@@ -7,25 +7,76 @@ LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
 HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
 LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o LYPrettySrc.o
+LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
 
-CFLAGS= $(MCFLAGS) -I. -I.. $(SLANGINC)
+CFLAGS= -O2 $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
+
+# comment this line to suppress DIRED support
+DIRED_DEFS = \
+ -DDIRED_SUPPORT \
+ -DOK_UUDECODE \
+ -DOK_TAR \
+ -DOK_GZIP \
+ -DOK_ZIP \
+ -DOK_OVERRIDE
+
+# Use this option to enable optional and *experimental* color style.
+#ENABLE_COLOR_STYLE = \
+ -DUSE_COLOR_STYLE
 
 CC = gcc
-MCFLAGS = -O2 -DHAVE_GETBKGD -DDISP_PARTIAL -DUSE_ZLIB \
- -DSOURCE_CACHE -DUSE_PSRC \
- -DUSE_EXTERNALS -DCOLOR_CURSES -DNCURSES -DFANCY_CURSES \
- -DACCESS_AUTH -DNO_CUSERID -DNOUSERS -DDOSPATH -DNO_TTYTYPE -DNO_UTMP \
- -Ichrtrans -I../WWW/library/implementation \
- -I../curses  -I../djgpp/tcplib/include -I../djgpp/tcplib/include/tcp
-WWWLIB = ../WWW/library/djgpp/libwww.a ../curses/pdcurses.a ../djgpp/tcplib/obj/libtcp.a
-LIBS=-lz
+
+MCFLAGS = \
+ $(DIRED_DEFS) \
+ $(ENABLE_COLOR_STYLE) \
+ -DACCESS_AUTH \
+ -DCOLOR_CURSES \
+ -DDISP_PARTIAL \
+ -DDOSPATH \
+ -DEXP_ADDRLIST_PAGE \
+ -DEXP_ALT_BINDINGS \
+ -DEXP_FILE_UPLOAD \
+ -DEXP_NESTED_TABLES \
+ -DEXP_PERSISTENT_COOKIES \
+ -DFANCY_CURSES \
+ -DNOUSERS \
+ -DNO_CUSERID \
+ -DNO_TTYTYPE \
+ -DNO_UTMP \
+ -DPDCURSES \
+ -DSOURCE_CACHE \
+ -DUSE_EXTERNALS \
+ -DUSE_PRETTYSRC \
+ -DUSE_ZLIB \
+ -DWATT32 \
+ $(SSLFLAGS) \
+ $(SSLINC) \
+ -I./chrtrans \
+ -I../WWW/Library/Implementation \
+ -I/djgpp/pdcur24 \
+ -I/djgpp/watt32/inc \
+ -I/djgpp/watt32/inc/sys
+
+WWWLIB = \
+ ../WWW/Library/djgpp/libwww.a \
+ /djgpp/pdcur24/lib/pdcurses.a
+
+LIBS= -L/djgpp/watt32/lib -lwatt -lz -lwmemu
+
+# Uncomment the following to enable Internationalization.
+#INTLFLAGS = -DHAVE_GETTEXT -DHAVE_LIBINTL_H
+#INTLLIBS= -lintl -liconv
+
+# Uncomment the followint to enable SSL.
+#SSLFLAGS = -DUSE_SSL
+#SSLLIB = -lssl -lcrypto
+#SSLINC = -I/djgpp/include/openssl
 
 all: lynx
 
 lynx:   message $(OBJS) $(WWWLIB)
 	@echo "Linking and creating Lynx executable"
-	$(CC) $(CFLAGS) -o lynx.exe  $(OBJS) $(WWWLIB) $(SLANGLIB) $(LIBS)
+	$(CC) $(CFLAGS) -o lynx.exe  $(OBJS) $(WWWLIB) $(SSLLIB) $(LIBS) $(INTLLIBS)
 	@echo "Welcome to Lynx!"
 
 message:
@@ -33,7 +84,7 @@ message:
 
 dbg:	$(OBJS) $(WWWLIB)
 	@echo "Making Lynx code"
-	$(CC) -g $(OBJS) $(CFLAGS) $(WWWLIB) $(SLANGLIB) $(LIBS)
+	$(CC) -g $(OBJS) $(CFLAGS) $(WWWLIB) $(LIBS)
 
 lint:
 	lint *.c  > ../lint.out
@@ -60,3 +111,4 @@ LYReadCFG.o:	../userdefs.h
 LYShowInfo.o:	../userdefs.h
 LYStrings.o:	../userdefs.h
 LYTraversal.o:	../userdefs.h
+LYUtils.o:	../userdefs.h

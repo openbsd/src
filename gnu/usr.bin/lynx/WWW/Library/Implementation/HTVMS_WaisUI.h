@@ -183,10 +183,6 @@ typedef unsigned long data_tag;
 #define ACCEPT	TRUE
 #define REJECT	FALSE
 
-/* values for SearchAPDU replace indicator element */
-#define ON	TRUE
-#define OFF	FALSE
-
 /* values for SearchResponseAPDU search status element */
 #define	SUCCESS	0 /* intuitive huh? */
 #define FAILURE	1

@@ -26,28 +26,13 @@ enum {
  DSTYLE_ELEMENTS
 };
 
-enum {
- MSTYLE_NORMAL = 0,
- MSTYLE_EM = 1,
- MSTYLE_STRONG = 2,
- MSTYLE_PHYSICAL = 3,
- MSTYLE_A = 4,
- MSTYLE_A_OFF = 4,
- MSTYLE_A_ON,
- MSTYLE_BOLD,
- MSTYLE_UL,
- MSTYLE_STATUS,
- MSTYLE_CANDY,
- MSTYLE_NOMORE
-};
-
 typedef struct {
  int color; /* color highlighting to be done */
  int mono; /* mono highlighting to be done */
  int cattr; /* attributes to go with the color */
 } HTCharStyle;
 
-#define HText_characterStyle CTRACE(tfp,"HTC called from %s/%d\n",__FILE__,__LINE__);_internal_HTC
+#define HText_characterStyle CTRACE((tfp,"HTC called from %s/%d\n",__FILE__,__LINE__));_internal_HTC
 
 #undef HText_characterStyle
 #define HText_characterStyle _internal_HTC

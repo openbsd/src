@@ -15,12 +15,22 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-# PACKAGE = @PACKAGE@
-PACKAGE = lynx
-# VERSION = @VERSION@
-VERSION = 2.8.2
+# Changes:
+# #	Added a variable $(MAKEFILE) permitting us to use "makefile.in" for
+#	ease of porting to systems with case-independent filenames.
+# #	Renamed po2tbl.sed.in to po2tbl.sed_in to allow bundling in VMS zips.
+# #	Set CDPATH to . in the makefile.in's that use cd, in case user has set
+#	CDPATH without . at the beginning.
+# #	Add variable $(CONFIG_H) permitting us to use a different name than
+#	"config.h" in the parent package.
+
+PACKAGE = @PACKAGE@
+VERSION = @VERSION@
 
 SHELL = @CONFIG_SHELL@
+CDPATH = .
+MAKEFILE = makefile
+CONFIG_H = @CONFIG_H@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -42,11 +52,13 @@ subdir = intl
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 MKINSTALLDIRS = @MKINSTALLDIRS@
+DESTDIR = @DESTDIR@
 
 l = @l@
 
 AR = ar
 CC = @CC@
+LN_S = @LN_S@
 LIBTOOL = @LIBTOOL@
 RANLIB = @RANLIB@
 
@@ -69,7 +81,7 @@ finddomain.$lo loadmsgcat.$lo localealias.$lo textdomain.$lo l10nflist.$lo \
 explodename.$lo
 CATOBJS = cat-compat.$lo ../po/cat-id-tbl.$lo
 GETTOBJS = intl-compat.$lo
-DISTFILES.common = ChangeLog makefile.in linux-msg.sed po2tbl.sed.in \
+DISTFILES.common = ChangeLog $(MAKEFILE).in linux-msg.sed po2tbl.sed_in \
 xopen-msg.sed $(HEADERS) $(SOURCES)
 DISTFILES.normal = VERSION
 DISTFILES.gettext = libintl.glibc intlh.inst.in
@@ -116,26 +128,26 @@ install-exec: all
 	if test "$(PACKAGE)" = "gettext" \
 	   && test '@INTLOBJS@' = '$(GETTOBJS)'; then \
 	  if test -r $(MKINSTALLDIRS); then \
-	    $(MKINSTALLDIRS) $(libdir) $(includedir); \
+	    $(MKINSTALLDIRS) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir); \
 	  else \
-	    $(top_srcdir)/mkinstalldirs $(libdir) $(includedir); \
+	    $(top_srcdir)/mkinstalldirs $(DESTDIR)$(libdir) $(DESTDIR)$(includedir); \
 	  fi; \
-	  $(INSTALL_DATA) intlh.inst $(includedir)/libintl.h; \
-	  $(INSTALL_DATA) libintl.a $(libdir)/libintl.a; \
+	  $(INSTALL_DATA) intlh.inst $(DESTDIR)$(includedir)/libintl.h; \
+	  $(INSTALL_DATA) libintl.a $(DESTDIR)$(libdir)/libintl.a; \
 	else \
 	  : ; \
 	fi
 install-data: all
 	if test "$(PACKAGE)" = "gettext"; then \
 	  if test -r $(MKINSTALLDIRS); then \
-	    $(MKINSTALLDIRS) $(gettextsrcdir); \
+	    $(MKINSTALLDIRS) $(DESTDIR)$(gettextsrcdir); \
 	  else \
-	    $(top_srcdir)/mkinstalldirs $(gettextsrcdir); \
+	    $(top_srcdir)/mkinstalldirs $(DESTDIR)$(gettextsrcdir); \
 	  fi; \
-	  $(INSTALL_DATA) VERSION $(gettextsrcdir)/VERSION; \
+	  $(INSTALL_DATA) VERSION $(DESTDIR)$(gettextsrcdir)/VERSION; \
 	  dists="$(DISTFILES.common)"; \
 	  for file in $$dists; do \
-	    $(INSTALL_DATA) $(srcdir)/$$file $(gettextsrcdir)/$$file; \
+	    $(INSTALL_DATA) $(srcdir)/$$file $(DESTDIR)$(gettextsrcdir)/$$file; \
 	  done; \
 	else \
 	  : ; \
@@ -147,12 +159,14 @@ installcheck:
 uninstall:
 	dists="$(DISTFILES.common)"; \
 	for file in $$dists; do \
-	  rm -f $(gettextsrcdir)/$$file; \
+	  rm -f $(DESTDIR)$(gettextsrcdir)/$$file; \
 	done
 
 info dvi:
 
-$(OBJECTS): ../lynx_cfg.h libgettext.h
+$(OBJECTS): config.h libgettext.h
+config.h : $(top_srcdir)/@CONFIG_H@
+	cp $(top_srcdir)/@CONFIG_H@ $@
 bindtextdom.$lo finddomain.$lo loadmsgcat.$lo: gettextP.h gettext.h loadinfo.h
 dcgettext.$lo: gettextP.h gettext.h hash-string.h loadinfo.h
 
@@ -173,7 +187,8 @@ mostlyclean:
 clean: mostlyclean
 
 distclean: clean
-	rm -f makefile ID TAGS po2msg.sed po2tbl.sed # libintl.h
+	rm -f $(MAKEFILE) ID TAGS po2msg.sed po2tbl.sed libintl.h
+	rm -f config.h
 
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use;"
@@ -183,7 +198,7 @@ maintainer-clean: distclean
 # GNU gettext needs not contain the file `VERSION' but contains some
 # other files which should not be distributed in other packages.
 distdir = ../$(PACKAGE)-$(VERSION)/$(subdir)
-dist distdir: makefile $(DISTFILES)
+dist distdir: $(MAKEFILE) $(DISTFILES)
 	if test "$(PACKAGE)" = gettext; then \
 	  additional="$(DISTFILES.gettext)"; \
 	else \
@@ -197,13 +212,13 @@ dist distdir: makefile $(DISTFILES)
 dist-libc:
 	tar zcvf intl-glibc.tar.gz $(COMSRCS) $(COMHDRS) libintl.h.glibc
 
-makefile: makefile.in ../config.status
+$(MAKEFILE): $(MAKEFILE).in ../config.status
 	cd .. \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 # The dependency for intlh.inst is different in gettext and all other
-# packages.  Because we cannot you GNU make features we have to solve
-# the problem while rewriting makefile.in.
+# packages.  Because we cannot use GNU make features we have to solve
+# the problem while rewriting $(MAKEFILE).in.
 @GT_YES@intlh.inst: intlh.inst.in ../config.status
 @GT_YES@	cd .. \
 @GT_YES@	&& CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= \

@@ -152,7 +152,7 @@ PRIVATE void HTFWriter_abort ARGS2(HTStream *, me, HTError, e)
 {
     fclose(me->fp);
     if (me->end_command) {		/* Temp file */
-	CTRACE(tfp, "HTFWriter: Aborting: file not executed.\n");
+	CTRACE((tfp, "HTFWriter: Aborting: file not executed.\n"));
 	FREE(me->end_command);
 	if (me->remove_command) {
 	    system(me->remove_command);
@@ -223,7 +223,7 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
 	HTParentAnchor *,	anchor,	/* Not used */
 	HTStream *,		sink)	/* Not used */
 
-#ifdef unix
+#ifdef UNIX
 #define REMOVE_COMMAND "/bin/rm -f %s\n"
 #endif
 #ifdef VMS
@@ -254,9 +254,9 @@ PUBLIC HTStream* HTSaveAndExecute ARGS3(
     if (fnam == NULL)
 	outofmem(__FILE__, "HTSaveAndExecute");
     tmpnam (fnam);
-    if (suffix) strcat(fnam, suffix);
+    strcat(fnam, suffix);
 
-    me->fp = fopen (fnam, "w");
+    me->fp = fopen (fnam, BIN_W);
     if (!me->fp) {
 	HTAlert(CANNOT_OPEN_TEMP);
         FREE(fnam);
@@ -326,14 +326,14 @@ PUBLIC HTStream* HTSaveLocally ARGS3(
     if (fnam == NULL)
 	outofmem(__FILE__, "HTSaveLocally");
     tmpnam (fnam);
-    if (suffix) strcat(fnam, suffix);
+    strcat(fnam, suffix);
 
     /*	Save Panel */
     answer = HTPrompt(GIVE_FILENAME, fnam);
 
     FREE(fnam);
 
-    me->fp = fopen (answer, "w");
+    me->fp = fopen (answer, BIN_W);
     if (!me->fp) {
 	HTAlert(CANNOT_OPEN_OUTPUT);
         FREE(answer);

@@ -186,7 +186,7 @@ HTStyle * HTStyleNamed ARGS2 (HTStyleSheet *,self, CONST char *,name)
     HTStyle * scan;
     for (scan=self->styles; scan; scan=scan->next)
 	if (0==strcmp(scan->name, name)) return scan;
-    CTRACE(tfp, "StyleSheet: No style named `%s'\n", name);
+    CTRACE((tfp, "StyleSheet: No style named `%s'\n", name));
     return NULL;
 }
 
@@ -237,8 +237,8 @@ HTStyle * HTStyleForRun (HTStyleSheet *self, NXRun *run)
 	    }
 	}
     }
-    CTRACE(tfp, "HTStyleForRun: Best match for style is %d out of 18\n",
-		 bestMatch);
+    CTRACE((tfp, "HTStyleForRun: Best match for style is %d out of 18\n",
+		 bestMatch));
     return best;
 }
 #endif /* NEXT_SUPRESS */
@@ -329,7 +329,7 @@ HTStyleSheet * HTStyleSheetRead(HTStyleSheet * self, NXStream * stream)
     HTStyle * style;
     char styleName[80];
     NXScanf(stream, " %d ", &numStyles);
-    CTRACE(tfp, "Stylesheet: Reading %d styles\n", numStyles);
+    CTRACE((tfp, "Stylesheet: Reading %d styles\n", numStyles));
     for (i=0; i<numStyles; i++) {
 	NXScanf(stream, "%s", styleName);
 	style = HTStyleNamed(self, styleName);
@@ -357,7 +357,7 @@ HTStyleSheet * HTStyleSheetWrite(HTStyleSheet * self, NXStream * stream)
     for(style=self->styles; style; style=style->next) numStyles++;
     NXPrintf(stream, "%d\n", numStyles);
 
-    CTRACE(tfp, "StyleSheet: Writing %d styles\n", numStyles);
+    CTRACE((tfp, "StyleSheet: Writing %d styles\n", numStyles));
     for (style=self->styles; style; style=style->next) {
 	NXPrintf(stream, "%s ", style->name);
 	(void) HTStyleWrite(style, stream);

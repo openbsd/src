@@ -116,6 +116,7 @@ typedef struct _HTStyle {
 
 } HTStyle;
 
+#define HT_ALIGN_NONE (-1)
 
 /*      Style functions:
 */

@@ -1,5 +1,5 @@
-/* Handle aliases for locale names
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Handle aliases for locale names.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
    This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #include <ctype.h>
@@ -69,8 +69,8 @@ void free ();
 # endif
 #endif
 
-#include <gettext.h>
-#include <gettextP.h>
+#include "gettext.h"
+#include "gettextP.h"
 
 /* @@ end of prolog @@ */
 
@@ -79,6 +79,14 @@ void free ();
    because some ANSI C functions will require linking with this object
    file and the name space must not be polluted.  */
 # define strcasecmp __strcasecmp
+
+# define mempcpy __mempcpy
+# define HAVE_MEMPCPY	1
+
+/* We need locking here since we can be called from different places.  */
+# include <bits/libc-lock.h>
+
+__libc_lock_define_initialized (static, lock);
 #endif
 
 
@@ -125,13 +133,17 @@ struct alias_map
 };
 
 
+static char *string_space = NULL;
+static size_t string_space_act = 0;
+static size_t string_space_max = 0;
 static struct alias_map *map;
 static size_t nmap = 0;
 static size_t maxmap = 0;
 
 
 /* Prototypes for local functions.  */
-static size_t read_alias_file PARAMS ((const char *fname, int fname_len));
+static size_t read_alias_file PARAMS ((const char *fname, int fname_len))
+     internal_function;
 static void extend_alias_table PARAMS ((void));
 static int alias_compare PARAMS ((const struct alias_map *map1,
 				  const struct alias_map *map2));
@@ -143,7 +155,12 @@ _nl_expand_alias (name)
 {
   static const char *locale_alias_path = LOCALE_ALIAS_PATH;
   struct alias_map *retval;
+  const char *result = NULL;
   size_t added;
+
+#ifdef _LIBC
+  __libc_lock_lock (lock);
+#endif
 
   do
     {
@@ -162,7 +179,10 @@ _nl_expand_alias (name)
 
       /* We really found an alias.  Return the value.  */
       if (retval != NULL)
-	return retval->value;
+	{
+	  result = retval->value;
+	  break;
+	}
 
       /* Perhaps we can find another alias file.  */
       added = 0;
@@ -183,11 +203,16 @@ _nl_expand_alias (name)
     }
   while (added != 0);
 
-  return NULL;
+#ifdef _LIBC
+  __libc_lock_unlock (lock);
+#endif
+
+  return result;
 }
 
 
 static size_t
+internal_function
 read_alias_file (fname, fname_len)
      const char *fname;
      int fname_len;
@@ -202,8 +227,13 @@ read_alias_file (fname, fname_len)
 
   full_fname = (char *) alloca (fname_len + sizeof aliasfile);
   ADD_BLOCK (block_list, full_fname);
+#ifdef HAVE_MEMPCPY
+  mempcpy (mempcpy (full_fname, fname, fname_len),
+	   aliasfile, sizeof aliasfile);
+#else
   memcpy (full_fname, fname, fname_len);
   memcpy (&full_fname[fname_len], aliasfile, sizeof aliasfile);
+#endif
 
   fp = fopen (full_fname, "r");
   if (fp == NULL)
@@ -220,14 +250,27 @@ read_alias_file (fname, fname_len)
 	 b) these fields must be usable as file names and so must not
 	    be that long
        */
-      char buf[BUFSIZ];
-      char *alias;
-      char *value;
-      char *cp;
+      unsigned char buf[BUFSIZ];
+      unsigned char *alias;
+      unsigned char *value;
+      unsigned char *cp;
 
-      if (fgets (buf, BUFSIZ, fp) == NULL)
+      if (fgets (buf, sizeof buf, fp) == NULL)
 	/* EOF reached.  */
 	break;
+
+      /* Possibly not the whole line fits into the buffer.  Ignore
+	 the rest of the line.  */
+      if (strchr (buf, '\n') == NULL)
+	{
+	  char altbuf[BUFSIZ];
+	  do
+	    if (fgets (altbuf, sizeof altbuf, fp) == NULL)
+	      /* Make sure the inner loop will be left.  The outer loop
+		 will exit at the `feof' test.  */
+	      break;
+	  while (strchr (altbuf, '\n') == NULL);
+	}
 
       cp = buf;
       /* Ignore leading white space.  */
@@ -250,8 +293,8 @@ read_alias_file (fname, fname_len)
 
 	  if (cp[0] != '\0')
 	    {
-	      char *tp;
-	      size_t len;
+	      size_t alias_len;
+	      size_t value_len;
 
 	      value = cp++;
 	      while (cp[0] != '\0' && !isspace (cp[0]))
@@ -271,41 +314,36 @@ read_alias_file (fname, fname_len)
 	      if (nmap >= maxmap)
 		extend_alias_table ();
 
-	      /* We cannot depend on strdup available in the libc.  Sigh!  */
-	      len = strlen (alias) + 1;
-	      tp = (char *) malloc (len);
-	      if (tp == NULL)
-		{
-		  FREE_BLOCKS (block_list);
-		  return added;
-		}
-	      memcpy (tp, alias, len);
-	      map[nmap].alias = tp;
+	      alias_len = strlen (alias) + 1;
+	      value_len = strlen (value) + 1;
 
-	      len = strlen (value) + 1;
-	      tp = (char *) malloc (len);
-	      if (tp == NULL)
+	      if (string_space_act + alias_len + value_len > string_space_max)
 		{
-		  FREE_BLOCKS (block_list);
-		  return added;
+		  /* Increase size of memory pool.  */
+		  size_t new_size = (string_space_max
+				     + (alias_len + value_len > 1024
+					? alias_len + value_len : 1024));
+		  char *new_pool = (char *) realloc (string_space, new_size);
+		  if (new_pool == NULL)
+		    {
+		      FREE_BLOCKS (block_list);
+		      return added;
+		    }
+		  string_space = new_pool;
+		  string_space_max = new_size;
 		}
-	      memcpy (tp, value, len);
-	      map[nmap].value = tp;
+
+	      map[nmap].alias = memcpy (&string_space[string_space_act],
+					alias, alias_len);
+	      string_space_act += alias_len;
+
+	      map[nmap].value = memcpy (&string_space[string_space_act],
+					value, value_len);
+	      string_space_act += value_len;
 
 	      ++nmap;
 	      ++added;
 	    }
-	}
-
-      /* Possibly not the whole line fits into the buffer.  Ignore
-	 the rest of the line.  */
-      while (strchr (cp, '\n') == NULL)
-	{
-	  cp = buf;
-	  if (fgets (buf, BUFSIZ, fp) == NULL)
-	    /* Make sure the inner loop will be left.  The outer loop
-	       will exit at the `feof' test.  */
-	    *cp = '\n';
 	}
     }
 
@@ -329,20 +367,28 @@ extend_alias_table ()
   struct alias_map *new_map;
 
   new_size = maxmap == 0 ? 100 : 2 * maxmap;
-  new_map = (struct alias_map *) malloc (new_size
-					 * sizeof (struct alias_map));
+  new_map = (struct alias_map *) realloc (map, (new_size
+						* sizeof (struct alias_map)));
   if (new_map == NULL)
     /* Simply don't extend: we don't have any more core.  */
     return;
 
-  memcpy (new_map, map, nmap * sizeof (struct alias_map));
-
-  if (maxmap != 0)
-    free (map);
-
   map = new_map;
   maxmap = new_size;
 }
+
+
+#ifdef _LIBC
+static void __attribute__ ((unused))
+free_mem (void)
+{
+  if (string_space != NULL)
+    free (string_space);
+  if (map != NULL)
+    free (map);
+}
+text_set_element (__libc_subfreeres, free_mem);
+#endif
 
 
 static int

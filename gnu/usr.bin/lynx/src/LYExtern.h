@@ -5,6 +5,11 @@
 #include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
-void run_external PARAMS((char * c));
+/*returns TRUE if something matching was executed*/
+BOOL run_external PARAMS((char * c, BOOL only_overriders));
+
+#ifdef WIN_EX
+extern char * quote_pathname PARAMS((char * pathname));
+#endif
 
 #endif /* EXTERNALS_H */

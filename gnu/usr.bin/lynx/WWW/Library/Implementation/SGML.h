@@ -19,28 +19,36 @@
 
 #include <HTStream.h>
 #include <HTAnchor.h>
+#include <LYJustify.h>
 
 /*
 
 SGML content types
 
  */
-typedef enum _SGMLContent {
+typedef enum {
     SGML_EMPTY,	   /* No content. */
     SGML_LITTERAL, /* Literal character data.  Recognize exact close tag only.
 		      Old www server compatibility only!  Not SGML */
-    SGML_CDATA,	   /* Character data.  Recognize </ only. */
-    SGML_RCDATA,   /* Replaceable character data.  Recognize </ and &ref; */
+    SGML_CDATA,	   /* Character data.  Recognize </ only.
+		      (But we treat it just as SGML_LITTERAL.) */
+    SGML_SCRIPT,   /* Like CDATA, but allow it to be a comment */
+    SGML_RCDATA,   /* Replaceable character data. Should recognize </ and &ref;
+		      (but we treat it like SGML_MIXED for old times' sake). */
     SGML_MIXED,	   /* Elements and parsed character data.
 		      Recognize all markup. */
-    SGML_ELEMENT,  /* Any data found will be returned as an error. */
-    SGML_PCDATA	   /* Added by KW. */
+    SGML_ELEMENT,  /* Any data found should be regarded as an error.
+		      (But we treat it just like SGML_MIXED.) */
+    SGML_PCDATA	   /* Should contain no elements but &ref; is parsed.
+		      (We treat it like SGML_CDATA wrt. contained tags
+		      i.e. pass them on literally, i.e. like we should
+		      treat SGML_RCDATA) (added by KW). */
 } SGMLContent;
 
 
 typedef struct {
     char *	name;		/* The (constant) name of the attribute */
-#ifdef USE_PSRC
+#ifdef USE_PRETTYSRC
     char	type;		/* code of the type of the attribute. Code
 				   values are in HTMLDTD.h */
 #endif
@@ -69,7 +77,7 @@ typedef int TagClass;
 				    text directly */
     /* insertions */
 #define Tgc_BRlike	0x01000 /* BR,IMG,TAB allowed in any text */
-#define Tgc_APPLETlike	0x02000 /* APPLET,OBJECT,EMBED,SCRIPT */
+#define Tgc_APPLETlike	0x02000 /* APPLET,OBJECT,EMBED,SCRIPT;BUTTON */
 #define Tgc_HRlike	0x04000 /* HR,MARQUEE can contain all kinds of things
 				    and/or are not allowed (?) in running text */
 #define Tgc_MAPlike	0x08000 /* MAP,AREA some specials that never contain
@@ -89,9 +97,17 @@ typedef int TagFlags;
 #define Tgf_mafse	0x00004 /* Make Attribute-Free Start-tag End instead
 				      (if found invalid) */
 #define Tgf_strict	0x00008 /* Ignore contained invalid elements,
-				      don't pass them on */
+				   don't pass them on; or other variant
+				   handling for some content types */
 #define Tgf_nreie	0x00010 /* Not Really Empty If Empty,
 				      used by color style code */
+#define Tgf_frecyc	0x00020 /* Pass element content on in a form that
+				   allows recycling, i.e. don't translate to
+				   output (display) character set yet (treat
+				   content similar to attribute values) */
+#define Tgf_nolyspcl	0x00040 /* Don't generate lynx special characters
+				   for soft hyphen and various spaces (nbsp,
+				   ensp,..) */
 
 /*		A tag structure describes an SGML element.
 **		-----------------------------------------
@@ -112,6 +128,9 @@ struct _tag{
     char *	name;			/* The name of the tag */
 #ifdef USE_COLOR_STYLE
     int		name_len;		/* The length of the name */
+#endif
+#ifdef EXP_JUSTIFY_ELTS
+    BOOL	can_justify;		/* justification allowed?*/
 #endif
     attr *	attributes;		/* The list of acceptable attributes */
     int		number_of_attributes;	/* Number of possible attributes */
@@ -196,7 +215,7 @@ typedef struct _HTStructuredClass{
 		CONST char *	str,
 		int		len));
 
-	void (*start_element) PARAMS((
+	int (*start_element) PARAMS((
 		HTStructured*	me,
 		int		element_number,
 		CONST BOOL*	attribute_present,
@@ -204,7 +223,7 @@ typedef struct _HTStructuredClass{
 		int		charset,
 		char **		include));
 
-	void (*end_element) PARAMS((
+	int (*end_element) PARAMS((
 		HTStructured*	me,
 		int		element_number,
 		char **		include));
@@ -213,7 +232,7 @@ typedef struct _HTStructuredClass{
 		HTStructured*	me,
 		int		entity_number));
 
-}HTStructuredClass;
+} HTStructuredClass;
 
 /*
   Equivalents to the following functions possibly could be generalised

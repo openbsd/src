@@ -48,6 +48,7 @@
 #include <HTLex.h>	/* Lexical analysor	*/
 #include <HTGroup.h>	/* Implemented here	*/
 
+#include <LYUtils.h>
 #include <LYLeaks.h>
 
 /*
@@ -78,12 +79,12 @@ PRIVATE void syntax_error ARGS3(FILE *,	 fp,
     int ch;
 
     while ((ch = getc(fp)) != EOF  &&  ch != '\n')
-	if (cnt < 40) buffer[cnt++] = ch;
+	if (cnt < 40) buffer[cnt++] = (char) ch;
     buffer[cnt] = (char)0;
 
-    CTRACE(tfp, "%s %d before: '%s'\nHTGroup.c: %s (got %s)\n",
+    CTRACE((tfp, "%s %d before: '%s'\nHTGroup.c: %s (got %s)\n",
 		"HTGroup.c: Syntax error in rule file at line",
-		HTlex_line, buffer, msg, lex_verbose(lex_item));
+		HTlex_line, buffer, msg, lex_verbose(lex_item)));
     HTlex_line++;
 }
 
@@ -107,7 +108,7 @@ PRIVATE AddressDefList *parse_address_part ARGS1(FILE *, fp)
     address_def_list = HTList_new();
 
     for(;;) {
-	Ref *ref = (Ref*)calloc(1, sizeof(Ref));
+	Ref *ref = typecalloc(Ref);
 	if (ref == NULL)
 	    outofmem(__FILE__, "parse_address_part");
 	ref->name = NULL;
@@ -163,7 +164,7 @@ PRIVATE UserDefList *parse_user_part ARGS1(FILE *, fp)
     user_def_list = HTList_new();
 
     for (;;) {
-	Ref *ref = (Ref*)calloc(1, sizeof(Ref));
+	Ref *ref = typecalloc(Ref);
 	if (ref == NULL)
 	    outofmem(__FILE__, "parse_user_part");
 	ref->name = NULL;
@@ -238,7 +239,7 @@ PRIVATE Item *parse_item ARGS1(FILE *, fp)
 	syntax_error(fp, "Empty item not allowed", lex_item);
 	return NULL;
     }
-    item = (Item*)calloc(1, sizeof(Item));
+    item = typecalloc(Item);
     if (item == NULL)
 	outofmem(__FILE__, "parse_item");
     item->user_def_list = user_def_list;
@@ -287,7 +288,7 @@ PUBLIC GroupDef *HTAA_parseGroupDef ARGS1(FILE *, fp)
     if (!(item_list = parse_item_list(fp))) {
 	return NULL;
     }
-    group_def = (GroupDef*)calloc(1, sizeof(GroupDef));
+    group_def = typecalloc(GroupDef);
     if (group_def == NULL)
 	outofmem(__FILE__, "HTAA_parseGroupDef");
     group_def->group_name = NULL;
@@ -506,8 +507,8 @@ PRIVATE BOOL part_match ARGS2(CONST char *, tcur,
     actual[cnt] = (char)0;
 
     status = HTAA_templateMatch(required, actual);
-    CTRACE(tfp, "part_match: req: '%s' act: '%s' match: %s\n",
-		required, actual, (status ? "yes" : "no"));
+    CTRACE((tfp, "part_match: req: '%s' act: '%s' match: %s\n",
+		required, actual, (status ? "yes" : "no")));
 
     return status;
 }
@@ -660,25 +661,25 @@ PUBLIC GroupDefList *HTAA_readGroupFile ARGS1(CONST char *, filename)
 
 	while (NULL != (group_cache = (GroupCache*)HTList_nextObject(cur))) {
 	    if (!strcmp(filename, group_cache->group_filename)) {
-		CTRACE(tfp, "%s '%s' %s\n",
+		CTRACE((tfp, "%s '%s' %s\n",
 			    "HTAA_readGroupFile: group file",
-			    filename, "already found in cache");
+			    filename, "already found in cache"));
 		return group_cache->group_list;
 	    } /* if cache match */
 	} /* while cached files remain */
     } /* cache exists */
 
-    CTRACE(tfp, "HTAA_readGroupFile: reading group file `%s'\n",
-		filename);
+    CTRACE((tfp, "HTAA_readGroupFile: reading group file `%s'\n",
+		filename));
 
-    if (!(fp = fopen(filename, "r"))) {
-	CTRACE(tfp, "%s '%s'\n",
+    if (!(fp = fopen(filename, TXT_R))) {
+	CTRACE((tfp, "%s '%s'\n",
 		    "HTAA_readGroupFile: unable to open group file",
-		    filename);
+		    filename));
 	return NULL;
     }
 
-    if (!(group_cache = (GroupCache*)calloc(1, sizeof(GroupCache))))
+    if ((group_cache = typecalloc(GroupCache)) == 0)
 	outofmem(__FILE__, "HTAA_readGroupFile");
 
     group_cache->group_filename = NULL;
@@ -687,7 +688,7 @@ PUBLIC GroupDefList *HTAA_readGroupFile ARGS1(CONST char *, filename)
     HTList_addObject(group_cache_list, (void*)group_cache);
     fclose(fp);
 
-    CTRACE(tfp, "Read group file '%s', results follow:\n", filename);
+    CTRACE((tfp, "Read group file '%s', results follow:\n", filename));
     if (TRACE)
 	print_group_def_list(group_cache->group_list);
 

@@ -2,11 +2,14 @@
 #ifndef LYNX_CFG_H
 #define LYNX_CFG_H 1
 
+#undef ALL_CHARSETS		/* AC_ARG_WITH(charsets) */
 #undef ALT_CHAR_SET		/* CF_ALT_CHAR_SET */
 #undef ANSI_VARARGS		/* CF_VARARGS */
 #undef ARCHIVE_ONLY		/* CF_ARG_DISABLE(dired-archive) */
 #undef BZIP2_PATH		/* CF_PATH_PROG(bzip2) */
+#undef CAN_SET_ERRNO		/* CF_SET_ERRNO */
 #undef CHMOD_PATH		/* CF_PATH_PROG(chmod) */
+#undef CJK_EX			/* CF_ARG_ENABLE(cjk) */
 #undef COLOR_CURSES		/* defined by CF_COLOR_CURSES */
 #undef COMPRESS_PATH		/* CF_PATH_PROG(compress) */
 #undef COPY_PATH		/* CF_PATH_PROG(cp) */
@@ -18,23 +21,31 @@
 #undef DECL_STRSTR
 #undef DECL_SYS_ERRLIST
 #undef DIRED_SUPPORT		/* AC_ARG_WITH(dired) */
+#undef DISABLE_BIBP		/* CF_ARG_DISABLE(bibp-urls) */
 #undef DISABLE_FINGER		/* CF_ARG_DISABLE(finger) */
 #undef DISABLE_FTP		/* CF_ARG_DISABLE(ftp) */
 #undef DISABLE_GOPHER		/* CF_ARG_DISABLE(gopher) */
 #undef DISABLE_NEWS		/* CF_ARG_DISABLE(news) */
 #undef DISP_PARTIAL		/* CF_ARG_ENABLE(partial) */
 #undef DONT_TRACK_INTERNAL_LINKS /* CF_ARG_DISABLE(internal-links) */
-#undef EBCDIC			/* CF_EBCDIC */
+#undef ENABLE_IPV6		/* CF_CHECK_IPV6 */
 #undef ENABLE_NLS		/* defined if NLS is requested */
+#undef ENABLE_OPTS_CHANGE_EXEC	/* CF_ARG_ENABLE(change-exec) */
 #undef EXEC_LINKS		/* CF_ARG_ENABLE(exec-links) */
 #undef EXEC_SCRIPTS		/* CF_ARG_ENABLE(exec-scripts) */
 #undef EXP_ADDRLIST_PAGE	/* CF_ARG_ENABLE(addrlist-page) */
 #undef EXP_ALT_BINDINGS		/* CF_ARG_ENABLE(alt-bindings) */
+#undef EXP_CHARSET_CHOICE	/* CF_ARG_ENABLE(charset-choice) */
 #undef EXP_CHARTRANS_AUTOSWITCH	/* CF_ARG_ENABLE(font-switch) */
+#undef EXP_FILE_UPLOAD		/* CF_ARG_ENABLE(file-upload) */
+#undef EXP_JUSTIFY_ELTS		/* CF_ARG_ENABLE(justify-elts) */
 #undef EXP_KEYBOARD_LAYOUT	/* CF_ARG_ENABLE(kbd-layout) */
 #undef EXP_LIBJS		/* CF_ARG_ENABLE(libjs) */
+#undef EXP_NESTED_TABLES	/* CF_ARG_ENABLE(nested-tables) */
 #undef EXP_PERSISTENT_COOKIES	/* CF_ARG_ENABLE(persistent-cookies) */
+#undef EXP_READPROGRESS		/* CF_ARG_ENABLE(read-eta) */
 #undef FANCY_CURSES		/* defined by CF_FANCY_CURSES */
+#undef GCC_NORETURN		/* CF_GCC_ATTRIBUTES */
 #undef GCC_PRINTF		/* CF_GCC_ATTRIBUTES */
 #undef GCC_UNUSED		/* CF_GCC_ATTRIBUTES */
 #undef GETGROUPS_T		/* AC_TYPE_GETGROUPS */
@@ -42,19 +53,30 @@
 #undef HAVE_ALLOCA		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_ALLOCA_H		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_ARGZ_H		/* defined by AM_GNU_GETTEXT */
+#undef HAVE_ARPA_INET_H
+#undef HAVE_ASSUME_DEFAULT_COLORS /* ncurses extension */
+#undef HAVE_BSD_TOUCHLINE	/* CF_CURS_TOUCHLINE */
 #undef HAVE_CATGETS		/* defined if you want to use non-GNU catgets */
 #undef HAVE_CBREAK
 #undef HAVE_CURSESX_H
 #undef HAVE_CUSERID
 #undef HAVE_DCGETTEXT		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_DEFINE_KEY
+#undef HAVE_DELSCREEN		/* defined by CF_CURSES_FUNCS  */
 #undef HAVE_DIRENT_H		/* defined by AC_HEADER_DIRENT */
 #undef HAVE_FCNTL_H		/* have <fcntl.h> */
+#undef HAVE_FTIME
+#undef HAVE_GAI_STRERROR	/* CF_CHECK_IPV6 */
+#undef HAVE_GETADDRINFO		/* CF_CHECK_IPV6 */
+#undef HAVE_GETATTRS
+#undef HAVE_GETBEGX
+#undef HAVE_GETBEGY
 #undef HAVE_GETBKGD		/* defined by CF_COLOR_CURSES */
 #undef HAVE_GETCWD
 #undef HAVE_GETGROUPS
 #undef HAVE_GETTEXT		/* defined if you want to use non-GNU gettext */
 #undef HAVE_GETTIMEOFDAY
+#undef HAVE_GETUID
 #undef HAVE_H_ERRNO
 #undef HAVE_INET_ATON		/* CF_INET_ADDR */
 #undef HAVE_JCURSES_H
@@ -65,16 +87,27 @@
 #undef HAVE_LOCALE_H
 #undef HAVE_LSTAT		/* defined by CF_FUNC_LSTAT */
 #undef HAVE_MALLOC_H		/* defined by AM_GNU_GETTEXT */
+#undef HAVE_MKSTEMP
+#undef HAVE_MKTEMP
 #undef HAVE_MMAP		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_MUNMAP		/* defined by AM_GNU_GETTEXT */
+#undef HAVE_NAPMS
 #undef HAVE_NCURSES_H		/* defined if we include <ncurses.h> */
+#undef HAVE_NCURSES_NCURSES_H	/* defined if we include <ncurses/ncurses.h> */
+#undef HAVE_NCURSES_TERM_H	/* have <ncurses/term.h> */
+#undef HAVE_NEWPAD
+#undef HAVE_NEWTERM
 #undef HAVE_NL_TYPES_H		/* defined by AM_GNU_GETTEXT */
+#undef HAVE_PNOUTREFRESH
 #undef HAVE_POPEN
 #undef HAVE_PUTENV
 #undef HAVE_READDIR
+#undef HAVE_RESIZETERM
 #undef HAVE_RESOLV_H
 #undef HAVE_SETENV		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_SETLOCALE
+#undef HAVE_SETUID
+#undef HAVE_SIGACTION		/* CF_FUNC_SIGACTION */
 #undef HAVE_SIZECHANGE		/* defined by CF_SIZECHANGE */
 #undef HAVE_STDARG_H		/* CF_VARARGS */
 #undef HAVE_STDLIB_H
@@ -83,39 +116,58 @@
 #undef HAVE_STRCHR		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_STRERROR
 #undef HAVE_STRING_H
+#undef HAVE_SYSLOG_H
+#undef HAVE_SYSV_TOUCHLINE	/* CF_CURS_TOUCHLINE */
 #undef HAVE_SYS_DIR_H		/* defined by AC_HEADER_DIRENT */
 #undef HAVE_SYS_FCNTL_H		/* have <sys/fcntl.h> */
 #undef HAVE_SYS_FILIO_H		/* have <sys/filio.h> */
 #undef HAVE_SYS_IOCTL_H		/* have <sys/ioctl.h> */
 #undef HAVE_SYS_NDIR_H		/* defined by AC_HEADER_DIRENT */
 #undef HAVE_SYS_PARAM_H		/* defined by AM_GNU_GETTEXT */
+#undef HAVE_SYS_TIMEB_H		/* have <sys/timeb.h> */
 #undef HAVE_SYS_WAIT_H		/* have <sys/wait.h> */
 #undef HAVE_TERMIOS_H		/* have <termios.h> */
 #undef HAVE_TERMIO_H		/* have <termio.h> */
+#undef HAVE_TERM_H		/* have <term.h> */
+#undef HAVE_TOUCHLINE
+#undef HAVE_TOUCHWIN
+#undef HAVE_TRUNCATE
+#undef HAVE_TTYNAME
 #undef HAVE_TTYTYPE
 #undef HAVE_TYPE_UNIONWAIT	/* CF_UNION_WAIT */
 #undef HAVE_UNISTD_H		/* have <unistd.h> */
 #undef HAVE_UNSETENV
 #undef HAVE_USE_DEFAULT_COLORS	/* ncurses extension */
-#undef HAVE_UTMP
+#undef HAVE_UTMP		/* CF_UTMP */
+#undef HAVE_UTMP_UT_HOST	/* CF_UTMP_UT_HOST */
+#undef HAVE_UTMP_UT_SESSION	/* CF_UTMP_UT_SESSION */
+#undef HAVE_UTMP_UT_XSTATUS	/* CF_UTMP_UT_XSTATUS */
+#undef HAVE_UTMP_UT_XTIME	/* CF_UTMP_UT_XTIME */
 #undef HAVE_VALUES_H		/* defined by AM_GNU_GETTEXT */
 #undef HAVE_VARARGS_H		/* CF_VARARGS */
+#undef HAVE_VASPRINTF
+#undef HAVE_VFORK_H		/* have <vfork.h> */
 #undef HAVE_WAITPID
 #undef HAVE_WBORDER
+#undef HAVE_WREDRAWLN
+#undef HAVE_WRESIZE
+#undef HAVE_XCURSES		/* CF_PDCURSES_X11 */
 #undef HAVE___ARGZ_COUNT	/* defined by AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_NEXT		/* defined by AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_STRINGIFY	/* defined by AM_GNU_GETTEXT */
 #undef IGNORE_CTRL_C		/* FIXME: make tests? */
+#undef INCLUDE_PROTOTYPES	/* CF_SOCKS5 */
 #undef INSTALL_ARGS		/* CF_PATH_PROG(install) */
 #undef INSTALL_PATH		/* CF_PATH_PROG(install) */
-#undef LINKEDSTYLES		/* see USE_COLOR_STYLE */
 #undef LINUX			/* FIXME: make tests? */
 #undef LOCALE			/* for locale support */
 #undef LONG_LIST		/* CF_ARG_DISABLE(long-list) */
 #undef LYNXCGI_LINKS		/* CF_ARG_ENABLE(cgi-links) */
 #undef LYNX_CFG_FILE		/* $libdir/lynx.cfg */
 #undef LYNX_LSS_FILE		/* $libdir/lynx.lss */
-#undef LY_FIND_LEAKS		/* configure --disable-leaks */
+#undef LYNX_RAND_MAX		/* CF_SRAND */
+#undef LY_FIND_LEAKS		/* CF_ARG_ENABLE(find-leaks) */
+#undef LY_TRACELINE		/* CF_ARG_ENABLE(vertrace) */
 #undef MKDIR_PATH		/* CF_PATH_PROG(mkdir) */
 #undef MV_PATH			/* CF_PATH_PROG(mv) */
 #undef NCURSES			/* defined for ncurses support */
@@ -123,27 +175,27 @@
 #undef NEED_PTEM_H		/* defined by CF_SIZECHANGE */
 #undef NEED_REMOVE		/* defined by CF_REMOVE_BROKEN */
 #undef NGROUPS			/* defined by CF_NGROUPS */
-#undef NOT_ASCII		/* CF_NOT_ASCII */
 #undef NO_CHANGE_EXECUTE_PERMS	/* CF_ARG_DISABLE(dired-xpermit) */
 #undef NO_CONFIG_INFO		/* CF_ARG_DISABLE(config-info) */
 #undef NO_EXTENDED_HTMLDTD	/* CF_ARG_DISABLE(extended-dtd) */
 #undef NO_LYNX_TRACE		/* CF_ARG_DISABLE(trace) */
 #undef NO_OPTION_FORMS		/* CF_ARG_DISABLE(forms-options) */
 #undef NO_OPTION_MENU		/* CF_ARG_DISABLE(option-menu) */
-#undef NO_PARENT_DIR_REFERENCE	/* configure --disable-parent-dir */
+#undef NO_PARENT_DIR_REFERENCE	/* CF_ARG_DISABLE(parent-dir-refs) */
 #undef NSL_FORK			/* CF_ARG_ENABLE(nsl-fork) */
 #undef OK_GZIP			/* CF_ARG_DISABLE(dired-gzip) */
+#undef OK_INSTALL
 #undef OK_OVERRIDE		/* CF_ARG_DISABLE(dired-override) */
 #undef OK_PERMIT		/* CF_ARG_DISABLE(dired-permit) */
 #undef OK_TAR			/* CF_ARG_DISABLE(dired-tar) */
 #undef OK_UUDECODE		/* CF_ARG_DISABLE(dired-uudecode) */
 #undef OK_ZIP			/* CF_ARG_DISABLE(dired-zip) */
+#undef REAL_UNIX_SYSTEM		/* CF_SLANG_UNIX_DEFS */
 #undef RLOGIN_PATH		/* CF_PATH_PROG(rlogin) */
 #undef RM_PATH			/* CF_PATH_PROG(rm) */
 #undef SOCKS			/* CF_SOCKS, CF_SOCKS5 */
 #undef SOURCE_CACHE		/* CF_ARG_ENABLE(source-cache) */
 #undef STDC_HEADERS
-#undef SYSLOG_REQUESTED_URLS	/* CF_ARG_ENABLE(syslog) */
 #undef SYSTEM_MAIL		/* CF_DEFINE_PROG */
 #undef SYSTEM_MAIL_FLAGS	/* defined by CF_SYSTEM_MAIL_FLAGS */
 #undef SYSTEM_NAME		/* CF_CHECK_CACHE */
@@ -163,26 +215,40 @@
 #undef USE_EXECVP		/* CF_ARG_DISABLE(full-paths) */
 #undef USE_EXTERNALS		/* CF_ARG_ENABLE(externs) */
 #undef USE_FCNTL		/* CF_FIONBIO */
-#undef USE_HASH			/* see USE_COLOR_STYLE */
-#undef USE_PSRC			/* CF_ARG_ENABLE(prettysrc) */
-#undef USE_SIZECHANGEHACK	/* FIXME: find a case where this works! */
+#undef USE_OPENSSL_INCL		/* CF_SSL */
+#undef USE_PRETTYSRC		/* CF_ARG_ENABLE(prettysrc) */
+#undef USE_SCROLLBAR		/* CF_ARG_ENABLE(scrollbar) */
 #undef USE_SLANG		/* AC_ARG_WITH(screen=slang) */
 #undef USE_SOCKS4_PREFIX	/* CF_SOCKS5 */
 #undef USE_SOCKS5		/* CF_SOCKS5 */
+#undef USE_SSL			/* CF_SSL */
+#undef USE_SYSV_UTMP		/* CF_UTMP */
 #undef USE_ZLIB			/* AC_ARG_WITH(zlib) */
 #undef UTMPX_FOR_UTMP		/* use <utmpx.h> since <utmp.h> not found */
 #undef UUDECODE_PATH		/* CF_PATH_PROG(uudecode) */
 #undef WAITPID_USES_UNION	/* CF_FUNC_WAIT */
 #undef WAIT_USES_UNION		/* CF_FUNC_WAIT */
+#undef XCURSES			/* CF_PDCURSES_X11 */
 #undef ZCAT_PATH		/* CF_PATH_PROG(zcat) */
 #undef ZIP_PATH			/* CF_PATH_PROG(zip) */
 #undef _ALL_SOURCE		/* AC_AIX */
 #undef inline			/* defined by AC_C_INLINE */
+#undef lynx_rand		/* CF_SRAND */
+#undef lynx_srand		/* CF_SRAND */
 #undef mode_t			/* defined by AC_TYPE_MODE_T */
 #undef off_t			/* defined by AC_TYPE_OFF_T */
 #undef pid_t			/* defined by AC_TYPE_PID_T */
 #undef uid_t			/* defined by AC_TYPE_UID_T */
+#undef ut_name			/* CF_UTMP */
+#undef ut_xstatus		/* CF_UTMP_UT_XSTATUS */
+#undef ut_xtime			/* CF_UTMP_UT_XTIME */
+
+/*
+ * U/Win defines vfork() as a macro in vfork.h, which is included from unistd.h.
+ */
+#ifndef HAVE_VFORK_H
 #undef vfork			/* defined by AC_FUNC_FORK */
+#endif
 
 /* 'const' may be defined externally by the compiler-wrapper, as in 'unproto'
  * or by AC_C_CONST
@@ -191,17 +257,19 @@
 #undef const
 #endif
 
-/* FIXME:ALLOW_USERS_TO_CHANGE_EXEC_WITHIN_OPTIONS */
-/* FIXME:DECLARE_WAIS_LOGFILES */
-/* FIXME:DGUX */
+/*
+ * The configure script generates LYHelp.h (handcrafted makefiles may not do
+ * this, so we set a definition):
+ */
+#define HAVE_LYHELP_H 1
+
+/* FIXME:DGUX (done in $host_os case-statement) */
 /* FIXME:DGUX_OLD */
 /* FIXME:HP_TERMINAL */
-/* FIXME:NOPORT */
-/* FIXME:POSIX_JC */
 /* FIXME:REVERSE_CLEAR_SCREEN_PROBLEM */
 /* FIXME:SHORTENED_RBIND */
 /* FIXME:SNAKE */
-/* FIXME:SVR4_BSDSELECT */
+/* FIXME:SVR4_BSDSELECT (done in $host_os case-statement) */
 
 /* Some older socks libraries, especially AIX need special definitions */
 #if defined(_AIX) && !defined(USE_SOCKS5)
@@ -213,6 +281,10 @@
 #undef listen
 #undef recvfrom
 #undef select
+#endif
+
+#ifdef HAVE_SYSLOG_H
+#undef SYSLOG_REQUESTED_URLS	/* CF_ARG_ENABLE(syslog) */
 #endif
 
 #ifndef HAVE_LSTAT

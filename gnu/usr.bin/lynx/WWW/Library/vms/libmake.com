@@ -176,10 +176,6 @@ $ cc [-.Implementation]HTAssoc.c
 $ cc [-.Implementation]HTLex.c
 $ cc [-.Implementation]HTUU.c
 $ cc [-.Implementation]HTVMSUtils.c
-$ cc [-.Implementation]getpass.c
-$ cc [-.Implementation]getline.c
-$ cc [-.Implementation]crypt.c
-$ cc [-.Implementation]crypt_util.c
 $ cc [-.Implementation]HTWAIS.c
 $ cc [-.Implementation]HTVMS_WaisUI.c
 $ cc [-.Implementation]HTVMS_WaisProt.c

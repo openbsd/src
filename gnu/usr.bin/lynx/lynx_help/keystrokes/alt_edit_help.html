@@ -1,24 +1,27 @@
-<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <html>
 <head>
-<title>Lynx Line Editor Alternate Key Binding</title>
+<title>Lynx Line Editor Alternative Key Binding</title>
 <link rev="made" href="mailto:lynx-dev@sig.net">
+<link rel="Sibling" title="Default Binding" href="edit_help.html">
+<link rel="Sibling" title="Bash-Like Binding" href="bashlike_edit_help.html">
 </head>
 <body>
-<h1>+++ALTERNATE BINDINGS+++</h1>
+<h1>+++ALTERNATIVE BINDING+++</h1>
 
 Lynx invokes a built-in <em>Line Editor</em> for entering strings in
 response to prompts, in forms, and for email messages if an external editor
-has not been defined.  Administrators can offer additional alternate key
-bindings by adding them in LYEditmap.c before compiling Lynx.  If available,
+has not been defined.  Additional alternative key-bindings can be offered
+by configuring with --enable-alt-bindings or by adding them in
+LYEditmap.c before compiling Lynx.  If available,
 they may be selected via the 'o'ptions menu, or by editing lineedit_mode in
 the '.lynxrc' file.
 
-<p>Note: setting emacs/vi keys ON has no effect on line-editor bindings.
+<p>Note: setting emacs/vi keys ON has no direct effect on line-editor bindings.
 
-<p>This is the <em>Alternate Bindings</em> keymap:
+<p>This is the <em>Alternative Binding</em> keymap:
 
-<p><pre>
+<pre>
      ENTER  Input complete        -  RETURN
      TAB    Input complete        -  TAB, Do
      ABORT  Input cancelled       -  Ctrl-G, Ctrl-O, (Ctrl-C on some systems)
@@ -35,7 +38,6 @@ the '.lynxrc' file.
      DELN   Delete next [1] char  -  Ctrl-D
      DELPW  Delete prev     word  -  Ctrl-R
      DELNW  Delete next     word  -  Ctrl-T
-     DELBL  Delete to beg of line -  Ctrl-X
      DELEL  Delete to end of line -  Ctrl-K
 
      UPPER  Upper case the line   -  Ctrl-^
@@ -43,12 +45,23 @@ the '.lynxrc' file.
 
      LKCMD  Invoke cmd prompt     -  Ctrl-V (in form text fields, only) [2]
 
+<A NAME="TASpecial">Special commands for use only in textarea fields</A>[3]:
+
+          Textarea external edit  - Ctrl-X e
+          Insert file in textarea - Ctrl-X i
+          Grow textarea           - Ctrl-X g
+
 [1] "next" means the character "under" a box or underline style cursor; it
      means "to the immediate right of" an I-beam (between characters) type
      cursor.
 
-[2]  Follow Ctrl-V with the key "e" bound to the EDIT function,
-     to edit the form's textarea field using an external editor.
+[2]  Follow Ctrl-V with any recognized key command, to "escape" from a text
+     input field.
+
+[3]  For other key combinations using Ctrl-X as a prefix key, see the
+     Help page for the <a rel="Sibling" title="Bash-Like Binding"
+                        href="bashlike_edit_help.html"
+                      >Bash-Like</a> Binding.
 </pre>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /* Message catalogs for internationalization.
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* Because on some systems (e.g., Solaris) we sometimes have to include
+/* Because on some systems (e.g. Solaris) we sometimes have to include
    the systems libintl.h as well as this file we have more complex
    include protection above.  But the systems header might perhaps also
    define _LIBINTL_H and therefore we have to protect the definition here.  */
 
-#if !defined (_LIBINTL_H) || !defined (_LIBGETTEXT_H)
-#if !defined (_LIBINTL_H)
+#if !defined _LIBINTL_H || !defined _LIBGETTEXT_H
+#ifndef _LIBINTL_H
 # define _LIBINTL_H	1
 #endif
 #define _LIBGETTEXT_H	1
@@ -44,7 +44,7 @@ extern "C" {
 /* @@ end of prolog @@ */
 
 #ifndef PARAMS
-# if __STDC__
+# if __STDC__ || defined __cplusplus
 #  define PARAMS(args) args
 # else
 #  define PARAMS(args) ()
@@ -76,7 +76,7 @@ struct _msg_ent
 };
 
 
-#if HAVE_CATGETS
+#ifdef HAVE_CATGETS
 /* These two variables are defined in the automatically by po-to-tbl.sed
    generated file `cat-id-tbl.c'.  */
 extern const struct _msg_ent _msg_tbl[];
@@ -126,7 +126,7 @@ extern char *bindtextdomain__ PARAMS ((const char *__domainname,
 /* Solaris 2.3 has the gettext function but dcgettext is missing.
    So we omit this optimization for Solaris 2.3.  BTW, Solaris 2.4
    has dcgettext.  */
-# if !HAVE_CATGETS && (!HAVE_GETTEXT || HAVE_DCGETTEXT)
+# if !defined(HAVE_CATGETS) && (!defined(HAVE_GETTEXT) || defined(HAVE_DCGETTEXT))
 
 #  define gettext(Msgid)						      \
      dgettext (NULL, Msgid)
@@ -168,8 +168,8 @@ extern int _nl_msg_cat_cntr;
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+# define textdomain(Domainname) ((char *) Domainname)
+# define bindtextdomain(Domainname, Dirname) ((char *) Dirname)
 
 #endif
 

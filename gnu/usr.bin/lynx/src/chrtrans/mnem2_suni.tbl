@@ -1,6 +1,6 @@
 #The MIME name of this charset.
 # (this file was renamed from mnemonic_suni.tbl)
-M mnemonic
+Mmnemonic
 
 #Name as a Display Charset (used on Options screen)
 O RFC 1345 Mnemonic

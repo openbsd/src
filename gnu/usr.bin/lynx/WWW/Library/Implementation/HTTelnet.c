@@ -36,8 +36,12 @@
 
 PRIVATE void do_system ARGS1(char *, command)
 {
-    CTRACE(tfp, "HTTelnet: Command is: %s\n\n", command);
+    CTRACE((tfp, "HTTelnet: Command is: %s\n\n", command));
+#ifdef UNIX	/* want LYSystem's signal sanitizing - kw */
+    LYSystem(command);
+#else		/* Non-UNIX should use LYSystem too? - left for now - kw */
     system(command);
+#endif
     FREE(command);
 }
 
@@ -65,7 +69,7 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	 *  or tab to prevent security whole
 	 */
 	for(cp = host; *cp != '\0'; cp++) {
-	    if(!isalnum(*cp) && *cp != '_' && *cp != '-' &&
+	    if(!isalnum(UCH(*cp)) && *cp != '_' && *cp != '-' &&
 				*cp != ':' && *cp != '.' && *cp != '@') {
 		*cp = '\0';
 		break;
@@ -86,12 +90,12 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    *port++ = '\0';	/* Split */
 
 	if (!hostname || *hostname == '\0') {
-	    CTRACE(tfp, "HTTelnet: No host specified!\n");
+	    CTRACE((tfp, "HTTelnet: No host specified!\n"));
 	    return HT_NO_DATA;
 	} else if (!valid_hostname(hostname)) {
 	    char *prefix = NULL;
 	    char *line = NULL;
-	    CTRACE(tfp, "HTTelnet: Invalid hostname %s!\n", host);
+	    CTRACE((tfp, "HTTelnet: Invalid hostname %s!\n", host));
 	    HTSprintf0(&prefix,
 		       gettext("remote %s session:"), acc_method);
 	    HTSprintf0(&line,
@@ -149,7 +153,7 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
  *	NeXTSTEP is the implied version of the NeXT operating system.
  *		You may need to define this yourself.
  */
-#if	defined(NeXT) && defined(NeXTSTEP) && NeXTSTEP<=20100
+#if	!defined(TELNET_DONE) && (defined(NeXT) && defined(NeXTSTEP) && NeXTSTEP<=20100)
 #define FMT_TELNET "%s%s%s %s %s"
 
 	HTAddParam(&command, FMT_TELNET, 1, TELNET_PATH);
@@ -160,13 +164,11 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	HTEndParam(&command, FMT_TELNET, 5);
 
 	do_system(command);
-	return HT_NO_DATA;		/* Ok - it was done but no data */
 #define TELNET_DONE
 #endif
 
-/* Most unix machines suppport username only with rlogin */
-#if defined(unix) || defined(DOSPATH)
-#ifndef TELNET_DONE
+/* Most unix machines support username only with rlogin */
+#if !defined(TELNET_DONE) && (defined(UNIX) || defined(DOSPATH) || defined(__CYGWIN__))
 
 #define FMT_RLOGIN "%s %s%s%s"
 #define FMT_TN3270 "%s %s %s"
@@ -196,6 +198,9 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	}
 
 #ifdef __DJGPP__
+#ifdef WATT32
+	_eth_release();
+#endif /* WATT32 */
        __djgpp_set_ctrl_c(0);
        _go32_want_ctrl_break(1);
 #endif /* __DJGPP__ */
@@ -203,14 +208,16 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 #ifdef __DJGPP__
        __djgpp_set_ctrl_c(1);
        _go32_want_ctrl_break(0);
+#ifdef WATT32
+       _eth_init();
+#endif /* WATT32 */
 #endif /* __DJGPP__ */
-	return HT_NO_DATA;		/* Ok - it was done but no data */
+
 #define TELNET_DONE
-#endif /* !TELNET_DONE */
 #endif /* unix */
 
 /* VMS varieties */
-#if defined(MULTINET)
+#if !defined(TELNET_DONE) && (defined(MULTINET))
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s%s%s%s %s",  /*lm 930713 */
 		user ? "/USERNAME=\"" : "",
@@ -234,66 +241,60 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	}
 
 	do_system(command);
-	return HT_NO_DATA;		/* Ok - it was done but no data */
 #define TELNET_DONE
 #endif /* MULTINET */
 
-#if defined(WIN_TCP)
-	{
-	    char *cp;
+#if !defined(TELNET_DONE) && defined(WIN_TCP)
+	if ((cp=getenv("WINTCP_COMMAND_STYLE")) != NULL &&
+	    0==strncasecomp(cp, "VMS", 3)) { /* VMS command syntax */
+	    if (login_protocol == rlogin) {
+		HTSprintf0(&command, "RLOGIN%s%s%s%s%s %s",  /*lm 930713 */
+		    user ? "/USERNAME=\"" : "",
+		    user ? user : "",
+		    user ? "\"" : "",
+		    port ? "/PORT=" : "",
+		    port ? port : "",
+		    hostname);
 
-	    if ((cp=getenv("WINTCP_COMMAND_STYLE")) != NULL &&
-		0==strncasecomp(cp, "VMS", 3)) { /* VMS command syntax */
-		if (login_protocol == rlogin) {
-		    HTSprintf0(&command, "RLOGIN%s%s%s%s%s %s",  /*lm 930713 */
-			user ? "/USERNAME=\"" : "",
-			user ? user : "",
-			user ? "\"" : "",
-			port ? "/PORT=" : "",
-			port ? port : "",
-			hostname);
+	    } else if (login_protocol == tn3270) {
+		HTSprintf0(&command, "TELNET/TN3270 %s%s %s",
+		    port ? "/PORT=" : "",
+		    port ? port : "",
+		    hostname);
 
-		} else if (login_protocol == tn3270) {
-		    HTSprintf0(&command, "TELNET/TN3270 %s%s %s",
-			port ? "/PORT=" : "",
-			port ? port : "",
-			hostname);
-
-		} else {  /* TELNET */
-		    HTSprintf0(&command, "TELNET %s%s %s",
-			port ? "/PORT=" : "",
-			port ? port : "",
-			hostname);
-		}
-
-	    } else { /* UNIX command syntax */
-	       if (login_protocol == rlogin) {
-		   HTSprintf0(&command, "RLOGIN %s%s%s%s%s",
-		       hostname,
-		       user ? " -l " : "",
-		       user ? "\"" : "",
-		       user ? user : "",
-		       user ? "\"" : "");
-
-		} else if (login_protocol == tn3270) {
-		    HTSprintf0(&command, "TN3270 %s %s",
-			hostname,
-			port ? port : "");
-
-		} else {  /* TELNET */
-		    HTSprintf0(&command, "TELNET %s %s",
-			hostname,
-			port ? port : "");
-		}
+	    } else {  /* TELNET */
+		HTSprintf0(&command, "TELNET %s%s %s",
+		    port ? "/PORT=" : "",
+		    port ? port : "",
+		    hostname);
 	    }
 
-	    do_system(command);
-	    return HT_NO_DATA;		/* Ok - it was done but no data */
+	} else { /* UNIX command syntax */
+	   if (login_protocol == rlogin) {
+	       HTSprintf0(&command, "RLOGIN %s%s%s%s%s",
+		   hostname,
+		   user ? " -l " : "",
+		   user ? "\"" : "",
+		   user ? user : "",
+		   user ? "\"" : "");
+
+	    } else if (login_protocol == tn3270) {
+		HTSprintf0(&command, "TN3270 %s %s",
+		    hostname,
+		    port ? port : "");
+
+	    } else {  /* TELNET */
+		HTSprintf0(&command, "TELNET %s %s",
+		    hostname,
+		    port ? port : "");
+	    }
 	}
+
+	do_system(command);
 #define TELNET_DONE
 #endif /* WIN_TCP */
 
-#ifdef UCX
+#if !defined(TELNET_DONE) && defined(UCX)
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s%s %s %s",
 		user ? "/USERNAME=\"" : "",
@@ -314,11 +315,10 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	}
 
 	do_system(command);
-	return HT_NO_DATA;		/* Ok - it was done but no data */
 #define TELNET_DONE
 #endif /* UCX */
 
-#ifdef CMU_TCP
+#if !defined(TELNET_DONE) && defined(CMU_TCP)
 	if (login_protocol == telnet) {
 	    HTSprintf0(&command, "TELNET %s%s %s",
 		port ? "/PORT=" : "",
@@ -336,14 +336,10 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    LYgetch();
 	    HadVMSInterrupt = FALSE;
 	}
-	return HT_NO_DATA;		/* Ok - it was done but no data */
 #define TELNET_DONE
 #endif /* CMU_TCP */
 
-#ifdef SOCKETSHR_TCP
-  {
-    char *cp;
-
+#if !defined(TELNET_DONE) && defined(SOCKETSHR_TCP)
     if (getenv("MULTINET_SOCKET_LIBRARY") != NULL) {
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "MULTINET RLOGIN%s%s%s%s %s",  /*lm 930713 */
@@ -409,7 +405,8 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	do_system(command);
 	return HT_NO_DATA;		/* Ok - it was done but no data */
     }
-    else if (getenv("UCX$DEVICE") != NULL) {
+    else if (getenv("UCX$DEVICE") != NULL
+          || getenv("TCPIP$DEVICE") != NULL) {
 	if (login_protocol == rlogin) {
 	    HTSprintf0(&command, "RLOGIN%s%s %s %s",
 		user ? "/USERNAME=" : "",
@@ -449,7 +446,6 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    LYgetch();
 	    HadVMSInterrupt = FALSE;
 	}
-	return HT_NO_DATA;		/* Ok - it was done but no data */
     }
     else {
 	if (login_protocol == telnet) {
@@ -469,22 +465,18 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    LYgetch();
 	    HadVMSInterrupt = FALSE;
 	}
-	return HT_NO_DATA;		/* Ok - it was done but no data */
     }
-  }
 #define TELNET_DONE
 #endif /* SOCKETSHR_TCP */
 
-#ifdef VM
-#define SIMPLE_TELNET
-#endif
-#ifdef SIMPLE_TELNET
+#if !defined(TELNET_DONE) && (defined(SIMPLE_TELNET) || defined(VM))
 	if (login_protocol == telnet) {			/* telnet only */
 	    HTSprintf0(&command, "TELNET  %s",	/* @@ Bug: port ignored */
 		hostname);
 	    do_system(command);
 	    return HT_NO_DATA;		/* Ok - it was done but no data */
 	}
+#define TELNET_DONE
 #endif
 
 #ifndef TELNET_DONE
@@ -509,8 +501,8 @@ PRIVATE int remote_session ARGS2(char *, acc_method, char *, host)
 	    }
 #endif /* VMS */
 	}
-	return HT_NO_DATA;
 #endif /* !TELNET_DONE */
+	return HT_NO_DATA;
 }
 
 /*	"Load a document" -- establishes a session
@@ -541,7 +533,7 @@ ARGS4
     int status;
 
     if (sink) {
-	CTRACE(tfp, "HTTelnet: Can't output a live session -- must be interactive!\n");
+	CTRACE((tfp, "HTTelnet: Can't output a live session -- must be interactive!\n"));
 	return HT_NO_DATA;
     }
     acc_method =  HTParse(addr, "file:", PARSE_ACCESS);
@@ -549,7 +541,7 @@ ARGS4
     host = HTParse(addr, "", PARSE_HOST);
     if (!host || *host == '\0') {
 	status = HT_NO_DATA;
-	CTRACE(tfp, "HTTelnet: No host specified!\n");
+	CTRACE((tfp, "HTTelnet: No host specified!\n"));
     } else {
 	status = remote_session(acc_method, host);
     }

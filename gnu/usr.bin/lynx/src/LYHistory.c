@@ -14,7 +14,10 @@
 #include <LYShowInfo.h>
 #include <LYStrings.h>
 #include <LYCharUtils.h>
-#include <LYGetFile.h>
+#include <LYCharSets.h>
+#ifdef DISP_PARTIAL
+#include <LYMainLoop.h>
+#endif
 
 #ifdef DIRED_SUPPORT
 #include <LYUpload.h>
@@ -23,8 +26,19 @@
 
 #include <LYexit.h>
 #include <LYLeaks.h>
+#include <HTCJK.h>
 
 PUBLIC HTList * Visited_Links = NULL;	/* List of safe popped docs. */
+PUBLIC int Visited_Links_As = VISITED_LINKS_AS_LATEST | VISITED_LINKS_REVERSE;
+PRIVATE VisitedLink *PrevVisitedLink = NULL;	    /* NULL on auxillary */
+PRIVATE VisitedLink *PrevActiveVisitedLink = NULL;  /* Last non-auxillary */
+PRIVATE VisitedLink Latest_first;
+PRIVATE VisitedLink Latest_last;
+PRIVATE VisitedLink *Latest_tree;
+PRIVATE VisitedLink *First_tree;
+PRIVATE VisitedLink *Last_by_first;
+
+int nhist_extra;
 
 #ifdef LY_FIND_LEAKS
 /*
@@ -35,6 +49,8 @@ PRIVATE void Visited_Links_free NOARGS
     VisitedLink *vl;
     HTList *cur = Visited_Links;
 
+    PrevVisitedLink = NULL;
+    PrevActiveVisitedLink = NULL;
     if (!cur)
 	return;
 
@@ -45,9 +61,26 @@ PRIVATE void Visited_Links_free NOARGS
     }
     HTList_delete(Visited_Links);
     Visited_Links = NULL;
+    Latest_last.prev_latest = &Latest_first;
+    Latest_first.next_latest = &Latest_last;
+    Last_by_first = Latest_tree = First_tree = 0;
     return;
 }
 #endif /* LY_FIND_LEAKS */
+
+#ifdef DEBUG
+PRIVATE void trace_history ARGS1(
+	CONST char *,	tag)
+{
+    if (TRACE) {
+	CTRACE((tfp, "HISTORY %s %d/%d (%d extra)\n",
+		     tag, nhist, MAXHIST, nhist_extra));
+	CTRACE_FLUSH(tfp);
+    }
+}
+#else
+#define trace_history(tag) /* nothing */
+#endif /* DEBUG */
 
 /*
  *  Utility for listing visited links, making any repeated
@@ -57,11 +90,13 @@ PUBLIC void LYAddVisitedLink ARGS1(
 	document *,	doc)
 {
     VisitedLink *new;
-    VisitedLink *old;
     HTList *cur;
+    char *title = (doc->title ? doc->title : NO_TITLE);
 
-    if (!(doc->address && *doc->address))
+    if (!(doc->address && *doc->address)) {
+	PrevVisitedLink = NULL;
 	return;
+    }
 
     /*
      *	Exclude POST or HEAD replies, and bookmark, menu
@@ -70,88 +105,208 @@ PUBLIC void LYAddVisitedLink ARGS1(
     if (doc->post_data || doc->isHEAD || doc->bookmark ||
 	(/* special url or a temp file */
 	 (!strncmp(doc->address, "LYNX", 4) ||
-	  !strncmp(doc->address, "file://localhost/", 17))
-	 && (
-	!strcmp((doc->title ? doc->title : ""), HISTORY_PAGE_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), PRINT_OPTIONS_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), DOWNLOAD_OPTIONS_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), OPTIONS_TITLE) ||
-#ifdef DIRED_SUPPORT
-	!strcmp((doc->title ? doc->title : ""), DIRED_MENU_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), UPLOAD_OPTIONS_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), PERMIT_OPTIONS_TITLE) ||
-#endif /* DIRED_SUPPORT */
-	!strcmp((doc->title ? doc->title : ""), CURRENT_KEYMAP_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), LIST_PAGE_TITLE) ||
-#ifdef EXP_ADDRLIST_PAGE
-	!strcmp((doc->title ? doc->title : ""), ADDRLIST_PAGE_TITLE) ||
-#endif
-	!strcmp((doc->title ? doc->title : ""), SHOWINFO_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), STATUSLINES_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), CONFIG_DEF_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), LYNXCFG_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), COOKIE_JAR_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), VISITED_LINKS_TITLE) ||
-	!strcmp((doc->title ? doc->title : ""), LYNX_TRACELOG_TITLE)))) {
-	return;
-    }
+	  !strncmp(doc->address, "file://localhost/", 17)))) {
+	int related = 1;	/* First approximation only */
 
-    if ((new = (VisitedLink *)calloc(1, sizeof(*new))) == NULL)
-	outofmem(__FILE__, "LYAddVisitedLink");
-    StrAllocCopy(new->address, doc->address);
-    StrAllocCopy(new->title, (doc->title ? doc->title : NO_TITLE));
+	if (	LYIsUIPage(doc->address, UIP_HISTORY) ||
+		LYIsUIPage(doc->address, UIP_VLINKS) ||
+		LYIsUIPage(doc->address, UIP_SHOWINFO) ||
+		!strncmp(doc->address, "LYNXMESSAGES:", 13) ||
+			(related = 0)	||
+#ifdef DIRED_SUPPORT
+		LYIsUIPage(doc->address, UIP_DIRED_MENU) ||
+		LYIsUIPage(doc->address, UIP_UPLOAD_OPTIONS) ||
+		LYIsUIPage(doc->address, UIP_PERMIT_OPTIONS) ||
+#endif /* DIRED_SUPPORT */
+		LYIsUIPage(doc->address, UIP_PRINT_OPTIONS) ||
+		LYIsUIPage(doc->address, UIP_DOWNLOAD_OPTIONS) ||
+		LYIsUIPage(doc->address, UIP_OPTIONS_MENU) ||
+		!strncmp(doc->address, "LYNXKEYMAP:", 11) ||
+		LYIsUIPage(doc->address, UIP_LIST_PAGE) ||
+#ifdef EXP_ADDRLIST_PAGE
+		LYIsUIPage(doc->address, UIP_ADDRLIST_PAGE) ||
+#endif
+		LYIsUIPage(doc->address, UIP_CONFIG_DEF) ||
+		LYIsUIPage(doc->address, UIP_LYNXCFG) ||
+		!strncmp(doc->address, "LYNXCOOKIE:", 11) ||
+		LYIsUIPage(doc->address, UIP_TRACELOG)	) {
+	    if (!related)
+		PrevVisitedLink = NULL;
+	    return;
+	}
+    }
 
     if (!Visited_Links) {
 	Visited_Links = HTList_new();
 #ifdef LY_FIND_LEAKS
 	atexit(Visited_Links_free);
 #endif
-	HTList_addObject(Visited_Links, new);
-	return;
+	Latest_last.prev_latest = &Latest_first;
+	Latest_first.next_latest = &Latest_last;
+	Latest_last.next_latest = NULL;		/* Find bugs quick! */
+	Latest_first.prev_latest = NULL;
+	Last_by_first = Latest_tree = First_tree = NULL;
     }
 
     cur = Visited_Links;
-    while (NULL != (old = (VisitedLink *)HTList_nextObject(cur))) {
-	if (!strcmp((old->address ? old->address : ""),
-		    (new->address ? new->address : "")) &&
-	    !strcmp((old->title ? new->title : ""),
-		    (new->title ? new->title : ""))) {
-	    FREE(old->address);
-	    FREE(old->title);
-	    HTList_removeObject(Visited_Links, old);
-	    FREE(old);
-	    break;
+    while (NULL != (new = (VisitedLink *)HTList_nextObject(cur))) {
+	if (!strcmp((new->address ? new->address : ""),
+		    (doc->address ? doc->address : ""))) {
+	    PrevVisitedLink = PrevActiveVisitedLink = new;
+	    /* Already visited.  Update the last-visited info. */
+	    if (new->next_latest == &Latest_last)	/* optimization */
+		return;
+
+	    /* Remove from "latest" chain */
+	    new->prev_latest->next_latest = new->next_latest;
+	    new->next_latest->prev_latest = new->prev_latest;
+
+	    /* Insert at the end of the "latest" chain */
+	    Latest_last.prev_latest->next_latest = new;
+	    new->prev_latest = Latest_last.prev_latest;
+	    new->next_latest = &Latest_last;
+	    Latest_last.prev_latest = new;
+	    return;
 	}
     }
-    HTList_addObject(Visited_Links, new);
+
+    if ((new = typecalloc(VisitedLink)) == NULL)
+	outofmem(__FILE__, "LYAddVisitedLink");
+    StrAllocCopy(new->address, doc->address);
+    LYformTitle(&(new->title), title);
+
+    /* First-visited chain */
+    HTList_appendObject(Visited_Links, new);	/* At end */
+    new->prev_first = Last_by_first;
+    Last_by_first = new;
+
+    /* Tree structure */
+    if (PrevVisitedLink) {
+	VisitedLink *a = PrevVisitedLink;
+	VisitedLink *b = a->next_tree;
+	int l = PrevVisitedLink->level;
+
+	/* Find last on the deeper levels */
+	while (b && b->level > l)
+	    a = b, b = b->next_tree;
+
+	if (!b)			/* a == Latest_tree */
+	    Latest_tree = new;
+	new->next_tree = a->next_tree;
+	a->next_tree = new;
+
+	new->level = PrevVisitedLink->level + 1;
+    } else {
+	if (Latest_tree)
+	    Latest_tree->next_tree = new;
+	new->level = 0;
+	new->next_tree = NULL;
+	Latest_tree = new;
+    }
+    PrevVisitedLink = PrevActiveVisitedLink = new;
+    if (!First_tree)
+	First_tree = new;
+
+    /* "latest" chain */
+    Latest_last.prev_latest->next_latest = new;
+    new->prev_latest = Latest_last.prev_latest;
+    new->next_latest = &Latest_last;
+    Latest_last.prev_latest = new;
 
     return;
 }
 
 /*
  *  Returns true if this is a page that we would push onto the stack if not
- *  forced.
+ *  forced.  If docurl is NULL, only the title is considered; otherwise
+ *  also check the URL whether it is (likely to be) a generated special
+ *  page.
  */
-PUBLIC BOOLEAN LYwouldPush ARGS1(
-	char *,	title)
+PUBLIC BOOLEAN LYwouldPush ARGS2(
+	CONST char *,	title,
+	CONST char *,	docurl)
 {
-    return (!strcmp(title, HISTORY_PAGE_TITLE)
-	 || !strcmp(title, PRINT_OPTIONS_TITLE)
-	 || !strcmp(title, DOWNLOAD_OPTIONS_TITLE)
+    BOOLEAN rc = FALSE;
+
+    /*
+     *  All non-pushable generated pages have URLs that begin with
+     *  "file://localhost/" and end with HTML_SUFFIX. - kw
+     */
+    if (docurl) {
+	size_t ulen;
+	if (strncmp(docurl, "file://localhost/", 17) != 0 ||
+	    (ulen = strlen(docurl)) <= strlen(HTML_SUFFIX) ||
+	    strcmp(docurl + ulen - strlen(HTML_SUFFIX), HTML_SUFFIX) != 0) {
+	    /*
+	     *  If it is not a local HTML file, it may be a Web page that
+	     *  accidentally has the same title.  So return TRUE now. - kw
+	     */
+	    return TRUE;
+	}
+    }
+
+    if (docurl) {
+	rc = (BOOLEAN)
+		! (LYIsUIPage(docurl, UIP_HISTORY)
+		|| LYIsUIPage(docurl, UIP_PRINT_OPTIONS)
+		|| LYIsUIPage(docurl, UIP_DOWNLOAD_OPTIONS)
 #ifdef DIRED_SUPPORT
-	 || !strcmp(title, DIRED_MENU_TITLE)
-	 || !strcmp(title, UPLOAD_OPTIONS_TITLE)
-	 || !strcmp(title, PERMIT_OPTIONS_TITLE)
+		|| LYIsUIPage(docurl, UIP_DIRED_MENU)
+		|| LYIsUIPage(docurl, UIP_UPLOAD_OPTIONS)
+		|| LYIsUIPage(docurl, UIP_PERMIT_OPTIONS)
 #endif /* DIRED_SUPPORT */
-	 )
-	 ? FALSE
-	 : TRUE;
+	    );
+    } else {
+	rc = (BOOLEAN)
+		! (!strcmp(title, HISTORY_PAGE_TITLE)
+		|| !strcmp(title, PRINT_OPTIONS_TITLE)
+		|| !strcmp(title, DOWNLOAD_OPTIONS_TITLE)
+#ifdef DIRED_SUPPORT
+		|| !strcmp(title, DIRED_MENU_TITLE)
+		|| !strcmp(title, UPLOAD_OPTIONS_TITLE)
+		|| !strcmp(title, PERMIT_OPTIONS_TITLE)
+#endif /* DIRED_SUPPORT */
+	    );
+    }
+    return rc;
+}
+
+/*
+ *  Free the information in the last history entry.
+ */
+PRIVATE void clean_extra NOARGS
+{
+    trace_history("clean_extra");
+    nhist += nhist_extra;
+    while (nhist_extra > 0) {
+	nhist--;
+	FREE(history[nhist].title);
+	FREE(history[nhist].address);
+	FREE(history[nhist].post_data);
+	FREE(history[nhist].post_content_type);
+	FREE(history[nhist].bookmark);
+	nhist_extra--;
+    }
+    trace_history("...clean_extra");
+}
+
+/* What is the relationship to are_different() from the mainloop?! */
+PRIVATE int are_identical ARGS2(
+	histstruct *,	doc,
+	document *,	doc1)
+{
+     return (	STREQ(doc1->address, doc->address)
+		&& !strcmp(doc1->post_data ? doc1->post_data : "",
+			   doc->post_data ?  doc->post_data : "")
+		&& !strcmp(doc1->bookmark ? doc1->bookmark : "",
+			   doc->bookmark ?  doc->bookmark : "")
+		&& doc1->isHEAD == doc->isHEAD );
 }
 
 /*
  *  Push the current filename, link and line number onto the history list.
  */
-PUBLIC void LYpush ARGS2(
+PUBLIC int LYpush ARGS2(
 	document *,	doc,
 	BOOLEAN,	force_push)
 {
@@ -159,7 +314,7 @@ PUBLIC void LYpush ARGS2(
      *	Don't push NULL file names.
      */
     if (*doc->address == '\0')
-	return;
+	return 0;
 
     /*
      *	Check whether this is a document we
@@ -169,51 +324,62 @@ PUBLIC void LYpush ARGS2(
 	/*
 	 *  Don't push the history, printer, or download lists.
 	 */
-	if (!LYwouldPush(doc->title)) {
+	if (!LYwouldPush(doc->title, doc->address)) {
 	    if (!LYforce_no_cache)
 		LYoverride_no_cache = TRUE;
-	    return;
+	    return 0;
 	}
     }
 
     /*
      *	If file is identical to one before it, don't push it.
      */
-    if (nhist> 1 &&
-	STREQ(history[nhist-1].address, doc->address) &&
-	!strcmp(history[nhist-1].post_data ?
-		history[nhist-1].post_data : "",
-		doc->post_data ?
-		doc->post_data : "") &&
-	!strcmp(history[nhist-1].bookmark ?
-		history[nhist-1].bookmark : "",
-		doc->bookmark ?
-		doc->bookmark : "") &&
-	history[nhist-1].isHEAD == doc->isHEAD) {
+    if ( nhist > 1 && are_identical(&(history[nhist-1]), doc)) {
 	if (history[nhist-1].internal_link == doc->internal_link) {
 	    /* But it is nice to have the last position remembered!
 	       - kw */
 	    history[nhist-1].link = doc->link;
 	    history[nhist-1].line = doc->line;
-	    return;
+	    return 0;
 	}
     }
+
+    /*
+     *	If file is identical to the current document, just move the pointer.
+     */
+    if ( nhist_extra >= 1 && are_identical(&(history[nhist]), doc)) {
+	history[nhist].link = doc->link;
+	history[nhist].line = doc->line;
+	nhist_extra--;
+	nhist++;
+	trace_history("LYpush: just move the cursor");
+	return 1;
+    }
+
+    clean_extra();
+
     /*
      *	OK, push it if we have stack space.
      */
     if (nhist < MAXHIST)  {
 	history[nhist].link = doc->link;
 	history[nhist].line = doc->line;
+
 	history[nhist].title = NULL;
-	StrAllocCopy(history[nhist].title, doc->title);
+	LYformTitle(&(history[nhist].title), doc->title);
+
 	history[nhist].address = NULL;
 	StrAllocCopy(history[nhist].address, doc->address);
+
 	history[nhist].post_data = NULL;
 	StrAllocCopy(history[nhist].post_data, doc->post_data);
+
 	history[nhist].post_content_type = NULL;
 	StrAllocCopy(history[nhist].post_content_type, doc->post_content_type);
+
 	history[nhist].bookmark = NULL;
 	StrAllocCopy(history[nhist].bookmark, doc->bookmark);
+
 	history[nhist].isHEAD = doc->isHEAD;
 	history[nhist].safe = doc->safe;
 
@@ -293,25 +459,26 @@ PUBLIC void LYpush ARGS2(
 			history[nhist].intern_seq_start =
 			    history[nhist-1].intern_seq_start >= 0 ?
 			    history[nhist-1].intern_seq_start : nhist-1;
-			CTRACE(tfp, "\nLYpush: pushed as internal link, OK\n");
+			CTRACE((tfp, "\nLYpush: pushed as internal link, OK\n"));
 		    }
 		}
 	    }
 	    if (!history[nhist].internal_link) {
-		CTRACE(tfp, "\nLYpush: push as internal link requested, %s\n",
-			    "but didn't check out!");
+		CTRACE((tfp, "\nLYpush: push as internal link requested, %s\n",
+			    "but didn't check out!"));
 	    }
 	}
-	CTRACE(tfp, "\nLYpush[%d]: address:%s\n        title:%s\n",
-		    nhist, doc->address, doc->title);
+	CTRACE((tfp, "\nLYpush[%d]: address:%s\n        title:%s\n",
+		    nhist, doc->address, doc->title));
 	nhist++;
     } else {
 	if (LYCursesON) {
 	    HTAlert(MAXHIST_REACHED);
 	}
-	CTRACE(tfp, "\nLYpush: MAXHIST reached for:\n        address:%s\n        title:%s\n",
-		    doc->address, doc->title);
+	CTRACE((tfp, "\nLYpush: MAXHIST reached for:\n        address:%s\n        title:%s\n",
+		    doc->address, doc->title));
     }
+    return 1;
 }
 
 /*
@@ -321,6 +488,7 @@ PUBLIC void LYpop ARGS1(
 	document *,	doc)
 {
     if (nhist > 0) {
+	clean_extra();
 	nhist--;
 	doc->link = history[nhist].link;
 	doc->line = history[nhist].line;
@@ -339,11 +507,66 @@ PUBLIC void LYpop ARGS1(
 	doc->internal_link = history[nhist].internal_link;
 #ifdef DISP_PARTIAL
 	/* assume we pop the 'doc' to show it soon... */
-	Newline_partial = doc->line;	/* reinitialize */
+	LYSetNewline(doc->line);	/* reinitialize */
 #endif /* DISP_PARTIAL */
-	CTRACE(tfp, "LYpop[%d]: address:%s\n     title:%s\n",
-		    nhist, doc->address, doc->title);
+	CTRACE((tfp, "LYpop[%d]: address:%s\n     title:%s\n",
+		    nhist, doc->address, doc->title));
     }
+}
+
+/*
+ *  Move to the previous filename, link and line number from the history list.
+ */
+PUBLIC void LYhist_prev ARGS1(
+	document *,	doc)
+{
+    trace_history("LYhist_prev");
+    if (nhist > 0 && (nhist_extra || nhist < MAXHIST)) {
+	nhist--;
+	nhist_extra++;
+	LYpop_num(nhist, doc);
+	trace_history("...LYhist_prev");
+    }
+}
+
+/*
+ *  Called before calling LYhist_prev().
+ */
+PUBLIC void LYhist_prev_register ARGS1(
+	document *,	doc)
+{
+    trace_history("LYhist_prev_register");
+    if (nhist > 1) {
+	if (nhist_extra) {	/* Make something to return back */
+	    /* Store the new position */
+	    history[nhist].link = doc->link;
+	    history[nhist].line = doc->line;
+	} else if (nhist < MAXHIST) { /* push will fail */
+	    if (LYpush(doc, 0)) {
+		nhist--;
+		nhist_extra++;
+	    }
+	}
+	trace_history("...LYhist_prev_register");
+    }
+}
+
+/*
+ *  Move to the next filename, link and line number from the history list.
+ */
+PUBLIC int LYhist_next ARGS2(
+	document *,	doc,
+	document *,	newdoc)
+{
+    if (nhist_extra <= 1)	/* == 1 when we are the last one */
+	return 0;
+    /* Store the new position */
+    history[nhist].link = doc->link;
+    history[nhist].line = doc->line;
+    nhist++;
+    nhist_extra--;
+    LYpop_num(nhist, newdoc);
+    return 1;
 }
 
 /*
@@ -355,7 +578,7 @@ PUBLIC void LYpop_num ARGS2(
 	int,		number,
 	document *,	doc)
 {
-    if (number >= 0 && nhist > number) {
+    if (number >= 0 && nhist + nhist_extra > number) {
 	doc->link = history[number].link;
 	doc->line = history[number].line;
 	StrAllocCopy(doc->title, history[number].title);
@@ -368,7 +591,7 @@ PUBLIC void LYpop_num ARGS2(
 	doc->internal_link = history[number].internal_link; /* ?? */
 #ifdef DISP_PARTIAL
 	/* assume we pop the 'doc' to show it soon... */
-	Newline_partial = doc->line;	/* reinitialize */
+	LYSetNewline(doc->line);	/* reinitialize */
 #endif /* DISP_PARTIAL */
     }
 }
@@ -379,13 +602,18 @@ PUBLIC void LYpop_num ARGS2(
 PUBLIC int showhistory ARGS1(
 	char **,	newfile)
 {
-    static char tempfile[LY_MAXPATH];
+    static char tempfile[LY_MAXPATH] = "\0";
     char *Title = NULL;
     int x = 0;
     FILE *fp0;
 
-    LYRemoveTemp(tempfile);
-    if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
+    if (LYReuseTempfiles) {
+	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, "w");
+    } else {
+	LYRemoveTemp(tempfile);
+	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w");
+    }
+    if (fp0 == NULL) {
 	HTAlert(CANNOT_OPEN_TEMP);
 	return(-1);
     }
@@ -397,13 +625,13 @@ PUBLIC int showhistory ARGS1(
 
     BeginInternalPage(fp0, HISTORY_PAGE_TITLE, HISTORY_PAGE_HELP);
 
-    fprintf(fp0, "<tr align=right> <a href=\"LYNXMESSAGES:\">[%s]</a> </tr>\n",
+    fprintf(fp0, "<p align=right> <a href=\"LYNXMESSAGES:\">[%s]</a>\n",
 		 STATUSLINES_TITLE);
 
     fprintf(fp0, "<pre>\n");
 
     fprintf(fp0, "<em>%s</em>\n", gettext("You selected:"));
-    for (x = nhist-1; x >= 0; x--) {
+    for (x = nhist + nhist_extra - 1; x >= 0; x--) {
 	/*
 	 *  The number of the document in the hist stack,
 	 *  its title in a link, and its address. - FM
@@ -460,17 +688,26 @@ PUBLIC BOOLEAN historytarget ARGS1(
     BOOLEAN treat_as_intern = FALSE;
 
     if ((!newdoc || !newdoc->address) ||
-	strlen(newdoc->address) < 10 || !isdigit(*(newdoc->address+9)))
+	strlen(newdoc->address) < 10 || !isdigit(UCH(*(newdoc->address+9))))
 	return(FALSE);
 
-    if ((number = atoi(newdoc->address+9)) > nhist || number < 0)
+    if ((number = atoi(newdoc->address+9)) > nhist + nhist_extra || number < 0)
 	return(FALSE);
 
     /*
      * Optimization: assume we came from the History Page,
      * so never return back - always a new version next time.
+     * But check first whether HTMainText is really the History
+     * Page document - in some obscure situations this may not be
+     * the case.  If HTMainText seems to be a History Page document,
+     * also check that it really hasn't been pushed. - LP, kw
      */
-    HTuncache_current_document();  /* don't waste the cache */
+    if (HTMainText && nhist > 0 &&
+	!strcmp(HTLoadedDocumentTitle(), HISTORY_PAGE_TITLE) &&
+	LYIsUIPage3(HTLoadedDocumentURL(), UIP_HISTORY, 0) &&
+	strcmp(HTLoadedDocumentURL(), history[nhist-1].address)) {
+	HTuncache_current_document();  /* don't waste the cache */
+    }
 
     LYpop_num(number, newdoc);
     if (((newdoc->internal_link &&
@@ -526,46 +763,117 @@ PUBLIC BOOLEAN historytarget ARGS1(
 }
 
 /*
- *  This procedure outputs the Visited Links
- *  list into a temporary file. - FM
+ *  This procedure outputs the Visited Links list into a temporary file. - FM
+ *  Returns links's number to make active (1-based), or 0 if not required.
  */
 PUBLIC int LYShowVisitedLinks ARGS1(
 	char **,	newfile)
 {
-    static char tempfile[LY_MAXPATH];
+    static char tempfile[LY_MAXPATH] = "\0";
     char *Title = NULL;
     char *Address = NULL;
-    int x;
+    int x, tot;
     FILE *fp0;
     VisitedLink *vl;
     HTList *cur = Visited_Links;
+    int offset;
+    int ret = 0;
+    char *arrow, *post_arrow;
 
     if (!cur)
 	return(-1);
 
-    LYRemoveTemp(tempfile);
-    if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
+    if (LYReuseTempfiles) {
+	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, "w");
+    } else {
+	LYRemoveTemp(tempfile);
+	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w");
+    }
+    if (fp0 == NULL) {
 	HTAlert(CANNOT_OPEN_TEMP);
 	return(-1);
     }
 
     LYLocalFileToURL(newfile, tempfile);
+    LYRegisterUIPage(*newfile, UIP_VLINKS);
 
     LYforce_HTML_mode = TRUE;	/* force this file to be HTML */
     LYforce_no_cache = TRUE;	/* force this file to be new */
 
     BeginInternalPage(fp0, VISITED_LINKS_TITLE, VISITED_LINKS_HELP);
 
+    fprintf(fp0, "<form action=\"LYNXOPTIONS:\" method=\"post\">\n");
+    fprintf(fp0, "<select name=\"visited_pages_type\">\n");
+    fprintf(fp0, " <option value=\"first_visited\" %s>Sort By First Visited\n",
+		 (Visited_Links_As == VISITED_LINKS_AS_FIRST_V ? "selected" : ""));
+    fprintf(fp0, " <option value=\"first_visited_reversed\" %s>Reverse Sort By First Visited\n",
+		 (Visited_Links_As == (VISITED_LINKS_AS_FIRST_V|VISITED_LINKS_REVERSE) ? "selected" : ""));
+    fprintf(fp0, " <option value=\"visit_tree\" %s>View As Visit Tree\n",
+		 (Visited_Links_As == VISITED_LINKS_AS_TREE ? "selected" : ""));
+    fprintf(fp0, " <option value=\"last_visited\" %s>Sort By Last Visited\n",
+		 (Visited_Links_As == VISITED_LINKS_AS_LATEST ? "selected" : ""));
+    fprintf(fp0, " <option value=\"last_visited_reversed\" %s>Reverse Sort By Last Visited\n",
+		 (Visited_Links_As == (VISITED_LINKS_AS_LATEST|VISITED_LINKS_REVERSE)
+		   ? "selected" : ""));
+    fprintf(fp0, "</select>\n");
+    fprintf(fp0, "<input type=\"submit\" value=\"Accept Changes\">\n");
+    fprintf(fp0, "</form>\n");
+    fprintf(fp0, "<P>\n");
+
     fprintf(fp0, "<pre>\n");
     fprintf(fp0, "<em>%s</em>\n",
 	    gettext("You visited (POSTs, bookmark, menu and list files excluded):"));
-    x = HTList_count(Visited_Links);
-    while (NULL != (vl = (VisitedLink *)HTList_nextObject(cur))) {
+    if (Visited_Links_As & VISITED_LINKS_REVERSE)
+	tot = x = HTList_count(Visited_Links);
+    else
+	tot = x = -1;
+
+    if (Visited_Links_As & VISITED_LINKS_AS_TREE) {
+	vl = First_tree;
+    } else if (Visited_Links_As & VISITED_LINKS_AS_LATEST) {
+	if (Visited_Links_As & VISITED_LINKS_REVERSE)
+	    vl = Latest_last.prev_latest;
+	else
+	    vl = Latest_first.next_latest;
+	if (vl == &Latest_last || vl == &Latest_first)
+	    vl = NULL;
+    } else {
+	if (Visited_Links_As & VISITED_LINKS_REVERSE)
+	    vl = Last_by_first;
+	else
+	    vl = (VisitedLink *)HTList_nextObject(cur);
+    }
+    while (NULL != vl) {
 	/*
 	 *  The number of the document (most recent highest),
 	 *  its title in a link, and its address. - FM
 	 */
-	x--;
+	post_arrow = arrow = "";
+	if (Visited_Links_As & VISITED_LINKS_REVERSE)
+	    x--;
+	else
+	    x++;
+	if (vl == PrevActiveVisitedLink) {
+	    if (Visited_Links_As & VISITED_LINKS_REVERSE)
+		ret = tot - x + 2;
+	    else
+		ret = x + 3;
+	}
+	if (vl == PrevActiveVisitedLink) {
+	    post_arrow = "<A NAME=current></A>";
+	    /* Otherwise levels 0 and 1 look the same when with arrow: */
+	    arrow = (vl->level && (Visited_Links_As & VISITED_LINKS_AS_TREE))
+			 ? "==>" : "=>";
+	    StrAllocCat(*newfile, "#current");
+	}
+	if (Visited_Links_As & VISITED_LINKS_AS_TREE) {
+	    offset = 2 * vl->level;
+	    if (offset > 24)
+		offset = (offset + 24)/2;
+	    if (offset > LYcols * 3/4)
+		offset = LYcols * 3/4;
+	} else
+	    offset = (x > 99 ? 0 : x < 10 ? 2 : 1);
 	if (vl->title != NULL && *vl->title != '\0') {
 	    StrAllocCopy(Title, vl->title);
 	    LYEntify(&Title, TRUE);
@@ -580,13 +888,13 @@ PUBLIC int LYShowVisitedLinks ARGS1(
 	    StrAllocCopy(Address, vl->address);
 	    LYEntify(&Address, FALSE);
 	    fprintf(fp0,
-		    "%s<em>%d</em>. <tab id=t%d><a href=\"%s\">%s</a>\n",
-		    (x > 99 ? "" : x < 10 ? "  " : " "),
+		    "%-*s%s<em>%d</em>. <tab id=t%d><a href=\"%s\">%s</a>\n",
+		    offset, arrow, post_arrow,
 		    x, x, Address, Title);
 	} else {
 	    fprintf(fp0,
-		    "%s<em>%d</em>. <tab id=t%d><em>%s</em>\n",
-		    (x > 99 ? "" : x < 10 ? "  " : " "),
+		    "%-*s%s<em>%d</em>. <tab id=t%d><em>%s</em>\n",
+		    offset, arrow, post_arrow,
 		    x, x, Title);
 	}
 	if (Address != NULL) {
@@ -595,6 +903,21 @@ PUBLIC int LYShowVisitedLinks ARGS1(
 	}
 	fprintf(fp0, "<tab to=t%d>%s\n", x,
 		     ((Address != NULL) ? Address : gettext("(no address)")));
+	if (Visited_Links_As & VISITED_LINKS_AS_TREE)
+	    vl = vl->next_tree;
+	else if (Visited_Links_As & VISITED_LINKS_AS_LATEST) {
+	    if (Visited_Links_As & VISITED_LINKS_REVERSE)
+		vl = vl->prev_latest;
+	    else
+		vl = vl->next_latest;
+	    if (vl == &Latest_last || vl == &Latest_first)
+		vl = NULL;
+	} else {
+	    if (Visited_Links_As & VISITED_LINKS_REVERSE)
+		vl = vl->prev_first;
+	    else
+		vl = (VisitedLink *)HTList_nextObject(cur);
+	}
     }
     fprintf(fp0,"</pre>\n");
     EndInternalPage(fp0);
@@ -602,7 +925,7 @@ PUBLIC int LYShowVisitedLinks ARGS1(
     LYCloseTempFP(fp0);
     FREE(Title);
     FREE(Address);
-    return(0);
+    return(ret);
 }
 
 
@@ -632,7 +955,7 @@ PRIVATE void to_stack ARGS1(char *, str)
     /*
      *  Cycle buffer:
      */
-    if (topOfStack == STATUSBUFSIZE) {
+    if (topOfStack >= STATUSBUFSIZE) {
 	topOfStack = 0;
     }
 
@@ -648,66 +971,11 @@ PRIVATE void to_stack ARGS1(char *, str)
 	atexit(free_messages_stack);
     }
 #endif
+    if (topOfStack >= STATUSBUFSIZE) {
+	topOfStack = 0;
+    }
 }
 
-
-/*
- *  Status line messages list, LYNXMESSAGES:/ internal page,
- *  called from getfile() cyrcle.
- */
-PUBLIC int LYshow_statusline_messages ARGS1(
-    document *,			      newdoc)
-{
-    static char tempfile[LY_MAXPATH];
-    static char *info_url;
-    DocAddress WWWDoc;  /* need on exit */
-    FILE *fp0;
-    int i;
-
-    LYRemoveTemp(tempfile);
-    if ((fp0 = LYOpenTemp (tempfile, HTML_SUFFIX, "w")) == 0) {
-	HTAlert(CANNOT_OPEN_TEMP);
-	return(NOT_FOUND);
-    }
-    LYLocalFileToURL(&info_url, tempfile);
-
-    LYforce_no_cache = TRUE;  /* don't cache this doc */
-
-    BeginInternalPage (fp0, STATUSLINES_TITLE, NULL);
-    fprintf(fp0, "<pre>\n");
-    fprintf(fp0, "<ol>\n");
-
-    /* print messages in reverse order: */
-    i = topOfStack;
-    while (--i >= 0) {
-	if (buffstack[i] != NULL)
-	    fprintf(fp0,  "<li> <em>%s</em>\n",  buffstack[i]);
-    }
-    i = STATUSBUFSIZE;
-    while (--i >= topOfStack) {
-	if (buffstack[i] != NULL)
-	fprintf(fp0,  "<li> <em>%s</em>\n",  buffstack[i]);
-    }
-
-    fprintf(fp0, "</ol>\n");
-    fprintf(fp0, "</pre>\n");
-    EndInternalPage(fp0);
-    LYCloseTempFP(fp0);
-
-
-    /* exit to getfile() cyrcle */
-    StrAllocCopy(newdoc->address, info_url);
-    WWWDoc.address = newdoc->address;
-    WWWDoc.post_data = newdoc->post_data;
-    WWWDoc.post_content_type = newdoc->post_content_type;
-    WWWDoc.bookmark = newdoc->bookmark;
-    WWWDoc.isHEAD = newdoc->isHEAD;
-    WWWDoc.safe = newdoc->safe;
-
-    if (!HTLoadAbsolute(&WWWDoc))
-	return(NOT_FOUND);
-    return(NORMAL);
-}
 
 /*
  * Dump statusline messages into the buffer.
@@ -726,7 +994,7 @@ PUBLIC void LYstatusline_messages_on_exit ARGS1(
      * probably a single message but let's do it.
      */
     i = topOfStack - 1;
-    while (++i <= STATUSBUFSIZE) {
+    while (++i < STATUSBUFSIZE) {
 	if (buffstack[i] != NULL) {
 	    StrAllocCat(*buf, buffstack[i]);
 	    StrAllocCat(*buf, "\n");
@@ -749,7 +1017,7 @@ PUBLIC void LYstore_message2 ARGS2(
 
     if (message != NULL) {
 	char *temp = NULL;
-	HTSprintf(&temp, message, (argument == 0) ? "" : argument);
+	HTSprintf0(&temp, message, (argument == 0) ? "" : argument);
 	to_stack(temp);
     }
 }
@@ -763,3 +1031,108 @@ PUBLIC void LYstore_message ARGS1(
 	to_stack(temp);
     }
 }
+
+/*     LYLoadMESSAGES
+**     --------------
+**     Create a text/html stream with a list of recent statusline messages.
+**     LYNXMESSAGES:/ internal page.
+**     [implementation based on LYLoadKeymap()].
+*/
+
+struct _HTStream
+{
+    HTStreamClass * isa;
+};
+
+PRIVATE int LYLoadMESSAGES ARGS4 (
+	CONST char *,		arg GCC_UNUSED,
+	HTParentAnchor *,	anAnchor,
+	HTFormat,		format_out,
+	HTStream*,		sink)
+{
+    HTFormat format_in = WWW_HTML;
+    HTStream *target = NULL;
+    char *buf = NULL;
+    int nummsg = 0;
+
+    int i;
+    char *temp = NULL;
+
+    i = STATUSBUFSIZE;
+    while (--i >= 0) {
+	if (buffstack[i] != NULL)
+	    nummsg++;
+    }
+
+    /*
+     *  Set up the stream. - FM
+     */
+    target = HTStreamStack(format_in, format_out, sink, anAnchor);
+
+    if (!target || target == NULL) {
+	HTSprintf0(&buf, CANNOT_CONVERT_I_TO_O,
+			 HTAtom_name(format_in), HTAtom_name(format_out));
+	HTAlert(buf);
+	FREE(buf);
+	return(HT_NOT_LOADED);
+    }
+    anAnchor->no_cache = TRUE;
+
+#define PUTS(buf)    (*target->isa->put_block)(target, buf, strlen(buf))
+
+    HTSprintf0(&buf, "<html>\n<head>\n");
+    PUTS(buf);
+	/*
+	 *  This page is a list of messages in display character set.
+	 */
+    HTSprintf0(&buf, "<META %s content=\"text/html;charset=%s\">\n",
+	       "http-equiv=\"content-type\"",
+	       LYCharSet_UC[current_char_set].MIMEname);
+    PUTS(buf);
+    HTSprintf0(&buf, "<title>%s</title>\n</head>\n<body>\n",
+	       STATUSLINES_TITLE);
+    PUTS(buf);
+
+    if (nummsg != 0) {
+	HTSprintf0(&buf, "<ol>\n");
+	PUTS(buf);
+	/* print messages in reverse order: */
+	i = topOfStack;
+	while (--i >= 0) {
+	    if (buffstack[i] != NULL) {
+		StrAllocCopy(temp, buffstack[i]);
+		LYEntify(&temp, TRUE);
+		HTSprintf0(&buf, "<li value=%d> <em>%s</em>\n", nummsg, temp);
+		nummsg--;
+		PUTS(buf);
+	    }
+	}
+	i = STATUSBUFSIZE;
+	while (--i >= topOfStack) {
+	    if (buffstack[i] != NULL) {
+		StrAllocCopy(temp, buffstack[i]);
+		LYEntify(&temp, TRUE);
+		HTSprintf0(&buf, "<li value=%d> <em>%s</em>\n", nummsg, temp);
+		nummsg--;
+		PUTS(buf);
+	    }
+	}
+	FREE(temp);
+	HTSprintf0(&buf, "</ol>\n</body>\n</html>\n");
+    } else {
+	HTSprintf0(&buf, "<p>%s\n</body>\n</html>\n",
+		   gettext("(No messages yet)"));
+    }
+    PUTS(buf);
+
+    (*target->isa->_free)(target);
+    FREE(buf);
+    return(HT_LOADED);
+}
+
+#ifdef GLOBALDEF_IS_MACRO
+#define _LYMESSAGES_C_GLOBALDEF_1_INIT { "LYNXMESSAGES", LYLoadMESSAGES, 0}
+GLOBALDEF (HTProtocol,LYLynxStatusMessages,_LYMESSAGES_C_GLOBALDEF_1_INIT);
+#else
+GLOBALDEF PUBLIC HTProtocol LYLynxStatusMessages = {"LYNXMESSAGES", LYLoadMESSAGES, 0};
+#endif /* GLOBALDEF_IS_MACRO */

@@ -7,13 +7,13 @@ LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
 HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
 LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o LYPrettySrc.o
+LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
 
-CFLAGS= $(MCFLAGS) -I. -I.. $(SLANGINC)
+CFLAGS= -O1 $(MCFLAGS) -I. -I.. $(SLANGINC)
 
 CC = gcc
-MCFLAGS = -O2 -DDISP_PARTIAL -DUSE_ZLIB -DUSE_EXTERNALS \
--DSOURCE_CACHE -DUSE_PSRC \
+MCFLAGS = -DDISP_PARTIAL -DUSE_ZLIB -DUSE_EXTERNALS \
+-DSOURCE_CACHE -DUSE_PRETTYSRC \
 -DUSE_SLANG -DACCESS_AUTH -DNO_CUSERID \
 -DNOUSERS -DDOSPATH -DNO_TTYTYPE -DNO_UTMP -I../WWW/library/implement -I../djgpp/tcplib/include \
 -I./chrtrans -I../djgpp/tcplib/include/tcp

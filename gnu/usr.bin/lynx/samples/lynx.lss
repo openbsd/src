@@ -51,6 +51,7 @@ whereis:reverse+underline:magenta:cyan
 # currently not used
 #value:normal:green
 #high:bold:brightmagenta
+forwbackw.arrow:reverse
 
 # Styles with classes - <ul class=red> etc.
 ul.red:underline:brightred

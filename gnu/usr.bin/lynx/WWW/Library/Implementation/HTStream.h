@@ -54,6 +54,17 @@ typedef struct _HTStreamClass {
 
 }HTStreamClass;
 
+/*
+
+  Generic Error Stream
+
+   The Error stream simply signals an error on all output methods.
+   This can be used to stop a stream as soon as data arrives, for
+   example from the network.
+
+ */
+extern HTStream * HTErrorStream NOPARAMS;
+
 #endif /* HTSTREAM_H */
 
 /*

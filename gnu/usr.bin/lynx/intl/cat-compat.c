@@ -16,7 +16,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #include <stdio.h>
@@ -35,7 +35,7 @@ char *getenv ();
 # include <nl_types.h>
 #endif
 
-#include <libgettext.h>
+#include "libgettext.h"
 
 /* @@ end of prolog @@ */
 
@@ -44,7 +44,7 @@ char *getenv ();
      setting of `local'.''
    However it does not specify the exact format.  And even worse: POSIX
    defines this not at all.  So we can use this feature only on selected
-   system (e.g., those using GNU C Library).  */
+   system (e.g. those using GNU C Library).  */
 #ifdef _LIBC
 # define HAVE_LOCALE_NULL
 #endif

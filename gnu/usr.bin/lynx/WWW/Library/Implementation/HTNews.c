@@ -16,11 +16,10 @@
 
 #include <HTCJK.h>
 #include <HTMIME.h>
+#include <HTFont.h>
 #include <HTTCP.h>
 #include <LYUtils.h>
-
-/* this define should be in HTFont.h :( */
-#define HT_NON_BREAK_SPACE ((char)1)   /* For now */
+#include <LYStrings.h>
 
 #define NEWS_PORT 119		/* See rfc977 */
 #define SNEWS_PORT 563		/* See Lou Montulli */
@@ -36,18 +35,13 @@ PUBLIC int HTNewsMaxChunk = 40; /* Largest number of articles in one window */
 #endif /* SERVER_FILE */
 
 #ifdef USE_SSL
-#define free_func free__func
-#include <openssl/ssl.h>
-#undef free_func
 extern SSL_CTX * ssl_ctx;
-extern SSL * HTGetSSLHandle NOPARAMS;
 PRIVATE SSL * Handle = NULL;
 PRIVATE int channel_s = 1;
 #define NEWS_NETWRITE(sock, buff, size) \
 	(Handle ? SSL_write(Handle, buff, size) : NETWRITE(sock, buff, size))
 #define NEWS_NETCLOSE(sock) \
 	{ (void)NETCLOSE(sock); if (Handle) SSL_free(Handle); Handle = NULL; }
-extern char HTGetSSLCharacter PARAMS((void *handle));
 PRIVATE char HTNewsGetCharacter NOPARAMS;
 #define NEXT_CHAR HTNewsGetCharacter()
 #else
@@ -65,6 +59,7 @@ PRIVATE char HTNewsGetCharacter NOPARAMS;
 #include <LYGlobalDefs.h>
 #include <LYLeaks.h>
 
+#define SnipIn(d,fmt,len,s) sprintf(d, fmt, (int)sizeof(d)-len, s)
 
 struct _HTStructured {
 	CONST HTStructuredClass *	isa;
@@ -75,12 +70,11 @@ struct _HTStream
   HTStreamClass * isa;
 };
 
-#define LINE_LENGTH 512 		/* Maximum length of line of ARTICLE etc */
+#define LINE_LENGTH 512			/* Maximum length of line of ARTICLE etc */
 #define GROUP_NAME_LENGTH	256	/* Maximum length of group name */
 extern BOOLEAN scan_for_buried_news_references;
 extern BOOLEAN LYListNewsNumbers;
 extern BOOLEAN LYListNewsDates;
-extern HTCJKlang HTCJK;
 extern int interrupted_in_htgetcharacter;
 extern BOOL keep_mime_headers;	 /* Include mime headers and force raw text */
 extern BOOL using_proxy;	/* Are we using an NNTP proxy? */
@@ -89,8 +83,8 @@ extern BOOL using_proxy;	/* Are we using an NNTP proxy? */
 **  Module-wide variables.
 */
 PUBLIC	char * HTNewsHost = NULL;		/* Default host */
-PRIVATE char * NewsHost = NULL; 		/* Current host */
-PRIVATE char * NewsHREF = NULL; 		/* Current HREF prefix */
+PRIVATE char * NewsHost = NULL;			/* Current host */
+PRIVATE char * NewsHREF = NULL;			/* Current HREF prefix */
 PRIVATE int s;					/* Socket for NewsHost */
 PRIVATE int HTCanPost = FALSE;			/* Current POST permission */
 PRIVATE char response_text[LINE_LENGTH+1];	/* Last response */
@@ -211,10 +205,10 @@ PRIVATE BOOL initialize NOARGS
 #else
     if (getenv("NNTPSERVER")) {
 	StrAllocCopy(HTNewsHost, (char *)getenv("NNTPSERVER"));
-	CTRACE(tfp, "HTNews: NNTPSERVER defined as `%s'\n",
-		    HTNewsHost);
+	CTRACE((tfp, "HTNews: NNTPSERVER defined as `%s'\n",
+		    HTNewsHost));
     } else {
-	FILE* fp = fopen(SERVER_FILE, "r");
+	FILE* fp = fopen(SERVER_FILE, TXT_R);
 	if (fp) {
 	    char server_name[MAXHOSTNAMELEN+1];
 	    if (fgets(server_name, sizeof server_name, fp) != NULL) {
@@ -222,8 +216,8 @@ PRIVATE BOOL initialize NOARGS
 		if (p != NULL)
 		    *p = '\0';
 		StrAllocCopy(HTNewsHost, server_name);
-		CTRACE(tfp, "HTNews: File %s defines news host as `%s'\n",
-			    SERVER_FILE, HTNewsHost);
+		CTRACE((tfp, "HTNews: File %s defines news host as `%s'\n",
+			    SERVER_FILE, HTNewsHost));
 	    }
 	    fclose(fp);
 	}
@@ -249,7 +243,7 @@ PRIVATE BOOL initialize NOARGS
 **	Negative status indicates transmission error, socket closed.
 **	Positive status is an NNTP status.
 */
-PRIVATE int response ARGS1(CONST char *,command)
+PRIVATE int response ARGS1(char *,command)
 {
     int result;
     char * p = response_text;
@@ -258,7 +252,7 @@ PRIVATE int response ARGS1(CONST char *,command)
     if (command) {
 	int status;
 	int length = strlen(command);
-	CTRACE(tfp, "NNTP command to be sent: %s", command);
+	CTRACE((tfp, "NNTP command to be sent: %s", command));
 #ifdef NOT_ASCII
 	{
 	    CONST char	* p;
@@ -273,7 +267,7 @@ PRIVATE int response ARGS1(CONST char *,command)
 	status = NEWS_NETWRITE(s, (char *)command, length);
 #endif /* NOT_ASCII */
 	if (status < 0){
-	    CTRACE(tfp, "HTNews: Unable to send command. Disconnecting.\n");
+	    CTRACE((tfp, "HTNews: Unable to send command. Disconnecting.\n"));
 	    NEWS_NETCLOSE(s);
 	    s = -1;
 	    return status;
@@ -282,10 +276,10 @@ PRIVATE int response ARGS1(CONST char *,command)
 
     for (;;) {
 	ich = NEXT_CHAR;
-	if (((*p++ = ich) == LF) ||
+	if (((*p++ = (char) ich) == LF) ||
 	    (p == &response_text[LINE_LENGTH])) {
 	    *--p = '\0';			/* Terminate the string */
-	    CTRACE(tfp, "NNTP Response: %s\n", response_text);
+	    CTRACE((tfp, "NNTP Response: %s\n", response_text));
 	    sscanf(response_text, "%d", &result);
 	    return result;
 	} /* if end of line */
@@ -293,11 +287,11 @@ PRIVATE int response ARGS1(CONST char *,command)
 	if (ich == EOF) {
 	    *(p-1) = '\0';
 	    if (interrupted_in_htgetcharacter) {
-		CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-			    s);
+		CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+			    s));
 	    } else {
-		CTRACE(tfp, "HTNews: EOF on read, closing socket %d\n",
-			    s);
+		CTRACE((tfp, "HTNews: EOF on read, closing socket %d\n",
+			    s));
 	    }
 	    NEWS_NETCLOSE(s);	/* End of file, close socket */
 	    s = -1;
@@ -335,7 +329,7 @@ typedef enum {
 **  This function handles nntp authentication. - FM
 */
 PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
-	char *, 	host)
+	char *,		host)
 {
     HTList *cur = NULL;
     NNTPAuth *auth = NULL;
@@ -373,15 +367,12 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
     /*
     **	Handle the username. - FM
     */
-    buffer[511] = '\0';
+    buffer[sizeof(buffer)-1] = '\0';
     tries = 3;
 
     while (tries) {
 	if (UserName == NULL) {
-	    if ((msg = (char *)calloc(1, (strlen(host) + 30))) == NULL) {
-		outofmem(__FILE__, "HTHandleAuthInfo");
-	    }
-	    sprintf(msg, gettext("Username for news host '%s':"), host);
+	    HTSprintf0(&msg, gettext("Username for news host '%s':"), host);
 	    UserName = HTPrompt(msg, NULL);
 	    FREE(msg);
 	    if (!(UserName && *UserName)) {
@@ -389,7 +380,8 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
 		return NNTPAUTH_ERROR;
 	    }
 	}
-	sprintf(buffer, "AUTHINFO USER %.*s%c%c", 495, UserName, CR, LF);
+	sprintf(buffer, "AUTHINFO USER %.*s%c%c",
+		(int) sizeof(buffer)-17, UserName, CR, LF);
 	if ((status = response(buffer)) < 0) {
 	    if (status == HT_INTERRUPTED)
 		_HTProgress(CONNECTION_INTERRUPTED);
@@ -418,8 +410,7 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
 		/*
 		**  Store the accepted username and no password. - FM
 		*/
-		if ((auth =
-		    (NNTPAuth *)calloc(1, sizeof(NNTPAuth))) != NULL) {
+		if ((auth = typecalloc(NNTPAuth)) != NULL) {
 		    StrAllocCopy(auth->host, host);
 		    auth->user = UserName;
 		    HTList_appendObject(NNTP_AuthInfo, auth);
@@ -462,10 +453,7 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
 	tries = 3;
 	while (tries) {
 	    if (PassWord == NULL) {
-		if ((msg = (char *)calloc(1, (strlen(host) + 30))) == NULL) {
-		    outofmem(__FILE__, "HTHandleAuthInfo");
-		}
-		sprintf(msg, gettext("Password for news host '%s':"), host);
+		HTSprintf0(&msg, gettext("Password for news host '%s':"), host);
 		PassWord = HTPromptPassword(msg);
 		FREE(msg);
 		if (!(PassWord && *PassWord)) {
@@ -473,7 +461,8 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
 		    return NNTPAUTH_ERROR;
 		}
 	    }
-	    sprintf(buffer, "AUTHINFO PASS %.*s%c%c", 495, PassWord, CR, LF);
+	    sprintf(buffer, "AUTHINFO PASS %.*s%c%c",
+		    (int) sizeof(buffer)-17, PassWord, CR, LF);
 	    if ((status = response(buffer)) < 0) {
 		if (status == HT_INTERRUPTED) {
 		    _HTProgress(CONNECTION_INTERRUPTED);
@@ -528,8 +517,7 @@ PRIVATE NNTPAuthResult HTHandleAuthInfo ARGS1(
 			auth->pass = PassWord;
 		    }
 		} else {
-		    if ((auth =
-			(NNTPAuth *)calloc(1, sizeof(NNTPAuth))) != NULL) {
+		    if ((auth = typecalloc(NNTPAuth)) != NULL) {
 			StrAllocCopy(auth->host, host);
 			auth->user = UserName;
 			auth->pass = PassWord;
@@ -582,18 +570,19 @@ PRIVATE char * author_name ARGS1 (char *,email)
     char *p, *e;
 
     StrAllocCopy(name, email);
-    CTRACE(tfp,"Trying to find name in: %s\n",name);
+    CTRACE((tfp,"Trying to find name in: %s\n",name));
 
-    if ((p = strchr(name, '(')) && (e = strchr(name, ')'))) {
+    if ((p = strrchr(name, '(')) && (e = strrchr(name, ')'))) {
 	if (e > p) {
 	    *e = '\0';			/* Chop off everything after the ')'  */
 	    return HTStrip(p+1);	/* Remove leading and trailing spaces */
 	}
     }
 
-    if ((p = strchr(name, '<')) && (e = strchr(name, '>'))) {
-	if (e > p) {
-	    strcpy(p, e+1);		/* Remove <...> */
+    if ((p = strrchr(name, '<')) && (e = strrchr(name, '>'))) {
+	if (e++ > p) {
+	    while ((*p++ = *e++) != 0)	/* Remove <...> */
+		;
 	    return HTStrip(name);	/* Remove leading and trailing spaces */
 	}
     }
@@ -618,10 +607,10 @@ PRIVATE char * author_address ARGS1(char *,email)
     char *p, *at, *e;
 
     StrAllocCopy(address, email);
-    CTRACE(tfp,"Trying to find address in: %s\n",address);
+    CTRACE((tfp,"Trying to find address in: %s\n",address));
 
-    if ((p = strchr(address, '<'))) {
-	if ((e = strchr(p, '>')) && (at = strchr(p, '@'))) {
+    if ((p = strrchr(address, '<'))) {
+	if ((e = strrchr(p, '>')) && (at = strrchr(p, '@'))) {
 	    if (at < e) {
 		*e = '\0';		 /* Remove > */
 		return HTStrip(p+1);  /* Remove leading and trailing spaces */
@@ -629,20 +618,20 @@ PRIVATE char * author_address ARGS1(char *,email)
 	}
     }
 
-    if ((p = strchr(address, '(')) &&
-	(e = strchr(address, ')')) && (at = strchr(address, '@'))) {
+    if ((p = strrchr(address, '(')) &&
+	(e = strrchr(address, ')')) && (at = strchr(address, '@'))) {
 	if (e > p && at < e) {
 	    *p = '\0';			/* Chop off everything after the ')'  */
 	    return HTStrip(address);	/* Remove leading and trailing spaces */
 	}
     }
 
-    if ((at = strchr(address, '@')) && at > address) {
+    if ((at = strrchr(address, '@')) && at > address) {
 	p = (at - 1);
 	e = (at + 1);
-	while (p > address && !isspace((unsigned char)*p))
+	while (p > address && !isspace(UCH(*p)))
 	    p--;
-	while (*e && !isspace((unsigned char)*e))
+	while (*e && !isspace(UCH(*e)))
 	    e++;
 	*e = 0;
 	return HTStrip(p);
@@ -652,10 +641,10 @@ PRIVATE char * author_address ARGS1(char *,email)
     **	Default to the first word.
     */
     p = address;
-    while (isspace((unsigned char)*p))
+    while (isspace(UCH(*p)))
 	p++; /* find first non-space */
     e = p;
-    while (!isspace((unsigned char)*e) && *e != '\0')
+    while (!isspace(UCH(*e)) && *e != '\0')
 	e++; /* find next space or end */
     *e = '\0'; /* terminate space */
 
@@ -668,16 +657,13 @@ PRIVATE char * author_address ARGS1(char *,email)
 PRIVATE void start_anchor ARGS1(CONST char *,  href)
 {
     BOOL		present[HTML_A_ATTRIBUTES];
-    CONST char* 	value[HTML_A_ATTRIBUTES];
+    CONST char*		value[HTML_A_ATTRIBUTES];
+    int i;
 
-    {
-	int i;
-	for(i=0; i < HTML_A_ATTRIBUTES; i++)
-	    present[i] = (i == HTML_A_HREF);
-    }
-    ((CONST char **)value)[HTML_A_HREF] = href;
-    (*targetClass.start_element)(target, HTML_A , present,
-				 (CONST char **)value, -1, 0);
+    for(i=0; i < HTML_A_ATTRIBUTES; i++)
+	present[i] = (BOOL) (i == HTML_A_HREF);
+    value[HTML_A_HREF] = href;
+    (*targetClass.start_element)(target, HTML_A, present, value, -1, 0);
 }
 
 /*	Start link element
@@ -686,17 +672,14 @@ PRIVATE void start_anchor ARGS1(CONST char *,  href)
 PRIVATE void start_link ARGS2(CONST char *,  href, CONST char *, rev)
 {
     BOOL		present[HTML_LINK_ATTRIBUTES];
-    CONST char* 	value[HTML_LINK_ATTRIBUTES];
+    CONST char*		value[HTML_LINK_ATTRIBUTES];
+    int i;
 
-    {
-	int i;
-	for(i=0; i < HTML_LINK_ATTRIBUTES; i++)
-	    present[i] = (i == HTML_LINK_HREF || i == HTML_LINK_REV);
-    }
-    ((CONST char **)value)[HTML_LINK_HREF] = href;
-    ((CONST char **)value)[HTML_LINK_REV]  = rev;
-    (*targetClass.start_element)(target, HTML_LINK, present,
-				 (CONST char **)value, -1, 0);
+    for(i=0; i < HTML_LINK_ATTRIBUTES; i++)
+	present[i] = (BOOL) (i == HTML_LINK_HREF || i == HTML_LINK_REV);
+    value[HTML_LINK_HREF] = href;
+    value[HTML_LINK_REV]  = rev;
+    (*targetClass.start_element)(target, HTML_LINK, present, value, -1, 0);
 }
 
 /*	Start list element
@@ -705,17 +688,16 @@ PRIVATE void start_link ARGS2(CONST char *,  href, CONST char *, rev)
 PRIVATE void start_list ARGS1(int, seqnum)
 {
     BOOL		present[HTML_OL_ATTRIBUTES];
-    CONST char* 	value[HTML_OL_ATTRIBUTES];
+    CONST char*		value[HTML_OL_ATTRIBUTES];
     char SeqNum[20];
     int i;
 
     for (i = 0; i < HTML_OL_ATTRIBUTES; i++)
-	present[i] = (i == HTML_OL_SEQNUM || i == HTML_OL_START);
+	present[i] = (BOOL) (i == HTML_OL_SEQNUM || i == HTML_OL_START);
     sprintf(SeqNum, "%d", seqnum);
-    ((CONST char **)value)[HTML_OL_SEQNUM] = SeqNum;
-    ((CONST char **)value)[HTML_OL_START]  = SeqNum;
-    (*targetClass.start_element)(target, HTML_OL , present,
-				 (CONST char **)value, -1, 0);
+    value[HTML_OL_SEQNUM] = SeqNum;
+    value[HTML_OL_START]  = SeqNum;
+    (*targetClass.start_element)(target, HTML_OL, present, value, -1, 0);
 }
 
 /*	Paste in an Anchor
@@ -731,18 +713,26 @@ PRIVATE void start_list ARGS1(int, seqnum)
 PRIVATE void write_anchor ARGS2(CONST char *,text, CONST char *,addr)
 {
     char href[LINE_LENGTH+1];
+    CONST char * p;
+    char *q;
 
-    {
-	CONST char * p;
-	strcpy(href, NewsHREF);
-	for (p = addr; *p && (*p != '>') && !WHITE(*p) && (*p!=','); p++)
-	    ;
-	strncat(href, addr, p-addr);	/* Make complete hypertext reference */
+    for (p = addr; *p && (*p != '>') && !WHITE(*p) && (*p!=','); p++)
+	;
+    if (strlen(NewsHREF) + (p - addr) + 1 < sizeof(href)) {
+	q = href;
+	strcpy(q, NewsHREF);
+	strncat(q, addr, p-addr);	/* Make complete hypertext reference */
+    } else {
+	q = NULL;
+	HTSprintf0(&q, "%s%.*s", NewsHREF, p-addr, addr);
     }
 
-    start_anchor(href);
+    start_anchor(q);
     PUTS(text);
     END(HTML_A);
+
+    if (q != href)
+	FREE(q);
 }
 
 /*	Write list of anchors
@@ -789,19 +779,23 @@ PRIVATE void write_anchors ARGS1 (char *,text)
 */
 PRIVATE void abort_socket NOARGS
 {
-    CTRACE(tfp, "HTNews: EOF on read, closing socket %d\n", s);
+    CTRACE((tfp, "HTNews: EOF on read, closing socket %d\n", s));
     NEWS_NETCLOSE(s);	/* End of file, close socket */
-    PUTS("Network Error: connection lost");
-    PUTC('\n');
+    if (rawtext) {
+	RAW_PUTS("Network Error: connection lost\n");
+    } else {
+	PUTS("Network Error: connection lost");
+	PUTC('\n');
+    }
     s = -1;		/* End of file on response */
 }
 
 /*
-**  Determine if a line is a valid header line. 		valid_header
+**  Determine if a line is a valid header line.			valid_header
 **  -------------------------------------------
 */
 PRIVATE BOOLEAN valid_header ARGS1(
-	char *, 	line)
+	char *,		line)
 {
     char *colon, *space;
 
@@ -818,7 +812,7 @@ PRIVATE BOOLEAN valid_header ARGS1(
     */
     colon = strchr(line, ':');
     space = strchr(line, ' ');
-    if (isalpha(line[0]) && colon && space == colon + 1)
+    if (isalpha(UCH(line[0])) && colon && space == colon + 1)
 	return(TRUE);
 
     /*
@@ -838,7 +832,7 @@ PRIVATE BOOLEAN valid_header ARGS1(
 **	postfile	file with header and article to post.
 */
 PRIVATE void post_article ARGS1(
-	char *, 	postfile)
+	char *,		postfile)
 {
     char line[512];
     char buf[512];
@@ -854,7 +848,7 @@ PRIVATE void post_article ARGS1(
     **	Open the temporary file with the
     **	nntp headers and message body. - FM
     */
-    if ((fd = fopen((postfile ? postfile : ""), "r")) == NULL) {
+    if ((fd = fopen((postfile ? postfile : ""), TXT_R)) == NULL) {
 	HTAlert(FAILED_CANNOT_OPEN_POST);
 	return;
     }
@@ -865,7 +859,7 @@ PRIVATE void post_article ARGS1(
     */
     buf[0] = '\0';
     sprintf(crlf, "%c%c", CR, LF);
-    while (fgets(line, sizeof(line), fd) != NULL) {
+    while (fgets(line, sizeof(line)-2, fd) != NULL) {
 	if ((cp = strchr(line, '\n')) != NULL)
 	    *cp = '\0';
 	if (line[0] == '.') {
@@ -893,16 +887,13 @@ PRIVATE void post_article ARGS1(
 	    if (seen_header) {
 		in_header = 0;
 		if (!seen_fromline) {
-		    if (blen < 475) {
-			strcat(buf, "From: anonymous@nowhere.you.know");
-			strcat(buf, crlf);
-			blen += 34;
-		    } else {
+		    if (blen >= (int) sizeof(buf) - 35) {
 			NEWS_NETWRITE(s, buf, blen);
-			sprintf(buf,
-				"From: anonymous@nowhere.you.know%s", crlf);
-			blen = 34;
+			buf[blen = 0] = 0;
 		    }
+		    strcat(buf, "From: anonymous@nowhere.you.know");
+		    strcat(buf, crlf);
+		    blen += 34;
 		}
 	     } else {
 		continue;
@@ -916,14 +907,12 @@ PRIVATE void post_article ARGS1(
 	}
 	strcat(line, crlf);
 	llen += 2;
-	if ((blen + llen) < 511) {
-	    strcat(buf, line);
-	    blen += llen;
-	} else {
+	if ((blen + llen) >= (int) sizeof(buf)-1) {
 	    NEWS_NETWRITE(s, buf, blen);
-	    strcpy(buf, line);
-	    blen = llen;
+	    buf[blen = 0] = 0;
 	}
+	strcat(buf, line);
+	blen += llen;
     }
     fclose(fd);
     HTSYS_remove(postfile);
@@ -931,17 +920,15 @@ PRIVATE void post_article ARGS1(
     /*
     **	Send the nntp EOF and get the server's response. - FM
     */
-    if (blen < 508) {
-	strcat(buf, ".");
-	strcat(buf, crlf);
-	blen += 3;
+    if (blen >= (int) sizeof(buf)-4) {
 	NEWS_NETWRITE(s, buf, blen);
-    } else {
-	NEWS_NETWRITE(s, buf, blen);
-	sprintf(buf, ".%s", crlf);
-	blen = 3;
-	NEWS_NETWRITE(s, buf, blen);
+	buf[blen = 0] = 0;
     }
+    strcat(buf, ".");
+    strcat(buf, crlf);
+    blen += 3;
+    NEWS_NETWRITE(s, buf, blen);
+
     status = response(NULL);
     if (status == 240) {
 	/*
@@ -955,6 +942,69 @@ PRIVATE void post_article ARGS1(
 	HTAlert(response_text);
     }
 }
+
+#ifdef SH_EX	/* for MIME */
+#define NEWS_DEBUG 0
+#if NEWS_DEBUG
+/* for DEBUG 1997/11/07 (Fri) 17:20:16 */
+void debug_print(unsigned char *p)
+{
+    while (*p) {
+	if (*p == '\0')
+	    break;
+	if (*p == 0x1b)
+	   printf("[ESC]");
+	else if (*p == '\n')
+	   printf("[NL]");
+	else if (*p < ' ' || *p >= 0x80)
+	   printf("(%02x)", *p);
+	else
+	   putchar(*p);
+       p++;
+    }
+    printf("]\n");
+}
+#endif
+
+static char *decode_mime(char *str)
+{
+    char temp[LINE_LENGTH];	/* FIXME: what determines the actual size? */
+    char *p, *q;
+
+    if (str == NULL)
+	return "";
+
+    if (HTCJK != JAPANESE)
+	return str;
+
+    LYstrncpy(temp, str, sizeof(temp) - 1);
+    q = temp;
+    while ((p = strchr(q, '=')) != 0) {
+	if (p[1] == '?') {
+	    HTmmdecode(p, p);
+	    q = p + 2;
+	} else {
+	    q = p + 1;
+	}
+    }
+#if NEWS_DEBUG
+    printf("new=[");
+    debug_print(temp);
+#endif
+    HTrjis(temp, temp);
+    strcpy(str, temp);
+
+    return str;
+}
+#else /* !SH_EX */
+static char *decode_mime ARGS1(char *, str)
+{
+    HTmmdecode(str, str);
+    HTrjis(str, str);
+    return str;
+}
+#endif
+
 
 /*	Read in an Article					read_article
 **	------------------
@@ -995,22 +1045,22 @@ PRIVATE int read_article ARGS1(
     if (!diagnostic && !rawtext) {
 	while (!done) {
 	    int ich = NEXT_CHAR;
-	    *p++ = ich;
+	    *p++ = (char) ich;
 	    if (ich == EOF) {
 		if (interrupted_in_htgetcharacter) {
 		    interrupted_in_htgetcharacter = 0;
-		    CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-				s);
+		    CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+				s));
 		    NEWS_NETCLOSE(s);
 		    s = -1;
 		    return(HT_INTERRUPTED);
 		}
-		abort_socket(); 	/* End of file, close socket */
+		abort_socket();		/* End of file, close socket */
 		return(HT_LOADED);	/* End of file on response */
 	    }
 	    if (((char)ich == LF) || (p == &line[LINE_LENGTH])) {
 		*--p = '\0';			/* Terminate the string */
-		CTRACE(tfp, "H %s\n", line);
+		CTRACE((tfp, "H %s\n", line));
 
 		if (line[0] == '\t' || line[0] == ' ') {
 		    int i = 0;
@@ -1032,47 +1082,31 @@ PRIVATE int read_article ARGS1(
 		    /*
 		    **	End of article?
 		    */
-		    if ((unsigned char)full_line[1] < ' ') {
+		    if (UCH(full_line[1]) < ' ') {
 			done = YES;
 			break;
 		    }
-		} else if ((unsigned char)full_line[0] < ' ') {
+		} else if (UCH(full_line[0]) < ' ') {
 		    break;		/* End of Header? */
 
 		} else if (match(full_line, "SUBJECT:")) {
 		    StrAllocCopy(subject, HTStrip(strchr(full_line,':')+1));
-		    if (HTCJK == JAPANESE) {
-			HTmmdecode(subject, subject);
-			HTrjis(subject, subject);
-		    }
-		    if (*subject) {
-			HTAnchor_setSubject(thisanchor, subject);
-		    }
-
+		    decode_mime(subject);
 		} else if (match(full_line, "DATE:")) {
 		    StrAllocCopy(date, HTStrip(strchr(full_line,':')+1));
 
 		} else if (match(full_line, "ORGANIZATION:")) {
 		    StrAllocCopy(organization,
 				 HTStrip(strchr(full_line,':')+1));
-		    if (HTCJK == JAPANESE) {
-			HTmmdecode(organization, organization);
-			HTrjis(organization, organization);
-		    }
+		    decode_mime(organization);
 
 		} else if (match(full_line, "FROM:")) {
 		    StrAllocCopy(from, HTStrip(strchr(full_line,':')+1));
-		    if (HTCJK == JAPANESE) {
-			HTmmdecode(from, from);
-			HTrjis(from, from);
-		    }
+		    decode_mime(from);
 
 		} else if (match(full_line, "REPLY-TO:")) {
 		    StrAllocCopy(replyto, HTStrip(strchr(full_line,':')+1));
-		    if (HTCJK == JAPANESE) {
-			HTmmdecode(replyto, replyto);
-			HTrjis(replyto, replyto);
-		    }
+		    decode_mime(replyto);
 
 		} else if (match(full_line, "NEWSGROUPS:")) {
 		    StrAllocCopy(newsgroups, HTStrip(strchr(full_line,':')+1));
@@ -1087,7 +1121,7 @@ PRIVATE int read_article ARGS1(
 		    char * msgid = HTStrip(full_line+11);
 		    if (msgid[0] == '<' && msgid[strlen(msgid)-1] == '>') {
 			msgid[strlen(msgid)-1] = '\0';	/* Chop > */
-			msgid++; 			/* Chop < */
+			msgid++;			/* Chop < */
 			HTAnchor_setMessageID(thisanchor, msgid);
 		    }
 
@@ -1110,7 +1144,7 @@ PRIVATE int read_article ARGS1(
 	**  Put in the owner as a link rel.
 	*/
 	if (from || replyto) {
-	    char *temp=NULL;
+	    char *temp = NULL;
 	    StrAllocCopy(temp, author_address(replyto ? replyto : from));
 	    StrAllocCopy(href,"mailto:");
 	    if (strchr(temp, '%') || strchr(temp, '?')) {
@@ -1319,7 +1353,7 @@ PRIVATE int read_article ARGS1(
 
     if (rawtext) {
 	/*
-	 *  No tags - kw
+	 *  No tags, and never do a PUTC. - kw
 	 */
 	;
     } else if (diagnostic) {
@@ -1328,24 +1362,25 @@ PRIVATE int read_article ARGS1(
 	**  as XMP formatted text. - FM
 	*/
 	START(HTML_XMP);
+	PUTC('\n');
     } else {
 	/*
 	**  Read in the BODY of the Article
 	**  as PRE formatted text. - FM
 	*/
 	START(HTML_PRE);
+	PUTC('\n');
     }
-    PUTC('\n');
 
     p = line;
     while (!done) {
 	int ich = NEXT_CHAR;
-	*p++ = ich;
+	*p++ = (char) ich;
 	if (ich == EOF) {
 	    if (interrupted_in_htgetcharacter) {
 		interrupted_in_htgetcharacter = 0;
-		CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-			    s);
+		CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+			    s));
 		NEWS_NETCLOSE(s);
 		s = -1;
 		return(HT_INTERRUPTED);
@@ -1355,19 +1390,23 @@ PRIVATE int read_article ARGS1(
 	}
 	if (((char)ich == LF) || (p == &line[LINE_LENGTH])) {
 	    *p++ = '\0';			/* Terminate the string */
-	    CTRACE(tfp, "B %s", line);
+	    CTRACE((tfp, "B %s", line));
+#if NEWS_DEBUG	/* 1997/11/09 (Sun) 15:56:11 */
+	    debug_print(line);	/* @@@ */
+#endif
 	    if (line[0] == '.') {
 		/*
 		**  End of article?
 		*/
-		if ((unsigned char)line[1] < ' ') {
+		if (UCH(line[1]) < ' ') {
 		    done = YES;
 		    break;
 		} else {			/* Line starts with dot */
-		    if (rawtext)
+		    if (rawtext) {
 			RAW_PUTS(&line[1]);
-		    else
+		    } else {
 			PUTS(&line[1]); /* Ignore first dot */
+		    }
 		}
 	    } else {
 		if (rawtext) {
@@ -1394,8 +1433,8 @@ PRIVATE int read_article ARGS1(
 		    char *p2;
 
 		    while ((p2 = strstr(l, "rticle <")) != NULL) {
-			char *q  = strchr(p2,'>');
-			char *at = strchr(p2, '@');
+			char *q  = strrchr(p2,'>');
+			char *at = strrchr(p2, '@');
 			if (q && at && at<q) {
 			    char c = q[1];
 			    q[1] = 0;		/* chop up */
@@ -1417,9 +1456,9 @@ PRIVATE int read_article ARGS1(
 				    strncmp(l, "wais://", 7) &&
 				    strncmp(l, "mailto:", 7) &&
 				    strncmp(l, "cso://", 6) &&
-				    strncmp(l, "gopher://", 9))
+				    strncmp(l, "gopher://", 9)) {
 				    PUTC (*l++);
-				else {
+				} else {
 				    StrAllocCopy(href, l);
 				    start_anchor(strtok(href, " \r\n\t,>)\""));
 				    while (*l && !strchr(" \r\n\t,>)\"", *l))
@@ -1435,7 +1474,7 @@ PRIVATE int read_article ARGS1(
 			    PUTS(p2);
 			    END(HTML_A);
 			    q[1] = c;		/* again */
-			    l=q+1;
+			    l = q + 1;
 			} else {
 			    break;		/* line has unmatched <> */
 			}
@@ -1545,12 +1584,12 @@ PRIVATE int read_list ARGS1(char *, arg)
     PUTC('\n');
     while (!done) {
 	int ich = NEXT_CHAR;
-	char ch = ich;
+	char ch = (char) ich;
 	if (ich == EOF) {
 	    if (interrupted_in_htgetcharacter) {
 		interrupted_in_htgetcharacter = 0;
-		CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-			    s);
+		CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+			    s));
 		NEWS_NETCLOSE(s);
 		s = -1;
 		return(HT_INTERRUPTED);
@@ -1569,7 +1608,7 @@ PRIVATE int read_list ARGS1(char *, arg)
 		continue;
 	    }
 	} else if (p == &line[LINE_LENGTH]) {
-	    CTRACE(tfp, "b %.*s%c[...]\n", (LINE_LENGTH), line, ch);
+	    CTRACE((tfp, "b %.*s%c[...]\n", (LINE_LENGTH), line, ch));
 	    *p = '\0';
 	    if (ch == LF) {
 		;		/* Will be dealt with below */
@@ -1579,7 +1618,7 @@ PRIVATE int read_list ARGS1(char *, arg)
 	    } else if (strchr(line, ' ') == NULL &&
 		       strchr(line, '\t') == NULL) {
 		/* No separator found */
-		CTRACE(tfp, "HTNews..... group name too long, discarding.\n");
+		CTRACE((tfp, "HTNews..... group name too long, discarding.\n"));
 		skip_this_line = YES; /* ignore whole line */
 		continue;
 	    } else {
@@ -1591,12 +1630,12 @@ PRIVATE int read_list ARGS1(char *, arg)
 	if (ch == LF) {
 	    skip_rest_of_line = NO;	/* done, reset flag */
 	    *p = '\0';			/* Terminate the string */
-	    CTRACE(tfp, "B %s", line);
+	    CTRACE((tfp, "B %s", line));
 	    if (line[0] == '.') {
 		/*
 		**  End of article?
 		*/
-		if ((unsigned char)line[1] < ' ') {
+		if (UCH(line[1]) < ' ') {
 		    done = YES;
 		    break;
 		} else {			/* Line starts with dot */
@@ -1650,10 +1689,12 @@ PRIVATE int read_list ARGS1(char *, arg)
 	} /* if end of line */
     } /* Loop over characters */
     if (!listing) {
+	char *msg = NULL;
 	START(HTML_DT);
-	sprintf(line, gettext("No matches for: %s"), arg);
-	PUTS(line);
+	HTSprintf0(&msg, gettext("No matches for: %s"), arg);
+	PUTS(msg);
 	MAYBE_END(HTML_DT);
+	FREE(msg);
     }
     END(HTML_DLC);
     PUTC('\n');
@@ -1669,9 +1710,9 @@ PRIVATE int read_list ARGS1(char *, arg)
 **
 */
 PRIVATE int read_group ARGS3(
-  CONST char *,groupName,
-  int,first_required,
-  int,last_required)
+	CONST char *,	groupName,
+	int,		first_required,
+	int,		last_required)
 {
     char line[LINE_LENGTH+1];
     char author[LINE_LENGTH+1];
@@ -1681,7 +1722,8 @@ PRIVATE int read_group ARGS3(
     char *p;
     BOOL done;
 
-    char buffer[LINE_LENGTH];
+    char buffer[LINE_LENGTH+1];
+    char *temp = NULL;
     char *reference = NULL;		/* Href for article */
     int art;				/* Article number WITHIN GROUP */
     int status, count, first, last;	/* Response fields */
@@ -1699,8 +1741,8 @@ PRIVATE int read_group ARGS3(
     PUTC('\n');
 
     sscanf(response_text, " %d %d %d %d", &status, &count, &first, &last);
-    CTRACE(tfp, "Newsgroup status=%d, count=%d, (%d-%d) required:(%d-%d)\n",
-		status, count, first, last, first_required, last_required);
+    CTRACE((tfp, "Newsgroup status=%d, count=%d, (%d-%d) required:(%d-%d)\n",
+		status, count, first, last, first_required, last_required));
     if (last == 0) {
 	PUTS(gettext("\nNo articles in this group.\n"));
 	goto add_post;
@@ -1710,7 +1752,7 @@ PRIVATE int read_group ARGS3(
 #define CHOP_THRESHOLD 50	/* Above this, chop off the rest */
 
     if (first_required < first)
-	first_required = first; 	/* clip */
+	first_required = first;		/* clip */
     if ((last_required == 0) || (last_required > last))
 	last_required = last;
 
@@ -1722,16 +1764,17 @@ PRIVATE int read_group ARGS3(
     if (last_required-first_required+1 > HTNewsMaxChunk) { /* Trim this block */
 	first_required = last_required-HTNewsChunkSize+1;
     }
-    CTRACE(tfp, "    Chunk will be (%d-%d)\n",
-		first_required, last_required);
+    CTRACE((tfp, "    Chunk will be (%d-%d)\n",
+		first_required, last_required));
 
     /*
     **	Set window title.
     */
-    sprintf(buffer, gettext("%s,  Articles %d-%d"),
+    HTSprintf0(&temp, gettext("%s,  Articles %d-%d"),
 		    groupName, first_required, last_required);
     START(HTML_H1);
-    PUTS(buffer);
+    PUTS(temp);
+    FREE(temp);
     END(HTML_H1);
     PUTC('\n');
 
@@ -1746,7 +1789,7 @@ PRIVATE int read_group ARGS3(
 	    before = first_required-HTNewsChunkSize;
 	HTSprintf0(&dbuf, "%s%s/%d-%d", NewsHREF, groupName,
 				      before, first_required-1);
-	CTRACE(tfp, "    Block before is %s\n", dbuf);
+	CTRACE((tfp, "    Block before is %s\n", dbuf));
 	PUTC('(');
 	start_anchor(dbuf);
 	PUTS(gettext("Earlier articles"));
@@ -1761,10 +1804,11 @@ PRIVATE int read_group ARGS3(
 /*#define USE_XHDR*/
 #ifdef USE_XHDR
     if (count > FAST_THRESHOLD)  {
-	sprintf(buffer,
+	HTSprintf0(&temp,
  gettext("\nThere are about %d articles currently available in %s, IDs as follows:\n\n"),
 		count, groupName);
-	PUTS(buffer);
+	PUTS(temp);
+	FREE(temp);
 	sprintf(buffer, "XHDR Message-ID %d-%d%c%c", first, last, CR, LF);
 	status = response(buffer);
 	if (status == 221) {
@@ -1775,8 +1819,8 @@ PRIVATE int read_group ARGS3(
 		if (ich == EOF) {
 		    if (interrupted_in_htgetcharacter) {
 			interrupted_in_htgetcharacter = 0;
-			CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-				    s);
+			CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+				    s));
 			NEWS_NETCLOSE(s);
 			s = -1;
 			return(HT_INTERRUPTED);
@@ -1786,12 +1830,12 @@ PRIVATE int read_group ARGS3(
 		}
 		if (((char)ich == '\n') || (p == &line[LINE_LENGTH])) {
 		    *p = '\0';		/* Terminate the string */
-		    CTRACE(tfp, "X %s", line);
+		    CTRACE((tfp, "X %s", line));
 		    if (line[0] == '.') {
 			/*
 			**  End of article?
 			*/
-			if ((unsigned char)line[1] < ' ') {
+			if (UCH(line[1]) < ' ') {
 			    done = YES;
 			    break;
 			} else {		/* Line starts with dot */
@@ -1875,17 +1919,17 @@ PRIVATE int read_group ARGS3(
 		done = NO;
 		while( !done ) {
 		    int ich = NEXT_CHAR;
-		    *p++ = ich;
+		    *p++ = (char) ich;
 		    if (ich == EOF) {
 			if (interrupted_in_htgetcharacter) {
 			    interrupted_in_htgetcharacter = 0;
-			    CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-					s);
+			    CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+					s));
 			    NEWS_NETCLOSE(s);
 			    s = -1;
 			    return(HT_INTERRUPTED);
 			}
-			abort_socket(); 	/* End of file, close socket */
+			abort_socket();		/* End of file, close socket */
 			return(HT_LOADED);	/* End of file on response */
 		    }
 		    if (((char)ich == LF) ||
@@ -1893,24 +1937,21 @@ PRIVATE int read_group ARGS3(
 
 			*--p = '\0';		/* Terminate  & chop LF*/
 			p = line;		/* Restart at beginning */
-			CTRACE(tfp, "G %s\n", line);
+			CTRACE((tfp, "G %s\n", line));
 			switch(line[0]) {
 
 			case '.':
 			    /*
 			    **	End of article?
 			    */
-			    done = ((unsigned char)line[1] < ' ');
+			    done = (BOOL) (UCH(line[1]) < ' ');
 			    break;
 
 			case 'S':
 			case 's':
 			    if (match(line, "SUBJECT:")) {
-				strcpy(subject, line+9);/* Save subject */
-				if (HTCJK == JAPANESE) {
-				    HTmmdecode(subject, subject);
-				    HTrjis(subject, subject);
-				}
+				LYstrncpy(subject, line+9, sizeof(subject)-1);/* Save subject */
+				decode_mime(subject);
 			    }
 			    break;
 
@@ -1927,12 +1968,10 @@ PRIVATE int read_group ARGS3(
 			case 'F':
 			    if (match(line, "FROM:")) {
 				char * p2;
-				strcpy(author,
-					author_name(strchr(line,':')+1));
-				if (HTCJK == JAPANESE) {
-				    HTmmdecode(author, author);
-				    HTrjis(author, author);
-				}
+				LYstrncpy(author,
+					author_name(strchr(line,':')+1),
+					sizeof(author)-1);
+				decode_mime(author);
 				p2 = author + strlen(author) - 1;
 				if (*p2==LF)
 				    *p2 = '\0'; /* Chop off newline */
@@ -1953,18 +1992,28 @@ PRIVATE int read_group ARGS3(
 
 		PUTC('\n');
 		START(HTML_LI);
-		sprintf(buffer, "\"%s\"", subject);
+#ifdef SH_EX	/* for MIME */
+		HTSprintf0(&temp, "\"%s\"", decode_mime(subject));
+#else
+		HTSprintf0(&temp, "\"%s\"", subject);
+#endif
 		if (reference) {
-		    write_anchor(buffer, reference);
+		    write_anchor(temp, reference);
 		    FREE(reference);
 		} else {
-		    PUTS(buffer);
+		    PUTS(temp);
 		}
+		FREE(temp);
+
 		if (author[0] != '\0') {
 		     PUTS(" - ");
 		     if (LYListNewsDates)
 			 START(HTML_I);
+#ifdef SH_EX	/* for MIME */
+		     PUTS(decode_mime(author));
+#else
 		     PUTS(author);
+#endif
 		     if (LYListNewsDates)
 			 END(HTML_I);
 		     author[0] = '\0';
@@ -1977,7 +2026,7 @@ PRIVATE int read_group ARGS3(
 			    }
 			}
 		    }
-		    sprintf(buffer, " [%s]", date);
+		    sprintf(buffer, " [%.*s]", (int)(sizeof(buffer) - 4), date);
 		    PUTS(buffer);
 		    FREE(date);
 		}
@@ -1987,8 +2036,8 @@ PRIVATE int read_group ARGS3(
 		*/
 	    } else if (status == HT_INTERRUPTED) {
 		interrupted_in_htgetcharacter = 0;
-		CTRACE(tfp, "HTNews: Interrupted on read, closing socket %d\n",
-			    s);
+		CTRACE((tfp, "HTNews: Interrupted on read, closing socket %d\n",
+			    s));
 		NEWS_NETCLOSE(s);
 		s = -1;
 		return(HT_INTERRUPTED);
@@ -2000,7 +2049,7 @@ PRIVATE int read_group ARGS3(
 		START(HTML_LI);
 		START(HTML_I);
 		if (LYListNewsNumbers)
-		    strcpy(buffer, "Status:");
+		    LYstrncpy(buffer, "Status:", sizeof(buffer) - 1);
 		else
 		    sprintf(buffer, "Status (ARTICLE %d):", art);
 		PUTS(buffer);
@@ -2029,7 +2078,7 @@ PRIVATE int read_group ARGS3(
 	else
 	    HTSprintf0(&dbuf, "%s%s/%d-%d", NewsHREF, groupName,
 					  last_required+1, after);
-	CTRACE(tfp, "    Block after is %s\n", dbuf);
+	CTRACE((tfp, "    Block after is %s\n", dbuf));
 	PUTC('(');
 	start_anchor(dbuf);
 	PUTS(gettext("Later articles"));
@@ -2076,17 +2125,18 @@ PRIVATE int HTLoadNews ARGS4(
 	HTFormat,		format_out,
 	HTStream*,		stream)
 {
-    char command[260];			/* The whole command */
-    char proxycmd[260]; 		/* The proxy command */
+    char command[262];			/* The whole command */
+    char proxycmd[260];			/* The proxy command */
     char groupName[GROUP_NAME_LENGTH];	/* Just the group name */
-    int status; 			/* tcp return */
+    int status;				/* tcp return */
     int retries;			/* A count of how hard we have tried */
+    BOOL normal_url;		/* Flag: "news:" or "nntp:" (physical) URL */
     BOOL group_wanted;		/* Flag: group was asked for, not article */
     BOOL list_wanted;		/* Flag: list was asked for, not article */
     BOOL post_wanted;		/* Flag: new post to group was asked for */
     BOOL reply_wanted;		/* Flag: followup post was asked for */
     BOOL spost_wanted;		/* Flag: new SSL post to group was asked for */
-    BOOL sreply_wanted; 	/* Flag: followup SSL post was asked for */
+    BOOL sreply_wanted;		/* Flag: followup SSL post was asked for */
     BOOL head_wanted = NO;	/* Flag: want HEAD of single article */
     int first, last;		/* First and last articles asked for */
     char *cp = 0;
@@ -2094,13 +2144,16 @@ PRIVATE int HTLoadNews ARGS4(
     char *ProxyHost = NULL;
     char *ProxyHREF = NULL;
     char *postfile = NULL;
+#ifdef USE_SSL
+    char SSLprogress[256];
+#endif /* USE_SSL */
 
     diagnostic = (format_out == WWW_SOURCE ||	/* set global flag */
 		  format_out == HTAtom_for("www/download") ||
 		  format_out == HTAtom_for("www/dump"));
     rawtext = NO;
 
-    CTRACE(tfp, "HTNews: Looking for %s\n", arg);
+    CTRACE((tfp, "HTNews: Looking for %s\n", arg));
 
     if (!initialized)
 	initialized = initialize();
@@ -2109,9 +2162,9 @@ PRIVATE int HTLoadNews ARGS4(
 
     FREE(NewsHREF);
     command[0] = '\0';
-    command[259] = '\0';
+    command[sizeof(command)-1] = '\0';
     proxycmd[0] = '\0';
-    proxycmd[259] = '\0';
+    proxycmd[sizeof(proxycmd)-1] = '\0';
 
     {
 	CONST char * p1 = arg;
@@ -2120,26 +2173,27 @@ PRIVATE int HTLoadNews ARGS4(
 	**  We will ask for the document, omitting the host name & anchor.
 	**
 	**  Syntax of address is
-	**	xxx@yyy 		Article
+	**	xxx@yyy			Article
 	**	<xxx@yyy>		Same article
 	**	xxxxx			News group (no "@")
 	**	group/n1-n2		Articles n1 to n2 in group
 	*/
-	spost_wanted = (strstr(arg, "snewspost:") != NULL);
-	sreply_wanted = (!(spost_wanted) &&
+	normal_url = (BOOL) (!strncmp(arg, "news:", 5) || !strncmp(arg, "nntp:", 5));
+	spost_wanted = (BOOL) (!normal_url && strstr(arg, "snewspost:") != NULL);
+	sreply_wanted = (BOOL) (!(normal_url || spost_wanted) &&
 			 strstr(arg, "snewsreply:") != NULL);
-	post_wanted = (!(spost_wanted || sreply_wanted) &&
+	post_wanted = (BOOL) (!(normal_url || spost_wanted || sreply_wanted) &&
 			strstr(arg, "newspost:") != NULL);
-	reply_wanted = (!(spost_wanted || sreply_wanted ||
+	reply_wanted = (BOOL) (!(normal_url || spost_wanted || sreply_wanted ||
 			  post_wanted) &&
 			strstr(arg, "newsreply:") != NULL);
-	group_wanted = (!(spost_wanted || sreply_wanted ||
+	group_wanted = (BOOL) ((!(spost_wanted || sreply_wanted ||
 			  post_wanted || reply_wanted) &&
-			strchr(arg, '@') == NULL) && (strchr(arg, '*') == NULL);
-	list_wanted  = (!(spost_wanted || sreply_wanted ||
+			strchr(arg, '@') == NULL) && (strchr(arg, '*') == NULL));
+	list_wanted  = (BOOL) ((!(spost_wanted || sreply_wanted ||
 			  post_wanted || reply_wanted ||
 			  group_wanted) &&
-			strchr(arg, '@') == NULL) && (strchr(arg, '*') != NULL);
+			strchr(arg, '@') == NULL) && (strchr(arg, '*') != NULL));
 
 #ifndef USE_SSL
 	if (!strncasecomp(arg, "snewspost:", 10) ||
@@ -2175,14 +2229,14 @@ PRIVATE int HTLoadNews ARGS4(
 		StrAllocCopy(NewsHost, cp);
 	    }
 	    FREE(cp);
-	    sprintf(command, "%s://%.245s/",
+	    HTSprintf0(&NewsHREF, "%s://%.*s/",
 			     (post_wanted ?
 			       "newspost" :
 			    (reply_wanted ?
 			       "newreply" :
 			    (spost_wanted ?
-			      "snewspost" : "snewsreply"))), NewsHost);
-	    StrAllocCopy(NewsHREF, command);
+			      "snewspost" : "snewsreply"))),
+			    (int) sizeof(command) - 15, NewsHost);
 
 	    /*
 	    **	If the SSL daemon is being used as a proxy,
@@ -2231,7 +2285,7 @@ PRIVATE int HTLoadNews ARGS4(
 		StrAllocCopy(NewsHost, cp);
 	    }
 	    FREE(cp);
-	    sprintf(command, "nntp://%.251s/", NewsHost);
+	    SnipIn(command, "nntp://%.*s/", 9, NewsHost);
 	    StrAllocCopy(NewsHREF, command);
 	}
 	else if (!strncasecomp(arg, "snews:", 6)) {
@@ -2301,7 +2355,7 @@ PRIVATE int HTLoadNews ARGS4(
 		StrAllocCopy(NewsHost, cp);
 	    }
 	    FREE(cp);
-	    sprintf(command, "news://%.251s/", NewsHost);
+	    SnipIn(command, "news://%.*s/", 9, NewsHost);
 	    StrAllocCopy(NewsHREF, command);
 	} else {
 	    p1 = (arg + 5);  /* Skip "news:" prefix */
@@ -2329,16 +2383,18 @@ PRIVATE int HTLoadNews ARGS4(
 	    !strncasecomp(p1, "snewsreply:", 11)) {
 	    StrAllocCopy(ProxyHost, NewsHost);
 	    if ((cp = HTParse(p1, "", PARSE_HOST)) != NULL && *cp != '\0') {
-		sprintf(command, "snews://%.250s", cp);
+		SnipIn(command, "snews://%.*s", 10, cp);
 		StrAllocCopy(NewsHost, cp);
 	    } else {
-		sprintf(command, "snews://%.250s", NewsHost);
+		SnipIn(command, "snews://%.*s", 10, NewsHost);
 	    }
-	    command[258] = '\0';
+	    command[sizeof(command)-2] = '\0';
 	    FREE(cp);
-	    sprintf(proxycmd, "GET %.251s%c%c%c%c", command, CR, LF, CR, LF);
-	    CTRACE(tfp, "HTNews: Proxy command is '%.*s'\n",
-			(int)(strlen(proxycmd) - 4), proxycmd);
+	    sprintf(proxycmd, "GET %.*s%c%c%c%c",
+		    (int) sizeof(proxycmd)-9, command,
+		    CR, LF, CR, LF);
+	    CTRACE((tfp, "HTNews: Proxy command is '%.*s'\n",
+			(int)(strlen(proxycmd) - 4), proxycmd));
 	    strcat(command, "/");
 	    StrAllocCopy(ProxyHREF, NewsHREF);
 	    StrAllocCopy(NewsHREF, command);
@@ -2353,7 +2409,7 @@ PRIVATE int HTLoadNews ARGS4(
 		}
 	    } else {
 		/*
-		**  Reset p1 so that it points to the newgroup
+		**  Reset p1 so that it points to the newsgroup
 		**  (or a wildcard), or the article.
 		*/
 		if (!(cp = strrchr((p1 + 6), '/')) || *(cp + 1) == '\0') {
@@ -2372,18 +2428,29 @@ PRIVATE int HTLoadNews ARGS4(
 	if (post_wanted || reply_wanted || spost_wanted || sreply_wanted) {
 	    strcpy(command, "POST");
 	} else if (list_wanted) {
-	    sprintf(command, "XGTITLE %.*s", 249, p1);
+	    if (strlen(p1) > 249) {
+		FREE(ProxyHost);
+		FREE(ProxyHREF);
+		HTAlert(URL_TOO_LONG);
+		return -400;
+	    }
+	    SnipIn(command, "XGTITLE %.*s", 11, p1);
 	} else if (group_wanted) {
 	    char * slash = strchr(p1, '/');
-	    strcpy(command, "GROUP ");
 	    first = 0;
 	    last = 0;
 	    if (slash) {
 		*slash = '\0';
-		strcpy(groupName, p1);
+		if (strlen(p1) >= sizeof(groupName)) {
+		    FREE(ProxyHost);
+		    FREE(ProxyHREF);
+		    HTAlert(URL_TOO_LONG);
+		    return -400;
+		}
+		LYstrncpy(groupName, p1, sizeof(groupName) - 1);
 		*slash = '/';
 		(void)sscanf(slash+1, "%d-%d", &first, &last);
-		if ((first > 0) && (isdigit(*(slash+1))) &&
+		if ((first > 0) && (isdigit(UCH(*(slash+1)))) &&
 		    (strchr(slash+1, '-') == NULL || first == last)) {
 		    /*
 		    **	We got a number greater than 0, which will be
@@ -2396,16 +2463,29 @@ PRIVATE int HTLoadNews ARGS4(
 		    last = -1;
 		}
 	    } else {
-		strcpy(groupName, p1);
+		if (strlen(p1) >= sizeof(groupName)) {
+		    FREE(ProxyHost);
+		    FREE(ProxyHREF);
+		    HTAlert(URL_TOO_LONG);
+		    return -400;
+		}
+		LYstrncpy(groupName, p1, sizeof(groupName) - 1);
 	    }
-	    strcat(command, groupName);
+	    SnipIn(command, "GROUP %.*s", 9, groupName);
 	} else {
-	    strcpy(command, "ARTICLE ");
-	    if (strchr(p1, '<') == 0)
-		strcat(command,"<");
-	    strcat(command, p1);
-	    if (strchr(p1, '>') == 0)
-		strcat(command,">");
+	    int add_open=(strchr(p1, '<') == 0);
+	    int add_close=(strchr(p1, '>') == 0);
+	    if (strlen(p1) + add_open + add_close >= 252) {
+		FREE(ProxyHost);
+		FREE(ProxyHREF);
+		HTAlert(URL_TOO_LONG);
+		return -400;
+	    }
+	    sprintf(command, "ARTICLE %s%.*s%s",
+		    add_open ? "<" : "",
+		    (int) (sizeof(command) - (11 + add_open + add_close)),
+		    p1,
+		    add_close ? ">" : "");
 	}
 
 	{
@@ -2431,14 +2511,14 @@ PRIVATE int HTLoadNews ARGS4(
     if (!(post_wanted || reply_wanted || spost_wanted || sreply_wanted ||
 	  (group_wanted && last != -1) || list_wanted)) {
 	head_wanted = anAnchor->isHEAD;
-	if (head_wanted && !strncmp(command, "ARTICLE_", 8)) {
+	if (head_wanted && !strncmp(command, "ARTICLE ", 8)) {
 	    /* overwrite "ARTICLE" - hack... */
 	    strcpy(command, "HEAD ");
 	    for (cp = command + 5; ; cp++)
 		if ((*cp = *(cp + 3)) == '\0')
 		    break;
 	}
-	rawtext = (head_wanted || keep_mime_headers);
+	rawtext = (BOOL) (head_wanted || keep_mime_headers);
     }
     if (rawtext) {
 	node_anchor = anAnchor;
@@ -2473,13 +2553,13 @@ PRIVATE int HTLoadNews ARGS4(
 	    /* CONNECTING to news host */
 	    char url[260];
 	    if (!strcmp(NewsHREF, "news:")) {
-		sprintf (url, "lose://%.251s/", NewsHost);
+		SnipIn (url, "lose://%.*s/", 9, NewsHost);
 	    } else if (ProxyHREF) {
-		sprintf (url, "%.259s", ProxyHREF);
+		SnipIn (url, "%.*s", 1, ProxyHREF);
 	    } else {
-		sprintf (url, "%.259s", NewsHREF);
+		SnipIn (url, "%.*s", 1, NewsHREF);
 	    }
-	    CTRACE (tfp, "News: doing HTDoConnect on '%s'\n", url);
+	    CTRACE((tfp, "News: doing HTDoConnect on '%s'\n", url));
 
 	    _HTProgress(gettext("Connecting to NewsHost ..."));
 
@@ -2499,7 +2579,7 @@ PRIVATE int HTLoadNews ARGS4(
 		/*
 		**  Interrupt cleanly.
 		*/
-		CTRACE(tfp, "HTNews: Interrupted on connect; recovering cleanly.\n");
+		CTRACE((tfp, "HTNews: Interrupted on connect; recovering cleanly.\n"));
 		_HTProgress(CONNECTION_INTERRUPTED);
 		if (!(post_wanted || reply_wanted ||
 		      spost_wanted || sreply_wanted)) {
@@ -2525,7 +2605,7 @@ PRIVATE int HTLoadNews ARGS4(
 	    if (status < 0) {
 		NEWS_NETCLOSE(s);
 		s = -1;
-		CTRACE(tfp, "HTNews: Unable to connect to news host.\n");
+		CTRACE((tfp, "HTNews: Unable to connect to news host.\n"));
 		if (retries < 1)
 		    continue;
 		if (!(post_wanted || reply_wanted ||
@@ -2544,8 +2624,8 @@ PRIVATE int HTLoadNews ARGS4(
 		}
 		return HTLoadError(stream, 500, dbuf);
 	    } else {
-		CTRACE(tfp, "HTNews: Connected to news host %s.\n",
-			    NewsHost);
+		CTRACE((tfp, "HTNews: Connected to news host %s.\n",
+			    NewsHost));
 #ifdef USE_SSL
 		/*
 		**  If this is an snews url,
@@ -2557,12 +2637,16 @@ PRIVATE int HTLoadNews ARGS4(
 		     !strncmp(url, "snewsreply:", 11))) {
 		    Handle = HTGetSSLHandle();
 		    SSL_set_fd(Handle, s);
+		    HTSSLInitPRNG();
 		    status = SSL_connect(Handle);
 
 		    if (status <= 0) {
-			CTRACE(tfp,
-"HTNews: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
-			       url, status);
+			unsigned long SSLerror;
+			CTRACE((tfp,"HTNews: Unable to complete SSL handshake for '%s', SSL_connect=%d, SSL error stack dump follows\n",url, status));
+			SSL_load_error_strings();
+			while((SSLerror = ERR_get_error()) != 0) {
+			    CTRACE((tfp,"HTNews: SSL: %s\n",ERR_error_string(SSLerror,NULL)));
+			}
 			HTAlert(
 			    "Unable to make secure connection to remote host.");
 			NEWS_NETCLOSE(s);
@@ -2586,14 +2670,15 @@ PRIVATE int HTLoadNews ARGS4(
 			}
 			return HT_NOT_LOADED;
 		    }
-		    _HTProgress(SSL_get_cipher(Handle));
+		    sprintf(SSLprogress,"Secure %d-bit %s (%s) NNTP connection",SSL_get_cipher_bits(Handle,NULL),SSL_get_cipher_version(Handle),SSL_get_cipher(Handle));
+		    _HTProgress(SSLprogress);
 		}
 #endif /* USE_SSL */
-		HTInitInput(s); 	/* set up buffering */
+		HTInitInput(s);		/* set up buffering */
 		if (proxycmd[0]) {
 		    status = NEWS_NETWRITE(s, proxycmd, strlen(proxycmd));
-		    CTRACE(tfp, "HTNews: Proxy command returned status '%d'.\n",
-				status);
+		    CTRACE((tfp, "HTNews: Proxy command returned status '%d'.\n",
+				status));
 		}
 		if (((status = response(NULL)) / 100) != 2) {
 			NEWS_NETCLOSE(s);
@@ -2617,13 +2702,23 @@ PRIVATE int HTLoadNews ARGS4(
 			}
 			if (retries < 1)
 			    continue;
+			FREE(ProxyHost);
+			FREE(ProxyHREF);
+			FREE(ListArg);
+			FREE(postfile);
 			if (!(post_wanted || reply_wanted ||
 			      spost_wanted || sreply_wanted)) {
 			    ABORT_TARGET;
 			}
-			HTSprintf0(&dbuf,
+			if (response_text[0]) {
+			    HTSprintf0(&dbuf,
 				gettext("Can't read news info.  News host %.20s responded: %.200s"),
 				NewsHost, response_text);
+			} else {
+			    HTSprintf0(&dbuf,
+				gettext("Can't read news info, empty response from host %s"),
+				NewsHost);
+			}
 			return HTLoadError(stream, 500, dbuf);
 		}
 		if (status == 200) {
@@ -2668,7 +2763,8 @@ PRIVATE int HTLoadNews ARGS4(
 		return(HT_NOT_LOADED);
 	    }
 	    if (postfile == NULL) {
-		postfile = LYNewsPost(ListArg, (reply_wanted || sreply_wanted));
+		postfile = LYNewsPost(ListArg,
+				(BOOLEAN)(reply_wanted || sreply_wanted));
 	    }
 	    if (postfile == NULL) {
 		HTProgress(CANCELLED);
@@ -2715,6 +2811,12 @@ PRIVATE int HTLoadNews ARGS4(
 	}
 
 Send_NNTP_command:
+#ifdef NEWS_DEB
+	if (postfile)
+	    printf("postfile = %s, command = %s", postfile, command);
+	else
+	    printf("command = %s", command);
+#endif
 	if ((status = response(command)) == HT_INTERRUPTED) {
 	    _HTProgress(CONNECTION_INTERRUPTED);
 	    break;
@@ -2731,7 +2833,7 @@ Send_NNTP_command:
 	 *  to occur in normal use, break from the loop without retrying
 	 *  and without closing the connection.  It is unlikely that
 	 *  these are leftovers from a timed-out connection (but we do
-	 *  some checks to see whether the response rorresponds to the
+	 *  some checks to see whether the response corresponds to the
 	 *  last command), or that they will give anything else when
 	 *  automatically retried.  - kw
 	 */
@@ -2875,10 +2977,11 @@ Send_NNTP_command:
 	return status;
     } /* Retry loop */
 
-    /* HTAlert(gettext("Sorry, could not load requested news.")); */
-
-/*    NXRunAlertPanel(NULL, "Sorry, could not load `%s'.",
-	    NULL,NULL,NULL, arg);No -- message earlier wil have covered it */
+#if 0
+    HTAlert(gettext("Sorry, could not load requested news."));
+    NXRunAlertPanel(NULL, "Sorry, could not load `%s'.", NULL,NULL,NULL, arg);
+    /* No -- message earlier wil have covered it */
+#endif
 
     if (!(post_wanted || reply_wanted ||
 	  spost_wanted || sreply_wanted)) {
@@ -2900,7 +3003,7 @@ Send_NNTP_command:
 
 /*
 **  This function clears all authorization information by
-**  invoking the free_HTAAGlobals() function, which normally
+**  invoking the free_NNTP_AuthInfo() function, which normally
 **  is invoked at exit.  It allows a browser command to do
 **  this at any time, for example, if the user is leaving
 **  the terminal for a period of time, but does not want
@@ -2925,35 +3028,46 @@ PUBLIC void HTClearNNTPAuthInfo NOARGS
 PRIVATE char HTNewsGetCharacter NOARGS
 {
     if (!Handle)
-        return HTGetCharacter();
+	return HTGetCharacter();
     else
-        return HTGetSSLCharacter((void *)Handle);
+	return HTGetSSLCharacter((void *)Handle);
 }
 
-PUBLIC int HTNewsProxyConnect ARGS5 (int, sock, CONST char *, url, 
-				     HTParentAnchor *, anAnchor,
-				     HTFormat, format_out,
-				     HTStream *, sink)
+PUBLIC int HTNewsProxyConnect ARGS5 (
+    int,		sock,
+    CONST char *,	url,
+    HTParentAnchor *,	anAnchor,
+    HTFormat,		format_out,
+    HTStream *,		sink)
 {
     int status;
     CONST char * arg = url;
+    char SSLprogress[256];
 
     s = channel_s = sock;
     Handle = HTGetSSLHandle();
     SSL_set_fd(Handle, s);
+    HTSSLInitPRNG();
     status = SSL_connect(Handle);
 
     if (status <= 0) {
-        channel_s = -1;
-	CTRACE(tfp,
-"HTTP: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
-		   url, status);
+	unsigned long SSLerror;
+	channel_s = -1;
+	CTRACE((tfp,"HTNews: Unable to complete SSL handshake for '%s', SSL_connect=%d, SSL error stack dump follows\n",url, status));
+	SSL_load_error_strings();
+	while((SSLerror = ERR_get_error()) != 0) {
+	    CTRACE((tfp,"HTNews: SSL: %s\n",ERR_error_string(SSLerror,NULL)));
+	}
 	HTAlert("Unable to make secure connection to remote host.");
 	NEWS_NETCLOSE(s);
 	s = -1;
 	return HT_NOT_LOADED;
     }
-    _HTProgress(SSL_get_cipher(Handle));
+    sprintf(SSLprogress,"Secure %d-bit %s (%s) NNTP connection",
+	    SSL_get_cipher_bits(Handle,NULL),
+	    SSL_get_cipher_version(Handle),
+	    SSL_get_cipher(Handle));
+    _HTProgress(SSLprogress);
     status = HTLoadNews(arg, anAnchor, format_out, sink);
     channel_s = -1;
     return status;

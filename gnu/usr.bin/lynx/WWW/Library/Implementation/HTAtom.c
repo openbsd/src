@@ -36,7 +36,7 @@ PRIVATE void free_atoms NOPARAMS;
 /*
  *	Alternate hashing function.
  */
-#define HASH_FUNCTION(cp_hash) ((strlen(cp_hash) * (unsigned char)*cp_hash) % HASH_SIZE)
+#define HASH_FUNCTION(cp_hash) ((strlen(cp_hash) * UCH(*cp_hash)) % HASH_SIZE)
 
 PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
 {
@@ -67,7 +67,7 @@ PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
     */
     for (a = hash_table[hash]; a; a = a->next) {
 	if (0 == strcasecomp(a->name, string)) {
-    	    /* CTRACE(tfp, "HTAtom: Old atom %p for `%s'\n", a, string); */
+    	    /* CTRACE((tfp, "HTAtom: Old atom %p for `%s'\n", a, string)); */
 	    return a;				/* Found: return it */
 	}
     }
@@ -84,7 +84,7 @@ PUBLIC HTAtom * HTAtom_for ARGS1(CONST char *, string)
     a->next = hash_table[hash];		/* Put onto the head of list */
     hash_table[hash] = a;
 #ifdef NOT_DEFINED
-    CTRACE(tfp, "HTAtom: New atom %p for `%s'\n", a, string);
+    CTRACE((tfp, "HTAtom: New atom %p for `%s'\n", a, string));
 #endif /* NOT_DEFINED */
     return a;
 }

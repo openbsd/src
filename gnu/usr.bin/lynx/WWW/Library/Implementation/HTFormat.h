@@ -48,6 +48,14 @@ typedef HTAtom * HTFormat;
  */
 #define WWW_PRESENT HTAtom_for("www/present")   /* The user's perception */
 
+#define WWW_DEBUG       HTAtom_for("www/debug")
+/*
+
+   WWW_DEBUG represents the user's perception of debug information, for example sent as a
+   HTML document in a HTTP redirection message.
+
+ */
+
 /*
 
    The message/rfc822 format means a MIME message or a plain text message with no MIME
@@ -55,6 +63,11 @@ typedef HTAtom * HTFormat;
 
  */
 #define WWW_MIME HTAtom_for("www/mime")         /* A MIME message */
+
+/*
+  For parsing only the header. - kw
+  */
+#define WWW_MIME_HEAD   HTAtom_for("message/x-rfc822-head")
 
 /*
 
@@ -137,7 +150,7 @@ typedef HTAtom* HTEncoding;
 The HTPresentation and HTConverter types
 
    This HTPresentation structure represents a possible conversion algorithm from one
-   format to annother.  It includes a pointer to a conversion routine.  The conversion
+   format to another.  It includes a pointer to a conversion routine.  The conversion
    routine returns a stream to which data should be fed. See also HTStreamStack which
    scans the list of registered converters and calls one.  See the initialisation module
    for a list of conversion routines.
@@ -151,14 +164,15 @@ typedef HTStream * HTConverter PARAMS((
         HTStream *              sink));
 
 struct _HTPresentation {
-        HTAtom	*	rep;            /* representation name atmoized */
+        HTAtom	*	rep;            /* representation name atomized */
         HTAtom	*	rep_out;        /* resulting representation */
-        HTConverter *	converter;  /* The routine to gen the stream stack */
+        HTConverter *	converter;	/* routine to gen the stream stack */
         char *		command;        /* MIME-format string */
         float		quality;        /* Between 0 (bad) and 1 (good) */
         float		secs;
         float		secs_per_byte;
 	long int	maxbytes;
+	BOOL		get_accept;	/* list in "Accept:" for GET */
 };
 
 /*
@@ -171,7 +185,7 @@ extern HTList * HTPresentations;
 
 /*
 
-   The default presentation is used when no other is appriporate
+   The default presentation is used when no other is appropriate
 
  */
 extern  HTPresentation* default_presentation;
@@ -197,9 +211,9 @@ HTSetPresentation: Register a system command to present a format
 extern void HTSetPresentation PARAMS((
         CONST char *	representation,
         CONST char *	command,
-        float		quality,
-        float		secs,
-        float		secs_per_byte,
+        double		quality,
+        double		secs,
+        double		secs_per_byte,
 	long int	maxbytes
 ));
 
@@ -259,6 +273,12 @@ extern void HTReorderPresentation PARAMS((
         HTFormat                format_out));
 
 /*
+ * Setup 'get_accept' flag to denote presentations that are not redundant,
+ * and will be listed in "Accept:" header.
+ */
+extern void HTFilterPresentations NOPARAMS;
+
+/*
 
 HTStackValue: Find the cost of a filter stack
 
@@ -282,7 +302,7 @@ extern float HTStackValue PARAMS((
         float                   initial_value,
         long int                length));
 
-#define NO_VALUE_FOUND  -1e20           /* returned if none found */
+#define NO_VALUE_FOUND  -1e20	/* returned if none found */
 
 /*	Display the page while transfer in progress
 **	-------------------------------------------

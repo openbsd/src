@@ -22,13 +22,22 @@
 #include <HTUtils.h>
 #endif
  
-typedef enum _HTRuleOp {
+typedef enum {
         HT_Invalid,
         HT_Map,
         HT_Pass,
         HT_Fail,
         HT_DefProt,
-        HT_Protect
+        HT_Protect,
+        HT_Progress,
+        HT_InfoMsg,
+        HT_UserMsg,
+        HT_Alert,
+        HT_AlwaysAlert,
+        HT_Redirect,
+        HT_RedirectPerm,
+        HT_PermitRedir,
+        HT_UseProxy
 } HTRuleOp;
 
 #ifndef NO_RULES
@@ -57,7 +66,14 @@ HTAddRule:  Add rule to the list
   pattern                points to 0-terminated string containing a single "*"
 
   equiv                  points to the equivalent string with * for the place where the
-                         text matched by * goes.
+                         text matched by * goes; or to other 2nd parameter
+                         meaning depends on op).			 
+
+  cond_op,               additional condition for applying rule; cond_op should
+  cond                   be either NULL (no additional condition), or one of
+                         the strings "if" or "unless"; if cond_op is not NULL,
+                         cond should point to a recognized condition keyword
+                         (as a string) such as "userspec", "redirected".
 
   ON EXIT,
 
@@ -68,7 +84,12 @@ HTAddRule:  Add rule to the list
    large.
 
  */
-extern int HTAddRule PARAMS((HTRuleOp op, CONST char * pattern, CONST char * equiv));
+extern int HTAddRule PARAMS((
+    HTRuleOp op,
+    CONST char * pattern,
+    CONST char * equiv,
+    CONST char * cond_op,
+    CONST char * cond));
 
 
 /*

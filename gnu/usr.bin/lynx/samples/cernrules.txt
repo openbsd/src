@@ -10,10 +10,29 @@
 #
 # Syntax:
 # =======
+# Summary of common forms:
+#
+#   Fail           URL1
+#   Map            URL1  URL2      [CONDITION]
+#   Pass           URL1  [URL2]    [CONDITION]
+#   Redirect       URL1  URL2      [CONDITION]
+#   RedirectPerm   URL1  URL2      [CONDITION]
+#   UseProxy       URL1  PROXYURL  [CONDITION]
+#   UseProxy       URL1  "none"    [CONDITION]
+#
+#   Alert          URL1  MESSAGE   [CONDITION]
+#   AlwaysAlert    URL1  MESSAGE   [CONDITION]
+#   UserMsg        URL1  MESSAGE   [CONDITION]
+#   InfoMsg        URL1  MESSAGE   [CONDITION]
+#   Progress       URL1  MESSAGE   [CONDITION]
+#
 # As you may have guessed, comments are introduced by a '#' character.
 # Rules have the general form
-#   Operator  Operand1  [Operand2]
-# with words separated by whitespace.
+#   Operator  Operand1  [Operand2]  [CONDITION]
+# with words separated by whitespace.  Words containing space can be quoted
+# with "double quotes".  Although normally this should not be necessary
+# necessary for URLs, it has to be used for MESSAGE Operands in Alert etc.
+# See below for an explanation of the optional CONDITION.
 #
 # Recognized operators are
 #
@@ -21,18 +40,95 @@
 # Reject access to this URL, stop processing further rules.
 #
 #   Map   URL1  URL2
-# Change the URL to URL2, then continue processing.
+# Change the current URL to URL2, then continue processing.
 #
 #   Pass  URL1  [URL2]
 # Accept this URL and stop processing further rules; if URL2
 # is given, apply this as the last mapping.
+# See the next item for reasons why you generally don't want to "pass"
+# a changed URL.
 #
-# Rules are processed sequentially first to last, a rule applies
-# if the current URL (for the resource the user is trying to access)
-# matches URL1.  case-sensitive (!) string comparison is used, in addition
-# URL1 can contain one '*' which is interpreted as a wildcard matching
-# 0 or more characters.  So if for example
-# "http://example.com/dir/doc.html" is requested, it would matches any of
+#   RedirectTemp       URL1  URL2
+#   RedirectPerm       URL1  URL2
+#   Redirect [STATUS]  URL1  URL2
+# Stop processing further rules and redirect to URL2, just as if lynx had
+# received a HTTP redirection with URL2 as the new location.  This means that
+# URL2 is subject to any applicable permission checking, if it passes a new
+# request will be issued (which may result in a new round of rules checking,
+# with a new "current URL") or the new URL might be taken from the cache, and,
+# after successful loading, lynx's idea of what the loaded document's URL is
+# will be fully updated.  All this does not happen if you just "pass" a changed
+# URL (or let it fall through), so this is generally the preferred way for
+# substituting URLs. 
+# If the RedirectPerm variant is used, or if the optional word is supplied and
+# is either "permanent" or "301", act as if lynx had received a permanent
+# redirection (with HTTP status 301).  In most cases this will not make a
+# noticeable difference.  Lynx may cache the location in a special way for 301
+# redirections, so that the redirection is followed immediately the next time
+# the same original URL is accessed, without re-checking of rules.  Therefore
+# the permanent variant should never be used if the desired outcome of rules
+# processing depends on variable conditions (see CONDITIONS below) or on
+# setting a special flag (see next item).
+#
+#   PermitRedirection  URL1
+# Mark following redirection as permitted, and continue processing.  Some
+# redirection locations are normally not allowed, because permitting them in a
+# response from an arbitrary remote server would open a security hole, and
+# others are not allowed if certain restrictions options are in effect.  Among
+# redirection locations normally always forbidden are lynxprog:  and lynxexec: 
+# schemes.  With "default" anonymous restrictions in effect, many URL schemes
+# are disallowed if the user would not be allowed to use them with 'g'oto. 
+# This rule allows to override the permission checking if rules processing ends
+# with a Redirect (including the RedirectPerm or RedirectTemp forms).  It is
+# ignored otherwise, in particular, it does not influence acceptance if rules
+# processing ends with a "Pass" and a real redirection is received in the
+# subsequent HTTP request.  If redirections are chained, it only applies to the
+# redirection that ends the same rules cycle.  Note that the new URL is still
+# subject to other permission checks that are not specific to redirections; but
+# using this rule may still weaken the expected effect of -anonymous,
+# -validate, -realm, and other restriction options, including TRUSTED_EXEC and
+# similar in lynx.cfg, so be careful where you redirect to if restrictions are
+# important!
+#
+#   UseProxy  URL1  PROXYURL
+# Stop processing further rules, and force access through the proxy given by
+# PROXYURL.  PROXYURL should have the same form as required for foo_proxy
+# environment variables and lynx.cfg options, i.e., (unless you are trying to
+# do something unusual) "http://some.proxy-server.dom:port/".  This rule
+# overrides any use of a proxy (or external gateway) that might otherwise apply
+# because of environment variables or lynx.cfg options, it also overrides any
+# "no_proxy" settings.
+#
+#   UseProxy  URL1  none
+# Mark request as NOT using any proxy (or external gateway), and continue
+# processing(!).  For a request marked this way, any subsequent UseProxy
+# rule with a PROXYURL will be ignored, and any use of a proxy (or external
+# gateway) that might otherwise apply because of environment variables or
+# lynx.cfg options will be overridden.  Note that the marking will not
+# survive a Redirect rule (since that will result, if successful, in a
+# new request).
+#
+#   Alert         URL1  MESSAGE
+#   AlwaysAlert   URL1  MESSAGE
+#   UserMsg       URL1  MESSAGE
+#   InfoMsg       URL1  MESSAGE
+#   Progress      URL1  MESSAGE
+# These produce various kinds of statusline messages, differing in whether
+# a pause is enforced and in its duration, immediately when the rule is
+# applied.  AlwaysAlert shows the message text even in non-interactive mode
+# (-dump, -source, etc.).  Rule processing continues after the message is
+# shown.  As usual, these rules only apply if URL1 matches.  MESSAGE is
+# the text to be displayed, it can contain one occurrence of "%s" which
+# will be replaced by the current URL, literal '%' characters should be
+# doubled as "%%".
+#
+# Rules are processed sequentially first to last for each request, a rule
+# applies if the current URL matches URL1.  The current URL is initally the
+# URL for the resource the user is trying to access, but may change as the
+# result of applied Map rules.  case-sensitive (!) string comparison is used,
+# in addition URL1 can contain one '*' which is interpreted as a wildcard
+# matching 0 or more characters.  So if for example
+# "http://example.com/dir/doc.html" is requested, it would match any of
 # the following:
 #   Pass  http:*
 #   Pass  http://example.com/*.html
@@ -56,14 +152,74 @@
 # not in the machine's native representation for filenames.
 #
 # Anyone with experience configuring the venerable CERN httpd server will
-# recognize the syntax - in fact, the code implementing rules goes back
-# to a common ancestor.  But note the differences: all URLs and URL-
+# recognize some of the syntax - in fact, the code implementing rules goes
+# back to a common ancestor.  But note the differences: all URLs and URL-
 # patterns here have to be given as absolute URLs, even for local files.
-# (Absolute URLs don't imply proxying - you cannot control that from here.)
+# (Absolute URLs don't imply proxying.)
+#
+# CONDITIONS
+# ----------
+# All rules mentioned can be followed by an optional CONDITION, which can
+# be used to further restrict when the rule should be applied (in addition
+# to the match on URL1).  A CONDITION takes one of the forms
+#   "if"     CONDITIONFLAG
+#   "unless" CONDITIONFLAG
+# and currently two condition flags are recognized:
+#   "userspecified"   (or abbreviated "userspec")
+#   "redirected"
+# To explain these, first some terms need to be defined.  A "request"
+# is...
+# 
+# A user action (like following a link, or entering a 'g'oto URL) can either be
+# rejected immediately (for example, because of restrictions in effect, or
+# because of invalid input), or can generate a "request".  For the purpose of
+# this discussion, a "request" is the sequence of processing done by lynx,
+# which might ultimately lead to an actual network request and loading and
+# display of data; a request can also result in rejection (for example, some
+# restrictions are checked at this stage), or in a redirection.  A redirection
+# in turn can be rejected (which makes the request fail), or can automatically
+# generate a new request.  A "request chain" is the sequence of one or more
+# requests triggered by the same user event that are chained together by
+# redirections.
+# For each request, some URL schemes are handled (or rejected) specially, see
+# Limitation 1 below, the others are passed to the generic access code.  Rules
+# processing occurs at the beginning of the generic access code, before a
+# request is dispatched to the scheme-specific protocol module (but after
+# checking whether the request can be satisfied by re-displaying an already
+# cached document).
+# With these definitions, the meaning of the possible CONDITIONFLAGS:
+# 
+#   if redirected
+# The rule applies if the current request results from a redirection;
+# whether that was a real HTTP redirection or one generated by a rule
+# in the previous request makes no difference.  In other words, the
+# condition is true if the current request is not the first one in the
+# request chain.
+#
+#   if userspecified
+# The rule applies if the initial URL of the request chain was specified
+# by the user.  Lynx marks a request as "user specified" for URLs that
+# come from 'g'oto prompts, as well as for following links in a bookmark
+# or Jump file and some other special (lynx-generated) pages that may
+# contain URLs that were typed in by the user.
+# Note that this is not a property of the request, but of the whole request
+# chain (based on where the first request's URL came from).  The current
+# URL may differ from what the user typed
+# - because of initial fixups, including conversion of Guess-URLs and file
+#   paths to full URLs,
+# - because of Map rules applied, and/or
+# - because of a previous redirection.
+# So to make reasonably sure a suspicious or potentially dangerous URL has
+# been entered by the user, i.e. is not a link or external redirection
+# location that cannot be trusted, a combination of "userspecified" and
+# "redirected" flags should be used, for example
+#   Fail URL1 unless userspecified
+#   Fail URL1 if redirected
+#   ...
 #
 # CAVEAT
 # ======
-# First, to squash any false expectations, and example for what NOT TO DO.
+# First, to squash any false expectations, an example for what NOT TO DO.
 # It might be expected that a rule like
 #   Fail  file://localhost/etc/passwd		# <- DON'T RELY ON THIS
 # could be used to prevent access to the file "/etc/passwd".  This might
@@ -105,15 +261,13 @@
 #
 # You could also direct access for a scheme to a brief text explaining
 # why it's not available:
-#   Map news:*   http://localhost/texts/newsserver-is-broken.html
-# (That text shouldn't contain any relative links, they would be
-# broken.)
+#   Redirect news:*   http://localhost/texts/newsserver-is-broken.html
 #
 # 2. Preventing accidental access
 # -------------------------------
 # If there is a page or site you don't want to access for whatever
 # reason (say there's a link to it that crashes Lynx [don't forget to
-# report a bug], or it that starts sending you a 5 Mb file you don't
+# report a bug], or if that starts sending you a 5 Mb file you don't
 # want, or you just don't like the people...), you can prevent yourself
 # from accidentally accessing it:
 #    Fail  http://bad.site.com/*
@@ -126,6 +280,8 @@
 # following kind of rule will alow you to navigate, invisibly accessing
 # the compressed files:
 #   Map file://localhost/somedir/*.html file://localhost/somedir/*.html.gz
+# or, perhaps better:
+#   Redirect file://localhost/somedir/*.html file://localhost/somedir/*.html.gz
 #
 # 4. Use local copies
 # -------------------
@@ -137,6 +293,12 @@
 # Or even combine this with compressing the files:
 #  Map http://remote.com/docs/*.html file://localhost/home/me/docs/*.html.gz
 #
+# Again, replacing the "Map" with "Redirect" is probably better - it will
+# allow you to see the _real_ location on the lynx INFO screen or in the
+# HISTORY list, will avoid duplicates in the cache if the same document is
+# loaded with two different URLs, and may allow you to 'e'dit the local
+# from within lynx if you feel like it.
+#
 # 5. Broken links etc.
 # --------------------
 # A user has moved from http://www.siteA.com/~jdoe to http://siteB.org/john,
@@ -147,10 +309,13 @@
 # which you're tired of seeing.  This will not fix your bookmarks, and
 # it will let you see the outdated URLs for longer (Limitation 3 below),
 # but for a quick fix:
-#   Map   http://www.siteA.com/~jdoe/*      http://siteB.org/john/*
-#   Map   http://www.provider.com/company/* http://www.company.com/*
-# But note that you are likely to create invalid links if not all documents
-# from a site are mapped (Limitation 3).
+#   Redirect   http://www.siteA.com/~jdoe/*      http://siteB.org/john/*
+#   Redirect   http://www.provider.com/company/* http://www.company.com/*
+#
+# You could use "Map" instead of "Redirect", but this would let you see the
+# outdated URLs for longer and even bookmark them, and you are likely to
+# create invalid links if not all documents from a site are mapped
+# (Limitation 3).
 #
 # 6. DNS troubles
 # ---------------
@@ -168,10 +333,202 @@
 #   Map   http://www.w3.org/*    http://www12.w3.org/*
 #
 # Note that this can break access to some name-based virtually hosted sites.
-
-
-# Limitations
-# ===========
+#
+# In this case use of "Map" is probably preferred over "Redirect", as long
+# as the URL on the left side contains the real and preferred hostname or
+# the problem is only temporary.
+#
+# 7. Avoid redirections
+# ---------------------
+# Some sites have a habit to provide links that don't go to the destination
+# directly but always force redirection via some intermediate URL.  The
+# delay imposed by this, especially for users with slower connections and
+# for overloaded servers, can be avoided if the intermediate URLs always
+# follow some simple pattern: we can then anticipate the redirect that will
+# inevitably follow and generate it internally.  For example,
+#   Redirect http://lwn.net/cgi-bin/vr/*    http://*
+#
+# Warning: The page authors may not like this circumvention.  Often the
+# redirection is wanted by them to track access, sometimes in connection
+# with cookies.  Some sites may employ mechanisms that defeat the shortcut.
+# It is your responsibility to decide whether use of this feature is
+# acceptable.  (But note that the same effect can be achieved anyway for
+# any link by editing the URL, e.g. with the ELGOTO ('E') key in Lynx, so
+# a shortcut like this does not create some new kind of intrusion.)
+#
+# 8. Detailed proxy selection
+# ---------------------------
+# Basic use for this one should be obvious, if you have a need for it.
+# It simply allows selecting use (or non-use) of proxies on a more detailed
+# level than the traditional <scheme>_proxy and no_proxy variables, as well
+# as using different proxies for different sites.
+# For example, to request access through an anonymizing proxy for all pages
+# on a "suspicious" site:
+#   UseProxy  http://suspicious.site/*  http://anonymyzing.proxy.dom/
+# (as long as all URLs really have a matching form, not some alternative
+# like <http://suspicious.site:80/> or <http://SuSpIcIoUs.site/>!)
+#
+# To access some site through a local squid proxy, running on the same host
+# as lynx, except for some image types (say because you rarely access images
+# with lynx anyway, and if you do, you don't want them cached by the proxy):
+#   UseProxy  http://some.site/*.gif  none
+#   UseProxy  http://some.site/*.jpg  none
+#   UseProxy  http://some.site/*      http://localhost:3128/
+# Note that order is important here.
+#
+# To exempt a local address from all proxying:
+#   UseProxy  http://local.site/*  none
+#
+# Note however that for some purposes the "no_proxy" setting may be better
+# suited than "UseProxy ... none", because of its different matching logic
+# (see comments in lynx.cfg).
+#
+# 9. Invent your own scheme
+# -------------------------
+# Suppose you want to teach lynx to handle a completely new URL scheme.
+# If what's required for the new scheme is already available in lynx in
+# _some_ way, this may be possible with some inventive use of rules.
+# As an example, let's assume you want to introduce a simple "man:" scheme
+# for showing manual pages, so (for a Unix-like system, at least) "man:lynx"
+# would display the same help information as the "man lynx" command and so
+# on (we ignore section numbers etc. for simplicity here).
+# First, since lynx doesn't know anything about a "man:" scheme, it will
+# normally reject any such URLs at an early stage.  However, a trick exists
+# to bypass that hurdle: define a man_proxy environment variable *outside of
+# lynx, before starting lynx* (it won't work in lynx.cfg), the actual value
+# is unimportant and won't actually be used.  For example, in your shell:
+#   export man_proxy=X
+#
+# If you already have some kind of HTTP-accessible man gateway available,
+# the task then probably just amounts to transforming the URL into the right
+# form.  For one such gateway (in this case, a CGI script running on the
+# local machine), the rule
+#   Redirect man:* http://localhost/cgi-bin/dwww?type=runman&location=*/
+# or, alternatively,
+#   UseProxy man:* none
+#   Map      man:* http://localhost/cgi-bin/dwww?type=runman&location=*/
+# does it, for other setups the right-hand side just has to be modified
+# appropriately.  The "UseProxy" is to make sure the bogus man_proxy gets
+# ignored.
+#
+# If no CGI-like access is available, you might want to invoke your system's
+# man command directly for a man: URL.  Here is some discussion of how this
+# could be done, and why ultimately you may not want to do it; this is also
+# an opportunity to show examples for how some of the rules and conditions
+# can be used that haven't been discussed in detail elsewhere.
+# Lynx provides the lynxexec: (and the similar lynxprog:) scheme for running
+# (nearly) arbitrary commands locally.  At the heart of employing it for
+# man: would be a rule like this:
+#   Redirect          man:*  "lynxexec:/usr/bin/man *"
+# (It is a peculiarity of this scheme that the literal space and quoting
+# are necessary here.  Also note that Map cannot be used here instead of
+# Redirect, since lynxexec, as a special kind of URL, needs to be handled
+# "early" in a request.)
+# Of course, execution of arbitrary commands is a potentially dangerous
+# thing.  lynxexec has to be specifically enabled at compile time and in
+# lynx.cfg (or with command line options), and there are various levels
+# of control, too much to go into here.  It is assumed in the following that
+# lynxexec has been enabled to the degree necessary (allow /usr/bin/man
+# execution) but hopefully not too much.
+# What needs to be prevented is that allowing local execution of the man
+# command might unintentionally open up unwanted execution of other commands,
+# possibly by some trick that could be exploited.  For example, redirecting
+# man:* as above, the URL "man:lynx;rm -r *" could result in the command
+# "man lynx;rm -r *" executed by the system, with obvious disastrous results.
+# (This particular example won't actually work, for several reasons; but
+# for the purpose of discussion let's assume it did, there may be similar
+# ones that do.)
+# Because of such dangers, redirection to a lynxexec: is normally never
+# accepted by lynx.  We need at least a PermitRedirection rule to override
+# this protective limitation:
+#   PermitRedirection man:*
+#   Redirect          man:*  "lynxexec:/usr/bin/man *"
+# But now we have potentially opened up local execution more than is
+# acceptable via the man: scheme, so this needs to be examined.
+# There are two aspects to security here: (1) restricting the user, and (2)
+# protecting the user.  The first could also be phrased as protecting the
+# system from the user; the second as preventing lynx (and the system) from
+# doing things the user doesn't really want.  Aspect (1) is very important
+# for setups providing anonymous guest accounts and similarly restricted
+# environments.  (Otherwise shell access is normally allowed, and trying to
+# protect the system in lynx would be rather pointless.)  As far as access
+# to some URLs is concerned, the difference can be characterized in terms of
+# which sources  of URLs are trusted enough to allow access: for (1), only
+# links occurring in a limited number of documents are trusted enough for
+# some (or all) URLs, user input at 'g'oto prompts and the like is not (if
+# not completely disabled).  For (2) and assuming a user with normal shell
+# privileges, the user may be trusted enough to accept any URL explicitly
+# entered, but URLs from arbitrary external sources are not - someone might
+# try to use them to trick the user (by following an innocent-looking link)
+# or lynx (by following a redirection) into doing something undesirable.
+#
+# In the following we are concerned with (2); it is assumed that providers
+# of anonymous accounts would not want to follow this path, and would have
+# no need for additional schemes that imply local execution anyway.  (For
+# one thing, with the man example they would have to carefully check that
+# users cannot break out of the man command to a local shell prompt.)
+#
+# Getting back to the example, it was already mentioned that lynx does not
+# allow redirections to lynxexec.  In fact this continues to be disallowed
+# for real redirection received from HTTP servers.  But we have introduced
+# a new man: scheme, and the lynx code that does the redirection checking
+# doesn't know anything about special considerations for man: URLs, so
+# an external HTTP server might send a redirection message with "Location:
+# man:<something>", which lynx would allow, and which would in turn be
+# redirected by our rule to "lynxexec:/usr/bin/man <something>".  Unless
+# we are 100% sure that either this can never happen or that the lynxexec
+# URL resulting from this can have no harmful effect, this needs to be
+# prevented.  It can be done by checking for the "redirected" condition,
+# either by putting something like (the first line is of course optional)
+#   Alert  man:*  "Redirection to man: not allowed" if redirected
+#   Fail   man:*                                    if redirected
+# somewhere before the Redirect rule, or, reversing the logic, by adding
+# a condition to the redirection rules, i.e. they become
+#   PermitRedirection man:*                             unless redirected
+#   Redirect          man:*  "lynxexec:/usr/bin/man *"  unless redirected
+# (actually, putting the condition on either one of the rules would be
+# sufficient).  The second variant assumes that the attempted access to
+# man: via redirection will ultimately fail because there is no other way
+# to handle such URLs.
+#
+# The above should take care of rejecting man: URLs from redirections, but
+# what about regular links in HTML (like <A HREF="man:...">)?  As long as
+# it can be assumed that the user will always inspect each and every link
+# before following it, and never follow a link that can have harmful effect,
+# no further restrictions are necessary.  But this is a very big assumption,
+# unrealistic except perhaps in some single-user setups where the user is
+# is identical with the rule writer.  So normally most links have to be
+# regarded as suspect, and only URLs entered by the user can be accepted:
+#   Alert  man:*  "Redirection to man: not allowed" if redirected
+#   Fail   man:*                                    if redirected
+#   Alert  man:*  "Link to man: not allowed"        unless userspecified
+#   Fail   man:*                                    unless userspecified
+#
+# With these restrictions we have limited the ways our new man: scheme can
+# be used rather severely, to the point where its usefulness is questionable.
+# In addition to 'g'oto prompts, it may work in Jump files; also, should
+# links to man:<something> appear in HTML text, the user could retype them
+# manually or use the ELGOTO ('E') command with some trivial editing (like
+# adding a space) to "confirm" the URL.  Even if the precautions outlined
+# above are followed: THIS TEXT DOES NOT IMPLY ANY PROMISE THAT, BY FOLLOWING
+# THE EXAMPLES, LYNX WILL BE SAFE.  On the other hand, some of the precautions
+# *may* not be necessary: it is possible that careful use of TRUSTED_EXEC
+# options in lynx.cfg could offer enough protection while making the new
+# scheme more useful.
+#
+# If all this seems a bit too scary, that's intentional; it should be noted
+# that these considerations are not in general necessary for "harmless" URL
+# schemes, but appropriate for this "extreme" example.  One last remark
+# regarding the hypothetical man scheme: instead of implementing it through
+# "lynxexec:" or "lynxprog:", it would be somewhat safer to use "lynxcgi:"
+# instead if it is supported.  A simple lynxcgi script would have to write
+# the man page to stdout (either converted to text/html or as plain text,
+# preceded by an appropriate Content-Type header line), and all necessary
+# checking for special shell characters would be done within the script -
+# lynx does not use the system() function to run the script.
+#
+# Other Limitations
+# =================
 # First, see CAVEAT above.  There are other limitations:
 #
 # 1. Applicable URL schemes
@@ -179,11 +536,15 @@
 # Rules processing does not apply to all URL schemes.  Some are
 # handled differently from the generic access code, therefore rules
 # for such URLs will never be "seen".  This limitation applies at
-# least to lynxexec:, lynxprog:, mailto:, and LYNXHIST: URLs.
+# least to lynxexec:, lynxprog:, mailto:, LYNXHIST:, LYNXMESSAGES:,
+# LYNXCFG:, and LYNXCOMPILEOPTS: URLs.  You shouldn't be tempted
+# to try to redirect most of these schemes anyway, but this also
+# makes it impossible to disable them with "Fail" rules.
 #
 # Also, a scheme has to be known to Lynx in order to get as far as
 # applying rules - you cannot just define your own new foobar: scheme
-# and then map it to something here.
+# and then map it to something here, but see Application 9, above,
+# for a workaround.
 #
 # 2. No re-checking
 # -----------------
@@ -193,6 +554,8 @@
 # it allows specific exceptions.  Of course it means that users for
 # whom any restrictions must be enforced cannot have write access to a
 # personal rules file, but that should be obvious anyway!
+# This limitation does not applies if "Redirect" is used, in that case
+# the new URL will always be re-examined.
 #
 # 3. Mappings are invisible
 # -------------------------
@@ -209,6 +572,10 @@
 # since they are taken to be relative to the "Document URL" (if no BASE tag
 # is present) when the HTML is parsed.
 #
+# This limitation does not apply if "Redirect" is used - the new location
+# will be visible to the user, and will be used by lynx for resolving
+# relative URLs within the document.
+#
 # 4. Interaction with proxying
 # ----------------------------
 # Rules processing is done after most other access checks, but before
@@ -224,3 +591,50 @@
 # don't do that"; in some cases setting the no_proxy variable will help.
 # Example 3 happens to work nicely if there is a http_proxy but no
 # ftp_proxy.
+#
+# This limitation does not come into play if a "UseProxy" rule is applied,
+# in either of its two forms: with a PROXYURL, proxying is fully under
+# the control of the rules author, and with "none", subsequent proxy
+# and gateway checking is completely disabled.  It is therefore a good
+# idea to combine any "Map" and "Pass" rules that might result in passing
+# the changed URL with explicit "UseProxy" rules, if the rules file is
+# expected to be used together with proxying; or else always use "Redirect"
+# instead of simple passing.
+#
+# 5. Case-sensitive matching
+# --------------------------
+# The matching logic is generic string-based.  It doesn't know anything
+# about URL syntax, and so it cannot know in which parts of a URL case
+# matters and where it doesn't.  As a result, all comparisons are case-
+# sensitive.  If (a limited number of) case variations of a URL need
+# to be dealt with, several rules can be used instead of one.
+# In particular, this makes "UseProxy ... none" in some ways more limited
+# than a no_proxy setting.
+#
+# 6. Redirection differences
+# --------------------------
+# For some URLs lynx does never check after a request whether a redirection
+# occurs; that makes the "Redirect" rule useless for such URLs (in addition
+# to those mentioned under limitation 1.).  Some of them are some gopher
+# types, telnet: and similar in most situations, newspost: and similar,
+# lynxcgi:, and some other private types.  Trying to redirect these will
+# make access fail.  You probable don't want to change such URLs anyway,
+# but if you feel you must, try using "Map" and "Pass" instead.
+#
+# The -noredir command line option only applies for real HTTP redirection
+# responses, Redirect rules are still applied.  Also for certain other
+# command line options (-mime_header, -head) and command keys (HEAD) lynx
+# shows the redirection message (or part of it) in case of a real HTTP
+# redirection, instead of following the redirection.  Here, too, a Redirect
+# rule remains effective (there is no redirection message to show, after all).
+#
+# 7. URLs required
+# ----------------
+# Full absolute URLs (modulo possible "*" matching wildcards) are required
+# in rules.  Strings like "www.somewhere.com" or "/some/dir/some.file" or
+# "www.somewhere.com/some/dir/some.file" are not URLs.  Lynx may accept
+# them as user input, as abbreviated forms for URLs; but by the time the
+# rules get checked, those have been converted to full URLs, if they can
+# be recognized.  This also means that rules cannot influence which strings
+# typed at a 'g'oto prompt are recognized for URLs - rules processing kicks
+# in later.

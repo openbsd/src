@@ -1,5 +1,5 @@
-/* Load needed message catalogs
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Load needed message catalogs.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #include <fcntl.h>
@@ -35,8 +35,8 @@
 # include <sys/mman.h>
 #endif
 
-#include <gettext.h>
-#include <gettextP.h>
+#include "gettext.h"
+#include "gettextP.h"
 
 /* @@ end of prolog @@ */
 
@@ -44,7 +44,6 @@
 /* Rename the non ISO C functions.  This is required by the standard
    because some ISO C functions will require linking with this object
    file and the name space must not be polluted.  */
-# define fstat  __fstat
 # define open   __open
 # define close  __close
 # define read   __read
@@ -61,10 +60,12 @@ int _nl_msg_cat_cntr = 0;
 /* Load the message catalogs specified by FILENAME.  If it is no valid
    message catalog do nothing.  */
 void
+internal_function
 _nl_load_domain (domain_file)
      struct loaded_l10nfile *domain_file;
 {
   int fd;
+  size_t size;
   struct stat st;
   struct mo_file_header *data = (struct mo_file_header *) -1;
 #if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
@@ -90,7 +91,8 @@ _nl_load_domain (domain_file)
 
   /* We must know about the size of the file.  */
   if (fstat (fd, &st) != 0
-      && st.st_size < (off_t) sizeof (struct mo_file_header))
+      || (size = (size_t) st.st_size) != st.st_size
+      || size < sizeof (struct mo_file_header))
     {
       /* Something went wrong.  */
       close (fd);
@@ -101,7 +103,7 @@ _nl_load_domain (domain_file)
     || defined _LIBC
   /* Now we are ready to load the file.  If mmap() is available we try
      this first.  If not available or it failed we try to load it.  */
-  data = (struct mo_file_header *) mmap (NULL, st.st_size, PROT_READ,
+  data = (struct mo_file_header *) mmap (NULL, size, PROT_READ,
 					 MAP_PRIVATE, fd, 0);
 
   if (data != (struct mo_file_header *) -1)
@@ -112,18 +114,18 @@ _nl_load_domain (domain_file)
     }
 #endif
 
-  /* If the data is not yet available (i.e., mmap'ed) we try to load
+  /* If the data is not yet available (i.e. mmap'ed) we try to load
      it manually.  */
   if (data == (struct mo_file_header *) -1)
     {
-      off_t to_read;
+      size_t to_read;
       char *read_ptr;
 
-      data = (struct mo_file_header *) malloc (st.st_size);
+      data = (struct mo_file_header *) malloc (size);
       if (data == NULL)
 	return;
 
-      to_read = st.st_size;
+      to_read = size;
       read_ptr = (char *) data;
       do
 	{
@@ -150,7 +152,7 @@ _nl_load_domain (domain_file)
 #if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
     || defined _LIBC
       if (use_mmap)
-	munmap ((caddr_t) data, st.st_size);
+	munmap ((caddr_t) data, size);
       else
 #endif
 	free (data);
@@ -164,6 +166,11 @@ _nl_load_domain (domain_file)
 
   domain = (struct loaded_domain *) domain_file->data;
   domain->data = (char *) data;
+#if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
+    || defined _LIBC
+  domain->use_mmap = use_mmap;
+#endif
+  domain->mmap_size = size;
   domain->must_swap = data->magic != _MAGIC;
 
   /* Fill in the information about the available tables.  */
@@ -184,7 +191,7 @@ _nl_load_domain (domain_file)
 #if (defined HAVE_MMAP && defined HAVE_MUNMAP && !defined DISALLOW_MMAP) \
     || defined _LIBC
       if (use_mmap)
-	munmap ((caddr_t) data, st.st_size);
+	munmap ((caddr_t) data, size);
       else
 #endif
 	free (data);
@@ -197,3 +204,19 @@ _nl_load_domain (domain_file)
      translations invalid.  */
   ++_nl_msg_cat_cntr;
 }
+
+
+#ifdef _LIBC
+void
+internal_function
+_nl_unload_domain (domain)
+     struct loaded_domain *domain;
+{
+  if (domain->use_mmap)
+    munmap ((caddr_t) domain->data, domain->mmap_size);
+  else
+    free ((void *) domain->data);
+
+  free (domain);
+}
+#endif

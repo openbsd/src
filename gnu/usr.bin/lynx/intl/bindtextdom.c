@@ -1,5 +1,5 @@
 /* Implementation of the bindtextdomain(3) function
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #if defined STDC_HEADERS || defined _LIBC
@@ -41,10 +41,10 @@ void free ();
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include <libgettext.h>
+# include "libgettext.h"
 #endif
-#include <gettext.h>
-#include <gettextP.h>
+#include "gettext.h"
+#include "gettextP.h"
 
 /* @@ end of prolog @@ */
 
@@ -61,7 +61,9 @@ extern struct binding *_nl_domain_bindings;
    prefix.  So we have to make a difference here.  */
 #ifdef _LIBC
 # define BINDTEXTDOMAIN __bindtextdomain
-# define strdup(str) __strdup (str)
+# ifndef strdup
+#  define strdup(str) __strdup (str)
+# endif
 #else
 # define BINDTEXTDOMAIN bindtextdomain__
 #endif
@@ -133,7 +135,9 @@ BINDTEXTDOMAIN (domainname, dirname)
   else
     {
       /* We have to create a new binding.  */
+#if !defined _LIBC && !defined HAVE_STRDUP
       size_t len;
+#endif
       struct binding *new_binding =
 	(struct binding *) malloc (sizeof (*new_binding));
 

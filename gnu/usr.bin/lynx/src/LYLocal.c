@@ -43,41 +43,39 @@
 #include <LYUpload.h>
 #include <LYLocal.h>
 #include <LYClean.h>
+#include <www_wait.h>
 
-#ifndef VMS
-#ifndef _WINDOWS
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#endif /*_WINDOWS */
-#endif /* VMS */
-
-#ifndef WEXITSTATUS
-# ifdef HAVE_TYPE_UNIONWAIT
-#  define	WEXITSTATUS(status)	(status.w_retcode)
-# else
-#  define	WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
-# endif
-#endif
-
-#ifndef WTERMSIG
-# ifdef HAVE_TYPE_UNIONWAIT
-#  define	WTERMSIG(status)	(status.w_termsig)
-# else
-#  define	WTERMSIG(status)	((status) & 0x7f)
-# endif
+#ifdef SUPPORT_CHDIR
+#include <LYMainLoop.h>
 #endif
 
 #include <LYLeaks.h>
 
-PRIVATE int LYExecv PARAMS((
-	char *		path,
-	char ** 	argv,
-	char *		msg));
+#undef USE_COMPRESS
+
+#ifdef __DJGPP__
+#define EXT_TAR_GZ ".tgz"
+#define EXT_TAR_Z  ".taz"
+#define EXT_Z      ".z"
+#else
+#define EXT_TAR_GZ ".tar.gz"
+#define EXT_TAR_Z  ".tar.Z"
+#define EXT_Z      ".Z"
+#endif
+
+#ifndef DIRED_MAXBUF
+#define DIRED_MAXBUF 512
+#endif
 
 #ifdef DIRED_SUPPORT
-PUBLIC char LYPermitFileURL[LY_MAXPATH] = "\0";
-PUBLIC char LYDiredFileURL[LY_MAXPATH] = "\0";
+
+#ifdef OK_INSTALL
+#ifdef FNAMES_8_3
+#define INSTALLDIRS_FILE "instdirs.htm"
+#else
+#define INSTALLDIRS_FILE ".installdirs.html"
+#endif /* FNAMES_8_3 */
+#endif /* OK_INSTALL */
 
 PRIVATE char *get_filename PARAMS((
 	char *		prompt,
@@ -85,19 +83,19 @@ PRIVATE char *get_filename PARAMS((
 	size_t		bufsize));
 
 #ifdef OK_PERMIT
-PRIVATE BOOLEAN permit_location PARAMS((
+PRIVATE int permit_location PARAMS((
 	char *		destpath,
 	char *		srcpath,
-	char ** 	newpath));
+	char **		newpath));
 #endif /* OK_PERMIT */
 
 PRIVATE char *render_item PARAMS((
 	CONST char *	s,
-	char *		path,
-	char *		dir,
+	CONST char *	path,
+	CONST char *	dir,
 	char *		buf,
 	int		bufsize,
-	BOOLEAN 	url_syntax));
+	BOOLEAN		url_syntax));
 
 PRIVATE struct dired_menu *menu_head = NULL;
 struct dired_menu {
@@ -118,23 +116,36 @@ struct dired_menu {
  *  configuration file via DIRED_MENU lines, then these default entries
  *  are discarded entirely.
  */
+#ifdef SUPPORT_CHDIR
+{ 0,		      "", "Change directory",
+		      "", "LYNXDIRED://CHDIR",			NULL },
+#endif
 { 0,		      "", "New File",
 "(in current directory)", "LYNXDIRED://NEW_FILE%d",		NULL },
 
 { 0,		      "", "New Directory",
 "(in current directory)", "LYNXDIRED://NEW_FOLDER%d",		NULL },
 
+#ifdef OK_INSTALL
 { DE_FILE,	      "", "Install",
-"(of current selection)", "LYNXDIRED://INSTALL_SRC%p",		NULL },
+"selected file to new location", "LYNXDIRED://INSTALL_SRC%p",	NULL },
+/* The following (installing a directory) doesn't work for me, at least
+   with the "install" from GNU fileutils 4.0.  I leave it in anyway, in
+   case one compiles with INSTALL_PATH / INSTALL_ARGS defined to some
+   other command for which it works (like a script, or maybe "cp -a"). - kw
+*/
 { DE_DIR,	      "", "Install",
-"(of current selection)", "LYNXDIRED://INSTALL_SRC%p",		NULL },
+"selected directory to new location", "LYNXDIRED://INSTALL_SRC%p",	NULL },
+#endif /* OK_INSTALL */
 
 { DE_FILE,	      "", "Modify File Name",
 "(of current selection)", "LYNXDIRED://MODIFY_NAME%p",		NULL },
 { DE_DIR,	      "", "Modify Directory Name",
 "(of current selection)", "LYNXDIRED://MODIFY_NAME%p",		NULL },
+#ifdef S_IFLNK
 { DE_SYMLINK,	      "", "Modify Name",
 "(of selected symbolic link)", "LYNXDIRED://MODIFY_NAME%p",	NULL },
+#endif  /* S_IFLNK */
 
 #ifdef OK_PERMIT
 { DE_FILE,	      "", "Modify File Permissions",
@@ -147,15 +158,19 @@ struct dired_menu {
 "(of selected file)"	, "LYNXDIRED://MODIFY_LOCATION%p",	NULL },
 { DE_DIR,	      "", "Change Location",
 "(of selected directory)", "LYNXDIRED://MODIFY_LOCATION%p",	NULL },
+#ifdef S_IFLNK
 { DE_SYMLINK,	      "", "Change Location",
 "(of selected symbolic link)", "LYNXDIRED://MODIFY_LOCATION%p", NULL },
+#endif /* S_IFLNK */
 
 { DE_FILE,	      "", "Remove File",
    "(current selection)", "LYNXDIRED://REMOVE_SINGLE%p",	NULL },
 { DE_DIR,	      "", "Remove Directory",
    "(current selection)", "LYNXDIRED://REMOVE_SINGLE%p",	NULL },
+#ifdef S_IFLNK
 { DE_SYMLINK,	      "", "Remove Symbolic Link",
    "(current selection)", "LYNXDIRED://REMOVE_SINGLE%p",	NULL },
+#endif /* S_IFLNK */
 
 #if defined(OK_UUDECODE) && !defined(ARCHIVE_ONLY)
 { DE_FILE,	      "", "UUDecode",
@@ -163,7 +178,7 @@ struct dired_menu {
 #endif /* OK_UUDECODE && !ARCHIVE_ONLY */
 
 #if defined(OK_TAR) && !defined(ARCHIVE_ONLY)
-{ DE_FILE,	".tar.Z", "Expand",
+{ DE_FILE,	EXT_TAR_Z, "Expand",
    "(current selection)", "LYNXDIRED://UNTAR_Z%p",		NULL },
 #endif /* OK_TAR && !ARCHIVE_ONLY */
 
@@ -176,7 +191,7 @@ struct dired_menu {
 #endif /* OK_TAR && OK_GZIP && !ARCHIVE_ONLY */
 
 #ifndef ARCHIVE_ONLY
-{ DE_FILE,	    ".Z", "Uncompress",
+{ DE_FILE,	   EXT_Z, "Uncompress",
    "(current selection)", "LYNXDIRED://DECOMPRESS%p",		NULL },
 #endif /* ARCHIVE_ONLY */
 
@@ -205,6 +220,11 @@ struct dired_menu {
       "(using GNU gzip)", "LYNXDIRED://TAR_GZ%p",		NULL },
 #endif /* OK_TAR && OK_GZIP */
 
+#if defined(OK_TAR) && defined(USE_COMPRESS)
+{ DE_DIR,	      "", "Tar and compress",
+      "(using compress)", "LYNXDIRED://TAR_Z%p",		NULL },
+#endif /* OK_TAR && USE_COMPRESS */
+
 #ifdef OK_ZIP
 { DE_DIR,	      "", "Package and compress",
 	   "(using zip)", "LYNXDIRED://ZIP%p",			NULL },
@@ -215,7 +235,7 @@ struct dired_menu {
 
 #ifdef OK_GZIP
 { DE_FILE,	      "", "Compress",
-	  "(using gzip)", "LYNXDIRED://GZIP%p", 		NULL },
+	  "(using gzip)", "LYNXDIRED://GZIP%p",			NULL },
 #endif /* OK_GZIP */
 
 #ifdef OK_ZIP
@@ -226,6 +246,11 @@ struct dired_menu {
 { DE_TAG,	      "", "Move all tagged items to another location.",
 		      "", "LYNXDIRED://MOVE_TAGGED%d",		NULL },
 
+#ifdef OK_INSTALL
+{ DE_TAG,	      "", "Install tagged files into another directory.",
+		      "", "LYNXDIRED://INSTALL_SRC%00",		NULL },
+#endif
+
 { DE_TAG,	      "", "Remove all tagged files and directories.",
 		      "", "LYNXDIRED://REMOVE_TAGGED",		NULL },
 
@@ -233,22 +258,24 @@ struct dired_menu {
 		      "", "LYNXDIRED://CLEAR_TAGGED",		NULL },
 
 { 0,		    NULL, NULL,
-		    NULL, NULL, 				NULL }
+		    NULL, NULL,					NULL }
 };
 
-PRIVATE BOOLEAN cannot_stat ARGS1(char *, name)
+PRIVATE BOOLEAN cannot_stat ARGS1(CONST char *, name)
 {
     char *tmpbuf = 0;
-    HTSprintf(&tmpbuf, gettext("Unable to get status of '%s'."), name);
+    HTSprintf0(&tmpbuf, gettext("Unable to get status of '%s'."), name);
     HTAlert(tmpbuf);
     FREE(tmpbuf);
     return FALSE;
 }
 
-PRIVATE BOOLEAN ok_stat ARGS2(char *, name, struct stat*, sb)
+#define OK_STAT(name, sb) (stat(name, sb) == 0)
+
+PRIVATE BOOLEAN ok_stat ARGS2(CONST char *, name, struct stat*, sb)
 {
-    CTRACE(tfp, "testing ok_stat(%s)\n", name);
-    if (stat(name, sb) < 0) {
+    CTRACE((tfp, "testing ok_stat(%s)\n", name));
+    if (!OK_STAT(name, sb)) {
 	return cannot_stat(name);
     }
     return TRUE;
@@ -257,7 +284,7 @@ PRIVATE BOOLEAN ok_stat ARGS2(char *, name, struct stat*, sb)
 #ifdef HAVE_LSTAT
 PRIVATE BOOLEAN ok_lstat ARGS2(char *, name, struct stat*, sb)
 {
-    CTRACE(tfp, "testing ok_lstat(%s)\n", name);
+    CTRACE((tfp, "testing ok_lstat(%s)\n", name));
     if (lstat(name, sb) < 0) {
 	return cannot_stat(name);
     }
@@ -277,34 +304,160 @@ PRIVATE BOOLEAN ok_file_or_dir ARGS1(struct stat*, sb)
     return TRUE;
 }
 
-PRIVATE BOOLEAN ok_localname ARGS2(char*, dst, char*, src)
+#ifdef OK_INSTALL		/* currently only used in local_install */
+PRIVATE BOOLEAN ok_localname ARGS2(char*, dst, CONST char*, src)
 {
-    char *s = HTfullURL_toFile(strip_trailing_slash(src));
     struct stat dir_info;
 
-    if (!ok_stat(s, &dir_info)
+    if (!ok_stat(src, &dir_info)
      || !ok_file_or_dir(&dir_info)) {
-	FREE(s);
 	return FALSE;
     }
-    strcpy(dst, s);
-    FREE(s);
+    if (strlen(src) >= DIRED_MAXBUF) {
+	CTRACE((tfp, "filename too long in ok_localname!\n"));
+	return FALSE;
+    }
+    strcpy(dst, src);
     return TRUE;
 }
+#endif /* OK_INSTALL */
 
+/*
+ *  Execute DIRED command, return -1 or 0 on failure, 1 success.
+ */
+PRIVATE int LYExecv ARGS3(
+	char *,		path,
+	char **,	argv,
+	char *,		msg)
+{
+    int rc = 0;
+#if defined(VMS)
+    CTRACE((tfp, "LYExecv:  Called inappropriately!\n"));
+#else
+#if defined(_WINDOWS)
+    if (!strcmp(path, TOUCH_PATH)) {
+#if defined(__BORLANDC__) || defined(__MINGW32__)
+	int fd = _creat(argv[1], S_IREAD | S_IWRITE);
+#else /* Visual C++ */
+	int fd = _creat(argv[1], _S_IREAD | _S_IWRITE);
+#endif
+	if (fd >= 0) {
+	    close(fd);
+	    return(1);
+	}
+    } else if (!strcmp(path, RM_PATH)) {
+	rc = remove(argv[2]);
+    } else {
+	CTRACE((tfp, "LYExecv:  Called inappropriately! (path=%s)\n", path));
+    }
+#else
+    int n;
+    char *tmpbuf = 0;
+#ifdef __DJGPP__
+    stop_curses();
+    HTSprintf0(&tmpbuf, "%s", path);
+    for (n = 1; argv[n] != 0; n++)
+	HTSprintf(&tmpbuf, " %s", argv[n]);
+    HTSprintf(&tmpbuf, "\n");
+    rc = LYSystem(tmpbuf) ? 0 : 1;
+#else
+    pid_t pid;
+#ifdef HAVE_TYPE_UNIONWAIT
+    union wait wstatus;
+#else
+    int wstatus;
+#endif
+
+    if (TRACE) {
+	CTRACE((tfp, "LYExecv path='%s'\n", path));
+	for (n = 0; argv[n] != 0; n++)
+	    CTRACE((tfp, "argv[%d] = '%s'\n", n, argv[n]));
+    }
+
+    rc = 1;		/* It will work */
+    stop_curses();
+    pid = fork();	/* fork and execute command */
+
+    switch (pid) {
+	case -1:
+	    HTSprintf0(&tmpbuf, gettext("Unable to %s due to system error!"), msg);
+	    rc = 0;
+	    break;	/* don't fall thru! - KW */
+
+	case 0:  /* child */
+#ifdef USE_EXECVP
+	    execvp(path, argv);	/* this uses our $PATH */
+#else
+	    execv(path, argv);
+#endif
+	    exit(EXIT_FAILURE);	/* execv failed, give wait() something to look at */
+	    /*NOTREACHED*/
+
+	default:  /* parent */
+#if !HAVE_WAITPID
+	    while (wait(&wstatus) != pid)
+		; /* do nothing */
+#else
+	    while (-1 == waitpid(pid, &wstatus, 0)) { /* wait for child */
+#ifdef EINTR
+		if (errno == EINTR)
+		    continue;
+#endif /* EINTR */
+#ifdef ERESTARTSYS
+		if (errno == ERESTARTSYS)
+		    continue;
+#endif /* ERESTARTSYS */
+		break;
+	    }
+#endif /* !HAVE_WAITPID */
+	    if (WEXITSTATUS(wstatus) != 0 ||
+		WTERMSIG(wstatus) > 0)	{ /* error return */
+		HTSprintf0(&tmpbuf, gettext("Probable failure to %s due to system error!"),
+				   msg);
+		rc = 0;
+	    }
+    }
+#endif /* __DJGPP__ */
+
+    if (rc == 0) {
+	/*
+	 *  Screen may have message from the failed execv'd command.
+	 *  Give user time to look at it before screen refresh.
+	 */
+	LYSleepAlert();
+    }
+    start_curses();
+    if (tmpbuf != 0) {
+	if (rc == 0)
+	    HTAlert(tmpbuf);
+	FREE(tmpbuf);
+    }
+
+#endif /* _WINDOWS */
+#endif /* VMS */
+    return(rc);
+}
 PRIVATE int move_file ARGS2(char *, source, char *, target)
 {
     int code;
+#ifdef WIN_EX	/* 1999/01/02 (Sat) 23:24:20 */
+    if ((code = rename(source, target)) != 0)
+	if ((code = LYCopyFile(source, target)) >= 0)
+	    code = remove(source);
+    if (code == 0)
+	code = 1;
+#else
     char *msg = 0;
     char *args[5];
 
-    HTSprintf(&msg, gettext("move %s to %s"), source, target);
+    HTSprintf0(&msg, gettext("move %s to %s"), source, target);
     args[0] = "mv";
     args[1] = source;
     args[2] = target;
     args[3] = (char *) 0;
     code = (LYExecv(MV_PATH, args, msg) <= 0) ? -1 : 1;
     FREE(msg);
+#endif
     return code;
 }
 
@@ -312,7 +465,7 @@ PRIVATE BOOLEAN not_already_exists ARGS1(char *, name)
 {
     struct stat dir_info;
 
-    if (stat(name, &dir_info) == -1) {
+    if (!OK_STAT(name, &dir_info)) {
 	if (errno != ENOENT) {
 	    cannot_stat(name);
 	} else {
@@ -328,10 +481,10 @@ PRIVATE BOOLEAN not_already_exists ARGS1(char *, name)
     return FALSE;
 }
 
-PRIVATE BOOLEAN dir_has_same_owner ARGS2(struct stat *, info, uid_t, owner)
+PRIVATE BOOLEAN dir_has_same_owner ARGS2(struct stat *, info, int, owner)
 {
     if (S_ISDIR(info->st_mode)) {
-	if (info->st_uid == owner) {
+	if ((int) info->st_uid == owner) {
 	    return TRUE;
 	} else {
 	    HTAlert(gettext("Destination has different owner!  Request denied."));
@@ -345,7 +498,7 @@ PRIVATE BOOLEAN dir_has_same_owner ARGS2(struct stat *, info, uid_t, owner)
 /*
  *  Remove all tagged files and directories.
  */
-PRIVATE BOOLEAN remove_tagged NOARGS
+PRIVATE int remove_tagged NOARGS
 {
     int ans;
     BOOL will_clear = TRUE;
@@ -360,7 +513,7 @@ PRIVATE BOOLEAN remove_tagged NOARGS
     if (HTList_isEmpty(tagged))  /* should never happen */
 	return 0;
 
-    ans = HTConfirm(gettext("Remove all tagged files and directories "));
+    ans = HTConfirm(gettext("Remove all tagged files and directories?"));
 
     count = 0;
     tag = tagged;
@@ -388,6 +541,7 @@ PRIVATE BOOLEAN remove_tagged NOARGS
 		    break;
 		}
 		++count;
+		FREE(testpath);
 	    }
 	}
     }
@@ -406,15 +560,15 @@ PRIVATE BOOLEAN remove_tagged NOARGS
  *  If a user has enough permissions to move a file somewhere, the same
  *   uid with Lynx & dired can do the same thing.
  */
-PRIVATE BOOLEAN modify_tagged ARGS1(
-	char *, 	testpath)
+PRIVATE int modify_tagged ARGS1(
+	char *,		testpath)
 {
     char *cp;
     dev_t dev;
     ino_t inode;
-    uid_t owner;
+    int owner;
     char tmpbuf[1024];
-    char *savepath = NULL;
+    char *savepath;
     char *srcpath = NULL;
     struct stat dir_info;
     int count = 0;
@@ -448,21 +602,28 @@ PRIVATE BOOLEAN modify_tagged ARGS1(
 	    cp = HTList_lastObject(tagged);
 	    testpath = NULL;	/* Won't be needed any more in this function,
 				   set to NULL as a flag. */
-	    if (!cp)	/* Last resort, should never happen. */
-		cp = "/";
 	}
 
 	if (testpath == NULL) {
 	    /*
 	     *	Get the directory containing the file or subdir.
 	     */
-	    cp = HTfullURL_toFile(strip_trailing_slash(cp));
-	    savepath = HTParse(".", cp, PARSE_PATH+PARSE_PUNCTUATION);
+	    if (cp) {
+		cp = strip_trailing_slash(cp);
+		cp = HTParse(".", cp, PARSE_PATH+PARSE_PUNCTUATION);
+		savepath = HTURLPath_toFile(cp, TRUE);
+		FREE(cp);
+	    } else {	/* Last resort, should never happen. */
+		savepath = HTURLPath_toFile(".", TRUE);
+	    }
 	} else {
-	    cp = HTfullURL_toFile(cp);
-	    StrAllocCopy(savepath, cp);
+	    if (!strncmp(cp, "file://localhost", 16)) {
+		cp += 16;
+	    } else if (!strncmp(cp, "file:", 5)) {
+		cp += 5;
+	    }
+	    savepath = HTURLPath_toFile(cp, TRUE);
 	}
-	FREE(cp);
 
 	if (!ok_stat(savepath, &dir_info)) {
 	    FREE(savepath);
@@ -490,7 +651,7 @@ PRIVATE BOOLEAN modify_tagged ARGS1(
 		FREE(cp1);
 		return 0;
 	    }
-	    strcpy(tmpbuf, cp1);
+	    LYstrncpy(tmpbuf, cp1, sizeof(tmpbuf)-1);
 	    FREE(cp1);
 	}
 
@@ -533,16 +694,14 @@ PRIVATE BOOLEAN modify_tagged ARGS1(
 	     *  Move all tagged items to the target location.
 	     */
 	    while ((cp = (char *)HTList_nextObject(tag)) != NULL) {
-		cp = HTfullURL_toFile(cp);
-		StrAllocCopy(srcpath, cp);
+		srcpath = HTfullURL_toFile(cp);
 
 		if (move_file(srcpath, savepath) < 0) {
-		    FREE(cp);
 		    if (count == 0)
 			count = -1;
 		    break;
 		}
-		FREE(cp);
+		FREE(srcpath);
 		++count;
 	    }
 	    clear_tags();
@@ -557,14 +716,14 @@ PRIVATE BOOLEAN modify_tagged ARGS1(
 /*
  *  Modify the name of the specified item.
  */
-PRIVATE BOOLEAN modify_name ARGS1(
-	char *, 	testpath)
+PRIVATE int modify_name ARGS1(
+	char *,		testpath)
 {
     char *cp;
-    char tmpbuf[512];
-    char newpath[512];
-    char savepath[512];
+    char tmpbuf[DIRED_MAXBUF];
+    char *newpath = NULL;
     struct stat dir_info;
+    int code = 0;
 
     /*
      *	Determine the status of the selected item.
@@ -588,40 +747,42 @@ PRIVATE BOOLEAN modify_name ARGS1(
 	/*
 	 *  Do not allow the user to also change the location at this time.
 	 */
-	if (strchr(tmpbuf, '/') != NULL) {
-	    HTAlert(gettext("Illegal character \"/\" found! Request ignored."));
-	} else if (strlen(tmpbuf) &&
-		   (cp = strrchr(testpath, '/')) != NULL) {
-	    strcpy(savepath,testpath);
-	    *(++cp) = '\0';
-	    strcpy(newpath,testpath);
-	    strcat(newpath,tmpbuf);
+	if (LYLastPathSep(tmpbuf) != 0) {
+	    HTAlert(gettext("Illegal character (path-separator) found! Request ignored."));
+	} else if (strlen(tmpbuf)) {
+	    if ((cp = LYLastPathSep(testpath)) != NULL)
+		HTSprintf0(&newpath, "%.*s%s", (cp - testpath + 1), testpath, tmpbuf);
+	    else
+		StrAllocCopy(newpath, tmpbuf);
 
 	    /*
 	     *	Make sure the destination does not already exist.
 	     */
 	    if (not_already_exists(newpath)) {
-		return move_file(savepath, newpath);
+		code = move_file(testpath, newpath);
 	    }
+	    FREE(newpath);
+
 	}
     }
-    return 0;
+    return code;
 }
 
 /*
  *  Change the location of a file or directory.
  */
-PRIVATE BOOLEAN modify_location ARGS1(
-	char *, 	testpath)
+PRIVATE int modify_location ARGS1(
+	char *,		testpath)
 {
     char *cp;
     dev_t dev;
     ino_t inode;
-    uid_t owner;
+    int owner;
     char tmpbuf[1024];
-    char newpath[512];
-    char savepath[512];
+    char *newpath = NULL;
+    char *savepath = NULL;
     struct stat dir_info;
+    int code = 0;
 
     /*
      *	Determine the status of the selected item.
@@ -645,28 +806,28 @@ PRIVATE BOOLEAN modify_location ARGS1(
     if (get_filename(cp, tmpbuf, sizeof(tmpbuf)) == NULL)
 	return 0;
     if (strlen(tmpbuf)) {
-	strcpy(savepath, testpath);
-	strcpy(newpath, testpath);
+	StrAllocCopy(savepath, testpath);
+	StrAllocCopy(newpath, testpath);
 
 	/*
 	 *  Allow ~/ references to the home directory.
 	 */
 	if (!strncmp(tmpbuf, "~/", 2)
 	 || !strcmp(tmpbuf,"~")) {
-	    strcpy(newpath, Home_Dir());
-	    strcat(newpath, (tmpbuf + 1));
-	    strcpy(tmpbuf, newpath);
+	    StrAllocCopy(newpath, Home_Dir());
+	    StrAllocCat(newpath, (tmpbuf + 1));
+	    LYstrncpy(tmpbuf, newpath, sizeof(tmpbuf)-1);
 	}
-	if (!LYIsPathSep(tmpbuf[0])) {
-	    if ((cp = strrchr(newpath,'/')) != NULL) {
-		*++cp = '\0';
-		strcat(newpath,tmpbuf);
-	    } else {
-		HTAlert(gettext("Unexpected failure - unable to find trailing \"/\""));
-		return 0;
-	    }
+	if (LYisAbsPath(tmpbuf)) {
+	    StrAllocCopy(newpath, tmpbuf);
+	} else if ((cp = LYLastPathSep(newpath)) != NULL) {
+	    *++cp = '\0';
+	    StrAllocCat(newpath, tmpbuf);
 	} else {
-	    strcpy(newpath,tmpbuf);
+	    HTAlert(gettext("Unexpected failure - unable to find trailing path separator"));
+	    FREE(newpath);
+	    FREE(savepath);
+	    return 0;
 	}
 
 	/*
@@ -676,41 +837,41 @@ PRIVATE BOOLEAN modify_location ARGS1(
 	inode = dir_info.st_ino;
 	owner = dir_info.st_uid;
 	if (!ok_stat(newpath, &dir_info)) {
-	    return 0;
+	    code = 0;
 	}
 
 	/*
 	 *  Make sure the source and target are not the same location.
 	 */
-	if (dev == dir_info.st_dev && inode == dir_info.st_ino) {
+	else if (dev == dir_info.st_dev && inode == dir_info.st_ino) {
 	    HTAlert(gettext("Source and destination are the same location!  Request ignored!"));
-	    return 0;
+	    code = 0;
+	} else if (dir_has_same_owner(&dir_info, owner)) {
+	    code = move_file(savepath,newpath);
 	}
-	if (dir_has_same_owner(&dir_info, owner)) {
-	    return move_file(savepath,newpath);
-	}
+	FREE(newpath);
+	FREE(savepath);
     }
-    return 0;
+    return code;
 }
 
 /*
  *  Modify name or location of a file or directory on localhost.
  */
-PUBLIC BOOLEAN local_modify ARGS2(
+PUBLIC int local_modify ARGS2(
 	document *,	doc,
 	char **,	newpath)
 {
-    int c, ans;
+    int ans;
     char *cp;
-    char testpath[512]; /* a bit ridiculous */
+    char testpath[DIRED_MAXBUF]; /* a bit ridiculous */
     int count;
 
     if (!HTList_isEmpty(tagged)) {
 	cp = HTpartURL_toFile(doc->address);
-	strcpy(testpath, cp);
-	FREE(cp);
 
-	count = modify_tagged(testpath);
+	count = modify_tagged(cp);
+	FREE(cp);
 
 	if (doc->link > (nlinks-count - 1))
 	    doc->link = (nlinks-count - 1);
@@ -732,14 +893,17 @@ PUBLIC BOOLEAN local_modify ARGS2(
 #ifdef OK_PERMIT
     _statusline(gettext("Modify name, location, or permission (n, l, or p): "));
 #else
-    _statusline(gettext("Modify name, or location (n or l): "));
+    _statusline(gettext("Modify name or location (n or l): "));
 #endif /* OK_PERMIT */
-    c = LYgetch();
-    ans = TOUPPER(c);
+    ans = LYgetch_single();
 
     if (strchr("NLP", ans) != NULL) {
 	cp = HTfullURL_toFile(links[doc->link].lname);
-	strcpy(testpath, cp);
+	if (strlen(cp) >= DIRED_MAXBUF) {
+	    FREE(cp);
+	    return 0;
+	}
+	LYstrncpy(testpath, cp, sizeof(testpath)-1);
 	FREE(cp);
 
 	if (ans == 'N') {
@@ -767,46 +931,46 @@ PUBLIC BOOLEAN local_modify ARGS2(
 /*
  *  Create a new empty file in the current directory.
  */
-PRIVATE BOOLEAN create_file ARGS1(
-	char *, 	current_location)
+PRIVATE int create_file ARGS1(
+	char *,		current_location)
 {
     int code = FALSE;
-    char tmpbuf[512];
-    char testpath[512];
+    char tmpbuf[DIRED_MAXBUF];
+    char *testpath = NULL;
     char *args[5];
     char *bad_chars = ".~/";
 
     if (get_filename(gettext("Enter name of file to create: "),
-		     tmpbuf, sizeof(tmpbuf)) == NULL) {
-	return code;
-    }
+		     tmpbuf, sizeof(tmpbuf)) != NULL) {
 
-    if (!no_dotfiles && show_dotfiles) {
-	bad_chars = "~/";
-    }
+	if (!no_dotfiles && show_dotfiles) {
+	    bad_chars = "~/";
+	}
 
-    if (strstr(tmpbuf, "//") != NULL) {
-	HTAlert(gettext("Illegal redirection \"//\" found! Request ignored."));
-    } else if (strlen(tmpbuf) && strchr(bad_chars, tmpbuf[0]) == NULL) {
-	strcpy(testpath,current_location);
-	LYAddPathSep0(testpath);
+	if (strstr(tmpbuf, "//") != NULL) {
+	    HTAlert(gettext("Illegal redirection \"//\" found! Request ignored."));
+	} else if (strlen(tmpbuf) && strchr(bad_chars, tmpbuf[0]) == NULL) {
+	    StrAllocCopy(testpath, current_location);
+	    LYAddPathSep(&testpath);
 
-	/*
-	 *  Append the target filename to the current location.
-	 */
-	strcat(testpath, tmpbuf);
+	    /*
+	     *  Append the target filename to the current location.
+	     */
+	    StrAllocCat(testpath, tmpbuf);
 
-	/*
-	 *  Make sure the target does not already exist
-	 */
-	if (not_already_exists(testpath)) {
-	    char *msg = 0;
-	    HTSprintf(&msg,gettext("create %s"),testpath);
-	    args[0] = "touch";
-	    args[1] = testpath;
-	    args[2] = (char *) 0;
-	    code = (LYExecv(TOUCH_PATH, args, msg) <= 0) ? -1 : 1;
-	    FREE(msg);
+	    /*
+	     *  Make sure the target does not already exist
+	     */
+	    if (not_already_exists(testpath)) {
+		char *msg = 0;
+		HTSprintf0(&msg,gettext("create %s"),testpath);
+		args[0] = "touch";
+		args[1] = testpath;
+		args[2] = (char *) 0;
+		code = (LYExecv(TOUCH_PATH, args, msg) <= 0) ? -1 : 1;
+		FREE(msg);
+	    }
+	    FREE(testpath);
 	}
     }
     return code;
@@ -815,43 +979,43 @@ PRIVATE BOOLEAN create_file ARGS1(
 /*
  *  Create a new directory in the current directory.
  */
-PRIVATE BOOLEAN create_directory ARGS1(
-	char *, 	current_location)
+PRIVATE int create_directory ARGS1(
+	char *,		current_location)
 {
     int code = FALSE;
-    char tmpbuf[512];
-    char testpath[512];
+    char tmpbuf[DIRED_MAXBUF];
+    char *testpath = NULL;
     char *args[5];
     char *bad_chars = ".~/";
 
     if (get_filename(gettext("Enter name for new directory: "),
-		     tmpbuf, sizeof(tmpbuf)) == NULL) {
-	return code;
-    }
+		     tmpbuf, sizeof(tmpbuf)) != NULL) {
 
-    if (!no_dotfiles && show_dotfiles) {
-	bad_chars = "~/";
-    }
+	if (!no_dotfiles && show_dotfiles) {
+	    bad_chars = "~/";
+	}
 
-    if (strstr(tmpbuf, "//") != NULL) {
-	HTAlert(gettext("Illegal redirection \"//\" found! Request ignored."));
-    } else if (strlen(tmpbuf) && strchr(bad_chars, tmpbuf[0]) == NULL) {
-	strcpy(testpath,current_location);
-	LYAddPathSep0(testpath);
+	if (strstr(tmpbuf, "//") != NULL) {
+	    HTAlert(gettext("Illegal redirection \"//\" found! Request ignored."));
+	} else if (strlen(tmpbuf) && strchr(bad_chars, tmpbuf[0]) == NULL) {
+	    StrAllocCopy(testpath, current_location);
+	    LYAddPathSep(&testpath);
 
-	strcat(testpath, tmpbuf);
+	    StrAllocCat(testpath, tmpbuf);
 
-	/*
-	 *  Make sure the target does not already exist.
-	 */
-	if (not_already_exists(testpath)) {
-	    char *msg = 0;
-	    HTSprintf(&msg,"make directory %s",testpath);
-	    args[0] = "mkdir";
-	    args[1] = testpath;
-	    args[2] = (char *) 0;
-	    code = (LYExecv(MKDIR_PATH, args, msg) <= 0) ? -1 : 1;
-	    FREE(msg);
+	    /*
+	     *  Make sure the target does not already exist.
+	     */
+	    if (not_already_exists(testpath)) {
+		char *msg = 0;
+		HTSprintf0(&msg,"make directory %s",testpath);
+		args[0] = "mkdir";
+		args[1] = testpath;
+		args[2] = (char *) 0;
+		code = (LYExecv(MKDIR_PATH, args, msg) <= 0) ? -1 : 1;
+		FREE(msg);
+	    }
+	    FREE(testpath);
 	}
     }
     return code;
@@ -860,20 +1024,23 @@ PRIVATE BOOLEAN create_directory ARGS1(
 /*
  *  Create a file or a directory at the current location.
  */
-PUBLIC BOOLEAN local_create ARGS1(
+PUBLIC int local_create ARGS1(
 	document *,	doc)
 {
-    int c, ans;
+    int ans;
     char *cp;
-    char testpath[512];
-
-    _statusline(gettext("Create file or directory (f or d): "));
-    c = LYgetch();
-    ans = TOUPPER(c);
+    char testpath[DIRED_MAXBUF];
 
     cp = HTfullURL_toFile(doc->address);
+    if (strlen(cp) >= DIRED_MAXBUF) {
+	FREE(cp);
+	return 0;
+    }
     strcpy(testpath,cp);
     FREE(cp);
+
+    _statusline(gettext("Create file or directory (f or d): "));
+    ans = LYgetch_single();
 
     if (ans == 'F') {
 	return(create_file(testpath));
@@ -887,8 +1054,8 @@ PUBLIC BOOLEAN local_create ARGS1(
 /*
  *  Remove a single file or directory.
  */
-PRIVATE BOOLEAN remove_single ARGS1(
-	char *, 	testpath)
+PRIVATE int remove_single ARGS1(
+	char *,		testpath)
 {
     int code = 0;
     char *cp;
@@ -903,7 +1070,7 @@ PRIVATE BOOLEAN remove_single ARGS1(
     /*
      *	Locate the filename portion of the path.
      */
-    if ((cp = strrchr(testpath, '/')) != NULL) {
+    if ((cp = LYLastPathSep(testpath)) != NULL) {
 	++cp;
     } else {
 	cp = testpath;
@@ -913,23 +1080,23 @@ PRIVATE BOOLEAN remove_single ARGS1(
 	/*** Course, it's probably broken for screen sizes other 80, too     ***/
 	if (strlen(cp) < 37) {
 	    HTSprintf0(&tmpbuf,
-		       gettext("Remove '%s' and all of its contents: "), cp);
+		       gettext("Remove '%s' and all of its contents?"), cp);
 	} else {
 	    HTSprintf0(&tmpbuf,
-		       gettext("Remove directory and all of its contents: "));
+		       gettext("Remove directory and all of its contents?"));
 	}
     } else if (S_ISREG(dir_info.st_mode)) {
 	if (strlen(cp) < 60) {
-	    HTSprintf0(&tmpbuf, gettext("Remove file '%s': "), cp);
+	    HTSprintf0(&tmpbuf, gettext("Remove file '%s'?"), cp);
 	} else {
-	    HTSprintf0(&tmpbuf, gettext("Remove file: "));
+	    HTSprintf0(&tmpbuf, gettext("Remove file?"));
 	}
 #ifdef S_IFLNK
     } else if (S_ISLNK(dir_info.st_mode)) {
 	if (strlen(cp) < 50) {
-	    HTSprintf0(&tmpbuf, gettext("Remove symbolic link '%s': "), cp);
+	    HTSprintf0(&tmpbuf, gettext("Remove symbolic link '%s'?"), cp);
 	} else {
-	    HTSprintf0(&tmpbuf, gettext("Remove symbolic link: "));
+	    HTSprintf0(&tmpbuf, gettext("Remove symbolic link?"));
 	}
 #endif
     } else {
@@ -953,11 +1120,11 @@ PRIVATE BOOLEAN remove_single ARGS1(
 /*
  *  Remove a file or a directory.
  */
-PUBLIC BOOLEAN local_remove ARGS1(
+PUBLIC int local_remove ARGS1(
 	document *,	doc)
 {
     char *cp, *tp;
-    char testpath[512];
+    char testpath[DIRED_MAXBUF];
     int count, i;
 
     if (!HTList_isEmpty(tagged)) {
@@ -973,6 +1140,10 @@ PUBLIC BOOLEAN local_remove ARGS1(
     cp = links[doc->link].lname;
     if (is_url(cp) == FILE_URL_TYPE) {
 	tp = HTfullURL_toFile(cp);
+	if (strlen(tp) >= DIRED_MAXBUF) {
+	    FREE(tp);
+	    return 0;
+	}
 	strcpy(testpath, tp);
 	FREE(tp);
 
@@ -989,35 +1160,30 @@ PUBLIC BOOLEAN local_remove ARGS1(
 }
 
 #ifdef OK_PERMIT
-/*
- *  Table of permission strings and chmod values.
- *  Makes the code a bit cleaner.
- */
-static struct {
-    CONST char *string_mode;	/* Key for  value below */
-    long permit_bits;		/* Value for chmod/whatever */
-} permissions[] = {
-    {"IRUSR", S_IRUSR},
-    {"IWUSR", S_IWUSR},
-    {"IXUSR", S_IXUSR},
-    {"IRGRP", S_IRGRP},
-    {"IWGRP", S_IWGRP},
-    {"IXGRP", S_IXGRP},
-    {"IROTH", S_IROTH},
-    {"IWOTH", S_IWOTH},
-    {"IXOTH", S_IXOTH},
-    {NULL, 0}			/* Don't include setuid and friends;
-				   use shell access for that. */
-};
 
 PRIVATE char LYValidPermitFile[LY_MAXPATH] = "\0";
+
+PRIVATE long permit_bits ARGS1(char *, string_mode)
+{
+    if (!strcmp(string_mode, "IRUSR")) return S_IRUSR;
+    if (!strcmp(string_mode, "IWUSR")) return S_IWUSR;
+    if (!strcmp(string_mode, "IXUSR")) return S_IXUSR;
+    if (!strcmp(string_mode, "IRGRP")) return S_IRGRP;
+    if (!strcmp(string_mode, "IWGRP")) return S_IWGRP;
+    if (!strcmp(string_mode, "IXGRP")) return S_IXGRP;
+    if (!strcmp(string_mode, "IROTH")) return S_IROTH;
+    if (!strcmp(string_mode, "IWOTH")) return S_IWOTH;
+    if (!strcmp(string_mode, "IXOTH")) return S_IXOTH;
+    /* Don't include setuid and friends; use shell access for that. */
+    return 0;
+}
 
 /*
  *  Handle DIRED permissions.
  */
-PRIVATE BOOLEAN permit_location ARGS3(
-	char *, 	destpath,
-	char *, 	srcpath,
+PRIVATE int permit_location ARGS3(
+	char *,		destpath,
+	char *,		srcpath,
 	char **,	newpath)
 {
 #ifndef UNIX
@@ -1035,22 +1201,19 @@ PRIVATE BOOLEAN permit_location ARGS3(
 	 *  Create form.
 	 */
 	FILE *fp0;
-	char local_src[LY_MAXPATH];
 	char * user_filename;
 	char * group_name;
 
-	cp = HTfullURL_toFile(strip_trailing_slash(srcpath));
-	strcpy(local_src, cp);
-	FREE(cp);
+	srcpath = strip_trailing_slash(srcpath);
 
 	/*
 	 *  A couple of sanity tests.
 	 */
-	if (!ok_lstat(local_src, &dir_info)
+	if (!ok_lstat(srcpath, &dir_info)
 	 || !ok_file_or_dir(&dir_info))
 	    return 0;
 
-	user_filename = LYPathLeaf(local_src);
+	user_filename = LYPathLeaf(srcpath);
 
 	LYRemoveTemp(tempfile);
 	if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
@@ -1062,11 +1225,11 @@ PRIVATE BOOLEAN permit_location ARGS3(
 	 * Make the tempfile a URL.
 	 */
 	LYLocalFileToURL(newpath, tempfile);
-	strcpy(LYPermitFileURL, *newpath);
+	LYRegisterUIPage(*newpath, UIP_PERMIT_OPTIONS);
 
 	group_name = HTAA_GidToName (dir_info.st_gid);
 	LYstrncpy(LYValidPermitFile,
-		  local_src,
+		  srcpath,
 		  (sizeof(LYValidPermitFile) - 1));
 
 	fprintf(fp0, "<Html><Head>\n<Title>%s</Title>\n</Head>\n<Body>\n",
@@ -1156,9 +1319,9 @@ PRIVATE BOOLEAN permit_location ARGS3(
 		HTAlert(INVALID_PERMIT_URL);
 	    else
 		fprintf(stderr, "%s\n", INVALID_PERMIT_URL);
-	    CTRACE(tfp, "permit_location: called for <%s>.\n",
+	    CTRACE((tfp, "permit_location: called for <%s>.\n",
 			(destpath ?
-			 destpath : "NULL URL pointer"));
+			 destpath : "NULL URL pointer")));
 	    return 0;
 	}
 	cp = destpath;
@@ -1171,10 +1334,14 @@ PRIVATE BOOLEAN permit_location ARGS3(
 	*cp++ = '\0';	/* Null terminate file name and
 			   start working on the masks. */
 
-	if ((destpath = HTfullURL_toFile(destpath)) == 0)
+	/* Will now operate only on filename part. */
+	if ((destpath = HTURLPath_toFile(destpath, TRUE)) == 0)
 		return(0);
-
-	strcpy(tmpdst, destpath);	/* operate only on filename */
+	if (strlen(destpath) >= LY_MAXPATH) {
+	    FREE(destpath);
+	    return(0);
+	}
+	strcpy(tmpdst, destpath);
 	FREE(destpath);
 	destpath = tmpdst;
 
@@ -1187,8 +1354,8 @@ PRIVATE BOOLEAN permit_location ARGS3(
 		HTAlert(INVALID_PERMIT_URL);
 	    else
 		fprintf(stderr, "%s\n", INVALID_PERMIT_URL);
-	    CTRACE(tfp, "permit_location: called for file '%s'.\n",
-			destpath);
+	    CTRACE((tfp, "permit_location: called for file '%s'.\n",
+			destpath));
 	    return 0;
 	}
 
@@ -1214,22 +1381,18 @@ PRIVATE BOOLEAN permit_location ARGS3(
 		*cr++ = '\0';
 	    }
 	    if (strncmp(cp, "mode=", 5) == 0) { /* Magic string. */
-		int i;
+		long mask = permit_bits(cp + 5);
 
-		for(i = 0; permissions[i].string_mode != NULL; i++) {
-		    if (strcmp(permissions[i].string_mode, cp+5) == 0) {
-			/*
-			 *  If restricted, only change eXecute
-			 *  permissions on directories.
-			 */
-			if (!no_change_exec_perms ||
-			    strchr(cp+5,'X') == NULL ||
-			    S_ISDIR(dir_info.st_mode))
-			    new_mode |= permissions[i].permit_bits;
-			break;
-		    }
-		}
-		if (permissions[i].string_mode == NULL) {
+		if (mask != 0) {
+		    /*
+		     *  If restricted, only change eXecute
+		     *  permissions on directories.
+		     */
+		    if (!no_change_exec_perms
+		     || strchr(cp+5, 'X') == NULL
+		     || S_ISDIR(dir_info.st_mode))
+			new_mode |= mask;
+		} else {
 		    HTAlert(gettext("Invalid mode format."));
 		    return 0;
 		}
@@ -1245,7 +1408,7 @@ PRIVATE BOOLEAN permit_location ARGS3(
 	/*
 	 *  Call chmod().
 	 */
-	HTSprintf(&tmpbuf, "chmod %.4o %s", (unsigned int)new_mode, destpath);
+	HTSprintf0(&tmpbuf, "chmod %.4o %s", (unsigned int)new_mode, destpath);
 	sprintf(amode, "%.4o", (unsigned int)new_mode);
 	args[0] = "chmod";
 	args[1] = amode;
@@ -1272,25 +1435,25 @@ PUBLIC void tagflag ARGS2(
 	int,		cur)
 {
     if (nlinks > 0) {
-	move(links[cur].ly, 2);
+	LYmove(links[cur].ly, 2);
 	stop_reverse();
 	if (flag == ON) {
-	    addch('+');
+	    LYaddch('+');
 	} else {
-	    addch(' ');
+	    LYaddch(' ');
 	}
 
 #if defined(FANCY_CURSES) || defined(USE_SLANG)
 	if (!LYShowCursor)
-	    move((LYlines - 1), (LYcols - 1)); /* get cursor out of the way */
+	    LYHideCursor(); /* get cursor out of the way */
 	else
 #endif /* FANCY CURSES || USE_SLANG */
 	    /*
 	     *	Never hide the cursor if there's no FANCY CURSES.
 	     */
-	    move(links[cur].ly, links[cur].lx);
+	    LYmove(links[cur].ly, links[cur].lx);
 
-	refresh();
+	LYrefresh();
     }
 }
 
@@ -1319,15 +1482,69 @@ PRIVATE char * DirectoryOf ARGS1(
 	char *,		pathname)
 {
     char *result = 0;
+    char *result1 = 0;
     char *leaf;
 
     StrAllocCopy(result, pathname);
     leaf = LYPathLeaf(result);
     if (leaf != result) {
 	*leaf = '\0';
-	LYTrimPathSep(result);
+	if (!LYisRootPath(result))
+	    LYTrimPathSep(result);
+	result1 = wwwName(result);
+	StrAllocCopy (result, result1);
     }
     return result;
+}
+
+#ifdef __DJGPP__
+/*
+ * Convert filenames to acceptable 8+3 names when necessary.  Make a copy of
+ * the parameter if we must modify it.
+ */
+PRIVATE char * LYonedot ARGS1(
+	char *,		line)
+{
+    char *dot;
+    static char line1[LY_MAXPATH];
+
+    if (pathconf (line, _PC_NAME_MAX) <= 12) {
+	LYstrncpy(line1, line, sizeof(line1)-1);
+	for (;;) {
+	    if ((dot = strrchr(line1, '.')) == 0
+	     || LYLastPathSep(dot) != 0) {
+		break;
+	    } else if (strlen(dot) == 1) {
+		*dot = 0;
+	    } else {
+		*dot = '_';
+	    }
+	}
+	return(line1);
+    }
+    return(line);
+}
+#else
+#define LYonedot(path) path
+#endif /*  __DJGPP__ */
+
+PRIVATE char * match_op ARGS2(
+	CONST char *,	prefix,
+	char *,		data)
+{
+    int len = strlen(prefix);
+
+    if (!strncmp("LYNXDIRED://", data, 12)
+     && !strncmp(prefix, data + 12, (unsigned)len)) {
+	len += 12;
+#if defined(DOSPATH) || defined(__EMX__)
+	if (data[len] == '/') {	/* this is normal */
+	    len++;
+	}
+#endif
+	return data + len;
+    }
+    return 0;
 }
 
 /*
@@ -1345,68 +1562,80 @@ PUBLIC int local_dired ARGS1(
 {
     char *line_url;    /* will point to doc's address, which is a URL */
     char *line = NULL; /* same as line_url, but HTUnEscaped, will be alloced */
+    char *arg = NULL; /* ...will point into line[] */
     char *tp = NULL;
     char *tmpbuf = NULL;
     char *buffer = NULL;
     char *dirname = NULL;
+    BOOL do_pop_doc = TRUE;
 
     line_url = doc->address;
-    CTRACE(tfp, "local_dired: called for <%s>.\n",
+    CTRACE((tfp, "local_dired: called for <%s>.\n",
 		(line_url ?
-		 line_url : gettext("NULL URL pointer")));
+		 line_url : gettext("NULL URL pointer"))));
     HTUnEscapeSome(line_url, "/");	/* don't mess too much with *doc */
 
     StrAllocCopy(line, line_url);
     HTUnEscape(line);	/* _file_ (not URL) syntax, for those functions
 			   that need it.  Don't forget to FREE it. */
-
-    if (!strncmp(line, "LYNXDIRED://NEW_FILE", 20)) {
-	if (create_file(&line[20]) > 0)
+    if ((arg = match_op("CHDIR", line)) != 0) {
+#ifdef SUPPORT_CHDIR
+	handle_LYK_CHDIR();
+	do_pop_doc = FALSE;
+#endif
+	arg = "blah";	/* do something to avoid cc's complaints */
+    } else if ((arg = match_op("NEW_FILE", line)) != 0) {
+	if (create_file(arg) > 0)
 	    LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://NEW_FOLDER", 22)) {
-	if (create_directory(&line[22]) > 0)
+    } else if ((arg = match_op("NEW_FOLDER", line)) != 0) {
+	if (create_directory(arg) > 0)
 	    LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://INSTALL_SRC", 23)) {
-	local_install(NULL, &line[23], &tp);
-	StrAllocCopy(doc->address, tp);
-	FREE(tp);
+#ifdef OK_INSTALL
+    } else if ((arg = match_op("INSTALL_SRC", line)) != 0) {
+	local_install(NULL, arg, &tp);
+	if (tp) {
+	    FREE(doc->address);
+	    doc->address = tp;
+	}
 	FREE(line);
 	return 0;
-    } else if (!strncmp(line, "LYNXDIRED://INSTALL_DEST", 24)) {
-	local_install(&line[24], NULL, &tp);
+    } else if ((arg = match_op("INSTALL_DEST", line)) != 0) {
+	local_install(arg, NULL, &tp);
 	LYpop(doc);
-    } else if (!strncmp(line, "LYNXDIRED://MODIFY_NAME", 23)) {
-	if (modify_name(&line[23]) > 0)
-	LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://MODIFY_LOCATION", 27)) {
-	if (modify_location(&line[27]) > 0)
+#endif /* OK_INSTALL */
+    } else if ((arg = match_op("MODIFY_NAME", line)) != 0) {
+	if (modify_name(arg) > 0)
 	    LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://MOVE_TAGGED", 23)) {
-	if (modify_tagged(&line_url[23]) > 0)
+    } else if ((arg = match_op("MODIFY_LOCATION", line)) != 0) {
+	if (modify_location(arg) > 0)
+	    LYforce_no_cache = TRUE;
+    } else if ((arg = match_op("MOVE_TAGGED", line_url)) != 0) {
+	if (modify_tagged(arg) > 0)
 	    LYforce_no_cache = TRUE;
 #ifdef OK_PERMIT
-    } else if (!strncmp(line, "LYNXDIRED://PERMIT_SRC", 22)) {
-	permit_location(NULL, &line[22], &tp);
-	if (tp)
+    } else if ((arg = match_op("PERMIT_SRC", line)) != 0) {
+	permit_location(NULL, arg, &tp);
+	if (tp) {
 	    /*
 	     *	One of the checks may have failed.
 	     */
-	    StrAllocCopy(doc->address, tp);
+	    FREE(doc->address);
+	    doc->address = tp;
+	}
 	FREE(line);
-	FREE(tp);
 	return 0;
-    } else if (!strncmp(line, "LYNXDIRED://PERMIT_LOCATION", 27)) {
-	permit_location(&line_url[27], NULL, &tp);
+    } else if ((arg = match_op("PERMIT_LOCATION", line_url)) != 0) {
+	permit_location(arg, NULL, &tp);
 #endif /* OK_PERMIT */
-    } else if (!strncmp(line, "LYNXDIRED://REMOVE_SINGLE", 25)) {
-	if (remove_single(&line[25]) > 0)
+    } else if ((arg = match_op("REMOVE_SINGLE", line)) != 0) {
+	if (remove_single(arg) > 0)
 	    LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://REMOVE_TAGGED", 25)) {
+    } else if ((arg = match_op("REMOVE_TAGGED", line)) != 0) {
 	if (remove_tagged())
 	    LYforce_no_cache = TRUE;
-    } else if (!strncmp(line, "LYNXDIRED://CLEAR_TAGGED", 24)) {
+    } else if ((arg = match_op("CLEAR_TAGGED", line)) != 0) {
 	clear_tags();
-    } else if (!strncmp(line, "LYNXDIRED://UPLOAD", 18)) {
+    } else if ((arg = match_op("UPLOAD", line)) != 0) {
 	/*
 	 *  They're written by LYUpload_options() HTUnEscaped;
 	 *  don't want to change that for now... so pass through
@@ -1417,7 +1646,7 @@ PUBLIC int local_dired ARGS1(
 	    LYforce_no_cache = TRUE;
     } else {
 	LYTrimPathSep(line);
-	if (strrchr(line, '/') == NULL) {
+	if (LYLastPathSep(line) == NULL) {
 	    FREE(line);
 	    return 0;
 	}
@@ -1426,17 +1655,17 @@ PUBLIC int local_dired ARGS1(
 	 *  Construct the appropriate system command taking care to
 	 *  escape all path references to avoid spoofing the shell.
 	 */
-	if (!strncmp(line, "LYNXDIRED://DECOMPRESS", 22)) {
+	if ((arg = match_op("DECOMPRESS", line)) != 0) {
 #define FMT_UNCOMPRESS "%s %s"
 	    HTAddParam(&buffer, FMT_UNCOMPRESS, 1, UNCOMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_UNCOMPRESS, 2, line+22);
+	    HTAddParam(&buffer, FMT_UNCOMPRESS, 2, arg);
 	    HTEndParam(&buffer, FMT_UNCOMPRESS, 2);
 
 #if defined(OK_UUDECODE) && !defined(ARCHIVE_ONLY)
-	} else if (!strncmp(line, "LYNXDIRED://UUDECODE", 20)) {
+	} else if ((arg = match_op("UUDECODE", line)) != 0) {
 #define FMT_UUDECODE "%s %s"
 	    HTAddParam(&buffer, FMT_UUDECODE, 1, UUDECODE_PATH);
-	    HTAddParam(&buffer, FMT_UUDECODE, 2, line+20);
+	    HTAddParam(&buffer, FMT_UUDECODE, 2, arg);
 	    HTEndParam(&buffer, FMT_UUDECODE, 2);
 	    HTAlert(gettext("Warning!  UUDecoded file will exist in the directory you started Lynx."));
 #endif /* OK_UUDECODE && !ARCHIVE_ONLY */
@@ -1444,112 +1673,112 @@ PUBLIC int local_dired ARGS1(
 #ifdef OK_TAR
 # ifndef ARCHIVE_ONLY
 #  ifdef OK_GZIP
-	} else if (!strncmp(line, "LYNXDIRED://UNTAR_GZ", 20)) {
-#define FMT_UNTAR_GZ "%s -qdc %s | (cd %s; %s -xf -)"
-	    dirname = DirectoryOf(line+20);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 1, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 2, line+20);
-	    HTAddParam(&buffer, FMT_UNTAR_GZ, 3, dirname);
+	} else if ((arg = match_op("UNTAR_GZ", line)) != 0) {
+#define FMT_UNTAR_GZ "cd %s; %s -qdc %s |  %s -xf -"
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_UNTAR_GZ, 1, dirname);
+	    HTAddParam(&buffer, FMT_UNTAR_GZ, 2, GZIP_PATH);
+	    HTAddParam(&buffer, FMT_UNTAR_GZ, 3, arg);
 	    HTAddParam(&buffer, FMT_UNTAR_GZ, 4, TAR_PATH);
 	    HTEndParam(&buffer, FMT_UNTAR_GZ, 4);
 #  endif /* OK_GZIP */
 
-	} else if (!strncmp(line, "LYNXDIRED://UNTAR_Z", 19)) {
-#define FMT_UNTAR_Z "%s %s | (cd %s; %s -xf -)"
-	    dirname = DirectoryOf(line+19);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 1, ZCAT_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 2, line+19);
-	    HTAddParam(&buffer, FMT_UNTAR_Z, 3, dirname);
+	} else if ((arg = match_op("UNTAR_Z", line)) != 0) {
+#define FMT_UNTAR_Z "cd %s; %s %s |  %s -xf -"
+	    dirname = DirectoryOf(arg);
+	    HTAddParam(&buffer, FMT_UNTAR_Z, 1, dirname);
+	    HTAddParam(&buffer, FMT_UNTAR_Z, 2, ZCAT_PATH);
+	    HTAddParam(&buffer, FMT_UNTAR_Z, 3, arg);
 	    HTAddParam(&buffer, FMT_UNTAR_Z, 4, TAR_PATH);
 	    HTEndParam(&buffer, FMT_UNTAR_Z, 4);
 
-	} else if (!strncmp(line, "LYNXDIRED://UNTAR", 17)) {
+	} else if ((arg = match_op("UNTAR", line)) != 0) {
 #define FMT_UNTAR "cd %s; %s -xf %s"
-	    dirname = DirectoryOf(line+17);
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_UNTAR, 1, dirname);
 	    HTAddParam(&buffer, FMT_UNTAR, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_UNTAR, 3, line+17);
+	    HTAddParam(&buffer, FMT_UNTAR, 3, arg);
 	    HTEndParam(&buffer, FMT_UNTAR, 3);
 # endif /* !ARCHIVE_ONLY */
 
 # ifdef OK_GZIP
-	} else if (!strncmp(line, "LYNXDIRED://TAR_GZ", 18)) {
-#define FMT_TAR_GZ "(cd %s; %s -cf - %s) | %s -qc >%s/%s.tar.gz"
-	    dirname = DirectoryOf(line+18);
+	} else if ((arg = match_op("TAR_GZ", line)) != 0) {
+#define FMT_TAR_GZ "cd %s; %s -cf - %s | %s -qc >%s%s"
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_TAR_GZ, 1, dirname);
 	    HTAddParam(&buffer, FMT_TAR_GZ, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 3, LYPathLeaf(line+18));
+	    HTAddParam(&buffer, FMT_TAR_GZ, 3, LYPathLeaf(arg));
 	    HTAddParam(&buffer, FMT_TAR_GZ, 4, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 5, dirname);
-	    HTAddParam(&buffer, FMT_TAR_GZ, 6, LYPathLeaf(line+18));
+	    HTAddParam(&buffer, FMT_TAR_GZ, 5, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_TAR_GZ, 6, EXT_TAR_GZ);
 	    HTEndParam(&buffer, FMT_TAR_GZ, 6);
 # endif /* OK_GZIP */
 
-	} else if (!strncmp(line, "LYNXDIRED://TAR_Z", 17)) {
-#define FMT_TAR_Z "(cd %s; %s -cf - %s) | %s >%s/%s.tar.Z"
-	    dirname = DirectoryOf(line+17);
+	} else if ((arg = match_op("TAR_Z", line)) != 0) {
+#define FMT_TAR_Z "cd %s; %s -cf - %s | %s >%s%s"
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_TAR_Z, 1, dirname);
 	    HTAddParam(&buffer, FMT_TAR_Z, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR_Z, 3, LYPathLeaf(line+17));
+	    HTAddParam(&buffer, FMT_TAR_Z, 3, LYPathLeaf(arg));
 	    HTAddParam(&buffer, FMT_TAR_Z, 4, COMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_TAR_Z, 5, dirname);
-	    HTAddParam(&buffer, FMT_TAR_Z, 6, LYPathLeaf(line+17));
+	    HTAddParam(&buffer, FMT_TAR_Z, 5, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_TAR_Z, 6, EXT_TAR_Z);
 	    HTEndParam(&buffer, FMT_TAR_Z, 6);
 
-	} else if (!strncmp(line, "LYNXDIRED://TAR", 15)) {
-#define FMT_TAR "(cd %s; %s -cf %s.tar %s)"
-	    dirname = DirectoryOf(line+15);
+	} else if ((arg = match_op("TAR", line)) != 0) {
+#define FMT_TAR "cd %s; %s -cf %s.tar %s"
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_TAR, 1, dirname);
 	    HTAddParam(&buffer, FMT_TAR, 2, TAR_PATH);
-	    HTAddParam(&buffer, FMT_TAR, 3, LYPathLeaf(line+15));
-	    HTAddParam(&buffer, FMT_TAR, 4, LYPathLeaf(line+15));
+	    HTAddParam(&buffer, FMT_TAR, 3, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_TAR, 4, LYPathLeaf(arg));
 	    HTEndParam(&buffer, FMT_TAR, 4);
 #endif /* OK_TAR */
 
 #ifdef OK_GZIP
-	} else if (!strncmp(line, "LYNXDIRED://GZIP", 16)) {
+	} else if ((arg = match_op("GZIP", line)) != 0) {
 #define FMT_GZIP "%s -q %s"
 	    HTAddParam(&buffer, FMT_GZIP, 1, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_GZIP, 2, line+16);
+	    HTAddParam(&buffer, FMT_GZIP, 2, arg);
 	    HTEndParam(&buffer, FMT_GZIP, 2);
 #ifndef ARCHIVE_ONLY
-	} else if (!strncmp(line, "LYNXDIRED://UNGZIP", 18)) {
+	} else if ((arg = match_op("UNGZIP", line)) != 0) {
 #define FMT_UNGZIP "%s -d %s"
 	    HTAddParam(&buffer, FMT_UNGZIP, 1, GZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNGZIP, 2, line+18);
+	    HTAddParam(&buffer, FMT_UNGZIP, 2, arg);
 	    HTEndParam(&buffer, FMT_UNGZIP, 2);
 #endif /* !ARCHIVE_ONLY */
 #endif /* OK_GZIP */
 
 #ifdef OK_ZIP
-	} else if (!strncmp(line, "LYNXDIRED://ZIP", 15)) {
+	} else if ((arg = match_op("ZIP", line)) != 0) {
 #define FMT_ZIP "cd %s; %s -rq %s.zip %s"
-	    dirname = DirectoryOf(line+15);
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_ZIP, 1, dirname);
 	    HTAddParam(&buffer, FMT_ZIP, 2, ZIP_PATH);
-	    HTAddParam(&buffer, FMT_ZIP, 3, line+15);
-	    HTAddParam(&buffer, FMT_ZIP, 4, LYPathLeaf(line+15));
+	    HTAddParam(&buffer, FMT_ZIP, 3, LYonedot(LYPathLeaf(arg)));
+	    HTAddParam(&buffer, FMT_ZIP, 4, LYPathLeaf(arg));
 	    HTEndParam(&buffer, FMT_ZIP, 4);
 #ifndef ARCHIVE_ONLY
-	} else if (!strncmp(line, "LYNXDIRED://UNZIP", 17)) {
+	} else if ((arg = match_op("UNZIP", line)) != 0) {
 #define FMT_UNZIP "cd %s; %s -q %s"
-	    dirname = DirectoryOf(line+17);
+	    dirname = DirectoryOf(arg);
 	    HTAddParam(&buffer, FMT_UNZIP, 1, dirname);
 	    HTAddParam(&buffer, FMT_UNZIP, 2, UNZIP_PATH);
-	    HTAddParam(&buffer, FMT_UNZIP, 3, line+17);
+	    HTAddParam(&buffer, FMT_UNZIP, 3, arg);
 	    HTEndParam(&buffer, FMT_UNZIP, 3);
 # endif /* !ARCHIVE_ONLY */
 #endif /* OK_ZIP */
 
-	} else if (!strncmp(line, "LYNXDIRED://COMPRESS", 20)) {
+	} else if ((arg = match_op("COMPRESS", line)) != 0) {
 #define FMT_COMPRESS "%s %s"
 	    HTAddParam(&buffer, FMT_COMPRESS, 1, COMPRESS_PATH);
-	    HTAddParam(&buffer, FMT_COMPRESS, 2, line+20);
+	    HTAddParam(&buffer, FMT_COMPRESS, 2, arg);
 	    HTEndParam(&buffer, FMT_COMPRESS, 2);
 	}
 
 	if (buffer != 0) {
-	    if (strlen(buffer) < 60) {
+	    if ((int) strlen(buffer) < LYcols - 15) {
 		HTSprintf0(&tmpbuf, gettext("Executing %s "), buffer);
 	    } else {
 		HTSprintf0(&tmpbuf,
@@ -1557,7 +1786,7 @@ PUBLIC int local_dired ARGS1(
 	    }
 	    _statusline(tmpbuf);
 	    stop_curses();
-	    printf("%s\n", tmpbuf);
+	    printf("%s\r\n", tmpbuf);
 	    LYSystem(buffer);
 #ifdef VMS
 	    HadVMSInterrupt = FALSE;
@@ -1572,7 +1801,8 @@ PUBLIC int local_dired ARGS1(
     FREE(buffer);
     FREE(line);
     FREE(tp);
-    LYpop(doc);
+    if (do_pop_doc)
+	LYpop(doc);
     return 0;
 }
 
@@ -1584,11 +1814,11 @@ PUBLIC int dired_options ARGS2(
 	char **,	newfile)
 {
     static char tempfile[LY_MAXPATH];
-    char path[512], dir[512]; /* much too large */
-    lynx_html_item_type *nxt;
+    char *path;
+    char *dir;
+    lynx_list_item_type *nxt;
     struct stat dir_info;
     FILE *fp0;
-    char *cp = NULL;
     char *dir_url;
     char *path_url;
     BOOLEAN nothing_tagged;
@@ -1606,29 +1836,26 @@ PUBLIC int dired_options ARGS2(
      *  Make the tempfile a URL.
      */
     LYLocalFileToURL(newfile, tempfile);
-    strcpy(LYDiredFileURL, *newfile);
-
-    cp = HTpartURL_toFile(doc->address);
-    strcpy(dir, cp);
-    LYTrimPathSep(dir);
-    FREE(cp);
+    LYRegisterUIPage(*newfile, UIP_DIRED_MENU);
 
     if (doc->link > -1 && doc->link < (nlinks+1)) {
-	cp = HTfullURL_toFile(links[doc->link].lname);
-	strcpy(path, cp);
+	path = HTfullURL_toFile(links[doc->link].lname);
 	LYTrimPathSep(path);
-	FREE(cp);
 
 	if (!ok_lstat(path, &dir_info)) {
 	    LYCloseTempFP(fp0);
+	    FREE(path);
 	    return 0;
 	}
 
     } else {
-	path[0] = '\0';
+	StrAllocCopy(path, "");
     }
 
-    nothing_tagged = (HTList_isEmpty(tagged));
+    dir = HTfullURL_toFile(doc->address);
+    LYTrimPathSep(dir);
+
+    nothing_tagged = (BOOL) (HTList_isEmpty(tagged));
 
     BeginInternalPage(fp0, DIRED_MENU_TITLE, DIRED_MENU_HELP);
 
@@ -1716,6 +1943,7 @@ PUBLIC int dired_options ARGS2(
 	FREE(dir_url);
 	FREE(path_url);
     }
+    FREE(path);
 
     if (uploaders != NULL) {
 	fprintf(fp0, "<p>Upload to current directory:<p>\n");
@@ -1727,6 +1955,7 @@ PUBLIC int dired_options ARGS2(
 		    count, dir, nxt->name);
 	}
     }
+    FREE(dir);
 
     EndInternalPage(fp0);
     LYCloseTempFP(fp0);
@@ -1740,9 +1969,9 @@ PUBLIC int dired_options ARGS2(
  *  Check DIRED filename.
  */
 PRIVATE char *get_filename ARGS3(
-	char *, 	prompt,
-	char *, 	buf,
-	size_t, 	bufsize)
+	char *,		prompt,
+	char *,		buf,
+	size_t,		bufsize)
 {
     char *cp;
 
@@ -1756,7 +1985,7 @@ PRIVATE char *get_filename ARGS3(
     }
 
     if (no_dotfiles || !show_dotfiles) {
-	cp = strrchr(buf, '/'); /* find last slash */
+	cp = LYLastPathSep(buf); /* find last slash */
 	if (cp)
 	    cp += 1;
 	else
@@ -1769,80 +1998,247 @@ PRIVATE char *get_filename ARGS3(
     return buf;
 }
 
+#ifdef OK_INSTALL
+
+#define LYEXECV_MAX_ARGC 15
+/* these are quasi-constant once they have been allocated: */
+static char ** install_argp = NULL;	/* args for execv install */
+static char * install_path = NULL;	/* auxiliary */
+#ifdef LY_FIND_LEAKS
+PRIVATE void clear_install_path NOARGS
+{
+    FREE(install_argp);
+    FREE(install_path);
+}
+#endif /* LY_FIND_LEAKS */
+/*
+ *  Fill in args array for execv (or execvp etc.) call, after first
+ *  allocating it if necessary.  No fancy parsing, cmd_args is just
+ *  split at spaces.  Leave room for reserve additional args to be
+ *  added by caller.
+ *  On success *argvp points to new args vector, *pathp is auxiliary.
+ *  On success returns index of next argument, else -1.
+ *  This is generic enough that it could be used for other calls than
+ *  install, except the atexit call.  Go through this trouble for install
+ *  because INSTALL_ARGS may be significant, and someone may configure it
+ *  with more than one significant flags. - kw
+ */
+PRIVATE int fill_argv_for_execv ARGS5(
+    char ***,		argvp,
+    char **,		pathp,
+    char *,		cmd_path,
+    CONST char *,	cmd_args,
+    int,		reserve)
+{
+    int n = 0;
+
+    char **args;
+    char *cp;
+    if (*argvp == NULL) {
+	*argvp = typecallocn(char *, LYEXECV_MAX_ARGC+1);
+	if (!*argvp)
+	    return(-1);
+#ifdef LY_FIND_LEAKS
+	atexit(clear_install_path);
+#endif
+    }
+    args = *argvp;
+    args[n++] = cmd_path;
+    if (cmd_args) {
+	StrAllocCopy(*pathp, cmd_args);
+	cp = strtok(*pathp, " ");
+	if (cp) {
+	    while (cp && (n < LYEXECV_MAX_ARGC - reserve)) {
+		args[n++] = cp;
+		cp = strtok(NULL, " ");
+	    }
+	    if (cp && (n >= LYEXECV_MAX_ARGC - reserve)) {
+		CTRACE((tfp, "Too many args for '%s' in '%s'!\n",
+		       NONNULL(cmd_path), cmd_args));
+		return(-1);
+	    }
+	} else {
+	    args[n++] = *pathp;
+	}
+    }
+    args[n] = (char *)0;
+    return(n);
+}
 /*
  *  Install the specified file or directory.
  */
 PUBLIC BOOLEAN local_install ARGS3(
-	char *, 	destpath,
-	char *, 	srcpath,
+	char *,		destpath,
+	char *,		srcpath,
 	char **,	newpath)
 {
     char *tmpbuf = NULL;
-    char savepath[512]; /* This will be the link that is to be installed. */
+    static char savepath[DIRED_MAXBUF]; /* This will be the link that
+					   is to be installed. */
     struct stat dir_info;
-    char *args[6];
+    char **args;
     HTList *tag;
+    char *cp = NULL;
+    char *tmpdest = NULL;
     int count = 0;
-    int n = 0, src;	/* indices into 'args[]' */
+    int n = 0;		/* indices into 'args[]' */
+    static int src = -1;
 
     /*
      *	Determine the status of the selected item.
      */
     if (srcpath) {
-	if (!ok_localname(savepath, srcpath))
+	srcpath = strip_trailing_slash(srcpath);
+	if (is_url(srcpath)) {
+	    char *local_src = HTfullURL_toFile(srcpath);
+	    if (!ok_localname(savepath, local_src)) {
+		FREE(local_src);
+		return 0;
+	    }
+	    FREE(local_src);
+	} else if (!HTList_isEmpty(tagged) &&
+		   srcpath[0] == '\0') {
+	    savepath[0] = '\0';	/* will always use tagged list - kw */
+	} else if (!ok_localname(savepath, srcpath)) {
 	    return 0;
-
+	}
 	LYforce_no_cache = TRUE;
 	LYLocalFileToURL(newpath, Home_Dir());
-	StrAllocCat(*newpath, "/.installdirs.html");
+	LYAddHtmlSep(newpath);
+	StrAllocCat(*newpath, INSTALLDIRS_FILE);
+	LYRegisterUIPage(*newpath, UIP_INSTALL);
 	return 0;
+    }
+
+    /* deal with ~/ or /~/ at the beginning - kw */
+    if (destpath[0] == '~' &&
+	(destpath[1] == '/' || destpath[1] == '\0')) {
+	cp = &destpath[1];
+    } else if (destpath[0] == '/' && destpath[1] == '~' &&
+	       (destpath[2] == '/' || destpath[2] == '\0')) {
+	cp = &destpath[2];
+    }
+    if (cp) {
+	/* If found, allocate new string, make destpath point to it - kw */
+	StrAllocCopy(tmpdest, Home_Dir());
+	if (cp[0] && cp[1]) {
+	    LYAddPathSep(&tmpdest);
+	    StrAllocCat(tmpdest, cp + 1);
+	}
+	destpath = tmpdest;
     }
 
     destpath = strip_trailing_slash(destpath);
 
     if (!ok_stat(destpath, &dir_info)) {
+	FREE(tmpdest);
 	return 0;
     } else if (!S_ISDIR(dir_info.st_mode)) {
 	HTAlert(gettext("The selected item is not a directory!  Request ignored."));
+	FREE(tmpdest);
 	return 0;
     } else if (0 /*directory not writable*/) {
 	HTAlert(gettext("Install in the selected directory not permitted."));
+	FREE(tmpdest);
 	return 0;
     }
 
     statusline(gettext("Just a moment, ..."));
-    args[n++] = "install";
+
+    /* fill in the fixed args, if not already done - kw */
+    if (src > 0 && install_argp) {
+	n = src;
+	n++;
+    } else {
+	n = fill_argv_for_execv(&install_argp, &install_path,
+				"install",
 #ifdef INSTALL_ARGS
-    args[n++] = INSTALL_ARGS;
+				INSTALL_ARGS,
+#else
+				NULL,
 #endif /* INSTALL_ARGS */
-    src = n++;
+				2);
+	if (n <= 0) {
+	    src = 0;
+	    HTAlert(gettext("Error buiding install args"));
+	    FREE(tmpdest);
+	    return 0;
+	}
+	src = n++;
+    }
+    args = install_argp;
+
     args[n++] = destpath;
     args[n] = (char *)0;
-    HTSprintf(&tmpbuf, "install %s", destpath);
     tag = tagged;
 
     if (HTList_isEmpty(tagged)) {
+	/* simplistic detection of identical src and dest - kw */
+	if (!strcmp(savepath, destpath)) {
+	    HTUserMsg2(gettext("Source and target are the same: %s"),
+		       savepath);
+	    FREE(tmpdest);
+	    return(-1);		/* don't do it */
+	} else if (!strncmp(savepath, destpath, strlen(destpath)) &&
+		   LYIsPathSep(savepath[strlen(destpath)]) &&
+#ifdef DOSPATH
+		   !strchr(savepath + strlen(destpath) + 1, '\\') &&
+#endif
+		   !strchr(savepath + strlen(destpath) + 1, '/')) {
+	    HTUserMsg2(gettext("Already in target directory: %s"),
+		       savepath);
+	    FREE(tmpdest);
+	    return 0;		/* don't do it */
+	}
 	args[src] = savepath;
-	if (LYExecv(INSTALL_PATH, args, tmpbuf) <= 0)
+	HTSprintf0(&tmpbuf, "install %s in %s", savepath, destpath);
+	if (LYExecv(INSTALL_PATH, args, tmpbuf) <= 0) {
+	    FREE(tmpbuf);
+	    FREE(tmpdest);
 	    return (-1);
+	}
 	count++;
     } else {
 	char *name;
+	HTSprintf0(&tmpbuf, "install in %s", destpath);
 	while ((name = (char *)HTList_nextObject(tag))) {
 	    int err;
 	    args[src] = HTfullURL_toFile(name);
+
+	    /* simplistic detection of identical src and dest - kw */
+	    if (!strcmp(args[src], destpath)) {
+		HTUserMsg2(gettext("Source and target are the same: %s"),
+			   args[src]);
+		FREE(args[src]);
+		continue;	/* skip this source file */
+	    } else if (!strncmp(args[src], destpath, strlen(destpath)) &&
+		       LYIsPathSep(args[src][strlen(destpath)]) &&
+#ifdef DOSPATH
+		       !strchr(args[src] + strlen(destpath) + 1, '\\') &&
+#endif
+		       !strchr(args[src] + strlen(destpath) + 1, '/')) {
+		HTUserMsg2(gettext("Already in target directory: %s"),
+			   args[src]);
+		FREE(args[src]);
+		continue;	/* skip this source file */
+	    }
 	    err = (LYExecv(INSTALL_PATH, args, tmpbuf) <= 0);
 	    FREE(args[src]);
-	    if (err)
+	    if (err) {
+		FREE(tmpbuf);
+		FREE(tmpdest);
 		return ((count == 0) ? -1 : count);
+	    }
 	    count++;
 	}
 	clear_tags();
     }
     FREE(tmpbuf);
+    FREE(tmpdest);
     HTInfoMsg(gettext("Installation complete"));
     return count;
 }
+#endif /* OK_INSTALL */
 
 /*
  *  Clear DIRED tags.
@@ -1862,7 +2258,7 @@ PUBLIC void clear_tags NOARGS
  *  Handle DIRED menu item.
  */
 PUBLIC void add_menu_item ARGS1(
-	char *, 	str)
+	char *,		str)
 {
     struct dired_menu *new, *mp;
     char *cp;
@@ -1874,7 +2270,7 @@ PUBLIC void add_menu_item ARGS1(
     if (menu_head == defmenu)
 	menu_head = NULL;
 
-    new = (struct dired_menu *)calloc(1, sizeof(*new));
+    new = typecalloc(struct dired_menu);
     if (new == NULL)
 	outofmem(__FILE__, "add_menu_item");
 
@@ -1889,8 +2285,10 @@ PUBLIC void add_menu_item ARGS1(
 	new->cond = DE_DIR;
     } else if (strcasecomp(str, "file") == 0) {
 	new->cond = DE_FILE;
+#ifdef S_IFLNK
     } else if (strcasecomp(str, "link") == 0) {
 	new->cond = DE_SYMLINK;
+#endif /* S_IFLNK */
     }
 
     /*
@@ -1921,18 +2319,34 @@ PUBLIC void add_menu_item ARGS1(
 	menu_head = new;
 }
 
+PUBLIC void reset_dired_menu NOARGS
+{
+    if (menu_head != defmenu) {
+	struct dired_menu *mp, *mp_next = NULL;
+	for (mp = menu_head; mp != NULL; mp = mp_next) {
+	    FREE(mp->sfx);
+	    FREE(mp->link);
+	    FREE(mp->rest);
+	    FREE(mp->href);
+	    mp_next = mp_next;
+	    FREE(mp);
+	}
+	menu_head = NULL;
+    }
+}
+
 /*
  *  Create URL for DIRED HREF value.
  */
 PRIVATE char * render_item ARGS6(
-	CONST char *, 	s,
-	char *, 	path,
-	char *, 	dir,
-	char *, 	buf,
+	CONST char *,	s,
+	CONST char *,	path,
+	CONST char *,	dir,
+	char *,		buf,
 	int,		bufsize,
 	BOOLEAN,	url_syntax)
 {
-    char *cp;
+    CONST char *cp;
     char *bp;
     char overrun = '\0';
     char *taglist = NULL;
@@ -1962,7 +2376,7 @@ PRIVATE char * render_item ARGS6(
 			*BP_INC = *cp++;
 		    break;
 		case 'f':
-		    cp = strrchr(path, '/');
+		    cp = LYLastPathSep(path);
 		    if (cp)
 			cp++;
 		    else
@@ -1996,7 +2410,7 @@ PRIVATE char * render_item ARGS6(
 		    break;
 		default:
 		    *BP_INC = '%';
-		    *BP_INC =*s;
+		    *BP_INC = *s;
 		    break;
 	    }
 	} else {
@@ -2010,96 +2424,11 @@ PRIVATE char * render_item ARGS6(
 	s++;
     }
     if (overrun & url_syntax) {
-	strcpy(buf,gettext("Temporary URL or list would be too long."));
-	HTAlert(buf);
+	HTAlert(gettext("Temporary URL or list would be too long."));
 	bp = buf;	/* set to start, will return empty string as URL */
     }
     *bp = '\0';
     return buf;
 }
+
 #endif /* DIRED_SUPPORT */
-
-/*
- *  Execute DIRED command.
- */
-PRIVATE int LYExecv ARGS3(
-	char *, 	path,
-	char **,	argv,
-	char *, 	msg)
-{
-#if defined(VMS) || defined(_WINDOWS)
-    CTRACE(tfp, "LYExecv:  Called inappropriately!\n");
-    return(0);
-#else
-    int rc;
-    char *tmpbuf = 0;
-    pid_t pid;
-#ifdef HAVE_TYPE_UNIONWAIT
-    union wait wstatus;
-#else
-    int wstatus;
-#endif
-
-    if (TRACE) {
-	int n;
-	CTRACE(tfp, "LYExecv path='%s'\n", path);
-	for (n = 0; argv[n] != 0; n++)
-	    CTRACE(tfp, "argv[%d] = '%s'\n", n, argv[n]);
-    }
-
-    rc = 1;		/* It will work */
-    stop_curses();
-    pid = fork();	/* fork and execute rm */
-    switch (pid) {
-	case -1:
-	    HTSprintf(&tmpbuf, gettext("Unable to %s due to system error!"), msg);
-	    rc = 0;
-	    break;	/* don't fall thru! - KW */
-	case 0:  /* child */
-#ifdef USE_EXECVP
-	    execvp(path, argv);	/* this uses our $PATH */
-#else
-	    execv(path, argv);
-#endif
-	    exit(-1);	/* execv failed, give wait() something to look at */
-	default:  /* parent */
-#if !HAVE_WAITPID
-	    while (wait(&wstatus) != pid)
-		; /* do nothing */
-#else
-	    while (-1 == waitpid(pid, &wstatus, 0)) { /* wait for child */
-#ifdef EINTR
-		if (errno == EINTR)
-		    continue;
-#endif /* EINTR */
-#ifdef ERESTARTSYS
-		if (errno == ERESTARTSYS)
-		    continue;
-#endif /* ERESTARTSYS */
-		break;
-	    }
-#endif /* !HAVE_WAITPID */
-	    if (WEXITSTATUS(wstatus) != 0 ||
-		WTERMSIG(wstatus) > 0)	{ /* error return */
-		HTSprintf(&tmpbuf, gettext("Probable failure to %s due to system error!"),
-				   msg);
-		rc = 0;
-	    }
-    }
-
-    if (rc == 0) {
-	/*
-	 *  Screen may have message from the failed execv'd command.
-	 *  Give user time to look at it before screen refresh.
-	 */
-	sleep(AlertSecs);
-    }
-    start_curses();
-    if (tmpbuf != 0) {
-	HTAlert(tmpbuf);
-	FREE(tmpbuf);
-    }
-
-    return(rc);
-#endif /* VMS */
-}

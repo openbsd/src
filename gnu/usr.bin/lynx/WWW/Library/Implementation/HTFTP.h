@@ -21,7 +21,7 @@
 extern int HTfileSortMethod;  /* specifies the method of sorting */
 
 
-/* PUBLIC						 HTMake_VMS_name()
+/* PUBLIC						 HTVMS_name()
 **		CONVERTS WWW name into a VMS name
 ** ON ENTRY:
 **	nn		Node Name (optional)
@@ -32,7 +32,7 @@ extern int HTfileSortMethod;  /* specifies the method of sorting */
 **
 ** Bug:	Returns pointer to static -- non-reentrant
 */
-PUBLIC char * HTMake_VMS_name PARAMS((
+PUBLIC char * HTVMS_name PARAMS((
 	CONST char * nn,
 	CONST char * fn));
 

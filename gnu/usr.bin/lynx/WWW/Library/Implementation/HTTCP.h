@@ -10,7 +10,7 @@
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
- 
+
 /*      Produce a string for an internet address
 **      ---------------------------------------
 **
@@ -18,10 +18,11 @@
 **           returns a pointer to a static string which must be copied if
 **                it is to be kept.
 */
-#ifndef _WINDOWS
+#ifdef INET6
+extern CONST char * HTInetString PARAMS((SockA* mysin));
+#else
 extern CONST char * HTInetString PARAMS((struct sockaddr_in* mysin));
-#endif
-
+#endif /* INET6 */
 
 /*      Encode INET status (as in sys/errno.h)                    inet_status()
 **      ------------------
@@ -33,7 +34,7 @@ extern CONST char * HTInetString PARAMS((struct sockaddr_in* mysin));
 ** On return:
 **      returns a negative status in the unix way.
 */
-#ifdef __STDC__
+#if defined(__STDC__) || defined(__BORLANDC__) || defined(_MSC_VER)
         extern int HTInetStatus(char *where);
 #else
         extern int HTInetStatus();
@@ -68,7 +69,7 @@ extern unsigned int HTCardinal PARAMS((int *pstatus,
 **	-------------------------------------------------
 */
 
-extern BOOL valid_hostname PARAMS((CONST char * name));
+extern BOOL valid_hostname PARAMS((char * name));
 
 /*	Resolve an internet hostname, like gethostbyname
 **	------------------------------------------------
@@ -86,29 +87,10 @@ extern BOOL valid_hostname PARAMS((CONST char * name));
 */
 extern int lynx_nsl_status;
 
-#ifndef DJGPP
-extern struct hostent * LYGetHostByName PARAMS((
-	CONST char *	str));
-#endif /* DJGPP */
-
-
-/*      Parse an internet node address and port
-**      ---------------------------------------
-**
-** On entry:
-**               str points to a string with a node name or number,
-**               with optional trailing colon and port number.
-**               sin points to the binary internet or decnet address field.
-**
-** On exit:
-**               *sin is filled in.  If no port is specified in str, that
-**               field is left unchanged in *sin.
-*/
-#ifdef __STDC__
-        extern int HTParseInet(struct sockaddr_in * mysin, CONST char * str);
-        /*!! had to change this to get it to compile. CTB */
+#if defined(__DJGPP__) && !defined(WATT32)
+#define LYGetHostByName(host) resolv(host) /* we'll use it the same way */
 #else
-        extern int HTParseInet();
+extern struct hostent * LYGetHostByName PARAMS((char * str));
 #endif
 
 /*      Get Name of This Machine

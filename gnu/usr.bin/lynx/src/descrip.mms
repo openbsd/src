@@ -5,7 +5,7 @@
 !	       chrtrans header files before using this descrip.mms.
 !
 ! History:
-!  1/1/93  creation at KU (Lou montulli@ukanaix.cc.ukans.edu). 
+!  1/1/93  creation at KU (Lou montulli@ukanaix.cc.ukans.edu).
 !  4/12/93 (seb@lns61.tn.cornell.edu)
 !           modified to support either UCX or MULTINET
 !  12/2/93 modified to support Lynx rewrite
@@ -54,15 +54,16 @@
 !	$ MMS /Macro = (TCPWARE=1, GNU_C=1)	for GNUC - OpenCMU TCP/IP
 !	$ MMS /Macro = (DECNET=1, GNU_C=1)	for GNUC - socket emulation over DECnet
 
-OBJS = 	DefaultStyle.obj, GridText.obj, HTAlert.obj, HTFWriter.obj, -
+OBJS =	DefaultStyle.obj, GridText.obj, HTAlert.obj, HTFWriter.obj, -
 	HTInit.obj, HTML.obj, LYBookmark.obj, LYCgi.obj, LYCharSets.obj, -
 	LYCharUtils.obj, LYClean.obj, LYCookie.obj, LYCurses.obj, -
-	LYDownload.obj, LYEdit.obj, LYEditmap.obj, LYexit.obj, LYForms.obj, -
-	LYGetFile.obj, LYHistory.obj, LYJump.obj, LYKeymap.obj, LYLeaks.obj, -
-	LYList.obj, LYMail.obj, LYMain.obj, LYMainLoop.obj, LYMap.obj, -
-	LYNews.obj, LYOptions.obj, LYPrint.obj, LYrcFile.obj, LYReadCFG.obj, -
+	LYDownload.obj, LYEdit.obj, LYEditmap.obj, LYForms.obj, -
+	LYGetFile.obj, LYHistory.obj, LYJump.obj, LYKeymap.obj, -
+	LYLeaks.obj, LYList.obj, LYMail.obj, LYMain.obj, LYMainLoop.obj, -
+	LYMap.obj, LYNews.obj, LYOptions.obj, LYPrint.obj, LYReadCFG.obj, -
 	LYSearch.obj, LYShowInfo.obj, LYStrings.obj, LYTraversal.obj, -
-	LYUpload.obj, LYUtils.obj, UCAuto.obj, UCAux.obj, UCdomap.obj
+	LYUpload.obj, LYUtils.obj, LYexit.obj, LYrcFile.obj, TRSTable.obj, -
+	UCAuto.obj, UCAux.obj, UCdomap.obj
 
 .ifdef WIN_TCP
 TCP = WIN_TCP

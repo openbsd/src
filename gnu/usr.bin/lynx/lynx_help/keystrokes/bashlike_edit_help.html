@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
+<html>
+<head>
+<title>Lynx Line Editor Bash-Like Key Binding</title>
+<link rev="made" href="mailto:lynx-dev@sig.net">
+<link rel="Sibling" title="Default Binding" href="edit_help.html">
+<link rel="Sibling" title="Alternative Binding" href="alt_edit_help.html">
+</head>
+<body>
+<h1>+++BASH-LIKE BINDING+++</h1>
+
+Lynx invokes a built-in <em>Line Editor</em> for entering strings in
+response to prompts, in forms, and for email messages if an external editor
+has not been defined.  Several sets of key-bindings can be offered
+by configuring with --enable-alt-bindings or by adding them in
+LYEditmap.c before compiling Lynx.  If available,
+they may be selected via the 'o'ptions menu, or by editing lineedit_mode in
+the '.lynxrc' file.
+
+<p>Note: setting emacs/vi keys ON has no direct effect on line-editor bindings.
+
+<p>This is the <em>Bash-like Binding</em> keymap.</p>
+<h2>Basic commands</h2>
+<pre>
+     ENTER  Input complete        -  Enter, RETURN
+     TAB    Completion [2]/ Next  -  TAB, Do
+     ABORT  Cancel / Undo Change  -  C-g, C-_
+     ERASE  Erase the line        -  M-k, C-x k
+
+     BACK   Cursor back     char  -  Left-Arrow,  C-b
+     FORW   Cursor forward  char  -  Right-Arrow, C-f
+     BACKW  Cursor back     word  -  M-b, C-r
+     FORWW  Cursor forward  word  -  M-f, C-s [5]
+     BOL    Go to begin of  line  -  C-a, Home, Find
+     EOL    Go to end   of  line  -  C-e [4], End,  Select
+
+     DELP   Delete prev     char  -  C-h, Backspace, Rubout
+     DELN   Delete next [1] char  -  C-d, Delete, Remove
+     DELPW  Delete prev     word  -  C-w [3], M-Backspace, M-Delete (?)
+     DELNW  Delete next     word  -  M-d
+     DELBL  Delete to beg of line -  C-u
+     DELEL  Delete to end of line -  C-k [4]
+
+     UPPER  Upper case the line   -  M-u
+     LOWER  Lower case the line   -  M-l
+
+     LKCMD  Invoke cmd prompt     -  C-v [FORM]
+     SWMAP  Switch input keymap   -  C-^ (if compiled in)
+
+<A NAME="TASpecial">Special commands for use in textarea fields</A> [FORM]:
+
+     PASS!  Textarea external edit  - C-e C-e [4], C-x e
+     PASS!  Insert file in textarea - C-x i
+     PASS!  Grow textarea           - C-x g
+
+</pre>
+Here is a little textarea for practice:<BR>
+<FORM action=""><TEXTAREA name="practice" cols=40 ROWS=5>
+This text cannot be submitted.  Normally lines like
+these would be part of a form that is filled out and
+then submitted.  You can move around here and delete
+or add text as you like, using the Line-Editor keys.
+</TEXTAREA><INPUT TYPE=reset VALUE="[reset content]"></FORM>
+<pre>
+
+Advanced emacs-like commands:
+
+    TPOS    Transpose characters                   -  C-t
+    SETMARK Set mark at current position in line   -  C-@
+    XPMARK  Exchange current position with mark    -  C-x C-x
+    KILLREG Kill region between mark and position  -  C-x C-w [3]
+    YANK    Insert text last killed (with KILLREG) -  C-y
+</pre>
+<h2>Notes</h2>
+<P><samp>
+     <DFN>C-</DFN><strong>key</strong> means Control+<strong><kbd>key</kbd></strong>.  <DFN
+     ><code>C-x </code></DFN><strong>key</strong> means first Control+<kbd>x</kbd>, then
+     <strong><kbd>key</kbd></strong>.
+                                                                       <DFN
+                        >M-</DFN>key means Meta+<strong><kbd>key</kbd></strong>, where Meta
+     is a modifier that can be entered in a variety of ways:
+</samp></P><UL>
+<LI>First ESC, then the <strong><kbd>key</kbd></strong>.
+    This doesn't work with all systems or on all connections, and if it
+    does may not work for some keys (because the ESC character is also
+    part of code sequences for "normal" function keys).
+<LI>Alt+<strong><kbd>key</kbd></strong>.
+    This works if the terminal, console, or comm program is set up to
+    interpret Alt as a modifier to send ESC.  The Linux console acts
+    like that by default for most keys;  Kermit can be set up to do it,
+    xterm can be for some keys, and so on.  But the same caveats as for
+    the previous item apply.
+    This Alt mapping may also be possible, independent of the ESC character,
+    for some keys in Lynx for DOS/i386 or for Win32.
+<LI>C-x <strong><kbd>key</kbd></strong>.
+    Actually, currently the same internal table is used for Meta and the
+    C-x prefix.  Therefore all M-<strong><kbd>key</kbd></strong> combinations can
+    also be typed as C-x <strong><kbd>key</kbd></strong>, and vice versa.
+</UL><pre>
+[1] "next" means the character "under" a box or underline style cursor; it
+    means "to the immediate right of" an I-beam (between characters) type
+    cursor.
+[2] For entering strings in response to prompts (that is, when not editing
+    form text fields), some keys have different actions: TAB tries to
+    complete input based on previous response; Up-Arrow and Down-Arrow
+    may offer previous response and next response, respectively, from
+    recall buffer for some prompts.
+[3] C-w can only be used for editing functions if its default KEYMAP
+    to REFRESH is changed.  This can be done in the lynx.cfg file,
+    for example with the line "KEYMAP:^W:DO_NOTHING".  This also applies
+    for other keys: as long as the key's action is mapped to REFRESH,
+    either with an explicit KEYMAP in lynx.cfg or by default, the
+    key's Line Editor binding is disabled.
+[4] These keys invoke special behavior when pressed twice in a row:
+    C-e C-e calls the external editor for changing the text in a
+    textarea (if available).  C-k C-k will move to the next link,
+    so that all lines in a textarea can be conveniently cleared by
+    repeating C-k.
+[5] Key is likely unavailable for Lynx, because it is interpreted by
+    operating system, comm program, or curses library, or swallowed
+    as part of escape sequence recognition.  Binding is provided for
+    the benefit of those where this doesn't apply.
+[FORM] In form text fields, only.  Ignored by Line Editor elsewhere.
+
+
+More notes
+
+   When a text input field, including a textarea line, is selected,
+   the Line Editor functions get a first grab at the keys entered.
+   If a key has no function defined in the Line Editor binding, it
+   can either be ignored, or passed on for normal key command handling,
+   where modifiers like C-x or Meta currently have no effect (see the
+   <A HREF="LYNXKEYMAP:"
+   >Key Map Page</A> accessible with the key <kbd>K</kbd> for current information).
+
+
+</pre>
+<h2>Additional details on other keys, for the curious
+(very much subject to change)</h2>
+<pre>
+Normal key action when used in form fields, subject to remapping
+with KEYMAP: [FORM (except Up-Arrow, Down-Arrow)]
+            C-l [3], C-o, C-z [5], C-\ [5], C-] [5]
+            C-n [emacskey], C-p [emacskey]
+            Up-Arrow [2], Down-Arrow [2]
+            Page-Up, Page-Down, F1, Back-Tab
+
+Normal key command with Meta modifier ignored when used in form fields,
+subject to remapping with KEYMAP: [FORM (except Up-Arrow, Down-Arrow)]
+            M-C-l [3], M-C-o [!], M-C-z [5], M-C-\ [5], M-C-] [5]
+            M-C-u, M-/, M-n
+            M-Up-Arrow [2][!], M-Down-Arrow [2][!]
+            M-Page-Up [!], M-Page-Down [!], M-Home, M-End
+
+Passed as specific command:
+                     lynx action    duplicates by default
+                     -----------    ---------------------
+            M-C-d    NEXT_LINK      Down-Arrow
+            M-C-e    EDITTEXTAREA   C-e C-e
+            M-C-k    LPOS_NEXT_LINK (none, Down-Arrow suggested)
+            M-e      EDITTEXTAREA   C-e C-e
+            M-g      GROWTEXTAREA   (none, C-v $ suggested?)
+            M-i      INSERTFILE     (none, C-v # suggested?)
+            M-&lt;      HOME           M-Home
+            M-&gt;      END            M-End
+            M-F1     DWIMHELP       F1
+            M-Find   WHEREIS        C-v /
+            M-Select NEXT           C-v n
+
+Duplicates function of other key(s):
+                     edit action    duplicates
+                     -----------    ----------
+            M-C-b    BACKW          M-b, C-r
+            M-C-f    FORWW          M-f
+            M-C-n    FORWW          M-f
+            M-C-p    BACKW          M-b, C-r
+            M-C-r    BACKW          M-b, C-r
+            M-a      BOL            C-a, Home, ...
+
+Modifier ignored, and duplicates function of other key(s):
+                     edit action    duplicates
+                     -----------    ----------
+            M-C-a    BOL            C-a, Home, ...
+            M-C-g    ABORT          C-g, ...
+            M-TAB    TAB            C-i [!]
+            M-C-j    ENTER          C-m, C-j, Enter / RETURN
+            M-RETURN ENTER          C-m, C-j, Enter / RETURN
+            M-C-y    YANK           C-y [!]
+            M-C-^    SWMAP          C-^ [!] (if compiled in)
+       M-Right-Arrow FORW           Right-Arrow [!], C-f
+        M-Left-Arrow BACK           Left-Arrow [!],  C-b
+            M-Do     TAB            C-i [!]
+
+Key completely ignored:
+            C-q, Insert
+            M-C-q, M-C-s [5], M-C-t, M-C-v, M-ESC
+            M-C-@, M-C-_, M-Remove, M-Insert [!]
+
+Meta + other (mostly, printable character) keys:
+              Modifier ignored, or sequence swallowed (see [5]).
+            M-@, M-E...M-Z [5], M-\, M-^, M-_ attempt to interpret
+              as 7-bit escape representation for character in 8-bit
+              control (C1) range if appropriate according to
+              Display Character Set.
+
+
+[emacskey] Normal key action subject to emacs_keys setting.
+[!] Action of key with Meta modifier follows action of key without
+    Meta.  If you manage to enter the Meta key while Line-Editor
+    Binding is not set to Bash-Like, and the unmodified binding
+    is different from that listed here, M-&lt;<var>key</var>&gt; will act
+    like &lt;<var>key</var>&gt;.
+</pre>
+</body>
+</html>

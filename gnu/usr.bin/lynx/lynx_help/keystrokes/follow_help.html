@@ -1,4 +1,4 @@
-<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <HTML>
 <HEAD>
 <TITLE>Help on the Follow link (or page) number feature</TITLE>
@@ -31,7 +31,7 @@ it will not be ACTIVATE-ed.
 <p>If the number entered at the prompt has a '<em>g</em>' suffix (e.g.,
 <em>123g</em>), then Lynx will make the link corresponding to that number
 the current link, paging as appropriate if the link does not appear in
-the currently displayed page.  The '<em>g</em>' suffix is implied (need
+the currently displayed page.  The '<em>g</em>' suffix is inferred (need
 not be entered) for form fields in <em>Links and form fields are
 numbered</em> mode.
 
@@ -54,7 +54,7 @@ the page.  <em>5p+</em> skips ahead 5 pages, and so on.
 You can also enter <em>5+</em> or <em>5-</em>, which will activate
 the 5th link ahead/behind where you are currently positioned.
 Note that typing <em>1g+</em> is different from typing a down arrow
-in that <em>1g+</em> may skip pages containing no links, or
+in that <em>1g+</em> skips pages containing no links, or
 intervening non-numbered links, such as form fields when
 form fields are not numbered.  It also differs from
 the <em>&lt;tab&gt;</em> command in that <em>1g+</em>
@@ -62,8 +62,8 @@ does not skip over whole textareas, unless form fields
 are not numbered.
 
 <p>
-<em>NOTE:</em> <em>1+g 1-g 1+p 1-p</em> are all recognized as equivalent<br>
-to <em>1g+ 1g- 1p+ 1p-</em> .  Any other (mistyped) characters terminate<br>
+<em>NOTE:</em> <em>1+g 1-g 1+p 1-p</em> are all recognized as equivalent
+to <em>1g+ 1g- 1p+ 1p-</em> .  Any other (mistyped) characters end
 the formula: e.g. <em>1gh+</em> is treated as <em>1g</em>.
 
 <p>If the user has set <em>Keypad mode</em> to <em>Numbers act as arrows</em>,
@@ -88,7 +88,7 @@ numbered</em> mode.  In any keypad mode, the <em>F_LINK_NUM</em>
 ('<em>0</em>') command will invoke a <em>Select option (or page)
 number:</em> prompt, and you can enter a number, and optionally a
 '<em>g</em>' or '<em>p</em>' suffix, to select or seek an OPTION in that
-list.  If only an number is entered at the prompt, the corresponding OPTION
+list.  If only a number is entered at the prompt, the corresponding OPTION
 will be selected and the popup will be retracted.  If the '<em>g</em>'
 suffix is included, then you will be positioned on the corresponding OPTION
 in the list, paging through the list if necessary, but it will not be
@@ -123,9 +123,9 @@ Anchor's HREF attribute is intended as a navigation aid for robots
 document.  With the <em>-ismap</em> command line switch, Lynx will
 additionally treat a link to a server-side image maps as hidden if
 there also is a client-side map for the same image.
-Finally, in some cases links which are not intended to be hidden
+Finally, in some cases links that are not intended to be hidden
 may effectively become <em>hidden links</em> because of bad HTML.
-The <em>hidden links</em> differ from Anchors which have only a
+The <em>hidden links</em> differ from Anchors that have only a
 NAME or ID attribute name/value pair (intended as positioning targets from
 other links which do have HREF attributes and values that include a
 fragment).
@@ -146,15 +146,15 @@ shown in the text even in <em>links are numbered</em> mode.  Not using a
 <em>hidden links</em>, they will be reported, with appropriate labeling,
 in the menus created for the LIST ('<em>l</em>') or ADDRLIST ('<em>A</em>')
 commands, unless <em>-hiddenlinks=ignore</em> is used.  They can then be
-ACTIVATE-ed via those menus.  Also, if a link was hidden due to an ALT
+ACTIVATE-ed via those menus.  Also, if a link was hidden because of an ALT
 attribute in an IMG element, it will be converted to a <em>visible link</em>
 whenever the IMAGE_TOGGLE ('<em>*</em>') command is used to create links
 for SRC attribute values of IMG elements, because this indicates that the
 user does have some form of image handling enabled via a helper application,
-or wishes to download files for subsequent use with a graphic browsers or
+or wishes to download files for subsequent use with a graphic browser or
 other suitable software.
 
-<p>HTML forms also can have fields with a HIDDEN attribute, indicating that
+<p>HTML forms also may have fields with a HIDDEN attribute, indicating that
 a name/value pair for the fields should be included in the content submitted
 for the form, but the value should not be displayed in the rendered form.
 Lynx respects this attribute as well, and neither displays the HIDDEN field,

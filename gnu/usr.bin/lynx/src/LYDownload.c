@@ -25,7 +25,7 @@ PUBLIC BOOLEAN LYDidRename = FALSE;
 PRIVATE char LYValidDownloadFile[LY_MAXPATH] = "\0";
 
 PUBLIC void LYDownload ARGS1(
-	char *, 	line)
+	char *,		line)
 {
     char *Line = NULL, *method, *file, *sug_file = NULL;
     int method_number;
@@ -34,8 +34,7 @@ PUBLIC void LYDownload ARGS1(
     char buffer[LY_MAXPATH];
     char command[LY_MAXPATH];
     char *cp;
-    lynx_html_item_type *download_command = 0;
-    FILE *fp;
+    lynx_list_item_type *download_command = 0;
     int ch, recall;
     int FnameTotal;
     int FnameNum;
@@ -61,24 +60,24 @@ PUBLIC void LYDownload ARGS1(
     StrAllocCopy(Line, line);
 
     /*
-     *	Parse out the sug_file, Method and the File.
+     *	Parse out the File, sug_file, and the Method.
      */
-    if ((sug_file = (char *)strstr(Line, "SugFile=")) != NULL) {
-	*(sug_file-1) = '\0';
-	/*
-	 *  Go past "SugFile=".
-	 */
-	sug_file += 8;
-	HTUnEscape(sug_file);
-    }
-
-    if ((file = (char *)strstr(Line, "File=")) == NULL)
+    if ((file = strstr(Line, "/File=")) == NULL)
 	goto failed;
-    *(file-1) = '\0';
+    *file = '\0';
     /*
      *	Go past "File=".
      */
-    file += 5;
+    file += 6;
+
+    if ((sug_file = strstr(file + 1, "/SugFile=")) != NULL) {
+	*sug_file = '\0';
+	/*
+	 *  Go past "SugFile=".
+	 */
+	sug_file += 9;
+	HTUnEscape(sug_file);
+    }
 
     /*
      *	Make sure that the file string is the one from
@@ -88,16 +87,30 @@ PUBLIC void LYDownload ARGS1(
 	goto failed;
     }
 
-#ifdef DIRED_SUPPORT
+#if defined(DIRED_SUPPORT)
     /* FIXME: use HTLocalName */
-    if (!strncmp(file, "file://localhost", 16))
+    if (!strncmp(file, "file://localhost", 16)) {
+#ifdef __DJGPP__
+	file += 17;
+	file = HTDOS_name(file);
+#else
 	file += 16;
+#endif /* __DJGPP__ */
+    }
     else if (!strncmp(file, "file:", 5))
 	file += 5;
     HTUnEscape(file);
+#else
+#if defined(_WINDOWS)	/* 1997/10/15 (Wed) 16:27:38 */
+    if (!strncmp(file, "file://localhost/", 17))
+	file += 17;
+    else if (!strncmp(file, "file:/", 6))
+	file += 6;
+    HTUnEscape(file);
+#endif /* _WINDOWS */
 #endif /* DIRED_SUPPORT */
 
-    if ((method = (char *)strstr(Line, "Method=")) == NULL)
+    if ((method = strstr(Line, "Method=")) == NULL)
 	goto failed;
     /*
      *	Go past "Method=".
@@ -109,7 +122,7 @@ PUBLIC void LYDownload ARGS1(
      *	Set up the sug_filenames recall buffer.
      */
     FnameTotal = (sug_filenames ? HTList_count(sug_filenames) : 0);
-    recall = ((FnameTotal >= 1) ? RECALL : NORECALL);
+    recall = ((FnameTotal >= 1) ? RECALL_URL : NORECALL);
     FnameNum = FnameTotal;
 
     if (method_number < 0) {
@@ -151,7 +164,7 @@ check_recall:
 		} else if ((cp = (char *)HTList_objectAt(
 						sug_filenames,
 						FnameNum)) != NULL) {
-		    strcpy(buffer, cp);
+		    LYstrncpy(buffer, cp, sizeof(buffer)-1);
 		    if (FnameTotal == 1) {
 			_statusline(EDIT_THE_PREV_FILENAME);
 		    } else {
@@ -184,7 +197,7 @@ check_recall:
 		} else if ((cp = (char *)HTList_objectAt(
 						sug_filenames,
 						FnameNum)) != NULL) {
-		    strcpy(buffer, cp);
+		    LYstrncpy(buffer, cp, sizeof(buffer)-1);
 		    if (FnameTotal == 1) {
 			_statusline(EDIT_THE_PREV_FILENAME);
 		    } else {
@@ -233,14 +246,9 @@ check_recall:
 	/*
 	 *  See if we can write to it.
 	 */
-	CTRACE(tfp, "LYDownload: filename is %s", buffer);
+	CTRACE((tfp, "LYDownload: filename is %s\n", buffer));
 
-	if ((fp = fopen(buffer, "w")) != NULL) {
-	    fclose(fp);
-	    remove(buffer);
-	} else {
-	    HTAlert(CANNOT_WRITE_TO_FILE);
-	    _statusline(NEW_FILENAME_PROMPT);
+	if (! LYCanWriteFile(buffer)) {
 	    FirstRecall = TRUE;
 	    FnameNum = FnameTotal;
 	    goto retry;
@@ -252,12 +260,12 @@ check_recall:
 	/*
 	 *  Try rename() first. - FM
 	 */
-	CTRACE(tfp, "command: rename(%s, %s)\n", file, buffer);
+	CTRACE((tfp, "command: rename(%s, %s)\n", file, buffer));
 	if (rename(file, buffer)) {
 	    /*
 	     *	Failed.  Use spawned COPY_COMMAND. - FM
 	     */
-	    CTRACE(tfp, "         FAILED!\n");
+	    CTRACE((tfp, "         FAILED!\n"));
 	    LYCopyFile(file, buffer);
 	} else {
 	    /*
@@ -332,7 +340,7 @@ check_recall:
 			} else if ((cp = (char *)HTList_objectAt(
 							sug_filenames,
 							FnameNum)) != NULL) {
-			    strcpy(buffer, cp);
+			    LYstrncpy(buffer, cp, sizeof(buffer)-1);
 			    if (FnameTotal == 1) {
 				_statusline(EDIT_THE_PREV_FILENAME);
 			    } else {
@@ -365,7 +373,7 @@ check_recall:
 			} else if ((cp = (char *)HTList_objectAt(
 							sug_filenames,
 							FnameNum)) != NULL) {
-			    strcpy(buffer, cp);
+			    LYstrncpy(buffer, cp, sizeof(buffer)-1);
 			    if (FnameTotal == 1) {
 				_statusline(EDIT_THE_PREV_FILENAME);
 			    } else {
@@ -396,7 +404,11 @@ check_recall:
 		if (!strncasecomp(buffer, "nl:", 3) ||
 		    !strncasecomp(buffer, "/nl/", 4))
 #else
+#if defined(DOSPATH)	/* 1997/10/15 (Wed) 16:41:30 */
+		if (!strcmp(buffer, "nul"))
+#else
 		if (!strcmp(buffer, "/dev/null"))
+#endif /* DOSPATH */
 #endif /* VMS */
 		{
 		    goto cancelled;
@@ -422,7 +434,7 @@ check_recall:
 	    goto failed;
 	}
 
-	CTRACE(tfp, "command: %s\n", the_command);
+	CTRACE((tfp, "command: %s\n", the_command));
 	stop_curses();
 	LYSystem(the_command);
 	FREE(the_command);
@@ -467,13 +479,13 @@ cancelled:
  */
 PUBLIC int LYdownload_options ARGS2(
 	char **,	newfile,
-	char *, 	data_file)
+	char *,		data_file)
 {
-    static char tempfile[LY_MAXPATH];
+    static char tempfile[LY_MAXPATH] = "\0";
     char *downloaded_url = NULL;
     char *sug_filename = NULL;
     FILE *fp0;
-    lynx_html_item_type *cur_download;
+    lynx_list_item_type *cur_download;
     int count;
 
     /*
@@ -482,8 +494,13 @@ PUBLIC int LYdownload_options ARGS2(
     StrAllocCopy(sug_filename, *newfile);
     change_sug_filename(sug_filename);
 
-    LYRemoveTemp(tempfile);
-    if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
+    if (LYReuseTempfiles) {
+	fp0 = LYOpenTempRewrite(tempfile, HTML_SUFFIX, BIN_W);
+    } else {
+	LYRemoveTemp(tempfile);
+	fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, BIN_W);
+    }
+    if (fp0 == NULL) {
 	HTAlert(CANNOT_OPEN_TEMP);
 	return(-1);
     }
@@ -500,12 +517,12 @@ PUBLIC int LYdownload_options ARGS2(
 
     fprintf(fp0, "<pre>\n");
     fprintf(fp0, "<em>%s</em> %s\n",
-    	    gettext("Downloaded link:"),
+	    gettext("Downloaded link:"),
 	    downloaded_url);
     FREE(downloaded_url);
 
     fprintf(fp0, "<em>%s</em> %s\n",
-    	    gettext("Suggested file name:"),
+	    gettext("Suggested file name:"),
 	    sug_filename);
 
     fprintf(fp0, "\n%s\n",
@@ -514,7 +531,7 @@ PUBLIC int LYdownload_options ARGS2(
 	    : gettext("Download options:"));
 
     if (!no_disk_save && !child_lynx) {
-#ifdef DIRED_SUPPORT
+#if defined(DIRED_SUPPORT)
 	/*
 	 *  Disable save to disk option for local files.
 	 */
@@ -549,6 +566,7 @@ PUBLIC int LYdownload_options ARGS2(
     fprintf(fp0, "</pre>\n");
     EndInternalPage(fp0);
     LYCloseTempFP(fp0);
+    LYRegisterUIPage(*newfile, UIP_DOWNLOAD_OPTIONS);
 
     /*
      *	Free off temp copy.

@@ -13,13 +13,20 @@
 #include <LYLeaks.h>
 #include <LYStrings.h>
 
-PUBLIC int WWW_TraceFlag = 0;	/* Global trace flag for ALL W3 code */
+#ifndef NO_LYNX_TRACE
+PUBLIC BOOLEAN WWW_TraceFlag = 0;	/* Global trace flag for ALL W3 code */
+PUBLIC int WWW_TraceMask = 0;		/* Global trace flag for ALL W3 code */
+#endif
 
 #ifndef VC
 #define VC "unknown"
 #endif /* !VC */
 
+#ifdef _WINDOWS
+CONST char * HTLibraryVersion = "2.14FM"; /* String for help screen etc */
+#else
 PUBLIC CONST char * HTLibraryVersion = VC; /* String for help screen etc */
+#endif
 
 /*
 **     strcasecomp8 is a variant of strcasecomp (below)
@@ -73,7 +80,81 @@ PUBLIC int strncasecomp8 ARGS3(
     }
     /*NOTREACHED*/
 }
+
 #ifndef VM		/* VM has these already it seems */
+
+#ifdef SH_EX	/* 1997/12/23 (Tue) 16:40:31 */
+
+/*
+ * This array is designed for mapping upper and lower case letter
+ * together for a case independent comparison.  The mappings are
+ * based upon ascii character sequences.
+ */
+static unsigned char charmap[] = {
+	'\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007',
+	'\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
+	'\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
+	'\030', '\031', '\032', '\033', '\034', '\035', '\036', '\037',
+	'\040', '\041', '\042', '\043', '\044', '\045', '\046', '\047',
+	'\050', '\051', '\052', '\053', '\054', '\055', '\056', '\057',
+	'\060', '\061', '\062', '\063', '\064', '\065', '\066', '\067',
+	'\070', '\071', '\072', '\073', '\074', '\075', '\076', '\077',
+	'\100', '\141', '\142', '\143', '\144', '\145', '\146', '\147',
+	'\150', '\151', '\152', '\153', '\154', '\155', '\156', '\157',
+	'\160', '\161', '\162', '\163', '\164', '\165', '\166', '\167',
+	'\170', '\171', '\172', '\133', '\134', '\135', '\136', '\137',
+	'\140', '\141', '\142', '\143', '\144', '\145', '\146', '\147',
+	'\150', '\151', '\152', '\153', '\154', '\155', '\156', '\157',
+	'\160', '\161', '\162', '\163', '\164', '\165', '\166', '\167',
+	'\170', '\171', '\172', '\173', '\174', '\175', '\176', '\177',
+	'\200', '\201', '\202', '\203', '\204', '\205', '\206', '\207',
+	'\210', '\211', '\212', '\213', '\214', '\215', '\216', '\217',
+	'\220', '\221', '\222', '\223', '\224', '\225', '\226', '\227',
+	'\230', '\231', '\232', '\233', '\234', '\235', '\236', '\237',
+	'\240', '\241', '\242', '\243', '\244', '\245', '\246', '\247',
+	'\250', '\251', '\252', '\253', '\254', '\255', '\256', '\257',
+	'\260', '\261', '\262', '\263', '\264', '\265', '\266', '\267',
+	'\270', '\271', '\272', '\273', '\274', '\275', '\276', '\277',
+	'\340', '\341', '\342', '\343', '\344', '\345', '\346', '\347',
+	'\350', '\351', '\352', '\353', '\354', '\355', '\356', '\357',
+	'\360', '\361', '\362', '\363', '\364', '\365', '\366', '\327',
+	'\370', '\371', '\372', '\373', '\374', '\375', '\376', '\337',
+	'\340', '\341', '\342', '\343', '\344', '\345', '\346', '\347',
+	'\350', '\351', '\352', '\353', '\354', '\355', '\356', '\357',
+	'\360', '\361', '\362', '\363', '\364', '\365', '\366', '\367',
+	'\370', '\371', '\372', '\373', '\374', '\375', '\376', '\377',
+};
+
+PUBLIC int strcasecomp ARGS2(
+	CONST char*,	s1,
+	CONST char*,	s2)
+{
+    register unsigned char *cm = charmap;
+    register unsigned char *us1 = (unsigned char *)s1;
+    register unsigned char *us2 = (unsigned char *)s2;
+
+    while (cm[*us1] == cm[*us2++])
+	if (*us1++ == '\0')
+	    return(0);
+    return (cm[*us1] - cm[*--us2]);
+}
+
+PUBLIC int strncasecomp ARGS3(
+	CONST char*,	a,
+	CONST char*,	b,
+	int,		n)
+{
+    register unsigned char *cm = charmap;
+    register unsigned char *us1 = (unsigned char *)a;
+    register unsigned char *us2 = (unsigned char *)b;
+
+    while ((long)(--n) >= 0 && cm[*us1] == cm[*us2++])
+	if (*us1++ == '\0')
+	    return(0);
+    return ((long)n < 0 ? 0 : cm[*us1] - cm[*--us2]);
+}
+
+#else	/* SH_EX */
 
 /*	Strings of any length
 **	---------------------
@@ -120,6 +201,8 @@ PUBLIC int strncasecomp ARGS3(
     }
     /*NOTREACHED*/
 }
+
+#endif	/* SH_EX */
 #endif /* VM */
 
 #ifdef NOT_ASCII
@@ -135,7 +218,7 @@ PUBLIC int AS_casecomp ARGS2(
 
     for ( ; ; p++, q++) {
 	if (!(*p && *q))
-	    return ((unsigned char) *p - (unsigned char) *q);
+	    return (UCH(*p)  - UCH(*q));
 	diff = TOASCII(TOLOWER(*p))
 	     - TOASCII(TOLOWER(*q));
 	if (diff)
@@ -159,7 +242,7 @@ PUBLIC int AS_ncmp ARGS3(
 
     for ( ; (p-a) < n; p++, q++) {
 	if (!(*p && *q))
-	    return ((unsigned char) *p - (unsigned char) *q);
+	    return (UCH(*p) - UCH(*q));
 	diff = TOASCII(*p)
 	     - TOASCII(*q);
 	if (diff)
@@ -275,7 +358,7 @@ PUBLIC char * HTNextField ARGS1(
 **	On entry,
 **	*pstr	points to a string to be parsed.
 **	delims	lists characters to be recognized as delimiters.
-**		If NULL default is white white space "," ";" or "=".
+**		If NULL, default is white space "," ";" or "=".
 **		The word can optionally be quoted or enclosed with
 **		chars from bracks.
 **		Comments surrrounded by '(' ')' are filtered out
@@ -283,7 +366,7 @@ PUBLIC char * HTNextField ARGS1(
 **		' ' or '(' in delims or bracks.
 **	bracks	lists bracketing chars.  Some are recognized as
 **		special, for those give the opening char.
-**		If NULL defaults to <"> and "<" ">".
+**		If NULL, defaults to <"> and "<" ">".
 **	found	points to location to fill with the ending delimiter
 **		found, or is NULL.
 **
@@ -298,7 +381,7 @@ PUBLIC char * HTNextTok ARGS4(
 	char **,	pstr,
 	CONST char *,	delims,
 	CONST char *,	bracks,
-	char *, 	found)
+	char *,		found)
 {
     char * p = *pstr;
     char * start = NULL;
@@ -310,9 +393,9 @@ PUBLIC char * HTNextTok ARGS4(
     if (!delims) delims = " ;,=" ;
     if (!bracks) bracks = "<\"" ;
 
-    get_blanks = (!strchr(delims,' ') && !strchr(bracks,' '));
-    get_comments = (strchr(bracks,'(') != NULL);
-    skip_comments = (!get_comments && !strchr(delims,'(') && !get_blanks);
+    get_blanks = (BOOL) (!strchr(delims,' ') && !strchr(bracks,' '));
+    get_comments = (BOOL) (strchr(bracks,'(') != NULL);
+    skip_comments = (BOOL) (!get_comments && !strchr(delims,'(') && !get_blanks);
 #define skipWHITE(c) (!get_blanks && WHITE(c))
 
     while (*p && skipWHITE(*p))
@@ -350,9 +433,9 @@ PUBLIC char * HTNextTok ARGS4(
 		if (!*p || (!strchr(bracks,*p) && strchr(delims,*p))) {
 		    break;
 		} else
-		    get_closing_char_too = (strchr(bracks,*p) != NULL);
+		    get_closing_char_too = (BOOL) (strchr(bracks,*p) != NULL);
 	    }
-	} else if (strchr(bracks,*p)) {        /* quoted or bracketted field */
+	} else if (strchr(bracks,*p)) {	       /* quoted or bracketed field */
 	    switch (*p) {
 	       case '<': closer = '>'; break;
 	       case '[': closer = ']'; break;
@@ -368,16 +451,9 @@ PUBLIC char * HTNextTok ARGS4(
 		if (!*p || (!strchr(bracks,*p) && strchr(delims,*p))) {
 		    break;
 		} else
-		    get_closing_char_too = (strchr(bracks,*p) != NULL);
+		    get_closing_char_too = (BOOL) (strchr(bracks,*p) != NULL);
 	    } else
 	    break;			    /* kr95-10-9: needs to stop here */
-#if 0
-	} else if (*p == '<') { 			     /* quoted field */
-	    if (!start) start = ++p;
-	    for(;*p && *p!='>'; p++)
-		if (*p == '\\' && *(p+1)) p++;	       /* Skip escaped chars */
-	    break;			    /* kr95-10-9: needs to stop here */
-#endif
 	} else {					      /* Spool field */
 	    if (!start) start = p;
 	    while(*p && !skipWHITE(*p) && !strchr(bracks,*p) &&
@@ -416,6 +492,16 @@ PRIVATE char *HTAlloc ARGS2(char *, ptr, size_t, length)
 }
 
 /*
+ * If SAVE_TIME_NOT_SPACE is defined, StrAllocVsprintf will hang on to
+ * its temporary string buffers instead of allocating and freeing them
+ * in each invocation.  They only grow and never shrink, and won't be
+ * cleaned up on exit. - kw
+ */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE) || defined(LY_FIND_LEAKS)
+#undef SAVE_TIME_NOT_SPACE
+#endif
+
+/*
  * Replacement for sprintf, allocates buffer on the fly according to what's needed
  * for its arguments.  Unlike sprintf, this always concatenates to the destination
  * buffer, so we do not have to provide both flavors.
@@ -433,27 +519,54 @@ typedef enum { Flags, Width, Prec, Type, Format } PRINTF;
 #define GROW_EXPR(n) (((n) * 3) / 2)
 #define GROW_SIZE 256
 
-PRIVATE char * StrAllocVsprintf ARGS4(
+PUBLIC_IF_FIND_LEAKS char * StrAllocVsprintf ARGS4(
 	char **,	pstr,
 	size_t,		dst_len,
 	CONST char *,	fmt,
 	va_list *,	ap)
 {
+#ifdef SAVE_TIME_NOT_SPACE
+    static size_t tmp_len = 0;
+    static size_t fmt_len = 0;
+    static char *tmp_ptr = NULL;
+    static char *fmt_ptr = NULL;
+#else
     size_t tmp_len = GROW_SIZE;
-    size_t have, need;
     char *tmp_ptr = 0;
     char *fmt_ptr;
+#endif /* SAVE_TIME_NOT_SPACE */
+    size_t have, need;
     char *dst_ptr = *pstr;
     CONST char *format = fmt;
 
     if (fmt == 0 || *fmt == '\0')
 	return 0;
 
+#ifdef USE_VASPRINTF
+    if (pstr && !dst_len) {
+	if (*pstr)
+	    FREE(*pstr);
+	if (vasprintf(pstr, fmt, *ap) >= 0) {
+	    mark_malloced(*pstr, strlen(*pstr)+1);
+	    return(*pstr);
+	}
+    }
+#endif /* USE_VASPRINTF */
+
     need = strlen(fmt) + 1;
+#ifdef SAVE_TIME_NOT_SPACE
+    if (!fmt_ptr || fmt_len < need*NUM_WIDTH) {
+	fmt_ptr = HTAlloc(fmt_ptr, fmt_len = need*NUM_WIDTH);
+    }
+    if (!tmp_ptr || tmp_len < GROW_SIZE) {
+	tmp_ptr = HTAlloc(tmp_ptr, tmp_len = GROW_SIZE);
+    }
+#else
     if ((fmt_ptr = malloc(need*NUM_WIDTH)) == 0
      || (tmp_ptr = malloc(tmp_len)) == 0) {
 	outofmem(__FILE__, "StrAllocVsprintf");
     }
+#endif /* SAVE_TIME_NOT_SPACE */
 
     if (dst_ptr == 0) {
 	dst_ptr = HTAlloc(dst_ptr, have = GROW_SIZE + need);
@@ -482,7 +595,7 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 	    while (*++fmt != '\0' && !done) {
 		fmt_ptr[f++] = *fmt;
 
-		if (isdigit(*fmt)) {
+		if (isdigit(UCH(*fmt))) {
 		    int num = *fmt - '0';
 		    if (state == Flags && num != 0)
 			state = Width;
@@ -506,7 +619,7 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 		    }
 		    sprintf(&fmt_ptr[--f], "%d", ival);
 		    f = strlen(fmt_ptr);
-		} else if (isalpha(*fmt)) {
+		} else if (isalpha(UCH(*fmt))) {
 		    done = TRUE;
 		    switch (*fmt) {
 		    case 'Z': /* FALLTHRU */
@@ -535,11 +648,6 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 		    case 'E': /* FALLTHRU */
 		    case 'g': /* FALLTHRU */
 		    case 'G': /* FALLTHRU */
-#if 0	/* we don't need this, it doesn't work on SunOS 4.x */
-			if (type == 'L')
-			    VA_FLOAT(long double);
-			else
-#endif
 			    VA_FLOAT(double);
 			used = 'f';
 			break;
@@ -562,8 +670,8 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 			used = 0;
 			break;
 		    default:
-			CTRACE(tfp, "unknown format character '%c' in %s\n",
-			            *fmt, format);
+			CTRACE((tfp, "unknown format character '%c' in %s\n",
+				    *fmt, format));
 			break;
 		    }
 		} else if (*fmt == '.') {
@@ -580,16 +688,21 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 		case 'f':
 		    if (width < prec + NUM_WIDTH)
 			width = prec + NUM_WIDTH;
+		    /* FALLTHRU */
 		case 'i':
+		    /* FALLTHRU */
 		case 'p':
 		    if (width < prec + 2)
 			width = prec + 2; /* leading sign/space/zero, "0x" */
+		    break;
 		case 'c':
+		    break;
 		case '%':
 		    break;
 		default:
 		    if (width < prec)
 			width = prec;
+		    break;
 		}
 	    }
 	    if (width >= (int)tmp_len) {
@@ -623,19 +736,27 @@ PRIVATE char * StrAllocVsprintf ARGS4(
 	}
     }
 
+#ifndef SAVE_TIME_NOT_SPACE
     FREE(tmp_ptr);
     FREE(fmt_ptr);
+#endif
     dst_ptr[dst_len] = '\0';
     if (pstr)
-    	*pstr = dst_ptr;
+	*pstr = dst_ptr;
     return (dst_ptr);
 }
+#undef SAVE_TIME_NOT_SPACE
 
 /*
  * Replacement for sprintf, allocates buffer on the fly according to what's needed
  * for its arguments.  Unlike sprintf, this always concatenates to the destination
  * buffer.
  */
+/* Note: if making changes, also check the memory tracking version
+ * LYLeakHTSprintf in LYLeaks.c. - kw */
+#ifdef HTSprintf		/* if hidden by LYLeaks stuff */
+#undef HTSprintf
+#endif
 #if ANSI_VARARGS
 PUBLIC char * HTSprintf (char ** pstr, CONST char * fmt, ...)
 #else
@@ -667,6 +788,11 @@ PUBLIC char * HTSprintf (va_alist)
  * needed for its arguments.  Like sprintf, this always resets the destination
  * buffer.
  */
+/* Note: if making changes, also check the memory tracking version
+ * LYLeakHTSprintf0 in LYLeaks.c. - kw */
+#ifdef HTSprintf0		/* if hidden by LYLeaks stuff */
+#undef HTSprintf0
+#endif
 #if ANSI_VARARGS
 PUBLIC char * HTSprintf0 (char ** pstr, CONST char * fmt, ...)
 #else
@@ -683,6 +809,15 @@ PUBLIC char * HTSprintf0 (va_alist)
 	char **		pstr = va_arg(ap, char **);
 	CONST char *	fmt  = va_arg(ap, CONST char *);
 #endif
+#ifdef USE_VASPRINTF
+	if (pstr) {
+	    if (*pstr)
+		FREE(*pstr);
+	    if (vasprintf(pstr, fmt, ap) >= 0) /* else call outofmem?? */
+		mark_malloced(*pstr, strlen(*pstr)+1);
+	    result = *pstr;
+	} else
+#endif /* USE_VASPRINTF */
 	result = StrAllocVsprintf(pstr, 0, fmt, &ap);
     }
     va_end(ap);
@@ -708,7 +843,7 @@ PUBLIC char *HTQuoteParameter ARGS1(
 
     for (i=0; i < last; ++i)
 	if (strchr("\\&#$^*?(){}<>\"';`|", parameter[i]) != 0
-	 || isspace(parameter[i]))
+	 || isspace(UCH(parameter[i])))
 	    ++quoted;
 
     result = (char *)malloc(last + 5*quoted + 3);
@@ -725,10 +860,14 @@ PUBLIC char *HTQuoteParameter ARGS1(
 	    result[n++] = parameter[i];
 	    result[n++] = D_QUOTE;
 	    result[n++] = S_QUOTE;
-	} else if (parameter[i] == '\\') {
-	    result[n++] = parameter[i];
-	    result[n++] = parameter[i];
 	} else {
+	    /* Note:  No special handling of other characters, including
+	       backslash, since we are constructing a single-quoted string!
+	       Backslash has no special escape meaning within those for sh
+	       and compatible shells, so trying to escape a backslash by
+	       doubling it is unnecessary and would be interpreted by the
+	       shell as an additional data character. - kw 2000-05-02
+	       */
 	    result[n++] = parameter[i];
 	}
     }
@@ -806,12 +945,12 @@ PUBLIC void HTAddXpand ARGS4(
 	    if (HTIsParam(next)) {
 		if (next != last) {
 		    size_t len = (next - last)
-		    		+ ((*result != 0) ? strlen(*result) : 0);
+				+ ((*result != 0) ? strlen(*result) : 0);
 		    HTSACat(result, last);
 		    (*result)[len] = 0;
 		}
 		HTSACat(result, parameter);
-		CTRACE(tfp, "PARAM-EXP:%s\n", *result);
+		CTRACE((tfp, "PARAM-EXP:%s\n", *result));
 		return;
 	    }
 	    next++;
@@ -840,7 +979,9 @@ PUBLIC void HTAddParam ARGS4(
     if (number > 0) {
 	CONST char *last = HTAfterCommandArg(command, number - 1);
 	CONST char *next = last;
+#if USE_QUOTED_PARAMETER
 	char *quoted;
+#endif
 
 	if (number <= 1) {
 	    FREE(*result);
@@ -851,7 +992,7 @@ PUBLIC void HTAddParam ARGS4(
 	    if (HTIsParam(next)) {
 		if (next != last) {
 		    size_t len = (next - last)
-		    		+ ((*result != 0) ? strlen(*result) : 0);
+				+ ((*result != 0) ? strlen(*result) : 0);
 		    HTSACat(result, last);
 		    (*result)[len] = 0;
 		}
@@ -862,7 +1003,7 @@ PUBLIC void HTAddParam ARGS4(
 #else
 		HTSACat(result, parameter);
 #endif
-		CTRACE(tfp, "PARAM-ADD:%s\n", *result);
+		CTRACE((tfp, "PARAM-ADD:%s\n", *result));
 		return;
 	    }
 	    next++;
@@ -888,5 +1029,67 @@ PUBLIC void HTEndParam ARGS3(
     if (last[0] != 0) {
 	HTSACat(result, last);
     }
-    CTRACE(tfp, "PARAM-END:%s\n", *result);
+    CTRACE((tfp, "PARAM-END:%s\n", *result));
 }
+
+
+#ifdef EXP_FILE_UPLOAD
+/*	bstring Allocate and Concatenate
+*/
+
+/*	Allocate a new copy of a bstring, and returns it
+*/
+PUBLIC void HTSABCopy ARGS3(
+	bstring**,	dest,
+	CONST char *,	src,
+	int,		len)
+{
+    bstring *t;
+    CTRACE((tfp, "HTSABCopy(%p, %p, %d)\n", dest, src, len));
+    /* if we already have a bstring ** ... */
+    if (dest) {
+	/* ... with a valid bstring *, free it ... */
+	if (*dest) {
+	    FREE((*dest)->str);
+	    FREE(*dest);
+	}
+	*dest = malloc(sizeof(bstring));
+	if (src) {
+	    CTRACE((tfp, "%% [%s]\n", src));
+	    t = (bstring*) malloc(sizeof(bstring));
+	    if (t == NULL)
+		outofmem(__FILE__, "HTSABCopy");
+	    t->str = (char *) malloc (len);
+	    if (t->str == NULL)
+		outofmem(__FILE__, "HTSABCopy");
+	    memcpy (t->str, src, len);
+	    t->len = len;
+	    *dest = t;
+	}
+    }
+}
+
+PUBLIC void HTSABCat ARGS3(
+	bstring **,	dest,
+	CONST char *,	src,
+	int,		len)
+{
+    bstring *t = *dest;
+    if (src) {
+	if (t) {
+	    int length = t->len;
+	    t->str = (char *)realloc(t->str, length + len);
+	} else {
+	    t = typecalloc(bstring);
+	    if (t == NULL)
+		outofmem(__FILE__, "HTSACat");
+	    t->str = (char *)malloc(len);
+	}
+	if (t->str == NULL)
+	    outofmem(__FILE__, "HTSACat");
+	memcpy (t->str + t->len, src, len);
+	t->len += len;
+	*dest = t;
+    }
+}
+#endif /* EXP_FILE_UPLOAD */

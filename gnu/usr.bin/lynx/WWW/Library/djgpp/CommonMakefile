@@ -116,7 +116,7 @@ HFILES = $(CMN)HTParse.h $(CMN)HTAccess.h $(CMN)HTTP.h $(CMN)HTFile.h \
 	$(CMN)HTFormat.h $(CMN)HTInit.h \
 	$(CMN)HTMIME.h $(CMN)HTNews.h \
 	$(CMN)HTGopher.h \
-	$(CMN)HTUtils.h $(CMN)tcp.h $(CMN)HText.h \
+	$(CMN)HTUtils.h $(CMN)www_tcp.h $(CMN)HText.h \
 	$(CMN)HTTelnet.h $(CMN)HTFinger.h \
 	$(CMN)HTWAIS.h  $(CMN)HTWSRC.h \
 	$(CMN)HTAAUtil.h $(CMN)HTAABrow.h \
@@ -130,9 +130,6 @@ SOURCES = $(CFILES) $(HFILES) $(CMN)Version.make \
 SPECIFIC = $(WWW)/All/*/Makefile.include $(WWW)/All/Implementation/Makefile* \
 	$(VMS)/descrip.mms $(VMS)/build_multinet.com \
 	$(VMS)/COPYING.LIB $(VMS)/setup.com $(VMS)/multinet.opt \
-	$(VMS)/patchlevel.h $(VMS)/ufc-crypt.h \
-	$(VMS)/crypt.c $(VMS)/crypt_util.c \
-	$(VMS)/getline.c $(VMS)/getpass.c \
 	$(VMS)/HTVMSUtils.h $(VMS)/HTVMSUtils.c
 
 
@@ -146,13 +143,12 @@ $(LOB)/libwww.a : $(COMMON)
 
 #	Clean up everything generatable except final products
 clean :
-	rm $(LOB)/*.o
-	-rmdir $(LOB)
+	rm -f $(LOB)/*.o
 
 #	Clean up everything generatable including final products
 
 cleanall : clean
-	rm $(LOB)/libwww.a
+	rm -f $(LOB)/libwww.a
 
 #	Install W3 library into system space (not normally necessary)
 

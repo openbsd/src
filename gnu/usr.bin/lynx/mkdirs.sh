@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 # mkinstalldirs --- make directory hierarchy
 # Author: Noah Friedman <friedman@prep.ai.mit.edu>
 # Created: 1993-05-16
@@ -22,7 +22,10 @@ for file in ${1+"$@"} ; do
 
      if test ! -d "$pathcomp"; then
         echo "mkdir $pathcomp" 1>&2
-        mkdir "$pathcomp" || errstatus=$?
+        case "$pathcomp" in
+          [a-zA-Z]: )  ;;               # DOSISH systems
+          * )          mkdir "$pathcomp" || errstatus=$? ;;
+        esac
      fi
 
      pathcomp="$pathcomp/"

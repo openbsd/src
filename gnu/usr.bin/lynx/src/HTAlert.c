@@ -22,18 +22,36 @@
 
 #include <LYLeaks.h>
 
+#include <HTParse.h>
+
+#undef timezone	/* U/Win defines this in time.h, hides implementation detail */
+
+#if defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H)
+#include <sys/timeb.h>
+#endif
+
+/*
+ * 'napms()' is preferable to 'sleep()' in any case because it does not
+ * interfere with output, but also because it can be less than a second.
+ */
+#ifdef HAVE_NAPMS
+#define LYSleep(n) napms(n)
+#else
+#define LYSleep(n) sleep(n)
+#endif
+
 /*	Issue a message about a problem.		HTAlert()
 **	--------------------------------
 */
 PUBLIC void HTAlert ARGS1(
 	CONST char *,	Msg)
 {
-    CTRACE(tfp, "\nAlert!: %s\n\n", Msg);
+    CTRACE((tfp, "\nAlert!: %s\n\n", Msg));
     CTRACE_FLUSH(tfp);
     _user_message(ALERT_FORMAT, Msg);
     LYstore_message2(ALERT_FORMAT, Msg);
 
-    sleep(AlertSecs);
+    LYSleepAlert();
 }
 
 PUBLIC void HTAlwaysAlert ARGS2(
@@ -48,16 +66,18 @@ PUBLIC void HTAlwaysAlert ARGS2(
 		    "%s %s!\n",
 		    extra_prefix, Msg);
 	    fflush(stdout);
-	    sleep(AlertSecs);
+	    LYstore_message2(ALERT_FORMAT, Msg);
+	    LYSleepAlert();
 	} else {
 	    fprintf(((TRACE) ? stdout : stderr),
 		    ALERT_FORMAT,
 		    (Msg == 0) ? "" : Msg);
 	    fflush(stdout);
-	    sleep(AlertSecs);
+	    LYstore_message2(ALERT_FORMAT, Msg);
+	    LYSleepAlert();
 	    fprintf(((TRACE) ? stdout : stderr), "\n");
 	}
-	CTRACE(tfp, "\nAlert!: %s\n\n", Msg);
+	CTRACE((tfp, "\nAlert!: %s\n\n", Msg));
 	CTRACE_FLUSH(tfp);
     }
 }
@@ -70,9 +90,9 @@ PUBLIC void HTInfoMsg ARGS1(
 {
     _statusline(Msg);
     if (Msg && *Msg) {
-	CTRACE(tfp, "Info message: %s\n", Msg);
+	CTRACE((tfp, "Info message: %s\n", Msg));
 	LYstore_message(Msg);
-	sleep(InfoSecs);
+	LYSleep(InfoSecs);
     }
 }
 
@@ -84,9 +104,9 @@ PUBLIC void HTUserMsg ARGS1(
 {
     _statusline(Msg);
     if (Msg && *Msg) {
-	CTRACE(tfp, "User message: %s\n", Msg);
+	CTRACE((tfp, "User message: %s\n", Msg));
 	LYstore_message(Msg);
-	sleep(MessageSecs);
+	LYSleepMsg();
     }
 }
 
@@ -96,11 +116,11 @@ PUBLIC void HTUserMsg2 ARGS2(
 {
     _user_message(Msg2, Arg);
     if (Msg2 && *Msg2) {
-	CTRACE(tfp, "User message: ");
-	CTRACE(tfp, Msg2, Arg);
-	CTRACE(tfp, "\n");
+	CTRACE((tfp, "User message: "));
+	CTRACE((tfp, Msg2, Arg));
+	CTRACE((tfp, "\n"));
 	LYstore_message2(Msg2, Arg);
-	sleep(MessageSecs);
+	LYSleepMsg();
     }
 }
 
@@ -112,7 +132,45 @@ PUBLIC void HTProgress ARGS1(
 {
     statusline(Msg);
     LYstore_message(Msg);
-    CTRACE(tfp, "%s\n", Msg);
+    CTRACE((tfp, "%s\n", Msg));
+#if defined(SH_EX) && defined(WIN_EX)	/* 1997/10/11 (Sat) 12:51:02 */
+    {
+	if (debug_delay != 0)
+	    Sleep(debug_delay);	/* XXX msec */
+    }
+#endif
+}
+
+PRIVATE char *sprint_bytes ARGS3(
+	char *,		s,
+	long,		n,
+	char *, 	was_units)
+{
+    static long kb_units = 1024;
+    static char *bunits;
+    static char *kbunits;
+    char *u;
+
+    if (!bunits) {
+	bunits = gettext("bytes");
+	kbunits = gettext("KB");
+    }
+
+    u = kbunits;
+    if ( (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe)
+	 && (n >= 10 * kb_units) )
+	sprintf(s, "%ld", n/kb_units);
+    else if ((LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe)
+	     && (n > 999))	/* Avoid switching between 1016b/s and 1K/s */
+	sprintf(s, "%.2g", ((double)n)/kb_units);
+    else {
+	sprintf(s, "%ld", n);
+	u = bunits;
+    }
+
+    if (!was_units || was_units != u)
+	sprintf(s + strlen(s), " %s", u);
+    return u;
 }
 
 /*	Issue a read-progress message.			HTReadProgress()
@@ -122,68 +180,111 @@ PUBLIC void HTReadProgress ARGS2(
 	long,		bytes,
 	long,		total)
 {
-    static long kb_units = 1024;
-    static time_t first, last;
-    static long bytes_last;
+    static long bytes_last, total_last;
     static long transfer_rate = 0;
-    long divisor;
-    char line[80];
+    static char *line = NULL;
+    char bytesp[80], totalp[80], transferp[80];
+    int renew = 0;
+    char *was_units;
+
+#ifdef HAVE_GETTIMEOFDAY
+    struct timeval tv;
+    double now;
+    static double first, last, last_active;
+    gettimeofday(&tv, (struct timezone *)0);
+    now = tv.tv_sec + tv.tv_usec/1000000. ;
+#else
+#if defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H)
+    static double now, first, last, last_active;
+    struct timeb tb;
+
+    ftime(&tb);
+    now = tb.time + (double)tb.millitm / 1000;
+#else
     time_t now = time((time_t *)0);  /* once per second */
-    static char *units = "bytes";
+    static time_t first, last, last_active;
+#endif
+#endif
+
+    if (!LYShowTransferRate)
+	LYTransferRate = rateOFF;
 
     if (bytes == 0) {
-	first = last = now;
+	first = last = last_active = now;
 	bytes_last = bytes;
-    } else if ((bytes > 0) &&
+    } else if (bytes < 0) {	/* stalled */
+	bytes = bytes_last;
+	total = total_last;
+    }
+    if ((bytes > 0) &&
 	       (now != first))
-		/* 1 sec delay for transfer_rate calculation :-( */ {
+		/* 1 sec delay for transfer_rate calculation without g-t-o-d */ {
 	if (transfer_rate <= 0)    /* the very first time */
-	    transfer_rate = (bytes) / (now - first);   /* bytes/sec */
+	    transfer_rate = (long)((bytes) / (now - first));   /* bytes/sec */
+	total_last = total;
 
 	/*
 	 * Optimal refresh time:  every 0.2 sec, use interpolation.  Transfer
 	 * rate is not constant when we have partial content in a proxy, so
 	 * interpolation lies - will check every second at least for sure.
 	 */
+#ifdef HAVE_GETTIMEOFDAY
+	if (now >= last + 0.2)
+	    renew = 1;
+#else
 	if (((bytes - bytes_last) > (transfer_rate / 5)) || (now != last)) {
-
+	    renew = 1;
 	    bytes_last += (transfer_rate / 5);	/* until we got next second */
-
+	}
+#endif
+	if (renew) {
 	    if (now != last) {
 		last = now;
+		if (bytes_last != bytes)
+		    last_active = now;
 		bytes_last = bytes;
-		transfer_rate = (bytes_last) / (last - first); /* more accurate here */
+		transfer_rate = (long)(bytes / (now - first)); /* more accurate here */
 	    }
 
-	    units = gettext("bytes");
-	    divisor = 1;
-	    if (LYshow_kb_rate
-	      && (total >= kb_units || bytes >= kb_units)) {
-		units = gettext("KB");
-		divisor = kb_units;
-		bytes /= divisor;
-		if (total > 0) total /= divisor;
+	    if (total > 0)
+		was_units = sprint_bytes(totalp, total, 0);
+	    else
+		was_units = 0;
+	    sprint_bytes(bytesp, bytes, was_units);
+
+	    if (total > 0)
+		HTSprintf0 (&line, gettext("Read %s of %s of data"), bytesp, totalp);
+	    else
+		HTSprintf0 (&line, gettext("Read %s of data"), bytesp);
+
+	    if (LYTransferRate != rateOFF
+	     && transfer_rate > 0) {
+		sprint_bytes(transferp, transfer_rate, 0);
+		HTSprintf (&line, gettext(", %s/sec"), transferp);
 	    }
 
-	    if (total >  0)
-		sprintf (line, gettext("Read %ld of %ld %s of data"), bytes, total, units);
-	    else
-		sprintf (line, gettext("Read %ld %s of data"), bytes, units);
-	    if ((transfer_rate > 0)
-		  && (!LYshow_kb_rate || (bytes * divisor >= kb_units)))
-		sprintf (line + strlen(line), gettext(", %ld %s/sec."), transfer_rate / divisor, units);
-	    else
-		sprintf (line + strlen(line), ".");
-	    if (total <  0) {
-		if (total < -1)
-		    strcat(line, gettext(" (Press 'z' to abort)"));
+#ifdef EXP_READPROGRESS
+	    if (LYTransferRate == rateEtaBYTES
+	     || LYTransferRate == rateEtaKB) {
+		if (now - last_active >= 5)
+		    HTSprintf (&line, gettext(" (stalled for %ld sec)"), (long)(now - last_active));
+		if (total > 0 && transfer_rate)
+		    HTSprintf (&line, gettext(", ETA %ld sec"), (long)((total - bytes)/transfer_rate));
 	    }
+#endif
+
+	    StrAllocCat (line, ".");
+	    if (total < -1)
+		StrAllocCat(line, gettext(" (Press 'z' to abort)"));
 
 	    /* do not store the message for history page. */
 	    statusline(line);
-	    CTRACE(tfp, "%s\n", line);
+	    CTRACE((tfp, "%s\n", line));
 	}
     }
+#ifdef LY_FIND_LEAKS
+    FREE(line);
+#endif
 }
 
 PRIVATE BOOL conf_cancelled = NO; /* used by HTConfirm only - kw */
@@ -200,54 +301,195 @@ PUBLIC BOOL HTLastConfirmCancelled NOARGS
 
 #define DFT_CONFIRM ~(YES|NO)
 
-/*	Seek confirmation.				HTConfirm()
-**	------------------
+/*	Seek confirmation with default answer.		HTConfirmDefault()
+**	--------------------------------------
 */
-PUBLIC BOOL HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
+PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
 {
+/* Meta-note: don't move the following note from its place right
+   in front of the first gettext().  As it is now, it should
+   automatically appear in generated lynx.pot files. - kw
+ */
+
+/*  NOTE TO TRANSLATORS:  If you provide a translation for "yes", lynx
+ *  will take the first byte of the translation as a positive response
+ *  to Yes/No questions.  If you provide a translation for "no", lynx
+ *  will take the first byte of the translation as a negative response
+ *  to Yes/No questions.  For both, lynx will also try to show the
+ *  first byte in the prompt as a character, instead of (y) or (n),
+ *  respectively.  This will not work right for multibyte charsets!
+ *  Don't translate "yes" and "no" for CJK character sets (or translate
+ *  them to "yes" and "no").  For a translation using UTF-8, don't
+ *  translate if the translation would begin with anything but a 7-bit
+ *  (US_ASCII) character.  That also means do not translate if the
+ *  translation would begin with anything but a 7-bit character, if
+ *  you use a single-byte character encoding (a charset like ISO-8859-n)
+ *  but anticipate that the message catalog may be used re-encoded in
+ *  UTF-8 form.
+ *  For translations using other character sets, you may also wish to
+ *  leave "yes" and "no" untranslated, if using (y) and (n) is the
+ *  preferred behavior.
+ *  Lynx will also accept y Y n N as responses unless there is a conflict
+ *  with the first letter of the "yes" or "no" translation.
+ */
     char *msg_yes = gettext("yes");
     char *msg_no  = gettext("no");
     int result = -1;
 
+    /* If they're not really distinct in the first letter, revert to English */
+    if (TOUPPER(*msg_yes) == TOUPPER(*msg_no)) {
+	msg_yes = "yes";
+	msg_no = "no";
+    }
+
     conf_cancelled = NO;
     if (dump_output_immediately) { /* Non-interactive, can't respond */
+	if (Dft == DFT_CONFIRM) {
+	    CTRACE((tfp, "Confirm: %s (%c/%c) ", Msg, *msg_yes, *msg_no));
+	} else {
+	    CTRACE((tfp, "Confirm: %s (%c) ", Msg, (Dft == YES) ? *msg_yes : *msg_no));
+	}
+	CTRACE((tfp, "- NO, not interactive.\n"));
 	result = NO;
     } else {
 	char *msg = NULL;
+	char fallback_y = 'y';	/* English letter response as fallback */
+	char fallback_n = 'n';	/* English letter response as fallback */
+
+	if (fallback_y == *msg_yes || fallback_y == *msg_no)
+	    fallback_y = '\0';	/* conflict or duplication, don't use */
+	if (fallback_n == *msg_yes || fallback_n == *msg_no)
+	    fallback_n = '\0';	/* conflict or duplication, don't use */
 
 	if (Dft == DFT_CONFIRM)
 	    HTSprintf0(&msg, "%s (%c/%c) ", Msg, *msg_yes, *msg_no);
 	else
 	    HTSprintf0(&msg, "%s (%c) ", Msg, (Dft == YES) ? *msg_yes : *msg_no);
+	if (LYTraceLogFP) {
+	    CTRACE((tfp, "Confirm: %s", msg));
+	}
 	_statusline(msg);
 	FREE(msg);
 
 	while (result < 0) {
-	    int c = LYgetch();
+	    int c = LYgetch_single();
 #ifdef VMS
 	    if (HadVMSInterrupt) {
 		HadVMSInterrupt = FALSE;
-		c = *msg_no;
+		c = TOUPPER(*msg_no);
 	    }
 #endif /* VMS */
-	    if (c == 7 || c == 3) { /* remember we had ^G or ^C */
+	    if (c == TOUPPER(*msg_yes)) {
+		result = YES;
+	    } else if (c == TOUPPER(*msg_no)) {
+		result = NO;
+	    } else if (fallback_y && c == fallback_y) {
+		result = YES;
+	    } else if (fallback_n && c == fallback_n) {
+		result = NO;
+	    } else if (LYCharIsINTERRUPT(c)) { /* remember we had ^G or ^C */
 		conf_cancelled = YES;
 		result = NO;
-	    } else if (TOUPPER(c) == TOUPPER(*msg_yes)) {
-		result = YES;
-	    } else if (TOUPPER(c) == TOUPPER(*msg_no)) {
-		return(NO);
 	    } else if (Dft != DFT_CONFIRM) {
-		return(Dft);
+		result = Dft;
+		break;
 	    }
 	}
+	CTRACE((tfp, "- %s%s.\n",
+	       (result != NO) ? "YES" : "NO",
+	       conf_cancelled ? ", cancelled" : ""));
     }
     return (result);
 }
 
+/*	Seek confirmation.				HTConfirm()
+**	------------------
+*/
 PUBLIC BOOL HTConfirm ARGS1(CONST char *, Msg)
 {
-    return HTConfirmDefault(Msg, DFT_CONFIRM);
+    return (BOOL) HTConfirmDefault(Msg, DFT_CONFIRM);
+}
+
+/*
+ *  Ask a post resubmission prompt with some indication of what would
+ *  be resubmitted, useful especially for going backward in history.
+ *  Try to use parts of the address or, if given, the title, depending
+ *  on how much fits on the statusline.
+ *  if_imgmap and if_file indicate how to handle an address that is
+ *  a "LYNXIMGMAP:", or a "file:" URL (presumably the List Page file),
+ *  respectively: 0: auto-deny, 1: auto-confirm, 2: prompt.
+ *  - kw
+ */
+
+PUBLIC BOOL confirm_post_resub ARGS4(
+    CONST char*,	address,
+    CONST char*,	title,
+    int,		if_imgmap,
+    int,		if_file)
+{
+    size_t len1;
+    CONST char *msg = CONFIRM_POST_RESUBMISSION_TO;
+    char buf[240];
+    char *temp = NULL;
+    BOOL res;
+    size_t maxlen = LYcols - 6;
+    if (!address) {
+	return(NO);
+    } else if (!strncmp(address, "LYNXIMGMAP:", 11)) {
+	if (if_imgmap <= 0)
+	    return(NO);
+	else if (if_imgmap == 1)
+	    return(YES);
+	else
+	    msg = CONFIRM_POST_LIST_RELOAD;
+    } else if (!strncmp(address, "file:", 5)) {
+	if (if_file <= 0)
+	    return(NO);
+	else if (if_file == 1)
+	    return(YES);
+	else
+	    msg = CONFIRM_POST_LIST_RELOAD;
+    } else if (dump_output_immediately) {
+	return(NO);
+    }
+    if (maxlen >= sizeof(buf))
+	maxlen = sizeof(buf) - 1;
+    if ((len1 = strlen(msg)) +
+	strlen(address) <= maxlen) {
+	sprintf(buf, msg, address);
+	return HTConfirm(buf);
+    }
+    if (len1 + strlen(temp = HTParse(address, "",
+				     PARSE_ACCESS+PARSE_HOST+PARSE_PATH
+				     +PARSE_PUNCTUATION)) <= maxlen) {
+	sprintf(buf, msg, temp);
+	res = HTConfirm(buf);
+	FREE(temp);
+	return(res);
+    }
+    FREE(temp);
+    if (title && (len1 + strlen(title) <= maxlen)) {
+	sprintf(buf, msg, title);
+	return HTConfirm(buf);
+    }
+    if (len1 + strlen(temp = HTParse(address, "",
+				     PARSE_ACCESS+PARSE_HOST
+				     +PARSE_PUNCTUATION)) <= maxlen) {
+	sprintf(buf, msg, temp);
+	res = HTConfirm(buf);
+	FREE(temp);
+	return(res);
+    }
+    FREE(temp);
+    if ((temp = HTParse(address, "", PARSE_HOST)) && *temp &&
+	len1 + strlen(temp) <= maxlen) {
+	sprintf(buf, msg, temp);
+	res = HTConfirm(buf);
+	FREE(temp);
+	return(res);
+    }
+    FREE(temp);
+    return HTConfirm(CONFIRM_POST_RESUBMISSION);
 }
 
 /*	Prompt for answer and get text back.		HTPrompt()
@@ -464,28 +706,27 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 **		TRUE if the cookie should be set.
 */
 PUBLIC BOOL HTConfirmCookie ARGS4(
-	void *, 	dp,
+	domain_entry *, de,
 	CONST char *,	server,
 	CONST char *,	name,
 	CONST char *,	value)
 {
-    domain_entry *de;
-    int ch, namelen, valuelen, space_free;
+    int ch;
+    char *prompt = ADVANCED_COOKIE_CONFIRMATION;
 
-    if ((de = (domain_entry *)dp) == NULL)
+    if (de == NULL)
 	return FALSE;
 
-#ifdef ENHANCED_COOKIES
     /*	If the user has specified a list of domains to allow or deny
     **	from the config file, then they'll already have de->bv set to
     **	ACCEPT_ALWAYS or REJECT_ALWAYS so we can relax and let the
-    **	default cookie handling code cope with this fine.  I hope.
+    **	default cookie handling code cope with this fine.
     */
-#endif
+
     /*
     **	If the user has specified a constant action, don't prompt at all.
     */
-    if (de->bv == ACCEPT_ALWAYS || de->bv == FROM_FILE)
+    if (de->bv == ACCEPT_ALWAYS)
 	return TRUE;
     if (de->bv == REJECT_ALWAYS)
 	return FALSE;
@@ -502,42 +743,77 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
     /*
     **	Estimate how much of the cookie we can show.
     */
-    if (de != NULL) {
-	if (de->bv == ACCEPT_ALWAYS)
-	    return TRUE;
-	if (de->bv == REJECT_ALWAYS)
-	    return FALSE;
-    }
-    space_free = (((LYcols - 1)
-	       - strlen(ADVANCED_COOKIE_CONFIRMATION))
-	       - strlen(server));
-    if (space_free < 0)
-	space_free = 0;
-    namelen = strlen(name);
-    valuelen = strlen(value);
-    if ((namelen + valuelen) > space_free) {
-	/*
-	**  Argh... there isn't enough space on our single line for
-	**  the whole cookie.  Reduce them both by a percentage.
-	**  This should be smarter.
-	*/
-        int percentage;  /* no float */
-        percentage = (100 * space_free) / (namelen + valuelen);
-        namelen = (percentage * namelen) / 100;
-        valuelen = (percentage * valuelen) / 100;
-    }
     if(!LYAcceptAllCookies) {
+	int namelen, valuelen, space_free, percentage;
 	char *message = 0;
-	HTSprintf(&message, ADVANCED_COOKIE_CONFIRMATION,
-		 server, namelen, name, valuelen, value);
+
+	space_free = ((LYcols - 1)
+		      - (strlen(prompt)
+			 - 10)		/* %s and %.*s and %.*s chars */
+		      - strlen(server));
+	if (space_free < 0)
+	    space_free = 0;
+	namelen = strlen(name);
+	valuelen = strlen(value);
+	if ((namelen + valuelen) > space_free) {
+	    /*
+	    **  Argh... there isn't enough space on our single line for
+	    **  the whole cookie.  Reduce them both by a percentage.
+	    **  This should be smarter.
+	    */
+	    percentage = (100 * space_free) / (namelen + valuelen);
+	    namelen = (percentage * namelen) / 100;
+	    valuelen = (percentage * valuelen) / 100;
+	}
+	HTSprintf(&message, prompt, server, namelen, name, valuelen, value);
 	_statusline(message);
 	FREE(message);
     }
     while (1) {
-	if(!LYAcceptAllCookies) {
-	    ch = LYgetch();
-	} else {
+	if(LYAcceptAllCookies) {
 	    ch = 'A';
+	} else {
+	    ch = LYgetch_single();
+#if defined(LOCALE) && defined(HAVE_GETTEXT) && !defined(gettext)
+	    /*
+	     * Special-purpose workaround for gettext support (we should do
+	     * this in a more general way -- after 2.8.3).
+	     *
+	     * NOTE TO TRANSLATORS:  If the prompt has been rendered into
+	     * another language, and if yes/no are distinct, assume the
+	     * translator can make an ordered list in parentheses with one
+	     * capital letter for each as we assumed in HTConfirmDefault().
+	     * The list has to be in the same order as in the original message,
+	     * and the four capital letters chosen to not match those in the
+	     * original unless they have the same position.
+	     *
+	     * Example:
+	     *	(Y/N/Always/neVer)		- English (original)
+	     *	(O/N/Toujours/Jamais)		- French
+	     */
+	    {
+#define L_PAREN '('
+#define R_PAREN ')'
+		char *p;
+		char *s = "YNAV\007\003"; /* see ADVANCED_COOKIE_CONFIRMATION */
+
+		if (strchr(s, ch) == 0
+		 && isalpha(ch)
+		 && (p = strrchr(prompt, L_PAREN)) != 0) {
+
+		    while (*p != R_PAREN && *p != 0 && isalpha(UCH(*s))) {
+			if (*p == ch) {
+			    ch = *s;
+			    break;
+			} else {
+			    if (isalpha(UCH(*p)) && (*p == TOUPPER(*p)))
+				s++;
+			    p++;
+			}
+		    }
+		}
+	    }
+#endif
 	}
 #ifdef VMS
 	if (HadVMSInterrupt) {
@@ -545,7 +821,7 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 	    ch = 'N';
 	}
 #endif /* VMS */
-	switch(TOUPPER(ch)) {
+	switch(ch) {
 	    case 'A':
 		/*
 		**  Set to accept all cookies for this domain.
@@ -555,11 +831,10 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 		return TRUE;
 
 	    case 'N':
-	    case 7:	/* Ctrl-G */
-	    case 3:	/* Ctrl-C */
 		/*
 		**  Reject the cookie.
 		*/
+	      reject:
 		HTUserMsg(REJECTING_COOKIE);
 		return FALSE;
 
@@ -579,6 +854,8 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 		return TRUE;
 
 	    default:
+		if (LYCharIsINTERRUPT(ch))
+		    goto reject;
 		continue;
 	}
     }
@@ -637,15 +914,15 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
 
     if (user_mode == NOVICE_MODE) {
 	on_screen = 2;
-	move(LYlines-2, 0);
+	LYmove(LYlines-2, 0);
 	HTSprintf0(&StatusInfo, SERVER_ASKED_FOR_REDIRECTION, server_status);
-	addstr(StatusInfo);
-	clrtoeol();
-	move(LYlines-1, 0);
+	LYaddstr(StatusInfo);
+	LYclrtoeol();
+	LYmove(LYlines-1, 0);
 	HTSprintf0(&url, "URL: %.*s",
 		    (LYcols < 250 ? LYcols-6 : 250), Redirecting_url);
-	addstr(url);
-	clrtoeol();
+	LYaddstr(url);
+	LYclrtoeol();
 	if (server_status == 301) {
 	    _statusline(PROCEED_GET_CANCEL);
 	} else {
@@ -671,8 +948,8 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
 	    case 1:
 		_statusline(show_POST_url);
 	}
-	c = LYgetch();
-	switch (TOUPPER(c)) {
+	c = LYgetch_single();
+	switch (c) {
 	    case 'P':
 		/*
 		**  Proceed with 301 or 307 redirect of POST
@@ -730,3 +1007,40 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
     FREE(url);
     return (result);
 }
+
+#define okToSleep() (!crawl && !traversal && LYCursesON)
+
+/*
+ * Sleep for the given message class's time.
+ */
+PUBLIC void LYSleepAlert NOARGS
+{
+    if (okToSleep())
+	LYSleep(AlertSecs);
+}
+
+PUBLIC void LYSleepInfo NOARGS
+{
+    if (okToSleep())
+	LYSleep(InfoSecs);
+}
+
+PUBLIC void LYSleepMsg NOARGS
+{
+    if (okToSleep())
+	LYSleep(MessageSecs);
+}
+
+/*
+ *  LYstrerror emulates the ANSI strerror() function.
+ */
+#ifdef LYStrerror
+    /* defined as macro in .h file. */
+#else
+PUBLIC char *LYStrerror ARGS1(int, code)
+{
+    static char temp[80];
+    sprintf(temp, "System errno is %d.\r\n", code);
+    return temp;
+}
+#endif /* HAVE_STRERROR */

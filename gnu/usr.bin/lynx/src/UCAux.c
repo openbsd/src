@@ -5,9 +5,7 @@
 #include <UCDefs.h>
 #include <HTStream.h>
 #include <UCAux.h>
-
-extern HTCJKlang HTCJK;
-extern LYUCcharset LYCharSet_UC[];
+#include <LYCharSets.h>
 
 PUBLIC BOOL UCCanUniTranslateFrom ARGS1(
 	int,		from)
@@ -151,16 +149,15 @@ PUBLIC BOOL UCNeedNotTranslate ARGS2(
 **  up to the caller to do something about them. - KW
 */
 PUBLIC void UCSetTransParams ARGS5(
-    UCTransParams *, 	pT,
+    UCTransParams *,	pT,
     int,		cs_in,
     CONST LYUCcharset*,	p_in,
     int,		cs_out,
     CONST LYUCcharset*,	p_out)
 {
-    CTRACE(tfp, "UCSetTransParams: from %s(%d) to %s(%d)\n",
-/*	   p_in->MIMEname, p_in->UChndl, p_out->MIMEname, p_out->UChndl); */
+    CTRACE((tfp, "UCSetTransParams: from %s(%d) to %s(%d)\n",
 	   p_in->MIMEname,  UCGetLYhndl_byMIME(p_in->MIMEname),
-	   p_out->MIMEname, UCGetLYhndl_byMIME(p_out->MIMEname));
+	   p_out->MIMEname, UCGetLYhndl_byMIME(p_out->MIMEname)));
 
     /*
     **  Initialize this element to FALSE, and set it TRUE
@@ -172,7 +169,7 @@ PUBLIC void UCSetTransParams ARGS5(
     **  The "transparent" display character set is a
     **  "super raw mode". - FM
     */
-    pT->transp = (!strcmp(p_in->MIMEname, "x-transparent") ||
+    pT->transp = (BOOL) (!strcmp(p_in->MIMEname, "x-transparent") ||
 		  !strcmp(p_out->MIMEname, "x-transparent"));
 
     if (pT->transp) {
@@ -186,8 +183,8 @@ PUBLIC void UCSetTransParams ARGS5(
 	pT->use_raw_char_in = TRUE;
 	pT->strip_raw_char_in = FALSE;
 	pT->pass_160_173_raw = TRUE;
-	pT->repl_translated_C0 = (p_out->enc == UCT_ENC_8BIT_C0);
-	pT->trans_C0_to_uni = (p_in->enc == UCT_ENC_8BIT_C0 ||
+	pT->repl_translated_C0 = (BOOL) (p_out->enc == UCT_ENC_8BIT_C0);
+	pT->trans_C0_to_uni = (BOOL) (p_in->enc == UCT_ENC_8BIT_C0 ||
 			       p_out->enc == UCT_ENC_8BIT_C0);
     } else {
 	/*
@@ -199,13 +196,13 @@ PUBLIC void UCSetTransParams ARGS5(
 	**  Set this element if we want to treat
 	**  the input as CJK. - FM
 	*/
-	pT->do_cjk = ((p_in->enc == UCT_ENC_CJK) && (HTCJK != NOCJK));
+	pT->do_cjk = (BOOL) ((p_in->enc == UCT_ENC_CJK) && (HTCJK != NOCJK));
 	/*
 	**  Set these elements based on whether
 	**  we are dealing with UTF-8. - FM
 	*/
-	pT->decode_utf8 = (p_in->enc == UCT_ENC_UTF8);
-	pT->output_utf8 = (p_out->enc == UCT_ENC_UTF8);
+	pT->decode_utf8 = (BOOL) (p_in->enc == UCT_ENC_UTF8);
+	pT->output_utf8 = (BOOL) (p_out->enc == UCT_ENC_UTF8);
 	if (pT->do_cjk) {
 	    /*
 	    **  Set up the structure for a CJK input with
@@ -227,7 +224,7 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  equivalent to them, i.e., if we have UCS without
 	    **  having to do a table translation.
 	    */
-	    intm_ucs = (cs_in == LATIN1 || pT->decode_utf8 ||
+	    intm_ucs = (BOOL) (cs_in == LATIN1 || pT->decode_utf8 ||
 			(p_in->codepoints &
 			 (UCT_CP_SUBSETOF_LAT1|UCT_CP_SUBSETOF_UCS2)));
 	    /*
@@ -237,7 +234,7 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  that use the transformation structure, so it is
 	    **  treated as already Unicode here.
 	    */
-	    pT->trans_to_uni = (!intm_ucs &&
+	    pT->trans_to_uni = (BOOL) (!intm_ucs &&
 				UCCanUniTranslateFrom(cs_in));
 	    /*
 	    **  We set this if we are translating to Unicode and
@@ -245,12 +242,12 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  fact are encoding octets for the input charset
 	    **  (presently, this applies to VISCII). - FM
 	    */
-	    pT->trans_C0_to_uni = (pT->trans_to_uni &&
+	    pT->trans_C0_to_uni = (BOOL) (pT->trans_to_uni &&
 				   p_in->enc == UCT_ENC_8BIT_C0);
 	    /*
 	    **  We set this, presently, for VISCII. - FM
 	    */
-	    pT->repl_translated_C0 = (p_out->enc == UCT_ENC_8BIT_C0);
+	    pT->repl_translated_C0 = (BOOL) (p_out->enc == UCT_ENC_8BIT_C0);
 	    /*
 	    **  Currently unused for any charset combination.
 	    **  Should always be FALSE
@@ -260,7 +257,7 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  use_ucs should be set TRUE if we have or will create
 	    **  Unicode values for input octets or UTF multibytes. - FM
 	    */
-	    use_ucs = (intm_ucs || pT->trans_to_uni);
+	    use_ucs = (BOOL) (intm_ucs || pT->trans_to_uni);
 	    /*
 	    **  This is set TRUE if use_ucs was set FALSE.  It is
 	    **  complementary to the HTPassEightBitRaw flag, which
@@ -268,19 +265,19 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  setting in relation to the current Display Character
 	    **  Set. - FM
 	    */
-	    pT->do_8bitraw = (!use_ucs);
+	    pT->do_8bitraw = (BOOL) (!use_ucs);
 	    /*
 	    **  This is set TRUE when 160 and 173 should not be
 	    **  treated as nbsp and shy, respectively. - FM
 	    */
-	    pT->pass_160_173_raw = (!use_ucs &&
+	    pT->pass_160_173_raw = (BOOL) (!use_ucs &&
 				    !(p_in->like8859 & UCT_R_8859SPECL));
 	    /*
 	    **  This is set when the input and output charsets match,
 	    **  and they are not ones which should go through a Unicode
 	    **  translation process anyway. - FM
 	    */
-	    pT->use_raw_char_in = (!pT->output_utf8 &&
+	    pT->use_raw_char_in = (BOOL) (!pT->output_utf8 &&
 				   cs_in == cs_out &&
 				   !pT->trans_C0_to_uni);
 	    /*
@@ -292,7 +289,7 @@ PUBLIC void UCSetTransParams ARGS5(
 	    **  above, but also on HTPassEightBitRaw in any functions
 	    **  which use the transformation structure.. - FM
 	    */
-	    pT->trans_from_uni = (use_ucs && !pT->do_8bitraw &&
+	    pT->trans_from_uni = (BOOL) (use_ucs && !pT->do_8bitraw &&
 				  !pT->use_raw_char_in &&
 				  UCCanTranslateUniTo(cs_out));
 	}
@@ -452,4 +449,66 @@ PUBLIC BOOL UCConvertUniToUtf8 ARGS2(
 	*ch = '\0';
     }
     return YES;
+}
+
+/*
+** Get UCS character code for one character from UTF-8 encoded string.
+**
+** On entry:
+**	*ppuni should point to beginning of UTF-8 encoding character
+** On exit:
+**	*ppuni is advanced to point to the last byte of UTF-8 sequence,
+**		if there was a valid one; otherwise unchanged.
+** returns the UCS value
+** returns negative value on error (invalid UTF-8 sequence)
+*/
+PUBLIC UCode_t UCGetUniFromUtf8String ARGS1(char **, ppuni)
+{
+    UCode_t uc_out = 0;
+    char * p = *ppuni;
+    int utf_count, i;
+    if (!(**ppuni&0x80))
+	return (UCode_t) **ppuni; /* ASCII range character */
+    else if (!(**ppuni&0x40))
+	return (-1);		/* not a valid UTF-8 start */
+    if ((*p & 0xe0) == 0xc0) {
+	utf_count = 1;
+    } else if ((*p & 0xf0) == 0xe0) {
+	utf_count = 2;
+    } else if ((*p & 0xf8) == 0xf0) {
+	utf_count = 3;
+    } else if ((*p & 0xfc) == 0xf8) {
+	utf_count = 4;
+    } else if ((*p & 0xfe) == 0xfc) {
+	utf_count = 5;
+    } else { /* garbage */
+	return (-1);
+    }
+    for (p = *ppuni, i = 0; i < utf_count ; i++) {
+	if ((*(++p) & 0xc0) != 0x80)
+	    return (-1);
+    }
+    p = *ppuni;
+    switch (utf_count) {
+    case 1:
+	uc_out = (((*p&0x1f) << 6) | (*(p+1)&0x3f));
+	break;
+    case 2:
+	uc_out = (((((*p&0x0f) << 6) | (*(p+1)&0x3f)) << 6) | (*(p+2)&0x3f));
+	break;
+    case 3:
+	uc_out = (((((((*p&0x07) << 6) | (*(p+1)&0x3f)) << 6) | (*(p+2)&0x3f)) << 6)
+	    | (*(p+3)&0x3f));
+	break;
+    case 4:
+	uc_out = (((((((((*p&0x03) << 6) | (*(p+1)&0x3f)) << 6) | (*(p+2)&0x3f)) << 6)
+		  | (*(p+3)&0x3f)) << 6) | (*(p+4)&0x3f));
+	break;
+    case 5:
+	uc_out = (((((((((((*p&0x01) << 6) | (*(p+1)&0x3f)) << 6) | (*(p+2)&0x3f)) << 6)
+		  | (*(p+3)&0x3f)) << 6) | (*(p+4)&0x3f)) << 6) | (*(p+5)&0x3f));
+	break;
+    }
+    *ppuni = p + utf_count;
+    return uc_out;
 }

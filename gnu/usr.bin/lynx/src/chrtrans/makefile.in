@@ -29,6 +29,7 @@ SITE_DEFS	= # FIXME: set in parent makefile
 CC		= @CC@
 CPP		= @CPP@
 CFLAGS		= @CFLAGS@
+_O		= .o
 
 CPP_OPTS	= @DEFS@ @CPPFLAGS@ \
 		-I$(top_builddir) \
@@ -93,14 +94,14 @@ default: $(FONTMAP_INC)
 
 tables: $(TABLES)
 
-makeuctb$x: makeuctb.o
-	$(CC) $(CC_OPTS) -o $@ makeuctb.o $(INTLLIB) $(LIBS)
+makeuctb$x: makeuctb$(_O)
+	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@ makeuctb$(_O) $(INTLLIB) $(LIBS)
 
-makeuctb.o: $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
+makeuctb$(_O): $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
 
-.SUFFIXES : .tbl .i
+.SUFFIXES : $(_O) .tbl .i
 
-.c.o:
+.c$(_O):
 @RULE_CC@
 	@ECHO_CC@$(CC) $(CC_OPTS) -c $(srcdir)/$*.c
 
@@ -109,7 +110,7 @@ makeuctb.o: $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
 	@ECHO_CC@$(CPP) -C $(CPP_OPTS) $(srcdir)/$*.c >$@
 
 .tbl.h:
-	./makeuctb$x $(srcdir)/$*.tbl > $@
+	./makeuctb$x $(srcdir)/$*.tbl $*.h
 
 # table files listed here once again to get the make dependencies
 # right, in case makeuctb was recompiled.
@@ -155,7 +156,7 @@ utf8_uni.h:		$(srcdir)/utf8_uni.tbl		makeuctb$x
 viscii_uni.h:		$(srcdir)/viscii_uni.tbl	makeuctb$x
 
 clean:
-	rm -f makeuctb$x *.o *uni.h *uni2.h
+	rm -f makeuctb$x *$(_O) *uni.h *uni2.h
 
 distclean: clean
 	-rm -rf obsolete

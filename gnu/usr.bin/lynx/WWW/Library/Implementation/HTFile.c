@@ -24,9 +24,9 @@
 
 #ifndef VMS
 #ifdef DOSPATH
+#undef LONG_LIST
 #define LONG_LIST  /* Define this for long style unix listings (ls -l),
 		     the actual style is configurable from lynx.cfg */
-#define lstat stat
 #endif
 /* #define NO_PARENT_DIR_REFERENCE */ /* Define this for no parent links */
 #endif /* !VMS */
@@ -46,7 +46,6 @@
 #include <GridText.h>
 #endif
 
-#define INFINITY 512		/* file name length @@ FIXME */
 #define MULTI_SUFFIX ".multi"	/* Extension for scanning formats */
 
 #include <HTParse.h>
@@ -121,7 +120,6 @@ PUBLIC int HTDirReadme = HT_DIR_README_TOP;
 #endif /* DIRED_SUPPORT */
 
 extern BOOL HTPassEightBitRaw;
-extern HTCJKlang HTCJK;
 
 PRIVATE char *HTMountRoot = "/Net/";		/* Where to find mounts */
 #ifdef VMS
@@ -138,14 +136,6 @@ PRIVATE char *HTCacheRoot = "/tmp/W3_Cache_";	/* Where to cache things */
 PRIVATE HTList * HTSuffixes = 0;
 PRIVATE HTSuffix no_suffix = { "*", NULL, NULL, NULL, 1.0 };
 PRIVATE HTSuffix unknown_suffix = { "*.*", NULL, NULL, NULL, 1.0};
-
-
-#ifdef _WINDOWS
-int exists(char *filename)
-{
- return (access(filename,0)==0);
-}
-#endif
 
 
 /*	To free up the suffixes at program exit.
@@ -165,8 +155,10 @@ PRIVATE char *FormatStr ARGS3(
     if (*start) {
 	sprintf(fmt, "%%%.*ss", (int) sizeof(fmt) - 3, start);
 	HTSprintf0(bufp, fmt, entry);
-    } else {
-	HTSprintf0(bufp, "%s", entry);
+    } else if (*bufp && !(entry && *entry)) {
+	**bufp = '\0';
+    } else if (entry) {
+	StrAllocCopy(*bufp, entry);
     }
     return *bufp;
 }
@@ -182,7 +174,7 @@ PRIVATE char *FormatNum ARGS3(
 	HTSprintf0(bufp, fmt, entry);
     } else {
 	sprintf(fmt, "%d", entry);
-	StrAllocCat(*bufp, fmt);
+	StrAllocCopy(*bufp, fmt);
     }
     return *bufp;
 }
@@ -203,17 +195,31 @@ PRIVATE void LYListFmtParse ARGS5(
 	char *buf = NULL;
 	char tmp[LY_MAXPATH];
 	char type;
+#ifndef _WINDOWS
 	char *name;
+#endif
 	time_t now;
 	char *datestr;
+#ifdef S_IFLNK
 	int len;
+#endif
 #define SEC_PER_YEAR	(60 * 60 * 24 * 365)
+
+#ifdef _WINDOWS	/* 1998/01/06 (Tue) 21:20:53 */
+	static char *pbits[] = {
+		"---", "--x", "-w-", "-wx",
+		"r--", "r-x", "rw-", "rwx",
+		0 };
+#define PBIT(a, n, s)  pbits[((a) >> (n)) & 0x7]
+
+#else
 	static char *pbits[] = { "---", "--x", "-w-", "-wx",
 		"r--", "r-x", "rw-", "rwx", 0 };
 	static char *psbits[] = { "--S", "--s", "-wS", "-ws",
 		"r-S", "r-s", "rwS", "rws", 0 };
 #define PBIT(a, n, s)  (s) ? psbits[((a) >> (n)) & 0x7] : \
 	pbits[((a) >> (n)) & 0x7]
+#endif
 #ifdef S_ISVTX
 	static char *ptbits[] = { "--T", "--t", "-wT", "-wt",
 		"r-T", "r-t", "rwT", "rwt", 0 };
@@ -248,7 +254,7 @@ PRIVATE void LYListFmtParse ARGS5(
 		if (s == end)
 			break;
 		start = ++s;
-		while (isdigit(*s) || *s == '.' || *s == '-' || *s == ' ' ||
+		while (isdigit(UCH(*s)) || *s == '.' || *s == '-' || *s == ' ' ||
 		    *s == '#' || *s == '+' || *s == '\'')
 			s++;
 		c = *s;		/* the format char. or \0 */
@@ -341,7 +347,11 @@ PRIVATE void LYListFmtParse ARGS5(
 
 		case 'p':	/* unix-style permission bits */
 			switch(st.st_mode & S_IFMT) {
+#if defined(_MSC_VER) && defined(_S_IFIFO)
+			case _S_IFIFO: type = 'p'; break;
+#else
 			case S_IFIFO: type = 'p'; break;
+#endif
 			case S_IFCHR: type = 'c'; break;
 			case S_IFDIR: type = 'd'; break;
 			case S_IFREG: type = '-'; break;
@@ -362,13 +372,23 @@ PRIVATE void LYListFmtParse ARGS5(
 #endif /* S_IFSOCK */
 			default: type = '?'; break;
 			}
+#ifdef _WINDOWS
+			sprintf(tmp, "%c%s", type,
+				PBIT(st.st_mode, 6, st.st_mode & S_IRWXU));
+#else
 			sprintf(tmp, "%c%s%s%s", type,
 				PBIT(st.st_mode, 6, st.st_mode & S_ISUID),
 				PBIT(st.st_mode, 3, st.st_mode & S_ISGID),
 				PTBIT(st.st_mode,   st.st_mode & S_ISVTX));
+#endif
 			FormatStr(&buf, start, tmp);
 			break;
 
+#ifdef _WINDOWS
+		case 'o':	/* owner */
+		case 'g':	/* group */
+			break;
+#else
 		case 'o':	/* owner */
 			name = HTAA_UidToName (st.st_uid);
 			if (*name) {
@@ -386,6 +406,7 @@ PRIVATE void LYListFmtParse ARGS5(
 				FormatNum(&buf, start, (int) st.st_gid);
 			}
 			break;
+#endif
 
 		case 'l':	/* link count */
 			FormatNum(&buf, start, (int) st.st_nlink);
@@ -431,10 +452,10 @@ PUBLIC void HTSetSuffix5 ARGS5(
 	CONST char *,	representation,
 	CONST char *,	encoding,
 	CONST char *,	desc,
-	float,		value)
+	double,		value)
 {
     HTSuffix * suff;
-    BOOL trivial_enc = IsUnityEncStr(encoding);
+    BOOL trivial_enc = (BOOL) IsUnityEncStr(encoding);
 
     if (strcmp(suffix, "*") == 0)
 	suff = &no_suffix;
@@ -451,7 +472,7 @@ PUBLIC void HTSetSuffix5 ARGS5(
 		break;
 	}
 	if (!suff) { /* Not found -- create a new node */
-	    suff = (HTSuffix *) calloc(1, sizeof(HTSuffix));
+	    suff = typecalloc(HTSuffix);
 	    if (suff == NULL)
 		outofmem(__FILE__, "HTSetSuffix");
 
@@ -484,7 +505,7 @@ PUBLIC void HTSetSuffix5 ARGS5(
 
     StrAllocCopy(suff->desc, desc);
 
-    suff->quality = value;
+    suff->quality = (float) value;
 }
 
 #ifdef LY_FIND_LEAKS
@@ -558,6 +579,50 @@ PRIVATE int HTCreatePath ARGS1(CONST char *,path)
 }
 #endif /* NOT_IMPLEMENTED */
 
+/*	Convert filename from URL-path syntax to local path format
+**	----------------------------------------------------------
+**	Input name is assumed to be the URL-path of a local file
+**      URL, i.e. what comes after the "file://localhost".
+**      '#'-fragments to be treated as such must already be stripped.
+**      If expand_all is FALSE, unescape only escaped '/'. - kw
+**
+**  On exit:
+**	Returns a malloc'ed string which must be freed by the caller.
+*/
+PUBLIC char * HTURLPath_toFile ARGS2(
+	CONST char *,	name,
+	BOOL,		expand_all)
+{
+    char * path = NULL;
+    char * result = NULL;
+
+    StrAllocCopy(path, name);
+    if (expand_all)
+	HTUnEscape(path);		/* Interpret all % signs */
+    else
+	HTUnEscapeSome(path, "/");	/* Interpret % signs for path delims */
+
+    CTRACE((tfp, "URLPath `%s' means path `%s'\n", name, path));
+#ifdef DOSPATH
+    StrAllocCopy(result, HTDOS_name(path));
+#else
+#ifdef __EMX__
+    if (path[0] == '/'
+	&& isalpha(path[1])
+	&& path[2] == ':') /* pesky leading slash */
+	StrAllocCopy(result, path+1);
+    else
+	StrAllocCopy(result, path);
+    CTRACE((tfp, "EMX hack changed `%s' to `%s'\n", path, result));
+#else
+    StrAllocCopy(result, path);
+#endif /* __EMX__ */
+#endif /* DOSPATH */
+
+    FREE(path);
+
+    return result;
+}
 /*	Convert filenames between local and WWW formats.
 **	------------------------------------------------
 **	Make up a suitable name for saving the node in
@@ -567,6 +632,11 @@ PRIVATE int HTCreatePath ARGS1(CONST char *,path)
 **
 **  On exit:
 **	Returns a malloc'ed string which must be freed by the caller.
+*/
+/* NOTE: Don't use this function if you know that the input is a URL path
+	 rather than a full URL, use HTURLPath_toFile instead.  Otherwise
+	 this function will return the wrong thing for some unusual
+	 paths (like ones containing "//", possibly escaped). - kw
 */
 PUBLIC char * HTnameOfFile_WWW ARGS3(
 	CONST char *,	name,
@@ -579,16 +649,16 @@ PUBLIC char * HTnameOfFile_WWW ARGS3(
     char * home;
     char * result = NULL;
 
-    if (expand_all)
+    if (expand_all) {
 	HTUnEscape(path);		/* Interpret all % signs */
-    else
+    } else
 	HTUnEscapeSome(path, "/");	/* Interpret % signs for path delims */
 
     if (0 == strcmp(acc_method, "file")	/* local file */
      || !*acc_method) {			/* implicitly local? */
 	if ((0 == strcasecomp(host, HTHostName())) ||
 	    (0 == strcasecomp(host, "localhost")) || !*host) {
-	    CTRACE(tfp, "Node `%s' means path `%s'\n", name, path);
+	    CTRACE((tfp, "Node `%s' means path `%s'\n", name, path));
 #ifdef DOSPATH
 	    StrAllocCopy(result, HTDOS_name(path));
 #else
@@ -599,14 +669,14 @@ PUBLIC char * HTnameOfFile_WWW ARGS3(
 		StrAllocCopy(result, path+1);
 	    else
 		StrAllocCopy(result, path);
-	    CTRACE(tfp, "EMX hack changed `%s' to `%s'\n", path, result);
+	    CTRACE((tfp, "EMX hack changed `%s' to `%s'\n", path, result));
 #else
 	    StrAllocCopy(result, path);
 #endif /* __EMX__ */
 #endif /* DOSPATH */
 	} else if (WWW_prefix) {
 	    HTSprintf0(&result, "%s%s%s", "/Net/", host, path);
-	    CTRACE(tfp, "Node `%s' means file `%s'\n", name, result);
+	    CTRACE((tfp, "Node `%s' means file `%s'\n", name, result));
 	} else {
 	    StrAllocCopy(result, path);
 	}
@@ -617,7 +687,12 @@ PUBLIC char * HTnameOfFile_WWW ARGS3(
 	else
 	    home = HTVMS_wwwName(home);
 #else
-	if ((home = getenv("HOME")) == 0)
+#if defined(_WINDOWS)	/* 1997/10/16 (Thu) 20:42:51 */
+	home =  (char *)Home_Dir();
+#else
+	home = getenv("HOME");
+#endif
+	if (home == 0)
 	    home = "/tmp";
 #endif /* VMS */
 	HTSprintf0(&result, "%s/WWW/%s/%s%s", home, acc_method, host, path);
@@ -628,6 +703,9 @@ PUBLIC char * HTnameOfFile_WWW ARGS3(
     FREE(host);
     FREE(path);
     FREE(acc_method);
+
+    CTRACE((tfp, "HTnameOfFile_WWW(%s,%d,%d) = %s\n",
+	    name, WWW_prefix, expand_all, result));
 
     return result;
 }
@@ -654,7 +732,7 @@ PUBLIC char * WWW_nameOfFile ARGS1(
     } else {
 	HTSprintf0(&result, "file://%s%s", HTHostName(), name);
     }
-    CTRACE(tfp, "File `%s'\n\tmeans node `%s'\n", name, result);
+    CTRACE((tfp, "File `%s'\n\tmeans node `%s'\n", name, result));
     return result;
 }
 
@@ -687,7 +765,7 @@ PUBLIC CONST char * HTFileSuffix ARGS2(
 	HTFileInit();
 #endif /* !NO_INIT */
 
-    trivial_enc = IsUnityEncStr(enc);
+    trivial_enc = (BOOL) IsUnityEncStr(enc);
     n = HTList_count(HTSuffixes);
     for (i = 0; i < n; i++) {
 	suff = (HTSuffix *)HTList_objectAt(HTSuffixes, i);
@@ -802,6 +880,10 @@ PUBLIC HTFormat HTFileFormat ARGS3(
 		    if (suff->rep) {
 			if (pdesc && !(*pdesc))
 			    *pdesc = suff->desc;
+			if (pencoding && IsUnityEnc(*pencoding) &&
+			    *pencoding != WWW_ENC_7BIT &&
+			    !IsUnityEnc(suff->encoding))
+			    *pencoding = suff->encoding;
 #ifdef VMS
 			if (semicolon != NULL)
 			    *semicolon = ';';
@@ -855,8 +937,8 @@ PUBLIC HTFormat HTCharsetFormat ARGS3(
     LYLowerCase(cp);
     if (((cp1 = strchr(cp, ';')) != NULL) &&
 	(cp2 = strstr(cp1, "charset")) != NULL) {
-	CTRACE(tfp, "HTCharsetFormat: Extended MIME Content-Type is %s\n",
-		    format->name);
+	CTRACE((tfp, "HTCharsetFormat: Extended MIME Content-Type is %s\n",
+		    format->name));
 	cp2 += 7;
 	while (*cp2 == ' ' || *cp2 == '=')
 	    cp2++;
@@ -944,15 +1026,15 @@ PUBLIC HTFormat HTCharsetFormat ARGS3(
 	    **  of match.
 	    */
 	    BOOL given_is_8859
-		= (!strncmp(cp4, "iso-8859-", 9) &&
-		   isdigit((unsigned char)cp4[9]));
+		= (BOOL) (!strncmp(cp4, "iso-8859-", 9) &&
+		   isdigit(UCH(cp4[9])));
 	    BOOL given_is_8859like
-		= (given_is_8859 ||
+		= (BOOL) (given_is_8859 ||
 		   !strncmp(cp4, "windows-", 8) ||
 		   !strncmp(cp4, "cp12", 4) ||
 		   !strncmp(cp4, "cp-12", 5));
 	    BOOL given_and_display_8859like
-		= (given_is_8859like &&
+		= (BOOL) (given_is_8859like &&
 		   (strstr(LYchar_set_names[current_char_set],
 			   "ISO-8859") ||
 		    strstr(LYchar_set_names[current_char_set],
@@ -965,7 +1047,7 @@ PUBLIC HTFormat HTCharsetFormat ARGS3(
 	    if (given_is_8859) {
 		cp1 = &cp4[10];
 		while (*cp1 &&
-		       isdigit((unsigned char)(*cp1)))
+		       isdigit(UCH(*cp1)))
 		    cp1++;
 		*cp1 = '\0';
 	    }
@@ -1003,6 +1085,85 @@ PUBLIC HTFormat HTCharsetFormat ARGS3(
     return format;
 }
 
+
+
+/*	Get various pieces of meta info from file name.
+**	-----------------------------------------------
+**
+**  LYGetFileInfo fills in information that can be determined without
+**  an actual (new) access to the filesystem, based on current suffix
+**  and character set configuration.  If the file has been loaded and
+**  parsed before  (with the same URL generated here!) and the anchor
+**  is still around, some results may be influenced by that (in
+**  particular, charset info from a META tag - this is not actually
+**  tested!).
+**  The caller should not keep pointers to the returned objects around
+**  for too long, the valid lifetimes vary. In particular, the returned
+**  charset string should be copied if necessary.  If return of the
+**  file_anchor is requested, that one can be used to retrieve
+**  additional bits of info that are stored in the anchor object and
+**  are not covered here; as usual, don't keep pointers to the
+**  file_anchor longer than necessary since the object may disappear
+**  through HTuncache_current_document or at the next document load.
+**  - kw
+*/
+PUBLIC void LYGetFileInfo ARGS7(
+	CONST char *,		filename,
+	HTParentAnchor **,	pfile_anchor,
+	HTFormat *,		pformat,
+	HTAtom **,		pencoding,
+	CONST char**,		pdesc,
+	CONST char**,		pcharset,
+	int *,			pfile_cs)
+{
+	char *Afn;
+	char *Aname = NULL;
+	HTFormat format;
+	HTAtom * myEnc = NULL;
+	HTParentAnchor *file_anchor;
+	CONST char *file_csname;
+	int file_cs;
+
+	/*
+	 *  Convert filename to URL.  Note that it is always supposed to
+	 *  be a filename, not maybe-filename-maybe-URL, so we don't
+	 *  use LYFillLocalFileURL and LYEnsureAbsoluteURL. - kw
+	 */
+	Afn = HTEscape(filename, URL_PATH);
+	LYLocalFileToURL(&Aname, Afn);
+	file_anchor = HTAnchor_parent(HTAnchor_findSimpleAddress(Aname));
+
+	file_csname = file_anchor->charset;
+	format = HTFileFormat(filename, &myEnc, pdesc);
+	format = HTCharsetFormat(format, file_anchor, UCLYhndl_HTFile_for_unspec);
+	file_cs = HTAnchor_getUCLYhndl(file_anchor, UCT_STAGE_MIME);
+	if (!file_csname) {
+	    if (file_cs >= 0)
+		file_csname = LYCharSet_UC[file_cs].MIMEname;
+	    else file_csname = "display character set";
+	}
+	CTRACE((tfp, "GetFileInfo: '%s' is a%s %s %s file, charset=%s (%d).\n",
+	       filename,
+	       ((myEnc && *HTAtom_name(myEnc) == '8') ? "n" : myEnc ? "" :
+		*HTAtom_name(format) == 'a' ? "n" : ""),
+	       myEnc ? HTAtom_name(myEnc) : "",
+	       HTAtom_name(format),
+	       file_csname,
+	       file_cs));
+	FREE(Afn);
+	FREE(Aname);
+	if (pfile_anchor)
+	    *pfile_anchor = file_anchor;
+	if (pformat)
+	    *pformat = format;
+	if (pencoding)
+	    *pencoding = myEnc;
+	if (pcharset)
+	    *pcharset = file_csname;
+	if (pfile_cs)
+	    *pfile_cs = file_cs;
+    }
+
 /*	Determine value from file name.
 **	-------------------------------
 **
@@ -1025,12 +1186,48 @@ PUBLIC float HTFileValue ARGS1(
 	suff = (HTSuffix *)HTList_objectAt(HTSuffixes, i);
 	ls = strlen(suff->suffix);
 	if ((ls <= lf) && 0==strcmp(suff->suffix, filename + lf - ls)) {
-	    CTRACE(tfp, "File: Value of %s is %.3f\n",
-			filename, suff->quality);
+	    CTRACE((tfp, "File: Value of %s is %.3f\n",
+			filename, suff->quality));
 	    return suff->quality;		/* OK -- found */
 	}
     }
-    return 0.3;		/* Dunno! */
+    return (float)0.3;		/* Dunno! */
+}
+
+/*
+**  Determine compression type from file name, by looking at its suffix.
+**  Sets as side-effect a pointer to the "dot" that begins the suffix.
+*/
+PUBLIC CompressFileType HTCompressFileType ARGS3(
+	char *,		filename,
+	char *,		dots,
+	char **,	suffix)
+{
+    CompressFileType result = cftNone;
+    size_t len = strlen(filename);
+    char *ftype = filename + len;
+
+    if ((len > 4)
+     && !strcasecomp((ftype - 3), "bz2")
+     && strchr(dots, ftype[-4]) != 0) {
+	result = cftBzip2;
+	ftype -= 4;
+    } else if ((len > 3)
+     && !strcasecomp((ftype - 2), "gz")
+     && strchr(dots, ftype[-3]) != 0) {
+	result = cftGzip;
+	ftype -= 3;
+    } else if ((len > 2)
+     && !strcmp((ftype - 1), "Z")
+     && strchr(dots, ftype[-2]) != 0) {
+	result = cftCompress;
+	ftype -= 2;
+    }
+
+    *suffix = ftype;
+    CTRACE((tfp, "HTCompressFileType(%s) returns %d:%s\n",
+		 filename, result, *suffix));
+    return result;
 }
 
 /*	Determine write access to a file.
@@ -1043,36 +1240,10 @@ PUBLIC float HTFileValue ARGS1(
 **	1.	No code for non-unix systems.
 **	2.	Isn't there a quicker way?
 */
-
-#if defined(HAVE_CONFIG_H)
-
-#ifndef HAVE_GETGROUPS
-#define NO_GROUPS
-#endif
-
-#else
-
-#ifdef VMS
-#define NO_GROUPS
-#endif /* VMS */
-#ifdef NO_UNIX_IO
-#define NO_GROUPS
-#endif /* NO_UNIX_IO */
-#ifdef PCNFS
-#define NO_GROUPS
-#endif /* PCNFS */
-#ifdef NOUSERS
-#define NO_GROUPS
-#endif /* PCNFS */
-
-#endif	/* HAVE_CONFIG_H */
-
 PUBLIC BOOL HTEditable ARGS1(
 	CONST char *,	filename)
 {
-#ifdef NO_GROUPS
-    return NO;		/* Safe answer till we find the correct algorithm */
-#else
+#ifndef NO_GROUPS
     GETGROUPS_T groups[NGROUPS];
     uid_t	myUid;
     int		ngroups;			/* The number of groups	 */
@@ -1113,9 +1284,9 @@ PUBLIC BOOL HTEditable ARGS1(
 		return YES;
 	}
     }
-    CTRACE(tfp, "\tFile is not editable.\n");
-    return NO;					/* If no excuse, can't do */
+    CTRACE((tfp, "\tFile is not editable.\n"));
 #endif /* NO_GROUPS */
+    return NO;					/* If no excuse, can't do */
 }
 
 /*	Make a save stream.
@@ -1130,7 +1301,7 @@ PUBLIC HTStream * HTFileSaveStream ARGS1(
     CONST char * addr = HTAnchor_address((HTAnchor*)anchor);
     char *  localname = HTLocalName(addr);
 
-    FILE* fp = fopen(localname, "w");
+    FILE* fp = fopen(localname, BIN_W);
     if (!fp)
 	return NULL;
 
@@ -1193,9 +1364,9 @@ PUBLIC void HTDirEntry ARGS3(
 **  On exit:
 **	Returns TRUE if an "Up to <parent>" link was not created
 **	for a readable local directory because LONG_LIST is defined
-**	and NO_PARENT_DIR_REFERENCE is not defined, such that the
-**	calling function use LYListFmtParse() to create a link to
-**	the parent directory.  Otherwise, it returns FALSE. - FM
+**	and NO_PARENT_DIR_REFERENCE is not defined, so that the
+**	calling function should use LYListFmtParse() to create a link
+**	to the parent directory.  Otherwise, it returns FALSE. - FM
 */
 PUBLIC BOOL HTDirTitles ARGS3(
 	HTStructured *, target,
@@ -1211,7 +1382,7 @@ PUBLIC BOOL HTDirTitles ARGS3(
 
 #ifdef DOSPATH
     BOOL local_link = FALSE;
-    if (logical[18] == ':') local_link = TRUE;
+    if (strlen(logical) > 18 && logical[18] == ':') local_link = TRUE;
 #endif
     /*
     **	Check tildeIsTop for treating home directory as Welcome
@@ -1246,10 +1417,11 @@ PUBLIC BOOL HTDirTitles ARGS3(
       char * printable = NULL;
 
 #ifdef DIRED_SUPPORT
-      printable = HTfullURL_toFile(
+      printable = HTURLPath_toFile(
 	    (0 == strncasecomp(path, "/%2F", 4))	/* "//" ? */
 	    ? (path+1)
-	    : path);
+	    : path,
+	    TRUE);
       if (0 == strncasecomp(printable, "/vmsysu:", 8) ||
 	  0 == strncasecomp(printable, "/anonymou.", 10)) {
 	  StrAllocCopy(cp, (printable+1));
@@ -1300,6 +1472,9 @@ PUBLIC BOOL HTDirTitles ARGS3(
     /*
     **	Make link back to parent directory.
     */
+#ifdef DOSPATH
+    if (current != path)	/* leave "/c:" alone */
+#endif
     if (current && current[1]) {   /* was a slash AND something else too */
 	char * parent = NULL;
 	char * relative = NULL;
@@ -1320,15 +1495,15 @@ PUBLIC BOOL HTDirTitles ARGS3(
 	HTSprintf0(&relative, "%s/..", current);
 
 #ifdef DOSPATH
-	if (local_link)
-	    if (strlen(parent) == 3 )
+	if (local_link) {
+	    if (parent != 0 && strlen(parent) == 3 ) {
 		StrAllocCat(relative, "/.");
+	    }
+	}
+	else
 #endif
 
 #if !defined (VMS)
-#ifdef DOSPATH
-	if(!local_link)
-#endif
 	{
 	    /*
 	    **	On Unix, if it's not ftp and the directory cannot
@@ -1425,15 +1600,11 @@ PUBLIC BOOL HTDirTitles ARGS3(
 PRIVATE void do_readme ARGS2(HTStructured *, target, CONST char *, localname)
 {
     FILE * fp;
-    char * readme_file_name =
-	malloc(strlen(localname)+ 1 + strlen(HT_DIR_README_FILE) + 1);
-    if (readme_file_name == NULL)
-	outofmem(__FILE__, "do_readme");
-    strcpy(readme_file_name, localname);
-    strcat(readme_file_name, "/");
-    strcat(readme_file_name, HT_DIR_README_FILE);
+    char * readme_file_name = NULL;
 
-    fp = fopen(readme_file_name,  "r");
+    HTSprintf0(&readme_file_name, "%s/%s", localname, HT_DIR_README_FILE);
+
+    fp = fopen(readme_file_name, "r");
 
     if (fp) {
 	HTStructuredClass targetClass;
@@ -1441,8 +1612,8 @@ PRIVATE void do_readme ARGS2(HTStructured *, target, CONST char *, localname)
 	targetClass =  *target->isa;	/* (Can't init agregate in K&R) */
 	START(HTML_PRE);
 	for (;;){
-	    char c = fgetc(fp);
-	    if (c == (char)EOF) break;
+	    int c = fgetc(fp);
+	    if (c == EOF) break;
 #ifdef NOTDEFINED
 	    switch (c) {
 		case '&':
@@ -1458,10 +1629,10 @@ PRIVATE void do_readme ARGS2(HTStructured *, target, CONST char *, localname)
 			PUTC('\r');
 Bug removed thanks to joe@athena.mit.edu */
 		default:
-			PUTC(c);
+			PUTC((char)c);
 	    }
 #else
-	    PUTC(c);
+	    PUTC((char)c);
 #endif /* NOTDEFINED */
 	}
 	END(HTML_PRE);
@@ -1489,8 +1660,9 @@ PRIVATE int print_local_dir ARGS5(
     BOOL need_parent_link = FALSE;
     struct stat file_info;
     int status;
+    int i;
 
-    CTRACE(tfp, "print_local_dir() started\n");
+    CTRACE((tfp, "print_local_dir() started\n"));
 
     logical = HTAnchor_address((HTAnchor*)anchor);
     pathname = HTParse(logical, "",
@@ -1529,10 +1701,8 @@ PRIVATE int print_local_dir ARGS5(
     target = HTML_new(anchor, format_out, sink);
     targetClass = *target->isa;	    /* Copy routine entry points */
 
-    { int i;
-	   for (i = 0; i < HTML_A_ATTRIBUTES; i++)
-		   present[i] = (i == HTML_A_HREF);
-    }
+    for (i = 0; i < HTML_A_ATTRIBUTES; i++)
+	present[i] = (BOOL) (i == HTML_A_HREF);
 
     /*
     **	The need_parent_link flag will be set if an
@@ -1559,7 +1729,7 @@ PRIVATE int print_local_dir ARGS5(
 	HTBTree * bt = HTBTree_new((HTComparer)AS_cmp);
 	int num_of_entries = 0;	    /* lines counter */
 
-	_HTProgress (gettext("Reading directory..."));
+	_HTProgress (READING_DIRECTORY);
 	status = HT_LOADED; /* assume we don't get interrupted */
 	while ((dirbuf = readdir(dp)) != NULL) {
 	    /*
@@ -1597,13 +1767,14 @@ PRIVATE int print_local_dir ARGS5(
 
 	    StrAllocCat(tmpfilename, dirbuf->d_name);
 	    stat(tmpfilename, &file_info);
-	    if (S_ISDIR(file_info.st_mode))
 #ifndef DIRED_SUPPORT
+	    if (S_ISDIR(file_info.st_mode))
 		HTSprintf0(&dirname, "D%s",dirbuf->d_name);
 	    else
 		HTSprintf0(&dirname, "F%s",dirbuf->d_name);
 		/* D & F to have first directories, then files */
 #else
+	    if (S_ISDIR(file_info.st_mode))
 	    {
 		if (dir_list_style == MIXED_STYLE)
 		    HTSprintf0(&dirname, " %s/", dirbuf->d_name);
@@ -1641,9 +1812,9 @@ PRIVATE int print_local_dir ARGS5(
 	}   /* end while directory entries left to read */
 
 	if (status != HT_PARTIAL_CONTENT)
-	    _HTProgress (gettext("OK"));
+	    _HTProgress (OPERATION_OK);
 	else
-	    CTRACE(tfp, "Reading the directory interrupred by user\n");
+	    CTRACE((tfp, "Reading the directory interrupted by user\n"));
 
 
 	/*
@@ -1652,7 +1823,7 @@ PRIVATE int print_local_dir ARGS5(
 	{
 	    HTBTElement * next_element = HTBTree_next(bt,NULL);
 		/* pick up the first element of the list */
-	    int num_of_entries_partial = 0; /* lines counter */
+	    int num_of_entries_output = 0; /* lines counter */
 
 	    char state;
 		/* I for initial (.. file),
@@ -1667,19 +1838,28 @@ PRIVATE int print_local_dir ARGS5(
 	    while (next_element != NULL) {
 		char *entry, *file_extra;
 
+#ifndef DISP_PARTIAL
+		if (num_of_entries_output % HTMAX(display_lines,10) == 0) {
+		    if (HTCheckForInterrupt()) {
+			_HTProgress (TRANSFER_INTERRUPTED);
+			status = HT_PARTIAL_CONTENT;
+			break;
+		    }
+		}
+#endif
 		StrAllocCopy(tmpfilename,localname);
 		if (strcmp(localname, "/"))
 		    /*
 		    **	If filename is not root directory.
 		    */
-		    StrAllocCat(tmpfilename, "/");
+		    LYAddHtmlSep(&tmpfilename);
 
-		StrAllocCat(tmpfilename,
-			    (char *)HTBTree_object(next_element)+1);
+		entry = (char*)HTBTree_object(next_element)+1;
 		/*
 		**  Append the current entry's filename
 		**  to the path.
 		*/
+		StrAllocCat(tmpfilename, entry);
 		HTSimplify(tmpfilename);
 		/*
 		**  Output the directory entry.
@@ -1706,7 +1886,7 @@ PRIVATE int print_local_dir ARGS5(
 			    }
 #endif /* !LONG_LIST */
 			state =
-			   (*(char *)(HTBTree_object(next_element))
+			   (char) (*(char *)(HTBTree_object(next_element))
 			    == 'D' ? 'D' : 'F');
 			START(HTML_H2);
 			if (dir_list_style != MIXED_STYLE) {
@@ -1733,7 +1913,7 @@ PRIVATE int print_local_dir ARGS5(
 			}
 #endif /* !LONG_LIST */
 			state =
-			  (*(char *)(HTBTree_object(next_element))
+			  (char) (*(char *)(HTBTree_object(next_element))
 			   == 'D' ? 'D' : 'F');
 			START(HTML_H2);
 			START(HTML_EM);
@@ -1753,7 +1933,6 @@ PRIVATE int print_local_dir ARGS5(
 		    START(HTML_LI);
 #endif /* !LONG_LIST */
 		}
-		entry = (char*)HTBTree_object(next_element)+1;
 		file_extra = NULL;
 
 #ifdef LONG_LIST
@@ -1777,10 +1956,10 @@ PRIVATE int print_local_dir ARGS5(
 
 		/* optimize for expensive operation: */
 #ifdef DISP_PARTIAL
-		if (num_of_entries_partial %
+		if (num_of_entries_output %
 		    (partial_threshold > 0 ? partial_threshold : display_lines)
 		    == 0) {
-		    /* num_of_entries, num_of_entries_partial... */
+		    /* num_of_entries, num_of_entries_output... */
 		    /* HTReadProgress...(bytes, 0); */
 		    HTDisplayPartial();
 
@@ -1790,7 +1969,7 @@ PRIVATE int print_local_dir ARGS5(
 			break;
 		    }
 		}
-		num_of_entries_partial++;
+		num_of_entries_output++;
 #endif /* DISP_PARTIAL */
 
 	    } /* end while next_element */
@@ -1807,7 +1986,6 @@ PRIVATE int print_local_dir ARGS5(
 	    }
 	} /* end printing out the tree in order */
 
-	closedir(dp);
 	FREE(logical);
 	FREE(tmpfilename);
 	FREE(tail);
@@ -1827,6 +2005,40 @@ PRIVATE int print_local_dir ARGS5(
 #endif /* HAVE_READDIR */
 
 
+#ifndef VMS
+PUBLIC int HTStat ARGS2(
+	CONST char *,	filename,
+	struct stat *,	data)
+{
+    int result = -1;
+    char *temp_name = NULL;
+    size_t len = strlen(filename);
+
+    if (len != 0 && LYIsPathSep(filename[len-1])) {
+	HTSprintf0(&temp_name, "%s.", filename);
+    } else {
+	temp_name = (char *)filename;
+    }
+#ifdef _WINDOWS
+    /*
+     * Someone claims that stat() doesn't give the proper result for a
+     * directory on Windows.
+     */
+    if (access(temp_name, 0) == 0) {
+	if (stat(temp_name, data) == -1)
+	    data->st_mode = S_IFDIR;
+	result = 0;
+    }
+#else
+    result = stat(temp_name, data);
+#endif
+
+    if (temp_name != filename) {
+	FREE(temp_name);
+    }
+    return result;
+}
+#endif
 
 /*	Load a document.
 **	----------------
@@ -1848,13 +2060,13 @@ PUBLIC int HTLoadFile ARGS4(
 {
     char * filename = NULL;
     char * acc_method = NULL;
-    char * ftp_newhost;
     HTFormat format;
     char * nodename = NULL;
     char * newname = NULL;	/* Simplified name of file */
     HTAtom * encoding;		/* @@ not used yet */
     HTAtom * myEncoding = NULL; /* enc of this file, may be gzip etc. */
     int status;
+    char *dot;
 #ifdef VMS
     struct stat stat_info;
 #endif /* VMS */
@@ -1882,34 +2094,20 @@ PUBLIC int HTLoadFile ARGS4(
 	strcmp(nodename, HTHostName()) != 0
 #endif /* VMS */
     )) {
+	status = -1;
 	FREE(newname);
 	FREE(filename);
 	FREE(nodename);
 	FREE(acc_method);
 #ifndef DISABLE_FTP
-	ftp_newhost = HTParse(addr, "", PARSE_HOST);	/* HTParse mallocs */
-	if (strcmp(ftp_lasthost, ftp_newhost))
-		ftp_local_passive = ftp_passive;	/* set to default */
-
 	status = HTFTPLoad(addr, anchor, format_out, sink);
-
-	if ( ftp_passive == ftp_local_passive ) {
-		if (( status <= -4 ) || ( status == -1 )) {
-			ftp_local_passive = !ftp_passive;
-			status = HTFTPLoad(addr, anchor, format_out, sink);
-		}
-	}
-	free(ftp_lasthost);
-	ftp_lasthost = ftp_newhost;
-	return status;
-#else
-	return -1;
 #endif /* DISABLE_FTP */
+	return status;
     } else {
 	FREE(newname);
 	FREE(acc_method);
     }
-#ifdef VMS
+#if defined(VMS) || defined(DOSPATH)
     HTUnEscape(filename);
 #endif /* VMS */
 
@@ -1951,7 +2149,7 @@ PUBLIC int HTLoadFile ARGS4(
     **	to the directories or files listed.
     */
     if (HTStat(filename, &stat_info) == -1) {
-	CTRACE(tfp, "HTLoadFile: Can't stat %s\n", filename);
+	CTRACE((tfp, "HTLoadFile: Can't stat %s\n", filename));
     } else {
 	if (S_ISDIR(stat_info.st_mode)) {
 	    if (HTDirAccess == HT_DIR_FORBID) {
@@ -1961,14 +2159,9 @@ PUBLIC int HTLoadFile ARGS4(
 	    }
 
 	    if (HTDirAccess == HT_DIR_SELECTIVE) {
-		char * enable_file_name =
-		    malloc(strlen(filename)+ 1 +
-		    strlen(HT_DIR_ENABLE_FILE) + 1);
-		if (enable_file_name == NULL)
-		    outofmem(__FILE__, "HTLoadFile");
-		strcpy(enable_file_name, filename);
-		strcat(enable_file_name, "/");
-		strcat(enable_file_name, HT_DIR_ENABLE_FILE);
+		char * enable_file_name = NULL;
+
+		HTSprintf0(&enable_file_name, "%s/%s", filename, HT_DIR_ENABLE_FILE);
 		if (HTStat(enable_file_name, &stat_info) == -1) {
 		    FREE(filename);
 		    FREE(nodename);
@@ -1998,18 +2191,16 @@ PUBLIC int HTLoadFile ARGS4(
 	*/
 	if (!fp) {
 	    char * ultrixname = 0;
-	    CTRACE(tfp, "HTLoadFile: Can't open as %s\n", vmsname);
+	    CTRACE((tfp, "HTLoadFile: Can't open as %s\n", vmsname));
 	    HTSprintf0(&ultrixname, "%s::\"%s\"", nodename, filename);
 	    fp = fopen(ultrixname, "r", "shr=put", "shr=upd");
 	    if (!fp) {
-		CTRACE(tfp, "HTLoadFile: Can't open as %s\n",
-			    ultrixname);
+		CTRACE((tfp, "HTLoadFile: Can't open as %s\n",
+			    ultrixname));
 	    }
 	    FREE(ultrixname);
 	}
 	if (fp) {
-	    int len;
-	    char *cp = NULL;
 	    char *semicolon = NULL;
 
 	    if (HTEditable(vmsname)) {
@@ -2042,10 +2233,10 @@ PUBLIC int HTLoadFile ARGS4(
 		    fclose(fp);
 		    if (semicolon != NULL)
 			*semicolon = ';';
-		    gzfp = gzopen(vmsname, "rb");
+		    gzfp = gzopen(vmsname, BIN_R);
 
-		    CTRACE(tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
-				vmsname, (void*)gzfp);
+		    CTRACE((tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
+				vmsname, (void*)gzfp));
 		    use_gzread = YES;
 		} else
 #endif	/* USE_ZLIB */
@@ -2054,50 +2245,50 @@ PUBLIC int HTLoadFile ARGS4(
 		    StrAllocCopy(anchor->content_encoding, HTAtom_name(myEncoding));
 		    format = HTAtom_for("www/compressed");
 		}
-	    } else if ((len = strlen(vmsname)) > 2) {
-		if ((vmsname[len - 1] == 'Z') &&
-		    (vmsname[len - 2] == '.' ||
-		     vmsname[len - 2] == '-' ||
-		     vmsname[len - 2] == '_') &&
-		    vmsname[len - 3] != ']' &&
-		    vmsname[len - 3] != ':') {
+	    } else {
+		/* FIXME: should we check if suffix is after ']' or ':' ? */
+		CompressFileType cft = HTCompressFileType(vmsname, "._-", &dot);
+
+		if (cft != cftNone) {
+		    char *cp = NULL;
+
 		    StrAllocCopy(cp, vmsname);
-		    cp[len - 2] = '\0';
+		    cp[dot - vmsname] = '\0';
 		    format = HTFileFormat(cp, &encoding, NULL);
 		    FREE(cp);
 		    format = HTCharsetFormat(format, anchor,
 					     UCLYhndl_HTFile_for_unspec);
 		    StrAllocCopy(anchor->content_type, format->name);
+		}
+
+		switch (cft) {
+		case cftCompress:
 		    StrAllocCopy(anchor->content_encoding, "x-compress");
 		    format = HTAtom_for("www/compressed");
-		} else if ((len > 3) &&
-			   !strcasecomp((char *)&vmsname[len - 2], "gz")) {
-		    if (vmsname[len - 3] == '.' ||
-			vmsname[len - 3] == '-' ||
-			vmsname[len - 3] == '_') {
-			StrAllocCopy(cp, vmsname);
-			cp[len - 3] = '\0';
-			format = HTFileFormat(cp, &encoding, NULL);
-			FREE(cp);
-			format = HTCharsetFormat(format, anchor,
-						 UCLYhndl_HTFile_for_unspec);
-			StrAllocCopy(anchor->content_type, format->name);
-			StrAllocCopy(anchor->content_encoding, "x-gzip");
+		    break;
+		case cftGzip:
+		    StrAllocCopy(anchor->content_encoding, "x-gzip");
 #ifdef USE_ZLIB
-			if (strcmp(format_out->name, "www/download") != 0) {
-			    fclose(fp);
-			    if (semicolon != NULL)
-				*semicolon = ';';
-			    gzfp = gzopen(vmsname, "rb");
+		    if (strcmp(format_out->name, "www/download") != 0) {
+			fclose(fp);
+			if (semicolon != NULL)
+			    *semicolon = ';';
+			gzfp = gzopen(vmsname, BIN_R);
 
-			    CTRACE(tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
-					vmsname, (void*)gzfp);
-			    use_gzread = YES;
-			}
-#else  /* USE_ZLIB */
-			format = HTAtom_for("www/compressed");
-#endif	/* USE_ZLIB */
+			CTRACE((tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
+				    vmsname, (void*)gzfp));
+			use_gzread = YES;
 		    }
+#else  /* USE_ZLIB */
+		    format = HTAtom_for("www/compressed");
+#endif	/* USE_ZLIB */
+		    break;
+		case cftBzip2:
+		    StrAllocCopy(anchor->content_encoding, "x-bzip2");
+		    format = HTAtom_for("www/compressed");
+		    break;
+		case cftNone:
+		    break;
 		}
 	    }
 	    if (semicolon != NULL)
@@ -2146,7 +2337,7 @@ PUBLIC int HTLoadFile ARGS4(
 	FREE(filename);
     }
 
-#else /* Unix: */
+#else /* not VMS: */
 
     FREE(filename);
 
@@ -2177,7 +2368,7 @@ PUBLIC int HTLoadFile ARGS4(
 	    BOOL forget_multi = NO;
 
 	    STRUCT_DIRENT * dirbuf;
-	    float best = NO_VALUE_FOUND;	/* So far best is bad */
+	    float best = (float) NO_VALUE_FOUND; /* So far best is bad */
 	    HTFormat best_rep = NULL;	/* Set when rep found */
 	    HTAtom * best_enc = NULL;
 	    char * best_name = NULL;	/* Best dir entry so far */
@@ -2217,40 +2408,38 @@ PUBLIC int HTLoadFile ARGS4(
 						filevalue,
 						0L  /* @@@@@@ */);
 		    if (value <= 0.0) {
+			char *atomname = NULL;
+			CompressFileType cft = HTCompressFileType(dirbuf->d_name, ".", &dot);
 			char * cp = NULL;
-			int len = strlen(dirbuf->d_name);
+
 			enc = NULL;
-			if (len > 2 &&
-			    dirbuf->d_name[len - 1] == 'Z' &&
-			    dirbuf->d_name[len - 2] == '.') {
+			if (cft != cftNone) {
 			    StrAllocCopy(cp, dirbuf->d_name);
-			    cp[len - 2] = '\0';
+			    cp[dot - dirbuf->d_name] = '\0';
 			    format = HTFileFormat(cp, NULL, NULL);
 			    FREE(cp);
 			    value = HTStackValue(format, format_out,
 						 filevalue, 0);
-			    if (value <= 0.0) {
-				format = HTAtom_for("application/x-compressed");
-				value = HTStackValue(format, format_out,
-						     filevalue, 0);
+			    switch (cft) {
+			    case cftCompress:
+				atomname = "application/x-compressed";
+				break;
+			    case cftGzip:
+				atomname = "application/x-gzip";
+				break;
+			    case cftBzip2:
+				atomname = "application/x-bzip2";
+				break;
+			    case cftNone:
+				break;
 			    }
-			    if (value <= 0.0) {
-				format = HTAtom_for("www/compressed");
-				value = HTStackValue(format, format_out,
-						     filevalue, 0);
-			    }
-			} else if ((len > 3) &&
-				   !strcasecomp((char *)&dirbuf->d_name[len - 2],
-						"gz") &&
-				   dirbuf->d_name[len - 3] == '.') {
-			    StrAllocCopy(cp, dirbuf->d_name);
-			    cp[len - 3] = '\0';
-			    format = HTFileFormat(cp, NULL, NULL);
-			    FREE(cp);
+			}
+
+			if (atomname != NULL) {
 			    value = HTStackValue(format, format_out,
 						 filevalue, 0);
 			    if (value <= 0.0) {
-				format = HTAtom_for("application/x-gzip");
+				format = HTAtom_for(atomname);
 				value = HTStackValue(format, format_out,
 						     filevalue, 0);
 			    }
@@ -2262,8 +2451,8 @@ PUBLIC int HTLoadFile ARGS4(
 			}
 		    }
 		    if (value != NO_VALUE_FOUND) {
-			CTRACE(tfp, "HTLoadFile: value of presenting %s is %f\n",
-				    HTAtom_name(rep), value);
+			CTRACE((tfp, "HTLoadFile: value of presenting %s is %f\n",
+				    HTAtom_name(rep), value));
 			if  (value > best) {
 			    best_rep = rep;
 			    best_enc = enc;
@@ -2300,20 +2489,12 @@ PUBLIC int HTLoadFile ARGS4(
 	**  will hold the directory entry, and a type 'DIR' which is used
 	**  to point to the current directory being read.
 	*/
-#ifdef _WINDOWS
-	if (!exists(localname))
-#else
-	if (stat(localname,&dir_info) == -1)	   /* get file information */
-#endif
+	if (HTStat(localname,&dir_info) == -1)	   /* get file information */
 	{
 				/* if can't read file information */
-	    CTRACE(tfp, "HTLoadFile: can't stat %s\n", localname);
+	    CTRACE((tfp, "HTLoadFile: can't stat %s\n", localname));
 
 	}  else {		/* Stat was OK */
-
-#ifdef _WINDOWS
-	    if (stat(localname,&dir_info) == -1) dir_info.st_mode = S_IFDIR;
-#endif
 
 	    if (S_ISDIR(dir_info.st_mode)) {
 		/*
@@ -2322,7 +2503,7 @@ PUBLIC int HTLoadFile ARGS4(
 		DIR *dp;
 		struct stat file_info;
 
-		CTRACE(tfp, "%s is a directory\n", localname);
+		CTRACE((tfp, "%s is a directory\n", localname));
 
 		/*
 		**  Check directory access.
@@ -2335,16 +2516,10 @@ PUBLIC int HTLoadFile ARGS4(
 		    return HTLoadError(sink, 403, DISALLOWED_DIR_SCAN);
 		}
 
-
 		if (HTDirAccess == HT_DIR_SELECTIVE) {
-		    char * enable_file_name =
-			malloc(strlen(localname)+ 1 +
-				      strlen(HT_DIR_ENABLE_FILE) + 1);
-		    if (enable_file_name == NULL)
-			outofmem(__FILE__, "HTLoadFile");
-		    strcpy(enable_file_name, localname);
-		    strcat(enable_file_name, "/");
-		    strcat(enable_file_name, HT_DIR_ENABLE_FILE);
+		    char * enable_file_name = NULL;
+
+		    HTSprintf0(&enable_file_name, "%s/%s", localname, HT_DIR_ENABLE_FILE);
 		    if (stat(enable_file_name, &file_info) != 0) {
 			FREE(localname);
 			FREE(nodename);
@@ -2353,6 +2528,7 @@ PUBLIC int HTLoadFile ARGS4(
 		    }
 		}
 
+		CTRACE((tfp, "Opening directory %s\n", localname));
 		dp = opendir(localname);
 		if (!dp) {
 		    FREE(localname);
@@ -2366,11 +2542,19 @@ PUBLIC int HTLoadFile ARGS4(
 
 		status = print_local_dir(dp, localname,
 					anchor, format_out, sink);
+		closedir(dp);
 		FREE(localname);
 		FREE(nodename);
 		return status;	/* document loaded, maybe partial */
 
-	   } /* end if localname is a directory */
+	    } /* end if localname is a directory */
+
+	    if (S_ISREG(dir_info.st_mode)) {
+#ifdef INT_MAX
+		if (dir_info.st_size <= INT_MAX)
+#endif
+		    anchor->content_length = dir_info.st_size;
+	    }
 
 	} /* end if file stat worked */
 
@@ -2378,20 +2562,12 @@ PUBLIC int HTLoadFile ARGS4(
 */
 #endif /* HAVE_READDIR */
 	{
-#  ifdef __EMX__
-	    int len = strlen(localname);
-	    int bin = ((len > 3) && !strcasecomp(localname + len - 3, ".gz"));
-	    FILE * fp = fopen(localname, (bin ? "rb" : "r"));
-#  else	/* !( defined __EMX__ ) */
-	    FILE * fp = fopen(localname, "r");
-#  endif
+	    int bin = HTCompressFileType(localname, ".", &dot) != cftNone;
+	    FILE * fp = fopen(localname, (bin ? BIN_R : "r"));
 
-	    CTRACE (tfp, "HTLoadFile: Opening `%s' gives %p\n",
-				 localname, (void*)fp);
+	    CTRACE((tfp, "HTLoadFile: Opening `%s' gives %p\n",
+				 localname, (void*)fp));
 	    if (fp) {		/* Good! */
-		int len;
-		char *cp = NULL;
-
 		if (HTEditable(localname)) {
 		    HTAtom * put = HTAtom_for("PUT");
 		    HTList * methods = HTAnchor_methods(anchor);
@@ -2413,10 +2589,10 @@ PUBLIC int HTLoadFile ARGS4(
 			(!strcmp(HTAtom_name(myEncoding), "gzip") ||
 			 !strcmp(HTAtom_name(myEncoding), "x-gzip"))) {
 			fclose(fp);
-			gzfp = gzopen(localname, "rb");
+			gzfp = gzopen(localname, BIN_R);
 
-			CTRACE(tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
-				    localname, (void*)gzfp);
+			CTRACE((tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
+				    localname, (void*)gzfp));
 			use_gzread = YES;
 		    } else
 #endif	/* USE_ZLIB */
@@ -2425,42 +2601,47 @@ PUBLIC int HTLoadFile ARGS4(
 			StrAllocCopy(anchor->content_encoding, HTAtom_name(myEncoding));
 			format = HTAtom_for("www/compressed");
 		    }
-		} else if ((len = strlen(localname)) > 2) {
-		    if (localname[len - 1] == 'Z' &&
-			localname[len - 2] == '.') {
+		} else {
+		    CompressFileType cft = HTCompressFileType(localname, ".", &dot);
+
+		    if (cft != cftNone) {
+			char *cp = NULL;
+
 			StrAllocCopy(cp, localname);
-			cp[len - 2] = '\0';
+			cp[dot - localname] = '\0';
 			format = HTFileFormat(cp, &encoding, NULL);
 			FREE(cp);
 			format = HTCharsetFormat(format, anchor,
 						 UCLYhndl_HTFile_for_unspec);
 			StrAllocCopy(anchor->content_type, format->name);
+		    }
+
+		    switch (cft) {
+		    case cftCompress:
 			StrAllocCopy(anchor->content_encoding, "x-compress");
 			format = HTAtom_for("www/compressed");
-		    } else if ((len > 3) &&
-			       !strcasecomp((char *)&localname[len - 2],
-					    "gz") &&
-			       localname[len - 3] == '.') {
-			StrAllocCopy(cp, localname);
-			cp[len - 3] = '\0';
-			format = HTFileFormat(cp, &encoding, NULL);
-			FREE(cp);
-			format = HTCharsetFormat(format, anchor,
-						 UCLYhndl_HTFile_for_unspec);
-			StrAllocCopy(anchor->content_type, format->name);
+			break;
+		    case cftGzip:
 			StrAllocCopy(anchor->content_encoding, "x-gzip");
 #ifdef USE_ZLIB
 			if (strcmp(format_out->name, "www/download") != 0) {
 			    fclose(fp);
-			    gzfp = gzopen(localname, "rb");
+			    gzfp = gzopen(localname, BIN_R);
 
-			    CTRACE(tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
-					localname, (void*)gzfp);
+			    CTRACE((tfp, "HTLoadFile: gzopen of `%s' gives %p\n",
+					localname, (void*)gzfp));
 			    use_gzread = YES;
 			}
 #else  /* USE_ZLIB */
 			format = HTAtom_for("www/compressed");
 #endif	/* USE_ZLIB */
+			break;
+		    case cftBzip2:
+			StrAllocCopy(anchor->content_encoding, "x-bzip2");
+			format = HTAtom_for("www/compressed");
+			break;
+		    case cftNone:
+			break;
 		    }
 		}
 		FREE(localname);
@@ -2524,18 +2705,17 @@ PUBLIC int HTLoadFile ARGS4(
 	if (strcmp(nodename, HTHostName()) != 0)
 #endif /* VMS */
 	{
+	    status = -1;
 	    FREE(nodename);
-	    if (!strncmp(addr, "file://localhost", 16)) {
-		return -1;  /* never go to ftp site when URL
-			     * is file://localhost
-			     */
-	    } else {
+	    if (strncmp(addr, "file://localhost", 16)) {
+		/* never go to ftp site when URL
+		 * is file://localhost
+		 */
 #ifndef DISABLE_FTP
-		return HTFTPLoad(addr, anchor, format_out, sink);
-#else
-		return -1;
+		status = HTFTPLoad(addr, anchor, format_out, sink);
 #endif /* DISABLE_FTP */
 	    }
+	    return status;
 	}
 	FREE(nodename);
     }
@@ -2545,7 +2725,7 @@ PUBLIC int HTLoadFile ARGS4(
     **	All attempts have failed.
     */
     {
-	CTRACE(tfp, "Can't open `%s', errno=%d\n", addr, SOCKET_ERRNO);
+	CTRACE((tfp, "Can't open `%s', errno=%d\n", addr, SOCKET_ERRNO));
 
 	return HTLoadError(sink, 403, FAILED_FILE_UNREADABLE);
     }

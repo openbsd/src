@@ -15,6 +15,7 @@
 /* Version 1 of 24-Oct-1991 (JFG), written in C, browser-independent */
 
 #include <HTList.h>
+#include <HTChunk.h>
 #include <HTAtom.h>
 #include <UCDefs.h>
 
@@ -66,7 +67,8 @@ struct _HTParentAnchor {
   char *	title;		/* Title of document */
   char *	owner;		/* Owner of document */
   char *	RevTitle;	/* TITLE in REV="made" or REV="owner" LINK */
-#ifdef USE_HASH
+  char *	citehost;	/* Citehost from REL="citehost" LINK */
+#ifdef USE_COLOR_STYLE
   char *	style;
 #endif
 
@@ -77,7 +79,11 @@ struct _HTParentAnchor {
   BOOL		isISMAPScript;	/* Script for clickable image map */
   BOOL		isHEAD;		/* Document is headers from a HEAD request */
   BOOL		safe;			/* Safe */
-  char *	FileCache;	/* Path to a disk-cached copy */
+#ifdef SOURCE_CACHE
+  char *	source_cache_file;
+  HTChunk *	source_cache_chunk;
+#endif
+  char *	FileCache;	/* Path to a disk-cached copy (see src/HTFWriter.c) */
   char *	SugFname;	/* Suggested filename */
   char *	cache_control;	/* Cache-Control */
   BOOL		no_cache;	/* Cache-Control, Pragma or META "no-cache"? */
@@ -163,6 +169,15 @@ extern HTChildAnchor * HTAnchor_findChildAndLink PARAMS((
 extern HTAnchor * HTAnchor_findAddress PARAMS((
 	CONST DocAddress *	address));
 
+/*	Create new or find old named anchor - simple form
+**	-------------------------------------------------
+**
+**	Like the previous one, but simpler to use for simple cases.
+**	No post data etc. can be supplied. - kw
+*/
+extern HTAnchor * HTAnchor_findSimpleAddress PARAMS((
+	CONST char *	url));
+
 /*	Delete an anchor and possibly related things (auto garbage collection)
 **	--------------------------------------------
 **
@@ -174,6 +189,11 @@ extern HTAnchor * HTAnchor_findAddress PARAMS((
 */
 extern BOOL HTAnchor_delete PARAMS((
 	HTParentAnchor *	me));
+
+#ifdef SOURCE_CACHE
+extern void HTAnchor_clearSourceCache PARAMS((
+	HTParentAnchor *	me));
+#endif
 
 /*		Move an anchor to the head of the list of its siblings
 **		------------------------------------------------------
@@ -227,7 +247,7 @@ extern BOOL HTAnchor_isISMAPScript PARAMS((
 extern BOOL HTAnchor_hasChildren PARAMS((
 	HTParentAnchor *	me));
 
-#if defined(USE_HASH)
+#if defined(USE_COLOR_STYLE)
 extern CONST char * HTAnchor_style PARAMS((
 	HTParentAnchor *	me));
 
@@ -275,6 +295,15 @@ extern CONST char * HTAnchor_RevTitle PARAMS((
 extern void HTAnchor_setRevTitle PARAMS((
 	HTParentAnchor *	me,
 	CONST char *		title));
+
+/*	Citehost for bibp links from LINKs with REL="citehost". - RDC
+*/
+extern CONST char * HTAnchor_citehost PARAMS((
+	HTParentAnchor *	me));
+
+extern void HTAnchor_setCitehost PARAMS((
+	HTParentAnchor *	me,
+	CONST char *		citehost));
 
 /*	Suggested filename handling. - FM
 **	(will be loaded if we had a Content-Disposition

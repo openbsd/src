@@ -1,5 +1,5 @@
-/* Implementation of the textdomain(3) function
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Implementation of the textdomain(3) function.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
    This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #if defined STDC_HEADERS || defined _LIBC
@@ -36,7 +36,7 @@
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include <libgettext.h>
+# include "libgettext.h"
 #endif
 
 /* @@ end of prolog @@ */
@@ -54,7 +54,9 @@ extern const char *_nl_current_default_domain;
    prefix.  So we have to make a difference here.  */
 #ifdef _LIBC
 # define TEXTDOMAIN __textdomain
-# define strdup(str) __strdup (str)
+# ifndef strdup
+#  define strdup(str) __strdup (str)
+# endif
 #else
 # define TEXTDOMAIN textdomain__
 #endif

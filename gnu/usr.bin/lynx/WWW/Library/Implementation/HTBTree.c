@@ -9,9 +9,6 @@
 
 #include <HTUtils.h>
 #include <HTBTree.h>
-#ifndef __STRICT_BSD__
-#include <stdlib.h>
-#endif
 
 #define MAXIMUM(a,b) ((a)>(b)?(a):(b))
 

@@ -22,8 +22,6 @@
 #define PARAM_MAX BIG
 #define CACHE_PERIOD (7*86400)	/* Time to keep .src file in seconds */
 
-#define HEX_ESCAPE '%'
-
 struct _HTStructured {
 	CONST HTStructuredClass *	isa;
 	/* ... */
@@ -110,10 +108,10 @@ PUBLIC CONST char * hex = "0123456789ABCDEF";
 
 PUBLIC char from_hex ARGS1(char, c)
 {
-    return		  (c>='0')&&(c<='9') ? c-'0'
+    return  (char) (      (c>='0')&&(c<='9') ? c-'0'
 			: (c>='A')&&(c<='F') ? c-'A'+10
 			: (c>='a')&&(c<='f') ? c-'a'+10
-			:		       0;
+			:		       0);
 }
 
 
@@ -159,8 +157,8 @@ PRIVATE void WSRCParser_put_character ARGS2(HTStream*, me, char, c)
 		}
 	    }
 	    if (!par_name[me->param_number]) {	/* Unknown field */
-		CTRACE(tfp, "HTWSRC: Unknown field `%s' in source file\n",
-			    me->param);
+		CTRACE((tfp, "HTWSRC: Unknown field `%s' in source file\n",
+			    me->param));
 		me->param_number = PAR_UNKNOWN;
 		me->state = before_value;	/* Could be better ignore */
 		return;
@@ -244,28 +242,32 @@ PRIVATE void WSRCParser_put_character ARGS2(HTStream*, me, char, c)
 PRIVATE BOOL write_cache ARGS1(HTStream *, me)
 {
     FILE * fp;
-    char cache_file_name[256];
+    char * cache_file_name = NULL;
     char * www_database;
+    int result = NO;
+
     if (!me->par_value[PAR_DATABASE_NAME]
 	|| !me->par_value[PAR_IP_NAME]
 	) return NO;
 
     www_database = HTEscape(me->par_value[PAR_DATABASE_NAME], URL_XALPHAS);
-    sprintf(cache_file_name, "%sWSRC-%s:%s:%.100s.txt",
+    HTSprintf0(&cache_file_name, "%sWSRC-%s:%s:%.100s.txt",
 	CACHE_FILE_PREFIX,
 	me->par_value[PAR_IP_NAME],
 	me->par_value[PAR_TCP_PORT] ? me->par_value[PAR_TCP_PORT] : "210",
 	www_database);
-    FREE(www_database);
-    fp = fopen(cache_file_name, "w");
-    if (!fp) return NO;
 
-    if (me->par_value[PAR_DESCRIPTION])
-	fputs(me->par_value[PAR_DESCRIPTION], fp);
-    else
-	fputs("Description not available\n", fp);
-    fclose(fp);
-    return YES;
+    if ((fp = fopen(cache_file_name, TXT_W)) != 0) {
+	result = YES;
+	if (me->par_value[PAR_DESCRIPTION])
+	    fputs(me->par_value[PAR_DESCRIPTION], fp);
+	else
+	    fputs("Description not available\n", fp);
+	fclose(fp);
+    }
+    FREE(www_database);
+    FREE(cache_file_name);
+    return result;
 }
 #endif
 
@@ -329,11 +331,11 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 	if (me->par_value[PAR_IP_NAME] &&
 	    me->par_value[PAR_DATABASE_NAME]) {
 
-	    char WSRC_address[256];
+	    char * WSRC_address = NULL;
 	    char * www_database;
 	    www_database = HTEscape(me->par_value[PAR_DATABASE_NAME],
 		URL_XALPHAS);
-	    sprintf(WSRC_address, "wais://%s%s%s/%s",
+	    HTSprintf0(&WSRC_address, "wais://%s%s%s/%s",
 		me->par_value[PAR_IP_NAME],
 		me->par_value[PAR_TCP_PORT] ? ":" : "",
 		me->par_value[PAR_TCP_PORT] ? me->par_value[PAR_TCP_PORT] :"",
@@ -346,6 +348,7 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 	    PUTS(gettext(" (or via proxy server, if defined)"));
 
 	    FREE(www_database);
+	    FREE(WSRC_address);
 
 	} else {
 	    give_parameter(me, PAR_IP_NAME);

@@ -20,13 +20,22 @@
 #define ATTR_CS_IN me->tag_charset
 
 #define TRANSLATE_AND_UNESCAPE_ENTITIES(s, p, h) \
-	LYUCFullyTranslateString(s, ATTR_CS_IN, current_char_set, YES, p, h, st_HTML)
+	LYUCTranslateHTMLString(s, ATTR_CS_IN, current_char_set, YES, p, h, st_HTML)
 
 #define TRANSLATE_AND_UNESCAPE_ENTITIES5(s,cs_from,cs_to,p,h) \
-	LYUCFullyTranslateString(s, cs_from, cs_to, YES, p, h, st_HTML)
+	LYUCTranslateHTMLString(s, cs_from, cs_to, YES, p, h, st_HTML)
 
 #define TRANSLATE_AND_UNESCAPE_ENTITIES6(s,cs_from,cs_to,spcls,p,h) \
-	LYUCFullyTranslateString(s, cs_from, cs_to, spcls, p, h, st_HTML)
+	LYUCTranslateHTMLString(s, cs_from, cs_to, spcls, p, h, st_HTML)
+
+#define TRANSLATE_HTML(s,p,h) \
+	LYUCFullyTranslateString(s, me->UCLYhndl, current_char_set, NO, YES, p, h, NO, st_HTML)
+
+#define TRANSLATE_HTML5(s,cs_from,cs_to,p,h) \
+	LYUCFullyTranslateString(s, cs_from, cs_to, NO, YES, p, h, NO, st_HTML)
+
+#define TRANSLATE_HTML7(s,cs_from,cs_to,spcls,p,h,Back) \
+	LYUCFullyTranslateString(s, cs_from, cs_to, NO, spcls, p, h, Back, st_HTML)
 
 /*
  *  Strings from attributes which should be converted to some kind
@@ -34,9 +43,9 @@
  *  esp. URLs (incl. #fragments) and HTML NAME and ID stuff.
  */
 #define TRANSLATE_AND_UNESCAPE_TO_STD(s) \
-	LYUCFullyTranslateString(s, ATTR_CS_IN, ATTR_CS_IN, NO, NO, YES, st_URL)
+	LYUCTranslateHTMLString(s, ATTR_CS_IN, ATTR_CS_IN, NO, NO, YES, st_URL)
 #define UNESCAPE_FIELDNAME_TO_STD(s) \
-	LYUCFullyTranslateString(s, ATTR_CS_IN, ATTR_CS_IN, NO, NO, YES, st_HTML)
+	LYUCTranslateHTMLString(s, ATTR_CS_IN, ATTR_CS_IN, NO, NO, YES, st_HTML)
 
 extern CONST HTStructuredClass HTMLPresentation;
 
@@ -84,6 +93,8 @@ struct _HTStructured {
     char *			object_codebase;
     char *			object_codetype;
     char *			object_name;
+    int				objects_mixed_open,
+    				objects_figged_open;
     HTChunk			option;		/* Grow by 128 */
     BOOL			first_option;	/* First OPTION in SELECT? */
     char *			LastOptionValue;
@@ -161,6 +172,7 @@ struct _HTStructured {
 
     BOOL		needBoldH;
 
+    char *		xinclude; /* if no include strin address passed */
     /*
     **  UCI and UCLYhndl give the UCInfo and charset registered for
     **  the HTML parser in the node_anchor's UCStages structure.  It
@@ -204,6 +216,7 @@ struct _HTStructured {
 };
 
 extern  HTStyle *LYstyles PARAMS((int style_number));
+extern	BOOL LYBadHTML PARAMS((HTStructured *me)); 
 
 /*
  *	Semi-Private functions. - FM

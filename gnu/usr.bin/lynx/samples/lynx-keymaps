@@ -107,10 +107,42 @@ setkey "^[[Z"		0x10F
 #	\v		vertical tab
 #	\<number>	octal number, up to 3 digits, e.g., "\033".
 #	\d<number>	decimal number, up to 3 digits, e.g., "\d99"
-#	\x<number>	hexidecimal number, up to 2 digits, e.g., "\xFF"
+#	\x<number>	hexadecimal number, up to 2 digits, e.g., "\xFF"
 #
 # For Unix-systems (which have termcap or terminfo) you may also use symbols
 # that refer to the termcap/terminfo, by referencing the name bracketed by
 # "^(" and ")", e.g.,
 setkey "^(cuu1)"	UPARROW
 setkey "^(up)"		UPARROW
+#
+# The following extension, introduced after lynx2.8.2, allows to force
+# recognition of meta (ESC) prefixes - especially useful with the
+# "Bash-like" lineeditor binding.  Its use is unnecessary in most
+# cases if Lynx was built with ncurses, but is probably necessary for
+# all keys that should recognize ESC as a prefix if Lynx was built with
+# slang.
+#
+#       setkey ESC-SEQUENCE  Meta-LETTER
+#       setkey ESC-SEQUENCE  Meta-KEYSYM
+#       setkey ESC-SEQUENCE  Meta-KEYSYM_NAME
+#
+# for example
+#setkey "\033b"          Meta-b
+#setkey "\033e"          Meta-'e'
+#setkey "\033\033[28~"   Meta-F1
+#
+# The following extensions, introduced after lynx2.8.2, allow mapping
+# escape sequences directly to key commands (lynxactioncodes).
+#
+#       setkey ESC-SEQUENCE  LAC:LYNX_ACTION
+#       setkey ESC-SEQUENCE  LAC:LYNX_ACTION:LYNX_EDITACTION
+#
+# where LYNX_ACTION is a key command specified as for lynx.cfg KEYMAP
+# options and as listed on the KEYMAP ('K') screen, and LYNX_EDITACTION
+# is a line-editor action specified as for KEYMAP and as listed in Line
+# Editor help pages.  Using this form makes remapping according to user
+# preference with KEYMAP impossible, and should thus be used sparingly
+# (in general, use KEYMAP with PASS instead, if the goal is to force
+# recognition of a key in form text fields).  For example:
+#
+#setkey "\033e"          LAC:EDITTEXTAREA:PASS

@@ -1,0 +1,47 @@
+SSL support for Lynx 2.8.4 (SSL-MM 1.4.1)
+-- adapted from http://www.moxienet.com/lynx/
+
+Lynx, in its unmodified form, will not allow you to make secure socket layer
+(SSL) connections.  SSL is used for the secure transfer of information over the
+Internet.  Many sites are now requiring SSL to ensure security for themselves
+and their users.  With a version of Lynx modified to support SSL, Lynx users
+can now visit these sites with ease as well.
+
+The SSL configure option (--with-ssl) for Lynx provides the ability to make use
+of SSL over HTTP for secure access to web sites (HTTPS) and over NNTP for
+secure access to news servers (SNEWS).  SSL is handled transparently, allowing
+users to continue accessing web sites and news services from within Lynx
+through the same interface for both secure and standard transfers.
+
+This is based on, and requires, the OpenSSL library.  OpenSSL's distribution
+and use may be restricted by licenses and laws.  For information on obtaining
+OpenSSL, as well as information on its distribution, see
+http://www.openssl.org/.  The main distribution site is ftp://ftp.openssl.org/. 
+
+To test your version of Lynx for its SSL support, try it out with an SSL site. 
+http://www.moxienet.com/lynx/ssl-test will redirect you to a secure (https)
+page which will load if your browser contains SSL support, and give you some
+information about the connection.  Note that the server that you are redirected
+to may not have a valid certificate.  Lynx will not complain, as it does not
+yet support certificates, but other browsers may.  Since you will not be
+sending any sensitive data to the test page, this should not present a problem.
+
+It is the user's responsibility to ensure that all patent laws,
+export restrictions, and other considerations have been taken into account
+before using this software.
+
+-- Note:
+
+Lynx is GPL'd, so it falls under the regulations in EAR section
+740.13(e)(1):
+
+    (1) Encryption source code controlled under 5D002, which would be
+        considered publicly available under section 734.3(b)(3) and
+        which is not subject an express agreement for the payment a
+        licensing fee or royalty for commercial production or sale of
+        any product developed with the source code, is released from
+        EI controls and may be exported or reexported without review
+        under License Exception TSU, provided you have submitted
+        written notification to BXA of the Internet location (e.g.,
+        URL or Internet address) or a copy of source code by the time
+        of export.

@@ -52,6 +52,14 @@ extern HTStream * HTMIMEConvert PARAMS((HTPresentation * pres,
 extern HTStream * HTNetMIME PARAMS((HTPresentation * pres,
                                         HTParentAnchor * anchor,
                                         HTStream * sink));
+/*
+
+  INPUT: Redirection message, parse headers only for Location if present
+
+ */
+extern HTStream * HTMIMERedirect PARAMS((HTPresentation * pres,
+                                        HTParentAnchor * anchor,
+                                        HTStream * sink));
 
 
 /*

@@ -45,10 +45,7 @@
 #include <LYLocal.h>
 
 #include <LYLeaks.h>
-
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
+#include <www_wait.h>
 
 struct _HTStream
 {
@@ -68,7 +65,7 @@ PRIVATE char *post_len = NULL;
 
 PRIVATE void add_environment_value PARAMS((char *env_value));
 
-#define PERROR(msg) CTRACE(tfp, "LYNXCGI: %s: %s\n", msg, LYStrerror(errno))
+#define PERROR(msg) CTRACE((tfp, "LYNXCGI: %s: %s\n", msg, LYStrerror(errno)))
 
 #ifdef LY_FIND_LEAKS
 PRIVATE void free_alloced_lynxcgi NOARGS
@@ -137,14 +134,7 @@ PUBLIC void add_lynxcgi_environment ARGS1(
     if (env_value != NULL) {
 	char *add_value = NULL;
 
-	add_value = (char *)malloc(strlen(variable_name) +
-				   strlen(env_value) + 2);
-	if (add_value == NULL) {
-	    outofmem(__FILE__, "LYCgi");
-	}
-	strcpy(add_value, variable_name);
-	strcat(add_value, "=");
-	strcat(add_value, env_value);
+	HTSprintf0(&add_value, "%s=%s", variable_name, env_value);
 	add_environment_value(add_value);
 	remember_alloced(add_value);
     }
@@ -208,7 +198,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	while (statrv < 0 || (statrv = stat(pgm_buff, &stat_buf)) < 0) {
 	    if ((cp=strrchr(pgm_buff, '/')) != NULL) {
 		*cp = '\0';
-		statrv = 999;	/* force new stat()  - kw */
+		statrv = 1;	/* force new stat()  - kw */
 	    } else {
 		PERROR("strrchr(pgm_buff, '/') returned NULL");
 	    	break;
@@ -220,10 +210,15 @@ PRIVATE int LYLoadCGI ARGS4(
 	    PERROR("stat() of pgm_buff failed");
 	} else {
 	    /* Found PATH_INFO data.  Strip it off of pgm and into path_info. */
-	    StrAllocCopy(path_info, pgm+strlen(pgm_buff));
+	    StrAllocCopy(path_info, pgm + strlen(pgm_buff));
+	    /* The following is safe since pgm_buff was derived from pgm
+	       by stripping stuff off its end and by HTUnEscaping, so we
+	       know we have enough memory allocated for pgm.  Note that
+	       pgm_args may still point into that memory, so we cannot
+	       reallocate pgm here. - kw */
 	    strcpy(pgm, pgm_buff);
-	    CTRACE(tfp, "LYNXCGI: stat() of %s succeeded, path_info=\"%s\".\n",
-			pgm_buff, path_info);
+	    CTRACE((tfp, "LYNXCGI: stat() of %s succeeded, path_info=\"%s\".\n",
+			pgm_buff, path_info));
 	}
 	FREE(pgm_buff);
     }
@@ -238,8 +233,13 @@ PRIVATE int LYLoadCGI ARGS4(
 	PERROR("stat() failed");
 	status = -4;
 
-    } else if (!(S_ISREG(stat_buf.st_mode) &&
-		 stat_buf.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))) {
+    } else
+#ifdef _WINDOWS	/* 1998/01/14 (Wed) 09:16:04 */
+#define isExecutable(mode) (mode & (S_IXUSR))
+#else
+#define isExecutable(mode) (mode & (S_IXUSR|S_IXGRP|S_IXOTH))
+#endif
+    if (!(S_ISREG(stat_buf.st_mode) && isExecutable(stat_buf.st_mode))) {
 	/*
 	 *  Not a runnable file, See if we can load it using "file:" code.
 	 */
@@ -251,8 +251,8 @@ PRIVATE int LYLoadCGI ARGS4(
 	 *  to confusing to know just what file is loaded. - kw
 	 */
 	if (path_info) {
-	    CTRACE(tfp, "%s is not a file and %s not an executable, giving up.\n",
-			orig_pgm, pgm);
+	    CTRACE((tfp, "%s is not a file and %s not an executable, giving up.\n",
+			orig_pgm, pgm));
 	    FREE(path_info);
 	    FREE(pgm);
 	    FREE(orig_pgm);
@@ -262,7 +262,7 @@ PRIVATE int LYLoadCGI ARGS4(
 
 	LYLocalFileToURL (&new_arg, orig_pgm);
 
-	CTRACE(tfp, "%s is not an executable file, passing the buck.\n", arg);
+	CTRACE((tfp, "%s is not an executable file, passing the buck.\n", arg));
 	status = HTLoadFile(new_arg, anAnchor, format_out, sink);
 	FREE(new_arg);
 
@@ -392,10 +392,10 @@ PRIVATE int LYLoadCGI ARGS4(
 		    close(fd1[0]);
 
 		    /* We have form data to push across the pipe */
-		    CTRACE(tfp, "LYNXCGI: Doing post, content-type '%s'\n",
-				anAnchor->post_content_type);
-		    CTRACE(tfp, "LYNXCGI: Writing:\n%s----------------------------------\n",
-				anAnchor->post_data);
+		    CTRACE((tfp, "LYNXCGI: Doing post, content-type '%s'\n",
+				anAnchor->post_content_type));
+		    CTRACE((tfp, "LYNXCGI: Writing:\n%s----------------------------------\n",
+				anAnchor->post_data));
 		    remaining = strlen(anAnchor->post_data);
 		    while ((written = write(fd1[1],
 					    anAnchor->post_data + total_written,
@@ -412,16 +412,16 @@ PRIVATE int LYLoadCGI ARGS4(
 			    PERROR("write() of POST data failed");
 			    break;
 			}
-			CTRACE(tfp, "LYNXCGI: Wrote %d bytes of POST data.\n",
-				    written);
+			CTRACE((tfp, "LYNXCGI: Wrote %d bytes of POST data.\n",
+				    written));
 			total_written += written;
 			remaining -= written;
 			if (remaining == 0)
 			    break;
 		    }
 		    if (remaining != 0) {
-			CTRACE(tfp, "LYNXCGI: %d bytes remain unwritten!\n",
-				    remaining);
+			CTRACE((tfp, "LYNXCGI: %d bytes remain unwritten!\n",
+				    remaining));
 		    }
 		    close(fd1[1]);
 		}
@@ -441,7 +441,7 @@ PRIVATE int LYLoadCGI ARGS4(
 			break;
 		    }
 		    HTReadProgress(total_chars += chars, 0);
-		    CTRACE(tfp, "LYNXCGI: Rx: %.*s\n", chars, buf);
+		    CTRACE((tfp, "LYNXCGI: Rx: %.*s\n", chars, buf));
 		    (*target->isa->put_block)(target, buf, chars);
 		}
 
@@ -647,7 +647,8 @@ PRIVATE int LYLoadCGI ARGS4(
 			   format_out,
 			   sink, anAnchor);
 
-    HTSprintf0(&buf, "<head>\n<title>%s</title>\n</head>\n<body>\n", gettext("Good Advice"));
+    HTSprintf0(&buf, "<html>\n<head>\n<title>%s</title>\n</head>\n<body>\n",
+	       gettext("Good Advice"));
     (*target->isa->put_block)(target, buf, strlen(buf));
 
     HTSprintf0(&buf, "<h1>%s</h1>\n", gettext("Good Advice"));
@@ -667,7 +668,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	       gettext("It provides state of the art CGI script support.\n"));
     (*target->isa->put_block)(target, buf, strlen(buf));
 
-    HTSprintf0(&buf,"</body>\n");
+    HTSprintf0(&buf,"</body>\n</html>\n");
     (*target->isa->put_block)(target, buf, strlen(buf));
 
     (*target->isa->_free)(target);

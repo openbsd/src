@@ -51,6 +51,9 @@ extern int LATIN1;     /* UCGetLYhndl_byMIME("iso-8859-1") */
 extern int US_ASCII;   /* UCGetLYhndl_byMIME("us-ascii")   */
 extern int UTF8;       /* UCGetLYhndl_byMIME("utf-8")      */
 
+#undef TRANSPARENT	/* defined on Solaris in <sys/stream.h> */
+extern int TRANSPARENT; /* UCGetLYhndl_byMIME("x-transparent")  */
+
 /*
 In general, Lynx translates letters from document charset to display charset.
 If document charset is not specified or not recognized by Lynx, we fall back

@@ -26,3 +26,15 @@ contacted the author of DJGPP for help with getting this port further.
 
 Wayne Buttles
 lynx-port@fdisk.com
+
+
+
+Win32 port was further extended by Hiroyuki Senshu <senshu@shonai-cit.ac.jp>
+ftp://crab.it.osha.sut.ac.jp/pub/Win32/develope/senshu/Lynx/
+  Most changes are ifdef'd
+    #define _WIN_CC=    .... for Windows C Compiler
+    #define CJK_EX      .... CJK EXtension
+    #define SH_EX       .... Senshu Hiroyuki EXtension
+    #define WIN_EX      .... Windows EXtension
+
+Lynx now builds with C++ Builder, Borland C++, Visual C++, and Cygwin.

@@ -9,7 +9,7 @@
  * There are four sections to this document:
  *  Section 1.  Things you MUST verify.  Unix platforms use a configure
  *		script to provide sensible default values.  If your site
- *		has special requirements, that may not be sufficient. 
+ *		has special requirements, that may not be sufficient.
  *		For non-Unix platforms (e.g., VMS), there is no
  *		configure script, so the defaults here are more
  *		critical.
@@ -120,14 +120,15 @@
  * XLOADIMAGE_COMMAND will be used as a default in src/HTInit.c
  * for viewing image content types when the DECW$DISPLAY logical
  * is set.  Make it the foreign command for your system's X image
- * viewer (commonly, "xv").  Make it "exit" or something like that
- * if you don't have one.  It can be anything that will handle GIF,
+ * viewer (commonly, "xv").  It can be anything that will handle GIF,
  * TIFF and other popular image formats.  Freeware ports of xv for
  * VMS are available in the ftp://ftp.wku.edu/vms/unsupported and
  * http://www.openvms.digital.com/cd/XV310A/ subdirectories.  You
  * must also have a "%s" for the filename.  The default defined
  * here can be overridden in lynx.cfg, or via the global or personal
  * mailcap files.
+ * Make this NULL if you don't have such a viewer or don't want to
+ * use any default viewers for image types.
  */
 #define XLOADIMAGE_COMMAND "xv %s"
 
@@ -305,16 +306,16 @@
  * XLOADIMAGE_COMMAND will be used as a default in src/HTInit.c for
  * viewing image content types when the DISPLAY environment variable
  * is set.  Make it the full path and name of the xli (also known as
- * xloadimage or xview) command, or other image viewer.  Put 'echo' or
- * something like it here if you don't have a suitable viewer.  It can
- * be anything that will handle GIF, TIFF and other popular image formats
+ * xloadimage or xview) command, or other image viewer.  It can be
+ * anything that will handle GIF, TIFF and other popular image formats
  * (xli does).  The freeware distribution of xli is available in the
  * ftp://ftp.x.org/contrib/ subdirectory.  The shareware, xv, also is
  * suitable.  You must also have a "%s" for the filename; "&" for
  * background is optional.  The default defined here can be overridden
- * in lynx.cfg, or via the global or personal mailcap files.  Note that
- * open is used as the default for NeXT, instead of the XLOADIMAGE_COMMAND
- * definition.
+ * in lynx.cfg, or via the global or personal mailcap files.
+ * Make this NULL if you don't have such a viewer or don't want to
+ * use any default viewers for image types.  Note that open is used as
+ * the default for NeXT, instead of the XLOADIMAGE_COMMAND definition.
  */
 #define XLOADIMAGE_COMMAND "xli %s &"
 
@@ -340,6 +341,29 @@
 #define TEMP_SPACE "/tmp/"
 
 /********************************
+ * Comment this line out to disable code that implements command logging
+ * and scripting.
+ */
+#define EXP_CMD_LOGGING 1
+
+/********************************
+ * Comment this line out to disable code that randomizes the names given to
+ * temporary files.
+ */
+#define EXP_RAND_TEMPNAME 1
+
+/********************************
+ * Uncomment this line to use 'mkstemp()' in preference to lynx's own code
+ * in fmt_tempname().  Caution: on a few older systems, mkstemp() is less
+ * secure than you would like.  For this reason, we do not auto-configure it.
+ *
+ * Some things to watch out for:  some broken implementations of mkstemp() may
+ * not necessarily try a different filename when they are called, making it
+ * impossible to rename the file.  Others make world-writable files.
+ */
+#define USE_MKSTEMP 
+
+/********************************
  * Comment this line out to let the user enter his/her email address
  * when sending a message.  There should be no need to do this unless
  * your mailer agent does not put in the From: field for you.  (If your
@@ -347,7 +371,7 @@
  * upgrade, because anonymous mail makes it far too easy for a user to
  * spoof someone else's email address.)
  */
-#define NO_ANONYMOUS_EMAIL TRUE
+/*#define NO_ANONYMOUS_EMAIL TRUE */
 
 /********************************
  * LIST_FORMAT defines the display for local files when LONG_LIST
@@ -424,18 +448,18 @@
  * STARTFILE is the default starting URL if none is specified
  *   on the command line or via a WWW_HOME environment variable;
  *   Lynx will refuse to start without a starting URL of some kind.
- * STARTFILE can be remote, e.g. http://www.w3.org/default.html ,
- *                or local, e.g. file://localhost/PATH_TO/FILENAME ,
+ * STARTFILE can be remote, e.g., http://www.w3.org/default.html ,
+ *                or local, e.g., file://localhost/PATH_TO/FILENAME ,
  *           where PATH_TO is replaced with the complete path to FILENAME
  *           using Unix shell syntax and including the device on VMS.
  *
  * Normally we expect you will connect to a remote site, e.g., the Lynx starting
  * site:
  */
-#define STARTFILE "http://lynx.browser.org/"
+#define STARTFILE "http://www.OpenBSD.org/"
 /*
  * As an alternative, you may want to use a local URL.  A good choice for this
- * is the user's home directory: 
+ * is the user's home directory:
  *#define STARTFILE "file://localhost/~/"
  *
  * Your choice of STARTFILE should reflect your site's needs, and be a URL that
@@ -451,11 +475,11 @@
  *   for this distribution (use SHELL syntax including the device
  *   on VMS systems).
  * The default HELPFILE is:
- * http://www.crl.com/~subir/lynx/lynx_help/lynx_help_main.html
+ * http://www.trill-home.com/lynx/lynx_help/lynx_help_main.html
  *   This should be changed here or in lynx.cfg to the local path.
  */
-#define HELPFILE "http://www.crl.com/~subir/lynx/lynx_help/lynx_help_main.html"
-/* #define HELPFILE "file://localhost/PATH_TO/lynx_help/lynx_help_main.html" */
+/* #define HELPFILE "http://www.trill-home.com/lynx/lynx_help/lynx_help_main.html" */
+#define HELPFILE "file://localhost/usr/share/doc/html/lynx_help/lynx_help_main.html"
 
 /*****************************
  * DEFAULT_INDEX_FILE is the default file retrieved when the
@@ -715,27 +739,27 @@
 #define PREFERRED_CHARSET ""
 
 /*****************************
-* If MULTI_BOOKMARK_SUPPORT is set TRUE, and BLOCK_MULTI_BOOKMARKS (see
-* below) is FALSE, and sub-bookmarks exist, all bookmark operations will
-* first prompt the user to select an active sub-bookmark file or the
-* default bookmark file.  FALSE is the default so that one (the default)
-* bookmark file will be available initially.  The default set here can
-* be overridden in lynx.cfg.  The user can turn on multiple bookmark
-* support via the 'o'ptions menu, and can save that choice as the startup
-* default via the .lynxrc file.  When on, the setting can be STANDARD or
-* ADVANCED.  If support is set to the latter, and the user mode also is
-* ADVANCED, the VIEW_BOOKMARK command will invoke a status line prompt at
-* which the user can enter the letter token (A - Z) of the desired bookmark,
+* If MULTI_BOOKMARK_SUPPORT is set to MBM_STANDARD or MBM_ADVANCED, and
+* BLOCK_MULTI_BOOKMARKS (see below) is FALSE, and sub-bookmarks exist, all
+* bookmark operations will first prompt the user to select an active
+* sub-bookmark file or the default bookmark file.  MBM_OFF is the default so
+* that one (the default) bookmark file will be available initially.  The
+* default set here can be overridden in lynx.cfg.  The user can turn on
+* multiple bookmark support via the 'o'ptions menu, and can save that choice as
+* the startup default via the .lynxrc file.  When on, the setting can be
+* STANDARD or ADVANCED.  If support is set to the latter, and the user mode
+* also is ADVANCED, the VIEW_BOOKMARK command will invoke a status line prompt
+* at which the user can enter the letter token (A - Z) of the desired bookmark,
 * or '=' to get a menu of available bookmark files.  The menu always is
 * presented in NOVICE or INTERMEDIATE mode, or if the support is set to
 * STANDARD.  No prompting or menu display occurs if only one (the startup
 * default) bookmark file has been defined (define additional ones via the
-* 'o'ptions menu).  The startup default, however set, can be overridden on
-* the command line via the -restrictions=multibook or the -anonymous or
-* -validate switches.
+* 'o'ptions menu).  The startup default, however set, can be overridden on the
+* command line via the -restrictions=multibook or the -anonymous or -validate
+* switches.
 */
 #ifndef MULTI_BOOKMARK_SUPPORT
-#define MULTI_BOOKMARK_SUPPORT FALSE
+#define MULTI_BOOKMARK_SUPPORT MBM_OFF
 #endif /* MULTI_BOOKMARK_SUPPORT */
 
 /*****************************
@@ -812,6 +836,12 @@
  * (e.g., ./lynx/.lynxsig).  The definition here can be changed in lynx.cfg.
  */
 #define LYNX_SIG_FILE ".lynxsig"
+
+/********************************
+ * BIBP_GLOBAL_SERVER is the default global server for bibp: links, used
+ * when a local bibhost or document-specified citehost is unavailable.
+ */
+#define BIBP_GLOBAL_SERVER "http://usin.org/"
 
 /********************************
  * If USE_SELECT_POPUPS is set FALSE, Lynx will present a vertical list
@@ -895,7 +925,7 @@
  * Showing the cursor is handy if you are a sighted user with a poor
  * terminal that can't do bold and reverse video at the same time or
  * at all.  It also can be useful to blind users, as an alternative
- * or supplement to setting LINKS_AND_FORM_FIELDS_ARE_NUMBERED or
+ * or supplement to setting LINKS_AND_FIELDS_ARE_NUMBERED or
  * LINKS_ARE_NUMBERED.
  *
  * The default defined here can be changed in lynx.cfg.  It can be
@@ -940,7 +970,8 @@
  * Note that this is currently not supported with the chartrans code,
  * or rather it doesn't have an effect if translations for a display
  * character set are taken from one of the *.tbl files in src/chrtrans.
- * One would have to modify the corresponding *.tbl file for this.
+ * One would have to modify the corresponding *.tbl file to change the
+ # 7-bit replacements for these characters.
  */
 #define LY_UMLAUT
 
@@ -967,7 +998,7 @@
  * Use lynxexec for commands or scripts that generate a screen output which
  * should be held via a prompt to press <return> before returning to Lynx
  * for display of the current document.
- * Use lynxprog for programs such as mail which do require a pause before
+ * Use lynxprog for programs such as mail which do not require a pause before
  * Lynx restores the display of the current document.
  *
  * Execution scripts take the form of a standard
@@ -1003,56 +1034,20 @@
 /* #define EXEC_LINKS  */
 /* #define EXEC_SCRIPTS  */
 
-/**********
- * UNIX:
- * =====
- * CGI script support.  Defining LYNXCGI_LINKS allows you to use the
- *
- *   lynxcgi:path
- *
- * URL which allows lynx to access a cgi script directly without the need for
- * a http daemon.  Redirection or mime support is not supported but just about
- * everything else is.  If the path is not an executable file then the URL is
- * rewritten as file://localhost and passed to the file loader.  This means
- * that if your http:html files are currently set up to use relative
- * addressing, you should be able to fire up your main page with lynxcgi:path
- * and everything should work as if you were talking to the http daemon.
- *
- * Note that TRUSTED_LYNXCGI directives must be defined in your lynx.cfg file
- * if you wish to place restrictions on source documents and/or paths for
- * lynxcgi links.
- *
- * The cgi scripts are called with a fork()/execve() sequence so you don't
- * have to worry about people trying to abuse the code. :-)
- *
- *     George Lindholm (George.Lindholm@ubc.ca)
- *
- * VMS:
- * ====
- * The lynxcgi scheme, if enabled, yields an informational message regardless
- * of the path, and use of the freeware OSU DECthreads server as a local
- * script server is recommended instead of lynxcgi URLs.  Uncomment the
- * following line to define LYNXCGI_LINKS, and when running Lynx, enter
- * lynxcgi:advice  as a G)oto URL for more information and links to the
- * OSU server distribution.
- */
-/* #define LYNXCGI_LINKS */
-
 #if defined(EXEC_LINKS) || defined(EXEC_SCRIPTS)
 
 /**********
- * if ALLOW_USERS_TO_CHANGE_EXEC_WITHIN_OPTIONS
- * is defined then the user will be able to change
- * the execution status within the options screen.
+ * if ENABLE_OPTS_CHANGE_EXEC is defined, the user will be able to change
+ * the execution status within the Options Menu.
  */
-/* #define ALLOW_USERS_TO_CHANGE_EXEC_WITHIN_OPTIONS */
+/* #define ENABLE_OPTS_CHANGE_EXEC */
 
 /**********
- * if NEVER_ALLOW_REMOTE_EXEC is defined then local execution of
- * scripts or lynxexec and lynxprog URLs will only be implemented
- * from HTML files that were accessed via a "file://localhost/" URL,
- * and the options menu for "L)ocal executions links" will only
- * allow toggling between "ALWAYS OFF" and "FOR LOCAL FILES ONLY".
+ * if NEVER_ALLOW_REMOTE_EXEC is defined,
+ * local execution of scripts or lynxexec & lynxprog URLs will be implemented
+ * only from HTML files that were accessed via a "file://localhost/" URL
+ * and the Options Menu for "Local executions links" will allow toggling
+ * only between "ALWAYS OFF" and "FOR LOCAL FILES ONLY".
  */
 /* #define NEVER_ALLOW_REMOTE_EXEC */
 
@@ -1077,23 +1072,61 @@
  * LOCAL_EXECUTION_LINKS_ALWAYS_ON will be FALSE
  * if NEVER_ALLOW_REMOTE_EXEC has been defined.
  *
- * if LOCAL_EXECUTION_LINKS_ALWAYS_OFF_FOR_ANONYMOUS is
- * true all execution links will be disabled when the
- * -anonymous command line option is used.  Anonymous
- * users are not allowed to change the execution options
- * from within the Lynx options menu so you might be able
- * to use this option to enable execution links and set
- * LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE to TRUE to
- * give anonymous execution link capability without compromising
- * your system (see comments about TRUSTED_EXEC rules in
- * lynx.cfg for more information).
- *
+ * if LOCAL_EXECUTION_LINKS_ALWAYS_OFF_FOR_ANONYMOUS is true,
+ * all execution links will be disabled when the -anonymous
+ * command-line option is used.  Anonymous users are not allowed
+ * to change the execution options from within the Lynx Options Menu,
+ * so you might be able to use this option to enable execution links
+ * and set LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE to TRUE
+ * to give anonymous execution-link capability without compromising
+ * your system (see comments about TRUSTED_EXEC rules in lynx.cfg ).
  */
+
 #define LOCAL_EXECUTION_LINKS_ALWAYS_ON          FALSE
 #define LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE  FALSE
 #define LOCAL_EXECUTION_LINKS_ALWAYS_OFF_FOR_ANONYMOUS FALSE
 
 #endif /*  defined(EXEC_LINKS) || defined(EXEC_SCRIPTS) */
+
+/**********
+ * *** This is for those -- e.g. DOS users -- who do not have configure;
+ * *** others should use the configure switch --enable-lynxcgi-links .
+ *
+ * UNIX:
+ * =====
+ * CGI script support.  Defining LYNXCGI_LINKS allows you to use the
+ *
+ *   lynxcgi:path
+ *
+ * URL which allows lynx to access a cgi script directly without the need for
+ * a http daemon.  Redirection is not supported but just about everything
+ * else is.  If the path is not an executable file then the URL is
+ * rewritten as file://localhost and passed to the file loader.  This means
+ * that if your http:html files are currently set up to use relative
+ * addressing, you should be able to fire up your main page with lynxcgi:path
+ * and everything should work as if you were talking to the http daemon.
+ *
+ * Note that TRUSTED_LYNXCGI directives must be defined in your lynx.cfg file
+ * if you wish to place restrictions on source documents and/or paths for
+ * lynxcgi links.
+ *
+ * The cgi scripts are called with a fork()/execve() sequence so you don't
+ * have to worry about people trying to abuse the code. :-)
+ *
+ *     George Lindholm (George.Lindholm@ubc.ca)
+ *
+ * VMS:
+ * ====
+ * The lynxcgi scheme, if enabled, yields an informational message regardless
+ * of the path, and use of the freeware OSU DECthreads server as a local
+ * script server is recommended instead of lynxcgi URLs.  Uncomment the
+ * following line to define LYNXCGI_LINKS, and when running Lynx, enter
+ * lynxcgi:advice  as a G)oto URL for more information and links to the
+ * OSU server distribution.
+ */
+#ifndef HAVE_CONFIG_H
+/* #define LYNXCGI_LINKS */
+#endif
 
 /*********************************
  *  MAIL_SYSTEM_ERROR_LOGGING will send a message to the owner of
@@ -1105,6 +1138,16 @@
  *  NOTE: This can generate A LOT of mail, be warned.
  */
 #define MAIL_SYSTEM_ERROR_LOGGING   FALSE  /*mail a message for every error?*/
+
+/*********************************
+ *  If a document cannot be accessed, and MAIL_SYSTEM_ERROR_LOGGING
+ *  is on and would send a message to the owner of the information,
+ *  but no owner is known, then the message will be sent to ALERTMAIL
+ *  instead - if it is defined as a non-empty email address.
+ *
+ *  NOTE: This can generate A REAL LOT of mail, be warned!!!
+ */
+/* #define ALERTMAIL "webmaster@localhost" */ /*error recipient if no owner*/
 
 /*********************************
  * If CHECKMAIL is set to TRUE, the user will be informed (via a status line
@@ -1127,27 +1170,22 @@
 #define CHECKMAIL	FALSE	/* report unread and new mail messages */
 
 /*********************************
- * VI_KEYS can be changed in lynx.cfg and can be turned on by the user
- * in the options screen or the .lynxrc file.  This is just the default.
+ * Vi or Emacs movement keys.  These are defaults,
+ * which can be changed in lynx.cfg , the Options Menu or .lynxrc .
  */
-#define VI_KEYS_ALWAYS_ON	FALSE /* familiar h,j,k, & l */
+#define VI_KEYS_ALWAYS_ON	FALSE /* familiar h j k l */
+#define EMACS_KEYS_ALWAYS_ON	FALSE /* familiar ^N ^P ^F ^B */
 
 /*********************************
- * EMACS_KEYS can be changed in lynx.cfg and can be turned on by the user
- * in the options screen or the .lynxrc file.  This is just the default.
- */
-#define EMACS_KEYS_ALWAYS_ON	FALSE /* familiar ^N, ^P, ^F, ^B */
-
-/*********************************
- * DEFAULT_KEYPAD_MODE specifies whether by default the user
- * has numbers that work like arrows or else numbered links
- * DEFAULT KEYPAD MODE may be set to
- *	NUMBERS_AS_ARROWS   or
- *	LINKS_ARE_NUMBERED  or
- *	LINKS_AND_FORM_FIELDS_ARE_NUMBERED
- *
- * This default setting can be overridden in lynx.cfg (but not to
- * the third value), and it can be changed at run time by the user.
+ * DEFAULT_KEYPAD_MODE may be set to NUMBERS_AS_ARROWS
+ *                                or LINKS_ARE_NUMBERED
+ *                                or LINKS_AND_FIELDS_ARE_NUMBERED
+ * to specify whether numbers (e.g. [10]) appear before all links,
+ * allowing immediate access by entering the number on the keyboard,
+ * or numbers on the numeric key-pad work like arrows;
+ * the 3rd option causes form fields also to be preceded by numbers.
+ * The first two options (but not the last) can be changed in lynx.cfg
+ * and all three can be changed via the Options Menu.
  */
 #define DEFAULT_KEYPAD_MODE	NUMBERS_AS_ARROWS
 
@@ -1221,6 +1259,55 @@
 #define QUIT_DEFAULT_YES	TRUE
 
 /********************************
+ * If TEXT_SUBMIT_CONFIRM_WANTED is defined (to anything), the user will be
+ * prompted for confirmation before Lynx submits a form with only one input
+ * field (of type text) to the server, after the user has pressed <return>
+ * or <enter> on the field.  Since the is no other way such as a "submit"
+ * button to submit, normally the form gets submitted automatically in this
+ * case, but some users may find this surprising and expect <return> to just
+ * move to the next link as for other text entry fields.
+ */
+/* #define TEXT_SUBMIT_CONFIRM_WANTED */
+
+/********************************
+ * If TEXTFIELDS_MAY_NEED_ACTIVATION is defined (to anything),
+ * the option TEXTFIELDS_NEED_ACTIVATION in lynx.cfg or the command
+ * line option -tna can be used to require explicit activation
+ * before text input fields can be changed with the built-in line
+ * editor.
+ */
+
+#define TEXTFIELDS_MAY_NEED_ACTIVATION
+
+/********************************
+ * The following three definitions control some aspects of extended
+ * textarea handling.  TEXTAREA_EXPAND_SIZE is the number of new empty
+ * lines that get appended at the end of a textarea by a GROWTEXTAREA
+ * key.  If TEXTAREA_AUTOGROW is defined (to anything), <return> or
+ * <enter> in the last line of a textarea automatically extends the
+ * area by adding a new line.  If TEXTAREA_AUTOEXTEDIT is defined (to
+ * anything), a key mapped to DWIMEDIT will invoke the external editor
+ * like EDITTEXTAREA when used in a text input field.  Comment those
+ * last two definitions out to disable the corresponding behavior.
+ * See under KEYMAP in lynx.cfg for mapping keys to GROWTEXTAREA or
+ * DWIMEDIT actions.
+ */
+#define TEXTAREA_EXPAND_SIZE  5
+#define TEXTAREA_AUTOGROW
+#define TEXTAREA_AUTOEXTEDIT
+
+/********************************
+ * If BUILTIN_SUFFIX_MAPS is defined (to anything), default mappings
+ * for file extensions (aka suffixes) will be compiled in (see
+ * src/HTInit.c).  By removing the definition, the default mappings
+ * are suppressed except for a few very basic ones for text/html.
+ * See GLOBAL_EXTENSION_MAP, PERSONAL_EXTENSION_MAP above and SUFFIX,
+ * SUFFIX_ORDER in lynx.cfg for other ways to map file extensions.
+ */
+
+#define BUILTIN_SUFFIX_MAPS
+
+/********************************
  * These definitions specify files created or used in conjunction
  * with traversals.  See CRAWL.ANNOUNCE for more information.
  */
@@ -1241,6 +1328,20 @@
 
 
 /****************************************************************
+ * DEFAULT_VISITED_LINKS may be set to one or more of
+ *					VISITED_LINKS_AS_FIRST_V
+ *					VISITED_LINKS_AS_TREE
+ *					VISITED_LINKS_AS_LATEST
+ *					VISITED_LINKS_REVERSE
+ * to change the organization of the Visited Links page.
+ *
+ * (Not all combinations are meaningful; see src/LYrcFile.c for a list
+ * in the visited_links_tbl table).
+ */
+#define DEFAULT_VISITED_LINKS (VISITED_LINKS_AS_LATEST | VISITED_LINKS_REVERSE)
+
+
+/****************************************************************
  *   Section 3.   Things that you should not change until you
  *  		  have a good knowledge of the program
  */
@@ -1250,25 +1351,15 @@
  * the version definition with the Project Version on checkout.  Just
  * ignore it. - kw */
 /* $Format: "#define LYNX_VERSION \"$ProjectVersion$\""$ */
-#define LYNX_VERSION "2.8.2rel.1"
+#define LYNX_VERSION "2.8.4rel.1"
 #define LYNX_WWW_HOME "http://lynx.browser.org/"
-#define LYNX_WWW_DIST "http://www.slcc.edu/lynx/current/"
-#define LYNX_RELEASE FALSE
+#define LYNX_WWW_DIST "http://lynx.isc.org/current/"
 /* $Format: "#define LYNX_DATE \"$ProjectDate$\""$ */
-#define LYNX_DATE "Tue, 01 Jun 1999 19:30:15 -0600"
+#define LYNX_DATE "Tue, 17 Jul 2001 14:04:37 -0700"
 #define LYNX_DATE_OFF 5		/* truncate the automatically-generated date */
 #define LYNX_DATE_LEN 11	/* truncate the automatically-generated date */
-#define LYNX_RELEASE_DATE "1998"
 
-#ifndef MAXINT
-#define MAXINT 2147483647	/* max integer */
-#endif /* !MAXINT */
-#define MAXBASE 100		/* max length of base directory */
-#define MAXHIGHLIGHT 160	/* max length of highlighted text */
-#define MAXTARGET 130		/* max length of target string */
 #define LINESIZE 1024		/* max length of line to read from file */
-#define MAXFNAME 1280		/* max filename length DDD/FILENAME.EXT */
-#define MAXCOMMAND MAXFNAME	/* max length of command should be the same */
 #define MAXHIST  1024		/* max links we remember in history */
 #define MAXLINKS 1024		/* max links on one screen */
 
@@ -1277,6 +1368,9 @@
 #endif
 
 #define MAXCHARSETS 60		/* max character sets supported */
+#define TRST_MAXROWSPAN 10000	/* max rowspan accepted by TRST code */
+#define TRST_MAXCOLSPAN 1000	/* max colspan and COL/COLGROUP span accepted */
+#define SAVE_TIME_NOT_SPACE	/* minimize number of some malloc calls */
 
 /* Win32 may support more, but old win16 helper apps may not. */
 #if defined(__DJGPP__) || defined(_WINDOWS)
@@ -1304,9 +1398,21 @@
 #else
 
 #ifdef DOSPATH
-/*  Something has to be defined for this or we don't compile. */
+
+#ifdef _WINDOWS
+#ifdef USE_ALT_BLAT_MAILER
+#define SYSTEM_MAIL		"BLAT"
+#define SYSTEM_MAIL_FLAGS	""
+#else
+#define SYSTEM_MAIL		"BLATJ"
+#define SYSTEM_MAIL_FLAGS	""
+#endif
+#else
+/* have to define something... */
 #define SYSTEM_MAIL "sendmail"
 #define SYSTEM_MAIL_FLAGS "-t -oi"
+#endif
+
 /*
 **  The following executables may be used at run time.  Unless you change
 **  the definitions to include the full directories, they will be sought
@@ -1315,10 +1421,9 @@
 **  elsewhere.
 **  Currently, if compiled with -DUSE_ZLIB and without -DDIRED_SUPPORT
 **  (default), the following from the list below are required:
-**  COPY_PATH (cp.exe) - needed for file downloading
 **  MV_PATH   (mv.exe) - for bookmark handling (DEL_BOOKMARK command)
-**  UNCOMPRESS_PATH, BZIP2_PATH - for automatic decompression of files in
-**                                these formats
+**  UNCOMPRESS_PATH    - for automatic decompression of files in Unix
+**                       compress format
 **  TELNET_PATH, TN3270_PATH, RLOGIN_PATH - for access to "telnet:",
 **                                         "tn3270:", and "rlogin:" URLs.
 **  If they are not defined right, the corresponding operations may fail
@@ -1341,7 +1446,8 @@
 #define MKDIR_PATH      "mkdir"
 #define MV_PATH         "mv"
 #define RM_PATH         "rm"
-#define COPY_PATH       "cp"
+/* COPY_PATH is not required for DOSPATH any more (implemented directly) */
+/* #define COPY_PATH       "cp" */
 #define CHMOD_PATH      "chmod"
 #define TELNET_PATH     "telnet"
 #define TN3270_PATH     "tn3270"
@@ -1356,6 +1462,59 @@
 #endif /* DOSPATH */
 #endif /* VMS */
 
+
+/***************************** 
+ * SUPPORT_MULTIBYTE_EDIT provides better support of CJK characters to
+ * Lynx's Line Editor.  JIS X0201 Kana is partially supported.  The
+ * reason why I didn't support it fully is I think supporting it is not
+ * required so much and I don't have an environment to test it. - TH
+ */
+#define SUPPORT_MULTIBYTE_EDIT
+
+/***************************** 
+ * SUPPORT_CHDIR provides CD command (bound to 'C' by default).  It allows
+ * changing directory to arbitrary location (if OS allows them).  If dired is
+ * enabled, user will be able to visit any directory and view any file allowed
+ * according to file permissions or ACLs.
+ */
+#define SUPPORT_CHDIR
+
+/***************************** 
+ * MARK_HIDDEN_LINKS controls whether hidden links are shown with the title
+ * set by the HIDDEN_LINK_MARKER string in lynx.cfg
+ */
+#define MARK_HIDDEN_LINKS
+
+/*****************************
+ * USE_TH_JP_AUTO_DETECT, CONV_JISX0201KANA_JISX0208KANA,  
+ * and KANJI_CODE_OVERRIDE are the macros for Japanese. - TH 
+ */ 
+/***************************** 
+ * USE_TH_JP_AUTO_DETECT enables a new Japanese charset detection routine. 
+ * With the old detection strategy, Lynx always thought a document was 
+ * written in mixture of three kanji codes (JIS, EUC and SJIS).  The new 
+ * strategy is for Lynx to first assume the document is written in one code 
+ * or JIS + one other kanji code (JIS, EUC, SJIS, EUC+JIS and SJIS+JIS). 
+ * The first assumption is usually correct, but if the assumption is wrong, 
+ * Lynx falls back to the old assumption of the three kanji codes mixed. 
+ */ 
+#define USE_TH_JP_AUTO_DETECT 
+ 
+/***************************** 
+ * If CONV_JISX0201KANA_JISX0208KANA is set, Lynx will convert 
+ * JIS X0201 Kana to JIS X0208 Kana, i.e., convert half-width kana 
+ * to full-width. 
+ */ 
+#define CONV_JISX0201KANA_JISX0208KANA 
+ 
+/***************************** 
+ * Uncomment the following line to enable the kanji code override routine. 
+ * The code can be changed by pressing ^L.  More precisely, this allows 
+ * the user to override the assumption about the kanji code for the document 
+ * which Lynx has made on the basis of a META tag and HTTP response. 
+ */ 
+/*#define KANJI_CODE_OVERRIDE */ 
+ 
 
 /****************************************************************
  *  Section 4.  Things you MUST check only if you plan to use Lynx
@@ -1410,7 +1569,10 @@
 
 /*******************************
  * set to FALSE if you don't want users of your anonymous
- * account to be able to read news
+ * account to be able to read news OR post news articles.
+ * These flags apply to "news", "nntp", "newspost", and "newsreply"
+ * URLs, but not to "snews", "snewspost", or "snewsreply"
+ * in case they are supported.
  */
 #define CAN_ANONYMOUS_INSIDE_DOMAIN_READ_NEWS	TRUE
 #define CAN_ANONYMOUS_OUTSIDE_DOMAIN_READ_NEWS	FALSE
@@ -1425,6 +1587,7 @@
  * set to FALSE if you don't want users of your anonymous
  * account to be able to goto particular URLs.
  */
+#define CAN_ANONYMOUS_GOTO_BIBP		TRUE    /* BIBP maps to HTTP */
 #define CAN_ANONYMOUS_GOTO_CSO		FALSE
 #define CAN_ANONYMOUS_GOTO_FILE		FALSE
 #define CAN_ANONYMOUS_GOTO_FINGER	TRUE
@@ -1469,6 +1632,48 @@
  * account to be able to print
  */
 #define CAN_ANONYMOUS_PRINT	FALSE
+
+/*******************************
+ * set to FALSE if users with anonymous restrictions should
+ * not be able to view configuration file (lynx.cfg) info
+ * via special LYNXCFG: links.  (This does not control access
+ * to lynx.cfg as a normal file, e.g., through a "file:" URL,
+ * if other restrictions allow that.)
+ */
+#define CAN_ANONYMOUS_VIEW_LYNXCFG_INFO			FALSE
+
+/*******************************
+ * set to FALSE if users with anonymous restrictions should
+ * not be able to view extended configuration file (lynx.cfg)
+ * info @@@ or perform special config info functions (reloading
+ * at run-time) via special LYNXCFG: links @@@.  This only applies
+ * if the lynxcfg_info" restriction controlled by the previous
+ * item is not in effect and if Lynx has been compiled without
+ * NO_CONFIG_INFO defined (--disable-config-info wasn't used
+ * if Lynx was built with the autoconf configure script).
+ * The extended info may include details on configuration file
+ * names and location and links for reading the files, as well
+ * as information on nesting of included configuration files.
+ */
+#define CAN_ANONYMOUS_VIEW_LYNXCFG_EXTENDED_INFO	FALSE
+
+/*******************************
+ * set to FALSE if users with anonymous restrictions should
+ * not be able to view information on compile time configuration
+ * via special LYNXCOMPILEOPTS: links.  This only applies
+ * if the autoconf configure script was used to build Lynx
+ * AND --disable-config-info wasn't used, otherwise this
+ * special URL scheme isn't recognized anyway.
+ */
+#define CAN_ANONYMOUS_VIEW_COMPILEOPTS_INFO		FALSE
+
+/*******************************
+ * set to FALSE if you don't want users of your anonymous
+ * account to be able to 'g'oto special URLs for showing
+ * configuration info (LYNXCFG: and LYNXCOMPILEOPTS:) if
+ * they are otherwise allowed.
+ */
+#define CAN_ANONYMOUS_GOTO_CONFIGINFO		FALSE
 
 /*****************************
  * Be sure you have read about and set defines above in Sections

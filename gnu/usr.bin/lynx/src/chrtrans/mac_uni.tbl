@@ -80,6 +80,8 @@ OMacintosh (8 bit)
 #   interpreted (if at all) as the control codes DC1-DC4.
 #
 ##################
+# Lines with more than one Unicode (U+XXXX) value contain additional
+# replacement mappings added for lynx. - kw
 
 #0x20    U+0020  # SPACE
 #0x21    U+0021  # EXCLAMATION MARK
@@ -276,7 +278,7 @@ OMacintosh (8 bit)
 0xDE    U+FB01  # LATIN SMALL LIGATURE FI
 0xDF    U+FB02  # LATIN SMALL LIGATURE FL
 0xE0    U+2021  # DOUBLE DAGGER
-0xE1    U+00B7  # MIDDLE DOT
+0xE1    U+00B7  U+0307	U+0387	U+2027	# MIDDLE DOT
 0xE2    U+201A  # SINGLE LOW-9 QUOTATION MARK
 0xE3    U+201E  # DOUBLE LOW-9 QUOTATION MARK
 0xE4    U+2030  # PER MILLE SIGN

@@ -52,6 +52,12 @@ file or remote URL specified at the command
 line.  For help with URLs, press \fB"?"\fR
 or \fB"H"\fR while running \fILynx\fR.
 Then follow the link titled, "Help on URLs."
+
+\fILynx\fR uses only long option names. Option
+names can begin with double dash as well,
+underscores and dashes can be intermixed in
+option names (in the reference below options
+are with one dash before them and with underscores).
 .PP
 .TP
 .B -
@@ -59,17 +65,21 @@ If the argument is only '-', then Lynx expects to receive
 the arguments from stdin.  This is to allow for the
 potentially very long command line that can be associated
 with the -get_data or -post_data arguments (see below).
+It can also be used to avoid having sensitive information
+in the invoking command line (which would be visible to
+other processes on most systems), especially when
+the -auth or -pauth options are used.
 .TP
 .B -accept_all_cookies
 accept all cookies.
 .TP
 .B -anonymous
-used to specify the anonymous account.
+apply restrictions for anonymous account, see also -restrictions.
 .TP
-.B -assume_charset\fR=\fIID\fR:\fIMIMEname
+.B -assume_charset\fR=\fIMIMEname
 charset for documents that don't specify it.
 .TP
-.B -assume_local_charset\fR=\fIID\fR:\fIMIMEname
+.B -assume_local_charset\fR=\fIMIMEname
 charset assumed for local files.
 .TP
 .B -assume_unrec_charset\fR=\fIMIMEname
@@ -84,10 +94,14 @@ this switch.
 prepend a request URL comment and BASE tag to text/html
 outputs for -source dumps.
 .TP
+.B -bibp\fR=\fIURL
+specify a local bibp server (default http://bibhost/).
+.TP
 .B -blink
-forces high intensity bg colors for color mode, if available
+forces high intensity background colors for color mode, if available
 and supported by the terminal.
-Lynx needs to be compiled with the slang library for this flag.
+This applies to the \fBslang\fR library (for a few terminal emulators),
+or to OS/2 EMX with \fBncurses\fR.
 .TP
 .B -book
 use the bookmark page as the startfile.  The default or command
@@ -107,6 +121,9 @@ The default is 10.
 .B -case
 enable case-sensitive string searching.
 .TP
+.B -center
+Toggle center alignment in HTML TABLE.
+.TP
 .B -cfg\fR=\fIFILENAME
 specifies a Lynx configuration file other than the default
 lynx.cfg.
@@ -114,20 +131,46 @@ lynx.cfg.
 .B -child
 exit on left-arrow in startfile, and disable save to disk.
 .TP
+.B -cmd_log\fR=\fIFILENAME
+write keystroke commands and related information to the specified file.
+.TP
+.B -cmd_script\fR=\fIFILENAME
+read keystroke commands from the specified file.
+You can use the data written using the \fB\-cmd_log\fR option.
+Lynx will ignore other information which the command-logging may have
+written to the logfile.
+.TP
 .B -color
 forces color mode on, if available.  Default color control sequences
 which work for many terminal types are assumed if the terminal
 capability description does not specify how to handle color.
-Lynx needs to be compiled with the slang library for this flag.
+Lynx needs to be compiled with the \fBslang\fR library for this flag,
+it is equivalent to setting the \fBCOLORTERM\fR environment variable.
+(If color support is instead provided by a color-capable curses
+library like \fBncurses\fR, Lynx relies completely on the terminal
+description to determine whether color mode is possible, and
+this flag is not needed and thus unavailable.)
 A saved show_color=always setting found in a .lynxrc file at
-startup has the same effect.  A saved show_color=always found
+startup has the same effect.  A saved show_color=never found
 in .lynxrc on startup is overridden by this flag.
+.TP
+.B -connect_timeout\fR=\fIN
+Sets the connection timeout, where N is given in seconds.
+This is not available under DOS (use the sockdelay
+parameter of WATTCP under DOS).
+.TP
+.B -cookie_file\fR=\fIFILENAME
+specifies a file to use to read cookies.
+If none is specified, the default value is ~/.lynx_cookies
+for most systems, but ~/cookies for MS-DOS.
+.TP
+.B -cookie_save_file\fR=\fIFILENAME
+specifies a file to use to store cookies.
+If none is specified, the value given by
+\fB-cookie_file\fR is used.
 .TP
 .B -cookies
 toggles handling of Set-Cookie headers.
-.TP
-.B -cookie_file\fR=\fIFILENAME
-specifies a file to use to store cookies.
 .TP
 .B -core
 toggles forced core dumps on fatal errors.
@@ -136,28 +179,39 @@ toggles forced core dumps on fatal errors.
 with -traversal, output each page to a file.
 with -dump, format output as with -traversal, but to stdout.
 .TP
+.B -curses_pads
+toggles the use of curses "pad" feature which supports
+left/right scrolling of the display.
+.TP
 .B -debug_partial
-incremental display stages with MessageSecs delay
+separate incremental display stages with MessageSecs delay
 .TP
 .B -display\fR=\fIDISPLAY
 set the display variable for X rexec-ed programs.
 .TP
+.B -display_charset\fR=\fIMIMEname
+set the charset for the terminal output.
+.TP
+.B -dont_wrap_pre
+inhibit wrapping of text in <pre> when -dump'ing and -crawl'ing, mark
+wrapped lines in interactive session.
+.TP
 .B -dump
 dumps the formatted output of the default document or one
-specified on the command line to standard out.
+specified on the command line to standard output.
 This can be used in the following way:
 .sp
-lynx -dump http://www.crl.com/~subir/lynx.html
+lynx -dump http://www.trill-home.com/lynx.html
 .TP
 .B -editor\fR=\fIEDITOR
-enable edit mode using the specified
+enable external editing, using the specified
 EDITOR. (vi, ed, emacs, etc.)
 .TP
 .B -emacskeys
 enable emacs-like key movement.
 .TP
 .B -enable_scrollback
-toggles compatibility with comm programs' scrollback keys
+toggles compatibility with communication programs' scrollback keys
 (may be incompatible with some curses packages).
 .TP
 .B -error_file\fR=\fIFILE
@@ -169,6 +223,9 @@ enable local program execution (normally not configured).
 .B -fileversions
 include all versions of files in local VMS directory listings.
 .TP
+.B -force_empty_hrefless_a
+force HREF-less 'A' elements to be empty (close them as soon as they are seen).
+.TP
 .B -force_html
 forces the first document to be interpreted as HTML.
 .TP
@@ -176,7 +233,7 @@ forces the first document to be interpreted as HTML.
 toggles forcing of the secure flag for SSL cookies.
 .TP
 .B -forms_options
-toggles the style of options (menu or forms).
+toggles whether the Options Menu is key-based or form-based.
 .TP
 .B -from
 toggles transmissions of From headers.
@@ -185,7 +242,9 @@ toggles transmissions of From headers.
 disable ftp access.
 .TP
 .B -get_data
-send form data from stdin using GET method and dump results.
+properly formatted data for a get form are read in from
+stdin and passed to the form.
+Input is terminated by a line that starts with '---'.
 .TP
 .B -head
 send a HEAD request for the mime headers.
@@ -226,6 +285,9 @@ set the default index file to the specified URL.
 toggles inclusion of ISMAP links when client-side
 MAPs are present.
 .TP
+.B -justify
+do justification of text.
+.TP
 .B -link\fR=\fINUMBER
 starting count for lnk#.dat files produced by -crawl.
 .TP
@@ -235,6 +297,10 @@ disable URLs that point to remote hosts.
 .B -locexec
 enable local program execution from local files only (if
 Lynx was compiled with local execution enabled).
+.TP
+.B -lss\fR=\fIFILENAME
+specify filename containing color-style information.
+The default is lynx.lss.
 .TP
 .B -mime_header
 prints the MIME header of a fetched document along with its
@@ -248,6 +314,9 @@ number of articles in chunked news listings.
 .TP
 .B -newsmaxchunk\fR=\fINUMBER
 maximum news articles in listings before chunking.
+.TP
+.B -nobold
+disable bold video-attribute.
 .TP
 .B -nobrowse
 disable directory browsing.
@@ -273,11 +342,18 @@ disable the link list feature in dumps.
 .B -nolog
 disable mailing of error messages to document owners.
 .TP
+.B -nonrestarting_sigwinch
+This flag is not available on all systems,
+Lynx needs to be compiled with HAVE_SIGACTION defined.
+If available, this flag \fImay\fR cause Lynx to react
+more immediately to window changes when run within
+an \fBxterm\fR.
+.TP
 .B -nopause
 disable forced pauses for statusline messages.
 .TP
 .B -noprint
-disable print functions.
+disable most print functions.
 .TP
 .B -noredir
 prevents automatic redirection and prints a message with a
@@ -286,19 +362,28 @@ link to the new URL.
 .B -noreferer
 disable transmissions of Referer headers.
 .TP
+.B -noreverse
+disable reverse video-attribute.
+.TP
 .B -nosocks
 disable SOCKS proxy usage by a SOCKSified Lynx.
 .TP
 .B -nostatus
 disable the retrieval status messages.
 .TP
+.B -nounderline
+disable underline video-attribute.
+.TP
+.B -number_fields
+force numbering of links as well as form input fields
+.TP
 .B -number_links
 force numbering of links.
 .TP
 .B -partial
-display partial pages while downloading.
+toggles display partial pages while loading.
 .TP
-.B partial_thres\fR=\fINUMBER
+.B -partial_thres\fR=\fINUMBER
 number of lines to render before repainting display
 with partial-display logic
 .TP
@@ -312,7 +397,9 @@ toggles handling of single-choice SELECT options via
 popup windows or as lists of radio buttons.
 .TP
 .B -post_data
-send form data from stdin using POST method and dump results.
+properly formatted data for a post form are read in from 
+stdin and passed to the form.
+Input is terminated by a line that starts with '---'. 
 .TP
 .B -preparsed
 show HTML source preparsed and reformatted when used with -source
@@ -340,11 +427,12 @@ flushes the cache on a proxy server
 .TP
 .B -restrictions\fR=\fI[option][,option][,option]...
 allows a list of services to be disabled
-selectively.  The following list is printed
+selectively. Dashes and underscores in option names
+can be intermixed. The following list is printed
 if no options are specified.
 
 .I all
-- restricts all options.
+- restricts all options listed below.
 
 .I bookmark
 - disallow changing the location of the bookmark
@@ -361,11 +449,16 @@ management is enabled.
 .I default
 - same as command line option -anonymous.
 Disables default services for anonymous users.
-Currently set to all restricted except for:
-inside_telnet, outside_telnet, inside_news,
-inside_ftp, outside_ftp, inside_rlogin,
-outside_rlogin, jump, mail and goto.  Defaults
-are setable within userdefs.h.
+Set to all restricted, except for:
+inside_telnet, outside_telnet,
+inside_ftp, outside_ftp,
+inside_rlogin, outside_rlogin,
+inside_news, outside_news, telnet_port,
+jump, mail, print, exec, and goto.
+The settings for these,
+as well as additional goto restrictions for
+specific URL schemes that are also applied,
+are derived from definitions within userdefs.h.
 
 .I dired_support
 - disallow local file management.
@@ -374,11 +467,15 @@ are setable within userdefs.h.
 - disallow saving to disk in the download and
 print menus.
 
+.I dotfiles
+- disallow access to, or creation of, hidden (dot) files.
+
 .I download
-- disallow downloaders in the download menu.
+- disallow some downloaders in the download menu (does not
+imply disk_save restriction).
 
 .I editor
-- disallow editing.
+- disallow external editing.
 
 .I exec
 - disable execution scripts.
@@ -386,6 +483,12 @@ print menus.
 .I exec_frozen
 - disallow the user from changing the local
 execution option.
+
+.I externals
+- disallow some "EXTERNAL" configuration lines
+if support for passing URLs to external
+applications (with the EXTERN command) is
+compiled in.
 
 .I file_url
 - disallow using G)oto, served links or bookmarks for
@@ -430,8 +533,11 @@ your domain (utmp required for selectivity).
 domain (utmp required for selectivity).
 
 .I outside_news
-- disallow USENET news posting for people coming
+- disallow USENET news reading and posting for people coming
 from outside your domain (utmp required for selectivity).
+This restriction applies to "news", "nntp", "newspost", and
+"newsreply" URLs, but not to "snews", "snewspost",
+or "snewsreply" in case they are supported.
 
 .I outside_rlogin
 - disallow rlogins for people coming from outside
@@ -465,8 +571,19 @@ with the PREV_DOC command or from the History List.
 .B -rlogin
 disable recognition of rlogin commands.
 .TP
+.B -scrollbar
+toggles showing scrollbar.
+.TP
+.B -scrollbar_arrow
+toggles showing arrows at ends of the scrollbar.
+.TP
 .B -selective
 require .www_browsable files to browse directories.
+.TP
+.B -short_url
+show very long URLs in the status line with "..." to represent the
+portion which cannot be displayed.
+The beginning and end of the URL are displayed, rather than suppressing the end.
 .TP
 .B -show_cursor
 If enabled the cursor will not be hidden in the right hand
@@ -475,6 +592,11 @@ currently selected link.  Show cursor is the default for
 systems without FANCY_CURSES capabilities.  The default
 configuration can be changed in userdefs.h or lynx.cfg.
 The command line switch toggles the default.
+.TP
+.B -show_rate
+If enabled the transfer rate is shown in bytes/second.
+If disabled, no transfer rate is shown.
+Use lynx.cfg or the options menu to select KB/second and/or ETA.
 .TP
 .B -soft_dquotes
 toggles emulation of the old Netscape and Mosaic bug which
@@ -490,6 +612,13 @@ disable SIGINT cleanup handler
 .B -startfile_ok
 allow non-http startfile and homepage with -validate.
 .TP
+.B -stdin
+read the startfile from standard input
+(UNIX only).
+.TP
+.B -syslog\fR=\fItext
+information for syslog call.
+.TP
 .B -tagsoup
 initialize parser, using Tag Soup DTD rather than SortaSGML.
 .TP
@@ -497,16 +626,34 @@ initialize parser, using Tag Soup DTD rather than SortaSGML.
 disable recognition of telnet commands.
 .TP
 .B -term\fR=\fITERM
-tell Lynx what terminal type to assume its talking to.
+tell Lynx what terminal type to assume it is talking to.
 (This may be useful for remote execution, when, for example,
 Lynx connects to a remote TCP/IP port that starts a script that,
 in turn, starts another Lynx process.)
 .TP
+.B -timeout\fR=\fIN
+For win32, sets the network read-timeout, where N is given in seconds.
+.TP
 .B -tlog
-toggles use of a Lynx Trace Log for the current session.
+toggles between using a Lynx Trace Log and stderr for trace output
+from the session.
+.TP
+.B -tna
+turns on "Textfields Need Activation" mode.
 .TP
 .B -trace
-turns on WWW trace mode.
+turns on Lynx trace mode.  Destination of trace output depends
+on -tlog.
+.TP
+.B -trace_mask\fR=\fIvalue
+turn on optional traces, which may result in very large trace files.
+Logically OR the values to combine options:
+.br
+1=SGML character parsing states
+.br
+2=color-style
+.br
+4=TRST (table layout)
 .TP
 .B -traversal
 traverse all http links derived from startfile.  When used with
@@ -514,16 +661,24 @@ traverse all http links derived from startfile.  When used with
 is output to a file, intended for indexing.  See CRAWL.announce
 for more information.
 .TP
+.B trim_input_fields
+trim input text/textarea fields in forms.
+.TP
 .B -underscore
 toggles use of _underline_ format in dumps.
 .TP
 .B -use_mouse
-turn on xterm mouse support.
+turn on mouse support, if available.
 Clicking the left mouse button on a link traverses it.
 Clicking the right mouse button pops back.
-Click in the first line of a page to scroll up.
-Click in the last line of a page to scroll down.
-Lynx must be compiled with ncurses or slang to support this feature.
+Click on the top line to scroll up.
+Click on the bottom line to scroll down.
+The first few positions in the top and bottom line may invoke
+additional functions.
+Lynx must be compiled with \fBncurses\fR or \fBslang\fR to support this feature.
+If \fBncurses\fR is used, clicking the middle mouse button pops up
+a simple menu.  Mouse clicks may only work reliably while Lynx is
+idle waiting for input.
 .TP
 .B -useragent=Name
 set alternate Lynx User-Agent header.
@@ -533,7 +688,7 @@ accept only http URLs (for validation).  Complete security
 restrictions also are implemented.
 .TP
 .B -verbose
-taggles [LINK], [IMAGE] and [INLINE] comments with filenames of these images.
+toggle [LINK], [IMAGE] and [INLINE] comments with filenames of these images.
 .TP
 .B -version
 print version information.
@@ -541,8 +696,15 @@ print version information.
 .B -vikeys
 enable vi-like key movement.
 .TP
+.B -wdebug
+enable Waterloo tcp/ip packet debug (print to watt debugfile).
+This applies only to DOS versions compiled with WATTCP or WATT-32.
+.TP
 .B -width\fR=\fINUMBER
 number of columns for formatting of dumps, default is 80.
+.TP
+.B -with_backspaces
+emit backspaces in output if -dumping or -crawling (like 'man' does)
 .SH COMMANDS
 o Use \fBUp arrow\fR and \fBDown arrow\fR to scroll through hypertext links.
 .br
@@ -682,6 +844,10 @@ It is created for use by an external program, as defined in a
 If the field does not exist for the document, the variable is set to a
 null string under \fBUNIX\fR, or "No URL" under \fBVMS\fR.
 .TP 20
+.B LYNX_TRACE
+If set, causes \fILynx\fR to write a trace file as if the \fB-trace\fR
+option were supplied. 
+.TP 20
 .B LYNX_VERSION
 This variable is always set by \fILynx\fR, and may be used by an external
 program to determine if it was invoked by \fILynx\fR.  See also the comments
@@ -771,7 +937,7 @@ codes.  Currently, it is hard-coded to a wish list.
 .B NLSPATH
 This variable, if set, is used as the path prefix for message catalogs.
 .SH NOTES
-This is the Lynx v2.8.2 Release
+This is the Lynx v2.8.4 Release
 .PP
 If you wish to contribute to the further development
 of \fILynx\fR, subscribe to our mailing list.  Send email to
@@ -805,7 +971,7 @@ Note that man page availability and section numbering is somewhat
 platform dependent, and may vary from the above references.
 .PP
 A section shown as (GNU), is intended to denote that the topic
-may be available via an info page, instead of a man page (ie, try
+may be available via an info page, instead of a man page (i.e., try
 "info subject", rather than "man subject").
 .PP
 A section shown as (?) denotes that documentation on the topic exists,

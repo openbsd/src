@@ -14,7 +14,6 @@
 #include <LYGetFile.h>
 #include <LYPrint.h>
 #include <LYOptions.h>
-#include <LYHistory.h>
 #include <LYStrings.h>
 #include <LYClean.h>
 #include <LYDownload.h>
@@ -28,23 +27,50 @@
 #include <LYLocal.h>
 #endif /* DIRED_SUPPORT */
 #include <LYReadCFG.h>
+#include <LYHistory.h>
+#include <LYPrettySrc.h>
 
 #include <LYexit.h>
 #include <LYLeaks.h>
 
-#ifndef VMS
-#ifdef SYSLOG_REQUESTED_URLS
-#include <syslog.h>
-#endif /* SYSLOG_REQUESTED_URLS */
-#endif /* !VMS */
+PRIVATE int fix_httplike_urls PARAMS((document *doc, UrlTypes type));
 
-PRIVATE int fix_http_urls PARAMS((document *doc));
-extern char * WWW_Download_File;
 #ifdef VMS
 extern BOOLEAN LYDidRename;
 #endif /* VMS */
 
-PUBLIC BOOLEAN getfile ARGS1(
+#ifdef VMS
+#define STRNADDRCOMP strncasecomp
+#else
+#define STRNADDRCOMP strncmp
+#endif /* !VMS */
+
+PUBLIC int HTNoDataOK = 0;
+
+/*
+ *  getfile is the main mechanism to load a new document (or a previously
+ *  loaded one whose rendering is cached in a HText structure) from
+ *  mainloop, nearly everything goes through it.
+ *  It should return one of the values
+ *     NORMAL     - requested document loaded successfully, usually [always?]
+ *                  its rendering is available as HTMainText.  It can be an
+ *                  HTTP error message page or similar, we make no
+ *                  distinction here.
+ *     NOT_FOUND  - requested document cannot be accessed, and the reason
+ *                  is a real error (as may be caused by an invalid link),
+ *                  not just that lynx disallows access because of some
+ *                  permission restrictions, and we have no error page
+ *                  to show for it either.
+ *     NULLFILE   - requested document not loaded into HTMainText, either
+ *                  some interactive protocol was requested (like telnet),
+ *                  or lynx does not allow access.
+ *  The distinction between NOT_FOUND and NULLFILE is not very crucial,
+ *  but getting it right prevents mainloop from exiting with the wrong
+ *  message if it happens for the first file, and from logging (or not
+ *  logging) errors inappropriately with -traversal, and from sending
+ *  bogus error mail with MAIL_SYSTEM_ERROR_LOGGING:TRUE. - kw
+ */
+PUBLIC int getfile ARGS1(
 	document *,	doc)
 {
 	int url_type = 0;
@@ -56,7 +82,7 @@ PUBLIC BOOLEAN getfile ARGS1(
 	 *  Reset LYCancelDownload to prevent unwanted delayed effect. - KW
 	 */
 	if (LYCancelDownload) {
-	    CTRACE(tfp, "getfile:    resetting LYCancelDownload to FALSE\n");
+	    CTRACE((tfp, "getfile:    resetting LYCancelDownload to FALSE\n"));
 	    LYCancelDownload = FALSE;
 	}
 
@@ -64,6 +90,14 @@ PUBLIC BOOLEAN getfile ARGS1(
 	 *  Reset fake 'Z' to prevent unwanted delayed effect. - kw
 	 */
 	LYFakeZap(NO);
+
+	/*
+	 *  Reset redirection counter to prevent bogus TOO_MANY_REDIRECTIONS
+	 *  in rare situations if the previous cycle got to the limit, but
+	 *  did not fail for that reason because the URL of the final location
+	 *  was handled specially, not via HTLoadAbsolute. - kw
+	 */
+	redirection_attempts = 0;
 
 Try_Redirected_URL:
 	/*
@@ -77,6 +111,11 @@ Try_Redirected_URL:
 	WWWDoc.safe = doc->safe;
 
 	/*
+	 *  Reset HTPermitRedir, it has done its job if it was set. - kw
+	 */
+	HTPermitRedir = FALSE;
+
+	/*
 	 *  Reset WWW_Download_File just in case.
 	 */
 	FREE(WWW_Download_File);
@@ -86,7 +125,20 @@ Try_Redirected_URL:
 	 */
 	redirect_post_content = FALSE;
 
-	CTRACE(tfp,"getfile: getting %s\n\n",doc->address);
+	/*
+	 *  This flag is a hack to allow us to pass on the fact
+	 *  that 'no data' may not really be an error although
+	 *  HTLoadAbsolute returned NO.  There should be a better
+	 *  way...  HT_NO_DATA should always mean 'not data but
+	 *  not an error', and be passed on to us as that, but
+	 *  current usage if HT_NO_DATA vs HT_NOT_LOADED has
+	 *  to be reviewed everywhere.
+	 *  Anyway, some protocol module can set it to say
+	 *  'I really mean it', we have to reset it here. - kw
+	 */
+	HTNoDataOK = 0;
+
+	CTRACE((tfp,"getfile: getting %s\n\n",doc->address));
 
 	/*
 	 *  Protect against denial of service attacks
@@ -124,7 +176,7 @@ Try_Redirected_URL:
 			FREE(temp);
 			return(NULLFILE);
 		    }
-		} else if (isdigit((unsigned char)*cp)) {
+		} else if (isdigit(UCH(*cp))) {
 		    HTAlert(URL_PORT_BAD);
 		    FREE(temp);
 		    return(NULLFILE);
@@ -148,16 +200,19 @@ Try_Redirected_URL:
 			  url_type == LYNXKEYMAP_URL_TYPE ||
 			  url_type == LYNXIMGMAP_URL_TYPE ||
 			  url_type == LYNXCOOKIE_URL_TYPE ||
-			  0==strncasecomp(WWWDoc.address, helpfilepath,
+			  url_type == LYNXMESSAGES_URL_TYPE ||
+			  (url_type == LYNXOPTIONS_URL_TYPE &&
+			   WWWDoc.post_data) ||
+			  0==STRNADDRCOMP(WWWDoc.address, helpfilepath,
 					  strlen(helpfilepath)) ||
 			  (lynxlistfile != NULL &&
-			   0==strncasecomp(WWWDoc.address, lynxlistfile,
+			   0==STRNADDRCOMP(WWWDoc.address, lynxlistfile,
 					  strlen(lynxlistfile))) ||
 			  (lynxlinksfile != NULL &&
-			   0==strncasecomp(WWWDoc.address, lynxlinksfile,
+			   0==STRNADDRCOMP(WWWDoc.address, lynxlinksfile,
 					  strlen(lynxlinksfile))) ||
 			  (lynxjumpfile != NULL &&
-			   0==strncasecomp(WWWDoc.address, lynxjumpfile,
+			   0==STRNADDRCOMP(WWWDoc.address, lynxjumpfile,
 					  strlen(lynxjumpfile))))) {
 			HTUserMsg(NOT_HTTP_URL_OR_ACTION);
 			return(NULLFILE);
@@ -181,6 +236,7 @@ Try_Redirected_URL:
 			  url_type == LYNXOPTIONS_URL_TYPE ||
 			  url_type == LYNXCFG_URL_TYPE ||
 			  url_type == LYNXCOMPILE_OPTS_URL_TYPE ||
+			  url_type == LYNXMESSAGES_URL_TYPE ||
 			  url_type == LYNXDOWNLOAD_URL_TYPE ||
 			  url_type == MAILTO_URL_TYPE ||
 			  url_type == NEWSPOST_URL_TYPE ||
@@ -193,13 +249,13 @@ Try_Redirected_URL:
 			    url_type == LYNXCGI_URL_TYPE)) ||
 			  (WWWDoc.bookmark != NULL &&
 			   *WWWDoc.bookmark != '\0') ||
-			  0==strncasecomp(WWWDoc.address, helpfilepath,
+			  0==STRNADDRCOMP(WWWDoc.address, helpfilepath,
 					  strlen(helpfilepath)) ||
 			  (lynxlistfile != NULL &&
-			   0==strncasecomp(WWWDoc.address, lynxlistfile,
+			   0==STRNADDRCOMP(WWWDoc.address, lynxlistfile,
 					  strlen(lynxlistfile))) ||
 			  (lynxjumpfile != NULL &&
-			   0==strncasecomp(WWWDoc.address, lynxjumpfile,
+			   0==STRNADDRCOMP(WWWDoc.address, lynxjumpfile,
 					  strlen(lynxjumpfile))))) {
 			HTUserMsg(NOT_IN_STARTING_REALM);
 			return(NULLFILE);
@@ -215,21 +271,18 @@ Try_Redirected_URL:
 		    url_type != PROXY_URL_TYPE &&
 		    url_type != LYNXOPTIONS_URL_TYPE &&
 		    !(url_type == FILE_URL_TYPE &&
-		      *(LYlist_temp_url()) &&
-		      !strncmp(WWWDoc.address, LYlist_temp_url(),
-			       strlen(LYlist_temp_url())))) {
-		    CTRACE(tfp, "getfile: dropping post_data!\n");
+		      (LYIsUIPage(WWWDoc.address, UIP_LIST_PAGE) ||
+		       LYIsUIPage(WWWDoc.address, UIP_ADDRLIST_PAGE)))) {
+		    CTRACE((tfp, "getfile: dropping post_data!\n"));
 		    HTAlert(IGNORED_POST);
 		    FREE(doc->post_data);
 		    FREE(doc->post_content_type);
 		    WWWDoc.post_data = NULL;
 		    WWWDoc.post_content_type = NULL;
 		}
-#ifndef VMS
-#ifdef SYSLOG_REQUESTED_URLS
-		syslog(LOG_INFO|LOG_LOCAL5, "%s", doc->address);
-#endif /* SYSLOG_REQUESTED_URLS */
-#endif /* !VMS */
+#if !defined(VMS) && defined(SYSLOG_REQUESTED_URLS)
+		LYSyslog (doc->address);
+#endif
 		if (url_type == UNKNOWN_URL_TYPE ||
 		    url_type == AFS_URL_TYPE ||
 		    url_type == PROSPERO_URL_TYPE) {
@@ -249,19 +302,21 @@ Try_Redirected_URL:
 		    return(postoptions(doc));
 #endif
 
-		} else if (url_type == LYNXCFG_URL_TYPE) {
+		} else if (url_type == LYNXCFG_URL_TYPE &&
+		    !no_lynxcfg_info) {
+		    /* @@@ maybe we should generate a specific error message
+		       if attempted but restricted. - kw */
 		    /* show/change/reload lynx.cfg settings */
 		    return(lynx_cfg_infopage(doc));
 
 #if defined(HAVE_CONFIG_H) && !defined(NO_CONFIG_INFO)
-		} else if (url_type == LYNXCOMPILE_OPTS_URL_TYPE) {
+		} else if (url_type == LYNXCOMPILE_OPTS_URL_TYPE &&
+		    !no_compileopts_info) {
+		    /* @@@ maybe we should generate a specific error message
+		       if attempted but restricted or not supported. - kw */
 		    /* show compile-time settings */
 		    return(lynx_compile_opts(doc));
 #endif
-
-		} else if (url_type == LYNXMESSAGES_URL_TYPE) {
-		    /* show list of recent statusline messages */
-		    return(LYshow_statusline_messages(doc));
 
 #ifndef DISABLE_NEWS
 		} else if (url_type == NEWSPOST_URL_TYPE ||
@@ -271,6 +326,11 @@ Try_Redirected_URL:
 
 		    if (no_newspost) {
 			HTUserMsg(NEWSPOSTING_DISABLED);
+			return(NULLFILE);
+		    } else if (!news_ok && (
+			url_type == NEWSPOST_URL_TYPE ||
+			url_type == NEWSREPLY_URL_TYPE)) {
+			HTUserMsg(NEWS_DISABLED);
 			return(NULLFILE);
 		    } else {
 			HTLoadAbsolute(&WWWDoc);
@@ -290,18 +350,12 @@ Try_Redirected_URL:
 			 */
 			LYDidRename = FALSE;
 			return(NULLFILE);
-		    } else {
-			return(NORMAL);
 		    }
-#else
-		    return(NORMAL);
 #endif /* VMS */
+		    return(NORMAL);
 		} else if (url_type == LYNXDIRED_URL_TYPE) {
 #ifdef DIRED_SUPPORT
-		    if (no_dired_support) {
-		       HTUserMsg(DIRED_DISABLED);
-		       return(NULLFILE);
-		    } else {
+		    if (!no_dired_support) {
 		       local_dired(doc);
 		       WWWDoc.address = doc->address;
 		       WWWDoc.post_data = doc->post_data;
@@ -314,12 +368,50 @@ Try_Redirected_URL:
 			   return(NOT_FOUND);
 		       return(NORMAL);
 		    }
-#else
+#endif /* DIRED_SUPPORT */
 		    HTUserMsg(DIRED_DISABLED);
 		    return(NULLFILE);
-#endif /* DIRED_SUPPORT */
+		}
 
-		} else if (url_type == LYNXHIST_URL_TYPE) {
+		if (LYNoRefererHeader == FALSE &&
+		    LYNoRefererForThis == FALSE) {
+		    char *ref_url = HTLoadedDocumentURL();
+		    if (!strncmp(ref_url, "LYNXIMGMAP:", 11))
+			ref_url += 11;
+		    if (no_filereferer == TRUE &&
+			!strncmp(ref_url, "file:", 5)) {
+			LYNoRefererForThis = TRUE;
+		    }
+		    if (LYNoRefererForThis == FALSE &&
+			(cp = strchr(ref_url, '?')) != NULL &&
+			strchr(cp, '=') != NULL) {
+			/*
+			 *  Don't send a Referer header if the URL is
+			 *  the reply from a form with method GET, in
+			 *  case the content has personal data (e.g.,
+			 *  a password or credit card number) which
+			 *  would become visible in logs. - FM
+			 *
+			 *  Changed 1999-11-01 to be controlled by
+			 *  REFERER_WITH_QUERY option. - kw
+			 */
+			if (LYRefererWithQuery == 'S') { /* SEND */
+			    StrAllocCopy(LYRequestReferer, ref_url);
+			} else if (LYRefererWithQuery == 'P') { /* PARTIAL */
+			    FREE(LYRequestReferer); /* just to be sure */
+			    LYRequestReferer = HTParse(ref_url, "",
+		PARSE_ACCESS|PARSE_HOST|PARSE_STRICTPATH|PARSE_PUNCTUATION);
+			} else { /* Everyhting else - don't send Referer */
+			    LYNoRefererForThis = TRUE;
+			}
+			cp = NULL;
+		    } else if (LYNoRefererForThis == FALSE) {
+			StrAllocCopy(LYRequestReferer, ref_url);
+		    }
+		} else {
+		    StrAllocCopy(LYRequestReferer, HTLoadedDocumentURL());
+		}
+		if (url_type == LYNXHIST_URL_TYPE) {
 		    /*
 		     *	'doc' will change to the new file
 		     *	if we had a successful LYpop_num(),
@@ -346,6 +438,9 @@ Try_Redirected_URL:
 		    }
 #endif
 
+#ifdef DIRED_SUPPORT
+		    lynx_edit_mode = FALSE;
+#endif /* DIRED_SUPPORT */
 		    if (!HTLoadAbsolute(&WWWDoc)) {
 			return(NOT_FOUND);
 		    }
@@ -365,7 +460,7 @@ Try_Redirected_URL:
 			       exec_ok(HTLoadedDocumentURL(),
 				       doc->address+9, EXEC_PATH))) {
 
-			char *p, addressbuf[1024];
+			char *p = NULL;
 
 			/*
 			 *  Bug puts slash on end if none is in the string.
@@ -375,17 +470,17 @@ Try_Redirected_URL:
 			 == (int)strlen(doc->address) - 1)
 			    doc->address[strlen(doc->address)-1] = '\0';
 
-			p = doc->address;
 			/*
 			 *  Convert '~' to $HOME.
 			 */
 			if ((cp = strchr(doc->address, '~'))) {
-			    strncpy(addressbuf, doc->address, cp-doc->address);
-			    addressbuf[cp - doc->address] = '\0';
-			    p = wwwName(Home_Dir());
-			    strcat(addressbuf, p);
-			    strcat(addressbuf, cp+1);
-			    p = addressbuf;
+			    HTSprintf0(&p, "%.*s%s%s",
+					   cp - doc->address,
+					   doc->address,
+					   wwwName(Home_Dir()),
+					   cp + 1);
+			} else {
+			    StrAllocCopy(p, doc->address);
 			}
 			/*
 			 *  Show URL before executing it.
@@ -399,6 +494,8 @@ Try_Redirected_URL:
 			    LYSystem(p+11);
 			else
 			    LYSystem(p+9);
+			FREE(p);
+
 			if (url_type != LYNXPROG_URL_TYPE) {
 			    /*
 			     *	Make sure user gets to see screen output.
@@ -408,13 +505,15 @@ Try_Redirected_URL:
 #endif /* !VMS */
 			    printf("\n%s", RETURN_TO_LYNX);
 			    fflush(stdout);
-			    LYgetch();
+			    (void) LYgetch();
 #ifdef VMS
 			    HadVMSInterrupt = FALSE;
 #endif /* VMS */
 			}
-			start_curses();
-			LYAddVisitedLink(doc);
+			if (!dump_output_immediately) {
+			    start_curses();
+			    LYAddVisitedLink(doc);
+			}
 
 		     } else {
 			char *buf = 0;
@@ -473,11 +572,13 @@ Try_Redirected_URL:
 		 *  so check if that's allowed.
 		 */
 		} else if (local_host_only &&
-			   url_type != NEWS_URL_TYPE &&
 			   url_type != LYNXKEYMAP_URL_TYPE &&
 			   url_type != LYNXIMGMAP_URL_TYPE &&
 			   url_type != LYNXCOOKIE_URL_TYPE &&
+			   url_type != LYNXMESSAGES_URL_TYPE &&
 			   url_type != LYNXCGI_URL_TYPE &&
+			   !(url_type == NEWS_URL_TYPE &&
+			     strncmp(doc->address, "news://", 7)) &&
 			   !(LYisLocalHost(doc->address) ||
 			     LYisLocalAlias(doc->address))) {
 		    HTUserMsg(ACCESS_ONLY_LOCALHOST);
@@ -489,39 +590,76 @@ Try_Redirected_URL:
 		} else if (url_type == TELNET_URL_TYPE ||
 			   url_type == TN3270_URL_TYPE ||
 			   url_type == TELNET_GOPHER_URL_TYPE) {
+		    char * proxy;
 		    if (!telnet_ok) {
 			HTUserMsg(TELNET_DISABLED);
+			return(NULLFILE);
 		    } else if (no_telnet_port && strchr(doc->address+7, ':')) {
 			HTUserMsg(TELNET_PORT_SPECS_DISABLED);
+			return(NULLFILE);
+		    /*
+		     *  Detect weird case where interactive protocol would
+		     *  be proxied, and to a non-interactive protocol at that.
+		     */
+		    } else if ((proxy = (char *)getenv(
+			(url_type==TN3270_URL_TYPE) ? "tn3270_proxy" :
+			(url_type==TELNET_GOPHER_URL_TYPE) ? "gopher_proxy" :
+			"telnet_proxy")) != NULL &&
+			       *proxy != '\0' &&
+			       !override_proxy(doc->address) &&
+			       (strncmp(proxy, "telnet:", 7) &&
+				strncmp(proxy, "tn3270:", 7) &&
+				strncmp(proxy, "rlogin:", 7))) {
+			/* Do nothing, fall through to generic code - kw */
 		    } else {
 			stop_curses();
 			HTLoadAbsolute(&WWWDoc);
-			start_curses();
-			fflush(stdout);
-			LYAddVisitedLink(doc);
+			if (!dump_output_immediately) {
+			    start_curses();
+			    fflush(stdout);
+			    LYAddVisitedLink(doc);
+			}
+			return(NULLFILE);
 		    }
-		    return(NULLFILE);
 
 		/*
 		 *  Disable www news access if not news_ok.
 		 */
 #ifndef DISABLE_NEWS
-		} else if (url_type == NEWS_URL_TYPE && !news_ok) {
+		} else if (!news_ok && (
+		    url_type == NEWS_URL_TYPE ||
+		    url_type == NNTP_URL_TYPE)) {
 		    HTUserMsg(NEWS_DISABLED);
 		    return(NULLFILE);
 #endif
 
 		} else if (url_type == RLOGIN_URL_TYPE) {
+		    char * proxy;
 		    if (!rlogin_ok) {
 			HTUserMsg(RLOGIN_DISABLED);
+			return(NULLFILE);
+		    /*
+		     *  Detect weird case where interactive protocol would
+		     *  be proxied, and to a non-interactive protocol at that.
+		     */
+		    } else if ((proxy = (char *)getenv(
+			"rlogin_proxy")) != NULL &&
+			       *proxy != '\0' &&
+			       !override_proxy(doc->address) &&
+			       (strncmp(proxy, "telnet:", 7) &&
+				strncmp(proxy, "tn3270:", 7) &&
+				strncmp(proxy, "rlogin:", 7))) {
+			/* Do nothing, fall through to generic code - kw */
 		    } else {
 			stop_curses();
 			HTLoadAbsolute(&WWWDoc);
 			fflush(stdout);
-			start_curses();
-			LYAddVisitedLink(doc);
+			if (!dump_output_immediately) {
+			    start_curses();
+			    LYAddVisitedLink(doc);
+			}
+			return(NULLFILE);
 		    }
-		    return(NULLFILE);
 
 		/*
 		 *  If its a gopher index type and there isn't a search
@@ -568,10 +706,15 @@ Try_Redirected_URL:
 			WWWDoc.isHEAD = doc->isHEAD;
 			WWWDoc.safe = doc->safe;
 			status = HTLoadAbsolute(&WWWDoc);
+#ifdef DIRED_SUPPORT
+		    } else {
+			lynx_edit_mode = FALSE;
+#endif /* DIRED_SUPPORT */
 		    }
 		    return(status);
 
-		} else {
+		}
+		{
 
 		    if (url_type == FTP_URL_TYPE && !ftp_ok) {
 			HTUserMsg(FTP_DISABLED);
@@ -586,8 +729,8 @@ Try_Redirected_URL:
 			if ((cp=strchr(doc->address+9, '/')) != NULL &&
 			   0==strncmp(++cp, "hGET%20/", 8)) {
 			    StrAllocCopy(tmp, "http://");
-			    CTRACE(tfp, "getfile: URL '%s'\n",
-					doc->address);
+			    CTRACE((tfp, "getfile: URL '%s'\n",
+					doc->address));
 			    *cp = '\0';
 			    StrAllocCat(tmp, doc->address+9);
 			   /*
@@ -600,8 +743,8 @@ Try_Redirected_URL:
 			    if (strlen(cp+7) > 1)
 				StrAllocCat(tmp, cp+8);
 			    StrAllocCopy(doc->address, tmp);
-			    CTRACE(tfp, "  changed to '%s'\n",
-					doc->address);
+			    CTRACE((tfp, "  changed to '%s'\n",
+					doc->address));
 			    FREE(tmp);
 			    url_type = HTTP_URL_TYPE;
 			}
@@ -610,11 +753,36 @@ Try_Redirected_URL:
 			url_type == HTTPS_URL_TYPE ||
 			url_type == FTP_URL_TYPE ||
 			url_type == CSO_URL_TYPE)
-			fix_http_urls(doc);
+			fix_httplike_urls(doc, url_type);
 		    WWWDoc.address = doc->address;  /* possible reload */
 #ifdef DIRED_SUPPORT
 		    lynx_edit_mode = FALSE;
 #endif /* DIRED_SUPPORT */
+#ifndef DISABLE_BIBP
+		    if (url_type == BIBP_URL_TYPE) {
+			char *bibpTmp = NULL;
+			if (!BibP_bibhost_checked)
+			    LYCheckBibHost();
+			if (BibP_bibhost_available) {
+			    StrAllocCopy(bibpTmp, BibP_bibhost);
+			} else if (HTMainAnchor && HTAnchor_citehost(HTMainAnchor)) {
+			    StrAllocCopy(bibpTmp, HTAnchor_citehost(HTMainAnchor));
+			} else {
+			    StrAllocCopy(bibpTmp, BibP_globalserver);
+			}
+			if (HTMainAnchor && HTAnchor_citehost(HTMainAnchor)) {
+			    StrAllocCat(bibpTmp, "bibp1.0/resolve?citehost=");
+			    StrAllocCat(bibpTmp, HTAnchor_citehost(HTMainAnchor));
+			    StrAllocCat(bibpTmp, "&usin=");
+			} else {
+			    StrAllocCat(bibpTmp, "bibp1.0/resolve?usin=");
+			}
+			StrAllocCat(bibpTmp, doc->address+5); /* USIN after bibp: */
+			StrAllocCopy(doc->address, bibpTmp);
+			WWWDoc.address = doc->address;
+			FREE(bibpTmp);
+		    }
+#endif /* !DISABLE_BIBP */
 
 		    if (url_type == FILE_URL_TYPE) {
 			/*
@@ -632,8 +800,8 @@ Try_Redirected_URL:
 			    char *cp1 = strstr(doc->address, "/~");
 			    char *cp2;
 
-			    CTRACE(tfp, "getfile: URL '%s'\n",
-					doc->address);
+			    CTRACE((tfp, "getfile: URL '%s'\n",
+					doc->address));
 			    *cp1 = '\0';
 			    cp1 += 2;
 			    StrAllocCopy(temp, doc->address);
@@ -647,39 +815,24 @@ Try_Redirected_URL:
 			    }
 			    StrAllocCopy(doc->address, temp);
 			    FREE(temp);
-			    CTRACE(tfp, "  changed to '%s'\n",
-					doc->address);
+			    CTRACE((tfp, "  changed to '%s'\n",
+					doc->address));
 			    WWWDoc.address = doc->address;
 			}
 			FREE(cp);
 		    }
 		    CTRACE_SLEEP(MessageSecs);
 		    user_message(WWW_WAIT_MESSAGE, doc->address);
+
 		    if (TRACE) {
 #ifdef USE_SLANG
 			if (LYCursesON) {
-			    addstr("*\n");
-			    refresh();
+			    LYaddstr("*\n");
+			    LYrefresh();
 			}
 #endif /* USE_SLANG */
-			fprintf(tfp,"\n");
+			CTRACE((tfp, "\n"));
 		    }
-		    if ((LYNoRefererHeader == FALSE &&
-			 LYNoRefererForThis == FALSE) &&
-			(url_type == HTTP_URL_TYPE ||
-			 url_type == HTTPS_URL_TYPE) &&
-			(cp = strchr(HTLoadedDocumentURL(), '?')) != NULL &&
-			strchr(cp, '=') != NULL) {
-			/*
-			 *  Don't send a Referer header if the URL is
-			 *  the reply from a form with method GET, in
-			 *  case the content has personal data (e.g.,
-			 *  a password or credit card number) which
-			 *  would become visible in logs. - FM
-			 */
-			LYNoRefererForThis = TRUE;
-		    }
-		    cp = NULL;
 		    if (!HTLoadAbsolute(&WWWDoc)) {
 			/*
 			 *  Check for redirection.
@@ -716,7 +869,8 @@ Try_Redirected_URL:
 				FREE(temp);
 			    }
 			    url_type = is_url(use_this_url_instead);
-			    if (url_type == LYNXDOWNLOAD_URL_TYPE ||
+			    if (!HTPermitRedir &&
+			       (url_type == LYNXDOWNLOAD_URL_TYPE ||
 				url_type == LYNXEXEC_URL_TYPE ||
 				url_type == LYNXPROG_URL_TYPE ||
 #ifdef DIRED_SUPPORT
@@ -728,6 +882,7 @@ Try_Redirected_URL:
 				url_type == LYNXCOMPILE_OPTS_URL_TYPE ||
 				url_type == LYNXHIST_URL_TYPE ||
 				url_type == LYNXCOOKIE_URL_TYPE ||
+				url_type == LYNXMESSAGES_URL_TYPE ||
 				(LYValidate &&
 				 url_type != HTTP_URL_TYPE &&
 				 url_type != HTTPS_URL_TYPE) ||
@@ -735,6 +890,10 @@ Try_Redirected_URL:
 				 url_type == FILE_URL_TYPE) ||
 				(no_goto_lynxcgi &&
 				 url_type == LYNXCGI_URL_TYPE) ||
+#ifndef DISABLE_BIBP
+				(no_goto_bibp &&
+				 url_type == BIBP_URL_TYPE) ||
+#endif
 				(no_goto_cso &&
 				 url_type == CSO_URL_TYPE) ||
 				(no_goto_finger &&
@@ -766,7 +925,7 @@ Try_Redirected_URL:
 				(no_goto_tn3270 &&
 				 url_type == TN3270_URL_TYPE) ||
 				(no_goto_wais &&
-				 url_type == WAIS_URL_TYPE)) {
+				 url_type == WAIS_URL_TYPE))) {
 				/*
 				 *  Some schemes are not acceptable from
 				 *  server redirections. - KW & FM
@@ -775,7 +934,7 @@ Try_Redirected_URL:
 				if (LYCursesON) {
 				    _user_message(WWW_ILLEGAL_URL_MESSAGE,
 						  use_this_url_instead);
-				    sleep(AlertSecs);
+				    LYSleepAlert();
 				} else {
 				    fprintf(stderr,
 					    WWW_ILLEGAL_URL_MESSAGE,
@@ -795,16 +954,16 @@ Try_Redirected_URL:
 				 *  be positioned at the top of that document,
 				 *  so there's no harm done. - FM
 				 */
-				CTRACE(tfp,
+				CTRACE((tfp,
 			"getfile: Adding fragment '%s' to redirection URL.\n",
-				    pound);
+				    pound));
 				StrAllocCat(use_this_url_instead, pound);
 			    }
 			    CTRACE_SLEEP(MessageSecs);
 			    _user_message(WWW_USING_MESSAGE,
 					  use_this_url_instead);
-			    sleep(InfoSecs);
-			    CTRACE(tfp, "\n");
+			    LYSleepInfo();
+			    CTRACE((tfp, "\n"));
 			    StrAllocCopy(doc->address,
 					use_this_url_instead);
 			    FREE(use_this_url_instead);
@@ -823,19 +982,21 @@ Try_Redirected_URL:
 			     */
 			    goto Try_Redirected_URL;
 			}
+			if (HTNoDataOK)
+			    return(NULLFILE);
 			return(NOT_FOUND);
 		    }
 
 		    lynx_mode = NORMAL_LYNX_MODE;
 
 		    /*
-		     *	Some URL's don't actually return a document
+		     *	Some URL's don't actually return a document;
 		     *	compare doc->address with the document that is
-		     *	actually loaded and return NULL if not
+		     *	actually loaded and return NULLFILE if not
 		     *	loaded.  If www_search_result is not -1
 		     *	then this is a reference to a named anchor
-		     *	within the same document.  Do NOT return
-		     *	NULL.
+		     *	within the same document; do NOT return
+		     *	NULLFILE in that case.
 		     */
 		    {
 			char *pound;
@@ -923,11 +1084,14 @@ Try_Redirected_URL:
 			    return(NULLFILE);
 
 			} else {
-			/*
-			 *  May set www_search_result.
-			 */
-			    if (pound != NULL)
+			    if (pound != NULL) {
+				if (!HTMainText) /* this should not happen... */
+				    return(NULLFILE); /* but it can. - kw */
+				/*
+				 *  May set www_search_result.
+				 */
 				HTFindPoundSelector(pound+1);
+			    }
 			    return(NORMAL);
 			}
 		    }
@@ -935,9 +1099,45 @@ Try_Redirected_URL:
 	  } else {
 	      CTRACE_SLEEP(MessageSecs);
 	      HTUserMsg2(WWW_BAD_ADDR_MESSAGE, doc->address);
-	      CTRACE(tfp,"\n");
+	      CTRACE((tfp,"\n"));
 	      return(NULLFILE);
 	  }
+}
+
+/*
+ *  Set source mode for the next retrieval via getfile or HTreparse_document.
+ *  mode == -1: force normal presentation
+ *  mode ==  1: force source presentation
+ *  mode ==  0: reset to normal if it was set to source
+ *  - kw
+ */
+PUBLIC void srcmode_for_next_retrieval ARGS1(
+    int,	mode)
+{
+    if (mode < 0) {
+	HTOutputFormat = WWW_PRESENT;
+#ifdef USE_PRETTYSRC
+	psrc_view = FALSE;
+#endif
+
+    } else if (mode == 0) {
+	if (HTOutputFormat == WWW_SOURCE)
+	    HTOutputFormat = WWW_PRESENT;
+#ifdef USE_PRETTYSRC
+	else if (LYpsrc)
+	    psrc_view = FALSE;
+#endif
+
+    } else {
+#ifdef USE_PRETTYSRC
+	if (LYpsrc)
+	    psrc_view = TRUE;
+	else
+	    HTOutputFormat = WWW_SOURCE;
+#else
+	HTOutputFormat = WWW_SOURCE;
+#endif
+    }
 }
 
 /*
@@ -969,8 +1169,8 @@ PUBLIC int follow_link_number ARGS4(
     BOOL want_go;
     int curline = *num; /* passed in from mainloop() */
 
-    CTRACE(tfp,"follow_link_number(%d,%d,...)\n",c,cur);
-    temp[0] = c;
+    CTRACE((tfp,"follow_link_number(%d,%d,...)\n",c,cur));
+    temp[0] = (char) c;
     temp[1] = '\0';
     *num = -1;
     _statusline(FOLLOW_LINK_NUMBER);
@@ -982,7 +1182,7 @@ PUBLIC int follow_link_number ARGS4(
 	return(DO_NOTHING);
     }
     *num = atoi(p);
-    while ( isdigit(*p) )
+    while ( isdigit(UCH(*p)) )
 	++p;
     c = *p; /* reuse c; 0 or g or p or + or - */
     switch ( c ) {
@@ -992,17 +1192,22 @@ PUBLIC int follow_link_number ARGS4(
 	break;
     default:
 	rel = *++p;
+	break;
     case 0:
 	break;
     }
     /* don't currently check for errors typing suffix */
 
-    CTRACE(tfp,"  temp=%s, *num=%d, rel='%c'\n",temp,*num,rel);
+    CTRACE((tfp,"  temp=%s, *num=%d, rel='%c'\n",temp,*num,rel));
     /*
      *	Check if we had a 'p' or 'P' following the number as
      *	a flag for displaying the page with that number. - FM
      */
-    if ( c == 'p' || c == 'P' ) {
+    if (( c == 'p' || c == 'P') && display_lines == 0) {
+	CTRACE((tfp," curline=%d, LYlines=%d, display too small!\n",
+	       curline,LYlines));
+	return(PRINT_ERROR);
+    } else if ( c == 'p' || c == 'P' ) {
 	int nlines = HText_getNumOfLines();
 	int npages = ((nlines + 1) > display_lines) ?
 		(((nlines + 1) + (display_lines - 1))/(display_lines))
@@ -1010,8 +1215,8 @@ PUBLIC int follow_link_number ARGS4(
 	int curpage = ((curline + 1) > display_lines) ?
 		     (((curline + 1) + (display_lines - 1))/(display_lines))
 						      : 1;
-	CTRACE(tfp," nlines=%d, npages=%d, curline=%d, curpage=%d\n",
-		nlines,npages,curline,curpage);
+	CTRACE((tfp," nlines=%d, npages=%d, curline=%d, curpage=%d\n",
+		nlines,npages,curline,curpage));
 	if (*num < 1)
 	    *num = rel ? 0 : 1;
 	if ( rel == '+' )
@@ -1029,7 +1234,7 @@ PUBLIC int follow_link_number ARGS4(
      *	Check if we want to make the link corresponding to the
      *	number the current link, rather than ACTIVATE-ing it.
      */
-    want_go = ( c == 'g' || c == 'G' );
+    want_go = (BOOL) ( c == 'g' || c == 'G' );
 
     /* If rel, add or subtract num from current link, or
      * nearest previous/subsequent link if current link is not on screen.
@@ -1204,6 +1409,7 @@ PUBLIC BOOLEAN exec_ok ARGS3(
 {
     struct trust *tp;
     CONST char *cp;
+    CONST char *allowed_extra_chars;
     int Type = type;
 
     /*
@@ -1255,13 +1461,12 @@ PUBLIC BOOLEAN exec_ok ARGS3(
     /*
      *	Security: reject on strange character.
      */
+    if (Type == CGI_PATH)
+	allowed_extra_chars = " _-:./@~$&+=\t";
+    else
+	allowed_extra_chars = " _-:./@~$+=\t";
     for (cp = linktext; *cp != '\0'; cp++) {
-	if (!isalnum(*cp) &&
-	    *cp != '_' && *cp != '-' && *cp != ' ' &&
-	    *cp != ':' && *cp != '.' && *cp != '/' &&
-	    *cp != '@' && *cp != '~' && *cp != '$' &&
-	    *cp != '&' && *cp != '+' && *cp != '=' &&
-	    *cp != '\t') {
+	if (!isalnum(UCH(*cp)) && !strchr(allowed_extra_chars, *cp)) {
 	    char *buf = 0;
 
 	    HTSprintf0(&buf,
@@ -1282,13 +1487,8 @@ check_tp_for_entry:
 	    if (strstr(command,"//") == linktext) {
 		command += 2;
 	    }
-#ifdef VMS
-	    if (strncasecomp(source, tp->src, strlen(tp->src)) == 0 &&
-		strncasecomp(command, tp->path, strlen(tp->path)) == 0)
-#else
-	    if (strncmp(source, tp->src, strlen(tp->src)) == 0 &&
-		strncmp(command, tp->path, strlen(tp->path)) == 0)
-#endif /* VMS */
+	    if (STRNADDRCOMP(source, tp->src, strlen(tp->src)) == 0 &&
+		STRNADDRCOMP(command, tp->path, strlen(tp->path)) == 0)
 		return TRUE;
 	}
 	tp = tp->next;
@@ -1305,15 +1505,24 @@ check_tp_for_entry:
 }
 #endif /* EXEC_LINKS || LYNXCGI_LINKS */
 
-PRIVATE int fix_http_urls ARGS1(
-	document *,	doc)
+PRIVATE int fix_httplike_urls ARGS2(
+	document *,	doc,
+	UrlTypes,	type)
 {
     char *slash;
 
     /*
+     *  If there's a fragment present, our simplistic methods won't
+     *  work.  - kw
+     */
+    if (strchr(doc->address, '#'))
+	return 0;
+
+#ifndef DISABLE_FTP
+    /*
      *	If it's an ftp URL with a trailing slash, trim it off.
      */
-    if (!strncmp(doc->address, "ftp", 3) &&
+    if (type == FTP_URL_TYPE &&
 	LYIsHtmlSep(doc->address[strlen(doc->address)-1])) {
 	char * proxy;
 	char *path = HTParse(doc->address, "", PARSE_PATH|PARSE_PUNCTUATION);
@@ -1339,11 +1548,12 @@ PRIVATE int fix_http_urls ARGS1(
 	/*
 	 *  If we get to here, trim the trailing slash. - FM
 	 */
-	CTRACE(tfp, "fix_http_urls: URL '%s'\n", doc->address);
+	CTRACE((tfp, "fix_httplike_urls: URL '%s'\n", doc->address));
 	LYTrimHtmlSep(doc->address);
-	CTRACE(tfp, "        changed to '%s'\n", doc->address);
+	CTRACE((tfp, "            changed to '%s'\n", doc->address));
 	CTRACE_SLEEP(MessageSecs);
     }
+#endif /* DISABLE_FTP */
 
     /*
      *	If there isn't a slash besides the two at the beginning, append one.
@@ -1352,10 +1562,31 @@ PRIVATE int fix_http_urls ARGS1(
 	if (!LYIsHtmlSep(*(slash-1)) || *(slash-2) != ':') {
 	    return(0);
 	}
+	if (type == HTTP_URL_TYPE ||
+	    type == HTTPS_URL_TYPE) {
+	    if ((slash-2) - strchr(doc->address, ':')) {
+	    /*
+	     *  Turns out we were not looking at the right slash after all,
+	     *  there must have been more than one "://" which is valid
+	     *  at least for http URLs (later occurrences can be part of
+	     *  a query string, for example), so leave this alone, too. - kw
+	     */
+		return(0);
+	    }
+	    if (strchr(doc->address, '?')) {
+		/*
+		 *  If there is a question mark that appears to be part
+		 *  of the hostname, don't append anything either. Leave
+		 *  it to HTParse to interpret the question mark as ending
+		 *  the hostname. - kw
+		 */
+		return(0);
+	    }
+	}
     }
-    CTRACE(tfp, "fix_http_urls: URL '%s'\n", doc->address);
+    CTRACE((tfp, "fix_httplike_urls: URL '%s'\n", doc->address));
     LYAddHtmlSep(&(doc->address));
-    CTRACE(tfp, "        changed to '%s'\n",doc->address);
+    CTRACE((tfp, "            changed to '%s'\n", doc->address));
     CTRACE_SLEEP(MessageSecs);
 
     return(1);

@@ -1,5 +1,5 @@
 /* Handle list of needed message catalogs
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
    This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #include <ctype.h>
@@ -53,12 +53,12 @@ void free ();
 # include <unistd.h>
 #endif
 
-#include <gettext.h>
-#include <gettextP.h>
+#include "gettext.h"
+#include "gettextP.h"
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include <libgettext.h>
+# include "libgettext.h"
 #endif
 
 /* @@ end of prolog @@ */
@@ -70,6 +70,7 @@ static struct loaded_l10nfile *_nl_loaded_domains;
    the DOMAINNAME and CATEGORY parameters with respect to the currently
    established bindings.  */
 struct loaded_l10nfile *
+internal_function
 _nl_find_domain (dirname, locale, domainname)
      const char *dirname;
      char *locale;
@@ -95,9 +96,9 @@ _nl_find_domain (dirname, locale, domainname)
 
 	language[_territory][+audience][+special][,[sponsor][_revision]]
 
-     Beside the first all of them are allowed to be missing.  If the
-     full specified locale is not found, the less specific one are
-     looked for.  The various part will be stripped of according to
+     Beside the first part all of them are allowed to be missing.  If
+     the full specified locale is not found, the less specific one are
+     looked for.  The various parts will be stripped off according to
      the following order:
 		(1) revision
 		(2) sponsor
@@ -142,12 +143,18 @@ _nl_find_domain (dirname, locale, domainname)
   alias_value = _nl_expand_alias (locale);
   if (alias_value != NULL)
     {
+#if defined _LIBC || defined HAVE_STRDUP
+      locale = strdup (alias_value);
+      if (locale == NULL)
+	return NULL;
+#else
       size_t len = strlen (alias_value) + 1;
       locale = (char *) malloc (len);
       if (locale == NULL)
 	return NULL;
 
       memcpy (locale, alias_value, len);
+#endif
     }
 
   /* Now we determine the single parts of the locale name.  First
@@ -187,3 +194,23 @@ _nl_find_domain (dirname, locale, domainname)
 
   return retval;
 }
+
+
+#ifdef _LIBC
+static void __attribute__ ((unused))
+free_mem (void)
+{
+  struct loaded_l10nfile *runp = _nl_loaded_domains;
+
+  while (runp != NULL)
+    {
+      struct loaded_l10nfile *here = runp;
+      if (runp->data != NULL)
+	_nl_unload_domain ((struct loaded_domain *) runp->data);
+      runp = runp->next;
+      free (here);
+    }
+}
+
+text_set_element (__libc_subfreeres, free_mem);
+#endif

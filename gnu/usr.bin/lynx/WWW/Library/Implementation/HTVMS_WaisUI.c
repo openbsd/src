@@ -40,7 +40,7 @@
 #include <HTVMS_WaisProt.h>
 #include <HTTCP.h>
 
-#undef MAXINT	/* we don't need it here, and tcp.h may conflict */
+#undef MAXINT	/* we don't need it here, and www_tcp.h may conflict */
 #include <math.h>
 
 #include <LYexit.h>
@@ -220,7 +220,7 @@ transport_message(
 
   if( request_length + HEADER_LENGTH !=
       NETWRITE(connection,request_message,
-   		  (int)( request_length +HEADER_LENGTH)) )
+		  (int)( request_length +HEADER_LENGTH)) )
     return 0;
 
   /* read for the first '0' */
@@ -650,22 +650,22 @@ void* queryInfo)
   query->ReplaceIndicator = replace;
   query->ResultSetName = s_strdup(name);
   query->DatabaseNames = NULL;
-  if (databases != NULL)
-    { for (i = 0, ptr = databases[i]; ptr != NULL; ptr = databases[++i])
-	{ if (query->DatabaseNames == NULL)
+  if (databases != NULL) {
+    for (i = 0, ptr = databases[i]; ptr != NULL; ptr = databases[++i]) {
+	if (query->DatabaseNames == NULL)
 	    query->DatabaseNames = (char**)s_malloc((size_t)(sizeof(char*) * 2));
         else
           query->DatabaseNames = (char**)s_realloc((char*)query->DatabaseNames,
 						   (size_t)(sizeof(char*) * (i + 2)));
 	    query->DatabaseNames[i] = s_strdup(ptr);
 	    query->DatabaseNames[i+1] = NULL;
-	  }
-      }
+	}
+    }
   query->QueryType = s_strdup(type);
   query->ElementSetNames = NULL;
-  if (elements != NULL)
-    { for (i = 0, ptr = elements[i]; ptr != NULL; ptr = elements[++i])
-	{ if (query->ElementSetNames == NULL)
+  if (elements != NULL) {
+    for (i = 0, ptr = elements[i]; ptr != NULL; ptr = elements[++i]) {
+	if (query->ElementSetNames == NULL)
 	    query->ElementSetNames = (char**)s_malloc((size_t)(sizeof(char*) * 2));
         else
           query->ElementSetNames = (char**)s_realloc((char*)query->ElementSetNames,
@@ -717,9 +717,9 @@ writeSearchAPDU(SearchAPDU* query, char* buffer, long* len)
   buf = writeBoolean(query->ReplaceIndicator,buf,len);
   buf = writeString(query->ResultSetName,DT_ResultSetName,buf,len);
   /* write database names */
-  if (query->DatabaseNames != NULL)
-    { for (i = 0,scratch = NULL, ptr = query->DatabaseNames[i]; ptr != NULL; ptr = query->DatabaseNames[++i])
-	{ if (scratch == NULL)
+  if (query->DatabaseNames != NULL) {
+    for (i = 0,scratch = NULL, ptr = query->DatabaseNames[i]; ptr != NULL; ptr = query->DatabaseNames[++i]) {
+	if (scratch == NULL)
 	    scratch = s_strdup(ptr);
         else
 	  { size_t newScratchSize = (size_t)(strlen(scratch) + strlen(ptr) + 2);
@@ -727,16 +727,16 @@ writeSearchAPDU(SearchAPDU* query, char* buffer, long* len)
 	    s_strncat(scratch,DB_DELIMITER,2,newScratchSize);
 	    s_strncat(scratch,ptr,strlen(ptr) + 1,newScratchSize);
 	  }
-	  }
+	}
 	buf = writeString(scratch,DT_DatabaseNames,buf,len);
 	s_free(scratch);
       }
   buf = writeString(query->QueryType,DT_QueryType,buf,len);
   /* write element set names */
-  if (query->ElementSetNames != NULL)
-    { for (i = 0,scratch = NULL, ptr = query->ElementSetNames[i]; ptr != NULL; ptr = query->ElementSetNames[++i])
-	{ if (scratch == NULL)
-	    { if (query->ElementSetNames[i+1] == NULL) /* there is a single element set name */
+  if (query->ElementSetNames != NULL) {
+    for (i = 0,scratch = NULL, ptr = query->ElementSetNames[i]; ptr != NULL; ptr = query->ElementSetNames[++i]) {
+	if (scratch == NULL) {
+	    if (query->ElementSetNames[i+1] == NULL) /* there is a single element set name */
 		{ scratch = (char*)s_malloc((size_t)strlen(ptr) + 2);
 		  strncpy(scratch,ES_DELIMITER_1,2);
 		  s_strncat(scratch,ptr,strlen(ptr) + 1,strlen(ptr) + 2);
@@ -749,7 +749,7 @@ writeSearchAPDU(SearchAPDU* query, char* buffer, long* len)
 		s_strncat(scratch,ES_DELIMITER_1,2,newScratchSize);
 		s_strncat(scratch,ptr,strlen(ptr) + 1,newScratchSize);
 	      }
-	      }
+	  }
         else
 	  { char* esPtr = query->ElementSetNames[++i]; /* the element set name */
 	    size_t newScratchSize = (size_t)(strlen(scratch) + strlen(ptr) + strlen(esPtr) + 3);
@@ -953,11 +953,11 @@ makeDiag(boolean surrogate, char* code, char* addInfo)
 void
 freeDiag(diagnosticRecord* diag)
 {
-  if (diag != NULL)
-    { if (diag->ADDINFO != NULL)
+  if (diag != NULL) {
+    if (diag->ADDINFO != NULL)
 	s_free(diag->ADDINFO);
-	s_free(diag);
-      }
+    s_free(diag);
+  }
 }
 
 /*----------------------------------------------------------------------*/
@@ -2032,10 +2032,10 @@ readQuery(any *info)
   query_term** terms = NULL;
   query_term* qt = NULL;
   long numTerms = 0L;
-char tmp[100];
+  char tmp[100];
 
-sprintf(tmp,"readquery: bytes: %ld",info->size);
-log_write(tmp);
+  sprintf(tmp,"readquery: bytes: %ld",info->size);
+  log_write(tmp);
 
   while (readPos < info->bytes + info->size)
     { readPos = readQueryTerm(&qt,readPos);
@@ -2048,7 +2048,7 @@ log_write(tmp);
 	    (query_term**)s_realloc((char*)terms,
 				    (size_t)(sizeof(query_term*)*(numTerms+2)));
 	  }
-if(qt==NULL)
+      if (qt == NULL)
 	log_write("qt = null");
       terms[numTerms++] = qt;
       terms[numTerms] = NULL;

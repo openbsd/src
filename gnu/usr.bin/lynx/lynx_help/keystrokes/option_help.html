@@ -1,70 +1,90 @@
-<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <HTML>
 <HEAD>
-<TITLE>Options Screen Help</TITLE>
+<TITLE>Form-based Options Menu : Help</TITLE>
 <LINK rev="made" href="mailto:lynx-dev@sig.net">
 </HEAD>
 <BODY>
-<h1>OPTIONS SCREEN HELP</h1>
+<h1>FORM-BASED OPTIONS MENU : HELP</h1>
 
-The Options Screen allows you to set and modify many Lynx features.<BR>
+The Options Menu allows you to set and modify many Lynx features.<BR>
 Note: some options appear on the screen only if they have been
-compiled in or chosen in `lynx.cfg':<P>
+compiled in or chosen in `lynx.cfg':
 
 <UL>
-<LI>Personal Preferences
+
+<LI>General Preferences
 <UL>
-<LI><A HREF="#CK">Cookies</A>
-<LI><A HREF="#ED">Editor</A>
-<LI><A HREF="#EM">Emacs keys</A>
-<LI><A HREF="#KM">Keypad mode</A>
-<LI><A HREF="#LE">Line edit style</A>
-<LI><A HREF="#PM">Personal Mail Address</A>
-<LI><A HREF="#ST">Searching type</A>
-<LI><A HREF="#SC">Show color</A>
-<LI><A HREF="#CL">Show cursor for current link or option</A>
 <LI><A HREF="#UM">User Mode</A>
-<LI><A HREF="#VI">VI keys</A>
-<LI><A HREF="#DC">Display Character set</A>
-<LI><A HREF="#DV">X DISPLAY variable</A></UL>
-<LI>Document Layout
+<LI><A HREF="#ED">Editor</A>
+<LI><A HREF="#ST">Searching type</A>
+<LI><A HREF="#CK">Cookies</A>
+</UL>
+
+<LI>Keyboard Input
 <UL>
+<LI><A HREF="#KM">Keypad mode</A>
+<LI><A HREF="#EM">Emacs keys</A>
+<LI><A HREF="#VI">VI keys</A>
+<LI><A HREF="#LE">Line edit style</A>
+</UL>
+
+<LI>Display and Character Set
+<UL>
+<LI><A HREF="#DC">Display Character set</A>
 <LI><A HREF="#AD">Assumed document character set</A>
 <LI><A HREF="#JK">Raw 8-bit or CJK mode</A>
-<LI><A HREF="#tagsoup">HTML error recovery</A>
-<LI><A HREF="#PU">Pop-ups for select fields</A>
-<LI><A HREF="#SI">Show Images</A>
-<LI><A HREF="#VB">Verbose Images</A></UL>
-<LI>Bookmark Options
+<LI><A HREF="#DV">X DISPLAY variable</A>
+</UL>
+
+<LI>Document Appearance
 <UL>
-<LI><A HREF="#MB">Multi-bookmarks</A>
-<LI><A HREF="#BF">Bookmark file</A></UL>
-<LI>File Management Options
+<LI><A HREF="#SC">Show color</A>
+<LI><A HREF="#CL">Show cursor for current link or option</A>
+<LI><A HREF="#PU">Pop-ups for select fields</A>
+<LI><A HREF="#tagsoup">HTML error recovery</A>
+<LI><A HREF="#SI">Show Images</A>
+<LI><A HREF="#VB">Verbose Images</A>
+</UL>
+
+<LI>Headers Transferred to Remote Servers
+<UL>
+<LI><A HREF="#PM">Personal Mail Address</A>
+<LI><A HREF="#PC">Preferred Document Charset</A>
+<LI><A HREF="#PL">Preferred Document Language</A>
+<LI><A HREF="#UA">User Agent</A>
+</UL>
+
+<LI>Listing and Accessing Files
 <UL>
 <LI><A HREF="#FT">FTP sort criteria</A>
 <LI><A HREF="#LD">Local directory sort criteria</A>
 <LI><A HREF="#DF">Show dot files</A>
-<LI><A HREF="#LL">Execution links</A></UL>
-<LI>Headers transferred to remote server
+<LI><A HREF="#LL">Execution links</A>
+</UL>
+
+<LI>Special Files and Screens
 <UL>
-<LI><A HREF="#PC">Preferred Document Charset</A>
-<LI><A HREF="#PL">Preferred Document Language</A>
-<LI><A HREF="#UA">User Agent</A></UL>
+<LI><A HREF="#MB">Multi-bookmarks</A>
+<LI><A HREF="#BF">Bookmark file</A>
+<LI><A HREF="#VP">Visited Pages</A>
+</UL>
+
 </UL>
 
 <H1><A NAME="CK">Cookies</A></H1>
 
 This can be set to accept or reject all cookies or to ask each time.
-See the Users Guide for details of <A HREF="../Lynx_users_guide.html#Cookies" 
->cookie usage</A>. 
+See the Users Guide for details of <A HREF="../Lynx_users_guide.html#Cookies"
+>cookie usage</A>.
 
 <H1><A NAME="ED">Editor</A></H1>
 
-This is the editor to be invoked when editing browsable files, 
-sending mail or comments, or filling form's textarea (multiline input field). 
-The full pathname of the editor command should be specified when possible. 
-It is assumed the text editor supports the same character set 
-you have for "display character set" in Lynx. 
+This is the editor to be invoked when editing browsable files,
+sending mail or comments, or filling form's textarea (multiline input field).
+The full pathname of the editor command should be specified when possible.
+It is assumed the text editor supports the same character set
+you have for "display character set" in Lynx.
 
 <H1><A NAME="EM">Emacs keys</A></H1>
 
@@ -90,8 +110,7 @@ with the arrow keys.  You can also number form fields.
 <H1><A NAME="LE">Line edit style</A></H1>
 
 This allows you to set alternate key bindings for the built-in line editor,
-if your system administrator has installed
-<A HREF="alt_edit_help.html">Alternate Bindings</A>.
+if <A HREF="alt_edit_help.html">Alternate Bindings</A> have been installed.
 Otherwise, Lynx uses the <A HREF="edit_help.html">Default Binding</A>.
 
 <H1><A NAME="PM">Personal Mail Address</A></H1>
@@ -251,21 +270,25 @@ from lynx.cfg or command line switch.
 
 <H1><A NAME="SI">Show Images</A></H1>
 
-Text-based browser cannot show images directly, so we have a choice:
-<em>ignore all</em> images without ALT= text string
-(this is also switched by <A HREF="../Lynx_users_guide.html#[-key">'[' key</A>),
-<em>show labels</em> (see also "verbose images" for choice between [IMAGE] and filename),
-<em>use links</em> for every image to make it possible to download them
-(also switched by <A HREF="../Lynx_users_guide.html#*-key">'*' key</A>).
-Changing these settings will not be saved but could be made permanent
-by changing the respective settings in lynx.cfg.
+This option combines the effects of the `*' &amp; `[' keys as follows:
+<pre>
+     <em>ignore</em> all images which lack an ALT= text string,
+     <em>show labels</em>, e.g. [INLINE] -- see `Verbose Images' below -- ,
+     <em>use links</em> for every image, enabling downloading.
+</pre><p>
+This option setting cannot be saved between sessions.
+See <A HREF="../Lynx_users_guide.html#Images">Users Guide</A>
+&amp; <em>lynx.cfg</em> for more details.
 
 <H1><A NAME="VB">Verbose Images</A></H1>
 
-Controls whether or not Lynx replaces the [LINK], [INLINE] and [IMAGE] comments
-(for images without ALT) with filenames of these images.  This is extremely
-useful because now we can determine immediately which images are decorations
-(button.gif, line.gif) and which are important.
+This allows you to replace [LINK], [INLINE] and [IMAGE]
+-- for images without ALT -- with filenames:
+this can be helpful by revealing which images are important
+&amp; which are merely decoration, e.g. <em>button.gif</em>, <em>line.gif</em>.
+See <A HREF="../Lynx_users_guide.html#Images">Users Guide</A>
+&amp; <em>lynx.cfg</em> for more details.
+
 
 <H1><A NAME="VI">VI keys</A></H1>
 
@@ -290,9 +313,9 @@ and windows-xxxx within native MS-Windows applications.
 
 <H1><A NAME="DV">X DISPLAY variable</A></H1>
 
-This option is only relevant to X Window users. It specifies 
-the DISPLAY (Unix) or DECW$DISPLAY (VMS) variable.  It is picked up 
-automatically from the environment if it has been previously set. 
+This option is only relevant to X Window users. It specifies
+the DISPLAY (Unix) or DECW$DISPLAY (VMS) variable.  It is picked up
+automatically from the environment if it has been previously set.
 
 <H1><A NAME="MB">Multi-bookmarks</A></H1>
 
@@ -324,6 +347,38 @@ if subdirectories are included (e.g., './BM/lynx_bookmarks.html').
 <P>
 Lynx will create bookmark files when you first 'a'dd a link,
 but any subdirectories in the filepath must already exist.
+
+<H1><A NAME="VP">Visited Pages</A></H1>
+
+This allows you to change the appearance of the
+<a href="visited_help.html">Visited Links Page</a>
+
+Normally it shows a list, in reverse order of the pages visited.
+The popup menu allows you these choices:
+<dl>
+<dt><EM>By First Visit</EM>:
+The default appearance, shows the pages based on when they were first visited.
+The list is shown in reverse order, to make the current page (usually) at
+the top of the list.
+<dt><EM>By First Visit Reversed</EM>
+The default appearance, shows the pages based on when they were first visited.
+The list is shown in order, to make the current page (usually) at
+the bottom of the list.
+<dt><EM>As Visit Tree</EM>
+Combines the first/last visited information, showing the list in order of
+the first visit, but using the indentation level of the page immediately
+previous to determine indentation of new entries.
+That gives a clue to the order of visiting pages when moving around in
+the History or Visited Pages lists.
+<dt><EM>By Last Visit</EM>
+The default appearance, shows the pages based on when they were last visited.
+The list is shown in reverse order, to make the current page (usually) at
+the top of the list.
+<dt><EM>By Last Visit Reversed</EM>
+The default appearance, shows the pages based on when they were last visited.
+The list is shown in order, to make the current page (usually) at
+the bottom of the list.
+</dl>
 
 <H1><A NAME="FT">FTP sort criteria</A></H1>
 
@@ -370,7 +425,7 @@ e.g., <kbd>da, en-gb;q=0.8, en;q=0.7</kbd> .
 
 The header string which Lynx sends to servers to indicate the User-Agent
 is displayed here.  Changes may be disallowed via the -restrictions switch.
-Otherwise, the header can be changed temporarily to e.g., L_y_n_x/2.8.2
+Otherwise, the header can be changed temporarily to e.g., L_y_n_x/2.8.3
 for access to sites which discriminate against Lynx based on checks
 for the presence of `Lynx' in the header.  If changed during a Lynx session,
 the default User-Agent header can be restored by deleting the modified string

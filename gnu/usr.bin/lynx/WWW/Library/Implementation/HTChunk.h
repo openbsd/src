@@ -21,8 +21,14 @@ typedef struct {
 	int	growby; 	/* Allocation unit in bytes	*/
 	int	allocated;	/* Current size of *data	*/
 	char *	data;		/* Pointer to malloced area or 0 */
+	int	failok;		/* allowed to fail without exiting program? */
 } HTChunk;
 
+
+/*
+ * Initialize a chunk's allocation data and allocation-increment.
+ */
+extern void HTChunkInit PARAMS((HTChunk * ch, int grow));
 
 /*
  *
@@ -41,6 +47,15 @@ typedef struct {
  */
 
 extern HTChunk * HTChunkCreate PARAMS((int growby));
+
+/*
+ *  Create a chunk for which an allocation error is not a fatal application
+ *  error if failok != 0, but merely resets the chunk.  When using a chunk
+ *  created this way, the caller should always check whether the contents
+ *  are ok each time after data have been appended.
+ *  The create call may also fail and will reurn NULL in that case. - kw
+ */
+extern HTChunk * HTChunkCreateMayFail PARAMS((int growby, int failok));
 
 /*
  *  Like HTChunkCreate but with initial allocation - kw

@@ -2,12 +2,14 @@
 #define LYUTILS_H
 
 #include <LYCharVals.h>  /* S/390 -- gil -- 2149 */
+#include <LYKeymap.h>
 
 #ifndef HTLIST_H
 #include <HTList.h>
 #endif /* HTLIST_H */
 
 #ifdef VMS
+#include <HTFTP.h>
 #include <HTVMSUtils.h>
 #define HTSYS_name(path)   HTVMS_name("", path)
 #define HTSYS_purge(path)  HTVMS_purge(path)
@@ -33,7 +35,18 @@
 
 #define LYIsPipeCommand(s) ((s)[0] == '|')
 
-#ifdef DOSPATH
+/* See definitions in src/LYCharVals.h.  The hardcoded values...
+   This prohibits binding C-c and C-g.  Maybe it is better to remove this? */
+#define LYCharIsINTERRUPT_HARD(ch)	\
+  ((ch) == LYCharINTERRUPT1 || ch == LYCharINTERRUPT2)
+
+#define LYCharIsINTERRUPT(ch)		\
+  (LYCharIsINTERRUPT_HARD(ch) || LKC_TO_LAC(keymap,ch) == LYK_INTERRUPT)
+
+#define LYCharIsINTERRUPT_NO_letter(ch)	\
+  (LYCharIsINTERRUPT(ch) && !isprint(ch))
+
+#if defined(DOSPATH) || defined(__EMX__)
 #define LYIsPathSep(ch) ((ch) == '/' || (ch) == '\\')
 #else
 #define LYIsPathSep(ch) ((ch) == '/')
@@ -50,26 +63,35 @@
 
 #define LYIsHtmlSep(ch) ((ch) == '/')
 
-#define TABLESIZE(v) (sizeof(v)/sizeof(v[0]))
-
+extern BOOL strn_dash_equ PARAMS((CONST char* p1,CONST char* p2,int len));
 extern BOOLEAN LYAddSchemeForURL PARAMS((char **AllocatedString, char *default_scheme));
 extern BOOLEAN LYCachedTemp PARAMS((char *result, char **cached));
 extern BOOLEAN LYCanDoHEAD PARAMS((CONST char *address));
+extern BOOLEAN LYCanReadFile PARAMS((CONST char* name));
+extern BOOLEAN LYCanWriteFile PARAMS((CONST char* name));
+extern BOOLEAN LYCloseInput PARAMS((FILE * fp));
+extern BOOLEAN LYCloseOutput PARAMS((FILE * fp));
 extern BOOLEAN LYExpandHostForURL PARAMS((char **AllocatedString, char *prefix_list, char *suffix_list));
+extern BOOLEAN LYFixCursesOnForAccess PARAMS((CONST char* addr, CONST char* physical));
 extern BOOLEAN LYPathOffHomeOK PARAMS((char *fbuffer, size_t fbuffer_size));
 extern BOOLEAN LYValidateFilename PARAMS((char * result, char * given));
+extern BOOLEAN LYisAbsPath PARAMS((CONST char *path));
 extern BOOLEAN LYisLocalAlias PARAMS((char *filename));
 extern BOOLEAN LYisLocalFile PARAMS((char *filename));
 extern BOOLEAN LYisLocalHost PARAMS((char *filename));
+extern BOOLEAN LYisRootPath PARAMS((char *path));
 extern BOOLEAN inlocaldomain NOPARAMS;
 extern CONST char *Home_Dir NOPARAMS;
+extern CONST char *index_to_restriction PARAMS(( int	inx));
 extern FILE *LYAppendToTxtFile PARAMS((char * name));
 extern FILE *LYNewBinFile PARAMS((char * name));
 extern FILE *LYNewTxtFile PARAMS((char * name));
 extern FILE *LYOpenScratch PARAMS((char *result, CONST char *prefix));
 extern FILE *LYOpenTemp PARAMS((char *result, CONST char *suffix, CONST char *mode));
+extern FILE *LYOpenTempRewrite PARAMS((char *result, CONST char *suffix, CONST char *mode));
 extern FILE *LYReopenTemp PARAMS((char *name));
 extern char *Current_Dir PARAMS((char * pathname));
+extern char *LYLastPathSep PARAMS((CONST char *path));
 extern char *LYPathLeaf PARAMS((char * pathname));
 extern char *LYSysShell NOPARAMS;
 extern char *LYgetXDisplay NOPARAMS;
@@ -79,9 +101,10 @@ extern int HTCheckForInterrupt NOPARAMS;
 extern int LYCheckForProxyURL PARAMS((char *filename));
 extern int LYConsoleInputFD PARAMS((BOOLEAN need_selectable));
 extern int LYCopyFile PARAMS((char *src, char *dst));
-extern int LYOpenInternalPage PARAMS((FILE **fp0, char **newfile));
+extern int LYRemoveTemp PARAMS((char *name));
 extern int LYSystem PARAMS((char *command));
 extern int LYValidateOutput PARAMS((char * filename));
+extern int find_restriction PARAMS((CONST char * name, int len));
 extern int is_url PARAMS((char *filename));
 extern int number2arrows PARAMS((int number));
 extern time_t LYmktime PARAMS((char *string, BOOL absolute));
@@ -95,6 +118,7 @@ extern void LYAddLocalhostAlias PARAMS((char *alias));
 extern void LYAddPathSep PARAMS((char **path));
 extern void LYAddPathSep0 PARAMS((char *path));
 extern void LYAddPathToHome PARAMS((char *fbuffer, size_t fbuffer_size, char *fname));
+extern void LYCheckBibHost NOPARAMS;
 extern void LYCheckMail NOPARAMS;
 extern void LYCleanupTemp NOPARAMS;
 extern void LYCloseTemp PARAMS((char *name));
@@ -103,9 +127,9 @@ extern void LYConvertToURL PARAMS((char **AllocatedString, int fixit));
 extern void LYDoCSI PARAMS((char *url, CONST char *comment, char **csi));
 extern void LYEnsureAbsoluteURL PARAMS((char **href, CONST char *name, int fixit));
 extern void LYFakeZap PARAMS((BOOL set));
+extern void LYFixCursesOn PARAMS((CONST char* reason));
 extern void LYLocalFileToURL PARAMS((char **target, CONST char *source));
 extern void LYLocalhostAliases_free NOPARAMS;
-extern void LYRemoveTemp PARAMS((char *name));
 extern void LYRenamedTemp PARAMS((char * oldname, char * newname));
 extern void LYTrimHtmlSep PARAMS((char *path));
 extern void LYTrimPathSep PARAMS((char *path));
@@ -117,10 +141,57 @@ extern void free_and_clear PARAMS((char **obj));
 extern void highlight PARAMS((int flag, int cur, char *target));
 extern void noviceline PARAMS((int more_flag));
 extern void parse_restrictions PARAMS((CONST char *s));
+extern void print_restrictions_to_fd PARAMS((FILE *fp));
 extern void remove_backslashes PARAMS((char *buf));
 extern void size_change PARAMS((int sig));
 extern void statusline PARAMS((CONST char *text));
 extern void toggle_novice_line NOPARAMS;
+
+/* Keeping track of User Interface Pages: */
+typedef enum {
+    UIP_UNKNOWN=-1
+  , UIP_HISTORY=0
+  , UIP_DOWNLOAD_OPTIONS
+  , UIP_PRINT_OPTIONS
+  , UIP_SHOWINFO
+  , UIP_LIST_PAGE
+  , UIP_VLINKS
+  , UIP_LYNXCFG
+  , UIP_OPTIONS_MENU
+  , UIP_DIRED_MENU
+  , UIP_PERMIT_OPTIONS
+  , UIP_UPLOAD_OPTIONS
+  , UIP_ADDRLIST_PAGE
+  , UIP_CONFIG_DEF
+  , UIP_TRACELOG
+  , UIP_INSTALL
+} UIP_t;
+
+#define UIP_P_FRAG 0x0001   /* flag: consider "url#frag" as matching "url" */
+
+extern BOOL LYIsUIPage3 PARAMS((CONST char * url, UIP_t type, int flagparam));
+#define LYIsUIPage(url,type) LYIsUIPage3(url, type, UIP_P_FRAG)
+extern void LYRegisterUIPage PARAMS((CONST char * url, UIP_t type));
+#define LYUnRegisterUIPage(type) LYRegisterUIPage(NULL, type)
+extern void LYUIPages_free NOPARAMS;
+
+#ifdef CAN_CUT_AND_PASTE
+extern int put_clip(char *szBuffer);
+/* get_clip_grab() returns a pointer to the string in the system area.
+   get_clip_release() should be called ASAP after this. */
+extern char* get_clip_grab(void);
+extern void  get_clip_release(void);
+#  ifdef WIN_EX
+#    define size_clip()	8192
+#  else
+extern int size_clip();
+#  endif
+#endif
+
+#if defined(WIN_EX)	/* 1997/10/16 (Thu) 20:13:28 */
+extern char *HTDOS_short_name(char *path);
+extern char *w32_strerror(DWORD ercode);
+#endif
 
 #ifdef VMS
 extern void Define_VMSLogical PARAMS((char *LogicalName, char *LogicalValue));
@@ -163,6 +234,7 @@ typedef enum {
     TELNET_GOPHER_URL_TYPE,
     INDEX_GOPHER_URL_TYPE,
     MAILTO_URL_TYPE,
+    BIBP_URL_TYPE,
     FINGER_URL_TYPE,
     CSO_URL_TYPE,
     HTTPS_URL_TYPE,
@@ -203,6 +275,22 @@ typedef enum {
 extern HTList *sug_filenames;
 
 /*
+ * syslog() facility
+ */
+#if !defined(VMS) && defined(SYSLOG_REQUESTED_URLS)
+#ifdef WATT32
+#include <sys/syslog.h>
+#else
+#include <syslog.h>
+#endif
+
+extern void LYOpenlog  PARAMS((CONST char *banner));
+extern void LYSyslog   PARAMS((char *arg));
+extern void LYCloselog NOPARAMS;
+
+#endif /* !VMS && SYSLOG_REQUESTED_URLS */
+
+/*
  *  Miscellaneous.
  */
 #define ON      1
@@ -212,5 +300,19 @@ extern HTList *sug_filenames;
 
 #define HIDE_CHMOD 0600
 #define HIDE_UMASK 0077
+
+#if defined(DOSPATH) || defined(WIN_EX) || defined(__CYGWIN__)
+#define TXT_R	"rt"
+#define TXT_W	"wt"
+#define TXT_A	"at+"
+#else
+#define TXT_R	"r"
+#define TXT_W	"w"
+#define TXT_A	"a+"
+#endif
+
+#define BIN_R	"rb"
+#define BIN_W	"wb"
+#define BIN_A	"ab+"
 
 #endif /* LYUTILS_H */

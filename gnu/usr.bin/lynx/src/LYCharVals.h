@@ -11,19 +11,23 @@
  */
 #ifndef   CH_ESC
 #ifdef    EBCDIC
-#define CH_DEL     	0x07
-#define CH_ESC     	0x27
-#define CH_ESC_PAR 	0x27
-#define CH_HICTL   	0x3f
-#define CH_NBSP    	0x41
-#define CH_SHY     	0xca
+#define CH_DEL           0x07
+#define CH_ESC           0x27
+#define CH_ESC_PAR       0x27
+#define CH_HICTL         0x3f
+#define CH_NBSP          0x41
+#define CH_SHY           0xca
+#define LYCharINTERRUPT1 0x03 /* Control-C */
+#define LYCharINTERRUPT2 0x2f /* Control-G */
 #else  /* EBCDIC */
-#define CH_ESC     	0033
-#define CH_DEL     	0177
-#define CH_ESC_PAR 	0233
-#define CH_HICTL   	0237
-#define CH_NBSP    	0240
-#define CH_SHY     	0255
+#define CH_ESC           0033
+#define CH_DEL           0177
+#define CH_ESC_PAR       0233
+#define CH_HICTL         0237
+#define CH_NBSP          0240
+#define CH_SHY           0255
+#define LYCharINTERRUPT1 0003 /* Control-C */
+#define LYCharINTERRUPT2 0007 /* Control-G */
 #endif /* EBCDIC */
 #endif /* CH_ESC */
 

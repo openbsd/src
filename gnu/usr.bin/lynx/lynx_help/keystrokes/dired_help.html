@@ -1,4 +1,4 @@
-<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <html>
 <head>
 <title>Lynx Dired Help</title>
@@ -8,44 +8,46 @@
 <h1>+++DIRED HELP+++</h1>
 
 Lynx changes into Dired mode when you use a URL of the type
-<em>file://localhost/path/</em>.  While in Dired mode, some keys are 
+<em>file://localhost/path/</em>.  While in Dired mode, some keys are
 remapped to do the following functions:
 <pre>
-	C)reate       -	Create a new, empty file in the current 
-			directory.  You will be prompted to enter
-			a name for the file.
 
-	D)ownload     -	Download selection using options listed in
-			the download options screen.
+        C)reate       - Create a new, empty file in the current
+                        directory.  You will be prompted to enter
+                        a name for the file.
 
-	E)dit         -	Spawn the editor defined in the <a
-			href="option_help.html">options screen</a>
-			and load selection for editing.
+        F)ull menu    - Show a full menu of commands for currently
+                        selected file or directory.
 
-	F)ull menu    -	Show a full menu of commands for currently
-			selected file or directory.
+        M)odify       - Modify the name or location of selection.  If
+                        multiple files have been selected, you will
+                        only be able to change the location.  Choose
+                        between changing the name or location and then
+                        enter a new filename or path.
 
-	M)odify       -	Modify the name or location of selection.  If
-			multiple files have been selected, you will
-			only be able to change the location.  Choose
-			between changing the name or location and then
-			enter a new filename or path.
+        R)emove       - Delete currently selected files.
 
-	R)emove       - Delete currently selected files.
+        T)ag          - Tag the highlighted file.  Multiple files may
+                        be tagged and all other commands except "Create"
+                        will be performed on tagged files instead of the
+                        one highlighted.  Press '<em>t</em>' again to untag
+                        a file.
 
-	T)ag          -	Tag the highlighted file.  Multiple files may
-			be tagged and all other commands except "Create"
-			will be performed on tagged files instead of the
-			one highlighted.  Press '<em>t</em>' again to untag
-			a file.
+        U)pload       - Upload a file to the current directory using
+                        one of the options listed in the upload screen.
+</pre>
+Some other keys useful in Dired mode:
+<pre>
+        D)ownload     - Download selection using options listed in
+                        the download options screen.
 
-	U)pload       - Upload a file to the current directory using
-			one of the options listed in the upload
-			options screen.
+        E)dit         - Spawn the editor defined in the <a
+                        href="option_help.html">Options Menu</a>
+                        and load selection for editing.
 </pre>
 
-<em>Note:</em> Dired mode must be activated at compile time by the
-system administrator.  Otherwise, the above commands will not be available
-and lynx will treat a directory listing as a HTML file.
+<em>Note:</em> Dired mode must be activated at compile time.
+Otherwise, the above commands will not be available
+and Lynx will treat a directory listing as an HTML file.
 </body>
 </html>

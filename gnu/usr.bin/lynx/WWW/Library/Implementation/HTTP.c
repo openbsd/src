@@ -1,4 +1,4 @@
-/*	HyperText Tranfer Protocol	- Client implementation 	HTTP.c
+/*	HyperText Tranfer Protocol	- Client implementation		HTTP.c
 **	==========================
 ** Modified:
 ** 27 Jan 1994	PDM  Added Ari Luotonen's Fix for Reload when using proxy
@@ -7,15 +7,15 @@
 */
 
 #include <HTUtils.h>
+#if defined(__DJGPP__) && defined (WATT32)
+#include <tcp.h>
+#endif /* __DJGPP__ */
 #include <HTTP.h>
 #include <LYUtils.h>
 
 #ifdef USE_SSL
-#define free_func free__func
-#include <openssl/ssl.h>
-#include <openssl/crypto.h>
-#undef free_func
-#endif /* USE_SSL */
+#include <HTNews.h>
+#endif
 
 #define HTTP_VERSION	"HTTP/1.0"
 
@@ -77,17 +77,17 @@ PUBLIC SSL_CTX * ssl_ctx = NULL;	/* SSL ctx */
 PRIVATE void free_ssl_ctx NOARGS
 {
     if (ssl_ctx != NULL)
-        SSL_CTX_free(ssl_ctx);
+	SSL_CTX_free(ssl_ctx);
 }
 
 PUBLIC SSL * HTGetSSLHandle NOARGS
 {
     if (ssl_ctx == NULL) {
-        /*
+	/*
 	 *  First time only.
 	 */
 #if SSLEAY_VERSION_NUMBER < 0x0800
-        ssl_ctx = SSL_CTX_new();
+	ssl_ctx = SSL_CTX_new();
 	X509_set_default_verify_paths(ssl_ctx->cert);
 #else
 	SSLeay_add_ssl_algorithms();
@@ -100,6 +100,44 @@ PUBLIC SSL * HTGetSSLHandle NOARGS
     return(SSL_new(ssl_ctx));
 }
 
+PUBLIC void HTSSLInitPRNG NOARGS
+{
+#if SSLEAY_VERSION_NUMBER >= 0x00905100
+    if (RAND_status() == 0) {
+	char rand_file[256];
+	time_t t;
+	pid_t pid;
+	long l,seed;
+
+	t = time(NULL);
+	pid = getpid();
+	RAND_file_name(rand_file, 256);
+	CTRACE((tfp,"HTTP: Seeding PRNG\n"));
+	if(rand_file != NULL) {
+	    /* Seed as much as 1024 bytes from RAND_file_name */
+	    RAND_load_file(rand_file, 1024);
+	}
+	/* Seed in time (mod_ssl does this) */
+	RAND_seed((unsigned char *)&t, sizeof(time_t));
+	/* Seed in pid (mod_ssl does this) */
+	RAND_seed((unsigned char *)&pid, sizeof(pid_t));
+	/* Initialize system's random number generator */
+	RAND_bytes((unsigned char *)&seed, sizeof(long));
+	lynx_srand(seed);
+	while (RAND_status() == 0) {
+	    /* Repeatedly seed the PRNG using the system's random number generator until it has been seeded with enough data */
+	    l = lynx_rand();
+	    RAND_seed((unsigned char *)&l, sizeof(long));
+	}
+	if (rand_file != NULL) {
+	    /* Write a rand_file */
+	    RAND_write_file(rand_file);
+	}
+    }
+#endif /* SSLEAY_VERSION_NUMBER >= 0x00905100 */
+    return;
+}
+
 #define HTTP_NETREAD(sock, buff, size, handle) \
 	(handle ? SSL_read(handle, buff, size) : NETREAD(sock, buff, size))
 #define HTTP_NETWRITE(sock, buff, size, handle) \
@@ -107,15 +145,184 @@ PUBLIC SSL * HTGetSSLHandle NOARGS
 #define HTTP_NETCLOSE(sock, handle)  \
 	{ (void)NETCLOSE(sock); if (handle) SSL_free(handle); handle = NULL; }
 
-extern int HTNewsProxyConnect PARAMS (( int sock, CONST char *url, 
-					HTParentAnchor *anAnchor,
-					HTFormat format_out,
-					HTStream *sink ));
 #else
 #define HTTP_NETREAD(a, b, c, d)   NETREAD(a, b, c)
 #define HTTP_NETWRITE(a, b, c, d)  NETWRITE(a, b, c)
 #define HTTP_NETCLOSE(a, b)  (void)NETCLOSE(a)
 #endif /* USE_SSL */
+
+#ifdef _WINDOWS		/* 1997/11/06 (Thu) 13:00:08 */
+
+#define	BOX_TITLE	"Lynx " __FILE__
+#define	BOX_FLAG	(MB_ICONINFORMATION | MB_SETFOREGROUND)
+
+typedef struct {
+	int fd;
+	char *buf;
+	int len;
+} recv_data_t;
+
+PUBLIC int ws_read_per_sec = 0;
+PRIVATE int ws_errno = 0;
+
+PRIVATE DWORD g_total_times = 0;
+PRIVATE DWORD g_total_bytes = 0;
+
+
+PUBLIC char * str_speed(void)
+{
+    static char buff[32];
+
+    if (ws_read_per_sec > 1000)
+	sprintf(buff, "%d.%03dkB", ws_read_per_sec / 1000,
+			(ws_read_per_sec % 1000) );
+    else
+	sprintf(buff, "%3d", ws_read_per_sec);
+
+    return buff;
+}
+
+/* The same like read, but takes care of EINTR and uses select to
+   timeout the stale connections.  */
+
+PRIVATE int ws_read(int fd, char *buf, int len)
+{
+     int res;
+     int retry = 3;
+
+     do {
+	res = recv(fd, buf, len, 0);
+	if (WSAEWOULDBLOCK == WSAGetLastError()) {
+	  Sleep(100);
+	  if (retry-- > 0)
+	    continue;
+	}
+     } while (res == SOCKET_ERROR && SOCKET_ERRNO == EINTR);
+
+     return res;
+}
+
+PRIVATE void _thread_func (void *p)
+{
+    int i, val, ret;
+    recv_data_t *q = (recv_data_t *)p;
+
+    i = 0;
+    i++;
+    val = ws_read(q->fd, q->buf, q->len);
+
+    if (val == SOCKET_ERROR) {
+	ws_errno = WSAGetLastError();
+#if 0
+	char buff[256];
+	sprintf(buff, "Thread read: %d, error (%ld), fd = %d, len = %d",
+		i, ws_errno, q->fd, q->len);
+	MessageBox(NULL, buff, BOX_TITLE, BOX_FLAG);
+#endif
+	ret = -1;
+    } else {
+	ret = val;
+    }
+
+    ExitThread((DWORD)ret);
+}
+
+/* The same like read, but takes care of EINTR and uses select to
+   timeout the stale connections.  */
+
+PUBLIC int ws_netread(int fd, char *buf, int len)
+{
+    int i;
+    char buff[256];
+
+     /* 1998/03/30 (Mon) 09:01:21 */
+    HANDLE hThread;
+    DWORD dwThreadID;
+    DWORD exitcode = 0;
+    DWORD ret_val = -1, val, process_time, now_TickCount, save_TickCount;
+
+    static recv_data_t para;
+
+    extern int win32_check_interrupt(void);	/* LYUtil.c */
+    extern int lynx_timeout;			/* LYMain.c */
+    extern int AlertSecs;			/* LYMain.c */
+    extern CRITICAL_SECTION critSec_READ;	/* LYMain.c */
+
+#define TICK	5
+#define STACK_SIZE	0x2000uL
+
+    InitializeCriticalSection(&critSec_READ);
+
+    para.fd = fd;
+    para.buf = buf;
+    para.len = len;
+
+    ws_read_per_sec = 0;
+    save_TickCount = GetTickCount();
+
+    hThread = CreateThread((void *)NULL, STACK_SIZE,
+		 (LPTHREAD_START_ROUTINE)_thread_func,
+		 (void *)&para, 0UL, &dwThreadID);
+
+    if (hThread == 0) {
+	HTInfoMsg("CreateThread Failed (read)");
+	goto read_exit;
+    }
+
+    i = 0;
+    while (1) {
+	val = WaitForSingleObject(hThread, 1000/TICK);
+	i++;
+	if (val == WAIT_FAILED) {
+	    HTInfoMsg("Wait Failed");
+	    ret_val = -1;
+	    break;
+	} else if (val == WAIT_TIMEOUT) {
+	    i++;
+	    if (i/TICK > (AlertSecs + 2)) {
+		sprintf(buff, "Read Waiting (%2d.%01d) for %d Bytes",
+			i/TICK, (i%TICK) * 10 / TICK, len);
+		SetConsoleTitle(buff);
+	    }
+	    if (win32_check_interrupt() || ((i/TICK) > lynx_timeout)) {
+		if (CloseHandle(hThread) == FALSE) {
+		    HTInfoMsg("Thread terminate Failed");
+		}
+		WSASetLastError(ETIMEDOUT);
+		ret_val = HT_INTERRUPTED;
+		break;
+	    }
+	} else if (val == WAIT_OBJECT_0) {
+	    if (GetExitCodeThread(hThread, &exitcode) == FALSE) {
+		exitcode = -1;
+	    }
+	    if (CloseHandle(hThread) == FALSE) {
+		HTInfoMsg("Thread terminate Failed");
+	    }
+	    now_TickCount = GetTickCount();
+	    if (now_TickCount > save_TickCount)
+		process_time = now_TickCount - save_TickCount;
+	    else
+		process_time = now_TickCount + (0xffffffff - save_TickCount);
+
+	    g_total_times += process_time;
+	    g_total_bytes += exitcode;
+
+	    if (g_total_bytes > 2000000) {
+		ws_read_per_sec = g_total_bytes / (g_total_times/1000);
+	    } else {
+		ws_read_per_sec = g_total_bytes * 1000 / g_total_times;
+	    }
+	    ret_val = exitcode;
+	    break;
+	}
+    }	/* end while(1) */
+
+    read_exit:
+    LeaveCriticalSection(&critSec_READ);
+    return ret_val;
+}
+#endif
 
 
 /*		Load Document from HTTP Server			HTLoadHTTP()
@@ -143,39 +350,42 @@ PRIVATE int HTLoadHTTP ARGS4 (
 {
   int s;			/* Socket number for returned data */
   CONST char *url = arg;	/* The URL which get_physical() returned */
-  char *command = NULL; 	/* The whole command */
+  char *command = NULL;		/* The whole command */
   char *eol;			/* End of line if found */
   char *start_of_data;		/* Start of body of reply */
   int status;			/* tcp return */
   int bytes_already_read;
-  char crlf[3]; 		/* A CR LF equivalent string */
+  char crlf[3];			/* A CR LF equivalent string */
   HTStream *target;		/* Unconverted data */
   HTFormat format_in;		/* Format arriving in the message */
-  BOOL do_head = FALSE; 	/* Whether or not we should do a head */
-  BOOL do_post = FALSE; 	/* ARE WE posting ? */
+  BOOL do_head = FALSE;		/* Whether or not we should do a head */
+  BOOL do_post = FALSE;		/* ARE WE posting ? */
   char *METHOD;
 
   BOOL had_header;		/* Have we had at least one header? */
   char *line_buffer;
   char *line_kept_clean;
+  int real_length_of_line;
   BOOL extensions;		/* Assume good HTTP server */
-  char line[INIT_LINE_SIZE];
+  char *linebuf = NULL;
   char temp[80];
   BOOL first_Accept = TRUE;
   BOOL show_401 = FALSE;
   BOOL show_407 = FALSE;
-  BOOL auth_proxy = NO; 	/* Generate a proxy authorization. - AJL */
+  BOOL auth_proxy = NO;		/* Generate a proxy authorization. - AJL */
 
-  int length, rv;
-  BOOL doing_redirect, already_retrying = FALSE, bad_location = FALSE;
+  int length, rawlength, rv;
+  int server_status;
+  BOOL doing_redirect, already_retrying = FALSE;
   int len = 0;
 
 #ifdef USE_SSL
-  BOOL do_connect = FALSE;    /* ARE WE going to use a proxy tunnel ? */
-  BOOL did_connect = FALSE;   /* ARE WE actually using a proxy tunnel ? */
+  BOOL do_connect = FALSE;	/* ARE WE going to use a proxy tunnel ? */
+  BOOL did_connect = FALSE;	/* ARE WE actually using a proxy tunnel ? */
   CONST char *connect_url = NULL; /* The URL being proxied */
-  char *connect_host = NULL;  /* The host being proxied */
-  SSL * handle = NULL;                /* The SSL handle */
+  char *connect_host = NULL;	/* The host being proxied */
+  SSL * handle = NULL;		/* The SSL handle */
+  char SSLprogress[256];	/* progress bar message */
 #if SSLEAY_VERSION_NUMBER >= 0x0900
   BOOL try_tls = TRUE;
 #endif /* SSLEAY_VERSION_NUMBER >= 0x0900 */
@@ -201,24 +411,24 @@ PRIVATE int HTLoadHTTP ARGS4 (
 
 #ifdef USE_SSL
   if (using_proxy && !strncmp(url, "http://", 7)) {
-      if (connect_url = strstr((url+7), "https://")) {
+      if ((connect_url = strstr((url+7), "https://"))) {
 	  do_connect = TRUE;
 	  connect_host = HTParse(connect_url, "https", PARSE_HOST);
 	  if (!strchr(connect_host, ':')) {
 	      sprintf(temp, ":%d", HTTPS_PORT);
 	      StrAllocCat(connect_host, temp);
 	  }
-	  CTRACE(tfp, "HTTP: connect_url = '%s'\n", connect_url);
-	  CTRACE(tfp, "HTTP: connect_host = '%s'\n", connect_host);
-      } else if (connect_url = strstr((url+7), "snews://")) {
+	  CTRACE((tfp, "HTTP: connect_url = '%s'\n", connect_url));
+	  CTRACE((tfp, "HTTP: connect_host = '%s'\n", connect_host));
+      } else if ((connect_url = strstr((url+7), "snews://"))) {
 	  do_connect = TRUE;
 	  connect_host = HTParse(connect_url, "snews", PARSE_HOST);
 	  if (!strchr(connect_host, ':')) {
 	      sprintf(temp, ":%d", SNEWS_PORT);
 	      StrAllocCat(connect_host, temp);
 	  }
-	  CTRACE(tfp, "HTTP: connect_url = '%s'\n", connect_url);
-	  CTRACE(tfp, "HTTP: connect_host = '%s'\n", connect_host);
+	  CTRACE((tfp, "HTTP: connect_url = '%s'\n", connect_url));
+	  CTRACE((tfp, "HTTP: connect_host = '%s'\n", connect_host));
       }
   }
 #endif /* USE_SSL */
@@ -245,12 +455,13 @@ try_again:
   line_buffer = NULL;
   line_kept_clean = NULL;
 
-  if (!strncmp(url, "https", 5))
 #ifdef USE_SSL
+  if (!strncmp(url, "https", 5))
     status = HTDoConnect (url, "HTTPS", HTTPS_PORT, &s);
   else
     status = HTDoConnect (url, "HTTP", HTTP_PORT, &s);
 #else
+  if (!strncmp(url, "https", 5))
     {
       HTAlert(gettext("This client does not contain support for HTTPS URLs."));
       status = HT_NOT_LOADED;
@@ -262,18 +473,30 @@ try_again:
       /*
       **  Interrupt cleanly.
       */
-       CTRACE (tfp, "HTTP: Interrupted on connect; recovering cleanly.\n");
+       CTRACE((tfp, "HTTP: Interrupted on connect; recovering cleanly.\n"));
        _HTProgress (CONNECTION_INTERRUPTED);
        status = HT_NOT_LOADED;
        goto done;
    }
    if (status < 0) {
-	CTRACE(tfp, "HTTP: Unable to connect to remote host for `%s' (errno = %d).\n",
-	    url, SOCKET_ERRNO);
+#ifdef _WINDOWS
+      CTRACE((tfp, "HTTP: Unable to connect to remote host for `%s'\n"
+			  " (status = %d, sock_errno = %d).\n",
+			  url, status, SOCKET_ERRNO));
+#else
+      CTRACE((tfp,
+	    "HTTP: Unable to connect to remote host for `%s' (errno = %d).\n",
+	    url, SOCKET_ERRNO));
+#endif
       HTAlert(gettext("Unable to connect to remote host."));
       status = HT_NOT_LOADED;
       goto done;
   }
+
+/* *sob*  All this needs to be converted to handle binary strings
+ * if we're going to be able to handle binary form uploads...
+ * This is a nice long function as well.  *sigh*  -RJP
+ */
 
 #ifdef USE_SSL
 use_tunnel:
@@ -286,51 +509,63 @@ use_tunnel:
       SSL_set_fd(handle, s);
 #if SSLEAY_VERSION_NUMBER >= 0x0900
       if (!try_tls)
-          handle->options|=SSL_OP_NO_TLSv1;
+	  handle->options|=SSL_OP_NO_TLSv1;
 #endif /* SSLEAY_VERSION_NUMBER >= 0x0900 */
+      HTSSLInitPRNG();
       status = SSL_connect(handle);
 
       if (status <= 0) {
 #if SSLEAY_VERSION_NUMBER >= 0x0900
 	  if (try_tls) {
-              CTRACE(tfp, "HTTP: Retrying connection without TLS\n");
+	      CTRACE((tfp, "HTTP: Retrying connection without TLS\n"));
 	      _HTProgress("Retrying connection.");
 	      try_tls = FALSE;
 	      if (did_connect)
-	          HTTP_NETCLOSE(s, handle);
-      	      goto try_again;
+		  HTTP_NETCLOSE(s, handle);
+	      goto try_again;
 	  } else {
-              CTRACE(tfp,
-"HTTP: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
-				url, status);
-      	      HTAlert("Unable to make secure connection to remote host.");
+	      unsigned long SSLerror;
+	      CTRACE((tfp,
+"HTTP: Unable to complete SSL handshake for '%s', SSL_connect=%d, SSL error stack dump follows\n",
+				url, status));
+	      SSL_load_error_strings();
+	      while((SSLerror=ERR_get_error())!=0) {
+		  CTRACE((tfp,"HTTP: SSL: %s\n",ERR_error_string(SSLerror,NULL)));
+	      }
+	      HTAlert("Unable to make secure connection to remote host.");
 	      if (did_connect)
-	          HTTP_NETCLOSE(s, handle);
-      	      status = HT_NOT_LOADED;
-      	      goto done;
+		  HTTP_NETCLOSE(s, handle);
+	      status = HT_NOT_LOADED;
+	      goto done;
 	  }
 #else
-              CTRACE(tfp,
-"HTTP: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
-				url, status);
-      	  HTAlert("Unable to make secure connection to remote host.");
+	  unsigned long SSLerror;
+	  CTRACE((tfp,
+"HTTP: Unable to complete SSL handshake for '%s', SSL_connect=%d, SSL error stack dump follows\n",
+				url, status));
+	  SSL_load_error_strings();
+	  while((SSLerror=ERR_get_error())!=0) {
+	      CTRACE((tfp,"HTTP: SSL: %s\n",ERR_error_string(SSLerror,NULL)));
+	  }
+	  HTAlert("Unable to make secure connection to remote host.");
 	  if (did_connect)
 	      HTTP_NETCLOSE(s, handle);
-      	  status = HT_NOT_LOADED;
-      	  goto done;
+	  status = HT_NOT_LOADED;
+	  goto done;
 #endif /* SSLEAY_VERSION_NUMBER >= 0x0900 */
       }
-      _HTProgress (SSL_get_cipher(handle));
+      sprintf(SSLprogress,"Secure %d-bit %s (%s) HTTP connection",SSL_get_cipher_bits(handle,NULL),SSL_get_cipher_version(handle),SSL_get_cipher(handle));
+      _HTProgress(SSLprogress);
 
 #ifdef NOTDEFINED
       if (strcmp(HTParse(url, "", PARSE_HOST),
-      		 strstr(X509_NAME_oneline(
-		 	X509_get_subject_name(
+		 strstr(X509_NAME_oneline(
+			X509_get_subject_name(
 				handle->session->peer)),"/CN=")+4)) {
 	  HTAlert("Certificate is for different host name");
 	  HTAlert(strstr(X509_NAME_oneline(
-	  		 X509_get_subject_name(
-			 	handle->session->peer)),"/CN=")+4);
+			 X509_get_subject_name(
+				handle->session->peer)),"/CN=")+4);
       }
 #endif /* NOTDEFINED */
   }
@@ -368,8 +603,8 @@ use_tunnel:
     if (using_proxy && !did_connect) {
 	if (do_connect)
 	    StrAllocCat(command, connect_host);
-      else
-	StrAllocCat(command, p1+1);
+	else
+	    StrAllocCat(command, p1+1);
     }
 #else
     if (using_proxy)
@@ -391,8 +626,7 @@ use_tunnel:
       char * host = NULL;
 
       if ((host = HTParse(anAnchor->address, "", PARSE_HOST)) != NULL) {
-	  sprintf(line, "Host: %s%c%c", host, CR,LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "Host: %s%c%c", host, CR,LF);
 	  FREE(host);
       }
 
@@ -405,70 +639,61 @@ use_tunnel:
       for (i = 0; i < n; i++) {
 	  HTPresentation *pres =
 			(HTPresentation *)HTList_objectAt(HTPresentations, i);
-	  if (pres->rep_out == WWW_PRESENT) {
-	      if (pres->rep != WWW_SOURCE &&
-		  strcasecomp(HTAtom_name(pres->rep), "www/mime") &&
-		  strcasecomp(HTAtom_name(pres->rep), "www/compressed") &&
-		  pres->quality <= 1.0 && pres->quality >= 0.0) {
-		  if (pres->quality < 1.0) {
-		      if (pres->maxbytes > 0) {
-			  sprintf(temp, ";q=%4.3f;mxb=%ld",
-					pres->quality, pres->maxbytes);
-		      } else {
-			  sprintf(temp, ";q=%4.3f", pres->quality);
-		      }
-		  } else if (pres->maxbytes > 0) {
-		      sprintf(temp, ";mxb=%ld", pres->maxbytes);
+	  if (pres->get_accept) {
+	      if (pres->quality < 1.0) {
+		  if (pres->maxbytes > 0) {
+		      sprintf(temp, ";q=%4.3f;mxb=%ld",
+				    pres->quality, pres->maxbytes);
 		  } else {
-		      temp[0] = '\0';
+		      sprintf(temp, ";q=%4.3f", pres->quality);
 		  }
-		  sprintf(line, "%s%s%s",
-				(first_Accept ?
-				   "Accept: " : ", "),
+	      } else if (pres->maxbytes > 0) {
+		  sprintf(temp, ";mxb=%ld", pres->maxbytes);
+	      } else {
+		  temp[0] = '\0';
+	      }
+	      HTSprintf0(&linebuf, "%s%s%s",
+			    (first_Accept ?
+			       "Accept: " : ", "),
+			    HTAtom_name(pres->rep),
+			    temp);
+	      len += strlen(linebuf);
+	      if (len > 252 && !first_Accept) {
+		  StrAllocCat(command, crlf);
+		  HTSprintf0(&linebuf, "Accept: %s%s",
 				HTAtom_name(pres->rep),
 				temp);
-		  len += strlen(line);
-		  if (len > 252 && !first_Accept) {
-		      StrAllocCat(command, crlf);
-		      sprintf(line, "Accept: %s%s",
-				    HTAtom_name(pres->rep),
-				    temp);
-		      len = strlen(line);
-		  }
-		  StrAllocCat(command, line);
-		  first_Accept = FALSE;
+		  len = strlen(linebuf);
 	      }
+	      StrAllocCat(command, linebuf);
+	      first_Accept = FALSE;
 	  }
       }
-      sprintf(line, "%s*/*;q=0.01%c%c",
+      HTSprintf(&command, "%s*/*;q=0.01%c%c",
 		    (first_Accept ?
 		       "Accept: " : ", "), CR, LF);
-      StrAllocCat(command, line);
       first_Accept = FALSE;
       len = 0;
 
-      sprintf(line, "Accept-Encoding: %s, %s%c%c",
+      HTSprintf(&command, "Accept-Encoding: %s, %s%c%c",
 		    "gzip", "compress", CR, LF);
-      StrAllocCat(command, line);
 
       if (language && *language) {
-	  sprintf(line, "Accept-Language: %s%c%c", language, CR, LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "Accept-Language: %s%c%c", language, CR, LF);
       }
 
       if (pref_charset && *pref_charset) {
 	  StrAllocCat(command, "Accept-Charset: ");
-	  strcpy(line, pref_charset);
-	  if (line[strlen(line)-1] == ',')
-	      line[strlen(line)-1] = '\0';
-	  LYLowerCase(line);
-	  if (strstr(line, "iso-8859-1") == NULL)
-	      strcat(line, ", iso-8859-1;q=0.01");
-	  if (strstr(line, "us-ascii") == NULL)
-	      strcat(line, ", us-ascii;q=0.01");
-	  StrAllocCat(command, line);
-	  sprintf(line, "%c%c", CR, LF);
-	  StrAllocCat(command, line);
+	  StrAllocCopy(linebuf, pref_charset);
+	  if (linebuf[strlen(linebuf)-1] == ',')
+	      linebuf[strlen(linebuf)-1] = '\0';
+	  LYLowerCase(linebuf);
+	  if (strstr(linebuf, "iso-8859-1") == NULL)
+	      StrAllocCat(linebuf, ", iso-8859-1;q=0.01");
+	  if (strstr(linebuf, "us-ascii") == NULL)
+	      StrAllocCat(linebuf, ", us-ascii;q=0.01");
+	  StrAllocCat(command, linebuf);
+	  HTSprintf(&command, "%c%c", CR, LF);
       }
 
 #if 0
@@ -495,8 +720,7 @@ use_tunnel:
       **  new-httpd@apache.org from Koen Holtman, Jan 1999.
       */
       if (!do_post) {
-	  sprintf(line, "Negotiate: trans%c%c", CR, LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "Negotiate: trans%c%c", CR, LF);
       }
 #endif /* 0 */
 
@@ -507,31 +731,32 @@ use_tunnel:
       **  Also send it as a Cache-Control header for HTTP/1.1. - FM
       */
       if (reloading) {
-	  sprintf(line, "Pragma: no-cache%c%c", CR, LF);
-	  StrAllocCat(command, line);
-	  sprintf(line, "Cache-Control: no-cache%c%c", CR, LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "Pragma: no-cache%c%c", CR, LF);
+	  HTSprintf(&command, "Cache-Control: no-cache%c%c", CR, LF);
       }
 
       if (LYUserAgent && *LYUserAgent) {
-	  sprintf(line, "User-Agent: %s%c%c", LYUserAgent, CR, LF);
+	  char *cp = LYSkipBlanks(LYUserAgent);
+	  /* Won't send it at all if all blank - kw */
+	  if (*cp != '\0')
+	      HTSprintf(&command, "User-Agent: %.*s%c%c",
+		      INIT_LINE_SIZE-15, LYUserAgent, CR, LF);
       } else {
-	  sprintf(line, "User-Agent: %s/%s  libwww-FM/%s%c%c",
+	  HTSprintf(&command, "User-Agent: %s/%s  libwww-FM/%s%c%c",
 		  HTAppName ? HTAppName : "unknown",
 		  HTAppVersion ? HTAppVersion : "0.0",
 		  HTLibraryVersion, CR, LF);
       }
-      StrAllocCat(command, line);
 
       if (personal_mail_address && !LYNoFromHeader) {
-	  sprintf(line, "From: %s%c%c", personal_mail_address, CR,LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "From: %s%c%c", personal_mail_address, CR,LF);
       }
 
       if (!(LYUserSpecifiedURL ||
 	    LYNoRefererHeader || LYNoRefererForThis) &&
 	  strcmp(HTLoadedDocumentURL(), "")) {
-	  char *cp = HTLoadedDocumentURL();
+	  char *cp = LYRequestReferer;
+	  if (!cp) cp = HTLoadedDocumentURL(); /* @@@ Try both? - kw */
 	  StrAllocCat(command, "Referer: ");
 	  if (!strncasecomp(cp, "LYNXIMGMAP:", 11)) {
 	      char *cp1 = strchr(cp, '#');
@@ -543,8 +768,7 @@ use_tunnel:
 	  } else {
 	      StrAllocCat(command, cp);
 	  }
-	  sprintf(line, "%c%c", CR, LF);
-	  StrAllocCat(command, line);
+	  HTSprintf(&command, "%c%c", CR, LF);
       }
 
       {
@@ -554,7 +778,7 @@ use_tunnel:
 	char *colon;
 	int portnumber;
 	char *auth, *cookie = NULL;
-	BOOL secure = (strncmp(anAnchor->address, "https", 5) ?
+	BOOL secure = (BOOL) (strncmp(anAnchor->address, "https", 5) ?
 							FALSE : TRUE);
 
 	abspath = HTParse(arg, "", PARSE_PATH|PARSE_PUNCTUATION);
@@ -606,9 +830,8 @@ use_tunnel:
 		**  If auth is not NULL nor zero-length, it's
 		**  an Authorization header to be included. - FM
 		*/
-		sprintf(line, "%s%c%c", auth, CR, LF);
-		StrAllocCat(command, line);
-		CTRACE(tfp, "HTTP: Sending authorization: %s\n", auth);
+		HTSprintf(&command, "%s%c%c", auth, CR, LF);
+		CTRACE((tfp, "HTTP: Sending authorization: %s\n", auth));
 	    } else if (auth && *auth == '\0') {
 		/*
 		**  If auth is a zero-length string, the user either
@@ -622,7 +845,7 @@ use_tunnel:
 		    if (traversal || dump_output_immediately)
 			HTAlert(FAILED_NEED_PASSWD);
 #ifdef USE_SSL
-		    if(did_connect)
+		    if (did_connect)
 			HTTP_NETCLOSE(s, handle);
 #endif /* USE_SSL */
 		    FREE(command);
@@ -635,7 +858,7 @@ use_tunnel:
 		    goto done;
 		}
 	    } else {
-		CTRACE(tfp, "HTTP: Not sending authorization (yet).\n");
+		CTRACE((tfp, "HTTP: Not sending authorization (yet).\n"));
 	    }
 	    /*
 	    **	Add 'Cookie:' header, if it's HTTP or HTTPS
@@ -668,7 +891,7 @@ use_tunnel:
 		*/
 		StrAllocCat(command, "Cookie2: $Version=\"1\"");
 		StrAllocCat(command, crlf);
-		CTRACE(tfp, "HTTP: Sending Cookie2: $Version =\"1\"\n");
+		CTRACE((tfp, "HTTP: Sending Cookie2: $Version =\"1\"\n"));
 	    }
 	    if (*cookie != '\0') {
 		/*
@@ -679,7 +902,7 @@ use_tunnel:
 		StrAllocCat(command, "Cookie: ");
 		StrAllocCat(command, cookie);
 		StrAllocCat(command, crlf);
-		CTRACE(tfp, "HTTP: Sending Cookie: %s\n", cookie);
+		CTRACE((tfp, "HTTP: Sending Cookie: %s\n", cookie));
 	    }
 	    FREE(cookie);
 	}
@@ -702,12 +925,11 @@ use_tunnel:
 	    **	an Authorization or Proxy-Authorization
 	    **	header to be included. - FM
 	    */
-	    sprintf(line, "%s%c%c", auth, CR, LF);
-	    StrAllocCat(command, line);
-	    CTRACE(tfp, (auth_proxy ?
+	    HTSprintf(&command, "%s%c%c", auth, CR, LF);
+	    CTRACE((tfp, (auth_proxy ?
 			 "HTTP: Sending proxy authorization: %s\n" :
 			 "HTTP: Sending authorization: %s\n"),
-			auth);
+			auth));
 	} else if (auth && *auth == '\0') {
 	    /*
 	    **	If auth is a zero-length string, the user either
@@ -730,9 +952,9 @@ use_tunnel:
 		goto done;
 	    }
 	} else {
-	    CTRACE(tfp, (auth_proxy ?
+	    CTRACE((tfp, (auth_proxy ?
 			 "HTTP: Not sending proxy authorization (yet).\n" :
-			 "HTTP: Not sending authorization (yet).\n"));
+			 "HTTP: Not sending authorization (yet).\n")));
 	}
 	FREE(hostname);
 	FREE(docname);
@@ -740,44 +962,44 @@ use_tunnel:
       auth_proxy = NO;
   }
 
+    if (
 #ifdef USE_SSL
-    if (!do_connect && do_post) {
-#else
-    if (do_post) {
+	!do_connect &&
 #endif /* USE_SSL */
-	CTRACE (tfp, "HTTP: Doing post, content-type '%s'\n",
+	do_post) {
+	CTRACE((tfp, "HTTP: Doing post, content-type '%s'\n",
 		     anAnchor->post_content_type ? anAnchor->post_content_type
-						 : "lose");
-      sprintf (line, "Content-type: %s%c%c",
-	       anAnchor->post_content_type ? anAnchor->post_content_type
-					   : "lose", CR, LF);
-      StrAllocCat(command, line);
-      {
-	int content_length;
-	if (!anAnchor->post_data)
-	  content_length = 0;
-	else
-	  content_length = strlen (anAnchor->post_data);
-	sprintf (line, "Content-length: %d%c%c",
-		 content_length, CR, LF);
-	StrAllocCat(command, line);
-      }
+						 : "lose"));
+	HTSprintf(&command, "Content-type: %s%c%c",
+		   anAnchor->post_content_type
+		   ? anAnchor->post_content_type
+		   : "lose",
+		  CR, LF);
+/*
+ * Ack!  This assumes non-binary data!  Icky!
+ *
+ */
+	HTSprintf(&command, "Content-length: %d%c%c",
+		  (anAnchor->post_data)
+		   ? strlen (anAnchor->post_data)
+		   : 0,
+		  CR, LF);
 
-      StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
+	StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
 
-      StrAllocCat(command, anAnchor->post_data);
+	StrAllocCat(command, anAnchor->post_data);
     }
-  else
-      StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
+    else
+	StrAllocCat(command, crlf);	/* Blank line means "end" of headers */
 
 #ifdef USE_SSL
-  CTRACE (tfp, "Writing:\n%s%s----------------------------------\n",
+  CTRACE((tfp, "Writing:\n%s%s----------------------------------\n",
 	       command,
-	       (anAnchor->post_data && !do_connect ? crlf : ""));
+	       (anAnchor->post_data && !do_connect ? crlf : "")));
 #else
-  CTRACE (tfp, "Writing:\n%s%s----------------------------------\n",
+  CTRACE((tfp, "Writing:\n%s%s----------------------------------\n",
 	       command,
-	       (anAnchor->post_data ? crlf : ""));
+	       (anAnchor->post_data ? crlf : "")));
 #endif /* USE_SSL */
 
   _HTProgress (gettext("Sending HTTP request."));
@@ -791,9 +1013,10 @@ use_tunnel:
 #endif /* NOT_ASCII */
   status = HTTP_NETWRITE(s, command, (int)strlen(command), handle);
   FREE(command);
+  FREE(linebuf);
   if (status <= 0) {
       if (status == 0) {
-	  CTRACE (tfp, "HTTP: Got status 0 in initial write\n");
+	  CTRACE((tfp, "HTTP: Got status 0 in initial write\n"));
 	  /* Do nothing. */
       } else if ((SOCKET_ERRNO == ENOTCONN ||
 		  SOCKET_ERRNO == ECONNRESET ||
@@ -803,14 +1026,14 @@ use_tunnel:
 	    /*
 	    **	Arrrrgh, HTTP 0/1 compability problem, maybe.
 	    */
-	    CTRACE (tfp, "HTTP: BONZO ON WRITE Trying again with HTTP0 request.\n");
+	    CTRACE((tfp, "HTTP: BONZO ON WRITE Trying again with HTTP0 request.\n"));
 	    _HTProgress (RETRYING_AS_HTTP0);
 	    HTTP_NETCLOSE(s, handle);
 	    extensions = NO;
 	    already_retrying = TRUE;
 	    goto try_again;
       } else {
-	  CTRACE (tfp, "HTTP: Hit unexpected network WRITE error; aborting connection.\n");
+	  CTRACE((tfp, "HTTP: Hit unexpected network WRITE error; aborting connection.\n"));
 	  HTTP_NETCLOSE(s, handle);
 	  status = -1;
 	  HTAlert(gettext("Unexpected network write error; connection aborted."));
@@ -818,7 +1041,7 @@ use_tunnel:
       }
   }
 
-  CTRACE (tfp, "HTTP: WRITE delivered OK\n");
+  CTRACE((tfp, "HTTP: WRITE delivered OK\n"));
   _HTProgress (gettext("HTTP request sent; waiting for response."));
 
   /*	Read the first line of the response
@@ -829,7 +1052,7 @@ use_tunnel:
     BOOL end_of_file = NO;
     int buffer_length = INIT_LINE_SIZE;
 
-    line_buffer = (char *)calloc(1, (buffer_length * sizeof(char)));
+    line_buffer = typecallocn(char, buffer_length);
     if (line_buffer == NULL)
 	outofmem(__FILE__, "HTLoadHTTP");
 
@@ -845,31 +1068,33 @@ use_tunnel:
 	    if (line_buffer == NULL)
 		outofmem(__FILE__, "HTLoadHTTP");
 	}
-	CTRACE (tfp, "HTTP: Trying to read %d\n",
-		     buffer_length - length - 1);
+	CTRACE((tfp, "HTTP: Trying to read %d\n", buffer_length - length - 1));
 	status = HTTP_NETREAD(s, line_buffer + length,
 			      buffer_length - length - 1, handle);
-	CTRACE (tfp, "HTTP: Read %d\n", status);
+	CTRACE((tfp, "HTTP: Read %d\n", status));
 	if (status <= 0) {
 	    /*
 	     *	Retry if we get nothing back too.
 	     *	Bomb out if we get nothing twice.
 	     */
 	    if (status == HT_INTERRUPTED) {
-		CTRACE (tfp, "HTTP: Interrupted initial read.\n");
+		CTRACE((tfp, "HTTP: Interrupted initial read.\n"));
 		_HTProgress (CONNECTION_INTERRUPTED);
 		HTTP_NETCLOSE(s, handle);
 		status = HT_NO_DATA;
 		goto clean_up;
 	    } else if  (status < 0 &&
 			(SOCKET_ERRNO == ENOTCONN ||
+#ifdef _WINDOWS	/* 1997/11/09 (Sun) 16:59:58 */
+			 SOCKET_ERRNO == ETIMEDOUT ||
+#endif
 			 SOCKET_ERRNO == ECONNRESET ||
 			 SOCKET_ERRNO == EPIPE) &&
 			!already_retrying && !do_post) {
 		/*
 		**  Arrrrgh, HTTP 0/1 compability problem, maybe.
 		*/
-		CTRACE (tfp, "HTTP: BONZO Trying again with HTTP0 request.\n");
+		CTRACE((tfp, "HTTP: BONZO Trying again with HTTP0 request.\n"));
 		HTTP_NETCLOSE(s, handle);
 		FREE(line_buffer);
 		FREE(line_kept_clean);
@@ -879,8 +1104,8 @@ use_tunnel:
 		_HTProgress (RETRYING_AS_HTTP0);
 		goto try_again;
 	    } else {
-		CTRACE (tfp, "HTTP: Hit unexpected network read error; aborting connection; status %d.\n",
-			   status);
+		CTRACE((tfp, "HTTP: Hit unexpected network read error; aborting connection; status %d.\n",
+			   status));
 		HTAlert(gettext("Unexpected network read error; connection aborted."));
 		HTTP_NETCLOSE(s, handle);
 		status = -1;
@@ -916,6 +1141,7 @@ use_tunnel:
 	    if (line_kept_clean == NULL)
 		outofmem(__FILE__, "HTLoadHTTP");
 	    memcpy(line_kept_clean, line_buffer, buffer_length);
+	    real_length_of_line = length + status;
 	}
 
 	eol = strchr(line_buffer + length, LF);
@@ -939,11 +1165,13 @@ use_tunnel:
     while (!eol && !end_of_file && bytes_already_read < 100);
   } /* Scope of loop variables */
 
+  /* save total length, in case we decide later to show it all - kw */
+  rawlength = length;
 
   /*	We now have a terminated unfolded line.  Parse it.
   **	--------------------------------------------------
   */
-  CTRACE(tfp, "HTTP: Rx: %s\n", line_buffer);
+  CTRACE((tfp, "HTTP: Rx: %s\n", line_buffer));
 
   /*
   **  Kludge to work with old buggy servers and the VMS Help gateway.
@@ -959,7 +1187,7 @@ use_tunnel:
       FREE(line_kept_clean);
       extensions = NO;
       already_retrying = TRUE;
-      CTRACE(tfp, "HTTP: close socket %d to retry with HTTP0\n", s);
+      CTRACE((tfp, "HTTP: close socket %d to retry with HTTP0\n", s));
       HTTP_NETCLOSE(s, handle);
       /* print a progress message */
       _HTProgress (RETRYING_AS_HTTP0);
@@ -970,7 +1198,6 @@ use_tunnel:
   {
     int fields;
     char server_version[VERSION_LENGTH+1];
-    int server_status;
 
     server_version[0] = 0;
 
@@ -978,18 +1205,18 @@ use_tunnel:
 		    server_version,
 		    &server_status);
 
-    CTRACE (tfp, "HTTP: Scanned %d fields from line_buffer\n", fields);
+    CTRACE((tfp, "HTTP: Scanned %d fields from line_buffer\n", fields));
 
     if (http_error_file) {     /* Make the status code externally available */
 	FILE *error_file;
 #ifdef SERVER_STATUS_ONLY
-	error_file = fopen(http_error_file, "w");
+	error_file = fopen(http_error_file, TXT_W);
 	if (error_file) {		/* Managed to open the file */
 	    fprintf(error_file, "error=%d\n", server_status);
 	    fclose(error_file);
 	}
 #else
-	error_file = fopen(http_error_file, "a");
+	error_file = fopen(http_error_file, TXT_A);
 	if (error_file) {		/* Managed to open the file */
 	    fprintf(error_file, "   URL=%s (%s)\n", url, METHOD);
 	    fprintf(error_file, "STATUS=%s\n", line_buffer);
@@ -1010,7 +1237,7 @@ use_tunnel:
 	 */
 	HTAtom * encoding;
 
-	CTRACE (tfp, "--- Talking HTTP0.\n");
+	CTRACE((tfp, "--- Talking HTTP0.\n"));
 
 	format_in = HTFileFormat(url, &encoding, NULL);
 	/*
@@ -1019,19 +1246,19 @@ use_tunnel:
 	**  without looking at content.
 	*/
 	if (!strncmp(HTAtom_name(format_in), "text/plain",10)) {
-	    CTRACE(tfp, "HTTP: format_in being changed to text/HTML\n");
+	    CTRACE((tfp, "HTTP: format_in being changed to text/HTML\n"));
 	    format_in = WWW_HTML;
 	}
 	if (!IsUnityEnc(encoding)) {
 	    /*
 	    **	Change the format to that for "www/compressed".
 	    */
-	    CTRACE(tfp, "HTTP: format_in is '%s',\n", HTAtom_name(format_in));
+	    CTRACE((tfp, "HTTP: format_in is '%s',\n", HTAtom_name(format_in)));
 	    StrAllocCopy(anAnchor->content_type, HTAtom_name(format_in));
 	    StrAllocCopy(anAnchor->content_encoding, HTAtom_name(encoding));
 	    format_in = HTAtom_for("www/compressed");
-	    CTRACE(tfp, "        Treating as '%s' with encoding '%s'\n",
-			"www/compressed", HTAtom_name(encoding));
+	    CTRACE((tfp, "        Treating as '%s' with encoding '%s'\n",
+			"www/compressed", HTAtom_name(encoding)));
 	}
 
 	start_of_data = line_kept_clean;
@@ -1040,7 +1267,7 @@ use_tunnel:
 	**  Set up to decode full HTTP/1.n response. - FM
 	*/
 	format_in = HTAtom_for("www/mime");
-	CTRACE (tfp, "--- Talking HTTP1.\n");
+	CTRACE((tfp, "--- Talking HTTP1.\n"));
 
 	/*
 	**  We set start_of_data to "" when !eol here because there
@@ -1098,6 +1325,7 @@ use_tunnel:
 		 */
 		HTAlert(line_buffer);
 		HTTP_NETCLOSE(s, handle);
+		HTNoDataOK = 1;
 		status = HT_NO_DATA;
 		goto clean_up;
 
@@ -1135,17 +1363,17 @@ use_tunnel:
 		 *  > 206 is unknown.
 		 *  All should return something to display.
 		 */
-#ifdef USE_SSL
-	        if (do_connect) {
-		    CTRACE(tfp, "HTTP: Proxy tunnel to '%s' established.\n",
-				connect_host);
+#if defined(USE_SSL) && !defined(DISABLE_NEWS)
+		if (do_connect) {
+		    CTRACE((tfp, "HTTP: Proxy tunnel to '%s' established.\n",
+				connect_host));
 		    do_connect = FALSE;
 		    url = connect_url;
 		    FREE(line_buffer);
 		    FREE(line_kept_clean);
 		    if (!strncmp(connect_url, "snews", 5)) {
-			CTRACE(tfp,
-			"      Will attempt handshake and snews connection.\n");
+			CTRACE((tfp,
+			"      Will attempt handshake and snews connection.\n"));
 			status = HTNewsProxyConnect(s, url, anAnchor,
 						    format_out, sink);
 			goto done;
@@ -1157,10 +1385,10 @@ use_tunnel:
 		    had_header = NO;
 		    length = 0;
 		    doing_redirect = FALSE;
-	            permanent_redirection = FALSE;
+		    permanent_redirection = FALSE;
 		    target = NULL;
-		    CTRACE(tfp,
-			"      Will attempt handshake and resubmit headers.\n");
+		    CTRACE((tfp,
+			"      Will attempt handshake and resubmit headers.\n"));
 		    goto use_tunnel;
 		}
 #endif /* USE_SSL */
@@ -1283,8 +1511,6 @@ use_tunnel:
 	     *	previous document. - FM
 	     */
 	    {
-	      char *cp;
-
 	      if ((dump_output_immediately || traversal) &&
 		  do_post &&
 		  server_status != 303 &&
@@ -1303,383 +1529,22 @@ use_tunnel:
 		  goto clean_up;
 	      }
 
-	      /*
-	       *  Get the rest of the headers and data, if
-	       *  any, and then close the connection. - FM
-	       */
-	      while ((status = HTTP_NETREAD(s, line_buffer,
-					    (INIT_LINE_SIZE - 1),
-					    handle)) > 0) {
-#ifdef    NOT_ASCII  /* S/390 -- gil -- 0581 */
-	      {   char *p;
-
-		  for ( p = line_buffer; p < line_buffer + status; p++ )
-		      *p = FROMASCII(*p);
-	      }
-#endif /* NOT_ASCII */
-		  line_buffer[status] = '\0';
-		  StrAllocCat(line_kept_clean, line_buffer);
-	      }
-	      HTTP_NETCLOSE(s, handle);
-	      if (status == HT_INTERRUPTED) {
-		  /*
-		   *  Impatient user. - FM
-		   */
-		  CTRACE (tfp, "HTTP: Interrupted followup read.\n");
-		  _HTProgress (CONNECTION_INTERRUPTED);
-		  status = HT_INTERRUPTED;
-		  goto clean_up;
-	      }
-	      doing_redirect = TRUE;
+	      HTProgress(line_buffer);
 	      if (server_status == 301) { /* Moved Permanently */
-		  HTProgress(line_buffer);
 		  if (do_post) {
 		      /*
 		       *  Don't make the redirection permanent
 		       *  if we have POST content. - FM
 		       */
-		      CTRACE(tfp, "HTTP: Have POST content.  Treating 301 (Permanent) as Temporary.\n");
+		      CTRACE((tfp, "HTTP: Have POST content.  Treating 301 (Permanent) as Temporary.\n"));
 		      HTAlert(
 	 gettext("Have POST content.  Treating Permanent Redirection as Temporary.\n"));
 		  } else {
 		      permanent_redirection = TRUE;
 		  }
 	      }
+	      doing_redirect = TRUE;
 
-	      /*
-	      **  Look for "Set-Cookie:" and "Set-Cookie2:" headers. - FM
-	      */
-	      if (LYSetCookies == TRUE) {
-		  char *value = NULL;
-		  char *SetCookie = NULL;
-		  char *SetCookie2 = NULL;
-		  cp = line_kept_clean;
-		  while (*cp) {
-		      /*
-		      **  Assume a CRLF pair terminates
-		      **  the header section. - FM
-		      */
-		      if (*cp == CR) {
-			  if (*(cp+1) == LF &&
-			      *(cp+2) == CR && *(cp+3) == LF) {
-			      break;
-			  }
-		      }
-		      if (TOUPPER(*cp) != 'S') {
-			  cp++;
-		      } else if (!strncasecomp(cp, "Set-Cookie:", 11))	{
-			  char *cp1 = NULL, *cp2 = NULL;
-			  cp += 11;
-Cookie_continuation:
-			  /*
-			   *  Trim leading spaces. - FM
-			   */
-			  while (isspace((unsigned char)*cp))
-			      cp++;
-			  /*
-			  **  Accept CRLF, LF, or CR as end of line. - FM
-			  */
-			  if (((cp1 = strchr(cp, LF)) != NULL) ||
-			      (cp2 = strchr(cp, CR)) != NULL) {
-			      if (*cp1) {
-				  *cp1 = '\0';
-				  if ((cp2 = strchr(cp, CR)) != NULL)
-				      *cp2 = '\0';
-			      } else {
-				  *cp2 = '\0';
-			      }
-			  }
-			  if (*cp == '\0') {
-			      if (cp1)
-				  *cp1 = LF;
-			      if (cp2)
-				  *cp2 = CR;
-			      if (value != NULL) {
-				  HTMIME_TrimDoubleQuotes(value);
-				  if (SetCookie == NULL) {
-				      StrAllocCopy(SetCookie, value);
-				  } else {
-				      StrAllocCat(SetCookie, ", ");
-				      StrAllocCat(SetCookie, value);
-				  }
-				  FREE(value);
-			      }
-			      break;
-			  }
-			  StrAllocCat(value, cp);
-			  cp += strlen(cp);
-			  if (cp1) {
-			      *cp1 = LF;
-			      cp1 = NULL;
-			  }
-			  if (cp2) {
-			      *cp2 = CR;
-			      cp2 = NULL;
-			  }
-			  cp1 = cp;
-			  if (*cp1 == CR)
-			     cp1++;
-			  if (*cp1 == LF)
-			     cp1++;
-			  if (*cp1 == ' ' || *cp1 == '\t') {
-			      StrAllocCat(value, " ");
-			      cp = cp1;
-			      cp++;
-			      cp1 = NULL;
-			      goto Cookie_continuation;
-			  }
-			  HTMIME_TrimDoubleQuotes(value);
-			  if (SetCookie == NULL) {
-			      StrAllocCopy(SetCookie, value);
-			  } else {
-			      StrAllocCat(SetCookie, ", ");
-			      StrAllocCat(SetCookie, value);
-			  }
-			  FREE(value);
-		      } else if (!strncasecomp(cp, "Set-Cookie2:", 12))  {
-			  char *cp1 = NULL, *cp2 = NULL;
-			  cp += 12;
-Cookie2_continuation:
-			  /*
-			   *  Trim leading spaces. - FM
-			   */
-			  while (isspace((unsigned char)*cp))
-			      cp++;
-			  /*
-			  **  Accept CRLF, LF, or CR as end of line. - FM
-			  */
-			  if (((cp1 = strchr(cp, LF)) != NULL) ||
-			      (cp2 = strchr(cp, CR)) != NULL) {
-			      if (*cp1) {
-				  *cp1 = '\0';
-				  if ((cp2 = strchr(cp, CR)) != NULL)
-				      *cp2 = '\0';
-			      } else {
-				  *cp2 = '\0';
-			      }
-			  }
-			  if (*cp == '\0') {
-			      if (cp1)
-				  *cp1 = LF;
-			      if (cp2)
-				  *cp2 = CR;
-			      if (value != NULL) {
-				  HTMIME_TrimDoubleQuotes(value);
-				  if (SetCookie2 == NULL) {
-				      StrAllocCopy(SetCookie2, value);
-				  } else {
-				      StrAllocCat(SetCookie2, ", ");
-				      StrAllocCat(SetCookie2, value);
-				  }
-				  FREE(value);
-			      }
-			      break;
-			  }
-			  StrAllocCat(value, cp);
-			  cp += strlen(cp);
-			  if (cp1) {
-			      *cp1 = LF;
-			      cp1 = NULL;
-			  }
-			  if (cp2) {
-			      *cp2 = CR;
-			      cp2 = NULL;
-			  }
-			  cp1 = cp;
-			  if (*cp1 == CR)
-			     cp1++;
-			  if (*cp1 == LF)
-			     cp1++;
-			  if (*cp1 == ' ' || *cp1 == '\t') {
-			      StrAllocCat(value, " ");
-			      cp = cp1;
-			      cp++;
-			      cp1 = NULL;
-			      goto Cookie2_continuation;
-			  }
-			  HTMIME_TrimDoubleQuotes(value);
-			  if (SetCookie2 == NULL) {
-			      StrAllocCopy(SetCookie2, value);
-			  } else {
-			      StrAllocCat(SetCookie2, ", ");
-			      StrAllocCat(SetCookie2, value);
-			  }
-			  FREE(value);
-		      } else {
-			  cp++;
-		      }
-		  }
-		  FREE(value);
-		  if (SetCookie != NULL || SetCookie2 != NULL) {
-		      LYSetCookie(SetCookie, SetCookie2, anAnchor->address);
-		      FREE(SetCookie);
-		      FREE(SetCookie2);
-		  }
-	      }
-
-	      /*
-	       *  Look for the "Location:" in the headers. - FM
-	       */
-	      cp = line_kept_clean;
-	      while (*cp) {
-		if (TOUPPER(*cp) != 'L') {
-		    cp++;
-		} else if (!strncasecomp(cp, "Location:", 9)) {
-		    char *cp1 = NULL, *cp2 = NULL;
-		    cp += 9;
-		    /*
-		     *	Trim leading spaces. - FM
-		     */
-		    while (isspace((unsigned char)*cp))
-			cp++;
-		    /*
-		     *	Accept CRLF, LF, or CR as end of header. - FM
-		     */
-		    if (((cp1 = strchr(cp, LF)) != NULL) ||
-			(cp2 = strchr(cp, CR)) != NULL) {
-			if (*cp1) {
-			    *cp1 = '\0';
-			    if ((cp2 = strchr(cp, CR)) != NULL)
-				*cp2 = '\0';
-			} else {
-			    *cp2 = '\0';
-			}
-			/*
-			 *  Load the new URL into redirecting_url,
-			 *  and make sure it's not zero-length. - FM
-			 */
-			StrAllocCopy(redirecting_url, cp);
-			HTMIME_TrimDoubleQuotes(redirecting_url);
-			if (*redirecting_url == '\0') {
-			    /*
-			     *	The "Location:" value is zero-length, and
-			     *	thus is probably something in the body, so
-			     *	we'll show the user what was returned. - FM
-			     */
-			    CTRACE(tfp, "HTTP: 'Location:' is zero-length!\n");
-			    if (cp1)
-				*cp1 = LF;
-			    if (cp2)
-				*cp2 = CR;
-			    bad_location = TRUE;
-			    FREE(redirecting_url);
-			    HTAlert(
-			       gettext("Got redirection with a bad Location header."));
-			    HTProgress(line_buffer);
-			    break;
-			}
-
-			/*
-			 *  Set up for checking redirecting_url in
-			 *  LYGetFile.c for restrictions before we
-			 *  seek the document at that Location. - FM
-			 */
-			HTProgress(line_buffer);
-			CTRACE(tfp, "HTTP: Picked up location '%s'\n",
-				    redirecting_url);
-			if (cp1)
-			    *cp1 = LF;
-			if (cp2)
-			    *cp2 = CR;
-			if (server_status == 305) { /* Use Proxy */
-			    /*
-			     *	Make sure the proxy field ends with
-			     *	a slash. - FM
-			     */
-			    if (redirecting_url[strlen(redirecting_url)-1]
-				!= '/')
-				StrAllocCat(redirecting_url, "/");
-			    /*
-			     *	Append our URL. - FM
-			     */
-			    StrAllocCat(redirecting_url, anAnchor->address);
-			    CTRACE(tfp, "HTTP: Proxy URL is '%s'\n",
-					redirecting_url);
-			}
-			if (!do_post ||
-			    server_status == 303 ||
-			    server_status == 302) {
-			    /*
-			     *	We don't have POST content (nor support PUT
-			     *	or DELETE), or the status is "See Other"  or
-			     *	"General Redirection" and we can convert to
-			     *	GET, so go back and check out the new URL. - FM
-			     */
-			    status = HT_REDIRECTING;
-			    goto clean_up;
-			}
-			/*
-			 *  Make sure the user wants to redirect
-			 *  the POST content, or treat as GET - FM & DK
-			 */
-			switch (HTConfirmPostRedirect(redirecting_url,
-						      server_status)) {
-			    /*
-			     *	User failed to confirm.
-			     *	Abort the fetch.
-			     */
-			    case 0:
-				doing_redirect = FALSE;
-				FREE(redirecting_url);
-				status = HT_NO_DATA;
-				goto clean_up;
-
-			    /*
-			     *	User wants to treat as GET with no content.
-			     *	Go back to check out the URL.
-			     */
-			    case 303:
-				status = HT_REDIRECTING;
-				goto clean_up;
-
-			    /*
-			     *	Set the flag to retain the POST
-			     *	content and go back to check out
-			     *	the URL. - FM
-			     */
-			    default:
-				status = HT_REDIRECTING;
-				redirect_post_content = TRUE;
-				goto clean_up;
-			}
-		    }
-		    break;
-		} else {
-		    /*
-		     *	Keep looking for the Location header. - FM
-		     */
-		    cp++;
-		}
-	      }
-
-	      /*
-	       *  If we get to here, we didn't find the Location
-	       *  header, so we'll show the user what we got, if
-	       *  anything. - FM
-	       */
-	      CTRACE (tfp, "HTTP: Failed to pick up location.\n");
-	      doing_redirect = FALSE;
-	      permanent_redirection = FALSE;
-	      start_of_data = line_kept_clean;
-	      length = strlen(start_of_data);
-	      if (!bad_location) {
-		  HTAlert(gettext("Got redirection with no Location header."));
-		  HTProgress(line_buffer);
-	      }
-	      if (traversal) {
-		  HTTP_NETCLOSE(s, handle);
-		  status = -1;
-		  goto clean_up;
-	      }
-	      if (!dump_output_immediately &&
-		  format_out == HTAtom_for("www/download")) {
-		  /*
-		   *  Convert a download request to
-		   *  a presentation request for
-		   *  interactive users. - FM
-		   */
-		  format_out = WWW_PRESENT;
-	      }
 	      break;
 	   }
 
@@ -1713,9 +1578,9 @@ Cookie2_continuation:
 			goto clean_up;
 		    }
 
-		    CTRACE(tfp, "%s %d %s\n",
+		    CTRACE((tfp, "%s %d %s\n",
 				"HTTP: close socket", s,
-				"to retry with Access Authorization");
+				"to retry with Access Authorization"));
 
 		    _HTProgress (
 			gettext("Retrying with access authorization information."));
@@ -1766,9 +1631,9 @@ Cookie2_continuation:
 			goto clean_up;
 		    }
 
-		    CTRACE(tfp, "%s %d %s\n",
+		    CTRACE((tfp, "%s %d %s\n",
 				"HTTP: close socket", s,
-				"to retry with Proxy Authorization");
+				"to retry with Proxy Authorization"));
 
 		    _HTProgress (HTTP_RETRY_WITH_PROXY);
 		    FREE(line_buffer);
@@ -1913,6 +1778,13 @@ Cookie2_continuation:
   */
   if (HTCheckForInterrupt()) {
       HTTP_NETCLOSE(s, handle);
+      if (doing_redirect) {
+	  /*
+	   *  Impatient user. - FM
+	   */
+	  CTRACE((tfp, "HTTP: Interrupted followup read.\n"));
+	  _HTProgress (CONNECTION_INTERRUPTED);
+      }
       status = HT_INTERRUPTED;
       goto clean_up;
   }
@@ -1924,8 +1796,31 @@ Cookie2_continuation:
       **  It was a HEAD request, or we want the headers and source.
       */
       start_of_data = line_kept_clean;
-      length = strlen(start_of_data);
+#ifdef SH_EX	/* FIX BUG by kaz@maczuka.hitachi.ibaraki.jp */
+/* GIF file contains \0, so strlen does not return the data length */
+      length = real_length_of_line;
+#else
+      length = rawlength;
+#endif
       format_in = HTAtom_for("text/plain");
+
+  } else if (doing_redirect) {
+
+      format_in = HTAtom_for("message/x-http-redirection");
+      StrAllocCopy(anAnchor->content_type, HTAtom_name(format_in));
+      if (traversal) {
+	  format_out = WWW_DEBUG;
+	  if (!sink)
+	      sink = HTErrorStream();
+      } else if (!dump_output_immediately &&
+	  format_out == HTAtom_for("www/download")) {
+	  /*
+	   *  Convert a download request to
+	   *  a presentation request for
+	   *  interactive users. - FM
+	   */
+	  format_out = WWW_PRESENT;
+      }
   }
 
   target = HTStreamStack(format_in,
@@ -1933,12 +1828,13 @@ Cookie2_continuation:
 			 sink, anAnchor);
 
   if (!target || target == NULL) {
-      char buffer[1024];	/* @@@@@@@@ */
+      char *buffer = NULL;
 
       HTTP_NETCLOSE(s, handle);
-      sprintf(buffer, CANNOT_CONVERT_I_TO_O,
+      HTSprintf0(&buffer, CANNOT_CONVERT_I_TO_O,
 	      HTAtom_name(format_in), HTAtom_name(format_out));
       _HTProgress (buffer);
+      FREE(buffer);
       status = -1;
       goto clean_up;
   }
@@ -1953,12 +1849,23 @@ Cookie2_continuation:
   */
   rv = HTCopy(anAnchor, s, (void *)handle, target);
 
+  /*
+  **  If we get here with doing_redirect set, it means that we were
+  **  looking for a Location header.  We either have got it now in
+  **  redirecting_url - in that case the stream should not have loaded
+  **  any data.  Or we didn't get it, in that case the stream may have
+  **  presented the message body normally. - kw
+  */
+
   if (rv == -1) {
       /*
       **  Intentional interrupt before data were received, not an error
       */
       /* (*target->isa->_abort)(target, NULL); */ /* already done in HTCopy */
-      status = HT_INTERRUPTED;
+      if (doing_redirect && traversal)
+	  status = -1;
+      else
+	  status = HT_INTERRUPTED;
       HTTP_NETCLOSE(s, handle);
       goto clean_up;
   }
@@ -1968,21 +1875,29 @@ Cookie2_continuation:
       **  Aw hell, a REAL error, maybe cuz it's a dumb HTTP0 server
       */
       (*target->isa->_abort)(target, NULL);
-      HTTP_NETCLOSE(s, handle);
-      if (!already_retrying && !do_post) {
-	  CTRACE (tfp, "HTTP: Trying again with HTTP0 request.\n");
+      if (doing_redirect && redirecting_url) {
 	  /*
-	  **  May as well consider it an interrupt -- right?
+	  **  Got a location before the error occurred?  Then consider it
+	  **  an interrupt but proceed below as normal. - kw
 	  */
-	  FREE(line_buffer);
-	  FREE(line_kept_clean);
-	  extensions = NO;
-	  already_retrying = TRUE;
-	  _HTProgress (RETRYING_AS_HTTP0);
-	  goto try_again;
+	  /* do nothing here */
       } else {
-	  status = HT_NOT_LOADED;
-	  goto clean_up;
+	  HTTP_NETCLOSE(s, handle);
+	  if (!doing_redirect && !already_retrying && !do_post) {
+	      CTRACE((tfp, "HTTP: Trying again with HTTP0 request.\n"));
+	      /*
+	      **  May as well consider it an interrupt -- right?
+	      */
+	      FREE(line_buffer);
+	      FREE(line_kept_clean);
+	      extensions = NO;
+	      already_retrying = TRUE;
+	      _HTProgress (RETRYING_AS_HTTP0);
+	      goto try_again;
+	  } else {
+	      status = HT_NOT_LOADED;
+	      goto clean_up;
+	  }
       }
   }
 
@@ -1990,23 +1905,107 @@ Cookie2_continuation:
   **  Free if complete transmission (socket was closed before return).
   **  Close socket if partial transmission (was freed on abort).
   */
-  if (rv != HT_INTERRUPTED) {
+  if (rv != HT_INTERRUPTED && rv != -2) {
       (*target->isa->_free)(target);
   } else {
       HTTP_NETCLOSE(s, handle);
   }
 
   if (doing_redirect) {
-      /*
-      **  We already jumped over all this if the "case 3:" code worked
-      **  above, but we'll check here as a backup in case it fails. - FM
-      */
-      /* Lou's old comment:  - FM */
-      /* OK, now we've got the redirection URL temporarily stored
-	 in external variable redirecting_url, exported from HTMIME.c,
-	 since there's no straightforward way to do this in the library
-	 currently.  Do the right thing. */
-      status = HT_REDIRECTING;
+      if (redirecting_url) {
+	  /*
+	   *  Set up for checking redirecting_url in
+	   *  LYGetFile.c for restrictions before we
+	   *  seek the document at that Location. - FM
+	   */
+	  CTRACE((tfp, "HTTP: Picked up location '%s'\n",
+		  redirecting_url));
+	  if (rv == HT_INTERRUPTED) {
+	      /*
+	      **  Intentional interrupt after data were received, not an
+	      **  error (probably).  We take it as a user request to
+	      **  abandon the redirection chain.
+	      **  This could reasonably be changed (by just removing this
+	      **  block), it would make sense if there are redirecting
+	      **  resources that "hang" after sending the headers. - kw
+	      */
+	      FREE(redirecting_url);
+	      CTRACE((tfp, "HTTP: Interrupted followup read.\n"));
+	      status = HT_INTERRUPTED;
+	      goto clean_up;
+	  }
+	  HTProgress(line_buffer);
+	  if (server_status == 305) { /* Use Proxy */
+	      /*
+	       *	Make sure the proxy field ends with
+	       *	a slash. - FM
+	       */
+	      if (redirecting_url[strlen(redirecting_url)-1]
+		  != '/')
+		  StrAllocCat(redirecting_url, "/");
+	      /*
+	       *	Append our URL. - FM
+	       */
+	      StrAllocCat(redirecting_url, anAnchor->address);
+	      CTRACE((tfp, "HTTP: Proxy URL is '%s'\n",
+		      redirecting_url));
+	  }
+	  if (!do_post ||
+	      server_status == 303 ||
+	      server_status == 302) {
+	      /*
+	       *	We don't have POST content (nor support PUT
+	       *	or DELETE), or the status is "See Other"  or
+	       *	"General Redirection" and we can convert to
+	       *	GET, so go back and check out the new URL. - FM
+	       */
+	      status = HT_REDIRECTING;
+	      goto clean_up;
+	  }
+	  /*
+	   *  Make sure the user wants to redirect
+	   *  the POST content, or treat as GET - FM & DK
+	   */
+	  switch (HTConfirmPostRedirect(redirecting_url,
+					server_status)) {
+	      /*
+	       *	User failed to confirm.
+	       *	Abort the fetch.
+	       */
+	  case 0:
+	      doing_redirect = FALSE;
+	      FREE(redirecting_url);
+	      status = HT_NO_DATA;
+	      goto clean_up;
+
+	      /*
+	       *	User wants to treat as GET with no content.
+	       *	Go back to check out the URL.
+	       */
+	  case 303:
+	      break;
+
+	      /*
+	       *	Set the flag to retain the POST
+	       *	content and go back to check out
+	       *	the URL. - FM
+	       */
+	  default:
+	      redirect_post_content = TRUE;
+	  }
+
+	  /* Lou's old comment:  - FM */
+	  /* OK, now we've got the redirection URL temporarily stored
+	     in external variable redirecting_url, exported from HTMIME.c,
+	     since there's no straightforward way to do this in the library
+	     currently.  Do the right thing. */
+
+	  status = HT_REDIRECTING;
+
+      } else {
+	  status = traversal ? -1 : HT_LOADED;
+      }
+
   } else {
       /*
       **  If any data were received, treat as a complete transmission

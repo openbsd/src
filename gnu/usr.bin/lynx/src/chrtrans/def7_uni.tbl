@@ -67,7 +67,7 @@ U+00bd: 1/2
 U+00be: 3/4
 U+00bf:?
 0x41	U+00c0-U+00c3
-U+00c4:A:
+U+00c4 "Ae"		# &Auml;, not the best choice for some languages.
 U+00c5:AA
 U+00c6:AE
 U+00c7:C,
@@ -76,17 +76,17 @@ U+00c7:C,
 U+00d0:D-
 0x4e	U+00d1
 0x4f	U+00d2-U+00d5
-U+00d6:O:
+U+00d6 "Oe"		# &Ouml;, not the best choice for some languages.
 U+00d7: *
 U+00d8:O/
 0x55	U+00d9-U+00db
-U+00dc:U:
+U+00dc "Ue"		# &Uuml;, not the best choice for some languages.
 0x59	U+00dd
 U+00de:TH
 U+00df:ss
 U+00e0:`a
 0x61	U+00e1-U+00e3
-U+00e4:a:
+U+00e4 "ae"		# &auml;, not the best choice for some languages.
 U+00e5:aa
 U+00e6:ae
 U+00e7:c,
@@ -96,11 +96,11 @@ U+00ec:`i
 U+00f0:d-
 0x6e	U+00f1
 0x6f	U+00f2-U+00f5
-U+00f6:o:
+U+00f6 "oe"		# &ouml;, not the best choice for some languages.
 U+00f7:-:
 U+00f8:o/
 0x75	U+00f9-U+00fb
-U+00fc:u:
+U+00fc "ue"		# &uuml;, not the best choice for some languages.
 0x79	U+00fd
 U+00fe:th
 0x79	U+00ff
@@ -165,7 +165,7 @@ U+0171:u"
 0x77	U+0175
 0x59	U+0176	U+0178
 0x79	U+0177
-0x5a	U+0179	U+017b	U+017d
+0x5a	U+0179	U+017b	U+017d	U+021d
 0x7a	U+017a	U+017c	U+017e
 U+017f:s1
 U+0187:C2
@@ -314,7 +314,7 @@ U+028d:w<vls>
 U+028e:l^
 U+028f:I.
 U+0290:z.
-U+0292:ed
+U+0292:Z
 0x3f	U+0294 #	LATIN SMALL LETTER GLOTTAL STOP	-> ?
 U+0295:H<vcd>
 U+0296:l!
@@ -326,6 +326,9 @@ U+029b:G`
 U+029e:k!
 0x4c	U+029F #	LATIN LETTER SMALL CAPITAL L
 U+02a0:q`
+U+02a4:d3
+U+02a6:ts
+U+02a7:tS
 U+02b0:<h>
 U+02b1:<?>
 0x3b	U+02b2 U+0321
@@ -335,23 +338,50 @@ U+02bb:;S
 0x60	U+02bc
 U+02c6:^
 U+02c7:'<
+U+02c8:|
 U+02c9:1-
 U+02cb:1!
 0x3a	U+02d0
+U+02d1 ":\\"
+0x2b	U+02d6
+0x2d	U+02d7
 U+02d8:'(
 U+02d9:'.
 U+02da:'0
 U+02db:';
 U+02dc:~
 U+02dd:'"
+U+02e5:_T
+U+02e6:_H
+U+02e7:_M
+U+02e8:_L
+U+02e9:_B
+U+02ec:_v
+U+02ee:''
+0x60	U+0300
+0x27	U+0301
+0x5e	U+0302
 0x7e	U+0303	U+0334
+U+030b:''
+0x7c	U+030d
+U+030e:||
+U+030f:``
 0x2e	U+0322	U+0323
 U+0324:<?>
 U+0325:<o>
+0x2c	U+0326	U+0327
 0x2d	U+0329
 0x5b	U+032a
 U+032b:<w>
 U+0334:<H>
+0x2f	U+0337	U+0338
+U+0340:`
+U+0341:'
+U+0342:~
+U+0344:'%
+U+0345:j3
+U+0347:=
+U+0360:~~
 U+0374:'
 U+0375:,
 U+037a:j3
@@ -359,12 +389,12 @@ U+037e:?%
 U+0384:'*
 U+0385:'%
 # Greek letters
-U+0386:A%
+U+0386:A'
 U+0387:.*
-U+0388:E%
+U+0388:E'
 U+0389:Y%
-U+038a:I%
-U+038c:O%
+U+038a:I'
+U+038c:O'
 U+038e:U%
 U+038f:W%
 U+0390:i3
@@ -391,13 +421,13 @@ U+03a5:U
 U+03a6:F
 U+03a7:X
 U+03a8:Q
-U+03a9:W
+U+03a9:W*
 U+03aa:J
 U+03ab:V*
-U+03ac:a%
-U+03ad:e%
+U+03ac:a'
+U+03ad:e'
 U+03ae:y%
-U+03af:i%
+U+03af:i'
 U+03b0:u3
 U+03b1:a
 U+03b2:b
@@ -426,7 +456,7 @@ U+03c8:q
 U+03c9:w
 U+03ca:j
 U+03cb:v*
-U+03cc:o%
+U+03cc:o'
 U+03cd:u%
 U+03ce:w%
 # Greek symbols
@@ -435,6 +465,7 @@ U+03d1 "theta "
 U+03d2 "upsi "
 U+03d5 "phi "
 U+03d6 "pi "
+U+03d7:k.
 U+03da:T3
 U+03db:t3
 U+03dc:M3
@@ -445,6 +476,7 @@ U+03e0:P3
 U+03e1:p3
 U+03f0 "kappa "
 U+03f1 "rho "
+U+03f3:J
 U+03f4:'%
 U+03f5:j3
 # Cyrillic capital letters
@@ -555,7 +587,8 @@ U+0480:C3
 U+0481:c3
 U+0490:G3
 U+0491:g3
-
+U+04d4:AE
+U+04d5:ae
 # These may make Yiddish slightly more readable, until we have
 # something better.
 
@@ -1272,14 +1305,30 @@ U+1ef6:Y2
 U+1ef7:y2
 U+1ef8:Y?
 U+1ef9:y?
-U+1f00:;'
-U+1f01:,'
-U+1f02:;!
-U+1f03:,!
-U+1f04:?;
-U+1f05:?,
-U+1f06:!:
-U+1f07:?:
+0x61	U+1f00
+U+1f01:ha
+U+1f02:`a
+U+1f03:h`a
+U+1f04:a'
+U+1f05:ha'
+U+1f06:a~
+U+1f07:ha~
+0x41	U+1f08
+U+1f09:hA
+U+1f0a:`A
+U+1f0b:h`A
+U+1f0c:A'
+U+1f0d:hA'
+U+1f0e:A~
+U+1f0f:hA~
+U+1f11:he
+U+1f19:hE
+U+1f31:hi
+U+1f39:hI
+U+1f41:ho
+U+1f49:hO
+U+1f51:hu
+U+1f59:hU
 U+1fbf:,,
 U+1fc0:?*
 U+1fc1:?:
@@ -1289,6 +1338,8 @@ U+1fcf:?,
 U+1fdd:;!
 U+1fde:;'
 U+1fdf:?;
+U+1fe5:rh
+U+1fec:Rh
 U+1fed:!:
 U+1fef:!*
 U+1ffe:;;
@@ -1299,7 +1350,7 @@ U+2003 "  "
 U+200e:(->)
 U+200f:(<-)
 U+200a:
-0x2d	U+2010	U+2013 U+2015	# hyphen-like
+0x2d	U+2010 U+2011 U+2013 U+2015	# hyphen-like
 U+2014 "--"
 U+2016:||
 U+2017:=2
@@ -1309,8 +1360,12 @@ U+2017:=2
 U+2020:/-
 U+2021:/=
 U+2022 " o "
+0x2e	U+2024
 U+2025:..
 U+2026:...
+U+2027:.
+U+2028 "\015"
+U+2029 "\015\012"
 
 # Dont wanna see these:
 # POP DIRECTIONAL FORMATTING      202C
@@ -1318,6 +1373,7 @@ U+202c:
 # LEFT-TO-RIGHT OVERRIDE  202D
 U+202d:
 
+U+202f ""
 U+2030: 0/00
 U+2032:'
 U+2033:''
@@ -1333,6 +1389,8 @@ U+203c:!!
 U+203e:'-
 0x2d   U+2043  # HYPHEN BULLET ?
 U+2044:/
+U+2048:?!
+U+2049:!?
 # end of General punctuation.
 U+2070:^0
 U+2074:^4
@@ -1370,22 +1428,31 @@ U+20a7:Pt
 U+20a9:W=
 # New euro currency sign glyph:
 U+20AC:EUR
+U+2100:a/c
+U+2101:a/s
 U+2103:oC
 U+2105:c/o
+U+2106:c/u
 U+2109:oF
+0x67	U+210a
+0x68	U+210e
+U+210f "\134hbar "
 U+2111:Im
+U+2113:l
 U+2116:No.
 U+2117:PO
 U+2118:P
 U+211C:Re
 U+211e:Rx
 U+2120:(SM)
+U+2121:TEL
 # TRADE MARK SIGN:
 U+2122:(TM)
 U+2126:Ohm
 0x4b	U+212A	# Kelvin sign - K
 U+212b:Ang.
 U+212E:est.
+0x6f	U+2134
 U+2135 "Aleph "
 U+2136 "Bet "
 U+2137 "Gimel "
@@ -1402,6 +1469,7 @@ U+215b: 1/8
 U+215c: 3/8
 U+215d: 5/8
 U+215e: 7/8
+U+215f: 1/
 U+2160:I
 U+2161:II
 U+2162:III
@@ -1459,25 +1527,34 @@ U+2200:FA
 U+2202:\partial
 U+2203:TE
 U+2205:{}
-U+2206:decr.
+U+2206:Delta
 U+2207:Nabla
 U+2208:(-
 U+2209:!(-
+U+220a:(-
 U+220b:-)
+U+220c:!-)
+U+220d:-)
+U+220e " qed"
 U+220f:\prod
 U+2211:\sum
 U+2212: -
 U+2213:-/+
 U+2214:.+
+0x2f	U+2215
+U+2216 " - "
 U+2217:*
 U+2218:Ob
 U+2219:sb
 U+221a " SQRT "
+U+221b " ROOT3 "
+U+221c " ROOT4 "
 U+221d:0(
 U+221e:infty
 U+221f:-L
 U+2220:-V
 U+2225:PP
+U+2226 " !PP "
 U+2227:AND
 U+2228:OR
 U+2229:(U
@@ -1495,30 +1572,69 @@ U+2243:?-
 U+2245:?=
 # ALMOST EQUAL TO:
 U+2248:~=
+U+2249 " !~= "
 U+224c:=?
 U+2253:HI
+U+2254::=
+U+2255:=:
 U+2260:!=
 U+2261:=3
+U+2262 " !=3 "
 U+2264:=<
 U+2265:>=
+U+2266:.LE.
+U+2267:.GE.
+U+2268:.LT.NOT.EQ.
+U+2269:.GT.NOT.EQ.
 U+226a:<<
 U+226b:>>
 U+226e:!<
 U+226f:!>
+U+2276 " <> "
+U+2277 " >< "
 U+2282:(C
 U+2283:)C
-U+2282:!(C
+U+2284 " !(C "
+U+2285 " !)C "
 U+2286:(_
 U+2287:)_
-U+2295:(+)
-U+2297:(x)
-U+2299:0.
-U+229a:02
+U+2295 "(+)"		# CIRCLED PLUS
+U+2296 "(-)"		# CIRCLED MINUS
+U+2297 "(x)"		# CIRCLED TIMES
+U+2298 "(/)"		# CIRCLED DIVISION SLASH
+U+2299 "(.)"		# CIRCLED DOT OPERATOR
+U+229A "(o)"		# CIRCLED RING OPERATOR
+U+229B "(*)"		# CIRCLED ASTERISK OPERATOR
+U+229C "(=)"		# CIRCLED EQUALS
+U+229D "(-)"		# CIRCLED DASH
+U+229E "[+]"		# SQUARED PLUS
+U+229F "[-]"		# SQUARED MINUS
+U+22A0 "[x]"		# SQUARED TIMES
+U+22A1 "[.]"		# SQUARED DOT OPERATOR
 U+22a5:-T
-U+22c5:.P
+U+22A7 " MODELS "		# MODELS
+U+22A8 " TRUE "		# TRUE
+U+22A9 " FORCES "		# FORCES
+U+22AC " !PROVES "		# DOES NOT PROVE
+U+22AD " NOT TRUE "		# NOT TRUE
+U+22AE " !FORCES "		# DOES NOT FORCE
+U+22B2 " NORMAL SUBGROUP OF "
+U+22B3 " CONTAINS AS NORMAL SUBGROUP "
+U+22B4 " NORMAL SUBGROUP OF OR EQUAL TO "
+U+22B5 " CONTAINS AS NORMAL SUBGROUP OR EQUAL TO "
+U+22B8 " MULTIMAP "		# MULTIMAP
+U+22BA " INTERCALATE "		# INTERCALATE
+U+22BB " XOR "		# XOR
+U+22BC " NAND "		# NAND
+U+22C5 " DOT "		# DOT OPERATOR
+U+22d6:<.
+U+22d7:>.
+U+22d8:<<<
+U+22d9:>>>
 U+22ee::3
 U+22ef:.3
 U+2302:Eh
+U+2307:~~
 U+2308:<7
 U+2309:>7
 U+230a:7<
@@ -1529,7 +1645,10 @@ U+2315:TR
 U+2318:88
 U+2320:Iu
 U+2321:Il
+U+2322::(
 U+2323::)
+U+2324:|^|
+U+2327:[X]
 U+2329:</
 U+232a:/>
 U+2423:Vs
@@ -1716,16 +1835,16 @@ U+25a9:RX
 U+25aa:sB
 U+25ac:SR
 U+25ad:Or
-U+25b2:UT
+U+25b2:^
 U+25b3:uT
-U+25b6:PR
+U+25b6:|>
 U+25b7:Tr
-U+25ba:PR
-U+25bc:Dt
+U+25ba:|>
+U+25bc:v
 U+25bd:dT
-U+25c0:PL
+U+25c0:<|
 U+25c1:Tl
-U+25c4:PL
+U+25c4:<|
 U+25c6:Db
 U+25c7:Dw
 U+25ca:LZ
@@ -1745,6 +1864,9 @@ U+260e:TEL
 U+260f:tel
 U+261c:<--
 U+261e:-->
+U+2621 "CAUTION "
+U+2627:XP
+U+2639::-(
 U+263a::-)
 U+263b:(-:
 U+263c:SU
@@ -1790,8 +1912,11 @@ U+3014:('
 U+3015:)'
 U+3016:(I
 U+3017:)I
+U+301a:[[
+U+301b:]]
 U+301c:-?
 U+3020:=T:)
+0x20	U+303f
 U+3041:A5
 U+3042:a5
 U+3043:I5
@@ -2163,6 +2288,14 @@ U+fefa:lh.
 U+fefb:la-
 U+fefc:la.
 
+# the reverse byte-order-mark: zero-width non-break space
+U+feff ""
+
+0x21-0x7e	U+ff01-U+ff5e
+0x2e	U+ff61
+0x22	U+ff62	U+ff63
+0x2c	U+ff64
+
 # Symbols for C0 and C1 control characters, in case they get through...
 U+0000:NUL
 U+0001:SH
@@ -2207,6 +2340,7 @@ U+007f:DT
 #U+0083:NH
 #U+0084:IN
 #U+0085:NL
+U+0085 "\012"
 #U+0086:SA
 #U+0087:ES
 #U+0088:HS
@@ -2236,5 +2370,5 @@ U+007f:DT
 
 # Let's try to show a question mark for character that cannot
 # be shown.  U+fffd is used for invalid characters.
-# It works, but let's stick with UHHH representatiion. - FM
-#U+fffd:?
+# It works, but let's stick with UHHH representation. - FM
+#U+fffd "?"

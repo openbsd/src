@@ -8,6 +8,95 @@
 
 #include <LYLeaks.h>
 
+PRIVATE BOOL link_has_target ARGS2(
+	linkstruct *,	a,
+	char *,		target)
+{
+    OptionType *option;
+    char *stars = NULL, *cp;
+
+    /*
+     *  Search the hightext string, and hightext2 if present,
+     *  taking the case_sensitive setting into account. - FM
+     */
+    if (LYno_attr_strstr(a->hightext, target)
+     || LYno_attr_strstr(a->hightext2, target)) {
+	return TRUE;
+    }
+
+    /*
+     *  Search the relevant form fields, taking the
+     *  case_sensitive setting into account. - FM
+     */
+    if ((a->form != NULL && a->form->value != NULL) &&
+	a->form->type != F_HIDDEN_TYPE) {
+	if (a->form->type == F_PASSWORD_TYPE) {
+	    /*
+	     *  Check the actual, hidden password, and then
+	     *  the displayed string. - FM
+	     */
+	    if (LYno_attr_strstr(a->form->value, target)) {
+		return TRUE;
+	    }
+	    StrAllocCopy(stars, a->form->value);
+	    for (cp = stars; *cp != '\0'; cp++)
+		*cp = '*';
+	    if (LYno_attr_strstr(stars, target)) {
+		FREE(stars);
+		return TRUE;
+	    }
+	    FREE(stars);
+	} else if (a->form->type == F_OPTION_LIST_TYPE) {
+	    /*
+	     *  Search the option strings that are displayed
+	     *  when the popup is invoked. - FM
+	     */
+	    option = a->form->select_list;
+	    while (option != NULL) {
+		if (LYno_attr_strstr(option->name, target)) {
+		    return TRUE;
+		}
+		option = option->next;
+	    }
+	} else if (a->form->type == F_RADIO_TYPE) {
+	    /*
+	     *  Search for checked or unchecked parens. - FM
+	     */
+	    if (a->form->num_value) {
+		cp = checked_radio;
+	    } else {
+		cp = unchecked_radio;
+	    }
+	    if (LYno_attr_strstr(cp, target)) {
+		return TRUE;
+	    }
+	} else if (a->form->type == F_CHECKBOX_TYPE) {
+	    /*
+	     *  Search for checked or unchecked square brackets. - FM
+	     */
+	    if (a->form->num_value) {
+		cp = checked_box;
+	    } else {
+		cp = unchecked_box;
+	    }
+	    if (LYno_attr_strstr(cp, target)) {
+		return TRUE;
+	    }
+	} else {
+	    /*
+	     *  Check the values intended for display.
+	     *  May have been found already via the
+	     *  hightext search, but make sure here
+	     *  that the entire value is searched. - FM
+	     */
+	    if (LYno_attr_strstr(a->form->value, target)) {
+		return TRUE;
+	    }
+	}
+    }
+    return FALSE;
+}
+
 /*
  *  Search for the target string inside of the links
  *  that are currently displayed on the screen beginning
@@ -16,158 +105,55 @@
  *  If not found do not reset cur and return FALSE.
  */
 
-PRIVATE int check_for_target_in_links ARGS2(
+PRIVATE int check_next_target_in_links ARGS2(
 	int *,		cur,
-	char *,		new_target)
+	char *,		target)
 {
-    int i = *cur + 1;
-    OptionType *option;
-    char *stars = NULL, *cp;
+    int i;
 
-    if (nlinks == 0)
-	return(FALSE);
-
-    for (; i < nlinks; i++) {
-        /*
-	 *  Search the hightext string, and hightext2 if present,
-	 *  taking the case_sensitive setting into account. - FM
-	 */
-	if (((links[i].hightext != NULL && case_sensitive == TRUE) &&
-	     LYno_attr_char_strstr(links[i].hightext, new_target)) ||
-	    ((links[i].hightext != NULL && case_sensitive == FALSE) &&
-	     LYno_attr_char_case_strstr(links[i].hightext, new_target))) {
-	    break;
-	}
-	if (((links[i].hightext2 != NULL && case_sensitive == TRUE) &&
-	     LYno_attr_char_strstr(links[i].hightext2, new_target)) ||
-	    ((links[i].hightext2 != NULL && case_sensitive == FALSE) &&
-	     LYno_attr_char_case_strstr(links[i].hightext2, new_target))) {
-	    break;
-	}
-
-	/*
-	 *  Search the relevant form fields, taking the
-	 *  case_sensitive setting into account. - FM
-	 */
-	if ((links[i].form != NULL && links[i].form->value != NULL) &&
-	    links[i].form->type != F_HIDDEN_TYPE) {
-	    if (links[i].form->type == F_PASSWORD_TYPE) {
-	        /*
-		 *  Check the actual, hidden password, and then
-		 *  the displayed string. - FM
-		 */
-		if (((case_sensitive == TRUE) &&
-		     LYno_attr_char_strstr(links[i].form->value,
-					   new_target)) ||
-		    ((case_sensitive == FALSE) &&
-		     LYno_attr_char_case_strstr(links[i].form->value,
-						new_target))) {
-		    break;
-		}
-		StrAllocCopy(stars, links[i].form->value);
-		for (cp = stars; *cp != '\0'; cp++)
-		    *cp = '*';
-		if (((case_sensitive == TRUE) &&
-		     LYno_attr_char_strstr(stars, new_target)) ||
-		    ((case_sensitive == FALSE) &&
-		     LYno_attr_char_case_strstr(stars, new_target))) {
-		    FREE(stars);
-		    break;
-		}
-		FREE(stars);
-	    } else if (links[i].form->type == F_OPTION_LIST_TYPE) {
-		/*
-		 *  Search the option strings that are displayed
-		 *  when the popup is invoked. - FM
-		 */
-		option = links[i].form->select_list;
-		while (option != NULL) {
-		    if (((option->name != NULL &&
-			  case_sensitive == TRUE) &&
-			 LYno_attr_char_strstr(option->name, new_target)) ||
-			((option->name != NULL &&
-			  case_sensitive == FALSE) &&
-			 LYno_attr_char_case_strstr(option->name,
-						    new_target))) {
-			break;
-		    }
-		    option = option->next;
-		}
-		if (option != NULL) {
-		    break;
-		}
-	    } else if (links[i].form->type == F_RADIO_TYPE) {
-		/*
-		 *  Search for checked or unchecked parens. - FM
-		 */
-	        if (links[i].form->num_value) {
-		    cp = checked_radio;
-		} else {
-		    cp = unchecked_radio;
-		}
-		if (((case_sensitive == TRUE) &&
-		     LYno_attr_char_strstr(cp, new_target)) ||
-		    ((case_sensitive == FALSE) &&
-		     LYno_attr_char_case_strstr(cp, new_target))) {
-		    break;
-		}
-	    } else if (links[i].form->type == F_CHECKBOX_TYPE) {
-		/*
-		 *  Search for checked or unchecked square brackets. - FM
-		 */
-	        if (links[i].form->num_value) {
-		    cp = checked_box;
-		} else {
-		    cp = unchecked_box;
-		}
-		if (((case_sensitive == TRUE) &&
-		     LYno_attr_char_strstr(cp, new_target)) ||
-		    ((case_sensitive == FALSE) &&
-		     LYno_attr_char_case_strstr(cp, new_target))) {
-		    break;
-		}
-	    } else {
-	        /*
-		 *  Check the values intended for display.
-		 *  May have been found already via the
-		 *  hightext search, but make sure here
-		 *  that the entire value is searched. - FM
-		 */
-		if (((case_sensitive == TRUE) &&
-		     LYno_attr_char_strstr(links[i].form->value,
-					   new_target)) ||
-		    ((case_sensitive == FALSE) &&
-		     LYno_attr_char_case_strstr(links[i].form->value,
-						new_target))) {
-		    break;
-		}
+    if (nlinks != 0) {
+	for (i = *cur + 1; i < nlinks; ++i) {
+	    if (link_has_target(&links[i], target)) {
+		*cur = i;
+		return TRUE;
 	    }
 	}
     }
+    return FALSE;
+}
 
-    if (i == nlinks)
-	return(FALSE);
- 
-    *cur = i;
-    return(TRUE);
+PRIVATE int check_prev_target_in_links ARGS2(
+	int *,		cur,
+	char *,		target)
+{
+    int i;
+
+    if (nlinks != 0) {
+	for (i = *cur - 1; i >= 0; --i) {
+	    if (link_has_target(&links[i], target)) {
+		*cur = i;
+		return TRUE;
+	    }
+	}
+    }
+    return FALSE;
 }
 
 /*
  *  Textsearch checks the prev_target variable to see if it is empty.
- *  If it is then it requests a new search string.  It then searches 
+ *  If it is then it requests a new search string.  It then searches
  *  the current file for the next instance of the search string and
  *  finds the line number that the string is on
- * 
+ *
  *  This is the primary USER search engine and is case sensitive
  *  or case insensitive depending on the 'case_sensitive' global
  *  variable
- *
  */
-		
-PUBLIC BOOL textsearch ARGS3(
+PUBLIC BOOL textsearch ARGS4(
 	document *,	cur_doc,
 	char *,		prev_target,
-	BOOL,		next)
+	int,		target_size,
+	int,		direction)
 {
     int offset;
     int oldcur = cur_doc->link;
@@ -188,18 +174,18 @@ PUBLIC BOOL textsearch ARGS3(
     }
 
     QueryTotal = (search_queries ? HTList_count(search_queries) : 0);
-    recall = ((QueryTotal >= 1) ? RECALL : NORECALL);
+    recall = ((QueryTotal >= 1) ? RECALL_URL : NORECALL);
     QueryNum = QueryTotal;
 
-    if (next)
-        /*
-	 *  LYK_NEXT was pressed, so copy the
-	 *  buffer into prev_target. - FM
+    if (direction != 0)
+	/*
+	 *  LYK_NEXT or LYK_PREV was pressed, so copy the
+	 *  buffer into prev_target.
 	 */
-	strcpy(prev_target, prev_target_buffer);
+	LYstrncpy(prev_target, prev_target_buffer, target_size);
 
     if (strlen(prev_target) == 0 ) {
-        /*
+	/*
 	 *  This is a new WHEREIS search ('/'), or
 	 *  LYK_NEXT was pressed but there was no
 	 *  previous search, so we need to get a
@@ -207,13 +193,12 @@ PUBLIC BOOL textsearch ARGS3(
 	 */
 	_statusline(ENTER_WHEREIS_QUERY);
 
-	if ((ch = LYgetstr(prev_target, VISIBLE,
-	    		   sizeof(prev_target_buffer), recall)) < 0) {
+	if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
 	    /*
 	     *  User cancelled the search via ^G.
 	     *  Restore prev_target and return. - FM
 	     */
-	    strcpy(prev_target, prev_target_buffer);
+	    LYstrncpy(prev_target, prev_target_buffer, target_size);
 	    HTInfoMsg(CANCELLED);
 	    return(FALSE);
 	}
@@ -221,14 +206,14 @@ PUBLIC BOOL textsearch ARGS3(
 
 check_recall:
     if (strlen(prev_target) == 0 &&
-        !(recall && (ch == UPARROW || ch == DNARROW))) {
-        /*
+	!(recall && (ch == UPARROW || ch == DNARROW))) {
+	/*
 	 *  No entry.  Simply return, retaining the current buffer.
 	 *  Because prev_target is now reset, highlighting of the
 	 *  previous search string will no longer occur, but it can
-	 *  be used again via LYK_NEXT.   - FM
+	 *  be used again via LYK_NEXT or LYK_PREV.
 	 */
-        HTInfoMsg(CANCELLED);
+	HTInfoMsg(CANCELLED);
 	return(FALSE);
     }
 
@@ -239,11 +224,11 @@ check_recall:
 	     */
 	    FirstRecall = FALSE;
 	    if (*prev_target_buffer) {
-	        for (QueryNum = (QueryTotal - 1); QueryNum > 0; QueryNum--) {
+		for (QueryNum = (QueryTotal - 1); QueryNum > 0; QueryNum--) {
 		    if ((cp = (char *)HTList_objectAt(search_queries,
-	    					      QueryNum)) != NULL &&
-		        !strcmp(prev_target_buffer, cp)) {
-		        break;
+						      QueryNum)) != NULL &&
+			!strcmp(prev_target_buffer, cp)) {
+			break;
 		    }
 		 }
 	     } else {
@@ -261,10 +246,10 @@ check_recall:
 	     */
 	    QueryNum = 0;
 	if ((cp = (char *)HTList_objectAt(search_queries,
-	    				  QueryNum)) != NULL) {
-	    strcpy(prev_target, cp);
+					  QueryNum)) != NULL) {
+	    LYstrncpy(prev_target, cp, target_size);
 	    if (*prev_target_buffer &&
-	        !strcmp(prev_target_buffer, prev_target)) {
+		!strcmp(prev_target_buffer, prev_target)) {
 		_statusline(EDIT_CURRENT_QUERY);
 	    } else if ((*prev_target_buffer && QueryTotal == 2) ||
 		       (!(*prev_target_buffer) && QueryTotal == 1)) {
@@ -272,13 +257,12 @@ check_recall:
 	    } else {
 		_statusline(EDIT_A_PREV_QUERY);
 	    }
-	    if ((ch = LYgetstr(prev_target, VISIBLE,
-	    		       sizeof(prev_target_buffer), recall)) < 0) {
-	        /*
-		 *  User cancelled the search via ^G.
+	    if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
+		/*
+		 *  User canceled the search via ^G.
 		 *  Restore prev_target and return. - FM
 		 */
-		strcpy(prev_target, prev_target_buffer);
+		LYstrncpy(prev_target, prev_target_buffer, target_size);
 		HTInfoMsg(CANCELLED);
 		return(FALSE);
 	    }
@@ -291,11 +275,11 @@ check_recall:
 	     */
 	    FirstRecall = FALSE;
 	    if (*prev_target_buffer) {
-	        for (QueryNum = 0; QueryNum < (QueryTotal - 1); QueryNum++) {
+		for (QueryNum = 0; QueryNum < (QueryTotal - 1); QueryNum++) {
 		    if ((cp = (char *)HTList_objectAt(search_queries,
-	    					      QueryNum)) != NULL &&
-		        !strcmp(prev_target_buffer, cp)) {
-		        break;
+						      QueryNum)) != NULL &&
+			!strcmp(prev_target_buffer, cp)) {
+			break;
 		    }
 		}
 	    } else {
@@ -313,10 +297,10 @@ check_recall:
 	     */
 	    QueryNum = QueryTotal - 1;
 	if ((cp = (char *)HTList_objectAt(search_queries,
-	    				  QueryNum)) != NULL) {
-	    strcpy(prev_target, cp);
+					  QueryNum)) != NULL) {
+	    LYstrncpy(prev_target, cp, target_size);
 	    if (*prev_target_buffer &&
-	        !strcmp(prev_target_buffer, prev_target)) {
+		!strcmp(prev_target_buffer, prev_target)) {
 		_statusline(EDIT_CURRENT_QUERY);
 	    } else if ((*prev_target_buffer && QueryTotal == 2) ||
 		       (!(*prev_target_buffer) && QueryTotal == 1)) {
@@ -324,13 +308,12 @@ check_recall:
 	    } else {
 		_statusline(EDIT_A_PREV_QUERY);
 	    }
-	    if ((ch = LYgetstr(prev_target, VISIBLE,
-			       sizeof(prev_target_buffer), recall)) < 0) {
-	        /*
+	    if ((ch = LYgetstr(prev_target, VISIBLE, target_size, recall)) < 0) {
+		/*
 		 *  User cancelled the search via ^G.
 		 *  Restore prev_target and return. - FM
 		 */
-		strcpy(prev_target, prev_target_buffer);
+		LYstrncpy(prev_target, prev_target_buffer, target_size);
 		HTInfoMsg(CANCELLED);
 		return(FALSE);
 	    }
@@ -340,39 +323,51 @@ check_recall:
     /*
      *  Replace the search string buffer with the new target. - FM
      */
-    strcpy(prev_target_buffer, prev_target);
+    LYstrncpy(prev_target_buffer, prev_target, sizeof(prev_target_buffer)-1);
     HTAddSearchQuery(prev_target_buffer);
 
-    /*
-     *  Search the links on the currently displayed page for
-     *  the string, starting after the current link. - FM
-     */
-    if (check_for_target_in_links(&cur_doc->link, prev_target)) {
+    if (direction < 0) {
+	offset = 0;
+	if (check_prev_target_in_links(&cur_doc->link, prev_target)) {
+	    /*
+	     *  Found in link, changed cur, we're done.
+	     */
+	    highlight(OFF, oldcur, prev_target);
+	    return(TRUE);
+	}
+    } else {
+
 	/*
-	 *  Found in link, changed cur, we're done.
+	 *  Search the links on the currently displayed page for
+	 *  the string, starting after the current link. - FM
 	 */
-	highlight(OFF, oldcur, prev_target);
-	return(TRUE); 
+	if (check_next_target_in_links(&cur_doc->link, prev_target)) {
+	    /*
+	     *  Found in link, changed cur, we're done.
+	     */
+	    highlight(OFF, oldcur, prev_target);
+	    return(TRUE);
+	}
+
+	/*
+	 *  We'll search the text starting from the
+	 *  link we are on, or the next page.
+	 */
+	if (nlinks == 0)
+	    offset = (display_lines - 1);
+	else
+	    offset = links[cur_doc->link].ly - 1;
     }
-	
-    /*
-     *  We'll search the text starting from the
-     *  link we are on, or the next page.
-     */
-    if (nlinks == 0)
-	offset = (display_lines - 1);
-    else
-	offset = links[cur_doc->link].ly - 1;
 
     /*
      *  Resume search, this time for all text.
      *  Set www_search_result if string found,
      *  and position the hit near top of screen.
      */
-    www_user_search((cur_doc->line + offset), cur_doc, prev_target);
+    www_user_search((cur_doc->line + offset), cur_doc, prev_target, direction);
     if (cur_doc->link != oldcur) {
 	highlight(OFF, oldcur, prev_target);
 	return(TRUE);
     }
-    return(www_search_result > 0);
+    return (BOOL) (www_search_result > 0);
 }

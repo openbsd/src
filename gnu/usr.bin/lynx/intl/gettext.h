@@ -1,4 +1,4 @@
-/* Internal header for GNU gettext internationalization functions
+/* Internal header for GNU gettext internationalization functions.
    Copyright (C) 1995, 1997 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#if HAVE_LIMITS_H || _LIBC
+#if defined(HAVE_LIMITS_H) || defined(_LIBC)
 # include <limits.h>
 #endif
 

@@ -11,13 +11,20 @@
 #include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
-#ifdef HAVE_CONFIG_H
+/* Of the following definitions, currently unused are and could
+   be removed (at least):
+   CURRENT_KEYMAP_HELP
+*/
+#if defined(HAVE_CONFIG_H) && defined(HAVE_LYHELP_H)
 #include <LYHelp.h>
 #else
+#define ALT_EDIT_HELP		"keystrokes/alt_edit_help.html"
+#define BASHLIKE_EDIT_HELP	"keystrokes/bashlike_edit_help.html"
 #define COOKIE_JAR_HELP		"Lynx_users_guide.html#Cookies"
 #define CURRENT_KEYMAP_HELP	"keystrokes/keystroke_help.html"
 #define DIRED_MENU_HELP		"keystrokes/dired_help.html"
 #define DOWNLOAD_OPTIONS_HELP	"Lynx_users_guide.html#RemoteSource"
+#define EDIT_HELP		"keystrokes/edit_help.html"
 #define HISTORY_PAGE_HELP	"keystrokes/history_help.html"
 #define LIST_PAGE_HELP		"keystrokes/follow_help.html"
 #define LYNXCFG_HELP		"lynx.cfg"
@@ -31,6 +38,8 @@
 #include <HTChunk.h>
 #endif
 
+#include <LYMail.h>		/* to get ifdef's for mail-variables */
+
 #ifdef SOCKS
 extern BOOLEAN socks_flag;
 #endif /* SOCKS */
@@ -39,7 +48,7 @@ extern BOOLEAN socks_flag;
 extern BOOLEAN sigint;
 #endif /* IGNORE_CTRL_C */
 
-#ifdef VMS
+#if USE_VMS_MAILER
 extern char *mail_adrs;
 extern BOOLEAN UseFixedRecords; /* convert binary files to FIXED 512 records */
 #endif /* VMS */
@@ -65,6 +74,7 @@ extern BOOLEAN prev_lynx_edit_mode;
 #ifdef OK_PERMIT
 extern BOOLEAN no_change_exec_perms;
 #endif /* OK_PERMIT */
+extern int LYAutoUncacheDirLists;
 #endif /* DIRED_SUPPORT */
 
 extern int HTCacheSize;  /* the number of documents cached in memory */
@@ -85,7 +95,7 @@ extern char *LYCgiDocumentRoot;  /* DOCUMENT_ROOT in the lynxcgi env */
 /* Values to which keypad_mode can be set */
 #define NUMBERS_AS_ARROWS 0
 #define LINKS_ARE_NUMBERED 1
-#define LINKS_AND_FORM_FIELDS_ARE_NUMBERED 2
+#define LINKS_AND_FIELDS_ARE_NUMBERED 2
 
 #define HIDDENLINKS_MERGE	0
 #define HIDDENLINKS_SEPARATE	1
@@ -97,114 +107,140 @@ extern char *LYCgiDocumentRoot;  /* DOCUMENT_ROOT in the lynxcgi env */
 extern BOOLEAN LYUseNoviceLineTwo;  /* True if TOGGLE_HELP is not mapped */
 
 #define MAX_LINE 1024	/* Hope that no window is larger than this */
+#define MAX_COLS 999	/* we don't expect wider than this */
+#define DFT_COLS 80	/* ...and normally only this */
+#define DFT_ROWS 24	/* ...corresponding nominal height */
+
 extern char star_string[MAX_LINE + 1]; /* from GridText.c */
 #define STARS(n) \
  ((n) >= MAX_LINE ? star_string : &star_string[(MAX_LINE-1)] - (n))
 
-#define SHOW_COLOR_UNKNOWN	(-1)
-#define SHOW_COLOR_NEVER  0
-#define SHOW_COLOR_OFF	  1
-#define SHOW_COLOR_ON	  2
-#define SHOW_COLOR_ALWAYS 3
+typedef enum {
+    SHOW_COLOR_UNKNOWN = 0
+    , SHOW_COLOR_NEVER
+    , SHOW_COLOR_OFF
+    , SHOW_COLOR_ON
+    , SHOW_COLOR_ALWAYS
+} enumShowColor;
+
 extern int LYShowColor;		/* Show color or monochrome?	    */
-extern int LYChosenShowColor;	/* extended color/monochrome choice */
 extern int LYrcShowColor;	/* ... as read or last written	    */
+
+typedef enum {
+    MBM_OFF = 0
+    , MBM_STANDARD
+    , MBM_ADVANCED
+} enumMultiBookmarks;
 
 #if !defined(NO_OPTION_FORMS) && !defined(NO_OPTION_MENU)
 extern BOOLEAN LYUseFormsOptions; /* use Forms-based options menu */
 #else
 #define LYUseFormsOptions FALSE	/* simplify ifdef'ing in LYMainLoop.c */
 #endif
-extern BOOLEAN LYShowCursor;	/* Show the cursor or hide it?	    */
-extern BOOLEAN verbose_img;	/* display filenames of images?     */
-extern BOOLEAN LYUseDefShoCur;	/* Command line -show_cursor toggle */
-extern BOOLEAN LYCursesON;  /* start_curses()->TRUE, stop_curses()->FALSE */
-extern BOOLEAN LYUserSpecifiedURL;  /* URL from a goto or document? */
+
+typedef enum {
+    rateOFF = 0
+    , rateBYTES = 1
+    , rateKB
+#ifdef EXP_READPROGRESS
+    , rateEtaBYTES
+    , rateEtaKB
+#endif
+} TransferRate;
+
+#ifdef EXP_READPROGRESS
+#  define rateEtaKB_maybe	rateEtaKB
+#else
+#  define rateEtaKB_maybe	rateKB
+#endif
+
+extern BOOLEAN LYCursesON;  	/* start_curses()->TRUE, stop_curses()->FALSE */
 extern BOOLEAN LYJumpFileURL;   /* URL from the jump file shortcuts? */
-extern BOOLEAN jump_buffer;     /* TRUE if offering default shortcut */
-extern BOOLEAN goto_buffer;     /* TRUE if offering default goto URL */
-extern char *LYRequestTitle;    /* newdoc.title in calls to getfile() */
-extern char *jumpprompt;        /* The default jump statusline prompt */
-extern int more;  /* is there more document to display? */
-extern int display_lines; /* number of lines in the display */
-extern int www_search_result;
-extern char *checked_box;  /* form boxes */
-extern char *unchecked_box;  /* form boxes */
-extern char *checked_radio;  /* form radio buttons */
-extern char *unchecked_radio;  /* form radio buttons */
-extern char *empty_string;
-extern char *LynxHome;
-extern char *original_dir;
-extern char *startfile;
-extern char *helpfile;
-extern char *helpfilepath;
-extern char *lynxjumpfile;
-extern char *lynxlistfile;
-extern char *lynxlinksfile;
-extern char *x_display;
-extern char *language;
-extern char *pref_charset;	/* Lynx's preferred character set - MM */
 extern BOOLEAN LYNewsPosting;	/* News posting supported if TRUE */
-extern char *LynxSigFile;	/* Signature file, in or off home */
-extern char *system_mail;
-extern char *system_mail_flags;
-extern char *lynx_cfg_file;	/* location of active lynx.cfg file */
-extern char *lynx_temp_space;
-extern char *lynx_save_space;
+extern BOOLEAN LYShowCursor;	/* Show the cursor or hide it?	    */
+extern BOOLEAN LYShowTransferRate;
+extern BOOLEAN LYUseDefShoCur;	/* Command line -show_cursor toggle */
+extern BOOLEAN LYUserSpecifiedURL;  /* URL from a goto or document? */
 extern BOOLEAN LYforce_HTML_mode;
 extern BOOLEAN LYforce_no_cache;
-extern BOOLEAN LYoverride_no_cache;  /* don't need fresh copy, from history */
 extern BOOLEAN LYinternal_flag; /* don't need fresh copy, was internal link */
+extern BOOLEAN LYoverride_no_cache;  /* don't need fresh copy, from history */
 extern BOOLEAN LYresubmit_posts;
-extern BOOLEAN LYshow_kb_rate;	/* show KB/sec in HTReadProgress */
-extern int user_mode;		/* novice or advanced */
-extern BOOLEAN is_www_index;
-extern BOOLEAN dump_output_immediately;
-extern int dump_output_width;
-extern BOOLEAN lynx_mode;
-extern BOOLEAN bold_headers;
+extern BOOLEAN LYtrimInputFields;
 extern BOOLEAN bold_H1;
+extern BOOLEAN bold_headers;
 extern BOOLEAN bold_name_anchors;
-extern BOOLEAN recent_sizechange;
-extern BOOLEAN telnet_ok;
-extern BOOLEAN news_ok;
+extern BOOLEAN case_sensitive;    /* TRUE to turn on case sensitive search */
+extern BOOLEAN check_mail;        /* TRUE to report unread/new mail messages */
+extern BOOLEAN child_lynx;        /* TRUE to exit with an arrow */
+extern BOOLEAN dump_output_immediately;
+extern BOOLEAN emacs_keys;        /* TRUE to turn on emacs-like key movement */
+extern BOOLEAN error_logging;     /* TRUE to mail error messages */
 extern BOOLEAN ftp_ok;
 extern BOOLEAN ftp_passive;	/* TRUE if we want to use passive mode ftp */
-extern BOOLEAN ftp_local_passive;
-extern char *ftp_lasthost;
+extern BOOLEAN goto_buffer;     /* TRUE if offering default goto URL */
+extern BOOLEAN is_www_index;
+extern BOOLEAN jump_buffer;     /* TRUE if offering default shortcut */
+extern BOOLEAN long_url_ok;
+extern BOOLEAN lynx_mode;
+extern BOOLEAN more;		/* is there more document to display? */
+extern BOOLEAN news_ok;
+extern BOOLEAN recent_sizechange;
 extern BOOLEAN rlogin_ok;
-extern BOOLEAN system_editor;     /* True if locked-down editor */
-extern BOOLEAN child_lynx;        /* TRUE to exit with an arrow */
-extern BOOLEAN error_logging;     /* TRUE to mail error messages */
-extern BOOLEAN check_mail;        /* TRUE to report unread/new mail messages */
-extern BOOLEAN vi_keys;           /* TRUE to turn on vi-like key movement */
-extern BOOLEAN emacs_keys;        /* TRUE to turn on emacs-like key movement */
-extern int keypad_mode;           /* is set to either NUMBERS_AS_ARROWS *
-				   * or LINKS_ARE_NUMBERED 		*/
-extern BOOLEAN case_sensitive;    /* TRUE to turn on case sensitive search */
-extern BOOLEAN no_inside_telnet;  /* this and following are restrictions */
-extern BOOLEAN no_outside_telnet;
-extern BOOLEAN no_telnet_port;
-extern BOOLEAN no_inside_news;
-extern BOOLEAN no_outside_news;
-extern BOOLEAN no_inside_ftp;
-extern BOOLEAN no_outside_ftp;
-extern BOOLEAN no_inside_rlogin;
-extern BOOLEAN no_outside_rlogin;
-extern BOOLEAN no_suspend;
-extern BOOLEAN no_editor;
-extern BOOLEAN no_shell;
-extern BOOLEAN no_bookmark;
-extern BOOLEAN no_multibook;
-extern BOOLEAN no_bookmark_exec;
-extern BOOLEAN no_option_save;
-extern BOOLEAN no_download;
-extern BOOLEAN no_print;          /* TRUE to disable printing */
-extern BOOLEAN no_disk_save;
-extern BOOLEAN no_exec;
-extern BOOLEAN no_lynxcgi;
+extern BOOLEAN system_editor;	  /* True if locked-down editor */
+extern BOOLEAN telnet_ok;
+extern BOOLEAN verbose_img;	/* display filenames of images?     */
+extern BOOLEAN vi_keys;		/* TRUE to turn on vi-like key movement */
+extern char *LYRequestReferer;	/* Referer, may be set in getfile() */
+extern char *LYRequestTitle;	/* newdoc.title in calls to getfile() */
+extern char *LynxHome;
+extern char *LynxSigFile;	/* Signature file, in or off home */
+extern char *checked_box;	/* form boxes */
+extern char *checked_radio;	/* form radio buttons */
+extern char *empty_string;
+extern char *helpfile;
+extern char *helpfilepath;
+extern char *jumpprompt;	/* The default jump statusline prompt */
+extern char *language;
+extern char *lynx_cfg_file;	/* location of active lynx.cfg file */
+extern char *lynx_cmd_logfile;	/* file to write keystroke commands, if any */
+extern char *lynx_cmd_script;	/* file to read keystroke commands, if any */
+extern char *lynx_save_space;
+extern char *lynx_temp_space;
+extern char *lynxjumpfile;
+extern char *lynxlinksfile;
+extern char *lynxlistfile;
+extern char *original_dir;
+extern char *pref_charset;	/* Lynx's preferred character set - MM */
+extern char *startfile;
+extern char *system_mail;
+extern char *system_mail_flags;
+extern char *unchecked_box;	/* form boxes */
+extern char *unchecked_radio;	/* form radio buttons */
+extern char *x_display;
+extern int LYTransferRate;	/* see enum TransferRate */
+extern int display_lines;	/* number of lines in the display */
+extern int dump_output_width;
+extern int keypad_mode;		/* NUMBERS_AS_ARROWS or LINKS_ARE_NUMBERED */
+extern int lynx_temp_subspace;
+extern int user_mode;		/* novice or advanced */
+extern int www_search_result;
+
 extern BOOLEAN exec_frozen;
+extern BOOLEAN had_restrictions_all;     /* parsed these restriction options */
+extern BOOLEAN had_restrictions_default; /* flags to note whether we have... */
+extern BOOLEAN no_bookmark;
+extern BOOLEAN no_bookmark_exec;
+extern BOOLEAN no_chdir;
+extern BOOLEAN no_compileopts_info;
+extern BOOLEAN no_disk_save;
+extern BOOLEAN no_dotfiles;
+extern BOOLEAN no_download;
+extern BOOLEAN no_editor;
+extern BOOLEAN no_exec;
+extern BOOLEAN no_file_url;
 extern BOOLEAN no_goto;
+extern BOOLEAN no_goto_configinfo;
 extern BOOLEAN no_goto_cso;
 extern BOOLEAN no_goto_file;
 extern BOOLEAN no_goto_finger;
@@ -223,14 +259,31 @@ extern BOOLEAN no_goto_snews;
 extern BOOLEAN no_goto_telnet;
 extern BOOLEAN no_goto_tn3270;
 extern BOOLEAN no_goto_wais;
+extern BOOLEAN no_inside_ftp;
+extern BOOLEAN no_inside_news;
+extern BOOLEAN no_inside_rlogin;
+extern BOOLEAN no_inside_telnet;  /* this and following are restrictions */
 extern BOOLEAN no_jump;
-extern BOOLEAN no_file_url;
-extern BOOLEAN no_newspost;
+extern BOOLEAN no_lynxcfg_info;
+extern BOOLEAN no_lynxcfg_xinfo;
+extern BOOLEAN no_lynxcgi;
 extern BOOLEAN no_mail;
-extern BOOLEAN no_dotfiles;
+extern BOOLEAN no_multibook;
+extern BOOLEAN no_newspost;
+extern BOOLEAN no_option_save;
+extern BOOLEAN no_outside_ftp;
+extern BOOLEAN no_outside_news;
+extern BOOLEAN no_outside_rlogin;
+extern BOOLEAN no_outside_telnet;
+extern BOOLEAN no_print;          /* TRUE to disable printing */
+extern BOOLEAN no_shell;
+extern BOOLEAN no_suspend;
+extern BOOLEAN no_telnet_port;
 extern BOOLEAN no_useragent;
+
 extern BOOLEAN no_statusline;
 extern BOOLEAN no_filereferer;
+extern char LYRefererWithQuery;	/* 'S', 'P', or 'D' */
 extern BOOLEAN local_host_only;
 extern BOOLEAN override_no_download;
 extern BOOLEAN show_dotfiles;	/* From rcfile if no_dotfiles is false */
@@ -253,17 +306,21 @@ extern BOOLEAN nolist;
 extern BOOLEAN historical_comments;
 extern BOOLEAN minimal_comments;
 extern BOOLEAN soft_dquotes;
+
 #ifdef SOURCE_CACHE
-extern char * source_cache_filename;
-extern HTChunk * source_cache_chunk;
-extern BOOLEAN from_source_cache; /* mutable */
+extern BOOLEAN source_cache_file_error;
 extern int LYCacheSource;
 #define SOURCE_CACHE_NONE	0
 #define SOURCE_CACHE_FILE	1
 #define SOURCE_CACHE_MEMORY	2
+
+extern int LYCacheSourceForAborted;
+#define SOURCE_CACHE_FOR_ABORTED_KEEP 1
+#define SOURCE_CACHE_FOR_ABORTED_DROP 0
 #endif
+
 extern BOOLEAN LYCancelDownload;
-extern BOOLEAN LYRestricted;
+extern BOOLEAN LYRestricted;	/* whether we had -anonymous option */
 extern BOOLEAN LYValidate;
 extern BOOLEAN LYPermitURL;
 extern BOOLEAN enable_scrollback; /* Clear screen before displaying new page */
@@ -271,13 +328,11 @@ extern BOOLEAN keep_mime_headers; /* Include mime headers and *
 				   * force source dump	      */
 extern BOOLEAN no_url_redirection;   /* Don't follow URL redirections */
 #ifdef DISP_PARTIAL
-extern BOOLEAN display_partial;      /* Display document during download */
-extern int Newline_partial;          /* -//- "current" newline position */
+extern BOOLEAN display_partial;      /* Display document while loading */
 extern int NumOfLines_partial;       /* -//- "current" number of lines */
 extern int partial_threshold;
 extern BOOLEAN debug_display_partial;  /* show with MessageSecs delay */
 extern BOOLEAN display_partial_flag; /* permanent flag, not mutable */
-extern int Newline; /* original newline position, from mainloop() */
 #endif
 extern char *form_post_data;         /* User data for post form */
 extern char *form_get_data;          /* User data for get form */
@@ -288,6 +343,7 @@ extern BOOLEAN HEAD_request;         /* Do a HEAD request */
 extern BOOLEAN scan_for_buried_news_references;
 extern BOOLEAN bookmark_start;       /* Use bookmarks as startfile */
 extern BOOLEAN clickable_images;
+extern BOOLEAN nested_tables;
 extern BOOLEAN pseudo_inline_alts;
 extern BOOLEAN crawl;
 extern BOOLEAN traversal;
@@ -323,9 +379,8 @@ extern char *URLDomainSuffixes;
 extern BOOLEAN startfile_ok;
 extern BOOLEAN LYSelectPopups;		/* Cast popups to radio buttons? */
 extern BOOLEAN LYUseDefSelPop;		/* Command line -popup toggle    */
-extern BOOLEAN LYMultiBookmarks;    	/* Multi bookmark support on?	 */
+extern int LYMultiBookmarks;		/* Multi bookmark support on?	 */
 extern BOOLEAN LYMBMBlocked;		/* Force MBM support off?	 */
-extern BOOLEAN LYMBMAdvanced;		/* MBM statusline for ADVANCED?	 */
 extern int LYStatusLine;		/* Line for statusline() or -1   */
 extern BOOLEAN LYCollapseBRs;		/* Collapse serial BRs?		 */
 extern BOOLEAN LYSetCookies;		/* Process Set-Cookie headers?	 */
@@ -340,41 +395,146 @@ extern char *LYCookieSRejectDomains;    /* domains to reject all cookies */
 extern char *LYCookieSStrictCheckDomains;/* domains to check strictly    */
 extern char *LYCookieSLooseCheckDomains;/* domains to check loosely      */
 extern char *LYCookieSQueryCheckDomains;/* domains to check w/a query    */
+
+#ifndef DISABLE_BIBP
+extern BOOLEAN no_goto_bibp;
+extern char *BibP_globalserver;         /* global server for bibp: links */
+extern char *BibP_bibhost;              /* local server for bibp: links  */
+extern BOOLEAN BibP_bibhost_checked;    /* bibhost has been checked      */
+extern BOOLEAN BibP_bibhost_available;  /* bibhost is responding         */
+#endif
+
 #ifdef EXP_PERSISTENT_COOKIES
 extern BOOLEAN persistent_cookies;
-extern char *LYCookieFile;              /* file to store cookies in      */
+extern char *LYCookieFile;              /* cookie read file              */
+extern char *LYCookieSaveFile;          /* cookie save file              */
 #endif /* EXP_PERSISTENT_COOKIES */
+
 extern char *XLoadImageCommand;		/* Default image viewer for X	 */
+
 #ifdef USE_EXTERNALS
 extern BOOLEAN no_externals; 		/* don't allow the use of externals */
 #endif
+
 extern BOOLEAN LYNoISMAPifUSEMAP;	/* Omit ISMAP link if MAP present? */
 extern int LYHiddenLinks;
 
-extern BOOL Old_DTD;
+extern int Old_DTD;
 
 #define MBM_V_MAXFILES  25		/* Max number of sub-bookmark files */
 /*
  *  Arrays that holds the names of sub-bookmark files
  *  and their descriptions.
  */
-extern char *MBM_A_subbookmark[MBM_V_MAXFILES+1];
-extern char *MBM_A_subdescript[MBM_V_MAXFILES+1];
-extern FILE *LYTraceLogFP;		/* Pointer for TRACE log	 */
-extern char *LYTraceLogPath;		/* Path for TRACE log		 */
-extern BOOLEAN LYUseTraceLog;		/* Use a TRACE log?		 */
-extern BOOLEAN LYSeekFragMAPinCur;
-extern BOOLEAN LYSeekFragAREAinCur;
-extern BOOLEAN LYStripDotDotURLs;	/* Try to fix ../ in some URLs?  */
 extern BOOLEAN LYForceSSLCookiesSecure;
 extern BOOLEAN LYNoCc;
+extern BOOLEAN LYNonRestartingSIGWINCH;
 extern BOOLEAN LYPreparsedSource;	/* Show source as preparsed?	 */
 extern BOOLEAN LYPrependBaseToSource;
 extern BOOLEAN LYPrependCharsetToSource;
 extern BOOLEAN LYQuitDefaultYes;
+extern BOOLEAN LYReuseTempfiles;
+extern BOOLEAN LYSeekFragAREAinCur;
+extern BOOLEAN LYSeekFragMAPinCur;
+extern BOOLEAN LYStripDotDotURLs;	/* Try to fix ../ in some URLs?  */
+extern BOOLEAN LYUseBuiltinSuffixes;
+extern BOOLEAN dont_wrap_pre;
+extern char *MBM_A_subbookmark[MBM_V_MAXFILES+1];
+extern char *MBM_A_subdescript[MBM_V_MAXFILES+1];
+
+#ifdef MISC_EXP
+extern int LYNoZapKey;  /* 0: off (do 'z' checking), 1: full, 2: initially */
+#endif
+
+#ifdef EXP_JUSTIFY_ELTS
+extern BOOL ok_justify;
+extern int justify_max_void_percent;
+#endif
+
+#ifndef NO_DUMP_WITH_BACKSPACES
+extern BOOLEAN with_backspaces;
+#endif
+
+#ifndef NO_LYNX_TRACE
+extern FILE *LYTraceLogFP;		/* Pointer for TRACE log	 */
+extern char *LYTraceLogPath;		/* Path for TRACE log		 */
+#endif
+extern BOOLEAN LYUseTraceLog;		/* Use a TRACE log?		 */
+
+extern BOOL force_empty_hrefless_a;
+extern int connect_timeout;
+
+#ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
+extern BOOL textfields_need_activation;
+extern BOOL textfields_activation_option;
+#ifdef INACTIVE_INPUT_STYLE_VH
+extern BOOL textinput_redrawn;
+#endif
+#else
+#define textfields_need_activation FALSE
+#endif /* TEXTFIELDS_MAY_NEED_ACTIVATION */
+
+extern BOOLEAN textfield_prompt_at_left_edge;
+
 
 #ifndef VMS
 extern BOOLEAN LYNoCore;
+extern BOOLEAN restore_sigpipe_for_children;
 #endif /* !VMS */
+
+extern int HTNoDataOK;		/* HT_NO_DATA-is-ok hack */
+extern BOOLEAN FileInitAlreadyDone;
+
+#ifdef WIN_EX
+/* LYMain.c */
+extern BOOLEAN focus_window;
+extern BOOLEAN system_is_NT;
+extern char windows_drive[4];
+extern int lynx_timeout;
+#endif /* _WINDOWS */
+
+#ifdef SH_EX
+extern BOOLEAN show_cfg;
+#ifdef WIN_EX
+extern int     debug_delay;
+#endif
+extern BOOLEAN no_table_center;
+#endif
+
+#if USE_BLAT_MAILER
+extern BOOLEAN mail_is_blat;
+#endif
+
+#if defined(__CYGWIN__)
+extern void cygwin_conv_to_full_win32_path(char *posix, char *dos);
+extern void cygwin_conv_to_full_posix_path(char *dos, char *posix);
+extern int setmode(int handle, int amode);
+#endif
+
+#if !defined(__CYGWIN__) && defined(__CYGWIN32__)
+#define __CYGWIN__
+
+#define	cygwin_conv_to_full_win32_path(p, q) \
+	cygwin32_conv_to_full_win32_path(p, q)
+
+#define	cygwin_conv_to_full_posix_path(p, q) \
+	cygwin32_conv_to_full_posix_path(p, q)
+#endif
+
+#ifdef USE_SCROLLBAR
+/* GridText.c */
+extern BOOLEAN LYsb;
+extern BOOLEAN LYsb_arrow;
+extern int LYsb_begin;
+extern int LYsb_end;
+#endif
+
+#ifdef MARK_HIDDEN_LINKS
+extern char* hidden_link_marker;
+#endif
+
+#ifdef USE_BLINK
+extern BOOLEAN term_blink_is_boldbg;
+#endif
 
 #endif /* LYGLOBALDEFS_H */

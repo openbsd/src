@@ -48,11 +48,9 @@
 #include <HTAAUtil.h>	/* Implemented here	*/
 #include <HTAssoc.h>	/* Assoc list		*/
 #include <HTTCP.h>
+#include <HTTP.h>
 
 #ifdef USE_SSL
-#define free_func free__func
-#include <openssl/ssl.h>
-#undef free_func
 PRIVATE SSL * Handle = NULL;	/* The SSL Handle	*/
 #endif /* USE_SSL */
 
@@ -197,7 +195,7 @@ PUBLIC BOOL HTAAMethod_inList ARGS2(HTAAMethod, method,
     char *item;
 
     while (NULL != (item = (char*)HTList_nextObject(cur))) {
-	CTRACE(tfp, " %s", item);
+	CTRACE((tfp, " %s", item));
 	if (method == HTAAMethod_enum(item))
 	    return YES;
     }
@@ -346,8 +344,8 @@ PUBLIC char *HTAA_makeProtectionTemplate ARGS1(CONST char *, docname)
     else
 	StrAllocCopy(template, "*");
 
-    CTRACE(tfp, "make_template: made template `%s' for file `%s'\n",
-		template, docname);
+    CTRACE((tfp, "make_template: made template `%s' for file `%s'\n",
+		template, docname));
 
     return template;
 }
@@ -550,9 +548,9 @@ PUBLIC char *HTAA_getUnfoldedLine NOARGS
     BOOL peek_for_folding = NO;
 
     if (in_soc < 0) {
-	CTRACE(tfp, "%s %s\n",
+	CTRACE((tfp, "%s %s\n",
 		    "HTAA_getUnfoldedLine: buffer not initialized",
-		    "with function HTAA_setupReader()");
+		    "with function HTAA_setupReader()"));
 	return NULL;
     }
 

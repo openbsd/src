@@ -4,8 +4,8 @@
 */
 
 #include <HTUtils.h>
-#include <HTStyle.h>
 #include <HTFont.h>
+#include <HTStyle.h>
 
 #include <LYLeaks.h>
 
@@ -19,14 +19,6 @@ PRIVATE CONST HTTabStop tabs_8[] = {
 	{0, 168}, {0, 176},
 	{0, 0 }		/* Terminate */
 };
-
-#ifdef NOT_USED
-PRIVATE HTTabStop tabs_16[] = {
-	{ 0, 16 }, {0, 32}, {0, 48}, {0, 64}, {0, 80},
-	{0, 96}, {0, 112},
-	{0, 0 }		/* Terminate */
-};
-#endif /* NOT_USED */
 
 /* Template:
 **	link to next, name, tag,

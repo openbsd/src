@@ -33,9 +33,8 @@
 #include <LYStyle.h>
 #endif
 
+#include <LYGlobalDefs.h>
 #include <LYLeaks.h>
-
-extern BOOLEAN LYPreparsedSource;	/* Show source as preparsed?	*/
 
 #define PUTC(c) (*me->targetClass.put_character)(me->target, c)
 /* #define PUTS(s) (*me->targetClass.put_string)(me->target, s) */
@@ -83,7 +82,7 @@ struct _HTStructured {
 */
 
 PRIVATE void flush_breaks ARGS1(
-	HTStructured *, 	me)
+	HTStructured *,		me)
 {
     int i;
     for (i=0; i<= MAX_CLEANNESS; i++) {
@@ -92,7 +91,7 @@ PRIVATE void flush_breaks ARGS1(
 }
 
 PRIVATE void HTMLGen_flush ARGS1(
-	HTStructured *, 	me)
+	HTStructured *,		me)
 {
     (*me->targetClass.put_block)(me->target,
 				 me->buffer,
@@ -132,7 +131,7 @@ PRIVATE void HTMLGen_flush ARGS1(
  *  -preparsed flag. - kw
  */
 PRIVATE void do_cstyle_flush ARGS1(
-	HTStructured *, 	me)
+	HTStructured *,		me)
 {
     if (!me->text && LYPreparsedSource) {
 	me->text = HTMainText;
@@ -177,10 +176,10 @@ PRIVATE void allow_break ARGS3(
 **	by hand, too, though this is not a primary design consideration. TBL
 */
 PRIVATE void HTMLGen_put_character ARGS2(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	char,			c)
 {
-    if (me->escape_specials && (unsigned char)c < 32) {
+    if (me->escape_specials && UCH(c) < 32) {
 	if (c == HT_NON_BREAK_SPACE || c == HT_EN_SPACE ||
 	    c == LY_SOFT_HYPHEN) { /* recursion... */
 	    HTMLGen_put_character(me, '&');
@@ -288,7 +287,7 @@ PRIVATE void HTMLGen_put_character ARGS2(
 **	---------------
 */
 PRIVATE void HTMLGen_put_string ARGS2(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	CONST char *,		s)
 {
     CONST char * p;
@@ -298,7 +297,7 @@ PRIVATE void HTMLGen_put_string ARGS2(
 }
 
 PRIVATE void HTMLGen_write ARGS3(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	CONST char *,		s,
 	int,			l)
 {
@@ -314,8 +313,8 @@ PRIVATE void HTMLGen_write ARGS3(
 **	Within the opening tag, there may be spaces
 **	and the line may be broken at these spaces.
 */
-PRIVATE void HTMLGen_start_element ARGS6(
-	HTStructured *, 	me,
+PRIVATE int HTMLGen_start_element ARGS6(
+	HTStructured *,		me,
 	int,			element_number,
 	CONST BOOL*,		present,
 	CONST char **,		value,
@@ -338,26 +337,26 @@ PRIVATE void HTMLGen_start_element ARGS6(
 	strcpy (myHash, HTML_dtd.tags[element_number].name);
 	if (class_string[0])
 	{
+	    int len = strlen(myHash);
+	    sprintf (myHash + len, ".%.*s", (int) sizeof(myHash) - len - 2, class_string);
 	    HTSprintf (&Style_className, ".%s", class_string);
-	    strcat (myHash, ".");
-	    strcat (myHash, class_string);
 	}
 	class_string[0] = '\0';
 	strtolower(myHash);
 	hcode = hash_code(myHash);
 	strtolower(Style_className);
 
-	if (TRACE)
+	if (TRACE_STYLE)
 	{
 	    fprintf(tfp, "CSSTRIM:%s -> %d", myHash, hcode);
 	    if (hashStyles[hcode].code!=hcode)
 	    {
-		char *rp=strrchr(myHash, '.');
+		char *rp = strrchr(myHash, '.');
 		fprintf(tfp, " (undefined) %s\n", myHash);
 		if (rp)
 		{
 		    int hcd;
-		    *rp='\0'; /* trim the class */
+		    *rp = '\0'; /* trim the class */
 		    hcd = hash_code(myHash);
 		    fprintf(tfp, "CSS:%s -> %d", myHash, hcd);
 		    if (hashStyles[hcd].code!=hcd)
@@ -372,8 +371,9 @@ PRIVATE void HTMLGen_start_element ARGS6(
 
 	if (displayStyles[element_number + STARTAT].color > -2) /* actually set */
 	{
-	    CTRACE(tfp, "CSSTRIM: start_element: top <%s>\n",
-		   HTML_dtd.tags[element_number].name);
+	    CTRACE2(TRACE_STYLE,
+		    (tfp, "CSSTRIM: start_element: top <%s>\n",
+			  HTML_dtd.tags[element_number].name));
 	    do_cstyle_flush(me);
 	    HText_characterStyle(me->text, hcode, 1);
 	}
@@ -412,7 +412,8 @@ PRIVATE void HTMLGen_start_element ARGS6(
 		    if (title && *title) {
 			HTSprintf0(&title_tmp, "link.%s.%s",
 				   value[HTML_LINK_CLASS], title);
-			CTRACE(tfp, "CSSTRIM:link=%s\n", title_tmp);
+			CTRACE2(TRACE_STYLE,
+				(tfp, "CSSTRIM:link=%s\n", title_tmp));
 
 			do_cstyle_flush(me);
 			HText_characterStyle(me->text, hash_code(title_tmp), 1);
@@ -486,23 +487,35 @@ PRIVATE void HTMLGen_start_element ARGS6(
      *  Same logic as in HTML_start_element, copied from there. - kw
      */
 
-/* end really empty tags straight away */
-#define REALLY_EMPTY(e) ((HTML_dtd.tags[e].contents == SGML_EMPTY) && \
-			 !(HTML_dtd.tags[e].flags & Tgf_nreie))
-
-    if (LYPreparsedSource && REALLY_EMPTY(element_number))
+    /* end really empty tags straight away */
+    if (LYPreparsedSource && ReallyEmptyTagNum(element_number))
     {
-	CTRACE(tfp, "STYLE:begin_element:ending EMPTY element style\n");
+	CTRACE2(TRACE_STYLE,
+		(tfp, "STYLE:begin_element:ending EMPTY element style\n"));
 	do_cstyle_flush(me);
-#if !defined(USE_HASH)
-	HText_characterStyle(me->text, element_number+STARTAT, STACK_OFF);
-#else
 	HText_characterStyle(me->text, hcode, STACK_OFF);
-#endif /* USE_HASH */
 	TrimColorClass(HTML_dtd.tags[element_number].name,
 		       Style_className, &hcode);
     }
 #endif /* USE_COLOR_STYLE */
+    if (element_number == HTML_OBJECT && tag->contents == SGML_LITTERAL) {
+	/*
+	 *  These conditions only approximate the ones used in HTML.c.
+	 *  Let our SGML parser know that further content is to be parsed
+	 *  normally not literally. - kw
+	 */
+	if (!present) {
+	    return HT_PARSER_OTHER_CONTENT;
+	} else if (!present[HTML_OBJECT_DECLARE] &&
+		   !(present[HTML_OBJECT_NAME]  &&
+		     value[HTML_OBJECT_NAME] && *value[HTML_OBJECT_NAME])) {
+	    if (present[HTML_OBJECT_SHAPES] ||
+		!(present[HTML_OBJECT_USEMAP] &&
+		  value[HTML_OBJECT_USEMAP] && *value[HTML_OBJECT_USEMAP]))
+		return HT_PARSER_OTHER_CONTENT;
+	}
+    }
+    return HT_OK;
 }
 
 /*		End Element
@@ -516,8 +529,8 @@ PRIVATE void HTMLGen_start_element ARGS6(
 **	should be linked to the whole stack not just the top one.)
 **	TBL 921119
 */
-PRIVATE void HTMLGen_end_element ARGS3(
-	HTStructured *, 	me,
+PRIVATE int HTMLGen_end_element ARGS3(
+	HTStructured *,		me,
 	int,			element_number,
 	char **,		insert GCC_UNUSED)
 {
@@ -544,17 +557,14 @@ PRIVATE void HTMLGen_end_element ARGS3(
     TrimColorClass(HTML_dtd.tags[element_number].name,
 		   Style_className, &hcode);
 
-    if (LYPreparsedSource && !REALLY_EMPTY(element_number))
-    {
-	CTRACE(tfp, "STYLE:end_element: ending non-EMPTY style\n");
+    if (LYPreparsedSource && !ReallyEmptyTagNum(element_number)) {
+	CTRACE2(TRACE_STYLE,
+		(tfp, "STYLE:end_element: ending non-EMPTY style\n"));
 	do_cstyle_flush(me);
-#if !defined(USE_HASH)
-	HText_characterStyle(me->text, element_number+STARTAT, STACK_OFF);
-#else
 	HText_characterStyle(me->text, hcode, STACK_OFF);
-#endif /* USE_HASH */
     }
 #endif /* USE_COLOR_STYLE */
+    return HT_OK;
 }
 
 /*		Expanding entities
@@ -562,7 +572,7 @@ PRIVATE void HTMLGen_end_element ARGS3(
 **
 */
 PRIVATE int HTMLGen_put_entity ARGS2(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	int,			entity_number)
 {
     int nent = HTML_dtd.number_of_entities;
@@ -580,7 +590,7 @@ PRIVATE int HTMLGen_put_entity ARGS2(
 **
 */
 PRIVATE void HTMLGen_free ARGS1(
-	HTStructured *, 	me)
+	HTStructured *,		me)
 {
     (*me->targetClass.put_character)(me->target, '\n');
     HTMLGen_flush(me);
@@ -592,14 +602,14 @@ PRIVATE void HTMLGen_free ARGS1(
 }
 
 PRIVATE void PlainToHTML_free ARGS1(
-	HTStructured *, 	me)
+	HTStructured *,		me)
 {
     HTMLGen_end_element(me, HTML_PRE, 0);
     HTMLGen_free(me);
 }
 
 PRIVATE void HTMLGen_abort ARGS2(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	HTError,		e GCC_UNUSED)
 {
     HTMLGen_free(me);
@@ -609,7 +619,7 @@ PRIVATE void HTMLGen_abort ARGS2(
 }
 
 PRIVATE void PlainToHTML_abort ARGS2(
-	HTStructured *, 	me,
+	HTStructured *,		me,
 	HTError,		e GCC_UNUSED)
 {
     PlainToHTML_free(me);
@@ -632,8 +642,6 @@ PRIVATE CONST HTStructuredClass HTMLGeneration = /* As opposed to print etc */
 **	-------------------------
 */
 extern int LYcols;			/* LYCurses.h, set in LYMain.c	*/
-extern BOOL dump_output_immediately;	/* TRUE if no interactive user	*/
-extern int dump_output_width;		/* -width instead of 80 	*/
 
 PUBLIC HTStructured * HTMLGenerator ARGS1(
 	HTStream *,		output)

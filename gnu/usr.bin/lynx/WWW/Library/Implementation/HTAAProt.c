@@ -30,6 +30,7 @@
 #include <HTLex.h>	/* Lexical analysor	*/
 #include <HTAAProt.h>	/* Implemented here	*/
 
+#include <LYUtils.h>
 #include <LYLeaks.h>
 
 #define NOBODY    65534	/* -2 in 16-bit environment */
@@ -46,11 +47,11 @@ typedef struct {
 PRIVATE HTList *  prot_cache	= NULL;	/* Protection setup cache.	*/
 PRIVATE HTAAProt *default_prot	= NULL;	/* Default protection.		*/
 PRIVATE HTAAProt *current_prot	= NULL;	/* Current protection mode	*/
-                                        /* which is set up by callbacks	*/
-                                        /* from the rule system when	*/
-                                        /* a "protect" rule is matched.	*/
+					/* which is set up by callbacks */
+					/* from the rule system when	*/
+					/* a "protect" rule is matched. */
 
-
+#ifndef NOUSERS
 /* PRIVATE							isNumber()
 **		DOES A CHARACTER STRING REPRESENT A NUMBER
 */
@@ -70,6 +71,7 @@ PRIVATE BOOL isNumber ARGS1(CONST char *, s)
     }
     return YES;
 }
+#endif /* !NOUSERS */
 
 
 #if defined (NOUSERS)
@@ -85,7 +87,7 @@ PRIVATE BOOL isNumber ARGS1(CONST char *, s)
 PUBLIC char * HTAA_getUidName NOARGS
 {
     if (current_prot && current_prot->uid_name
-                  && (0 != strcmp(current_prot->uid_name,"nobody")) )
+		  && (0 != strcmp(current_prot->uid_name,"nobody")) )
        return(current_prot->uid_name);
     else
        return("");
@@ -256,8 +258,8 @@ PRIVATE void HTAA_parseProtFile ARGS2(HTAAProt *, prot,
 
 		if (LEX_FIELD_SEP != (lex_item = lex(fp)))
 		    unlex(lex_item);	/* If someone wants to use colon */
-		                        /* after field name it's ok, but */
-		                        /* not required. Here we read it.*/
+					/* after field name it's ok, but */
+					/* not required. Here we read it.*/
 
 		if (0==strncasecomp(fieldname, "Auth", 4)) {
 		    lex_item = lex(fp);
@@ -267,15 +269,15 @@ PRIVATE void HTAA_parseProtFile ARGS2(HTAAProt *, prot,
 			    if (!prot->valid_schemes)
 				prot->valid_schemes = HTList_new();
 			    HTList_addObject(prot->valid_schemes,(void*)scheme);
-			    CTRACE(tfp, "%s %s `%s'\n",
-				        "HTAA_parseProtFile: valid",
-				        "authentication scheme:",
-				        HTAAScheme_name(scheme));
+			    CTRACE((tfp, "%s %s `%s'\n",
+					"HTAA_parseProtFile: valid",
+					"authentication scheme:",
+					HTAAScheme_name(scheme)));
 			} else {
-			    CTRACE(tfp, "%s %s `%s'\n",
+			    CTRACE((tfp, "%s %s `%s'\n",
 					"HTAA_parseProtFile: unknown",
 					"authentication scheme:",
-					HTlex_buffer);
+					HTlex_buffer));
 			}
 
 			if (LEX_ITEM_SEP != (lex_item = lex(fp)))
@@ -310,19 +312,19 @@ PRIVATE void HTAA_parseProtFile ARGS2(HTAAProt *, prot,
 			    prot->values = HTAssocList_new();
 			HTAssocList_add(prot->values, fieldname, HTlex_buffer);
 			lex_item = lex(fp);  /* Read record separator */
-			CTRACE(tfp, "%s `%s' bound to value `%s'\n",
+			CTRACE((tfp, "%s `%s' bound to value `%s'\n",
 				    "HTAA_parseProtFile: Name",
-				    fieldname, HTlex_buffer);
+				    fieldname, HTlex_buffer));
 		    }
 		} /* else name-value pair */
 
 	    } /* if valid field */
 
 	    if (lex_item != LEX_EOF  &&  lex_item != LEX_REC_SEP) {
-		CTRACE(tfp, "%s %s %d (that line ignored)\n",
+		CTRACE((tfp, "%s %s %d (that line ignored)\n",
 			    "HTAA_parseProtFile: Syntax error",
 			    "in protection setup file at line",
-			    HTlex_line);
+			    HTlex_line));
 		do {
 		    lex_item = lex(fp);
 		} while (lex_item != LEX_EOF && lex_item != LEX_REC_SEP);
@@ -377,13 +379,13 @@ PRIVATE HTAAProt *HTAAProt_new ARGS3(CONST char *,	cur_docname,
     }
     if (cache_item) {
 	prot = cache_item->prot;
-	CTRACE(tfp, "%s `%s' already in cache\n",
-		    "HTAAProt_new: Protection file", prot_filename);
+	CTRACE((tfp, "%s `%s' already in cache\n",
+		    "HTAAProt_new: Protection file", prot_filename));
     } else {
-	CTRACE(tfp, "HTAAProt_new: Loading protection file `%s'\n",
-		    prot_filename);
+	CTRACE((tfp, "HTAAProt_new: Loading protection file `%s'\n",
+		    prot_filename));
 
-	if (!(prot = (HTAAProt*)calloc(1, sizeof(HTAAProt))))
+	if ((prot = typecalloc(HTAAProt)) == 0)
 	    outofmem(__FILE__, "HTAAProt_new");
 
 	prot->template	= NULL;
@@ -394,20 +396,19 @@ PRIVATE HTAAProt *HTAAProt_new ARGS3(CONST char *,	cur_docname,
 	prot->mask_group= NULL;		/* Masking disabled by defaults */
 	prot->values	= HTAssocList_new();
 
-	if (prot_filename && NULL != (fp = fopen(prot_filename, "r"))) {
+	if (prot_filename && NULL != (fp = fopen(prot_filename, TXT_R))) {
 	    HTAA_parseProtFile(prot, fp);
 	    fclose(fp);
-	    if (!(cache_item =
-	    		(HTAAProtCache*)calloc(1, sizeof(HTAAProtCache))))
+	    if ((cache_item = typecalloc(HTAAProtCache)) == 0)
 		outofmem(__FILE__, "HTAAProt_new");
 	    cache_item->prot = prot;
 	    cache_item->prot_filename = NULL;
 	    StrAllocCopy(cache_item->prot_filename, prot_filename);
 	    HTList_addObject(prot_cache, (void*)cache_item);
 	} else {
-	    CTRACE(tfp, "HTAAProt_new: %s `%s'\n",
+	    CTRACE((tfp, "HTAAProt_new: %s `%s'\n",
 			"Unable to open protection setup file",
-			(prot_filename ? prot_filename : "(null)"));
+			NONNULL(prot_filename)));
 	}
     }
 
@@ -447,9 +448,9 @@ PUBLIC void HTAA_setDefaultProtection ARGS3(CONST char *,	cur_docname,
     if (prot_filename) {
 	default_prot = HTAAProt_new(cur_docname, prot_filename, ids);
     } else {
-	CTRACE(tfp, "%s %s\n",
+	CTRACE((tfp, "%s %s\n",
 		    "HTAA_setDefaultProtection: ERROR: Protection file",
-		    "not specified (obligatory for DefProt rule)!!\n");
+		    "not specified (obligatory for DefProt rule)!!\n"));
     }
 }
 
@@ -485,15 +486,15 @@ PUBLIC void HTAA_setCurrentProtection ARGS3(CONST char *,	cur_docname,
 	if (default_prot) {
 	    current_prot = default_prot;
 	    HTAA_setIds(current_prot, ids);
-	    CTRACE(tfp, "%s %s %s\n",
-		        "HTAA_setCurrentProtection: Protection file",
-		        "not specified for Protect rule",
-		        "-- using default protection");
+	    CTRACE((tfp, "%s %s %s\n",
+			"HTAA_setCurrentProtection: Protection file",
+			"not specified for Protect rule",
+			"-- using default protection"));
 	} else {
-	    CTRACE(tfp, "%s %s %s\n",
-		        "HTAA_setCurrentProtection: ERROR: Protection",
-		        "file not specified for Protect rule, and",
-		        "default protection is not set!!");
+	    CTRACE((tfp, "%s %s %s\n",
+			"HTAA_setCurrentProtection: ERROR: Protection",
+			"file not specified for Protect rule, and",
+			"default protection is not set!!"));
 	}
     }
 }
@@ -570,17 +571,20 @@ PUBLIC void HTAA_clearProtections NOARGS
 }
 
 typedef struct {
-    	char *name;
+	char *name;
 	int user;
-    	} USER_DATA;
+	} USER_DATA;
 
+#ifndef NOUSERS
 PRIVATE HTList *known_grp = NULL;
 PRIVATE HTList *known_pwd = NULL;
 PRIVATE BOOL uidgid_cache_inited = NO;
+#endif
 
 #ifdef LY_FIND_LEAKS
 PRIVATE void clear_uidgid_cache NOARGS
 {
+#ifndef NOUSERS
     USER_DATA *data;
     if (known_grp) {
 	while ((data = HTList_removeLastObject(known_grp)) != NULL) {
@@ -596,12 +600,14 @@ PRIVATE void clear_uidgid_cache NOARGS
 	}
 	FREE(known_pwd);
     }
+#endif
 }
 #endif /* LY_FIND_LEAKS */
 
+#ifndef NOUSERS
 PRIVATE void save_gid_info ARGS2(char *, name, int, user)
 {
-    USER_DATA *data = (USER_DATA *)calloc(1, sizeof(USER_DATA));
+    USER_DATA *data = typecalloc(USER_DATA);
     if (!data)
 	return;
     if (!known_grp) {
@@ -617,10 +623,12 @@ PRIVATE void save_gid_info ARGS2(char *, name, int, user)
     data->user = user;
     HTList_addObject (known_grp, data);
 }
+#endif /* NOUSERS */
 
+#ifndef NOUSERS
 PRIVATE void save_uid_info ARGS2(char *, name, int, user)
 {
-    USER_DATA *data = (USER_DATA *)calloc(1, sizeof(USER_DATA));
+    USER_DATA *data = typecalloc(USER_DATA);
     if (!data)
 	return;
     if (!known_pwd) {
@@ -636,9 +644,10 @@ PRIVATE void save_uid_info ARGS2(char *, name, int, user)
     data->user = user;
     HTList_addObject (known_pwd, data);
 }
+#endif /* !NOUSERS */
 
-/* PUBLIC                                                       HTAA_UidToName
-**              GET THE USER NAME
+/* PUBLIC							HTAA_UidToName
+**		GET THE USER NAME
 ** ON ENTRY:
 **      The user-id
 **
@@ -659,10 +668,10 @@ PUBLIC char * HTAA_UidToName ARGS1(int, uid)
 
     if ((pw = getpwuid(uid)) != 0
      && pw->pw_name != 0) {
-	CTRACE(tfp, "%s(%d) returned (%s:%d:...)\n",
+	CTRACE((tfp, "%s(%d) returned (%s:%d:...)\n",
 		    "HTAA_UidToName: getpwuid",
 		    uid,
-		    pw->pw_name, (int) pw->pw_uid);
+		    pw->pw_name, (int) pw->pw_uid));
 	save_uid_info(pw->pw_name, (int) pw->pw_uid);
 	return pw->pw_name;
     }
@@ -670,8 +679,8 @@ PUBLIC char * HTAA_UidToName ARGS1(int, uid)
     return "";
 }
 
-/* PUBLIC                                                       HTAA_NameToUid
-**              GET THE USER ID
+/* PUBLIC							HTAA_NameToUid
+**		GET THE USER ID
 ** ON ENTRY:
 **      The user-name
 **
@@ -691,10 +700,10 @@ PUBLIC int HTAA_NameToUid ARGS1(char *, name)
     }
 
     if ((pw = getpwnam(name)) != 0) {
-	CTRACE(tfp, "%s(%s) returned (%s:%d:...)\n",
+	CTRACE((tfp, "%s(%s) returned (%s:%d:...)\n",
 		    "HTAA_NameToUid: getpwnam",
 		    name,
-		    pw->pw_name, (int) pw->pw_uid);
+		    pw->pw_name, (int) pw->pw_uid));
 	save_uid_info(pw->pw_name, (int) pw->pw_uid);
 	return (int) pw->pw_uid;
     }
@@ -702,8 +711,8 @@ PUBLIC int HTAA_NameToUid ARGS1(char *, name)
     return NONESUCH;
 }
 
-/* PUBLIC                                                       HTAA_GidToName
-**              GET THE GROUP NAME
+/* PUBLIC							HTAA_GidToName
+**		GET THE GROUP NAME
 ** ON ENTRY:
 **      The group-id
 **
@@ -724,10 +733,10 @@ PUBLIC char * HTAA_GidToName ARGS1(int, gid)
 
     if ((gr = getgrgid(gid)) != 0
      && gr->gr_name != 0) {
-	CTRACE(tfp, "%s(%d) returned (%s:%d:...)\n",
+	CTRACE((tfp, "%s(%d) returned (%s:%d:...)\n",
 		    "HTAA_GidToName: getgrgid",
 		    gid,
-		    gr->gr_name, (int) gr->gr_gid);
+		    gr->gr_name, (int) gr->gr_gid));
 	save_gid_info(gr->gr_name, (int) gr->gr_gid);
 	return gr->gr_name;
     }
@@ -735,8 +744,8 @@ PUBLIC char * HTAA_GidToName ARGS1(int, gid)
     return "";
 }
 
-/* PUBLIC                                                       HTAA_NameToGid
-**              GET THE GROUP ID
+/* PUBLIC							HTAA_NameToGid
+**		GET THE GROUP ID
 ** ON ENTRY:
 **      The group-name
 **
@@ -756,10 +765,10 @@ PUBLIC int HTAA_NameToGid ARGS1(char *, name)
     }
 
     if ((gr = getgrnam(name)) != 0) {
-	CTRACE(tfp, "%s(%s) returned (%s:%d:...)\n",
+	CTRACE((tfp, "%s(%s) returned (%s:%d:...)\n",
 		    "HTAA_NameToGid: getgrnam",
 		    name,
-		    gr->gr_name, (int) gr->gr_gid);
+		    gr->gr_name, (int) gr->gr_gid));
 	save_gid_info(gr->gr_name, (int) gr->gr_gid);
 	return (int) gr->gr_gid;
     }

@@ -3,16 +3,15 @@
  */
 #include <HTUtils.h>
 #include <LYexit.h>
+#include <HTAlert.h>
 #ifndef VMS
 #include <LYGlobalDefs.h>
 #include <LYUtils.h>
 #include <LYSignal.h>
-#include <LYClean.h>
 #include <LYMainLoop.h>
-#ifdef SYSLOG_REQUESTED_URLS
-#include <syslog.h>
-#endif /* SYSLOG_REQUESTED_URLS */
 #endif /* !VMS */
+#include <LYStrings.h>
+#include <LYClean.h>
 
 /*
  *  Flag for outofmem macro. - FM
@@ -37,17 +36,17 @@ PRIVATE int topOfStack = 0;
  */
 
 #ifdef __STDC__
-PUBLIC int LYatexit(void (*function)(void))
+PUBLIC int LYatexit(void (*function) NOPARAMS)
 #else /* Not ANSI, ugh! */
 PUBLIC int LYatexit(function)
-void (*function)();
+void (*function) NOPARAMS;
 #endif /* __STDC__ */
 {
     /*
      *  Check for available space.
      */
     if (topOfStack == ATEXITSIZE) {
-	CTRACE(tfp, "(LY)atexit: Too many functions, ignoring one!\n");
+	CTRACE((tfp, "(LY)atexit: Too many functions, ignoring one!\n"));
 	return(-1);
     }
 
@@ -92,6 +91,12 @@ PUBLIC void LYexit ARGS1(
 {
 #ifndef VMS	/*  On VMS, the VMSexit() handler does these. - FM */
 #ifdef _WINDOWS
+    extern CRITICAL_SECTION critSec_DNS;	/* 1998/09/03 (Thu) 22:01:56 */
+    extern CRITICAL_SECTION critSec_READ;	/* 1998/09/03 (Thu) 22:01:56 */
+
+    DeleteCriticalSection(&critSec_DNS);
+    DeleteCriticalSection(&critSec_READ);
+
     WSACleanup();
 #endif
     if (LYOutOfMemory == TRUE) {
@@ -111,17 +116,17 @@ PUBLIC void LYexit ARGS1(
 	(void) signal(SIGSEGV, SIG_IGN);
 	(void) signal(SIGILL, SIG_IGN);
 
-	 /*
-	  *  Flush all messages. - FM
-	  */
-	 fflush(stderr);
-	 fflush(stdout);
+	/*
+	 *  Flush all messages. - FM
+	 */
+	fflush(stderr);
+	fflush(stdout);
 
 	/*
 	 *  Deal with curses, if on, and clean up. - FM
 	 */
 	if (LYCursesON) {
-	    sleep(AlertSecs);
+	    LYSleepAlert();
 	}
 	cleanup_sig(0);
 #ifndef __linux__
@@ -139,12 +144,11 @@ PUBLIC void LYexit ARGS1(
      */
     LYCompleteExit();
 
-#ifndef VMS
-#ifdef SYSLOG_REQUESTED_URLS
-    syslog(LOG_INFO, "Session over");
-    closelog();
-#endif /* SYSLOG_REQUESTED_URLS */
-#endif /* !VMS */
+#if !defined(VMS) && defined(SYSLOG_REQUESTED_URLS)
+    LYCloselog();
+#endif /* !VMS && SYSLOG_REQUESTED_URLS */
+
+    LYCloseCmdLogfile();
 
 #ifdef exit
 /*  Make sure we use stdlib exit and not LYexit. - GAB
@@ -152,6 +156,7 @@ PUBLIC void LYexit ARGS1(
 #undef exit
 #endif /* exit */
 
+    cleanup_files();	/* if someone starts with LYNXfoo: page */
 #ifndef VMS	/*  On VMS, the VMSexit() handler does these. - FM */
     fflush(stderr);
     if (LYOutOfMemory == TRUE) {

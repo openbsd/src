@@ -12,11 +12,11 @@
 CFLAGS = $(MCFLAGS)
 
 CC = gcc
-MCFLAGS = -O3 -DDOSPATH -DNO_TTYTYP \
+MCFLAGS = -O2 -DDOSPATH -DNO_TTYTYP \
 -I. \
 -I../../WWW/Library/Implementation \
--I../../djgpp/tcplib/include \
--I../../djgpp/tcplib/include/tcp \
+-I/djgpp/watt32/inc \
+-I/djgpp/watt32/inc/sys \
 -I../..
 
 .SUFFIXES: .tbl
@@ -77,7 +77,7 @@ makeuctb.exe: makeuctb.c UCkd.h
 	strip makeuctb.exe
 
 .tbl.h:
-	./makeuctb $*.tbl > $@
+	./makeuctb $*.tbl
 
 cp1250_uni.h:		cp1250_uni.tbl		makeuctb.exe
 cp1251_uni.h:		cp1251_uni.tbl		makeuctb.exe

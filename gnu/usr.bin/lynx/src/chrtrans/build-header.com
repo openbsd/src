@@ -24,7 +24,6 @@ $!
 $!	Create a Lynx [.SRC.CHRTRANS] header file.
 $!
 $ makeuctb := $'CHRwhere'makeuctb
-$ define/user sys$output 'CHRwhere''P1'.h
 $ makeuctb 'P1'.tbl
 $ v1 = 'f$verify(0)'
 $ exit

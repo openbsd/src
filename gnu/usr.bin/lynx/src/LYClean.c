@@ -26,12 +26,12 @@ PUBLIC void cleanup_sig ARGS1(
 
 #ifdef IGNORE_CTRL_C
     if (sig == SIGINT)	{
-    /*
-     *	Need to rearm the signal.
-     */
-    signal(SIGINT, cleanup_sig);
-    sigint = TRUE;
-    return;
+	/*
+	 * Need to rearm the signal.
+	 */
+	signal(SIGINT, cleanup_sig);
+	sigint = TRUE;
+	return;
     }
 #endif /* IGNORE_CTRL_C */
 
@@ -43,7 +43,6 @@ PUBLIC void cleanup_sig ARGS1(
 	 *  Reassert the AST.
 	 */
 	(void) signal(SIGINT, cleanup_sig);
-	HadVMSInterrupt = TRUE;
 	if (!LYCursesON)
 	    return;
 
@@ -51,7 +50,7 @@ PUBLIC void cleanup_sig ARGS1(
 	 *  Refresh screen to get rid of "cancel" message, then query.
 	 */
 	lynx_force_repaint();
-	refresh();
+	LYrefresh();
 
 	/*
 	 *  Ask if exit is intended.
@@ -61,6 +60,7 @@ PUBLIC void cleanup_sig ARGS1(
 	} else {
 	    c = HTConfirmDefault(REALLY_EXIT_N, NO);
 	}
+	HadVMSInterrupt = TRUE;
 	if (LYQuitDefaultYes == TRUE) {
 	    if (c == NO) {
 		return;
@@ -127,7 +127,7 @@ PUBLIC void cleanup_sig ARGS1(
 	(void) signal(SIGTSTP, SIG_DFL);
 #endif /* SIGTSTP */
     if (sig != 0) {
-	exit(0);
+	exit(EXIT_SUCCESS);
     }
 }
 
@@ -139,8 +139,8 @@ PUBLIC void cleanup_files NOARGS
 {
     LYCleanupTemp();
 
-    if (rmdir(lynx_temp_space))
-	perror("Could not remove the temp-directory");
+    if (lynx_temp_space != NULL && rmdir(lynx_temp_space))
+        perror("Could not remove the temp-directory");
 
     FREE(lynx_temp_space);
 }
@@ -166,22 +166,20 @@ PUBLIC void cleanup NOARGS
 #endif /* !VMS */
 
     if (LYCursesON) {
-	move(LYlines-1, 0);
-	clrtoeol();
+	LYmove(LYlines-1, 0);
+	LYclrtoeol();
 
 	lynx_stop_all_colors ();
-	refresh();
+	LYrefresh();
 
 	stop_curses();
     }
 
 #ifdef EXP_CHARTRANS_AUTOSWITCH
-#ifdef LINUX
     /*
      *	Currently implemented only for LINUX: Restore original font.
      */
     UCChangeTerminalCodepage(-1, (LYUCcharset*)0);
-#endif /* LINUX */
 #endif /* EXP_CHARTRANS_AUTOSWITCH */
 
 #ifdef EXP_PERSISTENT_COOKIES
@@ -193,7 +191,7 @@ PUBLIC void cleanup NOARGS
      * out as well.
      */
     if (persistent_cookies)
-	LYStoreCookies (LYCookieFile);
+	LYStoreCookies (LYCookieSaveFile);
 #endif
 
     cleanup_files();

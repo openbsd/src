@@ -1,82 +1,62 @@
-<HTML>
-<HEAD>
-<TITLE> Test of some symbols </TITLE>
-</HEAD>
-<BODY>
-<PRE>
-You may press '\' to view the source of this test
-
-NCRs for symbols which are the C1 control chars for iso-8859-1 and Unicode,
-but assumed as <em>windows-1252</em> codepoints (common for windows-xxxx),
-say mercy to MS FrontPage (WYSIWYG HTML editor).
-
-<em>Number  NCR    alt-NCR    windows-1252</em>
-
-0x80    &#x80;	<IMG SRC=X ALT="&#x80;">	 &#x20AC;   	#EURO SIGN
-0x81    &#x81;	<IMG SRC=X ALT="&#x81;">	 <!--&#x0081;-->   	#NOT USED
-0x82    &#x82;	<IMG SRC=X ALT="&#x82;">	 &#x201a;   	#SINGLE LOW-9 QUOTATION MARK
-0x83    &#x83;	<IMG SRC=X ALT="&#x83;">	 &#x0192;   	#LATIN SMALL LETTER F WITH HOOK
-0x84    &#x84;	<IMG SRC=X ALT="&#x84;">	 &#x201e;   	#DOUBLE LOW-9 QUOTATION MARK
-0x85    &#x85;	<IMG SRC=X ALT="&#x85;">	 &#x2026;   	#HORIZONTAL ELLIPSIS
-0x86    &#x86;	<IMG SRC=X ALT="&#x86;">	 &#x2020;   	#DAGGER
-0x87    &#x87;	<IMG SRC=X ALT="&#x87;">	 &#x2021;   	#DOUBLE DAGGER
-0x88    &#x88;	<IMG SRC=X ALT="&#x88;">	 &#x02c6;   	#MODIFIER LETTER CIRCUMFLEX ACCENT
-0x89    &#x89;	<IMG SRC=X ALT="&#x89;">	 &#x2030;   	#PER MILLE SIGN
-0x8a    &#x8a;	<IMG SRC=X ALT="&#x8a;">	 &#x0160;   	#LATIN CAPITAL LETTER S WITH CARON
-0x8b    &#x8b;	<IMG SRC=X ALT="&#x8b;">	 &#x2039;   	#SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-0x8c    &#x8c;	<IMG SRC=X ALT="&#x8c;">	 &#x0152;   	#LATIN CAPITAL LIGATURE OE
-0x8d    &#x8d;	<IMG SRC=X ALT="&#x8d;">	 <!--&#x008d;-->   	#NOT USED
-0x8e    &#x8e;	<IMG SRC=X ALT="&#x8e;">	 <!--&#x008e;-->   	#NOT USED
-0x8f    &#x8f;	<IMG SRC=X ALT="&#x8f;">	 <!--&#x008f;-->   	#NOT USED
-0x90    &#x90;	<IMG SRC=X ALT="&#x90;">	 <!--&#x0090;-->   	#NOT USED
-0x91    &#x91;	<IMG SRC=X ALT="&#x91;">	 &#x2018;   	#LEFT SINGLE QUOTATION MARK
-0x92    &#x92;	<IMG SRC=X ALT="&#x92;">	 &#x2019;   	#RIGHT SINGLE QUOTATION MARK
-0x93    &#x93;	<IMG SRC=X ALT="&#x93;">	 &#x201c;   	#LEFT DOUBLE QUOTATION MARK
-0x94    &#x94;	<IMG SRC=X ALT="&#x94;">	 &#x201d;   	#RIGHT DOUBLE QUOTATION MARK
-0x95    &#x95;	<IMG SRC=X ALT="&#x95;">	 &#x2022;   	#BULLET
-0x96    &#x96;	<IMG SRC=X ALT="&#x96;">	 &#x2013;   	#EN DASH
-0x97    &#x97;	<IMG SRC=X ALT="&#x97;">	 &#x2014;   	#EM DASH
-0x98    &#x98;	<IMG SRC=X ALT="&#x98;">	 &#x02dc;   	#SMALL TILDE
-0x99    &#x99;	<IMG SRC=X ALT="&#x99;">	 &#x2122;   	#TRADE MARK SIGN
-0x9a    &#x9a;	<IMG SRC=X ALT="&#x9a;">	 &#x0161;   	#LATIN SMALL LETTER S WITH CARON
-0x9b    &#x9b;	<IMG SRC=X ALT="&#x9b;">	 &#x203a;   	#SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-0x9c    &#x9c;	<IMG SRC=X ALT="&#x9c;">	 &#x0153;   	#LATIN SMALL LIGATURE OE
-0x9d    &#x9d;	<IMG SRC=X ALT="&#x9d;">	 <!--&#x009d;-->   	#NOT USED
-0x9e    &#x9e;	<IMG SRC=X ALT="&#x9e;">	 <!--&#x009e;-->   	#NOT USED
-0x9f    &#x9f;	<IMG SRC=X ALT="&#x9f;">	 &#x0178;   	#LATIN CAPITAL LETTER Y WITH DIAERESIS
-
-
-</PRE>
-</BODY>
-</HTML>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<HTML> 
+<HEAD> 
+<TITLE>Test of invalid NCRs 128-159</TITLE> 
+</HEAD> 
+<BODY><H2>Test of invalid NCRs 128-159</H2> 
+<P> 
+Authoring tools on MS Windows, in particular MS FrontPage ("WYSIWYG" HTML editor), 
+generate invalid <DFN>Numerical Character References</DFN> for characters 
+commonly found in positions 128...159 (0x80...0x9f) in Windows fonts.  Although 
+these are valid codepoints for <em>windows-1252</em> (and other 
+windows-xxxx) charsets, valid NCRs always refer to the document character set 
+in the SGML sense, not to the character encoding scheme (or charset).  For HTML, 
+the SGML document character set is fixed, it is always a subset of Unicode 
+(or ISO 10646).  In Unicode and its iso-8859-1 subset, values 128...159 are 
+C1 control characters, they must not appear in HTML.  Valid NCRs for the 
+intended characters use Unicode values greater than 256. 
+<p> 
+Lynx tries to interpret some of the invalid codes, by assuming that they are 
+windows-1252 codepoints. 
+<PRE> 
+ 
+You may want to press '\' to view the source of this test. 
+ 
+<em>Code      invalid NCR    <!--    --> <tab id=c>valid NCR, description</em> 
+<em>        normal   in ALT  <a id=table></a>				</em> 
+                             
+0x80    &#x80;	<IMG SRC=X ALT="&#x80;"> <tab to=c>&#x20AC;	#EURO SIGN 
+0x81    &#x81;	<IMG SRC=X ALT="&#x81;"> <!--&#x0081;-->	#NOT USED 
+0x82    &#x82;	<IMG SRC=X ALT="&#x82;"> <tab to=c>&#x201a;	#SINGLE LOW-9 QUOTATION MARK 
+0x83    &#x83;	<IMG SRC=X ALT="&#x83;"> <tab to=c>&#x0192;	#LATIN SMALL LETTER F WITH HOOK 
+0x84    &#x84;	<IMG SRC=X ALT="&#x84;"> <tab to=c>&#x201e;	#DOUBLE LOW-9 QUOTATION MARK 
+0x85    &#x85;	<IMG SRC=X ALT="&#x85;"> <tab to=c>&#x2026;	#HORIZONTAL ELLIPSIS 
+0x86    &#x86;	<IMG SRC=X ALT="&#x86;"> <tab to=c>&#x2020;	#DAGGER 
+0x87    &#x87;	<IMG SRC=X ALT="&#x87;"> <tab to=c>&#x2021;	#DOUBLE DAGGER 
+0x88    &#x88;	<IMG SRC=X ALT="&#x88;"> <tab to=c>&#x02c6;	#MODIFIER LETTER CIRCUMFLEX ACCENT 
+0x89    &#x89;	<IMG SRC=X ALT="&#x89;"> <tab to=c>&#x2030;	#PER MILLE SIGN 
+0x8a    &#x8a;	<IMG SRC=X ALT="&#x8a;"> <tab to=c>&#x0160;	#LATIN CAPITAL LETTER S WITH CARON 
+0x8b    &#x8b;	<IMG SRC=X ALT="&#x8b;"> <tab to=c>&#x2039;	#SINGLE LEFT-POINTING ANGLE QUOTATION MARK 
+0x8c    &#x8c;	<IMG SRC=X ALT="&#x8c;"> <tab to=c>&#x0152;	#LATIN CAPITAL LIGATURE OE 
+0x8d    &#x8d;	<IMG SRC=X ALT="&#x8d;"> <!--&#x008d;-->	#NOT USED 
+0x8e    &#x8e;	<IMG SRC=X ALT="&#x8e;"> <!--&#x008e;-->	#NOT USED 
+0x8f    &#x8f;	<IMG SRC=X ALT="&#x8f;"> <!--&#x008f;-->	#NOT USED 
+0x90    &#x90;	<IMG SRC=X ALT="&#x90;"> <!--&#x0090;-->	#NOT USED 
+0x91    &#x91;	<IMG SRC=X ALT="&#x91;"> <tab to=c>&#x2018;	#LEFT SINGLE QUOTATION MARK 
+0x92    &#x92;	<IMG SRC=X ALT="&#x92;"> <tab to=c>&#x2019;	#RIGHT SINGLE QUOTATION MARK 
+0x93    &#x93;	<IMG SRC=X ALT="&#x93;"> <tab to=c>&#x201c;	#LEFT DOUBLE QUOTATION MARK 
+0x94    &#x94;	<IMG SRC=X ALT="&#x94;"> <tab to=c>&#x201d;	#RIGHT DOUBLE QUOTATION MARK 
+0x95    &#x95;	<IMG SRC=X ALT="&#x95;"> <tab to=c>&#x2022;	#BULLET 
+0x96    &#x96;	<IMG SRC=X ALT="&#x96;"> <tab to=c>&#x2013;	#EN DASH 
+0x97    &#x97;	<IMG SRC=X ALT="&#x97;"> <tab to=c>&#x2014;	#EM DASH 
+0x98    &#x98;	<IMG SRC=X ALT="&#x98;"> <tab to=c>&#x02dc;	#SMALL TILDE 
+0x99    &#x99;	<IMG SRC=X ALT="&#x99;"> <tab to=c>&#x2122;	#TRADE MARK SIGN 
+0x9a    &#x9a;	<IMG SRC=X ALT="&#x9a;"> <tab to=c>&#x0161;	#LATIN SMALL LETTER S WITH CARON 
+0x9b    &#x9b;	<IMG SRC=X ALT="&#x9b;"> <tab to=c>&#x203a;	#SINGLE RIGHT-POINTING ANGLE QUOTATION MARK 
+0x9c    &#x9c;	<IMG SRC=X ALT="&#x9c;"> <tab to=c>&#x0153;	#LATIN SMALL LIGATURE OE 
+0x9d    &#x9d;	<IMG SRC=X ALT="&#x9d;"> <!--&#x009d;-->	#NOT USED 
+0x9e    &#x9e;	<IMG SRC=X ALT="&#x9e;"> <!--&#x009e;-->	#NOT USED 
+0x9f    &#x9f;	<IMG SRC=X ALT="&#x9f;"> <tab to=c>&#x0178;	#LATIN CAPITAL LETTER Y WITH DIAERESIS 
+ 
+</PRE> 
+</BODY> 
+</HTML> 

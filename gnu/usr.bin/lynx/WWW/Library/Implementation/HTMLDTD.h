@@ -13,19 +13,20 @@
 #define HTMLDTD_H
 
 #include <SGML.h>
+#include <HTFont.h>
 
 /*
-**  Lynx internal character representations.
+**  Valid name chars for tag parsing.
 */
-#ifndef HT_NON_BREAK_SPACE
-#define HT_NON_BREAK_SPACE	((char)1)	/* For now */
-#endif /* !HT_NON_BREAK_SPACE */
-#ifndef HT_EN_SPACE
-#define HT_EN_SPACE		((char)2)	/* For now */
-#endif /* !HT_EN_SPACE */
-#ifndef LY_SOFT_HYPHEN
-#define LY_SOFT_HYPHEN		((char)7)
-#endif /* !LY_SOFT_HYPHEN */
+#define IsNmStart(c) (isalpha(UCH(c)))
+#define IsNmChar(c) (isalnum(UCH(c)) || \
+		      c == '_' || c=='-' || c == '.' || c==':')
+
+
+#define ReallyEmptyTagNum(e) ((HTML_dtd.tags[e].contents == SGML_EMPTY) && \
+			      !(HTML_dtd.tags[e].flags & Tgf_nreie))
+#define ReallyEmptyTag(t) ((t->contents == SGML_EMPTY) && \
+			   !(t->flags & Tgf_nreie))
 
 /*
 
@@ -39,7 +40,7 @@ Element Numbers
    These include tables in HTMLDTD.c and code in HTML.c.
 
  */
-typedef enum _HTMLElement {
+typedef enum {
 	HTML_A,
 	HTML_ABBREV,
 	HTML_ACRONYM,
@@ -157,9 +158,22 @@ typedef enum _HTMLElement {
 	HTML_UL,
 	HTML_VAR,
 	HTML_WBR,
-	HTML_XMP } HTMLElement;
+	HTML_XMP,
+	HTML_ALT_OBJECT } HTMLElement;
 
+/* Notes: HTML.c uses a different extension of the HTML_ELEMENTS space
+          privately, see HTNestedList.h. */
+/*        Don't replace HTML_ELEMENTS with TABLESIZE(mumble_dtd.tags). */
+/* Keep the following defines in synch with the above enum! */
+
+/* HTML_ELEMENTS:     number of elements visible to Lynx code in general,
+                      alphabetic (ASCII) order. */
 #define HTML_ELEMENTS 118
+
+/* HTML_ALL_ELEMENTS: number of elements visible to SGML parser,
+                      additional variant(s) at end. */
+#define HTML_ALL_ELEMENTS 119
+
 
 /*
 
@@ -957,7 +971,7 @@ Attribute numbers
 #define HTML_UL_WRAP           13
 #define HTML_UL_ATTRIBUTES     14
 
-#ifdef USE_PSRC
+#ifdef USE_PRETTYSRC
 /* values of HTML attributes' types */
 #define HTMLA_NORMAL 0 /* nothing specific */
 #define HTMLA_ANAME  1 /* anchor name - 'id' or a's 'name' */
@@ -968,10 +982,10 @@ Attribute numbers
 #endif
 extern CONST SGML_dtd HTML_dtd;
 
-extern void HTSwitchDTD PARAMS((
-    BOOL new));
+extern void HTSwitchDTD PARAMS((int new_flag));
 
 extern HTTag HTTag_unrecognized;
+extern HTTag HTTag_mixedObject;
 
 /*
 
@@ -992,6 +1006,13 @@ extern void HTStartAnchor PARAMS((
 		HTStructured * targetstream,
 		CONST char *	name,
 		CONST char *	href));
+
+extern void HTStartAnchor5 PARAMS((
+		HTStructured * targetstream,
+		CONST char *	name,
+		CONST char *	href,
+		CONST char *	linktype,
+		int		tag_charset));
 
 /*
 

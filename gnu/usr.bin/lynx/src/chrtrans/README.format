@@ -82,7 +82,7 @@ c) character translation definitions:
  *	<range>		idem
  *	<range>		<unicode range>
  *
- * where <range> ::= <fontpos>-<fontpos>
+ * where <unicode range> ::= <unicode>-<unicode>
  * and <unicode> ::= U+<h><h><h><h>
  * and <h> ::= <hexadecimal digit>
  *

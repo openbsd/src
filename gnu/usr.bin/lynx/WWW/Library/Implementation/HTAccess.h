@@ -13,6 +13,8 @@
 
 extern char * use_this_url_instead;
 
+extern int redirection_attempts;
+
 /*      Definition uses:
 */
 #include <HTAnchor.h>
@@ -76,6 +78,7 @@ extern int HTDiag;                      /* Flag: load source as plain text */
 extern char * HTClientHost;             /* Name or number of telnetting host */
 extern FILE * HTlogfile;                /* File to output one-liners to */
 extern BOOL HTSecure;                   /* Disable security holes? */
+extern BOOL HTPermitRedir;              /* Special flag for getfile() */
 extern HTStream* HTOutputStream;        /* For non-interactive, set this */
 extern HTFormat HTOutputFormat;         /* To convert on load, set this */
 

@@ -19,6 +19,7 @@
 #include <UCDefs.h>
 #include <UCMap.h>
 #include <UCAux.h>
+#include <HTFTP.h>
 #include <HTVMSUtils.h>
 #include <ssdef.h>
 #include <jpidef.h>
@@ -32,8 +33,7 @@
 
 #include <LYUtils.h>
 #include <LYLeaks.h>
-
-#define INFINITY 512            	/* File name length @@ FIXME */
+#include <LYStrings.h>
 
 PUBLIC BOOL HTVMSFileVersions=FALSE; /* Include version numbers in listing? */
 
@@ -104,7 +104,7 @@ unsigned long Prv[2], PreviousPrv[2];
 
    if (Result == SS$_NORMAL) {
        if (!(PreviousPrv[0] & PRV$M_SYSPRV)) {
-           CTRACE(tfp, "HTVMS_enableSysPrv: Enabled SYSPRV\n");
+	   CTRACE((tfp, "HTVMS_enableSysPrv: Enabled SYSPRV\n"));
        }
    }
 }
@@ -130,7 +130,7 @@ unsigned long Prv[2], PreviousPrv[2];
 
    if (Result == SS$_NORMAL) {
        if (PreviousPrv[0] & PRV$M_SYSPRV) {
-           CTRACE(tfp, "HTVMS_disableSysPrv: Disabled SYSPRV\n");
+	   CTRACE((tfp, "HTVMS_disableSysPrv: Disabled SYSPRV\n"));
        }
    }
 }
@@ -207,9 +207,9 @@ char *colon;
      Result = sys$check_access(&ObjType,&FileNameDesc,&UserNameDesc,ItemList);
 
      if (Result == SS$_NORMAL)
-        return(YES);
+	return(YES);
      else
-        return(NO);
+	return(NO);
    }
 
    return(NO);
@@ -223,30 +223,31 @@ char *colon;
 **	vmsname		VMS file specification (NO NODE)
 **
 ** ON EXIT:
-**	returns 	www file specification
+**	returns		www file specification
 **
 ** EXAMPLES:
 **	vmsname				wwwname
-**	DISK$USER 			disk$user
-**	DISK$USER: 			/disk$user/
-**	DISK$USER:[DUNS] 		/disk$user/duns
-**	DISK$USER:[DUNS.ECHO] 		/disk$user/duns/echo
-**	[DUNS] 				duns
-**	[DUNS.ECHO] 			duns/echo
-**	[DUNS.ECHO.-.TRANS] 		duns/echo/../trans
-**	[DUNS.ECHO.--.TRANS] 		duns/echo/../../trans
-**	[.DUNS] 			duns
-**	[.DUNS.ECHO] 			duns/echo
-**	[.DUNS.ECHO]TEST.COM 		duns/echo/test.com
-**	TEST.COM 			test.com
+**	DISK$USER			disk$user
+**	DISK$USER:			/disk$user/
+**	DISK$USER:[DUNS]		/disk$user/duns
+**	DISK$USER:[DUNS.ECHO]		/disk$user/duns/echo
+**	[DUNS]				duns
+**	[DUNS.ECHO]			duns/echo
+**	[DUNS.ECHO.-.TRANS]		duns/echo/../trans
+**	[DUNS.ECHO.--.TRANS]		duns/echo/../../trans
+**	[.DUNS]				duns
+**	[.DUNS.ECHO]			duns/echo
+**	[.DUNS.ECHO]TEST.COM		duns/echo/test.com
+**	TEST.COM			test.com
 **
 **
 */
 PUBLIC char * HTVMS_wwwName ARGS1(
-	char *, vmsname)
+	CONST char *,	vmsname)
 {
-static char wwwname[256];
-char *src, *dst;
+static char wwwname[LY_MAXPATH];
+CONST char *src;
+char *dst;
 int dir;
    dst = wwwname;
    src = vmsname;
@@ -256,118 +257,46 @@ int dir;
    {
       switch(*src)
       {
-         case ':':  *(dst++) = '/'; break;
-         case '-': if (dir)
-	 	   {
-	 	      if ((*(src-1)=='[' || *(src-1)=='.' || *(src-1)=='-') &&
-		          (*(src+1)=='.' || *(src+1)=='-'))
+	 case ':':  *(dst++) = '/'; break;
+	 case '-': if (dir)
+		   {
+		      if ((*(src-1)=='[' || *(src-1)=='.' || *(src-1)=='-') &&
+			  (*(src+1)=='.' || *(src+1)=='-'))
 		      {
-		          *(dst++) = '/';
-                          *(dst++) = '.';
-                          *(dst++) = '.';
+			  *(dst++) = '/';
+			  *(dst++) = '.';
+			  *(dst++) = '.';
 		      }
 		      else
-		          *(dst++) = '-';
+			  *(dst++) = '-';
 		   }
 		   else
 		   {
 		      if (*(src-1) == ']') *(dst++) = '/';
 		      *(dst++) = '-';
 		   }
-                   break;
-         case '.': if (dir)
-                   {
-                      if (*(src-1) != '[') *(dst++) = '/';
-                   }
-                   else
+		   break;
+	 case '.': if (dir)
+		   {
+		      if (*(src-1) != '[') *(dst++) = '/';
+		   }
+		   else
 		   {
 		      if (*(src-1) == ']') *(dst++) = '/';
-                      *(dst++) = '.';
+		      *(dst++) = '.';
 		   }
-                   break;
-         case '[': dir = 1; break;
-         case ']': dir = 0; break;
-         default:  if (*(src-1) == ']') *(dst++) = '/';
-                   *(dst++) = *src;
-                   break;
+		   break;
+	 case '[': dir = 1; break;
+	 case ']': dir = 0; break;
+	 default:  if (*(src-1) == ']') *(dst++) = '/';
+		   *(dst++) = *src;
+		   break;
       }
    }
    *(dst++) = '\0';
    return(wwwname);
 }
 
-
-/* PUBLIC							HTVMS_name()
-**		CONVERTS WWW name into a VMS name
-** ON ENTRY:
-**	nn		Node Name (optional)
-**	fn		WWW file name
-**
-** ON EXIT:
-**	returns 	vms file specification
-**
-** Bug:	Returns pointer to static -- non-reentrant
-*/
-PUBLIC char * HTVMS_name ARGS2(
-	CONST char *, nn,
-	CONST char *, fn)
-{
-
-/*	We try converting the filename into Files-11 syntax.  That is, we assume
-**	first that the file is, like us, on a VMS node.  We try remote
-**	(or local) DECnet access.  Files-11, VMS, VAX and DECnet
-**	are trademarks of Digital Equipment Corporation.
-**	The node is assumed to be local if the hostname WITHOUT DOMAIN
-**	matches the local one. @@@
-*/
-    static char vmsname[INFINITY];	/* returned */
-    char * filename = (char*)malloc(strlen(fn)+1);
-    char * nodename = (char*)malloc(strlen(nn)+2+1);	/* Copies to hack */
-    char *second;		/* 2nd slash */
-    char *last;			/* last slash */
-
-    char * hostname = (char *)HTHostName();
-
-    if (!filename || !nodename) outofmem(__FILE__, "HTVMSname");
-    strcpy(filename, fn);
-    strcpy(nodename, "");	/* On same node?  Yes if node names match */
-    if (strncmp(nn,"localhost",9)) {
-        char *p, *q;
-        for (p=hostname, q=(char *)nn;
-	     *p && *p!='.' && *q && *q!='.'; p++, q++){
-	    if (TOUPPER(*p)!=TOUPPER(*q)) {
-	        strcpy(nodename, nn);
-		q = strchr(nodename, '.');	/* Mismatch */
-		if (q) *q=0;			/* Chop domain */
-		strcat(nodename, "::");		/* Try decnet anyway */
-		break;
-	    }
-	}
-    }
-
-    second = strchr(filename+1, '/');		/* 2nd slash */
-    last = strrchr(filename, '/');	/* last slash */
-
-    if (!second) {				/* Only one slash */
-	sprintf(vmsname, "%s%s", nodename, filename + 1);
-    } else if(second==last) {		/* Exactly two slashes */
-	*second = 0;		/* Split filename from disk */
-	sprintf(vmsname, "%s%s:%s", nodename, filename+1, second+1);
-	*second = '/';	/* restore */
-    } else { 				/* More than two slashes */
-	char * p;
-	*second = 0;		/* Split disk from directories */
-	*last = 0;		/* Split dir from filename */
-	sprintf(vmsname, "%s%s:[%s]%s",
-		nodename, filename+1, second+1, last+1);
-	*second = *last = '/';	/* restore filename */
-	for (p=strchr(vmsname, '['); *p!=']'; p++)
-	    if (*p=='/') *p='.';	/* Convert dir sep.  to dots */
-    }
-    FREE(nodename);
-    FREE(filename);
-    return vmsname;
-}
 
 /*
 **	The code below is for directory browsing by VMS Curses clients.
@@ -380,7 +309,7 @@ PUBLIC int HTStat ARGS2(
    /*
       the following stuff does not work in VMS with a normal stat...
       -->   /disk$user/duns/www if www is a directory
-		is statted like: 	/disk$user/duns/www.dir
+		is statted like:	/disk$user/duns/www.dir
 		after a normal stat has failed
       -->   /disk$user/duns	if duns is a toplevel directory
 		is statted like:	/disk$user/000000/duns.dir
@@ -394,7 +323,7 @@ PUBLIC int HTStat ARGS2(
 int Result;
 int Len;
 char *Ptr, *Ptr2;
-char Name[256];
+static char *Name;
 
    /* try normal stat... */
    Result = stat((char *)filename,info);
@@ -402,32 +331,7 @@ char Name[256];
       return(Result);
 
    /* make local copy */
-   strcpy(Name,filename);
-
-#ifdef NOT_USED
-   /* if filename contains a node specification (! or ::), we will try to access
-      the file via DECNET, but we do not stat it..., just return success
-      with some fake information... */
-   if (HTVMS_checkDecnet(Name))
-   {
-      /* set up fake info, only the one we use... */
-      info->st_dev = NULL;
-      info->st_ino[0] = 0;
-      info->st_ino[1] = 0;
-      info->st_ino[2] = 0;
-      info->st_mode = S_IFREG | S_IREAD;	/* assume it is a regular Readable file */
-      info->st_nlink = NULL;
-      info->st_uid = 0;
-      info->st_gid = 0;
-      info->st_rdev = 0;
-      info->st_size = 0;
-      info->st_atime = time(NULL);
-      info->st_mtime = time(NULL);
-      info->st_ctime = time(NULL);
-
-      return(0);
-   }
-#endif /* NOT_USED */
+   StrAllocCopy(Name,filename);
 
    /* failed,so do device search in case root is requested */
    if (!strcmp(Name,"/"))
@@ -444,7 +348,7 @@ char Name[256];
    Ptr = strchr(Name+1,'/');
    if ((Ptr == NULL) && (Name[0] == '/'))
    {  /* device only... */
-      strcat(Name,"/000000/000000");
+      StrAllocCat(Name, "/000000/000000");
    }
 
    if (Ptr != NULL)
@@ -452,21 +356,21 @@ char Name[256];
       Ptr2 = strchr(Ptr+1,'/');
       if ((Ptr2 == NULL) && (Name[0] == '/'))
       {
-         char End[256];
-         strcpy(End,Ptr);
-         *(Ptr+1) = '\0';
-         strcat(Name,"000000");
-         strcat(Name,End);
+	 char End[256];
+	 LYstrncpy(End, Ptr, sizeof(End) - 1);
+	 *(Ptr+1) = '\0';
+	 StrAllocCat(Name, "000000");
+	 StrAllocCat(Name, End);
       }
    }
 
-   /* try in case a file on toplevel directory or .DIR was alreadyt specified */
+   /* try in case a file on toplevel directory or .DIR was already specified */
    Result = stat(Name,info);
    if (Result == 0)
       return(Result);
 
    /* add .DIR and try again */
-   strcat(Name,".dir");
+   StrAllocCat(Name, ".dir");
    Result = stat(Name,info);
    return(Result);
 }
@@ -479,15 +383,7 @@ char Name[256];
 #endif	/* !_POSIX_SOURCE */
 
 typedef	struct __dirdesc {
-#if 0
-	int	dd_fd;		/* file descriptor */
-	long	dd_loc;		/* buf offset of entry from last readddir() */
-	long	dd_size;	/* amount of valid data in buffer */
-	long	dd_bsize;	/* amount of entries read at a time */
-	long	dd_off;		/* Current offset in dir (for telldir) */
-	char	*dd_buf;	/* directory data buffer */
-#endif
-	long 	context;	/* context descriptor for LIB$FIND_FILE calls */
+	long	context;	/* context descriptor for LIB$FIND_FILE calls */
 	char	dirname[255+1];	/* keeps the directory name, including *.* */
 	struct dsc$descriptor_s dirname_desc;	/* descriptor of dirname */
 } DIR;
@@ -495,28 +391,11 @@ typedef	struct __dirdesc {
 PRIVATE	DIR *HTVMSopendir(char *dirname);
 PRIVATE	struct dirent *HTVMSreaddir(DIR *dirp);
 PRIVATE	int HTVMSclosedir(DIR *dirp);
-#if 0
-#ifndef	_POSIX_SOURCE
-extern	void seekdir(/* DIR *dirp, int loc */);
-extern	long telldir(/* DIR *dirp */);
-#endif	/* POSIX_SOURCE */
-extern	void rewinddir(/* DIR *dirp */);
-
-#ifndef	lint
-#define	rewinddir(dirp)	seekdir((dirp), (long)0)
-#endif
-#endif /* not defined for VMS */
 
 /*** #include <sys_dirent.h> ***/
 /*** "sys_dirent.h" ***/
 struct	dirent {
-#if 0
-	off_t		d_off;		/* offset of next disk dir entry */
-#endif
 	unsigned long	d_fileno;	/* file number of entry */
-#if 0
-	unsigned short	d_reclen;	/* length of this record */
-#endif
 	unsigned short	d_namlen;	/* length of string in d_name */
 	char		d_name[255+1];	/* name (up to MAXNAMLEN + 1) */
 };
@@ -547,7 +426,8 @@ char *closebracket;
 long status;
 struct dsc$descriptor_s entryname_desc;
 struct dsc$descriptor_s dirname_desc;
-char DirEntry[256];
+static char *DirEntry;
+char Actual[256];
 char VMSentry[256];
 char UnixEntry[256];
 int index;
@@ -558,11 +438,13 @@ char *dot;
    /* or like               /disk$user/duns/www/test/multi/   */
    /* DirEntry should look like     disk$user:[duns.www.test]multi in both cases */
    /* dir.dirname should look like  disk$user:[duns.www.test.multi] */
-   strcpy(UnixEntry,dirname);
+   sprintf(UnixEntry, "%.*s", sizeof(UnixEntry) - 2, dirname);
    if (UnixEntry[strlen(UnixEntry)-1] != '/')
       strcat(UnixEntry,"/");
 
-   strcpy(DirEntry, HTVMS_name("",UnixEntry));
+   StrAllocCopy(DirEntry, HTVMS_name("",UnixEntry));
+   if (strlen(DirEntry) > sizeof(dir.dirname) - 1)
+      return (NULL);
    strcpy(dir.dirname, DirEntry);
    index = strlen(DirEntry) - 1;
 
@@ -574,31 +456,34 @@ char *dot;
       char *openbr = strrchr(DirEntry,'[');
       if (!openbr)
       { /* convert disk$user: into disk$user:[000000]000000.dir */
-         strcpy(dir.dirname, DirEntry);
-         strcat(dir.dirname, "[000000]");
-         strcat(DirEntry,"[000000]000000.dir");
+         if (strlen(dir.dirname) > sizeof(dir.dirname) - 10)
+            return (NULL);
+         sprintf(dir.dirname, "%.*s[000000]", sizeof(dir.dirname) - 9, DirEntry);
+	 StrAllocCat(DirEntry,"[000000]000000.dir");
       }
       else
       {
-         char End[256];
-         strcpy(End,openbr+1);
-         *(openbr+1) = '\0';
-         strcat(DirEntry,"000000]");
-         strcat(DirEntry,End);
-         strcat(DirEntry,".dir");
+	 char End[256];
+	 strcpy(End,openbr+1);
+	 *(openbr+1) = '\0';
+	 StrAllocCat(DirEntry,"000000]");
+	 StrAllocCat(DirEntry,End);
+	 StrAllocCat(DirEntry,".dir");
       }
    }
    else
    {
       *dot = ']';
-      strcat(DirEntry,".dir");
+      StrAllocCat(DirEntry,".dir");
    }
+   /* lib$find_file needs a fixed-size buffer */
+   LYstrncpy(Actual, DirEntry, sizeof(Actual)-1);
 
    dir.context = 0;
-   dirname_desc.dsc$w_length = strlen(DirEntry);
+   dirname_desc.dsc$w_length = strlen(Actual);
    dirname_desc.dsc$b_dtype = DSC$K_DTYPE_T;
    dirname_desc.dsc$b_class = DSC$K_CLASS_S;
-   dirname_desc.dsc$a_pointer = (char *)&(DirEntry);
+   dirname_desc.dsc$a_pointer = (char *)&(Actual);
 
    /* look for the directory */
    entryname_desc.dsc$w_length = 255;
@@ -607,24 +492,16 @@ char *dot;
    entryname_desc.dsc$a_pointer = VMSentry;
 
    status = lib$find_file(&(dirname_desc),
-                          &entryname_desc,
-                          &(dir.context),
-                          0,0,0,0);
+			  &entryname_desc,
+			  &(dir.context),
+			  0,0,0,0);
    if (!(status & 0x01))
    { /* directory not found */
       return(NULL);
    }
 
-#if 0
-   /* now correct dirname, which looks like disk$user:[duns.www.test]multi */
-   /* and should look like disk$user:[duns.www.test.multi] */
-   closebracket = strchr(dir.dirname,']');
-   *closebracket = '.';
-   closebracket = strstr(dir.dirname,".dir");
-   *closebracket = '\0';
-   strcat(dir.dirname,"]");
-#endif
-
+   if (strlen(dir.dirname) > sizeof(dir.dirname) - 10)
+       return (NULL);
    if (HTVMSFileVersions)
        strcat(dir.dirname,"*.*;*");
    else
@@ -652,9 +529,9 @@ char *UnixEntry;
    entryname_desc.dsc$a_pointer = VMSentry;
 
    status = lib$find_file(&(dirp->dirname_desc),
-                          &entryname_desc,
-                          &(dirp->context),
-                          0,0,0,0);
+			  &entryname_desc,
+			  &(dirp->context),
+			  0,0,0,0);
    if (status == RMS$_NMF)
    { /* no more files */
       return(NULL);
@@ -663,11 +540,11 @@ char *UnixEntry;
    { /* ok */
       if (!(status & 0x01)) return(0);
       if (HTVMSFileVersions)
-          space = strchr(VMSentry,' ');
+	  space = strchr(VMSentry,' ');
       else
-          space = strchr(VMSentry,';');
+	  space = strchr(VMSentry,';');
       if (space)
-         *space = '\0';
+	 *space = '\0';
 
       /* convert to unix style... */
       UnixEntry = HTVMS_wwwName(VMSentry);
@@ -733,12 +610,6 @@ PRIVATE void free_VMSEntryInfo_contents ARGS1(VMSEntryInfo *,entry_info)
    /* dont free the struct */
 }
 
-#define FILE_BY_NAME 0
-#define FILE_BY_TYPE 1
-#define FILE_BY_SIZE 2
-#define FILE_BY_DATE 3
-extern BOOLEAN HTfileSortMethod;  /* specifies the method of sorting */
-
 PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 					      VMSEntryInfo *,entry2)
 {
@@ -747,9 +618,9 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 
     switch(HTfileSortMethod)
       {
-        case FILE_BY_SIZE:
+	case FILE_BY_SIZE:
 			/* both equal or both 0 */
-                        if(entry1->size == entry2->size)
+			if(entry1->size == entry2->size)
 			    return(strcasecomp(entry1->filename,
 					       entry2->filename));
 			else
@@ -757,24 +628,22 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 				return(1);
 			    else
 				return(-1);
-                        break;
-        case FILE_BY_TYPE:
-                        if(entry1->type && entry2->type) {
-                            status = strcasecomp(entry1->type, entry2->type);
+	case FILE_BY_TYPE:
+			if(entry1->type && entry2->type) {
+			    status = strcasecomp(entry1->type, entry2->type);
 			    if(status)
 				return(status);
 			    /* else fall to filename comparison */
 			}
-                        return (strcasecomp(entry1->filename,
+			return (strcasecomp(entry1->filename,
 					    entry2->filename));
-                        break;
-        case FILE_BY_DATE:
-                        if(entry1->date && entry2->date) {
+	case FILE_BY_DATE:
+			if(entry1->date && entry2->date) {
 			    /*
 			    ** Make sure we have the correct length. - FM
 			    */
 			    if (strlen(entry1->date) != 12 ||
-			        strlen(entry2->date) != 12) {
+				strlen(entry2->date) != 12) {
 				return (strcasecomp(entry1->filename,
 						    entry2->filename));
 			    }
@@ -783,71 +652,70 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 			    ** chronological order. - FM
 			    */
 			    if (entry1->date[7] != ' ') {
-			        strcpy(date1, "9999");
+				strcpy(date1, "9999");
 				strcpy(time1, (char *)&entry1->date[7]);
 			    } else {
 				strcpy(date1, (char *)&entry1->date[8]);
-			        strcpy(time1, "00:00");
+				strcpy(time1, "00:00");
 			    }
 			    strncpy(month, entry1->date, 3);
 			    month[3] = '\0';
 			    for (i = 0; i < 12; i++) {
-			        if (!strcasecomp(month, months[i])) {
+				if (!strcasecomp(month, months[i])) {
 				    break;
 				}
 			    }
 			    i++;
-			    sprintf(month, "%s%d", (i < 10 ? "0" : ""), i);
+			    sprintf(month, "%02d", i);
 			    strcat(date1, month);
 			    strncat(date1, (char *)&entry1->date[4], 2);
 			    date1[8] = '\0';
 			    if (date1[6] == ' ') {
-			        date1[6] = '0';
+				date1[6] = '0';
 			    }
 			    strcat(date1, time1);
 			    if (entry2->date[7] != ' ') {
-			        strcpy(date2, "9999");
+				strcpy(date2, "9999");
 				strcpy(time2, (char *)&entry2->date[7]);
 			    } else {
 				strcpy(date2, (char *)&entry2->date[8]);
-			        strcpy(time2, "00:00");
+				strcpy(time2, "00:00");
 			    }
 			    strncpy(month, entry2->date, 3);
 			    month[3] = '\0';
 			    for (i = 0; i < 12; i++) {
-			        if (!strcasecomp(month, months[i])) {
+				if (!strcasecomp(month, months[i])) {
 				    break;
 				}
 			    }
 			    i++;
-			    sprintf(month, "%s%d", (i < 10 ? "0" : ""), i);
+			    sprintf(month, "%02d", i);
 			    strcat(date2, month);
 			    strncat(date2, (char *)&entry2->date[4], 2);
 			    date2[8] = '\0';
 			    if (date2[6] == ' ') {
-			        date2[6] = '0';
+				date2[6] = '0';
 			    }
 			    strcat(date2, time2);
 			    /*
 			    ** Do the comparison. - FM
 			    */
-                            status = strcasecomp(date2, date1);
+			    status = strcasecomp(date2, date1);
 			    if(status)
 				return(status);
 			    /* else fall to filename comparison */
 			}
-                        return (strcasecomp(entry1->filename,
+			return (strcasecomp(entry1->filename,
 					    entry2->filename));
-                        break;
-        case FILE_BY_NAME:
-        default:
-                        return (strcmp(entry1->filename,
+	case FILE_BY_NAME:
+	default:
+			return (strcmp(entry1->filename,
 					    entry2->filename));
       }
 }
 
 
-/*						    	HTVMSBrowseDir()
+/*							HTVMSBrowseDir()
 **
 **	This function generates a directory listing as an HTML-object
 **	for local file URL's.  It assumes the first two elements of
@@ -889,7 +757,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
     extern BOOLEAN no_dotfiles, show_dotfiles;
 
     HTUnEscape(pathname);
-    CTRACE(tfp,"HTVMSBrowseDir: Browsing `%s\'\n", pathname);
+    CTRACE((tfp,"HTVMSBrowseDir: Browsing `%s\'\n", pathname));
 
     /*
      *  Require at least two elements (presumably a device and directory)
@@ -898,12 +766,12 @@ PUBLIC int HTVMSBrowseDir ARGS4(
      *  to /sys$sysroot/syshlp) before calling this routine.
      */
     if (((*pathname != '/') ||
-    	 (cp=strchr(pathname+1, '/')) == NULL ||
+	 (cp=strchr(pathname+1, '/')) == NULL ||
 	 *(cp+1) == '\0' ||
 	 0==strncmp((cp+1), "000000", 6)) ||
-        (dp=HTVMSopendir(pathname)) == NULL) {
-        FREE(pathname);
-    	return HTLoadError(sink, 403, COULD_NOT_ACCESS_DIR);
+	(dp=HTVMSopendir(pathname)) == NULL) {
+	FREE(pathname);
+	return HTLoadError(sink, 403, COULD_NOT_ACCESS_DIR);
     }
 
     /*
@@ -926,7 +794,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
     cp = strrchr(pathname, '/');  /* find lastslash */
     StrAllocCopy(tail, (cp+1)); /* take slash off the beginning */
     if (*tail != '\0') {
-        StrAllocCopy(title, tail);
+	StrAllocCopy(title, tail);
 	*cp = '\0';
 	if ((cp1=strrchr(pathname, '/')) != NULL &&
 	    cp1 != pathname &&
@@ -934,7 +802,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    StrAllocCopy(parent, (cp1+1));
 	*cp = '/';
     } else {
-        pathname[strlen(pathname)-1] = '\0';
+	pathname[strlen(pathname)-1] = '\0';
 	cp = strrchr(pathname, '/');
 	StrAllocCopy(title, (cp+1));
 	pathname[strlen(pathname)] = '/';
@@ -974,19 +842,19 @@ PUBLIC int HTVMSBrowseDir ARGS4(
     END(HTML_H1);
     PUTC('\n');
     if (HTDirReadme == HT_DIR_README_TOP) {
-        FILE * fp;
+	FILE * fp;
 	if (header[strlen(header)-1] != '/')
 	    StrAllocCat(header, "/");
 	StrAllocCat(header, HT_DIR_README_FILE);
-        if ((fp = fopen(header,  "r")) != NULL) {
+	if ((fp = fopen(header,	 "r")) != NULL) {
 	    START(HTML_PRE);
 	    for(;;) {
-	        char c = fgetc(fp);
-	        if (c == (char)EOF)
+		char c = fgetc(fp);
+		if (c == (char)EOF)
 		    break;
 #ifdef NOTDEFINED
-	        switch (c) {
-	    	    case '&':
+		switch (c) {
+		    case '&':
 		    case '<':
 		    case '>':
 			PUTC('&');
@@ -997,21 +865,18 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 			break;
 		    default:
 			PUTC(c);
-	        }
+		}
 #else
 		PUTC(c);
 #endif /* NOTDEFINED */
 	    }
 	    END(HTML_PRE);
 	    fclose(fp);
-        }
+	}
     }
     FREE(header);
     if (parent) {
-	relative = (char*) malloc(strlen(tail) + 4);
-	if (relative == NULL)
-		outofmem(__FILE__, "HTVMSBrowseDir");
-	sprintf(relative, "%s/..", tail);
+	HTSprintf0(&relative, "%s/..", tail);
 	HTStartAnchor(target, "", relative);
 	PUTS("Up to ");
 	HTUnEscape(parent);
@@ -1075,9 +940,9 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    if (HTStat(pathname, &file_info)) {
 		/* for VMS the failure here means the file is not readable...
 		   we however continue to browse through the directory... */
-                continue;
+		continue;
 	    }
-            entry_info = (VMSEntryInfo *)malloc(sizeof(VMSEntryInfo));
+	    entry_info = (VMSEntryInfo *)malloc(sizeof(VMSEntryInfo));
 	    if (entry_info == NULL)
 		outofmem(__FILE__, "HTVMSBrowseDir");
 	    entry_info->type = 0;
@@ -1103,45 +968,45 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 
 	    StrAllocCopy(entry_info->filename, dirbuf->d_name);
 	    if (S_ISDIR(file_info.st_mode)) {
-	        /* strip .DIR part... */
-                char *dot;
-                dot = strstr(entry_info->filename, ".DIR");
-                if (dot)
-                   *dot = '\0';
+		/* strip .DIR part... */
+		char *dot;
+		dot = strstr(entry_info->filename, ".DIR");
+		if (dot)
+		   *dot = '\0';
 		LYLowerCase(entry_info->filename);
 		StrAllocCopy(entry_info->type, "Directory");
 	    } else {
-	        if ((cp = strstr(entry_info->filename, "READ")) == NULL) {
-	            cp = entry_info->filename;
+		if ((cp = strstr(entry_info->filename, "READ")) == NULL) {
+		    cp = entry_info->filename;
 		} else {
 		    cp += 4;
 		    if (!strncmp(cp, "ME", 2)) {
-		        cp += 2;
+			cp += 2;
 			while (cp && *cp && *cp != '.') {
 			    cp++;
 			}
 		    } else if (!strncmp(cp, ".ME", 3)) {
-		        cp = (entry_info->filename +
+			cp = (entry_info->filename +
 			      strlen(entry_info->filename));
 		    } else {
-		        cp = entry_info->filename;
+			cp = entry_info->filename;
 		    }
 		}
 		LYLowerCase(cp);
 		if (((len = strlen(entry_info->filename)) > 2) &&
 		    entry_info->filename[len-1] == 'z') {
 		    if (entry_info->filename[len-2] == '.' ||
-		        entry_info->filename[len-2] == '_')
+			entry_info->filename[len-2] == '_')
 			entry_info->filename[len-1] = 'Z';
 		}
 	    }
 
 	    /* Get the date */
 	    {
-	        char *t = (char *)ctime((CONST time_t *)&file_info.st_ctime);
+		char *t = (char *)ctime((CONST time_t *)&file_info.st_ctime);
 		*(t+24) = '\0';
 
-	        StrAllocCopy(entry_info->date, (t+4));
+		StrAllocCopy(entry_info->date, (t+4));
 		*((entry_info->date)+7) = '\0';
 		if ((atoi((t+19))) < atoi(ThisYear))
 		    StrAllocCat(entry_info->date,  (t+19));
@@ -1153,16 +1018,16 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 
 	    /* Get the size */
 	    if (!S_ISDIR(file_info.st_mode))
-	        entry_info->size = (unsigned int)file_info.st_size;
+		entry_info->size = (unsigned int)file_info.st_size;
 	    else
-	        entry_info->size = 0;
+		entry_info->size = 0;
 
 	    /* Now, update the BTree etc. */
 	    if(entry_info->display)
 	      {
-		 CTRACE(tfp,"Adding file to BTree: %s\n",
-						      entry_info->filename);
-	         HTBTree_add(bt, (VMSEntryInfo *)entry_info);
+		 CTRACE((tfp,"Adding file to BTree: %s\n",
+						      entry_info->filename));
+		 HTBTree_add(bt, (VMSEntryInfo *)entry_info);
 	      }
 
 	} /* End while HTVMSreaddir() */
@@ -1186,8 +1051,8 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		/* Output the date */
 		if(entry_info->date)
 		       {
-		             PUTS(entry_info->date);
-		             PUTS("  ");
+			     PUTS(entry_info->date);
+			     PUTS("  ");
 		       }
 		else
 			PUTS("     * ");
@@ -1196,9 +1061,9 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		if(entry_info->type)
 		  {
 		    for(i = 0; entry_info->type[i] != '\0' && i < 15; i++)
-		        PUTC(entry_info->type[i]);
+			PUTC(entry_info->type[i]);
 		    for(; i < 17; i++)
-		        PUTC(' ');
+			PUTC(' ');
 
 		  }
 
@@ -1207,10 +1072,10 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		PUTS(entry_info->filename);
 		END(HTML_A);
 
-                /* Output the size */
+		/* Output the size */
 		if(entry_info->size)
 		  {
-		          if(entry_info->size < 1024)
+			  if(entry_info->size < 1024)
 			      sprintf(string_buffer,"  %d bytes",
 							entry_info->size);
 			  else

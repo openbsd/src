@@ -34,7 +34,7 @@ typedef struct _UCTransParams UCTransParams;
 #endif /* UCDEFS_H */
 
 extern void UCSetTransParams PARAMS((
-	UCTransParams * 	pT,
+	UCTransParams *		pT,
 	int			cs_in,
 	CONST LYUCcharset *	p_in,
 	int			cs_out,
@@ -66,9 +66,11 @@ extern BOOL UCPutUtf8_charstring PARAMS((
 	HTStream *	target,
 	putc_func_t *	actions,
 	UCode_t		code));
-    
+
 extern BOOL UCConvertUniToUtf8 PARAMS((
 	UCode_t		code,
 	char *		buffer));
+
+extern UCode_t UCGetUniFromUtf8String PARAMS((char ** ppuni));
 
 #endif /* UCAUX_H */

@@ -14,6 +14,7 @@
 #include <GridText.h>
 #include <LYCharSets.h>
 #include <LYNews.h>
+#include <LYEdit.h>
 
 #include <LYGlobalDefs.h>
 
@@ -25,16 +26,19 @@
 BOOLEAN term_message = FALSE;
 PRIVATE void terminate_message  PARAMS((int sig));
 
-PRIVATE BOOLEAN message_has_content ARGS1(
-    CONST char *,		filename)
+PRIVATE BOOLEAN message_has_content ARGS2(
+    CONST char *,	filename,
+    BOOLEAN *,		nonspaces)
 {
     FILE *fp;
     char *buffer = NULL;
     BOOLEAN in_headers = TRUE;
 
+    *nonspaces = FALSE;
+
     if (!filename || (fp = fopen(filename, "r")) == NULL) {
-	CTRACE(tfp, "Failed to open file %s for reading!\n",
-	       filename ? filename : "(<null>)");
+	CTRACE((tfp, "Failed to open file %s for reading!\n",
+	       NONNULL(filename)));
 	return FALSE;
     }
     while (LYSafeGets(&buffer, fp) != NULL) {
@@ -47,21 +51,26 @@ PRIVATE BOOLEAN message_has_content ARGS1(
 	    if (*cp == '\n') {
 		break;
 	    } else if (*cp != ' ') {
-		if (!firstnonblank && isgraph((unsigned char)*cp)) {
+		if (!firstnonblank && isgraph(UCH(*cp))) {
 		    firstnonblank = *cp;
+		} else if (!isspace(UCH(*cp))) {
+		    *nonspaces = TRUE;
 		}
 	    }
 	}
 	if (*cp != '\n') {
 	    int c;
-	    while ((c = getc(fp)) != EOF && c != (int)(unsigned char)'\n') {
-		if (!firstnonblank && isgraph((unsigned char)c))
+	    while ((c = getc(fp)) != EOF && c != '\n') {
+		if (!firstnonblank && isgraph(UCH(c))) {
 		    firstnonblank = (char)c;
+		} else if (!isspace(UCH(*cp))) {
+		    *nonspaces = TRUE;
+		}
 	    }
 	}
 	if (firstnonblank && firstnonblank != '>') {
 	    if (!in_headers) {
-		fclose(fp);
+		LYCloseInput(fp);
 		FREE(buffer);
 		return TRUE;
 	    }
@@ -71,7 +80,7 @@ PRIVATE BOOLEAN message_has_content ARGS1(
 	}
     }
     FREE(buffer);
-    fclose(fp);
+    LYCloseInput(fp);
     return FALSE;
 }
 
@@ -95,6 +104,7 @@ PUBLIC char *LYNewsPost ARGS2(
     char *cp = NULL;
     CONST char *kp = NULL;
     int c = 0;  /* user input */
+    int len;
     FILE *fd = NULL;
     char my_tempfile[LY_MAXPATH];
     FILE *fc = NULL;
@@ -105,6 +115,7 @@ PUBLIC char *LYNewsPost ARGS2(
     char *org = NULL;
     FILE *fp = NULL;
     BOOLEAN nonempty = FALSE;
+    BOOLEAN nonspaces = FALSE;
 
     /*
      *  Make sure a non-zero length newspost, newsreply,
@@ -114,10 +125,22 @@ PUBLIC char *LYNewsPost ARGS2(
 	return(postfile);
 
     /*
+     *  Return immediately if we do get called, maybe by some quirk
+     *  of HTNews.c, when we shouldn't. - kw
+     */
+    if (no_newspost)
+	return(postfile);
+
+    /*
      *  Open a temporary file for the headers
      *  and message body. - FM
      */
-    if ((fd = LYOpenTemp(my_tempfile, HTML_SUFFIX, "w")) == NULL) {
+#ifdef __DJGPP__
+    if ((fd = LYOpenTemp(my_tempfile, HTML_SUFFIX, BIN_W)) == NULL)
+#else
+    if ((fd = LYOpenTemp(my_tempfile, HTML_SUFFIX, "w")) == NULL)
+#endif /* __DJGPP__ */
+    {
 	HTAlert(CANNOT_OPEN_TEMP);
 	return(postfile);
     }
@@ -154,7 +177,7 @@ PUBLIC char *LYNewsPost ARGS2(
 	}
 	HTUnEscape(References);
 	if (!((cp = strchr(References, '@')) && cp > References + 1 &&
-	      isalnum(cp[1]))) {
+	      isalnum(UCH(cp[1])))) {
 	    FREE(References);
 	}
     }
@@ -174,28 +197,27 @@ PUBLIC char *LYNewsPost ARGS2(
     /*
      *  Show the list of newsgroups. - FM
      */
-    clear();
-    move(2,0);
-    scrollok(stdscr, TRUE);	/* Enable scrolling. */
-    addstr(gettext("You will be posting to:"));
-    addstr("\n\t");
-    addstr(NewsGroups);
-    addch('\n');
+    LYclear();
+    LYmove(2,0);
+    scrollok(LYwin, TRUE);		/* Enable scrolling. */
+    LYaddstr(gettext("You will be posting to:"));
+    LYaddstr("\n\t");
+    LYaddstr(NewsGroups);
+    LYaddch('\n');
 
     /*
      *  Get the mail address for the From header,
      *  offering personal_mail_address as default.
      */
-    addstr(gettext("\n\n Please provide your mail address for the From: header\n"));
-    strcpy(user_input, "From: ");
-    if (personal_mail_address)
-	strcat(user_input, personal_mail_address);
+    LYaddstr(gettext("\n\n Please provide your mail address for the From: header\n"));
+    sprintf(user_input, "From: %.*s", (int)sizeof(user_input) - 8,
+	    (personal_mail_address != NULL) ? personal_mail_address : "");
     if (LYgetstr(user_input, VISIBLE,
 		 sizeof(user_input), NORECALL) < 0 ||
 	term_message) {
 	HTInfoMsg(NEWS_POST_CANCELLED);
 	LYCloseTempFP(fd);		/* Close the temp file.	*/
-	scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+	scrollok(LYwin, FALSE);		/* Stop scrolling.	*/
 	goto cleanup;
     }
     fprintf(fd, "%s\n", user_input);
@@ -205,7 +227,7 @@ PUBLIC char *LYNewsPost ARGS2(
      *  document's title as the default if this is a
      *  followup rather than a new post. - FM
      */
-    addstr(gettext("\n\n Please provide or edit the Subject: header\n"));
+    LYaddstr(gettext("\n\n Please provide or edit the Subject: header\n"));
     strcpy(user_input, "Subject: ");
     if ((followup == TRUE && nhist > 0) &&
 	(kp = HText_getTitle()) != NULL) {
@@ -213,10 +235,28 @@ PUBLIC char *LYNewsPost ARGS2(
 	 *  Add the default subject.
 	 */
 	kp = LYSkipCBlanks(kp);
+#ifdef CJK_EX	/* 1998/05/15 (Fri) 09:10:38 */
+	if (HTCJK == JAPANESE) {
+	    CJKinput[0] = '\0';
+	    switch(kanji_code) {
+	    case EUC:
+		TO_EUC((CONST unsigned char *)kp, (unsigned char *)CJKinput);
+		kp = CJKinput;
+		break;
+	    case SJIS:
+		TO_SJIS((CONST unsigned char *)kp, (unsigned char *)CJKinput);
+		kp = CJKinput;
+		break;
+	    default:
+		break;
+	    }
+	}
+#endif
 	if (strncasecomp(kp, "Re:", 3)) {
 	    strcat(user_input, "Re: ");
 	}
-	strcat(user_input, kp);
+	len = strlen(user_input);
+	LYstrncpy(user_input + len, kp, sizeof(user_input) - len - 1);
     }
     cp = NULL;
     if (LYgetstr(user_input, VISIBLE,
@@ -224,7 +264,7 @@ PUBLIC char *LYNewsPost ARGS2(
 	term_message) {
 	HTInfoMsg(NEWS_POST_CANCELLED);
 	LYCloseTempFP(fd);		/* Close the temp file. */
-	scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+	scrollok(LYwin, FALSE);		/* Stop scrolling.	*/
 	goto cleanup;
     }
     fprintf(fd,"%s\n",user_input);
@@ -238,8 +278,9 @@ PUBLIC char *LYNewsPost ARGS2(
     } else if (((org = getenv("NEWS_ORGANIZATION")) != NULL) &&
 	       *org != '\0') {
 	StrAllocCat(cp, org);
-#ifndef VMS
-    } else if ((fp = fopen("/etc/organization", "r")) != NULL) {
+    }
+#ifdef UNIX
+    else if ((fp = fopen("/etc/organization", TXT_R)) != NULL) {
 	char *buffer = 0;
 	if (LYSafeGets(&buffer, fp) != NULL) {
 	    if ((org = strchr(buffer, '\n')) != NULL) {
@@ -250,18 +291,41 @@ PUBLIC char *LYNewsPost ARGS2(
 	    }
 	}
 	FREE(buffer);
-	fclose(fp);
-#endif /* !VMS */
+	LYCloseInput(fp);
     }
+#else
+#ifdef _WINDOWS	/* 1998/05/14 (Thu) 17:47:01 */
+    else {
+	char *p, fname[LY_MAXPATH];
+
+	strcpy(fname, LynxSigFile);
+	p = strrchr(fname, '/');
+	if (p != 0 && (p - fname) < sizeof(fname) - 15) {
+	    strcpy(p + 1, "LYNX_ETC.TXT");
+	    if ((fp = fopen(fname, TXT_R)) != NULL) {
+		if (fgets(user_input, sizeof(user_input), fp) != NULL) {
+		    if ((org = strchr(user_input, '\n')) != NULL) {
+			*org = '\0';
+		    }
+		    if (user_input[0] != '\0') {
+			StrAllocCat(cp, user_input);
+		    }
+		}
+		LYCloseInput(fp);
+	    }
+	}
+    }
+#endif /* _WINDOWS */
+#endif /* !UNIX */
     LYstrncpy(user_input, cp, (sizeof(user_input) - 16));
     FREE(cp);
-    addstr(gettext("\n\n Please provide or edit the Organization: header\n"));
+    LYaddstr(gettext("\n\n Please provide or edit the Organization: header\n"));
     if (LYgetstr(user_input, VISIBLE,
 		 sizeof(user_input), NORECALL) < 0 ||
 	term_message) {
 	HTInfoMsg(NEWS_POST_CANCELLED);
 	LYCloseTempFP(fd);		/* Close the temp file. */
-	scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+	scrollok(LYwin, FALSE);		/* Stop scrolling.	*/
 	goto cleanup;
     }
     fprintf(fd, "%s\n", user_input);
@@ -278,10 +342,6 @@ PUBLIC char *LYNewsPost ARGS2(
      *  Have the user create the message body.
      */
     if (!no_editor && editor && *editor != '\0') {
-	/*
-	 *  Use an external editor.
-	 */
-	char *editor_arg = "";
 
 	if (followup && nhist > 0) {
 	    /*
@@ -291,58 +351,47 @@ PUBLIC char *LYNewsPost ARGS2(
 		_statusline(INC_ORIG_MSG_PROMPT);
 	    } else if (HTConfirm(INC_ORIG_MSG_PROMPT) == YES) {
 		/*
-		 *  The 1 will add the reply ">" in front of every line.
+		 *  The 'TRUE' will add the reply ">" in front of every line.
 		 *  We're assuming that if the display character set is
 		 *  Japanese and the document did not have a CJK charset,
 		 *  any non-EUC or non-SJIS 8-bit characters in it where
 		 *  converted to 7-bit equivalents. - FM
 		 */
-		print_wwwfile_to_fd(fd, 1);
+		print_wwwfile_to_fd(fd, TRUE);
 	    }
 	}
 	LYCloseTempFP(fd);		/* Close the temp file. */
-	scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
-	if (term_message || c == 7 || c == 3)
+	scrollok(LYwin, FALSE);		/* Stop scrolling.	*/
+	if (term_message || LYCharIsINTERRUPT(c))
 	    goto cleanup;
 
 	/*
 	 *  Spawn the user's editor on the news file.
 	 */
-	if (strstr(editor, "pico")) {
-	    editor_arg = " -t"; /* No prompt for filename to use */
-	}
-	sprintf(user_input,"%s%s %s", editor, editor_arg, my_tempfile);
-	_statusline(SPAWNING_EDITOR_FOR_NEWS);
-	stop_curses();
-	if (LYSystem(user_input)) {
-	    start_curses();
-	    HTAlert(ERROR_SPAWNING_EDITOR);
-	} else {
-	    start_curses();
-	}
+	edit_temporary_file(my_tempfile, "", SPAWNING_EDITOR_FOR_NEWS);
 
-	nonempty = message_has_content(my_tempfile);
+	nonempty = message_has_content(my_tempfile, &nonspaces);
 
     } else {
 	/*
 	 *  Use the built in line editior.
 	 */
-	addstr(gettext("\n\n Please enter your message below."));
-	addstr(gettext("\n When you are done, press enter and put a single period (.)"));
-	addstr(gettext("\n on a line and press enter again."));
-	addstr("\n\n");
-	refresh();
+	LYaddstr(gettext("\n\n Please enter your message below."));
+	LYaddstr(gettext("\n When you are done, press enter and put a single period (.)"));
+	LYaddstr(gettext("\n on a line and press enter again."));
+	LYaddstr("\n\n");
+	LYrefresh();
 	*user_input = '\0';
 	if (LYgetstr(user_input, VISIBLE,
 		     sizeof(user_input), NORECALL) < 0 ||
 	    term_message) {
 	    HTInfoMsg(NEWS_POST_CANCELLED);
 	    LYCloseTempFP(fd);		/* Close the temp file.	*/
-	    scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+	    scrollok(LYwin, FALSE);	/* Stop scrolling.	*/
 	    goto cleanup;
 	}
 	while (!STREQ(user_input,".") && !term_message) {
-	    addch('\n');
+	    LYaddch('\n');
 	    fprintf(fd,"%s\n",user_input);
 	    if (!nonempty && strlen(user_input))
 		nonempty = TRUE;
@@ -350,32 +399,35 @@ PUBLIC char *LYNewsPost ARGS2(
 	    if (LYgetstr(user_input, VISIBLE,
 			 sizeof(user_input), NORECALL) < 0) {
 		HTInfoMsg(NEWS_POST_CANCELLED);
-		LYCloseTempFP(fd);		/* Close the temp file. */
-		scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+		LYCloseTempFP(fd);	/* Close the temp file. */
+		scrollok(LYwin, FALSE);	/* Stop scrolling.	*/
 		goto cleanup;
 	    }
 	}
 	fprintf(fd, "\n");
 	LYCloseTempFP(fd);		/* Close the temp file. */
-	scrollok(stdscr, FALSE);	/* Stop scrolling.	*/
+	scrollok(LYwin, FALSE);		/* Stop scrolling.	*/
     }
 
-    if (!nonempty) {
+    if (nonempty) {
+	/*
+	 *  Confirm whether to post, and if so,
+	 *  whether to append the sig file. - FM
+	 */
+	LYStatusLine = (LYlines - 1);
+	c = HTConfirm(POST_MSG_PROMPT);
+	LYStatusLine = -1;
+	if (c != YES) {
+	    LYclear();  /* clear the screen */
+	    goto cleanup;
+	}
+    } else {
 	HTAlert(gettext("Message has no original text!"));
-	goto cleanup;
+	if (!nonspaces
+	 || HTConfirmDefault(POST_MSG_PROMPT, NO) != YES)
+	    goto cleanup;
     }
-    /*
-     *  Confirm whether to post, and if so,
-     *  whether to append the sig file. - FM
-     */
-    LYStatusLine = (LYlines - 1);
-    c = HTConfirm(POST_MSG_PROMPT);
-    LYStatusLine = -1;
-    if (c != YES) {
-	clear();  /* clear the screen */
-	goto cleanup;
-    }
-    if ((LynxSigFile != NULL) && (fp = fopen(LynxSigFile, "r")) != NULL) {
+    if ((LynxSigFile != NULL) && (fp = fopen(LynxSigFile, TXT_R)) != NULL) {
 	char *msg = NULL;
 	HTSprintf0(&msg, APPEND_SIG_FILE, LynxSigFile);
 
@@ -389,14 +441,14 @@ PUBLIC char *LYNewsPost ARGS2(
 		while (LYSafeGets(&buffer, fp) != NULL) {
 		    fputs(buffer, fd);
 		}
-		fclose(fd);
+		LYCloseOutput(fd);
 	    }
 	}
-	fclose(fp);
+	LYCloseInput(fp);
 	FREE(msg);
 	LYStatusLine = -1;
     }
-    clear();  /* clear the screen */
+    LYclear();  /* clear the screen */
 
     /*
      *  If we are using a Japanese display character
@@ -406,7 +458,7 @@ PUBLIC char *LYNewsPost ARGS2(
      *  use the temp file as is. - FM
      */
     if (CJKfile[0] != '\0') {
-	if ((fd = fopen(my_tempfile, "r")) != NULL) {
+	if ((fd = fopen(my_tempfile, TXT_R)) != NULL) {
 	    char *buffer = NULL;
 	    while (LYSafeGets(&buffer, fd) != NULL) {
 		TO_JIS((unsigned char *)buffer,
@@ -415,7 +467,7 @@ PUBLIC char *LYNewsPost ARGS2(
 	    }
 	    LYCloseTempFP(fc);
 	    StrAllocCopy(postfile, CJKfile);
-	    fclose(fd);
+	    LYCloseInput(fd);
 	    LYRemoveTemp(my_tempfile);
 	    strcpy(my_tempfile, CJKfile);
 	    CJKfile[0] = '\0';
@@ -471,7 +523,7 @@ PRIVATE void terminate_message ARGS1(
      *  Refresh the screen to get rid of the "interrupt" message.
      */
     lynx_force_repaint();
-    refresh();
+    LYrefresh();
 #endif /* VMS */
 }
 

@@ -13,15 +13,30 @@
 
 PUBLIC BOOLEAN editor_can_position NOARGS
 {
+    static CONST char *table[] = {
 #ifdef VMS
-    return (strstr(editor, "sedt") || strstr(editor, "SEDT"));
+	"sedt",
+	"SEDT"
 #else
-    return (strstr(editor, "emacs") || strstr(editor, "vi") ||
-	strstr(editor, "pico")  || strstr(editor, "jove")   ||
- 	strstr(editor, "jed")   || strstr(editor, "joe")    ||
- 	strstr(editor, "jstar") || strstr(editor, "jmacs")  ||
- 	strstr(editor, "rjoe")  || strstr(editor, "jpico"));
+	"emacs",
+	"jed",
+	"jmacs",
+	"joe",
+	"jove",
+	"jpico",
+	"jstar",
+	"pico",
+	"rjoe",
+	"vi"
 #endif
+    };
+    unsigned n;
+    for (n = 0; n < TABLESIZE(table); n++) {
+	if (strstr(editor, table[n]) != 0) {
+	    return TRUE;
+	}
+    }
+    return FALSE;
 }
 
 /*
@@ -38,16 +53,24 @@ PUBLIC int edit_current_file ARGS3(
 	int,		lineno)
 {
     int result = FALSE;
-    int params = 1;
-    char *format = "%s %s";
-    char *command = NULL;
     char *filename = NULL;
-    char *colon, *number_sign;
+#if !(defined(VMS) || defined(DOSPATH) || defined(__EMX__))
+    char *colon;
+#endif
+    char *number_sign;
     char position[80];
+#if defined(VMS) || defined(CANT_EDIT_UNWRITABLE_FILES)
     FILE *fp;
+#endif
+#if defined(__CYGWIN__) && defined(DOSPATH)
+    unsigned char temp_buff[LY_MAXPATH];
+#endif
+
+    CTRACE((tfp, "edit_current_file(newfile=%s, cur=%d, lineno=%d)\n",
+		 newfile, cur, lineno));
 
     /*
-     *  If its a remote file then we can't edit it.
+     *  If it's a remote file then we can't edit it.
      */
     if (!LYisLocalFile(newfile)) {
 	HTUserMsg(CANNOT_EDIT_REMOTE_FILES);
@@ -67,32 +90,46 @@ PUBLIC int edit_current_file ARGS3(
      *
      * On VMS, only try the path.
      */
-#if !defined (VMS) && !defined (DOSPATH) && !defined (__EMX__)
+#if defined (VMS) || defined (DOSPATH) || defined (__EMX__)
+    filename = HTParse(newfile, "", PARSE_PATH+PARSE_PUNCTUATION);
+    HTUnEscape(filename);
+    StrAllocCopy(filename, HTSYS_name(filename));
+    if (!LYCanReadFile(filename)) {
+#ifdef SH_EX
+	HTUserMsg2(COULD_NOT_EDIT_FILE, filename);
+#else
+	HTAlert(COULD_NOT_ACCESS_FILE);
+#endif
+	CTRACE((tfp, "filename: '%s'\n", filename));
+	goto done;
+    }
+#else	/* !(VMS || !DOSPATH || !__EMX__) == UNIX */
+#ifdef SH_EX	/* Speed Up! */
+    if (strncmp(newfile, "file://localhost/", 16) == 0)
+	colon = newfile + 16;
+    else
+	colon = strchr(newfile, ':');
+#else
     colon = strchr(newfile, ':');
+#endif
     StrAllocCopy(filename, (colon + 1));
     HTUnEscape(filename);
-    if ((fp = fopen(filename, "r")) == NULL) {
+    if (!LYCanReadFile(filename)) {
 	FREE(filename);
-#endif /* !VMS */
 	filename = HTParse(newfile, "", PARSE_PATH+PARSE_PUNCTUATION);
 	HTUnEscape(filename);
-	StrAllocCopy(filename, HTSYS_name(filename));
-	if ((fp = fopen(filename, "r")) == NULL)
-	{
+	if (!LYCanReadFile(HTSYS_name(filename))) {
 	    HTAlert(COULD_NOT_ACCESS_FILE);
-	    CTRACE(tfp, "filename: '%s'\n", filename);
 	    goto done;
 	}
-#if !defined (VMS) && !defined (DOSPATH) && !defined (__EMX__)
     }
-#endif /* !VMS */
-    fclose(fp);
+#endif /* !(VMS || !DOSPATH || !__EMX__) */
 
 #if defined(VMS) || defined(CANT_EDIT_UNWRITABLE_FILES)
     /*
      *  Don't allow editing if user lacks append access.
      */
-    if ((fp = fopen(filename, "a")) == NULL)
+    if ((fp = fopen(filename, TXT_A)) == NULL)
     {
 	HTUserMsg(NOAUTH_TO_EDIT_FILE);
 	goto done;
@@ -118,36 +155,7 @@ PUBLIC int edit_current_file ARGS3(
     if (lineno > 0)
 	sprintf(position, "%d", lineno);
 
-    if (editor_can_position() && *position) {
-#ifdef VMS
-	format = "%s %s -%s";
-	HTAddXpand(&command, format, params++, editor);
-	HTAddParam(&command, format, params++, filename);
-	HTAddParam(&command, format, params++, position);
-	HTEndParam(&command, format, params);
-#else
-	format = "%s +%s %s";
-	HTAddXpand(&command, format, params++, editor);
-	HTAddParam(&command, format, params++, position);
-	HTAddParam(&command, format, params++, filename);
-	HTEndParam(&command, format, params);
-#endif
-    } else {
-	HTAddXpand(&command, format, params++, editor);
-	HTAddParam(&command, format, params++, filename);
-	HTEndParam(&command, format, params);
-    }
-
-    CTRACE(tfp, "LYEdit: %s\n", command);
-    CTRACE_SLEEP(MessageSecs);
-
-    /*
-     *  Invoke the editor. - FM
-     */
-    stop_curses();
-    LYSystem(command);
-    start_curses();
-
+    edit_temporary_file(filename, position, NULL);
     result = TRUE;
 
 done:
@@ -157,7 +165,124 @@ done:
     if (number_sign)
 	*number_sign = '#';
 
-    FREE(command);
     FREE(filename);
+    CTRACE((tfp, "edit_current_file returns %d\n", result));
     return (result);
+}
+
+PUBLIC void edit_temporary_file ARGS3(
+	char *,		filename,
+	char *,		position,
+	char *,		message)
+{
+#ifdef UNIX
+    struct stat stat_info;
+#endif
+    char *format = "%s %s";
+    char *command = NULL;
+    char *editor_arg = "";
+    int params = 1;
+    int rv;
+
+    if (strstr(editor, "pico")) {
+	editor_arg = " -t"; /* No prompt for filename to use */
+    }
+    if (editor_can_position() && *position) {
+#ifdef VMS
+	format = "%s %s -%s%s";
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, filename);
+	HTAddParam(&command, format, params++, position);
+	HTAddParam(&command, format, params++, editor_arg);
+	HTEndParam(&command, format, params);
+#else
+	format = "%s +%s%s %s";
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, position);
+	HTAddParam(&command, format, params++, editor_arg);
+	HTAddParam(&command, format, params++, filename);
+	HTEndParam(&command, format, params);
+#endif
+    }
+#ifdef DOSPATH
+    else if (strncmp(editor, "VZ", 2)==0) {
+	/* for Vz editor */
+	format = "%s %s -%s";
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, HTDOS_short_name(filename));
+	HTAddParam(&command, format, params++, position);
+	HTEndParam(&command, format, params);
+    } else if (strncmp(editor, "edit", 4)==0) {
+	/* for standard editor */
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, HTDOS_short_name(filename));
+	HTEndParam(&command, format, params);
+    }
+#endif
+    else {
+#ifdef _WINDOWS
+	if (strchr(editor, ' '))
+	    HTAddXpand(&command, format, params++, HTDOS_short_name(editor));
+	else
+	    HTAddXpand(&command, format, params++, editor);
+#else
+#if defined(__CYGWIN__) && defined(DOSPATH)
+	if (strchr(editor, ' ')) {
+	    cygwin_conv_to_full_posix_path(HTDOS_short_name(editor), temp_buff);
+	    HTAddXpand(&command, format, params++, temp_buff);
+	} else {
+	    HTAddXpand(&command, format, params++, editor);
+	}
+#else
+	HTAddXpand(&command, format, params++, editor);
+#endif /* __CYGWIN__ */
+#endif
+	HTAddParam(&command, format, params++, filename);
+	HTEndParam(&command, format, params);
+    }
+    if (message != NULL) {
+	_statusline(message);
+    }
+
+    CTRACE((tfp, "LYEdit: %s\n", command));
+    CTRACE_SLEEP(MessageSecs);
+
+    stop_curses();
+
+#ifdef UNIX
+    set_errno(0);
+#endif
+    if ((rv = LYSystem(command)) != 0) {	/* Spawn Editor */
+	start_curses();
+	/*
+	 *  If something went wrong, we should probably return soon;
+	 *  currently we don't, but at least put out a message. - kw
+	 */
+	{
+#ifdef UNIX
+	    int rvhi = (rv >> 8);
+	    CTRACE((tfp, "ExtEditForm: system() returned %d (0x%x), %s\n",
+		   rv, rv, errno ? LYStrerror(errno) : "reason unknown"));
+	    LYFixCursesOn("show error warning:");
+	    if (rv != -1 && (rv && 0xff) && !rvhi) {
+		HTAlwaysAlert(NULL, gettext("Editor killed by signal"));
+	    } else if (!(rv == -1 || (rvhi == 127 && errno))) {
+		HTUserMsg2(gettext("Editor returned with error status, %s"),
+			   errno ? LYStrerror(errno) : gettext("reason unknown."));
+	    } else
+#endif
+		HTAlwaysAlert(NULL, ERROR_SPAWNING_EDITOR);
+	}
+    } else {
+	start_curses();
+    }
+#ifdef UNIX
+    /*
+     *  Delete backup file, if that's your style.
+     */
+    HTSprintf0 (&command, "%s~", filename);
+    if (stat (command, &stat_info) == 0)
+	remove (command);
+#endif
+    FREE(command);
 }

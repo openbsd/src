@@ -12,6 +12,7 @@
 #
 ABOUT_LYNX=about_lynx.html
 ALT_EDIT_HELP=alt_edit_help.html
+BASHLIKE_EDIT_HELP=bashlike_edit_help.html
 BOOKMARK_HELP=bookmark_help.html
 COOKIE_HELP=cookie_help.html
 DIRED_HELP=dired_help.html
@@ -38,12 +39,12 @@ LYNX_DEV=lynx-dev.html
 # Each link has to contain 'http:' or 'ftp:' otherwise install-help will fail.
 #
 LYNX_DEV_ARCHIVE=http://www.flora.org/lynx-dev/html/
-LYNX_DIST=http://www.slcc.edu/lynx/current/index.html
-LYNX_FAQ=http://www.slcc.edu/lynx/faq.html
-LYNX_FAQ_AL=http://www.access.digex.net/~asgilman/lynx/FAQ/
+LYNX_DIST=http://lynx.isc.org/current/index.html
+LYNX_FAQ=http://lynx.isc.org/cgi-bin/fom
+LYNX_FAQ_O_MATIC=http://lynx.isc.org/cgi-bin/fom
 LYNX_HOME=http://lynx.browser.org/
 LYNX_SPEECH=http://leb.net/blinux/blynx/
-LYNX_SUBIR=http://www.crl.com/~subir/lynx.html
+LYNX_SUBIR=http://www.trill-home.com/lynx.html
 WWW_NEWS=http://www.w3.org/hypertext/DataSources/News/Groups/Overview.html
 WWW_HTML2=http://www.w3.org/MarkUp/html-spec/html-spec_toc.html
 WWW_HTML3=http://www.w3.org/MarkUp/html3/Contents.html

@@ -25,66 +25,78 @@ First, you must configure Lynx for your system regardless of the port you use.
 Follow the instructions given immediately below to configure for your system,
 and then go to the respective section concerning the port you wish to compile.
 
-
 I. General configuration instructions (all ports).
 
-Step 1. (define compile-time variables  -- See the userdefs.h file.)
-    There are a few variables that MUST be defined, or Lynx will not build.
-    There are a few more that you will probably want to change.  The variables
-    that must be changed are marked as such in the userdefs.h file.  Just edit
-    this file, and the changes should be straight forward.  If you compile
-    using autoconfigure, you can set most defines with option switches and do
-    not absolutely have to edit userdefs.h.  Many of the variables are now
-    configurable in the lynx.cfg file, so you may set them at run-time if you
-    wish.  Lynx implements Native Language Support.  Read "ABOUT-NLS" if you
-    want to build an international version of Lynx or tailor the statusline
-    prompts, messages and warnings to the requirements of your site.
+Step 1.  Compile-time Variables.
 
-Step 2. (define run-time variables -- See the lynx.cfg file for details.)
-    Set up local printers, downloaders, assumed character set, key mapping,
-    and colors in the lynx.cfg file.  Please read "lynx.cfg" thoroughly as
-    many of the features of Lynx, and how to use them, are explained.  Also
-    see the example mime.types, mailcap and jumps files in the samples
-    subdirectory.  Lynx MUST be able to find the lynx.cfg file at start-up.
-    The location of the lynx.cfg file may be compiled in with the LYNX_CFG_FILE
-    defined in userdefs.h (or with the configure option explained in the Unix
-    section below), specified with an environment variable, LYNX_CFG, or
-    specified with the "-cfg" command line option.
+  There are a few variables that MUST be defined if Lynx is to build
+  and there are others you may want to change.
 
-Step 3. (You may skip this step if you are not interested in any special
-    characters and any local files or WWW pages you will view all use the
-    ISO-8859-1 "ISO Latin 1" Western European character set.) People who
-    will be running Lynx in an environment with different and incompatible
-    character sets should configure CHARACTER_SET (the Display character set)
-    and ASSUME_LOCAL_CHARSET to work correctly for them before creating
-    bookmark files et cetera.  Read "lynx.cfg" for detailed instructions.
-    Additional character sets and their properties may be defined with tables
-    in the src/chrtrans directory, see the README.* files therein.
+  Lynx MUST be able to find lynx.cfg at start-up: using configure
+  (e.g. with UNIX or Cygwin), its location is best set with --libdir ;
+  you can check in lynx_cfg.h after configure has run, if you wish.
+  otherwise, you can use LYNX_CFG_FILE in userdefs.h ,
+  environment variable LYNX_CFG or the -cfg command-line option.
 
-Step 4. (optional -- news for UNIX and VMS)
-    Set NNTPSERVER in "lynx.cfg" to your site's NNTP server, or set the
-    environment variable externally.  For news posting ability to be enabled
-    in Lynx, the NEWS_POSTING symbol must be defined to TRUE in userdefs.h or
-    lynx.cfg.  Also define LYNX_SIG_FILE in userdefs.h or lynx.cfg so that it
-    points to users' signature files for appending to posted messages.
+  If you are using configure, you need not make any changes in userdefs.h .
+  There are a few variables you can't define with configure --options
+  but can define in userdefs.h , e.g. numbering fields as well as links.
+  Many variables which can be defined with configure or  userdefs.h
+  can also be defined in lynx.cfg or via the Options Menu.
 
-Step 5. (Anonymous account -- VERY IMPORTANT!!!!! -- )
-    If you are building Lynx for your personal use only you may skip this
-    step.  If you are setting up an anonymous account with Lynx, you are
-    STRONGLY advised to use the -anonymous command line option.  If you do
-    not use this option, users may be able to gain access to all readable
-    files on your machine!  ALSO NOTE that many implementations of telnetd
-    allow passing of environment variables, which might be used by
-    unscrupulous people to modify the environment in anonymous accounts.
-    When making Web access publicly available via anonymous accounts intended
-    to run Lynx captively, be sure the wrapper uses the -cfg and -homepage
-    switches to specify the configuration and start files, rather than relying
-    on the LYNX_CFG, LYNX_CFG_FILE, or WWW_HOME variables.
+  Lynx implements Native Language Support.  Read "ABOUT-NLS", if you want
+  to build an international version of Lynx or tailor status-line prompts,
+  messages and warnings to the requirements of your site.
 
+Step 2.  Run-time Variables.
+
+  Read  lynx.cfg  thoroughly, as many Lynx features and how to use them
+  are explained there, in some cases ONLY there.  Set up local printers,
+  downloaders, assumed character set, key mapping and colors in  lynx.cfg .
+  Also see the sample mime.types, mailcap and jumps files
+  in the samples subdirectory.
+
+Step 3.  Alternative Character Sets.
+
+  You may skip this, if you are not interested in special characters
+  and all local files or WWW pages you will view will use the ISO-8859-1
+  "ISO Latin 1" Western European character set.
+
+  If you will be running Lynx in an environment with different incompatible
+  character sets, configure CHARACTER_SET (the Display character set)
+  and ASSUME_LOCAL_CHARSET to work correctly before creating bookmark files
+  and other such items: read lynx.cfg for detailed instructions.
+  Additional character sets and their properties may be defined with tables
+  in the src/chrtrans directory: see the README.* files therein.
+
+Step 4.  News.
+
+  Set NNTPSERVER in lynx.cfg to your site's NNTP server
+  or set the environment variable externally.  For posting to be enabled,
+  NEWS_POSTING must be TRUE in userdefs.h or lynx.cfg.
+  Also define LYNX_SIG_FILE in userdefs.h or lynx.cfg ,
+  so that it points to users' signature files for appending to messages.
+
+Step 5.  Anonymous Accounts *** VERY IMPORTANT!!!!! ***
+
+  If you are building Lynx for personal use only, you can skip this.
+
+  If you are setting up anonymous accounts to use Lynx captively,
+  i.e. making Web access publicly available to users who should not
+  be allowed any other type of access to your system,
+  you are STRONGLY advised to use the -anonymous command-line option:
+  if you do not use this option, users may be able to gain access
+  to all readable files on your machine!
+
+  Many implementations of telnetd allow passing of environment variables,
+  which might be used to modify the environment in anonymous accounts,
+  allowing mischief or damage by malicious users, so make sure the wrapper
+  uses the -cfg and -homepage switches to specify  lynx.cfg  and start-file,
+  rather than relying on variables LYNX_CFG, LYNX_CFG_FILE and WWW_HOME.
 
 II. Compile instructions -- UNIX
 
-1a. Auto-configure.  The auto-configure script uses autoconf2.12 to generate a
+1a. Auto-configure.  The auto-configure script uses autoconf2.13 to generate a
     Bourne shell script, configure, which creates "makefile" and "lynx_cfg.h".
 
     If you are on a UNIX platform, the easiest way to build Lynx is to type:
@@ -111,10 +123,13 @@ II. Compile instructions -- UNIX
     of config.status, config.cache and config.log, as well as the pertinent
     compiler diagnostics.
 
+    See the note in aclocal.m4 for special instructions if you must modify the
+    configure script.
+
     NOTE:  Lynx is a curses-based application, so you must have a curses
     library available to link to.  Native curses (on the system when it was
     installed) are often broken, so you may get superior performance if you
-    have either "ncurses" ("ftp://ftp.clark.net/pub/dickey/ncurses") or "slang"
+    have either "ncurses" ("ftp://invisible-island.net/ncurses") or "slang"
     ("ftp://space.mit.edu/pub/davis/slang").  If you install these libraries
     in your home directory or a non-default location, you may need to set the
     CPPFLAGS (full path to include files) and LIBS (full path to library files)
@@ -128,22 +143,22 @@ II. Compile instructions -- UNIX
     slang, e.g., before 0.99-38, because slang's interfaces change periodically.
 
     Note compiler/system specific problems below.  See also:
-	http://www.clark.net/pub/dickey/ncurses/ncurses.faq.html
+	http://invisible-island.net/ncurses/ncurses.faq.html
 
 1b. Platforms.  Configure should work properly on any Unix-style system.
     It has been tested on the following platforms.
 
-	AIX 3.2.5 (cc w/ curses)	CLIX (cc w/ curses & ncurses)
-	DGUX
+	AIX 3.2.5 (cc w/ curses)	BeOS 4.5 (gcc w/ ncurses)
+	CLIX (cc w/ curses & ncurses)	DGUX
 	Digital Unix 3.2C and 4.0 (gcc & cc w/ curses, ncurses & slang)
-	FreeBSD 2.1.5 (gcc 2.6.3 w/ curses & ncurses)
+	FreeBSD 2.1.5, 3.1 (gcc 2.6.3 w/ curses & ncurses)
 	HP-UX (K&R and ANSI cc, gcc w/ curses, ncurses & slang)
 	IRIX 5.2 and 6.2 (cc & gcc w/ curses, ncurses & slang)
 	Linux 2.0.0 (gcc 2.7.2 w/ curses, ncurses & slang)
 	MkLinux 2.1.5 (gcc 2.7.2.1)	NetBSD
 	NEXTSTEP 3.3 (gcc 2.7.2.3 w/ curses)
-	OS/2 EMX 0.9b (ncurses) 	SCO (cc w/ curses)
-	Solaris 2.5 & 2.6 (cc & gcc w/ curses, ncurses & slang)
+	OS/2 EMX 0.9c (ncurses) 	SCO OpenServer (cc w/ curses)
+	Solaris 2.5, 2.6 & 2.7 (cc & gcc w/ curses, ncurses & slang)
 	SunOS 4.1 (cc w/ curses, gcc w/ ncurses & slang)
 	OS390 and BS2000.
 
@@ -151,26 +166,26 @@ II. Compile instructions -- UNIX
     useful for compiling with the bundled curses.  Both ncurses and slang
     require a compiler that recognizes prototypes.
 
-    NOTE:  Ncurses 4.2 builds/works on OS/2; however you should get at least
-    the post-4.2 patches from October 1998, since that supports mouse and
-    screen sizes other than 25x80.  (ftp://ftp.clark.net/pub/dickey/ncurses/)
-
 1c. Options
     To get a list of the configure script's options, type "./configure --help".
     Below is an alphabetical listing of the Lynx-specific options.  The actual
     order shown by the -help option is different.  See "docs/README.defines"
     for information on defines for which there are no option switches.
 
-  --disable-alt-bindings 		(define EXP_ALT_BINDINGS)
+  --disable-alt-bindings 		(prevent defining EXP_ALT_BINDINGS)
 	Compiles-in an alternative set of line-edit bindings, in addition
 	to the default bindings.
 
-  --disable-config-info			(define NO_CONFIG_INFO)
-  	Use this option to disable the browsable configuration information
-	(screens that show the result of the configuration script, as well
-	as a pointer to the lynx.cfg file).
+  --disable-bibp-urls			(define DISABLE_BIBP)
+	Disable (do not compile code) support for bibp: URLs.
 
-  --disable-dired			(define DIRED_SUPPORT)
+  --disable-config-info			(define NO_CONFIG_INFO)
+  	Use this option to disable extended browsable configuration information
+	(a screen that shows the result of the configuration script, as well
+	as extended lynx.cfg viewing with a pointer to the lynx.cfg file and
+	additional functionality).
+
+  --disable-dired			(prevent defining DIRED_SUPPORT)
 	Use this option to disable the optional directory-editor.
 
 	Lynx supports directory editing (DirEd) for local directories.
@@ -181,14 +196,15 @@ II. Compile instructions -- UNIX
 	current directory.  If you're building a Lynx that is to be used as
 	a kind of restricted shell for users who do not have access to the
 	command line and should not have access to equivalent capabilities,
-	you must disable DirEd with this option.  You can also disable some
-	DirEd functions while allowing others.  If you have disabled DirEd
-	completely, you can ignore all the other DirEd options.
+	you probably want to disable DirEd with this option.  You can also
+	disable some DirEd functions while allowing others.  If you have
+	disabled DirEd completely, you can ignore all the more specific
+	DirEd options.
 
-	All DirEd functions that were enabled on compilation can be disabled
-	or modified at run time via DIRED_MENU symbols in lynx.cfg.
+	All DirEd menu functions that were enabled on compilation can be
+	disabled or modified at run time via DIRED_MENU symbols in lynx.cfg.
 
-  --disable-dired-archive		(define ARCHIVE_ONLY)
+  --disable-dired-dearchive		(define ARCHIVE_ONLY)
 	Use this option to prevent DirEd from extracting files from an
 	archive file.
 
@@ -196,9 +212,8 @@ II. Compile instructions -- UNIX
 	Use this option to prevent DirEd from using gzip and gunzip.
 
   --disable-dired-override		(prevent defining OK_OVERRIDE)
-	Lynx users can customize their keymaps by creating private
-	versions of lynx.cfg and modifying them to override the default
-	keymap.  Use this option to prevent DirEd keymap overriding.
+	Normally, in DirEd directory viewing mode some key mappings are
+	overridden.  Use this option to disable DirEd keymap overriding.
 
   --disable-dired-permit		(prevent defining OK_PERMIT)
 	Use this option to prevent DirEd from changing the permissions
@@ -234,21 +249,33 @@ II. Compile instructions -- UNIX
 	Do not compile-in code used to connect to "finger" URLs.
 
   --disable-ftp				(define DISABLE_FTP)
-	Do not compile-in code used to connect to "ftp" URLs.
+	Do not compile-in code used to connect to FTP servers.
 
   --disable-forms-options		(define NO_OPTION_FORMS)
-	Disable the forms-based options screen.  (See --disable-menu-options).
-	Please note that a few users with broken curses may have problems with
-	popup forms fields.  The default behaviour is to compile both forms and
-	menu options code with FORMS_OPTIONS switch in lynx.cfg, or
-	-forms_options command-line switch.
+	Disable the Form-based Options Menu (see --disable-menu-options).
+	The default is to compile key-based & form-based Options Menu code,
+	allowing users the final choice via FORMS_OPTIONS in lynx.cfg
+	or the -forms_options command-line switch.
 
   --disable-gopher			(define DISABLE_GOPHER)
 	Do not compile-in code used to connect to GOPHER servers.
 
   --disable-full-paths
-  	Use this option to control whether full utility pathnames are used.
-	By default, configure substitutes full pathnames.
+  	Use this option to control whether full pathnames are compiled in for
+	various utilities invoked by lynx as external commands.  By default,
+	full pathnames are compiled in for the the locations where configure
+	finds these commands at configure time.  Affected commands are chmod,
+	compress, cp, gzip, install, mkdir, mv, rm, tar, touch, gunzip, unzip,
+	bzip2, uudecode, zcat, zip, telnet, tn3270, rlogin.  (Not all of them
+	are used on all systems or in all configurations.)
+
+	This option makes Lynx simpler to install, but potentially less secure,
+	since the commands are then set in the user's $PATH.  All of these
+	commands may also be overridden individually by setting environment
+	variables before configuring.  For example, you can disable the telnet
+	command by doing this:
+
+		setenv TELNET /bin/false
 
   --disable-included-msgs
 	Do not use included messages, for i18n support.  If NLS support is
@@ -260,28 +287,26 @@ II. Compile instructions -- UNIX
 	enabled, the actual directory style is configurable from lynx.cfg).
 
   --disable-menu-options		(define NO_OPTION_MENU)
-	Disable the menu-style options screen.  (See --disable-forms-options).
-	Please note that a few users with broken curses may have problems with
-	popup forms fields.  The default behaviour is to compile both styles
-	options menu code with FORMS_OPTIONS switch in lynx.cfg, or
-	-forms_options command-line switch.
+	Disable the Key-based Options Menu.
+	See --disable-forms-options (above) for further details.
 
   --disable-news			(define DISABLE_NEWS)
-	Do not compile-in code used to connect to NEWS servers.
+	Do not compile-in code used to connect to NNTP (netnews) servers.
 
   --disable-parent-dir-refs		(define NO_PARENT_DIR_REFERENCE)
   	Use this option to disable "Up-to" parent-links in directory listings.
 
-  --disable-partial			(define DISP_PARTIAL)
+  --disable-partial			(prevent defining DISP_PARTIAL)
 	Turn off code that lets Lynx display parts of a long page while loading
 	it.
 
-  --disable-persistent-cookies		(define EXP_PERSISTENT_COOKIES)
+  --disable-persistent-cookies		(prevent defining EXP_PERSISTENT_COOKIES)
 	Use this option to tell configure whether to compile-in support for
-	saving cookies to a file, for subsequent reuse.  This creates the file
-	specified by the 'COOKIE_FILE' option, or defaults to ".lynx_cookies"
-	in the home directory.  (Currently there is no protection against
-	conflict if several lynx copies are active from the same account).
+	saving cookies to a file, for subsequent reuse.  Persistent cookie
+	support will use (or create) the file specified by the 'COOKIE_FILE'
+	option, or default to ".lynx_cookies" in the home directory.
+	(Currently there is no protection against conflict if several lynx
+	sessions are active from the same account).
 
   --disable-trace			(define NO_LYNX_TRACE)
 	Turn off code that lets you trace internal details of Lynx's operation.
@@ -293,16 +318,33 @@ II. Compile instructions -- UNIX
 	Compiles-in an alternative list-page, bound to 'A' rather than 'l',
 	which always lists URLs rather than titles.
 
+  --enable-change-exec			(define ENABLE_OPTS_CHANGE_EXEC)
+  	Allow users to change the execution status within the options screen.
+	See EXEC_LINKS and EXEC_SCRIPTS.
+
   --enable-cgi-links			(define LYNXCGI_LINKS)
 	Allows lynx to access a cgi script directly without the need for
 	a http daemon.
 
+  --enable-charset-choice		(define EXP_CHARSET_CHOICE)
+	Add logic for ASSUMED_DOC_CHARSET_CHOICE and DISPLAY_CHARSET_CHOICE in
+	lynx.cfg, allowing user to configure a subset of the compiled-in
+	charsets for normal use.
+
+  --enable-cjk				(define CJK_EX)
+	Add experimental logic for supporting CJK documents.  (This is not
+	necessary for CJK support and may go away in a future release.)
+
   --enable-color-style			(define USE_COLOR_STYLE)
   	Use this option to enable optional and *experimental* color style.
-	(Also defines USE_HASH, LINKEDSTYLES)
+	This is implemented for curses (if it supports color), ncurses and
+	PDCurses, but not slang.
 
   --enable-debug			(The symbol DEBUG is always defined.)
-  	Use this option to compile-in support for debugging.
+        Use this option to compile-in support for debugging.
+        Note that this flag is ignored if the CFLAGS environment
+        variable is set, in that case "-g" (or whatever) has to
+        be included in the CFLAGS value to get debugging.
 
   --enable-default-colors		(define USE_DEFAULT_COLORS)
   	Enable use of default-color background (ncurses/slang).  Either
@@ -324,6 +366,9 @@ II. Compile instructions -- UNIX
   --enable-find-leaks			(define LY_FIND_LEAKS)
 	Use this option to compile-in logic for testing memory leaks.
 
+  --enable-file-upload			(define EXP_FILE_UPLOAD)
+	Compile-in support for form-based file-upload.
+
   --enable-font-switch			(define EXP_CHARTRANS_AUTOSWITCH)
 	Allow Lynx to automatically change the Linux console state (switch
 	fonts) according to the current Display Character Set.  (Linux console
@@ -332,10 +377,27 @@ II. Compile instructions -- UNIX
   --enable-gzip-help
 	Install the lynx help files in gzip'd format [*.gz] to save space.
 
-  --enable-internal-links		(define DONT_TRACK_INTERNAL_LINKS)
-	Disabled by default, this option allows tracking of internal links,
-	a feature which could, however, compromise a secure transaction by
-	forcing inappropriate resubmission of form content.
+  --enable-htmlized-cfg
+	generate an HTMLized copy of lynx.cfg which will be installed with
+	the other help files.
+
+  --enable-ipv6         		(define ENABLE_IPV6)
+	use experimental IPV6 (with IPV4) logic.
+
+  --enable-justify-elts			(define EXP_JUSTIFY_ELTS)
+	use experimental element-justification logic.
+
+  --enable-internal-links		(prevent defining DONT_TRACK_INTERNAL_LINKS)
+        With `internal links' (links within a document to a location within
+        the same document) enabled, Lynx will distinguish between, for example,
+        `<A HREF="foo#frag">' and `<A HREF="#frag">' within a document whose
+        URL is `foo'.  It may handle such links differently, although practical
+        differences would appear only if the document containing them resulted
+        from a POST request or had a no-cache flag set.  This feature attempts
+        to interpret URL-references as suggested by RFC 2396, and to prevent
+        mistaken resubmissions of form content with the POST method.  An
+        alternate opinion asserts that the feature could actually result in
+        inappropriate resubmission of form content.
 
   --enable-kbd-layout			(define EXP_KEYBOARD_LAYOUT)
 	Disabled by default, this option allows you to use translation
@@ -346,17 +408,33 @@ II. Compile instructions -- UNIX
 
   --enable-libjs			(define EXP_LIBJS)
   	Disabled by default; used for ifdef'ing JavaScript interface.
+	Currently dummy: no JavaScript support implemented in Lynx yet.
 
-  --enable-nls
+  --enable-nested-tables
+	Extends TRST to format nested tables, as well as be smarter about
+	<BR> and <P> tags in table cells.
+
+  --enable-nls				(several definitions)
 	use Native Language Support (i.e., gettext).
 
   --enable-nsl-fork			(define NSL_FORK)
 	Disabled by default, this allows interruption of NSL requests,
 	so that `z' will stop the `look-up' phase of a connection.
 
-  --enable-prettysrc			(define USE_PSRC)
-	Use this option to compile-in support for colorizing the source
-	view of HTML pages.
+  --enable-prettysrc			(define USE_PRETTYSRC)
+	Use this option to compile-in support for colorizing the source view of
+	HTML pages.  If compiled-in, new source view mode is available with
+	-prettysrc command line option.
+
+  --enable-read-eta			(define EXP_READPROGRESS)
+	Enhance the read-progress message to show ETA (estimated time to
+	completion), as well as the amount of time stalled without any data
+	transferred.
+
+  --enable-scrollbar			(define USE_SCROLLBAR)
+	Compile-in experimental support for scrollbar on the right-margin of
+	the screen.  If you configure with ncurses, this works with the mouse
+	on xterm, etc.
 
   --enable-source-cache			(define SOURCE_CACHE)
 	Use this option to compile-in support for caching HTML pages locally,
@@ -367,6 +445,10 @@ II. Compile instructions -- UNIX
 
   --enable-underlines			(define UNDERLINE_LINKS)
 	Use this option to underline links rather than using boldface.
+
+  --enable-vertrace			(define LY_TRACELINE)
+	Turn on code that prefixes trace output lines with source filename
+	and line number.
 
   --enable-warnings
 	Use this option to turn on GCC compiler warnings.
@@ -381,6 +463,10 @@ II. Compile instructions -- UNIX
   --with-catgets
 	use catgets functions if available.  See "--enable-nls".
 
+  --with-charsets=list			(define ALL_CHARSETS)
+ 	Limit the number of charsets that are compiled-in to the specified
+	list of comma-separated MIME names.
+
   --with-included-gettext
 	use the GNU gettext library included here (default).  See
 	"--enable-nls".
@@ -393,7 +479,7 @@ II. Compile instructions -- UNIX
 
   --with-screen=XXX
 	Use this option to select the screen type.  The option value,
-	XXX must be one of curses (the default), ncurses or slang.
+	XXX must be one of curses (the default), ncurses, pdcurses or slang.
 	Specifying a screen type causes the configure script to look in
 	standard locations for the associated header and library files,
 	unless you have preset the $CFLAGS and $LIBS variables.
@@ -401,20 +487,43 @@ II. Compile instructions -- UNIX
 	--with-screen=ncurses		(define NCURSES)
 	--with-screen=slang		(define USE_SLANG)
 
-  --with-socks				(define SOCKS)
+	Note that some systems may have a default curses library which
+	does not support color, while on others, ncurses is installed as
+	the curses library.
+
+  --with-socks[=XXX]			(define SOCKS)
 	Use this option to configure with the socks library.
 
-  --with-socks5				(define USE_SOCKS5, SOCKS)
+	The optional value XXX specifies the directory in which the library
+	can be found, and may be either the path of the "lib" directory,
+	or one level above.  In either case, the corresponding header files
+	are assumed to be in the parallel "include" directory.
+
+  --with-socks5[=XXX]			(define USE_SOCKS5, SOCKS)
 	Use this option to configure with the socks5 library.
 
+	The optional value XXX specifies the directory in which the library
+	can be found, and may be either the path of the "lib" directory,
+	or one level above.  In either case, the corresponding header files
+	are assumed to be in the parallel "include" directory.
+
 	If you make a SOCKSified lynx, you may have trouble accessing FTP
-        servers.  Also, instead of SOCKSifying lynx for use behind a firewall,
-        you are better off if you make it normally, and set it up to use a
-        proxy server.  You can SOCKSify the proxy server, and it will handle
-        all clients, not just Lynx.  If your SOCKS server was compiled to use
-        the short version of Rbind, also include -DSHORTENED_RBIND in your
-        SITE_LYDEFS and SITE_DEFS.  If you do SOCKSify lynx, you can turn off
-        SOCKS proxy usage via a -nosocks command line switch.
+	servers.  Also, instead of SOCKSifying lynx for use behind a firewall,
+	you are better off if you make it normally, and set it up to use a
+	proxy server.  You can SOCKSify the proxy server, and it will handle
+	all clients, not just Lynx.  If your SOCKS server was compiled to use
+	the short version of Rbind, also include -DSHORTENED_RBIND in your
+	SITE_LYDEFS and SITE_DEFS.  If you do SOCKSify lynx, you can turn off
+	SOCKS proxy usage via a -nosocks command line switch.
+
+  --with-ssl[=XXX]			(define USE_SSL)
+	Use this option to configure with the OpenSSL library, or SSLeay.
+	See docs/README.ssl for additional information.
+
+	The optional value XXX specifies the directory in which the library
+	can be found, and may be either the path of the "lib" directory,
+	or one level above.  In either case, the corresponding header files
+	are assumed to be in the parallel "include" directory.
 
   --with-zlib				(define USE_ZLIB)
 	Use zlib for decompression of some gzip files.
@@ -445,6 +554,13 @@ II. Compile instructions -- UNIX
 		unrelated to the install prefix (that you can specify in
 		the configure script) you may have to specify these via
 		the $LIBS variable.
+
+    Lynx has compiled-in the pathnames of various programs which it executes.
+    Normally the full pathnames are given, rather than the program name
+    alone.  These may be preset in the environment by the capitalized version,
+    e.g., INSTALL for "install".  The corresponding internal definitions
+    are suffixed "_PATH", e.g., "INSTALL_PATH".
+
 
 -- 1997/7/27 - T. Dickey <dickey@clark.net>
 
@@ -484,7 +600,7 @@ II. Compile instructions -- UNIX
     process will create the libraries you will need, wais.a and client.a.  Edit
     the Makefile in the top level directory and add the library locations under
     the DIRECT WAIS ACCESS heading.  Edit the Makefile for the WWW Library in
-    "WWW/Library/Implementation/CommonMakefile" to point to the include
+    "WWW/Library/Implementation/makefile" to point to the include
     directory for the freewais distribution.  Precompiled libraries are
     available for many platforms if you don't wish to compile one yourself.
 
@@ -507,10 +623,9 @@ Step 1.  Downloading binary files.
     comments in FIXED512.COM, userdefs.h and lynx.cfg for more information.
 
 Step 2.  Passive FTP
-    If your system requires the PASV FTP code instead of the standard
-    PORT FTP code (e.g., to deal with a firewall) then edit "WWW/Library/
-    Implementation/HTFTP.c" and comment out line 43 like so:
-	     /*  #define LISTEN   /* @@@@ Test LJM */.
+    If your system requires the PASV FTP code instead of the standard PORT FTP
+    code (e.g., to deal with a firewall) then set the FTP_PASSIVE option in
+    lynx.cfg
 
 Step 3a.
     Lynx uses the VMS port of gzip for uncompressing streams which have
@@ -585,13 +700,15 @@ Step 3b.  (optional compilation method)
 
 IV. Compile instructions -- Win32 (Windows95/98/NT)
 
+Borland C:
+
     The original Win32 port was built with Borland C++ 4.52, but later
     versions reportedly can be used.  Before compiling the Lynx sources, you
     need a curses library, and it is recommended that you have the zlib
     library.  Get pdcurses2.3 from "http://www.lightlink.com/hessling/".  I
     have modified it so that mouse support is no longer broken for Lynx (see
     "http://www.fdisk.com/doslynx/").  You will want to get zlib from
-    "http://www.cdrom.com/pub/infozip/zlib/".  Compile these libraries, and
+    "http://www.gzip.org/zlib/ ".  Compile these libraries, and
     put them in a convenient place (pdcurses inside the Lynx directory).
 
     Unpack the latest Lynx source distribution, and make an obj directory
@@ -599,11 +716,11 @@ IV. Compile instructions -- Win32 (Windows95/98/NT)
     IDE file.  A sample IDE file and helper libraries are available at
     "http://www.fdisk.com/doslynx/wlynx/source/".
 
-    First build the .h files in src\chrtrans using "MAKEW32.BAT".  Double
+    First build the .h files in src\chrtrans using "makew32.bat".  Double
     check for new .tbl files; hand edit in any new ones, and then do "makew32".
     Jump into Borland C++, load the project (IDE file) and compile Lynx.
     Alternately, after compiling the chartrans tables, you can come back to
-    the top directory and compile manually, i.e., do "make -f makefile.w32".
+    the top directory and compile manually, i.e., do "make -f makefile.bcb".
 
     I also have a binary available at "http://www.fdisk.com/doslynx/".  This
     binary was compiled with pdcurses 2.3, hacked so win32 mouse support works,
@@ -612,108 +729,110 @@ IV. Compile instructions -- Win32 (Windows95/98/NT)
 
 -- 1997/10/12 - W. Buttles <lynx-port@fdisk.com>
 
-    It is possible to compile under the cygwin32 system, which will allow you
-    to use the configure script described above for Unix.  Type, for example,
-    "./configure --with-screen=slang --with-libz" in a Dos window running the
+Cygwin:
+    It is possible to compile under the cygwin system, which will allow you to
+    use the configure script described above for Unix.  Type, for example,
+    "./configure --with-screen=ncurses --with-libz" in a Dos window running the
     cygwin bash$ shell.  You also have the choice of using either pdcurses or
-    slang.  See "http://www.flora.org/lynx-dev/html/month1097/msg00559.html"
-    and "http://www.flora.org/lynx-dev/html/month1097/msg00186.html", and other
-    messages along those threads.  You will have to make a minor alteration to
-    HTTCP.c (change delay to 30 seconds) and modify HTFILE.c (concerning
-    getgroups).  You will need a launch program to call helper applications.
+    slang.  You will need a launch program such as sh.exe to call helper
+    applications.  Paths may need to be in cygwin style, rather than Windows
+    style (e.g., TMPDIR=/cygdrive/d/cygwin/tmp, rather than
+    TMPDIR=d:\cygwin\tmp).
 
+Visual C++:
+    You must have compiled zlib and PDCurses with the -MT (threaded code)
+    option.  This is not the default with zlib (see Makefile.msc).
+
+    Copy into lib the following
+	zconf.h
+	zlib.h
+	zlib.lib
+
+    from the zlib build-tree, and
+	curses.h
+	pdcurses.lib
+
+    from the PDCurses build-tree.
+
+    Then
+	make-msc
+
+    to build lynx.
 
 V. Compile instructions -- 386 DOS
 
     Compiling for DOS with DJGPP is a multistep procedure. First install
-    the c compiler and its libraries. If using DJGPP 2.01, update the
-    distribution with the patched lib.c, to take care of bug fixes. It is
-    available at: "http://www.cartsys.com/eldredge/djgpp-patches.html".
-    GCC 2.7.2.1, as distributed from the usual DJGPP archives, will not
-    successfully compile lynx. You need to "stubedit" your "cc1.exe" file.
-    The following parameters have worked successfully: minstack=800k,
-    bufsize=64k. To accomplish this, move to the djgpp\bin directory
-    and type the command:
-    	"stubedit cc1.exe bufsize=64k minstack=800k".
-    Or do it interactively with the command: "stubedit cc1.exe". (see
-    "http://www.flora.org/lynx-dev/html/month0897/msg00145.html").
+    the C compiler and its libraries (see readme.1st from DJGPP distribution).
 
-    If using DJGPP 2.02 and GCC 2.8.1, you may not need to "stubedit"
-    cc1.exe if you use -O2 optimization, since cc1.exe comes with
-    a 1536K stack. To compile with -O3 optimization, the stub
-    needs to be edited to give a larger stack. To do this go into
-    djgpp\lib\gcc-lib\djgpp\2.81 and either type the command:
+    Originally, lynx makefiles come with the initial -O2 optimization level. 
+    If you experience compilation process too slow due to paging to the disk
+    (DPMI server provide virtual memory, when in lack of RAM), you may change
+    optimization to -O1 or turn the optimization off entirely.
+
+    Alternatively, to get the last bit of run-time performance you may try
+    -O2 or -O3, in this case you may need to "stubedit" your "cc1.exe" file
+    to enlarge compiler stack size.  If using DJGPP 2.02 and GCC 2.8.1,
+    to compile with -O3 optimization, the stub needs to be edited to give
+    a larger stack. To do this go into  djgpp\lib\gcc-lib\djgpp\2.81
+    and either type the command:
    	 "stubedit cc1.exe bufsize=63k minstack=2M",
     or edit interactively with: "stubedit cc1.exe".
+    The requirements for compiling with optimization using DJGPP 2.03
+    and GCC 2.95.2 have not yet been fully investigated. The above
+    should serve as a guide.
 
     Unpack the source code using a DOS program like UNZIP386.  If you are
     using PKUNZIP to unpack the .zip archive, you must use the -d command
     line switch to restore the directory structure contained in the archive,
     i.e., do "pkunzip -d lynx-cur.zip".  No switch is required if you use
     unzip386 or unzip.  If you are trying to compile the 386DOS port under a
-    Win95/NT DOS shell, be sure to unpack the source with a DOS program so
+    WinNT DOS shell, be sure to unpack the source with a DOS program so
     that all directories will be adjusted to the DOS 8.3 file format necessary
     for compiling with DJGPP.  Do NOT use Winzip, because that will create
     long filenames that will not be recognized by DJGPP tools.
 
     If you wish to compile with "USE_ZLIB" (recommended), you must have the
-    zlib library.  Get the source from "http://www.cdrom.com/pub/infozip/zlib/"
+    zlib library.  Get the source from
+	    http://www.gzip.org/zlib/ 
     and compile it.  Put libz.a in the lib subdirectory of DJGPP, and put
     zlib.h and zconf.h in the include subdirectory.
 
-    In addition to the files in the Lynx distribution, you will need a
-    curses package and a TCP package. You can use PDCurses (available at
-    "http://www.lightlink.com/hessling/") and the DJGPP port of WATTCP
-    (available in two different versions at "ftp://neonatal.sm.med.ic.ac.uk/"
-    and in "http://www.fdisk.com/doslynx/wlynx/source/djgpp.zip").
-    A patched copy of the version from the neonatal site is also
-    available from "http://www.rahul.net/dkaufman/tcplibdj.zip" or
-    "ftp://ftp.rahul.net/pub/dkaufman/tcplibdj.zip". You can also use slang
-    ("ftp://space.mit.edu/pub/davis/slang") as your curses library. You need
-    to compile these before you go any further. If you wish to use PDCurses
-    2.3, you need to first apply the following patch:
+    In addition to the files in the Lynx distribution, you will need a curses
+    package and a TCP package.  You can use PDCurses (available at
+    "http://www.lightlink.com/hessling/") and the DJGPP port of WATTCP.  The
+    updated version of WATTCP is known as WATT-32, and is available at
+    "http://www.bgnett.no/~giva/".  You can also use slang (available at
+    "ftp://space.mit.edu/pub/davis/slang") as your screen library.  You must
+    compile these before you go any further.  If you wish to use PDCurses 2.4,
+    you need to first apply the following patch:
 
-*** curses.h	Thu Jul  9 19:38:28 1998
---- curses.h.new	Sat Aug 15 11:02:08 1998
-***************
-*** 1802,1807 ****
---- 1802,1808 ----
-  #define getbegx(w)              (w)->_begx
-  #define getbegy(w)              (w)->_begy
-  #define getbegyx(w,y,x)         ( y = (w)->_begy, x = (w)->_begx )
-+ #define getbkgd(w)              ((w)->_bkgd)
-  #define getch()                 wgetch(stdscr)
-  #define getmaxx(w)              (w)->_maxx
-  #define getmaxy(w)              (w)->_maxy
-*** dos/pdckbd.c	Sat Jul 12 17:10:12 1997
---- dos/pdckbd.c.new	Thu Apr 15 20:52:16 1999
-***************
-*** 443,449 ****
-  		_watch_breaks();
-  #else
-  # ifdef GO32
-! 	(void*)signal(SIGINT,(setting ? SIG_DFL : SIG_IGN));
-  /*	__djgpp_set_ctrl_c(setting);*/
-  	setcbrk(setting);
-  # else
---- 443,449 ----
-  		_watch_breaks();
-  #else
-  # ifdef GO32
-! /*	(void*)signal(SIGINT,(setting ? SIG_DFL : SIG_IGN)); */
-  /*	__djgpp_set_ctrl_c(setting);*/
-  	setcbrk(setting);
-  # else
+    --- dos/pdckbd.c.ori	Sun Dec 26 23:15:04 1999
+    +++ dos/pdckbd.c	Fri Mar  3 00:20:14 2000
+    @@ -336,7 +336,7 @@
+     	||  (scan == 0x4e && ascii == 0x2b)  /* Plus */
+     	||  (scan == 0xe0 && ascii == 0x2f)) /* Slash */
+     		return ((int) ((ascii & 0x0f) | 0xf0) << 8);
+    -	if (ascii == 0x00 || ascii == 0xe0)
+    +	if (ascii == 0x00 || (ascii == 0xe0 && scan != 0x00))
+     		return ((int) (scan << 8));
+     	return ((int) (ascii));
+     }
+    @@ -496,7 +496,7 @@
+     		_watch_breaks();
+     #else
+     # ifdef GO32
+    -	(void*)signal(SIGINT,(setting ? SIG_DFL : SIG_IGN));
+    +/*	(void*)signal(SIGINT,(setting ? SIG_DFL : SIG_IGN)); */
+     /*	__djgpp_set_ctrl_c(setting);*/
+     	setcbrk(setting);
+     # else
 
     If you have trouble applying the patch, try using the "patch" program,
-    ("http://www.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/pat25b.zip").  The
-    WATTCP TCPLIB sources must also be patched prior to compilation.  See
-    "http://www.flora.org/lynx-dev/html/month1197/msg00403.html".
-
+    ("ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/pat253b.zip").
     To read the Unix man style documentation, use, for example, "less"
-    ("http://www.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/lss332b.zip").
+    ("ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/v2gnu/lss358b.zip").
     Compile or place your compiled PDCurses library in lynx2-*/curses, and
-    compile or place your compiled WATTCP library in lynx2-*/djgpp/tcplib.  If
+    compile or place your compiled WATT-32 library in lynx2-*/djgpp/watt32.  If
     using the SLANG library, put libslang.a in your DJGPP/lib directory and put
     slang.h and slcurses.h in your DJGPP/include directory, or in the
     appropriate directories specified by LIBRARY_PATH and INCLUDE_PATH in your
@@ -735,27 +854,25 @@ V. Compile instructions -- 386 DOS
     incompatibilities from mixing different programs.
 
     If you wish to compile with support for internationalization of messages,
-    you first need to install the DOS port of the GNU gettext package,
-    available from any DJGPP mirror site.  You may wish to recompile with DJGPP
-    2.02.  Then uncomment the lines for INTLFLAGS in src/makefile.dsl and in
-    WWW/Library/djgpp/makefile.sla, and remove the "#" from the LIBS line in
-    src/makefile.dsl.  Make similar changes if using one of the other DOS
-    makefiles.  See the gettext documentation for information on creating and
-    using message files for different languages.
+    you first need to install the DOS ports of the GNU gettext and libiconv
+    packages, available from any DJGPP mirror site.  Then uncomment the lines
+    for INTLFLAGS in src/makefile.dsl and in WWW/Library/djgpp/makefile.sla,
+    and remove the "#" from the LIBS line in src/makefile.dsl.  Make similar
+    changes if using one of the other DOS makefiles.  See the gettext
+    documentation for information on creating and using message files for
+    different languages.
 
     If all goes well, you will have a lynx.exe file.  If you have trouble,
     check to be sure djgpp.env is the way it came in the original package.
-    To compile lynx with DJGPP you may need about 20Mb of free disk space
-    for virtual memory.
 
     To test Lynx_386 you must have a packet driver installed.  The simplest
     method is to use a null packet driver that just allows Lynx to start up,
     but doesn't do anything else.  One such executable driver has been posted,
     uuencoded, to the lynx-dev mailing list:
-    "http://www.flora.org/lynx-dev/html/month0198/msg00057.html".
+    "http://www.flora.org/lynx-dev/html/month011998/msg00057.html".
     Start the dummy packet driver with "nullpkt 0x60", and take it out of
     memory with "nullpkt -u".  You can also use slip8250.com.  See the CRYNWR
-    package "http://www.simtel.net/pub/simtelnet/msdos/pktdrvr/pktd11.zip".
+    package "ftp://ftp.simtel.net/pub/simtelnet/msdos/pktdrvr/pktd11.zip".
     Usage is "slip8250 0x60", but you may have to invoke it as, for example,
     "slip8250  0x60 6 3 0x2F8" so that it uses COM2 and IRQ 3, in order to
     avoid an IRQ conflict with a mouse or some other device.  Another packet
@@ -766,8 +883,8 @@ V. Compile instructions -- 386 DOS
     (Find at:
     "http://mvmpc9.ciw.uni-karlsruhe.de/c:/user/toni/dosppp/dosppp06.zip",
     "http://personal.redestb.es/tonilop/dosppp/dosppp06.zip", or
-    "ftp://ftp.agate.net/users/01935/internet/dosppp06.zip";
-    "ftp://ftp.klos.com/demo/pppshare.exe".)
+    "ftp://ftp.oldskool.org/pub/tvdog/internet/dosppp06.zip";
+    "http://www.klos.com/get.pppshare.html")
 
     File access looks like this:
 
@@ -777,18 +894,21 @@ V. Compile instructions -- 386 DOS
     file://localhost/c:/
     file://localhost/c:/dos
     file://localhost/c:/dos/command.com
+    file://localhost/dev/c/dos/command.com
 
-    See "http://www.fdisk.com/doslynx/lynxport.htm" for more hints and some
-    precompiled libraries.  One problem you can run into is when editing
-    userdefs.h and lynx.cfg, which have unix-style end of lines.  You would be
-    well advised to use an editor that can handle end of lines terminated with
-    a single LF character.  You can also unpack the source code using unzip386
-    or unzip with the -a switch to convert unix LF to dos CRLF.  That will make
-    texts more readable under DOS.  If you compile lynx regularly, you may
-    automate the procedure by creating a batch file such as the following.
+    See "http://www.fdisk.com/doslynx/lynxport.htm" for more hints and
+    some precompiled libraries. One problem you can encounter is editing
+    userdefs.h and lynx.cfg, which have unix-style end of lines. You would
+    be well advised to use an editor that can handle end of lines terminated
+    with a single LF character. You can also unpack the source code using
+    unzip386 or unzip with the -a or -aa switch to convert unix LF to dos CRLF.
+    That will make texts more readable under DOS. If you compile lynx
+    regularly, you may automate the procedure by creating a batch file such
+    as the following.
 
-	cd djgpp\tcplib\obj
-	make
+	cd djgpp\watt32\src
+	configur djgpp
+	make -f djgpp.mak
 	cd ..\..\..\www\library\djgpp
 	make
 	cd ..\..\..\src\chrtrans
@@ -798,21 +918,22 @@ V. Compile instructions -- 386 DOS
 	strip lynx.exe
 	cd ..
 
-    This batch file expects the DJGPP port of WATTCP to be installed in the
+    This batch file expects the DJGPP port of WATT-32 to be installed in the
     lynx2-* directory.  Place a copy of this batch file, named "djgpp.bat",
     in the lynx2-* directory, move to that directory and type "djgpp".  A more
     complete batch file with error checking and annotation can be found at:
-    "http://www.flora.org/lynx-dev/html/month1197/msg00250.html".
+    "http://www.flora.org/lynx-dev/html/month111997/msg00250.html".
 
 -- 1997/9/29 - D. Kaufman <dkaufman@rahul.net>
 -- 1997/10/3 - B. Schiavo <Wschiavo@concentric.net>
+-- Last update - 2001/07/12
 
 
 VI. General installation instructions
 
     Once you have compiled Lynx, test it out first on a local file.  Be sure
     Lynx can find lynx.cfg.  A _sample_ test command line would be:
-    `lynx -cfg=/usr/local/lib/lynx.cfg .`.  Once you are satisfied that
+    'lynx -cfg=/usr/local/lib/lynx.cfg .'.  Once you are satisfied that
     Lynx works, go ahead and install it.  For Unix, type "make install".
 
     For VMS, you need to have the executable in a public place, make it
@@ -859,7 +980,7 @@ VII. Setting environment variables before running Lynx (optional)
     setting in config.sys.  In addition, lynx looks for a "SHELL" environment
     variable when shelling to DOS.  If  you wish to preserve the environment
     space when shelling, put a line like this in your AUTOEXEC.BAT file also
-    "SET SHELL=C:\COMMAND.COM /E:2048".  It should match CONFIG.SYS.
+    "SET SHELL=C:\COMMAND.COM /E:4096".  It should match CONFIG.SYS.
 
     HOME         Where to keep the bookmark file and personal config files.
     TEMP or TMP  Bookmarks are kept here with no HOME.  Temp files here.
@@ -869,7 +990,6 @@ VII. Setting environment variables before running Lynx (optional)
 
     386 version only:
     WATTCP.CFG   Set to the full path for the WATTCP.CFG directory
-    (Depending on how you compiled libtcp.a, you may have to use WATCONF.)
 
     Define these in your batch file for running Lynx.  For example, if your
     application line is "D:\win32\lynx.bat", lynx.bat for Win32 may look like:

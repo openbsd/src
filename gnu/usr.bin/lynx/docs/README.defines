@@ -5,10 +5,10 @@ Does not include
 - symbols defined and documented in userdefs.h
 - symbols expected to be set by compiler to indicate system type or
   compiler features
-- some symbols set and used only in connection with the ./configure
+- many symbols set and used only in connection with the ./configure
   mechanism - the full and current list can be found in config.hin
   (as a template) or, after running ./configure, in lynx_cfg.h.
-- symbols and macros defined in the source code
+- most symbols and macros defined in the source code
 
 ***Not complete.***
 
@@ -37,6 +37,16 @@ packet driver.  I created four new defines to accomplish this.
 Added for 8+3 filesystems (DOS):
 	FNAMES_8_3  also defined in userdefs.h if __DJGPP__
 
+* incorporate changes for win32 by Hiroyuki Senshu <senshu@shonai-cit.ac.jp>
+  (SH) from
+    ftp://crab.it.osha.sut.ac.jp/pub/Win32/develope/senshu/Lynx/
+  Most changes are ifdef'd
+    #define _WIN_CC=    .... for Windows C Compiler
+    #define CJK_EX      .... CJK EXtension
+    #define SH_EX       .... Senshu Hiroyuki EXtension
+    #define WIN_EX      .... Windows EXtension
+
+
 B. Symbols to enable or disable specific features, mostly
 =========================================================
 Note that some of these may be only usable on some system types,
@@ -48,10 +58,9 @@ Network related, specific protocols
        			see comments in makefile.in
 # -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
                		see comments in makefile.in
-# -DNOPORT         if you must use PASV instead of PORT for FTP
 
-Related to DirEd code - probably one usable for UNIX or similar
----------------------------------------------------------------
+Related to DirEd code - probably only usable for UNIX or similar
+----------------------------------------------------------------
 # -DDIRED_SUPPORT  (see INSTALLATION, Section II-1c)
 # -DOK_GZIP        (see INSTALLATION, Section II-1c)
 # -DOK_OVERRIDE    (see INSTALLATION, Section II-1c)
@@ -59,8 +68,10 @@ Related to DirEd code - probably one usable for UNIX or similar
 # -DOK_TAR         (see INSTALLATION, Section II-1c)
 # -DOK_UUDECODE    (see INSTALLATION, Section II-1c)
 # -DOK_ZIP         (see INSTALLATION, Section II-1c)
+# -DOK_INSTALL     to enable dired menu "Install" function
 # -DARCHIVE_ONLY   (see INSTALLATION, Section II-1c)
 # -DNO_CHANGE_EXECUTE_PERMS (see INSTALLATION, Section II-1c)
+# -DCANT_EDIT_UNWRITABLE_FILES (see LYEdit.c - always in effect for VMS)
 
 Related to formatting of local directory listings
 -------------------------------------------------
@@ -82,8 +93,7 @@ Using curses or ncurses library:
 # -DNO_SIZECHANGE (old) or HAVE_SIZECHANGE (new) whether using code to detect
                    new size after size changes of the terminal (window).
                    for UNIX handled by ./configure, may be set in HTUtils.h
-# -DUSE_SIZECHANGEHACK  enable hack to handle increasing the window size
-			above window size at startup
+# -DUSE_SCROLLBAR  supports scrollbar when built with ncurses
 
 Using slang library:
 # -DUSE_SLANG      (see INSTALLATION, Section II-1c)
@@ -93,21 +103,61 @@ Both:
 # 	if you have the reverse clear screen problem of some SUN4 systems, or
 # 	to work around some other "garbage on the screen" problems
 
-Related to *experimental* (unsupported) character style code
+Related to experimental (unsupported) character style code
 ------------------------------------------------------------
-# -DUSE_COLOR_STYLE (see INSTALLATION, Section II-1c) probably needs -DNCURSES
-# -DUSE_HASH       (see INSTALLATION, Section II-1c)  probably needs the above
-# -DLINKEDSTYLES   (see INSTALLATION, Section II-1c)  probably needs the above
+# -DUSE_COLOR_STYLE (see INSTALLATION, Section II-1c) needs SVr4 curses
 
-Other
------
-# -DDONT_TRACK_INTERNAL_LINKS - Handle following links to same doc differently.
-# -DEXP_CHARTRANS_AUTOSWITCH also let lynx switch term mode(Linux console only)
+Other general
+-------------
 # -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
-# -DLY_FIND_LEAKS  (see INSTALLATION, Section II-1c)
 # -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
-# -DNSL_FORK       For fork-based name server lookups that can be 'z'apped.
-# -DSYSLOG_REQUESTED_URLS
-# 	if you would like logging of client requests via syslog()
-# -DUSE_ZLIB       To use some functions from zlib library if you have it.
-# -DDECLARE_WAIS_LOGFILES   see comments in makefile.in
+# -DNO_DUMP_WITH_BACKSPACES Disables -with_backspaces code
+# -DUSE_VASPRINT   Use vasprintf() function
+# -DNO_RULES	   Disables code for CERN-style rules files
+# -DMISC_EXP       Enable some truly experimental stuff
+# -DINACTIVE_INPUT_STYLE_VH  Different style for showing inactive text fields
+
+Untested
+--------
+# -DNO_EXTENDED_HTMLDTD	Disable some "SortaSGML" code, see SGML.c
+# -DWIND_DOWN_STACK Aggressive handling of end tags for "TagSoup", SGML.c
+
+C. Secondary symbols
+====================
+Some macros that are not primary, i.e. they are normally automatically
+set or unset in the code based on other macros (including those from
+./configure), but it may be sometimes useful to set them differently.
+They may directly affect several source files.  Filenames show where
+they are set.  Normally installers shouldn't have to care about these
+symbols.
+
+COOKIE_FILE		LYMain.c	default cookie file in HOME dir
+SHOW_WHEREIS_TARGETS	LYCurses.h	whereis search highlighting
+USE_KEYMAPS		LYCurses.h	use of .lynx-keymaps files
+
+D. Symbols defined locally to modify some behavior
+==================================================
+Defined in the source files to which they apply.  Only filenames are listed,
+the files would have to be read and edited anyway to change the definition.
+Normally installers shouldn't have to care about any of these symbols.
+
+ADVANCED_INFO				LYShowInfo.c
+ALLOW_PROXY_HEAD			LYUtils.c
+CHECK_FREE_MEM				GridText.c
+CLEAN_URLS				HTParse.c
+DEBUG_HOSTENT				HTTCP.c
+DEBUG_HOSTENT_CHILD			HTTCP.c
+DEFAULT_INVCHECK_BV			LYCookie.c
+DUPLICATE_ANCHOR_NAME_WORKAROUND	HTAnchor.c
+EXTENDED_OPTION_LOGIC			LYMain.c
+EXTENDED_STARTFILE_RECALL		LYMain.c
+OPTNAME_ALLOW_DASHES			LYMain.c
+OVERLAP					HTNews.c
+RESTRICT_NM_ALLOW_DASHES		LYUtils.c
+SOCKET_DEBUG_TRACE			HTTCP.c
+TRADITIONAL_SUFFIXES			HTInit.c
+USE_XHDR				HTNews.c
+max_cookies_buffer			LYCookie.c
+max_cookies_domain			LYCookie.c
+max_cookies_global			LYCookie.c
+reverse_mailcap				HTInit.c

@@ -7,34 +7,62 @@ LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
 HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
 LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o LYPrettySrc.o
+LYStyle.o LYHash.o LYPrettySrc.o TRSTable.o
 
-CFLAGS= $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
+CFLAGS= -O1 $(MCFLAGS) $(INTLFLAGS) -I. -I.. $(SLANGINC)
+
+# comment this line to suppress DIRED support
+DIRED_DEFS = \
+ -DDIRED_SUPPORT \
+ -DOK_UUDECODE \
+ -DOK_TAR \
+ -DOK_GZIP \
+ -DOK_ZIP \
+ -DOK_OVERRIDE 
 
 CC = gcc
-MCFLAGS = -O2 -DDISP_PARTIAL -DUSE_ZLIB -DUSE_EXTERNALS \
--DSOURCE_CACHE -DUSE_PSRC \
--DUSE_SLANG -DDJGPP_KEYHANDLER -DACCESS_AUTH -DNO_CUSERID \
--DNOUSERS -DDOSPATH -DNO_TTYTYPE -DNO_UTMP -I../WWW/Library/Implementation \
--I../djgpp/tcplib/include -I./chrtrans -I../djgpp/tcplib/include/tcp
-WWWLIB = ../WWW/Library/djgpp/libwww.a ../djgpp/tcplib/obj/libtcp.a
-LIBS= -lslang -lz # -lintl
-CHRTR= ./chrtrans/
+
+MCFLAGS = \
+ $(DIRED_DEFS) \
+ -DACCESS_AUTH \
+ -DDISP_PARTIAL \
+ -DDJGPP_KEYHANDLER \
+ -DDOSPATH \
+ -DNOUSERS \
+ -DNO_CUSERID \
+ -DNO_TTYTYPE \
+ -DNO_UTMP \
+ -DSOURCE_CACHE \
+ -DUSE_EXTERNALS \
+ -DUSE_PRETTYSRC \
+ -DUSE_SLANG \
+ -DUSE_ZLIB \
+ -DWATT32 \
+ -I./chrtrans \
+ -I../WWW/Library/Implementation \
+ -I../djgpp/watt32/inc \
+ -I../djgpp/watt32/inc/sys
+
+WWWLIB = \
+ ../WWW/Library/djgpp/libwww.a \
+ ../djgpp/watt32/lib/libwatt.a
+
+LIBS= $(SLANGLIB) -lslang -lz # -lintl
 #INTLFLAGS = -DHAVE_GETTEXT -DHAVE_LIBINTL_H
 
 all: lynx.exe
 
 lynx.exe:   message $(OBJS) $(WWWLIB)
 	@echo "Linking and creating Lynx executable"
-	$(CC) $(CFLAGS) -o lynx.exe  $(OBJS) $(WWWLIB) $(SLANGLIB) $(LIBS)
+	$(CC) $(CFLAGS) -o lynx.exe  $(OBJS) $(WWWLIB) $(LIBS)
 	@echo "Welcome to Lynx!"
 
 message:
 	@echo "Compiling Lynx sources"
 
-dbg:    $(OBJS) $(WWWLIB)
+dbg:	$(OBJS) $(WWWLIB)
 	@echo "Making Lynx code"
-	$(CC) $(OBJS) $(CFLAGS) $(WWWLIB) $(SLANGLIB) $(LIBS)
+	$(CC) -g $(OBJS) $(CFLAGS) $(WWWLIB) $(LIBS)
 
 lint:
 	lint *.c  > ../lint.out
@@ -57,7 +85,6 @@ LYKeymap.o:	../userdefs.h
 LYMain.o:	../userdefs.h
 LYMainLoop.o:	../userdefs.h
 LYOptions.o:	../userdefs.h
-LYReadCFG.o:	../userdefs.h
 LYReadCFG.o:	../userdefs.h
 LYShowInfo.o:	../userdefs.h
 LYStrings.o:	../userdefs.h

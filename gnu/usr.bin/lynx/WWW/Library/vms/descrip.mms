@@ -163,7 +163,7 @@ CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), MULTINET) $(INCLUDES)
 CC = gcc
 .endif
 
-!HEADERS = HTUtils.h, HTStream.h, tcp.h, HText.h -
+!HEADERS = HTUtils.h, HTStream.h, www_tcp.h, HText.h -
 !        HTParse.h, HTAccess.h, HTTP.h, HTFile.h, -
 !	HTBTree.h, HTTCP.h, SGML.h, -
 !	HTML.h, HTMLDTD.h, HTChunk.h, HTPlain.h, -
@@ -175,15 +175,15 @@ CC = gcc
 !	HTFinger.h, HTAABrow.h, -
 !	HTAAProt.h, HTAAUtil.h, -
 !	HTAssoc.h, HTUU.h, -
-!	HTVMSUtils.h, ufc-crypt.h, patchlevel.h
+!	HTVMSUtils.h,
 
 MODULES = HTParse, HTAccess, HTTP, HTFile, HTBTree, HTFTP, HTTCP, HTString, -
 	SGML, HTMLDTD, HTChunk, HTPlain, HTMLGen, -
 	HTAtom, HTAnchor, HTStyle, HTList, HTRules, HTFormat, -
 	HTMIME, HTNews, HTGopher, HTTelnet, HTFinger, -
 	HTWSRC, HTAAUtil, HTAABrow, HTGroup, -
-	HTAAProt, HTAssoc, HTLex, HTUU, HTVMSUtils, getpass, -
-	getline, crypt, crypt_util, HTWAIS, HTVMS_WaisUI, HTVMS_WaisProt
+	HTAAProt, HTAssoc, HTLex, HTUU, HTVMSUtils, -
+	HTWAIS, HTVMS_WaisUI, HTVMS_WaisProt
 
 !.ifdef DECNET  ! Strip FTP, Gopher, News, WAIS
 !HEADERS = $(COMMON_HEADERS)
@@ -212,7 +212,7 @@ clean :
 ! Simple Dependencies
 
 
-!HTString.obj :	HTString.c HTString.h tcp.h Version.make HTUtils.h
+!HTString.obj :	HTString.c HTString.h www_tcp.h Version.make HTUtils.h
 !HTAtom.obj :	HTAtom.c HTAtom.h HTUtils.h HTString.h
 !HTChunk.obj :	HTChunk.c HTChunk.h HTUtils.h
 !HTList.obj :	HTList.c HTList.h HTUtils.h
@@ -235,7 +235,7 @@ clean :
 !HTNews.obj :	HTNews.c HTNews.h HTUtils.h HTList.h
 !HTParse.obj :	HTParse.c HTParse.h HTUtils.h
 !HTStyle.obj :	HTStyle.c HTStyle.h HTUtils.h
-!HTTCP.obj :	HTTCP.c HTTCP.h HTUtils.h tcp.h
+!HTTCP.obj :	HTTCP.c HTTCP.h HTUtils.h www_tcp.h
 !HTTP.obj :	HTTP.c HTTP.h HTUtils.h
 !SGML.obj :	SGML.c SGML.h HTUtils.h
 !HTAABrow.obj :	HTAABrow.c HTUtils.h
@@ -245,6 +245,4 @@ clean :
 !HTLex.obj :	HTLex.c HTUtils.h
 !HTAssoc.obj :	HTAssoc.c HTAssoc.h HTAAUtil.h HTString.h
 !HTUU.obj :	HTUU.c HTUU.h HTUtils.h
-!crypt.obj :	crypt.c ufc-crypt.h
 !HTVMSUtils.obj :	HTVMSUtils.c HTVMSUtils.h HTUtils.h
-!crypt_util.obj :	crypt_util.c ufc-crypt.h patchlevel.h

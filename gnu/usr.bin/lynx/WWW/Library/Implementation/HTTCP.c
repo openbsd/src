@@ -25,12 +25,16 @@
 
 #ifdef NSL_FORK
 #include <signal.h>
-#include <sys/wait.h>
+#include <www_wait.h>
 #endif /* NSL_FORK */
 
 #ifdef HAVE_RESOLV_H
 #include <resolv.h>
 #endif
+
+#if defined(__DJGPP__) && defined (WATT32)
+#include <netdb.h>
+#endif /* __DJGPP__ */
 
 #define OK_HOST(p) ((p) != 0 && ((p)->h_length) != 0)
 
@@ -40,7 +44,7 @@ PUBLIC int BSDselect PARAMS((
 	fd_set *	 readfds,
 	fd_set *	 writefds,
 	fd_set *	 exceptfds,
-	struct timeval * timeout));
+	struct timeval * select_timeout));
 #ifdef select
 #undef select
 #endif /* select */
@@ -87,42 +91,33 @@ PUBLIC unsigned long socks_bind_remoteAddr; /* for long Rbind */
 **	global errno	gives the error number in the Unix way.
 **
 **  On return,
-**	returns 	a negative status in the Unix way.
+**	returns		a negative status in the Unix way.
 */
-#ifndef PCNFS
-
-#ifdef VMS
-#include <perror.h>
-#ifndef errno
-extern int errno;
-#endif /* !errno */
-#endif /* VMS */
-
-#ifndef VM
-#ifndef VMS
-#ifndef THINK_C
 
 #ifdef DECL_SYS_ERRLIST
 extern char *sys_errlist[];		/* see man perror on cernvax */
 extern int sys_nerr;
 #endif /* DECL_SYS_ERRLIST */
 
-#endif /* !THINK_C */
-#endif /* !VMS */
-#endif /* !VM */
-
-#endif	/* !PCNFS */
-
 #ifdef _WINDOWS_NSL
-	 char host[512];
-	 struct hostent  *phost;	/* Pointer to host - See netdb.h */
-	 int donelookup;
+char host[512];
+struct hostent  *phost;	/* Pointer to host - See netdb.h */
+int donelookup;
 
-unsigned long _fork_func (void *arglist)
+static unsigned long _fork_func (void *arglist)
 {
-	 phost = gethostbyname(host);
-	 donelookup = TRUE;
-	 return (unsigned long)(phost);
+#ifdef SH_EX
+    unsigned long addr;
+    addr = (unsigned long)inet_addr(host);
+    if ((int)addr != -1)
+	phost = gethostbyaddr((char *)&addr, sizeof (addr), AF_INET);
+    else
+	phost = gethostbyname(host);
+#else
+    phost = gethostbyname(host);
+#endif
+    donelookup = TRUE;
+    return (unsigned long)(phost);
 }
 #endif /* _WINDOWS_NSL */
 
@@ -131,9 +126,7 @@ unsigned long _fork_func (void *arglist)
 **  A routine to mimic the ioctl function for UCX.
 **  Bjorn S. Nilsson, 25-Nov-1993. Based on an example in the UCX manual.
 */
-#include <iodef.h>
-#define IOC_OUT (int)0x40000000
-extern int vaxc$get_sdc(), sys$qiow();
+#include <HTioctl.h>
 
 PUBLIC int HTioctl ARGS3(
 	int,		d,
@@ -154,7 +147,7 @@ PUBLIC int HTioctl ARGS3(
     } ioctl_desc;
 
     if ((sdc = vaxc$get_sdc (d)) == 0) {
-	errno = EBADF;
+	set_errno(EBADF);
 	return -1;
     }
     ioctl_desc.opt  = UCX$C_IOCTL;
@@ -173,81 +166,90 @@ PUBLIC int HTioctl ARGS3(
     ioctl_comm.addr = (char *)argp;
     status = sys$qiow (0, sdc, fun, iosb, 0, 0, 0, 0, 0, 0, p5, p6);
     if (!(status & 01)) {
-	errno = status;
+	set_errno(status);
 	return -1;
     }
     if (!(iosb[0] & 01)) {
-	errno = iosb[0];
+	set_errno(iosb[0]);
 	return -1;
     }
     return 0;
 }
 #endif /* VMS && UCX */
 
+#define MY_FORMAT "TCP: Error %d in `SOCKET_ERRNO' after call to %s() failed.\n\t%s\n"
+	   /* third arg is transport/platform specific */
+
 /*	Report Internet Error
 **	---------------------
 */
 PUBLIC int HTInetStatus ARGS1(
-	char *, 	where)
+	char *,		where)
 {
+    int status;
+    int saved_errno = errno;
 #ifdef VMS
 #ifdef MULTINET
     SOCKET_ERRNO = vmserrno;
 #endif /* MULTINET */
 #endif /* VMS */
 
-    CTRACE(tfp,
-	"TCP: Error %d in `SOCKET_ERRNO' after call to %s() failed.\n\t%s\n",
-	   SOCKET_ERRNO,  where,
-	   /* third arg is transport/platform specific */
 #ifdef VM
-	   "(Error number not translated)");	/* What Is the VM equiv? */
+    CTRACE((tfp, MY_FORMAT, SOCKET_ERRNO,  where,
+	   "(Error number not translated)"));	/* What Is the VM equiv? */
 #define ER_NO_TRANS_DONE
 #endif /* VM */
 
 #ifdef VMS
 #ifdef MULTINET
-	   vms_errno_string());
+    CTRACE((tfp, MY_FORMAT, SOCKET_ERRNO,  where,
+	   vms_errno_string()));
 #else
+    CTRACE((tfp, MY_FORMAT, SOCKET_ERRNO,  where,
 	   ((SOCKET_ERRNO > 0 && SOCKET_ERRNO <= 65) ?
-	    strerror(SOCKET_ERRNO) : "(Error number not translated)"));
+	    strerror(SOCKET_ERRNO) : "(Error number not translated)")));
 #endif /* MULTINET */
 #define ER_NO_TRANS_DONE
 #endif /* VMS */
 
 #ifdef HAVE_STRERROR
-	   strerror(SOCKET_ERRNO));
+    CTRACE((tfp, MY_FORMAT, SOCKET_ERRNO,  where,
+	   strerror(SOCKET_ERRNO)));
 #define ER_NO_TRANS_DONE
 #endif /* HAVE_STRERROR */
 
 #ifndef ER_NO_TRANS_DONE
+    CTRACE((tfp, MY_FORMAT, SOCKET_ERRNO,  where,
 	   (SOCKET_ERRNO < sys_nerr ?
-	    sys_errlist[SOCKET_ERRNO] : "Unknown error" ));
+	    sys_errlist[SOCKET_ERRNO] : "Unknown error" )));
 #endif /* !ER_NO_TRANS_DONE */
 
 #ifdef VMS
 #ifndef MULTINET
-    CTRACE(tfp,
+    CTRACE((tfp,
 	   "         Unix error number (SOCKET_ERRNO) = %ld dec\n",
-	   SOCKET_ERRNO);
-    CTRACE(tfp,
+	   SOCKET_ERRNO));
+    CTRACE((tfp,
 	   "         VMS error (vaxc$errno)    = %lx hex\n",
-	   vaxc$errno);
+	   vaxc$errno));
 #endif /* MULTINET */
 #endif /* VMS */
+
+    set_errno(saved_errno);
 
 #ifdef VMS
     /*
     **	uerrno and errno happen to be zero if vmserrno <> 0
     */
 #ifdef MULTINET
-    return -vmserrno;
+    status = -vmserrno;
 #else
-    return -vaxc$errno;
+    status = -vaxc$errno;
 #endif /* MULTINET */
 #else
-    return -SOCKET_ERRNO;
+    status = -SOCKET_ERRNO;
 #endif /* VMS */
+    return status;
 }
 
 /*	Parse a cardinal value				       parse_cardinal()
@@ -295,15 +297,23 @@ PUBLIC unsigned int HTCardinal ARGS3(
 **		it is to be kept.
 */
 PUBLIC CONST char * HTInetString ARGS1(
-	SockA*, 	soc_in)
+	SockA*,		soc_in)
 {
-    static char string[16];
+#ifdef INET6
+    static char hostbuf[MAXHOSTNAMELEN];
+    getnameinfo((struct sockaddr *)soc_in,
+	    SOCKADDR_LEN(soc_in),
+	    hostbuf, sizeof(hostbuf), NULL, 0, NI_NUMERICHOST);
+    return hostbuf;
+#else
+    static char string[20];
     sprintf(string, "%d.%d.%d.%d",
 	    (int)*((unsigned char *)(&soc_in->sin_addr)+0),
 	    (int)*((unsigned char *)(&soc_in->sin_addr)+1),
 	    (int)*((unsigned char *)(&soc_in->sin_addr)+2),
 	    (int)*((unsigned char *)(&soc_in->sin_addr)+3));
     return string;
+#endif /* INET6 */
 }
 #endif /* !DECNET */
 
@@ -314,6 +324,7 @@ PUBLIC CONST char * HTInetString ARGS1(
 **  - contains only valid chars for domain names (actually, the
 **    restrictions are somewhat relaxed),
 **  - no leading dots or empty segments,
+**  - no segment starts with '-' or '+' [this protects telnet command],
 **  - max. length of dot-separated segment <= 63 (RFC 1034,1035),
 **  - total length <= 254 (if it ends with dot) or 253 (otherwise)
 **     [an interpretation of RFC 1034,1035, although RFC 1123
@@ -327,10 +338,10 @@ PUBLIC CONST char * HTInetString ARGS1(
 **	returns 1 if valid, otherwise 0.
 */
 PUBLIC BOOL valid_hostname ARGS1(
-	CONST char *,	name)
+	char *,	name)
 {
     int i=1, iseg = 0;
-    CONST char *cp = name;
+    char *cp = name;
     if (!(name && *name))
 	return NO;
     for (; (*cp && i <= 253); cp++, i++) {
@@ -341,16 +352,18 @@ PUBLIC BOOL valid_hostname ARGS1(
 		iseg = 0;
 		continue;
 	    }
+	} else if (iseg == 0 && (*cp == '-' || *cp == '+')) {
+	    return NO;
 	} else if (++iseg > 63) {
-		return NO;
+	    return NO;
 	}
-	if (!isalnum((unsigned char)*cp) &&
+	if (!isalnum(UCH(*cp)) &&
 	    *cp != '-' && *cp != '_' &&
 	    *cp != '$' && *cp != '+') {
 	    return NO;
 	}
     }
-    return (*cp == '\0' || (*cp == '.' && iseg != 0 && cp[1] == '\0'));
+    return (BOOL) (*cp == '\0' || (*cp == '.' && iseg != 0 && cp[1] == '\0'));
 }
 
 #ifdef NSL_FORK
@@ -368,7 +381,7 @@ PRIVATE void quench ARGS1(
 
 PUBLIC int lynx_nsl_status = HT_OK;
 
-#ifndef DJGPP			/* much excluded! */
+#if !( defined(__DJGPP__) && !defined(WATT32) )    /* much excluded! */
 
 #define DEBUG_HOSTENT		/* disable in case of problems */
 #define DEBUG_HOSTENT_CHILD  /* for NSL_FORK, may screw up trace file */
@@ -387,52 +400,52 @@ PRIVATE void dump_hostent ARGS2(
     if (TRACE) {
 	int i;
 	char **pcnt;
-	CTRACE(tfp,"%s: %p ", msgprefix, phost);
+	CTRACE((tfp,"%s: %p ", msgprefix, phost));
 	if (phost) {
-	    CTRACE(tfp,"{ h_name = %p", phost->h_name);
+	    CTRACE((tfp,"{ h_name = %p", phost->h_name));
 	    if (phost->h_name) {
-		CTRACE(tfp, " \"%s\",", phost->h_name);
+		CTRACE((tfp, " \"%s\",", phost->h_name));
 	    } else {
-		CTRACE(tfp, ",");
+		CTRACE((tfp, ","));
 	    }
-	    CTRACE(tfp,"\n\t h_aliases = %p", phost->h_aliases);
+	    CTRACE((tfp,"\n\t h_aliases = %p", phost->h_aliases));
 	    if (phost->h_aliases) {
-		CTRACE(tfp, " {");
+		CTRACE((tfp, " {"));
 		for (pcnt = phost->h_aliases; *pcnt; pcnt++) {
-		    CTRACE(tfp,"%s %p \"%s\"",
+		    CTRACE((tfp,"%s %p \"%s\"",
 			   (pcnt == phost->h_aliases ? " " : ", "),
-			   *pcnt, *pcnt);
+			   *pcnt, *pcnt));
 		}
-		CTRACE(tfp, "%s0x0 },\n\t",
-		       (*phost->h_aliases ? ", " : " "));
+		CTRACE((tfp, "%s0x0 },\n\t",
+		       (*phost->h_aliases ? ", " : " ")));
 	    } else {
-		CTRACE(tfp, ",\n\t");
+		CTRACE((tfp, ",\n\t"));
 	    }
-	    CTRACE(tfp," h_addrtype = %d,", phost->h_addrtype);
-	    CTRACE(tfp," h_length = %d,\n\t", phost->h_length);
-	    CTRACE(tfp," h_addr_list = %p", phost->h_addr_list);
+	    CTRACE((tfp," h_addrtype = %d,", phost->h_addrtype));
+	    CTRACE((tfp," h_length = %d,\n\t", phost->h_length));
+	    CTRACE((tfp," h_addr_list = %p", phost->h_addr_list));
 	    if (phost->h_addr_list) {
-		CTRACE(tfp, " {");
+		CTRACE((tfp, " {"));
 		for (pcnt = phost->h_addr_list; *pcnt; pcnt++) {
-		    CTRACE(tfp,"%s %p",
+		    CTRACE((tfp,"%s %p",
 			   (pcnt == phost->h_addr_list ? "" : ","),
-			   *pcnt);
+			   *pcnt));
 		    for (i = 0; i < phost->h_length; i++) {
-			CTRACE(tfp, "%s%d%s", (i==0 ? " \"" : "."),
+			CTRACE((tfp, "%s%d%s", (i==0 ? " \"" : "."),
 			       (int)*((unsigned char *)(*pcnt)+i),
-			       (i+1 == phost->h_length ? "\"" : ""));
+			       (i+1 == phost->h_length ? "\"" : "")));
 		    }
 		}
 		if (*phost->h_addr_list) {
-		    CTRACE(tfp, ", 0x0 } }");
+		    CTRACE((tfp, ", 0x0 } }"));
 		} else {
-		    CTRACE(tfp, " 0x0 } }");
+		    CTRACE((tfp, " 0x0 } }"));
 		}
 	    } else {
-		CTRACE(tfp, "}");
+		CTRACE((tfp, "}"));
 	    }
 	}
-	CTRACE(tfp,"\n");
+	CTRACE((tfp,"\n"));
 	fflush(tfp);
     }
 }
@@ -445,11 +458,21 @@ PRIVATE void dump_hostent ARGS2(
 **  cast to a struct hostent. - kw
 **  See also description of LYGetHostByName.
 */
+#ifdef NSL_FORK
+
+#define REHOSTENT_SIZE 128		/* not bigger than pipe buffer! */
+
+typedef struct {
+	struct hostent	h;
+	char		rest[REHOSTENT_SIZE];
+    } AlignedHOSTENT;
+
 PRIVATE size_t fill_rehostent ARGS3(
     char *,			rehostent,
     size_t,			rehostentsize,
     CONST struct hostent *,	phost)
 {
+    AlignedHOSTENT *data = (AlignedHOSTENT *)rehostent;
     int num_addrs = 0;
     int num_aliases = 0;
     char **pcnt;
@@ -509,8 +532,8 @@ PRIVATE size_t fill_rehostent ARGS3(
 	}
     }
 
-    ((struct hostent *)rehostent)->h_addrtype = phost->h_addrtype;
-    ((struct hostent *)rehostent)->h_length = phost->h_length;
+    data->h.h_addrtype = phost->h_addrtype;
+    data->h.h_length = phost->h_length;
     p_next_charptr = (char **)(rehostent + curlen);
     p_next_char = rehostent + curlen;
     if (phost->h_addr_list)
@@ -519,7 +542,7 @@ PRIVATE size_t fill_rehostent ARGS3(
 	p_next_char += (num_aliases+1) * sizeof(phost->h_aliases[0]);
 
     if (phost->h_addr_list) {
-	((struct hostent *)rehostent)->h_addr_list = p_next_charptr;
+	data->h.h_addr_list = p_next_charptr;
 	for (pcnt=phost->h_addr_list, i_addr = 0;
 	     i_addr < num_addrs;
 	     pcnt++, i_addr++) {
@@ -529,11 +552,11 @@ PRIVATE size_t fill_rehostent ARGS3(
 	}
 	*p_next_charptr++ = NULL;
     } else {
-	((struct hostent *)rehostent)->h_addr_list = NULL;
+	data->h.h_addr_list = NULL;
     }
 
     if (phost->h_name) {
-	((struct hostent *)rehostent)->h_name = p_next_char;
+	data->h.h_name = p_next_char;
 	if (name_len) {
 	    strcpy(p_next_char, phost->h_name);
 	    p_next_char += name_len + 1;
@@ -541,11 +564,11 @@ PRIVATE size_t fill_rehostent ARGS3(
 	    *p_next_char++ = '\0';
 	}
     } else {
-	((struct hostent *)rehostent)->h_name = NULL;
+	data->h.h_name = NULL;
     }
 
     if (phost->h_aliases) {
-	((struct hostent *)rehostent)->h_aliases = p_next_charptr;
+	data->h.h_aliases = p_next_charptr;
 	for (pcnt=phost->h_aliases, i_alias = 0;
 	     (*pcnt && i_alias < num_addrs);
 	     pcnt++, i_alias++) {
@@ -563,20 +586,21 @@ PRIVATE size_t fill_rehostent ARGS3(
 	}
 	*p_next_charptr++ = NULL;
     } else {
-	((struct hostent *)rehostent)->h_aliases = NULL;
+	data->h.h_aliases = NULL;
     }
     curlen = p_next_char - (char *)rehostent;
     return curlen;
 }
-
-#define REHOSTENT_SIZE 128		/* not bigger than pipe buffer! */
+#endif /* NSL_FORK */
 
 #ifndef HAVE_H_ERRNO
 #undef  h_errno
 #define h_errno my_errno
 static int my_errno;
 #else /* we do HAVE_H_ERRNO: */
+#ifndef h_errno		/* there may be a macro as well as the extern data */
 extern int h_errno;
+#endif
 #endif
 
 /*	Resolve an internet hostname, like gethostbyname
@@ -614,17 +638,14 @@ extern int h_errno;
 **	HT_INTERNAL		Internal error
 */
 PUBLIC struct hostent * LYGetHostByName ARGS1(
-	CONST char *,	str)
+	char *,	str)
 {
 #ifndef _WINDOWS_NSL
-    CONST char *host = str;
-#endif /* _WINDOWS_NSL */
+    char *host = str;
+#endif
 #ifdef NSL_FORK
     /* for transfer of result between from child to parent: */
-    static struct {
-	struct hostent	h;
-	char		rest[REHOSTENT_SIZE];
-    } aligned_full_rehostent;
+    static AlignedHOSTENT aligned_full_rehostent;
     /*
      * We could define rehosten directly as a
      * static char rehostent[REHOSTENT_SIZE],
@@ -645,7 +666,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
     struct _statuses {
 	size_t rehostentlen;
 	int h_length;
-	int child_errno;  /* maybe not very useful */
+	int child_errno;  /* sometimes useful to pass this on */
 	int child_h_errno;
 	BOOL h_errno_valid;
     } statuses;
@@ -656,38 +677,40 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
     struct hostent *result_phost = NULL;
 
     if (!str) {
-	CTRACE(tfp, "LYGetHostByName: Can't parse `NULL'.\n");
+	CTRACE((tfp, "LYGetHostByName: Can't parse `NULL'.\n"));
 	lynx_nsl_status = HT_INTERNAL;
 	return NULL;
     }
-    CTRACE(tfp, "LYGetHostByName: parsing `%s'.\n", str);
+    CTRACE((tfp, "LYGetHostByName: parsing `%s'.\n", str));
 
 	/*  Could disable this if all our callers already check - kw */
     if (HTCheckForInterrupt()) {
-	CTRACE (tfp, "LYGetHostByName: INTERRUPTED for '%s'.\n", str);
+	CTRACE((tfp, "LYGetHostByName: INTERRUPTED for '%s'.\n", str));
 	lynx_nsl_status = HT_INTERRUPTED;
 	return NULL;
     }
 
+#ifdef _WINDOWS_NSL
+    strncpy(host, str, sizeof(host));
+#endif /*  _WINDOWS_NSL */
+
     if (!valid_hostname(host)) {
 	lynx_nsl_status = HT_NOT_ACCEPTABLE;
 #ifdef NO_RECOVERY
+#ifdef _WINDOWS
+	WSASetLastError(NO_RECOVERY);
+#else
 	h_errno = NO_RECOVERY;
+#endif
 #endif
 	return NULL;
     }
 
-#ifdef _WINDOWS_NSL
-    strncpy(host, str, (size_t)512);
-#else
-    host = str;
-#endif /*  _WINDOWS_NSL */
-
 #ifdef MVS	/* Outstanding problem with crash in MVS gethostbyname */
-    CTRACE(tfp, "LYGetHostByName: Calling gethostbyname(%s)\n", host);
+    CTRACE((tfp, "LYGetHostByName: Calling gethostbyname(%s)\n", host));
 #endif /* MVS */
 
-    CTRACE_FLUSH(tfp);  /* so child messages will not mess parent log */
+    CTRACE_FLUSH(tfp);  /* so child messages will not mess up parent log */
 
     lynx_nsl_status = HT_INTERNAL;	/* should be set to something else below */
 
@@ -699,16 +722,25 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	*/
     {
 	int got_rehostent = 0;
+#if HAVE_SIGACTION
+	sigset_t old_sigset;
+	sigset_t new_sigset;
+#endif
 	/*
 	**	Pipe, child pid, status buffers, start time, select()
 	**	control variables.
 	*/
 	pid_t fpid, waitret;
-	int pfd[2], selret, readret, waitstat = 0;
-	time_t start_time = time(NULL);
+	int pfd[2], selret, readret;
+#ifdef HAVE_TYPE_UNIONWAIT
+	union wait waitstat;
+#else
+	int waitstat = 0;
+#endif
+	time_t start_time = time((time_t *)0);
 	fd_set readfds;
-	struct timeval timeout;
-	int dns_patience = 30; /* how many seconds will we wait for DNS? */
+	struct timeval one_second;
+	long dns_patience = 30; /* how many seconds will we wait for DNS? */
 	int child_exited = 0;
 
 	    /*
@@ -726,6 +758,32 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	waitret = 0;
 
 	pipe(pfd);
+
+#if HAVE_SIGACTION
+	/*
+	 *  Attempt to prevent a rare situation where the child
+	 *  could execute the Lynx signal handlers because it gets
+	 *  killed before it even has a chance to reset its handlers,
+	 *  resulting in bogus 'Exiting via interrupt' message and
+	 *  screen corruption or worse.
+	 *  Should that continue to be reported, for systems without
+	 *  sigprocmask(), we need to find a different solutions for
+	 *  those. - kw 19990430
+	 */
+	sigemptyset(&new_sigset);
+	sigaddset(&new_sigset, SIGTERM);
+	sigaddset(&new_sigset, SIGINT);
+#ifndef NOSIGHUP
+	sigaddset(&new_sigset, SIGHUP);
+#endif /* NOSIGHUP */
+#ifdef SIGTSTP
+	sigaddset(&new_sigset, SIGTSTP);
+#endif /* SIGTSTP */
+#ifdef SIGWINCH
+	sigaddset(&new_sigset, SIGWINCH);
+#endif /* SIGWINCH */
+	sigprocmask(SIG_BLOCK, &new_sigset, &old_sigset);
+#endif /* HAVE_SIGACTION */
 
 	if ((fpid = fork()) == 0 ) {
 	    struct hostent  *phost;	/* Pointer to host - See netdb.h */
@@ -764,15 +822,28 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	    signal(SIGSEGV, SIG_DFL);
 	    signal(SIGILL, SIG_DFL);
 
+#if HAVE_SIGACTION
+	    /* Restore signal mask to whatever it was before the fork. -kw */
+	    sigprocmask(SIG_SETMASK, &old_sigset, NULL);
+#endif /* HAVE_SIGACTION */
+
 	    /*
 	    **  Child won't use read side.  -BL
 	    */
 	    close(pfd[0]);
+#ifdef HAVE_H_ERRNO
+	    /* to detect cases when it doesn't get set although it should */
+	    h_errno = -2;
+#endif
+	    set_errno(0);
 	    phost = gethostbyname(host);
+	    statuses.child_errno = errno;
 	    statuses.child_h_errno = h_errno;
+#ifdef HAVE_H_ERRNO
 	    statuses.h_errno_valid = YES;
+#endif
 #ifdef MVS
-	    CTRACE(tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost);
+	    CTRACE((tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost));
 #endif /* MVS */
 
 #ifdef DEBUG_HOSTENT_CHILD
@@ -790,12 +861,17 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		statuses.h_length = 0;
 	    } else {
 		statuses.h_length = ((struct hostent *)rehostent)->h_length;
+#ifdef HAVE_H_ERRNO
+		if (h_errno == -2) /* success, but h_errno unchanged? */
+		    statuses.h_errno_valid = NO;
+#endif
 	    }
 	    /*
 	    **  Send variables indicating status of lookup to parent.
 	    **  That includes rehostentlen, which the parent will use
 	    **  as the size for the second read (if > 0).
 	    */
+	    if (!statuses.child_errno)
 	    statuses.child_errno = errno;
 	    statuses.rehostentlen = rehostentlen;
 	    write(pfd[1], &statuses, sizeof(statuses));
@@ -815,6 +891,14 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	    }
 	}
 
+#if HAVE_SIGACTION
+	/*
+	**  (parent) Restore signal mask to whatever it was
+	**  before the fork. - kw
+	*/
+	sigprocmask(SIG_SETMASK, &old_sigset, NULL);
+#endif /* HAVE_SIGACTION */
+
 	/*
 	**	(parent) Wait until lookup finishes, or interrupt,
 	**	or cycled too many times (just in case) -BL
@@ -827,7 +911,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		goto failed;
 	}
 
-	while (child_exited || time(NULL) - start_time < dns_patience) {
+	while (child_exited || (long)(time((time_t *)0) - start_time) < dns_patience) {
 
 	    FD_ZERO(&readfds);
 	    /*
@@ -847,8 +931,8 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		}
 	    }
 
-	    timeout.tv_sec = 1;
-	    timeout.tv_usec = 0;
+	    one_second.tv_sec = 1;
+	    one_second.tv_usec = 0;
 	    FD_SET(pfd[0], &readfds);
 
 		/*
@@ -858,10 +942,10 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		*/
 #ifdef SOCKS
 	    if (socks_flag)
-		selret = Rselect(pfd[0] + 1, (void *)&readfds, NULL, NULL, &timeout);
+		selret = Rselect(pfd[0] + 1, (void *)&readfds, NULL, NULL, &one_second);
 	    else
 #endif /* SOCKS */
-		selret = select(pfd[0] + 1, (void *)&readfds, NULL, NULL, &timeout);
+		selret = select(pfd[0] + 1, (void *)&readfds, NULL, NULL, &one_second);
 
 	    if ((selret > 0) && FD_ISSET(pfd[0], &readfds)) {
 		/*
@@ -870,9 +954,45 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 		readret = read(pfd[0], &statuses, sizeof(statuses));
 		if (readret == sizeof(statuses)) {
 		    h_errno = statuses.child_h_errno;
-		    errno = statuses.child_errno;
-		    if (statuses.h_errno_valid)
+		    set_errno(statuses.child_errno);
+#ifdef HAVE_H_ERRNO
+		    if (statuses.h_errno_valid) {
 			lynx_nsl_status = HT_H_ERRNO_VALID;
+			/*
+			 *  If something went wrong in the child process
+			 *  other than normal lookup errors, and it appears
+			 *  that we have enough info to know what went wrong,
+			 *  generate diagnostic output.
+			 *  ENOMEM observed on linux in processes constrained
+			 *  with ulimit.  It would be too unkind to abort
+			 *  the session, access to local files or through a
+			 *  proxy may still work. - kw
+			 */
+			if (
+#ifdef NETDB_INTERNAL		/* linux glibc: defined in netdb.h */
+			    (errno && h_errno == NETDB_INTERNAL) ||
+#endif
+			    (errno == ENOMEM &&
+			     statuses.rehostentlen == 0 &&
+			     /* should probably be NETDB_INTERNAL if child
+				memory exhausted, but we may find that
+				h_errno remains unchanged. - kw */
+			     h_errno == -2)) {
+#ifndef MULTINET
+			    HTInetStatus("CHILD gethostbyname");
+#endif
+			    HTAlert(LYStrerror(statuses.child_errno));
+			    if (errno == ENOMEM) {
+				/*
+				 *  Not much point in continuing, right?
+				 *  Fake a 'z', should shorten pointless
+				 *  guessing cycle. - kw
+				 */
+				LYFakeZap(YES);
+			    }
+			}
+		    }
+#endif /* HAVE_H_ERRNO */
 		    if (statuses.rehostentlen > sizeof(struct hostent)) {
 			/*
 			**  Then get the full reorganized hostent.  -BL, kw
@@ -888,7 +1008,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 			} else if (!statuses.h_errno_valid) {
 			    lynx_nsl_status = HT_INTERNAL;
 			}
-	    	    }
+		    }
 		} else {
 		    lynx_nsl_status = HT_ERROR;
 		}
@@ -928,7 +1048,7 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	    **  Abort if interrupt key pressed.
 	    */
 	    if (HTCheckForInterrupt()) {
-		CTRACE(tfp, "LYGetHostByName: INTERRUPTED gethostbyname.\n");
+		CTRACE((tfp, "LYGetHostByName: INTERRUPTED gethostbyname.\n"));
 		kill(fpid, SIGTERM);
 		waitpid(fpid, NULL, WNOHANG);
 		close(pfd[0]);
@@ -943,20 +1063,20 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 	}
 	if (waitret > 0) {
 	    if (WIFEXITED(waitstat)) {
-		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d exited, status 0x%x.\n",
-		       (int)waitret, waitstat);
+		CTRACE((tfp, "LYGetHostByName: NSL_FORK child %d exited, status 0x%x.\n",
+			(int)waitret, WEXITSTATUS(waitstat)));
 	    } else if (WIFSIGNALED(waitstat)) {
-		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d got signal, status 0x%x!\n",
-		       (int)waitret, waitstat);
+		CTRACE((tfp, "LYGetHostByName: NSL_FORK child %d got signal, status 0x%x!\n",
+		       (int)waitret, WTERMSIG(waitstat)));
 #ifdef WCOREDUMP
 		if (WCOREDUMP(waitstat)) {
-		    CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d dumped core!\n",
-			   (int)waitret);
+		    CTRACE((tfp, "LYGetHostByName: NSL_FORK child %d dumped core!\n",
+			   (int)waitret));
 		}
 #endif /* WCOREDUMP */
 	    } else if (WIFSTOPPED(waitstat)) {
-		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d is stopped, status 0x%x!\n",
-		       (int)waitret, waitstat);
+		CTRACE((tfp, "LYGetHostByName: NSL_FORK child %d is stopped, status 0x%x!\n",
+			(int)waitret, WEXITSTATUS(waitstat)));
 	    }
 	}
 	if (!got_rehostent) {
@@ -967,50 +1087,53 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 
 #ifdef _WINDOWS_NSL
     {
-#ifdef __BORLANDC__
-		HANDLE hThread, dwThreadID;
-#else
-		unsigned long hThread, dwThreadID;
-#endif /* __BORLANDC__ */
-		phost = (struct hostent *) NULL;
-		hThread = CreateThread((void *)NULL, 4096UL,
-#ifdef __BORLANDC__
-			 (LPTHREAD_START_ROUTINE)_fork_func,
-#else
-			 (unsigned long (*)())_fork_func,
-#endif /* __BORLANDC__ */
-			 (void *)NULL, 0UL, (unsigned long *)&dwThreadID);
-		if (!hThread)
-			 MessageBox((void *)NULL, "CreateThread",
-				"CreateThread Failed", 0L);
+	HANDLE hThread, dwThreadID;
 
-		donelookup = FALSE;
-		while (!donelookup)
-			if (HTCheckForInterrupt())
-			 {
-			  /* Note that host is a character array and is not freed */
-			  /* to avoid possible subthread problems: */
-			  if (!CloseHandle(hThread))
-				 MessageBox((void *)NULL, "CloseHandle","CloseHandle Failed",
-						0L);
-			  lynx_nsl_status = HT_INTERRUPTED;
-			  return NULL;
-			};
-		if (phost) {
-		    lynx_nsl_status = HT_OK;
-		    result_phost = phost;
-		} else {
-		    lynx_nsl_status = HT_ERROR;
-		    goto failed;
+	if (!system_is_NT) {	/* for Windows9x */
+	    unsigned long t;
+	    t = (unsigned long)inet_addr(host);
+	    if ((int)t != -1)
+		phost = gethostbyaddr((char *)&t, sizeof (t), AF_INET);
+	    else
+		phost = gethostbyname(host);
+	} else {		/* for Windows NT */
+	    phost = (struct hostent *) NULL;
+	    donelookup = FALSE;
+	    hThread = CreateThread((void *)NULL, 4096UL,
+		(LPTHREAD_START_ROUTINE)_fork_func,
+		(void *)NULL, 0UL, (unsigned long *)&dwThreadID);
+	    if (!hThread)
+		MessageBox((void *)NULL, "CreateThread",
+			   "CreateThread Failed", 0L);
+
+	    while (!donelookup) {
+		if (HTCheckForInterrupt()) {
+		    /* Note that host is a character array and is not freed */
+		    /* to avoid possible subthread problems: */
+		    if (!CloseHandle(hThread)) {
+			MessageBox((void *)NULL,
+				   "CloseHandle","CloseHandle Failed", 0L);
+		    }
+		    lynx_nsl_status = HT_INTERRUPTED;
+		    return NULL;
 		}
-    };
+	    }
+	}
+	if (phost) {
+	    lynx_nsl_status = HT_OK;
+	    result_phost = phost;
+	} else {
+	    lynx_nsl_status = HT_ERROR;
+	    goto failed;
+	}
+    }
 
 #else /* !NSL_FORK, !_WINDOWS_NSL: */
     {
 	struct hostent  *phost;
-	phost = gethostbyname((char *)host);	/* See netdb.h */
+	phost = gethostbyname(host);	/* See netdb.h */
 #ifdef MVS
-	CTRACE(tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost);
+	CTRACE((tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost));
 #endif /* MVS */
 	if (phost) {
 	    lynx_nsl_status = HT_OK;
@@ -1025,18 +1148,18 @@ PUBLIC struct hostent * LYGetHostByName ARGS1(
 
 #ifdef DEBUG_HOSTENT
     dump_hostent("End of LYGetHostByName", result_phost);
-    CTRACE(tfp, "LYGetHostByName: Resolved name to a hostent.\n");
+    CTRACE((tfp, "LYGetHostByName: Resolved name to a hostent.\n"));
 #endif
 
     return result_phost;	/* OK */
 
 failed:
-    CTRACE(tfp, "LYGetHostByName: Can't find internet node name `%s'.\n",
-		host);
+    CTRACE((tfp, "LYGetHostByName: Can't find internet node name `%s'.\n",
+		host));
     return NULL;
 }
 
-#endif /* from here on DJGPP joins us again. */
+#endif /* from here on DJGPP without WATT32 joins us again. */
 
 
 /*	Parse a network node address and port
@@ -1051,27 +1174,29 @@ failed:
 **	*soc_in is filled in.  If no port is specified in str, that
 **		field is left unchanged in *soc_in.
 */
-PUBLIC int HTParseInet ARGS2(
+#ifndef INET6
+PRIVATE int HTParseInet ARGS2(
 	SockA *,	soc_in,
 	CONST char *,	str)
 {
     char *port;
     int dotcount_ip = 0;	/* for dotted decimal IP addr */
+    char *strptr;
 #ifndef _WINDOWS_NSL
     char *host = NULL;
 #endif /* _WINDOWS_NSL */
 
     if (!str) {
-	CTRACE(tfp, "HTParseInet: Can't parse `NULL'.\n");
+	CTRACE((tfp, "HTParseInet: Can't parse `NULL'.\n"));
 	return -1;
     }
-    CTRACE(tfp, "HTParseInet: parsing `%s'.\n", str);
+    CTRACE((tfp, "HTParseInet: parsing `%s'.\n", str));
     if (HTCheckForInterrupt()) {
-	CTRACE (tfp, "HTParseInet: INTERRUPTED for '%s'.\n", str);
+	CTRACE((tfp, "HTParseInet: INTERRUPTED for '%s'.\n", str));
 	return -1;
     }
 #ifdef _WINDOWS_NSL
-    strncpy(host, str, (size_t)512);
+    strncpy(host, str, sizeof(host));
 #else
     StrAllocCopy(host, str);	/* Make a copy we can mutilate */
 #endif /*  _WINDOWS_NSL */
@@ -1080,25 +1205,33 @@ PUBLIC int HTParseInet ARGS2(
     */
     if ((port = strchr(host, ':')) != NULL) {
 	*port++ = 0;		/* Chop off port */
+	strptr = port;
 	if (port[0] >= '0' && port[0] <= '9') {
-#ifdef unix
-	    soc_in->sin_port = htons(atol(port));
+#ifdef UNIX
+	    soc_in->sin_port = (PortNumber)htons(strtol(port, &strptr, 10));
 #else /* VMS: */
 #ifdef DECNET
-	    soc_in->sdn_objnum = (unsigned char)(strtol(port, (char**)0, 10));
+	    soc_in->sdn_objnum = (unsigned char)(strtol(port, &strptr, 10));
 #else
-	    soc_in->sin_port = htons((unsigned short)strtol(port,(char**)0,10));
+	    soc_in->sin_port = htons((PortNumber)strtol(port, &strptr, 10));
 #endif /* Decnet */
 #endif /* Unix vs. VMS */
-#ifdef SUPPRESS 	/* 1. crashes!?!.  2. Not recommended */
+#ifdef SUPPRESS		/* 1. crashes!?!.  2. URL syntax has number not name */
 	} else {
 	    struct servent * serv = getservbyname(port, (char*)0);
 	    if (serv) {
 		soc_in->sin_port = serv->s_port;
 	    } else {
-		CTRACE(tfp, "TCP: Unknown service %s\n", port);
+		CTRACE((tfp, "TCP: Unknown service %s\n", port));
 	    }
 #endif /* SUPPRESS */
+	}
+	if (strptr && *strptr != '\0') {
+#ifndef _WINDOWS_NSL
+	    FREE(host);
+#endif /* _WINDOWS_NSL */
+	    HTAlwaysAlert(NULL, gettext("Address has invalid port"));
+	    return -1;
 	}
     }
 
@@ -1109,16 +1242,16 @@ PUBLIC int HTParseInet ARGS2(
     */
     soc_in->sdn_nam.n_len = min(DN_MAXNAML, strlen(host));  /* <=6 in phase 4 */
     strncpy(soc_in->sdn_nam.n_name, host, soc_in->sdn_nam.n_len + 1);
-    CTRACE(tfp, "DECnet: Parsed address as object number %d on host %.6s...\n",
-		soc_in->sdn_objnum, host);
+    CTRACE((tfp, "DECnet: Parsed address as object number %d on host %.6s...\n",
+		soc_in->sdn_objnum, host));
 #else  /* parse Internet host: */
 
     if (*host >= '0' && *host <= '9') {   /* Test for numeric node address: */
-	char *strptr = host;
+	strptr = host;
 	while (*strptr) {
 	    if (*strptr == '.') {
 		dotcount_ip++;
-	    } else if (!isdigit(*strptr)) {
+	    } else if (!isdigit(UCH(*strptr))) {
 		break;
 	    }
 	    strptr++;
@@ -1131,9 +1264,10 @@ PUBLIC int HTParseInet ARGS2(
     /*
     **	Parse host number if present.
     */
-    if (dotcount_ip == 3) {   /* Numeric node address: */
+    if (dotcount_ip == 3)   /* Numeric node address: */
+    {
 
-#ifdef DJGPP
+#if defined(__DJGPP__) && !defined(WATT32)
 	soc_in->sin_addr.s_addr = htonl(aton(host));
 #else
 #ifdef DGUX_OLD
@@ -1144,7 +1278,7 @@ PUBLIC int HTParseInet ARGS2(
 #else
 #ifdef HAVE_INET_ATON
 	if (!inet_aton(host, &(soc_in->sin_addr))) {
-	    CTRACE(tfp, "inet_aton(%s) returns error\n", host);
+	    CTRACE((tfp, "inet_aton(%s) returns error\n", host));
 #ifndef _WINDOWS_NSL
 	    FREE(host);
 #endif /* _WINDOWS_NSL */
@@ -1155,17 +1289,18 @@ PUBLIC int HTParseInet ARGS2(
 #endif /* HAVE_INET_ATON */
 #endif /* GUSI */
 #endif /* DGUX_OLD */
-#endif /* DJGPP */
+#endif /* __DJGPP__ && !WATT32 */
 #ifndef _WINDOWS_NSL
 	FREE(host);
 #endif /* _WINDOWS_NSL */
-    } else {		    /* Alphanumeric node name: */
+    } else
+    {			    /* Alphanumeric node name: */
 
 #ifdef MVS	/* Outstanding problem with crash in MVS gethostbyname */
-	CTRACE(tfp, "HTParseInet: Calling LYGetHostByName(%s)\n", host);
+	CTRACE((tfp, "HTParseInet: Calling LYGetHostByName(%s)\n", host));
 #endif /* MVS */
 
-#ifdef DJGPP
+#if defined(__DJGPP__) && !defined(WATT32)
 	if (!valid_hostname(host)) {
 	    FREE(host);
 	    return HT_NOT_ACCEPTABLE; /* only HTDoConnect checks this. */
@@ -1174,12 +1309,12 @@ PUBLIC int HTParseInet ARGS2(
 	if (soc_in->sin_addr.s_addr == 0) {
 	    goto failed;
 	}
-#else /* !DJGPP: */
+#else /* !(__DJGPP__ && !WATT32) */
 #ifdef _WINDOWS_NSL
 	phost = LYGetHostByName(host);	/* See above */
 	if (!phost) goto failed;
 	memcpy((void *)&soc_in->sin_addr, phost->h_addr, phost->h_length);
-#else /* !DJGPP, !_WINDOWS_NSL: */
+#else /* !(__DJGPP__ && !WATT32) && !_WINDOWS_NSL */
 	{
 	    struct hostent  *phost;
 	    phost = LYGetHostByName(host);	/* See above */
@@ -1203,38 +1338,83 @@ PUBLIC int HTParseInet ARGS2(
 	    memcpy((void *)&soc_in->sin_addr, phost->h_addr, phost->h_length);
 #endif /* VMS && CMU_TCP */
 	}
-#endif /* !DJGPP, !_WINDOWS_NSL */
-#endif /* !DJGPP */
+#endif /* _WINDOWS_NSL */
+#endif /* __DJGPP__ && !WATT32 */
 #ifndef _WINDOWS_NSL
 	FREE(host);
 #endif /* _WINDOWS_NSL */
 
     }	/* Alphanumeric node name */
 
-    CTRACE(tfp, "HTParseInet: Parsed address as port %d, IP address %d.%d.%d.%d\n",
+    CTRACE((tfp, "HTParseInet: Parsed address as port %d, IP address %d.%d.%d.%d\n",
 		(int)ntohs(soc_in->sin_port),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+0),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+1),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+2),
-		(int)*((unsigned char *)(&soc_in->sin_addr)+3));
+		(int)*((unsigned char *)(&soc_in->sin_addr)+3)));
 #endif	/* Internet vs. Decnet */
 
     return 0;	/* OK */
 
 failed:
-    CTRACE(tfp, "HTParseInet: Can't find internet node name `%s'.\n",
-		host);
+    CTRACE((tfp, "HTParseInet: Can't find internet node name `%s'.\n",
+		host));
 #ifndef _WINDOWS_NSL
     FREE(host);
 #endif /* _WINDOWS_NSL */
     switch (lynx_nsl_status) {
-    case HT_NOT_ACCEPTABLE:
-    case HT_INTERRUPTED:
-	return lynx_nsl_status;
-    default:
-    return -1;
+	case HT_NOT_ACCEPTABLE:
+	case HT_INTERRUPTED:
+	    return lynx_nsl_status;
+	default:
+	return -1;
+    }
 }
+#endif /* !INET6 */
+
+#ifdef INET6
+PRIVATE struct addrinfo *
+HTGetAddrInfo ARGS2(
+    CONST char *, str,
+    CONST int, defport)
+{
+    struct addrinfo hints, *res;
+    int error;
+    char *p;
+    char *s;
+    char *host, *port;
+    char pbuf[10];
+
+    s = strdup(str);
+
+    if (s[0] == '[' && (p = strchr(s, ']')) != NULL) {
+	*p++ = '\0';
+	host = s + 1;
+    } else {
+	p = s;
+	host = &s[0];
+    }
+    port = strrchr(p, ':');
+    if (port) {
+	*port++ = '\0';
+    } else {
+	snprintf(pbuf, sizeof(pbuf), "%d", defport);
+	port = pbuf;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(host, port, &hints, &res);
+    if (error || !res) {
+	CTRACE((tfp, "HTGetAddrInfo: getaddrinfo(%s, %s): %s\n", host, port,
+		gai_strerror(error)));
+	res = NULL;
+    }
+
+    return res;
 }
+#endif /* INET6 */
 
 #ifdef LY_FIND_LEAKS
 /*	Free our name for the host on which we are - FM
@@ -1262,12 +1442,17 @@ PRIVATE void get_host_details NOARGS
     char *domain_name;			/* The name of this host domain */
 #endif /* UCX */
 #ifdef NEED_HOST_ADDRESS		/* no -- needs name server! */
+#ifdef INET6
+    struct addrinfo hints, *res;
+    int error;
+#else
     struct hostent * phost;		/* Pointer to host -- See netdb.h */
+#endif /* INET6 */
 #endif /* NEED_HOST_ADDRESS */
     int namelength = sizeof(name);
 
     if (hostname)
-	return; 			/* Already done */
+	return;				/* Already done */
     gethostname(name, namelength);	/* Without domain */
     StrAllocCopy(hostname, name);
 #ifdef LY_FIND_LEAKS
@@ -1278,28 +1463,47 @@ PRIVATE void get_host_details NOARGS
     **	UCX doesn't give the complete domain name.
     **	Get rest from UCX$BIND_DOM logical.
     */
-    if (strchr(hostname,'.') == NULL) { 	  /* Not full address */
+    if (strchr(hostname,'.') == NULL) {		  /* Not full address */
 	domain_name = getenv("UCX$BIND_DOMAIN");
+	if (domain_name == NULL)
+	    domain_name = getenv("TCPIP$BIND_DOMAIN");
 	if (domain_name != NULL) {
 	    StrAllocCat(hostname, ".");
 	    StrAllocCat(hostname, domain_name);
 	}
      }
 #endif /* UCX */
-    CTRACE(tfp, "TCP: Local host name is %s\n", hostname);
+    CTRACE((tfp, "TCP: Local host name is %s\n", hostname));
 
 #ifndef DECNET	/* Decnet ain't got no damn name server 8#OO */
 #ifdef NEED_HOST_ADDRESS		/* no -- needs name server! */
+#ifdef INET6
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+    error = getaddrinfo(name, NULL, &hints, &res);
+    if (error || !res || !res->ai_canonname) {
+	CTRACE((tfp, "TCP: %s: `%s'\n", gai_strerror(error), name));
+	if (res)
+	    freeaddrinfo(res);
+	return;  /* Fail! */
+    }
+    StrAllocCopy(hostname, res->ai_canonname);
+    memcpy(&HTHostAddress, res->ai_addr, res->ai_addrlen);
+    freeaddrinfo(res);
+#else
     phost = gethostbyname(name);	/* See netdb.h */
     if (!OK_HOST(phost)) {
-	CTRACE(tfp, "TCP: Can't find my own internet node address for `%s'!!\n",
-		    name);
+	CTRACE((tfp, "TCP: Can't find my own internet node address for `%s'!!\n",
+		    name));
 	return;  /* Fail! */
     }
     StrAllocCopy(hostname, phost->h_name);
     memcpy(&HTHostAddress, &phost->h_addr, phost->h_length);
-    CTRACE(tfp, "     Name server says that I am `%s' = %s\n",
-		hostname, HTInetString(&HTHostAddress));
+#endif /* INET6 */
+    CTRACE((tfp, "     Name server says that I am `%s' = %s\n",
+		hostname, HTInetString(&HTHostAddress)));
 #endif /* NEED_HOST_ADDRESS */
 
 #endif /* !DECNET */
@@ -1311,31 +1515,40 @@ PUBLIC CONST char * HTHostName NOARGS
     return hostname;
 }
 
+#ifndef MULTINET		/* SOCKET_ERRNO != errno ? */
+#if !defined(UCX) || !defined(VAXC) /* errno not modifiable ? */
+#define SOCKET_DEBUG_TRACE    /* show errno status after some system calls */
+#endif  /* UCX && VAXC */
+#endif /* MULTINET */
 /*
-**  Interruptable connect as implemented for Mosaic by Marc Andreesen
+**  Interruptible connect as implemented for Mosaic by Marc Andreesen
 **  and hacked in for Lynx years ago by Lou Montulli, and further
 **  modified over the years by numerous Lynx lovers. - FM
 */
 PUBLIC int HTDoConnect ARGS4(
 	CONST char *,	url,
-	char *, 	protocol,
+	char *,		protocol,
 	int,		default_port,
 	int *,		s)
 {
-    struct sockaddr_in soc_address;
-    struct sockaddr_in *soc_in = &soc_address;
-    int status;
+    int status = 0;
     char *line = NULL;
     char *p1 = NULL;
     char *at_sign = NULL;
     char *host = NULL;
+#ifdef INET6
+    struct addrinfo *res, *res0;
+#else
+    struct sockaddr_in soc_address;
+    struct sockaddr_in *soc_in = &soc_address;
 
     /*
     **	Set up defaults.
     */
     memset(soc_in, 0, sizeof(*soc_in));
     soc_in->sin_family = AF_INET;
-    soc_in->sin_port = htons(default_port);
+    soc_in->sin_port = htons((PortNumber) default_port);
+#endif /* INET6 */
 
     /*
     **	Get node name and optional port number.
@@ -1351,8 +1564,20 @@ PUBLIC int HTDoConnect ARGS4(
     }
     FREE(p1);
 
-    HTSprintf0 (&line, gettext("Looking up %s."), host);
+    HTSprintf0 (&line, "%s%s", WWW_FIND_MESSAGE, host);
     _HTProgress (line);
+#ifdef INET6
+    /* HTParseInet() is useless! */
+    _HTProgress(host);
+    res0 = HTGetAddrInfo(host, default_port);
+    if (res0 == NULL) {
+	HTSprintf0 (&line, gettext("Unable to locate remote host %s."), host);
+	_HTProgress(line);
+	FREE(host);
+	FREE(line);
+	return HT_NO_DATA;
+    }
+#else
     status = HTParseInet(soc_in, host);
     if (status) {
 	if (status != HT_INTERRUPTED) {
@@ -1373,8 +1598,9 @@ PUBLIC int HTDoConnect ARGS4(
 	FREE(line);
 	return status;
     }
+#endif /* INET6 */
 
-    HTSprintf0 (&line, gettext("Making %s connection to %s."), protocol, host);
+    HTSprintf0 (&line, gettext("Making %s connection to %s"), protocol, host);
     _HTProgress (line);
     FREE(host);
     FREE(line);
@@ -1382,11 +1608,27 @@ PUBLIC int HTDoConnect ARGS4(
     /*
     **	Now, let's get a socket set up from the server for the data.
     */
+#ifdef INET6
+    for (res = res0; res; res = res->ai_next) {
+	*s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (*s == -1) {
+	    char hostbuf[1024], portbuf[1024];
+	    getnameinfo(res->ai_addr, res->ai_addrlen,
+		    hostbuf, sizeof(hostbuf), portbuf, sizeof(portbuf),
+		    NI_NUMERICHOST|NI_NUMERICSERV);
+	    HTSprintf0 (&line, gettext("socket failed: family %d addr %s port %s."),
+		    res->ai_family, hostbuf, portbuf);
+	    _HTProgress (line);
+	    FREE(line);
+	    continue;
+	}
+#else
     *s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (*s == -1) {
 	HTAlert(gettext("socket failed."));
 	return HT_NO_DATA;
     }
+#endif /* INET6 */
 
 #ifndef DOSPATH
 #if !defined(NO_IOCTL) || defined(USE_FCNTL)
@@ -1415,16 +1657,24 @@ PUBLIC int HTDoConnect ARGS4(
     */
 #ifdef SOCKS
     if (socks_flag) {
+#ifdef INET6
+	status = Rconnect(*s, res->ai_addr, res->ai_addrlen);
+#else
 	status = Rconnect(*s, (struct sockaddr*)&soc_address,
 			  sizeof(soc_address));
+#endif /* INET6 */
 	/*
 	**  For long Rbind.
 	*/
 	socks_bind_remoteAddr = soc_address.sin_addr.s_addr;
     } else
 #endif /* SOCKS */
+#ifdef INET6
+    status = connect(*s, res->ai_addr, res->ai_addrlen);
+#else
     status = connect(*s, (struct sockaddr*)&soc_address, sizeof(soc_address));
-#ifndef DJGPP
+#endif /* INET6 */
+#ifndef __DJGPP__
     /*
     **	According to the Sun man page for connect:
     **	   EINPROGRESS	       The socket is non-blocking and the  con-
@@ -1444,11 +1694,18 @@ PUBLIC int HTDoConnect ARGS4(
     **			       the normal case.
     */
     if ((status < 0) &&
-	(SOCKET_ERRNO == EINPROGRESS || SOCKET_ERRNO == EAGAIN)) {
-	struct timeval timeout;
+	(SOCKET_ERRNO == EINPROGRESS
+#ifdef EAGAIN
+	 || SOCKET_ERRNO == EAGAIN
+#endif
+	 )) {
+	struct timeval select_timeout;
 	int ret;
 	int tries=0;
 
+#ifdef SOCKET_DEBUG_TRACE
+	HTInetStatus("this socket's first connect");
+#endif /* SOCKET_DEBUG_TRACE */
 	ret = 0;
 	while (ret <= 0) {
 	    fd_set writefds;
@@ -1456,34 +1713,49 @@ PUBLIC int HTDoConnect ARGS4(
 	    /*
 	    **	Protect against an infinite loop.
 	    */
-	    if (tries++ >= 180000) {
-		HTAlert(gettext("Connection failed for 180,000 tries."));
+	    if ((tries++/10) >= connect_timeout) {
+		HTAlert(gettext("Connection failed (too many retries)."));
+#ifdef INET6
+		FREE(line);
+		freeaddrinfo(res0);
+#endif /* INET6 */
 		return HT_NO_DATA;
 	    }
 
 #ifdef _WINDOWS_NSL
-	    timeout.tv_sec = 100;
+	    select_timeout.tv_sec = connect_timeout;
+	    select_timeout.tv_usec = 0;
 #else
-	    timeout.tv_sec = 0;
+	    select_timeout.tv_sec = 0;
+	    select_timeout.tv_usec = 100000;
 #endif /* _WINDOWS_NSL */
-	    timeout.tv_usec = 100000;
 	    FD_ZERO(&writefds);
-	    FD_SET(*s, &writefds);
+	    FD_SET((unsigned) *s, &writefds);
 #ifdef SOCKS
 	    if (socks_flag)
 		ret = Rselect(FD_SETSIZE, NULL,
-			      (void *)&writefds, NULL, &timeout);
+			      (void *)&writefds, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
-	    ret = select(FD_SETSIZE, NULL, (void *)&writefds, NULL, &timeout);
+	    ret = select(FD_SETSIZE, NULL, (void *)&writefds, NULL, &select_timeout);
 
-	   /*
-	   **  If we suspend, then it is possible that select will be
-	   **  interrupted.  Allow for this possibility. - JED
-	   */
-	   if ((ret == -1) && (errno == EINTR))
-	     continue;
+#ifdef SOCKET_DEBUG_TRACE
+	    if (tries == 1) {
+		HTInetStatus("this socket's first select");
+	    }
+#endif /* SOCKET_DEBUG_TRACE */
+	    /*
+	    **  If we suspend, then it is possible that select will be
+	    **  interrupted.  Allow for this possibility. - JED
+	    */
+	    if ((ret == -1) && (errno == EINTR))
+		continue;
 
+#ifdef SOCKET_DEBUG_TRACE
+	    if (ret < 0) {
+		HTInetStatus("failed select");
+	    }
+#endif /* SOCKET_DEBUG_TRACE */
 	    /*
 	    **	Again according to the Sun and Motorola man pages for connect:
 	    **	   EALREADY	       The socket is non-blocking and a  previ-
@@ -1508,8 +1780,12 @@ PUBLIC int HTDoConnect ARGS4(
 		    status = 0;
 		} else {
 #endif /* SOCKS */
+#ifdef INET6
+		status = connect(*s, res->ai_addr, res->ai_addrlen);
+#else
 		status = connect(*s, (struct sockaddr*)&soc_address,
 				 sizeof(soc_address));
+#endif /* INET6 */
 #ifdef UCX
 		/*
 		**  A UCX feature: Instead of returning EISCONN
@@ -1527,8 +1803,14 @@ PUBLIC int HTDoConnect ARGS4(
 
 		if (status && (SOCKET_ERRNO == EALREADY)) /* new stuff LJM */
 		    ret = 0; /* keep going */
-		else
+		else {
+#ifdef SOCKET_DEBUG_TRACE
+		    if (status < 0) {
+			HTInetStatus("confirm-ready connect");
+		    }
+#endif /* SOCKET_DEBUG_TRACE */
 		    break;
+		}
 #ifdef SOCKS
 		}
 #endif /* SOCKS */
@@ -1551,27 +1833,61 @@ PUBLIC int HTDoConnect ARGS4(
 		**  For some reason, UCX pre 3 apparently returns
 		**  errno = 18242 instead the EALREADY or EISCONN.
 		*/
+#ifdef INET6
+		status = connect(*s, res->ai_addr, res->ai_addrlen);
+#else
 		status = connect(*s, (struct sockaddr*)&soc_address,
 				 sizeof(soc_address));
+#endif /* INET6 */
 		if ((status < 0) &&
-		    (SOCKET_ERRNO != EALREADY && SOCKET_ERRNO != EAGAIN) &&
+		    (SOCKET_ERRNO != EALREADY
+#ifdef EAGAIN
+		    && SOCKET_ERRNO != EAGAIN
+#endif
+		    ) &&
 #ifdef UCX
 		    (SOCKET_ERRNO != 18242) &&
 #endif /* UCX */
 		    (SOCKET_ERRNO != EISCONN)) {
+#ifdef SOCKET_DEBUG_TRACE
+		    HTInetStatus("confirm-not-ready connect");
+#endif /* SOCKET_DEBUG_TRACE */
 		    break;
 		}
 	    }
 	    if (HTCheckForInterrupt()) {
-		CTRACE(tfp, "*** INTERRUPTED in middle of connect.\n");
+		CTRACE((tfp, "*** INTERRUPTED in middle of connect.\n"));
 		status = HT_INTERRUPTED;
+#ifdef _WINDOWS
+		WSASetLastError(EINTR);
+#else
 		SOCKET_ERRNO = EINTR;
+#endif
 		break;
 	    }
 	}
     }
-#endif /* !DJGPP */
-    if (status < 0) {
+#ifdef SOCKET_DEBUG_TRACE
+    else if (status < 0) {
+	HTInetStatus("this socket's first and only connect");
+    }
+#endif /* SOCKET_DEBUG_TRACE */
+#ifdef INET6
+	if (status < 0) {
+		NETCLOSE(*s);
+		*s = -1;
+		continue;
+	}
+	break;
+    }
+#endif /* INET6 */
+#endif /* !__DJGPP__ */
+#ifdef INET6
+    if (*s < 0)
+#else
+    if (status < 0)
+#endif /* INET6 */
+    {
 	/*
 	**  The connect attempt failed or was interrupted,
 	**  so close up the socket.
@@ -1596,6 +1912,10 @@ PUBLIC int HTDoConnect ARGS4(
 #endif /* !NO_IOCTL || USE_FCNTL */
 #endif /* !DOSPATH */
 
+#ifdef INET6
+    FREE(line);
+    freeaddrinfo(res0);
+#endif /* INET6 */
     return status;
 }
 
@@ -1604,13 +1924,17 @@ PUBLIC int HTDoConnect ARGS4(
 */
 PUBLIC int HTDoRead ARGS3(
 	int,		fildes,
-	void *, 	buf,
+	void *,		buf,
 	unsigned,	nbyte)
 {
     int ready, ret;
     fd_set readfds;
-    struct timeval timeout;
+    struct timeval select_timeout;
     int tries=0;
+#ifdef EXP_READPROGRESS
+    int otries = 0;
+    time_t otime = time((time_t *)0);
+#endif
 #if defined(UNIX) || defined(UCX)
     int nb;
 #endif /* UCX, BSN */
@@ -1622,7 +1946,7 @@ PUBLIC int HTDoRead ARGS3(
 	 *  have gone wrong. - kw
 	 */
 	if (isatty(fildes)) {
-	    CTRACE(tfp, "HTDoRead - refusing to read fd 0 which is a tty!\n");
+	    CTRACE((tfp, "HTDoRead - refusing to read fd 0 which is a tty!\n"));
 	    return -1;
 	}
     } else
@@ -1631,7 +1955,11 @@ PUBLIC int HTDoRead ARGS3(
 	return -1;
 
     if (HTCheckForInterrupt()) {
+#ifdef _WINDOWS
+	WSASetLastError(EINTR);
+#else
 	SOCKET_ERRNO = EINTR;
+#endif
 	return (HT_INTERRUPTED);
     }
 
@@ -1646,27 +1974,43 @@ PUBLIC int HTDoRead ARGS3(
 	*/
 	if (tries++ >= 180000) {
 	    HTAlert(gettext("Socket read failed for 180,000 tries."));
+#ifdef _WINDOWS
+	    WSASetLastError(EINTR);
+#else
 	    SOCKET_ERRNO = EINTR;
+#endif
 	    return HT_INTERRUPTED;
 	}
+
+#ifdef EXP_READPROGRESS
+	if (tries - otries > 10) {
+	    time_t t = time((time_t *)0);
+
+	    otries = tries;
+	    if (t - otime >= 5) {
+		otime = t;
+		HTReadProgress(-1, 0);	/* Put "stalled" message */
+	    }
+	}
+#endif
 
 	/*
 	**  If we suspend, then it is possible that select will be
 	**  interrupted.  Allow for this possibility. - JED
 	*/
 	do {
-	    timeout.tv_sec = 0;
-	    timeout.tv_usec = 100000;
+	    select_timeout.tv_sec = 0;
+	    select_timeout.tv_usec = 100000;
 	    FD_ZERO(&readfds);
-	    FD_SET(fildes, &readfds);
+	    FD_SET((unsigned)fildes, &readfds);
 #ifdef SOCKS
 	    if (socks_flag)
 		ret = Rselect(FD_SETSIZE,
-			      (void *)&readfds, NULL, NULL, &timeout);
+			      (void *)&readfds, NULL, NULL, &select_timeout);
 	    else
 #endif /* SOCKS */
 		ret = select(FD_SETSIZE,
-			     (void *)&readfds, NULL, NULL, &timeout);
+			     (void *)&readfds, NULL, NULL, &select_timeout);
 	} while ((ret == -1) && (errno == EINTR));
 
 	if (ret < 0) {
@@ -1674,7 +2018,11 @@ PUBLIC int HTDoRead ARGS3(
 	} else if (ret > 0) {
 	    ready = 1;
 	} else if (HTCheckForInterrupt()) {
+#ifdef _WINDOWS
+	    WSASetLastError(EINTR);
+#else
 	    SOCKET_ERRNO = EINTR;
+#endif
 	    return HT_INTERRUPTED;
 	}
     }
@@ -1682,7 +2030,6 @@ PUBLIC int HTDoRead ARGS3(
 #if !defined(UCX) || !defined(VAXC)
 #ifdef UNIX
     while ((nb = SOCKET_READ (fildes, buf, nbyte)) == -1) {
-	int saved_errno = errno;
 	if (errno == EINTR)
 	    continue;
 #ifdef ERESTARTSYS
@@ -1690,7 +2037,6 @@ PUBLIC int HTDoRead ARGS3(
 	    continue;
 #endif /* ERESTARTSYS */
 	HTInetStatus("read");
-	errno = saved_errno;	/* our caller may check it */
 	break;
     }
     return nb;
@@ -1704,8 +2050,8 @@ PUBLIC int HTDoRead ARGS3(
     */
     errno = vaxc$errno = 0;
     nb = SOCKET_READ (fildes, buf, nbyte);
-    CTRACE(tfp,
-	   "Read - nb,errno,vaxc$errno: %d %d %d\n", nb,errno,vaxc$errno);
+    CTRACE((tfp,
+	   "Read - nb,errno,vaxc$errno: %d %d %d\n", nb,errno,vaxc$errno));
     if ((nb <= 0) && TRACE)
 	perror ("HTTCP.C:HTDoRead:read");	   /* RJF */
     /*
@@ -1713,7 +2059,7 @@ PUBLIC int HTDoRead ARGS3(
     */
     if ((nb <= 0) && (errno == EPIPE)) {
 	nb = 0;
-	errno = 0;
+	set_errno(0);
     }
     return nb;
 #endif /* UCX, BSN */
@@ -1754,22 +2100,21 @@ PUBLIC int BSDselect ARGS5(
 	fd_set *,		readfds,
 	fd_set *,		writefds,
 	fd_set *,		exceptfds,
-	struct timeval *,	timeout)
+	struct timeval *,	select_timeout)
 {
     int rval,
     i;
 
 #ifdef SOCKS
     if (socks_flag)
-	rval = Rselect(nfds, readfds, writefds, exceptfds, timeout);
+	rval = Rselect(nfds, readfds, writefds, exceptfds, select_timeout);
     else
 #endif /* SOCKS */
-    rval = select(nfds, readfds, writefds, exceptfds, timeout);
+    rval = select(nfds, readfds, writefds, exceptfds, select_timeout);
 
     switch (rval) {
 	case -1:
 	    return(rval);
-	    break;
 
 	case 0:
 	    if (readfds != NULL)
@@ -1779,7 +2124,6 @@ PUBLIC int BSDselect ARGS5(
 	    if (exceptfds != NULL)
 		FD_ZERO(exceptfds);
 	    return(rval);
-	    break;
 
 	default:
 	    for (i = 0, rval = 0; i < nfds; i++) {

@@ -1,26 +1,26 @@
 This document suggests steps to install Lynx on OS/390 systems.
 
 ========================================================================
-o Download the archive file lynx2-8-2.tar.Z in BINARY from the site
+o Download the archive file lynx2-8-4.tar.Z in BINARY from the site
   where you found this announcement or from a site listed at
   http://lynx.browser.org/
 
 o Unpack with:
 
-	uncompress <lynx2-8-2.tar.Z | pax -rv -o to=IBM-1047
+	uncompress <lynx2-8-4.tar.Z | pax -rv -o to=IBM-1047
 
   The "-o to=IBM-1047" is needed to convert the ASCII archive
   to EBCDIC.  You must not download as a text file; the conversion
   must be performed after the uncompress.
 
 ========================================================================
-o Alternatively, download the PKZIPped archive lynx2-8-2.zip in BINARY.
+o Alternatively, download the PKZIPped archive lynx2-8-4.zip in BINARY.
 
 o Unpack with:
 
-	unzip -a lynx2.8.2.zip
+	unzip -aa lynx2-8-4.zip
 
-  The "-a" is needed to convert the ASCII archive
+  The "-aa" is needed to convert the ASCII archive
   to EBCDIC.  (unzip is not shipped with OS/390.  You can
   obtain it from:
 
@@ -38,7 +38,7 @@ o Run the configure script:
 	cd       ./OS390
 	rm -f config.cache
 	CC=c89 CFLAGS="-D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE" \
-	    ../lynx2-8-2/configure
+	    ../lynx2-8-4/configure
 
   The definitions select the ANSI C compiler (c89) and options
   to select the right header file directories.  You may also
@@ -64,8 +64,8 @@ o Build Lynx
 ========================================================================
 o Test Lynx:
 
-	./lynx -cfg=../lynx2-8-2/lynx.cfg \
-	    ../lynx2-8-2/lynx_help/lynx_help_main.html
+	./lynx -cfg=../lynx2-8-4/lynx.cfg \
+	    ../lynx2-8-4/lynx_help/lynx_help_main.html
 
 ========================================================================
 o Install Lynx:

@@ -1,6 +1,7 @@
 ##makefile for lynx
 
 SHELL		= @CONFIG_SHELL@
+CDPATH		= .
 
 x		= @PROG_EXT@
 
@@ -23,19 +24,20 @@ LIBS		= @LIBS@
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
+LN_S		= @LN_S@
 
 ## This is the version which we are developing (or, upon release, make this
 ## the same).  Use no dots in the name, since it must work on VMS and MS-DOS.
-VERSION		= 2-8-2
+VERSION		= 2-8-4
 
 ##this is the name of the directory the lynx source code is in.
-##(e.g., lynx2-8-2, not the full path)
+##(e.g., lynx2-8-4, not the full path)
 lynxdir= lynx$(VERSION)
 lynxname= lynx$(VERSION)
 
 ## The 'DESTDIR' variable allows you to install the program into a different
 ## location, e.g., for packaging, without affecting the compiled-in pathnames.
-DESTDIR=
+DESTDIR= @DESTDIR@
 
 ## Where you want lynx installed
 bindir= @bindir@
@@ -94,7 +96,7 @@ COMPRESS_EXT=@COMPRESS_EXT@
 
 # !!!!!!!!!!!!! NCURSES Support (For color version of Lynx). !!!!!!!!!!!!!!
 # If you need ncurses, the latest version can always be found
-# in ftp://ftp.clark.net/pub/dickey/ncurses/
+# in ftp://invisible-island.net/ncurses/
 # or ftp://ftp.gnu.org/pub/gnu/
 
 # Also be sure to check out the compilation symbols in userdefs.h
@@ -113,11 +115,11 @@ SITE_DEFS = # Your defines here
 # defines for which there are no configure options:
 # -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
 # -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
-# -DNOPORT         if you must use PASV instead of PORT for FTP
 # -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
 # -DNO_RULES       Disables CERN-style access rules (see lynx.cfg).
 # -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
 # -DSLANG_MBCS_HACK prevent cutoff lines when using UTF8 console (slang only)
+# -DUSE_SCROLLBAR  supports scrollbar when built with ncurses
 #
 # if you are linking to freeWAIS-0.202 or older, you should define this
 # in SITE_DEFS
@@ -148,7 +150,6 @@ SITE_DEFS = # Your defines here
 # -DEXEC_SCRIPTS
 # -DEXP_CHARTRANS_AUTOSWITCH
 # -DEXP_PERSISTENT_COOKIES
-# -DLINKEDSTYLES
 # -DLONG_LIST
 # -DLYNXCGI_LINKS
 # -DLY_FIND_LEAKS
@@ -171,7 +172,6 @@ SITE_DEFS = # Your defines here
 # -DUSE_COLOR_STYLE
 # -DUSE_DEFAULT_COLORS
 # -DUSE_EXTERNALS
-# -DUSE_HASH
 # -DUSE_SLANG
 # -DUSE_SOCKS5
 # -DUSE_ZLIB
@@ -228,6 +228,8 @@ clean:
 @INTLDIR_MAKE@	cd intl && $(MAKE) $@
 @MSG_DIR_MAKE@	cd po && $(MAKE) $@
 	rm -f *.b src/lynx$x *.leaks cfg_defs.h LYHelp.h lint.*
+@LYNXCFG_MAKE@	-rm -f alphatoc.html body.html cattoc.html tmp007
+	rm -f help_files.sed
 	rm -f core *.core
 
 depend: cfg_defs.h LYHelp.h
@@ -241,10 +243,11 @@ distclean: clean
 	-cd src && $(MAKE) $@
 	-cd src/chrtrans && $(MAKE) $@
 @INTLDIR_MAKE@	cd intl && $(MAKE) $@
+	-rm -f intl/libintl.h
 @MSG_DIR_MAKE@	-rmdir intl
 @MSG_DIR_MAKE@	cd po && $(MAKE) $@
 @MSG_DIR_MAKE@	-rmdir po
-	-rm -f *~ *.bak *.sav
+	-rm -f *~ *.bak *.sav tags TAGS
 	-rm -f $(WWWINC)/makefile src/makefile src/chrtrans/makefile
 @SRCDIR_CLEAN@	-rmdir $(WWWINC) && rmdir WWW/Library && rmdir WWW
 @SRCDIR_CLEAN@	-rmdir src/chrtrans && rmdir src
@@ -285,7 +288,7 @@ compress: tar
 REFDIR=orig/$(lynxdir)
 
 lynx.patch: $(top_srcdir) $(top_srcdir)/CHANGES
-	cd  $(top_srcdir)/.. && cd $(REFDIR) && { rm -f \
+	- cd $(top_srcdir)/.. && cd $(REFDIR) && { rm -f \
 		config.log \
 		config.status \
 		lynx_cfg.h \
@@ -294,12 +297,14 @@ lynx.patch: $(top_srcdir) $(top_srcdir)/CHANGES
 			( set -x; cd $$I && rm -f *.orig *.rej makefile ); : ); \
 		done; }
 	( cd $(top_srcdir)/..; echo "%%% Created `date` by target $@. %%%"; \
-			diff -brc $(REFDIR) $(lynxdir) ) \
+	   if diff -bru /dev/null /dev/null;		     \
+		   then diff -bru $(REFDIR) $(lynxdir);	     \
+		   else diff -brc $(REFDIR) $(lynxdir); fi ) \
 		| grep -v '^Common' \
 		| grep -v '^Binary files ' \
-		| grep -v '^Only ' | tee $@ | grep '^--- $(lynxdir)'
+		| grep -v '^Only ' | tee $@ | egrep '^\-\-\- .*$(lynxdir)'
 
-install: lynx$x install-bin install-man install-cfg @INSTALL_LSS@
+install: install-bin install-man install-cfg @INSTALL_LSS@
 	@echo
 	@echo "Use $(MAKE) install-help to install the help-files"
 	@echo "Use $(MAKE) install-doc to install extra documentation files"
@@ -308,7 +313,7 @@ install: lynx$x install-bin install-man install-cfg @INSTALL_LSS@
 install-full: install install-help install-doc
 	@echo Full installation complete.
 
-install-bin: $(BINDIR)
+install-bin: $(BINDIR) lynx$x
 @MSG_DIR_MAKE@	cd po && $(MAKE) CC="$(CC)" install
 	-mv -f $(BINDIR)/lynx$x $(BINDIR)/lynx.old
 	$(INSTALL_PROGRAM) lynx$x $(BINDIR)/lynx$x
@@ -316,34 +321,58 @@ install-bin: $(BINDIR)
 install-man : $(MANDIR)
 	$(INSTALL_DATA) $(srcdir)/lynx.man $(MANDIR)/lynx.1
 
-install-doc : $(DOCDIR)
+install-doc : $(DOCDIR) $(HELPDIR)
 	@echo Copying sample files
 	(cd $(srcdir) && tar cf - C[HO]* PROBLEMS README samples test ) | \
-			       ( cd $(DOCDIR) && tar xf - )
+			       ( cd $(DOCDIR) && chmod -R u+w . && tar xf - )
+	$(SHELL) -c 'for name in COPYING COPYHEADER; do \
+		cd $(HELPDIR) && rm -f $$name ;\
+		cd $(HELPDIR) && ( $(LN_S) $(DOCDIR)/$$name . || cp $(DOCDIR)/$$name . );\
+		done'
 
 # HPUX 'sed' does not seem to like '=' as pattern delimiter.
-FIX_SED = tr '=' '%'
-#FIX_SED = cat
+# We cannot use '%' because it may appear in a URL.
+# Andrew filesystem uses '@'.
+# So we limit sed delimiters to '!' and '%', depending on the expected text.
+FIX_SED = tr '=' '"'
 
-install-help : $(DOCDIR) $(HELPDIR)
-	(cd $(HELPDIR) && rm -rf *)
-	@echo Constructing sed-script
+help_files.sed : makefile $(srcdir)/lynx_help/help_files.txt
+	@echo Constructing sed-script $@
+	@-rm -f $@ help_files.tmp
+	@cat $(srcdir)/lynx_help/help_files.txt > help_files.tmp
+@LYNXCFG_MAKE@	@echo 's!http://www.hippo.ru/%7Ehvv/lynxcfg_toc.html#alphatoc!alphatoc.html!g' >> help_files.tmp
+@LYNXCFG_MAKE@	@echo 's!http://www.hippo.ru/%7Ehvv/lynxcfg_toc.html!cattoc.html!g' >> help_files.tmp
+@LYNXCFG_MAKE@	@echo 's!alphatoc\.html!alphatoc.html$(COMPRESS_EXT)!g' >> help_files.tmp
+@LYNXCFG_MAKE@	@echo 's!cattoc\.html!cattoc.html$(COMPRESS_EXT)!g' >> help_files.tmp
+@LYNXCFG_MAKE@	@echo 's!body\.html!body.html$(COMPRESS_EXT)!g' >> help_files.tmp
 	@ECHO_CC@sed	-e '/^#/d' -e '/^$$/d' \
 		-e 's%\(.*\)=\(.*\@.*\)$$%s=@\1@=\2=g%' \
 		-e 's%\(.*\)=\(http:.*\)$$%s=@\1@=\2=g%' \
 		-e 's%\(.*\)=\(ftp:.*\)$$%s=@\1@=\2=g%' \
 		-e 's%\(.*\)=\(.*\.html\)$$%s=@\1@=\2$(COMPRESS_EXT)=g%' \
-		$(srcdir)/lynx_help/help_files.txt | $(FIX_SED) > \
-		$(HELPDIR)/help_files.sed
-	@echo Appending interim-fix for existing html files
+		help_files.tmp | $(FIX_SED) > $@
+	@echo Appending interim-fix for existing html files to $@
 	@ECHO_CC@sed	-e '/^#/d' -e '/[:@]/d' -e '/^$$/d' \
 		-e 's%\(.*\)=\(.*\.html\)$$%s=\2=\2$(COMPRESS_EXT)=g%' \
 		-e 's%\.html=%\\.html=%' \
-		$(srcdir)/lynx_help/help_files.txt | $(FIX_SED) >> \
-		$(HELPDIR)/help_files.sed
-	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\$(COMPRESS_EXT)\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> \
-		$(HELPDIR)/help_files.sed; fi
+		help_files.tmp | $(FIX_SED) >> $@
+	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\$(COMPRESS_EXT)\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> $@; fi
+	@-rm -f help_files.tmp
+
+install-help : help_files.sed $(HELPDIR)
+	(cd $(HELPDIR) && WD=`pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && rm -rf *)
+@LYNXCFG_MAKE@	@echo 'Making htmlized lynx.cfg'
+@LYNXCFG_MAKE@	cd src && make LYReadCFG.i
+@LYNXCFG_MAKE@	@-rm -f alphatoc.html body.html cattoc.html
+@LYNXCFG_MAKE@	sed -n -e '/Config_Type  *Config_Table/,/{0, *0, *0}/ p' src/LYReadCFG.i | \
+@LYNXCFG_MAKE@	sed  -e 's/ *{ *"\([^"]*\)".*/\1/' | \
+@LYNXCFG_MAKE@	perl $(srcdir)/scripts/cfg2html.pl -ms $(srcdir)/lynx.cfg
 	@echo Translating/copying html files
+	@cat help_files.sed > $(HELPDIR)/help_files.sed
+@LYNXCFG_MAKE@	@$(SHELL) -c 'for f in alphatoc.html body.html cattoc.html ; do \
+@LYNXCFG_MAKE@		sed -f $(HELPDIR)/help_files.sed $$f > $(HELPDIR)/$$f ; \
+@LYNXCFG_MAKE@		done'
+@LYNXCFG_MAKE@	-rm -f src/LYReadCFG.i
 	@ECHO_CC@$(SHELL) -c 'cd $(srcdir)/lynx_help && ( \
 		dirs=keystrokes; \
 		(cd $(HELPDIR) && mkdir $$dirs 2>/dev/null ) ; \
@@ -355,7 +384,7 @@ install-help : $(DOCDIR) $(HELPDIR)
 			(cd $(HELPDIR) && $(COMPRESS_PROG) $$files ) \
 		fi ; \
 		)'
-	-rm -f $(HELPDIR)/help_files.sed
+	@-rm -f $(HELPDIR)/help_files.sed
 	@echo Updating $(libdir)/lynx.cfg
 	$(SHELL) -c 'if test -f $(LIBDIR)/lynx.cfg ; then \
 		mv $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
@@ -363,33 +392,19 @@ install-help : $(DOCDIR) $(HELPDIR)
 		cp $(srcdir)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
 	fi'
 	@echo Updating $(libdir)/lynx.cfg to point to installed help-files
-	@ECHO_CC@sed	-e '/^HELPFILE:http/s@^@#@' \
-		-e '/^#HELPFILE:file/s@#@@' \
-		-e '/^HELPFILE:file/s@/PATH_TO/lynx_help@$(helpdir)@' \
-		-e '/^[A-Z_]*:/s@/PATH_TO/lynx_doc@$(docdir)@' \
-		-e '/^HELPFILE:file/s@$$@$(COMPRESS_EXT)@' \
-		-e '/^HELPFILE:file/s@$(COMPRESS_EXT)$(COMPRESS_EXT)$$@$(COMPRESS_EXT)@' \
+	@ECHO_CC@sed	-e '/^HELPFILE:http/s!^!#!' \
+		-e '/^#HELPFILE:file/s!#!!' \
+		-e '/^HELPFILE:file/s!/PATH_TO/lynx_help!$(helpdir)!' \
+		-e '/^[A-Z_]*:/s!/PATH_TO/lynx_doc!$(docdir)!' \
+		-e '/^HELPFILE:file/s!$$!$(COMPRESS_EXT)!' \
+		-e '/^HELPFILE:file/s!$(COMPRESS_EXT)$(COMPRESS_EXT)$$!$(COMPRESS_EXT)!' \
 		$(LIBDIR)/lynx.tmp >$(LIBDIR)/lynx.cfg
 	chmod 644 $(LIBDIR)/lynx.cfg
 	-rm -f $(LIBDIR)/lynx.tmp
-	$(INSTALL_DATA) $(srcdir)/COPYHEADER $(DOCDIR)/COPYHEADER
-	$(INSTALL_DATA) $(srcdir)/COPYING    $(DOCDIR)/COPYING
-	cd $(HELPDIR) && ( \
-		ln $(DOCDIR)/COPYHEADER . || cp $(DOCDIR)/COPYHEADER . ; \
-		ln $(DOCDIR)/COPYING    . || cp $(DOCDIR)/COPYING . )
 
-LYHelp.h : LYHelp.hin
-	@echo Constructing sed-script
-	@ECHO_CC@sed	-e '/^#/d' -e '/^$$/d' \
-		-e 's%\(.*\)=\(.*\@.*\)$$%s=@\1@=\2=g%' \
-		-e 's%\(.*\)=\(http:.*\)$$%s=@\1@=\2=g%' \
-		-e 's%\(.*\)=\(ftp:.*\)$$%s=@\1@=\2=g%' \
-		-e 's%\(.*\)=\(.*\.html\)$$%s=@\1@=\2$(COMPRESS_EXT)=g%' \
-		$(srcdir)/lynx_help/help_files.txt | $(FIX_SED) > \
-		help_files.sed
+LYHelp.h : help_files.sed LYHelp.hin
 	@echo Creating $@
 	@sed -f help_files.sed $(srcdir)/LYHelp.hin > $@
-	-@rm -f help_files.sed
 	@echo '**********************************************'
 	@echo
 	@$(SHELL) -c 'if test "$(COMPRESS_PROG)" = "" ; then \
@@ -402,9 +417,9 @@ LYHelp.h : LYHelp.hin
 	@echo
 	@echo '**********************************************'
 
-cfg_defs.h : $(srcdir)/cfg_defs.sh lynx_cfg.h
+cfg_defs.h : $(srcdir)/cfg_defs.sh $(srcdir)/cfg_edit.sh config.cache lynx_cfg.h
 	@rm -f $@
-	PATH=$(srcdir):$$PATH; export PATH; $(SHELL) -c '$(SHELL) $(srcdir)/cfg_defs.sh'
+	$(SHELL) -c '/bin/sh $(srcdir)/cfg_defs.sh $(srcdir)'
 
 install-cfg : $(LIBDIR)
 	-mv -f $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.oldcfg
@@ -414,14 +429,23 @@ install-lss : $(LIBDIR)
 	-mv -f $(LIBDIR)/lynx.lss $(LIBDIR)/lynx.oldlss
 	$(INSTALL_DATA) $(srcdir)/samples/lynx.lss $(LIBDIR)/lynx.lss
 
-uninstall:
+uninstall ::
 @MSG_DIR_MAKE@	cd po && $(MAKE) CC="$(CC)" uninstall
 	-rm -f $(BINDIR)/lynx$x
 	-rm -f $(MANDIR)/lynx.1
 	-rm -f $(LIBDIR)/lynx.cfg
 	-rm -f $(LIBDIR)/lynx.lss
-	-rm -rf $(HELPDIR)
-	-rm -rf $(DOCDIR)
+
+uninstall \
+uninstall-help ::
+	-test -d $(HELPDIR) && WD=`cd $(HELPDIR) && pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && rm -rf $(HELPDIR)
+
+uninstall \
+uninstall-doc ::
+	-test -d $(DOCDIR) && WD=`cd $(DOCDIR) && pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_doc$$!!'` && test $$WD != $$HEAD && rm -rf $(DOCDIR)
+	-test -d $(HELPDIR) && WD=`cd $(HELPDIR) && pwd` && HEAD=`echo $$WD|sed -e 's!/lynx_help$$!!'` && test $$WD != $$HEAD && cd $(HELPDIR) && rm -f COPYING COPYHEADER
 
 $(BINDIR) $(MANDIR) $(LIBDIR) $(HELPDIR) $(DOCDIR) :
 	$(srcdir)/mkdirs.sh $@
+etags:
+	etags -r "/\(PRIVATE\|PUBLIC\)[ \t]+\([a-zA-Z_][a-zA-Z_0-1]*[ \t*]+\)*\([a-zA-Z_][a-zA-Z_0-1]*\)[ \t]+\(ARGS[0-9]\|NOARGS\)/\3/" *.[ch] */*.[ch] */*/*.[ch] */*/*/*.[ch]

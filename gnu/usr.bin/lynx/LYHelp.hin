@@ -3,9 +3,12 @@
 #ifndef LYHELP_H
 #define LYHELP_H
 
+#define ALT_EDIT_HELP		"keystrokes/@ALT_EDIT_HELP@"
+#define BASHLIKE_EDIT_HELP	"keystrokes/@BASHLIKE_EDIT_HELP@"
 #define COOKIE_JAR_HELP		"@LYNX_USERS_GUIDE@#Cookies"
 #define CURRENT_KEYMAP_HELP	"keystrokes/@KEYSTROKE_HELP@"
 #define DIRED_MENU_HELP		"keystrokes/@DIRED_HELP@"
+#define EDIT_HELP		"keystrokes/@EDIT_HELP@"
 #define DOWNLOAD_OPTIONS_HELP	"@LYNX_USERS_GUIDE@#RemoteSource"
 #define HISTORY_PAGE_HELP	"keystrokes/@HISTORY_HELP@"
 #define LIST_PAGE_HELP		"keystrokes/@FOLLOW_HELP@"

@@ -1,7 +1,7 @@
 #ifndef LYPrettySrc_H
 #define LYPrettySrc_H
 
-#ifdef USE_PSRC
+#ifdef USE_PRETTYSRC
 
 #include <HTMLDTD.h>
 
@@ -21,8 +21,10 @@ extern BOOL psrc_nested_call;/* this is used when distinguishing whether
 extern BOOL psrc_first_tag; /* this is also used in HTML.c to trigger the 
  1st tag to preform special. */
 
-/* here is a list of lexem codes. */
-typedef enum _HTlexem {
+extern BOOL mark_htext_as_source;
+
+/* here is a list of lexeme codes. */
+typedef enum {
   HTL_comm=0,
   HTL_tag,
   HTL_attrib,
@@ -35,8 +37,8 @@ typedef enum _HTlexem {
   HTL_badtag,
   HTL_badattr,
   HTL_sgmlspecial,
-  HTL_num_lexems
-} HTlexem;
+  HTL_num_lexemes
+} HTlexeme;
 
 typedef struct _HT_tagspec
 {
@@ -53,13 +55,16 @@ typedef struct _HT_tagspec
     BOOL start; /* if true, then this starts element, otherwise - ends */    
 } HT_tagspec;
 
-extern char* HTL_tagspecs[HTL_num_lexems];
-extern HT_tagspec* lexem_start[HTL_num_lexems];
-extern HT_tagspec* lexem_end[HTL_num_lexems];
+extern char* HTL_tagspecs[HTL_num_lexemes];
+extern HT_tagspec* lexeme_start[HTL_num_lexemes];
+extern HT_tagspec* lexeme_end[HTL_num_lexemes];
 
-extern int html_src_parse_tagspec PARAMS((char* ts, HTlexem lexem,
+extern int html_src_parse_tagspec PARAMS((char* ts, HTlexeme lexeme,
                      BOOL checkonly,BOOL isstart));
-extern void HTMLSRC_init_caches NOPARAMS;
+extern void HTMLSRC_init_caches PARAMS((BOOL dont_exit));
+extern void html_src_clean_item PARAMS((HTlexeme l));
+extern void html_src_clean_data NOPARAMS;
+extern void html_src_on_lynxcfg_reload NOPARAMS;
 
 /* these 2 vars tell what kind of transform should be appiled to tag names
   and attribute names. 0 - lowercase, 1 - as is, 2 uppercase. */
@@ -67,7 +72,8 @@ extern int tagname_transform;
 extern int attrname_transform;
 
 
-#endif /* ifdef USE_PSRC */
+extern BOOL psrcview_no_anchor_numbering;
+#endif /* ifdef USE_PRETTYSRC */
 
 
 #endif /* LYPrettySrc_H */

@@ -1,6 +1,7 @@
 # template-makefile for Lynx src directory
 
 SHELL		= @CONFIG_SHELL@
+CDPATH		= .
 
 x		= @PROG_EXT@
 
@@ -21,7 +22,9 @@ CC		= @CC@
 CPP		= @CPP@
 CFLAGS		= @CFLAGS@
 DEFS		= @DEFS@
+CHARSET_DEFS	= @CHARSET_DEFS@
 CPPFLAGS	= @CPPFLAGS@
+_O		= .o
 
 LIBS		= @LIBS@ $(RESOLVLIB) $(WAISLIB) $(SITE_LIBS)
 LDFLAGS		= @LDFLAGS@
@@ -38,7 +41,7 @@ WWWLIB		= $(top_builddir)/WWW/Library/Implementation/libwww.a
 INTLLIB		= @INTLDIR_MAKE@@INTLLIBS@
 INTLDIR_CPPFLAGS= @INTLDIR_CPPFLAGS@-I$(top_srcdir)/intl
 
-CPP_OPTS	= $(DEFS) $(CPPFLAGS) \
+CPP_OPTS	= $(CPPFLAGS) $(DEFS) $(CHARSET_DEFS) \
 		-DLOCALEDIR=\"$(localedir)\" \
 		-I. \
 		-I$(top_builddir) \
@@ -56,24 +59,26 @@ LINTOPTS	=
 COMPRESS_PROG	=@COMPRESS_PROG@
 COMPRESS_EXT	=@COMPRESS_EXT@
 
-CHARTRANS_OBJS=UCdomap.o UCAux.o UCAuto.o
-OBJS=  LYClean.o LYShowInfo.o LYEdit.o LYStrings.o \
-LYMail.o HTAlert.o GridText.o LYGetFile.o \
-LYMain.o LYMainLoop.o LYCurses.o LYBookmark.o LYUtils.o \
-LYOptions.o LYReadCFG.o LYSearch.o LYHistory.o \
-LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
-HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
-LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
-LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o LYPrettySrc.o $(CHARTRANS_OBJS) @LIBOBJS@
+CHARTRANS_OBJS	= UCdomap$(_O) UCAux$(_O) UCAuto$(_O)
+OBJS	= \
+	LYClean$(_O) LYShowInfo$(_O) LYEdit$(_O) LYStrings$(_O) LYMail$(_O) \
+	HTAlert$(_O) GridText$(_O) LYGetFile$(_O) LYMain$(_O) LYMainLoop$(_O) \
+	LYCurses$(_O) LYBookmark$(_O) LYUtils$(_O) LYOptions$(_O) \
+	LYReadCFG$(_O) LYSearch$(_O) LYHistory$(_O) LYForms$(_O) LYPrint$(_O) \
+	LYrcFile$(_O) LYDownload$(_O) LYNews$(_O) LYKeymap$(_O) HTML$(_O) \
+	HTFWriter$(_O) HTInit$(_O) DefaultStyle$(_O) LYUpload$(_O) \
+	LYLeaks$(_O) LYexit$(_O) LYJump$(_O) LYList$(_O) LYCgi$(_O) \
+	LYTraversal$(_O) LYEditmap$(_O) LYCharSets$(_O) LYCharUtils$(_O) \
+	LYMap$(_O) LYCookie$(_O) LYStyle$(_O) LYHash$(_O) LYPrettySrc$(_O) \
+	TRSTable$(_O) $(CHARTRANS_OBJS) @LIBOBJS@
 
-C_SRC	= $(OBJS:.o=.c)
+C_SRC	= $(OBJS:$(_O)=.c)
 
 all: lynx$x
 
-.SUFFIXES : .i
+.SUFFIXES : $(_O) .i
 
-.c.o:
+.c$(_O):
 @RULE_CC@
 	@ECHO_CC@$(CC) $(CC_OPTS) -c $(srcdir)/$*.c
 
@@ -85,7 +90,8 @@ lynx$x:   message do_chartrans_stuff $(top_builddir)/LYHelp.h $(OBJS) $(WWWLIB)
 	@echo "Linking and creating Lynx executable"
 	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(OBJS) $(WWWLIB) $(INTLLIB) $(LIBS)
 	@echo "Copying Lynx executable into top-level directory"
-	cp $@ $(top_builddir)
+	rm -f $(top_builddir)/$@
+	cp $@ $(top_builddir)/
 	@echo "Welcome to Lynx!"
 
 message:
@@ -102,25 +108,28 @@ lint:
 	$(LINT) $(LINTOPTS) $(CPP_OPTS) *.c  > $(top_builddir)/lint.lynx
 
 clean:
-	rm -f lynx$x core *.core *.leaks *.[ob] *.bak
+	rm -f lynx$x core *.core *.leaks *.[oi] *.bak tags TAGS
 	cd chrtrans && $(MAKE) clean
 
 distclean: clean
 
-HTFWriter.o:	$(top_srcdir)/userdefs.h
-HTInit.o:	$(top_srcdir)/userdefs.h
-LYCharSets.o:	$(top_srcdir)/userdefs.h
-LYGetFile.o:	$(top_srcdir)/userdefs.h
-LYKeymap.o:	$(top_srcdir)/userdefs.h
-LYMail.o:	$(top_srcdir)/userdefs.h
-LYMain.o:	$(top_srcdir)/userdefs.h $(top_builddir)/lynx_cfg.h
-LYMainLoop.o:	$(top_srcdir)/userdefs.h
-LYOptions.o:	$(top_srcdir)/userdefs.h
-LYReadCFG.o:	$(top_srcdir)/userdefs.h
-LYShowInfo.o:	$(top_builddir)/cfg_defs.h
-LYTraversal.o:	$(top_srcdir)/userdefs.h
-LYUtils.o:	$(top_srcdir)/userdefs.h
-LYrcFile.o:	$(top_srcdir)/userdefs.h
+CMN=$(top_srcdir)/WWW/Library/Implementation/
+
+HTFWriter$(_O):		$(top_srcdir)/userdefs.h
+HTInit$(_O):		$(top_srcdir)/userdefs.h
+LYCharSets$(_O):	$(top_srcdir)/userdefs.h
+LYGetFile$(_O):		$(top_srcdir)/userdefs.h
+LYKeymap$(_O):		$(top_srcdir)/userdefs.h
+LYMail$(_O):		$(top_srcdir)/userdefs.h
+LYMain$(_O):		$(top_srcdir)/userdefs.h $(top_builddir)/lynx_cfg.h
+LYMainLoop$(_O):	$(top_srcdir)/userdefs.h
+LYOptions$(_O):		$(top_srcdir)/userdefs.h
+LYReadCFG$(_O):		$(top_srcdir)/userdefs.h
+LYShowInfo$(_O):	$(top_builddir)/cfg_defs.h
+LYTraversal$(_O):	$(top_srcdir)/userdefs.h
+LYUtils$(_O):		$(top_srcdir)/userdefs.h
+LYrcFile$(_O):		$(top_srcdir)/userdefs.h
+LYLeaks$(_O):		$(CMN)LYLeaks.h $(CMN)HTString.h
 
 CHRTR= chrtrans/
 
@@ -164,16 +173,14 @@ TABLES= \
  $(CHRTR)utf8_uni.h \
  $(CHRTR)viscii_uni.h
 
-CMN=$(top_srcdir)/WWW/Library/Implementation/
-
 $(TABLES):
 	-cd chrtrans && $(MAKE) tables
 
-UCdomap.o: UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c \
+UCdomap$(_O): UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c \
 	UCdomap.h $(CMN)UCMap.h $(TABLES) $(top_srcdir)/userdefs.h
 
-UCAux.o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
-LYCookie.o: $(top_srcdir)/userdefs.h
+chrtrans/makeuctb$x:
+	cd chrtrans; make makeuctb$x
 
 .if ${MACHINE_ARCH} == "hppa"
 LYMainLoop.o: ${srcdir}/LYMainLoop.c
@@ -184,6 +191,9 @@ HTML.o: ${srcdir}/HTML.c
 @RULE_CC@
 	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
 .endif
+
+UCAux$(_O) : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
+LYCookie$(_O): $(top_srcdir)/userdefs.h
 
 depend : $(TABLES)
 	makedepend -fmakefile -- $(CC_OPTS) -- $(C_SRC)

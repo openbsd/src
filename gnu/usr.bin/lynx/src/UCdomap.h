@@ -5,6 +5,10 @@
 #include <HTUtils.h>
 #endif
 
+#ifndef ALL_CHARSETS
+#define ALL_CHARSETS 1
+#endif
+
 #include <UCkd.h>
 
 /*
@@ -66,7 +70,7 @@ extern void UCInit NOARGS;
  *
  *  Several #defines below are declarations for charsets which need no
  *  tables for mapping to Unicode - CJK multibytes, x-transparent, UTF8 -
- *  Lynx care of them internally.
+ *  Lynx takes care of them internally.
  *
  *  The declaration's format is kept in chrtrans/XXX_uni.h -
  *  keep this in mind when changing ucmaketbl.c,
@@ -79,35 +83,101 @@ extern void UCInit NOARGS;
    *  from Unicode mechanism).  For now we use the MIME name that describes
    *  what is output to the terminal. - KW
    */
-static CONST struct unimapdesc_str dfont_replacedesc_fallback = {0,NULL,0,1};
 
-#define UC_CHARSET_SETUP_euc_cn UC_Charset_Setup("euc-cn","Chinese",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,UCT_ENC_CJK,0)
-#define UC_CHARSET_SETUP_euc_jp UC_Charset_Setup("euc-jp","Japanese (EUC-JP)",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,UCT_ENC_CJK,0)
-#define UC_CHARSET_SETUP_shift_jis UC_Charset_Setup("shift_jis","Japanese (Shift_JIS)",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,UCT_ENC_CJK,0)
-#define UC_CHARSET_SETUP_euc_kr UC_Charset_Setup("euc-kr","Korean",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,UCT_ENC_CJK,0)
-#define UC_CHARSET_SETUP_big5 UC_Charset_Setup("big5","Taipei (Big5)",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,UCT_ENC_CJK,0)
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_euc_cn
+#define NO_CHARSET_euc_cn !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_euc_cn
+#define UC_CHARSET_SETUP_euc_cn /*nothing*/
+#else
+#define UC_CHARSET_SETUP_euc_cn UC_Charset_NoUctb_Setup("euc-cn","Chinese",\
+       1, 128,UCT_ENC_CJK,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_euc_jp
+#define NO_CHARSET_euc_jp !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_euc_jp
+#define UC_CHARSET_SETUP_euc_jp /*nothing*/
+#else
+#define UC_CHARSET_SETUP_euc_jp UC_Charset_NoUctb_Setup("euc-jp","Japanese (EUC-JP)",\
+       1, 128,UCT_ENC_CJK,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_shift_jis
+#define NO_CHARSET_shift_jis !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_shift_jis
+#define UC_CHARSET_SETUP_shift_jis /*nothing*/
+#else
+#define UC_CHARSET_SETUP_shift_jis UC_Charset_NoUctb_Setup("shift_jis","Japanese (Shift_JIS)",\
+       1, 128,UCT_ENC_CJK,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_euc_kr
+#define NO_CHARSET_euc_kr !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_euc_kr
+#define UC_CHARSET_SETUP_euc_kr /*nothing*/
+#else
+#define UC_CHARSET_SETUP_euc_kr UC_Charset_NoUctb_Setup("euc-kr","Korean",\
+       1, 128,UCT_ENC_CJK,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_big5
+#define NO_CHARSET_big5 !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_big5
+#define UC_CHARSET_SETUP_big5 /*nothing*/
+#else
+#define UC_CHARSET_SETUP_big5 UC_Charset_NoUctb_Setup("big5","Taipei (Big5)",\
+       1, 128,UCT_ENC_CJK,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
   /*
    *  Placeholder for non-translation mode. - FM
    */
-#define UC_CHARSET_SETUP_x_transparent UC_Charset_Setup("x-transparent","Transparent",\
-       NULL,NULL,0,dfont_replacedesc_fallback,\
-       128,1,0)
 
-static CONST struct unimapdesc_str dfont_replacedesc_NO_fallback = {0,NULL,0,0};
+#ifndef NO_CHARSET_x_transparent
+#define NO_CHARSET_x_transparent !ALL_CHARSETS
+#endif
 
-#define UC_CHARSET_SETUP_utf_8 UC_Charset_Setup("utf-8","UNICODE (UTF-8)",\
-       NULL,NULL,0,dfont_replacedesc_NO_fallback,\
-       128,UCT_ENC_UTF8,0)
+#if NO_CHARSET_x_transparent
+#define UC_CHARSET_SETUP_x_transparent /*nothing*/
+#else
+#define UC_CHARSET_SETUP_x_transparent UC_Charset_NoUctb_Setup("x-transparent","Transparent",\
+       0, 128,UCT_ENC_8BIT,0)
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+#ifndef NO_CHARSET_utf_8
+#define NO_CHARSET_utf_8 !ALL_CHARSETS
+#endif
+
+#if NO_CHARSET_utf_8
+#define UC_CHARSET_SETUP_utf_8 /*nothing*/
+#else
+#define UC_CHARSET_SETUP_utf_8 UC_Charset_NoUctb_Setup("utf-8","UNICODE (UTF-8)",\
+       0, 128,UCT_ENC_UTF8,-4)
+#endif
 
 
 #endif /* UCDOMAP_H */

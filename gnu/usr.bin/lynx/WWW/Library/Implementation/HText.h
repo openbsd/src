@@ -83,7 +83,7 @@ extern void HText_setStyle PARAMS((HText * text, HTStyle * style));
   ADD ONE CHARACTER
 
  */
-extern void HText_appendCharacter PARAMS((HText * text, char ch));
+extern void HText_appendCharacter PARAMS((HText * text, int ch));
 
 /*
 
@@ -126,7 +126,7 @@ extern int HText_beginAnchor PARAMS((
 	BOOL		underline,
 	HTChildAnchor *	anc));
 extern void HText_endAnchor PARAMS((HText * text, int number));
-
+extern BOOL HText_isAnchorBlank PARAMS((HText * text, int number));
 
 /*
 

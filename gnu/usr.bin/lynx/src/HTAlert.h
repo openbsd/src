@@ -8,9 +8,7 @@
 #ifndef HTALERT_H
 #define HTALERT_H 1
 
-#ifndef HTUTILS_H
-#include <HTUtils.h>
-#endif
+#include <LYCookie.h>
 
 #define ALERT_PREFIX_LEN 5
 
@@ -62,7 +60,7 @@ extern BOOL HTLastConfirmCancelled NOPARAMS;
 **              If the user enters 'YES', returns TRUE, returns FALSE
 **              otherwise.
 */
-extern BOOL HTConfirmDefault PARAMS ((CONST char * Msg, int Dft));
+extern int HTConfirmDefault PARAMS ((CONST char * Msg, int Dft));
 
 
 /*      Display a message, then wait for 'yes' or 'no'.
@@ -76,6 +74,11 @@ extern BOOL HTConfirmDefault PARAMS ((CONST char * Msg, int Dft));
 */
 extern BOOL HTConfirm PARAMS ((CONST char * Msg));
 
+extern BOOL confirm_post_resub PARAMS((
+    CONST char*		address,
+    CONST char*		title,
+    int			if_imgmap,
+    int			if_file));
 
 /*      Prompt for password without echoing the reply
 */
@@ -124,7 +127,7 @@ extern void HTPromptUsernameAndPassword PARAMS((
 **		TRUE if the cookie should be set.
 */
 extern BOOL HTConfirmCookie PARAMS((
-	void *		dp,
+	domain_entry *	dp,
 	CONST char *	server,
 	CONST char *	name,
 	CONST char *	value));
@@ -144,5 +147,17 @@ extern BOOL HTConfirmCookie PARAMS((
 extern int HTConfirmPostRedirect PARAMS((
 	CONST char *	Redirecting_url,
 	int		server_status));
+
+
+extern void LYSleepAlert NOPARAMS;
+extern void LYSleepInfo NOPARAMS;
+extern void LYSleepMsg NOPARAMS;
+
+#ifdef HAVE_STRERROR
+#define LYStrerror strerror
+#else
+extern char *LYStrerror PARAMS((
+	int		code));
+#endif /* HAVE_STRERROR */
 
 #endif /* HTALERT_H */

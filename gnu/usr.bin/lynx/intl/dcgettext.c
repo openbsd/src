@@ -1,5 +1,5 @@
-/* Implementation of the dcgettext(3) function
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Implementation of the dcgettext(3) function.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_CONFIG_H
-# include <lynx_cfg.h>
+# include <config.h>
 #endif
 
 #include <sys/types.h>
@@ -75,14 +75,14 @@ void free ();
 # include <unistd.h>
 #endif
 
-#include <gettext.h>
-#include <gettextP.h>
+#include "gettext.h"
+#include "gettextP.h"
 #ifdef _LIBC
 # include <libintl.h>
 #else
-# include <libgettext.h>
+# include "libgettext.h"
 #endif
-#include <hash-string.h>
+#include "hash-string.h"
 
 /* @@ end of prolog @@ */
 
@@ -91,7 +91,9 @@ void free ();
    because some ANSI C functions will require linking with this object
    file and the name space must not be polluted.  */
 # define getcwd __getcwd
-# define stpcpy __stpcpy
+# ifndef stpcpy
+#  define stpcpy __stpcpy
+# endif
 #else
 # if !defined HAVE_GETCWD
 char *getwd ();
@@ -141,7 +143,7 @@ static char *stpcpy PARAMS ((char *dest, const char *src));
      setting of `local'.''
    However it does not specify the exact format.  And even worse: POSIX
    defines this not at all.  So we can use this feature only on selected
-   system (e.g., those using GNU C Library).  */
+   system (e.g. those using GNU C Library).  */
 #ifdef _LIBC
 # define HAVE_LOCALE_NULL
 #endif
@@ -162,10 +164,11 @@ struct binding *_nl_domain_bindings;
 
 /* Prototypes for local functions.  */
 static char *find_msg PARAMS ((struct loaded_l10nfile *domain_file,
-			       const char *msgid));
-static const char *category_to_name PARAMS ((int category));
+			       const char *msgid)) internal_function;
+static const char *category_to_name PARAMS ((int category)) internal_function;
 static const char *guess_category_value PARAMS ((int category,
-						 const char *categoryname));
+						 const char *categoryname))
+     internal_function;
 
 
 /* For those loosing systems which don't have `alloca' we have to add
@@ -325,7 +328,7 @@ DCGETTEXT (domainname, msgid, category)
 	{
 	  /* The whole contents of CATEGORYVALUE has been searched but
 	     no valid entry has been found.  We solve this situation
-	     by implicitly appending a "C" entry, i.e., no translation
+	     by implicitly appending a "C" entry, i.e. no translation
 	     will take place.  */
 	  single_locale[0] = 'C';
 	  single_locale[1] = '\0';
@@ -388,6 +391,7 @@ weak_alias (__dcgettext, dcgettext);
 
 
 static char *
+internal_function
 find_msg (domain_file, msgid)
      struct loaded_l10nfile *domain_file;
      const char *msgid;
@@ -476,6 +480,7 @@ find_msg (domain_file, msgid)
 
 /* Return string representation of locale CATEGORY.  */
 static const char *
+internal_function
 category_to_name (category)
      int category;
 {
@@ -535,6 +540,7 @@ category_to_name (category)
 
 /* Guess value of current locale from value of the environment variables.  */
 static const char *
+internal_function
 guess_category_value (category, categoryname)
      int category;
      const char *categoryname;
@@ -580,7 +586,7 @@ guess_category_value (category, categoryname)
    avoid the non-standard function stpcpy.  In GNU C Library this
    function is available, though.  Also allow the symbol HAVE_STPCPY
    to be defined.  */
-#if !_LIBC && !HAVE_STPCPY
+#if !defined(_LIBC) && !defined(HAVE_STPCPY)
 static char *
 stpcpy (dest, src)
      char *dest;
@@ -590,4 +596,29 @@ stpcpy (dest, src)
     /* Do nothing. */ ;
   return dest - 1;
 }
+#endif
+
+
+#ifdef _LIBC
+/* If we want to free all resources we have to do some work at
+   program's end.  */
+static void __attribute__ ((unused))
+free_mem (void)
+{
+  struct binding *runp;
+
+  for (runp = _nl_domain_bindings; runp != NULL; runp = runp->next)
+    {
+      free (runp->domainname);
+      if (runp->dirname != _nl_default_dirname)
+	/* Yes, this is a pointer comparison.  */
+	free (runp->dirname);
+    }
+
+  if (_nl_current_default_domain != _nl_default_default_domain)
+    /* Yes, again a pointer comparison.  */
+    free ((char *) _nl_current_default_domain);
+}
+
+text_set_element (__libc_subfreeres, free_mem);
 #endif

@@ -865,6 +865,7 @@ char* buffer;
 		  size -= (buf - originalBuf);
 		}
 	    }
+	    /* FALLTHRU */
 	  case DT_Source:
 	    buf = readString(&source,buf);
 	    break;
@@ -1204,6 +1205,7 @@ char* buffer;
 		  size -= (buf - originalBuf);
 		}
 	    }
+	    /* FALLTHRU */
 	  case DT_Source:
 	    buf = readString(&source,buf);
 	    break;
@@ -2193,7 +2195,7 @@ query_term** terms;
       docTerm = terms[termNum];
      
       if (docTerm == NULL)
-	break;			/* we're done converting */;
+	break;			/* we're done converting */
 
       typeTerm = terms[termNum + 1]; /* get the lead Term if it exists */
 

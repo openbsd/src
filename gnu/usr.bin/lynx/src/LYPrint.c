@@ -56,9 +56,9 @@
 #define MAIL	  4
 #define PRINTER   5
 
-#ifdef VMS
+#if USE_VMS_MAILER
 PRIVATE int remove_quotes PARAMS((char *string));
-#endif /* VMS */
+#endif /* USE_VMS_MAILER */
 
 PRIVATE  char* subject_translate8bit PARAMS((char *source));
 
@@ -188,7 +188,7 @@ PRIVATE int RecallFilename ARGS5(
 	*total = (sug_filenames ? HTList_count(sug_filenames) : 0);
 	*now = *total;
     }
-    recall = ((*total >= 1) ? RECALL : NORECALL);
+    recall = ((*total >= 1) ? RECALL_URL : NORECALL);
 
     if ((ch = LYgetstr(filename, VISIBLE, LY_MAXPATH, recall)) < 0 ||
 	*filename == '\0' || ch == UPARROW || ch == DNARROW) {
@@ -292,7 +292,7 @@ PRIVATE BOOLEAN confirm_by_pages ARGS3(
 	FREE(msg);
 
 	if (c == YES) {
-	    addstr("   Ok...");
+	    LYaddstr("   Ok...");
 	} else {
 	    HTInfoMsg(PRINT_REQUEST_CANCELLED);
 	    return FALSE;
@@ -360,7 +360,7 @@ check_recall:
     /*
      * See if we can write to it.
      */
-    CTRACE(tfp, "LYPrint: filename is %s, action is `%c'\n", buffer, c);
+    CTRACE((tfp, "LYPrint: filename is %s, action is `%c'\n", buffer, c));
 
 #if HAVE_POPEN
     if (*buffer == '|') {
@@ -370,7 +370,7 @@ check_recall:
 	    FnameNum = FnameTotal;
 	    goto retry;
 	} else if ((outfile_fp = popen(buffer+1, "w")) == NULL) {
-	    CTRACE(tfp, "LYPrint: errno is %d\n", errno);
+	    CTRACE((tfp, "LYPrint: errno is %d\n", errno));
 	    HTAlert(CANNOT_WRITE_TO_FILE);
 	    _statusline(NEW_FILENAME_PROMPT);
 	    FirstRecall = TRUE;
@@ -382,7 +382,7 @@ check_recall:
     if ((outfile_fp = (TOUPPER(c) == 'A'
 	    ? LYAppendToTxtFile(buffer)
 	    : LYNewTxtFile(buffer))) == NULL) {
-	CTRACE(tfp, "LYPrint: errno is %d\n", errno);
+	CTRACE((tfp, "LYPrint: errno is %d\n", errno));
 	HTAlert(CANNOT_WRITE_TO_FILE);
 	_statusline(NEW_FILENAME_PROMPT);
 	FirstRecall = TRUE;
@@ -402,9 +402,17 @@ check_recall:
 
 	fprintf(outfile_fp,
 		"<!-- X-URL: %s -->\n", newdoc->address);
-	if (HText_getDate() != NULL)
-	     fprintf(outfile_fp,
+	if (HText_getDate() != NULL) {
+	    fprintf(outfile_fp,
 		"<!-- Date: %s -->\n", HText_getDate());
+	    if (HText_getLastModified() != NULL
+			&& strcmp(HText_getLastModified(), HText_getDate())
+			&& strcmp(HText_getLastModified(), "Thu, 01 Jan 1970 00:00:01 GMT")) {
+		fprintf(outfile_fp,
+		    "<!-- Last-Modified: %s -->\n", HText_getLastModified());
+	    }
+	}
+
 	fprintf(outfile_fp,
 		"<BASE HREF=\"%s\">\n", content_base);
     }
@@ -435,7 +443,7 @@ check_recall:
 	}
     }
 
-    print_wwwfile_to_fd(outfile_fp,0);
+    print_wwwfile_to_fd(outfile_fp, FALSE);	/* FILE */
     if (keypad_mode)
 	printlist(outfile_fp,FALSE);
 
@@ -444,7 +452,8 @@ check_recall:
 	pclose(outfile_fp);
     else
 #endif
-    fclose(outfile_fp);
+	LYCloseOutput(outfile_fp);
+
 #ifdef VMS
     if (0 == strncasecomp(buffer, "sys$disk:", 9)) {
 	if (0 == strncmp((buffer+9), "[]", 2)) {
@@ -470,18 +479,17 @@ PRIVATE void send_file_to_mail ARGS3(
 {
     static BOOLEAN first_mail_preparsed = TRUE;
 
-#ifdef VMS
-    BOOLEAN isPMDF = !strncasecomp(system_mail, "PMDF SEND", 9);
+#if USE_VMS_MAILER
+    BOOLEAN isPMDF = LYMailPMDF();
     FILE *hfd;
     char hdrfile[LY_MAXPATH];
-    char my_temp[LY_MAXPATH];
 #endif
-#ifdef DOSPATH
+    BOOL use_mime;
+#if !CAN_PIPE_TO_MAILER
     char my_temp[LY_MAXPATH];
 #endif
 
     BOOL use_cte;
-    BOOL use_mime;
     BOOL use_type;
     CONST char *disp_charset;
     FILE *outfile_fp;
@@ -492,7 +500,7 @@ PRIVATE void send_file_to_mail ARGS3(
     if (LYPreparsedSource && first_mail_preparsed &&
 	HTisDocumentSource()) {
 	if (HTConfirmDefault(CONFIRM_MAIL_SOURCE_PREPARSED, NO) == YES) {
-	    addstr("   Ok...");
+	    LYaddstr("   Ok...");
 	    first_mail_preparsed = FALSE;
 	} else	{
 	    CancelPrint(MAIL_REQUEST_CANCELLED);
@@ -501,7 +509,7 @@ PRIVATE void send_file_to_mail ARGS3(
 
     _statusline(MAIL_ADDRESS_PROMPT);
     LYstrncpy(user_response, personal_mail_address, sizeof(user_response)-1);
-    if (LYgetstr(user_response, VISIBLE, sizeof(user_response), NORECALL) < 0 ||
+    if (LYgetstr(user_response, VISIBLE, sizeof(user_response), RECALL_MAIL) < 0 ||
 	*user_response == '\0') {
 	CancelPrint(MAIL_REQUEST_CANCELLED);
     }
@@ -522,26 +530,26 @@ PRIVATE void send_file_to_mail ARGS3(
 	disp_charset = NULL;
 	use_cte = FALSE;
     }
-    use_type =  (disp_charset || HTisDocumentSource());
+    use_type = (BOOL) (disp_charset || HTisDocumentSource());
 
     /*
      * Use newdoc->title as a subject instead of sug_filename:  MORE readable
      * and 8-bit letters shouldn't be a problem - LP
      */
     /* change_sug_filename(sug_filename); */
-   subject = subject_translate8bit(newdoc->title);
+    subject = subject_translate8bit(newdoc->title);
 
-   if (newdoc->isHEAD) {
-	   /*
-	    * Special case for mailing HEAD responce:  this is rather technical
-	    * information, show URL.
-	    */
-	   FREE(subject);
-	   StrAllocCopy(subject, "HEAD  ");
-	   StrAllocCat(subject, newdoc->address);
+    if (newdoc->isHEAD) {
+	/*
+	 * Special case for mailing HEAD responce:  this is rather technical
+	 * information, show URL.
+	 */
+	FREE(subject);
+	StrAllocCopy(subject, "HEAD  ");
+	StrAllocCat(subject, newdoc->address);
     }
 
-#ifdef VMS
+#if USE_VMS_MAILER
     if (strchr(user_response,'@') && !strchr(user_response,':') &&
        !strchr(user_response,'%') && !strchr(user_response,'"')) {
 	char *temp = 0;
@@ -597,6 +605,11 @@ PRIVATE void send_file_to_mail ARGS3(
 	 *	X-URL header. - FM
 	 */
 	fprintf(hfd, "X-URL: %s\n", newdoc->address);
+	/*
+	 * For PMDF, put the subject in the header file and close it.  - FM
+	 */
+	fprintf(hfd, "Subject: %.70s\n\n", subject);
+	LYCloseTempFP(hfd);
     }
 
     /*
@@ -615,17 +628,13 @@ PRIVATE void send_file_to_mail ARGS3(
     } else if (!isPMDF) {
 	fprintf(outfile_fp, "X-URL: %s\n\n", newdoc->address);
     }
-    print_wwwfile_to_fd(outfile_fp, 0);
+    print_wwwfile_to_fd(outfile_fp, FALSE);	/* MAIL */
     if (keypad_mode)
 	printlist(outfile_fp, FALSE);
     LYCloseTempFP(outfile_fp);
 
+    buffer = NULL;
     if (isPMDF) {
-	/*
-	 * For PMDF, put the subject in the header file and close it.  - FM
-	 */
-	fprintf(hfd, "Subject: %.70s\n\n", subject);
-	LYCloseTempFP(hfd);
 	/*
 	 * Now set up the command.  - FM
 	 */
@@ -651,20 +660,22 @@ PRIVATE void send_file_to_mail ARGS3(
     }
 
     stop_curses();
+    SetOutputMode( O_TEXT );
     printf(MAILING_FILE);
     LYSystem(buffer);
-    sleep(AlertSecs);
+    LYSleepAlert();
     start_curses();
+    SetOutputMode( O_BINARY );
+
     if (isPMDF)
 	LYRemoveTemp(hdrfile);
     LYRemoveTemp(my_temp);
-#else /* Unix or DOS */
+#else /* !VMS (Unix or DOS) */
 
-#ifdef DOSPATH
-    outfile_fp = LYOpenTemp(my_temp, ".txt", "w");
+#if CAN_PIPE_TO_MAILER
+    outfile_fp = LYPipeToMailer();
 #else
-    HTSprintf0(&buffer, "%s %s", system_mail, system_mail_flags);
-    outfile_fp = popen(buffer, "w");
+    outfile_fp = LYOpenTemp(my_temp, ".txt", "w");
 #endif
     if (outfile_fp == NULL) {
 	CannotPrint(MAIL_REQUEST_FAILED);
@@ -697,8 +708,8 @@ PRIVATE void send_file_to_mail ARGS3(
     if (use_cte && !disp_charset)
 	use_cte = FALSE;
 #endif /* NOTDEFINED */
-    use_type = (disp_charset || HTisDocumentSource());
-    use_mime = (use_cte || use_type);
+    use_type = (BOOL) (disp_charset || HTisDocumentSource());
+    use_mime = (BOOL) (use_cte || use_type);
 
     if (use_mime) {
 	fprintf(outfile_fp, "Mime-Version: 1.0\n");
@@ -758,25 +769,25 @@ PRIVATE void send_file_to_mail ARGS3(
 		"<!-- X-URL: %s -->\n<BASE HREF=\"%s\">\n\n",
 		newdoc->address, content_base);
     }
-    print_wwwfile_to_fd(outfile_fp, 0);
+    print_wwwfile_to_fd(outfile_fp, FALSE);	/* MAIL */
     if (keypad_mode)
 	printlist(outfile_fp, FALSE);
 
-#ifdef DOSPATH
-    HTSprintf0(&buffer, "%s -t \"%s\" -F %s", system_mail, user_response, my_temp);
-    LYCloseTempFP(outfile_fp);	/* Close the tmpfile. */
-    stop_curses();
-    printf("%s\n\n$ %s\n\n%s", gettext("Sending"), buffer, PLEASE_WAIT);
-    LYSystem(buffer);
-    sleep(MessageSecs);
-    start_curses();
-    LYRemoveTemp(my_temp); /* Delete the tmpfile. */
-#else
+#if CAN_PIPE_TO_MAILER
     pclose(outfile_fp);
-#endif
-#endif /* VMS */
+#else
+    LYCloseOutput(outfile_fp);
+    LYSendMailFile (
+	    user_response,
+	    my_temp,
+	    subject,
+	    "",
+	    "");
+    LYRemoveTemp(my_temp); /* Delete the tmpfile. */
+#endif /* CAN_PIPE_TO_MAILER */
+#endif /* USE_VMS_MAILER */
 
-done:
+done:	/* send_file_to_mail() */
     FREE(buffer);
     FREE(subject);
     return;
@@ -794,7 +805,7 @@ PRIVATE void send_file_to_printer ARGS4(
     char my_file[LY_MAXPATH];
     char my_temp[LY_MAXPATH];
     int FnameTotal, FnameNum = -1;
-    lynx_printer_item_type *cur_printer;
+    lynx_list_item_type *cur_printer;
 
     outfile_fp = LYOpenTemp(my_temp,
 			    (HTisDocumentSource())
@@ -816,7 +827,7 @@ PRIVATE void send_file_to_printer ARGS4(
 		"<!-- X-URL: %s -->\n<BASE HREF=\"%s\">\n\n",
 		newdoc->address, content_base);
     }
-    print_wwwfile_to_fd(outfile_fp, 0);
+    print_wwwfile_to_fd(outfile_fp, FALSE);	/* PRINTER */
     if (keypad_mode)
 	printlist(outfile_fp, FALSE);
 
@@ -877,26 +888,44 @@ check_again:
 	if (!strncasecomp(my_file, "nl:", 3) ||
 	    !strncasecomp(my_file, "/nl/", 4))
 #else
+#if defined(DOSPATH)	/* 1997/10/15 (Wed) 16:41:30 */
+	if (!strcmp(my_file, "nul"))
+#else
 	if (!strcmp(my_file, "/dev/null"))
+#endif /* DOSPATH */
 #endif /* VMS */
 	{
 	    CancelPrint(PRINT_REQUEST_CANCELLED);
 	}
 	HTAddSugFilename(my_file);
     }
+#ifdef SH_EX	/* 1999/01/04 (Mon) 09:37:03 */
+    else {
+	my_file[0] = '\0';
+    }
 
+    HTAddParam (&the_command, cur_printer->command, 1, my_temp);
+    if (my_file[0]) {
+	HTAddParam (&the_command, cur_printer->command, 2, my_file);
+	HTEndParam (&the_command, cur_printer->command, 3);
+    } else {
+	HTEndParam (&the_command, cur_printer->command, 2);
+    }
+#else
     HTAddParam (&the_command, cur_printer->command, 1, my_temp);
     HTAddParam (&the_command, cur_printer->command, 2, my_file);
     HTEndParam (&the_command, cur_printer->command, 2);
+#endif
 
     /*
      * Move the cursor to the top of the screen so that output from system'd
      * commands don't scroll up the screen.
      */
-    move(1,1);
+    LYmove(1,1);
 
     stop_curses();
-    CTRACE(tfp, "command: %s\n", the_command);
+    CTRACE((tfp, "command: %s\n", the_command));
+    SetOutputMode( O_TEXT );
     printf(PRINTING_FILE);
     /*
      * Set various bits of document information as environment variables, for
@@ -926,10 +955,15 @@ check_again:
 #ifndef VMS
     signal(SIGINT, cleanup_sig);
 #endif /* !VMS */
-    sleep(MessageSecs);
+#ifdef SH_EX
+    fprintf(stdout, gettext(" Print job complete.\n"));
+    fflush(stdout);
+#endif
+    SetOutputMode( O_BINARY );
+    LYSleepMsg();
     start_curses();
 
-done:
+done:	/* send_file_to_printer() */
     return;
 }
 
@@ -955,6 +989,8 @@ PRIVATE void send_file_to_screen ARGS3(
     outfile_fp = stdout;
 
     stop_curses();
+    SetOutputMode( O_TEXT );
+
 #ifndef VMS
     signal(SIGINT, SIG_IGN);
 #endif /* !VMS */
@@ -972,7 +1008,7 @@ PRIVATE void send_file_to_screen ARGS3(
     }
     if (Lpansi)
 	printf("\033[5i");
-    print_wwwfile_to_fd(outfile_fp, 0);
+    print_wwwfile_to_fd(outfile_fp, FALSE);	/* SCREEN */
     if (keypad_mode)
 	printlist(outfile_fp, FALSE);
 
@@ -986,18 +1022,23 @@ PRIVATE void send_file_to_screen ARGS3(
     if (Lpansi) {
 	printf("\n\014");	/* Form feed */
 	printf("\033[4i");
+	fflush(stdout);  /* refresh to screen */
 	Lpansi = FALSE;
     } else {
 	fprintf(stdout,"\n\n%s", PRESS_RETURN_TO_FINISH);
-	LYgetch();  /* grab some user input to pause */
+	fflush(stdout);		/* refresh to screen */
+	(void) LYgetch();	/* grab some user input to pause */
 #ifdef VMS
 	HadVMSInterrupt = FALSE;
 #endif /* VMS */
     }
-    fflush(stdout);  /* refresh to screen */
+#ifdef SH_EX
+    fprintf(stdout,"\n");
+#endif
+    SetOutputMode( O_BINARY );
     start_curses();
 
-done:
+done:	/* send_file_to_screen() */
     return;
 }
 
@@ -1074,7 +1115,7 @@ PUBLIC int printfile ARGS1(
     /*
      *	Get the number of lines in the file.
      */
-    if ((cp = (char *)strstr(link_info, "lines=")) != NULL) {
+    if ((cp = strstr(link_info, "lines=")) != NULL) {
 	/*
 	 *  Terminate prev string here.
 	 */
@@ -1102,12 +1143,12 @@ PUBLIC int printfile ARGS1(
     } else if (strstr(link_info, "PRINTER")) {
 	type = PRINTER;
 
-	if ((cp = (char *)strstr(link_info, "number=")) != NULL) {
+	if ((cp = strstr(link_info, "number=")) != NULL) {
 	    /* number of characters in "number=" */
 	    cp += 7;
 	    printer_number = atoi(cp);
 	}
-	if ((cp = (char *)strstr(link_info, "pagelen=")) != NULL) {
+	if ((cp = strstr(link_info, "pagelen=")) != NULL) {
 	    /* number of characters in "pagelen=" */
 	    cp += 8;
 	    pagelen = atoi(cp);
@@ -1149,7 +1190,7 @@ PUBLIC int printfile ARGS1(
     return(NORMAL);
 }
 
-#ifdef VMS
+#if USE_VMS_MAILER
 PRIVATE int remove_quotes ARGS1(
 	char *,		string)
 {
@@ -1165,7 +1206,7 @@ PRIVATE int remove_quotes ARGS1(
 
    return(0);
 }
-#endif /* VMS */
+#endif /* USE_VMS_MAILER */
 
 /*
  *  Mail subject may have 8-bit characters and they are in display charset.
@@ -1184,38 +1225,27 @@ PRIVATE int remove_quotes ARGS1(
  *
  *  Always returns a new allocated string which has to be freed.
  */
+#include <LYCharUtils.h>
 PRIVATE char* subject_translate8bit ARGS1(char *, source)
 {
-    CONST char *p = source;
-    char temp[2];
     char *target = NULL;
 
     int charset_in, charset_out;
-    char replace_buf [10];
 
     int i = outgoing_mail_charset;  /* from lynx.cfg, -1 by default */
 
+    StrAllocCopy(target, source);
     if (i < 0
      || i == current_char_set
      || LYCharSet_UC[current_char_set].enc == UCT_ENC_CJK
      || LYCharSet_UC[i].enc == UCT_ENC_CJK) {
-	StrAllocCopy(target, source);
 	return(target); /* OK */
     } else {
 	charset_out = i;
 	charset_in  = current_char_set;
     }
 
-    for ( ; *p; p++) {
-	LYstrncpy(temp, p, sizeof(temp)-1);
-	if ((unsigned char)*temp <= 127) {
-	    StrAllocCat(target, temp);
-	} else {
-	    if (UCTransCharStr(replace_buf, sizeof(replace_buf), *temp,
-				charset_in, charset_out, YES) > 0)
-		StrAllocCat(target, replace_buf);
-	}
-    }
+    LYUCTranslateBackHeaderText(&target, charset_in, charset_out, YES);
 
     return(target);
 }
@@ -1233,18 +1263,23 @@ PRIVATE char* subject_translate8bit ARGS1(char *, source)
  */
 PUBLIC int print_options ARGS3(
 	char **,	newfile,
-	char **,	printed_url,
+	CONST char *,	printed_url,
 	int,		lines_in_file)
 {
-    static char my_temp[LY_MAXPATH];
+    static char my_temp[LY_MAXPATH] = "\0";
     char *buffer = 0;
     int count;
     int pages;
     FILE *fp0;
-    lynx_printer_item_type *cur_printer;
+    lynx_list_item_type *cur_printer;
 
-    LYRemoveTemp(my_temp);
-    if ((fp0 = LYOpenTemp(my_temp, HTML_SUFFIX, "w")) == NULL) {
+    if (LYReuseTempfiles) {
+	fp0 = LYOpenTempRewrite(my_temp, HTML_SUFFIX, "w");
+    } else {
+	LYRemoveTemp(my_temp);
+	fp0 = LYOpenTemp(my_temp, HTML_SUFFIX, "w");
+    }
+    if (fp0 == NULL) {
 	HTAlert(UNABLE_TO_OPEN_PRINTOP_FILE);
 	return(-1);
     }
@@ -1258,7 +1293,7 @@ PUBLIC int print_options ARGS3(
     /*  pages = lines_in_file/66 + 1; */
     pages = (lines_in_file+65)/66;
     HTSprintf0(&buffer, "   <em>%s</em> %s\n   <em>%s</em> %d\n   <em>%s</em> %d %s %s\n",
-	    gettext("Document:"), *printed_url,
+	    gettext("Document:"), printed_url,
 	    gettext("Number of lines:"), lines_in_file,
 	    gettext("Number of pages:"), pages,
 	    (pages > 1 ? gettext("pages") : gettext("page")),
@@ -1337,8 +1372,6 @@ PUBLIC char * GetFileName NOARGS
 {
     struct stat stat_info;
 
-    FILE *fp;
-
     char  fbuf[LY_MAXPATH];
     char  tbuf[LY_MAXPATH];
     char *fn;
@@ -1413,14 +1446,12 @@ check_recall:
 	goto retry;
     }
 
-    if ((fp = fopen (tbuf, "r")) == NULL) {
+    if (!LYCanReadFile(tbuf)) {
 	HTInfoMsg (FILE_NOT_READABLE);
 	_statusline(FILE_NOT_READABLE_RE);
 	FirstRecall = TRUE;
 	FnameNum    = FnameTotal;
 	goto retry;
-    } else {
-	fclose (fp);
     }
 
     /*
@@ -1433,7 +1464,7 @@ check_recall:
      *   "invalid pointer" reported in the Lynx.leaks file (if compiled
      *   with  --enable-find-leaks  turned on.  Dumb.]
      */
-    if ((fn = (char *) calloc (1, (strlen (tbuf) + 1))) == NULL)
+    if ((fn = typecallocn(char, strlen (tbuf) + 1)) == NULL)
 	outofmem(__FILE__, "GetFileName");
     return (strcpy (fn, tbuf));
 

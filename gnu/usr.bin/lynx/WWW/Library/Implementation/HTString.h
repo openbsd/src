@@ -11,8 +11,6 @@
 #include <HTUtils.h>
 #endif /* HTUTILS_H */
 
-extern int WWW_TraceFlag;       /* Global flag for all W3 trace */
-
 extern CONST char * HTLibraryVersion;   /* String for help screen etc */
 
 /*
@@ -81,7 +79,15 @@ extern char * HTSprintf () GCC_PRINTFLIKE(2,3);
 extern char * HTSprintf0 () GCC_PRINTFLIKE(2,3);
 #endif
 
-#if defined(VMS) || defined(DOSPATH) || defined(__EMX__)
+#if defined(LY_FIND_LEAKS)	/* private otherwise */
+extern char * StrAllocVsprintf PARAMS((
+        char **		pstr,
+        size_t		len,
+        CONST char *	fmt,
+        va_list *	ap));
+#endif
+
+#if (defined(VMS) || defined(DOSPATH) || defined(__EMX__)) && !defined(__CYGWIN__)
 #define USE_QUOTED_PARAMETER 0
 #else
 #define USE_QUOTED_PARAMETER 1
@@ -101,5 +107,17 @@ extern void HTEndParam PARAMS((char ** result, CONST char * command, int number)
 
 /* Force an option, with leading blanks, to be appended without quoting them */
 #define HTOptParam(result, command, number, parameter) HTSACat(result, parameter)
+
+/* Binary copy and concat */
+#ifdef EXP_FILE_UPLOAD
+
+typedef struct {
+	char *str;
+	int len;
+} bstring;
+
+extern void HTSABCopy PARAMS((bstring** dest, CONST char * src, int len));
+extern void HTSABCat PARAMS((bstring ** dest, CONST char * src, int len));
+#endif
 
 #endif /* HTSTRING_H */

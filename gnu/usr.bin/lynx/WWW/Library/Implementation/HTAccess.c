@@ -64,14 +64,13 @@
 #include <LYUtils.h>
 #include <LYLeaks.h>
 
-extern HTCJKlang HTCJK;
-
 /*
 **  These flags may be set to modify the operation of this module
 */
 PUBLIC char * HTClientHost = NULL; /* Name of remote login host if any */
 PUBLIC FILE * HTlogfile = NULL;    /* File to which to output one-liners */
 PUBLIC BOOL HTSecure = NO;	   /* Disable access for telnet users? */
+PUBLIC BOOL HTPermitRedir = NO;	   /* Always allow redirection in getfile()? */
 
 PUBLIC BOOL using_proxy = NO; /* are we using a proxy gateway? */
 
@@ -268,15 +267,16 @@ PUBLIC BOOL override_proxy ARGS1(
     }
     Host = (((at = strchr(host, '@')) != NULL) ? (at+1) : host);
 
+#ifdef VMS
+#define CompareHostname(a,b) strcasecomp(a, b)
+#else
+#define CompareHostname(a,b) strcmp(a, b)
+#endif /* VMS */
+
     if ((acc_method = HTParse(addr, "", PARSE_ACCESS))) {
 	if (!strcmp("file", acc_method) &&
 	    (!strcmp(Host, "localhost") ||
-#ifdef VMS
-	     !strcasecomp(Host, HTHostName())
-#else
-	     !strcmp(Host, HTHostName())
-#endif /* VMS */
-	)) {
+	     !CompareHostname(Host, HTHostName()))) {
 	    FREE(host);
 	    FREE(acc_method);
 	    return YES;
@@ -315,6 +315,9 @@ PUBLIC BOOL override_proxy ARGS1(
 #ifndef DISABLE_FINGER
 	    else if (!strcmp(acc_method, "finger"))	port = 79;
 #endif
+	    else if (!strcmp(acc_method, "telnet"))	port = 23;
+	    else if (!strcmp(acc_method, "tn3270"))	port = 23;
+	    else if (!strcmp(acc_method, "rlogin"))	port = 513;
 	    FREE(acc_method);
 	}
     }
@@ -351,6 +354,15 @@ PUBLIC BOOL override_proxy ARGS1(
 	    FREE(host);
 	    return YES;
 	}
+#ifdef CJK_EX	/* ASATAKU PROXY HACK */
+	if ((!templ_port || templ_port == port)	 &&
+	    (t_len > 0	&&  t_len <= h_len  &&
+	     isdigit(UCH(*no_proxy)) && !strncmp(host, no_proxy, t_len))) {
+	    FREE(host);
+	    return YES;
+	}
+#endif	/* ASATAKU PROXY HACK */
+
 	if (*end)
 	    no_proxy = (end + 1);
 	else
@@ -379,23 +391,40 @@ PRIVATE int get_physical ARGS2(
     char * acc_method = NULL;	/* Name of access method */
     char * physical = NULL;
     char * Server_addr = NULL;
+    BOOL override_flag = NO;
+
+    /*
+    **	Make sure the using_proxy variable is FALSE.
+    */
+    using_proxy = NO;
 
 #ifndef NO_RULES
     physical = HTTranslate(addr);
     if (!physical) {
+	if (redirecting_url) {
+	    return HT_REDIRECTING;
+	}
 	return HT_FORBIDDEN;
     }
     if (anchor->isISMAPScript == TRUE) {
 	StrAllocCat(physical, "?0,0");
-	CTRACE(tfp, "HTAccess: Appending '?0,0' coordinate pair.\n");
+	CTRACE((tfp, "HTAccess: Appending '?0,0' coordinate pair.\n"));
     }
-    HTAnchor_setPhysical(anchor, physical);
+    if (!strncmp(physical, "Proxied=", 8)) {
+	HTAnchor_setPhysical(anchor, physical + 8);
+	using_proxy = YES;
+    } else if (!strncmp(physical, "NoProxy=", 8)) {
+	HTAnchor_setPhysical(anchor, physical + 8);
+	override_flag = YES;
+    } else {
+	HTAnchor_setPhysical(anchor, physical);
+    }
     FREE(physical);			/* free our copy */
 #else
     if (anchor->isISMAPScript == TRUE) {
 	StrAllocCopy(physical, addr);
 	StrAllocCat(physical, "?0,0");
-	CTRACE(tfp, "HTAccess: Appending '?0,0' coordinate pair.\n");
+	CTRACE((tfp, "HTAccess: Appending '?0,0' coordinate pair.\n"));
 	HTAnchor_setPhysical(anchor, physical);
 	FREE(physical);			/* free our copy */
     } else {
@@ -410,65 +439,63 @@ PRIVATE int get_physical ARGS2(
     **	Check whether gateway access has been set up for this.
     **
     **	This function can be replaced by the rule system above.
+    **
+    **  If the rule system has already determined that we should
+    **  use a proxy, or that we shouldn't, ignore proxy-related
+    **  settings, don't use no_proxy either.
     */
 #define USE_GATEWAYS
 #ifdef USE_GATEWAYS
-    /*
-    **	Make sure the using_proxy variable is FALSE.
-    */
-    using_proxy = NO;
 
-    if (!strcasecomp(acc_method, "news")) {
-	/*
-	**  News is different, so we need to check the name of the server,
-	**  as well as the default port for selective exclusions.
-	*/
-	char *host = NULL;
-	if ((host = HTParse(addr, "", PARSE_HOST))) {
-	    if (strchr(host, ':') == NULL) {
+    if (!override_flag && !using_proxy) {   /* else ignore no_proxy env var */
+	if (!strcasecomp(acc_method, "news")) {
+	    /*
+	    **  News is different, so we need to check the name of the server,
+	    **  as well as the default port for selective exclusions.
+	    */
+	    char *host = NULL;
+	    if ((host = HTParse(addr, "", PARSE_HOST))) {
+		if (strchr(host, ':') == NULL) {
+		    StrAllocCopy(Server_addr, "news://");
+		    StrAllocCat(Server_addr, host);
+		    StrAllocCat(Server_addr, ":119/");
+		}
+		FREE(host);
+	    } else if (getenv("NNTPSERVER") != NULL) {
 		StrAllocCopy(Server_addr, "news://");
-		StrAllocCat(Server_addr, host);
+		StrAllocCat(Server_addr, (char *)getenv("NNTPSERVER"));
 		StrAllocCat(Server_addr, ":119/");
 	    }
-	    FREE(host);
-	} else if (getenv("NNTPSERVER") != NULL) {
-	    StrAllocCopy(Server_addr, "news://");
-	    StrAllocCat(Server_addr, (char *)getenv("NNTPSERVER"));
-	    StrAllocCat(Server_addr, ":119/");
-	 }
-    } else if (!strcasecomp(acc_method, "wais")) {
-	/*
+	} else if (!strcasecomp(acc_method, "wais")) {
+	    /*
 	**  Wais also needs checking of the default port
 	**  for selective exclusions.
 	*/
-	char *host = NULL;
-	if ((host = HTParse(addr, "", PARSE_HOST))) {
-	    if (!(strchr(host, ':'))) {
-		StrAllocCopy(Server_addr, "wais://");
-		StrAllocCat(Server_addr, host);
-		StrAllocCat(Server_addr, ":210/");
+	    char *host = NULL;
+	    if ((host = HTParse(addr, "", PARSE_HOST))) {
+		if (!(strchr(host, ':'))) {
+		    StrAllocCopy(Server_addr, "wais://");
+		    StrAllocCat(Server_addr, host);
+		    StrAllocCat(Server_addr, ":210/");
+		}
+		FREE(host);
 	    }
-	    FREE(host);
-	}
-	else
+	    else
+		StrAllocCopy(Server_addr, addr);
+	} else {
 	    StrAllocCopy(Server_addr, addr);
-    } else {
-	StrAllocCopy(Server_addr, addr);
+	}
+	override_flag = override_proxy(Server_addr);
     }
 
-    if (!override_proxy(Server_addr)) {
-	char * gateway_parameter, *gateway, *proxy;
+    if (!override_flag && !using_proxy) {
+	char * gateway_parameter = NULL, *gateway, *proxy;
 
 	/*
 	**  Search for gateways.
 	*/
-	gateway_parameter = (char *)calloc(1, (strlen(acc_method) + 20));
-	if (gateway_parameter == NULL)
-	    outofmem(__FILE__, "HTLoad");
-	strcpy(gateway_parameter, "WWW_");
-	strcat(gateway_parameter, acc_method);
-	strcat(gateway_parameter, "_GATEWAY");
-	gateway = (char *)getenv(gateway_parameter); /* coerce for decstation */
+	HTSprintf0(&gateway_parameter, "WWW_%s_GATEWAY", acc_method);
+	gateway = getenv(gateway_parameter); /* coerce for decstation */
 
 	/*
 	**  Search for proxy servers.
@@ -477,17 +504,16 @@ PRIVATE int get_physical ARGS2(
 	    /*
 	    ** If we got to here, a file URL is for ftp on a remote host. - FM
 	    */
-	    strcpy(gateway_parameter, "ftp");
+	    strcpy(gateway_parameter, "ftp_proxy");
 	else
-	    strcpy(gateway_parameter, acc_method);
-	strcat(gateway_parameter, "_proxy");
-	proxy = (char *)getenv(gateway_parameter);
+	    sprintf(gateway_parameter, "%s_proxy", acc_method);
+	proxy = getenv(gateway_parameter);
 	FREE(gateway_parameter);
 
 	if (gateway)
-	    CTRACE(tfp, "Gateway found: %s\n", gateway);
+	    CTRACE((tfp, "Gateway found: %s\n", gateway));
 	if (proxy)
-	    CTRACE(tfp, "proxy server found: %s\n", proxy);
+	    CTRACE((tfp, "proxy server found: %s\n", proxy));
 
 	/*
 	**  Proxy servers have precedence over gateway servers.
@@ -495,6 +521,14 @@ PRIVATE int get_physical ARGS2(
 	if (proxy) {
 	    char * gatewayed = NULL;
 	    StrAllocCopy(gatewayed,proxy);
+	    if (!strncmp(gatewayed, "http", 4)) {
+		char *cp = strrchr(gatewayed, '/');
+		/* Append a slash to the proxy specification if it doesn't
+		 * end in one but otherwise looks normal (starts with "http",
+		 * has no '/' other than ones before the hostname). - kw */
+		if (cp && (cp - gatewayed) <= 7)
+		    LYAddHtmlSep(&gatewayed);
+	    }
 	    /*
 	    ** Ensure that the proxy server uses ftp for file URLs. - FM
 	    */
@@ -578,13 +612,16 @@ PUBLIC void LYUCPushAssumed ARGS1(
 	if (anchor_UCI && anchor_UCI->MIMEname) {
 	    pushed_assume_MIMEname = UCAssume_MIMEcharset;
 	    UCAssume_MIMEcharset = NULL;
+	    if (HTCJK == JAPANESE)
+		StrAllocCopy(UCAssume_MIMEcharset, pushed_assume_MIMEname);
+	    else
 	    StrAllocCopy(UCAssume_MIMEcharset, anchor_UCI->MIMEname);
 	    pushed_assume_LYhndl = anchor_LYhndl;
 	    /* some diagnostics */
 	    if (UCLYhndl_for_unspec != anchor_LYhndl)
-	    CTRACE(tfp, "LYUCPushAssumed: UCLYhndl_for_unspec changed %d -> %d\n",
+	    CTRACE((tfp, "LYUCPushAssumed: UCLYhndl_for_unspec changed %d -> %d\n",
 			UCLYhndl_for_unspec,
-			anchor_LYhndl);
+			anchor_LYhndl));
 	    UCLYhndl_for_unspec = anchor_LYhndl;
 	    return;
 	}
@@ -603,9 +640,9 @@ PUBLIC int LYUCPopAssumed NOARGS
     if (pushed_assume_LYhndl >= 0) {
 	/* some diagnostics */
 	if (UCLYhndl_for_unspec != pushed_assume_LYhndl)
-	CTRACE(tfp, "LYUCPopAssumed: UCLYhndl_for_unspec changed %d -> %d\n",
+	CTRACE((tfp, "LYUCPopAssumed: UCLYhndl_for_unspec changed %d -> %d\n",
 		    UCLYhndl_for_unspec,
-		    pushed_assume_LYhndl);
+		    pushed_assume_LYhndl));
 	UCLYhndl_for_unspec = pushed_assume_LYhndl;
 	pushed_assume_LYhndl = -1;
 	FREE(UCAssume_MIMEcharset);
@@ -641,11 +678,17 @@ PRIVATE int HTLoad ARGS4(
     HTProtocol *p;
     int status = get_physical(addr, anchor);
     if (status == HT_FORBIDDEN) {
+	 /* prevent crash if telnet or similar was forbidden by rule. - kw */
+	LYFixCursesOn("show alert:");
 	return HTLoadError(sink, 500, gettext("Access forbidden by rule"));
+    } else if (status == HT_REDIRECTING) {
+	return status;	/* fake redirection by rule, to redirecting_url */
     }
     if (status < 0)
 	return status;	/* Can't resolve or forbidden */
 
+    /* prevent crash if telnet or similar mapped or proxied by rule. - kw */
+    LYFixCursesOnForAccess(addr, HTAnchor_physical(anchor));
     p = (HTProtocol *)HTAnchor_protocol(anchor);
     anchor->underway = TRUE;		/* Hack to deal with caching */
     status= (*(p->load))(HTAnchor_physical(anchor),
@@ -667,6 +710,8 @@ PUBLIC HTStream *HTSaveStream ARGS1(
 
     return (*p->saveStream)(anchor);
 }
+
+PUBLIC int redirection_attempts = 0; /* counter in HTLoadDocument */
 
 /*	Load a document - with logging etc		HTLoadDocument()
 **	----------------------------------
@@ -697,9 +742,8 @@ PRIVATE BOOL HTLoadDocument ARGS4(
     CONST char * address_to_load = full_address;
     char *cp;
     BOOL ForcingNoCache = LYforce_no_cache;
-    static int redirection_attempts = 0;
 
-    CTRACE (tfp, "HTAccess: loading document %s\n", address_to_load);
+    CTRACE((tfp, "HTAccess: loading document %s\n", address_to_load));
 
     /*
     **	Free use_this_url_instead and reset permanent_redirection
@@ -755,9 +799,9 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	       !strncmp(cp, "Location=", 9)) {
 	    DocAddress NewDoc;
 
-	    CTRACE (tfp, "HTAccess: '%s' is a redirection URL.\n",
-			  anchor->address);
-	    CTRACE (tfp, "HTAccess: Redirecting to '%s'\n", cp+9);
+	    CTRACE((tfp, "HTAccess: '%s' is a redirection URL.\n",
+			  anchor->address));
+	    CTRACE((tfp, "HTAccess: Redirecting to '%s'\n", cp+9));
 
 	    /*
 	    **	Don't exceed the redirection_attempts limit. - FM
@@ -779,7 +823,7 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	    NewDoc.bookmark = anchor->bookmark;
 	    NewDoc.isHEAD = anchor->isHEAD;
 	    NewDoc.safe = anchor->safe;
-	    anchor = (HTParentAnchor *)HTAnchor_findAddress(&NewDoc);
+	    anchor = HTAnchor_parent(HTAnchor_findAddress(&NewDoc));
 	}
     }
     /*
@@ -855,7 +899,7 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	     strncmp(full_address, "LYNXIMGMAP:", 11)))
 #endif /* TRACK_INTERNAL_LINKS */
 	{
-	    CTRACE(tfp, "HTAccess: Document already in memory.\n");
+	    CTRACE((tfp, "HTAccess: Document already in memory.\n"));
 	    HText_select(text);
 
 #ifdef DIRED_SUPPORT
@@ -866,7 +910,7 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	    return YES;
 	} else {
 	    ForcingNoCache = YES;
-	    CTRACE(tfp, "HTAccess: Auto-reloading document.\n");
+	    CTRACE((tfp, "HTAccess: Auto-reloading document.\n"));
 	}
     }
 
@@ -881,7 +925,7 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	FREE(anchor->title);
     }
     status = HTLoad(address_to_load, anchor, format_out, sink);
-    CTRACE(tfp, "HTAccess:  status=%d\n", status);
+    CTRACE((tfp, "HTAccess:  status=%d\n", status));
 
     /*
     **	Log the access if necessary.
@@ -895,11 +939,11 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 		status < 0 ? "FAIL" : "GET",
 		full_address);
 	fflush(HTlogfile);	/* Actually update it on disk */
-	CTRACE(tfp, "Log: %24.24s %s %s %s\n",
+	CTRACE((tfp, "Log: %24.24s %s %s %s\n",
 		    ctime(&theTime),
 		    HTClientHost ? HTClientHost : "local",
 		    status < 0 ? "FAIL" : "GET",
-		    full_address);
+		    full_address));
     }
 
     /*
@@ -923,11 +967,18 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	**  So, instead, we'll go all the way back to the top of getfile
 	**  in LYGetFile.c when the status is HT_REDIRECTING.  This may
 	**  seem bizarre, but it works like a charm! - FM
+	**
+	**  Actually, the location header for redirections is now again
+	**  picked up in HTMIME.c.  But that's an internal matter between
+	**  HTTP.c and HTMIME.c, is still under control of HTLoadHTTP for
+	**  http URLs, is done in a way that doesn't load the redirection
+	**  response's body (except when wanted as an error fallback), and
+	**  thus need not concern us here. - kw 1999-12-02
 	*/
-	CTRACE(tfp, "HTAccess: '%s' is a redirection URL.\n",
-		    address_to_load);
-	CTRACE(tfp, "HTAccess: Redirecting to '%s'\n",
-		     redirecting_url);
+	CTRACE((tfp, "HTAccess: '%s' is a redirection URL.\n",
+		    address_to_load));
+	CTRACE((tfp, "HTAccess: Redirecting to '%s'\n",
+		     redirecting_url));
 	/*
 	**  Prevent circular references.
 	*/
@@ -967,32 +1018,32 @@ PRIVATE BOOL HTLoadDocument ARGS4(
     permanent_redirection = FALSE;
 
     if (status == HT_LOADED) {
-	CTRACE(tfp, "HTAccess: `%s' has been accessed.\n",
-		    full_address);
+	CTRACE((tfp, "HTAccess: `%s' has been accessed.\n",
+		    full_address));
 	return YES;
     }
     if (status == HT_PARTIAL_CONTENT) {
 	HTAlert(gettext("Loading incomplete."));
-	CTRACE(tfp, "HTAccess: `%s' has been accessed, partial content.\n",
-		    full_address);
+	CTRACE((tfp, "HTAccess: `%s' has been accessed, partial content.\n",
+		    full_address));
 	return YES;
     }
 
     if (status == HT_NO_DATA) {
-	CTRACE(tfp, "HTAccess: `%s' has been accessed, No data left.\n",
-		    full_address);
+	CTRACE((tfp, "HTAccess: `%s' has been accessed, No data left.\n",
+		    full_address));
 	return NO;
     }
 
     if (status == HT_NOT_LOADED) {
-	CTRACE(tfp, "HTAccess: `%s' has been accessed, No data loaded.\n",
-		    full_address);
+	CTRACE((tfp, "HTAccess: `%s' has been accessed, No data loaded.\n",
+		    full_address));
 	return NO;
     }
 
     if (status == HT_INTERRUPTED) {
-	CTRACE(tfp, "HTAccess: `%s' has been accessed, transfer interrupted.\n",
-		    full_address);
+	CTRACE((tfp, "HTAccess: `%s' has been accessed, transfer interrupted.\n",
+		    full_address));
 	return NO;
     }
 
@@ -1004,9 +1055,9 @@ PRIVATE BOOL HTLoadDocument ARGS4(
 	fprintf(stderr,
  gettext("**** HTAccess: socket or file number returned by obsolete load routine!\n"));
 	fprintf(stderr,
- gettext("**** HTAccess: Internal software error.  Please mail lynx_dev@sig.net!\n"));
+ gettext("**** HTAccess: Internal software error.  Please mail lynx-dev@sig.net!\n"));
 	fprintf(stderr, gettext("**** HTAccess: Status returned was: %d\n"),status);
-	exit(-1);
+	exit(EXIT_FAILURE);
     }
 
     /* Failure in accessing a document */
@@ -1018,7 +1069,7 @@ PRIVATE BOOL HTLoadDocument ARGS4(
     _HTProgress(cp);
     FREE(cp);
 
-    CTRACE(tfp, "HTAccess: Can't access `%s'\n", full_address);
+    CTRACE((tfp, "HTAccess: Can't access `%s'\n", full_address));
     HTLoadError(sink, 500, gettext("Unable to access document."));
     return NO;
 } /* HTLoadDocument */
@@ -1193,7 +1244,7 @@ PUBLIC BOOL HTSearch ARGS2(
     CONST char * p, *s, *e;		/* Pointers into keywords */
     char * address = NULL;
     BOOL result;
-    char * escaped = (char *)calloc(1, ((strlen(keywords)*3) + 1));
+    char * escaped = typecallocn(char, (strlen(keywords)*3) + 1);
     static CONST BOOL isAcceptable[96] =
 
     /*	 0 1 2 3 4 5 6 7 8 9 A B C D E F */
@@ -1217,12 +1268,12 @@ PUBLIC BOOL HTSearch ARGS2(
     for (e = s + strlen(s); e > s && WHITE(*(e-1)); e--) /* Scan */
 	;	/* Skip trailers */
     for (q = escaped, p = s; p < e; p++) {	/* Scan stripped field */
-	unsigned char c = (unsigned char)TOASCII(*p);
+	unsigned char c = UCH(TOASCII(*p));
 	if (WHITE(*p)) {
 	    *q++ = '+';
 	} else if (HTCJK != NOCJK) {
 	    *q++ = *p;
-	} else if (c>=32 && c<=(unsigned char)127 && isAcceptable[c-32]) {
+	} else if (c>=32 && c<=UCH(127) && isAcceptable[c-32]) {
 	    *q++ = *p;				/* 930706 TBL for MVS bug */
 	} else {
 	    *q++ = '%';
@@ -1312,7 +1363,7 @@ PUBLIC HTParentAnchor * HTHomeAnchor NOARGS
 	FILE * fp = fopen(REMOTE_POINTER, "r");
 	char * status;
 	if (fp) {
-	    my_home_document = (char*)calloc(1, MAX_FILE_NAME);
+	    my_home_document = typecallocn(char, MAX_FILE_NAME);
 	    if (my_home_document == NULL)
 		outofmem(__FILE__, "HTHomeAnchor");
 	    status = fgets(my_home_document, MAX_FILE_NAME, fp);
@@ -1325,7 +1376,7 @@ PUBLIC HTParentAnchor * HTHomeAnchor NOARGS
 	    StrAllocCopy(my_home_document, REMOTE_ADDRESS);
     }
 
-#ifdef unix
+#ifdef UNIX
     if (my_home_document == NULL) {
 	FILE * fp = NULL;
 	CONST char * home =  (CONST char*)getenv("HOME");
@@ -1341,20 +1392,20 @@ PUBLIC HTParentAnchor * HTHomeAnchor NOARGS
 	if (fp) {
 	    fclose(fp);
 	} else {
-	    CTRACE(tfp, "HTBrowse: No local home document ~/%s or %s\n",
-			PERSONAL_DEFAULT, LOCAL_DEFAULT_FILE);
+	    CTRACE((tfp, "HTBrowse: No local home document ~/%s or %s\n",
+			PERSONAL_DEFAULT, LOCAL_DEFAULT_FILE));
 	    FREE(my_home_document);
 	}
     }
-#endif /* unix */
+#endif /* UNIX */
     ref = HTParse((my_home_document ?
 		   my_home_document : (HTClientHost ?
 				     REMOTE_ADDRESS : LAST_RESORT)),
 		  "file:",
 		  PARSE_ACCESS|PARSE_HOST|PARSE_PATH|PARSE_PUNCTUATION);
     if (my_home_document) {
-	CTRACE(tfp, "HTAccess: Using custom home page %s i.e., address %s\n",
-		    my_home_document, ref);
+	CTRACE((tfp, "HTAccess: Using custom home page %s i.e., address %s\n",
+		    my_home_document, ref));
 	FREE(my_home_document);
     }
     anchor = (HTParentAnchor*)HTAnchor_findAddress(ref);

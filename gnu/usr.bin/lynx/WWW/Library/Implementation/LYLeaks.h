@@ -32,11 +32,22 @@
 **		string created by __FILE__ to not be dynamic in
 **		nature (don't free it and assume will exist at all
 **		times during execution).
+**	If you are using LY_FIND_LEAKS and LY_FIND_LEAKS_EXTENDED and
+**		want only normal memory tracking (not extended for
+**		HTSprintf/HTSprintf0) to be used in a certain file,
+**		define NO_EXTENDED_MEMORY_TRACKING and don't define
+**		NO_MEMORY_TRACKING before including this file.
 **  Revision History:
 **	05-26-94	created for Lynx 2-3-1, Garrett Arch Blythe
 **	10-30-97	modified to handle StrAllocCopy() and
 **			StrAllocCat(). - KW & FM
+**	1999-10-17	modified to handle HTSprintf0 and HTSprintf(),
+**			and to provide mark_malloced, if
+**			LY_FIND_LEAKS_EXTENDED is defined. - kw
 */
+
+/* Undefine this to get no improved HTSprintf0/HTSprintf tracking: */
+#define LY_FIND_LEAKS_EXTENDED
 
 /*
 **  Required includes
@@ -146,13 +157,42 @@ typedef struct AllocationList_tag	{
 #endif /* StrAllocCat */
 #define StrAllocCat(dest, src)  LYLeakSACat(&(dest), src, __FILE__, __LINE__)
 
+#define mark_malloced(a,size) LYLeak_mark_malloced(a,size, __FILE__, __LINE__)
+
+#if defined(LY_FIND_LEAKS_EXTENDED) && !defined(NO_EXTENDED_MEMORY_TRACKING)
+#ifdef HTSprintf0
+#undef HTSprintf0
+#endif /* HTSprintf0 */
+#define HTSprintf0 (Get_htsprintf0_fn(__FILE__,__LINE__))
+#ifdef HTSprintf
+#undef HTSprintf
+#endif /* HTSprintf */
+#define HTSprintf (Get_htsprintf_fn(__FILE__,__LINE__))
+#endif /* LY_FIND_LEAKS_EXTENDED and not NO_EXTENDED_MEMORY_TRACKING */
+
+#else /* LY_FIND_LEAKS && !NO_MEMORY_TRACKING */
+
+#define mark_malloced(a,size)	/* no-op */
+
 #endif /* LY_FIND_LEAKS && !NO_MEMORY_TRACKING */
 
+#if defined(LY_FIND_LEAKS)
+#define PUBLIC_IF_FIND_LEAKS PUBLIC
+#else
+#define PUBLIC_IF_FIND_LEAKS PRIVATE
+#endif
 /*
 **	Function declarations
 **	See the appropriate source file for usage.
 */
 extern void LYLeaks NOPARAMS;
+#ifdef LY_FIND_LEAKS_EXTENDED
+extern AllocationList *LYLeak_mark_malloced PARAMS((
+	void *		vp_alloced,
+	size_t		st_bytes,
+	CONST char *	cp_File,
+	CONST short	ssi_Line));
+#endif /* LY_FIND_LEAKS_EXTENDED */
 extern void *LYLeakMalloc PARAMS((
 	size_t		st_bytes,
 	CONST char *	cp_File,
@@ -181,5 +221,18 @@ extern char * LYLeakSACat PARAMS((
 	CONST char *	src,
 	CONST char *	cp_File,
 	CONST short	ssi_Line));
+
+#ifdef LY_FIND_LEAKS_EXTENDED
+/* Trick to get tracking of var arg functions without relying
+   on var arg preprocessor macros: */
+
+typedef char * HTSprintflike PARAMS((char **, CONST char *, ...));
+extern HTSprintflike *Get_htsprintf_fn PARAMS((
+			   CONST char *	cp_File,
+			   CONST short	ssi_Line));
+extern HTSprintflike *Get_htsprintf0_fn PARAMS((
+			   CONST char *	cp_File,
+			   CONST short	ssi_Line));
+#endif /* LY_FIND_LEAKS_EXTENDED */
 
 #endif /* __LYLEAKS_H */

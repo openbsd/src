@@ -2,17 +2,23 @@
 #define LYOPTIONS_H
 
 #include <LYStructs.h>
+#include <LYStrings.h>
 
 extern BOOLEAN term_options; /* for LYgetstr() */
 
+extern BOOLEAN LYCheckUserAgent NOPARAMS;
 extern void edit_bookmarks NOPARAMS;
 extern  int popup_choice PARAMS((
 	int		cur_choice,
 	int		line,
 	int		column,
-	char ** 	choices,
-	int		i_length,
-	int		disabled));
+	CONST char ** 	choices,
+	int		length,
+	int		disabled,
+	BOOLEAN		mouse));
+
+#define LYChoosePopup(cur, line, column, choices, length, disabled, mouse) \
+	popup_choice(cur, line, column, (CONST char **)choices, length, disabled, mouse)
 
 #ifndef NO_OPTION_FORMS
 extern int postoptions PARAMS((document *newdoc));
