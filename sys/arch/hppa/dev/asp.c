@@ -1,7 +1,7 @@
-/*	$OpenBSD: asp.c,v 1.1 1998/11/23 02:55:43 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.2 1999/05/05 02:19:02 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,36 +40,72 @@
 #include <machine/autoconf.h>
 
 #include <hppa/dev/cpudevs.h>
+#include <hppa/dev/viper.h>
 
 #include <hppa/gsc/gscbusvar.h>
 
+struct asp_hwr {
+	u_int8_t asp_reset;
+	u_int8_t asp_resv[31];
+	u_int8_t asp_version;
+	u_int8_t asp_resv1[15];
+	u_int8_t asp_scsidsync;
+	u_int8_t asp_resv2[15];
+	u_int8_t asp_error;
+};
+
+struct asp_trs {
+	u_int32_t asp_irr;
+	u_int32_t asp_imr;
+	u_int32_t asp_ipr;
+	u_int32_t asp_icr;
+	u_int32_t asp_iar;
+	u_int32_t asp_resv[3];
+	u_int8_t  asp_cled;
+#define	ASP_LEDDATA	1
+#define	ASP_LEDSTROBE	2
+#define	ASP_LEDPULSE	8
+	u_int8_t  asp_resv1[3];
+	struct {
+		u_int		:20,
+			asp_spu	: 3,	/* SPU ID board jumper */
+#define	ASP_SPUCOBRA	0
+#define	ASP_SPUCORAL	1
+#define	ASP_SPUBUSH	2
+#define	ASP_SPUHARDBALL	3
+#define	ASP_SPUSCORPIO	4
+#define	ASP_SPUCORAL2	5
+			asp_sw	: 1,	/* front switch is normal */
+			asp_clk : 1,	/* SCSI clock is doubled */
+			asp_lan : 2,	/* LAN iface selector */
+#define	ASP_LANINVAL	0
+#define	ASP_LANAUI	1
+#define	ASP_LANTHIN	2
+#define	ASP_LANMISS	3
+			asp_lanf: 1,	/* LAN AUI fuse is ok */
+			asp_spwr: 1,	/* SCSI power ok */
+			asp_scsi: 3;	/* SCSI ctrl ID */
+	} _asp_ios;
+#define	asp_spu		_asp_ios.asp_spu
+#define	asp_sw		_asp_ios.asp_sw
+#define	asp_clk		_asp_ios.asp_clk
+#define	asp_lan		_asp_ios.asp_lan
+#define	asp_lanf	_asp_ios.asp_lanf
+#define	asp_spwr	_asp_ios.asp_spwr
+#define	asp_scsi	_asp_ios.asp_scsi
+};
+
 struct asp_softc {
-	struct  device sc_dv;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_cioh;
-
+	struct  device sc_dev;
 	struct gscbus_ic sc_ic;
 
+	struct asp_hwr volatile *sc_hw;
+	struct asp_trs volatile *sc_trs;
 	u_int8_t sc_leds;
 };
 
-/* ASP "Primary Controller" definitions */
+/* ASP "Primary Controller" HPA */
 #define	ASP_CHPA	0xF0800000
-#define	ASP_IRR		0x000
-#define	ASP_IMR		0x004
-#define	ASP_IPR		0x008
-#define	ASP_LEDS	0x020
-#define		ASP_LED_DATA	0x01
-#define		ASP_LED_STROBE	0x02
-#define		ASP_LED_PULSE	0x08
-
-/* ASP registers definitions */
-#define	ASP_RESET	0x000
-#define	ASP_VERSION	0x020
-#define	ASP_DSYNC	0x030
-#define	ASP_ERROR	0x040
 
 int	aspmatch __P((struct device *, void *, void *));
 void	aspattach __P((struct device *, struct device *, void *));
@@ -82,7 +118,6 @@ struct cfdriver asp_cd = {
 	NULL, "asp", DV_DULL
 };
 
-void asp_intr_attach __P((void *v, u_int in));
 void asp_intr_establish __P((void *v, u_int32_t mask));
 void asp_intr_disestablish __P((void *v, u_int32_t mask));
 u_int32_t asp_intr_check __P((void *v));
@@ -96,16 +131,10 @@ aspmatch(parent, cfdata, aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
-	bus_space_handle_t ioh;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_ASP)
 		return 0;
-
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
 
 	return 1;
 }
@@ -119,28 +148,39 @@ aspattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct asp_softc *sc = (struct asp_softc *)self;
 	struct gsc_attach_args ga;
-	u_int ver;
+	bus_space_handle_t ioh;
+	register u_int32_t irr;
+	register int s;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
+#ifdef DEBUG
+		printf("aspattach: can't map IO space\n");
+#endif
+		return;
+	}
+
+	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
+	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
 
 	sc->sc_leds = 0;
-	sc->sc_iot = ca->ca_iot;
-	if (bus_space_map(sc->sc_iot, ca->ca_hpa, IOMOD_HPASIZE, 0,
-			  &sc->sc_ioh))
-		panic("aspattach: unable to map bus space");
-
-	if (bus_space_map(sc->sc_iot, ASP_CHPA, IOMOD_HPASIZE, 0,
-			  &sc->sc_cioh))
-		panic("aspattach: unable to map bus space");
 
 	/* reset ASP */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ASP_RESET, 1);
+	sc->sc_hw->asp_reset = 1;
+	delay(400000);
 
-	ver = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ASP_VERSION);
-	printf(": hpa 0x%x, rev %d\n", ca->ca_hpa,
-	       (ver & 0xf0) >> 4, ver & 0xf);
+	s = splhigh();
+	viper_setintrwnd(1 << ca->ca_irq);
+
+	sc->sc_trs->asp_imr = ~0;
+	irr = sc->sc_trs->asp_irr;
+	sc->sc_trs->asp_imr = 0;
+	splx(s);
+
+	printf (": rev %d, spu %d, lan %d, scsi %d\n", sc->sc_hw->asp_version,
+		sc->sc_trs->asp_spu,sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
 	sc->sc_ic.gsc_type = gsc_asp;
 	sc->sc_ic.gsc_dv = sc;
-	sc->sc_ic.gsc_intr_attach = asp_intr_attach;
 	sc->sc_ic.gsc_intr_establish = asp_intr_establish;
 	sc->sc_ic.gsc_intr_disestablish = asp_intr_disestablish;
 	sc->sc_ic.gsc_intr_check = asp_intr_check;
@@ -159,34 +199,15 @@ heartbeat(int on)
 	register struct asp_softc *sc;
 
 	sc = asp_cd.cd_devs[0];
-	if (sc) {
-		register u_int8_t r = sc->sc_leds ^= ASP_LED_PULSE, b;
+	if (asp_cd.cd_ndevs && sc) {
+		register u_int8_t r = sc->sc_leds ^= ASP_LEDPULSE, b;
 		for (b = 0x80; b; b >>= 1) {
-			bus_space_write_1(sc->sc_iot, sc->sc_cioh, ASP_LEDS,
-					  (r & b)? 1 : 0);
-			bus_space_write_1(sc->sc_iot, sc->sc_cioh, ASP_LEDS,
-					  ASP_LED_STROBE | ((r & b)? 1 : 0));
+			sc->sc_trs->asp_cled = (r & b)? 1 : 0;
+			sc->sc_trs->asp_cled = ASP_LEDSTROBE | (r & b)? 1 : 0;
 		}
 	}
 }
 #endif
-
-void
-asp_intr_attach(v, irq)
-	void *v;
-	u_int irq;
-{
-	register struct asp_softc *sc = v;
-	int s;
-
-	s = splhigh();
-	cpu_setintrwnd(1 << irq);
-
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, ~0);
-	bus_space_read_4 (sc->sc_iot, sc->sc_cioh, ASP_IRR);
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, 0);
-	splx(s);
-}
 
 void
 asp_intr_establish(v, mask)
@@ -195,8 +216,7 @@ asp_intr_establish(v, mask)
 {
 	register struct asp_softc *sc = v;
 
-	mask |= bus_space_read_4(sc->sc_iot, sc->sc_cioh, ASP_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, mask);
+	sc->sc_trs->asp_imr |= mask;
 }
 
 void
@@ -206,8 +226,7 @@ asp_intr_disestablish(v, mask)
 {
 	register struct asp_softc *sc = v;
 
-	mask &= ~bus_space_read_4(sc->sc_iot, sc->sc_cioh, ASP_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, mask);
+	sc->sc_trs->asp_imr &= ~mask;
 }
 
 u_int32_t
@@ -215,13 +234,13 @@ asp_intr_check(v)
 	void *v;
 {
 	register struct asp_softc *sc = v;
-	register u_int32_t mask, imr;
+	register u_int32_t irr, imr;
 
-	imr = bus_space_read_4(sc->sc_iot, sc->sc_cioh, ASP_IMR);
-	mask = bus_space_read_4(sc->sc_iot, sc->sc_cioh, ASP_IRR);
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, imr & ~mask);
+	imr = sc->sc_trs->asp_imr;
+	irr = sc->sc_trs->asp_irr;
+	sc->sc_trs->asp_imr = imr & ~irr;
 
-	return mask;
+	return irr;
 }
 
 void
@@ -231,6 +250,5 @@ asp_intr_ack(v, mask)
 {
 	register struct asp_softc *sc = v;
 
-	mask |= bus_space_read_4(sc->sc_iot, sc->sc_cioh, ASP_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_cioh, ASP_IMR, mask);
+	sc->sc_trs->asp_imr |= mask;
 }
