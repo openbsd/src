@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.21 2001/06/29 21:52:42 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.22 2001/07/02 04:34:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -61,9 +61,24 @@ struct ubsec_q2_rng {
 };
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
+struct ubsec_dmachunk {
+#if 0
+	struct ubsec_mcr	d_mcr;
+	struct ubsec_mcr_add	d_mcradd[UBS_MAX_AGGR-1];
+#endif
+	struct ubsec_pktbuf	d_sbuf[UBS_MAX_SCATTER-1];
+	struct ubsec_pktbuf	d_dbuf[UBS_MAX_SCATTER-1];
+	u_int32_t		d_macbuf[5];
+	union {
+		struct ubsec_pktctx_long	ctxl;
+		struct ubsec_pktctx		ctx;
+	} d_ctx;
+};
+
 struct ubsec_dma {
 	SIMPLEQ_ENTRY(ubsec_dma)	d_next;
-	struct ubsec_dma_alloc		d_ctx;
+	struct ubsec_dmachunk		*d_dma;
+	struct ubsec_dma_alloc		d_alloc;
 };
 
 struct ubsec_softc {
@@ -111,7 +126,6 @@ struct ubsec_q {
 	long				q_dst_packp[UBS_MAX_SCATTER];
 	int				q_dst_packl[UBS_MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
-	u_int32_t			q_macbuf[5];
 	int				q_sesn;
 	int				q_flags;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.64 2001/06/29 21:52:41 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.65 2001/07/02 04:34:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -196,9 +196,10 @@ ubsec_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->sc_dma);
 	dmap = sc->sc_dmaa;
 	for (i = 0; i < UBS_MAX_NQUEUE; i++, dmap++) {
-		if (ubsec_dma_malloc(sc, MAX(sizeof(struct ubsec_pktctx_long),
-		    sizeof(struct ubsec_pktctx)), &dmap->d_ctx, 0))
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_dmachunk),
+		    &dmap->d_alloc, 0))
 			break;
+		dmap->d_dma = (struct ubsec_dmachunk *)dmap->d_alloc.dma_vaddr;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
 	}
 
@@ -339,7 +340,6 @@ ubsec_feed(sc)
 		npkts = UBS_MAX_AGGR;
 	if (npkts < 2)
 		goto feed1;
-	goto feed1;
 
 	if (READ_REG(sc, BS_STAT) & BS_STAT_MCR1_FULL)
 		return (0);
@@ -828,11 +828,8 @@ ubsec_process(crp)
 		if (j == 0)
 			pb = &q->q_mcr->mcr_ipktbuf;
 		else
-			pb = &q->q_srcpkt[j - 1];
+			pb = &dmap->d_dma->d_sbuf[j - 1];
 
-#ifdef UBSEC_DEBUG
-		printf("  pb v %08x p %08x\n", pb, vtophys(pb));
-#endif
 		pb->pb_addr = q->q_src_packp[i];
 		if (stheend) {
 			if (q->q_src_packl[i] > stheend) {
@@ -848,7 +845,8 @@ ubsec_process(crp)
 		if ((i + 1) == q->q_src_npa)
 			pb->pb_next = 0;
 		else
-			pb->pb_next = vtophys(&q->q_srcpkt[j]);
+			pb->pb_next = dmap->d_alloc.dma_paddr +
+			    offsetof(struct ubsec_dmachunk, d_sbuf[j]);
 		j++;
 	}
 #ifdef UBSEC_DEBUG
@@ -856,19 +854,13 @@ ubsec_process(crp)
 	    q->q_mcr->mcr_ipktbuf.pb_len,
 	    q->q_mcr->mcr_ipktbuf.pb_addr,
 	    q->q_mcr->mcr_ipktbuf.pb_next);
-	for (i = 0; i < j - 1; i++) {
-		printf("  buf[%x]: %d@%x -> %x\n", vtophys(&q->q_srcpkt[i]),
-		    q->q_srcpkt[i].pb_len,
-		    q->q_srcpkt[i].pb_addr,
-		    q->q_srcpkt[i].pb_next);
-	}
 #endif
 
 	if (enccrd == NULL && maccrd != NULL) {
 		q->q_mcr->mcr_opktbuf.pb_addr = 0;
 		q->q_mcr->mcr_opktbuf.pb_len = 0;
-		q->q_mcr->mcr_opktbuf.pb_next =
-		    (u_int32_t)vtophys(q->q_macbuf);
+		q->q_mcr->mcr_opktbuf.pb_next = dmap->d_alloc.dma_paddr +
+		    offsetof(struct ubsec_dmachunk, d_macbuf[0]);
 #ifdef UBSEC_DEBUG
 		printf("opkt: %x %x %x\n",
 		    q->q_mcr->mcr_opktbuf.pb_addr,
@@ -961,7 +953,7 @@ ubsec_process(crp)
 			if (j == 0)
 				pb = &q->q_mcr->mcr_opktbuf;
 			else
-				pb = &q->q_dstpkt[j - 1];
+				pb = &dmap->d_dma->d_dbuf[j - 1];
 
 			pb->pb_addr = q->q_dst_packp[i];
 
@@ -978,11 +970,13 @@ ubsec_process(crp)
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
-					pb->pb_next = vtophys(q->q_macbuf);
+					pb->pb_next = dmap->d_alloc.dma_paddr +
+					    offsetof(struct ubsec_dmachunk, d_macbuf[0]);
 				else
 					pb->pb_next = 0;
 			} else
-				pb->pb_next = vtophys(&q->q_dstpkt[j]);
+				pb->pb_next = dmap->d_alloc.dma_paddr +
+				    offsetof(struct ubsec_dmachunk, d_dbuf[j]);
 			j++;
 		}
 #ifdef UBSEC_DEBUG
@@ -991,22 +985,17 @@ ubsec_process(crp)
 		    q->q_mcr->mcr_opktbuf.pb_len,
 		    q->q_mcr->mcr_opktbuf.pb_addr,
 		    q->q_mcr->mcr_opktbuf.pb_next);
-		for (i = 0; i < j - 1; i++) {
-			printf("  buf[%d, %x]: %d@%x -> %x\n", i+1,
-			    vtophys(&q->q_dstpkt[i]),
-			    q->q_dstpkt[i].pb_len,
-			    q->q_dstpkt[i].pb_addr,
-			    q->q_dstpkt[i].pb_next);
-		}
 #endif
 	}
 
-	q->q_mcr->mcr_cmdctxp = dmap->d_ctx.dma_paddr;
+	q->q_mcr->mcr_cmdctxp = dmap->d_alloc.dma_paddr +
+	    offsetof(struct ubsec_dmachunk, d_ctx);
 
 	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
 		struct ubsec_pktctx_long *ctxl;
 
-		ctxl = (struct ubsec_pktctx_long *)dmap->d_ctx.dma_vaddr;
+		ctxl = (struct ubsec_pktctx_long *)(dmap->d_alloc.dma_vaddr +
+		    offsetof(struct ubsec_dmachunk, d_ctx));
 		
 		/* transform small context into long context */
 		ctxl->pc_len = sizeof(struct ubsec_pktctx_long);
@@ -1022,9 +1011,11 @@ ubsec_process(crp)
 		ctxl->pc_iv[0] = ctx.pc_iv[0];
 		ctxl->pc_iv[1] = ctx.pc_iv[1];
 	} else
-		bcopy(&ctx, dmap->d_ctx.dma_vaddr,
+		bcopy(&ctx, dmap->d_alloc.dma_vaddr +
+		    offsetof(struct ubsec_dmachunk, d_ctx),
 		    sizeof(struct ubsec_pktctx));
-	bus_dmamap_sync(sc->sc_dmat, dmap->d_ctx.dma_map, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map,
+	    BUS_DMASYNC_PREREAD);
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1060,8 +1051,8 @@ ubsec_callback(sc, q)
 	struct cryptodesc *crd;
 	struct ubsec_dma *dmap = q->q_dma;
 
-	bus_dmamap_sync(sc->sc_dmat, dmap->d_ctx.dma_map, BUS_DMASYNC_POSTREAD);
-	SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
+	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map,
+	    BUS_DMASYNC_POSTREAD);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
@@ -1093,11 +1084,15 @@ ubsec_callback(sc, q)
 			continue;
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
-			    crd->crd_inject, 12, (caddr_t)q->q_macbuf);
+			    crd->crd_inject, 12,
+			    (caddr_t)dmap->d_dma->d_macbuf);
 		else if (crp->crp_flags & CRYPTO_F_IOV && crp->crp_mac)
-			bcopy((caddr_t)q->q_macbuf, crp->crp_mac, 12);
+			bcopy((caddr_t)dmap->d_dma->d_macbuf,
+			    crp->crp_mac, 12);
 		break;
 	}
+
+	SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
 
 	/*
 	 * note that q->q_mcr is not freed, because ubsec_intr() has to
