@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.183 2001/09/19 16:27:47 todd Exp $
+#	$OpenBSD: rc,v 1.184 2001/09/21 05:51:13 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -117,7 +117,15 @@ echo 'setting tty flags'
 ttyflags -a
 
 if [ "X$pf" != X"NO" ]; then
-	echo "block in all\nblock out all" | pfctl -R - -e
+	RULES="block in all\nblock out all"
+	case `sysctl vfs.mounts.nfs` in
+	*[1-9]*)
+		# don't kill NFS
+		RULES="$RULES\npass in proto udp from any port { 111, 2049 } to any"
+		RULES="$RULES\npass out proto udp from any to any port { 111, 2049 }"
+		;;
+	esac
+	echo $RULES | pfctl -R - -e
 fi
 
 if [ -f /etc/sysctl.conf ]; then
@@ -146,11 +154,6 @@ fi
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
-
-if [ "X$pf" != X"NO" ]; then
-	ifconfig pflog0 up
-	pflogd ${pflogd_flags}
-fi
 
 # if there's no /var/db/host.random, make one through /dev/urandom
 if [ ! -f /var/db/host.random ]; then
@@ -185,6 +188,11 @@ if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
 	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
 fi
 syslogd ${syslogd_flags}
+
+if [ "X$pf" != X"NO" ]; then
+	ifconfig pflog0 up
+	pflogd ${pflogd_flags}
+fi
 
 # $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
