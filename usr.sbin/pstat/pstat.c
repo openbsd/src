@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.31 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.32 2002/06/02 22:38:57 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.31 2002/05/30 19:09:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.32 2002/06/02 22:38:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ vnode_print(avnode, vp)
 	/*
 	 * set type
 	 */
-	switch(vp->v_type) {
+	switch (vp->v_type) {
 	case VNON:
 		type = "non"; break;
 	case VREG:
