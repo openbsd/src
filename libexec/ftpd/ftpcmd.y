@@ -985,8 +985,7 @@ yylex()
 					setproctitle("%s: %s", proctitle, cbuf);
 					*cp = c;
 				}
-			} else
-				setproctitle("%s: %s", proctitle, cbuf);
+			}
 #endif /* HASSETPROCTITLE */
 			if ((cp = strpbrk(cbuf, " \n")))
 				cpos = cp - cbuf;
