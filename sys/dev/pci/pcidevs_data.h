@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.439 2001/09/05 00:50:47 provos Exp 
+ *		OpenBSD: pcidevs,v 1.440 2001/09/05 22:59:21 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -633,6 +633,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
 	    "79C974 PCnet-PCI Ether+SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_ELANSC520,
+	    "ElanSC520 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
