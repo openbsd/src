@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.19 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: eso.c,v 1.20 2003/05/01 22:44:21 jason Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -66,21 +66,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#ifdef __OpenBSD__
-#include <machine/endian.h>
-#define htopci(x) htole32(x)
-#define pcitoh(x) letoh32(x)
-#else
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define htopci(x) bswap32(x)
-#define pcitoh(x) bswap32(x)
-#else
-#define htopci(x) (x)
-#define pcitoh(x) (x)
-#endif
-#endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) printf x
@@ -267,6 +252,8 @@ eso_attach(parent, self, aux)
 	sc->sc_dmas = NULL;
 	sc->sc_dmac_configured = 0;
 
+	sc->sc_pa = *pa;
+
 	/* Enable bus mastering. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -323,7 +310,6 @@ eso_attach(parent, self, aux)
 	} else {
 		DPRINTF(("%s: VC I/O space at 0x%lx not suitable, deferring\n",
 			 sc->sc_dev.dv_xname, (unsigned long)vcbase));
-		sc->sc_pa = *pa; 
 		config_defer((struct device *)sc, eso_defer);
 	}
 	
@@ -1592,7 +1578,7 @@ eso_freem(hdl, addr, type)
 	void *addr;
 	int type;
 {
-	struct eso_softc *sc;
+	struct eso_softc *sc = hdl;
 	struct eso_dma *p, **pp;
 
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->ed_next) {
@@ -1709,10 +1695,9 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	eso_write_mixreg(sc, ESO_MIXREG_A2C2, sc->sc_a2c2);
 	
 	/* Set up DMA controller. */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAA,
-	    htopci(DMAADDR(ed)));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAA, DMAADDR(ed));
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start));
+	    (uint8_t *)end - (uint8_t *)start);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAM,
 	    ESO_IO_A2DMAM_DMAENB | ESO_IO_A2DMAM_AUTO);
 	
@@ -1811,9 +1796,9 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MODE,
 	    DMA37MD_WRITE | DMA37MD_LOOP | DMA37MD_DEMAND);
 	bus_space_write_4(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAA,
-	    htopci(DMAADDR(ed)));
+	    DMAADDR(ed));
 	bus_space_write_2(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start - 1));
+	    (uint8_t *)end - (uint8_t *)start - 1);
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MASK, 0);
 
 	/* Start DMA. */
