@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.40 1998/07/26 17:36:09 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.41 1998/07/26 17:40:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.40 1998/07/26 17:36:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.41 1998/07/26 17:40:38 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -378,10 +378,9 @@ editor_add(lp, freep, p)
 			return;
 		}
 	} else {
-		/* Find first unused partition that is not 'b' or 'c' */
+		/* Find first unused partition that is not 'c' */
 		for (partno = 0; partno < MAXPARTITIONS; partno++, p++) {
-			if (lp->d_partitions[partno].p_size == 0 &&
-			    partno != 1 && partno != 2)
+			if (lp->d_partitions[partno].p_size == 0 && partno != 2)
 				break;
 		}
 		if (partno < MAXPARTITIONS) {
