@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.11 1997/04/06 06:31:51 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.12 1997/04/07 15:59:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -66,8 +66,8 @@ void tempfree(Cell *p) {
 jmp_buf env;
 
 #define PA2NUM	29	/* max number of pat,pat patterns allowed */
-long	paircnt;		/* number of them in use */
-long	pairstack[PA2NUM];	/* state of each pat,pat */
+int	paircnt;		/* number of them in use */
+int	pairstack[PA2NUM];	/* state of each pat,pat */
 
 Node	*winner = NULL;	/* root of parse tree */
 Cell	*tmps;		/* free temporary cells for execution */
@@ -201,7 +201,7 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	}
 	for (ncall = 0, x = a[1]; x != NULL; x = x->nnext)	/* args in call */
 		ncall++;
-	ndef = (long) fcn->fval;		/* args in defn */
+	ndef = (int) fcn->fval;			/* args in defn */
 	dprintf( ("calling %s, %d args (%d in defn), fp=%d\n", s, ncall, ndef, fp-frame) );
 	if (ncall > ndef)
 		ERROR "function %s called with %d args, uses only %d",
@@ -290,7 +290,7 @@ Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 Cell *arg(Node **a, int n)	/* nth argument of a function */
 {
 
-	n = (long) a[0];	/* argument number, counting from 0 */
+	n = (int) a[0];	/* argument number, counting from 0 */
 	dprintf( ("arg(%d), fp->nargs=%d\n", n, fp->nargs) );
 	if (n+1 > fp->nargs)
 		ERROR "argument #%d of function %s was not supplied",
@@ -352,9 +352,9 @@ Cell *getline(Node **a, int n)	/* get next line from specific input */
 	r = gettemp();
 	if (a[1] != NULL) {		/* getline < file */
 		x = execute(a[2]);		/* filename */
-		if ((long) a[1] == '|')	/* input pipe */
+		if ((int) a[1] == '|')	/* input pipe */
 			a[1] = (Node *) LE;	/* arbitrary flag */
-		fp = openfile((long) a[1], getsval(x));
+		fp = openfile((int) a[1], getsval(x));
 		tempfree(x);
 		if (fp == NULL)
 			n = -1;
@@ -750,7 +750,7 @@ int format(char *buf, int bufsize, char *s, Node *a)
 			if (*s == '*') {
 				x = execute(a);
 				a = a->nnext;
-				sprintf((char *)t-1, "%ld", (long) getfval(x));
+				sprintf((char *)t-1, "%d", (int) getfval(x));
 				t = fmt + strlen(fmt);
 				tempfree(x);
 			}
@@ -794,7 +794,7 @@ int format(char *buf, int bufsize, char *s, Node *a)
 			break;
 		case 1:	sprintf((char *)p, (char *)fmt, getfval(x)); break;
 		case 2:	sprintf((char *)p, (char *)fmt, (long) getfval(x)); break;
-		case 3:	sprintf((char *)p, (char *)fmt, (long) getfval(x)); break;
+		case 3:	sprintf((char *)p, (char *)fmt, (int) getfval(x)); break;
 		case 4:
 			t = getsval(x);
 			n = strlen(t);
@@ -806,7 +806,7 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		case 5:
 			isnum(x) ?
 			  (getfval(x) ?
-			    sprintf((char *)p, (char *)fmt, (long) getfval(x))
+			    sprintf((char *)p, (char *)fmt, (int) getfval(x))
                                       : (*p++ = '\0'))
 				 : sprintf((char *)p, (char *)fmt, getsval(x)[0]);
 			break;
@@ -818,7 +818,7 @@ int format(char *buf, int bufsize, char *s, Node *a)
 	*p = '\0';
 	for ( ; a; a = a->nnext)		/* evaluate any remaining args */
 		execute(a);
-	return ((long)(p - buf));
+	return ((int)(p - buf));
 }
 
 Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
@@ -857,7 +857,7 @@ Cell *awkprintf(Node **a, int n)		/* printf */
 		if (ferror(stdout))
 			ERROR "write error on stdout" FATAL;
 	} else {
-		fp = redirect((long)a[1], a[2]);
+		fp = redirect((int)a[1], a[2]);
 		fwrite(buf, len, 1, fp);
 		fflush(fp);
 		if (ferror(fp))
@@ -907,7 +907,7 @@ Cell *arith(Node **a, int n)	/* a[0] + a[1], etc.  also -a[0] */
 		break;
 	case POWER:
 		if (j >= 0 && modf(j, &v) == 0.0)	/* pos integer exponent */
-			i = ipow(i, (long) j);
+			i = ipow(i, (int) j);
 		else
 			i = errcheck(pow(i, j), "pow");
 		break;
@@ -1001,7 +1001,7 @@ Cell *assign(Node **a, int n)	/* a[0] = a[1], a[0] += a[1], etc. */
 		break;
 	case POWEQ:
 		if (yf >= 0 && modf(yf, &v) == 0.0)	/* pos integer exponent */
-			xf = ipow(xf, (long) yf);
+			xf = ipow(xf, (int) yf);
 		else
 			xf = errcheck(pow(xf, yf), "pow");
 		break;
@@ -1061,7 +1061,7 @@ Cell *dopa2(Node **a, int n)	/* a[0], a[1] { a[2] } */
 	Cell *x;
 	int pair;
 
-	pair = (long) a[3];
+	pair = (int) a[3];
 	if (pairstack[pair] == 0) {
 		x = execute(a[0]);
 		if (istrue(x))
@@ -1091,10 +1091,10 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	s = getsval(y);
 	if (a[2] == 0)		/* fs string */
 		fs = *FS;
-	else if ((long) a[3] == STRING) {	/* split(str,arr,"string") */
+	else if ((int) a[3] == STRING) {	/* split(str,arr,"string") */
 		x = execute(a[2]);
 		fs = getsval(x);
-	} else if ((long) a[3] == REGEXPR)
+	} else if ((int) a[3] == REGEXPR)
 		fs = (char*) "(regexpr)";	/* split(str,arr,/regexpr/) */
 	else
 		ERROR "illegal type of split()" FATAL;
@@ -1107,9 +1107,9 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	ap->sval = (char *) makesymtab(NSYMTAB);
 
 	n = 0;
-	if ((*s != '\0' && strlen(fs) > 1) || (long) a[3] == REGEXPR) {	/* reg expr */
+	if ((*s != '\0' && strlen(fs) > 1) || (int) a[3] == REGEXPR) {	/* reg expr */
 		fa *pfa;
-		if ((long) a[3] == REGEXPR) {	/* it's ready already */
+		if ((int) a[3] == REGEXPR) {	/* it's ready already */
 			pfa = (fa *) a[2];
 		} else {
 			pfa = makedfa(fs, 1);
@@ -1199,7 +1199,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	}
 	tempfree(ap);
 	tempfree(y);
-	if (a[2] != 0 && (long) a[3] == STRING)
+	if (a[2] != 0 && (int) a[3] == STRING)
 		tempfree(x);
 	x = gettemp();
 	x->tval = NUM;
@@ -1395,7 +1395,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	Node *nextarg;
 	FILE *fp;
 
-	t = (long) a[0];
+	t = (int) a[0];
 	x = execute(a[1]);
 	nextarg = a[1]->nnext;
 	switch (t) {
@@ -1437,7 +1437,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 			u = time((time_t *)0);
 		else
 			u = getfval(x);
-		srand((long) u); u = (long) u;
+		srand((int) u); u = (int) u;
 		break;
 	case FTOUPPER:
 	case FTOLOWER:
@@ -1485,7 +1485,7 @@ Cell *printstat(Node **a, int n)	/* print a[0] */
 	if (a[1] == 0)	/* a[1] is redirection operator, a[2] is file */
 		fp = stdout;
 	else
-		fp = redirect((long)a[1], a[2]);
+		fp = redirect((int)a[1], a[2]);
 	for (x = a[0]; x != NULL; x = x->nnext) {
 		y = execute(x);
 		fputs((char *)getsval(y), fp);

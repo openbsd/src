@@ -193,7 +193,7 @@ extern Node	*nullnode;
 #define	NFIELD	4
 
 
-extern	long	pairstack[], paircnt;
+extern	int	pairstack[], paircnt;
 
 #define notlegal(n)	(n <= FIRSTTOKEN || n >= LASTTOKEN || proctab[n-FIRSTTOKEN] == nullproc)
 #define isvalue(n)	((n)->ntype == NVALUE)
@@ -221,13 +221,13 @@ extern	long	pairstack[], paircnt;
 #define NSTATES	32
 
 typedef struct rrow {
-	long	ltype;
+	int	ltype;
 	union {
 		int i;
 		Node *np;
 		char *up;
 	} lval;		/* because Al stores a pointer in it! */
-	long	*lfollow;
+	int	*lfollow;
 } rrow;
 
 typedef struct fa {
@@ -235,7 +235,7 @@ typedef struct fa {
 	int	anchor;
 	int	use;
 	uschar	gototab[NSTATES][NCHARS];
-	long	*posns[NSTATES];
+	int	*posns[NSTATES];
 	uschar	out[NSTATES];
 	int	initstat;
 	int	curstat;

@@ -59,13 +59,13 @@ int	*tmpset;
 int	maxsetvec = 0;
 
 int	rtok;		/* next token in current re */
-long	rlxval;
+int	rlxval;
 char	*rlxstr;
 char	*prestr;	/* current position in current re */
 char	*lastre;	/* origin of last re */
 
-static	long setcnt;
-static	long poscnt;
+static	int setcnt;
+static	int poscnt;
 
 char	*patbeg;
 int	patlen;
@@ -134,9 +134,9 @@ fa *mkdfa(char *s, int anchor)	/* does the real work of making a dfa */
 	f->accept = poscnt-1;	/* penter has computed number of positions in re */
 	cfoll(f, p1);	/* set up follow sets */
 	freetr(p1);
-	if ((f->posns[0] = (long *) calloc(1, *(f->re[0].lfollow)*sizeof(int))) == NULL)
+	if ((f->posns[0] = (int *) calloc(1, *(f->re[0].lfollow)*sizeof(int))) == NULL)
 			overflo("out of space in makedfa");
-	if ((f->posns[1] = (long *) calloc(1, sizeof(int))) == NULL)
+	if ((f->posns[1] = (int *) calloc(1, sizeof(int))) == NULL)
 		overflo("out of space in makedfa");
 	*f->posns[1] = 0;
 	f->initstat = makeinit(f, anchor);
@@ -154,7 +154,7 @@ int makeinit(fa *f, int anchor)
 	f->reset = 0;
 	k = *(f->re[0].lfollow);
 	xfree(f->posns[2]);			
-	if ((f->posns[2] = (long *) calloc(1, (k+1)*sizeof(int))) == NULL)
+	if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
 		overflo("out of space in makeinit");
 	for (i=0; i <= k; i++) {
 		(f->posns[2])[i] = (f->re[0].lfollow)[i];
@@ -329,12 +329,12 @@ void overflo(char *s)
 void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfollow[leaf] */
 {
 	int i;
-	long *p;
+	int *p;
 
 	switch (type(v)) {
 	LEAF
-		f->re[(long) left(v)].ltype = type(v);
-		f->re[(long) left(v)].lval.np = right(v);
+		f->re[(int) left(v)].ltype = type(v);
+		f->re[(int) left(v)].lval.np = right(v);
 		while (f->accept >= maxsetvec) {	/* guessing here! */
 			maxsetvec *= 4;
 			setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
@@ -347,9 +347,9 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 			setvec[i] = 0;
 		setcnt = 0;
 		follow(v);	/* computes setvec and setcnt */
-		if ((p = (long *) calloc(1, (setcnt+1)*sizeof(int))) == NULL)
+		if ((p = (int *) calloc(1, (setcnt+1)*sizeof(int))) == NULL)
 			overflo("out of space building follow set");
-		f->re[(long) left(v)].lfollow = p;
+		f->re[(int) left(v)].lfollow = p;
 		*p = setcnt;
 		for (i = f->accept; i >= 0; i--)
 			if (setvec[i] == 1)
@@ -371,12 +371,11 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 int first(Node *p)	/* collects initially active leaves of p into setvec */
 			/* returns 1 if p matches empty string */
 {
-	int b;
-	long lp;
+	int b, lp;
 
 	switch (type(p)) {
 	LEAF
-		lp = (long) left(p);	/* look for high-water mark of subscripts */
+		lp = (int) left(p);	/* look for high-water mark of subscripts */
 		while (setcnt >= maxsetvec || lp >= maxsetvec) {	/* guessing here! */
 			maxsetvec *= 4;
 			setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
@@ -508,7 +507,7 @@ int pmatch(fa *f, char *p0)	/* longest match, for sub */
 			for (i = 2; i <= f->curstat; i++)
 				xfree(f->posns[i]);
 			k = *f->posns[0];			
-			if ((f->posns[2] = (long *) calloc(1, (k+1)*sizeof(int))) == NULL)
+			if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
 				overflo("out of space in pmatch");
 			for (i = 0; i <= k; i++)
 				(f->posns[2])[i] = (f->posns[0])[i];
@@ -558,7 +557,7 @@ int nematch(fa *f, char *p0)	/* non-empty match, for sub */
 			for (i = 2; i <= f->curstat; i++)
 				xfree(f->posns[i]);
 			k = *f->posns[0];			
-			if ((f->posns[2] = (long *) calloc(1, (k+1)*sizeof(int))) == NULL)
+			if ((f->posns[2] = (int *) calloc(1, (k+1)*sizeof(int))) == NULL)
 				overflo("out of state space");
 			for (i = 0; i <= k; i++)
 				(f->posns[2])[i] = (f->posns[0])[i];
@@ -737,7 +736,7 @@ int relex(void)		/* lexical analyzer for reparse */
 int cgoto(fa *f, int s, int c)
 {
 	int i, j, k;
-	long *p, *q;
+	int *p, *q;
 
 	if (c < 0)
 		ERROR "can't happen: neg char %d in cgoto", c FATAL;
@@ -810,7 +809,7 @@ int cgoto(fa *f, int s, int c)
 	for (i = 0; i < NCHARS; i++)
 		f->gototab[f->curstat][i] = 0;
 	xfree(f->posns[f->curstat]);
-	if ((p = (long *) calloc(1, (setcnt+1)*sizeof(int))) == NULL)
+	if ((p = (int *) calloc(1, (setcnt+1)*sizeof(int))) == NULL)
 		overflo("out of space in cgoto");
 
 	f->posns[f->curstat] = p;
