@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.49 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: socket.h,v 1.50 2005/03/22 12:22:00 henning Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ struct sockproto {
 #define	PF_CNT		AF_CNT
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
 #define PF_INET6	AF_INET6
-#define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
+#define PF_RTIP		pseudo_AF_RTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
 #define PF_ISDN		AF_ISDN
 #define PF_NATM		AF_NATM
