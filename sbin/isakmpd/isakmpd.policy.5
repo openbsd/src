@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.9 2000/05/02 14:35:40 niklas Exp $
-.\" $EOM: isakmpd.policy.5,v 1.16 2000/04/25 06:49:19 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.10 2000/06/08 20:52:09 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.19 2000/05/26 21:50:26 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -129,6 +129,15 @@ is simply a flat
 .Xr ascii 7
 file containing KeyNote policy assertions, separated by blank lines
 (note that KeyNote assertions may not contain blank lines).
+.Nm isakmpd.policy
+is read when
+.Xr isakmpd 8
+is first started, and every time it receives a
+.Dv SIGHUP
+signal. The new policies read will be used for all new Phase 2 (IPsec)
+SAs established from that point on (even if the associated Phase 1 SA
+was already established when the new policies were loaded). The policy
+change will not affect already established Phase 2 SAs.
 .Pp
 For more details on KeyNote assertion format, please see
 .Xr keynote 5 .
@@ -188,6 +197,9 @@ Credentials are used to build chains of delegation of authority.
 They can be exchanged during an IKE exchange,
 or can be retrieved through some out-of-band mechanism (no such
 mechanism is currently supported in this implementation however).
+See
+.Xr isakmpd.conf 5
+on how to specify what credentials to send in an IKE exchange.
 .Pp
 Passphrases that appear in the Licensees field are encoded as the
 string "passphrase:", followed by the passphrase itself
@@ -572,5 +584,3 @@ addresses (single, range, or subnet), FQDN, and User FQDN.
 
 The \*_addr_upper and \*_addr_lower attributes are not currently set
 for IPv6 addresses (single, range, or subnet).
-
-No KeyNote credentials can be exchanged during an IKE negotiation yet.
