@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.9 2001/03/12 11:45:35 hugh Exp $	*/
+/*	$OpenBSD: sid.h,v 1.10 2001/03/16 22:46:25 hugh Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -160,7 +160,10 @@
 #define VAX_BTYP_1301	0x13000001	/* VAX 4000 model [4-6]00 */
 #define VAX_STYP_675	0x00000c	/* VAX 4000 model 400 */
 #define VAX_STYP_680	0x000006	/* VAX 4000 model 500 */
+#define VAX_STYP_681	0x00000e	/* VAX 4000 model 500A */
 #define VAX_STYP_690	0x000007	/* VAX 4000 model 600 */
+#define VAX_STYP_691	0x00000f	/* VAX 4000 model 605A */
+#define VAX_STYP_692	0x000010	/* VAX 4000 model 700? */
 
 #define VAX_BTYP_1302	0x13000002
 

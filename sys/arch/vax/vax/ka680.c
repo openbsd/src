@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.2 2001/03/12 11:45:39 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.3 2001/03/16 22:46:26 hugh Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -118,8 +118,12 @@ ka680_conf()
 			cpuname = "KA675"; break;
 		case VAX_STYP_680:
 			cpuname = "KA680"; break;
+		case VAX_STYP_681:
+			cpuname = "KA681"; break;
 		case VAX_STYP_690:
 			cpuname = "KA690"; break;
+		case VAX_STYP_691:
+			cpuname = "KA691"; break;
 		default:
 			cpuname = "unknown NVAX";
 	}
