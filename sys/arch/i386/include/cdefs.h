@@ -8,11 +8,13 @@
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
+#ifndef	_C_LABEL
 #ifdef __STDC__
 #define _C_LABEL(x)	_STRING(_ ## x)
 #else
 #define _C_LABEL(x)	_STRING(_/**/x)
 #endif
+#endif /* _C_LABEL */
 
 #ifdef __GNUC__
 #ifdef __STDC__
