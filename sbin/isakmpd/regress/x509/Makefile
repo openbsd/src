@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 1999/07/17 21:54:38 niklas Exp $
-#	$EOM: Makefile,v 1.6 1999/07/17 20:44:13 niklas Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/08/26 22:31:53 niklas Exp $
+#	$EOM: Makefile,v 1.9 1999/08/26 11:31:35 niklas Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -38,16 +38,50 @@
 # Test X509
 
 PROG=		x509test
-SRCS=		x509test.c conf.c log.c sysdep.c x509.c field.c util.c \
+SRCS=		x509test.c conf.c libcrypto.c log.c sysdep.c field.c util.c \
 		isakmp_fld.c ipsec_fld.c ipsec_num.c isakmp_num.c constants.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
-LDADD+=		-lgmp -lcrypto
-DPADD+=		${LIBDES}
 NOMAN=
 DEBUG=		-g
+
+.include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
+
+.ifdef HAVE_DLOPEN
+X509=		x509.c
+POLICY=		policy.c
+CFLAGS+=	-DHAVE_DLOPEN
+SRCS+=		dyn.c
+.endif
+
+.ifdef USE_KEYNOTE
+USE_LIBCRYPTO=	yes
+POLICY=		policy.c
+LDADD+=		-lkeynote -lm
+DPADD+=		${LIBKEYNOTE} ${LIBM}
+CFLAGS+=	-DUSE_KEYNOTE
+.endif
+
+.ifdef USE_LIBCRYPTO
+X509=		x509.c
+CFLAGS+=	-DUSE_LIBCRYPTO
+LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO}
+.endif
+
+.if !defined (HAVE_DLOPEN) && !defined (USE_LIBCRYPTO)
+.BEGIN:
+	@echo X.509 cannot be used in this environmet, skipping...
+
+PROG=
+.endif
+
+SRCS+=		${X509} ${POLICY}
+
+LDADD+=		${DESLIB}
+DPADD+=		${DESLIBDEP}
 
 .include <bsd.prog.mk>
