@@ -14,13 +14,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.14 2000/03/23 22:15:33 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.15 2000/04/12 09:39:10 markus Exp $");
 
 #include "packet.h"
 #include "match.h"
 #include "ssh.h"
-#include <ssl/rsa.h>
-#include <ssl/dsa.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 #include "key.h"
 #include "hostfile.h"
 

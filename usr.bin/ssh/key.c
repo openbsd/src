@@ -33,9 +33,9 @@
 
 #include "includes.h"
 #include "ssh.h"
-#include <ssl/rsa.h>
-#include <ssl/dsa.h>
-#include <ssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
 #include "xmalloc.h"
 #include "key.h"
 

@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: dsa.c,v 1.2 2000/04/12 06:37:02 markus Exp $");
+RCSID("$Id: dsa.c,v 1.3 2000/04/12 09:39:10 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -36,15 +36,15 @@ RCSID("$Id: dsa.c,v 1.2 2000/04/12 06:37:02 markus Exp $");
 #include "bufaux.h"
 #include "compat.h"
 
-#include <ssl/bn.h>
-#include <ssl/dh.h>
-#include <ssl/rsa.h>
-#include <ssl/dsa.h>
-#include <ssl/evp.h>
-#include <ssl/bio.h>
-#include <ssl/pem.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
 
-#include <ssl/hmac.h>
+#include <openssl/hmac.h>
 #include "kex.h"
 #include "key.h"
 

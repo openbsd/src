@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.19 2000/03/23 22:15:33 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.20 2000/04/12 09:39:09 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -27,8 +27,8 @@ RCSID("$Id: auth-rsa.c,v 1.19 2000/03/23 22:15:33 markus Exp $");
 #include "match.h"
 #include "servconf.h"
 
-#include <ssl/rsa.h>
-#include <ssl/md5.h>
+#include <openssl/rsa.h>
+#include <openssl/md5.h>
 
 /* Flags that may be set in authorized_keys options. */
 extern int no_port_forwarding_flag;

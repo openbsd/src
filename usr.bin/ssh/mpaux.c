@@ -15,13 +15,13 @@
 */
 
 #include "includes.h"
-RCSID("$Id: mpaux.c,v 1.10 2000/03/28 20:27:09 markus Exp $");
+RCSID("$Id: mpaux.c,v 1.11 2000/04/12 09:39:10 markus Exp $");
 
-#include <ssl/bn.h>
+#include <openssl/bn.h>
 #include "getput.h"
 #include "xmalloc.h"
 
-#include <ssl/md5.h>
+#include <openssl/md5.h>
 
 void
 compute_session_id(unsigned char session_id[16],

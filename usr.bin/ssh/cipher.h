@@ -11,15 +11,15 @@
  * 
  */
 
-/* RCSID("$Id: cipher.h,v 1.14 2000/04/12 07:45:43 markus Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.15 2000/04/12 09:39:10 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
 
-#include <ssl/des.h>
-#include <ssl/blowfish.h>
-#include <ssl/rc4.h>
-#include <ssl/cast.h>
+#include <openssl/des.h>
+#include <openssl/blowfish.h>
+#include <openssl/rc4.h>
+#include <openssl/cast.h>
 
 /* Cipher types.  New types can be added, but old types should not be removed
    for compatibility.  The maximum allowed value is 31. */

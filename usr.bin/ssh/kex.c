@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: kex.c,v 1.3 2000/04/12 07:03:05 markus Exp $");
+RCSID("$Id: kex.c,v 1.4 2000/04/12 09:39:10 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -38,14 +38,14 @@ RCSID("$Id: kex.c,v 1.3 2000/04/12 07:03:05 markus Exp $");
 #include "cipher.h"
 #include "compat.h"
 
-#include <ssl/bn.h>
-#include <ssl/dh.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
-#include <ssl/crypto.h>
-#include <ssl/bio.h>
-#include <ssl/bn.h>
-#include <ssl/dh.h>
-#include <ssl/pem.h>
+#include <openssl/crypto.h>
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/pem.h>
 
 #include "kex.h"
 

@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.103 2000/04/12 08:11:36 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.104 2000/04/12 09:39:10 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -29,12 +29,12 @@ RCSID("$OpenBSD: sshd.c,v 1.103 2000/04/12 08:11:36 markus Exp $");
 #include "buffer.h"
 
 #include "ssh2.h"
-#include <ssl/dh.h>
-#include <ssl/bn.h>
-#include <ssl/hmac.h>
+#include <openssl/dh.h>
+#include <openssl/bn.h>
+#include <openssl/hmac.h>
 #include "kex.h"
-#include <ssl/dsa.h>
-#include <ssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
 #include "key.h"
 #include "dsa.h"
 

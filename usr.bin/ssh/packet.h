@@ -13,12 +13,12 @@
  * 
  */
 
-/* RCSID("$Id: packet.h,v 1.12 2000/04/03 20:12:55 markus Exp $"); */
+/* RCSID("$Id: packet.h,v 1.13 2000/04/12 09:39:10 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
 
-#include <ssl/bn.h>
+#include <openssl/bn.h>
 
 /*
  * Sets the socket used for communication.  Disables encryption until
