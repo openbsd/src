@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.26 2000/09/14 13:40:03 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.27 2000/09/14 13:52:42 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -89,6 +89,25 @@
 #include "lst.h"
 #include "config.h"
 #include "buf.h"
+
+typedef time_t TIMESTAMP;
+#define is_out_of_date(t)	((t) == INT_MIN)
+#define set_out_of_date(t)	(t) = INT_MIN
+#define grab_stat(s, t)	\
+do { \
+	(t) = (s).st_mtime; \
+	if (is_out_of_date(t)) \
+		(t)++; \
+} while (0)
+#define is_before(t1, t2)	((t1) < (t2))
+#define grab_date(d, t) \
+do { \
+	(t) = d; \
+	if (is_out_of_date(t)) \
+		(t)++; \
+} while (0)
+#define grab(n) time(&(n))
+#define timestamp2time_t(t)	(t)
 
 #define OUT_OF_DATE INT_MIN
 

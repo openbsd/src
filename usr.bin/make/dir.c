@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.26 2000/09/14 13:46:44 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.27 2000/09/14 13:52:41 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "make.h"
-#include "hash.h"
 #include "ohash.h"
 #include "dir.h"
 
@@ -97,7 +96,7 @@
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: dir.c,v 1.26 2000/09/14 13:46:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.27 2000/09/14 13:52:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +183,13 @@ static int    hits,	      /* Found in directory cache */
 	      bigmisses;      /* Sought by itself */
 
 static Path    	  *dot;	    /* contents of current directory */
-static Hash_Table mtimes;   /* Results of doing a last-resort stat in
+
+struct file_stamp {
+	TIMESTAMP mtime;		/* time stamp... */
+	char name[1];			/* ...for that file.  */
+};
+
+static struct hash mtimes;  /* Results of doing a last-resort stat in
 			     * Dir_FindFile -- if we have to go to the
 			     * system to find the file, we might as well
 			     * have its mtime on record. XXX: If this is done
@@ -194,14 +199,23 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * be two rules to update a single file, so this
 			     * should be ok, but... */
 
+/* There are three distinct hash structures:
+ * - to collate files's last modification times (global mtimes)
+ * - to collate file names (in each Path structure)
+ * - to collate known directories (global openDirectories).  */
+static struct hash_info stamp_info = { offsetof(struct file_stamp, name),
+    NULL, hash_alloc, hash_free, element_alloc };
+
 static struct hash_info file_info = { 0, 
     NULL, hash_alloc, hash_free, element_alloc };
 
 static struct hash_info dir_info = { offsetof(Path, name), 
     NULL, hash_alloc, hash_free, element_alloc };
 
+static void record_stamp __P((const char *, TIMESTAMP));
 static void add_file __P((Path *, const char *));
 static char *find_file_hash __P((Path *, const char *, const char *, u_int32_t));
+static struct file_stamp *find_stamp __P((const char *));
 static void free_hash __P((struct hash *));
 
 static Path *DirReaddir __P((const char *, const char *));
@@ -210,6 +224,33 @@ static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
 static void DirPrintWord __P((void *));
 static void DirPrintDir __P((void *));
+
+static void
+record_stamp(file, t)
+    const char 		*file;
+    TIMESTAMP 		t;
+{
+    unsigned 		slot;
+    const char 		*end = NULL;
+    struct file_stamp 	*n;
+
+    slot = hash_qlookupi(&mtimes, file, &end);
+    n = hash_find(&mtimes, slot);
+    if (n)
+	n->mtime = t;
+    else {
+	n = hash_create_entry(&stamp_info, file, &end);
+	n->mtime = t;
+	hash_insert(&mtimes, slot, n);
+    }
+}
+		
+static struct file_stamp *
+find_stamp(file)
+    const char 		*file;
+{
+    return hash_find(&mtimes, hash_qlookup(&mtimes, file));
+}
 
 static void
 add_file(p, file)
@@ -270,7 +311,7 @@ Dir_Init()
 {
     Lst_Init(&dirSearchPath);
     hash_init(&openDirectories, 4, &dir_info);
-    Hash_InitTable(&mtimes, 0);
+    hash_init(&mtimes, 4, &stamp_info);
 
     dot = DirReaddir(".", NULL);
 
@@ -687,9 +728,10 @@ Dir_FindFile(name, path)
     register char *cp;	    /* index of first slash, if any */
     Boolean	  hasSlash; /* true if 'name' contains a / */
     struct stat	  stb;	    /* Buffer for stat, if necessary */
+    struct file_stamp
+    		  *entry;   /* Entry for mtimes table */
     const char	  *e;
     u_int32_t	  hv;
-    Hash_Entry	  *entry;
 
     /*
      * Find the final component of the name and note whether it has a
@@ -817,6 +859,9 @@ Dir_FindFile(name, path)
 		printf("checking %s...", file);
 
 	    if (stat(file, &stb) == 0) {
+	    	TIMESTAMP mtime;
+
+		grab_stat(stb, mtime);
 		if (DEBUG(DIR))
 		    printf("got it.\n");
 
@@ -835,10 +880,7 @@ Dir_FindFile(name, path)
 		if (DEBUG(DIR))
 		    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 			    file);
-		entry = Hash_CreateEntry(&mtimes, (char *) file,
-					 (Boolean *)NULL);
-		/* XXX */
-		Hash_SetValue(entry, (void *)((long)stb.st_mtime));
+		record_stamp(file, mtime);
 		nearmisses += 1;
 		return file;
 	    } else
@@ -890,18 +932,19 @@ Dir_FindFile(name, path)
 	printf("Looking for \"%s\"...", name);
 
     bigmisses += 1;
-    entry = Hash_FindEntry(&mtimes, name);
-    if (entry != (Hash_Entry *)NULL) {
+    entry = find_stamp(name);
+    if (entry != NULL) {
 	if (DEBUG(DIR))
 	    printf("got it (in mtime cache)\n");
 	return estrdup(name);
     } else if (stat(name, &stb) == 0) {
-	entry = Hash_CreateEntry(&mtimes, name, (Boolean *)NULL);
+    	TIMESTAMP mtime;
+
+	grab_stat(stb, mtime);
 	if (DEBUG(DIR))
 	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
-	/* XXX */
-	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
+	record_stamp(name, mtime);
 	return estrdup(name);
     } else {
 	if (DEBUG(DIR))
@@ -918,7 +961,7 @@ Dir_FindFile(name, path)
  *	search path dirSearchPath.
  *
  * Results:
- *	TRUE if file exists.
+ *	The modification time or OUT_OF_DATE if it doesn't exist
  *
  * Side Effects:
  *	The modification time is placed in the node's mtime slot.
@@ -926,63 +969,54 @@ Dir_FindFile(name, path)
  *	found one for it, the full name is placed in the path slot.
  *-----------------------------------------------------------------------
  */
-Boolean
+TIMESTAMP
 Dir_MTime(gn)
     GNode         *gn;	      /* the file whose modification time is
 			       * desired */
 {
     char          *fullName;  /* the full pathname of name */
     struct stat	  stb;	      /* buffer for finding the mod time */
-    Hash_Entry	  *entry;
-    Boolean 	  exists;
+    struct file_stamp
+    	          *entry;
+    unsigned int  slot;
+    TIMESTAMP	  mtime;
 
     if (gn->type & OP_ARCHV)
 	return Arch_MTime(gn);
-    else if (gn->path == NULL)
+    if (gn->path == NULL) {
 	fullName = Dir_FindFile(gn->name, &dirSearchPath);
-    else
+	if (fullName == NULL)
+	    fullName = estrdup(gn->name);
+    } else
 	fullName = gn->path;
 
-    if (fullName == (char *)NULL) {
-	fullName = estrdup(gn->name);
-    }
-
-    entry = Hash_FindEntry(&mtimes, fullName);
-    if (entry != (Hash_Entry *)NULL) {
-	/*
-	 * Only do this once -- the second time folks are checking to
+    slot = hash_qlookup(&mtimes, fullName);
+    entry = hash_find(&mtimes, slot);
+    if (entry != NULL) {
+	/* Only do this once -- the second time folks are checking to
 	 * see if the file was actually updated, so we need to actually go
-	 * to the file system.
-	 */
-	if (DEBUG(DIR)) {
+	 * to the file system.  */
+	if (DEBUG(DIR))
 	    printf("Using cached time %s for %s\n",
-		    Targ_FmtTime((time_t)(long)Hash_GetValue(entry)), fullName);
-	}
-	stb.st_mtime = (time_t)(long)Hash_GetValue(entry);
-	Hash_DeleteEntry(&mtimes, entry);
-	exists = TRUE;
-    } else if (stat (fullName, &stb) == 0) {
-    	/* XXX forces make to differentiate between the epoch and
-	 * non-existent files by kludging the timestamp slightly. */
-    	if (stb.st_mtime == OUT_OF_DATE)
-		stb.st_mtime++;
-	exists = TRUE;
-    } else {
+		    Targ_FmtTime(entry->mtime), fullName);
+	mtime = entry->mtime;
+	free(entry);
+	hash_remove(&mtimes, slot);
+    } else if (stat(fullName, &stb) == 0)
+    	grab_stat(stb, mtime);
+    else {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
 	    return Arch_MemMTime (gn);
-	} else {
-	    stb.st_mtime = OUT_OF_DATE;
-	    exists = FALSE;
-	}
+	} else
+	    set_out_of_date(mtime);
     }
-    if (fullName && gn->path == (char *)NULL) {
+    if (fullName && gn->path == NULL)
 	gn->path = fullName;
-    }
 
-    gn->mtime = stb.st_mtime;
-    return exists;
+    gn->mtime = mtime;
+    return gn->mtime;
 }
 
 /* Read a directory, either from the disk, or from the cache.  */

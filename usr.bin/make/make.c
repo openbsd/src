@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.22 2000/09/14 13:46:45 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.23 2000/09/14 13:52:42 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: make.c,v 1.22 2000/09/14 13:46:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.23 2000/09/14 13:52:42 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,9 +161,9 @@ Make_OODate (gn)
      * doesn't depend on their modification time...
      */
     if ((gn->type & (OP_JOIN|OP_USE|OP_EXEC)) == 0) {
-	(void) Dir_MTime (gn);
+	(void)Dir_MTime(gn);
 	if (DEBUG(MAKE)) {
-	    if (gn->mtime != OUT_OF_DATE) {
+	    if (!is_out_of_date(gn->mtime)) {
 		printf ("modified %s...", Targ_FmtTime(gn->mtime));
 	    } else {
 		printf ("non-existent...");
@@ -461,7 +461,8 @@ Make_Update (cgn)
 	 * the target is made now. Otherwise archives with ... rules
 	 * don't work!
 	 */
-	if (noExecute || (cgn->type & OP_SAVE_CMDS) || Dir_MTime(cgn) == FALSE) {
+	if (noExecute || (cgn->type & OP_SAVE_CMDS) || 
+	    is_out_of_date(Dir_MTime(cgn))) {
 	    cgn->mtime = now;
 	}
 	if (DEBUG(MAKE)) {

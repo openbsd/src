@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.34 2000/09/14 13:46:44 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.35 2000/09/14 13:52:41 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: compat.c,v 1.34 2000/09/14 13:46:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.35 2000/09/14 13:52:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -443,7 +443,7 @@ CompatMake(gnp, pgnp)
     GNode *pgn = (GNode *) pgnp;
 
     if (pgn->type & OP_MADE) {
-	(void) Dir_MTime(gn);
+	(void)Dir_MTime(gn);
 	gn->made = UPTODATE;
     }
 
@@ -589,10 +589,9 @@ CompatMake(gnp, pgnp)
 	     * ok.
 	     * -- ardeb 1/12/88
 	     */
-	    if (noExecute || Dir_MTime(gn) == FALSE) {
+	    if (noExecute || is_out_of_date(Dir_MTime(gn)))
 		gn->mtime = now;
-	    }
-	    if (gn->cmtime > gn->mtime)
+	    if (is_before(gn->mtime, gn->cmtime))
 		gn->mtime = gn->cmtime;
 	    if (DEBUG(MAKE)) {
 		printf("update time: %s\n", Targ_FmtTime(gn->mtime));

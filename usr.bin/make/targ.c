@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.27 2000/09/14 13:40:03 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.28 2000/09/14 13:52:42 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #include	  <time.h>
 #include	  "make.h"
 #include	  "ohash.h"
-#include 	  "hash.h"
 #include	  "dir.h"
 
 #ifndef lint
@@ -88,7 +87,7 @@
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char *rcsid = "$OpenBSD: targ.c,v 1.27 2000/09/14 13:40:03 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.28 2000/09/14 13:52:42 espie Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.36 2000/09/14 13:46:45 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.37 2000/09/14 13:52:42 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: job.c,v 1.36 2000/09/14 13:46:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.37 2000/09/14 13:52:42 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1099,7 +1099,7 @@ Job_CheckCommands(gn, abortProc)
 	     */
 	    Make_HandleUse(DEFAULT, gn);
 	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), gn);
-	} else if (Dir_MTime(gn) == 0) {
+	} else if (is_out_of_date(Dir_MTime(gn))) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT
 	     * rule to go on and the target doesn't already exist. There's

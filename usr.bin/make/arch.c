@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.33 2000/09/14 13:46:44 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.34 2000/09/14 13:52:41 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.33 2000/09/14 13:46:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.34 2000/09/14 13:52:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -998,15 +998,14 @@ Arch_TouchLib (gn)
  *	Return the modification time of a member of an archive.
  *
  * Results:
- *	TRUE if found.
+ *	The modification time (seconds).
  *
  * Side Effects:
  *	The mtime field of the given node is filled in with the value
  *	returned by the function.
- *
  *-----------------------------------------------------------------------
  */
-Boolean
+TIMESTAMP
 Arch_MTime (gn)
     GNode	  *gn;	      /* Node describing archive member */
 {
@@ -1015,13 +1014,11 @@ Arch_MTime (gn)
     arhPtr = ArchStatMember(Varq_Value(ARCHIVE_INDEX, gn),
 			     Varq_Value(MEMBER_INDEX, gn),
 			     TRUE);
-    if (arhPtr != NULL) {
+    if (arhPtr != NULL)
 	gn->mtime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
-	return TRUE;
-    } else {
+    else
     	gn->mtime = OUT_OF_DATE;
-	return FALSE;
-    }
+    return gn->mtime;
 }
 
 /*-
