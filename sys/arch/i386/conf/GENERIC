@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.91 1998/11/17 06:18:33 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.92 1998/11/18 20:17:18 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -196,6 +196,7 @@ inphy*	at mii? phy ?				# Intel 82555 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
