@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.12 2001/03/29 16:02:18 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.13 2001/06/25 02:18:47 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1327,7 +1327,6 @@ void sk_shutdown(v)
 void sk_rxeof(sc_if)
 	struct sk_if_softc	*sc_if;
 {
-	struct ether_header	*eh;
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct sk_chain		*cur_rx;
@@ -1381,15 +1380,13 @@ void sk_rxeof(sc_if)
 		}
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	sc_if->sk_cdata.sk_rx_prod = i;

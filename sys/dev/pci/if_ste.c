@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.10 2001/02/20 19:39:45 mickey Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.11 2001/06/25 02:18:47 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -617,7 +617,6 @@ int ste_intr(xsc)
 void ste_rxeof(sc)
 	struct ste_softc		*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct ste_chain_onefrag	*cur_rx;
@@ -675,7 +674,6 @@ again:
 		}
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
 
@@ -684,9 +682,8 @@ again:
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	/*

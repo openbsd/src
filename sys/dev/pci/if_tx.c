@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.15 2001/06/12 15:40:31 niklas Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.16 2001/06/25 02:18:48 fgsch Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -890,7 +890,6 @@ epic_rx_done(sc)
 	struct epic_rx_buffer *buf;
 	struct epic_rx_desc *desc;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	while( !(sc->rx_desc[sc->cur_rx].status & 0x8000) ) { 
 		buf = sc->rx_buffer + sc->cur_rx;
@@ -931,7 +930,6 @@ epic_rx_done(sc)
 		 * First mbuf in packet holds the ethernet and
 		 * packet headers.
 		 */
-		eh = mtod( m, struct ether_header * );
 		m->m_pkthdr.rcvif = &(sc->sc_if);
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -943,12 +941,8 @@ epic_rx_done(sc)
 #endif /* NBPFILTER > 0 */
 #endif /* !__FreeBSD__ */
 
-		/* Second mbuf holds packet ifself */
-		m->m_pkthdr.len = m->m_len = len - sizeof(struct ether_header);
-		m->m_data += sizeof( struct ether_header );
-
 		/* Give mbuf to OS */
-		ether_input(&sc->sc_if, eh, m);
+		ether_input_mbuf(&sc->sc_if, m);
 
 		/* Successfuly received frame */
 		sc->sc_if.if_ipackets++;
