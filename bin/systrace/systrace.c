@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.41 2002/12/11 16:55:28 avsm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.42 2002/12/12 00:39:14 avsm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -284,6 +284,10 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
 	action = filter_evaluate(NULL, pflq, ipid);
+
+	if (ipid->uflags & SYSCALL_LOG)
+		dolog = 1;
+
 	if (action != ICPOLICY_ASK)
 		goto out;
 
