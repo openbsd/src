@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.22 1998/09/17 20:34:41 marc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.23 1998/11/15 16:36:49 art Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -594,10 +594,8 @@ apm_set_ver(self)
 	}
 	printf(": Power Management spec V%d.%d", apm_majver, apm_minver);
 	if (apm_flags & APM_IDLE_SLOWS) {
-#ifdef DEBUG
 		/* not relevant much */
-		printf(" (slowidle)");
-#endif
+		DPRINTF((" (slowidle)"));
 		apm_dobusy = 1;
 	} else
 		apm_dobusy = 0;
@@ -641,9 +639,7 @@ apmprobe(parent, match, aux)
 	    strcmp(ba->bios_dev, "apm") ||
 	    ba->bios_apmp->apm_detail & APM_BIOS_PM_DISABLED ||
 	    !(ba->bios_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
-#ifdef DEBUG
-		printf("%s: %x\n", ba->bios_dev, ba->bios_apmp->apm_detail);
-#endif
+		DPRINTF(("%s: %x\n", ba->bios_dev, ba->bios_apmp->apm_detail));
 		return 0;
 	}
 
@@ -652,9 +648,7 @@ apmprobe(parent, match, aux)
 		    IOM_END;
 	if (bus_space_map(ba->bios_memt, ap->apm_code32_base,
 	    ap->apm_code_len, 1, &ch) != 0) {
-#ifdef DEBUG
-		printf("apm0: can't map code\n");
-#endif
+		DPRINTF(("apm0: can't map code\n"));
 		return 0;
 	}
 	bus_space_unmap(ba->bios_memt, ch, ap->apm_code_len);
@@ -662,9 +656,7 @@ apmprobe(parent, match, aux)
 	    ap->apm_data_len -= ap->apm_data_base + ap->apm_data_len - IOM_END;
 	if (bus_space_map(ba->bios_memt, ap->apm_data_base,
 	    ap->apm_data_len, 1, &dh) != 0) {
-#ifdef DEBUG
-		printf("apm0: can't map data\n");
-#endif
+		DPRINTF(("apm0: can't map data\n"));
 		return 0;
 	}
 	bus_space_unmap(ba->bios_memt, dh, ap->apm_data_len);
@@ -722,14 +714,12 @@ apmattach(parent, self, aux)
 			   ap->apm_code_len-1, SDT_MEMERA, SEL_KPL, 0, 0);
 		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd, (void *)dh,
 			   ap->apm_data_len-1, SDT_MEMRWA, SEL_KPL, 1, 0);
-#if defined(DEBUG) || defined(APMDEBUG)
-		printf(": flags %x code 32:%x/%x 16:%x/%x %x "
+		DPRINTF((": flags %x code 32:%x/%x 16:%x/%x %x "
 		       "data %x/%x/%x ep %x (%x:%x)\n%s", apm_flags,
 		    ap->apm_code32_base, ch, ap->apm_code16_base, ch,
 		    ap->apm_code_len, ap->apm_data_base, dh, ap->apm_data_len,
 		    ap->apm_entry, apm_ep.seg, ap->apm_entry+ch,
-		    sc->sc_dev.dv_xname);
-#endif
+		    sc->sc_dev.dv_xname));
 		apm_set_ver(sc);
 		/*
 		 * Engage cooperative power mgt (we get to do it)
