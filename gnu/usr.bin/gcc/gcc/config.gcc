@@ -1170,12 +1170,11 @@ i[34567]86-*-openbsd2* | i[34567]86-*-openbsd3.[0123])
 i[34567]86-*-openbsd*)
 	# needed to unconfuse gdb
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
-	tm_file="${cpu_type}/${cpu_type}.h i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h"
+	tm_file="${cpu_type}/${cpu_type}.h i386/unix.h i386/att.h dbxelf.h elfos.h"
 	tm_file="${tm_file} exec-stack.h"
 	tm_file="${tm_file} openbsd.h openbsd-libpthread.h i386/openbsdelf.h"
 	gas=yes
 	gnu_ld=yes
-	stabs=yes
   	;;
 x86_64-*-openbsd*)
 	tm_file="i386/biarch64.h i386/i386.h i386/unix.h i386/att.h dbxelf.h elfos.h openbsd.h openbsd-libpthread.h i386/x86-64.h i386/openbsd64.h"
