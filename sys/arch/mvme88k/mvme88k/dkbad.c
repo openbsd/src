@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.c,v 1.2 1999/02/09 06:36:28 smurph Exp $	*/
+/*	$OpenBSD: dkbad.c,v 1.3 1999/07/20 03:23:06 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -54,7 +54,7 @@ isbad(bt, cyl, trk, sec)
 	register long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
-	for (i = 0; i < 126; i++) {
+	for (i = 0; i < NBT_BAD; i++) {
 		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) + bt->bt_bad[i].bt_trksec;
 		if (blk == bblk)
 			return (i);

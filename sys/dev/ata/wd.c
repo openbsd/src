@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.1 1999/07/18 21:25:17 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.2 1999/07/20 03:23:05 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -212,7 +212,9 @@ struct	wd_ioctl *wi_get __P((void));
 void	wdioctlstrategy __P((struct buf *));
 
 void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
-static void  wdgetdisklabel	__P((dev_t dev, struct wd_softc *));
+static void  wdgetdisklabel __P((dev_t dev, struct wd_softc *, 
+				 struct disklabel *,
+				 struct cpu_disklabel *, int));
 void  wdstrategy	__P((struct buf *));
 void  wdstart	__P((void *));
 void  __wdstart	__P((struct wd_softc*, struct buf *));
@@ -227,7 +229,7 @@ struct dkdriver wddkdriver = { wdstrategy };
 cdev_decl(wd);
 bdev_decl(wd);
 
-#ifdef HAS_BAD144_HANDLING
+#ifdef DKBAD
 static void bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock	__P((struct wd_softc *));
@@ -690,18 +692,14 @@ wdopen(dev, flag, fmt, p)
 		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
-			int ret;
-
 			wd->sc_flags |= WDF_LOADED;
 
 			/* Load the physical device parameters. */
-			ret = wd_get_params(wd, AT_WAIT, &wd->sc_params);
-			if (ret != 0) {
-				panic ("Parameter loading problem: %d\n");
-			}
+			wd_get_params(wd, AT_WAIT, &wd->sc_params);
 
 			/* Load the partition info if not already loaded. */
-			wdgetdisklabel(dev, wd);
+			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
+				       wd->sc_dk.dk_cpulabel, 0);
 		}
 	}
 
@@ -827,16 +825,18 @@ wdgetdefaultlabel(wd, lp)
  * Fabricate a default disk label, and try to read the correct one.
  */
 static void
-wdgetdisklabel(dev, wd)
+wdgetdisklabel(dev, wd, lp, clp, spoofonly)
 	dev_t  dev;
 	struct wd_softc *wd;
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
+	int spoofonly;
 {
-	struct disklabel *lp = wd->sc_dk.dk_label;
 	char *errstring;
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
-	memset(wd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
+	memset(clp, 0, sizeof(struct cpu_disklabel));
 
 	wdgetdefaultlabel(wd, lp);
 
@@ -845,7 +845,7 @@ wdgetdisklabel(dev, wd)
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 	errstring = readdisklabel(WDLABELDEV(dev),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel, 0);
+	    wdstrategy, lp, clp, spoofonly);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -856,7 +856,7 @@ wdgetdisklabel(dev, wd)
 		if (wd->drvp->state > RECAL)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 		errstring = readdisklabel(WDLABELDEV(dev),
-		    wdstrategy, lp, wd->sc_dk.dk_cpulabel, 0);
+		    wdstrategy, lp, clp, spoofonly);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
@@ -865,7 +865,7 @@ wdgetdisklabel(dev, wd)
 
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-#ifdef HAS_BAD144_HANDLING
+#ifdef DKBAD
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 #endif
@@ -888,15 +888,23 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
-#ifdef HAS_BAD144_HANDLING
+#ifdef DKBAD
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		wd->sc_dk.dk_cpulabel->bad = *(struct dkbad *)addr;
+		DKBAD(wd->sc_dk.dk_cpulabel) = *(struct dkbad *)addr;
 		wd->sc_dk.dk_label->d_flags |= D_BADSECT;
 		bad144intern(wd);
 		return 0;
 #endif
+
+	case DIOCGPDINFO: {
+			struct cpu_disklabel osdep;
+
+			wdgetdisklabel(dev, wd, (struct disklabel *)addr,
+			    &osdep, 1);
+			return 0;
+		}
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
@@ -1224,7 +1232,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
-#ifdef HAS_BAD144_HANDLING
+#ifdef DKBAD
 /*
  * Internalize the bad sector table.
  */

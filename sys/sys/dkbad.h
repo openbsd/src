@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.h,v 1.2 1996/03/03 12:11:35 niklas Exp $	*/
+/*	$OpenBSD: dkbad.h,v 1.3 1999/07/20 03:23:04 csapuntz Exp $	*/
 /*	$NetBSD: dkbad.h,v 1.10 1994/12/25 13:14:21 pk Exp $	*/
 
 /*-
@@ -58,6 +58,8 @@
  * making sure that it does not overlap the bad sector information or any
  * replacement sectors.
  */
+#define NBT_BAD 126
+
 struct dkbad {
 	int32_t   bt_csn;		/* cartridge serial number */
 	u_int16_t bt_mbz;		/* unused; should be 0 */
@@ -65,7 +67,7 @@ struct dkbad {
 	struct bt_bad {
 		u_int16_t bt_cyl;	/* cylinder number of bad sector */
 		u_int16_t bt_trksec;	/* track and sector number */
-	} bt_bad[126];
+	} bt_bad[NBT_BAD];
 };
 
 #define	ECC	0
