@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmcvar.h,v 1.3 2000/02/01 18:01:42 chris Exp $ */
+/*	$OpenBSD: if_lmcvar.h,v 1.4 2000/02/06 20:56:02 chris Exp $ */
 /*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -282,7 +282,7 @@ struct lmc___softc {
     struct isadev lmc_id;		/* ISA device */
     struct intrhand lmc_ih;		/* intrrupt vectoring */
     struct atshutdown lmc_ats;		/* shutdown hook */
-    struct	p2pcom lmc_p2pcom;	/* point-to-point common stuff */
+    struct p2pcom lmc_p2pcom;		/* point-to-point common stuff */
     
 #define lmc_if	lmc_p2pcom.p2p_if	/* network-visible interface */
 #endif /* __bsdi__ */
@@ -349,8 +349,9 @@ struct lmc___softc {
 #endif
 
     u_int32_t	lmc_crcSize;
+    u_int32_t	tx_clockState;
     char	lmc_yel, lmc_blue, lmc_red;	/* for T1 and DS3 */
-    char	lmc_timing;		/* for HSSI and SSI */
+    char	lmc_timing;			/* for HSSI and SSI */
     u_int16_t	t1_alarm1_status;
     u_int16_t	t1_alarm2_status;
 };

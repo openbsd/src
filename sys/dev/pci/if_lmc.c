@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.4 2000/02/06 17:51:41 chris Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.5 2000/02/06 20:56:02 chris Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@
  * led3 red    = No timing is available from the cable or the on-board
  *               frequency generator. (ST not available for LMC5200)
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +437,28 @@ lmc_watchdog(int unit)
 	sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;
 	LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
 
+	/* Is the transmit clock still available? */
+	ticks = LMC_CSR_READ (sc, csr_gp_timer);
+	ticks = 0x0000ffff - (ticks & 0x0000ffff);
+
+	if (ticks == 0)
+	{
+		/* no clock found ? */
+		if (sc->tx_clockState != 0)
+		{
+			sc->tx_clockState = 0;
+			if (sc->lmc_cardtype == LMC_CARDTYPE_SSI)
+				lmc_led_on (sc, LMC_MII16_LED3); /* ON red */
+		}
+	else
+		if (sc->tx_clockState == 0)
+		{
+			sc->tx_clockState = 1;
+			if (sc->lmc_cardtype == LMC_CARDTYPE_SSI)
+				lmc_led_off (sc, LMC_MII16_LED3); /* OFF red */
+		}
+	}
+
 	link_status = sc->lmc_media->get_link_status(sc);
 	ostatus = ((sc->lmc_flags & LMC_MODEMOK) == LMC_MODEMOK);
 
@@ -466,7 +487,7 @@ lmc_watchdog(int unit)
 	 * hardware link is up, but the interface is marked as down.
 	 * Bring it back up again.
 	 */
-	if (link_status != 0 && !ostatus) {
+	if (link_status != LMC_LINK_DOWN && !ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link up\n",
 		       LMC_PRINTF_ARGS);
 		if (sc->lmc_flags & LMC_IFUP)
@@ -480,7 +501,7 @@ lmc_watchdog(int unit)
 							/* turn off red LED */
 			lmc_led_on (sc, LMC_DS3_LED2);
 		} else {
-			lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED1 \
+			lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED1
 				    | LMC_MII16_LED2);
 			if (sc->lmc_timing != LMC_CTL_CLOCK_SOURCE_EXT)
 				lmc_led_off (sc, LMC_MII16_LED3);
@@ -514,7 +535,7 @@ lmc_ifup(lmc_softc_t * const sc)
 	lmc_dec_reset(sc);
 	lmc_reset(sc);
 
-	sc->lmc_media->set_link_status(sc, 1);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_UP);
 	sc->lmc_media->set_status(sc, NULL);
 
 	sc->lmc_flags |= LMC_IFUP;
