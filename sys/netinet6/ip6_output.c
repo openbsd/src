@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.78 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.79 2003/11/07 22:32:47 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1848,8 +1848,8 @@ ip6_setmoptions(optname, im6op, m)
 		/*
 		 * If the interface is specified, validate it.
 		 */
-		if (mreq->ipv6mr_interface < 0
-		 || if_index < mreq->ipv6mr_interface) {
+		if (mreq->ipv6mr_interface < 0 ||
+		    if_index < mreq->ipv6mr_interface) {
 			error = ENXIO;	/* XXX EINVAL? */
 			break;
 		}
@@ -1899,7 +1899,7 @@ ip6_setmoptions(optname, im6op, m)
 		 */
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mreq->ipv6mr_multiaddr)) {
 			mreq->ipv6mr_multiaddr.s6_addr16[1] =
-			    htons(mreq->ipv6mr_interface);
+			    htons(ifp->if_index);
 		}
 		/*
 		 * See if the membership already exists.
