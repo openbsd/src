@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2001/11/17 21:35:12 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2001/12/06 21:13:28 millert Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -101,11 +101,18 @@ export	PSL_HIGHIPL
 struct	pcb
 member	pcb_onfault
 
-# exception frame offset/sizes
+# exception frame offsets
 struct	frame
 member	FR_SP		f_regs[15]
 member	FR_HW		f_sr
 member	FR_ADJ		f_stackadj
+
+# FP frame offsets
+struct	fpframe
+member	fpf_regs	fpf_regs[0]
+member	fpf_fpcr
+member	fpf_fpsr
+member	fpf_fpi		fpf_fpiar
 
 # interrupt/fault metering
 struct	uvmexp	UVMEXP_
