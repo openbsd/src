@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcdefs.h,v 1.6 2001/05/02 22:56:53 millert Exp $	*/
+/*	$OpenBSD: supcdefs.h,v 1.7 2001/05/05 15:32:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,9 +73,6 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #endif	/* MACH */
-#ifdef HAS_FPARSELN
-#include <util.h>
-#endif /* HAS_FPARSELN */
 #include <c.h>
 #include "sup.h"
 #include "supmsg.h"
