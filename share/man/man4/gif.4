@@ -1,4 +1,5 @@
-.\"	$OpenBSD: gif.4,v 1.4 2000/04/03 21:19:36 aaron Exp $
+.\"	$OpenBSD: gif.4,v 1.5 2000/04/19 09:37:35 itojun Exp $
+.\"	$KAME: gif.4,v 1.14 2000/04/19 09:28:50 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -26,8 +27,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     KAME Id: gif.4,v 1.2 1999/09/29 15:36:17 itojun Exp
 .\"
 .Dd April 10, 1999
 .Dt GIF 4
@@ -86,18 +85,47 @@ if no match is found.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr inet6 4 ,
-.Xr ifconfig 8 ,
-RFC1933
+.Xr ifconfig 8
+.Rs
+.%A	R. Gilligan
+.%A	E. Nordmark
+.%B	RFC1933
+.%T	Transition Mechanisms for IPv6 Hosts and Routers
+.%D	April 1996
+.%O	ftp://ftp.isi.edu/in-notes/rfc1933.txt
+.Re
 .Rs
 .%A	Sally Floyd
 .%A	David L. Black
 .%A	K. K. Ramakrishnan
 .%T	"IPsec Interactions with ECN"
-.%D	February 1999
-.%O	http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
+.%D	December 1999
+.%O	draft-ietf-ipsec-ecn-02.txt
 .Re
 .\"
 .Sh HISTORY
 The
 .Nm
 device first appeared in WIDE hydrangea IPv6 kit.
+.\"
+.Sh BUGS
+There are many tunnelling protocol specifications,
+defined differently from each other.
+.Nm
+may not interoperate with peers which are based on different specifications,
+and are picky about outer header fields.
+For example, you cannot usually use
+.Nm
+to talk with IPsec devices that use IPsec tunnel mode.
+.Pp
+The current code does not check if the ingress address
+.Pq outer source address
+configured to
+.Nm
+makes sense.
+Make sure to configure an address which belongs to your node.
+Otherwise, your node will not be able to receive packets from the peer,
+and your node will generate packets with a spoofed source address.
+.Pp
+If the outer protocol is IPv6, path MTU discovery for encapsulated packet
+may affect communication over the interface.
