@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.32 2002/06/02 22:38:57 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.33 2002/06/08 23:41:42 angelos Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.32 2002/06/02 22:38:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.33 2002/06/08 23:41:42 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ int	totalflag;
 int	kflag;
 char	*nlistf	= NULL;
 char	*memf	= NULL;
-kvm_t	*kd;
+kvm_t	*kd = 0;
 
 #define	SVAR(var) __STRING(var)	/* to force expansion */
 #define	KGET(idx, var)							\
@@ -738,11 +738,19 @@ kinfo_vnodes(avnodes)
 	struct vnode *vp, vnode;
 	char *vbuf, *evbuf, *bp;
 	int num, numvnodes;
+	int mib[2];
 
 #define VPTRSZ  sizeof(struct vnode *)
 #define VNODESZ sizeof(struct vnode)
 
-	KGET(V_NUMV, numvnodes);
+	if (kd == 0) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_NUMVNODES;
+		num = sizeof(numvnodes);
+		if (sysctl(mib, 2, &numvnodes, &num, NULL, 0) < 0)
+			err(1, "sysctl(KERN_NUMVNODES) failed");
+	} else
+		KGET(V_NUMV, numvnodes);
 	if ((vbuf = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
 		err(1, "malloc: vnode buffer");
 	bp = vbuf;
@@ -774,11 +782,19 @@ char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 void
 ttymode()
 {
-	int ntty;
+	int ntty, nlen;
 	struct ttylist_head tty_head;
 	struct tty *tp, tty;
+	int mib[2];
 
-	KGET(TTY_NTTY, ntty);
+	if (kd == 0) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_TTYCOUNT;
+		nlen = sizeof(ntty);
+		if (sysctl(mib, 2, &ntty, &nlen, NULL, 0) < 0)
+			err(1, "sysctl(KERN_TTYCOUNT) failed");
+	} else
+		KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
 	KGET(TTY_TTYLIST, tty_head);
 	(void)printf(hdr);
@@ -867,13 +883,30 @@ filemode()
 	char *buf, flagbuf[16], *fbp;
 	int len, maxfile, nfile;
 	static char *dtypes[] = { "???", "inode", "socket" };
+	int mib[2];
 
-	KGET(FNL_MAXFILE, maxfile);
-	if (totalflag) {
-		KGET(FNL_NFILE, nfile);
-		(void)printf("%3d/%3d files\n", nfile, maxfile);
-		return;
+	if (kd == 0) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MAXFILES;
+		len = sizeof(maxfile);
+		if (sysctl(mib, 2, &maxfile, &len, NULL, 0) < 0)
+			err(1, "sysctl(KERN_MAXFILES) failed");
+		if (totalflag) {
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_NFILES;
+			len = sizeof(nfile);
+			if (sysctl(mib, 2, &nfile, &len, NULL, 0) < 0)
+				err(1, "sysctl(KERN_NFILES) failed");
+		}
+	} else {
+		KGET(FNL_MAXFILE, maxfile);
+		if (totalflag) {
+			KGET(FNL_NFILE, nfile);
+			(void)printf("%3d/%3d files\n", nfile, maxfile);
+			return;
+		}
 	}
+
 	if (getfiles(&buf, &len) == -1)
 		return;
 	/*
