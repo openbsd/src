@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: diff3.ksh,v 1.1 2003/07/10 16:06:07 millert Exp $
+# $OpenBSD: diff3.ksh,v 1.2 2003/07/31 11:16:58 millert Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -34,12 +34,10 @@ d3flags=
 while getopts "aeExX3" c; do
 	case "$c" in
 		a)
-			dflags="$dflags $1"
-			shift
+			dflags="$dflags -$c"
 			;;
 		e|E|x|X|3)
 			d3flags="-$c"
-			shift
 			;;
 		*)
 			echo "$USAGE" 1>&2
@@ -48,6 +46,11 @@ while getopts "aeExX3" c; do
 	esac
 done
 shift $(( $OPTIND - 1 ))
+
+if [ $# -lt 3 ]; then
+	echo "$USAGE" 1>&2
+	exit 1
+fi
 
 TMP1=`mktemp -t d3a.XXXXXXXXXX` || exit 1
 TMP2=`mktemp -t d3b.XXXXXXXXXX`
@@ -58,5 +61,5 @@ fi
 trap "/bin/rm -f $TMP1 $TMP2" 0 1 2 13 15
 diff $dflags $1 $3 > $TMP1
 diff $dflags $2 $3 > $TMP2
-$DIFF3PROG $d3flags $TMP1 $TMP2 $1 $2 $3
+$diff3prog $d3flags $TMP1 $TMP2 $1 $2 $3
 exit $?
