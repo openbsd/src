@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 1997/12/19 03:02:48 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.58 1997/12/26 08:16:48 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -60,7 +60,7 @@ pcmcia* at pcic?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
-#isapnp0	at isa?
+isapnp0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
@@ -77,6 +77,7 @@ pccom*	at ast? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
 pccom3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+pccom*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
@@ -159,6 +160,7 @@ ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
@@ -181,3 +183,4 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record
 #joy0	at isa? port 0x201
 
 pseudo-device	pctr	1
+#option DEBUG_ISAPNP
