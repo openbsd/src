@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.19 2003/10/24 09:41:52 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.20 2003/10/26 15:16:13 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1668,7 +1668,7 @@ encryption:
 .Dl $ openssl ciphers -v 'RSA:!COMPLEMENTOFALL'
 .Sh CIPHERS HISTORY
 The
-.Ar COMPLENTOFALL
+.Ar COMPLEMENTOFALL
 and
 .Ar COMPLEMENTOFDEFAULT
 selection options were added in version 0.9.7.
@@ -1678,19 +1678,19 @@ selection options were added in version 0.9.7.
 .Sh CRL
 .Nm openssl crl
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl text
-.Op Fl in Ar filename
-.Op Fl out Ar filename
-.Op Fl noout
-.Op Fl hash
 .Op Fl fingerprint
+.Op Fl hash
 .Op Fl issuer
 .Op Fl lastupdate
 .Op Fl nextupdate
+.Op Fl noout
+.Op Fl text
 .Op Cm CAfile Ar file
 .Op Cm CApath Ar dir
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
 .Ek
 .Pp
 The
@@ -1703,42 +1703,6 @@ format.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM
-This specifies the input format.
-.Ar DER
-format is a DER encoded CRL structure.
-.Ar PEM
-.Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar filename
-This specifies the input filename to read from or standard input if this
-option is not specified.
-.It Fl out Ar filename
-Specifies the output filename to write to, or standard output by
-default.
-.It Fl text
-Print out the CRL in text form.
-.It Fl noout
-Don't output the encoded version of the CRL.
-.It Fl hash
-Output a hash of the issuer name.
-This can be used to look up CRLs in a directory by issuer name.
-.It Fl fingerprint
-Print the CRL fingerprint.
-.It Fl issuer
-Output the issuer name.
-.It Fl lastupdate
-Output the
-.Ar lastUpdate
-field.
-.It Fl nextupdate
-Output the
-.Ar nextUpdate
-field.
 .It Fl CAfile Ar file
 Verify the signature on a CRL by looking up the issuing certificate in
 .Ar file .
@@ -1749,6 +1713,42 @@ This directory must be a standard certificate directory,
 i.e. a hash of each subject name (using
 .Cm x509 Fl hash )
 should be linked to each certificate.
+.It Fl fingerprint
+Print the CRL fingerprint.
+.It Fl hash
+Output a hash of the issuer name.
+This can be used to look up CRLs in a directory by issuer name.
+.It Fl in Ar filename
+This specifies the input filename to read from, or standard input if this
+option is not specified.
+.It Fl inform Ar DER | PEM
+This specifies the input format.
+.Ar DER
+format is a DER encoded CRL structure.
+.Ar PEM
+.Pq the default
+is a base64 encoded version of the DER form with header and footer lines.
+.It Fl issuer
+Output the issuer name.
+.It Fl lastupdate
+Output the
+.Ar lastUpdate
+field.
+.It Fl nextupdate
+Output the
+.Ar nextUpdate
+field.
+.It Fl noout
+Don't output the encoded version of the CRL.
+.It Fl out Ar filename
+Specifies the output filename to write to, or standard output by
+default.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl text
+Print out the CRL in text form.
 .El
 .Sh CRL NOTES
 The PEM CRL format uses the header and footer lines:
@@ -1768,7 +1768,7 @@ Output the text form of a
 .Ar DER
 encoded certificate:
 .Pp
-.Dl $ openssl crl -in crl.der -text -noout
+.Dl $ openssl crl -in crl.der -inform DER -text -noout
 .Sh CRL BUGS
 Ideally, it should be possible to create a CRL using appropriate options
 and files too.
@@ -1777,12 +1777,14 @@ and files too.
 .\"
 .Sh CRL2PKCS7
 .Nm openssl crl2pkcs7
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
-.Op Fl certfile Ar filename
+.Bk -words
 .Op Fl nocrl
+.Op Fl certfile Ar filename
+.Op Fl in Ar filename
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar filename
+.Op Fl outform Ar DER | PEM
+.Ek
 .Pp
 The
 .Nm crl2pkcs7
@@ -1793,28 +1795,6 @@ structure.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM
-This specifies the CRL input format.
-.Ar DER
-format is a DER encoded CRL structure.
-.Ar PEM
-.Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the PKCS#7 structure output format.
-.Ar DER
-format is a DER encoded PKCS#7 structure.
-.Ar PEM
-.Pq the default
-is a base64 encoded version of the DER form with header and footer lines.
-.It Fl in Ar filename
-This specifies the input
-.Ar filename
-to read a CRL from or standard input if this option is not specified.
-.It Fl out Ar filename
-Specifies the output
-.Ar filename
-to write the PKCS#7 structure to or standard output by default.
 .It Fl certfile Ar filename
 Specifies a
 .Ar filename
@@ -1824,10 +1804,32 @@ format.
 All certificates in the file will be added to the PKCS#7 structure.
 This option can be used more than once to read certificates from multiple
 files.
+.It Fl in Ar filename
+This specifies the input
+.Ar filename
+to read a CRL from or standard input if this option is not specified.
+.It Fl inform Ar DER | PEM
+This specifies the CRL input format.
+.Ar DER
+format is a DER encoded CRL structure.
+.Ar PEM
+.Pq the default
+is a base64 encoded version of the DER form with header and footer lines.
 .It Fl nocrl
 Normally, a CRL is included in the output file.
 With this option, no CRL is
 included in the output file and a CRL is not read from the input file.
+.It Fl out Ar filename
+Specifies the output
+.Ar filename
+to write the PKCS#7 structure to or standard output by default.
+.It Fl outform Ar DER | PEM
+This specifies the PKCS#7 structure output format.
+.Ar DER
+format is a DER encoded PKCS#7 structure.
+.Ar PEM
+.Pq the default
+is a base64 encoded version of the DER form with header and footer lines.
 .El
 .Sh CRL2PKCS7 EXAMPLES
 Create a PKCS#7 structure from a certificate and CRL:
