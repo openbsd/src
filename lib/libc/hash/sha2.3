@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.8 2004/05/03 18:10:07 millert Exp $
+.\"	$OpenBSD: sha2.3,v 1.9 2004/05/05 17:39:47 millert Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -28,6 +28,7 @@
 .Nm SHA256_Update ,
 .Nm SHA256_Pad ,
 .Nm SHA256_Final ,
+.Nm SHA256_Transform ,
 .Nm SHA256_End ,
 .Nm SHA256_File ,
 .Nm SHA256_FileChunk ,
@@ -44,6 +45,8 @@
 .Fn SHA256_Pad "SHA256_CTX *context"
 .Ft void
 .Fn SHA256_Final "u_int8_t digest[SHA256_DIGEST_LENGTH]" "SHA256_CTX *context"
+.Ft void
+.Fn SHA256_Transform "u_int32_t state[8]" "const u_int8_t buffer[SHA256_BLOCK_LENGTH]"
 .Ft "char *"
 .Fn SHA256_End "SHA256_CTX *context" "char *buf"
 .Ft "char *"
@@ -60,6 +63,8 @@
 .Fn SHA384_Pad "SHA384_CTX *context"
 .Ft void
 .Fn SHA384_Final "u_int8_t digest[SHA384_DIGEST_LENGTH]" "SHA384_CTX *context"
+.Ft void
+.Fn SHA384_Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA384_BLOCK_LENGTH]"
 .Ft "char *"
 .Fn SHA384_End "SHA384_CTX *context" "char *buf"
 .Ft "char *"
@@ -76,6 +81,8 @@
 .Fn SHA512_Pad "SHA512_CTX *context"
 .Ft void
 .Fn SHA512_Final "u_int8_t digest[SHA512_DIGEST_LENGTH]" "SHA512_CTX *context"
+.Ft void
+.Fn SHA512_Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA512_BLOCK_LENGTH]"
 .Ft "char *"
 .Fn SHA512_End "SHA512_CTX *context" "char *buf"
 .Ft "char *"
@@ -131,6 +138,20 @@ function can be used to apply padding to the message digest as in
 .Fn SHA256_Final ,
 but the current context can still be used with
 .Fn SHA256_Update .
+.Pp
+The
+.Fn SHA256_Transform
+function is used by
+.Fn SHA256_Update
+to hash 512-bit blocks and forms the core of the algorithm.
+Most programs should use the interface provided by
+.Fn SHA256_Init ,
+.Fn SHA256_Update
+and
+.Fn SHA256_Final
+instead of calling
+.Fn SHA256_Transform
+directly.
 .Pp
 The
 .Fn SHA256_End

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.4 2004/05/03 17:30:14 millert Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.5 2004/05/05 17:39:47 millert Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -68,6 +68,7 @@ typedef SHA512_CTX SHA384_CTX;
 
 __BEGIN_DECLS
 void SHA256_Init(SHA256_CTX *);
+void SHA256_Transform(u_int32_t state[8], const u_int8_t [SHA256_BLOCK_LENGTH]);
 void SHA256_Update(SHA256_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA256_Pad(SHA256_CTX *);
@@ -84,6 +85,7 @@ char *SHA256_Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__minbytes__,3,SHA256_DIGEST_STRING_LENGTH)));
 
 void SHA384_Init(SHA384_CTX *);
+void SHA384_Transform(u_int64_t state[8], const u_int8_t [SHA384_BLOCK_LENGTH]);
 void SHA384_Update(SHA384_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA384_Pad(SHA384_CTX *);
@@ -100,6 +102,7 @@ char *SHA384_Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__minbytes__,3,SHA384_DIGEST_STRING_LENGTH)));
 
 void SHA512_Init(SHA512_CTX *);
+void SHA512_Transform(u_int64_t state[8], const u_int8_t [SHA512_BLOCK_LENGTH]);
 void SHA512_Update(SHA512_CTX *, const u_int8_t *, size_t)
 	__attribute__((__bounded__(__string__,2,3)));
 void SHA512_Pad(SHA512_CTX *);
