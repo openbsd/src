@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.38 2002/05/09 15:06:29 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.39 2002/05/19 18:45:42 miod Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -301,9 +301,13 @@ typedef struct device *device_ptr_t;
 	} usb_dma_t
 
 typedef struct timeout usb_callout_t;
-#define usb_callout_init(h)
+#define usb_callout_init(h)	timeout_set(&(h), NULL, NULL)
 #define usb_callout(h, t, f, d) \
-	{ timeout_set(&(h), (f), (d)); timeout_add(&(h), (t)); }
+	do { \
+		timeout_del(&(h)); \
+		timeout_set(&(h), (f), (d)); \
+		timeout_add(&(h), (t)); \
+	} while (0)
 #define usb_uncallout(h, f, d) timeout_del(&(h))
 
 #define usb_lockmgr(l, f, sl, p) lockmgr((l), (f), (sl), (p))
