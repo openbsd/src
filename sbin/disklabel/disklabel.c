@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.8 1996/06/08 03:54:56 dm Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.9 1996/06/12 08:02:44 downsj Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -81,10 +81,6 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson E
  * The bootstrap source must leave space at the proper offset
  * for the label on such machines.
  */
-
-#ifndef RAWPARTITION
-#define RAWPARTITION	'c'
-#endif
 
 #ifndef BBSIZE
 #define	BBSIZE	8192			/* size of boot area, with label */
@@ -240,7 +236,7 @@ main(argc, argv)
 		goto ok;
 	}
 	if (dkname[0] != '/') {
-		(void)sprintf(np, "%sr%s%c", _PATH_DEV, dkname, RAWPARTITION);
+		(void)sprintf(np, "%sr%s%c", _PATH_DEV, dkname, 'a' + RAW_PART);
 		specname = np;
 		np += strlen(specname) + 1;
 	} else
