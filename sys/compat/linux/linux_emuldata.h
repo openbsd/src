@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_emuldata.h,v 1.2 2003/06/23 18:23:48 tedu Exp $	*/
+/*	$OpenBSD: linux_emuldata.h,v 1.3 2004/04/25 03:21:19 jolan Exp $	*/
 /*	$NetBSD: linux_emuldata.h,v 1.4 2002/02/15 16:48:02 christos Exp $	*/
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _LINUX_EMULDATA_H
 
 /*
- * This is auxillary data the linux compat code
+ * This is auxiliary data the linux compat code
  * needs to do its work.  A pointer to it is
  * stored in the emuldata field of the proc
  * structure.

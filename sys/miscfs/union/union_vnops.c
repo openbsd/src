@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.22 2003/09/23 16:51:13 millert Exp $ */
+/*	$OpenBSD: union_vnops.c,v 1.23 2004/04/25 03:21:19 jolan Exp $ */
 /*	$NetBSD: union_vnops.c,v 1.59 2002/09/27 15:37:48 provos Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ union_lookup(v)
 
 	/*
 	 * do the lookup in the upper level.
-	 * if that level comsumes additional pathnames,
+	 * if that level consumes additional pathnames,
 	 * then assume that something special is going
 	 * on and just return that vnode.
 	 */

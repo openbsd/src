@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.22 2003/09/01 18:06:03 henning Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.23 2004/04/25 03:21:19 jolan Exp $  */
 
 /*
  *    Portions of this code are:
@@ -148,7 +148,7 @@ vop_generic_abortop(v)
  * Stubs to use when there is no locking to be done on the underlying object.
  * A minimal shared lock is necessary to ensure that the underlying object
  * is not revoked while an operation is in progress. So, an active shared
- * count is maintained in an auxillary vnode lock structure.
+ * count is maintained in an auxiliary vnode lock structure.
  */
 int
 vop_generic_lock(v)
