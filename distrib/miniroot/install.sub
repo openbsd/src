@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.51 1998/02/17 23:19:09 millert Exp $
+#	$OpenBSD: install.sub,v 1.52 1998/03/01 19:49:03 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -884,9 +884,9 @@ install_url() {
 			echo ""
 			if [ "X${_f}" = "X${_kernel}" ]; then
 				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp -o - ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
+					( cd /mnt ; ftp ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
 				else
-					( cd /mnt ; eval ftp -o - -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
+					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
 				fi
 			else
 				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
