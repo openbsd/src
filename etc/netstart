@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.40 1998/08/24 09:32:50 downsj Exp $
+#	$OpenBSD: netstart,v 1.41 1998/09/08 20:26:41 marc Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -38,6 +38,10 @@ ifconfig lo0 inet localhost
 route -n add -host $hostname localhost
 route -n add -net 127 127.0.0.1 -reject
 
+if [ "X${dhcp_client}" != X"NO" ]; then
+# Do DHCP discovery
+      dhclient ${dhcp_client}
+else
 # configure all of the non-loopback interfaces which we know about.
 # do this by reading /etc/hostname.* files, where * is the name
 # of a given interface.
@@ -61,7 +65,7 @@ route -n add -net 127 127.0.0.1 -reject
 # the only required contents of the file are the addr_family field
 # and the hostname.
 
-(
+    (
     tmp="$IFS"
     IFS="$IFS."
     set -- `echo /etc/hostname*`
@@ -91,16 +95,17 @@ route -n add -net 127 127.0.0.1 -reject
         ) < /etc/hostname.$1
         shift
     done
-)
+    )
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
-if [ -f /etc/mygate ]; then
+    if [ -f /etc/mygate ]; then
 	route -n add -host default `cat /etc/mygate`
 
 	# default multicast route for hosts with a gateway
 	route -n add -net 224.0.0.0 -interface default
-else
+    else
 	# default multicast route
 	route -n add -net 224.0.0.0 -interface $hostname
+    fi
 fi

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 1998/08/20 03:21:45 form Exp $
+#	$OpenBSD: Makefile,v 1.90 1998/09/08 20:26:40 marc Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -19,7 +19,7 @@ BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	myname ipnat.rules netstart networks newsyslog.conf passwd.conf \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel remote rpc security services shells syslog.conf weekly \
-	etc.${MACHINE}/disktab
+	etc.${MACHINE}/disktab dhclient.conf
 
 # -rw-rw-r--
 BIN2=	motd
