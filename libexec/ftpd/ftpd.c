@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.56 1999/07/21 00:05:47 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.57 1999/09/22 05:00:46 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1848,6 +1848,7 @@ myoob(signo)
 		longjmp(urgcatch, 1);
 	}
 	if (strcmp(cp, "STAT\r\n") == 0) {
+		tmpline[0] = '\0';
 		if (file_size != (off_t) -1)
 			reply(213, "Status: %qd of %qd bytes transferred",
 			    byte_count, file_size);
