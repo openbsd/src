@@ -1,17 +1,16 @@
-
-This port is partly based on the NetBSD powerpc port by Wolfgang Solfrank.
-The NetBSD code was imported by Dale Rahn who also added support for ELF.
-
-A lot of code has been removed and a lot of new code has been added to
-create a monolithic kernel that uses OpenFirmware or any other boot plattform
-as little possible.
-
 The current kernel supports PowerMac G4 and iMacs, additional machines
 may be supported to varying degrees.
 
 
 TODO:
-	ptrace support finished (gdb can breakpoint, but not step)
+	* Stability analysis. Find that lurking memory mapping error.
+	* Share harddrives between BSD and MacOS
+	  Use pdisk from Apple as basis of disklabel editor
+	  Allow BSD disklabel to exist inside Apple Partition.
+	* Legagcy machine support
+	  adb keyboard/mouse support
+	  esp ethernet
+	  - other legacy support.
 
 Dale
-rahnds@cvs.openbsd.org
+drahn@cvs.openbsd.org
