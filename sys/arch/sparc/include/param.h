@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 1999/07/09 21:33:37 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 1999/11/25 08:46:44 art Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -233,6 +233,9 @@ extern int mmumod;
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
+#	define PAGE_SIZE	4096
+#	define PAGE_MASK	(PAGE_SIZE - 1)
+#	define PAGE_SHIFT	SUN4CM_PGSHIFT
 #elif defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(0)
@@ -251,6 +254,9 @@ extern int mmumod;
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
+#	define PAGE_SIZE	4096
+#	define PAGE_MASK	(PAGE_SIZE - 1)
+#	define PAGE_SHIFT	SUN4CM_PGSHIFT
 #elif !defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
@@ -269,6 +275,9 @@ extern int mmumod;
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
+#	define PAGE_SIZE	4096
+#	define PAGE_MASK	(PAGE_SIZE - 1)
+#	define PAGE_SHIFT	SUN4CM_PGSHIFT
 #elif !defined(SUN4M) && !defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(0)
@@ -278,6 +287,9 @@ extern int mmumod;
 #	define NBPG		8192
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4_PGSHIFT
+#	define PAGE_SIZE	8192
+#	define PAGE_MASK	(PAGE_SIZE - 1)
+#	define PAGE_SHIFT	SUN4_PGSHIFT
 #elif !defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
