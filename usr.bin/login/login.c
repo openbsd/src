@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.32 2000/08/24 20:08:06 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.33 2000/09/04 19:15:27 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.32 2000/08/24 20:08:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.33 2000/09/04 19:15:27 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -427,16 +427,6 @@ main(argc, argv)
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
-	if (pwd->pw_change) {
-		if (tp.tv_sec >= pwd->pw_change) {
-			(void)printf("Sorry -- your password has expired.\n");
-			sleepexit(1);
-		} else if (!quietlog && pwd->pw_change - tp.tv_sec <
-		    login_getcaptime(lc, "password-warn", 
-		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY))
-			(void)printf("Warning: your password expires on %s",
-			    ctime(&pwd->pw_change));
-	}
 	if (pwd->pw_expire) {
 		if (tp.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
@@ -446,6 +436,16 @@ main(argc, argv)
 		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY))
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
+	}
+	if (pwd->pw_change) {
+		if (tp.tv_sec >= pwd->pw_change) {
+			(void)printf("Sorry -- your password has expired.\n");
+			sleepexit(1);
+		} else if (!quietlog && pwd->pw_change - tp.tv_sec <
+		    login_getcaptime(lc, "password-warn", 
+		    2 * DAYSPERWEEK * SECSPERDAY, 2 * DAYSPERWEEK * SECSPERDAY))
+			(void)printf("Warning: your password expires on %s",
+			    ctime(&pwd->pw_change));
 	}
 
 	/* Nothing else left to fail -- really log in. */
