@@ -7,7 +7,8 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	calloc.c cfree.c exit.c ecvt.c gcvt.c getenv.c getopt_long.c \
 	getsubopt.c heapsort.c l64a.c llabs.c lsearch.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c realpath.c \
-	setenv.c strtod.c strtol.c strtoll.c strtoul.c strtoull.c system.c \
+	setenv.c strtod.c strtol.c strtoll.c strtonum.c strtoul.c strtoull.c \
+	system.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
 	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
 
@@ -42,7 +43,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 ecvt.3 exit.3 getenv.3 getopt.3 getopt_long.3 \
 	getsubopt.3 insque.3 labs.3 ldiv.3 lsearch.3 malloc.3 qabs.3 \
 	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 realpath.3 \
-	strtod.3 strtol.3 strtoul.3 system.3 tsearch.3
+	strtod.3 strtonum.3 strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
