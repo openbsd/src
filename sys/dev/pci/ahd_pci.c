@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.9 2004/11/18 01:33:28 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.10 2004/12/10 17:43:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1169,7 +1169,8 @@ ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 
 		ahd->features |= AHD_RTI|AHD_NEW_IOCELL_OPTS
 			      |  AHD_NEW_DFCNTRL_OPTS|AHD_FAST_CDB_DELIVERY;
-		ahd->bugs |= AHD_LQOOVERRUN_BUG|AHD_EARLY_REQ_BUG;
+		ahd->bugs |= AHD_LQOOVERRUN_BUG|AHD_EARLY_REQ_BUG
+		    	  |  AHD_BUSFREEREV_BUG;
 
 		/*
 		 * Some issues have been resolved in the 7901B.
