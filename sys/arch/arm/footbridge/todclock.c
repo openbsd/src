@@ -1,4 +1,4 @@
-/*	$OpenBSD: todclock.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: todclock.c,v 1.2 2004/02/15 17:25:01 drahn Exp $	*/
 /*	$NetBSD: todclock.c,v 1.4 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
@@ -329,11 +329,6 @@ inittodr(base)
 	/* If the base was 0 then keep quiet */
 
 	if (base) {
-		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
-		    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
-		    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
-		    rtc.rtc_year);
-
 		if (n > base + 60) {
 			days = (n - base) / SECPERDAY;
 			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
