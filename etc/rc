@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.251 2004/08/21 08:17:28 hshoexer Exp $
+#	$OpenBSD: rc,v 1.252 2004/09/17 21:50:30 mcbride Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -131,6 +131,10 @@ rm -f /fastboot		# XXX (root now writeable)
 # set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'
 ttyflags -a
+
+if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
+	kbd `cat /etc/kbdtype`
+fi
 
 if [ "X${pf}" != X"NO" ]; then
 	RULES="block all"
@@ -610,10 +614,6 @@ if [ -x /sbin/wsconsctl -a -f /etc/wsconsctl.conf ]; then
 		shift
 	done
 )
-fi
-
-if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
-	kbd `cat /etc/kbdtype`
 fi
 
 # KerberosV master KDC
