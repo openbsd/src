@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.16 2004/11/11 12:32:57 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.17 2004/11/11 12:38:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -1269,23 +1269,21 @@ axe_watchdog(struct ifnet *ifp)
 	struct axe_softc	*sc;
 	struct axe_chain	*c;
 	usbd_status		stat;
+	int			s;
 
 	sc = ifp->if_softc;
-	axe_lock_mii(sc);
 
 	ifp->if_oerrors++;
 	printf("axe%d: watchdog timeout\n", sc->axe_unit);
 
+	s = splusb();
 	c = &sc->axe_cdata.axe_tx_chain[0];
 	usbd_get_xfer_status(c->axe_xfer, NULL, NULL, NULL, &stat);
 	axe_txeof(c->axe_xfer, c, stat);
 
-	axe_unlock_mii(sc);
-
 	if (ifp->if_snd.ifq_head != NULL)
 		axe_start(ifp);
-
-	return;
+	splx(s);
 }
 
 /*
