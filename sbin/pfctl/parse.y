@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2002/06/08 00:23:41 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2002/06/08 01:00:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -114,6 +114,7 @@ void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, u_int8_t, struct node_port *);
 void	expand_label_proto(const char *, char *, u_int8_t);
+void	expand_label_nr(const char *, char *);
 void	expand_label(char *, u_int8_t, struct node_host *, struct node_port *,
     struct node_host *, struct node_port *, u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
@@ -1729,6 +1730,21 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 	}
 }
 
+void
+expand_label_nr(const char *name, char *label)
+{
+	char tmp[PF_RULE_LABEL_SIZE];
+	char *p;
+
+	while ((p = strstr(label, name)) != NULL) {
+		tmp[0] = 0;
+		strlcat(tmp, label, p-label+1);
+		snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
+		    "%u", pf->rule_nr);
+		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
+		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+	}
+}
 
 void
 expand_label(char *label, u_int8_t af,
@@ -1741,6 +1757,7 @@ expand_label(char *label, u_int8_t af,
 	expand_label_port("$srcport", label, af, src_port);
 	expand_label_port("$dstport", label, af, dst_port);
 	expand_label_proto("$proto", label, proto);
+	expand_label_nr("$nr", label);
 }
 
 void
