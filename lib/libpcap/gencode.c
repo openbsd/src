@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.22 2004/05/21 05:40:37 brad Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.23 2005/02/28 13:19:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -609,6 +609,11 @@ init_linktype(type)
 	case DLT_IEEE802_11:
 		off_linktype = 30; /* XXX variable */
 		off_nl = 32;
+		return;
+
+	case DLT_IEEE802_11_RADIO:
+		off_linktype = 30 + 64; /* XXX variable */
+		off_nl = 32 + 64;
 		return;
 
 	case DLT_ATM_RFC1483:
