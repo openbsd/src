@@ -1,0 +1,144 @@
+.\"	$OpenBSD: sha1.3,v 1.1 1997/07/11 02:05:02 millert Exp $
+.\"
+.\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Todd C. Miller.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" See http://csrc.nist.gov/fips/fip180-1.txt for the detailed standard
+.\"
+.Dd July 10, 1997
+.Dt SHA1 3
+.Sh NAME
+.Nm SHA1Init ,
+.Nm SHA1Update ,
+.Nm SHA1Final ,
+.Nm SHA1Transform
+.Nd calculate the NIST Secure Hash Algorithm
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sha1.h>
+.Ft void
+.Fn SHA1Init "SHA1_CTX *context"
+.Ft void
+.Fn SHA1Update "SHA1_CTX *context" "u_char *data" "u_int len"
+.Ft void
+.Fn SHA1Final "u_char digest[20]" "SHA1_CTX *context"
+.Ft void
+.Fn SHA1Transform "u_int32_t state[5]" "u_char buffer[64]"
+.Sh DESCRIPTION
+The SHA1 functions implement then NIST Secure Hash Algorithm (SHA-1),
+FIPS PUB 180-1.  SHA-1 is used to generate a condensed representation
+of a message called a message digest.  The algorithm takes a
+message less than 2^64 bits as input and produces a 160-bit digest
+suitable for use as a digital signature.
+.Pp
+The SHA1 functions are considered to be more secure than the 
+.Xr md4 3
+and
+.Xr md5 3
+functions with which they share a similar interface.
+.Pp
+The
+.Fn SHA1Init
+function initializes a MDX_CTX
+.Ar context
+for use with
+.Fn SHA1Update ,
+and
+.Fn SHA1Final .
+The
+.Fn SHA1Update
+function adds
+.Ar data
+of length
+.Ar len
+to the SHA1_CTX specified by
+.Ar context.
+.Fn SHA1Final
+is called when all data has been added via
+.Fn SHA1Update
+and stores a message digest in the
+.Ar digest
+parameter.
+.Pp
+The
+.Fn SHA1Transform
+function is used by
+.Fn SHA1Update
+to hash 512-bit blocks and forms the core of the algorithm.
+Most programs should use the interface provided by
+.Fn SHA1Init ,
+.Fn SHA1Update
+and
+.Fn SHA1Final
+instead of calling
+.Fn SHA1Transform
+directly.
+.Sh EXAMPLE
+The follow code fragment will calculate the digest for
+the string "abc" which is ``0xa9993e36476816aba3e25717850c26c9cd0d89d''.
+.Bd -literal -offset indent
+SHA1_CTX sha;
+u_char results[20];
+char *buf;
+int n;
+
+buf = "abc";
+n = strlen(buf);
+SHA1Init(&sha);
+SHA1Update(&sha, (u_char *)buf, n);
+SHA1Final(results, &sha);
+
+/* Print the digest as one long hex value */
+printf("0x");
+for (n = 0; n < 20; n++)
+	printf("%x", results[n]);
+putchar('\n');
+.Ed
+.Sh CAVEATS
+This implementation of SHA-1 has not been valdiated by NIST
+and as such is not in official compliance with the standard.
+.Pp
+If a message digest is to be copied to a multi-byte type (ie:
+an array of five 32-bit integers) it will be necesary to
+perform byte swapping on little endian machines such as the i386, alpha,
+and vax.
+.Sh AUTHOR
+This implementation of SHA-1 was written by Steve Reid <steve@edmweb.com>.
+.Sh SEE ALSO
+.Xr md4 3 ,
+.Xr md5 3
+.Pp
+.Rs
+.%A J. Burrows
+.%T The Secure Hash Standard
+.%O FIPS PUB 180-1
+.Re
+.Sh HISTORY
+The SHA-1 functions appeared in
+.Bx Open
+2.0.
