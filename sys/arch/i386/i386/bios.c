@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.33 2000/09/22 02:00:21 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.34 2000/09/25 16:33:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -332,7 +332,7 @@ bios32_service(service, e, ei)
 
 	slot = gdt_get_slot();
 	setsegment(&dynamic_gdt[slot].sd, ISA_HOLE_VADDR(base),
-	    count - 1, SDT_MEMERA, SEL_KPL, 1, 0);
+	    ((base + 0x10000) & ~0xffff) - 1, SDT_MEMERA, SEL_KPL, 1, 0);
 
 	e->segment = GSEL(slot, SEL_KPL);
 	e->offset = (vaddr_t)(ent - base);
