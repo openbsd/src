@@ -63,7 +63,9 @@ krb_get_admhst(h, r, n)
 
     if ((cnffile = fopen(KRB_CONF,"r")) == NULL) {
         char tbuf[128];
-        char *tdir = (char *) getenv("KRBCONFDIR");
+        char *tdir = NULL;
+        if (issetugid() == 0)
+	   tdir = (char *) getenv("KRBCONFDIR");
         strncpy(tbuf, tdir ? tdir : "/etc", sizeof(tbuf)-1);
         tbuf[sizeof(tbuf)-1] = 0;
         strncat(tbuf, "/krb.conf", sizeof(tbuf)-strlen(tbuf));
