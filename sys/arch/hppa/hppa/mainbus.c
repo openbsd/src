@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.23 2002/02/12 02:44:00 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.24 2002/02/16 02:21:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -151,7 +151,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 		/* register vaddr_t va; */
 
 #ifdef PMAPDEBUG
-		printf ("%d, %d, %x\n", bank, off, vm_physmem[0].end);
+		printf ("%d, %d, %lx\n", bank, off, vm_physmem[0].end);
 #endif
 		spa = hppa_trunc_page(bpa);
 		epa = hppa_round_page(bpa + size);
@@ -268,7 +268,8 @@ int
 mbus_subregion(void *v, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t size, bus_space_handle_t *nbshp)
 {
-	panic("mbus_subregion: unimplemented");
+	*nbshp = bsh + offset;
+	return (0);
 }
 
 void
@@ -638,14 +639,26 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
 }
 
 void
+mbus_dmamap_unload(void *v, bus_dmamap_t map)
+{
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+}
+
+void
 mbus_dmamap_destroy(void *v, bus_dmamap_t map)
 {
+	if (map->dm_mapsize != 0)
+		mbus_dmamap_unload(v, map);
+
 	free(map, M_DEVBUF);
 }
 
@@ -653,7 +666,48 @@ int
 mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 		 struct proc *p, int flags)
 {
-	panic("_dmamap_load: not implemented");
+	paddr_t pa, pa_next;
+	bus_size_t mapsize;
+	bus_size_t off, pagesz;
+	int seg;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+	map->dm_mapsize = 0;
+	map->_dm_va = (vaddr_t)addr;
+
+	/* Load the memory. */
+	pa_next = 0;
+	seg = -1;
+	mapsize = size;
+	off = (bus_size_t)addr & (PAGE_SIZE - 1);
+	addr = (void *) ((caddr_t)addr - off);
+	for(; size > 0; ) {
+
+		pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa);
+		if (pa != pa_next) {
+			if (++seg >= map->_dm_segcnt)
+				panic("mbus_dmamap_load: nsegs botch");
+			map->dm_segs[seg].ds_addr = pa + off;
+			map->dm_segs[seg].ds_len = 0;
+		}
+		pa_next = pa + PAGE_SIZE;
+		pagesz = PAGE_SIZE - off;
+		if (size < pagesz)
+			pagesz = size;
+		map->dm_segs[seg].ds_len += pagesz;
+		size -= pagesz;
+		addr = (caddr_t)addr + off + pagesz;
+		off = 0;
+	}
+
+	/* Make the map truly valid. */
+	map->dm_nsegs = seg + 1;
+	map->dm_mapsize = mapsize;
+
+	return (0);
 }
 
 int
@@ -676,38 +730,17 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 }
 
 void
-mbus_dmamap_unload(void *v, bus_dmamap_t map)
-{
-	panic("_dmamap_unload: not implemented");
-}
-
-void
 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
     int ops)
 {
-	int i;
-	switch (ops) {
-	case BUS_DMASYNC_POSTREAD:
-	case BUS_DMASYNC_POSTWRITE:
+
+	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE))
 		__asm __volatile ("syncdma");
-		break;
 
-	case BUS_DMASYNC_PREREAD:
-		for (i = map->dm_nsegs; i--; )
-			pdcache(HPPA_SID_KERNEL,
-			    map->dm_segs[i].ds_addr + offset,
-			    len);
-		sync_caches();
-		break;
-
-	case BUS_DMASYNC_PREWRITE:
-		for (i = map->dm_nsegs; i--; )
-			fdcache(HPPA_SID_KERNEL,
-			    map->dm_segs[i].ds_addr + offset,
-			    len);
-		sync_caches();
-		break;
-	}
+	if (ops & BUS_DMASYNC_PREREAD)
+		pdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
+	else if (ops & BUS_DMASYNC_PREWRITE)
+		fdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
 }
 
 int

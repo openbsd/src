@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2001/11/05 17:25:57 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2002/02/16 02:21:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -403,6 +403,7 @@ struct hppa_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	vaddr_t		_dm_va;		/* needed for syncing */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
@@ -411,6 +412,7 @@ struct hppa_bus_dmamap {
 	 */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
 };
 
 #endif /* _MACHINE_BUS_H_ */
