@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.22 2002/07/23 16:56:52 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.23 2002/07/25 04:51:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -174,12 +174,13 @@ void
 kdbprinttrap(type, code)
 	int type, code;
 {
+	type &= ~T_USER;	/* just in case */
 	db_printf("kernel: ");
 	if (type >= trap_types || type < 0)
-		db_printf("type %d", type);
+		db_printf("type 0x%x", type);
 	else
 		db_printf("%s", trap_type[type]);
-	db_printf(" trap, code=%x\n", code);
+	db_printf(" trap, code=0x%x\n", code);
 }
 
 /*
@@ -210,9 +211,8 @@ kdb_trap(type, code, regs)
 
 	/* XXX Should switch to kdb`s own stack here. */
 
-	ddb_regs = *regs;
-
 	s = splhigh();
+	ddb_regs = *regs;
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(type, code);
