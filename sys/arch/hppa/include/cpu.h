@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2002/02/11 19:42:11 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2002/02/11 21:21:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -124,14 +124,6 @@ extern const char *cpu_typename;
 extern int want_resched;
 
 #define DELAY(x) delay(x)
-
-static __inline long
-kvtop (const caddr_t va)
-{
-	long ret;
-	__asm __volatile ("lpa %%r0(%1), %0" : "=r" (ret) : "r" (va));
-	return ret;
-}
 
 extern int (*cpu_desidhash) __P((void));
 
