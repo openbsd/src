@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.7 1999/10/04 16:44:09 deraadt Exp $
+.\"	$OpenBSD: whois.1,v 1.8 1999/11/15 01:46:41 millert Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl adpr
+.Op Fl adgiprR
 .Op Fl h Ar host
 .Ar name Op Ar ...
 .Sh DESCRIPTION
@@ -65,10 +65,25 @@ Use the (US Military) Defense Data Network
 .Pq Tn DDN
 database.  It contains points of contact for subdomains of
 .Tn \&.MIL Ns .
+.It Fl g
+Use the US non-military federal government database, which contains points of
+contact for subdomains of
+.Tn \&.GOV Ns .
 .It Fl h Ar host
 Use the specified host instead of the default NIC
-(whois.internic.net).
+(whois.crsnic.net).
 Either a host name or an IP address may be specified.
+.It Fl i
+Use the Network Solutions Registry for Internet Numbers
+.Pq Tn InterNIC
+database.  It contains network numbers and domain contact information
+for most of
+.Tn \&.COM ,
+.Tn \&.NET ,
+.Tn \&.ORG
+and
+.Tn \&.EDU
+domains.
 .It Fl m
 Use the Route Arbiter Database
 .Pq Tn RADB
@@ -100,6 +115,12 @@ Use the R\(aaeseaux IP Europ\(aaeens
 .Pq Tn RIPE
 database.  It contains network numbers and domain contact information
 for Europe.
+.It Fl R
+Use the Russia Network Information Center
+.Pq Tn RIPN
+database.  It contains network numbers and domain contact information
+for subdomains of
+.Tn \&.RU Ns .
 .El
 .Pp
 The operands specified to

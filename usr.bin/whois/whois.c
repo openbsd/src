@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.6 1999/10/03 00:42:34 deraadt Exp $	*/
+/*	$OpenBSD: whois.c,v 1.7 1999/11/15 01:46:41 millert Exp $	*/
 /*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: whois.c,v 1.6 1999/10/03 00:42:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.7 1999/11/15 01:46:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,31 +52,32 @@ static char rcsid[] = "$OpenBSD: whois.c,v 1.6 1999/10/03 00:42:34 deraadt Exp $
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
-#include <err.h>
 
-#define	NICHOST		"whois.internic.net"
-#define	DNICHOST	"nic.ddn.mil"
+#define	NICHOST		"whois.crsnic.net"
+#define	INICHOST	"whois.internic.net"
+#define	DNICHOST	"whois.nic.mil"
+#define	GNICHOST	"whois.nic.gov"
 #define	ANICHOST	"whois.arin.net"
 #define	RNICHOST	"whois.ripe.net"
 #define	PNICHOST	"whois.apnic.net"
+#define	RUNICHOST	"whois.ripn.net"
 #define	MNICHOST	"whois.ra.net"
 #define	QNICHOST_TAIL	".whois-servers.net"
 #define	WHOIS_PORT	43
 
-static void usage();
+static void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	register FILE *sfi, *sfo;
 	register int ch;
 	struct sockaddr_in sin;
@@ -90,7 +91,7 @@ main(argc, argv)
 
 	host = NICHOST;
 	use_qnichost = 0;
-	while ((ch = getopt(argc, argv, "adh:pmqr")) != -1)
+	while ((ch = getopt(argc, argv, "adgh:impqrR")) != -1)
 		switch((char)ch) {
 		case 'a':
 			host = ANICHOST;
@@ -98,8 +99,14 @@ main(argc, argv)
 		case 'd':
 			host = DNICHOST;
 			break;
+		case 'g':
+			host = GNICHOST;
+			break;
 		case 'h':
 			host = optarg;
+			break;
+		case 'i':
+			host = INICHOST;
 			break;
 		case 'm':
 			host = MNICHOST;
@@ -112,6 +119,9 @@ main(argc, argv)
 			break;
 		case 'r':
 			host = RNICHOST;
+			break;
+		case 'R':
+			host = RUNICHOST;
 			break;
 		case '?':
 		default:
@@ -180,6 +190,8 @@ main(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: whois [-admpqr] [-h hostname] name ...\n");
+
+	(void)fprintf(stderr,
+	    "usage: whois [-adgimpqrR] [-h hostname] name ...\n");
 	exit(EX_USAGE);
 }
