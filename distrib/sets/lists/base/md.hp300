@@ -4,7 +4,7 @@
 ./usr/include/readline
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.1
+./usr/lib/libc.so.20.2
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
