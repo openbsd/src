@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: grep.c,v 1.3 2003/06/22 22:20:07 deraadt Exp $
+ *	$Id: grep.c,v 1.4 2003/06/22 22:23:06 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -330,6 +330,17 @@ main(int argc, char *argv[])
 		break;
 	case 'z':
 		Zflag++;
+		switch(progname[1]) {
+		case 'e':
+			Eflag++;
+			break;
+		case 'f':
+			Fflag++;
+			break;
+		case 'g':
+			Gflag++;
+			break;
+		}
 		break;
 	}
 
