@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.11 2001/09/06 22:37:08 jasoni Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.12 2001/09/22 20:19:46 pvalchev Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -139,7 +139,7 @@ bidirectional map is created between the private address 192.168.1.5
 and the routable external address 204.92.77.113.  (Thus, incoming
 traffic to 204.92.77.113 is mapped to the internal address 192.168.1.5.)
 .Bd -literal
-binat on fxp0 from 192.168.1.5/32 to any -> 204.92.77.113
+binat on fxp0 from 192.168.1.5 to any -> 204.92.77.113
 .Ed
 .Pp
 This longer example uses both a NAT and a redirection. Interface
