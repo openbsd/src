@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.251 2003/06/07 20:00:52 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.252 2003/06/07 20:05:12 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2122,7 +2122,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "fragment" | "no-df" | "min-ttl" number |
                  "max-mss" number | "random-id" | "reassemble tcp" |
                  fragmentation | "allow-opts" |
-                 "label" string | "tag" string | "tagged" string
+                 "label" string | "tag" string | [ ! ] "tagged" string
                  "queue" "(" string | ( string [ [ "," ] string ] ) ")"
 
 nat-rule       = [ "no" ] "nat" [ "on" ifspec ] [ af ] [ protospec ]
