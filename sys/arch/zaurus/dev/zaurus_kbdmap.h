@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.1 2005/01/13 23:33:37 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.2 2005/01/14 00:04:50 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -31,6 +31,7 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(11),	KS_w,
     KC(12),	KS_a,
     KC(13),	KS_z,
+    /* KC(14),	US, (left japanese) */
     KC(16),	KS_3,
     KC(17),	KS_4,
     KC(18),	KS_e,
@@ -72,13 +73,12 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(59),	KS_l,
     /* KC(61),	up, */
     /* KC(62),	down, */
-    KC(64),	KS_BackSpace,
+    KC(64),	KS_Delete,	KS_BackSpace,
     KC(65),	KS_p,
-    /* KC(68),	US, (left japanese) */
+    KC(68),	KS_Return,
     /* KC(70),	right, */
     /* KC(80),	OK, (ext) */
     /* KC(81),	tog left, */
-    KC(83),	KS_Return,
     KC(83),	KS_Shift_R,
     KC(84),	KS_Shift_L,
     /* KC(88),	cancel (ext), */
