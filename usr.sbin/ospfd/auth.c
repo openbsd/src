@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.3 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: auth.c,v 1.4 2005/04/04 13:49:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -64,9 +64,17 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		}
 		break;
 	case AUTH_CRYPT:
-		if (ospf_hdr->auth_key.crypt.keyid != iface->auth_keyid) {
-			log_debug("auth_validate: invalid key id, "
-			    "interface %s", iface->name);
+		/*
+		 * We must allow keys that are configured on the interface
+		 * but not necessarily set as the transmit key
+		 * (iface->auth_keyid). This allows for key rotation to new
+		 * keys without taking down the network.
+		 */
+		if ((md = md_list_find(iface, ospf_hdr->auth_key.crypt.keyid))
+		    == NULL) {
+			log_debug("auth_validate: keyid %d not configured, "
+			    "interface %s", ospf_hdr->auth_key.crypt.keyid,
+			    iface->name);
 			return (-1);
 		}
 
@@ -97,14 +105,6 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		bzero(auth_data, MD5_DIGEST_LENGTH);
 
 		/* insert plaintext key */
-		if ((md = md_list_find(iface, iface->auth_keyid))
-		    == NULL) {
-			log_debug("auth_validate: keyid %d not configured, "
-			    "interface %s", iface->auth_keyid,
-			    iface->name);
-			return (-1);
-		}
-
 		bzero(digest, MD5_DIGEST_LENGTH);
 		strncpy(digest, md->key, MD5_DIGEST_LENGTH);
 
