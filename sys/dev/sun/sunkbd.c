@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.5 2002/05/29 20:43:43 maja Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.6 2002/08/05 21:23:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -71,8 +71,8 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x14),				KS_Up,
     KC(0x15),				KS_Pause,
     KC(0x16),				KS_Print_Screen,
+    KC(0x17),				KS_Hold_Screen,
     KC(0x18),				KS_Left,
-    KC(0x19),				KS_Hold_Screen,
     KC(0x1b),				KS_Down,
     KC(0x1c),				KS_Right,
     KC(0x1d),				KS_Escape,
