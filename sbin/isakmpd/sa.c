@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.50 2001/11/21 09:59:26 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.51 2001/11/21 10:01:43 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -795,7 +795,7 @@ sa_setup_expirations (struct sa *sa)
       /* XXX This should probably be configuration controlled somehow.  */
       seconds = sa->seconds * (850 + sysdep_random () % 100) / 1000;
       LOG_DBG ((LOG_TIMER, 95,
-		"sa_setup_expirations: SA %p soft timeout in %qd seconds",
+		"sa_setup_expirations: SA %p soft timeout in %llu seconds",
 		sa, seconds));
       expiration.tv_sec += seconds;
       sa->soft_death
@@ -813,7 +813,7 @@ sa_setup_expirations (struct sa *sa)
     {
       gettimeofday (&expiration, 0);
       LOG_DBG ((LOG_TIMER, 95,
-		"sa_setup_expirations: SA %p hard timeout in %qd seconds",
+		"sa_setup_expirations: SA %p hard timeout in %llu seconds",
 		sa, sa->seconds));
       expiration.tv_sec += sa->seconds;
       sa->death
