@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.7 2004/03/12 10:10:42 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.8 2004/06/22 03:23:33 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -109,9 +109,11 @@
 #define PAYLOAD_DELETE		12
 #define PAYLOAD_VENDOR		13
 #define PAYLOAD_ATTRIBUTE	14
-#define PAYLOAD_NAT_D		15
-#define PAYLOAD_NAT_OA		16
-#define PAYLOAD_RESERVED_MIN	17
+#define PAYLOAD_RESERVED_MIN	15
+#define PAYLOAD_PRIVATE_MIN	128
+#define PAYLOAD_NAT_D		130
+#define PAYLOAD_NAT_OA		131
+#define PAYLOAD_PRIVATE_MAX	132
 
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
@@ -129,8 +131,23 @@
 	  "DELETE",		/* 12 */		\
 	  "VENDOR",		/* 13 */		\
 	  "ATTRIBUTE",		/* 14 (ikecfg) */	\
-	  "NAT-D",		/* 15 */		\
-	  "NAT-OA",		/* 16 */		\
+	}
+
+#if 0
+	  "SAK",		/* 15 (RFC 3547) */	\
+	  "SAT",		/* 16 (RFC 3547) */	\
+	  "KD",			/* 17 (RFC 3547) */	\
+	  "SEQ",		/* 18 (RFC 3547) */	\
+	  "POP",		/* 19 (RFC 3547) */	\
+	  "SAT",		/* 16 (RFC 3547) */	\
+
+#endif
+
+#define IKE_PRIVATE_PAYLOAD_TYPES_INITIALIZER		\
+	{ "NONE",		/*  128 */		\
+	  "<unknown 129>",	/*  129 */		\
+	  "NAT-D",		/*  130 (draft-ietf-ipsec-nat-t-ike-03) */  \
+	  "NAT-OA",		/*  131 (draft-ietf-ipsec-nat-t-ike-03) */  \
 	}
 
 /* Exchange types */
@@ -153,6 +170,7 @@
 	  "AGGRESSIVE",		/* 4 */			\
 	  "INFO",		/* 5 */			\
 	  "TRANSACTION",	/* 6 (ikecfg) */	\
+	  "DPD",		/* 7 */			\
 	  /* step up to type 32 with unknowns */	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
@@ -160,7 +178,6 @@
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
 	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown",					\
 	  "QUICK_MODE",		/* 32 */		\
 	  "NEW_GROUP_MODE",	/* 33 */		\
 	}
@@ -375,8 +392,49 @@
 #define ISAKMP_NAT_OA_SZ	 8
 
 static u_int16_t min_payload_lengths[] = {
-  0, ISAKMP_SA_SZ, ISAKMP_PROP_SZ, ISAKMP_TRANSFORM_SZ, ISAKMP_KE_SZ,
-  ISAKMP_ID_SZ, ISAKMP_CERT_SZ, ISAKMP_CERTREQ_SZ, ISAKMP_HASH_SZ,
-  ISAKMP_SIG_SZ, ISAKMP_NONCE_SZ, ISAKMP_NOTIFY_SZ, ISAKMP_DELETE_SZ,
-  ISAKMP_VENDOR_SZ, ISAKMP_ATTRIBUTE_SZ, ISAKMP_NAT_D_SZ, ISAKMP_NAT_OA_SZ
+	0, ISAKMP_SA_SZ, ISAKMP_PROP_SZ, ISAKMP_TRANSFORM_SZ, ISAKMP_KE_SZ,
+	ISAKMP_ID_SZ, ISAKMP_CERT_SZ, ISAKMP_CERTREQ_SZ, ISAKMP_HASH_SZ,
+	ISAKMP_SIG_SZ, ISAKMP_NONCE_SZ, ISAKMP_NOTIFY_SZ, ISAKMP_DELETE_SZ,
+	ISAKMP_VENDOR_SZ, ISAKMP_ATTRIBUTE_SZ
 };
+
+static u_int16_t min_priv_payload_lengths[] = {
+	0, 0, ISAKMP_NAT_D_SZ, ISAKMP_NAT_OA_SZ
+};
+
+static const struct vendor_id 
+{
+    char	 vid[16];
+    char	*name;
+} vendor_ids[] = {
+ 	{
+		{
+			0x44, 0x85, 0x15, 0x2d, 0x18, 0xb6, 0xbb, 0xcd,
+			0x0b, 0xe8, 0xa8, 0x46, 0x95, 0x79, 0xdd, 0xcc,
+		},
+		"v1 NAT-T, draft-ietf-ipsec-nat-t-ike-00",
+	},
+	{
+		{
+			0x90, 0xcb, 0x80, 0x91, 0x3e, 0xbb, 0x69, 0x6e,
+			0x08, 0x63, 0x81, 0xb5, 0xec, 0x42, 0x7b, 0x1f,
+		},
+		"v2 NAT-T, draft-ietf-ipsec-nat-t-ike-02",
+	},
+	{
+		{
+			0x7d, 0x94, 0x19, 0xa6, 0x53, 0x10, 0xca, 0x6f,
+			0x2c, 0x17, 0x9d, 0x92, 0x15, 0x52, 0x9d, 0x56,
+		},
+		"v3 NAT-T, draft-ietf-ipsec-nat-t-ike-03",
+	},
+	{
+		{
+			0xaf, 0xca, 0xd7, 0x13, 0x68, 0xa1, 0xf1, 0xc9,
+			0x6b, 0x86, 0x96, 0xfc, 0x77, 0x57, 0x01, 0x00,
+			/* Last "0x01, 0x00" means major v1, minor v0 */
+		},
+		"DPD v1.0"
+	}
+};
+

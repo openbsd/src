@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.23 2004/06/20 17:51:55 avsm Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.24 2004/06/22 03:23:33 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.23 2004/06/20 17:51:55 avsm Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.24 2004/06/22 03:23:33 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -684,11 +684,19 @@ ike_pl_vendor_print (u_int8_t *buf, int len, u_int8_t doi)
 {
 	struct vendor_payload *vp = (struct vendor_payload *)buf;
 	u_int8_t *p;
+	int i;
 
 	if (len < sizeof(struct vendor_payload)) {
 		printf(" [|payload]");
 		return;
 	}
+
+	for (i = 0; i < sizeof vendor_ids / sizeof vendor_ids[0]; i ++)
+		if (memcmp(vp->vid, vendor_ids[i].vid,
+		    sizeof vendor_ids[i].vid) == 0) {
+			printf (" (supports %s)", vendor_ids[i].name);
+			return;
+		}
 
 	if (doi != IPSEC_DOI)
 		return;
@@ -813,17 +821,28 @@ void
 ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 {
 	static const char *pltypes[] = IKE_PAYLOAD_TYPES_INITIALIZER;
+	static const char *plprivtypes[] = 
+	    IKE_PRIVATE_PAYLOAD_TYPES_INITIALIZER;
 	u_int8_t next_type = buf[0];
 	u_int16_t this_len = buf[2]<<8 | buf[3];
 
-	printf("\n\t%spayload: %s len: %hu", ike_tab_offset(),
-	    (type < (sizeof pltypes/sizeof pltypes[0]) ?
-	    pltypes[type] : "<unknown>"), this_len);
+	if (type < PAYLOAD_PRIVATE_MIN || type >= PAYLOAD_PRIVATE_MAX)
+		printf("\n\t%spayload: %s len: %hu", ike_tab_offset(),
+		    (type < (sizeof pltypes/sizeof pltypes[0]) ?
+			pltypes[type] : "<unknown>"), this_len);
+	else
+		printf("\n\t%spayload: %s len: %hu", ike_tab_offset(),
+		    plprivtypes[type - PAYLOAD_PRIVATE_MIN], this_len);
 
-	if ((type < PAYLOAD_RESERVED_MIN
-	    && this_len < min_payload_lengths[type]) || this_len == 0)
+	if ((type < PAYLOAD_RESERVED_MIN &&
+	    this_len < min_payload_lengths[type]) || this_len == 0)
 		goto pltrunc;
 
+	if ((type > PAYLOAD_PRIVATE_MIN && type < PAYLOAD_PRIVATE_MAX &&
+	    this_len < min_priv_payload_lengths[type - PAYLOAD_PRIVATE_MIN]) ||
+	    this_len == 0)
+		goto pltrunc;
+	    
 	if ((u_int8_t *)&(buf[0]) > snapend - this_len)
 		goto pltrunc;
 
