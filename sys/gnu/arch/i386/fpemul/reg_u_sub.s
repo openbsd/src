@@ -1,5 +1,5 @@
 	.file	"reg_u_sub.S"
-/*	$OpenBSD: reg_u_sub.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
+/*	$OpenBSD: reg_u_sub.s,v 1.3 2004/01/13 18:08:48 espie Exp $	*/
 /*
  *  reg_u_sub.S
  *
@@ -117,7 +117,7 @@ xOp1_not_denorm:
 	jnz	FPU_Arith_exit
 
 xOp2_not_denorm:
-#endif DENORM_OPERAND
+#endif /* DENORM_OPERAND */
 
 /*	xorl	%ecx,%ecx */
 	movl	EXP(%esi),%ecx
@@ -133,7 +133,7 @@ xOp2_not_denorm:
 
 	testl	$0x80000000,SIGH(%esi)
 	je	L_bugged_2
-#endif PARANOID
+#endif /* PARANOID */
 
 /*--------------------------------------+
  |	Form a register holding the     |
@@ -246,7 +246,7 @@ L_subtr:
 #ifdef PARANOID
 	/* We can never get a borrow */
 	jc	L_bugged
-#endif PARANOID
+#endif /* PARANOID */
 
 /*--------------------------------------+
  |	Normalize the result		|
@@ -278,7 +278,7 @@ L_must_be_zero:
 #ifdef PARANOID
 	orl	%edx,%edx
 	jnz	L_bugged_3
-#endif PARANOID
+#endif /* PARANOID */
 
 	/* The result is zero */
 	movb	TW_Zero,TAG(%edi)
@@ -337,7 +337,7 @@ L_bugged:
 	call	EXCEPTION
 	pop	%ebx
 	jmp	L_exit
-#endif PARANOID
+#endif /* PARANOID */
 
 
 L_store:
