@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.41 2002/04/02 08:44:57 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.42 2002/04/02 21:47:26 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.41 2002/04/02 08:44:57 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.42 2002/04/02 21:47:26 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1608,8 +1608,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 
 	klen = sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keylen +
 	    IEEE80211_WEP_IVLEN;
-	if (klen > RC4KEYLEN)
-		klen = RC4KEYLEN;
+	klen = (klen >= RC4KEYLEN) ? RC4KEYLEN : RC4KEYLEN/2;
 	bcopy((char *)&sc->wi_keys.wi_keys[sc->wi_tx_key].wi_keydat,
 	    (char *)key + IEEE80211_WEP_IVLEN, klen - IEEE80211_WEP_IVLEN);
 
@@ -1619,7 +1618,7 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 		state[i] = i;
 	for (i = 0; i < RC4STATE; i++) {
 		y = (key[x] + state[i] + y) % RC4STATE;
-		RC4SWAP(x, y);
+		RC4SWAP(i, y);
 		x = (x + 1) % klen;
 	}
 
@@ -1644,11 +1643,11 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 	crc = ~crc;
 	dat += len;
 
-	/* append crc32 and encrypt */
-	dat[0] = crc >> 24;
-	dat[1] = crc >> 16;
-	dat[2] = crc >> 8;
-	dat[3] = crc;
+	/* append little-endian crc32 and encrypt */
+	dat[0] = crc;
+	dat[1] = crc >> 8;
+	dat[2] = crc >> 16;
+	dat[3] = crc >> 24;
 	for (i = 0; i < IEEE80211_WEP_CRCLEN; i++) {
 		x = (x + 1) % RC4STATE;
 		y = (state[x] + y) % RC4STATE;
