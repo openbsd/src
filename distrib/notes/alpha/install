@@ -23,7 +23,7 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine using of the floppy.fs floppy.  When
+	Boot your machine using the floppy.fs floppy.  When
 	presented with the SRM console prompt, type "boot dva0"
 	and hit return.  You should see about the primary and
 	secondary boot and then the kernel should start to load.

@@ -34,7 +34,7 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine using of the floppy.fs floppy.  When
+	Boot your machine using the floppy.fs floppy.  When
 	presented with the boot prompt hit return.  If the boot prompt
 	does not appear in a reasonable amount of time, you either
 	have a bad boot floppy or a hardware problem.  Try writing the
