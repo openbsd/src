@@ -1,5 +1,5 @@
-	$OpenBSD: syscalls.master,v 1.4 1996/04/17 05:24:13 mickey Exp $
-	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
+	$OpenBSD: syscalls.master,v 1.5 1996/04/28 07:38:24 etheisen Exp $
+;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -68,8 +68,9 @@
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
-21	UNIMPL		mount
-22	UNIMPL		umount
+21	STD		{ int linux_sys_mount(char *specialfile, char *dir, \
+			    char *filesystemtype, long rwflag, void *data); }
+22	STD		{ int linux_sys_umount(char *specialfile); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	UNIMPL		stime
