@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2004/02/20 01:28:01 deraadt Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2004/02/27 21:15:49 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ fputrap(struct trapframe *frame)
 	u_int16_t cw;
 	union sigval sv;
 
-printf("fputrap\n");
 #ifdef DIAGNOSTIC
 	/*
 	 * At this point, fpcurproc should be curproc.  If it wasn't,
