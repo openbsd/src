@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.1 2002/03/01 22:01:11 millert Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.2 2002/03/02 16:20:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)spell.c	8.1 (Berkeley) 6/6/93";
 #else
 #endif
-static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.1 2002/03/01 22:01:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.2 2002/03/02 16:20:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,6 +122,7 @@ int	 CCe(char *, char *, char *, int);
 int	 VCe(char *, char *, char *, int);
 char	*lookuppref(char **, char *);
 char	*skipv(char *);
+char	*estrdup(const char *);
 void	 ise(void);
 void	 print_word(FILE *);
 void	 ztos(char *);
@@ -131,7 +132,7 @@ __dead void usage(void);
 int	 look(unsigned char *, unsigned char *, unsigned char *);
 
 struct suftab {
-	char *suf;	/* XXX - needs to be writable for ise() */
+	char *suf;
 	int (*p1)();	/* XXX - variable args */
 	int n1;
 	char *d1;
@@ -317,7 +318,6 @@ main(int argc, char **argv)
 	else if ((found = fopen(outfile, "w")) == NULL)
 		err(1, "cannot open %s", outfile);
 
-	/* XXX - this fprintf is for loop abuse */
 	for (;; print_word(file)) {
 		affix[0] = '\0';
 		file = found;
@@ -742,12 +742,22 @@ vowel(int c)
 void
 ise(void)
 {
-	struct suftab *p;
+	struct suftab *tab;
 
-	for (p = suftab; p->suf; p++) {
-		ztos(p->suf);
-		ztos(p->d1);
-		ztos(p->a1);
+	for (tab = suftab; tab->suf; tab++) {
+		/* Assume that suffix will contain 'z' if a1 or d1 do */
+		if (strchr(tab->suf, 'z')) {
+			tab->suf = estrdup(tab->suf);
+			ztos(tab->suf);
+			if (strchr(tab->d1, 'z')) {
+				tab->d1 = estrdup(tab->d1);
+				ztos(tab->d1);
+			}
+			if (strchr(tab->a1, 'z')) {
+				tab->a1 = estrdup(tab->a1);
+				ztos(tab->a1);
+			}
+		}
 	}
 }
 
@@ -758,6 +768,16 @@ ztos(char *s)
 	for (; *s; s++)
 		if (*s == 'z')
 			*s = 's';
+}
+
+char *
+estrdup(const char *s)
+{
+	char *d;
+
+	if ((d = strdup(s)) == NULL)
+		err(1, "strdup");
+	return(d);
 }
 
 /*
