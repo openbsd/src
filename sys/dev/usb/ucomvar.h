@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucomvar.h,v 1.10 2002/05/07 18:29:18 nate Exp $ */
-/*	$NetBSD: ucomvar.h,v 1.9 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$OpenBSD: ucomvar.h,v 1.11 2002/07/10 03:09:34 nate Exp $ */
+/*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,11 @@
 
 
 #if defined(__NetBSD__)
+/* Macros to clear/set/test flags. */
+#define SET(t, f)       (t) |= (f)
+#define CLR(t, f)       (t) &= ~(f)
+#define ISSET(t, f)     ((t) & (f))
+
 #include "locators.h"
 #endif
 
@@ -56,7 +61,7 @@ struct ucom_methods {
 #define UCOM_SET_BREAK 3
 	int (*ucom_param)(void *sc, int portno, struct termios *);
 	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  caddr_t data, int flag, struct proc *p);
+			  caddr_t data, int flag, usb_proc_ptr p);
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
 	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
@@ -105,10 +110,11 @@ struct ucom_attach_args {
 	void *arg;
 };
 
-int ucomprint(void *aux, const char *pnp);
-#if defined(__OpenBSD__)
-int ucomsubmatch(struct device *parent, void *cf, void *aux);
+#if defined(__NetBSD__)
+int ucomsubmatch(struct device *, struct cfdata *, void *);
 #else
-int ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux);
+int ucomsubmatch(struct device *, void *, void *);
 #endif
+
+int ucomprint(void *aux, const char *pnp);
 void ucom_status_change(struct ucom_softc *);
