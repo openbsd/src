@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atoi.3,v 1.7 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: atoi.3,v 1.8 2004/08/22 21:47:41 jaredy Exp $
 .\"
 .Dd June 4, 1993
 .Dt ATOI 3
@@ -61,6 +61,7 @@ It is equivalent to:
 .Xr atol 3 ,
 .Xr strtod 3 ,
 .Xr strtol 3 ,
+.Xr strtonum 3 ,
 .Xr strtoul 3
 .Sh STANDARDS
 The
@@ -78,4 +79,8 @@ Careful use of
 .Xr strtol 3
 and
 .Xr strtoul 3
-can alleviate these problems.
+can alleviate these problems,
+but
+.Xr strtonum 3
+can be used to convert numbers from strings much more safely
+and easily.
