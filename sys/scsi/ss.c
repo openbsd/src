@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.5 1996/05/10 12:31:39 deraadt Exp $	*/
+/*	$OpenBSD: ss.c,v 1.6 1996/07/11 16:38:35 deraadt Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ ssattach(parent, self, aux)
 	 * and install functions for special handling
 	 */
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
-	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK  ", 8))
+	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
 	if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
 		scanjet_attach(ss, sa);
