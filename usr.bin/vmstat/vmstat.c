@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.31 1999/06/24 12:36:17 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.32 1999/07/17 22:11:15 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -548,38 +548,50 @@ dosum()
 	long nchtotal;
 
 #ifdef UVM
-	/*
-	 * XXXART - We probably don't want to look like the old vmstat,
-	 * The best would be just to print out everything in uvmexp
-	 * XXXART - Just make it work now. Do it right later.
-	 */
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
-	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
-	(void)printf("%9u device interrupts\n", uvmexp.intrs);
-	(void)printf("%9u software interrupts\n", uvmexp.softs);
-	(void)printf("%9u traps\n", uvmexp.traps);
-	(void)printf("%9u system calls\n", uvmexp.syscalls);
-	(void)printf("%9u total faults taken\n", uvmexp.faults);
-	(void)printf("%9u swap ins\n", uvmexp.swapins);
-	(void)printf("%9u swap outs\n", uvmexp.swapouts);
-	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
-	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
-	(void)printf("%9u page ins\n", uvmexp.pageins);
-	(void)printf("%9u page outs\n", uvmexp.pdpageouts);
-	(void)printf("%9u pages reactivated\n", uvmexp.pdreact);
-	(void)printf("%9u zero fill pages created\n", uvmexp.flt_przero);
-	(void)printf("%9u pages examined by the clock daemon\n", uvmexp.pdscans);
-	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
-#if 0
-	(void)printf("%9u total VM faults taken\n", uvmexp.vm_faults);
-#endif
-	(void)printf("%9u copy-on-write faults\n", uvmexp.flt_acow);
-	(void)printf("%9u pages freed by daemon\n", uvmexp.pdfreed);
+	/* vm_page constants */
+	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+
+	/* vm_page counters */
+	(void)printf("%9u pages managed\n", uvmexp.npages);
 	(void)printf("%9u pages free\n", uvmexp.free);
-	(void)printf("%9u pages wired down\n", uvmexp.wired);
 	(void)printf("%9u pages active\n", uvmexp.active);
 	(void)printf("%9u pages inactive\n", uvmexp.inactive);
-	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+	(void)printf("%9u pages being paged out\n", uvmexp.paging);
+	(void)printf("%9u pages wired\n", uvmexp.wired);
+	(void)printf("%9u pages reserved for pagedaemon\n",
+		     uvmexp.reserve_pagedaemon);
+	(void)printf("%9u pages reserved for kernel\n",
+		     uvmexp.reserve_kernel);
+
+	/* swap */
+	(void)printf("%9u swap pages\n", uvmexp.swpages);
+	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
+	(void)printf("%9u total anon's in system\n", uvmexp.nanon);
+	(void)printf("%9u free anon's\n", uvmexp.nfreeanon);
+
+	/* stat counters */
+	(void)printf("%9u page faults\n", uvmexp.faults);
+	(void)printf("%9u traps\n", uvmexp.traps);
+	(void)printf("%9u interrupts\n", uvmexp.intrs);
+	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
+	(void)printf("%9u software interrupts\n", uvmexp.softs);
+	(void)printf("%9u syscalls\n", uvmexp.syscalls);
+	(void)printf("%9u pagein operations\n", uvmexp.pageins);
+	(void)printf("%9u swap ins\n", uvmexp.swapins);
+	(void)printf("%9u swap outs\n", uvmexp.swapouts);
+	(void)printf("%9u forks\n", uvmexp.forks);
+	(void)printf("%9u forks where vmspace is shared\n",
+		     uvmexp.forks_sharevm);
+
+	/* daemon counters */
+	(void)printf("%9u number of times the pagedamoen woke up\n",
+		     uvmexp.pdwoke);
+	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
+	(void)printf("%9u pages freed by pagedaemon\n", uvmexp.pdfreed);
+	(void)printf("%9u pages scanned by pagedaemon\n", uvmexp.pdscans);
+	(void)printf("%9u pages reactivated by pagedaemon\n", uvmexp.pdreact);
+	(void)printf("%9u busy pages found by pagedaemon\n", uvmexp.pdbusy);
 #else
 	kread(X_SUM, &sum, sizeof(sum));
 	(void)printf("%9u cpu context switches\n", sum.v_swtch);
