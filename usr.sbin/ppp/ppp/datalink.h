@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.h,v 1.8 2000/02/27 01:38:25 brian Exp $
+ *	$OpenBSD: datalink.h,v 1.9 2002/03/31 02:38:49 brian Exp $
  */
 
 #define DATALINK_CLOSED  (0)
@@ -52,7 +52,7 @@ struct physical;
 struct bundle;
 
 struct datalink {
-  struct fdescriptor desc;       /* We play either a physical or a chat */
+  struct fdescriptor desc;	/* We play either a physical or a chat */
   int state;			/* Our DATALINK_* state */
   struct physical *physical;	/* Our link */
 
@@ -154,3 +154,4 @@ extern int datalink_RemoveFromSet(struct datalink *, fd_set *, fd_set *,
 extern int datalink_SetMode(struct datalink *, int);
 extern int datalink_GetDialTimeout(struct datalink *);
 extern const char *datalink_ChoosePhoneNumber(struct datalink *);
+extern void datalink_ComeDown(struct datalink *, int);

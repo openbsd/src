@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.32 2002/02/21 07:32:55 fgsch Exp $
+ *  $OpenBSD: physical.c,v 1.33 2002/03/31 02:38:49 brian Exp $
  *
  */
 
@@ -100,6 +100,7 @@
 #endif
 #ifndef NONETGRAPH
 #include "ether.h"
+#include "netgraph.h"
 #endif
 #ifndef NOATM
 #include "atm.h"
@@ -137,6 +138,9 @@ struct {
    * able to identify it as a more specific type of SOCK_DGRAM.
    */
   { ether_Create, ether_iov2device, ether_DeviceSize },
+#ifdef EXPERIMENTAL_NETGRAPH
+  { ng_Create, ng_iov2device, ng_DeviceSize },
+#endif
 #endif
 #ifndef NOATM
   /* Ditto for ATM devices */
@@ -593,7 +597,7 @@ iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
   p->desc.Write = physical_DescriptorWrite;
   p->type = PHYS_DIRECT;
   p->dl = dl;
-  len = sizeof(_PATH_DEV) - 1;
+  len = strlen(_PATH_DEV);
   p->out = NULL;
   p->connect_count = 1;
 
@@ -953,7 +957,7 @@ physical_DeleteQueue(struct physical *p)
 void
 physical_SetDevice(struct physical *p, const char *name)
 {
-  int len = sizeof(_PATH_DEV) - 1;
+  int len = strlen(_PATH_DEV);
 
   if (name != p->name.full) {
     strncpy(p->name.full, name, sizeof p->name.full - 1);
@@ -1099,4 +1103,14 @@ physical_AwaitCarrier(struct physical *p)
     return (*p->handler->awaitcarrier)(p);
 
   return CARRIER_OK;
+}
+
+
+void
+physical_SetAsyncParams(struct physical *p, u_int32_t mymap, u_int32_t hismap)
+{
+  if (p->handler && p->handler->setasyncparams)
+    return (*p->handler->setasyncparams)(p, mymap, hismap);
+
+  async_SetLinkParams(&p->async, mymap, hismap);
 }

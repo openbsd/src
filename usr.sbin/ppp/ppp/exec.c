@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: exec.c,v 1.16 2001/06/19 10:24:52 brian Exp $
+ *	$OpenBSD: exec.c,v 1.17 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -70,6 +70,7 @@ static struct device execdevice = {
   "exec",
   0,
   { CD_NOTREQUIRED, 0 },
+  NULL,
   NULL,
   NULL,
   NULL,

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: async.h,v 1.5 2002/03/04 10:17:40 brian Exp $
+ *	$OpenBSD: async.h,v 1.6 2002/03/31 02:38:49 brian Exp $
  */
 
 #define HDLCSIZE	(MAX_MRU*2+6)
@@ -48,6 +48,6 @@ struct bundle;
 
 extern void async_Init(struct async *);
 extern void async_Setup(struct async *);
-extern void async_SetLinkParams(struct async *, struct lcp *);
+extern void async_SetLinkParams(struct async *, u_int32_t, u_int32_t);
 
 extern struct layer asynclayer;

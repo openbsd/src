@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.14 2001/09/13 10:32:57 brian Exp $
+ *	$OpenBSD: ether.c,v 1.15 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -49,10 +49,6 @@
 #include <string.h>
 #include <sysexits.h>
 #include <sys/fcntl.h>
-#if defined(__FreeBSD__) && !defined(NOKLDLOAD)
-#include <sys/linker.h>
-#include <sys/module.h>
-#endif
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <termios.h>
@@ -254,6 +250,11 @@ ether_MessageIn(struct etherdevice *dev)
     case NGM_PPPOE_FAIL:	msg = "FAIL";		break;
     case NGM_PPPOE_CLOSE:	msg = "CLOSE";		break;
     case NGM_PPPOE_GET_STATUS:	msg = "GET_STATUS";	break;
+    case NGM_PPPOE_ACNAME:
+      msg = "ACNAME";
+      if (setenv("ACNAME", sts->hook, 1) != 0)
+        log_Printf(LogWARN, "setenv: cannot set ACNAME=%s: %m", sts->hook);
+      break;
     default:
       snprintf(unknown, sizeof unknown, "<%d>", (int)rep->header.cmd);
       msg = unknown;
@@ -293,6 +294,7 @@ static const struct device baseetherdevice = {
   { CD_REQUIRED, DEF_ETHERCDDELAY },
   ether_AwaitCarrier,
   ether_RemoveFromSet,
+  NULL,
   NULL,
   NULL,
   NULL,
@@ -427,29 +429,8 @@ ether_Create(struct physical *p)
 
     p->fd--;				/* We own the device - change fd */
 
-#if defined(__FreeBSD__) && !defined(NOKLDLOAD)
-    if (modfind("netgraph") == -1 && ID0kldload("netgraph") == -1) {
-      log_Printf(LogWARN, "kldload: netgraph: %s\n", strerror(errno));
-      return NULL;
-    }
-
-    if (modfind("ng_ether") == -1 && ID0kldload("ng_ether") == -1)
-      /*
-       * Don't treat this as an error as older kernels have this stuff
-       * built in as part of the netgraph node itself.
-       */
-      log_Printf(LogWARN, "kldload: ng_ether: %s\n", strerror(errno));
-
-    if (modfind("ng_pppoe") == -1 && ID0kldload("ng_pppoe") == -1) {
-      log_Printf(LogWARN, "kldload: ng_pppoe: %s\n", strerror(errno));
-      return NULL;
-    }
-
-    if (modfind("ng_socket") == -1 && ID0kldload("ng_socket") == -1) {
-      log_Printf(LogWARN, "kldload: ng_socket: %s\n", strerror(errno));
-      return NULL;
-    }
-#endif
+    loadmodules(LOAD_VERBOSLY, "netgraph", "ng_ether", "ng_pppoe", "ng_socket",
+                NULL);
 
     if ((dev = malloc(sizeof *dev)) == NULL)
       return NULL;
@@ -493,6 +474,7 @@ ether_Create(struct physical *p)
       log_Printf(LogWARN, "Cannot create netgraph socket node: %s\n",
                  strerror(errno));
       free(dev);
+      p->fd = -2;
       return NULL;
     }
 
@@ -560,7 +542,7 @@ ether_Create(struct physical *p)
     if (f == ninfo->hooks) {
       /*
        * Create a new ``PPPoE'' node connected to the ``ether'' node using
-       * the magic ``orphan'' and ``ethernet'' hooks
+       * the ``orphan'' and ``ethernet'' hooks
        */
       snprintf(mkp.type, sizeof mkp.type, "%s", NG_PPPOE_NODE_TYPE);
       snprintf(mkp.ourhook, sizeof mkp.ourhook, "%s", NG_ETHER_HOOK_ORPHAN);

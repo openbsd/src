@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: atm.c,v 1.6 2002/01/16 14:13:06 brian Exp $
+ *	$OpenBSD: atm.c,v 1.7 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/types.h>
@@ -124,6 +124,7 @@ static const struct device baseatmdevice = {
   "atm",
   0,
   { CD_NOTREQUIRED, 0 },
+  NULL,
   NULL,
   NULL,
   NULL,

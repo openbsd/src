@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias.c,v 1.17 2001/11/23 11:17:03 brian Exp $
+ * $OpenBSD: alias.c,v 1.18 2002/03/31 02:38:49 brian Exp $
  */
 
 /*
@@ -1057,12 +1057,14 @@ TcpAliasOut(struct ip *pip, int maxpacketsize)
         u_short *sptr;
 
 /* Save original destination address, if this is a proxy packet.
-   Also modify packet to include destination encoding. */
+   Also modify packet to include destination encoding.  This may
+   change the size of IP header. */
         if (proxy_type != 0)
         {
             SetProxyPort(link, dest_port);
             SetProxyAddress(link, dest_address);
             ProxyModify(link, pip, maxpacketsize, proxy_type);
+            tc = (struct tcphdr *) ((char *) pip + (pip->ip_hl << 2));
         }
 
 /* Get alias address and port */

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.h,v 1.11 2001/10/24 10:01:15 brian Exp $
+ * $OpenBSD: lcp.h,v 1.12 2002/03/31 02:38:49 brian Exp $
  */
 
 /* callback::opmask values */
@@ -92,7 +92,7 @@ struct lcp {
     struct fsm_retry fsm;	/* How often/frequently to resend requests */
     unsigned acfcomp : 2;	/* Address & Control Field Compression neg */
     unsigned chap05 : 2;	/* Challenge Handshake Authentication proto */
-#ifdef HAVE_DES
+#ifndef NODES
     unsigned chap80nt : 2;	/* Microsoft (NT) CHAP */
     unsigned chap80lm : 2;	/* Microsoft (LANMan) CHAP */
     unsigned chap81 : 2;	/* Microsoft CHAP v2 */

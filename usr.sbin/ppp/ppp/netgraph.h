@@ -1,7 +1,5 @@
 /*-
- * Copyright (c) 1996 - 2001 Brian Somers <brian@Awfulhak.org>
- *          based on work by Toshiharu OHNO <tony-o@iij.ad.jp>
- *                           Internet Initiative Japan, Inc (IIJ)
+ * Copyright (c) 2000 Brian Somers <brian@Awfulhak.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,44 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.h,v 1.12 2002/03/31 02:38:49 brian Exp $
  */
 
-struct mbuf;
 struct physical;
+struct device;
 
-#define	CHAP_CHALLENGE	1
-#define	CHAP_RESPONSE	2
-#define	CHAP_SUCCESS	3
-#define	CHAP_FAILURE	4
+#define DEF_NGCDDELAY	5	/* Default ``set cd'' value */
 
-struct chap {
-  struct fdescriptor desc;
-  struct {
-    pid_t pid;
-    int fd;
-    struct {
-      char ptr[AUTHLEN * 2 + 3];	/* Allow for \r\n at the end (- NUL) */
-      int len;
-    } buf;
-  } child;
-  struct authinfo auth;
-  struct {
-    u_char local[CHAPCHALLENGELEN + AUTHLEN];	/* I invented this one */
-    u_char peer[CHAPCHALLENGELEN + AUTHLEN];	/* Peer gave us this one */
-  } challenge;
-#ifndef NODES
-  unsigned NTRespSent : 1;		/* Our last response */
-  int peertries;
-  u_char authresponse[CHAPAUTHRESPONSELEN];	/* CHAP 81 response */
-#endif
-};
-
-#define descriptor2chap(d) \
-  ((d)->type == CHAP_DESCRIPTOR ? (struct chap *)(d) : NULL)
-#define auth2chap(a) \
-  ((struct chap *)((char *)a - (int)&((struct chap *)0)->auth))
-
-extern void chap_Init(struct chap *, struct physical *);
-extern void chap_ReInit(struct chap *);
-extern struct mbuf *chap_Input(struct bundle *, struct link *, struct mbuf *);
+extern struct device *ng_Create(struct physical *);
+extern struct device *ng_iov2device(int, struct physical *, struct iovec *,
+                                    int *, int, int *, int *);
+extern int ng_DeviceSize(void);

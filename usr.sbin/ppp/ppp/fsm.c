@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: fsm.c,v 1.19 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: fsm.c,v 1.20 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -879,6 +879,7 @@ FsmRecvProtoRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
       case ST_CLOSED:
       case ST_CLOSING:
         NewState(fp, ST_CLOSED);
+        break;
       default:
         NewState(fp, ST_STOPPED);
         break;

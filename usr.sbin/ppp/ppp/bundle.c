@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.62 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.63 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -49,12 +49,6 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
-#if defined(__FreeBSD__) && !defined(NOKLDLOAD)
-#ifdef NOSUID
-#include <sys/linker.h>
-#endif
-#include <sys/module.h>
-#endif
 #include <termios.h>
 #include <unistd.h>
 
@@ -100,7 +94,7 @@
 #include "iface.h"
 #include "server.h"
 #include "probe.h"
-#ifdef HAVE_DES
+#ifndef NODES
 #include "mppe.h"
 #endif
 
@@ -135,7 +129,7 @@ bundle_NewPhase(struct bundle *bundle, u_int new)
   switch (new) {
   case PHASE_DEAD:
     bundle->phase = new;
-#ifdef HAVE_DES
+#ifndef NODES
     MPPE_MasterKeyValid = 0;
 #endif
     log_DisplayPrompts();
@@ -336,9 +330,11 @@ bundle_LayerDown(void *v, struct fsm *fp)
                    fp->link->name);
     }
 
-    if (!others_active)
+    if (!others_active) {
       /* Down the NCPs.  We don't expect to get fsm_Close()d ourself ! */
       ncp2initial(&bundle->ncp);
+      mp_Down(&bundle->ncp.mp);
+    }
   }
 }
 
@@ -348,6 +344,7 @@ bundle_LayerFinish(void *v, struct fsm *fp)
   /* The given fsm is now down (fp cannot be NULL)
    *
    * If it's the last NCP, fsm_Close all LCPs
+   * If it's the last NCP, bring any MP layer down
    */
 
   struct bundle *bundle = (struct bundle *)v;
@@ -360,6 +357,7 @@ bundle_LayerFinish(void *v, struct fsm *fp)
       if (dl->state == DATALINK_OPEN)
         datalink_Close(dl, CLOSE_STAYDOWN);
     fsm2initial(fp);
+    mp_Down(&bundle->ncp.mp);
   }
 }
 
@@ -406,6 +404,7 @@ bundle_Close(struct bundle *bundle, const char *name, int how)
       ncp_Close(&bundle->ncp);
     else {
       ncp2initial(&bundle->ncp);
+      mp_Down(&bundle->ncp.mp);
       for (dl = bundle->links; dl; dl = dl->next)
         datalink_Close(dl, how);
     }
@@ -625,11 +624,18 @@ bundle_DescriptorWrite(struct fdescriptor *d, struct bundle *bundle,
 
   /* This is not actually necessary as struct mpserver doesn't Write() */
   if (descriptor_IsSet(&bundle->ncp.mp.server.desc, fdset))
-    descriptor_Write(&bundle->ncp.mp.server.desc, bundle, fdset);
+    if (descriptor_Write(&bundle->ncp.mp.server.desc, bundle, fdset) == 1)
+      result++;
 
   for (dl = bundle->links; dl; dl = dl->next)
     if (descriptor_IsSet(&dl->desc, fdset))
-      result += descriptor_Write(&dl->desc, bundle, fdset);
+      switch (descriptor_Write(&dl->desc, bundle, fdset)) {
+      case -1:
+        datalink_ComeDown(dl, CLOSE_NORMAL);
+        break;
+      case 1:
+        result++;
+      }
 
   return result;
 }
@@ -705,13 +711,8 @@ bundle_Create(const char *prefix, int type, int unit)
 	 * Attempt to load the tunnel interface KLD if it isn't loaded
 	 * already.
          */
-        if (modfind("if_tun") == -1) {
-          if (ID0kldload("if_tun") != -1) {
-            bundle.unit--;
-            continue;
-          }
-          log_Printf(LogWARN, "kldload: if_tun: %s\n", strerror(errno));
-        }
+        loadmodules(LOAD_VERBOSLY, "if_tun", NULL);
+        continue;
       }
 #endif
       if (errno != ENOENT || ++enoentcount > 2) {
@@ -938,6 +939,7 @@ bundle_LinkClosed(struct bundle *bundle, struct datalink *dl)
     if (dl->physical->type != PHYS_AUTO)	/* Not in -auto mode */
       bundle_DownInterface(bundle);
     ncp2initial(&bundle->ncp);
+    mp_Down(&bundle->ncp.mp);
     bundle_NewPhase(bundle, PHASE_DEAD);
     bundle_StopIdleTimer(bundle);
   }

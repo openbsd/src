@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.30 2001/08/19 23:22:18 brian Exp $
+ * $OpenBSD: main.c,v 1.31 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -653,9 +653,9 @@ DoLoop(struct bundle *bundle)
     }
 
     if (descriptor_IsSet(&bundle->desc, wfds))
-      if (!descriptor_Write(&bundle->desc, bundle, wfds) && nothing_done) {
+      if (descriptor_Write(&bundle->desc, bundle, wfds) <= 0 && nothing_done) {
         /*
-         * This is disasterous.  The OS has told us that something is
+         * This is disastrous.  The OS has told us that something is
          * writable, and all our write()s have failed.  Rather than
          * going back immediately to do our UpdateSet()s and select(),
          * we sleep for a bit to avoid gobbling up all cpu time.

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.39 2002/03/04 10:17:40 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.40 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -489,7 +489,10 @@ datalink_Write(struct fdescriptor *d, struct bundle *bundle,
     case DATALINK_DIAL:
     case DATALINK_LOGOUT:
     case DATALINK_LOGIN:
-      result = descriptor_Write(&dl->chat.desc, bundle, fdset);
+      if ((result = descriptor_Write(&dl->chat.desc, bundle, fdset)) == -1) {
+        datalink_ComeDown(dl, CLOSE_NORMAL);
+        result = 0;
+      }
       break;
 
     case DATALINK_READY:
@@ -498,16 +501,28 @@ datalink_Write(struct fdescriptor *d, struct bundle *bundle,
     case DATALINK_CBCP:
     case DATALINK_OPEN:
       if (descriptor_IsSet(&dl->chap.desc, fdset))
-        result += descriptor_Write(&dl->chap.desc, bundle, fdset);
+        switch (descriptor_Write(&dl->chap.desc, bundle, fdset)) {
+        case -1:
+          datalink_ComeDown(dl, CLOSE_NORMAL);
+          break;
+        case 1:
+          result++;
+        }
       if (descriptor_IsSet(&dl->physical->desc, fdset))
-        result += descriptor_Write(&dl->physical->desc, bundle, fdset);
+        switch (descriptor_Write(&dl->physical->desc, bundle, fdset)) {
+        case -1:
+          datalink_ComeDown(dl, CLOSE_NORMAL);
+          break;
+        case 1:
+          result++;
+        }
       break;
   }
 
   return result;
 }
 
-static void
+void
 datalink_ComeDown(struct datalink *dl, int how)
 {
   int stayonline;

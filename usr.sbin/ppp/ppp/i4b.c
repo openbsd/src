@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.6 2001/10/24 10:01:13 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.7 2002/03/31 02:38:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -305,6 +305,7 @@ static struct device basei4bdevice = {
   i4b_Raw,
   i4b_Offline,
   i4b_Cooked,
+  NULL,
   i4b_StopTimer,
   i4b_Free,
   NULL,

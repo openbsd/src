@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.5 2002/03/25 14:22:39 brian Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.6 2002/03/31 02:38:49 brian Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -67,8 +67,12 @@ to act as a NAT or masquerading engine for all machines on an internal
 LAN.
 ifdef({LOCALNAT},{},{Refer to
 .Xr libalias 3
-for details.
+for details on the technical side of the NAT engine.
 })dnl
+Refer to the
+.Sx NETWORK ADDRESS TRANSLATION (PACKET ALIASING)
+section of this manual page for details on how to configure NAT in
+.Nm ppp .
 .Pp
 The
 .Fl quiet
@@ -4491,6 +4495,12 @@ The given
 is passed as the service name in the PPPoE Discovery Initiation (PADI)
 packet.
 If no provider is given, an empty value will be used.
+.Pp
+When a PPPoE connection is established,
+.Nm
+will place the name of the Access Concentrator in the environment variable
+.Ev ACNAME .
+.Pp
 Refer to
 .Xr netgraph 4
 and
