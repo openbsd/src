@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.61 2002/01/11 20:13:11 mickey Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.62 2002/02/14 15:32:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -199,14 +199,16 @@ struct pf_rule {
 	struct pf_rule_addr dst;
 	struct pf_addr	 rt_addr;
 
-#define PF_SKIP_IFP		0
-#define PF_SKIP_AF		1
-#define PF_SKIP_PROTO		2
-#define PF_SKIP_SRC_ADDR	3
-#define PF_SKIP_SRC_PORT	4
-#define PF_SKIP_DST_ADDR	5
-#define PF_SKIP_DST_PORT	6
-#define PF_SKIP_COUNT		7
+#define PF_SKIP_ACTION		0
+#define PF_SKIP_IFP		1
+#define PF_SKIP_DIR		2
+#define PF_SKIP_AF		3
+#define PF_SKIP_PROTO		4
+#define PF_SKIP_SRC_ADDR	5
+#define PF_SKIP_SRC_PORT	6
+#define PF_SKIP_DST_ADDR	7
+#define PF_SKIP_DST_PORT	8
+#define PF_SKIP_COUNT		9
 	struct pf_rule	*skip[PF_SKIP_COUNT];
 	TAILQ_ENTRY(pf_rule)	entries;
 
@@ -275,19 +277,6 @@ struct pf_state {
 	u_int8_t	 log;
 	u_int8_t	 allow_opts;
 };
-
-#define		MATCH_TUPLE(h,r,d,i,a) \
-		( \
-		  (r->direction == d) && \
-		  (r->ifp == NULL || r->ifp == i) && \
-		  (!r->proto || r->proto == h->ip_p) && \
-		  (!r->src.mask.addr32[0] || \
-		   pf_match_addr(r->src.not, &(r)->src.addr, \
-		   &(r)->src.mask, (struct pf_addr *)&h->ip_src.s_addr, a)) && \
-		  (!r->dst.mask.addr32[0] || \
-		   pf_match_addr(r->dst.not, &(r)->dst.addr, \
-		   &(r)->dst.mask, (struct pf_addr *)&h->ip_dst.s_addr, a)) \
-		)
 
 struct pf_nat {
 	char		 ifname[IFNAMSIZ];

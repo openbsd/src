@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.187 2002/02/11 16:22:48 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.188 2002/02/14 15:32:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2188,7 +2188,12 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		}
 		s = TAILQ_NEXT(r, entries);
 		while (a && s != NULL) {
+			PF_CALC_SKIP_STEP(PF_SKIP_ACTION,
+			    (s->action == PF_SCRUB && r->action == PF_SCRUB) ||
+			    (s->action != PF_SCRUB && r->action != PF_SCRUB));
 			PF_CALC_SKIP_STEP(PF_SKIP_IFP, s->ifp == r->ifp);
+			PF_CALC_SKIP_STEP(PF_SKIP_DIR,
+			    s->direction == r->direction);
 			PF_CALC_SKIP_STEP(PF_SKIP_AF, s->af == r->af);
 			PF_CALC_SKIP_STEP(PF_SKIP_PROTO, s->proto == r->proto);
 			PF_CALC_SKIP_STEP(PF_SKIP_SRC_ADDR,
@@ -2866,13 +2871,13 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
-		if (r->action == PF_SCRUB) {
-			r = TAILQ_NEXT(r, entries);
-			continue;
-		}
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->action == PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != direction)
+			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != IPPROTO_TCP)
@@ -2889,8 +2894,6 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
-		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -3092,14 +3095,13 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
-		if (r->action == PF_SCRUB) {
-			r = TAILQ_NEXT(r, entries);
-			continue;
-		}
 		r->evaluations++;
-
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->action == PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != direction)
+			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != IPPROTO_UDP)
@@ -3118,8 +3120,6 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
-		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
 			if ((*rm)->quick)
@@ -3349,13 +3349,13 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
-		if (r->action == PF_SCRUB) {
-			r = TAILQ_NEXT(r, entries);
-			continue;
-		}
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->action == PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != direction)
+			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
@@ -3366,8 +3366,6 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (!PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
-		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
 		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->type && r->type != icmptype + 1)
@@ -3549,13 +3547,13 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
-		if (r->action == PF_SCRUB) {
-			r = TAILQ_NEXT(r, entries);
-			continue;
-		}
 		r->evaluations++;
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->action == PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != direction)
+			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
@@ -3566,8 +3564,6 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (!PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
-		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
 			if ((*rm)->quick)

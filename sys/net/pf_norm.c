@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.17 2002/01/23 00:39:48 art Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.18 2002/02/14 15:32:11 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -445,9 +445,27 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 	u_int16_t max;
 
-	TAILQ_FOREACH(r, pf_rules_active, entries) {
-		if ((r->action == PF_SCRUB) &&
-		    MATCH_TUPLE(h, r, dir, ifp, AF_INET))
+	r = TAILQ_FIRST(pf_rules_active);
+	while (r != NULL) {
+		if (r->action != PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
+			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != dir)
+			r = r->skip[PF_SKIP_DIR];
+		else if (r->af && r->af != AF_INET)
+			r = r->skip[PF_SKIP_AF];
+		else if (r->proto && r->proto != h->ip_p)
+			r = r->skip[PF_SKIP_PROTO];
+		else if (!PF_AZERO(&r->src.mask, AF_INET) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr, &r->src.mask,
+		    (struct pf_addr *)&h->ip_src.s_addr, AF_INET))
+			r = r->skip[PF_SKIP_SRC_ADDR];
+		else if (!PF_AZERO(&r->dst.mask, AF_INET) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr, &r->dst.mask,
+		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET))
+			r = r->skip[PF_SKIP_DST_ADDR];
+		else
 			break;
 	}
 
@@ -566,12 +584,12 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
-		if (r->action != PF_SCRUB) {
-			r = TAILQ_NEXT(r, entries);
-			continue;
-		}
-		if (r->ifp != NULL && r->ifp != ifp)
+		if (r->action != PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != dir)
+			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
@@ -591,10 +609,6 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 			    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
-		else if (r->direction != dir)
-			r = TAILQ_NEXT(r, entries);
-		else if (r->ifp != NULL && r->ifp != ifp)
-			r = TAILQ_NEXT(r, entries);
 		else {
 			rm = r;
 			break;
