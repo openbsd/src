@@ -1,0 +1,4 @@
+.endif
+
+a:
+	@echo I=$I

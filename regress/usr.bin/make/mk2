@@ -1,0 +1,3 @@
+# Invoke with make -r
+a:
+	@cd ${.CURDIR} && make -f mk2b COPTS='-g -O2'

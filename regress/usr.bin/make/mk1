@@ -1,0 +1,9 @@
+# invoke with make -r -e
+# if it does NOT return the MACHINE_ARCH, it's buggy
+
+MYARCH:= ${MACHINE_ARCH}
+.if ${MACHINE_ARCH} != "alpha"
+.endif
+
+a:
+	@echo MACHINE_ARCH=${MACHINE_ARCH}
