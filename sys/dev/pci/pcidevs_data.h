@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.312 2000/09/14 09:53:09 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -651,7 +651,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AAC-364",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC3642,
 	    0,
 	    "Adaptec(2)",
 	    "AAC-3642",

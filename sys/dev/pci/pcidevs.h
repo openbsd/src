@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.312 2000/09/14 09:53:09 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -687,7 +687,7 @@
 #define	PCI_PRODUCT_ADP2_3960D	0x00C0		/* AHA-3960D Ultra160 */
 #define	PCI_PRODUCT_ADP2_AAC2622	0x0282		/* AAC-2622 */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
-#define	PCI_PRODUCT_ADP2_AAC2622	0x0365		/* AAC-3642 */
+#define	PCI_PRODUCT_ADP2_AAC3642	0x0365		/* AAC-3642 */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
 
