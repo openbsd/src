@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_setschedparam.c,v 1.4 2002/01/19 23:42:40 fgsch Exp $	*/
+/*	$OpenBSD: uthread_setschedparam.c,v 1.5 2002/01/19 23:49:32 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -49,11 +49,7 @@ pthread_setschedparam(pthread_t pthread, int policy, const struct sched_param *p
 	} else if ((param->sched_priority < PTHREAD_MIN_PRIORITY) ||
 	    (param->sched_priority > PTHREAD_MAX_PRIORITY)) {
 		/* Return an unsupported value error. */
-#ifdef NOT_YET
 		ret = ENOTSUP;
-#else
-		ret = EOPNOTSUPP;
-#endif
 
 	/* Find the thread in the list of active threads: */
 	} else if ((ret = _find_thread(pthread)) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_join.c,v 1.9 2001/12/19 02:02:52 fgsch Exp $	*/
+/*	$OpenBSD: uthread_join.c,v 1.10 2002/01/19 23:49:32 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -114,7 +114,7 @@ pthread_join(pthread_t pthread, void **thread_return)
 		_thread_kern_sig_undefer();
 
 		/* Multiple joiners are not supported. */
-		ret = EOPNOTSUPP;
+		ret = ENOTSUP;
 
 	/* Check if the thread is not dead: */
 	} else if (pthread->state != PS_DEAD) {

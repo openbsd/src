@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setscope.c,v 1.2 1999/11/25 07:01:32 d Exp $	*/
+/*	$OpenBSD: uthread_attr_setscope.c,v 1.3 2002/01/19 23:49:32 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -50,12 +50,7 @@ pthread_attr_setscope(pthread_attr_t *attr, int contentionscope)
 
 	else if (contentionscope == PTHREAD_SCOPE_SYSTEM)
 		/* We don't support system wide contention: */
-#ifdef NOT_YET
 		ret = ENOTSUP;
-#else
-		ret = EOPNOTSUPP;
-#endif
-
 	else
 		(*attr)->flags |= contentionscope;
 
