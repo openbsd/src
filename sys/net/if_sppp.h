@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.7 2004/11/28 23:39:45 canacar Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.8 2005/01/08 20:35:59 canacar Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct sipcp {
 #define IPCP_MYADDR_SEEN  4	/* have seen his address already */
 };
 
-#define AUTHNAMELEN	32
+#define AUTHNAMELEN	64
 #define AUTHKEYLEN	16
 
 struct sauth {
