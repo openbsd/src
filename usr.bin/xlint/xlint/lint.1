@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.4 1996/10/08 01:20:58 michaels Exp $
+.\"	$OpenBSD: lint.1,v 1.5 1997/07/17 07:40:29 deraadt Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -384,7 +384,7 @@ Suppress complaints about use of long long integer types.
 At appropriate points, inhibit complaints about unreachable code.
 (This comment is typically placed just after calls to functions
 like
-.Xr exit 2 ).
+.Xr exit 3 ).
 .It Li /* PRINTFLIKE Ns Ar n Li */
 makes
 .Nm
@@ -489,7 +489,7 @@ temporaries
 Jochen Pohl
 .Sh BUGS
 The routines
-.Xr exit 2 ,
+.Xr exit 3 ,
 .Xr longjmp 3
 and other functions that do not return are not understood; this
 causes various incorrect diagnostics.
