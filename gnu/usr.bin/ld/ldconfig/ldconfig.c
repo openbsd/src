@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.8 2000/04/30 15:14:34 form Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.9 2000/06/28 15:32:40 form Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -63,6 +63,7 @@ static int			nostd;
 static int			justread;
 static int			merge;
 static int			rescan;
+static int			unconfig;
 
 struct shlib_list {
 	/* Internal list of shared libraries found */
@@ -92,10 +93,13 @@ char	*argv[];
 	int		i, c;
 	int		rval = 0;
 
-	while ((c = getopt(argc, argv, "Rmrsv")) != EOF) {
+	while ((c = getopt(argc, argv, "RUmrsv")) != EOF) {
 		switch (c) {
 		case 'R':
 			rescan = 1;
+			break;
+		case 'U':
+			rescan = unconfig = 1;
 			break;
 		case 'm':
 			merge = 1;
@@ -110,11 +114,15 @@ char	*argv[];
 			verbose = 1;
 			break;
 		default:
-			errx(1, "Usage: %s [-Rmrsv] [dir ...]",
-				__progname);
+			(void)fprintf(stderr,
+				"usage: %s [-RUmrsv] [dir ...]\n", __progname);
+			exit(1);
 			break;
 		}
 	}
+
+	if (unconfig && merge)
+		errx(1, "cannot use -U with -m");
 
 	dir_list = xmalloc(1);
 	*dir_list = '\0';
@@ -133,8 +141,22 @@ char	*argv[];
 		if (!nostd)
 			std_search_path();
 
-	for (i = optind; i < argc; i++)
-		add_search_dir(argv[i]);
+	if (unconfig) {
+		if (optind < argc)
+			for (i = optind; i < argc; i++)
+				remove_search_dir(argv[i]);
+		else {
+			i = 0;
+			while (i < n_search_dirs) {
+				if (access(search_dirs[i], R_OK) < 0)
+					remove_search_dir(search_dirs[i]);
+				else
+					i++;
+			}
+		}
+	} else
+		for (i = optind; i < argc; i++)
+			add_search_dir(argv[i]);
 
 	for (i = 0; i < n_search_dirs; i++) {
 		char *cp = concat(dir_list, *dir_list?":":"", search_dirs[i]);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.4 2000/01/27 22:14:57 form Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.5 2000/06/28 15:32:40 form Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl Rmrsv
+.Op Fl RUmrsv
 .Op Ar directory Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -46,7 +46,7 @@ is used to prepare a set of
 for use by the run-time linker
 .Xr ld.so
 to facilitate quick lookup of shared libraries available in multiple
-directories.  It scans a set of built-in system directories and any
+directories. It scans a set of built-in system directories and any
 .Ar directories
 specified on the command line (in the given order) looking for shared
 libraries and stores the results in the file
@@ -83,14 +83,21 @@ The following options are recognized by
 .Nm ldconfig:
 .Bl -tag -width indent
 .It Fl R
-Rescan the previously configured directories.  This opens the hints file
-and fetches the directory list from the header.  Any additional pathnames
+Rescan the previously configured directories. This opens the hints file
+and fetches the directory list from the header. Any additional pathnames
 on the command line are also processed.
+.It Fl U
+Unconfigure directories specified on the command line or remove inaccessible
+directories from search path if no directories specified. This option cannot
+be used with
+.Fl m .
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
-the existing hints file. The default action is to build the hints file afresh.
+the existing hints file. The default action is to build the hints file
+afresh. This option cannot be used with
+.Fl U .
 .It Fl r
-Lists the current contents of
+List the current contents of
 .Xr ld.so.hints
 on the standard output. The hints file will not be modified.
 .It Fl s

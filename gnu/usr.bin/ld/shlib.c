@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.9 2000/04/24 03:33:27 form Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.10 2000/06/28 15:32:40 form Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -99,16 +99,25 @@ void
 remove_search_dir(name)
 	char	*name;
 {
-	int	n;
+	int	i, len;
 
-	for (n = 0; n < n_search_dirs; n++) {
-		if (strcmp(search_dirs[n], name))
+	len = strlen(name);
+
+	while (len > 1 && name[len - 1] == '/')
+		--len;
+
+	for (i = 0; i < n_search_dirs; i++) {
+		if (strlen(search_dirs[i]) != len ||
+		    strncmp(search_dirs[i], name, len))
 			continue;
-		free(search_dirs[n]);
-		if (n < (n_search_dirs - 1))
-			bcopy(&search_dirs[n+1], &search_dirs[n],
-			      (n_search_dirs - n - 1) * sizeof search_dirs[0]);
+		free(search_dirs[i]);
+		if (i < (n_search_dirs - 1))
+			bcopy(&search_dirs[i+1], &search_dirs[i],
+			      (n_search_dirs - i - 1) * sizeof search_dirs[0]);
 		n_search_dirs--;
+		search_dirs = (char **)xrealloc(search_dirs,
+			n_search_dirs * sizeof search_dirs[0]);
+		break;
 	}
 }
 
