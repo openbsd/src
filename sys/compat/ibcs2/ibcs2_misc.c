@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.23 2002/03/14 03:16:03 millert Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.24 2002/04/25 21:01:41 espie Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -694,7 +694,8 @@ ibcs2_sys_sysconf(p, v, retval)
 	struct ibcs2_sys_sysconf_args /* {
 		syscallarg(int) name;
 	} */ *uap = v;
-	int mib[2], value, len, error;
+	int mib[2], value, error;
+	size_t len;
 	struct sys___sysctl_args sa;
 	struct sys_getrlimit_args ga;
 
