@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.6 1996/09/28 04:30:39 etheisen Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.7 1997/01/09 04:09:40 rahnds Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -100,7 +100,7 @@ int goterror = 0;
 
 char *pname = "crunchgen";
 
-int verbose, readcache;	/* options */
+int verbose, readcache, elf_names;	/* options */
 int reading_cache;
 
 /* general library routines */
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     
     if(argc > 0) pname = argv[0];
 
-    while((optc = getopt(argc, argv, "m:c:e:fqD:L:")) != -1) {
+    while((optc = getopt(argc, argv, "m:c:e:fqD:EL:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
@@ -141,6 +141,7 @@ int main(int argc, char **argv)
 	case 'e':	strcpy(execfname, optarg); break;
 
 	case 'D':	strcpy(topdir, optarg); break;
+	case 'E' :	elf_names = 1; break;
 	case 'L':	strcpy(libdir, optarg); break;
 
 	case '?':
@@ -823,10 +824,10 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->name);
     fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\tld -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
+    fprintf(outmk, "\t${LD} -dc -r -o %s.lo %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
-    fprintf(outmk, "\tcrunchide -k __crunched_%s_stub %s.lo\n", 
-	    p->ident, p->name);
+    fprintf(outmk, "\tcrunchide -k %s_crunched_%s_stub %s.lo\n", 
+	    elf_names ? "" : "_", p->ident, p->name);
 }
 
 void output_strlst(FILE *outf, strlst_t *lst)
