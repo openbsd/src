@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.1 2002/06/02 18:15:03 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.2 2002/06/04 21:25:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -431,7 +431,7 @@ noct_rng_tick(vsc)
 	rd = (reg & RNGQPTR_READ_M) >> RNGQPTR_READ_S;
 	wr = (reg & RNGQPTR_WRITE_M) >> RNGQPTR_WRITE_S;
 
-	while (rd != wr) {
+	while (rd != wr && cons < 32) {
 		val = sc->sc_rngbuf[rd];
 		add_true_randomness((val >> 32) & 0xffffffff);
 		add_true_randomness((val >> 0) & 0xffffffff);
