@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.72 2004/02/14 15:09:22 grange Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.73 2004/02/15 11:14:45 markus Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -629,6 +629,7 @@ typedef int (sysctlfn)(int *, u_int, void *, size_t *, void *, size_t, struct pr
 
 int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
+int sysctl_int_arr(int **, int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_quad(void *, size_t *, void *, size_t, int64_t *);
 int sysctl_rdquad(void *, size_t *, void *, int64_t);
 int sysctl_string(void *, size_t *, void *, size_t, char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.100 2004/02/15 02:45:46 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.101 2004/02/15 11:14:45 markus Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -676,6 +676,26 @@ sysctl_rdint(oldp, oldlenp, newp, val)
 	if (oldp)
 		error = copyout((caddr_t)&val, oldp, sizeof(int));
 	return (error);
+}
+
+/*
+ * Array of integer values.
+ */
+int
+sysctl_int_arr(valpp, name, namelen, oldp, oldlenp, newp, newlen)
+	int **valpp;
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	if (namelen > 1)
+		return (ENOTDIR);
+	if (name[0] < 0 || valpp[name[0]] == NULL)
+		return (EOPNOTSUPP);
+	return (sysctl_int(oldp, oldlenp, newp, newlen, valpp[name[0]]));
 }
 
 /*
