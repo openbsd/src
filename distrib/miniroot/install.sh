@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.45 1999/04/01 04:14:08 millert Exp $
+#	$OpenBSD: install.sh,v 1.46 1999/04/01 21:24:22 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -207,7 +207,7 @@ __get_filesystems_1
 			_psizes[${_npartitions}]=${_ps}
 			# If the user assigned a mount point, use it.
 			if [ -f /tmp/fstab.${DISK} ]; then
-				_mount_points[${_npartitions}]=`sed -n "s:^/dev/$DISK$_pp[ 	]*\([^ 	]*\).*:\1:p" < /etc/fstab.${DISK}`
+				_mount_points[${_npartitions}]=`sed -n "s:^/dev/$DISK$_pp[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.${DISK}`
 			fi
 			_npartitions=$(( ${_npartitions} + 1 ))
 		done
@@ -599,10 +599,8 @@ if [ ! -x /mnt/dev/MAKEDEV ]; then
 fi
 
 echo -n "Making all device nodes (by running /dev/MAKEDEV all) ..."
-#pid=`twiddle`
 cd /mnt/dev
 sh MAKEDEV all
-#kill $pid
 echo "... done."
 cd /
 
