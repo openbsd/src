@@ -45,6 +45,7 @@
 #ifdef _THREAD_SAFE
 #include <machine/reg.h>
 #include <pthread.h>
+#include <pthread_np.h>
 #include "pthread_private.h"
 
 /* Allocate space for global thread variables here: */
@@ -85,7 +86,7 @@ pthread_cond_t		  _gc_cond = NULL;
 struct  sigaction 	  _thread_sigact[NSIG];
 
 /* Automatic init module. */
-extern int _thread_autoinit_hook;
+extern int _thread_autoinit_dummy_decl;
 
 #ifdef GCC_2_8_MADE_THREAD_AWARE
 /* see src/gnu/usr.bin/gcc/libgcc2.c */
@@ -304,7 +305,7 @@ _thread_init(void)
 		PANIC("Failed to initialise garbage collector mutex or condvar");
 
 	/* Pull in automatic thread unit. */
-	_thread_autoinit_hook = 1;
+	_thread_autoinit_dummy_decl = 1;
 
 	return;
 }

@@ -55,4 +55,4 @@ _thread_init_constructor()
  * Dummy symbol referenced by uthread_init.o so this compilation unit 
  * is always loaded.
  */
-int _thread_autoinit_hook = 0;
+int _thread_autoinit_dummy_decl = 0;
