@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.95 2002/11/15 03:33:25 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.96 2002/11/17 19:21:52 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -828,7 +828,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	 */
 	if (bus_space_subregion(wdc_cp->ctl_iot, cp->ctl_baseioh, 2, 1,
 	    &wdc_cp->ctl_ioh) != 0) {
-		printf("%s: unable to subregion %s channel ctl regs\n",
+		printf("%s: unable to subregion %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
 		bus_space_unmap(wdc_cp->cmd_iot, cp->ctl_baseioh, *ctlsizep);
@@ -1321,10 +1321,13 @@ int
 pciide_chan_candisable(cp)
 	struct pciide_channel *cp;
 {
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 
 	if ((wdc_cp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (wdc_cp->ch_drive[1].drive_flags & DRIVE) == 0) {
+		printf("%s: %s disabled (no drives)\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		cp->hw_ok = 0;
 		return 1;
 	}
@@ -2863,7 +2866,7 @@ cmd680_channel_map(pa, sc, channel)
 	cp->wdc_channel.ch_queue =
 	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
-		printf("%s %s channel: "
+		printf("%s %s: "
 		    "can't allocate memory for command queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		    return;
@@ -2874,7 +2877,7 @@ cmd680_channel_map(pa, sc, channel)
 	for (i = 0; i < sizeof(init_val); i++)
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, reg + i, init_val[i]);
 
-	printf("%s: %s channel %s to %s mode\n",
+	printf("%s: %s %s to %s mode\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
@@ -4079,7 +4082,7 @@ pdc202xx_chip_map(sc, pa)
 			continue;
 		if (!PDC_IS_268(sc) && (st & (PDC_IS_262(sc) ?
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
-			printf("%s: %s channel ignored (disabled)\n",
+			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
 		}
@@ -4453,7 +4456,7 @@ opti_chip_map(sc, pa)
 			continue;
 		if (channel == 1 &&
 		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
-			printf("%s: %s channel ignored (disabled)\n",
+			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
 		}
