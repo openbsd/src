@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.42 2001/06/22 14:39:20 deraadt Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.43 2001/06/23 04:20:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -587,6 +587,7 @@ txp_rx_reclaim(sc, r)
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	u_int32_t roff, woff;
+	int sumflags = 0;
 
 	roff = *r->r_roff;
 	woff = *r->r_woff;
@@ -654,6 +655,23 @@ txp_rx_reclaim(sc, r)
 #endif
 
 		m_adj(m, sizeof(struct ether_header));
+
+		if (rxd->rx_stat & RX_STAT_IPCKSUMBAD)
+			sumflags |= M_IPV4_CSUM_IN_BAD;
+		else if (rxd->rx_stat & RX_STAT_IPCKSUMGOOD)
+			sumflags |= M_IPV4_CSUM_IN_OK;
+
+		if (rxd->rx_stat & RX_STAT_TCPCKSUMBAD)
+			sumflags |= M_TCP_CSUM_IN_BAD;
+		else if (rxd->rx_stat & RX_STAT_TCPCKSUMGOOD)
+			sumflags |= M_TCP_CSUM_IN_OK;
+
+		if (rxd->rx_stat & RX_STAT_UDPCKSUMBAD)
+			sumflags |= M_UDP_CSUM_IN_BAD;
+		else if (rxd->rx_stat & RX_STAT_UDPCKSUMGOOD)
+			sumflags |= M_UDP_CSUM_IN_OK;
+
+		m->m_pkthdr.csum = sumflags;
 
 #if NVLAN > 0
 		if (rxd->rx_stat & RX_STAT_VLAN) {
@@ -1853,32 +1871,43 @@ txp_capabilities(sc)
 	}
 #endif
 
+#if 0
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPSEC) {
 		sc->sc_tx_capability |= OFFLOAD_IPSEC;
 		sc->sc_rx_capability |= OFFLOAD_IPSEC;
 		ifp->if_capabilities |= IFCAP_IPSEC;
 	}
+#endif
 
-#if 0
-	/* not supported, yet */
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_IPCKSUM) {
+#if 0
 		sc->sc_tx_capability |= OFFLOAD_IPCKSUM;
+#endif
 		sc->sc_rx_capability |= OFFLOAD_IPCKSUM;
+#if 0
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+#endif
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_TCPCKSUM) {
+#if 0
 		sc->sc_tx_capability |= OFFLOAD_TCPCKSUM;
+#endif
 		sc->sc_rx_capability |= OFFLOAD_TCPCKSUM;
+#if 0
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4;
+#endif
 	}
 
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_UDPCKSUM) {
+#if 0
 		sc->sc_tx_capability |= OFFLOAD_UDPCKSUM;
-		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
-		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
-	}
 #endif
+		sc->sc_rx_capability |= OFFLOAD_UDPCKSUM;
+#if 0
+		ifp->if_capabilities |= IFCAP_CSUM_UDPv4;
+#endif
+	}
 
 	if (txp_command(sc, TXP_CMD_OFFLOAD_WRITE, 0,
 	    sc->sc_tx_capability, sc->sc_rx_capability, NULL, NULL, NULL, 1))
