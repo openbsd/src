@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.4 2004/04/13 17:27:48 jmc Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.5 2004/08/15 23:24:14 jaredy Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
-.Op Fl p Ar port
 .Fl i Ar interface
 .Ar server0 Op Ar ... serverN
 .Sh DESCRIPTION
@@ -83,24 +82,6 @@ to always run as a foreground process.
 The name of the network interface that
 .Nm
 should attempt to configure.
-.It Fl p Ar port
-Tells
-.Nm
-to listen and transmit on a port other than the standard
-.Pq port 67 .
-It should be followed by the UDP port number that
-.Nm
-should use.
-This is mostly useful for debugging purposes.
-The relay agent will transmit responses to clients
-at a port number that is one greater than the one specified \- i.e., if
-you specify
-.Fl p
-67, then the relay agent will listen on port 67 and transmit to port 68.
-Transmissions to servers will be sent to the same port number
-that is specified with the
-.Fl p
-flag.
 .El
 .Sh SEE ALSO
 .Xr dhclient 8 ,
