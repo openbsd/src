@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.39 2003/02/10 21:28:26 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.40 2003/05/26 07:16:14 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -200,7 +200,12 @@ INCFILES= \
 	src/include/util_script.h \
 	src/include/util_uri.h \
 	src/os/unix/os-inline.c \
-	src/os/unix/os.h
+	src/os/unix/os.h \
+	src/modules/ssl/mod_ssl.h \
+	src/modules/ssl/ssl_expr.h \
+	src/modules/ssl/ssl_util_sdbm.h \
+	src/modules/ssl/ssl_util_ssl.h \
+	src/modules/ssl/ssl_util_table.h
 
 XMLFILES= \
 	src/lib/expat-lite/asciitab.h \
