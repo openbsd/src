@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.2 1998/10/30 19:26:02 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.3 1998/12/13 06:47:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -73,6 +73,8 @@
  * SPA space (see below) ranges from 0xF1000000 thru 0xFFFC0000.
  */
 
+#define	HPPA_IOBEGIN	0xF0000000
+#define	HPPA_IOLEN	0x10000000
 #define	PDC_ADDR	0xEF000000	/* explained above */
 #define	IO_ADDR		0xF1000000
 #define	SGC_SLOT1	0xF4000000	/* (hp700) */
