@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.6 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: esa.c,v 1.7 2003/08/11 05:03:10 mickey Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1016,13 +1016,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	struct esa_card_type *card;
 	const char *intrstr;
 	u_int32_t data;
-	char devinfo[256];
-	int revision, len;
-	int i;
-
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+	int i, len;
 
 	for (card = esa_card_types; card->pci_vendor_id; card++)
 		if (PCI_VENDOR(pa->pa_id) == card->pci_vendor_id &&
@@ -1041,7 +1035,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios, 0)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -1052,7 +1046,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
@@ -1060,14 +1054,14 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self,
             sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt", sc->sc_dev.dv_xname);
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Power up chip */
 	esa_power(sc, PCI_PMCSR_STATE_D0);

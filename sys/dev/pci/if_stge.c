@@ -407,12 +407,10 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sp = stge_lookup(pa);
 	if (sp == NULL) {
 		printf("\n");
-		panic("ste_attach: impossible");
+		panic("stge_attach: impossible");
 	}
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-
-	printf(": %s, rev. %d\n", sp->stge_name, sc->sc_rev);
 
 	/*
 	 * Map the device.
@@ -431,8 +429,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map device registers\n");
 		return;
 	}
 
@@ -451,13 +448,11 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
+			printf(": unable to wake up from power state D3\n");
 			return;
 		}
 		if (pmode != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
+			printf(": waking up from power state D%d\n", pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
@@ -466,21 +461,20 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, stge_intr, sc,
 				       sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s, rev. %d, %s\n", sp->stge_name, sc->sc_rev, intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the

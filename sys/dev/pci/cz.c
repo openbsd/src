@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.6 2002/11/19 18:40:17 jason Exp $ */
+/*	$OpenBSD: cz.c,v 1.7 2003/08/11 05:03:10 mickey Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -300,23 +300,19 @@ cz_attach(parent, self, aux)
 	struct tty *tp;
 	int i;
 
-	printf(": Cyclades-Z multiport serial\n");
-
 	cz->cz_plx.plx_pc = pa->pa_pc;
 	cz->cz_plx.plx_tag = pa->pa_tag;
 
 	if (pci_mapreg_map(pa, PLX_PCI_RUNTIME_MEMADDR,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &cz->cz_plx.plx_st, &cz->cz_plx.plx_sh, NULL, NULL, 0) != 0) {
-		printf("%s: unable to map PLX registers\n",
-		    cz->cz_dev.dv_xname);
+		printf(": unable to map PLX registers\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, PLX_PCI_LOCAL_ADDR0,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &cz->cz_win_st, &cz->cz_win_sh, NULL, NULL, 0) != 0) {
-		printf("%s: unable to map device window\n",
-		    cz->cz_dev.dv_xname);
+		printf(": unable to map device window\n");
 		return;
 	}
 
@@ -355,15 +351,13 @@ cz_attach(parent, self, aux)
 			    cz_intr, cz, cz->cz_dev.dv_xname);
 	}
 	if (cz->cz_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    cz->cz_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		/* We will fall-back on polling mode. */
 	} else
-		printf("%s: interrupting at %s\n",
-		    cz->cz_dev.dv_xname, intrstr);
+		printf(": %s\n", intrstr);
 
  polling_mode:
 	if (cz->cz_ih == NULL) {
