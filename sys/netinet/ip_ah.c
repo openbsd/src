@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.47 2001/03/15 06:30:58 mickey Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.48 2001/03/28 20:03:02 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -880,10 +880,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	m1.m_len = ENC_HDRLEN;
 	m1.m_data = (char *) &hdr;
 
-	if (tdb->tdb_interface)
-	  ifn = (struct ifnet *) tdb->tdb_interface;
-	else
-	  ifn = &(encif[0].sc_if);
+	ifn = &(encif[0].sc_if);
 
 	if (ifn->if_bpf)
 	  bpf_mtap(ifn->if_bpf, &m1);

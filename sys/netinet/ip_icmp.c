@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.32 2001/03/07 20:57:20 brian Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.33 2001/03/28 20:03:03 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -367,6 +367,13 @@ icmp_input(m, va_alist)
 		code = PRC_QUENCH;
 	deliver:
 		/*
+		 * Free packet atttributes. XXX
+		 */
+		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
+		    free(m->m_pkthdr.tdbi, M_TEMP);
+		    m->m_pkthdr.tdbi = NULL;
+		}
+		/*
 		 * Problem with datagram; advise higher level routines.
 		 */
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
@@ -466,6 +473,13 @@ icmp_input(m, va_alist)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
+		/*
+		 * Free packet atttributes. XXX
+		 */
+		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
+		    free(m->m_pkthdr.tdbi, M_TEMP);
+		    m->m_pkthdr.tdbi = NULL;
+		}
 		ip->ip_len += hlen;	/* since ip_input deducts this */
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
@@ -473,6 +487,13 @@ reflect:
 		return;
 
 	case ICMP_REDIRECT:
+		/*
+		 * Free packet atttributes. XXX
+		 */
+		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
+		    free(m->m_pkthdr.tdbi, M_TEMP);
+		    m->m_pkthdr.tdbi = NULL;
+		}
 		if (code > 3)
 			goto badcode;
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
@@ -567,8 +588,7 @@ icmp_reflect(m)
 					      m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address (like an
-	 * enc interface).
+	 * and was received on an interface with no IP address.
 	 */
 	if (ia == (struct in_ifaddr *)0) {
 	        struct sockaddr_in *dst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.3 2001/03/15 06:31:00 mickey Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.4 2001/03/28 20:03:06 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -193,8 +193,9 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	    /* Fix IPv4 header checksum and length */
 	    if (af == AF_INET)
 	    {
-		if ((m = m_pullup(m, sizeof(struct ip))) == 0)
-		  return ENOBUFS;
+		if (m->m_len < sizeof(struct ip))
+		  if ((m = m_pullup(m, sizeof(struct ip))) == 0)
+		    return ENOBUFS;
 
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
@@ -207,7 +208,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	    /* Fix IPv6 header payload length */
 	    if (af == AF_INET6)
 	    {
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
+		if (m->m_len < sizeof(struct ip6_hdr))
+		  if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
 		    return ENOBUFS;
 
 		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {

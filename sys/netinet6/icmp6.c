@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.36 2001/03/21 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.37 2001/03/28 20:03:07 angelos Exp $	*/
 /*	$KAME: icmp6.c,v 1.205 2001/03/21 07:48:57 itojun Exp $	*/
 
 /*
@@ -625,6 +625,7 @@ icmp6_input(mp, offp, proto)
 			n->m_pkthdr.len += n0->m_pkthdr.len;
 			n->m_next = n0;
 			n0->m_flags &= ~M_PKTHDR;
+			n0->m_pkthdr.tdbi = NULL;
 		} else {
 			nip6 = mtod(n, struct ip6_hdr *);
 			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
@@ -740,7 +741,7 @@ icmp6_input(mp, offp, proto)
 			bzero(p, 4);
 			bcopy(hostname, p + 4, maxhlen); /*meaningless TTL*/
 			noff = sizeof(struct ip6_hdr);
-			M_COPY_PKTHDR(n, m); /* just for recvif */
+			M_DUP_PKTHDR(n, m); /* just for rcvif */
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
@@ -1434,7 +1435,7 @@ ni6_input(m, off)
 		m_freem(m);
 		return(NULL);
 	}
-	M_COPY_PKTHDR(n, m); /* just for recvif */
+	M_DUP_PKTHDR(n, m); /* just for rcvif */
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*

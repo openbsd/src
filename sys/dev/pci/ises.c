@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.3 2001/01/30 14:07:44 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.4 2001/03/28 20:02:59 angelos Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -1048,7 +1048,7 @@ ises_process(struct cryptop *crp)
 			totlen = q->q_dst_l = q->q_src_l;
 			if (q->q_src_m->m_flags & M_PKTHDR) {
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
-				M_COPY_PKTHDR(m, q->q_src_m);
+				M_DUP_PKTHDR(m, q->q_src_m);
 				len = MHLEN;
 			} else {
 				MGET(m, M_DONTWAIT, MT_DATA);

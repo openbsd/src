@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.28 2001/03/25 09:56:00 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.29 2001/03/28 20:03:08 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -211,11 +211,11 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	 * from a transport protocol.
 	 */
 	ip6 = mtod(m, struct ip6_hdr *);
-	if (inp && inp->inp_tdb &&
-	    inp->inp_tdb->tdb_dst.sa.sa_family == AF_INET6 &&
-	    IN6_ARE_ADDR_EQUAL(&inp->inp_tdb->tdb_dst.sin6.sin6_addr,
+	if (inp && inp->inp_tdb_out &&
+	    inp->inp_tdb_out->tdb_dst.sa.sa_family == AF_INET6 &&
+	    IN6_ARE_ADDR_EQUAL(&inp->inp_tdb_out->tdb_dst.sin6.sin6_addr,
 		  &ip6->ip6_dst)) {
-	        tdb = inp->inp_tdb;
+	        tdb = inp->inp_tdb_out;
 	} else {
 	        tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
 	            &error, IPSP_DIRECTION_OUT, NULL, NULL);
@@ -586,6 +586,10 @@ skip_ipsec2:;
 			m_freem(m);
 			goto done;
 		}
+
+		/* Latch to PCB */
+		if (inp)
+		        tdb_add_inp(tdb, inp, 0);
 
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
@@ -1435,11 +1439,11 @@ ip6_ctloutput(op, so, level, optname, mp)
 				} else {
 					tdbip = mtod(m, struct tdb_ident *);
 					tdb = gettdb(tdbip->spi, &tdbip->dst,
-					    tdbip->proto);
+						     tdbip->proto);
 					if (tdb == NULL)
 						error = ESRCH;
 					else
-						tdb_add_inp(tdb, inp);
+						tdb_add_inp(tdb, inp, 0);
 				}
 				splx(s);
 #endif /* IPSEC */
@@ -1647,12 +1651,12 @@ ip6_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 #else
 				s = spltdb();
-				if (inp->inp_tdb == NULL) {
+				if (inp->inp_tdb_out == NULL) {
 					error = ENOENT;
 				} else {
-					tdbi.spi = inp->inp_tdb->tdb_spi;
-					tdbi.dst = inp->inp_tdb->tdb_dst;
-					tdbi.proto = inp->inp_tdb->tdb_sproto;
+					tdbi.spi = inp->inp_tdb_out->tdb_spi;
+					tdbi.dst = inp->inp_tdb_out->tdb_dst;
+					tdbi.proto = inp->inp_tdb_out->tdb_sproto;
 					*mp = m = m_get(M_WAIT, MT_SOOPTS);
 					m->m_len = sizeof(tdbi);
 					bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
@@ -2341,6 +2345,7 @@ ip6_splithdr(m, exthdrs)
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, sizeof(*ip6));
 		m->m_flags &= ~M_PKTHDR;
+		m->m_pkthdr.tdbi = NULL;
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;

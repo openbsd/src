@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.55 2001/02/18 18:29:27 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.56 2001/03/28 20:02:59 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -876,7 +876,7 @@ hifn_crypto(sc, cmd)
 		if (m == NULL)
 			return (-1);
 		if (len == MHLEN)
-			M_COPY_PKTHDR(m, cmd->src_m);
+			M_DUP_PKTHDR(m, cmd->src_m);
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)

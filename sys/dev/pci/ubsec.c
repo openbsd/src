@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.41 2001/03/25 07:59:25 csapuntz Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.42 2001/03/28 20:03:00 angelos Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -839,7 +839,7 @@ ubsec_process(crp)
 				goto errout;
 			}
 			if (len == MHLEN)
-				M_COPY_PKTHDR(m, q->q_src_m);
+				M_DUP_PKTHDR(m, q->q_src_m);
 			if (totlen >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if (m->m_flags & M_EXT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.110 2001/03/27 14:45:22 art Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.111 2001/03/28 20:03:04 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -319,13 +319,6 @@ gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
 	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
 	    break;
 
-	  /* We only grok addresses */
-	  if (((tdbp->tdb_srcid_type != SADB_IDENTTYPE_PREFIX) &&
-	       (tdbp->tdb_dstid_type != SADB_IDENTTYPE_CONNECTION)) ||
-	      ((tdbp->tdb_dstid_type != SADB_IDENTTYPE_PREFIX) &&
-	       (tdbp->tdb_dstid_type != SADB_IDENTTYPE_CONNECTION)))
-	    continue;
-
 	  /* Sanity */
 	  if ((m == NULL) || (af == 0))
 	    continue;
@@ -363,13 +356,6 @@ gettdbbysrc(union sockaddr_union *src, u_int8_t proto, struct mbuf *m, int af)
 	   */
 	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
 	    break;
-
-	  /* We only grok addresses */
-	  if (((tdbp->tdb_srcid_type != SADB_IDENTTYPE_PREFIX) &&
-	       (tdbp->tdb_dstid_type != SADB_IDENTTYPE_CONNECTION)) ||
-	      ((tdbp->tdb_dstid_type != SADB_IDENTTYPE_PREFIX) &&
-	       (tdbp->tdb_dstid_type != SADB_IDENTTYPE_CONNECTION)))
-	    continue;
 
 	  /* XXX Check the IDs ? */
 	  break;
@@ -685,11 +671,18 @@ tdb_delete(struct tdb *tdbp)
     }
 
     /* Cleanup inp references */
-    for (inp = TAILQ_FIRST(&tdbp->tdb_inp); inp;
-	 inp = TAILQ_FIRST(&tdbp->tdb_inp))
+    for (inp = TAILQ_FIRST(&tdbp->tdb_inp_in); inp;
+	 inp = TAILQ_FIRST(&tdbp->tdb_inp_in))
     {
-        TAILQ_REMOVE(&tdbp->tdb_inp, inp, inp_tdb_next);
-	inp->inp_tdb = NULL;
+        TAILQ_REMOVE(&tdbp->tdb_inp_in, inp, inp_tdb_in_next);
+	inp->inp_tdb_in = NULL;
+    }
+
+    for (inp = TAILQ_FIRST(&tdbp->tdb_inp_out); inp;
+	 inp = TAILQ_FIRST(&tdbp->tdb_inp_out))
+    {
+        TAILQ_REMOVE(&tdbp->tdb_inp_out, inp, inp_tdb_out_next);
+	inp->inp_tdb_out = NULL;
     }
 
     /* Cleanup SPD references */
@@ -721,10 +714,16 @@ tdb_delete(struct tdb *tdbp)
 	tdbp->tdb_dstid = NULL;
     }
 
-    if (tdbp->tdb_credentials)
+    if (tdbp->tdb_src_credentials)
     {
-	FREE(tdbp->tdb_credentials, M_XDATA);
-	tdbp->tdb_credentials = NULL;
+	FREE(tdbp->tdb_src_credentials, M_XDATA);
+	tdbp->tdb_src_credentials = NULL;
+    }
+
+    if (tdbp->tdb_dst_credentials)
+    {
+	FREE(tdbp->tdb_dst_credentials, M_XDATA);
+	tdbp->tdb_dst_credentials = NULL;
     }
 
     if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
@@ -964,10 +963,6 @@ ipsp_kern(int off, char **bufp, int len)
 			     ipsp_address(tdb->tdb_inext->tdb_dst),
 			     tdb->tdb_inext->tdb_sproto);
 
-	      if (tdb->tdb_interface)
-		l += sprintf(buffer + l, "\tAssociated interface = <%s>\n",
-			     ((struct ifnet *) tdb->tdb_interface)->if_xname);
-
 	      l += sprintf(buffer + l, "\t%qu bytes processed by this SA\n",
 			 tdb->tdb_cur_bytes);
 
@@ -1083,20 +1078,38 @@ get_sa_require(struct inpcb *inp)
  * Add an inpcb to the list of inpcb which reference this tdb directly.
  */
 void
-tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
+tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
 {
-    if (inp->inp_tdb)
+    if (inout)
     {
-	if (inp->inp_tdb == tdb)
-          return;
+        if (inp->inp_tdb_in)
+        {
+	    if (inp->inp_tdb_in == tdb)
+              return;
 
-	TAILQ_REMOVE(&inp->inp_tdb->tdb_inp, inp, inp_tdb_next);
+	    TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp, inp_tdb_in_next);
+        }
+
+        inp->inp_tdb_in = tdb;
+        TAILQ_INSERT_TAIL(&tdb->tdb_inp_in, inp, inp_tdb_in_next);
+    }
+    else
+    {
+        if (inp->inp_tdb_out)
+        {
+	    if (inp->inp_tdb_out == tdb)
+              return;
+
+	    TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
+			 inp_tdb_out_next);
+        }
+
+        inp->inp_tdb_out = tdb;
+        TAILQ_INSERT_TAIL(&tdb->tdb_inp_out, inp, inp_tdb_out_next);
     }
 
-    inp->inp_tdb = tdb;
-    TAILQ_INSERT_TAIL(&tdb->tdb_inp, inp, inp_tdb_next);
-
-    DPRINTF(("tdb_add_inp: tdb: %p, inp: %p\n", tdb, inp));
+    DPRINTF(("tdb_add_inp: tdb: %p, inp: %p, direction: %s\n", tdb, inp,
+	     inout ? "in" : "out"));
 }
 
 /* Return a printable string for the IPv4 address. */
@@ -1132,4 +1145,26 @@ ipsp_address(union sockaddr_union sa)
 	default:
 	    return "(unknown address family)";
     }
+}
+
+/* Copy a struct tdb_ident structure */
+void *
+ipsp_copy_ident(void *arg)
+{
+    struct tdb_ident *tdbii, *tdbi;
+
+    tdbi = (struct tdb_ident *) arg;
+
+    /*
+     * Allocate new structure. If we fail, just return NULL -- the
+     * new packet will be treated as if it was not protected.
+     */
+    MALLOC(tdbii, struct tdb_ident *, sizeof(struct tdb_ident), M_TEMP,
+	   M_NOWAIT);
+    if (tdbii == NULL)
+      return NULL;
+    bcopy(&tdbi->dst, &tdbii->dst, sizeof(union sockaddr_union));
+    tdbii->proto = tdbi->proto;
+    tdbii->spi = tdbi->spi;
+    return (void *) tdbii;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.86 2001/03/07 23:19:54 aaron Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.87 2001/03/28 20:03:04 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -180,9 +180,9 @@ ip_output(m0, va_alist)
 	 * If the higher-level protocol has cached the SA to use, we
 	 * can avoid the routing lookup if the source address is zero.
 	 */
-	if (inp != NULL && inp->inp_tdb != NULL &&
+	if (inp != NULL && inp->inp_tdb_out != NULL &&
 	    ip->ip_src.s_addr == INADDR_ANY) {
-		tdb = inp->inp_tdb;
+		tdb = inp->inp_tdb_out;
 		if (tdb->tdb_src.sa.sa_family == AF_INET &&
 		    tdb->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) {
 			ip->ip_src.s_addr = tdb->tdb_src.sin.sin_addr.s_addr;
@@ -281,11 +281,11 @@ ip_output(m0, va_alist)
 	 * Check if there was an outgoing SA bound to the flow
 	 * from a transport protocol.
 	 */
-	if (inp && inp->inp_tdb &&
-	    inp->inp_tdb->tdb_dst.sa.sa_family == AF_INET &&
-	    !bcmp(&inp->inp_tdb->tdb_dst.sin.sin_addr,
+	if (inp && inp->inp_tdb_out &&
+	    inp->inp_tdb_out->tdb_dst.sa.sa_family == AF_INET &&
+	    !bcmp(&inp->inp_tdb_out->tdb_dst.sin.sin_addr,
 		  &ip->ip_dst, sizeof(ip->ip_dst)))
-	        tdb = inp->inp_tdb;
+	        tdb = inp->inp_tdb_out;
 	else
 	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
 				      IPSP_DIRECTION_OUT, NULL, inp);
@@ -550,12 +550,10 @@ sendit:
 		if (fr_checkp) {
 		    /*
 		     * Ok, it's time for a simple round-trip to the IPF/NAT
-		     * code with the enc# interface
+		     * code with the enc0 interface
 		     */
 		    struct mbuf *m0 = m;
-		    void *ifp = tdb->tdb_interface ?
-				(void *)tdb->tdb_interface :
-				      (void *)&encif[0].sc_if;
+		    void *ifp = (void *)&encif[0].sc_if;
 		    if ((*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
 			error = EHOSTUNREACH;
 			splx(s);
@@ -578,6 +576,10 @@ sendit:
 			m_freem(m);
 			goto done;
 		}
+
+		/* Latch to PCB */
+		if (inp)
+		        tdb_add_inp(tdb, inp, 0);
 
 		/* Massage the IP header for use by the IPsec code */
 		ip->ip_len = htons((u_short) ip->ip_len);

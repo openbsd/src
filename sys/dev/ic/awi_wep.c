@@ -327,8 +327,9 @@ awi_wep_encrypt(sc, m0, txflag)
 	n0 = n;
 	if (n == NULL)
 		goto fail;
-	M_COPY_PKTHDR(n, m);
-	len = IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
+	M_DUP_PKTHDR(n, m);
+	len = IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
+	      IEEE80211_WEP_CRCLEN;
 	if (txflag) {
 		n->m_pkthdr.len += len;
 	} else {

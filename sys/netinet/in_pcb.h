@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.32 2001/02/16 16:00:53 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.33 2001/03/28 20:03:02 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ struct inpcb {
 	} inp_mou;
 #define inp_moptions inp_mou.mou_mo
 #define inp_moptions6 inp_mou.mou_mo6
-	u_char	  inp_seclevel[3];	/* Only the first 3 are used for now */
+	u_char	  inp_seclevel[3];
 #define SL_AUTH           0             /* Authentication level */
 #define SL_ESP_TRANS      1             /* ESP transport level */
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
@@ -131,8 +131,8 @@ struct inpcb {
 #define SR_FAILED         1             /* Negotiation failed permanently */
 #define SR_SUCCESS        2             /* SA successfully established */
 #define SR_WAIT           3             /* Waiting for SA */
-	TAILQ_ENTRY(inpcb) inp_tdb_next;
-	struct tdb     *inp_tdb;	/* If tdb_dst matches our dst, use */
+	TAILQ_ENTRY(inpcb) inp_tdb_in_next, inp_tdb_out_next;
+	struct tdb     *inp_tdb_in, *inp_tdb_out;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	in6p_cksum;

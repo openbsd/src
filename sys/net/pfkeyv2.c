@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.57 2001/03/27 14:45:21 art Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.58 2001/03/28 20:03:01 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -66,7 +66,7 @@ static struct sadb_alg aalgs[] =
 void export_address(void **, struct sockaddr *);
 void export_identity(void **, struct tdb *, int);
 void export_lifetime(void **, struct tdb *, int);
-void export_credentials(void **, struct tdb *);
+void export_credentials(void **, struct tdb *, int);
 void export_sa(void **, struct tdb *);
 void export_key(void **, struct tdb *, int);
 
@@ -74,7 +74,7 @@ void import_address(struct sockaddr *, struct sadb_address *);
 void import_identity(struct tdb *, struct sadb_ident *, int);
 void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
-void import_credentials(struct tdb *, struct sadb_cred *);
+void import_credentials(struct tdb *, struct sadb_cred *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 
 int pfkeyv2_create(struct socket *);
@@ -487,17 +487,29 @@ export_address(void **p, struct sockaddr *sa)
  * Import a set of credentials into the TDB.
  */
 void
-import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred)
+import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
 {
     if (!sadb_cred)
       return;
 
-    tdb->tdb_cred_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
-    tdb->tdb_cred_type = sadb_cred->sadb_cred_type;
-    MALLOC(tdb->tdb_credentials, caddr_t, tdb->tdb_cred_len, M_XDATA,
-	   M_WAITOK);
-    bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
-	  tdb->tdb_credentials, tdb->tdb_cred_len);
+    if (dstcred)
+    {
+	tdb->tdb_dst_cred_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
+	tdb->tdb_dst_cred_type = sadb_cred->sadb_cred_type;
+	MALLOC(tdb->tdb_dst_credentials, caddr_t, tdb->tdb_dst_cred_len,
+	       M_XDATA, M_WAITOK);
+	bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
+	      tdb->tdb_dst_credentials, tdb->tdb_dst_cred_len);
+    }
+    else
+    {
+	tdb->tdb_src_cred_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
+	tdb->tdb_src_cred_type = sadb_cred->sadb_cred_type;
+	MALLOC(tdb->tdb_src_credentials, caddr_t, tdb->tdb_src_cred_len,
+	       M_XDATA, M_WAITOK);
+	bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
+	      tdb->tdb_src_credentials, tdb->tdb_src_cred_len);
+    }
 }
 
 /*
@@ -532,17 +544,30 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 }
 
 void
-export_credentials(void **p, struct tdb *tdb)
+export_credentials(void **p, struct tdb *tdb, int dstcred)
 {
     struct sadb_cred *sadb_cred = (struct sadb_cred *) *p;
 
-    sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
-				PADUP(tdb->tdb_cred_len)) /
-			       sizeof(uint64_t);
-    sadb_cred->sadb_cred_type = tdb->tdb_cred_type;
-    *p += sizeof(struct sadb_cred);
-    bcopy(tdb->tdb_credentials, *p, tdb->tdb_cred_len);
-    *p += PADUP(tdb->tdb_cred_len);
+    if (dstcred)
+    {
+	sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
+				    PADUP(tdb->tdb_dst_cred_len)) /
+				   sizeof(uint64_t);
+	sadb_cred->sadb_cred_type = tdb->tdb_dst_cred_type;
+	*p += sizeof(struct sadb_cred);
+	bcopy(tdb->tdb_dst_credentials, *p, tdb->tdb_dst_cred_len);
+	*p += PADUP(tdb->tdb_dst_cred_len);
+    }
+    else
+    {
+	sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
+				    PADUP(tdb->tdb_src_cred_len)) /
+				   sizeof(uint64_t);
+	sadb_cred->sadb_cred_type = tdb->tdb_src_cred_type;
+	*p += sizeof(struct sadb_cred);
+	bcopy(tdb->tdb_src_credentials, *p, tdb->tdb_src_cred_len);
+	*p += PADUP(tdb->tdb_src_cred_len);
+    }
 }
 
 void
@@ -1034,10 +1059,16 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
     }
 
     /* Export credentials, if present */
-    if (sa->tdb_credentials)
+    if (sa->tdb_src_credentials)
     {
-	headers[SADB_X_EXT_CREDENTIALS] = p;
-	export_credentials(&p, sa);
+	headers[SADB_X_EXT_SRC_CREDENTIALS] = p;
+	export_credentials(&p, sa, 0);
+    }
+
+    if (sa->tdb_dst_credentials)
+    {
+	headers[SADB_X_EXT_DST_CREDENTIALS] = p;
+	export_credentials(&p, sa, 1);
     }
 
     /* Export authentication key, if present */
@@ -1353,7 +1384,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				PFKEYV2_IDENTITY_SRC);
 		import_identity(newsa, headers[SADB_EXT_IDENTITY_DST],
 				PFKEYV2_IDENTITY_DST);
-		import_credentials(newsa, headers[SADB_X_EXT_CREDENTIALS]);
+		import_credentials(newsa, headers[SADB_X_EXT_SRC_CREDENTIALS],
+				   0);
+		import_credentials(newsa, headers[SADB_X_EXT_DST_CREDENTIALS],
+				   1);
 
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1468,7 +1502,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		import_identity(newsa, headers[SADB_EXT_IDENTITY_DST],
 				PFKEYV2_IDENTITY_DST);
 
-		import_credentials(newsa, headers[SADB_X_EXT_CREDENTIALS]);
+		import_credentials(newsa, headers[SADB_X_EXT_SRC_CREDENTIALS],
+				   0);
+		import_credentials(newsa, headers[SADB_X_EXT_DST_CREDENTIALS],
+				   1);
 
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;

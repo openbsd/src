@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.81 2001/03/27 14:45:22 art Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.82 2001/03/28 20:03:04 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -294,11 +294,13 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
     u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
     u_int16_t         tdb_ivlen;        /* IV length */
-    u_int16_t         tdb_cred_len;     /* size of tdb_credentials */
+    u_int16_t         tdb_src_cred_len; /* size of tdb_src_credentials */
+    u_int16_t         tdb_dst_cred_len; /* size of tdb_dst_credentials */
     u_int8_t	      tdb_sproto;	/* IPsec protocol */
     u_int8_t          tdb_wnd;          /* Replay window */
     u_int8_t          tdb_satype;       /* SA type (RFC2367, PF_KEY) */
-    u_int8_t          tdb_cred_type;    /* type of tdb_credentials */
+    u_int8_t          tdb_src_cred_type;/* type of tdb_src_credentials */
+    u_int8_t          tdb_dst_cred_type;/* type of tdb_dst_credentials */
 
     union sockaddr_union tdb_dst;	/* Destination address for this SA */
     union sockaddr_union tdb_src;	/* Source address for this SA */
@@ -321,10 +323,11 @@ struct tdb				/* tunnel descriptor block */
 
     u_int8_t          tdb_iv[4];        /* Used for HALF-IV ESP */
 
-    caddr_t           tdb_interface;
-    caddr_t           tdb_credentials;
+    caddr_t           tdb_src_credentials;
+    caddr_t           tdb_dst_credentials;
 
-    TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
+    TAILQ_HEAD(tdb_inp_head_in, inpcb) tdb_inp_in;
+    TAILQ_HEAD(tdb_inp_head_out, inpcb) tdb_inp_out;
     TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head;
 };
 
@@ -469,7 +472,7 @@ extern char *inet_ntoa4(struct in_addr);
 extern char *ipsp_address(union sockaddr_union);
 
 /* TDB management routines */
-extern void tdb_add_inp(struct tdb *tdb, struct inpcb *inp);
+extern void tdb_add_inp(struct tdb *, struct inpcb *, int);
 extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
 			     union sockaddr_union *, u_int8_t, int *);
 extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
@@ -584,5 +587,6 @@ extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);
 extern void ipsp_delete_acquire(struct ipsec_acquire *);
 extern void ipsp_clear_acquire(struct tdb *);
+extern void *ipsp_copy_ident(void *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

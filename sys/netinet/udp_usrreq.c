@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.55 2001/03/06 18:34:17 aaron Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.56 2001/03/28 20:03:07 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -94,8 +94,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 extern int ip6_defhlim;
 #endif /* INET6 */
 
-#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
-
 /*
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
@@ -177,10 +175,6 @@ udp_input(m, va_alist)
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
 	int error, s;
-
-	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
-	if (tdbi == (void *) PI_MAGIC)
-	        tdbi = NULL;
 #endif /* IPSEC */
 
 	va_start(ap, m);
@@ -231,10 +225,6 @@ udp_input(m, va_alist)
 	if (m->m_len < iphlen + sizeof(struct udphdr)) {
 		if ((m = m_pullup2(m, iphlen + sizeof(struct udphdr))) == 0) {
 			udpstat.udps_hdrops++;
-#ifdef IPSEC
-			if (tdbi)
-			        free(tdbi, M_TEMP);
-#endif /* IPSEC */
 			return;
 		}
 #ifdef INET6
@@ -303,10 +293,6 @@ udp_input(m, va_alist)
 		if ((uh->uh_sum = in_cksum(m, len + sizeof (struct ip))) != 0) {
 			udpstat.udps_badsum++;
 			m_freem(m);
-#ifdef IPSEC
-			if (tdbi)
-			        free(tdbi, M_TEMP);
-#endif /* IPSEC */
 			return;
 		}
 	} else
@@ -480,10 +466,6 @@ udp_input(m, va_alist)
 			goto bad;
 		}
 		sorwakeup(last);
-#ifdef IPSEC
-		if (tdbi)
-		        free(tdbi, M_TEMP);
-#endif /* IPSEC */
 		return;
 	}
 	/*
@@ -528,19 +510,12 @@ udp_input(m, va_alist)
 				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
 					0, 0);
 			}
-#ifdef IPSEC
-			if (tdbi)
-			        free(tdbi, M_TEMP);
-#endif /* IPSEC */
 			return;
 		}
 	}
 
 #ifdef IPSEC
-#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
 	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
-	if (tdbi == (void *) PI_MAGIC)
-	        tdbi = NULL;
 
         s = splnet();
         if (tdbi == NULL)
@@ -552,9 +527,7 @@ udp_input(m, va_alist)
 			IPSP_DIRECTION_IN, tdb, inp);
         splx(s);
 
-	if (tdbi)
-	        free(tdbi, M_TEMP);
-	tdbi = NULL;
+	/* No SA latching done for UDP */
 
 	/* Error or otherwise drop-packet indication */
 	if (error)
@@ -602,10 +575,6 @@ udp_input(m, va_alist)
 	sorwakeup(inp->inp_socket);
 	return;
 bad:
-#ifdef IPSEC
-	if (tdbi)
-	        free(tdbi, M_TEMP);
-#endif /* IPSEC */
 	m_freem(m);
 	if (opts)
 		m_freem(opts);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.13 2001/03/15 22:43:03 bjc Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.14 2001/03/28 20:03:06 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -94,7 +94,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
      * If there are no flows in place, there's no point
      * continuing with the SPD lookup.
      */
-    if (!ipsec_in_use)
+    if (!ipsec_in_use && inp == NULL)
     {
 	*error = 0;
 	return NULL;
@@ -406,11 +406,14 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			     ipo_tdb_next);
 		ipo->ipo_tdb = NULL;
+		ipo->ipo_last_searched = 0;
 
 		/* Fall through to acquisition of TDB */
 	    }
 	    else
-	      return ipo->ipo_tdb; /* Cached entry is good, we're done */
+	    {
+		return ipo->ipo_tdb; /* Cached entry is good, we're done */
+	    }
 	}
 
 	/*
@@ -510,6 +513,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	{
 	    TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
 	    ipo->ipo_tdb = NULL;
+	    ipo->ipo_last_searched = 0;
 	}
 
 	switch (ipo->ipo_type)

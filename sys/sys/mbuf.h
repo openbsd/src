@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.20 2001/03/18 18:51:10 aaron Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.21 2001/03/28 20:03:09 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #ifndef M_WAITOK
 #include <sys/malloc.h>
 #endif
+
+extern void *ipsp_copy_ident(void *);
 
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
@@ -293,16 +295,48 @@ union mcluster {
 		else \
 			MCLFREE((m)->m_ext.ext_buf); \
 	  } \
+          if (((m)->m_flags & M_PKTHDR) && ((m)->m_pkthdr.tdbi)) { \
+                free((m)->m_pkthdr.tdbi, M_TEMP); \
+                (m)->m_pkthdr.tdbi = NULL; \
+          } \
 	  (n) = (m)->m_next; \
 	  FREE((m), mbtypes[(m)->m_type]); \
 	}
+
+/*
+ * Copy just m_pkthdr from from to to.
+ */
+#define M_COPY_HDR(to, from) { \
+	(to)->m_pkthdr = (from)->m_pkthdr; \
+}
+
+/*
+ * Duplicate just m_pkthdr from from to to.
+ * XXX Deal with a generic packet attribute framework.
+ */
+#define M_DUP_HDR(to, from) { \
+        M_COPY_HDR((to), (from)); \
+        if ((from)->m_pkthdr.tdbi) { \
+                (to)->m_pkthdr.tdbi = ipsp_copy_ident((from)->m_pkthdr.tdbi); \
+	} \
+}
+
+/*
+ * Duplicate mbuf pkthdr from from to to.
+ * from must have M_PKTHDR set, and to must be empty.
+ */
+#define M_DUP_PKTHDR(to, from) { \
+        M_DUP_HDR((to), (from)); \
+	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
+	(to)->m_data = (to)->m_pktdat; \
+}
 
 /*
  * Copy mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define	M_COPY_PKTHDR(to, from) { \
-	(to)->m_pkthdr = (from)->m_pkthdr; \
+        M_COPY_HDR((to), (from)); \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
 }

@@ -60,7 +60,9 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
 #define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
 #define BITMAP_X_POLICY                (1 << SADB_X_EXT_POLICY)
-#define BITMAP_X_CREDENTIALS           (1 << SADB_X_EXT_CREDENTIALS)
+#define BITMAP_X_SRC_CREDENTIALS       (1 << SADB_X_EXT_SRC_CREDENTIALS)
+#define BITMAP_X_DST_CREDENTIALS       (1 << SADB_X_EXT_DST_CREDENTIALS)
+#define BITMAP_X_CREDENTIALS           (BITMAP_X_SRC_CREDENTIALS | BITMAP_X_DST_CREDENTIALS)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -415,7 +417,8 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	    return EINVAL;
 	}
 	break;
-     case SADB_X_EXT_CREDENTIALS:
+     case SADB_X_EXT_SRC_CREDENTIALS:
+     case SADB_X_EXT_DST_CREDENTIALS:
 	{
           struct sadb_cred *sadb_cred = (struct sadb_cred *)p;
 

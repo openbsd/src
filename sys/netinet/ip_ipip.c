@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.10 2001/02/28 01:24:55 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.11 2001/03/28 20:03:04 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -87,8 +87,6 @@
 #define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
-#define PI_MAGIC 0xdeadbeef   /* XXX */
-
 /*
  * We can control the acceptance of IP4 packets by altering the sysctl
  * net.inet.ipip.allow value.  Zero means drop them, all else is acceptance.
@@ -104,18 +102,11 @@ struct ipipstat ipipstat;
 int
 ip4_input6(struct mbuf **m, int *offp, int proto)
 {
-    void *tdbi = (*m)->m_pkthdr.tdbi;
-    
-    if (tdbi == (void *) PI_MAGIC)
-      tdbi = NULL;
-
     /* If we do not accept IPv4 explicitly, drop.  */
     if (!ipip_allow && ((*m)->m_flags & (M_AUTH|M_CONF)) == 0)
     {
 	DPRINTF(("ip4_input6(): dropped due to policy\n"));
 	ipipstat.ipips_pdrops++;
-	if (tdbi)
-	  free(tdbi, M_TEMP);
 	m_freem(*m);
 	return IPPROTO_DONE;
     }
@@ -134,18 +125,12 @@ ip4_input(struct mbuf *m, ...)
 {
     va_list ap;
     int iphlen;
-    void *tdbi = m->m_pkthdr.tdbi;
-
-    if (tdbi == (void *) PI_MAGIC)
-      tdbi = NULL;
 
     /* If we do not accept IPv4 explicitly, drop.  */
     if (!ipip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
     {
 	DPRINTF(("ip4_input(): dropped due to policy\n"));
 	ipipstat.ipips_pdrops++;
-	if (tdbi)
-	  free(tdbi, M_TEMP);
 	m_freem(m);
 	return;
     }
@@ -183,12 +168,8 @@ ipip_input(struct mbuf *m, int iphlen)
     u_int8_t otos;
     u_int8_t v;
     int hlen, s;
-    void *tdbi = m->m_pkthdr.tdbi;
 
     ipipstat.ipips_ipackets++;
-
-    if (tdbi == (void *) PI_MAGIC)
-      tdbi = NULL;
 
     m_copydata(m, 0, 1, &v);
 
@@ -206,8 +187,6 @@ ipip_input(struct mbuf *m, int iphlen)
             break;
 #endif
         default:
-	    if (tdbi)
-	      free(tdbi, M_TEMP);
             m_freem(m);
             return /* EAFNOSUPPORT */;
     }
@@ -219,8 +198,6 @@ ipip_input(struct mbuf *m, int iphlen)
 	{
 	    DPRINTF(("ipip_input(): m_pullup() failed\n"));
 	    ipipstat.ipips_hdrops++;
-	    if (tdbi)
-	      free(tdbi, M_TEMP);
 	    return;
 	}
     }
@@ -232,12 +209,6 @@ ipip_input(struct mbuf *m, int iphlen)
     {
 	if (IN_MULTICAST(((struct ip *)((char *) ipo + iphlen))->ip_dst.s_addr))
 	{
-	    if (tdbi)
-	    {
-		free(tdbi, M_TEMP);
-		m->m_pkthdr.tdbi = NULL;
-	    }
-
 	    ipip_mroute_input (m, iphlen);
 	    return;
 	}
@@ -256,7 +227,7 @@ ipip_input(struct mbuf *m, int iphlen)
       otos = (ntohl(mtod(m, struct ip6_hdr *)->ip6_flow) >> 20) & 0xff;
 #endif
 
-    /* Remove outter IP header */
+    /* Remove outer IP header */
     m_adj(m, iphlen);
 
     m_copydata(m, 0, 1, &v);
@@ -276,8 +247,6 @@ ipip_input(struct mbuf *m, int iphlen)
 #endif
 
         default:
-	    if (tdbi)
-	      free(tdbi, M_TEMP);
             m_freem(m);
             return /* EAFNOSUPPORT */;
     }
@@ -288,8 +257,6 @@ ipip_input(struct mbuf *m, int iphlen)
 	if ((m = m_pullup(m, hlen)) == 0)
 	{
 	    DPRINTF(("ipip_input(): m_pullup() failed\n"));
-	    if (tdbi)
-	      free(tdbi, M_TEMP);
 	    ipipstat.ipips_hdrops++;
 	    return;
 	}
@@ -347,8 +314,6 @@ ipip_input(struct mbuf *m, int iphlen)
 		    {
 			DPRINTF(("ipip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst)));
 			ipipstat.ipips_spoof++;
-			if (tdbi)
-			  free(tdbi, M_TEMP);
 			m_freem(m);
 			return;
 		    }
@@ -366,8 +331,6 @@ ipip_input(struct mbuf *m, int iphlen)
 		    if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_src))
 		    {
 			DPRINTF(("ipip_input(): possible local address spoofing detected on packet\n"));
-			if (tdbi)
-			  free(tdbi, M_TEMP);
 			m_freem(m);
 			return;
 		    }
@@ -410,8 +373,6 @@ ipip_input(struct mbuf *m, int iphlen)
     {
 	IF_DROP(ifq);
 	m_freem(m);
-	if (tdbi)
-	  free(tdbi, M_TEMP);
 	ipipstat.ipips_qfull++;
 
 	splx(s);
@@ -471,7 +432,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		*mp = NULL;
 		return ENOBUFS;
 	    }
-	    
+
 	    ipo = mtod(m, struct ip *);
 
 	    ipo->ip_v = IPVERSION;

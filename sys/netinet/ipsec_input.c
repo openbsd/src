@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.33 2001/03/15 06:31:00 mickey Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.34 2001/03/28 20:03:06 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -76,8 +76,6 @@
 #include <net/if_enc.h>
 
 #include "bpfilter.h"
-
-#define PI_MAGIC 0xdeadbeef /* XXX horror! */
 
 int ipsec_common_input(struct mbuf *, int, int, int, int);
 
@@ -218,10 +216,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	 * XXX The fragment conflicts with scoped nature of IPv6, so do it for
 	 * only for IPv4 for now.
 	 */
-	if (tdbp->tdb_interface)
-	  m->m_pkthdr.rcvif = (struct ifnet *) tdbp->tdb_interface;
-	else
-	  m->m_pkthdr.rcvif = &encif[0].sc_if;
+	m->m_pkthdr.rcvif = &encif[0].sc_if;
     }
 
     /* Register first use, setup expiration timer */
@@ -286,7 +281,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
     /* Fix IPv4 header */
     if (tdbp->tdb_dst.sa.sa_family == AF_INET)
     {
-        if ((m = m_pullup(m, skip)) == 0)
+        if ((m->m_len < skip) && ((m = m_pullup(m, skip)) == 0))
         {
 	    DPRINTF(("ipsec_common_input_cb(): processing failed for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
@@ -373,7 +368,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
     /* Fix IPv6 header */
     if (af == INET6)
     {
-        if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
+        if ((m->m_len < sizeof(struct ip6_hdr)) &&
+            ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0))
         {
 	    DPRINTF(("ipsec_common_input_cb(): processing failed for SA %s/%08x\n", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
@@ -458,7 +454,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
      * Record what we've done to the packet (under what SA it was
      * processed).
      */
-    if (m->m_pkthdr.tdbi && m->m_pkthdr.tdbi != (void *) PI_MAGIC)
+    /* XXX We need a better packets-attributes framework */
+    if (m->m_pkthdr.tdbi)
       free(m->m_pkthdr.tdbi, M_TEMP);
 
     MALLOC(m->m_pkthdr.tdbi, void *, sizeof(struct tdb_ident), M_TEMP,
@@ -489,10 +486,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
       m->m_flags |= M_AUTH;
 
 #if NBPFILTER > 0
-    if (tdbp->tdb_interface)
-	bpfif = (struct ifnet *) tdbp->tdb_interface;
-    else
-	bpfif = &encif[0].sc_if;
+    bpfif = &encif[0].sc_if;
     if (bpfif->if_bpf)
     {
         /*
@@ -631,8 +625,6 @@ ah4_input_cb(struct mbuf *m, ...)
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
-	if (m->m_pkthdr.tdbi && m->m_pkthdr.tdbi != (void *) PI_MAGIC)
-	  free(m->m_pkthdr.tdbi, M_TEMP);
 	m_freem(m);
 	ahstat.ahs_qfull++;
 
@@ -673,8 +665,6 @@ esp4_input_cb(struct mbuf *m, ...)
     if (IF_QFULL(ifq))
     {
 	IF_DROP(ifq);
-	if (m->m_pkthdr.tdbi && m->m_pkthdr.tdbi != (void *) PI_MAGIC)
-	  free(m->m_pkthdr.tdbi, M_TEMP);
 	m_freem(m);
 	espstat.esps_qfull++;
 
@@ -780,8 +770,6 @@ ah6_input_cb(struct mbuf *m, int off, int protoff)
     return 0;
 
 bad:
-    if (m->m_pkthdr.tdbi && m->m_pkthdr.tdbi != (void *) PI_MAGIC)
-      free(m->m_pkthdr.tdbi, M_TEMP);
     m_freem(m);
     return EINVAL;
 }

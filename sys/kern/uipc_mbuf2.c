@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.5 2001/02/14 17:04:34 itojun Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.6 2001/03/28 20:03:00 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -261,7 +261,7 @@ m_dup1(m, off, len, wait)
 		return NULL;
 
 	if (copyhdr)
-		M_COPY_PKTHDR(n, m);
+		M_DUP_PKTHDR(n, m);
 	m_copydata(m, off, len, mtod(n, caddr_t));
 	return n;
 }
