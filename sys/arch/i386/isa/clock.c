@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2001/02/19 04:57:02 ho Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2001/09/21 20:38:42 mickey Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -145,8 +145,8 @@ int	dectohexdec __P((int));
 int	rtcintr __P((void *));
 void	rtcdrain __P((void *));
 
-__inline u_int mc146818_read __P((void *, u_int));
-__inline void mc146818_write __P((void *, u_int, u_int));
+u_int mc146818_read __P((void *, u_int));
+void mc146818_write __P((void *, u_int, u_int));
 
 #if defined(I586_CPU) || defined(I686_CPU)
 int pentium_mhz;
@@ -155,7 +155,7 @@ int pentium_mhz;
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 
-__inline u_int
+u_int
 mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
 	u_int reg;
@@ -172,7 +172,7 @@ mc146818_read(sc, reg)
 	return (v);
 }
 
-__inline void
+void
 mc146818_write(sc, reg, datum)
 	void *sc;					/* XXX use it? */
 	u_int reg, datum;
