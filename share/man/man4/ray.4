@@ -1,0 +1,121 @@
+.\"	$OpenBSD: ray.4,v 1.1 2000/03/22 20:01:59 mickey Exp $
+.\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
+.\"
+.\" Copyright (c) 2000 Christian E. Hopps
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 24, 2000
+.Dt RAY 4
+.Os
+.Sh NAME
+.Nm ray
+.Nd Raytheon Raylink / WebGear Aviator IEEE 802.11 2Mbps Wireless
+.Sh SYNOPSIS
+.Cd "ray* at pcmcia? function ?"
+.Cd "options RAY_PID_COUNTRY_CODE_DEFAULT=RAY_PID_COUNTRY_CODE_USA"
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports the Raytheon Raylink and Aviator 2.4/PRO
+802.11 FH 2Mbps wireless pcmcia cards.  The cards can be operated in
+either adhoc or infrastructure modes. The operating mode is
+selectable with
+.Xr ifconfig 8 
+through a media option.
+.Pp
+To communicate with other 802.11 cards a common network id or NWID must
+be specified on each station that wishes to participate in the shared
+wireless network.  The NWID can
+be set with
+.Xr ifconfig 8 .
+.Pp
+The device uses IEEE 802.11 standard Frequency Hopping Spread Spectrum
+signaling and operates in the ranges of 2.400 to 2.4835 Gigahertz.
+This frequency range is further restricted by country according to
+that country's regulations.  Currently the
+.Nm
+driver defaults to using the ranges appropriate for the USA.
+To change this setting you must define the kernel option
+RAY_PID_COUNTRY_CODE_DEFAULT to one of the following values:
+.Pp
+.Bl -item -compact
+.It
+.Cd RAY_PID_COUNTRY_CODE_USA
+.It
+.Cd RAY_PID_COUNTRY_CODE_EUROPE
+.It
+.Cd RAY_PID_COUNTRY_CODE_JAPAN
+.It
+.Cd RAY_PID_COUNTRY_CODE_KOREA
+.It
+.Cd RAY_PID_COUNTRY_CODE_SPAIN
+.It
+.Cd RAY_PID_COUNTRY_CODE_FRANCE
+.It
+.Cd RAY_PID_COUNTRY_CODE_ISRAEL
+.It
+.Cd RAY_PID_COUNTRY_CODE_AUSTRALIA
+.El
+.Pp
+The output power of the transceiver is 100mW and the card's power consumption
+is 365 mA @ 5 volts.  The transmission range in open air (line of sight)
+is a maximum of 1000 feet (or ~304 meters), and indoors (i.e., with
+obstructions) it is a maximum of 500 feet (152 meters).
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -compact
+.It
+WebGear Aviator 2.4
+.It
+WebGear Aviator PRO
+.It
+Raytheon Raylink WLAN
+.El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "ray0: card failed self test: status x"
+Indicates the card has failed its initial startup tests.
+.El
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr pcmcia 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.5 .
+.Sh AUTHOR
+The
+.Nm
+driver was written by
+.An Christian E. Hopps Aq chopps@netbsd.org
+.Sh BUGS
+Currently the infrastructure mode is untested, and authentication
+using WEP is unimplemented.
