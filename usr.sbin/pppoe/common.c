@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.10 2003/06/04 04:46:13 jason Exp $	*/
+/*	$OpenBSD: common.c,v 1.11 2003/06/28 20:37:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -258,7 +258,7 @@ send_padt(int bpffd, struct ether_addr *src_ea,
 }
 
 u_int32_t
-cookie_bake()
+cookie_bake(void)
 {
 	MD5_CTX ctx;
 	unsigned char buf[40];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.36 2003/06/08 21:14:55 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.37 2003/06/28 20:37:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.36 2003/06/08 21:14:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.37 2003/06/28 20:37:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ errorx(name)
 }
 
 void
-cleanup()
+cleanup(void)
 {
 	char buf[MAXPATHLEN];
 

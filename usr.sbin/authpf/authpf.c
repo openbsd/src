@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.61 2003/06/27 09:50:07 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.62 2003/06/28 20:37:29 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -517,7 +517,7 @@ check_luser(char *luserdir, char *luser)
  * died ungracefully or were terminated) and remove them.
  */
 static int
-remove_stale_rulesets()
+remove_stale_rulesets(void)
 {
 	struct pfioc_ruleset	 prs;
 	const int		 action[PF_RULESET_MAX] = { PF_SCRUB,
@@ -681,7 +681,7 @@ error:
  * pfctl_kill_states from pfctl.
  */
 static void
-authpf_kill_states()
+authpf_kill_states(void)
 {
 	struct pfioc_state_kill	psk;
 	struct in_addr		target;
@@ -736,7 +736,7 @@ do_death(int active)
 }
 
 /*
- * callbacks for parse_rules()
+ * callbacks for parse_rules(void)
  */
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.36 2003/04/22 09:57:04 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.37 2003/06/28 20:37:30 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.36 2003/04/22 09:57:04 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.37 2003/06/28 20:37:30 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -515,7 +515,7 @@ sighandler(signo)
  */
 /* ARGSUSED */
 void
-rtdexit()
+rtdexit(void)
 {
 	struct	riprt *rrt;
 
@@ -542,7 +542,7 @@ rtdexit()
  */
 /* ARGSUSED */
 void
-ripalarm()
+ripalarm(void)
 {
 	struct	ifc *ifcp;
 	struct	riprt *rrt, *rrt_prev, *rrt_next;
@@ -582,7 +582,7 @@ ripalarm()
 }
 
 void
-init()
+init(void)
 {
 	int	i, error;
 	const int int0 = 0, int1 = 1, int255 = 255;
@@ -1058,7 +1058,7 @@ sendpacket(sin6, len)
  * table if necessary.
  */
 void
-riprecv()
+riprecv(void)
 {
 	struct	ifc *ifcp, *ic;
 	struct	sockaddr_in6 fsock;
@@ -1402,7 +1402,7 @@ riprequest(ifcp, np, nn, sin6)
  * Get information of each interface.
  */
 void
-ifconfig()
+ifconfig(void)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct ifc *ifcp;
@@ -1555,7 +1555,7 @@ ifconfig1(name, sa, ifcp, s)
  * Update interface information as necesssary.
  */
 void
-rtrecv()
+rtrecv(void)
 {
 	char buf[BUFSIZ];
 	char *p, *q;
@@ -3044,7 +3044,7 @@ rtdump(sig)
  * 		-O 5f09:c400::/32,ef0,ef1  (only when match)
  */
 void
-filterconfig()
+filterconfig(void)
 {
 	int i;
 	char *p, *ap, *iflp, *ifname, *ep;
@@ -3331,7 +3331,7 @@ allocopy(p)
 }
 
 char *
-hms()
+hms(void)
 {
 	static char buf[BUFSIZ];
 	time_t t;
@@ -3361,7 +3361,7 @@ ripinterval(timer)
 }
 
 time_t
-ripsuptrig()
+ripsuptrig(void)
 {
 	time_t t;
 
@@ -3431,7 +3431,7 @@ trace(int level, const char *fmt, ...)
 }
 
 unsigned int
-if_maxindex()
+if_maxindex(void)
 {
 	struct if_nameindex *p, *p0;
 	unsigned int max = 0;
