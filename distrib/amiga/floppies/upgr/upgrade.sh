@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.4 1996/06/29 05:54:07 tholo Exp $
+#	$OpenBSD: upgrade.sh,v 1.5 1996/10/15 07:32:44 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -258,6 +258,8 @@ if [ $upgradefs = YES ]; then
 	fi
 	echo	"Done."
 fi
+
+export TMPDIR=/mnt	# tar needs a writable tmp directory
 
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
