@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: log.c,v 1.6 1999/06/01 16:01:39 brian Exp $
+ *	$Id: log.c,v 1.7 1999/08/08 15:19:54 brian Exp $
  */
 
 #include <sys/types.h>
@@ -356,8 +356,8 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
         b += 3;
         if (b == buf + 48) {
           memset(b, ' ', 2);
-          strcpy(c, "\n");
-          log_Printf(lev, buf);
+          *c = '\0';
+          log_Printf(lev, "%s\n", buf);
           b = buf;
           c = b + 50;
         }
@@ -366,8 +366,8 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
 
     if (b > buf) {
       memset(b, ' ', 50 - (b - buf));
-      strcpy(c, "\n");
-      log_Printf(lev, buf);
+      *c = '\0';
+      log_Printf(lev, "%s\n", buf);
     }
   }
 }
@@ -389,8 +389,8 @@ log_DumpBuff(int lev, const char *hdr, const u_char *ptr, int n)
         *c++ = isprint(*ptr) ? *ptr : '.';
       }
       memset(b, ' ', 50 - (b - buf));
-      strcpy(c, "\n");
-      log_Printf(lev, buf);
+      *c = '\0';
+      log_Printf(lev, "%s\n", buf);
     }
   }
 }
