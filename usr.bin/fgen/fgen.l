@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.4 2002/06/18 03:22:15 jason Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.5 2002/07/12 00:26:24 deraadt Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -991,6 +991,9 @@ main(argc, argv)
 	initdic();
 	outbufsiz = BUFCLICK;
 	outbuf = malloc(outbufsiz);
+	if (outbuf == NULL)
+		(void)err(1, "out of memory");
+
 	fheader = (struct fcode_header *)outbuf;
 	outpos = 0;
 	emit(hdrtype);
@@ -1152,8 +1155,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			if (!fadd(dictionary, fcode))
 				token_err(yylineno, infile, NULL,
 				    "Duplicate definition: `%s'\n", fcode->name);
@@ -1214,13 +1223,22 @@ tokenize(input)
 					      token->type);
 			}
 			alias = malloc(sizeof(*alias));
+			if (alias == NULL)
+				(void)err(1, "out of memory");
+
 			alias->name = strdup(token->text);
+			if (alias->name == NULL)
+				(void)err(1, "out of memory");
+			
 			token = yylex();
 			if (token == NULL) {
 				(void)printf( "EOF in alias definition\n");
 				return;
 			}			
 			alias->equiv = strdup(token->text);
+			if (alias->equiv == NULL)
+				(void)err(1, "out of memory");
+			
 			if (!aadd(aliases, alias)) {
 				(void)printf( "ERROR: Duplicate alias %s\n",
 					      alias->name);
@@ -1272,8 +1290,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1305,8 +1329,13 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1346,8 +1375,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1415,8 +1450,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1551,8 +1592,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1782,8 +1829,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)
@@ -1810,8 +1863,14 @@ tokenize(input)
 			
 			/* Add new code to dictionary */
 			fcode = malloc(sizeof(*fcode));
+			if (fcode == NULL)
+				(void)err(1, "out of memory");
+
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
+			if (fcode->name == NULL)
+				(void)err(1, "out of memory");
+			
 			fadd(dictionary, fcode);
 			
 			if (state == 0)

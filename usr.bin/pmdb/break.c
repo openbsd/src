@@ -1,4 +1,4 @@
-/*	$OpenBSD: break.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: break.c,v 1.3 2002/07/12 00:24:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -187,6 +187,9 @@ bkpt_check(struct pstate *ps)
 	 * of the callbacks require a stop.
 	 */
 	rg = alloca(sizeof(*rg) * md_def.nregs);
+	if (rg == NULL)
+		err(1, "bkpt_check: Can't allocate stack space.");
+
 	if (md_getregs(ps, rg))
 		err(1, "bkpt_check: Can't get registers.");
 

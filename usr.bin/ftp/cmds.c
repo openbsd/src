@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.40 2002/01/04 16:18:59 art Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.41 2002/07/12 00:25:30 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.40 2002/01/04 16:18:59 art Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.41 2002/07/12 00:25:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -935,6 +935,8 @@ setgate(argc, argv)
 				gateport = htons(port);
 #else
 				gateport = strdup(argv[2]);
+				if (gateport == NULL)
+					err(1, NULL);
 #endif
 			}
 			strlcpy(gsbuf, argv[1], sizeof(gsbuf));

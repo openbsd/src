@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2002/03/30 17:45:44 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2002/07/12 00:25:30 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.29 2002/03/30 17:45:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.30 2002/07/12 00:25:30 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -507,6 +507,8 @@ globulize(cpp)
 		 *	free(*cpp) if that is the case
 		 */
 	*cpp = strdup(gl.gl_pathv[0]);
+	if (*cpp == NULL)
+		err(1, NULL);
 	globfree(&gl);
 	return (1);
 }
