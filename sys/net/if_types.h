@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.16 2004/10/28 20:34:20 henning Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.17 2004/11/18 16:49:57 mpf Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -265,6 +265,6 @@
 #define	IFT_ENC		0xf4		/* Encapsulation */
 #define	IFT_PFLOG	0xf5		/* Packet filter logging */
 #define	IFT_PFSYNC	0xf6		/* Packet filter state syncing */
-#define	IFT_CARP	0xf7		/* Common Access Redundancy Protocol */
+#define	IFT_CARP	0xf7		/* Common Address Redundancy Protocol */
 
 #endif /* _NET_IF_TYPES_H_ */
