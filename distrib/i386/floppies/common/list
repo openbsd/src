@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2000/06/09 17:42:53 mickey Exp $
+#	$OpenBSD: list,v 1.13 2000/06/23 18:53:24 mickey Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -47,7 +47,6 @@ LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin			usr/bin/less usr/bin/more
 LINK	instbin			usr/bin/rsh
 LINK	instbin			usr/bin/sed
-LINK	instbin			usr/bin/sort
 LINK	instbin			usr/mdec/installboot
 SPECIAL	/bin/rm instbin
 

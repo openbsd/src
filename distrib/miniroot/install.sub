@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.154 2000/06/16 03:19:42 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.155 2000/06/23 18:53:24 mickey Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -263,6 +263,33 @@ isnumeric() {
 get_ifdevs() {
 	# return available network devices
 	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
+}
+
+bsort() {
+	local _a=$1
+
+	if [ $# == 0 ]; then
+		return
+	fi
+
+	if [ $# == 1 ]; then
+		echo $1; return
+	fi
+
+	shift
+	while [ $# != 0 ]; do
+		local _b=$1
+		if [[ "$_a" != "$_b" ]] ; then
+			if [[ "$_a" > "$_b" ]] ; then
+				_l="$_a $_l"; _a=$_b
+			else
+				_l="$_b $_l"
+			fi
+		fi
+		shift
+	done
+
+	echo -n "$_a "; bsort $_l
 }
 
 dir_has_sets() {
