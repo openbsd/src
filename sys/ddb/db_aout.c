@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.10 1996/08/16 10:12:35 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.11 1996/08/23 19:53:46 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -199,7 +199,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	    if ((sp->n_type & N_STAB) != 0 || (sp->n_type & N_TYPE) == N_FN)
 		continue;
 	    if (off >= sp->n_value) {
-		if (off - sp->n_value < diff || diff < 0) {
+		if ((db_expr_t)(off - sp->n_value) < diff || diff < 0) {
 		    diff = off - sp->n_value;
 		    symp = sp;
 		    if (diff == 0 &&
@@ -209,7 +209,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 					(sp->n_type & N_EXT))))
 			break;
 		}
-		else if (off - sp->n_value == diff) {
+		else if ((db_expr_t)(off - sp->n_value) == diff) {
 		    if (symp == 0)
 			symp = sp;
 		    else if ((symp->n_type & N_EXT) == 0 &&
@@ -283,7 +283,8 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 	    }
 
 	    if (sp->n_type == N_SO) {
-		if (sp->n_value <= off && (off - sp->n_value) < sodiff) {
+		if ((db_expr_t)sp->n_value <= off &&
+		    (off - sp->n_value) < sodiff) {
 			sodiff = off - sp->n_value;
 			fname = sp->n_un.n_name;
 		}
@@ -293,7 +294,7 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 	    if (sp->n_type != N_SLINE)
 		continue;
 
-	    if (sp->n_value > off)
+	    if ((db_expr_t)sp->n_value > off)
 		break;
 
 	    if (off - sp->n_value < lndiff) {
