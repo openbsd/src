@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.41 2001/11/17 19:37:53 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.42 2001/11/22 21:18:10 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -420,9 +420,9 @@ CompatMake(gnp, pgnp)
 	    return;
 	}
 
-	if (Lst_Member(&gn->iParents, pgn) != NULL) {
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
-	}
+	if (Lst_Member(&gn->iParents, pgn) != NULL && 
+	    (pgn->type & OP_IS_SUFFIX))
+		Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
 
 	/* All the children were made ok. Now cmtime contains the modification
 	 * time of the newest child, we need to find out if we exist and when
@@ -547,9 +547,9 @@ CompatMake(gnp, pgnp)
 	 * to abort.  */
 	pgn->make = false;
     else {
-	if (Lst_Member(&gn->iParents, pgn) != NULL) {
-	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
-	}
+	if (Lst_Member(&gn->iParents, pgn) != NULL && 
+	    (pgn->type & OP_IS_SUFFIX))
+		Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
 	switch (gn->made) {
 	    case BEINGMADE:
 		Error("Graph cycles through %s\n", gn->name);
