@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.17 1998/05/18 21:10:51 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.18 1998/05/22 07:29:20 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -235,7 +235,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
       if (tdb->tdb_ttl == 0)
         ipo->ip_ttl = ip_defttl;
       else
-        ipi->ip_ttl = tdb->tdb_ttl;
+        ipo->ip_ttl = tdb->tdb_ttl;
 	
     ipo->ip_p = IPPROTO_IPIP;
     ipo->ip_sum = 0;
