@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpass.c,v 1.3 1996/08/19 08:23:57 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getpass.c,v 1.4 1996/12/04 23:02:13 chuck Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
@@ -59,7 +59,7 @@ getpass(prompt)
 	 * read and write to /dev/tty if possible; else read from
 	 * stdin and write to stderr.
 	 */
-	if ((outfp = fp = fopen(_PATH_TTY, "w+")) == NULL) {
+	if ((outfp = fp = fopen(_PATH_TTY, "r+")) == NULL) {
 		outfp = stderr;
 		fp = stdin;
 	}
