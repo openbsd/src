@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.88 2003/08/23 19:21:15 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.89 2003/08/23 20:02:59 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1545,15 +1545,11 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_EMUL_NAME:
 		return (sysctl_rdstring(oldp, oldlenp, newp, e->e_name));
 	case KERN_EMUL_ENABLED:
-		if (e->e_flags & EMUL_NATIVE)
-			return (sysctl_rdint(oldp, oldlenp, newp, 1));
-		else {
-			enabled = (e->e_flags & EMUL_ENABLED);
-			error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &enabled);
-			e->e_flags = (enabled & EMUL_ENABLED);
-			return (error);
-		}
+		enabled = (e->e_flags & EMUL_ENABLED);
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &enabled);
+		e->e_flags = (enabled & EMUL_ENABLED);
+		return (error);
 	default:
 		return (EINVAL);
 	}

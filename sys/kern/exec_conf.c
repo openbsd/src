@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.14 2003/08/23 19:21:15 deraadt Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.15 2003/08/23 20:02:59 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -127,13 +127,6 @@ extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
 	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_elf64_netbsd,
 	emul_osf1, emul_sunos, emul_svr4, emul_ultrix;
 struct emul *emulsw[] = {
-	&emul_native,
-#ifdef _KERN_DO_ELF
-	&emul_elf32,
-#endif
-#ifdef _KERN_DO_ELF64
-	&emul_elf64,
-#endif
 #if defined (_KERN_DO_AOUT) && defined (COMPAT_AOUT)
 	&emul_aout,
 #endif
