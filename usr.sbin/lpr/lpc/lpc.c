@@ -213,7 +213,8 @@ makeargv()
 	register int n = 0;
 
 	margc = 0;
-	for (cp = cmdline; *cp && n < MAX_MARGV; n++) {
+	for (cp = cmdline; *cp && (cp - cmdline) < sizeof(cmdline) &&
+	    n < MAX_MARGV; n++) {
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')
