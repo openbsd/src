@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.9 2000/10/07 06:59:32 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.14 2000/09/12 16:31:22 ho Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.10 2000/10/16 23:26:44 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.16 2000/10/15 19:58:40 niklas Exp $
 
 #
 # Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 
+CFLAGS+=	-DHAVE_GETNAMEINFO
+
 # Some OpenBSD systems do not provide dlopen(3).
 .if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "vax"
 HAVE_DLOPEN=	defined
@@ -47,6 +49,7 @@ USE_LIBCRYPTO=	defined
 
 .ifdef FEATURES
 .if ${FEATURES:Mpolicy} == "policy"
+SRCS+=		keynote_compat.c
 USE_KEYNOTE=	defined
 .endif
 .endif
