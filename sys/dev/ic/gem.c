@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.33 2003/07/09 18:21:45 krw Exp $	*/
+/*	$OpenBSD: gem.c,v 1.34 2003/07/15 03:52:30 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -505,7 +505,6 @@ gem_reset_rx(struct gem_softc *sc)
 	bus_space_handle_t h = sc->sc_h;
 	int i;
 
-
 	/*
 	 * Resetting while DMA is in progress can cause a bus hang, so we
 	 * disable DMA first.
@@ -517,7 +516,7 @@ gem_reset_rx(struct gem_softc *sc)
 		if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) != 0)
-		printf("%s: cannot disable read dma\n",
+		printf("%s: cannot disable rx dma\n",
 			sc->sc_dev.dv_xname);
 
 	/* Wait 5ms extra. */
@@ -559,7 +558,7 @@ gem_reset_tx(struct gem_softc *sc)
 		if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) != 0)
-		printf("%s: cannot disable read dma\n",
+		printf("%s: cannot disable tx dma\n",
 			sc->sc_dev.dv_xname);
 
 	/* Wait 5ms extra. */
@@ -572,7 +571,7 @@ gem_reset_tx(struct gem_softc *sc)
 		if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) != 0) {
-		printf("%s: cannot reset receiver\n",
+		printf("%s: cannot reset transmitter\n",
 			sc->sc_dev.dv_xname);
 		return (1);
 	}
