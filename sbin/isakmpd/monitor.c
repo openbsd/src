@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.29 2004/08/12 11:21:07 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.30 2004/11/08 12:11:00 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -66,7 +68,7 @@ static volatile sig_atomic_t cur_state = STATE_INIT;
 
 /* Private functions.  */
 int             m_write_int32(int, int32_t);
-int             m_write_raw(int, char *, size_t);
+int             m_write_raw(int, const char *, size_t);
 int             m_read_int32(int, int32_t *);
 int             m_read_raw(int, char *, size_t);
 void            m_flush(int);
@@ -382,7 +384,7 @@ monitor_setsockopt(int s, int level, int optname, const void *optval,
 		goto errout;
 	if (m_write_int32(m_state.s, (int32_t)optlen))
 		goto errout;
-	if (m_write_raw(m_state.s, (char *)optval, (size_t)optlen))
+	if (m_write_raw(m_state.s, (const char *)optval, (size_t)optlen))
 		goto errout;
 
 	if (m_read_int32(m_state.s, &err))
@@ -413,7 +415,7 @@ monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 
 	if (m_write_int32(m_state.s, (int32_t)namelen))
 		goto errout;
-	if (m_write_raw(m_state.s, (char *)name, (size_t)namelen))
+	if (m_write_raw(m_state.s, (const char *)name, (size_t)namelen))
 		goto errout;
 
 	if (m_read_int32(m_state.s, &err))
@@ -540,6 +542,7 @@ monitor_init_done(void)
  */
 
 /* Help functions for monitor_loop().  */
+/* ARGSUSED */
 static void
 monitor_got_sigchld(int sig)
 {
@@ -871,7 +874,7 @@ m_priv_setsockopt(int s)
 	if (m_read_int32(s, &optname))
 		goto errout;
 
-	if (m_read_int32(s, &optlen))
+	if (m_read_int32(s, (int *)&optlen))
 		goto errout;
 
 	optval = (char *)malloc(optlen);
@@ -986,7 +989,7 @@ m_write_int32(int s, int32_t value)
 
 /* Write a number of bytes of data to a socket.  */
 int
-m_write_raw(int s, char *data, size_t dlen)
+m_write_raw(int s, const char *data, size_t dlen)
 {
 	if (m_write_int32(s, (int32_t) dlen))
 		return 1;
@@ -1117,9 +1120,9 @@ m_priv_check_bind(const struct sockaddr *sa, socklen_t salen)
 		log_print("NULL address");
 		return 1;
 	}
-	if (sysdep_sa_len((struct sockaddr *)sa) != salen) {
+	if (sysdep_sa_len((const struct sockaddr *)sa) != salen) {
 		log_print("Length mismatch: %d %d",
-		  (int)sysdep_sa_len((struct sockaddr *)sa), (int)salen);
+		  (int)sysdep_sa_len((const struct sockaddr *)sa), (int)salen);
 		return 1;
 	}
 	switch (sa->sa_family) {
