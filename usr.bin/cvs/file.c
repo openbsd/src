@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.6 2004/07/27 12:01:58 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 2004/07/27 16:56:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -364,6 +364,8 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	struct dirent *ent;
 	struct cvs_file *cfp;
 	struct cvs_dir *cdp;
+
+	cdp = cf->cf_ddat;
 
 	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
 		cdp->cd_repo = strdup(pbuf);
