@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.351 2003/05/14 08:42:00 canacar Exp $ */
+/*	$OpenBSD: pf.c,v 1.352 2003/05/14 21:50:56 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -186,8 +186,9 @@ void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
 void			 pf_rule_set_qid(struct pf_rulequeue *);
 u_int32_t		 pf_qname_to_qid(char *);
-int			 pf_match_tag(struct mbuf *, struct pf_rule *,
-			     struct pf_rule *);
+struct pf_tag		*pf_get_tag(struct mbuf *);
+int			 pf_tag_packet(struct mbuf *, struct pf_tag *,
+			     u_int16_t);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
@@ -1351,20 +1352,34 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 	return (pf_match(op, a1, a2, g));
 }
 
-int
-pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_rule *nat)
+struct pf_tag *
+pf_get_tag(struct mbuf *m)
 {
 	struct m_tag	*mtag;
-	struct pf_tag	*pftag;
 
-	if (nat != NULL && nat->tag == r->match_tag)
-		return (1);
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL)
+		return ((struct pf_tag *)(mtag + 1));
+	else
+		return (NULL);
+}
 
-	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL) {
-		pftag = (struct pf_tag *)(mtag + 1);
-		if (pftag->tag == r->match_tag)
+int
+pf_tag_packet(struct mbuf *m, struct pf_tag *pftag, u_int16_t tag)
+{
+	struct m_tag	*mtag;
+
+	if (tag == 0)
+		return (0);
+
+	if (pftag == NULL) {
+		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
+		if (mtag == NULL)
 			return (1);
-	}
+		((struct pf_tag *)(mtag + 1))->tag = tag;
+		m_tag_prepend(m, mtag);
+	} else
+		pftag->tag = tag;
+
 	return (0);
 }
 
@@ -1970,6 +1985,14 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_ruleset	*ruleset = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
+	struct pf_tag		*pftag;
+	u_int16_t		 tag;
+
+	pftag = pf_get_tag(m);
+	if (pftag != NULL)
+		tag = pftag->tag;
+	else
+		tag = 0;
 
 	if (direction == PF_OUT) {
 		bport = nport = th->th_sport;
@@ -1994,6 +2017,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			rewrite++;
 		}
 	}
+
+	if (nat != NULL && nat->tag)
+		tag = nat->tag;
+	if (rdr != NULL && rdr->tag)
+		tag = rdr->tag;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -2037,9 +2065,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nat))
+		else if (r->match_tag && r->match_tag != tag)
 			r = TAILQ_NEXT(r, entries);
 		else {
+			if (r->tag)
+				tag = r->tag;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -2101,6 +2131,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->action == PF_DROP)
 		return (PF_DROP);
+
+	if (pf_tag_packet(m, pftag, tag)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		return (PF_DROP);
+	}
 
 	if (r->keep_state || nat != NULL || rdr != NULL) {
 		/* create new state */
@@ -2236,6 +2271,14 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_ruleset	*ruleset = NULL;
 	u_short			 reason;
 	int			 rewrite = 0;
+	struct pf_tag		*pftag;
+	u_int16_t		 tag;
+
+	pftag = pf_get_tag(m);
+	if (pftag != NULL)
+		tag = pftag->tag;
+	else
+		tag = 0;
 
 	if (direction == PF_OUT) {
 		bport = nport = uh->uh_sport;
@@ -2260,6 +2303,11 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			rewrite++;
 		}
 	}
+
+	if (nat != NULL && nat->tag)
+		tag = nat->tag;
+	if (rdr != NULL && rdr->tag)
+		tag = rdr->tag;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -2299,11 +2347,13 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nat))
+		else if (r->match_tag && r->match_tag != tag)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
+			if (r->tag)
+				tag = r->tag;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -2360,6 +2410,11 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->action == PF_DROP)
 		return (PF_DROP);
+
+	if (pf_tag_packet(m, pftag, tag)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		return (PF_DROP);
+	}
 
 	if (r->keep_state || nat != NULL || rdr != NULL) {
 		/* create new state */
@@ -2457,9 +2512,17 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	sa_family_t		 af = pd->af;
 	u_int8_t		 icmptype, icmpcode;
 	int			 state_icmp = 0;
+	struct pf_tag		*pftag;
+	u_int16_t		 tag;
 #ifdef INET6
 	int			 rewrite = 0;
 #endif /* INET6 */
+
+	pftag = pf_get_tag(m);
+	if (pftag != NULL)
+		tag = pftag->tag;
+	else
+		tag = 0;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -2535,6 +2598,11 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 	}
 
+	if (nat != NULL && nat->tag)
+		tag = nat->tag;
+	if (rdr != NULL && rdr->tag)
+		tag = rdr->tag;
+
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
@@ -2559,11 +2627,13 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nat))
+		else if (r->match_tag && r->match_tag != tag)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
+			if (r->tag)
+				tag = r->tag;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -2602,6 +2672,11 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->action != PF_PASS)
 		return (PF_DROP);
+
+	if (pf_tag_packet(m, pftag, tag)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		return (PF_DROP);
+	}
 
 	if (!state_icmp && (r->keep_state ||
 	    nat != NULL || rdr != NULL)) {
@@ -2696,6 +2771,14 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_addr		 baddr, naddr;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
+	struct pf_tag		*pftag;
+	u_int16_t		 tag;
+
+	pftag = pf_get_tag(m);
+	if (pftag != NULL)
+		tag = pftag->tag;
+	else
+		tag = 0;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
@@ -2737,6 +2820,11 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		}
 	}
 
+	if (nat != NULL && nat->tag)
+		tag = nat->tag;
+	if (rdr != NULL && rdr->tag)
+		tag = rdr->tag;
+
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
@@ -2757,11 +2845,13 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nat))
+		else if (r->match_tag && r->match_tag != tag)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else {
+			if (r->tag)
+				tag = r->tag;
 			if (r->anchor == NULL) {
 				*rm = r;
 				*am = a;
@@ -2825,6 +2915,11 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (r->action != PF_PASS)
 		return (PF_DROP);
+
+	if (pf_tag_packet(m, pftag, tag)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		return (PF_DROP);
+	}
 
 	if (r->keep_state || nat != NULL || rdr != NULL) {
 		/* create new state */
@@ -2911,6 +3006,14 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_ruleset	*ruleset = NULL;
 	sa_family_t		 af = pd->af;
 	u_short			 reason;
+	struct pf_tag		*pftag;
+	u_int16_t		 tag;
+
+	pftag = pf_get_tag(m);
+	if (pftag != NULL)
+		tag = pftag->tag;
+	else
+		tag = 0;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -2933,7 +3036,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, NULL))
+		else if (r->match_tag && r->match_tag != tag)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2969,6 +3072,11 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	if (r->action != PF_PASS)
 		return (PF_DROP);
+
+	if (pf_tag_packet(m, pftag, tag)) {
+		REASON_SET(&reason, PFRES_MEMORY);
+		return (PF_DROP);
+	}
 
 	return (PF_PASS);
 }
@@ -4438,7 +4546,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
-	struct m_tag	  *mtag;
 	struct ip	  *h;
 	struct pf_rule	  *a = NULL, *r = &pf_default_rule;
 	struct pf_state	  *s = NULL;
@@ -4621,20 +4728,6 @@ done:
 		    ("pf: dropping packet with ip options\n"));
 	}
 
-	if (action != PF_DROP && r->tag) {
-		struct pf_tag	*pftag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
-		if (mtag == NULL) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_MEMORY);
-		} else {
-			pftag = (struct pf_tag *)(mtag + 1);
-			pftag->tag = r->tag;
-			m_tag_prepend(m, mtag);
-		}
-	}
-
 #ifdef ALTQ
 	if (action != PF_DROP && r->qid) {
 		struct m_tag	*mtag;
@@ -4672,7 +4765,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
-	struct m_tag	  *mtag;
 	struct ip6_hdr	  *h;
 	struct pf_rule	  *a = NULL, *r = &pf_default_rule;
 	struct pf_state	  *s = NULL;
@@ -4852,20 +4944,6 @@ done:
 		    r->dst.not);
 
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
-
-	if (action != PF_DROP && r->tag) {
-		struct pf_tag	*pftag;
-
-		mtag = m_tag_get(PACKET_TAG_PF_TAG, sizeof(*pftag), M_NOWAIT);
-		if (mtag == NULL) {
-			action = PF_DROP;
-			REASON_SET(&reason, PFRES_MEMORY);
-		} else {
-			pftag = (struct pf_tag *)(mtag + 1);
-			pftag->tag = r->tag;
-			m_tag_prepend(m, mtag);
-		}
-	}
 
 #ifdef ALTQ
 	if (action != PF_DROP && r->qid) {
