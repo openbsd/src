@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.5 2005/04/03 18:31:00 deraadt Exp $ */
+/*	$OpenBSD: stat.c,v 1.6 2005/04/03 18:38:28 deraadt Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.5 2005/04/03 18:31:00 deraadt Exp $";
+    "$OpenBSD: stat.c,v 1.6 2005/04/03 18:38:28 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ static const char rccs_id[] =
 
 void	usage(const char *);
 void	output(const struct stat *, const char *,
-	    const char *, int, int, int);
+	    const char *, int, int);
 int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
@@ -167,11 +167,10 @@ int
 main(int argc, char *argv[])
 {
 	struct stat st;
-	int ch, rc, errs, am_readlink;
+	int ch, rc, errs;
 	int lsF, fmtchar, usestat, fn, nonl, quiet;
 	char *statfmt, *options, *synopsis;
 
-	am_readlink = 0;
 	lsF = 0;
 	fmtchar = '\0';
 	usestat = 0;
@@ -181,17 +180,8 @@ main(int argc, char *argv[])
 	statfmt = NULL;
 	timefmt = NULL;
 
-	if (strcmp(__progname, "readlink") == 0) {
-		am_readlink = 1;
-		options = "n";
-		synopsis = "[-n] [file ...]";
-		statfmt = "%Y";
-		fmtchar = 'f';
-		quiet = 1;
-	} else {
-		options = "f:FlLnqrst:x";
-		synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
-	}
+	options = "f:FlLnqrst:x";
+	synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
 
 	while ((ch = getopt(argc, argv, options)) != -1)
 		switch (ch) {
@@ -292,14 +282,14 @@ main(int argc, char *argv[])
 				warn("%s: stat",
 				    argc == 0 ? "(stdin)" : argv[0]);
 		} else
-			output(&st, argv[0], statfmt, fn, nonl, quiet);
+			output(&st, argv[0], statfmt, fn, nonl);
 
 		argv++;
 		argc--;
 		fn++;
 	} while (argc > 0);
 
-	return (am_readlink ? linkfail : errs);
+	return (errs);
 }
 
 void
@@ -315,7 +305,7 @@ usage(const char *synopsis)
  */
 void
 output(const struct stat *st, const char *file,
-    const char *statfmt, int fn, int nonl, int quiet)
+    const char *statfmt, int fn, int nonl)
 {
 	int flags, size, prec, ofmt, hilo, what;
 	char buf[PATH_MAX];
