@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2001/08/06 22:34:44 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2001/08/23 22:33:23 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,35 +43,80 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#include "st.h"
-bdev_decl(st);
-#include "sd.h"
-bdev_decl(sd);
-#include "cd.h"
-bdev_decl(cd);
-#include "rd.h"
+#include "pty.h"
+#include "bpfilter.h"
+#include "tun.h"
 #include "vnd.h"
 #include "ccd.h"
-bdev_decl(rd);
-
-
-#if notyet
 #include "ch.h"
-bdev_decl(ch);
+#include "sd.h"
+#include "st.h"
+#include "cd.h"
+#include "rd.h"
+
+#ifdef XFS
+#include <xfs/nxfs.h>
+#cdev_decl(xfs_dev);
+#endif
+#include "ksyms.h"
+cdev_decl(ksyms);
+
+#include "sram.h"
+#include "nvram.h"
+#include "vmel.h"
+#include "vmes.h"
+#include "dart.h"
+#include "cl.h"
+#include "bugtty.h"
+#include "vx.h"
+
+#ifdef notyet
 #include "xd.h"
 bdev_decl(xd);
+cdev_decl(xd);
 #endif /* notyet */
 
-#include "vnd.h"
-bdev_decl(vnd);
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+cdev_decl(sram);
+cdev_decl(nvram);
+cdev_decl(vmel);
+cdev_decl(vmes);
+#ifdef notyet
+#include "flash.h"
+cdev_decl(flash);
+#endif /* notyet */
 
-#ifdef LKM
-int	lkmenodev();
-#else
-#define	lkmenodev	enodev
-#endif
+cdev_decl(dart);
+cdev_decl(cl);
+cdev_decl(bugtty);
+cdev_decl(vx);
+
+/* open, close, write, ioctl */
+#define	cdev_lp_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl, mmap, ioctl */
+#define	cdev_mdev_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	dev_init(c,n,mmap) }
+
+#if notyet
+#include "lp.h"
+cdev_decl(lp);
+#include "lptwo.h"
+cdev_decl(lptwo);
+#endif /* notyet */
+
+#include "pf.h"
+cdev_decl(pf);
+
+#include <altq/altqconf.h>
 
 struct bdevsw	bdevsw[] =
 {
@@ -99,108 +144,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-cdev_decl(cn);
-cdev_decl(ctty);
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-
-#include "sram.h"
-cdev_decl(sram);
-
-#include "nvram.h"
-cdev_decl(nvram);
-
-#include "vmel.h"
-cdev_decl(vmel);
-
-#include "vmes.h"
-cdev_decl(vmes);
-
-#if notyet
-#include "flash.h"
-cdev_decl(flash);
-#endif /* notyet */
-
-#include "pty.h"
-#define ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(fd);
-
-#include "dart.h"
-cdev_decl(dart);
-
-#include "cl.h"
-cdev_decl(cl);
-
-#include "bugtty.h"
-cdev_decl(bugtty);
-
-#include "vx.h"
-cdev_decl(vx);
-
-/* open, close, write, ioctl */
-#define	cdev_lp_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl, mmap, ioctl */
-#define	cdev_mdev_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
-	dev_init(c,n,mmap) }
-
-#if notyet
-#include "lp.h"
-cdev_decl(lp);
-#include "lptwo.h"
-cdev_decl(lptwo);
-#endif /* notyet */
-
-cdev_decl(st);
-cdev_decl(sd);
-cdev_decl(cd);
-cdev_decl(xd);
-cdev_decl(rd);
-cdev_decl(vnd);
-
-dev_decl(filedesc,open);
-
-#include "bpfilter.h"
-cdev_decl(bpf);
-
-#include "tun.h"
-cdev_decl(tun);
-
-#ifdef XFS
-#include <xfs/nxfs.h>
-#cdev_decl(xfs_dev);
-#endif
-
-#include "ksyms.h"
-cdev_decl(ksyms);
-
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-
-
-#include "pf.h"
-cdev_decl(pf);
-
-cdev_decl(lkm);
-
-#include <altq/altqconf.h>
-
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),              /* 0: virtual console */
@@ -214,8 +157,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NSD,sd),          /* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),          /* 9: SCSI CD-ROM */
 	cdev_mdev_init(NNVRAM,nvram),    /* 10: /dev/nvramX */
-
-#if notyet
+#ifdef notyet
 	cdev_mdev_init(NFLASH,flash),    /* 11: /dev/flashX */
 #else
 	cdev_notdef(),                   /* 11: */
@@ -225,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NBUGTTY,bugtty),   /* 14: BUGtty (ttyB) */
 	cdev_tty_init(NVX,vx),           /* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
 	cdev_notdef(),                   /* 16 */
-	cdev_notdef(),                   /* 17: concatenated disk */
+	cdev_disk_init(NCCD,ccd),        /* 17: concatenated disk */
 	cdev_disk_init(NRD,rd),          /* 18: ramdisk disk */
 	cdev_disk_init(NVND,vnd),        /* 19: vnode disk */
 	cdev_tape_init(NST,st),          /* 20: SCSI tape */
@@ -234,13 +176,13 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),      /* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),         /* 24: loadable module driver */
 	cdev_notdef(),                   /* 25 */
-#if notyet
+#ifdef notyet
 	cdev_disk_init(NXD,xd),          /* 26: XD disk */
 #else
 	cdev_notdef(),                   /* 26: XD disk */
 #endif /* notyet */
 	cdev_notdef(),                   /* 27 */
-#if notyet
+#ifdef notyet
 	cdev_lp_init(NLP,lp),            /* 28: lp */
 	cdev_lp_init(NLPTWO,lptwo),      /* 29: lptwo */
 #else                      
@@ -256,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),                /* 36 */
 	cdev_lkm_dummy(),                /* 37 */
 	cdev_lkm_dummy(),                /* 38 */
-	cdev_pf_init(NPF,pf),		/* 39: packet filter */
+	cdev_pf_init(NPF,pf),		 /* 39: packet filter */
 	cdev_random_init(1,random),	 /* 40: random data source */
 	cdev_notdef(),                   /* 41 */
 	cdev_notdef(),                   /* 42 */
@@ -273,7 +215,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),                   /* 51 */
 #endif
-	cdev_altq_init(NALTQ,altq),	/* 52: ALTQ control interface */
+	cdev_altq_init(NALTQ,altq),	 /* 52: ALTQ control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
