@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.12 2004/07/13 06:00:33 tom Exp $	*/
+/*	$OpenBSD: part.h,v 1.13 2004/08/03 09:22:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,10 +30,10 @@
 
 /* Partition type */
 typedef struct _prt_t {
-	int shead, scyl, ssect;
-	int ehead, ecyl, esect;
-	int bs;
-	int ns;
+	u_int32_t shead, scyl, ssect;
+	u_int32_t ehead, ecyl, esect;
+	u_int32_t bs;
+	u_int32_t ns;
 	unsigned char flag;
 	unsigned char id;
 } prt_t;

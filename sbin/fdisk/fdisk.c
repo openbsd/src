@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.38 2004/01/07 16:28:52 tom Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.39 2004/08/03 09:22:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -89,17 +89,20 @@ main(int argc, char *argv[])
 		case 'c':
 			c_arg = atoi(optarg);
 			if (c_arg < 1 || c_arg > 262144)
-				errx(1, "Cylinder argument out of range.");
+				errx(1, "Cylinder argument out of range "
+				    "[1..262144].");
 			break;
 		case 'h':
 			h_arg = atoi(optarg);
 			if (h_arg < 1 || h_arg > 256)
-				errx(1, "Head argument out of range.");
+				errx(1, "Head argument out of range "
+				    "[1..256].");
 			break;
 		case 's':
 			s_arg = atoi(optarg);
 			if (s_arg < 1 || s_arg > 63)
-				errx(1, "Sector argument out of range.");
+				errx(1, "Sector argument out of range "
+				    "[1..63].");
 			break;
 		default:
 			usage();

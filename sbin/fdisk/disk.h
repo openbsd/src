@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.7 2003/06/03 01:13:19 weingart Exp $	*/
+/*	$OpenBSD: disk.h,v 1.8 2004/08/03 09:22:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,10 +30,10 @@
 
 /* Data types */
 typedef struct _DISK_metrics {
-	int cylinders;
-	int heads;
-	int sectors;
-	int size;
+	u_int32_t cylinders;
+	u_int32_t heads;
+	u_int32_t sectors;
+	u_int32_t size;
 } DISK_metrics;
 
 typedef struct _disk_t {

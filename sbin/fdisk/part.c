@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.38 2004/07/13 06:00:33 tom Exp $	*/
+/*	$OpenBSD: part.c,v 1.39 2004/08/03 09:22:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -284,7 +284,7 @@ PRT_print(int num, prt_t *partn, char *units)
 	} else {
 		size = (double)partn->ns * DEV_BSIZE /
 		    unit_types[i].conversion;
-		printf("%c%1d: %.2X %4d %3d %2d - %4d %3d %2d [%12d:%12.0f%s] %s\n",
+		printf("%c%1d: %.2X %4u %3u %2u - %4u %3u %2u [%12u:%12.0f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
 			partn->scyl, partn->shead, partn->ssect,
@@ -298,9 +298,9 @@ PRT_print(int num, prt_t *partn, char *units)
 void
 PRT_fix_BN(disk_t *disk, prt_t *part, int pn)
 {
-	int spt, tpc, spc;
-	int start = 0;
-	int end = 0;
+	u_int32_t spt, tpc, spc;
+	u_int32_t start = 0;
+	u_int32_t end = 0;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED ) {
@@ -332,9 +332,9 @@ PRT_fix_BN(disk_t *disk, prt_t *part, int pn)
 void
 PRT_fix_CHS(disk_t *disk, prt_t *part)
 {
-	int spt, tpc, spc;
-	int start, end, size;
-	int cyl, head, sect;
+	u_int32_t spt, tpc, spc;
+	u_int32_t start, end, size;
+	u_int32_t cyl, head, sect;
 
 	/* Zero out entry if not used */
 	if (part->id == DOSPTYP_UNUSED ) {
