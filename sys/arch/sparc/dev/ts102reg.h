@@ -1,5 +1,4 @@
-/*	$OpenBSD: ts102reg.h,v 1.1 1999/09/07 02:58:50 jason Exp $	*/
-/*	$NetBSD: ts102reg.h,v 1.2 1999/08/11 00:46:06 matt Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +38,19 @@
 #ifndef _SPARC_DEV_TS102REG_H
 #define	_SPARC_DEV_TS102REG_H
 
+/* The TS102 consumes a 256MB region of the SPARCbook 3's address space.
+ */
+#define TS102_OFFSET_REGISTERS		0x02000000
+#define TS102_OFFSET_CARD_A_ATTR_SPACE	0x04000000
+#define TS102_OFFSET_CARD_B_ATTR_SPACE	0x05000000
+#define TS102_SIZE_ATTR_SPACE		0x01000000
+#define TS102_OFFSET_CARD_A_IO_SPACE	0x06000000
+#define TS102_OFFSET_CARD_B_IO_SPACE	0x07000000
+#define TS102_SIZE_IO_SPACE		0x01000000
+#define TS102_OFFSET_CARD_A_MEM_SPACE	0x08000000
+#define TS102_OFFSET_CARD_B_MEM_SPACE	0x0c000000
+#define TS102_SIZE_MEM_SPACE		0x04000000
+
 /* There are two separate register blocks within the TS102.  The first
  * gives access to PCMCIA card specific resources, and the second gives
  * access to the microcontroller interface
@@ -49,6 +61,9 @@
 #define	TS102_REG_CARD_B_INT	0x0010	/* Card B Interrupt Register */
 #define	TS102_REG_CARD_B_STS	0x0014	/* Card B Status Register */
 #define	TS102_REG_CARD_B_CTL	0x0018	/* Card B Control Register */
+#define	TS102_REG_UCTRL_INT	0x0020	/* Microcontroller Interrupt Register */
+#define	TS102_REG_UCTRL_DATA	0x0024	/* Microcontroller Data Register */
+#define	TS102_REG_UCTRL_STS	0x0028	/* Microcontroller Status Register */
 
 struct uctrl_regs {
 	volatile u_int8_t	intr;	/* Microcontroller Interrupt Reg */
@@ -59,7 +74,7 @@ struct uctrl_regs {
 	volatile u_int8_t	filler2[3];
 };
 
-/* TS102 Card Interrupt Register defintions.
+/* TS102 Card Interrupt Register definitions.
  *
  * There is one 16-bit interrupt register for each card.  Each register
  * contains interrupt status (read) and clear (write) bits and an 
@@ -158,6 +173,7 @@ struct uctrl_regs {
 #define	TS102_UCTRL_STS_TXNF_STA	0x02	/* transmit FIFO not full */
 #define	TS102_UCTRL_STS_RXNE_STA	0x04	/* receive FIFO not empty */
 #define	TS102_UCTRL_STS_RXO_STA		0x08	/* receive FIFO overflow */
+#define	TS102_UCTRL_STS_MASK		0x0F	/* Only 4 bits significant */
 
 enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_SERIAL_NUM=0x01,	/* none		ack + 4 bytes */
@@ -165,8 +181,8 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_HW_VERSION=0x03,	/* none		ack + 2 bytes */
     TS102_OP_RD_UCTLR_VERSION=0x04,	/* none		ack + 2 bytes */
     TS102_OP_RD_MAX_TEMP=0x05,		/* none		ack + 1 bytes */
-    TS102_OP_RD_MIN_TEMP=0x07,		/* none		ack + 1 bytes */
-    TS102_OP_RD_CURRENT_TEMP=0x06,	/* none		ack + 1 bytes */
+    TS102_OP_RD_MIN_TEMP=0x06,		/* none		ack + 1 bytes */
+    TS102_OP_RD_CURRENT_TEMP=0x07,	/* none		ack + 1 bytes */
     TS102_OP_RD_SYSTEM_VARIANT=0x08,	/* none		ack + 4 bytes */
     TS102_OP_RD_POWERON_CYCLES=0x09,	/* none		ack + 4 bytes */
     TS102_OP_RD_POWERON_SECONDS=0x0a,	/* none		ack + 4 bytes */
@@ -182,14 +198,18 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_EVENT_STATUS=0x0c,	/* none		ack + 2 bytes */
 #define	TS102_EVENT_STATUS_SHUTDOWN_REQUEST			0x0001
 #define	TS102_EVENT_STATUS_LOW_POWER_WARNING			0x0002
+/* Internal Warning Changed 0x0002 */
 #define	TS102_EVENT_STATUS_VERY_LOW_POWER_WARNING		0x0004
+/* Discharge Event 0x0004 */
 #define	TS102_EVENT_STATUS_BATT_CHANGED				0x0008
+/* Internal Status Changed 0x0008 */
 #define	TS102_EVENT_STATUS_EXT_KEYBOARD_STATUS_CHANGE		0x0010
 #define	TS102_EVENT_STATUS_EXT_MOUSE_STATUS_CHANGE		0x0020
 #define	TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE		0x0040
 #define	TS102_EVENT_STATUS_LID_STATUS_CHANGE			0x0080
 #define	TS102_EVENT_STATUS_MICROCONTROLLER_ERROR		0x0100
 #define	TS102_EVENT_STATUS_RESERVED				0x0200
+/* Wakeup 0x0200 */
 #define	TS102_EVENT_STATUS_EXT_BATT_STATUS_CHANGE		0x0400
 #define	TS102_EVENT_STATUS_EXT_BATT_CHARGING_STATUS_CHANGE	0x0800
 #define	TS102_EVENT_STATUS_EXT_BATT_LOW_POWER			0x1000
@@ -222,8 +242,8 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_DC_IN_VLT=0x15,		/* none		ack + 1 bytes */
     TS102_OP_RD_HORZ_PRT_VLT=0x16,	/* none		ack + 1 bytes */
     TS102_OP_RD_VERT_PTR_VLT=0x17,	/* none		ack + 1 bytes */
-    TS102_OP_RD_INT_CHANGE_LEVEL=0x18,	/* none		ack + 1 bytes */
-    TS102_OP_RD_EXT_CHARGE_LEVEL=0x19,	/* none		ack + 1 bytes */
+    TS102_OP_RD_INT_CHARGE_RATE=0x18,	/* none		ack + 1 bytes */
+    TS102_OP_RD_EXT_CHARGE_RATE=0x19,	/* none		ack + 1 bytes */
     TS102_OP_RD_RTC_ALARM=0x1a,		/* none		ack + 7 bytes */
     TS102_OP_RD_EVENT_STATUS_NO_RESET=0x1b,	/* none		ack + 2 bytes */
     TS102_OP_RD_INT_KBD_LAYOUT=0x1c,	/* none		ack + 2 bytes */
@@ -236,7 +256,7 @@ enum ts102_opcode {			/* Argument	Returned */
  
     /* Read/Write/Modify Commands
      */
-    TS102_OP_CTL_LCD=0x20,		/* mask		ack + 2 bytes */
+    TS102_OP_CTL_LCD=0x20,		/* 4 byte mask	ack + 4 bytes */
 #define	TS102_LCD_CAPS_LOCK		0x0001
 #define	TS102_LCD_SCROLL_LOCK		0x0002
 #define	TS102_LCD_NUMLOCK		0x0004
@@ -253,14 +273,23 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
 						/* boot from pcmcia (low */
 #define	TS102_BITPORT_ENCSYNC		0x20	/* enab composite sync (low) */
+    TS102_OP_CTL_DEV=0x22,		/* mask 	ack + 1 byte */
+#define TS102_DEVCTL_CHARGE_DISABLE	0x01	/* dis/en charging */
+#define TS102_DEVCTL_POINTER_DISABLE	0x04	/* dis/en pointer */
+#define TS102_DEVCTL_KEYCLICK		0x08	/* keyclick? */
+#define TS102_DEVCTL_INT_BTNCLICK	0x10	/* internal button click? */
+#define TS102_DEVCTL_EXT_BTNCLICK	0x20	/* ext. button click?? */
     TS102_OP_CTL_SPEAKER_VOLUME=0x23,	/* mask		ack + 1 byte */
-    TS102_OP_CTL_TFT_BIRGHNESS=0x24,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_TFT_BRIGHTNESS=0x24,	/* mask		ack + 1 byte */
     TS102_OP_CTL_WATCHDOG=0x25,		/* mask		ack + 1 byte */
     TS102_OP_CTL_FCTRY_EEPROM=0x26,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_SECURITY_KEY=0x27,	/* no idea */
     TS102_OP_CTL_KDB_TIME_UNTL_RTP=0x28, /* mask 	ack + 1 byte */
     TS102_OP_CTL_KBD_TIME_BTWN_RPTS=0x29, /* mask	ack + 1 byte */
     TS102_OP_CTL_TIMEZONE=0x2a,		/* mask		ack + 1 byte */
     TS102_OP_CTL_MARK_SPACE_RATIO=0x2b,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_MOUSE_SENS=0x2c, 	/* mask		ack + 1 byte */
+    TS102_OP_CTL_MOUSE_SCAN=0x2d,	/* no idea invalid?*/
     TS102_OP_CTL_DIAGNOSTIC_MODE=0x2e,	/* mask		ack + 1 byte */
 #define	TS102_DIAGNOSTIC_MODE_CMD_DIAG_ON_LCD	0x01
 #define	TS102_DIAGNOSTIC_MODE_KDB_MS_9600	0x02
@@ -269,6 +298,7 @@ enum ts102_opcode {			/* Argument	Returned */
     /* Commands returning no status
      */
     TS102_OP_CMD_RING_BELL=0x30,	/* msb,lsb	ack */
+    TS102_OP_RD_INPUT_SOURCE=0x31,	/* no idea */
     TS102_OP_CMD_DIAGNOSTIC_STATUS=0x32, /* msb,lsb	ack */
     TS102_OP_CMD_CLR_KEY_COMBO_TBL=0x33, /* none	ack */
     TS102_OP_CMD_SOFTWARE_RESET=0x34,	/* none		ack */
@@ -284,7 +314,7 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_BLK_RD_EEPROM=0x40,	/* len off		ack <data> */
     TS102_OP_BLK_WR_EEPROM=0x41,	/* len off <data>	ack */
     TS102_OP_BLK_WR_STATUS=0x42,	/* len off <data>	ack */
-    TS102_OP_BLK_DEF_SPCL_CHAR=0x43,	/* len off <data>	ack */
+    TS102_OP_BLK_DEF_SPCL_CHAR=0x43,	/* len off <8b data>	ack */
 #define	TS102_BLK_OFF_DEF_WAN1			0
 #define	TS102_BLK_OFF_DEF_WAN2			1
 #define	TS102_BLK_OFF_DEF_LAN1			2
@@ -315,6 +345,9 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_ADMIN_VRFY_USER_PASS=0x71,	/* len <pass>   ack + status */
     TS102_OP_ADMIN_GET_SYSTEM_PASS=0x72, /* none	ack + <7bytekey> */
     TS102_OP_ADMIN_VRFY_SYSTEM_PASS=0x73, /* len <pass>   ack + status */
+    TS102_OP_RD_INT_CHARGE_LEVEL=0x7a, /* ack + 2 byte */
+    TS102_OP_RD_EXT_CHARGE_LEVEL=0x7b, /* ack + 2 byte */
+    TS102_OP_SLEEP=0x80, /* supposedly sleeps, not sure */
     TS102_OP_ADMIN_POWER_OFF=0x82,	 /* len <pass>	none */
     TS102_OP_ADMIN_POWER_RESTART=0x83,	 /* msb,xx,lsb	none */
 };
