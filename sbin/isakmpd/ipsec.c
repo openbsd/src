@@ -1,8 +1,8 @@
-/*	$OpenBSD: ipsec.c,v 1.43 2001/04/15 16:09:16 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.44 2001/04/24 07:27:37 niklas Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2001 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -805,7 +805,6 @@ ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto,
 	       "%s made us delete SA %p (%d references) for proto %d",
 	       type, sa, sa->refcnt, proto));
 
-      sa_reference (sa);
       sa_free (sa);
     }
 }
@@ -1394,7 +1393,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
   u_int32_t spisz, nspis;
   struct sockaddr *dst;
   socklen_t dstlen;
-  int flag = 0;
+  int reenter = 0;
   u_int8_t *spis, proto;
   struct sa *sa;
 
@@ -1416,19 +1415,17 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
       if ((proto == ISAKMP_PROTO_ISAKMP && spisz != ISAKMP_HDR_COOKIES_LEN)
           || (proto != ISAKMP_PROTO_ISAKMP && spisz != sizeof (u_int32_t)))
         {
-	    LOG_DBG ((LOG_SA, 50,
-	             "ipsec_handle_leftover_payload: invalid SPI size %d "
-                     "for proto %d in DELETE payload", spisz, proto));
-	    return -1;
+	  log_print ("ipsec_handle_leftover_payload: "
+		     "invalid SPI size %d for proto %d in DELETE payload",
+		     spisz, proto);
+	  return -1;
         }
 
-      spis = (u_int8_t *) malloc (nspis * spisz);
-      if (spis == NULL)
+      spis = (u_int8_t *)malloc (nspis * spisz);
+      if (!spis)
         {
-	  LOG_DBG ((LOG_SA, 50,
-		    "ipsec_handle_leftover_payload: "
-		    "DELETE failed to allocate %d SPIs of %d bytes each",
-		    nspis, spisz));
+	  log_error ("ipsec_handle_leftover_payload: malloc (%d) failed",
+		     nspis * spisz);
 	  return -1;
 	}
 
@@ -1441,6 +1438,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
       free (spis);
       payload->flags |= PL_MARK;
       return 0;
+
     case ISAKMP_PAYLOAD_NOTIFY:
       switch (GET_ISAKMP_NOTIFY_MSG_TYPE (payload->p))
 	{
@@ -1456,13 +1454,14 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	      /*
 	       * Don't delete the current SA -- we received the notification
 	       * over it, so it's obviously still active. We temporarily need
-               * to remove the SA from the list to avoid an endless loop.
+               * to remove the SA from the list to avoid an endless loop,
+	       * but keep a reference so it won't disappear meanwhile.
 	       */
-
 	      if (sa == msg->isakmp_sa)
 	        {
-                  LIST_REMOVE (sa, link);
-                  flag = 1;
+		  sa_reference (sa);
+                  sa_remove (sa);
+                  reenter = 1;
 		  continue;
 		}
 
@@ -1473,8 +1472,11 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	      sa_delete (sa, 0);
 	    }
 
-          if (flag)
-            sa_enter (msg->isakmp_sa);
+          if (reenter)
+	    {
+	      sa_enter (msg->isakmp_sa);
+	      sa_release (msg->isakmp_sa);
+	    }
 	  payload->flags |= PL_MARK;
 	  return 0;
 	}

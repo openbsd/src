@@ -1,8 +1,8 @@
-/*	$OpenBSD: sa.h,v 1.20 2001/01/27 12:03:36 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.21 2001/04/24 07:27:37 niklas Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2001 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -190,7 +190,6 @@ extern void sa_delete (struct sa *, int);
 extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
 extern int sa_flag (char *);
 extern void sa_free (struct sa *);
-extern void sa_free_aux (struct sa *);
 extern void sa_init (void);
 extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, socklen_t);
 extern void sa_isakmp_upgrade (struct message *);
@@ -203,6 +202,7 @@ extern struct sa *sa_lookup_isakmp_sa (struct sockaddr *, u_int8_t *);
 extern void sa_mark_replaced (struct sa *);
 extern void sa_reference (struct sa *);
 extern void sa_release (struct sa *);
+extern void sa_remove (struct sa *);
 extern void sa_report (void);
 extern int sa_setup_expirations (struct sa *);
 #endif /* _SA_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.40 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.41 2001/04/24 07:27:37 niklas Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ sa_enter (struct sa *sa)
     }
   bucket &= bucket_mask;
   LIST_INSERT_HEAD (&sa_tab[bucket], sa, link);
+  sa_reference (sa);
   LOG_DBG ((LOG_SA, 70, "sa_enter: SA %p added to SA list", sa));
   return 1;
 }
@@ -502,17 +503,18 @@ sa_free (struct sa *sa)
       sa->soft_death = 0;
       sa->refcnt--;
     }
-  sa_free_aux (sa);
+  sa_remove (sa);
 }
 
-/* Release all resources this SA is using except the death timers.  */
+/* Remove the SA from the hash table of live SAs.  */
 void
-sa_free_aux (struct sa *sa)
+sa_remove (struct sa *sa)
 {
   LIST_REMOVE (sa, link);
-  LOG_DBG ((LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa));
+  LOG_DBG ((LOG_SA, 70, "sa_remove: SA %p removed from SA list", sa));
   sa_release (sa);
 }
+
 /* Raise the reference count of SA.  */
 void
 sa_reference (struct sa *sa)
@@ -581,7 +583,7 @@ sa_isakmp_upgrade (struct message *msg)
 {
   struct sa *sa = TAILQ_FIRST (&msg->exchange->sa_list);
 
-  LIST_REMOVE (sa, link);
+  sa_remove (sa);
   GET_ISAKMP_HDR_RCOOKIE (msg->iov[0].iov_base,
 			  sa->cookies + ISAKMP_HDR_ICOOKIE_LEN);
 
@@ -679,7 +681,7 @@ void
 sa_delete (struct sa *sa, int notify)
 {
   /* Don't bother notifying of Phase 1 SA deletes.  */
-  if (sa->phase != 1)
+  if (sa->phase != 1 && notify)
     message_send_delete (sa);
   sa_free (sa);
 }
@@ -691,7 +693,9 @@ static void
 sa_soft_expire (void *v_sa)
 {
   struct sa *sa = v_sa;
+
   sa->soft_death = 0;
+  sa_release (sa);
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)
@@ -702,8 +706,6 @@ sa_soft_expire (void *v_sa)
      * happen as soon as it is shown to be alive.
      */
     sa->flags |= SA_FLAG_FADING;
-
-  sa_release (sa);
 }
 
 /* SA has passed its best before date.  */
@@ -713,6 +715,7 @@ sa_hard_expire (void *v_sa)
   struct sa *sa = v_sa;
 
   sa->death = 0;
+  sa_release (sa);
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)

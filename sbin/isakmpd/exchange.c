@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.44 2001/04/09 22:09:51 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.45 2001/04/24 07:27:36 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -817,8 +817,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  exchange_free (exchange);
 	  return;
 	}
-      else
-        sa_reference (msg->isakmp_sa);
+      sa_reference (msg->isakmp_sa);
     }
 
   msg->extra = args;
@@ -932,8 +931,8 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
     }
 
   msg = message_alloc (isakmp_sa->transport, 0, ISAKMP_HDR_SZ);
-  sa_reference (isakmp_sa);
   msg->isakmp_sa = isakmp_sa;
+  sa_reference (isakmp_sa);
   
   msg->extra = args;
 
@@ -1454,10 +1453,7 @@ exchange_finalize (struct message *msg)
 	}
 
       TAILQ_REMOVE (&exchange->sa_list, sa, next);
-
-      /* Only release the SA if it is time-expired */
-      if (sa->refcnt > 1)
-	sa_release (sa);
+      sa_release (sa);
     }
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
