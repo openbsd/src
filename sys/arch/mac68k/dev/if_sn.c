@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.19 1997/04/10 03:15:59 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.20 1997/04/13 14:14:51 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -1191,4 +1191,59 @@ sonic_get(sc, eh, datalen)
 			cp = spkt;
 	}
 	return (top);
+}
+
+static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
+
+void
+sn_get_enaddr(t, h, o, dst)
+	bus_space_tag_t	   t;
+	bus_space_handle_t h;
+	vm_offset_t	   o;
+	u_char		   *dst;
+{
+	int			i, do_bbr;
+	u_char			b;
+
+	/*
+	 * For reasons known only to Apple, MAC addresses in the ethernet
+	 * PROM are stored in Token Ring (IEEE 802.5) format, that is
+	 * with all of the bits in each byte reversed (canonical bit format).
+	 * When the address is read out it must be reversed to ethernet format
+	 * before use.
+	 *
+	 * Apple has been assigned OUI's 08:00:07 and 00:a0:40. All onboard
+	 * ethernet addresses on 68K machines should be in one of these
+	 * two ranges.
+	 *
+	 * Here is where it gets complicated.
+	 *
+	 * The PMac 7200, 7500, 8500, and 9500 accidentally had the PROM
+	 * written in standard ethernet format. The MacOS accounted for this
+	 * in these systems, and did not reverse the bytes. Some other
+	 * networking utilities were not so forgiving, and got confused.
+	 * "Some" of Apple's Nubus ethernet cards also had their bits
+	 * burned in ethernet format.
+	 *
+	 * Apple petitioned the IEEE and was granted the 00:05:02 (bit reversal
+	 * of 00:a0:40) as well. As of OpenTransport 1.1.1, Apple removed
+	 * their workaround and now reverses the bits regardless of
+	 * what kind of machine it is. So PMac systems and the affected
+	 * Nubus cards now use 00:05:02, instead of the 00:a0:40 for which they
+	 * were intended.
+	 *
+	 * See Apple Techinfo article TECHINFO-0020552, "OpenTransport 1.1.1
+	 * and MacOS System 7.5.3 FAQ (10/96)" for more details.
+	 */
+	do_bbr = 0;
+	b = bus_space_read_1(t, h, o);
+	if (b == 0x10)
+		do_bbr = 1;
+	dst[0] = (do_bbr) ? bbr(b) : b;
+
+	for (i = 1 ; i < ETHER_ADDR_LEN ; i++) {
+		b = bus_space_read_1(t, h, o+i);
+		dst[i] = (do_bbr) ? bbr(b) : b;
+	}
 }

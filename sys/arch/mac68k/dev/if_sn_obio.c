@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.11 1997/04/10 03:16:00 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.12 1997/04/13 14:14:52 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -137,16 +137,11 @@ sn_obio_attach(parent, self, aux)
 	add_nubus_intr(sc->slotno, snintr, (void *)sc);
 }
 
-static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
-#define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
-
 static int
 sn_obio_getaddr(sc)
 	struct sn_softc	*sc;
 {
 	bus_space_handle_t	bsh;
-	int			i, do_bbr;
-	u_char			b;
 
 	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, NBPG, 0, &bsh)) {
 		panic("failed to map space to read SONIC address.\n");
@@ -157,46 +152,7 @@ sn_obio_getaddr(sc)
 		return -1;
 	}
 
-	/*
-	 * For reasons known only to Apple, MAC addresses in the ethernet
-	 * PROM are stored in Token Ring (IEEE 802.5) format, that is
-	 * with all of the bits in each byte reversed (canonical bit format).
-	 * When the address is read out it must be reversed to ethernet format
-	 * before use.
-	 *
-	 * Apple has been assigned OUI's 08:00:07 and 00:a0:40. All onboard
-	 * ethernet addresses on 68K machines should be in one of these
-	 * two ranges.
-	 *
-	 * Here is where it gets complicated.
-	 *
-	 * The PMac 7200, 7500, 8500, and 9500 accidentally had the PROM
-	 * written in standard ethernet format. The MacOS accounted for this
-	 * in these systems, and did not reverse the bytes. Some other
-	 * networking utilities were not so forgiving, and got confused.
-	 * "Some" of Apple's Nubus ethernet cards also had their bits
-	 * burned in ethernet format.
-	 *
-	 * Apple petitioned the IEEE and was granted the 00:05:02 (bit reversal
-	 * of 00:a0:40) as well. As of OpenTransport 1.1.1, Apple removed
-	 * their workaround and now reverses the bits regardless of
-	 * what kind of machine it is. So PMac systems and the affected
-	 * Nubus cards now use 00:05:02, instead of the 00:a0:40 for which they
-	 * were intended.
-	 *
-	 * See Apple Techinfo article TECHINFO-0020552, "OpenTransport 1.1.1
-	 * and MacOS System 7.5.3 FAQ (10/96)" for more details.
-	 */
-	do_bbr = 0;
-	b = bus_space_read_1(sc->sc_regt, bsh, 0);
-	if (b == 0x10)
-		do_bbr = 1;
-	sc->sc_arpcom.ac_enaddr[0] = (do_bbr) ? bbr(b) : b;
-
-	for (i = 1 ; i < ETHER_ADDR_LEN ; i++) {
-		b = bus_space_read_1(sc->sc_regt, bsh, i);
-		sc->sc_arpcom.ac_enaddr[i] = (do_bbr) ? bbr(b) : b;
-	}
+	sn_get_enaddr(sc->sc_regt, bsh, 0, sc->sc_arpcom.ac_enaddr);
 
 	bus_space_unmap(sc->sc_regt, bsh, NBPG);
 
