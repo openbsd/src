@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.70 2004/08/08 19:32:45 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.71 2004/08/17 09:38:07 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -624,6 +624,16 @@ match(const char *s1, const char *s2)
 void
 nextstate(struct con *cp)
 {
+	if (match(cp->ibuf, "QUIT") && cp->state < 99) {
+		snprintf(cp->obuf, cp->osize, "221 %s\n", hostname);
+		cp->op = cp->obuf;
+		cp->ol = strlen(cp->op);
+		cp->w = t + cp->stutter;
+		cp->laststate = cp->state;
+		cp->state = 99;
+		return;
+	}
+
 	switch (cp->state) {
 	case 0:
 		/* banner sent; wait for input */
