@@ -1,0 +1,4 @@
+nat pass on lo0 from 10/8 to 172.16/16 -> 172.16.0.1
+rdr pass on lo0 proto tcp from any to 1.2.3.4 port 80 -> 127.0.0.1 port 8080
+
+ 
