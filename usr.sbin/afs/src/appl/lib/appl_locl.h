@@ -99,14 +99,14 @@
 #ifdef HAVE_KRB5
 #include <krb5.h>
 #endif /* HAVE_KRB5 */
-#ifdef HAVE_KRB4
 #ifdef HAVE_OPENSSL
 #include <openssl/des.h>
 #else
 #include <des.h>
+#endif /* HAVE_OPENSSL */
+#ifdef HAVE_KRB4
 #include <krb.h>
 #endif /* HAVE_KRB4 */
-#endif
 #include <rxkad.h>
 #include <kafs.h>
 #ifdef HAVE_STDS_H
