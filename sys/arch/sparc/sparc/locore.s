@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.29 2000/01/31 16:06:58 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.30 2000/02/18 16:05:36 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -5767,9 +5767,9 @@ ENTRY(raise)
  *	    %o3 == async fault status, %o4 == async fault address
  */
 ALTENTRY(srmmu_get_fltstatus)
-	set	SRMMU_SFADDR, %o2
+	set	SRMMU_SFAR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-	set	SRMMU_SFSTAT, %o1
+	set	SRMMU_SFSR, %o1
 	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
 
 	 clr	%o3			! clear %o3 and %o4
@@ -5781,10 +5781,10 @@ ALTENTRY(viking_get_fltstatus)
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
 
-	set	SRMMU_SFADDR, %o2
+	set	SRMMU_SFAR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
 1:
-	set	SRMMU_SFSTAT, %o1
+	set	SRMMU_SFSR, %o1
 	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
 
 	 clr	%o3			! clear %o3 and %o4
@@ -5798,10 +5798,10 @@ ALTENTRY(turbosparc_get_fltstatus)
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
 
-	set	SRMMU_SFADDR, %o2
+	set	SRMMU_SFAR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
 1:
-	set	SRMMU_SFSTAT, %o1
+	set	SRMMU_SFSR, %o1
 	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
 
 	 clr	%o3			! clear %o3 and %o4
@@ -5813,27 +5813,27 @@ ALTENTRY(cypress_get_fltstatus)
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
 
-	set	SRMMU_SFADDR, %o2
+	set	SRMMU_SFAR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
 1:
-	set	SRMMU_SFSTAT, %o1
+	set	SRMMU_SFSR, %o1
 	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
 
-	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
+	set	SRMMU_AFSR, %o3		! must read status before fault on HS
 	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
-	set	SRMMU_AFADDR, %o4
+	set	SRMMU_AFAR, %o4
 	retl
 	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
 
 ALTENTRY(hypersparc_get_fltstatus)
-	set	SRMMU_SFADDR, %o2
+	set	SRMMU_SFAR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-	set	SRMMU_SFSTAT, %o1
+	set	SRMMU_SFSR, %o1
 	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
 
-	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
+	set	SRMMU_AFSR, %o3		! must read status before fault on HS
 	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
-	set	SRMMU_AFADDR, %o4
+	set	SRMMU_AFAR, %o4
 	retl
 	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
 
