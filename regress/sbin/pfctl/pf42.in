@@ -1,0 +1,9 @@
+# shuffle opts a bit around to test flexopts
+
+ext_if = "lo0"
+
+altq on $ext_if bandwidth 10Mb cbq \
+    queue { deflt, http, ssh, mail, rsets }
+queue	deflt cbq(default ecn) bandwidth 10% priority 0 
+queue	http priority 3 bandwidth 1.5Mb { http_vhosts, http_cust1 }
+queue	 http_vhosts cbq(borrow red) bandwidth 40% 
