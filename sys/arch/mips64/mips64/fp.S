@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.6 2004/10/30 14:48:59 pefo Exp $	*/
+/*	$OpenBSD: fp.S,v 1.7 2004/11/02 18:54:45 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.6 2004/10/30 14:48:59 pefo Exp $
+ *      $Id: fp.S,v 1.7 2004/11/02 18:54:45 pefo Exp $
  */
 
 /*
@@ -2267,8 +2267,8 @@ get_fs_d_/**/n:				\
 	b	get_fs_d_done
 
 ALEAF(get_fs_d)
-	srl	a3, a0, 12 - 2			# get FS field (even regs only)
-	and	a3, a3, 0xF << 2		# mask FS field
+	srl	a3, a0, 11 - 3			# get FS field
+	and	a3, a3, 0x1f << 3		# mask FS field
 	ld	a3, get_fs_d_tbl(a3)		# switch on register number
 	j	a3
 
