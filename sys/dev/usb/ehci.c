@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.14 2004/07/07 00:58:42 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.15 2004/07/07 01:27:06 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1909,21 +1909,23 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 	int port;
 	u_int32_t v;
 
+#if 0
 	DPRINTF(("ehci_disown: index=%d lowspeed=%d\n", index, lowspeed));
-#ifdef DIAGNOSTIC
+#endif
+#ifdef EHCI_DEBUG
 	if (sc->sc_npcomp != 0) {
 		int i = (index-1) / sc->sc_npcomp;
 		if (i >= sc->sc_ncomp)
-			printf("%s: strange port\n",
-			       USBDEVNAME(sc->sc_bus.bdev));
+			DPRINTF(("%s: strange port\n",
+			       USBDEVNAME(sc->sc_bus.bdev)));
 		else
-			printf("%s: handing over %s speed device on "
+			DPRINTF(("%s: handing over %s speed device on "
 			       "port %d to %s\n",
 			       USBDEVNAME(sc->sc_bus.bdev),
 			       lowspeed ? "low" : "full",
-			       index, USBDEVNAME(sc->sc_comps[i]->bdev));
+			       index, USBDEVNAME(sc->sc_comps[i]->bdev)));
 	} else {
-		printf("%s: npcomp == 0\n", USBDEVNAME(sc->sc_bus.bdev));
+		DPRINTF(("%s: npcomp == 0\n", USBDEVNAME(sc->sc_bus.bdev)));
 	}
 #endif
 	port = EHCI_PORTSC(index);
