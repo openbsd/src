@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.5 1996/05/02 13:12:20 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.6 1996/06/26 20:39:21 dm Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -105,16 +105,19 @@ panic(fmt, va_alist)
 	va_dcl
 #endif
 {
+	static char panicbuf[1024];
 	int bootopt;
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
+	va_start(ap, fmt);
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
-	else
-		panicstr = fmt;
+	else {
+		vsprintf (panicbuf, fmt, ap);
+		panicstr = panicbuf;
+	}
 
-	va_start(ap, fmt);
 	printf("panic: %:\n", fmt, ap);
 	va_end(ap);
 
@@ -528,11 +531,11 @@ putchar(c, flags, tp)
  */
 int
 #ifdef __STDC__
-sprintf(char *buf, const char *cfmt, ...)
+vsprintf(char *buf, const char *cfmt, va_list ap)
 #else
-sprintf(buf, cfmt, va_alist)
+vsprintf(buf, cfmt, ap)
 	char *buf, *cfmt;
-	va_dcl
+	va_list ap;
 #endif
 {
 	register const char *fmt = cfmt;
@@ -540,10 +543,8 @@ sprintf(buf, cfmt, va_alist)
 	register int ch, base;
 	u_long ul;
 	int lflag, tmp, width;
-	va_list ap;
 	char padc;
 
-	va_start(ap, cfmt);
 	for (bp = buf; ; ) {
 		padc = ' ';
 		width = 0;
@@ -623,7 +624,24 @@ number:			p = ksprintn(ul, base, &tmp);
 			*bp++ = ch;
 		}
 	}
-	va_end(ap);
+}
+
+int
+#ifdef __STDC__
+sprintf(char *buf, const char *cfmt, ...)
+#else
+sprintf(buf, cfmt, va_alist)
+	char *buf, *cfmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int ret;
+
+	va_start (ap, cfmt);
+	ret = vsprintf (buf, cfmt, ap);
+	va_end (ap);
+	return (ret);
 }
 
 /*
