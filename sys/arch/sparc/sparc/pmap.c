@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.127 2002/08/08 17:40:27 jason Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.128 2002/09/06 22:46:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4731,23 +4731,25 @@ pmap_page_protect4m(pg, prot)
  * fairly easy.
  */
 void
-pmap_protect4m(pm, sva, eva, prot)
-	struct pmap *pm;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	int va, nva, vr, vs;
 	int s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
-
-	if (pm == NULL || prot & VM_PROT_WRITE)
-		return;
+	int newprot;
 
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
 	}
+
+	/*
+	 * Since the caller might request either a removal of PROT_EXECUTE
+	 * or PROT_WRITE, we don't attempt to guess what to do, just lower
+	 * to read-only and let the real protection be faulted in.
+	 */
+	newprot = pte_prot4m(pm, VM_PROT_READ);
 
 	write_user_windows();
 	ctx = getcontext4m();
@@ -4786,23 +4788,27 @@ pmap_protect4m(pm, sva, eva, prot)
 
 		pmap_stats.ps_npg_prot_all = (nva - va) >> PGSHIFT;
 		for (; va < nva; va += NBPG) {
-			int tpte;
+			int tpte, npte;
+
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+			npte = (tpte & ~SRMMU_PROT_MASK) | newprot;
+
+			/* Only do work when needed. */
+			if (npte == tpte)
+				continue;
+
+			pmap_stats.ps_npg_prot_actual++;
 			/*
 			 * Flush cache so that any existing cache
-			 * tags are updated.  This is really only
-			 * needed for PTEs that lose PG_W.
+			 * tags are updated.
 			 */
-			if ((tpte & (PPROT_WRITE|SRMMU_PGTYPE)) ==
-			    (PPROT_WRITE|PG_SUN4M_OBMEM)) {
-				pmap_stats.ps_npg_prot_actual++;
-				if (pm->pm_ctx) {
+			if (pm->pm_ctx) {
+				if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 					cache_flush_page(va);
-					tlb_flush_page(va);
 				}
-				setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
-					 tpte & ~PPROT_WRITE);
+				tlb_flush_page(va);
 			}
+			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], npte);
 		}
 	}
 	simple_unlock(&pm->pm_lock);
