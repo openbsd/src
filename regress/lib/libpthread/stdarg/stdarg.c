@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.c,v 1.3 2001/09/20 16:43:16 todd Exp $	*/
+/*	$OpenBSD: stdarg.c,v 1.4 2001/12/12 21:18:34 fgsch Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
@@ -47,8 +47,9 @@ test1(char *fmt, ...)
 		EQ(p, &thing);
 		break;
 	    default:
-		fprintf(stderr, "unexpected character 0x%02x `%c' in %s(%p) at %p\n",
-			ch, ch, ofmt, ofmt, fmt);
+		fprintf(stderr,
+		    "unexpected character 0x%02x `%c' in %s(%p) at %p\n",
+		    ch, ch, ofmt, ofmt, fmt);
 		ASSERT(0);
 	    }
 	va_end(ap);
