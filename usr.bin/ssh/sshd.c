@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.66 1999/11/24 19:53:53 markus Exp $");
+RCSID("$Id: sshd.c,v 1.67 1999/12/06 12:10:12 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1525,7 +1525,8 @@ do_authenticated(struct passwd * pw)
 			debug("Allocating pty.");
 
 			/* Allocate a pty and open it. */
-			if (!pty_allocate(&ptyfd, &ttyfd, ttyname)) {
+			if (!pty_allocate(&ptyfd, &ttyfd, ttyname,
+			    sizeof(ttyname))) {
 				error("Failed to allocate pty.");
 				goto fail;
 			}
