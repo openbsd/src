@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.12 2001/01/26 11:08:25 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.13 2001/01/26 12:35:47 niklas Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include "libcrypto.h"
 #include "log.h"
 #include "ipsec_num.h"
+#include "isakmp_fld.h"
 #include "x509.h"
 
 u_int32_t file_sz;
@@ -92,6 +93,73 @@ open_file (char *name)
   close (fd);
 
   return addr;
+}
+
+/*
+ * Check that a certificate has a subjectAltName and that it matches our ID.
+ */
+int
+x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
+{
+  u_int8_t *altname;
+  u_int32_t altlen;
+  int type, idtype, ret;
+
+  type = x509_cert_subjectaltname (scert, &altname, &altlen);
+  if (!type)
+    {
+      log_print ("x509_check_subjectaltname: can't access subjectAltName");
+      return 0;
+    }
+
+  /* 
+   * Now that we have the X509 certicate in native form, get the
+   * subjectAltName extension and verify that it matches our ID.
+   */
+
+  /* XXX Get type of ID.  */
+  idtype = id[0];
+  id += ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+  id_len -= ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+
+  ret = 0;
+  switch (idtype)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      if (type == X509v3_IP_ADDR) 
+	ret = 1;
+      break;
+    case IPSEC_ID_FQDN:
+      if (type == X509v3_DNS_NAME) 
+	ret = 1;
+      break;
+    case IPSEC_ID_USER_FQDN:
+      if (type == X509v3_RFC_NAME) 
+	ret = 1;
+      break;
+    default:
+      ret = 0;
+      break;
+    }
+
+  if (!ret)
+    {
+      LOG_DBG ((LOG_CRYPTO, 50,
+		"x509_check_subjectaltname: "
+		"our ID type (%d) does not match X509 cert ID type (%d)",
+		idtype, type));
+      return 0;
+    }
+
+  if (altlen != id_len || memcmp (altname, id, id_len) != 0)
+    {
+      LOG_DBG ((LOG_CRYPTO, 50,
+		"x509_check_subjectaltname: "
+		"our ID does not match X509 cert ID"));
+      return 0;
+    }
+
+  return 1;
 }
 
 int
