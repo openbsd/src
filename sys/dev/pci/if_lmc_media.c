@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.6 2001/06/27 05:44:56 nate Exp $ */
-/* $Id: if_lmc_media.c,v 1.6 2001/06/27 05:44:56 nate Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.7 2001/06/27 06:02:50 nate Exp $ */
+/* $Id: if_lmc_media.c,v 1.7 2001/06/27 06:02:50 nate Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -1123,7 +1123,7 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 {
 	int t1stat;
 
-	/* read alarm 1 status (recieve) */
+	/* read alarm 1 status (receive) */
 	t1stat = lmc_t1_read (sc, 0x47);
 	/* blue alarm -- RAIS */
 	if (t1stat & 0x08) {
