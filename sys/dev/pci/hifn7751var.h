@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.50 2003/06/02 15:58:42 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.51 2003/10/09 03:47:20 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -59,6 +59,8 @@
 #define HIFN_3DES_KEY_LENGTH		24
 #define HIFN_MAX_CRYPT_KEY_LENGTH	HIFN_3DES_KEY_LENGTH
 #define HIFN_IV_LENGTH			8
+#define HIFN_AES_IV_LENGTH		16
+#define	HIFN_MAX_IV_LENGTH		HIFN_AES_IV_LENGTH
 
 /*
  *  Length values for authentication
@@ -103,7 +105,7 @@ struct hifn_dma {
 struct hifn_session {
 	int hs_state;
 	int hs_prev_op; /* XXX collapse into hs_flags? */
-	u_int8_t hs_iv[HIFN_IV_LENGTH];
+	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
 };
 
 /* We use a state machine on sessions */
@@ -151,11 +153,13 @@ struct hifn_softc {
 	int sc_maxses;
 	int sc_ramsize;
 	int sc_flags;
-#define	HIFN_HAS_RNG		1
-#define	HIFN_HAS_PUBLIC		2
-#define	HIFN_IS_7811		4
-#define	HIFN_NO_BURSTWRITE	8
-#define	HIFN_HAS_LEDS		16
+#define	HIFN_HAS_RNG		0x01	/* includes random number generator */
+#define	HIFN_HAS_PUBLIC		0x02	/* includes public key support */
+#define	HIFN_IS_7811		0x04	/* Hifn 7811 part */
+#define	HIFN_NO_BURSTWRITE	0x08	/* can't handle PCI burst writes */
+#define	HIFN_HAS_LEDS		0x10	/* Has LEDs to blink */
+#define	HIFN_HAS_AES		0x20	/* includes AES support */
+#define	HIFN_IS_7956		0x40	/* Hifn 7955/7956 part */
 	struct timeout sc_rngto, sc_tickto;
 	int sc_rngfirst;
 	int sc_rnghz;
@@ -249,7 +253,7 @@ struct hifn_softc {
 struct hifn_command {
 	u_int16_t session_num;
 	u_int16_t base_masks, cry_masks, mac_masks, comp_masks;
-	u_int8_t iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
+	u_int8_t iv[HIFN_MAX_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 	int cklen;
 	int sloplen, slopidx;
 
