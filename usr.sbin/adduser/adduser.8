@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.21 2001/04/09 18:31:36 deraadt Exp $
+.\"	$OpenBSD: adduser.8,v 1.22 2001/07/11 12:47:33 mpech Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -244,7 +244,7 @@ The default value is 1000 or as configured in the configuration file.
 This value is the end of the range where free UID values are
 searched for.
 This value must be more than the value of uid_start.
-The default value is 32000 or as configured in the configuration file.
+The default value is 2147483647 or as configured in the configuration file.
 .It Sy gid/login group
 This value is generated automatically, but can be specified at the
 discretion of the person invoking the program.
