@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.26 2005/01/14 04:21:18 david Exp $
+#	$OpenBSD: test-exec.sh,v 1.27 2005/02/27 11:33:30 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -35,6 +35,8 @@ else
 	exit 2
 fi
 unset SSH_AUTH_SOCK
+
+SRC=`dirname ${SCRIPT}`
 
 # defaults
 SSH=ssh
@@ -80,6 +82,10 @@ if [ ! -x /$SSHD ]; then
 	SSHD=`which sshd`
 fi
 
+if [ "x$TEST_SSH_LOGFILE" = "x" ]; then
+	TEST_SSH_LOGFILE=/dev/null
+fi
+
 # these should be used in tests
 export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN SFTP SFTPSERVER SCP
 #echo $SSH $SSHD $SSHAGENT $SSHADD $SSHKEYGEN $SSHKEYSCAN $SFTP $SFTPSERVER $SCP
@@ -103,6 +109,7 @@ cleanup ()
 
 trace ()
 {
+	echo "trace: $@" >>$TEST_SSH_LOGFILE
 	if [ "X$TEST_SSH_TRACE" = "Xyes" ]; then
 		echo "$@"
 	fi
@@ -110,6 +117,7 @@ trace ()
 
 verbose ()
 {
+	echo "verbose: $@" >>$TEST_SSH_LOGFILE
 	if [ "X$TEST_SSH_QUIET" != "Xyes" ]; then
 		echo "$@"
 	fi
@@ -118,12 +126,14 @@ verbose ()
 
 fail ()
 {
+	echo "FAIL: $@" >>$TEST_SSH_LOGFILE
 	RESULT=1
 	echo "$@"
 }
 
 fatal ()
 {
+	echo "FATAL: $@" >>$TEST_SSH_LOGFILE
 	echo -n "FATAL: "
 	fail "$@"
 	cleanup
@@ -142,7 +152,7 @@ cat << EOF > $OBJ/sshd_config
 	#ListenAddress		::1
 	PidFile			$PIDFILE
 	AuthorizedKeysFile	$OBJ/authorized_keys_%u
-	LogLevel		QUIET
+	LogLevel		DEBUG
 	AcceptEnv		_XXX_TEST_*
 	AcceptEnv		_XXX_TEST
 	Subsystem	sftp	$SFTPSERVER
@@ -214,7 +224,7 @@ chmod 644 $OBJ/authorized_keys_$USER
 # create a proxy version of the client config
 (
 	cat $OBJ/ssh_config
-	echo proxycommand ${SSHD} -i -f $OBJ/sshd_proxy
+	echo proxycommand sh ${SRC}/sshd-log-wrapper.sh ${SSHD} ${TEST_SSH_LOGFILE} -i -f $OBJ/sshd_proxy
 ) > $OBJ/ssh_proxy
 
 # check proxy config
@@ -224,7 +234,7 @@ start_sshd ()
 {
 	# start sshd
 	$SUDO ${SSHD} -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
-	$SUDO ${SSHD} -f $OBJ/sshd_config
+	$SUDO ${SSHD} -f $OBJ/sshd_config -e >>$TEST_SSH_LOGFILE 2>&1
 
 	trace "wait for sshd"
 	i=0;
