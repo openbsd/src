@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/03/27 11:52:07 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1997/03/27 16:18:02 niklas Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -157,9 +157,9 @@ define	USPACE		USPACE
 define	NBPG		NBPG
 define	PGSHIFT		PGSHIFT
 define	USRSTACK	USRSTACK
-#ifdef DRACO
+ifdef DRACO
 define	DRACO		DRACO
-#endif
+endif
 
 # user fields
 define	U_PROF		offsetof(struct user, u_stats.p_prof)
