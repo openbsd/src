@@ -1,5 +1,5 @@
 /* MD5.H - header file for MD5C.C
- * $OpenBSD: md5.h,v 1.9 2003/06/26 19:34:17 avsm Exp $
+ * $OpenBSD: md5.h,v 1.10 2003/08/01 17:38:33 avsm Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -43,7 +43,8 @@ void   MD5Final(unsigned char [16], MD5_CTX *);
 void   MD5Transform(u_int32_t [4], const unsigned char [64]);
 char * MD5End(MD5_CTX *, char *);
 char * MD5File(char *, char *);
-char * MD5Data(const unsigned char *, size_t, char *);
+char * MD5Data(const unsigned char *, size_t, char *)
+		__attribute__ ((__bounded__(__string__,3,2)));
 __END_DECLS
 
 #endif /* _MD5_H_ */

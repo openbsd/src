@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.27 2003/06/26 19:34:17 avsm Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.28 2003/08/01 17:38:33 avsm Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -188,7 +188,8 @@ int	 radixsort(const unsigned char **, int, const unsigned char *,
 int	 sradixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 
-char	*initstate(unsigned int, char *, size_t);
+char	*initstate(unsigned int, char *, size_t)
+		__attribute__((__bounded__ (__string__,2,3)));
 long	 random(void);
 char	*realpath(const char *, char *);
 char	*setstate(const char *);
@@ -218,7 +219,8 @@ void	 srand48(long);
 
 u_int32_t arc4random(void);
 void	arc4random_stir(void);
-void	arc4random_addrandom(unsigned char *, int);
+void	arc4random_addrandom(unsigned char *, int)
+	__attribute__((__bounded__ (__string__,1,2)));
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS

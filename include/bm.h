@@ -1,4 +1,4 @@
-/*	$OpenBSD: bm.h,v 1.6 2003/06/26 19:34:17 avsm Exp $	*/
+/*	$OpenBSD: bm.h,v 1.7 2003/08/01 17:38:33 avsm Exp $	*/
 /*	$NetBSD: bm.h,v 1.3 1994/10/26 00:55:46 cgd Exp $	*/
 
 /*-
@@ -51,7 +51,8 @@ typedef struct {
 
 __BEGIN_DECLS
 bm_pat	*bm_comp(u_char const *, size_t, u_char const *);
-u_char	*bm_exec(bm_pat *, u_char *, size_t);
+u_char	*bm_exec(bm_pat *, u_char *, size_t)
+		__attribute__ ((__bounded__(__string__,2,3)));
 void	 bm_free(bm_pat *);
 __END_DECLS
 
