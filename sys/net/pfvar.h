@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.34 2001/07/17 21:54:26 provos Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.35 2001/07/17 22:22:15 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -73,6 +73,7 @@ struct pf_rule {
 	u_int8_t	 flagset;
 
 	u_int8_t	 rule_flag;
+	u_int8_t	 min_ttl;	/* minimum ttl for packet normalize */
 };
 
 #define	PFRULE_RETURNRST	0x01

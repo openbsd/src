@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.6 2001/07/17 21:54:27 provos Exp $ */
+/*      $OpenBSD: parse.y,v 1.7 2001/07/17 22:22:16 provos Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -85,14 +85,14 @@ u_int32_t		 ipmask(u_int8_t);
 }
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP STATE PORT
-%token	RDR NAT ARROW NODF
+%token	RDR NAT ARROW NODF MINTTL
 %token	<string> STRING
 %token	<number> NUMBER
 %token	<i>	PORTUNARY PORTBINARY
 %type	<addr>	ipportspec ipspec host portspec
 %type	<addr2>	fromto
 %type	<iface> iface
-%type	<number> address port icmptype
+%type	<number> address port icmptype minttl
 %type	<i>	direction log quick keep proto nodf
 %type	<b>	action icmpspec flags blockspec
 %type	<range>	dport rport
@@ -105,7 +105,7 @@ ruleset:	/* empty */
 		| ruleset rdrrule '\n'
 		;
 
-pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf
+pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf minttl
 		{
 			struct pf_rule r;
 
@@ -141,6 +141,8 @@ pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf
 
 			if ($11)
 				r.rule_flag |= PFRULE_NODF;
+			if ($12)
+				r.min_ttl = $12;
 			
 			if (rule_consistent(&r) < 0)
 				yyerror("skipping rule due to errors");
@@ -358,6 +360,11 @@ keep:					{ $$ = 0; }
 		| KEEP STATE		{ $$ = 1; }
 		;
 
+minttl:					{ $$ = 0; }
+		| MINTTL NUMBER		{ $$ = $2; }
+		| MINTTL PORTUNARY NUMBER	{ $$ = $3; }
+		;
+
 nodf:					{ $$ = 0; }
 		| NODF			{ $$ = 1; }
 		;
@@ -495,9 +502,15 @@ rule_consistent(struct pf_rule *r)
 			yyerror("icmp-type/code does not apply to scrub");
 			problems++;
 		}
-	} else if (r->rule_flag & PFRULE_NODF) {
+	} else {
+		if (r->rule_flag & PFRULE_NODF) {
 			yyerror("nodf applies only to scrub");
 			problems++;
+		}
+		if (r->min_ttl) {
+			yyerror("min-ttl applies only to scrub");
+			problems++;
+		}
 	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
@@ -529,7 +542,8 @@ lookup(char *s)
 		{ "in",		IN}, 
 		{ "keep",	KEEP}, 
 		{ "log",	LOG}, 
-		{ "log-all",	LOGALL}, 
+		{ "log-all",	LOGALL},
+		{ "min-ttl",	MINTTL},
 		{ "nat",	NAT},
 		{ "no-df",	NODF},
 		{ "on",		ON}, 
