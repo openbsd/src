@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2004/07/03 05:32:18 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.20 2004/07/03 23:40:44 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -379,13 +379,13 @@ bad_path:
  * and rewrite to /dev/null if it's a bad path.
  */
 static void
-check_log_name(char *log, size_t loglen)
+check_log_name(char *lognam, size_t loglen)
 {
 	struct logname *lg;
 	char *p;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = log; *p && (p - log) < loglen; p++)
+	for (p = lognam; *p && (p - lognam) < loglen; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -394,12 +394,12 @@ check_log_name(char *log, size_t loglen)
 		lg = malloc(sizeof(struct logname));
 		if (!lg)
 			err(1, "check_log_name() malloc");
-		strlcpy(lg->path, log, MAXPATHLEN);
+		strlcpy(lg->path, lognam, MAXPATHLEN);
 		TAILQ_INSERT_TAIL(&lognames, lg, next);
 		break;
 	case STATE_RUNNING:
 		TAILQ_FOREACH(lg, &lognames, next)
-			if (!strcmp(lg->path, log))
+			if (!strcmp(lg->path, lognam))
 				return;
 		goto bad_path;
 		break;
@@ -412,8 +412,8 @@ check_log_name(char *log, size_t loglen)
 
 bad_path:
 	warnx("%s: invalid attempt to open %s: rewriting to /dev/null",
-	    __func__, log);
-	strlcpy(log, "/dev/null", loglen);
+	    __func__, lognam);
+	strlcpy(lognam, "/dev/null", loglen);
 }
 
 /* Crank our state into less permissive modes */
@@ -452,7 +452,7 @@ priv_open_tty(const char *tty)
 
 /* Open log-file */
 int
-priv_open_log(const char *log)
+priv_open_log(const char *lognam)
 {
 	char path[MAXPATHLEN];
 	int cmd, fd;
@@ -461,7 +461,7 @@ priv_open_log(const char *log)
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged child", __func__);
 
-	if (strlcpy(path, log, sizeof path) >= sizeof(path))
+	if (strlcpy(path, lognam, sizeof path) >= sizeof(path))
 		return -1;
 	path_len = strlen(path) + 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.81 2004/07/03 05:32:18 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.82 2004/07/03 23:40:44 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.81 2004/07/03 05:32:18 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.82 2004/07/03 23:40:44 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ struct filed {
 	int	f_prevpri;			/* pri of f_prevline */
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
-	int	f_repeatcount;			/* number of "repeated" msgs */
+	unsigned int f_repeatcount;		/* number of "repeated" msgs */
 	int	f_quick;			/* abort when matched */
 };
 
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 {
 	int ch, i, linesize, fd;
 	struct sockaddr_un fromunix;
-	struct sockaddr_in sin, frominet;
+	struct sockaddr_in s_in, frominet;
 	socklen_t len;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
@@ -364,11 +364,11 @@ main(int argc, char *argv[])
 			logerror("syslog/udp: unknown service");
 			die(0);
 		}
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_len = sizeof(sin);
-		sin.sin_family = AF_INET;
-		sin.sin_port = LogPort = sp->s_port;
-		if (bind(fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		memset(&s_in, 0, sizeof(s_in));
+		s_in.sin_len = sizeof(s_in);
+		s_in.sin_family = AF_INET;
+		s_in.sin_port = LogPort = sp->s_port;
+		if (bind(fd, (struct sockaddr *)&s_in, sizeof(s_in)) < 0) {
 			logerror("bind");
 			if (!Debug)
 				die(0);
@@ -1247,9 +1247,7 @@ cfline(char *line, struct filed *f, char *prog)
 	int i, pri, addr_len;
 	size_t rb_len;
 	char *bp, *p, *q, *cp;
-	const char *errstr;
 	char buf[MAXLINE], ebuf[100];
-	char addr[MAXHOSTNAMELEN];
 	struct filed *xf;
 
 	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
@@ -1296,7 +1294,6 @@ cfline(char *line, struct filed *f, char *prog)
 			pri = LOG_PRIMASK + 1;
 		else {
 			/* ignore trailing spaces */
-			int i;
 			for (i=strlen(buf)-1; i >= 0 && buf[i] == ' '; i--) {
 				buf[i]='\0';
 			}
@@ -1774,7 +1771,7 @@ ctlconn_read_handler(void)
 	reply_hdr->flags = htonl(flags);
 
 	ctl_reply_size = reply_text_size + CTL_HDR_LEN;
-	dprintf("ctlcmd reply length %d\n", ctl_reply_size);
+	dprintf("ctlcmd reply length %lu\n", (u_long)ctl_reply_size);
 
 	/* Otherwise, set up to write out reply */
 	ctl_state = CTL_WRITING_REPLY;
