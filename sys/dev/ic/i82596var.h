@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.8 2002/09/23 06:11:50 mickey Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.9 2002/10/13 14:21:49 mickey Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -111,10 +111,10 @@
 #define IED_CMDS	0x80
 #define	IED_ALL		0xff
 
-#define B_PER_F		3		/* recv buffers per frame */
+#define B_PER_F		6		/* recv buffers per frame */
 #define	IE_RBUF_SIZE	256		/* size of each receive buffer;
 						MUST BE POWER OF TWO */
-#define	NTXBUF		2		/* number of transmit commands */
+#define	NTXBUF		4		/* number of transmit commands */
 #define	IE_TBUF_SIZE	ETHER_MAX_LEN	/* length of transmit buffer */
 
 #define IE_MAXMCAST	(IE_TBUF_SIZE/6)/* must fit in transmit buffer */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596reg.h,v 1.3 2001/03/23 00:16:49 mickey Exp $	*/
+/*	$OpenBSD: i82596reg.h,v 1.4 2002/10/13 14:21:49 mickey Exp $	*/
 /*	$NetBSD: i82586reg.h,v 1.7 1998/02/28 01:07:45 pk Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ struct __ie_recv_frame_desc {
 };
  */
 #define IE_RFRAME_SZ			24
-#define IE_RFRAME_ADDR(base,i)		((base) + (i) * 48)
+#define IE_RFRAME_ADDR(base,i)		((base) + (i) * 64)
 #define IE_RFRAME_STATUS(b,i)		(IE_RFRAME_ADDR(b,i) + 0)
 #define IE_RFRAME_LAST(b,i)		(IE_RFRAME_ADDR(b,i) + 2)
 #define IE_RFRAME_NEXT(b,i)		(IE_RFRAME_ADDR(b,i) + 4)
@@ -381,7 +381,7 @@ struct __ie_mcast_cmd {
 #define ie_mcast_status		com.ie_cmd_status
 
 	// size (in bytes) of multicast addresses
-	u_short		ie_mcast_bytes;
+	u_int16_t		ie_mcast_bytes;
 	struct __ie_en_addr ie_mcast_addrs[IE_MAXMCAST + 1];// space for them
 };
  */
