@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.39 2004/04/25 02:48:04 itojun Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.40 2004/07/17 13:24:58 henning Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -150,11 +150,6 @@
 #include <netipx/ipx_ip.h>
 #endif /* NSIP */
 
-#ifdef TPIP
-#include <netiso/tp_param.h>
-#include <netiso/tp_var.h>
-#endif /* TPIP */
-
 #ifdef EON
 #include <netiso/eonvar.h>
 #endif /* EON */
@@ -251,13 +246,6 @@ struct protosw inetsw[] = {
   rip_usrreq,
   igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
 },
-#ifdef TPIP
-{ SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
-  tpip_input,	0,		tpip_ctlinput,	tp_ctloutput,
-  tp_usrreq,
-  tp_init,	0,		tp_slowtimo,	tp_drain,
-},
-#endif /* TPIP */
 /* EON (ISO CLNL over IP) */
 #ifdef EON
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
