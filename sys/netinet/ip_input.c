@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.41 1999/09/23 07:20:35 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.42 1999/09/25 06:35:48 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1375,7 +1375,6 @@ ip_forward(m, srcrt)
 		break;
 	}
 
-	ip = mtod(mcopy, struct ip *);
 	icmp_error(mcopy, type, code, dest, destifp);
 }
 
