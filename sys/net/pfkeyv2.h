@@ -158,7 +158,8 @@ struct sadb_protocol {
   uint16_t sadb_protocol_exttype;
   uint8_t  sadb_protocol_proto;
   uint8_t  sadb_protocol_direction;
-  uint16_t sadb_protocol_reserved2;
+  uint8_t  sadb_protocol_flags;
+  uint8_t  sadb_protocol_reserved2;
 };
 
 struct sadb_x_policy {
@@ -264,6 +265,8 @@ struct sadb_x_cred {
 #define SADB_X_SAFLAGS_CHAINDEL  	0x008    /* Delete whole SA chain */
 #define SADB_X_SAFLAGS_RANDOMPADDING    0x080    /* Random ESP padding */
 #define SADB_X_SAFLAGS_NOREPLAY         0x100    /* No replay counter */
+
+#define SADB_X_POLICYFLAGS_POLICY       0x0001	/* This is a static policy */
 
 #define SADB_IDENTTYPE_RESERVED     0
 #define SADB_IDENTTYPE_PREFIX       1
