@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$OpenBSD: apinstall,v 1.1 1996/03/05 11:25:31 mickey Exp $
+#	$OpenBSD: apinstall,v 1.2 1996/03/05 11:49:32 mickey Exp $
 #
 # Postinstall script for NetBSD Aperture Driver
 # 
@@ -13,4 +13,6 @@ fi
 echo "Major device number: $3"
 rm -f /dev/xf86
 mknod /dev/xf86 c $3 0
+chown root.wheel /dev/xf86
+chmod 600 /dev/xf86
 exit 0
