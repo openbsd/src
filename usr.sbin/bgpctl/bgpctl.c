@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.34 2004/01/21 23:47:35 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.35 2004/01/22 03:09:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -494,7 +494,8 @@ show_nexthop_msg(struct imsg *imsg)
 void
 show_interface_head(void)
 {
-	printf("%-20s%-20s%-20s\n", "Interface", "Flags", "Link state");
+	printf("%-15s%-15s%-15s%s\n", "Interface", "Nexthop state", "Flags",
+	    "Link state");
 }
 
 const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
@@ -558,8 +559,9 @@ show_interface_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
 		k = imsg->data;
-		printf("%-20s", k->ifname);
-		printf("%-20s", k->flags & IFF_UP ? "UP" : "");
+		printf("%-15s", k->ifname);
+		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
+		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
 		switch (k->media_type) {
 		case IFT_ETHER:
 			ifms_type = IFM_ETHER;
