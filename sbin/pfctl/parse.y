@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2001/08/19 16:16:41 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2001/08/23 04:14:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -84,6 +84,16 @@ void			 expand_rule(struct pf_rule *, struct node_proto *,
 			    struct node_host *, struct node_port *,
 			    struct node_host *, struct node_port *);
 
+struct sym {
+	struct sym *next;
+	char *nam;
+	char *val;
+};
+struct sym *symhead = NULL;
+
+int	symset(char *name, char *val);
+char *	symget(char *name);
+
 typedef struct {
 	union {
 		u_int32_t		number;
@@ -124,7 +134,7 @@ typedef struct {
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.iface> iface natiface
 %type	<v.number> port icmptype minttl
-%type	<v.i>	direction log quick keep nodf
+%type	<v.i>	dir log quick keep nodf
 %type	<v.b>	action icmpspec flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
@@ -134,15 +144,26 @@ typedef struct {
 %type	<v.port>	portspec port_list port_item
 %%
 
-ruleset:	/* empty */
+ruleset		: /* empty */
 		| ruleset '\n'
 		| ruleset pfrule '\n'
 		| ruleset natrule '\n'
 		| ruleset rdrrule '\n'
+		| ruleset varset '\n'
 		| ruleset error '\n'		{ errors++; }
 		;
 
-pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf minttl
+varset		: STRING PORTUNARY STRING
+		{
+			printf("%s = %s\n", $1, $3);
+			if (symset($1, $3) == -1) {
+				yyerror("cannot store variable %s", $1);
+				YYERROR;
+			}
+		}
+		;
+
+pfrule		: action dir log quick iface proto fromto flags icmpspec keep nodf minttl
 		{
 			struct pf_rule r;
 
@@ -179,12 +200,12 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 		}
 		;
 
-action:		PASS			{ $$.b1 = PF_PASS; }
+action		: PASS			{ $$.b1 = PF_PASS; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
 		| SCRUB			{ $$.b1 = PF_SCRUB; }
 		;
 
-blockspec:				{ $$.b2 = 0; $$.w = 0; }
+blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 		| RETURNRST		{ $$.b2 = 1; $$.w = 0;}
 		| RETURNICMP		{
 			$$.b2 = 0;
@@ -202,38 +223,38 @@ blockspec:				{ $$.b2 = 0; $$.w = 0; }
 		}
 		;
 
-direction:	IN			{ $$ = PF_IN; }
-		| OUT			{ $$ = PF_OUT; }
+dir		: IN			{ $$ = PF_IN; }
+		| OUT				{ $$ = PF_OUT; }
 		;
 
-log:					{ $$ = 0; }
-		| LOG			{ $$ = 1; }
-		| LOGALL		{ $$ = 2; }
+log		: /* empty */			{ $$ = 0; }
+		| LOG				{ $$ = 1; }
+		| LOGALL			{ $$ = 2; }
 		;
 
-quick:					{ $$ = 0; }
-		| QUICK			{ $$ = 1; }
+quick		: /* empty */			{ $$ = 0; }
+		| QUICK				{ $$ = 1; }
 		;
 
-natiface:	iface
-		| ON '!' STRING		{
+natiface	: iface
+		| ON '!' STRING			{
 			$$.string = strdup($3); $$.not = 1;
 		}
 		;
-iface:					{ $$.string = NULL; }
-		| ON STRING		{ $$.string = strdup($2); }
+iface		: /* empty */			{ $$.string = NULL; }
+		| ON STRING			{ $$.string = strdup($2); }
 		;
 
-proto:						{ $$ = NULL; }
+proto		: /* empty */			{ $$ = NULL; }
 		| PROTO proto_item		{ $$ = $2; }
 		| PROTO '{' proto_list '}'	{ $$ = $3; }
 		;
 
-proto_list:	proto_item			{ $$ = $1; }
+proto_list	: proto_item			{ $$ = $1; }
 		| proto_list ',' proto_item	{ $3->next = $1; $$ = $3; }
 		;
 
-proto_item:	NUMBER			{
+proto_item	: NUMBER			{
 			struct protoent *p;
 
 			if ((p = getprotobynumber($1)) == NULL) {
@@ -244,7 +265,7 @@ proto_item:	NUMBER			{
 			$$->proto = p->p_proto;
 			$$->next = NULL;
 		}
-		| STRING		{
+		| STRING			{
 			struct protoent *p;
 
 			if ((p = getprotobyname($1)) == NULL) {
@@ -257,7 +278,7 @@ proto_item:	NUMBER			{
 		}
 		;
 
-fromto:		ALL			{
+fromto		: ALL				{
 			$$.src.host = NULL;
 			$$.src.port = NULL;
 			$$.dst.host = NULL;
@@ -269,27 +290,27 @@ fromto:		ALL			{
 		}
 		;
 
-ipportspec:	ipspec			{ $$.host = $1; $$.port = NULL; }
-		| ipspec PORT portspec	{
+ipportspec	: ipspec			{ $$.host = $1; $$.port = NULL; }
+		| ipspec PORT portspec		{
 			$$.host = $1;
 			$$.port = $3;
 		}
 		;
 
-ipspec:		ANY			{ $$ = NULL; }
-		| '!' host		{ $$ = $2; $$->not = 1; }
-		| host			{ $$ = $1; $$->not = 0; }
-		| '{' host_list '}'	{ $$ = $2; }
+ipspec		: ANY				{ $$ = NULL; }
+		| '!' host			{ $$ = $2; $$->not = 1; }
+		| host				{ $$ = $1; $$->not = 0; }
+		| '{' host_list '}'		{ $$ = $2; }
 		;
 
-host_list:	host			{ $$ = $1; }
-		| host_list ',' host	{ $3->next = $1; $$ = $3; }
+host_list	: host				{ $$ = $1; }
+		| host_list ',' host		{ $3->next = $1; $$ = $3; }
 
-host:		address			{
+host		: address			{
 			$$ = $1;
 			$$->mask = 0xffffffff;
 		}
-		| address '/' NUMBER	{
+		| address '/' NUMBER		{
 			if ($3 < 0 || $3 > 32) {
 				yyerror("illegal netmask value %d", $3);
 				YYERROR;
@@ -299,7 +320,7 @@ host:		address			{
 		}
 		;
 
-address:	STRING {
+address		: STRING			{
 			struct hostent *hp;
 
 			if ((hp = gethostbyname($1)) == NULL) {
@@ -321,15 +342,15 @@ address:	STRING {
 		}
 		;
 
-portspec:	port_item			{ $$ = $1; }
+portspec	: port_item			{ $$ = $1; }
 		| '{' port_list '}'		{ $$ = $2; }
 		;
 
-port_list:	port_item			{ $$ = $1; }
+port_list	: port_item			{ $$ = $1; }
 		| port_list ',' port_item	{ $3->next = $1; $$ = $3; }
 		;
 
-port_item:	port				{
+port_item	: port				{
 			$$ = malloc(sizeof(struct node_port));
 			$$->port[0] = $1;
 			$$->port[1] = $1;
@@ -349,14 +370,14 @@ port_item:	port				{
 		}
 		;
 
-port:		NUMBER				{
+port		: NUMBER			{
 			if (0 > $1 || $1 > 65535) {
 				yyerror("illegal port value %d", $1);
 				YYERROR;
 			}
 			$$ = htons($1);
 		}
-		| STRING		{
+		| STRING			{
 			struct servent *s = NULL;
 
 			s = getservbyname($1, "tcp");
@@ -370,7 +391,7 @@ port:		NUMBER				{
 		}
 		;
 
-flag:		STRING			{
+flag		: STRING			{
 			int f;
 
 			if ((f = parse_flags($1)) < 0) {
@@ -381,14 +402,14 @@ flag:		STRING			{
 		}
 		;
 
-flags:					{ $$.b1 = 0; $$.b2 = 0; }
-		| FLAGS flag		{ $$.b1 = $2.b1; $$.b2 = 63; }
-		| FLAGS flag "/" flag	{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
-		| FLAGS "/" flag	{ $$.b1 = 0; $$.b2 = $3.b1; }
+flags		: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
+		| FLAGS flag			{ $$.b1 = $2.b1; $$.b2 = 63; }
+		| FLAGS flag "/" flag		{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
+		| FLAGS "/" flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
-icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
-		| ICMPTYPE icmptype	{ $$.b1 = $2; $$.b2 = 0; }
+icmpspec	: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
+		| ICMPTYPE icmptype		{ $$.b1 = $2; $$.b2 = 0; }
 		| ICMPTYPE icmptype CODE NUMBER	{
 			if ($4 < 0 || $4 > 255) {
 				yyerror("illegal icmp code %d", $4);
@@ -409,7 +430,7 @@ icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
 		}
 		;
 
-icmptype:	STRING			{
+icmptype	: STRING			{
 			struct icmptypeent *p;
 
 			if ((p = geticmptypebyname($1)) == NULL) {
@@ -418,7 +439,7 @@ icmptype:	STRING			{
 			}
 			$$ = p->type + 1;
 		}
-		| NUMBER		{
+		| NUMBER			{
 			if ($1 < 0 || $1 > 255) {
 				yyerror("illegal icmp type %d", $1);
 				YYERROR;
@@ -428,12 +449,12 @@ icmptype:	STRING			{
 		;
 
 
-keep:					{ $$ = 0; }
-		| KEEP STATE		{ $$ = 1; }
+keep		: /* empty */			{ $$ = 0; }
+		| KEEP STATE			{ $$ = 1; }
 		;
 
-minttl:					{ $$ = 0; }
-		| MINTTL NUMBER		{
+minttl		: /* empty */			{ $$ = 0; }
+		| MINTTL NUMBER			{
 			if ($2 < 0 || $2 > 255) {
 				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
@@ -442,11 +463,11 @@ minttl:					{ $$ = 0; }
 		}
 		;
 
-nodf:					{ $$ = 0; }
-		| NODF			{ $$ = 1; }
+nodf		: /* empty */			{ $$ = 0; }
+		| NODF				{ $$ = 1; }
 		;
 
-natrule:	NAT natiface proto FROM ipspec TO ipspec ARROW address
+natrule		: NAT natiface proto FROM ipspec TO ipspec ARROW address
 		{
 			struct pf_nat nat;
 
@@ -454,7 +475,6 @@ natrule:	NAT natiface proto FROM ipspec TO ipspec ARROW address
 				yyerror("nat rule not permitted in filter mode");
 				YYERROR;
 			}
-
 			memset(&nat, 0, sizeof(nat));
 
 			if ($2.string) {
@@ -485,12 +505,11 @@ natrule:	NAT natiface proto FROM ipspec TO ipspec ARROW address
 			}
 			nat.raddr = $9->addr;
 			free($9);
-
 			pfctl_add_nat(pf, &nat);
 		}
 		;
 
-rdrrule:	RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
+rdrrule		: RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
 		{
 			struct pf_rdr rdr;
 
@@ -498,7 +517,6 @@ rdrrule:	RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
 				yyerror("rdr rule not permitted in filter mode");
 				YYERROR;
 			}
-
 			memset(&rdr, 0, sizeof(rdr));
 
 			if ($2.string) {
@@ -541,7 +559,7 @@ rdrrule:	RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
 		}
 		;
 
-dport:		PORT port			{
+dport		: PORT port			{
 			$$.a = $2;
 			$$.b = $$.t = 0;
 		}
@@ -552,7 +570,7 @@ dport:		PORT port			{
 		}
 		;
 
-rport:		PORT port			{
+rport		: PORT port			{
 			$$.a = $2;
 			$$.b = $$.t = 0;
 		}
@@ -562,7 +580,6 @@ rport:		PORT port			{
 			$$.t = PF_RPORT_RANGE;
 		}
 		;
-
 %%
 
 int
@@ -761,12 +778,26 @@ lookup(char *s)
 	return (STRING);
 }
 
+char	*parsebuf;
+int	parseindex;
+
 int
 lgetc(FILE *fin)
 {
 	int c, next;
 
 restart:
+	if (parsebuf) {
+		/* Reading characters from the parse buffer, instead of input */
+		c = parsebuf[parseindex++];
+		if (c != '\0')
+			return (c);
+		free(parsebuf);
+		parsebuf = NULL;
+		parseindex = 0;
+		goto restart;
+	}
+
 	c = getc(fin);
 	if (c == '\\') {
 		next = getc(fin);
@@ -782,26 +813,102 @@ restart:
 }
 
 int
+lungetc(int c, FILE *fin)
+{
+	if (parsebuf && parseindex) {
+		/* XXX breaks on index 0 */
+		parseindex--;
+		return (c);
+	}
+	return ungetc(c, fin);
+}
+
+int
+findeol()
+{
+	int c;
+
+	if (parsebuf) {
+		free(parsebuf);
+		parsebuf = NULL;
+		parseindex = 0;
+	}
+
+	/* skip to either EOF or the first real EOL */
+	while (1) {
+		c = lgetc(fin);
+		if (c == '\\') {
+			c = lgetc(fin);
+			if (c == '\n')
+				continue;
+		}
+		if (c == EOF || c == '\n')
+			break;
+	}
+	return (ERROR);
+}
+
+int
 yylex(void)
 {
-	char *p, buf[8096];
-	int c, next;
+	char buf[8096], *p, *val;
+	int endc, c, next;
 	int token;
 
+top:
+	p = buf;
 	while ((c = lgetc(fin)) == ' ' || c == '\t')
 		;
-	
+
 	yylval.lineno = lineno;
 	if (c == '#')
 		while ((c = lgetc(fin)) != '\n' && c != EOF)
 			;
-	if (c == '-') {
-		next = lgetc(fin);
-		if (next == '>')
-			return (ARROW);
-		ungetc(next, fin);
+	if (c == '$' && parsebuf == NULL) {
+		while (1) {
+			if ((c = lgetc(fin)) == EOF)
+				return (0);
+			if (p + 1 >= buf + sizeof(buf) - 1) {
+				yyerror("string too long");
+				return (findeol());
+			}
+			if (isalnum(c)) {
+				*p++ = (char)c;
+				continue;
+			}
+			*p = '\0';
+			lungetc(c, fin);
+			break;
+		}
+		val = symget(buf);
+		if (val == NULL)
+			return (ERROR);
+		parsebuf = strdup(val);
+		parseindex = 0;
+		goto top;
 	}
+
 	switch (c) {
+	case '\'':
+	case '"':
+		endc = c;
+		while (1) {
+			if ((c = lgetc(fin)) == EOF)
+				return (0);
+			if (c == endc) {
+				*p = '\0';
+				break;
+			}
+			if (c == '\n')
+				continue;
+			if (p + 1 >= buf + sizeof(buf) - 1) {
+				yyerror("string too long");
+				return (findeol());
+			}
+			*p++ = (char)c;
+		}
+		yylval.v.string = strdup(buf);
+		return (STRING);
 	case '=':
 		yylval.v.i = PF_OP_EQ;
 		return (PORTUNARY);
@@ -811,7 +918,7 @@ yylex(void)
 			yylval.v.i = PF_OP_NE;
 			return (PORTUNARY);
 		}
-		ungetc(next, fin);
+		lungetc(next, fin);
 		break;
 	case '<':
 		next = lgetc(fin);
@@ -822,7 +929,7 @@ yylex(void)
 			yylval.v.i = PF_OP_LE;
 		} else {
 			yylval.v.i = PF_OP_LT;
-			ungetc(next, fin);
+			lungetc(next, fin);
 		}
 		return (PORTUNARY);
 		break;
@@ -835,33 +942,68 @@ yylex(void)
 			yylval.v.i = PF_OP_GE;
 		} else {
 			yylval.v.i = PF_OP_GT;
-			ungetc(next, fin);
+			lungetc(next, fin);
 		}
 		return (PORTUNARY);
 		break;
+	case '-':
+		next = lgetc(fin);
+		if (next == '>')
+			return (ARROW);
+		lungetc(next, fin);
+		break;
 	}
+
 	if (isdigit(c)) {
+		int index = 0, base = 10;
+		u_int64_t n = 0;
+
 		yylval.v.number = 0;
-		do {
-			u_int64_t n = (u_int64_t)yylval.v.number * 10 + c - '0';
-			if (n > 0xffffffff) {
+		while (1) {
+			if (base == 10) {
+				if (!isdigit(c))
+					break;
+				c -= '0';
+			} else if (base == 16) {
+				if (isdigit(c))
+					c -= '0';
+				else if (c >= 'a' && c <= 'f')
+					c -= 'a';
+				else if (c >= 'A' && c <= 'F')
+					c -= 'A';
+				else
+					break;
+			}
+			n = n * base + c;
+
+			if (n > UINT_MAX) {
 				yyerror("number is too large");
 				return (ERROR);
 			}
-			yylval.v.number = (u_int32_t)n;
-		} while ((c = lgetc(fin)) != EOF && isdigit(c));
-		ungetc(c, fin);
+			c = lgetc(fin);
+			if (c == EOF)
+				break;
+			if (index++ == 0 && n == 0 && c == 'x') {
+				base = 16;
+				c = lgetc(fin);
+				if (c == EOF)
+					break;
+			}
+		}
+		yylval.v.number = (u_int32_t)n;
+
+		if (c != EOF)
+			lungetc(c, fin);
 		if (debug > 1)
 			fprintf(stderr, "number: %d\n", yylval.v.number);
 		return (NUMBER);
 	}
 
 #define allowed_in_string(x) \
-	isalnum(x) || (ispunct(x) && x != '(' && x != ')' && x != '<' \
-	&& x != '>' && x != '!' && x != '=' && x != '/' && x != '#' && x != ',')
+	isalnum(x) || (ispunct(x) && x != '(' && x != ')' && x != '<' && \
+	x != '>' && x != '!' && x != '=' && x != '/' && x != '#' && x != ',')
 
 	if (isalnum(c)) {
-		p = buf;
 		do {
 			*p++ = c;
 			if (p-buf >= sizeof buf) {
@@ -869,7 +1011,7 @@ yylex(void)
 				return (ERROR);
 			}
 		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
-		ungetc(c, fin);
+		lungetc(c, fin);
 		*p = '\0';
 		token = lookup(buf);
 		yylval.v.string = strdup(buf);
@@ -927,4 +1069,43 @@ new_addr(void)
 		err(1, "new_addr: malloc failed");
 	memset(ra, 0, sizeof(*ra));
 	return (ra);
+}
+
+/*
+ * Over-designed efficiency is a French and German concept, so how about
+ * we wait until they discover this ugliness and make it all fancy.
+ */
+int
+symset(char *nam, char *val)
+{
+	struct sym *sym;
+
+	sym = calloc(1, sizeof(*sym));
+	if (sym == NULL)
+		return (-1);
+	sym->nam = strdup(nam);
+	if (sym->nam == NULL) {
+		free(sym);
+		return (-1);
+	}
+	sym->val = strdup(val);
+	if (sym->val == NULL) {
+		free(sym->nam);
+		free(sym);
+		return (-1);
+	}
+	sym->next = symhead;
+	symhead = sym;
+	return (0);
+}
+
+char *
+symget(char *nam)
+{
+	struct sym *sym;
+
+	for (sym = symhead; sym; sym = sym->next)
+		if (strcmp(nam, sym->nam) == 0)
+			return (sym->val);
+	return (NULL);
 }
