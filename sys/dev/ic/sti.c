@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.16 2003/01/31 03:44:26 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.17 2003/01/31 17:00:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -193,7 +193,7 @@ sti_attach_common(sc)
 	    "end=%x, mmap=%x, msto=%x, timo=%d, mont=%x, ua=%x\n"
 	    "memrq=%x, pwr=%d, bus=%x, ebus=%x, altt=%x, cfb=%x\n"
 	    "code=",
-	    dd->dd_type, dd->dd_grrev, dd->dd_lrrev,
+	    dd->dd_type & 0xff, dd->dd_grrev, dd->dd_lrrev,
 	    dd->dd_grid[0], dd->dd_grid[1],
 	    dd->dd_fntaddr, dd->dd_maxst, dd->dd_romend,
 	    dd->dd_reglst, dd->dd_maxreent,
@@ -342,12 +342,19 @@ sti_attach_common(sc)
 	{
 		struct wsemuldisplaydev_attach_args waa;
 
-		/* attach WSDISPLAY */
-		bzero(&waa, sizeof(waa));
 		waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
 		waa.scrdata = &sti_default_screenlist;
 		waa.accessops = &sti_accessops;
 		waa.accesscookie = sc;
+
+		/* attach as console if required */
+		if (waa.console) {
+			long defattr;
+
+			sti_alloc_attr(sc, 0, 0, 0, &defattr);
+			wsdisplay_cnattach(&sti_default_screen, sc,
+			    0, sti_default_screen.nrows - 1, defattr);
+		}
 
 		config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
 	}
@@ -467,6 +474,7 @@ sti_bmove(sc, x1, y1, x2, y2, h, w, f)
 		a.in.bg_colour = 0;
 		break;
 	case bmf_invert:
+		a.flags.flags |= STI_BLKMVF_COLR;
 		a.in.fg_colour = 0;
 		a.in.bg_colour = 1;
 		break;
@@ -506,7 +514,7 @@ sti_mmap(v, offset, prot)
 	int prot;
 {
 	/* XXX not finished */
-	return offset;
+	return -1;
 }
 
 int
@@ -517,7 +525,17 @@ sti_alloc_screen(v, type, cookiep, cxp, cyp, defattr)
 	int *cxp, *cyp;
 	long *defattr;
 {
-	return -1;
+	struct sti_softc *sc = v;
+
+	if (sc->sc_nscreens > 0)
+		return ENOMEM;
+
+	*cookiep = sc;
+	*cxp = 0;
+	*cyp = 0;
+	sti_alloc_attr(sc, 0, 0, 0, defattr);
+	sc->sc_nscreens++;
+	return 0;
 }
 
 void
@@ -525,6 +543,9 @@ sti_free_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
+	struct sti_softc *sc = v;
+
+	sc->sc_nscreens--;
 }
 
 int
@@ -556,9 +577,9 @@ sti_cursor(v, on, row, col)
 	struct sti_font *fp = sc->sc_curfont;
 
 	sti_bmove(sc,
-	    row * fp->height, col * fp->width,
-	    row * fp->height, col * fp->width,
-	    fp->width, fp->height, bmf_invert);
+	    col * fp->width, row * fp->height,
+	    col * fp->width, row * fp->height,
+	    fp->height, fp->width, bmf_invert);
 }
 
 int
@@ -610,9 +631,9 @@ sti_copycols(v, row, srccol, dstcol, ncols)
 	struct sti_font *fp = sc->sc_curfont;
 
 	sti_bmove(sc,
-	    row * fp->height, srccol * fp->width,
-	    row * fp->height, dstcol * fp->width,
-	    ncols * fp->width, fp->height, bmf_copy);
+	    srccol * fp->width, row * fp->height,
+	    dstcol * fp->width, row * fp->height,
+	    fp->height, ncols * fp->width, bmf_copy);
 }
 
 void
@@ -625,9 +646,9 @@ sti_erasecols(v, row, startcol, ncols, attr)
 	struct sti_font *fp = sc->sc_curfont;
 
 	sti_bmove(sc,
-	    row * fp->height, startcol * fp->width,
-	    row * fp->height, startcol * fp->width,
-	    ncols * fp->width, fp->height, bmf_clear);
+	    startcol * fp->width, row * fp->height,
+	    startcol * fp->width, row * fp->height,
+	    fp->height, ncols * fp->width, bmf_clear);
 }
 
 void
@@ -638,8 +659,8 @@ sti_copyrows(v, srcrow, dstrow, nrows)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = sc->sc_curfont;
 
-	sti_bmove(sc, srcrow * fp->height, 0, dstrow * fp->height, 0,
-	    sc->sc_cfg.fb_width, nrows + fp->height, bmf_copy);
+	sti_bmove(sc, 0, srcrow * fp->height, 0, dstrow * fp->height,
+	    nrows * fp->height, sc->sc_cfg.fb_width, bmf_copy);
 }
 
 void
@@ -651,8 +672,8 @@ sti_eraserows(v, srcrow, nrows, attr)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = sc->sc_curfont;
 
-	sti_bmove(sc, srcrow * fp->height, 0, srcrow * fp->height, 0,
-	    sc->sc_cfg.fb_width, nrows + fp->height, bmf_clear);
+	sti_bmove(sc, 0, srcrow * fp->height, 0, srcrow * fp->height,
+	    nrows * fp->height, sc->sc_cfg.fb_width, bmf_clear);
 }
 
 int
