@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.9 1996/12/02 21:14:16 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.10 1997/03/11 09:12:25 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.9 1996/12/02 21:14:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.10 1997/03/11 09:12:25 maja Exp $";
 #endif
 
 /*
@@ -75,6 +75,7 @@ struct opt_map {
 	DBM	*db;			/* database */
 	struct opt_domain *dom;		/* back ptr to our domain */
 	int	host_lookup;		/* host lookup */
+	int	secure;			/* secure map? */
 	CIRCLEQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
 	LIST_ENTRY(opt_map) mapsl;	/* map list pointers */
 };
@@ -226,6 +227,7 @@ ypdb_open_db(domain, map, status, map_info)
 {
 	char map_path[MAXPATHLEN];
 	static char   *domain_key = YP_INTERDOMAIN_KEY;
+	static char   *secure_key = YP_SECURE_KEY;
 	struct	stat finfo;
 	DBM	*db;
 	int	fd;
@@ -359,11 +361,16 @@ ypdb_open_db(domain, map, status, map_info)
 			m->host_lookup = TRUE;
 		}
 	}
+	m->secure = FALSE;
+	k.dptr = secure_key;
+	k.dsize = YP_SECURE_LEN;
+	v = ypdb_fetch(db,k);
+	if (v.dptr) m->secure = TRUE;
 	*status = YP_TRUE;
 	if (map_info) *map_info = m;
 #ifdef DEBUG
-	     yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, db=0x%x", 
-			domain, map, m->host_lookup, m->db);
+	     yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=0x%x", 
+			domain, map, m->host_lookup, m->secure, m->db);
 #endif
 	return(m->db);
 }
@@ -750,3 +757,27 @@ ypdb_xdr_get_all(xdrs, req)
 	
 	return (TRUE);
 }
+
+int
+ypdb_secure(domain, map)
+	domainname	domain;
+	mapname		map;
+{
+	static	ypresp_val res;
+	DBM	*db;
+	int	secure;
+	struct opt_map *map_info = NULL;
+
+	bzero((char *)&res, sizeof(res));
+	secure = FALSE;
+
+	db = ypdb_open_db(domain, map, &res.stat, &map_info);
+	if (!db || res.stat < 0) 
+		return(secure);			/* ? */
+	if (map_info)
+		secure = map_info->secure;
+
+	ypdb_close_db(db);
+	return(secure);
+}
+

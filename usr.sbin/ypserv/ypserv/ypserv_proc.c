@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.8 1996/10/03 19:50:57 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.9 1997/03/11 09:12:27 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.8 1996/10/03 19:50:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.9 1997/03/11 09:12:27 maja Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -66,6 +66,7 @@ extern ypresp_order ypdb_get_order();
 extern ypresp_master ypdb_get_master();
 extern bool_t ypdb_xdr_get_all();
 extern void ypdb_close_all();
+extern int ypdb_secure();
 
 static char *True = "true";
 static char *False = "FALSE";
@@ -80,7 +81,7 @@ ypproc_null_2_svc(argp, rqstp)
 	int ok = acl_check_host(&caller->sin_addr);
 
 	YPLOG("null_2: caller=[%s].%d, auth_ok=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok));
+	      inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok));
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
@@ -108,8 +109,8 @@ ypproc_domain_2_svc(argp, rqstp)
 				    (finfo.st_mode & S_IFDIR));
 
 	YPLOG("domain_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), 
-	  TORF(ok), *argp, TORF(result));
+	      inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), 
+	      TORF(ok), *argp, TORF(result));
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
@@ -159,10 +160,12 @@ ypproc_match_2_svc(argp, rqstp)
 	static ypresp_val res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
 	YPLOG(
-	  "match_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  "match_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
 	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
 
 	if (!ok) {
@@ -170,8 +173,12 @@ ypproc_match_2_svc(argp, rqstp)
 		return(NULL);
 	}
 
-	res = ypdb_get_record(argp->domain,argp->map,argp->key, FALSE);
-	
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.stat = YP_YPERR;
+	} else {
+		res = ypdb_get_record(argp->domain,argp->map,argp->key, FALSE);
+	}
+
 #ifdef DEBUG
 	yplog("  match2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
@@ -187,9 +194,11 @@ ypproc_first_2_svc(argp, rqstp)
 	static ypresp_key_val res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
-	YPLOG( "first_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	YPLOG( "first_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
 	  argp->domain, argp->map);
 	
 	if (!ok) {
@@ -197,7 +206,11 @@ ypproc_first_2_svc(argp, rqstp)
 		return(NULL);
 	}
 
-	res = ypdb_get_first(argp->domain,argp->map,FALSE);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.stat = YP_YPERR;
+	} else {
+		res = ypdb_get_first(argp->domain,argp->map,FALSE);
+	}
 
 #ifdef DEBUG
 	yplog("  first2_status: %s", yperr_string(ypprot_err(res.stat)));
@@ -214,10 +227,12 @@ ypproc_next_2_svc(argp, rqstp)
 	static ypresp_key_val res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
 	YPLOG(
-	  "next_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  "next_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
 	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
 
 	if (!ok) {
@@ -225,8 +240,11 @@ ypproc_next_2_svc(argp, rqstp)
 		return(NULL);
 	}
 
-	res = ypdb_get_next(argp->domain,argp->map,argp->key,FALSE);
-
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.stat = YP_YPERR;
+	} else {
+		res = ypdb_get_next(argp->domain,argp->map,argp->key,FALSE);
+	}
 
 #ifdef DEBUG
 	yplog("  next2_status: %s", yperr_string(ypprot_err(res.stat)));
@@ -335,10 +353,11 @@ ypproc_all_2_svc(argp, rqstp)
 	pid_t pid;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
-	YPLOG( "all_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  argp->domain, argp->map);
+	YPLOG( "all_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
@@ -347,16 +366,21 @@ ypproc_all_2_svc(argp, rqstp)
 
 	bzero((char *)&res, sizeof(res));
 	
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.ypresp_all_u.val.stat = YP_YPERR;
+		return(&res);
+	}
+
 	pid = fork();
 
 	if (pid) {
 
-	  if (pid == -1) {
-	    /* XXXCDC An error has occurred */
-	  }
-
-	  return(NULL); /* PARENT: continue */
-	  
+		if (pid == -1) {
+			/* XXXCDC An error has occurred */
+		}
+		
+		return(NULL); /* PARENT: continue */
+		
 	}
 	/* CHILD: send result, then exit */
 
@@ -378,17 +402,22 @@ ypproc_master_2_svc(argp, rqstp)
 	static peername nopeer = "";
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
-	YPLOG( "master_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  argp->domain, argp->map);
+	YPLOG( "master_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
 
-	res = ypdb_get_master(argp->domain,argp->map);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.stat = YP_YPERR;
+	} else {
+		res = ypdb_get_master(argp->domain,argp->map);
+	}
 
 #ifdef DEBUG
 	yplog("  master2_status: %s", yperr_string(ypprot_err(res.stat)));
@@ -404,7 +433,7 @@ ypproc_master_2_svc(argp, rqstp)
 	/* xdr_string in ypserv_xdr.c may be a better place?     */
 	
 	if (res.peer == NULL) {
-	  res.peer = nopeer;
+		res.peer = nopeer;
 	}
 
 	/* End of fix                                            */
@@ -421,17 +450,22 @@ ypproc_order_2_svc(argp, rqstp)
 	static ypresp_order res;
 	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
 	int ok = acl_check_host(&caller->sin_addr);
+	int secure = ypdb_secure(argp->domain,argp->map);
 
-	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
-	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
-	  argp->domain, argp->map);
+	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure), argp->domain, argp->map);
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
 
-	res = ypdb_get_order(argp->domain,argp->map);
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.stat = YP_YPERR;
+	} else {
+		res = ypdb_get_order(argp->domain,argp->map);
+	}
 
 #ifdef DEBUG
 	yplog("  order2_status: %s", yperr_string(ypprot_err(res.stat)));
