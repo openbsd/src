@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.16 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: uhub.c,v 1.17 2002/07/10 13:15:58 nate Exp $ */
 /*	$NetBSD: uhub.c,v 1.52 2001/10/26 17:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -268,6 +268,7 @@ USB_ATTACH(uhub)
 	 *  For all ports
 	 *     get port status
 	 *     if device connected
+	 *        wait 100 ms
 	 *        turn on reset
 	 *        wait
 	 *        clear C_PORT_RESET
@@ -423,8 +424,25 @@ uhub_explore(usbd_device_handle dev)
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status)) {
-			printf("uhub_explore: port=%d reset failed\n",
-				 port);
+			printf("%s: port %d reset failed\n",
+			       USBDEVNAME(sc->sc_dev), port);
+			continue;
+		}
+		/* Get port status again, it might have changed during reset */
+		err = usbd_get_port_status(dev, port, &up->status);
+		if (err) {
+			DPRINTF(("uhub_explore: get port status failed, "
+				 "error=%s\n", usbd_errstr(err)));
+			continue;
+		}
+		status = UGETW(up->status.wPortStatus);
+		change = UGETW(up->status.wPortChange);
+		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
+			/* Nothing connected, just ignore it. */
+#ifdef DIAGNOSTIC
+			printf("%s: port %d, device disappeared after reset\n",
+			       USBDEVNAME(sc->sc_dev), port);
+#endif
 			continue;
 		}
 
