@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.3 1996/12/08 15:15:50 niklas Exp $	*/
+/*	$OpenBSD: exit.c,v 1.4 1997/07/25 18:21:56 mickey Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -29,9 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifdef __STDC__
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #else
-#include <varargs.h>
+#include <machine/varargs.h>
 #endif
 
 #include "stand.h"
