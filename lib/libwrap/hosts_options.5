@@ -1,121 +1,172 @@
-.\"	$OpenBSD: hosts_options.5,v 1.1 1997/02/26 03:06:53 downsj Exp $
-.TH HOSTS_OPTIONS 5
-.SH NAME
-hosts_options \- host access control language extensions
-.SH DESCRIPTION
+.\"	$OpenBSD: hosts_options.5,v 1.2 1997/06/23 11:12:41 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd June 23, 1997
+.Dt HOSTS_OPTIONS 5
+.Os
+.Sh NAME
+.Nm hosts_options
+.Nd host access control language extensions
+.Sh DESCRIPTION
 This document describes optional extensions to the language described
-in the hosts_access(5) document. The extensions are enabled at program
-build time. For example, by editing the Makefile and turning on the 
-PROCESS_OPTIONS compile-time option.
-.PP
+in the
+.Xr hosts_access 5
+document.
+.\" The extensions are enabled at program build time.
+.\" For example, by editing the Makefile and turning on the 
+.\" PROCESS_OPTIONS compile-time option.
+.Pp
 The extensible language uses the following format:
-.sp
-.ti +3
+.Bd -unfilled -offset indent
 daemon_list : client_list : option : option ...
-.PP
-The first two fields are described in the hosts_access(5) manual page.
+.Ed
+.Pp
+The first two fields are described in the 
+.Xr hosts_access 5
+manual page.
 The remainder of the rules is a list of zero or more options.  Any ":"
 characters within options should be protected with a backslash.
-.PP
+.Pp
 An option is of the form "keyword" or "keyword value". Options are
 processed in the specified order. Some options are subjected to
 %<letter> substitutions. For the sake of backwards compatibility with
 earlier versions, an "=" is permitted between keyword and value.
-.SH LOGGING
-.IP "severity mail.info"
-.IP "severity notice"
+.Sh LOGGING
+.Bl -tag -width "severity mail.info"
+.It "severity mail.info"
+.It "severity notice"
 Change the severity level at which the event will be logged. Facility
 names (such as mail) are optional, and are not supported on systems
 with older syslog implementations. The severity option can be used
 to emphasize or to ignore specific events.
-.SH ACCESS CONTROL
-.IP "allow"
-.IP "deny"
+.El
+.Sh ACCESS CONTROL
+.Bl -tag -width allow
+.It "allow"
+.It "deny"
 Grant (deny) service. These options must appear at the end of a rule.
-.PP
-The \fIallow\fR and \fIdeny\fR keywords make it possible to keep all
+.El
+.Pp
+The 
+.Ar allow
+and
+.Ar deny
+keywords make it possible to keep all
 access control rules within a single file, for example in the
-\fIhosts.allow\fR file.
-.sp
+.Pa /etc/hosts.allow
+file.
+.Pp
 To permit access from specific hosts only:
-.sp
-.ne 2
-.ti +3
+.Pp
+.Bd -unfilled -offset indent
 ALL: .friendly.domain: ALLOW
-.ti +3
 ALL: ALL: DENY
-.sp
+.Ed
+.Pp
 To permit access from all hosts except a few trouble makers:
-.sp
-.ne 2
-.ti +3
+.Pp
+.Bd -unfilled -offset indent
 ALL: .bad.domain: DENY
-.ti +3
 ALL: ALL: ALLOW
-.sp
+.Ed
+.Pp
 Notice the leading dot on the domain name patterns.
-.SH RUNNING OTHER COMMANDS
-.IP "spawn shell_command"
+.Sh RUNNING OTHER COMMANDS
+.Bl -tag -width "spawn shell_command"
+.It "spawn shell_command"
 Execute, in a child process, the specified shell command, after
 performing the %<letter> expansions described in the hosts_access(5)
 manual page.  The command is executed with stdin, stdout and stderr
 connected to the null device, so that it won\'t mess up the
 conversation with the client host. Example:
-.sp
-.nf
-.ti +3
+.Bd -unfilled -offset indent
 spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) &
-.fi
-.sp
+.Ed
+.Pp
 executes, in a background child process, the shell command "safe_finger
 -l @%h | mail root" after replacing %h by the name or address of the
 remote host.
-.sp
+.Pp
 The example uses the "safe_finger" command instead of the regular
 "finger" command, to limit possible damage from data sent by the finger
 server. The "safe_finger" command is part of the daemon wrapper
 package; it is a wrapper around the regular finger command that filters
 the data sent by the remote host.
-.IP "twist shell_command"
+.It "twist shell_command"
 Replace the current process by an instance of the specified shell
 command, after performing the %<letter> expansions described in the
-hosts_access(5) manual page.  Stdin, stdout and stderr are connected to
+.Xr hosts_access 5
+manual page.  Stdin, stdout and stderr are connected to
 the client process. This option must appear at the end of a rule.
-.sp
+.Pp
 To send a customized bounce message to the client instead of
 running the real ftp daemon:
-.sp
-.nf
-.ti +3
-in.ftpd : ... : twist /bin/echo 421 Some bounce message
-.fi
-.sp
+.Bd -unfilled -offset indent
+ftpd : ... : twist /bin/echo 421 Some bounce message
+.Ed
+.Pp
 For an alternative way to talk to client processes, see the
-\fIbanners\fR option below.
-.sp
-To run /some/other/in.telnetd without polluting its command-line
+.Ar banners
+option below.
+.Pp
+To run /some/other/telnetd without polluting its command-line
 array or its process environment:
-.sp
-.nf
-.ti +3
-in.telnetd : ... : twist PATH=/some/other; exec in.telnetd
-.fi
-.sp
+.Bd -unfilled -offset indent
+telnetd : ... : twist PATH=/some/other; exec in.telnetd
+.Ed
+.Pp
 Warning:  in case of UDP services, do not twist to commands that use
-the standard I/O or the read(2)/write(2) routines to communicate with
+the standard I/O or the 
+.Xr read 2
+or
+.Xr write 2
+routines to communicate with
 the client process; UDP requires other I/O primitives.
-.SH NETWORK OPTIONS
-.IP "keepalive"
+.El
+.Sh NETWORK OPTIONS
+.Bl -tag -width "linger number_of_seconds"
+.It "keepalive"
 Causes the server to periodically send a message to the client.  The
 connection is considered broken when the client does not respond. The
 keepalive option can be useful when users turn off their machine while
 it is still connected to a server.  The keepalive option is not useful
 for datagram (UDP) services.
-.IP "linger number_of_seconds"
+.It "linger number_of_seconds"
 Specifies how long the kernel will try to deliver not-yet delivered
 data after the server process closes a connection. 
-.SH USERNAME LOOKUP
-.IP "rfc931 [ timeout_in_seconds ]"
+.El
+.Sh USERNAME LOOKUP
+.Bl -tag -width "rfc931 [ timeout_in_seconds ]"
+.It "rfc931 [ timeout_in_seconds ]"
 Look up the client user name with the RFC 931 (TAP, IDENT, RFC 1413)
 protocol.  This option is silently ignored in case of services based on
 transports other than TCP.  It requires that the client system runs an
@@ -123,51 +174,58 @@ RFC 931 (IDENT, etc.) -compliant daemon, and may cause noticeable
 delays with connections from non-UNIX clients.  The timeout period is
 optional. If no timeout is specified a compile-time defined default
 value is taken.
-.SH MISCELLANEOUS
-.IP "banners /some/directory"
-Look for a file in `/some/directory' with the same name as the daemon
-process (for example in.telnetd for the telnet service), and copy its
-contents to the client. Newline characters are replaced by
-carriage-return newline, and %<letter> sequences are expanded (see
-the hosts_access(5) manual page).
-.sp
-The tcp wrappers source code distribution provides a sample makefile
-(Banners.Makefile) for convenient banner maintenance.
-.sp
+.El
+.Sh MISCELLANEOUS
+.Bl -tag -width "banners /some/directory"
+.It "banners /some/directory"
+Look for a file in 
+.Pa /some/directory
+with the same name as the daemon process (for example 
+.Nm telnetd
+for the telnet service), and copy its contents to the client.
+Newline characters are replaced by carriage-return newline, and %<letter>
+sequences are expanded (see the
+.Xr hosts_access 5
+manual page).
+.Pp
+.\" The tcp wrappers source code distribution provides a sample makefile
+.\" (Banners.Makefile) for convenient banner maintenance.
+.\" .Pp
 Warning: banners are supported for connection-oriented (TCP) network
 services only.
-.IP "nice [ number ]"
+.It "nice [ number ]"
 Change the nice value of the process (default 10).  Specify a positive
 value to spend more CPU resources on other processes. 
-.IP "setenv name value"
+.It "setenv name value"
 Place a (name, value) pair into the process environment. The value is
 subjected to %<letter> expansions and may contain whitespace (but
 leading and trailing blanks are stripped off).
-.sp
+.Pp
 Warning: many network daemons reset their environment before spawning a
 login or shell process.
-.IP "umask 022"
+.It "umask 022"
 Like the umask command that is built into the shell. An umask of 022
 prevents the creation of files with group and world write permission.
 The umask argument should be an octal number.
-.IP "user nobody"
-.IP "user nobody.kmem"
+.It "user nobody"
+.It "user nobody.kmem"
 Assume the privileges of the "nobody" userid (or user "nobody", group
 "kmem"). The first form is useful with inetd implementations that run
 all services with root privilege. The second form is useful for
 services that need special group privileges only.
-.SH DIAGNOSTICS
+.El
+.Sh DIAGNOSTICS
 When a syntax error is found in an access control rule, the error
 is reported to the syslog daemon; further options will be ignored,
 and service is denied.
-.SH SEE ALSO
-hosts_access(5), the default access control language
-.SH AUTHOR
-.na
-.nf
+.Sh SEE ALSO
+.Xr hosts_access 5 .
+.Sh AUTHOR
+.Bd -unfilled -indent
 Wietse Venema (wietse@wzv.win.tue.nl)
 Department of Mathematics and Computing Science
 Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
+.Ed
 \" @(#) hosts_options.5 1.10 94/12/28 17:42:28
