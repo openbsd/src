@@ -1,11 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2001/10/08 22:40:50 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/01/01 23:05:30 art Exp $
 
 PROG=	dup2test
-NOMAN=	noman, no way, man
 
-install:
-
-regress:
-	./dup2test
-
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

@@ -1,12 +1,10 @@
-# $OpenBSD: Makefile,v 1.11 2001/11/26 16:53:27 jasoni Exp $
+# $OpenBSD: Makefile,v 1.12 2002/01/01 23:05:30 art Exp $
 
-NOMAN=
-NOPROG=
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13
 PFFAIL=1 2 3 4 5 6 7 8
 
 .for n in ${PFFAIL}
-regress: pfail${n}
+REGRESSTARGETS+=pfail${n}
 
 pfail${n}:
 	@pfctl -nv -R - < ${.CURDIR}/pfail${n}.in > /dev/null 2>&1 && \
@@ -16,7 +14,7 @@ pfail${n}:
 .endfor
 
 .for n in ${PFTESTS}
-regress: pf${n}
+REGRESSTARGETS+=pf${n}
 
 pf${n}: pf${n}.out
 	@cmp -s ${.CURDIR}/pf${n}.ok pf${n}.out || \
@@ -37,7 +35,6 @@ binat1.out:
 
 CLEANFILES+=binat1.out
 
-regress: binat1
+REGRESSTARGETS+=binat1
 
-.PHONY: regress
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

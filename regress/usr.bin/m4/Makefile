@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile,v 1.14 2001/10/14 09:41:55 todd Exp $
+#	$OpenBSD: Makefile,v 1.15 2002/01/01 23:05:30 art Exp $
 #	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
-
-NOMAN=
-NOPROG=
 
 FIBOMAX=25
 M4=m4
@@ -10,11 +7,9 @@ M4=m4
 .SUFFIXES: .m4 .m4.uu
 CLEANFILES+= ff_after_dnl.m4 strangequotes.m4 fibo.out
 
-ALL_TESTS= test-ff_after_dnl test-m4wrap test-m4wrap2 test-fibo \
+REGRESSTARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 test-fibo \
     test-patterns trip test-strangequotes test-redef test-quotes \
     test-weird test-args test-esyscmd
-
-regress: ${ALL_TESTS}
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -63,4 +58,4 @@ test-esyscmd:
 
 .PHONY:	${ALL_TESTS}
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

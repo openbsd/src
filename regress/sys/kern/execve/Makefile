@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2001/01/06 18:26:32 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/01/01 23:05:30 art Exp $
 
 PROG=	doexec
-NOMAN=	noman, no way, man
-
 LDSTATIC= -static
 
 RP=	${.OBJDIR}/${PROG}
@@ -16,9 +14,7 @@ CLEANFILES+= ${TESTFILES}
 
 all:	${PROG} ${TESTFILES}
 
-install:
-
-regress:	test-empty test-nonexist \
+REGRESSTARGETS=	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \
 		test-goodscript test-scriptarg test-scriptarg-nospace \
 		test-goodaout test-truncaout
@@ -85,4 +81,4 @@ truncaout: goodaout
 test-truncaout: ${PROG} truncaout
 	${RP} ${.OBJDIR}/truncaout | diff - ${OD}/truncaout
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

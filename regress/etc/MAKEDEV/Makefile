@@ -1,9 +1,5 @@
-# $OpenBSD: Makefile,v 1.6 2001/11/13 18:05:37 deraadt Exp $
 
-NOMAN=
-NOPROG=
-        
-regress: t1
+# $OpenBSD: Makefile,v 1.7 2002/01/01 23:00:51 art Exp $
 
 MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
@@ -12,7 +8,7 @@ ETCSRCDIR?=	/usr/src/etc
 
 # test separate targets, all, ramdisk/raminst, std, etc
 
-t1: ${MAKEDEVARCHS}
+REGRESSTARGETS=${MAKEDEVARCHS}
 
 ${MAKEDEVARCHS}:
 	@echo "====> ${.TARGET}"
@@ -29,8 +25,9 @@ ${MAKEDEVARCHS}:
 
 clean:
 	for f in ${MAKEDEVARCHS}; do rm -rf test.$$f; done
+	rm -f ${CLEANFILES}
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 regress ${MAKEDEVARCHS}
 CLEANFILES+=t1.*.out
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

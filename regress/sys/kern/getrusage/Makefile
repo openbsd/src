@@ -1,11 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2001/12/17 01:22:05 nordin Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/01/01 23:05:30 art Exp $
 
 PROG=	getrusage
-NOMAN=	noman, no way, man
 
-install:
-
-regress:
-	./getrusage
-
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

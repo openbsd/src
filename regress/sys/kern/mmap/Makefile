@@ -1,11 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2001/06/19 08:41:59 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/01/01 23:05:31 art Exp $
 
 PROG=	mmaptest
-NOMAN=	noman, no way, man
 
-install:
-
-regress:
-	./mmaptest
-
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>
