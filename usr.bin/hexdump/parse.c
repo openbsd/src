@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 1999/02/07 20:54:09 aaron Exp $	*/
+/*	$OpenBSD: parse.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.5 1999/02/07 20:54:09 aaron Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.5 1999/02/07 20:54:09 aaron Exp $";
 
 FU *endfu;					/* format at end-of-data */
 
+void
 addfile(name)
 	char *name;
 {
@@ -74,6 +75,7 @@ addfile(name)
 	(void)fclose(fp);
 }
 
+void
 add(fmt)
 	char *fmt;
 {
@@ -152,6 +154,7 @@ add(fmt)
 }
 
 static char *spec = ".#-+ 0123456789";
+int
 size(fs)
 	FS *fs;
 {
@@ -205,6 +208,7 @@ size(fs)
 	return(cursize);
 }
 
+void
 rewrite(fs)
 	FS *fs;
 {
@@ -445,6 +449,7 @@ sw2:					switch(fu->bcnt) {
 }
 
 
+void
 escape(p1)
 	register char *p1;
 {
@@ -487,6 +492,7 @@ escape(p1)
 	}
 }
 
+void
 badcnt(s)
 	char *s;
 {
@@ -495,6 +501,7 @@ badcnt(s)
 	exit(1);
 }
 
+void
 badsfmt()
 {
 	(void)fprintf(stderr,
@@ -502,6 +509,7 @@ badsfmt()
 	exit(1);
 }
 
+void
 badfmt(fmt)
 	char *fmt;
 {
@@ -509,6 +517,7 @@ badfmt(fmt)
 	exit(1);
 }
 
+void
 badconv(ch)
 	char *ch;
 {

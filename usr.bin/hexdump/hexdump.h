@@ -1,4 +1,4 @@
-/* *	$OpenBSD: hexdump.h,v 1.2 1996/06/26 05:34:19 deraadt Exp $*/
+/* *	$OpenBSD: hexdump.h,v 1.3 2001/09/30 07:17:03 pvalchev Exp $*/
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -75,3 +75,25 @@ extern FS *fshead;			/* head of format strings list */
 extern int blocksize;			/* data block size */
 enum _vflag { ALL, DUP, FIRST, WAIT };	/* -v values */
 char *emalloc();
+
+void	bpad __P((PR *));
+void	conv_c __P((PR *, u_char *));
+void	conv_u __P((PR *, u_char *));
+int	next __P((char **));
+void	doskip __P((char *, int));
+void	nomem __P((void));
+void	odoffset __P((int, char ***));
+void	newsyntax __P((int, char ***));
+void	oldsyntax __P((int, char ***));
+int	size __P((FS *));
+void	rewrite __P((FS *));
+void	display __P((void));
+void	badcnt __P((char *));
+void	add __P((char *));
+void	addfile __P((char *));
+void	badcnt __P((char *));
+void	badconv __P((char *));
+void	badfmt __P((char *));
+void	badsfmt __P((void));
+void	escape __P((char *));
+void	usage __P((void));
