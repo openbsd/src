@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.5 2003/03/08 21:44:31 beck Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.6 2003/03/09 02:37:58 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -59,8 +59,8 @@ Example:
 .Ic 	
 .Ic spews1:\e
 .Ic 	:black\e
-.Ic 	:msg="SPAM. Your address \%A is in the spews level\e
-.Ic 	1 database\en see http://www.spews.org/ask.cgi?x=%A\en":\e
+.Ic 	:msg="SPAM. Your address \&%A is in the spews\e
+.Ic 	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
 .Ic 	:method=http:\e	
 .Ic 	:file=www.spews.org/spews_list_level1.txt:
 .Ic \ \	
@@ -184,7 +184,7 @@ to be displayed in the SMTP dialogue to any connections that match
 addresses in the blacklist.
 The sequence \e" in the message will produce a double quote in the output.
 The sequence %% will produce a single % in the output,
-and the sequence %A will be expanded in the message by
+and the sequence \&%A will be expanded in the message by
 .Xr spamd 8
 to display the connecting IP address in the output.
 .Pp
