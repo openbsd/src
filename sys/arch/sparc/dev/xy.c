@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.22 2003/08/15 20:32:14 tedu Exp $	*/
+/*	$OpenBSD: xy.c,v 1.23 2003/09/29 09:08:19 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -1343,7 +1343,7 @@ xyc_startbuf(xycsc, xysc, bp)
  * [2] we can only be blocked if there is a WAIT type I/O request being
  * run.   since this can only happen when we are crashing, we wait a sec
  * and then steal the IOPB.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 

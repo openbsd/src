@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.7 2003/06/03 02:56:19 millert Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.8 2003/09/29 09:08:20 miod Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.7 2003/06/03 02:56:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.8 2003/09/29 09:08:20 miod Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -95,7 +95,7 @@ static state firstentry = { 0, STATE_NULL, 0, 0 };
 static state *headOfQueue = &firstentry;
 
 /* the following is a primitive adm3a table, to be used when nothing
- * else seems to be avaliable.
+ * else seems to be available.
  */
 
 #ifdef	DEBUG

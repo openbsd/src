@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.24 2003/06/02 07:06:56 deraadt Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.25 2003/09/29 09:08:19 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -425,7 +425,7 @@ ieattach(parent, self, aux)
         if (ca->ca_paddr == bootaddr)
                 bootdv = self;
 
-	/* get the first avaliable etherbuf */
+	/* get the first available etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
 	if (sc->sc_maddr == NULL) panic("ie: too many ethernet boards");
 	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)

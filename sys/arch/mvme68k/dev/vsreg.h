@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.4 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.5 2003/09/29 09:08:17 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,7 +134,7 @@ typedef struct LONGV
 
 #define M_IQAR_IQEA             0x8000  /* interrupt on queue entry avail */
 #define M_IQAR_IQEH             0x4000  /* interrupt on queue half empty */
-#define M_IQAR_ILVL             0x0700  /* interrupt lvl on queue avaliable */
+#define M_IQAR_ILVL             0x0700  /* interrupt lvl on queue available */
 #define M_IQAR_IVCT             0x00FF  /* interrupt vector on queue avail */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.16 2003/08/11 06:20:57 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.17 2003/09/29 09:08:19 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  *
  * bus_space/bus_dma'fied by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
- * The 53c710 datasheet is avaliable at:
+ * The 53c710 datasheet is available at:
  * http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/index.html
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.21 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: if_le.c,v 1.22 2003/09/29 09:08:17 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -311,7 +311,7 @@ leattach(parent, self, aux)
 	switch (lebustype) {
 	case BUS_VMES:
 		/* 
-		 * get the first avaliable etherbuf.  MVME376 uses its own dual-ported 
+		 * get the first available etherbuf.  MVME376 uses its own dual-ported 
 		 * RAM for etherbuf.  It is set by dip switches on board.  We support 
 		 * the four Motorola address locations, however, the board can be set up 
 		 * at any other address. We must map this space into the extio map. 

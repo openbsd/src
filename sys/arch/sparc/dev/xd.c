@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.25 2003/08/15 20:32:14 tedu Exp $	*/
+/*	$OpenBSD: xd.c,v 1.26 2003/09/29 09:08:19 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -1491,7 +1491,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
  * picked up later by the interrupt routine.  for case [2] the
  * programmed i/o driver is called with a special flag that says
  * return when one iopb is free.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 
