@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.16 2000/09/19 03:23:16 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.17 2000/10/11 09:14:15 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.122 2000/08/19 02:12:02 jinmei Exp $	*/
 
 /*
@@ -1388,17 +1388,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_LEAVE_GROUP:
 				error =	ip6_setmoptions(optname,
 					&inp->inp_moptions6, m);
-				/*
-				 * XXX: setting the flag would be redundant
-				 *      except at the first time. Also, we
-				 *      actually don't have to reset the flag,
-				 *      since ip6_freemoptions() would simply
-				 *      return when the inp_moptions6 is NULL.
-				 */
-				if (inp->inp_moptions6)
-					inp->inp_flags |= INP_IPV6_MCAST;
-				else
-					inp->inp_flags &= ~INP_IPV6_MCAST;
 				break;
 
 			case IPV6_PORTRANGE:

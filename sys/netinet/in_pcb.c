@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.47 2000/10/10 15:16:01 provos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.48 2000/10/11 09:14:10 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -366,6 +366,8 @@ in_pcbconnect(v, nam)
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6)
 		return (in6_pcbconnect(inp, nam));
+	if ((inp->inp_flags & INP_IPV6) != 0)
+		panic("IPv6 pcb passed into in_pcbconnect");
 #endif /* INET6 */
 
 	if (nam->m_len != sizeof (*sin))
@@ -450,13 +452,7 @@ in_pcbconnect(v, nam)
 		 * address of that interface as our source address.
 		 */
 		if (IN_MULTICAST(sin->sin_addr.s_addr) &&
-#ifdef INET6
-		    inp->inp_moptions != NULL &&
-		    !(inp->inp_flags & INP_IPV6_MCAST))
-#else
-		    inp->inp_moptions != NULL)
-#endif
-		{
+		    inp->inp_moptions != NULL) {
 			struct ip_moptions *imo;
 			struct ifnet *ifp;
 
@@ -510,14 +506,16 @@ in_pcbdisconnect(v)
 {
 	struct inpcb *inp = v;
 
+	switch (sotopf(inp->inp_socket)) {
 #ifdef INET6
-	if (sotopf(inp->inp_socket) == PF_INET6) {
+	case PF_INET6:
 		inp->inp_faddr6 = in6addr_any;
-		/* Disconnected AF_INET6 sockets cannot be "v4-mapped" */
-		inp->inp_flags &= ~INP_IPV6_MAPPED;
-	} else
+		break;
 #endif
+	case PF_INET:
 		inp->inp_faddr.s_addr = INADDR_ANY;
+		break;
+	}
 
 	inp->inp_fport = 0;
 	in_pcbrehash(inp);
@@ -968,14 +966,7 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 	 * interface has been set as a multicast option, use the
 	 * address of that interface as our source address.
 	 */
-	if (IN_MULTICAST(sin->sin_addr.s_addr) &&
-#if 0 /*def INET6*/
-	    mopts != NULL &&
-	    !(inp->inp_flags & INP_IPV6_MCAST))
-#else
-	    mopts != NULL)
-#endif
-	{
+	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
 		struct ip_moptions *imo;
 		struct ifnet *ifp;
 

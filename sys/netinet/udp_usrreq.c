@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.49 2000/09/22 17:51:46 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.50 2000/10/11 09:14:13 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -767,8 +767,7 @@ udp_output(m, va_alist)
 	va_end(ap);
 
 #ifdef INET6
-	v6packet = ((inp->inp_flags & INP_IPV6) &&
-		    !(inp->inp_flags & INP_IPV6_MAPPED));
+	v6packet = (inp->inp_flags & INP_IPV6);
 #endif
 
 #ifdef INET6
@@ -789,8 +788,7 @@ udp_output(m, va_alist)
 
 	        /*
 		 * Save current PCB flags because they may change during
-		 * temporary connection, particularly the INP_IPV6_UNDEC
-		 * flag.
+		 * temporary connection.
 		 */
                 pcbflags = inp->inp_flags;
 
@@ -925,8 +923,7 @@ udp_output(m, va_alist)
 
 		error = ip6_output(m, inp->inp_outputopts6, &inp->inp_route6, 
 		    inp->inp_socket->so_options & SO_DONTROUTE,
-		    (inp->inp_flags & INP_IPV6_MCAST)?inp->inp_moptions6:NULL,
-		    NULL);
+		    inp->inp_moptions6, NULL);
 	} else
 #endif /* INET6 */
 	{
@@ -972,20 +969,10 @@ udp_output(m, va_alist)
 		}
 
 		udpstat.udps_opackets++;
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6_MCAST) {
-			error = ip_output(m, inp->inp_options, &inp->inp_route,
-				inp->inp_socket->so_options &
-				(SO_DONTROUTE | SO_BROADCAST),
-				NULL, NULL, inp->inp_socket);
-		} else
-#endif /* INET6 */
-		{
-			error = ip_output(m, inp->inp_options, &inp->inp_route,
-				inp->inp_socket->so_options &
-				(SO_DONTROUTE | SO_BROADCAST),
-		    		inp->inp_moptions, inp, NULL);
-		}
+		error = ip_output(m, inp->inp_options, &inp->inp_route,
+			inp->inp_socket->so_options &
+			(SO_DONTROUTE | SO_BROADCAST),
+			inp->inp_moptions, inp, NULL);
 	}
 
 bail:
@@ -1153,10 +1140,12 @@ udp_usrreq(so, req, m, addr, control)
 			}
 		} else
 #endif /* INET6 */
+		{
 			if (inp->inp_faddr.s_addr == INADDR_ANY) {
 				error = ENOTCONN;
 				break;
 			}
+		}
 
 		s = splsoftnet();
 		in_pcbdisconnect(inp);

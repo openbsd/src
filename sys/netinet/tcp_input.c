@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.77 2000/09/25 09:41:02 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.78 2000/10/11 09:14:11 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -120,9 +120,8 @@ extern u_long sb_max;
 #ifdef INET6
 #define ND6_HINT(tp) \
 do { \
-	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) \
-	 && !(tp->t_inpcb->inp_flags & INP_IPV6_MAPPED) \
-	 && tp->t_inpcb->inp_route6.ro_rt) { \
+	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) && \
+	    tp->t_inpcb->inp_route6.ro_rt) { \
 		nd6_nud_hint(tp->t_inpcb->inp_route6.ro_rt, NULL, 0); \
 	} \
 } while (0)
@@ -762,10 +761,7 @@ findpcb:
 			  struct inpcb *oldinpcb = inp;
 			  
 			  inp = (struct inpcb *)so->so_pcb;
-			  inp->inp_flags |= (flags & (INP_IPV6 | INP_IPV6_UNDEC
-						      | INP_IPV6_MAPPED));
-			  if (flags & INP_IPV6_MAPPED)
-				panic("unexpected v4 mapped inpcb");
+			  inp->inp_flags |= (flags & INP_IPV6);
 			  if ((inp->inp_flags & INP_IPV6) != 0) {
 			    inp->inp_ipv6.ip6_hlim = 
 			      oldinpcb->inp_ipv6.ip6_hlim;
