@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.36 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.37 2004/04/07 14:09:35 aaron Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 	/*
 	 * Parse the command line arguments
 	 */
-	while ((ch = getopt(argc, argv, "hHbwit:p:a:u:g:c:r:loenvdmNU")) != -1) {
+	while ((ch = getopt(argc, argv, "hHbwit:p:a:u:g:c:loenvdmNU")) != -1) {
 		switch (ch) {
 		case 'h':
 			token_flag = 1;

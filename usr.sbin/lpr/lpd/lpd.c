@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.43 2003/11/08 19:17:29 jmc Exp $ */
+/*	$OpenBSD: lpd.c,v 1.44 2004/04/07 14:09:35 aaron Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.43 2003/11/08 19:17:29 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.44 2004/04/07 14:09:35 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 	options = 0;
 	gethostname(host, sizeof(host));
 
-	while ((i = getopt(argc, argv, "b:cdln:rsw:W")) != -1) {
+	while ((i = getopt(argc, argv, "b:dln:rsw:W")) != -1) {
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {

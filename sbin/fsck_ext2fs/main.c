@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2004/04/07 14:09:35 aaron Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #if 0
 static char rcsid[] = "$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2004/04/07 14:09:35 aaron Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "b:c:dfm:npy")) != -1) {
+	while ((ch = getopt(argc, argv, "b:dfm:npy")) != -1) {
 		switch (ch) {
 		case 'b':
 			skipclean = 0;
