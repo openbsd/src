@@ -112,7 +112,8 @@ do_syslog(pri, msg)
     /*
      * Log the full line, breaking into multiple syslog(3) calls if necessary
      */
-    for (p = msg, count = 0; count < strlen(msg) / MAXSYSLOGLEN + 1; count++) {
+    for (p = msg, count = 0; *p && count < strlen(msg) / MAXSYSLOGLEN + 1;
+	count++) {
 	if (strlen(p) > MAXSYSLOGLEN) {
 	    /*
 	     * Break up the line into what will fit on one syslog(3) line
@@ -135,7 +136,7 @@ do_syslog(pri, msg)
 	    *tmp = save;			/* restore saved character */
 
 	    /* Eliminate leading whitespace */
-	    for (p = tmp; *p != ' '; p++)
+	    for (p = tmp; *p != ' ' && *p !='\0'; p++)
 		;
 	} else {
 	    if (count == 0)
