@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.169 2000/04/03 01:53:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.170 2000/04/03 01:59:19 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -272,7 +272,7 @@ wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
 an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia? function ?			# Xircom Netwave
-#ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
+ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii? phy ?				# 3Com internal PHYs
