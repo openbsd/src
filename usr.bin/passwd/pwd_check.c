@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.2 2000/11/24 20:50:20 millert Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.3 2000/11/24 21:07:04 millert Exp $	*/
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -38,10 +38,12 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <err.h>
 #include <regex.h>
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <util.h>
 
 struct pattern {
 	char *match;
