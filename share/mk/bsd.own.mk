@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.73 2004/02/01 06:02:13 drahn Exp $
+#	$OpenBSD: bsd.own.mk,v 1.74 2004/02/07 23:49:05 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -20,7 +20,7 @@ YP?=		yes
 # integrated support for libwrap.
 TCP_WRAPPERS?=	yes
 # Set `AFS` to `yes' to build with AFS support.
-.if (${MACHINE_ARCH} == "m88k")
+.if (${MACHINE_ARCH} == "m88k") || (${MACHINE_ARCH} == "x86_64")
 AFS?=		no
 .else
 AFS?=		yes
