@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.19 1998/01/26 04:19:50 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 1998/09/15 10:23:23 pattonme Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -89,6 +89,7 @@ case $arg in
 all)
 	sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh MAKEDEV ipl
 	;;
 
 std)
@@ -132,6 +133,7 @@ ipl)
 	mk ipl c 75 0 600
 	mk ipnat c 75 1 600
 	mk ipstate c 75 2 600
+	mk ipauth c 75 3 600
 	;;
 
 tun*)

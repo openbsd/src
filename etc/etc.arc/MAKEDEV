@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.25 1998/09/11 16:21:04 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.26 1998/09/15 10:23:22 pattonme Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -104,6 +104,7 @@ std)
 	mknod stdin		c 7 0	; chmod 666 stdin
 	mknod stdout		c 7 1	; chmod 666 stdout
 	mknod stderr		c 7 2	; chmod 666 stderr
+	mknod ksyms		c 35 0  ; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
 ttyC*)
@@ -179,11 +180,12 @@ bpf*|tun*)
 	;;
 
 ipl)
-	rm -f ipl ipnat ipstate
+	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 31 0
 	mknod ipnat c 31 1
 	mknod ipstate c 31 2
-	chown root.wheel ipl ipnat ipstate 
+	mknod ipauth c 31 3
+	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 rd*)
