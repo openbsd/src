@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.38 2002/07/13 00:34:03 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.39 2002/12/09 11:19:39 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.38 2002/07/13 00:34:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.39 2002/12/09 11:19:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 		ttymode();
 	if (swapflag || totalflag)
 		swapmode();
-	exit (0);
+	exit(0);
 }
 
 void
