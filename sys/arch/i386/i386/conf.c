@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 1999/08/08 01:51:43 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 1999/08/13 05:38:05 fgsch Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -193,6 +193,12 @@ cdev_decl(bktr);
 cdev_decl(wdt);
 #include "ksyms.h"
 cdev_decl(ksyms);   
+#include "usb.h"
+cdev_decl(usb);
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -290,6 +296,9 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 59: i4b trace device */
 	cdev_notdef(),			/* 60: i4b phone device */
 	/* End of reserved slots for isdn4bsd. */
+	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
+	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
