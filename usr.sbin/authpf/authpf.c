@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.79 2004/04/28 00:22:39 djm Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.80 2004/04/28 05:06:13 cedric Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -57,10 +57,12 @@ static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
 static int	remove_stale_rulesets(void);
 static int	change_filter(int, const char *, const char *);
+static int	change_table(int, const char *, const char *);
 static void	authpf_kill_states(void);
 
 int	dev;			/* pf device */
 char	anchorname[PF_ANCHOR_NAME_SIZE] = "authpf";
+char	tablename[PF_TABLE_NAME_SIZE] = "authpf_users";
 char	rulesetname[PF_RULESET_NAME_SIZE];
 
 FILE	*pidfp;
@@ -268,6 +270,11 @@ main(int argc, char *argv[])
 		printf("Unable to modify filters\r\n");
 		do_death(0);
 	}
+	if (change_table(1, luser, ipsrc) == -1) {
+		printf("Unable to modify table\r\n");
+		change_filter(0, luser, ipsrc);
+		do_death(0);
+	}
 
 	signal(SIGTERM, need_death);
 	signal(SIGINT, need_death);
@@ -348,6 +355,11 @@ read_config(FILE *f)
 		if (strcasecmp(pair[0], "anchor") == 0) {
 			if (!pair[1][0] || strlcpy(anchorname, pair[1],
 			    sizeof(anchorname)) >= sizeof(anchorname))
+				goto parse_error;
+		}
+		if (strcasecmp(pair[0], "table") == 0) {
+			if (!pair[1][0] || strlcpy(tablename, pair[1],
+			    sizeof(tablename)) >= sizeof(tablename))
 				goto parse_error;
 		}
 	} while (!feof(f) && !ferror(f));
@@ -681,6 +693,45 @@ error:
 }
 
 /*
+ * Add/remove this IP from the "authpf_users" table.
+ */
+static int
+change_table(int add, const char *luser, const char *ipsrc)
+{
+	struct pfioc_table	io;
+	struct pfr_addr		addr;
+
+	bzero(&io, sizeof(io));
+	strlcpy(io.pfrio_table.pfrt_name, tablename, sizeof(io.pfrio_table));
+	io.pfrio_buffer = &addr;
+	io.pfrio_esize = sizeof(addr);
+	io.pfrio_size = 1;
+
+	bzero(&addr, sizeof(addr));
+	if (ipsrc == NULL || !ipsrc[0])
+		return (-1);
+	if (inet_pton(AF_INET, ipsrc, &addr.pfra_ip4addr) == 1) {
+		addr.pfra_af = AF_INET;
+		addr.pfra_net = 32;
+	} else if (inet_pton(AF_INET6, ipsrc, &addr.pfra_ip6addr) == 1) {
+		addr.pfra_af = AF_INET6;
+		addr.pfra_net = 128;
+	} else {
+		syslog(LOG_ERR, "invalid ipsrc");
+		return (-1);
+	}
+
+	if (ioctl(dev, add ? DIOCRADDADDRS : DIOCRDELADDRS, &io) &&
+	    errno != ESRCH) {
+		syslog(LOG_ERR, "cannot %s %s from table %s: %s",
+		    add ? "add" : "remove", ipsrc, tablename,
+		    strerror(errno));
+		return (-1);
+	}
+	return (0);
+}
+
+/*
  * This is to kill off states that would otherwise be left behind stateful
  * rules. This means we don't need to allow in more traffic than we really
  * want to, since we don't have to worry about any luser sessions lasting
@@ -740,6 +791,7 @@ do_death(int active)
 
 	if (active) {
 		change_filter(0, luser, ipsrc);
+		change_table(0, luser, ipsrc);
 		authpf_kill_states();
 		remove_stale_rulesets();
 	}
