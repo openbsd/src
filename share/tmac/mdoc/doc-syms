@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.42 2002/09/10 21:36:57 deraadt Exp $
+.\"	$OpenBSD: doc-syms,v 1.43 2002/12/06 02:37:13 marc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -318,7 +318,7 @@
 .de St
 .if \\n(aC==0 \{\
 .	ie \\n(.$==0 \{\
-.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.2 | -p1003.1b | -p1003.1b-93 | -p1387.2-95 | -p1387.2 | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 | -xpg4.3 | -susv2 | -susv3 ] \\*(Pu ... (#\\n(.c)
+.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.1-01 | -p1003.2 | -p1003.1b | -p1003.1b-93 | -p1387.2-95 | -p1387.2 | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 | -xpg4.3 | -susv2 | -susv3 ] \\*(Pu ... (#\\n(.c)
 .	\}
 .	el \{\
 .		ds mN St
@@ -347,6 +347,10 @@
 .	\}
 .       if "\\*(A\\n(aP"-p1003.1-90" \{\
 .		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
+.		as b1 (``\\*(tN\\*(Px\\*(aa'')
+.       \}
+.       if "\\*(A\\n(aP"-p1003.1-01" \{\
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-2001\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1" \{\
