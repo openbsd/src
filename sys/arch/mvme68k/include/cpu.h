@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2002/04/23 08:04:14 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.11 2002/04/25 22:18:20 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -89,13 +89,13 @@
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-#ifdef	_KERNEL
-
 /*
  * Get common m68k CPU definiti÷ns.
  */
 #define M68K_MMU_MOTOROLA
 #include <m68k/cpu.h>
+
+#ifdef	_KERNEL
 
 /*
  * Get interrupt glue.
