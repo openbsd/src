@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.3 2001/09/12 19:48:11 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -210,6 +210,10 @@ qeattach(parent, self, aux)
 	bus_size_t size;
 	int rseg, error;
 	extern void myetheraddr __P((u_char *));
+
+	/* Pass on the bus tags */
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",

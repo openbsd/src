@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.3 2001/09/12 19:48:11 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -241,6 +241,10 @@ beattach(parent, self, aux)
 	int rseg, error;
 	u_int32_t v;
 	extern void myetheraddr __P((u_char *));
+
+	/* Pass on the bus tags */
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
