@@ -104,10 +104,12 @@ through which packets are being transmitted and received.  Normally
 this address corresponds to the peer entity's network.
 .Pp
 .Tn TCP
-supports one socket option which is set with
+supports several socket options which are set with
 .Xr setsockopt 2
 and tested with
 .Xr getsockopt 2 .
+.Bl -ohang
+.It Cd TCP_NODELAY
 Under most circumstances,
 .Tn TCP
 sends data when it is presented;
@@ -124,6 +126,14 @@ provides a boolean option,
 (from
 .Aq Pa netinet/tcp.h ,
 to defeat this algorithm.
+.It Cd TCP_MAXSEG
+Set the maximum segment size for this connection. The maximum segment
+size can only be lowered.
+.It Cd TCP_SACK_DISABLE
+Do not use selective acknowledgements for this connection. See
+.Xr options 4 .
+.El
+.Pp
 The option level for the
 .Xr setsockopt
 call is the protocol number for
