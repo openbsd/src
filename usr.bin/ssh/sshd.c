@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.80 2000/01/20 15:19:22 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.81 2000/01/24 20:31:19 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -230,6 +230,7 @@ grace_alarm_handler(int sig)
 char *
 get_authname(int type)
 {
+	static char buf[1024];
 	switch (type) {
 	case SSH_CMSG_AUTH_PASSWORD:
 		return "password";
@@ -248,8 +249,8 @@ get_authname(int type)
 		return "s/key";
 #endif
 	}
-	fatal("get_authname: unknown auth %d: internal error", type);
-	return NULL;
+	snprintf(buf, sizeof buf, "bad-auth-msg-%d", type);
+	return buf;
 }
 
 /*
