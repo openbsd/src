@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.47 2001/11/13 14:06:10 mpech Exp $
+.\"	$OpenBSD: ftpd.8,v 1.48 2001/11/22 16:19:48 mpech Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -294,9 +294,7 @@ authenticates users according to five rules.
 .Pp
 .Bl -enum -offset indent
 .It
-The login name must be in the password database and not have a null password.
-In this case a password must be provided by the client before any
-file operations may be performed.
+The login name must be in the password database.
 .It
 The login name must not appear in the file
 .Pa /etc/ftpusers .
