@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.24 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.25 2003/05/06 23:16:51 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ int
 scanjet_trigger_scanner(ss)
 	struct ss_softc *ss;
 {
-	char escape_codes[20];
+	static char *escape_codes = "\033*f0S";
 	int error;
 
 	error = scanjet_set_window(ss, 0);
@@ -271,7 +271,6 @@ scanjet_trigger_scanner(ss)
 	}
 
 	/* send "trigger" operation */
-	strcpy(escape_codes, "\033*f0S");
 	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
 	if (error) {
 		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
@@ -384,64 +383,71 @@ scanjet_set_window(ss, flags)
 	struct ss_softc *ss;
 	int flags;
 {
-	char escape_codes[128], *p;
+	size_t len;
+	char escape_codes[128];
 
-	p = escape_codes;
-
-	p += sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
-	p += sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
-	p += sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
-	p += sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
-	p += sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
-	p += sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
+	snprintf(escape_codes, sizeof escape_codes,
+	    "\033*f%ldP\033*f%ldQ\033*f%ldX\033*f%ldY\033*a%dR\033*a%dS",
+	    ss->sio.scan_width / 4,
+	    ss->sio.scan_height / 4,
+	    ss->sio.scan_x_origin / 4,
+	    ss->sio.scan_y_origin / 4,
+	    ss->sio.scan_x_resolution,
+	    ss->sio.scan_y_resolution);
 
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;
-		/* use "line art" mode */
-		strcpy(p, "\033*a0T");
-		p += strlen(p);
-		/* make image data be "min-is-white ala PBM */
-		strcpy(p, "\033*a0I");
-		p += strlen(p);
+		/* 
+		 * Use line art mode (\033*aoT) and make image data be
+		 * min-is-white ala PBM (\033*a0I).		
+		 */
+		strlcat(escape_codes, "\033*a0T\033*a0I", sizeof escape_codes);
 		break;
 	case SIM_DITHERED_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;
-		/* use dithered mode */
-		strcpy(p, "\033*a3T");
-		p += strlen(p);
-		/* make image data be "min-is-white ala PBM */
-		strcpy(p, "\033*a0I");
-		p += strlen(p);
+		/* 
+		 * Use dithered mode (\033*a3T) and make image data be
+		 * min-is-white ala PBM (\033*a0I).
+		 */
+		strlcat(escape_codes, "\033*a3T\033*a0I", sizeof escape_codes);
 		break;
 	case SIM_GRAYSCALE:
 		ss->sio.scan_bits_per_pixel = 8;
-		/* use grayscale mode */
-		strcpy(p, "\033*a4T");
-		p += strlen(p);
-		/* make image data be "min-is-black ala PGM */
-		strcpy(p, "\033*a1I");
-		p += strlen(p);
+		/* 
+		 * Use grayscale mode (\033*a4T) and make image data be
+		 * min-is-black ala PGM (\033*a1I)
+		 */
+		strlcat(escape_codes, "\033*a4T\033*a1I", sizeof escape_codes);
 		break;
 	case SIM_COLOR:
 		ss->sio.scan_bits_per_pixel = 24;
-		/* use RGB color mode */
-		strcpy(p, "\033*a5T");
-		p += strlen(p);
-		/* make image data be "min-is-black ala PPM */
-		strcpy(p, "\033*a1I");
-		p += strlen(p);
-		/* use pass-through matrix (disable NTSC) */
-		strcpy(p, "\033*u2T");
-		p += strlen(p);
+		/*
+		 * Use RGB color mode (\033*a5T), make image data be
+		 * min-is-black ala PPM (\033*a1I) and use pass-through matrix,
+		 * i.e. disable NTSC (\033*u2T).
+		 */
+		strlcat(escape_codes, "\033*a5T\033*a1I\033*u2T",
+		    sizeof escape_codes);
 		break;
 	}
 
-	p += sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
-	p += sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
-	p += sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
+	/*
+	 * If the escape sequence has been truncated at this point, appending
+	 * the next sequence will also cause truncation, and this time we pay
+	 * attention.
+	 */ 
+	len = strlen(escape_codes);
+	len += snprintf(escape_codes + len, sizeof escape_codes - len,
+	    "\033*a%dG\033*a%dL\033*a%dK",
+	    ss->sio.scan_bits_per_pixel,
+	    (int)(ss->sio.scan_brightness) - 128,
+	    (int)(ss->sio.scan_contrast) - 128);
 
-	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, flags));
+	if (len >= sizeof escape_codes)
+		return (ENOMEM);
+
+	return (scanjet_ctl_write(ss, escape_codes, len, flags));
 }
 
 /* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
@@ -481,7 +487,9 @@ scanjet_compute_sizes(ss, flags)
 	static char *wfail = "%s: interrogate write failed\n";
 	static char *rfail = "%s: interrogate read failed\n";
 	static char *dfail = "%s: bad data returned\n";
-	char escape_codes[20];
+	static char *mono  = "\033*s1025E"; /* bytes wide  */
+	static char *color = "\033*s1024E"; /* pixels wide */
+	static char *high  = "\033*s1026E"; /* pixels high */
 	char response[20];
 	char *p;
 
@@ -496,15 +504,16 @@ scanjet_compute_sizes(ss, flags)
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 	case SIM_DITHERED_MONOCHROME:
-		strcpy(escape_codes, "\033*s1025E"); /* bytes wide */
+		error = scanjet_ctl_write(ss, mono, strlen(mono), flags);
 		break;
 	case SIM_GRAYSCALE:
 	case SIM_COLOR:
-		strcpy(escape_codes, "\033*s1024E"); /* pixels wide */
+		error = scanjet_ctl_write(ss, color, strlen(color), flags);
+		break;
+	default:
+		error = EIO;
 		break;
 	}
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes),
-		flags);
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
@@ -515,7 +524,7 @@ scanjet_compute_sizes(ss, flags)
 		return (error);
 	}
 	p = strchr(response, 'd');
-	if (p == 0) {
+	if (p == NULL) {
 		uprintf(dfail, ss->sc_dev.dv_xname);
 		return (EIO);
 	}
@@ -523,9 +532,7 @@ scanjet_compute_sizes(ss, flags)
 	if (ss->sio.scan_image_mode < SIM_GRAYSCALE)
 		ss->sio.scan_pixels_per_line *= 8;
 
-	strcpy(escape_codes, "\033*s1026E"); /* pixels high */
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes),
-		flags);
+	error = scanjet_ctl_write(ss, high, strlen(high), flags);
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
@@ -536,7 +543,7 @@ scanjet_compute_sizes(ss, flags)
 		return (error);
 	}
 	p = strchr(response, 'd');
-	if (p == 0) {
+	if (p == NULL) {
 		uprintf(dfail, ss->sc_dev.dv_xname);
 		return (EIO);
 	}
