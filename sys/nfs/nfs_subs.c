@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.18 1997/04/28 00:37:06 angelos Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.19 1997/04/28 00:40:14 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -644,17 +644,13 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 
 	/* Get a new (non-zero) xid */
 
-	if ((nfs_xid == 0) && (nfs_xid_touched == 0))
-	{
-	    nfs_xid = arc4random();
-	    nfs_xid_touched = 1;
-	}
-	else
-	{
-	    while ((*xidp = arc4random() % 256) == 0)
-	      ;
-
-	    nfs_xid += *xidp;
+	if ((nfs_xid == 0) && (nfs_xid_touched == 0)) {
+		nfs_xid = arc4random();
+		nfs_xid_touched = 1;
+	} else {
+		while ((*xidp = arc4random() % 256) == 0)
+			;
+		nfs_xid += *xidp;
 	}
 	    
 	*tl++ = *xidp = txdr_unsigned(nfs_xid);
