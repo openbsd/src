@@ -1,8 +1,8 @@
 /* terminal.c -- How to handle the physical terminal for Info.
-   $Id: terminal.c,v 1.3 1997/08/01 22:37:40 kstailey Exp $
+   $Id: terminal.c,v 1.4 1999/01/11 16:38:09 espie Exp $
 
-   Copyright (C) 1988, 89, 90, 91, 92, 93, 96, 97 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 96, 97, 98
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -141,7 +141,10 @@ terminal_begin_using_terminal ()
   if (!term_begin_use || !*term_begin_use)
     return;
 
+#ifdef SIGWINCH
   sigsave = signal (SIGWINCH, SIG_IGN); 
+#endif
+
   send_to_terminal (term_begin_use);
   /* Without this fflush and sleep, running info in a shelltool or
      cmdtool (TERM=sun-cmd) with scrollbars loses -- the scrollbars are
@@ -149,7 +152,10 @@ terminal_begin_using_terminal ()
      From: strube@physik3.gwdg.de (Hans Werner Strube).  */
   fflush (stdout);
   sleep (1);
+
+#ifdef SIGWINCH
   signal (SIGWINCH, sigsave);
+#endif
 }
 
 /* Tell the terminal that we will not be doing any more cursor
@@ -165,11 +171,17 @@ terminal_end_using_terminal ()
   if (!term_end_use || !*term_end_use)
     return;
 
+#ifdef SIGWINCH
   sigsave = signal (SIGWINCH, SIG_IGN);
+#endif
+
   send_to_terminal (term_end_use);
   fflush (stdout);
   sleep (1);
+
+#ifdef SIGWINCH
   signal (SIGWINCH, sigsave);
+#endif
 }
 
 /* **************************************************************** */

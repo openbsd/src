@@ -1,5 +1,5 @@
 /* info.c -- Display nodes of Info files in multiple windows.
-   $Id: info.c,v 1.1.1.5 1999/01/11 16:32:18 espie Exp $
+   $Id: info.c,v 1.2 1999/01/11 16:38:08 espie Exp $
 
    Copyright (C) 1993, 96, 97, 98 Free Software Foundation, Inc.
 

@@ -1,5 +1,5 @@
 /* variables.c -- How to manipulate user visible variables in Info.
-   $Id: variables.c,v 1.1.1.2 1997/08/01 22:00:47 kstailey Exp $
+   $Id: variables.c,v 1.2 1999/01/11 16:38:10 espie Exp $
 
    This file is part of GNU Info, a program for reading online documentation
    stored in Info format.

@@ -1,5 +1,5 @@
 /* infomap.c -- Keymaps for Info.
-   $Id: infomap.c,v 1.1.1.3 1997/08/01 22:00:25 kstailey Exp $
+   $Id: infomap.c,v 1.2 1999/01/11 16:38:08 espie Exp $
 
    Copyright (C) 1993, 97 Free Software Foundation, Inc.
 

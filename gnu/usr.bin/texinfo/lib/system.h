@@ -1,5 +1,5 @@
 /* system.h: System-dependent declarations.  Include this first.
-   $Id: system.h,v 1.1.1.1 1997/08/01 21:59:40 kstailey Exp $
+   $Id: system.h,v 1.2 1999/01/11 16:38:11 espie Exp $
 
    Copyright (C) 1997 Free Software Foundation, Inc.
 
