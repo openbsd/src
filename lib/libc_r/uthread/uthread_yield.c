@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_yield.c,v 1.3 1999/11/25 07:01:47 d Exp $	*/
+/*	$OpenBSD: uthread_yield.c,v 1.4 2001/08/04 14:43:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -58,8 +58,5 @@ pthread_yield(void)
 
 	/* Schedule the next thread: */
 	_thread_kern_sched(NULL);
-
-	/* Nothing to return. */
-	return;
 }
 #endif
