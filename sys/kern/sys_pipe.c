@@ -16,7 +16,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- * $Id: sys_pipe.c,v 1.3 1996/09/05 12:31:14 mickey Exp $
+ * $Id: sys_pipe.c,v 1.4 1996/10/12 14:34:42 niklas Exp $
  */
 
 #ifndef OLD_PIPE
@@ -169,7 +169,11 @@ sys_pipe(p, v, retval)
 #endif
 	struct proc *p;
 	void *v;
+#if defined(__FreeBSD__)
 	int retval[];
+#else /* (__NetBSD__) || (__OpenBSD__) */
+	register_t *retval;
+#endif
 {
 	register struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
