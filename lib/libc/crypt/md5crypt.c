@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.10 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.11 2003/04/02 20:35:29 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.10 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.11 2003/04/02 20:35:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -108,9 +108,8 @@ md5crypt(pw, salt)
 		    MD5Update(&ctx, (const unsigned char *)pw, 1);
 
 	/* Now make the output string */
-	strcpy(passwd,(const char *)magic);
-	strncat(passwd,(const char *)sp,sl);
-	strcat(passwd,"$");
+	snprintf(passwd, sizeof(passwd), "%s%.*s$", (char *)magic,
+	    sl, (const char *)sp);
 
 	MD5Final(final,&ctx);
 
