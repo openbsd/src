@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.11 2002/06/05 16:51:08 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.12 2002/06/05 20:01:22 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -467,7 +467,8 @@ main(int argc, char **argv)
 		if (!intercept_existpids())
 			break;
 
-	systrace_dumppolicy();
+	if (userpolicy)
+		systrace_dumppolicy();
 
 	close(fd);
 
