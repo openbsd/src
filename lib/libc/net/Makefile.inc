@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.11 1997/06/23 03:37:24 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 1997/07/07 22:16:47 millert Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
+
+CFLAGS+=-DRESOLVSORT
 
 SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getnetnamadr.c getproto.c getprotoent.c getprotoname.c getservbyname.c \
