@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.24 2004/02/16 12:53:15 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.25 2004/02/16 12:58:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -211,7 +211,7 @@ void		 rde_send_nexthop(struct bgpd_addr *, int);
 void		 rde_generate_updates(struct prefix *, struct prefix *);
 u_int16_t	 rde_local_as(void);
 
-/* rde_rib.c */
+/* rde_attr.c */
 void		 attr_init(struct attr_flags *);
 int		 attr_parse(u_char *, u_int16_t, struct attr_flags *, int,
 		     u_int16_t);
@@ -239,7 +239,10 @@ u_int16_t	 aspath_count(struct aspath *);
 u_int16_t	 aspath_neighbour(struct aspath *);
 u_int32_t	 aspath_hash(struct aspath *);
 int		 aspath_compare(struct aspath *, struct aspath *);
+int		 aspath_snprint(char *, size_t, void *, u_int16_t);
+size_t		 aspath_strlen(void *, u_int16_t);
 
+/* rde_rib.c */
 void		 path_init(u_int32_t);
 void		 path_update(struct rde_peer *, struct attr_flags *,
 		     struct bgpd_addr *, int);

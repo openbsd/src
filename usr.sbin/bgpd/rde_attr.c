@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.3 2004/02/16 12:53:15 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.4 2004/02/16 12:58:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "bgpd.h"
@@ -393,7 +394,7 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 void
 attr_optfree(struct attr_flags *attr)
 {
-	struct attr	*a, *xa;
+	struct attr	*a;
 
 	while ((a = TAILQ_FIRST(&attr->others)) != NULL) {
 		TAILQ_REMOVE(&attr->others, a, attr_l);
@@ -665,3 +666,102 @@ aspath_compare(struct aspath *a1, struct aspath *a2)
 	return 0;
 }
 
+int
+aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
+{
+#define UPDATE()				\
+	do {					\
+		if (r == -1)			\
+			return (1);		\
+		total_size += r;		\
+		if ((unsigned int)r < size) {	\
+			size -= r;		\
+			buf += r;		\
+		} else {			\
+			buf += size;		\
+			size = 0;		\
+		}				\
+	} while (0)
+	u_int8_t	*seg;
+	int		 r, total_size;
+	u_int16_t	 seg_size;
+	u_int8_t	 i, seg_type, seg_len;
+
+	total_size = 0;
+	seg = data;
+	for (; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		if (seg_type == AS_SET) {
+			r = snprintf(buf, size, "{ ");
+			UPDATE();
+		} else if (total_size != 0) {
+			r = snprintf(buf, size, " ");
+			UPDATE();
+		}
+
+		ENSURE(seg_size <= len);
+		for (i = 0; i < seg_len; i++) {
+			r = snprintf(buf, size, "%hu", aspath_extract(seg, i));
+			UPDATE();
+			if (i + 1 < seg_len) {
+				r = snprintf(buf, size, " ");
+				UPDATE();
+			}
+		}
+		if (seg_type == AS_SET) {
+			r = snprintf(buf, size, " }");
+			UPDATE();
+		}
+	}
+	return total_size;
+#undef UPDATE
+}
+
+size_t
+aspath_strlen(void *data, u_int16_t len)
+{
+	u_int8_t	*seg;
+	int		 total_size;
+	u_int16_t	 as, seg_size;
+	u_int8_t	 i, seg_type, seg_len;
+
+	total_size = 0;
+	seg = data;
+	for (; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		if (seg_type == AS_SET)
+			total_size += 2;
+		else if (total_size != 0)
+			total_size += 1;
+
+		ENSURE(seg_size <= len);
+		for (i = 0; i < seg_len; i++) {
+			as = aspath_extract(seg, i);
+			if (as >= 10000)
+				total_size += 5;
+			else if (as >= 1000)
+				total_size += 4;
+			else if (as >= 100)
+				total_size += 3;
+			else if (as >= 10)
+				total_size += 2;
+			else
+				total_size += 1;
+
+			if (i + 1 < seg_len)
+				total_size += 1;
+		}
+
+		if (seg_type == AS_SET)
+			total_size += 2;
+	}
+	return total_size;
+}
