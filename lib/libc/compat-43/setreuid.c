@@ -32,19 +32,34 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setreuid.c,v 1.5 2002/02/16 21:27:21 millert Exp $";
+static char *rcsid = "$OpenBSD: setreuid.c,v 1.6 2002/10/30 20:15:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
 
-extern int __setreuid(uid_t, uid_t);
-
 __warn_references(setreuid, "warning: this program uses setreuid(), which is deprecated.");
 
 int
-setreuid(ruid, euid)
-	int ruid, euid;
+setreuid(uid_t ruid, uid_t euid)
 {
-	return (__setreuid(ruid, euid));
+	int error;
+	uid_t suid, cur_ruid, cur_euid, cur_suid;
+
+	if (error == (getresuid(&cur_ruid, &cur_euid, &cur_suid)) != 0)
+		return (error);
+
+	/*
+	 * The saved uid presents a bit of a dilemma, as it did not
+	 * appear in 4.3BSD.  We only set the saved uid when the real
+	 * uid is specified and either its value would change, or,
+	 * where the saved and effective uids are different.
+	 */
+	if (ruid != (uid_t)-1 && (ruid != cur_ruid ||
+	    cur_suid != (euid != (uid_t)-1 ? euid : cur_euid)))
+		suid = ruid;
+	else
+		suid = (uid_t)-1;
+
+	return (setresuid(ruid, euid, suid));
 }

@@ -32,21 +32,36 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setregid.c,v 1.4 2002/02/16 21:27:21 millert Exp $";
+static char *rcsid = "$OpenBSD: setregid.c,v 1.5 2002/10/30 20:15:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
-
-extern int __setregid(gid_t, gid_t);
 
 #ifndef NO_WARN_REFERENCES
 __warn_references(setregid, "warning: this program uses setregid(), which is deprecated.");
 #endif
 
 int
-setregid(rgid, egid)
-	int rgid, egid;
+setregid(gid_t rgid, gid_t egid)
 {
-	return (__setregid(rgid, egid));
+	int error;
+	gid_t sgid, cur_rgid, cur_egid, cur_sgid;
+
+	if (error == (getresgid(&cur_rgid, &cur_egid, &cur_sgid)) != 0)
+		return (error);
+
+	/*
+	 * The saved gid presents a bit of a dilemma, as it did not
+	 * appear in 4.3BSD.  We only set the saved gid when the real
+	 * gid is specified and either its value would change, or,
+	 * where the saved and effective gids are different.
+	 */
+	if (rgid != (gid_t)-1 && (rgid != cur_rgid ||
+	    cur_sgid != (egid != (gid_t)-1 ? egid : cur_egid)))
+		sgid = rgid;
+	else
+		sgid = (gid_t)-1;
+
+	return (setresgid(rgid, egid, sgid));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.43 2002/10/25 21:55:28 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.44 2002/10/30 20:15:29 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -146,6 +146,8 @@ long	 gethostid(void);
 int	 gethostname(char *, size_t);
 mode_t	 getmode(const void *, mode_t);
 int	 getpagesize(void);
+int	 getresgid(gid_t *, gid_t *, gid_t *);
+int	 getresuid(uid_t *, uid_t *, uid_t *);
 char	*getpass(const char *);
 char	*getusershell(void);
 char	*getwd(char *);			/* obsoleted by getcwd() */
@@ -194,8 +196,10 @@ int	 setkey(const char *);
 int	 setlogin(const char *);
 void	*setmode(const char *);
 int	 setpgrp(pid_t pid, pid_t pgrp);	/* obsoleted by setpgid() */
-int	 setregid(int, int);
-int	 setreuid(int, int);
+int	 setregid(gid_t, gid_t);
+int	 setresgid(gid_t, gid_t, gid_t);
+int	 setresuid(uid_t, uid_t, uid_t);
+int	 setreuid(uid_t, uid_t);
 int	 setrgid(gid_t);
 int	 setruid(uid_t);
 void	 setusershell(void);
