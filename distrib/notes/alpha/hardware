@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2002/10/07 20:16:51 miod Exp $
+dnl	$OpenBSD: hardware,v 1.28 2002/10/20 21:17:58 henning Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -224,6 +224,7 @@ Supported Peripherals:
 			Intel EtherExpress PRO/100+ "Management Adapter"
 			Intel EtherExpress PRO/100 Dual Port
 			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+		Intel 21145-based PCI adapters (dc)
 		Novell NE1000, NE2000 (ISA and PCI variants thereof) (ne) [*]
 		RealTek 8129/8139-based adapters (rl), including: [*]
 			Accton MPX 5030/5038
