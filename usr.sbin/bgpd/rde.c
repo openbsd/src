@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.52 2004/01/10 22:25:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.53 2004/01/11 02:39:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -634,7 +634,7 @@ rde_update_queue_runner(void)
 {
 	struct rde_peer		*peer;
 	int			 r, sent;
-	u_int16_t	 	 len, wd_len, wpos;
+	u_int16_t		 len, wd_len, wpos;
 
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
 	do {

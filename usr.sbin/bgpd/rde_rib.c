@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.16 2004/01/10 22:25:42 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.17 2004/01/11 02:39:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,9 +95,9 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 		return (1);
 	if (a->med < b->med)
 		return (-1);
-	if (a->lpref > b->lpref) 
+	if (a->lpref > b->lpref)
 		return (1);
-	if (a->lpref < b->lpref) 
+	if (a->lpref < b->lpref)
 		return (-1);
 	r = aspath_compare(a->aspath, b->aspath);
 	if (r > 0)
@@ -106,8 +106,8 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 		return (-1);
 
 	for (oa = TAILQ_FIRST(&a->others), ob = TAILQ_FIRST(&b->others);
-	   oa != TAILQ_END(&a->others) && ob != TAILQ_END(&a->others);
-	   oa = TAILQ_NEXT(oa, attr_l), ob = TAILQ_NEXT(ob, attr_l)) {
+	    oa != TAILQ_END(&a->others) && ob != TAILQ_END(&a->others);
+	    oa = TAILQ_NEXT(oa, attr_l), ob = TAILQ_NEXT(ob, attr_l)) {
 		if (oa->type > ob->type)
 			return (1);
 		if (oa->type < ob->type)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.13 2004/01/10 22:25:42 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.14 2004/01/11 02:39:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -352,7 +352,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 	struct update_prefix	*np;
 
 	ENSURE(p != NULL);
-	
+
 	/* 1. search for attr */
 	if (a != NULL && (na = RB_FIND(uptree_attr, &peer->up_attrs, a)) ==
 	    NULL) {
@@ -409,7 +409,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 void
 up_generate_updates(struct prefix *new, struct prefix *old)
 {
-	extern struct rde_peer_head	 peerlist;	
+	extern struct rde_peer_head	 peerlist;
 	struct rde_peer			*peer;
 	struct update_attr		*a;
 	struct update_prefix		*p;
@@ -587,7 +587,7 @@ up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
 	    upp != TAILQ_END(prefix_head); upp = xupp) {
 		xupp = TAILQ_NEXT(upp, prefix_l);
 		if ((r = up_set_prefix(buf + wpos, len - wpos,
-		    upp->prefix, upp->prefixlen)) == -1) 
+		    upp->prefix, upp->prefixlen)) == -1)
 			break;
 		wpos += r;
 		if (RB_REMOVE(uptree_prefix, &peer->up_prefix, upp) == NULL)
