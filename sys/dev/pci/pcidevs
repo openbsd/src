@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.222 2000/03/04 18:46:42 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.223 2000/03/05 21:42:00 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1379,6 +1379,7 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 
 /* Toshiba (2nd ID) products */
 product TOSHIBA2 THB 		0x0601	Host-PCI
+product TOSHIBA2 ISA 		0x0602	PCI-ISA
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B PCI-CardBus
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus
