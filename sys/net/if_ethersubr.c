@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.20 1997/07/23 20:20:10 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.21 1997/07/23 20:37:19 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -90,14 +90,12 @@
 #include <netatalk/at_var.h>
 #include <netatalk/at_extern.h>
 
-/* Should we include <netatalk/phase2.h> here instead? */
 #define llc_snap_org_code llc_un.type_snap.org_code
 #define llc_snap_ether_type llc_un.type_snap.ether_type
 
 extern u_char	at_org_code[ 3 ];
 extern u_char	aarp_org_code[ 3 ];
 #endif /* NETATALK */
-
 
 #if defined(CCITT)
 #include <sys/socketvar.h>
@@ -243,7 +241,7 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef IPX
 	case AF_IPX:
-		etype = htons(satosipx(dst)->sipx_type);
+		etype = ETHERTYPE_IPX;
  		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
@@ -496,7 +494,7 @@ decapsulate:
 
 #endif
 #ifdef IPX
-	case ETHERTYPE_II:
+	case ETHERTYPE_IPX:
 		schednetisr(NETISR_IPX);
 		inq = &ipxintrq;
 		break;
@@ -533,7 +531,6 @@ decapsulate:
 			 * gets handled by stripping off the SNAP header
 			 * and going back up to decapsulate.
 			 */
-#ifdef NETATALK
 			if (l->llc_control == LLC_UI &&
 			    l->llc_ssap == LLC_SNAP_LSAP &&
 			    Bcmp(&(l->llc_snap_org_code)[0],
@@ -544,7 +541,7 @@ decapsulate:
 				schednetisr(NETISR_ATALK);
 				break;
 			}
-#endif /* NETATALK */
+
 			if (l->llc_control == LLC_UI &&
 			    l->llc_ssap == LLC_SNAP_LSAP &&
 			    Bcmp(&(l->llc_snap_org_code)[0],
@@ -555,7 +552,7 @@ decapsulate:
 				aarpinput((struct arpcom *)ifp, m);
 				return;
 			}
-#endif
+#endif /* NETATALK */
 			if (l->llc_control == LLC_UI &&
 			    l->llc_dsap == LLC_SNAP_LSAP &&
 			    l->llc_ssap == LLC_SNAP_LSAP) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_if.h,v 1.2 1996/10/26 09:34:50 mickey Exp $	*/
+/*	$OpenBSD: ipx_if.h,v 1.3 1997/07/23 20:37:20 mickey Exp $	*/
 
 /*-
  *
@@ -79,6 +79,7 @@ struct	ipx_aliasreq {
 #define	ETHERTYPE_SNAP	0x0005	/* Ethernet_SNAP, internal use only */
 #define	ETHERTYPE_8022TR 0x0011	/* Ethernet_802.2 w/ trailers */
 #define ETHERTYPE_II	0x8137	/* Ethernet_II */
+#define ETHERTYPE_IPX	ETHERTYPE_II
 
 #ifdef	IPXIP
 struct ipxip_req {
