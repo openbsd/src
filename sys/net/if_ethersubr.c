@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.49 2001/06/23 06:20:35 angelos Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.50 2001/06/23 22:52:51 fgsch Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -583,6 +583,22 @@ bad:
 	if (m)
 		m_freem(m);
 	return (error);
+}
+
+/*
+ * Temporary function to migrate while
+ * removing ether_header * from ether_input().
+ */
+void
+ether_input_mbuf(ifp, m)
+	struct ifnet *ifp;
+	struct mbuf *m;
+{
+	struct ether_header *eh;
+
+	eh = mtod(m, struct ether_header *);
+	m_adj(m, ETHER_HDR_LEN);
+	ether_input(ifp, eh, m);
 }
 
 /*
