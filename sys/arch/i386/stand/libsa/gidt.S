@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.14 1997/08/13 04:03:30 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.15 1997/09/02 17:05:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -50,7 +50,7 @@
 #define S16TEXT	0x18
 #define	S16DATA	0x20
 
-#ifdef	GIDT_DEBUG
+#ifdef GIDT_DEBUG
 #define	gidt_debug0		; \
 	movl	$0xb8000, %eax	; \
 	movl	$0x47314730, (%eax)		; \
@@ -151,7 +151,7 @@
 	.globl	__rtt
 
 __rtt:
-#ifdef DEBUG
+#ifdef GIDT_DEBUG
 	movl	$0xb8000, %ebx
 	movl	$0x4f514f51, (%ebx)
 #endif
@@ -169,7 +169,7 @@ __rtt:
 	movb	$0xfe, %al
 	outb	%al, $0x64
 
-#ifdef DEBUG
+#ifdef GIDT_DEBUG
 	movl	$0xb8000, %ebx
 	movl	$0x07310731, (%ebx)
 #endif
