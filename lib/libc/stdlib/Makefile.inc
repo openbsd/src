@@ -3,7 +3,7 @@
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
 
-SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
+SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c \
 	cfree.c exit.c getenv.c getopt.c getsubopt.c heapsort.c l64a.c \
 	malloc.c merge.c multibyte.c putenv.c qsort.c radixsort.c rand.c \
 	random.c realpath.c setenv.c strtod.c strtol.c strtoq.c strtoul.c \
