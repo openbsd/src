@@ -161,6 +161,9 @@ gem_attach_pci(parent, self, aux)
 #ifdef __sparc__
 	myetheraddr(sc->sc_enaddr);
 #endif
+#ifdef __powerpc__ 
+        pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+#endif
 
 	sc->sc_burst = 16;	/* XXX */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.12 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: gem.c,v 1.13 2001/12/13 03:51:10 drahn Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -725,13 +725,13 @@ gem_init(struct ifnet *ifp)
 	gem_setladrf(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
-	bus_space_write_8(t, h, GEM_TX_RING_PTR,
-		GEM_CDTXADDR(sc, 0));
-	/* Yeeech.  The following has endianness issues. */
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI,
-		(((uint64_t)GEM_CDRXADDR(sc, 0))>>32));
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO,
-		GEM_CDRXADDR(sc, 0));
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI, 
+	    (((uint64_t)GEM_CDTXADDR(sc,0)) >> 32));
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_LO, GEM_CDTXADDR(sc, 0));
+
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 
+	    (((uint64_t)GEM_CDRXADDR(sc,0)) >> 32));
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO, GEM_CDRXADDR(sc, 0));
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, h, GEM_INTMASK,
