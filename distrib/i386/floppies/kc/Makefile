@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1996/06/11 09:04:17 deraadt Exp $
+#	$Id: Makefile,v 1.6 1996/06/16 11:02:26 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -44,11 +44,12 @@ all: ${CBIN}
 	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
+	rm ${REALIMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${REALIMAGE} ${IMAGE}
+	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
@@ -57,7 +58,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
