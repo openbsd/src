@@ -970,7 +970,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_mem.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_port.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_quirks.ph
@@ -980,7 +980,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdivar.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/ascii.ph
