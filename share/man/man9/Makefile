@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2001/02/24 02:07:34 csapuntz Exp $
+#	$OpenBSD: Makefile,v 1.31 2001/02/25 20:16:00 krw Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -14,6 +14,40 @@ MAN=	audio.9 boot.9 bus_dma.9 bus_space.9 \
 	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
 	vm_map_inherit.9 vm_map_protect.9 vnode.9
 
+MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
+	bus_dma.9 bus_dmamap_load.9 bus_dma.9 bus_dmamap_load_mbuf.9 \
+	bus_dma.9 bus_dmamap_load_uio.9 bus_dma.9 bus_dmamap_load_raw.9 \
+	bus_dma.9 bus_dmamap_unload.9 bus_dma.9 bus_dmamap_sync.9 \
+	bus_dma.9 bus_dmamem_alloc.9 bus_dma.9 bus_dmamem_free.9 \
+	bus_dma.9 bus_dmamem_map.9 bus_dma.9 bus_dmamem_unmap.9 \
+	bus_dma.9 bus_dmamem_mmap.9
+MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
+	bus_space.9 bus_space_copy_1.9 bus_space.9 bus_space_copy_2.9 \
+	bus_space.9 bus_space_copy_4.9 bus_space.9 bus_space_copy_8.9 \
+	bus_space.9 bus_space_free.9 bus_space.9 bus_space_map.9 \
+	bus_space.9 bus_space_read_1.9 bus_space.9 bus_space_read_2.9 \
+	bus_space.9 bus_space_read_4.9 bus_space.9 bus_space_read_8.9 \
+	bus_space.9 bus_space_read_multi_1.9 bus_space.9 bus_space_read_multi_2.9 \
+	bus_space.9 bus_space_read_multi_4.9 bus_space.9 bus_space_read_multi_8.9 \
+	bus_space.9 bus_space_read_raw_multi_2.9 bus_space.9 bus_space_read_raw_multi_4.9 \
+	bus_space.9 bus_space_read_raw_multi_8.9 bus_space.9 bus_space_read_region_1.9 \
+	bus_space.9 bus_space_read_region_2.9 bus_space.9 bus_space_read_region_4.9 \
+	bus_space.9 bus_space_read_region_8.9 bus_space.9 bus_space_read_raw_region_2.9 \
+	bus_space.9 bus_space_read_raw_region_4.9 bus_space.9 bus_space_read_raw_region_8.9 \
+	bus_space.9 bus_space_set_multi_1.9 bus_space.9 bus_space_set_multi_2.9 \
+	bus_space.9 bus_space_set_multi_4.9 bus_space.9 bus_space_set_multi_8.9 \
+	bus_space.9 bus_space_set_region_1.9 bus_space.9 bus_space_set_region_2.9 \
+	bus_space.9 bus_space_set_region_4.9 bus_space.9 bus_space_set_region_8.9 \
+	bus_space.9 bus_space_subregion.9 bus_space.9 bus_space_unmap.9 \
+	bus_space.9 bus_space_write_1.9 bus_space.9 bus_space_write_2.9 \
+	bus_space.9 bus_space_write_4.9 bus_space.9 bus_space_write_8.9 \
+	bus_space.9 bus_space_write_multi_1.9 bus_space.9 bus_space_write_multi_2.9 \
+	bus_space.9 bus_space_write_multi_4.9 bus_space.9 bus_space_write_multi_8.9 \
+	bus_space.9 bus_space_write_raw_multi_2.9 bus_space.9 bus_space_write_raw_multi_4.9 \
+	bus_space.9 bus_space_write_raw_multi_8.9 bus_space.9 bus_space_write_region_1.9 \
+	bus_space.9 bus_space_write_region_2.9 bus_space.9 bus_space_write_region_4.9 \
+	bus_space.9 bus_space_write_region_8.9 bus_space.9 bus_space_write_raw_region_2.9 \
+	bus_space.9 bus_space_write_raw_region_4.9 bus_space.9 bus_space_write_raw_region_8.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
