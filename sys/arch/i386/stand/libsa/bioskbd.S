@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.6 1997/05/29 04:33:40 mickey Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.7 1997/05/31 15:38:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -64,6 +64,7 @@ ENTRY(kbd_probe)
 ENTRY(kbd_putc)
 	pushl	%ebx
 
+	xorl	%eax, %eax
 	movb	8(%esp), %al
 	movb	$0x0e, %ah
 	xorl	%ebx, %ebx
@@ -78,9 +79,11 @@ ENTRY(kbd_putc)
  */
 ENTRY(kbd_getc)
 	pushl	%ebx
-	movb	$0, %ah
+	pushl	%ecx
+	xorl	%eax, %eax
 	BIOSINT(0x16)
 	movzbl	%al, %eax
+	popl	%ecx
 	popl	%ebx
 	ret
 
@@ -90,10 +93,13 @@ ENTRY(kbd_getc)
  */
 ENTRY(kbd_ischar)
 	pushl	%ebx
-	movb	$1, %ah
+	pushl	%ecx
+	xorl	%eax, %eax
+	incb	%ah
 	BIOSINT(0x16)
 	setnz	%al
 	movzbl	%al, %eax
+	popl	%ecx
 	popl	%ebx
 	ret
 
