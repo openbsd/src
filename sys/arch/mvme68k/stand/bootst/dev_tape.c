@@ -1,3 +1,4 @@
+/*	$OpenBSD: dev_tape.c,v 1.2 2001/07/04 08:06:54 niklas Exp $	*/
 /*	$NetBSD: dev_tape.c,v 1.2 1995/10/17 22:58:20 gwr Exp $	*/
 
 /*

@@ -1,3 +1,5 @@
+/*	$OpenBSD: syscall.stub,v 1.4 2001/07/04 08:09:24 niklas Exp $	*/
+
 	/*
 	 * system call will look like:
 	 *	 ld r10, r31, 32; r10,r11,r12 might be garbage.

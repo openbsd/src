@@ -1,3 +1,5 @@
+/*	$OpenBSD: cpu_number.h,v 1.5 2001/07/04 08:09:23 niklas Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University

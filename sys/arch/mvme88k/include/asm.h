@@ -1,3 +1,5 @@
+/*	$OpenBSD: asm.h,v 1.11 2001/07/04 08:09:23 niklas Exp $	*/
+
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University

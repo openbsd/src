@@ -1,3 +1,4 @@
+/*	$OpenBSD: exec_mvme.c,v 1.3 2001/07/04 08:06:56 niklas Exp $ */
 /*	$NetBSD: exec_sun.c,v 1.5 1996/01/29 23:41:06 gwr Exp $ */
 
 /*-

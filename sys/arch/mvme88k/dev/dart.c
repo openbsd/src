@@ -1,3 +1,5 @@
+/*	$OpenBSD: dart.c,v 1.7 2001/07/04 08:09:21 niklas Exp $	*/
+
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University

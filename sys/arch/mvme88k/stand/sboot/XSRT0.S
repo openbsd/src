@@ -1,3 +1,5 @@
+/*	$OpenBSD: XSRT0.S,v 1.2 2001/07/04 08:09:30 niklas Exp $	*/
+
 /*
  * Copyright (c) 1995 Theo de Raadt
  * 

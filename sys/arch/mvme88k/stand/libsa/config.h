@@ -1,3 +1,5 @@
+/*	$OpenBSD: config.h,v 1.3 2001/07/04 08:09:29 niklas Exp $	*/
+
 
 /*
  * Copyright (c) 1995 Theo de Raadt

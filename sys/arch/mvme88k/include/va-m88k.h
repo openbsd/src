@@ -1,3 +1,5 @@
+/*	$OpenBSD: va-m88k.h,v 1.4 2001/07/04 08:09:23 niklas Exp $	*/
+
 /* This file has local changes by MOTOROLA
 Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
 	* Due to C-Front's usage of __alignof__ builtin the

@@ -1,3 +1,5 @@
+/*	$OpenBSD: libsa.h,v 1.2 2001/07/04 08:09:30 niklas Exp $	*/
+
 /*
  * libsa prototypes 
  */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: exec_mvme.c,v 1.7 2001/07/04 08:09:30 niklas Exp $	*/
+
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

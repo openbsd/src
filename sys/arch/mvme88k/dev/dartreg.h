@@ -1,3 +1,5 @@
+/*	$OpenBSD: dartreg.h,v 1.3 2001/07/04 08:09:22 niklas Exp $	*/
+
 /*
  * Something to put append a 'U' to a long constant if it's C so that
  * it'll be unsigned in both ANSI and traditional.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: prtvid.c,v 1.4 2001/07/04 08:06:57 niklas Exp $	*/
+
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
