@@ -1,5 +1,5 @@
-/*	$OpenBSD: raw_ip6.c,v 1.3 2001/02/16 16:08:01 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.65 2001/02/08 18:36:17 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.4 2001/03/04 16:48:25 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -471,9 +471,8 @@ rip6_output(m, va_alist)
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
-		struct mbuf *n;
 		int off;
-		u_int16_t *p;
+		u_int16_t sum;
 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
@@ -488,16 +487,10 @@ rip6_output(m, va_alist)
 		}
 		off += sizeof(struct ip6_hdr);
 
-		n = m;
-		while (n && n->m_len <= off) {
-			off -= n->m_len;
-			n = n->m_next;
-		}
-		if (!n)
-			goto bad;
-		p = (u_int16_t *)(mtod(n, caddr_t) + off);
-		*p = 0;
-		*p = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		sum = 0;
+		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
 	}
 
 #ifdef IPSEC
