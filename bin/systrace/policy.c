@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.10 2002/06/19 16:31:07 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.11 2002/06/22 18:23:02 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -137,8 +137,8 @@ systrace_initpolicy(char *file)
 			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
 				err(1, "strdup(%s)", gr->gr_name);
 		} else {
-			snprintf(gidbuf, sizeof(gidbuf), "%lu",
-			    (u_long)groups[i]);
+			snprintf(gidbuf, sizeof(gidbuf), "%u",
+			    groups[i]);
 			if ((groupnames[i] = strdup(gidbuf)) == NULL)
 				err(1, "strdup(%s)", gidbuf);
 		}
