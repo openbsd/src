@@ -68,7 +68,9 @@ Note: if booting the kernel in the miniroot should not work - there are
                     installing from a simpleroot on a zip disk (which
                     is usually rz5 or rz6 - bsd crashes here :-)
         * bsd_nfs - a generic kernel with root and swap configured
-                    to be on nfs
+                    to be on nfs (also this kernel is in ecoff and not
+                    in a.out format so that it can be netbooted with a
+                    pmax)
 
       Maybe the names will change from bsd_xxx to bsd.xxx.
 
