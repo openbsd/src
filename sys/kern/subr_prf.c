@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.53 2003/05/27 21:03:49 henning Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.54 2003/05/29 14:41:53 ho Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -240,6 +240,12 @@ splassert_fail(int wantipl, int haveipl, const char *func)
 	case 2:
 #ifdef DDB
 		db_stack_dump();
+#endif
+		break;
+	case 3:
+#ifdef DDB
+		db_stack_dump();
+		Debugger();
 #endif
 		break;
 	default:
