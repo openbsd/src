@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.34 2003/01/19 23:28:46 espie Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.35 2003/01/19 23:33:40 espie Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -97,11 +97,19 @@ struct somap_private {
 #define RTLD_MAIN	1
 #define RTLD_RTLD	2
 #define RTLD_DL		4
+#define RTLD_INITED	8
 	size_t		spd_size;
 
 #ifdef SUN_COMPAT
 	long		spd_offset;	/* Correction for Sun main programs */
 #endif
+	struct dep_node	*first_child;
+	struct dep_node	*last_child;
+};
+
+struct dep_node {
+	struct dep_node *next_sibling;
+	struct so_map *data;
 };
 
 #define LM_PRIVATE(smp)	((struct somap_private *)(smp)->som_spd)
@@ -358,6 +366,23 @@ rtld(int version, struct crt_ldso *crtp, struct _dynamic *dp)
 	return 0;
 }
 
+static void
+link_sub(struct so_map *dep, struct so_map *p)
+{
+	struct dep_node *n;
+	struct somap_private *pp;
+
+	n = xmalloc(sizeof *n);
+	n->data = dep;
+	n->next_sibling = NULL;
+	pp = LM_PRIVATE(p);
+	if (pp->first_child) {
+		pp->last_child->next_sibling = n;
+		pp->last_child = n;
+	} else {
+		pp->first_child = pp->last_child = n;
+	}
+}
 
 static int
 load_subs(struct so_map	*smp)
@@ -407,6 +432,8 @@ load_subs(struct so_map	*smp)
 				}
 				newmap = alloc_link_map(NULL, sodp, smp,
 				    0, 0, 0);
+			} else {
+				link_sub(newmap, smp);
 			}
 			LM_PRIVATE(newmap)->spd_refcount++;
 			next = sodp->sod_next;
@@ -528,6 +555,8 @@ alloc_link_map(char *path, struct sod *sodp, struct so_map *parent,
 	smpp->spd_flags = 0;
 	smpp->spd_parent = parent;
 	smpp->spd_size = size;
+	smpp->first_child = NULL;
+	smpp->last_child = NULL;
 
 #ifdef SUN_COMPAT
 	smpp->spd_offset =
@@ -707,6 +736,23 @@ unmap_object(struct so_map *smp)
 	(void)munmap(smp->som_addr, LM_PRIVATE(smp)->spd_size);
 }
 
+void init_dependent_before_main(struct so_map *smp)
+{
+	struct dep_node *n;
+
+	LM_PRIVATE(smp)->spd_flags |= RTLD_INITED;
+
+	for (n = LM_PRIVATE(smp)->first_child; n; n = n->next_sibling) {
+		if (LM_PRIVATE(n->data)->spd_flags & RTLD_INITED)
+			continue;
+		init_dependent_before_main(n->data);
+	}
+
+	call_map(smp, ".init");
+	call_map(smp, "__init");
+	call_map(smp, "__GLOBAL__DI");
+}
+
 void
 init_maps(struct so_map *head)
 {
@@ -730,9 +776,9 @@ init_maps(struct so_map *head)
 	for (smp = head; smp; smp = smp->som_next) {
 		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
 			continue;
-		call_map(smp, ".init");
-		call_map(smp, "__init");
-		call_map(smp, "__GLOBAL__DI");
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_INITED)
+			continue;
+		init_dependent_before_main(smp);
 	}
 }
 
