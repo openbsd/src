@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2002/06/08 08:04:02 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2002/06/08 08:44:09 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -143,7 +143,6 @@ struct sym {
 struct sym *symhead = NULL;
 
 int	symset(char *name, char *val);
-int	symextend(char *name, char *val);
 char *	symget(char *name);
 
 struct ifaddrs    *ifa0_lookup(char *ifa_name);
@@ -201,7 +200,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL PLUSEQUAL
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -232,7 +231,6 @@ ruleset		: /* empty */
 		| ruleset binatrule '\n'
 		| ruleset rdrrule '\n'
 		| ruleset varset '\n'
-		| ruleset varextend '\n'
 		| ruleset error '\n'		{ errors++; }
 		;
 
@@ -247,17 +245,6 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-varextend	: STRING PLUSEQUAL STRING
-		{
-			if (pf->opts & PF_OPT_VERBOSE)
-				printf("%s += %s\n", $1, $3);
-			if (symextend($1, $3) == -1) {
-				yyerror("cannot extend variable %s", $1);
-				YYERROR;
-			}
-		}
-		;
-		
 pfrule		: action dir log quick interface route af proto fromto
 		  uids gids flags icmpspec keep fragment nodf minttl
 		  maxmss allowopts label
@@ -2222,12 +2209,6 @@ top:
 			return (ARROW);
 		lungetc(next, fin);
 		break;
-	case '+':
-		next = lgetc(fin);
-		if (next == '=')
-			return (PLUSEQUAL);
-		lungetc(next, fin);
-		break;
 	}
 
 	/* Need to parse v6 addresses before tokenizing numbers. ick */
@@ -2416,24 +2397,6 @@ symset(char *nam, char *val)
 	sym->next = symhead;
 	symhead = sym;
 	return (0);
-}
-
-int
-symextend(char *nam, char *val)
-{
-	struct sym *sym;
-	char *p;
-	
-	for (sym = symhead; sym && strcmp(nam, sym->nam); sym = sym->next)
-		;	/* nothing */
-	if (sym == NULL)
-		return -1;
-	p = realloc(sym->val, strlen(sym->val) + strlen(val) + 1);
-	if (p == NULL)
-		return -1;
-	sym->val = p;
-	strlcat(sym->val, val, strlen(sym->val) + strlen(val) + 1);
-	return 0;
 }
 
 char *
