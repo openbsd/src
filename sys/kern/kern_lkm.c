@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.14 1997/02/06 13:09:13 deraadt Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.15 1997/05/29 22:42:00 mickey Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ lkmioctl(dev, cmd, data, flag, p)
 #endif	/* DEBUG */
 #ifdef DDB
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
-		    db_add_symbol_table(curp->syms,
+		    curp->sym_id = db_add_symbol_table(curp->syms,
 					curp->syms + curp->sym_symsize,
 					curp->private.lkm_any->lkm_name,
 					curp->syms, 
