@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $
+# $OpenBSD: Error.pm,v 1.10 2004/12/12 22:44:51 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,8 @@ package OpenBSD::Error;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(System VSystem Copy Fatal Warn Usage set_usage 
     try throw catch catchall rethrow);
+
+our ($FileName, $Line, $FullMessage);
 
 sub System
 {
@@ -164,9 +166,9 @@ sub dienow
 	if ($error) {
 		if ($error =~ m/^(Expected:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/) {
 			local $_ = $2;
-			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $3;
-			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $4;
-			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $error;
+			$FileName = $3;
+			$Line = $4;
+			$FullMessage = $error;
 
 			$handler->exec($error, $1, $2, $3, $4);
 		} else {
@@ -204,8 +206,6 @@ sub catchall(&)
 {
 	bless $_[0], "OpenBSD::Error::catchall";
 }
-
-our ($FileName, $Line, $FullMessage);
 
 package OpenBSD::Error::catch;
 sub exec
