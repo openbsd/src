@@ -3,7 +3,8 @@
 
 S	= ${.CURDIR}/../../..
 I386	= ${.CURDIR}/..
-RMHDR	= ${.CURDIR}/../boot/rmaouthdr
+CSH	= csh
+RMHDR	= ${CSH} ${.CURDIR}/../boot/rmaouthdr
 STAND=	/sys/stand
 INCPATH=-I${.CURDIR} -I${S} -I${S}/arch -I${S}/ufs -I${S} -I${STAND}
 VPATH=	${STAND}
@@ -11,7 +12,8 @@ STANDDIR= ${DESTDIR}/usr/mdec
 
 AFLAGS+=	-v -Wa,-a -D_LOCORE
 CFLAGS+=	-m386 -O6 -D_STANDALONE -DAT386 -O ${INCPATH}
-CPPFLAGS+=	${INCPATH} -D_KERNEL -DRELOC=0x${RELOC}
+#CPPFLAGS+=	${INCPATH} -D_KERNEL -DRELOC=0x${RELOC}
+CPPFLAGS+=	${INCPATH} -DRELOC=0x${RELOC}
 LDADD+=		${LIBC}
 
 RELOC=	98000
