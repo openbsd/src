@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.7 2000/06/06 06:49:47 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.8 2000/06/18 03:07:11 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -42,8 +42,14 @@ int crypto_drivers_num = 0;
 
 struct cryptop *cryptop_queue = NULL;
 struct cryptodesc *cryptodesc_queue = NULL;
+
 int crypto_queue_num = 0;
 int crypto_queue_max = CRYPTO_MAX_CACHED;
+
+struct cryptop *crp_req_queue = NULL;
+struct cryptop **crp_req_queue_tail = NULL;
+
+int crypto_invoke(struct cryptop *);
 
 /*
  * Create a new session.
@@ -158,7 +164,7 @@ crypto_get_driverid(void)
 
     if (crypto_drivers_num == 0)
     {
-        crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
+	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 	MALLOC(crypto_drivers, struct cryptocap *, 
 	       crypto_drivers_num * sizeof(struct cryptocap), M_XDATA,
 	       M_DONTWAIT);
@@ -275,10 +281,30 @@ crypto_unregister(u_int32_t driverid, int alg)
 }
 
 /*
- * Dispatch a crypto request to the appropriate crypto devices.
+ * Add crypto request to a queue, to be processed by a kernel thread.
  */
 int
 crypto_dispatch(struct cryptop *crp)
+{
+    int s = splhigh();
+
+    if (crp_req_queue == NULL)
+      crp_req_queue = crp;
+    else
+      crp->crp_next = NULL;
+
+    crp_req_queue_tail = &(crp->crp_next);
+    wakeup((caddr_t) &crp_req_queue);
+    splx(s);
+
+    return 0;
+}
+
+/*
+ * Dispatch a crypto request to the appropriate crypto devices.
+ */
+int
+crypto_invoke(struct cryptop *crp)
 {
     struct cryptodesc *crd;
     u_int64_t nid;
@@ -339,9 +365,12 @@ void
 crypto_freereq(struct cryptop *crp)
 {
     struct cryptodesc *crd;
+    int s;
 
     if (crp == NULL)
       return;
+
+    s = splhigh();
 
     while ((crd = crp->crp_desc) != NULL)
     {
@@ -365,6 +394,8 @@ crypto_freereq(struct cryptop *crp)
         cryptop_queue = crp;
         crypto_queue_num++;
     }
+
+    splx(s);
 }
 
 /*
@@ -375,13 +406,17 @@ crypto_getreq(int num)
 {
     struct cryptodesc *crd;
     struct cryptop *crp;
+    int s = splhigh();
 
     if (cryptop_queue == NULL)
     {
         MALLOC(crp, struct cryptop *, sizeof(struct cryptop), M_XDATA,
 	       M_DONTWAIT);
         if (crp == NULL)
-          return NULL;
+        {
+            splx(s);
+            return NULL;
+        }
     }
     else
     {
@@ -400,6 +435,7 @@ crypto_getreq(int num)
 		   M_XDATA, M_DONTWAIT);
 	    if (crd == NULL)
 	    {
+                splx(s);
 		crypto_freereq(crp);
 	        return NULL;
 	    }
@@ -416,5 +452,41 @@ crypto_getreq(int num)
 	crp->crp_desc = crd;
     }
 
+    splx(s);
     return crp;
+}
+
+/*
+ * Crypto thread, runs as a kernel thread to process crypto requests.
+ */
+void
+crypto_thread(void)
+{
+    struct cryptop *crp;
+    int s;
+
+    s = splhigh();
+
+    for (;;)
+    {
+	crp = crp_req_queue;
+	if (crp == NULL) /* No work to do */
+	{
+	    (void) tsleep(&crp_req_queue, PLOCK, "crypto_wait", 0);
+	    continue;
+	}
+
+	/* Remove from the queue */
+	crp_req_queue = crp->crp_next;
+	if (crp_req_queue)
+	  crp_req_queue_tail = &crp_req_queue->crp_next;
+        else
+          crp_req_queue_tail = NULL;
+
+	splx(s);
+
+	crypto_invoke(crp);
+
+	s = splhigh();
+    }
 }

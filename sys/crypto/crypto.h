@@ -161,5 +161,6 @@ int	mbuf2pages(struct mbuf *, int *, long *, int *, int, int *);
 
 extern struct cryptop *crypto_getreq(int);
 extern void crypto_freereq(struct cryptop *);
+extern void crypto_thread(void);
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */
