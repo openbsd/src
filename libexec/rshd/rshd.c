@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.36 2001/02/04 17:51:30 millert Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.37 2001/05/29 21:37:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.36 2001/02/04 17:51:30 millert Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.37 2001/05/29 21:37:16 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -76,6 +76,7 @@ static char *rcsid = "$OpenBSD: rshd.c,v 1.36 2001/02/04 17:51:30 millert Exp $"
 #include <syslog.h>
 #include <unistd.h>
 #include <login_cap.h>
+#include <bsd_auth.h>
 
 int	keepalive = 1;
 int	check_all;
@@ -196,7 +197,7 @@ main(argc, argv)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
 	doit((struct sockaddr *)&from);
 	/* NOTREACHED */
-	return 0;
+	exit(0);
 }
 
 char	*envinit[1] = { 0 };
@@ -327,7 +328,7 @@ doit(fromp)
 			shutdown(0, 1+1);
 			exit(1);
 		}
-		if (c== 0)
+		if (c == 0)
 			break;
 		port = port * 10 + c - '0';
 	}
@@ -373,7 +374,7 @@ doit(fromp)
 	if (getnameinfo(fromp, fromp->sa_len, saddr, sizeof(saddr),
 			NULL, 0, NI_NAMEREQD)== 0) {
 		/*
-		 * If name returned by gethostbyaddr is in our domain,
+		 * If name returned by getnameinfo is in our domain,
 		 * attempt to verify that we haven't been fooled by someone
 		 * in a remote net; look up the name and check that this
 		 * address corresponds to the name.
@@ -544,10 +545,8 @@ fail:
 		exit(1);
 	}
 
-	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK)) {
-		error("Logins currently disabled.\n");
-		exit(1);
-	}
+	if (pwd->pw_uid)
+		auth_checknologin(lc);
 
 	(void) write(STDERR_FILENO, "\0", 1);
 	sent_null = 1;
@@ -730,9 +729,11 @@ fail:
 	    setenv("USER", pwd->pw_name, 1) == -1 ||
 	    setenv("LOGNAME", pwd->pw_name, 1) == -1)
 		errx(1, "cannot setup environment");
-	
+
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
 		errx(1, "cannot set user context");
+	if (auth_approval(NULL, lc, pwd->pw_name, "rsh") <= 0)
+		errx(1, "approval failure");
 
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
@@ -791,7 +792,7 @@ error(fmt, va_alist)
 		len = 1;
 	} else
 		len = 0;
-	(void)vsnprintf(bp, sizeof(buf) - 1, fmt, ap);
+	(void)vsnprintf(bp, sizeof(buf) - len, fmt, ap);
 	(void)write(STDERR_FILENO, buf, len + strlen(bp));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rexecd.c,v 1.16 2001/01/28 19:34:30 niklas Exp $	*/
+/*	$OpenBSD: rexecd.c,v 1.17 2001/05/29 21:37:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,13 +41,17 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$OpenBSD: rexecd.c,v 1.16 2001/01/28 19:34:30 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rexecd.c,v 1.17 2001/05/29 21:37:16 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <signal.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -61,9 +65,7 @@ static char rcsid[] = "$OpenBSD: rexecd.c,v 1.16 2001/01/28 19:34:30 niklas Exp 
 #include <paths.h>
 #include <err.h>
 #include <login_cap.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <bsd_auth.h>
 
 /*VARARGS1*/
 void error __P(());
@@ -167,6 +169,8 @@ doit(f, fromp)
 		exit(1);
 	}
 	endpwent();
+	if (pwd->pw_uid)
+		auth_checknologin(lc);
 	if (*pwd->pw_passwd != '\0') {
 		namep = crypt(pass, pwd->pw_passwd);
 		if (strcmp(namep, pwd->pw_passwd)) {
@@ -253,7 +257,7 @@ doit(f, fromp)
 			    FD_ISSET(s, &readfrom));
 			exit(0);
 		}
-		setpgrp(0, getpid());
+		setsid();
 		(void) close(s); (void)close(pv[0]);
 		dup2(pv[1], 2);
 	}
@@ -270,6 +274,8 @@ doit(f, fromp)
 		err(1, "unable to setup environment");
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
 		err(1, "unable to set user context");
+	if (auth_approval(NULL, lc, pwd->pw_name, "rexec") <= 0)
+		err(1, "approval failure");
 
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)

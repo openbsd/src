@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.12 2001/05/05 23:23:31 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.13 2001/05/29 21:37:16 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -51,6 +51,7 @@
 
 #include <paths.h>
 #include <login_cap.h>
+#include <bsd_auth.h>
 
 /* Local headers */
 
@@ -70,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.12 2001/05/05 23:23:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.13 2001/05/29 21:37:16 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -128,10 +129,11 @@ run_file(filename, uid, gid)
 	int send_mail = 0;
 	struct stat buf, lbuf;
 	off_t size;
-	struct passwd *pentry;
+	struct passwd *pw;
 	int fflags;
 	uid_t nuid;
 	gid_t ngid;
+	login_cap_t *lc;
 
 	PRIV_START
 
@@ -152,8 +154,8 @@ run_file(filename, uid, gid)
 	 * root.
 	 */
 
-	pentry = getpwuid(uid);
-	if (pentry == NULL) {
+	pw = getpwuid(uid);
+	if (pw == NULL) {
 		syslog(LOG_ERR,"Userid %u not found - aborting job %s",
 		    uid, filename);
 		exit(EXIT_FAILURE);
@@ -164,7 +166,7 @@ run_file(filename, uid, gid)
 
 	PRIV_END
 
-	if (pentry->pw_expire && time(NULL) >= pentry->pw_expire) {
+	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		syslog(LOG_ERR, "Userid %u has expired - aborting job %s",
 		    uid, filename);
 		exit(EXIT_FAILURE);
@@ -299,10 +301,18 @@ run_file(filename, uid, gid)
 		if (chdir(_PATH_ATJOBS) < 0)
 			perr2("Cannot chdir to ", _PATH_ATJOBS);
 
-		if (setusercontext(0, pentry, pentry->pw_uid, LOGIN_SETALL) < 0)
+		if ((lc = login_getclass(pw->pw_class)) == NULL)
+			perr("Cannot get login class");
+
+		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETALL) < 0)
 			perr("Cannot set user context");
 
-		if (chdir(pentry->pw_dir) < 0)
+		if (auth_approval(NULL, lc, pw->pw_name, "at") <= 0)
+			perr2("Approval failure for ", pw->pw_name);
+
+		login_close(lc);
+
+		if (chdir(pw->pw_dir) < 0)
 			chdir("/");
 
 		/* First letter indicates requested job priority */
@@ -340,10 +350,10 @@ run_file(filename, uid, gid)
 
 		PRIV_START
 
-		if (setusercontext(0, pentry, pentry->pw_uid, LOGIN_SETALL) < 0)
+		if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0)
 			perr("Cannot set user context");
 
-		if (chdir(pentry->pw_dir))
+		if (chdir(pw->pw_dir))
 			chdir("/");
 
 		execl(_PATH_SENDMAIL, "sendmail", "-F", "Atrun Service",
