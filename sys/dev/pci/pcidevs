@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.480 2001/12/28 02:55:04 maja Exp $
+	$OpenBSD: pcidevs,v 1.481 2001/12/28 18:22:25 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1183,6 +1183,7 @@ product HP NETRAID_4M		0x10c2	NetRaid-4M
 /* Hifn products */
 product HIFN 7751		0x0005	7751
 product HIFN 6500		0x0006	6500
+product	HIFN 7811		0x0007	7811
 product HIFN 7951		0x0012	7951
 
 /* Hint */
