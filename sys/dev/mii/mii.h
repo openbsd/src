@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.h,v 1.4 2001/10/05 18:33:33 nate Exp $	*/
+/*	$OpenBSD: mii.h,v 1.5 2001/11/17 21:07:16 aaron Exp $	*/
 /*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
  
 /*
@@ -79,7 +79,6 @@
 #define	BMSR_100T2FDX	0x0400	/* 100 base T2 full duplex capable */
 #define	BMSR_100T2HDX	0x0200	/* 100 base T2 half duplex capable */
 #define	BMSR_EXTSTAT	0x0100	/* Extended status in register 15 */
-#define	BMSR_MFPS	0x0040	/* MII Frame Preamble Suppression */
 #define	BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define	BMSR_RFAULT	0x0010	/* Link partner fault */
 #define	BMSR_ANEG	0x0008	/* Autonegotiation capable */
@@ -90,7 +89,7 @@
 /*
  * Note that the EXTSTAT bit indicates that there is extended status
  * info available in register 15, but 802.3 section 22.2.4.3 also
- * states that that all 1000 Mb/s capable PHYs will set this bit to 1.
+ * states that all 1000 Mb/s capable PHYs will set this bit to 1.
  */
 
 #define	BMSR_MEDIAMASK	(BMSR_100T4|BMSR_100TXFDX|BMSR_100TXHDX| \
