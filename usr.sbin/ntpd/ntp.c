@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.37 2004/10/13 14:02:50 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.38 2004/10/22 21:17:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -380,17 +380,23 @@ ntp_adjtime(void)
 			conf->status.rootdelay =
 			    (peers[offset_cnt / 2 - 1]->update.delay +
 			    peers[offset_cnt / 2]->update.delay) / 2;
+			conf->status.stratum = MAX(
+			    peers[offset_cnt / 2 - 1]->update.status.stratum,
+			    peers[offset_cnt / 2]->update.status.stratum);
 		} else {
 			offset_median = peers[offset_cnt / 2]->update.offset;
 			conf->status.rootdelay =
 			    peers[offset_cnt / 2]->update.delay;
+			conf->status.stratum =
+			    peers[offset_cnt / 2]->update.status.stratum;
 		}
 
 		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
 
 		conf->status.reftime = gettime();
-		conf->status.leap = LI_NOWARNING;		/* XXX */
+		conf->status.leap = LI_NOWARNING;
+		conf->status.stratum++;	/* one more than selected peer */
 
 		if (peers[offset_cnt / 2]->addr->ss.ss_family == AF_INET)
 			conf->status.refid = ((struct sockaddr_in *)
