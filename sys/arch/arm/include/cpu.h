@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2005/01/21 16:22:34 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -294,6 +294,9 @@ int badaddr_read	(void *, size_t, void *);
 
 /* syscall.c */
 void swi_handler	(trapframe_t *);
+
+/* machine_machdep.c */
+void board_startup(void);
 
 #endif	/* !_LOCORE */
 

@@ -112,10 +112,6 @@
  * S20: no-dot: set RB_SINGLE. don't go multi user mode.
  */
 
-#include <sys/cdefs.h>
-#include "rd.h"
-#include "lcd.h"
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -154,6 +150,8 @@
 #include <arm/sa11x0/sa1111_reg.h>
 #include <machine/zaurus_reg.h>
 #include <machine/zaurus_var.h>
+
+#include "wsdisplay.h"
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
@@ -244,6 +242,7 @@ void	parse_mi_bootargs(char *args);
 #endif
 
 void	consinit(void);
+void	early_clkman(u_int, int);
 void	kgdb_port_init(void);
 void	change_clock(uint32_t v);
 
@@ -499,7 +498,7 @@ bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	startpa = trunc_page(bpa);
 	pmap_map_section((vaddr_t)pagedir, va, startpa, 
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
@@ -595,10 +594,10 @@ initarm(void *arg)
 #ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
 #endif
+	/* early bus_space_map support */
 	struct bus_space tmp_bs_tag;
 	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int, 
 	    bus_space_handle_t *);
-
 
 
 #if 0
@@ -689,18 +688,25 @@ initarm(void *arg)
 
 #if 1
 	/* turn on clock to UART block.
-	   XXX: this should not be done here. */
-	ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN, CKEN_FFUART|CKEN_BTUART |
-	    ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN));
+	   XXX this should not be necessary, consinit() will do it */
+	early_clkman(CKEN_FFUART | CKEN_BTUART, 1);
 #endif
 
 	green_on(0);
 
+	/*
+	 * Temporarily replace bus_space_map() functions so that
+	 * console devices can get mapped.
+	 *
+	 * Note that this relies upon the fact that both regular
+	 * and a4x bus_space tags use the same map function.
+	 */
 	tmp_bs_tag = pxa2x0_bs_tag;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
-	map_func_save = pxa2x0_a4x_bs_tag.bs_map;
-	pxa2x0_a4x_bs_tag.bs_map = bootstrap_bs_map;
+	map_func_save = pxa2x0_bs_tag.bs_map;
+	pxa2x0_a4x_bs_tag.bs_map = pxa2x0_bs_tag.bs_map = bootstrap_bs_map;
 
+	/* setup a serial console for very early boot */
 	consinit();
 #ifdef KGDB
 	kgdb_port_init();
@@ -1076,15 +1082,6 @@ initarm(void *arg)
 	printf("bootstrap done.\n");
 #endif
 
-        if (boothowto & RB_CONFIG) {
-#ifdef BOOT_CONFIG
-		user_config();
-#else
-		printf("kernel does not support -c; continuing..\n");
-#endif
-							}
-
-
 	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
 	/*
@@ -1162,6 +1159,11 @@ initarm(void *arg)
 	}
 #endif
 
+	/*
+	 * Restore proper bus_space operation, now that pmap is initialized.
+	 */
+	pxa2x0_a4x_bs_tag.bs_map = pxa2x0_bs_tag.bs_map = map_func_save;
+
 #ifdef DDB
 	db_machine_init();
 
@@ -1171,8 +1173,6 @@ initarm(void *arg)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	pxa2x0_a4x_bs_tag.bs_map = map_func_save ;
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
@@ -1225,12 +1225,10 @@ int comkgdbmode = KGDB_DEVMODE;
 
 #endif /* KGDB */
 
-
 void
 consinit(void)
 {
 	static int consinit_called = 0;
-	uint32_t ckenreg = ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN);
 #if 0
 	char *console = CONSDEVNAME;
 #endif
@@ -1243,45 +1241,32 @@ consinit(void)
 #if NCOM > 0
 
 #ifdef FFUARTCONSOLE
-	if (0) {
-		/* We don't use FF serial when S17=no-dot position */
-	}
 #ifdef KGDB
-	else if (0 == strcmp(kgdb_devname, "ffuart")) {
+	if (strcmp(kgdb_devname, "ffuart") == 0) {
 		/* port is reserved for kgdb */
-	}
+	} else
 #endif
-	else if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
-		     comcnspeed, PXA2X0_COM_FREQ, comcnmode)) {
-#if 0
-		/* XXX: can't call pxa2x0_clkman_config yet */
-		pxa2x0_clkman_config(CKEN_FFUART, 1);
-#else
-		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN,
-		    ckenreg|CKEN_FFUART);
-#endif
-
+	if (comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, comcnspeed,
+	    PXA2X0_COM_FREQ, comcnmode) == 0) {
+		early_clkman(CKEN_FFUART, 1);
 		return;
 	}
 #endif /* FFUARTCONSOLE */
 
 #ifdef BTUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "btuart")) {
+	if (strcmp(kgdb_devname, "btuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
-	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
-		comcnspeed, PXA2X0_COM_FREQ, comcnmode)) {
-		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN,
-		    ckenreg|CKEN_BTUART);
+	if (comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE, comcnspeed,
+	    PXA2X0_COM_FREQ, comcnmode) == 0) {
+		early_clkman(CKEN_BTUART, 1);
 		return;
 	}
 #endif /* BTUARTCONSOLE */
 
-
 #endif /* NCOM */
-
 }
 
 #ifdef KGDB
@@ -1289,28 +1274,75 @@ void
 kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
-	paddr_t paddr = 0;
-	enum pxa2x0_uart_id uart_id;
-	uint32_t ckenreg = ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN);
+	paddr_t paddr;
+	u_int cken;
 
-	if (0 == strcmp(kgdb_devname, "ffuart")) {
+	if (strcmp(kgdb_devname, "ffuart") == 0) {
 		paddr = PXA2X0_FFUART_BASE;
-		clenreg |= CKEN_FFUART;
-	}
-	else if (0 == strcmp(kgdb_devname, "btuart")) {
+		cken = CKEN_FFUART;
+	} else if (strcmp(kgdb_devname, "btuart") == 0) {
 		paddr = PXA2X0_BTUART_BASE;
-		clenreg |= CKEN_BTUART;
-	}
+		cken = CKEN_BTUART;
+	} else
+		return;
 
-	if (paddr &&
-	    0 == com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
-		kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
-
-		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN, ckenreg);
+	if (com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
+	    kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode) == 0) {
+		early_clkman(cken, 1);
 	}
 #endif
 }
 #endif
+
+/* same as pxa2x0_clkman, but before autoconf */
+void
+early_clkman(u_int clk, int enable)
+{
+	u_int32_t rv;
+
+	rv = ioreg_read(ZAURUS_CLKMAN_VBASE + CLKMAN_CKEN);
+	if (enable)
+		rv |= clk;
+	else
+		rv &= ~clk;
+	ioreg_write(ZAURUS_CLKMAN_VBASE + CLKMAN_CKEN, rv);
+}
+
+void
+board_startup(void)
+{
+	extern int lcd_cnattach(void (*)(u_int, int));
+	extern bus_addr_t comconsaddr;
+
+#if NWSDISPLAY > 0
+	/*
+	 * Try to attach the display console now that VM services
+	 * are available.
+	 */
+
+	printf("attempting to switch console to lcd screen\n");
+	if (lcd_cnattach(early_clkman) == 0) {
+		/*
+		 * Kill the existing serial console.
+		 * XXX need to bus_space_unmap resources and disable
+		 *     clocks...
+		 */
+		comconsaddr = 0;
+
+		/* Display the copyright notice again on the new console */
+		extern const char copyright[];
+		printf("%s\n", copyright);
+	}
+#endif
+
+        if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
+}
 
 /*
  * Cotulla's integrated ICU doesn't have IRQ0..7, so
@@ -1370,11 +1402,11 @@ pxa2x0_spllower(int ipl)
 void
 pxa2x0_setsoftintr(int si)
 {
-	#if 0
+#if 0
 	atomic_set_bit( (u_int *)&softint_pending, SI_TO_IRQBIT(si) );
-	#else
-		softint_pending |=  SI_TO_IRQBIT(si);
-	#endif
+#else
+	softint_pending |=  SI_TO_IRQBIT(si);
+#endif
 
 	/* Process unmasked pending soft interrupts. */
 	if ( softint_pending & intr_mask )

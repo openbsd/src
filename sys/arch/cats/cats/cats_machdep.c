@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.9 2004/09/16 21:52:50 miod Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.10 2005/01/21 16:22:34 miod Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -905,6 +905,11 @@ initarm(bootargs)
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+}
+
+void
+board_startup(void)
+{
 }
 
 char *console = CONSDEVNAME;

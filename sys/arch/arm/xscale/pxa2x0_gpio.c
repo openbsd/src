@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.11 2005/01/17 04:27:20 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.12 2005/01/21 16:22:34 miod Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -467,7 +467,8 @@ pxa2x0_gpio_get_function(u_int gpio)
 	struct pxagpio_softc *sc = pxagpio_softc;
 	u_int32_t rv, io;
 
-	KDASSERT(gpio < sc->npins);
+	if (__predict_true(sc != NULL))
+		KDASSERT(gpio < sc->npins);
 
 	rv = pxagpio_reg_read(sc, GPIO_FN_REG(gpio)) >> GPIO_FN_SHIFT(gpio);
 	rv = GPIO_FN(rv);
@@ -490,7 +491,8 @@ pxa2x0_gpio_set_function(u_int gpio, u_int fn)
 	u_int32_t rv, bit;
 	u_int oldfn;
 
-	KDASSERT(gpio < sc->npins);
+	if (__predict_true(sc != NULL))
+		KDASSERT(gpio < sc->npins);
 
 	oldfn = pxa2x0_gpio_get_function(gpio);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.6 2005/01/06 23:47:20 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.7 2005/01/21 16:22:34 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -85,14 +85,9 @@ struct pxa2x0_lcd_softc {
 	int n_screens;
 	LIST_HEAD(, pxa2x0_lcd_screen) screens;
 	struct pxa2x0_lcd_screen *active;
-	struct rasops_info	sc_ro;		/* main (console) rasops */
 
 	void *ih;			/* interrupt handler */
 };
-
-void pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *, struct pxaip_attach_args *,
-			   const struct lcd_panel_geometry *);
-void pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *, struct pxa2x0_lcd_screen *);
 
 struct lcd_panel_geometry {
 	short panel_width;
@@ -124,10 +119,6 @@ struct lcd_panel_geometry {
 	short end_frame_wait;		/* end of frame wait (EFW) */
 };
 
-void	pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
-	    const struct lcd_panel_geometry *);
-struct pxa2x0_lcd_screen *pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *, int);
-
 /*
  * we need bits-per-pixel value to configure wsdisplay screen
  */
@@ -136,11 +127,11 @@ struct pxa2x0_wsscreen_descr {
 	int depth;			/* bits per pixel */
 };
 
-int	pxa2x0_lcd_setup_console(struct pxa2x0_lcd_softc *,
-	    const struct pxa2x0_wsscreen_descr *);
-int	pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *,
-	    struct pxa2x0_wsscreen_descr *, const struct lcd_panel_geometry *,
-	    const char * );
+void	pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *,
+	    struct pxaip_attach_args *, struct pxa2x0_wsscreen_descr *,
+	    const struct lcd_panel_geometry *, int);
+int	pxa2x0_lcd_cnattach(struct pxa2x0_wsscreen_descr *,
+	    const struct lcd_panel_geometry *, void (*)(u_int, int));
 
 int	pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.10 2005/01/13 17:44:43 drahn Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.11 2005/01/21 16:22:34 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -60,9 +60,9 @@
 #include <machine/zaurus_reg.h>
 #include <machine/zaurus_var.h>
 
-int	lcd_match(struct device *, void *, void *);
 void	lcd_attach(struct device *, struct device *, void *);
-int	lcdintr(void *);
+int	lcd_match(struct device *, void *, void *);
+int	lcd_cnattach(void (*)(u_int, int));
 
 /*
  * wsdisplay glue
@@ -70,31 +70,13 @@ int	lcdintr(void *);
 struct pxa2x0_wsscreen_descr
 lcd_bpp16_screen = {
 	{
-		"std" /* "bpp16" */
+		"std"
 	},
 	16				/* bits per pixel */
-#ifdef notyet
-}, lcd_bpp8_screen = {
-	{
-		"bpp8"
-	},
-	8				/* bits per pixel */
-}, lcd_bpp4_screen = {
-	{
-		"bpp4"
-	},
-	4				/* bits per pixel */
-#endif
 };
 
-
 static const struct wsscreen_descr *lcd_scr_descr[] = {
-#ifdef notyet
-	/* bpp4 needs a patch to rasops4 */
-	&lcd_bpp4_screen.c,
-	&lcd_bpp8_screen.c,
-#endif
-	&lcd_bpp16_screen.c,
+	&lcd_bpp16_screen.c
 };
 
 const struct wsscreen_list lcd_screen_list = {
@@ -125,74 +107,65 @@ struct cfdriver lcd_cd = {
 	NULL, "lcd_pxaip", DV_DULL
 };
 
+#define CURRENT_DISPLAY &sharp_zaurus_C3000
+
+const struct lcd_panel_geometry sharp_zaurus_C3000 =
+{
+	480,			/* Width */
+	640,			/* Height */
+	0,			/* No extra lines */
+
+	LCDPANEL_ACTIVE | LCDPANEL_VSP | LCDPANEL_HSP,
+	1,			/* clock divider */
+	0,			/* AC bias pin freq */
+
+	0x28,			/* horizontal sync pulse width */
+	0x2e,			/* BLW */
+	0x7d,			/* ELW */
+
+	2,			/* vertical sync pulse width */
+	1,			/* BFW */
+	0,			/* EFW */
+};
+
 int
 lcd_match(struct device *parent, void *cf, void *aux)
 {
 	return 1;
 }
 
-#define CURRENT_DISPLAY &sharp_zaurus_C3000
-
-static const struct lcd_panel_geometry sharp_zaurus_C3000 =
-{
-    480,			/* Width */
-    640,			/* Height */
-    0,				/* No extra lines */
-
-    LCDPANEL_ACTIVE | LCDPANEL_VSP | LCDPANEL_HSP,
-    1,				/* clock divider */
-    0,				/* AC bias pin freq */
-
-    0x28,			/* horizontal sync pulse width */
-    0x2e,			/* BLW */
-    0x7d,			/* ELW */
-
-    2,				/* vertical sync pulse width */
-    1,				/* BFW */
-    0,				/* EFW */
-};
-
 void
 lcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
-	long defattr;
+	int console;
 
-	pxa2x0_lcd_attach_sub(sc, aux, CURRENT_DISPLAY);
-
-	/* make wsdisplay screen list */
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp16_screen, CURRENT_DISPLAY, NULL);
-#ifdef notyet
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp8_screen, CURRENT_DISPLAY, NULL);
-	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp4_screen, CURRENT_DISPLAY, NULL);
-#endif
+	console = 1;		/* XXX allow user configuration? */
 
 	printf("\n");
 
-	aa.console = 1;		/* XXX allow user configuration? */
+	pxa2x0_lcd_attach_sub(sc, aux, &lcd_bpp16_screen, CURRENT_DISPLAY,
+	    console);
 
-	if (aa.console != 0) {
-		if (pxa2x0_lcd_setup_console(sc, &lcd_bpp16_screen) == 0) {
-			/* assumes 16bpp */
-			sc->sc_ro.ri_ops.alloc_attr(&sc->sc_ro, 0, 0, 0,
-			    &defattr);
-
-			wsdisplay_cnattach(&lcd_bpp16_screen.c, &sc->sc_ro,
-			    sc->sc_ro.ri_ccol, sc->sc_ro.ri_crow, defattr);
-		} else {
-			printf("%s: failed to initialize console!\n",
-			    sc->dev.dv_xname);
-			aa.console = 0;	/* better than panicing... */
-		}
-	}
-
+	aa.console = console;
 	aa.scrdata = &lcd_screen_list;
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
 
 	(void)config_found(self, &aa, wsemuldisplaydevprint);
 }
+
+int
+lcd_cnattach(void (*clkman)(u_int, int))
+{
+	return
+	    (pxa2x0_lcd_cnattach(&lcd_bpp16_screen, CURRENT_DISPLAY, clkman));
+}
+
+/*
+ * wsdisplay accessops overrides
+ */
 
 void
 lcd_burner(void *v, u_int on, u_int flags)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvbox.c,v 1.4 2005/01/19 10:51:23 miod Exp $	*/
+/*	$OpenBSD: dvbox.c,v 1.5 2005/01/21 16:22:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -356,7 +356,7 @@ dvbox_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->cmsize = 8;	/* XXX 16 because of overlay? */
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = (fb->fbwidth * fb->planes) >> 3;
+		*(u_int *)data = fb->fbwidth;
 		break;
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
