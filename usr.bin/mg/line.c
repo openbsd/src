@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.17 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.18 2003/04/16 02:38:18 millert Exp $	*/
 
 /*
  *		Text line handling.
@@ -52,7 +52,7 @@ lalloc(int used)
 	LINE *lp;
 
 	if ((lp = malloc(sizeof *lp)) == NULL)
-		return FALSE;
+		return NULL;
 	lp->l_text = NULL;
 	lp->l_size = 0;
 	lp->l_used = used;	/* XXX */
@@ -68,10 +68,12 @@ lrealloc(LINE *lp, int newsize)
 {
 	char *tmp;
 
-	if ((tmp = realloc(lp->l_text, newsize)) == NULL)
-		return FALSE;
-	lp->l_text = tmp;
-	lp->l_size = newsize;
+	if (lp->l_size < newsize) {
+		if ((tmp = realloc(lp->l_text, newsize)) == NULL)
+			return FALSE;
+		lp->l_text = tmp;
+		lp->l_size = newsize;
+	}
 
 	return TRUE;
 }
