@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.21 1999/08/08 14:59:02 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.22 1999/10/27 16:36:25 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -252,12 +252,6 @@ if_detach(ifp)
 	vif_delete(ifp);
 #endif
 #endif
-
-#ifdef IPFILTER
-	/* XXX More ipf & ipnat cleanup needed.  */
-	nat_ifdetach(ifp);
-#endif
-
 	/*
 	 * XXX transient ifp refs?  inpcb.ip_moptions.imo_multicast_ifp?
 	 * Other network stacks than INET?
@@ -265,6 +259,11 @@ if_detach(ifp)
 
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
+
+#ifdef IPFILTER
+	/* XXX More ipf & ipnat cleanup needed.  */
+	nat_ifdetach(ifp);
+#endif
 
 	/* Deallocate private resources.  */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa;
