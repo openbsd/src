@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.19 2001/09/02 18:45:41 jakob Exp $
+.\"     $OpenBSD: nc.1,v 1.20 2002/02/17 03:03:06 ericj Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Nd "arbitrary TCP and UDP connections and listens"
 .Sh SYNOPSIS
 .Nm nc
-.Op Fl 46hklnrtuvz
+.Op Fl 46hklnrtuvzU
 .Op Fl i Ar interval
 .Op Fl p Ar source port
 .Op Fl s Ar source ip address
@@ -139,6 +139,8 @@ If port is not specified, port 1080 is used.
 Specifies that
 .Nm
 should just scan for listening daemons, without sending any data to them.
+.It Fl U
+Specifies to use Unix Domain Sockets.
 .El
 .Sh EXAMPLES
 .Bl -tag -width x
@@ -176,6 +178,10 @@ the remote host, and send data from the remote host to stdout.
 Connect to port 1000 of hostname, send the string "foobar"
 followed by a newline, and move data from port 1000 of hostname to
 stdout until hostname closes the connection.
+.It Li "nc -U /var/tmp/dsocket"
+Connect to a Unix Domain Socket.
+.It Li "nc -lU /var/tmp/dsocket"
+Create and listen on a Unix Domain Socket.
 .El
 .Sh SEE ALSO
 .Xr cat 1 ,
