@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.38 1998/05/25 19:17:40 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.39 1998/05/30 01:48:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -358,8 +358,10 @@ Xstty()
 static int
 Xtime()
 {
+	time_t tt = getsecs();
+
 	if (cmd.argc == 1)
-		time_print();
+		printf(ctime(&tt));
 	else {
 	}
 
