@@ -18,7 +18,7 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Configure,v 1.13 2004/04/07 21:32:58 millert Exp $
+# $Id: Configure,v 1.14 2004/08/09 18:08:53 millert Exp $
 #
 # Generated on Wed May 12 13:00:30 METDST 2004 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
@@ -4726,6 +4726,20 @@ default|recommended)
 				echo "Leaving current flags $ccflags alone." 2>&1
 				;;
 			*) dflt="$dflt -fno-strict-aliasing" ;;
+			esac
+		else
+			echo "Nope, it doesn't, but that's ok." 2>&1
+		fi
+		echo " "
+		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
+		echo 'int main(void) { return 0; }' > gcctest.c
+		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
+			echo "Yes, it does." 2>&1
+			case "$ccflags" in
+			*delete-null-pointer-checks*)
+				echo "Leaving current flags $ccflags alone." 2>&1
+				;;
+			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
 			esac
 		else
 			echo "Nope, it doesn't, but that's ok." 2>&1

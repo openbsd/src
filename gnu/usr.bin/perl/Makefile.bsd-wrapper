@@ -1,13 +1,19 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.67 2004/08/11 11:13:10 pefo Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.68 2004/08/14 00:12:22 millert Exp $
 #
 # Build wrapper for Perl 5.8.5
 #
+
+# For ``NOMAN'' and ``USE_GCC3''
+.include <bsd.own.mk>
 
 # To build a threaded perl, uncomment this.  Not stable on all platforms...
 #THREADED_PERL=true
 
 # Perl builds with -fno-strict-aliasing, we want libperl to do the same
 CFLAGS+= -fno-strict-aliasing
+.if ${USE_GCC3:L} == "yes"
+CFLAGS+= -fno-delete-null-pointer-checks
+.endif
 
 # Arguments passed to Configure...
 CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined
@@ -15,9 +21,6 @@ CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined
 CONFIGURE_ARGS+= -Dusethreads
 CFLAGS+= -pthread
 .endif
-
-# For ``NOMAN''
-.include <bsd.own.mk>
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -615,57 +618,6 @@ x2p/cflags:
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
 	-@true
-
-# Work around a gcc bug on arm
-.if ${MACHINE_ARCH} == "arm"
-pp_hot.o: pp_hot.c
-	@echo "${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_hot.go: pp_hot.c
-	@echo "${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_hot.po: pp_hot.c
-	@echo "${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_hot.so: pp_hot.c
-	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_ctl.o: pp_ctl.c
-	@echo "${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_ctl.go: pp_ctl.c
-	@echo "${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} -g ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_ctl.po: pp_ctl.c
-	@echo "${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} -p ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_ctl.so: pp_ctl.c
-	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O1 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-.endif
 
 .ifdef NOMAN
 maninstall:
