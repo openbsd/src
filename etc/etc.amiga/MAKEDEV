@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.21 1997/05/13 05:34:48 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.22 1997/05/13 16:21:48 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -94,6 +94,20 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
+
+hex ()
+{
+	case $1 in
+		[0-9]) echo -n $1 ;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
+	esac
+}
+
 for i
 do
 case $i in
@@ -424,13 +438,15 @@ pty*)
 	case $class in
 	0|1|2|3|4)
 		umask 0
-		(i=0; while [ $i -lt 16 ]; do
-			eval `printf "rm -f tty%s%x; mknod tty%s%x c 4 %d; \
-			    rm -f pty%s%x; mknod pty%s%x c 5 %d" $name $i \
-			    $name $i $offset $name $i $name $i $offset`
-			offset=$(($offset+1))
-			i=$(($i+1))
-			done)
+		n=0
+		while [ $n -lt 16 ]
+                do
+                        nam=$name`hex $n`
+                        rm -rf {tty,pty}$n
+                        mknod tty$nam c 4 "$(( $offset + $n ))"
+                        mknod pty$nam c 5 "$(( $offset + $n ))"
+                        n="$(( $n + 1 ))"
+                done
 		umask 77
 		;;
 	esac
