@@ -64,7 +64,8 @@ Supported devices {:-include-:}:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509, 3c579, 3c589, 3c59x and 3c9xx
+		3COM 3c509, 3c579, 3c589, 3c59x
+		3COM 3c900, 3c900b, 3c905, and 3c905b
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			SMC EtherPower 10, 10/100 (PCI only!)
 			Znyx ZX34X
@@ -209,8 +210,12 @@ Novell NE1000, or NE2000 Ethernet boards
 3COM 3c505/Etherlink+ Ethernet boards
 		eg0	0x310	5
 
-3COM 3c509, 3c579, 3c595, 3c900, 3c905 Ethernet boards
+3COM 3c509, 3c579, 3c595 Ethernet boards
 		ep0	any	any
+
+3COM 3c900, 3c900b, 3c905, 3c905b Ethernet boards
+		xl0	any	any	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
