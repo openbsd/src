@@ -129,7 +129,6 @@ case "$openbsd_distribution" in
 		useshrplib=true
 		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
 	fi
-	usethreads=$define
 	;;
 esac
 
