@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadavg.h,v 1.1 1997/08/14 14:00:22 downsj Exp $	*/
+/*	$OpenBSD: loadavg.h,v 1.2 1997/08/17 01:01:59 downsj Exp $	*/
 
 /*
  *  Top - a top users display for Berkeley Unix
@@ -21,7 +21,7 @@
  *
  * Defined types:  load_avg for load averages, pctcpu for cpu percentages.
  */
-#if defined(mips) && !defined(NetBSD)
+#if defined(mips) && !defined(__OpenBSD__)
 # include <sys/fixpoint.h>
 # if defined(FBITS) && !defined(FSCALE)
 #  define FSCALE (1 << FBITS)	/* mips */
