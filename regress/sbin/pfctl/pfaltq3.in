@@ -1,3 +1,7 @@
+# more complicated case to provoke queue id assignment errors:
+# -two same named queues must have same qid on all interfaces
+# -two differently named queues must not share a qid, even on different ifs
+
 altq on lo0 tbrsize 1824 bandwidth 10Mb cbq queue { eins zwei drei }
 altq on tun0 tbrsize 1824 bandwidth 33600b cbq queue { vier zwei fuenf }
 queue eins bandwidth 10% cbq(default)

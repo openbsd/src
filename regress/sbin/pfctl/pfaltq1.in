@@ -1,3 +1,5 @@
+#queue id assignment with priq
+
 altq on { lo0 tun0 } tbrsize 1824 priq bandwidth 10Mb queue { one two }
 queue one priority 1 priq(default)
 queue two priority 15

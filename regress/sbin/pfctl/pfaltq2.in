@@ -1,3 +1,6 @@
+#queue id assignment with cbq: two same named queues on different interfaces
+#must have the same qid
+
 altq on { lo0 tun0 } tbrsize 1824 cbq bandwidth 10Mb queue { one two }
 queue one bandwidth 10% cbq(default)
 queue two bandwidth 90% { three four}
