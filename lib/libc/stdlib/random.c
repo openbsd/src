@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)random.c	5.9 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: random.c,v 1.1.1.1 1995/10/18 08:42:19 deraadt Exp $";
+static char *rcsid = "$Id: random.c,v 1.2 1996/03/30 10:01:47 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -136,12 +136,12 @@ static int seps [MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
 
 static long randtbl[DEG_3 + 1] = {
 	TYPE_3,
-	0x9a319039, 0x32d9c024, 0x9b663182, 0x5da1f342, 0xde3b81e0, 0xdf0a6fb5,
-	0xf103bc02, 0x48f340fb, 0x7449e56b, 0xbeb1dbb0, 0xab5c5918, 0x946554fd,
-	0x8c2e680f, 0xeb3d799f, 0xb11ee0b7, 0x2d436b86, 0xda672e2a, 0x1588ca88,
-	0xe369735d, 0x904f35f7, 0xd7158fd6, 0x6fa6f051, 0x616e6b96, 0xac94efdc,
-	0x36413f93, 0xc622c298, 0xf5a42ab8, 0x8a88d77b, 0xf5ad9d0e, 0x8999220b,
-	0x27fb47b9,
+	0x991539b1, 0x16a5bce3, 0x6774a4cd, 0x3e01511e, 0x4e508aaa, 0x61048c05, 
+	0xf5500617, 0x846b7115, 0x6a19892c, 0x896a97af, 0xdb48f936, 0x14898454, 
+	0x37ffd106, 0xb58bff9c, 0x59e17104, 0xcf918a49, 0x09378c83, 0x52c7a471, 
+	0x8d293ea9, 0x1f4fc301, 0xc3db71be, 0x39b44e1c, 0xf8a44ef9, 0x4c8b80b1, 
+	0x19edc328, 0x87bf4bdd, 0xc9b240e5, 0xe9ee4b1b, 0x4382aee7, 0x535b6b41, 
+	0xf3bec5da,
 };
 
 /*
@@ -193,15 +193,27 @@ void
 srandom(x)
 	u_int x;
 {
+	register long int test;
 	register int i, j;
+	ldiv_t val;
 
 	if (rand_type == TYPE_0)
 		state[0] = x;
 	else {
 		j = 1;
 		state[0] = x;
-		for (i = 1; i < rand_deg; i++)
-			state[i] = 1103515245 * state[i - 1] + 12345;
+		for (i = 1; i < rand_deg; i++) {
+			/*
+			 * Implement the following, without overflowing 31 bits:
+			 *
+			 *	state[i] = (16807 * state[i - 1]) % 2147483647;
+			 *
+			 *	2^31-1 (prime) = 2147483647 = 127773*16807+2836
+			 */
+			val = ldiv(state[i-1], 127773);
+			test = 16807 * val.rem - 2836 * val.quot;
+			state[i] = test + (test < 0 ? 2147483647 : 0);
+		}
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
