@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.56 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.57 2004/02/27 17:40:17 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1611,8 +1611,7 @@ nfs_link(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
-
+	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
 		FREE(cnp->cn_pnbuf, M_NAMEI);
@@ -1630,6 +1629,7 @@ nfs_link(v)
 	 */
 	VOP_FSYNC(vp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
 
+	v3 = NFS_ISV3(vp);
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	nfsm_reqhead(vp, NFSPROC_LINK,
 		NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
