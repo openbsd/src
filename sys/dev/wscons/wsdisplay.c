@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.25 2001/05/01 02:23:22 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.26 2001/05/08 22:28:43 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -128,16 +128,14 @@ struct wsscreen {
 };
 
 struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
-				      const char *,
-				      const struct wsscreen_descr *, void *,
-				      int, int, long));
+	const char *, const struct wsscreen_descr *, void *, int, int, long));
 void wsscreen_detach __P((struct wsscreen *));
-int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *,
-			     const char *));
+int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
 void wsdisplay_shutdownhook __P((void *));
 void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
 void wsdisplay_closescreen __P((struct wsdisplay_softc *, struct wsscreen *));
 int wsdisplay_delscreen __P((struct wsdisplay_softc *, int, int));
+void wsdisplay_burner __P((void *v));
 
 #define WSDISPLAY_MAXSCREEN	12
 #define WSDISPLAY_MAXFONT	8
@@ -153,6 +151,13 @@ struct wsdisplay_softc {
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
 	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
+
+	struct timeout sc_burner;
+	int	sc_burnoutintvl;
+	int	sc_burninintvl;
+	int	sc_burnout;
+	int	sc_burnman;
+	int	sc_burnflags;
 
 	struct wsdisplay_font sc_fonts[WSDISPLAY_MAXFONT];
 
@@ -221,17 +226,17 @@ void wsdisplay_common_attach __P((struct wsdisplay_softc *sc, int console,
 int wsdisplay_update_rawkbd __P((struct wsdisplay_softc *, struct wsscreen *));
 #endif
 
-static int wsdisplay_console_initted;
-static struct wsdisplay_softc *wsdisplay_console_device;
-static struct wsscreen_internal wsdisplay_console_conf;
+int wsdisplay_console_initted;
+struct wsdisplay_softc *wsdisplay_console_device;
+struct wsscreen_internal wsdisplay_console_conf;
 
 int wsdisplay_getc_dummy __P((dev_t));
 void wsdisplay_pollc __P((dev_t, int));
 
-static int wsdisplay_cons_pollmode;
+int wsdisplay_cons_pollmode;
 void (*wsdisplay_cons_kbd_pollc) __P((dev_t, int));
 
-static struct consdev wsdisplay_cons = {
+struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
 	    wsdisplay_pollc, NULL, NODEV, CN_NORMAL
 };
@@ -681,6 +686,13 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
 
+	sc->sc_burnoutintvl = (hz * WSDISPLAY_DEFBURNOUT) / 1000;
+	sc->sc_burninintvl  = (hz * WSDISPLAY_DEFBURNIN ) / 1000;
+	sc->sc_burnflags = 0;	/* off by default */
+	timeout_set(&sc->sc_burner, wsdisplay_burner, sc);
+	sc->sc_burnout = sc->sc_burnoutintvl;
+	wsdisplay_burn(sc, sc->sc_burnflags);
+
 	if (hookset == 0)
 		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
 	hookset = 1;
@@ -994,32 +1006,30 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 
 #if NWSKBD > 0
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-		switch (cmd) {
-		    case WSKBDIO_SETMODE:
-			scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
-			return (wsdisplay_update_rawkbd(sc, scr));
-		    case WSKBDIO_GETMODE:
-			*(int *)data = (scr->scr_rawkbd ?
-					WSKBD_RAW : WSKBD_TRANSLATED);
-			return (0);
-		}
+	switch (cmd) {
+	    case WSKBDIO_SETMODE:
+		scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (wsdisplay_update_rawkbd(sc, scr));
+	    case WSKBDIO_GETMODE:
+		*(int *)data = (scr->scr_rawkbd ?
+				WSKBD_RAW : WSKBD_TRANSLATED);
+		return (0);
+	}
 #endif
 	error = wsmux_displayioctl(&sc->sc_muxdv->sc_dv, cmd, data, flag, p);
-		if (error >= 0)
+	if (error >= 0)
 		return (error);
 #endif /* NWSKBD > 0 */
 
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
 		*(u_int *)data = (scr->scr_flags & SCR_GRAPHICS ?
-				  WSDISPLAYIO_MODE_MAPPED :
-				  WSDISPLAYIO_MODE_EMUL);
+		    WSDISPLAYIO_MODE_MAPPED : WSDISPLAYIO_MODE_EMUL);
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
-		if (d != WSDISPLAYIO_MODE_EMUL &&
-		    d != WSDISPLAYIO_MODE_MAPPED)
+		if (d != WSDISPLAYIO_MODE_EMUL && d != WSDISPLAYIO_MODE_MAPPED)
 			return (EINVAL);
 
 	    if (WSSCREEN_HAS_EMULATOR(scr)) {
@@ -1041,10 +1051,55 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			return (EINVAL);
 		d->data = 0;
 		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
-					scr->scr_dconf->emulcookie, d);
+		    scr->scr_dconf->emulcookie, d);
 		if (!error && WSSCREEN_HAS_EMULATOR(scr))
 			(*scr->scr_dconf->wsemul->reset)
-				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
+			    (scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
+		return (error);
+#undef d
+	case WSDISPLAYIO_GVIDEO:
+		*(u_int *)data = !sc->sc_burnman;
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+		if (*(u_int *)data != WSDISPLAYIO_VIDEO_OFF &&
+		    *(u_int *)data != WSDISPLAYIO_VIDEO_ON)
+			return (EINVAL);
+		if (sc->sc_accessops->burn_screen == NULL)
+			return (EOPNOTSUPP);
+		(*sc->sc_accessops->burn_screen)(sc->sc_accesscookie,
+		     *(u_int *)data, sc->sc_burnflags);
+		break;
+
+	case WSDISPLAYIO_GBURNER:
+#define d ((struct wsdisplay_burner *)data)
+		d->on  = sc->sc_burninintvl  * 1000 / hz;
+		d->off = sc->sc_burnoutintvl * 1000 / hz;
+		d->flags = sc->sc_burnflags;
+		return (0);
+
+	case WSDISPLAYIO_SBURNER:
+		error = EINVAL;
+		if (d->flags & (WSDISPLAY_BURN_VBLANK | WSDISPLAY_BURN_KBD |
+		    WSDISPLAY_BURN_MOUSE | WSDISPLAY_BURN_OUTPUT)) {
+			error = 0;
+			sc->sc_burnflags = d->flags;
+		}
+		if (d->on) {
+			error = 0;
+			sc->sc_burninintvl = hz * d->on / 1000;
+			if (sc->sc_burnman)
+				sc->sc_burnout = sc->sc_burninintvl;
+		}
+		if (d->off) {
+			error = 0;
+			sc->sc_burnoutintvl = hz * d->off / 1000;
+			if (!sc->sc_burnman) {
+				sc->sc_burnout = sc->sc_burnoutintvl;
+				/* reinit timeout if changed */
+				wsdisplay_burn(sc, sc->sc_burnflags);
+			}
+		}
 		return (error);
 #undef d
 	}
@@ -1100,9 +1155,9 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		d->data = buf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
-		if (error || d->index < 0)
+		if (error)
 			free(buf, M_DEVBUF);
-		else
+		else if (d->index >= 0 || d->index < WSDISPLAY_MAXFONT)
 			sc->sc_fonts[d->index] = *d;
 		return (error);
 
@@ -1265,6 +1320,7 @@ wsdisplaystart(tp)
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+		wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
 		if (scr == sc->sc_focus) {
 			if (IS_SEL_EXISTS(sc->sc_focus))
 				/* hide a potential selection */
@@ -1282,6 +1338,7 @@ wsdisplaystart(tp)
 
 		if (!(scr->scr_flags & SCR_GRAPHICS)) {
 			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+			wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
 			(*scr->scr_dconf->wsemul->output)
 			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
 		}
@@ -1373,7 +1430,7 @@ wsdisplay_emulinput(v, data, count)
 	tp = scr->scr_tty;
 	while (count-- > 0)
 		(*linesw[tp->t_line].l_rint)(*data++, tp);
-};
+}
 
 /*
  * Calls from the keyboard interface.
@@ -1837,6 +1894,7 @@ wsdisplay_cnputc(dev, i)
 		return;
 
 	dc = &wsdisplay_console_conf;
+	/*wsdisplay_burn(wsdisplay_console_device, WSDISPLAY_BURN_OUTPUT);*/
 	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
 }
 
@@ -1925,6 +1983,44 @@ wsscrollback(arg, op)
 	if (sc->sc_accessops->scrollback) {
 		(*sc->sc_accessops->scrollback)(sc->sc_accesscookie,
 		    sc->sc_focus->scr_dconf->emulcookie, lines);
+	}
+}
+
+void
+wsdisplay_burn(v, flags)
+	void *v;
+	u_int flags;
+{
+	struct wsdisplay_softc *sc = v;
+
+	if ((flags & sc->sc_burnflags & (WSDISPLAY_BURN_OUTPUT |
+	    WSDISPLAY_BURN_KBD | WSDISPLAY_BURN_MOUSE)) &&
+	    sc->sc_accessops->burn_screen) {
+		if (sc->sc_burnout)
+			timeout_add(&sc->sc_burner, sc->sc_burnout);
+		if (sc->sc_burnman)
+			sc->sc_burnout = 0;
+	}
+}
+
+void
+wsdisplay_burner(v)
+	void *v;
+{
+	struct wsdisplay_softc *sc = v;
+	int s;
+
+	if (sc->sc_accessops->burn_screen) {
+		(*sc->sc_accessops->burn_screen)(sc->sc_accesscookie,
+		    sc->sc_burnman, sc->sc_burnflags);
+		s = spltty();
+		if (sc->sc_burnman) {
+			sc->sc_burnout = sc->sc_burnoutintvl;
+			timeout_add(&sc->sc_burner, sc->sc_burnout);
+		} else
+			sc->sc_burnout = sc->sc_burninintvl;
+		sc->sc_burnman = !sc->sc_burnman;
+		splx(s);
 	}
 }
 

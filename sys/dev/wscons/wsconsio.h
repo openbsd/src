@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.9 2001/04/14 04:44:01 aaron Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.10 2001/05/08 22:28:43 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -304,11 +304,6 @@ struct wsdisplay_cursor {
 #define		WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
 #define		WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
 
-/*
- * XXX WARNING
- * XXX The following definitions are very preliminary and are likely
- * XXX to be changed without care about backwards compatibility!
- */
 struct wsdisplay_font {
 	char name[WSFONT_NAME_SIZE];
 	int index;
@@ -332,6 +327,23 @@ struct wsdisplay_font {
 #define	WSDISPLAYIO_DELFONT	_IOW ('W', 79, struct wsdisplay_font)
 #define WSDISPLAYIO_USEFONT	_IOW ('W', 80, struct wsdisplay_font)
 
+struct wsdisplay_burner {
+	u_int	off;
+	u_int	on;
+	u_int	flags;
+#define	WSDISPLAY_BURN_VBLANK	0x0001
+#define	WSDISPLAY_BURN_KBD	0x0002
+#define	WSDISPLAY_BURN_MOUSE	0x0004
+#define	WSDISPLAY_BURN_OUTPUT	0x0008
+};
+#define	WSDISPLAYIO_SBURNER	_IOW('W', 81, struct wsdisplay_burner)
+#define	WSDISPLAYIO_GBURNER	_IOR('W', 82, struct wsdisplay_burner) 
+
+/*
+ * XXX WARNING
+ * XXX The following definitions are very preliminary and are likely
+ * XXX to be changed without care about backwards compatibility!
+ */
 struct wsdisplay_addscreendata {
 	int idx; /* screen index */
 	char screentype[WSSCREEN_NAME_SIZE];

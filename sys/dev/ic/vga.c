@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.24 2001/05/08 16:16:10 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.25 2001/05/08 22:28:43 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -87,17 +87,15 @@ struct vgascreen {
 	int vga_rollover;
 };
 
-static int vgaconsole, vga_console_type, vga_console_attached;
-static struct vgascreen vga_console_screen;
-static struct vga_config vga_console_vc;
+int vgaconsole, vga_console_type, vga_console_attached;
+struct vgascreen vga_console_screen;
+struct vga_config vga_console_vc;
 
 int vga_selectfont __P((struct vga_config *, struct vgascreen *,
-			const char *, const char *));
-void vga_init_screen __P((struct vga_config *, struct vgascreen *,
-			  const struct wsscreen_descr *,
-			  int, long *));
-void vga_init __P((struct vga_config *, bus_space_tag_t,
-		   bus_space_tag_t));
+    const char *, const char *));
+void	vga_init_screen __P((struct vga_config *, struct vgascreen *,
+    const struct wsscreen_descr *, int, long *));
+void	vga_init __P((struct vga_config *, bus_space_tag_t, bus_space_tag_t));
 void vga_setfont __P((struct vga_config *, struct vgascreen *));
 
 int vga_mapchar __P((void *, int, unsigned int *));
@@ -105,7 +103,7 @@ void vga_putchar __P((void *, int, int, u_int, long));
 int vga_alloc_attr __P((void *, int, int, int, long *));
 void	vga_copyrows __P((void *, int, int, int));
 
-const struct wsdisplay_emulops vga_emulops = {
+static const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
 	vga_mapchar,
 	vga_putchar,
@@ -223,6 +221,7 @@ int	vga_show_screen __P((void *, void *, int,
 			     void (*) (void *, int, int), void *));
 int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
 void	vga_scrollback __P((void *, void *, int));
+void	vga_burner __P((void *v, u_int on, u_int flags));
 u_int16_t vga_getchar __P((void *, int, int));
 
 void vga_doswitch __P((struct vga_config *));
@@ -235,7 +234,8 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_show_screen,
 	vga_load_font,
 	vga_scrollback,
-	vga_getchar
+	vga_getchar,
+	vga_burner
 };
 
 /*
@@ -1237,6 +1237,35 @@ vga_putchar(c, row, col, uc, attr)
 		vga_scrollback(scr->cfg, scr, 0);
 
 	pcdisplay_putchar(c, row, col, uc, attr);
+}
+
+void
+vga_burner(v, on, flags)
+	void *v;
+	u_int on, flags;
+{
+	struct vga_config *vc = v;
+	struct vga_handle *vh = &vc->hdl;
+	u_int8_t r;
+	int s;
+
+	s = splhigh();
+	vga_ts_write(vh, syncreset, 0x01);
+	if (on) {
+		vga_ts_write(vh, mode, (vga_ts_read(vh, mode) & ~0x20));
+		r = vga_6845_read(vh, mode) | 0x80;
+		DELAY(10000);
+		vga_6845_write(vh, mode, r);
+	} else {
+		vga_ts_write(vh, mode, (vga_ts_read(vh, mode) | 0x20));
+		if (flags & WSDISPLAY_BURN_VBLANK) {
+			r = vga_6845_read(vh, mode) & ~0x80;
+			DELAY(10000);
+			vga_6845_write(vh, mode, r);
+		}
+	}
+	vga_ts_write(vh, syncreset, 0x03);
+	splx(s);
 }
 
 u_int16_t

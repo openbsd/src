@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.15 2001/04/18 02:26:58 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.16 2001/05/08 22:28:43 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -589,6 +589,8 @@ wskbd_input(dev, type, value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
+		if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_displaydv != NULL)
+			wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_KBD);
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_displaydv != NULL) {
