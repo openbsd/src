@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.31 2001/06/08 20:32:24 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.32 2001/06/09 06:14:11 angelos Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -46,13 +46,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
@@ -61,9 +57,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
 #define SIN(s) ((struct sockaddr_in *)s)
