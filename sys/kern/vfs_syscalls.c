@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.40 1998/04/06 09:00:58 niklas Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.41 1998/04/25 07:14:47 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1444,7 +1444,7 @@ sys_readlink(p, v, retval)
 	register struct sys_readlink_args /* {
 		syscallarg(char *) path;
 		syscallarg(char *) buf;
-		syscallarg(int) count;
+		syscallarg(size_t) count;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct iovec aiov;

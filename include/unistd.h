@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.19 1998/02/16 09:46:03 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.20 1998/04/25 07:14:50 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ int	 rcmdsh __P((char **, int, const char *,
 		const char *, const char *, char *));
 char	*re_comp __P((const char *));
 int	 re_exec __P((const char *));
-int	 readlink __P((const char *, char *, int));
+int	 readlink __P((const char *, char *, size_t));
 int	 reboot __P((int));
 int	 revoke __P((const char *));
 int	 rfork __P((int opts));
