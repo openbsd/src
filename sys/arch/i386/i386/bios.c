@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.5 1997/09/22 12:09:45 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.6 1997/09/24 22:52:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -253,6 +253,15 @@ biosioctl(dev, cmd, data, flag, p)
 
 	(void)sc;
 
+	return 0;
+}
+
+int
+biosselect(dev, rw, p)
+	dev_t	dev;
+	int	rw;
+	struct proc *p;
+{
 	return 0;
 }
 

@@ -63,12 +63,6 @@ cdev_decl(pms);
 
 cdev_decl(joy);
 
-/* open, close, ioctl, mmap */
-#define cdev_bios_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
 cdev_decl(bios);
+
 cdev_decl(apm);

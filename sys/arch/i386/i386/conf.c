@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 1997/09/24 22:18:13 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 1997/09/24 22:52:57 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
-	cdev_bios_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
+	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
