@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.24 1997/06/15 02:37:59 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.25 1997/06/24 05:29:53 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -125,7 +125,6 @@ int	acd_pause __P((struct acd_softc *, int));
 void	acdminphys __P((struct buf*));
 u_long	acd_size __P((struct acd_softc*, int));
 int	acddone __P((void *));
-#ifndef XXX
 int	acdlock __P((struct acd_softc *));
 void	acdunlock __P((struct acd_softc *));
 int	acdopen __P((dev_t, int, int));
@@ -136,7 +135,6 @@ int	acdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	acd_reset __P((struct acd_softc *));
 int	acdsize __P((dev_t));
 int	acddump __P((dev_t, daddr_t, caddr_t, size_t));
-#endif
 int	acd_get_mode __P((struct acd_softc *, struct atapi_mode_data *, int,
 	    int, int));
 int	acd_set_mode __P((struct acd_softc *, struct atapi_mode_data *, int));
