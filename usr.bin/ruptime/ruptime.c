@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.12 2003/08/04 17:06:45 deraadt Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.13 2004/09/14 22:24:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.12 2003/08/04 17:06:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.13 2004/09/14 22:24:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,8 +73,6 @@ void morehosts(void);
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	extern int optind;
 	struct hs *hsp;
 	struct whod *wd;
 	struct whoent *we;
