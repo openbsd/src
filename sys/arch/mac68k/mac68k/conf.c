@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2001/12/11 23:19:02 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2002/04/21 23:35:52 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_notdef(),			/* 16 */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
-	cdev_notdef(),			/* 18 */
+        cdev_disk_init(NRD,rd),         /* 18: ramdisk device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
@@ -237,7 +237,7 @@ static int chrtoblktab[] = {
 	/* 15 */	6,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	NODEV,
+	/* 18 */	13,
 	/* 19 */	8,
 	/* 20 */	9,
 };

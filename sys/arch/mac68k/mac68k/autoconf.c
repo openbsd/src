@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2002/04/21 23:35:52 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ struct nam2blk {
 } nam2blk[] = {
 	{ "sd",         4 },
 	{ "cd",         6 },
+	{ "rd",		13 },
 };
 
 static int
@@ -165,7 +166,7 @@ getdisk(str, len, defpart, devp)
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
-				printf(" %s[a-h]", dv->dv_xname);
+				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
 				printf(" %s", dv->dv_xname);
