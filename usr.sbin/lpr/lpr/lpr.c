@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.8 1996/08/13 17:51:39 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.9 1996/08/13 18:13:29 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -365,14 +365,13 @@ main(argc, argv)
 		if (sflag)
 			printf("%s: %s: not linked, copying instead\n", name, arg);
 		if ((i = open(arg, O_RDONLY)) < 0) {
-			seteuid(uid);
 			printf("%s: cannot open %s\n", name, arg);
-			continue;
+		} else {
+			copy(i, arg);
+			(void) close(i);
+			if (f && unlink(arg) < 0)
+				printf("%s: %s: not removed\n", name, arg);
 		}
-		copy(i, arg);
-		(void) close(i);
-		if (f && unlink(arg) < 0)
-			printf("%s: %s: not removed\n", name, arg);
 	}
 
 	if (nact) {
@@ -506,7 +505,7 @@ card(c, p2)
 	register int len = 2;
 
 	*p1++ = c;
-	while ((c = *p2++) != '\0') {
+	while ((c = *p2++) != '\0' && len < sizeof(buf)) {
 		*p1++ = (c == '\n') ? ' ' : c;
 		len++;
 	}
@@ -741,7 +740,7 @@ lmktemp(id, num, len)
 
 	if ((s = malloc(len)) == NULL)
 		fatal2("out of memory");
-	(void) sprintf(s, "%s/%sA%03d%s", SD, id, num, host);
+	(void) snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
 	return(s);
 }
 
