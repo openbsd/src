@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.5 1998/08/24 05:46:12 millert Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.6 2000/04/16 21:02:04 mickey Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -42,12 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.5 1998/08/24 05:46:12 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.6 2000/04/16 21:02:04 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * i386 machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * i386 machine dependent routines for kvm.  Hopefully, the forthcoming
  * vm code will one day obsolete this module.
  */
 
@@ -69,11 +69,6 @@ static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.5 1998/08/24 05:46:12 millert Exp
 #include "kvm_private.h"
 
 #include <machine/pte.h>
-
-#ifndef btop
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
-#define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
-#endif
 
 struct vmstate {
 	pd_entry_t *PTD;
@@ -114,8 +109,8 @@ _kvm_initvtop(kd)
 
 	vm->PTD = 0;
 
-	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), SEEK_SET)
-	    == -1 && errno != 0) {
+	if (lseek(kd->pmfd, _kvm_pa2off(kd, nlist[0].n_value - KERNBASE),
+				SEEK_SET) == -1 && errno != 0) {
 		_kvm_syserr(kd, kd->program, "kvm_lseek");
 		goto invalid;
 	}
@@ -126,8 +121,10 @@ _kvm_initvtop(kd)
 
 	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
 
-	if (lseek(kd->pmfd, (off_t)pa, SEEK_SET) == -1 && errno != 0) { _kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid; }
+	if (lseek(kd->pmfd, _kvm_pa2off(kd, pa), SEEK_SET) == -1 && errno != 0) {
+		_kvm_syserr(kd, kd->program, "kvm_lseek");
+		goto invalid;
+	}
 	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
 		_kvm_syserr(kd, kd->program, "kvm_read");
 		goto invalid;
@@ -178,7 +175,7 @@ _kvm_kvatop(kd, va, pa)
 	    (ptei(va) * sizeof(pt_entry_t));
 	/* XXX READ PHYSICAL XXX */
 	{
-		if (lseek(kd->pmfd, (off_t)pte_pa, SEEK_SET) == -1 &&
+		if (lseek(kd->pmfd, _kvm_pa2off(kd, pte_pa), SEEK_SET) == -1 &&
 		    errno != 0) {
 			_kvm_syserr(kd, kd->program, "kvm_lseek");
 			goto invalid;
@@ -198,13 +195,12 @@ invalid:
 }
 
 /*
- * Translate a physical address to a file-offset in the crash dump.
- * XXX - just a stub for now.
+ * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
 _kvm_pa2off(kd, pa)
 	kvm_t *kd;
 	u_long pa;
 {
-	return((off_t)pa);
+	return((off_t)(kd->dump_off + pa));
 }
