@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.18 2004/11/30 19:28:36 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.19 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ si_find(struct buf *bp)
 	int s;
 
 	s = splbio();
-	for (si = si_head.lh_first; si != 0; si = si->si_list.le_next)
+	LIST_FOREACH(si, &si_head, si_list)
 		if (bp == &si->si_bp)
 			break;
 	splx(s);

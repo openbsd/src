@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.17 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.18 2004/12/26 21:22:13 miod Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -325,10 +325,12 @@ sea_queue_length(sea)
 	int connected, issued, disconnected;
 
 	connected = sea->nexus ? 1 : 0;
-	for (scb = sea->ready_list.tqh_first, issued = 0; scb;
-	    scb = scb->chain.tqe_next, issued++);
-	for (scb = sea->nexus_list.tqh_first, disconnected = 0; scb;
-	    scb = scb->chain.tqe_next, disconnected++);
+	issued = 0;
+	TAILQ_FOREACH(scb, &sea->ready_list, chain)
+		issued++;
+	disconnected = 0;
+	TAILQ_FOREACH(scb, &sea->nexus_list, chain)
+		disconnected++;
 	printf("%s: length: %d/%d/%d\n", sea->sc_dev.dv_xname, connected,
 	    issued, disconnected);
 }
@@ -625,7 +627,7 @@ sea_get_scb(sea, flags)
 	 * but only if we can't allocate a new one.
 	 */
 	for (;;) {
-		scb = sea->free_list.tqh_first;
+		scb = TAILQ_FIRST(&sea->free_list);
 		if (scb) {
 			TAILQ_REMOVE(&sea->free_list, scb, chain);
 			break;
@@ -702,8 +704,7 @@ loop:
 			 * Search through the ready_list for a command
 			 * destined for a target that's not busy.
 			 */
-			for (scb = sea->ready_list.tqh_first; scb;
-			    scb = scb->chain.tqe_next) {
+			TAILQ_FOREACH(scb, &sea->ready_list, chain) {
 				if (!(sea->busy[scb->xs->sc_link->target] &
 				    (1 << scb->xs->sc_link->lun))) {
 					TAILQ_REMOVE(&sea->ready_list, scb,
@@ -789,7 +790,7 @@ sea_free_scb(sea, scb, flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (!scb->chain.tqe_next)
+	if (TAILQ_NEXT(scb, chain) == NULL)
 		wakeup((caddr_t)&sea->free_list);
 
 	splx(s);
@@ -898,8 +899,7 @@ sea_reselect(sea)
 		 * we just reestablished, and remove it from the disconnected
 		 * queue.
 		 */
-		for (scb = sea->nexus_list.tqh_first; scb;
-		    scb = scb->chain.tqe_next)
+		TAILQ_FOREACH(scb, &sea->nexus_list, chain)
 			if (target_mask == (1 << scb->xs->sc_link->target) &&
 			    lun == scb->xs->sc_link->lun) {
 				TAILQ_REMOVE(&sea->nexus_list, scb,
@@ -1129,7 +1129,7 @@ sea_abort(sea, scb)
 	 * issue queue
 	 * XXX Could avoid this loop.
 	 */
-	for (tmp = sea->ready_list.tqh_first; tmp; tmp = tmp->chain.tqe_next)
+	TAILQ_FOREACH(tmp, &sea->ready_list, chain)
 		if (scb == tmp) {
 			TAILQ_REMOVE(&sea->ready_list, scb, chain);
 			/* XXX Set some type of error result for operation. */
@@ -1148,8 +1148,7 @@ sea_abort(sea, scb)
 	 * no connected commands, we reconnect the I_T_L or I_T_L_Q nexus
 	 * associated with it, go into message out, and send an abort message.
 	 */
-	for (tmp = sea->nexus_list.tqh_first; tmp;
-	    tmp = tmp->chain.tqe_next)
+	TAILQ_FOREACH(tmp, &sea->nexus_list, chain)
 		if (scb == tmp) {
 			if (sea_select(sea, scb))
 				return 0;
@@ -1161,8 +1160,7 @@ sea_abort(sea, scb)
 			CONTROL = BASE_CMD | CMD_ATTN;
 			sea_transfer_pio(sea, &phase, &len, &msgptr);
 
-			for (tmp = sea->nexus_list.tqh_first; tmp;
-			    tmp = tmp->chain.tqe_next)
+			TAILQ_FOREACH(tmp, &sea->nexus_list, chain)
 				if (scb == tmp) {
 					TAILQ_REMOVE(&sea->nexus_list,
 					    scb, chain);

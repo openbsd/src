@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink.c,v 1.5 1997/11/07 08:06:45 niklas Exp $	*/
+/*	$OpenBSD: elink.c,v 1.6 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: elink.c,v 1.9 1996/05/03 19:06:27 christos Exp $	*/
 
 /*
@@ -80,8 +80,7 @@ elink_reset(iot, ioh, bus)
 	/*
 	 * Reset these cards if we haven't done so already.
 	 */
-	for (er = elink_all_resets.lh_first; er != NULL;
-	    er = er->er_link.le_next)
+	LIST_FOREACH(er, &elink_all_resets, er_link)
 		if (er->er_bus == bus)
 			goto out;
 

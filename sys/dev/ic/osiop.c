@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.21 2004/03/31 20:37:52 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.22 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -549,8 +549,8 @@ osiop_sched(sc)
 			printf("%s: osiop_sched- nexus %p/%d ready %p/%d\n",
 			    sc->sc_dev.dv_xname, sc->sc_nexus,
 			    sc->sc_nexus->xs->sc_link->target,
-			    sc->ready_list.tqh_first,
-			    sc->ready_list.tqh_first->xs->sc_link->target);
+			    TAILQ_FIRST(&sc->ready_list),
+			    TAILQ_FIRST(&sc->ready_list)->xs->sc_link->target);
 #endif
 		return;
 	}
@@ -678,7 +678,7 @@ osiop_scsidone(acb, status)
 		    ~(1 << periph->lun);
 		sc->sc_active--;
 		OSIOP_TRACE('d', 'a', status, 0);
-	} else if (sc->ready_list.tqh_last == &acb->chain.tqe_next) {
+	} else if (sc->ready_list.tqh_last == TAILQ_NEXT(acb, chain)) {
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		OSIOP_TRACE('d', 'r', status, 0);
 	} else {
@@ -693,7 +693,7 @@ osiop_scsidone(acb, status)
 			}
 		}
 		if (acb2 == NULL) {
-			if (acb->chain.tqe_next != NULL) {
+			if (TAILQ_NEXT(acb, chain) != NULL) {
 				TAILQ_REMOVE(&sc->ready_list, acb, chain);
 				sc->sc_active--;
 			} else {

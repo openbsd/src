@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.118 2004/09/16 10:37:41 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.119 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
  		vrele(coveredvp);
  	}
 	mp->mnt_vfc->vfc_refcount--;
-	if (mp->mnt_vnodelist.lh_first != NULL)
+	if (!LIST_EMPTY(&mp->mnt_vnodelist))
 		panic("unmount: dangling vnode");
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock, p);
 	free(mp, M_MOUNT);

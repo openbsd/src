@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.28 2004/01/09 21:32:23 brad Exp $ */
+/*	$OpenBSD: adw.c,v 1.29 2004/12/26 21:22:13 miod Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -127,8 +127,8 @@ adw_enqueue(sc, xs, infront)
 	int             infront;
 {
 
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
+	if (infront || LIST_EMPTY(&sc->sc_queue)) {
+		if (LIST_EMPTY(&sc->sc_queue))
 			sc->sc_queuelast = xs;
 		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
 		return;
@@ -147,10 +147,10 @@ adw_dequeue(sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = sc->sc_queue.lh_first;
+	xs = LIST_FIRST(&sc->sc_queue);
 	LIST_REMOVE(xs, free_list);
 
-	if (sc->sc_queue.lh_first == NULL)
+	if (LIST_EMPTY(&sc->sc_queue))
 		sc->sc_queuelast = NULL;
 
 	return (xs);
@@ -315,7 +315,7 @@ adw_free_ccb(sc, ccb)
          * If there were none, wake anybody waiting for one to come free,
          * starting with queued entries.
          */
-	if (ccb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(ccb, chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
@@ -385,7 +385,7 @@ adw_get_ccb(sc, flags)
          * but only if we can't allocate a new one.
          */
 	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
@@ -439,7 +439,7 @@ adw_queue_ccb(sc, ccb, retry)
 		TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
 	}
 
-	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
+	while ((ccb = TAILQ_FIRST(&sc->sc_waiting_ccb)) != NULL) {
 
 		errcode = AdwExeScsiQueue(sc, &ccb->scsiq);
 		switch(errcode) {
@@ -663,7 +663,7 @@ adw_scsi_cmd(xs)
          * If we're running the queue from adw_done(), we've been
          * called with the first queue entry as our argument.
          */
-	if (xs == sc->sc_queue.lh_first) {
+	if (xs == LIST_FIRST(&sc->sc_queue)) {
  		if(sc->sc_freeze_dev[xs->sc_link->target]) {
 			splx(s);
 			return (TRY_AGAIN_LATER);
@@ -684,7 +684,7 @@ adw_scsi_cmd(xs)
 		/*
                  * If there are jobs in the queue, run them first.
                  */
-		if (sc->sc_queue.lh_first != NULL) {
+		if (!LIST_EMPTY(&sc->sc_queue)) {
 			/*
                          * If we can't queue, we have to abort, since
                          * we have to preserve order.
@@ -949,7 +949,7 @@ adw_intr(arg)
 	         * NOTE: adw_scsi_cmd() relies on our calling it with
 	         * the first entry in the queue.
 	         */
-	        if ((xs = sc->sc_queue.lh_first) != NULL)
+		if ((xs = LIST_FIRST(&sc->sc_queue)) != NULL)
 			(void) adw_scsi_cmd(xs);
 
 		return (1);

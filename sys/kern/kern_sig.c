@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.72 2004/07/04 13:35:01 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.73 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ killpg1(cp, signum, pgid, all)
 			if (pgrp == NULL)
 				return (ESRCH);
 		}
-		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    !cansignal(cp, pc, p, signum))
 				continue;
@@ -705,8 +705,7 @@ csignal(pgid, signum, uid, euid)
 		pgid = -pgid;
 		if ((pgrp = pgfind(pgid)) == NULL)
 			return;
-		for (p = pgrp->pg_members.lh_first; p;
-		    p = p->p_pglist.le_next)
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
 			if (CANDELIVER(uid, euid, p))
 				psignal(p, signum);
 	} else {
@@ -742,7 +741,7 @@ pgsignal(pgrp, signum, checkctty)
 	register struct proc *p;
 
 	if (pgrp)
-		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next)
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
 			if (checkctty == 0 || p->p_flag & P_CONTROLT)
 				psignal(p, signum);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.48 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: fd.c,v 1.49 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -421,7 +421,7 @@ fdstart(fd)
 	struct fd_softc *fd;
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-	int active = (fdc->sc_link.fdlink.sc_drives.tqh_first != NULL);
+	int active = !TAILQ_EMPTY(&fdc->sc_link.fdlink.sc_drives);
 
 	/* Link into controller queue. */
 	fd->sc_q.b_active = 1;
@@ -447,7 +447,7 @@ fdfinish(fd, bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
-	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+	if (TAILQ_NEXT(fd, sc_drivechain) != NULL && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
 		if (bp->b_actf) {
@@ -495,7 +495,7 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if ((fd = fdc->sc_link.fdlink.sc_drives.tqh_first) != NULL)
+	if ((fd = TAILQ_FIRST(&fdc->sc_link.fdlink.sc_drives)) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
@@ -531,7 +531,7 @@ fd_motor_on(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_link.fdlink.sc_drives.tqh_first == fd)
+	if ((TAILQ_FIRST(&fdc->sc_link.fdlink.sc_drives) == fd)
 	    && (fdc->sc_state == MOTORWAIT))
 		(void) fdintr(fdc);
 	splx(s);
@@ -625,7 +625,7 @@ fdintr(fdc)
 
 loop:
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	fd = fdc->sc_link.fdlink.sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_link.fdlink.sc_drives);
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
 		return 1;

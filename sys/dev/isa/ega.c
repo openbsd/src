@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.6 2004/12/26 00:01:16 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.7 2004/12/26 21:22:13 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -607,7 +607,7 @@ ega_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 		 * for the first one too.
 		 * XXX We could be more clever and use video RAM.
 		 */
-		vc->screens.lh_first->pcs.mem =
+		LIST_FIRST(&vc->screens)->pcs.mem =
 		  malloc(type->ncols * type->nrows * 2, M_DEVBUF, M_WAITOK);
 	}
 
@@ -645,7 +645,7 @@ ega_free_screen(v, cookie)
 		 * removes backing store for the last one
 		 */
 		if (vc->nscreens == 1)
-			free(vc->screens.lh_first->pcs.mem, M_DEVBUF);
+			free(LIST_FIRST(&vc->screens)->pcs.mem, M_DEVBUF);
 
 		/* Last screen has no backing store */
 		if (vc->nscreens != 0)

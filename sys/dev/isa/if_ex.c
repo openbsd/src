@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.9 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.10 2004/12/26 21:22:13 miod Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -326,7 +326,7 @@ ex_init(sc)
 
 	DODEBUG(Start_End, printf("ex_init: start\n"););
 
-	if (ifp->if_addrlist.tqh_first == NULL)
+	if (TAILQ_EMPTY(&ifp->if_addrlist))
 		return;
 	s = splimp();
 	sc->arpcom.ac_if.if_timer = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.53 2004/08/04 21:49:19 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.54 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -207,11 +207,11 @@ exit1(p, rv)
 	/*
 	 * Give orphaned children to init(8).
 	 */
-	q = p->p_children.lh_first;
+	q = LIST_FIRST(&p->p_children);
 	if (q)		/* only need this if any child is S_ZOMB */
 		wakeup(initproc);
 	for (; q != 0; q = nq) {
-		nq = q->p_sibling.le_next;
+		nq = LIST_NEXT(q, p_sibling);
 		proc_reparent(q, initproc);
 		/*
 		 * Traced processes are killed
@@ -255,7 +255,7 @@ exit1(p, rv)
 		 * parent, so in case he was wait(2)ing, he will
 		 * continue.
 		 */
-		if (pp->p_children.lh_first == NULL)
+		if (LIST_EMPTY(&pp->p_children))
 			wakeup(pp);
 	}
 
@@ -426,7 +426,7 @@ sys_wait4(q, v, retval)
 
 loop:
 	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+	LIST_FOREACH(p, &q->p_children, p_sibling) {
 		if ((p->p_flag & P_NOZOMBIE) ||
 		    (SCARG(uap, pid) != WAIT_ANY &&
 		    p->p_pid != SCARG(uap, pid) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.74 2004/12/11 14:26:31 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.75 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -143,9 +143,9 @@ bremfree(struct buf *bp)
 	 *
 	 * NB: This makes an assumption about how tailq's are implemented.
 	 */
-	if (bp->b_freelist.tqe_next == NULL) {
+	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
-			if (dp->tqh_last == &bp->b_freelist.tqe_next)
+			if (dp->tqh_last == &TAILQ_NEXT(bp, b_freelist))
 				break;
 		if (dp == &bufqueues[BQUEUES])
 			panic("bremfree: lost tail");
@@ -739,7 +739,7 @@ allocbuf(struct buf *bp, int size)
 	 */
 	if (bp->b_bufsize > desired_size) {
 		s = splbio();
-		if ((nbp = bufqueues[BQ_EMPTY].tqh_first) == NULL) {
+		if ((nbp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) == NULL) {
 			/* No free buffer head */
 			splx(s);
 			goto out;
@@ -1009,7 +1009,7 @@ vfs_bufstats()
 		pages = 0;
 		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
-		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
+		TAILQ_FOREACH(bp, dp, b_freelist) {
 			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 			pages += btoc(bp->b_bufsize);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.9 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.10 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ ufs_ihashlookup(dev, inum)
         struct inode *ip;
 
 	simple_lock(&ufs_ihash_slock);
-	for (ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next)
+	LIST_FOREACH(ip, INOHASH(dev, inum), i_hash)
 		if (inum == ip->i_number && dev == ip->i_dev)
 			break;
 	simple_unlock(&ufs_ihash_slock);
@@ -97,7 +97,7 @@ ufs_ihashget(dev, inum)
 	struct vnode *vp;
 loop:
 	simple_lock(&ufs_ihash_slock);
-	for (ip = INOHASH(dev, inum)->lh_first; ip; ip = ip->i_hash.le_next) {
+	LIST_FOREACH(ip, INOHASH(dev, inum), i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
@@ -106,7 +106,6 @@ loop:
 				goto loop;
 			return (vp);
  		}
-
 	}
 	simple_unlock(&ufs_ihash_slock);
 	return (NULL);
@@ -130,8 +129,7 @@ ufs_ihashins(ip)
 
 	simple_lock(&ufs_ihash_slock);
 
-	for (curip = INOHASH(dev, inum)->lh_first; curip; 
-	     curip = curip->i_hash.le_next) {
+	LIST_FOREACH(curip, INOHASH(dev, inum), i_hash) {
 		if (inum == curip->i_number && dev == curip->i_dev) {
 		        simple_unlock(&ufs_ihash_slock);
 			lockmgr(&ip->i_lock, LK_RELEASE, (struct simplelock *)0, p);

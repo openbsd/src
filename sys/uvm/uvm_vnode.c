@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.38 2004/06/06 13:44:07 grange Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.39 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ uvn_detach(uobj)
 		simple_unlock(&uvn_wl_lock);
 	}
 #ifdef DIAGNOSTIC
-	if (uobj->memq.tqh_first != NULL)
+	if (!TAILQ_EMPTY(&uobj->memq))
 		panic("uvn_deref: vnode VM object still has pages afer "
 		    "syncio/free flush");
 #endif
@@ -590,8 +590,7 @@ uvm_vnp_terminate(vp)
 	while (uvn->u_obj.uo_npages) {
 #ifdef DEBUG
 		struct vm_page *pp;
-		for (pp = uvn->u_obj.memq.tqh_first ; pp != NULL ;
-		     pp = pp->listq.tqe_next) {
+		TAILQ_FOREACH(pp, &uvn->u_obj.memq, listq) {
 			if ((pp->flags & PG_BUSY) == 0)
 				panic("uvm_vnp_terminate: detected unbusy pg");
 		}
@@ -686,7 +685,7 @@ uvn_releasepg(pg, nextpgp)
 	pmap_page_protect(pg, VM_PROT_NONE);
 	uvm_lock_pageq();
 	if (nextpgp)
-		*nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
+		*nextpgp = TAILQ_NEXT(pg, pageq); /* next page for daemon */
 	uvm_pagefree(pg);
 	if (!nextpgp)
 		uvm_unlock_pageq();
@@ -705,7 +704,7 @@ uvn_releasepg(pg, nextpgp)
 				simple_unlock(&uvn_wl_lock);
 			}
 #ifdef DIAGNOSTIC
-			if (uvn->u_obj.memq.tqh_first)
+			if (!TAILQ_EMPTY(&uvn->u_obj.memq))
 	panic("uvn_releasepg: pages in object with npages == 0");
 #endif
 			if (uvn->u_flags & UVM_VNODE_WANTED)
@@ -870,8 +869,7 @@ uvn_flush(uobj, start, stop, flags)
 	if ((flags & PGO_CLEANIT) != 0 &&
 	    uobj->pgops->pgo_mk_pcluster != NULL) {
 		if (by_list) {
-			for (pp = uobj->memq.tqh_first ; pp != NULL ;
-			    pp = pp->listq.tqe_next) {
+			TAILQ_FOREACH(pp, &uobj->memq, listq) {
 				if (!all &&
 				    (pp->offset < start || pp->offset >= stop))
 					continue;
@@ -895,7 +893,7 @@ uvn_flush(uobj, start, stop, flags)
 	 */
 
 	if (by_list) {
-		pp = uobj->memq.tqh_first;
+		pp = TAILQ_FIRST(&uobj->memq);
 	} else {
 		curoff = start;
 		pp = uvm_pagelookup(uobj, curoff);
@@ -917,7 +915,7 @@ uvn_flush(uobj, start, stop, flags)
 
 			if (!all &&
 			    (pp->offset < start || pp->offset >= stop)) {
-				ppnext = pp->listq.tqe_next;
+				ppnext = TAILQ_NEXT(pp, listq);
 				continue;
 			}
 
@@ -976,7 +974,7 @@ uvn_flush(uobj, start, stop, flags)
 		if (!needs_clean) {
 			/* load ppnext */
 			if (by_list)
-				ppnext = pp->listq.tqe_next;
+				ppnext = TAILQ_NEXT(pp, listq);
 			else {
 				if (curoff < stop)
 					ppnext = uvm_pagelookup(uobj, curoff);
@@ -1081,10 +1079,10 @@ ReTry:
 				 */
 				if (by_list) {
 					if (pp->version == pp_version)
-						ppnext = pp->listq.tqe_next;
+						ppnext = TAILQ_NEXT(pp, listq);
 					else
 						/* reset */
-						ppnext = uobj->memq.tqh_first;
+						ppnext = TAILQ_FIRST(&uobj->memq);
 				} else {
 					if (curoff < stop)
 						ppnext = uvm_pagelookup(uobj,
@@ -1120,10 +1118,10 @@ ReTry:
 				/* set up next page for outer loop */
 				if (by_list) {
 					if (pp->version == pp_version)
-						ppnext = pp->listq.tqe_next;
+						ppnext = TAILQ_NEXT(pp, listq);
 					else
 						/* reset */
-						ppnext = uobj->memq.tqh_first;
+						ppnext = TAILQ_FIRST(&uobj->memq);
 				} else {
 					if (curoff < stop)
 					ppnext = uvm_pagelookup(uobj, curoff);
@@ -1942,8 +1940,7 @@ uvm_vnp_sync(mp)
 	 */
 	SIMPLEQ_INIT(&uvn_sync_q);
 	simple_lock(&uvn_wl_lock);
-	for (uvn = uvn_wlist.lh_first ; uvn != NULL ;
-	    uvn = uvn->u_wlist.le_next) {
+	LIST_FOREACH(uvn, &uvn_wlist, u_wlist) {
 
 		vp = (struct vnode *) uvn;
 		if (mp && vp->v_mount != mp)

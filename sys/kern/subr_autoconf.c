@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.39 2004/11/23 19:08:55 miod Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.40 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ config_search(fn, parent, aux)
 	m.aux = aux;
 	m.indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
 	m.pri = 0;
-	for(t = allcftables.tqh_first; t; t = t->list.tqe_next) {
+	TAILQ_FOREACH(t, &allcftables, list) {
 		for (cf = t->tab; cf->cf_driver; cf++) {
 			/*
 			 * Skip cf if no longer eligible, otherwise scan
@@ -246,7 +246,7 @@ config_scan(fn, parent)
 	struct cftable *t;
 
 	indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
-	for (t = allcftables.tqh_first; t; t = t->list.tqe_next) {
+	TAILQ_FOREACH(t, &allcftables, list) {
 		for (cf = t->tab; cf->cf_driver; cf++) {
 			/*
 			 * Skip cf if no longer eligible, otherwise scan
@@ -399,7 +399,7 @@ config_attach(parent, match, aux, print)
 	 * otherwise identical, or bump the unit number on all starred
 	 * cfdata for this device.
 	 */
-	for (t = allcftables.tqh_first; t; t = t->list.tqe_next) {
+	TAILQ_FOREACH(t, &allcftables, list) {
 		for (cf = t->tab; cf->cf_driver; cf++)
 			if (cf->cf_driver == cd &&
 			    cf->cf_unit == dev->dv_unit) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.13 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: adv.c,v 1.14 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -140,8 +140,8 @@ adv_enqueue(sc, xs, infront)
 	int             infront;
 {
 
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
+	if (infront || LIST_EMPTY(&sc->sc_queue)) {
+		if (LIST_EMPTY(&sc->sc_queue))
 			sc->sc_queuelast = xs;
 		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
 		return;
@@ -160,10 +160,10 @@ adv_dequeue(sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = sc->sc_queue.lh_first;
+	xs = LIST_FIRST(&sc->sc_queue);
 	LIST_REMOVE(xs, free_list);
 
-	if (sc->sc_queue.lh_first == NULL)
+	if (LIST_EMPTY(&sc->sc_queue))
 		sc->sc_queuelast = NULL;
 
 	return (xs);
@@ -266,7 +266,7 @@ adv_free_ccb(sc, ccb)
          * If there were none, wake anybody waiting for one to come free,
          * starting with queued entries.
          */
-	if (ccb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(ccb, chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
@@ -326,7 +326,7 @@ adv_get_ccb(sc, flags)
          * but only if we can't allocate a new one.
          */
 	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
@@ -368,7 +368,7 @@ adv_start_ccbs(sc)
 	ADV_CCB        *ccb;
 	struct scsi_xfer *xs;
 
-	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
+	while ((ccb = TAILQ_FIRST(&sc->sc_waiting_ccb)) != NULL) {
 
 		xs = ccb->xs;
 		if (ccb->flags & CCB_WATCHDOG)
@@ -651,7 +651,7 @@ adv_scsi_cmd(xs)
          * If we're running the queue from adv_done(), we've been
          * called with the first queue entry as our argument.
          */
-	if (xs == sc->sc_queue.lh_first) {
+	if (xs == LIST_FIRST(&sc->sc_queue)) {
 		xs = adv_dequeue(sc);
 		fromqueue = 1;
 	} else {
@@ -662,7 +662,7 @@ adv_scsi_cmd(xs)
 		/*
                  * If there are jobs in the queue, run them first.
                  */
-		if (sc->sc_queue.lh_first != NULL) {
+		if (!LIST_EMPTY(&sc->sc_queue)) {
 			/*
                          * If we can't queue, we have to abort, since
                          * we have to preserve order.
@@ -865,7 +865,7 @@ adv_intr(arg)
          * NOTE: adv_scsi_cmd() relies on our calling it with
          * the first entry in the queue.
          */
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = LIST_FIRST(&sc->sc_queue)) != NULL)
 		(void) adv_scsi_cmd(xs);
 
 	return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.42 2004/07/16 15:01:51 henning Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.43 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -317,8 +317,8 @@ sys_nfssvc(p, v, retval)
 			 * First check to see if another nfsd has already
 			 * added this credential.
 			 */
-			for (nuidp = NUIDHASH(slp,nsd->nsd_cr.cr_uid)->lh_first;
-			    nuidp != NULL; nuidp = LIST_NEXT(nuidp, nu_hash)) {
+			LIST_FOREACH(nuidp, NUIDHASH(slp,nsd->nsd_cr.cr_uid),
+			    nu_hash) {
 				if (nuidp->nu_cr.cr_uid == nsd->nsd_cr.cr_uid &&
 				    (!nfsd->nfsd_nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
@@ -1114,8 +1114,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	if (verf_len < (4 * NFSX_UNSIGNED))
 		panic("nfs_getnickauth verf too small");
 #endif
-	for (nuidp = NMUIDHASH(nmp, cred->cr_uid)->lh_first;
-	    nuidp != NULL; nuidp = LIST_NEXT(nuidp, nu_hash)) {
+	LIST_FOREACH(nuidp, NMUIDHASH(nmp, cred->cr_uid), nu_hash) {
 		if (nuidp->nu_cr.cr_uid == cred->cr_uid)
 			break;
 	}

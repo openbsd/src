@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.17 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.18 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -852,7 +852,7 @@ dqget(vp, id, ump, type, dqp)
 	 * Check the cache first.
 	 */
 	dqh = DQHASH(dqvp, id);
-	for (dq = dqh->lh_first; dq; dq = dq->dq_hash.le_next) {
+	LIST_FOREACH(dq, dqh, dq_hash) {
 		if (dq->dq_id != id ||
 		    dq->dq_vp != dqvp)
 			continue;
@@ -869,7 +869,7 @@ dqget(vp, id, ump, type, dqp)
 	/*
 	 * Not in cache, allocate a new one.
 	 */
-	if (dqfreelist.tqh_first == NODQUOT &&
+	if (TAILQ_FIRST(&dqfreelist) == NODQUOT &&
 	    numdquot < MAXQUOTAS * desiredvnodes)
 		desireddquot += DQUOTINC;
 	if (numdquot < desireddquot) {
@@ -877,7 +877,7 @@ dqget(vp, id, ump, type, dqp)
 		bzero((char *)dq, sizeof *dq);
 		numdquot++;
 	} else {
-		if ((dq = dqfreelist.tqh_first) == NULL) {
+		if ((dq = TAILQ_FIRST(&dqfreelist)) == NULL) {
 			tablefull("dquot");
 			*dqp = NODQUOT;
 			return (EUSERS);

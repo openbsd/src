@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.23 2004/11/18 15:10:24 markus Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.24 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ chgproccnt(uid, diff)
 	register struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
-	for (uip = uipp->lh_first; uip != 0; uip = uip->ui_hash.le_next)
+	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
 	if (uip) {
@@ -172,7 +172,7 @@ pfind(pid)
 {
 	register struct proc *p;
 
-	for (p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
+	LIST_FOREACH(p, PIDHASH(pid), p_hash)
 		if (p->p_pid == pid)
 			return (p);
 	return (NULL);
@@ -187,7 +187,7 @@ pgfind(pgid)
 {
 	register struct pgrp *pgrp;
 
-	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
+	LIST_FOREACH(pgrp, PGRPHASH(pgid), pg_hash)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
 	return (NULL);
@@ -262,7 +262,7 @@ enterpgrp(p, pgid, mksess)
 	fixjobc(p, p->p_pgrp, 0);
 
 	LIST_REMOVE(p, p_pglist);
-	if (p->p_pgrp->pg_members.lh_first == 0)
+	if (LIST_EMPTY(&p->p_pgrp->pg_members))
 		pgdelete(p->p_pgrp);
 	p->p_pgrp = pgrp;
 	LIST_INSERT_HEAD(&pgrp->pg_members, p, p_pglist);
@@ -278,7 +278,7 @@ leavepgrp(p)
 {
 
 	LIST_REMOVE(p, p_pglist);
-	if (p->p_pgrp->pg_members.lh_first == 0)
+	if (LIST_EMPTY(&p->p_pgrp->pg_members))
 		pgdelete(p->p_pgrp);
 	p->p_pgrp = 0;
 	return (0);
@@ -336,7 +336,7 @@ fixjobc(p, pgrp, entering)
 	 * their process groups; if so, adjust counts for children's
 	 * process groups.
 	 */
-	for (p = p->p_children.lh_first; p != 0; p = p->p_sibling.le_next)
+	LIST_FOREACH(p, &p->p_children, p_sibling)
 		if ((hispgrp = p->p_pgrp) != pgrp &&
 		    hispgrp->pg_session == mysession &&
 		    P_ZOMBIE(p) == 0) {
@@ -358,10 +358,9 @@ orphanpg(pg)
 {
 	register struct proc *p;
 
-	for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
-			for (p = pg->pg_members.lh_first; p != 0;
-			    p = p->p_pglist.le_next) {
+			LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 				psignal(p, SIGHUP);
 				psignal(p, SIGCONT);
 			}
@@ -497,15 +496,14 @@ pgrpdump()
 	register int i;
 
 	for (i = 0; i <= pgrphash; i++) {
-		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
+		if (!LIST_EMPTY(&pgrphashtbl[i])) {
 			printf("\tindx %d\n", i);
-			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
+			LIST_FOREACH(pgrp, &pgrphashtbl[i], pg_hash) {
 				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
-				    pgrp->pg_members.lh_first);
-				for (p = pgrp->pg_members.lh_first; p != 0;
-				    p = p->p_pglist.le_next) {
+				    LIST_FIRST(&pgrp->pg_members));
+				LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 					printf("\t\tpid %d addr %p pgrp %p\n", 
 					    p->p_pid, p, p->p_pgrp);
 				}

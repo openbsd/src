@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.52 2004/11/29 06:20:02 jsg Exp $	*/
+/*	$OpenBSD: aha.c,v 1.53 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -599,7 +599,7 @@ aha_free_ccb(sc, ccb)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (ccb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(ccb, chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
@@ -659,7 +659,7 @@ aha_get_ccb(sc, flags)
 	 * but only if we can't allocate a new one.
 	 */
 	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
@@ -779,7 +779,7 @@ aha_start_ccbs(sc)
 
 	wmbo = wmbx->tmbo;
 
-	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
+	while ((ccb = TAILQ_FIRST(&sc->sc_waiting_ccb)) != NULL) {
 		if (sc->sc_mbofull >= AHA_MBX_SIZE) {
 			aha_collect_mbo(sc);
 			if (sc->sc_mbofull >= AHA_MBX_SIZE) {

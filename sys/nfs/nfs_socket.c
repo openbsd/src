@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.40 2004/12/10 19:55:21 millert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.41 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1140,8 +1140,8 @@ nfs_rephead(siz, nd, slp, err, frev, mrq, mbp, bposp)
 		    struct nfsuid *nuidp;
 		    struct timeval ktvin, ktvout;
 
-		    for (nuidp = NUIDHASH(slp, nd->nd_cr.cr_uid)->lh_first;
-		 	nuidp != NULL; nuidp = LIST_NEXT(nuidp, nu_hash)) {
+		    LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
+		     nu_hash) {
 			if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
 			    (!nd->nd_nam2 || netaddr_match(NU_NETFAM(nuidp),
 			     &nuidp->nu_haddr, nd->nd_nam2)))
@@ -1664,8 +1664,8 @@ nfs_getreq(nd, nfsd, has_header)
 			tvin.tv_sec = *tl++;
 			tvin.tv_usec = *tl;
 
-			for (nuidp = NUIDHASH(nfsd->nfsd_slp,nickuid)->lh_first;
-			    nuidp != NULL; nuidp = LIST_NEXT(nuidp, nu_hash)) {
+			LIST_FOREACH(nuidp, NUIDHASH(nfsd->nfsd_slp, nickuid),
+			    nu_hash) {
 				if (nuidp->nu_cr.cr_uid == nickuid &&
 				    (!nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),

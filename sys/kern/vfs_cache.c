@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.12 2004/10/04 12:03:45 pedro Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.13 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -270,7 +270,7 @@ cache_enter(dvp, vp, cnp)
 		ncp = pool_get(&nch_pool, PR_WAITOK);
 		bzero((char *)ncp, sizeof *ncp);
 		numcache++;
-	} else if ((ncp = nclruhead.tqh_first) != NULL) {
+	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		if (ncp->nc_hash.le_prev != 0) {
 			LIST_REMOVE(ncp, nc_hash);
@@ -328,7 +328,7 @@ cache_purge(vp)
 	if (nextvnodeid != 0)
 		return;
 	for (ncpp = &nchashtbl[nchash]; ncpp >= nchashtbl; ncpp--) {
-		for (ncp = ncpp->lh_first; ncp != 0; ncp = ncp->nc_hash.le_next) {
+		LIST_FOREACH(ncp, ncpp, nc_hash) {
 			ncp->nc_vpid = 0;
 			ncp->nc_dvpid = 0;
 		}
@@ -350,9 +350,10 @@ cache_purgevfs(mp)
 {
 	register struct namecache *ncp, *nxtcp;
 
-	for (ncp = nclruhead.tqh_first; ncp != 0; ncp = nxtcp) {
+	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
+	    ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
-			nxtcp = ncp->nc_lru.tqe_next;
+			nxtcp = TAILQ_NEXT(ncp, nc_lru);
 			continue;
 		}
 		/* free the resources we had */
@@ -364,7 +365,7 @@ cache_purgevfs(mp)
 			ncp->nc_hash.le_prev = 0;
 		}
 		/* cause rescan of list, it may have altered */
-		nxtcp = nclruhead.tqh_first;
+		nxtcp = TAILQ_FIRST(&nclruhead);
 		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.7 2004/07/26 16:36:30 miod Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.8 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -392,7 +392,7 @@ aic_init(sc)
 			timeout_del(&acb->xs->stimeout);
 			aic_done(sc, acb);
 		}
-		while ((acb = sc->nexus_list.tqh_first) != NULL) {
+		while ((acb = TAILQ_FIRST(&sc->nexus_list)) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			timeout_del(&acb->xs->stimeout);
 			aic_done(sc, acb);
@@ -440,7 +440,7 @@ aic_free_acb(sc, acb, flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (acb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(acb, chain) == NULL)
 		wakeup(&sc->free_list);
 
 	splx(s);
@@ -456,7 +456,7 @@ aic_get_acb(sc, flags)
 
 	s = splbio();
 
-	while ((acb = sc->free_list.tqh_first) == NULL &&
+	while ((acb = TAILQ_FIRST(&sc->free_list)) == NULL &&
 	       (flags & SCSI_NOSLEEP) == 0)
 		tsleep(&sc->free_list, PRIBIO, "aicacb", 0);
 	if (acb) {
@@ -688,8 +688,7 @@ aic_reselect(sc, message)
 	 */
 	target = ffs(selid) - 1;
 	lun = message & 0x07;
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	     acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain) {
 		sc_link = acb->xs->sc_link;
 		if (sc_link->target == target && sc_link->lun == lun)
 			break;
@@ -754,8 +753,7 @@ aic_sched(sc)
 	 */
 	bus_space_write_1(iot, ioh, CLRSINT1,
 	    CLRSELTIMO | CLRBUSFREE | CLRSCSIPERR);
-	for (acb = sc->ready_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->ready_list, chain) {
 		sc_link = acb->xs->sc_link;
 		ti = &sc->sc_tinfo[sc_link->target];
 		if ((ti->lubusy & (1 << sc_link->lun)) == 0) {
@@ -2112,15 +2110,13 @@ aic_print_active_acb()
 	struct aic_softc *sc = aic_cd.cd_devs[0];
 
 	printf("ready list:\n");
-	for (acb = sc->ready_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->ready_list, chain)
 		aic_print_acb(acb);
 	printf("nexus:\n");
 	if (sc->sc_nexus != NULL)
 		aic_print_acb(sc->sc_nexus);
 	printf("nexus list:\n");
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain)
 		aic_print_acb(acb);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.33 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.34 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ sys_ktrace(curp, v, retval)
 			error = ESRCH;
 			goto done;
 		}
-		for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next)
+		LIST_FOREACH(p, &pg->pg_members, p_pglist)
 			if (descend)
 				ret |= ktrsetchildren(curp, p, ops, facs, vp);
 			else 
@@ -449,13 +449,13 @@ ktrsetchildren(curp, top, ops, facs, vp)
 		 * otherwise do any siblings, and if done with this level,
 		 * follow back up the tree (but not past top).
 		 */
-		if (p->p_children.lh_first)
-			p = p->p_children.lh_first;
+		if (!LIST_EMPTY(&p->p_children))
+			p = LIST_FIRST(&p->p_children);
 		else for (;;) {
 			if (p == top)
 				return (ret);
-			if (p->p_sibling.le_next) {
-				p = p->p_sibling.le_next;
+			if (LIST_NEXT(p, p_sibling) != NULL) {
+				p = LIST_NEXT(p, p_sibling);
 				break;
 			}
 			p = p->p_pptr;

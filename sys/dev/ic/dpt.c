@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.9 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.10 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -679,7 +679,7 @@ dpt_free_ccb(sc, ccb)
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_chain);
 
 	/* Wake anybody waiting for a free ccb */
-	if (ccb->ccb_chain.tqe_next == 0)
+	if (TAILQ_NEXT(ccb, ccb_chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 	splx(s);
 }
@@ -886,7 +886,7 @@ dpt_done_ccb(sc, ccb)
 	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = LIST_FIRST(&sc->sc_queue)) != NULL)
 #endif /* __OpenBSD__ */
 		dpt_scsi_cmd(xs);
 }
@@ -904,8 +904,8 @@ dpt_enqueue(sc, xs, infront)
 	int             infront;
 {
 
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
+	if (infront || LIST_EMPTY(&sc->sc_queue)) {
+		if (LIST_EMPTY(&sc->sc_queue))
 			sc->sc_queuelast = xs;
 		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
 		return;
@@ -923,10 +923,10 @@ dpt_dequeue(sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = sc->sc_queue.lh_first;
+	xs = LIST_FIRST(&sc->sc_queue);
 	LIST_REMOVE(xs, free_list);
 
-	if (sc->sc_queue.lh_first == NULL)
+	if (LIST_EMPTY(&sc->sc_queue))
 		sc->sc_queuelast = NULL;
 
 	return (xs);
@@ -985,7 +985,7 @@ dpt_scsi_cmd(xs)
 		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-	if (xs == sc->sc_queue.lh_first) {
+	if (xs == LIST_FIRST(&sc->sc_queue)) {
 		xs = dpt_dequeue(sc);
 #endif /* __OpenBSD__ */
 		fromqueue = 1;
@@ -1022,7 +1022,7 @@ dpt_scsi_cmd(xs)
 		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-		if (sc->sc_queue.lh_first != NULL) {
+		if (!LIST_EMPTY(&sc->sc_queue)) {
 #endif /* __OpenBSD__ */
 			/*
 			 * If we can't queue we abort, since we must 

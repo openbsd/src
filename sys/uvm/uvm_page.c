@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.49 2004/02/23 06:19:32 drahn Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.50 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -812,7 +812,7 @@ uvm_page_rehash()
 
 	/* ... and rehash */
 	for (lcv = 0 ; lcv < oldcount ; lcv++) {
-		while ((pg = oldbuckets[lcv].tqh_first) != NULL) {
+		while ((pg = TAILQ_FIRST(&oldbuckets[lcv])) != NULL) {
 			TAILQ_REMOVE(&oldbuckets[lcv], pg, hashq);
 			TAILQ_INSERT_TAIL(
 			  &uvm.page_hash[uvm_pagehash(pg->uobject, pg->offset)],

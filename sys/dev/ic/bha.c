@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.6 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: bha.c,v 1.7 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -138,8 +138,8 @@ bha_enqueue(sc, xs, infront)
 	int infront;
 {
 
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
+	if (infront || LIST_EMPTY(&sc->sc_queue)) {
+		if (LIST_EMPTY(&sc->sc_queue))
 			sc->sc_queuelast = xs;
 		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
 		return;
@@ -158,10 +158,10 @@ bha_dequeue(sc)
 {
 	struct scsi_xfer *xs;
 
-	xs = sc->sc_queue.lh_first;
+	xs = LIST_FIRST(&sc->sc_queue);
 	LIST_REMOVE(xs, free_list);
 
-	if (sc->sc_queue.lh_first == NULL)
+	if (LIST_EMPTY(&sc->sc_queue))
 		sc->sc_queuelast = NULL;
 
 	return (xs);
@@ -535,7 +535,7 @@ bha_free_ccb(sc, ccb)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (ccb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(ccb, chain) == NULL)
 		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
@@ -622,7 +622,7 @@ bha_get_ccb(sc, flags)
 	 * but only if we can't allocate a new one.
 	 */
 	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
+		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
@@ -720,7 +720,7 @@ bha_start_ccbs(sc)
 
 	wmbo = wmbx->tmbo;
 
-	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
+	while ((ccb = TAILQ_FIRST(&sc->sc_waiting_ccb)) != NULL) {
 
 		xs = ccb->xs;
 		if (sc->sc_mbofull >= BHA_MBX_SIZE) {
@@ -857,7 +857,7 @@ bha_done(sc, ccb)
 	 * NOTE: bha_scsi_cmd() relies on our calling it with
 	 * the first entry in the queue.
 	 */
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = LIST_FIRST(&sc->sc_queue)) != NULL)
 		(void) bha_scsi_cmd(xs);
 }
 
@@ -1355,7 +1355,7 @@ bha_scsi_cmd(xs)
 	 * If we're running the queue from bha_done(), we've been
 	 * called with the first queue entry as our argument.
 	 */
-	if (xs == sc->sc_queue.lh_first) {
+	if (xs == LIST_FIRST(&sc->sc_queue)) {
 		xs = bha_dequeue(sc);
 		fromqueue = 1;
 		goto get_ccb;
@@ -1367,7 +1367,7 @@ bha_scsi_cmd(xs)
 	/*
 	 * If there are jobs in the queue, run them first.
 	 */
-	if (sc->sc_queue.lh_first != NULL) {
+	if (!LIST_EMPTY(&sc->sc_queue)) {
 		/*
 		 * If we can't queue, we have to abort, since
 		 * we have to preserve order.

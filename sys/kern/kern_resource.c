@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.27 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.28 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ sys_getpriority(curp, v, retval)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (p->p_nice < low)
 				low = p->p_nice;
 		}
@@ -153,8 +153,7 @@ sys_setpriority(curp, v, retval)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0;
-		    p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			error = donice(curp, p, SCARG(uap, prio));
 			found++;
 		}

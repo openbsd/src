@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: uha.c,v 1.5 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -190,7 +190,7 @@ uha_free_mscp(sc, mscp)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (mscp->chain.tqe_next == 0)
+	if (TAILQ_NEXT(mscp, chain) == NULL)
 		wakeup(&sc->sc_free_mscp);
 
 	splx(s);
@@ -236,7 +236,7 @@ uha_get_mscp(sc, flags)
 	 * but only if we can't allocate a new one
 	 */
 	for (;;) {
-		mscp = sc->sc_free_mscp.tqh_first;
+		mscp = TAILQ_FIRST(&sc->sc_free_mscp);
 		if (mscp) {
 			TAILQ_REMOVE(&sc->sc_free_mscp, mscp, chain);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.11 2004/07/16 15:01:51 henning Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.12 2004/12/26 21:22:14 miod Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -173,8 +173,7 @@ nfsrv_getcache(nd, slp, repp)
 	if (!nd->nd_nam2)
 		return (RC_DOIT);
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != NULL;
-	    rp = LIST_NEXT(rp, rc_hash)) {
+	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
@@ -277,8 +276,7 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 	if (!nd->nd_nam2)
 		return;
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != NULL;
-	    rp = LIST_NEXT(rp, rc_hash)) {
+	LIST_FOREACH(rp, NFSRCHASH(nd->nd_retxid), rc_hash) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {

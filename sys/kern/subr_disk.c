@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.28 2004/11/01 03:43:24 pedro Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.29 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -257,8 +257,7 @@ disk_find(name)
 	if ((name == NULL) || (disk_count <= 0))
 		return (NULL);
 
-	for (diskp = disklist.tqh_first; diskp != NULL;
-	    diskp = diskp->dk_link.tqe_next)
+	TAILQ_FOREACH(diskp, &disklist, dk_link)
 		if (strcmp(diskp->dk_name, name) == 0)
 			return (diskp);
 

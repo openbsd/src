@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.104 2004/12/09 22:36:40 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.105 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -889,10 +889,10 @@ vfs_mount_foreach_vnode(struct mount *mp,
 
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 		simple_lock(&vp->v_interlock);		
 		simple_unlock(&mntvnode_slock);
 
@@ -1361,8 +1361,7 @@ printlockedvnodes()
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
-		for (vp = mp->mnt_vnodelist.lh_first; vp;
-		    vp = vp->v_mntvnodes.le_next) {
+		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
 				vprint((char *)0, vp);
 		}
@@ -1454,7 +1453,7 @@ sysctl_vnode(where, sizep, p)
 		}
 		savebp = bp;
 again:
-		for (vp = mp->mnt_vnodelist.lh_first; vp != NULL;
+		for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL;
 		    vp = nvp) {
 			/*
 			 * Check that the vp is still associated with
@@ -1468,7 +1467,7 @@ again:
 				bp = savebp;
 				goto again;
 			}
-			nvp = vp->v_mntvnodes.le_next;
+			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + sizeof(struct e_vnode) > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
@@ -1993,13 +1992,13 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	if (flags & V_SAVE) {
 		s = splbio();
 		vwaitforio(vp, 0, "vinvalbuf", 0);
-		if (vp->v_dirtyblkhd.lh_first != NULL) {
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			splx(s);
 			if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
 				return (error);
 			s = splbio();
 			if (vp->v_numoutput > 0 ||
-			    vp->v_dirtyblkhd.lh_first != NULL)
+			    !LIST_EMPTY(&vp->v_dirtyblkhd))
 				panic("vinvalbuf: dirty bufs");
 		}
 		splx(s);
@@ -2007,14 +2006,15 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 loop:
 	s = splbio();
 	for (;;) {
-		if ((blist = vp->v_cleanblkhd.lh_first) &&
+		if ((blist = LIST_FIRST(&vp->v_cleanblkhd)) &&
 		    (flags & V_SAVEMETA))
 			while (blist && blist->b_lblkno < 0)
-				blist = blist->b_vnbufs.le_next;
-		if (!blist && (blist = vp->v_dirtyblkhd.lh_first) &&
+				blist = LIST_NEXT(blist, b_vnbufs);
+		if (blist == NULL &&
+		    (blist = LIST_FIRST(&vp->v_cleanblkhd)) &&
 		    (flags & V_SAVEMETA))
 			while (blist && blist->b_lblkno < 0)
-				blist = blist->b_vnbufs.le_next;
+				blist = LIST_NEXT(blist, b_vnbufs);
 		if (!blist)
 			break;
 
@@ -2049,7 +2049,7 @@ loop:
 		}
 	}
 	if (!(flags & V_SAVEMETA) &&
-	    (vp->v_dirtyblkhd.lh_first || vp->v_cleanblkhd.lh_first))
+	    (!LIST_EMPTY(&vp->v_dirtyblkhd) || !LIST_EMPTY(&vp->v_cleanblkhd)))
 		panic("vinvalbuf: flush failed");
 	splx(s);
 	return (0);
@@ -2065,8 +2065,9 @@ vflushbuf(vp, sync)
 
 loop:
 	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
+	    bp != LIST_END(&vp->v_dirtyblkhd); bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -2089,7 +2090,7 @@ loop:
 		return;
 	}
 	vwaitforio(vp, 0, "vflushbuf", 0);
-	if (vp->v_dirtyblkhd.lh_first != NULL) {
+	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		splx(s);
 		vprint("vflushbuf: dirty", vp);
 		goto loop;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.121 2004/11/28 02:11:33 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.122 2004/12/26 21:22:13 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -439,7 +439,7 @@ main(framep)
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 
 	/* Get the vnode for '/'.  Set p->p_fd->fd_cdir to reference it. */
-	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
+	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	p->p_fd->fd_cdir = rootvnode;
 	VREF(p->p_fd->fd_cdir);
