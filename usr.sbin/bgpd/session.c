@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.98 2004/01/28 18:19:32 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.99 2004/01/28 18:24:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -755,13 +755,14 @@ session_connect(struct peer *peer)
 	peer->wbuf.sock = peer->sock;
 
 	/* if update source is set we need to bind() */
-	if (peer->conf.local_addr.af)
-		if (bind(peer->sock, addr2sa(&peer->conf.local_addr, 0),
-		    sizeof(peer->conf.local_addr))) {
+	if (peer->conf.local_addr.af) {
+		sa = addr2sa(&peer->conf.local_addr, 0);
+		if (bind(peer->sock, sa, sa->sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
+	}
 
 	if (session_setup_socket(peer)) {
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
