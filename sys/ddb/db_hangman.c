@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.9 1996/11/28 19:01:49 niklas Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.10 1996/11/29 06:51:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -41,6 +41,14 @@
 
 #define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'A'+'a':(c))
 #define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
+
+/*
+ * if [ `size db_hangman.o | awk 'BEGIN {getline} {print $$1+$$2}'` -gt 1024 ];
+ * then
+ *	echo 'hangman is too big!!!'
+ * fi
+ *
+ */
 
 static __inline size_t db_random __P((size_t));
 static __inline char *db_randomsym __P((size_t *));
