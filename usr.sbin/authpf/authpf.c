@@ -295,8 +295,15 @@ read_config(void)
 	FILE *f;
 
 	f = fopen(configfile, "r");
-	if (f == NULL)
-		return; /* fail silently, run with defaults */
+	if (f == NULL) {
+		if (errno == ENOTDIR || errno == ENOENT)
+			/* if the config file is not present, refuse to run */
+			syslog(LOG_INFO, "run by uid %d but no %s file exits",
+			    getuid(), configfile);
+		else 
+			syslog(LOG_INFO, "can't open %s (%m)", configfile);
+		exit(EX_CONFIG);
+	}
 
 	do {
 		char **ap, *pair[4], *cp, *tp;
