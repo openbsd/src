@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.17 2002/08/04 01:26:40 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.18 2002/12/09 08:15:29 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,10 +47,9 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.17 2002/08/04 01:26:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.18 2002/12/09 08:15:29 deraadt Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <ctype.h>
