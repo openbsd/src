@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 1998/03/16 09:38:28 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 1998/03/25 11:42:08 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.16 1998/03/16 09:38:28 pefo Exp $
+ *	$Id: locore.S,v 1.17 1998/03/25 11:42:08 pefo Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ onfault_table:
 	.word	fswberr
 #define FSWINTRBERR	4
 	.word	fswintrberr
-#if defined(DDB)
+#if defined(DDB) || defined(DEBUG)
 #define	DDBERR		5
 	.word	ddberr
 #else
@@ -2947,7 +2947,7 @@ LEAF(R4K_InvalidateDCache)
 	nop
 END(R4K_InvalidateDCache)
 
-#if defined(DDB)
+#if defined(DDB) || defined(DEBUG)
 LEAF(kdbpeek)
 	li	v0, DDBERR
 	and	v0, a0, 3			# unaligned ?
@@ -2965,6 +2965,11 @@ LEAF(kdbpeek)
 	sw	zero, UADDR+U_PCB_ONFAULT
 END(kdbpeek)
 
+ddberr:
+	jr	ra
+	nop
+
+#if defined(DDB)
 LEAF(kdbpoke)
 	li	v0, DDBERR
 	and	v0, a0, 3			# unaligned ?
@@ -2981,10 +2986,6 @@ LEAF(kdbpoke)
 	jr	ra
 	sw	zero, UADDR+U_PCB_ONFAULT
 END(kdbpoke)
-
-ddberr:
-	jr	ra
-	nop
 
 LEAF(Debugger)
 	break   BREAK_SOVER_VAL
@@ -3032,7 +3033,8 @@ END(longjmp)
 	.globl	esym
 esym:	.word	0
 
-#endif
+#endif /* DDB */
+#endif /* DDB || DEBUGGER */
 
 /*
  * Interrupt counters for vmstat.
