@@ -1,4 +1,4 @@
-#	$Id: list,v 1.4 1996/02/02 07:24:32 dm Exp $
+#	$Id: list,v 1.5 1996/06/16 10:25:18 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -53,7 +53,6 @@ SYMLINK	/bin/cat		usr/bin/tip
 SYMLINK	/bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK	/bin/cat		usr/sbin/update
 SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices

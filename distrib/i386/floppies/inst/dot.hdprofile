@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.hdprofile,v 1.4 1996/04/25 21:28:04 niklas Exp $
+#	$OpenBSD: dot.hdprofile,v 1.5 1996/06/16 10:25:13 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -49,9 +49,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils
