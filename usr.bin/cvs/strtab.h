@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.h,v 1.1 2005/03/23 20:21:54 jfb Exp $	*/
+/*	$OpenBSD: strtab.h,v 1.2 2005/03/24 03:11:03 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,6 +35,6 @@
 void  cvs_strtab_init    (void);
 void  cvs_strtab_cleanup (void);
 char* cvs_strdup         (const char *);
-void  cvs_strfree        (char *);
+void  cvs_strfree        (const char *);
 
 #endif /* STRTAB_H */

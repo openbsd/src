@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.c,v 1.1 2005/03/23 20:21:54 jfb Exp $	*/
+/*	$OpenBSD: strtab.c,v 1.2 2005/03/24 03:11:03 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,6 +40,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "strtab.h"
 
 #define CVS_STRTAB_HASHBITS       8
 #define CVS_STRTAB_NBUCKETS      (1 << CVS_STRTAB_HASHBITS)
@@ -86,7 +87,7 @@ cvs_strdup(const char *s)
  * cvs_strfree()
  */
 void
-cvs_strfree(char *s)
+cvs_strfree(const char *s)
 {
 	cvs_strtab_free(s);
 }
@@ -219,7 +220,7 @@ cvs_strtab_free(const char *str)
 	sp->cs_ref--;
 	if (sp->cs_ref == 0) {
 		/* no more references, free the file */
-		h = cvs_file_hashname(sp->cs_str);
+		h = cvs_strtab_hash(sp->cs_str);
 
 		SLIST_REMOVE(&(cvs_strtab[h]), sp, cvs_str, cs_link);
 		free(sp->cs_str);
