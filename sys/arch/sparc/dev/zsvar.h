@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.4 1995/04/11 02:38:21 mycroft Exp $ */
+/*	$NetBSD: zsvar.h,v 1.6 1996/01/24 19:52:57 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,21 @@
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
+
+/*
+ * Register layout is machine-dependent...
+ */
+
+struct zschan {
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0;
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1;
+};
+
+struct zsdevice {
+	struct	zschan zs_chan[2];
+};
 
 /*
  * Software state, per zs channel.
