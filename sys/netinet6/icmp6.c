@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.83 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.84 2005/01/17 10:18:03 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -510,8 +510,6 @@ icmp6_input(mp, offp, proto)
 
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
-		if (code != 0)
-			goto badcode;
 
 		code = PRC_MSGSIZE;
 
