@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.25 2001/05/08 05:22:01 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.26 2001/05/09 02:25:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1004,7 +1004,7 @@ txp_dma_malloc(sc, size, dma, mapflags)
 	}
 
 	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
-	dma->dma_size = size;
+
 	return (0);
 }
 
@@ -1013,7 +1013,7 @@ txp_dma_free(sc, dma)
 	struct txp_softc *sc;
 	struct txp_dma_alloc *dma;
 {
-	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_size);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_map->dm_mapsize);
 	bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs, dma->dma_map->dm_nsegs);
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
 	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);

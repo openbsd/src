@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.21 2001/05/08 03:52:43 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.22 2001/05/09 02:25:09 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -528,7 +528,6 @@ struct txp_dma_alloc {
 	u_int64_t		dma_paddr;
 	caddr_t			dma_vaddr;
 	bus_dmamap_t		dma_map;
-	bus_size_t		dma_size;	/* XXX should use dm_mapsize */
 };
 
 struct txp_cmd_ring {
