@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.8 1998/06/11 18:32:17 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.9 1998/06/14 18:57:09 matthieu Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ sys_oshmctl(p, v, retval)
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
 			return error;
 		shmid_n2o(shmseg, &oinbuf);
-		error = copyout((caddr_t)shmseg, SCARG(uap, buf),
+		error = copyout((caddr_t)&oinbuf, SCARG(uap, buf),
 		    sizeof(oinbuf));
 		if (error)
 			return error;
