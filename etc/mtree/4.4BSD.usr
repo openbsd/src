@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.usr,v 1.19 2003/03/13 07:05:49 jmc Exp $
+#	$OpenBSD: 4.4BSD.usr,v 1.20 2003/03/17 07:38:13 deraadt Exp $
 #	$NetBSD: 4.4BSD.usr,v 1.3 1996/05/12 23:30:37 thorpej Exp $
 #
 #	   user: bostic
@@ -1224,13 +1224,6 @@ usd             type=dir
 /set type=file gname=bin uname=root mode=0444
 29.diction      type=dir uname=root gname=wheel mode=0775
 # ./share/doc/usd/29.diction
-..
-
-
-# ./share/doc/usd/30.rogue
-/set type=file gname=bin uname=root mode=0444
-30.rogue        type=dir uname=root gname=wheel mode=0775
-# ./share/doc/usd/30.rogue
 ..
 
 

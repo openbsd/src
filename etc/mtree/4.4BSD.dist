@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.148 2003/03/13 07:05:49 jmc Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.149 2003/03/17 07:38:13 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -890,11 +890,6 @@ usd
 # ./usr/share/doc/usd/29.diction
 29.diction
 # ./usr/share/doc/usd/29.diction
-..
-
-# ./usr/share/doc/usd/30.rogue
-30.rogue
-# ./usr/share/doc/usd/30.rogue
 ..
 
 # ./usr/share/doc/usd/31.trek
