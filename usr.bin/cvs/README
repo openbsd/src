@@ -1,4 +1,31 @@
-README for cvs
+OpenCVS README
+==============
+
+This release of OpenCVS is for OpenBSD systems only.
+Please consult http://www.opencvs.org/ for portable release availability.
 
 This is a BSD-licensed equivalent of the popular versioning system
-CVS.  Not much more to say for now
+CVS.  It is currently in development and thus is not yet suited to replace
+GNU CVS entirely.  This program should NOT be used on development tree unless
+you don't care about losing your modifications due to possible bugs.
+
+
+To extract and install this release on your OpenBSD system, do the following:
+
+	# cd /usr/src/usr.bin
+	# tar -xvzf opencvs-X_Y.tar.gz
+	# cd cvs
+	# make obj
+	# make cleandir
+	# make
+	# make install
+
+To preserve the GNU CVS binary, it is recommended that you first rename it:
+
+	# cd /usr/bin
+	# mv cvs gcvs
+
+The cvs daemon is not yet ready so there are no additional steps required
+for the moment.
+
+See http://www.opencvs.org/ for more information.
