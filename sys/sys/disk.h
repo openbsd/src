@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.7 2001/05/14 07:05:00 angelos Exp $	*/
+/*	$OpenBSD: disk.h,v 1.8 2001/06/03 03:22:53 angelos Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -60,18 +60,22 @@ struct buf;
 struct disklabel;
 struct cpu_disklabel;
 
+struct diskstats {
+	int		ds_busy;	/* busy counter */
+	u_int64_t	ds_xfer;	/* total number of transfers */
+	u_int64_t	ds_seek;	/* total independent seek operations */
+	u_int64_t	ds_bytes;	/* total bytes transferred */
+	struct timeval	ds_attachtime;	/* time disk was attached */
+	struct timeval	ds_timestamp;	/* timestamp of last unbusy */
+	struct timeval	ds_time;	/* total time spent busy */
+};
+
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
 	struct lock     dk_lock;        /* disk lock */
 	char		*dk_name;	/* disk name */
 	int             dk_flags;       /* disk flags */
 #define DKF_CONSTRUCTED  0x0001
-	int		dk_bopenmask;	/* block devices open */
-	int		dk_copenmask;	/* character devices open */
-	int		dk_openmask;	/* composite (bopen|copen) */
-	int		dk_state;	/* label state   ### */
-	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks */
-	int		dk_byteshift;	/* shift to convert bytes to blks */
 
 	/*
 	 * Metrics data; note that some metrics may have no meaning
@@ -84,6 +88,13 @@ struct disk {
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
+
+	int		dk_bopenmask;	/* block devices open */
+	int		dk_copenmask;	/* character devices open */
+	int		dk_openmask;	/* composite (bopen|copen) */
+	int		dk_state;	/* label state   ### */
+	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks*/
+	int		dk_byteshift;	/* shift to convert bytes to blks */
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
 
