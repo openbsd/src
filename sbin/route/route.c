@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.79 2004/09/26 19:46:01 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.80 2004/10/13 22:54:35 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.79 2004/09/26 19:46:01 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.80 2004/10/13 22:54:35 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -1249,7 +1249,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 	printf("%8lu%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 	if (rtm->rtm_rmx.rmx_expire)
 		rtm->rtm_rmx.rmx_expire -= time(0);
-	printf("%8lu%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+	printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 #undef lock
 #undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
