@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.64";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.12 1998/07/11 23:08:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.13 1998/07/11 23:17:20 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -277,7 +277,7 @@ register struct state * const	sp;
 	register int		fid;
 
 	if (name != NULL && issetugid() != 0)
-		if ((name[0] == ':') ||
+		if ((name[0] == ':' && (strchr(name, '/') || strstr(name, ".."))) ||
 		    name[0] == '/' || strchr(name, '.'))
 			name = NULL;
 	if (name == NULL && (name = TZDEFAULT) == NULL)
@@ -291,7 +291,7 @@ register struct state * const	sp;
 		** to hold the longest file name string that the implementation
 		** guarantees can be opened."
 		*/
-		char		fullname[FILENAME_MAX + 1];
+		char		fullname[FILENAME_MAX];
 
 		if (name[0] == ':')
 			++name;
@@ -299,7 +299,7 @@ register struct state * const	sp;
 		if (!doaccess) {
 			if ((p = TZDIR) == NULL)
 				return -1;
-			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
+			if ((strlen(p) + 1 + strlen(name)) >= sizeof fullname)
 				return -1;
 			(void) strcpy(fullname, p);
 			(void) strcat(fullname, "/");
