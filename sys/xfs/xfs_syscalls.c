@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_syscalls.c,v 1.1 1998/08/30 16:47:21 art Exp $	*/
+/*	$OpenBSD: xfs_syscalls.c,v 1.2 1998/08/30 18:06:19 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -63,7 +63,7 @@ RCSID("$KTH: xfs_syscalls.c,v 1.20 1998/07/19 21:18:30 art Exp $");
 #include <xfs/xfs_deb.h>
 
 /* Misc syscalls */
-#include <sys/pioctl.h>
+#include <sys/xfs_pioctl.h>
 #include <sys/syscallargs.h>
 
 #ifdef ACTUALLY_LKM_NOT_KERNEL
@@ -157,7 +157,7 @@ xfs_setpag_call(struct ucred **ret_cred)
 
 #define syscallarg(x)   union { x datum; register_t pad; }
 
-struct sys_pioctl_args {
+struct sys_xfspioctl_args {
     syscallarg(int) operation;
     syscallarg(char *) a_pathP;
     syscallarg(int) a_opcode;
@@ -167,7 +167,7 @@ struct sys_pioctl_args {
 
 #elif defined(__FreeBSD__)
 
-struct sys_pioctl_args {
+struct sys_xfspioctl_args {
     int operation;
     char *a_pathP;
     int a_opcode;
@@ -191,7 +191,7 @@ xfs_pioctl_call(struct proc *p, void *v, int *i)
     struct xfs_message_wakeup_data *msg2;
     char *pathptr;
 
-    struct sys_pioctl_args *arg = (struct sys_pioctl_args *) v;
+    struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) v;
 
     /* Copy in the data structure for us */
 
@@ -288,10 +288,10 @@ static int
 xfs_syscall(struct proc *p, void *v, int *i)
 #else
 int
-sys_pioctl(struct proc *p, void *v, int *i)
+sys_xfspioctl(struct proc *p, void *v, int *i)
 #endif
 {
-    struct sys_pioctl_args *arg = (struct sys_pioctl_args *) v;
+    struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) v;
     int error = EINVAL;
 
     switch (SCARG(arg, operation)) {
@@ -318,7 +318,7 @@ static struct sysent syscall_oldent;
 
 static struct sysent xfs_syscallent = {
     4,				       /* number of args */
-    sizeof(struct sys_pioctl_args),    /* size of args */
+    sizeof(struct sys_xfspioctl_args), /* size of args */
     xfs_syscall			       /* function pointer */
 };
 
