@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.22 2001/11/09 02:57:03 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.23 2001/11/09 15:31:11 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -803,12 +803,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 
 	/*
 	 * Figure out how many PTE's are necessary to map the kernel.
-	 * The '512' comes from PAGER_MAP_SIZE in vm_pager_init().
-	 * This should be kept in sync.
-	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
 	lev3mapsize = (VM_PHYS_SIZE +
-		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 512 +
+		nbuf * MAXBSIZE + + PAGER_MAP_SIZE + 16 * NCARGS) / NBPG +
 		(maxproc * UPAGES) + NKMEMCLUSTERS;
 
 #ifdef SYSVSHM
