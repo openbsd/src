@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: bad144.8,v 1.7 2000/03/14 21:31:43 aaron Exp $
+.\"	$Id: bad144.8,v 1.8 2000/03/19 17:57:02 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
@@ -99,23 +99,24 @@ the information is specified by
 .Tn DEC
 standard 144, as follows.
 The bad sector information is located in the first 5 even numbered sectors
-of the last track of the disk pack.  There are five identical copies of
-the information, described by the
+of the last track of the disk pack.
+There are five identical copies of the information, described by the
 .Va dkbad
 structure.
 .Pp
 Replacement sectors are allocated starting with the first sector before
 the bad sector information and working backwards towards the beginning
-of the disk.  A maximum of 126 bad sectors are supported.  The position
-of the bad sector in the bad sector table determines the replacement
-sector to which it corresponds.
+of the disk.
+A maximum of 126 bad sectors are supported.
+The position of the bad sector in the bad sector table determines the
+replacement sector to which it corresponds.
 The bad sectors must be listed in ascending order.
 .Pp
 The bad sector information and replacement sectors are conventionally
 only accessible through the
 .Dq c
-file system partition of the disk.  If
-that partition is used for a file system, the user is responsible for
+file system partition of the disk.o
+If that partition is used for a file system, the user is responsible for
 making sure that it does not overlap the bad sector information or any
 replacement sectors.
 Thus, one track plus 126 sectors must be reserved to allow use
@@ -179,8 +180,8 @@ errors, or the special
 (skip sector) errors of RM80-type disks.
 This means that none of these errors can occur when reading the file
 .Pa /bsd
-to boot.  Sectors 0-15 of the disk drive
-must also not have any of these errors.
+to boot.
+Sectors 0-15 of the disk drive must also not have any of these errors.
 .Pp
 The drivers which write a system core image on disk after a crash do not
 handle errors; thus the crash dump area must be free of errors and bad

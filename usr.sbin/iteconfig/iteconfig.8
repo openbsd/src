@@ -103,13 +103,15 @@ is 3 then 8 colors will be used.
 .It Fl x Ar offset
 Set the horizontal offset of the console view on the monitor to
 .Ar offset
-pixel columns.  The horizontal offset may be a positive or a
+pixel columns.
+The horizontal offset may be a positive or a
 negative integer, positive being an offset to the right, negative
 to the left.
 .It Fl y Ar offset
 Set the vertical offset of the console view on the monitor to
 .Ar offset
-pixel rows.  The vertical offset may be a positive or a negative
+pixel rows.
+The vertical offset may be a positive or a negative
 integer, positive being an offset down, negative up.
 .It Fl b Ar seconds
 Set the console screen blanker to kick in after
@@ -121,7 +123,8 @@ is 0.
 .Pp
 Any additional arguments will be interpreted as colors and will
 be used to supply the color values for the console view's
-color map, starting with the first entry in the map.  (See the
+color map, starting with the first entry in the map.
+(See the
 .Sx COLOR SPECIFICATION
 section of this manual page for information on how to specify
 colors.)
@@ -138,7 +141,8 @@ and
 .Ar BB
 are taken to be 8-bit values specifying the
 intensities of the red, green and blue components, respectively,
-of the color to be used.  For example,
+of the color to be used.
+For example,
 .Li 0xff0000
 is bright red,
 .Li 0xffffff
@@ -148,7 +152,8 @@ is dark cyan.
 .It Ar 0xGG
 .Ar GG
 is taken to be an 8-bit value specifying the intensity
-of grey to be used.  A value of
+of grey to be used.
+A value of
 .Li 0x00
 is black, a value of
 .Li 0xff

@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ypxfr.8,v 1.8 1999/06/05 22:18:36 aaron Exp $
+.\"	$OpenBSD: ypxfr.8,v 1.9 2000/03/19 17:57:19 aaron Exp $
+.\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -28,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ypxfr.8,v 1.8 1999/06/05 22:18:36 aaron Exp $
+.\"	$OpenBSD: ypxfr.8,v 1.9 2000/03/19 17:57:19 aaron Exp $
 .\"
 .Dd August 18, 1994
 .Dt YPXFR 8
@@ -49,7 +50,8 @@
 is the utiliy in YP that transfers maps to the local host.
 .Pp
 Since the YP master transfers a map when it has changed, an YP slave should
-check for missed maps regulary. This can be done via an entry in
+check for missed maps regulary.
+This can be done via an entry in
 .Xr crontab 5 .
 The scripts
 .Ar ypxfr_1perhour , ypxfr_2perday
@@ -61,11 +63,12 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl b
 Preserve the entry in the database informing a YP server to use
-DNS to get information about unknown hosts. This option will only have
+DNS to get information about unknown hosts.
+This option will only have
 effect on the two maps hosts.byname and hosts.byaddr.
 .It Fl c
-Don't send a "Clear current map" to local ypserv process. Useful if ypserv
-isn't running localy to avoid timeout message.
+Don't send a "Clear current map" to local ypserv process.
+Useful if ypserv isn't running localy to avoid timeout message.
 .It Fl f
 Force map transfer, even if version of master is older than local copy.
 .It Fl d Ar domain
@@ -75,8 +78,8 @@ Get map from host instead of the maps master host.
 .It Fl s Ar domain
 Specify a source domain other than the target domain.
 .It Fl C Ar tid prog ipadd port
-This option is only used by ypserv. This is to open communication with
-an yppush on another host.
+This option is only used by ypserv.
+This is to open communication with a yppush on another host.
 .El
 .Sh FILES
 .Bl -tag -width /usr/sbin/ypxfr_1perhour -compact

@@ -1,4 +1,5 @@
-.\" $OpenBSD: memconfig.8,v 1.1 1999/11/20 11:22:54 matthieu Exp $
+.\" $OpenBSD: memconfig.8,v 1.2 2000/03/19 17:57:08 aaron Exp $
+.\"
 .\" Copyright (c) 1999 Chris Costello
 .\" All rights reserved.
 .\" 
@@ -61,7 +62,8 @@ provides an interface to this facility, allowing CPU cache behavior to
 be altered for ranges of system physical memory.
 .Pp
 These ranges are typically power-of-2 aligned and sized, however the specific
-rules governing their layout vary between architectures.  The
+rules governing their layout vary between architectures.
+The
 .Nm memconfig
 program does not attempt to enforce these rules, however the system will
 reject any attempt to set an illegal combination.
@@ -90,8 +92,8 @@ Attributes applied to this range; one of
 .Ar write-protect
 .El
 .It Ar clear
-Clear memory range attributes. Ranges may be cleared by owner or by
-base/length combination.
+Clear memory range attributes.
+Ranges may be cleared by owner or by base/length combination.
 .Pp
 To clear based on ownership:
 .Bl -tag -width xxxxxx

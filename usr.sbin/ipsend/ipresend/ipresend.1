@@ -1,4 +1,4 @@
-.Dd October  9, 1999
+.Dd October 9, 1999
 .Dt IPRESEND 1
 .Os
 .Sh NAME
@@ -26,19 +26,21 @@ must be run as root.
 .Ss OPTIONS
 .Bl -tag -width "d interface "
 .It Fl d Ar interface
-Set the interface name to be the name supplied.  This is useful with the
+Set the interface name to be the name supplied.
+This is useful with the
 .Fl P ,
 .Fl S ,
-.Fl T
+.Fl T ,
 and
 .Fl E
 options, where it is not otherwise possible
-to associate a packet with an interface.  Normal
+to associate a packet with an interface.
+Normal
 .Sq text packets
 can override this setting.
 .It Fl g Ar gateway
-Specify the hostname of the gateway through which to route packets. This
-is required whenever the destination host isn't directly attached to the
+Specify the hostname of the gateway through which to route packets.
+This is required whenever the destination host isn't directly attached to the
 same network as the host from which you're sending.
 .It Fl m Ar mtu
 Set the MTU used when sending out packets to
@@ -47,10 +49,12 @@ This option allows you
 to set a fake MTU, allowing the simulation of network interfaces with small
 MTU's.
 .It Fl r Ar filename
-Specify the filename from which to take input. Default is
+Specify the filename from which to take input.
+Default is
 .Va stdin .
 .It Fl E
-The input file is to be text output from etherfind. The text formats which
+The input file is to be text output from etherfind.
+The text formats which
 are currently supported are those which result from the following etherfind
 option combinations:
 .Bd -literal -offset indent
@@ -59,7 +63,8 @@ etherfind -n -t
 .Ed
 .It Fl H
 The input file is to be hex digits, representing the binary makeup of the
-packet. No length correction is made if an incorrect length is put in
+packet.
+No length correction is made if an incorrect length is put in
 the IP header.
 .It Fl P
 The input file specified by
@@ -67,13 +72,13 @@ The input file specified by
 is a binary file produced using libpcap
 (i.e.,
 .Xr tcpdump 8
-version 3). Packets are read from this file as being input
-(for rule purposes).
+version 3).
+Packets are read from this file as being input (for rule purposes).
 .It Fl R
 When sending packets out, send them out
-.Sq  raw
-(the way they came in). The
-only real significance here is that it will expect the link layer (i.e.,
+.Sq raw
+(the way they came in).
+The only real significance here is that it will expect the link layer (i.e.,
 Ethernet) headers to be prepended to the IP packet being output.
 .It Fl S
 The input file is to be in
@@ -81,8 +86,8 @@ The input file is to be in
 format (see
 .Tn RFC 1761 ) .
 Packets are read
-from this file and used as input from any interface. This is perhaps the
-most useful input type, currently.
+from this file and used as input from any interface.
+This is perhaps the most useful input type, currently.
 .It Fl T
 The input file is to be text output from
 .Xr tcpdump 8 .

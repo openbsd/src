@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.7 1999/10/05 13:39:31 aaron Exp $
+.\" $OpenBSD: dhclient.8,v 1.8 2000/03/19 17:57:03 aaron Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -55,8 +55,8 @@ or if these protocols fail, by statically assigning an address.
 The names of the network interfaces that
 .Nm
 should attempt to
-configure may be specified on the command line. If no interface names
-are given,
+configure may be specified on the command line.
+If no interface names are given,
 .Nm
 will identify all network
 interfaces, eliminating non-broadcast interfaces if possible, and
@@ -71,7 +71,8 @@ to exit if it failed to configure an interface.
 .It Fl d
 Forces
 .Nm
-to always run as a foreground process. By default,
+to always run as a foreground process.
+By default,
 .Nm
 runs in the foreground until it has configured an interface, and then
 will revert to running in the background.
@@ -84,9 +85,10 @@ should listen on, instead of the default (68).
 .Pp
 The DHCP protocol allows a host to contact a central server which
 maintains a list of IP addresses which may be assigned on one or more
-subnets. A DHCP client may request an address from this pool, and
-then use it on a temporary basis for communication on the network. The
-DHCP protocol also provides a mechanism whereby a client can learn
+subnets.
+A DHCP client may request an address from this pool, and
+then use it on a temporary basis for communication on the network.
+The DHCP protocol also provides a mechanism whereby a client can learn
 important details about the network to which it is attached, such as
 the location of a default router, the location of a name server, and
 so on.
@@ -95,16 +97,18 @@ On startup,
 .Nm
 reads
 .Pa /etc/dhclient.conf
-for configuration instructions. It then gets a list of all the
-network interfaces that are configured in the current system. It
-then attempts to configure each interface with DHCP.
+for configuration instructions.
+It then gets a list of all the
+network interfaces that are configured in the current system.
+It then attempts to configure each interface with DHCP.
 .Pp
 In order to keep track of leases across system reboots and server
 restarts,
 .Nm
 keeps a list of leases it has been assigned in the
 .Pa /var/db/dhclient.leases
-file. On startup, after reading the
+file.
+On startup, after reading the
 .Pa dhclient.conf
 file,
 .Nm
@@ -117,8 +121,8 @@ In order to prevent the file from becoming arbitrarily large, from time to time
 .Nm
 creates a new
 .Pa dhclient.leases
-file from its in-core lease database. The old version
-of is retained under the name
+file from its in-core lease database.
+The old version of is retained under the name
 .Pa /var/db/dhcpd.leases~
 until the next time
 .Nm
@@ -127,7 +131,8 @@ rewrites the database.
 Old leases are kept around in case the DHCP server is unavailable when
 .Nm
 is first invoked (generally during the initial system boot
-process). In that event, old leases from the
+process).
+In that event, old leases from the
 .Pa dhclient.leases
 file which have not yet expired are tested, and if they are determined to
 be valid, they are used until either they expire or the DHCP server
@@ -135,14 +140,15 @@ becomes available.
 .Pp
 A mobile host which may sometimes need to access a network on which no
 DHCP server exists may be preloaded with a lease for a fixed
-address on that network. When all attempts to contact a DHCP server
-have failed,
+address on that network.
+When all attempts to contact a DHCP server have failed,
 .Nm
 will try to validate the static lease, and if it
 succeeds, it will use that lease until it is restarted.
 .Pp
 A mobile host may also travel to some networks on which DHCP is not
-available but BOOTP is. In that case, it may be advantageous to
+available but BOOTP is.
+In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
@@ -178,12 +184,14 @@ process ID of
 .Nm
 has been written for the Internet Software Consortium
 by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-Enterprises. To learn more about the Internet Software Consortium,
-see
-.B http://www.vix.com/isc.
-To learn more about Vixie
-Enterprises, see
-.B http://www.vix.com.
+Enterprises.
+To learn more about the Internet Software Consortium, see
+.Pp
+.Dl http://www.vix.com/isc.
+.Pp
+To learn more about Vixie Enterprises, see
+.Pp
+.Dl http://www.vix.com.
 .Pp
 This client was substantially modified and enhanced by Elliot Poger
 for use on Linux while he was working on the MosquitoNet project at
@@ -192,7 +200,8 @@ Stanford.
 The current version owes much to Elliot's Linux enhancements, but
 was substantially reorganized and partially rewritten by Ted Lemon
 so as to use the same networking framework that the Internet Software
-Consortium DHCP server uses.  Much system-specific configuration code
+Consortium DHCP server uses.
+Much system-specific configuration code
 was moved into a shell script so that as support for more operating
 systems is added, it will not be necessary to port and maintain
 system-specific configuration code to these operating systems - instead,

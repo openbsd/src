@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ypserv.8,v 1.13 1999/06/05 22:18:33 aaron Exp $
+.\"	$OpenBSD: ypserv.8,v 1.14 2000/03/19 17:57:19 aaron Exp $
+.\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -48,18 +49,21 @@ on the network.
 .Pp
 A YP map is stored on the server as a
 .Xr db 3
-database. A number of YP maps is grouped together in a domain.
+database.
+A number of YP maps is grouped together in a domain.
 .Nm
 determines the domains it serves by looking for a directory with
 the domain name in
 .Pa /var/yp .
 .Pp
-YP hasn't been known for high security through the years. In recent years
-security has improved by restricting access to the server. In SunOS 4.1
+YP hasn't been known for high security through the years.
+In recent years
+security has improved by restricting access to the server.
+In SunOS 4.1
 has a new file occurred named
 .Pa /var/yp/securenet .
-It contains networks the server can assume is secure. For information about
-file format see
+It contains networks the server can assume is secure.
+For information about file format see
 .Xr securenet 5 .
 .Pp
 Before the author of this server had seen
@@ -68,8 +72,8 @@ another format,
 .Xr ypserv.acl 5 ,
 was implemented.
 This file format makes it possible to allow and deny hosts and networks
-access to the server. This file can have any name since it's given by
-the argument to
+access to the server.
+This file can have any name since it's given by the argument to
 .Fl a
 (use full path).
 .Pp
@@ -107,10 +111,12 @@ to answer old YP version 1 requests.
 .It Fl a Ar aclfile
 Don't use
 .Pa /var/yp/securenet .
-Use another file with a different file format. For further information see
+Use another file with a different file format.
+For further information see
 .Xr ypserv.acl 5 .
 .It Fl d
-Use Internet Domain Name System. If a query to map
+Use Internet Domain Name System.
+If a query to map
 .Dq hosts.byname
 or
 .Dq hosts.byaddr

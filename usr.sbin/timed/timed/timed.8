@@ -1,4 +1,5 @@
-.\"	$OpenBSD: timed.8,v 1.5 1999/06/05 22:18:17 aaron Exp $
+.\"	$OpenBSD: timed.8,v 1.6 2000/03/19 17:57:16 aaron Exp $
+.\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -164,9 +165,10 @@ Messages printed by the kernel on the system console occur with
 interrupts disabled.
 This means that the clock stops while they are printing.
 A machine with many disk or network hardware problems and consequent
-messages cannot keep good time by itself.  Each message typically causes
-the clock to lose a dozen milliseconds.  A time daemon can
-correct the result.
+messages cannot keep good time by itself.
+Each message typically causes
+the clock to lose a dozen milliseconds.
+A time daemon can correct the result.
 .Pp
 Messages in the system log about machines that failed to respond
 usually indicate machines that crashed or were turned off.
@@ -189,7 +191,8 @@ flag is used, so that
 .Nm
 never attempts to adjust the local clock.
 .Pp
-The protocol is based on UDP/IP broadcasts.  All machines within
+The protocol is based on UDP/IP broadcasts.
+All machines within
 the range of a broadcast that are using the TSP protocol must cooperate.
 There cannot be more than a single administrative domain using the
 .Fl F

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: screenblank.1,v 1.4 1999/04/02 15:12:21 aaron Exp $
+.\"	$OpenBSD: screenblank.1,v 1.5 2000/03/19 17:57:15 aaron Exp $
 .\"	$NetBSD: screenblank.1,v 1.2 1996/02/28 01:18:32 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,8 @@ When killed with a
 or
 .Dv SIGTERM ,
 .Nm
-will re-enable the framebuffer.  The PID can be found in the file
+will re-enable the framebuffer.
+The PID can be found in the file
 .Pa /var/run/screenblank.pid .
 .Pp
 The options are as follows:
@@ -72,12 +73,14 @@ Do not check the mouse for activity.
 Wait the number of seconds specified by
 .Ar timeout ,
 expressed in the format `xxx.xxx', before disabling the framebuffer due to
-inactivity.  The default is 600 seconds (10 minutes).
+inactivity.
+The default is 600 seconds (10 minutes).
 .It Fl e Ar timeout
 Wait the number of seconds specified by
 .Ar timeout ,
 expressed in the format `xxx.xxx', before re-enabling the framebuffer once
-activity resumes.  The default is .25 seconds.
+activity resumes.
+The default is .25 seconds.
 .It Fl f Ar framebuffer
 Use the framebuffer device
 .Ar framebuffer

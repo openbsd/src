@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sa.8,v 1.8 2000/03/05 00:28:57 aaron Exp $
+.\"	$OpenBSD: sa.8,v 1.9 2000/03/19 17:57:14 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: sa.8,v 1.8 2000/03/05 00:28:57 aaron Exp $
+.\"	$Id: sa.8,v 1.9 2000/03/19 17:57:14 aaron Exp $
 .\"
 .Dd February 25, 1994
 .Dt SA 8
@@ -69,8 +69,8 @@ If file names are supplied, they are read instead of
 .Pa /var/account/acct .
 After each file is read, if the summary
 files are being updated, an updated summary will
-be saved to disk.  Only one report is printed,
-after the last file is processed.
+be saved to disk.
+Only one report is printed, after the last file is processed.
 .Pp
 The labels used in the output indicate the following, except
 where otherwise specified by individual options:
@@ -101,7 +101,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 List all command names, including those containing unprintable
-characters and those used only once.  By default,
+characters and those used only once.
+By default,
 .Nm
 places all names containing unprintable characters and
 those used only once under the name
@@ -114,7 +115,8 @@ In addition to the number of calls and the user, system and real times
 for each command, print their percentage of the total over all commands.
 .It Fl d
 If printing command statistics, sort by the average number of disk
-I/O operations.  If printing user statistics, print the average number of
+I/O operations.
+If printing user statistics, print the average number of
 disk I/O operations per user.
 .It Fl D
 If printing command statistics, sort and print by the total number
@@ -129,8 +131,8 @@ Do not read in the summary files.
 Instead of the total minutes per category, give seconds per call.
 .It Fl k
 If printing command statistics, sort by the CPU time average memory
-usage.  If printing user statistics, print the CPU time average
-memory usage.
+usage.
+If printing user statistics, print the CPU time average memory usage.
 .It Fl K
 If printing command statistics, print and sort by the CPU-storage integral.
 .It Fl l
@@ -161,22 +163,26 @@ command name.
 For each command used
 .Ar cutoff
 times or fewer, print the command name and await a reply
-from the terminal.  If the reply begins with
+from the terminal.
+If the reply begins with
 .Dq y ,
 add the command to the category
 .Dq **junk** .
 This flag is used to strip garbage from the report.
 .El
 .Pp
-By default, per-command statistics will be printed.  The number of
+By default, per-command statistics will be printed.
+The number of
 calls, the total elapsed time in minutes, total CPU and user time
 in minutes, average number of I/O operations, and CPU time
-averaged core usage will be printed.  If the
+averaged core usage will be printed.
+If the
 .Fl m
 option is specified, per-user statistics will be printed, including
 the user name, the number of commands invoked, total CPU time used
 (in minutes), total number of I/O operations, and CPU storage integral
-for each user.  If the
+for each user.
+If the
 .Fl u
 option is specified, the uid, user and system time (in seconds),
 CPU storage integral, I/O usage, and command name will be printed
@@ -186,7 +192,8 @@ If the
 .Fl u
 flag is specified, all flags other than
 .Fl q
-are ignored.  If the
+are ignored.
+If the
 .Fl m
 flag is specified, only the
 .Fl b ,
@@ -226,8 +233,8 @@ OpenBSD's VM system does not record the CPU storage integral.
 While the behavior of the options in this version of
 .Nm
 was modeled after the original version, there are some intentional
-differences and undoubtedly some unintentional ones as well.  In
-particular, the
+differences and undoubtedly some unintentional ones as well.
+In particular, the
 .Fl q
 option has been added, and the
 .Fl m

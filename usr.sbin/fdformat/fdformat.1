@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdformat.1,v 1.9 2000/03/14 21:31:43 aaron Exp $
+.\"	$OpenBSD: fdformat.1,v 1.10 2000/03/19 17:57:04 aaron Exp $
 .\"
 .\" Copyright (C) 1993, 1994 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -85,8 +85,8 @@ An alternate method to specify the geometry data to write to the floppy disk.
 If the
 .Fl q
 flag has not been specified, the user is asked for a confirmation
-of the intended formatting process. In order to continue, an answer
-of
+of the intended formatting process.
+In order to continue, an answer of
 .Dq y
 must be given.
 .Sh DIAGNOSTICS
@@ -102,7 +102,8 @@ while it's being verified, and if an error has been detected, it
 will finally change to
 .Dq E .
 .Pp
-An exit status of 0 is returned upon successful operation. Exit status
+An exit status of 0 is returned upon successful operation.
+Exit status
 1 is returned on any errors during floppy formatting, and an exit status
 of 2 reflects invalid arguments given to the program (along with
 appropriate information written to diagnostic output).
@@ -112,8 +113,10 @@ appropriate information written to diagnostic output).
 .Nm fdformat
 was developed for 386BSD 0.1 and upgraded to the new
 .Xr fd 4
-floppy disk driver. It later became part of
-FreeBSD 1.1, and was then ported to
+floppy disk driver.
+It later became part of
+.Fx 1.1 ,
+and was then ported to
 .Ox 1.2 .
 .Sh AUTHOR
 The program was been contributed by Joerg Wunsch, Dresden,

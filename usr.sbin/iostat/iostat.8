@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.12 1999/09/23 04:12:10 alex Exp $
+.\"	$OpenBSD: iostat.8,v 1.13 2000/03/19 17:57:05 aaron Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -54,7 +54,8 @@ statistics
 .Nm iostat
 displays kernel
 .Tn I/O
-statistics on terminal, disk and CPU operations.  By default,
+statistics on terminal, disk and CPU operations.
+By default,
 .Nm iostat
 displays one line of statistics averaged over the machine's run time.
 The use of
@@ -82,20 +83,24 @@ If no
 .Ar wait
 interval is specified, the default is 1 second.
 .It Fl C
-Show CPU statistics.  This is enabled by default unless the
+Show CPU statistics.
+This is enabled by default unless the
 .Fl d,
 .Fl D,
 or
 .Fl T
 flags are used.
 .It Fl d
-Show disk statistics.  This is the default.  Displays kilobytes per
-transfer, number of transfers, and megabytes transferred.  Use of this
-flag disables display of CPU and tty statistics.
+Show disk statistics.
+This is the default.
+Displays kilobytes per
+transfer, number of transfers, and megabytes transferred.
+Use of this flag disables display of CPU and tty statistics.
 .It Fl D
-Show alternate disk statistics.  Displays kilobytes transferred, number of
-transfers, and time spent in transfers.  Use of this flag disables the
-default display.
+Show alternate disk statistics.
+Displays kilobytes transferred, number of
+transfers, and time spent in transfers.
+Use of this flag disables the default display.
 .It Fl I
 Show the running total values, rather than an average.
 .It Fl M
@@ -106,7 +111,8 @@ instead of the default
 Extract the name list from the specified system instead of the default
 .Dq Pa /bsd .
 .It Fl T
-Show tty statistics.  This is enabled by default unless the
+Show tty statistics.
+This is enabled by default unless the
 .Fl C,
 .Fl d,
 or

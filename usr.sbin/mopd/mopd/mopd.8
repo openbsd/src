@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopd.8,v 1.7 2000/03/14 21:31:43 aaron Exp $
+.\"	$OpenBSD: mopd.8,v 1.8 2000/03/19 17:57:08 aaron Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopd.8,v 1.7 2000/03/14 21:31:43 aaron Exp $
+.\" @(#) $OpenBSD: mopd.8,v 1.8 2000/03/19 17:57:08 aaron Exp $
 .\"
 .Dd September 24, 1995
 .Dt MOPD 8
@@ -48,7 +48,8 @@ or all interfaces if
 is given.
 In a load request received by
 .Nm mopd
-a filename can be given. This is the normal case for, e.g., terminal servers.
+a filename can be given.
+This is the normal case for, e.g., terminal servers.
 If a filename isn't given
 .Nm mopd
 must know what image to load.
@@ -65,14 +66,17 @@ filename (e.g.,
 and it might be a soft link to another file.
 .Pp
 .Nm mopd
-supports two kinds of files. The file is first checked to see if it is in
+supports two kinds of files.
+The file is first checked to see if it is in
 .Xr a.out 5
-format. If not, a few of Digital's formats are checked.
+format.
+If not, a few of Digital's formats are checked.
 .Pp
 In normal operation,
 .Nm mopd
 forks a copy of itself and runs in
-the background.  Anomalies and errors are reported via
+the background.
+Anomalies and errors are reported via
 .Xr syslog 3 .
 .Pp
 The options are as follows:
@@ -83,8 +87,8 @@ If
 .Fl a
 is omitted, an interface must be specified.
 .It Fl d
-Run in debug mode, with all the output to stdout. The process will run in
-the foreground.
+Run in debug mode, with all the output to stdout.
+The process will run in the foreground.
 .It Fl f
 Run in the foreground.
 .El

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: arp.8,v 1.8 2000/03/19 17:57:01 aaron Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -91,12 +92,14 @@ entry for the host called
 with the Ethernet address
 .Ar ether_addr .
 The Ethernet address is given as six hex bytes separated by
-colons.  The entry will be static, i.e., not time out, unless the word
+colons.
+The entry will be static, i.e., not time out, unless the word
 .Ar temp
-is given in the command.  A static ARP entry can be overwritten
-by network traffic, unless the word
+is given in the command.
+A static ARP entry can be overwritten by network traffic, unless the word
 .Ar permanent
-is given.  If the word
+is given.
+If the word
 .Ar pub
 is given, the entry will be
 .Dq published ;
@@ -106,16 +109,16 @@ act as an
 server,
 responding to requests for
 .Ar hostname
-even though the host address is not its own. This behavior has traditionally
-been called
+even though the host address is not its own.
+This behavior has traditionally been called
 .Em "proxy arp" .
 .It Fl f
 Causes the file
 .Ar filename
 to be read and multiple entries to be set in the
 .Tn ARP
-tables.  Entries
-in the file should be of the form
+tables.
+Entries in the file should be of the form
 .Pp
 .Bd -filled -offset indent -compact
 .Ar hostname ether_addr

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: pstat.8,v 1.14 2000/03/19 17:57:12 aaron Exp $
 .\"	$NetBSD: pstat.8,v 1.9.4.1 1996/06/02 09:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -63,7 +64,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl T
 Prints the number of used and free slots for open files, used vnodes, and swap
-space. It is useful for checking to see how large system tables become
+space.
+It is useful for checking to see how large system tables become
 if the system is under heavy load.
 .It Fl f
 Print the open file table with these headings:
@@ -106,10 +108,12 @@ Print devices by major/minor number rather than by name.
 .It Fl s
 Print information about swap space usage on all the
 swap areas compiled into the kernel.
-The first column is the device name of the partition.  The next column is
-the total space available in the partition.  The
+The first column is the device name of the partition.
+The next column is the total space available in the partition.
+The
 .Ar Used
-column indicates the total blocks used so far;  the
+column indicates the total blocks used so far;
+the
 .Ar Available
 column indicates how much space is remaining on each partition.
 The
@@ -197,9 +201,10 @@ for PPPDISC (see
 for STRIPDISC (see
 .Xr strip 4 ) .
 .It Fl v
-Print the active vnodes.  Each group of vnodes corresponding
-to a particular filesystem is preceded by a two line header.  The
-first line consists of the following:
+Print the active vnodes.
+Each group of vnodes corresponding
+to a particular filesystem is preceded by a two line header.
+The first line consists of the following:
 .Pp
 .Df I
 .No *** MOUNT Em fstype from
@@ -226,7 +231,8 @@ of optional flags applied to the mount (see
 .Xr mount 8 ) .
 .The second line is a header for the individual fields ,
 the first part of which are fixed, and the second part are filesystem
-type specific.  The headers common to all vnodes are:
+type specific.
+The headers common to all vnodes are:
 .Bl -tag -width indent
 .It ADDR
 Location of this vnode.

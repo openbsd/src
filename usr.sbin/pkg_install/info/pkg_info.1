@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.6 1999/06/05 01:29:39 aaron Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.7 2000/03/19 17:57:11 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -102,7 +102,8 @@ Show the install script (if any) for each package.
 .It Fl k
 Show the de-install script (if any) for each package.
 .It Fl L
-Show the files within each package.  This is different from just
+Show the files within each package.
+This is different from just
 viewing the packing list, since full pathnames for everything
 are generated.
 .It Fl l Ar str
@@ -113,8 +114,8 @@ shown with
 This is primarily of use to front-end programs that want to request a
 lot of different information fields at once for a package, but don't
 necessary want the output intermingled in such a way that they can't
-organize it.  This lets you add a special token to the start of
-each field.
+organize it.
+This lets you add a special token to the start of each field.
 .It Fl m
 Show the mtree file (if any) for each package.
 .It Fl p
@@ -141,9 +142,11 @@ can be overridden by specifying an alternative directory in the
 environment variable.
 .It Ev PKG_PATH
 This can be used to specify a colon-separated list of paths to search for
-package files.  The current directory is always searched first, even if
+package files.
+The current directory is always searched first, even if
 .Ev PKG_PATH
-is set.  If
+is set.
+If
 .Ev PKG_PATH
 is used, the suffix
 .Dq .tgz
@@ -158,7 +161,8 @@ to create a
 .Dq staging area
 for any files extracted by
 .Nm
-from package files.  If neither
+from package files.
+If neither
 .Ev PKG_TMPDIR
 nor
 .Ev TMPDIR
@@ -167,7 +171,8 @@ yields a suitable scratch directory,
 .Pa /tmp ,
 and
 .Pa /usr/tmp
-are tried in turn.  Note that
+are tried in turn.
+Note that
 .Pa /usr/tmp
 may be created, if it doesn't already exist.
 .Pp

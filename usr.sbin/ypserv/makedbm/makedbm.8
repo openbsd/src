@@ -1,4 +1,5 @@
-.\"	$OpenBSD: makedbm.8,v 1.7 1999/06/05 22:18:23 aaron Exp $
+.\"	$OpenBSD: makedbm.8,v 1.8 2000/03/19 17:57:18 aaron Exp $
+.\"
 .\" Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -63,14 +64,17 @@ but also try
 .Xr db 3
 hash format.
 .It Fl b
-Interdomain. Include an entry in the database informing a YP server to use
-DNS to get information about unknown hosts. This option will only have
+Interdomain.
+Include an entry in the database informing a YP server to use
+DNS to get information about unknown hosts.
+This option will only have
 effect on the two maps hosts.byname and hosts.byaddr.
 .It Fl l
-Lowercase. Convert all keys to lower case before adding them to the YP
-database.
+Lowercase.
+Convert all keys to lower case before adding them to the YP database.
 .It Fl s
-Secure map. Include an entry in the database informing
+Secure map.
+Include an entry in the database informing
 .Xr ypxfr 8
 and
 .Xr ypserv 8

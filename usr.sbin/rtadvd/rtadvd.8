@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.8 2000/03/13 06:16:11 itojun Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.9 2000/03/19 17:57:14 aaron Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -36,12 +36,12 @@
 .Nm rtadvd
 .Nd router advertisement daemon
 .Sh SYNOPSIS
-.Nm
+.Nm rtadvd
 .Op Fl c Ar configfile
 .Op Fl dDfRs
 .Ar interface ...
 .Sh DESCRIPTION
-.Nm Rtadvd
+.Nm
 advertises router advertisement packet to the specified
 .Ar interfaces .
 .Pp
@@ -62,7 +62,7 @@ In particular,
 reads all the interface routes from the routing table and advertises
 them as on-link prefixes.
 .Pp
-.Nm Rtadvd
+.Nm
 also watches the routing table.
 By default, if an interface direct route is
 added/deleted on an advertising interface,

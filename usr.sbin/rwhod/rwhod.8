@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rwhod.8,v 1.10 1999/06/05 22:18:07 aaron Exp $
+.\"	$OpenBSD: rwhod.8,v 1.11 2000/03/19 17:57:14 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"     $OpenBSD: rwhod.8,v 1.10 1999/06/05 22:18:07 aaron Exp $
+.\"     $OpenBSD: rwhod.8,v 1.11 2000/03/19 17:57:14 aaron Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
@@ -47,7 +48,8 @@ is the server which maintains the database used by the
 .Xr rwho 1
 and
 .Xr ruptime 1
-programs.  Its operation is predicated on the ability to
+programs.
+Its operation is predicated on the ability to
 .Em broadcast
 messages on a network.
 .Pp
@@ -90,17 +92,18 @@ struct	whod {
 .Ed
 .Pp
 All fields are converted to network byte order prior to
-transmission.  The load averages are as calculated by the
+transmission.
+The load averages are as calculated by the
 .Xr w 1
 program, and represent load averages over the 5, 10, and 15 minute
 intervals prior to a server's transmission; they are multiplied by 100
-for representation in an integer.  The host name
-included is that returned by
+for representation in an integer.
+The host name included is that returned by
 .Xr gethostname 3
 with any trailing domain name omitted.
 The array at the end of the message contains information about
-the users logged in to the sending machine.  This information
-includes the contents of the
+the users logged in to the sending machine.
+This information includes the contents of the
 .Xr utmp 5
 entry for each non-idle terminal line and a value indicating the
 time in seconds since a character was last received on the terminal line.
@@ -109,11 +112,13 @@ Messages received by the
 .Xr rwho
 server are discarded unless they originated at an
 .Xr rwho
-server's port.  In addition, if the host's name, as specified
+server's port.
+In addition, if the host's name, as specified
 in the message, contains any unprintable
 .Tn ASCII
 characters, the
-message is discarded.  Valid messages received by
+message is discarded.
+Valid messages received by
 .Nm
 are placed in files named
 .Pa whod.hostname

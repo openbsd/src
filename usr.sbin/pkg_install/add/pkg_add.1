@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.17 2000/03/02 18:33:30 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.18 2000/03/19 17:57:09 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -53,8 +53,8 @@ package name itself plus the
 .Dq .tar.gz
 , or 
 .Dq .tar
-suffix) or an FTP location in the form of an URL. For example, the following
-is valid:
+suffix) or an FTP location in the form of an URL.
+For example, the following is valid:
 .Pp
 .Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/m4-1.4.tgz
 .Pp
@@ -109,12 +109,13 @@ If an installation script exists for a given package, do not execute it.
 Don't actually install a package, just report the steps that
 would be taken if it was.
 .It Fl R
-Do not record the installation of a package.  This means
-that you cannot deinstall it later, so only use this option if
+Do not record the installation of a package.
+This means that you cannot deinstall it later, so only use this option if
 you know what you are doing!
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
-installed or the requirements script fails.  Although
+installed or the requirements script fails.
+Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
@@ -123,12 +124,14 @@ Set
 .Ar prefix
 as the directory in which to extract files from a package.
 If a package has set its default directory, it will be overridden
-by this flag.  Note that only the first
+by this flag.
+Note that only the first
 .Cm @cwd
 directive will be replaced, since
 .Nm
 has no way of knowing which directory settings are relative and
-which are absolute.  It is rare in any case to see more than one
+which are absolute.
+It is rare in any case to see more than one
 directory transition made, but when such does happen and you wish
 to have control over
 .Em all
@@ -153,7 +156,8 @@ By default, this is the string
 but it may be necessary to override it in the situation where
 space in your
 .Pa /var/tmp
-directory is limited.  Be sure to leave some number of
+directory is limited.
+Be sure to leave some number of
 .Dq X
 characters for
 .Xr mkdtemp 3
@@ -167,11 +171,13 @@ file installation; often this is
 .It Fl M
 Run in
 .Cm MASTER
-mode.  This is a very specialized mode for running
+mode.
+This is a very specialized mode for running
 .Nm
 and is meant to be run in conjunction with
 .Cm SLAVE
-mode.  When run in this mode,
+mode.
+When run in this mode,
 .Nm
 does no work beyond extracting the package into a temporary staging
 area (see the
@@ -187,15 +193,18 @@ before acting on its contents.
 .It Fl S
 Run in
 .Cm SLAVE
-mode.  This is a very specialized mode for running
+mode.
+This is a very specialized mode for running
 .Nm
 and is meant to be run in conjunction with
 .Cm MASTER
-mode.  When run in this mode,
+mode.
+When run in this mode,
 .Nm
 expects the release contents to be already extracted and waiting
 in the staging area, the location of which is read as a string
-from the standard input.  The complete packing list is also read from stdin,
+from the standard input.
+The complete packing list is also read from stdin,
 and the contents then acted on as normal.
 .El
 .Pp
@@ -203,7 +212,8 @@ By default, when adding packages via FTP, the
 .Xr ftp 1
 program operates in
 .Dq passive
-mode. If you wish to use active mode instead, set the
+mode.
+If you wish to use active mode instead, set the
 .Ev FTPMODE
 environment variable to
 .Qq active .
@@ -211,7 +221,8 @@ If
 .Nm
 consistently fails to fetch a package from a site known to work,
 it may be because the site does not support
-passive mode ftp correctly. This is very rare since
+passive mode ftp correctly.
+This is very rare since
 .Nm
 will try active mode ftp if the server refuses a passive mode
 connection.
@@ -236,8 +247,8 @@ A check is made to determine if the package conflicts (from
 .Cm @pkgcfl
 directives, see
 .Xr pkg_create 1 )
-with an already recorded as installed package. If it is,
-installation is terminated.
+with an already recorded as installed package.
+If it is, installation is terminated.
 .It
 All package dependencies (from
 .Cm @pkgdep
@@ -366,7 +377,8 @@ scripts are called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
-option above).  This allows a package author to write a script
+option above).
+This allows a package author to write a script
 that reliably performs some action on the directory where the package
 is installed, even if the user might change it with the
 .Fl p
@@ -379,8 +391,9 @@ If a given package name cannot be found,
 the directories named by
 .Ev PKG_PATH
 are searched.
-It should contain a series of entries separated by colons.  Each entry
-consists of a directory name. The current directory may be indicated
+It should contain a series of entries separated by colons.
+Each entry consists of a directory name.
+The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period
 .Pq Ql \&. .

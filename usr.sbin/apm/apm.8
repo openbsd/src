@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apm.8,v 1.9 2000/03/05 00:28:57 aaron Exp $
+.\"	$Id: apm.8,v 1.10 2000/03/19 17:57:01 aaron Exp $
 .\"
 .Dd March 18, 1996
 .Dt APM 8
@@ -69,10 +69,12 @@ Display the estimated battery lifetime (in percent).
 .It Fl m
 Display the estimated battery lifetime (in minutes).
 .It Fl b
-Display the battery status.  0 means high, 1 means low, 2 means
+Display the battery status.
+0 means high, 1 means low, 2 means
 critical, 3 means charging, 4 means absent, and 255 means unknown.
 .It Fl a
-Display the external charger (A/C status).  0 means disconnected, 1
+Display the external charger (A/C status).
+0 means disconnected, 1
 means connected, 2 means backup power source, and 255 means unknown.
 .It Fl v
 Request more verbose description of the displayed states.

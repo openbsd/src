@@ -1,3 +1,4 @@
+.\"	$OpenBSD: arp.4,v 1.9 2000/03/19 17:57:01 aaron Exp $
 .\"	$NetBSD: arp.4,v 1.2 1995/03/01 11:50:56 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
@@ -91,7 +92,8 @@ Manually added entries may be temporary, static or permanent,
 and may be
 .Dq published ,
 in which case the system will respond to ARP requests for that host
-as if it were the target of the request. A static entry will not
+as if it were the target of the request.
+A static entry will not
 time out, but may be overwritten by network traffic, while a permanent
 entry will not time out and can not be overwritten.
 .Pp
@@ -110,7 +112,8 @@ same Internet address.
 .Pp
 .Em "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x."
 An existing route has been overwritten with a new Ethernet address, for
-example when the other host has changed Ethernet cards.  If the route
+example when the other host has changed Ethernet cards.
+If the route
 previously was static/non-expiring, the new route will expire normally.
 .Pp
 .Em "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x."

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: afsd.8,v 1.7 2000/03/05 00:28:57 aaron Exp $
+.\"	$OpenBSD: afsd.8,v 1.8 2000/03/19 17:56:59 aaron Exp $
 .\"
-.Dd September  5, 1998
+.Dd September 5, 1998
 .Dt AFSD 8
 .Os
 .Sh NAME
@@ -36,10 +36,12 @@
 .Op Ar device
 .Sh DESCRIPTION
 .Nm
-runs on AFS client machines. It is used to manage the file cache, fetch files
+runs on AFS client machines.
+It is used to manage the file cache, fetch files
 from AFS servers, handle callbacks and manage the authentication information
-for users. In normal cases you will not need to run it by yourself. It is
-automatically started when
+for users.
+In normal cases you will not need to run it by yourself.
+It is automatically started when
 .Xr mount_xfs 8
 is run.
 .Pp
@@ -133,13 +135,16 @@ default cache directory
 .El
 .Pp
 It is highly recommended that the default cache directory be a separate
-filesystem. When enough memory is available this could be a mfs to
+file system.
+When enough memory is available this could be a mfs to
 drastically improve performance.
 .Sh SEE ALSO
 .Xr mount_xfs 8
 .Sh BUGS
-This code is still in the experimental stage and some bugs are present. If
+This code is still in the experimental stage and some bugs are present.
+If
 .Nm
 happens to crash, it's recommended to restart it with the
 .Fl z
-flag. Otherwise a corrupted cache can be reused.
+flag.
+Otherwise a corrupted cache can be reused.

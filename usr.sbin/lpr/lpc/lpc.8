@@ -1,3 +1,5 @@
+.\"	$OpenBSD: lpc.8,v 1.8 2000/03/19 17:57:06 aaron Exp $
+.\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -69,8 +71,8 @@ will prompt for commands from the standard input.
 If arguments are supplied,
 .Nm
 interprets the first argument as a command and the remaining
-arguments as parameters to the command.  The standard input
-may be redirected causing
+arguments as parameters to the command.
+The standard input may be redirected causing
 .Nm
 to read commands from file.
 Commands may be abbreviated;
@@ -94,8 +96,8 @@ be printed (i.e., do not form a complete printer job)
 from the specified printer queue(s) on the local machine.
 .Pp
 .It Ic disable  No {\ all\ |\ printer\ }
-Turn the specified printer queues off.  This prevents new
-printer jobs from being entered into the queue by
+Turn the specified printer queues off.
+This prevents new printer jobs from being entered into the queue by
 .Xr lpr .
 .Pp
 .It Xo Ic down No {\ all\ |\ printer\ } Ar message
@@ -103,7 +105,8 @@ printer jobs from being entered into the queue by
 .Xc
 Turn the specified printer queue off, disable printing and put
 .Em message
-in the printer status file. The message doesn't need to be quoted, the
+in the printer status file.
+The message doesn't need to be quoted, the
 remaining arguments are treated like
 .Xr echo 1 .
 This is normally used to take a printer down and let others know why
@@ -144,7 +147,8 @@ printing.
 Place the jobs in the order listed at the top of the printer queue.
 .Pp
 .It Ic up  No {\ all\ |\ printer\ }
-Enable everything and start a new printer daemon. Undoes the effects of
+Enable everything and start a new printer daemon.
+Undoes the effects of
 .Ic down .
 .El
 .Sh FILES

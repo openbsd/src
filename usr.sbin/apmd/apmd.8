@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.10 1999/06/05 22:16:28 aaron Exp $
+.\"	$Id: apmd.8,v 1.11 2000/03/19 17:57:01 aaron Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -69,7 +69,8 @@ Suspends are announced with two high tones.
 .Nm
 periodically polls the APM driver for the current power state.
 If the battery charge level changes substantially or the external power
-status changes, the new status is logged.  The polling rate defaults to
+status changes, the new status is logged.
+The polling rate defaults to
 once per 10 minutes, but may be specified using the
 .Fl t
 command-line flag.
@@ -108,7 +109,8 @@ flag is specified,
 .Nm
 does not disable power status messages issued by the
 .Tn APM
-driver.  In normal operation these status messages are disabled as they are
+driver.
+In normal operation these status messages are disabled as they are
 the same as the information collected by this daemon and reported via syslog.
 .Pp
 The
@@ -117,16 +119,19 @@ and
 .Fl p
 flags are used to re-enable
 .Tn APM
-driver power status messages.  In both cases
+driver power status messages.
+In both cases
 .Nm
 exits immediately after setting the desired option.
 .Fl e
 unconditionally enables power status messages.
 .Fl p
 causes power status messages to be displayed only when the
-battery life expectancy changes.  This minimized message output
+battery life expectancy changes.
+This minimized message output
 for those devices that are constantly updating the estimated time
-remaining based upon current processor load.  However, in no case
+remaining based upon current processor load.
+However, in no case
 will power status messages be displayed until the battery life
 goes below the percentage in the
 .Xr sysctl 8
@@ -155,7 +160,8 @@ and
 The suspend and standby actions are run prior to
 .Nm
 performing any other actions (such as disk syncs) and entering the new
-mode.  The resume program is run after resuming from a stand-by or
+mode.
+The resume program is run after resuming from a stand-by or
 suspended state.
 .Sh FILES
 .Pa /etc/apm/suspend ,

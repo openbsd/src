@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipftest.1,v 1.13 2000/03/05 00:28:51 aaron Exp $
+.\"     $OpenBSD: ipftest.1,v 1.14 2000/03/19 17:57:05 aaron Exp $
 .Dd May 23, 1999
 .Dt IPFTEST 1
 .Os
@@ -19,7 +19,8 @@ operators can see the effects of an
 .Nm ipf
 filter ruleset on test packets, rather than having to observe
 the effects of the
-ruleset on live traffic. This can reduce the disruptions experienced
+ruleset on live traffic.
+This can reduce the disruptions experienced
 during the development and refinement of secure IP environments.
 .Pp
 .Nm
@@ -34,18 +35,23 @@ each packet to
 .Ar stdout .
 .Pp
 Captured or handcrafted packets to be tested can be supplied
-in a variety of formats. See the options
-.Fl P , Fl S ,
-.Fl T , Fl H
+in a variety of formats.
+See the options
+.Fl P ,
+.Fl S ,
+.Fl T ,
+.Fl H ,
 and
 .Fl E
-for details. In addition the
+for details.
+In addition the
 .Fl X
 option gives
 .Nm
 the ability to use its own text description format to generate
 .Dq fake
-packets.  The format used is:
+packets.
+The format used is:
 .Bd -ragged
 in|out on
 .Ar if
@@ -58,8 +64,10 @@ in|out on
 .Ed
 .Pp
 This allows for input or output ICMP, TCP, or UDP packets to be generated for
-any interface. For TCP or UDP it allows the specification of source and
-destination ports. For TCP it allows the specification of TCP flags.
+any interface.
+For TCP or UDP it allows the specification of source and
+destination ports.
+For TCP it allows the specification of TCP flags.
 Some examples are:
 .Bd -literal -offset indent
 # a UDP packet coming in on le0
@@ -73,10 +81,12 @@ out on le0 tcp 10.4.12.1,2245 10.1.1.1,23 S
 The options are as follows:
 .Bl -tag -width Fl
 .It Fl v
-Verbose mode.  This provides more information about which parts of rule
+Verbose mode.
+This provides more information about which parts of rule
 matching the packet passes and fails.
 .It Fl d
-Turn on filter rule debugging.  Currently, this only shows what caused
+Turn on filter rule debugging.
+Currently, this only shows what caused
 the rule to not match in the IP header checking (addresses/netmasks, etc).
 .It Fl b
 Cause the output to be a one word description of the result of passing
@@ -89,7 +99,8 @@ This is useful with the
 and
 .Fl E
 options, where it is
-not otherwise possible to associate a packet with an interface.  Normal
+not otherwise possible to associate a packet with an interface.
+Normal
 .Dq text packets
 can override this setting.
 .It Fl P
@@ -97,15 +108,17 @@ The input file is in
 the binary format produced using libpcap
 (i.e.,
 .Xr tcpdump
-version 3).  Packets are read from this file as being input
-(for rule purposes).  An interface may be specified using
+version 3).
+Packets are read from this file as being input (for rule purposes).
+An interface may be specified using
 .Fl I .
 .It Fl S
 The input file is in
 .Dq snoop
-format (see RFC 1761).  Packets are read
-from this file and used as input from any interface.  This is perhaps the
-most useful input type, currently.
+format (see RFC 1761).
+Packets are read
+from this file and used as input from any interface.
+This is perhaps the most useful input type, currently.
 .It Fl T
 The input file is text output from
 .Xr tcpdump .
@@ -122,12 +135,14 @@ tcpdump -nqte
 .Ed
 .It Fl H
 The input file is hex digits, representing the binary makeup of the
-packets.  No length correction is made if an incorrect length is put in
+packets.
+No length correction is made if an incorrect length is put in
 the IP header.
 .It Fl X
 The input file is composed of text descriptions of IP packets.
 .It Fl E
-The input file is text output from etherfind.  The text formats which
+The input file is text output from etherfind.
+The text formats which
 are currently supported are those which result from the following etherfind
 option combinations:
 .Bd -literal -offset indent
@@ -135,7 +150,8 @@ etherfind -n
 etherfind -n -t
 .Ed
 .It Fl i Ar filename
-Specify the filename from which to take input.  Default is stdin.
+Specify the filename from which to take input.
+Default is stdin.
 .It Fl r Ar filename
 Specify the filename from which to read filter rules.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slstats.8,v 1.7 1999/10/07 06:41:35 ericj Exp $
+.\"	$OpenBSD: slstats.8,v 1.8 2000/03/19 17:57:15 aaron Exp $
 .\"	$NetBSD: slstats.8,v 1.2.6.1 1996/06/07 01:42:24 thorpej Exp $
 .Dd July 5, 1993
 .Dt SLSTATS 8
@@ -21,18 +21,19 @@ utility reports slip-related statistics for the
 .So
 .Ar unit-number
 .Sc
-interface.  If the
+interface.
+If the
 .Nm unit-number
-is unspecified, it defaults to 0.  These statistics are displayed at
-regular intervals.
+is unspecified, it defaults to 0.
+These statistics are displayed at regular intervals.
 .Pp
 The display is split horizontally into input and output sections
 containing columns of statistics describing the properties and volume
 of packets received and transmitted by the specified interface.
 .Pp
 The first report will consist of a snapshot of the interface's present
-statistics.  All further output will describe activity between report
-intervals.
+statistics.
+All further output will describe activity between report intervals.
 .Pp
 The options are as follows:
 .Bl -tag -width "system   "
@@ -41,7 +42,8 @@ Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
 distribution.
 .It Fl i
-Specifies the interval between reports. The default interval is 5 seconds.
+Specifies the interval between reports.
+The default interval is 5 seconds.
 .It Fl M Ar core
 Extract values associated with the name list from the specified.
 .It Fl N Ar system
@@ -62,13 +64,13 @@ The number of uncompressed TCP packets received by this interface.
 .It Li ERR
 The number of packets received by this interface of unknown type.
 .It Li TOSS
-The number of packets dropped on reception by this interface.  Only
-reported when the
+The number of packets dropped on reception by this interface.
+Only reported when the
 .Fl v
 option is specified.
 .It Li IP
-The total number of non-TCP packets received by this interface. Only
-reported when the
+The total number of non-TCP packets received by this interface.
+Only reported when the
 .Fl v
 option is specified.
 .El
@@ -87,12 +89,14 @@ The number of uncompressed TCP packets transmitted from this interface.
 The total number of non-TCP packets transmitted from this interface.
 .It Li SEARCH
 The number of searches for the cached header entry for a compressed
-packet.  Only reported when the
+packet.
+Only reported when the
 .Fl v
 option is specified.
 .It Li MISS
 The number of failed searches for the cached header entry for a
-compressed packet.  Only reported when the
+compressed packet.
+Only reported when the
 .Fl v
 option is specified.
 .El

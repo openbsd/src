@@ -27,7 +27,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: quot.8,v 1.8 1999/09/23 04:12:12 alex Exp $
+.\"	$Id: quot.8,v 1.9 2000/03/19 17:57:12 aaron Exp $
 .\"
 .Dd February 8, 1994
 .Dt QUOT 8
@@ -66,8 +66,8 @@ options causes the numbers to be reported in kilobyte counts.
 .It Fl n
 Given a list of inodes (plus some optional data on each line)
 in the standard input, for each file print out the owner (plus
-the remainder of the input line). This is traditionally used
-in the pipe:
+the remainder of the input line).
+This is traditionally used in the pipe:
 .Bd -literal -offset indent
 ncheck filesystem | sort +0n | quot -n filesystem
 .Ed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: map-mbone.8,v 1.5 1999/07/07 10:50:12 aaron Exp $
+.\"	$OpenBSD: map-mbone.8,v 1.6 2000/03/19 17:57:08 aaron Exp $
 .\"	$NetBSD: map-mbone.8,v 1.2 1995/10/03 23:16:53 thorpej Exp $
 .\"
 .Dd June 13, 1999
@@ -56,7 +56,8 @@ must be run as root.
 Sets the debug level to
 .Ar level .
 When the debug level is greater than
-0, additional debugging messages are printed to stderr. Regardless of
+0, additional debugging messages are printed to stderr.
+Regardless of
 the debug level, an error condition will always write an error message and will
 cause
 .Nm
@@ -73,7 +74,8 @@ Print notifications of all packet timeouts, plus level 2 messages.
 .Pp
 Default is 0.
 .It Fl f
-Causes a recursive (flooding) search. If no
+Causes a recursive (flooding) search.
+If no
 .Ar starting_router
 is specified, a recursive search is always performed.
 .It Fl g

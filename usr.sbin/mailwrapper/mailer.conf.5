@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.1 1999/08/02 19:50:07 jakob Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.2 2000/03/19 17:57:07 aaron Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -42,8 +42,8 @@
 .Pp
 The file
 .Pa /etc/mailer.conf
-contains a series of pairs. The first member of each pair is the name
-of a program invoking
+contains a series of pairs.
+The first member of each pair is the name of a program invoking
 .Xr mailwrapper 8
 which is typically a symbolic link to
 .Pa /usr/sbin/sendmail .
@@ -53,8 +53,8 @@ and
 .Xr mailq 1
 would be set up this way.)
 The second member of each pair is the name of the program to
-actually execute when the first name is invoked. The file may also
-contain comments, denoted by a
+actually execute when the first name is invoked.
+The file may also contain comments, denoted by a
 .Ql #
 character in the first column of any line.
 .Sh EXAMPLES
@@ -88,7 +88,8 @@ newaliases	/usr/local/libexec/postfix/sendmail
 .Sh AUTHORS
 Perry E. Metzger <perry@piermont.com>
 .Sh BUGS
-The entire reason this program exists is a crock. Instead, a command
+The entire reason this program exists is a crock.
+Instead, a command
 for how to submit mail should be standardized, and all the "behave
 differently if invoked with a different name" behavior of things like
 .Xr mailq 1

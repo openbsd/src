@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.13 2000/03/15 00:09:46 aaron Exp $
+.\"	$OpenBSD: mtree.8,v 1.14 2000/03/19 17:57:09 aaron Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -87,20 +87,22 @@ Use the
 keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 .It Fl n
-Do not emit pathname comments when creating a specification.  Normally
+Do not emit pathname comments when creating a specification.
+Normally
 a comment is emitted before each directory and before the close of that
 directory when using the
 .Fl c
 option.
 .It Fl p Ar path
 Use the file hierarchy rooted in
-.Ar path  ,
+.Ar path ,
 instead of the current directory.
 .It Fl q
-Quiet mode.  Do not complain when a
+Quiet mode.
+Do not complain when a
 .Dq missing
-directory can not be created because it is already exists.  This occurs
-when the directory is a symbolic link.
+directory can not be created because it is already exists.
+This occurs when the directory is a symbolic link.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.

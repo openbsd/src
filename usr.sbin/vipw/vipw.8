@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vipw.8,v 1.5 1999/05/23 14:11:39 aaron Exp $
+.\"	$OpenBSD: vipw.8,v 1.6 2000/03/19 17:57:17 aaron Exp $
 .\"	$NetBSD: vipw.8,v 1.4 1995/01/20 19:19:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -49,7 +49,8 @@ and does any necessary processing after the password file is unlocked.
 If the password file is already locked for editing by another user,
 .Nm
 will ask you
-to try again later. The default editor for
+to try again later.
+The default editor for
 .Nm
 is
 .Xr vi 1 .
@@ -69,8 +70,10 @@ Once the information has been verified,
 .Nm
 uses
 .Xr pwd_mkdb 8
-to update the user database.  This is run in the background, and,
-at very large sites could take several minutes.  Until this update
+to update the user database.
+This is run in the background, and,
+at very large sites could take several minutes.
+Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
 .Pp

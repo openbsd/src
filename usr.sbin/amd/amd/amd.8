@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amd.8	5.10 (Berkeley) 4/19/94
-.\"	$Id: amd.8,v 1.7 1999/07/02 20:11:47 aaron Exp $
+.\"	$Id: amd.8,v 1.8 2000/03/19 17:57:00 aaron Exp $
 .\"
 .Dd April 19, 1994
 .Dt AMD 8
@@ -100,13 +100,14 @@ The default is
 Specify a
 .Ar duration ,
 in seconds, that a looked up name remains
-cached when not in use.  The default is 5 minutes.
+cached when not in use.
+The default is 5 minutes.
 .It Fl d Ar domain
-Specify the local domain name.  If this option is not
-given the domain name is determined from the hostname.
+Specify the local domain name.
+If this option is not given the domain name is determined from the hostname.
 .It Fl k Ar kernel-arch
-Specifies the kernel architecture.  This is used solely
-to set the ${karch} selector.
+Specifies the kernel architecture.
+This is used solely to set the ${karch} selector.
 .It Fl l Ar logfile
 Specify a logfile in which to record mount and unmount events.
 If
@@ -118,8 +119,8 @@ the log messages will be sent to the system log daemon by
 .It Fl n
 Normalize hostnames.
 The name referred to by ${rhost} is normalized relative to the
-host database before being used.  The effect is to translate
-aliases into
+host database before being used.
+The effect is to translate aliases into
 .Dq official
 names.
 .It Fl p
@@ -132,8 +133,8 @@ to standard output where it can be saved into a file.
 Restart existing mounts.
 .Nm amd
 will scan the mount file table to determine which filesystems
-are currently mounted.  Whenever one of these would have
-been auto-mounted,
+are currently mounted.
+Whenever one of these would have been auto-mounted,
 .Nm amd
 .Em inherits
 it.
@@ -148,7 +149,8 @@ The second values alters the retransmit counter.
 Useful defaults are supplied if either or both
 values are missing.
 .It Fl v
-Version.  Displays version and configuration information on standard error.
+Version.
+Displays version and configuration information on standard error.
 .It Fl w Ar interval
 Specify an
 .Ar interval ,
@@ -166,13 +168,15 @@ This option is ignored if
 .Tn NIS
 support is not available.
 .It Fl x Ar options
-Specify run-time logging options.  The options are a comma separated
+Specify run-time logging options.
+The options are a comma separated
 list chosen from: fatal, error, user, warn, info, map, stats, all.
 .It Fl D Ar option
-Select from a variety of debug options.  Prefixing an
-option with the string
+Select from a variety of debug options.
+Prefixing an option with the string
 .Dq no
-reverses the effect of that option.  Options are cumulative.
+reverses the effect of that option.
+Options are cumulative.
 The most useful option is
 .Ar all .
 .El

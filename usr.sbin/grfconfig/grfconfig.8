@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grfconfig.8,v 1.10 1999/07/04 19:25:20 aaron Exp $
+.\"	$OpenBSD: grfconfig.8,v 1.11 2000/03/19 17:57:04 aaron Exp $
 .\"	$NetBSD: grfconfig.8,v 1.4 1997/07/29 17:40:47 veego Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@
 .Sh DESCRIPTION
 .Nm
 is used to change or view the screen mode definition list contained
-in a grf device.  You may alter the console screen definition as well
-as the definitions for the graphic screen.  The console will automatically
-reinitialize itself to the new screen mode.
+in a grf device.
+You may alter the console screen definition as well
+as the definitions for the graphic screen.
+The console will automatically reinitialize itself to the new screen mode.
 .Pp
 The following flags and arguments are interpreted by
 .Nm grfconfig :
@@ -60,10 +61,11 @@ The following flags and arguments are interpreted by
 Print out a raw listing of the mode definitions instead of the
 pretty list normally shown.
 .It Ar device
-The grf device to manipulate.  This argument is required.
+The grf device to manipulate.
+This argument is required.
 .It Ar file
-The file which contains the mode definitions.  If this argument
-is not specified,
+The file which contains the mode definitions.
+If this argument is not specified,
 .Nm
 will print out of a list of the modes currently loaded into
 the grf device.
@@ -87,11 +89,13 @@ The screen mode's height.
 .It Ar dep
 The bitdepth of the mode.
 .It Ar hbs hss hse ht
-The horizontal timing parameters for the mode in pixel values.  All the
+The horizontal timing parameters for the mode in pixel values.
+All the
 values are relative to the end of the horizontal blank (beginning of the
 displayed area).
 .It Ar vbs vss vse vt
-The vertical timing paramters for the mode in line values.  All the
+The vertical timing paramters for the mode in line values.
+All the
 values are relative to the end of vertical blank (beginning of the displayed
 area).
 .It Ar flags

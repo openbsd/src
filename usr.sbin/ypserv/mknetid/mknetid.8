@@ -1,4 +1,5 @@
-.\"	$OpenBSD: mknetid.8,v 1.6 1999/06/05 22:18:25 aaron Exp $
+.\"	$OpenBSD: mknetid.8,v 1.7 2000/03/19 17:57:18 aaron Exp $
+.\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -60,26 +61,31 @@ The options are as follows:
 .It Fl d Ar domain
 Which yp-domain if not default yp-domain.
 .It Fl q
-Keep quiet about multiple occurrences of a UID. Ignore all but the first.
+Keep quiet about multiple occurrences of a UID.
+Ignore all but the first.
 .It Fl p Ar passwdfile
 Alternate
 .Xr passwd 5
-file. Default is
+file.
+Default is
 .Pa /etc/passwd .
 .It Fl g Ar groupfile
 Alternate
 .Xr group 5
-file. Default is
+file.
+Default is
 .Pa /etc/group .
 .It Fl h Ar hostfile
 Alternate
 .Xr hosts 5
-file. Default is
+file.
+Default is
 .Pa /etc/hosts .
 .It Fl m Ar netidfile
 Alternate
 .Xr netid 5
-file. Default is
+file.
+Default is
 .Pa /etc/netid .
 file.
 .El

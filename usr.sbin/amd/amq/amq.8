@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
-.\"	$Id: amq.8,v 1.4 1999/08/26 14:35:41 millert Exp $
+.\"	$Id: amq.8,v 1.5 2000/03/19 17:57:01 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt AMQ 8
@@ -78,7 +78,8 @@ Request automounter to flush the internal caches.
 .It Fl h Ar hostname
 Query alternate host
 .Ar hostname .
-By default the local host is used.  In an
+By default the local host is used.
+In an
 .Tn HP-UX
 cluster, the root server is queried by default, since
 that is the system on which the automounter is normally run.
@@ -90,14 +91,15 @@ which occurred while mounting.
 Request the automounter to provide system-wide mount statistics.
 .It Fl u
 Request the automounter to unmount the named filesystems
-instead of providing information about them.  Unmounts are requested,
-not forced.  They merely cause the mounted filesystem to timeout,
+instead of providing information about them.
+Unmounts are requested, not forced.
+They merely cause the mounted filesystem to timeout,
 which will be picked up by
 .Nm amd Ns \'s
 main scheduler thus causing the normal timeout action to be taken.
 .It Fl v
-Request the automounter to provide version information.  This is a subset
-of the information provided by
+Request the automounter to provide version information.
+This is a subset of the information provided by
 .Xr amd Ns \'s Fl v
 option.
 .\".It Fl M

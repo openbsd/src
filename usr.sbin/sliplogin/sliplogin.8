@@ -1,4 +1,5 @@
-.\"	$OpenBSD: sliplogin.8,v 1.4 2000/03/04 22:19:30 aaron Exp $
+.\"	$OpenBSD: sliplogin.8,v 1.5 2000/03/19 17:57:15 aaron Exp $
+.\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -31,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sliplogin.8	5.4 (Berkeley) 8/5/91
-.\"	$Id: sliplogin.8,v 1.4 2000/03/04 22:19:30 aaron Exp $
+.\"	$Id: sliplogin.8,v 1.5 2000/03/19 17:57:15 aaron Exp $
 .\"
 .Dd August 5, 1991
 .Dt SLIPLOGIN 8
@@ -47,8 +48,8 @@
 is used to turn the terminal line on standard input into
 a Serial Line IP
 .Pq Tn SLIP
-link to a remote host.  To do this, the program
-searches the file
+link to a remote host.
+To do this, the program searches the file
 .Pa /etc/sliphome/slip.hosts
 for an entry matching
 .Ar loginname
@@ -56,8 +57,8 @@ for an entry matching
 If a matching entry is found, the line is configured appropriately
 for slip (8-bit transparent I/O) and converted to
 .Tn SLIP
-line
-discipline.  Then a shell script is invoked to initialize the slip
+line discipline.
+Then a shell script is invoked to initialize the slip
 interface with the appropriate local and remote
 .Tn IP
 address,
@@ -71,7 +72,8 @@ will be executed instead if it exists.
 The script is invoked with the parameters
 .Bl -tag -width slipunit
 .It Em slipunit
-The unit number of the slip interface assigned to this line.  E.g.,
+The unit number of the slip interface assigned to this line.
+e.g.,
 .Sy 0
 for
 .Sy sl0 .
@@ -84,23 +86,26 @@ entry, in order starting with
 .Ar loginname .
 .El
 .Pp
-Only the super-user may attach a network interface.  The interface is
-automatically detached when the other end hangs up or the
+Only the superuser may attach a network interface.
+The interface is automatically detached when the other end hangs up or the
 .Nm
-process dies.  If the kernel slip
+process dies.
+If the kernel slip
 module has been configured for it, all routes through that interface will
-also disappear at the same time.  If there is other processing a site
+also disappear at the same time.
+If there is other processing a site
 would like done on hangup, the file
 .Pa /etc/sliphome/slip.logout
 or
 .Pa /etc/sliphome/slip.logout. Ns Ar loginname
-is executed if it exists.  It is given the same arguments as the login script.
+is executed if it exists.
+It is given the same arguments as the login script.
 .Ss Format of /etc/sliphome/slip.hosts
 Comments (lines starting with a `#') and blank lines are ignored.
 Other lines must start with a
 .Ar loginname
 but the remaining arguments can be whatever is appropriate for the
-.Pa  slip.login
+.Pa slip.login
 file that will be executed for that name.
 Arguments are separated by whitespace and follow normal
 .Xr sh 1
@@ -119,8 +124,8 @@ and
 are the IP host names or addresses of the local and remote ends of the
 slip line and
 .Em netmask
-is the appropriate IP netmask.  These arguments are passed
-directly to
+is the appropriate IP netmask.
+These arguments are passed directly to
 .Xr ifconfig 8 .
 .Em Opt-args
 are optional arguments used to configure the line.
@@ -131,7 +136,8 @@ is to create a
 .Pa /etc/passwd
 entry for each legal, remote slip site with
 .Nm
-as the shell for that entry.  E.g.,
+as the shell for that entry.
+e.g.,
 .Bd -literal
 Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/usr/sbin/sliplogin
 .Ed
@@ -160,8 +166,8 @@ Note that
 .Nm
 must be setuid to root and, while not a security hole, moral defectives
 can use it to place terminal lines in an unusable state and/or deny
-access to legitimate users of a remote slip line.  To prevent this,
-a site can create a group, say
+access to legitimate users of a remote slip line.
+To prevent this a site can create a group, say
 .Em slip ,
 that only the slip login accounts are put in then make sure that
 .Pa /usr/sbin/sliplogin

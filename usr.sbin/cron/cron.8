@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: cron.8,v 1.7 1999/07/07 10:50:11 aaron Exp $
+.\" $Id: cron.8,v 1.8 2000/03/19 17:57:03 aaron Exp $
 .\"
 .Dd June 6, 1999
 .Dt CRON 8
@@ -49,8 +49,8 @@ which is in a different format (see
 .Xr crontab 5 ) .
 .Nm
 then wakes up every minute, examining all loaded crontabs, checking each
-command to see if it should be run in the current minute. When executing
-commands, any output is mailed to the user named in the
+command to see if it should be run in the current minute.
+When executing commands, any output is mailed to the user named in the
 .Ev MAILTO
 environment variable in the crontab, or to the owner of the crontab if
 .Ev MAILTO
@@ -63,16 +63,19 @@ checks each minute to see if its spool directory's modtime (or the modtime on
 has changed, and if it has,
 .Nm
 examines the modtime on all crontabs and reloads those which have
-changed. Thus
+changed.
+Thus
 .Nm
-need not be restarted whenever a crontab file is modified. Note that the
+need not be restarted whenever a crontab file is modified.
+Note that the
 .Xr crontab 1
 command updates the modtime of the spool directory whenever it changes a
 crontab.
 .Pp
 Special considerations exist when the clock is changed by less than 3
 hours; for example, at the beginning and end of Daylight Saving
-Time. If the time has moved forward, those jobs which would have
+Time.
+If the time has moved forward, those jobs which would have
 run in the time that was skipped will be run soon after the change.
 Conversely, if the time has moved backward by less than 3 hours,
 those jobs that fall into the repeated time will not be run.
@@ -81,7 +84,8 @@ Only jobs that run at a particular time (not specified as @hourly, nor with
 .Ql *
 in the hour or minute specifier)
 are
-affected. Jobs which are specified with wildcards are run based on the
+affected.
+Jobs which are specified with wildcards are run based on the
 new time immediately.
 .Pp
 Clock changes of more than 3 hours are considered to be corrections to

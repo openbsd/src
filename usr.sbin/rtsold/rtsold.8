@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.6 2000/01/02 06:28:16 itojun Exp $
+.\"	$OpenBSD: rtsold.8,v 1.7 2000/03/19 17:57:14 aaron Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd router solicitation daemon
 .\"
 .Sh SYNOPSIS
-.Nm
+.Nm rtsold
 .Op Fl dDfm1
 .Ar interface ...
 .Nm rtsol
@@ -46,7 +46,7 @@
 .Ar interface ...
 .\"
 .Sh DESCRIPTION
-.Nm Rtsold
+.Nm
 is the daemon program to send ICMPv6 Router Solicitation messages
 on the specified interfaces.
 If a node (re)attaches to a link,
@@ -81,7 +81,7 @@ Just after invocation of
 daemon.
 .It
 The interface is up after a temporary interface failure.
-.Nm Rtsold
+.Nm
 detects such failures by periodically probing to see if the status
 of the interface is active or not.
 Note that some network cards and drivers do not allow the extraction

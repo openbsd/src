@@ -1,3 +1,4 @@
+.\"	$OpenBSD: traceroute.8,v 1.17 2000/03/19 17:57:16 aaron Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -80,7 +81,7 @@ The default probe datagram length is 38 bytes, but this may be increased
 by specifying a packet size (in bytes) after the destination host
 name.
 .Pp
-Other options are:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Turn on socket-level debugging.
@@ -90,13 +91,15 @@ Dump the packet data to standard error before transmitting it.
 Add
 .Ar gateway_addr
 to the list of addresses in the IP Loose Source Record Route (LSRR)
-option.  If no gateways are specified, the LSRR option is omitted.
+option.
+If no gateways are specified, the LSRR option is omitted.
 .It Fl l
-Display the ttl value of the returned packet.  This is useful for
-checking for asymmetric routing.
+Display the ttl value of the returned packet.
+This is useful for checking for asymmetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
-packets.  The default is 30 hops (the same default used for
+packets.
+The default is 30 hops (the same default used for
 .Tn TCP
 connections).
 .It Fl n
@@ -132,7 +135,8 @@ at the destination host (so an
 .Tn ICMP
 .Dv PORT_UNREACHABLE
 message will
-be returned to terminate the route tracing).  If something is
+be returned to terminate the route tracing).
+If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
 .It Fl c
@@ -156,19 +160,21 @@ that has no route through it (e.g., after the interface was dropped by
 .It Fl s Ar src_addr
 Use the following IP address
 (which must be given as an IP number, not
-a hostname) as the source address in outgoing probe packets.  On
-hosts with more than one IP address, this option can be used to
+a hostname) as the source address in outgoing probe packets.
+On hosts with more than one IP address, this option can be used to
 force the source address to be something other than the IP address
-of the interface the probe packet is sent on.  If the IP address
+of the interface the probe packet is sent on.
+If the IP address
 is not one of this machine's interface addresses and the user is
 not the superuser, an error is returned and nothing is sent.
 .It Fl t Ar tos
 Set the
 .Em type-of-service
-in probe packets to the following value (default zero).  The value must be
-a decimal integer in the range 0 to 255.  This option can be used to
-see if different types-of-service result in different paths.  (If you
-are not running a
+in probe packets to the following value (default zero).
+The value must be a decimal integer in the range 0 to 255.
+This option can be used to
+see if different types-of-service result in different paths.
+(If you are not running a
 .Bx 4.3 tahoe
 or later system, this may be academic since the normal network
 services like telnet and ftp don't let you control the
@@ -176,14 +182,15 @@ services like telnet and ftp don't let you control the
 Not all values of
 .Dv TOS
 are legal or
-meaningful \- see the IP spec for definitions.  Useful values are
-probably
+meaningful \- see the IP spec for definitions.
+Useful values are probably
 .Ql \-t 16
 (low delay) and
 .Ql \-t 8
 (high throughput).
 .It Fl v
-Verbose output.  Received
+Verbose output.
+Received
 .Tn ICMP
 packets other than
 .Dv TIME_EXCEEDED
@@ -200,21 +207,23 @@ internet host by launching
 probe
 packets with a small ttl (time to live) then listening for an
 .Tn ICMP
-"time exceeded" reply from a gateway.  We start our probes
-with a ttl of one and increase by one until we get an
+"time exceeded" reply from a gateway.
+We start out probes with a ttl of one and increase by one until we get an
 .Tn ICMP
 "port unreachable"
 (which means we got to "host") or hit a max (which
 defaults to 30 hops & can be changed with the
 .Fl m
-flag).  Three
-probes (changed with
+flag).
+Three probes (changed with
 .Fl q
 flag) are sent at each ttl setting and a
 line is printed showing the ttl, address of the gateway and
-round trip time of each probe.  If the probe answers come from
+round trip time of each probe.
+If the probe answers come from
 different gateways, the address of each responding system will
-be printed.  If there is no response within a 5 sec. timeout
+be printed.
+If there is no response within a 5 sec. timeout
 interval (changed with the
 .Fl w
 flag), a "*" is printed for that
@@ -246,7 +255,8 @@ traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 56 byte packet
 11  nic.merit.edu (35.1.1.48)  239 ms  239 ms  239 ms
 
 .Ed
-Note that lines 2 & 3 are the same.  This is due to a buggy
+Note that lines 2 & 3 are the same.
+This is due to a buggy
 kernel on the 2nd hop system \- lbl-csam.arpa \- that forwards
 packets with a zero ttl (a bug in the distributed version
 of 4.3
@@ -286,21 +296,22 @@ Note that the gateways 12, 14, 15, 16 & 17 hops away
 either don't send
 .Tn ICMP
 "time exceeded" messages or send them
-with a ttl too small to reach us.  14 \- 17 are running the
+with a ttl too small to reach us.
+14 \- 17 are running the
 .Tn MIT
-C Gateway code that doesn't send "time exceeded"s.  God
-only knows what's going on with 12.
+C Gateway code that doesn't send "time exceeded"s.
+God only knows what's going on with 12.
 .Pp
 The silent gateway 12 in the above may be the result of a bug in
 the 4.[23]
 .Tn BSD
 network code (and its derivatives):  4.x (x <= 3)
 sends an unreachable message using whatever ttl remains in the
-original datagram.  Since, for gateways, the remaining ttl is
-zero, the
+original datagram.
+Since, for gateways, the remaining ttl is zero, the
 .Tn ICMP
-"time exceeded" is guaranteed to not make it back
-to us.  The behavior of this bug is slightly more interesting
+"time exceeded" is guaranteed to not make it back to us.
+The behavior of this bug is slightly more interesting
 when it appears on the destination system:
 .Bd -literal
 1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
@@ -323,14 +334,16 @@ destination) and exactly the last half of them are "missing".
 What's really happening is that rip (a Sun-3 running Sun OS3.5)
 is using the ttl from our arriving datagram as the ttl in its
 .Tn ICMP
-reply.  So, the reply will time out on the return path
+reply.
+So, the reply will time out on the return path
 (with no notice sent to anyone since
 .Tn ICMP's
 aren't sent for
 .Tn ICMP's )
 until we probe with a ttl that's at least twice the path
-length.  I.e., rip is really only 7 hops away.  A reply that
-returns with a ttl of 1 is a clue this problem exists.
+length.
+i.e., rip is really only 7 hops away.
+A reply that returns with a ttl of 1 is a clue this problem exists.
 .Nm
 prints a "!" after the time if the ttl is <= 1.
 Since vendors ship a lot of obsolete
@@ -353,8 +366,8 @@ Other possible annotations after the time are
 or
 .Sy !F
 (source route failed or fragmentation needed \- neither of these should
-ever occur and the associated gateway is busted if you see one).  If
-almost all the probes result in some kind of unreachable,
+ever occur and the associated gateway is busted if you see one).
+If almost all the probes result in some kind of unreachable,
 .Nm
 will give up and exit.
 .Pp
@@ -377,7 +390,8 @@ Because of the load it could impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
 .Sh AUTHOR
-Implemented by Van Jacobson from a suggestion by Steve Deering.  Debugged
+Implemented by Van Jacobson from a suggestion by Steve Deering.
+Debugged
 by a cast of thousands with particularly cogent suggestions or fixes from
 C. Philip Wood, Tim Seaver and Ken Adelman.
 .Sh SEE ALSO

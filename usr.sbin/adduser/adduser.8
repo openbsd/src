@@ -1,4 +1,5 @@
-.\"	$OpenBSD: adduser.8,v 1.14 1999/10/07 06:24:11 ericj Exp $
+.\"	$OpenBSD: adduser.8,v 1.15 2000/03/19 17:57:00 aaron Exp $
+.\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
 .\"
@@ -64,15 +65,18 @@
 .Sh DESCRIPTION
 The
 .Nm adduser
-program adds new users to the system. The
+program adds new users to the system.
+The
 .Nm rmuser
-program removes users from the system. When not passed any arguments, both
+program removes users from the system.
+When not passed any arguments, both
 utilities operate in interactive mode and prompt for any required information.
 .Pp
 .Nm adduser
 first performs consistency checks on the password, group, and shell databases.
 This includes finding any duplicate user or group names, illegal shells, or
-shells that aren't executable. Once these tests are passed,
+shells that aren't executable.
+Once these tests are passed,
 .Nm
 performs the following operations for each new user:
 .Bl -enum -offset indent
@@ -103,7 +107,8 @@ entries or
 jobs belonging to the user.
 .It
 Removes the user from the password database and all groups in the group
-database. If a group becomes empty and its name is the same as the username,
+database.
+If a group becomes empty and its name is the same as the username,
 the group is removed (this complements
 .Nm adduser Ns No 's
 unique per-user groups).
@@ -123,8 +128,8 @@ politely refuses to remove users whose UID is 0 (typically root).
 .Sh RESTRICTIONS
 .Bl -tag -width Ds
 .It Sy username
-Login names should contain only lowercase characters or digits. They should be
-no longer than 8 characters (see BUGS section of
+Login names should contain only lowercase characters or digits.
+They should be no longer than 8 characters (see BUGS section of
 .Xr setlogin 2 ) .
 .\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
@@ -138,7 +143,8 @@ If you need a longer login name for e-mail addresses,
 you can define an alias in
 .Pa /etc/aliases .
 .It Sy fullname
-This should contain the user's first name and surname.  The
+This should contain the user's first name and surname.
+The
 .Ql \&:
 is not permitted.
 .It Sy shell
@@ -151,11 +157,13 @@ and
 are permitted.
 .It Sy uid_start
 This value is the start of the range where free UID values are
-searched for.  This value must be less than the value of uid_end.
+searched for.
+This value must be less than the value of uid_end.
 The default value is 1000 or as configured in the configuration file.
 .It Sy uid_end
 This value is the end of the range where free UID values are
-searched for.  This value must be more than the value of uid_start.
+searched for.
+This value must be more than the value of uid_start.
 The default value is 32000 or as configured in the configuration file.
 .It Sy gid/login group
 This value is generated automatically, but can be specified at the
@@ -221,7 +229,8 @@ proceeding with the normal interactive adduser procedure.
 .It Fl dotdir Ar directory
 Copy files from
 .Ar directory
-into the HOME directory of new users.  Files named in the fashion of
+into the HOME directory of new users.
+Files named in the fashion of
 .Dq Pa dot.foo
 will be renamed to
 .Dq Pa .foo .
@@ -236,7 +245,8 @@ Encrypt local passwords using
 of encryption as described in
 .Xr passwd.conf 5 .
 .It Fl group Ar login_group
-Specify the default login group.  A value of
+Specify the default login group.
+A value of
 .Ar USER
 means that the username is to be used as the login group.
 .It Xo
@@ -270,8 +280,8 @@ Use UIDs from
 up when automatically generating UIDs.
 .It Fl unencrypted
 Causes the program to assume that the password given in batch mode is
-unencrypted. The password will be encrypted before it's added to the
-password file.
+unencrypted.
+The password will be encrypted before it's added to the password file.
 Use of this option will leave username and cleartext password displayable
 for any user.
 .It Fl verbose Ns No , Fl v
@@ -327,8 +337,8 @@ Create user
 .Dq vehlefanz
 in login group
 .Dq guest .
-Start the free
-UID search at 5000. No other groups, no realname, no password.
+Start the free UID search at 5000.
+No other groups, no realname, no password.
 Do not send a welcome message.
 .Sh FILES
 .Bl -tag -width /etc/adduser.messageX -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dig.1,v 1.17 2000/03/14 21:31:37 aaron Exp $
+.\"	$OpenBSD: dig.1,v 1.18 2000/03/19 17:57:09 aaron Exp $
 .\" $From: dig.1,v 8.2 1997/06/01 20:34:33 vixie Exp $
 .\"
 .\" ++Copyright++ 1993
@@ -103,8 +103,8 @@ Name System servers.
 .Nm
 has two modes: simple interactive mode
 which makes a single query, and batch which executes a query for
-each in a list of several query lines. All query options are
-accessible from the command line.
+each in a list of several query lines.
+All query options are accessible from the command line.
 .Pp
 The usual simple use of
 .Nm
@@ -120,24 +120,27 @@ where:
 .Bl -tag -width "query-class" -offset
 .It Ar server
 may be either a domain name or a dot-notation
-Internet address. If this optional field is omitted,
+Internet address.
+If this optional field is omitted,
 .Nm
 will attempt to use the default name server for your machine.
 .Pp
 .Sy Note:
 If a domain name is specified, this will be resolved
-using the domain name system resolver (i.e., BIND). If your
-system does not support DNS, you may
+using the domain name system resolver (i.e., BIND).
+If your system does not support DNS, you may
 .Em have
 to specify a
-dot-notation address. Alternatively, if there is a server
+dot-notation address.
+Alternatively, if there is a server
 at your disposal somewhere, all that is required is that
 .Pa /etc/resolv.conf
 be present and indicate where the default
 name servers reside, so that
 .Ar server
 itself can be
-resolved. See
+resolved.
+See
 .Xr resolv.conf 5
 for information on
 .Pa /etc/resolv.conf .
@@ -158,7 +161,8 @@ is specific
 to the
 .Nm
 resolver and not referenced by the standard
-resolver). If the
+resolver).
+If the
 .Ev LOCALRES
 variable is not set or the file
 is not readable then
@@ -173,7 +177,8 @@ for a convenient way to specify inverse address
 query.
 .It Ar query-type
 is the type of information (DNS query type) that
-you are requesting. If omitted, the default is
+you are requesting.
+If omitted, the default is
 .Dq Li a
 (T_A = address).
 The following types are recognized:
@@ -193,8 +198,8 @@ txt	T_TXT	arbitrary number of strings
 .sp 1
 (See RFC 1035 for the complete list.)
 .It Ar query-class
-is the network class requested in the query. If
-omitted, the default is
+is the network class requested in the query.
+If omitted, the default is
 .Dq Li in
 (C_IN = Internet).
 The following classes are recognized:
@@ -216,7 +221,8 @@ will parse the first occurrence of
 .Dq Li any
 to mean
 .Ar query-type
-= T_ANY. To specify
+= T_ANY.
+To specify
 .Ar query-class
 = C_ANY you must either specify
 .Dq Li any
@@ -230,14 +236,17 @@ option (see below).
 .It Cm % Ns ignored-comment
 .Dq Li %
 is used to included an argument that is simply not
-parsed. This may be useful if running
+parsed.
+This may be useful if running
 .Nm
 in batch
-mode. Instead of resolving every
+mode.
+Instead of resolving every
 .Cm @ Ns Ar server-domain-name
 in a list of queries, you can avoid the overhead of doing
 so, and still have the domain name on the command line
-as a reference. Example:
+as a reference.
+Example:
 .D1 Ic "dig @128.9.0.32 %venera.isi.edu mx isi.edu"
 .\" .It Cm \- Ns dig-option
 .\" .Dq Li \-
@@ -257,30 +266,39 @@ simply
 .It Fl f Ar file
 File for
 .Nm
-batch mode. The file contains a list
+batch mode.
+The file contains a list
 of query specifications (\fIdig\fP command lines) which
-are to be executed successively. Lines beginning
-with ';', '#', or '\\n' are ignored. Other options
+are to be executed successively.
+Lines beginning
+with
+.Ql \&; ,
+.Ql # ,
+or
+.Ql \en
+are ignored.
+Other options
 may still appear on command line, and will be in
 effect for each batch query.
 .It Fl T Ar time
 Time in seconds between start of successive
-queries when running in batch mode. Can be used
-to keep two or more batch
+queries when running in batch mode.
+Can be used to keep two or more batch
 .Nm
 commands running
-roughly in sync. Default is zero.
+roughly in sync.
+Default is zero.
 .It Fl p Ar port
-Port number. Query a name server listening to a
-non-standard port number. Default is 53.
+Port number.
+Query a name server listening to a non-standard port number.
+Default is 53.
 .It Fl P Ns Op Ar ping-string
 After query returns, execute a
 .Xr ping 1
 command
-for response time comparison. This rather
-inelegantly makes a call to the shell. The last
-three lines of statistics are printed for the
-command:
+for response time comparison.
+This rather inelegantly makes a call to the shell.
+The last three lines of statistics are printed for the command:
 .Dl ping -s server_name 56 3
 If the optional
 .Ar ping-string
@@ -289,12 +307,14 @@ replaces
 .Dq Li "ping \-s"
 in the shell command.
 .It Fl t Ar query-type
-Specify the type of query. This may specify either an
+Specify the type of query.
+This may specify either an
 integer value to be included in the type field
 or use the abbreviated mnemonic as discussed
 above (i.e., mx = T_MX).
 .It Fl c Ar query-class
-Specify the class of query. This may specify either an
+Specify the class of query.
+This may specify either an
 integer value to be included in the class field
 or use the abbreviated mnemonic as discussed
 above (i.e., in = C_IN).
@@ -320,7 +340,8 @@ If the shell environment variable
 is set
 to the name of a file, this is where the default
 .Nm
-environment is saved. If not, the file
+environment is saved.
+If not, the file
 .Pa DiG.env
 is created in the current working directory.
 .sp 1
@@ -344,7 +365,8 @@ environment is restored from it
 before any arguments are parsed.
 .It Fl envset
 This flag only affects
-batch query runs. When
+batch query runs.
+When
 .Fl envset
 is
 specified on a line in a
@@ -387,8 +409,8 @@ default).
 is used to specify an option to be changed in the
 query packet or to change
 .Nm
-output specifics. Many
-of these are the same parameters accepted by
+output specifics.
+Many of these are the same parameters accepted by
 .Xr nslookup 8 .
 .\" If an option requires a parameter, the form is as
 .\" follows:
@@ -399,10 +421,12 @@ of these are the same parameters accepted by
 .\" .Oc
 .\" .Ed
 .Pp
-Most keywords can be abbreviated. Parsing of the
+Most keywords can be abbreviated.
+Parsing of the
 .Dq Li "+"
 options is very simplistic \(em a value must not be
-separated from its keyword by whitespace. The following
+separated from its keyword by whitespace.
+The following
 .Ar keyword Ns
 s are currently available:
 .sp 1
@@ -449,7 +473,8 @@ The
 and
 .Ar time
 keywords affect the retransmission strategy used by resolver
-library when sending datagram queries. The algorithm is as follows:
+library when sending datagram queries.
+The algorithm is as follows:
 .Bd -literal -offset indent
 for i = 0 to retry \- 1
     for j = 1 to num_servers
@@ -468,8 +493,8 @@ always uses a value of 1 for
 .Nm
 once required a slightly modified version of the BIND
 .Xr resolver 3
-library. BIND's resolver has (as of BIND 4.9) been augmented to work
-properly with
+library.
+BIND's resolver has (as of BIND 4.9) been augmented to work properly with
 .Nm dig .
 Essentially,
 .Nm
@@ -512,8 +537,9 @@ authored by Andrew Cherenson.
 has a serious case of
 .Dq creeping featurism
 \(em the result of
-considering several potential uses during it's development. It would
-probably benefit from a rigorous diet. Similarly, the print flags
+considering several potential uses during it's development.
+It would probably benefit from a rigorous diet.
+Similarly, the print flags
 and granularity of the items they specify make evident their
 rather ad hoc genesis.
 .Pp
@@ -522,8 +548,9 @@ does not consistently exit nicely (with appropriate status)
 when a problem occurs somewhere in the resolver.
 .Sy ( Note:
 most of the common
-exit cases are handled). This is particularly annoying when running in
-batch mode. If the resolver exits abnormally (and is not caught), the entire
+exit cases are handled).
+This is particularly annoying when running in batch mode.
+If the resolver exits abnormally (and is not caught), the entire
 batch aborts; when such an event is trapped,
 .Nm
 simply continues with the next query.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: rpc.bootparamd.8,v 1.11 1999/07/03 02:11:10 aaron Exp $
+.\" $OpenBSD: rpc.bootparamd.8,v 1.12 2000/03/19 17:57:13 aaron Exp $
 .\" @(#)bootparamd.8
 .Dd January 8, 1994
 .Dt BOOTPARAMD 8
@@ -16,14 +16,16 @@
 .Sh DESCRIPTION
 .Nm
 is a server process that provides information to diskless clients
-necessary for booting. It consults the file
+necessary for booting.
+It consults the file
 .Pa /etc/bootparams .
 It should normally be started from
 .Pa /etc/rc .
 .Pp
 This version will allow the use of aliases on the hostname in the
 .Pa /etc/bootparams
-file. The hostname returned in response to the booting client's whoami request
+file.
+The hostname returned in response to the booting client's whoami request
 will be the name that appears in the config file, not the canonical name.
 In this way you can keep the answer short enough
 so that machines that cannot handle long hostnames won't fail during boot.
@@ -33,18 +35,20 @@ While parsing, if a line containing just
 is found, and the YP subsystem is active, the YP map
 .Pa bootparams
 will be searched immediately.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl d
-Display the debugging information. The daemon does not fork in this
-case.
+Display the debugging information.
+The daemon does not fork in this case.
 .It Fl s
 Log the debugging information with syslog.
 .It Fl r
 Set the default router (a hostname or IP address).
 This defaults to the machine running the server.
 .It Fl f
-Specify the file to read boot parameters from.  Defaults to
+Specify the file to read boot parameters from.
+Defaults to
 .Pa /etc/bootparams .
 .El
 .Sh FILES
@@ -55,14 +59,14 @@ default configuration file
 .Sh SEE ALSO
 .Xr bootparams 5 ,
 .Xr diskless 8
-.Sh WARNINGS
-If
-.Nm rpc.bootparamd
-is run on a system which is also running YP, your YP
-domainname will be made public information.
+.Sh AUTHOR
+Originally written by Klas Heggemann <klas@nada.kth.se>
 .Sh BUGS
 You may find the syslog loggings too verbose.
 .Pp
 It's not clear if the non-canonical hack mentioned above is a good idea.
-.Sh AUTHOR
-Originally written by Klas Heggemann <klas@nada.kth.se>
+.Sh WARNING
+If
+.Nm rpc.bootparamd
+is run on a system which is also running YP, your YP
+domainname will be made public information.

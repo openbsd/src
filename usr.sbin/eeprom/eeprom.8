@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.8 1999/06/05 22:16:47 aaron Exp $
+.\"	$OpenBSD: eeprom.8,v 1.9 2000/03/19 17:57:03 aaron Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,15 +68,16 @@
 .Sh DESCRIPTION
 .Nm eeprom
 provides an interface for displaying and changing the contents of the
-EEPROM or OpenProm.  Without any arguments,
+EEPROM or OpenProm.
+Without any arguments,
 .Nm eeprom
 will list all of the known fields and their corresponding values.
 When given the name of a specific field,
 .Nm eeprom
 will display that value or set it if the field name is followed by
 .Dq =
-and a value.  Only the super-user may modify the contents of the EEPROM
-or OpenProm.
+and a value.
+Only the superuser may modify the contents of the EEPROM or OpenProm.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -84,8 +85,8 @@ The options are as follows:
 Commands are taken from stdin and displayed on stdout.
 .It Fl c
 .Nm eeprom
-will fix incorrect checksum values and exit.  This flag is quietly ignored
-on systems with an OpenProm.
+will fix incorrect checksum values and exit.
+This flag is quietly ignored on systems with an OpenProm.
 .It Fl f Ar device
 On systems with an EEPROM, use
 .Ar device
@@ -98,16 +99,16 @@ instead of the default
 .It Fl i
 If checksum values are incorrect,
 .Nm eeprom
-will ignore them and continue after displaying a warning.  This flag is
-quietly ignored on systems with an OpenProm.
+will ignore them and continue after displaying a warning.
+This flag is quietly ignored on systems with an OpenProm.
 .El
 .Pp
 The following options are valid only on the SPARC and will produce an
 error when used on a Sun 3:
 .Bl -tag -width indent
 .It Fl v
-On systems with an OpenProm, be verbose when setting a value.  Systems
-with an EEPROM are always verbose.
+On systems with an OpenProm, be verbose when setting a value.
+Systems with an EEPROM are always verbose.
 .It Fl N Ar system
 Use the system image
 .Ar system
@@ -130,15 +131,16 @@ How much memory, in megabytes, is installed in the system.
 .It memtest
 How much memory, in megabytes, is to be tested upon power-up.
 .It scrsize
-The size of the screen.  Acceptable values are
+The size of the screen.
+Acceptable values are
 .Dq 1024x1024 ,
 .Dq 1152x900 ,
 .Dq 1600x1280 ,
 and
 .Dq 1440x1440 .
 .It watchdog_reboot
-If true, the system will reboot upon reset.  Otherwise, the system will fall
-into the monitor.
+If true, the system will reboot upon reset.
+Otherwise, the system will fall into the monitor.
 .It default_boot
 If true, the system will use the boot device stored in
 .Pa bootdev .
@@ -158,7 +160,8 @@ This value is
 .Dq 0
 for all Sun keyboards.
 .It console
-Specifies the console type.  Valid values are
+Specifies the console type.
+Valid values are
 .Dq b&w ,
 .Dq ttya ,
 .Dq ttyb ,
@@ -212,8 +215,10 @@ and
 fields are not currently supported.
 .Pp
 Since the OpenProm is designed such that the field names are arbitrary,
-explaining them here is dubious.  Below are field names and values that
-one is likely to see on a system with an OpenProm.  NOTE: this list
+explaining them here is dubious.
+Below are field names and values that
+one is likely to see on a system with an OpenProm.
+NOTE: this list
 may be incomplete or incorrect due to differences between revisions
 of the OpenProm.
 .Bl -tag -width "last-hardware-update  "
@@ -224,9 +229,9 @@ rather than the OpenProm-style interface.
 A 32-bit integer specifying the number of megabytes of memory to
 test upon power-up.
 .It oem-logo
-A 64bitx64bit bitmap in Sun Iconedit format.  To set the bitmap, give
-the pathname of the file containing the image.  NOTE: this property is
-not yet supported.
+A 64bitx64bit bitmap in Sun Iconedit format.
+To set the bitmpa, give the pathname of the file containing the image.
+NOTE: this property is not yet supported.
 .It oem-logo?
 If true, enables the use of the bitmap stored in
 .Pa oem-logo
@@ -240,9 +245,9 @@ rather than the default Sun banner.
 .It ttya-mode
 A string of five comma separated fields in the format
 .Dq 9600,8,n,1,- .
-The first field is the baud rate.  The second field is the
-number of data bits.  The third field is the parity; acceptable values
-for parity are
+The first field is the baud rate.
+The second field is the number of data bits.
+The third field is the parity; acceptable values for parity are
 .Dq n
 (none),
 .Dq e
@@ -252,8 +257,9 @@ for parity are
 .Dq m
 (mark), and
 .Dq s
-(space).  The
-fourth field is the number of stop bits.  The fifth field is the
+(space).
+The fourth field is the number of stop bits.
+The fifth field is the
 .Dq handshake
 field; acceptable values are
 .Dq -
@@ -281,8 +287,8 @@ but for ttyb.
 .It sbus-probe-list
 Four digits in the format
 .Dq 0123
-specifying which order to probe the sbus at power-up.  It is unlikely that
-this value should ever be changed.
+specifying which order to probe the sbus at power-up.
+It is unlikely that this value should ever be changed.
 .It screen-#columns
 An 8-bit integer specifying the number of columns on the console.
 .It screen-#rows
@@ -290,8 +296,8 @@ An 8-bit integer specifying the number of rows on the console.
 .It auto-boot?
 If true, the system will boot automatically at power-up.
 .It watchdog-reboot?
-If true, the system will reboot upon reset.  Otherwise, system will fall
-into the monitor.
+If true, the system will reboot upon reset.
+Otherwise, system will fall into the monitor.
 .It input-device
 One of the strings
 .Dq keyboard ,
@@ -315,7 +321,8 @@ describing the translation of physical to logical target.
 .It st-targets
 Similar to
 .Pa sd-targets ,
-but for tapes.  The default translation is
+but for tapes.
+The default translation is
 .Dq 45670123 .
 .It scsi-initiator-id
 The SCSI ID of the on-board SCSI controller.
@@ -331,21 +338,24 @@ If true, the system will boot and run in diagnostic mode.
 .It local-mac-address?
 When set to
 .Pa false
-all Ethernet devices will use same system default MAC address.  When
+all Ethernet devices will use same system default MAC address.
+When
 .Pa true ,
 Ethernet devices which have a unique MAC address will use it
 rather than the system default MAC address.
 .El
 .Sh WARNINGS
 The fields and their values are not necessarily well defined on
-systems with an OpenProm.  Your mileage may vary.
+systems with an OpenProm.
+Your mileage may vary.
 .Pp
 There are a few fields known to exist in some revisions of the EEPROM
-and/or OpenProm that are not yet supported.  Most notable are those
+and/or OpenProm that are not yet supported.
+Most notable are those
 relating to password protection of the EEPROM or OpenProm.
 .Pp
-Avoid gratuitously changing the contents of the EEPROM.  It has a limited
-number of write cycles.
+Avoid gratuitously changing the contents of the EEPROM.
+It has a limited number of write cycles.
 .Pp
 The date parser isn't very intelligent.
 .Sh FILES

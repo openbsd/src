@@ -1,4 +1,5 @@
 .\"	$NetBSD: rarpd.8,v 1.7 1998/04/15 15:06:06 mrg Exp $
+.\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -17,7 +18,7 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.8 1999/12/03 01:25:44 millert Exp $
+.\" @(#) $Id: rarpd.8,v 1.9 2000/03/19 17:57:12 aaron Exp $
 .\"
 .Dd October 26, 1990
 .Dt RARPD 8
@@ -54,8 +55,8 @@ proceed and a reply will not be sent.
 .Pp
 In normal operation,
 .Nm
-forks a copy of itself and runs in
-the background.  Anomalies and errors are reported via
+forks a copy of itself and runs in the background.
+Anomalies and errors are reported via
 .Xr syslog 3 .
 .Pp
 The options are as follows:
@@ -93,7 +94,7 @@ process id of
 .Xr bpf 4 ,
 .Xr diskless 8
 .Rs
-.%R A Reverse Address  Resolution Protocol
+.%R A Reverse Address Resolution Protocol
 .%N RFC 903
 .%A Finlayson, R.
 .%A Mann, T.

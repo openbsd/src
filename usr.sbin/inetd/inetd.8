@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.12 1999/12/08 13:21:17 itojun Exp $
+.\"	$Id: inetd.8,v 1.13 2000/03/19 17:57:05 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -50,13 +50,14 @@ should be run at boot time by
 .Pa /etc/rc
 (see
 .Xr rc 8 ) .
-It then listens for connections on certain
-internet sockets.  When a connection is found on one
+It then listens for connections on certain internet sockets.
+When a connection is found on one
 of its sockets, it decides what service the socket
 corresponds to, and invokes a program to service the request.
 After the program is
 finished, it continues to listen on the socket (except in some cases which
-will be described below).  Essentially,
+will be described below).
+Essentially,
 .Nm inetd
 allows running one daemon to invoke several others,
 reducing load on the system.
@@ -78,11 +79,13 @@ file which, by default, is
 .Pa /etc/inetd.conf .
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
-a space.  Comments are denoted by a
+a space.
+Comments are denoted by a
 .Dq #
 at the beginning
-of a line.  There must be an entry for each field.  The
-fields of the configuration file are as follows:
+of a line.
+There must be an entry for each field.
+The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
 service name
@@ -109,13 +112,17 @@ server program arguments
 .Pp
 For internet services, the first field of the line may also have a host
 address specifier prefixed to it, separated from the service name by a
-colon.  If this is done, the string before the colon in the first field
+colon.
+If this is done, the string before the colon in the first field
 indicates what local address
 .Nm
-should use when listening for that service. Multiple local addresses
-can be specified on the same line, separated by commas. Numeric IP
+should use when listening for that service.
+Multiple local addresses
+can be specified on the same line, separated by commas.
+Numeric IP
 addresses in dotted-quad notation can be used as well as symbolic
-hostnames. Symbolic hostnames are looked up using
+hostnames.
+Symbolic hostnames are looked up using
 .Fn gethostbyname .
 If a hostname has multiple address mappings, inetd creates a socket
 to listen on each address.
@@ -130,7 +137,8 @@ To avoid repeating an address that occurs frequently, a line with a
 host address specifier and colon, but no further fields, causes the
 host address specifier to be remembered and used for all further lines
 with no explicit host specifier (until another such line or the end of
-the file).  A line
+the file).
+A line
 .Dl *:
 is implicitly provided at the top of the file; thus, traditional
 configuration files (which have no host address specifiers) will be
@@ -155,8 +163,8 @@ the file
 .Pa /etc/rpc .
 The part on the right of the
 .Dq /
-is the RPC version number. This
-can simply be a single numeric argument or a range of versions.
+is the RPC version number.
+This can simply be a single numeric argument or a range of versions.
 A range is bounded by the low version to the high version -
 .Dq rusers/1-3 .
 .Pp
@@ -210,7 +218,8 @@ a
 .Dq multi-threaded
 server, and should use the
 .Dq nowait
-entry.  For datagram servers which process all incoming datagrams
+entry.
+For datagram servers which process all incoming datagrams
 on a socket and eventually time out, the server is said to be
 .Dq single-threaded
 and should use a
@@ -240,7 +249,8 @@ or
 by a dot) specifies the maximum number of server instances that may be
 spawned from
 .Nm inetd
-within an interval of 60 seconds. When omitted,
+within an interval of 60 seconds.
+When omitted,
 .Dq max
 defaults to 40.
 .Pp
@@ -250,7 +260,8 @@ but if a single server process is to handle multiple connections, it may be
 marked as
 .Dq wait .
 The master socket will then be passed as fd 0 to the server, which will then
-need to accept the incoming connection.  The server should eventually time
+need to accept the incoming connection.
+The server should eventually time
 out and exit when no more connections are active.
 .Nm
 will continue to
@@ -262,10 +273,14 @@ is usually the only stream server marked as wait.
 The
 .Em user
 entry should contain the user name of the user as whom the server
-should run.  This allows for servers to be given less permission
-than root. An optional group name can be specified by appending a dot to
-the user name followed by the group name. This allows for servers to run with
-a different (primary) group ID than specified in the password file. If a group
+should run.
+This allows for servers to be given less permission
+than root.
+An optional group name can be specified by appending a dot to
+the user name followed by the group name.
+This allows for servers to run with
+a different (primary) group ID than specified in the password file.
+If a group
 is specified and user is not root, the supplementary groups associated with
 that user will still be set.
 .Pp
@@ -274,7 +289,8 @@ The
 entry should contain the pathname of the program which is to be
 executed by
 .Nm inetd
-when a request is found on its socket.  If
+when a request is found on its socket.
+If
 .Nm inetd
 provides this service internally, this entry should
 be
@@ -284,16 +300,16 @@ The
 .Em server program arguments
 should be just as arguments
 normally are, starting with argv[0], which is the name of
-the program.  If the service is provided internally, the
-word
+the program.
+If the service is provided internally, the word
 .Dq internal
 should take the place of this entry.
 .Pp
 .Nm inetd
 provides several
 .Dq trivial
-services internally by use of
-routines within itself.  These services are
+services internally by use of routines within itself.
+These services are
 .Dq echo ,
 .Dq discard ,
 .Dq chargen
@@ -303,8 +319,9 @@ routines within itself.  These services are
 .Dq time
 (machine readable time,
 in the form of the number of seconds since midnight, January
-1, 1900).  All of these services are TCP based.  For
-details of these services, consult the appropriate
+1, 1900).
+All of these services are TCP based.
+For details of these services, consult the appropriate
 .Tn RFC
 from the Network Information Center.
 .Pp
@@ -420,11 +437,14 @@ Therefore, it is unwise to rely too much upon the behavior of
 wildcard bind socket.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
-services, do not work entirely correctly.  This is largely because the
+services, do not work entirely correctly.
+This is largely because the
 portmapper interface does not provide a way to register different ports
-for the same service on different local addresses.  Provided you never
+for the same service on different local addresses.
+Provided you never
 have more than one entry for a given RPC service, everything should
-work correctly.  (Note that default host address specifiers do apply to
+work correctly.
+(Note that default host address specifiers do apply to
 RPC lines with no explicit specifier.)
 .Pp
 .Dq rpc
