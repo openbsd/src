@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	8.1 (Berkeley) 6/11/93
- *      $Id: endian.h,v 1.1.1.1 1997/03/03 19:30:24 rahnds Exp $
+ *      $Id: endian.h,v 1.2 1997/06/25 12:32:52 downsj Exp $
  */
 
 #ifndef _ENDIAN_H_
@@ -73,10 +73,10 @@ __END_DECLS
 #define	htonl(x)	(x)
 #define	htons(x)	(x)
 
-#define	NTOHL(x)	(x)
-#define	NTOHS(x)	(x)
-#define	HTONL(x)	(x)
-#define	HTONS(x)	(x)
+#define	NTOHL(x)	(void)(x)
+#define	NTOHS(x)	(void)(x)
+#define	HTONL(x)	(void)(x)
+#define	HTONS(x)	(void)(x)
 
 #else
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 1997/04/04 03:05:31 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 1997/06/25 12:32:50 downsj Exp $	*/
 /*	$NetBSD: endian.h,v 1.10 1996/10/13 02:59:55 christos Exp $	*/
 
 /*
@@ -145,10 +145,10 @@ __END_DECLS
 #define	htonl(x)	htobe32(x)
 #define	htons(x)	htobe16(x)
 
-#define	NTOHL(x)	((x) = ntohl((u_int32_t)x))
-#define	NTOHS(x)	((x) = ntohs((u_int16_t)x))
-#define	HTONL(x)	((x) = htonl((u_int32_t)x))
-#define	HTONS(x)	((x) = htons((u_int16_t)x))
+#define	NTOHL(x)	(void)(x)
+#define	NTOHS(x)	(void)(x)
+#define	HTONL(x)	(void)(x)
+#define	HTONS(x)	(void)(x)
 
 #endif /* _POSIX_SOURCE */
 
