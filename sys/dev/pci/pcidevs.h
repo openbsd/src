@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.169 1999/08/05 17:36:52 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.170 1999/08/06 22:35:19 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -600,6 +600,7 @@
 #define	PCI_PRODUCT_ALI_M1449	0x1449		/* M1449 PCI-ISA */
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI */
+#define	PCI_PRODUCT_ALI_M1489	0x1489		/* M1489 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1521	0x1521		/* M1523 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI */
