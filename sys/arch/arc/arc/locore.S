@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 1996/09/19 17:35:19 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 1996/09/22 11:29:52 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.5 1996/09/19 17:35:19 pefo Exp $
+ *	$Id: locore.S,v 1.6 1996/09/22 11:29:52 pefo Exp $
  */
 
 /*
@@ -330,6 +330,9 @@ END(outsb)
 LEAF(outsw)
 	beq	a2, zero, 2f
 	addu	a2, a2
+	li	v0, 1
+	and	v0, a1
+	bne	v0, zero, 3f		# arghh, unaligned.
 	addu	a2, a1
 1:
 	lhu	v0, 0(a1)
@@ -339,11 +342,23 @@ LEAF(outsw)
 2:
 	jr	ra
 	nop
+3:
+	LWHI	v0, 0(a1)
+	LWLO	v0, 3(a1)
+	addiu	a1, 2
+	bne	a1, a2, 3b
+	sh	v0, 0(a0)
+
+	jr	ra
+	nop
 END(outsw)
 
 LEAF(outsl)
 	beq	a2, zero, 2f
 	sll	a2, 2
+	li	v0, 3
+	and	v0, a1
+	bne	v0, zero, 3f		# arghh, unaligned.
 	addu	a2, a1
 1:
 	lw	v0, 0(a1)
@@ -351,6 +366,15 @@ LEAF(outsl)
 	bne	a1, a2, 1b
 	sw	v0, 0(a0)
 2:
+	jr	ra
+	nop
+3:
+	LWHI	v0, 0(a1)
+	LWLO	v0, 3(a1)
+	addiu	a1, 4
+	bne	a1, a2, 3b
+	sw	v0, 0(a0)
+
 	jr	ra
 	nop
 END(outsl)
