@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.3 2000/07/25 00:04:59 mickey Exp $ */
+/*	$OpenBSD: pccbbvar.h,v 1.4 2001/01/27 04:44:20 mickey Exp $ */
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -135,6 +135,7 @@ struct pccbb_softc {
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
 	int sc_chipset;			/* chipset id */
+	int sc_ints_on;
 
 	bus_addr_t sc_mem_start;	/* CardBus/PCMCIA memory start */
 	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */

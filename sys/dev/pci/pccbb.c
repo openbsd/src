@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.15 2001/01/22 18:53:57 deraadt Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.16 2001/01/27 04:44:20 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -665,6 +665,8 @@ pccbb_pci_callback(self)
 		sc->sc_csc = csc;
 	}
 
+	sc->sc_ints_on = 1;
+
 	/* CSC Interrupt: Card detect interrupt on */
 	maskreg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 	maskreg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
@@ -898,6 +900,9 @@ pccbbintr(arg)
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;
+
+	if (!sc->sc_ints_on)
+		return 0;
 
 	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
 	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
