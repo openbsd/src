@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.6 2003/09/28 21:01:43 grange Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.7 2003/10/16 21:35:16 grange Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -120,3 +120,14 @@ static int8_t piix_isp_dma[] = {0x00, 0x02, 0x02};
 static int8_t piix_rtc_dma[] = {0x00, 0x02, 0x03};
 static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
 
+/*
+ * ICH5/ICH5R SATA registers definitions
+ */
+#define ICH5_SATA_MAP		0x90 /* Address Map Register */
+#define ICH5_SATA_MAP_MV_MASK	0x07 /* Map Value mask */
+
+#define ICH_SATA_PCS		0x92 /* Port Control and Status Register */
+#define ICH_SATA_PCS_P0E	0x01 /* Port 0 enabled */
+#define ICH_SATA_PCS_P1E	0x02 /* Port 1 enabled */
+#define ICH_SATA_PCS_P0P	0x10 /* Port 0 present */
+#define ICH_SATA_PCS_P1P	0x20 /* Port 1 present */
