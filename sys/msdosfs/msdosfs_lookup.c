@@ -1,4 +1,5 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.24 1995/11/30 19:00:57 ws Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.3 1996/02/29 10:46:55 niklas Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.25 1996/02/09 19:13:47 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -48,6 +49,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -76,13 +78,14 @@
  * memory denode's will be in synch.
  */
 int
-msdosfs_lookup(ap)
+msdosfs_lookup(v)
+	void *v;
+{
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vdp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
@@ -91,7 +94,7 @@ msdosfs_lookup(ap)
 	int lockparent;
 	int wantparent;
 	int slotcount;
-	int slotoffset;
+	int slotoffset = 0;
 	int frcn;
 	u_long cluster;
 	int blkoff;
@@ -130,7 +133,7 @@ msdosfs_lookup(ap)
 	 */
 	if ((dp->de_Attributes & ATTR_DIRECTORY) == 0)
 		return (ENOTDIR);
-	if (error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_proc))
+	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_proc)) != 0)
 		return (error);
 
 	/*
@@ -140,7 +143,7 @@ msdosfs_lookup(ap)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if (error = cache_lookup(vdp, vpp, cnp)) {
+	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
 		int vpid;
 
 		if (error == ENOENT)
@@ -183,7 +186,7 @@ msdosfs_lookup(ap)
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
 				VOP_UNLOCK(pdp);
 		}
-		if (error = VOP_LOCK(pdp))
+		if ((error = VOP_LOCK(pdp)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTODE(vdp);
@@ -253,12 +256,13 @@ msdosfs_lookup(ap)
 	 */
 	diroff = 0;
 	for (frcn = 0;; frcn++) {
-		if (error = pcbmap(dp, frcn, &bn, &cluster, &blsize)) {
+		if ((error = pcbmap(dp, frcn, &bn, &cluster, &blsize)) != 0) {
 			if (error == E2BIG)
 				break;
 			return (error);
 		}
-		if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		if (error) {
 			brelse(bp);
 			return (error);
 		}
@@ -385,7 +389,8 @@ notfound:;
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc))
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		if (error)
 			return (error);
 		/*
 		 * Return an indication of where the new directory
@@ -462,7 +467,8 @@ foundroot:;
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc))
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		if (error)
 			return (error);
 
 		/*
@@ -474,7 +480,7 @@ foundroot:;
 			*vpp = vdp;
 			return (0);
 		}
-		if (error = deget(pmp, cluster, blkoff, &tdp))
+		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
 		if (!lockparent)
@@ -490,7 +496,8 @@ foundroot:;
 	 */
 	if (nameiop == RENAME && wantparent &&
 	    (flags & ISLASTCN)) {
-		if (error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc))
+		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		if (error)
 			return (error);
 
 		/*
@@ -500,7 +507,7 @@ foundroot:;
 		if (dp->de_StartCluster == scn && isadir)
 			return (EISDIR);
 
-		if (error = deget(pmp, cluster, blkoff, &tdp))
+		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
@@ -531,7 +538,7 @@ foundroot:;
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp);	/* race to get the inode */
-		if (error = deget(pmp, cluster, blkoff, &tdp)) {
+		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
 			VOP_LOCK(pdp);
 			return (error);
 		}
@@ -545,7 +552,7 @@ foundroot:;
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if (error = deget(pmp, cluster, blkoff, &tdp))
+		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
 			VOP_UNLOCK(pdp);
@@ -599,7 +606,7 @@ createde(dep, ddep, depp, cnp)
 		diroffset = ddep->de_fndoffset + sizeof(struct direntry)
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, diroffset);
-		if (error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR))
+		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0)
 			return error;
 		/*
 		 * Update the size of the directory
@@ -612,13 +619,14 @@ createde(dep, ddep, depp, cnp)
 	 * entry in.  Then write it to disk. NOTE:  DOS directories
 	 * do not get smaller as clusters are emptied.
 	 */
-	if (error = pcbmap(ddep, de_cluster(pmp, ddep->de_fndoffset),
-	    &bn, &dirclust, &blsize))
+	error = pcbmap(ddep, de_cluster(pmp, ddep->de_fndoffset),
+		       &bn, &dirclust, &blsize);
+	if (error)
 		return error;
 	diroffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		diroffset &= pmp->pm_crbomask;
-	if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return error;
 	}
@@ -637,16 +645,20 @@ createde(dep, ddep, depp, cnp)
 		
 		while (--ddep->de_fndcnt >= 0) {
 			if (!(ddep->de_fndoffset & pmp->pm_crbomask)) {
-				if (error = bwrite(bp))
+				if ((error = bwrite(bp)) != 0)
 					return error;
 
 				ddep->de_fndoffset -= sizeof(struct direntry);
-				if (error = pcbmap(ddep,
-				    de_cluster(pmp, ddep->de_fndoffset),
-				    &bn, 0, &blsize))
+				error = pcbmap(ddep,
+					       de_cluster(pmp,
+							  ddep->de_fndoffset),
+					       &bn, 0, &blsize);
+				if (error)
 					return error;
 
-				if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+				error = bread(pmp->pm_devvp, bn, blsize,
+					      NOCRED, &bp);
+				if (error) {
 					brelse(bp);
 					return error;
 				}
@@ -660,7 +672,7 @@ createde(dep, ddep, depp, cnp)
 		}
 	}
 	
-	if (error = bwrite(bp))
+	if ((error = bwrite(bp)) != 0)
 		return error;
 
 	/*
@@ -702,12 +714,13 @@ dosdirempty(dep)
 	 * we hit end of file.
 	 */
 	for (cn = 0;; cn++) {
-		if (error = pcbmap(dep, cn, &bn, 0, &blsize)) {
+		if ((error = pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
 			if (error == E2BIG)
 				return (1);	/* it's empty */
 			return (0);
 		}
-		if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		if (error) {
 			brelse(bp);
 			return (0);
 		}
@@ -791,8 +804,9 @@ doscheckpath(source, target)
 		}
 		pmp = dep->de_pmp;
 		scn = dep->de_StartCluster;
-		if (error = bread(pmp->pm_devvp, cntobn(pmp, scn),
-				  pmp->pm_bpcluster, NOCRED, &bp))
+		error = bread(pmp->pm_devvp, cntobn(pmp, scn),
+			      pmp->pm_bpcluster, NOCRED, &bp);
+		if (error)
 			break;
 
 		ep = (struct direntry *) bp->b_data + 1;
@@ -812,7 +826,7 @@ doscheckpath(source, target)
 		brelse(bp);
 		bp = NULL;
 		/* NOTE: deget() clears dep on error */
-		if (error = deget(pmp, scn, 0, &dep))
+		if ((error = deget(pmp, scn, 0, &dep)) != 0)
 			break;
 	}
 out:;
@@ -848,7 +862,7 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
-	if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) {
+	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) != 0) {
 		brelse(*bpp);
 		*bpp = NULL;
 		return (error);
@@ -902,9 +916,11 @@ removede(pdep, dep)
 
 	dep->de_refcnt--;
 	do {
-		if (error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize))
+		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
+		if (error);
 			return error;
-		if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		if (error) {
 			brelse(bp);
 			return error;
 		}
@@ -923,7 +939,7 @@ removede(pdep, dep)
 			    || ep->deAttributes != ATTR_WIN95)
 				break;
 		}
-		if (error = bwrite(bp))
+		if ((error = bwrite(bp)) != 0)
 			return error;
 	} while (!(pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 	    && offset
@@ -960,12 +976,13 @@ uniqdosname(dep, cnp, cp)
 		 * Now look for a dir entry with this exact name
 		 */
 		for (cn = error = 0; !error; cn++) {
-			if (error = pcbmap(dep, cn, &bn, 0, &blsize)) {
+			if ((error = pcbmap(dep, cn, &bn, 0, &blsize)) != 0) {
 				if (error == E2BIG)	/* EOF reached and not found */
 					return 0;
 				return error;
 			}
-			if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+			error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+			if (error) {
 				brelse(bp);
 				return error;
 			}

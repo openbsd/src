@@ -1,4 +1,5 @@
-/*	$NetBSD: fat.h,v 1.9 1996/01/19 14:28:05 leo Exp $	*/
+/*	$OpenBSD: fat.h,v 1.3 1996/02/29 10:46:47 niklas Exp $	*/
+/*	$NetBSD: fat.h,v 1.10 1996/02/11 22:48:14 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -67,8 +68,9 @@
  * MSDOSFS:
  * Return true if filesystem uses 12 bit fats. Microsoft Programmer's
  * Reference says if the maximum cluster number in a filesystem is greater
- * than 4086 then we've got a 16 bit fat filesystem. While mounting, the
- * result of this test is stored in pm_fatentrysize.
+ * than 4078 ((CLUST_RSRVS - CLUST_FIRST) & FAT12_MASK) then we've got a
+ * 16 bit fat filesystem. While mounting, the result of this test is stored
+ * in pm_fatentrysize.
  * GEMDOS-flavour (atari):
  * If the filesystem is on floppy we've got a 12 bit fat filesystem, otherwise
  * 16 bit. We check the d_type field in the disklabel struct while mounting

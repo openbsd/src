@@ -1,4 +1,5 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.18 1995/11/29 15:08:38 ws Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.3 1996/02/29 10:46:51 niklas Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.19 1996/02/09 19:13:43 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -56,6 +57,9 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>		/* defines "time" */
 #include <sys/dirent.h>
+#include <sys/namei.h>
+
+#include <vm/vm.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/msdosfsmount.h>
@@ -68,10 +72,13 @@ u_long dehash;			/* size of hash table - 1 */
 #define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
 				 & dehash)
 
-int
+static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
+static void msdosfs_hashins __P((struct denode *));
+static void msdosfs_hashrem __P((struct denode *));
+
+void
 msdosfs_init()
 {
-
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, &dehash);
 }
 
@@ -112,7 +119,7 @@ msdosfs_hashins(dep)
 	struct denode **depp, *deq;
 	
 	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset)];
-	if (deq = *depp)
+	if ((deq = *depp) != NULL)
 		deq->de_prev = &dep->de_next;
 	dep->de_next = deq;
 	dep->de_prev = depp;
@@ -125,7 +132,7 @@ msdosfs_hashrem(dep)
 {
 	struct denode *deq;
 
-	if (deq = dep->de_next)
+	if ((deq = dep->de_next) != NULL)
 		deq->de_prev = dep->de_prev;
 	*dep->de_prev = deq;
 #ifdef DIAGNOSTIC
@@ -154,7 +161,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
-	extern int (**msdosfs_vnodeop_p)();
+	extern int (**msdosfs_vnodeop_p) __P((void *));
 	struct direntry *direntptr;
 	struct denode *ldep;
 	struct vnode *nvp;
@@ -177,7 +184,8 @@ deget(pmp, dirclust, diroffset, depp)
 	 * entry that represented the file happens to be reused while the
 	 * deleted file is still open.
 	 */
-	if (ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset)) {
+	ldep = msdosfs_hashget(pmp->pm_dev, dirclust, diroffset);
+	if (ldep) {
 		*depp = ldep;
 		return (0);
 	}
@@ -187,7 +195,9 @@ deget(pmp, dirclust, diroffset, depp)
 	 * copy it from the passed disk buffer.
 	 */
 	/* getnewvnode() does a VREF() on the vnode */
-	if (error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp, msdosfs_vnodeop_p, &nvp)) {
+	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp,
+			    msdosfs_vnodeop_p, &nvp);
+	if (error) {
 		*depp = 0;
 		return (error);
 	}
@@ -240,7 +250,8 @@ deget(pmp, dirclust, diroffset, depp)
 		ldep->de_MDate = ldep->de_CDate;
 		/* leave the other fields as garbage */
 	} else {
-		if (error = readep(pmp, dirclust, diroffset, &bp, &direntptr))
+		error = readep(pmp, dirclust, diroffset, &bp, &direntptr);
+		if (error)
 			return (error);
 		DE_INTERNALIZE(ldep, direntptr);
 		brelse(bp);
@@ -320,7 +331,7 @@ deupdat(dep, waitfor)
 	 * Read in the cluster containing the directory entry we want to
 	 * update.
 	 */
-	if (error = readde(dep, &bp, &dirp))
+	if ((error = readde(dep, &bp, &dirp)) != 0)
 		return (error);
 
 	/*
@@ -401,7 +412,9 @@ detrunc(dep, length, flags, cred, p)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		if (error = pcbmap(dep, de_clcount(pmp, length) - 1, 0, &eofentry, 0)) {
+		error = pcbmap(dep, de_clcount(pmp, length) - 1, 0,
+			       &eofentry, 0);
+		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
 #endif
@@ -464,8 +477,9 @@ detrunc(dep, length, flags, cred, p)
 	 * now.
 	 */
 	if (eofentry != ~0) {
-		if (error = fatentry(FAT_GET_AND_SET, pmp, eofentry,
-				     &chaintofree, CLUST_EOFE)) {
+		error = fatentry(FAT_GET_AND_SET, pmp, eofentry,
+				 &chaintofree, CLUST_EOFE);
+		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): fatentry errors %d\n", error);
 #endif
@@ -520,7 +534,8 @@ deextend(dep, length, cred)
 	if (count > 0) {
 		if (count > pmp->pm_freeclustercount)
 			return (ENOSPC);
-		if (error = extendfile(dep, count, NULL, NULL, DE_CLEAR)) {
+		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
+		if (error) {
 			/* truncate the added clusters away again */
 			(void) detrunc(dep, dep->de_FileSize, 0, cred, NULL);
 			return (error);
@@ -540,8 +555,6 @@ void
 reinsert(dep)
 	struct denode *dep;
 {
-	struct denode **depp, *deq;
-
 	/*
 	 * Fix up the denode cache.  If the denode is for a directory,
 	 * there is nothing to do since the hash is based on the starting
@@ -557,11 +570,12 @@ reinsert(dep)
 }
 
 int
-msdosfs_reclaim(ap)
+msdosfs_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	extern int prtactive;
@@ -594,11 +608,12 @@ msdosfs_reclaim(ap)
 }
 
 int
-msdosfs_inactive(ap)
+msdosfs_inactive(v)
+	void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	int error;

@@ -1,4 +1,5 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.3 1996/02/21 07:41:05 mickey Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.4 1996/02/29 10:46:49 niklas Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.17 1996/02/09 19:13:42 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -51,6 +52,7 @@
  * System include files.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>		/* defines tz */
 #include <sys/dirent.h>
@@ -121,7 +123,7 @@ unix2dostime(tsp, ddp, dtp)
 	     /* +- daylight savings time correction */ ;
 	if (lasttime != t) {
 		lasttime = t;
-		lastdtime = (((t % 60) >> 1) << DT_2SECONDS_SHIFT)
+		lastdtime = (((t / 2) % 30) << DT_2SECONDS_SHIFT)
 		    + (((t / 60) % 60) << DT_MINUTES_SHIFT)
 		    + (((t / 3600) % 24) << DT_HOURS_SHIFT);
 
@@ -187,7 +189,15 @@ dos2unixtime(dd, dt, tsp)
 	u_long days;
 	u_short *months;
 
-	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT)
+	if (dd == 0) {
+		/*
+		 * Uninitialized field, return the epoch.
+		 */
+		tsp->tv_sec = 0;
+		tsp->tv_nsec = 0;
+		return;
+	}
+	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT) * 2
 	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
 	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600;
 	/*

@@ -1,4 +1,5 @@
-/*	$NetBSD: msdosfsmount.h,v 1.13 1996/01/19 14:28:31 leo Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.4 1996/02/29 10:47:02 niklas Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.14 1996/02/09 19:13:56 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -82,10 +83,14 @@ struct msdosfsmount {
 /*
  * Mount point flags:
  */
-/*#define	MSDOSFSMNT_SHORTNAME	1	/* Defined in <sys/mount.h> */
-/*#define	MSDOSFSMNT_LONGNAME	2				*/
-/*#define	MSDOSFSMNT_NOWIN95	4				*/
-/*#define	MSDOSFSMNT_GEMDOSFS	8				*/
+#if 0
+    /* Defined in <sys/mount.h> */
+#define	MSDOSFSMNT_SHORTNAME	1
+#define	MSDOSFSMNT_LONGNAME	2
+#define	MSDOSFSMNT_NOWIN95	4
+#define	MSDOSFSMNT_GEMDOSFS	8
+#endif
+
 /* All flags above: */
 #define	MSDOSFSMNT_MNTOPT \
 	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
@@ -194,4 +199,4 @@ int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
-int msdosfs_init __P(());
+void msdosfs_init __P((void));

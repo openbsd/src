@@ -1,4 +1,5 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.21 1995/11/05 18:47:53 ws Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.3 1996/02/29 10:46:53 niklas Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.22 1996/02/09 19:13:45 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -85,6 +86,16 @@ int fc_largedistance;		/* off by more than LMMAX		 */
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	(FAT12(pmp) ? (cn) * 3 / 2 : (cn) * 2)
 
+static void fatblock __P((struct msdosfsmount *, u_long, u_long *, u_long *,
+			  u_long *));
+void updatefats __P((struct msdosfsmount *, struct buf *, u_long));
+static __inline void usemap_free __P((struct msdosfsmount *, u_long));
+static __inline void usemap_alloc __P((struct msdosfsmount *, u_long));
+static int fatchain __P((struct msdosfsmount *, u_long, u_long, u_long));
+int chainlength __P((struct msdosfsmount *, u_long, u_long));
+int chainalloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *,
+		    u_long *));
+
 static void
 fatblock(pmp, ofs, bnp, sizep, bop)
 	struct msdosfsmount *pmp;
@@ -136,7 +147,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 	int error;
 	u_long i;
 	u_long cn;
-	u_long prevcn;
+	u_long prevcn = 0; /* XXX: prevcn could be used unititialized */
 	u_long byteoffset;
 	u_long bn;
 	u_long bo;
@@ -213,8 +224,8 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp);
-			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED,
-					  &bp)) {
+			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			if (error) {
 				brelse(bp);
 				return (error);
 			}
@@ -403,7 +414,8 @@ clusterfree(pmp, cluster, oldcnp)
 	int error;
 	u_long oldcn;
 
-	if (error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE))
+	error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE);
+	if (error)
 		return (error);
 	/*
 	 * If the cluster was successfully marked free, then update
@@ -480,7 +492,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+	if ((error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -551,7 +563,8 @@ fatchain(pmp, start, count, fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+		error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+		if (error) {
 			brelse(bp);
 			return (error);
 		}
@@ -616,7 +629,7 @@ chainlength(pmp, start, count)
 	while (++idx <= max_idx) {
 		if (len >= count)
 			break;
-		if (map = pmp->pm_inusemap[idx]) {
+		if ((map = pmp->pm_inusemap[idx]) != NULL) {
 			len +=  ffs(map) - 1;
 			break;
 		}
@@ -647,7 +660,7 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 {
 	int error;
 	
-	if (error = fatchain(pmp, start, count, fillwith))
+	if ((error = fatchain(pmp, start, count, fillwith)) != 0)
 		return (error);
 #ifdef MSDOSFS_DEBUG
 	printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
@@ -683,7 +696,8 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	u_long *got;
 {
 	u_long idx;
-	u_long len, newst, foundcn, foundl, cn, l;
+	u_long len, newst, foundl, cn, l;
+	u_long foundcn = 0; /* XXX: foundcn could be used unititialized */
 	u_int map;
 	
 #ifdef MSDOSFS_DEBUG
@@ -779,7 +793,8 @@ freeclusterchain(pmp, cluster)
 		if (lbn != bn) {
 			if (bp)
 				updatefats(pmp, bp, lbn);
-			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			if (error) {
 				brelse(bp);
 				return (error);
 			}
@@ -846,7 +861,8 @@ fillinusemap(pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			if (error) {
 				brelse(bp);
 				return (error);
 			}
@@ -918,18 +934,20 @@ extendfile(dep, count, bpp, ncp, flags)
 
 	while (count > 0) {
 		/*
-		 * Allocate a new cluster chain and cat onto the end of the file.
-		 * If the file is empty we make de_StartCluster point to the new
-		 * block.  Note that de_StartCluster being 0 is sufficient to be
-		 * sure the file is empty since we exclude attempts to extend the
-		 * root directory above, and the root dir is the only file with a
-		 * startcluster of 0 that has blocks allocated (sort of).
+		 * Allocate a new cluster chain and cat onto the end of the
+		 * file.  * If the file is empty we make de_StartCluster point
+		 * to the new block.  Note that de_StartCluster being 0 is
+		 * sufficient to be sure the file is empty since we exclude
+		 * attempts to extend the root directory above, and the root
+		 * dir is the only file with a startcluster of 0 that has
+		 * blocks allocated (sort of).
 		 */
 		if (dep->de_StartCluster == 0)
 			cn = 0;
 		else
 			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
-		if (error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got))
+		error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got);
+		if (error)
 			return (error);
 		
 		count -= got;
@@ -947,9 +965,10 @@ extendfile(dep, count, bpp, ncp, flags)
 			dep->de_StartCluster = cn;
 			frcn = 0;
 		} else {
-			if (error = fatentry(FAT_SET, pmp,
-					     dep->de_fc[FC_LASTFC].fc_fsrcn,
-					     0, cn)) {
+			error = fatentry(FAT_SET, pmp,
+					 dep->de_fc[FC_LASTFC].fc_fsrcn,
+					 0, cn);
+			if (error) {
 				clusterfree(pmp, cn, NULL);
 				return (error);
 			}

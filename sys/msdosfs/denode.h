@@ -1,4 +1,5 @@
-/*	$NetBSD: denode.h,v 1.19 1995/11/29 15:08:32 ws Exp $	*/
+/*	$OpenBSD: denode.h,v 1.3 1996/02/29 10:46:45 niklas Exp $	*/
+/*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -245,53 +246,55 @@ struct defid {
 
 	u_long defid_dirclust;	/* cluster this dir entry came from */
 	u_long defid_dirofs;	/* offset of entry within the cluster */
-
-	/* u_long	defid_gen;	/* generation number */
+#if 0
+	u_long	defid_gen;	/* generation number */
+#endif
 };
 
 /*
  * Prototypes for MSDOSFS vnode operations
  */
-int	msdosfs_lookup __P((struct vop_lookup_args *));
-int	msdosfs_create __P((struct vop_create_args *));
-int	msdosfs_mknod __P((struct vop_mknod_args *));
-int	msdosfs_open __P((struct vop_open_args *));
-int	msdosfs_close __P((struct vop_close_args *));
-int	msdosfs_access __P((struct vop_access_args *));
-int	msdosfs_getattr __P((struct vop_getattr_args *));
-int	msdosfs_setattr __P((struct vop_setattr_args *));
-int	msdosfs_read __P((struct vop_read_args *));
-int	msdosfs_write __P((struct vop_write_args *));
+int	msdosfs_lookup		__P((void *));
+int	msdosfs_create		__P((void *));
+int	msdosfs_mknod		__P((void *));
+int	msdosfs_open		__P((void *));
+int	msdosfs_close		__P((void *));
+int	msdosfs_access		__P((void *));
+int	msdosfs_getattr		__P((void *));
+int	msdosfs_setattr		__P((void *));
+int	msdosfs_read		__P((void *));
+int	msdosfs_write		__P((void *));
 #ifdef NFSSERVER
-int	lease_check __P((struct vop_lease_args *));
+int	lease_check		__P((void *));
 #define	msdosfs_lease_check lease_check
 #else
-#define	msdosfs_lease_check ((int (*) __P((struct vop_lease_args *)))nullop)
+#define	msdosfs_lease_check nullop
 #endif
-int	msdosfs_ioctl __P((struct vop_ioctl_args *));
-int	msdosfs_select __P((struct vop_select_args *));
-int	msdosfs_mmap __P((struct vop_mmap_args *));
-int	msdosfs_fsync __P((struct vop_fsync_args *));
-int	msdosfs_seek __P((struct vop_seek_args *));
-int	msdosfs_remove __P((struct vop_remove_args *));
-int	msdosfs_link __P((struct vop_link_args *));
-int	msdosfs_rename __P((struct vop_rename_args *));
-int	msdosfs_mkdir __P((struct vop_mkdir_args *));
-int	msdosfs_rmdir __P((struct vop_rmdir_args *));
-int	msdosfs_symlink __P((struct vop_symlink_args *));
-int	msdosfs_readdir __P((struct vop_readdir_args *));
-int	msdosfs_readlink __P((struct vop_readlink_args *));
-int	msdosfs_abortop __P((struct vop_abortop_args *));
-int	msdosfs_inactive __P((struct vop_inactive_args *));
-int	msdosfs_reclaim __P((struct vop_reclaim_args *));
-int	msdosfs_lock __P((struct vop_lock_args *));
-int	msdosfs_unlock __P((struct vop_unlock_args *));
-int	msdosfs_bmap __P((struct vop_bmap_args *));
-int	msdosfs_strategy __P((struct vop_strategy_args *));
-int	msdosfs_print __P((struct vop_print_args *));
-int	msdosfs_islocked __P((struct vop_islocked_args *));
-int	msdosfs_advlock __P((struct vop_advlock_args *));
-int	msdosfs_reallocblks __P((struct vop_reallocblks_args *));
+int	msdosfs_ioctl		__P((void *));
+int	msdosfs_select		__P((void *));
+int	msdosfs_mmap		__P((void *));
+int	msdosfs_fsync		__P((void *));
+int	msdosfs_seek		__P((void *));
+int	msdosfs_remove		__P((void *));
+int	msdosfs_link		__P((void *));
+int	msdosfs_rename		__P((void *));
+int	msdosfs_mkdir		__P((void *));
+int	msdosfs_rmdir		__P((void *));
+int	msdosfs_symlink		__P((void *));
+int	msdosfs_readdir		__P((void *));
+int	msdosfs_readlink	__P((void *));
+int	msdosfs_abortop		__P((void *));
+int	msdosfs_inactive	__P((void *));
+int	msdosfs_reclaim		__P((void *));
+int	msdosfs_lock		__P((void *));
+int	msdosfs_unlock		__P((void *));
+int	msdosfs_bmap		__P((void *));
+int	msdosfs_strategy	__P((void *));
+int	msdosfs_print		__P((void *));
+int	msdosfs_islocked	__P((void *));
+int	msdosfs_advlock		__P((void *));
+int	msdosfs_reallocblks	__P((void *));
+int	msdosfs_pathconf	__P((void *));
 
 /*
  * Internal service routine prototypes.
@@ -308,4 +311,5 @@ int readep __P((struct msdosfsmount *, u_long, u_long, struct buf **, struct dir
 void reinsert __P((struct denode *));
 int removede __P((struct denode *, struct denode *));
 int uniqdosname __P((struct denode *, struct componentname *, u_char *));
+int findwin95 __P((struct denode *));
 #endif	/* _KERNEL */
