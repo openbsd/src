@@ -1,5 +1,5 @@
-/*	$OpenBSD: genassym.c,v 1.3 1996/05/26 18:36:19 briggs Exp $	*/
-/*	$NetBSD: genassym.c,v 1.18 1996/05/05 06:18:27 briggs Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.4 1996/10/14 01:17:05 briggs Exp $	*/
+/*	$NetBSD: genassym.c,v 1.20 1996/09/16 18:00:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -155,7 +155,7 @@ main(void)
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
-	printf("#define\tCACHE4_OFF %d\n", CACHE4_OFF);
+	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
 	printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
 
@@ -184,6 +184,10 @@ main(void)
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
+
+	printf("#define\tFPU_68881 %d\n", FPU_68881);
+	printf("#define\tFPU_68882 %d\n", FPU_68882);
+	printf("#define\tFPU_68040 %d\n", FPU_68040);
 
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
 	printf("#define\tMMU_68030 %d\n", MMU_68030);

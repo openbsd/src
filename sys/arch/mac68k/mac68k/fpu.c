@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.4 1996/06/23 16:00:35 briggs Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.5 1996/10/14 01:15:52 briggs Exp $	*/
 /*	$NetBSD: fpu.c,v 1.16 1996/06/11 02:56:22 scottr Exp $	*/
 
 /*
@@ -46,7 +46,11 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-extern int fpu_type;
+/*
+ * FPU type; emulator uses FPU_NONE
+ */
+int     fputype;
+
 extern int *nofault;
 
 static int  fpu_match __P((struct device *, void *, void *));
@@ -78,7 +82,8 @@ static char *fpu_descr[] = {
 	"mc68881",			/* 1 */
 	"mc68882",			/* 2 */
 	"mc68040",			/* 3 */
-	"?" };
+	"mc68060",			/* 4 */
+	"unknown" };
 
 static void
 fpu_attach(parent, self, args)
@@ -88,9 +93,9 @@ fpu_attach(parent, self, args)
 {
 	char *descr;
 
-	fpu_type = fpu_probe();
-	if ((0 <= fpu_type) && (fpu_type <= 3))
-		descr = fpu_descr[fpu_type];
+	fputype = fpu_probe();
+	if ((0 <= fputype) && (fputype <= 3))
+		descr = fpu_descr[fputype];
 	else
 		descr = "unknown type";
 
@@ -111,7 +116,7 @@ fpu_probe()
 	nofault = (int *) &faultbuf;
 	if (setjmp(&faultbuf)) {
 		nofault = (int *) 0;
-		return(0);
+		return (FPU_NONE);
 	}
 
 	/*
@@ -128,9 +133,8 @@ fpu_probe()
 	 * Presumably, if we're an 040 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (mmutype == MMU_68040) {
-		return 3;
-	}
+	if (mmutype == MMU_68040)
+		return (FPU_68040);
 
 	/*
 	 * Presumably, this will not cause a fault--the fnop should
@@ -151,11 +155,13 @@ fpu_probe()
 	 * The size of a 68881 IDLE frame is 0x18
 	 *         and a 68882 frame is 0x38
 	 */
-	if (b == 0x18) return 1;
-	if (b == 0x38) return 2;
+	if (b == 0x18)
+		return (FPU_68881);
+	if (b == 0x38)
+		return (FPU_68882);
 
 	/*
 	 * If it's not one of the above, we have no clue what it is.
 	 */
-	return 4;
+	return (FPU_UNKNOWN);
 }
