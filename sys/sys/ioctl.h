@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.19 1995/10/10 01:27:09 mycroft Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.20 1996/01/30 18:21:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -61,6 +61,7 @@ struct ttysize {
 
 #include <sys/ioccom.h>
 
+#include <sys/dkio.h>
 #include <sys/filio.h>
 #include <sys/sockio.h>
 
