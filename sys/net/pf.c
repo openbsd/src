@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.3 2001/06/24 20:49:40 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.4 2001/06/24 20:54:55 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -135,7 +135,7 @@ struct state	*pf_test_state_udp (int direction, struct ifnet *ifp, struct ip *h,
 struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
 		    struct ip *h, struct icmp *ih);
 void		*pull_hdr (struct ifnet *ifp, struct mbuf **m, struct ip *h,
-		    int *action, u_int8_t len, void *);
+		    int, int *action, u_int8_t len, void *);
 int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
 
 /* ------------------------------------------------------------------------ */
@@ -1596,14 +1596,13 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 /* ------------------------------------------------------------------------ */
 
 inline void *
-pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int *action,
-    u_int8_t len, void *header)
+pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off,
+    int *action, u_int8_t len, void *header)
 {
-	u_int16_t hl = h->ip_hl << 2;
-	u_int16_t off = (h->ip_off & IP_OFFMASK) << 3;
+	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 
-	if (off) {
-		if (off >= len)
+	if (fragoff) {
+		if (fragoff >= len)
 			*action = PF_PASS;
 		else {
 			*action = PF_DROP;
@@ -1612,17 +1611,17 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int *action,
 		}
 		return NULL;
 	}
-	if ((h->ip_len - hl) < len) {
+	if ((h->ip_len - off) < len) {
 		*action = PF_DROP;
 		printf("packetfilter: dropping first fragment");
 		print_ip(ifp, h);
 		return NULL;
 	}
-	if (hl + len > (*m)->m_pkthdr.len) {
+	if (off + len > (*m)->m_pkthdr.len) {
 		*action = PF_DROP;
 		return NULL;
 	}
-	m_copydata(*m, hl, len, header);
+	m_copydata(*m, off, len, header);
 	return header;
 }
 
@@ -1631,6 +1630,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 {
 	int action;
 	struct ip *h = mtod(*m, struct ip *);
+	int off;
 
 	if (!status.running)
 		return PF_PASS;
@@ -1647,9 +1647,11 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		panic("pf_test called with non-header mbuf");
 #endif
 
+	off = h->ip_hl << 2;
+
 	/* ensure we have at least the complete ip header pulled up */
-	if ((*m)->m_len < (h->ip_hl << 2))
-		if ((*m = m_pullup(*m, h->ip_hl << 2)) == NULL) {
+	if ((*m)->m_len < off)
+		if ((*m = m_pullup(*m, off)) == NULL) {
 			printf("packetfilter: pullup ip header failed\n");
 			action = PF_DROP;
 			goto done;
@@ -1659,7 +1661,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 	case IPPROTO_TCP: {
 		struct tcphdr th;
-		if (pull_hdr(ifp, m, h, &action, 20, &th) == NULL)
+		if (pull_hdr(ifp, m, h, off, &action, 20, &th) == NULL)
 			goto done;
 		if (pf_test_state_tcp(direction, ifp, h, &th))
 			action = PF_PASS;
@@ -1670,7 +1672,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 	case IPPROTO_UDP: {
 		struct udphdr uh;
-		if (pull_hdr(ifp, m, h, &action, 8, &uh) == NULL)
+		if (pull_hdr(ifp, m, h, off, &action, 8, &uh) == NULL)
 			goto done;
 		if (pf_test_state_udp(direction, ifp, h, &uh))
 			action = PF_PASS;
@@ -1681,7 +1683,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 	case IPPROTO_ICMP: {
 		struct icmp ih;
-		if (pull_hdr(ifp, m, h, &action, 8, &ih) == NULL)
+		if (pull_hdr(ifp, m, h, off, &action, 8, &ih) == NULL)
 			goto done;
 		if (pf_test_state_icmp(direction, ifp, h, &ih))
 			action = PF_PASS;
