@@ -7,7 +7,7 @@
     This software is placed into the public domain with no restrictions
     on its distribution.
 
-    $OpenBSD: alias.h,v 1.5 2000/06/11 14:40:26 brian Exp $
+    $OpenBSD: alias.h,v 1.6 2000/06/23 09:47:04 brian Exp $
 */
 
 
@@ -55,9 +55,6 @@ struct alias_link;
     PacketAliasAddServer(struct alias_link *link,
                          struct in_addr addr,
                          u_short port);
-
-    extern int
-    PacketAliasPptp(struct in_addr);
 
     extern struct alias_link *
     PacketAliasRedirectProto(struct in_addr,

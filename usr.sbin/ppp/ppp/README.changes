@@ -1,4 +1,4 @@
-$OpenBSD: README.changes,v 1.15 2000/06/13 09:57:50 brian Exp $
+$OpenBSD: README.changes,v 1.16 2000/06/23 09:47:04 brian Exp $
 
 This file summarises changes made to ppp that effect
 its configuration.
@@ -101,3 +101,4 @@ o Unbalanced quotes in commands are now warned about and the entire command
 o It is now only necessary to escape the `-' character in chat scripts twice.
   See the example files for details.
 o Environment variables and ~ are expanded on in commands
+o ``nat pptp'' is no longer necessary as this is now done transparently

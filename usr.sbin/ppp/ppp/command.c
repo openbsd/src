@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.42 2000/06/13 09:57:50 brian Exp $
+ * $OpenBSD: command.c,v 1.43 2000/06/23 09:47:05 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -597,7 +597,6 @@ static struct cmdtab const NatCommands[] =
    (const void *) PKT_ALIAS_LOG},
   {"port", NULL, nat_RedirectPort, LOCAL_AUTH, "port redirection",
    "nat port proto localaddr:port[-port] aliasport[-aliasport]"},
-  {"pptp", NULL, nat_Pptp, LOCAL_AUTH, "Set the PPTP address", "nat pptp IP"},
   {"proxy", NULL, nat_ProxyRule, LOCAL_AUTH,
    "proxy control", "nat proxy server host[:port] ..."},
   {"same_ports", NULL, NatOption, LOCAL_AUTH,
