@@ -1197,11 +1197,11 @@ ctag_file(sp, tfp, name, dirp, dlenp)
 	    stat(name, &sb) && (p = strrchr(tfp->name, '/')) != NULL) {
 		*p = '\0';
 		len = snprintf(buf, sizeof(buf), "%s/%s", tfp->name, name);
-		*p = '/';
 		if (stat(buf, &sb) == 0) {
 			*dirp = tfp->name;
 			*dlenp = strlen(*dirp);
 		}
+		*p = '/';
 	}
 }
 
