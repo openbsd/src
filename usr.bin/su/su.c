@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.13 1996/10/21 19:33:36 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.14 1996/10/23 01:28:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.13 1996/10/21 19:33:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.14 1996/10/23 01:28:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,9 +174,7 @@ main(argc, argv)
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
-				if (skey_haskey(user))
-					errx(1, "Sorry, you have no s/key.");
-				else if (skey_authenticate(user))
+				if (skey_authenticate(user))
 					goto badlogin;
 			} else
 #endif
