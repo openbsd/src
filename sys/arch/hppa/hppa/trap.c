@@ -1,7 +1,7 @@
-/*	$OpenBSD: trap.c,v 1.15 2000/01/11 05:39:52 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2000/01/12 05:51:02 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@
 #include <net/netisr.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 #include <uvm/uvm.h>
 
 #include <machine/iomod.h>
@@ -224,11 +225,12 @@ trap(type, frame)
 	case T_IBREAK:
 	case T_DATALIGN:
 	case T_DBREAK:
+	dead_end:
 #ifdef DDB
 		if (kdb_trap (type, 0, frame)) {
 			if (type == T_IBREAK) {
 				/* skip break instruction */
-				frame->tf_iioq_head += 4;
+				frame->tf_iioq_head = frame->tf_iioq_tail;
 				frame->tf_iioq_tail += 4;
 			}
 			return;
@@ -296,7 +298,17 @@ trap(type, frame)
 	case T_DTLBMISSNA:	case T_DTLBMISSNA | T_USER:
 		va = trunc_page(va);
 		vm = p->p_vmspace;
-		map = &vm->vm_map;
+
+		if (!vm)
+			goto dead_end;
+
+		/*
+		 * if could be a kernel map for exec_map faults
+		 */
+		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
+			map = kernel_map;
+		else
+			map = &vm->vm_map;
 
 		ret = uvm_fault(map, va, 0, vftype);
 
@@ -322,14 +334,14 @@ printf("trapsignal: uvm_fault\n");
 				sv.sival_int = frame->tf_ior;
 				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			} else {
-				pcbp = &p->p_addr->u_pcb;
-				if (p && pcbp->pcb_onfault) {
-#if PMAPDEBUG
-					printf("trap: copyin/copyout\n");
+				if (p && p->p_addr->u_pcb.pcb_onfault) {
+#ifdef PMAPDEBUG
+					printf("trap: copyin/out %d\n",ret);
 #endif
-					frame->tf_iioq_tail =
-					    frame->tf_iioq_head =
-					    pcbp->pcb_onfault;
+					pcbp = &p->p_addr->u_pcb;
+					frame->tf_iioq_tail = 4 +
+					    (frame->tf_iioq_head =
+						pcbp->pcb_onfault);
 					pcbp->pcb_onfault = 0;
 					break;
 				}
