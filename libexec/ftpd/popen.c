@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.11 1999/12/08 13:15:21 itojun Exp $	*/
+/*	$OpenBSD: popen.c,v 1.12 2001/01/24 11:50:55 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -151,6 +151,8 @@ ftpd_popen(program, type)
 
 		if (strcmp(gargv[0], "/bin/ls") == 0) {
 			extern int optreset;
+			extern int ls_main(int, char **);
+
 			/* reset getopt for ls_main */
 			optreset = optind = 1;
 			exit(ls_main(gargc, gargv));
