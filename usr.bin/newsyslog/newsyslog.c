@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.8 1997/01/15 23:42:56 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.8 1997/01/15 23:42:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -46,23 +46,21 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.8 1997/01/15 23:42:56 millert E
 #endif
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <signal.h>
-#include <pwd.h>
-#include <grp.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/wait.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <grp.h>
+#include <unistd.h>
 
 #define kbytes(size)  (((size) + 1023) >> 10)
-#ifdef _IBMR2
-/* Calculates (db * DEV_BSIZE) */
-#define dbtob(db)  ((unsigned)(db) << UBSHIFT) 
-#endif
 
 #define CE_COMPACT 1            /* Compact the achived log files */
 #define CE_BINARY 2             /* Logfile is in binary, don't add */
@@ -81,12 +79,6 @@ struct conf_entry {
         struct conf_entry       *next; /* Linked list pointer */
 };
 
-extern int      optind;
-extern char     *optarg;
-extern char *malloc();
-extern uid_t getuid(),geteuid();
-extern time_t time();
-
 char    *progname;              /* contains argv[0] */
 int     verbose = 0;            /* Print out what's going on */
 int     needroot = 1;           /* Root privs are necessary */
@@ -100,10 +92,21 @@ char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
 
-struct conf_entry *parse_file();
-char *sob(), *son(), *strdup(), *missing_field();
+void do_entry __P((struct conf_entry *));
+void PRS __P((int, char **));
+void usage __P((void));
+struct conf_entry *parse_file __P((void));
+char *missing_field __P((char *, char *));
+void dotrim __P((char *, int, int, int, int, int));
+int log_trim __P((char *));
+void compress_log __P((char *));
+int sizefile __P((char *));
+int age_old_log __P((char *));
+char *sob __P((char *));
+char *son __P((char *));
+int isnumber __P((char *));
 
-main(argc,argv)
+int main(argc, argv)
         int argc;
         char **argv;
 {
@@ -124,7 +127,7 @@ main(argc,argv)
         exit(0);
 }
 
-do_entry(ent)
+void do_entry(ent)
         struct conf_entry       *ent;
         
 {
@@ -168,7 +171,7 @@ do_entry(ent)
         }
 }
 
-PRS(argc,argv)
+void PRS(argc, argv)
         int argc;
         char **argv;
 {
@@ -194,12 +197,12 @@ PRS(argc,argv)
         (void) gethostname(hostname, sizeof(hostname));
 
 	/* Truncate domain */
-	if (p = strchr(hostname, '.')) {
+	p = strchr(hostname, '.');
+	if (p)
 		*p = '\0';
-	}
 
         optind = 1;             /* Start options parsing */
-        while ((c = getopt(argc,argv,"nrvf:t:")) != -1)
+        while ((c = getopt(argc,argv,"nrvf:t:")) != -1) {
                 switch (c) {
                 case 'n':
                         noaction++; /* This implies needroot as off */
@@ -217,8 +220,9 @@ PRS(argc,argv)
                         usage();
                 }
         }
+}
 
-usage()
+void usage()
 {
         fprintf(stderr,
                 "Usage: %s <-nrv> <-f config-file>\n", progname);
@@ -357,7 +361,7 @@ struct conf_entry *parse_file()
         return(first);
 }
 
-char *missing_field(p,errline)
+char *missing_field(p, errline)
         char    *p,*errline;
 {
         if (!p || !*p) {
@@ -368,7 +372,7 @@ char *missing_field(p,errline)
         return(p);
 }
 
-dotrim(log,numdays,flags,perm,owner_uid,group_gid)
+void dotrim(log, numdays, flags, perm, owner_uid, group_gid)
         char    *log;
         int     numdays;
         int     flags;
@@ -381,14 +385,6 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         int     fd;
         struct  stat st;
 	int	days = numdays;
-
-#ifdef _IBMR2
-/* AIX 3.1 has a broken fchown- if the owner_uid is -1, it will actually */
-/* change it to be owned by uid -1, instead of leaving it as is, as it is */
-/* supposed to. */
-                if (owner_uid == -1)
-                  owner_uid = geteuid();
-#endif
 
         /* Remove oldest log */
         (void) sprintf(file1,"%s.%d",log,numdays);
@@ -482,7 +478,7 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
 }
 
 /* Log the fact that the logs were turned over */
-log_trim(log)
+int log_trim(log)
         char    *log;
 {
         FILE    *f;
@@ -498,7 +494,7 @@ log_trim(log)
 }
 
 /* Fork of /usr/ucb/compress to compress the old log file */
-compress_log(log)
+void compress_log(log)
         char    *log;
 {
         int     pid;
@@ -543,21 +539,6 @@ int age_old_log(file)
         return( (int) (timenow - sb.st_mtime + 1800) / 3600);
 }
 
-
-#ifndef OSF
-/* Duplicate a string using malloc */
-
-char *strdup(strp)
-register char   *strp;
-{
-        register char *cp;
-
-        if ((cp = malloc((unsigned) strlen(strp) + 1)) == NULL)
-                abort();
-        return(strcpy (cp, strp));
-}
-#endif
-
 /* Skip Over Blanks */
 char *sob(p)
         register char   *p;
@@ -579,12 +560,12 @@ char *son(p)
         
 /* Check if string is actually a number */
 
-isnumber(string)
+int isnumber(string)
 char *string;
 {
         while (*string != '\0') {
-            if (*string < '0' || *string > '9') return(0);
-            string++;
+            if (!isdigit(*string++))
+		return(0);
         }
         return(1);
 }
