@@ -1,0 +1,144 @@
+#	$NetBSD: files.series5,v 1.16 1995/11/30 00:58:42 jtc Exp $
+#
+# new style config file for kbus architecture
+#
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 16
+
+maxusers 2 16 64
+
+device mainbus {}
+attach mainbus at root
+file	arch/kbus/kbus/mainbus.c	mainbus
+
+device kbus {addr = -1, [level = -1]}
+attach kbus at mainbus
+file arch/kbus/dev/kbus.c		kbus
+
+# VME Space
+device vmel {addr = -1, [level = -1], [vect = -1]}
+attach vmel at mainbus
+device vmeh {addr = -1, [level = -1], [vect = -1]}
+attach vmeh at mainbus
+device vmes {addr = -1, [level = -1], [vect = -1]}
+attach vmes at mainbus
+file arch/kbus/dev/vme.c		vmel | vmeh | vmes
+
+major	{vnd = 5}
+
+#device  rd at membus: disk
+#file	arch/kbus/dev/rd.c		rd needs-count
+#major	{rd = 3}
+
+#device	timer at membus
+#device	clock at membus
+file	arch/kbus/kbus/clock.c	# clock timer
+
+device zsc {channel = -1}
+attach zsc at kbus
+file	arch/kbus/dev/zs.c		zsc needs-flag
+file	dev/ic/z8530sc.c		zsc
+
+device clock
+attach clock at zsc
+
+device zstty: tty
+attach zstty at zsc
+file dev/ic/z8530tty.c			zstty needs-flag
+file arch/skbus/dev/zs_kgdb.c	kgdb
+
+# device defined in sys/conf/files
+device sle: ether, ifnet
+attach sle at kbus
+file arch/kbus/dev/if_le.c		sle
+file arch/kbus/dev/am7990.c		sle
+
+
+include "../../../scsi/files.scsi"
+
+device si: scsi
+attach si at kbus
+file	arch/kbus/dev/sbic.c			si
+file	arch/kbus/dev/sbicdma.c		si
+
+
+#define	scsi {}
+
+#device	ncr at membus: scsi
+#file	arch/kbus/dev/ncr.c		ncr needs-count
+#device	oldncr at membus: scsi
+#file	arch/kbus/dev/oldncr.c		oldncr needs-count
+#device	dp at membus: scsi
+#file	arch/kbus/dev/dp.c		dp needs-count
+#device	aic at membus: scsi
+#file	arch/kbus/dev/aic.c		aic needs-count
+
+#device	scsibus at scsi {target = -1, lun = -1}
+
+#device	cd at scsibus: disk
+#file	scsi/cd.c			cd needs-flag
+#major	{cd = 4}
+#device	sd at scsibus: disk
+#file	scsi/sd.c			sd needs-flag
+#major	{sd = 0}
+#device	st at scsibus: tape
+#file	scsi/st.c			st needs-flag
+#major	{st = 2}
+#device	ch at scsibus: disk
+#file	scsi/ch.c			ch needs-flag
+#device	uk at scsibus: disk
+#file	scsi/uk.c			uk needs-flag
+#device	su at scsibus: disk
+#file	scsi/su.c			su needs-flag
+#device	ss at scsibus: tape
+#file	scsi/ss.c			ss needs-flag
+
+#
+# VME
+#
+device	xdc {drive = -1}
+attach	xdc at vmes
+device	xd: disk
+attach	xd at xdc
+file	arch/kbus/dev/xd.c		xd needs-flag
+
+file	dev/cons.c
+#file	scsi/scsiconf.c			scsi
+#file	scsi/scsi_base.c		scsi
+#file	scsi/scsi_ioctl.c		scsi
+file	arch/kbus/kbus/autoconf.c
+file	arch/kbus/kbus/locore2.c
+file	arch/kbus/kbus/db_disasm.c	ddb
+file	arch/kbus/kbus/db_interface.c	ddb
+file	arch/kbus/kbus/db_trace.c	ddb
+file	arch/kbus/kbus/disksubr.c	disk
+#file	arch/kbus/kbus/icuinit.c
+file	arch/kbus/kbus/in_cksum.c	inet
+file	arch/kbus/kbus/intr.c
+file	arch/kbus/kbus/machdep.c
+file	arch/kbus/kbus/mem.c
+file	arch/kbus/kbus/ns_cksum.c	ns
+#file	arch/kbus/kbus/ntoh.s
+file	arch/kbus/kbus/pmap.c
+file	arch/kbus/kbus/process_machdep.c
+#file 	arch/kbus/kbus/random.s
+file	arch/kbus/kbus/sys_machdep.c
+file	arch/kbus/kbus/trap.c
+file	arch/kbus/kbus/vm_machdep.c
+
+file	arch/kbus/fpu/fpu.c
+file	arch/kbus/fpu/fpu_add.c
+file	arch/kbus/fpu/fpu_compare.c
+file	arch/kbus/fpu/fpu_div.c
+file	arch/kbus/fpu/fpu_explode.c
+file	arch/kbus/fpu/fpu_implode.c
+file	arch/kbus/fpu/fpu_mul.c
+file	arch/kbus/fpu/fpu_sqrt.c
+file	arch/kbus/fpu/fpu_subr.c
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/kbus/kbus/sunos_machdep.c compat_sunos
+
+

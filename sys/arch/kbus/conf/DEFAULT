@@ -1,0 +1,111 @@
+#
+# DEFAULT: default install kernel
+#
+
+machine		kbus
+
+maxusers	8			# estimated number of users
+options		TIMEZONE=0, DST=0	# time zone to read RTC in
+options		SWAPPAGER		# paging
+options		DEVPAGER		# device node caching
+options		OLD_PIPE
+#options	KGDB
+
+options		DDB			# kernel debugger; recommended
+#options	DIAGNOSTIC		# internal consistency checking
+options		KTRACE			# system call tracing, a la ktrace(1)
+
+options		ACCOUNTING		# process accounting
+#options	FIFO			# fifos; recommended
+#options	SYSVSHM			# System V shared memory; broken
+#options	SHMMAXPGS=1024
+#options	LKM			# loadable kernel modules
+#options	LEDEBUG
+
+# compatibility options
+#options 	COMPAT_09		# NetBSD 0.9,
+#options 	COMPAT_10		# NetBSD 1.0,
+#options 	COMPAT_43		# and 4.3BSD
+#options 	TCP_COMPAT_42		# TCP bug compatibility with 4.2BSD
+options		COMPAT_SUNOS		# Compatibility with SunOS binaries
+
+# file system options
+#options	QUOTA			# file system quotas
+options		FFS			# Berkeley fast file system
+#options	LFS			# log-structered file system
+#options	MFS			# memory file system; uses RAM and swap
+#options	MSDOSFS			# MS-DOS file system
+#options	CD9660			# ISO 9660 CD-ROM file system, with RR
+#options	NULLFS			# loopback file system
+#options	UMAPFS			# NULLFS + uid and gid remapping
+#options	UNION			# union file system
+#options	PORTAL			# /portal
+#options	FDESC			# /dev/fd
+#options	KERNFS			# /kern
+#options	PROCFS			# /proc
+#options	NFSSERVER		# Network File System server
+options		NFSCLIENT		# Network File System client
+
+# networking options
+#options	GATEWAY			# packet forwarding
+options		INET			# IP + ICMP + TCP + UDP
+#options	NS			# XNS
+#options	ISO,TPIP		# OSI
+#options	EON			# OSI tunneling over IP
+#options	CCITT,LLC,HDLC		# X.25
+
+# pc532 specific options
+#options	COMDEF_SPEED=B19200	# default baud on the scn chips
+#options	PLIP			# PLIP driver in dev/lpt.c
+
+#config		netbsd	root on nfs swap on nfs
+config		netbsd	swap generic
+
+mainbus0 at root
+
+kbus0 at mainbus?
+vmel0 at mainbus?
+vmeh0 at mainbus?
+vmes0 at mainbus?
+
+zsc1 at kbus0 addr 0x17012000
+zsc0 at kbus0 addr 0x17011000
+
+# clock
+clock0 at zsc0 channel 1	# clock
+
+#
+# Serial ports
+#
+zstty0 at zsc1 channel 0	# ttya
+zstty1 at zsc1 channel 1	# ttyb
+
+# Lance Ethernet (only onboard)
+sle0 at kbus0 addr   0x90001000 level 3
+
+# Xylogics 753 controllers
+xdc0 at vmes0 addr 0xffffee80 level 2 vect 0x44
+# xdc1 at vmes0 addr 0xffffee90 level 2 vect 0x45
+xd* at xdc? drive ?
+
+# WD33C93A SCSI controler.
+si0 at kbus? addr 0x90000800
+
+scsibus* at si?
+
+#sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?		# SCSI Tapes
+#cd*	at scsibus? target ? lun ?
+#ch*	at scsibus? target ? lun ?
+#ss*	at scsibus? target ? lun ?
+#uk*	at scsibus? target ? lun ?
+
+pseudo-device	pty 16			# pseudo-terminals
+pseudo-device	loop 1			# loopback network
+#pseudo-device	vnd 2			# vnode devices
+#pseudo-device	bpfilter 4		# packet filter
+#pseudo-device	sl 1			# compressed SLIP
+#pseudo-device	ppp 1			# Point-to-Point Protocol
+#pseudo-device	tun 1			# network tunneling
+
+
