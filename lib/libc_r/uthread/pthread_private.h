@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.16 1999/06/15 00:07:39 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.17 1999/09/08 08:21:47 espie Exp $
  *
  */
 
@@ -53,12 +53,6 @@
 #include <pthread_np.h>
 #ifndef _NO_UTHREAD_MACHDEP
 #include "uthread_machdep.h"
-#endif
-
-#ifdef __OpenBSD__
-/* Steal TAILQ_FOREACH from FreeBSD's <sys/queue.h> */
-#define TAILQ_FOREACH(var, head, field)                                 \
-        for (var = TAILQ_FIRST(head); var; var = TAILQ_NEXT(var, field))
 #endif
 
 /*
