@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_kern.c,v 1.8 1997/11/06 05:59:33 csapuntz Exp $	*/
+/*	$OpenBSD: vm_kern.c,v 1.9 1998/02/23 20:22:17 niklas Exp $	*/
 /*	$NetBSD: vm_kern.c,v 1.17.6.1 1996/06/13 17:21:28 cgd Exp $	*/
 
 /* 
@@ -101,13 +101,12 @@ kmem_alloc_pageable(map, size)
 	size = round_page(size);
 
 	addr = vm_map_min(map);
-	result = vm_map_find(map, NULL, (vm_offset_t) 0,
-				&addr, size, TRUE);
+	result = vm_map_find(map, NULL, (vm_offset_t)0, &addr, size, TRUE);
 	if (result != KERN_SUCCESS) {
-		return(0);
+		return (0);
 	}
 
-	return(addr);
+	return (addr);
 }
 
 /*
@@ -172,10 +171,11 @@ kmem_alloc(map, size)
 	 */
 
 	vm_object_lock(kernel_object);
-	for (i = 0 ; i < size; i+= PAGE_SIZE) {
+	for (i = 0; i < size; i += PAGE_SIZE) {
 		vm_page_t	mem;
 
-		while ((mem = vm_page_alloc(kernel_object, offset+i)) == NULL) {
+		while ((mem = vm_page_alloc(kernel_object, offset + i)) ==
+		    NULL) {
 			vm_object_unlock(kernel_object);
 			VM_WAIT;
 			vm_object_lock(kernel_object);
@@ -186,18 +186,18 @@ kmem_alloc(map, size)
 	vm_object_unlock(kernel_object);
 		
 	/*
-	 *	And finally, mark the data as non-pageable.
+	 * And finally, mark the data as non-pageable.
 	 */
 
-	(void) vm_map_pageable(map, (vm_offset_t) addr, addr + size, FALSE);
+	(void)vm_map_pageable(map, (vm_offset_t)addr, addr + size, FALSE);
 
 	/*
-	 *	Try to coalesce the map
+	 * Try to coalesce the map
 	 */
 
 	vm_map_simplify(map, addr);
 
-	return(addr);
+	return (addr);
 }
 
 /*
@@ -213,7 +213,7 @@ kmem_free(map, addr, size)
 	register vm_offset_t	addr;
 	vm_size_t		size;
 {
-	(void) vm_map_remove(map, trunc_page(addr), round_page(addr + size));
+	(void)vm_map_remove(map, trunc_page(addr), round_page(addr + size));
 }
 
 /*
@@ -242,8 +242,7 @@ kmem_suballoc(parent, min, max, size, pageable)
 	size = round_page(size);
 
 	*min = (vm_offset_t) vm_map_min(parent);
-	ret = vm_map_find(parent, NULL, (vm_offset_t) 0,
-				min, size, TRUE);
+	ret = vm_map_find(parent, NULL, (vm_offset_t)0, min, size, TRUE);
 	if (ret != KERN_SUCCESS) {
 		printf("kmem_suballoc: bad status return of %d.\n", ret);
 		panic("kmem_suballoc");
@@ -255,7 +254,7 @@ kmem_suballoc(parent, min, max, size, pageable)
 		panic("kmem_suballoc: cannot create submap");
 	if ((ret = vm_map_submap(parent, *min, *max, result)) != KERN_SUCCESS)
 		panic("kmem_suballoc: unable to change range to submap");
-	return(result);
+	return (result);
 }
 
 /*
@@ -320,10 +319,10 @@ kmem_malloc(map, size, canwait)
 	 */
 	if (canwait) {
 		vm_map_unlock(map);
-		(void) vm_map_pageable(map, (vm_offset_t) addr, addr + size,
-				       FALSE);
+		(void)vm_map_pageable(map, (vm_offset_t)addr, addr + size,
+		    FALSE);
 		vm_map_simplify(map, addr);
-		return(addr);
+		return (addr);
 	}
 
 	/*
@@ -348,7 +347,7 @@ kmem_malloc(map, size, canwait)
 			vm_object_unlock(kmem_object);
 			vm_map_delete(map, addr, addr + size);
 			vm_map_unlock(map);
-			return(0);
+			return (0);
 		}
 #if 0
 		vm_page_zero_fill(m);
@@ -379,12 +378,12 @@ kmem_malloc(map, size, canwait)
 		m = vm_page_lookup(kmem_object, offset + i);
 		vm_object_unlock(kmem_object);
 		pmap_enter(map->pmap, addr + i, VM_PAGE_TO_PHYS(m),
-			   VM_PROT_DEFAULT, TRUE);
+		    VM_PROT_DEFAULT, TRUE);
 	}
 	vm_map_unlock(map);
 
 	vm_map_simplify(map, addr);
-	return(addr);
+	return (addr);
 }
 
 /*
@@ -438,7 +437,7 @@ kmem_free_wakeup(map, addr, size)
 	vm_size_t	size;
 {
 	vm_map_lock(map);
-	(void) vm_map_delete(map, trunc_page(addr), round_page(addr + size));
+	(void)vm_map_delete(map, trunc_page(addr), round_page(addr + size));
 	thread_wakeup(map);
 	vm_map_unlock(map);
 }
@@ -459,8 +458,8 @@ kmem_init(start, end)
 	vm_map_lock(m);
 	/* N.B.: cannot use kgdb to debug, starting with this assignment ... */
 	kernel_map = m;
-	(void) vm_map_insert(m, NULL, (vm_offset_t)0,
-	    VM_MIN_KERNEL_ADDRESS, start);
+	(void)vm_map_insert(m, NULL, (vm_offset_t)0, VM_MIN_KERNEL_ADDRESS,
+	    start);
 	/* ... and ending with the completion of the above `insert' */
 	vm_map_unlock(m);
 }
