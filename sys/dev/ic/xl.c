@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.28 2001/08/12 20:12:12 mickey Exp $	*/
+/*	$OpenBSD: xl.c,v 1.29 2001/08/19 01:45:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -195,6 +195,28 @@ void xl_testpacket	__P((struct xl_softc *));
 int xl_miibus_readreg	__P((struct device *, int, int));
 void xl_miibus_writereg	__P((struct device *, int, int, int));
 void xl_miibus_statchg	__P((struct device *));
+
+void xl_power __P((int, void *));
+
+void
+xl_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct xl_softc *sc = arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splimp();
+	if (why != PWR_RESUME)
+		xl_stop(sc);
+	else {
+		ifp = &sc->arpcom.ac_if;
+		if (ifp->if_flags & IFF_UP)
+			xl_reset(sc, 1);
+	}
+	splx(s);
+}
 
 /*
  * Murphy's law says that it's possible the chip can wedge and
@@ -2649,6 +2671,7 @@ xl_attach(sc)
 	ether_ifattach(ifp);
 
 	sc->sc_sdhook = shutdownhook_establish(xl_shutdown, sc);
+	sc->sc_pwrhook = powerhook_establish(xl_power, sc);
 }
 
 int
