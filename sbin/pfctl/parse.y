@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.130 2002/07/21 00:40:00 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.131 2002/07/21 01:37:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -519,7 +519,7 @@ interface	: /* empty */			{ $$ = NULL; }
 		;
 
 if_list		: if_item_not			{ $$ = $1; }
-		| if_list ',' if_item_not	{ $3->next = $1; $$ = $3; }
+		| if_list comma if_item_not	{ $3->next = $1; $$ = $3; }
 		;
 
 if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
@@ -549,7 +549,7 @@ proto		: /* empty */			{ $$ = NULL; }
 		;
 
 proto_list	: proto_item			{ $$ = $1; }
-		| proto_list ',' proto_item	{ $3->next = $1; $$ = $3; }
+		| proto_list comma proto_item	{ $3->next = $1; $$ = $3; }
 		;
 
 proto_item	: STRING			{
@@ -598,7 +598,7 @@ ipspec		: ANY				{ $$ = NULL; }
 		;
 
 host_list	: xhost				{ $$ = $1; }
-		| host_list ',' xhost		{
+		| host_list comma xhost		{
 			/* both $1 and $3 may be lists, so join them */
 			$$ = $3;
 			while ($3->next)
@@ -691,7 +691,7 @@ portspec	: port_item			{ $$ = $1; }
 		;
 
 port_list	: port_item			{ $$ = $1; }
-		| port_list ',' port_item	{ $3->next = $1; $$ = $3; }
+		| port_list comma port_item	{ $3->next = $1; $$ = $3; }
 		;
 
 port_item	: port				{
@@ -752,7 +752,7 @@ uids		: /* empty */			{ $$ = NULL; }
 		;
 
 uid_list	: uid_item			{ $$ = $1; }
-		| uid_list ',' uid_item		{ $3->next = $1; $$ = $3; }
+		| uid_list comma uid_item	{ $3->next = $1; $$ = $3; }
 		;
 
 uid_item	: uid				{
@@ -823,7 +823,7 @@ gids		: /* empty */			{ $$ = NULL; }
 		;
 
 gid_list	: gid_item			{ $$ = $1; }
-		| gid_list ',' gid_item		{ $3->next = $1; $$ = $3; }
+		| gid_list comma gid_item	{ $3->next = $1; $$ = $3; }
 		;
 
 gid_item	: gid				{
@@ -913,11 +913,11 @@ icmpspec	: /* empty */			{ $$ = NULL; }
 		;
 
 icmp_list	: icmp_item			{ $$ = $1; }
-		| icmp_list ',' icmp_item	{ $3->next = $1; $$ = $3; }
+		| icmp_list comma icmp_item	{ $3->next = $1; $$ = $3; }
 		;
 
 icmp6_list	: icmp6_item			{ $$ = $1; }
-		| icmp6_list ',' icmp6_item	{ $3->next = $1; $$ = $3; }
+		| icmp6_list comma icmp6_item	{ $3->next = $1; $$ = $3; }
 		;
 
 icmp_item	: icmptype		{
@@ -1051,7 +1051,7 @@ state_opt_spec	: /* empty */			{ $$ = NULL; }
 		;
 
 state_opt_list	: state_opt_item		{ $$ = $1; }
-		| state_opt_list ',' state_opt_item {
+		| state_opt_list comma state_opt_item {
 			$$ = $1;
 			while ($1->next)
 				$1 = $1->next;
@@ -1475,7 +1475,7 @@ timeout_spec	: STRING number
 		}
 		;
 
-timeout_list	: timeout_list ',' timeout_spec
+timeout_list	: timeout_list comma timeout_spec
 		| timeout_spec
 		;
 
@@ -1491,8 +1491,12 @@ limit_spec	: STRING number
 			}
 		}
 
-limit_list	: limit_list ',' limit_spec
+limit_list	: limit_list comma limit_spec
 		| limit_spec
+		;
+
+comma		: ','
+		| /* empty */
 		;
 
 %%
