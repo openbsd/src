@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.2 1996/06/26 05:31:58 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.3 1996/08/30 13:09:41 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.2 1996/06/26 05:31:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.3 1996/08/30 13:09:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,12 +207,13 @@ interpret(pwent, line)
 	return (pwent);
 }
 
+static char *__yplin;
+
 struct passwd *
 ypgetpwnam(nam)
 	char *nam;
 {
 	static struct passwd pwent;
-	static char line[1024];
 	char *val;
 	int reason, vallen;
 	
@@ -235,10 +236,13 @@ ypgetpwnam(nam)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	if (__yplin)
+		free(__yplin);
+	__yplin = (char *)malloc(vallen + 1);
+	strcpy(__yplin, val);
 	free(val);
 
-	return(interpret(&pwent, line));
+	return(interpret(&pwent, __yplin));
 }
 
 struct passwd *
@@ -246,7 +250,6 @@ ypgetpwuid(uid)
 	uid_t uid;
 {
 	static struct passwd pwent;
-	static char line[1024];
 	char *val;
 	int reason, vallen;
 	char namebuf[16];
@@ -268,10 +271,13 @@ ypgetpwuid(uid)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	if (__yplin)
+		free(__yplin);
+	__yplin = (char *)malloc(vallen + 1);
+	strcpy(__yplin, val);
 	free(val);
 
-	return(interpret(&pwent, line));
+	return(interpret(&pwent, __yplin));
 }
 
 #endif	/* YP */
