@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.5 1998/03/25 18:43:44 art Exp $	*/
+/*	$OpenBSD: ext.h,v 1.6 1998/05/08 19:37:45 deraadt Exp $	*/
 /*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ extern char	ptyobuf[BUFSIZ+NETSLOP], *pfrontp, *pbackp;
 extern char	netibuf[BUFSIZ], *netip;
 
 extern char	netobuf[BUFSIZ+NETSLOP], *nfrontp, *nbackp;
-extern char	*neturg;		/* one past last bye of urgent data */
+extern char	*neturg;		/* one past last byte of urgent data */
 
 extern int	pcc, ncc;
 
