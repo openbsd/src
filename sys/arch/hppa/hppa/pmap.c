@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2004/08/05 09:06:24 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2004/09/14 22:23:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -540,20 +540,21 @@ pmap_bootstrap(vstart)
 	 * lazy map only needed pieces (see bus_mem_add_mapping() for refs).
 	 */
 
-	/* takes about 16 per gig of initial kmem ... */
-	nkpdes = totalphysmem >> 14;
+	/* kernel virtual is the last gig of the mohicans */
+	nkpdes = totalphysmem >> 14;	/* at least 16/gig for kmem */
 	if (nkpdes < 4)
-		nkpdes = 4;	/* ... but no less than four */
+		nkpdes = 4;		/* ... but no less than four */
+	nkpdes += HPPA_IOLEN / PDE_SIZE; /* ... and io space too */
 	npdes = nkpdes + (totalphysmem + btoc(PDE_SIZE) - 1) / btoc(PDE_SIZE);
-	uvm_page_physload(0, totalphysmem,
-	    atop(addr) + npdes, totalphysmem, VM_FREELIST_DEFAULT);
 
 	/* map the pdes */
 	for (va = 0; npdes--; va += PDE_SIZE, addr += PAGE_SIZE) {
 
-		/* last four pdes are for the kernel virtual */
+		/* last nkpdes are for the kernel virtual */
 		if (npdes == nkpdes - 1)
 			va = SYSCALLGATE;
+		if (npdes == HPPA_IOLEN / PDE_SIZE - 1)
+			va = HPPA_IOBEGIN;
 		/* now map the pde for the physmem */
 		bzero((void *)addr, PAGE_SIZE);
 		DPRINTF(PDB_INIT|PDB_VP, ("pde premap 0x%x 0x%x\n", va, addr));
@@ -562,6 +563,9 @@ pmap_bootstrap(vstart)
 	}
 
 	physmem = atop(addr);
+	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", physmem, totalphysmem));
+	uvm_page_physload(0, totalphysmem,
+	    physmem, totalphysmem, VM_FREELIST_DEFAULT);
 
 	/* TODO optimize/inline the kenter */
 	for (va = 0; va < ptoa(totalphysmem); va += PAGE_SIZE) {
