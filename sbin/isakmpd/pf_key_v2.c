@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.142 2004/06/14 09:55:41 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.143 2004/06/21 15:15:38 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -70,8 +70,12 @@
 #include "transport.h"
 #include "util.h"
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE)
 #include "policy.h"
+#endif
+
+#if defined (USE_NAT_TRAVERSAL)
+#include "udp_encap.h"
 #endif
 
 #define IN6_IS_ADDR_FULL(a)						\
@@ -534,7 +538,7 @@ pf_key_v2_open(void)
 	pf_key_v2_msg_free(regmsg);
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
 		goto cleanup;
@@ -554,7 +558,7 @@ pf_key_v2_open(void)
 	pf_key_v2_msg_free(regmsg);
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
 		goto cleanup;
@@ -575,7 +579,7 @@ pf_key_v2_open(void)
 	pf_key_v2_msg_free(regmsg);
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		log_print("pf_key_v2_open: REGISTER: %s", strerror(err));
 		goto cleanup;
@@ -650,7 +654,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
-	if (pf_key_v2_msg_add(getspi, (struct sadb_ext *) & ssa2, 0) == -1)
+	if (pf_key_v2_msg_add(getspi, (struct sadb_ext *)&ssa2, 0) == -1)
 		goto cleanup;
 #endif
 
@@ -718,7 +722,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		spirange.sadb_spirange_max = 0xffffffff;
 	}
 	spirange.sadb_spirange_reserved = 0;
-	if (pf_key_v2_msg_add(getspi, (struct sadb_ext *) & spirange, 0) == -1)
+	if (pf_key_v2_msg_add(getspi, (struct sadb_ext *)&spirange, 0) == -1)
 		goto cleanup;
 
 	ret = pf_key_v2_call(getspi);
@@ -726,7 +730,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	getspi = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		log_print("pf_key_v2_get_spi: GETSPI: %s", strerror(err));
 		goto cleanup;
@@ -852,6 +856,10 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct ipsec_sa *isa = sa->data;
 	struct sadb_x_cred *cred;
 	struct sadb_protocol flowtype, tprotocol;
+#endif
+#if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
+	struct sadb_x_udpencap udpencap;
+	const char *errstr;
 #endif
 #ifdef USE_DEBUG
 	char           *addr_str;
@@ -1097,7 +1105,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #else
 	ssa2.sadb_x_sa2_mode = 0;
 #endif
-	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & ssa2, 0) == -1)
+	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&ssa2, 0) == -1)
 		goto cleanup;
 #endif
 
@@ -1113,13 +1121,36 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	ssa.sadb_sa_replay = conf_get_str("General", "Shared-SADB") ? 0 :
 	    iproto->replay_window;
 	ssa.sadb_sa_state = SADB_SASTATE_MATURE;
-#ifdef SADB_X_SAFLAGS_TUNNEL
-	ssa.sadb_sa_flags = iproto->encap_mode == IPSEC_ENCAP_TUNNEL ?
-	    SADB_X_SAFLAGS_TUNNEL : 0;
-#else
 	ssa.sadb_sa_flags = 0;
+#ifdef SADB_X_SAFLAGS_TUNNEL
+	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL ||
+	    iproto->encap_mode == IPSEC_ENCAP_UDP_ENCAP_TUNNEL)
+		ssa.sadb_sa_flags = SADB_X_SAFLAGS_TUNNEL;
 #endif
-	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & ssa, 0) == -1)
+
+#if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
+	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE) {
+		memset(&udpencap, 0, sizeof udpencap);
+		ssa.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
+		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
+		udpencap.sadb_x_udpencap_len =
+		    sizeof udpencap / PF_KEY_V2_CHUNK;
+		udpencap.sadb_x_udpencap_port =
+		    strtonum(udp_encap_default_port ? udp_encap_default_port :
+			UDP_ENCAP_DEFAULT_PORT_STR, 0, USHRT_MAX, &errstr);
+		if (errstr)
+			log_print("pf_key_v2_set_spi: bad port for UDPENCAP");
+		else {
+			udpencap.sadb_x_udpencap_port =
+			    htons(udpencap.sadb_x_udpencap_port);
+			if (pf_key_v2_msg_add(update,
+			    (struct sadb_ext *)&udpencap, 0) == -1)
+				goto cleanup;
+		}
+	}
+#endif
+
+	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&ssa, 0) == -1)
 		goto cleanup;
 
 	if (sa->seconds || sa->kilobytes) {
@@ -1518,7 +1549,7 @@ doneauth:
 	flowtype.sadb_protocol_direction = incoming ?
 	    IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
 
-	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & flowtype, 0) == -1)
+	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&flowtype, 0) == -1)
 		goto cleanup;
 
 	bzero(&tprotocol, sizeof tprotocol);
@@ -1526,7 +1557,7 @@ doneauth:
 	tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
 	tprotocol.sadb_protocol_proto = isa->tproto;
 
-	if (pf_key_v2_msg_add(update, (struct sadb_ext *) & tprotocol,
+	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&tprotocol,
 	    0) == -1)
 		goto cleanup;
 
@@ -1613,7 +1644,7 @@ doneauth:
 	update = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	pf_key_v2_msg_free(ret);
 	ret = 0;
 
@@ -1778,7 +1809,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	flowtype.sadb_protocol_proto =
 	    ingress ? SADB_X_FLOW_TYPE_USE : SADB_X_FLOW_TYPE_REQUIRE;
 
-	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) & flowtype, 0) == -1)
+	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)&flowtype, 0) == -1)
 		goto cleanup;
 #else				/* SADB_X_EXT_FLOW_TYPE */
 	/* Setup the SA extension.  */
@@ -1799,7 +1830,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 		ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
 #endif
 
-	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) & ssa, 0) == -1)
+	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)&ssa, 0) == -1)
 		goto cleanup;
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
@@ -1884,7 +1915,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
 	tprotocol.sadb_protocol_proto = tproto;
 
-	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) & tprotocol, 0) == -1)
+	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)&tprotocol, 0) == -1)
 		goto cleanup;
 
 #ifdef USE_DEBUG
@@ -1918,7 +1949,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	flow = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		if (err == ESRCH)	/* These are common and usually
 					 * harmless.  */
@@ -1974,7 +2005,7 @@ cleanup:
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
-	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) & ssa2, 0) == -1)
+	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)&ssa2, 0) == -1)
 		goto cleanup;
 
 	/*
@@ -2140,7 +2171,7 @@ cleanup:
 	flow = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (!delete && err == EEXIST) {
 		LOG_DBG((LOG_SYSDEP, 50, "pf_key_v2_flow: "
 		    "SPDADD returns EEXIST"));
@@ -2296,7 +2327,7 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 	u_int8_t       *sid = 0, *did = 0;
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	struct sockaddr_storage hostmask_storage;
-	struct sockaddr *hostmask = (struct sockaddr *) & hostmask_storage;
+	struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
@@ -2496,7 +2527,7 @@ pf_key_v2_disable_sa(struct sa *sa, int incoming)
 	struct proto   *proto = TAILQ_FIRST(&sa->protos);
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	struct sockaddr_storage hostmask_storage;
-	struct sockaddr *hostmask = (struct sockaddr *) & hostmask_storage;
+	struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
 	int             error;
 #endif				/* SADB_X_EXT_FLOW_TYPE */
 
@@ -2620,7 +2651,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	ssa.sadb_sa_auth = 0;
 	ssa.sadb_sa_encrypt = 0;
 	ssa.sadb_sa_flags = 0;
-	if (pf_key_v2_msg_add(delete, (struct sadb_ext *) & ssa, 0) == -1)
+	if (pf_key_v2_msg_add(delete, (struct sadb_ext *)&ssa, 0) == -1)
 		goto cleanup;
 
 #ifdef KAME
@@ -2628,7 +2659,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
-	if (pf_key_v2_msg_add(delete, (struct sadb_ext *) & ssa2, 0) == -1)
+	if (pf_key_v2_msg_add(delete, (struct sadb_ext *)&ssa2, 0) == -1)
 		goto cleanup;
 #endif
 
@@ -2698,7 +2729,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	delete = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_delete_spi: DELETE: %s",
 			 strerror(err)));
@@ -2767,7 +2798,7 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	struct pf_key_v2_node *lifenode, *ext;
 	char           *dst_str;
 
-	msg = (struct sadb_msg *) TAILQ_FIRST(pmsg)->seg;
+	msg = (struct sadb_msg *)TAILQ_FIRST(pmsg)->seg;
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_SA);
 	if (!ext) {
 		log_print("pf_key_v2_expire: no SA extension found");
@@ -2910,7 +2941,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 		log_error("pf_key_v2_acquire: malloc (%d) failed", connlen);
 		return;
 	}
-	msg = (struct sadb_msg *) TAILQ_FIRST(pmsg)->seg;
+	msg = (struct sadb_msg *)TAILQ_FIRST(pmsg)->seg;
 
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_ADDRESS_DST);
 	if (!ext) {
@@ -2947,7 +2978,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy.sadb_x_policy_len = sizeof policy / PF_KEY_V2_CHUNK;
 	policy.sadb_x_policy_seq = msg->sadb_msg_seq;
-	if (pf_key_v2_msg_add(askpolicy, (struct sadb_ext *) & policy, 0) == -1)
+	if (pf_key_v2_msg_add(askpolicy, (struct sadb_ext *)&policy, 0) == -1)
 		goto fail;
 
 	ret = pf_key_v2_call(askpolicy);
@@ -3964,7 +3995,7 @@ fail:
 static void
 pf_key_v2_notify(struct pf_key_v2_msg *msg)
 {
-	switch (((struct sadb_msg *) TAILQ_FIRST(msg)->seg)->sadb_msg_type) {
+	switch (((struct sadb_msg *)TAILQ_FIRST(msg)->seg)->sadb_msg_type) {
 	case SADB_EXPIRE:
 		pf_key_v2_expire(msg);
 		break;
@@ -4061,7 +4092,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	sa1.sadb_sa_auth = 0;
 	sa1.sadb_sa_encrypt = 0;
 	sa1.sadb_sa_flags = 0;
-	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) & sa1, 0) == -1)
+	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *)&sa1, 0) == -1)
 		goto cleanup;
 
 #ifndef KAME
@@ -4074,14 +4105,14 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	sa2.sadb_sa_auth = 0;
 	sa2.sadb_sa_encrypt = 0;
 	sa2.sadb_sa_flags = 0;
-	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) & sa2, 0) == -1)
+	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *)&sa2, 0) == -1)
 		goto cleanup;
 #else
 	memset(&kamesa2, 0, sizeof kamesa2);
 	kamesa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	kamesa2.sadb_x_sa2_len = sizeof kamesa2 / PF_KEY_V2_CHUNK;
 	kamesa2.sadb_x_sa2_mode = 0;
-	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) & kamesa2, 0) == -1)
+	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *)&kamesa2, 0) == -1)
 		goto cleanup;
 #endif
 
@@ -4149,7 +4180,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	}
 	protocol.sadb_protocol_reserved2 = 0;
 	if (pf_key_v2_msg_add(grpspis, 
-	    (struct sadb_ext *) & protocol, 0) == -1)
+	    (struct sadb_ext *)&protocol, 0) == -1)
 		goto cleanup;
 
 	ret = pf_key_v2_call(grpspis);
@@ -4157,7 +4188,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	grpspis = 0;
 	if (!ret)
 		goto cleanup;
-	err = ((struct sadb_msg *) TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
+	err = ((struct sadb_msg *)TAILQ_FIRST(ret)->seg)->sadb_msg_errno;
 	if (err) {
 		log_print("pf_key_v2_group_spis: GRPSPIS: %s", strerror(err));
 		goto cleanup;
