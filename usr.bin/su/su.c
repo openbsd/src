@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.22 1997/06/20 02:12:40 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.23 1997/06/20 21:59:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.22 1997/06/20 02:12:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.23 1997/06/20 21:59:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ main(argc, argv)
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *avshell, *username, **cleanenv, **np;
+	char *user, *shell, *avshell, *username, *k, **np;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
@@ -234,12 +234,18 @@ badlogin:
 	if (!asme) {
 		if (asthem) {
 			p = getenv("TERM");
-			if ((cleanenv = calloc(1, sizeof (char *))) == NULL)
+#ifdef KERBEROS
+			k = getenv("KRBTKFILE");
+#endif
+			if ((environ = calloc(1, sizeof (char *))) == NULL)
 				errx(1, "calloc");
-			environ = cleanenv;
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			if (p)
 				(void)setenv("TERM", p, 1);
+#ifdef KERBEROS
+			if (k)
+				(void)setenv("KRBTKFILE", k, 1);
+#endif
 
 			seteuid(pwd->pw_uid);
 			setegid(pwd->pw_gid);
