@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.107 2003/05/07 18:23:14 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.108 2003/05/07 18:48:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1209,7 +1209,7 @@ EXIT(TLABEL(emu))
 	dep	r8, 31, 16, r16		/* put in the space id */	! \
 	depi	1, 0, 1, r16		/* and set the valid bit */
 
-#if 1
+#if 0
 	.export	dtlb_c, data
 	BSS(dtlb_c, 8)
 	.export	dtlb_c, data
