@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.4 1996/10/26 08:07:26 downsj Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.5 1996/10/28 00:06:21 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -195,7 +195,7 @@ fdcattach(parent, self, aux)
 
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
-	TAILQ_INIT(&fdc->sc_drives);
+	TAILQ_INIT(&fdc->sc_link.fdlink.sc_drives);	/* XXX */
 
 	printf("\n");
 
@@ -220,6 +220,7 @@ fdcattach(parent, self, aux)
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_flags = 0;
+		fa.fa_type = 0;
 #if NFD > 0
 		if (type >= 0 && fa.fa_drive < 2)
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
@@ -257,8 +258,7 @@ fdcresult(fdc)
 	bus_chipset_tag_t bc = fdc->sc_bc;
 	bus_io_handle_t ioh = fdc->sc_ioh;
 	u_char i;
-	int j = 100000,
-	    n = 0;
+	int j = 100000, n = 0;
 
 	for (; j; j--) {
 		i = bus_io_read_1(bc, ioh, fdsts) &

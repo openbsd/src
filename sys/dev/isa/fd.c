@@ -1,8 +1,8 @@
-/*	$OpenBSD: fd.c,v 1.25 1996/10/26 08:07:24 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.26 1996/10/28 00:06:20 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995, 1996 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -95,6 +95,7 @@ struct fd_type fd_types[] = {
         {  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    }, /* 3.5" 720kB diskette */
         {  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS, "720KB/x"  }, /* 720kB in 1.2MB drive */
         {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  }, /* 360kB in 720kB drive */
+	{ 36,2,72,2,0xff,0xaf,0x1b,0x54,80,5760,1,FDC_500KBPS,"2.88MB"    }  /* 2.88MB diskette */
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -227,7 +228,9 @@ fdattach(parent, self, aux)
 	if (!type || (fa->fa_flags & 0x10)) {
 		/* The config has overridden this. */
 		switch (fa->fa_flags & 0x07) {
-		/* 1 is reserved for 2.88MB */
+		case 1:	/* 2.88MB */
+			type = &fd_types[7];
+			break;
 		case 2:	/* 1.44MB */
 			type = &fd_types[0];
 			break;
@@ -252,7 +255,8 @@ fdattach(parent, self, aux)
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
-	fdc->sc_fd[drive] = fd;
+	fdc->sc_type[drive] = FDC_TYPE_DISK;
+	fdc->sc_link.fdlink.sc_fd[drive] = fd;
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -275,7 +279,6 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	char *fdc;
 	int nvraminfo, drive;
 {
-#if defined(i386)
 	int type;
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
@@ -286,7 +289,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		return &fd_types[1];
 	case NVRAM_DISKETTE_TYPE5:
 	case NVRAM_DISKETTE_TYPE6:
-		/* XXX We really ought to handle 2.88MB format. */
+		return &fd_types[7];
 	case NVRAM_DISKETTE_144M:
 		return &fd_types[0];
 	case NVRAM_DISKETTE_360K:
@@ -298,9 +301,6 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		    fdc, drive, type);
 		return NULL;
 	}
-#else
-	return NULL;
-#endif
 }
 
 __inline struct fd_type *
@@ -319,15 +319,12 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
 	int sz;
  	int s;
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
-	    bp->b_blkno < 0 ||
+	if (bp->b_blkno < 0 ||
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
@@ -392,11 +389,11 @@ fdstart(fd)
 	struct fd_softc *fd;
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
-	int active = fdc->sc_drives.tqh_first != 0;
+	int active = (fdc->sc_link.fdlink.sc_drives.tqh_first != NULL);
 
 	/* Link into controller queue. */
 	fd->sc_q.b_active = 1;
-	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+	TAILQ_INSERT_TAIL(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
 
 	/* If controller not already active, start it. */
 	if (!active)
@@ -418,9 +415,10 @@ fdfinish(fd, bp)
 	 */
 	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
-		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
+		TAILQ_REMOVE(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
 		if (bp->b_actf) {
-			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+			TAILQ_INSERT_TAIL(&fdc->sc_link.fdlink.sc_drives, fd,
+					  sc_drivechain);
 		} else
 			fd->sc_q.b_active = 0;
 	}
@@ -463,14 +461,15 @@ fd_set_motor(fdc, reset)
 	u_char status;
 	int n;
 
-	if ((fd = fdc->sc_drives.tqh_first) != NULL)
+	if ((fd = fdc->sc_link.fdlink.sc_drives.tqh_first) != NULL)
 		status = fd->sc_drive;
 	else
 		status = 0;
 	if (!reset)
 		status |= FDO_FRST | FDO_FDMAEN;
 	for (n = 0; n < 4; n++)
-		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
+		if ((fd = fdc->sc_link.fdlink.sc_fd[n])
+		    && (fd->sc_flags & FD_MOTOR))
 			status |= FDO_MOEN(n);
 	bus_io_write_1(fdc->sc_bc, fdc->sc_ioh, fdout, status);
 }
@@ -498,7 +497,8 @@ fd_motor_on(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
+	if ((fdc->sc_link.fdlink.sc_drives.tqh_first == fd)
+	    && (fdc->sc_state == MOTORWAIT))
 		(void) fdintr(fdc);
 	splx(s);
 }
@@ -589,7 +589,7 @@ fdintr(fdc)
 
 loop:
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	fd = fdc->sc_drives.tqh_first;
+	fd = fdc->sc_link.fdlink.sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
 		return 1;
@@ -598,7 +598,7 @@ loop:
 	bp = fd->sc_q.b_actf;
 	if (bp == NULL) {
 		fd->sc_ops = 0;
-		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
+		TAILQ_REMOVE(&fdc->sc_link.fdlink.sc_drives, fd, sc_drivechain);
 		fd->sc_q.b_active = 0;
 		goto loop;
 	}
@@ -619,7 +619,8 @@ loop:
 		}
 		if ((fd->sc_flags & FD_MOTOR) == 0) {
 			/* Turn on the motor, being careful about pairing. */
-			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
+			struct fd_softc *ofd =
+				fdc->sc_link.fdlink.sc_fd[fd->sc_drive ^ 1];
 			if (ofd && ofd->sc_flags & FD_MOTOR) {
 				untimeout(fd_motor_off, ofd);
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);

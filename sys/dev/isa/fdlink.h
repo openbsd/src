@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.1 1996/09/01 20:58:27 downsj Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.2 1996/10/28 00:06:22 downsj Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -67,7 +67,24 @@ enum fdc_state {
 	RECALCOMPLETE,
 };
 
+enum fdc_type {
+	FDC_TYPE_TAPE,
+	FDC_TYPE_DISK
+};
+
+
 /* software state, per controller */
+struct fd_softc;
+struct fdc_fdlink {
+	struct fd_softc *sc_fd[4];	/* pointers to children */
+	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
+};
+
+struct ft_softc;
+struct fdc_ftlink {
+	struct ft_softc *sc_ft[4];	/* pointers to children */
+};
+
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct isadev sc_id;
@@ -78,8 +95,11 @@ struct fdc_softc {
 
 	int sc_drq;
 
-	struct fd_softc *sc_fd[4];	/* pointers to children */
-	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
+	enum fdc_type sc_type[4];	/* type of device */
+	union {
+		struct fdc_fdlink fdlink;
+		struct fdc_ftlink ftlink;
+	} sc_link;
 	enum fdc_state sc_state;
 	int sc_errors;			/* number of retries so far */
 	u_char sc_status[7];		/* copy of registers */
@@ -91,6 +111,7 @@ struct fdc_softc {
 struct fdc_attach_args {
 	int fa_drive;
 	int fa_flags;
+	int fa_type;			/* tape drive type */
 	struct fd_type *fa_deftype;
 };
 
