@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.32 2000/12/12 01:45:31 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.33 2001/01/10 19:48:29 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1296,14 +1296,71 @@ int
 ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 			       struct payload *payload)
 {
+  u_int32_t spisz, nspis, *spis;
   struct sockaddr *dst;
   socklen_t dstlen;
+  int flag = 0, i;
+  u_int8_t proto;
   struct sa *sa;
-  int flag = 0;
 
-  /* So far, the only thing we handle is an INITIAL-CONTACT NOTIFY.  */
   switch (type)
     {
+    case ISAKMP_PAYLOAD_DELETE:
+      proto = GET_ISAKMP_DELETE_PROTO (payload->p);
+      nspis = GET_ISAKMP_DELETE_NSPIS (payload->p);
+      spisz = GET_ISAKMP_DELETE_SPI_SZ (payload->p);
+
+      if (spisz != sizeof (u_int32_t))
+        {
+	    LOG_DBG ((LOG_SA, 40,
+		      "ipsec_handle_leftover_payload: SPI size %d in DELETE "
+		      "payload unsupported", spisz));
+	    return -1;
+	}
+
+      if (nspis == 0)
+        {
+	  LOG_DBG ((LOG_SA, 40, "ipsec_handle_leftover_payload: message "
+		    "specified zero SPIs, ignoring"));
+	  return -1;
+	}
+
+      spis = (u_int32_t *) malloc (nspis * spisz);
+      if (spis == NULL)
+        {
+	  LOG_DBG ((LOG_SA, 70,
+		    "ipsec_handle_leftover_payload: "
+		    "DELETE failed to allocate %d SPIs of %d bytes each",
+		    nspis, spisz));
+	  return -1;
+	}
+
+      memcpy (spis, payload->p + ISAKMP_DELETE_SPI_OFF, nspis * spisz);
+      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+
+      for (i = 0; i < nspis; i++)
+        {
+	    sa = ipsec_sa_lookup (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+				  spis[i], proto);
+	    if (sa == NULL)
+	      {
+		LOG_DBG ((LOG_SA, 30, "ipsec_handle_leftover_payload: "
+			  "could not locate SA (SPI %08x, proto %u)",
+			  spis[i], proto));
+		continue;
+	      }
+
+	    /* Delete the SA and search for the next */
+	    LOG_DBG ((LOG_SA, 30, "ipsec_handle_leftover_payload: "
+		      "DELETE made us delete SA %p (%d references)",
+		      sa, sa->refcnt));
+
+	    sa_free(sa);
+	}
+
+      free (spis);
+      payload->flags |= PL_MARK;
+      return 0;
     case ISAKMP_PAYLOAD_NOTIFY:
       switch (GET_ISAKMP_NOTIFY_MSG_TYPE (payload->p))
 	{
@@ -1340,7 +1397,6 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
             sa_enter (msg->isakmp_sa);
 	  payload->flags |= PL_MARK;
 	  return 0;
-	  break;
 	}
     }
   return -1;
