@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.17 2003/04/07 16:03:32 jmc Exp $
+.\"	$OpenBSD: sk.4,v 1.18 2003/08/01 04:47:05 nate Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -38,15 +38,15 @@
 .Sh NAME
 .Nm sk ,
 .Nm skc
-.Nd SysKonnect SK-984x PCI Gigabit Ethernet driver
+.Nd SysKonnect XMAC II and Marvell GMAC based gigabit ethernet
 .Sh SYNOPSIS
 .Cd "skc* at pci? dev ? function ?"
 .Cd "sk* at skc?"
 .Sh DESCRIPTION
 The
 .Nm sk
-driver provides support for the SysKonnect SK-984x series PCI
-Gigabit Ethernet adapters, including the following:
+driver provides support for SysKonnect based gigabit ethernet adapters
+and Marvell based gigabit ethernet adapters, including the following:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
@@ -61,15 +61,25 @@ SK-9842 SK-NET GE-LX dual port, single mode fiber adapter
 SK-9843 SK-NET GE-SX single port, multimode fiber adapter
 .It
 SK-9844 SK-NET GE-SX dual port, multimode fiber adapter
+.It
+SK-9821 V2.0 single port, copper adapter
+.It
+SK-9843 V2.0 single port, copper adapter
+.It
+3com 3c940 single port, copper adapter
 .El
 .Pp
-The SysKonnect adapters consist of two main components: the XaQti Corp.
-XMAC II Gigabit MAC (sk) and the SysKonnect GEnesis controller ASIC (skc).
-The XMAC provides the Gigabit MAC and PHY support while the GEnesis
-provides an interface to the PCI bus, DMA support, packet buffering
-and arbitration.
+The SysKonnect based adapters consist of two main components: the
+XaQti Corp.  XMAC II Gigabit MAC (sk) and the SysKonnect GEnesis
+controller ASIC (skc).  The XMAC provides the Gigabit MAC and PHY
+support while the GEnesis provides an interface to the PCI bus, DMA
+support, packet buffering and arbitration.
 The GEnesis can control up to two XMACs simultaneously,
 allowing dual-port NIC configurations.
+.Pp
+The Marvell based adapters are a single integrated circuit, but are
+still presented as a separate MAC (sk) and controller ASIC (skc).  At
+this time, there are no dual-port Marvell based NICs.
 .Pp
 The
 .Nm
