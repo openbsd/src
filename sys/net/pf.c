@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.154 2001/09/19 11:09:59 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.155 2001/09/21 07:18:49 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1083,12 +1083,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
 #ifndef INET
 		if (rule->af == AF_INET) {
+			pool_put(&pf_rule_pl, rule);
 			error = EAFNOSUPPORT;
 			break;
 		}
 #endif /* INET */
 #ifndef INET6
 		if (rule->af == AF_INET6) {
+			pool_put(&pf_rule_pl, rule);
 			error = EAFNOSUPPORT;
 			break;
 		}
@@ -1204,12 +1206,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bcopy(&pcr->newrule, newrule, sizeof(struct pf_rule));
 #ifndef INET
 			if (newrule->af == AF_INET) {
+				pool_put(&pf_rule_pl, newrule);
 				error = EAFNOSUPPORT;
 				break;
 			}
 #endif /* INET */
 #ifndef INET6
 			if (newrule->af == AF_INET6) {
+				pool_put(&pf_rule_pl, newrule);
 				error = EAFNOSUPPORT;
 				break;
 			}
@@ -1304,12 +1308,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&pn->nat, nat, sizeof(struct pf_nat));
 #ifndef INET
 		if (nat->af == AF_INET) {
+			pool_put(&pf_nat_pl, nat);
 			error = EAFNOSUPPORT;
 			break;
 		}
 #endif /* INET */
 #ifndef INET6
 		if (nat->af == AF_INET6) {
+			pool_put(&pf_nat_pl, nat);
 			error = EAFNOSUPPORT;
 			break;
 		}
@@ -1411,12 +1417,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bcopy(&pcn->newnat, newnat, sizeof(struct pf_nat));
 #ifndef INET
 			if (newnat->af == AF_INET) {
+				pool_put(&pf_nat_pl, newnat);
 				error = EAFNOSUPPORT;
 				break;
 			}
 #endif /* INET */
 #ifndef INET6
 			if (newnat->af == AF_INET6) {
+				pool_put(&pf_nat_pl, newnat);
 				error = EAFNOSUPPORT;
 				break;
 			}
@@ -1498,12 +1506,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&pb->binat, binat, sizeof(struct pf_binat));
 #ifndef INET
 		if (binat->af == AF_INET) {
+			pool_put(&pf_binat_pl, binat);
 			error = EAFNOSUPPORT;
 			break;
 		}
 #endif /* INET */
 #ifndef INET6
 		if (binat->af == AF_INET6) {
+			pool_put(&pf_binat_pl, binat);
 			error = EAFNOSUPPORT;
 			break;
 		}
@@ -1606,12 +1616,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				sizeof(struct pf_binat));
 #ifndef INET
 			if (newbinat->af == AF_INET) {
+				pool_put(&pf_binat_pl, newbinat);
 				error = EAFNOSUPPORT;
 				break;
 			}
 #endif /* INET */
 #ifndef INET6
 			if (newbinat->af == AF_INET6) {
+				pool_put(&pf_binat_pl, newbinat);
 				error = EAFNOSUPPORT;
 				break;
 			}
@@ -1694,12 +1706,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(&pr->rdr, rdr, sizeof(struct pf_rdr));
 #ifndef INET
 		if (rdr->af == AF_INET) {
+			pool_put(&pf_rdr_pl, rdr);
 			error = EAFNOSUPPORT;
 			break;
 		}
 #endif /* INET */
 #ifndef INET6
 		if (rdr->af == AF_INET6) {
+			pool_put(&pf_rdr_pl, rdr);
 			error = EAFNOSUPPORT;
 			break;
 		}
@@ -1801,12 +1815,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bcopy(&pcn->newrdr, newrdr, sizeof(struct pf_rdr));
 #ifndef INET
 			if (newrdr->af == AF_INET) {
+				pool_put(&pf_rdr_pl, newrdr);
 				error = EAFNOSUPPORT;
 				break;
 			}
 #endif /* INET */
 #ifndef INET6
 			if (newrdr->af == AF_INET6) {
+				pool_put(&pf_rdr_pl, newrdr);
 				error = EAFNOSUPPORT;
 				break;
 			}
@@ -1991,8 +2007,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		key.port[0] = pnl->dport;
 
 		if (!pnl->proto || 
-		    !PF_AZERO(&pnl->saddr, pnl->af) ||
-		    !PF_AZERO(&pnl->daddr, pnl->af) ||
+		    PF_AZERO(&pnl->saddr, pnl->af) ||
+		    PF_AZERO(&pnl->daddr, pnl->af) ||
 		    !pnl->dport || !pnl->sport)
 			error = EINVAL;
 		else {
