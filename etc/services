@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.22 2000/04/16 10:25:24 espie Exp $
+#	$OpenBSD: services,v 1.23 2000/04/27 15:28:10 millert Exp $
 #
 # Network services, Internet style
 #
@@ -126,6 +126,8 @@ https		443/tcp				# secure http (SSL)
 photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
+submission	587/tcp		msa		# mail message submission
+submission	587/udp		msa		# mail message submission
 #
 # UNIX specific services
 #
