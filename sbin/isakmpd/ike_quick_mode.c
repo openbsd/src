@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.5 1998/12/21 01:02:24 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.64 1998/12/17 07:55:46 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.6 1999/02/26 03:42:30 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.69 1999/02/25 11:39:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"
@@ -240,7 +242,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 					      IPSEC_ATTR_SA_LIFE_TYPE, &attr);
 
 		      /* XXX Does only handle 16-bit entities!  */
-		      value = conf_get_num (life->field, "LIFE_DURATION");
+		      value = conf_get_num (life->field, "LIFE_DURATION", 0);
 		      if (value)
 			attr
 			  = attribute_set_basic (attr,
@@ -262,24 +264,25 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 				      ike_group_desc_cst,
 				      IPSEC_ATTR_GROUP_DESCRIPTION, &attr);
 
-	      value = conf_get_num (xf->field, "KEY_LENGTH");
+	      value = conf_get_num (xf->field, "KEY_LENGTH", 0);
 	      if (value)
 		attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_LENGTH,
 					    value);
 
-	      value = conf_get_num (xf->field, "KEY_ROUNDS");
+	      value = conf_get_num (xf->field, "KEY_ROUNDS", 0);
 	      if (value)
 		attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_ROUNDS,
 					    value);
 
-	      value = conf_get_num (xf->field, "COMPRESS_DICTIONARY_SIZE");
+	      value = conf_get_num (xf->field, "COMPRESS_DICTIONARY_SIZE", 0);
 	      if (value)
 		attr
 		  = attribute_set_basic (attr,
 					 IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE,
 					 value);
 
-	      value = conf_get_num (xf->field, "COMPRESS_PRIVATE_ALGORITHM");
+	      value
+		= conf_get_num (xf->field, "COMPRESS_PRIVATE_ALGORITHM", 0);
 	      if (value)
 		attr
 		  = attribute_set_basic (attr,
@@ -324,10 +327,15 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&exchange->sa_list)->protos, proto,
 			     link);
 
+	  /* Setup the incoming SPI.  */
 	  SET_ISAKMP_PROP_SPI_SZ (proposal[prop_no], spi_sz);
 	  memcpy (proposal[prop_no] + ISAKMP_PROP_SPI_OFF, spi, spi_sz);
-	  proto->spi_sz[exchange->initiator] = spi_sz;
-	  proto->spi[exchange->initiator] = spi;
+	  proto->spi_sz[1] = spi_sz;
+	  proto->spi[1] = spi;
+
+	  /* Let the DOI get at proto for initializing its own data. */
+	  if (doi->proto_init)
+	    doi->proto_init (proto, prot->field);
 
 	  SET_ISAKMP_PROP_NTRANSFORMS (proposal[prop_no],
 				       transform_cnt[prop_no]);
