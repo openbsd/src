@@ -1,3 +1,4 @@
+.\"	$OpenBSD: timed.8,v 1.2 1999/03/11 21:08:04 aaron Exp $
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -38,7 +39,7 @@
 .Nm timed
 .Nd time server daemon
 .Sh SYNOPSIS
-.Nm timed
+.Nm
 .Op Fl M
 .Op Fl t
 .Op Fl d
@@ -62,11 +63,11 @@ using the
 timestamp request message.
 .Pp
 The service provided by
-.Nm timed
-is based  on a master-slave
+.Nm
+is based on a master-slave
 scheme.
 When
-.Nm timed
+.Nm
 is started on a machine, it asks the master for the network time
 and sets the host's clock to that time.
 After that, it accepts synchronization messages periodically sent by
@@ -85,7 +86,7 @@ a new master from among slaves running with the
 .Fl M
 flag.
 A
-.Nm timed
+.Nm
 running without the
 .Fl M
 or
@@ -94,7 +95,7 @@ flags will remain a slave.
 The 
 .Fl t
 flag enables
-.Nm timed
+.Nm
 to trace the messages it receives in the
 file
 .Pa /var/log/timed.log .
@@ -105,7 +106,7 @@ The
 flag is for debugging the daemon.
 It causes the program to not put itself into the background.
 Normally
-.Nm timed
+.Nm
 checks for a master time server on each network to which
 it is connected, except as modified by the options described below.
 It will request synchronization service from the first master server
@@ -142,7 +143,7 @@ and
 .Fl i
 flags are meaningless if used together.
 .Pp
-.Nm Timed
+.Nm
 checks for a master time server on each network to which
 it is connected, except as modified by the
 .Fl n
@@ -185,7 +186,7 @@ and another time daemon are run on the same machine,
 ensure that the 
 .Fl F
 flag is used, so that 
-.Nm timed
+.Nm
 never attempts to adjust the local clock.
 .Pp 
 The protocol is based on UDP/IP broadcasts.  All machines within
@@ -199,9 +200,11 @@ machines in the system log.
 .Sh FILES
 .Bl -tag -width /var/log/timed.masterlog -compact
 .It Pa /var/log/timed.log
-tracing file for timed
+tracing file for
+.Nm
 .It Pa /var/log/timed.masterlog
-log file for master timed 
+log file for master
+.Nm
 .El
 .Sh SEE ALSO
 .Xr date 1 ,

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: sliplogin.8,v 1.2 1999/03/11 21:08:02 aaron Exp $
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sliplogin.8	5.4 (Berkeley) 8/5/91
-.\"	$Id: sliplogin.8,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $
+.\"	$Id: sliplogin.8,v 1.2 1999/03/11 21:08:02 aaron Exp $
 .\"
 .Dd August 5, 1991
 .Dt SLIPLOGIN 8
@@ -39,10 +40,10 @@
 .Nm sliplogin
 .Nd attach a serial line network interface
 .Sh SYNOPSIS
-.Nm sliplogin
+.Nm
 .Op Ar loginname
 .Sh DESCRIPTION
-.Nm Sliplogin
+.Nm
 is used to turn the terminal line on standard input into
 a Serial Line IP
 .Pq Tn SLIP
@@ -53,7 +54,7 @@ for an entry matching
 .Ar loginname
 (which defaults to the current login name if omitted).
 If a matching entry is found, the line is configured appropriately
-for slip (8-bit transparent i/o) and converted to
+for slip (8-bit transparent I/O) and converted to
 .Tn SLIP
 line
 discipline.  Then a shell script is invoked to initialize the slip
@@ -85,7 +86,7 @@ entry, in order starting with
 .Pp
 Only the super-user may attach a network interface.  The interface is
 automatically detached when the other end hangs up or the
-.Nm sliplogin
+.Nm
 process dies.  If the kernel slip
 module has been configured for it, all routes through that interface will
 also disappear at the same time.  If there is other processing a site
@@ -125,11 +126,11 @@ directly to
 are optional arguments used to configure the line.
 .Sh EXAMPLE
 The normal use of
-.Nm sliplogin
+.Nm
 is to create a
 .Pa /etc/passwd
 entry for each legal, remote slip site with
-.Nm sliplogin
+.Nm
 as the shell for that entry.  E.g.,
 .Bd -literal
 Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/usr/sbin/sliplogin
@@ -156,7 +157,7 @@ to the local host name and
 is the local host IP netmask.
 .Pp
 Note that
-.Nm sliplogin
+.Nm
 must be setuid to root and, while not a security hole, moral defectives
 can use it to place terminal lines in an unusable state and/or deny
 access to legitimate users of a remote slip line.  To prevent this,
@@ -170,7 +171,7 @@ and mode 4550 (setuid root, only group
 .Em slip
 can execute binary).
 .Sh DIAGNOSTICS
-.Nm Sliplogin
+.Nm
 logs various information to the system log daemon,
 .Xr syslogd 8 ,
 with a facility code of

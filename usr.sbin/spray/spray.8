@@ -1,3 +1,4 @@
+.\"	$OpenBSD: spray.8,v 1.3 1999/03/11 21:08:03 aaron Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -28,7 +29,7 @@
 .Nm spray
 .Nd send many packets to host 
 .Sh SYNOPSIS
-.Nm spray
+.Nm
 .Op Fl c Ar count 
 .Op Fl d Ar delay 
 .Op Fl l Ar length
@@ -36,7 +37,7 @@
 \&...
 .Ek
 .Sh DESCRIPTION
-.Nm Spray
+.Nm
 sends multiple RPC packets to 
 .Ar host
 and records how many of them were correctly received and how long it took.
@@ -58,11 +59,11 @@ bytes.
 Not all values of
 .Ar length
 are possible because RPC data is encoded using XDR. 
-.Nm Spray
+.Nm
 rounds up to the nearest possible value.
 .El
 .Pp
-.Nm Spray 
+.Nm
 is intended for use in network testing, measurement, and management.
 This command
 .Bf -emphasis 

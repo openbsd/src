@@ -1,4 +1,4 @@
-.\"	$OpenBSD: screenblank.1,v 1.2 1996/03/25 15:56:13 niklas Exp $
+.\"	$OpenBSD: screenblank.1,v 1.3 1999/03/11 21:07:59 aaron Exp $
 .\"	$NetBSD: screenblank.1,v 1.2 1996/02/28 01:18:32 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,20 +42,24 @@
 .Nm screenblank
 .Nd screen saver daemon for the Sun 3 and SPARC
 .Sh SYNOPSIS
-.Nm screenblank
+.Nm
 .Op Fl k | Fl m
 .Op Fl d Ar timeout
 .Op Fl e Ar timeout
 .Op Fl f Ar framebuffer
 .Sh DESCRIPTION
-.Nm Screenblank
+.Nm
 disables the framebuffer if the keyboard and mouse are idle for a period
 of time, and re-enables the framebuffer when keyboard or mouse activity
 resumes.
 .Pp
-When killed with a SIGINT, SIGHUP, or SIGTERM,
-.Nm screenblank
-will re-enable the framebuffer.  The pid can be found in the file
+When killed with a
+.Dv SIGINT ,
+.Dv SIGHUP ,
+or
+.Dv SIGTERM ,
+.Nm
+will re-enable the framebuffer.  The PID can be found in the file
 .Pa /var/run/screenblank.pid .
 .Pp
 The options are as follows:
@@ -87,16 +91,17 @@ and
 .Fl m
 flags are mutually exclusive.
 .Sh FILES
-.Bl -tag -width "/var/run/screenblank.pid  "
-.It /dev/kbd
-The keyboard device.
-.It /dev/mouse
-The mouse device.
-.It /dev/console
-The console device.
-.It /dev/fb
-The default framebuffer.
-.It /var/run/screenblank.pid
-File containing the pid of
-.Nm screenblank .
+.Bl -tag -width "/var/run/screenblank.pid  " -compact
+.It Pa /dev/kbd
+keyboard device
+.It Pa /dev/mouse
+mouse device
+.It Pa /dev/console
+console device
+.It Pa /dev/fb
+default framebuffer
+.It Pa /var/run/screenblank.pid
+contains the PID of
+.Nm screenblank
 .El
+

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: syslogd.8,v 1.8 1999/03/11 21:08:03 aaron Exp $
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,16 +40,17 @@
 .Nm syslogd
 .Nd log systems messages
 .Sh SYNOPSIS
-.Nm syslogd
+.Nm
 .Op Fl du
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
 .Op Fl a Ar path
 .Op Fl p Ar log_socket
 .Sh DESCRIPTION
-.Nm Syslogd
+.Nm
 reads and logs messages to the system console, log files, other
 machines and/or users as specified by its configuration file.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
@@ -59,10 +61,13 @@ Specify the pathname of an alternate configuration file;
 the default is
 .Pa /etc/syslog.conf .
 .It Fl m Ar mark_interval
-Select the number of minutes between ``mark'' messages;
-the default is 20 minutes.
+Select the number of minutes between
+.Dq mark
+messages; the default is 20 minutes.
 .It Fl u
-Select the historical ``insecure'' mode, in which syslogd will
+Select the historical
+.Dq insecure
+mode, in which syslogd will
 accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
@@ -72,7 +77,7 @@ the default is
 .Pa /dev/log .
 .It Fl a Pa path
 Specify a location where
-.Nm syslogd
+.Nm
 should place an additional log socket.
 Up to about 20 additional logging sockets can be specified.
 The primary use for this is to place additional log sockets in
@@ -80,22 +85,23 @@ The primary use for this is to place additional log sockets in
 of various chroot filespaces.
 .El
 .Pp
-.Nm Syslogd
+.Nm
 reads its configuration file when it starts up and whenever it
 receives a hangup signal.
 For information on the format of the configuration file,
 see
 .Xr syslog.conf 5 .
 .Pp
-.Nm Syslogd
+.Nm
 opens an Internet domain socket as specified
 in
 .Pa /etc/services .
 Normally
-.Nm syslogd
+.Nm
 will only use this socket to send messages outwards, but in
-`insecure'' mode it will also read messages from this socket.
-.Nm Syslogd
+.Dq insecure
+mode it will also read messages from this socket.
+.Nm
 also opens and reads messages from the
 .Tn UNIX
 domain socket
@@ -104,36 +110,35 @@ and from the special device
 .Pa /dev/klog
 (to read kernel messages).
 .Pp
-.Nm Syslogd
+.Nm
 creates the file
 .Pa /var/run/syslog.pid ,
-and stores its process
-id there.
+and stores its process ID there.
 This can be used to kill or reconfigure
 .Nm syslogd .
 .Pp
 The message sent to
-.Nm syslogd
+.Nm
 should consist of a single line.
 The message can contain a priority code, which should be a preceding
 decimal number in angle braces, for example,
-.Sq Aq 5.
+.Dq Aq 5. .
 This priority code should map into the priorities defined in the
 include file
 .Aq Pa sys/syslog.h .
 .Sh FILES
 .Bl -tag -width /var/run/syslog.pid -compact
 .It Pa /etc/syslog.conf
-The configuration file.
+configuration file
 .It Pa /var/run/syslog.pid
-The process id of current
-.Nm syslogd .
+process ID of current
+.Nm syslogd
 .It Pa /dev/log
-Name of the
+name of the
 .Tn UNIX
-domain datagram log socket.
+domain datagram log socket
 .It Pa /dev/klog
-The kernel log device.
+kernel log device
 .El
 .Sh SEE ALSO
 .Xr logger 1 ,
@@ -145,3 +150,4 @@ The
 .Nm
 command appeared in
 .Bx 4.3 .
+
