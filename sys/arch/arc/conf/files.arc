@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.14 1997/04/10 16:29:12 pefo Exp $
+#	$OpenBSD: files.arc,v 1.15 1997/05/18 13:45:24 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -152,6 +152,15 @@ file	arch/arc/dev/lpt_lbus.c		lpt & (lpt_pica | lpt_algor)
 device	pcivga: tty
 attach	pcivga at pci
 file	arch/arc/pci/pci_vga.c		pcivga
+
+#
+# Specials.
+#
+# RAM disk for boot tape
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
+file arch/arc/dev/rd_root.c		ramdisk_hooks
+major {rd = 8}
 
 #
 #	Common files

@@ -9,8 +9,6 @@ InWork: Have a test version. The system hangs after a while. Not solved yet.
 
     o   Boot. Standalone boot program instead of booting the kernel directly?
 
-    o   Create boot package for distribution.
-
     o   sigsetjmp/siglongjmp missing....
 
     o   Add more videomodes to pccons driver. 50kHz and 64kHz monitors?
@@ -18,8 +16,6 @@ InWork: This seems to be hard. Need more info on the chip.
 
     o   Find out why bitmap load to S3-928 flashes screen.
 Know why (enable linear mode). Need S3 info.
-
-    o   Would be nice to have Motif...
 
     o   Can we have 32 double registers?
 

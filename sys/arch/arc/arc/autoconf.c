@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1997/04/19 17:19:39 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.8 1997/04/19 17:19:39 pefo Exp $
+ *      $Id: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $
  */
 
 /*
@@ -233,6 +233,9 @@ setroot()
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 #endif
+
+	if(boothowto & RB_DFLTROOT)
+		return;		/* Boot compiled in */
 
 	/* Lookup boot device from boot if not set by configuration */
 	if(bootdv == NULL) {

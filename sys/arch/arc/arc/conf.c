@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 1997/04/30 22:02:24 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 1997/05/18 13:45:21 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.15 1997/04/30 22:02:24 niklas Exp $
+ *      $Id: conf.c,v 1.16 1997/05/18 13:45:21 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -67,6 +67,9 @@ bdev_decl(fd);
 bdev_decl(wd);
 #include "acd.h"
 bdev_decl(acd);
+#include "ccd.h"
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -76,9 +79,9 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_disk_init(NWDC,wd),	/* 4: ST506/ESDI/IDE disk */
 	bdev_disk_init(NACD,acd),	/* 5: ATAPI CD-ROM */
-	bdev_notdef(),			/* 6:  */
+	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
 	bdev_disk_init(NFDC,fd),	/* 7: Floppy disk driver */
-	bdev_notdef(),			/* 8:  */
+	bdev_disk_init(NRD,rd),		/* 8: RAM disk (for install) */
 	bdev_notdef(),			/* 9:  */
 	bdev_notdef(),			/* 10:  */
 	bdev_notdef(),			/* 11:  */
@@ -134,6 +137,7 @@ cdev_decl(st);
 #include "fdc.h"
 bdev_decl(fd);
 cdev_decl(vnd);
+cdev_decl(rd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "com.h"
@@ -183,7 +187,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_notdef(),			/* 22: */
+	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
 	cdev_notdef(),			/* 23: */
 	cdev_notdef(),			/* 24: */
 	cdev_notdef(),			/* 25: */
@@ -272,7 +276,7 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 19 */	5,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
-	/* 22 */	NODEV,
+	/* 22 */	8,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,

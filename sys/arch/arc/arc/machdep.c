@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 1997/05/01 15:15:29 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 1997/05/18 13:45:21 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.26 1997/05/01 15:15:29 pefo Exp $
+ *      $Id: machdep.c,v 1.27 1997/05/18 13:45:21 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -301,9 +301,14 @@ mips_init(argc, argv, envv)
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
-	 * Default to SINGLE and ASKNAME if no args.
+	 * Default to SINGLE and ASKNAME if no args or
+	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
 	 */
+#ifdef RAMDISK_HOOKS
+	boothowto = RB_SINGLE | RB_DFLTROOT;
+#else
 	boothowto = RB_SINGLE | RB_ASKNAME;
+#endif /* RAMDISK_HOOKS */
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
@@ -320,10 +325,6 @@ mips_init(argc, argv, envv)
 				boothowto |= RB_DFLTROOT;
 				break;
 
-			case 'm': /* mini root present in memory */
-				boothowto |= RB_MINIROOT;
-				break;
-
 			case 'n': /* ask for names */
 				boothowto |= RB_ASKNAME;
 				break;
@@ -335,18 +336,6 @@ mips_init(argc, argv, envv)
 
 		}
 	}
-
-#ifdef MFS
-	/*
-	 * Check to see if a mini-root was loaded into memory. It resides
-	 * at the start of the next page just after the end of BSS.
-	 */
-	if (boothowto & RB_MINIROOT) {
-		boothowto |= RB_DFLTROOT;
-		bios_load_miniroot(NULL, sysend);
-		sysend += mfs_initminiroot(sysend);
-	}
-#endif
 
 	/*
 	 * Now its time to abandon the BIOS and be self supplying.
