@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.9 2000/03/17 18:15:13 aaron Exp $
+.\"	$OpenBSD: expr.1,v 1.10 2000/10/18 06:55:08 aaron Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -74,10 +74,12 @@ otherwise, returns 0.
 .Pp
 Parentheses are used for grouping in the usual manner.
 .Sh EXAMPLES
-Add 1 to the variable
-.Va a :
+.Cm a=`expr $a + 1`
 .Pp
-.Dl a=`expr $a + 1`
+Add 1 to the variable
+.Va a .
+.Pp
+.Cm expr "//$a" \&: '.*/\e(.*\e)'
 .Pp
 Return the filename portion of a pathname stored
 in variable
@@ -86,13 +88,10 @@ The
 .Ql //
 characters act to eliminate ambiguity with the division operator.
 .Pp
-.Dl expr "//$a" Li : '.*/\e(.*\e)'
+.Cm expr $a \&: '.*'
 .Pp
 Return the number of characters in variable
-.Va a :
-.Pp
-.Dl expr $a Li : '.*'
-.Pp
+.Va a .
 .Sh DIAGNOSTICS
 The
 .Nm

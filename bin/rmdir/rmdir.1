@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmdir.1,v 1.9 2000/03/21 14:40:15 aaron Exp $
+.\"	$OpenBSD: rmdir.1,v 1.10 2000/10/18 06:55:10 aaron Exp $
 .\"	$NetBSD: rmdir.1,v 1.10 1995/07/25 19:37:35 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -87,6 +87,18 @@ successfully.
 .It Li \&>\&0
 An error occurred.
 .El
+.Sh EXAMPLES
+.Cm rmdir foobar
+.Pp
+Remove the directory
+.Pa foobar
+if it is empty.
+.Pp
+.Cm rmdir -p cow/horse/monkey
+.Pp
+Remove all directories up to and including
+.Pa monkey ,
+stopping at the first non-empty directory (if any).
 .Sh SEE ALSO
 .Xr rm 1 ,
 .Xr rmdir 2

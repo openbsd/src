@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.8 1999/09/23 19:15:49 aaron Exp $
+.\"	$OpenBSD: ln.1,v 1.9 2000/10/18 06:55:08 aaron Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -121,19 +121,19 @@ makes links in
 to all the named source files.
 The links made will have the same name as the files being linked to.
 .Sh EXAMPLES
-Create a symbolic link named
-.Pa /home/www
-and point it to
-.Pa /var/www :
+.Cm ln -s /var/www /home/www
 .Pp
-.D1 Ic ln -s /var/www /home/www
+Creates a symbolic link named
+.Pa /home/www
+and points it to
+.Pa /var/www .
+.Pp
+.Cm ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
 .Pp
 Hard link
 .Pa /usr/local/bin/fooprog
 to file
-.Pa /usr/local/bin/fooprog-1.0 :
-.Pp
-.D1 Ic ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
+.Pa /usr/local/bin/fooprog-1.0 .
 .Pp
 As an exercise, try the following commands:
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.19 2000/08/05 22:05:52 pjanzen Exp $
+.\"	$OpenBSD: cat.1,v 1.20 2000/10/18 06:55:06 aaron Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -109,21 +109,15 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-The command:
-.Bd -literal -offset indent
-.Ic cat file1
-.Ed
+.Cm cat file1
 .Pp
-will print the contents of
+Print the contents of
 .Ar file1
 to the standard output.
 .Pp
-The command:
-.Bd -literal -offset indent
-.Ic cat file1 file2 > file3
-.Ed
+.Cm cat file1 file2 > file3
 .Pp
-will sequentially print the contents of
+Sequentially print the contents of
 .Ar file1
 and
 .Ar file2
@@ -136,12 +130,9 @@ See the manual page for your shell (i.e.,
 .Xr sh 1 )
 for more information on redirection.
 .Pp
-The command:
-.Bd -literal -offset indent
-.Ic cat file1 - file2 - file3
-.Ed
+.Cm cat file1 - file2 - file3
 .Pp
-will print the contents of
+Print the contents of
 .Ar file1 ,
 print data it receives from the standard input until it receives an
 .Dv EOF

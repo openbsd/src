@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.9 2000/03/21 14:40:14 aaron Exp $
+.\"	$OpenBSD: rm.1,v 1.10 2000/10/18 06:55:10 aaron Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -127,20 +127,18 @@ removed.
 If an error occurs,
 .Nm
 exits with a value >0.
+.Sh EXAMPLES
+.Cm rm -rf foobar
+.Pp
+Recursively remove all files contained within the
+.Pa foobar
+directory hierarchy.
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .\" .Xr undelete 2 ,
 .Xr unlink 2 ,
 .Xr fts 3 ,
 .Xr symlink 7
-.Sh BUGS
-The
-.Fl P
-option assumes that the underlying file system is a fixed-block file
-system.
-UFS is a fixed-block file system, LFS is not.
-In addition, only regular files are overwritten, other types of files
-are not.
 .Sh COMPATIBILITY
 The
 .Nm
@@ -164,3 +162,11 @@ An
 .Nm
 command appeared in
 .At v1 .
+.Sh BUGS
+The
+.Fl P
+option assumes that the underlying file system is a fixed-block file
+system.
+UFS is a fixed-block file system, LFS is not.
+In addition, only regular files are overwritten, other types of files
+are not.

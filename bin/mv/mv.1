@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.10 2000/03/21 14:40:14 aaron Exp $
+.\"	$OpenBSD: mv.1,v 1.11 2000/10/18 06:55:09 aaron Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -124,6 +124,16 @@ rm -f destination_path && \e
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+.Cm mv -f foo bar
+.Pp
+Rename file
+.Pa foo
+to
+.Pa bar ,
+overwriting
+.Pa bar
+if it already exists.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr symlink 7

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.10 1999/09/23 10:29:09 aaron Exp $
+.\"	$OpenBSD: dd.1,v 1.11 2000/10/18 06:55:07 aaron Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -341,6 +341,12 @@ will exit.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+.Cm dd if=floppy28.fs of=/dev/fd0a
+.Pp
+Write an
+.Ox
+floppy image to a floppy disk.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr mt 1 ,
