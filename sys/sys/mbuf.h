@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.62 2002/06/07 19:57:45 dhartmei Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.63 2002/06/09 00:57:05 itojun Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -140,9 +140,10 @@ struct mbuf {
 /* mbuf pkthdr flags, also in m_flags */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
-#define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
-#define M_AUTH		0x0800  /* packet was authenticated (AH) */
-#define M_COMP		0x1000  /* packet was compressed (IPCOMP) */
+#define M_CONF		0x0400  /* payload was encrypted (ESP-transport) */
+#define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
+#define M_COMP		0x1000  /* payload was compressed (IPCOMP) */
+#define M_AUTH_AH	0x2000  /* header was authenticated (AH) */
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
