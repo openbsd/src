@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp $
+	$OpenBSD: pcidevs,v 1.458 2001/10/31 06:14:19 nate Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -532,6 +532,7 @@ vendor TRIWARE		0x13c1	3ware
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics
 vendor LAVA		0x1407	Lava
+vendor TAMARACK		0x143d	Tamarack Microelectronics
 vendor OXFORD		0x14d2	Oxford
 vendor INVERTEX		0x14e1	Invertex
 vendor AIRONET		0x14b9	Aironet
@@ -546,6 +547,7 @@ vendor VMWARE		0x15ad	VMware
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
+vendor ANTARES		0x1754	Antares Microsystems
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
 vendor HINT		0x3388	Hint
@@ -795,6 +797,9 @@ product AMD 766_PMC		0x7413	766 Power Mgmt
 product AMI MEGARAID		0x1960	MegaRAID
 product AMI MEGARAID428		0x9010	MegaRAID Series 428
 product AMI MEGARAID434		0x9060	MegaRAID Series 434
+
+/* Antares Microsystems, Inc. products */
+product ANTARES TC9021		0x1021	Antares Gigabit Ethernet
 
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit
@@ -1829,6 +1834,7 @@ product SUN US_IIe		0xa001	UltraSPARC IIe PCI
 
 /* Sundance products */
 product SUNDANCE ST201		0x0201	ST201
+product SUNDANCE ST2021		0x2021	ST2021 Gigabit Ethernet
 
 /* Surecom products */
 product SURECOM NE34		0x0e34	Surecom NE-34
@@ -1839,6 +1845,10 @@ product SYMPHONY 82C103		0x0103	82C103
 product SYMPHONY 82C105		0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
 product SYMPHONY 82C565		0x0565	82C565 PCI-ISA
+
+/* Tamarack Microelectronics */
+product TAMARACK TC9021		0x1021	Tamarack TC9021 GigE
+product TAMARACK TC9021_ALT	0x9021	Tamarack TC9021 GigE (alt ID)
 
 /* Tekram Technology products (1st ID)*/
 product TEKRAM 	DC290		0xdc29	DC-290(M)
