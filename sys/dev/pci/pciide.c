@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.26 2000/06/26 18:09:11 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.27 2000/07/07 18:42:16 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -370,6 +370,10 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
+	IDE_PCI_CLASS_OVERRIDE,
+	pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_ULTRA100,
 	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	}
@@ -1806,6 +1810,8 @@ amd756_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int rev = PCI_REVISION(
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
@@ -1838,8 +1844,25 @@ amd756_setup_channel(chp)
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
-			/* use Multiword DMA */
+			/* use Multiword DMA, but only if revision is OK */
 			drvp->drive_flags &= ~DRIVE_UDMA;
+#ifndef PCIIDE_AMD756_ENABLEDMA
+			/*
+			 * The workaround doesn't seem to be necessary
+			 * with all drives, so it can be disabled by
+			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
+			 * triggered. 
+			 */
+			if (AMD756_CHIPREV_DISABLEDMA(rev)) {
+				printf("%s:%d:%d: multi-word DMA disabled due "
+				    "to chip revision\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    chp->channel, drive);
+				mode = drvp->PIO_mode;
+				drvp->drive_flags &= ~DRIVE_DMA;
+				goto pio;
+			}
+#endif
 			/* mode = min(pio, dma+2) */
 			if (drvp->PIO_mode <= (drvp->DMA_mode +2))
 				mode = drvp->PIO_mode;
