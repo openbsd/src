@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.46 2002/06/10 22:27:33 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.47 2003/01/16 04:17:10 art Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -146,7 +146,7 @@
  */
 #define	ISA_DMA_BOUNCE_THRESHOLD	0x00ffffff
 
-extern	vm_offset_t avail_end;
+extern	paddr_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
@@ -965,7 +965,7 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t high;
+	paddr_t high;
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
@@ -1049,8 +1049,9 @@ _isa_dma_check_buffer(buf, buflen, segcnt, boundary, p)
 	bus_size_t boundary;
 	struct proc *p;
 {
-	vm_offset_t vaddr = (vm_offset_t)buf;
-	vm_offset_t pa, lastpa, endva;
+	vaddr_t vaddr = (vaddr_t)buf;
+	vaddr_t endva;
+	paddr_t pa, lastpa;
 	u_long pagemask = ~(boundary - 1);
 	pmap_t pmap;
 	int nsegs;
@@ -1069,7 +1070,7 @@ _isa_dma_check_buffer(buf, buflen, segcnt, boundary, p)
 		/*
 		 * Get physical address for this segment.
 		 */
-		pmap_extract(pmap, (vm_offset_t)vaddr, &pa);
+		pmap_extract(pmap, (vaddr_t)vaddr, &pa);
 		pa = trunc_page(pa);
 
 		/*
