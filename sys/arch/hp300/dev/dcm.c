@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.22 2005/01/15 21:08:36 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.23 2005/02/12 18:01:08 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -266,10 +266,7 @@ void	dcminit(struct dcmdevice *, int, int);
 int	dcmselftest(struct dcm_softc *);
 
 int	dcm_console_scan(int, caddr_t, void *);
-void	dcmcnprobe(struct consdev *);
-void	dcmcninit(struct consdev *);
-int	dcmcngetc(dev_t);
-void	dcmcnputc(dev_t, int);
+cons_decl(dcm);
 
 int	dcmmatch(struct device *, void *, void *);
 void	dcmattach(struct device *, struct device *, void *);

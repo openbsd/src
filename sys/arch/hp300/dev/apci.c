@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.18 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.19 2005/02/12 18:01:08 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -194,11 +194,7 @@ struct apciregs *apci_cn = NULL;	/* console hardware */
 int	apciconsinit;			/* has been initialized */
 int	apcimajor;			/* our major number */
 
-void	apcicnprobe(struct consdev *);
-void	apcicninit(struct consdev *);
-int	apcicngetc(dev_t);
-void	apcicnputc(dev_t, int);
-
+cons_decl(apci);
 
 int
 apcimatch(parent, match, aux)
