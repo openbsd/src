@@ -1,3 +1,4 @@
+/*	$OpenBSD: isa_intr.h,v 1.2 1996/02/27 15:40:58 niklas Exp $	*/
 /*	$NetBSD: isa_intr.h,v 1.1 1995/08/02 14:44:57 niklas Exp $	*/
 
 /*
@@ -42,7 +43,7 @@ struct	isa_intr_fcns {
 	void	(*isa_intr_setup) __P((void));
 
 	void	*(*isa_intr_establish) __P((int irq, int type, int level,
-	    int (*ih_fun)(void *), void *ih_arg));
+	    int (*ih_fun)(void *), void *ih_arg, char *ih_what));
 	void	(*isa_intr_disestablish) __P((void *handler));
 
 	void	(*isa_iointr) __P((void *framep, int vec));

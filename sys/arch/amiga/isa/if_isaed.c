@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_isaed.c,v 1.2 1996/02/27 15:40:57 niklas Exp $	*/
 /*	$NetBSD: if_isaed.c,v 1.7 1994/11/28 21:47:38 root Exp $	*/
 
 /*
@@ -1117,7 +1118,7 @@ isaedattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-	    isaedintr, sc);
+	    isaedintr, sc, sc->sc_dev.dv_xname);
 }
 
 /*

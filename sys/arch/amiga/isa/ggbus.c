@@ -1,3 +1,4 @@
+/*	$OpenBSD: ggbus.c,v 1.2 1996/02/27 15:40:56 niklas Exp $	*/
 /*	$NetBSD: ggbus.c,v 1.1 1994/07/08 23:32:17 niklas Exp $	*/
 
 /*
@@ -63,7 +64,8 @@ u_char	ggbusldb __P((struct device *, int));
 void	ggbusstw __P((struct device *, int, u_short));
 u_short ggbusldw __P((struct device *, int));
 void	*ggbus_establish_intr __P((int intr, int type, int level,
-				   int (*ih_fun) (void *), void *));
+				   int (*ih_fun) (void *), void *ih_arg,
+				   char *ih_what));
 void	ggbus_disestablish_intr __P((void *handler));
 
 struct isa_intr_fcns ggbus_intr_fcns = {
@@ -224,12 +226,13 @@ ggbusintr(gid)
 }
 
 void *
-ggbus_establish_intr(intr, type, level, ih_fun, ih_arg)
+ggbus_establish_intr(intr, type, level, ih_fun, ih_arg, ih_what)
 	int intr;
 	int type;
 	int level;
 	int (*ih_fun)(void *);
 	void *ih_arg;
+	char *ih_what;
 {
 	if (ggid[intr]) {
 		log(LOG_WARNING, "ISA interrupt %d already handled\n", intr);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cross.c,v 1.2 1996/02/27 15:40:54 niklas Exp $	*/
 /*	$NetBSD: cross.c,v 1.0 1994/07/08 23:32:17 niklas Exp $	*/
 
 /*
@@ -62,7 +63,8 @@ u_char crossldb __P((struct device *, int));
 void crossstw __P((struct device *, int, u_short));
 u_short crossldw __P((struct device *, int));
 void    *cross_establish_intr __P((int intr, int type, int level,
-                                   int (*ih_fun) (void *), void *));
+                                   int (*ih_fun) (void *), void *ih_arg,
+				   char *ih_what));
 void    cross_disestablish_intr __P((void *handler));
 
 struct isa_intr_fcns cross_intr_fcns = {
@@ -278,12 +280,13 @@ crossintr(cid)
 }
 
 void *
-cross_establish_intr(intr, type, level, ih_fun, ih_arg)
+cross_establish_intr(intr, type, level, ih_fun, ih_arg, ih_what)
         int intr;
         int type;
         int level;
         int (*ih_fun)(void *);
         void *ih_arg;
+	char *ih_what;
 {
 	if (crid[intr]) {
 		log(LOG_WARNING, "ISA interrupt %d already handled\n", intr);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: isa_machdep.c,v 1.2 1996/02/27 15:40:59 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.1 1995/08/02 14:10:17 niklas Exp $	*/
 
 /*
@@ -95,15 +96,16 @@ isaattach(parent, self, aux)
 }
 
 void *
-isa_intr_establish(intr, type, level, ih_fun, ih_arg)
+isa_intr_establish(intr, type, level, ih_fun, ih_arg, ih_what)
 	int intr;
 	int type;
 	int level;
 	int (*ih_fun)(void *);
 	void *ih_arg;
+	char *ih_what;
 {
 	return (*isa_intr_fcns->isa_intr_establish)(intr, type, level,
-	    ih_fun, ih_arg);
+	    ih_fun, ih_arg, ih_what);
 }
 
 void
