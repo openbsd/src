@@ -1,4 +1,4 @@
-/*      $Id: if_ipwvar.h,v 1.2 2004/10/27 21:17:18 damien Exp $ */
+/*      $Id: if_ipwvar.h,v 1.3 2004/10/27 21:21:16 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -26,6 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+struct ipw_firmware {
+	void	*main;
+	int	main_size;
+	void	*ucode;
+	int	ucode_size;
+};
 
 struct ipw_soft_bd {
 	struct ipw_bd	*bd;
@@ -81,8 +88,10 @@ struct ipw_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
+	struct ipw_firmware		fw;
 	u_int32_t			flags;
-#define IPW_FLAG_FW_INITED	(1 << 0)
+#define IPW_FLAG_FW_CACHED	(1 << 0)
+#define IPW_FLAG_FW_INITED	(1 << 1)
 
 	struct resource			*irq;
 	struct resource			*mem;

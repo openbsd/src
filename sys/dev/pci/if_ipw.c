@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.11 2004/10/27 21:20:30 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.12 2004/10/27 21:21:16 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -106,11 +106,11 @@ void ipw_tx_stop(struct ipw_softc *);
 int ipw_rx_init(struct ipw_softc *);
 void ipw_rx_stop(struct ipw_softc *);
 void ipw_stop_master(struct ipw_softc *);
-void ipw_reset(struct ipw_softc *);
-int ipw_clock_sync(struct ipw_softc *);
+int ipw_reset(struct ipw_softc *);
 int ipw_load_ucode(struct ipw_softc *, u_char *, int);
 int ipw_load_firmware(struct ipw_softc *, u_char *, int);
-int ipw_firmware_init(struct ipw_softc *, u_char *);
+int ipw_cache_firmware(struct ipw_softc *, void *);
+void ipw_free_firmware(struct ipw_softc *);
 int ipw_config(struct ipw_softc *);
 int ipw_init(struct ifnet *);
 void ipw_stop(struct ifnet *, int);
@@ -275,7 +275,10 @@ ipw_detach(struct device* self, int flags)
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
-	ipw_reset(sc);
+	ipw_stop(ifp, 1);
+
+	if (sc->flags & IPW_FLAG_FW_CACHED)
+		ipw_free_firmware(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -408,14 +411,7 @@ ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 	    letoh32(cmd->type), letoh32(cmd->subtype), letoh32(cmd->seq),
 	    letoh32(cmd->len), letoh32(cmd->status)));
 
-	/*
-	 * Wake up processes waiting for command ack. In the case of the
-	 * IPW_CMD_DISABLE command, wake up the process only when the adapter
-	 * enters the IPW_STATE_DISABLED state. This is notified in
-	 * ipw_newstate_intr().
-	 */
-	if (letoh32(cmd->type) != IPW_CMD_DISABLE)
-		wakeup(sc);
+	wakeup(sc);
 }
 
 void
@@ -442,10 +438,6 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 
 	case IPW_STATE_ASSOCIATION_LOST:
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-		break;
-
-	case IPW_STATE_DISABLED:
-		wakeup(sc->cmd);
 		break;
 
 	case IPW_STATE_RADIO_DISABLED:
@@ -937,8 +929,10 @@ ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 {
 	u_int32_t i, size, buf[256];
 
-	if (!(sc->flags & IPW_FLAG_FW_INITED))
-		return ENOTTY;
+	if (!(sc->flags & IPW_FLAG_FW_INITED)) {
+		bzero(buf, sizeof buf);
+		return copyout(buf, tbl, sizeof buf);
+	}
 
 	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, sc->table1_base);
 
@@ -953,9 +947,6 @@ int
 ipw_get_radio(struct ipw_softc *sc, int *ret)
 {
 	int val;
-
-	if (!(sc->flags & IPW_FLAG_FW_INITED))
-		return ENOTTY;
 
 	val = (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED) ? 0 : 1;
 	return copyout(&val, ret, sizeof val);
@@ -1013,7 +1004,7 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 
 		ifr = (struct ifreq *)data;
-		error = ipw_firmware_init(sc, (u_char *)ifr->ifr_data);
+		error = ipw_cache_firmware(sc, ifr->ifr_data);
 		break;
 
 	case SIOCSKILLFW:
@@ -1021,7 +1012,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc, 0)) != 0)
 			break;
 
-		ipw_reset(sc);
+		ipw_stop(ifp, 1);
+		ipw_free_firmware(sc);
 		break;
 
 	case SIOCG80211AUTH:
@@ -1492,64 +1484,33 @@ ipw_stop_master(struct ipw_softc *sc)
 	sc->flags &= ~IPW_FLAG_FW_INITED;
 }
 
-void
+int
 ipw_reset(struct ipw_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int ntries;
 
-	ipw_stop(ifp, 1);
+	ipw_stop_master(sc);
 
-	if (sc->flags & IPW_FLAG_FW_INITED) {
-		ipw_cmd(sc, IPW_CMD_DISABLE_PHY, NULL, 0);
-		ipw_cmd(sc, IPW_CMD_PREPARE_POWER_DOWN, NULL, 0);
+	/* Move adapter to D0 state */
+	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
+	    IPW_CTL_INIT);
 
-		sc->flags &= ~IPW_FLAG_FW_INITED;
-	}
-
-	/* Disable interrupts */
-	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
-
-	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_STOP_MASTER);
-	for (ntries = 0; ntries < 5; ntries++) {
-		if (CSR_READ_4(sc, IPW_CSR_RST) & IPW_RST_MASTER_DISABLED)
-			break;
-		DELAY(10);
-	}
-
-	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_SW_RESET);
-
-	ipw_rx_stop(sc);
-	ipw_tx_stop(sc);
-
-	ifp->if_flags &= ~IFF_UP;
-}
-
-int
-ipw_clock_sync(struct ipw_softc *sc)
-{
-	int ntries;
-	u_int32_t r;
-
-	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_SW_RESET);
+	/* Wait for clock stabilization */
 	for (ntries = 0; ntries < 1000; ntries++) {
-		if (CSR_READ_4(sc, IPW_CSR_RST) & IPW_RST_PRINCETON_RESET)
-			break;
-		DELAY(10);
-	}
-	if (ntries == 1000)
-		return EIO;
-
-	CSR_WRITE_4(sc, IPW_CSR_CTL, IPW_CTL_INIT);
-	for (ntries = 0; ntries < 1000; ntries++) {
-		if ((r = CSR_READ_4(sc, IPW_CSR_CTL)) & IPW_CTL_CLOCK_READY)
+		if (CSR_READ_4(sc, IPW_CSR_CTL) & IPW_CTL_CLOCK_READY)
 			break;
 		DELAY(200);
 	}
 	if (ntries == 1000)
 		return EIO;
 
-	CSR_WRITE_4(sc, IPW_CSR_CTL, r | IPW_CTL_ALLOW_STANDBY);
+	CSR_WRITE_4(sc, IPW_CSR_RST, CSR_READ_4(sc, IPW_CSR_RST) |
+	    IPW_RST_SW_RESET);
+
+	DELAY(10);
+
+	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
+	    IPW_CTL_INIT);
 
 	return 0;
 }
@@ -1635,6 +1596,8 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 
 	/* Tell the adapter to initialize the firmware */
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
+	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
+	    IPW_CTL_ALLOW_STANDBY);
 
 	/* Wait at most one second for firmware initialization to complete */
 	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
@@ -1649,98 +1612,66 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	return 0;
 }
 
+/*
+ * Store firmware into kernel memory so we can download it when we need to,
+ * e.g when the adapter wakes up from suspend mode.
+ */
 int
-ipw_firmware_init(struct ipw_softc *sc, u_char *data)
+ipw_cache_firmware(struct ipw_softc *sc, void *data)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-	struct ipw_fw_hdr hdr;
-	u_int32_t len, fw_size, uc_size;
-	u_char *fw, *uc;
+	struct ipw_firmware *fw = &sc->fw;
+	struct ipw_firmware_hdr hdr;
+	u_char *p = data;
 	int error;
 
-	ipw_reset(sc);
+	if (sc->flags & IPW_FLAG_FW_CACHED)
+		ipw_free_firmware(sc);
 
 	if ((error = copyin(data, &hdr, sizeof hdr)) != 0)
 		goto fail1;
 
-	fw_size = letoh32(hdr.fw_size);
-	uc_size = letoh32(hdr.uc_size);
-	data += sizeof hdr;
+	fw->main_size  = letoh32(hdr.main_size);
+	fw->ucode_size = letoh32(hdr.ucode_size);
+	p += sizeof hdr;
 
-	if ((fw = malloc(fw_size, M_DEVBUF, M_NOWAIT)) == NULL) {
+	fw->main = malloc(fw->main_size, M_DEVBUF, M_NOWAIT);
+	if (fw->main == NULL) {
 		error = ENOMEM;
 		goto fail1;
 	}
 
-	if ((error = copyin(data, fw, fw_size)) != 0)
-		goto fail2;
-
-	data += fw_size;
-
-	if ((uc = malloc(uc_size, M_DEVBUF, M_NOWAIT)) == NULL) {
+	fw->ucode = malloc(fw->ucode_size, M_DEVBUF, M_NOWAIT);
+	if (fw->ucode == NULL) {
 		error = ENOMEM;
 		goto fail2;
 	}
 
-	if ((error = copyin(data, uc, uc_size)) != 0)
+	if ((error = copyin(p, fw->main, fw->main_size)) != 0)
 		goto fail3;
 
-	if ((error = ipw_clock_sync(sc)) != 0) {
-		printf("%s: clock synchronization failed\n",
-		    sc->sc_dev.dv_xname);
+	p += fw->main_size;
+	if ((error = copyin(p, fw->ucode, fw->ucode_size)) != 0)
 		goto fail3;
-	}
 
-	if ((error = ipw_load_ucode(sc, uc, uc_size)) != 0) {
-		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
+	DPRINTF(("Firmware cached: main %u, ucode %u\n", fw->main_size,
+	    fw->ucode_size));
 
-	ipw_stop_master(sc);
-
-	if ((error = ipw_rx_init(sc)) != 0) {
-		printf("%s: could not initialize rx queue\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	if ((error = ipw_tx_init(sc)) != 0) {
-		printf("%s: could not initialize tx queue\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	if ((error = ipw_load_firmware(sc, fw, fw_size))) {
-		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	/* Firmware initialization completed */
-	sc->flags |= IPW_FLAG_FW_INITED;
-
-	free(uc, M_DEVBUF);
-	free(fw, M_DEVBUF);
-
-	/* Retrieve information tables base addresses */
-	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
-	sc->table2_base = CSR_READ_4(sc, IPW_CSR_TABLE2_BASE);
-
-	ipw_write_table1(sc, IPW_INFO_LOCK, 0);
-
-	/* Retrieve adapter MAC address */
-	len = IEEE80211_ADDR_LEN;
-	ipw_read_table2(sc, IPW_INFO_ADAPTER_MAC, ic->ic_myaddr, &len);
-
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	sc->flags |= IPW_FLAG_FW_CACHED;
 
 	return 0;
 
-fail3:	free(uc, M_DEVBUF);
-fail2:	free(fw, M_DEVBUF);
-fail1:	ipw_reset(sc);
+fail3:	free(fw->ucode, M_DEVBUF);
+fail2:	free(fw->main, M_DEVBUF);
+fail1:	return error;
+}
 
-	return error;
+void
+ipw_free_firmware(struct ipw_softc *sc)
+{
+	free(sc->fw.main, M_DEVBUF);
+	free(sc->fw.ucode, M_DEVBUF);
+
+	sc->flags &= ~IPW_FLAG_FW_CACHED;
 }
 
 int
@@ -1945,16 +1876,60 @@ int
 ipw_init(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ipw_firmware *fw = &sc->fw;
+	int error, len;
 
 	/* exit immediately if firmware has not been ioctl'd */
-	if (!(sc->flags & IPW_FLAG_FW_INITED)) {
+	if (!(sc->flags & IPW_FLAG_FW_CACHED)) {
 		ifp->if_flags &= ~IFF_UP;
 		return EIO;
 	}
 
-	ipw_stop(ifp, 0);
+	if ((error = ipw_reset(sc)) != 0) {
+		printf("%s: could not reset adapter\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
 
-	if (ipw_config(sc) != 0) {
+	if ((error = ipw_load_ucode(sc, fw->ucode, fw->ucode_size)) != 0) {
+		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	ipw_stop_master(sc);
+
+	if ((error = ipw_rx_init(sc)) != 0) {
+		printf("%s: could not initialize rx queue\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	if ((error = ipw_tx_init(sc)) != 0) {
+		printf("%s: could not initialize tx queue\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	if ((error = ipw_load_firmware(sc, fw->main, fw->main_size)) != 0) {
+		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	sc->flags |= IPW_FLAG_FW_INITED;
+
+	/* Retrieve information tables base addresses */
+	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
+	sc->table2_base = CSR_READ_4(sc, IPW_CSR_TABLE2_BASE);
+
+	ipw_write_table1(sc, IPW_INFO_LOCK, 0);
+
+	/* Retrieve adapter MAC address */
+	len = IEEE80211_ADDR_LEN;
+	ipw_read_table2(sc, IPW_INFO_ADAPTER_MAC, ic->ic_myaddr, &len);
+
+	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+
+	if ((error = ipw_config(sc)) != 0) {
 		printf("%s: device configuration failed\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
@@ -1967,7 +1942,7 @@ ipw_init(struct ifnet *ifp)
 
 fail:	ipw_stop(ifp, 0);
 
-	return EIO;
+	return error;
 }
 
 void
@@ -1976,10 +1951,11 @@ ipw_stop(struct ifnet *ifp, int disable)
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		DPRINTF(("Disabling adapter\n"));
-		ipw_cmd(sc, IPW_CMD_DISABLE, NULL, 0);
-	}
+	ipw_stop_master(sc);
+	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_SW_RESET);
+
+	ipw_tx_stop(sc);
+	ipw_rx_stop(sc);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
