@@ -178,13 +178,13 @@ file arch/powerpc/mac/aed.c                      aed needs-flag
 #define wsmousedev {}
 #??
 
-#device akbd: wskbddev
-#attach akbd at adb
-#file arch/powerpc/mac/akbd.c                     akbd needs-flag
+device akbd: wskbddev
+attach akbd at adb
+file arch/powerpc/mac/akbd.c                     akbd needs-flag
 
-#device ams: wsmousedev
-#attach ams at adb
-#file arch/powerpc/mac/ams.c                      ams
+device ams: wsmousedev
+attach ams at adb
+file arch/powerpc/mac/ams.c                      ams
 
 device nvram
 attach nvram at obio
