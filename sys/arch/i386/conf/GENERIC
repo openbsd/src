@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.276 2001/10/05 19:11:48 nate Exp $
+#	$OpenBSD: GENERIC,v 1.277 2001/10/06 21:52:01 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -336,6 +336,8 @@ wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+#ax*	at pci? dev ? function ?		# ASIX ethernet
+#pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
@@ -392,6 +394,7 @@ pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? disable port 0x220 irq 7 drq 1 drq2 6 # Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
+#aria0	at isa? port 0x280 irq 10 drq 0 flags 0x1 # Prometheus Aria 16
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
