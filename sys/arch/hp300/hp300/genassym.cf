@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2001/06/27 04:05:45 art Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2001/08/30 22:10:47 miod Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -51,7 +51,6 @@ include <uvm/uvm_extern.h>
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
-include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
 
@@ -136,34 +135,21 @@ endif
 # general constants
 define	UPAGES			UPAGES
 define	USPACE			USPACE
-define	NBPG			NBPG
 define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
 define	MAXADDR			MAXADDR
 
 # proc fields and values
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_BACK			offsetof(struct proc, p_back)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_PRIORITY		offsetof(struct proc, p_priority)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
-define	SRUN			SRUN
 
 # interrupt/fault metering
 define UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
-# PSL values (should just include psl.h?)
-define	PSL_S			PSL_S
-define	PSL_IPL7		PSL_IPL7
-define	PSL_LOWIPL		PSL_LOWIPL
-define	PSL_HIGHIPL		PSL_HIGHIPL
-define	PSL_USER		PSL_USER
-define	PSL_TS			PSL_T | PSL_S
+# PSL values
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3
@@ -172,7 +158,6 @@ define	SPL5			PSL_S | PSL_IPL5
 define	SPL6			PSL_S | PSL_IPL6
 
 # magic
-define	FC_USERD		FC_USERD
 define	FC_PURGE		FC_PURGE
 define	INTIOBASE		INTIOBASE
 define	MMUBASE			MMUBASE
@@ -211,24 +196,15 @@ define	SG_ISHIFT		SG_ISHIFT
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
 define	PCB_USP			offsetof(struct pcb, pcb_usp)
 define	PCB_REGS		offsetof(struct pcb, pcb_regs)
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
 
-# exception frame offset/sizes
-define	FR_SP			offsetof(struct frame, f_regs[15])
-define	FR_HW			offsetof(struct frame, f_sr)
-define	FR_ADJ			offsetof(struct frame, f_stackadj)
+# exception frame size
 define	FR_SIZE			sizeof(struct trapframe)
 
 # system calls
 define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
-define	SYS_sigreturn		SYS_sigreturn
-
-# errno
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
 
 # clock registers
 define	CLKSR			CLKSR

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2001/08/21 00:26:28 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2001/08/30 22:10:50 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -78,8 +78,6 @@ include <vm/vm.h>
 include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
-include <machine/trap.h>
-include <machine/psl.h>
 include <machine/nvram.h>
 include <machine/reg.h>
 include <machine/autoconf.h>
@@ -88,54 +86,21 @@ include <machine/pte.h>
 
 # general constants
 define	USPACE			USPACE
-define	NBPG			NBPG
 define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
 
 # proc fields and values
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_BACK			offsetof(struct proc, p_back)
 define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_PRIORITY		offsetof(struct proc, p_priority)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
-
-define	SRUN			SRUN
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
-# trap types (should just include trap.h?)
-define	T_BUSERR		T_BUSERR
-define	T_ADDRERR		T_ADDRERR
-define	T_ILLINST		T_ILLINST
-define	T_ZERODIV		T_ZERODIV
-define	T_CHKINST		T_CHKINST
-define	T_TRAPVINST		T_TRAPVINST
-define	T_PRIVINST		T_PRIVINST
-define	T_TRACE			T_TRACE
-define	T_MMUFLT		T_MMUFLT
-define	T_SSIR			T_SSIR
-define	T_FMTERR		T_FMTERR
-define	T_COPERR		T_COPERR
-define	T_FPERR			T_FPERR
-define	T_ASTFLT		T_ASTFLT
-define	T_TRAP15		T_TRAP15
-define	T_FPEMULI		T_FPEMULI
-define	T_FPEMULD		T_FPEMULD
-
-# PSL values (should just include psl.h?)
-define	PSL_S			PSL_S
-define	PSL_IPL7		PSL_IPL7
-define	PSL_LOWIPL		PSL_LOWIPL
-define	PSL_HIGHIPL		PSL_HIGHIPL
-define	PSL_USER		PSL_USER
+# PSL values
 define	SPL1			PSL_S | PSL_IPL1
 
 # magic
-define	FC_USERD		FC_USERD
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
@@ -152,22 +117,12 @@ define	PG_FRAME		PG_FRAME
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
 define	PCB_USP			offsetof(struct pcb, pcb_usp)
 define	PCB_REGS		offsetof(struct pcb, pcb_regs)
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
 
-# exception frame offset/sizes
-define	FR_SP			offsetof(struct frame, f_regs[15])
-define	FR_HW			offsetof(struct frame, f_sr)
-define	FR_ADJ			offsetof(struct frame, f_stackadj)
+# exception frame size
 define	FR_SIZE			sizeof(struct trapframe)
 
-# system calls
-define	SYS_sigreturn		SYS_sigreturn
-
-# errno
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
 
 define	SIZEOF_MVMEPROM_BRDID	sizeof(struct mvmeprom_brdid)
 define	MVMEPROM_BRDID_MODEL	offsetof(struct mvmeprom_brdid, model)
