@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.30 2000/08/17 13:54:23 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.31 2000/08/17 21:44:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -877,15 +877,15 @@ ubsec_process(crp)
 			pb->pb_addr = q->q_dst_packp[i];
 
 			if (dtheend) {
-				if (q->q_src_packl[i] > dtheend) {
+				if (q->q_dst_packl[i] > dtheend) {
 					pb->pb_len = dtheend;
 					dtheend = 0;
 				} else {
-					pb->pb_len = q->q_src_packl[i];
+					pb->pb_len = q->q_dst_packl[i];
 					dtheend -= pb->pb_len;
 				}
 			} else
-				pb->pb_len = q->q_src_packl[i];
+				pb->pb_len = q->q_dst_packl[i];
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
