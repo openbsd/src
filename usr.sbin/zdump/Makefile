@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:44:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/07/01 21:46:37 mickey Exp $
 
 PROG=	zdump
-SRCS=	zdump.c ialloc.c
 MAN=	zdump.8
 
 .PATH: ${.CURDIR}/../../lib/libc/time
