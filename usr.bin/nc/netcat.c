@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.38 2001/10/28 19:48:33 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.39 2001/10/28 19:52:04 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -361,9 +361,6 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
 
-		if (error == 0)
-			break;
-		
 		close(s);
 		s = -1;
 	} while ((res0 = res0->ai_next) != NULL);
