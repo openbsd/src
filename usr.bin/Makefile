@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2004/05/02 17:55:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.91 2005/02/19 22:15:41 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -7,10 +7,10 @@ SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
 	biff cal calendar cap_mkdb cdio checknr chpass cmp col \
 	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
 	dc deroff diff diff3 dirname du elf2olf encrypt env expand false file \
-	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getconf \
-	getopt gprof grep head hexdump id indent infocmp ipcrm ipcs join jot \
-	kdump keynote ktrace lam last lastcomm leave less lex lndir locate \
-	lock logger login logname look lorder m4 mail make man mesg mg \
+	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getcap \
+	getconf getopt gprof grep head hexdump id indent infocmp ipcrm ipcs \
+	join jot kdump keynote ktrace lam last lastcomm leave less lex lndir \
+	locate lock logger login logname look lorder m4 mail make man mesg mg \
 	midiplay mixerctl mkdep mkstr mktemp modstat msgs nc netstat newsyslog \
 	nfsstat nice nm nohup oldrdist pagesize passwd paste patch pctr pkill \
 	pmdb pr printenv printf quota radioctl rdist rdistd readlink renice \

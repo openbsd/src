@@ -1,0 +1,184 @@
+.\"	$OpenBSD: getcap.1,v 1.1 2005/02/19 22:15:41 millert Exp $
+.\"
+.\" Copyright (c) 2005 Todd C. Miller <Todd.Miller@courtesan.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 18, 2005
+.Dt GETCAP 1
+.Os
+.Sh NAME
+.Nm getcap
+.Nd capability database access utility
+.Sh SYNOPSIS
+.Nm getcap
+.Oo
+.Fl b Ar boolean | Fl c Ar capability |
+.Fl n Ar number | Fl s Ar string
+.Oc
+.Fl a
+.Fl f Ar path
+.Nm getcap
+.Oo
+.Fl b Ar boolean | Fl c Ar capability |
+.Fl n Ar number | Fl s Ar string
+.Oc
+.Fl f Ar path
+record ...
+.Sh DESCRIPTION
+The
+.Nm
+utility provides a simple method of querying a capability database such as
+.Pa /etc/login.conf
+or
+.Pa /etc/printcap
+and as described by
+.Xr getcap 3 .
+.Pp
+The following query types are supported:
+.Bl -tag -width "capability"
+.It boolean
+A boolean flag.
+For each matching record, the name of the boolean capability is printed
+(since there is no value per se).
+.It number
+A numeric capability (key#number).
+For each matching record, the value of the numeric capability is printed
+as a decimal number.
+To print a number in the same format as it is listed in the
+capabilities database (i.e. literally), use a
+.Dq raw
+query instead.
+.It string
+A string capability (key=value).
+Note that the value printed has escape sequences expanded, see
+.Xr getcap 3
+for a list of valid escape sequences.
+To print the string exactly as it is listed in the
+capabilities database, use a  
+.Dq raw
+query instead.
+.It raw
+A generic query where no interpretation of the data is done.
+Use this for querying capabilities with non-standard types or
+for getting the raw, unformatted entry from the database.
+.El
+.Pp
+.Nm
+prints the value associated with the give key.
+If more than one record is being searched, the value is prefixed
+with the record name (for records with multiple names, only the
+first is printed).
+If a key has no associated value and a boolean query is not being
+performed, a blank line will be printed.
+.Pp
+The options are as follows:
+.Bl -tag -width "-c capability"
+.It Fl a
+Query all records in the database.
+.It Fl b Ar boolean
+Return occurrences of
+.Ar boolean .
+.It Fl c Ar capability
+Return the raw value for the key
+.Ar capability ,
+which must include the type as the last character, e.g.
+.Dq foo=
+for the string
+.Sq foo .
+See
+.Xr getcap 3
+for more information on capability types.
+.It Fl f Ar path
+A colon-separated list of database filenames to be searched for records.
+.It Fl n Ar number
+Return occurrences of
+.Ar number .
+.It Fl s Ar string
+Return occurrences of the string
+.Ar string .
+.El
+.Pp
+Only one of the
+.Fl b ,
+.Fl c ,
+.Fl n
+and
+.Fl s 
+options may be specified.
+If none are specified, the record will be dumped from the database as-is.
+.Sh FILES
+.Bl -tag -width /etc/login.conf -compact
+.It Pa /etc/login.conf
+login configuration
+.It Pa /etc/printcap
+printer configuration
+.It Pa /etc/termcap
+terminal configuration
+.El
+.Sh EXAMPLES
+Find all
+.Xr login.conf 5
+entries with the
+.Dq ignorenologin
+capability:
+.Pp
+.Dl "$ getcap -f /etc/login.conf -a -b ignorenologin"
+.Pp
+Dump the
+.Dq default
+record in 
+.Xr login.conf 5 :
+.Pp
+.Dl "$ getcap -f /etc/login.conf default"
+.Pp
+Print all
+.Xr login.conf 5 :
+records with the
+.Dq localcipher
+capability:
+.Pp
+.Dl "$ getcap -f /etc/login.conf -a -s localcipher"
+.Pp
+Print the
+.Dq datasize-max
+capability in the
+.Dq staff
+record in
+.Xr login.conf 5
+if it exists:
+.Pp
+.Dl "$ getcap -f /etc/login.conf -s datasize-max staff"
+.Pp
+Print all
+.Xr printcap 5
+entries that reference
+.Pa /dev/lp .
+Note that we are treating the entire string
+.Dq lp=/dev/lp
+as a boolean flag instead of a key/value pair.
+.Pp
+.Dl "$ getcap -f /etc/printcap -a -b lp=/dev/lp"
+.Sh SEE ALSO
+.Xr cap_mkdb 1 ,
+.Xr getcap 3 ,
+.Xr login.conf 5 ,
+.Xr printcap 5 ,
+.Xr termcap 5
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Ox 3.7 .
+.Sh AUTHORS
+Todd C. Miller
