@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbd.c,v 1.3 2003/02/15 23:42:45 miod Exp $	*/
+/*	$OpenBSD: gsckbd.c,v 1.4 2003/02/16 02:08:04 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -527,7 +527,7 @@ gsckbd_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_PC_XT;
+		*(int *)data = WSKBD_TYPE_GSC;
 		return 0;
 	case WSKBDIO_SETLEDS:
 	{

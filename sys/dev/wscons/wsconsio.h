@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.25 2003/02/12 01:44:11 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.26 2003/02/16 02:08:04 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -112,6 +112,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_SUN		11	/* Sun Type3/4 */
 #define		WSKBD_TYPE_SUN5		12	/* Sun Type5 */
 #define		WSKBD_TYPE_HIL		13	/* HP HIL */
+#define		WSKBD_TYPE_GSC		14	/* HP PS/2 */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
