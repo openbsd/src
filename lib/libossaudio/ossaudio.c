@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.6 2003/05/03 19:01:48 avsm Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.7 2005/01/19 18:35:04 jason Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -458,6 +458,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 struct audiodevinfo {
 	int done;
 	dev_t dev;
+	ino_t ino;
 	int16_t devmap[SOUND_MIXER_NRDEVICES],
 	        rdevmap[NETBSD_MAXDEVS];
 	char names[NETBSD_MAXDEVS][MAX_AUDIO_DEV_LEN];
@@ -557,11 +558,12 @@ getdevinfo(int fd)
 	 */
 	if (fstat(fd, &sb) < 0)
 		return 0;
-	if (di->done && di->dev == sb.st_dev)
+	if (di->done && (di->dev == sb.st_dev && di->ino == sb.st_ino))
 		return di;
 
 	di->done = 1;
 	di->dev = sb.st_dev;
+	di->ino = sb.st_ino;
 	di->devmask = 0;
 	di->recmask = 0;
 	di->stereomask = 0;
