@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.15 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.16 2004/07/05 19:59:20 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ int loadfile(char *, u_int64_t *);
 char boot_file[128];
 char boot_flags[128];
 
-extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+extern char bootprog_name[], bootprog_rev[];
 
 struct bootinfo_v1 bootinfo_v1;
 
@@ -63,14 +63,6 @@ extern paddr_t ffp_save, ptbr_save;
 extern vaddr_t ssym, esym;
 
 int debug;
-
-char *kernelnames[] = {
-	"bsd",
-	"bsd.bak",
-	"bsd.old",
-	"obsd",
-	NULL
-};
 
 int
 main()
@@ -83,13 +75,10 @@ main()
 	init_prom_calls();
 
 	/* print a banner */
-	printf("%s, Revision %s (%s, %s)\n", bootprog_name, bootprog_rev,
-	    bootprog_maker, bootprog_date);
+	printf("%s %s\n", bootprog_name, bootprog_rev);
 
 	/* switch to OSF pal code. */
 	OSFpal();
-
-	printf("\n");
 
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
@@ -100,11 +89,8 @@ main()
 	if (boot_file[0] != '\0')
 		win = (loadfile(name = boot_file, &entry) == 0);
 	else
-		for (namep = kernelnames, win = 0; *namep != NULL && !win;
-		    namep++)
-			win = (loadfile(name = *namep, &entry) == 0);
+		win = (loadfile(name = "bsd", &entry) == 0);
 
-	printf("\n");
 	if (!win)
 		goto fail;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.9 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.10 2004/07/05 19:59:17 deraadt Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
 
 /*
@@ -147,7 +147,9 @@ main()
 		return;
 	}
 
+#if 0
 	puts("Jumping to entry point...\n");
+#endif
 	entry = (void (*)())loadaddr;
 	(*entry)();
 	puts("SECONDARY BOOT BLOCK RETURNED!\n");

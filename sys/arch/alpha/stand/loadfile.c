@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.14 2003/10/18 20:14:43 jmc Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.15 2004/07/05 19:59:17 deraadt Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ loadfile(fname, entryp)
 	} hdr;
 	int fd, rval;
 
-	(void)printf("\nLoading %s...\n", fname);
+	(void)printf("Loading %s...\n", fname);
 
 	/* Open the file. */
 	rval = 1;

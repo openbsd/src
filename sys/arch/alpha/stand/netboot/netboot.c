@@ -1,4 +1,4 @@
-/*	$OpenBSD: netboot.c,v 1.5 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: netboot.c,v 1.6 2004/07/05 19:59:20 deraadt Exp $	*/
 /*	$NetBSD: netboot.c,v 1.1 1996/09/18 20:03:12 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ int loadfile(char *, u_int64_t *);
 char boot_file[128];
 char boot_flags[128];
 
-extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+extern char bootprog_name[], bootprog_rev[];
 
 vm_offset_t ffp_save, ptbr_save;
 
@@ -68,15 +68,10 @@ main()
 	init_prom_calls();
 
 	/* print a banner */
-	printf("\n");
-	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
-	printf("\n");
+	printf("%s %s\n", bootprog_name, bootprog_rev);
 
 	/* switch to OSF pal code. */
 	OSFpal();
-
-	printf("\n");
 
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
