@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2001/09/16 03:19:30 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.3 2001/09/17 15:34:51 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -91,7 +91,7 @@ akbd*		at adb?				# ADB keyboard
 
 wskbd*		at akbd? console ?
 ams*		at adb?				# ADB mouse
-wsmouse*	at ams?			
+wsmouse*	at ams?	mux 0
 abtn*		at adb?				# ADB button?
 #zsc*		at macobio?
 #zstty*		at zsc? channel ?
@@ -110,7 +110,7 @@ scsibus*	at iopsp?
 #scsibus*	at pcscp?
 scsibus*	at siop?
 
-wdc*		at macobio? flags 0x0
+wdc*		at macobio? flags 0x1
 wd*		at wdc? drive ? flags 0x0000
 wd*		at pciide? drive ? flags 0x0000
 atapiscsi*	at wdc? channel ? flags 0x0000
