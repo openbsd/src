@@ -585,6 +585,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 	struct tm *lcl = NULL;
 	unsigned long ti;
 
+#define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
+
 	if(m->addr == (char *)l->bio)
 	    return;
 
@@ -592,22 +594,22 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 		{
 		lcl = localtime(&m->time);
 	
-		sprintf(bufp, "[%02d:%02d:%02d] ",
+		snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
 			lcl->tm_hour,lcl->tm_min,lcl->tm_sec);
 		bufp += strlen(bufp);
 		}
 
-	sprintf(bufp, "%5lu file=%s, line=%d, ",
+	snprintf(bufp, BUF_REMAIN, "%5lu file=%s, line=%d, ",
 		m->order,m->file,m->line);
 	bufp += strlen(bufp);
 
 	if (options & V_CRYPTO_MDEBUG_THREAD)
 		{
-		sprintf(bufp, "thread=%lu, ", m->thread);
+		snprintf(bufp, BUF_REMAIN, "thread=%lu, ", m->thread);
 		bufp += strlen(bufp);
 		}
 
-	sprintf(bufp, "number=%d, address=%08lX\n",
+	snprintf(bufp, BUF_REMAIN, "number=%d, address=%08lX\n",
 		m->num,(unsigned long)m->addr);
 	bufp += strlen(bufp);
 
@@ -682,7 +684,7 @@ void CRYPTO_mem_leaks(BIO *b)
 				(char *)&ml);
 	if (ml.chunks != 0)
 		{
-		sprintf(buf,"%ld bytes leaked in %d chunks\n",
+		snprintf(buf,sizeof buf,"%ld bytes leaked in %d chunks\n",
 			ml.bytes,ml.chunks);
 		BIO_puts(b,buf);
 		}

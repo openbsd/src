@@ -242,7 +242,7 @@ const char *RAND_file_name(char *buf, size_t size)
 			{
 			strlcpy(buf,s,size);
 #ifndef OPENSSL_SYS_VMS
-			strcat(buf,"/");
+			strlcat(buf,"/",size);
 #endif
 			strlcat(buf,RFILE,size);
 			ok = 1;
