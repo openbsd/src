@@ -256,6 +256,7 @@
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/lsi64854reg.h
 ./usr/include/dev/ic/lsi64854var.h
+./usr/include/dev/ic/max2820reg.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/mc6845.h
@@ -304,7 +305,12 @@
 ./usr/include/dev/ic/rtl80x9reg.h
 ./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/rtl81x9reg.h
+./usr/include/dev/ic/rtwphy.h
+./usr/include/dev/ic/rtwphyio.h
+./usr/include/dev/ic/rtwreg.h
+./usr/include/dev/ic/rtwvar.h
 ./usr/include/dev/ic/s3_617.h
+./usr/include/dev/ic/sa2400reg.h
 ./usr/include/dev/ic/si4136reg.h
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h

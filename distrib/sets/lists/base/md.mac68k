@@ -2194,3 +2194,9 @@
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/max2820reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rtwphy.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rtwphyio.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rtwreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/rtwvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/sa2400reg.ph

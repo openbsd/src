@@ -2180,3 +2180,9 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/max2820reg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtwphy.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtwphyio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtwreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtwvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/sa2400reg.ph

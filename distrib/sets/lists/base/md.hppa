@@ -2221,3 +2221,9 @@
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/max2820reg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/rtwphy.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/rtwphyio.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/rtwreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/rtwvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/sa2400reg.ph

@@ -2288,3 +2288,9 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/max2820reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwphy.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwphyio.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtwvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/sa2400reg.ph
