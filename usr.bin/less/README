@@ -1,0 +1,127 @@
+=======================================================================
+===        NOTE: THIS IS A DISTRIBUTION OF less (version 290)       ===
+===    PLEASE REPORT ANY PROBLEMS TO THE AUTHOR AT markn@3do.com.   ===
+=======================================================================
+
+This is the distribution of "less", a paginator similar to "more" or "pg".
+The formatted manual page is in less.man.
+The manual page nroff source is in less.nro.
+Major changes made since the last posted version are in NEWS.
+
+=======================================================================
+INSTALLATION (Unix systems only):
+
+1. Move the distributed source to its own directory and 
+   unpack it by running "sh" or "unshar" on the distribution 
+   files, if you have not already done so.
+
+2. Type "sh configure".
+   This will generate a Makefile and a defines.h.
+   Warning: if you have a GNU sed, make sure it is version 2.05 or later.
+
+3. It is a good idea to look over the generated Makefile and defines.h
+   and make sure they look ok.  If you know of any peculiarities of
+   your system that configure might not have detected, you may fix the
+   Makefile now.  
+
+   If you wish, you may edit defines.h to remove some optional features.
+   If you wish to build a "secure" version of less (which disables all
+   features which might allow a user to do unintended things to the system
+   on which less is running), edit defines.h and define SECURE to 1.
+   If you choose not to include some features in your version, you may
+   wish to edit the manual page "less.nro" and the help page "less.hlp" 
+   to remove the descriptions of the features which you are removing.
+
+4. Type "make" and watch the fun.
+
+   If you want less to find the help file in a directory other than
+   the default (/usr/local/share), define "datadir" to that directory.
+   For example: "make datadir=/usr/local/helpfiles"
+
+5. If the make succeeds, it will generate a program "less"
+   in your current directory.  Test the generated program.
+
+6. When satisfied that it works, if you wish to install it
+   in a public place, type "make install".
+
+   The default install destinations are:
+	Executables (less, lesskey) in /usr/local/bin
+	Data files (less.hlp) in /usr/local/share
+	Documentation (less.nro, lesskey.nro) in /usr/local/man/man1
+   If you want to install any of these files elsewhere, define
+   bindir, datadir, and/or mandir to the appropriate directories.
+   datadir must be defined the same as in step 4.
+
+If you have any problems building or running "less", suggestions, 
+complaints, etc., you may mail to the author at markn@3do.com
+
+Note to hackers: comments noting possible improvements are enclosed
+in double curly brackets {{ like this }}.
+
+
+
+=======================================================================
+INSTALLATION (MS-DOS systems only)
+
+1. Move the distributed source to its own directory.
+   Make sure the source has been converted to have CR-LF rather than 
+   LF as line terminators.
+
+2. Rename MAKEFILE.DOS to MAKEFILE.
+
+3. Look at MAKEFILE to make sure that the definitions for CC and LIBDIR
+   are correct.  CC should be the name of your Microsoft C compiler and
+   LIBDIR should be the directory where the Microsoft C libraries
+   reside.  If these definitions need to be changed, you can either 
+   modify the definitions directly in MAKEFILE, or set your environment 
+   variables CC and/or LIBDIR to override the definitions in MAKEFILE.
+
+4. If you wish, you may edit DEFINES.DOS to remove some optional features.
+   If you choose not to include some features in your version, you may
+   wish to edit the manual page LESS.MAN and the help page LESS.HLP 
+   to remove the descriptions of the features which you are removing.
+
+5. Type "make" and watch the fun.
+   You may need to invoke "make -e", if your "make" requires the -e
+   flag to import environment variables.
+   If your compiler runs out of memory, try running "make -n >cmds.bat" 
+   and then run cmds.bat.
+
+6. If the make succeeds, it will generate a program "LESS.EXE"
+   in your current directory.  Test the generated program.
+
+7. When satisfied that it works, you may wish to install LESS.EXE,
+   LESSKEY.EXE and LESS.HLP in a directory which is included in 
+   your PATH.
+
+
+
+=======================================================================
+INSTALLATION (OS/2 systems only)
+
+1. Move the distributed source to its own directory.
+
+2. Rename Makefile.os2 to Makefile.
+
+3. Check the Makefile to make sure the definitions look ok.
+
+4. If you wish, you may edit defines.os2 to remove some optional features.
+   If you choose not to include some features in your version, you may
+   wish to edit the manual page less.man and the help page less.hlp
+   to remove the descriptions of the features which you are removing.
+
+5. Type "make" and watch the fun.
+
+6. If the make succeeds, it will generate a program "less.exe"
+   in your current directory.  Test the generated program.
+
+7. Make sure you have the emx runtime installed. You need the emx DLLs
+   emx.dll and emxlibcs.dll and also the termcap database, termcap.dat.
+   Make sure you have termcap.dat either in the default location or
+   somewhere in a directory listed in the PATH or INIT environment 
+   variables.
+
+8. When satisfied that it works, you may wish to install less.exe,
+   lesskey.exe and less.hlp in a directory which is included in 
+   your PATH.
+

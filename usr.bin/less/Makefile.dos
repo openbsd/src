@@ -1,0 +1,54 @@
+# Makefile for less.
+# MS-DOS version
+
+#### Start of system configuration section. ####
+
+CC = cl
+LIBDIR = \msc6.0\lib
+
+CFLAGS = -O /Alfw
+LDFLAGS = -O
+LIBS = ${LIBDIR}\llibce.lib ${LIBDIR}\graphics.lib
+
+#### End of system configuration section. ####
+
+# This rule allows us to supply the necessary -D options
+# in addition to whatever the user asks for.
+.c.obj:
+	${CC} -c -I. ${CPPFLAGS} ${CFLAGS} $<
+
+SRC =	main.c doscreen.c brac.c ch.c charset.c cmdbuf.c command.c \
+	decode.c edit.c filename.c forwback.c help.c ifile.c \
+	input.c jump.c line.c linenum.c lsystem.c \
+	mark.c optfunc.c option.c opttbl.c os.c output.c \
+	position.c prompt.c search.c signal.c tags.c \
+	ttyin.c version.c
+OBJ =	main.obj doscreen.obj brac.obj ch.obj charset.obj cmdbuf.obj command.obj \
+	decode.obj edit.obj filename.obj forwback.obj help.obj ifile.obj \
+	input.obj jump.obj line.obj linenum.obj lsystem.obj \
+	mark.obj optfunc.obj option.obj opttbl.obj os.obj output.obj \
+	position.obj prompt.obj search.obj signal.obj tags.obj \
+	ttyin.obj version.obj
+
+all: less lesskey
+
+# This is really horrible, but the command line is too long for 
+# MS-DOS if we try to link $(OBJ).
+less: $(OBJ)
+	-del lesskey.obj
+	$(CC) $(LDFLAGS) -o $@ *.obj $(LIBS)
+
+lesskey: lesskey.obj version.obj
+	$(CC) $(LDFLAGS) -o $@ lesskey.obj version.obj $(LIBS)
+
+defines.h: defines.dos
+	-del defines.h
+	-copy defines.dos defines.h
+
+$(OBJ): less.h defines.h
+
+clean:
+	-del *.obj 
+	-del less.exe
+	-del lesskey.exe
+

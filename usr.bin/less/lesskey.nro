@@ -1,0 +1,216 @@
+.TH LESSKEY 1
+.SH NAME
+lesskey \- specify key bindings for less
+.SH SYNOPSIS
+.B "lesskey [-o output] [input]"
+.br
+.B "lesskey -V"
+.SH DESCRIPTION
+.I Lesskey
+is used to specify a set of key bindings to be used by 
+.I less.
+The input file is a text file which describes the key bindings,
+If the input file is "-", standard input is read.
+If no input file is specified, $HOME/.lesskey is read.
+The output file is a binary file which is used by 
+.I less.
+If no output file is specified, $HOME/.less is written.
+If the output file already exists,
+.I lesskey
+will overwrite it.
+.PP
+The input file consists of lines of the form:
+.sp
+	\fIstring\fP <whitespace> \fIaction\fP [extra-string] <newline>
+.sp
+Whitespace is any sequence of one or more spaces and/or tabs.
+The \fIstring\fP is the command key(s) which invoke the action.
+The \fIstring\fP may be a single command key, or a sequence of up to 15 keys.
+The \fIaction\fP is the name of the less action, from the list below.
+The characters in the \fIstring\fP may appear literally, or be
+prefixed by a caret to indicate a control key.
+A backslash followed by one to three octal digits may be used to
+specify a character by its octal value.
+A backslash followed by b, e, n, r or t specifies
+BACKSPACE, ESCAPE, NEWLINE, RETURN or TAB, respectively.
+A backslash followed by any other character indicates that character is
+to be taken literally.
+Characters which must be preceded by backslash include
+caret, space, tab and the backslash itself.
+Blank lines and lines which start with a pound sign (#) are ignored.
+.PP
+An action may be followed by an "extra" string.
+When such a command is entered while running
+.I less,
+the action is performed, and then the extra
+string is parsed, just as if it were typed in to
+.I less.
+This feature can be used in certain cases to extend
+the functionality of a command.
+For example, see the "{" and ":t" commands in the example below.
+.PP
+The -V flag causes
+.I lesskey
+to print its version number and immediately exit.  
+Other flags and arguments are ignored.
+
+.SH EXAMPLE
+The following input file describes the set of
+default command keys used by less:
+.sp
+.nf
+	\er		forw-line 
+	\en		forw-line 
+	e		forw-line 
+	j		forw-line 
+	^E		forw-line 
+	^N		forw-line 
+	k		back-line 
+	y		back-line 
+	^Y		back-line 
+	^K		back-line 
+	^P		back-line 
+	J		forw-line-force 
+	K		back-line-force 
+	Y		back-line-force 
+	d		forw-scroll 
+	^D		forw-scroll 
+	u		back-scroll 
+	^U		back-scroll 
+	\e40		forw-screen 
+	f		forw-screen 
+	^F		forw-screen 
+	^V		forw-screen 
+	b		back-screen 
+	^B		back-screen 
+	\eev		back-screen 
+	z		forw-window 
+	w		back-window 
+	F		forw-forever 
+	R		repaint-flush 
+	r		repaint 
+	^R		repaint 
+	^L		repaint 
+	g		goto-line 
+	<		goto-line 
+	\ee<		goto-line 
+	p		percent 
+	%		percent 
+	{		forw-bracket {}
+	}		back-bracket {}
+	(		forw-bracket ()
+	)		back-bracket ()
+	[		forw-bracket []
+	]		back-bracket []
+	\ee^F		forw-bracket 
+	\ee^B		back-bracket 
+	G		goto-end 
+	\ee>		goto-end 
+	>		goto-end 
+	=		status 
+	^G		status 
+	:f		status 
+	/		forw-search 
+	?		back-search 
+	\ee/		forw-search *
+	\ee?		back-search *
+	n		repeat-search 
+	\een		repeat-search-all 
+	N		reverse-search 
+	\eeN		reverse-search-all 
+	\eu		undo-hilite
+	m		set-mark 
+	'		goto-mark 
+	^X^X		goto-mark 
+	E		examine 
+	:e		examine 
+	^X^V		examine 
+	:n		next-file 
+	:p		prev-file 
+	:x		index-file 
+	-		toggle-option 
+	:t		toggle-option t
+	s		toggle-option o
+	_		display-option 
+	|		pipe 
+	v		visual 
+	!		shell 
+	+		firstcmd 
+	H		help 
+	h		help 
+	V		version 
+	q		quit 
+	:q		quit 
+	:Q		quit 
+	ZZ		quit 
+.fi
+.sp
+.SH PRECEDENCE
+Commands specified by
+.I lesskey
+take precedence over the default commands.
+A default command key may be disabled by including it in the
+input file with the action "invalid".
+Alternatively, a key may be defined 
+to do nothing by using the action "noaction".
+"noaction" is similar to "invalid", but 
+.I less
+will give an error beep for an "invalid" command, 
+but not for a "noaction" command.
+In addition, ALL default commands may be disabled by 
+adding this control line to the input file:
+.sp
+#stop
+.sp
+This will cause all default commands to be ignored.
+The #stop line should be the last line in that section of the file.
+(Another section, introduced by #line-edit, may follow the #stop line.)
+.PP
+Be aware that #stop can be dangerous.  
+Since all default commands are disabled, 
+you must provide sufficient commands before the #stop line
+to enable all necessary actions.
+For example, failure to provide a "quit" command can lead to frustration.
+
+.SH "LINE EDITING"
+New key bindings may be specified for the line editing commands,
+in a manner similar to the way key bindings for 
+ordinary commands are specified.
+This control line marks the beginning of a section of line-editing commands:
+.sp
+#line-edit
+.sp
+Following this line is a list of keys and actions,
+one per line as in the example below.
+
+.SH EXAMPLE
+The following input file describes the set of
+default line-editing keys used by less:
+.sp
+.nf
+	#line-edit
+	\et	    	forw-complete
+	\e17		back-complete
+	\ee\et		back-complete
+	\e14		expand
+	^V		literal
+	^A		literal
+   	\eel		right
+	\eeh		left
+	\eeb		word-left
+	\eew		word-right
+	\eei		insert
+	\eex		delete
+	\ee\eb		word-backspace
+	\ee0		home
+	\ee$		end
+	\eek		up
+	\eej		down
+.fi
+.sp
+
+.SH "SEE ALSO"
+less(1)
+
+.SH COPYRIGHT
+Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
