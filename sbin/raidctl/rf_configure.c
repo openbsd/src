@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.7 2002/04/19 00:15:28 miod Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.8 2002/05/22 21:23:49 tdeval Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -202,11 +202,11 @@ rf_MakeConfig(configname, cfgPtr)
       cp = rf_find_non_white(buf);
 			if (!strncmp(cp, "START", strlen("START")))
 				break;
-      (void) strcpy(&cfgPtr->debugVars[c][0], cp);
+      strlcpy(&cfgPtr->debugVars[c][0], cp, RF_MAXDBGVLEN);
     }
   }
   rewind(fp);
-  strcpy(cfgPtr->diskQueueType,"fifo");
+  strlcpy(cfgPtr->diskQueueType,"fifo", sizeof(RF_DiskQueueType_t));
   cfgPtr->maxOutstandingDiskReqs = 1;
   /* scan the file for the block related to disk queues */
   if (rf_search_file_for_start_of("queue",buf,256,fp)) {
