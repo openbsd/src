@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.13 2000/07/04 11:44:21 fgsch Exp $ */
+/*	$OpenBSD: ohci.c,v 1.14 2000/09/06 22:42:10 rahnds Exp $ */
 /*	$NetBSD: ohci.c,v 1.85 2000/04/01 09:27:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -96,24 +96,6 @@ int ohcidebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
-#endif
-
-/*
- * The OHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
- */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
-#define htole16(x) (bswap16(x))
-#define le16toh(x) (bswap16(x))
-#else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#define htole16(x) (x)
-#define le16toh(x) (x)
-#endif
 #endif
 
 struct ohci_pipe;
