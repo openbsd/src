@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1996/12/05 13:22:10 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1996/12/06 00:12:21 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -148,7 +148,7 @@ readdisklabel(dev, strat, lp, clp)
 
 #if defined(CD9660)
 	if (iso_disklabelspoof(dev, strat, lp) == 0)
-		return (msg);
+		return (NULL);
 #endif
 
 	/* obtain buffer to probe drive with */
