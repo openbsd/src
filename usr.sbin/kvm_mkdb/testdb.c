@@ -1,4 +1,4 @@
-/*	$OpenBSD: testdb.c,v 1.6 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: testdb.c,v 1.7 2004/11/24 17:57:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,20 +33,21 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: testdb.c,v 1.6 2003/06/26 21:36:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: testdb.c,v 1.7 2004/11/24 17:57:16 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/file.h>
-#include <errno.h>
-#include <limits.h>
-#include <kvm.h>
+#include <sys/sysctl.h>
+
 #include <db.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
 #include <paths.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -54,56 +55,33 @@ static char *rcsid = "$OpenBSD: testdb.c,v 1.6 2003/06/26 21:36:39 deraadt Exp $
 int
 testdb(char *dbname)
 {
-	DB *db;
-	int cc, kd, ret, dbversionlen;
 	DBT rec;
-	struct nlist nitem;
-	char dbversion[_POSIX2_LINE_MAX];
-	char kversion[_POSIX2_LINE_MAX];
+	DB *db = NULL;
+	size_t kversionlen;
+	char kversion[LINE_MAX];
+	int mib[2], ret = 0;
 
-	ret = 0;
-	db = NULL;
-
-	if ((kd = open(_PATH_KMEM, O_RDONLY, 0)) < 0)
-		goto close;
-
-	if ((db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL)) == NULL)
+	/* Read version string of running kernel */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_VERSION;
+	kversionlen = sizeof(kversion);
+	if (sysctl(mib, 2, kversion, &kversionlen, NULL, 0) < 0)
 		goto close;
 
 	/* Read the version out of the database */
+	if ((db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL)) == NULL)
+		goto close;
 	rec.data = VRS_KEY;
 	rec.size = sizeof(VRS_KEY) - 1;
 	if ((db->get)(db, &rec, &rec, 0))
 		goto close;
-	if (rec.data == 0 || rec.size == 0 || rec.size > sizeof(dbversion))
-		goto close;
-	(void)memcpy(dbversion, rec.data, rec.size);
-	dbversionlen = rec.size;
-
-	/* Read version string from kernel memory */
-	rec.data = VRS_SYM;
-	rec.size = sizeof(VRS_SYM) - 1;
-	if ((db->get)(db, &rec, &rec, 0))
-		goto close;
-	if (rec.data == 0 || rec.size != sizeof(struct nlist))
-		goto close;
-	(void)memcpy(&nitem, rec.data, sizeof(nitem));
-	/*
-	 * Theoretically possible for lseek to be seeking to -1.  Not
-	 * that it's something to lie awake nights about, however.
-	 */
-	errno = 0;
-	if (lseek(kd, (off_t)nitem.n_value, SEEK_SET) == -1 && errno != 0)
-		goto close;
-	cc = read(kd, kversion, sizeof(kversion));
-	if (cc < 0 || cc != sizeof(kversion))
+	if (rec.data == NULL || rec.size > kversionlen)
 		goto close;
 
 	/* If they match, we win */
-	ret = memcmp(kversion, dbversion, dbversionlen) == 0;
+	ret = memcmp(kversion, rec.data, rec.size) == 0;
 
-close:	if (kd >= 0)
-		(void)close(kd);
+close:
 	if (db)
 		(void)(db->close)(db);
 	return (ret);
