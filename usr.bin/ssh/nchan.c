@@ -23,13 +23,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channel-close.c,v 1.1 2001/05/30 12:55:07 markus Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.28 2001/05/31 10:30:16 markus Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
 #include "buffer.h"
 #include "packet.h"
-#include "channel.h"
+#include "channels.h"
 #include "compat.h"
 #include "log.h"
 
