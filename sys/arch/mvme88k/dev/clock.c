@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.33 2004/07/30 19:02:05 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.34 2004/07/30 22:09:59 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -111,8 +111,8 @@ void	m188_initclock(void);
 void	m188_initstatclock(void);
 void	m188_timer_init(unsigned);
 void	m188_cio_init(unsigned);
-u_int8_t read_cio(int);
-void	write_cio(int, u_int8_t);
+u_int	read_cio(int);
+void	write_cio(int, u_int);
 
 struct clocksoftc {
 	struct device	sc_dev;
@@ -484,9 +484,10 @@ m188_initstatclock(void)
 
 /* Write CIO register */
 void
-write_cio(int reg, u_int8_t val)
+write_cio(int reg, u_int val)
 {
-	int s, i;
+	int s;
+	volatile int i;
 	int *volatile cio_ctrl = (int *volatile)CIO_CNTRL;
 
 	s = splclock();
@@ -504,18 +505,18 @@ write_cio(int reg, u_int8_t val)
 }
 
 /* Read CIO register */
-u_int8_t
+u_int
 read_cio(int reg)
 {
-	int c;
-	int s, i;
+	int c, s;
+	volatile int i;
 	int *volatile cio_ctrl = (int *volatile)CIO_CNTRL;
 
 	s = splclock();
 	CIO_LOCK;
 
 	/* Select register */
-	*cio_ctrl = (char)(reg & 0xff);
+	*cio_ctrl = (reg & 0xff);
 	/* Delay for a short time to allow 8536 to settle */
 	for (i = 0; i < 100; i++)
 		;
@@ -535,7 +536,7 @@ read_cio(int reg)
 void
 m188_cio_init(unsigned p)
 {
-	long i;
+	volatile int i;
 	short period;
 
 	CIO_LOCK;
@@ -559,7 +560,7 @@ m188_cio_init(unsigned p)
 
 	/* Initialize the 8536 */
 	write_cio(CIO_MICR,
-	    CIO_MICR_MIE | CIO_MICR_NV | CIO_MICR_RJA | CIO_MICR_DLC);
+	    CIO_MICR_MIE /* | CIO_MICR_NV */ | CIO_MICR_RJA | CIO_MICR_DLC);
 	write_cio(CIO_CTMS1, CIO_CTMS_CSC);	/* Continuous count */
 	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
 
