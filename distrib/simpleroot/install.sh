@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.1 1997/05/12 11:21:12 graichen Exp $
+#	$OpenBSD: install.sh,v 1.2 1997/05/13 14:29:38 graichen Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,6 +65,22 @@ MODE="install"
 #	md_native_fsopts()	- native filesystem options for disk installs
 #	md_makerootwritable()	- make root writable (at least /tmp)
 
+# test if / is read write
+echo "" > /tmp/test_read_write_root
+if [ "X$?" != X"0" ]; then
+	echo "Please mount your rootfilesystem read/write - for"
+	echo "instance - if the disk you booted from is rz0 do"
+	echo "the following:"
+	echo ""
+	echo "  mount /dev/rz0a /"
+	echo ""
+	echo "Then you can restart the installation"
+	echo ""
+	exit 0
+else
+       rm -f /tmp/test_read_write_root
+fi
+
 # include machine dependent subroutines
 . ./install.md
 
@@ -97,6 +113,7 @@ case "$resp" in
 		;;
 esac
 
+echo ""
 echo "In case you install from an simpleroot image dd'ed onto a disk - do"
 echo -n "you plan to install OpenBSD onto the same disk ? [n] "
 getresp "n"
@@ -137,7 +154,9 @@ if [ "`df /`" = "`df /mnt`" ]; then
 
 	if [ "X${SIMPLEROOT}" = X"simpleroot" ]; then
 		SIMPLEROOTDISK=${ROOTDISK}a
-		( cd /; rmdir /mnt; ln -s / /mnt)
+		if [ ! -L /mnt ]; then
+			( cd /; rmdir /mnt; ln -s / /mnt )
+		fi
 	else
 		SIMPLEROOTDISK=NO_GOOD_GREPABLE_STRING
 	fi
@@ -253,7 +272,9 @@ __get_filesystems_1
 		USRDEVICE=`grep /usr$ ${FILESYSTEMS} | cut -d" " -f1`
 		mkdir /tmp/mnt
 		mount /dev/${USRDEVICE} /tmp/mnt
+		echo -n "Copying the old /usr directory to the new location ..."
 		( cd /usr; tar cf - * ) | ( cd /tmp/mnt; tar xpf - )
+		echo " done."
 		umount /tmp/mnt
 		rmdir /tmp/mnt
 	fi
@@ -488,7 +509,6 @@ if [ "X${SIMPLEROOT}" != X"simpleroot" ]; then
 	echo "done."
 	cd /
 else
-	rm -f /mnt; mkdir /mnt
 	echo -n "did you install the comp${VERSION} set ? [y] "
 	getresp "n"
 	case "$resp" in
@@ -513,6 +533,10 @@ umount /kern
 rmdir /kern
 
 unmount_fs /tmp/fstab.shadow
+
+if [ "X${SIMPLEROOT}" = X"simpleroot" ]; then
+	rm -f /mnt; mkdir /mnt
+fi
 
 # Pat on the back.
 md_congrats
