@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.35 2001/12/10 18:08:12 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.36 2001/12/10 18:13:30 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm pfctl
-.Nd control the packet filter and NAT subsystems
+.Nd control the packet filter device
 .Sh SYNOPSIS
 .Nm pfctl
 .Op Fl dehnqv
@@ -44,33 +44,43 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility communicates with the packet filter system using the
+utility communicates with the packet filter device using the
 ioctl interface described in
 .Xr pf 4 .
+It allows rule set and parameter configuration and retrieval of status
+information from the packet filter.
 .Pp
-Packet filtering lets you restrict packets entering or leaving
-your host; packets can be specified in a variety of ways including
-by protocol, by port number, and by address.
-Network Address Translation lets you map a series of internal
-host IP numbers to a single external address.
-The NAT code also has provisions for redirecting a
-range of connections to a different host and/or port number.
-Taken together this provides a powerful basic firewall mechanism.
+Packet filtering restricts the types of packets that pass through
+network interfaces entering or leaving the host based on filter
+rules as described in
+.Xr pf.conf 5 .
+The packet filter can also replace addresses and ports of packets.
+Replacing source addresses and ports of outgoing packets is called
+NAT (Network Address Translation) and is used to connect an internal
+network (usually reserved address space) to an external one (the
+Internet) by making all connections to external hosts appear to
+come from the gateway.
+Replacing destination addresses and ports of incoming packets
+is used to redirect connections to different hosts and/or ports.
+A combination of both translations, bidirectional NAT, is also
+supported.
+Translation rules are described in
+.Xr nat.conf 5 .
 .Pp
-The
-.Nm
-command is normally invoked automatically at system initialization
-time to start and load the packet filter,
-but can also be used when the filter or translation rules change.
+When the variable pf=YES is set in
+.Xr rc.conf 8 ,
+the rule files specified with the variables pf_rules and nat_rules
+are loaded automatically by the
+.Xr rc 8
+scripts and the packet filter is enabled.
 .Pp
-.Nm
-requires the
-.Xr pf 4
-pseudo-device driver.
-Forwarding packets, by using NAT, also requires specifying
-.Li net.inet.ip.forwarding=1
-in the file
-.Pa /etc/sysctl.conf .
+The packet filter does not itself forward packet between interfaces.
+Forwarding can be enabled using the
+.Xr sysctl 8
+variable
+.Li net.inet.ip.forwarding=1 ,
+permanently in
+.Xr sysctl.conf 5 .
 .Pp
 The
 .Nm
@@ -105,7 +115,7 @@ These statistics can be viewed with the
 .Fl s Ar info
 option.
 .It Fl n
-Do not actually load rules.
+Do not actually load rules, just parse them.
 .It Fl N Ar file
 Load a NAT rules file.
 .It Fl O Ar modifier
@@ -113,7 +123,8 @@ Optimize the engine to one of the following network topographies or
 environments:
 .Bl -tag -width "O high-latency " -compact
 .It Fl O Ar default
-A normal network environment.  Suitable for almost all networks.
+A normal network environment.
+Suitable for almost all networks.
 .It Fl O Ar normal
 Alias for
 .Em default
@@ -123,13 +134,14 @@ A high-latency environment (such as a satellite connection)
 Alias for
 .Em high-latency
 .It Fl O Ar aggressive
-Aggressively expire connections when they are likely no longer valid.  This
-can greatly reduce the memory usage of the firewall at the cost of dropping
-idle connections early.
+Aggressively expire connections when they are likely no longer valid.
+This can greatly reduce the memory usage of the firewall at the cost of
+dropping idle connections early.
 .It Fl O Ar conservative
-Extremely conservative settings.  Pains will be taken to avoid dropping
-legitimate connections at the expense of greater memory utilization (possibly
-much greater on a busy network) and slightly increased processor utilization.
+Extremely conservative settings.
+Pains will be taken to avoid dropping legitimate connections at the
+expense of greater memory utilization (possibly much greater on a busy
+network) and slightly increased processor utilization.
 .El
 Currently the optimizations only encompass the state table timeouts but much
 more is planned in future revisions of the finite state machines (FSMs).
@@ -138,18 +150,20 @@ Only print errors and warnings.
 .It Fl R Ar file
 Load a filter rules file into the filter.
 .It Fl s Ar modifier
-Show filter parameters. Modifier names may be abbreviated:
+Show filter parameters.
+Modifier names may be abbreviated:
 .Bl -tag -width "s rules " -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
 .It Fl s Ar rules
-Show the currently loaded packet filter rules.
+Show the currently loaded filter rules.
 When used together with -v, the per-rule statistics (number of evaluations,
-packets and bytes) are also shown. Note that the 'skip step' optimization
-done automatically by the kernel will skip evaluation of rules where
-redundant. Packets passed statefully are counted in the rule that created
-the state (even though the rule isn't evaluated more than once for the
-entire connection).
+packets and bytes) are also shown.
+Note that the 'skip step' optimization done automatically by the kernel
+will skip evaluation of rules where possible.
+Packets passed statefully are counted in the rule that created the state
+(even though the rule isn't evaluated more than once for the entire
+connection).
 .It Fl s Ar state
 Show the contents of the state table.
 .It Fl s Ar info
@@ -158,8 +172,8 @@ Show filter information (statistics and counters).
 Show all of the above.
 .El
 .It Fl t Ar modifier
-Get a timeout or interval value.  Any of the modifiers may be set,
-with the exception of
+Get a timeout or interval value.
+Any of the modifiers may be set, with the exception of
 .Em all ,
 by appending =<seconds> to the modifier without any whitespace seperating
 the modifier, the equals and the number of seconds.
@@ -174,12 +188,10 @@ Seconds before an unassembled fragment is expired.
 .Pp
 When a packet matches a stateful connection, the seconds to live of the
 connection will be updated to that of the proto.modifier which corresponds
-to the connection state.  Each packet which matches this state will increase
-the TTL.  It is permissible to set the TTL for a particular state to zero
-if you do not want packets matching a particular state to prolong the life
-of the state.  Tuning these values may improve the performance of the
+to the connection state.
+Each packet which matches this state will reset the TTL.
+Tuning these values may improve the performance of the
 firewall at the risk of dropping valid idled connections.
-
 .Bl -tag -width "t tcp.established " -compact
 .It Fl t Ar tcp.first
 The state after the first packet.
@@ -191,14 +203,16 @@ The fully established state.
 The state after the first FIN has been sent.
 .It Fl t Ar tcp.finwait
 The state after both FINs have been exchanged and the connection is closed.
-If you see lots of blocked packets coming back from web servers (notably
-Solaris), increase this value and possibly tcp.closing.
+Some hosts (notably web servers on Solaris) send TCP packets even after closing
+the connection.
+Increasing tcp.finwait (and possibly tcp.closing) can prevent blocking of
+such packets.
 .It Fl t Ar tcp.closed
 The state after one endpoint sends a RST.
 .El
 .Pp
 ICMP and UDP are handled in a similar fashion to TCP but with a much more
-limited set of states.
+limited set of states:
 .Bl -tag -width "t udp.multiple " -compact
 .It Fl t Ar udp.first
 The state after the first packet.
@@ -253,9 +267,10 @@ Rules for Network Address Translation.
 .Xr nat.conf 5 ,
 .Xr pf.conf 5 ,
 .Xr ftp-proxy 8 ,
-.Xr rc 8
-.Sh AUTHORS
-Daniel Hartmeier wrote the program and the underlying mechanism.
+.Xr rc 8 ,
+.Xr rc.conf 8 ,
+.Xr sysctl 8 ,
+.Xr sysctl.conf 8
 .Sh HISTORY
 The
 .Nm
@@ -263,5 +278,3 @@ program and the
 .Xr pf 4
 filter mechanism first appeared in
 .Ox 3.0 .
-.Sh BUGS
-Probably.
