@@ -2,11 +2,19 @@
 
 # Machine architecture; required by config(8)
 machine		sparc
-maxusers	32
+
+# maxusers means mostly "let's get small" in terms of kernel malloc's
+maxusers	2
+# force default minimum number of buffers and dependents
+option		NBUF=16
+# this should only waste 64K vs. 512K, but hopefully enough for ftp et.al.
+option		NMBCLUSTERS=32
 
 # the size for MINIROOTSIZE must insure: 16384+size(bsd) < RELOC(boot,bootxx)
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=4352
+
+#option		DDB		# need this to see what's happening
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
@@ -17,7 +25,7 @@ option		DIAGNOSTIC	# internal consistency checks
 option		FFS		# UFS
 option		NFSCLIENT	# Network File System client
 option		CD9660		# ISO 9660 + Rock Ridge file system
-option		FDESC		# /dev/fd
+#option		FDESC		# /dev/fd
 #option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 option		INET		# IP + ICMP + TCP + UDP
@@ -250,8 +258,8 @@ pseudo-device	kbd		# Sun keyboard
 pseudo-device	rd	2
 pseudo-device	loop	1	# network loopback
 pseudo-device	sl	2	# CSLIP
-pseudo-device	ppp	2	# PPP
-pseudo-device	pty	64	# pseudo-terminals
+# pseudo-device	ppp	2	# PPP
+pseudo-device	pty	4	# pseudo-terminals
 #pseudo-device	ccd	4	# concatenated disk devices
 
 
