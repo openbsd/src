@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.45 2000/08/13 21:17:38 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.46 2000/08/15 14:22:44 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -137,8 +137,7 @@ hifn_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	char rbase;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+	bus_size_t iosize0, iosize1;
 	u_int32_t cmd;
 	u_int16_t ena;
 	bus_dma_segment_t seg;
@@ -156,45 +155,37 @@ hifn_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_mem_find(pc, pa->pa_tag, HIFN_BAR0, &iobase, &iosize, NULL)) {
-		printf(": can't find mem space\n");
+	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
+		printf(": can't find mem space %d\n", 0);
 		return;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh0)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-	sc->sc_st0 = pa->pa_memt;
 
-	if (pci_mem_find(pc, pa->pa_tag, HIFN_BAR1, &iobase, &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		return;
+	if (pci_mapreg_map(pa, HIFN_BAR1, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
+		printf(": can't find mem space %d\n", 1);
+		goto fail_io0;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh1)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-	sc->sc_st1 = pa->pa_memt;
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc dma buffer\n");
-		return;
+		goto fail_io1;
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%d bytes)\n",
 		    sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail_io1;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
 		printf(": can't create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail_io1;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
 	    NULL, BUS_DMA_NOWAIT)) {
@@ -202,7 +193,7 @@ hifn_attach(parent, self, aux)
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail_io1;
 	}
 	sc->sc_dma = (struct hifn_dma *)kva;
 	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
@@ -211,7 +202,7 @@ hifn_attach(parent, self, aux)
 
 	if (hifn_enable_crypto(sc, pa->pa_id) != 0) {
 		printf("%s: crypto enabling failed\n", sc->sc_dv.dv_xname);
-		return;
+		goto fail_mem;
 	}
 
 	hifn_init_dma(sc);
@@ -223,6 +214,11 @@ hifn_attach(parent, self, aux)
 		hifn_sramsize(sc);
 	else
 		hifn_dramsize(sc);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751 &&
+	    PCI_REVISION(pa->pa_class) == 0x61)
+		sc->sc_ramsize >>= 1;
 
 	/*
 	 * Reinitialize again, since the DRAM/SRAM detection shifted our ring
@@ -236,7 +232,7 @@ hifn_attach(parent, self, aux)
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
-		return;
+		goto fail_mem;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
@@ -246,7 +242,7 @@ hifn_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		goto fail_mem;
 	}
 
 	hifn_sessions(sc);
@@ -262,7 +258,7 @@ hifn_attach(parent, self, aux)
 
 	sc->sc_cid = crypto_get_driverid();
 	if (sc->sc_cid < 0)
-		return;
+		goto fail_intr;
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG,
 	    READ_REG_0(sc, HIFN_0_PUCNFG) | HIFN_PUCNFG_CHIPID);
@@ -281,6 +277,20 @@ hifn_attach(parent, self, aux)
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
 		    NULL, NULL, NULL);
 	}
+
+	return;
+
+fail_intr:
+	pci_intr_disestablish(pc, sc->sc_ih);
+fail_mem:
+	bus_dmamap_unload(sc->sc_dmat, dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+fail_io1:
+	bus_space_unmap(sc->sc_st1, sc->sc_sh1, iosize1);
+fail_io0:
+	bus_space_unmap(sc->sc_st0, sc->sc_sh0, iosize0);
 }
 
 /*
