@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.18 2003/03/06 21:54:40 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.19 2003/03/09 02:39:26 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
@@ -59,6 +59,7 @@
 .Cd wsdisplay* at tcx? console ?
 .Cd wsdisplay* at tvtwo? console ?
 .Cd wsdisplay* at vigra? console ?
+.Cd wsdisplay* at zx? console ?
 (sparc and/or sparc64 framebuffers)
 .Cd wsdisplay* at creator? console ?
 (sparc64 framebuffers)
@@ -174,6 +175,7 @@ control device
 .It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
+.Xr agten 4 ,
 .Xr bwtwo 4 ,
 .Xr cgtwo 4 ,
 .Xr cgthree 4 ,
@@ -195,6 +197,7 @@ control device
 .Xr vgafb 4 ,
 .Xr vigra 4 ,
 .Xr wscons 4 ,
+.Xr zx 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
 .Xr wsfontload 8
