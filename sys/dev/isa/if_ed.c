@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.39 1998/07/31 18:02:05 millert Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.40 1998/08/11 03:28:37 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ ed_pci_attach(parent, self, aux)
 		printf("type %s ", sc->type_str);
 	else
 		printf("type unknown (0x%x) ", sc->type);
-	printf("%s\n", sc->isa16bit ? "(16-bit)" : "(8-bit)");	/* XXX */
+	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");	/* XXX */
 
 #if NBPFILTER > 0
         if ((sc->spec_flags & ED_REATTACH) == 0)
@@ -527,21 +527,21 @@ ed_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, edintr,
 	    sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		printf("\n%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(", %s\n", intrstr);
 }
 
 #endif
