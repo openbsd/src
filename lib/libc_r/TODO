@@ -65,5 +65,6 @@ This is a list of things that still need to be done:
 	- ports
 		- lang/python
 		- databases/mysql
+		- net/mrtd
 
-$OpenBSD: TODO,v 1.7 1999/11/28 11:28:15 d Exp $
+$OpenBSD: TODO,v 1.8 1999/11/29 22:28:20 d Exp $
