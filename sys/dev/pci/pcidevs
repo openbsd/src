@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.9 1996/05/26 00:27:46 deraadt Exp $
+$OpenBSD: pcidevs,v 1.10 1996/06/20 11:33:22 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
@@ -210,7 +210,7 @@ vendor DATABOOK		0x10b3	Databook
 vendor STB		0x10b4	STB Systems
 vendor PLX		0x10b5	PLX Technology
 vendor MADGE		0x10b6	Madge Networks
-vendor 3COM		0x10B7	3Com
+vendor 3COM		0x10b7	3Com
 vendor SMC		0x10b8	Standard Microsystems
 vendor ALI		0x10b9	Acer Labs
 vendor MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
@@ -247,7 +247,7 @@ vendor APL		0x10d8	Advanced Peripherals Labs
 vendor MACRONIX		0x10d9	Macronix
 vendor THOMASCONRAD	0x10da	Thomas-Conrad
 vendor ROHM		0x10db	Rohm Research
-vendor CERN		0x10DC	CERN/ECP/EDU
+vendor CERN		0x10dc	CERN/ECP/EDU
 vendor ES		0x10dd	Evans & Sutherland
 vendor NVIDIA		0x10de	Nvidia Corporation
 vendor EMULEX		0x10df	Emulex
@@ -510,3 +510,7 @@ product TSENG W32P_D	0x3207	ET4000w32p rev D
 product UMC UM8673F	0x0101	UM8673F
 product UMC UM8881F	0x8881	UM8881F PCI-Host bridge
 product UMC UM8886F	0x8886	UM8886F PCI-ISA bridge
+
+/* Cyclades products */
+product CYCLADES CYCLOMY_1 0x0100       Cyclom-Y below 1M
+product CYCLADES CYCLOMY_2 0x0101       Cyclom-Y above 1M
