@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.72 2004/11/30 12:39:43 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.73 2004/12/05 04:42:42 jsg Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ bufinit(void)
 	/*
 	 * Reserve 5% of bufpages for syncer's needs,
 	 * but not more than 25% and if possible
-	 * not less then 2 * MAXBSIZE. locleanpages
+	 * not less than 2 * MAXBSIZE. locleanpages
 	 * value must be not too small, but probably
 	 * there are no reason to set it more than 1-2 MB.
 	 */
