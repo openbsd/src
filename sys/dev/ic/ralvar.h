@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.5 2005/03/01 19:30:42 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.6 2005/03/01 19:38:09 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -19,8 +19,7 @@
 
 struct ral_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	uint32_t	wr_tsf_lo;
-	uint32_t	wr_tsf_hi;
+	uint64_t	wr_tsf;
 	uint8_t		wr_flags;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.15 2005/02/28 17:49:22 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.16 2005/03/01 19:38:09 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1231,8 +1231,8 @@ ral_decryption_intr(struct ral_softc *sc)
 			tsf_lo = RAL_READ(sc, RAL_CSR16);
 			tsf_hi = RAL_READ(sc, RAL_CSR17);
 
-			tap->wr_tsf_lo = htole32(tsf_lo);
-			tap->wr_tsf_hi = htole32(tsf_hi);
+			tap->wr_tsf =
+			    htole64(((uint64_t)tsf_hi << 32) | tsf_lo);
 			tap->wr_flags = 0;
 			tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 			tap->wr_chan_flags =
