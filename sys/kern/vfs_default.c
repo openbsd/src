@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.10 2001/11/29 02:08:21 art Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.11 2001/11/29 15:51:48 art Exp $  */
 
 /*
  *    Portions of this code are:
@@ -482,7 +482,8 @@ genfs_getpages(v)
 	 * find any additional pages needed to cover the expanded range.
 	 */
 
-	if (startoffset != origoffset) {
+	npages = (endoffset - startoffset) >> PAGE_SHIFT;
+	if (startoffset != origoffset || npages != orignpages) {
 
 		/*
 		 * XXXUBC we need to avoid deadlocks caused by locking
@@ -491,19 +492,18 @@ genfs_getpages(v)
 		 * start over.
 		 */
 
-		for (i = 0; i < npages; i++) {
+		for (i = 0; i < orignpages; i++) {
 			struct vm_page *pg = pgs[ridx + i];
 
 			if (pg->flags & PG_FAKE) {
 				pg->flags |= PG_RELEASED;
 			}
 		}
-		uvm_page_unbusy(&pgs[ridx], npages);
+		uvm_page_unbusy(&pgs[ridx], orignpages);
 		memset(pgs, 0, sizeof(pgs));
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 			    startoffset, endoffset, 0,0);
-		npages = (endoffset - startoffset) >> PAGE_SHIFT;
 		npgs = npages;
 		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
 	}
@@ -561,7 +561,7 @@ genfs_getpages(v)
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
-		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
+		while ((pgs[pidx]->flags & (PG_FAKE|PG_RDONLY)) == 0) {
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
@@ -616,6 +616,8 @@ genfs_getpages(v)
 		 */
 
 		if (blkno < 0) {
+			int holepages = (round_page(offset + iobytes) - 
+					 trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = TRUE;
@@ -623,11 +625,10 @@ genfs_getpages(v)
 			       iobytes);
 			skipbytes += iobytes;
 
-			if (!write) {
-				int holepages =
-					(round_page(offset + iobytes) - 
-					 trunc_page(offset)) >> PAGE_SHIFT;
-				for (i = 0; i < holepages; i++) {
+			for (i = 0; i < holepages; i++) {
+				if (write) {
+					pgs[pidx + i]->flags &= ~PG_CLEAN;
+				} else {
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
@@ -638,7 +639,7 @@ genfs_getpages(v)
 		 * allocate a sub-buf for this piece of the i/o
 		 * (or just use mbp if there's only 1 piece),
 		 * and start it going.
- 		 */
+		 */
 
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
@@ -681,9 +682,9 @@ loopdone:
 	}
 
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
+		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&vp->v_glock, LK_RELEASE, NULL, p);
-		return EINPROGRESS;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -957,8 +958,8 @@ genfs_putpages(v)
 		splx(s);
 	}
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND", 0,0,0,0);
-		return EINPROGRESS;
+		UVMHIST_LOG(ubchist, "returning 0 (async)", 0,0,0,0);
+		return 0;
 	}
 	if (bp != NULL) {
 		UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);
