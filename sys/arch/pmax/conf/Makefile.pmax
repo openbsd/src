@@ -39,10 +39,10 @@ INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax
 
 # that is our goal to be up to date with i386 for instance ...
-#CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-#		-Wno-format
+#CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+#		-Wno-uninitialized -Wno-format -Wno-main
 # ... and this we will use for now to get the kernel compiled
-CDIAGFLAGS=	-Werror
+CDIAGFLAGS=	-Werror -Wno-main
 
 CMACHFLAGS=	-mno-abicalls -mcpu=r3000
 

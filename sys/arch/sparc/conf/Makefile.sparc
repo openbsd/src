@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.14 1997/09/15 02:40:35 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.15 1998/03/03 22:35:07 niklas Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -40,7 +40,7 @@ INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format
+		-Wno-uninitialized -Wno-format -Wno-main
 
 .if ${IDENT:M-DSUN*} == ${IDENT:M-DSUN4M}
 CMACHFLAGS=	-mv8

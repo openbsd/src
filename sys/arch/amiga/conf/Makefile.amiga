@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.22 1997/09/18 13:39:39 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.23 1998/03/03 22:34:45 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -39,7 +39,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Damiga
 
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format
+		-Wno-uninitialized -Wno-format -Wno-main
 
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020

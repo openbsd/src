@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.10 1998/01/28 13:46:02 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.11 1998/03/03 22:34:48 niklas Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -38,8 +38,8 @@ MIPS=	../../../mips
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darc
-CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format
+CDIAGFLAGS=	-Werror -Wall -Wmissing-protoypes -Wstrict-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
 
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE

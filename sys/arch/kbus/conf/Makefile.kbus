@@ -43,7 +43,9 @@ KBUS=	../..
 CPPFLAGS= -I. -I$S -I$S/sys -I${KBUS}
 INCLUDES=$(CPPFLAGS)
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CDIAGFLAGS= -Wall -Werror -Wno-format -Wstrict-prototypes -Wmissing-prototypes
+CDIAGFLAGS=	-Wall -Werror -Wno-format -Wstrict-prototypes \
+		-Wmissing-prototypes -Wno-main -Wno-uninitialized
+		
 CFLAGS=	-pipe -O ${COPTS} ${CDIAGFLAGS}
 ASFLAGS=
 
