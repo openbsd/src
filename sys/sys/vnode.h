@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.23 2000/04/19 08:34:51 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.24 2000/05/22 13:48:40 provos Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -90,8 +90,8 @@ struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
 #endif
 	u_long	v_flag;				/* vnode flags (see below) */
-	short	v_usecount;			/* reference count of users */
-	short	v_writecount;			/* reference count of writers */
+	int	v_usecount;			/* reference count of users */
+	int	v_writecount;			/* reference count of writers */
 	long	v_holdcnt;			/* page & buffer references */
 	daddr_t	v_lastr;			/* last read (read-ahead) */
 	u_long	v_id;				/* capability identifier */
