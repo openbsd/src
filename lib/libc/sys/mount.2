@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.2,v 1.15 1999/06/29 14:10:08 aaron Exp $
+.\"	$OpenBSD: mount.2,v 1.16 1999/07/05 06:08:05 aaron Exp $
 .\"	$NetBSD: mount.2,v 1.12 1996/02/29 23:47:48 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
@@ -54,28 +54,28 @@ The
 function grafts
 a filesystem object onto the system file tree
 at the point
-.Ar dir .
+.Fa dir .
 The argument
-.Ar data
+.Fa data
 describes the filesystem object to be mounted.
 The argument
-.Ar type
+.Fa type
 tells the kernel how to interpret
-.Ar data
+.Fa data
 (See
-.Ar type
+.Fa type
 below).
 The contents of the filesystem
 become available through the new mount point
-.Ar dir .
+.Fa dir .
 Any files in
-.Ar dir
+.Fa dir
 at the time
 of a successful mount are swept under the carpet so to speak, and
 are unavailable until the filesystem is unmounted.
 .Pp
 The following
-.Ar flags
+.Fa flags
 may be specified to
 suppress default semantics which affect filesystem access.
 .Bl -tag -width MNT_SYNCHRONOUS
@@ -231,23 +231,23 @@ is not supported by the kernel.
 .El
 .Pp
 The following errors can occur for a
-.Em ufs
+.Dq ufs
 filesystem mount:
 .Bl -tag -width [ENOTBLK]
 .It Bq Er ENODEV
 A component of ufs_args
-.Ar fspec
+.Fa fspec
 does not exist.
 .It Bq Er ENOTBLK
-.Ar Fspec
+.Fa fspec
 is not a block device.
 .It Bq Er ENXIO
 The major device number of
-.Ar fspec
+.Fa fspec
 is out of range (this indicates no device driver exists
 for the associated hardware).
 .It Bq Er EBUSY
-.Ar Fspec
+.Fa fspec
 is already mounted.
 .It Bq Er EMFILE
 No space remains in the mount table.
@@ -261,7 +261,7 @@ group information for the filesystem.
 An I/O error occurred while reading the super block or
 cylinder group information.
 .It Bq Er EFAULT
-.Ar Fspec
+.Fa fspec
 points outside the process's allocated address space.
 .El
 .Pp
@@ -327,9 +327,9 @@ points outside the process's allocated address space.
 .El
 .Pp
 A
-.Em ufs
+.Dq ufs
 or
-.Em mfs
+.Dq mfs
 mount can also fail if the maximum number of filesystems are currently
 mounted.
 .Sh SEE ALSO

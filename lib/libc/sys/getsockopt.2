@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.12 1999/06/29 14:23:29 aaron Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.13 1999/07/05 06:08:05 aaron Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -121,16 +121,16 @@ the parameter should be non-zero to enable a boolean option,
 or zero if the option is to be disabled.
 .Dv SO_LINGER
 uses a
-.Fa struct linger
+.Li struct linger
 parameter, defined in
-.Ao Pa sys/socket.h Ac ,
+.Aq Pa sys/socket.h ,
 which specifies the desired state of the option and the
 linger interval (see below).
 .Dv SO_SNDTIMEO
 and
 .Dv SO_RCVTIMEO
 use a
-.Fa struct timeval
+.Li struct timeval
 parameter, defined in
 .Ao Pa sys/time.h Ac .
 .Pp
@@ -270,7 +270,7 @@ is different than that returned.
 .Dv SO_SNDTIMEO
 is an option to set a timeout value for output operations.
 It accepts a
-.Fa struct timeval
+.Li struct timeval
 parameter with the number of seconds and microseconds
 used to limit waits for output operations to complete.
 If a send operation has blocked for this much time,
@@ -285,7 +285,7 @@ from the low water mark to the high water mark for output.
 .Dv SO_RCVTIMEO
 is an option to set a timeout value for input operations.
 It accepts a
-.Fa struct timeval
+.Li struct timeval
 parameter with the number of seconds and microseconds
 used to limit waits for input operations to complete.
 In the current implementation, this timer is restarted each time additional

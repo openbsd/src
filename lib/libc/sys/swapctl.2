@@ -45,7 +45,7 @@
 .Fn swapctl "int cmd" "const void *arg" "int misc"
 .Sh DESCRIPTION
 The
-.Nm
+.Fn swapctl
 function is used to add and delete swap devices, and modify their
 configuration.
 .Pp
@@ -221,8 +221,8 @@ function call appeared in
 The
 .Fa se_path
 member was added to
-.Va struct swapent
+.Li struct swapent
 in
 .Nx 1.4 ,
 when the header file was also moved from
-.Pa <vm/vm_swap.h> .
+.Aq Pa vm/vm_swap.h .

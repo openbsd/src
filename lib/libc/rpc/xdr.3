@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.10 1999/05/25 21:16:25 aaron Exp $
+.\"	$OpenBSD: xdr.3,v 1.11 1999/07/05 06:08:05 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -41,7 +41,7 @@
 .Nd library routines for external data representation
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd #include <xdr.h>
+.Fd #include <rpc/xdr.h>
 .Ft int
 .Fn xdr_array "XDR *xdrs" "char **arrp" "u_int *sizep" "u_int maxsize" "u_int elsize" "xdrproc_t elproc"
 .Ft int
@@ -178,19 +178,19 @@ is undefined.
 .Pp
 .Fn xdr_double
 is a filter primitive that translates between C
-.Ft double
+.Li double
 precision numbers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_enum
 is a filter primitive that translates between the C
-.Ft enum
+.Li enum
 type (actually an integer) and its external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_float
 is a filter primitive that translates between the C
-.Ft float
+.Li float
 type and its external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -229,11 +229,11 @@ to a contiguous piece of the stream's buffer;
 .Fa len
 is the byte length of the desired buffer.
 Note: pointer is cast to
-.Ft "long *" .
+.Li long * .
 Warning:
 .Fn xdr_inline
 may return
-.Tn NULL
+.Dv NULL
 if it cannot allocate a contiguous piece of a buffer.
 Therefore the behavior may vary among stream instances;
 it exists for the sake of efficiency.
@@ -245,7 +245,7 @@ This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_long
 is a filter primitive that translates between C
-.Ft long
+.Li long
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -265,10 +265,10 @@ determines the direction of the
 .Tn XDR
 stream
 (either
-.Tn XDR_ENCODE ,
-.Tn XDR_DECODE ,
+.Dv XDR_ENCODE ,
+.Dv XDR_DECODE ,
 or
-.Tn XDR_FREE Ns ).
+.Dv XDR_FREE Ns ).
 .Pp
 .Fn xdr_opaque
 is a filter primitive that translates between fixed size opaque
@@ -285,7 +285,7 @@ This routine returns one if it succeeds, zero otherwise.
 is like
 .Fn xdr_reference
 execpt that it serializes
-.Tn NULL
+.Dv NULL
 pointers, whereas
 .Fn xdr_reference
 does not.  Thus,
@@ -373,7 +373,7 @@ procedure that filters the structure
 between its C form and its external representation.
 This routine returns one if it succeeds, zero otherwise.
 Warning: this routine does not understand
-.Tn NULL
+.Dv NULL
 pointers. Use
 .Fn xdr_pointer
 instead.
@@ -398,7 +398,7 @@ type of stream and succeed with another.
 .Pp
 .Fn xdr_short
 is a filter primitive that translates between C
-.Ft short
+.Li short
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -417,10 +417,10 @@ The parameter
 determines the direction of the
 .Tn XDR
 stream (either
-.Tn XDR_ENCODE ,
-.Tn XDR_DECODE ,
+.Dv XDR_ENCODE ,
+.Dv XDR_DECODE ,
 or
-.Tn XDR_FREE Ns ).
+.Dv XDR_FREE Ns ).
 Warning: the destroy routine associated with such
 .Tn XDR
 streams calls
@@ -441,42 +441,42 @@ This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_u_char
 is a filter primitive that translates between
-.Ft unsigned
+.Li unsigned
 C characters and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_u_int
 is a filter primitive that translates between C
-.Ft unsigned
+.Li unsigned
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_u_long
 is a filter primitive that translates between C
-.Ft "unsigned long"
+.Li unsigned long
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_u_short
 is a filter primitive that translates between C
-.Ft "unsigned short"
+.Li unsigned short
 integers and their external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_union
 is a filter primitive that translates between a discriminated C
-.Ft union
+.Li union
 and its corresponding external representation. It first
 translates the discriminant of the union located at
 .Fa dscmp .
 This discriminant is always an
-.Ft enum_t .
+.Li enum_t .
 Next the union located at
 .Fa unp
 is translated.  The parameter
 .Fa choices
 is a pointer to an array of
-.Ft struct xdr_discrim
+.Li struct xdr_discrim
 structures. Each structure contains an ordered pair of
 .Ft [ value , proc ].
 If the union's discriminant is equal to the associated
@@ -484,15 +484,15 @@ If the union's discriminant is equal to the associated
 then the
 .Fa proc
 is called to translate the union.  The end of the
-.Fa struct xdr_discrim
+.Li struct xdr_discrim
 structure array is denoted by a routine of value
-.Tn NULL .
+.Dv NULL .
 If the discriminant is not found in the
 .Fa choices
 array, then the
 .Fn (*defaultarm)
 procedure is called (if it is not
-.Tn NULL Ns ).
+.Dv NULL Ns ).
 Returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_vector
