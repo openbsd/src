@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.18 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.19 2002/02/11 12:35:53 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -660,8 +660,8 @@ unp_externalize(rights)
 #endif
 
 restart:
-	rp = (struct file **)CMSG_DATA(cm);
 	if (error != 0) {
+		rp = ((struct file **)CMSG_DATA(cm));
 		for (i = 0; i < nfds; i++) {
 			fp = *rp;
 			/*
@@ -678,8 +678,10 @@ restart:
 	 * First loop -- allocate file descriptor table slots for the
 	 * new descriptors.
 	 */
+	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
-		fp = *rp++;
+		bcopy(rp, &fp, sizeof(fp));
+		rp--;
 		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
 			/*
 			 * Back out what we've done so far.
@@ -738,49 +740,75 @@ unp_internalize(control, p)
 	struct proc *p;
 {
 	struct filedesc *fdp = p->p_fd;
-	register struct cmsghdr *cm = mtod(control, struct cmsghdr *);
+	struct cmsghdr *cm = mtod(control, struct cmsghdr *);
 	struct file **rp, *fp;
-	register int i;
+	int i, error;
 	struct mbuf *n = NULL;
-	int oldfds, *ip, fd;
+	int nfds, *ip, fd, neededspace;
 
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
-	oldfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
-	ip = (int *)(cm + 1);
-	for (i = 0; i < oldfds; i++) {
-		struct file *fp;
-		fd = *ip++;
-		if ((fp = fd_getfile(fdp, fd)) == NULL)
-			return (EBADF);
-		if (fp->f_count == LONG_MAX-2 ||
-		    fp->f_msgcount == LONG_MAX-2)
-			return (EDEADLK);
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof (int);
+
+	/* Make sure we have room for the struct file pointers */
+morespace:
+	neededspace = CMSG_SPACE(nfds * sizeof(struct file *)) -
+	    control->m_len;
+	if (neededspace > M_TRAILINGSPACE(control)) {
+		/* if we already have a cluster, the message is just too big */
+		if (control->m_flags & M_EXT)
+			return (E2BIG);
+
+		/* allocate a cluster and try again */
+		MCLGET(control, M_WAIT);
+		if ((control->m_flags & M_EXT) == 0)
+			return (ENOBUFS);       /* allocation failed */
+
+		/* copy the data to the cluster */
+		memcpy(mtod(control, char *), cm, cm->cmsg_len);
+		cm = mtod(control, struct cmsghdr *);
+		goto morespace;
 	}
-	ip = (int *)(cm + 1);
-	if (sizeof(int) != sizeof(struct file *)) {
-		MGET(n, M_WAIT, MT_DATA);
-		rp = (struct file **)mtod(n, caddr_t);
-	} else
-		rp = (struct file **)ip;
-	for (i = 0; i < oldfds; i++) {
+
+	/* adjust message & mbuf to note amount of space actually used. */
+	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
+	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
+
+	ip = ((int *)CMSG_DATA(cm));
+	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
+	for (i = 0; i < nfds; i++) {
 		bcopy(ip, &fd, sizeof fd);
 		ip++;
-		fp = fd_getfile(fdp, fd);
-		/* XXX - are ew really sure that this will never fail? */
+		if ((fp = fd_getfile(fdp, fd)) == NULL) {
+			error = EBADF;
+			goto fail;
+		}
+		if (fp->f_count == LONG_MAX-2 ||
+		    fp->f_msgcount == LONG_MAX-2) {
+			error = EDEADLK;
+			goto fail;
+		}
 		bcopy(&fp, rp, sizeof fp);
-		rp++;
+		rp--;
 		fp->f_count++;
 		fp->f_msgcount++;
 		unp_rights++;
 	}
-	if (n) {
-		m_adj(control, -(oldfds * sizeof(int)));
-		n->m_len = oldfds * sizeof(struct file *);
-		m_cat(control, n);
-	}
 	return (0);
+fail:
+	/* Back out what we just did. */
+	for ( ; i > 0; i--) {
+		bcopy(rp, &fp, sizeof(fp));
+		rp++;
+		fp->f_count--;
+		fp->f_msgcount--;
+		unp_rights--;
+	}
+	if (n)
+		m_freem(n);
+
+	return (error);
 }
 
 int	unp_defer, unp_gcing;
@@ -802,18 +830,19 @@ unp_gc()
 		fp->f_flag &= ~(FMARK|FDEFER);
 	do {
 		for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
-			if (fp->f_count == 0)
-				continue;
 			if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
 			} else {
+				if (fp->f_count == 0)
+					continue;
 				if (fp->f_flag & FMARK)
 					continue;
 				if (fp->f_count == fp->f_msgcount)
 					continue;
-				fp->f_flag |= FMARK;
 			}
+			fp->f_flag |= FMARK;
+
 			if (fp->f_type != DTYPE_SOCKET ||
 			    (so = (struct socket *)fp->f_data) == 0)
 				continue;
@@ -836,7 +865,7 @@ unp_gc()
 				goto restart;
 			}
 #endif
-			unp_scan(so->so_rcv.sb_mb, unp_mark);
+			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
 		}
 	} while (unp_defer);
 	/*
@@ -906,38 +935,43 @@ unp_dispose(m)
 {
 
 	if (m)
-		unp_scan(m, unp_discard);
+		unp_scan(m, unp_discard, 1);
 }
 
 void
-unp_scan(m0, op)
-	register struct mbuf *m0;
+unp_scan(m0, op, discard)
+	struct mbuf *m0;
 	void (*op) __P((struct file *));
+	int discard;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct file **rp, *fp;
-	register struct cmsghdr *cm;
-	register int i;
+	struct cmsghdr *cm;
+	int i;
 	int qfds;
 
 	while (m0) {
-		for (m = m0; m; m = m->m_next)
+		for (m = m0; m; m = m->m_next) {
 			if (m->m_type == MT_CONTROL &&
 			    m->m_len >= sizeof(*cm)) {
 				cm = mtod(m, struct cmsghdr *);
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - sizeof *cm) / sizeof (int);
-				rp = (struct file **)(cm + 1);
+				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof *cm))
+				    / sizeof(struct file *);
+				rp = (struct file **)CMSG_DATA(cm);
 				for (i = 0; i < qfds; i++) {
-					bcopy(rp, &fp, sizeof fp);
-					rp++;
+					fp = *rp;
+					if (discard)
+						*rp = 0;
 					(*op)(fp);
+					rp++;
 				}
 				break;		/* XXX, but saves time */
 			}
-		m0 = m0->m_act;
+		}
+		m0 = m0->m_nextpkt;
 	}
 }
 
@@ -948,8 +982,16 @@ unp_mark(fp)
 
 	if (fp->f_flag & FMARK)
 		return;
-	unp_defer++;
-	fp->f_flag |= (FMARK|FDEFER);
+
+	if (fp->f_flag & FDEFER)
+		return;
+
+	if (fp->f_type == DTYPE_SOCKET) {
+		unp_defer++;
+		fp->f_flag |= FDEFER;
+	} else {
+		fp->f_flag |= FMARK;
+	}
 }
 
 void
@@ -957,6 +999,8 @@ unp_discard(fp)
 	struct file *fp;
 {
 
+	if (fp == NULL)
+		return;
 	FREF(fp);
 	fp->f_msgcount--;
 	unp_rights--;
