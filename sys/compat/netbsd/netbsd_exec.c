@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.1 1999/09/12 14:15:16 kstailey Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.2 1999/09/17 22:14:09 kstailey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -55,7 +55,6 @@
 static void *netbsd_copyargs __P((struct exec_package *, struct ps_strings *,
 			       void *, void *));
 
-const char netbsd_emul_path[] = "/emul/netbsd";
 extern char sigcode[], esigcode[];
 extern struct sysent netbsd_sysent[];
 extern char *netbsd_syscallnames[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.3 1999/09/17 12:13:47 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.4 1999/09/17 22:14:09 kstailey Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,18 +40,23 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/systm.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+
+#include <sys/syscallargs.h>
+
 #include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_stat.h>
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
+#include <compat/netbsd/netbsd_util.h>
 
 static void openbsd_to_netbsd_stat __P((struct stat *, struct netbsd_stat *));
 
@@ -102,14 +107,16 @@ netbsd_sys___stat13(p, v, retval)
 	register_t *retval;
 {
 	register struct netbsd_sys___stat13_args /* {
-		syscallarg(const char *) path;
+		syscallarg(char *) path;
 		syscallarg(struct netbsd_stat *) nsb;
 	} */ *uap = v;
 	struct netbsd_stat nsb;
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg = stackgap_init(p->p_emul);
 
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -137,14 +144,16 @@ netbsd_sys___lstat13(p, v, retval)
 	register_t *retval;
 {
 	register struct netbsd_sys___lstat13_args /* {
-		syscallarg(const char *) path;
+		syscallarg(char *) path;
 		syscallarg(struct netbsd_stat *) ub;
 	} */ *uap = v;
 	struct netbsd_stat nsb;
 	struct stat sb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg = stackgap_init(p->p_emul);
 
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -204,4 +213,68 @@ netbsd_sys___fstat13(p, v, retval)
 	openbsd_to_netbsd_stat(&sb, &nsb);
 	error = copyout(&nsb, SCARG(uap, ub), sizeof(nsb));
 	return (error);
+}
+
+int
+compat_43_netbsd_sys_stat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_netbsd_sys_stat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct ostat *) ub;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return compat_43_sys_stat(p, uap, retval);
+}
+
+int
+compat_43_netbsd_sys_lstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_netbsd_sys_lstat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct ostat *) ub;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return compat_43_sys_lstat(p, uap, retval);
+}
+
+int
+netbsd_sys_stat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd_sys_stat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct stat *) ub;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return sys_stat(p, uap, retval);
+}
+
+int
+netbsd_sys_lstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd_sys_lstat_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct stat *) ub;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	NETBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return sys_lstat(p, uap, retval);
 }

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.8 1999/09/17 15:03:18 kstailey Exp $
+;	$OpenBSD: syscalls.master,v 1.9 1999/09/17 22:14:09 kstailey Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -60,25 +60,25 @@
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
 ; XXX int mode vs. mode_t mode
-5	NOARGS		{ int sys_open(const char *path, \
+5	STD		{ int netbsd_sys_open(char *path, \
 			    int flags, ... int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 ; XXX int mode vs. mode_t mode
-8	NOARGS		{ int compat_43_sys_creat(char *path, \
+8	STD		{ int compat_43_netbsd_sys_creat(char *path, \
 			    int mode); } ocreat
-9	NOARGS		{ int sys_link(const char *path, const char *link); }
-10	NOARGS		{ int sys_unlink(const char *path); }
+9	STD		{ int netbsd_sys_link(char *path, char *link); }
+10	STD		{ int netbsd_sys_unlink(char *path); }
 11	OBSOL		execv
-12	NOARGS		{ int sys_chdir(const char *path); }
+12	STD		{ int netbsd_sys_chdir(char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
 ; XXX int mode vs. mode_t mode
-14	NOARGS		{ int sys_mknod(const char *path, int mode, \
+14	STD		{ int netbsd_sys_mknod(char *path, int mode, \
 			    dev_t dev); }
 ; XXX int mode vs. mode_t mode
-15	NOARGS		{ int sys_chmod(const char *path, int mode); }
-16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
+15	STD		{ int netbsd_sys_chmod(char *path, int mode); }
+16	STD		{ int netbsd_sys_chown(char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_ogetfsstat(struct statfs *buf, long bufsize, \
@@ -88,7 +88,7 @@
 20	NOARGS		{ pid_t sys_getpid(void); }
 21	NOARGS		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
-22	NOARGS		{ int sys_unmount(const char *path, int flags); }
+22	STD		{ int netbsd_sys_unmount(char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
@@ -110,19 +110,19 @@
 			    int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    socklen_t *alen); }
-33	NOARGS		{ int sys_access(const char *path, int flags); }
+33	STD		{ int netbsd_sys_access(char *path, int flags); }
 ; XXX u_long flags vs. u_int flags
-34	NOARGS		{ int sys_chflags(const char *path, u_int flags); }
+34	STD		{ int netbsd_sys_chflags(char *path, u_int flags); }
 ; XXX u_long flags vs. u_int flags
 35	NOARGS		{ int sys_fchflags(int fd, u_int flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
 ; XXX struct stat43 *ub vs. struct ostat *ub
-38	NOARGS		{ int sys_stat(const char *path, struct ostat *ub); } \
-			    ostat
+38	STD		{ int compat_43_netbsd_sys_stat(char *path, \
+			    struct ostat *ub); } ostat
 39	NOARGS		{ pid_t sys_getppid(void); }
 ; XXX struct stat43 *ub vs. struct ostat *ub
-40	NOARGS		{ int sys_lstat(char *path, \
+40	STD		{ int compat_43_netbsd_sys_lstat(char *path, \
 			    struct ostat *ub); } olstat
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_opipe(void); }
@@ -149,15 +149,14 @@
 54	NOARGS		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	NOARGS		{ int sys_reboot(int opt); }
-56	NOARGS		{ int sys_revoke(const char *path); }
-57	NOARGS		{ int sys_symlink(const char *path, \
-			    const char *link); }
-58	NOARGS		{ int sys_readlink(const char *path, char *buf, \
+56	STD		{ int netbsd_sys_revoke(char *path); }
+57	STD		{ int netbsd_sys_symlink(char *path, char *link); }
+58	STD		{ int netbsd_sys_readlink(char *path, char *buf, \
 			    size_t count); }
-59	NOARGS		{ int sys_execve(const char *path, \
-			    char * const *argp, char * const *envp); }
+59	STD		{ int netbsd_sys_execve(char *path, \
+			    char **argp, char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
-61	NOARGS		{ int sys_chroot(const char *path); }
+61	STD		{ int netbsd_sys_chroot(char *path); }
 62	NOARGS		{ int sys_fstat(int fd, struct ostat *sb); } ofstat
 63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
 			    int *size, int arg); } ogetkerninfo
@@ -261,21 +260,21 @@
 			    osetreuid
 127	NOARGS		{ int compat_43_sys_setregid(int rgid, int egid); } \
 			    osetregid
-128	NOARGS		{ int sys_rename(const char *from, const char *to); }
-129	NOARGS		{ int compat_43_sys_truncate(char *path, \
+128	STD		{ int netbsd_sys_rename(char *from, char *to); }
+129	STD		{ int compat_43_netbsd_sys_truncate(char *path, \
 			    long length); } otruncate
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
 			    oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
-132	NOARGS		{ int sys_mkfifo(const char *path, int mode); }
+132	STD		{ int netbsd_sys_mkfifo(char *path, int mode); }
 133	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    socklen_t tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	NOARGS		{ int sys_mkdir(const char *path, int mode); }
-137	NOARGS		{ int sys_rmdir(const char *path); }
+136	STD		{ int netbsd_sys_mkdir(char *path, int mode); }
+137	STD		{ int netbsd_sys_rmdir(char *path); }
 138	NOARGS		{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
@@ -388,10 +387,10 @@
 186	UNIMPL
 187	UNIMPL
 #endif
-188	NOARGS		{ int sys_stat(const char *path, struct stat *ub); }
+188	STD		{ int netbsd_sys_stat(char *path, struct stat *ub); }
 189	NOARGS		{ int sys_fstat(int fd, struct stat12 *sb); }
-190	NOARGS		{ int sys_lstat(const char *path, struct stat *ub); }
-191	NOARGS		{ long sys_pathconf(const char *path, int name); }
+190	STD		{ int netbsd_sys_lstat(char *path, struct stat *ub); }
+191	STD		{ long netbsd_sys_pathconf(char *path, int name); }
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
 193	NOARGS		{ int sys_swapctl(int cmd, const void *arg, int misc); }
 194	NOARGS		{ int sys_getrlimit(int which, \
@@ -405,7 +404,7 @@
 198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
-200	NOARGS		{ int sys_truncate(const char *path, int pad, \
+200	STD		{ int netbsd_sys_truncate(char *path, int pad, \
 			    off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
@@ -552,11 +551,11 @@
 276	STD		{ int netbsd_sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	NOARGS		{ int sys_msync(void *addr, size_t len, int flags); }
-278	STD		{ int netbsd_sys___stat13(const char *path, \
+278	STD		{ int netbsd_sys___stat13(char *path, \
 			   struct netbsd_stat *ub); }
 279	STD		{ int netbsd_sys___fstat13(int fd, \
 			    struct netbsd_stat *ub); }
-280	STD		{ int netbsd_sys___lstat13(const char *path, \
+280	STD		{ int netbsd_sys___lstat13(char *path, \
 			    struct netbsd_stat *ub); }
 281	STD		{ int netbsd_sys___sigaltstack14( \
 			    const struct netbsd_sigaltstack *nss, \
