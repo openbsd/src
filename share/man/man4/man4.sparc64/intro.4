@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.20 2002/09/18 04:41:20 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.21 2002/10/01 21:03:27 miod Exp $
 .\"
 .\" Copyright (c) 2001-2002 The OpenBSD Project
 .\" All Rights Reserved.
@@ -83,10 +83,6 @@ EBus CS4231 based audio.
 SBus CS4231 based audio.
 .It Xr autri 4
 PCI Trident 4DWAVE DX/NX, SiS 7018, ALi M5451 audio.
-.It Xr creator 4
-UPA Creator/Creator 3D/Elite 3D color graphics frame buffer.
-.It Xr eap 4
-Ensoniq AudioPCI based audio.
 .It Xr be 4
 10BaseT/100BaseTX SBus Ethernet controller.
 .It Xr beeper 4
@@ -103,10 +99,16 @@ EBUS clones of the NS16550 serial UART.
 Sun serial keyboards on
 .Xr com 4
 ports.
+.It Xr creator 4
+UPA Creator/Creator 3D/Elite 3D color graphics frame buffer.
 .It Xr dc 4
 Clones of the DEC Tulip ethernet controller.
+.It Xr eap 4
+Ensoniq AudioPCI based audio.
 .It Xr esp 4
 ESP SCSI controller.
+.It Xr gem 4
+GEM gigabit ethernet interface.
 .It Xr hifn 4
 Hifn 7751/7811/7951 cryptography acclerators.
 .It Xr hme 4
@@ -117,12 +119,18 @@ Qlogic ISP SBus SCSI controller.
 AMD 7990 LANCE ethernet controller.
 .It Xr lofn 4
 Hifn 6500 public key cryptography engine.
+.It Xr lpt 4
+Parallel port driver.
 .It Xr magma 4
 MAGMA serial/parallel communication boards.
 .It Xr openprom 4
 Sun Open boot PROM (what became IEEE 1275) configuration driver.
+.It Xr pckbd 4
+PS/2-style keyboard driver.
 .It Xr pcons 4
 PROM console input/output device.
+.It Xr pms/pmsi 4
+PS/2 auxiliary port mouse driver.
 .It Xr qe 4
 Quad 10BaseT SBus Ethernet controller.
 .It Xr qec 4
@@ -133,6 +141,8 @@ or
 Ethernet controllers.
 .It Xr sab 4
 Infineon (formerly Siemens) SAB82532 serial controller.
+.It Xr siop 4
+LSI/Symbios Logic/NCR 53c8xxx SCSI driver.
 .It Xr spif 4
 Sun SUNW,spif serial/parallel communication boards.
 .It Xr stp 4
@@ -141,6 +151,10 @@ SBus
 bridge.
 .It Xr ubsec 4
 Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 crytography accelerators.
+.It Xr ukbd 4
+USB keyboard.
+.It Xr ums 4
+USB mouse.
 .It Xr uperf 4
 Performance counters on SBUS/PCI machines.
 .It Xr vgafb 4
@@ -149,7 +163,52 @@ PCI graphics frame buffer.
 Zilog 8530 serial controller (and serial keyboards).
 .El
 .Sh SEE ALSO
+.Xr apio 4 ,
+.Xr asio 4 ,
+.Xr audioce 4 ,
+.Xr audiocs 4 ,
 .Xr autoconf 4 ,
+.Xr autri 4 ,
+.Xr be 4 ,
+.Xr beeper 4 ,
+.Xr bwtwo 4 ,
+.Xr cgsix 4 ,
+.Xr cgthree 4 ,
+.Xr com 4 ,
+.Xr comkbd 4 ,
+.Xr creator 4 ,
+.Xr dc 4 ,
+.Xr eap 4 ,
+.Xr ebus 4 ,
+.Xr esp 4 ,
+.Xr gem 4 ,
+.Xr hifn 4 ,
+.Xr hme 4 ,
+.Xr isp 4 ,
+.Xr le 4 ,
+.Xr lofn 4 ,
+.Xr lpt 4 ,
+.Xr magma 4 ,
+.Xr openprom 4 ,
+.Xr pci 4 ,
+.Xr pckbd 4 ,
+.Xr pcons 4 ,
+.Xr pms 4 ,
+.Xr qe 4 ,
+.Xr qec 4 ,
+.Xr sab 4 ,
+.Xr sbus 4 ,
+.Xr siop 4 ,
+.Xr spif 4 ,
+.Xr stp 4 ,
+.Xr ubsec 4 ,
+.Xr ukbd 4 ,
+.Xr ums 4 ,
+.Xr upa 4 ,
+.Xr uperf 4 ,
+.Xr usb 4 ,
+.Xr vgafb 4 ,
+.Xr zs 4 ,
 .Xr config 8
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: esp.4,v 1.3 2002/05/23 09:30:34 mpech Exp $
+.\"	$OpenBSD: esp.4,v 1.4 2002/10/01 21:03:27 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -11,9 +11,10 @@
 .Nm esp
 .Nd ESP NCR 53c94 on-board or SBus SCSI controller
 .Sh SYNOPSIS
-.Cd "dma* at sbus? slot ? offset ?" Pq "SBus SCSI"
-.Cd "esp* at dma?                 " Pq "two flavours"
-.Cd "esp* at sbus? slot ? offset ?" Pq "depending on model"
+.Cd "dma* at sbus? slot ? offset ?             " Pq "SBus SCSI"
+.Cd "esp* at dma? flags 0x0000                 " Pq "two flavours"
+.Cd "esp* at sbus? slot ? offset ? flags 0x0000" Pq "depending on model"
+.Cd "scsibus* at esp?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -22,10 +23,11 @@ on some
 .Tn Sun
 ULTRAsparc workstations.
 .Sh DEVICE FLAGS
-.Bl -tag -width "Bits 8-15" -compact
-.It Bits 0-7 disable disconnect/reselect for the corresponding target
-.It ""
-.It Bits 8-15 disable synchronous negotiation for target "[bit - 8]"
+.Bl -tag -width "Bits XX-XX" -compact
+.It Bits 0-7
+Disable disconnect/reselect for the corresponding target
+.It Bits 8-15
+Disable synchronous negotiation for target "[bit - 8]"
 .El
 .Pp
 The
@@ -37,9 +39,16 @@ that tape devices normally have one of these targets.
 Tape devices should be allowed to disconnect for the SCSI bus to operate
 acceptably.
 .Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr intro 4 ,
 .Xr isp 4 ,
 .Xr sbus 4 ,
-.Xr scsi 4
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
 .Sh HISTORY
 .Ox
 support for the

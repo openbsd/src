@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.4 2002/02/19 06:59:13 jason Exp $
+.\"	$OpenBSD: zs.4,v 1.5 2002/10/01 21:03:28 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -13,7 +13,7 @@
 .Sh SYNOPSIS
 .Cd "zs* at sbus? slot ? offset ?"
 .Cd "zstty* at zs? channel ?"
-.Cd "zskbd* at zs? channel ?
+.Cd "zskbd* at zs? channel ?"
 .Cd "wskbd* at zskbd? console ?"
 .Sh DESCRIPTION
 The
@@ -57,6 +57,7 @@ connections fail, apparently due to a getty hang.
 The hung getty apparently prevents the cua device from being re-opened.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr intro 4 ,
 .Xr sbus 4 ,
 .Xr tty 4 ,
 .Xr wskbd 4

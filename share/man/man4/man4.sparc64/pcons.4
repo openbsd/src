@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcons.4,v 1.2 2002/03/29 22:31:08 miod Exp $
+.\"	$OpenBSD: pcons.4,v 1.3 2002/10/01 21:03:28 miod Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -44,16 +44,20 @@ It will use the PROM console devices set via the
 and
 .Dq output-device
 variables.
+.Pp
+This driver is deprecated and only provided as a fallback console mechanism
+if the real console hardware can not be driven in
+.Ox .
 .Sh FILES
 .Bl -tag -width /dev/console
 .It Pa /dev/console
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr tty 4
 .Sh HISTORY
 .Ox
-support for the
-.Nm
+support for the PROM console
 first appeared in
 .Ox 3.0 .
 .Sh CAVEATS

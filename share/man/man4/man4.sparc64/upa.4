@@ -1,4 +1,4 @@
-.\"     $OpenBSD: upa.4,v 1.1 2002/06/11 10:59:38 jason Exp $
+.\"     $OpenBSD: upa.4,v 1.2 2002/10/01 21:03:28 miod Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nd SPARC64 Host/UPA bridge
 .Sh SYNOPSIS
 .Cd "upa* at mainbus0"
+.Cd "creator* at upa0"
 .Sh DESCRIPTION
 The
 .Nm
@@ -44,6 +45,9 @@ device provides support for the
 .Xr upa 4
 bus on sparc64
 systems, most often found on UltraSPARC III based systems.
+.Sh SEE ALSO
+.Xr creator 4 ,
+.Xr intro 4
 .Sh HISTORY
 .Ox
 support for the
