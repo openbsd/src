@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.26 2001/12/01 16:29:54 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.27 2001/12/17 16:22:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -709,9 +709,12 @@ ac97_attach(host_if)
 	if (as->ext_id)
 		DPRINTF(("ac97: ext id %b\n", as->ext_id,
 		    AC97_EXT_AUDIO_BITS));
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &id1);
 	if (as->ext_id & AC97_EXT_AUDIO_VRA)
-		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL,
-		    AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM);
+		id1 |= AC97_EXT_AUDIO_VRA;
+	if (as->ext_id & AC97_EXT_AUDIO_VRM)
+		id1 |= AC97_EXT_AUDIO_VRM;
+	ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, id1);
 
 	ac97_setup_source_info(as);
 
