@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.25 2002/01/02 15:57:16 mpech Exp $
+.\"	$OpenBSD: recv.2,v 1.26 2002/03/31 20:34:57 deraadt Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -282,6 +282,16 @@ was larger than
 .El
 .Pp
 Also,
+.Fn recv
+may return the following error:
+.Bl -tag -width Er
+.It Bq Er ECONNREFUSED
+The socket is associated with a connection-oriented protocol
+and the connection was forcefully rejected (see
+.Xr connect 2 ) .
+.El
+.Pp
+And
 .Fn recvmsg
 may return one of the following errors:
 .Bl -tag -width Er
