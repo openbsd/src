@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.33 2002/10/16 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.34 2002/10/17 05:49:40 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -328,8 +328,7 @@ intercept_run(int bg, int fd, uid_t uid, gid_t gid,
 	/* Choose the pid of the systraced process */
 	pid = bg ? pid : cpid;
 
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		err(1, "intercept_getpid");
+	icpid = intercept_getpid(pid);
 	
 	/* Set up user related information */
 	if (!uid && !gid) {
@@ -436,8 +435,7 @@ intercept_attachpid(int fd, pid_t pid, char *name)
 	if (res == -1)
 		return (-1);
 
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		return (-1);
+	icpid = intercept_getpid(pid);
 
 	if ((icpid->newname = strdup(name)) == NULL)
 		err(1, "strdup");
@@ -579,8 +577,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 	}
 
 	/* Update cwd for process */
-	if ((icpid = intercept_getpid(pid)) == NULL)
-		err(1, "intercept_getpid");
+	icpid = intercept_getpid(pid);
 	if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
 		errx(1, "cwd too long");
 
