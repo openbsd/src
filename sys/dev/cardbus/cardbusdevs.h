@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.13 2002/06/08 00:08:17 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.14 2003/06/26 00:50:59 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.11 2001/08/22 16:33:57 aaron Exp 
+ *	OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -57,6 +57,7 @@
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* Abocom */
+#define	CARDBUS_VENDOR_NETGEAR	0x168c		/* Netgear */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
 #define	CARDBUS_VENDOR_ADP2	0x9005		/* Adaptec(2) */
@@ -101,6 +102,9 @@
 /* XXX product name? */
 #define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* Modem */
 #define	CARDBUS_PRODUCT_INTEL_DFE660	0x7192		/* DFE-660 */
+
+/* Netgear products */
+#define	CARDBUS_PRODUCT_NETGEAR_HA501	0x0007		/* HA501 */
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */

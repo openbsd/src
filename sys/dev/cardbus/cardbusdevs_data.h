@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.13 2002/06/08 00:08:17 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.14 2003/06/26 00:50:59 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.11 2001/08/22 16:33:57 aaron Exp 
+ *	OpenBSD: cardbusdevs,v 1.13 2003/06/26 00:50:42 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -117,6 +117,10 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "DFE-660",
 	},
 	{
+	    CARDBUS_VENDOR_NETGEAR, CARDBUS_PRODUCT_NETGEAR_HA501,
+	    "HA501",
+	},
+	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
 	    "82C861",
 	},
@@ -183,6 +187,10 @@ struct cardbus_known_vendor cardbus_known_vendors[] = {
 	{
 	    CARDBUS_VENDOR_ABOCOM, 0,
 	    "Abocom",
+	},
+	{
+	    CARDBUS_VENDOR_NETGEAR, 0,
+	    "Netgear",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, 0,
