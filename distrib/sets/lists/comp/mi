@@ -1775,6 +1775,8 @@
 ./usr/share/man/cat2/amd64/amd64_set_mtrr.0
 ./usr/share/man/cat2/bind.0
 ./usr/share/man/cat2/brk.0
+./usr/share/man/cat2/cats/arm_drain_writebuf.0
+./usr/share/man/cat2/cats/arm_sync_icache.0
 ./usr/share/man/cat2/chdir.0
 ./usr/share/man/cat2/chflags.0
 ./usr/share/man/cat2/chmod.0
@@ -1961,6 +1963,8 @@
 ./usr/share/man/cat2/waitpid.0
 ./usr/share/man/cat2/write.0
 ./usr/share/man/cat2/writev.0
+./usr/share/man/cat2/zaurus/arm_drain_writebuf.0
+./usr/share/man/cat2/zaurus/arm_sync_icache.0
 ./usr/share/man/cat3/BF_cbc.0
 ./usr/share/man/cat3/BF_cbc_encrypt.0
 ./usr/share/man/cat3/BF_cfb64_encrypt.0

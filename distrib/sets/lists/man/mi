@@ -676,7 +676,9 @@
 ./usr/share/man/cat2
 ./usr/share/man/cat2/alpha
 ./usr/share/man/cat2/amd64
+./usr/share/man/cat2/cats
 ./usr/share/man/cat2/i386
+./usr/share/man/cat2/zaurus
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amd64
