@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.5 1996/10/30 22:40:14 niklas Exp $	*/
+/*	$OpenBSD: sio.c,v 1.6 1996/11/12 20:29:39 niklas Exp $	*/
 /*	$NetBSD: sio.c,v 1.11 1996/10/13 03:00:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #include <sys/device.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>

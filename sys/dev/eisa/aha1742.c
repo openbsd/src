@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.11 1996/10/16 12:38:05 deraadt Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.12 1996/11/12 20:30:07 niklas Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/eisa/eisareg.h>

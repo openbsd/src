@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.4 1996/10/31 01:01:40 niklas Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.5 1996/11/12 20:30:23 niklas Exp $	*/
 
 /*
  * Interface for the 93C46/26/06 serial eeprom parts.
@@ -59,7 +59,7 @@
 #include <machine/clock.h>
 #include <i386/scsi/93cx6.h>
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <dev/ic/smc93cx6var.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia_bus_io.c,v 1.3 1996/10/30 22:39:54 niklas Exp $	*/
+/*	$OpenBSD: cia_bus_io.c,v 1.4 1996/11/12 20:29:35 niklas Exp $	*/
 /*	$NetBSD: cia_bus_io.c,v 1.5 1996/08/27 16:29:25 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>

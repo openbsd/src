@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.27 1996/10/28 00:36:18 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.28 1996/11/12 20:30:31 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
 #include <sys/queue.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/conf.h>
 #include <machine/intr.h>
 #include <machine/ioctl_fd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.3 1996/10/30 22:41:21 niklas Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.4 1996/11/12 20:29:45 niklas Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.7 1996/07/09 00:55:33 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <dev/tc/tcvar.h>
 
 int		tc_mem_map __P((void *, bus_mem_addr_t, bus_mem_size_t,

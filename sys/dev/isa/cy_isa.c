@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.1 1996/07/27 07:20:05 deraadt Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.2 1996/11/12 20:30:28 niklas Exp $	*/
 
 /*
  * cy.c
@@ -38,7 +38,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 

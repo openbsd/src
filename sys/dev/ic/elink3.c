@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.14 1996/10/31 01:01:28 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.15 1996/11/12 20:30:18 niklas Exp $	*/
 /*	$NetBSD: elink3.c,v 1.7 1996/05/14 22:22:05 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>

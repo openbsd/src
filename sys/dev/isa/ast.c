@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.12 1996/06/02 17:23:02 niklas Exp $	*/
+/*	$OpenBSD: ast.c,v 1.13 1996/11/12 20:30:25 niklas Exp $	*/
 /*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdqvar.h,v 1.8 1996/10/31 01:01:38 niklas Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.9 1996/11/12 20:30:22 niklas Exp $	*/
 /*	$NetBSD: pdqvar.h,v 1.8 1996/07/10 18:55:05 cgd Exp $	*/
 
 /*-
@@ -127,7 +127,7 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #define	PDQ_OS_PTR_FMT		"%p"
 typedef void ifnet_ret_t;

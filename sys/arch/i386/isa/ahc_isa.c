@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.1 1996/10/04 02:51:20 deraadt Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.2 1996/11/12 20:30:00 niklas Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.1 1996/08/05 21:14:29 soda Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <scsi/scsi_all.h>

@@ -61,7 +61,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>

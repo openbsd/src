@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.23 1996/11/07 11:25:10 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.24 1996/11/12 20:30:34 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>

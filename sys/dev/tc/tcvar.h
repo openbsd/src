@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcvar.h,v 1.4 1996/05/26 00:27:56 deraadt Exp $	*/
+/*	$OpenBSD: tcvar.h,v 1.5 1996/11/12 20:31:02 niklas Exp $	*/
 /*	$NetBSD: tcvar.h,v 1.5 1996/05/17 23:38:16 cgd Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
  * Definitions for TurboChannel autoconfiguration.
  */
 
-#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.h */
-#include <machine/bus.h>
+#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.old.h */
+#include <machine/bus.old.h>
 #endif
 #include <dev/tc/tcreg.h>
 

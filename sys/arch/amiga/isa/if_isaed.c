@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.12 1996/10/05 00:08:41 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.13 1996/11/12 20:29:51 niklas Exp $	*/
 
 /*
  *	Derived from sys/dev/isa/if_ed.c:
@@ -53,7 +53,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isareg.h>

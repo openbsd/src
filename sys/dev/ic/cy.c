@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.3 1996/10/16 12:38:16 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.4 1996/11/12 20:30:17 niklas Exp $	*/
 
 /*
  * cy.c
@@ -46,7 +46,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #if NCY_ISA > 0	

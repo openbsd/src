@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisavar.h,v 1.4 1996/04/21 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.5 1996/11/12 20:30:10 niklas Exp $	*/
 /*	$NetBSD: eisavar.h,v 1.9 1996/04/12 06:34:36 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  * separated into eisa_machdep.h.
  */
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
 /* 

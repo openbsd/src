@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_pci.c,v 1.4 1996/10/16 12:40:55 deraadt Exp $
+ *	$Id: ahc_pci.c,v 1.5 1996/11/12 20:30:48 niklas Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -43,7 +43,7 @@
 #include <sys/queue.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.19 1996/09/22 09:02:32 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.20 1996/11/12 20:30:43 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -53,7 +53,7 @@
 
 #include <vm/vm.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 

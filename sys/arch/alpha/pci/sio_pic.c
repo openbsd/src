@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.6 1996/10/30 22:40:15 niklas Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.7 1996/11/12 20:29:39 niklas Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.13 1996/10/13 03:00:20 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/syslog.h>
 
 #include <machine/intr.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

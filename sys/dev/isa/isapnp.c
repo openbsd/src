@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.6 1996/10/18 15:39:34 mickey Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.7 1996/11/12 20:30:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -62,7 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/extent.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/isa/isavar.h>
 

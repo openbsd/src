@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.11 1996/10/17 19:04:02 niklas Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.12 1996/11/12 20:30:42 niklas Exp $       */
 /*	$NetBSD: rtfps.c,v 1.23 1996/05/12 23:53:29 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

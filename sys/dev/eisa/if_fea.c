@@ -91,7 +91,7 @@
 #include <i386/eisa/pdqreg.h>
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/ic/pdqvar.h>
 #include <dev/ic/pdqreg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.18 1996/06/30 03:51:55 dm Exp $ */
+/*	$OpenBSD: lpt.c,v 1.19 1996/11/12 20:30:41 niklas Exp $ */
 /*	$NetBSD: lpt.c,v 1.39 1996/05/12 23:53:06 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 #include <sys/conf.h>
 #include <sys/syslog.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.5 1996/10/16 12:38:07 deraadt Exp $
+ *	$Id: ahc_eisa.c,v 1.6 1996/11/12 20:30:08 niklas Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -46,7 +46,7 @@
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
 

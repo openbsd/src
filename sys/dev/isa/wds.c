@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.8 1996/11/09 08:40:53 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.9 1996/11/12 20:30:46 niklas Exp $	*/
 /*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -65,7 +65,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 

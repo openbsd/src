@@ -1,4 +1,4 @@
-/*	$Id: pcmciavar.h,v 1.1 1996/04/29 14:17:39 hvozda Exp $	*/
+/*	$Id: pcmciavar.h,v 1.2 1996/11/12 20:31:01 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/queue.h>
 #include <sys/select.h>
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 /*
  * The following documentation tries to describe the relationship between the

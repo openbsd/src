@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.17 1996/10/31 01:05:10 niklas Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.18 1996/11/12 20:30:40 niklas Exp $	*/
 /*	$NetBSD: isavar.h,v 1.23 1996/05/08 23:32:31 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/queue.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 /* 
  * Structures and definitions needed by the machine-dependent header.

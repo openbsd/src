@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.3 1996/05/05 12:42:23 deraadt Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.4 1996/11/12 20:30:09 niklas Exp $	*/
 /*	$NetBSD: eisa.c,v 1.11 1996/04/09 22:46:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>

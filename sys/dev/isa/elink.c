@@ -39,7 +39,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <dev/isa/elink.h>
 

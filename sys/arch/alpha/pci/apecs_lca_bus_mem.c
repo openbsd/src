@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.3 1996/10/30 22:39:48 niklas Exp $	*/
+/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.4 1996/11/12 20:29:34 niklas Exp $	*/
 /*	$NetBSD: apecs_lca_bus_mem.c,v 1.5 1996/08/27 16:29:24 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/lcareg.h>

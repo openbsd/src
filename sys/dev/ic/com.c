@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.26 1996/11/09 21:50:43 tholo Exp $	*/
+/*	$OpenBSD: com.c,v 1.27 1996/11/12 20:30:27 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

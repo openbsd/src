@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.7 1996/10/30 22:40:03 niklas Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.8 1996/11/12 20:29:37 niklas Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.10 1996/10/13 03:00:09 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>

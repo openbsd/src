@@ -1,4 +1,4 @@
-/*	$OpenBSD: tga.c,v 1.5 1996/10/30 22:40:19 niklas Exp $	*/
+/*	$OpenBSD: tga.c,v 1.6 1996/11/12 20:29:41 niklas Exp $	*/
 /*	$NetBSD: tga.c,v 1.10 1996/10/13 03:00:22 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>

@@ -37,7 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>

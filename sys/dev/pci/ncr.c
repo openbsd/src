@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.17 1996/10/31 01:05:12 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.18 1996/11/12 20:30:57 niklas Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -206,7 +206,7 @@
 #include <pci/ncrreg.h>
 #else
 #include <sys/device.h>
-#include <machine/bus.h>
+#include <machine/bus.old.h>
 #include <machine/intr.h>
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
