@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.13 2004/10/08 19:53:49 kettenis Exp $
+.\"	$OpenBSD: elf.5,v 1.14 2004/10/10 15:02:18 kettenis Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -528,6 +528,14 @@ Moreover, it may
 only occur if the program header table is part of the memory image of the
 program.
 If it is present, it must precede any loadable segment entry.
+.It Dv PT_LOOS
+This value up to and including
+.Sy PT_HIOS
+is reserverd for operating system-specific semantics.
+.It Dv PT_HIOS
+This value down to and including
+.Sy PT_LOOS
+is reserved for operating system-specific semantics.
 .It Dv PT_LOPROC
 This value up to and including
 .Sy PT_HIPROC

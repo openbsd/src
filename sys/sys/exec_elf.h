@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.39 2004/02/27 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.40 2004/10/10 15:02:18 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -401,6 +401,8 @@ typedef struct {
 #define PT_SHLIB	5		/* reserved - purpose undefined */
 #define PT_PHDR		6		/* program header */
 #define PT_NUM		7		/* Number of segment types */
+#define PT_LOOS		0x60000000	/* reserved range for OS */
+#define PT_HIOS		0x6fffffff	/*  specific segment types */
 #define PT_LOPROC	0x70000000	/* reserved range for processor */
 #define PT_HIPROC	0x7fffffff	/*  specific segment types */
 
@@ -546,6 +548,7 @@ struct elf_args {
 #define Elf_Rel		Elf32_Rel
 #define Elf_RelA	Elf32_Rela
 #define Elf_Dyn		Elf32_Dyn
+#define Elf_Half	Elf32_Half
 #define Elf_Word	Elf32_Word
 #define Elf_Sword	Elf32_Sword
 #define Elf_Addr	Elf32_Addr
@@ -571,6 +574,7 @@ struct elf_args {
 #define Elf_Rel		Elf64_Rel
 #define Elf_RelA	Elf64_Rela
 #define Elf_Dyn		Elf64_Dyn
+#define Elf_Half	Elf64_Half
 #define Elf_Word	Elf64_Word
 #define Elf_Sword	Elf64_Sword
 #define Elf_Addr	Elf64_Addr
