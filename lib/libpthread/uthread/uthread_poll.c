@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.7 2002/01/10 00:38:39 fgsch Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -63,12 +63,12 @@ poll(struct pollfd fds[], int nfds, int timeout)
 	} else if (timeout > 0) {
 		/* Convert the timeout in msec to a timespec: */
 		ts.tv_sec = timeout / 1000;
-		ts.tv_nsec = (timeout % 1000) * 1000;
+		ts.tv_nsec = (timeout % 1000) * 1000000;
 
 		/* Set the wake up time: */
 		_thread_kern_set_timeout(&ts);
 	} else if (timeout < 0) {
-		/* a timeout less than zero but not == -1 is invalid */
+		/* a timeout less than zero but not == INFTIM is invalid */
 		errno = EINVAL;
 		return (-1);
 	}
