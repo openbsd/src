@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.15 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.16 2005/03/06 23:23:10 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -396,7 +396,6 @@ zskbd_attach(parent, self, aux)
 		zs_modem(zst, 0);
 		splx(s);
 
-		printf("%s: no keyboard\n", self->dv_xname);
 		return;
 	}
 
@@ -567,7 +566,7 @@ zskbd_init(zst)
 		break;
 	}
 	if (tries == 0)
-		printf(": reset timeout\n");
+		printf(": no keyboard\n");
 	else
 		printf(": layout %d\n", zst->zst_layout);
 	splx(s);

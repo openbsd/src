@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.14 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.15 2005/03/06 23:23:10 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -234,8 +234,7 @@ comkbd_attach(parent, self, aux)
 		return;
 	}
 
-	if (!comkbd_init(sc)) {
-		printf("%s: no keyboard\n", self->dv_xname);
+	if (comkbd_init(sc) == 0) {
 		return;
 	}
 
@@ -609,7 +608,7 @@ comkbd_init(sc)
 			break;
 	}
 	if (tries == 0)
-		printf(": reset timeout\n");
+		printf(": no keyboard\n");
 	else
 		printf(": layout %d\n", sc->sc_layout);
 
