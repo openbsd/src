@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 1996/07/12 01:03:44 weingart Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 1996/07/12 06:45:29 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.4 1996/07/12 01:03:44 weingart Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.5 1996/07/12 06:45:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -590,7 +590,8 @@ single_user()
 		 */
 		typ = getttynam("console");
 		pp = getpwnam("root");
-		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp) {
+		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
+		    *pp->pw_passwd) {
 			write(2, banner, sizeof banner - 1);
 			for (;;) {
 				clear = getpass("Password:");
