@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.33 2002/09/17 19:12:17 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.34 2003/04/07 21:01:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -314,6 +314,7 @@ const struct ac97_codecid {
 	{ 0x48, 0xff, 0, 0,	"AD1881A" },
 	{ 0x60, 0xff, 0, 0,	"AD1885" },
 	{ 0x61, 0xff, 0, 0,	"AD1886" },
+	{ 0x70, 0xff, 0, 0,	"AD1981" },
 	{ 0x72, 0xff, 0, 0,	"AD1981A" },
 }, ac97_ak[] = {
 	{ 0x00,	0xfe, 1, 0,	"AK4540" },
@@ -323,6 +324,7 @@ const struct ac97_codecid {
 	{ 0x07,	0xff, 0, 0,	"AK4545" },
 }, ac97_av[] = {
 	{ 0x10, 0xff, 0, 0,	"ALC200" },
+	{ 0x20, 0xff, 0, 0,	"ALC650" },
 }, ac97_rl[] = {
 	{ 0x00, 0xf0, 0xf, 0,	"RL5306" },
 	{ 0x10, 0xf0, 0xf, 0,	"RL5382" },
