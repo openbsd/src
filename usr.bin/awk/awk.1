@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.14 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.15 2003/11/24 10:58:08 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -132,7 +132,6 @@ Pattern-action statements are separated by newlines or semicolons.
 .Pp
 An action is a sequence of statements.
 A statement can be one of the following:
-.Pp
 .Bd -unfilled -offset indent
 .Ic if ( Xo
 .Ar expression ) statement \&
@@ -252,7 +251,6 @@ and
 .Fn atan2
 are built in.
 Other built-in functions:
-.Pp
 .Bl -tag -width Fn
 .It Fn length
 the length of its argument
@@ -406,7 +404,7 @@ in a pattern.
 A pattern may consist of two patterns separated by a comma;
 in this case, the action is performed for all lines
 from an occurrence of the first pattern
-though an occurrence of the second.
+through an occurrence of the second.
 .Pp
 A relational expression is one of the following:
 .Bd -unfilled -offset indent
@@ -418,6 +416,7 @@ A relational expression is one of the following:
 .Ar \& array-name
 .Xc
 .Ed
+.Pp
 where a
 .Ar relop
 is any of the six relational operators in C, and a
@@ -499,13 +498,11 @@ Print lines longer than 72 characters.
 .Pp
 .Dl { print $2, $1 }
 Print first two fields in opposite order.
-.Pp
 .Bd -literal -offset indent
 BEGIN { FS = ",[ \et]*|[ \et]+" }
       { print $2, $1 }
 .Ed
 Same, with input fields separated by comma and/or blanks and tabs.
-.Pp
 .Bd -literal -offset indent
 { s += $1 }
 END { print "sum is", s, " average is", s/NR }
@@ -514,7 +511,6 @@ Add up first column, print sum and average.
 .Pp
 .Dl /start/, /stop/
 Print all lines between start/stop pairs.
-.Pp
 .Bd -literal -offset indent
 BEGIN { # Simulate echo(1)
         for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]
