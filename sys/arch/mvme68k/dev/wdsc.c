@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.1 1996/04/28 11:24:48 deraadt Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.2 1996/05/06 21:54:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -151,24 +151,26 @@ wdscattach(pdp, dp, auxp)
      */
     sbicinit(sc);
 
+    sc->sc_ipl = ca->ca_ipl;
+
+    pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_INT;
+    pcc->pcc_dmairq = ca->ca_ipl | PCC_IRQ_INT;
+    pcc->pcc_dmacsr  = 0;
+
     /*
      * Fix up the interrupts
      */
     sc->sc_dmaih.ih_fn = wdsc_dmaintr;
     sc->sc_dmaih.ih_arg = sc;
     sc->sc_dmaih.ih_ipl = ca->ca_ipl;
-    pcctwointr_establish(PCCV_DMA, &sc->sc_dmaih);
+    pccintr_establish(PCCV_DMA, &sc->sc_dmaih);
 
     sc->sc_sbicih.ih_fn = wdsc_scsiintr;
     sc->sc_sbicih.ih_arg = sc;
     sc->sc_sbicih.ih_ipl = ca->ca_ipl;
-    pcctwointr_establish(PCCV_SBIC, &sc->sc_dmaih);
+    pccintr_establish(PCCV_SBIC, &sc->sc_sbicih);
 
-    pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN;
-    pcc->pcc_dmairq = ca->ca_ipl | PCC_IRQ_IEN;
-    pcc->pcc_dmacsr  = 0;
-
-    pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN /* | PCC_IRQ_INT */;
+    pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 
     /*
      * Attach all scsi units on us
@@ -201,7 +203,7 @@ wdsc_enintr(dev)
 
     dev->sc_flags |= SBICF_INTR;
 
-    pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN /*| PCC_IRQ_INT*/;
+    pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 }
 
 /*
@@ -303,7 +305,7 @@ wdsc_dmaintr(dev)
     /*
      * Really a DMA interrupt?
      */
-    if ( (pc->pcc_dmairq & 0x80) == 0 )
+    if ( (pc->pcc_dmairq & PCC_IRQ_INT) == 0 )
         return(0);
 
     /*
@@ -332,7 +334,7 @@ wdsc_scsiintr(dev)
     /*
      * Really a SCSI interrupt?
      */
-    if ( (pc->pcc_sbicirq & 0x80) == 0 )
+    if ( (pc->pcc_sbicirq & PCC_IRQ_INT) == 0 )
         return(0);
 
     /*
