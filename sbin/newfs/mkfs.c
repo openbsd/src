@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.34 2003/11/03 05:36:27 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.35 2003/11/03 05:40:09 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.34 2003/11/03 05:36:27 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.35 2003/11/03 05:40:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,10 +151,10 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 	int width;
 	char tmpbuf[100];	/* XXX this will break in about 2,500 years */
 
-	if ((fsun = (union fs_u *)calloc(1, sizeof (union fs_u))) == 0 ||
-	    (cgun = (union cg_u *)calloc(1, sizeof (union cg_u))) == 0 ||
-	    (zino = (struct ufs1_dinode *)calloc(1, MAXBSIZE)) == 0 ||
-	    (buf = (char *)calloc(1, MAXBSIZE)) == 0) {
+	if ((fsun = calloc(1, sizeof (union fs_u))) == NULL ||
+	    (cgun = calloc(1, sizeof (union cg_u))) == NULL ||
+	    (zino = calloc(1, MAXBSIZE)) == NULL ||
+	    (buf = calloc(1, MAXBSIZE)) == NULL) {
 		err(1, "calloc");
 	}
 
@@ -573,9 +573,8 @@ next:
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
 		sblock.fs_csshift++;
-	if ((fscs = (struct csum *)calloc(1, sblock.fs_cssize)) == 0) {
+	if ((fscs = calloc(1, sblock.fs_cssize)) == NULL)
 		err(1, "cg summary");
-	}
 	sblock.fs_magic = FS_MAGIC;
 	sblock.fs_rotdelay = rotdelay;
 	sblock.fs_minfree = minfree;
