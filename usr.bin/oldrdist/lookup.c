@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.4 1996/07/19 21:57:32 millert Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.5 1996/08/22 20:33:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: lookup.c,v 1.4 1996/07/19 21:57:32 millert Exp $";
+static char *rcsid = "$OpenBSD: lookup.c,v 1.5 1996/08/22 20:33:21 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -129,7 +129,7 @@ lookup(name, action, value)
 	register unsigned n;
 	register char *cp;
 	register struct syment *s;
-	char buf[1024];
+	char buf[BUFSIZ];
 
 	if (debug)
 		printf("lookup(%s, %d, %x)\n", name, action, value);
@@ -144,8 +144,8 @@ lookup(name, action, value)
 			continue;
 		if (action != LOOKUP) {
 			if (action != INSERT || s->s_type != CONST) {
-				(void)snprintf(buf, sizeof buf,
-				    "%s redefined", name);
+				(void)snprintf(buf, sizeof(buf),
+					"%s redefined", name);
 				yyerror(buf);
 			}
 		}
@@ -153,7 +153,7 @@ lookup(name, action, value)
 	}
 
 	if (action == LOOKUP) {
-		(void)snprintf(buf, sizeof buf, "%s undefined", name);
+		(void)snprintf(buf, sizeof(buf), "%s undefined", name);
 		yyerror(buf);
 		return(NULL);
 	}

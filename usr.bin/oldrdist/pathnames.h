@@ -1,4 +1,4 @@
-/* *	$OpenBSD: pathnames.h,v 1.3 1996/07/19 21:57:33 millert Exp $*/
+/* *	$OpenBSD: pathnames.h,v 1.4 1996/08/22 20:33:23 millert Exp $*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,4 +37,3 @@
 #include <paths.h>
 
 #define	_PATH_RDIST	"rdist"
-#define _PATH_REMSH	"/usr/bin/rsh"

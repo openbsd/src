@@ -1,18 +1,13 @@
-#	$OpenBSD: Makefile,v 1.3 1996/07/19 21:57:31 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/08/22 20:33:14 millert Exp $
 
 PROG=	rdist
 CFLAGS+=-I${.CURDIR}
-SRCS=	docmd.c expand.c lookup.c main.c server.c rshrcmd.c
+SRCS=	docmd.c expand.c lookup.c main.c server.c
 OBJS+=	gram.o
 BINOWN=	root
 BINMODE=555
 CLEANFILES=y.tab.h
 MAN=	oldrdist.1
-
-LDADD=	-lcompat
-DPADD=	${LIBCOMPAT}
-
-.PATH:	${.CURDIR}/../rdist
 
 realinstall:
 	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

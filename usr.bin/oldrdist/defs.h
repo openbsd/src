@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.3 1996/07/19 21:57:31 millert Exp $*/
+/* *	$OpenBSD: defs.h,v 1.4 1996/08/22 20:33:16 millert Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -106,11 +106,6 @@
 
 #define ALLOC(x) (struct x *) malloc(sizeof(struct x))
 
-/* so we can use rshrcmd.c from rdist 6.1.x */
-#define SYSERR	strerror(errno)
-#define path_remsh	_PATH_REMSH
-#define getsocketpair	socketpair
-
 struct namelist {	/* for making lists of strings */
 	char	*n_name;
 	struct	namelist *n_next;
@@ -155,7 +150,7 @@ extern struct linkbuf *ihead;	/* list of files with more than one link */
 extern struct passwd *pw;	/* pointer to static area used by getpwent */
 extern struct group *gr;	/* pointer to static area used by getgrent */
 extern char host[];		/* host name of master copy */
-extern char buf[];		/* general purpose buffer */
+extern char buf[BUFSIZ];	/* general purpose buffer */
 
 int	 any __P((int, char *));
 char	*colon __P((char *));
@@ -184,5 +179,6 @@ void	 prnames __P((struct namelist *));
 void	 server __P((void));
 void	 yyerror __P((char *));
 int	 yyparse __P((void));
-int	 rshrcmd __P((char **, u_short, char *, char *, char *, int *));
+/* XXX - move to /usr/include/unistd.h... */
+int	 rcmdsh __P((char **, u_short, char *, char *, char *, char *));
 char	*xbasename __P((char *));

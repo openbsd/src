@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.6 1996/07/30 20:34:54 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.7 1996/08/22 20:33:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,12 +35,13 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.6 1996/07/30 20:34:54 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.7 1996/08/22 20:33:17 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
 #include <setjmp.h>
 #include <netdb.h>
+#include <regex.h>
 
 FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */
@@ -148,10 +149,10 @@ doarrow(filev, files, rhost, cmds)
 		signal(SIGPIPE, lostconn);
 		if (!makeconn(rhost))
 			return;
-		if ((fd = mkstemp(tempfile)) == -1 ||
+		if ((fd = open(tempfile, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
 		    (lfp = fdopen(fd, "w")) == NULL) {
-			if (fd != -1)
-				close(fd);
+			if (fd >= 0)
+				(void) close(fd);
 			fatal("cannot open %s\n", tempfile);
 			exit(1);
 		}
@@ -245,7 +246,7 @@ makeconn(rhost)
 		ruser = user;
 	if (!qflag)
 		printf("updating host %s\n", rhost);
-	(void) snprintf(buf, BUFSIZ, "%s -Server%s", _PATH_RDIST,
+	(void) snprintf(buf, sizeof(buf), "%s -Server%s", _PATH_RDIST,
 		qflag ? " -q" : "");
 #if	defined(DIRECT_RCMD)
 	if (port < 0) {
@@ -272,7 +273,7 @@ makeconn(rhost)
 	rem = rcmd(&rhost, port, user, ruser, buf, 0);
 	seteuid(userid);
 #else	/* !DIRECT_RCMD */
-	rem = rshrcmd(&rhost, -1, user, ruser, buf, 0);
+	rem = rcmdsh(&rhost, -1, user, ruser, buf, NULL);
 #endif	/* !DIRECT_RCMD */
 	if (rem < 0)
 		return(0);
@@ -399,11 +400,11 @@ dodcolon(filev, files, stamp, cmds)
 	else {
 		int fd;
 
-		if ((fd = mkstemp(tempfile)) == -1 ||
+		if ((fd = open(tempfile, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
 		    (tfp = fdopen(fd, "w")) == NULL) {
-			if (fd != -1)
-				close(fd);
 			error("%s: %s\n", stamp, strerror(errno));
+			if (fd >= 0)
+				(void) close(fd);
 			return;
 		}
 		(void) gettimeofday(&tv[0], &tz);
@@ -565,7 +566,7 @@ notify(file, rhost, to, lmod)
 	/*
 	 * Create a pipe to mailling program.
 	 */
-	(void) snprintf(buf, BUFSIZ, "%s -oi -t", _PATH_SENDMAIL);
+	(void) snprintf(buf, sizeof(buf), "%s -oi -t", _PATH_SENDMAIL);
 	pf = popen(buf, "w");
 	if (pf == NULL) {
 		error("notify: \"%s\" failed\n", _PATH_SENDMAIL);
@@ -628,6 +629,8 @@ except(file)
 {
 	register struct	subcmd *sc;
 	register struct	namelist *nl;
+	regex_t s;
+	int err;
 
 	if (debug)
 		printf("except(%s)\n", file);
@@ -641,9 +644,15 @@ except(file)
 					return(1);
 				continue;
 			}
-			re_comp(nl->n_name);
-			if (re_exec(file) > 0)
+			if ((err = regcomp(&s, nl->n_name, 0)) != 0) {
+				(void) regerror(err, &s, buf, sizeof(buf));
+				error("%s: %s\n", nl->n_name, buf);
+			}
+			if (regexec(&s, file, 0, NULL, 0) == 0) {
+				regfree(&s);
 				return(1);
+			}
+			regfree(&s);
 		}
 	}
 	return(0);
