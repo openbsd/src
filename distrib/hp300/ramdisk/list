@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 1997/10/13 07:47:23 downsj Exp $
+#	$OpenBSD: list,v 1.7 1997/10/21 00:35:32 downsj Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -79,8 +79,6 @@ COPY	rd.group		etc/group
 COPY	rd.master.passwd	etc/master.passwd
 COPY	rd.disktab		etc/disktab
 SPECIAL	cd etc; pwd_mkdb -p -d . ./master.passwd
-
-COPY	${DESTDIR}/etc/virc	etc/virc
 
 # and the common installation tools
 COPY	${TOPDIR}/common/dot.commonutils	.commonutils
