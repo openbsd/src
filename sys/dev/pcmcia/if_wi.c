@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.10 2000/04/24 19:43:36 niklas Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.11 2000/05/24 06:23:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -135,7 +135,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.10 2000/04/24 19:43:36 niklas Exp $";
+	"$OpenBSD: if_wi.c,v 1.11 2000/05/24 06:23:36 itojun Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1088,8 +1088,18 @@ STATIC int wi_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		wi_setmulti(sc);
-		error = 0;
+		/* Update our multicast list. */
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+                         * accordingly.
+			 */
+			wi_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGWAVELAN:
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
@@ -1286,7 +1296,8 @@ STATIC void wi_start(ifp)
 	 */
 	if (ntohs(eh->ether_type) == ETHERTYPE_IP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_REVARP) {
+	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
+	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
 		bcopy((char *)&eh->ether_dhost,
 		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
 		bcopy((char *)&eh->ether_shost,
