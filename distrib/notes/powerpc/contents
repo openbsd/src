@@ -14,10 +14,10 @@ As well you may be interested in
 		installation section, below.
 
 Instead of the single floppy, currently multiple floppies for different
-systems exist. boot.fs is for VI vme board machines, bootmix.fs is for
-Motorola Powerstack (and possibly other machines) and bootofw.fs is
-generic and should run on any system with openfirmware because it only uses
-openfirmware for device drivers (not recommended for general use).
+systems exist. boot.fs is for VI vme board machines, and Motorola Powerstack
+(and possibly other machines) and bootofw.fs is generic and should run on
+any system with openfirmware because it only uses openfirmware for device
+drivers (not recommended for general use).
 This is a bootable install floppy which can be used both to install and to
 upgrade OpenBSD to the current version.  It is also useful for maintenance
 and disaster recovery.  In addition, the "tools/" directory contains some

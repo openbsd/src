@@ -1,16 +1,17 @@
 OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), and PCI buses
 with 603, 603e, 604, 604e processors.
 Only systems with openfirmware are supported.
+The V-I Power-4e vme board.
 Has been tested on various Motorola (MCG) boards:
-	VME16xx, Ultra, Pro2000,
 	Pro3000, Series E and Series DT.
-Also tested on a V-I Power-3 vme board.
+	VME16xx, Ultra have not been tested, but should work.
+	Pro4000 may not work due to irq problem with onboard ethernet.
 
 MCG 603 machines will not work with later firmware. A firmware
 incompatibility exists that has not yet been fixed. Some versions
 of earlier openfirmware work fine with 603 family machines.
 
-The minimal configuration is said to require 8M of RAM and 150M of
+The minimal configuration is said to require 8M of RAM and 380M of
 disk space, though we do not know of anyone running with a system
 quite this minimal today.  To install the entire system requires much
 more disk space,
@@ -30,13 +31,14 @@ Supported devices {:-include-:}:
 		[OPENFIRMWARE SUPPORT]
 		X does not yet exist.  currently will only function as console
 		[NATIVE SUPPORT]
-		None
+		Vga text terminal support is available, not console.
+		No X server avaliable
 
 	Serial ports:
 		[OPENFIRMWARE SUPPORT] (also MIX drivers)
 		Only port 0 on the machine is supported and only as console.
 		[NATIVE SUPPORT]
-		VI kernels supports com0 and com1 serial ports.
+		com0 and com1 serial ports are supported.
 
 	Ethernet adapters:
 		[OPENFIRMWARE SUPPORT]
@@ -48,6 +50,7 @@ Supported devices {:-include-:}:
 		Znyx ZX34X
 		Znyx ZX314
 		Onboard ethernet for Powerstack family machines.
+		(* Powerstack PRO4000 may not work due to irq problem).
 	Tape drives:
 		[OPENFIRMWARE SUPPORT]
 		NONE

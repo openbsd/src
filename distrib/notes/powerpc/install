@@ -167,12 +167,9 @@ process again from scratch.
 	will ask for the IP address to use, the symbolic host name to use,
 	the netmask to use and any interface-specific flags to set.  The
 	interface-specific flags are usually used to determine which media
-	the network card is to use.  The flags usually carry the following
-	meaning:
-
-		-link0 -link1	Use BNC (coaxial) port [default]
-		link0 -link1	Use AUI port
-		link0 link1	Use UTP (twisted pair) port
+	the network card is to use. Supply the apropriate media options
+	as suggested, Typically no media flags are required as autodetect
+	normally works.
 
 	After all network interfaces has been configured the install pro-
 	gram will ask for a default route and IP address of the primary
