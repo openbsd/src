@@ -1,4 +1,4 @@
-.\"	$OpenBSD: factor.6,v 1.6 2001/06/06 20:52:18 pjanzen Exp $
+.\"	$OpenBSD: factor.6,v 1.7 2001/08/19 16:55:02 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility will factor integers between -2147483648 and 2147483647 inclusive.
+utility will factor integers between 1 and 4294967295 inclusive.
 When a number is factored, it is printed, followed by a
 .Dq \: ,
 and the list of factors on a single line.
@@ -75,11 +75,10 @@ When
 is invoked with no arguments,
 .Nm
 reads numbers, one per line, from standard input, until end of file or error.
-Leading white-space and empty lines are ignored.
-Numbers may be preceded by a single - or +.
-Numbers are terminated by a non-digit character (such as a newline).
+White-space and empty lines are ignored.
+Numbers may be preceded by a single +.
 After a number is read, it is factored.
-Input lines must not be longer than 255 characters.
+Input lines must not be longer than 99 characters.
 .Pp
 The
 .Nm primes
@@ -108,10 +107,7 @@ is taken to be 4294967295.
 The
 .Ar start
 value may be preceded by a single +.
-The
-.Ar start
-value is terminated by a non-digit character (such as a newline).
-The input line must not be longer than 255 characters.
+The input line must not be longer than 99 characters.
 .Sh BUGS
 .Nm factor
 cannot handle the
