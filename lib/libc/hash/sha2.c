@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.8 2004/05/05 17:39:47 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.9 2004/05/07 14:34:40 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2.c,v 1.8 2004/05/05 17:39:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha2.c,v 1.9 2004/05/07 14:34:40 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,6 @@ static const char rcsid[] = "$OpenBSD: sha2.c,v 1.8 2004/05/05 17:39:47 millert 
  *   #define SHA2_UNROLL_TRANSFORM
  *
  */
-
 
 /*** SHA-256/384/512 Machine Architecture Definitions *****************/
 /*
@@ -97,35 +96,48 @@ static const char rcsid[] = "$OpenBSD: sha2.c,v 1.8 2004/05/05 17:39:47 millert 
 #define SHA384_SHORT_BLOCK_LENGTH	(SHA384_BLOCK_LENGTH - 16)
 #define SHA512_SHORT_BLOCK_LENGTH	(SHA512_BLOCK_LENGTH - 16)
 
+/*** ENDIAN SPECIFIC COPY MACROS **************************************/
+#define BE_8_TO_32(dst, cp) do {					\
+	(dst) = (u_int32_t)(cp)[3] | ((u_int32_t)(cp)[2] << 8) |	\
+	    ((u_int32_t)(cp)[1] << 16) | ((u_int32_t)(cp)[0] << 24);	\
+} while(0)
 
-/*** ENDIAN REVERSAL MACROS *******************************************/
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define REVERSE32(w,x)	{ \
-	u_int32_t tmp = (w); \
-	tmp = (tmp >> 16) | (tmp << 16); \
-	(x) = ((tmp & 0xff00ff00UL) >> 8) | ((tmp & 0x00ff00ffUL) << 8); \
-}
-#define REVERSE64(w,x)	{ \
-	u_int64_t tmp = (w); \
-	tmp = (tmp >> 32) | (tmp << 32); \
-	tmp = ((tmp & 0xff00ff00ff00ff00ULL) >> 8) | \
-	      ((tmp & 0x00ff00ff00ff00ffULL) << 8); \
-	(x) = ((tmp & 0xffff0000ffff0000ULL) >> 16) | \
-	      ((tmp & 0x0000ffff0000ffffULL) << 16); \
-}
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+#define BE_8_TO_64(dst, cp) do {					\
+	(dst) = (u_int64_t)(cp)[7] | ((u_int64_t)(cp)[6] << 8) |	\
+	    ((u_int64_t)(cp)[5] << 16) | ((u_int64_t)(cp)[4] << 24) |	\
+	    ((u_int64_t)(cp)[3] << 32) | ((u_int64_t)(cp)[2] << 40) |	\
+	    ((u_int64_t)(cp)[1] << 48) | ((u_int64_t)(cp)[0] << 56);	\
+} while (0)
+
+#define BE_64_TO_8(cp, src) do {					\
+	(cp)[0] = (src) >> 56;						\
+        (cp)[1] = (src) >> 48;						\
+	(cp)[2] = (src) >> 40;						\
+	(cp)[3] = (src) >> 32;						\
+	(cp)[4] = (src) >> 24;						\
+	(cp)[5] = (src) >> 16;						\
+	(cp)[6] = (src) >> 8;						\
+	(cp)[7] = (src);						\
+} while (0)
+
+#define BE_32_TO_8(cp, src) do {					\
+	(cp)[0] = (src) >> 24;						\
+	(cp)[1] = (src) >> 16;						\
+	(cp)[2] = (src) >> 8;						\
+	(cp)[3] = (src);						\
+} while (0)
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the
  * unsigned 128-bit integer (represented using a two-element array of
  * 64-bit words):
  */
-#define ADDINC128(w,n)	{ \
-	(w)[0] += (u_int64_t)(n); \
-	if ((w)[0] < (n)) { \
-		(w)[1]++; \
-	} \
-}
+#define ADDINC128(w,n) do {						\
+	(w)[0] += (u_int64_t)(n);					\
+	if ((w)[0] < (n)) {						\
+		(w)[1]++;						\
+	}								\
+} while (0)
 
 /*** THE SIX LOGICAL FUNCTIONS ****************************************/
 /*
@@ -279,8 +291,7 @@ SHA256_Init(SHA256_CTX *context)
 /* Unrolled SHA-256 round macros: */
 
 #define ROUND256_0_TO_15(a,b,c,d,e,f,g,h) do {				    \
-	W256[j] = (u_int32_t)data[3] | ((u_int32_t)data[2] << 8) |	    \
-	    ((u_int32_t)data[1] << 16) | ((u_int32_t)data[0] << 24);	    \
+	BE_8_TO_32(W256[j], data);					    \
 	data += 4;							    \
 	T1 = (h) + Sigma1_256((e)) + Ch((e), (f), (g)) + K256[j] + W256[j]; \
 	(d) += T1;							    \
@@ -377,8 +388,7 @@ SHA256_Transform(u_int32_t state[8], const u_int8_t data[SHA256_BLOCK_LENGTH])
 
 	j = 0;
 	do {
-		W256[j] = (u_int32_t)data[3] | ((u_int32_t)data[2] << 8) |
-		    ((u_int32_t)data[1] << 16) | ((u_int32_t)data[0] << 24);
+		BE_8_TO_32(W256[j], data);
 		data += 4;
 		/* Apply the SHA-256 compression function to update a..h */
 		T1 = h + Sigma1_256(e) + Ch(e, f, g) + K256[j] + W256[j];
@@ -486,10 +496,6 @@ SHA256_Pad(SHA256_CTX *context)
 	unsigned int	usedspace;
 
 	usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	/* Convert FROM host byte order */
-	REVERSE64(context->bitcount, context->bitcount);
-#endif
 	if (usedspace > 0) {
 		/* Begin padding with a 1 bit: */
 		context->buffer[usedspace++] = 0x80;
@@ -516,8 +522,9 @@ SHA256_Pad(SHA256_CTX *context)
 		/* Begin padding with a 1 bit: */
 		*context->buffer = 0x80;
 	}
-	/* Store the length of input data (in bits): */
-	*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount;
+	/* Store the length of input data (in bits) in big endian format: */
+	BE_64_TO_8(&context->buffer[SHA256_SHORT_BLOCK_LENGTH],
+	    context->bitcount);
 
 	/* Final transform: */
 	SHA256_Transform(context->state, context->buffer);
@@ -527,23 +534,20 @@ SHA256_Pad(SHA256_CTX *context)
 }
 
 void
-SHA256_Final(u_int8_t digest[], SHA256_CTX *context)
+SHA256_Final(u_int8_t digest[SHA256_DIGEST_LENGTH], SHA256_CTX *context)
 {
-	u_int32_t	*d = (u_int32_t *)digest;
-
 	SHA256_Pad(context);
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
+		int	i;
+
 		/* Convert TO host byte order */
-		int	j;
-		for (j = 0; j < 8; j++) {
-			REVERSE32(context->state[j], context->state[j]);
-			*d++ = context->state[j];
-		}
+		for (i = 0; i < 8; i++)
+			BE_32_TO_8(digest + i * 4, context->state[i]);
 #else
-		memcpy(d, context->state, SHA256_DIGEST_LENGTH);
+		memcpy(digest, context->state, SHA256_DIGEST_LENGTH);
 #endif
 	}
 
@@ -569,10 +573,7 @@ SHA512_Init(SHA512_CTX *context)
 /* Unrolled SHA-512 round macros: */
 
 #define ROUND512_0_TO_15(a,b,c,d,e,f,g,h) do {				    \
-	W512[j] = (u_int64_t)data[7] | ((u_int64_t)data[6] << 8) |	    \
-	    ((u_int64_t)data[5] << 16) | ((u_int64_t)data[4] << 24) |	    \
-	    ((u_int64_t)data[3] << 32) | ((u_int64_t)data[2] << 40) |	    \
-	    ((u_int64_t)data[1] << 48) | ((u_int64_t)data[0] << 56);	    \
+	BE_8_TO_64(W512[j], data);					    \
 	data += 8;							    \
 	T1 = (h) + Sigma1_512((e)) + Ch((e), (f), (g)) + K512[j] + W512[j]; \
 	(d) += T1;							    \
@@ -670,10 +671,7 @@ SHA512_Transform(u_int64_t state[8], const u_int8_t data[SHA512_BLOCK_LENGTH])
 
 	j = 0;
 	do {
-		W512[j] = (u_int64_t)data[7] | ((u_int64_t)data[6] << 8) |
-		    ((u_int64_t)data[5] << 16) | ((u_int64_t)data[4] << 24) |
-		    ((u_int64_t)data[3] << 32) | ((u_int64_t)data[2] << 40) |
-		    ((u_int64_t)data[1] << 48) | ((u_int64_t)data[0] << 56);
+		BE_8_TO_64(W512[j], data);
 		data += 8;
 		/* Apply the SHA-512 compression function to update a..h */
 		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + W512[j];
@@ -781,11 +779,6 @@ SHA512_Pad(SHA512_CTX *context)
 	unsigned int	usedspace;
 
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	/* Convert FROM host byte order */
-	REVERSE64(context->bitcount[0],context->bitcount[0]);
-	REVERSE64(context->bitcount[1],context->bitcount[1]);
-#endif
 	if (usedspace > 0) {
 		/* Begin padding with a 1 bit: */
 		context->buffer[usedspace++] = 0x80;
@@ -810,9 +803,11 @@ SHA512_Pad(SHA512_CTX *context)
 		/* Begin padding with a 1 bit: */
 		*context->buffer = 0x80;
 	}
-	/* Store the length of input data (in bits): */
-	*(u_int64_t *)&context->buffer[SHA512_SHORT_BLOCK_LENGTH] = context->bitcount[1];
-	*(u_int64_t *)&context->buffer[SHA512_SHORT_BLOCK_LENGTH+8] = context->bitcount[0];
+	/* Store the length of input data (in bits) in big endian format: */
+	BE_64_TO_8(&context->buffer[SHA512_SHORT_BLOCK_LENGTH],
+	    context->bitcount[1]);
+	BE_64_TO_8(&context->buffer[SHA512_SHORT_BLOCK_LENGTH + 8],
+	    context->bitcount[0]);
 
 	/* Final transform: */
 	SHA512_Transform(context->state, context->buffer);
@@ -822,23 +817,20 @@ SHA512_Pad(SHA512_CTX *context)
 }
 
 void
-SHA512_Final(u_int8_t digest[], SHA512_CTX *context)
+SHA512_Final(u_int8_t digest[SHA512_DIGEST_LENGTH], SHA512_CTX *context)
 {
-	u_int64_t	*d = (u_int64_t *)digest;
-
 	SHA512_Pad(context);
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
+		int	i;
+
 		/* Convert TO host byte order */
-		int	j;
-		for (j = 0; j < 8; j++) {
-			REVERSE64(context->state[j],context->state[j]);
-			*d++ = context->state[j];
-		}
+		for (i = 0; i < 8; i++)
+			BE_64_TO_8(digest + i * 8, context->state[i]);
 #else
-		memcpy(d, context->state, SHA512_DIGEST_LENGTH);
+		memcpy(digest, context->state, SHA512_DIGEST_LENGTH);
 #endif
 	}
 
@@ -864,23 +856,20 @@ __weak_alias(SHA384_Update, SHA512_Update);
 __weak_alias(SHA384_Pad, SHA512_Pad);
 
 void
-SHA384_Final(u_int8_t digest[], SHA384_CTX *context)
+SHA384_Final(u_int8_t digest[SHA384_DIGEST_LENGTH], SHA384_CTX *context)
 {
-	u_int64_t	*d = (u_int64_t *)digest;
-
 	SHA384_Pad(context);
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
 #if BYTE_ORDER == LITTLE_ENDIAN
+		int	i;
+
 		/* Convert TO host byte order */
-		int	j;
-		for (j = 0; j < 6; j++) {
-			REVERSE64(context->state[j],context->state[j]);
-			*d++ = context->state[j];
-		}
+		for (i = 0; i < 6; i++)
+			BE_64_TO_8(digest + i * 8, context->state[i]);
 #else
-		memcpy(d, context->state, SHA384_DIGEST_LENGTH);
+		memcpy(digest, context->state, SHA384_DIGEST_LENGTH);
 #endif
 	}
 
