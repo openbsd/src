@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile,v 1.4 1999/12/09 00:52:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/02/24 22:30:12 matthieu Exp $
 
 SUBDIR+= 
-
-#.if ${MACHINE_ARCH} == "i386"
-#SUBDIR+= ap
-#.endif
 
 .include <bsd.subdir.mk>
