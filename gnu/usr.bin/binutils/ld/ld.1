@@ -158,6 +158,7 @@ ld \- the GNU linker
 \&\|]
 .RB "[\|" \-X "\|]" 
 .RB "[\|" \-x "\|]" 
+.RB "[\|" \-Z "\|]" 
 .ad b
 .hy 1
 .SH DESCRIPTION
@@ -1076,6 +1077,11 @@ symbols whose names begin with `\|\c
 .TP
 .B \-x
 Delete all local symbols.
+
+.TP
+.B \-Z
+Produce 'Standard' executables, disables Writable XOR Executable features
+of resulting binaries.
 
 .PP
 
