@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.51 2004/10/11 13:46:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.52 2004/10/11 14:35:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1084,7 +1084,7 @@ sub run
 
 	return if $state->{dont_run_scripts};
 
-	main::ensure_ldconfig($verbose) unless $not;
+	main::ensure_ldconfig($state);
 	print $self->beautify(), " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
 	return if $not;
 	chmod 0755, $dir.$name;

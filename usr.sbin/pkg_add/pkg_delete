@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.54 2004/10/11 13:46:17 espie Exp $
+# $OpenBSD: pkg_delete,v 1.55 2004/10/11 14:35:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -33,9 +33,11 @@ our %forced = ();
 
 sub ensure_ldconfig
 {
-	my $verbose = shift;
+	my $state = shift;
+	return if $state->{not};
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	VSystem($verbose, @OpenBSD::PackingElement::Lib::ldconfig, "-R");
+	VSystem($state->{verbose}, 
+	    @OpenBSD::PackingElement::Lib::ldconfig, "-R");
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 
@@ -212,7 +214,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $cmd = $self->{expanded};
-	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
+	main::ensure_ldconfig($state);
 	if ($state->{beverbose}) {
 		print "unexec: $cmd\n";
 	}
@@ -427,7 +429,7 @@ sub delete
 	return unless $state->{extra};
 
 	my $cmd = $self->{expanded};
-	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
+	main::ensure_ldconfig($state);
 	if ($state->{beverbose}) {
 		print "unexec: $cmd\n";
 	}
@@ -724,7 +726,7 @@ eval {
 
 my $dielater = $@;
 
-ensure_ldconfig($opt_v) unless $opt_n;
+ensure_ldconfig($state);
 # delayed directory/user/group removal
 cleanup_shared_items($state);
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
