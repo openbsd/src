@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2004/12/18 21:58:39 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * signal handling
@@ -189,7 +189,7 @@ runtraps(flag)
 
 	if (ksh_tmout_state == TMOUT_LEAVING) {
 		ksh_tmout_state = TMOUT_EXECUTING;
-		warningf(FALSE, "timed out waiting for input");
+		warningf(false, "timed out waiting for input");
 		unwind(LEXIT);
 	} else
 		/* XXX: this means the alarm will have no effect if a trap

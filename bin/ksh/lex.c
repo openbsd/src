@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.28 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.29 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -193,7 +193,7 @@ yylex(int cf)
 						if (h >= 0)
 							replace = &history[h];
 					} else {
-						int h = findhist(-1, 0, match, TRUE);
+						int h = findhist(-1, 0, match, true);
 						if (h >= 0)
 							replace = &history[h];
 					}
@@ -222,7 +222,7 @@ yylex(int cf)
 			}
 			if (c == '[' && (cf & (VARASN|ARRAYVAR))) {
 				*wp = EOS; /* temporary */
-				if (is_wdvarname(Xstring(ws, wp), FALSE))
+				if (is_wdvarname(Xstring(ws, wp), false))
 				{
 					char *p, *tmp;
 
@@ -889,7 +889,7 @@ yyerror(const char *fmt, ...)
 		source = source->next;
 	source->str = null;	/* zap pending input */
 
-	error_prefix(TRUE);
+	error_prefix(true);
 	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);

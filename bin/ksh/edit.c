@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.25 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: edit.c,v 1.26 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -95,7 +95,7 @@ x_read(char *buf, size_t len)
 	if (got_sigwinch)
 		check_sigwinch();
 
-	x_mode(TRUE);
+	x_mode(true);
 #ifdef EMACS
 	if (Flag(FEMACS) || Flag(FGMACS))
 		i = x_emacs(buf, len);
@@ -107,7 +107,7 @@ x_read(char *buf, size_t len)
 	else
 #endif
 		i = -1;		/* internal error */
-	x_mode(FALSE);
+	x_mode(false);
 	return i;
 }
 
@@ -121,9 +121,9 @@ x_getc(void)
 
 	while ((n = blocking_read(0, &c, 1)) < 0 && errno == EINTR)
 		if (trap) {
-			x_mode(FALSE);
+			x_mode(false);
 			runtraps(0);
-			x_mode(TRUE);
+			x_mode(true);
 		}
 	if (n != 1)
 		return -1;
@@ -149,11 +149,11 @@ x_puts(const char *s)
 		shf_putc(*s++, shl_out);
 }
 
-bool_t
-x_mode(bool_t onoff)
+bool
+x_mode(bool onoff)
 {
-	static bool_t	x_cur_mode;
-	bool_t		prev;
+	static bool	x_cur_mode;
+	bool		prev;
 
 	if (x_cur_mode == onoff)
 		return x_cur_mode;
@@ -656,7 +656,7 @@ add_glob(const char *str, int slen)
 {
 	char *toglob;
 	char *s;
-	bool_t saw_slash = FALSE;
+	bool saw_slash = false;
 
 	if (slen < 0)
 		return (char *) 0;
@@ -677,7 +677,7 @@ add_glob(const char *str, int slen)
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
 		else if (*s == '/')
-			saw_slash = TRUE;
+			saw_slash = true;
 	}
 	if (!*s && (*toglob != '~' || saw_slash)) {
 		toglob[slen] = '*';
@@ -765,7 +765,7 @@ glob_table(const char *pat, XPtrV *wp, struct table *tp)
 	struct tbl *te;
 
 	for (twalk(&ts, tp); (te = tnext(&ts)); ) {
-		if (gmatch(te->name, pat, FALSE))
+		if (gmatch(te->name, pat, false))
 			XPput(*wp, str_save(te->name, ATEMP));
 	}
 }

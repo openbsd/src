@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.24 2004/12/18 22:43:58 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.25 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <setjmp.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -46,10 +47,6 @@
 
 #define EXECSHELL	_PATH_BSHELL
 #define EXECSHELL_STR	"EXECSHELL"
-
-typedef int bool_t;
-#define	FALSE	0
-#define	TRUE	1
 
 #define	NELEM(a) (sizeof(a) / sizeof((a)[0]))
 #define	sizeofN(type, n) (sizeof(type) * (n))

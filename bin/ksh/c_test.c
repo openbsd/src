@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.13 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.14 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -289,11 +289,11 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	 */
 	  case TO_STEQL: /* = */
 		if (te->flags & TEF_DBRACKET)
-			return gmatch(opnd1, opnd2, FALSE);
+			return gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) == 0;
 	  case TO_STNEQ: /* != */
 		if (te->flags & TEF_DBRACKET)
-			return !gmatch(opnd1, opnd2, FALSE);
+			return !gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) != 0;
 	  case TO_STLT: /* < */
 		return strcmp(opnd1, opnd2) < 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.17 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: vi.c,v 1.18 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -218,7 +218,7 @@ x_vi(char *buf, size_t len)
 				x_vi_zotc(c);
 				x_flush();
 				trapsig(c == edchars.intr ? SIGINT : SIGQUIT);
-				x_mode(FALSE);
+				x_mode(false);
 				unwind(LSHELL);
 			} else if (c == edchars.eof && state != VVERSION) {
 				if (es->linelen == 0) {

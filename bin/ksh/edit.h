@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.6 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: edit.h,v 1.7 2004/12/22 17:14:34 millert Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -48,7 +48,7 @@ int 	x_getc(void);
 void 	x_flush(void);
 void 	x_putc(int);
 void 	x_puts(const char *);
-bool_t 	x_mode(bool_t);
+bool 	x_mode(bool);
 int 	promptlen(const char *, const char **);
 int	x_do_comment(char *, int, int *);
 void	x_print_expansions(int, char *const *, int);

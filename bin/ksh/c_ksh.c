@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.23 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.24 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -678,7 +678,7 @@ c_typeset(char **wp)
 		for (i = builtin_opt.optind; wp[i]; i++) {
 			if (func) {
 				f = findfunc(wp[i], hash(wp[i]),
-					     (fset&UCASEV_AL) ? TRUE : FALSE);
+					     (fset&UCASEV_AL) ? true : false);
 				if (!f) {
 					/* at&t ksh does ++rval: bogus */
 					rval = 1;
@@ -1120,7 +1120,7 @@ c_kill(char **wp)
 
 	/* assume old style options if -digits or -UPPERCASE */
 	if ((p = wp[1]) && *p == '-' && (digit(p[1]) || isupper(p[1]))) {
-		if (!(t = gettrap(p + 1, TRUE))) {
+		if (!(t = gettrap(p + 1, true))) {
 			bi_errorf("bad signal `%s'", p + 1);
 			return 1;
 		}
@@ -1134,7 +1134,7 @@ c_kill(char **wp)
 				lflag = 1;
 				break;
 			  case 's':
-				if (!(t = gettrap(builtin_opt.optarg, TRUE))) {
+				if (!(t = gettrap(builtin_opt.optarg, true))) {
 					bi_errorf("bad signal `%s'",
 						builtin_opt.optarg);
 					return 1;
@@ -1255,7 +1255,7 @@ c_getopts(char **wp)
 		bi_errorf("missing name argument");
 		return 1;
 	}
-	if (!*var || *skip_varname(var, TRUE)) {
+	if (!*var || *skip_varname(var, true)) {
 		bi_errorf("%s: is not an identifier", var);
 		return 1;
 	}

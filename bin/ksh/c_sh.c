@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.23 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.24 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -440,7 +440,7 @@ c_eval(char **wp)
 		exstat = subst_exstat;
 	}
 
-	return shell(s, FALSE);
+	return shell(s, false);
 }
 
 int
@@ -486,13 +486,13 @@ c_trap(char **wp)
 	 * command 'exit' isn't confused with the pseudo-signal
 	 * 'EXIT'.
 	 */
-	s = (gettrap(*wp, FALSE) == NULL) ? *wp++ : NULL; /* get command */
+	s = (gettrap(*wp, false) == NULL) ? *wp++ : NULL; /* get command */
 	if (s != NULL && s[0] == '-' && s[1] == '\0')
 		s = NULL;
 
 	/* set/clear traps */
 	while (*wp != NULL) {
-		p = gettrap(*wp++, TRUE);
+		p = gettrap(*wp++, true);
 		if (p == NULL) {
 			bi_errorf("bad signal %s", wp[-1]);
 			return 1;
@@ -516,7 +516,7 @@ c_exitreturn(char **wp)
 	if (arg) {
 	    if (!getn(arg, &n)) {
 		    exstat = 1;
-		    warningf(TRUE, "%s: bad number", arg);
+		    warningf(true, "%s: bad number", arg);
 	    } else
 		    exstat = n;
 	}
@@ -581,7 +581,7 @@ c_brkcont(char **wp)
 		 * scripts, but don't generate an error (ie, keep going).
 		 */
 		if (n == quit) {
-			warningf(TRUE, "%s: cannot %s", wp[0], wp[0]);
+			warningf(true, "%s: cannot %s", wp[0], wp[0]);
 			return 0;
 		}
 		/* POSIX says if n is too big, the last enclosing loop
@@ -589,7 +589,7 @@ c_brkcont(char **wp)
 		 * do anyway 'cause the user messed up.
 		 */
 		last_ep->flags &= ~EF_BRKCONT_PASS;
-		warningf(TRUE, "%s: can only %s %d level(s)",
+		warningf(true, "%s: can only %s %d level(s)",
 			wp[0], wp[0], n - quit);
 	}
 

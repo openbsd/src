@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.24 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -432,7 +432,7 @@ parse_args(char **argv,
 		*setargsp = !arrayset && ((go.info & GI_MINUSMINUS)
 					  || argv[go.optind]);
 
-	if (arrayset && (!*array || *skip_varname(array, FALSE))) {
+	if (arrayset && (!*array || *skip_varname(array, false))) {
 		bi_errorf("%s: is not an identifier", array);
 		return -1;
 	}
@@ -944,7 +944,7 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 			go->buf[0] = c;
 			go->optarg = go->buf;
 		} else {
-			warningf(TRUE, "%s%s-%c: unknown option",
+			warningf(true, "%s%s-%c: unknown option",
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
@@ -970,7 +970,7 @@ ksh_getopt(char **argv, Getopt *go, const char *options)
 				go->optarg = go->buf;
 				return ':';
 			}
-			warningf(TRUE, "%s%s-`%c' requires argument",
+			warningf(true, "%s%s-`%c' requires argument",
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)

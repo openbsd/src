@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.20 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: proto.h,v 1.21 2004/12/22 17:14:34 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -244,7 +244,7 @@ void 	newblock(void);
 void 	popblock(void);
 void	initvar(void);
 struct tbl *	global(const char *);
-struct tbl *	local(const char *, bool_t);
+struct tbl *	local(const char *, bool);
 char *	str_val(struct tbl *);
 long 	intval(struct tbl *);
 int 	setstr(struct tbl *, const char *, int);
