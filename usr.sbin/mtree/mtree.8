@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.16 2001/04/18 14:39:24 aaron Exp $
+.\"	$OpenBSD: mtree.8,v 1.17 2001/08/10 02:33:46 millert Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -145,12 +145,19 @@ The checksum of the file using the default algorithm specified by
 the
 .Xr cksum 1
 utility.
-.It Cm ignore
-Ignore any file hierarchy below this file.
+.It Cm flags
+The current file's flags (whitespace or comma separated) in symbolic form
+as specified by
+.Xr chflags 1 .
+The string
+.Dq none
+may be used to indicate that no flags should be set on the file.
 .It Cm gid
 The file group as a numeric value.
 .It Cm gname
 The file group as a symbolic name.
+.It Cm ignore
+Ignore any file hierarchy below this file.
 .It Cm md5digest
 The MD5 message digest of the file.
 .It Cm mode

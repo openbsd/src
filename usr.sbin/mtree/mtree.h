@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.6 1997/07/18 05:46:13 millert Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.7 2001/08/10 02:33:46 millert Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ typedef struct _node {
 #define	MBITS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 	mode_t	st_mode;			/* mode */
 	nlink_t	st_nlink;			/* link count */
+	u_int32_t file_flags;			/* file flags */
 
 #define	F_CKSUM		0x00001			/* check sum */
 #define	F_DONE		0x00002			/* directory done */
@@ -79,6 +80,7 @@ typedef struct _node {
 #define	F_UID		0x10000			/* uid */
 #define	F_UNAME		0x20000			/* user name */
 #define	F_VISIT		0x40000			/* file visited */
+#define	F_FLAGS		0x80000			/* file flags */
 	u_int32_t flags;			/* items set */
 
 #define	F_BLOCK	0x001				/* block special */

@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.11 1997/11/05 20:31:26 flipk Exp $	*/
+/*	$OpenBSD: create.c,v 1.12 2001/08/10 02:33:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: create.c,v 1.11 1997/11/05 20:31:26 flipk Exp $";
+static char rcsid[] = "$OpenBSD: create.c,v 1.12 2001/08/10 02:33:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,6 +227,18 @@ statf(indent, p)
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(indent, &offset, "link=%s", rlink(p->fts_accpath));
+	if (keys & F_FLAGS && !S_ISLNK(p->fts_statp->st_mode)) {
+		char *file_flags;
+
+		file_flags = fflagstostr(p->fts_statp->st_flags);
+		if (file_flags == NULL)
+			error("%s", strerror(errno));
+		if (*file_flags != '\0')
+			output(indent, &offset, "flags=%s", file_flags);
+		else
+			output(indent, &offset, "flags=none");
+		free(file_flags);
+	}
 	(void)putchar('\n');
 }
 

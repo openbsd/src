@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 1997/07/25 20:12:14 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2001/08/10 02:33:46 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@ typedef struct _key {
 /* NB: the following table must be sorted lexically. */
 static KEY keylist[] = {
 	{"cksum",	F_CKSUM,	NEEDVALUE},
+	{"flags",	F_FLAGS,	NEEDVALUE},
 	{"gid",		F_GID,		NEEDVALUE},
 	{"gname",	F_GNAME,	NEEDVALUE},
 	{"ignore",	F_IGN,		0},

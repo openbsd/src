@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.10 1998/09/24 02:42:38 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.11 2001/08/10 02:33:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: spec.c,v 1.10 1998/09/24 02:42:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: spec.c,v 1.11 2001/08/10 02:33:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,11 +171,12 @@ set(t, ip)
 	register NODE *ip;
 {
 	register int type;
-	register char *kw, *val = NULL;
+	char *kw, *val = NULL;
 	struct group *gr;
 	struct passwd *pw;
 	mode_t *m;
 	int value;
+	u_int32_t fset, fclr;
 	char *ep;
 
 	for (; (kw = strtok(t, "= \t\n")); t = NULL) {
@@ -193,6 +194,15 @@ set(t, ip)
 			if (!ip->md5digest)
 				error("%s", strerror(errno));
 			break;
+		case F_FLAGS:
+			if (!strcmp(val, "none")) {
+				ip->file_flags = 0;
+				break;
+			}
+			if (strtofflags(&val, &fset, &fclr))
+				error("%s", strerror(errno));
+			ip->file_flags = fset;
+			break; 
 		case F_GID:
 			ip->st_gid = strtoul(val, &ep, 10);
 			if (*ep)
