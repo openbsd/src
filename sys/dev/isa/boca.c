@@ -1,4 +1,4 @@
-/*	$OpenBSD: boca.c,v 1.13 1996/11/29 22:54:51 niklas Exp $ */
+/*	$OpenBSD: boca.c,v 1.14 1996/12/03 07:48:23 niklas Exp $ */
 /*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #define	NSLAVES	8
 

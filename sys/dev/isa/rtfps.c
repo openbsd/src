@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.14 1996/11/29 22:55:07 niklas Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.15 1996/12/03 07:48:24 niklas Exp $       */
 /*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #define	NSLAVES	4
 
