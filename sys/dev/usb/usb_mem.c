@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.c,v 1.11 2000/11/08 18:10:39 aaron Exp $ */
-/*	$NetBSD: usb_mem.c,v 1.21 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.12 2002/05/05 22:23:43 nate Exp $ */
+/*	$NetBSD: usb_mem.c,v 1.22 2001/11/13 06:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
