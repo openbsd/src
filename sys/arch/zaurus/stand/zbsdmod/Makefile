@@ -11,7 +11,7 @@ clean:
 
 afterinstall:
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
-		${OBJS} ${BINDIR}
+		${OBJS} ${DESTDIR}${BINDIR}
 
 CFLAGS= -fno-stack-protector -Wall
 CFLAGS+= -DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
