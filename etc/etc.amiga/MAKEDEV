@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.41 1998/11/25 04:58:53 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.42 1999/07/30 18:49:35 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
 #	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
-#	acd*	ISA ATAPI cdrom drives
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -169,7 +168,7 @@ all)
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this view00 view01 view02 view03 view04 view05 pty0 pty1
 	sh $this lpa0 lpa1 lpt0 lpt1 lpt2 ipl
-	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 acd0 ch0 uk0 uk1
+	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 ch0 uk0 uk1
 	sh $this tun0 tun1 par0 lkm ss0 random audio0 xfs0 local
 	;;
 
@@ -177,7 +176,7 @@ floppy|ramdisk)
 	sh $this std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1
 	sh $this ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
 	sh $this cd0 cd1 sd0 sd1 sd2 sd3 st0 st1
-	sh $this fd0 fd1 wd0 wd1 acd0 rd0 random
+	sh $this fd0 fd1 wd0 wd1 rd0 random
 	;;
 
 std)
@@ -375,11 +374,10 @@ ch*)
 	umask 77
 	;;
 
-cd*|acd*)
+cd*)
 	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=7; chr=9;;
-	acd*) name=acd; blk=15; chr=38;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in

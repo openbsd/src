@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.42 1998/12/19 18:35:36 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 1999/07/30 18:49:35 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,6 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
 #	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
-#	acd*	ISA ATAPI cdrom drives
 #
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -147,7 +146,7 @@ case $i in
 all)
 	sh $this std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
 	sh $this st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
-	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3 acd0 acd1
+	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
 	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
@@ -160,7 +159,7 @@ all)
 raminst)
 	sh $this std
 	sh $this sd0 sd1 sd2 wd0 st0
-	sh $this cd0 acd0
+	sh $this cd0
 	sh $this rd0 bpf0
 	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
 	;;
@@ -284,11 +283,10 @@ vnd*)
 	umask 77
 	;;
 
-cd*|acd*)
+cd*)
 	umask 2
 	case $i in
 	cd*)	name=cd;	blk=3; chr=13;;
-	acd*)	name=acd;	blk=4; chr=37;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `add $(mult $unit 16) 0` 
