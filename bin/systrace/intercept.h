@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.8 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.9 2002/07/22 04:02:39 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -49,7 +49,7 @@ struct intercept_system {
 	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
-	int (*answer)(int, pid_t, short, int, short);
+	int (*answer)(int, pid_t, u_int32_t, short, int, short);
 	int (*newpolicy)(int);
 	int (*assignpolicy)(int, pid_t, int);
 	int (*policy)(int, int, int, short);
@@ -164,9 +164,9 @@ int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
 char *intercept_filename(int, pid_t, void *, int);
-void intercept_syscall(int, pid_t, int, const char *, int, const char *,
-    void *, int);
-void intercept_syscall_result(int, pid_t, int, const char *, int, const char *,
-    void *, int, int, void *);
+void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
+    const char *, void *, int);
+void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,
+    const char *, void *, int, int, void *);
 
 #endif /* _INTERCEPT_H_ */

@@ -69,8 +69,8 @@ struct str_msg_child {
 struct str_message {
 	int msg_type;
 	pid_t msg_pid;
+	u_int16_t msg_seqnr;	/* answer has to match seqnr */
 	short msg_policy;
-	short reserved;
 	union {
 		struct str_msg_emul msg_emul;
 		struct str_msg_ask msg_ask;
@@ -80,6 +80,8 @@ struct str_message {
 
 struct systrace_answer {
 	pid_t stra_pid;
+	u_int16_t stra_seqnr;
+	short reserved;
 	int stra_policy;
 	int stra_error;
 	int stra_flags;

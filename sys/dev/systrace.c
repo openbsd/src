@@ -85,6 +85,7 @@ struct str_policy {
 #define STR_PROC_WAITANSWER	0x02
 #define STR_PROC_SYSCALLRES	0x04
 #define STR_PROC_REPORT		0x08	/* Report emulation */
+#define STR_PROC_NEEDSEQNR	0x10	/* Answer must quote seqnr */
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
@@ -101,6 +102,7 @@ struct str_process {
 	int flags;
 	short answer;
 	short error;
+	u_int16_t seqnr;	/* expected reply sequence number */
 
 	struct str_message msg;
 };
@@ -782,6 +784,12 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		goto out;
 	}
 
+	/* Check if answer is in sync with us */
+	if (ans->stra_seqnr != strp->seqnr) {
+		error = ESRCH;
+		goto out;
+	}
+
 	if ((error = systrace_processready(strp)) != 0)
 		goto out;
 
@@ -1306,6 +1314,7 @@ systrace_make_msg(struct str_process *strp, int type)
 	struct proc *p = strp->proc;
 	int st;
 
+	msg->msg_seqnr = ++strp->seqnr;
 	msg->msg_type = type;
 	msg->msg_pid = strp->pid;
 	if (strp->policy)

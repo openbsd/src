@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.9 2002/07/22 04:02:39 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -126,7 +126,7 @@ static int obsd_syscall_number(const char *, const char *);
 static short obsd_translate_policy(short);
 static short obsd_translate_flags(short);
 static int obsd_translate_errno(int);
-static int obsd_answer(int, pid_t, short, int, short);
+static int obsd_answer(int, pid_t, u_int32_t, short, int, short);
 static int obsd_newpolicy(int);
 static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
@@ -350,11 +350,13 @@ obsd_translate_errno(int errno)
 }
 
 static int
-obsd_answer(int fd, pid_t pid, short policy, int errno, short flags)
+obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
+    short flags)
 {
 	struct systrace_answer ans;
 
 	ans.stra_pid = pid;
+	ans.stra_seqnr = seqnr;
 	ans.stra_policy = obsd_translate_policy(policy);
 	ans.stra_flags = obsd_translate_flags(flags);
 	ans.stra_error = obsd_translate_errno(errno);
@@ -515,6 +517,8 @@ obsd_read(int fd)
 
 	char name[SYSTR_EMULEN+1];
 	const char *sysname;
+	u_int16_t seqnr;
+	pid_t pid;
 	int code;
 
 	if (read(fd, &msg, sizeof(msg)) != sizeof(msg))
@@ -526,13 +530,15 @@ obsd_read(int fd)
 	data = icpid->data;
 
 	current = data->current;
-
+	
+	seqnr = msg.msg_seqnr;
+	pid = msg.msg_pid;
 	switch (msg.msg_type) {
 	case SYSTR_MSG_ASK:
 		code = msg.msg_data.msg_ask.code;
-		sysname = obsd_syscall_name(msg.msg_pid, code);
+		sysname = obsd_syscall_name(pid, code);
 
-		intercept_syscall(fd, msg.msg_pid, msg.msg_policy,
+		intercept_syscall(fd, pid, seqnr, msg.msg_policy,
 		    sysname, code, current->name,
 		    (void *)msg.msg_data.msg_ask.args,
 		    msg.msg_data.msg_ask.argsize);
@@ -540,14 +546,14 @@ obsd_read(int fd)
 
 	case SYSTR_MSG_RES:
 		code = msg.msg_data.msg_ask.code;
-		sysname = obsd_syscall_name(msg.msg_pid, code);
+		sysname = obsd_syscall_name(pid, code);
 
 		/* Switch emulation around at the right time */
 		if (data->commit != NULL) {
 			current = obsd_switch_emulation(data);
 		}
 
-		intercept_syscall_result(fd, msg.msg_pid, msg.msg_policy,
+		intercept_syscall_result(fd, pid, seqnr, msg.msg_policy,
 		    sysname, code, current->name,
 		    (void *)msg.msg_data.msg_ask.args,
 		    msg.msg_data.msg_ask.argsize,
@@ -559,7 +565,7 @@ obsd_read(int fd)
 		memcpy(name, msg.msg_data.msg_emul.emul, SYSTR_EMULEN);
 		name[SYSTR_EMULEN] = '\0';
 
-		if (obsd_set_emulation(msg.msg_pid, name) == -1)
+		if (obsd_set_emulation(pid, name) == -1)
 			errx(1, "%s:%d: set_emulation(%s)",
 			    __func__, __LINE__, name);
 
@@ -570,13 +576,13 @@ obsd_read(int fd)
 			current = obsd_switch_emulation(data);
 
 			intercept_syscall_result(fd,
-			    msg.msg_pid, msg.msg_policy,
+			    pid, seqnr, msg.msg_policy,
 			    "execve", 0, current->name,
 			    NULL, 0, 0, NULL);
 			break;
 		}
 
-		if (obsd_answer(fd, msg.msg_pid, 0, 0, 0) == -1)
+		if (obsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.17 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.18 2002/07/22 04:02:39 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -552,8 +552,8 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 }
 
 void
-intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
-    const char *emulation, void *args, int argsize)
+intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
+    const char *name, int code, const char *emulation, void *args, int argsize)
 {
 	short action, flags = 0;
 	struct intercept_syscall *sc;
@@ -609,11 +609,11 @@ intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
 	}
 
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, action, error, flags);
+	intercept.answer(fd, pid, seqnr, action, error, flags);
 }
 
 void
-intercept_syscall_result(int fd, pid_t pid, int policynr,
+intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
     const char *name, int code, const char *emulation, void *args, int argsize,
     int result, void *rval)
 {
@@ -644,7 +644,7 @@ intercept_syscall_result(int fd, pid_t pid, int policynr,
 	}
  out:
 	/* Resume execution of the process */
-	intercept.answer(fd, pid, 0, 0, 0);
+	intercept.answer(fd, pid, seqnr, 0, 0, 0);
 }
 
 int
