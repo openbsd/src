@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.10 2001/04/11 10:48:40 bjc Exp $
+.\"	$OpenBSD: mg.1,v 1.11 2002/02/08 00:51:55 deraadt Exp $
 .\"
 .Dd February 25, 2000
 .Dt MG 1
@@ -26,53 +26,59 @@ where the Meta key may be either a special key on your keyboard
 or the ALT key; otherwise ESC followed by the key X works as well.
 .Pp
 .Bl -tag -width xxxxx -compact
-.It ^f
+.It ^F
 Forward character
-.It ^b
+.It ^B
 Backwards character
-.It ^n
+.It ^N
 Next line
-.It ^p
+.It ^P
 Previous line
-.It ^a
+.It ^A
 Start of line
-.It ^e
+.It ^E
 End of line
-.It ^d
+.It ^D
 delete current character
-.It ^s
+.It ^S
 interactive search forward
-.It ^r
+.It ^R
 interactive search backwards
-.It ^o
+.It ^O
 Open a new line at cursor position
-.It ^t
+.It ^T
 transpose characters
-.It ^u
+.It ^U
 Repeat next command 4 times (can be cascaded, ie. ^u^u^f will move 16 characters forward)
 .Pp
-.It ^k
+.It ^K
 kill to end of line (placing into kill buffer)
-.It ^y
+.It ^Y
 yank kill buffer into current location
 .It ^@
 set mark
-.It ^w
+.It ^W
 kill region (cuts from previously set mark to current location, into kill buffer)
-.It M-w
+.It M-W
 copy region (into kill buffer)
 .Pp
-.It ^v
+.It ^V
 Next page
-.It M-v
+.It M-V
 Previous page
 .It M-<
 start of buffer
 .It M->
 end of buffer
 .Pp
-.It ^x^c
+.It ^X^C
 Quit (you will be asked if you want to save files)
+.It ^X-O
+Next window.
+.It ^X-N
+Next window.
+.It ^X-P
+Previous window.
 .El
 .Pp
 For more key bindings, type
@@ -127,6 +133,16 @@ the cursor to "blink" to show you matching brackets.
 global-set-key } blink-matching-paren-hack
 blink-matching-paren
 set-default-mode blink
+.Ed
+.Pp
+More complicated key mappings are also possible, though there are are some
+internal limitations compared to regular emacs.  An example of how to map
+control characters and sequences follows, illustrating the Gosling-like
+line scrolling characters.
+.Bd -literal -offset indent
+global-set-key "\\^Z" scroll-one-line-up
+global-set-key "\\ez" scroll-one-line-down
+global-set-key "\\^_" suspend-emacs
 .Ed
 .Sh FILES
 .Bl -tag -width ~/.mg-TERM -compact
