@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.33 1997/04/15 10:51:36 tholo Exp $	*/
+/*	$OpenBSD: ss.c,v 1.34 1997/08/02 21:35:32 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -272,6 +272,8 @@ struct scsi_inquiry_pattern ss_patterns[] = {
 	 "HP      ", "C2500A          ", ""},
 	{T_PROCESSOR, T_FIXED,
 	 "HP      ", "C1130A          ", ""},
+	{T_PROCESSOR, T_FIXED,
+	 "HP      ", "C5110A          ", ""},
 };
 
 int
