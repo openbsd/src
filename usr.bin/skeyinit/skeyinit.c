@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.48 2004/06/07 19:28:03 otto Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.49 2004/09/14 22:58:57 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -41,7 +41,6 @@
 void	usage(void);
 void	secure_mode(int *, char *, char *, size_t, char *, size_t);
 void	normal_mode(char *, int, char *, char *);
-void	timedout(int);
 void	convert_db(void);
 void	enable_db(int);
 
@@ -550,15 +549,6 @@ convert_db(void)
 	printf("%s has been populated.  NOTE: %s has *not* been removed.\n"
 	    "It should be removed once you have verified that the new keys "
 	    "work.\n", _PATH_SKEYDIR, _PATH_SKEYKEYS);
-}
-
-#define TIMEOUT_MSG	"Timed out waiting for input.\n"
-void
-timedout(int signo)
-{
-
-	write(STDERR_FILENO, TIMEOUT_MSG, sizeof(TIMEOUT_MSG) - 1);
-	_exit(1);
 }
 
 void
