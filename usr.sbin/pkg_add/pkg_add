@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.125 2004/11/21 13:24:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.126 2004/11/21 13:32:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -242,32 +242,30 @@ sub solve_dependencies
 	return @deps;
 }
 
-sub check_lib_specs
+sub check_lib_spec
 {
-	my ($verbose, $base, $specs, $available) = @_;
+	my ($verbose, $base, $spec, $available) = @_;
 	my $dir;
-	for my $spec (split(/,/, $specs)) {
-		print "checking libspec $spec " if $verbose;
-		if ($spec =~ m|(.*)/|) {
-			$dir = "$base/$1";
-			$spec = $';
+	print "checking libspec $spec " if $verbose;
+	if ($spec =~ m|(.*)/|) {
+		$dir = "$base/$1";
+		$spec = $';
+	} else {
+		$dir = "$base/lib";
+	}
+	if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+		my ($libname, $major, $minor) = ($1, $2, $3);
+		my $exists = $available->{"$dir/lib$libname.so.$major"};
+		if ((defined $exists) && $exists->[0] >= $minor) {
+			my ($m, $where) = @$exists;
+			print "found $dir/lib$libname.so.$major.$m in $where\n" if $verbose;
 		} else {
-			$dir = "$base/lib";
-		}
-		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
-			my ($libname, $major, $minor) = ($1, $2, $3);
-			my $exists = $available->{"$dir/lib$libname.so.$major"};
-			if ((defined $exists) && $exists->[0] >= $minor) {
-				my ($m, $where) = @$exists;
-				print "found $dir/lib$libname.so.$major.$m in $where\n" if $verbose;
-			} else {
-				print "not found\n" if $verbose;
-				return undef;
-			}
-		} else {
-			print "bad spec\n" if $verbose;
+			print "not found\n" if $verbose;
 			return undef;
 		}
+	} else {
+		print "bad spec\n" if $verbose;
+		return undef;
 	}
 	return 1;
 }
@@ -478,7 +476,7 @@ sub find_old_lib
 			\&OpenBSD::PackingList::LibraryOnly);
 		my $available = {};
 		$plist->visit('available_lib', $available, $try);
-		if (check_lib_specs($state->{very_verbose},
+		if (check_lib_spec($state->{very_verbose},
 		    $state->{destdir}.$plist->pkgbase(), $lib, $available)) {
 			Warn "Found library ", $lib, " in old package $try\n";
 			$plist->visit('available_lib', $global_avail, $try);
@@ -495,7 +493,7 @@ sub add_system_libs
 {
 	my ($destdir, $avail) = @_;
 	for my $dirname ("/usr/lib", "/usr/X11R6/lib") {
-		opendir(my $dir, $destdir.$dirname);
+		opendir(my $dir, $destdir.$dirname) or next;
 		while (my $d = readdir($dir)) {
 			next unless $d =~ m/^(.*\.so\.\d+)\.(\d+)$/;
 			my ($stem, $minor) = ($1, $2);
@@ -512,7 +510,7 @@ sub lookup_library
 {
 	my ($state, $lib, $available, $plist, $dependencies, $harder) = @_;
 
-	if (check_lib_specs($state->{very_verbose},
+	if (check_lib_spec($state->{very_verbose},
 	    $state->{destdir}.$plist->pkgbase(), $lib, $available)) {
 	    return 1;
 	}
@@ -521,11 +519,11 @@ sub lookup_library
 			$syst_avail = {};
 			add_system_libs($state->{destdir}, $syst_avail);
 		}
-		if (check_lib_specs($state->{very_verbose},
+		if (check_lib_spec($state->{very_verbose},
 		    $state->{destdir}."/usr", $lib, $syst_avail)) {
 			return 1;
 		}
-		if (check_lib_specs($state->{very_verbose},
+		if (check_lib_spec($state->{very_verbose},
 		    $state->{destdir}."/usr/X11R6", $lib, $syst_avail)) {
 			return 1;
 		}
@@ -553,7 +551,7 @@ sub lookup_library
 			\&OpenBSD::PackingList::LibraryOnly);
 		my $avail2 = {};
 		$plist->visit('available_lib', $avail2, $dep);
-		if (check_lib_specs($state->{very_verbose},
+		if (check_lib_spec($state->{very_verbose},
 		    $state->{destdir}.$plist->pkgbase(), $lib, $avail2)) {
 			Warn "Found library ", $lib, " in dependent package $dep\n";
 			$plist->visit('available_lib', $available, $dep);
@@ -617,10 +615,12 @@ sub install_package
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
-		if (!lookup_library($state, $dep->{libspec}, $available, 
-		    $plist, $handle->{solved_dependencies}, 0)) {
-		    	Warn "Can't install $pkg: lib not found ", $dep->{libspec}, "\n";
-			return () unless $forced{libdepends};
+		for my $spec (split(/,/, $dep->{libspec})) {
+		    if (!lookup_library($state, $spec, $available, 
+			$plist, $handle->{solved_dependencies}, 0)) {
+			    Warn "Can't install $pkg: lib not found spec\n";
+			    return () unless $forced{libdepends};
+		    }
 		}
 	}
 #	add_system_libs($state->{destdir}, $available);

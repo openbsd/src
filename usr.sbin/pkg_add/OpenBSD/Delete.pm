@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.10 2004/11/14 19:25:45 espie Exp $
+# $OpenBSD: Delete.pm,v 1.11 2004/11/21 13:32:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -126,10 +126,12 @@ sub delete_plist
 
 	# guard against duplicate pkgdep
 	my $removed = {};
-	for my $item (@{$plist->{pkgdep}}) {
-		my $name = $item->{name};
-		next if defined $removed->{$name};
-		print "remove dependency in $name\n" 
+
+	my $zap_dependency = sub {
+		my $name = shift;
+
+		return if defined $removed->{$name};
+		print "remove dependency on $name\n" 
 		    if $state->{very_verbose} or $state->{not};
 		local $@;
 		eval { OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $state->{not}; };
@@ -137,17 +139,13 @@ sub delete_plist
 			print STDERR "$@\n";
 		}
 		$removed->{$name} = 1;
+	};
+
+	for my $item (@{$plist->{pkgdep}}) {
+		&$zap_dependency($item->{name});
 	}
 	for my $name (OpenBSD::Requiring->new($pkgname)->list()) {
-		next if defined $removed->{$name};
-		print "remove dependency in $name\n" 
-		    if $state->{very_verbose} or $state->{not};
-		local $@;
-		eval { OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $state->{not}; };
-		if ($@) {
-			print STDERR "$@\n";
-		}
-		$removed->{$name} = 1;
+		&$zap_dependency($name);
 	}
 		
 	remove_packing_info($dir) unless $state->{not};
