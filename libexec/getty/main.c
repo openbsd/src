@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2001/07/08 21:18:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2001/11/19 22:35:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/07/08 21:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2001/11/19 22:35:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,7 +56,6 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.19 2001/07/08 21:18:08 deraadt Exp $
 #include <time.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -127,24 +126,24 @@ char partab[] = {
 #define	KILL	tmode.c_cc[VKILL]
 #define	EOT	tmode.c_cc[VEOF]
 
-jmp_buf timeout;
-
 static void
 dingdong()
 {
-	alarm(0);
-	signal(SIGALRM, SIG_DFL);
-	longjmp(timeout, 1);		/* XXX signal/longjmp resource leaks */
+	tmode.c_ispeed = tmode.c_ospeed = 0;
+	(void)tcsetattr(0, TCSANOW, &tmode);
+	_exit(1);
 }
 
-jmp_buf	intrupt;
+volatile sig_atomic_t interrupt_flag;
 
 static void
 interrupt()
 {
+	int save_errno = errno;
 
+	interrupt_flag = 1;
 	signal(SIGINT, interrupt);
-	longjmp(intrupt, 1);
+	errno = save_errno;
 }
 
 /*
@@ -154,8 +153,10 @@ void
 timeoverrun(signo)
 	int signo;
 {
-	/* XXX signal race */
-	syslog(LOG_ERR, "getty exiting due to excessive running time");
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+	syslog_r(LOG_ERR, &sdata,
+	    "getty exiting due to excessive running time");
 	_exit(1);
 }
 
@@ -284,11 +285,6 @@ main(argc, argv)
 		edithost(HE);
 		if (IM && *IM)
 			putf(IM);
-		if (setjmp(timeout)) {
-			tmode.c_ispeed = tmode.c_ospeed = 0;
-			(void)tcsetattr(0, TCSANOW, &tmode);
-			exit(1);
-		}
 		if (TO) {
 			signal(SIGALRM, dingdong);
 			alarm(TO);
@@ -301,7 +297,7 @@ main(argc, argv)
 			syslog(LOG_ERR, "%s: %m", PP);
 			exit(1);
 		} else if (rval) {
-			register int i;
+			int i;
 
 			oflush();
 			alarm(0);
@@ -354,19 +350,14 @@ main(argc, argv)
 static int
 getname()
 {
-	register int c;
-	register char *np;
+	int ppp_state = 0, ppp_connection = 0;
 	unsigned char cs;
-	volatile int ppp_state = 0;
-	volatile int ppp_connection = 0;
+	int c, r;
+	char *np;
 
 	/*
 	 * Interrupt may happen if we use CBREAK mode
 	 */
-	if (setjmp(intrupt)) {
-		signal(SIGINT, SIG_IGN);
-		return (0);
-	}
 	signal(SIGINT, interrupt);
 	setflags(1);
 	prompt();
@@ -383,8 +374,14 @@ getname()
 	np = name;
 	for (;;) {
 		oflush();
-		if (read(STDIN_FILENO, &cs, 1) <= 0)
+		r = read(STDIN_FILENO, &cs, 1);
+		if (r <= 0) {
+			if (r == -1 && errno == EINTR && interrupt_flag) {
+				interrupt_flag = 0;
+				return (0);
+			}
 			exit(0);
+		}
 		if ((c = cs&0177) == 0)
 			return (0);
 
@@ -453,6 +450,10 @@ getname()
 		putchr(cs);
 	}
 	signal(SIGINT, SIG_IGN);
+	if (interrupt_flag) {
+		interrupt_flag = 0;
+		return (0);
+	}
 	*np = 0;
 	if (c == '\r')
 		crmod = 1;
@@ -465,7 +466,7 @@ getname()
 
 static void
 putpad(s)
-	register char *s;
+	char *s;
 {
 	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
@@ -503,7 +504,7 @@ putpad(s)
 
 static void
 xputs(s)
-	register char *s;
+	char *s;
 {
 	while (*s)
 		putchr(*s++);
@@ -551,11 +552,11 @@ prompt()
 
 static void
 putf(cp)
-	register char *cp;
+	char *cp;
 {
 	extern char editedhost[];
-	time_t t;
 	char *slash, db[100];
+	time_t t;
 
 	while (*cp) {
 		if (*cp != '%') {
@@ -584,6 +585,7 @@ putf(cp)
 			(void)strftime(db, sizeof(db), fmt, localtime(&t));
 			xputs(db);
 			break;
+		}
 
 		case 's':
 			xputs(kerninfo.sysname);
@@ -600,7 +602,6 @@ putf(cp)
 		case 'v':
 			xputs(kerninfo.version);
 			break;
-		}
 
 		case '%':
 			putchr('%');
