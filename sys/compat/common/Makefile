@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2001/05/16 17:14:38 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/08/19 18:29:02 art Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/18 15:52:19 christos Exp $
 
 LIB=	compat
@@ -12,7 +12,7 @@ SRCS=	compat_exec.c compat_util.c compat_dir.c compat_vm.c kern_exit_43.c \
 	vfs_syscalls_25.c vfs_syscalls_43.c vm_43.c
 
 # really, all machines where sizeof(int) != sizeof(long)
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha") || (${MACHINE_ARCH} != "sparc64")
 SRCS+=	kern_ipc_10.c 
 .endif
 
