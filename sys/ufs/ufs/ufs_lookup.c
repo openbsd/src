@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.8 1997/12/02 17:11:11 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.9 1997/12/11 01:03:17 csapuntz Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -888,12 +888,16 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
  	 */
 
 	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_ffs_size) {
+#if 0  /* This code is breaking rename */
 	        if (tvp != NULL)
 			VOP_UNLOCK(tvp, 0, p);
+#endif
 
 		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
+#if 0
 		if (tvp != NULL)
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+#endif
 	}
 	return (error);
 }
