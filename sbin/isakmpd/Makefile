@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2004/06/20 15:24:05 ho Exp $
+#	$OpenBSD: Makefile,v 1.54 2004/06/21 23:28:18 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -50,7 +50,7 @@ OS=		openbsd
 #FEATURES+=	rawkey isakmp_cfg dnssec privsep dpd nat_traversal
 FEATURES=	tripledes des blowfish cast aes
 FEATURES+=	policy x509 ec aggressive debug
-FEATURES+=	rawkey isakmp_cfg privsep 
+FEATURES+=	rawkey isakmp_cfg privsep nat_traversal
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
