@@ -592,10 +592,12 @@ reapchild(sig)
     int sig;
 {
     int status, serrno = errno;
-
 #ifdef sudo_waitpid
-    while (sudo_waitpid(-1, &status, WNOHANG) != -1 || errno == EINTR)
-	;
+    pid_t pid;
+
+    do {
+	pid = sudo_waitpid(-1, &status, WNOHANG);
+    } while (pid != 0 && (pid != -1 || errno == EINTR));
 #else
     (void) wait(&status);
 #endif
