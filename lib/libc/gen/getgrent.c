@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.17 2002/07/06 03:08:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.18 2003/05/01 20:22:00 avsm Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -355,6 +355,9 @@ grscan(search, gid, name, p_gr, gs)
 					__ypmode = YPMODE_NONE;	/* ??? */
 					continue;
 				}
+				break;
+			case YPMODE_NONE:
+				/* NOTREACHED */
 				break;
 			}
 			line[datalen] = '\0';
