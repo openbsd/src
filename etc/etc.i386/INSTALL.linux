@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.3 1998/09/24 17:24:37 espie Exp $
+$OpenBSD: INSTALL.linux,v 1.4 1998/09/25 01:58:38 espie Exp $
 
 Warning: this document is currently being reviewed. It's not yet complete,
 and probably contains loads of errors. As an example, I can't figure out
@@ -572,6 +572,34 @@ with the rest of the Linux kernel. I would recommend checking that patch
 manually, as Linux module information tends to vary widely, and it is
 pretty trivial to add by hand anyway.
 
-Binary compatibility
---------------------
-To be checked and written.
+Running Linux binaries under OpenBSD
+------------------------------------
+You just have to recompile your BSD kernel with COMPAT_LINUX, and set up
+/emul/linux as explained in compat_linux(1). 
+
+It's a good idea to mount your Linux file system under another point, then
+make symbolic links so that you can control what gets used precisely.
+Don't bother with the ports emul/linux_lib entry: it's only a set of Linux
+libraries for people who don't have a Linux system running.
+
+As of this writing, most applications work, apart from sound.
+
+The Linux sound devices use differing ioctl from OpenBSD, hence anything that
+needs to change the audio mode won't work, and produce audio garbage at best.
+
+A small detail that may cause problems: uname still says `OpenBSD', even
+under Linux compatibility.  The reason behind that is that we don't want
+netscape to tell it was run from a Linux box, when it is used under
+OpenBSD.
+
+Some programs, for instance maple, do depend on uname answering `Linux'.
+For maple, this is straigthforward: you just have to fudge
+/usr/local/maple/bin/maple.system.type to check OpenBSD in the same
+class with Linux.
+
+Similar shell scripts are easy to fix.  Binary programs that don't run
+suid can be coerced by using LD_PRELOAD.
+
+As a rule, this should be achieved on a program-by-program basis. 
+The more networking programs that do tell they're running under OpenBSD,
+the merrier !
