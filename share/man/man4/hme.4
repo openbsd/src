@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.1 2003/02/10 22:40:55 jason Exp $
+.\"     $OpenBSD: hme.4,v 1.2 2003/02/12 20:42:59 miod Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -111,4 +111,9 @@ Use 10baseT, half duplex
 support for the
 .Nm
 first appeared in
-.Ox 3.0 .
+.Ox 2.4 .
+.Sh CAVEATS
+The
+.Nm
+sbus cards will not function in a sun4c class machine,
+due to PROM limitations.
