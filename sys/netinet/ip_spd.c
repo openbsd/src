@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.15 2001/04/06 04:42:08 csapuntz Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.16 2001/04/10 21:52:38 provos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -1035,7 +1035,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	    ipa->ipa_mask.sen_direction = ipo->ipo_mask.sen_direction;
 
 	    if (ipo->ipo_mask.sen_ip_src.s_addr == INADDR_ANY ||
-		ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY)
+		ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY ||
+		ipo->ipo_dst.sa.sa_family == 0)
 	    {
 		ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
 		ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
@@ -1047,7 +1048,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	    }
 
 	    if (ipo->ipo_mask.sen_ip_dst.s_addr == INADDR_ANY ||
-		ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY)
+		ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY ||
+		ipo->ipo_dst.sa.sa_family == 0)
 	    {
 		ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
 		ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
@@ -1079,7 +1081,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	    ipa->ipa_mask.sen_ip6_direction = ipo->ipo_mask.sen_ip6_direction;
 
 	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_src) ||
-		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src))
+		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src) ||
+		ipo->ipo_dst.sa.sa_family == 0)
 	    {
 		ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
 		for (i = 0; i < 16; i++)
@@ -1092,7 +1095,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	    }
 
 	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_dst) ||
-		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst))
+		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst) ||
+		ipo->ipo_dst.sa.sa_family == 0)
 	    {
 		ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
 		for (i = 0; i < 16; i++)
