@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2001/02/22 00:55:21 krw Exp $
+#	$OpenBSD: Makefile,v 1.30 2001/02/24 02:07:34 csapuntz Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -12,7 +12,7 @@ MAN=	audio.9 boot.9 bus_dma.9 bus_space.9 \
 	ratecheck.9 resettodr.9 random.9 shutdownhook_establish.9 \
 	sleep.9 spl.9 store.9 style.9 time.9 timeout.9 uvm.9 \
 	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
-	vm_map_inherit.9 vm_map_protect.9
+	vm_map_inherit.9 vm_map_protect.9 vnode.9
 
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
