@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.36 2002/02/19 18:38:02 mpech Exp $	*/
+/*	$OpenBSD: w.c,v 1.37 2002/06/08 22:57:34 angelos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.36 2002/02/19 18:38:02 mpech Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.37 2002/06/08 22:57:34 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,20 +178,13 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL) {
-		setegid(getgid());
-		setgid(getgid());
+	if (nlistf == NULL && memf == NULL) {
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, KVM_NO_FILES, errbuf)) == NULL)
+			errx(1, "%s", errbuf);
+	} else {
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
+			errx(1, "%s", errbuf);
 	}
-
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
-		errx(1, "%s", errbuf);
-
-	setegid(getgid());
-	setgid(getgid());
 
 	(void)time(&now);
 	if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
