@@ -1055,7 +1055,6 @@
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
-./usr/share/man/cat4/i386/xf86.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
@@ -1397,6 +1396,7 @@
 ./usr/share/man/cat4/wsmux.0
 ./usr/share/man/cat4/wx.0
 ./usr/share/man/cat4/xe.0
+./usr/share/man/cat4/xf86.0
 ./usr/share/man/cat4/xl.0
 ./usr/share/man/cat4/xmphy.0
 ./usr/share/man/cat4/yds.0
