@@ -612,6 +612,7 @@
 ./usr/include/netdb.h
 ./usr/include/netgroup.h
 ./usr/include/netinet/icmp_var.h
+./usr/include/netinet/ip_rmd160.h
 ./usr/include/netinet/if_arc.h
 ./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_ether.h
@@ -1419,7 +1420,11 @@
 ./usr/share/man/cat3/curs_pad.0
 ./usr/share/man/cat3/curs_printw.0
 ./usr/share/man/cat3/curs_refresh.0
-./usr/share/man/cat3/curs_resize.0
+./usr/share/man/cat3/curs_print.0
+./usr/share/man/cat3/form_requestname.0
+./usr/share/man/cat3/menu_requestname.0
+./usr/share/man/cat3/menu_spacing.0
+./usr/share/man/cat3/wresize.0
 ./usr/share/man/cat3/curs_scanw.0
 ./usr/share/man/cat3/curs_scr_dmp.0
 ./usr/share/man/cat3/curs_scroll.0
