@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.6 1996/05/22 07:44:28 etheisen Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.7 1996/06/06 07:39:37 pefo Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -38,6 +38,15 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/syscall.h>
+#include <sys/signalvar.h>
+
+#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)	/*XXX should be */
+#undef EXEC_ELF						/*XXX defined in */
+#define EXEC_ELF					/*XXX machine/exec.h */
+#endif							/*XXX instead ? */
+
+#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
 
 #include <sys/mman.h>
 #include <vm/vm.h>
@@ -76,6 +85,35 @@ static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
 #define ELF_ALIGN(a, b) ((a) & ~((b) - 1))
+
+/*
+ * This is the basic elf emul. elf_probe_funcs may change to other emuls.
+ */
+
+extern char sigcode[], esigcode[];
+#ifdef SYSCALL_DEBUG
+extern char *syscallnames[];
+#endif
+
+struct emul emul_elf = {
+      "netbsd",
+      NULL,
+      sendsig,
+      SYS_syscall,
+      SYS_MAXSYSCALL,
+      sysent,
+#ifdef SYSCALL_DEBUG
+      syscallnames,
+#else
+      NULL,
+#endif
+      sizeof(AuxInfo) * ELF_AUX_ENTRIES,
+      elf_copyargs,
+      setregs,
+      sigcode,
+      esigcode,
+};
+
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -159,7 +197,7 @@ elf_check_header(eh, type)
 	int type;
 {
 
-	if (bcmp(eh->e_ident, ELFMAG, SELFMAG) != 0)
+	if (!IS_ELF(eh[0]))
 		return ENOEXEC;
 
 	switch (eh->e_machine) {
@@ -170,6 +208,9 @@ elf_check_header(eh, type)
 #endif
 #ifdef sparc
 	case EM_SPARC:
+#endif
+#ifdef mips
+	case EM_MIPS:
 #endif
 		break;
 
@@ -197,7 +238,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	u_long *size;
 	int *prot;
 {
-	u_long uaddr, msize, rm, rf;
+	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
 
 	/*
@@ -224,8 +265,23 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
+	psize = round_page(*size);
 
-	NEW_VMCMD(vcset, vmcmd_map_readvn, *size, *addr, vp, offset, *prot);
+	/*
+	 * Because the pagedvn pager can't handle zero fill of the last
+	 * data page if it's not page aligned we map the las page readvn.
+         */
+	if(ph->p_flags & PF_W) {
+		psize = trunc_page(*size);
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset, *prot);
+		if(psize != *size) {
+			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize, *addr
++ psize, vp, offset + psize, *prot);
+		}
+	}
+	else {
+		 NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset, *prot);
+	}
 
 	/*
          * Check if we need to extend the size of the segment
@@ -291,7 +347,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 	char *bp = NULL;
 	u_long addr = *last;
 
-	bp = path;
+	bp  = path;
 	/*
          * 1. open file
          * 2. read filehdr
@@ -329,7 +385,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entry = addr + eh.e_entry;
+				*entry = addr + eh.e_entry - ph[i].p_vaddr;
 				ap->arg_interp = addr;
 			}
 			addr += size;
@@ -363,7 +419,6 @@ bad:
  * out if this is not possible.  Finally, set up vmcmds for the
  * text, data, bss, and stack segments.
  *
- * XXX no demand paging (yet?)
  */
 int
 exec_elf_makecmds(p, epp)
@@ -422,6 +477,13 @@ exec_elf_makecmds(p, epp)
 			break;
 		}
 	}
+
+	/*
+	 * OK, we want a slightly different twist of the
+	 * standard emulation package for "real" elf.
+	 */
+	epp->ep_emul = &emul_elf;
+	pos = ELF32_NO_ADDR;
 
 	/*
 	 * On the same architecture, we may be emulating different systems.
@@ -498,6 +560,7 @@ exec_elf_makecmds(p, epp)
 		}
 	}
 
+#if !defined(mips)
 	/*
 	 * If no position to load the interpreter was set by a probe
 	 * function, pick the same address that a non-fixed mmap(0, ..)
@@ -505,6 +568,7 @@ exec_elf_makecmds(p, epp)
 	 */
 	if (pos == ELF32_NO_ADDR)
 		pos = round_page(epp->ep_daddr + MAXDSIZ);
+#endif
 
 	/*
          * Check if we found a dynamically linked binary and arrange to load
@@ -546,3 +610,4 @@ bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
 }
+#endif /* NATIVE_EXEC_ELF || EXEC_ELF */
