@@ -2099,8 +2099,14 @@ push_frame_in_args (parms, push_size, boundary)
 	    /* the operand related to the sweep variable */
 	    if (AUTO_BASEPTR (XEXP (home, 0)) == frame_pointer_rtx)
 	      {
-		offset += push_size;
-		XEXP (XEXP (home, 0), 1) = gen_rtx_CONST_INT (VOIDmode, offset);
+		if (XEXP (home, 0) == frame_pointer_rtx)
+		  XEXP (home, 0) = plus_constant (frame_pointer_rtx,
+						  push_size);
+		else {
+		  offset += push_size;
+		  XEXP (XEXP (home, 0), 1) = gen_rtx_CONST_INT (VOIDmode,
+								offset);
+		}
 
 		/* mark */
 		XEXP (home, 0)->used = 1;
