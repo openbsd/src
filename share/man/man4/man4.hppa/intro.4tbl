@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.7 2003/01/07 20:37:10 mickey Exp $
+.\" $OpenBSD: intro.4tbl,v 1.8 2003/01/26 21:55:45 jason Exp $
 .\"
 .\" Copyright (c) 2002 Paul Weissmann
 .\" All rights reserved.
@@ -226,13 +226,13 @@ The Centronics printer port.
 The
 .Xr eisa 4
 bus controller on most of the older 700 machines.
-.It Xr pdc 4
-The PROM interface, allows to call the routines in the machine's
-PROM for things like initial console output and such.
 .It Xr osiop 4
 The
 .Tn SCSI
 I/O processor.
+.It Xr pdc 4
+The PROM interface, allows to call the routines in the machine's
+PROM for things like initial console output and such.
 .It Xr sti 4
 The system graphics driver.
 .It Xr wax 4
