@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <time.h>
 #include <string.h>
 
@@ -226,7 +227,7 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 	static int init=1;
 	unsigned long l;
 #ifdef DEVRANDOM
-	FILE *fh;
+	int fd;
 #endif
 
 #ifdef PREDICT
@@ -259,20 +260,23 @@ static void ssleay_rand_bytes(unsigned char *buf, int num)
 /* #ifdef DEVRANDOM */
 		/* 
 		 * Use a random entropy pool device.
-		 * Linux 1.3.x and FreeBSD-Current has 
+		 * Linux 1.3.x, OpenBSD, and FreeBSD have
 		 * this. Use /dev/urandom if you can
 		 * as /dev/random will block if it runs out
 		 * of random entries.
 		 */
-		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
+		if ((fd = open(DEVRANDOM, O_RDONLY)) != NULL)
 			{
 			unsigned char tmpbuf[32];
 
-			fread((unsigned char *)tmpbuf,1,32,fh);
+			read(fd, tmpbuf, sizeof(tmpbuf));
 			/* we don't care how many bytes we read,
 			 * we will just copy the 'stack' if there is
 			 * nothing else :-) */
-			fclose(fh);
+			/* the above comment is EVIL.  Security software
+			 * RELIES ON THESE PRIMITIVES HAVING MORE SECURE
+			 * BEHAVIOUR! Secure entropy is required in
+			 * many cases! */
 			RAND_seed(tmpbuf,32);
 			memset(tmpbuf,0,32);
 			}
