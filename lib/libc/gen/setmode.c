@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.13 2004/05/18 02:05:52 jfb Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.14 2004/07/01 07:28:01 otto Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.13 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.14 2004/07/01 07:28:01 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -218,6 +218,7 @@ setmode(const char *p)
 				return (NULL);
 			}
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
+		set->cmd = 0;
 		return (saveset);
 	}
 
