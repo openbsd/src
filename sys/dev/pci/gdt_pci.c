@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.15 2002/06/06 19:33:00 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.16 2002/06/11 03:05:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -296,7 +296,7 @@ gdt_pci_attach(parent, self, aux)
 
 	switch (GDT_CLASS(gdt)) {
 	case GDT_PCI:
-		bus_space_set_region_4(dpmemt, dpmemh, 0, htole32(0),
+		bus_space_set_region_4(dpmemt, dpmemh, 0, 0,
 		    GDT_DPR_IF_SZ >> 2);
 		if (bus_space_read_1(dpmemt, dpmemh, 0) != 0) {
 			printf("cannot write to DPMEM\n");
@@ -368,7 +368,7 @@ gdt_pci_attach(parent, self, aux)
 		break;
 
 	case GDT_PCINEW:
-		bus_space_set_region_4(dpmemt, dpmemh, 0, htole32(0),
+		bus_space_set_region_4(dpmemt, dpmemh, 0, 0,
 		    GDT_DPR_IF_SZ >> 2);
 		if (bus_space_read_1(dpmemt, dpmemh, 0) != 0) {
 			printf("cannot write to DPMEM\n");
@@ -443,10 +443,9 @@ gdt_pci_attach(parent, self, aux)
 		break;
 
 	case GDT_MPR:
-		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC,
-		    htole32(GDT_MPR_MAGIC));
+		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC, GDT_MPR_MAGIC);
 		if (bus_space_read_4(dpmemt, dpmemh, GDT_MPR_IC) !=
-		    htole32(GDT_MPR_MAGIC)) {
+		    GDT_MPR_MAGIC) {
 			printf("cannot access DPMEM at 0x%x (shadowed?)\n",
 			    dpmembase);
 			goto bail_out;
@@ -459,7 +458,7 @@ gdt_pci_attach(parent, self, aux)
 		 * do anything similar.
 		 */
 
-		bus_space_set_region_4(dpmemt, dpmemh, GDT_I960_SZ, htole32(0),
+		bus_space_set_region_4(dpmemt, dpmemh, GDT_I960_SZ, 0,
 		    GDT_DPR_IF_SZ >> 2);
 
 		/* Disable everything */
@@ -472,7 +471,7 @@ gdt_pci_attach(parent, self, aux)
 		    0);
 
 		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_INFO,
-		    htole32(dpmembase));
+		    dpmembase);
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_CMD_INDX,
 		    0xff);
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_LDOOR, 1);
@@ -488,8 +487,8 @@ gdt_pci_attach(parent, self, aux)
 			DELAY(1);
 		}
 
-		protocol = (u_int8_t)letoh32(bus_space_read_4(dpmemt, dpmemh,
-		    GDT_MPR_IC + GDT_S_INFO));
+		protocol = (u_int8_t)bus_space_read_4(dpmemt, dpmemh,
+		    GDT_MPR_IC + GDT_S_INFO);
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_STATUS,
 		    0);
 		if (protocol != GDT_PROTOCOL_VERSION) {
@@ -498,16 +497,13 @@ gdt_pci_attach(parent, self, aux)
 		}
 
 		/* special commnd to controller BIOS */
-		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_INFO,
-		    htole32(0));
+		bus_space_write_4(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_INFO, 0);
 		bus_space_write_4(dpmemt, dpmemh,
-		    GDT_MPR_IC + GDT_S_INFO + sizeof (u_int32_t), htole32(0));
+		    GDT_MPR_IC + GDT_S_INFO + sizeof (u_int32_t), 0);
 		bus_space_write_4(dpmemt, dpmemh,
-		    GDT_MPR_IC + GDT_S_INFO + 2 * sizeof (u_int32_t),
-		    htole32(1));
+		    GDT_MPR_IC + GDT_S_INFO + 2 * sizeof (u_int32_t), 1);
 		bus_space_write_4(dpmemt, dpmemh,
-		    GDT_MPR_IC + GDT_S_INFO + 3 * sizeof (u_int32_t),
-		    htole32(0));
+		    GDT_MPR_IC + GDT_S_INFO + 3 * sizeof (u_int32_t), 0);
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_IC + GDT_S_CMD_INDX,
 		    0xfe);
 		bus_space_write_1(dpmemt, dpmemh, GDT_MPR_LDOOR, 1);
@@ -727,10 +723,10 @@ gdt_mpr_copy_cmd(gdt, ccb)
 
 	bus_space_write_2(gdt->sc_dpmemt, gdt->sc_dpmemh,
 	    GDT_MPR_IC + GDT_COMM_QUEUE + cmd_no * GDT_COMM_Q_SZ + GDT_OFFSET,
-	    htole16(GDT_DPMEM_COMMAND_OFFSET + dp_offset));
+	    GDT_DPMEM_COMMAND_OFFSET + dp_offset);
 	bus_space_write_2(gdt->sc_dpmemt, gdt->sc_dpmemh,
 	    GDT_MPR_IC + GDT_COMM_QUEUE + cmd_no * GDT_COMM_Q_SZ + GDT_SERV_ID,
-	    htole16(ccb->gc_service));
+	    ccb->gc_service);
 	bus_space_write_raw_region_4(gdt->sc_dpmemt, gdt->sc_dpmemh,
 	    GDT_MPR_IC + GDT_DPR_CMD + dp_offset, gdt->sc_cmd, cp_count);
 }
