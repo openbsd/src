@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd_root.c,v 1.1 1998/09/12 03:11:18 mickey Exp $	*/
+/*	$OpenBSD: rd_root.c,v 1.2 1999/04/20 20:23:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,18 +35,14 @@
 #include <dev/ramdisk.h>
 
 extern int boothowto;
+extern u_int32_t rd_root_size;
+extern char rd_root_image[];
 
 #ifndef MINIROOTSIZE
 #define MINIROOTSIZE 512
 #endif
 
 #define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
-
-/*
- * This array will be patched to contain a file-system image.
- */
-u_int32_t rd_root_size = ROOTBYTES;
-char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
 /*
  * This is called during autoconfig.
@@ -56,14 +52,13 @@ rd_attach_hook(unit, rd)
 	int unit;
 	struct rd_conf *rd;
 {
-
 	if (unit == 0) {
 		/* Setup root ramdisk */
-		rd->rd_addr = (caddr_t)rd_root_image;
-		rd->rd_size = (size_t)rd_root_size;
+		rd->rd_addr = rd_root_image;
+		rd->rd_size = rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
 		printf("rd%d: internal %dK image area\n", unit,
-		    ROOTBYTES / 1024);
+		       rd_root_size / 1024);
 	}
 }
 
@@ -81,3 +76,11 @@ rd_open_hook(unit, rd)
 		boothowto |= RB_SINGLE;
 	}
 }
+
+/*
+ * This array will be patched to contain a file-system image.
+ * XXX there is an overflow bug in gnu ld-hppa, so keep this down
+ * the of .data segment (see ld.script) to avoid. will fix this later
+ */
+u_int32_t rd_root_size = ROOTBYTES;
+char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
