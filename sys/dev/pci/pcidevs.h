@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp 
+ *	OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -72,15 +72,15 @@
 #define	PCI_VENDOR_ICLPERSONAL	0x1016		/* ICL Personal Systems */
 #define	PCI_VENDOR_SPEA	0x1017		/* SPEA Software */
 #define	PCI_VENDOR_UNISYS	0x1018		/* Unisys Systems */
-#define	PCI_VENDOR_ELITEGROUP	0x1019		/* Elitegroup Computer Systems */
+#define	PCI_VENDOR_ELITEGROUP	0x1019		/* Elitegroup */
 #define	PCI_VENDOR_NCR	0x101a		/* AT&T GIS */
 #define	PCI_VENDOR_VITESSE	0x101b		/* Vitesse Semiconductor */
 #define	PCI_VENDOR_WD	0x101c		/* Western Digital */
-#define	PCI_VENDOR_AMI	0x101e		/* American Megatrends */
+#define	PCI_VENDOR_AMI	0x101e		/* AMI */
 #define	PCI_VENDOR_PICTURETEL	0x101f		/* PictureTel */
 #define	PCI_VENDOR_HITACHICOMP	0x1020		/* Hitachi Computer Products */
 #define	PCI_VENDOR_OKI	0x1021		/* OKI Electric Industry */
-#define	PCI_VENDOR_AMD	0x1022		/* Advanced Micro Devices */
+#define	PCI_VENDOR_AMD	0x1022		/* AMD */
 #define	PCI_VENDOR_TRIDENT	0x1023		/* Trident Microsystems */
 #define	PCI_VENDOR_ZENITH	0x1024		/* Zenith Data Systems */
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
@@ -91,7 +91,7 @@
 #define	PCI_VENDOR_CHIPS	0x102c		/* Chips and Technologies */
 #define	PCI_VENDOR_WYSE	0x102d		/* WYSE Technology */
 #define	PCI_VENDOR_OLIVETTI	0x102e		/* Olivetti */
-#define	PCI_VENDOR_TOSHIBA	0x102f		/* Toshiba America */
+#define	PCI_VENDOR_TOSHIBA	0x102f		/* Toshiba */
 #define	PCI_VENDOR_TMCRESEARCH	0x1030		/* TMC Research */
 #define	PCI_VENDOR_MIRO	0x1031		/* Miro Computer Products */
 #define	PCI_VENDOR_COMPAQ2	0x1032		/* Compaq (2nd ID) */
@@ -111,13 +111,13 @@
 #define	PCI_VENDOR_COMPUTREND	0x1041		/* Computrend */
 #define	PCI_VENDOR_PCTECH	0x1042		/* PC Technology */
 #define	PCI_VENDOR_ASUSTEK	0x1043		/* Asustek Computer */
-#define	PCI_VENDOR_DPT	0x1044		/* Distributed Processing Technology */
+#define	PCI_VENDOR_DPT	0x1044		/* DPT */
 #define	PCI_VENDOR_OPTI	0x1045		/* Opti */
 #define	PCI_VENDOR_IPCCORP	0x1046		/* IPC Corporation */
 #define	PCI_VENDOR_GENOA	0x1047		/* Genoa Systems */
 #define	PCI_VENDOR_ELSA	0x1048		/* Elsa */
 #define	PCI_VENDOR_FOUNTAINTECH	0x1049		/* Fountain Technology */
-#define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS Thomson Microelectric */
+#define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS Thomson */
 #define	PCI_VENDOR_BUSLOGIC	0x104b		/* BusLogic */
 #define	PCI_VENDOR_TI	0x104c		/* Texas Instruments */
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
@@ -237,7 +237,7 @@
 #define	PCI_VENDOR_ICM	0x10c1		/* ICM */
 #define	PCI_VENDOR_AUSPEX	0x10c2		/* Auspex Systems */
 #define	PCI_VENDOR_SAMSUNGSEMI	0x10c3		/* Samsung Semiconductors */
-#define	PCI_VENDOR_AWARD	0x10c4		/* Award Software Int'l */
+#define	PCI_VENDOR_AWARD	0x10c4		/* Award */
 #define	PCI_VENDOR_XEROX	0x10c5		/* Xerox */
 #define	PCI_VENDOR_RAMBUS	0x10c6		/* Rambus */
 #define	PCI_VENDOR_MEDIAVIS	0x10c7		/* Media Vision */
@@ -324,7 +324,7 @@
 #define	PCI_VENDOR_BERG	0x1118		/* Berg Electronics */
 #define	PCI_VENDOR_VORTEX	0x1119		/* Vortex Computer Systems */
 #define	PCI_VENDOR_EFFICIENTNETS	0x111a		/* Efficent Networks */
-#define	PCI_VENDOR_TELEDYNE	0x111b		/* Teledyne Electronic Systems */
+#define	PCI_VENDOR_TELEDYNE	0x111b		/* Teledyne */
 #define	PCI_VENDOR_TRICORD	0x111c		/* Tricord Systems */
 #define	PCI_VENDOR_IDT	0x111d		/* IDT */
 #define	PCI_VENDOR_ELDEC	0x111e		/* Eldec */
@@ -410,7 +410,7 @@
 #define	PCI_VENDOR_SBE	0x1176		/* SBE */
 #define	PCI_VENDOR_SILICONENG	0x1177		/* Silicon Engineering */
 #define	PCI_VENDOR_ALFA	0x1178		/* Alfa */
-#define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba Info Systems (2nd ID) */
+#define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba (2nd ID) */
 #define	PCI_VENDOR_ATREND	0x117a		/* A-Trend Technology */
 #define	PCI_VENDOR_ATTO	0x117c		/* Atto Technology */
 #define	PCI_VENDOR_TR	0x117e		/* T/R Systems */
@@ -1046,6 +1046,7 @@
 #define	PCI_PRODUCT_S3_968_3	0x88f3		/* 86C968-3 (Vision968) */
 #define	PCI_PRODUCT_S3_TRIO64V2_DX	0x8901		/* Trio64V2/DX */
 #define	PCI_PRODUCT_S3_PLATO	0x8902		/* Plato */
+#define	PCI_PRODUCT_S3_TRIO3D_AGP	0x8904		/* Trio3D AGP */
 #define	PCI_PRODUCT_S3_VIRGE_DX_GX	0x8a01		/* ViRGE DX/GX */
 #define	PCI_PRODUCT_S3_VIRGE_GX2	0x8a10		/* ViRGE GX2 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */

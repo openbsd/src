@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp 
+ *	OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -431,19 +431,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
-	    "Advanced Micro Devices",
+	    "AMD",
 	    "79c970 PCnet-PCI LANCE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
 	    0,
-	    "Advanced Micro Devices",
+	    "AMD",
 	    "53c974 PCscsi-PCI SCSI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
 	    0,
-	    "Advanced Micro Devices",
+	    "AMD",
 	    "79C974 PCnet-PCI Ether+SCSI",
 	},
 	{
@@ -1199,7 +1199,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    0,
-	    "Distributed Processing Technology",
+	    "DPT",
 	    "SmartCache/Raid",
 	},
 	{
@@ -2133,6 +2133,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Plato",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D_AGP,
+	    0,
+	    "S3",
+	    "Trio3D AGP",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_DX_GX,
 	    0,
 	    "S3",
@@ -2165,13 +2171,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
 	    0,
-	    "SGS Thomson Microelectric",
+	    "SGS Thomson",
 	    "STG 2000X",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764,
 	    0,
-	    "SGS Thomson Microelectric",
+	    "SGS Thomson",
 	    "STG 1764X",
 	},
 	{
@@ -2411,13 +2417,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
 	    0,
-	    "Toshiba America",
+	    "Toshiba",
 	    "R4x00 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
 	    0,
-	    "Toshiba America",
+	    "Toshiba",
 	    "TC35856F ATM (Meteor)",
 	},
 	{
@@ -3083,7 +3089,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ELITEGROUP, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Elitegroup Computer Systems",
+	    "Elitegroup",
 	    NULL,
 	},
 	{
@@ -3107,7 +3113,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AMI, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "American Megatrends",
+	    "AMI",
 	    NULL,
 	},
 	{
@@ -3131,7 +3137,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AMD, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Advanced Micro Devices",
+	    "AMD",
 	    NULL,
 	},
 	{
@@ -3197,7 +3203,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Toshiba America",
+	    "Toshiba",
 	    NULL,
 	},
 	{
@@ -3317,7 +3323,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DPT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Distributed Processing Technology",
+	    "DPT",
 	    NULL,
 	},
 	{
@@ -3353,7 +3359,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SGSTHOMSON, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "SGS Thomson Microelectric",
+	    "SGS Thomson",
 	    NULL,
 	},
 	{
@@ -4073,7 +4079,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AWARD, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Award Software Int'l",
+	    "Award",
 	    NULL,
 	},
 	{
@@ -4595,7 +4601,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TELEDYNE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Teledyne Electronic Systems",
+	    "Teledyne",
 	    NULL,
 	},
 	{
@@ -5111,7 +5117,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Toshiba Info Systems (2nd ID)",
+	    "Toshiba (2nd ID)",
 	    NULL,
 	},
 	{
