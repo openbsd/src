@@ -21,7 +21,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.   */
 
 
-static char rcsid[] ="$Id: eltorito.c,v 1.1 2000/10/10 20:40:14 beck Exp $";
+static char rcsid[] ="$Id: eltorito.c,v 1.2 2004/06/22 22:58:06 tom Exp $";
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -252,6 +252,15 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
 #endif /* APPLE_HYB */
 	    fprintf(stderr,"Emulating a 1.2 meg floppy\n");
     }
+    else if (nsectors == 4 ) 
+    {
+	default_desc.boot_media[0] = EL_TORITO_MEDIA_NOEMUL;
+#ifdef APPLE_HYB
+	/* NON-HFS change */
+	if (verbose > 0 )
+#endif /* APPLE_HYB */
+	    fprintf(stderr,"No-emulation CD boot sector\n");
+    }
     else 
     {
 	fprintf(stderr,"\nError - boot image is not the an allowable size.\n");
@@ -260,9 +269,11 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
     
     
     /* 
-     * FOR NOW LOAD 1 SECTOR, JUST LIKE FLOPPY BOOT!!! 
+     * FOR NOW LOAD 1 SECTOR, JUST LIKE FLOPPY BOOT, unless it's no-emulation
+     * boot.
      */
-    nsectors = 1;
+    if (default_desc.boot_media[0] != EL_TORITO_MEDIA_NOEMUL)
+        nsectors = 1;
     set_721(default_desc.nsect, (unsigned int) nsectors );
 #ifdef DEBUG_TORITO
     fprintf(stderr,"Extent of boot images is %d\n",get_733(de->isorec.extent));

@@ -191,15 +191,18 @@
               Specifies  the  path and filename of the boot image
               to be used when making an "El Torito" bootable  CD.
               The  pathname  must  be relative to the source path
-              specified to <STRONG>mkhybrid.</STRONG>  This option is required  to
+              specified to <STRONG>mkhybrid</STRONG>.  This option is required  to
               make a bootable CD.  The boot image must be exactly
-              the size of either a  1.2,  1.44,  or  a  2.88  meg
-              floppy, and <STRONG>mkhybrid</STRONG> will use this size when creat-
-              ing the output iso9660 filesystem.  It  is  assumed
-              that  the first 512 byte sector should be read from
-              the boot image (it is essentially emulating a  nor-
-              mal floppy drive).  This will work, for example, if
-              the boot image is a LILO based boot floppy.
+              the size of one of a 1.2, 1.44, or 2.88 MB  floppy,
+              or  of a 2 KB CD sector, and <STRONG>mkhybrid</STRONG> will use this
+              size when creating the output  iso9660  filesystem.
+              If  the boot file is 2 KB long, a no-emulation boot
+              CD will be created, and the whole 2 KB will be read
+              on  boot.  If the boot file is a floppy image, then
+              only the first 512-byte sector will  be  read  from
+              the  boot  image  (it  is emulating a normal floppy
+              drive).  This will work, for example, if  the  boot
+              image is a LILO-based boot floppy.
 
        <STRONG>-C</STRONG> <EM>last</EM><STRONG>_</STRONG><EM>sess</EM><STRONG>_</STRONG><EM>start,next</EM><STRONG>_</STRONG><EM>sess</EM><STRONG>_</STRONG><EM>start</EM>
               This option is needed when <STRONG>mkisofs</STRONG> is used to  cre-
