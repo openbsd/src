@@ -181,6 +181,10 @@ RSA *RSA_new_method(ENGINE *engine)
 		OPENSSL_free(ret);
 		ret=NULL;
 		}
+
+	/* Enforce blinding. */
+	ret->flags |= RSA_FLAG_BLINDING;
+
 	return(ret);
 	}
 

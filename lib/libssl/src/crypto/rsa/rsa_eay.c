@@ -97,6 +97,21 @@ const RSA_METHOD *RSA_PKCS1_SSLeay(void)
 	return(&rsa_pkcs1_eay_meth);
 	}
 
+static void rsa_eay_blinding(RSA *rsa, BN_CTX *ctx)
+	{
+	CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+	/* Check again inside the lock - the macro's check is racey */
+	if(rsa->blinding == NULL)
+		RSA_blinding_on(rsa, ctx);
+	CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+	}
+#define BLINDING_HELPER(rsa, ctx) \
+	do { \
+		if(((rsa)->flags & RSA_FLAG_BLINDING) && \
+				((rsa)->blinding == NULL)) \
+			rsa_eay_blinding(rsa, ctx); \
+	} while(0)
+
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 	     unsigned char *to, RSA *rsa, int padding)
 	{
@@ -237,8 +252,8 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
-		RSA_blinding_on(rsa,ctx);
+	BLINDING_HELPER(rsa, ctx);
+
 	if (rsa->flags & RSA_FLAG_BLINDING)
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
@@ -316,8 +331,8 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
-	if ((rsa->flags & RSA_FLAG_BLINDING) && (rsa->blinding == NULL))
-		RSA_blinding_on(rsa,ctx);
+	BLINDING_HELPER(rsa, ctx);
+
 	if (rsa->flags & RSA_FLAG_BLINDING)
 		if (!BN_BLINDING_convert(&f,rsa->blinding,ctx)) goto err;
 
@@ -592,6 +607,10 @@ err:
 static int RSA_eay_init(RSA *rsa)
 	{
 	rsa->flags|=RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE;
+
+	/* Enforce blinding. */
+	rsa->flags|=RSA_FLAG_BLINDING;
+
 	return(1);
 	}
 
