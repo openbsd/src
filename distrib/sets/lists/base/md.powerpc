@@ -340,3 +340,4 @@
 ./usr/powerpc-unknown-openbsd2.1/bin
 ./usr/powerpc-unknown-openbsd2.1/lib
 ./usr/powerpc-unknown-openbsd2.1/lib/ldscripts
+./usr/lib/perl5/powerpc-openbsd/5.003/rmd160.ph

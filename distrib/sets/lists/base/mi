@@ -1,6 +1,3 @@
-./usr/bin/readlink
-./sbin/fsck_ext2fs
-./etc/namedb/tmp
 .
 ./altroot
 ./bin
@@ -50,6 +47,7 @@
 ./etc/kerberosIV
 ./etc/mtree
 ./etc/namedb
+./etc/namedb/tmp
 ./etc/ppp
 ./etc/sliphome
 ./etc/termcap
@@ -68,6 +66,7 @@
 ./sbin/fastboot
 ./sbin/fasthalt
 ./sbin/fsck
+./sbin/fsck_ext2fs
 ./sbin/fsck_ffs
 ./sbin/fsck_msdos
 ./sbin/fsdb
@@ -303,6 +302,7 @@
 ./usr/bin/rcsmerge
 ./usr/bin/rdist
 ./usr/bin/rdistd
+./usr/bin/readlink
 ./usr/bin/register
 ./usr/bin/renice
 ./usr/bin/reset
@@ -1099,8 +1099,16 @@
 ./usr/share/nls/de/libc.cat
 ./usr/share/nls/es
 ./usr/share/nls/es/libc.cat
+./usr/share/nls/fi
+./usr/share/nls/fi/libc.cat
 ./usr/share/nls/fr
 ./usr/share/nls/fr/libc.cat
+./usr/share/nls/nl
+./usr/share/nls/nl/libc.cat
+./usr/share/nls/no
+./usr/share/nls/no/libc.cat
+./usr/share/nls/sv
+./usr/share/nls/sv/libc.cat
 ./usr/share/skel
 ./usr/share/skel/dot.cshrc
 ./usr/share/skel/dot.login
@@ -1731,11 +1739,6 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/share/nls/nl
-./usr/share/nls/nl/libc.cat
-./usr/share/nls/no
-./usr/share/nls/no/libc.cat
-./usr/share/nls/sv
-./usr/share/nls/sv/libc.cat
-./usr/share/nls/fi
-./usr/share/nls/fi/libc.cat
+./bin/rmd160
+./bin/sha1
+./usr/bin/otp-rmd160

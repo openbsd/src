@@ -442,7 +442,6 @@
 ./usr/share/man/cat1/ypmatch.0
 ./usr/share/man/cat1/ypwhich.0
 ./usr/share/man/cat1/zcat.0
-./usr/share/man/cat1/zcmp.0
 ./usr/share/man/cat1/zdiff.0
 ./usr/share/man/cat1/zforce.0
 ./usr/share/man/cat1/zgrep.0
@@ -858,3 +857,12 @@
 ./usr/share/man/cat8/kprop.0
 ./usr/share/man/cat8/kpropd.0
 ./usr/share/man/cat8/safe_finger.0
+./usr/share/man/cat1/otp-rmd160.0
+./usr/share/man/cat1/rmd160.0
+./usr/share/man/cat1/sha1.0
+./usr/share/man/cat3/SHA1Final.0
+./usr/share/man/cat3/SHA1Init.0
+./usr/share/man/cat3/SHA1Transform.0
+./usr/share/man/cat3/SHA1Update.0
+./usr/share/man/cat3/sha1.0
+./usr/share/man/cat3/rmd160.0
