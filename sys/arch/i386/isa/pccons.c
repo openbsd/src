@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.18 1996/06/16 13:41:34 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.19 1996/06/25 18:32:03 tholo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ static struct video_state {
 	int 	cx, cy;		/* escape parameters */
 	int 	row, col;	/* current cursor position */
 	int 	nrow, ncol, nchr;	/* current screen geometry */
+	int	offset;		/* Saved cursor pos */
 	u_char	state;		/* parser state */
 #define	VSS_ESCAPE	1
 #define	VSS_EBRACE	2
@@ -1028,6 +1029,10 @@ sput(cp, n)
 			} else
 				vs.state = VSS_ESCAPE;
 			break;
+		case 0x9B:	/* CSI */
+			vs.cx = vs.cy = 0;
+			vs.state = VSS_EBRACE;
+			break;
 
 		case '\t': {
 			int inccol = 8 - (vs.col & 7);
@@ -1041,7 +1046,7 @@ sput(cp, n)
 			}
 			break;
 
-		case '\010':
+		case '\b':
 			if (crtat <= Crtat)
 				break;
 			--crtat;
@@ -1094,19 +1099,32 @@ sput(cp, n)
 				}
 				break;
 			case VSS_ESCAPE:
-				if (c == '[') {	/* Start ESC [ sequence */
-					vs.cx = vs.cy = 0;
-					vs.state = VSS_EBRACE;
-				} else if (c == 'c') { /* Clear screen & home */
-					fillw((vs.at << 8) | ' ',
-					    Crtat, vs.nchr);
-					crtat = Crtat;
-					vs.col = 0;
-					vs.state = 0;
-				} else { /* Invalid, clear state */
-					wrtchar(c, vs.so_at); 
-					vs.state = 0;
-					goto maybe_scroll;
+				switch (c) {
+					case '[': /* Start ESC [ sequence */
+						vs.cx = vs.cy = 0;
+						vs.state = VSS_EBRACE;
+						break;
+					case 'c': /* Create screen & home */
+						fillw((vs.at << 8) | ' ',
+						    Crtat, vs.nchr);
+						crtat = Crtat;
+						vs.col = 0;
+						vs.state = 0;
+						break;
+					case '7': /* save cursor pos */
+						vs.offset = crtat - Crtat;
+						vs.state = 0;
+						break;
+					case '8': /* restore cursor pos */
+						crtat = Crtat + vs.offset;
+						vs.row = vs.offset / vs.ncol;
+						vs.col = vs.offset % vs.ncol;
+						vs.state = 0;
+						break;
+					default: /* Invalid, clear state */
+						wrtchar(c, vs.so_at); 
+						vs.state = 0;
+						goto maybe_scroll;
 				}
 				break;
 			default: /* VSS_EBRACE or VSS_EPARAM */
@@ -1327,6 +1345,16 @@ sput(cp, n)
 				case 'r':
 					vs.so_at = (vs.cx & FG_MASK) |
 					    ((vs.cy << 4) & BG_MASK);
+					vs.state = 0;
+					break;
+				case 's': /* save cursor pos */
+					vs.offset = crtat - Crtat;
+					vs.state = 0;
+					break;
+				case 'u': /* restore cursor pos */
+					crtat = Crtat + vs.offset;
+					vs.row = vs.offset / vs.ncol;
+					vs.col = vs.offset % vs.ncol;
 					vs.state = 0;
 					break;
 				case 'x': /* set attributes */
