@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.3 2004/10/27 21:12:08 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.4 2004/10/27 21:14:03 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -669,8 +669,8 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 
 	DPRINTFN(2, ("TX!CMD!%u!%u!%u!%u\n", type, 0, 0, len));
 
-	/* Wait at most two seconds for command to complete */
-	return tsleep(sc->cmd, 0, "ipwcmd", 2 * hz);
+	/* Wait at most one second for command to complete */
+	return tsleep(sc->cmd, 0, "ipwcmd", hz);
 }
 
 int
@@ -1641,8 +1641,8 @@ ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 	/* Tell the adapter to initialize the firmware */
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
 
-	/* Wait at most 5 seconds for firmware initialization to complete */
-	if ((error = tsleep(sc, 0, "ipwinit", 5 * hz)) != 0) {
+	/* Wait at most one second for firmware initialization to complete */
+	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
 		goto fail3;
