@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.7 2000/02/20 21:22:41 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.8 2000/03/05 22:22:55 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -122,18 +122,21 @@ isp_attach(isp)
 	 * XXX: that async events happen.
 	 */
 	if (IS_SCSI(isp)) {
-		int bus = 0;
-		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		if (IS_DUALBUS(isp)) {
-			bus++;
+		/* XXX: There's some issue with resets && Ultra3 */
+		if (!IS_ULTRA3(isp)) {
+			int bus = 0;
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+			if (IS_DUALBUS(isp)) {
+				bus++;
+				(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+			}
+			/*
+			 * wait for the bus to settle.
+			 */
+			printf("%s: waiting 4 seconds for bus reset settling\n",
+			    isp->isp_name);
+			delay(4 * 1000000);
 		}
-		/*
-		 * wait for the bus to settle.
-		 */
-		printf("%s: waiting 4 seconds for bus reset settling\n",
-		    isp->isp_name);
-		delay(4 * 1000000);
 	} else {
 		int i, j;
 		fcparam *fcp = isp->isp_param;
