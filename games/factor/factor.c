@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.7 1999/09/26 05:29:41 pjanzen Exp $	*/
+/*	$OpenBSD: factor.c,v 1.8 2001/08/19 15:22:43 pjanzen Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.7 1999/09/26 05:29:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.8 2001/08/19 15:22:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,10 @@ main(argc, argv)
 					err(1, "stdin");
 				exit (0);
 			}
+			if (*(p = buf + strlen(buf) - 1) == '\n')
+				*p = '\0';
 			for (p = buf; isblank(*p); ++p);
-			if (*p == '\n' || *p == '\0')
+			if (*p == '\0')
 				continue;
 			if (*p == '-')
 				errx(1, "negative numbers aren't permitted.");
@@ -132,7 +134,8 @@ main(argc, argv)
 			val = strtoul(buf, &p, 10);
 			if (errno)
 				err(1, "%s", buf);
-			if (*p != '\n')
+			for (; isblank(*p); ++p);
+			if (*p != '\0')
 				errx(1, "%s: illegal numeric format.", buf);
 			pr_fact(val);
 		}
