@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.44 2004/11/28 18:49:29 henning Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.45 2004/12/03 23:57:40 moritz Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.44 2004/11/28 18:49:29 henning Exp $";
+    "$OpenBSD: ftpcmd.y,v 1.45 2004/12/03 23:57:40 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -1170,7 +1170,6 @@ toolong(signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-	/* XXX signal races */
 	reply(421,
 	    "Timeout (%d seconds): closing control connection.", timeout);
 	if (logging)
