@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacvar.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: cacvar.h,v 1.3 2003/03/06 22:31:21 mickey Exp $	*/
 /*	$NetBSD: cacvar.h,v 1.7 2000/10/19 14:28:47 ad Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #ifndef _IC_CACVAR_H_
 #define	_IC_CACVAR_H_
 
-#define	CAC_MAX_CCBS	20
+#define	CAC_MAX_CCBS	128
 #define	CAC_MAX_XFER	(0xffff * 512)
 #define	CAC_SG_SIZE	32
 #define	CAC_SECTOR_SIZE	512
