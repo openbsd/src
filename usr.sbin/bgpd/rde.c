@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.39 2003/12/27 00:53:51 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.40 2004/01/01 23:09:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -176,10 +176,16 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	u_int32_t		 rid;
 	int			 n;
 
-	if ((n = imsg_get(ibuf, &imsg)) == -1)
-		fatal("imsg_get error");
+	if (imsg_read(ibuf) == -1)
+		fatal("rde_dispatch_imsg: imsg_read error");
 
-	if (n > 0) {
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg: imsg_read error");
+
+		if (n == 0)
+			break;
+
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)

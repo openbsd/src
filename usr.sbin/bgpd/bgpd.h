@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.44 2003/12/28 14:34:30 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.45 2004/01/01 23:09:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -294,6 +294,7 @@ int	 merge_config(struct bgpd_config *, struct bgpd_config *);
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int);
+int	 imsg_read(struct imsgbuf *);
 int	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, int, u_int32_t, void *, u_int16_t);
 void	 imsg_free(struct imsg *);

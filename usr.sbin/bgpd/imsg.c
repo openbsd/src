@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.14 2003/12/30 22:42:31 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.15 2004/01/01 23:09:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -35,10 +35,9 @@ imsg_init(struct imsgbuf *ibuf, int sock)
 }
 
 int
-imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
+imsg_read(struct imsgbuf *ibuf)
 {
-	ssize_t			 n, datalen = 0;
-	size_t			 av, left;
+	ssize_t			 n;
 
 	if ((n = read(ibuf->sock, ibuf->r.buf + ibuf->r.wpos,
 	    sizeof(ibuf->r.buf) - ibuf->r.wpos)) == -1) {
@@ -52,10 +51,22 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		logit(LOG_CRIT, "imsg_get: pipe close");
 		return (-1);
 	}
-	av = ibuf->r.wpos + n;
+
+	ibuf->r.wpos += n;
+
+	return (0);
+}
+
+int
+imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
+{
+	ssize_t			 datalen = 0;
+	size_t			 av, left;
+
+	av = ibuf->r.wpos; 
 
 	if (IMSG_HEADER_SIZE > av)
-		return (-1);
+		return (0);
 
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
@@ -64,7 +75,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		return (-1);
 	}
 	if (imsg->hdr.len > av)
-		return (-1);
+		return (0);
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
 	if ((imsg->data = malloc(datalen)) == NULL) {
