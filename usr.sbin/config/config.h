@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.h,v 1.7 1997/01/18 02:24:13 briggs Exp $	*/
-/*	$NetBSD: config.h,v 1.28 1996/11/11 23:40:09 gwr Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 1997/07/06 03:54:04 downsj Exp $	*/
+/*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,12 +277,14 @@ int	maxmaxusers;		/* default "maxusers" parameter */
 int	maxusers;		/* configuration's "maxusers" parameter */
 int	maxpartitions;		/* configuration's "maxpartitions" parameter */
 struct	nvlist *options;	/* options */
+struct	nvlist *defoptions;	/* "defopt"'d options */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
-
+struct	hashtab *opttab;	/* table of configured options */
+struct	hashtab *defopttab;	/* options that have been "defopt"'d */
 struct	devbase *allbases;	/* list of all devbase structures */
 struct	deva *alldevas;		/* list of all devbase attachment structures */
 struct	config *allcf;		/* list of configured kernels */
@@ -323,6 +325,7 @@ const char *intern __P((const char *));
 /* main.c */
 void	addoption __P((const char *name, const char *value));
 void	addmkoption __P((const char *name, const char *value));
+void	defoption __P((const char *name));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));
 void	setupdirs __P((void));

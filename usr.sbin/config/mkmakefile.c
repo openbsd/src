@@ -1,5 +1,5 @@
-/*	$OpenBSD: mkmakefile.c,v 1.5 1996/10/23 22:37:56 niklas Exp $	*/
-/*	$NetBSD: mkmakefile.c,v 1.32 1996/09/23 05:04:23 ghudson Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.6 1997/07/06 03:54:06 downsj Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,6 +185,8 @@ emitdefs(fp)
 		return (1);
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
+		if (ht_lookup(defopttab, nv->nv_name) != NULL)
+			continue;
 		if (fprintf(fp, "%s-D%s", sp, nv->nv_name) < 0)
 		    return 1;
 		if (nv->nv_str)
