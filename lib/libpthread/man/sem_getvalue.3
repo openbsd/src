@@ -1,4 +1,5 @@
-.\" $OpenBSD: sem_getvalue.3,v 1.1 2002/01/28 19:24:03 fgsch Exp $
+.\" $OpenBSD: sem_getvalue.3,v 1.2 2002/02/20 05:29:37 fgsch Exp $
+.\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
 .\"
@@ -33,10 +34,8 @@
 .Sh NAME
 .Nm sem_getvalue
 .Nd get the value of a semaphore
-.\" .Sh LIBRARY
-.\" .Lb libc_r
 .Sh SYNOPSIS
-.In semaphore.h
+.Fd #include <semaphore.h>
 .Ft int
 .Fn sem_getvalue "sem_t *sem" "int *sval"
 .Sh DESCRIPTION
