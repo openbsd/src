@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.766 2004/09/23 18:39:36 grange Exp $
+$OpenBSD: pcidevs,v 1.767 2004/09/25 18:40:27 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -215,8 +215,8 @@ vendor	OXFORD2		0x1415	Oxford
 vendor	TAMARACK	0x143d	Tamarack Microelectronics
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
-vendor	OXFORD		0x14d2	Oxford
 vendor	AIRONET		0x14b9	Aironet
+vendor	OXFORD		0x14d2	Oxford
 vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
 vendor	BROADCOM	0x14e4	Broadcom
