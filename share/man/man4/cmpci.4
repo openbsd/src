@@ -1,0 +1,27 @@
+.\" $OpenBSD: cmpci.4,v 1.1 2000/04/27 02:37:39 millert Exp $
+.\"
+.Dd April 26, 2000
+.Dt CMPCI 4
+.Os
+.Sh NAME
+.Nm cmpci
+.Nd C-Media CMI8x38 PCI device driver
+.Sh SYNOPSIS
+.Cd "cmpci* at pci? dev ? function ?"
+.Cd "audio* at cmpci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the C-Media CMI8338A, CMI8338B, and CMI8738
+sound chips present in some PCI sound cards and some integrated
+PC motherboard chipsets (such as the SiS 530).
+.Sh BUGS
+The MIDI and Joystick ports are not supported.  Neither OPL nor SPDIF
+functionality is currently supported.
+.Sh SEE ALSO
+.Xr audio 4 .
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 2.7 .
