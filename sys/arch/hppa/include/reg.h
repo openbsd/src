@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.9 2002/03/19 01:17:12 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.10 2003/09/25 22:10:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -135,6 +135,8 @@
 #define	DR0_PCXL2_L1DHPMC_DIS	9	/* r/w L1 D-cache hpmc disable */
 #define	DR0_PCXL2_L2DHPMC	10	/* r/c L1 I-cache error flag */
 #define	DR0_PCXL2_L2DHPMC_DIS	11	/* r/w L1 I-cache hpmc disable */
+#define	DR0_PCXL2_SCRATCH	12	/* r/w scratch register */
+#define	DR0_PCXL2_ACCEL_IO	13	/*  /w enable accel IO writes */
 #define	DR0_PCXL2_STORE0	16	/* r/w scratch space */
 #define	DR0_PCXL2_PFMASK	17	/* r/w power-fail trap mask */
 #define	DR0_PCXL2_STORE1	18	/* r/w scratch */
