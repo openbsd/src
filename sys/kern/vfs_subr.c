@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.43 1999/12/05 07:54:44 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.44 2000/04/21 16:33:12 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1781,8 +1781,10 @@ vfs_syncwait(verbose)
 {
 	register struct buf *bp;
 	int iter, nbusy, dcount, s;
+	struct proc *p;
 
-	sys_sync(&proc0, (void *)0, (register_t *)0);
+	p = curproc? curproc : &proc0;
+	sys_sync(p, (void *)0, (register_t *)0);
  
 	/* Wait for sync to finish. */
 	dcount = 10000;
