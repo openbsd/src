@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.2 2002/02/01 21:49:51 fgsch Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.3 2003/01/18 01:48:21 marc Exp $	*/
 /*
  * Copyright (c) 2002 Todd T. Fries <todd@OpenBSD.org>
  * All rights reserved.
@@ -33,19 +33,23 @@
 
 #include "test.h"
 
+#define STACK_SIZE	(2 * 1024 * 1024)
+
 void	*func(void *);
-void	*foo(void *);
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
+	pthread_attr_t attr;
 	pthread_t threads[2];
 	int i;
 
+	CHECKr(pthread_attr_init(&attr));
+	CHECKr(pthread_attr_setstacksize(&attr, (size_t) STACK_SIZE));
 	for (i = 0; i < 2; i++) {
-		CHECKr(pthread_create(&threads[i], NULL, func, NULL));
+		CHECKr(pthread_create(&threads[i], &attr, func, NULL));
 	}
 
 	pthread_yield();
@@ -85,10 +89,3 @@ func(arg)
 	return (NULL);
 }
 
-void *
-foo(arg)
-	void *arg;
-{
-	sleep(5);
-	exit(NOTOK);
-}
