@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: makebuf.c,v 1.2 1996/08/19 08:32:54 tholo Exp $";
+static char rcsid[] = "$OpenBSD: makebuf.c,v 1.3 1998/11/25 05:18:49 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -100,8 +100,8 @@ __swhatbuf(fp, bufsize, couldbetty)
 	}
 
 	/* could be a tty iff it is a character device */
-	*couldbetty = (st.st_mode & S_IFMT) == S_IFCHR;
-	if (st.st_blksize <= 0) {
+	*couldbetty = S_ISCHR(st.st_mode);
+	if (st.st_blksize == 0) {
 		*bufsize = BUFSIZ;
 		return (__SNPT);
 	}
@@ -111,8 +111,10 @@ __swhatbuf(fp, bufsize, couldbetty)
 	 * __sseek is mainly paranoia.)  It is safe to set _blksize
 	 * unconditionally; it will only be used if __SOPT is also set.
 	 */
-	*bufsize = st.st_blksize;
-	fp->_blksize = st.st_blksize;
+	if ((fp->_flags & __SSTR) == 0) {
+		*bufsize = st.st_blksize;
+		fp->_blksize = st.st_blksize;
+	}
 	return ((st.st_mode & S_IFMT) == S_IFREG && fp->_seek == __sseek ?
 	    __SOPT : __SNPT);
 }
