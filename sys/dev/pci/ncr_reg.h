@@ -1,8 +1,8 @@
-/*	$NetBSD: ncr_reg.h,v 1.5 1995/10/01 20:51:37 mycroft Exp $	*/
+/*      $NetBSD: ncr_reg.h,v 1.5.2.1 1995/11/23 20:50:10 perry Exp $      */
 
 /**************************************************************************
 **
-**  $Id: ncr_reg.h,v 1.1.1.1 1995/10/18 08:52:40 deraadt Exp $
+**  $Id: ncr_reg.h,v 1.2 1995/12/01 01:51:24 deraadt Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -497,6 +497,70 @@ struct scr_tblsel {
 **
 **-----------------------------------------------------------
 */
+
+/*
+**	Messages
+*/
+#ifdef __NetBSD__
+#include <scsi/scsi_message.h>
+
+#define	M_COMPLETE	MSG_CMDCOMPLETE
+#define	M_EXTENDED	MSG_EXTENDED
+#define	M_SAVE_DP	MSG_SAVEDATAPOINTER
+#define	M_RESTORE_DP	MSG_RESTOREPOINTERS
+#define	M_DISCONNECT	MSG_DISCONNECT
+#define	M_ID_ERROR	MSG_INITIATOR_DET_ERR
+#define	M_ABORT		MSG_ABORT
+#define	M_REJECT	MSG_MESSAGE_REJECT
+#define	M_NOOP		MSG_NOOP
+#define	M_PARITY	MSG_PARITY_ERROR
+#define	M_LCOMPLETE	MSG_LINK_CMD_COMPLETE
+#define	M_FCOMPLETE	MSG_LINK_CMD_COMPLETEF
+#define	M_RESET		MSG_BUS_DEV_RESET
+#define	M_ABORT_TAG	MSG_ABORT_TAG
+#define	M_CLEAR_QUEUE	MSG_CLEAR_QUEUE
+#define	M_INIT_REC	MSG_INIT_RECOVERY
+#define	M_REL_REC	MSG_REL_RECOVERY
+#define	M_TERMINATE	MSG_TERM_IO_PROC
+#define	M_SIMPLE_TAG	MSG_SIMPLE_Q_TAG
+#define	M_HEAD_TAG	MSG_HEAD_OF_Q_TAG
+#define	M_ORDERED_TAG	MSG_ORDERED_Q_TAG
+#define	M_IGN_RESIDUE	MSG_IGN_WIDE_RESIDUE
+#define	M_IDENTIFY   	MSG_IDENTIFY(0, 0)
+
+/* #define	M_X_MODIFY_DP	(0x00) */ 	/* XXX what is this? */
+#define	M_X_SYNC_REQ	MSG_EXT_SDTR
+#define	M_X_WIDE_REQ	MSG_EXT_WDTR
+#else
+#define M_COMPLETE      (0x00)
+#define M_EXTENDED      (0x01)
+#define M_SAVE_DP       (0x02)
+#define M_RESTORE_DP    (0x03)
+#define M_DISCONNECT    (0x04)
+#define M_ID_ERROR      (0x05)
+#define M_ABORT         (0x06)
+#define M_REJECT        (0x07)
+#define M_NOOP          (0x08)
+#define M_PARITY        (0x09)
+#define M_LCOMPLETE     (0x0a)
+#define M_FCOMPLETE     (0x0b)  
+#define M_RESET         (0x0c)  
+#define M_ABORT_TAG     (0x0d)
+#define M_CLEAR_QUEUE   (0x0e)
+#define M_INIT_REC      (0x0f)
+#define M_REL_REC       (0x10)
+#define M_TERMINATE     (0x11)
+#define M_SIMPLE_TAG    (0x20)
+#define M_HEAD_TAG      (0x21) 
+#define M_ORDERED_TAG   (0x22)
+#define M_IGN_RESIDUE   (0x23)
+#define M_IDENTIFY      (0x80) 
+
+#define M_X_MODIFY_DP   (0x00)
+#define M_X_SYNC_REQ    (0x01)
+#define M_X_WIDE_REQ    (0x03)
+#endif
+
 
 /*
 **	Status
