@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.7 1997/08/21 05:46:56 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.8 1997/08/25 23:11:12 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.7 1997/08/21 05:46:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.8 1997/08/25 23:11:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -227,7 +227,8 @@ wtmp()
 	struct utmp	*bp;		/* current structure */
 	TTY	*T;			/* tty list entry */
 	struct stat	stb;		/* stat of file for size */
-	time_t	bl, delta;		/* time difference */
+	time_t	delta;			/* time difference */
+	off_t	bl;
 	int	timesize;		/* how long time string gonna be */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
@@ -246,7 +247,7 @@ wtmp()
 	(void)signal(SIGQUIT, onintr);
 
 	while (--bl >= 0) {
-		if (lseek(wfd, (off_t)(bl * sizeof(buf)), L_SET) == -1 ||
+		if (lseek(wfd, bl * sizeof(buf), L_SET) == -1 ||
 		    (bytes = read(wfd, buf, sizeof(buf))) == -1)
 			err(1, "%s", file);
 		for (bp = &buf[bytes / sizeof(buf[0]) - 1]; bp >= buf; --bp) {
