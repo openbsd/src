@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.39 2005/01/29 00:49:47 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.40 2005/03/12 00:02:07 claudio Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -279,6 +279,11 @@ structure created by a call to
 returns zero on success or one of the error codes listed in
 .Xr gai_strerror 3
 if an error occurs.
+If an error occurs, no memory is allocated by
+.Fn getaddrinfo ,
+therefore it is not necessary to release the
+.Li addrinfo
+structure(s).
 .Sh EXAMPLES
 The following code tries to connect to
 .Dq Li www.kame.net
