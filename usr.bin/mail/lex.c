@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.15 1997/11/14 00:23:48 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.16 1998/05/04 05:37:49 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.15 1997/11/14 00:23:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.16 1998/05/04 05:37:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -549,7 +549,10 @@ void
 intr(s)
 	int s;
 {
+	sigset_t set, oset;
 
+	(void)sigfillset(&set);
+	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	noreset = 0;
 	if (!inithdr)
 		sawcom++;
@@ -565,6 +568,7 @@ intr(s)
 	}
 	fputs("Interrupt\n", stderr);
 	reset(0);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
 /*

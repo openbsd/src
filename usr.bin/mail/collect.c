@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.15 1997/11/14 00:23:45 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.16 1998/05/04 05:37:47 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.15 1997/11/14 00:23:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.16 1998/05/04 05:37:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -631,22 +631,29 @@ void
 collint(s)
 	int s;
 {
+	sigset_t set, oset;
+
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
 	 */
+	(void)sigfillset(&set);
+	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if (hadintr == 0 && isatty(0)) {
 		if (value("ignore") != NULL) {
 			puts("@");
 			fflush(stdout);
 			clearerr(stdin);
+			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 			return;
 		}
 		hadintr = 1;
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 		siglongjmp(colljmp, 1);
 	}
 	rewind(collf);
 	if (value("nosave") == NULL)
 		savedeadletter(collf);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	siglongjmp(collabort, 1);
 }
 
@@ -655,6 +662,10 @@ void
 collhup(s)
 	int s;
 {
+	sigset_t set;
+
+	(void)sigfillset(&set);
+	(void)sigprocmask(SIG_BLOCK, &set, NULL);
 	rewind(collf);
 	savedeadletter(collf);
 	/*
