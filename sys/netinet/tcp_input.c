@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.136 2003/12/08 10:48:57 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.137 2003/12/21 14:50:04 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -434,6 +434,13 @@ tcp_input(struct mbuf *m, ...)
 	tcpstat.tcps_rcvtotal++;
 
 	/*
+	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+	 * See below for AF specific multicast.
+	 */
+	if (m->m_flags & (M_BCAST|M_MCAST))
+		goto drop;
+
+	/*
 	 * Before we do ANYTHING, we have to figure out if it's TCP/IPv6 or
 	 * TCP/IPv4.
 	 */
@@ -515,6 +522,10 @@ tcp_input(struct mbuf *m, ...)
 		struct tcpiphdr *ti;
 
 		ip = mtod(m, struct ip *);
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+			goto drop;
+
 		tlen = m->m_pkthdr.len - iphlen;
 		ti = mtod(m, struct tcpiphdr *);
 
@@ -569,6 +580,12 @@ tcp_input(struct mbuf *m, ...)
 		 * already dropped in ip6_input.
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
+			/* XXX stat */
+			goto drop;
+		}
+
+		/* Discard packets to multicast */
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 			/* XXX stat */
 			goto drop;
 		}
@@ -1142,24 +1159,6 @@ findpcb:
 			}
 		}
 
-		/*
-		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-		 */
-		if (m->m_flags & (M_BCAST|M_MCAST))
-			goto drop;
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-				goto drop;
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-			    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
-				goto drop;
-			break;
-		}
 		am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 		if (am == NULL)
 			goto drop;
@@ -2282,23 +2281,10 @@ dropwithreset:
 	/*
 	 * Generate a RST, dropping incoming segment.
 	 * Make ACK acceptable to originator of segment.
-	 * Don't bother to respond if destination was broadcast/multicast.
+	 * Don't bother to respond to RST.
 	 */
-	if ((tiflags & TH_RST) || m->m_flags & (M_BCAST|M_MCAST))
+	if (tiflags & TH_RST)
 		goto drop;
-	switch (af) {
-#ifdef INET6
-	case AF_INET6:
-		/* For following calls to tcp_respond */
-		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-			goto drop;
-		break;
-#endif /* INET6 */
-	case AF_INET:
-		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
-			goto drop;
-	}
 	if (tiflags & TH_ACK) {
 		tcp_respond(tp, mtod(m, caddr_t), m, (tcp_seq)0, th->th_ack,
 		    TH_RST);
