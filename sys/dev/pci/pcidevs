@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.287 2000/07/19 22:45:57 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.288 2000/07/20 23:05:15 ho Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -480,6 +480,7 @@ vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
 vendor IRE		0x11d4	IRE
 vendor ZORAN		0x11de	Zoran
+vendor PIJNENBURG	0x11e3	Pijnenburg
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
@@ -1300,6 +1301,9 @@ product RCC CIOB30		0x0010	CIOB30
 product RCC CMIC_HE		0x0011	CMIC_HE Host
 /* product RCC UNKNOWN		0x0211	IDE */
 /* product RCC UNKNOWN		0x0220	USB */
+
+/* Pijnenburg */
+product PIJNENBURG PCC_ISES	0x0001	PCC-ISES
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
