@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.20 2003/06/26 00:09:45 deraadt Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.21 2003/08/02 19:26:15 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1264,7 +1264,9 @@ x_meta_yank(c)
 	int c;
 {
 	int	len;
-	if (x_last_command != XFUNC_yank && x_last_command != XFUNC_meta_yank) {
+	if ((x_last_command != XFUNC_yank && x_last_command != XFUNC_meta_yank)
+	    || killstack[killtp] == 0) {
+		killtp = killsp;
 		x_e_puts("\nyank something first");
 		x_redraw(-1);
 		return KSTD;
