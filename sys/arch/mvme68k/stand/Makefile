@@ -1,5 +1,6 @@
-#	$Id: Makefile,v 1.2 1995/11/07 08:50:32 deraadt Exp $
+#	$Id: Makefile,v 1.3 1996/05/16 02:17:32 chuck Exp $
 
-SUBDIR=  netboot sboot bootsd bootst libsa bugcrt libbug wrtvid
+SUBDIR= bugcrt libbug libsa sboot netboot bootxx bootsd bootst \
+	installboot prtvid wrtvid
 
 .include <bsd.subdir.mk>
