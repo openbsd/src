@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2004/12/28 21:11:22 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2005/02/25 11:21:16 deraadt Exp $	*/
 
 /*
  * signal handling
@@ -57,6 +57,7 @@ alarm_init(void)
 		SS_RESTORE_ORIG|SS_FORCE|SS_SHTRAP);
 }
 
+/* ARGSUSED */
 static void
 alarm_catcher(int sig)
 {
