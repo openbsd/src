@@ -1,8 +1,9 @@
-/*	$OpenBSD: x509.c,v 1.7 1999/03/24 15:00:36 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.10 1999/03/13 17:43:20 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.8 1999/04/19 19:57:29 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.13 1999/04/18 15:17:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,16 +60,15 @@
 
 /* X509 Certificate Handling functions */
 
-/* Validate the BER Encoding of a RDNSequence in the CERT_REQ payload */
-
+/* Validate the BER Encoding of a RDNSequence in the CERT_REQ payload.  */
 int
 x509_certreq_validate (u_int8_t *asn, u_int32_t len)
 {
   struct norm_type name = SEQOF ("issuer", RDNSequence);
   int res = 1;
 
-  if (asn_template_clone (&name, 1) == NULL ||
-      (asn = asn_decode_sequence (asn, len, &name)) == NULL)
+  if (!asn_template_clone (&name, 1)
+      || (asn = asn_decode_sequence (asn, len, &name)) == 0)
     {
       log_print ("x509_certreq_validate: can not decode 'acceptable CA' info");
       res = 0;
@@ -78,8 +78,7 @@ x509_certreq_validate (u_int8_t *asn, u_int32_t len)
   return res;
 }
 
-/* Decode the BER Encoding of a RDNSequence in the CERT_REQ payload */
-
+/* Decode the BER Encoding of a RDNSequence in the CERT_REQ payload.  */
 void *
 x509_certreq_decode (u_int8_t *asn, u_int32_t len)
 {
@@ -87,35 +86,42 @@ x509_certreq_decode (u_int8_t *asn, u_int32_t len)
   struct norm_type *tmp;
   struct x509_aca naca, *ret;
 
-  if (asn_template_clone (&aca, 1) == NULL ||
-      (asn = asn_decode_sequence (asn, len, &aca)) == NULL)
+  if (!asn_template_clone (&aca, 1)
+      || (asn = asn_decode_sequence (asn, len, &aca)) == 0)
     {
       log_print ("x509_certreq_validate: can not decode 'acceptable CA' info");
       goto fail;
     }
   memset (&naca, 0, sizeof (naca));
 
-  tmp = asn_decompose ("aca.RelativeDistinguishedName.AttributeValueAssertion", &aca);
-  if (tmp == NULL)
+  tmp = asn_decompose ("aca.RelativeDistinguishedName.AttributeValueAssertion",
+		       &aca);
+  if (!tmp)
     goto fail;
   x509_get_attribval (tmp, &naca.name1);
 
-  tmp = asn_decompose ("aca.RelativeDistinguishedName[1].AttributeValueAssertion", &aca);
-  if (tmp != NULL)
+  tmp = asn_decompose ("aca.RelativeDistinguishedName[1]"
+		       ".AttributeValueAssertion", &aca);
+  if (tmp)
     x509_get_attribval (tmp, &naca.name2);
   
   asn_free (&aca);
 
-  if ((ret = malloc (sizeof (struct x509_aca))) != NULL)
+  ret = malloc (sizeof (struct x509_aca));
+  if (ret)
     memcpy (ret, &naca, sizeof (struct x509_aca));
   else
-    x509_free_aca (&aca);
+    {
+      log_error ("x509_certreq_decode: malloc (%d) failed",
+		 sizeof (struct x509_aca));
+      x509_free_aca (&aca);
+    }
 
   return ret;
 
  fail:
   asn_free (&aca);
-  return NULL;
+  return 0;
 }
 
 void
@@ -123,23 +129,22 @@ x509_free_aca (void *blob)
 {
   struct x509_aca *aca = blob;
 
-  if (aca->name1.type != NULL)
+  if (aca->name1.type)
     free (aca->name1.type);
-  if (aca->name1.val != NULL)
+  if (aca->name1.val)
     free (aca->name1.val);
 
-  if (aca->name2.type != NULL)
+  if (aca->name2.type)
     free (aca->name2.type);
-  if (aca->name2.val != NULL)
+  if (aca->name2.val)
     free (aca->name2.val);
 }
 
 /* 
  * Obtain a Certificate from an acceptable Certification Authority.
- * XXX - this is where all the magic should happen, but yet here
- * you will find nothing :-\
+ * XXX This is where all the magic should happen, but yet here
+ * you will find nothing.
  */
-
 int
 x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
 		  u_int32_t *certlen)
@@ -150,16 +155,17 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
   int fd, res = 0;
   struct stat st;
 
-  if (aca != NULL)
+  if (aca)
     log_debug (LOG_CRYPTO, 60, "x509_cert_obtain: (%s) %s, (%s) %s",
 	       asn_parse_objectid (asn_ids, aca->name1.type), aca->name1.val,
 	       asn_parse_objectid (asn_ids, aca->name2.type), aca->name2.val);
 
-  /* XXX - this needs to be changed - but how else shoud I know */
+  /* XXX This needs to be changed - but how else would I know?  */
   switch (ie->ike_auth->id)
     {
     case IKE_AUTH_RSA_SIG:
-      if ((certfile = conf_get_str ("rsa_sig", "cert")) == NULL)
+      certfile = conf_get_str ("RSA_sig", "cert");
+      if (!certfile)
 	return 0;
       break;
     default:
@@ -180,9 +186,10 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
       return 0;
     }
   
-  if ((*cert = malloc (st.st_size)) == NULL)
+  *cert = malloc (st.st_size);
+  if (!*cert)
     {
-      log_print ("x509_cert_obtain: out of memory");
+      log_error ("x509_cert_obtain: malloc (%d) failed", st.st_size);
       res = 0;
       goto done;
     }
@@ -197,29 +204,28 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
 
   {
     /* 
-     * XXX - assumes IPv4 here, assumes a certificate with an extension
-     * type of subjectAltName at the end - this can go once the saved
-     * certificate is only used with one host with a fixed IP address
+     * XXX We assume IPv4 here and a certificate with an extension
+     * type of subjectAltName at the end.  This can go once the saved
+     * certificate is only used with one host with a fixed IP address.
      */
     u_int8_t *id_cert, *asn, *id;
     size_t id_len;
     u_int32_t id_cert_len;
 
-    /* XXX - assumes IPv4 */
     id = exchange->initiator ? exchange->id_i : exchange->id_r;
     id_len = exchange->initiator ? exchange->id_i_len : exchange->id_r_len;
 
-    /* XXX - we need our ID to set that in the cert */
-    if (id != NULL) 
+    /* XXX We need our ID to set that in the cert.  */
+    if (id) 
       {
-	/* XXX - get to address ? */
+	/* XXX How to get to the address?  */
 	id += 4; id_len -= 4;
 	
-	/* Get offset into data structure where the IP is saved */
+	/* Get offset into data structure where the IP is saved.  */
 	asn = *cert;
-	id_cert_len = asn_get_data_len (NULL, &asn, &id_cert);
+	id_cert_len = asn_get_data_len (0, &asn, &id_cert);
 	asn = id_cert;
-	id_cert_len = asn_get_data_len (NULL, &asn, &id_cert);
+	id_cert_len = asn_get_data_len (0, &asn, &id_cert);
 	id_cert += id_cert_len - 4;
 	memcpy (id_cert, id, 4); 
       }
@@ -233,7 +239,7 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
   return res;
 }
 
-/* Retrieve the public key from a X509 Certificate */
+/* Retrieve the public key from a X509 certificate.  */
 int
 x509_cert_get_key (u_int8_t *asn, u_int32_t asnlen, void *blob)
 {
@@ -243,7 +249,7 @@ x509_cert_get_key (u_int8_t *asn, u_int32_t asnlen, void *blob)
   if (!x509_decode_certificate (asn, asnlen, &cert))
     return 0;
 
-  /* XXX - perhaps put into pkcs ? */
+  /* XXX Perhaps put into pkcs?  */
   mpz_init_set (key->n, cert.key.n);
   mpz_init_set (key->e, cert.key.e);
 
@@ -252,11 +258,7 @@ x509_cert_get_key (u_int8_t *asn, u_int32_t asnlen, void *blob)
   return 1;
 }
 
-/*
- * Retrieve the public key from a X509 Certificate
- * XXX - look at XXX below.
- */
-
+/* Retrieve the public key from a X509 certificate.  */
 int
 x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen, 
 		       u_int8_t **subject, u_int32_t *subjectlen)
@@ -266,7 +268,7 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
   if (!x509_decode_certificate (asn, asnlen, &cert))
     return 0;
 
-  if (cert.extension.type == NULL || cert.extension.val == NULL)
+  if (!cert.extension.type || !cert.extension.val)
     goto fail;
 
   log_debug (LOG_CRYPTO, 60, "x509_cert_get_subject: Extension Type %s = %s",
@@ -284,26 +286,24 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
    * is supposed to be: 0x30 0x06 0x087 0x04 aa bb cc dd, where the IPV4
    * IP number is aa.bb.cc.dd.
    */
-
   if (asn_get_len (cert.extension.val) != 8 || cert.extension.val[3] != 4)
     {
-      log_print ("x509_cert_get_subject: subjectAltName uses "
-		 "unhandled encoding");
+      log_print ("x509_cert_get_subject: "
+		 "subjectAltName uses unhandled encoding");
       goto fail;
     }
 
-  /* XXX - 4 bytes for IPV4 address */
+  /* XXX 4 bytes for IPV4 address.  */
   *subject = malloc (4);
-  if (*subject == NULL)
+  if (!*subject)
     {
-      log_print ("x509_cert_get_subject: out of memory");
+      log_error ("x509_cert_get_subject: malloc (4) failed");
       goto fail;
     }
   *subjectlen = 4;
   memcpy (*subject, cert.extension.val + 4, *subjectlen);
 
   x509_free_certificate (&cert);
-
   return 1;
 
  fail:
@@ -311,24 +311,22 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
   return 0;
 }
 
-/* Initalizes the struct x509_attribval from a AtributeValueAssertion */
-
+/* Initalizes the struct x509_attribval from a AtributeValueAssertion.  */
 void
 x509_get_attribval (struct norm_type *obj, struct x509_attribval *a)
 {
   struct norm_type *tmp;
 
   tmp = asn_decompose ("AttributeValueAssertion.AttributeType", obj);
-  if (tmp != NULL && tmp->data != NULL)
+  if (tmp && tmp->data)
     a->type = strdup ((char *)tmp->data);
 
   tmp = asn_decompose ("AttributeValueAssertion.AttributeValue", obj);
-  if (tmp != NULL && tmp->data != NULL)
+  if (tmp && tmp->data)
     a->val = strdup ((char *)tmp->data);
 }
 
-/* Set's norm_type with values from x509_attribval */
-
+/* Set OBJ with values from A.  */
 void
 x509_set_attribval (struct norm_type *obj, struct x509_attribval *a)
 {
@@ -346,9 +344,9 @@ x509_set_attribval (struct norm_type *obj, struct x509_attribval *a)
 void
 x509_free_attribval (struct x509_attribval *a)
 {
-  if (a->type != NULL)
+  if (a->type)
     free (a->type);
-  if (a->val != NULL)
+  if (a->val)
     free (a->val);
 }
 
@@ -356,11 +354,11 @@ void
 x509_free_certificate (struct x509_certificate *cert)
 {
   pkcs_free_public_key (&cert->key);
-  if (cert->signaturetype != NULL)
+  if (cert->signaturetype)
     free (cert->signaturetype);
-  if (cert->start != NULL)
+  if (cert->start)
     free (cert->start);
-  if (cert->end != NULL)
+  if (cert->end)
     free (cert->end);
 
   x509_free_attribval (&cert->issuer1);
@@ -372,21 +370,24 @@ x509_free_certificate (struct x509_certificate *cert)
 
 int
 x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen, 
-			      struct x509_certificate *rcert)
+			 struct x509_certificate *rcert)
 {
   struct norm_type cert = SEQ ("cert", Certificate);
   struct norm_type *tmp;
   u_int8_t *data;
   u_int32_t datalen;
 
-  /* Get access to the inner Certificate */
-  if (!x509_validate_signed (asn, asnlen, NULL, &data, &datalen))
+  /*
+   * Get access to the inner Certificate.
+   * XXX We don't know how to get at the CA's public key yet.
+   */
+  if (!x509_validate_signed (asn, asnlen, 0, &data, &datalen))
     return 0;
   
-  memset (rcert, 0, sizeof (*rcert));
+  memset (rcert, 0, sizeof *rcert);
 
-  if (asn_template_clone (&cert, 1) == NULL || 
-      asn_decode_sequence (data, datalen, &cert) == NULL)
+  if (!asn_template_clone (&cert, 1)
+      || !asn_decode_sequence (data, datalen, &cert))
     goto fail;
 
   tmp = asn_decompose ("cert.subjectPublicKeyInfo.subjectPublicKey", &cert);
@@ -405,27 +406,27 @@ x509_decode_certificate (u_int8_t *asn, u_int32_t asnlen,
   x509_get_attribval (tmp, &rcert->issuer1);
   tmp = asn_decompose ("cert.issuer.RelativeDistinguishedName[1]."
 		       "AttributeValueAssertion", &cert);
-  if (tmp != NULL)
+  if (tmp)
     x509_get_attribval (tmp, &rcert->issuer2);
   else
-    rcert->issuer2.type = NULL;
+    rcert->issuer2.type = 0;
 
   tmp = asn_decompose ("cert.subject.RelativeDistinguishedName."
 		       "AttributeValueAssertion", &cert);
   x509_get_attribval (tmp, &rcert->subject1);
   tmp = asn_decompose ("cert.subject.RelativeDistinguishedName[1]."
 		       "AttributeValueAssertion", &cert);
-  if (tmp != NULL)
+  if (tmp)
     x509_get_attribval (tmp, &rcert->subject2);
   else
-    rcert->subject2.type = NULL;
+    rcert->subject2.type = 0;
 
   tmp = asn_decompose ("cert.validity.notBefore", &cert);
   rcert->start = strdup ((char *)tmp->data);
   tmp = asn_decompose ("cert.validity.notAfter", &cert);
   rcert->end = strdup ((char *)tmp->data);
 
-  /* For x509v3 there might be an extension, try to decode it */
+  /* For x509v3 there might be an extension, try to decode it.  */
   tmp = asn_decompose ("cert.extension", &cert);
   if (tmp && tmp->data && rcert->version == 2)
     x509_decode_cert_extension (tmp->data, tmp->len, rcert);
@@ -447,20 +448,20 @@ x509_encode_certificate (struct x509_certificate *rcert,
   struct norm_type *tmp;
   u_int8_t *data, *new_buf;
   mpz_t num;
+  u_int8_t *tmpasn;
+  u_int32_t tmpasnlen;
 
-  if (asn_template_clone (&cert, 1) == NULL)
+
+  if (!asn_template_clone (&cert, 1))
     goto fail;
 
-  if (rcert->extension.type != NULL && rcert->extension.val != NULL)
+  if (rcert->extension.type && rcert->extension.val)
     {
-      u_int8_t *asn;
-      u_int32_t asnlen;
-
       tmp = asn_decompose ("cert.extension", &cert);
-      if (x509_encode_cert_extension (rcert, &asn, &asnlen))
+      if (x509_encode_cert_extension (rcert, &tmpasn, &tmpasnlen))
 	{
-	  tmp->data = asn;
-	  tmp->len = asnlen;
+	  tmp->data = tmpasn;
+	  tmp->len = tmpasnlen;
 	}
     }
 
@@ -474,14 +475,16 @@ x509_encode_certificate (struct x509_certificate *rcert,
 
   tmp = asn_decompose ("cert.subjectPublicKeyInfo.subjectPublicKey", &cert);
   data = pkcs_public_key_to_asn (&rcert->key);
-  if (data == NULL)
+  if (!data)
     goto fail;
 
-  /* This is a BIT STRING add 0 octet for padding */
+  /* This is a BITSTRING, add 0 octet for padding.  */
   tmp->len = asn_get_len (data);
   new_buf = realloc (data, tmp->len + 1);
-  if (new_buf == NULL)
+  if (!new_buf)
     {
+      log_error ("x509_encode_certificate: realloc (%p, %d) failed", data,
+		 tmp->len + 1);
       free (data);
       goto fail;
     }
@@ -537,8 +540,8 @@ x509_encode_certificate (struct x509_certificate *rcert,
   tmp->data = strdup (rcert->end);
   tmp->len = strlen ((char *)tmp->data);
 
-  *asn = asn_encode_sequence (&cert, NULL);
-  if (*asn == NULL)
+  *asn = asn_encode_sequence (&cert, 0);
+  if (!*asn)
     goto fail;
 
   *asnlen = asn_get_len (*asn);
@@ -553,7 +556,7 @@ x509_encode_certificate (struct x509_certificate *rcert,
 
 /*
  * Decode an Extension to a X509 certificate.
- * XXX - We ignore the critical boolean
+ * XXX We ignore the critical boolean.
  */
 
 int
@@ -563,18 +566,17 @@ x509_decode_cert_extension (u_int8_t *asn, u_int32_t asnlen,
   struct norm_type *tmp;
   struct norm_type ex = SEQOF ("ex", Extensions);
 
-  /* Implicit tagging for extension */
+  /* Implicit tagging for extension.  */
   ex.class = ADD_EXP (3, UNIVERSAL);
 
-  if (asn_template_clone (&ex, 1) == NULL ||
-      asn_decode_sequence (asn, asnlen, &ex) == NULL)
+  if (!asn_template_clone (&ex, 1) || !asn_decode_sequence (asn, asnlen, &ex))
     {
       asn_free (&ex);
       return 0;
     }
 
   tmp = asn_decompose ("ex.extension.extnValue", &ex);
-  if (!tmp || tmp->data == NULL || asn_get_len (tmp->data) != tmp->len)
+  if (!tmp || !tmp->data || asn_get_len (tmp->data) != tmp->len)
     goto fail;
   cert->extension.val = malloc (tmp->len);
   if (cert->extension.val == 0)
@@ -582,13 +584,13 @@ x509_decode_cert_extension (u_int8_t *asn, u_int32_t asnlen,
   memcpy (cert->extension.val, tmp->data, tmp->len);
 
   tmp = asn_decompose ("ex.extension.extnId", &ex);
-  if (!tmp || tmp->data == NULL)
+  if (!tmp || !tmp->data)
     goto fail;
   cert->extension.type = strdup (tmp->data);
-  if (cert->extension.type == NULL)
+  if (!cert->extension.type)
     {
       free (cert->extension.val);
-      cert->extension.val = NULL;
+      cert->extension.val = 0;
       goto fail;
     }
 
@@ -601,10 +603,10 @@ x509_decode_cert_extension (u_int8_t *asn, u_int32_t asnlen,
 }
 
 /* 
- * Encode a Cert Extension - XXX - only one extension per certificate 
- * XXX - We tag everything as critical
+ * Encode a Cert Extension.
+ * XXX Only one extension per certificate.
+ * XXX We tag everything as critical.
  */
-
 int
 x509_encode_cert_extension (struct x509_certificate *cert,
 			    u_int8_t **asn, u_int32_t *asnlen)
@@ -613,28 +615,37 @@ x509_encode_cert_extension (struct x509_certificate *cert,
   struct norm_type *tmp;
   ex.class = ADD_EXP (3, UNIVERSAL);
 
-  if (asn_template_clone (&ex ,1) == NULL)
+  if (!asn_template_clone (&ex ,1))
     goto fail;
 
   tmp = asn_decompose ("ex.extension.extnId", &ex);
   tmp->data = strdup (cert->extension.type);
   tmp->len = strlen (tmp->data);
 
-  /* XXX - we mark every extension as critical */
+  /* XXX We mark every extension as critical.  */
   tmp = asn_decompose ("ex.extension.critical", &ex);
-  if ((tmp->data = malloc (1)) == NULL)
-    goto fail;
-  *(u_int8_t *)tmp->data = 0xFF;
+  tmp->data = malloc (1);
+  if (!tmp->data)
+    {
+      log_error ("x509_encode_cert_extension: malloc (1) failed");
+      goto fail;
+    }
+  *(u_int8_t *)tmp->data = 0xff;
   tmp->len = 1;
 
   tmp = asn_decompose ("ex.extension.extnValue", &ex);
-  if ((tmp->data = malloc (asn_get_len (cert->extension.val))) == NULL)
-    goto fail;
+  tmp->data = malloc (asn_get_len (cert->extension.val));
+  if (!tmp->data)
+    {
+      log_error ("x509_encode_cert_extension: malloc (%d) failed",
+		 asn_get_len (cert->extension.val));
+      goto fail;
+    }
   tmp->len = asn_get_len (cert->extension.val);
   memcpy (tmp->data, cert->extension.val, tmp->len);
 
-  *asn = asn_encode_sequence (&ex, NULL);
-  if (*asn == NULL)
+  *asn = asn_encode_sequence (&ex, 0);
+  if (!*asn)
     goto fail;
 
   *asnlen = asn_get_len (*asn);
@@ -647,28 +658,28 @@ x509_encode_cert_extension (struct x509_certificate *cert,
 }
 
 /* 
- * Checks the signature on an ASN.1 Signed Type. If the passed Key is
+ * Checks the signature on an ASN.1 Signed Type. If the passed KEY is
  * NULL we just unwrap the inner object and return it.
  */
-
 int
 x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
 		      struct rsa_public_key *key, u_int8_t **data, 
 		      u_int32_t *datalen)
 {
-  struct norm_type sig = SEQ("signed", Signed);
-  struct norm_type digest = SEQ("digest", DigestInfo);
+  struct norm_type sig = SEQ ("signed", Signed);
+  struct norm_type digest = SEQ ("digest", DigestInfo);
   struct norm_type *tmp;
-  struct hash *hash = NULL;
+  struct hash *hash = 0;
   int res;
   u_int8_t *dec;
   u_int16_t declen;
+  char *id;
 
-  if (asn_template_clone (&sig, 1) == NULL)
-      /* Failed, probably memory allocation, free what we got anyway */
+  if (!asn_template_clone (&sig, 1))
+    /* Failed, probably memory allocation, free what we got anyway.  */
     goto fail;
 
-  if (asn_decode_sequence (asn, asnlen, &sig) == NULL)
+  if (!asn_decode_sequence (asn, asnlen, &sig))
     {
       log_print ("x509_validate_signed: input data could not be decoded");
       goto fail;
@@ -676,23 +687,22 @@ x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
 
   tmp = asn_decompose ("signed.algorithm.algorithm", &sig);
 
-  if (!strcmp ((char *)tmp->data, ASN_ID_MD5WITHRSAENC))
-    {
-      hash = hash_get (HASH_MD5);
-    }
+  if (strcmp ((char *)tmp->data, ASN_ID_MD5WITHRSAENC) == 0)
+    hash = hash_get (HASH_MD5);
   else
     {
-      char *id = asn_parse_objectid (asn_ids, tmp->data);
+      id = asn_parse_objectid (asn_ids, tmp->data);
       log_print ("x509_validate_signed: can not handle SigType %s",
-		 id == NULL ? tmp->data : id);
+		 id ? id : tmp->data);
       goto fail;
     }
 
-  if (hash == NULL)
+  if (!hash)
     goto fail;
 
   tmp = asn_decompose ("signed.data", &sig);
-  /* Hash the data */
+
+  /* Hash the data.  */
   hash->Init (hash->ctx);
   hash->Update (hash->ctx, tmp->data, tmp->len);
   hash->Final (hash->digest, hash->ctx);
@@ -700,25 +710,25 @@ x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
   *data = tmp->data;
   *datalen = tmp->len;
 
-  /* Used to unwrap the SIGNED object around the Certificate */
-  if (key == NULL)
+  /* Used to unwrap the SIGNED object around the Certificate.  */
+  if (!key)
     {
       asn_free (&sig);
       return 1;
     }
 
   tmp = asn_decompose ("signed.encrypted", &sig);
+
   /* 
-   * tmp->data is a BIT STRING, the first octet in the BIT STRING gives
+   * tmp->data is a BITSTRING, the first octet in the BITSTRING gives
    * the padding bits at the end. Per definition there are no padding
    * bits at the end in this case, so just skip it.
    */
-  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, key, NULL, tmp->data + 1,
-			 &dec, &declen))
+  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, key, 0, tmp->data + 1, &dec, &declen))
     goto fail;
 
-  if (asn_template_clone (&digest, 1) == NULL || 
-      asn_decode_sequence (dec, declen, &digest) == NULL)
+  if (!asn_template_clone (&digest, 1)
+      || !asn_decode_sequence (dec, declen, &digest))
     {
       asn_free (&digest);
       goto fail;
@@ -732,8 +742,8 @@ x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
   else
     {
       tmp = asn_decompose ("digest.digest", &digest);
-      if (tmp->len != hash->hashsize ||
-	  memcmp (tmp->data, hash->digest, tmp->len))
+      if (tmp->len != hash->hashsize
+	  || memcmp (tmp->data, hash->digest, tmp->len))
 	{
 	  log_print ("x509_validate_signed: Digest does not match Data");
 	  res = 0;
@@ -757,7 +767,6 @@ x509_validate_signed (u_int8_t *asn, u_int32_t asnlen,
  * At the moment the used hash is MD5, this is the only common
  * hash between us and X509.
  */
-
 int
 x509_create_signed (u_int8_t *data, u_int32_t datalen,
 		    struct rsa_private_key *key, u_int8_t **asn, 
@@ -771,20 +780,23 @@ x509_create_signed (u_int8_t *data, u_int32_t datalen,
   u_int32_t enclen;
   int res = 0;
   
-  /* Hash the Data */
+  /* Hash the Data.  */
   hash = hash_get (HASH_MD5);
   hash->Init (hash->ctx);
   hash->Update (hash->ctx, data, datalen);
   hash->Final (hash->digest, hash->ctx);
 
-  if (asn_template_clone (&digest, 1) == NULL)
+  if (!asn_template_clone (&digest, 1))
     goto fail;
 
   tmp = asn_decompose ("digest.digest", &digest);
   tmp->len = hash->hashsize;
   tmp->data = malloc (hash->hashsize);
-  if (tmp->data == NULL)
-    goto fail;
+  if (!tmp->data)
+    {
+      log_error ("x509_create_signed: malloc (%d) failed", hash->hashsize);
+      goto fail;
+    }
   memcpy (tmp->data, hash->digest, hash->hashsize);
 
   tmp = asn_decompose ("digest.digestAlgorithm.parameters", &digest);
@@ -793,19 +805,20 @@ x509_create_signed (u_int8_t *data, u_int32_t datalen,
   tmp->data = strdup (ASN_ID_MD5);
   tmp->len = strlen (tmp->data);
 
-  /* ASN encode Digest Information */
-  if ((diginfo = asn_encode_sequence (&digest, NULL)) == NULL)
+  /* ASN encode Digest Information.  */
+  diginfo = asn_encode_sequence (&digest, 0);
+  if (!diginfo)
     goto fail;
 
-  /* Encrypt the Digest Info with Private Key */
-  res = pkcs_rsa_encrypt (PKCS_PRIVATE, NULL, key, diginfo, 
-			  asn_get_len (diginfo), &enc, &enclen);
+  /* Encrypt the Digest Info with Private Key.  */
+  res = pkcs_rsa_encrypt (PKCS_PRIVATE, 0, key, diginfo, asn_get_len (diginfo),
+			  &enc, &enclen);
   free (diginfo);
   if (!res)
     goto fail;
   res = 0;
 
-  if (asn_template_clone (&sig, 1) == NULL)
+  if (!asn_template_clone (&sig, 1))
     goto fail2;
 
   tmp = asn_decompose ("signed.algorithm.parameters", &sig);
@@ -814,11 +827,12 @@ x509_create_signed (u_int8_t *data, u_int32_t datalen,
   tmp->data = strdup (ASN_ID_MD5WITHRSAENC);
   tmp->len = strlen (tmp->data);
 
-  /* The type is BITSTING, i.e. first octet need to be zero */
+  /* The type is BITSTRING, i.e. first octet need to be zero.  */
   tmp = asn_decompose ("signed.encrypted", &sig);
   tmp->data = malloc (enclen + 1);
-  if (tmp->data == NULL)
+  if (!tmp->data)
     {
+      log_error ("x509_create_signed: malloc (%d) failed", enclen + 1);
       free (enc);
       goto fail2;
     }
@@ -831,14 +845,15 @@ x509_create_signed (u_int8_t *data, u_int32_t datalen,
   tmp->data = data;
   tmp->len = datalen;
 
-  *asn = asn_encode_sequence (&sig, NULL);
-  if (*asn == NULL)
+  *asn = asn_encode_sequence (&sig, 0);
+  if (!*asn)
     goto fail2;
   *asnlen = asn_get_len (*asn);
 
-  /* This is the data we have been given, we can not free it in asn_free */
-  tmp->data = NULL;
-  res = 1;	/* Successfull */
+  /* This is the data we have been given, we can not free it in asn_free.  */
+  tmp->data = 0;
+  res = 1;			/* Successful.  */
+
  fail2:
   asn_free (&sig);
  fail:
