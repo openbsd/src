@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.10 2003/06/04 17:59:01 espie Exp $
+.\" $OpenBSD: gcc-local.1,v 1.11 2003/06/14 05:13:18 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\"
@@ -38,36 +38,36 @@ software comes with specific modifications for
 .Bl -dash
 .It
 .Nm gcc
-does not search under 
+does not search under
 .Pa /usr/local
 for include files nor for libraries:
 as a system compiler, it only searches the system paths by default.
 .It
 On
 .Ox ,
-the 
+the
 .Fl pthread
 option should be used to link threaded code, isolating the program from
 operating system details.
 .It
 On most architectures,
-trampoline code marks the smallest possible area around the trampoline stub 
-executable using 
+trampoline code marks the smallest possible area around the trampoline stub
+executable using
 .Xr mprotect 2 ,
 since the stack area is by default non-executable.
 .It
-The 
+The
 .Fl O2
-option does not include 
+option does not include
 .Fl fstrict-aliasing ,
 as this option causes issues on some legacy code.
 .Fl fstrict-aliasing
-is very unsafe with code that plays tricks with casts, bypassing the 
+is very unsafe with code that plays tricks with casts, bypassing the
 already weak type system of C.
 .It
 The option
 .Fl fno-builtin-<function>
-was backported from 
+was backported from
 .Nm gcc
 version 3,
 yielding greater control over what functions
@@ -76,14 +76,14 @@ inlines.
 .It
 .Nm gcc
 recognizes the extra format attribute syslog, to better match
-the definition of 
+the definition of
 .Xr syslog 3 ,
 and silence erroneous warnings when used with
 .Fl pedantic .
 .It
 .Nm gcc
 recognizes the extra attribute nonnull, which can be used to mark
-arguments that can't be 
+arguments that can't be
 .Dv NULL .
 On the other hand, the printf format attribute does not imply nonnull
 for the format.
@@ -103,9 +103,9 @@ where a terminating 0 will expand to a 32 bit int, and not a full-fledged
 .It
 On some
 .Ox
-platforms, 
+platforms,
 .Nm gcc
-still uses 
+still uses
 .Xr setjmp 3 /
 .Xr longjmp 3 -
 style exceptions, and so needs extra fixes beyond the pure 2.95.3 release.
@@ -144,6 +144,6 @@ support bits, or use the
 option.
 .El
 .Sh SEE ALSO
-.Xr gcc 1 
+.Xr gcc 1
 .Pp
 .Pa http://www.trl.ibm.com/projects/security/ssp
