@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.138 2003/12/17 17:29:23 jason Exp $
+dnl	$OpenBSD: hardware,v 1.139 2004/02/14 20:11:51 andreas Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -310,6 +310,7 @@ Supported hardware {:-include-:}:
 		ASIX 88140A/88141 PCI Ethernet adapters, including:
 		    CNet Pro110B
 		    Alfa Inc. GFC2204
+		Broadcom BCM4401 [A] [B] [C]
 		CATC USB-EL1210A-based USB adapters, including: [G]
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111

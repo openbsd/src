@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.83 2004/02/07 21:02:18 miod Exp $
+.\"	$OpenBSD: pci.4,v 1.84 2004/02/14 20:11:51 andreas Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -172,6 +172,8 @@ controllers.
 .Bl -tag -width 10n -offset ind -compact
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
+.It Xr bce 4
+Broadcom BCM4401 Ethernet.
 .It Xr bge 4
 Broadcom BCM570x PCI gigabit ethernet.
 .It Xr dc 4
@@ -449,6 +451,7 @@ driver.
 .Xr auich 4 ,
 .Xr autri 4 ,
 .Xr auvia 4 ,
+.Xr bce 4 ,
 .Xr bge 4 ,
 .Xr bha 4 ,
 .Xr bktr 4 ,
