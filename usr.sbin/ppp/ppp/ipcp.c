@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.25 2000/07/19 11:06:34 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.26 2000/08/28 22:44:41 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -959,6 +959,12 @@ IpcpLayerDown(struct fsm *fp)
       s = "Interface configuration error !";
     log_Printf(LogIPCP, "%s: LayerDown: %s\n", fp->link->name, s);
 
+#ifndef NORADIUS
+    radius_Account(&fp->bundle->radius, &fp->bundle->radacct,
+                   fp->bundle->links, RAD_STOP, &ipcp->peer_ip, &ipcp->ifmask,
+                   &ipcp->throughput);
+#endif
+
     /*
      * XXX this stuff should really live in the FSM.  Our config should
      * associate executable sections in files with events.
@@ -1010,6 +1016,11 @@ IpcpLayerUp(struct fsm *fp)
 
   if (!ipcp_InterfaceUp(ipcp))
     return 0;
+
+#ifndef NORADIUS
+  radius_Account(&fp->bundle->radius, &fp->bundle->radacct, fp->bundle->links, 
+                 RAD_START, &ipcp->peer_ip, &ipcp->ifmask, &ipcp->throughput);
+#endif
 
   /*
    * XXX this stuff should really live in the FSM.  Our config should
