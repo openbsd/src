@@ -1,3 +1,4 @@
+.\"	$OpenBSD: editline.3,v 1.14 2003/10/31 08:57:10 otto Exp $
 .\"	$NetBSD: editline.3,v 1.38 2003/09/26 21:09:13 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -55,10 +56,8 @@
 .Nm history_end ,
 .Nm history
 .Nd line editor and history functions
-.Sh LIBRARY
-.Lb libedit
 .Sh SYNOPSIS
-.In histedit.h
+.Fd #include <histedit.h>
 .Ft EditLine *
 .Fn el_init "const char *prog" "FILE *fin" "FILE *fout" "FILE *ferr"
 .Ft void
@@ -570,12 +569,12 @@ as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
 If
 .Dv H_SETUNIQUE
-was has been called with a non-zero arguments, the element
+has been called with a non-zero arguments, the element
 will not be entered into the history if its contents match
 the ones of the current history element.
 If the element is entered
 .Fn history
-returns 1, if it is ignored as a duplicate returns 0.
+returns 1; if it is ignored as a duplicate returns 0.
 Finally
 .Fn history
 returns \-1 if an error occurred.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editrc.5,v 1.16 2003/10/31 08:42:24 otto Exp $
+.\"	$OpenBSD: editrc.5,v 1.17 2003/10/31 08:57:10 otto Exp $
 .\"	$NetBSD: editrc.5,v 1.16 2003/06/27 18:57:09 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ file defines various settings to be used by the
 library.
 .Pp
 The format of each line is:
+.Pp
 .Dl [prog:]command [arg [...]]
 .Pp
 .Ar command
@@ -90,19 +91,13 @@ The
 library has some builtin commands, which affect the way
 that the line editing and history functions operate.
 These are based on similar named builtins present in the
-.Xr tcsh 1
+.Xr tcsh
 shell.
 .Pp
 The following builtin commands are available:
 .Bl -tag -width 4n
 .It Ic bind Xo
-.Op Fl a
-.Op Fl e
-.Op Fl k
-.Op Fl l
-.Op Fl r
-.Op Fl s
-.Op Fl v
+.Op Fl aeklrsv
 .Op Ar key Op Ar command
 .Xc
 Without options, list all bound keys, and the editor command to which
@@ -119,16 +114,12 @@ to
 .Ar key .
 Options include:
 .Bl -tag -width 4n
-.It Fl e
-Bind all keys to the standard GNU Emacs-like bindings.
-.It Fl v
-Bind all keys to the standard
-.Xr vi 1 Ns -like
-bindings.
 .It Fl a
 List or change key bindings in the
 .Xr vi 1
 mode alternate (command mode) key map.
+.It Fl e
+Bind all keys to the standard GNU Emacs-like bindings.
 .It Fl k
 .Ar key
 is interpreted as a symbolic arrow key name, which may be one of
@@ -150,6 +141,10 @@ Bound keys in
 .Ar command
 are themselves reinterpreted, and this continues for ten levels of
 interpretation.
+.It Fl v
+Bind all keys to the standard
+.Xr vi 1 Ns -like
+bindings.
 .El
 .Pp
 .Ar command
@@ -165,7 +160,7 @@ can contain control characters of the form
 .Sq No ^ Ar character
 .Sm on
 .Po
-e.g.
+e.g.\&
 .Sq ^A
 .Pc ,
 and the following backslashed escape sequences:
@@ -214,7 +209,8 @@ is
 .Sq cols ,
 .Sq lines ,
 .Sq rows ,
-.Sq meta or
+.Sq meta
+or
 .Sq tabs ,
 the value of that capability is printed, with
 .Dq yes
@@ -233,9 +229,6 @@ Enable or disable the
 functionality in a program.
 .It Ic history
 List the history.
-.It Ic telltc
-List the values of all the terminal capabilities (see
-.Xr termcap 5 ) .
 .It Ic settc Ar cap Ar val
 Set the terminal capability
 .Ar cap
@@ -245,10 +238,7 @@ as defined in
 .Xr termcap 5 .
 No sanity checking is done.
 .It Ic setty Xo
-.Op Fl a
-.Op Fl d
-.Op Fl q
-.Op Fl x
+.Op Fl adqx
 .Op Ar +mode
 .Op Ar -mode
 .Op Ar mode
@@ -292,6 +282,9 @@ fixes
 on or off or removes control of
 .Ar mode
 in the chosen set.
+.It Ic telltc
+List the values of all the terminal capabilities (see
+.Xr termcap 5 ) .
 .El
 .Sh EDITOR COMMANDS
 The following editor commands are available for use in key bindings:
@@ -489,4 +482,4 @@ The
 library was written by Christos Zoulas,
 and this manual was written by Luke Mewburn,
 with some sections inspired by
-.Xr tcsh 1 .
+.Xr tcsh .
