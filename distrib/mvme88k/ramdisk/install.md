@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.10 2002/04/25 21:28:13 miod Exp $
+#       $OpenBSD: install.md,v 1.11 2002/05/07 02:03:57 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -46,8 +46,7 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [xterm]: "
-	getresp "xterm"
+	ask "Specify terminal type:" xterm
 	TERM="$resp"
 	export TERM
 }
@@ -123,17 +122,16 @@ md_prep_disklabel()
 	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	echo -n "Do you wish to edit the disklabel on $_disk? [y] "
+	0)	ask "Do you wish to edit the disklabel on $_disk?" y
 		;;
 	1)	echo "WARNING: Disk $_disk has no label"
-		echo -n "Do you want to create one with the disklabel editor? [y] "
+		ask "Do you want to create one with the disklabel editor?" y
 		;;
 	2)	echo "WARNING: Label on disk $_disk is corrupted"
-		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
+		ask "Do you want to try and repair the damage using the disklabel editor?" y
 		;;
 	esac
 
-	getresp "y"
 	case "$resp" in
 	y*|Y*)	;;
 	*)	return ;;
@@ -162,8 +160,7 @@ in case you have defined less than sixteen partitions.
 [End of example]
 
 __EOT
-	echo -n "Press [Enter] to continue "
-	getresp ""
+	ask "Press [Enter] to continue"
 	disklabel -W ${_disk}
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
 }
