@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.7 1996/10/30 01:09:23 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.8 1996/11/03 18:57:14 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -36,7 +36,8 @@ main(argc, argv)
 	char	*argv[];
 {
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
-	char    passwd[256], key[8], buf[33], *seed, *slash;
+	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
+	char	buf[33], *seed, *slash;
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
 	if (strncmp(argv[0], "otp-", 4) == 0) {
@@ -90,12 +91,18 @@ main(argc, argv)
 		seed = slash;
 
 		if ((n = atoi(argv[i])) < 0) {
-			warnx("%s not positive", argv[i]);
+			warnx("%d not positive", n);
+			usage(argv[0]);
+		} else if (n > SKEY_MAX_SEQ) {
+			warnx("%d is larger than max (%d)", n, SKEY_MAX_SEQ);
 			usage(argv[0]);
 		}
 	} else {
 		if ((n = atoi(argv[i])) < 0) {
 			warnx("%s not positive", argv[i]);
+			usage(argv[0]);
+		} else if (n > SKEY_MAX_SEQ) {
+			warnx("%d is larger than max (%d)", n, SKEY_MAX_SEQ);
 			usage(argv[0]);
 		}
 		seed = argv[++i];

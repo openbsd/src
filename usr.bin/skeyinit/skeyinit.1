@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.8 1996/10/08 01:20:57 michaels Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.9 1996/11/03 18:57:45 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -12,6 +12,7 @@
 .Nm skeyinit
 .Op Fl s
 .Op Fl z
+.Op Fl n Ar count
 .Op Ar user
 .Sh DESCRIPTION
 .Nm skeyinit
@@ -65,6 +66,12 @@ count and seed.  You can then "cut-and-paste" or type the words into the
 window.
 .It Fl z
 Allows the user to zero their S/Key entry.
+.It Fl n Ar count
+Start the
+.Nm skey
+sequence at
+.Ar count
+(default is 100).
 .It Fl md4
 Selects MD4 as the hash algorithm.
 .It Fl md5
