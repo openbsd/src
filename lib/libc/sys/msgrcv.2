@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.10 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.11 2003/02/27 07:55:34 jmc Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -164,7 +164,7 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa msqid
-is not a valid message queue identifier
+is not a valid message queue identifier.
 .Pp
 The message queue was removed while
 .Fn msgrcv

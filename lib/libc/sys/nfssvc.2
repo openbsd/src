@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.13 2000/05/25 06:09:50 deraadt Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.14 2003/02/27 07:55:34 jmc Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -173,7 +173,7 @@ will attempt to authenticate the ticket and generate a set of credentials
 on the server for the user ID specified in the field nsd_uid.
 This is done by first authenticating the Kerberos ticket and then mapping
 the Kerberos principal to a local name and getting a set of credentials for
-that user via.
+that user via
 .Xr getpwnam 3
 and
 .Xr getgrouplist 3 .

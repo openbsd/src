@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.7 2000/10/18 05:12:10 aaron Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.8 2003/02/27 07:55:34 jmc Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -60,7 +60,7 @@ returned will be zero.
 If the
 .Fn nanosleep
 function returns due to the delivery of a signal, the value returned
-will be the \-1, and the global variable
+will be \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 If
