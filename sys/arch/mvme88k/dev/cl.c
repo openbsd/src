@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.41 2004/04/15 08:41:44 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.42 2004/04/15 12:35:20 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -119,7 +119,8 @@ struct clsoftc {
 	struct pcctworeg		*sc_pcctwo;
 	int			sc_flags;
 };
-struct {
+
+const struct {
 	u_int speed;
 	u_char divisor;
 	u_char clock;

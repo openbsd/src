@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.30 2004/02/11 20:41:07 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.31 2004/04/15 12:35:20 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -121,11 +121,11 @@ void dartbreak(dev_t dev, int state);
  */
 
 #define DART_PORT(dev) minor(dev)
-#define dart_tty darttty
+
 struct dart_sv_reg dart_sv_reg;
 
 /* speed tables */
-struct dart_s {
+const struct dart_s {
 	int kspeed;
 	int dspeed;
 } dart_speeds[] = {
@@ -151,7 +151,7 @@ int
 dart_speed(speed)
 	int speed;
 {
-	struct dart_s *ds = dart_speeds;
+	const struct dart_s *ds = dart_speeds;
 	while (ds->kspeed != 0xFFFF) {
 		if (ds->kspeed == speed)
 			return ds->dspeed;
