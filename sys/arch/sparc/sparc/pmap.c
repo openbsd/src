@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 1999/07/09 21:30:02 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 1999/08/20 09:15:05 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2584,11 +2584,12 @@ pv_link4m(pv, pm, va, nc)
 	vaddr_t va;
 	int nc;
 {
-	struct pvlist *npv;
+	struct pvlist *npv, *mpv;
 	int ret;
 
 	ret = nc ? SRMMU_PG_C : 0;
 
+retry:
 	if (pv->pv_pmap == NULL) {
 		/* no pvlist entries yet */
 		pmap_stats.ps_enter_firstpv++;
@@ -2598,6 +2599,22 @@ pv_link4m(pv, pm, va, nc)
 		pv->pv_flags |= nc ? 0 : PV_C4M;
 		return (ret);
 	}
+
+	/*
+	 * We do the malloc early so that we catch all changes that happen
+	 * during the (possible) sleep.
+	 */
+	MALLOC(mpv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
+	if (pv->pv_pmap == NULL) {
+		/*
+		 * XXX - remove this printf some day when we know that
+		 * can/can't happen.
+		 */
+		printf("pv_link4m: pv changed during sleep!\n");
+		FREE(mpv, M_VMPVENT);
+		goto retry;
+	}
+
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
@@ -2630,12 +2647,12 @@ pv_link4m(pv, pm, va, nc)
 			}
 		}
 	}
-	MALLOC(npv, struct pvlist *, sizeof *npv, M_VMPVENT, M_WAITOK);
-	npv->pv_next = pv->pv_next;
-	npv->pv_pmap = pm;
-	npv->pv_va = va;
-	npv->pv_flags = nc ? 0 : PV_C4M;
-	pv->pv_next = npv;
+
+	mpv->pv_next = pv->pv_next;
+	mpv->pv_pmap = pm;
+	mpv->pv_va = va;
+	mpv->pv_flags = nc ? 0 : PV_C4M;
+	pv->pv_next = mpv;
 	return (ret);
 }
 #endif
