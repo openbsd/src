@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.12 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.13 2004/05/24 20:16:12 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,6 +40,8 @@
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
+
+#define RTLD_PROTECT_PLT
 
 /* HACK */
 #define DT_PROCNUM 0
