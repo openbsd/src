@@ -1,4 +1,4 @@
-.\"	$OpenBSD: what.1,v 1.6 2000/03/14 14:58:26 aaron Exp $
+.\"	$OpenBSD: what.1,v 1.7 2001/04/05 18:43:10 deraadt Exp $
 .\"	$NetBSD: what.1,v 1.3 1994/11/17 06:59:38 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -47,7 +47,11 @@
 .Nm
 reads each file
 .Ar name
-and searches for sequences of the form
+and searches for sequences of either the form
+.Dq $
+immediately followed by the system name (sysname) as defined by
+.Xr uname 3 ,
+or the form
 .Dq \&@(#)
 as inserted by the source code control system.
 It prints the remainder
