@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.6 1996/03/21 00:16:16 niklas Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.7 1996/06/25 15:57:20 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct grouplist {
 #define	GT_HOST		0x1
 #define	GT_NET		0x2
 #define	GT_ISO		0x4
+#define	GT_IGNORE	0x5
 
 struct hostlist {
 	int		 ht_flag;	/* Uses DP_xx bits */
@@ -175,7 +176,7 @@ void	free_exp __P((struct exportlist *));
 void	free_grp __P((struct grouplist *));
 void	free_host __P((struct hostlist *));
 void	get_exportlist __P((void));
-int	get_host __P((char *, struct grouplist *));
+int	get_host __P((char *, struct grouplist *, struct grouplist *));
 int	get_num __P((char *));
 struct hostlist *get_ht __P((void));
 int	get_line __P((void));
@@ -829,13 +830,13 @@ get_exportlist()
 				    grp = grp->gr_next;
 				}
 				if (netgrp) {
-				    if (get_host(hst, grp)) {
+				    if (get_host(hst, grp, tgrp)) {
 					syslog(LOG_ERR, "Bad netgroup %s", cp);
 					getexp_err(ep, tgrp);
 					endnetgrent();
 					goto nextline;
 				    }
-				} else if (get_host(cp, grp)) {
+				} else if (get_host(cp, grp, tgrp)) {
 				    getexp_err(ep, tgrp);
 				    goto nextline;
 				}
@@ -860,7 +861,7 @@ get_exportlist()
 			hpe = (struct hostent *)malloc(sizeof(struct hostent));
 			if (hpe == (struct hostent *)NULL)
 				out_of_mem();
-			hpe->h_name = "Default";
+			hpe->h_name = strdup("Default");
 			hpe->h_addrtype = AF_INET;
 			hpe->h_length = sizeof (u_long);
 			hpe->h_addr_list = (char **)NULL;
@@ -1336,10 +1337,12 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
  * addresses for a hostname.
  */
 int
-get_host(cp, grp)
+get_host(cp, grp, tgrp)
 	char *cp;
 	struct grouplist *grp;
+	struct grouplist *tgrp;
 {
+	struct grouplist *checkgrp;
 	struct hostent *hp, *nhp;
 	char **addrp, **naddrp;
 	struct hostent t_host;
@@ -1371,6 +1374,16 @@ get_host(cp, grp)
 			return (1);
 		}
 	}
+
+	/* only insert each host onto the list once */
+	for (checkgrp = tgrp; checkgrp; checkgrp = checkgrp->gr_next) {
+		if (checkgrp->gr_ptr.gt_hostent != NULL &&
+		    !strcmp(checkgrp->gr_ptr.gt_hostent->h_name, hp->h_name)) {
+			grp->gr_type = GT_IGNORE;
+			return (0);
+		}
+	}
+
 	grp->gr_type = GT_HOST;
 	nhp = grp->gr_ptr.gt_hostent = (struct hostent *)
 		malloc(sizeof(struct hostent));
@@ -1579,6 +1592,8 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			args.ua.export.ex_masklen = 0;
 			break;
 #endif	/* ISO */
+		case GT_IGNORE:
+			return (0);
 		default:
 			syslog(LOG_ERR, "Bad grouptype");
 			if (cp)
