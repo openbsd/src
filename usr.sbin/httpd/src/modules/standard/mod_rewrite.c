@@ -91,6 +91,7 @@
 
 
 #include "mod_rewrite.h"
+#include "fdcache.h"
 
 #ifndef NO_WRITEV
 #ifndef NETWARE
@@ -3107,8 +3108,14 @@ static void open_rewritelog(server_rec *s, pool *p)
         conf->rewritelogfp = ap_piped_log_write_fd(pl);
     }
     else if (*conf->rewritelogfile != '\0') {
-        if ((conf->rewritelogfp = ap_popenf(p, fname, rewritelog_flags,
-                                            rewritelog_mode)) < 0) {
+	if (ap_server_chroot_desired()) {
+		conf->rewritelogfp = fdcache_open(fname, rewritelog_flags,
+		    rewritelog_mode);
+	} else {
+		conf->rewritelogfp = ap_popenf(p, fname, rewritelog_flags,
+		    rewritelog_mode);
+	}
+        if (conf->rewritelogfp < 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, s, 
 
                          "mod_rewrite: could not open RewriteLog "

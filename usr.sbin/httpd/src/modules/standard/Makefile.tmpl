@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.tmpl,v 1.4 2002/07/17 12:55:15 henning Exp $
+# $OpenBSD: Makefile.tmpl,v 1.5 2002/07/31 08:52:55 henning Exp $
 
 #Dependencies
 
@@ -205,7 +205,7 @@ mod_rewrite.o: mod_rewrite.c mod_rewrite.h $(INCDIR)/httpd.h \
  $(INCDIR)/util_uri.h $(INCDIR)/http_config.h \
  $(INCDIR)/http_conf_globals.h $(INCDIR)/http_request.h \
  $(INCDIR)/http_core.h $(INCDIR)/http_log.h \
- $(INCDIR)/http_vhost.h
+ $(INCDIR)/http_vhost.h $(INCDIR)/fdcache.h
 mod_setenvif.o: mod_setenvif.c $(INCDIR)/httpd.h \
  $(INCDIR)/ap_config.h $(INCDIR)/ap_mmn.h \
  $(INCDIR)/ap_config_auto.h $(OSDIR)/os.h \
