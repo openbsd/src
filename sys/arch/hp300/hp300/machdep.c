@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1997/02/04 07:15:28 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1997/02/05 17:33:00 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
@@ -943,6 +943,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		kfp->sf_scp = hkfp->hsf_scp;
 	}
 #endif
+	/* XXX do not copy out siginfo if not needed */
 	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG

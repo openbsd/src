@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1997/02/04 06:21:32 downsj Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1997/02/05 17:33:02 downsj Exp $	*/
 /*	$NetBSD: trap.c,v 1.47 1996/10/14 20:06:31 thorpej Exp $	*/
 
 /*
@@ -263,7 +263,8 @@ again:
 		} else if (sig = writeback(fp, fromtrap)) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, (caddr_t)faultaddr);
+			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR,
+			    (caddr_t)faultaddr);
 			goto again;
 		}
 	}
@@ -604,7 +605,7 @@ trap(type, code, v, frame)
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
-		vm_prot_t ftype;
+		vm_prot_t ftype, vftype;
 		extern vm_map_t kernel_map;
 
 #ifdef DEBUG
@@ -626,9 +627,10 @@ trap(type, code, v, frame)
 		else
 			map = vm ? &vm->vm_map : kernel_map;
 
-		if (WRFAULT(code))
+		if (WRFAULT(code)) {
+			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
+		} else
 			ftype = VM_PROT_READ;
 
 		va = trunc_page((vm_offset_t)v);
@@ -697,7 +699,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		frame.f_pad = code & 0xffff;
-		ucode = T_MMUFLT;
+		ucode = vftype;
 		typ = SEGV_MAPERR;
 		i = SIGSEGV;
 		break;
