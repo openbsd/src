@@ -2272,7 +2272,7 @@ get_program_header_size (abfd)
     {
       struct elf_segment_map *m;
 
-      segs = 0;
+      segs = 1;
       for (m = elf_tdata (abfd)->segment_map; m != NULL; m = m->next)
 	++segs;
       elf_tdata (abfd)->program_header_size = segs * bed->s->sizeof_phdr;
@@ -2281,7 +2281,7 @@ get_program_header_size (abfd)
 
   /* Assume we will need exactly two PT_LOAD segments: one for text
      and one for data.  */
-  segs = 2;
+  segs = 3;
 
   s = bfd_get_section_by_name (abfd, ".interp");
   if (s != NULL && (s->flags & SEC_LOAD) != 0)
