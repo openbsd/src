@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.4 2000/04/29 08:20:54 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.5 2000/05/18 03:46:14 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 
 /*
@@ -51,18 +51,11 @@
  *	Given the nature of the buggy build 4 firmware there may be problems.
  */
 
-#ifdef __NetBSD__
-#include "opt_inet.h"
-#endif
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#ifdef __NetBSD__
-#include <sys/callout.h>
-#elif defined(__OpenBSD__)
 #include <sys/timeout.h>
-#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -73,9 +66,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 #include <net/if_media.h>
 #include <net/if_llc.h>
 
@@ -84,11 +74,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#elif defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #include <net/if_ieee80211.h>	/* here, since ETHER_ADDR_LEN is in netinet */
@@ -179,11 +165,7 @@
 
 struct ray_softc {
 	struct device	sc_dev;
-#ifdef __NetBSD__
-	struct ethercom	sc_ec;
-#elif defined(__OpenBSD__)
 	struct arpcom sc_ec;
-#endif
 	struct ifmedia	sc_media;
 
 	struct pcmcia_function		*sc_pf;
@@ -199,13 +181,6 @@ struct ray_softc {
 	int				sc_resumeinit;
 	int				sc_resetloop;
 
-#ifdef __NetBSD__
-	struct callout			sc_check_ccs_ch;
-	struct callout			sc_check_scheduled_ch;
-	struct callout			sc_reset_resetloop_ch;
-	struct callout			sc_disable_ch;
-	struct callout			sc_start_join_timo_ch;
-#elif defined(__OpenBSD__)
 	struct timeout			sc_check_ccs_ch;
 	struct timeout			sc_check_scheduled_ch;
 	struct timeout			sc_reset_resetloop_ch;
@@ -213,7 +188,6 @@ struct ray_softc {
 	struct timeout			sc_start_join_timo_ch;
 #define	callout_stop	timeout_del
 #define	callout_reset(t,n,f,a)	timeout_add((t), (n))
-#endif
 
 	struct ray_ecf_startup		sc_ecf_startup;
 	struct ray_startup_params_head	sc_startup;
@@ -267,13 +241,9 @@ struct ray_softc {
 #define	sc_startup_5	sc_u.u_params_5
 #define	sc_version	sc_ecf_startup.e_fw_build_string
 #define	sc_tibsize	sc_ecf_startup.e_tib_size
-#ifdef __NetBSD__
-#define	sc_if		sc_ec.ec_if
-#elif defined(__OpenBSD__)
 #define	sc_if		sc_ec.ac_if
 #define	ec_multicnt	ac_multicnt
 #define	memmove		memcpy		/* XXX */
-#endif
 #define	sc_xname	sc_dev.dv_xname
 
 /* modes of operation */
@@ -370,15 +340,10 @@ int ray_user_report_params __P((struct ray_softc *,
 int ray_user_update_params __P((struct ray_softc *,
     struct ray_param_req *));
 
-#ifdef __NetBSD__
-void ray_write_region __P((struct ray_softc *,bus_size_t,void *,size_t));
-void ray_read_region __P((struct ray_softc *, bus_size_t,void *,size_t));
-#elif defined(__OpenBSD__)
 #define	ray_read_region(sc,off,p,c) \
 	bus_space_read_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
 #define	ray_write_region(sc,off,p,c) \
 	bus_space_write_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
-#endif
 
 #ifdef RAY_DO_SIGLEV
 void ray_update_siglev __P((struct ray_softc *, u_int8_t *, u_int8_t));
@@ -506,11 +471,9 @@ static const ray_cmd_func_t ray_subcmdtab[] = {
 };
 static const int ray_nsubcmdtab = sizeof(ray_subcmdtab) / sizeof(*ray_subcmdtab);
 
-#ifdef __OpenBSD__
 struct cfdriver ray_cd = {
 	NULL, "ray", DV_IFNET
 };
-#endif
 
 /* autoconf information */
 struct cfattach ray_ca = {
@@ -554,9 +517,6 @@ ray_attach(parent, self, aux)
 	struct ray_softc *sc;
 	struct ifnet *ifp;
 	bus_addr_t memoff;
-#ifdef __NetBSD__
-	char devinfo[256];
-#endif
 
 	pa = aux;
 	sc = (struct ray_softc *)self;
@@ -567,13 +527,7 @@ ray_attach(parent, self, aux)
 	sc->sc_awindow = -1;
 #endif
 
-#ifdef __NetBSD__
-	/* Print out what we are */
-	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof devinfo);
-	printf(": %s\n", devinfo);
-#elif defined(__OpenBSD__)
 	printf("\n");
-#endif
 
 	/* enable the card */
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
@@ -648,19 +602,12 @@ ray_attach(parent, self, aux)
 	sc->sc_countrycode = sc->sc_dcountrycode = RAY_PID_COUNTRY_CODE_DEFAULT;
 	sc->sc_resumeinit = 0;
 
-#ifdef __NetBSD__
-	callout_init(&sc->sc_check_ccs_ch);
-	callout_init(&sc->sc_check_scheduled_ch);
-	callout_init(&sc->sc_reset_resetloop_ch);
-	callout_init(&sc->sc_disable_ch);
-	callout_init(&sc->sc_start_join_timo_ch);
-#elif defined(__OpenBSD__)
 	timeout_set(&sc->sc_check_ccs_ch, ray_check_ccs, sc);
 	timeout_set(&sc->sc_check_scheduled_ch, ray_check_scheduled, sc);
 	timeout_set(&sc->sc_reset_resetloop_ch, ray_reset_resetloop, sc);
 	timeout_set(&sc->sc_disable_ch, (void (*)(void *))ray_disable, sc);
 	timeout_set(&sc->sc_start_join_timo_ch, ray_start_join_timo, sc);
-#endif
+
 	/*
 	 * attach the interface
 	 */
@@ -681,12 +628,9 @@ ray_attach(parent, self, aux)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST;
 	if_attach(ifp);
-#ifdef __NetBSD__
-	ether_ifattach(ifp, ep->e_station_addr);
-#elif defined(__OpenBSD__)
 	memcpy(&sc->sc_ec.ac_enaddr, ep->e_station_addr, ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
-#endif
+
 	/* need enough space for ieee80211_header + (snap or e2) */
 	ifp->if_hdrlen =
 	    sizeof(struct ieee80211_frame) + sizeof(struct ether_header);
@@ -747,12 +691,8 @@ ray_activate(dev, act)
 	case DVACT_DEACTIVATE:
 		if (ifp->if_flags & IFF_RUNNING)
 			ray_disable(sc);
-#ifdef __NetBSD__
-		if_deactivate(ifp);
-#elif defined(__OpenBSD__)
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		pcmcia_function_disable(sc->sc_pf);
-#endif
 		break;
 	}
 	splx(s);
@@ -1048,12 +988,10 @@ ray_ioctl(ifp, cmd, data)
 	RAY_DPRINTF(("%s: ioctl: cmd 0x%lx data 0x%lx\n", ifp->if_xname,
 	    cmd, (long)data));
 
-#ifdef __OpenBSD__
 	if ((error = ether_ioctl(ifp, &sc->sc_ec, cmd, data)) > 0) {
 		splx(s);
 		return error;
 	}
-#endif
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1066,11 +1004,7 @@ ray_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#ifdef __NetBSD__
-			arp_ifinit(&sc->sc_if, ifa);
-#elif defined(__OpenBSD__)
 			arp_ifinit(&sc->sc_ec, ifa);
-#endif
 			break;
 #endif
 		default:
@@ -1659,12 +1593,8 @@ done:
 #endif
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
-#ifdef __NetBSD__
-	(*ifp->if_input)(ifp, m);
-#elif defined(__OpenBSD__)
 	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
-#endif
 }
 
 
@@ -2912,11 +2842,7 @@ ray_update_mcast(sc)
 	bus_size_t ccs;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-#ifdef __NetBSD__
-	struct ethercom *ec;
-#elif defined(__OpenBSD__)
 	struct arpcom *ec;
-#endif
 	bus_size_t bufp;
 	int count;
 
@@ -3287,7 +3213,7 @@ ray_dump_mbuf(sc, m)
 #endif	/* RAY_DEBUG */
 
 #ifdef RAY_DO_SIGLEV
-static void
+void
 ray_update_siglev(sc, src, siglev)
 	struct ray_softc *sc;
 	u_int8_t *src;
