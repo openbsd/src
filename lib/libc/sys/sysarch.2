@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysarch.2,v 1.6 2001/03/30 04:49:12 pjanzen Exp $
+.\"	$OpenBSD: sysarch.2,v 1.7 2001/06/16 22:16:24 deraadt Exp $
 .\"	$NetBSD: sysarch.2,v 1.4 1995/02/27 12:38:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Fd #include <machine/sysarch.h>
 .Ft int
-.Fn sysarch "int number" "char *args"
+.Fn sysarch "int number" "void *args"
 .Sh DESCRIPTION
 .Fn sysarch
 performs the architecture-dependent function specified by

@@ -75,12 +75,12 @@
 extern vm_map_t kernel_map;
 
 #ifdef USER_LDT
-int i386_get_ldt __P((struct proc *, char *, register_t *));
-int i386_set_ldt __P((struct proc *, char *, register_t *));
+int i386_get_ldt __P((struct proc *, void *, register_t *));
+int i386_set_ldt __P((struct proc *, void *, register_t *));
 #endif
-int i386_iopl __P((struct proc *, char *, register_t *));
-int i386_get_ioperm __P((struct proc *, char *, register_t *));
-int i386_set_ioperm __P((struct proc *, char *, register_t *));
+int i386_iopl __P((struct proc *, void *, register_t *));
+int i386_get_ioperm __P((struct proc *, void *, register_t *));
+int i386_set_ioperm __P((struct proc *, void *, register_t *));
 
 #ifdef USER_LDT
 /*
@@ -102,7 +102,7 @@ i386_user_cleanup(pcb)
 }
 
 int
-i386_get_ldt(p, args, retval)
+i386_get_ldt(p, void, retval)
 	struct proc *p;
 	char *args;
 	register_t *retval;
@@ -149,7 +149,7 @@ i386_get_ldt(p, args, retval)
 int
 i386_set_ldt(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error, i, n;
@@ -310,7 +310,7 @@ extern int allowaperture;
 int
 i386_iopl(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -341,7 +341,7 @@ i386_iopl(p, args, retval)
 int
 i386_get_ioperm(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -357,7 +357,7 @@ i386_get_ioperm(p, args, retval)
 int
 i386_set_ioperm(p, args, retval)
 	struct proc *p;
-	char *args;
+	void *args;
 	register_t *retval;
 {
 	int error;
@@ -381,7 +381,7 @@ sys_sysarch(p, v, retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
 	int error = 0;
 

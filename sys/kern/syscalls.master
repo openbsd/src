@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.45 2001/05/16 17:14:35 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.46 2001/06/16 22:16:23 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -298,7 +298,7 @@
 163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
 			    osetdomainname
 164	COMPAT_09	{ int sys_uname(struct outsname *name); } ouname
-165	STD		{ int sys_sysarch(int op, char *parms); }
+165	STD		{ int sys_sysarch(int op, void *parms); }
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
