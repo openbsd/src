@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.21 2003/09/25 22:13:19 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.22 2004/03/17 00:41:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -191,7 +191,19 @@ memattach(parent, self, aux)
 		/* XXX other values seem to blow it up */
 		if (sc->sc_vp->vi_status.hw_rev == 0) {
 			u_int32_t vic;
-			int s;
+			int s, settimeout;
+
+			switch (cpu_hvers) {
+			/* probably all oosiop-equipped machines */
+			case HPPA_BOARD_HP715_33:
+				settimeout = 1;
+				break;
+			default:
+				settimeout = 0;
+				break;
+			}
+			if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+				settimeout = !settimeout;
 
 			printf(" viper rev %x,", sc->sc_vp->vi_status.hw_rev);
 #ifdef DEBUG
@@ -202,7 +214,12 @@ memattach(parent, self, aux)
 			vic &= ~VI_CTRL_CORE_DEN;
 			vic &= ~VI_CTRL_SGC0_DEN;
 			vic &= ~VI_CTRL_SGC1_DEN;
+			vic |=  VI_CTRL_EISA_DEN;
 			vic |=  VI_CTRL_CORE_PRF;
+
+			if (settimeout && (vic & VI_CTRL_VSC_TOUT) == 0)
+				vic |= (850 << 19);	/* clks */
+
 			sc->sc_vp->vi_control = vic;
 			__asm __volatile("stwas %1, 0(%0)"
 			    :: "r" (&VI_CTRL), "r" (vic) : "memory");
