@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.h,v 1.2 1995/10/09 03:51:52 thorpej Exp $	*/
+/*	$NetBSD: prune.h,v 1.3 1995/12/10 10:07:11 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -36,6 +36,9 @@ struct gtable {
     struct stable  *gt_srctbl;		/* source table			    */
     struct ptable  *gt_pruntbl;		/* prune table			    */
     struct rtentry *gt_route;		/* parent route			    */
+#ifdef RSRR
+    struct rsrr_cache *gt_rsrr_cache;	/* RSRR cache                       */
+#endif /* RSRR */
 };
 
 /*
@@ -127,8 +130,8 @@ struct tr_resp {
 
 #define MASK_TO_VAL(x, i) { \
 			u_int32_t _x = ntohl(x); \
-			(i) = 0; \
-			while ((_x) << (i)) \
+			(i) = 1; \
+			while ((_x) <<= 1) \
 				(i)++; \
 			};
 

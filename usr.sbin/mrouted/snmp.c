@@ -1,57 +1,136 @@
-/*	$NetBSD: snmp.c,v 1.2 1995/10/09 03:51:58 thorpej Exp $	*/
-
-/*
- * snmp.c
- *
- * Code written by David Thaler <thalerd@eecs.umich.edu>
- * Moved to a seperate file by Bill Fenner <fenner@parc.xerox.com>
- */
-
+/*	$NetBSD: snmp.c,v 1.3 1995/12/10 10:07:16 mycroft Exp $	*/
 
 #include "defs.h"
-#include <string.h>
+#include <netinet/in_var.h>
 #include "snmp.h"
+#include "snmplib/asn1.h"
+#include "snmplib/party.h"
+#include "snmplib/snmp_impl.h"
+#define MROUTED
+#include "snmpd/snmp_vars.h"
 
-#define NUMMIBS 2
-#define SNMPD_RETRY_INTERVAL 300 /* periodic snmpd probe interval */
+    u_short dest_port = 0;
+    int sdlen = 0;
 
-char *mibs[]={ "ipMRouteMIB", "dvmrpMIB" };
+struct addrCache {
+    u_long addr;
+    int status;
+#define UNUSED 0
+#define USED   1
+#define OLD 2
+};
 
-extern int o_ipMRouteTable();
-extern int o_ipMRouteNextHopTable();
-extern int o_dvmrpRouteTable();
-extern int o_dvmrpRouteNextHopTable();
-
-       int smux_fd = NOTOK;
-       int rock_and_roll = 0;
-       int dont_bother_anymore = 0;
-       int quantum = 0;
-static OID   subtree[NUMMIBS] = NULLOID;
-static struct smuxEntry *se = NULL;
-extern int smux_errno;
-extern char smux_info[BUFSIZ];
+static struct addrCache addrCache[10];
 
 /*
- * Place an IP address into an OID starting at element n 
+ * Initialize the SNMP part of mrouted
+ */
+int /* returns: 0 on success, true on error */
+snmp_init(dest_port)
+    u_short dest_port;
+{
+   u_long myaddr;
+   int ret;
+   struct partyEntry *pp;
+   struct sockaddr_in  me;
+   int index, sd, portlist[32];
+
+   init_snmp();
+   /* init_mib(); why was this here? */
+    if (read_party_database("/etc/party.conf") > 0){
+   fprintf(stderr, "Couldn't read party database from /etc/party.conf\n");
+   exit(0);
+    }
+    if (read_context_database("/etc/context.conf") > 0){
+   fprintf(stderr, "Couldn't read context database from /etc/context.conf\n");
+   exit(0);
+    }
+    if (read_acl_database("/etc/acl.conf") > 0){
+   fprintf(stderr, "Couldn't read acl database from /etc/acl.conf\n");
+   exit(0);
+    }
+    if (read_view_database("/etc/view.conf") > 0){
+   fprintf(stderr, "Couldn't read view database from /etc/view.conf\n");
+   exit(0);
+    }
+
+    myaddr = get_myaddr();
+    if (ret = agent_party_init(myaddr, ".1.3.6.1")){
+   if (ret == 1){
+       fprintf(stderr, "Conflict found with initial noAuth/noPriv parties... continuing\n");
+   } else if (ret == -1){
+       fprintf(stderr, "Error installing initial noAuth/noPriv parties, exiting\n");
+       exit(1);
+   } else {
+       fprintf(stderr, "Unknown error, exiting\n");
+       exit(2);
+   }
+    }
+
+    printf("Opening port(s): ");
+    fflush(stdout);
+    party_scanInit();
+    for(pp = party_scanNext(); pp; pp = party_scanNext()){
+   if ((pp->partyTDomain != DOMAINSNMPUDP)
+       || bcmp((char *)&myaddr, pp->partyTAddress, 4))
+       continue;  /* don't listen for non-local parties */
+
+   dest_port = 0;
+   bcopy(pp->partyTAddress + 4, &dest_port, 2);
+   for(index = 0; index < sdlen; index++)
+       if (dest_port == portlist[index])
+      break;
+   if (index < sdlen)  /* found a hit before the end of the list */
+       continue;
+   printf("%u ", dest_port);
+   fflush(stdout);
+   /* Set up connections */
+   sd = socket(AF_INET, SOCK_DGRAM, 0);
+   if (sd < 0){
+       perror("socket");
+       return 1;
+   }
+   me.sin_family = AF_INET;
+   me.sin_addr.s_addr = INADDR_ANY;
+   /* already in network byte order (I think) */
+   me.sin_port = dest_port;
+   if (bind(sd, (struct sockaddr *)&me, sizeof(me)) != 0){
+       perror("bind");
+       return 2;
+   }
+   register_input_handler(sd, snmp_read_packet);
+   portlist[sdlen] = dest_port;
+   if (++sdlen == 32){
+       printf("No more sockets... ignoring rest of file\n");
+       break;
+   }
+    }
+    printf("\n");
+    bzero((char *)addrCache, sizeof(addrCache));
+}
+
+/*
+ * Place an IP address into an OID starting at element n
  */
 void
-put_address(oid, addr, n)
-   OID oid;
+put_address(name, addr, n)
+   oid	 *name;
    u_long addr;
    int n;
 {
    int i;
 
    for (i=n+3; i>=n+0; i--) {
-      oid->oid_elements[i] = addr & 0xFF;
+      name[i] = addr & 0xFF;
       addr >>= 8;
    }
 }
 
 /* Get an IP address from an OID starting at element n */
 int
-get_address(oid, addr, n)
-   OID oid;
+get_address(name, length, addr, n)
+   oid	 *name;	
+   int	  length;
    u_long *addr;
    int n;
 {
@@ -60,106 +139,75 @@ get_address(oid, addr, n)
 
    (*addr) = 0;
 
-   if (oid -> oid_nelem < n+4)
+   if (length < n+4)
       return 0;
 
    for (i=n; i<n+4; i++) {
       (*addr) <<= 8;
-      if (i >= oid->oid_nelem)
+      if (i >= length)
           ok = 0;
       else
-         (*addr) |= oid->oid_elements[i];
+         (*addr) |= name[i];
    }
-
    return ok;
 }
 
 /*
- *  Attempt to start up SMUX protocol
+ * Implements scalar objects from DVMRP and Multicast MIBs
  */
-void
-try_smux_init()
+u_char *
+o_scalar(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    if (smux_fd != NOTOK || dont_bother_anymore) 
-       return;
-    if ((smux_fd = smux_init(debug)) == NOTOK) {
-       log(LOG_WARNING, 0,"smux_init: %s [%s]", smux_error(smux_errno), 
-        smux_info);
-    } else 
-       rock_and_roll = 0;
-}
+    int result;
 
-/* 
- * Implements scalar objects from both MIBs 
- */
-static int 
-o_scalar(oi, v, offset)
-   OI oi;
-   register struct type_SNMP_VarBind *v;
-   int offset;
-{
-    int     ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT     ot = oi -> oi_type;
+    *write_method = 0;
+    result = compare(name, *length, vp->name, (int)vp->namelen);
+    if ((exact && (result != 0)) || (!exact && (result >= 0)))
+   return NULL;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-        case type_SNMP_SMUX__PDUs_get__request:
-            if (oid -> oid_nelem !=
-                        ot -> ot_name -> oid_nelem + 1
-                    || oid -> oid_elements[oid -> oid_nelem - 1]
-                            != 0)
-                return int_SNMP_error__status_noSuchName;
-            break;
+	bcopy((char *)vp->name, (char *)name,
+     (int)vp->namelen * sizeof(oid));
+	*length = vp->namelen;
+	*var_len = sizeof(long);
 
-        case type_SNMP_SMUX__PDUs_get__next__request:
-            if (oid -> oid_nelem
-                    == ot -> ot_name -> oid_nelem) {
-                OID     new;
+    switch (vp->magic) {
 
-                if ((new = oid_extend (oid, 1)) == NULLOID)
-                    return int_SNMP_error__status_genErr;
-                new -> oid_elements[new -> oid_nelem - 1] = 0;
+    case ipMRouteEnable:
+       long_return = 1;
+       return (u_char *) &long_return;
 
-                if (v -> name)
-                    free_SNMP_ObjectName (v -> name);
-                v -> name = new;
-            }
-            else
-                return NOTOK;
-            break;
+    case dvmrpVersion: {
+       static char buff[15];
 
-        default:
-            return int_SNMP_error__status_genErr;
+       sprintf(buff, "mrouted%d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
+       *var_len = strlen(buff);
+       return (u_char *)buff;
     }
 
-    switch (ifvar) {
-        case ipMRouteEnable:
-            return o_integer (oi, v, 1);
+    case dvmrpGenerationId:
+       long_return = dvmrp_genid;
+       return (u_char *) &long_return;
 
-        case dvmrpVersion: {
-            static char buff[15];
-
-            sprintf(buff, "mrouted%d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
-            return o_string (oi, v, buff, strlen (buff));
-        }
-
-        case dvmrpGenerationId:
-            return o_integer (oi, v, dvmrp_genid);
-
-        default:
-            return int_SNMP_error__status_noSuchName;
+    default:
+       ERROR("");
     }
+    return NULL;
 }
 
-/* 
+/*
  * Find if a specific scoped boundary exists on a Vif
  */
 struct vif_acl *
 find_boundary(vifi, addr, mask)
-   int vifi;
-   int addr;
-   int mask;
+   vifi_t vifi;
+   u_long addr;
+   u_long mask;
 {
    struct vif_acl *n;
 
@@ -171,13 +219,13 @@ find_boundary(vifi, addr, mask)
 }
 
 /*
- * Find the next scoped boundary in order after a given spec
+ * Find the lowest boundary >= (V,A,M) spec
  */
 struct vif_acl *
 next_boundary(vifi, addr, mask)
-   int *vifi;
-   int  addr;
-   int  mask;
+   vifi_t *vifi;
+   u_long  addr;
+   u_long  mask;
 {
    struct vif_acl *bestn, *n;
    int  i;
@@ -185,9 +233,9 @@ next_boundary(vifi, addr, mask)
    for (i = *vifi; i < numvifs; i++) {
       bestn = NULL;
       for (n = uvifs[i].uv_acl; n; n=n->acl_next) {
-         if ((i > *vifi || n->acl_addr > addr 
-           || (n->acl_addr==addr && n->acl_mask>mask)) 
-          && (!bestn || n->acl_addr < bestn->acl_addr 
+         if ((i > *vifi || n->acl_addr > addr
+           || (n->acl_addr == addr && n->acl_mask >= mask))
+          && (!bestn || n->acl_addr < bestn->acl_addr
            || (n->acl_addr==bestn->acl_addr && n->acl_mask<bestn->acl_mask)))
             bestn = n;
       }
@@ -202,97 +250,100 @@ next_boundary(vifi, addr, mask)
 /*
  * Implements the Boundary Table portion of the DVMRP MIB
  */
-static int  
-o_dvmrpBoundaryTable (oi, v, offset)
-OI	oi;
-register struct type_SNMP_VarBind *v;
+u_char *
+o_dvmrpBoundaryTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    int	    ifvar, vifi,
-	    addr, mask;
-    register OID    oid = oi -> oi_name;
-    register OT	   ot = oi -> oi_type;
+    vifi_t     vifi;
+    u_long	   addr, mask;
     struct vif_acl *bound;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-	    if (oid->oid_nelem != ot->ot_name->oid_nelem + 9)
-		return int_SNMP_error__status_noSuchName;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
 
-      if ((vifi = oid -> oid_elements[ot-> ot_name->oid_nelem]) >= numvifs)
-      return int_SNMP_error__status_noSuchName;
+    if (exact) {
+	    if (*length != vp->namelen + 9)
+		return NULL;
 
-      if (!get_address(oid, &addr, ot->ot_name->oid_nelem+1)
-       || !get_address(oid, &mask, ot->ot_name->oid_nelem+5))
-		return int_SNMP_error__status_noSuchName;
+      if ((vifi = name[vp->namelen]) >= numvifs)
+      return NULL;
+
+      if (!get_address(name, *length, &addr, vp->namelen+1)
+       || !get_address(name, *length, &mask, vp->namelen+5))
+		return NULL;
 
       if (!(bound = find_boundary(vifi, addr, mask)))
-		return int_SNMP_error__status_noSuchName;
-	    break;
+		return NULL;
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
-	    if (oid->oid_nelem < ot->ot_name->oid_nelem + 9) {
-		OID	new;
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
 
-      if (oid->oid_nelem == ot->ot_name->oid_nelem) {
-         vifi = addr = mask = 0;
-      } else {
-         vifi = oid->oid_elements[ot->ot_name->oid_nelem];
-         get_address(oid, &addr, ot->ot_name->oid_nelem+1);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+5);
-      }
+	    if (len < vp->namelen + 9) { /* get first entry */
 
-      bound = next_boundary(&vifi,addr,mask);
-      if (!bound)
-         return NOTOK;
+         if (len == vp->namelen) {
+            vifi = addr = mask = 0;
+         } else {
+            vifi = name[vp->namelen];
+            get_address(name, len, &addr, vp->namelen+1);
+            get_address(name, len, &mask, vp->namelen+5);
+         }
 
-		new = oid_extend (oid, ot->ot_name->oid_nelem+9-oid->oid_nelem);
-		if (new == NULLOID)
-		    return NOTOK;
-		new -> oid_elements[ot->ot_name->oid_nelem] = vifi;
-      put_address(new, bound->acl_addr, ot->ot_name->oid_nelem+1);
-      put_address(new, bound->acl_mask, ot->ot_name->oid_nelem+5);
+         bound = next_boundary(&vifi,addr,mask);
+         if (!bound)
+            return NULL;
 
-		if (v -> name)
-		    free_SNMP_ObjectName (v -> name);
-		v -> name = new;
+   		newname[vp->namelen] = vifi;
+         put_address(newname, bound->acl_addr, vp->namelen+1);
+         put_address(newname, bound->acl_mask, vp->namelen+5);
 	    } else {  /* get next entry given previous */
-		int	i = ot -> ot_name -> oid_nelem;
+		   vifi = name[vp->namelen];
+         get_address(name, *length, &addr, vp->namelen+1);
+         get_address(name, *length, &mask, vp->namelen+5);
 
-		   vifi = oid->oid_elements[i];
-         get_address(oid, &addr, ot->ot_name->oid_nelem+1);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+5);
          if (!(bound = next_boundary(&vifi,addr,mask+1)))
-            return NOTOK;
+            return NULL;
 
-         put_address(oid, bound->acl_addr, ot->ot_name->oid_nelem+1);
-         put_address(oid, bound->acl_mask, ot->ot_name->oid_nelem+5);
-		   oid->oid_elements[i] = vifi;
-		   oid->oid_nelem = i + 9;
+		   newname[vp->namelen] = vifi;
+         put_address(newname, bound->acl_addr, vp->namelen+1);
+         put_address(newname, bound->acl_mask, vp->namelen+5);
 	    }
-	    break;
-
-	default:
-	    return int_SNMP_error__status_genErr;
     }
 
-    switch (ifvar) {
+    /* Save new OID */
+    *length = vp->namelen + 9;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
+
+    switch (vp->magic) {
 
    case dvmrpBoundaryVifIndex:
-       return o_integer (oi, v, vifi);
+       long_return = vifi;
+       return (u_char *) &long_return;
 
-	default:
-	    return int_SNMP_error__status_noSuchName;
+    default:
+       ERROR("");
     }
+    return NULL;
 }
 
-/* 
- * Given a vif index and address, return the next greater neighbor entry 
+/*
+ * Find the lowest neighbor >= (V,A) spec
  */
 struct listaddr *
 next_neighbor(vifi, addr)
-   int *vifi;
-   int  addr;
+   vifi_t *vifi;
+   u_long  addr;
 {
    struct listaddr *bestn, *n;
    int  i;
@@ -300,7 +351,7 @@ next_neighbor(vifi, addr)
    for (i = *vifi; i < numvifs; i++) {
       bestn = NULL;
       for (n = uvifs[i].uv_neighbors; n; n=n->al_next) {
-         if ((i > *vifi || n->al_addr > addr) 
+         if ((i > *vifi || n->al_addr >= addr)
           && (!bestn || n->al_addr < bestn->al_addr))
             bestn = n;
       }
@@ -317,8 +368,8 @@ next_neighbor(vifi, addr)
  */
 struct listaddr *
 find_neighbor(vifi, addr)
-   int vifi;
-   int addr;
+   vifi_t vifi;
+   u_long addr;
 {
    struct listaddr *n;
 
@@ -329,103 +380,349 @@ find_neighbor(vifi, addr)
    return NULL;
 }
 
-/*
- * Implements the Neighbor Table portion of the DVMRP MIB
- */
-static int  
-o_dvmrpNeighborTable (oi, v, offset)
-OI	oi;
-register struct type_SNMP_VarBind *v;
+u_char *
+o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    int	    ifvar, vifi,
-	    addr;
-    register OID    oid = oi -> oi_name;
-    register OT	   ot = oi -> oi_type;
+    vifi_t     vifi;
+    u_long     addr, mask;
     struct listaddr *neighbor;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-	    if (oid->oid_nelem != ot->ot_name->oid_nelem + 5)
-		return int_SNMP_error__status_noSuchName;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
 
-      if ((vifi = oid -> oid_elements[ot-> ot_name->oid_nelem]) >= numvifs)
-      return int_SNMP_error__status_noSuchName;
+    if (exact) {
+	    if (*length != vp->namelen + 5)
+		return NULL;
 
-      if (!get_address(oid, &addr, ot->ot_name->oid_nelem+1))
-		return int_SNMP_error__status_noSuchName;
+      if ((vifi = name[vp->namelen]) >= numvifs)
+      return NULL;
+
+      if (!get_address(name, *length, &addr, vp->namelen+1))
+		return NULL;
 
       if (!(neighbor = find_neighbor(vifi, addr)))
-		return int_SNMP_error__status_noSuchName;
-	    break;
+		return NULL;
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
-	    if (oid->oid_nelem < ot->ot_name->oid_nelem + 5) { 
-		OID	new;
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
 
-      if (oid->oid_nelem == ot->ot_name->oid_nelem) {
-         vifi = addr = 0;
-      } else {
-         vifi = oid->oid_elements[ot->ot_name->oid_nelem];
-         get_address(oid, &addr, ot->ot_name->oid_nelem+1);
-      }
+	    if (len < vp->namelen + 5) { /* get first entry */
 
-      neighbor = next_neighbor(&vifi,addr); /* Get first entry */
-      if (!neighbor)
-         return NOTOK;
+         if (len == vp->namelen) {
+            vifi = addr = 0;
+         } else {
+            vifi = name[vp->namelen];
+            get_address(name, len, &addr, vp->namelen+1);
+         }
 
-		new = oid_extend (oid, ot->ot_name->oid_nelem+5-oid->oid_nelem);
-		if (new == NULLOID)
-		    return NOTOK;
-		new -> oid_elements[ot->ot_name->oid_nelem] = vifi;
-      put_address(new, neighbor->al_addr, ot->ot_name->oid_nelem+1);
+         neighbor = next_neighbor(&vifi,addr);
+         if (!neighbor)
+            return NULL;
 
-		if (v -> name)
-		    free_SNMP_ObjectName (v -> name);
-		v -> name = new;
-
+   		newname[vp->namelen] = vifi;
+         put_address(newname, neighbor->al_addr, vp->namelen+1);
 	    } else {  /* get next entry given previous */
-		int	i = ot -> ot_name -> oid_nelem;
+		   vifi = name[vp->namelen];
+         get_address(name, *length, &addr, vp->namelen+1);
 
-		   vifi = oid->oid_elements[i];
-         get_address(oid, &addr, ot->ot_name->oid_nelem+1);
          if (!(neighbor = next_neighbor(&vifi,addr+1)))
-            return NOTOK;
+            return NULL;
 
-         put_address(oid, neighbor->al_addr, ot->ot_name->oid_nelem+1);
-		   oid->oid_elements[i] = vifi;
-		   oid->oid_nelem = i + 5;
+		   newname[vp->namelen] = vifi;
+         put_address(newname, neighbor->al_addr, vp->namelen+1);
 	    }
-	    break;
-
-	default:
-	    return int_SNMP_error__status_genErr;
     }
 
-    switch (ifvar) {
+    /* Save new OID */
+    *length = vp->namelen + 5;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
+
+    switch (vp->magic) {
 
    case dvmrpNeighborUpTime: {
        time_t currtime;
        time(&currtime);
-       return o_integer (oi, v, (currtime - neighbor->al_ctime)*100);
+       long_return = (currtime - neighbor->al_ctime)*100;
+       return (u_char *) &long_return;
    }
 
-   case dvmrpNeighborExpiryTime:
-       return o_integer (oi, v, (NEIGHBOR_EXPIRE_TIME-neighbor->al_timer) * 100);
+   case dvmrpNeighborExpiryTime: 
+       long_return = (NEIGHBOR_EXPIRE_TIME - neighbor->al_timer 
+        + secs_remaining_offset()) * 100;
+       return (u_char *) &long_return;
 
    case dvmrpNeighborVersion: {
        static char buff[15];
 
        sprintf(buff, "%d.%d", neighbor->al_pv, neighbor->al_mv);
-       return o_string (oi, v, buff, strlen (buff));
+       *var_len = strlen(buff);
+       return (u_char *)buff;
    }
 
-   case dvmrpNeighborGenerationId: 
-       return o_integer (oi, v, neighbor->al_genid);
+   case dvmrpNeighborGenerationId:
+       long_return = neighbor->al_genid;
+       return (u_char *) &long_return;
+
+    default:
+       ERROR("");
+    }
+    return NULL;
+}
+
+/* Look up ifIndex given uvifs[ifnum].uv_lcl_addr */
+struct in_ifaddr *        /* returns: in_ifaddr structure, or null on error */
+ipaddr_to_ifindex(ipaddr, ifIndex)
+   u_long ipaddr;
+   int   *ifIndex;
+{
+    int interface;
+static struct in_ifaddr in_ifaddr;
+
+    Interface_Scan_Init();
+    for (;;) {
+       if (Interface_Scan_Next(&interface, (char *)0, NULL, &in_ifaddr) == 0) 
+          return NULL;
+    
+       if (((struct sockaddr_in *) &(in_ifaddr.ia_addr))->sin_addr.s_addr 
+        == ipaddr) {
+          *ifIndex = interface;
+          return &in_ifaddr;
+       }
+    }
+}
+
+/*
+ * Find if a specific scoped boundary exists on a Vif
+ */
+struct listaddr *
+find_cache(grp, vifi)
+   u_long grp;
+   vifi_t vifi;
+{
+   struct listaddr *n;
+
+   for (n = uvifs[vifi].uv_groups; n != NULL; n = n->al_next) {
+      if (grp == n->al_addr)
+         return n;
+   }
+   return NULL;
+}
+
+/*
+ * Find the next group cache entry >= (A,V) spec
+ */
+struct listaddr *
+next_cache(addr, vifi)
+   u_long  addr;
+   vifi_t *vifi;
+{
+   struct listaddr *bestn=NULL, *n;
+   int  i, besti;
+
+   /* Step through all entries looking for the next one */
+   for (i = 0; i < numvifs; i++) {
+      for (n = uvifs[i].uv_groups; n; n=n->al_next) {
+         if ((n->al_addr > addr || (n->al_addr == addr && i >= *vifi))
+          && (!bestn || n->al_addr < bestn->al_addr 
+           || (n->al_addr == bestn->al_addr && i < besti))) {
+            bestn = n;
+            besti = i;
+         }
+      }
+   }
+
+   if (bestn) {
+      *vifi = besti;
+      return bestn;
+   }
+   return NULL;
+}
+
+/*
+ * Implements the IGMP Cache Table portion of the IGMP MIB
+ */
+u_char *
+o_igmpCacheTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+{
+    vifi_t     vifi;
+    u_long     grp;
+    int	      ifIndex;
+    struct listaddr *cache;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
+    struct in_ifaddr *in_ifaddr;
+    struct in_multi   in_multi, *inm;
+
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
+
+    if (exact) {
+	    if (*length != vp->namelen + 5)
+		return NULL;
+
+      if ((vifi = name[vp->namelen+4]) >= numvifs)
+      return NULL;
+
+      if (!get_address(name, *length, &grp, vp->namelen))
+		return NULL;
+
+      if (!(cache = find_cache(grp, vifi)))
+		return NULL;
+
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
+
+	    if (len < vp->namelen + 5) { /* get first entry */
+
+         if (len == vp->namelen) {
+            vifi = grp = 0;
+         } else {
+            get_address(name, len, &grp, vp->namelen);
+            vifi = name[vp->namelen+4];
+         }
+
+         cache = next_cache(grp,&vifi);
+         if (!cache)
+            return NULL;
+
+         put_address(newname, cache->al_addr, vp->namelen);
+   		newname[vp->namelen+4] = vifi;
+	    } else {  /* get next entry given previous */
+         get_address(name, *length, &grp, vp->namelen);
+		   vifi = name[vp->namelen+4]+1;
+
+         if (!(cache = next_cache(grp,&vifi)))
+            return NULL;
+
+         put_address(newname, cache->al_addr, vp->namelen);
+		   newname[vp->namelen+4] = vifi;
+	    }
+    }
+
+    /* Save new OID */
+    *length = vp->namelen + 5;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
+
+    /* Look up ifIndex given uvifs[vifi].uv_lcl_addr */
+    in_ifaddr = ipaddr_to_ifindex(uvifs[vifi].uv_lcl_addr, &ifIndex);
+
+    switch (vp->magic) {
+
+   case igmpCacheSelf: 
+       inm = in_ifaddr->ia_multiaddrs;
+       while (inm) {
+          klookup( (int)inm, (char *)&in_multi, sizeof(in_multi));
+
+          if (in_multi.inm_addr.s_addr == cache->al_addr) {
+             long_return = 1; /* true */
+             return (u_char *) &long_return;
+          }
+
+          inm = in_multi.inm_next;
+       }
+       long_return = 2; /* false */
+       return (u_char *) &long_return;
+
+   case igmpCacheLastReporter:
+       return (u_char *) &cache->al_genid;
+
+   case igmpCacheUpTime: {
+      time_t currtime;
+      time(&currtime);
+      long_return = (currtime - cache->al_ctime)*100;
+      return (u_char *) &long_return;
+   }
+
+   case igmpCacheExpiryTime: 
+       long_return = secs_remaining(cache->al_timerid)*100;
+       return (u_char *) &long_return;
+
+   case igmpCacheStatus: 
+       long_return = 1;
+       return (u_char *) &long_return;
+
+    default:
+       ERROR("");
+    }
+    return NULL;
+}
+
+/*
+ * Implements the IGMP Interface Table portion of the IGMP MIB
+ */
+u_char *
+o_igmpInterfaceTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+{
+    oid			newname[MAX_NAME_LEN];
+    register int	ifnum;
+    int result;
+static struct sioc_vif_req v_req;
+
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
+
+    /* find "next" interface */
+    for(ifnum = 0; ifnum < numvifs; ifnum++){
+       if (!(uvifs[ifnum].uv_flags & VIFF_QUERIER))
+           continue;
+       newname[vp->namelen] = (oid)ifnum;
+       result = compare(name, *length, newname, (int)vp->namelen + 1);
+       if ((exact && (result == 0)) || (!exact && (result < 0)))
+          break;
+    }
+    if (ifnum >= numvifs)
+       return NULL;
+
+    /* Save new OID */
+    bcopy((char *)newname, (char *)name, ((int)vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);
+
+    switch (vp->magic){
+
+	case igmpInterfaceQueryInterval:
+		long_return = GROUP_QUERY_INTERVAL;
+      return (u_char *) &long_return;
+
+	case igmpInterfaceStatus:
+		long_return = 1; /* active */
+      return (u_char *) &long_return;
 
 	default:
-	    return int_SNMP_error__status_noSuchName;
+	    ERROR("");
     }
+    return NULL;
 }
 
 /*
@@ -449,859 +746,542 @@ refresh_vif(v_req, ifnum)
 /*
  * Implements the Multicast Routing Interface Table portion of the Multicast MIB
  */
-static int  
-o_ipMRouteInterfaceTable (oi, v, offset)
-OI	oi;
-register struct type_SNMP_VarBind *v;
-int	offset;
+u_char *
+o_ipMRouteInterfaceTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    int	    ifnum,
-	    ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT	   ot = oi -> oi_type;
+    oid			newname[MAX_NAME_LEN];
+    register int	ifnum;
+    int result;
 static struct sioc_vif_req v_req;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-	    if (oid -> oid_nelem != ot -> ot_name -> oid_nelem + 1)
-		return int_SNMP_error__status_noSuchName;
-	    if ((ifnum = oid -> oid_elements[oid -> oid_nelem - 1]) >= numvifs)
-		return int_SNMP_error__status_noSuchName;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
+
+    /* find "next" interface */
+    for(ifnum = 0; ifnum < numvifs; ifnum++){
+	newname[vp->namelen] = (oid)ifnum;
+	result = compare(name, *length, newname, (int)vp->namelen + 1);
+	if ((exact && (result == 0)) || (!exact && (result < 0)))
 	    break;
-
-	case type_SNMP_SMUX__PDUs_get__next__request:
-	    if (oid -> oid_nelem == ot -> ot_name -> oid_nelem) {
-		OID	new;
-
-		ifnum = 0;
-
-		if ((new = oid_extend (oid, 1)) == NULLOID)
-		    return NOTOK;
-		new -> oid_elements[new -> oid_nelem - 1] = ifnum;
-
-		if (v -> name)
-		    free_SNMP_ObjectName (v -> name);
-		v -> name = new;
-
-	    } else {
-		int	i = ot -> ot_name -> oid_nelem;
-
-		if ((ifnum = oid -> oid_elements[i] + 1) >= numvifs)
-		    return NOTOK;
-
-		oid -> oid_elements[i] = ifnum;
-		oid -> oid_nelem = i + 1;
-	    }
-	    break;
-
-	default:
-	    return int_SNMP_error__status_genErr;
     }
+    if (ifnum >= numvifs)
+	return NULL;
 
-    switch (ifvar) {
-	case ipMRouteInterfaceTtl:
-	    return o_integer (oi, v, uvifs[ifnum].uv_threshold);
+    /* Save new OID */
+    bcopy((char *)newname, (char *)name, ((int)vp->namelen + 1) * sizeof(oid));
+    *length = vp->namelen + 1;
+    *write_method = 0;
+    *var_len = sizeof(long);
 
-	case dvmrpVInterfaceType:
+    switch (vp->magic){
+
+   case ipMRouteInterfaceTtl:
+       long_return = uvifs[ifnum].uv_threshold;
+       return (u_char *) &long_return;
+
+   case dvmrpVInterfaceType:
       if (uvifs[ifnum].uv_flags & VIFF_SRCRT)
-         return o_integer (oi, v, 2); 
+         long_return = 2;
       else if (uvifs[ifnum].uv_flags & VIFF_TUNNEL)
-         return o_integer (oi, v, 1); 
+         long_return = 1;
       else if (uvifs[ifnum].uv_flags & VIFF_QUERIER)
-         return o_integer (oi, v, 3); 
+         long_return = 3;
       else                               /* SUBNET */
-         return o_integer (oi, v, 4); 
+         long_return = 4;
+      return (u_char *) &long_return;
 
-	case dvmrpVInterfaceState: 
+   case dvmrpVInterfaceState:
       if (uvifs[ifnum].uv_flags & VIFF_DISABLED)
-         return o_integer (oi, v, 3);
-      else if (uvifs[ifnum].uv_flags & VIFF_DOWN)
-         return o_integer (oi, v, 2);
+         long_return = 3;
+      else if ((uvifs[ifnum].uv_flags & VIFF_DOWN)
+       || ((uvifs[ifnum].uv_flags & VIFF_TUNNEL) && (uvifs[ifnum].uv_neighbors==NULL)))
+         long_return = 2;
       else /* UP */
-         return o_integer (oi, v, 1); 
+         long_return = 1;
+      return (u_char *) &long_return;
 
-   case dvmrpVInterfaceLocalAddress: {
-      struct sockaddr_in tmp;
-      tmp.sin_addr.s_addr = uvifs[ifnum].uv_lcl_addr;
-      return o_ipaddr (oi, v, &tmp);
-   }
+   case dvmrpVInterfaceLocalAddress: 
+      return (u_char *) &uvifs[ifnum].uv_lcl_addr;
 
-   case dvmrpVInterfaceRemoteAddress: {
-      struct sockaddr_in tmp;
-      tmp.sin_addr.s_addr = (uvifs[ifnum].uv_flags & VIFF_TUNNEL) ?
-         uvifs[ifnum].uv_rmt_addr :
-         uvifs[ifnum].uv_subnet;
-      return o_ipaddr (oi, v, &tmp);
-   }
+   case dvmrpVInterfaceRemoteAddress: 
+      return (u_char *) ((uvifs[ifnum].uv_flags & VIFF_TUNNEL) ?
+         &uvifs[ifnum].uv_rmt_addr :
+         &uvifs[ifnum].uv_subnet);
 
-   case dvmrpVInterfaceRemoteSubnetMask: {
-      struct sockaddr_in tmp;
-      tmp.sin_addr.s_addr = uvifs[ifnum].uv_subnetmask;
-      return o_ipaddr (oi, v, &tmp);
-   }
+   case dvmrpVInterfaceRemoteSubnetMask:
+      return (u_char *) &uvifs[ifnum].uv_subnetmask;
 
-	case dvmrpVInterfaceMetric:
-	    return o_integer (oi, v, uvifs[ifnum].uv_metric);
+   case dvmrpVInterfaceMetric:
+       long_return = uvifs[ifnum].uv_metric;
+       return (u_char *) &long_return;
 
-	case dvmrpVInterfaceRateLimit:
-	    return o_integer (oi, v, uvifs[ifnum].uv_rate_limit);
+   case dvmrpVInterfaceRateLimit:
+       long_return = uvifs[ifnum].uv_rate_limit;
+       return (u_char *) &long_return;
 
-	case dvmrpVInterfaceInPkts:
+   case dvmrpVInterfaceInPkts:
        refresh_vif(&v_req, ifnum);
-	    return o_integer(oi, v, v_req.icount);
+       long_return = v_req.icount;
+       return (u_char *) &long_return;
 
-	case dvmrpVInterfaceOutPkts:
+   case dvmrpVInterfaceOutPkts:
        refresh_vif(&v_req, ifnum);
-	    return o_integer(oi, v, v_req.ocount);
+       long_return = v_req.ocount;
+       return (u_char *) &long_return;
 
-	case dvmrpVInterfaceInOctets:
+   case dvmrpVInterfaceInOctets:
        refresh_vif(&v_req, ifnum);
-	    return o_integer(oi, v, v_req.ibytes);
+       long_return = v_req.ibytes;
+       return (u_char *) &long_return;
 
-	case dvmrpVInterfaceOutOctets:
+   case dvmrpVInterfaceOutOctets:
        refresh_vif(&v_req, ifnum);
-	    return o_integer(oi, v, v_req.obytes);
+       long_return = v_req.obytes;
+       return (u_char *) &long_return;
 
 	default:
-	    return int_SNMP_error__status_noSuchName;
+	    ERROR("");
     }
-}
-
-struct mib_variable {
-   char     *name;        /* MIB variable name */
-   int     (*function)(); /* Function to call */
-   int       info;        /* Which variable */
-} mib_vars[] = {
- "ipMRouteEnable",               o_scalar, ipMRouteEnable,
- "ipMRouteUpstreamNeighbor",     o_ipMRouteTable,  ipMRouteUpstreamNeighbor,
- "ipMRouteInIfIndex",            o_ipMRouteTable,  ipMRouteInIfIndex,
- "ipMRouteUpTime",               o_ipMRouteTable,  ipMRouteUpTime, 
- "ipMRouteExpiryTime",           o_ipMRouteTable,  ipMRouteExpiryTime,
- "ipMRoutePkts",                 o_ipMRouteTable,  ipMRoutePkts, 
- "ipMRouteDifferentInIfIndexes", o_ipMRouteTable,  ipMRouteDifferentInIfIndexes,
- "ipMRouteOctets",               o_ipMRouteTable,  ipMRouteOctets,
- "ipMRouteProtocol",             o_ipMRouteTable,  ipMRouteProtocol,
- "ipMRouteNextHopState",      o_ipMRouteNextHopTable, ipMRouteNextHopState,
- "ipMRouteNextHopUpTime",     o_ipMRouteNextHopTable, ipMRouteNextHopUpTime,
- "ipMRouteNextHopExpiryTime", o_ipMRouteNextHopTable, ipMRouteNextHopExpiryTime,
- "ipMRouteNextHopClosestMemberHops", o_ipMRouteNextHopTable, ipMRouteNextHopClosestMemberHops,
- "ipMRouteNextHopProtocol",   o_ipMRouteNextHopTable, ipMRouteNextHopProtocol,
- "ipMRouteInterfaceTtl",  o_ipMRouteInterfaceTable, ipMRouteInterfaceTtl,
- "dvmrpVersion",               o_scalar, dvmrpVersion,
- "dvmrpGenerationId",          o_scalar, dvmrpGenerationId,
- "dvmrpVInterfaceType",     o_ipMRouteInterfaceTable, dvmrpVInterfaceType,
- "dvmrpVInterfaceState",    o_ipMRouteInterfaceTable, dvmrpVInterfaceState,
- "dvmrpVInterfaceLocalAddress", o_ipMRouteInterfaceTable, dvmrpVInterfaceLocalAddress,
- "dvmrpVInterfaceRemoteAddress", o_ipMRouteInterfaceTable, dvmrpVInterfaceRemoteAddress,
- "dvmrpVInterfaceRemoteSubnetMask", o_ipMRouteInterfaceTable, dvmrpVInterfaceRemoteSubnetMask,
- "dvmrpVInterfaceMetric",    o_ipMRouteInterfaceTable, dvmrpVInterfaceMetric,
- "dvmrpVInterfaceRateLimit", o_ipMRouteInterfaceTable, dvmrpVInterfaceRateLimit,
- "dvmrpVInterfaceInPkts",    o_ipMRouteInterfaceTable, dvmrpVInterfaceInPkts,
- "dvmrpVInterfaceOutPkts",   o_ipMRouteInterfaceTable, dvmrpVInterfaceOutPkts,
- "dvmrpVInterfaceInOctets",  o_ipMRouteInterfaceTable, dvmrpVInterfaceInOctets,
- "dvmrpVInterfaceOutOctets", o_ipMRouteInterfaceTable, dvmrpVInterfaceOutOctets,
- "dvmrpNeighborUpTime",      o_dvmrpNeighborTable, dvmrpNeighborUpTime,
- "dvmrpNeighborExpiryTime",  o_dvmrpNeighborTable, dvmrpNeighborExpiryTime,
- "dvmrpNeighborVersion",     o_dvmrpNeighborTable, dvmrpNeighborVersion,
- "dvmrpNeighborGenerationId",o_dvmrpNeighborTable, dvmrpNeighborGenerationId,
- "dvmrpRouteUpstreamNeighbor", o_dvmrpRouteTable, dvmrpRouteUpstreamNeighbor,
- "dvmrpRouteInVifIndex",       o_dvmrpRouteTable, dvmrpRouteInVifIndex,
- "dvmrpRouteMetric",           o_dvmrpRouteTable, dvmrpRouteMetric,
- "dvmrpRouteExpiryTime",       o_dvmrpRouteTable, dvmrpRouteExpiryTime,
- "dvmrpRouteNextHopType",    o_dvmrpRouteNextHopTable, dvmrpRouteNextHopType,
- "dvmrpBoundaryVifIndex",    o_dvmrpBoundaryTable, dvmrpBoundaryVifIndex,
- 0, 0, 0
-};
-
-/*
- * Register variables as part of the MIBs
- */
-void
-init_mib()
-{
-   register OT ot;
-   int i;
-
-   for (i=0; mib_vars[i].name; i++)
-      if (ot=text2obj(mib_vars[i].name)) {
-         ot->ot_getfnx = mib_vars[i].function;
-         ot->ot_info = (caddr_t)mib_vars[i].info;
-      }
+    return NULL;
 }
 
 /*
- * Initialize the SNMP part of mrouted
+ * Implements the DVMRP Route Table portion of the DVMRP MIB
  */
-void
-snmp_init()
+u_char *
+o_dvmrpRouteTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    OT ot;
-    int i;
-
-    if (readobjects("mrouted.defs") == NOTOK)
-       log(LOG_ERR, 0, "readobjects: %s", PY_pepy);
-    for (i=0; i < NUMMIBS; i++) {
-       if ((ot = text2obj(mibs[i])) == NULL)
-          log(LOG_ERR, 0, "object \"%s\" not in \"%s\"",
-		  mibs[i], "mrouted.defs");
-       subtree[i] = ot -> ot_name;
-    }
-    init_mib();
-    try_smux_init();
-}
-
-/*
- * Process an SNMP "get" or "get-next" request
- */
-static  
-get_smux (pdu, offset)
-   register struct type_SNMP_GetRequest__PDU *pdu;
-   int     offset;
-{
-    int     idx,
-            status;
-    object_instance ois;
-    register struct type_SNMP_VarBindList *vp;
-    IFP method;
-
-    quantum = pdu -> request__id;
-    idx = 0;
-    for (vp = pdu -> variable__bindings; vp; vp = vp -> next) {
-        register OI     oi;
-        register OT     ot;
-        register struct type_SNMP_VarBind *v = vp -> VarBind;
-
-        idx++;
-
-        if (offset == type_SNMP_SMUX__PDUs_get__next__request) {
-            if ((oi = name2inst (v -> name)) == NULLOI
-                    && (oi = next2inst (v -> name)) == NULLOI)
-                goto no_name;
-
-            if ((ot = oi -> oi_type) -> ot_getfnx == NULLIFP)
-                goto get_next;
-        }
-        else
-            if ((oi = name2inst (v -> name)) == NULLOI
-                    || (ot = oi -> oi_type) -> ot_getfnx
-                            == NULLIFP) {
-no_name: ;
-                pdu -> error__status =
-                        int_SNMP_error__status_noSuchName;
-                goto out;
-            }
-
-try_again: ;
-   switch (offset) {
-       case type_SNMP_SMUX__PDUs_get__request:
-      if (!(method = ot -> ot_getfnx))
-          goto no_name;
-      break;
-
-       case type_SNMP_SMUX__PDUs_get__next__request:
-    if (!(method = ot -> ot_getfnx))
-          goto get_next;
-      break;
-
-       case type_SNMP_SMUX__PDUs_set__request:
-      if (!(method = ot -> ot_setfnx))
-          goto no_name;
-      break;
-
-       default:
-      goto no_name;
-   }
-
-        switch (status = (*ot -> ot_getfnx) (oi, v, offset)) {
-            case NOTOK:     /* get-next wants a bump */
-get_next: ;
-                oi = &ois;
-                for (;;) {
-                    if ((ot = ot -> ot_next) == NULLOT) {
-                        pdu -> error__status =
-                              int_SNMP_error__status_noSuchName;
-                        goto out;
-                    }
-                    oi -> oi_name =
-                                (oi -> oi_type = ot) -> ot_name;
-                    if (ot -> ot_getfnx)
-                        goto try_again;
-                }
-
-            case int_SNMP_error__status_noError:
-                break;
-
-            default:
-                pdu -> error__status = status;
-                goto out;
-        }
-    }
-    idx = 0;
-
-out: ;
-    pdu -> error__index = idx;
-
-    if (smux_response (pdu) == NOTOK) {
-        log(LOG_WARNING,0,"smux_response: %s [%s]",
-               smux_error (smux_errno), smux_info);
-        smux_fd = NOTOK;
-    }
-}
-
-/*
- * Handle SNMP "set" request by replying that it is illegal
- */
-static  
-set_smux(event)
-   struct type_SNMP_SMUX__PDUs *event;
-{
-    switch (event -> offset) {
-        case type_SNMP_SMUX__PDUs_set__request:
-            {
-                register struct type_SNMP_GetResponse__PDU *pdu =
-                                    event -> un.get__response;
-
-                pdu -> error__status = int_SNMP_error__status_noSuchName;
-                pdu -> error__index = pdu -> variable__bindings ? 1 : 0;
-
-                if (smux_response (pdu) == NOTOK) {
-                    log(LOG_WARNING, 0,
-                            "smux_response: %s [%s]",
-                            smux_error (smux_errno),
-                            smux_info);
-                    smux_fd = NOTOK;
-                }
-            }
-            break;
-
-        case type_SNMP_SMUX__PDUs_commitOrRollback:
-            {
-                struct type_SNMP_SOutPDU *cor =
-                                event -> un.commitOrRollback;
-
-                if (cor -> parm == int_SNMP_SOutPDU_commit) {
-                                    /* "should not happen" */
-                    (void) smux_close (protocolError);
-                    smux_fd = NOTOK;
-                }
-            }
-            break;
-    }
-}
-
-/* 
- *  Handle an incoming SNMP message
- */
-void
-doit_smux()
-{
-   struct type_SNMP_SMUX__PDUs *event;
- 
-   if (smux_wait(&event, NOTOK)==NOTOK) {
-      if (smux_errno==inProgress)
-         return;
-      log(LOG_WARNING, 0, "smux_wait: %s [%s]", smux_error(smux_errno), 
-       smux_info);
-      smux_fd = NOTOK;
-      return;
-   }
-
-   switch (event -> offset) {
-    case type_SNMP_SMUX__PDUs_registerResponse:
-        {
-            struct type_SNMP_RRspPDU *rsp =
-                        event -> un.registerResponse;
-
-            if (rsp -> parm == int_SNMP_RRspPDU_failure) {
-                log(LOG_WARNING,0,"SMUX registration of subtree failed");
-                dont_bother_anymore = 1;
-                (void) smux_close (goingDown);
-                break;
-            }
-        }
-        if (smux_trap(NULLOID, int_SNMP_generic__trap_coldStart, 0,
-                       (struct type_SNMP_VarBindList *)0) == NOTOK) {
-            log(LOG_WARNING,0,"smux_trap: %s [%s]", smux_error (smux_errno), 
-             smux_info);
-            break;
-        }
-        return;
-
-    case type_SNMP_SMUX__PDUs_get__request:
-    case type_SNMP_SMUX__PDUs_get__next__request:
-        get_smux (event -> un.get__request, event -> offset);
-        return;
-
-    case type_SNMP_SMUX__PDUs_close:
-        log(LOG_WARNING, 0, "SMUX close: %s", 
-         smux_error (event -> un.close -> parm));
-        break;
-
-    case type_SNMP_SMUX__PDUs_set__request:
-    case type_SNMP_SMUX__PDUs_commitOrRollback:
-        set_smux (event);
-        return;
-
-    default:
-        log(LOG_WARNING,0,"bad SMUX operation: %d", event -> offset);
-        (void) smux_close (protocolError);
-        break;
-   }
-   smux_fd = NOTOK;
-}
-
-/* 
- * Inform snmpd that we are here and handling our MIBs
- */
-void
-start_smux()
-{
-   int i;
-
-   for (i=0; i<NUMMIBS; i++) {
-      if ((se = getsmuxEntrybyname (mibs[i])) == NULL) {
-         log(LOG_WARNING,0,"no SMUX entry for \"%s\"", mibs[i]);
-         return;
-      }
- 
-      /* Only open a new connection the first time through */
-      if (!i) {
-         if (smux_simple_open(&se->se_identity, mibs[i], 
-          se->se_password, strlen(se->se_password))==NOTOK) {
-            if (smux_errno == inProgress)
-               return;
-
-            log(LOG_WARNING, 0,"smux_simple_open: %s [%s]", 
-             smux_error(smux_errno), smux_info);
-            smux_fd = NOTOK;
-            return;
-         }
-         log(LOG_NOTICE,0, "SMUX open: %s \"%s\"",
-          oid2ode (&se->se_identity), se->se_name);
-         rock_and_roll = 1;
-      }
-
-      if (smux_register(subtree[i], -1, readWrite)==NOTOK) {
-         log(LOG_WARNING, 0,"smux_register: %s [%s]", smux_error(smux_errno), 
-          smux_info);
-         smux_fd = NOTOK;
-         return;
-      }
-   }
-   log(LOG_NOTICE, 0, "SMUX registered");
-}
-
-/*
- * Implements the DVMRP Route Table portion of the DVMRP MIB 
- */
-int
-o_dvmrpRouteTable (oi, v, offset)
-OI oi;
-register struct type_SNMP_VarBind *v;
-int	offset;
-{
-    u_long   src, mask;
-    int	    ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT	    ot = oi -> oi_type;
+    u_long src, mask;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
     struct rtentry *rt = NULL;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-      if (!get_address(oid, &src, ot->ot_name->oid_nelem)
-       || !get_address(oid, &mask, ot->ot_name->oid_nelem+4)
-       || !(rt = snmp_find_route(src,mask)))
-         return int_SNMP_error__status_noSuchName;
-      break;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
+    if (exact) {
+	    if (*length != vp->namelen + 8)
+		return NULL;
 
-       /* Check if we're requesting the first row */
-      if (oid->oid_nelem < ot->ot_name->oid_nelem+8) {
-         OID	new;
+      if (!get_address(name, *length, &src, vp->namelen)
+       || !get_address(name, *length, &mask, vp->namelen+4))
+		return NULL;
 
-         /* Get partial specification (if any) */
-         get_address(oid, &src, ot->ot_name->oid_nelem);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+4);
+      if (!(rt = snmp_find_route(src, mask)))
+		return NULL;
+
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
+
+	    if (len < vp->namelen + 8) { /* get first entry */
+
+         if (len == vp->namelen) {
+            src = mask = 0;
+         } else {
+            get_address(name, len, &src, vp->namelen);
+            get_address(name, len, &mask, vp->namelen+4);
+         }
 
          if (!next_route(&rt,src,mask)) /* Get first entry */
-            return NOTOK;
+            return NULL;
 
-         /* Extend by 8 more ints to hold index columns */
-         new = oid_extend (oid, ot->ot_name->oid_nelem+8-oid->oid_nelem);
-         if (new == NULLOID)
-            return NOTOK;
+         put_address(newname, rt->rt_origin    , vp->namelen);
+         put_address(newname, rt->rt_originmask, vp->namelen+4);
+	    } else {  /* get next entry given previous */
+         get_address(name, *length, &src,  vp->namelen);
+         get_address(name, *length, &mask, vp->namelen+4);
 
-         put_address(new, rt->rt_origin,     ot->ot_name->oid_nelem);
-         put_address(new, rt->rt_originmask, ot->ot_name->oid_nelem+4); 
-
-         if (v -> name)
-            free_SNMP_ObjectName (v -> name);
-         v -> name = new;
-
-      /* Else we start from a previous row */
-      } else {
-         int	i = ot -> ot_name -> oid_nelem;
-
-         /* Get the lowest entry in the table > the given grp/src/mask */
-         get_address(oid, &src, ot->ot_name->oid_nelem);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+4);
          if (!next_route(&rt, src,mask))
-            return NOTOK; 
+            return NULL;
 
-         put_address(oid, rt->rt_origin, ot->ot_name->oid_nelem);
-         put_address(oid, rt->rt_originmask, ot->ot_name->oid_nelem+4);
-      }
-      break;
+         put_address(newname, rt->rt_origin,     vp->namelen);
+         put_address(newname, rt->rt_originmask, vp->namelen+4);
+	    }
+    }
 
-	default:
-	   return int_SNMP_error__status_genErr;
-   }
+    /* Save new OID */
+    *length = vp->namelen + 8;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
 
-   switch (ifvar) {
-      case dvmrpRouteUpstreamNeighbor: {
-         struct sockaddr_in tmp;
-         tmp.sin_addr.s_addr = rt->rt_gateway;
-         return o_ipaddr (oi, v, &tmp);
-      }
+    switch (vp->magic) {
+
+      case dvmrpRouteUpstreamNeighbor: 
+         return (u_char *) &rt->rt_gateway;
 
       case dvmrpRouteInVifIndex:
-         return o_integer (oi, v, rt->rt_parent);
+         long_return = rt->rt_parent;
+         return (u_char *) &long_return;
 
       case dvmrpRouteMetric:
-         return o_integer (oi, v, rt->rt_metric);
+         long_return = rt->rt_metric;
+         return (u_char *) &long_return;
 
       case dvmrpRouteExpiryTime:
-         return o_integer (oi, v, rt->rt_timer*100);
+         long_return = (ROUTE_EXPIRE_TIME - rt->rt_timer 
+          + secs_remaining_offset()) * 100;
+         return (u_char *) &long_return;
 
-      default:
-         return int_SNMP_error__status_noSuchName;
-   }
+    default:
+       ERROR("");
+    }
+    return NULL;
 }
 
-/* 
- * Implements the DVMRP Routing Next Hop Table portion of the DVMRP MIB 
+/*
+ * Implements the DVMRP Routing Next Hop Table portion of the DVMRP MIB
  */
-int
-o_dvmrpRouteNextHopTable (oi, v, offset)
-OI oi;
-register struct type_SNMP_VarBind *v;
-int   offset;
+u_char *
+o_dvmrpRouteNextHopTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
-    u_long   src, mask;
-    vifi_t   vifi;
-    int	    ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT	    ot = oi -> oi_type;
+    u_long     src, mask;
+    vifi_t     vifi;
     struct rtentry *rt = NULL;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-      if (oid->oid_nelem != ot->ot_name->oid_nelem+9)
-         return int_SNMP_error__status_noSuchName;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
 
-      if (!get_address(oid, &src, ot->ot_name->oid_nelem)
-       || !get_address(oid, &mask, ot->ot_name->oid_nelem+4)
+    if (exact) {
+	    if (*length != vp->namelen + 9)
+		return NULL;
+
+      if (!get_address(name, *length, &src, vp->namelen)
+       || !get_address(name, *length, &mask, vp->namelen+4)
        || (!(rt=snmp_find_route(src,mask))))
-         return int_SNMP_error__status_noSuchName;
+		return NULL;
 
-      vifi = oid->oid_elements[ot->ot_name->oid_nelem+8];
+      vifi = name[vp->namelen+8];
       if (!(VIFM_ISSET(vifi, rt->rt_children)))
-         return int_SNMP_error__status_noSuchName;
-      break;
+      return NULL;
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
 
-      /* Check if we're requesting the first row */
-      if (oid->oid_nelem < ot->ot_name->oid_nelem+9) {
-         OID	new;
+	    if (len < vp->namelen + 9) { /* get first entry */
 
-         get_address(oid, &src, ot->ot_name->oid_nelem);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+4);
+         get_address(name, len, &src,  vp->namelen);
+         get_address(name, len, &mask, vp->namelen+4);
 
          /* Find first child vif */
          vifi=0;
          if (!next_route_child(&rt, src, mask, &vifi))
-            return NOTOK;
+            return NULL;
 
-         /* Extend by 9 more ints to hold index columns */
-         new = oid_extend (oid, ot->ot_name->oid_nelem+9-oid->oid_nelem);
-         if (new == NULLOID)
-            return NOTOK;
-
-         put_address(new, rt->rt_origin, ot->ot_name->oid_nelem);
-         put_address(new, rt->rt_originmask, ot->ot_name->oid_nelem+4);
-         new->oid_elements[ot->ot_name->oid_nelem+8] = vifi;
-
-         if (v -> name)
-            free_SNMP_ObjectName (v -> name);
-         v -> name = new;
-
-      /* Else we start from a previous row */
-      } else {
-         int	i = ot -> ot_name -> oid_nelem;
-
-         /* Get the lowest entry in the table > the given grp/src/mask */
-         vifi = oid->oid_elements[oid->oid_nelem-1] + 1;
-         if (!get_address(oid, &src, ot->ot_name->oid_nelem)
-          || !get_address(oid, &mask, ot->ot_name->oid_nelem+4)
+         put_address(newname, rt->rt_origin,     vp->namelen);
+         put_address(newname, rt->rt_originmask, vp->namelen+4);
+   		newname[vp->namelen+8] = vifi;
+	    } else {  /* get next entry given previous */
+		   vifi = name[vp->namelen+8] + 1;
+         if (!get_address(name, *length, &src,  vp->namelen)
+          || !get_address(name, *length, &mask, vp->namelen+4)
           || !next_route_child(&rt, src, mask, &vifi))
-            return NOTOK;
+            return NULL;
 
-         put_address(oid, rt->rt_origin, ot->ot_name->oid_nelem);
-         put_address(oid, rt->rt_originmask, ot->ot_name->oid_nelem+4);
-         oid->oid_elements[ot->ot_name->oid_nelem+8] = vifi;
-      }
-      break;
+         put_address(newname, rt->rt_origin,     vp->namelen);
+         put_address(newname, rt->rt_originmask, vp->namelen+4);
+		   newname[vp->namelen+8] = vifi;
+	    }
+    }
 
-	default:
-	   return int_SNMP_error__status_genErr;
-   }
+    /* Save new OID */
+    *length = vp->namelen + 9;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
 
-   switch (ifvar) {
+    switch (vp->magic) {
 
-      case dvmrpRouteNextHopType:
-         return o_integer (oi, v, (VIFM_ISSET(vifi, rt->rt_leaves))? 1 : 2);
+    case dvmrpRouteNextHopType:
+       long_return = (VIFM_ISSET(vifi, rt->rt_leaves))? 1 : 2;
+       return (u_char *) &long_return;
 
-      default:
-         return int_SNMP_error__status_noSuchName;
-   }
+    default:
+       ERROR("");
+    }
+    return NULL;
 }
 
-/* 
- * Implements the IP Multicast Route Table portion of the Multicast MIB 
+/*
+ * Implements the IP Multicast Route Table portion of the Multicast MIB
  */
-int  
-o_ipMRouteTable (oi, v, offset)
-OI	oi;
-register struct type_SNMP_VarBind *v;
-int	offset;
+u_char *
+o_ipMRouteTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
     u_long src, grp, mask;
-    int	    ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT	    ot = oi -> oi_type;
     struct gtable *gt = NULL;
     struct stable *st = NULL;
 static struct sioc_sg_req sg_req;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-      if (!get_address(oid, &grp, ot->ot_name->oid_nelem)
-       || !get_address(oid, &src, ot->ot_name->oid_nelem+4)
-       || !get_address(oid, &mask, ot->ot_name->oid_nelem+8)
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
+
+    if (exact) {
+	    if (*length != vp->namelen + 12)
+		return NULL;
+
+      if (!get_address(name, *length, &grp,  vp->namelen)
+       || !get_address(name, *length, &src,  vp->namelen+4)
+       || !get_address(name, *length, &mask, vp->namelen+8)
        || (mask != 0xFFFFFFFF) /* we keep sources now, not subnets */
        || !(gt = find_grp(grp))
        || !(st = find_grp_src(gt,src)))
-         return int_SNMP_error__status_noSuchName;
-      break;
+		return NULL;
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
 
-       /* Check if we're requesting the first row */
-      if (oid->oid_nelem < ot->ot_name->oid_nelem+12) {
-         OID	new;
+	    if (len < vp->namelen + 12) { /* get first entry */
 
-         /* Get partial specification (if any) */
-         get_address(oid, &grp, ot->ot_name->oid_nelem);
-         get_address(oid, &src, ot->ot_name->oid_nelem+4);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+8);
+         get_address(name, len, &grp,  vp->namelen);
+         get_address(name, len, &src,  vp->namelen+4);
+         get_address(name, len, &mask, vp->namelen+8);
 
          if (!next_grp_src_mask(&gt,&st,grp,src,mask)) /* Get first entry */
-            return NOTOK;
+            return NULL;
 
-         /* Extend by 12 more ints to hold index columns */
-         new = oid_extend (oid, ot->ot_name->oid_nelem+12-oid->oid_nelem);
-         if (new == NULLOID)
-            return NOTOK;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen);
+         put_address(newname, st->st_origin,   vp->namelen+4);
+         put_address(newname, 0xFFFFFFFF,      vp->namelen+8);
+	    } else {  /* get next entry given previous */
+         get_address(name, *length, &grp , vp->namelen);
+         get_address(name, *length, &src , vp->namelen+4);
+         get_address(name, *length, &mask, vp->namelen+8);
 
-         put_address(new, gt->gt_mcastgrp, ot->ot_name->oid_nelem);
-         put_address(new, st->st_origin, ot->ot_name->oid_nelem+4);
-         put_address(new, 0xFFFFFFFF, ot->ot_name->oid_nelem+8); 
-
-         if (v -> name)
-            free_SNMP_ObjectName (v -> name);
-         v -> name = new;
-
-      /* Else we start from a previous row */
-      } else {
-         int	i = ot -> ot_name -> oid_nelem;
-
-         /* Get the lowest entry in the table > the given grp/src/mask */
-         get_address(oid, &grp, ot->ot_name->oid_nelem);
-         get_address(oid, &src, ot->ot_name->oid_nelem+4);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+8);
          if (!next_grp_src_mask(&gt, &st, grp,src,mask))
-            return NOTOK; 
+            return NULL;
 
-         put_address(oid, gt->gt_mcastgrp, ot->ot_name->oid_nelem);
-         put_address(oid, st->st_origin, ot->ot_name->oid_nelem+4);
-         put_address(oid, 0xFFFFFFFF, ot->ot_name->oid_nelem+8);
-      }
-      break;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen);
+         put_address(newname, st->st_origin,   vp->namelen+4);
+         put_address(newname, 0xFFFFFFFF,      vp->namelen+8);
+	    }
+    }
 
-	default:
-	   return int_SNMP_error__status_genErr;
-   }
+    /* Save new OID */
+    *length = vp->namelen + 12;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
 
-   switch (ifvar) {
-      case ipMRouteUpstreamNeighbor: {
-         struct sockaddr_in tmp;
-         tmp.sin_addr.s_addr = gt->gt_route->rt_gateway;
-         return o_ipaddr (oi, v, &tmp);
-      }
+    switch (vp->magic) {
+
+      case ipMRouteUpstreamNeighbor: 
+         return (u_char *) &gt->gt_route->rt_gateway;
 
       case ipMRouteInIfIndex:
-         return o_integer (oi, v, gt->gt_route->rt_parent);
+         long_return = gt->gt_route->rt_parent;
+         return (u_char *) &long_return;
 
       case ipMRouteUpTime: {
          time_t currtime;
          time(&currtime);
-         return o_integer (oi, v, (currtime - gt->gt_ctime)*100);
+         long_return = (currtime - gt->gt_ctime)*100;
+         return (u_char *) &long_return;
       }
 
       case ipMRouteExpiryTime:
-         return o_integer (oi, v, gt->gt_timer*100);
+         long_return = 5*((gt->gt_timer+4)/5); /* round up to nearest 5 */
+         long_return = (long_return + secs_remaining_offset()) * 100;
+         return (u_char *) &long_return;
 
       case ipMRoutePkts:
          refresh_sg(&sg_req, gt, st);
-         return o_integer (oi, v, sg_req.pktcnt);
-    
+         long_return = sg_req.pktcnt;
+         return (u_char *) &long_return;
+
       case ipMRouteOctets:
          refresh_sg(&sg_req, gt, st);
-         return o_integer (oi, v, sg_req.bytecnt);
+         long_return = sg_req.bytecnt;
+         return (u_char *) &long_return;
 
       case ipMRouteDifferentInIfIndexes:
          refresh_sg(&sg_req, gt, st);
-         return o_integer (oi, v, sg_req.wrong_if);
+         long_return = sg_req.wrong_if;
+         return (u_char *) &long_return;
 
       case ipMRouteProtocol:
-         return o_integer (oi, v, 4);
+         long_return = 4;
+         return (u_char *) &long_return;
 
-      default:
-         return int_SNMP_error__status_noSuchName;
-   }
+    default:
+       ERROR("");
+    }
+    return NULL;
 }
 
-/* 
+/*
  * Implements the IP Multicast Routing Next Hop Table portion of the Multicast
- * MIB 
+ * MIB
  */
-int  
-o_ipMRouteNextHopTable (oi, v, offset)
-OI	oi;
-register struct type_SNMP_VarBind *v;
-int	offset;
+u_char *
+o_ipMRouteNextHopTable(vp, name, length, exact, var_len, write_method)
+    register struct variable *vp;   /* IN - pointer to variable entry that points here */
+    register oid	*name;	    /* IN/OUT - input name requested, output name found */
+    register int	*length;    /* IN/OUT - length of input and output oid's */
+    int			exact;	    /* IN - TRUE if an exact match was requested. */
+    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
+    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
 {
     u_long src, grp, mask, addr;
     vifi_t   vifi;
-    int	    ifvar;
-    register OID    oid = oi -> oi_name;
-    register OT	    ot = oi -> oi_type;
     struct gtable *gt;
     struct stable *st;
+    oid        newname[MAX_NAME_LEN];
+    int        len;
 
-    ifvar = (int) ot -> ot_info;
-    switch (offset) {
-	case type_SNMP_SMUX__PDUs_get__request:
-      if (oid->oid_nelem != ot->ot_name->oid_nelem+17)
-         return int_SNMP_error__status_noSuchName;
+    /* Copy name OID to new OID */
+    bcopy((char *)vp->name, (char *)newname, (int)vp->namelen * sizeof(oid));
 
-      if (!get_address(oid, &grp, ot->ot_name->oid_nelem)
-       || !get_address(oid, &src, ot->ot_name->oid_nelem+4)
-       || !get_address(oid, &mask, ot->ot_name->oid_nelem+8)
-       || !get_address(oid, &addr, ot->ot_name->oid_nelem+13)
+    if (exact) {
+	    if (*length != vp->namelen + 17)
+		return NULL;
+
+      if (!get_address(name, *length, &grp, vp->namelen)
+       || !get_address(name, *length, &src, vp->namelen+4)
+       || !get_address(name, *length, &mask, vp->namelen+8)
+       || !get_address(name, *length, &addr, vp->namelen+13)
        || grp!=addr
        || mask!=0xFFFFFFFF
        || (!(gt=find_grp(grp)))
        || (!(st=find_grp_src(gt,src))))
-         return int_SNMP_error__status_noSuchName;
+		return NULL;
 
-      vifi = oid->oid_elements[ot->ot_name->oid_nelem+12];
+      vifi = name[vp->namelen+12];
       if (!(VIFM_ISSET(vifi, gt->gt_route->rt_children)))
-         return int_SNMP_error__status_noSuchName;
-      break;
+      return NULL;
 
-	case type_SNMP_SMUX__PDUs_get__next__request:
+       bcopy((char *)name, (char *)newname, ((int)*length) * sizeof(oid));
+	 } else {
+       len = *length;
+       if (compare(name, *length, vp->name, vp->namelen) < 0)
+          len = vp->namelen;
 
-      /* Check if we're requesting the first row */
-      if (oid->oid_nelem < ot->ot_name->oid_nelem+17) {
-         OID	new;
+	    if (len < vp->namelen + 17) { /* get first entry */
 
-         get_address(oid, &grp, ot->ot_name->oid_nelem);
-         get_address(oid, &src, ot->ot_name->oid_nelem+4);
-         get_address(oid, &mask, ot->ot_name->oid_nelem+8);
+         get_address(name, len, &grp, vp->namelen);
+         get_address(name, len, &src, vp->namelen+4);
+         get_address(name, len, &mask, vp->namelen+8);
 
          /* Find first child vif */
          vifi=0;
          if (!next_child(&gt, &st, grp, src, mask, &vifi))
-            return NOTOK;
+            return NULL;
 
-         /* Extend by 17 more ints to hold index columns */
-         new = oid_extend (oid, ot->ot_name->oid_nelem+17-oid->oid_nelem);
-         if (new == NULLOID)
-            return NOTOK;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen);
+         put_address(newname, st->st_origin,   vp->namelen+4);
+         put_address(newname, 0xFFFFFFFF,      vp->namelen+8);
+   		newname[vp->namelen+12] = vifi;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen+13);
 
-         put_address(new, gt->gt_mcastgrp, ot->ot_name->oid_nelem);
-         put_address(new, st->st_origin, ot->ot_name->oid_nelem+4);
-         put_address(new, 0xFFFFFFFF, ot->ot_name->oid_nelem+8);
-         new->oid_elements[ot->ot_name->oid_nelem+12] = vifi;
-         put_address(new, gt->gt_mcastgrp, ot->ot_name->oid_nelem+13);
-
-         if (v -> name)
-            free_SNMP_ObjectName (v -> name);
-         v -> name = new;
-
-      /* Else we start from a previous row */
-      } else {
-         int	i = ot -> ot_name -> oid_nelem;
-
-         /* Get the lowest entry in the table > the given grp/src/mask */
-         vifi = oid->oid_elements[oid->oid_nelem-1] + 1;
-         if (!get_address(oid, &grp, ot->ot_name->oid_nelem)
-          || !get_address(oid, &src, ot->ot_name->oid_nelem+4)
-          || !get_address(oid, &mask, ot->ot_name->oid_nelem+8)
+	    } else {  /* get next entry given previous */
+		   vifi = name[vp->namelen+12]+1;
+         if (!get_address(name, *length, &grp,  vp->namelen)
+          || !get_address(name, *length, &src,  vp->namelen+4)
+          || !get_address(name, *length, &mask, vp->namelen+8)
           || !next_child(&gt, &st, grp, src, mask, &vifi))
-            return NOTOK;
+            return NULL;
 
-         put_address(oid, gt->gt_mcastgrp, ot->ot_name->oid_nelem);
-         put_address(oid, st->st_origin, ot->ot_name->oid_nelem+4);
-         put_address(oid, 0xFFFFFFFF, ot->ot_name->oid_nelem+8);
-         oid->oid_elements[ot->ot_name->oid_nelem+12] = vifi;
-         put_address(oid, gt->gt_mcastgrp, ot->ot_name->oid_nelem+13);
-      }
-      break;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen);
+         put_address(newname, st->st_origin,   vp->namelen+4);
+         put_address(newname, 0xFFFFFFFF,      vp->namelen+8);
+		   newname[vp->namelen+12] = vifi;
+         put_address(newname, gt->gt_mcastgrp, vp->namelen+13);
+	    }
+    }
 
-	default:
-	   return int_SNMP_error__status_genErr;
-   }
+    /* Save new OID */
+    *length = vp->namelen + 17;
+    bcopy((char *)newname, (char *)name, ((int)*length) * sizeof(oid));
+    *write_method = 0;
+    *var_len = sizeof(long);
 
-   switch (ifvar) {
+    switch (vp->magic) {
 
       case ipMRouteNextHopState:
-         return o_integer (oi, v, (VIFM_ISSET(vifi, gt->gt_grpmems))? 2 : 1);
+         long_return = (VIFM_ISSET(vifi, gt->gt_grpmems))? 2 : 1;
+         return (u_char *) &long_return;
 
       /* Currently equal to ipMRouteUpTime */
       case ipMRouteNextHopUpTime: {
          time_t currtime;
          time(&currtime);
-         return o_integer (oi, v, (currtime - gt->gt_ctime)*100);
+         long_return = (currtime - gt->gt_ctime)*100;
+         return (u_char *) &long_return;
       }
 
       case ipMRouteNextHopExpiryTime:
-         return o_integer (oi, v, gt->gt_prsent_timer);
+         long_return = 5*((gt->gt_prsent_timer+4)/5); /* round up to nearest 5*/
+         long_return = (long_return + secs_remaining_offset()) * 100;
+         return (u_char *) &long_return;
 
       case ipMRouteNextHopClosestMemberHops:
-         return o_integer (oi, v, 0);
+         long_return = 0;
+         return (u_char *) &long_return;
 
       case ipMRouteNextHopProtocol:
-         return o_integer (oi, v, 4);
+         long_return = 4;
+         return (u_char *) &long_return;
 
-      default:
-         return int_SNMP_error__status_noSuchName;
-   }
+    default:
+       ERROR("");
+    }
+    return NULL;
+}
+
+/* sync_timer is called by timer() every TIMER_INTERVAL seconds.
+ * Its job is to record this time so that we can compute on demand
+ * the approx # seconds remaining until the next timer() call
+ */
+static time_t lasttimer;
+
+void
+sync_timer()
+{
+    time(&lasttimer);
+}
+
+int /* in range [-TIMER_INTERVAL..0] */
+secs_remaining_offset()
+{
+   time_t tm;
+
+   time(&tm);
+   return lasttimer-tm;
 }

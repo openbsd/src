@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.3 1995/10/09 03:51:42 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.4 1995/12/10 10:07:03 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -27,7 +27,8 @@ char s4[19];
  * (Without a mask, cannot detect addresses of the form {subnet,0} or
  * {subnet,-1}.)
  */
-int inet_valid_host(naddr)
+int
+inet_valid_host(naddr)
     u_int32_t naddr;
 {
     register u_int32_t addr;
@@ -39,6 +40,22 @@ int inet_valid_host(naddr)
 	      (addr & 0xff000000) == 0));
 }
 
+/*
+ * Verify that a given netmask is plausible;
+ * make sure that it is a series of 1's followed by
+ * a series of 0's with no discontiguous 1's.
+ */
+int
+inet_valid_mask(mask)
+    u_int32_t mask;
+{
+    if (~(((mask & -mask) - 1) | mask) != 0) {
+	/* Mask is not contiguous */
+	return (FALSE);
+    }
+
+    return (TRUE);
+}
 
 /*
  * Verify that a given subnet number and mask pair are credible.
@@ -49,7 +66,8 @@ int inet_valid_host(naddr)
  * within the [ABC] range and that the host bits of the subnet
  * are all 0.
  */
-int inet_valid_subnet(nsubnet, nmask)
+int
+inet_valid_subnet(nsubnet, nmask)
     u_int32_t nsubnet, nmask;
 {
     register u_int32_t subnet, mask;
@@ -59,19 +77,24 @@ int inet_valid_subnet(nsubnet, nmask)
 
     if ((subnet & mask) != subnet) return (FALSE);
 
-    if (subnet == 0 && mask == 0)
-	return (TRUE);
+    if (subnet == 0)
+	return (mask == 0);
 
     if (IN_CLASSA(subnet)) {
 	if (mask < 0xff000000 ||
-	   (subnet & 0xff000000) == 0x7f000000) return (FALSE);
+	    (subnet & 0xff000000) == 0x7f000000 ||
+	    (subnet & 0xff000000) == 0x00000000) return (FALSE);
     }
     else if (IN_CLASSD(subnet) || IN_BADCLASS(subnet)) {
 	/* Above Class C address space */
 	return (FALSE);
     }
-    else if (subnet & ~mask) {
+    if (subnet & ~mask) {
 	/* Host bits are set in the subnet */
+	return (FALSE);
+    }
+    if (!inet_valid_mask(mask)) {
+	/* Netmask is not contiguous */
 	return (FALSE);
     }
 
@@ -82,7 +105,8 @@ int inet_valid_subnet(nsubnet, nmask)
 /*
  * Convert an IP address in u_long (network) format into a printable string.
  */
-char *inet_fmt(addr, s)
+char *
+inet_fmt(addr, s)
     u_int32_t addr;
     char *s;
 {
@@ -98,7 +122,8 @@ char *inet_fmt(addr, s)
  * Convert an IP subnet number in u_long (network) format into a printable
  * string including the netmask as a number of bits.
  */
-char *inet_fmts(addr, mask, s)
+char *
+inet_fmts(addr, mask, s)
     u_int32_t addr, mask;
     char *s;
 {
@@ -128,7 +153,8 @@ char *inet_fmts(addr, mask, s)
  * legal address with that value, you must explicitly compare the string
  * with "255.255.255.255".)
  */
-u_int32_t inet_parse(s)
+u_int32_t
+inet_parse(s)
     char *s;
 {
     u_int32_t a = 0;
@@ -166,7 +192,8 @@ u_int32_t inet_parse(s)
  * Checksum routine for Internet Protocol family headers (C Version)
  *
  */
-int inet_cksum(addr, len)
+int
+inet_cksum(addr, len)
 	u_short *addr;
 	u_int len;
 {
@@ -181,13 +208,13 @@ int inet_cksum(addr, len)
 	 *  back all the carry bits from the top 16 bits into the lower
 	 *  16 bits.
 	 */
-	while( nleft > 1 )  {
+	while (nleft > 1)  {
 		sum += *w++;
 		nleft -= 2;
 	}
 
 	/* mop up an odd byte, if necessary */
-	if( nleft == 1 ) {
+	if (nleft == 1) {
 		*(u_char *) (&answer) = *(u_char *)w ;
 		sum += answer;
 	}

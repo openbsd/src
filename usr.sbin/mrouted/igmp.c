@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.4 1995/10/09 03:51:40 thorpej Exp $	*/
+/*	$NetBSD: igmp.c,v 1.5 1995/12/10 10:07:01 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -25,10 +25,18 @@ u_int32_t	dvmrp_group;		     /* DVMRP grp addr in net order */
 u_int32_t	dvmrp_genid;		     /* IGMP generation id          */
 
 /*
+ * Local function definitions.
+ */
+/* u_char promoted to u_int */
+static char *	packet_kind __P((u_int type, u_int code));
+static int	igmp_log_level __P((u_int type, u_int code));
+
+/*
  * Open and initialize the igmp socket, and fill in the non-changing
  * IP header fields in the output packet buffer.
  */
-void init_igmp()
+void
+init_igmp()
 {
     struct ip *ip;
 
@@ -65,13 +73,14 @@ void init_igmp()
 #define PIM_GRAFT        6
 #define PIM_GRAFT_ACK    7
 
-static char *packet_kind(type, code)
-     u_char type, code;
+static char *
+packet_kind(type, code)
+     u_int type, code;
 {
     switch (type) {
 	case IGMP_HOST_MEMBERSHIP_QUERY:	return "membership query  ";
-	case IGMP_v1_HOST_MEMBERSHIP_REPORT:	return "membership report ";
-	case IGMP_v2_HOST_MEMBERSHIP_REPORT:	return "new member report ";
+	case IGMP_v1_HOST_MEMBERSHIP_REPORT:	return "v1 member report  ";
+	case IGMP_v2_HOST_MEMBERSHIP_REPORT:	return "v2 member report  ";
 	case IGMP_HOST_LEAVE_MESSAGE:           return "leave message     ";
 	case IGMP_DVMRP:
 	  switch (code) {
@@ -84,6 +93,8 @@ static char *packet_kind(type, code)
 	    case DVMRP_PRUNE:			return "prune message     ";
 	    case DVMRP_GRAFT:			return "graft message     ";
 	    case DVMRP_GRAFT_ACK:		return "graft message ack ";
+	    case DVMRP_INFO_REQUEST:		return "info request      ";
+	    case DVMRP_INFO_REPLY:		return "info reply        ";
 	    default:	    			return "unknown DVMRP msg ";
 	  }
  	case IGMP_PIM:
@@ -108,7 +119,8 @@ static char *packet_kind(type, code)
  * Process a newly received IGMP packet that is sitting in the input
  * packet buffer.
  */
-void accept_igmp(recvlen)
+void
+accept_igmp(recvlen)
     int recvlen;
 {
     register u_int32_t src, dst, group;
@@ -143,8 +155,8 @@ void accept_igmp(recvlen)
     ipdatalen = ip->ip_len;
     if (iphdrlen + ipdatalen != recvlen) {
 	log(LOG_WARNING, 0,
-	    "received packet shorter (%u bytes) than hdr+data length (%u+%u)",
-	    recvlen, iphdrlen, ipdatalen);
+	    "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
+	    inet_fmt(src, s1), recvlen, iphdrlen, ipdatalen);
 	return;
     }
 
@@ -200,12 +212,12 @@ void accept_igmp(recvlen)
 		    return;
 
 		case DVMRP_NEIGHBORS:
-		    accept_neighbors(src, dst, (char *)(igmp+1), igmpdatalen,
+		    accept_neighbors(src, dst, (u_char *)(igmp+1), igmpdatalen,
 					     group);
 		    return;
 
 		case DVMRP_NEIGHBORS2:
-		    accept_neighbors2(src, dst, (char *)(igmp+1), igmpdatalen,
+		    accept_neighbors2(src, dst, (u_char *)(igmp+1), igmpdatalen,
 					     group);
 		    return;
 
@@ -219,6 +231,15 @@ void accept_igmp(recvlen)
 
 		case DVMRP_GRAFT_ACK:
 		    accept_g_ack(src, dst, (char *)(igmp+1), igmpdatalen);
+		    return;
+
+		case DVMRP_INFO_REQUEST:
+		    accept_info_request(src, dst, (char *)(igmp+1),
+				igmpdatalen);
+		    return;
+
+		case DVMRP_INFO_REPLY:
+		    accept_info_reply(src, dst, (char *)(igmp+1), igmpdatalen);
 		    return;
 
 		default:
@@ -249,6 +270,29 @@ void accept_igmp(recvlen)
     }
 }
 
+/*
+ * Some IGMP messages are more important than others.  This routine
+ * determines the logging level at which to log a send error (often
+ * "No route to host").  This is important when there is asymmetric
+ * reachability and someone is trying to, i.e., mrinfo me periodically.
+ */
+static int
+igmp_log_level(type, code)
+    u_int type, code;
+{
+    switch (type) {
+	case IGMP_MTRACE_REPLY:
+	    return LOG_INFO;
+
+	case IGMP_DVMRP:
+	  switch (code) {
+	    case DVMRP_NEIGHBORS:
+	    case DVMRP_NEIGHBORS2:
+		return LOG_INFO;
+	  }
+    }
+    return LOG_WARNING;
+}
 
 /*
  * Construct an IGMP message in the output packet buffer.  The caller may
@@ -262,9 +306,10 @@ send_igmp(src, dst, type, code, group, datalen)
     u_int32_t group;
     int datalen;
 {
-    static struct sockaddr_in sdst;
+    struct sockaddr_in sdst;
     struct ip *ip;
     struct igmp *igmp;
+    int setloop;
 
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
@@ -279,8 +324,13 @@ send_igmp(src, dst, type, code, group, datalen)
     igmp->igmp_cksum        = inet_cksum((u_short *)igmp,
 					 IGMP_MINLEN + datalen);
 
-    if (IN_MULTICAST(ntohl(dst))) k_set_if(src);
-    if (dst == allhosts_group) k_set_loop(TRUE);
+    if (IN_MULTICAST(ntohl(dst))) {
+	k_set_if(src);
+	if (type != IGMP_DVMRP) {
+	    setloop = 1;
+	    k_set_loop(TRUE);
+	}
+    }
 
     bzero(&sdst, sizeof(sdst));
     sdst.sin_family = AF_INET;
@@ -293,12 +343,13 @@ send_igmp(src, dst, type, code, group, datalen)
 	if (errno == ENETDOWN)
 	    check_vif_state();
 	else
-	    log(LOG_WARNING, errno,
+	    log(igmp_log_level(type, code), errno,
 		"sendto to %s on %s",
 		inet_fmt(dst, s1), inet_fmt(src, s2));
     }
 
-    if (dst == allhosts_group) k_set_loop(FALSE);
+    if (setloop)
+	    k_set_loop(FALSE);
 
     log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
 	packet_kind(type, code), inet_fmt(src, s1), inet_fmt(dst, s2));

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.5 1995/10/09 03:51:37 thorpej Exp $	*/
+/*	$NetBSD: config.c,v 1.6 1995/12/10 10:06:58 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -17,7 +17,8 @@
  * Query the kernel to find network interfaces that are multicast-capable
  * and install them in the uvifs array.
  */
-void config_vifs_from_kernel()
+void
+config_vifs_from_kernel()
 {
     struct ifreq ifbuf[32];
     struct ifreq *ifrp, *ifend;

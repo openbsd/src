@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.3 1995/10/09 03:51:54 thorpej Exp $	*/
+/*	$NetBSD: route.h,v 1.4 1995/12/10 10:07:13 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -37,8 +37,8 @@ struct rtentry {
     vifbitmap_t	     rt_leaves;		/* subset of outgoing children vifs */
     u_int32_t	    *rt_dominants;      /* per vif dominant gateways        */
     u_int32_t	    *rt_subordinates;   /* per vif subordinate gateways     */
-    u_long	    *rt_leaf_timers;	/* per vif leaf confirmation timers */
-    u_long	     rt_timer;		/* for timing out the route entry   */
+    u_int	    *rt_leaf_timers;	/* per vif leaf confirmation timers */
+    u_int	     rt_timer;		/* for timing out the route entry   */
     struct rtentry  *rt_prev;		/* link to previous entry           */
     struct gtable   *rt_groups;		/* link to active groups 	    */
 };

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.3 1995/10/09 03:51:35 thorpej Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.4 1995/12/10 10:06:57 mycroft Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -7,9 +7,26 @@
  * Written by Bill Fenner, NRL, 1994
  */
 #include <stdio.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
 #include <string.h>
 #include <varargs.h>
+#endif
 #include "defs.h"
+#include <netdb.h>
+
+/*
+ * Local function declarations
+ */
+static void		fatal __P((char *fmt, ...));
+static void		warn __P((char *fmt, ...));
+static void		yyerror __P((char *s));
+static char *		next_word __P((void));
+static int		yylex __P((void));
+static u_int32_t	valid_if __P((char *s));
+static struct ifreq *	ifconfaddr __P((struct ifconf *ifcp, u_int32_t a));
+int			yyparse __P((void));
 
 static FILE *f;
 
@@ -54,14 +71,16 @@ int numbounds = 0;			/* Number of named boundaries */
 
 %token CACHE_LIFETIME PRUNING
 %token PHYINT TUNNEL NAME
-%token DISABLE METRIC THRESHOLD RATE_LIMIT SRCRT BOUNDARY NETMASK ALTNET
+%token DISABLE IGMPV1 SRCRT
+%token METRIC THRESHOLD RATE_LIMIT BOUNDARY NETMASK ALTNET
+%token SYSNAM SYSCONTACT SYSVERSION SYSLOCATION
 %token <num> BOOLEAN
 %token <num> NUMBER
 %token <ptr> STRING
 %token <addrmask> ADDRMASK
 %token <addr> ADDR
 
-%type <addr> interface
+%type <addr> interface addrname
 %type <addrmask> bound boundary addrmask
 
 %start conf
@@ -94,10 +113,9 @@ stmt	: error
 			    fatal("%s is not a configured interface",
 				inet_fmt($2,s1));
 
-			/*log(LOG_INFO, 0, "phyint: %x\n", v);*/
 					}
 		ifmods
-	| TUNNEL interface ADDR		{
+	| TUNNEL interface addrname	{
 
 			struct ifreq *ifr;
 			struct ifreq ffr;
@@ -157,7 +175,6 @@ stmt	: error
 			    v->uv_flags |= VIFF_DOWN;
 			    vifs_down = TRUE;
 			}
-			/*log(LOG_INFO, 0, "tunnel: %x\n", v);*/
 					}
 		tunnelmods
 					{
@@ -180,10 +197,30 @@ stmt	: error
 				      strcpy(boundlist[numbounds].name, $2);
 				      boundlist[numbounds++].bound = $3;
 				    }
+	| SYSNAM STRING    {
+#ifdef SNMP
+			    set_sysName($2);
+#endif /* SNMP */
+			    }
+	| SYSCONTACT STRING {
+#ifdef SNMP
+			    set_sysContact($2);
+#endif /* SNMP */
+			    }
+        | SYSVERSION STRING {
+#ifdef SNMP
+			    set_sysVersion($2);
+#endif /* SNMP */
+			    }
+	| SYSLOCATION STRING {
+#ifdef SNMP
+			    set_sysLocation($2);
+#endif /* SNMP */
+			    }
 	;
 
 tunnelmods	: /* empty */
-	| tunnelmods /*{ log(LOG_INFO, 0, "tunnelmod: %x", v); }*/ tunnelmod
+	| tunnelmods tunnelmod
 	;
 
 tunnelmod	: mod
@@ -191,12 +228,28 @@ tunnelmod	: mod
 	;
 
 ifmods	: /* empty */
-	| ifmods /*{ log(LOG_INFO, 0, "ifmod: %x", v); }*/ ifmod
+	| ifmods ifmod
 	;
 
 ifmod	: mod
 	| DISABLE		{ v->uv_flags |= VIFF_DISABLED; }
-	| NETMASK ADDR		{ v->uv_subnetmask = $2; }
+	| IGMPV1		{ v->uv_flags |= VIFF_IGMPV1; }
+	| NETMASK addrname	{
+				  u_int32_t subnet, mask;
+
+				  mask = $2;
+				  subnet = v->uv_lcl_addr & mask;
+				  if (!inet_valid_subnet(subnet, mask))
+					fatal("Invalid netmask");
+				  v->uv_subnet = subnet;
+				  v->uv_subnetmask = mask;
+				  v->uv_subnetbcast = subnet | ~mask;
+				}
+	| NETMASK		{
+
+		    warn("Expected address after netmask keyword, ignored");
+
+				}
 	| ALTNET addrmask	{
 
 		    struct phaddr *ph;
@@ -205,15 +258,21 @@ ifmod	: mod
 		    if (ph == NULL)
 			fatal("out of memory");
 		    if ($2.mask) {
-			VAL_TO_MASK(ph->pa_mask, $2.mask);
+			VAL_TO_MASK(ph->pa_subnetmask, $2.mask);
 		    } else
-			ph->pa_mask = v->uv_subnetmask;
-		    ph->pa_addr = $2.addr & ph->pa_mask;
-		    if ($2.addr & ~ph->pa_mask)
-			warn("Extra addr %s/%d has host bits set",
+			ph->pa_subnetmask = v->uv_subnetmask;
+		    ph->pa_subnet = $2.addr & ph->pa_subnetmask;
+		    ph->pa_subnetbcast = ph->pa_subnet | ~ph->pa_subnetmask;
+		    if ($2.addr & ~ph->pa_subnetmask)
+			warn("Extra subnet %s/%d has host bits set",
 				inet_fmt($2.addr,s1), $2.mask);
 		    ph->pa_next = v->uv_addrs;
 		    v->uv_addrs = ph;
+
+				}
+	| ALTNET		{
+
+		    warn("Expected address after altnet keyword, ignored");
 
 				}
 	;
@@ -224,7 +283,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 				}
 	| THRESHOLD		{
 
-		    warn("Expected number after threshold keyword");
+		    warn("Expected number after threshold keyword, ignored");
 
 				}
 	| METRIC NUMBER		{ if ($2 < 1 || $2 > UNREACHABLE)
@@ -233,7 +292,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 				}
 	| METRIC		{
 
-		    warn("Expected number after metric keyword");
+		    warn("Expected number after metric keyword, ignored");
 
 				}
 	| RATE_LIMIT NUMBER	{ if ($2 > MAX_RATE_LIMIT)
@@ -242,7 +301,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 				}
 	| RATE_LIMIT		{
 
-		    warn("Expected number after rate_limit keyword");
+		    warn("Expected number after rate_limit keyword, ignored");
 
 				}
 	| BOUNDARY bound	{
@@ -263,7 +322,7 @@ mod	: THRESHOLD NUMBER	{ if ($2 < 1 || $2 > 255)
 				}
 	| BOUNDARY		{
 
-		    warn("Expected boundary spec after boundary keyword");
+		warn("Expected boundary spec after boundary keyword, ignored");
 
 				}
 	;
@@ -275,6 +334,20 @@ interface	: ADDR		{ $$ = $1; }
 					fatal("Invalid interface name %s",$1);
 				}
 	;
+
+addrname	: ADDR		{ $$ = $1; }
+	| STRING		{ struct hostent *hp;
+
+				  if ((hp = gethostbyname($1)) == NULL)
+				    fatal("No such host %s", $1);
+
+				  if (hp->h_addr_list[1])
+				    fatal("Hostname %s does not %s",
+					$1, "map to a unique address");
+
+				  bcopy(hp->h_addr_list[0], &$$,
+					    hp->h_length);
+				}
 
 bound	: boundary		{ $$ = $1; }
 	| STRING		{ int i;
@@ -306,8 +379,18 @@ addrmask	: ADDRMASK	{ $$ = $1; }
 	| ADDR			{ $$.addr = $1; $$.mask = 0; }
 	;
 %%
+#ifdef __STDC__
+static void
+fatal(char *fmt, ...)
+{
+	va_list ap;
+	char buf[200];
+
+	va_start(ap, fmt);
+#else
 /*VARARGS1*/
-static void fatal(fmt, va_alist)
+static void
+fatal(fmt, va_alist)
 char *fmt;
 va_dcl
 {
@@ -315,14 +398,25 @@ va_dcl
 	char buf[200];
 
 	va_start(ap);
+#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
+#ifdef __STDC__
+static void
+warn(char *fmt, ...)
+{
+	va_list ap;
+	char buf[200];
+
+	va_start(ap, fmt);
+#else
 /*VARARGS1*/
-static void warn(fmt, va_alist)
+static void
+warn(fmt, va_alist)
 char *fmt;
 va_dcl
 {
@@ -330,19 +424,22 @@ va_dcl
 	char buf[200];
 
 	va_start(ap);
+#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_WARNING,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
-void yyerror(s)
+static void
+yyerror(s)
 char *s;
 {
 	log(LOG_ERR, 0, "%s: %s near line %d", configfilename, s, lineno);
 }
 
-char *next_word()
+static char *
+next_word()
 {
 	static char buf[1024];
 	static char *p=NULL;
@@ -363,6 +460,15 @@ char *next_word()
 		continue;
 	    }
 	    q = p;
+#ifdef SNMP
+       if (*p == '"') {
+          p++;
+	       while (*p && *p != '"' && *p != '\n')
+		      p++;		/* find next whitespace */
+          if (*p == '"')
+             p++;
+       } else
+#endif
 	    while (*p && *p != ' ' && *p != '\t' && *p != '\n')
 		p++;		/* find next whitespace */
 	    *p++ = '\0';	/* null-terminate string */
@@ -376,7 +482,8 @@ char *next_word()
 	}
 }
 
-int yylex()
+static int
+yylex()
 {
 	int n;
 	u_int32_t addr;
@@ -408,10 +515,12 @@ int yylex()
 		return BOUNDARY;
 	if (!strcmp(q,"netmask"))
 		return NETMASK;
-	if (!strcmp(q,"name"))
-		return NAME;
+	if (!strcmp(q,"igmpv1"))
+		return IGMPV1;
 	if (!strcmp(q,"altnet"))
 		return ALTNET;
+	if (!strcmp(q,"name"))
+		return NAME;
 	if (!strcmp(q,"on") || !strcmp(q,"yes")) {
 		yylval.num = 1;
 		return BOOLEAN;
@@ -443,11 +552,28 @@ int yylex()
 		yylval.num = n;
 		return NUMBER;
 	}
+#ifdef SNMP
+	if (!strcmp(q,"sysName"))
+		return SYSNAM;
+	if (!strcmp(q,"sysContact"))
+		return SYSCONTACT;
+	if (!strcmp(q,"sysVersion"))
+		return SYSVERSION;
+	if (!strcmp(q,"sysLocation"))
+		return SYSLOCATION;
+   if (*q=='"') {
+      if (q[ strlen(q)-1 ]=='"')
+         q[ strlen(q)-1 ]='\0'; /* trash trailing quote */
+      yylval.ptr = q+1;
+      return STRING;
+   }
+#endif
 	yylval.ptr = q;
 	return STRING;
 }
 
-void config_vifs_from_file()
+void
+config_vifs_from_file()
 {
 	extern FILE *f;
 
@@ -468,7 +594,7 @@ void config_vifs_from_file()
 
 	yyparse();
 
-	close(f);
+	fclose(f);
 }
 
 static u_int32_t

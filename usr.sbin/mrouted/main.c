@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1995/10/09 03:51:44 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1995/12/10 10:07:05 mycroft Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -20,14 +20,24 @@
 
 
 #include "defs.h"
-#include <string.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif
+#include <fcntl.h>
 
 #ifdef SNMP
 #include "snmp.h"
 #endif
 
+#ifndef lint
+static char rcsid[] =
+	"@(#) $Id: main.c,v 1.2 1995/12/14 01:45:26 deraadt Exp $";
+#endif
+
 extern char *configfilename;
+char versionstring[100];
 
 static char pidfilename[]  = _PATH_MROUTED_PID;
 static char dumpfilename[] = _PATH_MROUTED_DUMP;
@@ -40,30 +50,38 @@ int max_prune_lifetime 	= DEFAULT_CACHE_LIFETIME * 2;
 int debug = 0;
 u_char pruning = 1;	/* Enable pruning by default */
 
+#ifdef SNMP
+#define NHANDLERS	34
+#else
 #define NHANDLERS	2
+#endif
 
 static struct ihandler {
     int fd;			/* File descriptor		 */
-    void (*func)();		/* Function to call with &fd_set */
+    ihfunc_t func;		/* Function to call with &fd_set */
 } ihandlers[NHANDLERS];
 static int nhandlers = 0;
 
 /*
  * Forward declarations.
  */
-static void fasttimer();
-static void timer();
-static void cleanup();
-static void done();
-static void dump();
-static void fdump();
-static void cdump();
-static void restart();
+static void fasttimer __P((int));
+static void done __P((int));
+static void dump __P((int));
+static void fdump __P((int));
+static void cdump __P((int));
+static void restart __P((int));
+static void timer __P((void));
+static void cleanup __P((void));
+static void resetlogging __P((void *));
+
+/* To shut up gcc -Wstrict-prototypes */
+int main __P((int argc, char **argv));
 
 int
 register_input_handler(fd, func)
     int fd;
-    void (*func)();
+    ihfunc_t func;
 {
     if (nhandlers >= NHANDLERS)
 	return -1;
@@ -74,7 +92,8 @@ register_input_handler(fd, func)
     return 0;
 }
 
-int main(argc, argv)
+int
+main(argc, argv)
     int argc;
     char *argv[];
 {
@@ -82,29 +101,18 @@ int main(argc, argv)
     register int omask;
     int dummy;
     FILE *fp;
-    extern uid_t geteuid();
     struct timeval tv;
-    u_long prev_genid;
+    u_int32_t prev_genid;
     int vers;
     fd_set rfds, readers;
     int nfds, n, i;
 #ifdef SNMP
-    char *myname;
-    fd_set wfds;
-  
-
-    if (myname = strrchr(argv[0], '/'))
-        myname++;
-    if (myname == NULL || *myname == 0)
-        myname = argv[0];
-    isodetailor (myname, 0);
+    struct timeval  timeout, *tvp = &timeout;
+    struct timeval  sched, *svp = &sched, now, *nvp = &now;
+    int index, block;
 #endif
 
-#ifdef SYSV
-    setvbuf(stderr, NULL, _IOLBF, 0);
-#else
     setlinebuf(stderr);
-#endif
 
     if (geteuid() != 0) {
 	fprintf(stderr, "must be root\n");
@@ -127,6 +135,14 @@ int main(argc, argv)
 		goto usage;
 	} else if (strcmp(*argv, "-p") == 0) {
 	    pruning = 0;
+#ifdef SNMP
+   } else if (strcmp(*argv, "-P") == 0) {
+	    if (argc > 1 && isdigit(*(argv + 1)[0])) {
+		argv++, argc--;
+		dest_port = atoi(*argv);
+	    } else
+		dest_port = DEFAULT_PORT;
+#endif
 	} else
 	    goto usage;
 	argv++, argc--;
@@ -151,6 +167,9 @@ usage:	fprintf(stderr,
 	(void)open("/", 0);
 	(void)dup2(0, 1);
 	(void)dup2(0, 2);
+#ifdef SYSV
+	(void)setpgrp();
+#else
 #ifdef TIOCNOTTY
 	t = open("/dev/tty", 2);
 	if (t >= 0) {
@@ -160,6 +179,7 @@ usage:	fprintf(stderr,
 #else
 	if (setsid() < 0)
 	    perror("setsid");
+#endif
 #endif
     }
     else
@@ -171,8 +191,10 @@ usage:	fprintf(stderr,
 #else
     (void)openlog("mrouted", LOG_PID);
 #endif
-    log(LOG_NOTICE, 0, "mrouted version %d.%d",
+    sprintf(versionstring, "mrouted version %d.%d",
 			PROTOCOL_VERSION, MROUTED_VERSION);
+
+    log(LOG_NOTICE, 0, "%s", versionstring);
 
 #ifdef SYSV
     srand48(time(NULL));
@@ -201,32 +223,46 @@ usage:	fprintf(stderr,
     }
 
     callout_init();
-
-#ifdef SNMP
-    snmp_init();
-#endif
-
     init_igmp();
+    init_routes();
+    init_ktable();
     k_init_dvmrp();		/* enable DVMRP routing in kernel */
 
 #ifndef OLD_KERNEL
     vers = k_get_version();
-    if ((((vers >> 8) & 0xff) != PROTOCOL_VERSION) ||
-	 ((vers & 0xff) != MROUTED_VERSION))
+    /*XXX
+     * This function must change whenever the kernel version changes
+     */
+    if ((((vers >> 8) & 0xff) != 3) ||
+	 ((vers & 0xff) != 5))
 	log(LOG_ERR, 0, "kernel (v%d.%d)/mrouted (v%d.%d) version mismatch",
 		(vers >> 8) & 0xff, vers & 0xff,
 		PROTOCOL_VERSION, MROUTED_VERSION);
 #endif
 
-    init_routes();
-    init_ktable();
+#ifdef SNMP
+    if (i = snmp_init())
+       return i;
+
+    gettimeofday(nvp, 0);
+    if (nvp->tv_usec < 500000L){
+   svp->tv_usec = nvp->tv_usec + 500000L;
+   svp->tv_sec = nvp->tv_sec;
+    } else {
+   svp->tv_usec = nvp->tv_usec - 500000L;
+   svp->tv_sec = nvp->tv_sec + 1;
+    }
+#endif /* SNMP */
+
     init_vifs();
+
 #ifdef RSRR
     rsrr_init();
 #endif /* RSRR */
 
 #if defined(__STDC__) || defined(__GNUC__)
-    /* Allow cleanup if unexpected exit.  Apparently some architectures
+    /*
+     * Allow cleanup if unexpected exit.  Apparently some architectures
      * have a kernel bug where closing the socket doesn't do an
      * ip_mrouter_done(), so we attempt to do it on exit.
      */
@@ -238,11 +274,9 @@ usage:	fprintf(stderr,
 
     fp = fopen(pidfilename, "w");		
     if (fp != NULL) {
-	fprintf(fp, "%d\n", getpid());
+	fprintf(fp, "%d\n", (int)getpid());
 	(void) fclose(fp);
     }
-
-    if (debug >= 2) dump();
 
     (void)signal(SIGALRM, fasttimer);
 
@@ -263,6 +297,17 @@ usage:	fprintf(stderr,
 	    nfds = ihandlers[i].fd + 1;
     }
 
+    /*
+     * Install the vifs in the kernel as late as possible in the
+     * initialization sequence.
+     */
+    init_installvifs();
+
+    if (debug >= 2) dump(0);
+
+    /* Start up the log rate-limiter */
+    resetlogging(NULL);
+
     (void)alarm(1);	 /* schedule first timer interrupt */
 
     /*
@@ -270,23 +315,38 @@ usage:	fprintf(stderr,
      */
     dummy = 0;
     for(;;) {
+#ifdef SYSV
+	sigset_t block, oblock;
+#endif
 	bcopy((char *)&readers, (char *)&rfds, sizeof(rfds));
 #ifdef SNMP
-        FD_ZERO(&wfds);
-  
-        if (smux_fd != NOTOK) {
-           if (rock_and_roll)
-              FD_SET(smux_fd, &rfds);
-           else
-              FD_SET(smux_fd, &wfds);
-           if (smux_fd >= nfds)
-              nfds = smux_fd + 1;
-        }
-  
-        if ((n = xselect(nfds, &rfds, &wfds, NULLFD, NOTOK))==NOTOK) {
+   gettimeofday(nvp, 0);
+   if (nvp->tv_sec > svp->tv_sec
+       || (nvp->tv_sec == svp->tv_sec && nvp->tv_usec > svp->tv_usec)){
+       alarmTimer(nvp);
+       eventTimer(nvp);
+       if (nvp->tv_usec < 500000L){
+      svp->tv_usec = nvp->tv_usec + 500000L;
+      svp->tv_sec = nvp->tv_sec;
+       } else {
+      svp->tv_usec = nvp->tv_usec - 500000L;
+      svp->tv_sec = nvp->tv_sec + 1;
+       }
+   }
+
+	tvp =  &timeout;
+	tvp->tv_sec = 0;
+	tvp->tv_usec = 500000L;
+
+	block = 0;
+	snmp_select_info(&nfds, &rfds, tvp, &block);
+	if (block == 1)
+		tvp = NULL; /* block without timeout */
+	if ((n = select(nfds, &rfds, NULL, NULL, tvp)) < 0) 
 #else
-	if ((n = select(nfds, &rfds, NULL, NULL, NULL)) < 0) {
+	if ((n = select(nfds, &rfds, NULL, NULL, NULL)) < 0) 
 #endif
+   {
             if (errno != EINTR) /* SIGALRM is expected */
                 log(LOG_WARNING, errno, "select failed");
             continue;
@@ -299,25 +359,31 @@ usage:	fprintf(stderr,
 		if (errno != EINTR) log(LOG_ERR, errno, "recvfrom");
 		continue;
 	    }
+#ifdef SYSV
+	    (void)sigemptyset(&block);
+	    (void)sigaddset(&block, SIGALRM);
+	    if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
+		    log(LOG_ERR, errno, "sigprocmask");
+#else
 	    omask = sigblock(sigmask(SIGALRM));
+#endif
 	    accept_igmp(recvlen);
+#ifdef SYSV
+	    (void)sigprocmask(SIG_SETMASK, &oblock, (sigset_t *)NULL);
+#else
 	    (void)sigsetmask(omask);
+#endif
         }
 
 	for (i = 0; i < nhandlers; i++) {
 	    if (FD_ISSET(ihandlers[i].fd, &rfds)) {
-		(*ihandlers[i].func)(&rfds);
+		(*ihandlers[i].func)(ihandlers[i].fd, &rfds);
 	    }
 	}
 
 #ifdef SNMP
-        if (smux_fd != NOTOK) {
-            if (rock_and_roll) {
-		if (FD_ISSET(smux_fd, &rfds))
-		    doit_smux();
-	    } else if (FD_ISSET(smux_fd, &wfds)) 
-                start_smux();
-        }
+	snmp_read(&rfds); 
+	snmp_timeout(); /* poll */
 #endif
     }
 }
@@ -331,7 +397,8 @@ usage:	fprintf(stderr,
  * do all the other time-based processing.
  */
 static void
-fasttimer()
+fasttimer(i)
+    int i;
 {
     static unsigned int tlast;
     static unsigned int nsent;
@@ -432,13 +499,7 @@ timer()
     }
 
 #ifdef SNMP
-    if (smux_fd == NOTOK && !dont_bother_anymore
-		 && virtual_time % SNMPD_RETRY_INTERVAL == 0) {
-	/*
-	 * Time to check for snmpd running.
-	 */
-        try_smux_init();
-    }
+    sync_timer();
 #endif
 
     /*
@@ -452,10 +513,10 @@ timer()
  * On termination, let everyone know we're going away.
  */
 static void
-done()
+done(i)
+    int i;
 {
-    log(LOG_NOTICE, 0, "mrouted version %d.%d exiting",
-			PROTOCOL_VERSION, MROUTED_VERSION);
+    log(LOG_NOTICE, 0, "%s exiting", versionstring);
     cleanup();
     _exit(1);
 }
@@ -481,7 +542,8 @@ cleanup()
  * Dump internal data structures to stderr.
  */
 static void
-dump()
+dump(i)
+    int i;
 {
     dump_vifs(stderr);
     dump_routes(stderr);
@@ -492,7 +554,8 @@ dump()
  * Dump internal data structures to a file.
  */
 static void
-fdump()
+fdump(i)
+    int i;
 {
     FILE *fp;
 
@@ -509,7 +572,8 @@ fdump()
  * Dump local cache contents to a file.
  */
 static void
-cdump()
+cdump(i)
+    int i;
 {
     FILE *fp;
 
@@ -525,17 +589,27 @@ cdump()
  * Restart mrouted
  */
 static void
-restart()
+restart(i)
+    int i;
 {
     register int omask;
+#ifdef SYSV
+    sigset_t block, oblock;
+#endif
 
-    log(LOG_NOTICE, 0, "mrouted version %d.%d restart",
-			PROTOCOL_VERSION, MROUTED_VERSION);
+    log(LOG_NOTICE, 0, "%s restart", versionstring);
 
     /*
      * reset all the entries
      */
+#ifdef SYSV
+    (void)sigemptyset(&block);
+    (void)sigaddset(&block, SIGALRM);
+    if (sigprocmask(SIG_BLOCK, &block, &oblock) < 0)
+	log(LOG_ERR, errno, "sigprocmask");
+#else
     omask = sigblock(sigmask(SIGALRM));
+#endif
     free_all_prunes();
     free_all_routes();
     stop_all_vifs();
@@ -550,20 +624,60 @@ restart()
     pruning = 1;
 
     init_igmp();
-    k_init_dvmrp();		/* enable DVMRP routing in kernel */
     init_routes();
     init_ktable();
     init_vifs();
+    k_init_dvmrp();		/* enable DVMRP routing in kernel */
+    init_installvifs();
 
+#ifdef SYSV
+    (void)sigprocmask(SIG_SETMASK, &oblock, (sigset_t *)NULL);
+#else
     (void)sigsetmask(omask);
+#endif
 }
 
+#define LOG_MAX_MSGS	20	/* if > 20/minute then shut up for a while */
+#define LOG_SHUT_UP	600	/* shut up for 10 minutes */
+static int log_nmsgs = 0;
+
+static void
+resetlogging(arg)
+    void *arg;
+{
+    int nxttime = 60;
+    void *narg = NULL;
+
+    if (arg == NULL && log_nmsgs > LOG_MAX_MSGS) {
+	nxttime = LOG_SHUT_UP;
+	narg = (void *)&log_nmsgs;	/* just need some valid void * */
+	syslog(LOG_WARNING, "logging too fast, shutting up for %d minutes",
+			LOG_SHUT_UP / 60);
+    } else {
+	log_nmsgs = 0;
+    }
+
+    timer_setTimer(nxttime, resetlogging, narg);
+}
 
 /*
  * Log errors and other messages to the system log daemon and to stderr,
  * according to the severity of the message and the current debug level.
  * For errors of severity LOG_ERR or worse, terminate the program.
  */
+#ifdef __STDC__
+void
+log(int severity, int syserr, char *format, ...)
+{
+    va_list ap;
+    static char fmt[211] = "warning - ";
+    char *msg;
+    char tbuf[20];
+    struct timeval now;
+    struct tm *thyme;
+
+    va_start(ap, format);
+#else
 /*VARARGS3*/
 void
 log(severity, syserr, format, va_alist)
@@ -579,6 +693,7 @@ log(severity, syserr, format, va_alist)
     struct tm *thyme;
 
     va_start(ap);
+#endif
     vsprintf(&fmt[10], format, ap);
     va_end(ap);
     msg = (severity == LOG_WARNING) ? fmt : &fmt[10];
@@ -589,23 +704,53 @@ log(severity, syserr, format, va_alist)
 	case 2: if (severity > LOG_INFO  ) break;
 	default:
 	    gettimeofday(&now,NULL);
-	    thyme = localtime((time_t *)&now.tv_sec);
+	    thyme = localtime(&now.tv_sec);
 	    strftime(tbuf, sizeof(tbuf), "%X.%%03d ", thyme);
 	    fprintf(stderr, tbuf, now.tv_usec / 1000);
 	    fprintf(stderr, "%s", msg);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
+	    else if (syserr < sys_nerr)
+		fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 	    else
-		fprintf(stderr, ": %s\n", strerror(syserr));
+		fprintf(stderr, ": errno %d\n", syserr);
     }
 
     if (severity <= LOG_NOTICE) {
-	if (syserr != 0) {
-	    errno = syserr;
-	    syslog(severity, "%s: %m", msg);
-	} else
-	    syslog(severity, "%s", msg);
+	if (log_nmsgs++ < LOG_MAX_MSGS) {
+	    if (syserr != 0) {
+		errno = syserr;
+		syslog(severity, "%s: %m", msg);
+	    } else
+		syslog(severity, "%s", msg);
+	}
 
 	if (severity <= LOG_ERR) exit(-1);
     }
 }
+
+#ifdef DEBUG_MFC
+void
+md_log(what, origin, mcastgrp)
+    int what;
+    u_int32_t origin, mcastgrp;
+{
+    static FILE *f = NULL;
+    struct timeval tv;
+    u_int32_t buf[4];
+
+    if (!f) {
+	if ((f = fopen("/tmp/mrouted.clog", "w")) == NULL) {
+	    log(LOG_ERR, errno, "open /tmp/mrouted.clog");
+	}
+    }
+
+    gettimeofday(&tv, NULL);
+    buf[0] = tv.tv_sec;
+    buf[1] = what;
+    buf[2] = origin;
+    buf[3] = mcastgrp;
+
+    fwrite(buf, sizeof(u_int32_t), 4, f);
+}
+#endif

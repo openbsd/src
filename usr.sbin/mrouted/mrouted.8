@@ -1,4 +1,4 @@
-'\"	$NetBSD: mrouted.8,v 1.5 1995/10/09 03:51:46 thorpej Exp $
+'\"	$NetBSD: mrouted.8,v 1.6 1995/12/10 10:07:07 mycroft Exp $
 '\"COPYRIGHT 1989 by The Board of Trustees of Leland Stanford Junior University.
 .TH MROUTED 8
 .UC 5
@@ -118,7 +118,7 @@ There are four types of configuration commands:
 		   [altnet <network>/<mask-len>]
 
     tunnel <local-addr> <remote-addr> [metric <m>]
-		 [threshold <t>] [srcrt] [rate_limit <b>]
+		 [threshold <t>] [rate_limit <b>]
 		   [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
 
     cache_lifetime <ct>
@@ -140,7 +140,7 @@ options may be specified as many times as necessary.
 The phyint command can be used to disable multicast routing on the physical
 interface identified by local IP address <local-addr>, or to associate a
 non-default metric or threshold with the specified physical interface.
-The local IP address <local-addr> may be alternatively replaced by the 
+The local IP address <local-addr> may be replaced by the 
 interface name (e.g le0).
 If a phyint is attached to multiple IP subnets, describe each additional subnet
 with the altnet keyword.
@@ -148,7 +148,12 @@ Phyint commands must precede tunnel commands.
 .PP
 The tunnel command can be used to establish a tunnel link between local
 IP address <local-addr> and remote IP address <remote-addr>, and to associate
-a non-default metric or threshold with that tunnel.  The tunnel must be set
+a non-default metric or threshold with that tunnel.
+The local IP address <local-addr> may be replaced by the
+interface name (e.g. le0).  The remote IP address <remote-addr> may
+be replaced by a host name, if and only if the host name has a single
+IP address associated with it.
+The tunnel must be set
 up in the mrouted.conf files of both routers before it can be used.
 '\"For backwards compatibility with older
 '\".IR mrouted s,
@@ -327,7 +332,7 @@ shown at each interface.
 Associated with each subnet from which a multicast datagram can originate
 is the address of the previous hop router (unless the subnet is directly-
 connected), the metric of the path back to the origin, the amount of time
-since we last recieved an update for this subnet, the incoming vif for
+since we last received an update for this subnet, the incoming vif for
 multicasts from that origin, and a list of outgoing vifs.  "*" means that
 the outgoing vif is connected to a leaf of the broadcast tree rooted at the
 origin, and a multicast datagram from that origin will be forwarded on that
@@ -365,7 +370,7 @@ The 'Ptmr' field is simply a dash if no prune was sent upstream, or the
 amount of time until the upstream prune will time out.
 The 'Ivif' field indicates the
 incoming vif for multicast packets from that origin.  Each router also
-maintains a record of the number of prunes received from neighbouring
+maintains a record of the number of prunes received from neighboring
 routers for a particular source and group. If there are no members of
 a multicast group on any downward link of the multicast tree for a
 subnet, a prune message is sent to the upstream router. They are
