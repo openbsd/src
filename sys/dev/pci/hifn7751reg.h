@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.23 2001/06/23 19:50:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.24 2001/06/23 20:20:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -235,6 +235,7 @@ typedef struct hifn_desc {
 #define	HIFN_DMACSR_C_DONE	0x00000010	/* Command Ring Done */
 #define	HIFN_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	HIFN_DMACSR_PUBDONE	0x00000002	/* Public op done (7951 only) */
 #define	HIFN_DMACSR_C_EIRQ	0x00000001	/* Command Ring Engine IRQ */
 
 /* DMA Interrupt Enable Register (HIFN_1_DMA_IER) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.73 2001/06/23 18:30:37 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.74 2001/06/23 20:20:32 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -356,6 +356,15 @@ hifn_init_pubrng(sc)
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 	}
 
+	/* Enable public key engine, if available */
+	if (sc->sc_flags & HIFN_HAS_PUBLIC) {
+		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
+		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
+
+		sc->sc_dmaier |= HIFN_DMAIER_PUBDONE;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	}
+
 	return (0);
 }
 
@@ -608,8 +617,8 @@ hifn_init_pci_registers(sc)
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA |
 	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_C_CTRL_ENA);
-	WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
-	sc->sc_dmaier = HIFN_DMAIER_R_DONE;
+	sc->sc_dmaier |= HIFN_DMAIER_R_DONE;
+	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
 	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
@@ -1143,9 +1152,8 @@ hifn_crypto(sc, cmd, crp)
 	 * in the queue.
 	 */
 	if (dma->cmdu > 1) {
-		WRITE_REG_1(sc, HIFN_1_DMA_IER,
-		    HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE);
-		sc->sc_dmaier = HIFN_DMAIER_C_WAIT | HIFN_DMAIER_R_DONE;
+		sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
 
 	hifnstats.hst_ipackets++;
@@ -1200,7 +1208,7 @@ hifn_intr(arg)
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
 	u_int32_t dmacsr;
-	int i, u;
+	int i, r = 0, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
 
@@ -1213,7 +1221,18 @@ hifn_intr(arg)
 
 	/* Nothing in the DMA unit interrupted */
 	if ((dmacsr & sc->sc_dmaier) == 0)
-		return (0);
+		return (r);
+
+	if ((sc->sc_flags & HIFN_HAS_PUBLIC) &&
+	    (dmacsr & HIFN_DMACSR_PUBDONE)) {
+		r = 1;
+		dmacsr &= ~HIFN_DMACSR_PUBDONE;
+	}
+
+	if ((dmacsr & sc->sc_dmaier) == 0)
+		return (r);
+
+	r = 1;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD); 
@@ -1228,8 +1247,8 @@ hifn_intr(arg)
 		 * command" interrupt, we disable the "waiting on command"
 		 * (by clearing it).
 		 */
-		WRITE_REG_1(sc, HIFN_1_DMA_IER, HIFN_DMAIER_R_DONE);
-		sc->sc_dmaier = HIFN_DMAIER_R_DONE;
+		sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
+		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
 
 	while (dma->resu > 0) {
@@ -1281,7 +1300,7 @@ hifn_intr(arg)
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD); 
-	return (1);
+	return (r);
 }
 
 /*
