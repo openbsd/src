@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scon.1,v 1.9 1999/09/29 22:29:10 aaron Exp $
+.\"	$OpenBSD: scon.1,v 1.10 1999/10/16 18:56:37 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
 .\"
@@ -49,6 +49,7 @@
 .Op Fl H
 .Op Fl l
 .Op Fl m
+.Op Fl o
 .Op Fl v
 .Op Fl V
 .Op Fl s Ar lines
@@ -122,6 +123,15 @@ any HP escape sequences and without displaying function key labels.
 Switch the specified/current screen into a mixed HP/VT220 mode. That is, that
 in addition to the full VT220 emulation, the HP function key labels and the
 escape sequences for handling the labels are available to the user.
+.It Fl o
+Toggle
+.Dq legacy
+pcvt mode with traditional PC display mode.
+As of
+.Ox 2.6 ,
+character mapping is turned off by default in favour of a traditional PC
+display with 16 colors and the standard IBM font.
+This option has no effect in line modes other than 25.
 .It Fl s
 Specify the number of character lines on the screen. Possible parameters are
 25, 28, 35, 40, 43 or 50. To use all this screen sizes, the fonts required

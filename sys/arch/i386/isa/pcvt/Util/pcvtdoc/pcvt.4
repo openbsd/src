@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcvt.4,v 1.17 1999/10/07 18:37:54 wvdputte Exp $
+.\" $OpenBSD: pcvt.4,v 1.18 1999/10/16 18:56:37 aaron Exp $
 .\"
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
 .\"                           Joerg Wunsch and Holger Veit.
@@ -83,8 +83,21 @@ functionality. See
 .Sx Features
 for a detailed description.
 
+.Sy Note:
+As of
+.Ox 2.6 ,
+.Nm
+does not do character mapping by default in favor of a traditional PC display
+where 16 colors are available and the standard IBM font is used.
+See the
+.Fl o
+flag in
+.Xr scon 1
+to toggle between this mode and the old mode.
+
 .Ss VT Keys
-Despite the complexity of options, if installed in a normal OpenBSD
+Despite the complexity of options, if installed in a normal
+.Ox
 configuration with the default options, on a standard i386 architecture
 system, you can use multiple virtual terminals.
 The key sequence used to move among virtual terminals are,

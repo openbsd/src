@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.6 1998/11/16 23:47:57 weingart Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.7 1999/10/16 18:56:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -149,10 +149,18 @@ vt_sgr(struct video_state *svsp)
 		{
 			case 0:		/* reset to normal attributes */
 				svsp->vtsgr = VT_NORMAL;
+				if (pcdisp)
+					setcolor = 0;
 				break;
 
 			case 1:		/* bold */
 				svsp->vtsgr |= VT_BOLD;
+				if (pcdisp) {
+					if ((setcolor >> 8) == 0)
+						setcolor = (FG_LIGHTGREY << 8);
+					setcolor |= (FG_INTENSE << 8);
+					colortouched = 1;
+				}
 				break;
 
 			case 4:		/* underline */
@@ -161,14 +169,30 @@ vt_sgr(struct video_state *svsp)
 
 			case 5:		/* blinking */
 				svsp->vtsgr |= VT_BLINK;
+				if (pcdisp) {
+					setcolor |= (FG_BLINK << 8);
+					colortouched = 1;
+				}
 				break;
 
 			case 7:		/* reverse */
 				svsp->vtsgr |= VT_INVERSE;
+				if (pcdisp) {
+					if ((setcolor >> 8) == 0)
+						setcolor = (FG_LIGHTGREY << 8);
+					setcolor = (((setcolor>>8) & 0x88) |
+					    ((((setcolor>>8) >> 4) |
+					    ((setcolor>>8) << 4)) & 0x77)) << 8;
+					colortouched = 1;
+				}
 				break;
 
 			case 22:	/* not bold */
 				svsp->vtsgr &= ~VT_BOLD;
+				if (pcdisp) {
+					setcolor &= ~(FG_INTENSE << 8);
+					colortouched = 1;
+				}
 				break;
 
 			case 24:	/* not underlined */
@@ -177,10 +201,20 @@ vt_sgr(struct video_state *svsp)
 
 			case 25:	/* not blinking */
 				svsp->vtsgr &= ~VT_BLINK;
+				if (pcdisp) {
+					setcolor &= ~(FG_BLINK << 8);
+					colortouched = 1;
+				}
 				break;
 
 			case 27:	/* not reverse */
 				svsp->vtsgr &= ~VT_INVERSE;
+				if (pcdisp) {
+					setcolor = (((setcolor>>8) & 0x88) |
+					    ((((setcolor>>8) >> 4) |
+					    ((setcolor>>8) << 4)) & 0x77)) << 8;
+					colortouched = 1;
+				}
 				break;
 
 			case 30:	/* foreground colors */
@@ -196,6 +230,8 @@ vt_sgr(struct video_state *svsp)
 				 colortouched = 1;
 				 setcolor &= ~(FG_MASK<<8);
 				 setcolor |= ((fgansitopc[(svsp->parms[i-1]-30) & 7]) << 8);
+				 if (pcdisp && svsp->vtsgr & VT_BOLD)
+					setcolor |= (FG_INTENSE << 8);
 				}
 				break;
 

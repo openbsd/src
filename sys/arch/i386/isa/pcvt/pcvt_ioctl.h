@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.11 1999/09/29 22:29:09 aaron Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.12 1999/10/16 18:56:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -479,6 +479,7 @@ struct pcvtinfo {			/* compile time option values */
 
 #define VGASETCOLMS	_IOW('V', 115, int) /* set number of columns (80/132)*/
 #define SETSCROLLSIZE	_IOW('V', 116, u_short) /* scrollbuffer size */
+#define TOGGLEPCDISP	_IOW('V', 117, int)	/* toggle traditional pc mode */
 
 /*
  * only useful if compiled with ``XSERVER'' defined, but always here:

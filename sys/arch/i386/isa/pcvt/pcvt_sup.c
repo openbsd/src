@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.10 1999/09/29 22:29:10 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.11 1999/10/16 18:56:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -233,6 +233,13 @@ vgaioctl(Dev_t dev, int cmd, caddr_t data, int flag)
 				scrollback_pages = *(u_short *)data;
 
 			reallocate_scrollbuffer(vsp, scrollback_pages);
+			break;
+
+		case TOGGLEPCDISP:
+			if (vsp->screen_rowsize == 25) {
+				pcdisp = !pcdisp;
+				set_2ndcharset();
+			}
 			break;
 
 		case TIOCSWINSZ:
@@ -713,6 +720,8 @@ set_screen_size(struct video_state *svsp, int size)
 		if(vgacs[i].screen_size == size)
 		{
 			set_charset(svsp, i);
+			pcdisp = 0;
+			set_2ndcharset();
 			clr_parms(svsp); 	/* escape parameter init */
 			svsp->state = STATE_INIT; /* initial state */
 			svsp->scrr_beg = 0;	/* start of scrolling region */
@@ -1791,9 +1800,16 @@ set_2ndcharset(void)
 		inb(GN_INPSTAT1M);
 
 	/* select color plane enable reg, caution: set ATC access bit ! */
-
 	outb(ATC_INDEX, (ATC_COLPLEN | ATC_ACCESS));
-	outb(ATC_DATAW, 0x07);		/* disable plane 3 */
+
+	if (!pcdisp) {
+		outb(ATC_DATAW, 0x07);		/* disable plane 3 */
+		sgr_tab_color[02] = (BG_BROWN | FG_LIGHTGREY);
+	}
+	else {
+		outb(ATC_DATAW, 0x0F);		/* enable plane 3 */
+		sgr_tab_color[02] = (BG_BLACK | FG_CYAN);
+	}
 }
 
 #if PCVT_SCREENSAVER

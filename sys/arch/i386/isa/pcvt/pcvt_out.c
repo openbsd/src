@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.12 1999/09/29 22:29:10 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.13 1999/10/16 18:56:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -92,6 +92,11 @@ static __inline void write_char (svsp, attrib, ch)
 struct	video_state *svsp;
 u_short	attrib, ch;
 {
+	if (pcdisp) {
+		*video = attrib | ch;
+		return;
+	}
+
 	if ((ch >= 0x20) && (ch <= 0x7f))	/* use GL if ch >= 0x20 */
 	{
 		if(!svsp->ss)		/* single shift G2/G3 -> GL ? */
@@ -1017,6 +1022,7 @@ vt_coldinit(void)
 	struct video_state *svsp;
 
 	do_initialization = 0;		/* reset init necessary flag */
+	pcdisp = 1;			/* turn on traditional pc colors/font */
 
 	/* get the equipment byte from the RTC chip */
 

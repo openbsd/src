@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.15 1999/10/07 18:26:21 wvdputte Exp $	*/
+/*	$OpenBSD: scon.c,v 1.16 1999/10/16 18:56:37 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -72,6 +72,7 @@ int bflag = -1;
 unsigned int scrollback_pages = 8;
 int lflag = -1;
 int mflag = -1;
+int oflag = -1;
 int current = -1;
 int pflag = -1;
 int hflag = -1;
@@ -208,7 +209,7 @@ char *argv[];
 	int c;
 	int fd;
 	
-	while( (c = getopt(argc, argv, "ab:c:d:f:HVlms:t:vp:18")) != -1)
+	while( (c = getopt(argc, argv, "ab:c:d:f:HVlmos:t:vp:18")) != -1)
 	{
 		switch(c)
 		{
@@ -268,6 +269,10 @@ char *argv[];
 
 			case 'v':
 				vflag++;
+				break;
+
+			case 'o':
+				oflag = 1;
 				break;
 
 			case 'p':
@@ -343,7 +348,7 @@ char *argv[];
 
 	if(dflag == -1 && lflag == -1 && current == -1 && pflag == -1 &&
 	   hflag == -1 && res == -1 && Pflag == 0 && tflag == 0 && fflag == -1
-	   && colms == 0 && mflag == -1 && bflag == -1)
+	   && colms == 0 && mflag == -1 && bflag == -1 && oflag == -1)
 	{
 		lflag = 1;
 	}
@@ -384,6 +389,16 @@ char *argv[];
 		if(ioctl(fd, SETSCROLLSIZE, &scrollback_pages) < 0)
 		{
 			perror("ioctl(SETSCROLLSIZE)");
+			exit(2);
+		}
+		exit(0);
+	}
+
+	if (oflag == 1)
+	{
+		if (ioctl(fd, TOGGLEPCDISP, &oflag) < 0)
+		{
+			perror("ioctl(TOGGLEPCDISP)");
 			exit(2);
 		}
 		exit(0);
