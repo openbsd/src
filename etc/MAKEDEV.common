@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.11 2004/08/17 20:58:05 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -471,7 +471,7 @@ _mkdev(fdesc, fd, {-RMlist="mkdir -p fd;$RMlist" n=0
 __devitem(grf_mac, grf*, Raw interface to the mac68k graphics devices,grf)dnl
 __devitem(ite, ite*, Terminal emulator interface to HP300 graphics devices)dnl
 __devitem({-hil-}, {-hil-}, HP-HIL input devices)dnl
-__devitem(oppr, openprom,,openprom)dnl
+__devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
 __devitem(cry, crypto, Hardware crypto access driver,crypto)dnl
 _mkdev(cry, crypto, {-M crypto c major_cry_c-} 0)dnl
