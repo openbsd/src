@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1998/07/13 03:52:06 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1998/07/14 17:20:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -44,8 +44,9 @@
 const char version[] = "0.02";
 int	debug;
 
-struct x_sw execsw[] = {
+const struct x_sw execsw[] = {
 	{ "elf", elf_probe,	elf_load },
+	{ "som", som_probe,	som_load },
 	{ ""   , NULL,		NULL },
 };
 
