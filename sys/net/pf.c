@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.188 2002/02/14 15:32:11 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.189 2002/02/14 19:46:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3901,7 +3901,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (direction == PF_OUT)
 			pf_change_ap(pd->src, &th->th_sport, pd->ip_sum,
 			    &th->th_sum, &(*state)->gwy.addr,
-		 	   (*state)->gwy.port, 0, pd->af);
+			    (*state)->gwy.port, 0, pd->af);
 		else
 			pf_change_ap(pd->dst, &th->th_dport, pd->ip_sum,
 			    &th->th_sum, &(*state)->lan.addr,
@@ -4056,7 +4056,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 #ifdef INET
 				case AF_INET:
 					pf_change_a(&saddr->v4.s_addr,
-				    	    pd->ip_sum,
+					    pd->ip_sum,
 					    (*state)->gwy.addr.v4.s_addr, 0);
 					break;
 #endif /* INET */
