@@ -170,9 +170,6 @@ Additionally, the following variables may be set to modify the behaviour
 of the system build process (default values are in brackets along with
 comments, if set by bsd.own.mk):
 
-EXPORTABLE_SYSTEM
-		Do not build /usr/src/domestic, even if it is present.
-
 SKEY		Compile in support for S/key authentication. [yes, set
 		unconditionally]
 
