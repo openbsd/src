@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.68 2002/06/18 23:03:26 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.69 2002/06/26 00:13:47 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1073,7 +1073,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    ntohl(tdb->tdb_spi)));
 
 		m_freem(m);
-		ahstat.ahs_wrap++;
+		ahstat.ahs_hdrops++;
 		return ENOBUFS;
 	}
 
