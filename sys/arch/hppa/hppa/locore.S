@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.40 2001/03/22 23:40:52 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.41 2001/03/28 18:24:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -712,7 +712,7 @@ $syscall_return
 	 *	and interrupts are disabled.
 	 */
 	copy	t3, arg0
-	ldil	$trap_tmp_save, arg1
+	ldil	L%$trap_tmp_save, arg1
 	ldi	TF_PHYS, arg2
 $syscall_return_copy_loop
 	ldwm	4(arg0), t1
@@ -796,7 +796,7 @@ $syscall_return_copy_loop
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop	/* XXX really? */
 $syscall_return_phys
 
-	ldil	$trap_tmp_save, t3
+	ldil	L%$trap_tmp_save, t3
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(t3), t1
@@ -1594,7 +1594,7 @@ TLABEL(all)
 	/* do not overwrite tr4(cr28) */
 	mtctl	t3, tr2
 
-	ldil	$trap_tmp_save, t3
+	ldil	L%$trap_tmp_save, t3
 	stw	t1, TF_R22(t3)		/* use ,bc */
 	stw	t2, TF_R21(t3)
 
@@ -1734,7 +1734,7 @@ $trapnowvirt
 	/*
 	 * Copy partially saved state from the store into the frame
 	 */
-	ldil	$trap_tmp_save, t2
+	ldil	L%$trap_tmp_save, t2
 	/* use ,bc each line */
 	ldw  0(t2), r1 ! ldw  4(t2), t1 ! stw r1,  0(t3) ! stw t1,  4(t3)
 	ldw  8(t2), r1 ! ldw 12(t2), t1 ! stw r1,  8(t3) ! stw t1, 12(t3)
