@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.4 1996/12/04 10:25:57 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.5 1996/12/23 07:44:59 downsj Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ main(argc, argv)
 		char *spec, *type;
 
 		if (strncmp(*argv, "/dev/", 5) == 0 &&
-		    (type = readlabelfs(*argv))) {
+		    (type = readlabelfs(*argv, 0))) {
 			spec = *argv;
 		} else if ((fs = getfsfile(*argv)) == NULL &&
 		    (fs = getfsspec(*argv)) == NULL) {
