@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.31 2004/04/28 06:53:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.32 2004/06/21 15:19:33 miod Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -460,12 +460,15 @@ sub really_add($$)
 			    borked_script("require script");
 		}
 	}
-	if ($plist->has(INSTALL)) {
-		print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
-		unless ($opt_n) {
-			chmod 0755, $dir.INSTALL;
-			system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
-			    borked_script("install script");
+
+	unless ($opt_I) {
+		if ($plist->has(INSTALL)) {
+			print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
+			unless ($opt_n) {
+				chmod 0755, $dir.INSTALL;
+				system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
+				    borked_script("install script");
+			}
 		}
 	}
 
@@ -489,12 +492,15 @@ sub really_add($$)
 	}
 
 	$handle->close();
-	if ($plist->has(INSTALL) && !$interrupted) {
-		print "Install script: $dir",INSTALL ,"$pkgname POST-INSTALL\n" if $opt_v or $opt_n;
-		unless ($opt_n) {
-			if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
-				print STDERR "install script for $pkgname borked\n";
-				$errors++ unless $forced{scripts};
+
+	unless ($opt_I) {
+		if ($plist->has(INSTALL) && !$interrupted) {
+			print "Install script: $dir",INSTALL ," $pkgname POST-INSTALL\n" if $opt_v or $opt_n;
+			unless ($opt_n) {
+				if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
+					print STDERR "install script for $pkgname borked\n";
+					$errors++ unless $forced{scripts};
+				}
 			}
 		}
 	}
