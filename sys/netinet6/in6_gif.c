@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.9 2000/12/30 21:51:00 angelos Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.10 2000/12/31 17:23:35 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -174,7 +174,9 @@ in6_gif_output(ifp, family, m, rt)
 
 	m = mp;
 
+#if NBRIDGE > 0
  sendit:
+#endif /* NBRIDGE */
 	/* See if out cached route remains the same */
 	if (dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.12 2000/12/31 17:20:14 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.13 2000/12/31 17:23:35 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -170,7 +170,9 @@ in_gif_output(ifp, family, m, rt)
 
 	m = mp;
 
+#if NBRIDGE > 0
  sendit:
+#endif /* NBRIDGE */
 	/* ip_output needs host-order length.  it should be nuked */
 	m_copydata(m, offsetof(struct ip, ip_len), sizeof(u_int16_t),
 		   (caddr_t) &plen);
