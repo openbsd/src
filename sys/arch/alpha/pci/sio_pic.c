@@ -1,5 +1,41 @@
-/*	$OpenBSD: sio_pic.c,v 1.15 2000/11/08 16:01:22 art Exp $	*/
-/*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
+/* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -41,13 +77,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/pci/cy82c693reg.h>
+#include <dev/pci/cy82c693var.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/pci/siovar.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 
@@ -59,34 +94,22 @@
  * what will happen if new interrupts (that the PROM console doesn't
  * want) are turned on.  I'll burn that bridge when I come to it.
  */
-#ifndef SANE_PROM
 #define	BROKEN_PROM_CONSOLE
-#endif /* SANE_PROM */
 
 /*
  * Private functions and variables.
  */
+
 bus_space_tag_t sio_iot;
 pci_chipset_tag_t sio_pc;
-bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
+bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2;
 
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
 static struct alpha_shared_intr *sio_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt sio_intr_evcnt;
-#endif
 
 #ifndef STRAY_MAX
-#ifdef BROKEN_PROM_CONSOLE
-/*
- * If prom console is broken, because initial interrupt settings
- * must be kept, there's no way to escape stray interrupts.
- */
-#define	STRAY_MAX	0
-#else
 #define	STRAY_MAX	5
-#endif
 #endif
 
 #ifdef BROKEN_PROM_CONSOLE
@@ -96,27 +119,24 @@ struct evcnt sio_intr_evcnt;
  */
 u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
-#define	INITIALLY_ENABLED(irq) \
-	    ((initial_ocw1[(irq) / 8] & (1 << ((irq) % 8))) == 0)
-#define	INITIALLY_LEVEL_TRIGGERED(irq) \
-	    ((initial_elcr[(irq) / 8] & (1 << ((irq) % 8))) != 0)
-#else
-#define	INITIALLY_ENABLED(irq)		((irq) == 2 ? 1 : 0)
-#define	INITIALLY_LEVEL_TRIGGERED(irq)	0
 #endif
 
-void sio_setirqstat __P((int, int, int));
-
-void	sio_setirqstat __P((int, int, int));
+void		sio_setirqstat __P((int, int, int));
 
 u_int8_t	(*sio_read_elcr) __P((int));
 void		(*sio_write_elcr) __P((int, u_int8_t));
+static void	specific_eoi __P((int));
+#ifdef BROKEN_PROM_CONSOLE
+void		sio_intr_shutdown __P((void *));
+#endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
 int		i82378_setup_elcr __P((void));
 u_int8_t	i82378_read_elcr __P((int));
 void		i82378_write_elcr __P((int, u_int8_t));
+
+bus_space_handle_t sio_ioh_elcr;
 
 int
 i82378_setup_elcr()
@@ -162,10 +182,13 @@ int		cy82c693_setup_elcr __P((void));
 u_int8_t	cy82c693_read_elcr __P((int));
 void		cy82c693_write_elcr __P((int, u_int8_t));
 
+const struct cy82c693_handle *sio_cy82c693_handle;
+
 int
 cy82c693_setup_elcr()
 {
 	int device, maxndevs;
+	pcitag_t tag;
 	pcireg_t id;
 
 	/*
@@ -183,8 +206,8 @@ cy82c693_setup_elcr()
 	maxndevs = pci_bus_maxdevs(sio_pc, 0);
 
 	for (device = 0; device < maxndevs; device++) {
-		id = pci_conf_read(sio_pc, pci_make_tag(sio_pc, 0, device, 0),
-				   PCI_ID_REG);
+		tag = pci_make_tag(sio_pc, 0, device, 0);
+		id = pci_conf_read(sio_pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
 		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -203,15 +226,10 @@ cy82c693_setup_elcr()
 
 #if 0
 		printf("cy82c693_setup_elcr: found 82C693 at device %d\n",
-		       device);
+		    device);
 #endif
 
-		/*
-		 * The CY82C693's ELCR registers are accessed indirectly
-		 * via (IO_ICU1 + 2) (address) and (IO_ICU1 + 3) (data).
-		 */
-		sio_ioh_elcr = sio_ioh_icu1;
-
+		sio_cy82c693_handle = cy82c693_init(sio_iot);
 		sio_read_elcr = cy82c693_read_elcr;
 		sio_write_elcr = cy82c693_write_elcr;
 
@@ -229,8 +247,7 @@ cy82c693_read_elcr(elcr)
 	int elcr;
 {
 
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
-	return (bus_space_read_1(sio_iot, sio_ioh_elcr, 0x03));
+	return (cy82c693_read(sio_cy82c693_handle, CONFIG_ELCR1 + elcr));
 }
 
 void
@@ -239,8 +256,7 @@ cy82c693_write_elcr(elcr, val)
 	u_int8_t val;
 {
 
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x02, 0x03 + elcr);
-	bus_space_write_1(sio_iot, sio_ioh_elcr, 0x03, val);
+	cy82c693_write(sio_cy82c693_handle, CONFIG_ELCR1 + elcr, val);
 }
 
 /******************** ELCR access function configuration ********************/
@@ -259,6 +275,7 @@ int (*sio_elcr_setup_funcs[]) __P((void)) = {
 };
 
 /******************** Shared SIO/Cypress functions ********************/
+
 void
 sio_setirqstat(irq, enabled, type)
 	int irq, enabled;
@@ -277,8 +294,8 @@ sio_setirqstat(irq, enabled, type)
 
 	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-        elcr[0] = (*sio_read_elcr)(0);                          /* XXX */
-        elcr[1] = (*sio_read_elcr)(1);                          /* XXX */
+	elcr[0] = (*sio_read_elcr)(0);				/* XXX */
+	elcr[1] = (*sio_read_elcr)(1);				/* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -303,65 +320,44 @@ sio_setirqstat(irq, enabled, type)
 	elcr[1] &= ~0x21;		/* IRQ[13,8] must be edge-triggered */
 #endif
 
-#ifdef BROKEN_PROM_CONSOLE
-	/*
-	 * make sure that the initially clear bits (unmasked interrupts)
-	 * are never set, and that the initially-level-triggered
-	 * intrrupts always remain level-triggered, to keep the prom happy.
-	 */
-	if ((ocw1[0] & ~initial_ocw1[0]) != 0 ||
-	    (ocw1[1] & ~initial_ocw1[1]) != 0 ||
-	    (elcr[0] & initial_elcr[0]) != initial_elcr[0] ||
-	    (elcr[1] & initial_elcr[1]) != initial_elcr[1]) {
-		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
-		    initial_ocw1[0], initial_ocw1[1],
-		    initial_elcr[0], initial_elcr[1]);
-		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
-		    ocw1[0], ocw1[1], elcr[0], elcr[1]);
-		panic("sio_setirqstat: hosed");
-	}
-#endif
-
 	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, ocw1[0]);
 	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, ocw1[1]);
-        (*sio_write_elcr)(0, elcr[0]);                          /* XXX */
-        (*sio_write_elcr)(1, elcr[1]);                          /* XXX */
+	(*sio_write_elcr)(0, elcr[0]);				/* XXX */
+	(*sio_write_elcr)(1, elcr[1]);				/* XXX */
 }
 
 void
 sio_intr_setup(pc, iot)
-        pci_chipset_tag_t pc;
+	pci_chipset_tag_t pc;
 	bus_space_tag_t iot;
 {
+#ifdef notyet
+	char *cp;
+#endif
 	int i;
 
 	sio_iot = iot;
 	sio_pc = pc;
-	
-	if (bus_space_map(sio_iot, IO_ICU1, IO_ICUSIZE, 0, &sio_ioh_icu1) ||
-	    bus_space_map(sio_iot, IO_ICU2, IO_ICUSIZE, 0, &sio_ioh_icu2))
-		panic("sio_intr_setup: can't map I/O ports");
 
-        for (i = 0; sio_elcr_setup_funcs[i] != NULL; i++)
-                if ((*sio_elcr_setup_funcs[i])() == 0)
-                        break;
-        if (sio_elcr_setup_funcs[i] == NULL)
-                panic("sio_intr_setup: can't map ELCR");
+	if (bus_space_map(sio_iot, IO_ICU1, 2, 0, &sio_ioh_icu1) ||
+	    bus_space_map(sio_iot, IO_ICU2, 2, 0, &sio_ioh_icu2))
+		panic("sio_intr_setup: can't map ICU I/O ports");
+
+	for (i = 0; sio_elcr_setup_funcs[i] != NULL; i++)
+		if ((*sio_elcr_setup_funcs[i])() == 0)
+			break;
+	if (sio_elcr_setup_funcs[i] == NULL)
+		panic("sio_intr_setup: can't map ELCR");
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
-	 * Remember the initial values, because the prom is stupid.
+	 * Remember the initial values, so we can restore them later.
 	 */
 	initial_ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
-        initial_elcr[0] = (*sio_read_elcr)(0);                  /* XXX */
-        initial_elcr[1] = (*sio_read_elcr)(1);                  /* XXX */
-#if 0
-	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
-	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
-	printf("initial_elcr[0] = 0x%x\n", initial_elcr[0]);
-	printf("initial_elcr[1] = 0x%x\n", initial_elcr[1]);
-#endif
+	initial_elcr[0] = (*sio_read_elcr)(0);			/* XXX */
+	initial_elcr[1] = (*sio_read_elcr)(1);			/* XXX */
+	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
 	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
@@ -372,6 +368,13 @@ sio_intr_setup(pc, iot)
 	for (i = 0; i < ICU_LEN; i++) {
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
 
+#ifdef notyet
+		cp = alpha_shared_intr_string(sio_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
+		    EVCNT_TYPE_INTR, NULL, "isa", cp);
+#endif
+
 		switch (i) {
 		case 0:
 		case 1:
@@ -381,11 +384,10 @@ sio_intr_setup(pc, iot)
 			 * IRQs 0, 1, 8, and 13 must always be
 			 * edge-triggered.
 			 */
-			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
-			sio_setirqstat(i, INITIALLY_ENABLED(i), IST_EDGE);
+			sio_setirqstat(i, 0, IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_EDGE);
+			specific_eoi(i);
 			break;
 
 		case 2:
@@ -393,10 +395,6 @@ sio_intr_setup(pc, iot)
 			 * IRQ 2 must be edge-triggered, and should be
 			 * enabled (otherwise IRQs 8-15 are ignored).
 			 */
-			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
-			if (!INITIALLY_ENABLED(i))
-				printf("sio_intr_setup: %d not enabled!\n", i);
 			sio_setirqstat(i, 1, IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_UNUSABLE);
@@ -407,16 +405,29 @@ sio_intr_setup(pc, iot)
 			 * Otherwise, disable the IRQ and set its
 			 * type to (effectively) "unknown."
 			 */
-			sio_setirqstat(i, INITIALLY_ENABLED(i),
-			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
-				IST_NONE);
+			sio_setirqstat(i, 0, IST_NONE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
-			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
-                                IST_NONE);
+			    IST_NONE);
+			specific_eoi(i);
 			break;
 		}
 	}
 }
+
+#ifdef BROKEN_PROM_CONSOLE
+void
+sio_intr_shutdown(arg)
+	void *arg;
+{
+	/*
+	 * Restore the initial values, to make the PROM happy.
+	 */
+	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, initial_ocw1[0]);
+	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, initial_ocw1[1]);
+	(*sio_write_elcr)(0, initial_elcr[0]);			/* XXX */
+	(*sio_write_elcr)(1, initial_elcr[1]);			/* XXX */
+}
+#endif
 
 const char *
 sio_intr_string(v, irq)
@@ -426,11 +437,25 @@ sio_intr_string(v, irq)
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_string: bogus isa irq 0x%x", irq);
+		panic("sio_intr_string: bogus isa irq 0x%x\n", irq);
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
 }
+
+#ifdef notyet
+const struct evcnt *
+sio_intr_evcnt(v, irq)
+	void *v;
+	int irq;
+{
+
+	if (irq == 0 || irq >= ICU_LEN || irq == 2)
+		panic("sio_intr_evcnt: bogus isa irq 0x%x\n", irq);
+
+	return (alpha_shared_intr_evcnt(sio_intr, irq));
+}
+#endif
 
 void *
 sio_intr_establish(v, irq, type, level, fn, arg, name)
@@ -461,12 +486,47 @@ sio_intr_disestablish(v, cookie)
 	void *v;
 	void *cookie;
 {
+	struct alpha_shared_intrhand *ih = cookie;
+	int s, ist, irq = ih->ih_num;
 
-	printf("sio_intr_disestablish(%p)\n", cookie);
-	/* XXX */
+	s = splhigh();
 
-	/* XXX NEVER ALLOW AN INITIALLY-ENABLED INTERRUPT TO BE DISABLED */
-	/* XXX NEVER ALLOW AN INITIALLY-LT INTERRUPT TO BECOME UNTYPED */
+	/* Remove it from the link. */
+	alpha_shared_intr_disestablish(sio_intr, cookie, "isa irq");
+
+	/*
+	 * Decide if we should disable the interrupt.  We must ensure
+	 * that:
+	 *
+	 *	- An initially-enabled interrupt is never disabled.
+	 *	- An initially-LT interrupt is never untyped.
+	 */
+	if (alpha_shared_intr_isactive(sio_intr, irq) == 0) {
+		/*
+		 * IRQs 0, 1, 8, and 13 must always be edge-triggered
+		 * (see setup).
+		 */
+		switch (irq) {
+		case 0:
+		case 1:
+		case 8:
+		case 13:
+			/*
+			 * If the interrupt was initially level-triggered
+			 * a warning was printed in setup.
+			 */
+			ist = IST_EDGE;
+			break;
+
+		default:
+			ist = IST_NONE;
+			break;
+		}
+		sio_setirqstat(irq, 0, ist);
+		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
+	}
+
+	splx(s);
 }
 
 void
@@ -482,16 +542,6 @@ sio_iointr(framep, vec)
 		panic("sio_iointr: irq out of range (%d)", irq);
 #endif
 
-#ifdef EVCNT_COUNTERS
-	sio_intr_evcnt.ev_count++;
-#else
-#ifdef DEBUG
-	if (ICU_LEN != INTRCNT_ISA_IRQ_LEN)
-		panic("sio interrupt counter sizes inconsistent");
-#endif
-	intrcnt[INTRCNT_ISA_IRQ + irq]++;
-#endif
-
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))
 		alpha_shared_intr_stray(sio_intr, irq, "isa irq");
 
@@ -501,9 +551,92 @@ sio_iointr(framep, vec)
 	 * require the non-specific EOI to be fed to the PIC(s)
 	 * by the interrupt handler.
 	 */
+	specific_eoi(irq);
+}
+
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+
+#ifdef notyet
+int
+sio_intr_alloc(v, mask, type, irq)
+	void *v;
+	int mask;
+	int type;
+	int *irq;
+{
+	int i, tmp, bestirq, count;
+	struct alpha_shared_intrhand **p, *q;
+
+	if (type == IST_NONE)
+		panic("intr_alloc: bogus type");
+
+	bestirq = -1;
+	count = -1;
+
+	/* some interrupts should never be dynamically allocated */
+	mask &= 0xdef8;
+
+	/*
+	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	 * the right answer is to do "breadth-first" searching of devices.
+	 */
+	mask &= 0xefbf;
+
+	for (i = 0; i < ICU_LEN; i++) {
+		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+			continue;
+
+		switch(sio_intr[i].intr_sharetype) {
+		case IST_NONE:
+			/*
+			 * if nothing's using the irq, just return it
+			 */
+			*irq = i;
+			return (0);
+
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (type != sio_intr[i].intr_sharetype)
+				continue;
+			/*
+			 * if the irq is shareable, count the number of other
+			 * handlers, and if it's smaller than the last irq like
+			 * this, remember it
+			 *
+			 * XXX We should probably also consider the
+			 * interrupt level and stick IPL_TTY with other
+			 * IPL_TTY, etc.
+			 */
+			for (p = &TAILQ_FIRST(&sio_intr[i].intr_q), tmp = 0;
+			     (q = *p) != NULL; p = &TAILQ_NEXT(q, ih_q), tmp++)
+				;
+			if ((bestirq == -1) || (count > tmp)) {
+				bestirq = i;
+				count = tmp;
+			}
+			break;
+
+		case IST_PULSE:
+			/* this just isn't shareable */
+			continue;
+		}
+	}
+
+	if (bestirq == -1)
+		return (1);
+
+	*irq = bestirq;
+
+	return (0);
+}
+#endif
+
+static void
+specific_eoi(irq)
+	int irq;
+{
 	if (irq > 7)
 		bus_space_write_1(sio_iot,
 		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
-	bus_space_write_1(sio_iot,
-	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
+	bus_space_write_1(sio_iot, sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));
 }
