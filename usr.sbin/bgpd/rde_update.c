@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.33 2004/11/11 13:29:37 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.34 2005/02/07 05:51:52 david Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -435,7 +435,7 @@ up_generate_updates(struct rde_peer *peer,
 
 		/*
 		 * apply default outgoing overrides,
-		 * acctually only prepend-self
+		 * actually only prepend-self
 		 */
 		rde_apply_set(fasp, &peer->conf.attrset, new->prefix->af,
 		    fasp->peer, DIR_DEFAULT_OUT);
