@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.16 2003/06/19 22:40:45 millert Exp $	 */
+/* $OpenBSD: display.c,v 1.17 2003/11/01 20:20:57 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -50,6 +50,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <term.h>
 #include <time.h>
 #include <unistd.h>
@@ -756,12 +757,20 @@ int
 readline(char *buffer, int size, int numeric)
 {
 	char *ptr = buffer, ch, cnt = 0, maxcnt = 0;
+	extern volatile sig_atomic_t leaveflag;
+	ssize_t len;
 
 	/* allow room for null terminator */
 	size -= 1;
 
 	/* read loop */
-	while ((fflush(stdout), read(0, ptr, 1) > 0)) {
+	while ((fflush(stdout), (len = read(0, ptr, 1)) > 0)) {
+
+		if (len == 0 || leaveflag) {
+			end_screen();
+			exit(0);
+		}
+
 		/* newline means we are done */
 		if ((ch = *ptr) == '\n')
 			break;

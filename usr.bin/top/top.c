@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.29 2003/09/19 10:32:24 jmc Exp $	*/
+/*	$OpenBSD: top.c,v 1.30 2003/11/01 20:20:57 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -362,6 +362,7 @@ main(int argc, char *argv[])
 	sigprocmask(SIG_BLOCK, &mask, &oldmask);
 	init_screen();
 	(void) signal(SIGINT, leave);
+	siginterrupt(SIGINT, 1);
 	(void) signal(SIGQUIT, leave);
 	(void) signal(SIGTSTP, tstop);
 	(void) signal(SIGWINCH, winch);
@@ -562,6 +563,7 @@ rundisplay(void)
 	 */
 	if (poll(pfd, 1, delay * 1000) > 0) {
 		char *errmsg;
+		ssize_t len;
 		int newval;
 
 		clear_message();
@@ -570,7 +572,14 @@ rundisplay(void)
 		 * now read it and convert to
 		 * command strchr
 		 */
-		(void) read(0, &ch, 1);
+		while (1) {
+			len = read(0, &ch, 1);
+			if (len == -1 && errno == EINTR)
+				continue;
+			if (len == 0)
+				exit(1);
+			break;
+		}
 		if ((iptr = strchr(command_chars, ch)) == NULL) {
 			/* illegal command */
 			new_message(MT_standout, " Command not understood");
@@ -620,7 +629,14 @@ rundisplay(void)
 			show_help();
 			standout("Hit any key to continue: ");
 			fflush(stdout);
-			(void) read(0, &ch, 1);
+			while (1) {
+				len = read(0, &ch, 1);
+				if (len == -1 && errno == EINTR)
+					continue;
+				if (len == 0)
+					exit(1);
+				break;
+			}
 			break;
 
 		case CMD_errors:	/* show errors */
@@ -636,7 +652,14 @@ rundisplay(void)
 				show_errors();
 				standout("Hit any key to continue: ");
 				fflush(stdout);
-				(void) read(0, &ch, 1);
+				while (1) {
+					len = read(0, &ch, 1);
+					if (len == -1 && errno == EINTR)
+						continue;
+					if (len == 0)
+						exit(1);
+					break;
+				}
 			}
 			break;
 
