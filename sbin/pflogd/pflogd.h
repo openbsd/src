@@ -1,3 +1,5 @@
+/*	$OpenBSD: pflogd.h,v 1.2 2004/01/15 20:15:14 canacar Exp $ */
+
 /*
  * Copyright (c) 2003 Can Erkin Acar
  *
@@ -14,16 +16,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/limits.h>
 #include <pcap.h>
 
 #define DEF_SNAPLEN 116		/* default plus allow for larger header of pflog */
 #define PCAP_TO_MS 500		/* pcap read timeout (ms) */
 #define PCAP_NUM_PKTS 1000	/* max number of packets to process at each loop */
-#define PCAP_OPT_FIL 0		/* filter optimization */
+#define PCAP_OPT_FIL 1		/* filter optimization */
 #define FLUSH_DELAY 60		/* flush delay */
 
 #define PFLOGD_LOG_FILE		"/var/log/pflog"
 #define PFLOGD_DEFAULT_IF	"pflog0"
+
+#define PFLOGD_MAXSNAPLEN	INT_MAX
+#define PFLOGD_BUFSIZE		65536	/* buffer size for incoming packets */
 
 void  logmsg(int priority, const char *message, ...);
 

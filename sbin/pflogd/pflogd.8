@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.22 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: pflogd.8,v 1.23 2004/01/15 20:15:14 canacar Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Op Fl d Ar delay
 .Op Fl f Ar filename
 .Op Fl s Ar snaplen
+.Op Fl x
 .Op Ar expression
 .Sh DESCRIPTION
 .Nm
@@ -77,6 +78,16 @@ If the existing log file was created with a different snaplen,
 .Nm
 temporarily uses the old snaplen to keep the log file consistent.
 .Pp
+.Nm
+tries to preserve the integrity of the log file against I/O errors.
+Furthermore, integrity of an existing log file is verified before
+appending.  If there is an invalid log file or an I/O error, logging
+is suspended, until a
+.Va SIGHUP
+or a
+.Va SIGALRM
+is received.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d Ar delay
@@ -98,6 +109,8 @@ bytes of data from each packet rather than the default of 96.
 The default of 96 is adequate for IP, ICMP, TCP, and UDP headers but may
 truncate protocol information for other protocols.
 Other file parsers may desire a higher snaplen.
+.It Fl x
+Check the integrity of an existing log file, and return.
 .It Ar expression
 Selects which packets will be dumped, using the regular language of
 .Xr tcpdump 8 .
