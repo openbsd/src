@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.28 2001/08/16 15:12:48 brad Exp $
+#	$OpenBSD: bsd.README,v 1.29 2001/08/18 10:46:25 miod Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -237,7 +237,6 @@ NOPROFILE	Do not build profiled versions of system libraries.
 
 NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.
-variable).
 
 NOLINT		Do not build lint libraries. [set, set unconditionally]
 
