@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: ksrvutil.8,v 1.1.1.1 1995/12/14 06:52:53 tholo Exp $
+.\"	$Id: ksrvutil.8,v 1.2 1997/04/08 23:08:50 rees Exp $
 .TH KSRVUTIL 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 ksrvutil \- host kerberos keyfile (srvtab) manipulation utility
@@ -14,6 +14,8 @@ ksrvutil
 .B \-k 
 ] [ 
 .B \-i 
+] [ 
+.B \-a 
 ] [ 
 .B \-f filename 
 ]
@@ -62,6 +64,13 @@ to add the key to the keyfile and then to change the key so that
 it will be random and unknown to either the system manager or
 the kerberos administrator.
 
+.PP
+If the \-a option is given,
+.I ksrvutil
+uses the AFS string-to-key function.  Use this if you are running
+an AFS kaserver.
+
+.PP
 .I ksrvutil
 always makes a backup copy of the keyfile before making any
 changes.  
