@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.16 2002/03/14 17:01:16 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.17 2003/04/19 10:43:55 henning Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.16 2002/03/14 17:01:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.17 2003/04/19 10:43:55 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ spec()
 	NODE ginfo, *root;
 	int c_cur, c_next;
 	char buf[2048];
+	size_t len;
 
 	centry = last = root = NULL;
 	bzero(&ginfo, sizeof(ginfo));
@@ -142,7 +143,8 @@ spec()
 noparent:		error("no parent node");
 		}
 
-		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
+		len = strlen(p) + 1;	/* NUL in struct _node */
+		if ((centry = calloc(1, sizeof(NODE) + len - 1)) == NULL)
 			error("%s", strerror(errno));
 		*centry = ginfo;
 #define	MAGIC	"?*["
@@ -151,7 +153,7 @@ noparent:		error("no parent node");
 		if (strunvis(centry->name, p) == -1) {
 			fprintf(stderr,
 			    "mtree: filename (%s) encoded incorrectly\n", p);
-			strcpy(centry->name, p);
+			strlcpy(centry->name, p, len);
 		}
 		set(NULL, centry);
 
@@ -183,6 +185,7 @@ set(t, ip)
 	int value;
 	u_int32_t fset, fclr;
 	char *ep;
+	size_t len;
 
 	for (; (kw = strtok(t, "= \t\n")); t = NULL) {
 		ip->flags |= type = parsekey(kw, &value);
@@ -248,12 +251,13 @@ set(t, ip)
 				error("invalid size %s", val);
 			break;
 		case F_SLINK:
-			if ((ip->slink = malloc(strlen(val) + 1)) == NULL)
+			len = strlen(val) + 1;
+			if ((ip->slink = malloc(len)) == NULL)
 				error("%s", strerror(errno));
 			if (strunvis(ip->slink, val) == -1) {
 				fprintf(stderr,
 				    "mtree: filename (%s) encoded incorrectly\n", val);
-				strcpy(ip->slink, val);
+				strlcpy(ip->slink, val, len);
 			}
 			break;
 		case F_TIME:
