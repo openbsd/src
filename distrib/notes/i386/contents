@@ -2,9 +2,14 @@ TopPart
 
 OpenBSDfloppy
 
-OpenBSDfloppyB
+		floppyB{:--:}OSrev.fs	The MACHINE boot and installation floppy;
+				this one features all the drivers not available
+				in floppy{:--:}OSrev.fs, such as SCSI, RAID, gigabit
+				ethernet, and such; see below.
 
-OpenBSDfloppyC
+		floppyC{:--:}OSrev.fs	The MACHINE boot and installation floppy;
+				this one features most of the cardbus and
+				pcmcia drivers; see below.
 
 OpenBSDcdrom
 
@@ -20,15 +25,15 @@ As well you may be interested in
 		see installation section, below.
 
 
-OpenBSDfloppydesc({:-In addition,
-the "tools/" directory contains some utilities that might be useful
-for the installation.-:})
+OpenBSDfloppydesc
+In addition, the "tools/" directory contains some utilities that might be
+useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(17.4M,49.2M)
+OpenBSDbase(shared,17.4M,49.2M)
 
-OpenBSDcomp(11.2M,34.7M)
+OpenBSDcomp(shared,11.2M,34.7M)
 
 OpenBSDetc(161.5K,730.0K)
 
