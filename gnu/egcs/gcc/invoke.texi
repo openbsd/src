@@ -2201,6 +2201,7 @@ and the performance of the generated code.
 and function inlining.  It also turns on the @samp{-fforce-mem} option
 on all machines and frame pointer elimination on machines where doing so
 does not interfere with debugging.
+It does not turn on @samp{-fstrict-aliasing} on OpenBSD platforms.
 
 @item -O3
 Optimize yet more.  @samp{-O3} turns on all optimizations specified by
