@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.51 1998/05/15 14:25:44 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.52 1998/05/16 00:44:34 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -609,6 +609,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Triflex Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
+	    0,
+	    "Compaq",
+	    "USB Controller",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
 	    0,
 	    "Compaq",
@@ -645,16 +651,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Deskpro 4000 5233MMX",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
-	    0,
-	    "Compaq",
-	    "NetFlex 3/P w/ BNC",
-	},
-	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P,
 	    0,
 	    "Compaq",
 	    "NetFlex 3/P",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
+	    0,
+	    "Compaq",
+	    "NetFlex 3/P w/ BNC",
 	},
 	{
 	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE,
