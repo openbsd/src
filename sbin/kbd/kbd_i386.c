@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_i386.c,v 1.9 2000/06/30 16:00:09 millert Exp $	*/
+/*	$OpenBSD: kbd_i386.c,v 1.10 2001/05/01 17:20:20 aaron Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -34,9 +34,7 @@
 
 #include <sys/types.h>
 #include <machine/pccons.h>
-#ifdef HAVEPCVT
-#include <machine/pcvt_ioctl.h>
-#endif
+
 #include <paths.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -75,34 +73,18 @@ struct {
 
 extern char *__progname;
 
-int
-ispcvt()
-{
-#ifdef HAVEPCVT
-	struct pcvtid pcvtid;
-		
-	return ioctl(0, VGAPCVTID, &pcvtid);
-#else
-	return(-1);
-#endif
-}
-
 void
 kbd_list()
 {
 	int i, j;
 
-	if (ispcvt() < 0) {
-		printf("tables available:\n%-16s %s\n\n",
-		       "encoding", "nick names");
-		for (i = 0; keymaps[i].name[0]; i++) {
-			printf("%-16s",keymaps[i].name[0]);
-			for (j = 1; j < NUM_NAMES && keymaps[i].name[j]; j++)
-				printf(" %s", keymaps[i].name[j]);
-			printf("\n");
-		}
-	} else
-		printf("consult 'keycap' database for kbd mapping tables\n");
+	printf("tables available:\n%-16s %s\n\n", "encoding", "nick names");
+	for (i = 0; keymaps[i].name[0]; i++) {
+		printf("%-16s",keymaps[i].name[0]);
+		for (j = 1; j < NUM_NAMES && keymaps[i].name[j]; j++)
+			printf(" %s", keymaps[i].name[j]);
+		printf("\n");
+	}
 }
 
 void
@@ -110,41 +92,30 @@ kbd_set(name, verbose)
 	char *name;
 	int verbose;
 {
+	int i, j, fd;
+	pccons_keymap_t *map = NULL;
 
-	if (ispcvt() < 0) {
-		int i, j, fd;
-		pccons_keymap_t *map = NULL;
+	for (i = 0; keymaps[i].name[0]; i++)
+		for (j = 0; j < NUM_NAMES && keymaps[i].name[j]; j++)
+			if (strcmp(keymaps[i].name[j], name) == 0) {
+				name = keymaps[i].name[0];
+				map = keymaps[i].map;
+				break;
+			}
 
-		for (i = 0; keymaps[i].name[0]; i++)
-			for (j = 0; j < NUM_NAMES && keymaps[i].name[j]; j++)
-				if (strcmp(keymaps[i].name[j], name) == 0) {
-					name = keymaps[i].name[0];
-					map = keymaps[i].map;
-					break;
-				}
-
-		if (map == NULL) {
-			fprintf(stderr, "%s: no such keymap: %s\n",
-				__progname, name);
-			exit(1);
-		}
-
-		if ((fd = open(_PATH_CONSOLE, O_RDONLY)) < 0)
-			err(1, "%s", _PATH_CONSOLE);
-
-		if (ioctl(fd, CONSOLE_SET_KEYMAP, map) < 0)
-			err(1, "CONSOLE_SET_KEYMAP");
-
-		close(fd);
-
-		if (verbose)
-			fprintf(stderr, "keyboard mapping set to %s\n", name);
-	} else {
-		char buf[32];
-
-		snprintf(buf, sizeof(buf), "kcon -m %s", name);
-
-		if (system(buf))
-			err(1, "%s", name);
+	if (map == NULL) {
+		fprintf(stderr, "%s: no such keymap: %s\n", __progname, name);
+		exit(1);
 	}
+
+	if ((fd = open(_PATH_CONSOLE, O_RDONLY)) < 0)
+		err(1, "%s", _PATH_CONSOLE);
+
+	if (ioctl(fd, CONSOLE_SET_KEYMAP, map) < 0)
+		err(1, "CONSOLE_SET_KEYMAP");
+
+	close(fd);
+
+	if (verbose)
+		fprintf(stderr, "keyboard mapping set to %s\n", name);
 }
