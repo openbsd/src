@@ -1,26 +1,31 @@
-/*	$OpenBSD: acl_files.c,v 1.6 1997/12/17 02:02:59 deraadt Exp $	*/
+/*	$OpenBSD: acl_files.c,v 1.7 1997/12/22 16:27:44 art Exp $	*/
 /* $KTH: acl_files.c,v 1.10 1997/05/02 14:28:56 assar Exp $ */
 
+/*
+ * This software may now be redistributed outside the US.
+ *
+ */
+
 /* 
-  Copyright (C) 1989 by the Massachusetts Institute of Technology
-
-   Export of this software from the United States of America is assumed
-   to require a specific license from the United States Government.
-   It is the responsibility of any person or organization contemplating
-   export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-distribute this software and its documentation for any purpose and
-without fee is hereby granted, provided that the above copyright
-notice appear in all copies and that both that copyright notice and
-this permission notice appear in supporting documentation, and that
-the name of M.I.T. not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.  M.I.T. makes no representations about the suitability of
-this software for any purpose.  It is provided "as is" without express
-or implied warranty.
-
-  */
+ *  Copyright (C) 1989 by the Massachusetts Institute of Technology
+ *
+ *  Export of this software from the United States of America is assumed
+ *  to require a specific license from the United States Government.
+ *  It is the responsibility of any person or organization contemplating
+ *  export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +73,7 @@ void
 acl_canonicalize_principal(char *principal, char *canon)
 {
     char *dot, *atsign, *end;
+    char *orgcanon = canon;
     int len;
 
     dot = strchr(principal, INST_SEP);
@@ -79,7 +85,7 @@ acl_canonicalize_principal(char *principal, char *canon)
 	    /* It's for real */
 	    /* Copy into canon */
 	    strncpy(canon, principal, MAX_PRINCIPAL_SIZE);
-	    canon[MAX_PRINCIPAL_SIZE-1] = '\0';
+	    orgcanon[MAX_PRINCIPAL_SIZE - 1] = '\0';
 	    return;
 	} else {
 	    /* Nope, it's part of the realm */
@@ -118,9 +124,9 @@ acl_canonicalize_principal(char *principal, char *canon)
 	canon += len;
 	*canon++ = '\0';
     } else if(krb_get_lrealm(canon, 1) != KSUCCESS) {
-	strncpy(canon, KRB_REALM, MAX_PRINCIPAL_SIZE);
-	canon[MAX_PRINCIPAL_SIZE - 1] = '\0';
+	strncpy(canon, KRB_REALM, MAX_PRINCIPAL_SIZE - (canon - orgcanon));
     }
+    orgcanon[MAX_PRINCIPAL_SIZE - 1] = '\0';
 }
 	    
 /* Get a lock to modify acl_file */
@@ -401,6 +407,7 @@ acl_load(char *name)
 
     /* Set up the acl */
     strncpy(acl_cache[i].filename, name, LINESIZE);
+    acl_cache[i].filename[LINESIZE - 1] = '\0';
     if((acl_cache[i].fd = open(name, O_RDONLY, 0)) < 0) return(-1);
     /* Force reload */
     acl_cache[i].acl = (struct hashtbl *) 0;
