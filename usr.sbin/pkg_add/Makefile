@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2005/02/28 13:44:19 espie Exp $
+# $OpenBSD: Makefile,v 1.22 2005/03/01 21:47:19 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,8 @@ PODS= \
     OpenBSD::PkgSpec \
     OpenBSD::Ustar \
     OpenBSD::Vstat
+
+_quick3p=
 
 .for p in ${PODS}
 .  ifndef NOMAN
