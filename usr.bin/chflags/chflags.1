@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.7 1999/10/05 19:56:27 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.8 1999/12/09 00:39:50 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -103,6 +103,15 @@ For example:
 .Bd -literal -offset indent compact
 nouchg	the immutable bit should be cleared
 .Ed
+.Pp
+The
+.Dq sappnd
+and
+.Dq schg
+system flags may be set at any time, but normally may only be unset when the
+system is in single-user mode (see
+.Xr init 8
+for details).
 .Pp
 Symbolic links do not have flags, so unless the
 .Fl H
