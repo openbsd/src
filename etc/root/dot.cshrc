@@ -1,3 +1,4 @@
+umask 022
 alias mail Mail
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin)
