@@ -63,11 +63,11 @@ struct fwohci_pci_softc {
 };
 
 #ifdef __NetBSD__
-static int fwohci_pci_match __P((struct device *, struct cfdata *, void *));
+static int fwohci_pci_match(struct device *, struct cfdata *, void *);
 #else
-static int fwohci_pci_match __P((struct device *, void *, void *));
+static int fwohci_pci_match(struct device *, void *, void *);
 #endif
-static void fwohci_pci_attach __P((struct device *, struct device *, void *));
+static void fwohci_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach fwohci_pci_ca = {
 	sizeof(struct fwohci_pci_softc), fwohci_pci_match, fwohci_pci_attach,

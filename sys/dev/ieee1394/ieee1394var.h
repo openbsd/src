@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1394var.h,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: ieee1394var.h,v 1.2 2002/06/25 23:33:31 itojun Exp $	*/
 /*	$NetBSD: ieee1394var.h,v 1.15 2002/02/27 05:04:28 jmc Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ struct ieee1394_node {
 	size_t node_configrom_len;
 };
 
-int ieee1394_init __P((struct ieee1394_softc *));
+int ieee1394_init(struct ieee1394_softc *);
 
 #define	IEEE1394_ARGTYPE_PTR	0
 #define	IEEE1394_ARGTYPE_MBUF	1

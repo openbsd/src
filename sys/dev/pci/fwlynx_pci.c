@@ -58,8 +58,8 @@ struct fwlynx_pci_softc {
 	void *psc_ih;
 };
 
-static int fwlynx_pci_match __P((struct device *, struct cfdata *, void *));
-static void fwlynx_pci_attach __P((struct device *, struct device *, void *));
+static int fwlynx_pci_match(struct device *, struct cfdata *, void *);
+static void fwlynx_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach fwlynx_pci_ca = {
 	sizeof(struct fwlynx_pci_softc), fwlynx_pci_match, fwlynx_pci_attach,
