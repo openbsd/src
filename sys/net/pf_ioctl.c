@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.137 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.138 2005/01/05 18:11:55 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,24 +165,24 @@ pfattach(int num)
 	pf_default_rule.nr = -1;
 
 	/* initialize default timeouts */
-	timeout[PFTM_TCP_FIRST_PACKET] = 120;		/* First TCP packet */
-	timeout[PFTM_TCP_OPENING] = 30;			/* No response yet */
-	timeout[PFTM_TCP_ESTABLISHED] = 24*60*60;	/* Established */
-	timeout[PFTM_TCP_CLOSING] = 15 * 60;		/* Half closed */
-	timeout[PFTM_TCP_FIN_WAIT] = 45;		/* Got both FINs */
-	timeout[PFTM_TCP_CLOSED] = 90;			/* Got a RST */
-	timeout[PFTM_UDP_FIRST_PACKET] = 60;		/* First UDP packet */
-	timeout[PFTM_UDP_SINGLE] = 30;			/* Unidirectional */
-	timeout[PFTM_UDP_MULTIPLE] = 60;		/* Bidirectional */
-	timeout[PFTM_ICMP_FIRST_PACKET] = 20;		/* First ICMP packet */
-	timeout[PFTM_ICMP_ERROR_REPLY] = 10;		/* Got error response */
-	timeout[PFTM_OTHER_FIRST_PACKET] = 60;		/* First packet */
-	timeout[PFTM_OTHER_SINGLE] = 30;		/* Unidirectional */
-	timeout[PFTM_OTHER_MULTIPLE] = 60;		/* Bidirectional */
-	timeout[PFTM_FRAG] = 30;			/* Fragment expire */
-	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
-	timeout[PFTM_SRC_NODE] = 0;			/* Source tracking */
-	timeout[PFTM_TS_DIFF] = 30;			/* Allowed TS diff */
+	timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
+	timeout[PFTM_TCP_OPENING] = PFTM_TCP_OPENING_VAL;
+	timeout[PFTM_TCP_ESTABLISHED] = PFTM_TCP_ESTABLISHED_VAL;
+	timeout[PFTM_TCP_CLOSING] = PFTM_TCP_CLOSING_VAL;
+	timeout[PFTM_TCP_FIN_WAIT] = PFTM_TCP_FIN_WAIT_VAL;
+	timeout[PFTM_TCP_CLOSED] = PFTM_TCP_CLOSED_VAL;
+	timeout[PFTM_UDP_FIRST_PACKET] = PFTM_UDP_FIRST_PACKET_VAL;
+	timeout[PFTM_UDP_SINGLE] = PFTM_UDP_SINGLE_VAL;
+	timeout[PFTM_UDP_MULTIPLE] = PFTM_UDP_MULTIPLE_VAL;
+	timeout[PFTM_ICMP_FIRST_PACKET] = PFTM_ICMP_FIRST_PACKET_VAL;
+	timeout[PFTM_ICMP_ERROR_REPLY] = PFTM_ICMP_ERROR_REPLY_VAL;
+	timeout[PFTM_OTHER_FIRST_PACKET] = PFTM_OTHER_FIRST_PACKET_VAL;
+	timeout[PFTM_OTHER_SINGLE] = PFTM_OTHER_SINGLE_VAL;
+	timeout[PFTM_OTHER_MULTIPLE] = PFTM_OTHER_MULTIPLE_VAL;
+	timeout[PFTM_FRAG] = PFTM_FRAG_VAL;
+	timeout[PFTM_INTERVAL] = PFTM_INTERVAL_VAL;
+	timeout[PFTM_SRC_NODE] = PFTM_SRC_NODE_VAL;
+	timeout[PFTM_TS_DIFF] = PFTM_TS_DIFF_VAL;
 
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);
@@ -2737,11 +2737,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETHOSTID: {
 		u_int32_t	*hostid = (u_int32_t *)addr;
 
-		if (*hostid == 0) {
-			error = EINVAL;
-			goto fail;
-		}
-		pf_status.hostid = *hostid;
+		if (*hostid == 0)
+			pf_status.hostid = arc4random();
+		else
+			pf_status.hostid = *hostid;
 		break;
 	}
 
