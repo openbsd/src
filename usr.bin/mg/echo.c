@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.23 2002/07/03 03:47:59 vincent Exp $	*/
+/*	$OpenBSD: echo.c,v 1.24 2002/07/03 17:25:38 vincent Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -421,116 +421,114 @@ complt_list(int flags, int c, char *buf, int cpos)
 	if (bclear(bp) == FALSE)
 		return FALSE;
 
-	{	/* this {} present for historical reasons */
-
+	/*
+	 * first get the list of objects.  This list may contain only
+	 * the ones that complete what has been typed, or may be the
+	 * whole list of all objects of this type.  They are filtered
+	 * later in any case.  Set wholelist if the list has been
+	 * cons'ed up just for us, so we can free it later.  We have
+	 * to copy the buffer list for this function even though we
+	 * didn't for complt.  The sorting code does destructive
+	 * changes to the list, which we don't want to happen to the
+	 * main buffer list!
+	 */
+	if ((flags & EFBUF) != 0)
+		wholelist = lh = copy_list(&(bheadp->b_list));
+	else if ((flags & EFFUNC) != 0) {
+		buf[cpos] = '\0';
+		wholelist = lh = complete_function_list(buf, c);
+	} else if ((flags & EFFILE) != 0) {
+		buf[cpos] = '\0';
+		wholelist = lh = make_file_list(buf);
 		/*
-		 * first get the list of objects.  This list may contain only
-		 * the ones that complete what has been typed, or may be the
-		 * whole list of all objects of this type.  They are filtered
-		 * later in any case.  Set wholelist if the list has been
-		 * cons'ed up just for us, so we can free it later.  We have
-		 * to copy the buffer list for this function even though we
-		 * didn't for complt.  The sorting code does destructive
-		 * changes to the list, which we don't want to happen to the
-		 * main buffer list!
+		 * We don't want to display stuff up to the / for file
+		 * names preflen is the list of a prefix of what the
+		 * user typed that should not be displayed.
 		 */
-		if ((flags & EFBUF) != 0)
-			wholelist = lh = copy_list(&(bheadp->b_list));
-		else if ((flags & EFFUNC) != 0) {
-			buf[cpos] = '\0';
-			wholelist = lh = complete_function_list(buf, c);
-		} else if ((flags & EFFILE) != 0) {
-			buf[cpos] = '\0';
-			wholelist = lh = make_file_list(buf);
-			/*
-			 * We don't want to display stuff up to the / for file
-			 * names preflen is the list of a prefix of what the
-			 * user typed that should not be displayed.
-			 */
-			cp = strrchr(buf, '/');
-			if (cp)
-				preflen = cp - buf + 1;
-		} else
-			panic("broken complt call: flags");
+		cp = strrchr(buf, '/');
+		if (cp)
+			preflen = cp - buf + 1;
+	} else
+		panic("broken complt call: flags");
 
 
-		/*
-		 * Sort the list, since users expect to see it in alphabetic
-		 * order.
-		 */
-		lh2 = lh;
-		while (lh2 != NULL) {
-			lh3 = lh2->l_next;
-			while (lh3 != NULL) {
-				if (strcmp(lh2->l_name, lh3->l_name) > 0) {
-					cp = lh2->l_name;
-					lh2->l_name = lh3->l_name;
-					lh3->l_name = cp;
-				}
-				lh3 = lh3->l_next;
+	/*
+	 * Sort the list, since users expect to see it in alphabetic
+	 * order.
+	 */
+	lh2 = lh;
+	while (lh2 != NULL) {
+		lh3 = lh2->l_next;
+		while (lh3 != NULL) {
+			if (strcmp(lh2->l_name, lh3->l_name) > 0) {
+				cp = lh2->l_name;
+				lh2->l_name = lh3->l_name;
+				lh3->l_name = cp;
 			}
-			lh2 = lh2->l_next;
+			lh3 = lh3->l_next;
 		}
-
-		/*
-		 * First find max width of object to be displayed, so we can
-		 * put several on a line.
-		 */
-		maxwidth = 0;
-		lh2 = lh;
-		while (lh2 != NULL) {
-			for (i = 0; i < cpos; ++i) {
-				if (buf[i] != lh2->l_name[i])
-					break;
-			}
-			if (i == cpos) {
-				width = strlen(lh2->l_name);
-				if (width > maxwidth)
-					maxwidth = width;
-			}
-			lh2 = lh2->l_next;
-		}
-		maxwidth += 1 - preflen;
-
-		/*
-		 * Now do the display.  objects are written into linebuf until
-		 * it fills, and then put into the help buffer.
-		 */
-		if ((linebuf = malloc((nrow + 1) * sizeof(char))) == NULL)
-			return FALSE;
-		width = 0;
-
-		/* 
-		 * We're going to strlcat() into the buffer, so it has to be
-		 * NUL terminated
-		 */
-		linebuf[0] = '\0';
-		for (lh2 = lh; lh2 != NULL; lh2 = lh2->l_next) {
-			for (i = 0; i < cpos; ++i) {
-				if (buf[i] != lh2->l_name[i])
-					break;
-			}
-			/* if we have a match */
-			if (i == cpos) {
-				/* if it wraps */
-				if ((width + maxwidth) > ncol) {
-					addline(bp, linebuf);
-					linebuf[0] = '\0';
-					width = 0;
-		 		}
-				strlcat(linebuf, lh2->l_name + preflen, nrow+1);				i = strlen(lh2->l_name + preflen);
-				/* make all the objects nicely line up */
-				memset(linebuf + strlen(linebuf), ' ',
-					maxwidth - i);
-				width += maxwidth;
-				linebuf[width] = '\0';
-			}
-		}
-		if (width > 0) {
-			addline(bp, linebuf);
-		}
-		free(linebuf);
+		lh2 = lh2->l_next;
 	}
+
+	/*
+	 * First find max width of object to be displayed, so we can
+	 * put several on a line.
+	 */
+	maxwidth = 0;
+	lh2 = lh;
+	while (lh2 != NULL) {
+		for (i = 0; i < cpos; ++i) {
+			if (buf[i] != lh2->l_name[i])
+				break;
+		}
+		if (i == cpos) {
+			width = strlen(lh2->l_name);
+			if (width > maxwidth)
+				maxwidth = width;
+		}
+		lh2 = lh2->l_next;
+	}
+	maxwidth += 1 - preflen;
+
+	/*
+	 * Now do the display.  objects are written into linebuf until
+	 * it fills, and then put into the help buffer.
+	 */
+	if ((linebuf = malloc((nrow + 1) * sizeof(char))) == NULL)
+		return FALSE;
+	width = 0;
+
+	/* 
+	 * We're going to strlcat() into the buffer, so it has to be
+	 * NUL terminated
+	 */
+	linebuf[0] = '\0';
+	for (lh2 = lh; lh2 != NULL; lh2 = lh2->l_next) {
+		for (i = 0; i < cpos; ++i) {
+			if (buf[i] != lh2->l_name[i])
+				break;
+		}
+		/* if we have a match */
+		if (i == cpos) {
+			/* if it wraps */
+			if ((width + maxwidth) > ncol) {
+				addline(bp, linebuf);
+				linebuf[0] = '\0';
+				width = 0;
+			}
+			strlcat(linebuf, lh2->l_name + preflen, nrow+1);
+			i = strlen(lh2->l_name + preflen);
+			/* make all the objects nicely line up */
+			memset(linebuf + strlen(linebuf), ' ',
+			    maxwidth - i);
+			width += maxwidth;
+			linebuf[width] = '\0';
+		}
+	}
+	if (width > 0)
+		addline(bp, linebuf);
+	free(linebuf);
+
 	/*
 	 * Note that we free lists only if they are put in wholelist lists
 	 * that were built just for us should be freed.  However when we use
