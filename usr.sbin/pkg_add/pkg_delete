@@ -1,6 +1,6 @@
-_#!/usr/bin/perl
+#!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.45 2004/09/21 09:42:33 espie Exp $
+# $OpenBSD: pkg_delete,v 1.46 2004/09/21 09:44:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
