@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.66 2002/01/03 09:24:02 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.67 2002/01/23 17:26:21 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ x509_generate_kn (int id, X509 *cert)
   char before[15], after[15];
   ASN1_TIME *tm;
   char *timecomp, *timecomp2;
-  int i;
+  int i, buf_len;
 
   LOG_DBG ((LOG_POLICY, 90,
 	    "x509_generate_kn: generating KeyNote policy for certificate %p",
@@ -224,8 +224,9 @@ x509_generate_kn (int id, X509 *cert)
     }
   LC (RSA_free, (key));
 
-  buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey) + 56,
-		sizeof (char));
+  buf_len = strlen (fmt) + strlen (ikey) + strlen (skey) + 56;
+  buf = calloc (buf_len, sizeof (char));
+  buf_len *= sizeof (char);
   if (!buf)
     {
       log_error ("x509_generate_kn: "
@@ -301,9 +302,9 @@ x509_generate_kn (int id, X509 *cert)
 
 	  /* Stupid UTC tricks.  */
 	  if (tm->data[0] < '5')
-	    sprintf (before, "20%s", tm->data);
+	    snprintf (before, 15, "20%s", tm->data);
 	  else
-	    sprintf (before, "19%s", tm->data);
+	    snprintf (before, 15, "19%s", tm->data);
 	}
       else
         { /* V_ASN1_GENERICTIME */
@@ -336,7 +337,7 @@ x509_generate_kn (int id, X509 *cert)
 	      return 0;
 	    }
 
-	  sprintf (before, "%s", tm->data);
+	  snprintf (before, 15, "%s", tm->data);
 	}
 
       /* Fix missing seconds.  */
@@ -417,9 +418,9 @@ x509_generate_kn (int id, X509 *cert)
 
 	  /* Stupid UTC tricks.  */
 	  if (tm->data[0] < '5')
-	    sprintf (after, "20%s", tm->data);
+	    snprintf (after, 15, "20%s", tm->data);
 	  else
-	    sprintf (after, "19%s", tm->data);
+	    snprintf (after, 15, "19%s", tm->data);
 	}
       else
         { /* V_ASN1_GENERICTIME */
@@ -452,7 +453,7 @@ x509_generate_kn (int id, X509 *cert)
 	      return 0;
 	    }
 
-	  sprintf (after, "%s", tm->data);
+	  snprintf (after, 15, "%s", tm->data);
         }
 
       /* Fix missing seconds.  */
@@ -465,7 +466,7 @@ x509_generate_kn (int id, X509 *cert)
       after[14] = '\0'; /* This will overwrite trailing 'Z' */
     }
 
-  sprintf (buf, fmt, skey, ikey, timecomp, before, timecomp2, after);
+  snprintf (buf, buf_len, fmt, skey, ikey, timecomp, before, timecomp2, after);
   free (ikey);
   free (skey);
 
@@ -497,15 +498,16 @@ x509_generate_kn (int id, X509 *cert)
       return 0;
     }
 
-  buf = malloc (strlen (fmt2) + strlen (isname) + strlen (subname) + 56);
+  buf_len = strlen (fmt2) + strlen (isname) + strlen (subname) + 56;
+  buf = malloc (buf_len);
   if (!buf)
     {
-      log_error ("x509_generate_kn: malloc (%d) failed", strlen (fmt2) +
-		 strlen (isname) + strlen (subname) + 56);
+      log_error ("x509_generate_kn: malloc (%d) failed", buf_len);
       return 0;
     }
 
-  sprintf (buf, fmt2, isname, subname, timecomp, before, timecomp2, after);
+  snprintf (buf, buf_len, fmt2, isname, subname, timecomp, before, timecomp2,
+	    after);
 
   if (LK (kn_add_assertion, (id, buf, strlen (buf),
 			     ASSERT_FLAG_LOCAL)) == -1)
@@ -683,15 +685,13 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       return 0;
     }
 
-  strncpy (fullname, name, sizeof fullname - 1);
-  fullname[sizeof fullname - 1] = 0;
+  strlcpy (fullname, name, sizeof fullname);
   off = strlen (fullname);
-  size = sizeof fullname - off - 1;
+  size = sizeof fullname - off;
 
   while ((file = readdir (dir)) != NULL)
     {
-      strncpy (fullname + off, file->d_name, size);
-      fullname[off + size] = 0;
+      strlcpy (fullname + off, file->d_name, size);
 
       if (file->d_type != DT_UNKNOWN)
       {
