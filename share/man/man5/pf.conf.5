@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.17 2001/09/28 14:12:15 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.18 2001/10/01 18:44:36 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -50,7 +50,7 @@ rule       = action ( "in" | "out" )
              [ "proto" ( proto-name | proto-number | "{" proto-list "}" ) ]
              hosts
              [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
-             [ "keep-state" ] [ "modulate-state" ]
+             [ "keep state" ] [ "modulate state" ]
              [ "no-df" ] [ "min-ttl" number ] .
 
 action     = "pass" | "block" [ return ] | "scrub" .
@@ -258,7 +258,7 @@ a connection.
 Instead of passing all traffic to port 25, for instance, one can pass
 only the initial packet and keep state.
 .Pp
-If a packet matches a pass ... keep-state rule, the filter creates
+If a packet matches a pass ... keep state rule, the filter creates
 a state for this connection and automatically lets pass all following
 packets of that connection.
 .Pp
