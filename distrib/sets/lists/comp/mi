@@ -418,8 +418,6 @@
 ./usr/include/dev/pci/if_txvar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
-./usr/include/dev/pci/if_wxreg.h
-./usr/include/dev/pci/if_wxvar.h
 ./usr/include/dev/pci/isesreg.h
 ./usr/include/dev/pci/isesvar.h
 ./usr/include/dev/pci/lofnreg.h

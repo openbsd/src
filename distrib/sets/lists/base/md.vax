@@ -409,8 +409,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_txvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_wbreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_wxreg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_wxvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/isesreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/lofnreg.ph
