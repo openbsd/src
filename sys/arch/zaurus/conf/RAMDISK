@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2005/01/13 23:33:37 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2005/01/14 00:39:20 drahn Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -173,13 +173,9 @@ urlphy*	at mii?			# Realtek RTL8150L internal PHY
 #ciphy*  at mii?		# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
-# On-board device support
-obio0		at pxaip? intr 8
-#sm0		at obio? addr 0x0c000000 intr 3 	# on-board SMC 91C96
-#options LUBBOCK_SMC91C96_16BIT
 
 # LCD
-lcd0		at obio?
+lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
