@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.3 1997/12/21 14:36:44 downsj Exp $
+#	$OpenBSD: pnpdevs,v 1.4 1997/12/22 01:34:22 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -284,7 +284,6 @@ ed	PNP81c8		#SMC EtherElite Ultra 16
 #	PNP828B	#TI2000-style Token Ring
 le	PNP828C		#AMD PCNet Family cards
 le	PNP828D		#AMD PCNet32 (VL version)
-le	WUMbeef
 #	PNP8294	#IrDA Infrared NDIS driver (Microsoft-supplied)
 #	PNP82bd	#IBM PCMCIA-NIC
 #	PNP82C2	#Xircom CE10
@@ -352,3 +351,4 @@ com	MOT1170	#Motorola Bitsurfer ISDN TA
 pccom	MOT1170	#Motorola Bitsurfer ISDN TA
 com	NECE761	#33.6Modem
 pccom	NECE761	#33.6Modem
+le	wUMBEEF	#BOCALANcard COMBO
