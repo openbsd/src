@@ -1,4 +1,5 @@
-/*	$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.7 1996/05/24 10:59:00 deraadt Exp $ */
+/*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,11 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.7 1996/05/24 10:59:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define DO_AOUT			/* always do a.out */
@@ -164,7 +161,7 @@ __ecoff_fdnlist(fd, list)
 	register struct nlist *list;
 {
 	struct nlist *p;
-	struct ecoff_filehdr *filehdrp;
+	struct ecoff_exechdr *exechdrp;
 	struct ecoff_symhdr *symhdrp;
 	struct ecoff_extsym *esyms;
 	struct stat st;
@@ -188,26 +185,26 @@ __ecoff_fdnlist(fd, list)
 	if (mappedfile == (char *)-1)
 		BAD;
 
-	if (check(0, sizeof *filehdrp))
+	if (check(0, sizeof *exechdrp))
 		BADUNMAP;
-	filehdrp = (struct ecoff_filehdr *)&mappedfile[0];
+	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
 
-	if (ECOFF_BADMAG(filehdrp))
+	if (ECOFF_BADMAG(exechdrp))
 		BADUNMAP;
 
-	symhdroff = filehdrp->ef_symptr;
-	symhdrsize = filehdrp->ef_syms;
+	symhdroff = exechdrp->f.f_symptr;
+	symhdrsize = exechdrp->f.f_nsyms;
 
 	if (check(symhdroff, sizeof *symhdrp) ||
 	    sizeof *symhdrp != symhdrsize)
 		BADUNMAP;
 	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
 
-	nesyms = symhdrp->sh_esymmax;
-	if (check(symhdrp->sh_esymoff, nesyms * sizeof *esyms))
+	nesyms = symhdrp->esymMax;
+	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
 		BADUNMAP;
-	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->sh_esymoff];
-	extstroff = symhdrp->sh_estroff;
+	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
+	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
 	 * clean out any left-over information for all valid entries.
