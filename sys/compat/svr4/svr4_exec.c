@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.7 1998/03/06 22:05:47 niklas Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.8 1999/09/10 20:08:13 art Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 
@@ -45,7 +46,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 #include <machine/svr4_machdep.h>
 
 #include <compat/svr4/svr4_util.h>
