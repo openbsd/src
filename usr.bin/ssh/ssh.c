@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.89 2001/02/06 22:07:42 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.90 2001/02/06 22:43:02 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -996,10 +996,10 @@ ssh_session2_callback(int id, void *arg)
 		channel_request(id, "shell", 0);
 	}
 	/* channel_callback(id, SSH2_MSG_OPEN_CONFIGMATION, client_init, 0); */
+
 done:
 	/* register different callback, etc. XXX */
 	packet_set_interactive(interactive);
-	clientloop_set_session_ident(id);
 }
 
 int
