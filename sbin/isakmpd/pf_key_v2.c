@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.24 2000/02/25 17:23:40 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.37 2000/02/20 19:58:41 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.25 2000/03/08 08:41:57 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.39 2000/03/07 22:52:21 ho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -85,7 +85,7 @@ TAILQ_HEAD (pf_key_v2_msg, pf_key_v2_node);
 #define PF_KEY_V2_NODE_MALLOCED 1
 #define PF_KEY_V2_NODE_MARK 2
 
-#ifdef __FreeBSD__
+#ifdef KAME
 /*
  * KAME requires the sadb_msg_seq of an UPDATE be the same of that of the
  * GETSPI creating the larval SA.
@@ -114,7 +114,7 @@ static u_int32_t pf_key_v2_write (struct pf_key_v2_msg *);
 /* The socket to use for PF_KEY interactions.  */
 static int pf_key_v2_socket;
 
-#ifdef __FreeBSD__
+#ifdef KAME
 static int
 pf_key_v2_register_sa_seq (u_int8_t *spi, size_t sz, u_int8_t proto,
 			   struct sockaddr *dst, int dstlen, u_int32_t seq)
@@ -404,7 +404,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
 
   msg->sadb_msg_version = PF_KEY_V2;
   msg->sadb_msg_errno = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   if (!msg->sadb_msg_mode)
     msg->sadb_msg_mode = IPSEC_MODE_ANY;
   msg->sadb_msg_reqid = 0;	/* XXX */
@@ -515,7 +515,7 @@ pf_key_v2_open ()
 
   /* Register it to get ESP and AH acquires from the kernel.  */
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   msg.sadb_msg_type = SADB_REGISTER;
@@ -540,7 +540,7 @@ pf_key_v2_open ()
   ret = 0;
 
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   msg.sadb_msg_type = SADB_REGISTER;
@@ -561,7 +561,7 @@ pf_key_v2_open ()
 
   /* XXX Register the accepted transforms.  */
 
-#ifdef __FreeBSD__
+#ifdef KAME
   TAILQ_INIT (&pf_key_v2_sa_seq_map);
 #endif
 
@@ -613,7 +613,7 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
    * from the acquire message.
    */
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = IPSEC_MODE_TUNNEL;	/* XXX */
 #endif
   getspi = pf_key_v2_msg_new (&msg, 0);
@@ -694,7 +694,7 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
   if (!spi)
     goto cleanup;
   memcpy (spi, &sa->sadb_sa_spi, *sz);
-#ifdef __FreeBSD__
+#ifdef KAME
   if (!pf_key_v2_register_sa_seq (spi, *sz, proto, dst, dstlen,
 				  ((struct sadb_msg *)(TAILQ_FIRST (ret)->seg))
 				  ->sadb_msg_seq))
@@ -777,7 +777,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       switch (iproto->auth)
 	{
 	case IPSEC_AUTH_HMAC_MD5:
-#ifdef __FreeBSD__
+#ifdef KAME
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC96;
@@ -785,7 +785,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	  break;
 
 	case IPSEC_AUTH_HMAC_SHA:
-#ifdef __FreeBSD__
+#ifdef KAME
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC96;
@@ -811,7 +811,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       switch (proto->id)
 	{
 	case IPSEC_AH_MD5:
-#ifdef __FreeBSD__
+#ifdef KAME
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_MD5HMAC96;
@@ -819,7 +819,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	  break;
 
 	case IPSEC_AH_SHA:
-#ifdef __FreeBSD__
+#ifdef KAME
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC96;
@@ -840,7 +840,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
     sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
   else
     sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_seq
     = (incoming ? pf_key_v2_seq_by_sa (proto->spi[incoming],
 				       sizeof ssa.sadb_sa_spi, proto->proto,
@@ -1133,7 +1133,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   flow = pf_key_v2_msg_new (&msg, 0);
@@ -1319,7 +1319,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   msg.sadb_msg_type = delete ? SADB_X_SPDDELETE : SADB_X_SPDADD;
   msg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   flow = pf_key_v2_msg_new (&msg, 0);
@@ -1617,7 +1617,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   delete = pf_key_v2_msg_new (&msg, 0);
@@ -1891,7 +1891,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
       goto cleanup;
     }
   msg.sadb_msg_seq = 0;
-#ifdef __FreeBSD__
+#ifdef KAME
   msg.sadb_msg_mode = 0;
 #endif
   grpspis = pf_key_v2_msg_new (&msg, 0);
