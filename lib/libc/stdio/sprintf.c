@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sprintf.c,v 1.9 2003/07/24 01:15:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprintf.c,v 1.10 2005/03/31 18:36:29 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ __warn_references(sprintf,
 #endif
 
 int
-sprintf(char *str, char const *fmt, ...)
+sprintf(char *str, const char *fmt, ...)
 {
 	int ret;
 	va_list ap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.8 2005/03/30 18:51:49 pat Exp $	*/
+/*	$OpenBSD: local.h,v 1.9 2005/03/31 18:36:29 pat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@ int	__sflush(FILE *);
 FILE	*__sfp(void);
 int	__srefill(FILE *);
 int	__sread(void *, char *, int);
-int	__swrite(void *, char const *, int);
+int	__swrite(void *, const char *, int);
 fpos_t	__sseek(void *, fpos_t, int);
 int	__sclose(void *);
 void	__sinit(void);

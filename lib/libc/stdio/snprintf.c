@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.9 2004/04/10 19:34:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: snprintf.c,v 1.10 2005/03/31 18:36:29 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <limits.h>
@@ -39,7 +39,7 @@ static char rcsid[] = "$OpenBSD: snprintf.c,v 1.9 2004/04/10 19:34:44 millert Ex
 #include <stdarg.h>
 
 int
-snprintf(char *str, size_t n, char const *fmt, ...)
+snprintf(char *str, size_t n, const char *fmt, ...)
 {
 	va_list ap;
 	int ret;

@@ -31,14 +31,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: printf.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.6 2005/03/31 18:36:29 pat Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdarg.h>
 
 int
-printf(char const *fmt, ...)
+printf(const char *fmt, ...)
 {
 	int ret;
 	va_list ap;
