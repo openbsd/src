@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.53 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: install,v 1.54 2002/07/25 19:29:32 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -186,7 +186,20 @@ OpenBSDBootMsgs
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 
-OpenBSDInstallPart3
+dnl put this back for 3.3
+dnl OpenBSDInstallPart3
+	After entering the terminal type you will be asked whether you
+	wish to do an "(I)nstall".  Enter 'I' for a fresh installation.
+	Note that you cannot upgrade a previous OpenBSD installation
+	to 3.2.
+
+	You will be presented with a welcome message and asked if
+	you really want to continue. Assuming you answered yes, the
+	install program will then tell you which disks of that type
+	it can install on, and ask you which it should use.  The name
+	of the disk is typically "sd0" for SCSI drives.
+	Reply with the name of your disk.
+dnl end put this back
 
 OpenBSDInstallPart4
 
@@ -497,7 +510,9 @@ filesystem for `/usr' with your diskless setup, make sure the "./usr" base
 files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and
-the install/upgrade scripts into the root directory.
+dnl put back after 3.2
+dnl the install/upgrade scripts into the root directory.
+the install script into the root directory.
 
 A few configuration files need to be edited:
 

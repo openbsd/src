@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.36 2002/07/04 18:06:45 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.37 2002/07/25 19:29:29 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -848,7 +848,7 @@ ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
 
 	Note that, when installing, the tape can be write-protected
 	(i.e. read-only).-:})dnl
-dnl
+dnl OpenBSDXferNFS [(noupgrade)]
 define({:-OpenBSDXferNFS-:},
 {:-To install OpenBSD using a remote partition, mounted via
 NFS, you must do the following:
@@ -877,11 +877,11 @@ NFS, you must do the following:
 
 	Once the NFS server is set up properly and you have the
 	information mentioned above, you can proceed to the next
-	step in the installation or upgrade process.  If you're
+	step in the installation ifelse(X$1,X,{:-or upgrade -:})process.ifelse(X$1,X,,{:-  If you're
 	installing OpenBSD from scratch, go to the section on
 	preparing your hard disk, below.  If you're upgrading an
 	existing installation, go directly to the section on
-	upgrading.-:})dnl
+	upgrading.-:})-:})dnl
 dnl
 define({:-OpenBSDXferFFS-:},
 {:-If you are upgrading OpenBSD, you also have the option of installing
