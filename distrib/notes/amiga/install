@@ -46,11 +46,6 @@ OpenBSDBootMsgs
 
 		loadbsd -I ff bsd.rd
 
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present.  Do not be
-	alarmed, these are completely normal.  When you reach the prompt
-	asking you for a shell name, just hit return.
-
 	You will be asked which terminal type to use, you should just
 	hit return to select the default (vt220).
 

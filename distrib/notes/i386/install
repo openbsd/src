@@ -33,19 +33,15 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present.  Do not be
-	alarmed, these are completely normal.  When you reach the prompt
-	asking you for a shell name, just hit return.
+	You will next be asked for your terminal type.  You should just
+	hit return to select the default (vt220).
 
 	Now you will be asked whether you wish to do an "install"
 	or an "upgrade".  Enter 'i' for a fresh install or 'u' to
 	upgrade an existing installation.
 
 	You will be presented with a welcome message and asked if
-	you really wish to install (or upgrade).  Assuming you
-	answered yes, you will be asked which terminal type to use.
-	You should just hit return to select the default (pcvt25).
+	you really wish to install (or upgrade).
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.  The

@@ -16,14 +16,7 @@ the disk, and then the OpenBSD partition will follow.
 This may require the disk be reformatted and reinstalled under MacOS
 using the "Drive Setup" application.
 
-You should now be ready to install OpenBSD.
-
-The following is a walk-through of the steps you will take while
-getting OpenBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question.  If you wish to stop the installation, you may hit Control-C
-at any time, but if you do, you'll have to begin the installation
-process again from scratch.
+OpenBSDInstallPart2
 
 	At this time, the system can be installed from the supplied
 	CD boot image, by network loading the bootloader or loading
@@ -39,22 +32,10 @@ process again from scratch.
 	(Refer to "OpenBSD OSREV Release Contents" above for information
 	on how to access and boot from Open Firmware)
 
-	You will then be presented with the OpenBSD kernel boot
-	messages.  You will want to read them, to determine your
-	disk's name and geometry.  Its name will be something like
-	"wd0" or "sd0" and the geometry will be printed on a line that
-	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating OpenBSD's partitions.  You will
-	also need to know the name, to tell the install tools what
-	disk to install on.  If you cannot read the messages as they
-	scroll by, do not worry -- you can get at this information
-	later inside the install program.
+OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present, and that
-	init(8) cannot find /etc/rc.  Do not be alarmed, these are
-	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+	You will next be asked for your terminal type.  You should just
+	hit return to select the default (vt220).
 
 	Now you will be asked whether you wish to do an "install"
 	or an "upgrade".  Enter 'i' for a fresh install or 'u' to

@@ -1,7 +1,5 @@
 OpenBSDInstallPrelude
 
-You should now be ready to install OpenBSD.
-
 OpenBSDInstallPart2
 
 	Boot your machine from the network.  When presented with
@@ -9,11 +7,6 @@ OpenBSDInstallPart2
 	is a likely choice if you are booting over the network).
 
 OpenBSDBootMsgs
-
-	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present.  Do not be
-	alarmed, these are completely normal.  When you reach the prompt
-	asking you for a shell name, just hit return.
 
 	You will next be asked for your terminal type.  There are only
 	a few specific terminal types supported.  If you are using a

@@ -113,11 +113,6 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	may be warned that the kernel can't figure out what device
-	it booted from and that no swap space is present.  Do not be
-	alarmed, these are completely normal.
-
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
 	"sun" if correct.  If you are installing from a serial console

@@ -125,12 +125,13 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	may be warned that no swap space is present. Do not be
-	alarmed, these are completely normal.
-
-	Next there will be a prompt asking you for a shell name, just
-	hit return to start executing the installation setup script.
+dnl XXX Uncomment when floppy boot available
+dnl	While booting, you will probably see several warnings.  You
+dnl	may be warned that the kernel can't figure out what device
+dnl	it booted from.  Do not be alarmed, this is completely normal.
+dnl	This warning occurs because while OpenBSD/MACHINE can boot from
+dnl	the floppy drive, the kernel itself lacks a floppy driver for some
+dnl	MACHINE models.
 
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
