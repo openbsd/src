@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2000/04/03 02:58:46 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.29 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.30 2000/04/03 02:58:46 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -586,6 +586,7 @@ main(argc, argv)
 	}
 
 	setenv("PWD", objdir, 1);
+	unsetenv("CDPATH");
 
 	create = Lst_Init();
 	makefiles = Lst_Init();
@@ -653,6 +654,7 @@ main(argc, argv)
 #endif
 
 	MainParseArgs(argc, argv);
+
 
 	/*
 	 * Initialize archive, target and suffix modules in preparation for

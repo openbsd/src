@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.29 2000/03/11 21:40:07 aaron Exp $
+.\"	$OpenBSD: make.1,v 1.30 2000/04/03 02:58:46 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1162,6 +1162,9 @@ uses the following environment variables, if they exist:
 .Ev MAKEOBJDIRPREFIX ,
 and
 .Ev PWD .
+.Nm
+also ignores and unsets 
+.Ev CDPATH .
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
 .It Pa .depend
