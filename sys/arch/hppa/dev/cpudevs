@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp $
+$OpenBSD: cpudevs,v 1.8 1999/02/17 03:21:43 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -130,7 +130,7 @@ type	bha	11	bus adaptor
 type	multi	12	Multiple-Type I/O
 type	faulty	31	broken
 
-cpu	HPPA11	0	PA-RISC 1.0
+cpu	HPPA10	0	PA-RISC 1.0
 cpu	HPPA11	4	PA-RISC 1.1
 cpu	HPPA20	8	PA-RISC 2.0
 
