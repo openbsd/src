@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.1 2000/01/07 21:38:01 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.2 2000/01/07 21:50:21 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
