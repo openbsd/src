@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4,v 1.8 2001/04/24 00:08:33 mickey Exp $
+.\"	$OpenBSD: wi.4,v 1.9 2001/06/07 23:53:54 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,19 +32,20 @@
 .\"
 .\"	$FreeBSD: wi.4,v 1.3 1999/05/22 16:12:43 wpaul Exp $
 .\"
-.Dd April 21, 1999
+.Dd June 7, 2001
 .Dt WI 4
 .Os
 .Sh NAME
 .Nm wi
-.Nd Lucent Technologies WaveLAN/IEEE 802.11DS PCMCIA driver
+.Nd WaveLAN/IEEE and PRISM-II 802.11DS wireless network driver
 .Sh SYNOPSIS
+.Cd "wi* at pci? dev ? function ?"
 .Cd "wi* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for WaveLAN/IEEE and compatible pcmcia adapters
-(also known as WaveLAN II cards) which support IEEE 802.11 Direct Sequence.
+driver provides support for PCMCIA adapters based on the Lucent Technologies
+WaveLAN/IEEE (aka WaveLAN II) and Intersil PRISM-II chipsets.
 The compatible cards supported are:
 .Pp
 .Bl -tag -width -offset indent -compact
@@ -67,46 +68,72 @@ The compatible cards supported are:
 .It Linksys WPC11
 .El
 .Pp
-Note that while Lucent sells both ISA and PCMCIA
-WaveLAN/IEEE devices, the ISA product is actually a PCMCIA card in an
-ISA to PCMCIA bridge adapter. Consequently, the
+Note that while Lucent sells PCI, ISA and PCMCIA WaveLAN/IEEE
+devices, the PCI and ISA products are actually a PCMCIA card in a
+PCMCIA bridge adapter. Consequently, the
 .Nm
-driver is required for both the ISA and PCMCIA NICs. The original
+driver is required for PCI, ISA and PCMCIA NICs. The original
 WaveLAN/IEEE cards (2Mbps), the WaveLAN/IEEE Turbo (6Mbps), the
 WaveLAN/IEEE Bronze Turbo (8Mbps), and the
 WaveLAN/IEEE Silver/Gold (11Mbps) adapters are supported.
 .Pp
+Unlike the Lucent devices, several vendors sell PCI adapters built
+around the PLX Technology 9050 or 9052 chip.
+These adapters are dumb PCMCIA bridges that do not attach as a
+normal PCMCIA bus.
+Instead they appear to the host as a normal PCI device and do
+not require any PCMCIA support.
+The following such bridges are supported or expected to work:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Global Sun Technology GL24110P02
+.It LinkSys WDT11 (a rebadged GL24110P02)
+.It Global Sun Technology GL24110P (untested)
+.It Eumitcom WL11000P (untested)
+.El
+.Pp
+Also note that some of the PRISM-II adapters only work at 3.3V, hence
+.Xr cardbus 4
+support is required for those cards to set VCC correctly, even
+though they are really 16bit cards.
+.Pp
 The core of the WaveLAN/IEEE is the Lucent Hermes controller. All
-host/device interaction is via programmed I/O with the Hermes. The
-Hermes supports 802.11 and 802.3 frames, power management, BSS, WDS
-and ad-hoc operation modes. The
+host/device interaction is via programmed I/O with the Hermes.
+The Hermes supports 802.11 and 802.3 frames, power management, BSS,
+WDS and ad-hoc operation modes.
+.Pp
+The
 .Nm
 driver encapsulates all IP and ARP traffic as 802.11 frames, however
-it can receive either 802.11 or 802.3 frames. Transmit speed is
-selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps with auto fallback,
-6Mbps, 8Mbps, or 11Mbps depending on your hardware (see above).  The
-Gold and Silver cards also have support for encryption.  Silver adapters
-will do 64bit encryption and Gold adapters will do 128bit encryption.
+it can receive either 802.11 or 802.3 frames.
+Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
+with auto fallback, 6Mbps, 8Mbps, or 11Mbps depending on your hardware
+(see above).
+The Lucent WaveLAN/IEEE Silver and Gold cards as well as the Intersil
+PRISM-II cards have support for WEP encryption.
+The WaveLAN Gold cards support 104bit keys, the others only accept
+40bit keys.
+The Lucent Bronze cards do not support WEP.
 To enable the encryption, use the
 .Xr wicontrol 8
 utility to set your keys.
 .Pp
 By default, the
 .Nm
-driver configures the WaveLAN card for BSS operation. In this mode,
-stations can communicate among each other without the aid of an access
-point. To join a service set, the driver must be set for BSS mode using
-the
-.Xr wicontrol 8
-utility.
+driver configures the WaveLAN card for ad-hoc operation.
+In this mode, the nwid is ignored and stations can communicate among
+each other without the aid of an access point.
+Note that this mode is not in the IEEE 802.11 specification and the
+driver may not be able to interoperate with other vendor's cards
+while in ad-hoc mode.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "wi%d: init failed"
-The WaveLAN failed to come ready after an initialization command was
-issued.
+The WaveLAN card failed to come ready after an initialization command
+was issued.
 .It "wi%d: failed to allocate %d bytes on NIC"
 The driver was unable to allocate memory for transmit frames in the
 NIC's on-board RAM.
@@ -146,4 +173,4 @@ Addtron cards, for example). See
 for information on how to change the channel.
 .Sh BUGS
 Addtron cards do not seem to work in infrastructure mode with
-Lucent base station with current driver source.
+a Lucent base station with current driver source.
