@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.7 2000/04/23 22:14:28 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.8 2000/04/26 15:44:18 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -58,6 +58,42 @@ sub write_uniques
     chown 0, (getgrnam 'bin')[2], $f;
 }
 
+sub found
+{
+    my @candidates = glob shift;
+    return @candidates > 1 || @candidates == 1 && -e $candidates[0];
+}
+
+# verify_subject($subject, $filename):
+#
+#   reparse the subject we're about to add, and check whether it makes
+#   sense, e.g., is there a man page around.
+sub verify_subject
+{
+    local $_ = shift;
+    my $filename = shift;
+    if (m/\s*(.*?)\s*\((.*?)\)\s-\s/) {
+    	my $man = $1;
+	my $section = $2;
+	my @mans = split(/\s*,\s*|\s+/, $man);
+	my $base = $filename;
+	$base =~ s,/[^/]*$,,;
+	for my $i (@mans) {
+	    next if found("$base/$i.*");
+	    # try harder
+	    $i =~ s/\(\)//;
+	    $i =~ s/\-//g;
+	    $i =~ s,^etc/,,;
+	    next if found("$base/$i.*");
+	    # and harder...
+	    $i =~ tr/[A-Z]/[a-z]/;
+	    next if found("$base/$i.*");
+	    print STDERR "Couldn't find $i in $filename:\n$_\n" 
+	}
+    }
+}
+
+
 # add_unformated_subject($lines, $toadd, $section):
 #
 #   build subject from list of $toadd lines, and add it to the list
@@ -68,6 +104,7 @@ sub add_unformated_subject
     my $subjects = shift;
     my $toadd = shift;
     my $section = shift;
+    my $filename = shift;
     local $_ = join(' ', @$toadd);
 	# unbreakable spaces
     s/\\\s+/ /g;
@@ -75,7 +112,11 @@ sub add_unformated_subject
     s/\\\(em\s+/- /g;
 	# font changes
     s/\\f[BIRP]//g;
-    s/\\-/($section) -/ || s/\s-\s/ ($section) - /;
+    unless (s/\\-/($section) -/ || s/\s-\s/ ($section) - /) {
+	print STDERR "Weird subject line in $filename:\n$_\n" if $picky;
+	    # Try guessing where the separation falls...
+	s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
+    }
 	# other dashes
     s/\\-/-/g;
 	# sequence of spaces
@@ -86,6 +127,7 @@ sub add_unformated_subject
 	# gremlins...
     s/\\c//g;
     push(@$subjects, $_);
+    verify_subject($_, $filename) if $picky;
 }
 
 # $lines = handle_unformated($file)
@@ -127,8 +169,8 @@ sub handle_unformated
 			    m/^\.ss/ || m/^\.nf/;
 			    # several subjects in one manpage
 			if (m/^\.PP/ || m/^\.br/ || m/^\.PD/ || /^\.sp/) {
-			    add_unformated_subject(\@lines, \@subject, $section) 
-				if @subject != 0;
+			    add_unformated_subject(\@lines, \@subject,
+				$section, $filename) if @subject != 0;
 			    @subject = ();
 			    next;
 			}
@@ -143,8 +185,8 @@ sub handle_unformated
 			s/\.(?:B|I|IR|SM)\s+//;
 			push(@subject, $_) unless m/^\s*$/;
 		    }
-		    add_unformated_subject(\@lines, \@subject, $section) 
-			if @subject != 0;
+		    add_unformated_subject(\@lines, \@subject, $section,
+			$filename) if @subject != 0;
 		    return \@lines;
 		}
 	    }
@@ -207,6 +249,7 @@ sub add_formated_subject
     my $subjects = shift;
     local $_ = shift;
     my $section = shift;
+    my $filename = shift;
 
     # some twits underline the command name
     while (s/_\cH//g || s/(.)\cH\1/$1/g)
@@ -218,23 +261,31 @@ sub add_formated_subject
 	if (m/^[^-+.\w\d]*(.*) -(?:-?)\s+(.*)$/) {
 	    my ($func, $descr) = ($1, $2);
 	    $func =~ s/,\s*$//;
-	    push(@$subjects, "$func ($section) - $descr");
+	    # nroff will tend to cut function names at the weirdest places
+	    if (length($func) > 40 && $func =~ m/,/ && $section =~ /^3/) {
+	    	$func =~ s/\b \b//g;
+	    }
+	    $_ = "$func ($section) - $descr";
+	    verify_subject($_, $filename) if $picky;
+	    push(@$subjects, $_);
 	    return;
 	}
     }
 
-    print STDERR "Weird subject line in ", shift, ":\n", $_, "\n" if $picky;
+    print STDERR "Weird subject line in $filename:\n$_\n" if $picky;
 
     # try to find subject in line anyway
     if (m/^\s*(.*\S)(?:\s{3,}|\(\)\s+)(.*?)\s*$/) {
     	my ($func, $descr) = ($1, $2);
 	$func =~ s/\s+/ /g;
 	$descr =~ s/\s+/ /g;
-	push(@$subjects, "$func ($section) - $descr");
+	$_ = "$func ($section) - $descr";
+	verify_subject($_, $filename) if $picky;
+	push(@$subjects, $_);
 	return;
     }
 
-    print STDERR "Weird subject line in ", shift, ":\n", $_, "\n" unless $picky;
+    print STDERR "Weird subject line in $filename:\n$_\n" unless $picky;
 }
 
 # $lines = handle_formated($file)
@@ -268,7 +319,7 @@ sub handle_formated
 	}
 	# Not all man pages are in english
 	# weird hex is `Namae' in japanese
-	if (m/^(?:NAME|NAMN|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
+	if (m/^(?:NAME|NAMES|NAMN|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
 	    unless (defined $section) {
 		# try to retrieve section from filename
 		if ($filename =~ m/(?:cat|man)([\dln])\//) {
