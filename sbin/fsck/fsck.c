@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.1 1996/10/20 08:36:24 tholo Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.2 1996/12/04 01:31:11 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pathnames.h"
 #include "fsutil.h"
@@ -160,7 +161,10 @@ main(argc, argv)
 	for (; argc--; argv++) {
 		char *spec, *type;
 
-		if ((fs = getfsfile(*argv)) == NULL &&
+		if (strncmp(*argv, "/dev/", 5) == 0 &&
+		    (type = readlabelfs(*argv))) {
+			spec = *argv;
+		} else if ((fs = getfsfile(*argv)) == NULL &&
 		    (fs = getfsspec(*argv)) == NULL) {
 			if (vfstype == NULL)
 				errx(1,
@@ -168,8 +172,7 @@ main(argc, argv)
 				    *argv);
 			spec = *argv;
 			type = vfstype;
-		}
-		else {
+		} else {
 			spec = fs->fs_spec;
 			type = fs->fs_vfstype;
 			if (BADTYPE(fs->fs_type))
