@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.2 1999/08/16 22:08:48 fgsch Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.3 1999/08/19 08:18:38 fgsch Exp $	*/
 /*	$NetBSD: ohcivar.h,v 1.6 1999/08/14 14:49:31 augustss Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ typedef struct ohci_softc {
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || defined(__OpenBSD__) */
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.1 1999/08/13 05:28:05 fgsch Exp $	*/
-/*	$NetBSD: usbdivar.h,v 1.22 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.2 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.24 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ struct usbd_pipe;
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
 	int			refcnt;
-	int			toggle;	/* XXX */
 };
 
 typedef void (*usbd_xfercb)__P((usbd_request_handle req));
@@ -53,7 +52,8 @@ struct usbd_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
 	usbd_status	      (*start)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
-	void		      (*close)__P((usbd_pipe_handle pipe));	
+	void		      (*close)__P((usbd_pipe_handle pipe));
+	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
 	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
 					    u_int32_t bufsize,u_int32_t nbuf));
 };

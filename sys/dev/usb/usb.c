@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
-/*	$NetBSD: usb.c,v 1.15 1999/08/02 19:36:48 augustss Exp $	*/
+/*	$OpenBSD: usb.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usb.c,v 1.17 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,10 +191,10 @@ usb_create_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
-#if defined(__OpenBSD__)
-	if (kthread_create(usb_event_thread, sc, &sc->event_thread,
-#else
+#if !defined(__OpenBSD__)
 	if (kthread_create1(usb_event_thread, sc, &sc->event_thread,
+#else
+	if (kthread_create(usb_event_thread, sc, &sc->event_thread,
 #endif
 			   "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_subr.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
-/*	$NetBSD: usb_subr.c,v 1.34 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: usb_subr.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,11 +76,10 @@ extern int usbdebug;
 static usbd_status	usbd_set_config __P((usbd_device_handle, int));
 char *usbd_get_string __P((usbd_device_handle, int, char *));
 int usbd_getnewaddr __P((usbd_bus_handle bus));
-#if defined(__NetBSD__)
 int usbd_print __P((void *aux, const char *pnp));
+#if defined(__NetBSD__)
 int usbd_submatch __P((bdevice *, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
-int usbd_print __P((void *aux, const char *pnp));
 int usbd_submatch __P((bdevice *, void *, void *));
 #endif
 void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
@@ -463,7 +462,6 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	found:
 		ifc->endpoints[endpt].edesc = ed;
 		ifc->endpoints[endpt].refcnt = 0;
-		ifc->endpoints[endpt].toggle = 0;
 		p += ed->bLength;
 	}
 #undef ed
@@ -677,6 +675,9 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 		free(p, M_USB);
 		return (r);
 	}
+	/* Clear any stall and make sure DATA0 toggle will be used next. */
+	if (UE_GET_ADDR(ep->edesc->bEndpointAddress) != USB_CONTROL_ENDPOINT)
+		usbd_clear_endpoint_stall(p);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1116,14 +1117,9 @@ usb_start_next(pipe)
 		printf("usb_start_next:  no start method\n");
 		return;
 	}
-	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
-		printf("usb_start_next: empty\n");
-		return;
-	}
 #endif
 
-	/* First remove remove old */
-	SIMPLEQ_REMOVE_HEAD(&pipe->queue, SIMPLEQ_FIRST(&pipe->queue), next);
+	/* Get next request in queue. */
 	reqh = SIMPLEQ_FIRST(&pipe->queue);
 	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
 	if (!reqh)

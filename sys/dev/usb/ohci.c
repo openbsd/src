@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.3 1999/08/15 18:58:58 fgsch Exp $	*/
+/*	$OpenBSD: ohci.c,v 1.4 1999/08/19 08:18:38 fgsch Exp $	*/
 /*	$NetBSD: ohci.c,v 1.33 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -89,11 +89,7 @@ struct cfdriver ohci_cd = {
  * the data strored in memory needs to be swapped.
  */
 #if BYTE_ORDER == BIG_ENDIAN
-#if defined(__OpenBSD__)
-#define LE(x) (swap32(x))
-#else
 #define LE(x) (bswap32(x))
-#endif
 #else
 #define LE(x) (x)
 #endif
@@ -161,6 +157,9 @@ void		ohci_close_pipe __P((usbd_pipe_handle pipe,
 				     ohci_soft_ed_t *head));
 void		ohci_abort_request __P((usbd_request_handle reqh));
 
+void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
+void		ohci_noop __P((usbd_pipe_handle pipe));
+
 #ifdef USB_DEBUG
 ohci_softc_t   *thesc;
 void		ohci_dumpregs __P((ohci_softc_t *));
@@ -169,15 +168,9 @@ void		ohci_dump_td __P((ohci_soft_td_t *));
 void		ohci_dump_ed __P((ohci_soft_ed_t *));
 #endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define OWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
 #define OREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 #define OREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
-#elif defined(__FreeBSD__)
-#define OWRITE4(sc, r, x) (*(u_int32_t *) ((sc)->sc_iobase + (r)) = (x))
-#define OREAD4(sc, r) (*(u_int32_t *) ((sc)->sc_iobase + (r)))
-#define OREAD2(sc, r) (*(u_int16_t *) ((sc)->sc_iobase + (r)))
-#endif
 
 /* Reverse the bits in a value 0 .. 31 */
 static u_int8_t revbits[OHCI_NO_INTRS] = 
@@ -221,6 +214,7 @@ struct usbd_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
+	ohci_noop,
 	0,
 };
 
@@ -229,6 +223,7 @@ struct usbd_methods ohci_root_intr_methods = {
 	ohci_root_intr_start,
 	ohci_root_intr_abort,
 	ohci_root_intr_close,
+	ohci_noop,
 	0,
 };
 
@@ -237,6 +232,7 @@ struct usbd_methods ohci_device_ctrl_methods = {
 	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
 	ohci_device_ctrl_close,
+	ohci_noop,
 	0,
 };
 
@@ -245,6 +241,8 @@ struct usbd_methods ohci_device_intr_methods = {
 	ohci_device_intr_start,
 	ohci_device_intr_abort,
 	ohci_device_intr_close,
+	ohci_device_clear_toggle,
+	0,
 };
 
 struct usbd_methods ohci_device_bulk_methods = {	
@@ -252,6 +250,7 @@ struct usbd_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
 	ohci_device_bulk_close,
+	ohci_device_clear_toggle,
 	0,
 };
 
@@ -534,9 +533,7 @@ ohci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 	sc->sc_bus.do_poll = ohci_poll;
 
-#if !defined(__OpenBSD__)
-	(void)powerhook_establish(ohci_power, sc);
-#endif
+	powerhook_establish(ohci_power, sc);
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -549,6 +546,7 @@ ohci_init(sc)
 	return (r);
 }
 
+#if !defined(__OpenBSD__)
 void
 ohci_power(why, v)
 	int why;
@@ -562,6 +560,7 @@ ohci_power(why, v)
 	ohci_dumpregs(sc);
 #endif
 }
+#endif /* !defined(__OpenBSD__) */
 
 #ifdef USB_DEBUG
 void ohcidump(void);
@@ -810,13 +809,15 @@ ohci_done(sc, reqh)
 	ohci_softc_t *sc;
 	usbd_request_handle reqh;
 {
+	usbd_pipe_handle pipe = reqh->pipe;
+
 #ifdef DIAGNOSTIC
 	if (!reqh->hcpriv)
 		printf("ohci_done: reqh=%p, no hcpriv\n", reqh);
 #endif
 	reqh->hcpriv = 0;
 
-	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
 		ohci_ctrl_done(sc, reqh);
 		break;
@@ -830,6 +831,9 @@ ohci_done(sc, reqh)
 		printf("ohci_process_done: ISO done?\n");
 		break;
 	}
+
+	/* Remove request from queue. */
+	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 
 	/* And finally execute callback. */
 	reqh->xfercb(reqh);
@@ -1881,6 +1885,7 @@ ohci_root_ctrl_start(reqh)
 	reqh->actlen = totlen;
 	r = USBD_NORMAL_COMPLETION;
  ret:
+	SIMPLEQ_REMOVE_HEAD(&reqh->pipe->queue, reqh, next);
 	reqh->status = r;
 	reqh->xfercb(reqh);
 	usb_start_next(reqh->pipe);
@@ -2025,6 +2030,21 @@ ohci_device_ctrl_close(pipe)
 }
 
 /************************/
+
+void
+ohci_device_clear_toggle(pipe)
+	usbd_pipe_handle pipe;
+{
+	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
+
+	opipe->sed->ed->ed_tailp &= LE(~OHCI_TOGGLECARRY);
+}
+
+void
+ohci_noop(pipe)
+	usbd_pipe_handle pipe;
+{
+}
 
 usbd_status
 ohci_device_bulk_transfer(reqh)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
-/*	$NetBSD: usbdi.c,v 1.26 1999/07/06 07:12:03 augustss Exp $	*/
+/*	$OpenBSD: usbdi.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.30 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,24 @@ static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests;
 #define USB_CDEV_MAJOR	108
 
 extern struct cdevsw usb_cdevsw;
+#endif
+
+#ifdef USB_DEBUG
+void usbd_dump_queue __P((usbd_pipe_handle));
+
+void
+usbd_dump_queue(pipe)
+	usbd_pipe_handle pipe;
+{
+	usbd_request_handle reqh;
+
+	printf("usbd_dump_queue: pipe=%p\n", pipe);
+	for (reqh = SIMPLEQ_FIRST(&pipe->queue);
+	     reqh;
+	     reqh = SIMPLEQ_NEXT(reqh, next)) {
+		printf("  reqh=%p\n", reqh);
+	}
+}
 #endif
 
 usbd_status 
@@ -225,7 +243,11 @@ usbd_do_transfer(reqh)
 {
 	usbd_pipe_handle pipe = reqh->pipe;
 
-	DPRINTFN(10,("usbd_do_transfer: reqh=%p\n", reqh));
+	DPRINTFN(5,("usbd_do_transfer: reqh=%p\n", reqh));
+#ifdef USB_DEBUG
+	if (usbdebug > 5)
+		usbd_dump_queue(pipe);
+#endif
 	reqh->done = 0;
 	return (pipe->methods->transfer(reqh));
 }
@@ -387,6 +409,7 @@ usbd_clear_endpoint_stall(pipe)
 	usbd_status r;
 
 	DPRINTFN(8, ("usbd_clear_endpoint_stall\n"));
+	pipe->methods->cleartoggle(pipe);
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -411,6 +434,7 @@ usbd_clear_endpoint_stall_async(pipe)
 	usb_device_request_t req;
 	usbd_status r;
 
+	pipe->methods->cleartoggle(pipe);
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_HALT);
@@ -543,25 +567,17 @@ usbd_ar_pipe(pipe)
 {
 	usbd_request_handle reqh;
 
-#if 0
-	for (;;) {
-		reqh = SIMPLEQ_FIRST(&pipe->queue);
-		if (reqh == 0)
-			break;
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
-		reqh->status = USBD_CANCELLED;
-		if (reqh->callback)
-			reqh->callback(reqh, reqh->priv, reqh->status);
-	}
-#else
 	DPRINTFN(2,("usbd_ar_pipe: pipe=%p\n", pipe));
-	while ((reqh = SIMPLEQ_FIRST(&pipe->queue))) {
-		DPRINTFN(2,("usbd_ar_pipe: reqh=%p (methods=%p)\n", 
-			    pipe, pipe->methods));
-		pipe->methods->abort(reqh);
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
-	}
+#ifdef USB_DEBUG
+	if (usbdebug > 5)
+		usbd_dump_queue(pipe);
 #endif
+	while ((reqh = SIMPLEQ_FIRST(&pipe->queue))) {
+		DPRINTFN(2,("usbd_ar_pipe: pipe=%p reqh=%p (methods=%p)\n", 
+			    pipe, reqh, pipe->methods));
+		/* Make the HC abort it (and invoke the callback). */
+		pipe->methods->abort(reqh);
+	}
 	return (USBD_NORMAL_COMPLETION);
 }
 

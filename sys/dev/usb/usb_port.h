@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.3 1999/08/16 22:08:49 fgsch Exp $	*/
-/*	$NetBSD: usb_port.h,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.4 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ __CONCAT(dname,_attach)(parent, self, aux) \
  */
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
+#define bswap32(x)		swap32(x)
+#define powerhook_establish(h, sc) /* nothing */
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect

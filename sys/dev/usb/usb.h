@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.h,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
-/*	$NetBSD: usb.h,v 1.23 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: usb.h,v 1.2 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$NetBSD: usb.h,v 1.27 1999/08/18 07:55:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -509,5 +509,9 @@ struct usb_device_stats {
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
 #define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
+
+/* Modem device */
+#define USB_GET_CM_OVER_DATA	_IOR ('U', 130, int)
+#define USB_SET_CM_OVER_DATA	_IOW ('U', 131, int)
 
 #endif /* _USB_H_ */
