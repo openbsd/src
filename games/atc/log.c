@@ -125,9 +125,7 @@ log_score(list_em)
 	struct passwd	*pw;
 	char		*cp;
 	SCORE		score[100], thisscore;
-#ifdef SYSV
 	struct utsname	name;
-#endif
 
 #ifdef BSD
 	if (flock(fileno(score_fp), LOCK_EX) < 0)
@@ -158,16 +156,8 @@ log_score(list_em)
 			return (-1);
 		}
 		strcpy(thisscore.name, pw->pw_name);
-#ifdef BSD
-		if (gethostname(thisscore.host, sizeof (thisscore.host)) < 0) {
-			perror("gethostname");
-			return (-1);
-		}
-#endif
-#ifdef SYSV
 		uname(&name);
-		strcpy(thisscore.host, name.sysname);
-#endif
+		strcpy(thisscore.host, name.nodename);
 
 		cp = strrchr(file, '/');
 		if (cp == NULL) {
