@@ -1,0 +1,307 @@
+/*
+ * 27-Mar-96: Jan-Piet Mens <jpm@mens.de>
+ * added 'match' option (-m) to specify regular expressions NOT to be included
+ * in the CD image.
+ */
+
+#ifdef APPLE_HYB
+/*
+ * Added a number of routines to create lists of files to hidden from
+ * the ISO9660 and/or Joliet trees. James Pearson (j.pearson@ge.ucl.ac.uk)
+ * January 1999 (these will probably appear in mkisofs in the future)
+ */
+#endif /* APPLE_HYB */
+
+static char rcsid[] ="$Id: match.c,v 1.1 2000/10/10 20:40:17 beck Exp $";
+
+#include "config.h"
+#include <prototyp.h>
+#include <stdio.h>
+#ifndef VMS
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#else
+#include <stdlib.h>
+#endif
+#endif
+#include <string.h>
+#include "match.h"
+
+#define MAXMATCH 1000
+static char *mat[MAXMATCH];
+
+#ifdef APPLE_HYB
+int  add_match(fn)
+#else
+void add_match(fn)
+#endif /* APPLE_HYB */
+char * fn;
+{
+  register int i;
+
+  for (i=0; mat[i] && i<MAXMATCH; i++);
+  if (i == MAXMATCH) {
+    fprintf(stderr,"Can't exclude RE '%s' - too many entries in table\n",fn);
+    return 1;
+  }
+
+ 
+  mat[i] = (char *) malloc(strlen(fn)+1);
+  if (! mat[i]) {
+    fprintf(stderr,"Can't allocate memory for excluded filename\n");
+    return 1;
+  }
+
+  strcpy(mat[i],fn);
+
+  return 0;
+}
+
+int matches(fn)
+char * fn;
+{
+  /* very dumb search method ... */
+  register int i;
+
+  for (i=0; mat[i] && i<MAXMATCH; i++) {
+    if (fnmatch(mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+      return 1; /* found -> excluded filenmae */
+    }
+  }
+  return 0; /* not found -> not excluded */
+}
+
+/* ISO9660/RR hide */
+
+static char *i_mat[MAXMATCH];
+
+#ifdef APPLE_HYB
+int  i_add_match(fn)
+#else
+void i_add_match(fn)
+#endif /* APPLE_HYB */
+char * fn;
+{
+  register int i;
+
+  for (i=0; i_mat[i] && i<MAXMATCH; i++);
+  if (i == MAXMATCH) {
+    fprintf(stderr,"Can't exclude RE '%s' - too many entries in table\n",fn);
+    return;
+  }
+
+ 
+  i_mat[i] = (char *) malloc(strlen(fn)+1);
+  if (! i_mat[i]) {
+    fprintf(stderr,"Can't allocate memory for excluded filename\n");
+    return;
+  }
+
+  strcpy(i_mat[i],fn);
+}
+
+int i_matches(fn)
+char * fn;
+{
+  /* very dumb search method ... */
+  register int i;
+
+  for (i=0; i_mat[i] && i<MAXMATCH; i++) {
+    if (fnmatch(i_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+      return 1; /* found -> excluded filenmae */
+    }
+  }
+  return 0; /* not found -> not excluded */
+}
+
+int i_ishidden()
+{
+  return((int)i_mat[0]);
+}
+
+/* Joliet hide */
+
+static char *j_mat[MAXMATCH];
+
+#ifdef APPLE_HYB
+int  j_add_match(fn)
+#else
+void j_add_match(fn)
+#endif /* APPLE_HYB */
+char * fn;
+{
+  register int i;
+
+  for (i=0; j_mat[i] && i<MAXMATCH; i++);
+  if (i == MAXMATCH) {
+    fprintf(stderr,"Can't exclude RE '%s' - too many entries in table\n",fn);
+    return 1;
+  }
+
+ 
+  j_mat[i] = (char *) malloc(strlen(fn)+1);
+  if (! j_mat[i]) {
+    fprintf(stderr,"Can't allocate memory for excluded filename\n");
+    return 1;
+  }
+
+  strcpy(j_mat[i],fn);
+
+  return 0;
+}
+
+int j_matches(fn)
+char * fn;
+{
+  /* very dumb search method ... */
+  register int i;
+
+  for (i=0; j_mat[i] && i<MAXMATCH; i++) {
+    if (fnmatch(j_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+      return 1; /* found -> excluded filenmae */
+    }
+  }
+  return 0; /* not found -> not excluded */
+}
+
+int j_ishidden()
+{
+  return((int)j_mat[0]);
+}
+
+#ifdef APPLE_HYB
+
+/* HFS hide */
+
+static char *hfs_mat[MAXMATCH];
+
+int hfs_add_match(fn)
+char * fn;
+{
+  register int i;
+
+  for (i=0; hfs_mat[i] && i<MAXMATCH; i++);
+  if (i == MAXMATCH) {
+    fprintf(stderr,"Can't exclude RE '%s' - too many entries in table\n",fn);
+    return 1;
+  }
+
+ 
+  hfs_mat[i] = (char *) malloc(strlen(fn)+1);
+  if (! hfs_mat[i]) {
+    fprintf(stderr,"Can't allocate memory for excluded filename\n");
+    return 1;
+  }
+
+  strcpy(hfs_mat[i],fn);
+
+  return 0;
+}
+
+void hfs_add_list(file)
+char *file;
+{
+  FILE *fp;
+  char name[1024];
+
+  if ((fp = fopen(file, "r")) == NULL) {
+    fprintf(stderr,"Can't open hidden file list %s\n", file);
+    exit (1);
+  }
+
+  while (fscanf(fp, "%s", name) != EOF) {
+    if (hfs_add_match(name)) {
+      fclose(fp);
+      return;
+    }
+  }
+
+  fclose(fp);
+}
+
+
+int hfs_matches(fn)
+char * fn;
+{
+  /* very dumb search method ... */
+  register int i;
+
+  for (i=0; hfs_mat[i] && i<MAXMATCH; i++) {
+    if (fnmatch(hfs_mat[i], fn, FNM_FILE_NAME) != FNM_NOMATCH) {
+      return 1; /* found -> excluded filenmae */
+    }
+  }
+  return 0; /* not found -> not excluded */
+}
+
+int hfs_ishidden()
+{
+  return((int)hfs_mat[0]);
+}
+
+/* These will probably appear in mkisofs in the future */
+
+void add_list(file)
+char *file;
+{
+  FILE *fp;
+  char name[1024];
+
+  if ((fp = fopen(file, "r")) == NULL) {
+    fprintf(stderr,"Can't open exclude file list %s\n", file);
+    exit (1);
+  }
+
+  while (fscanf(fp, "%s", name) != EOF) {
+    if (add_match(name)) {
+      fclose(fp);
+      return;
+    }
+  }
+
+  fclose(fp);
+}
+
+void i_add_list(file)
+char *file;
+{
+  FILE *fp;
+  char name[1024];
+
+  if ((fp = fopen(file, "r")) == NULL) {
+    fprintf(stderr,"Can't open hidden file list %s\n", file);
+    exit (1);
+  }
+
+  while (fscanf(fp, "%s", name) != EOF) {
+    if (i_add_match(name)) {
+      fclose(fp);
+      return;
+    }
+  }
+
+  fclose(fp);
+}
+
+void j_add_list(file)
+char *file;
+{
+  FILE *fp;
+  char name[1024];
+
+  if ((fp = fopen(file, "r")) == NULL) {
+    fprintf(stderr,"Can't open hidden file list %s\n", file);
+    exit (1);
+  }
+
+  while (fscanf(fp, "%s", name) != EOF) {
+    if (j_add_match(name)) {
+      fclose(fp);
+      return;
+    }
+  }
+
+  fclose(fp);
+}
+
+#endif /* APPLE_HYB */
