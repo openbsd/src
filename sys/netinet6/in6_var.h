@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_var.h,v 1.6 1999/12/10 10:04:28 angelos Exp $ */
+/* $OpenBSD: in6_var.h,v 1.7 2000/02/02 17:16:52 itojun Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -547,6 +547,7 @@ int	in6_control __P((struct socket *,
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
+void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));

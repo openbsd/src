@@ -1,4 +1,4 @@
-/* $OpenBSD: in6.c,v 1.9 2000/02/02 17:01:50 itojun Exp $ */
+/* $OpenBSD: in6.c,v 1.10 2000/02/02 17:16:52 itojun Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -1280,6 +1280,8 @@ in6_savemkludge(oia)
 
 		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next){
 			next = in6m->in6m_entry.le_next;
+			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+			in6m->in6m_ia = NULL;
 			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
 		}
 
@@ -1310,6 +1312,8 @@ in6_restoremkludge(ia, ifp)
 
 			for (in6m = mk->mk_head.lh_first; in6m; in6m = next){
 				next = in6m->in6m_entry.le_next;
+				in6m->in6m_ia = ia;
+				ia->ia_ifa.ifa_refcnt++;
 				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
 						 in6m, in6m_entry);
 			}
@@ -1317,6 +1321,29 @@ in6_restoremkludge(ia, ifp)
 			free(mk, M_IPMADDR);
 			break;
 		}
+	}
+}
+
+void
+in6_purgemkludge(ifp)
+	struct ifnet *ifp;
+{
+	struct multi6_kludge *mk;
+	struct in6_multi *in6m, *next;
+
+	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+		if (mk->mk_ifp != ifp)
+			continue;
+
+		for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
+			next = in6m->in6m_entry.le_next;
+			LIST_REMOVE(in6m, in6m_entry);
+			in6_delmulti(in6m);
+			in6m = NULL;
+		}
+		LIST_REMOVE(mk, mk_entry);
+		free(mk, M_IPMADDR);
+		break;
 	}
 }
 
@@ -1421,7 +1448,8 @@ in6_delmulti(in6m)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
-		IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+		if (in6m->in6m_ia)
+			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
 
 		/*
 		 * Notify the network driver to update its multicast 
