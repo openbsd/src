@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.11 1997/11/30 07:48:21 millert Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.12 1998/04/27 16:03:06 millert Exp $
 #
 # This file was produced by running the Configure script.  It holds all
 # the definitions figured out by Configure.  Should you modify any of
@@ -78,7 +78,7 @@ cpprun='cc -E'
 cppstdin='cc -E'
 cryptlib=''
 csh='csh'
-d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+d_Gconvert=''
 d_access='define'
 d_alarm='define'
 d_archlib='define'
@@ -294,7 +294,7 @@ freetype='void'
 full_csh='/bin/csh'
 full_sed='/usr/bin/sed'
 gcc=''
-gccversion='2.7.2.1'
+gccversion='2.8.1'
 gidtype='gid_t'
 glibpth='/usr/shlib  /shlib /usr/lib/pa1.1 /usr/lib/large /lib /usr/lib /usr/lib/386 /lib/386 /lib/large /usr/lib/small /lib/small /usr/ccs/lib /usr/ucblib '
 grep='grep'
