@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.7 2003/12/19 11:25:18 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.8 2003/12/19 16:46:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1221,6 +1221,7 @@ session_dispatch_imsg(int fd, int idx)
 				    NULL)
 					fatal("new_peer", errno);
 				p->state = STATE_NONE;
+				p->sock = -1;
 				p->next = nconf->peers;
 				nconf->peers = p;
 				reconf = RECONF_REINIT;
