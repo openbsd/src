@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.22 2003/08/02 19:44:12 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.23 2003/08/23 02:30:59 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1823,7 +1823,7 @@ do_complete(flags, type)
 	olen = end - start;
 	nlen = x_longest_prefix(nwords, words);
 	/* complete */
-	if (nlen > olen) {
+	if (nwords == 1 || nlen > olen) {
 		x_goto(xbuf + start);
 		x_delete(olen, FALSE);
 		x_escape(words[0], nlen, x_emacs_putbuf);
