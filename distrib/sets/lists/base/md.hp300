@@ -2,7 +2,7 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/include/readline
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.20.2
 ./usr/lib/libcurses.so.5.0
