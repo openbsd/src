@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.255 2002/10/14 12:58:27 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.256 2002/10/20 13:08:29 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -154,12 +154,6 @@ struct pool		 pf_altq_pl;
 
 void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 			    u_int8_t);
-int			 pf_compare_rules(struct pf_rule *,
-			    struct pf_rule *);
-int			 pf_compare_nats(struct pf_nat *, struct pf_nat *);
-int			 pf_compare_binats(struct pf_binat *,
-			    struct pf_binat *);
-int			 pf_compare_rdrs(struct pf_rdr *, struct pf_rdr *);
 int		 	 pf_insert_state(struct pf_state *);
 struct pf_state 	*pf_find_state(struct pf_state_tree *,
 			    struct pf_tree_node *);
@@ -369,131 +363,6 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, u_int8_t af)
 	}
 }
 #endif
-
-int
-pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
-{
-	if (a->return_icmp != b->return_icmp ||
-	    a->return_icmp6 != b->return_icmp6 ||
-	    a->action != b->action ||
-	    a->direction != b->direction ||
-	    a->log != b->log ||
-	    a->quick != b->quick ||
-	    a->keep_state != b->keep_state ||
-	    a->af != b->af ||
-	    a->proto != b->proto ||
-	    a->type != b->type ||
-	    a->code != b->code ||
-	    a->flags != b->flags ||
-	    a->flagset != b->flagset ||
-	    a->rule_flag != b->rule_flag ||
-	    a->min_ttl != b->min_ttl ||
-	    a->tos != b->tos ||
-	    a->allow_opts != b->allow_opts)
-		return (1);
-	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
-	    PF_ANEQ(&a->src.mask, &b->src.mask, a->af) ||
-	    a->src.port[0] != b->src.port[0] ||
-	    a->src.port[1] != b->src.port[1] ||
-	    a->src.not != b->src.not ||
-	    a->src.port_op != b->src.port_op)
-		return (1);
-	if (PF_ANEQ(&a->dst.addr.addr, &b->dst.addr.addr, a->af) ||
-	    PF_ANEQ(&a->dst.mask, &b->dst.mask, a->af) ||
-	    a->dst.port[0] != b->dst.port[0] ||
-	    a->dst.port[1] != b->dst.port[1] ||
-	    a->dst.not != b->dst.not ||
-	    a->dst.port_op != b->dst.port_op)
-		return (1);
-	if (strcmp(a->ifname, b->ifname))
-		return (1);
-	if (a->ifnot != b->ifnot)
-		return (1);
-	return (0);
-}
-
-int
-pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
-{
-	if (a->proto != b->proto ||
-	    a->af != b->af ||
-	    a->ifnot != b->ifnot ||
-	    a->no != b->no)
-		return (1);
-	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
-	    PF_ANEQ(&a->src.mask, &b->src.mask, a->af) ||
-	    a->src.port[0] != b->src.port[0] ||
-	    a->src.port[1] != b->src.port[1] ||
-	    a->src.not != b->src.not ||
-	    a->src.port_op != b->src.port_op)
-		return (1);
-	if (PF_ANEQ(&a->dst.addr.addr, &b->dst.addr.addr, a->af) ||
-	    PF_ANEQ(&a->dst.mask, &b->dst.mask, a->af) ||
-	    a->dst.port[0] != b->dst.port[0] ||
-	    a->dst.port[1] != b->dst.port[1] ||
-	    a->dst.not != b->dst.not ||
-	    a->dst.port_op != b->dst.port_op)
-		return (1);
-	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
-		return (1);
-	if (strcmp(a->ifname, b->ifname))
-		return (1);
-	return (0);
-}
-
-int
-pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
-{
-	if (a->proto != b->proto ||
-	    a->dnot != b->dnot ||
-	    a->af != b->af ||
-	    a->no != b->no)
-		return (1);
-	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->smask, &b->smask, a->af))
-		return (1);
-	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
-		return (1);
-	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->rmask, &b->rmask, a->af))
-		return (1);
-	if (strcmp(a->ifname, b->ifname))
-		return (1);
-	return (0);
-}
-
-int
-pf_compare_rdrs(struct pf_rdr *a, struct pf_rdr *b)
-{
-	if (a->dport != b->dport ||
-	    a->dport2 != b->dport2 ||
-	    a->rport != b->rport ||
-	    a->proto != b->proto ||
-	    a->af != b->af ||
-	    a->snot != b->snot ||
-	    a->dnot != b->dnot ||
-	    a->ifnot != b->ifnot ||
-	    a->opts != b->opts ||
-	    a->no != b->no)
-		return (1);
-	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->smask, &b->smask, a->af))
-		return (1);
-	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
-		return (1);
-	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
-		return (1);
-	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
-		return (1);
-	if (strcmp(a->ifname, b->ifname))
-		return (1);
-	return (0);
-}
 
 int
 pflog_packet(struct ifnet *ifp, struct mbuf *m, int af, u_short dir,
