@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2001/09/06 22:37:08 jasoni Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2001/09/12 16:37:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -360,6 +360,8 @@ address		: STRING			{
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "address: calloc");
 			memcpy(&$$->addr, hp->h_addr, sizeof(u_int32_t));
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
@@ -370,6 +372,8 @@ address		: STRING			{
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "address: calloc");
 			$$->addr = htonl(($1 << 24) | ($3 << 16) | ($5 << 8) | $7);
 		}
 		;
