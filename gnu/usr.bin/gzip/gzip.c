@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.6 2002/11/05 16:16:14 henning Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.7 2003/04/26 22:12:00 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -286,7 +286,7 @@ local int  get_istat    OF((char *iname, struct stat *sbuf));
 local int  make_ofname  OF((void));
 local int  same_file    OF((struct stat *stat1, struct stat *stat2));
 local int name_too_long OF((char *name, struct stat *statb));
-local void shorten_name  OF((char *name));
+local void shorten_name  OF((char *name, size_t namelen));
 local int  get_method   OF((int in));
 local void do_list      OF((int ifd, int method));
 local int  check_ofname OF((void));
@@ -641,8 +641,8 @@ local void treat_stdin()
     if (!test && !list && (!decompress || !ascii)) {
 	SET_BINARY_MODE(fileno(stdout));
     }
-    strcpy(ifname, "stdin");
-    strcpy(ofname, "stdout");
+    strlcpy(ifname, "stdin", sizeof ifname);
+    strlcpy(ofname, "stdout", sizeof ofname);
 
     /* Get the time stamp on the input file. */
     time_stamp = 0; /* time unknown by default */
@@ -760,7 +760,7 @@ local void treat_file(iname)
      * without a valid gzip suffix (check done in make_ofname).
      */
     if (to_stdout && !list && !test) {
-	strcpy(ofname, "stdout");
+	strlcpy(ofname, "stdout", sizeof ofname);
 
     } else if (make_ofname() != OK) {
 	return;
@@ -924,7 +924,7 @@ local int create_outfile()
 	fprintf(stderr, "%s: %s: name too long\n", progname, ofname);
 	do_exit(ERROR);
 #endif
-	shorten_name(ofname);
+	shorten_name(ofname, sizeof ofname);
     }
 }
 
@@ -981,9 +981,9 @@ local char *get_suffix(name)
 #endif
     nlen = strlen(name);
     if (nlen <= MAX_SUFFIX+2) {
-        strcpy(suffix, name);
+        strlcpy(suffix, name, sizeof suffix);
     } else {
-        strcpy(suffix, name+nlen-MAX_SUFFIX-2);
+        strlcpy(suffix, name+nlen-MAX_SUFFIX-2, sizeof suffix);
     }
     strlwr(suffix);
     slen = strlen(suffix);
@@ -1027,7 +1027,7 @@ local int get_istat(iname, sbuf)
 	return ERROR;
     }
 
-    strcpy(ifname, iname);
+    strlcpy(ifname, iname, sizeof ifname);
 
     /* If input file exists, return OK. */
     if (do_stat(ifname, sbuf) == 0) return OK;
@@ -1049,7 +1049,7 @@ local int get_istat(iname, sbuf)
 #ifdef NO_MULTIPLE_DOTS
     dot = strrchr(ifname, '.');
     if (dot == NULL) {
-        strcat(ifname, ".");
+        strlcat(ifname, ".", sizeof ifname);
         dot = strrchr(ifname, '.');
     }
 #endif
@@ -1063,24 +1063,24 @@ local int get_istat(iname, sbuf)
         if (*s == '.') s++;
 #endif
 #ifdef MAX_EXT_CHARS
-        strcpy(ifname, iname);
+        strlcpy(ifname, iname, sizeof ifname);
         /* Needed if the suffixes are not sorted by increasing length */
 
-        if (*dot == '\0') strcpy(dot, ".");
+        if (*dot == '\0') strlcpy(dot, ".", ifname + sizeof ifname - dot);
         dot[MAX_EXT_CHARS+1-strlen(s)] = '\0';
 #endif
-        strcat(ifname, s);
+        strlcat(ifname, s, sizeof ifname);
         if (do_stat(ifname, sbuf) == 0) return OK;
 	ifname[ilen] = '\0';
     } while (*++suf != NULL);
 
     /* No suffix found, complain using z_suffix: */
 #ifdef MAX_EXT_CHARS
-    strcpy(ifname, iname);
-    if (*dot == '\0') strcpy(dot, ".");
+    strlcpy(ifname, iname, sizeof ifname);
+    if (*dot == '\0') strlcpy(dot, ".", ifname + sizeof ifname - dot);
     dot[MAX_EXT_CHARS+1-z_len] = '\0';
 #endif
-    strcat(ifname, z_suffix);
+    strlcat(ifname, z_suffix, sizeof ifname);
     perror(ifname);
     exit_code = ERROR;
     return ERROR;
@@ -1094,7 +1094,7 @@ local int make_ofname()
 {
     char *suff;            /* ofname z suffix */
 
-    strcpy(ofname, ifname);
+    strlcpy(ofname, ifname, sizeof ofname);
     /* strip a version number if any and get the gzip suffix if present: */
     suff = get_suffix(ofname);
 
@@ -1115,7 +1115,7 @@ local int make_ofname()
 	/* Make a special case for .tgz and .taz: */
 	strlwr(suff);
 	if (strequ(suff, ".tgz") || strequ(suff, ".taz")) {
-	    strcpy(suff, ".tar");
+	    strlcpy(suff, ".tar", ofname + sizeof ofname - suff);
 	} else {
 	    *suff = '\0'; /* strip the z suffix */
 	}
@@ -1135,10 +1135,10 @@ local int make_ofname()
 #ifdef NO_MULTIPLE_DOTS
 	suff = strrchr(ofname, '.');
 	if (suff == NULL) {
-            strcat(ofname, ".");
+            strlcat(ofname, ".", sizeof ofname);
 #  ifdef MAX_EXT_CHARS
 	    if (strequ(z_suffix, "z")) {
-		strcat(ofname, "gz"); /* enough room */
+		strlcat(ofname, "gz", sizeof ofname); /* enough room */
 		return OK;
 	    }
         /* On the Atari and some versions of MSDOS, name_too_long()
@@ -1151,7 +1151,7 @@ local int make_ofname()
 #  endif
         }
 #endif /* NO_MULTIPLE_DOTS */
-	strcat(ofname, z_suffix);
+	strlcat(ofname, z_suffix, sizeof ofname);
 
     } /* decompress ? */
     return OK;
@@ -1473,8 +1473,9 @@ local int name_too_long(name, statb)
  *
  * IN assertion: for compression, the suffix of the given name is z_suffix.
  */
-local void shorten_name(name)
+local void shorten_name(name, namelen)
     char *name;
+    size_t namelen;
 {
     int len;                 /* length of name without z_suffix */
     char *trunc = NULL;      /* character to be truncated */
@@ -1495,7 +1496,7 @@ local void shorten_name(name)
 
     /* compress 1234567890.tar to 1234567890.tgz */
     if (len > 4 && strequ(p-4, ".tar")) {
-	strcpy(p-4, ".tgz");
+	strlcpy(p-4, ".tgz", name + namelen - (p-4));
 	return;
     }
     /* Try keeping short extensions intact:
@@ -1522,7 +1523,7 @@ local void shorten_name(name)
 	if (trunc == NULL) error("internal error in shorten_name");
 	if (trunc[1] == '\0') trunc--; /* force truncation */
     }
-    strcpy(trunc, z_suffix);
+    strlcpy(trunc, z_suffix, name + namelen - trunc);
 }
 
 /* ========================================================================
@@ -1550,7 +1551,7 @@ local int check_ofname()
     errno = 0;
     while (stat(ofname, &ostat) != 0) {
         if (errno != ENAMETOOLONG) return 0; /* ofname does not exist */
-	shorten_name(ofname);
+	shorten_name(ofname, sizeof ofname);
     }
 #else
     if (stat(ofname, &ostat) != 0) return 0;
@@ -1560,7 +1561,7 @@ local int check_ofname()
      * behavior is disabled by default (silent name truncation allowed).
      */
     if (!decompress && name_too_long(ofname, &ostat)) {
-	shorten_name(ofname);
+	shorten_name(ofname, sizeof ofname);
 	if (stat(ofname, &ostat) != 0) return 0;
     }
 
@@ -1581,7 +1582,7 @@ local int check_ofname()
     /* Ask permission to overwrite the existing file */
     if (!force) {
 	char response[80];
-	strcpy(response,"n");
+	strlcpy(response,"n",sizeof response);
 	fprintf(stderr, "%s: %s already exists;", progname, ofname);
 	if (foreground && isatty(fileno(stdin))) {
 	    fprintf(stderr, " do you wish to overwrite (y or n)? ");
@@ -1702,7 +1703,7 @@ local void treat_dir(dir)
 	}
 	len = strlen(dir);
 	if (len + NLENGTH(dp) + 1 < MAX_PATH_LEN - 1) {
-	    strcpy(nbuf,dir);
+	    strlcpy(nbuf,dir,sizeof nbuf);
 	    if (len != 0 /* dir = "" means current dir on Amiga */
 #ifdef PATH_SEP2
 		&& dir[len-1] != PATH_SEP2
@@ -1713,7 +1714,7 @@ local void treat_dir(dir)
 	    ) {
 		nbuf[len++] = PATH_SEP;
 	    }
-	    strcpy(nbuf+len, dp->d_name);
+	    strlcpy(nbuf+len, dp->d_name, sizeof nbuf-len);
 	    treat_file(nbuf);
 	} else {
 	    fprintf(stderr,"%s: %s/%s: pathname too long\n",

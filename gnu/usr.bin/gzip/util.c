@@ -5,7 +5,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: util.c,v 1.2 2002/11/05 16:16:14 henning Exp $";
+static char rcsid[] = "$Id: util.c,v 1.3 2003/04/26 22:12:00 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -286,12 +286,15 @@ char *add_envopt(argcp, argvp, env)
     char **nargv;        /* runs through new argv array */
     int	 oargc = *argcp; /* old argc */
     int  nargc = 0;      /* number of arguments in env variable */
+    size_t len;
 
     env = (char*)getenv(env);
     if (env == NULL) return NULL;
 
-    p = (char*)xmalloc(strlen(env)+1);
-    env = strcpy(p, env);                    /* keep env variable intact */
+    len = strlen(env)+1;
+    p = (char*)xmalloc(len);
+    strlcpy(p, env, len);              /* keep env variable intact */
+    env = p;
 
     for (p = env; *p; nargc++ ) {            /* move through env */
 	p += strspn(p, SEPARATOR);	     /* skip leading separators */
