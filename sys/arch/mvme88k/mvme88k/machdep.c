@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.138 2004/04/14 23:06:57 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.139 2004/04/15 21:35:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1893,38 +1893,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/*NOTREACHED*/
-}
-
-/*
- * insert an element into a queue
- */
-
-void
-_insque(velement, vhead)
-	void *velement, *vhead;
-{
-	struct prochd *element, *head;
-	element = velement;
-	head = vhead;
-	element->ph_link = head->ph_link;
-	head->ph_link = (struct proc *)element;
-	element->ph_rlink = (struct proc *)head;
-	((struct prochd *)(element->ph_link))->ph_rlink=(struct proc *)element;
-}
-
-/*
- * remove an element from a queue
- */
-
-void
-_remque(velement)
-	void *velement;
-{
-	struct prochd *element;
-	element = velement;
-	((struct prochd *)(element->ph_link))->ph_rlink = element->ph_rlink;
-	((struct prochd *)(element->ph_rlink))->ph_link = element->ph_link;
-	element->ph_rlink = (struct proc *)0;
 }
 
 int
