@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.407 2001/06/17 18:52:48 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.408 2001/06/20 21:58:11 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1923,6 +1923,7 @@
 #define	PCI_PRODUCT_VORTEX_GDT_6x21RP	0x0105		/* GDT6[15]21RP */
 /* GDT_MPR, RD series, wide/ultra SCSI */
 #define	PCI_PRODUCT_VORTEX_GDT_6x17RD	0x0110		/* GDT6[15]17RD */
+#define	PCI_PRODUCT_VORTEX_GDT_6x23RS	0x0137		/* GDT6[5]23RS */
 #define	PCI_PRODUCT_VORTEX_GDT_6x27RD	0x0111		/* GDT6[5]127RD */
 #define	PCI_PRODUCT_VORTEX_GDT_6537RD	0x0112		/* GDT6537RD */
 #define	PCI_PRODUCT_VORTEX_GDT_6557RD	0x0113		/* GDT6557RD */
