@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.38 2001/03/27 18:47:09 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.39 2001/04/09 12:34:37 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  int fd;
 
 	  privkeyfile = calloc (strlen (keyfile) + strlen (local_id) +
-				strlen (PRIVATE_KEY_FILE) + 3, sizeof(char));
+				strlen (PRIVATE_KEY_FILE) + 3, sizeof (char));
 	  if (privkeyfile == NULL)
 	    {
 	      log_print ("ike_auth_get_key: failed to allocate %d bytes",
@@ -226,7 +226,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	      return 0;
 	    }
 
-	  buf = calloc (sb.st_size + 1, sizeof(char));
+	  buf = calloc (sb.st_size + 1, sizeof (char));
 	  if (buf == NULL)
 	    {
 	      log_print ("ike_auth_get_key: failed allocating %d bytes",
@@ -741,7 +741,7 @@ rsa_sig_decode_hash (struct message *msg)
 	    }
 
 	  exchange->recv_key = calloc (strlen (pp) + strlen ("rsa-hex:") + 1,
-				       sizeof(char));
+				       sizeof (char));
 	  if (exchange->recv_key == NULL)
 	    {
 	      free (pp);

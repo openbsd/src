@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.27 2001/04/05 23:18:53 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.28 2001/04/09 12:34:38 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -871,7 +871,7 @@ policy_callback (char *name)
 	      my_inet_ntop4 (&net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1, 1);
 	      my_inet_ntop4 (&net, remote_filter_addr_lower,
-			     sizeof (remote_filter_addr_lower) - 1, 1);
+			     sizeof remote_filter_addr_lower - 1, 1);
 	      remote_filter = strdup (remote_filter_addr_upper);
 	      if (!remote_filter)
 	        {
@@ -1605,7 +1605,7 @@ keynote_cert_init (void)
 void *
 keynote_cert_get (u_int8_t *data, u_int32_t len)
 {
-  char *foo = calloc (len + 1, sizeof(char));
+  char *foo = calloc (len + 1, sizeof (char));
 
   if (foo == NULL)
     return NULL;
@@ -1755,7 +1755,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       {
 	struct in_addr in;
 
-	file = calloc (len + 15, sizeof(char));
+	file = calloc (len + 15, sizeof (char));
 	if (file == NULL)
 	  {
 	    log_error ("keynote_cert_obtain: failed to allocate %d bytes",
@@ -1763,7 +1763,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 	    return 0;
 	  }
 
-	memcpy (&in, id, sizeof(in));
+	memcpy (&in, id, sizeof in);
 	sprintf (file, "%s/%s/%s", dirname, inet_ntoa (in), CREDENTIAL_FILE);
 	break;
       }
@@ -1771,7 +1771,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
       {
-        file = calloc (len + id_len, sizeof(char));
+        file = calloc (len + id_len, sizeof (char));
 	if (file == NULL)
 	  {
 	    log_error ("keynote_cert_obtain: failed to allocate %d bytes",

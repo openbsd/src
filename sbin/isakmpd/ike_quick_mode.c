@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.46 2001/03/13 14:05:18 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.47 2001/04/09 12:34:37 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -196,11 +196,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
        * appropriate prefix tag.
        */
       nprinc = 3;
-      principal = calloc (nprinc, sizeof(*principal));
+      principal = calloc (nprinc, sizeof *principal);
       if (principal == NULL)
         {
 	  log_error ("check_policy: failed to allocate %d bytes",
-		     nprinc * sizeof(*principal));
+		     nprinc * sizeof *principal);
 	  goto policydone;
 	}
 
@@ -252,11 +252,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 #ifdef USE_KEYNOTE
       nprinc = 1;
 
-      principal = calloc (nprinc, sizeof(*principal));
+      principal = calloc (nprinc, sizeof *principal);
       if (principal == NULL)
         {
 	  log_error ("check_policy: failed to allocate %d bytes",
-		     nprinc * sizeof(*principal));
+		     nprinc * sizeof *principal);
 	  goto policydone;
 	}
 
@@ -280,7 +280,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      principal = calloc (2, sizeof(*principal));
+      principal = calloc (2, sizeof *principal);
       if (principal == NULL)
         {
 	  log_error ("check_policy: failed to get memory for principal");
