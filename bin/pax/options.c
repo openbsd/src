@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.24 1997/04/16 03:50:23 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.25 1997/05/29 15:47:18 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.24 1997/04/16 03:50:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.25 1997/05/29 15:47:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ FSUB fsub[] = {
 #define	F_OCPIO	0	/* format when called as cpio -6 */
 #define	F_ACPIO	1	/* format when called as cpio -c */
 #define	F_CPIO	3	/* format when called as cpio */
+#define F_OTAR	4	/* format when called as tar -o */
 #define F_TAR	5	/* format when called as tar */
 #define DEFLT	5	/* default write format from list above */
 
@@ -600,6 +601,7 @@ tar_options(argc, argv)
 {
 	register int c;
 	int fstdin = 0;
+	int Oflag = 0;
 
 	/*
 	 * Set default values.
@@ -610,7 +612,7 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopruts:vwxzBC:HLPXZ014578")) 
+	    "b:cef:hmopruts:vwxzBC:HLOPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -665,6 +667,8 @@ tar_options(argc, argv)
 		case 'o':
 			if (opt_add("write_opt=nodir") < 0)
 				tar_usage();
+		case 'O':
+			Oflag = 1;
 			break;
 		case 'p':
 			/*
@@ -794,9 +798,14 @@ tar_options(argc, argv)
 
 	/*
 	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
+	 * (unless -o specified)
 	 */
-	if (act == ARCHIVE)
-		frmt = &(fsub[F_TAR]);
+	if (act == ARCHIVE || act == APPND)
+		frmt = &(fsub[Oflag ? F_OTAR : F_TAR]);
+	else if (Oflag) {
+		paxwarn(1, "The -O/-o options are only valid when writing an archive");
+		tar_usage();		/* only valid when writing */
+	}
 
 	/*
 	 * process the args as they are interpreted by the operation mode
