@@ -202,6 +202,7 @@
 ./usr/include/dev/ic/i82596var.h
 ./usr/include/dev/ic/i82802reg.h
 ./usr/include/dev/ic/ics2101reg.h
+./usr/include/dev/ic/if_wi_hostap.h
 ./usr/include/dev/ic/if_wi_ieee.h
 ./usr/include/dev/ic/if_wireg.h
 ./usr/include/dev/ic/if_wivar.h

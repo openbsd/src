@@ -193,6 +193,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82802reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ics2101reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/if_wi_hostap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/if_wireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/if_wivar.ph
@@ -1823,8 +1824,8 @@
 ./usr/libdata/perl5/vax-openbsd/5.6.1/re.pm
 ./usr/local/libdata/perl5/site_perl/vax-openbsd
 ./usr/mdec/boot
+./usr/mdec/hdboot
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
-./usr/mdec/hdboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot

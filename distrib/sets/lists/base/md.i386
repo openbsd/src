@@ -597,6 +597,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/i82802reg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/ics2101reg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/if_wi_hostap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/if_wireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/if_wivar.ph
