@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.2 2001/09/21 16:58:41 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -127,6 +127,9 @@ parseargs(str, howtop)
 		case 'a':
 			*howtop |= RB_ASKNAME;
 			break;
+		case 'c':
+			*howtop |= RB_CONFIG;
+			break;
 		case 's':
 			*howtop |= RB_SINGLE;
 			break;
@@ -221,6 +224,8 @@ main()
 	*cp = '-';
 	if (boothowto & RB_ASKNAME)
 		*++cp = 'a';
+	if (boothowto & RB_CONFIG)
+		*++cp = 'c';
 	if (boothowto & RB_SINGLE)
 		*++cp = 's';
 	if (boothowto & RB_KDB)
