@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.37 2000/04/20 12:26:35 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.38 2000/07/27 20:12:25 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.37 2000/04/20 12:26:35 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.38 2000/07/27 20:12:25 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -268,9 +268,6 @@ flushroutes(argc, argv)
 			case K_OSI:
 				af = AF_ISO;
 				break;
-			case K_ENCAP:
-				af = AF_KEY;
-				break;
 			case K_X25:
 				af = AF_CCITT;
 				break;
@@ -312,13 +309,6 @@ bad:			usage(*argv);
 		sa = (struct sockaddr *)(rtm + 1);
 		if (af) {
 			if (sa->sa_family != af)
-				continue;
-		} else {
-			/*
-			 * A general 'flush' should not touch PF_KEY flows,
-			 * as the flows' SPIs would be left behind.
-			 */
-			if (sa->sa_family == AF_KEY)
 				continue;
 		}
 		if (debugonly)

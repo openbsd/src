@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.24 2000/04/15 11:45:58 aaron Exp $
+.\"	$OpenBSD: route.8,v 1.25 2000/07/27 20:12:25 angelos Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -123,16 +123,12 @@ command is specified,
 .Nm
 will
 .Dq flush
-the routing tables of all gateway entries expect
-the
-.Dq encap
-family entries (IPsec routing flows).
+the routing tables of all gateway entries.
 When the address family is specified by any of the
 .Fl osi ,
 .Fl xns ,
 .Fl ipx ,
 .Fl link ,
-.Fl encap ,
 .Fl x25 ,
 .Fl inet ,
 or
@@ -341,7 +337,6 @@ to create the new entry.
 .El
 .Sh SEE ALSO
 .Xr esis 4 ,
-.Xr ipsecadm 1 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
 .Xr routed 8
