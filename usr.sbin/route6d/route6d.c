@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.35 2003/04/15 07:22:46 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.36 2003/04/22 09:57:04 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.35 2003/04/15 07:22:46 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.36 2003/04/22 09:57:04 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -593,7 +593,7 @@ init()
 	nifc = 0;
 	nindex2ifc = 0;	/*initial guess*/
 	index2ifc = NULL;
-	snprintf(port, sizeof(port), "%d", RIP6_PORT);
+	snprintf(port, sizeof(port), "%u", RIP6_PORT);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
@@ -1114,7 +1114,7 @@ riprecv()
 	rp = (struct rip6 *)buf;
 	np = rp->rip6_nets;
 
-	if (rp->rip6_vers !=  RIP6_VERSION) {
+	if (rp->rip6_vers != RIP6_VERSION) {
 		trace(1, "Incorrect RIP version %d\n", rp->rip6_vers);
 		return;
 	}
