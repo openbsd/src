@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.5 1996/06/29 20:05:41 chuck Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.6 1996/07/03 17:14:30 chuck Exp $       */
 
 /*
  *
@@ -57,6 +57,7 @@
 #include <net/if_atm.h>
 
 #include <netinet/in.h>
+#include <netinet/if_atm.h>
 #include <netinet/if_ether.h> /* XXX: for ETHERTYPE_* */
 #ifdef INET
 #include <netinet/in_var.h>
@@ -107,7 +108,7 @@ atm_output(ifp, m0, dst, rt0)
 	if ((rt = rt0) != NULL) {
 
 		if ((rt->rt_flags & RTF_UP) == 0) { /* route went down! */
-			if ((rt0 = rt = rtalloc1(dst, 0)) != NULL)
+			if ((rt0 = rt = RTALLOC1(dst, 0)) != NULL)
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -118,7 +119,7 @@ atm_output(ifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 0);
+			lookup: rt->rt_gwroute = RTALLOC1(rt->rt_gateway, 0);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
 			}
@@ -147,8 +148,13 @@ atm_output(ifp, m0, dst, rt0)
 #endif
 
 		default:
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 			printf("%s: can't handle af%d\n", ifp->if_xname, 
 				dst->sa_family);
+#elif defined(__FreeBSD__) || defined(__bsdi__)
+			printf("%s%d: can't handle af%d\n", ifp->if_name, 
+				ifp->if_unit, dst->sa_family);
+#endif
 			senderr(EAFNOSUPPORT);
 		}
 
@@ -242,8 +248,13 @@ atm_input(ifp, ah, m, rxhand)
 		  return; /* failed */
 	    alc = mtod(m, struct atmllc *);
 	    if (bcmp(alc, ATMLLC_HDR, 6)) {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
 		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
+#elif defined(__FreeBSD__) || defined(__bsdi__)
+	      printf("%s%d: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
+		  ifp->if_name, ifp->if_unit, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
+#endif
 	      m_freem(m);
               return;
 	    }
@@ -288,8 +299,14 @@ atm_ifattach(ifp)
 	ifp->if_hdrlen = 0;
 	ifp->if_mtu = ATMMTU;
 	ifp->if_output = atm_output;
+
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next)
+#elif defined(__FreeBSD__) || defined(__bsdi__)
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) 
+#endif
+
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_ATM;
