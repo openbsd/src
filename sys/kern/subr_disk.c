@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.27 2004/10/25 19:53:52 pedro Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.28 2004/11/01 03:43:24 pedro Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -526,6 +526,9 @@ bufq_default_alloc(void)
 	struct bufq_default *bq;
 
 	bq = malloc(sizeof(*bq), M_DEVBUF, M_NOWAIT);
+	if (bq == NULL)
+		panic("bufq_default_alloc: no memory");
+
 	memset(bq, 0, sizeof(*bq));
 	bq->bufq.bufq_free = bufq_default_free;
 	bq->bufq.bufq_add = bufq_default_add;
