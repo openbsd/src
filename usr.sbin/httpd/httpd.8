@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.6 2002/07/09 16:59:40 deraadt Exp $
+.\"	$OpenBSD: httpd.8,v 1.7 2002/07/22 13:33:18 henning Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -57,7 +57,7 @@
 .Nd Apache hypertext transfer protocol server
 .Sh SYNOPSIS
 .Nm httpd
-.Op Fl hlLSvuVX
+.Op Fl FhlLSvuVX
 .Op Fl d Ar serverroot
 .Op Fl f Ar config
 .Op Fl c Ar directive
@@ -173,6 +173,8 @@ Sets a configuration
 which can be used with
 <IfDefine>...</IfDefine> sections in the configuration files
 to conditionally skip or process commands.
+.It Fl F
+Run the main process in foreground. For process supervisors.
 .It Fl h
 Output a short summary of available command line options.
 .It Fl l
