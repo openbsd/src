@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.19 2002/06/30 13:04:35 itojun Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.20 2002/06/30 14:09:32 art Exp $       */
 
 /*
  *
@@ -375,10 +375,8 @@ atm_input(ifp, ah, m, rxhand)
  */
 void
 atm_ifattach(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;
