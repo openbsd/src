@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.4 1997/01/15 23:42:40 millert Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.5 1997/06/18 09:44:09 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.4 1997/01/15 23:42:40 millert Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.5 1997/06/18 09:44:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,9 +140,19 @@ main(argc, argv)
 	}
 
 	omask = umask(S_IRWXG|S_IRWXO);
-	if ((fd = open(tracefile, O_CREAT | O_WRONLY | (append ? 0 : O_TRUNC),
-	    DEFFILEMODE)) < 0)
-		err(1, tracefile);
+	if (append) {
+		if ((fd = open(tracefile, O_CREAT | O_WRONLY, DEFFILEMODE)) < 0)
+			err(1, tracefile);
+		if (fstat(fd, &sb) != 0 || sb.st_uid != getuid())
+			errx(1, "Refuse to append to %s: not owned by you.",
+			    tracefile);
+	} else {
+		if (unlink(tracefile) == -1 && errno != ENOENT)
+			err(1, "unlink %s", tracefile);
+		if ((fd = open(tracefile, O_CREAT | O_EXCL | O_WRONLY,
+		    DEFFILEMODE)) < 0)
+			err(1, tracefile);
+	}
 	(void)umask(omask);
 	(void)close(fd);
 
@@ -183,9 +193,9 @@ usage()
 
 void
 no_ktrace(sig)
-        int sig;
+	int sig;
 {
-        (void)fprintf(stderr,
+	(void)fprintf(stderr,
 "error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'options KTRACE'\n");
-        exit(1);
+	exit(1);
 }
