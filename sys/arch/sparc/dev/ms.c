@@ -254,6 +254,7 @@ msopen(dev, flags, mode, p)
 		/* We need to set the baud rate on the mouse. */
 		ms_softc.ms_mouse->t_ispeed =
 		    ms_softc.ms_mouse->t_ospeed = 1200;
+		ms_softc.ms_mouse->t_cflag = CS8;
 	}
 #endif
 
