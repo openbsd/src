@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.10 2000/05/04 22:56:52 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.11 2000/05/05 12:33:51 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -136,6 +136,7 @@ enum {
 	MaxFieldNameLen = 32,
 	MaxCommandLen = 2048,
 	MaxEntryLen = 2048,
+	MaxPasswordEntryLen = 1024,
 	PasswordLength = _PASSWORD_LEN,
 
 	LowGid = DEF_LOWUID,
@@ -714,6 +715,13 @@ adduser(char *login, user_t *up)
 			up->u_comment,
 			home,
 			up->u_shell);
+	if (cc > MaxPasswordEntryLen ||
+	    (strchr(up->u_comment, '&') != NULL &&
+	     cc + strlen(login) > MaxPasswordEntryLen)) {
+		(void) close(ptmpfd);
+		(void) pw_abort();
+		err(EXIT_FAILURE, "can't add `%s', line too long", buf);
+	}
 	if (write(ptmpfd, buf, (size_t) cc) != cc) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
@@ -787,7 +795,7 @@ moduser(char *login, char *newlogin, user_t *up)
 	}
 	if (up != (user_t *) NULL) {
 		if (up->u_mkdir) {
-			(void) strcpy(oldhome, pwp->pw_dir);
+			(void) strlcpy(oldhome, pwp->pw_dir, sizeof(oldhome));
 		}
 		if (up->u_uid == -1) {
 			up->u_uid = pwp->pw_uid;
@@ -818,7 +826,7 @@ moduser(char *login, char *newlogin, user_t *up)
 		}
 		/* if home directory hasn't been given, use the old one */
 		if (!up->u_homeset) {
-			(void) strcpy(home, pwp->pw_dir);
+			(void) strlcpy(home, pwp->pw_dir, strlen(home));
 		}
 		expire = 0;
 		if (up->u_expire != NULL) {
@@ -862,6 +870,13 @@ moduser(char *login, char *newlogin, user_t *up)
 					up->u_comment,
 					home,
 					up->u_shell);
+				if (cc > MaxPasswordEntryLen ||
+				    (strchr(up->u_comment, '&') != NULL &&
+				     cc + strlen(newlogin) > MaxPasswordEntryLen)) {
+					(void) close(ptmpfd);
+					(void) pw_abort();
+					err(EXIT_FAILURE, "can't add `%s', line too long", buf);
+				}
 				if (write(ptmpfd, buf, (size_t) cc) != cc) {
 					(void) close(ptmpfd);
 					(void) pw_abort();
