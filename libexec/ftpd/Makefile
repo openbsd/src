@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/06/01 06:40:34 downsj Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/03/26 23:47:43 deraadt Exp $
 #	$NetBSD: Makefile,v 1.13 1996/02/16 02:07:41 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
@@ -25,8 +25,8 @@ DPADD+= ${LIBSKEY}
 SRCS+= klogin.c
 .PATH:	${.CURDIR}/../../usr.bin/login
 CFLAGS+= -DKERBEROS
-LDADD+= -lkrb -ldes
-DPADD+= ${LIBKRB} ${LIBKRB}
+LDADD+= -lkrb -ldes -lkafs
+DPADD+= ${LIBKRB} ${LIBKRB} ${LIBKAFS}
 .endif
 
 .if (${TCP_WRAPPERS} == "yes")
