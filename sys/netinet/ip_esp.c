@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.56 2001/04/14 00:30:59 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.57 2001/05/12 18:09:02 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -381,7 +381,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     /* Get IPsec-specific opaque pointer */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
            M_XDATA, M_NOWAIT);
-    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -390,6 +389,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	espstat.esps_crypto++;
 	return ENOBUFS;
     }
+    bzero(tc, sizeof(struct tdb_crypto));
 
     if (esph)
     {
@@ -948,7 +948,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     /* IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
            M_XDATA, M_NOWAIT);
-    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -957,6 +956,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	espstat.esps_crypto++;
 	return ENOBUFS;
     }
+    bzero(tc, sizeof(struct tdb_crypto));
 
     tc->tc_spi = tdb->tdb_spi;
     tc->tc_proto = tdb->tdb_sproto;

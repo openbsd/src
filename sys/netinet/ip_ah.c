@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.50 2001/04/14 00:30:58 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.51 2001/05/12 18:09:02 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -607,7 +607,6 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
 	   M_XDATA, M_NOWAIT);
-    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -616,6 +615,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	ahstat.ahs_crypto++;
 	return ENOBUFS;
     }
+    bzero(tc, sizeof(struct tdb_crypto));
 
     /*
      * Save the authenticator, the skipped portion of the packet, and the
@@ -1048,7 +1048,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto), M_XDATA,
 	   M_NOWAIT);
-    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -1057,6 +1056,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	ahstat.ahs_crypto++;
 	return ENOBUFS;
     }
+    bzero(tc, sizeof(struct tdb_crypto));
 
     /* Save the skipped portion of the packet */
     MALLOC(tc->tc_ptr, caddr_t, skip, M_XDATA, M_NOWAIT);
