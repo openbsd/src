@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.5 1996/02/02 06:34:09 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.6 1996/02/02 06:43:48 etheisen Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -10,7 +10,7 @@ GNUCFLAGS=	CFLAGS="$(CFLAGS)"
 FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)" $(GNUCFLAGS) $(INFODIR) $(INFOPATH)
 
 all:	config.status
-	${FSFMAKE} 
+	${FSFMAKE} LDFLAGS=${LDSTATIC}
 
 .FORCE:	.IGNORE
 
