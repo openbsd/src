@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.249 2002/12/11 13:23:38 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.250 2002/12/12 14:46:26 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2869,11 +2869,9 @@ expand_rule(struct pf_rule *r,
 	char	label[PF_RULE_LABEL_SIZE];
 	struct pf_pooladdr *pa;
 	struct node_host *h;
-	char	qname[PF_QNAME_SIZE];
 	u_int8_t flags, flagset;
 
 	strlcpy(label, r->label, sizeof(label));
-	strlcpy(qname, r->qname, sizeof(qname));
 	flags = r->flags;
 	flagset = r->flagset;
 
@@ -2915,8 +2913,7 @@ expand_rule(struct pf_rule *r,
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
 		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
-		strlcpy(r->qname, qname, PF_QNAME_SIZE);
-		r->qid = qname_to_qid(qname, r->ifname);
+		r->qid = qname_to_qid(r->qname, r->ifname);
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
