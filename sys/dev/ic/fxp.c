@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.57 2004/09/16 13:57:49 markus Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.58 2004/09/20 04:25:27 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1196,11 +1196,6 @@ fxp_scb_cmd(sc, cmd)
 	struct fxp_softc *sc;
 	u_int8_t cmd;
 {
-	if (cmd == FXP_SCB_COMMAND_CU_RESUME &&
-	    (sc->sc_flags & FXPF_FIX_RESUME_BUG) != 0) {
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_CB_COMMAND_NOP);
-		fxp_scb_wait(sc);
-	}
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
 }
 
@@ -1620,18 +1615,7 @@ void
 fxp_statchg(self)
 	struct device *self;
 {
-	struct fxp_softc *sc = (struct fxp_softc *)self;
-
-	/*
-	 * Determine whether or not we have to work-around the
-	 * Resume Bug.
-	 */
-	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
-		if (IFM_TYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
-			sc->sc_flags |= FXPF_FIX_RESUME_BUG;
-		else
-			sc->sc_flags &= ~FXPF_FIX_RESUME_BUG;
-	}
+	/* Nothing to do. */
 }
 
 void
