@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldd.1,v 1.7 2000/07/31 01:27:43 pjanzen Exp $
+.\"	$OpenBSD: ldd.1,v 1.8 2001/04/17 21:44:38 espie Exp $
 .\"	$NetBSD: ldd.1,v 1.2 1995/10/08 23:39:58 pk Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
@@ -40,7 +40,7 @@
 .Op Fl f Ar format
 .Ar program ...
 .Sh DESCRIPTION
-.Nm ldd
+.Nm
 displays all shared objects that are needed to run the given program.
 Contrary to
 .Xr nm 1 ,
@@ -57,6 +57,10 @@ and allows customization of
 output. See
 .Xr ld.so 1
 for a list of recognised conversion characters.
+.Pp
+.Nm
+also has some limited support for scanning shared libraries.
+It displays dependencies, but does not hunt them down recursively.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr ld.so 1 ,
