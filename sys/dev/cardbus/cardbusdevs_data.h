@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.2 2000/05/15 06:35:47 niklas Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.3 2000/06/09 00:43:05 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -57,6 +57,18 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3CCFE575CT 100Base-TX",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3CCFE656B,
+	    0,
+	    "3Com",
+	    "3CCFE656B 100Base-TX",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_MODEM56,
+	    0,
+	    "3Com",
+	    "56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
