@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.3 1996/05/22 11:52:32 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.4 1996/07/29 14:51:41 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -124,8 +124,15 @@ sys_ptrace(p, v, retval)
 			return (EBUSY);
 
 		/*
-		 *	(3) it's not owned by you, or is set-id on exec
-		 *	    (unless you're root), or...
+		 *	(3) it's not owned by you, or the last exec
+		 *	    gave us setuid/setgid privs (unless
+		 *	    you're root), or...
+		 * 
+		 *      [Note: once P_SUGID gets set in execve(), it stays
+		 *	set until the process does another execve(). Hence
+		 *	this prevents a setuid process which revokes it's
+		 *	special privilidges using setuid() from being
+		 *	traced. This is good security.]
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
 			ISSET(t->p_flag, P_SUGID)) &&
