@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.27 2002/07/09 11:00:27 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.28 2002/07/10 19:29:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -288,8 +288,9 @@ wi_pci_attach(parent, self, aux)
 		/*
 		 * Setup the PLX chip for level interrupts and config index 1
 		 */
-		bus_space_write_1(memt, memh, WI_COR_OFFSET, WI_PLX_COR_VALUE);
-		sc->wi_cor_offset = WI_COR_OFFSET;
+		bus_space_write_1(memt, memh, WI_PLX_COR_OFFSET,
+		    WI_PLX_COR_VALUE);
+		sc->wi_cor_offset = WI_PLX_COR_OFFSET;
 
 		/* Unmap registers we no longer need access to. */
 		if (localsize != 0)

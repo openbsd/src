@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.24 2002/06/27 15:11:44 fgsch Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.25 2002/07/10 19:29:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -292,7 +292,7 @@
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
 
-#define WI_COR_OFFSET		0x3E0	/* COR attribute offset of card */
+#define WI_COR_OFFSET		0x40	/* COR attribute offset of card */
 
 #define WI_PLX_LOCALRES		0x14	/* PLX chip's local registers */
 #define WI_PLX_MEMRES		0x18	/* Prism attribute memory (PLX) */
@@ -300,6 +300,7 @@
 #define WI_PLX_INTCSR		0x4C	/* PLX Interrupt CSR */
 #define WI_PLX_INTEN		0x40	/* Interrupt Enable bit */
 #define WI_PLX_COR_VALUE	0x41	/* Enable with irq in level trigger */
+#define WI_PLX_COR_OFFSET	0x3E0	/* COR attribute offset of card */
 
 #define WI_TMD_LOCALRES		0x14	/* TMD chip's local registers */
 #define WI_TMD_IORES		0x18	/* Prism I/O space (TMD) */
