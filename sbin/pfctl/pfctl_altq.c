@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.44 2003/03/10 14:48:38 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.45 2003/03/10 14:54:17 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -323,6 +323,12 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 	}
 	pa->scheduler = if_pa->scheduler;
 	pa->ifbandwidth = if_pa->ifbandwidth;
+
+	if (qname_to_pfaltq(pa->qname, pa->ifname) != NULL) {
+		fprintf(stderr, "queue %s already exists on interface %s\n",
+		    pa->qname, pa->ifname);
+		return (1);
+	}
 	pa->qid = qname_to_qid(pa->qname);
 
 	parent = NULL;
