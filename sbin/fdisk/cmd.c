@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.25 2000/04/18 22:40:15 kjell Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.26 2000/07/01 21:49:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -168,9 +168,9 @@ Xedit(cmd, disk, mbr, tt, offset)
 		EDIT("BIOS Ending head",       ASK_DEC, pp->ehead, 0, maxhead, NULL);
 		EDIT("BIOS Ending sector",     ASK_DEC, pp->esect, 1, maxsect, NULL);
 		/* Fix up off/size values */
-		PRT_fix_BN(disk, pp);
+		PRT_fix_BN(disk, pp, pn);
 		/* Fix up CHS values for LBA */
-		PRT_fix_CHS(disk, pp);
+		PRT_fix_CHS(disk, pp, pn);
 	} else {
 		u_int m;
 
@@ -186,7 +186,7 @@ Xedit(cmd, disk, mbr, tt, offset)
 		    m, NULL);
 
 		/* Fix up CHS values */
-		PRT_fix_CHS(disk, pp);
+		PRT_fix_CHS(disk, pp, pn);
 	}
 #undef EDIT
 	return (ret);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.17 2000/06/11 16:11:55 markus Exp $	*/
+/*	$OpenBSD: part.c,v 1.18 2000/07/01 21:49:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -144,12 +144,13 @@ PRT_ascii_id(id)
 }
 
 void
-PRT_parse(disk, prt, offset, reloff, partn)
+PRT_parse(disk, prt, offset, reloff, partn, pn)
 	disk_t *disk;
 	void *prt;
 	off_t offset;
 	off_t reloff;
 	prt_t *partn;
+	int pn;
 {
 	unsigned char *p = prt;
 	off_t off;
@@ -175,7 +176,7 @@ PRT_parse(disk, prt, offset, reloff, partn)
 	partn->bs = getlong(p) + off;
 	partn->ns = getlong(p+4);
 
-	PRT_fix_CHS(disk, partn);
+	PRT_fix_CHS(disk, partn, pn);
 }
 
 int
@@ -275,9 +276,10 @@ PRT_print(num, partn)
 }
 
 void
-PRT_fix_BN(disk, part)
+PRT_fix_BN(disk, part, pn)
 	disk_t *disk;
 	prt_t *part;
+	int pn;
 {
 	int spt, tpc, spc;
 	int start = 0;
@@ -298,16 +300,17 @@ PRT_fix_BN(disk, part)
 
 	/* XXX - Should handle this... */
 	if (start > end)
-		warn("Start of partition after end!");
+		warn("Start of partition #%d after end!", pn);
 
 	part->bs = start;
 	part->ns = (end - start) + 1;
 }
 
 void
-PRT_fix_CHS(disk, part)
+PRT_fix_CHS(disk, part, pn)
 	disk_t *disk;
 	prt_t *part;
+	int pn;
 {
 	int spt, tpc, spc;
 	int start, end, size;
@@ -329,7 +332,7 @@ PRT_fix_CHS(disk, part)
 
 	if (cyl > 1023) {
 		cyl = 1023;
-		printf("Only LBA values are valid in starting cylinder.\n");
+		printf("Only LBA values are valid in starting cylinder for partition #%d.\n", pn);
 	}
 	part->scyl = cyl;
 	part->shead = head;
@@ -342,7 +345,7 @@ PRT_fix_CHS(disk, part)
 
 	if (cyl > 1023) {
 		cyl = 1023;
-		printf("Only LBA values are valid in ending cylinder.\n");
+		printf("Only LBA values are valid in ending cylinder for partition #%d.\n", pn);
 	}
 	part->ecyl = cyl;
 	part->ehead = head;
