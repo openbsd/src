@@ -1,15 +1,20 @@
-# $OpenBSD: Makefile,v 1.2 2004/07/09 21:56:32 david Exp $
+# $OpenBSD: Makefile,v 1.3 2004/07/20 06:36:51 david Exp $
 
 NOMAN=
 NOPROG=
 
 
+.if ${USE_GCC3:L:Myes}
+TESTDIR=${BSDSRCDIR}/gnu/lib/libf2c
+TEST2DIR=${BSDSRCDIR}/gnu/usr.bin/gcc
+.else
 TESTDIR=${BSDSRCDIR}/gnu/egcs/libf2c
 TEST2DIR=${BSDSRCDIR}/gnu/egcs/gcc
+.endif
 
 #  We don't even try to run without objdir
-TEST3DIR=${BSDOBJDIR}/gnu/egcs/libf2c/libU77
-TEST4DIR=${BSDOBJDIR}/gnu/egcs/gcc/
+TEST3DIR=${TESTDIR}/libU77
+TEST4DIR=${TEST2DIR}/
 
 
 regress: 
