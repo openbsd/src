@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.5 2002/10/06 23:31:41 art Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.6 2003/04/17 03:47:42 drahn Exp $"
 #endif /* SYSLIB_SCCS */
 
 	.globl	_end
@@ -70,7 +70,10 @@ ENTRY(brk)
 	movl	%ecx,(%edx)
 	ret
 err:
-	jmp	PIC_PLT(__cerror)
+	PIC_PROLOGUE
+	movl	PIC_GOT(CERROR),%ecx	# set up GOT addressing
+	PIC_EPILOGUE
+	jmp	*%ecx
 
 #else
 
@@ -87,5 +90,5 @@ err:
 	movl	%ecx,__curbrk
 	ret
 err:
-	jmp	__cerror
+	jmp	CERROR
 #endif

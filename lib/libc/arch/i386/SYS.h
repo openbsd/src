@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.13 2002/10/06 23:24:13 art Exp $
+ *	$OpenBSD: SYS.h,v 1.14 2003/04/17 03:47:38 drahn Exp $
  */
 
 #include <machine/asm.h>
@@ -71,6 +71,9 @@
 			int $0x80
 #endif /* ! __STDC__ */
 
+#define CERROR          _C_LABEL(__cerror)
+#define CURBRK          _C_LABEL(__curbrk)
+
 /* perform a syscall */
 #define	_SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\
@@ -80,13 +83,25 @@
 		_SYSCALL_NOERROR(x,x)
 
 /* perform a syscall, set errno */
+#ifdef PIC
+#define	_SYSCALL(x,y)					\
+			.text;				\
+			.align 2;			\
+		2:	PIC_PROLOGUE;			\
+			movl PIC_GOT(CERROR), %ecx;	\
+			PIC_EPILOGUE;			\
+			jmp *%ecx;			\
+		_SYSCALL_NOERROR(x,y)			\
+			jc 2b
+#else
 #define	_SYSCALL(x,y)					\
 			.text;				\
 			.align 2;			\
 		2:					\
-			jmp PIC_PLT(__cerror);		\
+			jmp PIC_PLT(CERROR);		\
 		_SYSCALL_NOERROR(x,y)			\
 			jc 2b
+#endif
 
 #define	SYSCALL(x)					\
 		_SYSCALL(x,x)
@@ -105,4 +120,4 @@
 #define	RSYSCALL(x)					\
 			PSEUDO(x,x);
 
-	.globl	__cerror
+	.globl	CERROR

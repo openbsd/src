@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.3 1998/11/20 11:18:29 d Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.4 2003/04/17 03:47:42 drahn Exp $"
 #endif /* SYSLIB_SCCS */
 
 /*
@@ -55,15 +55,15 @@ SYSENTRY(vfork)
 	jc	err
 	decl	%edx
 	andl	%edx,%eax
-	jmp	%ecx
+	jmp	*%ecx
 err:
 #ifdef PIC
 	PIC_PROLOGUE
-	movl	PIC_GOT(_errno),%edx
+	movl	PIC_GOT(_C_LABEL(errno)),%edx
 	PIC_EPILOGUE
 	movl	%eax,(%edx)
 #else
-	movl	%eax,_errno
+	movl	%eax,_C_LABEL(errno)
 #endif
 	movl	$-1,%eax
-	jmp	%ecx
+	jmp	*%ecx

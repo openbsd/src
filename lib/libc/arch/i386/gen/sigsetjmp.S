@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.4 2001/11/01 07:02:13 mickey Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.5 2003/04/17 03:47:42 drahn Exp $"
 #endif
 
 ENTRY(sigsetjmp)
@@ -47,6 +47,8 @@ ENTRY(sigsetjmp)
 	movl	%eax,28(%ecx)
 	testl	%eax,%eax
 	jz	1f
+
+	PIC_PROLOGUE
 	pushl	$0
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(sigblock))
@@ -54,6 +56,8 @@ ENTRY(sigsetjmp)
 	call	_C_LABEL(sigblock)
 #endif
 	addl	$4,%esp
+	PIC_EPILOGUE
+
 	movl	4(%esp),%ecx
 	movl	%eax,24(%ecx)
 1:	movl	0(%esp),%edx
@@ -70,6 +74,8 @@ ENTRY(siglongjmp)
 	movl	4(%esp),%edx
 	cmpl	$0,28(%edx)
 	jz	1f
+
+	PIC_PROLOGUE
 	pushl	24(%edx)
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(sigsetmask))
@@ -77,6 +83,8 @@ ENTRY(siglongjmp)
 	call	_C_LABEL(sigsetmask)
 #endif
 	addl	$4,%esp
+	PIC_EPILOGUE
+
 1:	movl	4(%esp),%edx
 	movl	8(%esp),%eax
 	movl	0(%edx),%ecx
