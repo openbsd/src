@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.12 2000/11/19 13:30:17 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.13 2000/11/22 20:32:57 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -65,6 +65,7 @@ sub write_uniques
     } else {
     	use File::Copy;
 
+	unlink($f);
 	if (move($tempname, $f)) {
 	    chmod 0444, $f;
 	    chown 0, (getgrnam 'bin')[2], $f;
@@ -140,15 +141,17 @@ sub add_unformated_subject
     s/\\\*\[(.*?)\]/&$exp($1)/ge;
 
 	# horizontal space adjustments
-    while (s/\\s-?\d+//g)
+    while (s/\\s[-+]?\d+//g)
     	{}
 	# unbreakable spaces
     s/\\\s+/ /g;
 	# em dashes
     s/\\\(em\s+/- /g;
+    s/\\\(tm/(tm)/g;
 	# font changes
     s/\\f[BIRP]//g;
-    unless (s/\\-/($section) -/ || s/\s-\s/ ($section) - /) {
+    unless (s/\s+\\-\s+/ ($section) - / || s/\\\-/($section) -/ ||
+    	s/\s-\s/ ($section) - /) {
 	print STDERR "Weird subject line in $filename:\n$_\n" if $picky;
 	    # Try guessing where the separation falls...
 	s/\S+\s+/$& ($section) - / || s/\s*$/ ($section) - (empty subject)/;
@@ -199,7 +202,7 @@ sub handle_unformated
 	}
 	    # Some cross-refs just link to another manpage
 	$so_found = 1 if m/\.so/;
-	if (m/^\.TH/ || m/^\.th/) {
+	if (m/^\.\s*TH/ || m/^\.\s*th/) {
 		# in pricky mode, we should try to match these
 	    # ($name2, $section2) = m/^\.(?:TH|th)\s+(\S+)\s+(\S+)/;
 	    	# scan until first section
@@ -215,22 +218,20 @@ sub handle_unformated
 		    next;
 		}
 		next unless m/^\./;
-		if (m/^\.SH/ || m/^\.sh/) {
+		if (m/^\.\s*SH/ || m/^\.\s*sh/) {
 		    my @subject = ();
 		    while (<$f>) {
-			last if m/^\.SH/ || m/^\.sh/ || m/^\.SS/ ||
-			    m/^\.ss/ || m/^\.nf/;
+			last if m/^\.\s*(?:SH|sh|SS|ss|nf)/;
 			    # several subjects in one manpage
-			if (m/^\.PP/ || m/^\.Pp/ || m/^\.br/ || 
-			    m/^\.PD/ || /^\.sp/) {
+			if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
 			    add_unformated_subject(\@lines, \@subject,
 				$section, $filename, \%toexpand) 
 				    if @subject != 0;
 			    @subject = ();
 			    next;
 			}
-			next if m/^\'/ || m/^\.tr\s+/ || m/^\.\\\"/ ||
-			    m/^\.sv/ || m/^\.Vb\s+/ || m/\.HP\s+/;
+			next if m/^\'/ || m/^\.\s*tr\s+/ || m/^\.\s*\\\"/ ||
+			    m/^\.\s*sv/ || m/^\.\s*Vb\s+/ || m/\.\s*HP\s+/;
 			if (m/^\.\s*de/) {
 			    while (<$f>) {
 				last if m/^\.\s*\./;
@@ -241,8 +242,17 @@ sub handle_unformated
 			    chomp($toexpand{$1} = $');
 			    next;
 			}
+			# Motif index entries, don't do anything for now.
+			next if m/^\.\s*iX/;
+			# Some other index (cook)
+			next if m/^\.\s*XX/;
 			chomp;
-			s/\.(?:B|I|IR|SM)\s+//;
+			s/\.\s*(?:B|I|IR|SM|BR)\s+//;
+			if (m/^\.\s*(\S\S)/) {
+			    print STDERR "$filename: not grokking $_\n" 
+				if $picky;
+			    next;
+			}
 			push(@subject, $_) unless m/^\s*$/;
 		    }
 		    add_unformated_subject(\@lines, \@subject, $section,
@@ -251,19 +261,19 @@ sub handle_unformated
 		}
 	    }
 	    print STDERR "Couldn't find subject in old manpage $filename\n";
-	} elsif (m/^\.Dt/) {
-	    $section .= "/$1" if (m/^\.Dt\s+\S+\s+\d\S*\s+(\S+)/);
+	} elsif (m/^\.\s*Dt/) {
+	    $section .= "/$1" if (m/^\.\s*Dt\s+\S+\s+\d\S*\s+(\S+)/);
 	    while (<$f>) {
 		next unless m/^\./;
-		if (m/^\.Sh/) {
+		if (m/^\.\s*Sh/) {
 		    # subject/keep is the only way to deal with Nm/Nd pairs
 		    my @subject = ();
 		    my @keep = ();
 		    my $nd_seen = 0;
 		    while (<$f>) {
-			last if m/^\.Sh/;
+			last if m/^\.\s*Sh/;
 			s/\s,/,/g;
-			if (s/^\.(..)\s+//) {
+			if (s/^\.\s*(\S\S)\s+//) {
 			    my $macro = $1;
 			    next if $macro eq "\\\"";
 			    s/\"(.*?)\"/$1/g;
@@ -318,7 +328,7 @@ sub add_formated_subject
 	s/([-+.\w\d,])\s+/$1 /g;
 	s/([a-z][A-z])-\s+/$1/g;
 	# some twits use: func -- description
-	if (m/^[^-+.\w\d]*(.*) -(?:-?)\s+(.*)$/) {
+	if (m/^[^-+.\w\d]*(.*) -(?:-?)\s+(.*)/) {
 	    my ($func, $descr) = ($1, $2);
 	    $func =~ s/,\s*$//;
 	    # nroff will tend to cut function names at the weirdest places
@@ -543,5 +553,3 @@ for my $mandir (@ARGV) {
     	print STDERR "$0: $mandir is not a directory\n";
     }
 }
-
-
