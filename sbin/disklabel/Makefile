@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2001/09/01 16:21:16 drahn Exp $
+#	$OpenBSD: Makefile,v 1.27 2002/02/20 01:55:49 miod Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -39,11 +39,12 @@ CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 CFLAGS+= -DNUMBOOT=1
 .endif
 
-.if (${MACHINE} == "sun3") || (${MACHINE} == "sparc")
+.if (${MACHINE} == "sun3") || (${MACHINE} == "sparc") || \
+    (${MACHINE} == "sparc64")
 CFLAGS+= -DSEEALSO="\"installboot(8)\"" -DCYLCHECK -DAAT0
 .endif
 
-.if (${MACHINE} == "mvme68k") || (${MACHINE} == "mvme68k")
+.if (${MACHINE} == "mvme68k") || (${MACHINE} == "mvme88k")
 CFLAGS+= -DSEEALSO="\"installboot(8)\""
 .endif
 
