@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.354 2003/04/11 14:42:32 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.355 2003/04/11 15:19:10 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3240,7 +3240,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 					if (pfctl_add_altq(pf, &pa))
 						errs++;
 
-				for(nq = nqueues; nq != NULL; nq = nq->next) {
+				for (nq = nqueues; nq != NULL; nq = nq->next) {
 					n = calloc(1,
 					    sizeof(struct node_queue));
 					if (n == NULL)
