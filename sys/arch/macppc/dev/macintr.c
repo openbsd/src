@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.2 2001/09/10 12:57:24 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -161,7 +161,7 @@ macintr_attach(parent, self, aux)
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
 
-	interrupt_reg = (void *)ca->ca_baseaddr; /* XXX */
+	interrupt_reg = (void *)mapiodev(ca->ca_baseaddr,0x100); /* XXX */
 
 	install_extint(mac_ext_intr);
 	pending_int_f = mac_intr_do_pending_int;
