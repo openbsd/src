@@ -1,5 +1,5 @@
-/*	$OpenBSD: siopvar_common.h,v 1.10 2002/03/14 01:26:55 millert Exp $ */
-/*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
+/*	$OpenBSD: siopvar_common.h,v 1.11 2002/09/16 00:53:12 krw Exp $ */
+/*	$NetBSD: siopvar_common.h,v 1.21 2002/05/04 18:43:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -38,81 +38,54 @@
 #endif
 
 /* tables used by SCRIPT */
-struct scr_table {
+typedef struct scr_table {
 	u_int32_t count;
 	u_int32_t addr;
-} __attribute__((__packed__));
+} scr_table_t __attribute__((__packed__));
 
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
 
-/* Number of tags, also number of openings if tags are used */
-#define SIOP_NTAG 16
-
-/* Number of openings if tags are not used */
-#define SIOP_OPENINGS 2
-
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
  * transfer. 
+ * If you change something here, don't forget to update offsets in {s,es}iop.ss
  */
-struct siop_xfer_common {
-	u_int8_t msg_out[16];	         /*  0 */
-	u_int8_t msg_in[16];	         /* 16 */
-	u_int32_t status;	         /* 32 */
-	u_int32_t pad1;		         /* 36 */
-	u_int32_t id;		         /* 40 */
-	u_int32_t pad2;		         /* 44 */
-	struct scr_table t_msgin;	 /* 48 */
-	struct scr_table t_extmsgin;	 /* 56 */
-	struct scr_table t_extmsgdata;   /* 64 */
-	struct scr_table t_msgout;	 /* 72 */
-	struct scr_table cmd;	         /* 80 */
-	struct scr_table t_status;	 /* 88 */
-	struct scr_table data[SIOP_NSG]; /* 96 */
+struct siop_common_xfer {
+	u_int8_t msg_out[16];	/* 0 */
+	u_int8_t msg_in[16];	/* 16 */
+	u_int32_t status;	/* 32 */
+	u_int32_t pad1;		/* 36 */
+	u_int32_t id;		/* 40 */
+	u_int32_t pad2;		/* 44 */
+	scr_table_t t_msgin;	/* 48 */
+	scr_table_t t_extmsgin;	/* 56 */
+	scr_table_t t_extmsgdata; /* 64 */
+	scr_table_t t_msgout;	/* 72 */
+	scr_table_t cmd;	/* 80 */
+	scr_table_t t_status;	/* 88 */
+	scr_table_t data[SIOP_NSG]; /* 96 */
 } __attribute__((__packed__));
 
-/* status can hold the SCSI_* status values, and 2 additional values: */
+/* status can hold the SCSI_* status values, and 2 additionnal values: */
 #define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
 #define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
 
-/* xfer description of the script: tables and reselect script */
-struct siop_xfer {
-	struct siop_xfer_common tables;
-	/* u_int32_t resel[sizeof(load_dsa) / sizeof(load_dsa[0])]; */
-	u_int32_t resel[25];
-} __attribute__((__packed__));
-
 /*
- * This describes a command handled by the SCSI controller.
- * These are chained in either a free list or a active list.
- * We have one queue per target.
+ * This decribes a command handled by the SCSI controller
  */
-struct siop_cmd {
-	TAILQ_ENTRY (siop_cmd) next;
-	struct siop_softc *siop_sc; /* points back to our adapter */
-	struct siop_target *siop_target; /* pointer to our target def */
+struct siop_common_cmd {
+	struct siop_common_softc *siop_sc; /* points back to our adapter */
+	struct siop_common_target *siop_target; /* pointer to our target def */
 	struct scsi_xfer *xs; /* xfer from the upper level */
-	struct siop_xfer *siop_xfer; /* tables dealing with this xfer */
-#define siop_tables siop_xfer->tables
-	struct siop_cbd *siop_cbdp; /* pointer to our siop_cbd */
+	struct siop_common_xfer *siop_tables; /* tables for this cmd */
+	struct scsi_sense rs_cmd; /* request sense command buffer */
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
-	struct scsi_sense rs_cmd; /* request sense command buffer */
 	int status;
 	int flags;
-	int reselslot; /* the reselect slot used */
 	int tag;	/* tag used for tagged command queuing */
-};
-
-/* command block descriptors: an array of siop_cmd + an array of siop_xfer */
-
-struct siop_cbd {
-	TAILQ_ENTRY (siop_cbd) next;
-	struct siop_cmd *cmds;
-	struct siop_xfer *xfers;
-	bus_dmamap_t xferdma; /* DMA map for this block of xfers */
 };
 
 /* status defs */
@@ -127,34 +100,13 @@ struct siop_cbd {
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */
 
-/* per-tag struct */
-struct siop_tag {
-	struct siop_cmd *active; /* active command */
-	u_int reseloff; /* XXX */
-};
-
-/* per lun struct */
-struct siop_lun {
-	struct siop_tag siop_tag[SIOP_NTAG]; /* tag array */
-	int lun_flags; /* per-lun flags, see below */
-	u_int reseloff; /* XXX */
-};
-
-#define SIOP_LUNF_FULL 0x01 /* queue full message */
-
 /* per-target struct */
-struct siop_target {
+struct siop_common_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
-	u_int32_t id;	/* for SELECT FROM
-			 * 31-24 == SCNTL3
-			 * 23-16 == SCSI id
-			 * 15- 8 == SXFER
-			 *  7- 0 == SCNTL4
-			 */
-	struct siop_lun *siop_lun[8]; /* per-lun state */
-	u_int reseloff; /* XXX */
-	struct siop_lunsw *lunsw; /* XXX */
+	u_int32_t id;	/* for SELECT FROM */
+	int period;
+	int offset;
 };
 
 /* target status */
@@ -162,67 +114,89 @@ struct siop_target {
 #define TARST_ASYNC	1 /* target needs sync/wide negotiation */
 #define TARST_WIDE_NEG	2 /* target is doing wide negotiation */
 #define TARST_SYNC_NEG	3 /* target is doing sync negotiation */
-#define TARST_PPR_NEG	4 /* target is doing PPR (Parallel Protocol Request) */
+#define TARST_PPR_NEG	4 /* target is doing sync negotiation */
 #define TARST_OK	5 /* sync/wide agreement is valid */
 
 /* target flags */
-#define TARF_SYNC	0x01 /* target can do sync xfers      */
-#define TARF_WIDE	0x02 /* target can do wide xfers      */
-#define TARF_TAG	0x04 /* target can do taggged queuing */
-#define TARF_PPR	0x08 /* target can do PPR negotiation */
+#define TARF_SYNC	0x01 /* target can do sync */
+#define TARF_WIDE	0x02 /* target can do wide */
+#define TARF_TAG	0x04 /* target can do tags */
+#define TARF_DT		0x08 /* target can do DT clocking */
+#define TARF_ISWIDE	0x10 /* target is wide */
+#define TARF_ISDT	0x20 /* target is doing DT clocking */
 
-#define TARF_ISWIDE	0x10 /* target is using wide xfers    */
-#define TARF_ISIUS	0x20 /* target is using IUS           */
-#define TARF_ISDT	0x40 /* target is using DT            */
-#define TARF_ISQAS	0x80 /* target is using QAS           */
-
-struct siop_lunsw {
-	TAILQ_ENTRY (siop_lunsw) next;
-	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
-	u_int32_t lunsw_size; /* size of this lun sw */
+/* Driver internal state */
+struct siop_common_softc {
+	struct device sc_dev;
+	struct scsi_link sc_link;	/* link to upper level */
+	int features;			/* chip's features */
+	int ram_size;
+	int maxburst;
+	int maxoff;
+	int clock_div;			/* async. clock divider (scntl3) */
+	int clock_period;		/* clock period (ns * 10) */
+	int st_minsync;			/* min and max sync period, */
+	int dt_minsync;
+	int st_maxsync;			/* as sent in or PPR messages */
+	int dt_maxsync;
+	int mode;			/* current SE/LVD/HVD mode */
+	bus_space_tag_t sc_rt;		/* bus_space registers tag */
+	bus_space_handle_t sc_rh;	/* bus_space registers handle */
+	bus_addr_t sc_raddr;		/* register adresses */
+	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
+	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
+	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
+	void (*sc_reset)(struct siop_common_softc*); /* reset callback */
+	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
+	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
+	u_int32_t *sc_script;		/* script location in memory */
+	struct siop_common_target *targets[16]; /* per-target states */
 };
 
-static __inline__ void siop_table_sync(struct siop_cmd *, int);
-static __inline__ void
-siop_table_sync(siop_cmd, ops)
-	struct siop_cmd *siop_cmd;
-	int ops;
-{
-	struct siop_softc *sc = siop_cmd->siop_sc;
-        bus_addr_t offset;
-        
-        offset = siop_cmd->dsa -
-		siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
-            sizeof(struct siop_xfer), ops);
-}
+/* features */
+#define SF_BUS_WIDE	0x00000001 /* wide bus */
+#define SF_BUS_ULTRA	0x00000002 /* Ultra (20Mhz) bus */
+#define SF_BUS_ULTRA2	0x00000004 /* Ultra2 (40Mhz) bus */
+#define SF_BUS_ULTRA3	0x00000008 /* Ultra3 (80Mhz) bus */
+#define SF_BUS_DIFF	0x00000010 /* differential bus */
 
-void	siop_common_reset(struct siop_softc *);
-void	siop_setuptables(struct siop_cmd *);
-int	siop_modechange(struct siop_softc *);
+#define SF_CHIP_LED0	0x00000100 /* led on GPIO0 */
+#define SF_CHIP_LEDC	0x00000200 /* led on GPIO0 with hardware control */
+#define SF_CHIP_DBLR	0x00000400 /* clock doubler or quadrupler */
+#define SF_CHIP_QUAD	0x00000800 /* clock quadrupler, with PPL */
+#define SF_CHIP_FIFO	0x00001000 /* large fifo */
+#define SF_CHIP_PF	0x00002000 /* Intructions prefetch */
+#define SF_CHIP_RAM	0x00004000 /* on-board RAM */
+#define SF_CHIP_LS	0x00008000 /* load/store instruction */
+#define SF_CHIP_10REGS	0x00010000 /* 10 scratch registers */
+#define SF_CHIP_DFBC	0x00020000 /* Use DFBC register */
+#define SF_CHIP_DT	0x00040000 /* DT clocking */
+#define SF_CHIP_GEBUG	0x00080000 /* SCSI gross error bug */
 
-int	siop_wdtr_neg(struct siop_cmd *);
-int	siop_sdtr_neg(struct siop_cmd *);
-int     siop_ppr_neg(struct siop_cmd *);
-void	siop_sdtr_msg(struct siop_cmd *, int, int, int);
-void	siop_wdtr_msg(struct siop_cmd *, int, int);
-void    siop_ppr_msg(struct siop_cmd *, int, int, int);
+#define SF_PCI_RL	0x01000000 /* PCI read line */
+#define SF_PCI_RM	0x02000000 /* PCI read multiple */
+#define SF_PCI_BOF	0x04000000 /* PCI burst opcode fetch */
+#define SF_PCI_CLS	0x08000000 /* PCI cache line size */
+#define SF_PCI_WRI	0x10000000 /* PCI write and invalidate */
 
-/* actions to take at return of siop_<xxx>_neg() */
+int	siop_common_attach(struct siop_common_softc *);
+void	siop_common_reset(struct siop_common_softc *);
+void	siop_setuptables(struct siop_common_cmd *);
+int	siop_modechange(struct siop_common_softc *);
+
+int	siop_wdtr_neg(struct siop_common_cmd *);
+int	siop_sdtr_neg(struct siop_common_cmd *);
+int     siop_ppr_neg(struct siop_common_cmd *);
+void	siop_sdtr_msg(struct siop_common_cmd *, int, int, int);
+void	siop_wdtr_msg(struct siop_common_cmd *, int, int);
+void    siop_ppr_msg(struct siop_common_cmd *, int, int, int);
+void	siop_update_xfer_mode(struct siop_common_softc *, int);
+/* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
-#define SIOP_NEG_MSGREJ	0x3
 
-void	siop_print_info(struct siop_softc *, int);
 void	siop_minphys(struct buf *);
-void 	siop_sdp(struct siop_cmd *);
-void	siop_clearfifo(struct siop_softc *);
-void	siop_resetbus(struct siop_softc *);
-
-int     siop_period_factor_to_scf(struct siop_softc *, int, int);
-int     siop_scf_to_period_factor(struct siop_softc *, int, int);
-
-/* XXXX should be  callbacks */
-void	siop_add_dev(struct siop_softc *, int, int);
-void	siop_del_dev(struct siop_softc *, int, int);
+void 	siop_sdp(struct siop_common_cmd *);
+void	siop_clearfifo(struct siop_common_softc *);
+void	siop_resetbus(struct siop_common_softc *);

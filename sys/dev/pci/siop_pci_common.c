@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.8 2001/10/26 00:06:35 krw Exp $ */
-/*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
+/*	$OpenBSD: siop_pci_common.c,v 1.9 2002/09/16 00:53:12 krw Exp $ */
+/*	$NetBSD: siop_pci_common.c,v 1.17 2002/05/04 18:11:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -49,7 +49,7 @@
 #include <scsi/scsiconf.h>
 
 #include <dev/ic/siopreg.h>
-#include <dev/ic/siopvar.h>
+#include <dev/ic/siopvar_common.h>
 #include <dev/pci/siop_pci_common.h>
 
 /* List (array, really :) of chips we know how to handle */
@@ -57,48 +57,48 @@ const struct siop_product_desc siop_products[] = {
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x00,
 	SF_PCI_RL | SF_CHIP_LS,
-	4, 8, 3, SF_CLOCK_2500, 0
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x10,
 	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
-	4, 8, 3, SF_CLOCK_2500, 0
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_815,
 	0x00,
 	SF_PCI_RL | SF_PCI_BOF,
-	4, 8, 3, SF_CLOCK_2500, 0
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_820,
 	0x00,
 	SF_PCI_RL | SF_CHIP_LS | SF_BUS_WIDE,
-	4, 8, 3, SF_CLOCK_2500, 0
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x00,
 	SF_PCI_RL | SF_PCI_BOF | SF_BUS_WIDE,
-	4, 8, 3, SF_CLOCK_2500, 0
+	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x10,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_WIDE,
-	7, 8, 3, SF_CLOCK_2500, 4096
+	7, 8, 3, 250, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_860,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_PF | SF_CHIP_LS |
 	SF_BUS_ULTRA,
-	4, 8, 5, SF_CLOCK_1250, 0
+	4, 8, 5, 125, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, SF_CLOCK_1250, 4096
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x02,
@@ -106,7 +106,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, SF_CLOCK_1250, 4096
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_875J,
 	0x00,
@@ -114,7 +114,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, SF_CLOCK_1250, 4096
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_885,
 	0x00,
@@ -122,7 +122,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
-	7, 16, 5, SF_CLOCK_1250, 4096
+	7, 16, 5, 125, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_895,
 	0x00,
@@ -130,31 +130,49 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, SF_CLOCK_625, 4096
-	},
-	{ PCI_PRODUCT_SYMBIOS_895A,
-	0x00,
-	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
-	SF_CHIP_LS | SF_CHIP_10REGS |
-	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, SF_CLOCK_625, 8192
+	7, 31, 7, 62, 4096
 	},
 	{ PCI_PRODUCT_SYMBIOS_896,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, SF_CLOCK_625, 8192
+	7, 31, 7, 62, 8192
+	},
+	{ PCI_PRODUCT_SYMBIOS_895A,
+	0x00,
+	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
+	SF_CHIP_LS | SF_CHIP_10REGS |
+	SF_BUS_ULTRA2 | SF_BUS_WIDE,
+	7, 31, 7, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1010,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
-	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_C10 |
-	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 62, 0, SF_CLOCK_625, 8192
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR |
+	SF_CHIP_GEBUG |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
+	7, 31, 0, 62, 8192
+	},
+	{ PCI_PRODUCT_SYMBIOS_1010,
+	0x01,
+	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_CHIP_GEBUG |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
+	7, 62, 0, 62, 8192
+	},
+	{ PCI_PRODUCT_SYMBIOS_1010_2,
+	0x00,
+	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE, 
+	7, 62, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
 	0x00,
@@ -162,7 +180,7 @@ const struct siop_product_desc siop_products[] = {
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, SF_CLOCK_625, 4096
+	7, 31, 7, 62, 4096
 	},
 	{ 0,
 	0x00,
@@ -191,9 +209,11 @@ siop_lookup_product(id, rev)
 }
 
 int
-siop_pci_attach_common(sc, pa)
-	struct siop_pci_softc *sc;
+siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
+	struct siop_pci_common_softc *pci_sc;
+	struct siop_common_softc *siop_sc;
 	struct pci_attach_args *pa;
+	int (*intr) (void*);
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;    
@@ -205,23 +225,27 @@ siop_pci_attach_common(sc, pa)
 	int memh_valid, ioh_valid;
 	bus_addr_t ioaddr, memaddr;
 
-	sc->sc_pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
-	if (sc->sc_pp == NULL) {
+	pci_sc->sc_pp =
+	    siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
+	if (pci_sc->sc_pp == NULL) {
 		printf("siop: broken match/attach!\n");
 		return 0;
 	}
 	/* copy interesting infos about the chip */
-	sc->siop.features = sc->sc_pp->features;
-	sc->siop.maxburst = sc->sc_pp->maxburst;
-	sc->siop.maxoff = sc->sc_pp->maxoff;
-	sc->siop.clock_div = sc->sc_pp->clock_div;
-	sc->siop.scf_index = sc->sc_pp->scf_index;
-	sc->siop.ram_size = sc->sc_pp->ram_size;
+	siop_sc->features = pci_sc->sc_pp->features;
+#ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
+	siop_sc->features |= SF_CHIP_LED0;
+#endif
+	siop_sc->maxburst = pci_sc->sc_pp->maxburst;
+	siop_sc->maxoff = pci_sc->sc_pp->maxoff;
+	siop_sc->clock_div = pci_sc->sc_pp->clock_div;
+	siop_sc->clock_period = pci_sc->sc_pp->clock_period;
+	siop_sc->ram_size = pci_sc->sc_pp->ram_size;
 
-	sc->siop.sc_reset = siop_pci_reset;
-	sc->sc_pc = pc;
-	sc->sc_tag = tag;
-	sc->siop.sc_dmat = pa->pa_dmat;
+	siop_sc->sc_reset = siop_pci_reset;
+	pci_sc->sc_pc = pc;
+	pci_sc->sc_tag = tag;
+	siop_sc->sc_dmat = pa->pa_dmat;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x14);
 	switch (memtype) {
@@ -238,20 +262,20 @@ siop_pci_attach_common(sc, pa)
 	    &iot, &ioh, &ioaddr, NULL, 0) == 0);
 
 	if (memh_valid) {
-		sc->siop.sc_rt = memt;
-		sc->siop.sc_rh = memh;
-		sc->siop.sc_raddr = memaddr;
+		siop_sc->sc_rt = memt;
+		siop_sc->sc_rh = memh;
+		siop_sc->sc_raddr = memaddr;
 	} else if (ioh_valid) {
-		sc->siop.sc_rt = iot;
-		sc->siop.sc_rh = ioh;
-		sc->siop.sc_raddr = ioaddr;
+		siop_sc->sc_rt = iot;
+		siop_sc->sc_rh = ioh;
+		siop_sc->sc_raddr = ioaddr;
 	} else {
 		printf("\n%s: unable to map device registers\n",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		return 0;
 	}
 
-	if (sc->siop.features & SF_CHIP_RAM) {
+	if (siop_sc->features & SF_CHIP_RAM) {
 		int bar;
 		switch (memtype) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
@@ -262,39 +286,40 @@ siop_pci_attach_common(sc, pa)
 			break;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
-                    &sc->siop.sc_ramt, &sc->siop.sc_ramh,
-		    &sc->siop.sc_scriptaddr, NULL, 0) != 0)
-			sc->siop.features &= ~SF_CHIP_RAM;
+                    &siop_sc->sc_ramt, &siop_sc->sc_ramh,
+		    &siop_sc->sc_scriptaddr, NULL, 0) == 0) {
+			printf(" using on-board RAM");
+		} else {
+			printf(" can't map on-board RAM");
+			siop_sc->features &= ~SF_CHIP_RAM;
+		}
 	}
 
-	if (pci_intr_map(pa, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("\n%s: couldn't map interrupt\n",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		return 0;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
-	    siop_intr, &sc->siop, sc->siop.sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
+	pci_sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
+	    intr, siop_sc, siop_sc->sc_dev.dv_xname);
+	if (pci_sc->sc_ih != NULL) {
+		printf(" %s\n",
+		    intrstr ? intrstr : "?");
+	} else {
 		printf("\n%s: couldn't establish interrupt",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return 0;
 	}
-
-	printf(": %s", (intrstr != NULL) ? intrstr : "irq ?");
-	if (sc->siop.features & SF_CHIP_RAM)
-		printf(", has RAM");
-	printf("\n");
-
 	return 1;
 }
 
 void
 siop_pci_reset(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	int dmode;
 
@@ -324,7 +349,7 @@ siop_pci_reset(sc)
 		ctest5 &= ~CTEST5_BBCK;
 		ctest5 |= (sc->maxburst - 1) & CTEST5_BBCK;
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5, ctest5);
-	} else if ((sc->features & SF_CHIP_C10) == 0) {
+	} else {
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST4,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST4) |
 		    CTEST4_BDIS);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci.c,v 1.3 2002/03/14 01:27:00 millert Exp $ */
-/*	$NetBSD: siop_pci.c,v 1.8 2000/05/15 07:53:17 bouyer Exp $	*/
+/*	$OpenBSD: siop_pci.c,v 1.4 2002/09/16 00:53:12 krw Exp $ */
+/*	$NetBSD: siop_pci.c,v 1.11 2002/04/23 20:41:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -43,11 +43,17 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <dev/ic/siopvar.h>
+#include <dev/ic/siopvar_common.h>
 #include <dev/pci/siop_pci_common.h>
+#include <dev/ic/siopvar.h>
 
 int     siop_pci_match(struct device *, void *, void *);
 void    siop_pci_attach(struct device *, struct device *, void *);
+
+struct siop_pci_softc {
+	struct siop_softc siop;
+	struct siop_pci_common_softc siop_pci;
+};
 
 struct cfattach siop_pci_ca = {
 	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach
@@ -62,7 +68,7 @@ siop_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 	const struct siop_product_desc *pp;
 
-	/* see if it's a known product */
+	/* look if it's a known product */
 	pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
 	if (pp)
 		return 1;
@@ -77,7 +83,8 @@ siop_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct siop_pci_softc *sc = (struct siop_pci_softc *)self;
 
-	if (siop_pci_attach_common(sc, pa) == 0)
+	if (siop_pci_attach_common(&sc->siop_pci, &sc->siop.sc_c,
+	    pa, siop_intr) == 0)
 		return;
 
 	siop_attach(&sc->siop);

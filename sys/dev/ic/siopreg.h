@@ -1,5 +1,5 @@
-/*	$OpenBSD: siopreg.h,v 1.4 2001/06/25 23:14:40 krw Exp $ */
-/*	$NetBSD: siopreg.h,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$OpenBSD: siopreg.h,v 1.5 2002/09/16 00:53:12 krw Exp $ */
+/*	$NetBSD: siopreg.h,v 1.13 2002/08/29 16:43:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -74,49 +74,35 @@
 #define SCNTL3_CCF_SHIFT 0
 #define SCNTL3_CCF_MASK	0x07
 
-#define SIOP_CLOCKS_SUPPORTED 3 /* 3 supported clocks: 25, 12.5, 6.25 ns */
-
-struct period_factor {
-	int factor; /* transfer period factor from sdtr/ppr */
-	char *rate; /* string describing transfer rate      */
-	struct {
-		int st_scf;
-		int dt_scf;
-	} scf[SIOP_CLOCKS_SUPPORTED];	
-		/* scf value to use in SCNTL3[6:4]
-		 *   0 == SCLK/3
-		 *   1 == SCLK/1
-		 *   2 == SCLK/1.5
-		 *   3 == SCLK/2
-		 *   4 == SCLK/3
-		 *   5 == SCLK/4
-		 *   6 == SCLK/6
-		 *   7 == SCLK/8
-		 *
-		 * One entry for each different clock
-		 * supported, showing appropriate scf
-		 * for the period_factor requested. A
-		 * value of 0 indicates the rate is
-		 * not supported.
-		 *
-		 * scf[0] == scf for a 25ns cycle
-		 * scf[1] == scf for a 12.5 ns cycle
-		 * scf[2] == scf for a 6.25 ns cycle
-		 *
-		 * min sync = first non zero in column
-		 * max sync = last  non zero in column	
-		 */
+/* periods for various SCF values, assume transfer period of 4 */
+struct scf_period {
+	int clock; /* clock period (ns * 10) */
+	int period; /* scsi period, as set in the SDTR message */
+	int scf; /* scf value to use */
 };
 
-static const struct period_factor period_factor[] __attribute__((__unused__)) = {
-	{0x09, "80",   {{0,0},{0,0},{0,1}}},
-	{0x0a, "40",   {{0,0},{0,0},{1,3}}},
-	{0x0c, "20",   {{0,0},{1,0},{3,5}}},
-	{0x12, "13.3", {{0,0},{2,0},{4,6}}},
-	{0x19, "10",   {{1,0},{3,0},{5,7}}},
-	{0x25, "6.67", {{2,0},{4,0},{6,0}}},
-	{0x32, "5",    {{3,0},{5,0},{7,0}}},
-	{0x4b, "3.33", {{4,0},{6,0},{0,0}}},
+static const struct scf_period scf_period[] __attribute__((__unused__)) = {
+	{250, 25, 1}, /* 10.0 Mhz */
+	{250, 37, 2}, /* 6.67 Mhz */
+	{250, 50, 3},  /* 5.00 Mhz */
+	{250, 75, 4},  /* 3.33 Mhz */
+	{125, 12, 1},  /* 20.0 Mhz */
+	{125, 18, 2},  /* 13.3 Mhz */
+	{125, 25, 3},  /* 10.0 Mhz */
+	{125, 37, 4},  /* 6.67 Mhz */
+	{125, 50, 5},  /* 5.0 Mhz */
+	{ 62, 10, 1},  /* 40.0 Mhz */
+	{ 62, 12, 3},  /* 20.0 Mhz */
+	{ 62, 18, 4},  /* 13.3 Mhz */
+	{ 62, 25, 5},  /* 10.0 Mhz */
+};
+
+static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
+	{ 62,  9, 1},  /* 80.0 Mhz */
+	{ 62, 10, 3},  /* 40.0 Mhz */
+	{ 62, 12, 5},  /* 20.0 Mhz */
+	{ 62, 18, 6},  /* 13.3 Mhz */
+	{ 62, 25, 7},  /* 10.0 Mhz */
 };
 
 #define SIOP_SCID	0x04 /* SCSI chip ID R/W */
@@ -129,9 +115,9 @@ static const struct period_factor period_factor[] __attribute__((__unused__)) = 
 #define SXFER_TP_SHIFT	 5
 #define SXFER_TP_MASK	0xe0
 #define SXFER_MO_SHIFT  0
-#define SXFER_MO_MASK	0x1f
+#define SXFER_MO_MASK  0x3f
 
-#define SIOP_SDID	0x06 /* SCSI destination ID, R/W */
+#define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
 #define SDID_ENCID_SHIFT 0
 #define SDID_ENCID_MASK	0x07
 
@@ -354,6 +340,8 @@ static const struct period_factor period_factor[] __attribute__((__unused__)) = 
 #define SIOP_STEST0	0x4C /* SCSI test 0, RO */
 
 #define SIOP_STEST1	0x4D /* SCSI test 1, RO, RW on 875 */
+#define STEST1_DOGE	0x20	/* 1010 only */
+#define STEST1_DIGE	0x10	/* 1010 only */
 #define STEST1_DBLEN	0x08	/* 875-only */
 #define STEST1_DBLSEL	0x04	/* 875-only */
 
@@ -397,8 +385,150 @@ static const struct period_factor period_factor[] __attribute__((__unused__)) = 
 
 #define SIOP_SCRATCHJ	0x7c /* Scratch register J, R/W, 875-only */
 
-#define SIOP_SCNTL4	0xbc
-#define SCNTL4_ULTRA3	0x80
-#define SCNTL4_AIP	0x40
+#define SIOP_SCNTL4	0xBC /* SCSI control 4, R/W, 1010-only */
+#define SCNTL4_XCLKS_ST	0x01
+#define SCNTL4_XCLKS_DT	0x02
+#define SCNTL4_XCLKH_ST	0x04
+#define SCNTL4_XCLKH_DT	0x08
+#define SCNTL4_AIPEN	0x40
+#define SCNTL4_U3EN	0x80
 
-#define SIOP_DFBC	0xf0 /* DMA FIFO byte count, RO, C10-only */
+#define SIOP_DFBC	0xf0 /* DMA fifo byte count, RO */
+
+#define SIOP_AIPCNTL0	0xbe	/* AIP Control 0, 1010-only */
+#define AIPCNTL0_ERRLIVE 0x04	/* AIP error status, live */
+#define AIPCNTL0_ERR	0x02	/* AIP error status, latched */
+#define AIPCNTL0_PARITYERRs 0x01 /* Parity error */
+
+#define SIOP_AIPCNTL1	0xbf	/* AIP Control 1, 1010-only */
+#define AIPCNTL1_DIS	0x08	/* disable AIP generation, 1010-66 only */
+#define AIPCNTL1_RSETERR 0x04	/* reset AIP error 1010-66 only */
+#define AIPCNTL1_FB	0x02	/* force bad AIP value 1010-66 only */
+#define AIPCNTL1_RSET	0x01	/* reset AIP sequence value 1010-66 only */
+
+/*
+ * Non-volatile configuration settings stored in the EEPROM.  There
+ * are at least two known formats: Symbios Logic format and Tekram format.
+ */
+
+#define	SIOP_NVRAM_SYM_SIZE		368
+#define	SIOP_NVRAM_SYM_ADDRESS		0x100
+
+struct nvram_symbios {
+	/* Header (6 bytes) */
+	u_int16_t	type;		/* 0x0000 */
+	u_int16_t	byte_count;	/* excluding header/trailer */
+	u_int16_t	checksum;
+
+	/* Adapter configuration (20 bytes) */
+	u_int8_t	v_major;
+	u_int8_t	v_minor;
+	u_int32_t	boot_crc;
+	u_int16_t	flags;
+#define	NVRAM_SYM_F_SCAM_ENABLE		0x0001
+#define	NVRAM_SYM_F_PARITY_ENABLE	0x0002
+#define	NVRAM_SYM_F_VERBOSE_MESSAGES	0x0004
+#define	NVRAM_SYM_F_CHS_MAPPING		0x0008
+	u_int16_t	flags1;
+#define	NVRAM_SYM_F1_SCAN_HI_LO		0x0001
+	u_int16_t	term_state;
+#define	NVRAM_SYM_TERM_CANT_PROGRAM	0
+#define	NVRAM_SYM_TERM_ENABLED		1
+#define	NVRAM_SYM_TERM_DISABLED		2
+	u_int16_t	rmvbl_flags;
+#define	NVRAM_SYM_RMVBL_NO_SUPPORT	0
+#define	NVRAM_SYM_RMVBL_BOOT_DEVICE	1
+#define	NVRAM_SYM_RMVBL_MEDIA_INSTALLED	2
+	u_int8_t	host_id;
+	u_int8_t	num_hba;
+	u_int8_t	num_devices;
+	u_int8_t	max_scam_devices;
+	u_int8_t	num_valid_scam_devices;
+	u_int8_t	rsvd;
+
+	/* Boot order (14 bytes x 4) */
+	struct nvram_symbios_host {
+		u_int16_t	type;		/* 4 - 8xx */
+		u_int16_t	device_id;	/* PCI device ID */
+		u_int16_t	vendor_id;	/* PCI vendor ID */
+		u_int8_t	bus_nr;		/* PCI bus number */
+		u_int8_t	device_fn;	/* PCI device/func # << 3 */
+		u_int16_t	word8;
+		u_int16_t	flags;
+#define	NVRAM_SYM_HOST_F_SCAN_AT_BOOT	0x0001
+		u_int16_t	io_port;	/* PCI I/O address */
+	} __attribute__((__packed__)) host[4];
+
+	/* Targets (8 bytes x 16) */
+	struct nvram_symbios_target {
+		u_int8_t	flags;
+#define	NVRAM_SYM_TARG_F_DISCONNECT_EN	0x0001
+#define	NVRAM_SYM_TARG_F_SCAN_AT_BOOT	0x0002
+#define	NVRAM_SYM_TARG_F_SCAN_LUNS	0x0004
+#define	NVRAM_SYM_TARG_F_TQ_EN		0x0008
+		u_int8_t	rsvd;
+		u_int8_t	bus_width;
+		u_int8_t	sync_offset;	/* 8, 16, etc. */
+		u_int16_t	sync_period;	/* 4 * factor */
+		u_int16_t	timeout;
+	} __attribute__((__packed__)) target[16];
+
+	/* SCAM table (8 bytes x 4) */
+	struct nvram_symbios_scam {
+		u_int16_t	id;
+		u_int16_t	method;
+#define	NVRAM_SYM_SCAM_DEFAULT_METHOD	0
+#define	NVRAM_SYM_SCAM_DONT_ASSIGN	1
+#define	NVRAM_SYM_SCAM_SET_SPECIFIC_ID	2
+#define	NVRAM_SYM_SCAM_USE_ORDER_GIVEN	3
+		u_int16_t	status;
+#define	NVRAM_SYM_SCAM_UNKNOWN		0
+#define	NVRAM_SYM_SCAM_DEVICE_NOT_FOUND	1
+#define	NVRAM_SYM_SCAM_ID_NOT_SET	2
+#define	NVRAM_SYM_SCAM_ID_VALID		3
+		u_int8_t		target_id;
+		u_int8_t		rsvd;
+	} __attribute__((__packed__)) scam[4];
+
+	u_int8_t	spare_devices[15 * 8];
+	u_int8_t	trailer[6];	/* 0xfe 0xfe 0x00 0x00 0x00 0x00 */
+} __attribute__((__packed__));
+
+#define	SIOP_NVRAM_TEK_SIZE		64
+#define	SIOP_NVRAM_TEK_93c46_ADDRESS	0
+#define	SIOP_NVRAM_TEK_24c16_ADDRESS	0x40
+
+static const u_int8_t tekram_sync_table[16] __attribute__((__unused__)) = {
+	25, 31, 37,  43,
+	50, 62, 75, 125,
+	12, 15, 18,  21,
+	 6,  7,  9,  10,
+};
+
+struct nvram_tekram {
+	struct nvram_tekram_target {
+		u_int8_t	flags;
+#define	NVRAM_TEK_TARG_F_PARITY_CHECK	0x01
+#define	NVRAM_TEK_TARG_F_SYNC_NEGO	0x02
+#define	NVRAM_TEK_TARG_F_DISCONNECT_EN	0x04
+#define	NVRAM_TEK_TARG_F_START_CMD	0x08
+#define	NVRAM_TEK_TARG_F_TQ_EN		0x10
+#define	NVRAM_TEK_TARG_F_WIDE_NEGO	0x20
+		u_int8_t	sync_index;
+		u_int16_t	word2;
+	} __attribute__((__packed__)) target[16];
+	u_int8_t	host_id;
+	u_int8_t	flags;
+#define	NVRAM_TEK_F_MORE_THAN_2_DRIVES	0x01
+#define	NVRAM_TEK_F_DRIVES_SUP_1G	0x02
+#define	NVRAM_TEK_F_RESET_ON_POWER_ON	0x04
+#define	NVRAM_TEK_F_ACTIVE_NEGATION	0x08
+#define	NVRAM_TEK_F_IMMEDIATE_SEEK	0x10
+#define	NVRAM_TEK_F_SCAN_LUNS		0x20
+#define	NVRAM_TEK_F_REMOVABLE_FLAGS	0xc0	/* 0 dis, 1 boot, 2 all */
+	u_int8_t	boot_delay_index;
+	u_int8_t	max_tags_index;
+	u_int16_t	flags1;
+#define	NVRAM_TEK_F_F2_F6_ENABLED	0x0001
+	u_int16_t	spare[29];
+} __attribute__((__packed__));

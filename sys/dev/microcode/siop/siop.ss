@@ -1,5 +1,5 @@
-;	$OpenBSD: siop.ss,v 1.3 2001/04/15 06:01:32 krw Exp $
-;	$NetBSD: siop.ss,v 1.12 2000/10/23 14:53:53 bouyer Exp $
+;	$OpenBSD: siop.ss,v 1.4 2002/09/16 00:53:12 krw Exp $
+;	$NetBSD: siop.ss,v 1.17 2002/07/26 14:11:34 wiz Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
 ;     documentation and/or other materials provided with the distribution.
 ;  3. All advertising materials mentioning features or use of this software
 ;     must display the following acknowledgement:
-; 	This product includes software developed by Manuel Bouyer
+; 	This product includes software developed by Manuel Bouyer.
 ;  4. The name of the author may not be used to endorse or promote products
 ;     derived from this software without specific prior written permission.
 ; 
@@ -31,7 +31,7 @@
 
 ARCH 720
 
-; offsets in sym_xfer
+; offsets in siop_common_xfer
 ABSOLUTE t_id = 40;
 ABSOLUTE t_msg_in = 48;
 ABSOLUTE t_ext_msg_in = 56;
@@ -82,6 +82,9 @@ ENTRY get_extmsgdata;
 ENTRY resel_targ0;
 ENTRY msgin_space;
 ENTRY lunsw_return;
+ENTRY led_on1;
+ENTRY led_on2;
+ENTRY led_off;
 EXTERN abs_script_sched_slot0;
 EXTERN abs_targ0;
 EXTERN abs_msgin;
@@ -135,6 +138,10 @@ reselect_fail:
 	; check that host asserted SIGP, this'll clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
 	INT int_resfail,  IF 0x00;
+; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_on1:
+	NOP;
 script_sched:
 	; Clear DSA and init status
 	MOVE 0xff to DSA0;
@@ -198,7 +205,15 @@ reselect:
 	MOVE 0xff to DSA3;
 	MOVE 0x00 to SCRATCHA2; no tag
 	MOVE 0x20 to SCRATCHA3; simple tag msg, ignored by reselected:
+; a NOP by default; patched with MOVE GPREG | 0x01 to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_off:
+	NOP;
 	WAIT RESELECT REL(reselect_fail)
+; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_on2:
+	NOP;
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
 ; find the right param for this target
@@ -354,7 +369,6 @@ PROC lun_switch:
 restore_scntl3:
 	MOVE 0xff TO SCNTL3;
 	MOVE 0xff TO SXFER;
-	MOVE 0xff TO SFBR;
 	JUMP abs_lunsw_return;
 lun_switch_entry:
 	CALL REL(restore_scntl3);
@@ -408,3 +422,9 @@ ldsa_select:
 	JUMP ldsa_abs_selected;
 ldsa_data:
 	NOP; contains data used by the MOVE MEMORY
+
+PROC siop_led_on:
+	MOVE GPREG & 0xfe TO GPREG;
+
+PROC siop_led_off:
+	MOVE GPREG | 0x01 TO GPREG;

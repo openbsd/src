@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_pci_common.h,v 1.4 2002/03/14 01:27:00 millert Exp $ */
-/*	$NetBSD: siop_pci_common.h,v 1.2 2000/10/23 14:57:23 bouyer Exp $	*/
+/*	$OpenBSD: siop_pci_common.h,v 1.5 2002/09/16 00:53:12 krw Exp $ */
+/*	$NetBSD: siop_pci_common.h,v 1.4 2002/04/23 20:41:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -40,24 +40,21 @@ struct siop_product_desc {
 	u_int8_t maxburst;
 	u_int8_t maxoff;  /* maximum supported offset */
 	u_int8_t clock_div; /* clock divider to use for async. logic */
-	u_int8_t scf_index; /* Index into a period_factor_to_scf.scf */
-#define     SF_CLOCK_2500	0
-#define	    SF_CLOCK_1250	1
-#define	    SF_CLOCK_625	2
+	u_int8_t clock_period; /* clock period (ns * 10) */
 	int 	ram_size; /* size of RAM, if appropriate */
 };
 
 const struct siop_product_desc * siop_lookup_product(u_int32_t, int);
 
 /* Driver internal state */
-struct siop_pci_softc {
-	struct siop_softc siop;
+struct siop_pci_common_softc {
 	pci_chipset_tag_t	sc_pc;	/* PCI registers info */
 	pcitag_t		sc_tag;
 	void			*sc_ih;	/* PCI interrupt handle */
 	const struct siop_product_desc *sc_pp; /* Adapter description */
 };
 
-int siop_pci_attach_common(struct siop_pci_softc *,
-	struct pci_attach_args *);
-void siop_pci_reset(struct siop_softc *);
+int siop_pci_attach_common (struct siop_pci_common_softc *,
+	struct siop_common_softc *, struct pci_attach_args *,
+	int (*) (void *));
+void siop_pci_reset(struct siop_common_softc *);
