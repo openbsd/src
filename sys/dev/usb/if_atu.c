@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.49 2005/01/23 03:37:42 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -105,6 +105,8 @@ USB_DECLARE_DRIVER_CLASS(atu, DV_IFNET);
  * Various supported device vendors/products/radio type.
  */
 struct atu_type atu_devs[] = {
+	{ USB_VENDOR_ASKEY,	USB_PRODUCT_ASKEY_WLL013,
+	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_BW002,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503A,
