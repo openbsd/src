@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.17 2000/01/07 20:14:51 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.18 2000/01/15 19:38:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -394,6 +394,13 @@ caddr_t data;
     struct proc *prc = curproc;             /* XXX */
     struct tdb *tdb;
     int s, error;
+
+    /*
+     * enc0 does not allow binding of SAs, as it's used for all non-bound
+     * SAs.
+     */
+    if (ifp->if_softc == &encif[0])
+	return EOPNOTSUPP;
 
     switch (cmd) 
     {
