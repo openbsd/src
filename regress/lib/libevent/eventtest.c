@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.2 2003/07/31 21:48:04 deraadt Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.3 2004/01/05 19:23:04 markus Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.2 2003/06/13 04:09:18 itojun Exp $	*/
 
 /*
@@ -173,9 +173,37 @@ signal_cb(int fd, short event, void *arg)
 }
 
 struct both {
-	struct event ev;
+	struct event ev, ev1;
 	int nread;
 };
+
+static void
+eof_read_cb(int fd, short event, void *arg)
+{
+	struct both *both = arg;
+	char buf[256];
+	int ret;
+
+	ret = read(fd, buf, sizeof(buf));
+	test_ok = both->nread == 0 && ret == 0;
+
+	if (both->nread > 0)
+		event_add(&both->ev, NULL);
+	else
+		event_del(&both->ev1);
+
+	both->nread -= ret;
+}
+
+static void
+eof_timeout_cb(int fd, short event, void *arg)
+{
+	struct both *both = arg;
+
+	event_del(&both->ev);
+
+	test_ok = 0;
+}
 
 static void
 combined_read_cb(int fd, short event, void *arg)
@@ -258,7 +286,8 @@ main(int argc, char **argv)
 	struct timeval tv;
 	struct itimerval itv;
 	struct both r1, r2, w1, w2;
-	int i;
+	int i, fd, n, tmp;
+	char template[] = "/tmp/eventXXXX";
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -379,6 +408,37 @@ main(int argc, char **argv)
 
 	cleanup_test();
 
+	setup_test("EOF Behavior: ");
+
+	if ((fd = mkstemp(template)) == -1)
+		return (1);
+
+	unlink(template);
+
+	n = strlen(TEST1) + 1;
+	r1.nread = n;
+
+	while (n > 0) {
+		if ((tmp = write(fd, TEST1, n)) == -1)
+			return (1);
+
+		n -= tmp;
+	}
+
+	if (lseek(fd, 0, SEEK_SET) == -1)
+		return (1);
+
+	event_set(&r1.ev, fd, EV_READ, eof_read_cb, &r1);
+	event_add(&r1.ev, NULL);
+
+	tv.tv_usec = 0;
+	tv.tv_sec = SECONDS;
+	evtimer_set(&r1.ev1, eof_timeout_cb, &r1);
+	evtimer_add(&r1.ev1, &tv);
+
+	event_dispatch();
+
+	cleanup_test();
+
 	return (0);
 }
-
