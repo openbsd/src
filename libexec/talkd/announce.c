@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.14 2002/07/07 08:54:50 jufi Exp $	*/
+/*	$OpenBSD: announce.c,v 1.15 2002/09/24 17:36:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.14 2002/07/07 08:54:50 jufi Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.15 2002/09/24 17:36:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ print_mesg(tf, request, remote_machine)
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
 	char big_buf[(N_LINES + 1) * N_CHARS];
-	char *bptr, *lptr, *vis_user;
+	char *bptr, *lptr, vis_user[sizeof(request->l_name) * 4];
 	int i, j, max_size;
 
 	i = 0;
@@ -126,7 +126,6 @@ print_mesg(tf, request, remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	vis_user = (char *) malloc(strlen(request->l_name) * 4 + 1);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)snprintf(line_buf[i], N_CHARS,
 	    "talk: connection requested by %s@%s.",
