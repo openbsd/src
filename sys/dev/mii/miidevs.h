@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.44 2004/06/05 05:42:45 pvalchev Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.45 2004/08/06 09:57:57 pefo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.41 2004/06/05 05:42:08 pvalchev Exp 
+ *	OpenBSD: miidevs,v 1.42 2004/08/06 09:57:16 pefo Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -110,6 +110,8 @@
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
 #define	MII_MODEL_AMD_79C873phy	0x0036
 #define	MII_STR_AMD_79C873phy	"Am79C873 internal PHY"
+#define	MII_MODEL_AMD_79C875phy	0x0014
+#define	MII_STR_AMD_79C875phy	"Am79C875 quad PHY"
 
 /* Altima Communications PHYs */
 #define	MII_MODEL_xxALTIMA_AC101	0x0021
