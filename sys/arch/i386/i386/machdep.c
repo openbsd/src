@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.245 2003/10/14 19:38:21 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.246 2003/10/15 22:33:34 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1385,9 +1385,9 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 {
 	unsigned int creg0, creg4;
 	int s;
-        
+
 	s = splhigh();
-        
+
 	/* XXX - should not be needed, but we might need FXSR & FPU for XUnit */
 	creg0 = rcr0();
 	lcr0(creg0 & ~(CR0_EM|CR0_TS));
@@ -1577,7 +1577,7 @@ amd_family5_setup(cpu_device, model, step)
 	int model, step;
 {
 	switch (model) {
-	case 0:         /* AMD-K5 Model 0 */
+	case 0:		/* AMD-K5 Model 0 */
 		/*
 		 * According to the AMD Processor Recognition App Note,
 		 * the AMD-K5 Model 0 uses the wrong bit to indicate
