@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.3 2005/02/01 21:25:18 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.4 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -147,7 +147,7 @@ struct area {
 	LIST_HEAD(, rde_nbr)		 nbr_list;
 /*	list				 addr_range_list; */
 	u_int32_t			 stub_default_cost;
-	
+
 	u_int32_t	dead_interval;
 	u_int16_t	transfer_delay;
 	u_int16_t	hello_interval;

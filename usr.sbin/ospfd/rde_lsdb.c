@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.1 2005/01/28 14:05:40 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.2 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -335,7 +335,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 
 	/* timeout handling either MAX_AGE or LS_REFRESH_TIME */
 	timerclear(&tv);
-	
+
 	if (nbr->self)
 		tv.tv_sec = LS_REFRESH_TIME;
 	else
@@ -453,7 +453,7 @@ lsa_timeout(int fd, short event, void *bula)
 	struct vertex	*v = bula;
 
 	lsa_age(v);
-	
+
 	log_debug("lsa_timeout: REFLOOD");
 
 	if (v->nbr->self)

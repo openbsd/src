@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -400,7 +400,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			    "neighbor %s len %d", inet_ntoa(nbr->id),
 			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + 
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct lsa_hdr))
 				fatalx("invalid size of OE request");
 			memcpy(&lsa_hdr, imsg.data, sizeof(lsa_hdr));

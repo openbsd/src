@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: lsack.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -175,7 +175,7 @@ ls_ack_list_add(struct iface *iface, struct lsa_hdr *lsa)
 	iface->ls_ack_cnt++;
 
 	/* reschedule now if we have enough for a full packet */
-	if (iface->ls_ack_cnt  > 
+	if (iface->ls_ack_cnt >
 	    ((iface->mtu - PACKET_HDR) / sizeof(struct lsa_hdr))) {
 		start_ls_ack_tx_timer_now(iface);
 	}

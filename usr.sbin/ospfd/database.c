@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: database.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -269,7 +269,7 @@ recv_db_description(struct nbr *nbr, char *buf, u_int16_t len)
 
 			/* event negotiation done */
 			nbr_fsm(nbr, NBR_EVT_NEG_DONE);
-		
+
 		} else {
 			/* ignore packet */
 			log_debug("recv_db_description: packet ignored in "

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -175,7 +175,7 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	if ((age += iface->transfer_delay) >= MAX_AGE) age = MAX_AGE;
 	age = ntohs(age);
 	memcpy(ptr, &age, sizeof(age));
-	
+
 	ptr += len;
 
 	/* update authentication and calculate checksum */
@@ -388,7 +388,7 @@ struct lsa_ref *
 lsa_cache_get(struct lsa_hdr *lsa_hdr)
 {
 	struct lsa_ref		*ref;
-	
+
 	ref = lsa_cache_look(lsa_hdr);
 	if (ref)
 		ref->refcnt++;
@@ -401,7 +401,7 @@ lsa_cache_put(struct lsa_ref *ref, struct nbr *nbr)
 {
 	if (--ref->refcnt > 0)
 		return;
-	
+
 	if (ntohs(ref->hdr.age) >= MAX_AGE)
 		ospfe_imsg_compose_rde(IMSG_LS_MAXAGE, nbr->peerid, 0,
 		    ref->data, sizeof(struct lsa_hdr));
@@ -416,7 +416,7 @@ lsa_cache_look(struct lsa_hdr *lsa_hdr)
 {
 	struct lsa_cache_head	*head;
 	struct lsa_ref		*ref;
-	
+
 	head = lsa_cache_hash(lsa_hdr);
 	LIST_FOREACH(ref, head, entry) {
 		if (ref->hdr.type == lsa_hdr->type &&

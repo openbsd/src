@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.3 2005/02/01 21:15:40 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.4 2005/02/02 19:15:07 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -622,7 +622,7 @@ nbr_to_ctl(struct nbr *nbr)
 	static struct ctl_nbr	 nctl;
 	struct timeval		 tv, now, res;
 	struct lsa_entry	*le;
-	
+
 	memcpy(nctl.name, nbr->iface->name, sizeof(nctl.name));
 	memcpy(&nctl.id, &nbr->id, sizeof(nctl.id));
 	memcpy(&nctl.addr, &nbr->iface->addr, sizeof(nctl.addr));
@@ -653,10 +653,10 @@ nbr_to_ctl(struct nbr *nbr)
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {
 		timersub(&tv, &now, &res);
- 		nctl.dead_timer = res.tv_sec;
+		nctl.dead_timer = res.tv_sec;
 	} else
 		nctl.dead_timer = 0;
-	
+
 	return (&nctl);
 }
 
