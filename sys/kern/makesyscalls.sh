@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.7 2001/01/29 07:20:24 jasoni Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.8 2001/08/26 04:10:56 deraadt Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -175,8 +175,22 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
-	printf "#define\tsyscallarg(x)\tunion { x datum; register_t pad; }\n" \
+	printf "#ifdef\tsyscallarg\n" > sysarghdr
+	printf "#undef\tsyscallarg\n" > sysarghdr
+	printf "#endif\n\n" > sysarghdr
+	printf "#define\tsyscallarg(x)\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\tunion {\t\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\tregister_t pad;\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\tstruct { x datum; } le;\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\tstruct {\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\tint8_t pad[ (sizeof (register_t) < sizeof (x))\t\\\n" \
 		> sysarghdr
+	printf "\t\t\t\t? 0\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t\t: sizeof (register_t) - sizeof (x)];\t\\\n" \
+		> sysarghdr
+	printf "\t\t\tx datum;\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t\t} be;\t\t\t\t\t\t\t\\\n" > sysarghdr
+	printf "\t}\n" > sysarghdr
 	next
 }
 NF == 0 || $1 ~ /^;/ {
