@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.55 2002/07/24 22:10:23 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.56 2002/08/08 23:07:12 aaron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.55 2002/07/24 22:10:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.56 2002/08/08 23:07:12 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,7 @@ main(int argc, char *argv[])
 		    bind(funix[i], (struct sockaddr *)&sunx,
 		    SUN_LEN(&sunx)) < 0 ||
 		    chmod(funixn[i], 0666) < 0) {
-			(void)snprintf(line, sizeof line, "cannot create %s",
+			(void)snprintf(line, linesize, "cannot create %s",
 			    funixn[i]);
 			logerror(line);
 			dprintf("cannot create %s (%d)\n", funixn[i], errno);
