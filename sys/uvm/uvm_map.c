@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.57 2003/04/14 04:53:51 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.58 2003/04/17 03:50:54 drahn Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1078,6 +1078,15 @@ uvm_map_spacefits(vm_map_t map, vaddr_t *phint, vsize_t length,
 vaddr_t
 uvm_map_hint(struct proc *p, vm_prot_t prot)
 {
+#ifdef __i386__
+	/*
+	 * If executable skip first two pages, otherwise start
+	 * after data + heap region.
+	 */
+	if ((prot & VM_PROT_EXECUTE) &&
+	    ((vaddr_t)p->p_vmspace->vm_daddr >= 0x40000000))
+		return (round_page(PAGE_SIZE*2));
+#endif
 	return (round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ));
 }
 

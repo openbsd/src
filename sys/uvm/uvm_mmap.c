@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.40 2003/04/14 04:53:51 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.41 2003/04/17 03:50:54 drahn Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -166,10 +166,23 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 	if (vaddr == 0)
 		vaddr = uvm_map_hint(p, prot);
 
+	/* prevent a user requested address from falling in heap space */
+	if ((vaddr + SCARG(uap, size) > (vaddr_t)p->p_vmspace->vm_daddr) &&
+	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ))
+		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+
 	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, SCARG(uap, size),
 	    &vaddr, uobj, uoff, 0, flags) == NULL) {
 		error = ENOMEM;
 	} else {
+		/*
+		 * XXX?
+		 * is it possible for uvm_map_findspace() to return
+		 * an address in vm_addr - vm_addr+MAXDSIZ ?
+		 * if all of the memory below 1G (i386) is used, 
+		 * this could occur. In this case, could this loop
+		 * changing the hint to above daddr in that case?
+		 */
 		error = copyout(&vaddr, SCARG(uap, addr), sizeof(void *));
 	}
 
