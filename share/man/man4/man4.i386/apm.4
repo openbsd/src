@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.16 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: apm.4,v 1.17 2001/08/20 05:57:55 mpech Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -244,9 +244,9 @@ laptops.   If your system does not power down when given the command
 try setting
 .Dv machdep.apmhalt
 to 1 using
-.Xr sysctl(8) .
+.Xr sysctl 8 .
 The variable can be set at boot time in
-.Xr sysctl.conf(5) .
+.Xr sysctl.conf 5 .
 .Sh FILES
 .Bl -tag -width /dev/apmctl -compat
 .It Pa /dev/apm

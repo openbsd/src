@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.12 2001/08/03 15:21:16 mpech Exp $
+.\" $OpenBSD: login.conf.5,v 1.13 2001/08/20 05:57:55 mpech Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -313,7 +313,7 @@ The resource limit entries
 and
 .Va openfiles )
 actually specify both the maximum and current limits (see
-.Xr getrlimit 2 ).
+.Xr getrlimit 2 ) .
 The current limit is the one normally used, although the user is permitted
 to increase the current limit to the maximum limit.
 The maximum and current limits may be specified individually by appending a
@@ -557,12 +557,12 @@ utility is special in that it may select an authentication type based
 on information found in the
 .Pa /etc/ttys
 file for the appropriate tty (see
-.Xr ttys 5 ).
+.Xr ttys 5 ) .
 .Pp
 The class to be used is normally determined by the
 .Li class
 field in the password file (see
-.Xr passwd 5 ).
+.Xr passwd 5 ) .
 .Pp
 The class is used to look up a corresponding entry in the
 .Pa login.conf

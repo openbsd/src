@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.14 2001/06/22 12:15:47 mpech Exp $
+.\"	$OpenBSD: termios.4,v 1.15 2001/08/20 05:57:55 mpech Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -257,9 +257,9 @@ canonical or noncanonical mode.
 Another dependency is whether the
 .Dv O_NONBLOCK
 flag is set by
-.Xr open()
+.Fn open
 or
-.Xr fcntl() .
+.Fn fcntl .
 If the
 .Dv O_NONBLOCK
 flag is clear, then the read request is
