@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.20 2004/02/05 10:23:57 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.21 2004/02/19 22:33:29 grange Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -147,6 +147,7 @@
 #define	P5MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_APICBASE		0x01b
 #define MSR_EBL_CR_POWERON	0x02a
+#define MSR_EBC_FREQUENCY_ID	0x02c	/* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define	MSR_BBL_CR_D0		0x088	/* PII+ only */

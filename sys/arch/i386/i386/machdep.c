@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.279 2004/02/19 21:40:24 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.280 2004/02/19 22:33:29 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -251,6 +251,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int kbd_reset;
+int p4_model;
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -325,12 +326,16 @@ void	cyrix3_cpu_setup(const char *, int, int);
 void	cyrix6x86_cpu_setup(const char *, int, int);
 void	natsem6x86_cpu_setup(const char *, int, int);
 void	intel586_cpu_setup(const char *, int, int);
+void	intel686_common_cpu_setup(const char *, int, int);
 void	intel686_cpu_setup(const char *, int, int);
+void	intel686_p4_cpu_setup(const char *, int, int);
 void	tm86_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
 char *	tm86_cpu_name(int);
 void	viac3_rnd(void *);
+int	p4_cpuspeed(int *);
+int	pentium_cpuspeed(int *);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -765,7 +770,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0,
 				"Pentium 4"	/* Default */
 			},
-			intel686_cpu_setup
+			intel686_p4_cpu_setup
 		} }
 	},
 	{
@@ -1658,44 +1663,21 @@ amd_family6_setup(cpu_device, model, step)
 }
 
 void
-intel686_cpu_setup(cpu_device, model, step)
-	const char *cpu_device;
-	int model, step;
+intel686_common_cpu_setup(const char *cpu_device, int model, int step)
 {
-	u_quad_t msr119;
-
-	/*
-	 * Original PPro returns SYSCALL in CPUID but is non-functional.
-	 * From Intel Application Note #485.
-	 */
-	if ((model == 1) && (step < 3))
-		cpu_feature &= ~CPUID_SEP;
-
 	/*
 	 * Make sure SYSENTER is disabled.
 	 */
 	if (cpu_feature & CPUID_SEP)
 		wrmsr(MSR_SYSENTER_CS, 0);
 
-	/*
-	 * Disable the Pentium3 serial number.
-	 */
-	if ((model == 7) && (cpu_feature & CPUID_SER)) {
-		msr119 = rdmsr(MSR_BBL_CR_CTL);
-		msr119 |= 0x0000000000200000LL;
-		wrmsr(MSR_BBL_CR_CTL, msr119);
-
-		printf("%s: disabling processor serial number\n", cpu_device);
-		cpu_feature &= ~CPUID_SER;
-		cpuid_level = 2;
-	}
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
 	if (cpu_ecxfeature & CPUIDECX_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(cpu_device);
 		else
-			 printf("%s: Enhanced SpeedStep disabled by BIOS\n",
-			     cpu_device);
+			printf("%s: Enhanced SpeedStep disabled by BIOS\n",
+			    cpu_device);
 	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
 	    (CPUID_ACPI | CPUID_TM))
 		p4tcc_init(model, step);
@@ -1710,6 +1692,47 @@ intel686_cpu_setup(cpu_device, model, step)
 	else
 		pagezero = i686_pagezero;
 	pagezero = bzero;
+	}
+#endif
+}
+
+void
+intel686_cpu_setup(const char *cpu_device, int model, int step)
+{
+	u_quad_t msr119;
+
+	intel686_common_cpu_setup(cpu_device, model, step);
+
+	/*
+	 * Original PPro returns SYSCALL in CPUID but is non-functional.
+	 * From Intel Application Note #485.
+	 */
+	if ((model == 1) && (step < 3))
+		cpu_feature &= ~CPUID_SEP;
+
+	/*
+	 * Disable the Pentium3 serial number.
+	 */
+	if ((model == 7) && (cpu_feature & CPUID_SER)) {
+		msr119 = rdmsr(MSR_BBL_CR_CTL);
+		msr119 |= 0x0000000000200000LL;
+		wrmsr(MSR_BBL_CR_CTL, msr119);
+
+		printf("%s: disabling processor serial number\n", cpu_device);
+		cpu_feature &= ~CPUID_SER;
+		cpuid_level = 2;
+	}
+}
+
+void
+intel686_p4_cpu_setup(const char *cpu_device, int model, int step)
+{
+	intel686_common_cpu_setup(cpu_device, model, step);
+
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+	if (cpu_cpuspeed == NULL) {
+		p4_model = model;
+		cpu_cpuspeed = p4_cpuspeed;
 	}
 #endif
 }
@@ -2014,6 +2037,11 @@ identifycpu()
 	if (cpu_setup != NULL)
 		cpu_setup(cpu_device, model, step);
 
+#ifndef SMALL_KERNEL
+	if (cpu_cpuspeed == NULL && pentium_mhz != 0)
+		cpu_cpuspeed = pentium_cpuspeed;
+#endif
+
 	cpu_class = class;
 
 	/*
@@ -2104,6 +2132,59 @@ identifycpu()
 #endif /* I686_CPU */
 
 }
+
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+int
+p4_cpuspeed(int *freq)
+{
+	u_int64_t msr;
+	int bus, mult;
+
+	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
+	if (p4_model < 2) {
+		bus = (msr >> 21) & 0x7;
+		switch (bus) {
+		case 0:
+			bus = 100;
+			break;
+		case 1:
+			bus = 133;
+			break;
+		}
+	} else {
+		bus = (msr >> 16) & 0x7;
+		switch (bus) {
+		case 0:
+			bus = 100;
+			break;
+		case 1:
+			bus = 133;
+			break;
+		case 2:
+			bus = 200;
+			break;
+		}
+	}
+	mult = ((msr >> 24) & 0xff);
+	*freq = bus * mult;
+	/* 133MHz actually means 133.(3)MHz */
+	if (bus == 133)
+		*freq += mult / 3;
+
+	return (0);
+}
+
+int
+pentium_cpuspeed(int *freq)
+{
+	/* XXX: what about CPU without TSC? */
+	if (cpu_feature & CPUID_TSC)
+		calibrate_cyclecounter();
+	*freq = pentium_mhz;
+
+	return (0);
+}
+#endif
 
 #ifdef COMPAT_IBCS2
 void ibcs2_sendsig(sig_t, int, int, u_long, int, union sigval);
