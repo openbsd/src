@@ -1,0 +1,225 @@
+#	$Id: ipsec_num.cst,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+
+#
+# Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by Ericsson Radio Systems.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# This code was written under funding by Ericsson Radio Systems.
+#
+
+# XXX Please fill in references to the drafts, chapter & verse for each
+# constant group below.
+
+# IPSEC DOI Identifier.
+IPSEC_DOI
+  IPSEC 1
+.
+
+# IPSEC SA attributes
+IPSEC_ATTR
+  SA_LIFE_TYPE				1
+  SA_LIFE_DURATION			2
+  GROUP_DESCRIPTION			3
+  ENCAPSULATION_MODE			4
+  AUTHENTICATION_ALGORITHM		5
+  KEY_LENGTH				6
+  KEY_ROUNDS				7
+  COMPRESS_DICTIONARY_SIZE		8
+  COMPRESS_PRIVATE_ALGORITHM		9
+.
+
+# IPSEC SA duration.
+IPSEC_DURATION
+  SECONDS				1
+  KILOBYTES				2
+.
+
+# IPSEC encapsulation mode.
+IPSEC_ENCAP
+  TUNNEL				1
+  TRANSPORT				2
+.
+
+# IPSEC authentication algorithm.
+IPSEC_AUTH
+  HMAC_MD5				1
+  HMAC_SHA				2
+  DES_MAC				3
+  KPDK					4
+.
+
+# IPSEC ID types.
+IPSEC_ID
+  IPV4_ADDR				1
+  FQDN					2
+  USER_FQDN				3
+  IPV4_ADDR_SUBNET			4
+  IPV6_ADDR				5
+  IPV6_ADDR_SUBNET			6
+  IPV4_RANGE				7
+  IPV6_RANGE				8
+  DER_ASN1_DN				9
+  DER_ASN1_GN				10
+  KEY_ID				11
+.
+
+# IKE SA attributes
+IKE_ATTR
+  ENCRYPTION_ALGORITHM			1
+  HASH_ALGORITHM			2
+  AUTHENTICATION_METHOD			3
+  GROUP_DESCRIPTION			4
+  GROUP_TYPE				5
+  GROUP_PRIME				6
+  GROUP_GENERATOR_1			7
+  GROUP_GENERATOR_2			8
+  GROUP_CURVE_A				9
+  GROUP_CURVE_B				10
+  LIFE_TYPE				11
+  LIFE_DURATION				12
+  PRF					13
+  KEY_LENGTH				14
+  FIELD_SIZE				15
+  GROUP_ORDER				16
+.
+
+# XXX Fill in reserved ranges for the attributes below.
+
+# IKE encryption algorithm.
+IKE_ENCRYPT
+  DES_CBC				1
+  IDEA_CBC				2
+  BLOWFISH_CBC				3
+  RC5_R16_B64_CBC			4
+  3DES_CBC				5
+  CAST_CBC				6
+.
+
+# IKE hash algorithm.
+IKE_HASH
+  MD5					1
+  SHA					2
+  TIGER					3
+.
+
+# IKE authentication method.
+IKE_AUTH
+  PRE_SHARED				1
+  DSS					2
+  RSA_SIG				3
+  RSA_ENC				4
+  RSA_ENC_REV				5
+.
+
+# IKE group description.
+IKE_GROUP_DESC
+  MODP_768				1
+  MODP_1024				2
+  EC2N_155				3
+  EC2N_185				4
+.
+
+# IKE Group type.
+IKE_GROUP
+  MODP					1
+  ECP					2
+  EC2N					3
+.
+
+# IKE SA duration.
+IKE_DURATION
+  SECONDS				1
+  KILOBYTES				2
+.
+
+# IKE Pseudo random function.  No defined so far.
+IKE_PRF
+.
+
+# IPSEC Situation bits.
+IPSEC_SIT
+  IDENTITY_ONLY				1
+  SECRECY				2
+  INTEGRITY				4
+.
+
+# IPSEC security protocol IDs.
+IPSEC_PROTO
+  IPSEC_AH				2
+  IPSEC_ESP				3
+  IPCOMP				4
+.
+
+# IPSEC ISAKMP transform IDs.
+IPSEC_TRANSFORM
+  KEY_IKE				1
+.
+
+# IPSEC AH transform IDs.
+IPSEC_AH
+  MD5					2
+  SHA					3
+  DES					4
+.
+
+# IPSEC ESP transform IDs.
+IPSEC_ESP
+  DES_IV64				1
+  DES					2
+  3DES					3
+  RC5					4
+  IDEA					5
+  CAST					6
+  BLOWFISH				7
+  3IDEA					8
+  DES_IV32				9
+  RC4					10
+  NULL					11
+.
+
+# IPSEC IPCOMP transform IDs
+IPSEC_IPCOMP
+  OUI					1
+  DEFLATE				2
+  LZS					3
+  V42BIS				4
+.
+
+# IPSEC notify message types.
+IPSEC_NOTIFY
+  RESPONDER_LIFETIME			24576
+  REPLAY_STATUS				24577
+  INITIAL_CONTACT			24578
+.
+
+# IKE exchange types.
+IKE_EXCH
+  QUICK_MODE				32
+  NEW_GROUP_MODE			33
+.

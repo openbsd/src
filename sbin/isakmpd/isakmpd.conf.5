@@ -1,0 +1,175 @@
+.\" $Id: isakmpd.conf.5,v 1.1.1.1 1998/11/15 00:03:49 niklas Exp $
+.\"
+.\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Ericsson Radio Systems.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" This code was written under funding by Ericsson Radio Systems.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd October 10, 1998
+.Dt ISAKMPD.CONF 8
+.Os
+.Sh NAME
+.Nm isakmpd.conf
+.Nd Configuration file for isakmpd
+.Sh DESCRIPTION
+The
+.Nm isakmpd.conf
+is the configuration file for
+.Nm isakmpd
+daemon managing security association and key management for the
+.Nm IPSEC
+layer of the kernel's networking stack.
+.Pp
+The file is of a well known type of format called .INI style, named after
+the suffix used by an overrated windowing environment for its configuration
+files.  This format consists of sections, each beginning with a line looking
+like:
+.Bd -literal
+[Section name]
+.Ed
+Between the brackets is the name of the section following this section header.
+Inside a section many tag/value pairs can be stored, each one looking like:
+.Bd -literal
+Tag=Value
+.Ed
+If the value needs more space than fits on a single line it's possible to
+continue it on the next by ending the first with a backspace character
+immediately before the newline character.  This method can extend a value for
+an arbitrary amount of lines.
+.Pp
+Comments can be put anywhere in the file by using a hash mark, "#".  Then
+the comment goes on to the end of the line.
+.Pp
+.Sh EXAMPLE
+An example of a configuration file:
+.Pp
+.Bd -literal
+# A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
+
+[General]
+Retransmits=		10
+
+[Main mode initiator]
+Offered-transforms=	BLF-SHA-16,DES-MD5
+
+[Main mode responder]
+# XXX Not yet supported.
+#Accepted-transforms=	BLF-SHA-M1024,BLF-SHA-EC185,BLF-SHA-EC155,DES-MD5
+
+[DES-MD5]
+ENCRYPTION_ALGORITHM=	DES_CBC
+HASH_ALGORITHM=		MD5
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	MODP_768
+
+[BLF-SHA-16]
+ENCRYPTION_ALGORITHM=	BLOWFISH_CBC
+KEY_LENGTH=		128
+HASH_ALGORITHM=		SHA
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	MODP_1024
+
+[BLF-SHA-M1024]
+ENCRYPTION_ALGORITHM=	BLOWFISH
+HASH_ALGORITHM=		SHA
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	MODP_1024
+
+[BLF-SHA-EC155]
+ENCRYPTION_ALGORITHM=	BLOWFISH
+HASH_ALGORITHM=		SHA
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	EC2N_155
+
+[BLF-SHA-EC185]
+ENCRYPTION_ALGORITHM=	BLOWFISH
+HASH_ALGORITHM=		SHA
+AUTHENTICATION_METHOD=	PRE_SHARED
+GROUP_DESCRIPTION=	EC2N_185
+
+[Quick mode initiator]
+Offered-suites=		QM-ESP-DES-MD5-SUITE,QM-AH-MD5-ESP-DES-SUITE
+
+[Quick mode responder]
+# XXX Not yet supported.
+#Accepted-suites=	QM-ESP-DES-MD5-SUITE,QM-AH-MD5-ESP-DES-SUITE
+
+[QM-ESP-DES-MD5-SUITE]
+Protocols=		QM-ESP-DES-MD5
+
+[QM-ESP-DES-MD5]
+PROTOCOL_ID=		IPSEC_ESP
+Transforms=		QM-ESP-DES-MD5-XF
+
+[QM-ESP-DES-MD5-XF]
+TRANSFORM_ID=		DES
+ENCAPSULATION_MODE=	TUNNEL
+AUTHENTICATION_ALGORITHM=	HMAC_MD5
+Life=			LIFE_600_SECS,LIFE_32_MB
+
+[LIFE_600_SECS]
+SA_LIFE_TYPE=		SECONDS
+SA_LIFE_DURATION=	600
+
+[LIFE_32_MB]
+SA_LIFE_TYPE=		KILOBYTES
+SA_LIFE_DURATION=	32768
+
+[QM-AH-MD5-ESP-DES-SUITE]
+Protocols=		QM-AH-MD5,QM-ESP-DES
+
+[QM-AH-MD5]
+PROTOCOL_ID=		IPSEC_AH
+Transforms=		QM-AH-MD5-XF
+
+[QM-AH-MD5-XF]
+TRANSFORM_ID=		MD5
+ENCAPSULATION_MODE=	TUNNEL
+
+[QM-ESP-DES]
+PROTOCOL_ID=		IPSEC_ESP
+Transforms=		QM-ESP-DES-XF
+
+[QM-ESP-DES-XF]
+TRANSFORM_ID=		DES
+ENCAPSULATION_MODE=	TUNNEL
+
+[PRE_SHARED]
+# A general pre-shared key used for everyone.  XXX Should be per-peer later.
+KEY=			mekmitasdigoat
+
+[RSA_SIG]
+CERT=			/etc/isakmpd_cert
+PRIVKEY=		/etc/isakmpd_key
+PUBKEY=			/etc/isakmpd_key.pub
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr isakmpd 8 .
+

@@ -1,0 +1,116 @@
+.\" $Id: isakmpd.8,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+.\"
+.\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Ericsson Radio Systems.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" This code was written under funding by Ericsson Radio Systems.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd July 31, 1998
+.Dt ISAKMPD 8
+.Os
+.Sh NAME
+.Nm isakmpd
+.Nd ISAKMP/Oakley aka IKE key management daemon
+.Sh SYNOPSIS
+.Nm isakmpd
+.Op Fl c Ar config-file
+.Op Fl d
+.Op Fl D Ar debug-class=level
+.Op Fl f Ar fifo
+.Op Fl n
+.Op Fl p Ar listen-port
+.Op Fl P Ar local-port
+.Op Fl r Ar seed
+.Sh DESCRIPTION
+The
+.Nm ISAKMP
+daemon establishes security associations for encrypted
+and/or authenticated network traffic. 
+.Pp
+The daemon listens to a named pipe 
+.Pa isakmpd.fifo
+for user requests and on a
+.Nm PF_ENCAP
+socket for kernel requests.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+If given, the
+.Fl c
+option specifies an alternate configuration file instead of
+.Pa /etc/isakmpd.conf .
+.It Fl d
+The
+.Fl d
+option is used to make the daemon run in the foreground, logging to stderr.
+.It Fl D
+This argument is possible to specify many times.  It takes a parameter of
+the form: class=level where both class and level are numbers.  Class denotes
+a debugging class, and level the level you want that debugging class to
+limit debug printouts at.  I.e. all debug printouts above the level specified
+will not output anything.
+.It Fl f
+The
+.Fl f
+option specifies the fifo (aka named pipe) where the daemon listens for
+user requests.  If the path given is a dash,
+.Nm isakmpd
+will listen to stdin instead.
+.It Fl n
+When the
+.Fl n
+option is given, the kernel will not take part in the negotiations.
+This is a non-destructive mode so to say, in that it won't alter any
+SAs in the IPSEC stack.
+.It Fl r
+If given a deterministic random number sequence will be used internally.
+This is useful for setting up regression tests.
+.It Fl p
+The
+.Fl p
+option specifies the listen port the daemon will bind to.
+.It Fl P
+On the other hand, the port spcified to capital
+.Fl P
+will be what the daemon binds its local end to when acting as initiator.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr isakmpd.conf 5 ,
+.Xr photurisd 8 ,
+.Xr ipsec 4 .
+.Sh HISTORY
+The ISAKMP/Oakley keymanagement protocol is described in the internet drafts
+.Nm draft-ietf-ipsec-isakmp ,
+.Nm draft-ietf-ipsec-ipsec-doi &
+.Nm draft-ietf-ipsec-isakmp-oakley .
+This implementation was done 1998 by Niklas Hallqvist and Niels Provos,
+sponsored by Ericsson Radio Systems.
+

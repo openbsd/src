@@ -1,0 +1,156 @@
+#	$Id: isakmp_num.cst,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+
+#
+# Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by Ericsson Radio Systems.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# This code was written under funding by Ericsson Radio Systems.
+#
+
+# XXX Please fill in references to the drafts, chapter & verse for each
+# constant group below.
+# Also think about ranges, can they be specified diferently?  Can we use
+# these constants for vlidity checks?
+
+# ISAKMP payload type.
+ISAKMP_PAYLOAD
+  NONE				0
+  SA				1
+  PROPOSAL			2
+  TRANSFORM			3
+  KEY_EXCH			4
+  ID				5
+  CERT				6
+  CERT_REQ			7
+  HASH				8
+  SIG				9
+  NONCE				10
+  NOTIFY			11
+  DELETE			12
+  VENDOR			13
+  RESERVED_MIN			14
+  RESERVED_MAX			127
+  PRIVATE_MIN			128
+  PRIVATE_MAX			255
+.
+
+# ISAKMP exchange types.
+ISAKMP_EXCH
+  NONE				0
+  BASE				1
+  ID_PROT			2
+  AUTH_ONLY			3
+  AGGRESSIVE			4
+  INFO				5
+  FUTURE_MIN			6
+  FUTURE_MAX			31
+  DOI_MIN			32
+  DOI_MAX			255
+.
+
+# ISAKMP flags.
+ISAKMP_FLAGS
+  ENC				1
+  COMMIT			2
+  AUTH_ONLY			4
+.
+
+# ISAKMP certificate encoding.
+ISAKMP_CERTENC
+  NONE				0
+  PKCS				1
+  PGP				2
+  DNS				3
+  X509_SIG			4
+  X509_KE			5
+  KERBEROS			6
+  CRL				7
+  ARL				8
+  SPKI				9
+  X509_ATTR			10
+  RESERVED_MIN			11
+  RESERVED_MAX			255
+.
+
+# ISAKMP Notify message types.
+ISAKMP_NOTIFY
+  INVALID_PAYLOAD_TYPE		1
+  DOI_NOT_SUPPORTED		2
+  SITUATION_NOT_SUPPORTED	3
+  INVALID_COOKIE		4
+  INVALID_MAJOR_VERSION		5
+  INVALID_MINOR_VERSION		6
+  INVALID_EXCHANGE_TYPE		7
+  INVALID_FLAGS			8
+  INVALID_MESSAGE_ID		9
+  INVALID_PROTOCOL_ID		10
+  INVALID_SPI			11
+  INVALID_TRANSFORM_ID		12
+  ATTRIBUTES_NOT_SUPPORTED	13
+  NO_PROPOSAL_CHOSEN		14
+  BAD_PROPOSAL_SYNTAX		15
+  PAYLOAD_MALFORMED		16
+  INVALID_KEY_INFORMATION	17
+  INVALID_ID_INFORMATION	18
+  INVALID_CERT_ENCODING		19
+  INVALID_CERTIFICATE		20
+  CERT_TYPE_UNSUPPORTED		21
+  INVALID_CERT_AUTHORITY	22
+  INVALID_HASH_INFORMATION	23
+  AUTHENTICATION_FAILED		24
+  INVALID_SIGNATURE		25
+  ADDRESS_NOTIFICATION		26
+  NOTIFY_SA_LIFETIME		27
+  CERTIFICATE_UNAVAILABLE	28
+  UNSUPPORTED_EXCHANGE_TYPE	29
+  UNEQUAL_PAYLOAD_LENGTHS	30
+  RESERVED_MIN			31
+  RESERVED_MAX			8191
+  PRIVATE_MIN			8192
+  PRIVATE_MAX			16383
+  STATUS_CONNECTED		16384
+  STATUS_RESERVED1_MIN		16385
+  STATUS_RESERVED1_MAX		24575
+  STATUS_DOI_MIN		12576
+  STATUS_DOI_MAX		32767
+  STATUS_PRIVATE_MIN		32768
+  STATUS_PRIVATE_MAX		40959
+  STATUS_RESERVED2_MIN		40960
+  STATUS_RESERVED2_MAX		65535
+.
+
+# ISAKMP DOI Identifier.
+ISAKMP_DOI
+  ISAKMP		0
+.
+
+# ISAKMP Protocol ID.
+ISAKMP_PROTO
+  ISAKMP		1
+.

@@ -1,0 +1,59 @@
+$Id: README,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+
+This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
+implementation.  It's written by Niklas Hallqvist and Niels Provos,
+funded by Ericsson Radio Systems AB.  Currently it is just work in
+progress, it cannot be used for anything real.  For example it does not
+renegotiate SAs when an application says they have expired.  It is not
+released, thus I won't bother calling it any version numbers.  When you
+got the source, hopefully the archive was named with a date which
+reflects when it was created.  These archives are also known as snapshots
+and will be created at irregular intervals and put up on ftp.gsnig.net
+and ftp.appli.se in /pub/isakmpd.
+
+Isakmpd is being developed under OpenBSD, with OpenBSD as its primary
+target, soon enough however, a Linux effort will be started.  Until
+then the makefile support assumes a BSD environment.
+
+Assuming you have an OpenBSD /usr/share/mk and use the OpenBSD (or
+similar) make(1), you build isakmpd this way:
+
+ln -s sysdep-openbsd.c sysdep.c
+make obj && make depend && make
+
+Then obj/isakmpd will be the daemon.  I suggest you try it by running
+under gdb with args similar to:
+	-d -n -p5000 -D0=99 -D1=99 -D2=99 -D3=99 -D4=99 -D5=99 \
+	-f/tmp/isakmpd.fifo -cisakmpd.conf.sample
+
+That will run isakmpd in the foreground, not connected to any application
+(like an IPSEC implementation) logging to stderr with full debugging ouput,
+listening on UDP port 5000, accepting control commands via the named pipe
+called /tmp/isakmpd.fifo and reading its configuration from the
+isakmpd.conf.sample file (found in the isakmpd directory).
+
+If you are root you can try to run without -n -p5000 thus getting it to
+talk to your IPSec stack and use the standard port 500 instead.
+
+Read log.[ch] and ui.c to see how to alter the debugging levels.
+Now you have setup your daemon and can watch incoming negotiations.
+But how do you get such?  Either use http://isakmp-test.ssh.fi/,
+there's an excellent service, just waiting for you.  Or you can try to
+start another isakmpd on another port (say -p5001 or so, instead)
+and another fifo (let's say /tmp/other.fifo), then issue this command:
+
+$ echo "c udp 127.0.0.1:5000 2 1" >/tmp/other.fifo
+
+and watch.  You can turn on debugging on that isakmpd too of course, for
+greater fun.  When the ISAKMP SA is setup you can try quick mode too:
+
+$ echo "c udp 127.0.0.1:5000 32 1" >/tmp/other.fifo
+
+You will by now have noticed that this implementation is incomplete, but
+who cares?  You are here because you want to read code, start porting work
+or help us out fixing what need's to be fixed.
+
+Happy IKEing!
+
+Niklas Hallqvist <niklas@openbsd.org>
+Niels Provos <provos@openbsd.org>

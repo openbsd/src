@@ -1,0 +1,50 @@
+$Id: BUGS,v 1.1.1.1 1998/11/15 00:03:47 niklas Exp $
+
+Until we have a bug-tracking system setup, we might just add bugs to this
+file:
+------------------------------------------------------------------------------
+* message_drop frees the message, this is sometimes wrong and can cause
+  duplicate frees, for example when a proposal does not get chosen. [fixed]
+
+* Notifications should be their own exchanges, otherwise the IV gets
+  disturbed. [fixed]
+
+* We need a death timeout on half-ready SAs just like exchanges.  At the
+  moment we leak SAs.
+
+* When we establish a phase 2 exchange we seem to get the wrong IV set,
+  according to SSH's logs. [fixed]
+
+* If a phase 1 SA negotiation exists with a cause that is to be sent in
+  a NOTIFY to the peer, we get multiple free calls on the cleanup of the
+  informational exchange.
+
+* IKE mandates that a HASH should be added to informational exchanges in
+  phase 2.
+
+* Message_send requires an exchange to exist, and potentially it tries to
+  encrypt a message multiple times when retransmitting. [fixed]
+
+* Multiple protocol proposals seems to fail. [fixed]
+
+* The initiator fails to match the responders choice of protocol suite with
+  the correct one of its own when several are offered. [fixed]
+
+* Duplicate specified sections is not detected. [fixed]
+
+* Quick mode establishments via UI using -P bind-addr gets "Address already in
+  use".
+
+* Not chosen proposals should be deleted from the protos list in the sa
+  structure. [fixed]
+
+* Setting SPIs generates "Invalid argument" errors due to one tunnel endpoint
+  being INADDR_ANY. [fixed]
+
+* ipsec_proto structs are never allocated. [fixed]
+
+* Remove SPIs of unused proposals. [fixed]
+
+* If the first proposal is turned down, the initiator gets confused.
+
+* Renegotiation after a failed phase 1 fails.
