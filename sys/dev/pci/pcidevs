@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.165 1999/07/24 19:45:18 jason Exp $
+$OpenBSD: pcidevs,v 1.166 1999/07/24 23:44:05 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1181,6 +1181,9 @@ product SIS 5597_USB		0x7001	5597/5598 USB
 product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
 product SMC 83C170		0x0005	83C170 (EPIC/100)
+
+/* Sony products */
+product	SONY CXD1947A		0x8009	CXD1947A FireWire
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
