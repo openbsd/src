@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.46 2002/08/08 19:18:12 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.47 2002/11/27 13:31:09 mickey Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1084,6 +1084,8 @@ sosetopt(so, level, optname, m0)
 				goto bad;
 			}
 			val = tv->tv_sec * hz + tv->tv_usec / tick;
+			if (val == 0 && tv->tv_usec != 0)
+				val = 1;
 
 			switch (optname) {
 
