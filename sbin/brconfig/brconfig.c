@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.8 2000/07/03 17:21:26 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.9 2000/11/10 04:42:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -83,7 +83,7 @@ int bridge_rulefile __P((int, char *, char *));
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBAFBITS	"\020\1STATIC"
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4BLOCKARP"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP"
 
 void
 usage()
