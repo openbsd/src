@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.1 2004/12/30 23:48:17 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.2 2005/01/04 05:37:43 drahn Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -312,61 +312,38 @@ pxapcic_set_power(struct pxapcic_socket *so, int arg)
 int
 pxapcic_match(struct device *parent, void *v, void *aux)
 {
-        return (1);
+        return (0);
 }     
 
 void   
 pxapcic_event_thread(void *arg)
 {
-	struct pxapcic_softc *sc = arg;
+	struct pxapcic_socket *sock = arg;
 	u_int16_t csr;
 	int present;
 
-	while (sc->sc_shutdown == 0) {
+	while (sock->sc->sc_shutdown == 0) {
 		/* sleep .25s to avoid chatterling interrupts */
 
-		(void) tsleep((caddr_t)sc, PWAIT,
+		(void) tsleep((caddr_t)sock, PWAIT,
 		    "pxapcicss", hz/4);
 
-		csr = bus_space_read_2(sc->sc_iot, sc->sc_scooph,
+		csr = bus_space_read_2(sock->sc->sc_iot, sock->scooph,
 		    SCOOP_REG_CSR);
 
-		present = sc->sc_socket[0].flags & PXAPCIC_FLAG_CARDP;
+		present = sock->flags & PXAPCIC_FLAG_CARDP;
 
 		if (((csr & SCP_CSR_MISSING) == 0) == (present == 1))
 			continue; /* state unchanged */
 
-
-#if 0
-		printf("pxapcic_event_thread\n");
-
-		printf("SCOOP_CSR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CSR));
-		printf("SCOOP_CDR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CDR));
-		printf("SCOOP_CPR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CPR));
-		printf("SCOOP_CCR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CCR));
-		printf("SCOOP_MCR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_MCR));
-		printf("SCOOP_IMR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR));
-		printf("SCOOP_IRR 0x%04x\n",
-		    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IRR));
-#endif
-
 		/* XXX Do both? */
-		pxapcic_event_process(&sc->sc_socket[0]);
-#if NUM_CF_CARDS > 1
-		pxapcic_event_process(&sc->sc_socket[1]);
-#endif
+		pxapcic_event_process(sock);
 	}
 	
-	sc->sc_event_thread = NULL;
+	sock->event_thread = NULL;
 		
 	/* In case parent is waiting for us to exit. */
-	wakeup(sc);
+	wakeup(sock->sc);
 	 
 	kthread_exit(0);
 }
@@ -404,25 +381,25 @@ pxapcic_event_process_st(void *v)
 	pxapcic_event_process(h);
 }
 void
-pxapcic_event_process(h)
-	struct pxapcic_socket *h;
+pxapcic_event_process(sock)
+	struct pxapcic_socket *sock;
 {
-	struct pxapcic_softc *sc = h->sc;
+	struct pxapcic_softc *sc = sock->sc;
 	u_int16_t csr;
 
-	csr = bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CSR);
+	csr = bus_space_read_2(sc->sc_iot, sock->scooph, SCOOP_REG_CSR);
 
 	switch (csr & SCP_CSR_MISSING) {
 	case 0: /* PRESENT */
-		//DPRINTF(("%s: insertion event\n", h->sc->dv_xname));
-		if (!(h->flags & PXAPCIC_FLAG_CARDP))
-			pxapcic_attach_card(h);
+		//DPRINTF(("%s: insertion event\n", sock->sc->dv_xname));
+		if (!(sock->flags & PXAPCIC_FLAG_CARDP))
+			pxapcic_attach_card(sock);
 		break;
 
 	case SCP_CSR_MISSING:
-		//DPRINTF(("%s: removal event\n", h->sc->dv_xname));
-		if ((h->flags & PXAPCIC_FLAG_CARDP))
-			pxapcic_detach_card(h, DETACH_FORCE);
+		//DPRINTF(("%s: removal event\n", sock->sc->dv_xname));
+		if ((sock->flags & PXAPCIC_FLAG_CARDP))
+			pxapcic_detach_card(sock, DETACH_FORCE);
 		break;
 	}
 }
@@ -430,27 +407,32 @@ pxapcic_event_process(h)
 void
 pxapcic_create_event_thread(void *arg)
 {
-	struct pxapcic_softc *sc = arg;
+	struct pxapcic_socket *sock = arg;
+	struct pxapcic_softc *sc = sock->sc;
 	u_int16_t csr;
 
-	csr = bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CSR);
+	csr = bus_space_read_2(sc->sc_iot, sock->scooph, SCOOP_REG_CSR);
+	printf("%s%d: create event, csr %d\n", sc->sc_dev.dv_xname, 
+	    sock->socket, csr);
 
 	/* if there's a card there, then attach it  */
 
 	switch (csr & SCP_CSR_MISSING) {
 	case 0: /* PRESENT */
-		pxapcic_attach_card(&sc->sc_socket[0]);
+		pxapcic_attach_card(sock);
 		break;
 	default:
 		;
 	}
 
-	if (kthread_create(pxapcic_event_thread, sc, &sc->sc_event_thread,
-	     sc->sc_dev.dv_xname, "0")) {
+	if (kthread_create(pxapcic_event_thread, sock, &sock->event_thread,
+	     sc->sc_dev.dv_xname, sock->socket ? "1" : "0")) {
 		printf("%s: unable to create event thread for %s\n",
-		     sc->sc_dev.dv_xname, "0");
+		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
 	}
+	/*
 	config_pending_decr();
+	*/
 }
 
 int
@@ -476,63 +458,75 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	struct pxapcic_softc *sc = (struct pxapcic_softc *)self;
 	struct pxaip_attach_args *pxa = aux;
 	struct pxapcic_socket *so;
+	bus_space_tag_t iot;
+	bus_space_handle_t scooph;
 	int i;
 	int error;
-	bus_addr_t pa = 0x10800000;
+	bus_addr_t pa;
 	bus_size_t size = 0x100;
 
 	sc->sc_iot = pxa->pxa_iot;
 
-/*
-	pxa->pxa_addr;
-	pxa->pxa_size = 0x20;
-*/
 	sc->sc_shutdown = 0;
-	
-	/* scoop? */
-	error = bus_space_map(sc->sc_iot, pa, size, 0, &sc->sc_scooph);
 
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR,
-	    0x00c0);
-
-
-#if 0
-	printf("SCOOP_CSR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CSR));
-	printf("SCOOP_CDR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CDR));
-	printf("SCOOP_CPR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CPR));
-	printf("SCOOP_CCR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CCR));
-	printf("SCOOP_MCR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_MCR));
-	printf("SCOOP_IMR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR));
-	printf("SCOOP_IRR 0x%04x\n",
-	    bus_space_read_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IRR));
-#endif
-
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_MCR, 0x0100);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CDR, 0x0000);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CPR, 0x0000);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR, 0x0000);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IRM, 0x00ff);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_ISR, 0x0000);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR, 0x0000);
-
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_CPR,
-	    SCP_CPR_PWR|SCP_CPR_3V);
-	
 	printf("\n");
 
 	for(i = 0; i < NUM_CF_CARDS; i++) {
+		iot = sc->sc_iot;
 		so = &sc->sc_socket[i];
 		so->sc = sc;
 		so->socket = i;
 		so->flags = 0;
 
+		/* scoop? */
+		if (so->socket == 0)
+			pa = 0x10800000;
+		else if (so->socket == 1)
+			pa = 0x14800000;
+		else {
+			printf ("%s: invalid CF slot %d\n", sc->sc_dev.dv_xname,
+			    i);
+			continue;
+		}
+		error = bus_space_map(iot, pa, size, 0, &scooph);
+		if (error) {
+			printf ("%s%d:failed to map memory %x for scoop\n",
+			    sc->sc_dev.dv_xname, i, pa);
+			    continue;
+		}
+		so->scooph = scooph;
+
+		{
+		u_int16_t val;
+		/* probe */
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_IMR);
+		printf("scoop%d: IMR %x\n", i, val);
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_MCR);
+		printf("scoop%d: MCR %x\n", i, val);
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_CDR);
+		printf("scoop%d: CDR %x\n", i, val);
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_CPR);
+		printf("scoop%d: CPR %x\n", i, val);
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_IRM);
+		printf("scoop%d: IRM %x\n", i, val);
+		val = bus_space_read_2(iot, scooph, SCOOP_REG_ISR);
+		printf("scoop%d: ISR %x\n", i, val);
+		}
+
+		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x00c0);
+
 		/* setup */
+		bus_space_write_2(iot, scooph, SCOOP_REG_MCR, 0x0100);
+		bus_space_write_2(iot, scooph, SCOOP_REG_CDR, 0x0000);
+		bus_space_write_2(iot, scooph, SCOOP_REG_CPR, 0x0000);
+		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x0000);
+		bus_space_write_2(iot, scooph, SCOOP_REG_IRM, 0x00ff);
+		bus_space_write_2(iot, scooph, SCOOP_REG_ISR, 0x0000);
+		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x0000);
+
+		bus_space_write_2(iot, scooph, SCOOP_REG_CPR,
+		    SCP_CPR_PWR|SCP_CPR_3V);
+	
 
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t) &pxapcic_pcmcia_functions;
@@ -544,23 +538,57 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		     pxapcic_submatch);
 	}
 
+#if 0
+	/* XXX 860 */
+	so = &sc->sc_socket[0];
 	pxa2x0_gpio_set_function(14, GPIO_IN);
 	pxa2x0_gpio_set_function(17, GPIO_IN);
 
-
 	sc->sc_irq  = pxa2x0_gpio_intr_establish(14 /*???*/, IST_EDGE_FALLING,
-	    IPL_BIO /* XXX */, pxapcic_intr_detect, sc, sc->sc_dev.dv_xname);
-		     
+	    IPL_BIO /* XXX */, pxapcic_intr_detect, so, sc->sc_dev.dv_xname);
+	sc->sc_socket[0].irqpin = 17;	/* GPIO pin for interrupt */
 
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_IMR, 0x00ce);
-	bus_space_write_2(sc->sc_iot, sc->sc_scooph, SCOOP_REG_MCR, 0x0111);
-
-
-	sc->sc_gpio  = 17;	/* GPIO pin for interrupt */
-	    
 	config_pending_incr();
-	kthread_create_deferred(pxapcic_create_event_thread, sc);
+	kthread_create_deferred(pxapcic_create_event_thread, so);
+#else
+
+	/* XXX c3000 */
+	so = &sc->sc_socket[0];
+	pxa2x0_gpio_set_function(105, GPIO_IN); /* GPIO_CF_IRQ  */
+	pxa2x0_gpio_set_function(106, GPIO_IN); /* GPIO_CF2_IRQ */
+	pxa2x0_gpio_set_function(94, GPIO_IN); /* GPIO_CF_CD */
+	pxa2x0_gpio_set_function(93, GPIO_IN); /* GPIO_CF2_CD */
+
+	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(94 /*???*/,
+	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
+	    so, sc->sc_dev.dv_xname);
+	sc->sc_socket[0].irqpin = 105;	/* GPIO pin for interrupt */
+
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
+
+	/*
+	config_pending_incr();
+	*/
+	kthread_create_deferred(pxapcic_create_event_thread, so);
+
+	so = &sc->sc_socket[1];
+	sc->sc_socket[1].irq = pxa2x0_gpio_intr_establish(93 /*???*/,
+	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
+	    so, sc->sc_dev.dv_xname);
+	sc->sc_socket[1].irqpin = 106;	/* GPIO pin for interrupt */
+
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
+	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
+
+	/*
+	config_pending_incr();
+	*/
+	kthread_create_deferred(pxapcic_create_event_thread, so);
+#endif
 
 }
 

@@ -1,15 +1,17 @@
-/*	$OpenBSD: pxapcicvar.h,v 1.2 2005/01/02 19:52:37 drahn Exp $ */
+/*	$OpenBSD: pxapcicvar.h,v 1.3 2005/01/04 05:37:43 drahn Exp $ */
 struct pxapcic_socket {
         struct pxapcic_softc *sc;
         int socket;                     /* socket number */
         struct device *pcmcia;
-	/*
-        struct pxapcic_tag *pcictag;
-	*/
+	struct proc *event_thread;
+
+	bus_space_handle_t scooph;
 
         int flags;
 
         int power_capability;
+	int irqpin;
+	void *irq;
 
         void *pcictag_cookie;   /* opaque data for pcictag functions */
 };
@@ -38,9 +40,7 @@ struct pxapcic_softc {
 	struct pxapcic_socket sc_socket[2];
 
         bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_scooph;
 
-	struct proc *sc_event_thread;
 	void *sc_irq;
 	int sc_gpio;
         int sc_shutdown;
