@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.24 1999/10/07 21:45:02 markus Exp $");
+RCSID("$Id: sshd.c,v 1.25 1999/10/07 22:46:33 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -35,6 +35,7 @@ RCSID("$Id: sshd.c,v 1.24 1999/10/07 21:45:02 markus Exp $");
 #include <tcpd.h>
 #include <syslog.h>
 #include <sys/syslog.h>
+#include <sys/stat.h>
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
 #endif /* LIBWRAP */
@@ -2213,6 +2214,21 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     {
       char buf[256];
 
+      /* Check for mail if we have a tty and it was enabled in server options. */
+      if (ttyname && options.check_mail) {
+        char *mailbox;
+        struct stat mailstat;
+        mailbox = getenv("MAIL");
+        if(mailbox != NULL) {
+          if(stat(mailbox, &mailstat) != 0 || mailstat.st_size == 0) {
+            printf("No mail.\n");
+          } else if(mailstat.st_mtime < mailstat.st_atime) {
+            printf("You have mail.\n");
+          } else {
+            printf("You have new mail.\n");
+          }
+        }
+      }
       /* Start the shell.  Set initial character to '-'. */
       buf[0] = '-';
       strncpy(buf + 1, cp, sizeof(buf) - 1);

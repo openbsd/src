@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.7 1999/10/07 21:45:02 markus Exp $
+.\" $Id: sshd.8,v 1.8 1999/10/07 22:46:33 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -192,6 +192,12 @@ Note that
 can also be configured to use tcp_wrappers using the
 .Sy LIBWARP
 compile-time option.
+.It Cm CheckMail
+Specifies whether
+.Nm
+should check for new mail for interactive logins.
+The default is
+.Dq no .
 .It Cm DenyHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is disallowed from the hosts

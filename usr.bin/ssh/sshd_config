@@ -23,7 +23,6 @@ RhostsAuthentication no
 # For this to work you will also need host keys in /etc/ssh_known_hosts
 RhostsRSAAuthentication no
 #
-# Changed RSAAuthentication to no/bg
 RSAAuthentication yes
 
 # To disable tunneled clear text passwords, change to no here!
@@ -41,10 +40,10 @@ PermitEmptyPasswords no
 # Kerberos TGT Passing does only work with the AFS kaserver
 #KerberosTgtPassing yes
 
+#CheckMail yes
+
 # XXX implement these
 #UseLogin no
-#CheckMail no
 
 # AllowHosts *.our.com friend.other.com
 # DenyHosts lowsecurity.theirs.com *.evil.org evil.org
-

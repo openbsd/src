@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.10 1999/10/07 21:45:02 markus Exp $");
+RCSID("$Id: servconf.c,v 1.11 1999/10/07 22:46:32 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -34,6 +34,7 @@ void initialize_server_options(ServerOptions *options)
   options->quiet_mode = -1;
   options->fascist_logging = -1;
   options->print_motd = -1;
+  options->check_mail = -1;
   options->x11_forwarding = -1;
   options->x11_display_offset = -1;
   options->strict_modes = -1;
@@ -87,6 +88,8 @@ void fill_default_server_options(ServerOptions *options)
     options->ignore_rhosts = 0;
   if (options->quiet_mode == -1)
     options->quiet_mode = 0;
+  if (options->check_mail == -1)
+    options->check_mail = 0;
   if (options->fascist_logging == -1)
     options->fascist_logging = 1;
   if (options->print_motd == -1)
@@ -150,7 +153,7 @@ typedef enum
 #endif
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
-  sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives
+  sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -186,6 +189,7 @@ static struct
   { "skeyauthentication", sSkeyAuthentication },
 #endif
   { "allowhosts", sAllowHosts },
+  { "checkmail", sCheckMail },
   { "denyhosts", sDenyHosts },
   { "listenaddress", sListenAddress },
   { "printmotd", sPrintMotd },
@@ -404,6 +408,10 @@ void read_server_config(ServerOptions *options, const char *filename)
 	case sPasswordAuthentication:
 	  intptr = &options->password_authentication;
 	  goto parse_flag;
+
+        case sCheckMail:
+          intptr = &options->check_mail;
+          goto parse_flag;
 
 #ifdef SKEY
 	case sSkeyAuthentication:
