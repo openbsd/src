@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.15 2004/07/15 15:11:02 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.16 2004/07/15 15:28:59 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.59 2004/07/15 07:19:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.59 2004/07/15 07:19:46 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -62,14 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $");
 #include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -110,15 +110,15 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $");
  *    set ATW_PAR_SWR (software reset)
  *    wait for ATW_PAR_SWR clear
  *    disable interrupts
- *    ack status register 
- *    enable interrupts 
+ *    ack status register
+ *    enable interrupts
  *
  * rx/tx initialization
  *
  *    disable rx/tx w/ ATW_NAR_SR, ATW_NAR_ST
  *    allocate and init descriptor rings
  *    write ATW_PAR_DSL (descriptor skip length)
- *    write descriptor base addrs: ATW_TDBD, ATW_TDBP, write ATW_RDB		
+ *    write descriptor base addrs: ATW_TDBD, ATW_TDBP, write ATW_RDB
  *    write ATW_NAR_SQ for one/both transmit descriptor rings
  *    write ATW_NAR_SQ for one/both transmit descriptor rings
  *    enable rx/tx w/ ATW_NAR_SR, ATW_NAR_ST
@@ -141,15 +141,18 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.57 2004/07/15 07:11:23 dyoung Exp $");
  *
  */
 
+#define ATW_REFSLAVE	/* slavishly do what the reference driver does */
+
 #define	VOODOO_DUR_11_ROUNDING		0x01 /* necessary */
 #define	VOODOO_DUR_2_4_SPECIALCASE	0x02 /* NOT necessary */
 int atw_voodoo = VOODOO_DUR_11_ROUNDING;
 
-int atw_rfio_enable_delay = 20 * 1000;
-int atw_rfio_disable_delay = 2 * 1000;
-int atw_writewep_delay = 5;
+int atw_bbp_io_enable_delay = 20 * 1000;
+int atw_bbp_io_disable_delay = 2 * 1000;
+int atw_writewep_delay = 1000;
 int atw_beacon_len_adjust = 4;
 int atw_dwelltime = 200;
+int atw_xindiv2 = 0;
 
 #ifdef ATW_DEBUG
 int atw_debug = 0;
@@ -164,12 +167,12 @@ void atw_print_regs(struct atw_softc *, const char *);
 void atw_dump_pkt(struct ifnet *, struct mbuf *);
 
 /* Note well: I never got atw_rf3000_read or atw_si4126_read to work. */
-#	ifdef ATW_BBPDEBUG 
+#	ifdef ATW_BBPDEBUG
 int atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
 void atw_rf3000_print(struct atw_softc *);
 #	endif /* ATW_BBPDEBUG */
 
-#	ifdef ATW_SYNDEBUG 
+#	ifdef ATW_SYNDEBUG
 int atw_si4126_read(struct atw_softc *, u_int, u_int *);
 void atw_si4126_print(struct atw_softc *);
 #	endif /* ATW_SYNDEBUG */
@@ -236,16 +239,16 @@ struct ieee80211_node *atw_node_alloc(struct ieee80211com *);
 
 int	atw_tune(struct atw_softc *);
 
-void	atw_rfio_enable(struct atw_softc *, int);
+void	atw_bbp_io_enable(struct atw_softc *, int);
 
 /* RFMD RF3000 Baseband Processor */
 int	atw_rf3000_init(struct atw_softc *);
-int	atw_rf3000_tune(struct atw_softc *, u_int8_t);
+int	atw_rf3000_tune(struct atw_softc *, u_int);
 int	atw_rf3000_write(struct atw_softc *, u_int, u_int);
 
 /* Silicon Laboratories Si4126 RF/IF Synthesizer */
-int	atw_si4126_tune(struct atw_softc *, u_int8_t);
-int	atw_si4126_write(struct atw_softc *, u_int, u_int);
+void	atw_si4126_tune(struct atw_softc *, u_int);
+void	atw_si4126_write(struct atw_softc *, u_int, u_int);
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
@@ -1272,15 +1275,15 @@ atw_init(struct ifnet *ifp)
  * TBD support non-RFMD BBP, non-SiLabs synth.
  */
 void
-atw_rfio_enable(struct atw_softc *sc, int enable)
+atw_bbp_io_enable(struct atw_softc *sc, int enable)
 {
 	if (enable) {
 		ATW_WRITE(sc, ATW_SYNRF,
 		    ATW_SYNRF_SELRF|ATW_SYNRF_PE1|ATW_SYNRF_PHYRST);
-		DELAY(atw_rfio_enable_delay);
+		DELAY(atw_bbp_io_enable_delay);
 	} else {
 		ATW_WRITE(sc, ATW_SYNRF, 0);
-		DELAY(atw_rfio_disable_delay); /* shorter for some reason */
+		DELAY(atw_bbp_io_disable_delay); /* shorter for some reason */
 	}
 }
 
@@ -1288,8 +1291,7 @@ int
 atw_tune(struct atw_softc *sc)
 {
 	int rc;
-	u_int32_t reg;
-	int chan;
+	u_int chan;
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
@@ -1304,16 +1306,14 @@ atw_tune(struct atw_softc *sc)
 
 	atw_idle(sc, ATW_NAR_SR|ATW_NAR_ST);
 
-	if ((rc = atw_si4126_tune(sc, chan)) != 0 ||
-	    (rc = atw_rf3000_tune(sc, chan)) != 0)
+	atw_si4126_tune(sc, chan);
+	if ((rc = atw_rf3000_tune(sc, chan)) != 0)
 		printf("%s: failed to tune channel %d\n", sc->sc_dev.dv_xname,
 		    chan);
 
-	reg = ATW_READ(sc, ATW_CAP0) & ~ATW_CAP0_CHN_MASK;
-	ATW_WRITE(sc, ATW_CAP0,
-	    reg | LSHIFT(chan, ATW_CAP0_CHN_MASK));
-
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
+	DELAY(20 * 1000);
+	ATW_WRITE(sc, ATW_RDR, 0x1);
 
 	if (rc == 0)
 		sc->sc_cur_chan = chan;
@@ -1359,13 +1359,12 @@ atw_si4126_print(struct atw_softc *sc)
  * XINDIV2 = 1.  I've tried this (it is necessary to double R) and it
  * works, but I have still programmed for XINDIV2 = 1 to be safe.
  */
-int
-atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
+void
+atw_si4126_tune(struct atw_softc *sc, u_int chan)
 {
-	int rc = 0;
 	u_int mhz;
 	u_int R;
-	u_int32_t reg;
+	u_int32_t gpio;
 	u_int16_t gain;
 
 #ifdef ATW_SYNDEBUG
@@ -1374,7 +1373,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
 
 	if (chan == 14)
 		mhz = 2484;
-	else 
+	else
 		mhz = 2412 + 5 * (chan - 1);
 
 	/* Tune IF to 748MHz to suit the IF LO input of the
@@ -1386,94 +1385,101 @@ atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
 	 * strictly necessary.
 	 */
 
-	R = 44;
-
-	atw_rfio_enable(sc, 1);
+	if (atw_xindiv2)
+		R = 44;
+	else
+		R = 88;
 
 	/* Power-up RF, IF synthesizers. */
-	if ((rc = atw_si4126_write(sc, SI4126_POWER,
-	    SI4126_POWER_PDIB|SI4126_POWER_PDRB)) != 0)
-		goto out;
-
-	/* If RF2 N > 2047, then set KP2 to 1. */
-	gain = LSHIFT(((mhz - 374) > 2047) ? 1 : 0, SI4126_GAIN_KP2_MASK);
-
-	if ((rc = atw_si4126_write(sc, SI4126_GAIN, gain)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_POWER,
+	    SI4126_POWER_PDIB|SI4126_POWER_PDRB);
 
 	/* set LPWR, too? */
-	if ((rc = atw_si4126_write(sc, SI4126_MAIN,
-	    SI4126_MAIN_XINDIV2)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_MAIN,
+	    (atw_xindiv2) ? SI4126_MAIN_XINDIV2 : 0);
 
-	/* We set XINDIV2 = 1, so IF = N/(2 * R) * XIN.  XIN = 44MHz.
-	 * I choose N = 1496, R = 44 so that 1496/(2 * 44) * 44MHz = 748MHz.
+	/* Set the phase-locked loop gain.  If RF2 N > 2047, then
+	 * set KP2 to 1.
+	 *
+	 * REFDIF This is different from the reference driver, which
+	 * always sets SI4126_GAIN to 0.
 	 */
-	if ((rc = atw_si4126_write(sc, SI4126_IFN, 1496)) != 0)
-		goto out;
+	gain = LSHIFT(((mhz - 374) > 2047) ? 1 : 0, SI4126_GAIN_KP2_MASK);
 
-	if ((rc = atw_si4126_write(sc, SI4126_IFR, R)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_GAIN, gain);
 
+	/* XIN = 44MHz.
+	 *
+	 * If XINDIV2 = 1, IF = N/(2 * R) * XIN.  I choose N = 1496,
+	 * R = 44 so that 1496/(2 * 44) * 44MHz = 748MHz.
+	 *
+	 * If XINDIV2 = 0, IF = N/R * XIN.  I choose N = 1496, R = 88
+	 * so that 1496/88 * 44MHz = 748MHz.
+	 */
+	atw_si4126_write(sc, SI4126_IFN, 1496);
+
+	atw_si4126_write(sc, SI4126_IFR, R);
+
+#ifndef ATW_REFSLAVE
 	/* Set RF1 arbitrarily. DO NOT configure RF1 after RF2, because
 	 * then RF1 becomes the active RF synthesizer, even on the Si4126,
 	 * which has no RF1!
 	 */
-	if ((rc = atw_si4126_write(sc, SI4126_RF1R, R)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_RF1R, R);
 
-	if ((rc = atw_si4126_write(sc, SI4126_RF1N, mhz - 374)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_RF1N, mhz - 374);
+#endif
 
 	/* N/R * XIN = RF. XIN = 44MHz. We desire RF = mhz - IF,
 	 * where IF = 374MHz.  Let's divide XIN to 1MHz. So R = 44.
 	 * Now let's multiply it to mhz. So mhz - IF = N.
 	 */
-	if ((rc = atw_si4126_write(sc, SI4126_RF2R, R)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_RF2R, R);
 
-	if ((rc = atw_si4126_write(sc, SI4126_RF2N, mhz - 374)) != 0)
-		goto out;
+	atw_si4126_write(sc, SI4126_RF2N, mhz - 374);
 
 	/* wait 100us from power-up for RF, IF to settle */
 	DELAY(100);
 
-	if ((sc->sc_if.if_flags & IFF_LINK1) == 0 || chan == 14) {
-		/* XXX there is a binary driver which sends
-		 * ATW_GPIO_EN_MASK = 1, ATW_GPIO_O_MASK = 1. I had speculated
-		 * that this enables the Si4126 by raising its PWDN#, but I
-		 * think that it actually sets the Prism RF front-end
-		 * to a special mode for channel 14.  
+	gpio = ATW_READ(sc, ATW_GPIO);
+	gpio &= ~(ATW_GPIO_EN_MASK|ATW_GPIO_O_MASK|ATW_GPIO_I_MASK);
+	gpio |= LSHIFT(1, ATW_GPIO_EN_MASK);
+
+	if ((sc->sc_if.if_flags & IFF_LINK1) != 0 && chan != 14) {
+		/* Set a Prism RF front-end to a special mode for channel 14?
+		 *
+		 * Apparently the SMC2635W needs this, although I don't think
+		 * it has a Prism RF.
 		 */
-		reg = ATW_READ(sc, ATW_GPIO);
-		reg &= ~(ATW_GPIO_EN_MASK|ATW_GPIO_O_MASK|ATW_GPIO_I_MASK);
-		reg |= LSHIFT(1, ATW_GPIO_EN_MASK) | LSHIFT(1, ATW_GPIO_O_MASK);
-		ATW_WRITE(sc, ATW_GPIO, reg);
+		gpio |= LSHIFT(1, ATW_GPIO_O_MASK);
 	}
+	ATW_WRITE(sc, ATW_GPIO, gpio);
 
 #ifdef ATW_SYNDEBUG
 	atw_si4126_print(sc);
 #endif /* ATW_SYNDEBUG */
-
-out:
-	atw_rfio_enable(sc, 0);
-
-	return rc;
 }
 
 /* Baseline initialization of RF3000 BBP: set CCA mode and enable antenna
  * diversity.
  *
- * Call this w/ Tx/Rx suspended.
+ * !!!
+ * !!! Call this w/ Tx/Rx suspended, atw_idle(, ATW_NAR_ST|ATW_NAR_SR).
+ * !!!
  */
 int
 atw_rf3000_init(struct atw_softc *sc)
 {
 	int rc = 0;
 
-	atw_idle(sc, ATW_NAR_SR|ATW_NAR_ST);
+	atw_bbp_io_enable(sc, 1);
 
-	atw_rfio_enable(sc, 1);
+	/* CCA is acquisition sensitive */
+	rc = atw_rf3000_write(sc, RF3000_CCACTL,
+	    LSHIFT(RF3000_CCACTL_MODE_BOTH, RF3000_CCACTL_MODE_MASK));
+
+	if (rc != 0)
+		goto out;
 
 	/* enable diversity */
 	rc = atw_rf3000_write(sc, RF3000_DIVCTL, RF3000_DIVCTL_ENABLE);
@@ -1500,6 +1506,12 @@ atw_rf3000_init(struct atw_softc *sc)
 	if (rc != 0)
 		goto out;
 
+	/* XXX Reference driver remarks that Abocom sets this to 50.
+	 * Meaning 0x50, I think....  50 = 0x32, which would set a bit
+	 * in the "reserved" area of register RF3000_OPTIONS1.
+	 *
+	 * EEPROMs for the ADM8211B contain a setting for this register.
+	 */
 	rc = atw_rf3000_write(sc, RF3000_OPTIONS1, 0x0);
 
 	if (rc != 0)
@@ -1510,16 +1522,8 @@ atw_rf3000_init(struct atw_softc *sc)
 	if (rc != 0)
 		goto out;
 
-	/* CCA is acquisition sensitive */ 
-	rc = atw_rf3000_write(sc, RF3000_CCACTL,
-	    LSHIFT(RF3000_CCACTL_MODE_ACQ, RF3000_CCACTL_MODE_MASK));
-
-	if (rc != 0)
-		goto out;
-
 out:
-	atw_rfio_enable(sc, 0);
-	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
+	atw_bbp_io_enable(sc, 0);
 	return rc;
 }
 
@@ -1546,7 +1550,7 @@ atw_rf3000_print(struct atw_softc *sc)
 
 /* Set the power settings on the BBP for channel `chan'. */
 int
-atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
+atw_rf3000_tune(struct atw_softc *sc, u_int chan)
 {
 	int rc = 0;
 	u_int32_t reg;
@@ -1575,7 +1579,7 @@ atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 	    "lna_gs_thresh %02x\n",
 	    sc->sc_dev.dv_xname, chan, txpower, lpf_cutoff, lna_gs_thresh));
 
-	atw_rfio_enable(sc, 1);
+	atw_bbp_io_enable(sc, 1);
 
 	if ((rc = atw_rf3000_write(sc, RF3000_GAINCTL,
 	    LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK))) != 0)
@@ -1587,19 +1591,27 @@ atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 	if ((rc = atw_rf3000_write(sc, RF3000_HIGAINCAL, lna_gs_thresh)) != 0)
 		goto out;
 
-	/* from a binary-only driver. */
-	reg = ATW_READ(sc, ATW_PLCPHD);
-	reg &= ~ATW_PLCPHD_SERVICE_MASK;
-	reg |= LSHIFT(LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK),
-	    ATW_PLCPHD_SERVICE_MASK);
-	ATW_WRITE(sc, ATW_PLCPHD, reg);
+	if ((rc = atw_rf3000_write(sc, RF3000_OPTIONS1, 0x0)) != 0)
+		goto out;
+
+	rc = atw_rf3000_write(sc, RF3000_OPTIONS2, RF3000_OPTIONS2_LNAGS_DELAY);
+	if (rc != 0)
+		goto out;
 
 #ifdef ATW_BBPDEBUG
 	atw_rf3000_print(sc);
 #endif /* ATW_BBPDEBUG */
 
 out:
-	atw_rfio_enable(sc, 0);
+	atw_bbp_io_enable(sc, 0);
+
+	/* set beacon, rts, atim transmit power */
+	reg = ATW_READ(sc, ATW_PLCPHD);
+	reg &= ~ATW_PLCPHD_SERVICE_MASK;
+	reg |= LSHIFT(LSHIFT(txpower, RF3000_GAINCTL_TXVGC_MASK),
+	    ATW_PLCPHD_SERVICE_MASK);
+	ATW_WRITE(sc, ATW_PLCPHD, reg);
+	DELAY(2 * 1000);
 
 	return rc;
 }
@@ -1615,25 +1627,13 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	u_int32_t reg;
 	int i;
 
-	for (i = 1000; --i >= 0; ) {
-		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_RD|ATW_BBPCTL_WR) == 0)
-			break;
-		DELAY(100);
-	}
-
-	if (i < 0) {
-		printf("%s: BBPCTL busy (pre-write)\n", sc->sc_dev.dv_xname);
-		return ETIMEDOUT;
-	}
-
 	reg = sc->sc_bbpctl_wr |
 	     LSHIFT(val & 0xff, ATW_BBPCTL_DATA_MASK) |
 	     LSHIFT(addr & 0x7f, ATW_BBPCTL_ADDR_MASK);
 
-	ATW_WRITE(sc, ATW_BBPCTL, reg);
-
-	for (i = 1000; --i >= 0; ) {
-		DELAY(100);
+	for (i = 10; --i >= 0; ) {
+		ATW_WRITE(sc, ATW_BBPCTL, reg);
+		DELAY(2000);
 		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_WR) == 0)
 			break;
 	}
@@ -1641,7 +1641,7 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 	ATW_CLR(sc, ATW_BBPCTL, ATW_BBPCTL_WR);
 
 	if (i < 0) {
-		printf("%s: BBPCTL busy (post-write)\n", sc->sc_dev.dv_xname);
+		printf("%s: BBPCTL still busy\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
 	return 0;
@@ -1709,49 +1709,36 @@ atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
  *
  * Return 0 on success.
  */
-int
+void
 atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 {
-	u_int32_t bits, reg;
-	int i;
+	uint32_t bits, mask, reg;
+	const int nbits = 22;
 
 	KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
 	KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
 
-	for (i = 1000; --i >= 0; ) {
-		if (ATW_ISSET(sc, ATW_SYNCTL, ATW_SYNCTL_RD|ATW_SYNCTL_WR) == 0)
-			break;
-		DELAY(100);
-	}
-
-	if (i < 0) {
-		printf("%s: start atw_si4126_write, SYNCTL busy\n",
-		    sc->sc_dev.dv_xname);
-		return ETIMEDOUT;
-	}
-
 	bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
 	       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
 
-	reg = sc->sc_synctl_wr | LSHIFT(bits, ATW_SYNCTL_DATA_MASK);
+	reg = ATW_SYNRF_SELSYN;
+	/* reference driver: reset Si4126 serial bus to initial
+	 * conditions?
+	 */
+	ATW_WRITE(sc, ATW_SYNRF, reg | ATW_SYNRF_LEIF);
+	ATW_WRITE(sc, ATW_SYNRF, reg);
 
-	ATW_WRITE(sc, ATW_SYNCTL, reg);
-
-	for (i = 1000; --i >= 0; ) {
-		DELAY(100);
-		if (ATW_ISSET(sc, ATW_SYNCTL, ATW_SYNCTL_WR) == 0)
-			break;
+	for (mask = BIT(nbits - 1); mask != 0; mask >>= 1) {
+		if ((bits & mask) != 0)
+			reg |= ATW_SYNRF_SYNDATA;
+		else
+			reg &= ~ATW_SYNRF_SYNDATA;
+		ATW_WRITE(sc, ATW_SYNRF, reg);
+		ATW_WRITE(sc, ATW_SYNRF, reg | ATW_SYNRF_SYNCLK);
+		ATW_WRITE(sc, ATW_SYNRF, reg);
 	}
-
-	/* restore to acceptable starting condition */
-	ATW_CLR(sc, ATW_SYNCTL, ATW_SYNCTL_WR);
-
-	if (i < 0) {
-		printf("%s: atw_si4126_write wrote %08x, SYNCTL still busy\n",
-		    sc->sc_dev.dv_xname, reg);
-		return ETIMEDOUT;
-	}
-	return 0;
+	ATW_WRITE(sc, ATW_SYNRF, reg | ATW_SYNRF_LEIF);
+	ATW_WRITE(sc, ATW_SYNRF, 0x0);
 }
 
 /* Read 18-bit data from the 4-bit address addr in Si4126
@@ -1794,7 +1781,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 	ATW_CLR(sc, ATW_SYNCTL, ATW_SYNCTL_RD);
 
 	if (i < 0) {
-		printf("%s: atw_si4126_read wrote %08x, SYNCTL still busy\n",
+		printf("%s: atw_si4126_read wrote %#08x, SYNCTL still busy\n",
 		    sc->sc_dev.dv_xname, reg);
 		return ETIMEDOUT;
 	}
@@ -2264,7 +2251,7 @@ static __inline uint32_t
 atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 {
 	/* Following the reference driver's lead, I compute
-	 * 
+	 *
 	 *   (uint32_t)((((uint64_t)tsfth << 32) | tsftl) % ival)
 	 *
 	 * without using 64-bit arithmetic, using the following
@@ -2808,7 +2795,7 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	u_int32_t ackmask = 0, opmode, stsr, test0;
 	int i, s;
 
-	s = splnet(); 
+	s = splnet();
 
 	opmode = sc->sc_opmode & ~bits;
 
@@ -3122,7 +3109,7 @@ atw_txintr(struct atw_softc *sc)
 		    (txstat & TXSTAT_ERRMASK) != 0) {
 #if defined(__OpenBSD__)
 			printf("%s: txstat %b %d\n", sc->sc_dev.dv_xname,
-			    txstat & TXSTAT_ERRMASK, TXSTAT_FMT, 
+			    txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
 			    MASK_AND_RSHIFT(txstat, ATW_TXSTAT_ARC_MASK));
 #else
 			static char txstat_buf[sizeof("ffffffff<>" TXSTAT_FMT)];
@@ -3594,7 +3581,7 @@ atw_start(struct ifnet *ifp)
 			txd = &sc->sc_txdescs[nexttx];
 			txd->at_ctl = ctl |
 			    ((nexttx == firsttx) ? 0 : htole32(ATW_TXCTL_OWN));
- 
+
 			txd->at_buf1 = htole32(dmamap->dm_segs[seg].ds_addr);
 			txd->at_flags =
 			    htole32(LSHIFT(dmamap->dm_segs[seg].ds_len,
