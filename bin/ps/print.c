@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.35 2004/11/24 19:17:10 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.36 2004/12/20 15:10:46 aaron Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.35 2004/11/24 19:17:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.36 2004/12/20 15:10:46 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,9 +120,10 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 		argv = kvm_getenvv2(kd, kp, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
+				if (p != argv)
+					fmt_putc(' ', &left);
 				fmt_puts(*p, &left);
 				p++;
-				fmt_putc(' ', &left);
 			}
 		}
 	} else
@@ -133,9 +134,10 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 				argv = kvm_getargv2(kd, kp, termwidth);
 				if ((p = argv) != NULL) {
 					while (*p) {
+						if (p != argv)
+							fmt_putc(' ', &left);
 						fmt_puts(*p, &left);
 						p++;
-						fmt_putc(' ', &left);
 					}
 				}
 			}
