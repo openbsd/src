@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setenv.c,v 1.2 1996/08/19 08:33:48 tholo Exp $";
+static char *rcsid = "$OpenBSD: setenv.c,v 1.3 1998/02/02 22:44:53 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -71,10 +71,11 @@ setenv(name, value, rewrite)
 
 		for (P = environ, cnt = 0; *P; ++P, ++cnt);
 		if (alloced) {			/* just increase size */
-			environ = (char **)realloc((char *)environ,
+			P = (char **)realloc((void *)environ,
 			    (size_t)(sizeof(char *) * (cnt + 2)));
-			if (!environ)
+			if (!P)
 				return (-1);
+			environ = P;
 		}
 		else {				/* get new space */
 			alloced = 1;		/* copy old entries into it */
