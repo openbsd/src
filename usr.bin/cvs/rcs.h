@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.5 2005/01/03 22:10:12 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.6 2005/01/12 19:23:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,6 +42,23 @@
 
 #define RCS_HEAD_INIT  "1.1"
 
+/* RCS keyword expansion modes (kflags) */
+#define RCS_KWEXP_NONE     0x00
+#define RCS_KWEXP_NAME     0x01		/* include keyword name */
+#define RCS_KWEXP_VAL      0x02		/* include keyword value */
+#define RCS_KWEXP_LKR      0x04		/* include name of locker */
+#define RCS_KWEXP_OLD      0x08		/* generate old keyword string */
+#define RCS_KWEXP_ERR      0x10		/* mode has an error */
+
+#define RCS_KWEXP_DEFAULT  (RCS_KWEXP_NAME | RCS_KWEXP_VAL)
+#define RCS_KWEXP_KVL      (RCS_KWEXP_NAME | RCS_KWEXP_VAL | RCS_KWEXP_LKR)
+
+#define RCS_KWEXP_INVAL(k) (k & RCS_KWEXP_ERR)
+
+
+#define RCSNUM_MAXNUM  USHRT_MAX
+#define RCSNUM_MAXLEN  64
+
 
 /* open modes */
 #define RCS_MODE_READ   0x01
@@ -56,11 +73,6 @@
 
 /* delta flags */
 #define RCS_RD_DEAD   0x01     /* dead */
-
-
-
-#define RCSNUM_MAXNUM  USHRT_MAX
-#define RCSNUM_MAXLEN  64
 
 
 typedef struct rcs_num {
@@ -138,6 +150,8 @@ int       rcs_rmsym        (RCSFILE *, const char *);
 BUF*      rcs_getrev       (RCSFILE *, RCSNUM *);
 BUF*      rcs_gethead      (RCSFILE *);
 RCSNUM*   rcs_getrevbydate (RCSFILE *, struct tm *);
+
+int       rcs_kflag_get    (const char *);
 
 BUF*      rcs_patch     (const char *, const char *);
 size_t    rcs_stresc    (int, const char *, char *, size_t *);

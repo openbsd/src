@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.19 2004/12/18 17:20:40 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.20 2005/01/12 19:23:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,6 +126,17 @@ static void               rcs_freefoo    (struct rcs_foo *);
 #define RCS_TOKSTR(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_blen
 
+
+static struct rcs_kfl {
+	char  rk_char;
+	int   rk_val;
+} rcs_kflags[] = {
+	{ 'k',   RCS_KWEXP_NAME },
+	{ 'v',   RCS_KWEXP_VAL  },
+	{ 'l',   RCS_KWEXP_LKR  },
+	{ 'o',   RCS_KWEXP_OLD  },
+	{ 'b',   RCS_KWEXP_NONE },
+};
 
 static struct rcs_key {
 	char  rk_str[16];
@@ -698,6 +709,45 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	} while (found && cmplen < rev->rn_len);
 
 	return (NULL);
+}
+
+
+/*
+ * rcs_kflag_get()
+ *
+ * Get the keyword expansion mode from a set of character flags given in
+ * <flags> and return the appropriate flag mask.  In case of an error, the
+ * returned mask will have the RCS_KWEXP_ERR bit set to 1.
+ */
+int
+rcs_kflag_get(const char *flags)
+{
+	int fl;
+	size_t len;
+	const char *fp;
+
+	fl = 0;
+	len = strlen(flags);
+
+	for (fp = flags; *fp != '\0'; fp++) {
+		if (*fp == 'k')
+			fl |= RCS_KWEXP_NAME;
+		else if (*fp == 'v')
+			fl |= RCS_KWEXP_VAL;
+		else if (*fp == 'l')
+			fl |= RCS_KWEXP_LKR;
+		else if (*fp == 'o') {
+			if (len != 1)
+				fl |= RCS_KWEXP_ERR;
+			fl |= RCS_KWEXP_OLD;
+		} else if (*fp == 'b') {
+			if (len != 1)
+				fl |= RCS_KWEXP_ERR;
+		} else	/* unknown letter */
+			fl |= RCS_KWEXP_ERR;
+	}
+
+	return (fl);
 }
 
 
