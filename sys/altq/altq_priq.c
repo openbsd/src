@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.11 2003/03/11 02:25:59 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.12 2003/03/13 16:42:52 kjc Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -330,8 +330,10 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 		} else
 #endif
 		if (flags & PRCF_RED) {
-			cl->cl_red = red_alloc(0, 0, 0, 0,
-					       red_flags, red_pkttime);
+			cl->cl_red = red_alloc(0, 0,
+			    qlimit(cl->cl_q) * 10/100,
+			    qlimit(cl->cl_q) * 30/100,
+			    red_flags, red_pkttime);
 			if (cl->cl_red != NULL)
 				qtype(cl->cl_q) = Q_RED;
 		}

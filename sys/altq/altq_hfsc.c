@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.11 2003/03/11 02:25:59 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.12 2003/03/13 16:42:52 kjc Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -424,7 +424,9 @@ hfsc_class_create(hif, rsc, fsc, usc, parent, qlimit, flags, qid)
 			red_pkttime = (int64_t)hif->hif_ifq->altq_ifp->if_mtu
 				* 1000 * 1000 * 1000 / (m2 / 8);
 		if (flags & HFCF_RED) {
-			cl->cl_red = red_alloc(0, 0, 0, 0,
+			cl->cl_red = red_alloc(0, 0,
+			    qlimit(cl->cl_q) * 10/100,
+			    qlimit(cl->cl_q) * 30/100,
 			    red_flags, red_pkttime);
 			if (cl->cl_red != NULL)
 				qtype(cl->cl_q) = Q_RED;
