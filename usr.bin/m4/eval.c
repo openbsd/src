@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.7 1996/11/25 00:19:27 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.8 1997/08/31 21:33:26 deraadt Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.7 1996/11/25 00:19:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.8 1997/08/31 21:33:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -317,14 +317,13 @@ register int td;
 	 * characters in the "to" string.
 	 */
 		if (argc > 3) {
-			char temp[MAXTOK];
+			char temp[STRSPMAX+1];
 			if (argc > 4)
 				map(temp, argv[2], argv[3], argv[4]);
 			else
 				map(temp, argv[2], argv[3], null);
 			pbstr(temp);
-		}
-		else if (argc > 2)
+		} else if (argc > 2)
 			pbstr(argv[2]);
 		break;
 
@@ -549,8 +548,7 @@ register int argc;
 			if ((p = lookup(argv[n])) != nil)
 				fprintf(stderr, dumpfmt, p->name,
 					p->defn);
-	}
-	else {
+	} else {
 		for (n = 0; n < HASHSIZE; n++)
 			for (p = hashtab[n]; p != nil; p = p->nxtptr)
 				fprintf(stderr, dumpfmt, p->name,
@@ -593,8 +591,7 @@ char *ifile;
 		ilevel++;
 		bbase[ilevel] = bufbase = bp;
 		return (1);
-	}
-	else
+	} else
 		return (0);
 }
 
@@ -615,8 +612,7 @@ char *pfile;
 			putc(c, active);
 		(void) fclose(pf);
 		return (1);
-	}
-	else
+	} else
 		return (0);
 }
 #endif
@@ -630,16 +626,16 @@ register char *argv[];
 register int argc;
 {
 	if (argc > 2) {
-		if (*argv[2])
+		if (*argv[2]) {
 			strncpy(lquote, argv[2], MAXCCHARS);
+		else
+			strncpy(lquote, LQUOTE, MAXCCHARS);
 		if (argc > 3) {
 			if (*argv[3])
 				strncpy(rquote, argv[3], MAXCCHARS);
-		}
-		else
+		} else
 			strcpy(rquote, lquote);
-	}
-	else {
+	} else {
 		lquote[0] = LQUOTE, lquote[1] = '\0';
 		rquote[0] = RQUOTE, rquote[1] = '\0';
 	}
@@ -678,6 +674,7 @@ register int n;
 {
 	int fd;
 
+	oindex = n;
 	if (n < 0 || n >= MAXOUT)
 		n = 0;		       /* bitbucket */
 	if (outfile[n] == NULL) {
@@ -686,7 +683,6 @@ register int n;
 		    (outfile[n] = fdopen(fd, "w")) == NULL)
 			oops("%s: cannot divert.", m4temp);
 	}
-	oindex = n;
 	active = outfile[n];
 }
 
