@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.1 2003/05/20 04:22:17 mickey Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.2 2003/05/20 04:42:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -64,7 +64,6 @@ an_isapnp_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	/* XXX This should be more intelligent */
 	return 1;
 }
 
@@ -82,8 +81,5 @@ an_isapnp_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, an_intr, sc, sc->sc_dev.dv_xname);
 
-	printf(":");
-
-	/* Should look at ia->ia_devident... */
 	an_attach(sc);
 }
