@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2000/06/23 16:39:45 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2000/07/01 00:21:22 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.37 2000/06/23 16:39:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.38 2000/07/01 00:21:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -886,7 +886,7 @@ ReadMakefile(p, q)
 		if (curdir != objdir && *fname != '/') {
 			(void)sprintf(path, "%s/%s", curdir, fname);
 			if ((stream = fopen(path, "r")) != NULL) {
-				fname = path;
+				fname = estrdup(path);
 				goto found;
 			}
 		}
