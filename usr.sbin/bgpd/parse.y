@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2004/04/24 19:36:19 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.80 2004/04/25 07:16:24 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 %type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
-%type	<v.prefix>		prefix
+%type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction
 %type	<v.filter_peers>	filter_peer
 %type	<v.filter_match>	filter_match prefixlenop
@@ -345,6 +345,16 @@ prefix		: STRING '/' number	{
 		}
 		;
 
+addrspec	: address	{
+			memcpy(&$$.prefix, &$1, sizeof(struct bgpd_addr));
+			if ($$.prefix.af == AF_INET)
+				$$.len = 32;
+			else
+				$$.len = 128;
+		}
+		| prefix
+		;
+
 optnl		: '\n' optnl
 		|
 		;
@@ -357,9 +367,13 @@ optnumber	: /* empty */		{ $$ = 0; }
 		;
 
 neighbor	: {	curpeer = new_peer(); }
-		    NEIGHBOR address optnl '{' optnl {
-			memcpy(&curpeer->conf.remote_addr, &$3,
+		    NEIGHBOR addrspec optnl '{' optnl {
+			memcpy(&curpeer->conf.remote_addr, &$3.prefix,
 			    sizeof(curpeer->conf.remote_addr));
+			curpeer->conf.remote_masklen = $3.len;
+			if (($3.prefix.af == AF_INET && $3.len != 32) ||
+			    ($3.prefix.af == AF_INET6 && $3.len != 128))
+				curpeer->conf.template = 1;
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.144 2004/04/24 20:15:49 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.145 2004/04/25 07:16:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,7 @@ void	session_up(struct peer *);
 void	session_down(struct peer *);
 
 struct peer		*getpeerbyip(struct sockaddr *);
+int			 session_match_mask(struct peer *, struct sockaddr *);
 struct peer		*getpeerbyid(u_int32_t);
 static struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
 
@@ -455,7 +456,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				return;
 			}
 
-			if (peer->conf.passive) {
+			if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
 				peer->ConnectRetryTimer = 0;
 			} else {
@@ -722,12 +723,14 @@ change_state(struct peer *peer, enum session_state state,
 		pfkey_auth_remove(peer);
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
-		if (event != EVNT_STOP) {
+		if (event != EVNT_STOP && !peer->conf.cloned) {
 			peer->IdleHoldTimer = time(NULL) + peer->IdleHoldTime;
 			if (event != EVNT_NONE &&
 			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
 		}
+		if (peer->state != STATE_NONE && peer->conf.cloned)
+			peer->conf.reconf_action = RECONF_DELETE;
 		break;
 	case STATE_CONNECT:
 		break;
@@ -1876,11 +1879,13 @@ getpeerbyaddr(struct bgpd_addr *addr)
 struct peer *
 getpeerbyip(struct sockaddr *ip)
 {
-	struct peer *p;
+	struct peer	*p, *newpeer, *loose = NULL;
+	u_int32_t	 id;
 
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL; p = p->next)
-		if (p->conf.remote_addr.af == ip->sa_family) {
+		if (!p->conf.template &&
+		    p->conf.remote_addr.af == ip->sa_family) {
 			if (p->conf.remote_addr.af == AF_INET &&
 			    p->conf.remote_addr.v4.s_addr ==
 			    ((struct sockaddr_in *)ip)->sin_addr.s_addr)
@@ -1892,7 +1897,89 @@ getpeerbyip(struct sockaddr *ip)
 				return (p);
 		}
 
+	/* try template matching */
+	for (p = peers; p != NULL; p = p->next)
+		if (p->conf.template &&
+		    p->conf.remote_addr.af == ip->sa_family &&
+		    session_match_mask(p, ip))
+			if (loose == NULL || loose->conf.remote_masklen <
+			    p->conf.remote_masklen)
+				loose = p;
+
+	if (loose != NULL) {
+		/* clone */
+		if ((newpeer = malloc(sizeof(struct peer))) == NULL)
+			fatal(NULL);
+		memcpy(newpeer, loose, sizeof(struct peer));
+		for (id = 1; id < UINT_MAX; id++) {
+			for (p = peers; p != NULL && p->conf.id != id;
+			    p = p->next)
+				;	/* nothing */
+			if (p == NULL) {	/* we found a free id */
+				newpeer->conf.id = id;
+				break;
+			}
+		}
+		if (newpeer->conf.remote_addr.af == AF_INET) {
+			newpeer->conf.remote_addr.v4.s_addr =
+			    ((struct sockaddr_in *)ip)->sin_addr.s_addr;
+			newpeer->conf.remote_masklen = 32;
+		}
+		if (newpeer->conf.remote_addr.af == AF_INET6) {
+			memcpy(&p->conf.remote_addr.v6,
+			    &((struct sockaddr_in6 *)ip)->sin6_addr,
+			    sizeof(newpeer->conf.remote_addr.v6));
+			newpeer->conf.remote_masklen = 128;
+		}
+		newpeer->conf.template = 0;
+		newpeer->conf.cloned = 1;
+		newpeer->state = STATE_NONE;
+		newpeer->rbuf = NULL;
+		init_peer(newpeer);
+		bgp_fsm(newpeer, EVNT_START);
+		newpeer->next = peers;
+		peers = newpeer;
+		return (newpeer);
+	}
+
 	return (NULL);
+}
+
+int
+session_match_mask(struct peer *p, struct sockaddr *ip)
+{
+	int		 i;
+	in_addr_t	 v4mask;
+	struct in6_addr	*in;
+	struct in6_addr	 mask;
+
+	if (p->conf.remote_addr.af == AF_INET) {
+		v4mask = htonl(0xffffffff << (32 - p->conf.remote_masklen));
+		if (p->conf.remote_addr.v4.s_addr ==
+		    ((((struct sockaddr_in *)ip)->sin_addr.s_addr) & v4mask))
+			return (1);
+		else
+			return (0);
+	}
+
+	if (p->conf.remote_addr.af == AF_INET6) {
+		for (i = 0; i < p->conf.remote_masklen / 8; i++)
+			mask.s6_addr[i] = 0xff;
+		i = p->conf.remote_masklen % 8;
+		if (i)
+			mask.s6_addr[p->conf.remote_masklen / 8] = 0xff00 >> i;
+
+		in = &((struct sockaddr_in6 *)ip)->sin6_addr;
+
+		for (i = 0; i < 16; i++)
+			if ((in->s6_addr[i] & mask.s6_addr[i]) !=
+			    p->conf.remote_addr.addr8[i])
+				return (0);
+
+		return (1);
+	}
+
+	return (0);
 }
 
 struct peer *
@@ -1949,6 +2036,7 @@ session_up(struct peer *peer)
 		fatalx("session_up: unsupported address family");
 	}
 
+	memcpy(&sup.conf, &peer->conf, sizeof(sup.conf));
 	peer->stats.last_updown = time(NULL);
 	if (imsg_compose(&ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
 	    &sup, sizeof(sup)) == -1)

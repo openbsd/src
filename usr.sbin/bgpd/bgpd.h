@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.108 2004/04/24 19:36:19 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.109 2004/04/25 07:16:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,6 +150,9 @@ struct peer_config {
 	char			 descr[PEER_DESCR_LEN];
 	struct bgpd_addr	 remote_addr;
 	struct bgpd_addr	 local_addr;
+	u_int8_t		 template;
+	u_int8_t		 remote_masklen;
+	u_int8_t		 cloned;
 	u_int32_t		 max_prefix;
 	u_int16_t		 remote_as;
 	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
@@ -306,6 +309,7 @@ struct session_up {
 	u_int32_t		remote_bgpid;
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
+	struct peer_config	conf;
 };
 
 struct ctl_show_nexthop {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.102 2004/04/25 02:57:55 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.103 2004/04/25 07:16:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -932,7 +932,6 @@ struct peer_table {
 void
 peer_init(struct peer *peer_l, u_int32_t hashsize)
 {
-	struct peer	*p, *next;
 	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -946,14 +945,6 @@ peer_init(struct peer *peer_l, u_int32_t hashsize)
 	LIST_INIT(&peerlist);
 
 	peertable.peer_hashmask = hs - 1;
-
-	for (p = peer_l; p != NULL; p = next) {
-		next = p->next;
-		p->conf.reconf_action = RECONF_NONE;
-		peer_add(p->conf.id, &p->conf);
-		free(p);
-	}
-	peer_l = NULL;
 }
 
 void
@@ -988,7 +979,7 @@ struct rde_peer *
 peer_add(u_int32_t id, struct peer_config *p_conf)
 {
 	struct rde_peer_head	*head;
-	struct rde_peer	*peer;
+	struct rde_peer		*peer;
 
 	ENSURE(peer_get(id) == NULL);
 
@@ -1014,22 +1005,14 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 void
 peer_remove(struct rde_peer *peer)
 {
-	/*
-	 * If the session is up we wait until we get the IMSG_SESSION_DOWN
-	 * message. If the session is down or was never up we delete the
-	 * peer.
-	 */
-	if (peer->state == PEER_UP) {
-		peer->conf.reconf_action = RECONF_DELETE;
-	} else {
-		ENSURE(peer_get(peer->conf.id) != NULL);
-		ENSURE(LIST_EMPTY(&peer->path_h));
+	ENSURE(peer->state == PEER_DOWN);
+	ENSURE(peer_get(peer->conf.id) != NULL);
+	ENSURE(LIST_EMPTY(&peer->path_h));
 
-		LIST_REMOVE(peer, hash_l);
-		LIST_REMOVE(peer, peer_l);
+	LIST_REMOVE(peer, hash_l);
+	LIST_REMOVE(peer, peer_l);
 
-		free(peer);
-	}
+	free(peer);
 }
 
 void
@@ -1037,7 +1020,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 {
 	struct rde_peer	*peer;
 
-	peer = peer_get(id);
+	peer = peer_add(id, &sup->conf);
 	if (peer == NULL) {
 		log_warnx("peer_up: unknown peer id %d", id);
 		return;
@@ -1083,8 +1066,7 @@ peer_down(u_int32_t id)
 	}
 	LIST_INIT(&peer->path_h);
 
-	if (peer->conf.reconf_action == RECONF_DELETE)
-		peer_remove(peer);
+	peer_remove(peer);
 }
 
 /*
