@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.8 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: radix.c,v 1.9 2002/11/20 21:21:15 deraadt Exp $	*/
 /*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ on1:
 			 */
 			do {
 				if (m->rm_flags & RNF_NORMAL) {
-					if (rn_b <= m->rm_b && 
+					if (rn_b <= m->rm_b &&
 					    !(m->rm_flags & RNF_IGNORE))
 						return (m->rm_leaf);
 				} else {
@@ -308,7 +308,7 @@ on1:
 	} while (t != top);
 	return 0;
 }
-		
+
 #ifdef RN_DEBUG
 int	rn_nodenum;
 struct	radix_node *rn_clist;
@@ -323,13 +323,20 @@ rn_newpair(v, b, nodes)
 	struct radix_node nodes[2];
 {
 	register struct radix_node *tt = nodes, *t = tt + 1;
-	t->rn_b = b; t->rn_bmask = 0x80 >> (b & 7);
-	t->rn_l = tt; t->rn_off = b >> 3;
-	tt->rn_b = -1; tt->rn_key = (caddr_t)v; tt->rn_p = t;
+	t->rn_b = b;
+	t->rn_bmask = 0x80 >> (b & 7);
+	t->rn_l = tt;
+	t->rn_off = b >> 3;
+	tt->rn_b = -1;
+	tt->rn_key = (caddr_t)v;
+	tt->rn_p = t;
 	tt->rn_flags = t->rn_flags = RNF_ACTIVE;
 #ifdef RN_DEBUG
-	tt->rn_info = rn_nodenum++; t->rn_info = rn_nodenum++;
-	tt->rn_twin = t; tt->rn_ybro = rn_clist; rn_clist = tt;
+	tt->rn_info = rn_nodenum++;
+	t->rn_info = rn_nodenum++;
+	tt->rn_twin = t;
+	tt->rn_ybro = rn_clist;
+	rn_clist = tt;
 #endif
 	return t;
 }
@@ -348,7 +355,7 @@ rn_insert(v_arg, head, dupentry, nodes)
 	register caddr_t cp = v + head_off;
 	register int b;
 	struct radix_node *tt;
-    	/*
+	/*
 	 * Find first bit at which v and t->rn_key differ
 	 */
     {
@@ -372,24 +379,28 @@ on1:
 	cp = v;
 	do {
 		p = x;
-		if (cp[x->rn_off] & x->rn_bmask) 
+		if (cp[x->rn_off] & x->rn_bmask)
 			x = x->rn_r;
-		else x = x->rn_l;
+		else
+			x = x->rn_l;
 	} while (b > (unsigned) x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
 #ifdef RN_DEBUG
 	if (rn_debug)
 		log(LOG_DEBUG, "rn_insert: Going In:\n"), traverse(p);
 #endif
-	t = rn_newpair(v_arg, b, nodes); tt = t->rn_l;
+	t = rn_newpair(v_arg, b, nodes);
+	tt = t->rn_l;
 	if ((cp[p->rn_off] & p->rn_bmask) == 0)
 		p->rn_l = t;
 	else
 		p->rn_r = t;
-	x->rn_p = t; t->rn_p = p; /* frees x, p as temp vars below */
+	x->rn_p = t;
+	t->rn_p = p; /* frees x, p as temp vars below */
 	if ((cp[t->rn_off] & t->rn_bmask) == 0) {
 		t->rn_r = x;
 	} else {
-		t->rn_r = tt; t->rn_l = x;
+		t->rn_r = tt;
+		t->rn_l = x;
 	}
 #ifdef RN_DEBUG
 	if (rn_debug)
@@ -456,11 +467,12 @@ rn_addmask(n_arg, search, skip)
 	/*
 	 * Calculate index of mask, and check for normalcy.
 	 */
-	cplim = netmask + mlen; isnormal = 1;
+	cplim = netmask + mlen;
+	isnormal = 1;
 	for (cp = netmask + skip; (cp < cplim) && *(u_char *)cp == 0xff;)
 		cp++;
 	if (cp != cplim) {
-		for (j = 0x80; (j & *cp) != 0; j >>= 1)  
+		for (j = 0x80; (j & *cp) != 0; j >>= 1)
 			b++;
 		if (*cp != normal_chars[b] || cp != (cplim - 1))
 			isnormal = 0;
@@ -480,7 +492,7 @@ rn_lexobetter(m_arg, n_arg)
 
 	if (*mp > *np)
 		return 1;  /* not really, but need to check longer one first */
-	if (*mp == *np) 
+	if (*mp == *np)
 		for (lim = mp + *mp; mp < lim;)
 			if (*mp++ > *np++)
 				return 1;
@@ -570,15 +582,23 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 			(tt = treenodes)->rn_dupedkey = t;
 			tt->rn_flags = t->rn_flags;
 			tt->rn_p = x = t->rn_p;
-			if (x->rn_l == t) x->rn_l = tt; else x->rn_r = tt;
-			saved_tt = tt; x = xx;
+			if (x->rn_l == t)
+				x->rn_l = tt;
+			else
+				x->rn_r = tt;
+			saved_tt = tt;
+			x = xx;
 		} else {
 			(tt = treenodes)->rn_dupedkey = t->rn_dupedkey;
 			t->rn_dupedkey = tt;
 		}
 #ifdef RN_DEBUG
-		t=tt+1; tt->rn_info = rn_nodenum++; t->rn_info = rn_nodenum++;
-		tt->rn_twin = t; tt->rn_ybro = rn_clist; rn_clist = tt;
+		t=tt+1;
+		tt->rn_info = rn_nodenum++;
+		t->rn_info = rn_nodenum++;
+		tt->rn_twin = t;
+		tt->rn_ybro = rn_clist;
+		rn_clist = tt;
 #endif
 		tt->rn_key = (caddr_t) v;
 		tt->rn_b = -1;
@@ -596,9 +616,12 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	if (keyduplicated)
 		goto on2;
 	b_leaf = -1 - t->rn_b;
-	if (t->rn_r == saved_tt) x = t->rn_l; else x = t->rn_r;
+	if (t->rn_r == saved_tt)
+		x = t->rn_l;
+	else
+		x = t->rn_r;
 	/* Promote general routes from below */
-	if (x->rn_b < 0) { 
+	if (x->rn_b < 0) {
 	    for (mp = &t->rn_mklist; x; x = x->rn_dupedkey)
 		if (x->rn_mask && (x->rn_b >= b_leaf) && x->rn_mklist == 0) {
 			*mp = m = rn_new_radix_mask(x, 0);
@@ -612,7 +635,8 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 		for (mp = &x->rn_mklist; (m = *mp) != NULL; mp = &m->rm_mklist)
 			if (m->rm_b >= b_leaf)
 				break;
-		t->rn_mklist = m; *mp = 0;
+		t->rn_mklist = m;
+		*mp = 0;
 	}
 on2:
 	/* Add new route to highest possible ancestor's list */
@@ -695,7 +719,7 @@ rn_delete(v_arg, netmask_arg, head)
 			log(LOG_ERR, "rn_delete: inconsistent annotation\n");
 			return 0;  /* dangling ref could cause disaster */
 		}
-	} else { 
+	} else {
 		if (m->rm_mask != tt->rn_mask) {
 			log(LOG_ERR, "rn_delete: inconsistent annotation\n");
 			goto on1;
@@ -730,35 +754,56 @@ on1:
 		return (0);
 #ifdef RN_DEBUG
 	/* Get us out of the creation list */
-	for (t = rn_clist; t && t->rn_ybro != tt; t = t->rn_ybro) {}
+	for (t = rn_clist; t && t->rn_ybro != tt; t = t->rn_ybro)
+		;
 	if (t) t->rn_ybro = tt->rn_ybro;
 #endif
 	t = tt->rn_p;
 	if ((dupedkey = saved_tt->rn_dupedkey) != 0) {
 		if (tt == saved_tt) {
-			x = dupedkey; x->rn_p = t;
-			if (t->rn_l == tt) t->rn_l = x; else t->rn_r = x;
+			x = dupedkey;
+			x->rn_p = t;
+			if (t->rn_l == tt)
+				t->rn_l = x;
+			else
+				t->rn_r = x;
 		} else {
 			for (x = p = saved_tt; p && p->rn_dupedkey != tt;)
 				p = p->rn_dupedkey;
-			if (p) p->rn_dupedkey = tt->rn_dupedkey;
-			else log(LOG_ERR, "rn_delete: couldn't find us\n");
+			if (p)
+				p->rn_dupedkey = tt->rn_dupedkey;
+			else
+				log(LOG_ERR, "rn_delete: couldn't find us\n");
 		}
 		t = tt + 1;
 		if  (t->rn_flags & RNF_ACTIVE) {
 #ifndef RN_DEBUG
-			*++x = *t; p = t->rn_p;
+			*++x = *t;
+			p = t->rn_p;
 #else
-			b = t->rn_info; *++x = *t; t->rn_info = b; p = t->rn_p;
+			b = t->rn_info;
+			*++x = *t;
+			t->rn_info = b;
+			p = t->rn_p;
 #endif
-			if (p->rn_l == t) p->rn_l = x; else p->rn_r = x;
-			x->rn_l->rn_p = x; x->rn_r->rn_p = x;
+			if (p->rn_l == t)
+				p->rn_l = x;
+			else
+				p->rn_r = x;
+			x->rn_l->rn_p = x;
+			x->rn_r->rn_p = x;
 		}
 		goto out;
 	}
-	if (t->rn_l == tt) x = t->rn_r; else x = t->rn_l;
+	if (t->rn_l == tt)
+		x = t->rn_r;
+	else
+		x = t->rn_l;
 	p = t->rn_p;
-	if (p->rn_r == t) p->rn_r = x; else p->rn_l = x;
+	if (p->rn_r == t)
+		p->rn_r = x;
+	else
+		p->rn_l = x;
 	x->rn_p = p;
 	/*
 	 * Demote routes attached to us.
@@ -793,11 +838,17 @@ on1:
 #ifndef RN_DEBUG
 		*t = *x;
 #else
-		b = t->rn_info; *t = *x; t->rn_info = b;
+		b = t->rn_info;
+		*t = *x;
+		t->rn_info = b;
 #endif
-		t->rn_l->rn_p = t; t->rn_r->rn_p = t;
+		t->rn_l->rn_p = t;
+		t->rn_r->rn_p = t;
 		p = x->rn_p;
-		if (p->rn_l == x) p->rn_l = t; else p->rn_r = t;
+		if (p->rn_l == x)
+			p->rn_l = t;
+		else
+			p->rn_r = t;
 	}
 out:
 	tt->rn_flags &= ~RNF_ACTIVE;
