@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.27 1999/04/18 03:24:22 jason Exp $
+# 	$OpenBSD: SUN4C,v 1.28 1999/10/29 14:14:28 art Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -10,7 +10,6 @@ option		SUN4C
 option		TIMEZONE=0, DST=0
 
 # Standard system options
-option		SWAPPAGER, DEVPAGER	# paging
 #option		DEBUG, DIAGNOSTIC	# extra kernel debugging
 option		KTRACE			# system call tracing support
 #option		KGDB			# support for kernel gdb
@@ -18,6 +17,8 @@ option		KTRACE			# system call tracing support
 option		RASTERCONSOLE		# fast rasterop console
 option		SYSVMSG,SYSVSEM,SYSVSHM
 option		COMPAT_09, COMPAT_10
+
+option		UVM		# use the UVM virtual memory system
 
 # Filesystem options
 option		FFS
