@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.16 2004/03/02 23:09:27 tedu Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.17 2005/01/04 18:20:37 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ struct field {
 	char *name;
 	mixer_ctrl_t *valp;
 	mixer_devinfo_t *infp;
-	char changed;
 } *fields, *rfields;
 
 mixer_ctrl_t *values;
@@ -230,7 +229,6 @@ rdfield(struct field *p, char *q)
 	default:
 		errx(1, "Invalid format.");
 	}
-	p->changed = 1;
 	return (1);
 }
 
@@ -297,7 +295,10 @@ main(int argc, char **argv)
 
 	for(i = 0; i < ndev; i++) {
 		infos[i].index = i;
-		ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]);
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]) < 0) {
+			ndev--, i--;
+			continue;
+		}
 	}
 
 	for(i = 0; i < ndev; i++) {
@@ -372,7 +373,6 @@ main(int argc, char **argv)
 						}
 					}
 				}
-				argv++;
 			} else {
 				p = findfield(*argv);
 				if (p == NULL)
@@ -382,6 +382,7 @@ main(int argc, char **argv)
 					fprintf(out, "\n");
 				}
 			}
+			argv++;
 		}
 	} else
 		usage();
