@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bdes.1,v 1.2 1996/06/26 05:31:38 deraadt Exp $
+.\"	$OpenBSD: bdes.1,v 1.3 1996/07/12 22:25:03 deraadt Exp $
 .\"	$NetBSD: bdes.1,v 1.1 1995/07/24 04:30:51 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -49,13 +49,6 @@ bdes [ \-abdp ] [ \-F N ] [ \-f N ] [ \-k key ]
 [ \-m N ] [ \-o N ] [ \-v vector ]
 .ft R
 .fi
-.SH WARNING
-The
-.I bdes
-program installed on this system does not support
-encryption, because it was obtained as part of the
-``exportable'' distribution of
-.IR NetBSD .
 .SH DESCRIPTION
 .I Bdes
 implements all DES modes of operation described in FIPS PUB 81, 
@@ -227,7 +220,7 @@ By default,
 .I bdes
 does too, but this may be changed from the command line.
 .SH SEE ALSO
-crypt(1), crypt(3), getpass(3)
+crypt(3), getpass(3)
 .sp
 .IR "Data Encryption Standard" ,
 Federal Information Processing Standard #46,
