@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.2 2005/01/16 16:14:10 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.3 2005/01/18 19:17:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -58,6 +58,10 @@
  * SUCH DAMAGE.
  */
 
+struct diocmap {
+	u_int8_t r[256], g[256], b[256];
+};
+
 /*
  * Minimal frame buffer state structure.
  */
@@ -77,8 +81,6 @@ struct diofb {
 	u_int	dwidth;			/* displayed part width */
 	u_int	dheight;		/* displayed part height */
 
-	int	curvisible;
-
 	/* font information */
 	u_int	rows, cols;		/* display size, in chars */
 	u_int   cpl;			/* chars per line off screen */
@@ -86,8 +88,12 @@ struct diofb {
 	u_int	fontx, fonty;		/* off screen font position */
 
 	/* cursor information */
+	int	curvisible;
 	u_int   cursorx, cursory;	/* cursor position */
 	u_int   cblankx, cblanky;	/* off screen cursor shape */
+
+	/* color information */
+	struct diocmap cmap;
 
 	/* wsdisplay information */
 	struct wsscreen_descr wsd;
