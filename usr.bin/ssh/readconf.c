@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.3 1999/09/29 00:10:16 deraadt Exp $");
+RCSID("$Id: readconf.c,v 1.4 1999/09/29 17:52:12 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -165,6 +165,11 @@ void add_local_forward(Options *options, int port, const char *host,
 		       int host_port)
 {
   Forward *fwd;
+  extern uid_t original_real_uid;
+  if ((port & 0xffff) != port)
+    fatal("Requested forwarding of nonexistent port %d.", port);
+  if (port < 1024 && original_real_uid != 0)
+    fatal("Privileged ports can only be forwarded by root.\n");
   if (options->num_local_forwards >= SSH_MAX_FORWARDS_PER_DIRECTION)
     fatal("Too many local forwards (max %d).", SSH_MAX_FORWARDS_PER_DIRECTION);
   fwd = &options->local_forwards[options->num_local_forwards++];
