@@ -1,7 +1,7 @@
-/*	$OpenBSD: itvar.h,v 1.1 2003/05/20 20:26:27 grange Exp $	*/
+/*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
- * Copyright (c) 2003 Julien Bordet <zejames@greygats.org>
+ * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
