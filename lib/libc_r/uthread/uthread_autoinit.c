@@ -1,7 +1,7 @@
 /*
  * David Leonard, 1998. Public Domain. <david.leonard@csee.uq.edu.au>
  *
- * $OpenBSD: uthread_autoinit.c,v 1.5 1999/02/02 01:36:00 imp Exp $
+ * $OpenBSD: uthread_autoinit.c,v 1.6 1999/03/10 10:05:39 d Exp $
  */
 
 #include <stdio.h>
@@ -13,7 +13,7 @@ extern void _thread_init __P((void));
 __END_DECLS
 
 #ifdef DEBUG
-#define init_debug(m)	stderr_debug(m)
+#define init_debug(m)	stderr_debug( "[init method: " m "]\n")
 #else
 #define init_debug(m)	/* nothing */
 #endif
@@ -25,7 +25,7 @@ __END_DECLS
 class Init {
 public:
 	Init() { 
-		init_debug("init: C++\n");
+		init_debug("C++");
 		_thread_init();
 	}
 };
@@ -40,7 +40,7 @@ extern void _thread_dot_init __P((void)) asm(".init");
 void 
 _thread_dot_init()
 { 
-	init_debug("init: a.out .init\n");
+	init_debug("a.out .init");
 	_thread_init();
 }
 
@@ -54,7 +54,7 @@ extern int _init() __attribute__((constructor,section (".dynamic")));
 int 
 _init()
 { 
-	init_debug("init: elf _init\n");
+	init_debug("elf _init");
 	_thread_init();
 	return 0; 
 }
@@ -68,12 +68,12 @@ _init()
  * the collect2 stage of linkage will inform __main (from libgcc.a)
  * to call it.
  */
-#ifdef _GNUC_
+#ifdef __GNUC__
 void _thread_init_constructor __P((void)) __attribute__((constructor));
 void
 _thread_init_constructor()
 {
-	init_debug("init: GNU constructor");
+	init_debug("GNU constructor");
 	_thread_init();
 }
 #endif /* GNU C */
