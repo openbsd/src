@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.22 2001/05/31 10:22:35 art Exp $	*/
+/*	$OpenBSD: sd.c,v 1.23 2001/08/26 00:15:37 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-
-#include "opt_useleds.h"
 
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>

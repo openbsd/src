@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.12 2001/05/01 16:51:09 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.13 2001/08/26 00:15:36 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -66,8 +66,6 @@
 
 #include <hp300/dev/hdreg.h>
 #include <hp300/dev/hdvar.h>
-
-#include "opt_useleds.h"
 
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>

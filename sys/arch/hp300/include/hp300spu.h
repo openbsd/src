@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp300spu.h,v 1.3 1998/05/10 11:31:56 downsj Exp $	*/
+/*	$OpenBSD: hp300spu.h,v 1.4 2001/08/26 00:15:37 miod Exp $	*/
 /*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
@@ -83,25 +83,8 @@ extern	int mmuid;		/* MMU id */
 
 /*
  * This section associates hp300 model configurations with certain
- * combindations of CPU, MMU, and cache.
+ * combinations of CPU, MMU, and cache.
  */
-
-/*
- * Pull in user-defined SPU configuration options.
- */
-#include "opt_hp320.h"
-#include "opt_hp330.h"
-#include "opt_hp340.h"
-#include "opt_hp345.h"
-#include "opt_hp350.h"
-#include "opt_hp360.h"
-#include "opt_hp370.h"
-#include "opt_hp375.h"
-#include "opt_hp380.h"
-#include "opt_hp385.h"
-#include "opt_hp400.h"
-#include "opt_hp425.h"
-#include "opt_hp433.h"
 
 /*
  * CPU configuration.

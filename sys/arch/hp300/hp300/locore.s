@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.29 2001/08/25 16:16:03 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.30 2001/08/26 00:15:37 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 #include <machine/trap.h>
 
 #include "ksyms.h"
-#include "opt_useleds.h"
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
@@ -100,7 +99,7 @@ GLOBAL(kernel_text)
 
 /*
  * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
+ * Try and make this the first thing in the data segment so it
  * is page aligned.  Note that if we overflow here, we run into
  * our text segment.
  */

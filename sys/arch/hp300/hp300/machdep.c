@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2001/08/25 16:15:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2001/08/26 00:15:37 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -102,8 +102,6 @@
 #include <vm/vm_param.h>
 
 #include <uvm/uvm_extern.h>
-
-#include "opt_useleds.h"
 
 #include <arch/hp300/dev/hilreg.h>
 #include <arch/hp300/dev/hilioctl.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.14 2001/05/11 07:55:33 deraadt Exp $
+#	$OpenBSD: files.hp300,v 1.15 2001/08/26 00:15:33 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -7,24 +7,6 @@
 maxpartitions 16
 
 maxusers 2 8 64
-
-# SPU configuration options.
-defopt	HP320
-defopt	HP330
-defopt	HP340
-defopt	HP345
-defopt	HP350
-defopt	HP360
-defopt	HP370
-defopt	HP375
-defopt	HP380
-defopt	HP385
-defopt	HP400
-defopt	HP425
-defopt	HP433
-
-# Misc. options.
-defopt	USELEDS		# make the lights twinkle
 
 # NOTE!  The order of these lines is significant!  Don't change them
 # unless you absolutely know what you're doing!
