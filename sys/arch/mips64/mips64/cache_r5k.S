@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.13 2004/09/21 08:39:46 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.14 2004/09/29 12:16:55 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -168,6 +168,12 @@
  */
 LEAF(Mips5k_ConfigCache, 0)
 	.set	noreorder
+	LA	v0, 1f
+	LA	v1, KSEG1_BASE
+	or	v0, v1
+	jr	v0				# Switch to uncached.
+	nop
+1:
 	mfc0	v1, COP_0_PRID			# read processor ID register
 	mfc0	v0, COP_0_CONFIG		# Get configuration register
 
@@ -214,7 +220,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	nop
 
 #---- R5K ------------------------------
-Conf5K:					# R5000 type, check for L2 cache
+Conf5K:						# R5xxx type, check for L2 cache
 	and	t1, v0, CF_5_SC
 	bnez	t1, ConfResult			# not enabled
 	li	ta2, 0				# set size to 0.
@@ -224,18 +230,18 @@ Conf5K:					# R5000 type, check for L2 cache
 	beq	t1, t3, ConfResult		# No L2 cache
 	srl	t1, CF_5_SS_AL
 
-	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
 	li	ta2, 512*1024			# 512k per 'click'.
 	sll	ta2, t1
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
+	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	LA	t0, KSEG0_BASE
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
-	PTR_ADDU t0, 128*32
+	PTR_ADDU t0, 4096
 	bne	t0, t1, 1b
 	nop
 
@@ -254,18 +260,18 @@ Conf52K:					# R5200 type, check for L2 cache
 	beq	t1, t3, ConfResult		# No L2 cache
 	srl	t1, CF_52_SS_AL
 
-	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_52_SE			# Set SE in conf
 	or	v0, t3				# Update config register
 	li	ta2, 512*1024			# 512k per 'click'.
 	sll	ta2, t1
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
+	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	LA	t0, KSEG0_BASE
 	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
-	PTR_ADDU t0, 128*32
+	PTR_ADDU t0, 4096
 	bne	t0, t1, 1b
 	nop
 
@@ -297,16 +303,55 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	beqz	ta3, Conf7KL2			# No L3 cache present
 	nop
 
-	or	t2, CTYPE_HAS_XL3
 	li	t3, CF_7_TE			# Set SE in conf
 	or	v0, t3				# Update config register
+	mtc0	v0, COP_0_CONFIG		# Enable L3 cache
+	or	t2, CTYPE_HAS_XL3
 #endif
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta3
+1:
+	cache	InvalidatePage_T, 0(t0)
+	PTR_ADDU t0, 4096
+	bne	t0, t1, 1b
+	nop
+
 
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
 	bnez	t1, ConfResult
 	li	ta2, 0				# No L2?
 
+	and	t1, v0, CF_7_SE
+	bnez	t1, 3f
+	ori	v0, CF_7_SE
+
+	mtc0	v0, COP_0_CONFIG		# Enable and init L2 cache
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta3
+1:
+	PTR_ADDU t0, 32
+	bne	t0, t1, 1b
+	cache	IndexStoreTagS, -4(t0)
+	sync
+
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta3
+1:
+	PTR_ADDU t0, 32
+	bne	t0, t1, 1b
+	lw	zero, -4(t0)
+	sync
+
+	LA	t0, KSEG0_BASE
+	PTR_ADDU t1, t0, ta3
+1:
+	PTR_ADDU t0, 32
+	bne	t0, t1, 1b
+	cache	IndexStoreTagS, -4(t0)
+	sync
+
+3:
 	or	t2, CTYPE_HAS_IL2		# L2 is on chip
 	b	ConfResult
 	li	ta2, 256*1024			# L2 size = 256k
@@ -419,7 +464,7 @@ LEAF(Mips5k_SyncCache, 0)
 	lw	ta0, CpuSecondaryCacheSize
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
-	PTR_SUBU ta0, 32				# Fixed cache line size.
+	PTR_SUBU ta0, 32			# Fixed cache line size.
 	bgtz	ta0, 10b
 	PTR_ADDU t3, 32
 
