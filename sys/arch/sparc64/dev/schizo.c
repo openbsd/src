@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.5 2002/07/24 19:10:54 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.6 2002/07/24 19:12:00 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -229,7 +229,6 @@ schizo_init_iommu(sc, pbm)
 	is->is_sb[0] = NULL;
 #endif
 	is->is_sb[1] = NULL;
-	printf("buffers %p & %p\n", is->is_sb[0], is->is_sb[1]);
 
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
