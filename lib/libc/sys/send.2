@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.5 1995/02/27 12:36:43 cgd Exp $
+.\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,6 +148,9 @@ The operation may succeed when buffers become available.
 The output queue for a network interface was full.
 This generally indicates that the interface has stopped sending,
 but may be caused by transient congestion.
+.It Bq Er EACCES
+The SO_BROADCAST option is not set on the socket, and a broadcast address
+was given as the destination.
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
