@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.4 1997/10/23 15:13:29 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.5 1997/10/24 01:38:51 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,8 +62,7 @@ diskprobe()
 	for(drive = 0; drive < 4; drive++) {
 		rv = bios_getinfo(drive, &bios_diskinfo[i]);
 
-		if( (rv & 0x00FF)) break;
-		if(!(rv & 0xFF00)) break;
+		if(rv) break;
 
 		printf(" fd%u", drive);
 
@@ -76,8 +75,7 @@ diskprobe()
 	for(drive = 0x80; drive < 0x88; drive++) {
 		rv = bios_getinfo(drive, &bios_diskinfo[i]);
 
-		if( (rv & 0x00FF)) continue;
-		if(!(rv & 0xFF00)) continue;
+		if(rv) break;
 
 		unit = drive - 0x80;
 		printf(" hd%u%s", unit, (bios_diskinfo[i].bios_edd > 0?"+":""));
@@ -168,7 +166,7 @@ disksum(bdi)
 
 		sum = adler32(sum, buf, DEV_BSIZE);
 
-		/* Do a minimum of 8 sectors (floppy is slow...) */
+		/* Do a minimum of 8 sectors */
 		if((len >= 8) && ((bd = find_sum(sum)) == NULL))
 			break;
 	}

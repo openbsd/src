@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.40 1997/10/23 15:13:26 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.41 1997/10/24 01:38:50 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -87,7 +87,7 @@ bios_getinfo(dev, pdi)
 	pdi->bios_cylinders++;
 
 	if (rv & 0xff)
-		return (rv & 0xff) >> 8;
+		return(1);
 
 	/* EDD support check */
 	__asm __volatile(DOINT(0x13) "; setc %b0"
@@ -105,7 +105,12 @@ bios_getinfo(dev, pdi)
 	__asm __volatile (DOINT(0x13) "; setc %b0"
 		: "=a" (rv) : "0" (0x1500), "d" (dev) : "%ecx", "cc");
 
-	return rv & 0xffff;
+	if(!(rv & 0xff00))
+		return(1);
+	if(rv & 0x00ff)
+		return(1);
+
+	return(0);
 }
 
 /*
