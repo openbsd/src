@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.12 1999/07/04 11:53:51 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.13 1999/08/21 19:34:40 niklas Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -42,6 +42,7 @@
 .Nd add or change user database information
 .Sh SYNOPSIS
 .Nm chpass
+.Op Fl ly
 .Op Fl a Ar list
 .Op Fl s Ar newshell
 .Op Ar user
@@ -55,6 +56,9 @@ The information is formatted and supplied to an editor for changes.
 .Pp
 Only the information that the user is allowed to change is displayed.
 .Pp
+If YP in enabled change requests are first tried in the local database,
+and then in the YP database, if there was no entry to change locally.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar list
@@ -66,9 +70,19 @@ This argument must be a colon
 .Pq Sq \&:
 separated list of all the
 user database fields, although they may be empty.
+In YP environments this operation is not supported, only local additions
+can be done and that requires use of the
+.Fl l
+flag.
+.It Fl l
+In environments where YP is enabled, always alter local information as
+opposed to information in YP.
 .It Fl s Ar newshell
 Attempts to change the user's shell to
 .Ar newshell .
+.It Fl y
+In environments where YP is enabled, always change the YP entry, even if this
+is a modification request and there is a local entry for the specified user.
 .El
 .Pp
 Possible display items are as follows:
