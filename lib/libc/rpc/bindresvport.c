@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.4 1996/07/29 06:51:25 downsj Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.5 1996/07/30 10:52:49 deraadt Exp $	*/
 /*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.4 1996/07/29 06:51:25 downsj Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.5 1996/07/30 10:52:49 deraadt Exp $";
 #endif
 
 /*
@@ -58,11 +58,12 @@ bindresvport(sd, sin)
 {
 	int on, old, error;
 	struct sockaddr_in myaddr;
+	int sinlen = sizeof(struct sockaddr_in);
 
 	if (sin == (struct sockaddr_in *)0) {
 		sin = &myaddr;
-		memset(sin, 0, sizeof (*sin));
-		sin->sin_len = sizeof(struct sockaddr_in);
+		memset(sin, 0, sizeof(*sin));
+		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 	} else if (sin->sin_family != AF_INET) {
 		errno = EPFNOSUPPORT;
@@ -83,14 +84,25 @@ bindresvport(sd, sin)
 			return(error);
 	}
 
-	error = bind(sd, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
-	if (error < 0) {
-		/* Don't change error or errno. */
+	error = bind(sd, (struct sockaddr *)sin, sizeof(*sin));
+
+	if (sin.sin_port == 0) {
 		int saved_errno = errno;
 
-		if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-			       &old, sizeof(old)) < 0)
-			errno = saved_errno;
+		if (error) {
+			if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
+			    &old, sizeof(old)) < 0)
+				errno = saved_errno;
+			return (error);
+		}
+
+		if (sin != &myaddr) {
+			/* Hmm, what did the kernel assign... */
+			if (getsockname(sd, (struct sockaddr *)sin,
+			    sizeof(*sin)) < 0)
+				saved_errno = errno;
+			return (error);
+		}
 	}
-	return(error);
+	return (error);
 }
