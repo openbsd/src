@@ -1,3 +1,4 @@
+/*	$OpenBSD: math_emu.h,v 1.2 2001/07/04 08:57:47 niklas Exp $	*/
 /*	$NetBSD: math_emu.h,v 1.5 1995/05/03 00:17:16 mycroft Exp $	*/
 
 /*

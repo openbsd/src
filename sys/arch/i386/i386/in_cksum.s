@@ -1,3 +1,5 @@
+/*	$OpenBSD: in_cksum.s,v 1.5 2001/07/04 08:57:47 niklas Exp $	*/
+
 /*
  * Copyright (c) 1996 Dave Richards <richards@zso.dec.com>
  * All rights reserved.

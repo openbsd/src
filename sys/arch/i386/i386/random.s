@@ -1,3 +1,4 @@
+/*	$OpenBSD: random.s,v 1.3 2001/07/04 08:57:47 niklas Exp $	*/
 /*	$NetBSD: random.s,v 1.5 1995/01/15 23:20:33 mycroft Exp $	*/
 
 /*

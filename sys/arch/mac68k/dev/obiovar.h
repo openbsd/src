@@ -1,3 +1,4 @@
+/*	$OpenBSD: obiovar.h,v 1.3 2001/07/04 08:52:46 niklas Exp $	*/
 /*	$NetBSD: obiovar.h,v 1.3 1997/02/13 19:01:08 scottr Exp $	*/
 
 /*

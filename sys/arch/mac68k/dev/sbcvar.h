@@ -1,3 +1,4 @@
+/*	$OpenBSD: sbcvar.h,v 1.2 2001/07/04 08:52:46 niklas Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*

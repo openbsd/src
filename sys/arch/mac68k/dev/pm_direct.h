@@ -1,3 +1,5 @@
+/*	$OpenBSD: pm_direct.h,v 1.2 2001/07/04 08:52:46 niklas Exp $	*/
+
 /*  pm_direct.h 1.0 01/02/97 Takashi Hamada */
 
 /*

@@ -1,3 +1,4 @@
+/*    $OpenBSD: if_sn_nubus.c,v 1.13 2001/07/04 08:52:45 niklas Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
