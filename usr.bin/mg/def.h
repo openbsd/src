@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.30 2002/02/20 22:30:54 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.31 2002/02/21 00:02:04 deraadt Exp $	*/
 
 #include <sys/queue.h>
 
@@ -291,6 +291,8 @@ void	 ttwindow(int, int);
 void	 ttnowindow(void);
 void	 ttcolor(int);
 void	 ttresize(void);
+
+volatile sig_atomic_t winch_flag;
 
 /* ttyio.c */
 void	 ttopen(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.17 2002/01/10 12:13:35 art Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.18 2002/02/21 00:02:05 deraadt Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -154,9 +154,18 @@ int
 ttgetc()
 {
 	char	c;
+	int ret;
 
-	while (read(0, &c, 1) != 1)
-		;
+	do {
+		ret = read(0, &c, 1);
+		if (ret == -1 && errno == EINTR) {
+			if (winch_flag) {
+				refresh(0, 0);
+				winch_flag = 0;
+			}
+		} else if (ret == 1)
+			break;
+	} while (1);
 	return ((int) c);
 }
 

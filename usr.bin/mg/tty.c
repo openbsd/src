@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.14 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.15 2002/02/21 00:02:04 deraadt Exp $	*/
 
 /*
  * Terminfo display driver
@@ -39,15 +39,13 @@ static int	 cci;
 static int	 insdel;	/* Do we have both insert & delete line? */
 static char	*scroll_fwd;	/* How to scroll forward. */
 
-#ifdef I_WANT_SIGNAL_RACES
 static void	winchhandler(int);
 
 static void
 winchhandler(int sig)
 {
-	refresh(0,0);
+	winch_flag = 1;
 }
-#endif
 
 /*
  * Initialize the terminal when the editor
@@ -71,9 +69,9 @@ ttinit()
 		panic(p);
 	}
 
-#ifdef I_WANT_SIGNAL_RACES
 	signal(SIGWINCH, winchhandler);
-#endif
+	siginterrupt(SIGWINCH, 1);
+
 	scroll_fwd = scroll_forward;
 	if (scroll_fwd == NULL || *scroll_fwd == '\0') {
 		/* this is what GNU Emacs does */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2002/02/20 22:30:54 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2002/02/21 00:02:04 deraadt Exp $	*/
 
 /*
  *	Mainline.
@@ -81,6 +81,10 @@ main(argc, argv)
 		if (epresf == KPROMPT)
 			eerase();
 #endif	/* !NO_DPROMPT */
+		if (winch_flag) {
+			refresh(0, 0);
+			winch_flag = 0;
+		}
 		update();
 		lastflag = thisflag;
 		thisflag = 0;
