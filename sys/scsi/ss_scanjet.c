@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.18 1997/03/11 12:06:49 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.19 1997/05/05 13:14:18 niklas Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -65,6 +65,8 @@ int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
 int scanjet_set_window __P((struct ss_softc *, int));
 int scanjet_compute_sizes __P((struct ss_softc *, int));
 /* Maybe move to libkern? */
+#define atoi local_atoi
+#define strchr local_strchr
 __inline static int atoi __P((const char *));
 __inline static char *strchr __P((/* const */ char *, char));
 
