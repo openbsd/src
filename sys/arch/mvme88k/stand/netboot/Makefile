@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2003/08/01 07:42:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2003/10/01 20:39:41 miod Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -8,7 +8,7 @@ DEFS= -DSUN_BOOTPARAMS
 #-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
-CFLAGS=-O2 ${DEFS} ${INCPATH} ${COPTS}
+CFLAGS+=${DEFS} ${INCPATH} ${COPTS}
 CLEANFILES+=netboot netboot.bin
 
 .include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
@@ -28,7 +28,7 @@ all:	netboot.bin
 
 netboot: ${OBJS} ${SINGLE} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SINGLE} ${OBJS} ${LIBS} `${CC} -print-libgcc-file-name`
+		${SINGLE} ${OBJS} ${LIBS}
 #	@${SIZE} $@
 
 netboot.bin: netboot

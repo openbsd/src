@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.28 2003/08/30 21:15:59 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.29 2003/10/01 20:39:38 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -37,11 +37,11 @@ INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme88k -Dm88k
 CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes
-CMACHFLAGS=	-mno-check-zero-division
+CMACHFLAGS=	-mno-check-zero-division -mmemcpy
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-COPTS?=		-O
+COPTS?=		-O1
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -e start
@@ -113,8 +113,7 @@ SYSTEM_OBJ=	locore.o \
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o \
-		`${CC} -print-libgcc-file-name`
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@;
 
 DEBUG?=

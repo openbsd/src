@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2003/06/02 09:33:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/10/01 20:39:41 miod Exp $
 
 LIB=sa
 
@@ -37,8 +37,7 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_mvme} ${SRC_here} ${SRC_kern}
 DEFS= -D__INTERNAL_LIBSA_CREAD 
 #-DNETIF_DEBUG
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
-COPTS= #-fno-defer-pop
-CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL} -O2
+CFLAGS+= ${XCFLAGS} ${COPTS} ${DEFS} ${DBG} ${INCL}
 
 .PATH:  ${DIR_SA} ${DIR_KERN} 
 
