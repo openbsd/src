@@ -69,7 +69,7 @@
 #define	_ASM_LABEL(x)	x
 
 #define _ENTRY(x) \
-	.text; .align 2; .globl x; .type x,@function; x:
+	.text; .align 2, 0x90; .globl x; .type x,@function; x:
 
 #ifdef PROF
 # define _PROF_PROLOGUE	\
