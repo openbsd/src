@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: filter.h,v 1.11 2000/07/11 22:13:03 brian Exp $
+ * $OpenBSD: filter.h,v 1.12 2000/09/14 18:04:13 brian Exp $
  *
  *	TODO:
  */
@@ -32,6 +32,8 @@
 #ifdef IPPROTO_GRE
 #define P_GRE   6
 #endif
+#define P_ESP   7
+#define P_AH    8
 
 /* Operations - f_srcop, f_dstop */
 #define	OP_NONE	0
