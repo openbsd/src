@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.3 2002/12/23 01:09:22 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.4 2002/12/23 04:04:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -341,7 +341,7 @@ main(int argc, char *argv[])
 		setuid(pw->pw_uid);
 	}
 
-	if (gethostname(hostname, sizeof hostname) == 1)
+	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
 	for (i = 0; i < MAXCON; i++)
