@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.12 2001/06/25 21:49:42 csapuntz Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.13 2001/08/17 22:26:58 mickey Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 int	dec_kn20aa_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
+int	dec_kn20aa_intr_line __P((void *, pci_intr_handle_t));
 void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
 void	dec_kn20aa_intr_disestablish __P((void *, void *));
@@ -89,6 +90,7 @@ pci_kn20aa_pickintr(ccp)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_kn20aa_intr_map;
         pc->pc_intr_string = dec_kn20aa_intr_string;
+        pc->pc_intr_line = dec_kn20aa_intr_line;
         pc->pc_intr_establish = dec_kn20aa_intr_establish;
         pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
 
@@ -187,6 +189,14 @@ dec_kn20aa_intr_string(ccv, ih)
 
         sprintf(irqstr, "kn20aa irq %ld", ih);
         return (irqstr);
+}
+
+int
+dec_kn20aa_intr_line(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+	return (ih);
 }
 
 void *

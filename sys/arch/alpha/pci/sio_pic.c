@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.17 2000/11/25 00:39:05 art Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.18 2001/08/17 22:26:58 mickey Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -442,6 +442,14 @@ sio_intr_string(v, irq)
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
+}
+
+int
+sio_intr_line(v, irq)
+	void *v;
+	int irq;
+{
+	return (irq);
 }
 
 #ifdef notyet

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.4 2001/06/25 22:02:08 csapuntz Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.5 2001/08/17 22:26:58 mickey Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -81,6 +81,7 @@ void dec_6600_intr_disestablish __P((void *, void *));
 void *dec_6600_intr_establish __P((
     void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *));
 const char *dec_6600_intr_string __P((void *, pci_intr_handle_t));
+int dec_6600_intr_line __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_6600_intr_evcnt __P((void *, pci_intr_handle_t));
 int dec_6600_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
 void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
@@ -107,6 +108,7 @@ pci_6600_pickintr(pcp)
         pc->pc_intr_v = pcp;
         pc->pc_intr_map = dec_6600_intr_map;
         pc->pc_intr_string = dec_6600_intr_string;
+        pc->pc_intr_line = dec_6600_intr_line;
 #if 0
 	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
 #endif
@@ -209,6 +211,21 @@ dec_6600_intr_string(acv, ih)
 
 	snprintf(irqstr, sizeof irqstr, irqfmt, ih);
 	return (irqstr);
+}
+
+int
+dec_6600_intr_line(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+
+#if NSIO
+	if (DEC_6600_LINE_IS_ISA(ih))
+		return (sio_intr_line(NULL /*XXX*/,
+		    DEC_6600_LINE_ISA_IRQ(ih)));
+#endif
+
+	return (ih);
 }
 
 #if 0

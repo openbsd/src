@@ -1,4 +1,4 @@
-/*	$OpenBSD: siovar.h,v 1.8 2000/11/08 16:01:22 art Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.9 2001/08/17 22:26:58 mickey Exp $	*/
 /*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@ void	sio_intr_setup __P((pci_chipset_tag_t, bus_space_tag_t));
 void	sio_iointr __P((void *framep, unsigned long vec));
 
 const char *sio_intr_string __P((void *, int));
+int	sio_intr_line __P((void *, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	sio_intr_disestablish __P((void *, void *));

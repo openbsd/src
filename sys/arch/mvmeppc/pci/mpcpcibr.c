@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.2 2001/07/06 05:14:31 smurph Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.3 2001/08/17 22:26:58 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -70,6 +70,7 @@ void   mpc_conf_write __P((void *, pcitag_t, int, pcireg_t));
 
 int      mpc_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
 const char *mpc_intr_string __P((void *, pci_intr_handle_t));
+int	 mpc_intr_line __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
 											 int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
@@ -189,6 +190,7 @@ addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 	lcp->lc_pc.pc_intr_v = lcp;
 	lcp->lc_pc.pc_intr_map = mpc_intr_map;
 	lcp->lc_pc.pc_intr_string = mpc_intr_string;
+	lcp->lc_pc.pc_intr_line = mpc_intr_line;
 	lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 	lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
@@ -541,6 +543,14 @@ pci_intr_handle_t ih;
 
 	sprintf(str, "irq %d", ih);
 	return (str);
+}
+
+int
+mpc_intr_line(lcv, ih)
+	void *lcv;
+	pci_intr_handle_t ih;
+{
+	return (ih);
 }
 
 typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,

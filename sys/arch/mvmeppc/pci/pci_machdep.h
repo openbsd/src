@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.1 2001/06/26 21:57:57 smurph Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.2 2001/08/17 22:26:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -57,6 +57,7 @@ struct ppc_pci_chipset {
 	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
 			    pci_intr_handle_t *));
 	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
+	int		(*pc_intr_line) __P((void *, pci_intr_handle_t));
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
@@ -82,6 +83,8 @@ struct ppc_pci_chipset {
     (*(c)->pc_intr_map)((c)->pc_intr_v, (it), (ip), (il), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_line(c, ih)						\
+    (*(c)->pc_intr_line)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\

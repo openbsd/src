@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.7 2001/07/09 02:26:05 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.8 2001/08/17 22:26:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -57,6 +57,7 @@ struct ppc_pci_chipset {
 	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
 			    pci_intr_handle_t *));
 	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
+	int		(*pc_intr_line) __P((void *, pci_intr_handle_t));
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));

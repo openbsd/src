@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.13 2001/06/25 21:49:40 csapuntz Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.14 2001/08/17 22:26:58 mickey Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 int	dec_2100_a50_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_2100_a50_intr_string __P((void *, pci_intr_handle_t));
+int	 dec_2100_a50_intr_line __P((void *, pci_intr_handle_t));
 void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
 void    dec_2100_a50_intr_disestablish __P((void *, void *));
@@ -80,6 +81,7 @@ pci_2100_a50_pickintr(acp)
 	pc->pc_intr_v = acp;
 	pc->pc_intr_map = dec_2100_a50_intr_map;
 	pc->pc_intr_string = dec_2100_a50_intr_string;
+	pc->pc_intr_line = dec_2100_a50_intr_line;
 	pc->pc_intr_establish = dec_2100_a50_intr_establish;
 	pc->pc_intr_disestablish = dec_2100_a50_intr_disestablish;
 
@@ -218,6 +220,14 @@ dec_2100_a50_intr_string(acv, ih)
 	pci_intr_handle_t ih;
 {
 	return sio_intr_string(NULL /*XXX*/, ih);
+}
+
+const char *
+dec_2100_a50_intr_line(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+	return sio_intr_line(NULL /*XXX*/, ih);
 }
 
 void *

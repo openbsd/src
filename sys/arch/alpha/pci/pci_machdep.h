@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.14 2001/06/26 21:13:44 art Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.15 2001/08/17 22:26:58 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ struct alpha_pci_chipset {
 	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
 			    pci_intr_handle_t *));
 	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
+	int		(*pc_intr_line) __P((void *, pci_intr_handle_t));
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
@@ -101,6 +102,8 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
     (*(c)->pc_intr_map)((c)->pc_intr_v, (it), (ip), (il), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_line(c, ih)						\
+    (*(c)->pc_intr_line)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\

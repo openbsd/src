@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.8 2001/06/25 22:02:08 csapuntz Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.9 2001/08/17 22:26:58 mickey Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -98,6 +98,7 @@
 int	dec_eb164_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_eb164_intr_string __P((void *, pci_intr_handle_t));
+int	dec_eb164_intr_line __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_eb164_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
@@ -131,6 +132,7 @@ pci_eb164_pickintr(ccp)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_eb164_intr_map;
         pc->pc_intr_string = dec_eb164_intr_string;
+        pc->pc_intr_line = dec_eb164_intr_line;
         pc->pc_intr_establish = dec_eb164_intr_establish;
         pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
 
@@ -254,6 +256,14 @@ dec_eb164_intr_string(ccv, ih)
                 panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx", ih);
         sprintf(irqstr, "eb164 irq %ld", ih);
         return (irqstr);
+}
+
+int
+dec_eb164_intr_string(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+	return (ih);
 }
 
 void *

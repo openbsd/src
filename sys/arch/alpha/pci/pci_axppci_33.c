@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.12 2001/06/25 21:49:42 csapuntz Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.13 2001/08/17 22:26:58 mickey Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 int     dec_axppci_33_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_axppci_33_intr_string __P((void *, pci_intr_handle_t));
+int	dec_axppci_33_intr_line __P((void *, pci_intr_handle_t));
 void    *dec_axppci_33_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
 void    dec_axppci_33_intr_disestablish __P((void *, void *));
@@ -81,6 +82,7 @@ pci_axppci_33_pickintr(lcp)
 	pc->pc_intr_v = lcp;
 	pc->pc_intr_map = dec_axppci_33_intr_map;
 	pc->pc_intr_string = dec_axppci_33_intr_string;
+	pc->pc_intr_line = dec_axppci_33_intr_line;
 	pc->pc_intr_establish = dec_axppci_33_intr_establish;
 	pc->pc_intr_disestablish = dec_axppci_33_intr_disestablish;
 
@@ -217,6 +219,14 @@ dec_axppci_33_intr_string(lcv, ih)
 	pci_intr_handle_t ih;
 {
 	return sio_intr_string(NULL /*XXX*/, ih);
+}
+
+int
+dec_axppci_33_intr_line(lcv, ih)
+	void *lcv;
+	pci_intr_handle_t ih;
+{
+	return sio_intr_line(NULL /*XXX*/, ih);
 }
 
 void *
