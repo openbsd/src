@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.14 1999/11/11 11:33:02 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.15 1999/11/11 11:47:27 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -374,6 +374,6 @@ extern int debug;
 
 #define	DEBUG(module)	(debug & CONCAT(DEBUG_,module))
 
-#include "nonints.h"
+#include "extern.h"
 
 #endif /* _MAKE_H_ */
