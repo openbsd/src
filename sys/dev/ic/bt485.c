@@ -46,6 +46,8 @@
 #include <dev/ic/ramdac.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 /*
  * Functions exported via the RAMDAC configuration table.
@@ -247,8 +249,11 @@ bt485_init(rc)
 
 	/* Initial colormap: 0 is black, everything else is white */
 	data->cmap_r[0] = data->cmap_g[0] = data->cmap_b[0] = 0;
-	for (i = 1; i < 256; i++)
-		data->cmap_r[i] = data->cmap_g[i] = data->cmap_b[i] = 255;
+	for (i = 0; i < 256; i++) {
+		data->cmap_r[i] = rasops_cmap[3*i + 0];
+		data->cmap_g[i] = rasops_cmap[3*i + 1];
+		data->cmap_b[i] = rasops_cmap[3*i + 2];
+	}
 
 	bt485_update((void *)data);
 }
