@@ -1,4 +1,4 @@
-/*	$Id: ntpleaps.c,v 1.1 2002/07/27 08:46:51 jakob Exp $	*/
+/*	$Id: ntpleaps.c,v 1.2 2002/07/30 23:28:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 by Thorsten "mirabile" Glaser <x86@ePOST.de>
@@ -21,7 +21,7 @@
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.1 2002/07/27 08:46:51 jakob Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.2 2002/07/30 23:28:14 deraadt Exp $";
 
 
 /* I could include tzfile.h, but this would make the code unportable
@@ -55,7 +55,7 @@ ntpleaps_init(void)
 	/* This does not really hurt, but users will complain about
 	 * off-by-22-seconds (at time of coding) errors if we don't warn.
 	 */
-	if(!flagwarn) {
+	if (!flagwarn) {
 		fputs("Warning: error reading tzfile. You will NOT be\n"
 		    "able to get legal time or posix compliance!\n", stderr);
 		flagwarn = 1;	/* put it only once */
@@ -104,8 +104,9 @@ ntpleaps_read(void)
 		return (-1);
 
 	/* Check signature */
-	read(fd, buf, 4); buf[4]=0;
-	if(strcmp((const char *)buf, "TZif")) {
+	read(fd, buf, 4);
+	buf[4] = 0;
+	if (strcmp((const char *)buf, "TZif")) {
 		close(fd);
 		return (-1);
 	}
@@ -120,34 +121,36 @@ ntpleaps_read(void)
 	read(fd, buf, 28);
 
 	/* Read number of leap second entries */
-	r=ntohl( *((u_int32_t *) (buf + 24)) );
+	r = ntohl(*((u_int32_t *) (buf + 24)));
 	/* Check for plausibility - arbitrary values */
-	if( (r<20) || (r>60000) ) {
+	if (r < 20 || r > 60000) {
 		close(fd);
 		return (-1);
 	}
-	if(( l = (u_int64_t *) malloc(r << 3)) == NULL) {
+	if ((l = (u_int64_t *)malloc(r << 3)) == NULL) {
 		close(fd);
 		return (-1);
 	}
 
 	/* Skip further uninteresting stuff */
 	read(fd, buf, 12);
-	m1 = ntohl( *((u_int32_t *)(buf)) );
-	m2 = ntohl( *((u_int32_t *)(buf+4)) );
-	m3 = ntohl( *((u_int32_t *)(buf+8)) );
+	m1 = ntohl(*((u_int32_t *)(buf)));
+	m2 = ntohl(*((u_int32_t *)(buf+4)));
+	m3 = ntohl(*((u_int32_t *)(buf+8)));
 	m3 += (m1 << 2)+m1+(m2 << 2)+(m2 << 1);
 	lseek(fd, (off_t)m3, SEEK_CUR);
 
 	/* Now go parse the tzfile leap second info */
-	for (m1=0; m1<r; m1++) {
+	for (m1 = 0; m1 < r; m1++) {
 		read(fd, buf, 8);
-		m2 = ntohl( *((u_int32_t *)buf) );
-		s = NTPLEAPS_OFFSET + (u_int64_t) m2;
-	/* Assume just _one_ leap second on each entry, and compensate
-	 * the lacking error checking by validating the first entry
-	 * against the known value */
-		if(!m1 && s != 0x4000000004B2580AULL)
+		m2 = ntohl(*((u_int32_t *)buf));
+		s = NTPLEAPS_OFFSET + (u_int64_t)m2;
+		/*
+		 * Assume just _one_ leap second on each entry, and compensate
+		 * the lacking error checking by validating the first entry
+		 * against the known value
+		 */
+		if (!m1 && s != 0x4000000004B2580AULL)
 			return (-1);
 		l[m1] = s;
 	}
@@ -158,6 +161,5 @@ ntpleaps_read(void)
 		free(leapsecs);
 	leapsecs = l;
 	leapsecs_num = r;
-
 	return (0);
 }
