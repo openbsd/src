@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.4 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.5 2003/11/08 19:17:27 jmc Exp $	*/
 /*	$NetBSD: list.c,v 1.3 1995/03/21 15:04:18 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.4 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.5 2003/11/08 19:17:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ delete(l, p)
 	PLANE	*p;
 {
 	if (l->head == NULL)
-		loser(p, "deleted a non-existant plane! Get help!");
+		loser(p, "deleted a non-existent plane! Get help!");
 	
 	if (l->head == p && l->tail == p)
 		l->head = l->tail = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.14 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.15 2003/11/08 19:17:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.14 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.15 2003/11/08 19:17:29 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ spx_stats(u_long off, char *name)
 	ANY(spxstat.spxs_sndurg, "packet", " sent with URG only");
 	ANY(spxstat.spxs_sndwinup, "window update-only packet", " sent");
 	ANY(spxstat.spxs_sndctrl, "control (SYN|FIN|RST) packet", " sent");
-	ANY(spxstat.spxs_sndvoid, "request", " to send a non-existant packet");
+	ANY(spxstat.spxs_sndvoid, "request", " to send a non-existent packet");
 	ANY(spxstat.spxs_rcvtotal, "total packet", " received");
 	ANY(spxstat.spxs_rcvpack, "packet", " received in sequence");
 	ANY(spxstat.spxs_rcvbyte, "byte", " received in sequence");

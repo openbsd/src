@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 4.t,v 1.5 2003/06/02 20:06:15 millert Exp $
+.\"	$OpenBSD: 4.t,v 1.6 2003/11/08 19:17:28 jmc Exp $
 .\"	$NetBSD: 4.t,v 1.3 1996/04/05 01:45:48 cgd Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -219,7 +219,7 @@ ignore this error condition.
 .B "IMPOSSIBLE MINFREE=\fID\fP IN SUPERBLOCK (SET TO DEFAULT)"
 .br
 The superblock minimum space percentage is greater than 99%
-or less then 0%.
+or less than 0%.
 .LP
 Possible responses to the SET TO DEFAULT prompt are:
 .IP YES

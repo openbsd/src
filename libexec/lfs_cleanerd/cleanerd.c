@@ -1,4 +1,4 @@
-/*	$OpenBSD: cleanerd.c,v 1.12 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: cleanerd.c,v 1.13 2003/11/08 19:17:27 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";*/
-static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.12 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cleanerd.c,v 1.13 2003/11/08 19:17:27 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -274,7 +274,7 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	} else {
 		/* 
 		 * We will also clean if the system is reasonably idle and
-		 * the total clean space is less then IDLE_LIM % of possible
+		 * the total clean space is less than IDLE_LIM % of possible
 		 * clean space.
 		 */
 		if (getloadavg(loadavg, MAXLOADS) == -1) {

@@ -140,7 +140,7 @@ fgoto(in_refresh)
 			 * essential in some SB's because CRLF mode puts
 			 * garbage in at end of memory), but you must use
 			 * linefeed to scroll since down arrow won't go past
-			 * memory end. I turned this off after recieving Paul
+			 * memory end. I turned this off after receiving Paul
 			 * Eggert's Superbee description which wins better.
 			 */
 			if (NL /* && !XB */ && __pfast)

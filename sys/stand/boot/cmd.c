@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.51 2003/08/11 06:23:07 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.52 2003/11/08 19:17:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -464,7 +464,7 @@ Xboot(void)
 }
 
 /*
- * Qualifies the path adding neccessary dev
+ * Qualifies the path adding necessary dev
  */
 
 static char *

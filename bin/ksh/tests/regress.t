@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.t,v 1.11 2001/01/28 23:04:56 niklas Exp $
+#	$OpenBSD: regress.t,v 1.12 2003/11/08 19:17:27 jmc Exp $
 
 #
 # The first 39 of these tests are from the old Bugs script.
@@ -290,7 +290,7 @@ description:
 	The command
 		. /foo/bar
 	should set the exit status to non-zero (sh and at&t ksh88 do).
-	XXX doting a non existant file is a fatal error for a script
+	XXX doting a non existent file is a fatal error for a script
 stdin:
 	. does/not/exist
 expected-exit: e != 0

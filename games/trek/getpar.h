@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.h,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: getpar.h,v 1.6 2003/11/08 19:17:27 jmc Exp $	*/
 /*	$NetBSD: getpar.h,v 1.3 1995/04/22 10:58:59 cgd Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 typedef void (*cmdfun)(int);
 
-struct cvntab		/* used for getcodpar() paramater list */
+struct cvntab		/* used for getcodpar() parameter list */
 {
 	char	*abrev;
 	char	*full;

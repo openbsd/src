@@ -19,7 +19,7 @@ description:
 category: !os:os2
 file-setup: dir 755 "dir"
 file-setup: symlink 644 "dir/abc"
-	non-existant-file
+	non-existent-file
 stdin:
 	echo d*/*
 	echo d*/abc

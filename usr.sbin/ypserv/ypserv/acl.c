@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: acl.c,v 1.12 2003/11/08 19:17:30 jmc Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: acl.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: acl.c,v 1.12 2003/11/08 19:17:30 jmc Exp $";
 #endif
 
 #include <sys/types.h>
@@ -427,7 +427,7 @@ acl_securenet(char *file)
 	if (file != NULL)
 		data_file = fopen(file, "r");
 
-	/* Always add a localhost allow first, to be compatable with sun */
+	/* Always add a localhost allow first, to be compatible with sun */
 	addr.s_addr = htonl(0x7f000001);
 	mask.s_addr = htonl(0xffffffff);
 	allow = TRUE;

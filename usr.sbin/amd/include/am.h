@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.10 2003/06/17 18:00:24 millert Exp $	*/
+/*	$OpenBSD: am.h,v 1.11 2003/11/08 19:17:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -460,7 +460,7 @@ typedef struct am_stats am_stats;
 struct amd_stats {
 	int	d_drops;	/* Dropped requests */
 	int	d_stale;	/* Stale NFS handles */
-	int	d_mok;		/* Succesful mounts */
+	int	d_mok;		/* Successful mounts */
 	int	d_merr;		/* Failed mounts */
 	int	d_uerr;		/* Failed unmounts */
 };

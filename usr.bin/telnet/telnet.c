@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.17 2003/10/04 10:18:05 jmc Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.18 2003/11/08 19:17:29 jmc Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -1867,7 +1867,7 @@ process_iac:
 		    /*
 		     * This is an error.  We only expect to get
 		     * "IAC IAC" or "IAC SE".  Several things may
-		     * have happend.  An IAC was not doubled, the
+		     * have happened.  An IAC was not doubled, the
 		     * IAC SE was left off, or another option got
 		     * inserted into the suboption are all possibilities.
 		     * If we assume that the IAC was not doubled,

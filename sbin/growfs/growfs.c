@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.9 2003/10/28 21:35:16 tedu Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.10 2003/11/08 19:17:28 jmc Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.9 2003/10/28 21:35:16 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.10 2003/11/08 19:17:28 jmc Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -1151,7 +1151,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		/*
 		 * XXX	Handle the cluster statistics here in the case  this
 		 *	cylinder group is now almost full, and the remaining
-		 *	space is less then the maximum cluster size. This is
+		 *	space is less than the maximum cluster size. This is
 		 *	probably not needed, as you would hardly find a file
 		 *	system which has only MAXCSBUFS+FS_MAXCONTIG of free
 		 *	space right behind the cylinder group information in

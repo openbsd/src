@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.2 2003/10/26 15:46:37 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.3 2003/11/08 19:17:28 jmc Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1228,7 +1228,7 @@ done:
  * wi_read_data the information out.
  *
  * This code returns which 'fid' should be used. The results are only valid
- * during a wi_usb_rxeof because the data is recieved packet is 'held'
+ * during a wi_usb_rxeof because the data is received packet is 'held'
  * an a variable for reading by wi_read_data_usb for that period.
  *
  * for magic numbers this uses  0x1000, 0x1001 for rx/info
@@ -1287,7 +1287,7 @@ wi_dump_data(void *buffer, int len)
 #endif
 
 /*
- * A frame has been recieved.
+ * A frame has been received.
  */
 void
 wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
@@ -1385,14 +1385,14 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 		    USBDEVNAME(sc->wi_usb_dev), __func__, rtype));
 		break;
 	case WI_USB_BUFAVAIL:
-		printf("wi_usb: recieved USB_BUFAVAIL packet\n"); /* XXX */
+		printf("wi_usb: received USB_BUFAVAIL packet\n"); /* XXX */
 		break;
 	case WI_USB_ERROR:
-		printf("wi_usb: recieved USB_ERROR packet\n"); /* XXX */
+		printf("wi_usb: received USB_ERROR packet\n"); /* XXX */
 		break;
 	default:
 #if 0
-		printf("wi_usb: recieved Unknown packet 0x%x len %x\n",
+		printf("wi_usb: received Unknown packet 0x%x len %x\n",
 		    rtype, total_len);
 		wi_dump_data(c->wi_usb_buf, total_len);
 #endif

@@ -33,7 +33,7 @@ TODO list (most will be addressed in sudo 2.0)
 13) Should be able to mix Cmnd_Alias's and command args.  Ie:
 	pete   ALL=PASSWD [A-z]*,!PASSWD root
     where PASSWD was defined to be /usr/bin/passwd.
-    This requires the arg parsing to happen in the yacc grammer.
+    This requires the arg parsing to happen in the yacc grammar.
     At the very least, commands and args have to become separate
     tokens in the lexer.
 

@@ -4,7 +4,7 @@
 delim $$
 .EN
 .LP
-So far we have carefuly skirted around a potential
+So far we have carefully skirted around a potential
 problem; maybe you've wondered about it.
 Suppose we want to produce an equation that looks
 like this:

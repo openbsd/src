@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.8 2003/09/29 09:08:20 miod Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.9 2003/11/08 19:17:29 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.8 2003/09/29 09:08:20 miod Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.9 2003/11/08 19:17:29 jmc Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -73,7 +73,7 @@ static char rcsid[] = "$OpenBSD: map3270.c,v 1.8 2003/09/29 09:08:20 miod Exp $"
 #define	LEX_END_OF_FILE LEX_CARETED+1		/* end of file encountered */
 #define	LEX_ILLEGAL	LEX_END_OF_FILE+1	/* trailing escape character */
 
-/* the following is part of our character set dependancy... */
+/* the following is part of our character set dependency... */
 #define	ESCAPE		0x1b
 #define	TAB		0x09
 #define	NEWLINE 	0x0a

@@ -1,5 +1,5 @@
 First up, let me say I don't like writing in assembler.  It is not portable,
-dependant on the particular CPU architecture release and is generally a pig
+dependent on the particular CPU architecture release and is generally a pig
 to debug and get right.  Having said that, the x86 architecture is probably
 the most important for speed due to number of boxes and since
 it appears to be the worst architecture to get

@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmake.y	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: mkmake.y,v 1.4 2003/06/03 02:56:19 millert Exp $";
+static char rcsid[] = "$Id: mkmake.y,v 1.5 2003/11/08 19:17:29 jmc Exp $";
 #endif /* not lint */
 
 typedef struct string {
@@ -57,7 +57,7 @@ typedef struct string {
  * (and, we restrict any given one to live on one and only one such list)
  *
  * Also, they may live on the list of values for someone else's variable,
- * or as someone's dependancy.
+ * or as someone's dependency.
  */
 
 typedef struct same {
@@ -66,7 +66,7 @@ typedef struct same {
     struct same
 	*nexttoken,			/* Next pointer */
 	*lasttoken,			/* Back pointer */
-	*depend_list,			/* If target, dependancies */
+	*depend_list,			/* If target, dependencies */
 	*action_list,			/* If target, actions */
 	*value_list,			/* If variable, value list */
 	*shell_item;			/* If a shell variable, current value */

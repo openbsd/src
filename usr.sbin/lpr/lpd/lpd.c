@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.42 2003/10/16 03:39:12 itojun Exp $ */
+/*	$OpenBSD: lpd.c,v 1.43 2003/11/08 19:17:29 jmc Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.42 2003/10/16 03:39:12 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.43 2003/11/08 19:17:29 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	int lfd, i, f, funix, *finet;
 	int options, check_options, maxfd;
 	long l;
-	long child_max = 32;	/* more then enough to hose the system */
+	long child_max = 32;	/* more than enough to hose the system */
 	struct servent *sp;
 	const char *port = "printer";
 	char *cp;

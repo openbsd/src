@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.25 2003/06/04 07:31:16 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.26 2003/11/08 19:17:28 jmc Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ reinit (void)
   transport_reinit ();
 
   /*
-   * XXX "These" (non-existant) reinitializations should not be done.
+   * XXX "These" (non-existent) reinitializations should not be done.
    *   cookie_reinit ();
    *   ui_reinit ();
    */

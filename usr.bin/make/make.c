@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.33 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: make.c,v 1.34 2003/11/08 19:17:29 jmc Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ Make_OODate(gn)
      * Libraries are only considered out-of-date if the archive module says
      * they are.
      *
-     * These weird rules are brought to you by Backward-Compatability and
+     * These weird rules are brought to you by Backward-Compatibility and
      * the strange people who wrote 'Make'.
      */
     if (gn->type & OP_USE) {

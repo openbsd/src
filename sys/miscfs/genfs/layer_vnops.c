@@ -1,4 +1,4 @@
-/*	$OpenBSD: layer_vnops.c,v 1.3 2003/10/24 19:13:21 tedu Exp $ */
+/*	$OpenBSD: layer_vnops.c,v 1.4 2003/11/08 19:17:28 jmc Exp $ */
 /*	$NetBSD: layer_vnops.c,v 1.10 2001/12/06 04:29:23 chs Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.3 2003/10/24 19:13:21 tedu Exp $
+ *	$Id: layer_vnops.c,v 1.4 2003/11/08 19:17:28 jmc Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -79,7 +79,7 @@
  * (See mount_null(8) for more information.)
  *
  * The layer.h, layer_extern.h, layer_vfs.c, and layer_vnops.c files provide
- * the core implimentation of the null file system and most other stacked
+ * the core implementation of the null file system and most other stacked
  * fs's. The description below refers to the null file system, but the
  * services provided by the layer* files are useful for all layered fs's.
  *

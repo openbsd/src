@@ -315,7 +315,7 @@ xfs_dead_lookup(struct vop_lookup_args * ap)
 /* 
  * Given `fsid', `fileid', and `gen', return in `vpp' a locked and
  * ref'ed vnode from that file system with that id and generation.
- * All is done in the context of `proc'.  Returns 0 if succesful, and
+ * All is done in the context of `proc'.  Returns 0 if successful, and
  * error otherwise.  
  */
 
@@ -410,7 +410,7 @@ xfs_fhlookup (d_thread_t *proc,
 /*
  * Perform an open operation on the vnode identified by a `xfs_fhandle_t'
  * (see xfs_fhlookup) with flags `user_flags'.  Returns 0 or
- * error.  If succsesful, the file descriptor is returned in `retval'.
+ * error.  If successful, the file descriptor is returned in `retval'.
  */
 
 extern struct fileops vnops;	/* sometimes declared in <file.h> */

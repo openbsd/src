@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.7 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: decl.c,v 1.8 2003/11/08 19:17:29 jmc Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.7 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.8 2003/11/08 19:17:29 jmc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1490,7 +1490,7 @@ dname(sym)
 			 * XXX somewhat ugly because we dont know whether
 			 * this is AUTO or EXTERN (functions). If we are
 			 * wrong it must be corrected in decl1loc(), where
-			 * we have the neccessary type information.
+			 * we have the necessary type information.
 			 */
 			sc = AUTO;
 			sym->s_def = DEF;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.21 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.22 2003/11/08 19:17:28 jmc Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -280,7 +280,7 @@ void
 putphysbuf(bp)
 	struct buf *bp;
 {
-	/* XXXCDC: is this necesary? */
+	/* XXXCDC: is this necessary? */
 	if (bp->b_vp)
 		brelvp(bp);
 

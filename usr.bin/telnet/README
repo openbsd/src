@@ -1,4 +1,4 @@
-	$OpenBSD: README,v 1.3 2002/02/10 23:15:05 deraadt Exp $
+	$OpenBSD: README,v 1.4 2003/11/08 19:17:29 jmc Exp $
 
 This is a distribution of both client and server telnet.  These programs
 have been compiled on:
@@ -297,7 +297,7 @@ Februrary 22, 1991:
 	source route code is automatically enabled.
 
 	The NO_GETTYTAB #define has been removed; there
-	is a compatability routine that can be built into
+	is a compatibility routine that can be built into
 	libtelnet to achive the same results.
 
 	The server, telnetd, has been switched to use getopt()

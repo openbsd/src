@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.5 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: read.c,v 1.6 2003/11/08 19:17:29 jmc Exp $	*/
 /*	$NetBSD: read.c,v 1.2 1995/07/03 21:24:59 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.5 2002/02/19 19:39:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.6 2003/11/08 19:17:29 jmc Exp $";
 #endif
 
 #include <stdio.h>
@@ -220,7 +220,7 @@ setsrc(cp)
 
 /*
  * setfnid() gets as input an index as used in an input file and the
- * associated file name. If neccessary, it creates a new lint2 file
+ * associated file name. If necessary, it creates a new lint2 file
  * name index for this file name and creates the mapping of the index
  * as used in the input file to the index used in lint2.
  */

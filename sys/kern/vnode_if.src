@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.23 2003/09/23 16:46:02 millert Exp $
+#	$OpenBSD: vnode_if.src,v 1.24 2003/11/08 19:17:28 jmc Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 # protocol used by each vop call.  The first column is the name of
 # the variable, the remaining three columns are in, out and error
 # respectively.  The "in" column defines the lock state on input,
-# the "out" column defines the state on succesful return, and the
+# the "out" column defines the state on successful return, and the
 # "error" column defines the locking state on error exit.
 #
 # The locking value can take the following values:

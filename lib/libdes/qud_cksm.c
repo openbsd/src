@@ -121,7 +121,7 @@ des_cblock (*seed);
 			/* I believe I finally have things worked out.
 			 * The MIT library assumes that the checksum
 			 * is one huge number and it is returned in a
-			 * host dependant byte order.
+			 * host dependent byte order.
 			 */
 			static DES_LONG ltmp=1;
 			static unsigned char *c=(unsigned char *)&ltmp;

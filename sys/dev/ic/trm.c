@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.2 2003/10/21 18:58:50 jmc Exp $
+/*	$OpenBSD: trm.c,v 1.3 2003/11/08 19:17:28 jmc Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -762,7 +762,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		/* 
 		 * return 1 :
 		 * current interrupt status is interrupt disreenable 
-		 * It's said that SCSI processor has more then one SRB it needs
+		 * It's said that SCSI processor has more than one SRB it needs
 		 * to do, SCSI processor has been occupied by one SRB.
 		 */
 		pSRB->SRBState = TRM_READY;

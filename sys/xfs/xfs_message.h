@@ -110,7 +110,7 @@ typedef struct xfs_cache_handle {
 
 /* xfs_node.flags
  * The lower 16 bit flags are reserved for common xfs flags
- * The upper 16 bit flags are reserved for operting system dependant
+ * The upper 16 bit flags are reserved for operating system dependent
  * flags.
  */
 

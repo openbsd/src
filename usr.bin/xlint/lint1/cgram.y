@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.4 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.5 2003/11/08 19:17:29 jmc Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.4 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.5 2003/11/08 19:17:29 jmc Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1442,7 +1442,7 @@ expr:
 
 term:
 	  T_NAME {
-		/* XXX realy neccessary? */
+		/* XXX really necessary? */
 		if (yychar < 0)
 			yychar = yylex();
 		$$ = getnnode(getsym($1), yychar);

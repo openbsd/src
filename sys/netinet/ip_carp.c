@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.25 2003/11/07 23:38:48 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.26 2003/11/08 19:17:28 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -492,7 +492,7 @@ carp_input_c(struct mbuf *m, struct carp_softc *sc,
 		break;
 	case MASTER:
 		/*
-		 * If we recieve an advertisement from a master who's going to
+		 * If we receive an advertisement from a master who's going to
 		 * be more frequent than us, go into BACKUP state.
 		 */
 		if (timercmp(&sc_tv, &ch_tv, >) ||

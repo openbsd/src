@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.14 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.15 2003/11/08 19:17:29 jmc Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -202,7 +202,7 @@
 #define C_RECVDIR	'D'		/* Receive a directory */
 #define C_RECVSYMLINK	'K'		/* Receive a symbolic link */
 #define C_RECVHARDLINK	'k'		/* Receive a hard link */
-#define C_END		'E'		/* Indicate end of recieve/send */
+#define C_END		'E'		/* Indicate end of receive/send */
 #define C_CLEAN		'C'		/* Clean up */
 #define C_QUERY		'Q'		/* Query without checking */
 #define C_SPECIAL	'S'		/* Execute special command */

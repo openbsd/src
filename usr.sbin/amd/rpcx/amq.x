@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.x	8.1 (Berkeley) 6/6/93
- *	$Id: amq.x,v 1.4 2003/06/02 23:36:52 millert Exp $
+ *	$Id: amq.x,v 1.5 2003/11/08 19:17:29 jmc Exp $
  *
  */
 
@@ -98,7 +98,7 @@ typedef amq_mount_tree_p amq_mount_tree_list<>;
 struct amq_mount_stats {
 	int	as_drops;	/* Dropped requests */
 	int	as_stale;	/* Stale NFS handles */
-	int	as_mok;		/* Succesful mounts */
+	int	as_mok;		/* Successful mounts */
 	int	as_merr;	/* Failed mounts */
 	int	as_uerr;	/* Failed unmounts */
 };

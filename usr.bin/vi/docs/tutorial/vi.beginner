@@ -293,7 +293,7 @@ word 'scroll' refers to the action of the cursor within the file.  However,
 another legitimate use of the word refers to the action of the text on the
 screen.  That is, if the lines on your screen move up toward the top of the
 screen, this would be 'scrolling the screen up'.  If the lines move down
-toward the bottom of the screen, this would be refered to as scrolling down.
+toward the bottom of the screen, this would be referred to as scrolling down.
 
 I have tried to maintain the following jargon: 'scrolling' refers to what the
 text does on the screen, not to what the cursor does within the file.  For the

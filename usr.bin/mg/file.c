@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.26 2003/10/13 02:29:29 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.27 2003/11/08 19:17:29 jmc Exp $	*/
 
 /*
  *	File commands.
@@ -365,7 +365,7 @@ out:		lp2 = NULL;
  * Ask for a file name and write the contents of the current buffer to that
  * file.  Update the remembered file name and clear the buffer changed flag.
  * This handling of file names is different from the earlier versions and
- * is more compatable with Gosling EMACS than with ITS EMACS.
+ * is more compatible with Gosling EMACS than with ITS EMACS.
  */
 /* ARGSUSED */
 int

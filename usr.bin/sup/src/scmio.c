@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.14 2003/08/27 23:05:14 tedu Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.15 2003/11/08 19:17:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -147,7 +147,7 @@
  *	Added register variables to decode() for speedup.  Added I/O
  *	buffering to reduce the number or read/write system calls.
  *	Removed readmfil/writemfil routines which were not used and were
- *	not compatable with the other similarly defined routines anyway.
+ *	not compatible with the other similarly defined routines anyway.
  *
  * 19-Dec-85  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Created from scm.c I/O and crypt routines.

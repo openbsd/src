@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2003/09/29 16:03:10 deraadt Exp $
+/*	$OpenBSD: util.c,v 1.9 2003/11/08 19:17:29 jmc Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.8 2003/09/29 16:03:10 deraadt Exp $
+ * $Id: util.c,v 1.9 2003/11/08 19:17:29 jmc Exp $
  */
 
 
@@ -222,7 +222,7 @@ tolower_word(word)
  * Essential a simple  ``return *(int *)p'' but avoid sigbus
  * for integer alignment (SunOS 4.x, 5.x).
  *
- * Convert network byte order to host byte order if neccessary.
+ * Convert network byte order to host byte order if necessary.
  * So we can read on FreeBSD/i386 (little endian) a locate database
  * which was built on SunOS/sparc (big endian).
  */
@@ -257,7 +257,7 @@ getwm(p)
 /*
  * Read integer from stream.
  *
- * Convert network byte order to host byte order if neccessary.
+ * Convert network byte order to host byte order if necessary.
  * So we can read on FreeBSD/i386 (little endian) a locate database
  * which was built on SunOS/sparc (big endian).
  */
