@@ -1,0 +1,59 @@
+.\"	$OpenBSD: ncrscsi.4,v 1.1 2005/01/29 13:38:37 martin Exp $
+.\"
+.\" Copyright (c) 2005 Martin Reindl <martin@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 28, 2005
+.Dt NCRSCSI 4 mac68k
+.Os
+.Sh NAME
+.Nm ncrscsi ,
+.Nm sbc
+.Nd NCR 5380 on-board SCSI controller
+.Sh SYNOPSIS
+.Cd "ncrscsi0 at obio?"
+.Cd "sbc0 at obio?"
+.Sh DESCRIPTION
+The
+.Nm ncrscsi
+and
+.Nm sbc
+support on-board SCSI controllers based on the NCR 5380 chip, found
+on Apple Macintosh II-series, Performa, and LC-series machines.
+Only one of
+.Nm ncrscsi
+or
+.Nm sbc
+should be enabled in the kernel via
+.Xr config 8 .
+.Pp
+Tape devices should be allowed to disconnect for the SCSI bus to operate
+acceptably.
+.Sh SEE ALSO
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr intro 4 ,
+.Xr obio 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr st 4 ,
+.Xr uk 4 ,
+.Xr config 8
+.Sh HISTORY
+The
+.Nm ncrscsi
+and
+.Nm sbc
+drivers first appeared in
+.Ox 2.0 .

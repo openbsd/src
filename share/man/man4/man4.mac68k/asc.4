@@ -1,0 +1,43 @@
+.\"	$OpenBSD: asc.4,v 1.1 2005/01/29 13:38:37 martin Exp $
+.\"
+.\" Copyright (c) 2005 Martin Reindl <martin@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 27, 2005
+.Dt ASC 4 mac68k
+.Os
+.Sh NAME
+.Nm asc
+.Nd Apple Sound Chip on-board audio device
+.Sh SYNOPSIS
+.Cd "asc0 at obio?"
+.Sh DESCRIPTION
+The
+.Nm
+is an on-board audio device found on numerous mac68k machines.
+.Sh SEE ALSO
+.Xr obio 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.0 .
+.Sh BUGS
+The driver is currently only capable of working as an interface for the console
+bell.
+It is not possible for
+.Xr audio 4
+to attach to the
+.Nm
+device.
