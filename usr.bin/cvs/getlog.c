@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.5 2004/08/13 13:37:49 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.6 2004/11/18 15:54:17 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -36,8 +36,7 @@
 
 #include "cvs.h"
 #include "log.h"
-#include "rcs.h"
-#include "sock.h"
+#include "file.h"
 #include "proto.h"
 
 
@@ -49,10 +48,8 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
-#ifdef notyet
 static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
-#endif
-
+static int  cvs_getlog_file    (CVSFILE *, void *);
 
 
 
@@ -66,6 +63,7 @@ int
 cvs_getlog(int argc, char **argv)
 {
 	int i, rfonly, honly, flags;
+	struct cvsroot *root;
 
 	flags = CF_RECURSE;
 	rfonly = 0;
@@ -103,12 +101,114 @@ cvs_getlog(int argc, char **argv)
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
 
+	cvs_file_examine(cvs_files, cvs_getlog_file, NULL);
+
+	root = cvs_files->cf_ddat->cd_root;
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		cvs_senddir(root, cvs_files);
+		if (argc > 0) {
+			for (i = 0; i < argc; i++)
+				cvs_sendarg(root, argv[i], 0);
+		}
+		cvs_sendreq(root, CVS_REQ_LOG, NULL);
+	}
+
 	return (0);
 }
 
 
+/*
+ * cvs_getlog_file()
+ *
+ * Diff a single file.
+ */
 
+static int
+cvs_getlog_file(CVSFILE *cf, void *arg)
+{
+	char *dir, *repo, rcspath[MAXPATHLEN];
+	RCSFILE *rf;
+	struct cvsroot *root;
+	struct cvs_ent *entp;
 
+	if (cf->cf_type == DT_DIR) {
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+			root = cf->cf_parent->cf_ddat->cd_root;
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		}
+		else {
+			root = cf->cf_ddat->cd_root;
+			if ((cf->cf_parent == NULL) ||
+			    (root != cf->cf_parent->cf_ddat->cd_root)) {
+				cvs_connect(root);
+			}
+
+			cvs_senddir(root, cf);
+		}
+
+		return (0);
+	}
+	else
+		root = cf->cf_parent->cf_ddat->cd_root;
+
+	rf = NULL;
+	if (cf->cf_parent != NULL) {
+		dir = cf->cf_parent->cf_path;
+		repo = cf->cf_parent->cf_ddat->cd_repo;
+	}
+	else {
+		dir = ".";
+		repo = NULL;
+	}
+
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		if (root->cr_method == CVS_METHOD_LOCAL)
+			cvs_printf("? %s\n", cf->cf_path);
+		else
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		return (0);
+	}
+
+	entp = cvs_ent_getent(cf->cf_path);
+	if (entp == NULL)
+		return (-1);
+
+	if ((root->cr_method != CVS_METHOD_LOCAL) &&
+	    (cvs_sendentry(root, entp) < 0)) {
+		cvs_ent_free(entp);
+		return (-1);
+	}
+
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		switch (cf->cf_cvstat) {
+		case CVS_FST_UPTODATE:
+			cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+			break;
+		case CVS_FST_ADDED:
+		case CVS_FST_MODIFIED:
+			cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+			break;
+		default:
+			return (-1);
+		}
+
+		cvs_ent_free(entp);
+		return (0);
+	}
+
+	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	    root->cr_dir, repo, cf->cf_path, RCS_FILE_EXT);
+
+	rf = rcs_open(rcspath, RCS_MODE_READ);
+	if (rf == NULL) {
+		cvs_ent_free(entp);
+		return (-1);
+	}
+
+	rcs_close(rf);
+	cvs_ent_free(entp);
+	return (0);
+}
 
 #ifdef notyet
 static void
@@ -117,20 +217,20 @@ cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 	char numbuf[64], datebuf[64], *sp;
 	struct rcs_delta *rdp;
 
-	printf("RCS file: %s\nWorking file: %s\n",
+	cvs_printf("RCS file: %s\nWorking file: %s\n",
 	    rfp->rf_path, file);
-	printf("Working file: %s\n", (char *)NULL);
-	printf("head: %s\nbranch:\nlocks:\naccess list:\n");
-	printf("symbolic names:\nkeyword substitutions:\n");
-	printf("total revisions: %u;\tselected revisions: %u\n", 1, 1);
+	cvs_printf("Working file: %s\n", (char *)NULL);
+	cvs_printf("head: %s\nbranch:\nlocks:\naccess list:\n");
+	cvs_printf("symbolic names:\nkeyword substitutions:\n");
+	cvs_printf("total revisions: %u;\tselected revisions: %u\n", 1, 1);
 
-	printf("description:\n");
+	cvs_printf("description:\n");
 
 	for (;;) {
-		printf(CVS_GETLOG_REVSEP "\n");
+		cvs_printf(CVS_GETLOG_REVSEP "\n");
 		rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
-		printf("revision %s\n", numbuf);
-		printf("date: %d/%02d/%d %02d:%02d:%02d;  author: %s;"
+		cvs_printf("revision %s\n", numbuf);
+		cvs_printf("date: %d/%02d/%d %02d:%02d:%02d;  author: %s;"
 		    "  state: %s;  lines:",
 		    rdp->rd_date.tm_year, rdp->rd_date.tm_mon + 1,
 		    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
@@ -138,7 +238,6 @@ cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 		    rdp->rd_author, rdp->rd_state);
 	}
 
-	printf(CVS_GETLOG_REVEND "\n");
-
+	cvs_printf(CVS_GETLOG_REVEND "\n");
 }
 #endif
