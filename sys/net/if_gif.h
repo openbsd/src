@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.h,v 1.3 2000/01/12 06:40:45 angelos Exp $	*/
+/*	$OpenBSD: if_gif.h,v 1.4 2000/12/30 21:51:50 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,4 +71,5 @@ extern struct gif_softc *gif;
 int gif_output __P((struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *));
 int gif_ioctl __P((struct ifnet *, u_long, caddr_t));
+void gif_start __P((struct ifnet *));
 #endif /* _NET_IF_GIF_H_ */
