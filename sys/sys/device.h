@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.25 2002/09/06 18:12:47 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.26 2002/10/06 23:12:31 art Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -218,10 +218,6 @@ void device_register(struct device *, void *);
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
-#if 0
-extern int attach_loadable(char *, int, struct cftable *);
-extern int detach_loadable(struct cftable *);
-#endif
 
 #endif /* _KERNEL */
 
