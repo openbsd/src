@@ -1,7 +1,7 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2003/01/01 10:03:15 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2003/01/22 16:23:24 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 Michael Shalayeff
+ * Copyright (c) 1999-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ cpu_swapin(p)
 	 * Stash the physical for the pcb of U for later perusal
 	 */
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)p->p_addr, &pa))
-		panic("pmap_extract(p_addr) failed");
+		panic("pmap_extract(%p) failed", p->p_addr);
 
 	tf->tf_cr30 = pa;
 }
