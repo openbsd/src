@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.2 1999/12/11 08:44:48 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.3 1999/12/15 05:05:58 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: ping6.8,v 1.5 1999/12/01 12:51:04 jinmei Exp
+.\"     KAME Id: ping6.8,v 1.7 1999/12/15 04:59:13 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -39,8 +39,10 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm
-.\" .Op Fl AdEfnqRrvw
+.\" without ipsec, or new ipsec
 .Op Fl dfnqRrvw
+.\" old ipsec
+.\" .Op Fl AdEfnqRrvw
 .Op Fl a Ar addrtype
 .Op Fl b Ar bufsiz
 .Op Fl c Ar count
@@ -49,11 +51,28 @@ packets to network hosts
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
+.\" new ipsec
+.\" .Op Fl P Ar policy
 .Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
 .Ar host
 .Sh DESCRIPTION
+.Nm
+uses the
+.Tn ICMPv6
+protocol's mandatory
+.Tn ICMP6_ECHO_REQUEST
+datagram to elicit an
+.Tn ICMP6_ECHO_REPLY
+from a host or gateway.
+.Tn ICMP6_ECHO_REQUEST
+datagrams (``pings'') have an IPv6 header,
+and
+.Tn ICMPv6
+header formatted as documented in RFC2463.
+The options are as follows:
 .Bl -tag -width Ds
+.\" old ipsec
 .\" .It Fl A
 .\" Enables transport-mode IPsec authentication header. (experimental)
 .It Fl a Ar addrtype
@@ -148,6 +167,10 @@ flag,
 .Nm
 prints out any ICMP error messages caused by its own ECHO_REQUEST
 messages.
+.\" new ipsec
+.\" .It Fl P Ar policy
+.\" .Ar policy
+.\" specifies IPsec policy to be used for the probe.
 .It Fl q
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
@@ -330,6 +353,13 @@ if an error occurred.
 .Xr ping 8 ,
 .Xr traceroute 8 ,
 .Xr traceroute6 8
+.Rs
+.%A A. Conta
+.%A S. Deering
+.%T "Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification"
+.%N RFC2463
+.%D December 1998
+.Re
 .Sh HISTORY
 The
 .Nm ping
