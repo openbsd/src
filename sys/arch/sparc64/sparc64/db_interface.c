@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2002/06/10 20:09:24 mdw Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2002/06/11 08:09:42 mdw Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1128,6 +1128,14 @@ db_branch_taken(inst, pc, regs)
 
     insn.i_int = inst;
 
+    /* the fancy union just gets in the way of this: */
+    switch(inst & 0xffc00000) {
+    case 0x30400000:	/* branch always, annul, with prediction */
+	return pc + ((inst<<(32-19))>>((32-19)-2));
+    case 0x30800000:	/* branch always, annul */
+	return pc + ((inst<<(32-22))>>((32-22)-2));
+    }
+
     /*
      * if this is not an annulled conditional branch, the next pc is "npc".
      */
@@ -1168,6 +1176,14 @@ db_inst_branch(inst)
     union instr insn;
 
     insn.i_int = inst;
+
+    /* the fancy union just gets in the way of this: */
+    switch(inst & 0xffc00000) {
+    case 0x30400000:	/* branch always, annul, with prediction */
+	return TRUE;
+    case 0x30800000:	/* branch always, annul */
+	return TRUE;
+    }
 
     if (insn.i_any.i_op != IOP_OP2)
 	return FALSE;
