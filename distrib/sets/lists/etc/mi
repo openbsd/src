@@ -474,4 +474,4 @@
 ./var/www/icons/world2.gif
 ./var/crash/minfree
 ./var/cron/log
-./var/cron/tabs
+./var/db/locate.database

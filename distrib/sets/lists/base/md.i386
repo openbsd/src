@@ -427,7 +427,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/crypto.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/crypto/cryptoio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/crypto/des_locl.ph

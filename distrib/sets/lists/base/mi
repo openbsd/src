@@ -595,6 +595,7 @@
 ./usr/libdata/perl5/File/Spec/Unix.pm
 ./usr/libdata/perl5/File/Spec/VMS.pm
 ./usr/libdata/perl5/File/Spec/Win32.pm
+./usr/libdata/perl5/File/Temp.pm
 ./usr/libdata/perl5/File/stat.pm
 ./usr/libdata/perl5/FileCache.pm
 ./usr/libdata/perl5/FileHandle.pm
@@ -2591,7 +2592,6 @@
 ./var/crash
 ./var/cron
 ./var/db
-./var/db/locate.database
 ./var/db/ns
 ./var/db/pkg
 ./var/games
@@ -2637,3 +2637,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./var/cron/tabs

@@ -711,6 +711,7 @@
 ./usr/share/man/cat3p/File::Spec::Unix.0
 ./usr/share/man/cat3p/File::Spec::VMS.0
 ./usr/share/man/cat3p/File::Spec::Win32.0
+./usr/share/man/cat3p/File::Temp.0
 ./usr/share/man/cat3p/File::stat.0
 ./usr/share/man/cat3p/FileCache.0
 ./usr/share/man/cat3p/FileHandle.0
@@ -1027,8 +1028,8 @@
 ./usr/share/man/cat4/ohci.0
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
-./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pchb.0
+./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pcic.0
 ./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pcmcia.0
@@ -1261,6 +1262,7 @@
 ./usr/share/man/cat7/mdoc.0
 ./usr/share/man/cat7/mdoc.samples.0
 ./usr/share/man/cat7/me.0
+./usr/share/man/cat7/mirroring-ports.0
 ./usr/share/man/cat7/mm.0
 ./usr/share/man/cat7/ms.0
 ./usr/share/man/cat7/operator.0
@@ -1272,6 +1274,7 @@
 ./usr/share/man/cat8/UKC.0
 ./usr/share/man/cat8/ab.0
 ./usr/share/man/cat8/ac.0
+./usr/share/man/cat8/rc.conf.local.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/amd.0
@@ -1598,4 +1601,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat7/mirroring-ports.0
