@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.61 2004/01/26 18:23:51 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.62 2005/03/01 16:13:29 markus Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.61 2004/01/26 18:23:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.62 2005/03/01 16:13:29 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -576,7 +576,7 @@ main(int argc, char *argv[])
 	if (first_ttl > 1)
 		printf("Skipping %u intermediate hops\n", first_ttl - 1);
 
-	for (ttl = first_ttl; ttl <= max_ttl; ++ttl) {
+	for (ttl = first_ttl; ttl && ttl <= max_ttl; ++ttl) {
 		int got_there = 0, unreachable = 0, timeout = 0, loss;
 		in_addr_t lastaddr = 0;
 		quad_t dt;
