@@ -262,3 +262,5 @@
 >16	lelong			>0		not stripped
 0	belong&0377777777	043600507	OpenBSD/arm core
 >12	string			>\0		from '%s'
+0	belong&0377777777	047200507	OpenBSD/amd64 core
+>12	string			>\0		from '%s'
