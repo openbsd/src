@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.51 1999/11/12 05:52:58 angelos Exp $	*/
+/*	$OpenBSD: cd.c,v 1.52 2000/04/09 07:09:03 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1173,6 +1173,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	u_int8_t hdr[TOC_HEADER_SZ],  *ent, *toc = NULL;
 	u_int32_t lba, nlba;
 	int tocidx, i, n, len, is_data, data_track = -1;
+	int toc_valid = 0;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1221,9 +1222,15 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	 * disklabel read routine.  XXX should we move all data tracks up front
 	 * before any other tracks?
 	 */
+	bzero(hdr, sizeof(hdr));
 	if (cd_read_toc(cd, 0, 0, hdr, TOC_HEADER_SZ, 0))
-		return;
+		goto done;
+
 	n = hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] + 1;
+
+	if (n <= 0)
+		goto done;
+
 	/* n + 1 because of leadout track */
 	len = TOC_HEADER_SZ + (n + 1) * TOC_ENTRY_SZ;
 	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
@@ -1231,6 +1238,8 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 		goto done;
 
 	/* Create the partition table.  */
+        /* Probably should sanity-check the drive's values */
+	toc_valid = 1;  
 	ent = toc + TOC_HEADER_SZ;
 	lba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
 	    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
@@ -1240,9 +1249,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]);
 
 	i = 0;
-	for (tocidx = hdr[TOC_HEADER_STARTING_TRACK]; 
-	     tocidx <= hdr[TOC_HEADER_ENDING_TRACK]; 
-	     tocidx++) {
+	for (tocidx = 1; tocidx <= n; tocidx++) {
 		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
 		nlba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
@@ -1284,15 +1291,9 @@ done:
 		FREE(toc, M_TEMP);
 
 	/* We have a data track, look in there for a real disklabel.  */
-	if (data_track != -1) {
-#if 0
-		/* This might not necessarily work */
-		errstring = readdisklabel(MAKECDDEV(major(dev), CDUNIT(dev), 
-		    data_track), cdstrategy, lp, clp, spoofonly);
-#else
+	if (data_track != -1 || !toc_valid) {
 		errstring = readdisklabel(CDLABELDEV(dev),
 		    cdstrategy, lp, clp, spoofonly);
-#endif
 		/*if (errstring)
 			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
 	}
@@ -1508,6 +1509,7 @@ cd_read_toc(cd, mode, start, data, len, control)
 	scsi_cmd.from_track = start;
 	_lto2b(ntoc, scsi_cmd.data_len);
 	scsi_cmd.control = control;
+
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN);
