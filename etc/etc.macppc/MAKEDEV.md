@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/05/16 21:11:20 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.8 2002/10/16 15:48:31 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -94,3 +94,29 @@ ttyE*)
 	esac
 	M tty$type$unit c $major $minor 660
 	;;
+dnl
+dnl *** macppc specific targets
+dnl
+target(all, ses, 0)dnl
+target(all, ch, 0)dnl
+target(all, ss, 0, 1)dnl
+target(all, xfs, 0)dnl
+twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
+twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
+target(all, pty, 0, 1, 2)dnl
+target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, tun, 0, 1, 2, 3)dnl
+target(all, xy, 0, 1, 2, 3)dnl
+target(all, rd, 0)dnl
+target(all, cd, 0, 1)dnl
+target(all, sd, 0, 1, 2, 3, 4)dnl
+target(all, vnd, 0, 1, 2, 3)dnl
+target(all, ccd, 0, 1, 2, 3)dnl
+target(ramd, sd, 0, 1, 2, 3, 4)dnl
+target(ramd, wd, 0, 1, 2, 3, 4)dnl
+target(ramd, st, 0, 1)dnl
+target(ramd, cd, 0, 1)dnl)dnl
+target(ramd, rd, 0)dnl
+target(ramd, ttyE, 0)dnl
+target(ramd, tty0, 0, 1)dnl
+target(ramd, pty, 0)dnl

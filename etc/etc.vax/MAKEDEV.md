@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.10 2002/05/16 21:11:21 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.11 2002/10/16 15:48:31 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -23,6 +23,87 @@ dnl OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 dnl WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl
+dnl
+dnl *** vax specific definitions
+dnl
+__devitem(dhu, dhu*, unibus dhu11)dnl
+__devitem(dmz, dmz*, unibus dmz32)dnl
+__devitem(dmf, dmf*, unibus dmf32)dnl
+__devitem(dh, dh*, {-unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)-})
+__devitem(vt, vt*, {-console-})dnl
+__devitem(dz, dz*, unibus dz11 and dz32)dnl
+__devitem(dl, dl*, unibus dl11)dnl
+_mkdev(dz, dz*,
+{-case $U in
+       [0-7])
+	       i=0
+	       while [ $i -lt 8 ]; do
+		       no=Add(Mult($U, 8), $i)
+		       if [ $no -lt 10 ]; then
+			       no="0${no}"
+		       fi
+		       M tty${no} c 1 $no 600
+		       let i=i+1
+	       done
+	       ;;
+	*)
+	       echo bad unit for dz in: $i
+	       ;;
+       esac-})dnl
+dnl XXX split this up abit?
+_mkdev(dhu, dhu*|dmz*|dmf*|dh*|vt*,
+{-set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
+	case $i in
+	vt*)    name=vt; major=68; count=8;
+		case $U in
+		0) ch=w ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dmz*)   name=dmz; major=37; count=24;
+		case $U in
+		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dmf*)   name=dmf; major=22; count=8;
+		case $U in
+		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
+		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dhu*)   name=dhu; major=34; count=16;
+		case $U in
+		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
+		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	dh*)    name=dh; major=12; count=16;
+		case $U in
+		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
+		4) ch=l ;; 5) ch=m ;; 6) ch=n ;; 7) ch=o ;;
+		*) echo bad unit for $name in: $i ;;
+		esac;;
+	esac
+	i=0
+	while [ $i -lt $count ]; do
+		let=${cnvtbl[$i]}
+		if [ -n "$let" ] ;then
+			M tty${ch}${let} c $major Add(Mult($U, $count), $i) 600
+		else
+			echo bad count for ${name}: $U, $count, $i
+		fi
+		let i=i+1
+	done
+	;;
+
+dl*)
+	major=66
+	let=${cnvtbl[$U]}
+	if [ -n "$let" ] ;then
+		M ttyJ${let} c $major $U 600
+	else
+		echo bad number for ${name}: $U
+	fi-})dnl
 dnl
 dnl
 _TITLE(make)
@@ -140,3 +221,39 @@ ht*|tm*|mt*|ts*|ut*)
 	esac
 	umask 77
 	;;
+dnl
+dnl *** vax specific targets
+dnl
+dnl target(all, ses, 0)dnl
+dnl target(all, ut, 0)dnl
+dnl target(all, ch, 0)dnl
+target(all, ss, 0)dnl
+dnl target(all, xfs, 0)dnl
+target(all, pty, 0, 1)dnl
+target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7)dnl
+target(all, tun, 0, 1)dnl
+dnl target(all, xy, 0, 1, 2, 3)dnl
+dnl target(all, hk, 0, 1, 2, 3)dnl
+dnl target(all, up, 0, 1, 2, 3)dnl
+dnl target(all, rd, 0)dnl
+target(all, cd, 0)dnl
+target(all, sd, 0, 1, 2, 3)dnl
+target(all, vnd, 0)dnl
+target( all, ccd, 0)dnl
+target( all, hd, 0, 1, 2)dnl
+target( all, mt, 0, 1)dnl
+target( all, ts, 0, 1)dnl
+target( all, uu, 0)dnl
+target( all, st, 0, 1)dnl
+target( all, dhu, 0)dnl
+dnl target( all, dmz, 0)dnl
+dnl target( all, dmf, 0)dnl
+dnl target( all, dh, 0)dnl
+target( all, dz, 0)dnl
+target( all, dl, 0)dnl
+target( all, vt, 0)dnl
+target(ramd, fd, 0)dnl
+target(ramd, sd, 0, 1, 2, 3)dnl
+target(ramd, rd, 0)dnl
+target(ramd, cd, 0)dnl
+target(ramd, bpf, 0)dnl

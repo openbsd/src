@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.9 2002/09/06 21:48:34 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.10 2002/10/16 15:48:31 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -23,6 +23,33 @@ dnl OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 dnl WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl
+dnl *** hp300 specific device scripts/descriptions
+dnl
+_mkdev(st_hp300, ct*|mt*|st*,
+{-case $i in
+	ct*) name=ct blk=major_ct_b chr=major_ct_c;;
+	mt*) name=mt blk=major_mt_b chr=major_mt_c;;
+	st*) name=st blk=major_st_hp300_b chr=major_st_hp300_c;;
+	esac
+	case $U in
+	[0-7])
+		four=Add($U, 4) eight=Add($U, 8)
+		twelve=Add($U, 12) twenty=Add($U, 20)
+		M r$name$U	c $chr $U 660 operator
+		M r$name$four	c $chr $four 660 operator
+		M r$name$eight	c $chr $eight 660 operator
+		M r$name$twelve	c $chr $twelve 660 operator
+		MKlist="$MKlist;ln r$name$four nr$name$U";: sanity w/pdp11 v7
+		MKlist="$MKlist;ln r$name$twelve nr$name$eight";: ditto
+		RMlist="$RMlist nr$name$U nr$name$eight"
+		;;
+	*)
+		echo bad unit for tape in: $1
+		;;
+	esac-})dnl
+__devitem(st_hp300, st*, Exabyte tape)dnl
+__devitem(grf, grf*, raw interface to HP300 graphics devices)dnl
 dnl
 dnl
 _TITLE(make)
@@ -166,3 +193,41 @@ hil)
 	MKlist="$MKlist;ln hil3 locator"
 	RMlist="$RMlist keyboard locator"
 	;;
+dnl
+target(all, ses, 0)dnl
+target(all, ch, 0)dnl
+target(all, ss, 0, 1)dnl
+target(all, xfs, 0)dnl
+twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
+twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
+target(all, pty, 0, 1, 2)dnl
+target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, tun, 0, 1, 2, 3)dnl
+target(all, xy, 0, 1, 2, 3)dnl
+target(all, rd, 0)dnl
+target(all, cd, 0, 1)dnl
+target(all, sd, 0, 1, 2, 3, 4)dnl
+target(all, vnd, 0, 1, 2, 3)dnl
+target(all, ccd, 0, 1, 2, 3)dnl
+target( all, grf, 0)dnl
+dnl XXX target( all, hil, 0, 1, 2, 3, 4, 5, 6, 7)dnl
+target( all, hil, )dnl
+twrget( all, st_hp300, st, 0, 1)dnl
+target( all, dca, 0, 1)dnl
+target( all, dcm, 0, 1, 2, 3)dnl
+target( all, hd, 0, 1, 2)dnl
+target( all, ct, 0, 1)dnl
+target( all, ite, 0)dnl
+target(ramd, ct, 0, 1)dnl
+target(ramd, hd, 0, 1, 2)dnl
+target(ramd, sd, 0, 1, 2)dnl
+target(ramd, rd, 0, 1)dnl
+target(ramd, pty, 0)dnl
+target(ramd, hil, )dnl
+target(ramd, grf, 0)dnl
+target(ramd, apci, 0)dnl
+target(ramd, ite, 0)dnl
+target(ramd, dca, 0)dnl
+target(ramd, dcm, 0, 1)dnl
+target(ramd, bpf, 0, 1)dnl
+target(ramd, tun, 0, 1)dnl

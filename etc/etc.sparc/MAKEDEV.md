@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.14 2002/08/12 10:45:06 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.15 2002/10/16 15:48:31 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -28,8 +28,6 @@ dnl
 dnl
 dnl *** some sparc-specific devices
 dnl
-twrget(all, s64_tzs, tty, a, b, c, d)dnl
-twrget(all, s64_czs, cua, a, b, c, d)dnl
 __devitem(s64_tzs, tty[a-z]*, Zilog 8530 Serial Port)dnl
 __devitem(s64_czs, cua[a-z]*, Zilog 8530 Serial Port)dnl
 _mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
@@ -119,3 +117,31 @@ _std(2, 3, 122, 7, 16)
 	M eeprom	c 3 11	640 kmem
 	M openprom	c 70 0	640 kmem
 	;;
+dnl
+dnl *** some sparc-specific targets
+dnl
+twrget(all, s64_tzs, tty, a, b, c, d)dnl
+twrget(all, s64_czs, cua, a, b, c, d)dnl
+target(all, ses, 0)dnl
+target(all, ch, 0)dnl
+target(all, ss, 0, 1)dnl
+target(all, xfs, 0)dnl
+twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
+twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
+target(all, pty, 0, 1, 2)dnl
+target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, tun, 0, 1, 2, 3)dnl
+target(all, xy, 0, 1, 2, 3)dnl
+target(all, hk, 0, 1, 2, 3)dnl
+target(all, rd, 0)dnl
+target(all, cd, 0, 1)dnl
+target(all, sd, 0, 1, 2, 3, 4)dnl
+target(all, vnd, 0, 1, 2, 3)dnl
+target(all, ccd, 0, 1, 2, 3)dnl
+target(ramd, fd, 0)dnl
+target(ramd, sd, 0, 1, 2, 3)dnl
+target(ramd, rd, 0)dnl
+target(ramd, cd, 0)dnl
+twrget(wscons, wscons, ttyD, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
+twrget(wscons, wscons, ttyE, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
+twrget(wscons, wscons, ttyF, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl

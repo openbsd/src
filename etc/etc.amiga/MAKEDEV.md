@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.9 2002/06/09 06:15:14 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.10 2002/10/16 15:48:31 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -163,3 +163,33 @@ ttyB*)
 	M ttyB$U c 32 $U 660 dialer uucp
 	M cuaB$U c 32 Add($U, 128) 660 dialer uucp
 	;;
+dnl
+dnl *** amiga specific device targets
+dnl
+target(all, ses, 0)dnl
+target(all, ch, 0)dnl
+target(all, ss, 0, 1)dnl
+target(all, xfs, 0)dnl
+twrget(all, flo, fd, 0, 0B, 0C, 0D, 0E, 0F, 0G, 0H)dnl
+twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
+target(all, pty, 0, 1, 2)dnl
+target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, tun, 0, 1, 2, 3)dnl
+target(all, xy, 0, 1, 2, 3)dnl
+target(all, rd, 0)dnl
+target(all, cd, 0, 1)dnl
+target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
+target(all, vnd, 0, 1, 2, 3)dnl
+target(all, ccd, 0, 1, 2, 3)dnl
+target(ramd, kbd)dnl
+target(ramd, pty, 0)dnl
+target(ramd, tty0, 0)dnl
+target(ramd, ttyA, 0, 1)dnl
+target(ramd, ttyB, 0, 1)dnl
+target(ramd, ttye, 0, 1, 2, 3, 4, 5, 6)dnl
+target(ramd, cd, 0, 1)dnl
+target(ramd, sd, 0, 1, 2, 3)dnl
+target(ramd, st, 0, 1)dnl
+target(ramd, fd, 0, 1)dnl
+target(ramd, wd, 0, 1)dnl
+target(ramd, rd, 0)dnl
