@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.75 2001/06/23 20:59:41 angelos Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.76 2001/06/23 21:43:40 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1227,6 +1227,8 @@ hifn_intr(arg)
 	    (dmacsr & HIFN_DMACSR_PUBDONE)) {
 		r = 1;
 		dmacsr &= ~HIFN_DMACSR_PUBDONE;
+		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
+		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
 	}
 
 	if ((dmacsr & sc->sc_dmaier) == 0)
