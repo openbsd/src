@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.3 1996/10/26 05:11:05 millert Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.4 1997/05/30 08:51:45 deraadt Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.7 1996/06/08 19:48:44 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.3 1996/10/26 05:11:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.4 1997/05/30 08:51:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,15 +60,18 @@ static char rcsid[] = "$OpenBSD: v7.local.c,v 1.3 1996/10/26 05:11:05 millert Ex
  * mail is queued).
  */
 void
-findmail(user, buf)
+findmail(user, buf, buflen)
 	char *user, *buf;
+	int buflen;
 {
 	char *mbox;
 
 	if (!(mbox = getenv("MAIL")))
-		(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, user);
-	else
-		(void)strcpy(buf, mbox);
+		(void)snprintf(buf, sizeof buf, "%s/%s", _PATH_MAILDIR, user);
+	else {
+		(void)strncpy(buf, mbox, sizeof buf - 1);
+		buf[sizeof buf - 1] = '\0';
+	}
 }
 
 /*
@@ -97,6 +100,6 @@ username()
 		return np;
 	if ((np = getname(uid = getuid())) != NOSTR)
 		return np;
-	printf("Cannot associate a name with uid %d\n", uid);
+	printf("Cannot associate a name with uid %u\n", (unsigned)uid);
 	return NOSTR;
 }

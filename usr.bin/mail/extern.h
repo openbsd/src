@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 1997/03/29 03:01:45 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 1997/05/30 08:51:37 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1996/06/08 19:48:21 christos Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ void	 fail __P((char [], char []));
 int	 file __P((void *));
 struct grouphead *
 	 findgroup __P((char []));
-void	 findmail __P((char *, char *));
+void	 findmail __P((char *, char *, int));
 int	 first __P((int, int));
 void	 fixhead __P((struct header *, struct name *));
 void	 fmt __P((char *, struct name *, FILE *, int));
@@ -139,7 +139,7 @@ int	 forward __P((char [], FILE *, int));
 void	 free_child __P((int));
 int	 from __P((void *));
 off_t	 fsize __P((FILE *));
-int	 getfold __P((char *));
+int	 getfold __P((char *, int));
 int	 gethfield __P((FILE *, char [], int, char **));
 int	 getmsglist __P((char *, int *, int));
 int	 getrawlist __P((char [], char **, int));

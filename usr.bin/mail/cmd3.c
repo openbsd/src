@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.3 1997/03/29 03:01:44 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.4 1997/05/30 08:51:35 deraadt Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.3 1997/03/29 03:01:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.4 1997/05/30 08:51:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ overf:
 	}
 	strcpy(str, bangbuf);
 	strncpy(lastbang, bangbuf, 128);
-	lastbang[127] = 0;
+	lastbang[128-1] = 0;
 	return(0);
 }
 

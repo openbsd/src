@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.4 1997/03/29 03:01:46 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.5 1997/05/30 08:51:39 deraadt Exp $	*/
 /*	$NetBSD: fio.c,v 1.5 1996/06/08 19:48:22 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.4 1997/03/29 03:01:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.5 1997/05/30 08:51:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,16 +71,16 @@ setptr(ibuf)
 	FILE *mestmp;
 	off_t offset;
 	int maybe, inhead;
-	char linebuf[LINESIZE];
+	char linebuf[LINESIZE], pathbuf[PATHSIZE];
 
 	/* Get temporary file. */
-	(void)sprintf(linebuf, "%s/mail.XXXXXXXXXX", tmpdir);
-	if ((c = mkstemp(linebuf)) == -1 ||
+	(void)snprintf(pathbuf, sizeof pathbuf, "%s/mail.XXXXXXXXXX", tmpdir);
+	if ((c = mkstemp(pathbuf)) == -1 ||
 	    (mestmp = Fdopen(c, "r+")) == NULL) {
-		(void)fprintf(stderr, "mail: can't open %s\n", linebuf);
+		(void)fprintf(stderr, "mail: can't open %s\n", pathbuf);
 		exit(1);
 	}
-	(void)unlink(linebuf);
+	(void)unlink(pathbuf);
 
 	msgCount = 0;
 	maybe = 1;
@@ -336,7 +336,7 @@ expand(name)
 	 */
 	switch (*name) {
 	case '%':
-		findmail(name[1] ? name + 1 : myname, xname);
+		findmail(name[1] ? name + 1 : myname, xname, sizeof xname);
 		return savestr(xname);
 	case '#':
 		if (name[1] != 0)
@@ -351,13 +351,13 @@ expand(name)
 			name = "~/mbox";
 		/* fall through */
 	}
-	if (name[0] == '+' && getfold(cmdbuf) >= 0) {
-		sprintf(xname, "%s/%s", cmdbuf, name + 1);
+	if (name[0] == '+' && getfold(cmdbuf, sizeof cmdbuf) >= 0) {
+		snprintf(xname, sizeof xname, "%s/%s", cmdbuf, name + 1);
 		name = savestr(xname);
 	}
 	/* catch the most common shell meta character */
 	if (name[0] == '~' && (name[1] == '/' || name[1] == '\0')) {
-		sprintf(xname, "%s%s", homedir, name + 1);
+		snprintf(xname, sizeof xname, "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
 	if (!anyof(name, "~{[*?$`'\"\\"))
@@ -366,7 +366,7 @@ expand(name)
 		perror("pipe");
 		return name;
 	}
-	sprintf(cmdbuf, "echo %s", name);
+	snprintf(cmdbuf, sizeof cmdbuf, "echo %s", name);
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
 	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
@@ -409,17 +409,19 @@ expand(name)
  * Determine the current folder directory name.
  */
 int
-getfold(name)
+getfold(name, namelen)
 	char *name;
+	int namelen;
 {
 	char *folder;
 
 	if ((folder = value("folder")) == NOSTR)
 		return (-1);
-	if (*folder == '/')
-		strcpy(name, folder);
-	else
-		sprintf(name, "%s/%s", homedir, folder);
+	if (*folder == '/') {
+		strncpy(name, folder, namelen-1);
+		name[namelen-1] = '\0';
+	} else
+		snprintf(name, namelen, "%s/%s", homedir, folder);
 	return (0);
 }
 
@@ -436,7 +438,7 @@ getdeadletter()
 	else if (*cp != '/') {
 		char buf[PATHSIZE];
 
-		(void) sprintf(buf, "~/%s", cp);
+		(void) snprintf(buf, sizeof buf, "~/%s", cp);
 		cp = expand(buf);
 	}
 	return cp;

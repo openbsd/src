@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.4 1997/03/29 03:01:47 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.5 1997/05/30 08:51:43 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.4 1996/06/08 19:48:35 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.4 1997/03/29 03:01:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.5 1997/05/30 08:51:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ prepare_child(nset, infd, outfd)
 	if (outfd >= 0)
 		dup2(outfd, 1);
 	if (nset) {
-		for (i = 1; i <= NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			if (sigismember(nset, i))
 				(void) signal(i, SIG_IGN);
 		if (!sigismember(nset, SIGINT))
