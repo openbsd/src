@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.21 2002/01/16 18:44:21 mpech Exp $	*/
+/*	$OpenBSD: mv.c,v 1.22 2002/01/25 07:10:04 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.21 2002/01/16 18:44:21 mpech Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.22 2002/01/25 07:10:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,6 +174,12 @@ do_move(from, to)
 	struct stat sb, fsb;
 	char modep[15];
 
+	/* Source path must exist (symlink is OK). */
+	if (lstat(from, &fsb)) {
+		warn("%s", from);
+		return (1);
+	}
+
 	/*
 	 * (1)	If the destination path exists, the -f option is not specified
 	 *	and either of the following conditions are true:
@@ -228,11 +234,6 @@ do_move(from, to)
 
 	if (errno != EXDEV) {
 		warn("rename %s to %s", from, to);
-		return (1);
-	}
-
-	if (lstat(from, &fsb)) {
-		warn("%s", from);
 		return (1);
 	}
 
