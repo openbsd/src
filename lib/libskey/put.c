@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.7 1997/07/24 23:00:25 millert Exp $
+ * $Id: put.c,v 1.8 1997/07/26 19:42:44 millert Exp $
  */
 
 #include <stdio.h>
@@ -18,7 +18,7 @@
 
 #include "skey.h"
 
-static unsigned long extract __P ((char *s, int start, int length));
+static unsigned int extract __P ((char *s, int start, int length));
 static void standard __P ((char *word));
 static void insert __P ((char *s, int x, int start, int length));
 static int wsrch __P ((char *w, int low, int high));
@@ -2251,7 +2251,7 @@ insert(s, x, start, length)
 	unsigned char cl;
 	unsigned char cc;
 	unsigned char cr;
-	unsigned long y;
+	unsigned int y;
 	int shift;
 
 	assert(length <= 11);
@@ -2260,7 +2260,7 @@ insert(s, x, start, length)
 	assert(start + length <= 66);
 
 	shift = ((8 - ((start + length) % 8)) % 8);
-	y = (long)x << shift;
+	y = x << shift;
 	cl = (y >> 16) & 0xff;
 	cc = (y >> 8) & 0xff;
 	cr = y & 0xff;
@@ -2296,7 +2296,7 @@ standard(word)
 }
 
 /* Extract 'length' bits from the char array 's' starting with bit 'start' */
-static unsigned long
+static unsigned int
 extract(s, start, length)
 	char *s;
 	int start;
@@ -2305,7 +2305,7 @@ extract(s, start, length)
 	unsigned char cl;
 	unsigned char cc;
 	unsigned char cr;
-	unsigned long x;
+	unsigned int x;
 
 	assert(length <= 11);
 	assert(start >= 0);
@@ -2315,7 +2315,7 @@ extract(s, start, length)
 	cl = s[start / 8];
 	cc = s[start / 8 + 1];
 	cr = s[start / 8 + 2];
-	x = ((long)(cl << 8 | cc) << 8 | cr);
+	x = ((int)(cl << 8 | cc) << 8 | cr);
 	x = x >> (24 - (length + (start % 8)));
 	x = (x & (0xffff >> (16 - length)));
 
