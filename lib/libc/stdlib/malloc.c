@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.45 2001/12/05 22:54:01 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.46 2002/01/23 20:42:24 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1248,6 +1248,7 @@ malloc(size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     r = imalloc(size);
@@ -1287,6 +1288,7 @@ realloc(void *ptr, size_t size)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
+	THREAD_UNLOCK();
 	return (0);
     }
     if (!ptr) {
