@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.382 2003/05/14 23:51:28 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.383 2003/05/15 06:22:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1284,10 +1284,19 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			r.af = $6;
 			if ($9.tag)
-				strlcpy(r.tagname, $9.tag, PF_TAG_NAME_SIZE);
+				if (strlcpy(r.tagname, $9.tag,
+				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
 			if ($9.match_tag)
-				strlcpy(r.match_tagname, $9.match_tag,
-				    PF_TAG_NAME_SIZE);
+				if (strlcpy(r.match_tagname, $9.match_tag,
+				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
 			r.flags = $9.flags.b1;
 			r.flagset = $9.flags.b2;
 			if (rule_label(&r, $9.label))
@@ -2498,7 +2507,12 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 			}
 
 			if ($6 != NULL)
-				strlcpy(r.tagname, $6, PF_TAG_NAME_SIZE);
+				if (strlcpy(r.tagname, $6, PF_TAG_NAME_SIZE) >
+				    PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
 
 			if (r.action == PF_NONAT || r.action == PF_NORDR) {
 				if ($7 != NULL) {
@@ -2639,7 +2653,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 				free($3);
 			}
 			if ($10 != NULL)
-				strlcpy(binat.tagname, $10, PF_TAG_NAME_SIZE);
+				if (strlcpy(binat.tagname, $10,
+				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
 
 			if ($5 != NULL) {
 				binat.proto = $5->proto;
