@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.5 2000/07/05 12:53:20 art Exp $	*/
+/*	$OpenBSD: magma.c,v 1.6 2000/07/05 13:13:20 art Exp $	*/
 /*
  * magma.c
  *
@@ -1642,7 +1642,7 @@ again:		/* goto bad */
 		 * poll delay?
 		 */
 		if( mp->mp_delay > 0 ) {
-			s = splsoftclock();
+			s = spltty();	/* XXX */
 			SET(mp->mp_flags, MBPPF_DELAY);
 			timeout(mbpp_start, mp, mp->mp_delay);
 			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
@@ -1664,7 +1664,7 @@ again:		/* goto bad */
 	/*
 	 * clear timeouts
 	 */
-	s = splsoftclock();
+	s = spltty();	/* XXX */
 	if( ISSET(mp->mp_flags, MBPPF_TIMEOUT) ) {
 		untimeout(mbpp_timeout, mp);
 		CLR(mp->mp_flags, MBPPF_TIMEOUT);
