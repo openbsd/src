@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.2 1997/09/03 13:20:55 downsj Exp $
+	$OpenBSD: syscalls.master,v 1.3 1997/11/13 18:35:21 deraadt Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -131,7 +131,7 @@
 63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
 			    int *size, int arg); } ogetkerninfo
 64	NOARGS		{ int compat_43_sys_getpagesize(void); } ogetpagesize
-65	NOARGS		{ int sys_msync(caddr_t addr, size_t len, int flags); }
+65	NOARGS		{ int sys_msync(void *addr, size_t len, int flags); }
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.3 1996/03/24 17:01:33 tholo Exp $	*/
+/*	$OpenBSD: mman.h,v 1.4 1997/11/13 18:35:33 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -77,6 +77,13 @@
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
 
+/*
+ * Flags to msync
+ */
+#define	MS_ASYNC	0x01	/* perform asynchronous writes */
+#define	MS_SYNC		0x02	/* perform synchronous writes */
+#define	MS_INVALIDATE	0x04	/* invalidate cached data */
+
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
@@ -86,7 +93,7 @@ __BEGIN_DECLS
 caddr_t	mmap __P((caddr_t, size_t, int, int, int, off_t));
 int	mprotect __P((caddr_t, size_t, int));
 int	munmap __P((caddr_t, size_t));
-int	msync __P((caddr_t, size_t));
+int	msync __P((void *, size_t, int));
 int	mlock __P((caddr_t, size_t));
 int	munlock __P((caddr_t, size_t));
 int	madvise __P((caddr_t, size_t, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.11 1997/11/06 05:59:38 csapuntz Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.12 1997/11/13 18:35:39 deraadt Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -133,6 +133,7 @@ struct _ps_strings {
 #define	KERN_RESOURCE_SHORTAGE	6
 #define	KERN_NOT_RECEIVER	7
 #define	KERN_NO_ACCESS		8
+#define	KERN_PAGES_LOCKED	9
 
 #ifndef ASSEMBLER
 /*

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 1997/07/28 09:53:13 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.8 1997/11/13 18:35:29 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -113,7 +113,7 @@
 62	NOARGS		{ int compat_43_sys_fstat(int fd, struct ostat *sb); }
 63	UNIMPL		
 64	NOARGS		{ int compat_43_sys_getpagesize(void); }
-65	STD		{ int sunos_sys_omsync(caddr_t addr, size_t len, \
+65	NOARGS		{ int sys_msync(void *addr, size_t len, \
 			    int flags); }
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread

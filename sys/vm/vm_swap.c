@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.6 1997/08/18 13:55:59 niklas Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.7 1997/11/13 18:35:40 deraadt Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/file.h>
+#include <sys/mman.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -491,4 +492,22 @@ swfree(p, index)
 	}
 
 	return (0);
+}
+
+int
+sys_omsync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_msync_args ua;
+	struct sys_omsync_args /* {
+	        syscallarg(caddr_t) addr;
+	        syscallarg(size_t) len;
+	} */ *uap = v;
+
+	SCARG(&ua, addr) = SCARG(uap, addr);;
+	SCARG(&ua, len) = SCARG(uap, len);;
+	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
+	return (sys_msync(p, &ua, retval));
 }

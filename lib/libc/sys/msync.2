@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd October 10, 1997
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -43,13 +43,15 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>
 .Ft int
-.Fn msync "caddr_t addr" "size_t len"
+.Fn msync "void *addr" "size_t len" "int flags"
 .Sh DESCRIPTION
 The
 .Fn msync
-system call
-writes any modified pages back to the filesystem and updates
-the file modification time.
+system call writes all pages with shared modifications
+in the specified
+region of the process's address space back to permanent
+storage, and, if requested, invalidates cached data mapped
+in the region.
 If
 .Fa len
 is 0, all modified pages within the region containing
@@ -57,16 +59,28 @@ is 0, all modified pages within the region containing
 will be flushed;
 if
 .Fa len
-is non-zero, only the pages containing
+is non-zero, only modified pages containing
 .Fa addr
 and
 .Fa len
-succeeding locations will be examined.
+succeeding locations will be flushed.
 Any required synchronization of memory caches
 will also take place at this time.
 Filesystem operations on a file that is mapped for shared modifications
 are unpredictable except after an
 .Fn msync .
+.Pp
+The
+.Fa flags
+argument is formed by
+.Em or Ns 'ing
+the following values
+.Pp
+.Bd -literal -offset indent -compact
+MS_ASYNC	Perform asynchronous writes.
+MS_SYNC		Perform synchronous writes.
+MS_INVALIDATE	Invalidate cached data after writing.
+.Ed
 .Sh RETURN VALUES
 Upon successful completion,
 a value of 0 is returned.
@@ -76,20 +90,30 @@ is set to indicate the error.
 .Sh ERRORS
 The following errors may be reported:
 .Bl -tag -width Er
+.It Bq Er EBUSY
+The
+.Dv MS_INVALIDATE
+flag was specified and a portion of the specified region
+was locked with
+.Xr mlock 2 .
+.It Bq Er EINVAL
+The specified
+.Fa flags
+argument was invalid.
 .It Bq Er EINVAL
 The
 .Fa addr
 parameter was not page aligned.
-.It Bq Er EINVAL
-The
-.Fa addr
-parameter did not specify an address part of a mapped region.
-.It Bq Er EINVAL
-The
-.Fa len
-parameter was negative.
+.It Bq Er ENOMEM
+Addresses in the specified region are outside the range allowed
+for the address space of the process, or specify one or more pages
+which are unmapped.
 .It Bq Er EIO
-An I/O error occured while writing to the file system.
+An I/O error occured while writing.
+.Sh BUGS
+Writes are currently done synchronously even if the
+.Dv MS_ASYNC
+flag is specified.
 .Sh SEE ALSO
 .Xr madvise 2 ,
 .Xr minherit 2 ,
@@ -100,3 +124,8 @@ An I/O error occured while writing to the file system.
 The
 .Fn msync
 function first appeared in 4.4BSD.
+It was modified to conform to
+.St -p1003.1b-93
+in
+.Nx 1.3 .
+.P

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.8 1997/07/25 06:03:08 mickey Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.9 1997/11/13 18:35:38 deraadt Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -271,21 +271,31 @@ sys_msync(p, v, retval)
 	register_t *retval;
 {
 	struct sys_msync_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
+		syscallarg(int) flags;
 	} */ *uap = v;
 	vm_offset_t addr;
 	vm_size_t size, pageoff;
 	vm_map_t map;
-	int rv;
+	int rv, flags;
 	boolean_t syncio, invalidate;
 
 	addr = (vm_offset_t)SCARG(uap, addr);
 	size = (vm_size_t)SCARG(uap, len);
+	flags = SCARG(uap, flags);
 #ifdef DEBUG
 	if (mmapdebug & (MDB_FOLLOW|MDB_SYNC))
 		printf("msync(%d): addr 0x%lx len %lx\n", p->p_pid, addr, size);
 #endif
+
+	/* sanity check flags */
+	if ((flags & ~(MS_ASYNC | MS_SYNC | MS_INVALIDATE)) != 0 ||
+	    (flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
+	    (flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
+		return (EINVAL);
+	if ((flags & (MS_ASYNC | MS_SYNC)) == 0)
+		flags |= MS_SYNC;
 
 	/*
 	 * Align the address to a page boundary,
@@ -297,8 +307,8 @@ sys_msync(p, v, retval)
 	size = (vm_size_t) round_page(size);
 
 	/* Disallow wrap-around. */
-	if (addr + (int)size < addr)
-		return (EINVAL);
+	if (addr + size < addr)
+		return (ENOMEM);
 
 	map = &p->p_vmspace->vm_map;
 	/*
@@ -316,7 +326,7 @@ sys_msync(p, v, retval)
 		rv = vm_map_lookup_entry(map, addr, &entry);
 		vm_map_unlock_read(map);
 		if (rv == FALSE)
-			return (EINVAL);
+			return (ENOMEM);
 		addr = entry->start;
 		size = entry->end - entry->start;
 	}
@@ -325,11 +335,20 @@ sys_msync(p, v, retval)
 		printf("msync: cleaning/flushing address range [0x%lx-0x%lx)\n",
 		       addr, addr+size);
 #endif
+
+#if 0
 	/*
-	 * Could pass this in as a third flag argument to implement
-	 * Sun's MS_ASYNC.
+	 * XXX Asynchronous msync() causes:
+	 *	. the process to hang on wchan "vospgw", and
+	 *	. a "vm_object_page_clean: pager_put error" message to
+	 *	  be printed by the kernel.
 	 */
+	syncio = (flags & MS_SYNC) ? TRUE : FALSE;
+#else
 	syncio = TRUE;
+#endif
+	invalidate = (flags & MS_INVALIDATE) ? TRUE : FALSE;
+
 	/*
 	 * XXX bummer, gotta flush all cached pages to ensure
 	 * consistency with the file system cache.  Otherwise, we could
@@ -344,9 +363,11 @@ sys_msync(p, v, retval)
 	case KERN_SUCCESS:
 		break;
 	case KERN_INVALID_ADDRESS:
-		return (EINVAL);	/* Sun returns ENOMEM? */
+		return (ENOMEM);
 	case KERN_FAILURE:
 		return (EIO);
+	case KERN_PAGES_LOCKED:
+		return (EBUSY);
 	default:
 		return (EINVAL);
 	}

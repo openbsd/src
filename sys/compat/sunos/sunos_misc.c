@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.15 1997/11/06 22:15:51 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.16 1997/11/13 18:35:28 deraadt Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -217,23 +217,6 @@ sunos_sys_execv(p, v, retval)
 	SCARG(&ouap, envp) = NULL;
 
 	return (sys_execve(p, &ouap, retval));
-}
-
-int
-sunos_sys_omsync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sunos_sys_omsync_args *uap = v;
-	struct sys_msync_args ouap;
-
-	if (SCARG(uap, flags))
-		return (EINVAL);
-	SCARG(&ouap, addr) = SCARG(uap, addr);
-	SCARG(&ouap, len) = SCARG(uap, len);
-
-	return (sys_msync(p, &ouap, retval));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.11 1997/11/13 06:37:49 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.12 1997/11/13 18:35:26 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -527,27 +527,6 @@ linux_sys_mremap(p, v, retval)
 	} */ *uap = v;
 #endif
 	return (ENOMEM);
-}
-
-int
-linux_sys_msync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_msync_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
-		syscallarg(int) fl;
-	} */ *uap = v;
-
-	struct sys_msync_args bma;
-
-	/* flags are ignored */
-	SCARG(&bma, addr) = SCARG(uap, addr);
-	SCARG(&bma, len) = SCARG(uap, len);
-
-	return sys_msync(p, &bma, retval);
 }
 
 /*
