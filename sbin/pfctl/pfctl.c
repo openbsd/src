@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.163 2003/03/27 20:21:34 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.164 2003/04/02 14:07:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -950,8 +950,8 @@ pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 					    "qtype not configured\n");
 				else if (errno == ENODEV)
 					fprintf(stderr,
-					    "driver does not support "
-					    "altq\n");
+					    "%s: driver does not support "
+					    "altq\n", a->ifname);
 				err(1, "DIOCADDALTQ");
 			}
 		}
