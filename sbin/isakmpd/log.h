@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.h,v 1.4 1998/12/21 01:02:26 niklas Exp $	*/
-/*	$EOM: log.h,v 1.10 1998/12/01 10:19:45 niklas Exp $	*/
+/*	$OpenBSD: log.h,v 1.5 1999/03/24 14:59:41 niklas Exp $	*/
+/*	$EOM: log.h,v 1.11 1999/03/04 18:53:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -41,7 +41,7 @@
 #include <stdio.h>
 
 enum log_classes {
-  LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_PF_ENCAP,
+  LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_SYSDEP,
   LOG_ENDCLASS
 };
 
