@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.1 2002/12/21 01:41:54 deraadt Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.2 2003/01/03 04:52:43 deraadt Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -30,7 +30,7 @@ usage() {
 }
 
 case $# in
-0)	usage()
+0)	usage
 	;;
 esac
 
