@@ -1,4 +1,4 @@
-.\" $OpenBSD: growfs.8,v 1.1 2003/07/28 21:09:28 tedu Exp $
+.\" $OpenBSD: growfs.8,v 1.2 2003/07/28 22:28:59 jmc Exp $
 .\" Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
 .\" Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -63,19 +63,20 @@ If you wish to grow a file system beyond the boundary of
 the slice it resides in, you must re-size the slice using
 .Xr fdisk 8
 before running
-.Nm .
+.Nm growfs .
 The
 .Nm
 utility extends the size of the file system on the specified special file.
+.Pp
 Currently
 .Nm
 can only enlarge unmounted file systems.
-Do not try enlarging a mounted file system, your system may panic and you will
+Do not try enlarging a mounted file system \- your system may panic and you will
 not be able to use the file system any longer.
 Most of the
 .Xr newfs 8
 options cannot be changed by
-.Nm .
+.Nm growfs .
 In fact, you can only increase the size of the file system.
 Use
 .Xr tunefs 8
@@ -84,11 +85,11 @@ for other changes.
 The following options are available:
 .Bl -tag -width indent
 .It Fl N
-.Dq Test mode .
+Test mode.
 Causes the new file system parameters to be printed out without actually
 enlarging the file system.
 .It Fl y
-.Dq Expert mode .
+Expert mode.
 Usually
 .Nm
 will ask you if you took a backup of your data before and will do some tests
@@ -108,11 +109,6 @@ This value defaults to the size of the raw partition specified in
 .Nm
 will enlarge the file system to the size of the entire partition).
 .El
-.Sh BUGS
-It is recommended to always use
-.Xr fsck 8
-after enlarging (just to be on the safe side).
-.Pp
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr dumpfs 8 ,
@@ -120,12 +116,17 @@ after enlarging (just to be on the safe side).
 .Xr fsck 8 ,
 .Xr newfs 8 ,
 .Xr tunefs 8
-.Sh AUTHORS
-.An Christoph Herrmann Aq chm@FreeBSD.org
-.An Thomas-Henning von Kamptz Aq tomsoft@FreeBSD.org
-.An The GROWFS team Aq growfs@Tomsoft.COM
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
 .Fx 4.4 .
+.Sh AUTHORS
+.An Christoph Herrmann Aq chm@FreeBSD.org
+.An Thomas-Henning von Kamptz Aq tomsoft@FreeBSD.org
+.An The GROWFS team Aq growfs@Tomsoft.COM
+.Sh BUGS
+It is recommended to always use
+.Xr fsck 8
+after enlarging
+.Pq just to be on the safe side .
