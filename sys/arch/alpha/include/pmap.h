@@ -1,5 +1,5 @@
-/* $OpenBSD: pmap.h,v 1.7 2001/03/16 09:06:02 art Exp $ */
-/* $NetBSD: pmap.h,v 1.35 2000/06/08 03:10:06 thorpej Exp $ */
+/* $OpenBSD: pmap.h,v 1.8 2001/03/16 14:10:23 art Exp $ */
+/* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -183,6 +183,11 @@ struct pv_head {
 #if defined(MULTIPROCESSOR)
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_do_tlb_shootdown(void);
+void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
+#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
+	pmap_tlb_shootdown((pm), (va), (pte))
+#else
+#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
  
