@@ -34,10 +34,7 @@
  */
 
 
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <vm/vm_inherit.h>
-#include <vm/lock.h>
+#include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
