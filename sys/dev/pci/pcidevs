@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.832 2005/02/07 19:11:54 brad Exp $
+$OpenBSD: pcidevs,v 1.833 2005/02/08 02:10:18 krw Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2244,6 +2244,7 @@ product S3 TRIO3_DX2		0x8a13	Trio3 DX2
 product S3 SAVAGE3D		0x8a20	Savage 3D
 product S3 SAVAGE3D_M		0x8a21	Savage 3DM
 product S3 SAVAGE4		0x8a22	Savage 4
+product S3 PROSAVAGE_PM133	0x8a25	ProSavage PM133
 product S3 VIRGE_MX		0x8c01	ViRGE MX
 product S3 VIRGE_MXP		0x8c03	ViRGE MXP
 product S3 SAVAGE_MXMV		0x8c10	Savage/MX-MV
