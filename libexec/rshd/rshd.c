@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.33 2000/09/15 07:13:47 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.34 2000/11/10 17:45:43 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -377,6 +377,7 @@ doit(fromp)
 		 * address corresponds to the name.
 		 */
 		hostname = saddr;
+		res0 = NULL;
 #ifdef	KERBEROS
 		if (!use_kerberos)
 #endif
@@ -423,11 +424,12 @@ doit(fromp)
 					    "Host address mismatch for %s\n";
 					hostname = naddr;
 				}
-				freeaddrinfo(res);
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
 		    sizeof(hostnamebuf) - 1);
+		if (res0)
+			freeaddrinfo(res0);
 	} else
 		errorhost = hostname = strncpy(hostnamebuf,
 		    naddr, sizeof(hostnamebuf) - 1);
