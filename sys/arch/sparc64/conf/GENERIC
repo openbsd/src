@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.75 2002/12/04 17:32:30 nate Exp $
+#	$OpenBSD: GENERIC,v 1.76 2002/12/04 21:33:20 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -188,10 +188,14 @@ ss*		at scsibus? target ? lun ?	# SCSI scanners
 uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 # Media Independent Interface (mii) drivers)
+exphy*	at mii? phy ?				# 3Com internal PHYs
+brgphy*	at mii? phy ?				# Broadcom PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 dcphy*	at mii? phy ?				# Digital clone PHYs
 amphy*	at mii? phy ?				# AMD AM79c873 PHYs
+iophy*	at mii? phy ?				# Intel 82553 PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
 bwtwo*		at sbus? slot ? offset ?	# bw2, sbus mono framebuffer
