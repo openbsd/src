@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.7 1997/10/10 10:56:41 pefo Exp $	*/
+/*	$OpenBSD: pci.c,v 1.8 1997/10/11 09:14:53 pefo Exp $	*/
 /*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
 
 /*
@@ -263,11 +263,11 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	if (iosizep != NULL)
 		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
 
-#ifdef powerpc
+#ifdef power4e
 	/*
 	 * Open Firmware (yuck) shuts down devices before entering a
 	 * program so we need to bring them back 'online' to respond
-         * to bus accesses...
+         * to bus accesses... so far this is true on the power.4e.
          */
 	s = splhigh();
 	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
@@ -339,7 +339,7 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	/*
 	 * Open Firmware (yuck) shuts down devices before entering a
 	 * program so we need to bring them back 'online' to respond
-         * to bus accesses...
+         * to bus accesses... so far this is true on the power.4e.
          */
 	s = splhigh();
 	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
