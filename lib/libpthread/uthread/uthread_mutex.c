@@ -360,8 +360,8 @@ pthread_mutex_unlock(pthread_mutex_t * mutex)
 		case PTHREAD_MUTEX_ERRORCHECK:
 			/* Check if the running thread is not the owner of the mutex: */
 			if ((*mutex)->m_owner != _thread_run) {
-				/* Return an invalid argument error: */
-				ret = (*mutex)->m_owner ? EPERM : EINVAL;
+				/* This thread doesn't have permission: */
+				ret = EPERM;
 			}
 			/*
 			 * Get the next thread from the queue of threads waiting on
