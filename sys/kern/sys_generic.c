@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.3 1996/04/21 22:27:24 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.4 1996/05/07 05:52:01 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -538,24 +538,43 @@ sys_select(p, v, retval)
 		syscallarg(fd_set *) ex;
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
-	fd_set ibits[3], obits[3];
+	fd_set bits[6], *pibits[3], *pobits[3];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
 	u_int ni;
 
-	bzero((caddr_t)ibits, sizeof(ibits));
-	bzero((caddr_t)obits, sizeof(obits));
-	if (SCARG(uap, nd) > FD_SETSIZE)
-		return (EINVAL);
 	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
 		SCARG(uap, nd) = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
+	if (SCARG(uap, nd) > FD_SETSIZE) {
+		caddr_t mbits;
+
+		if ((mbits = malloc(ni * 6, M_TEMP, M_WAITOK)) == NULL) {
+			error = EINVAL;
+			goto cleanup;
+		}
+		bzero(mbits, ni * 6);
+		pibits[0] = (fd_set *)&mbits[ni * 0];
+		pibits[1] = (fd_set *)&mbits[ni * 1];
+		pibits[2] = (fd_set *)&mbits[ni * 2];
+		pobits[0] = (fd_set *)&mbits[ni * 3];
+		pobits[1] = (fd_set *)&mbits[ni * 4];
+		pobits[2] = (fd_set *)&mbits[ni * 5];
+	} else {
+		bzero((caddr_t)bits, sizeof(bits));
+		pibits[0] = &bits[0];
+		pibits[1] = &bits[1];
+		pibits[2] = &bits[2];
+		pobits[0] = &bits[3];
+		pobits[1] = &bits[4];
+		pobits[2] = &bits[5];
+	}
 
 #define	getbits(name, x) \
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, name), \
-	    (caddr_t)&ibits[x], ni))) \
+	    (caddr_t)pibits[x], ni))) \
 		goto done;
 	getbits(in, 0);
 	getbits(ou, 1);
@@ -585,7 +604,7 @@ sys_select(p, v, retval)
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
-	error = selscan(p, ibits, obits, SCARG(uap, nd), retval);
+	error = selscan(p, pibits[0], pobits[0], SCARG(uap, nd), retval);
 	if (error || *retval)
 		goto done;
 	s = splhigh();
@@ -612,7 +631,7 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 #define	putbits(name, x) \
-	if (SCARG(uap, name) && (error2 = copyout((caddr_t)&obits[x], \
+	if (SCARG(uap, name) && (error2 = copyout((caddr_t)pobits[x], \
 	    (caddr_t)SCARG(uap, name), ni))) \
 		error = error2;
 	if (error == 0) {
@@ -623,6 +642,10 @@ done:
 		putbits(ex, 2);
 #undef putbits
 	}
+	
+cleanup:
+	if (pibits[0] != &bits[0])
+		free(pibits[0], M_TEMP);
 	return (error);
 }
 
@@ -633,23 +656,35 @@ selscan(p, ibits, obits, nfd, retval)
 	int nfd;
 	register_t *retval;
 {
+	caddr_t cibits = (caddr_t)ibits, cobits = (caddr_t)obits;
 	register struct filedesc *fdp = p->p_fd;
 	register int msk, i, j, fd;
 	register fd_mask bits;
 	struct file *fp;
-	int n = 0;
+	int ni, n = 0;
 	static int flag[3] = { FREAD, FWRITE, 0 };
 
+	/*
+	 * if nfd > FD_SETSIZE then the fd_set's contain nfd bits (rounded
+	 * up to the next byte) otherwise the fd_set's are normal sized.
+	 */
+	ni = sizeof(fd_set);
+	if (nfd > FD_SETSIZE)
+		ni = howmany(nfd, NFDBITS) * sizeof(fd_mask);
+
 	for (msk = 0; msk < 3; msk++) {
+		fd_set *pibits = (fd_set *)&cibits[msk*ni];
+		fd_set *pobits = (fd_set *)&cobits[msk*ni];
+
 		for (i = 0; i < nfd; i += NFDBITS) {
-			bits = ibits[msk].fds_bits[i/NFDBITS];
+			bits = pibits->fds_bits[i/NFDBITS];
 			while ((j = ffs(bits)) && (fd = i + --j) < nfd) {
 				bits &= ~(1 << j);
 				fp = fdp->fd_ofiles[fd];
 				if (fp == NULL)
 					return (EBADF);
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
-					FD_SET(fd, &obits[msk]);
+					FD_SET(fd, pobits);
 					n++;
 				}
 			}
