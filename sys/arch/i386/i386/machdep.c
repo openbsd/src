@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.282 2004/02/19 23:31:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.283 2004/02/27 21:07:48 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -351,6 +351,7 @@ cyrix_write_reg(u_char reg, u_char data)
 	outb(0x22, reg);
 	outb(0x23, data);
 }
+#endif
 
 /*
  * cpuid instruction.  request in eax, result in eax, ebx, ecx, edx.
@@ -369,7 +370,6 @@ cpuid(u_int32_t ax, u_int32_t *regs)
 	    :"0" (ax), "S" (regs)
 	    :"bx", "cx", "dx");
 }
-#endif
 
 /*
  * Machine-dependent startup code
@@ -2038,8 +2038,10 @@ identifycpu()
 		cpu_setup(cpu_device, model, step);
 
 #ifndef SMALL_KERNEL
+#if defined(I586_CPU) || defined(I686_CPU)
 	if (cpu_cpuspeed == NULL && pentium_mhz != 0)
 		cpu_cpuspeed = pentium_cpuspeed;
+#endif
 #endif
 
 	cpu_class = class;
@@ -2133,7 +2135,8 @@ identifycpu()
 
 }
 
-#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+#ifndef SMALL_KERNEL
+#ifdef I686_CPU
 int
 p4_cpuspeed(int *freq)
 {
@@ -2173,7 +2176,9 @@ p4_cpuspeed(int *freq)
 
 	return (0);
 }
+#endif	/* I686_CPU */
 
+#if defined(I586_CPU) || defined(I686_CPU)
 int
 pentium_cpuspeed(int *freq)
 {
@@ -2181,6 +2186,7 @@ pentium_cpuspeed(int *freq)
 	return (0);
 }
 #endif
+#endif	/* !SMALL_KERNEL */
 
 #ifdef COMPAT_IBCS2
 void ibcs2_sendsig(sig_t, int, int, u_long, int, union sigval);
