@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2002/04/30 21:04:29 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2002/09/20 18:59:57 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -113,6 +113,7 @@ member	tf_sr5
 member	tf_sr6
 member	tf_sr7
 member	TF_CR0		tf_rctr
+member	TF_CR10		tf_ccr
 member	TF_IIOQH	tf_iioq_head
 member	TF_IIOQT	tf_iioq_tail
 member	TF_IISQH	tf_iisq_head
