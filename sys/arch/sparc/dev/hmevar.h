@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.4 1998/09/08 04:48:38 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.5 1998/09/10 17:34:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -36,7 +36,9 @@ struct hme_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	int	sc_node;		/* which sbus node */
-	struct	ifmedia sc_ifmedia;	/* interface media */
+
+	mii_data_t	sc_mii;		/* mii bus */
+
 	struct	arpcom sc_arpcom;	/* ethernet common */
 
 	/*
@@ -54,10 +56,6 @@ struct hme_softc {
 
 	u_int32_t	sc_flags;	/* status flags	*/
 	u_int32_t	sc_promisc;	/* are we promiscuous? */
-	u_int32_t	sc_phyaddr;	/* PHY addr */
-	int		sc_an_state;	/* state of negotiation */
-	int		sc_an_ticks;	/* how long has passed? */
-	int		sc_tcvr_type;	/* transceiver type */
 
 	/*
 	 * RX/TX ring buffers, descriptors, and counters

@@ -109,6 +109,10 @@ le*	at sbus? slot ? offset ?
 # HappyMeal ethernet
 hme*	at sbus? slot ? offset ?
 
+# Media Independent Interface (mii) drivers
+nsphy*	at mii? phy ?				# NS and compatible PHYs
+qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+
 #ie0	at obio0 addr 0xf6000000 level 6
 #ie0	at obio0 addr 0x06000000 level 6		# 4/100
 #ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.7 1998/09/09 19:23:34 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.8 1998/09/10 17:34:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -73,6 +73,8 @@
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>	/* for SBUS_BURST_* */
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <sparc/dev/hmereg.h>
 #include <sparc/dev/hmevar.h>
 
@@ -87,16 +89,8 @@ void	hmestop		__P((struct hme_softc *));
 void	hmeinit		__P((struct hme_softc *));
 void	hme_meminit	__P((struct hme_softc *));
 
-static void	hme_tcvr_write	    __P((struct hme_softc *, int reg,
-					u_short val));
-static int	hme_tcvr_read	    __P((struct hme_softc *, int reg));
-static void	hme_tcvr_bb_write   __P((struct hme_softc *, int reg,
-					u_short val));
-static int	hme_tcvr_bb_read    __P((struct hme_softc *, int reg));
-static void	hme_tcvr_bb_writeb  __P((struct hme_softc *, int b));
-static int	hme_tcvr_bb_readb   __P((struct hme_softc *));
-static void	hme_tcvr_check	    __P((struct hme_softc *));
-static int	hme_tcvr_reset	    __P((struct hme_softc *));
+static void	hme_tcvr_bb_writeb  __P((struct hme_softc *, int));
+static int	hme_tcvr_bb_readb   __P((struct hme_softc *, int));
 
 static void	hme_poll_stop	__P((struct hme_softc *sc));
 
@@ -105,11 +99,6 @@ static int	hme_tint	__P((struct hme_softc *));
 static int	hme_mint	__P((struct hme_softc *, u_int32_t));
 static int	hme_eint	__P((struct hme_softc *, u_int32_t));
 
-static void	hme_auto_negotiate __P((struct hme_softc *));
-static void	hme_negotiate_watchdog __P((void *));
-static void	hme_print_link_mode __P((struct hme_softc *));
-static void	hme_set_initial_advertisement	__P((struct hme_softc *));
-
 static void	hme_reset_rx		__P((struct hme_softc *));
 static void	hme_reset_tx		__P((struct hme_softc *));
 
@@ -117,8 +106,18 @@ static struct mbuf *	hme_get __P((struct hme_softc *, int, int));
 static void		hme_read __P((struct hme_softc *, int, int));
 static int		hme_put __P((struct hme_softc *, int, struct mbuf *));
 
-static int	hme_ifmedia_upd __P((struct ifnet *));
-static void	hme_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+/*
+ * ifmedia glue
+ */
+static int	hme_mediachange __P((struct ifnet *));
+static void	hme_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+/*
+ * mii glue
+ */
+static int	hme_mii_read __P((struct device *, int, int));
+static void	hme_mii_write __P((struct device *, int, int, int));
+static void	hme_mii_statchg __P((struct device *));
 
 static void	hme_mcreset __P((struct hme_softc *));
 
@@ -195,8 +194,6 @@ hmeattach(parent, self, aux)
 
 	hme_meminit(sc);
 
-	hme_set_initial_advertisement(sc);
-
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
 	sc->sc_ih.ih_fun = hmeintr;
@@ -212,6 +209,18 @@ hmeattach(parent, self, aux)
 		myetheraddr(sc->sc_arpcom.ac_enaddr);
 	}
 
+	printf(" pri %d: address %s rev %d\n", pri,
+		ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->sc_rev);
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = hme_mii_read;
+	sc->sc_mii.mii_writereg = hme_mii_write;
+	sc->sc_mii.mii_statchg = hme_mii_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, hme_mediachange,
+	    hme_mediastatus);
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE);
+
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = hmestart;
@@ -223,12 +232,6 @@ hmeattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	sc->sc_an_state = HME_TIMER_DONE;
-	sc->sc_an_ticks = 0;
-
-	printf(" pri %d: address %s rev %d\n", pri,
-		ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->sc_rev);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -308,6 +311,7 @@ hmestop(sc)
 		DELAY(20);
 	if (tries == MAX_STOP_TRIES)
 		printf("%s: stop failed\n", sc->sc_dev.dv_xname);
+	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
 /*
@@ -443,7 +447,7 @@ hmeioctl(ifp, cmd, data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
+		error = ifmedia_ioctl(ifp, ifr,  &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
 		error = EINVAL;
@@ -514,20 +518,6 @@ hmeinit(sc)
 	else
 		tcvr->cfg = c | TCVR_CFG_BENABLE;
 
-	hme_tcvr_check(sc);
-	switch (sc->sc_tcvr_type) {
-	case HME_TCVR_NONE:
-		printf("%s: no transceiver type!\n", sc->sc_dev.dv_xname);
-		return;
-	case HME_TCVR_INTERNAL:
-		cr->xif_cfg = 0;
-		break;
-	case HME_TCVR_EXTERNAL:
-		cr->xif_cfg = CR_XCFG_MIIDISAB;
-		break;
-	}
-	hme_tcvr_reset(sc);
-
 	hme_reset_tx(sc);
 	hme_reset_rx(sc);
 
@@ -588,242 +578,17 @@ hmeinit(sc)
 	cr->rx_cfg = CR_RXCFG_HENABLE;
 	DELAY(10);
 
-	c = CR_TXCFG_DGIVEUP;
-	if (sc->sc_flags & HME_FLAG_FULL)
-		c |= CR_TXCFG_FULLDPLX;
-	cr->tx_cfg = c;
+	cr->tx_cfg |= CR_TXCFG_DGIVEUP;
 
 	c = CR_XCFG_ODENABLE;
 	if (sc->sc_flags & HME_FLAG_LANCE)
 		c |= (HME_DEFAULT_IPKT_GAP0 << 5) | CR_XCFG_LANCE;
-	if (sc->sc_tcvr_type == HME_TCVR_EXTERNAL)
-		c |= CR_XCFG_MIIDISAB;
 	cr->xif_cfg = c;
 
 	cr->tx_cfg |= CR_TXCFG_ENABLE;	/* enable tx */
 	cr->rx_cfg |= CR_RXCFG_ENABLE;	/* enable rx */
 
-	hme_ifmedia_upd(&sc->sc_arpcom.ac_if);
-}
-
-static void
-hme_set_initial_advertisement(sc)
-	struct hme_softc *sc;
-{
-	hmestop(sc);
-	sc->sc_tcvr->int_mask = 0xffff;
-	if (sc->sc_flags & HME_FLAG_FENABLE)
-		sc->sc_tcvr->cfg &= ~(TCVR_CFG_BENABLE);
-	else
-		sc->sc_tcvr->cfg |= TCVR_CFG_BENABLE;
-
-	hme_tcvr_check(sc);
-	switch (sc->sc_tcvr_type) {
-	case HME_TCVR_NONE:
-		return;
-	case HME_TCVR_INTERNAL:
-		sc->sc_cr->xif_cfg = 0;
-		break;
-	case HME_TCVR_EXTERNAL:
-		sc->sc_cr->xif_cfg = CR_XCFG_MIIDISAB;
-		break;
-	}
-	if (hme_tcvr_reset(sc))
-		return;
-
-	/* grab the supported modes and advertised modes */
-	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-	sc->sc_sw.anar = hme_tcvr_read(sc, DP83840_ANAR);
-
-	ifmedia_init(&sc->sc_ifmedia, 0, hme_ifmedia_upd, hme_ifmedia_sts);
-
-	/* If 10BaseT Half duplex supported, advertise it, and so on... */
-	if (sc->sc_sw.bmsr & BMSR_10BASET_HALF) {
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
-		ifmedia_add(&sc->sc_ifmedia,
-		    IFM_ETHER | IFM_10_T | IFM_HDX, 0, NULL);
-		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_HDX;
-		sc->sc_sw.anar |= ANAR_10;
-	}
-	else
-		sc->sc_sw.anar &= ~(ANAR_10);
-
-	if (sc->sc_sw.bmsr & BMSR_10BASET_FULL) {
-		ifmedia_add(&sc->sc_ifmedia,
-		    IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
-		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_FDX;
-		sc->sc_sw.anar |= ANAR_10_FD;
-	}
-	else
-		sc->sc_sw.anar &= ~(ANAR_10_FD);
-
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF) {
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->sc_ifmedia,
-		    IFM_ETHER | IFM_100_TX | IFM_HDX, 0, NULL);
-		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		sc->sc_sw.anar |= ANAR_TX;
-	}
-	else
-		sc->sc_sw.anar &= ~(ANAR_TX);
-
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL) {
-		ifmedia_add(&sc->sc_ifmedia,
-		    IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
-		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_FDX;
-		sc->sc_sw.anar |= ANAR_TX_FD;
-	}
-	else
-		sc->sc_sw.anar &= ~(ANAR_TX_FD);
-
-	if (sc->sc_sw.bmsr & BMSR_ANC) {
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
-		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_AUTO;
-	}
-
-	ifmedia_set(&sc->sc_ifmedia, sc->sc_ifmedia.ifm_media);
-
-	/* Inform card about what it should advertise */
-	hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
-}
-
-#define XCVR_RESET_TRIES	16
-#define XCVR_UNISOLATE_TRIES	32
-
-static int
-hme_tcvr_reset(sc)
-	struct hme_softc *sc;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	u_int32_t cfg;
-	int result, tries = XCVR_RESET_TRIES;
-
-	cfg = tcvr->cfg;
-	if (sc->sc_tcvr_type == HME_TCVR_EXTERNAL) {
-		tcvr->cfg = cfg & ~(TCVR_CFG_PSELECT);
-		sc->sc_tcvr_type = HME_TCVR_INTERNAL;
-		sc->sc_phyaddr = TCVR_PHYADDR_ITX;
-		hme_tcvr_write(sc, DP83840_BMCR,
-			(BMCR_LOOPBACK | BMCR_PDOWN | BMCR_ISOLATE));
-		result = hme_tcvr_read(sc, DP83840_BMCR);
-		if (result == TCVR_FAILURE) {
-			printf("%s: tcvr_reset failed\n", sc->sc_dev.dv_xname);
-			return -1;
-		}
-		tcvr->cfg = cfg | TCVR_CFG_PSELECT;
-		sc->sc_tcvr_type = HME_TCVR_EXTERNAL;
-		sc->sc_phyaddr = TCVR_PHYADDR_ETX;
-	}
-	else {
-		if (cfg & TCVR_CFG_MDIO1) {
-			tcvr->cfg = cfg | TCVR_CFG_PSELECT;
-			hme_tcvr_write(sc, DP83840_BMCR,
-				(BMCR_LOOPBACK | BMCR_PDOWN | BMCR_ISOLATE));
-			result = hme_tcvr_read(sc, DP83840_BMCR);
-			if (result == TCVR_FAILURE) {
-				printf("%s: tcvr_reset failed\n",
-					sc->sc_dev.dv_xname);
-				return -1;
-			}
-			tcvr->cfg = cfg & ~(TCVR_CFG_PSELECT);
-			sc->sc_tcvr_type = HME_TCVR_INTERNAL;
-			sc->sc_phyaddr = TCVR_PHYADDR_ITX;
-		}
-	}
-
-	hme_tcvr_write(sc, DP83840_BMCR, BMCR_RESET);
-
-	while (--tries) {
-		result = hme_tcvr_read(sc, DP83840_BMCR);
-		if (result == TCVR_FAILURE)
-			return -1;
-		sc->sc_sw.bmcr = result;
-		if (!(result & BMCR_RESET))
-			break;
-		DELAY(20);
-	}
-	if (!tries) {
-		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
-		return -1;
-	}
-
-	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-	sc->sc_sw.phyidr1 = hme_tcvr_read(sc, DP83840_PHYIDR1);
-	sc->sc_sw.phyidr2 = hme_tcvr_read(sc, DP83840_PHYIDR2);
-	sc->sc_sw.anar = hme_tcvr_read(sc, DP83840_BMSR);
-
-	sc->sc_sw.bmcr &= ~(BMCR_ISOLATE);
-	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
-
-	tries = XCVR_UNISOLATE_TRIES;
-	while (--tries) {
-		result = hme_tcvr_read(sc, DP83840_BMCR);
-		if (result == TCVR_FAILURE)
-			return -1;
-		if (!(result & BMCR_ISOLATE))
-			break;
-		DELAY(20);
-	}
-	if (!tries) {
-		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
-		return -1;
-	}
-
-	result = hme_tcvr_read(sc, DP83840_PCR);
-	hme_tcvr_write(sc, DP83840_PCR, (result | PCR_CIM_DIS));
-	return 0;
-}
-
-
-/*
- * We need to know whether we are using an internal or external transceiver.
- */
-static void
-hme_tcvr_check(sc)
-	struct hme_softc *sc;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	u_int32_t cfg = tcvr->cfg;
-
-	/* polling? */
-	if (sc->sc_flags & HME_FLAG_POLL) {
-		if (sc->sc_tcvr_type == HME_TCVR_INTERNAL) {
-			hme_poll_stop(sc);
-			sc->sc_phyaddr = TCVR_PHYADDR_ETX;
-			sc->sc_tcvr_type = HME_TCVR_EXTERNAL;
-			cfg &= ~(TCVR_CFG_PENABLE);
-			cfg |= TCVR_CFG_PSELECT;
-			tcvr->cfg = cfg;
-		}
-		else {
-			if (!(tcvr->status >> 16)) {
-				hme_poll_stop(sc);
-				sc->sc_phyaddr = TCVR_PHYADDR_ITX;
-				sc->sc_tcvr_type = HME_TCVR_INTERNAL;
-				cfg &= ~(TCVR_CFG_PSELECT);
-				tcvr->cfg = cfg;
-			}
-		}
-	}
-	else {
-		u_int32_t cfg2 = tcvr->cfg;
-
-		if (cfg2 & TCVR_CFG_MDIO1) {
-			tcvr->cfg = cfg | TCVR_CFG_PSELECT;
-			sc->sc_phyaddr = TCVR_PHYADDR_ETX;
-			sc->sc_tcvr_type = HME_TCVR_EXTERNAL;
-		}
-		else {
-			if (cfg2 & TCVR_CFG_MDIO0) {
-				tcvr->cfg = cfg & ~(TCVR_CFG_PSELECT);
-				sc->sc_phyaddr = TCVR_PHYADDR_ITX;
-				sc->sc_tcvr_type = HME_TCVR_INTERNAL;
-			}
-			else {
-				sc->sc_tcvr_type = HME_TCVR_NONE;
-			}
-		}
-	}
+	mii_mediachg(&sc->sc_mii);
 }
 
 static void
@@ -841,69 +606,7 @@ hme_poll_stop(sc)
 	tcvr->int_mask = 0xffff;
         tcvr->cfg &= ~(TCVR_CFG_PENABLE);
 	sc->sc_flags &= ~(HME_FLAG_POLL);
-	DELAY(20);
-}
-
-#define XCVR_WRITE_TRIES	16
-
-static void
-hme_tcvr_write(sc, reg, val)
-	struct hme_softc *sc;
-	int reg;
-	u_short val;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	int tries = XCVR_WRITE_TRIES;
-
-	/* Use the bitbang? */
-	if (! (sc->sc_flags & HME_FLAG_FENABLE))
-		return hme_tcvr_bb_write(sc, reg, val);
-
-	/* No, good... we just write to the tcvr frame */
-	tcvr->frame = (FRAME_WRITE | sc->sc_phyaddr << 23) |
-		      ((reg & 0xff) << 18) |
-		      (val & 0xffff);
-	while (!(tcvr->frame & 0x10000) && (tries != 0)) {
-		tries--;
-		DELAY(20);
-	}
-
-	if (!tries)
-		printf("%s: tcvr_write failed\n", sc->sc_dev.dv_xname);
-}
-
-#define XCVR_READ_TRIES	16
-
-static int
-hme_tcvr_read(sc, reg)
-	struct hme_softc *sc;
-	int reg;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	int tries = XCVR_READ_TRIES;
-
-	if (sc->sc_tcvr_type == HME_TCVR_NONE) {
-		printf("%s: no transceiver type\n", sc->sc_dev.dv_xname);
-		return TCVR_FAILURE;
-	}
-
-	/* Use the bitbang? */
-	if (! (sc->sc_flags & HME_FLAG_FENABLE))
-		return hme_tcvr_bb_read(sc, reg);
-
-	/* No, good... we just write/read to the tcvr frame */
-	tcvr->frame = (FRAME_READ | sc->sc_phyaddr << 23) |
-		      ((reg & 0xff) << 18);
-	while (!(tcvr->frame & 0x10000) && (tries != 0)) {
-		tries--;
-		DELAY(20);
-	}
-
-	if (!tries) {
-		printf("%s: tcvr_write failed\n", sc->sc_dev.dv_xname);
-		return TCVR_FAILURE;
-	}
-	return (tcvr->frame & 0xffff);
+	DELAY(200);
 }
 
 /*
@@ -921,198 +624,20 @@ hme_tcvr_bb_writeb(sc, b)
 }
 
 static int
-hme_tcvr_bb_readb(sc)
+hme_tcvr_bb_readb(sc, phy)
 	struct hme_softc *sc;
+	int phy;
 {
 	int ret;
 
 	sc->sc_tcvr->bb_clock = 0;
 	DELAY(10);
-	if (sc->sc_tcvr_type == HME_TCVR_INTERNAL)
+	if (phy == TCVR_PHYADDR_ITX)
 		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO0;
-	else
+	if (phy == TCVR_PHYADDR_ETX)
 		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO1;
 	sc->sc_tcvr->bb_clock = 1;
 	return ((ret) ? 1 : 0);
-}
-
-static void
-hme_tcvr_bb_write(sc, reg, val)
-	struct hme_softc *sc;
-	int reg;
-	u_short val;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	int i;
-
-	tcvr->bb_oenab = 1;	                /* turn on bitbang intrs */
-
-	for (i = 0; i < 32; i++)		/* make bitbang idle */
-		hme_tcvr_bb_writeb(sc, 1);
-
-	hme_tcvr_bb_writeb(sc, 0);		/* 0101 signals a write */
-	hme_tcvr_bb_writeb(sc, 1);
-	hme_tcvr_bb_writeb(sc, 0);
-	hme_tcvr_bb_writeb(sc, 1);
-
-	for (i = 4; i >= 0; i--)		/* send PHY addr */
-		hme_tcvr_bb_writeb(sc, ((sc->sc_phyaddr & 0xff) >> i) & 0x1);
-
-	for (i = 4; i >= 0; i--)		/* send register num */
-		hme_tcvr_bb_writeb(sc, ((reg & 0xff) >> i) & 0x1);
-
-	hme_tcvr_bb_writeb(sc, 1);		/* get ready for data */
-	hme_tcvr_bb_writeb(sc, 0);
-
-	for (i = 15; i >= 0; i--)		/* send new value */
-		hme_tcvr_bb_writeb(sc, (val >> i) & 0x1);
-
-	tcvr->bb_oenab = 0;	                /* turn off bitbang intrs */
-}
-
-static int
-hme_tcvr_bb_read(sc, reg)
-	struct hme_softc *sc;
-	int reg;
-{
-	struct hme_tcvr *tcvr = sc->sc_tcvr;
-	int ret = 0, i;
-
-	tcvr->bb_oenab = 1;                	/* turn on bitbang intrs */
-
-	for (i = 0; i < 32; i++)		/* make bitbang idle */
-		hme_tcvr_bb_writeb(sc, 1);
-
-	hme_tcvr_bb_writeb(sc, 0);		/* 0110 signals a read */
-	hme_tcvr_bb_writeb(sc, 1);
-	hme_tcvr_bb_writeb(sc, 1);
-	hme_tcvr_bb_writeb(sc, 0);
-
-	for (i = 4; i >= 0; i--)		/* send PHY addr */
-		hme_tcvr_bb_writeb(sc, ((sc->sc_phyaddr & 0xff) >> i) & 0x1);
-
-	for (i = 4; i >= 0; i--)		/* send register num */
-		hme_tcvr_bb_writeb(sc, ((reg & 0xff) >> i) & 0x1);
-
-	tcvr->bb_oenab = 0;	                /* turn off bitbang intrs */
-
-	hme_tcvr_bb_readb(sc);			/* ignore... */
-
-	for (i = 15; i >= 15; i--)		/* read value */
-		ret |= hme_tcvr_bb_readb(sc) << i;
-
-	hme_tcvr_bb_readb(sc);			/* ignore... */
-	hme_tcvr_bb_readb(sc);			/* ignore... */
-	hme_tcvr_bb_readb(sc);			/* ignore... */
-
-	return ret;
-}
-
-static void
-hme_auto_negotiate(sc)
-	struct hme_softc *sc;
-{
-	int tries;
-
-	/* grab all of the registers */
-	sc->sc_sw.bmsr =	hme_tcvr_read(sc, DP83840_BMSR);
-	sc->sc_sw.bmcr =	hme_tcvr_read(sc, DP83840_BMCR);
-	sc->sc_sw.phyidr1 =	hme_tcvr_read(sc, DP83840_PHYIDR1);
-	sc->sc_sw.phyidr2 =	hme_tcvr_read(sc, DP83840_PHYIDR2);
-	sc->sc_sw.anar =	hme_tcvr_read(sc, DP83840_ANAR);
-
-	/* can this board autonegotiate? No, die. */
-	if (! (sc->sc_sw.bmsr & BMSR_ANC))
-		return;
-
-	/* Start autonegoiation */
-	sc->sc_sw.bmcr |= BMCR_ANE;	/* enable auto-neg */
-	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
-	sc->sc_sw.bmcr |= BMCR_RAN;	/* force a restart */
-	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
-
-	/* BMCR_RAN clears itself when it has started negotiation... */
-	tries = 64;
-	while (--tries) {
-		int r = hme_tcvr_read(sc, DP83840_BMCR);
-		if (r == TCVR_FAILURE)
-			return;
-		sc->sc_sw.bmcr = r;
-		if (! (sc->sc_sw.bmcr & BMCR_RAN))
-			break;
-		DELAY(100);
-	}
-	if (!tries) {
-		printf("%s: failed to start auto-negotiation\n",
-			sc->sc_dev.dv_xname);
-		return;
-	}
-	sc->sc_an_state = HME_TIMER_AUTONEG;
-	sc->sc_an_ticks = 0;
-	timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
-}
-
-/*
- * If auto-negotiating, check to see if it has completed successfully.  If so,
- * wait for a link up.  If it completed unsucessfully, try the manual process.
- */
-static void
-hme_negotiate_watchdog(arg)
-	void *arg;
-{
-	struct hme_softc *sc = (struct hme_softc *)arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	sc->sc_an_ticks++;
-	switch (sc->sc_an_state) {
-	    case HME_TIMER_DONE:
-		return;
-	    case HME_TIMER_AUTONEG:
-		sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-		if (sc->sc_sw.bmsr & BMSR_ANCOMPLETE) {
-			sc->sc_an_state = HME_TIMER_LINKUP;
-			sc->sc_an_ticks = 0;
-			timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
-			return;
-		}
-		if (sc->sc_an_ticks > 10) {
-			printf("%s: auto-negotiation failed.\n",
-				sc->sc_dev.dv_xname);
-			hme_auto_negotiate(sc);
-			return;
-		}
-		timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
-		break;
-	    case HME_TIMER_LINKUP:
-		ifp->if_flags |= IFF_RUNNING;
-		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_timer = 0;
-		hmestart(ifp);
-		sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-		if (sc->sc_sw.bmsr & BMSR_LINKSTATUS) {
-			sc->sc_an_state = HME_TIMER_DONE;
-			sc->sc_an_ticks = 0;
-			hme_print_link_mode(sc);
-			return;
-		}
-		if ((sc->sc_an_ticks % 10) == 0) {
-			printf("%s: link down...\n", sc->sc_dev.dv_xname);
-			timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
-			return;
-		}
-	}
-}
-
-static void 
-hme_print_link_mode(sc)
-	struct hme_softc *sc;
-{
-	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
-	printf("%s: %s transceiver up %dMb/s %s duplex\n",
-	    sc->sc_dev.dv_xname,
-	    (sc->sc_tcvr_type == HME_TCVR_EXTERNAL) ? "external" : "internal",
-	    (sc->sc_sw.bmcr & BMCR_SPEED) ? 100 : 10,
-	    (sc->sc_sw.bmcr & BMCR_DUPLEX) ? "full" : "half");
 }
 
 #define RESET_TRIES	32
@@ -1155,19 +680,7 @@ hme_mint(sc, why)
 	struct hme_softc *sc;
 	u_int32_t why;
 {
-	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
-	sc->sc_sw.anlpar = hme_tcvr_read(sc, DP83840_ANLPAR);
-
 	printf("%s: link status changed\n", sc->sc_dev.dv_xname);
-	if (sc->sc_sw.anlpar & ANLPAR_TX_FD) {
-		sc->sc_sw.bmcr |= (BMCR_SPEED | BMCR_DUPLEX);
-	} else if (sc->sc_sw.anlpar & ANLPAR_TX) {
-		sc->sc_sw.bmcr |= BMCR_SPEED;
-	} else if (sc->sc_sw.anlpar & ANLPAR_10_FD) {
-		sc->sc_sw.bmcr |= BMCR_DUPLEX;
-	} /* else 10Mb half duplex... */
-	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
-	hme_print_link_mode(sc);
 	hme_poll_stop(sc);
 	return 1;
 }
@@ -1532,104 +1045,136 @@ hme_mcreset(sc)
 	}
 }
 
-/*
- * Get current media settings.
- */
 static void
-hme_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+hme_mii_write(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
 {
-	struct hme_softc *sc = ifp->if_softc;
+	struct hme_softc *sc = (struct hme_softc *)self;
+	struct hme_tcvr *tcvr = sc->sc_tcvr;
+	int tries = 16, i;
 
-	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
-	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-
-	switch (sc->sc_sw.bmcr & (BMCR_SPEED | BMCR_DUPLEX)) {
-	case (BMCR_SPEED | BMCR_DUPLEX):
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
-		break;
-	case BMCR_SPEED:
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		break;
-	case BMCR_DUPLEX:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
-		break;
-	case 0:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
-		break;
+	if (sc->sc_flags & HME_FLAG_FENABLE) {
+		tcvr->frame = (FRAME_WRITE | phy << 23) |
+			      ((reg & 0xff) << 18) |
+			      (val & 0xffff);
+		while (!(tcvr->frame & 0x10000) && (tries != 0)) {
+			tries--;
+			DELAY(200);
+		}
+		if (!tries)
+			printf("%s: mii_read failed\n", sc->sc_dev.dv_xname);
+		return;
 	}
 
-	if (sc->sc_sw.bmsr & BMSR_LINKSTATUS)
-		ifmr->ifm_status |= IFM_AVALID | IFM_ACTIVE;
-	else {
-		ifmr->ifm_status |= IFM_AVALID;
-		ifmr->ifm_status &= ~IFM_ACTIVE;
-	}
+	tcvr->bb_oenab = 1;
+
+	for (i = 0; i < 32; i++)
+		hme_tcvr_bb_writeb(sc, 1);
+
+	hme_tcvr_bb_writeb(sc, (MII_COMMAND_START >> 1) & 1);
+	hme_tcvr_bb_writeb(sc, MII_COMMAND_START & 1);
+	hme_tcvr_bb_writeb(sc, (MII_COMMAND_WRITE >> 1) & 1);
+	hme_tcvr_bb_writeb(sc, MII_COMMAND_WRITE & 1);
+
+	for (i = 4; i >= 0; i--)
+		hme_tcvr_bb_writeb(sc, (phy >> i) & 1);
+
+	for (i = 4; i >= 0; i--)
+		hme_tcvr_bb_writeb(sc, (reg >> i) & 1);
+
+	for (i = 15; i >= 0; i--)
+		hme_tcvr_bb_writeb(sc, (reg >> i) & 1);
+
+	tcvr->bb_oenab = 0;
 }
 
 static int
-hme_ifmedia_upd(ifp)
+hme_mii_read(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct hme_softc *sc = (struct hme_softc *)self;
+	struct hme_tcvr *tcvr = sc->sc_tcvr;
+	int tries = 16, i, ret;
+
+	/* Use the frame if possible */
+	if (sc->sc_flags & HME_FLAG_FENABLE) {
+		tcvr->frame = (FRAME_READ | phy << 23) |
+			      ((reg & 0xff) << 18);
+		while (!(tcvr->frame & 0x10000) && (tries != 0)) {
+			tries--;
+			DELAY(20);
+		}
+		if (!tries) {
+			printf("%s: mii_read failed\n", sc->sc_dev.dv_xname);
+			return 0;
+		}
+		return (tcvr->frame & 0xffff);
+	}
+
+	tcvr->bb_oenab = 1;
+
+	for (i = 0; i < 32; i++)		/* make bitbang idle */
+		hme_tcvr_bb_writeb(sc, 1);
+
+	hme_tcvr_bb_writeb(sc, (MII_COMMAND_START >> 1) & 1);
+	hme_tcvr_bb_writeb(sc, MII_COMMAND_START & 1);
+	hme_tcvr_bb_writeb(sc, (MII_COMMAND_READ >> 1) & 1);
+	hme_tcvr_bb_writeb(sc, MII_COMMAND_READ & 1);
+
+	for (i = 4; i >= 0; i--)
+		hme_tcvr_bb_writeb(sc, (phy >> i) & 1);
+
+	for (i = 4; i >= 0; i--)
+		hme_tcvr_bb_writeb(sc, (reg >> i) & 1);
+
+	tcvr->bb_oenab = 0;	                /* turn off bitbang intrs */
+
+	hme_tcvr_bb_readb(sc, phy);		/* ignore... */
+
+	for (i = 15; i >= 15; i--)		/* read value */
+		ret |= hme_tcvr_bb_readb(sc, phy) << i;
+
+	hme_tcvr_bb_readb(sc, phy);			/* ignore... */
+	hme_tcvr_bb_readb(sc, phy);			/* ignore... */
+	hme_tcvr_bb_readb(sc, phy);			/* ignore... */
+
+	return ret;
+}
+
+static int
+hme_mediachange(ifp)
 	struct ifnet *ifp;
 {
-	struct hme_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_ifmedia;
-
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return (EINVAL);
-
-	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO &&
-	    sc->sc_sw.bmsr & BMSR_ANC) {
-		
-		/* advertise -everything- supported */
-		if (sc->sc_sw.bmsr & BMSR_10BASET_HALF)
-			sc->sc_sw.anar |= ANAR_10;
-		else
-			sc->sc_sw.anar &= ~(ANAR_10);
-
-		if (sc->sc_sw.bmsr & BMSR_10BASET_FULL)
-			sc->sc_sw.anar |= ANAR_10_FD;
-		else
-			sc->sc_sw.anar &= ~(ANAR_10_FD);
-
-		if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF)
-			sc->sc_sw.anar |= ANAR_TX;
-		else
-			sc->sc_sw.anar &= ~(ANAR_TX);
-
-		if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL)
-			sc->sc_sw.anar |= ANAR_TX_FD;
-		else
-			sc->sc_sw.anar &= ~(ANAR_TX_FD);
-
-		hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
-		hme_auto_negotiate(sc);
-		return (0);
-	}
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
-		return (EINVAL);
-
-	sc->sc_sw.anar = hme_tcvr_read(sc, DP83840_ANAR);
-	sc->sc_sw.anar &= ~(ANAR_T4 | ANAR_TX_FD | ANAR_TX
-	    | ANAR_10_FD | ANAR_10);
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
-			sc->sc_sw.anar |= ANAR_TX_FD;
-		else
-			sc->sc_sw.anar |= ANAR_TX;
-	}
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
-			sc->sc_sw.anar |= ANAR_10_FD;
-		else
-			sc->sc_sw.anar |= ANAR_10;
-	}
-
-	hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
-	hme_auto_negotiate(sc);
+	if (ifp->if_flags & IFF_UP)
+		hmeinit(ifp->if_softc);
 	return (0);
+}
+
+static void
+hme_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
+
+	mii_pollstat(&sc->sc_mii);
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+}
+
+static void
+hme_mii_statchg(self)
+	struct device *self;
+{
+	struct hme_softc *sc = (struct hme_softc *)sc;
+	struct hme_cr *cr = sc->sc_cr;
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		cr->tx_cfg |= CR_TXCFG_FULLDPLX;
+	else
+		cr->tx_cfg &= ~CR_TXCFG_FULLDPLX;
+
+	/* XXX Update ifp->if_baudrate */
 }

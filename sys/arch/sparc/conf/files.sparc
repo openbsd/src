@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.21 1998/09/01 17:36:58 jason Exp $
+#	$OpenBSD: files.sparc,v 1.22 1998/09/10 17:34:31 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -76,6 +76,10 @@ device sbus { slot = -1, offset = -1 }
 attach sbus at mainbus, iommu
 file	arch/sparc/dev/sbus.c			sbus
 
+#
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
@@ -114,7 +118,7 @@ attach	me at qec
 file	arch/sparc/dev/me.c		me
 
 # HappyMeal (hme) ethernet
-device hme
+device hme: ifnet, ether, mii
 attach hme at sbus
 file	arch/sparc/dev/hme.c		hme
 
