@@ -374,6 +374,20 @@ Run
 .Nm newaliases
 after changes.
 \!\"--------------------------------------------------------------------------
+.Ss Sendmail
+.Ox
+ships with a default
+.Pa /etc/sendmail.cf
+file that will work for simple installations; it was generated from
+.Pa openbsd-proto.mc
+in
+.Pa /usr/share/sendmail/cf .
+Please see
+.Pa /usr/share/sendmail/README
+and
+.Pa /usr/share/doc/smm/08.sendmailop/op.me
+for information on generating your own sendmail configuration files.
+\!\"--------------------------------------------------------------------------
 .Ss Bootp server
 If this is a
 .Pa bootp
