@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2002/03/14 03:15:53 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2002/05/16 13:01:41 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -291,7 +291,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				  nargs? ",":"");
 		}
 		db_printf(") at ");
-		db_printsym(pc, DB_STGY_PROC);
+		db_printsym(pc, DB_STGY_PROC, db_printf);
 		db_printf("\n");
 
 		/* TODO: print locals */
@@ -306,7 +306,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 	if (count && pc) {
-		db_printsym(pc, DB_STGY_XTRN);
+		db_printsym(pc, DB_STGY_XTRN, db_printf);
 		db_printf(":\n");
 	}
 }

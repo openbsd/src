@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2002/03/14 01:26:38 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2002/05/16 13:01:41 art Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -293,7 +293,7 @@ symofset(int  disp, int  bit, int iadr)
 	} else {
 		addr = iadr + (disp << 2);
 	}
-	db_printsym(addr,DB_STGY_PROC);
+	db_printsym(addr,DB_STGY_PROC, db_printf);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.9 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.10 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ db_examine(addr, fmt, count)
 		while ((c = *fp++) != 0) {
 			if (db_print_position() == 0) {
 				/* Always print the address. */
-				db_printsym(addr, DB_STGY_ANY);
+				db_printsym(addr, DB_STGY_ANY, db_printf);
 				db_printf(":\t");
 				db_prev = addr;
 			}
@@ -201,7 +201,7 @@ db_print_cmd(addr, have_addr, count, modif)
 
 	switch (db_print_format) {
 	case 'a':
-		db_printsym((db_addr_t)addr, DB_STGY_ANY);
+		db_printsym((db_addr_t)addr, DB_STGY_ANY, db_printf);
 		break;
 	case 'r':
 		db_printf("%*r", sizeof(db_expr_t) * 2 * 6 / 5, addr);
@@ -236,7 +236,7 @@ void
 db_print_loc_and_inst(loc)
 	db_addr_t	loc;
 {
-	db_printsym(loc, DB_STGY_PROC);
+	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
 	(void) db_disasm(loc, FALSE);
 }

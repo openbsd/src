@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -959,7 +959,7 @@ db_print_address(seg, size, addrp)
 	if (seg)
 		db_printf("%s:", seg);
 
-	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY);
+	db_printsym((db_addr_t)addrp->disp, DB_STGY_ANY, db_printf);
 	if (addrp->base != 0 || addrp->index != 0) {
 		db_printf("(");
 		if (addrp->base)
@@ -1301,15 +1301,18 @@ db_disasm(loc, altfmt)
 			if (seg)
 				db_printf("%s:%#r",seg, displ);
 			else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY);
+				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				    db_printf);
 			break;
 		    case Db:
 			get_value_inc(displ, loc, 1, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case Dl:
 			get_value_inc(displ, loc, 4, TRUE);
-			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN);
+			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
+			    db_printf);
 			break;
 		    case o1:
 			db_printf("$1");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2002/03/14 03:15:57 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2002/05/16 13:01:41 art Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -832,7 +832,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 	db_printf("(0) "); /*depth of trace */
 	if (trace_flags & TRACE_SHOWADDRESS_FLAG)
 		db_printf("%08x ", where);
-	db_printsym(where, DB_STGY_PROC);
+	db_printsym(where, DB_STGY_PROC, db_printf);
 	clear_global_saved_regs();
 
 	/* see if this routine had a stack frame */
@@ -884,7 +884,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 
 		if (trace_flags & TRACE_SHOWADDRESS_FLAG)
 			db_printf("%08x ", where);
-		db_printsym(where, DB_STGY_PROC);
+		db_printsym(where, DB_STGY_PROC, db_printf);
 		where = stack_decode(where, &stack);
 		print_args();
 		if (trace_flags & TRACE_SHOWFRAME_FLAG)

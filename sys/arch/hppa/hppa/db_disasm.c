@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2002/05/16 13:01:41 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -1712,7 +1712,7 @@ blDasm(i, ofs, w)
 		db_printf(",n");
 	db_printf("\t");
 
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 
 	if (link || Match("gate"))
 		db_printf(",%%r%d",link);
@@ -1782,7 +1782,7 @@ cbDasm(i, ofs, w)
 	else
 		db_printf(subDCond(Cond(w) << 1));
 	db_printf("%s\t%%r%d,%%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 
@@ -1802,7 +1802,7 @@ cbiDasm(i, ofs, w)
 	else
 		db_printf(subDCond(Cond(w) << 1));
 	db_printf("%s\t%d,%%r%d,", Nu(w)? ",n":"", Ima5(w), Rsb(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 
@@ -1822,7 +1822,7 @@ bbDasm(i, ofs, w)
 		db_printf("%s\t%%r%d,", p, Rta(w));
 	else
 		db_printf("%s\t%%r%d,%d,", p, Rsa(w), Imb5(w));
-	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
 }
 

@@ -139,7 +139,7 @@ void db_symbol_values(db_sym_t, char **, db_expr_t *);
 	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,0)
 					/* ditto, but no locals */
 
-void db_printsym(db_expr_t, db_strategy_t);
+void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));
 					/* print closest symbol to a value */
 
 boolean_t db_line_at_pc(db_sym_t, char **, int *, db_expr_t);

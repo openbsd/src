@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -159,7 +159,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				(*pr)("%x, ", (u_int)KLOAD(f32->fr_arg[i]));
 			(*pr)("%x) at ", (u_int)KLOAD(f32->fr_arg[i]));
 		}
-		db_printsym(pc, DB_STGY_PROC);
+		db_printsym(pc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 	}
 }
@@ -220,7 +220,7 @@ u_int64_t frame;
 				  (unsigned long long)f->fr_fp,
 				  (unsigned long long)f->fr_pc);
 			/* Sometimes this don't work.  Dunno why. */
-			db_printsym(f->fr_pc, DB_STGY_PROC);
+			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		} else {
 			struct frame64 fr;
@@ -254,7 +254,7 @@ u_int64_t frame;
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
 				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
-			db_printsym(f->fr_pc, DB_STGY_PROC);
+			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		} else {
 			struct frame32 fr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2002/03/14 04:16:55 jason Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -841,7 +841,7 @@ db_print_trace_entry(te, i)
 		  (int)te->tt, (unsigned long long)te->tstate, 
 		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,
 		  (unsigned long long)te->tpc);
-	db_printsym((u_long)te->tpc, DB_STGY_PROC);
+	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
 	db_printf(": ");
 	if ((te->tpc && !(te->tpc&0x3)) &&
 	    curproc &&

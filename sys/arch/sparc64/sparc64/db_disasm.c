@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -1006,19 +1006,19 @@ db_disasm(loc, altfmt)
 			val = (((insn>>20)&0x3)<<13)|(insn & 0x1fff);
 			val = SIGNEX(val, 16);
 			db_printsym((db_addr_t)(loc + (4 * val)),
-			    DB_STGY_ANY);
+			    DB_STGY_ANY, db_printf);
 			break;
 		case 'm':
 			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 22))),
-				DB_STGY_ANY);
+				DB_STGY_ANY, db_printf);
 			break;
 		case 'u':
 			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 19))),
-			    DB_STGY_ANY);
+			    DB_STGY_ANY, db_printf);
 			break;
 		case 'n':
 			db_printsym((db_addr_t)(loc + (4 * SIGNEX(insn, 30))),
-			    DB_STGY_PROC);
+			    DB_STGY_PROC, db_printf);
 			break;
 		case 's':
 			db_printf("%%asi");

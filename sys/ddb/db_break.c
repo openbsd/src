@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.11 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.12 2002/05/16 13:01:41 art Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -268,7 +268,7 @@ db_list_breakpoints()
 	    db_printf("%s%p %5d    ",
 		      db_map_current(bkpt->map) ? "*" : " ",
 		      bkpt->map, bkpt->init_count);
-	    db_printsym(bkpt->address, DB_STGY_PROC);
+	    db_printsym(bkpt->address, DB_STGY_PROC, db_printf);
 	    db_printf("\n");
 	}
 }
