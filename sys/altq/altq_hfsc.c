@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.9 2002/12/16 17:27:20 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.10 2003/03/02 11:22:31 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static int hfsc_request(struct ifaltq *, int, void *);
 static void hfsc_purge(struct hfsc_if *);
 static struct hfsc_class *hfsc_class_create(struct hfsc_if *,
     struct service_curve *, struct service_curve *, struct service_curve *,
-    struct hfsc_class *, int, int);
+    struct hfsc_class *, int, int, int);
 static int hfsc_class_destroy(struct hfsc_class *);
 static struct hfsc_class *hfsc_nextclass(struct hfsc_class *);
 static int hfsc_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
@@ -175,7 +175,7 @@ hfsc_add_altq(struct pf_altq *a)
 	root_sc.d = 0;
 	root_sc.m2 = a->ifbandwidth;
 	if ((hif->hif_rootclass = hfsc_class_create(hif,
-	    &root_sc, &root_sc, NULL, NULL, 0, 0)) == NULL) {
+	    &root_sc, &root_sc, NULL, NULL, 0, 0, 0)) == NULL) {
 		FREE(hif, M_DEVBUF);
 		return (ENOMEM);
 	}
@@ -221,6 +221,12 @@ hfsc_add_queue(struct pf_altq *a)
 	parent = clh_to_clp(hif, a->parent_qid);
 	if (parent == NULL)
 		return (EINVAL);
+	if (a->qid != 0) {
+		if (a->qid >= HFSC_MAX_CLASSES)
+			return (EINVAL);
+		if (clh_to_clp(hif, a->qid) != NULL)
+			return (EBUSY);
+	}
 	rtsc.m1 = opts->rtsc_m1;
 	rtsc.d  = opts->rtsc_d;
 	rtsc.m2 = opts->rtsc_m2;
@@ -232,7 +238,7 @@ hfsc_add_queue(struct pf_altq *a)
 	ulsc.m2 = opts->ulsc_m2;
 
 	cl = hfsc_class_create(hif, &rtsc, &lssc, &ulsc,
-	    parent, a->qlimit, opts->flags);
+	    parent, a->qlimit, opts->flags, a->qid);
 	if (cl == NULL)
 		return (ENOMEM);
 
@@ -340,11 +346,11 @@ hfsc_purge(hif)
 }
 
 struct hfsc_class *
-hfsc_class_create(hif, rsc, fsc, usc, parent, qlimit, flags)
+hfsc_class_create(hif, rsc, fsc, usc, parent, qlimit, flags, qid)
 	struct hfsc_if *hif;
 	struct service_curve *rsc, *fsc, *usc;
 	struct hfsc_class *parent;
-	int qlimit, flags;
+	int qlimit, flags, qid;
 {
 	struct hfsc_class *cl, *p;
 	int i, s, chandle;
@@ -358,13 +364,17 @@ hfsc_class_create(hif, rsc, fsc, usc, parent, qlimit, flags)
 	}
 #endif
 
-	/* find a free class slot. */
-	for (i = 0; i < HFSC_MAX_CLASSES; i++)
-		if (hif->hif_class_tbl[i] == NULL)
-			break;
-	if (i == HFSC_MAX_CLASSES)
-		return (NULL);
-	chandle = i + 1;
+	if (qid)
+		chandle = qid;
+	else {
+		/* find a free class slot. */
+		for (i = 0; i < HFSC_MAX_CLASSES; i++)
+			if (hif->hif_class_tbl[i] == NULL)
+				break;
+		if (i == HFSC_MAX_CLASSES)
+			return (NULL);
+		chandle = i + 1;
+	}
 
 	MALLOC(cl, struct hfsc_class *, sizeof(struct hfsc_class),
 	       M_DEVBUF, M_WAITOK);

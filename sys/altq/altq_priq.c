@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.9 2003/02/08 13:05:43 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.10 2003/03/02 11:22:31 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -52,7 +52,8 @@
 static int priq_clear_interface(struct priq_if *);
 static int priq_request(struct ifaltq *, int, void *);
 static void priq_purge(struct priq_if *);
-static struct priq_class *priq_class_create(struct priq_if *, int, int, int);
+static struct priq_class *priq_class_create(struct priq_if *, int, int, int,
+    int);
 static int priq_class_destroy(struct priq_class *);
 static int priq_enqueue(struct ifaltq *, struct mbuf *,
 			     struct altq_pktattr *);
@@ -135,8 +136,16 @@ priq_add_queue(struct pf_altq *a)
 	if (a->priority >= PRIQ_MAXPRI)
 		return (EINVAL);
 
+	if (a->qid != 0) {
+		/* qid is tied to priority with priq */
+		if (a->qid != a->priority + 1)
+			return (EINVAL);
+		if (clh_to_clp(pif, a->qid) != NULL)
+			return (EBUSY);
+	}
+
 	cl = priq_class_create(pif, a->priority, a->qlimit,
-	    a->pq_u.priq_opts.flags);
+	    a->pq_u.priq_opts.flags, a->qid);
 	if (cl == NULL)
 		return (ENOMEM);
 
@@ -236,7 +245,7 @@ priq_purge(struct priq_if *pif)
 }
 
 static struct priq_class *
-priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags)
+priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 {
 	struct priq_class *cl;
 	int s;
@@ -291,7 +300,10 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags)
 	if (pri > pif->pif_maxpri)
 		pif->pif_maxpri = pri;
 	cl->cl_pif = pif;
-	cl->cl_handle = pri + 1;
+	if (qid)
+		cl->cl_handle = qid;
+	else
+		cl->cl_handle = pri + 1;
 
 #ifdef ALTQ_RED
 	if (flags & (PRCF_RED|PRCF_RIO)) {

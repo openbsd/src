@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.12 2003/02/05 17:43:12 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.13 2003/03/02 11:22:31 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -332,14 +332,24 @@ cbq_add_queue(struct pf_altq *a)
 		chandle = CTL_CLASS_HANDLE;
 		break;
 	case 0:
-		/* find a free class slot. for now, reserve qid 0 */
-		for (i = 1; i < CBQ_MAX_CLASSES; i++)
-			if (cbqp->cbq_class_tbl[i] == NULL)
-				break;
-		if (i == CBQ_MAX_CLASSES)
-			return (ENOSPC);
-		chandle = (u_int32_t)i;
-		break;
+		if (a->qid) {
+			chandle = a->qid;
+			if (chandle >= CBQ_MAX_CLASSES &&
+			    chandle != DEFAULT_CLASS_HANDLE &&
+			    chandle != CTL_CLASS_HANDLE)
+				return (EINVAL);
+			if (cbqp->cbq_class_tbl[chandle] != NULL)
+				return (EBUSY);
+		} else {
+			/* find a free class slot. for now, reserve qid 0 */
+			for (i = 1; i < CBQ_MAX_CLASSES; i++)
+				if (cbqp->cbq_class_tbl[i] == NULL)
+					break;
+			if (i == CBQ_MAX_CLASSES)
+				return (ENOSPC);
+			chandle = (u_int32_t)i;
+		}
+			break;
 	default:
 		/* more than two flags bits set */
 		return (EINVAL);
