@@ -157,7 +157,7 @@ struct	 lwp_ctl {			/* LWP control structure */
     char	*outersp;		/* outermost stack pointer */
     struct lwp_pcb *outerpid;		/* process carved by Initialize */
     struct lwp_pcb *first, last;	/* ptrs to first and last pcbs */
-#ifdef __hp9000s800
+#if defined(__hp9000s800) || defined(__m88k__)
     double	dsptchstack[100];	/* stack for dispatcher use only */
 					/* force 8 byte alignment        */
 #else

@@ -25,6 +25,7 @@ process.S:
 		sparc)   PROCESS_S="process.sparc.S" ;; \
 		i*86*)   PROCESS_S="process.i386.S" ;; \
 		m68k)    PROCESS_S="process.m68k.S" ;; \
+		m88k)    PROCESS_S="process.m88k.S" ;; \
 		mips*)   PROCESS_S="process.mips.S" ;; \
 		alpha*)  PROCESS_S="process.alpha.S" ;; \
 		hppa*)   PROCESS_S="process.hpux.S" ;; \

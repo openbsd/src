@@ -80,7 +80,7 @@ RCSID("$arla: lwp_asm.c,v 1.27 2002/07/16 19:35:40 lha Exp $");
  * Make sure that alignment and saving of data is right
  */
 
-#if defined(__alpha) || defined(__uxpv__) || defined(__sparcv9) || defined(__x86_64__)
+#if defined(__alpha) || defined(__uxpv__) || defined(__sparcv9) || defined(__x86_64__) || defined(__m88k__)
 #define REGSIZE 8
 #else
 #define REGSIZE 4
@@ -96,6 +96,8 @@ RCSID("$arla: lwp_asm.c,v 1.27 2002/07/16 19:35:40 lha Exp $");
 #define STACK_HEADROOM 16
 #elif defined(__s390__)
 #define STACK_HEADROOM 24
+#elif defined(__m88k__)
+#define STACK_HEADROOM 4
 #else
 #define STACK_HEADROOM 5		
 #endif
