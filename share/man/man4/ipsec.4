@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.31 2000/04/28 06:58:58 deraadt Exp $
+.\" $OpenBSD: ipsec.4,v 1.32 2000/09/22 05:14:45 millert Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -420,8 +420,7 @@ DES algorithm.
 Steve Reid's SHA-1 code was also used.
 .Pp
 The
-.Xr setsockopt 2 / Ns
-.Xr getsockopt 2
+.Xr setsockopt 2 / Ns Xr getsockopt 2
 interface follows somewhat loosely the draft-mcdonald-simple-ipsec-api,
 which is work in progress.
 .Sh HISTORY
@@ -430,11 +429,10 @@ The
 protocol design process was started in 1992 by John Ioannidis, Phil Karn
 and William Allen Simpson. In 1995, the former wrote an
 implementation for
-.Tn BSD/OS .
+.Bsx .
 Angelos D. Keromytis ported it to
 .Ox
 and
 .Nx .
 The latest transforms and new features were
 implemented by Angelos D. Keromytis and Niels Provos.
-
