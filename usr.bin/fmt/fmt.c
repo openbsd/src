@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.4 1997/01/26 03:56:52 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.5 1997/01/27 04:06:49 millert Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.4 1997/01/26 03:56:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.5 1997/01/27 04:06:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,12 @@ static char rcsid[] = "$OpenBSD: fmt.c,v 1.4 1997/01/26 03:56:52 millert Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef	__GNUC__
+#define inline	__inline
+#else	/* !__GNUC__ */
+#define inline
+#endif	/* !__GNUC__ */
 
 /*
  * fmt -- format the concatenation of input files or standard input
@@ -90,6 +96,7 @@ void oflush __P((void));
 void tabulate __P((char *));
 void leadin __P((void));
 char *savestr __P((char *));
+char *extstr __P((char *, int *, int));
 int  ispref __P((char *, char *));
 int  ishead __P((char *));
 
@@ -163,19 +170,29 @@ void
 fmt(fi)
 	FILE *fi;
 {
-	static char *linebuf = 0, *canonb = 0;
+	static char *linebuf, *canonb;
+	static int lbufsize, cbufsize;
 	register char *cp, *cp2, cc;
 	register int c, col;
 #define CHUNKSIZE 1024
-	static int lbufsize = 0, cbufsize = 0;
 
 	if (center) {
-		if ((linebuf = malloc(BUFSIZ)) == NOSTR)
-			errx(1, "Ran out of memory");
+		register int len;
+
+		linebuf = extstr(linebuf, &lbufsize, NULL);
 		for (;;) {
-			cp = fgets(linebuf, BUFSIZ, fi);
-			if (!cp)
+			len = 0;
+			for (;;) {
+				if (!fgets(linebuf + len, lbufsize - len, fi))
+					break;
+				len = strlen(linebuf);
+				if (linebuf[len-1] == '\n' || feof(fi))
+					break;
+				linebuf = extstr(linebuf, &lbufsize, NULL);
+			}
+			if (len == 0)
 				return;
+			cp = linebuf;
 			while (*cp && isspace(*cp))
 				cp++;
 			cp2 = cp + strlen(cp) - 1;
@@ -201,10 +218,7 @@ fmt(fi)
 		while (c != '\n' && c != EOF) {
 			if (cp - linebuf >= lbufsize) {
 				int offset = cp - linebuf;
-				lbufsize += CHUNKSIZE;
-				linebuf = realloc(linebuf, lbufsize);
-				if(linebuf == 0)
-					abort();
+				linebuf = extstr(linebuf, &lbufsize, NULL);
 				cp = linebuf + offset;
 			}
 			if (c == '\b') {
@@ -246,10 +260,7 @@ fmt(fi)
 				col++;
 				if (cp2 - canonb >= cbufsize) {
 					int offset = cp2 - canonb;
-					cbufsize += CHUNKSIZE;
-					canonb = realloc(canonb, cbufsize);
-					if(canonb == 0)
-						abort();
+					canonb = extstr(canonb, &cbufsize, NULL);
 					cp2 = canonb + offset;
 				}
 				*cp2++ = cc;
@@ -258,10 +269,7 @@ fmt(fi)
 			do {
 				if (cp2 - canonb >= cbufsize) {
 					int offset = cp2 - canonb;
-					cbufsize += CHUNKSIZE;
-					canonb = realloc(canonb, cbufsize);
-					if(canonb == 0)
-						abort();
+					canonb = extstr(canonb, &cbufsize, NULL);
 					cp2 = canonb + offset;
 				}
 				*cp2++ = ' ';
@@ -313,7 +321,7 @@ prefix(line)
 	if ((h = ishead(cp)))
 		oflush(), mark = lineno;
 	if (lineno - mark < 3 && lineno - mark > 0)
-		for (hp = &headnames[0]; *hp != (char *) 0; hp++)
+		for (hp = &headnames[0]; *hp != NULL; hp++)
 			if (ispref(*hp, cp)) {
 				h = 1;
 				oflush();
@@ -324,7 +332,8 @@ prefix(line)
 	pfx = np;
 	if (h)
 		pack(cp, strlen(cp));
-	else	split(cp);
+	else
+		split(cp);
 	if (h)
 		oflush();
 	lineno++;
@@ -341,8 +350,12 @@ split(line)
 	char line[];
 {
 	register char *cp, *cp2;
-	char word[BUFSIZ];
+	static char *word;
+	static int wordsize;
 	int wordl;		/* LIZ@UOM 6/18/85 */
+
+	if (strlen(line) >= wordsize)
+		word = extstr(word, &wordsize, strlen(line) + 1);
 
 	cp = line;
 	while (*cp) {
@@ -388,8 +401,9 @@ split(line)
  * there ain't nothing in there yet.  At the bottom of this whole mess,
  * leading tabs are reinserted.
  */
-char	outbuf[BUFSIZ];			/* Sandbagged output line image */
-char	*outp;				/* Pointer in above */
+static char *outbuf;			/* Sandbagged output line image */
+static int   obufsize;			/* Size of outbuf */
+static char *outp;			/* Pointer in above */
 
 /*
  * Initialize the output section.
@@ -439,19 +453,25 @@ pack(word, wl)
 	 */
 	s = outp - outbuf;
 	t = wl + s;
+	if (t + 1 > obufsize) {
+		outbuf = extstr(outbuf, &obufsize, t + 1);
+		outp = outbuf + s;
+	}
 	if ((t <= goal_length) ||
 	    ((t <= max_length) && (t - goal_length <= goal_length - s))) {
 		/*
 		 * In like flint!
 		 */
-		for (cp = word; *cp; *outp++ = *cp++);
+		for (cp = word; *cp; *outp++ = *cp++)
+			;
 		return;
 	}
 	if (s > pfx) {
 		oflush();
 		leadin();
 	}
-	for (cp = word; *cp; *outp++ = *cp++);
+	for (cp = word; *cp; *outp++ = *cp++)
+		;
 }
 
 /*
@@ -519,6 +539,8 @@ leadin()
 	register int b;
 	register char *cp;
 
+	if (obufsize == 0 || (outp != NULL && outp - outbuf <= pfx))
+		outbuf = extstr(outbuf, &obufsize, pfx);
 	for (b = 0, cp = outbuf; b < pfx; b++)
 		*cp++ = ' ';
 	outp = cp;
@@ -552,4 +574,20 @@ ispref(s1, s2)
 	while (*s1++ == *s2)
 		;
 	return (*s1 == '\0');
+}
+
+inline char *
+extstr(str, size, gsize)
+	char *str;
+	int *size;
+	int gsize;
+{
+	do {
+		*size += CHUNKSIZE;
+	} while (gsize && *size < gsize);
+
+	if ((str = realloc(str, *size)) == NULL)
+		errx(1, "Ran out of memory");
+	
+	return(str);
 }
