@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.13 2002/12/29 21:58:15 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.14 2002/12/30 18:41:27 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -94,13 +94,28 @@ seminit(void)
 struct sem_undo *
 semu_alloc(struct proc *p)
 {
-	struct sem_undo *suptr;
+	struct sem_undo *suptr, *tmp;
 
-	if (semutot == seminfo.semmnu ||
-	    (suptr = pool_get(&semu_pool, 0)) == NULL)
+	if (semutot == seminfo.semmnu)
 		return (NULL);		/* no space */
 
+	/*
+	 * Allocate a semu w/o waiting if possible.
+	 * If we do have to wait, we must check to verify that a semu
+	 * with un_proc == p has not been allocated in the meantime.
+	 */
 	semutot++;
+	if ((suptr = pool_get(&semu_pool, 0)) == NULL) {
+		tmp = pool_get(&semu_pool, PR_WAITOK);
+		for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
+			if (suptr->un_proc == p) {
+				pool_put(&semu_pool, tmp);
+				semutot--;
+				return (suptr);
+			}
+		}
+		suptr = tmp;
+	}
 	suptr->un_cnt = 0;
 	suptr->un_proc = p;
 	suptr->un_next = semu_list;
