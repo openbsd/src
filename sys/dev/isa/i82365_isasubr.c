@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.6 1999/02/15 06:59:58 fgsch Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.7 1999/03/31 05:48:25 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -86,7 +86,7 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
  */
 
 char	pcic_isa_intr_list[] = {
-	3, 4, 12, 14, 9, 5, 10, 11, 15, 13, 7
+	3, 4, 14, 9, 5, 12, 10, 11, 15, 13, 7
 };
 
 int	npcic_isa_intr_list =
