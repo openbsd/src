@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.152 2001/02/20 05:09:44 nate Exp $
+#	$OpenBSD: Makefile,v 1.153 2001/02/20 21:45:04 jbm Exp $
 
 MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 	atalk.4 atapiscsi.4 audio.4 aue.4 auvia.4 awi.4 bpf.4 bridge.4 \
@@ -13,7 +13,7 @@ MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 	mtdphy.4 \
 	mtio.4 ncr.4 ne.4 neo.4 netintro.4 ns.4 nsip.4 nsphy.4 nsphyter.4 \
 	null.4 ohci.4 opl.4 options.4 pcdisplay.4 pchb.4 pckbc.4 pckbd.4 \
-	pci.4 pciide.4 pcmcia.4 pcscp.4 \
+	pci.4 pciide.4 pcmcia.4 pcscp.4 pms.4 \
 	pty.4 puc.4 qsphy.4 raid.4 random.4 ray.4 rl.4 rln.4 \
 	rlphy.4 route.4 scsi.4 sd.4 ses.4 sf.4 siop.4 sis.4 sk.4 sl.4 sm.4 spp.4 \
 	sppp.4 sqphy.4 ss.4 st.4 ste.4 sv.4 tb.4 tcic.4 tcp.4 termios.4 ti.4 \
@@ -40,6 +40,7 @@ MLINKS+=adv.4 adw.4
 MLINKS+=adv.4 advansys.4
 MLINKS+=pcmcia.4 pcic.4
 MLINKS+=usb.4 uhub.4
+MLINKS+=pms.4 pmsi.4
 SUBDIR=	man4.alpha man4.amiga man4.hp300 \
 	man4.i386 man4.mac68k man4.mvme68k man4.pmax man4.powerpc man4.sparc \
 	man4.sun3 man4.vax
