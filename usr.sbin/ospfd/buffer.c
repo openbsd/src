@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.1 2005/01/28 14:05:40 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.2 2005/02/01 21:25:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,11 +29,12 @@
 
 #include "ospfd.h"
 
+int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);
 void	buf_dequeue(struct msgbuf *, struct buf *);
 
 struct buf *
-buf_open(ssize_t len)
+buf_open(size_t len)
 {
 	struct buf	*buf;
 
@@ -43,17 +44,53 @@ buf_open(ssize_t len)
 		free(buf);
 		return (NULL);
 	}
-	buf->size = len;
+	buf->size = buf->max = len;
 	buf->fd = -1;
 
 	return (buf);
 }
 
+struct buf *
+buf_dynamic(size_t len, size_t max)
+{
+	struct buf	*buf;
+
+	if (max < len)
+		return (NULL);
+
+	if ((buf = buf_open(len)) == NULL)
+		return (NULL);
+
+	if (max > 0)
+		buf->max = max;
+
+	return (buf);
+}
+
 int
-buf_add(struct buf *buf, void *data, ssize_t len)
+buf_realloc(struct buf *buf, size_t len)
+{
+	u_char	*b;
+
+	/* on static buffers max is eq size and so the following fails */
+	if (buf->wpos + len > buf->max)
+		return (-1);
+
+	b = realloc(buf->buf, buf->wpos + len);
+	if (b == NULL)
+		return (-1);
+	buf->buf = b;
+	buf->size = buf->wpos + len;
+
+	return (0);
+}
+
+int
+buf_add(struct buf *buf, void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
-		return (-1);
+		if (buf_realloc(buf, len) == -1)
+			return (-1);
 
 	memcpy(buf->buf + buf->wpos, data, len);
 	buf->wpos += len;
@@ -61,12 +98,13 @@ buf_add(struct buf *buf, void *data, ssize_t len)
 }
 
 void *
-buf_reserve(struct buf *buf, ssize_t len)
+buf_reserve(struct buf *buf, size_t len)
 {
 	void	*b;
 
 	if (buf->wpos + len > buf->size)
-		return (NULL);
+		if (buf_realloc(buf, len) == -1)
+			return (NULL);
 
 	b = buf->buf + buf->wpos;
 	buf->wpos += len;
@@ -98,7 +136,7 @@ buf_write(int sock, struct buf *buf)
 		return (-2);
 	}
 
-	if (n < buf->size - buf->rpos) {	/* not all data written yet */
+	if (buf->rpos + n < buf->size) {	/* not all data written yet */
 		buf->rpos += n;
 		return (0);
 	} else
@@ -186,7 +224,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (n >= buf->size - buf->rpos) {
+		if (buf->rpos + n >= buf->size) {
 			n -= buf->size - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.3 2005/02/01 21:25:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -55,9 +55,10 @@
 struct buf {
 	TAILQ_ENTRY(buf)	 entry;
 	u_char			*buf;
-	ssize_t			 size;
-	ssize_t			 wpos;
-	ssize_t			 rpos;
+	size_t			 size;
+	size_t			 max;
+	size_t			 wpos;
+	size_t			 rpos;
 	int			 fd;
 };
 
@@ -362,9 +363,10 @@ int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
 
 /* buffer.c */
-struct buf	*buf_open(ssize_t);
-int		 buf_add(struct buf *, void *, ssize_t);
-void		*buf_reserve(struct buf *, ssize_t);
+struct buf	*buf_open(size_t);
+struct buf	*buf_dynamic(size_t, size_t);
+int		 buf_add(struct buf *, void *, size_t);
+void		*buf_reserve(struct buf *, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);
