@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.9 2002/07/18 02:14:26 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.10 2002/08/16 19:02:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1104,8 +1104,6 @@ ce4231_get_port(addr, cp)
 		cp->un.ord = sc->sc_out_port;
 		error = 0;
 		break;
-	default:
-		printf("Invalid kind!\n");
 	}
 	return (error);
 }
