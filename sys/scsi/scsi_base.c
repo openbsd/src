@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.21 1998/02/14 08:56:50 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.22 1998/12/19 01:32:26 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ scsi_test_unit_ready(sc_link, flags)
 	scsi_cmd.opcode = TEST_UNIT_READY;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 10000, NULL, flags);
+			     sizeof(scsi_cmd), 0, 0, 50, 10000, NULL, flags);
 }
 
 /*
@@ -531,19 +531,25 @@ sc_err1(xs, async)
 		break;
 
 	case XS_SENSE:
-		if ((error = scsi_interpret_sense(xs)) == ERESTART)
+		if ((error = scsi_interpret_sense(xs)) == ERESTART) {
+			if (xs->error == XS_BUSY) {
+				xs->error = XS_SENSE;
+				goto sense_retry;
+			}
 			goto retry;
+		}
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsi_interpret_sense returned %d\n", error));
 		break;
 
 	case XS_BUSY:
+	sense_retry:
 		if (xs->retries) {
 			if ((xs->flags & SCSI_POLL) != 0)
 				delay(1000000);
-			else if ((xs->flags & SCSI_NOSLEEP) == 0)
+			else if ((xs->flags & SCSI_NOSLEEP) == 0) {
 				tsleep(&lbolt, PRIBIO, "scbusy", 0);
-			else
+			} else
 #if 0
 				timeout(scsi_requeue, xs, hz);
 #else
@@ -659,6 +665,11 @@ scsi_interpret_sense(xs)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
 				return 0;
+			if (xs->retries && sense->add_sense_code == 0x04 &&
+			    sense->add_sense_code_qual == 0x01) {
+				xs->error = XS_BUSY;	/* ie. sense_retry */
+				return ERESTART;
+			}
 			if (xs->retries && !(sc_link->flags & SDEV_REMOVABLE)) {
 				delay(1000000);
 				return ERESTART;
