@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.1 1997/01/16 04:04:08 kstailey Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.2 1997/02/14 18:41:48 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -44,30 +44,6 @@
  */
 
 #ifdef _KERNEL
-
-/*
- * Internal definitions unique to sun3/68k cpu support.
- * These are the "private" declarations - those needed
- * only here in machine-independent code.  The "public"
- * definitions are in cpu.h (used by common code).
- */
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_CONTROL	3	/* sun control space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-#define IC_CLEAR (IC_CLR|IC_ENABLE)
-
 
 /* Prototypes... */
 
