@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.15 2001/12/15 08:40:56 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.16 2001/12/15 09:03:23 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -152,8 +152,7 @@ main(argc, argv)
 			error = bridge_add(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("delete", argv[0]) == 0 ||
+		} else if (strcmp("delete", argv[0]) == 0 ||
 		    strcmp("del", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
@@ -163,8 +162,7 @@ main(argc, argv)
 			error = bridge_delete(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("addspan", argv[0]) == 0) {
+		} else if (strcmp("addspan", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("addspan requires an argument");
@@ -173,8 +171,7 @@ main(argc, argv)
 			error = bridge_addspan(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("delspan", argv[0]) == 0) {
+		} else if (strcmp("delspan", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("delspan requires an argument");
@@ -183,18 +180,15 @@ main(argc, argv)
 			error = bridge_delspan(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("up", argv[0]) == 0) {
+		} else if (strcmp("up", argv[0]) == 0) {
 			error = bridge_setflag(sock, brdg, IFF_UP);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("down", argv[0]) == 0) {
+		} else if (strcmp("down", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_UP);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("discover", argv[0]) == 0) {
+		} else if (strcmp("discover", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("discover requires an argument");
@@ -204,8 +198,7 @@ main(argc, argv)
 			    IFBIF_DISCOVER);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-discover", argv[0]) == 0) {
+		} else if (strcmp("-discover", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("-discover requires an argument");
@@ -215,8 +208,7 @@ main(argc, argv)
 			    IFBIF_DISCOVER);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("blocknonip", argv[0]) == 0) {
+		} else if (strcmp("blocknonip", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("blocknonip requires an argument");
@@ -226,8 +218,7 @@ main(argc, argv)
 			    IFBIF_BLOCKNONIP);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-blocknonip", argv[0]) == 0) {
+		} else if (strcmp("-blocknonip", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("-blocknonip requires an argument");
@@ -237,8 +228,7 @@ main(argc, argv)
 			    IFBIF_BLOCKNONIP);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("learn", argv[0]) == 0) {
+		} else if (strcmp("learn", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("learn requires an argument");
@@ -248,8 +238,7 @@ main(argc, argv)
 			    IFBIF_LEARNING);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-learn", argv[0]) == 0) {
+		} else if (strcmp("-learn", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("-learn requires an argument");
@@ -259,18 +248,15 @@ main(argc, argv)
 			    IFBIF_LEARNING);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("flush", argv[0]) == 0) {
+		} else if (strcmp("flush", argv[0]) == 0) {
 			error = bridge_flush(sock, brdg);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("flushall", argv[0]) == 0) {
+		} else if (strcmp("flushall", argv[0]) == 0) {
 			error = bridge_flushall(sock, brdg);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("static", argv[0]) == 0) {
+		} else if (strcmp("static", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc < 2) {
 				warnx("static requires 2 arguments");
@@ -280,8 +266,7 @@ main(argc, argv)
 			if (error)
 				return (error);
 			argc--; argv++;
-		}
-		else if (strcmp("deladdr", argv[0]) == 0) {
+		} else if (strcmp("deladdr", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("deladdr requires an argument");
@@ -290,43 +275,35 @@ main(argc, argv)
 			error = bridge_deladdr(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("link0", argv[0]) == 0) {
+		} else if (strcmp("link0", argv[0]) == 0) {
 			error = bridge_setflag(sock, brdg, IFF_LINK0);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-link0", argv[0]) == 0) {
+		} else if (strcmp("-link0", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_LINK0);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("link1", argv[0]) == 0) {
+		} else if (strcmp("link1", argv[0]) == 0) {
 			error = bridge_setflag(sock, brdg, IFF_LINK1);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-link1", argv[0]) == 0) {
+		} else if (strcmp("-link1", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_LINK1);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("link2", argv[0]) == 0) {
+		} else if (strcmp("link2", argv[0]) == 0) {
 			error = bridge_setflag(sock, brdg, IFF_LINK2);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-link2", argv[0]) == 0) {
+		} else if (strcmp("-link2", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_LINK2);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("addr", argv[0]) == 0) {
+		} else if (strcmp("addr", argv[0]) == 0) {
 			error = bridge_addrs(sock, brdg, "");
 			if (error)
 				return (error);
-		}
-		else if (strcmp("maxaddr", argv[0]) == 0) {
+		} else if (strcmp("maxaddr", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("maxaddr requires an argument");
@@ -335,8 +312,7 @@ main(argc, argv)
 			error = bridge_maxaddr(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("hellotime", argv[0]) == 0) {
+		} else if (strcmp("hellotime", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("hellotime requires an argument");
@@ -345,8 +321,7 @@ main(argc, argv)
 			error = bridge_hellotime(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("fwddelay", argv[0]) == 0) {
+		} else if (strcmp("fwddelay", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("fwddelay requires an argument");
@@ -355,8 +330,7 @@ main(argc, argv)
 			error = bridge_fwddelay(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("maxage", argv[0]) == 0) {
+		} else if (strcmp("maxage", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("maxage requires an argument");
@@ -365,8 +339,7 @@ main(argc, argv)
 			error = bridge_maxage(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("priority", argv[0]) == 0) {
+		} else if (strcmp("priority", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("priority requires an argument");
@@ -375,8 +348,7 @@ main(argc, argv)
 			error = bridge_priority(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("ifpriority", argv[0]) == 0) {
+		} else if (strcmp("ifpriority", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc < 2) {
 				warnx("ifpriority requires 2 arguments");
@@ -386,8 +358,7 @@ main(argc, argv)
 			if (error)
 				return (error);
 			argc--; argv++;
-		}
-		else if (strcmp("rules", argv[0]) == 0) {
+		} else if (strcmp("rules", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("rules requires an argument");
@@ -396,12 +367,10 @@ main(argc, argv)
 			error = bridge_rules(sock, brdg, argv[0], NULL);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("rule", argv[0]) == 0) {
+		} else if (strcmp("rule", argv[0]) == 0) {
 			argc--; argv++;
 			return (bridge_rule(sock, brdg, argc, argv, -1));
-		}
-		else if (strcmp("rulefile", argv[0]) == 0) {
+		} else if (strcmp("rulefile", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("rulefile requires an argument");
@@ -410,8 +379,7 @@ main(argc, argv)
 			error = bridge_rulefile(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("flushrule", argv[0]) == 0) {
+		} else if (strcmp("flushrule", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("flushrule requires an argument");
@@ -420,8 +388,7 @@ main(argc, argv)
 			error = bridge_flushrule(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("timeout", argv[0]) == 0) {
+		} else if (strcmp("timeout", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("timeout requires an argument");
@@ -430,8 +397,7 @@ main(argc, argv)
 			error = bridge_timeout(sock, brdg, argv[0]);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("stp", argv[0]) == 0) {
+		} else if (strcmp("stp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("stp requires an argument");
@@ -441,8 +407,7 @@ main(argc, argv)
 			    IFBIF_STP);
 			if (error)
 				return (error);
-		}
-		else if (strcmp("-stp", argv[0]) == 0) {
+		} else if (strcmp("-stp", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("-stp requires an argument");
@@ -452,8 +417,7 @@ main(argc, argv)
 			    IFBIF_STP);
 			if (error)
 				return (error);
-		}
-		else {
+		} else {
 			warnx("unrecognized option: %s", argv[0]);
 			return (EX_USAGE);
 		}
@@ -1288,14 +1252,12 @@ bridge_rule(int s, char *brdg, int targc, char **targv, int ln)
 				goto bad_rule;
 			rule.ifbr_flags |= BRL_FLAG_DSTVALID;
 			dea = &rule.ifbr_dst;
-		}
-		else if (strcmp(argv[0], "src") == 0) {
+		} else if (strcmp(argv[0], "src") == 0) {
 			if (rule.ifbr_flags & BRL_FLAG_SRCVALID)
 				goto bad_rule;
 			rule.ifbr_flags |= BRL_FLAG_SRCVALID;
 			dea = &rule.ifbr_src;
-		}
-		else
+		} else
 			goto bad_rule;
 
 		argc--; argv++;
