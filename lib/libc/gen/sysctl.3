@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.89 2002/06/07 15:33:36 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.90 2002/06/08 23:28:39 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,11 +287,13 @@ information.
 .It Dv KERN_MAXVNODES No "	integer	yes"
 .It Dv KERN_MSGBUFSIZE No "	integer	no"
 .It Dv KERN_NCHSTATS No "	struct nchstats	no"
+.It Dv KERN_NFILES No "	integer	no"
 .It Dv KERN_NGROUPS No "	integer	no"
+.It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
 .It Dv KERN_NPROCS No "	integer	no"
 .It Dv KERN_NSELCOLL No "	integer	no"
 .It Dv KERN_NTPTIME No "	struct ntptimeval	no"
-.It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
+.It Dv KERN_NUMVNODES No "	integer	no"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
 .It Dv KERN_OSTYPE No "	string	no"
@@ -309,6 +311,7 @@ information.
 .It Dv KERN_SYSVSEM No "	integer	no"
 .It Dv KERN_SYSVSHM No "	integer	no"
 .It Dv KERN_TTY No "	node	not applicable"
+.It Dv KERN_TTYCOUNT No "	integer	no"
 .It Dv KERN_USERMOUNT No "	integer	yes"
 .It Dv KERN_VERSION No "	string	no"
 .It Dv KERN_VNODE No "	struct vnode	no"
@@ -393,6 +396,8 @@ This structure contains information the
 filename to
 .Xr inode 5
 mapping cache.
+.It Dv KERN_NFILES
+Number of open files.
 .It Dv KERN_NGROUPS
 The maximum number of supplemental groups.
 .It Dv KERN_NPROCS
@@ -407,6 +412,8 @@ collisions.
 Returns a
 .Li strct ntptimeval ,
 containing kernel precision timekeeping information.
+.It Dv KERN_NUMVNODES
+Number of vnodes in use.
 .It Dv KERN_OSRELEASE
 The system release string.
 .It Dv KERN_OSREV
@@ -599,6 +606,10 @@ Return the number of input characters in raw mode.
 .It Dv KERN_TTY_TKCANCC
 Return the number of input characters in canonical mode.
 .El
+.It Dv KERN_TTYCOUNT
+Number of available
+.Xr tty 4
+devices.
 .It Dv KERN_USERMOUNT
 Return non-zero if regular users can issue
 .Xr mount 2
