@@ -43,8 +43,6 @@ libcvs_a_SOURCES = \
 	ftruncate.c \
 	getdate.y \
 	getline.c \
-	getopt.c \
-	getopt1.c \
 	md5.c \
 	regex.c \
 	savecwd.c \
@@ -53,7 +51,6 @@ libcvs_a_SOURCES = \
 	xgetwd.c \
 	yesno.c \
 	getline.h \
-	getopt.h \
 	fnmatch.h \
 	md5.h \
 	regex.h \

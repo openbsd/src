@@ -131,8 +131,6 @@ libcvs_a_SOURCES = \
 	ftruncate.c \
 	getdate.y \
 	getline.c \
-	getopt.c \
-	getopt1.c \
 	md5.c \
 	regex.c \
 	savecwd.c \
@@ -141,7 +139,6 @@ libcvs_a_SOURCES = \
 	xgetwd.c \
 	yesno.c \
 	getline.h \
-	getopt.h \
 	fnmatch.h \
 	md5.h \
 	regex.h \
@@ -170,8 +167,7 @@ LIBRARIES = $(noinst_LIBRARIES)
 libcvs_a_AR = $(AR) cru
 libcvs_a_DEPENDENCIES = @LIBOBJS@
 am_libcvs_a_OBJECTS = argmatch.$(OBJEXT) ftruncate.$(OBJEXT) \
-	getdate.$(OBJEXT) getline.$(OBJEXT) getopt.$(OBJEXT) \
-	getopt1.$(OBJEXT) md5.$(OBJEXT) regex.$(OBJEXT) \
+	getdate.$(OBJEXT) getline.$(OBJEXT) md5.$(OBJEXT) regex.$(OBJEXT) \
 	savecwd.$(OBJEXT) sighandle.$(OBJEXT) stripslash.$(OBJEXT) \
 	xgetwd.$(OBJEXT) yesno.$(OBJEXT)
 libcvs_a_OBJECTS = $(am_libcvs_a_OBJECTS)
@@ -192,8 +188,7 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 @AMDEP_TRUE@DEP_FILES = $(DEPDIR)/argmatch.Po $(DEPDIR)/dup2.Po \
 @AMDEP_TRUE@	$(DEPDIR)/fncase.Po $(DEPDIR)/fnmatch.Po \
 @AMDEP_TRUE@	$(DEPDIR)/ftruncate.Po $(DEPDIR)/getdate.Po \
-@AMDEP_TRUE@	$(DEPDIR)/getline.Po $(DEPDIR)/getopt.Po \
-@AMDEP_TRUE@	$(DEPDIR)/getopt1.Po $(DEPDIR)/hostname.Po \
+@AMDEP_TRUE@	$(DEPDIR)/getline.Po $(DEPDIR)/hostname.Po \
 @AMDEP_TRUE@	$(DEPDIR)/md5.Po $(DEPDIR)/memmove.Po \
 @AMDEP_TRUE@	$(DEPDIR)/mkdir.Po $(DEPDIR)/regex.Po \
 @AMDEP_TRUE@	$(DEPDIR)/rename.Po $(DEPDIR)/savecwd.Po \
@@ -286,8 +281,6 @@ distclean-tags:
 @_am_include@ @_am_quote@$(DEPDIR)/ftruncate.Po@_am_quote@
 @_am_include@ @_am_quote@$(DEPDIR)/getdate.Po@_am_quote@
 @_am_include@ @_am_quote@$(DEPDIR)/getline.Po@_am_quote@
-@_am_include@ @_am_quote@$(DEPDIR)/getopt.Po@_am_quote@
-@_am_include@ @_am_quote@$(DEPDIR)/getopt1.Po@_am_quote@
 @_am_include@ @_am_quote@$(DEPDIR)/hostname.Po@_am_quote@
 @_am_include@ @_am_quote@$(DEPDIR)/md5.Po@_am_quote@
 @_am_include@ @_am_quote@$(DEPDIR)/memmove.Po@_am_quote@
