@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.12 2003/11/08 16:55:35 miod Exp $
+.\"	$OpenBSD: wdc.4,v 1.13 2004/03/22 20:31:36 miod Exp $
 .\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -66,7 +66,9 @@ PCI IDE controllers in legacy mode are also supported, but the
 .Xr pciide 4
 driver may provide more functionality.
 .Pp
-For the ISA front-end, setting
+For the
+.Xr isa 4
+front-end, setting
 .Cm flags
 to 0x01 enables 32-bit I/O negotiation.
 This is known to cause problems with some motherboards.
@@ -75,6 +77,7 @@ This is known to cause problems with some motherboards.
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr macobio 4 ,
 .Xr pciide 4 ,
 .Xr pcmcia 4 ,
 .Xr scsi 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.24 2004/02/29 21:44:04 miod Exp $
+.\"	$OpenBSD: sbus.4,v 1.25 2004/03/22 20:31:36 miod Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ includes the following
 .Nm
 drivers, sorted by device type and driver name:
 .Ss Audio interfaces
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr audioamd 4
 .Tn AMD
 7990 codecs.
@@ -74,7 +74,7 @@ drivers, sorted by device type and driver name:
 CS4231A codecs.
 .El
 .Ss SCSI interfaces
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr esp 4
 NCR53c94 and compatible
 .Tn SCSI
@@ -85,7 +85,7 @@ Qlogic
 interfaces.
 .El
 .Ss Network interfaces
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr be 4
 .Dq Big Mac
 .Tn Ethernet
@@ -109,14 +109,14 @@ Quad Ethernet Controller
 board.
 .El
 .Ss Bridges
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr stp 4
 .Nm sbus
 .Xr pcmcia 4
 bridge.
 .El
 .Ss Graphics devices
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr agten 4
 Fujitsu AG-10e accelerated 24-bit color frame buffer.
 .It Xr bwtwo 4
@@ -149,7 +149,7 @@ Accelerated 24-bit color frame buffer.
 Accelerated 24-bit color frame buffer.
 .El
 .Ss Serial and parallel interfaces
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr apio 4
 Aurora Technologies pio1 parallel port card.
 .It Xr asio 4
@@ -162,7 +162,7 @@ Magma LC series Serial/Parallel Interface cards.
 Sun Serial/Parallel Interface card.
 .El
 .Ss Miscellaneous devices
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 13n -offset ind -compact
 .It Xr auxio 4
 Miscellaneous I/O controls.
 .It Xr presto 4

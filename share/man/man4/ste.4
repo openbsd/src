@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ste.4,v 1.14 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: ste.4,v 1.15 2004/03/22 20:31:36 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -60,7 +60,7 @@ using an MII transceiver.
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width full-duplex
 .It autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -90,7 +90,7 @@ modes.
 The
 .Nm
 driver supports the following media options:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width full-duplex
 .It full-duplex
 Force full duplex operation.
 .It half-duplex

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmux.4,v 1.11 2004/03/21 19:47:59 miod Exp $
+.\" $OpenBSD: wsmux.4,v 1.12 2004/03/22 20:31:37 miod Exp $
 .\" $NetBSD: wsmux.4,v 1.2 1999/11/03 22:01:40 castor Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,13 +78,13 @@ This is used by the
 daemon to take data from a mouse connected to a serial port and
 make it appear on the standard mouse mux.
 .Sh FILES
-.Bl -item
+.Bl -item -compact
 .It
 .Pa /dev/wsmouse
 .It
 .Pa /dev/wskbd
 .It
-.Pa /usr/include/dev/wscons/wsconsio.h .
+.Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -94,5 +94,4 @@ make it appear on the standard mouse mux.
 .Xr wsmouse 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
-.Xr wsfontload 8 ,
 .Xr wsmoused 8

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.12 2003/07/09 13:26:20 jmc Exp $
+.\" $OpenBSD: wskbd.4,v 1.13 2004/03/22 20:31:36 miod Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -33,6 +33,7 @@
 .Nd generic keyboard support in wscons
 .Sh SYNOPSIS
 .Cd "wskbd* at pckbd? console ? mux 1"
+.Cd "wskbd* at gsckbd? console ? mux 1" Pq hppa
 (PS/2 keyboard)
 .Cd "wskbd* at ukbd? console ? mux 1"
 (USB keyboard)
@@ -142,6 +143,7 @@ driver supports it.
 .Sh SEE ALSO
 .Xr akbd 4 ,
 .Xr comkbd 4 ,
+.Xr gsckbd 4 ,
 .Xr hilkbd 4 ,
 .Xr intro 4 ,
 .Xr pckbd 4 ,
