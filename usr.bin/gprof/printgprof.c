@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.3 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.4 2001/03/31 23:27:02 fgsch Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.3 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.4 2001/03/31 23:27:02 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -403,9 +403,9 @@ sortchildren( parentp )
 	 *	    *prevp	arc before the arc you are comparing.
 	 */
     sorted.arc_childlist = 0;
-    for (  arcp = parentp -> children, detachedp = arcp -> arc_childlist;
+    for ((arcp = parentp -> children) && (detachedp = arcp -> arc_childlist);
 	    arcp ;
-	   arcp = detachedp, detachedp = detachedp -> arc_childlist) {
+	   (arcp = detachedp) && (detachedp = detachedp -> arc_childlist)) {
 	    /*
 	     *	consider *arcp as disconnected
 	     *	insert it into sorted
@@ -444,8 +444,8 @@ sortparents( childp )
 	 *	    *prevp	arc before the arc you are comparing.
 	 */
     sorted.arc_parentlist = 0;
-    for (arcp = childp->parents, detachedp = arcp->arc_parentlist;
-	 arcp; arcp = detachedp, detachedp = detachedp->arc_parentlist) {
+    for ((arcp = childp->parents) && (detachedp = arcp->arc_parentlist);
+	 arcp; (arcp = detachedp) && (detachedp = detachedp->arc_parentlist)) {
 	    /*
 	     *	consider *arcp as disconnected
 	     *	insert it into sorted
@@ -524,8 +524,8 @@ sortmembers( cyclep )
 	 */
     todo = cyclep -> cnext;
     cyclep -> cnext = 0;
-    for (doing = todo, todo = doing -> cnext;
-	 doing; doing = todo, todo = doing -> cnext) {
+    for ((doing = todo) && (todo = doing -> cnext);
+	 doing; (doing = todo) && (todo = doing -> cnext)) {
 	for (prev = cyclep; prev -> cnext; prev = prev -> cnext)
 	    if (membercmp(doing, prev->cnext ) == GREATERTHAN)
 		break;
