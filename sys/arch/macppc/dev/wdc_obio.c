@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.18 2003/10/26 15:15:26 miod Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.19 2003/10/26 15:23:40 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ void wdc_default_read_raw_multi_4(struct channel_softc *,
     void *, unsigned int);
 void wdc_default_write_raw_multi_4(struct channel_softc *,
     void *, unsigned int);
+
 struct channel_softc_vtbl wdc_obio_vtbl = {
 	wdc_obio_read_reg,
 	wdc_obio_write_reg,
@@ -219,8 +220,9 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
-	chp->ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
+
+	chp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
+	    M_NOWAIT);
 	if (chp->ch_queue == NULL) {
 		printf("%s: can't allocate memory for command queue",
 		sc->sc_wdcdev.sc_dev.dv_xname);
@@ -344,7 +346,7 @@ wdc_obio_adjust_timing(struct channel_softc *chp)
 	/* mask: 0x000007ff */
 	conf = (inact_tick << 5) | act_tick;
 	if (dmamode != -1) {
-		/* there are active  DMA mode */
+		/* there are active DMA mode */
 
 		min_cycle = dma_timing[dmamode].cycle;
 		min_active = dma_timing[dmamode].active;
@@ -367,8 +369,7 @@ wdc_obio_adjust_timing(struct channel_softc *chp)
 }
 
 void
-wdc_obio_ata4_adjust_timing(chp)
-	struct channel_softc *chp;
+wdc_obio_ata4_adjust_timing(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
 	u_int conf;
@@ -377,7 +378,6 @@ wdc_obio_ata4_adjust_timing(chp)
 	int min_cycle, min_active;
 	int cycle_tick, act_tick, inact_tick;
 	int udmamode = -1;
-
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
@@ -458,7 +458,6 @@ wdc_obio_ata6_adjust_timing(struct channel_softc *chp)
 	int piomode = -1, dmamode = -1;
 	int udmamode = -1;
 
-
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		if ((drvp->drive_flags & DRIVE) == 0)
@@ -521,11 +520,8 @@ wdc_obio_ata6_adjust_timing(struct channel_softc *chp)
 }
 
 int
-wdc_obio_dma_init(v, channel, drive, databuf, datalen, flags)
-	void *v;
-	void *databuf;
-	size_t datalen;
-	int flags;
+wdc_obio_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
 {
 	struct wdc_obio_softc *sc = v;
 	dbdma_command_t *cmdp;
@@ -579,8 +575,7 @@ wdc_obio_dma_finish(void *v, int channel, int drive, int force)
  */
 
 u_int8_t
-wdc_obio_read_reg(struct channel_softc *chp,
-	enum wdc_regs reg)
+wdc_obio_read_reg(struct channel_softc *chp, enum wdc_regs reg)
 {
 #ifdef DIAGNOSTIC
 	if (reg & _WDC_WRONLY) {
