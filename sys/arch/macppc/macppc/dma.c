@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.17 2002/10/07 18:35:56 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.18 2002/12/10 23:41:37 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ _dmamap_destroy(t, map)
 }
 
 int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int, paddr_t *, int *, int);
+    struct proc *, int, bus_addr_t *, int *, int);
 
 int
 _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
@@ -133,7 +133,7 @@ _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	paddr_t *lastaddrp;
+	bus_addr_t *lastaddrp;
 	int *segp;
 	int first;
 {
@@ -230,7 +230,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	paddr_t lastaddr;
+	bus_addr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -262,7 +262,7 @@ _dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	paddr_t lastaddr;
+	bus_addr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -305,7 +305,7 @@ _dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	paddr_t lastaddr;
+	bus_addr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -610,13 +610,13 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = TAILQ_NEXT(m, pageq);
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
