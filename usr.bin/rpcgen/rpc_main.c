@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_main.c,v 1.3 1997/10/11 21:10:41 deraadt Exp $	*/
+/*	$OpenBSD: rpc_main.c,v 1.4 1999/12/04 21:58:31 deraadt Exp $	*/
 /*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.3 1997/10/11 21:10:41 deraadt Exp $";
+static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.4 1999/12/04 21:58:31 deraadt Exp $";
 #endif
 
 /*
@@ -85,7 +85,7 @@ static char *cmdname;
 static char *svcclosetime = "120";
 static char *CPP = "/usr/bin/cpp";
 static char CPPFLAGS[] = "-C";
-static char pathbuf[MAXPATHLEN + 1];
+static char pathbuf[MAXPATHLEN];
 static char *allv[] = {
 	"rpcgen", "-s", "udp", "-s", "tcp",
 };
@@ -1047,8 +1047,9 @@ parseargs(argc, argv, cmd)
 					if (++i == argc) {
 						return (0);
 					}
-					(void) strcpy(pathbuf, argv[i]);
-					(void) strcat(pathbuf, "/cpp");
+					if (snprintf(pathbuf, sizeof pathbuf,
+					    "%s/cpp", argv[i]) >= sizeof pathbuf)
+						usage();
 					CPP = pathbuf;
 					cppDefined = 1;
 					goto nextarg;
