@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.142 2003/02/12 12:48:40 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.143 2003/02/13 10:28:58 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1154,7 +1154,7 @@ host(const char *s, int mask)
 				err(1, "host: asprintf");
 			v4mask = v6mask = mask;
 		} else {
-			fprintf(stderr, "illegal mask\n");
+			fprintf(stderr, "illegal mask %d\n", mask);
 			return (NULL);
 		}
 	}
