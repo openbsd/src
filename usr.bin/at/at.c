@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.16 1998/07/09 20:40:58 mickey Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <unistd.h>
 #include <utmp.h>
 #include <locale.h>
+#include <err.h>
 
 #if (MAXLOGNAME-1) > UT_NAMESIZE
 #define LOGNAMESIZE UT_NAMESIZE
@@ -73,14 +74,14 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.16 1998/07/09 20:40:58 mickey Exp $";
 #endif
 
 char *no_export[] =
 {
 	"TERM", "TERMCAP", "DISPLAY", "_"
 };
-static send_mail = 0;
+static int send_mail = 0;
 
 /* External variables */
 
@@ -507,11 +508,9 @@ process_jobs(argc, argv, what)
 
 		for (i = optind; i < argc; i++) {
 			if (atoi(argv[i]) == jobno) {
-				if ((buf.st_uid != real_uid) && !(real_uid == 0)) {
-					(void)fprintf(stderr,
-					    "%s: Not owner\n", argv[i]);
-					exit(EXIT_FAILURE);
-				}
+				if ((buf.st_uid != real_uid) && !(real_uid == 0))
+					errx(EXIT_FAILURE,
+					     "%s: Not owner\n", argv[i]);
 				switch (what) {
 				case ATRM:
 					PRIV_START
@@ -543,10 +542,9 @@ process_jobs(argc, argv, what)
 					break;
 
 				default:
-					(void)fprintf(stderr,
-					    "Internal error, process_jobs = %d\n",
+					errx(EXIT_FAILURE,
+					    "Internal error, process_jobs = %d",
 					    what);
-					exit(EXIT_FAILURE);
 					break;
 				}
 			}
@@ -665,11 +663,9 @@ main(argc, argv)
 	if (disp_version)
 		(void)fprintf(stderr, "%s version %.1f\n", namep, AT_VERSION);
 
-	if (!check_permission()) {
-		(void)fprintf(stderr, "You do not have permission to use %s.\n",
-		    namep);
-		exit(EXIT_FAILURE);
-	}
+	if (!check_permission())
+		errx(EXIT_FAILURE, "You do not have permission to use %s.",
+		     namep);
 
 	/* select our program */
 	switch (program) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.5 1998/06/26 03:20:11 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.6 1998/07/09 20:40:59 mickey Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -46,6 +46,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <err.h>
 
 /* Local headers */
 
@@ -137,7 +138,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.5 1998/06/26 03:20:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.6 1998/07/09 20:40:59 mickey Exp $";
 #endif
 
 /* Local functions */
@@ -344,7 +345,7 @@ plus(tm)
 		delay *= 60;
 	case MINUTES:
 		if (expectplur != sc_tokplur)
-			(void)fprintf(stderr, "at: pluralization is wrong\n");
+			warnx("pluralization is wrong");
 		dateadd(delay, tm);
 		return;
 	}
