@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.6 2001/05/30 20:37:54 miod Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.7 2001/09/29 18:40:33 miod Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.14 1995/04/26 23:30:08 gwr Exp $	*/
 
 /*
@@ -32,12 +32,11 @@
  */
 
 /*
- * Generic swap locations
+ * fake swapgeneric.c -- should do this differently.
  */
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/systm.h>
 
 int (*mountroot) __P((void)) = NULL;	/* tells autoconf.c that we are "generic" */
 
@@ -45,14 +44,6 @@ dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
 
 struct	swdevt swdevt[] = {
-	{ makedev(7, 1),	0,	0 },	/* sd0b */
-	{ makedev(7, 17),	0,	0 },	/* sd1b */
-	{ makedev(7, 33),	0,	0 },	/* sd2b */
-	{ makedev(7, 49),	0,	0 },	/* sd3b */
-	{ makedev(3, 1),	0,	0 },	/* xy0b */
-	{ makedev(3, 17),	0,	0 },	/* xy1b */
-	{ makedev(10, 1),	0,	0 },	/* xd0b */
-	{ makedev(10, 17),	0,	0 },	/* xd1b */
-	{ NODEV,		0,	0 },
-	{ NODEV,		0,	0 }
+	{ NODEV, 0, 0 },	/* to be filled in */
+	{ NODEV, 0, 0 }
 };

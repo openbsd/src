@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.10 1999/07/18 22:40:52 csapuntz Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.11 2001/09/29 18:40:32 miod Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
@@ -39,36 +39,19 @@
  *	@(#)swapgeneric.c	5.5 (Berkeley) 5/9/91
  */
 
+/*
+ * fake swapgeneric.c -- should do this differently.
+ */
+
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/buf.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/device.h>
-#include <sys/disklabel.h>
-
-#include <dev/cons.h>
-
-#include <machine/pte.h>
-#include <machine/cpu.h>
-
-#include "fdc.h"
-#include "sd.h"
-#include "cd.h"
-#include "mcd.h"
-
-/*
- * Generic configuration;  all in one
- */
-dev_t	rootdev = NODEV;
-dev_t	dumpdev = NODEV;
-struct	swdevt swdevt[] = {
-	{ makedev(4, 1),	0,	0 },	/* sd0 */
-	{ makedev(4, 17),	0,	0 },	/* sd1 */
-	{ makedev(4, 33),	0,	0 },	/* sd2 */
-	{ makedev(4, 49),	0,	0 },	/* sd3 */
-	{ NODEV,		0,	0 },
-	{ NODEV,		0,	0 },
-};
 
 int (*mountroot) __P((void)) = NULL;
+
+dev_t	rootdev = NODEV;
+dev_t	dumpdev = NODEV;
+
+struct	swdevt swdevt[] = {
+	{ NODEV, 0, 0 },	/* to be filled in */
+	{ NODEV, 0, 0 }
+};
