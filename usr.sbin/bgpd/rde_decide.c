@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.35 2004/06/22 23:17:01 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.36 2004/07/28 17:10:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -120,8 +120,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	asp1 = p1->aspath;
 	asp2 = p2->aspath;
-	/* 1. check if prefix is eligible a.k.a reachable */
 
+	/* 1. check if prefix is eligible a.k.a reachable */
 	if (asp2->nexthop->state != NEXTHOP_REACH)
 		return (1);
 	if (asp1->nexthop->state != NEXTHOP_REACH)
@@ -144,9 +144,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	/* 5. MED decision, only comparable between the same neighboring AS */
 	if (aspath_neighbor(asp1->flags.aspath) ==
 	    aspath_neighbor(asp2->flags.aspath))
-		/* the bigger, the better */
-		if ((asp1->flags.med - asp2->flags.med) != 0)
-			return (asp1->flags.med - asp2->flags.med);
+		/* lowest value wins */
+		if ((asp2->flags.med - asp1->flags.med) != 0)
+			return (asp2->flags.med - asp1->flags.med);
 
 	/*
 	 * 6. EBGP is cooler than IBGP
