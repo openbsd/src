@@ -9,7 +9,7 @@ option		SUN4U
 option		_LP64
 
 # XXX - remove this later.
-option		DEBUG
+#option		DEBUG
 option		DDB_SAFE_CONSOLE
 # XXX - remove this later.
 
@@ -41,10 +41,10 @@ timer*	at mainbus0				# sun4c
 
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
-zs*	at sbus? slot ? offset ?
-zstty*	at zs? channel ?			# ttya
-kbd0	at zstty?
-ms0	at zstty?
+#zs*	at sbus? slot ? offset ?
+#zstty*	at zs? channel ?			# ttya
+#kbd0	at zstty?
+#ms0	at zstty?
 
 #pseudo-device	md	1
 
