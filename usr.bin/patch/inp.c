@@ -1,16 +1,18 @@
-/*	$OpenBSD: inp.c,v 1.22 2003/08/01 20:30:48 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.23 2003/08/05 18:13:43 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.22 2003/08/01 20:30:48 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.23 2003/08/05 18:13:43 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #include <ctype.h>
 #include <libgen.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,9 +51,11 @@ re_input(void)
 	if (using_plan_a) {
 		i_size = 0;
 		free(i_ptr);
-		free(i_womp);
-		i_womp = NULL;
 		i_ptr = NULL;
+		if (i_womp != NULL) {
+			munmap(i_womp, i_size);
+			i_womp = NULL;
+		}
 	} else {
 		using_plan_a = true;	/* maybe the next one is smaller */
 		close(tifd);
@@ -83,9 +87,16 @@ static bool
 plan_a(const char *filename)
 {
 	int		ifd, statfailed;
-	char		*s, lbuf[MAXLINELEN];
+	char		*p, *s, lbuf[MAXLINELEN];
 	LINENUM		iline;
 	struct stat	filestat;
+	off_t		i;
+	ptrdiff_t	sz;
+
+#ifdef DEBUGGING
+	if (debug & 8)
+		return false;
+#endif
 
 	if (filename == NULL || *filename == '\0')
 		return false;
@@ -181,47 +192,70 @@ plan_a(const char *filename)
 		out_of_mem = false;
 		return false;	/* force plan b because plan a bombed */
 	}
-	if (i_size > SIZE_MAX - 2)
-		fatal("block too large to allocate");
-	i_womp = malloc((size_t)(i_size + 2));
-	if (i_womp == NULL)
-		return false;
+	if (i_size > SIZE_MAX) {
+		say("block too large to mmap\n");
+ 		return false;
+	}
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
-	if (read(ifd, i_womp, (size_t) i_size) != i_size) {
-		close(ifd);	/* probably means i_size > 15 or 16 bits worth */
-		free(i_womp);	/* at this point it doesn't matter if i_womp was */
-		return false;	/* undersized. */
+	i_womp = mmap(NULL, i_size, PROT_READ, MAP_FILE, ifd, 0);
+	if (i_womp == MAP_FAILED) {
+		perror("mmap failed");
+		i_womp = NULL;
+		return false;
 	}
 
 	close(ifd);
-	if (i_size && i_womp[i_size - 1] != '\n')
-		i_womp[i_size++] = '\n';
-	i_womp[i_size] = '\0';
 
 	/* count the lines in the buffer so we know how many pointers we need */
-
 	iline = 0;
-	for (s = i_womp; *s; s++) {
-		if (*s == '\n')
-			iline++;
+
+	/* test for NUL too, to maintain the behavior of the original code */
+	for (i = 0; i < i_size && i_womp[i] != '\0'; i++) {
+		if (i_womp[i] == '\n')
+ 			iline++;
 	}
+	if (i_size > 0 && i_womp[i_size - 1] != '\n')
+		iline++;
+
 
 	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
 
-	if (i_ptr == NULL) {	/* shucks, it was a near thing */
-		free(i_womp);
-		return false;
-	}
-	/* now scan the buffer and build pointer array */
+ 	if (i_ptr == NULL) {	/* shucks, it was a near thing */
+		munmap(i_womp, i_size);
+		i_womp = NULL;
+ 		return false;
+ 	}
 
+	/* now scan the buffer and build pointer array */
 	iline = 1;
 	i_ptr[iline] = i_womp;
-	for (s = i_womp; *s; s++) {
+	/* test for NUL too, to maintain the behavior of the original code */
+	for (s = i_womp, i = 0; i < i_size && *s != '\0'; s++, i++) {
 		if (*s == '\n')
 			i_ptr[++iline] = s + 1;	/* these are NOT NUL terminated */
 	}
+	/* if the last line contains no EOL, append one */
+	if (i_size > 0 && i_womp[i_size - 1] != '\n') {
+		/* fix last line */
+		sz = s - i_ptr[iline];
+		p = malloc(sz + 1);
+		if (p == NULL) {
+			free(i_ptr);
+			i_ptr = NULL;
+			munmap(i_womp, i_size);
+			i_womp = NULL;
+			return false;
+		}
+	
+		memcpy(p, i_ptr[iline], sz);
+		p[sz] = '\n';
+		i_ptr[iline] = p;
+		/* count the extra line and make it point to some valid mem */
+		i_ptr[++iline] = "";
+	}
+
 	input_lines = iline - 1;
 
 	/* now check for revision, if any */
