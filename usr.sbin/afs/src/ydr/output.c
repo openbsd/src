@@ -182,7 +182,7 @@ print_type (char *name, Type *type, enum argtype argtype,
 	       else
 		    fprintf (f, "unsigned %s", "len");
 	       fprintf (f, ";\n");
-	       strcpy(s + strlen(s) - 3, "val");
+	       strlcpy(s + strlen(s) - 3, "val", len - strlen(s) + 3);
 	       print_type ("*val", type->subtype, argtype, decl, f);
 	       fprintf (f, ";\n} %s", name);
 	       free(s);
