@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.16 2001/01/27 04:44:20 mickey Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.17 2001/02/01 03:38:08 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -1343,6 +1343,15 @@ pccbb_detect_card(sc)
 	u_int32_t sockstat =
 	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
 	int retval = 0;
+
+	/*
+	 * The SCM Microsystems TI1225-based PCI-CardBus dock card that
+	 * ships with some Lucent WaveLAN cards has only one physical slot
+	 * but OpenBSD probes two. The phantom card in the second slot can
+	 * be ignored by punting on unsupported voltages.
+	 */
+	if (sockstat & CB_SOCKET_STAT_XVCARD)
+		return 0;
 
 	/* CD1 and CD2 asserted */
 	if (0x00 == (sockstat & CB_SOCKET_STAT_CD)) {
