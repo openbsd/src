@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.7 1998/09/07 22:30:14 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/10/13 23:09:50 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.7 1998/09/07 22:30:14 marc Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.8 1998/10/13 23:09:50 marc Exp $";
 #endif
 
 /*
@@ -19,10 +19,10 @@ static const char *rcsid = "$OpenBSD: main.c,v 1.7 1998/09/07 22:30:14 marc Exp 
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "YNOhvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
+static char Options[] = "Ohvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
 
 char	*Prefix		= NULL;
-char	*Comment        = NULL;
+char	*Comment	= NULL;
 char	*Desc		= NULL;
 char	*SrcDir		= NULL;
 char	*Display	= NULL;
@@ -35,6 +35,7 @@ char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
 char	*Pkgcfl		= NULL;
 char	PlayPen[FILENAME_MAX];
+size_t	PlayPenSize	= sizeof(PlayPen);
 int	Dereference	= 0;
 int	PlistOnly	= 0;
 
@@ -51,14 +52,6 @@ main(int argc, char **argv)
 	switch(ch) {
 	case 'v':
 	    Verbose = TRUE;
-	    break;
-
-	case 'N':
-	    AutoAnswer = NO;
-	    break;
-
-	case 'Y':
-	    AutoAnswer = YES;
 	    break;
 
 	case 'O':
@@ -162,7 +155,7 @@ static void
 usage()
 {
     fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: pkg_create [-YNOhv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+"usage: pkg_create [-Ohv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
 "                  -c comment -d description -f packlist pkg-name");

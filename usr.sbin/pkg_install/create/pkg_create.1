@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.4 1998/09/07 22:30:14 marc Exp $	
+.\"	$OpenBSD: pkg_create.1,v 1.5 1998/10/13 23:09:50 marc Exp $	
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl YNOhv
+.Op Fl Ohv
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
@@ -90,9 +90,8 @@ Assume a default answer of `Yes' for any questions asked.
 .It Fl N
 Assume a default answer of `No' for any questions asked.
 .It Fl O
-Go into a `packing list Only' mode.  This is a custom hack for the
-.Em "FreeBSD Ports Collection"
-and is used to do `fake pkg_add' operations when a port is installed.
+Go into a `packing list Only' mode.
+This is used to do `fake pkg_add' operations when a package is installed.
 In such cases, it is necessary to know what the final, adjusted packing
 list will look like.
 .It Fl v

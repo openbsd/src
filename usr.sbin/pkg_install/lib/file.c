@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.6 1998/09/07 22:30:16 marc Exp $	*/
+/*	$OpenBSD: file.c,v 1.7 1998/10/13 23:09:52 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.6 1998/09/07 22:30:16 marc Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.7 1998/10/13 23:09:52 marc Exp $";
 #endif
 
 /*
@@ -28,13 +28,55 @@ static const char *rcsid = "$OpenBSD: file.c,v 1.6 1998/09/07 22:30:16 marc Exp 
 
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <err.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <time.h>
 
-FILE *
-ftpGetURL(char *url, char *user, char *passwd, int *retcode);
+/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+ * OpenBSD's ftp command to do all FTP.
+ */
+static FILE *
+ftpGetURL(char *url, int *retcode)
+{
+	FILE *ftp;
+	pid_t pid_ftp;
+	int p[2];
+
+	*retcode=0;
+
+	if (pipe(p) < 0) {
+		*retcode = 1;
+		return NULL;
+	}
+
+	pid_ftp = fork();
+	if (pid_ftp < 0) {
+		*retcode = 1;
+		return NULL;
+	}
+	if (pid_ftp == 0) {
+		/* child */
+		dup2(p[1],1);
+		close(p[1]);
+
+		fprintf(stderr, ">>> ftp -o - %s\n",url); 
+		execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+		exit(1);
+	} else {
+		/* parent */
+		ftp = fdopen(p[0],"r");
+
+		close(p[1]);
+
+		if (ftp == (FILE *) NULL) {
+			*retcode = 1;
+			return NULL;
+		}
+	}
+	return ftp;
+}
 
 /* Quick check to see if a file exists */
 Boolean
@@ -196,10 +238,9 @@ char *
 fileGetURL(char *base, char *spec)
 {
     char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
-    char pword[MAXHOSTNAMELEN + 40], *uname, *cp, *rp;
+    char *cp, *rp;
     char fname[FILENAME_MAX];
     char pen[FILENAME_MAX];
-    struct passwd *pw;
     FILE *ftp;
     pid_t tpid;
     int i, status;
@@ -251,29 +292,13 @@ fileGetURL(char *base, char *spec)
 	return NULL;
     }
 
-    /* Maybe change to ftp if this doesn't work */
-    uname = "anonymous";
-
-    /* Make up a convincing "password" */
-    pw = getpwuid(getuid());
-    if (!pw) {
-	warnx("can't get user name for ID %d", getuid());
-	strcpy(pword, "joe@");
-    }
-    else {
-	char me[MAXHOSTNAMELEN + 1];
-
-	gethostname(me, sizeof me);
-	me[sizeof(me) - 1] = '\0';
-	snprintf(pword, sizeof pword, "%s@%s", pw->pw_name, me);
-    }
     if (Verbose)
 	printf("Trying to fetch %s.\n", fname);
-    ftp = ftpGetURL(fname, uname, pword, &status);
+    ftp = ftpGetURL(fname, &status);
     if (ftp) {
 	pen[0] = '\0';
-	if ((rp = make_playpen(pen, 0)) != NULL) {
-            rp=pen; /* XXX - pen is dynamic; make static? */
+	if ((rp = make_playpen(pen, sizeof(pen), 0)) != NULL) {
+            rp=strdup(pen); /* be safe for nested calls */
 	    if (Verbose)
 		printf("Extracting from FTP connection into %s\n", pen);
 	    tpid = fork();
@@ -306,40 +331,75 @@ fileGetURL(char *base, char *spec)
 char *
 fileFindByPath(char *base, char *fname)
 {
-    static char tmp[FILENAME_MAX];
-    char *cp;
+	static char tmp[FILENAME_MAX];
+	char *cp;
 
-    if (fexists(fname) && isfile(fname)) {
-	strcpy(tmp, fname);
-	return tmp;
-    }
-    if (base) {
-	strcpy(tmp, base);
-
-	cp = strrchr(tmp, '/');
-	if (cp) {
-	    *cp = '\0';	/* chop name */
-	    cp = strrchr(tmp, '/');
+	if (ispkgpattern(fname)) {
+		if ((cp=findbestmatchingname(".",fname)) != NULL) {
+			strcpy (tmp, cp);
+			return tmp;
+		}
+	} else {
+		if (fexists(fname) && isfile(fname)) {
+			strcpy(tmp, fname);
+			return tmp;
+		}
 	}
-	if (cp) {
-	    *(cp + 1) = '\0';
-	    strcat(cp, "All/");
-	    strcat(cp, fname);
-	    strcat(cp, ".tgz");
-	    if (fexists(tmp))
-		return tmp;
+    
+	if (base) {
+		strcpy(tmp, base);
+
+		cp = strrchr(tmp, '/');
+		if (cp) {
+			*cp = '\0';	/* chop name */
+			cp = strrchr(tmp, '/');
+		}
+		if (cp) {
+			*(cp + 1) = '\0';
+			strcat(cp, "All/");
+			strcat(cp, fname);
+			strcat(cp, ".tgz");
+			if (ispkgpattern(tmp)) {
+				cp=findbestmatchingname(dirname_of(tmp),
+							basename_of(tmp));
+				if (cp) {
+					char *s;
+					s=strrchr(tmp,'/');
+					assert(s != NULL);
+					strcpy(s+1, cp);
+					return tmp;
+				}
+			} else {
+				if (fexists(tmp)) {
+					return tmp;
+				}
+			}
+		}
 	}
-    }
 
-    cp = getenv("PKG_PATH");
-    while (cp) {
-	char *cp2 = strsep(&cp, ":");
+	cp = getenv("PKG_PATH");
+	while (cp) {
+		char *cp2 = strsep(&cp, ":");
 
-	snprintf(tmp, FILENAME_MAX, "%s/%s.tgz", cp2 ? cp2 : cp, fname);
-	if (fexists(tmp) && isfile(tmp))
-	    return tmp;
-    }
-    return NULL;
+		snprintf(tmp, FILENAME_MAX, "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+		if (ispkgpattern(tmp)) {
+			char *s;
+			s = findbestmatchingname(dirname_of(tmp),
+						 basename_of(tmp));
+			if (s){
+				char *t;
+				t=strrchr(tmp, '/');
+				strcpy(t+1, s);
+				return tmp;
+			}
+		} else {
+			if (fexists(tmp) && isfile(tmp)) {
+				return tmp;
+			}
+		}
+	}
+    
+	return NULL;
 }
 
 char *
@@ -354,19 +414,19 @@ fileGetContents(char *fname)
 	errx(2, "can't stat '%s'", fname);
     }
 
-    contents = (char *)malloc(sb.st_size + 1);
+    contents = (char *)malloc((size_t)(sb.st_size) + 1);
     fd = open(fname, O_RDONLY, 0);
     if (fd == FAIL) {
 	cleanup(0);
 	errx(2, "unable to open '%s' for reading", fname);
     }
-    if (read(fd, contents, sb.st_size) != sb.st_size) {
+    if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
 	cleanup(0);
 	errx(2, "short read on '%s' - did not get %qd bytes",
 			fname, (long long)sb.st_size);
     }
     close(fd);
-    contents[sb.st_size] = '\0';
+    contents[(size_t)sb.st_size] = '\0';
     return contents;
 }
 
@@ -374,7 +434,7 @@ fileGetContents(char *fname)
  * name for it.
  */
 Boolean
-make_preserve_name(char *try, int max, char *name, char *file)
+make_preserve_name(char *try, size_t max, char *name, char *file)
 {
     int len, i;
 
@@ -408,24 +468,23 @@ make_preserve_name(char *try, int max, char *name, char *file)
 void
 write_file(char *name, char *str)
 {
-    FILE *fp;
-    int len;
+	FILE	*fp;
+	size_t	len;
 
-    fp = fopen(name, "w");
-    if (!fp) {
-	cleanup(0);
-	errx(2, "cannot fopen '%s' for writing", name);
-    }
-    len = strlen(str);
-    if (fwrite(str, 1, len, fp) != len) {
-	cleanup(0);
-	errx(2, "short fwrite on '%s', tried to write %d bytes",
+	if ((fp = fopen(name, "w")) == (FILE *) NULL) {
+		cleanup(0);
+		errx(2, "cannot fopen '%s' for writing", name);
+	}
+	len = strlen(str);
+	if (fwrite(str, 1, len, fp) != len) {
+		cleanup(0);
+		errx(2, "short fwrite on '%s', tried to write %d bytes",
 			name, len);
-    }
-    if (fclose(fp)) {
-	cleanup(0);
-	errx(2, "failure to fclose '%s'", name);
-    }
+	}
+	if (fclose(fp)) {
+		cleanup(0);
+		errx(2, "failure to fclose '%s'", name);
+	}
 }
 
 void
@@ -494,7 +553,7 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 int
 unpack(char *pkg, char *flist)
 {
-    char args[10], suffix[80], *cp;
+    char args[10], suff[80], *cp;
 
     args[0] = '\0';
     /*
@@ -504,8 +563,8 @@ unpack(char *pkg, char *flist)
     if (strcmp(pkg, "-")) {
 	cp = strrchr(pkg, '.');
 	if (cp) {
-	    strcpy(suffix, cp + 1);
-	    if (strchr(suffix, 'z') || strchr(suffix, 'Z'))
+	    strcpy(suff, cp + 1);
+	    if (strchr(suff, 'z') || strchr(suff, 'Z'))
 		strcpy(args, "-z");
 	}
     }
@@ -519,107 +578,64 @@ unpack(char *pkg, char *flist)
     return 0;
 }
 
-/* Using fmt, replace all instances of:
- *
+/*
+ * Using fmt, replace all instances of:
+ * 
  * %F	With the parameter "name"
  * %D	With the parameter "dir"
  * %B	Return the directory part ("base") of %D/%F
  * %f	Return the filename part of %D/%F
- *
- * Does not check for overflow - caution!
- *
+ * 
+ * Check that no overflows can occur.
  */
 void
-format_cmd(char *buf, char *fmt, char *dir, char *name)
+format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 {
-    char *cp, scratch[FILENAME_MAX * 2];
+	char	scratch[FILENAME_MAX * 2];
+	char   *bufp;
+	char   *cp;
 
-    while (*fmt) {
-	if (*fmt == '%') {
-	    switch (*++fmt) {
-	    case 'F':
-		strcpy(buf, name);
-		buf += strlen(name);
-		break;
+	for (bufp = buf ; (int)(bufp - buf) < size && *fmt ; ) {
+		if (*fmt == '%') {
+			switch (*++fmt) {
+			case 'F':
+				strnncpy(bufp, size - (int)(bufp - buf), name, strlen(name));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'D':
-		strcpy(buf, dir);
-		buf += strlen(dir);
-		break;
+			case 'D':
+				strnncpy(bufp, size - (int)(bufp - buf), dir, strlen(dir));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'B':
-		sprintf(scratch, "%s/%s", dir, name);
-		cp = &scratch[strlen(scratch) - 1];
-		while (cp != scratch && *cp != '/')
-		    --cp;
-		*cp = '\0';
-		strcpy(buf, scratch);
-		buf += strlen(scratch);
-		break;
+			case 'B':
+				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
+				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
+					cp = scratch;
+				}
+				strnncpy(bufp, size - (int)(bufp - buf), scratch, (size_t)(cp - scratch));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'f':
-		sprintf(scratch, "%s/%s", dir, name);
-		cp = &scratch[strlen(scratch) - 1];
-		while (cp != scratch && *(cp - 1) != '/')
-		    --cp;
-		strcpy(buf, cp);
-		buf += strlen(cp);
-		break;
+			case 'f':
+				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
+				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
+					cp = scratch;
+				} else {
+					cp++;
+				}
+				strnncpy(bufp, size - (int)(bufp - buf), cp, strlen(cp));
+				bufp += strlen(bufp);
+				break;
 
-	    default:
-		*buf++ = *fmt;
-		break;
-	    }
-	    ++fmt;
+			default:
+				*bufp++ = *fmt;
+				break;
+			}
+			++fmt;
+		} else {
+			*bufp++ = *fmt++;
+		}
 	}
-	else
-	    *buf++ = *fmt++;
-    }
-    *buf = '\0';
-}
-
-
-/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
- * OpenBSD's ftp command to do all FTP, which will DTRT for proxies,
- * etc.
- */
-FILE *
-ftpGetURL(char *url, char *user, char *passwd, int *retcode)
-{
-  FILE *ftp;
-  pid_t pid_ftp;
-  int p[2];
-
-  *retcode=0;
-
-  if( pipe(p) < 0){
-    *retcode = 1;
-    return NULL;
-  }
-
-  pid_ftp = fork();
-  if(pid_ftp < 0){
-    *retcode = 1;
-    return NULL;
-  }
-  if(pid_ftp == 0){
-    /* child */
-    dup2(p[1],1);
-    close(p[1]);
-
-    execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
-    exit(1);
-  }else{
-    /* parent */
-    ftp = fdopen(p[0],"r");
-
-    close(p[1]);
-    
-    if(ftp < 0){
-      *retcode = 1;
-      return NULL;
-    }
-  }
-  
-  return ftp;
+	*bufp = '\0';
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: add.h,v 1.2 1998/09/07 22:30:13 marc Exp $ */
+/* $OpenBSD: add.h,v 1.3 1998/10/13 23:09:49 marc Exp $ */
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
 /*
@@ -39,7 +39,7 @@ extern char	FirstPen[];
 extern add_mode_t AddMode;
 
 int		make_hierarchy(char *);
-void		extract_plist(char *, Package *);
+void		extract_plist(char *, package_t *);
 void		apply_perms(char *, char *);
 
 #endif	/* _INST_ADD_H_INCLUDE */

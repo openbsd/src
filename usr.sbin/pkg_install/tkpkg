@@ -1,7 +1,6 @@
 #!/usr/local/bin/wish -f
-#$OpenBSD: tkpkg,v 1.2 1998/09/07 22:30:12 marc Exp $
+#$OpenBSD: tkpkg,v 1.3 1998/10/13 23:09:48 marc Exp $
 # from FreeBSD Id: tkpkg,v 1.4 1997/02/22 16:09:13 peter Exp
-#
 #
 set pkgname ""
 wm title . "Package Installation"

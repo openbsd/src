@@ -1,4 +1,4 @@
-/* $OpenBSD: info.h,v 1.1 1996/06/04 07:56:09 niklas Exp $ */
+/* $OpenBSD: info.h,v 1.2 1998/10/13 23:09:51 marc Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -49,11 +49,12 @@ extern Boolean AllInstalled;
 extern Boolean Quiet;
 extern char *InfoPrefix;
 extern char PlayPen[];
+extern size_t PlayPenSize;
 extern char *CheckPkg;
 
 extern void	show_file(char *, char *);
-extern void	show_plist(char *, Package *, plist_t);
-extern void	show_files(char *, Package *);
+extern void	show_plist(char *, package_t *, pl_ent_t);
+extern void	show_files(char *, package_t *);
 extern void	show_index(char *, char *);
 
 #endif	/* _INST_INFO_H_INCLUDE */

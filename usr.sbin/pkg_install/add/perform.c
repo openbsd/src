@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.5 1998/09/07 22:30:13 marc Exp $	*/
+/*	$OpenBSD: perform.c,v 1.6 1998/10/13 23:09:49 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.5 1998/09/07 22:30:13 marc Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1998/10/13 23:09:49 marc Exp $";
 #endif
 
 /*
@@ -53,8 +53,17 @@ pkg_perform(char **pkgs)
     return err_cnt;
 }
 
-static Package Plist;
+static package_t Plist;
 static char *Home;
+
+/* called to see if pkg is already installed as some other version */
+/* note found version in "note" */
+static int
+check_if_installed(const char *found, char *note)
+{
+    strcpy(note, found);
+    return 0;
+}
 
 /*
  * This is seriously ugly code following.  Written very fast!
@@ -68,9 +77,10 @@ pkg_do(char *pkg)
     char playpen[FILENAME_MAX];
     char extract_contents[FILENAME_MAX];
     char *where_to, *tmp, *extract;
+    char *dbdir;
     FILE *cfile;
     int code;
-    PackingList p;
+    plist_t *p;
     struct stat sb;
     int inPlace;
 
@@ -79,8 +89,10 @@ pkg_do(char *pkg)
     LogDir[0] = '\0';
     strcpy(playpen, FirstPen);
     inPlace = 0;
+    dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
     /* Are we coming in for a second pass, everything already extracted? */
+    /* (Slave mode) */
     if (!pkg) {
 	fgets(playpen, FILENAME_MAX, stdin);
 	playpen[strlen(playpen) - 1] = '\0'; /* pesky newline! */
@@ -95,6 +107,13 @@ pkg_do(char *pkg)
     else {
 	/* Is it an ftp://foo.bar.baz/file.tgz specification? */
 	if (isURL(pkg)) {
+	    if (ispkgpattern(pkg)) {
+		warnx("patterns not allowed in URLs, "
+		     "please install manually!");
+		/* ... until we come up with a better solution :-/  - HF */
+		goto bomb;
+	    }
+
 	    if (!(Home = fileGetURL(NULL, pkg))) {
 		warnx("unable to fetch `%s' by URL", pkg);
 		return 1;
@@ -110,18 +129,20 @@ pkg_do(char *pkg)
 	    }
 	    read_plist(&Plist, cfile);
 	    fclose(cfile);
-	}
-	else {
+	} else {
 	    strcpy(pkg_fullname, pkg);		/* copy for sanity's sake, could remove pkg_fullname */
 	    if (strcmp(pkg, "-")) {
-		if (stat(pkg_fullname, &sb) == FAIL) {
+		if (!ispkgpattern(pkg_fullname)
+		    && stat(pkg_fullname, &sb) == FAIL) {
 		    warnx("can't stat package file '%s'", pkg_fullname);
 		    goto bomb;
 		}
 #if 0
-		sprintf(extract_contents, "--fast-read %s", CONTENTS_FNAME);
+		snprintf(extract_contents, sizeof( extract_comments ),
+			 "--fast-read %s", CONTENTS_FNAME);
 #else
-		sprintf(extract_contents, "%s", CONTENTS_FNAME);
+		snprintf(extract_contents, sizeof( extract_contents ),
+			 "%s", CONTENTS_FNAME);
 #endif
 		extract = extract_contents;
 	    }
@@ -129,7 +150,7 @@ pkg_do(char *pkg)
 		extract = NULL;
 		sb.st_size = 100000;	/* Make up a plausible average size */
 	    }
-	    Home = make_playpen(playpen, sb.st_size * 4);
+	    Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
 	    if (!Home)
 		warnx("unable to make playpen for %ld bytes",
 		    (long)(sb.st_size * 4));
@@ -160,10 +181,10 @@ pkg_do(char *pkg)
 			if (Verbose)
 			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
 			vsystem("mkdir -p %s", p->name);
-			if (chdir(p->name) == -1) {
-			    warn("unable to change directory to `%s'", p->name);
-			    goto bomb;
-			}
+		    }
+		    if (chdir(p->name) == -1) {
+			warn("unable to change directory to `%s'", p->name);
+			goto bomb;
 		    }
 		    where_to = p->name;
 		    inPlace = 1;
@@ -185,10 +206,10 @@ pkg_do(char *pkg)
 	     */
 
 	    if (!extract && !inPlace && min_free(playpen) < sb.st_size * 4) {
-		warnx("projected size of %d exceeds available free space.\n"
+		warnx("projected size of %ld exceeds available free space.\n"
 		       "Please set your PKG_TMPDIR variable to point to a"
 		       "location with more\n"
-		       "free space and try again", sb.st_size * 4);
+		       "free space and try again", (long)(sb.st_size * 4));
 		warnx("not extracting %s\ninto %s, sorry!", pkg_fullname,
 		       where_to);
 		goto bomb;
@@ -204,7 +225,7 @@ pkg_do(char *pkg)
 		warnx("unable to extract `%s'!", pkg_fullname);
 		goto bomb;
 	    }
-	}
+	} /* isURL(pkg) */
 
 	/* Check for sanity and dependencies */
 	if (sanity_check(pkg))
@@ -232,36 +253,65 @@ pkg_do(char *pkg)
     PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
     /* See if we're already registered */
-    sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
+    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
     if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 	warnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
 	goto success;	/* close enough for government work */
     }
 
+    /* See if some other version of us is already installed */
+    {	
+	char buf[FILENAME_MAX];
+	char installed[FILENAME_MAX];
+	char *s;
+
+	if ((s=strrchr(PkgName, '-')) != NULL){
+	    strcpy(buf, PkgName);
+	    buf[s-PkgName+1]='*';
+	    buf[s-PkgName+2]='\0';
+
+            if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
+		warnx("other version '%s' already installed", installed);
+		code = 1;
+		goto success;	/* close enough for government work */
+	    }
+	}	
+    }
+
     /* See if there are conflicting packages installed */
     for (p = Plist.head; p ; p = p->next) {
+	char installed[FILENAME_MAX];
+	
 	if (p->type != PLIST_PKGCFL)
 	    continue;
 	if (Verbose)
 	    printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
-	if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {
-	    warnx("Conflicting package `%s' installed, please use pkg_delete(1)\n\t first to remove it!\n",  p->name);
+	
+	/* was: */
+        /* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {*/
+	if(findmatchingname(dbdir, p->name, check_if_installed, installed)){
+	    warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n",  installed); 
 	    ++code;
 	}
     }
 
     /* Now check the packing list for dependencies */
     for (p = Plist.head; p ; p = p->next) {
+	char installed [FILENAME_MAX];
+	
 	if (p->type != PLIST_PKGDEP)
 	    continue;
 	if (Verbose)
 	    printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
-	if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {
+	/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+	if (!findmatchingname(dbdir, p->name, check_if_installed, installed)) {
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
 		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
+		    /* install depending pkg from local disk */
+		    
 		    snprintf(path, FILENAME_MAX, "%s/%s.tgz", Home, p->name);
 		    if (fexists(path))
 			cp = path;
@@ -280,38 +330,55 @@ pkg_do(char *pkg)
 				++code;
 			}
 		    }
-		else
-		   warnx("add of dependency `%s' failed%s",
-			    p->name, Force ? " (proceeding anyway)" : "!");
-		   if (!Force)
-			++code;
-		}
-		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
-		    if (Verbose)
-			printf("Finished loading %s over FTP.\n", p->name);
-		    if (!fexists(CONTENTS_FNAME)) {
-			warnx("autoloaded package %s has no %s file?",
-				p->name, CONTENTS_FNAME);
-			if (!Force)
-			    ++code;
-		    }
-		    else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
-                                     CONTENTS_FNAME, 
-                                     Prefix ? "-p " : "",
-                                     Prefix ? Prefix : "",
-				     Verbose ? "-v " : "")) {
+		    else {
 			warnx("add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
-			if (!Force)
-			    ++code;
+			     if (!Force)
+				++code;
 		    }
-		    else if (Verbose)
-			printf("\t`%s' loaded successfully.\n", p->name);
-		    /* Nuke the temporary playpen */
-		    leave_playpen(cp);
+		} else {
+		    /* install depending pkg via FTP */
+
+		    if (ispkgpattern(p->name)){
+			warnx("can't install dependent pkg '%s' via FTP, "
+			     "please install manually!", p->name);
+			/* ... until we come up with a better solution - HF */
+			goto bomb;
+		    }else{
+		    char *saved_Current;   /* allocated/set by save_dirs(), */
+		    char *saved_Previous;  /* freed by restore_dirs() */
+		    
+		    save_dirs(&saved_Current, &saved_Previous);
+		    
+		    if ((cp = fileGetURL(pkg, p->name)) != NULL) {
+			if (Verbose)
+			    printf("Finished loading %s over FTP.\n", p->name);
+			if (!fexists(CONTENTS_FNAME)) {
+			    warnx("autoloaded package %s has no %s file?",
+				  p->name, CONTENTS_FNAME);
+			    if (!Force)
+				++code;
+			}
+			else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
+					 CONTENTS_FNAME, 
+					 Prefix ? "-p " : "",
+					 Prefix ? Prefix : "",
+					 Verbose ? "-v " : "")) {
+			    warnx("add of dependency `%s' failed%s",
+				  p->name, Force ? " (proceeding anyway)" : "!");
+			    if (!Force)
+				++code;
+			}
+			else if (Verbose)
+			    printf("\t`%s' loaded successfully.\n", p->name);
+			/* Nuke the temporary playpen */
+			leave_playpen(cp);
+
+			restore_dirs(saved_Current, saved_Previous);
+		    }
 		}
 	    }
-	    else {
+	    } else {
 		if (Verbose)
 		    printf("and was not found%s.\n", Force ? " (proceeding anyway)" : "");
 		else
@@ -322,7 +389,7 @@ pkg_do(char *pkg)
 	    }
 	}
 	else if (Verbose)
-	    printf(" - already installed.\n");
+	    printf(" - %s already installed.\n", installed);
     }
 
     if (code != 0)
@@ -365,9 +432,12 @@ pkg_do(char *pkg)
 	    printf("Running mtree for %s.\n", PkgName);
 	p = find_plist(&Plist, PLIST_CWD);
 	if (Verbose)
-	    printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
+	    printf("mtree -q -U -f %s -d -e -p %s\n", MTREE_FNAME,
+		   p ? p->name : "/");
 	if (!Fake) {
-	    if (vsystem("/usr/sbin/mtree -U -f %s -d -e -p %s", MTREE_FNAME, p ? p->name : "/"))
+
+	    if (vsystem("/usr/sbin/mtree -q -U -f %s -d -e -p %s", MTREE_FNAME,
+			p ? p->name : "/"))
 		warnx("mtree returned a non-zero status - continuing");
 	}
 	unlink(MTREE_FNAME);
@@ -399,7 +469,7 @@ pkg_do(char *pkg)
 	    code = 1;
 	    goto success;	/* well, partial anyway */
 	}
-	sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
+	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	zapLogDir = 1;
 	if (Verbose)
 	    printf("Attempting to record package into %s.\n", LogDir);
@@ -416,7 +486,7 @@ pkg_do(char *pkg)
 	    move_file(".", DEINSTALL_FNAME, LogDir);
 	if (fexists(REQUIRE_FNAME))
 	    move_file(".", REQUIRE_FNAME, LogDir);
-	sprintf(contents, "%s/%s", LogDir, CONTENTS_FNAME);
+	(void) snprintf(contents, sizeof(contents), "%s/%s", LogDir, CONTENTS_FNAME);
 	cfile = fopen(contents, "w");
 	if (!cfile) {
 	    warnx("can't open new contents file '%s'! can't register pkg",
@@ -429,13 +499,34 @@ pkg_do(char *pkg)
 	move_file(".", COMMENT_FNAME, LogDir);
 	if (fexists(DISPLAY_FNAME))
 	    move_file(".", DISPLAY_FNAME, LogDir);
+
+	/* register dependencies */
+	/* we could save some cycles here if we remembered what we installed
+	 * above (in case we got a wildcard dependency) */
+	/* XXX remembering in p->name would NOT be good! */
 	for (p = Plist.head; p ; p = p->next) {
 	    if (p->type != PLIST_PKGDEP)
 		continue;
 	    if (Verbose)
 		printf("Attempting to record dependency on package `%s'\n", p->name);
-	    sprintf(contents, "%s/%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	    	    basename_of(p->name), REQUIRED_BY_FNAME);
+	    (void) snprintf(contents, sizeof(contents), "%s/%s", dbdir,
+	    	    basename_of(p->name));
+	    if (ispkgpattern(p->name)) {
+		char *s;
+		s=findbestmatchingname(dirname_of(contents),
+				       basename_of(contents));
+		if (s != NULL) {
+		    char *t;
+		    t=strrchr(contents, '/');
+		    strcpy(t+1, s);
+		}else{
+		    errx(1,"Where did our dependency go?!");
+		    /* this shouldn't happen... X-) */
+		}
+	    }
+	    strcat(contents, "/");
+	    strcat(contents, REQUIRED_BY_FNAME);
+ 
 	    cfile = fopen(contents, "a");
 	    if (!cfile)
 		warnx("can't open dependency file '%s'!\n"
@@ -463,7 +554,7 @@ pkg_do(char *pkg)
 	    putc('\n', stdout);
 	    (void) fclose(fp);
 	} else
-	    warn("cannot open %s as display file", buf);
+	    warnx("cannot open %s as display file", buf);
     }
 
     goto success;

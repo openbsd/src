@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.2 1998/09/07 22:30:16 marc Exp $ */
+/* $OpenBSD: lib.h,v 1.3 1998/10/13 23:09:53 marc Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -78,39 +78,66 @@
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
-enum _plist_t {
-    PLIST_FILE, PLIST_CWD, PLIST_CMD, PLIST_CHMOD,
-    PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT, PLIST_IGNORE,
-    PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
-    PLIST_PKGDEP, PLIST_MTREE, PLIST_DIR_RM, PLIST_IGNORE_INST,
-    PLIST_OPTION, PLIST_PKGCFL
-};
-typedef enum _plist_t plist_t;
+/* enumerated constants for plist entry types */
+typedef enum pl_ent_t {
+	PLIST_SHOW_ALL = -1,
+	PLIST_FILE,
+	PLIST_CWD,
+	PLIST_CMD,
+	PLIST_CHMOD,
+	PLIST_CHOWN,
+	PLIST_CHGRP,
+	PLIST_COMMENT,
+	PLIST_IGNORE,
+	PLIST_NAME,
+	PLIST_UNEXEC,
+	PLIST_SRC,
+	PLIST_DISPLAY,
+	PLIST_PKGDEP,
+	PLIST_MTREE,
+	PLIST_DIR_RM,
+	PLIST_IGNORE_INST,
+	PLIST_OPTION,
+	PLIST_PKGCFL
+} pl_ent_t;
 
 /* Types */
 typedef unsigned int Boolean;
 
-struct _plist {
-    struct _plist *prev, *next;
-    char *name;
-    Boolean marked;
-    plist_t type;
-};
-typedef struct _plist *PackingList;
+/* this structure describes a packing list entry */
+typedef struct plist_t {
+	struct plist_t	*prev;		/* previous entry */
+	struct plist_t	*next;		/* next entry */
+	char		*name;		/* name of entry */
+	Boolean		marked;		/* whether entry has been marked */
+	pl_ent_t	type;		/* type of entry */
+} plist_t;
 
-struct _pack {
-    struct _plist *head, *tail;
+/* this structure describes a package's complete packing list */
+typedef struct package_t {
+	plist_t		*head;		/* head of list */
+	plist_t		*tail;		/* tail of list */
+} package_t;
+
+enum {
+	ChecksumLen = 16,
+	LegibleChecksumLen = 33
 };
-typedef struct _pack Package;
+
+/* type of function to be handed to findmatchingname; return value of this
+ * is currently ignored */
+typedef int (*matchfn)(const char *found, char *data);
 
 /* Prototypes */
 /* Misc */
 int		vsystem(const char *, ...);
 void		cleanup(int);
-char		*make_playpen(char *, size_t);
+char		*make_playpen(char *, size_t, size_t);
 char		*where_playpen(void);
 void		leave_playpen(char *);
 off_t		min_free(char *);
+void            save_dirs(char **c, char **p);
+void            restore_dirs(char *c, char *p);
 
 /* String */
 char 		*get_dash_string(char **);
@@ -119,7 +146,13 @@ Boolean		suffix(char *, char *);
 void		nuke_suffix(char *);
 void		str_lowercase(char *);
 char		*basename_of(char *);
+char		*dirname_of(const char *);
 char		*strconcat(char *, char *);
+int		pmatch(const char *, const char *);
+int		findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong here */
+char		*findbestmatchingname(const char *, const char *); /* neither */
+int		ispkgpattern(const char *);
+char		*strnncpy(char *to, size_t tosize, char *from, size_t cc);
 
 /* File */
 Boolean		fexists(char *);
@@ -135,37 +168,31 @@ char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);
 char		*fileFindByPath(char *, char *);
 char		*fileGetContents(char *);
-Boolean		make_preserve_name(char *, int, char *, char *);
+Boolean		make_preserve_name(char *, size_t, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);
 void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
-void		format_cmd(char *, char *, char *, char *);
-
-/* Msg */
-void		upchuck(const char *);
-void		barf(const char *, ...);
-void		whinge(const char *, ...);
-Boolean		y_or_n(Boolean, const char *, ...);
+void		format_cmd(char *, size_t , char *, char *, char *);
 
 /* Packing list */
-PackingList	new_plist_entry(void);
-PackingList	last_plist(Package *);
-PackingList	find_plist(Package *, plist_t);
-char		*find_plist_option(Package *, char *name);
-void		plist_delete(Package *, Boolean, plist_t, char *);
-void		free_plist(Package *);
-void		mark_plist(Package *);
-void		csum_plist_entry(char *, PackingList);
-void		add_plist(Package *, plist_t, char *);
-void		add_plist_top(Package *, plist_t, char *);
-void		delete_plist(Package *pkg, Boolean all, plist_t type, char *name);
-void		write_plist(Package *, FILE *);
-void		read_plist(Package *, FILE *);
+plist_t		*new_plist_entry(void);
+plist_t		*last_plist(package_t *);
+plist_t		*find_plist(package_t *, pl_ent_t);
+char		*find_plist_option(package_t *, char *name);
+void		plist_delete(package_t *, Boolean, pl_ent_t, char *);
+void		free_plist(package_t *);
+void		mark_plist(package_t *);
+void		csum_plist_entry(char *, plist_t *);
+void		add_plist(package_t *, pl_ent_t, char *);
+void		add_plist_top(package_t *, pl_ent_t, char *);
+void		delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
+void		write_plist(package_t *, FILE *);
+void		read_plist(package_t *, FILE *);
 int		plist_cmd(char *, char **);
-int		delete_package(Boolean, Boolean, Package *);
+int		delete_package(Boolean, Boolean, package_t *);
 
 /* For all */
 int		pkg_perform(char **);
@@ -174,6 +201,5 @@ int		pkg_perform(char **);
 extern Boolean	Verbose;
 extern Boolean	Fake;
 extern Boolean  Force;
-extern int	AutoAnswer;
 
 #endif /* _INST_LIB_LIB_H_ */

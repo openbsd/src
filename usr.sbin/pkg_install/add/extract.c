@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.6 1998/09/07 22:30:13 marc Exp $	*/
+/*	$OpenBSD: extract.c,v 1.7 1998/10/13 23:09:49 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.6 1998/09/07 22:30:13 marc Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.7 1998/10/13 23:09:49 marc Exp $";
 #endif
 
 /*
@@ -33,26 +33,28 @@ static const char *rcsid = "$OpenBSD: extract.c,v 1.6 1998/09/07 22:30:13 marc E
 #define TOOBIG(str) ((strlen(str) + 22 + strlen(home) + where_count > maxargs) \
 		|| (strlen(str) + 6 + strlen(home) + perm_count > maxargs))
 
-#define PUSHOUT(todir) /* push out string */ \
-        if (where_count > sizeof(STARTSTRING)-1) { \
-		    strcat(where_args, "|tar xf - -C "); \
-		    strcat(where_args, todir); \
-		    if (system(where_args)) \
-	cleanup(0), errx(2, "can not invoke %lu byte tar pipeline: %s", \
-			(u_long)strlen(where_args), where_args); \
-		    strcpy(where_args, STARTSTRING); \
-		    where_count = sizeof(STARTSTRING)-1; \
-	} \
-	if (perm_count) { \
-		    if (!isdir(todir)) apply_perms(todir, perm_args); \
-		    perm_args[0] = 0;\
-		    perm_count = 0; \
+#define PUSHOUT(todir) /* push out string */				\
+        if (where_count > sizeof(STARTSTRING)-1) {			\
+		    strcat(where_args, "|tar xf - -C ");		\
+		    strcat(where_args, todir);				\
+		    if (system(where_args)) {				\
+			cleanup(0);					\
+			errx(2, "can not invoke %lu byte tar pipeline: %s", \
+				(u_long)strlen(where_args), where_args); \
+		    }							\
+		    strcpy(where_args, STARTSTRING);			\
+		    where_count = sizeof(STARTSTRING)-1;		\
+	}								\
+	if (perm_count) {						\
+		    apply_perms(todir, perm_args);			\
+		    perm_args[0] = 0;					\
+		    perm_count = 0;					\
 	}
 
 static void
-rollback(char *name, char *home, PackingList start, PackingList stop)
+rollback(char *name, char *home, plist_t *start, plist_t *stop)
 {
-    PackingList q;
+    plist_t *q;
     char try[FILENAME_MAX], bup[FILENAME_MAX], *dir;
 
     dir = home;
@@ -76,9 +78,9 @@ rollback(char *name, char *home, PackingList start, PackingList stop)
 }
 
 void
-extract_plist(char *home, Package *pkg)
+extract_plist(char *home, package_t *pkg)
 {
-    PackingList p = pkg->head;
+    plist_t *p = pkg->head;
     char *last_file;
     char *where_args, *perm_args, *last_chdir;
     int maxargs, where_count = 0, perm_count = 0, add_count;
@@ -86,12 +88,15 @@ extract_plist(char *home, Package *pkg)
 
     maxargs = sysconf(_SC_ARG_MAX) / 2;	/* Just use half the argument space */
     where_args = alloca(maxargs);
-    if (!where_args)
-	cleanup(0), errx(2, "can't get argument list space");
+    if (!where_args) {
+	cleanup(0);
+	errx(2, "can't get argument list space");
+    }
     perm_args = alloca(maxargs);
-    if (!perm_args)
-	cleanup(0), errx(2, "can't get argument list space");
-
+    if (!perm_args) {
+	cleanup(0);
+	errx(2, "can't get argument list space");
+    }
     strcpy(where_args, STARTSTRING);
     where_count = sizeof(STARTSTRING)-1;
     perm_args[0] = 0;
@@ -124,8 +129,10 @@ extract_plist(char *home, Package *pkg)
 	    if (!Fake) {
 		char try[FILENAME_MAX];
 
-		if (strrchr(p->name,'\''))
-		  cleanup(0), errx(2, "Bogus filename \"%s\"", p->name);
+		if (strrchr(p->name,'\'')) {
+		  cleanup(0);
+		  errx(2, "Bogus filename \"%s\"", p->name);
+		}
 		
 		/* first try to rename it into place */
 		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
@@ -151,11 +158,12 @@ extract_plist(char *home, Package *pkg)
 			PUSHOUT(Directory);
 		    }
 		    add_count = snprintf(&perm_args[perm_count], maxargs - perm_count, "'%s' ", p->name);
-		    if (add_count > maxargs - perm_count)
-			cleanup(0), errx(2, "oops, miscounted strings!");
+		    if (add_count > maxargs - perm_count) {
+			cleanup(0);
+			errx(2, "oops, miscounted strings!");
+		    }
 		    perm_count += add_count;
-		}
-		else {
+		} else {
 		    /* rename failed, try copying with a big tar command */
 		    if (last_chdir != Directory) {
 			PUSHOUT(last_chdir);
@@ -165,14 +173,18 @@ extract_plist(char *home, Package *pkg)
 			PUSHOUT(Directory);
 		    }
 		    add_count = snprintf(&where_args[where_count], maxargs - where_count, " '%s'", p->name);
-		    if (add_count > maxargs - where_count)
-			cleanup(0), errx(2, "oops, miscounted strings!");
+		    if (add_count > maxargs - where_count) {
+			cleanup(0);
+			errx(2, "oops, miscounted strings!");
+		    }
 		    where_count += add_count;
 		    add_count = snprintf(&perm_args[perm_count],
 					 maxargs - perm_count,
 					 "'%s' ", p->name);
-		    if (add_count > maxargs - perm_count)
-			cleanup(0), errx(2, "oops, miscounted strings!");
+		    if (add_count > maxargs - perm_count) {
+			cleanup(0);
+			errx(2, "oops, miscounted strings!");
+		    }
 		    perm_count += add_count;
 		}
 	    }
@@ -183,20 +195,21 @@ extract_plist(char *home, Package *pkg)
 		printf("extract: CWD to %s\n", p->name);
 	    PUSHOUT(Directory);
 	    if (strcmp(p->name, ".")) {
-		if (!Fake && make_hierarchy(p->name) == FAIL)
-		    cleanup(0), errx(2, "unable to make directory '%s'",
-					p->name);
+		if (!Fake && make_hierarchy(p->name) == FAIL) {
+		    cleanup(0);
+		    errx(2, "unable to make directory '%s'", p->name);
+		}
 		Directory = p->name;
-	    }
-	    else
+	    } else
 		Directory = home;
 	    break;
 
 	case PLIST_CMD:
-	    if (last_file == NULL)
-		cleanup(0), errx(2, "no last file specified for '%s' command",
-					p->name);
-	    format_cmd(cmd, p->name, Directory, last_file);
+	    if (last_file == NULL) {
+		cleanup(0);
+		errx(2, "no last file specified for '%s' command", p->name);
+	    }
+	    format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
 	    PUSHOUT(Directory);
 	    if (Verbose)
 		printf("extract: execute '%s'\n", cmd);

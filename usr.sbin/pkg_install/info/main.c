@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.10 1998/09/07 22:30:15 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1998/10/13 23:09:51 marc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.10 1998/09/07 22:30:15 marc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.11 1998/10/13 23:09:51 marc Exp $";
 #endif
 
 /*
@@ -36,6 +36,7 @@ Boolean AllInstalled	= FALSE;
 Boolean Quiet		= FALSE;
 char *InfoPrefix	= "";
 char PlayPen[FILENAME_MAX];
+size_t PlayPenSize	= sizeof(PlayPen);
 char *CheckPkg		= NULL;
 
 static void usage __P((void));
@@ -117,7 +118,8 @@ main(int argc, char **argv)
 	    Verbose = TRUE;
 	    /* Reasonable definition of 'everything' */
 	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
-		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
+		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
+		SHOW_REQBY;
 	    break;
 
 	case 'h':

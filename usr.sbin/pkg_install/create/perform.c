@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.5 1998/09/07 22:30:14 marc Exp $	*/
+/*	$OpenBSD: perform.c,v 1.6 1998/10/13 23:09:50 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.5 1998/09/07 22:30:14 marc Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.6 1998/10/13 23:09:50 marc Exp $";
 #endif
 
 /*
@@ -34,7 +34,7 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.5 1998/09/07 22:30:14 marc E
 #include <unistd.h>
 
 static void sanity_check(void);
-static void make_dist(char *, char *, char *, Package *);
+static void make_dist(char *, char *, char *, package_t *);
 
 static char *home;
 
@@ -44,7 +44,7 @@ pkg_perform(char **pkgs)
     char *pkg = *pkgs;		/* Only one arg to create */
     char *cp;
     FILE *pkg_in, *fp;
-    Package plist;
+    package_t plist;
     char *suffix;  /* What we tack on to the end of the finished package */
 
     /* Preliminary setup */
@@ -57,9 +57,10 @@ pkg_perform(char **pkgs)
 	pkg_in = stdin;
     else {
 	pkg_in = fopen(Contents, "r");
-	if (!pkg_in)
-	    cleanup(0), errx(2, "unable to open contents file '%s' for input",
-				Contents);
+	if (!pkg_in) {
+	    cleanup(0);
+	    errx(2, "unable to open contents file '%s' for input", Contents);
+	}
     }
     plist.head = plist.tail = NULL;
 
@@ -136,7 +137,7 @@ pkg_perform(char **pkgs)
     }
 
     /* Make a directory to stomp around in */
-    home = make_playpen(PlayPen, 0);
+    home = make_playpen(PlayPen, PlayPenSize, 0);
     signal(SIGINT, cleanup);
     signal(SIGHUP, cleanup);
 
@@ -186,11 +187,15 @@ pkg_perform(char **pkgs)
 
     /* Finally, write out the packing list */
     fp = fopen(CONTENTS_FNAME, "w");
-    if (!fp)
-	cleanup(0), errx(2, "can't open file %s for writing", CONTENTS_FNAME);
+    if (!fp) {
+	cleanup(0);
+	errx(2, "can't open file %s for writing", CONTENTS_FNAME);
+    }
     write_plist(&plist, fp);
-    if (fclose(fp))
-	cleanup(0), errx(2, "error while closing %s", CONTENTS_FNAME);
+    if (fclose(fp)) {
+	cleanup(0);
+	errx(2, "error while closing %s", CONTENTS_FNAME);
+    }
 
     /* And stick it into a tar ball */
     make_dist(home, pkg, suffix, &plist);
@@ -204,10 +209,10 @@ pkg_perform(char **pkgs)
 }
 
 static void
-make_dist(char *home, char *pkg, char *suffix, Package *plist)
+make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 {
     char tball[FILENAME_MAX];
-    PackingList p;
+    plist_t *p;
     int ret;
 #define DIST_MAX_ARGS 4096
     char *args[DIST_MAX_ARGS];	/* Much more than enough. */
@@ -283,22 +288,27 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     }
     wait(&ret);
     /* assume either signal or bad exit is enough for us */
-    if (ret)
-	cleanup(0), errx(2, "tar command failed with code %d", ret);
+    if (ret) {
+	cleanup(0);
+	errx(2, "tar command failed with code %d", ret);
+    }
 }
 
 static void
 sanity_check()
 {
-    if (!Comment)
-	cleanup(0), errx(2,
-		"required package comment string is missing (-c comment)");
-    if (!Desc)
-	cleanup(0), errx(2,
-		"required package description string is missing (-d desc)");
-    if (!Contents)
-	cleanup(0), errx(2,
-		"required package contents list is missing (-f [-]file)");
+    if (!Comment) {
+	cleanup(0);
+	errx(2, "required package comment string is missing (-c comment)");
+    }
+    if (!Desc) {
+	cleanup(0);
+	errx(2, "required package description string is missing (-d desc)");
+    }
+    if (!Contents) {
+	cleanup(0);
+	errx(2, "required package contents list is missing (-f [-]file)");
+    }
 }
 
 

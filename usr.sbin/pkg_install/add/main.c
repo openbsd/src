@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.8 1998/09/07 22:30:13 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/10/13 23:09:49 marc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.8 1998/09/07 22:30:13 marc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.9 1998/10/13 23:09:49 marc Exp $";
 #endif
 
 /*
@@ -122,9 +122,19 @@ main(int argc, char **argv)
 	    else if (isURL(*argv))	/* preserve URLs */
 		pkgs[ch] = strcpy(pkgnames[ch], *argv);
 	    else {			/* expand all pathnames to fullnames */
+		char *s;
+		    
 		if (fexists(*argv)) /* refers to a file directly */
 		    pkgs[ch] = realpath(*argv, pkgnames[ch]);
-		else {		/* look for the file in the expected places */
+		else if (ispkgpattern(*argv)
+			 && (s=findbestmatchingname(dirname_of(*argv),
+						    basename_of(*argv))) > 0) {
+		    if (Verbose)
+			printf("Using %s for %s\n",s, *argv);
+		    
+		    pkgs[ch] = realpath(s, pkgnames[ch]);
+		} else {
+		    /* look for the file(pattern) in the expected places */
 		    if (!(cp = fileFindByPath(NULL, *argv)))
 			warnx("can't find package '%s'", *argv);
 		    else
