@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.19 2002/02/17 19:42:31 millert Exp $	*/
+/*	$OpenBSD: quota.c,v 1.20 2002/05/14 12:24:10 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -37,14 +37,15 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.19 2002/02/17 19:42:31 millert Exp $";
+static const char rcsid[] =
+"$OpenBSD: quota.c,v 1.20 2002/05/14 12:24:10 fgsch Exp $";
 #endif /* not lint */
 
 /*
@@ -88,10 +89,10 @@ struct quotause {
 
 int	alldigits(char *);
 int	callaurpc(char *, int, int, int, xdrproc_t, void *, xdrproc_t, void *);
-int	main(int, char **);
 int	getnfsquota(struct statfs *, struct fstab *, struct quotause *,
 	    long, int);
-struct quotause	*getprivs(long id, int quotatype);
+struct quotause
+       *getprivs(long id, int quotatype);
 int	getufsquota(struct statfs *, struct fstab *, struct quotause *,
 	    long, int);
 void	heading(int, u_long, const char *, const char *);
@@ -177,6 +178,8 @@ main(argc, argv)
 		exit(0);
 	}
 	/* NOTREACHED */
+
+	exit(1);
 }
 
 void
@@ -229,7 +232,8 @@ showusrname(name)
 	}
 	myuid = getuid();
 	if (pwd->pw_uid != myuid && myuid != 0) {
-		warnx("%s (uid %u): permission denied", pwd->pw_name, pwd->pw_uid);
+		warnx("%s (uid %u): permission denied", pwd->pw_name,
+		    pwd->pw_uid);
 		return;
 	}
 	showquotas(USRQUOTA, pwd->pw_uid, pwd->pw_name);
@@ -472,7 +476,8 @@ getprivs(id, quotatype)
 	setfsent();
 	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
-			if ((qup = (struct quotause *)malloc(sizeof *qup)) == NULL)
+			if ((qup =
+			    (struct quotause *)malloc(sizeof *qup)) == NULL)
 				errx(2, "out of memory");
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", MFSNAMELEN) == 0) {
