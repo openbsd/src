@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.48 2002/10/06 22:06:15 art Exp $	*/
+/*	$OpenBSD: aha.c,v 1.49 2002/10/07 18:35:57 mickey Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1118,6 +1118,7 @@ aha_init(sc)
 	 * XXX - this vm juggling is so wrong. use bus_dma instead!
 	 */
 	size = round_page(sizeof(struct aha_mbx));
+	TAILQ_INIT(&pglist);
 	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1, 0) ||
 	    uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,

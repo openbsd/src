@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.17 2002/10/06 22:06:15 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.18 2002/10/07 18:35:56 mickey Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -182,6 +182,7 @@ iommu_attach(parent, self, aux)
 	 * The table must be aligned on a (-DVMA4M_BASE/NBPG) boundary
 	 * (i.e. 64K for 64M of dvma space).
 	 */
+	TAILQ_INIT(&mlist);
 #define DVMA_PTESIZE ((0 - DVMA4M_BASE) / 1024)
 	if (uvm_pglistalloc(DVMA_PTESIZE, 0, 0xffffffff, DVMA_PTESIZE,
 			    0, &mlist, 1, 0) ||

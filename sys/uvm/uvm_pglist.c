@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.13 2002/10/06 22:04:41 art Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.14 2002/10/07 18:35:52 mickey Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -119,8 +119,6 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 
 	/* Default to "lose". */
 	error = ENOMEM;
-
-	TAILQ_INIT(rlist);
 
 	/*
 	 * Block all memory allocation and lock the free list.
