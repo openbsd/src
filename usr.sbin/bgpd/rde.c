@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.40 2004/01/01 23:09:09 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.41 2004/01/03 14:06:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -176,8 +176,11 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	u_int32_t		 rid;
 	int			 n;
 
-	if (imsg_read(ibuf) == -1)
+	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg: imsg_read error");
+
+	if (n == 0)	/* connection closed */
+		fatal("rde_dispatch_imsg: pipe closed");
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)

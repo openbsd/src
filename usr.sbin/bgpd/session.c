@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.54 2004/01/01 23:46:47 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.55 2004/01/03 14:06:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1270,8 +1270,11 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	enum reconf_action	 reconf;
 	int			 n;
 
-	if (imsg_read(ibuf) == -1)
+	if ((n = imsg_read(ibuf)) == -1)
 		fatal("session_dispatch_imsg: imsg_read error");
+
+	if (n == 0)	/* connection closed */
+		fatal("session_dispatch_imsg: pipe closed");
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)

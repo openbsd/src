@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.17 2004/01/01 23:46:47 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.18 2004/01/03 14:06:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -42,19 +42,15 @@ imsg_read(struct imsgbuf *ibuf)
 	if ((n = read(ibuf->sock, ibuf->r.buf + ibuf->r.wpos,
 	    sizeof(ibuf->r.buf) - ibuf->r.wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
-			log_err("imsg_get: pipe read error");
+			log_err("imsg_read: pipe read error");
 			return (-1);
 		}
 		return (0);
 	}
-	if (n == 0) {	/* connection closed */
-		logit(LOG_CRIT, "imsg_get: pipe closed");
-		return (-1);
-	}
 
 	ibuf->r.wpos += n;
 
-	return (0);
+	return (n);
 }
 
 int
