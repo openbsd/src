@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.9 1996/06/02 05:58:20 tholo Exp $
+#	$OpenBSD: bsd.README,v 1.10 1996/07/27 10:05:48 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -120,7 +120,7 @@ BSDOBJDIR	The real path to the system 'obj' tree, so that 'make obj'
 
 BINGRP		Binary group. [bin]
 
-BINOWN		Binary owner. [bin]
+BINOWN		Binary owner. [root]
 
 BINMODE		Binary mode. [555]
 

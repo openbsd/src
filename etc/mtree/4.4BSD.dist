@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.18 1996/06/27 21:11:32 tholo Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.19 1996/07/27 10:04:25 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -18,7 +18,7 @@ bin
 dev
 
 # ./dev/fd
-fd		gname=bin uname=bin mode=0555
+fd		gname=bin uname=root mode=0555
 # ./dev/fd
 ..
 
@@ -116,23 +116,23 @@ hide            gname=games uname=games mode=0700
 ..
 
 # ./usr/include
-include		gname=bin uname=bin mode=0755
+include		gname=bin uname=root mode=0755
 
 # ./usr/include/arpa
-arpa		gname=bin uname=bin mode=0755
+arpa		gname=bin uname=root mode=0755
 # ./usr/include/arpa
 ..
 
 # ./usr/include/g++
-g++		gname=bin uname=bin mode=0755
+g++		gname=bin uname=root mode=0755
 
 # ./usr/include/g++/gen
-gen		gname=bin uname=bin mode=0755
+gen		gname=bin uname=root mode=0755
 # ./usr/include/g++/gen
 ..
 
 # ./include/g++/std
-std             gname=bin uname=bin mode=0555
+std             gname=bin uname=root mode=0555
 # ./include/g++/std
 ..
 
@@ -140,27 +140,27 @@ std             gname=bin uname=bin mode=0555
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV		gname=bin uname=bin mode=0755
+kerberosIV		gname=bin uname=root mode=0755
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols		gname=bin uname=bin mode=0755
+protocols		gname=bin uname=root mode=0755
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc		gname=bin uname=bin mode=0755
+rpc		gname=bin uname=root mode=0755
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc		gname=bin uname=bin mode=0755
+rpcsvc		gname=bin uname=root mode=0755
 # ./usr/include/rpcsvc
 ..
 
 # ./usr/include/ss
-ss		gname=bin uname=bin mode=0555
+ss		gname=bin uname=root mode=0555
 # ./usr/include/ss
 ..
 
@@ -871,20 +871,20 @@ info
 ..
 
 # ./usr/share/lkm
-lkm		gname=bin uname=bin
+lkm		gname=bin uname=root
 
 # ./usr/share/lkm/misc
-misc		gname=bin uname=bin
+misc		gname=bin uname=root
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall		gname=bin uname=bin
+syscall		gname=bin uname=root
 # ./usr/share/lkm/syscall
 ..
 
 # ./usr/share/lkm/vfs
-vfs		gname=bin uname=bin
+vfs		gname=bin uname=root
 # ./usr/share/lkm/vfs
 ..
 
@@ -1344,40 +1344,40 @@ catalog
 ..
 
 # ./usr/share/zoneinfo
-zoneinfo         gname=bin uname=bin mode=0555
+zoneinfo         gname=bin uname=root mode=0555
 
 # ./usr/share/zoneinfo/Australia
-Australia        gname=bin uname=bin mode=0555
+Australia        gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/Australia
 ..
 
 # ./usr/share/zoneinfo/Brazil
-Brazil           gname=bin uname=bin mode=0555
+Brazil           gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/Brazil
 ..
 
 # ./usr/share/zoneinfo/Canada
-Canada           gname=bin uname=bin mode=0555
+Canada           gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/Canada
 ..
 
 # ./usr/share/zoneinfo/Chile
-Chile            gname=bin uname=bin mode=0555
+Chile            gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/Chile
 ..
 
 # ./usr/share/zoneinfo/Mexico
-Mexico           gname=bin uname=bin mode=0555
+Mexico           gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/Mexico
 ..
 
 # ./usr/share/zoneinfo/SystemV
-SystemV          gname=bin uname=bin mode=0555
+SystemV          gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/SystemV
 ..
 
 # ./usr/share/zoneinfo/US
-US               gname=bin uname=bin mode=0555
+US               gname=bin uname=root mode=0555
 # ./usr/share/zoneinfo/US
 ..
 

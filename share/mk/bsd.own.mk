@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.8 1996/05/25 09:03:44 pefo Exp $
+#	$OpenBSD: bsd.own.mk,v 1.9 1996/07/27 10:05:52 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -22,7 +22,7 @@ BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
 
 BINGRP?=	bin
-BINOWN?=	bin
+BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
 
@@ -31,7 +31,7 @@ NONBINMODE?=	444
 
 MANDIR?=	/usr/share/man/cat
 MANGRP?=	bin
-MANOWN?=	bin
+MANOWN?=	root
 MANMODE?=	${NONBINMODE}
 
 LIBDIR?=	/usr/lib
@@ -42,7 +42,7 @@ LIBMODE?=	${NONBINMODE}
 
 DOCDIR?=        /usr/share/doc
 DOCGRP?=	bin
-DOCOWN?=	bin
+DOCOWN?=	root
 DOCMODE?=       ${NONBINMODE}
 
 LKMDIR?=	/usr/lkm
@@ -52,7 +52,7 @@ LKMMODE?=	${NONBINMODE}
 
 NLSDIR?=	/usr/share/nls
 NLSGRP?=	bin
-NLSOWN?=	bin
+NLSOWN?=	root
 NLSMODE?=	${NONBINMODE}
 
 COPY?=		-c

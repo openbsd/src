@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.doc.mk,v 1.3 1996/03/05 11:12:39 mickey Exp $
+#	$OpenBSD: bsd.doc.mk,v 1.4 1996/07/27 10:05:51 deraadt Exp $
 #	$NetBSD: bsd.doc.mk,v 1.20 1994/07/26 19:42:37 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
@@ -51,7 +51,7 @@ spell: ${SRCS}
 
 BINDIR?=	/usr/share/doc
 BINGRP?=	bin
-BINOWN?=	bin
+BINOWN?=	root
 BINMODE?=	444
 
 .include <bsd.own.mk>
