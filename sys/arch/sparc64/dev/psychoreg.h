@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.5 2001/09/15 07:08:04 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.6 2002/01/25 23:47:44 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -262,6 +262,17 @@ struct psychoreg {
 };
 
 /* what the bits mean! */
+
+/* uncorrectable error fault status */
+#define	PSY_UEAFSR_PDRD	0x4000000000000000	/* primary pci dma read */
+#define	PSY_UEAFSR_PDWR	0x2000000000000000	/* primary pci dma write */
+#define	PSY_UEAFSR_SDRD	0x0800000000000000	/* secondary pci dma read */
+#define	PSY_UEAFSR_SDWR	0x0400000000000000	/* secondary pci dma write */
+#define	PSY_UEAFSR_SDTE	0x0200000000000000	/* secondary dma translation error */
+#define	PSY_UEAFSR_PDTE	0x0100000000000000	/* primary dma translation error */
+#define	PSY_UEAFSR_MASK	0x0000ffff00000000	/* byte mask */
+#define	PSY_UEAFSR_OFF	0x00000000e0000000	/* offset (afar [5:3]) */
+#define	PSY_UEAFSR_BLK	0x0000000000800000	/* block operation */
 
 /* PCI [a|b] control/status register */
 /* note that the sabre only has one set of PCI control/status registers */
