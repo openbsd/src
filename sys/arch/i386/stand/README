@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.6 1997/04/21 19:42:03 mickey Exp $
+$OpenBSD: README,v 1.7 1997/05/31 16:08:34 mickey Exp $
 
 # hmm, no copyright
 
@@ -101,3 +101,11 @@ All the magic w/ prot-real mode interface now in one place <libsa/gidt.S>.
 BIOS (and DOS soon) interrupt entry points are now just as simple as
 they are in real mode (just use a macro BIOSINT, which shifts int#
 by 0x20, that all! ;).
+
+
+Sat May 31 12:06:37 EDT 1997
+----------------------------
+
+usleep(int15,f86) BIOS call is not supported well in all the BIOSes,
+especially some laptop BIOSes and Compaq machines. Everybody is encouraged
+to use sleep instead, it's known to work.
