@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.4 1998/03/19 11:13:31 pjanzen Exp $	*/
+/*	$OpenBSD: teach.c,v 1.5 1998/08/29 23:19:12 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: teach.c,v 1.4 1998/03/19 11:13:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: teach.c,v 1.5 1998/08/29 23:19:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	signal(2, getout);
+	signal(SIGINT, getout);
 	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
 		errexit("teachgammon(gtty)");
 	noech = old;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.3 1998/03/19 11:13:25 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.4 1998/08/29 23:19:09 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,13 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.3 1998/03/19 11:13:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.4 1998/08/29 23:19:09 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <errno.h>
 #include "back.h"
-
-extern int errno;
 
 static char confirm[] = "Are you sure you want to leave now?";
 static char prompt[] = "Enter a file name:  ";
@@ -93,7 +92,7 @@ save(n)
 			writec(*fs++);
 		}
 		*fs = '\0';
-		if ((fdesc = open(fname, 2)) == -1 && errno == 2) {
+		if ((fdesc = open(fname, O_RDWR)) == -1 && errno == ENOENT) {
 			if ((fdesc = creat(fname, 0600)) != -1)
 				break;
 		}
@@ -153,7 +152,7 @@ recover(s)
 {
 	int     fdesc;
 
-	if ((fdesc = open(s, 0)) == -1)
+	if ((fdesc = open(s, O_RDONLY)) == -1)
 		norec(s);
 	read(fdesc, board, sizeof(board));
 	read(fdesc, off, sizeof(off));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1998/03/19 11:13:07 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1998/08/29 23:19:07 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1998/03/19 11:13:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1998/08/29 23:19:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ main (argc,argv)
 
 	/* initialization */
 	bflag = 2;		/* default no board */
-	signal(2, getout);	/* trap interrupts */
+	signal(SIGINT, getout);	/* trap interrupts */
 	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
 		errexit("backgammon(gtty)");
 	noech = old;
