@@ -1900,6 +1900,11 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
       push_allocated_offset += units_per_push;
     }
 
+  /* At the second call from global alloc, alpha push frame and assign
+     a local variable to the top of the stack */
+  if (first_call_from_global_alloc && STARTING_FRAME_OFFSET == 0)
+    push_frame_offset = push_allocated_offset = 0;
+
   return new;
 #endif
 }
@@ -2388,6 +2393,13 @@ push_frame_of_reg_equiv_memory_loc (push_size, boundary)
 		XEXP (x, 0)->used = 1;
 	      }
 	  }
+	else if (GET_CODE (x) == MEM
+		 && XEXP (x, 0) == frame_pointer_rtx
+		 && boundary == 0)
+	  {
+	    XEXP (x, 0) = plus_constant (frame_pointer_rtx, push_size);
+	    XEXP (x, 0)->used = 1; insn_pushed = TRUE;
+	  }
       }
 }
 
@@ -2422,6 +2434,13 @@ push_frame_of_reg_equiv_constant (push_size, boundary)
 		/* mark */
 		x->used = 1;
 	      }
+	  }
+	else if (x == frame_pointer_rtx
+		 && boundary == 0)
+	  {
+	    reg_equiv_constant[i]
+	      = plus_constant (frame_pointer_rtx, push_size);
+	    reg_equiv_constant[i]->used = 1; insn_pushed = TRUE;
 	  }
       }
 }
