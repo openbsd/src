@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.3 1999/05/28 22:00:21 espie Exp $	*/
+/*	$OpenBSD: basename.c,v 1.4 1999/05/30 17:10:30 espie Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: basename.c,v 1.3 1999/05/28 22:00:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: basename.c,v 1.4 1999/05/30 17:10:30 espie Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,7 +41,7 @@ basename(path)
 	const char *path;
 {
 	static char bname[MAXPATHLEN];
-	register char *endp, *startp;
+	register const char *endp, *startp;
 
 	/* Empty or NULL string gets treated as "." */
 	if (path == NULL || *path == '\0') {
