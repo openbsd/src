@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.454 2001/10/07 22:25:34 jason Exp $
+	$OpenBSD: pcidevs,v 1.455 2001/10/24 03:46:01 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1793,6 +1793,12 @@ product SIS 5597_USB		0x7001	5597/5598 USB
 product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
 product SMC 83C170		0x0005	83C170 (EPIC/100)
+
+/* SNC products */
+product SNI PIRAHNA		0x0002	Pirahna 2-port
+product SNI TCPMSE		0x0005	Tulip, power, switch extender
+product SNI FPGAIBUS		0x4942	FPGA I-Bus Tracer for MBD
+product SNI SZB6120		0x6120	SZB6120
 
 /* Sony products */
 product SONY CXD1947A		0x8009	CXD1947A FireWire
