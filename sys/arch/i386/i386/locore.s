@@ -1,3 +1,4 @@
+/*	$OpenBSD: locore.s,v 1.27 1997/07/18 05:32:27 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -63,13 +64,8 @@
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 
+#inclide <dev/isa/isareg.h>
 #include <i386/isa/debug.h>
-
-/* XXX temporary kluge; these should not be here */
-#define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
-#define	IOM_END		0x100000	/* end of I/O memory "hole" */
-#define	IOM_SIZE	(IOM_END - IOM_BEGIN)
-
 
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
