@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.8 1996/08/28 08:55:18 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1996/08/29 13:22:21 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -144,17 +144,28 @@ cd*|sd*|vnd*|ccd*)
 	umask 77
 	;;
 
-ttyB*|ttyC*|ttyE*)
+ttyE*)
         type=`expr $i : 'tty\(.\).'`
         unit=`expr $i : 'tty.\(.\)'`
 	case $type in
-	B)	major=15; minor=`expr $unit \* 2` ;;
-	C)	major=26; minor=$unit ;;
 	E)	major=25; minor=$unit ;;
 	esac
         rm -f tty$type$unit
         mknod tty$type$unit c $major $minor
         chown uucp.wheel tty$type$unit
+        ;;
+
+ttyB*|ttyC*)
+        type=`expr $i : 'tty\(.\).'`
+        unit=`expr $i : 'tty.\(.\)'`
+	case $type in
+	B)	major=15; minor=`expr $unit \* 2` ;;
+	C)	major=26; minor=$unit ;;
+	esac
+        rm -f tty$type$unit cua$type$unit
+        mknod tty$type$unit c $major $minor
+        mknod cua$type$unit c $major `expr $minor + 128`
+        chown uucp.wheel tty$type$unit cua$type$unit
         ;;
 
 pty*)

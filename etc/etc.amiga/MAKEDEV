@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 1996/08/28 08:55:20 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 1996/08/29 13:22:22 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -67,8 +67,7 @@
 # Terminal ports:
 #	tty00	standard serial port.
 #	ttyA*	mfc serial ports
-#	com*	ISA COM ports			(XXX)
-#	ttyB*	alias for ISA COM ports, this is what the system really wants
+#	ttyB*	ISA COM ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -434,11 +433,12 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-com*|ttyB*)					# (XXX -- com should die)
+ttyB*)
 	unit=`expr $i : '...\(.*\)'`
-	rm -f com$unit tty$unit
-	mknod tty$unit c 32 $unit
-	chown uucp.wheel tty$unit
+	rm -f ttyB$unit cuaB$unit
+	mknod ttyB$unit c 32 $unit
+	mknod cuaB$unit c 32 `expr $unit + 128`
+	chown uucp.wheel ttyB$unit cuaB$unit
 	;;
 
 lpt*|lpa*)
