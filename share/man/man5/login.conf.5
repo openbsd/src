@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.15 2002/02/12 02:57:31 hugh Exp $
+.\" $OpenBSD: login.conf.5,v 1.16 2002/03/13 22:30:11 marc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -48,7 +48,7 @@ file describes the various attributes of login classes.
 A login class determines what styles of authentication are available
 as well as session resource limits and environment setup.
 While designed primarily for the
-.Xr login 8
+.Xr login 1
 program,
 it is also used by other programs, e.g.,
 .Xr ftpd 8 ,
@@ -501,7 +501,7 @@ then you should create an authentication script named
 using the style name
 .Li -slick .
 When logging in via the
-.Xr login 8
+.Xr login 1
 program, the syntax
 .Ar user Ns Li :-slick
 would be used.
@@ -548,7 +548,7 @@ the request will fail.
 The program requesting authentication must specify a username and an
 authentication style.
 (For example,
-.Xr login 8
+.Xr login 1
 requests a username from the user.
 Users may enter usernames of the form
 .Dq user:style
@@ -565,7 +565,7 @@ will always request the
 .Li su
 type authentication.
 The
-.Xr login 8
+.Xr login 1
 utility is special in that it may select an authentication type based
 on information found in the
 .Pa /etc/ttys
@@ -616,7 +616,7 @@ Any number of
 .Fl v
 options may be used.
 The
-.Xr login 8
+.Xr login 1
 program provides the following through the
 .Fl v
 option:
@@ -629,18 +629,18 @@ The hostname provided to login by the
 option.
 .It Li hostname
 The name
-.Xr login 8
+.Xr login 1
 will place in the utmp file
 for the remote hostname.
 .It Li local_addr
 The local ip address given to
-.Xr login 8
+.Xr login 1
 by the 
 .Fl L
 option.
 .It Li remote_addr
 The remote ip address given to
-.Xr login 8
+.Xr login 1
 by the 
 .Fl R
 option.
@@ -852,7 +852,7 @@ A classify program has the synopsis of:
 .Op user
 .Pp
 See
-.Xr login 8
+.Xr login 1
 for a description of the
 .Fl f ,
 option.
@@ -862,7 +862,7 @@ option is the same as for the authentication programs.
 The
 .Va user
 is the username passed to
-.Xr login 8
+.Xr login 1
 login, if any.
 .Pp
 The typical job of the classify program is to determine what authentication
@@ -878,7 +878,7 @@ The classify entry is only valid for the
 class as it is used prior to knowing who the user is.
 The classify script may pass environment variables or other commands
 back to
-.Xr login 8
+.Xr login 1
 on file descriptor 3, just as an authentication program does.
 The two variables
 .Nm AUTH_TYPE

@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_skey.8,v 1.2 2001/07/08 01:09:51 millert Exp $
+.\" $OpenBSD: login_skey.8,v 1.3 2002/03/13 22:33:14 marc Exp $
 .\"
 .\" Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -47,7 +47,7 @@
 The
 .Nm
 program is typically called from
-.Xr login 8
+.Xr login 1
 or
 .Xr ftpd 8 .
 The
@@ -84,10 +84,10 @@ argument is unused.
 data base of information for S/Key system
 .El
 .Sh SEE ALSO
+.Xr login 1 ,
 .Xr skey 1 ,
 .Xr skeyinfo 1 ,
 .Xr skeyinit 1 ,
 .Xr login.conf 5 ,
 .Xr ftpd 8 ,
-.Xr login 8 ,
 .Xr login_passwd 8
