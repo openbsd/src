@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.2 2001/06/25 01:04:41 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.3 2001/06/25 02:52:41 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
-	while((opt = getopt(argc, argv, "ds:")) != -1) {
+	while((opt = getopt(argc, argv, "ds:v:")) != -1) {
 		switch(opt) {
 		case 'd':
 			back = stdout;
@@ -94,6 +94,9 @@ main(int argc, char **argv)
 				syslog(LOG_ERR, "%s: invalid service", optarg);
 				exit(1);
 			}
+			break;
+		case 'v':
+			/* silently ignore -v options */
 			break;
 		default:
 			syslog(LOG_ERR, "usage error1");
