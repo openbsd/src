@@ -1,20 +1,20 @@
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
  *      @(#)Copyright (c) 1994, Simon J. Gerraty.
- *      
+ *
  *      This is free software.  It comes with NO WARRANTY.
- *      Permission to use, modify and distribute this source code 
+ *      Permission to use, modify and distribute this source code
  *      is granted subject to the following conditions.
- *      1/ that the above copyright notice and this notice 
- *      are preserved in all copies and that due credit be given 
- *      to the author.  
- *      2/ that any changes to this code are clearly commented 
- *      as such so that the author does not get blamed for bugs 
+ *      1/ that the above copyright notice and this notice
+ *      are preserved in all copies and that due credit be given
+ *      to the author.
+ *      2/ that any changes to this code are clearly commented
+ *      as such so that the author does not get blamed for bugs
  *      other than his own.
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.15 2003/07/20 19:39:35 mickey Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.16 2004/01/21 07:52:02 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ struct tty_list {
  * globals - yes yuk
  */
 #ifdef CONSOLE_TTY
-static char 	*Console = CONSOLE_TTY;
+static char	*Console = CONSOLE_TTY;
 #endif
 static time_t	Total = 0;
 static time_t	FirstTime = 0;
@@ -320,7 +320,7 @@ show_today(struct user_list *users, struct utmp_list *logins, time_t secs)
 		secs += up->secs;
 		up->secs = 0;			/* for next day */
 	}
- 	if (secs)
+	if (secs)
 		(void)printf("%s %11.2f\n", date, ((double)secs / 3600));
 }
 
@@ -389,13 +389,13 @@ log_in(struct utmp_list *head, struct utmp *up)
 	if (up->ut_host[0] == ':') {
 		/*
 		 * SunOS 4.0.2 does not treat ":0.0" as special but we
-		 * do. 
+		 * do.
 		 */
 		if (on_console(head))
 			return head;
 		/*
 		 * ok, no recorded login, so they were here when wtmp
-		 * started!  Adjust ut_time! 
+		 * started!  Adjust ut_time!
 		 */
 		up->ut_time = FirstTime;
 		/*
@@ -424,7 +424,7 @@ log_in(struct utmp_list *head, struct utmp *up)
 	if (Debug) {
 		printf("%-.*s %-.*s: %-.*s logged in", 19,
 		    ctime(&lp->usr.ut_time), sizeof (up->ut_line),
-		       up->ut_line, sizeof (up->ut_name), up->ut_name);
+		    up->ut_line, sizeof (up->ut_name), up->ut_name);
 		if (*up->ut_host)
 			printf(" (%-.*s)", sizeof (up->ut_host), up->ut_host);
 		putchar('\n');
