@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.16 2000/01/26 06:22:52 deraadt Exp $
+.\"	$OpenBSD: rcmd.3,v 1.17 2000/01/27 05:18:47 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,15 +36,19 @@
 .Os
 .Sh NAME
 .Nm rcmd ,
+.Nm rcmd_af ,
 .Nm rresvport ,
 .Nm rresvport_af ,
 .Nm iruserok ,
-.Nm ruserok
+.Nm ruserok ,
+.Nm iruserok_sa
 .Nd routines for returning a stream to a remote command
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
 .Fn rcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
+.Ft int
+.Fn rcmd_af "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p" "int af"
 .Ft int
 .Fn rresvport "int *port"
 .Ft int
@@ -53,6 +57,8 @@
 .Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
 .Ft int
 .Fn ruserok "const char *rhost" "int superuser" "const char *ruser" "const char *luser"
+.Ft int
+.Fn iruserok_sa "const void *sa" "int salen" "int superuser" "const char *ruser"
 .Sh DESCRIPTION
 The
 .Fn rcmd
@@ -74,6 +80,12 @@ will invoke
 .Xr rcmdsh 3
 to run the command via
 .Xr rsh 1 .
+While
+.Fn rcmd
+can handle IPv4 cases only,
+the
+.Fn rcmd_af
+function can handle other cases as well.
 The
 .Fn rresvport
 and
@@ -92,6 +104,9 @@ All four functions are present in the same file and are used
 by the
 .Xr rshd 8
 server (among others).
+.Fn iruserok_sa
+is an address family independent variant of
+.Fn iruserok .
 .Pp
 The
 .Fn rcmd
@@ -141,6 +156,14 @@ although you may be able to get its attention by using out-of-band data.
 Note that if the user is not the super-user,
 .Fa fd2p
 must be 0.
+.Pp
+.Fn rcmd_af
+takes address family in the last argument.
+If the last argument is
+.Dv PF_UNSPEC ,
+interpretation of
+.Fa *ahost
+will obey the underlying address resolution like DNS.
 .Pp
 The protocol is described in detail in
 .Xr rshd 8 .
@@ -200,6 +223,22 @@ If the IP address of the remote host is known,
 should be used in preference to
 .Fn ruserok ,
 as it does not require trusting the DNS server for the remote host's domain.
+.Pp
+While
+.Fn iruserok
+can handle IPv4 addresses only,
+.Fn iruserok_sa
+and
+.Fn ruserok
+can handle other address families as well, like IPv6.
+The first argument of
+.Fn iruserok_sa
+is typed as
+.Fa "void *"
+to avoid dependency between
+.Aq Li unistd.h
+and
+.Aq Li sys/socket.h .
 .Sh DIAGNOSTICS
 The
 .Fn rcmd

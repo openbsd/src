@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.27 1999/12/16 21:30:34 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.28 2000/01/27 05:18:46 itojun Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -65,7 +65,7 @@ MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=ipx.3 ipx_addr.3 ipx.3 ipx_ntoa.3
 MLINKS+=ns.3 ns_addr.3 ns.3 ns_ntoa.3
 MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 \
-	rcmd.3 rresvport_af.3
+	rcmd.3 rresvport_af.3 rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3

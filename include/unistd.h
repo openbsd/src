@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.28 1999/12/16 21:30:34 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.29 2000/01/27 05:18:47 itojun Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -137,6 +137,7 @@ char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
+int	 iruserok_sa __P((const void *, int, int, const char *, const char *));
 int	 lchown __P((const char *, uid_t, gid_t));
 char	*mkdtemp __P((char *));
 int	 mkstemp __P((char *));
@@ -149,6 +150,8 @@ extern __const char *__const sys_siglist[];
 int	 profil __P((char *, size_t, unsigned long, unsigned int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
+int	 rcmd_af __P((char **, int, const char *,
+		const char *, const char *, int *, int));
 int	 rcmdsh __P((char **, int, const char *,
 		const char *, const char *, char *));
 char	*re_comp __P((const char *));
