@@ -493,7 +493,7 @@ You can now extract the provided "*.tar.gz files onto your disk.
     comp{:--:}OSrev.tar.gz      game{:--:}OSrev.tar.gz      misc{:--:}OSrev.tar.gz      text{:--:}OSrev.tar.gz
     xbase{:--:}OSrev.tar.gz     xfont{:--:}OSrev.tar.gz     xserv{:--:}OSrev.tar.gz     bsd
     bsd.scsi3
-    sunos# gunzip < base{:--:}OSrev.tar.gz | (cd /mnt; gtar xvpf -)
+    sunos{:-#-:} gunzip < base{:--:}OSrev.tar.gz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
 And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.

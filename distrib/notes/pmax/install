@@ -28,7 +28,7 @@ onto the pmax which allows you to write to the raw disk - i.e. on all
 UN*X like operating systems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
-	# dd if=simpleroot{:--:}OSrev.fs of=/dev/rsd0c bs=20b
+	{:-#-:} dd if=simpleroot{:--:}OSrev.fs of=/dev/rsd0c bs=20b
 
 Especially on OpenBSD/pmax you'll have to use /dev/rrz0c or something
 like that instead of /dev/rsd0c.
