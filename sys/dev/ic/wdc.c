@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.41 2001/07/31 07:07:00 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.42 2001/08/23 13:23:28 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -619,6 +619,8 @@ wdcattach(chp)
 	if (!cold)
 		at_poll = AT_WAIT;
 
+	timeout_set(&chp->ch_timo, wdctimeout, chp);
+
 #ifndef __OpenBSD__
 	if ((error = wdc_addref(chp)) != 0) {
 		printf("%s: unable to enable controller\n",
@@ -661,7 +663,6 @@ wdcattach(chp)
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
-	timeout_set(&chp->ch_timo, wdctimeout, chp);
 	
 	for (i = 0; i < 2; i++) {
 		struct ata_drive_datas *drvp = &chp->ch_drive[i];
