@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.33 2002/06/06 02:15:27 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.34 2002/07/04 17:00:35 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -811,7 +811,8 @@ ike_phase_1_send_ID (struct message *msg)
   buf = malloc (sz);
   if (!buf)
     {
-      log_error ("ike_phase_1_send_ID: malloc (%lu) failed", (unsigned long)sz);
+      log_error ("ike_phase_1_send_ID: malloc (%lu) failed",
+		 (unsigned long)sz);
       return -1;
     }
 
@@ -867,7 +868,8 @@ ike_phase_1_send_ID (struct message *msg)
   *id = malloc (*id_len);
   if (!*id)
     {
-      log_error ("ike_phase_1_send_ID: malloc (%lu) failed", (unsigned long)*id_len);
+      log_error ("ike_phase_1_send_ID: malloc (%lu) failed",
+		 (unsigned long)*id_len);
       return -1;
     }
   memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
@@ -942,7 +944,8 @@ ike_phase_1_recv_ID (struct message *msg)
       rid = malloc (sz);
       if (!rid)
 	{
-	  log_error ("ike_phase_1_recv_ID: malloc (%lu) failed", (unsigned long)sz);
+	  log_error ("ike_phase_1_recv_ID: malloc (%lu) failed",
+		     (unsigned long)sz);
 	  return -1;
 	}
 
@@ -1003,7 +1006,7 @@ ike_phase_1_recv_ID (struct message *msg)
 	}
 
       /* Compare expected/desired and received remote ID */
-      if (bcmp(rid, payload->p + ISAKMP_ID_DATA_OFF, sz))
+      if (bcmp (rid, payload->p + ISAKMP_ID_DATA_OFF, sz))
 	{
 	  free (rid);
 	  log_print ("ike_phase_1_recv_ID: "
