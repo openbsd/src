@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.116 2004/09/14 22:09:38 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.117 2005/01/28 15:39:14 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.116 2004/09/14 22:09:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.117 2005/01/28 15:39:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,6 @@ parse(char *string, int flags)
 			len = sysctl_tty(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
-			newsize = 0;
 			break;
 		case KERN_NCHSTATS:
 			sysctl_nchstats(string, &bufp, mib, flags, &type);
