@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.8 1996/07/29 09:29:14 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.9 1996/07/29 11:31:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -575,6 +575,9 @@ callit(rqstp, xprt)
 	a.rmt_args.args = buf;
 	if (!svc_getargs(xprt, xdr_rmtcall_args, (caddr_t)&a))
 		return;
+	if (!check_callit(svc_getcaller(xprt), rqstp->rq_proc,
+	    a.rmt_prog, a.rmt_proc))
+		return;
 	if ((pml = find_service(a.rmt_prog, a.rmt_vers,
 	    (u_long)IPPROTO_UDP)) == NULL)
 		return;
@@ -624,4 +627,31 @@ reap()
 	while (wait3(NULL, WNOHANG, NULL) != -1)
 		;
 	errno = save_errno;
+}
+
+#define	NFSPROG			((u_long) 100003)
+#define	MOUNTPROG		((u_long) 100005)
+#define	YPXPROG			((u_long) 100069)
+#define	YPPROG			((u_long) 100004)
+#define	YPPROC_DOMAIN_NONACK	((u_long) 2)
+#define	MOUNTPROC_MNT		((u_long) 1)
+
+int
+check_callit(addr, proc, prog, aproc)
+	struct sockaddr_in *addr;
+	u_long  proc;
+	u_long  prog;
+	u_long  aproc;
+{
+	if (prog == PMAPPROG ||
+	    prog == NFSPROG ||
+	    prog == YPXPROG ||
+	    (prog == MOUNTPROG && aproc == MOUNTPROC_MNT) ||
+	    (prog == YPPROG && aproc != YPPROC_DOMAIN_NONACK)) {
+		syslog(LOG_WARNING,
+		    "callit prog %d aproc %d (might be from %s)",
+		    prog, aproc, inet_ntoa(*addr));
+		return (FALSE);
+	}
+	return (TRUE);
 }
