@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.11 1999/07/20 04:49:55 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.12 2000/04/13 05:55:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.11 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.12 2000/04/13 05:55:19 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,9 @@ struct rtentry;
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 #include "pcap-int.h"
 
@@ -86,6 +89,53 @@ char *
 pcap_lookupdev(errbuf)
 	register char *errbuf;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa, *mp;
+	int n, minunit;
+	char *cp;
+	static char device[IF_NAMESIZE + 1];
+
+	if (getifaddrs(&ifap) != 0) {
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "getifaddrs: %s", pcap_strerror(errno));
+		return NULL;
+	}
+
+	mp = NULL;
+	minunit = 666;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+#ifdef IFF_LOOPBACK
+		if ((ifa->ifa_flags & IFF_LOOPBACK) != 0)
+			continue;
+#else
+		if (strncmp(ifa->ifa_name, "lo", 2) == 0 &&
+		    (ifa->ifa_name[2] == '\0' || isdigit(ifa->ifa_name[2]))) {
+			continue;
+		}
+#endif
+
+		for (cp = ifa->ifa_name; !isdigit(*cp); ++cp)
+			continue;
+		n = atoi(cp);
+		if (n < minunit) {
+			minunit = n;
+			mp = ifa;
+		}
+	}
+	if (mp == NULL) {
+		(void)strncpy(errbuf, "no suitable device found",
+		    PCAP_ERRBUF_SIZE);
+		freeifaddrs(ifap);
+		return (NULL);
+	}
+
+	(void)strncpy(device, mp->ifa_name, sizeof(device) - 1);
+	device[sizeof(device) - 1] = '\0';
+	freeifaddrs(ifap);
+	return (device);
+#else
 	register int fd, minunit, n;
 	register char *cp, *ibuf = NULL, *nibuf;
 	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
@@ -180,6 +230,7 @@ pcap_lookupdev(errbuf)
 	device[sizeof(device) - 1] = '\0';
 	free(ibuf);
 	return (device);
+#endif
 }
 
 int
