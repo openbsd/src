@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.22 2001/03/21 10:11:22 art Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.23 2001/05/20 22:18:10 gluk Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ int	doclusterraz = 0;
  *	    2 Access is sequential, do read-ahead (1 ASYNC).
  *	Desired block is not in cache:
  *	    3 Not sequential access (1 SYNC).
- *	    4 Sequential access, next block is contiguous (1 SYNC).
+ *	    4 Sequential access, next block is contiguous (2 SYNC).
  *	    5 Sequential access, next block is not contiguous (1 SYNC, 1 ASYNC)
  *
  * There are potentially two buffers that require I/O.
@@ -417,7 +417,7 @@ cluster_callback(bp)
 	int error = 0;
 
 	/*
-	 * Must propogate errors to all the components.
+	 * Must propagate errors to all the components.
 	 */
 	if (bp->b_flags & B_ERROR)
 		error = bp->b_error;
@@ -699,7 +699,6 @@ redo:
 
 		++b_save->bs_nchildren;
 
-		/* Move memory from children to parent */
 		if (tbp->b_blkno != (bp->b_blkno + btodb(bp->b_bufsize))) {
 			printf("Clustered Block: %d addr %x bufsize: %ld\n",
 			    bp->b_lblkno, bp->b_blkno, bp->b_bufsize);
@@ -722,6 +721,7 @@ redo:
 		if (LIST_FIRST(&tbp->b_dep) != NULL)
 			buf_start(tbp);
 
+		/* Move memory from children to parent */
 		pagemove(tbp->b_data, cp, size);
 		bp->b_bcount += size;
 		bp->b_bufsize += size;
