@@ -98,8 +98,6 @@ wss_isapnp_attach(parent, self, aux)
 	struct ad1848_softc *ac = &sc->sc_ad1848;
 	struct isa_attach_args *ipa = aux;
 
-	printf("\n");
-	
 	/* probably broken */
 	if (bus_space_read_1(ipa->ia_iot, ipa->ipa_io[0].h, 0x0) == 0x01)
 		isapnp_write_reg(pnp, ISAPNP_CONFIG_CONTROL, 0x02);
@@ -125,9 +123,6 @@ wss_isapnp_attach(parent, self, aux)
 		printf("%s: probe failed\n", ac->sc_dev.dv_xname);
 		return;
 	}
-
-	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
-	    ipa->ipa_devclass);
 
 	wssattach(sc);
 }
