@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.13 1998/07/27 05:18:29 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.14 1998/09/20 02:22:22 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.13 1998/07/27 05:18:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.14 1998/09/20 02:22:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,7 @@ char	*dirptr;		/* destination dir in a copy */
 char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
+FILE	*listf = stderr;	/* file pointer to print file list to */
 
 /*
  *	PAX - Portable Archive Interchange

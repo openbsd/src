@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.13 1997/09/16 21:20:35 niklas Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.14 1998/09/20 02:22:21 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.13 1997/09/16 21:20:35 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.14 1998/09/20 02:22:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -284,9 +284,9 @@ extract()
 
 		if (vflag) {
 			if (vflag > 1)
-				ls_list(arcn, now, stderr);
+				ls_list(arcn, now, listf);
 			else {
-				(void)fputs(arcn->name, stderr);
+				(void)fputs(arcn->name, listf);
 				vfpart = 1;
 			}
 		}
@@ -318,7 +318,7 @@ extract()
 				purg_lnk(arcn);
 
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -339,7 +339,7 @@ extract()
 		res = (*frmt->rd_data)(arcn, fd, &cnt);
 		file_close(arcn, fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (!res)
@@ -488,9 +488,9 @@ wr_archive(arcn, is_app)
 
 		if (vflag) {
 			if (vflag > 1)
-				ls_list(arcn, now, stderr);
+				ls_list(arcn, now, listf);
 			else {
-				(void)fputs(arcn->name, stderr);
+				(void)fputs(arcn->name, listf);
 				vfpart = 1;
 			}
 		}
@@ -511,7 +511,7 @@ wr_archive(arcn, is_app)
 			 * so we are done messing with this file
 			 */
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			rdfile_close(arcn, &fd);
@@ -529,7 +529,7 @@ wr_archive(arcn, is_app)
 		res = (*frmt->wr_data)(arcn, fd, &cnt);
 		rdfile_close(arcn, &fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (res < 0)
@@ -646,7 +646,7 @@ append()
 	 * reading the archive may take a long time. If verbose tell the user
 	 */
 	if (vflag) {
-		(void)fprintf(stderr,
+		(void)fprintf(listf,
 			"%s: Reading archive to position at the end...", argv0);
 		vfpart = 1;
 	}
@@ -708,7 +708,7 @@ append()
 	 * tell the user we are done reading.
 	 */
 	if (vflag && vfpart) {
-		(void)fputs("done.\n", stderr);
+		(void)fputs("done.\n", listf);
 		vfpart = 0;
 	}
        
@@ -906,7 +906,7 @@ copy()
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
+			(void)fputs(arcn->name, listf);
 			vfpart = 1;
 		}
 		++flcnt;
@@ -921,7 +921,7 @@ copy()
 			res = chk_same(arcn);
 		if (res <= 0) {
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -941,7 +941,7 @@ copy()
 			if (res < 0)
 				purg_lnk(arcn);
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -971,7 +971,7 @@ copy()
 		rdfile_close(arcn, &fdsrc);
 
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.17 1997/09/01 18:29:42 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.18 1998/09/20 02:22:21 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.17 1997/09/01 18:29:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.18 1998/09/20 02:22:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,17 +316,11 @@ void
 ar_close()
 #endif
 {
-	FILE *outf;
 
 	if (arfd < 0) {
 		did_io = io_ok = flcnt = 0;
 		return;
 	}
-
-	if (act == LIST)
-		outf = stdout;
-	else
-		outf = stderr;
 
 	/*
 	 * Close archive file. This may take a LONG while on tapes (we may be
@@ -336,11 +330,11 @@ ar_close()
 	 */
 	if (vflag && (artyp == ISTAPE)) {
 		if (vfpart)
-			(void)putc('\n', outf);
-		(void)fprintf(outf,
+			(void)putc('\n', listf);
+		(void)fprintf(listf,
 			"%s: Waiting for tape drive close to complete...",
 			argv0);
-		(void)fflush(outf);
+		(void)fflush(listf);
 	}
 
 	/*
@@ -356,9 +350,9 @@ ar_close()
 	(void)close(arfd);
 
 	if (vflag && (artyp == ISTAPE)) {
-		(void)fputs("done.\n", outf);
+		(void)fputs("done.\n", listf);
 		vfpart = 0;
-		(void)fflush(outf);
+		(void)fflush(listf);
 	}
 	arfd = -1;
 
@@ -384,7 +378,7 @@ ar_close()
 	 * Print out a summary of I/O for this archive volume.
 	 */
 	if (vfpart) {
-		(void)putc('\n', outf);
+		(void)putc('\n', listf);
 		vfpart = 0;
 	}
 
@@ -395,27 +389,27 @@ ar_close()
 	 */
 	if (frmt == NULL) {
 #	ifdef NET2_STAT
-		(void)fprintf(outf, "%s: unknown format, %lu bytes skipped.\n",
+		(void)fprintf(listf, "%s: unknown format, %lu bytes skipped.\n",
 #	else
-		(void)fprintf(outf, "%s: unknown format, %qu bytes skipped.\n",
+		(void)fprintf(listf, "%s: unknown format, %qu bytes skipped.\n",
 #	endif
 		    argv0, rdcnt);
-		(void)fflush(outf);
+		(void)fflush(listf);
 		flcnt = 0;
 		return;
 	}
 
 	if (strcmp(NM_CPIO, argv0) == 0)
-		(void)fprintf(outf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
+		(void)fprintf(listf, "%qu blocks\n", (rdcnt ? rdcnt : wrcnt) / 5120);
 	else if (strcmp(NM_TAR, argv0) != 0)
-		(void)fprintf(outf,
+		(void)fprintf(listf,
 #	ifdef NET2_STAT
 		    "%s: %s vol %d, %lu files, %lu bytes read, %lu bytes written.\n",
 #	else
 		    "%s: %s vol %d, %lu files, %qu bytes read, %qu bytes written.\n",
 #	endif
 		    argv0, frmt->name, arvol-1, flcnt, rdcnt, wrcnt);
-	(void)fflush(outf);
+	(void)fflush(listf);
 	flcnt = 0;
 }
 

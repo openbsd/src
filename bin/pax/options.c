@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.33 1998/03/31 17:14:21 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.34 1998/09/20 02:22:22 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.33 1998/03/31 17:14:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.34 1998/09/20 02:22:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -523,6 +523,7 @@ pax_options(argc, argv)
 	 */
 	if (ISLIST(flg)) {
 		act = LIST;
+		listf = stdout;
 		bflg = flg & BDLIST;
 	} else if (ISEXTRACT(flg)) {
 		act = EXTRACT;
@@ -791,6 +792,12 @@ tar_options(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	/* Traditional tar behaviour (pax uses stderr unless in list mode) */
+	if (fstdin == 1 && act == ARCHIVE)
+		listf = stderr;
+	else
+		listf = stdout;
+
 	/* Traditional tar behaviour (pax wants to read filelist from stdin) */
 	if ((act == ARCHIVE || act == APPND) && argc == 0)
 		exit(0);
@@ -1011,6 +1018,7 @@ cpio_options(argc, argv)
 				 * list contents of archive
 				 */
 				act = LIST;
+				listf = stdout;
 				break;
 			case 'u':
 				/*
