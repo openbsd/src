@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.13 2002/12/25 20:05:35 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.14 2003/04/03 17:01:29 millert Exp $	*/
 /*	$NetBSD: scsi.c,v 1.21 1997/05/05 21:08:26 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 /*
- * HP9000/3xx 98658 SCSI host adaptor driver.
+ * HP 9000/3xx 98658 SCSI host adaptor driver.
  */
 
 #include <sys/param.h>
