@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.60 2004/01/28 13:04:58 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.61 2004/03/03 22:23:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -292,8 +292,9 @@ vmapbuf(bp, len)
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
 			   VM_PROT_READ | VM_PROT_WRITE,
 			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		/* make sure snooping will be possible... */
 		pmap_cache_ctrl(pmap_kernel(), kva, kva + PAGE_SIZE,
-		    CACHE_WT | CACHE_GLOBAL);
+		    CACHE_GLOBAL);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
