@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.15 2005/03/29 10:54:56 otto Exp $
+# $OpenBSD: Makefile,v 1.16 2005/04/02 18:06:10 otto Exp $
 
 DC=dc -x
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
-	t18 t19 t20 t21 t22 t23 t24
+	t18 t19 t20 t21 t22 t23 t24 t25
 
 # .in: input file
 # .out: desired result
@@ -32,6 +32,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
 # t22: sqrt
 # t23: factorial 1000
 # t24: line continuations
+# t25: exp
 
 all: clean ${REGRESS_TARGET}
 
