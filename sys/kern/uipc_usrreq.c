@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.3 1996/06/25 21:26:11 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.4 1997/06/05 08:13:12 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -605,12 +605,10 @@ unp_externalize(rights)
 	struct mbuf *rights;
 {
 	struct proc *p = curproc;		/* XXX */
-	register int i;
 	register struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	register struct file **rp = (struct file **)(cm + 1);
-	register struct file *fp;
+	struct file **rp = (struct file **)(cm + 1), *fp;
 	int newfds = (cm->cmsg_len - sizeof(*cm)) / sizeof (int);
-	int f;
+	int i, f, *ip;
 
 	if (!fdavail(p, newfds)) {
 		for (i = 0; i < newfds; i++) {
@@ -620,14 +618,17 @@ unp_externalize(rights)
 		}
 		return (EMSGSIZE);
 	}
+	ip = (int *)rp;
 	for (i = 0; i < newfds; i++) {
 		if (fdalloc(p, 0, &f))
 			panic("unp_externalize");
-		fp = *rp;
+		bcopy(rp, &fp, sizeof fp);
+		rp++;
 		p->p_fd->fd_ofiles[f] = fp;
 		fp->f_msgcount--;
 		unp_rights--;
-		*(int *)rp++ = f;
+		bcopy(&f, ip, sizeof f);
+		ip++;
 	}
 	return (0);
 }
@@ -639,29 +640,42 @@ unp_internalize(control, p)
 {
 	struct filedesc *fdp = p->p_fd;
 	register struct cmsghdr *cm = mtod(control, struct cmsghdr *);
-	register struct file **rp;
-	register struct file *fp;
-	register int i, fd;
-	int oldfds;
+	struct file **rp, *fp;
+	register int i;
+	struct mbuf *n = NULL;
+	int oldfds, *ip, fd;
 
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
 	oldfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
-	rp = (struct file **)(cm + 1);
+	ip = (int *)(cm + 1);
 	for (i = 0; i < oldfds; i++) {
-		fd = *(int *)rp++;
+		fd = *ip++;
 		if ((unsigned)fd >= fdp->fd_nfiles ||
 		    fdp->fd_ofiles[fd] == NULL)
 			return (EBADF);
 	}
-	rp = (struct file **)(cm + 1);
+	ip = (int *)(cm + 1);
+	if (sizeof(int) != sizeof(struct file *)) {
+		MGET(n, M_WAIT, MT_DATA);
+		rp = (struct file **)mtod(n, caddr_t);
+	} else
+		rp = (struct file **)ip;
 	for (i = 0; i < oldfds; i++) {
-		fp = fdp->fd_ofiles[*(int *)rp];
-		*rp++ = fp;
+		bcopy(ip, &fd, sizeof fd);
+		ip++;
+		fp = fdp->fd_ofiles[fd];
+		bcopy(&fp, rp, sizeof fp);
+		rp++;
 		fp->f_count++;
 		fp->f_msgcount++;
 		unp_rights++;
+	}
+	if (n) {
+		m_adj(control, -(oldfds * sizeof(int)));
+		n->m_len = oldfds * sizeof(struct file *);
+		m_cat(control, n);
 	}
 	return (0);
 }
@@ -796,7 +810,7 @@ unp_scan(m0, op)
 	void (*op) __P((struct file *));
 {
 	register struct mbuf *m;
-	register struct file **rp;
+	struct file **rp, *fp;
 	register struct cmsghdr *cm;
 	register int i;
 	int qfds;
@@ -809,11 +823,13 @@ unp_scan(m0, op)
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - sizeof *cm)
-						/ sizeof (struct file *);
+				qfds = (cm->cmsg_len - sizeof *cm) / sizeof (int);
 				rp = (struct file **)(cm + 1);
-				for (i = 0; i < qfds; i++)
-					(*op)(*rp++);
+				for (i = 0; i < qfds; i++) {
+					bcopy(rp, &fp, sizeof fp);
+					rp++;
+					(*op)(fp);
+				}
 				break;		/* XXX, but saves time */
 			}
 		m0 = m0->m_act;
