@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,31 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fingerd.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.3 1996/06/24 17:41:07 deraadt Exp $";
+/*static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";*/
+static char rcsid[] = "$Id: fingerd.c,v 1.4 1996/07/16 17:55:43 millert Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
+
+#include <unistd.h>
+#include <syslog.h>
+#include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
 #include "pathnames.h"
+
+void err __P((const char *, ...));
 
 int
 main(argc, argv)
@@ -51,84 +64,124 @@ main(argc, argv)
 	char *argv[];
 {
 	register FILE *fp;
-	register int ch;
+	register int ch, ac = 2;
 	register char *lp;
-	int p[2];
-#define	ENTRIES	50
-	char **ap, *av[ENTRIES + 1], line[1024], *strtok();
-	int forward = 1, nvalid;
-	int i, j, l;
-
-#ifdef LOGGING					/* unused for now */
-#include <netinet/in.h>
+	struct hostent *hp;
 	struct sockaddr_in sin;
-	int sval;
+	int p[2], logging, secure, user_required, short_list, sval;
+#define	ENTRIES	50
+	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog;
 
-	sval = sizeof(sin);
-	if (getpeername(0, &sin, &sval) < 0)
-		fatal("getpeername");
-#endif
+	prog = _PATH_FINGER;
+	logging = secure = user_required = short_list = 0;
+	openlog("fingerd", LOG_PID | LOG_CONS, LOG_DAEMON);
+	opterr = 0;
+	while ((ch = getopt(argc, argv, "sluSmpP:")) != EOF)
+		switch (ch) {
+		case 'l':
+			logging = 1;
+			break;
+		case 'P':
+			prog = optarg;
+			break;
+		case 's':
+			secure = 1;
+			break;
+		case 'u':
+			user_required = 1;
+			break;
+		case 'S':
+			short_list = 1;
+			av[ac++] = "-s";
+			break;
+		case 'm':
+			av[ac++] = "-m";
+			break;
+		case 'p':
+			av[ac++] = "-p";
+			break;
+		case '?':
+		default:
+			err("illegal option -- %c", ch);
+		}
 
-	if (argc > 1 && strcmp(argv[1], "-s") == 0)
-		forward = 0;
+	if (logging) {
+		sval = sizeof(sin);
+		if (getpeername(0, (struct sockaddr *)&sin, &sval) < 0)
+			err("getpeername: %s", strerror(errno));
+		if ((hp = gethostbyaddr((char *)&sin.sin_addr.s_addr,
+		    sizeof(sin.sin_addr.s_addr), AF_INET)))
+			lp = hp->h_name;
+		else
+			lp = inet_ntoa(sin.sin_addr);
+		syslog(LOG_NOTICE, "query from %s", lp);
+	}
 
 	if (!fgets(line, sizeof(line), stdin))
 		exit(1);
-
-	av[0] = "finger";
-	for (lp = line, ap = &av[1];;) {
-		*ap = strtok(lp, " \t\r\n");
-		if (!*ap)
-			break;
-		/* RFC742: "/[Ww]" == "-l" */
-		if ((*ap)[0] == '/' && ((*ap)[1] == 'W' || (*ap)[1] == 'w'))
-			*ap = "-l";
-		if (++ap == av + ENTRIES)
+	
+	av[ac++] = "--";
+	comp = &av[1];
+	for (lp = line, ap = &av[ac]; ac < ENTRIES;) {
+		if ((*ap = strtok(lp, " \t\r\n")) == NULL)
 			break;
 		lp = NULL;
-	}
-
-	nvalid = 0;
-	if (av[1] == NULL)
-		nvalid = 1;
-	for (i = 1; av[i];) {
-		if (forward == 0 && strchr(av[i], '@')) {
-			/* no way, delete it! */
-			for (j = i; av[j]; j++)
-				av[j] = av[j+1];
-			if (av[i])
-				continue;
-			break;
+		if (secure && strchr(*ap, '@')) {
+			(void) puts("fowarding service denied\r\n");
+			exit(1);
 		}
 
-		l = strlen(av[i]);
-		while (av[i][l-1] == '@')
-			av[i][--l] = '\0';
-		if (av[i][0] == '\0')
-			av[i] = NULL;
-		nvalid++;
-		i++;
+		ch = strlen(*ap);
+		while ((*ap)[ch-1] == '@')
+			(*ap)[--ch] = '\0';
+		if (**ap == '\0')
+			continue;
+
+		/* RFC1196: "/[Ww]" == "-l" */
+		if ((*ap)[0] == '/' && ((*ap)[1] == 'W' || (*ap)[1] == 'w')) {
+			if (!short_list) {
+				av[1] = "-l";
+				comp = &av[0];
+			}
+		} else {
+			ap++;
+			ac++;
+		}
+	}
+	av[ENTRIES - 1] = NULL;
+
+	if ((lp = strrchr(prog, '/')))
+		*comp = ++lp;
+	else
+		*comp = prog;
+
+	if (user_required) {
+		for (ap = comp + 1; strcmp("--", *(ap++)); );
+		if (*ap == NULL) {
+			(void) puts("must provide username\r\n");
+			exit(1);
+		}
 	}
 
 	if (pipe(p) < 0)
-		fatal("pipe");
+		err("pipe: %s", strerror(errno));
 
-	switch(fork()) {
+	switch(vfork()) {
 	case 0:
-		(void)close(p[0]);
+		(void) close(p[0]);
 		if (p[1] != 1) {
-			(void)dup2(p[1], 1);
-			(void)close(p[1]);
+			(void) dup2(p[1], 1);
+			(void) close(p[1]);
 		}
-		if (nvalid)
-			execv(_PATH_FINGER, av);
+		execv(prog, comp);
+		err("execv: %s: %s", prog, strerror(errno));
 		_exit(1);
 	case -1:
-		fatal("fork");
+		err("fork: %s", strerror(errno));
 	}
-	(void)close(p[1]);
+	(void) close(p[1]);
 	if (!(fp = fdopen(p[0], "r")))
-		fatal("fdopen");
+		err("fdopen: %s", strerror(errno));
 	while ((ch = getc(fp)) != EOF) {
 		if (ch == '\n')
 			putchar('\r');
@@ -137,12 +190,29 @@ main(argc, argv)
 	exit(0);
 }
 
-fatal(msg)
-	char *msg;
-{
-	extern int errno;
-	char *strerror();
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
-	fprintf(stderr, "fingerd: %s: %s\r\n", msg, strerror(errno));
+void
+#if __STDC__
+err(const char *fmt, ...)
+#else
+err(fmt, va_alist)
+	char *fmt;
+        va_dcl
+#endif
+{
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void) vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
 	exit(1);
+	/* NOTREACHED */
 }
