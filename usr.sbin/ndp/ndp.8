@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ndp.8,v 1.13 2002/06/03 04:32:14 itojun Exp $
-.\"	$KAME: ndp.8,v 1.25 2002/06/03 03:30:16 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.14 2002/06/03 04:44:50 itojun Exp $
+.\"	$KAME: ndp.8,v 1.26 2002/06/03 04:39:03 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -39,13 +39,19 @@
 .Sh SYNOPSIS
 .Nm ndp
 .Op Fl nt
-.Fl a
+.Ar hostname
+.Nm ndp
+.Op Fl nt
+.Fl a | Fl c | Fl p
+.Nm ndp
+.Op Fl nt
+.Fl r
+.Nm ndp
+.Op Fl nt
+.Fl H | Fl P | Fl R
 .Nm ndp
 .Op Fl nt
 .Fl A Ar wait
-.Nm ndp
-.Op Fl nt
-.Fl c
 .Nm ndp
 .Op Fl nt
 .Fl d Ar hostname
@@ -53,26 +59,19 @@
 .Op Fl nt
 .Fl f Ar filename
 .Nm ndp
-.Fl H
-.Nm ndp
-.Fl I Ar interface
-.Nm ndp
-.Fl I Li delete
-.Nm ndp
+.Op Fl nt
 .Fl i
 .Ar interface
 .Op Ar flags ...
 .Nm ndp
-.Fl p
-.Nm ndp
-.Fl P
-.Nm ndp
-.Fl r
-.Nm ndp
-.Fl R
+.Op Fl nt
+.Fl I Ar interface
 .Nm ndp
 .Op Fl nt
-.Fl s Ar nodename ether_addr
+.Fl I Li delete
+.Nm ndp
+.Op Fl nt
+.Fl s Ar nodename etheraddr
 .Op Li temp
 .Op Li proxy
 .\"
@@ -102,8 +101,8 @@ The entry could become
 in which case it will never expire.
 .It S
 State of the neighbor cache entry, as a single letter:
-.Bl -tag -width indent -compact
 .Pp
+.Bl -tag -width indent -compact
 .It N
 Nostate
 .It W
@@ -115,7 +114,7 @@ Reachable
 .It S
 Stale
 .It D
-Deay
+Delay
 .It P
 Probe
 .It ?
@@ -175,13 +174,13 @@ which means the flag should be cleared.
 .It Xo
 .Ic nud
 .Xc
-turn on or off NUD (Neighbor Unreachability Detection) on the
+Turn on or off NUD (Neighbor Unreachability Detection) on the
 interface.
 NUD is usually turned on by default.
 .It Xo
 .Ic accept_rtadv
 .Xc
-specify whether or not to accept Router Advertisement messages
+Specify whether or not to accept Router Advertisement messages
 received on the
 .Ar interface .
 Note that the kernel does not accept Router Advertisement messages
@@ -192,7 +191,7 @@ This flag is set to 1 by default.
 .It Xo
 .Ic prefer_source
 .Xc
-prefer addresses on the
+Prefer addresses on the
 .Ar interface
 as candidates of the source address for outgoing packets.
 The default value of this flag is off.
@@ -212,7 +211,7 @@ Show default router list.
 .It Fl R
 Flush all the entries in the default router list.
 .It Fl s
-Register an NDP entry for a node.
+Register a NDP entry for a node.
 The entry will be permanent unless the word
 .Ic temp
 is given in the command.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ndp.c,v 1.22 2002/06/03 04:32:14 itojun Exp $	*/
-/*	$KAME: ndp.c,v 1.97 2002/06/03 03:31:25 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.23 2002/06/03 04:44:50 itojun Exp $	*/
+/*	$KAME: ndp.c,v 1.99 2002/06/03 04:39:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -128,7 +128,6 @@ char ntop_buf[INET6_ADDRSTRLEN];	/* inet_ntop() */
 char host_buf[NI_MAXHOST];		/* getnameinfo() */
 char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
-int main(int, char **);
 int file(char *);
 void getsocket(void);
 int set(int, char **);
@@ -333,7 +332,7 @@ file(name)
 	args[3] = &arg[3][0];
 	args[4] = &arg[4][0];
 	retval = 0;
-	while(fgets(line, 100, fp) != NULL) {
+	while (fgets(line, 100, fp) != NULL) {
 		i = sscanf(line, "%s %s %s %s %s", arg[0], arg[1], arg[2],
 		    arg[3], arg[4]);
 		if (i < 2) {
@@ -833,7 +832,7 @@ ndp_ether_aton(a, n)
 		fprintf(stderr, "ndp: invalid Ethernet address '%s'\n", a);
 		return (1);
 	}
-	for (i=0; i<6; i++)
+	for (i = 0; i < 6; i++)
 		n[i] = o[i];
 	return (0);
 }
@@ -841,23 +840,17 @@ ndp_ether_aton(a, n)
 void
 usage()
 {
-	printf("usage: ndp hostname\n");
-	printf("       ndp [-nt] -a\n");
+	printf("usage: ndp [-nt] hostname\n");
+	printf("       ndp [-nt] -a | -c | -p | -r | -H | -P | -R\n");
 	printf("       ndp [-nt] -A wait\n");
-	printf("       ndp [-nt] -c\n");
 	printf("       ndp [-nt] -d hostname\n");
 	printf("       ndp [-nt] -f filename\n");
-	printf("       ndp -i interface [flags...]\n");
+	printf("       ndp [-nt] -i interface [flags...]\n");
 #ifdef SIOCSDEFIFACE_IN6
-	printf("       ndp -I interface\n");
-	printf("       ndp -I delete\n");
+	printf("       ndp [-nt] -I interface\n");
+	printf("       ndp [-nt] -I delete\n");
 #endif
-	printf("       ndp -p\n");
-	printf("       ndp -r\n");
-	printf("       ndp -s hostname ether_addr [temp] [proxy]\n");
-	printf("       ndp -H\n");
-	printf("       ndp -P\n");
-	printf("       ndp -R\n");
+	printf("       ndp [-nt] -s nodename etheraddr [temp] [proxy]\n");
 	exit(1);
 }
 
