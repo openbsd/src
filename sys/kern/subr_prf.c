@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.30 2000/06/25 18:45:19 provos Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.31 2001/02/22 19:33:22 mickey Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -819,7 +819,7 @@ reswitch:	switch (ch) {
 		case 'b': {
 			char *b, *z;
 			int tmp;
-			_uquad = va_arg(ap, int);
+			_uquad = va_arg(ap, u_int);
 			b = va_arg(ap, char *);
 			if (*b == 8)
 				sprintf(buf, "%qo", _uquad);
