@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/01/12 21:08:59 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.6 2002/01/12 21:14:57 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -87,6 +87,8 @@ _DEV(bpf,105)
 _DEV(tun,111)
 _DEV(lkm,112)
 _DEV(rnd,119)
+_DEV(mag)
+_DEV(spif)
 _DEV(cry,75)
 dnl
 divert(7)dnl
@@ -144,7 +146,7 @@ dnl 	*)	echo "bad unit for $i: $U"; exit 127;;
 dnl 	esac
 dnl 	offset=Mult($U,64)
 dnl 	n=0
-dnl 	while [ $n -lt 16 ]
+dnl 	while [ $n -lt 8 ]
 dnl 	do
 dnl 		name=${nam}`hex $n`
 dnl 		M tty$name c 102 Add($offset,$n)

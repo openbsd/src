@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.2 2002/01/12 21:02:03 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/01/12 21:14:57 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -68,6 +68,7 @@ _DEV(lkm,112)
 _DEV(tun,111)
 _DEV(rnd,119)
 _DEV(mag)
+_DEV(spif)
 _DEV(xfs,51)
 _DEV(raid,123,25)
 _DEV(fdesc,24)
@@ -122,7 +123,7 @@ spif*)
 	esac
 	offset=Mult($U,64)
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 8 ]
 	do
 		name=${nam}`hex $n`
 		M tty$name c 102 Add($offset,$n)

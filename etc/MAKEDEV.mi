@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.16 2002/01/08 06:00:15 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -595,6 +595,7 @@ _mkdev(rnd,*random,{-n=0
 __devitem(joy,joy*,joystick driver)dnl
 _mcdev(joy,joy*,joy,{-major_joy_c-},666)dnl
 __devitem(mag,magma*,magma card (makes 16 tty and 2 bpp))dnl
+__devitem(spif,spif*,spif card (makes 8 tty and 1 bpp))dnl
 __devitem(xfs,xfs*,XFS filesystem devices)dnl
 _mcdev(xfs,xfs*,xfs,{-major_xfs_c-},600)dnl
 __devitem(hil,hil,HIL input devices)dnl
