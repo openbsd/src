@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.51 2002/08/30 09:56:22 espie Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.52 2002/09/17 13:01:20 mpech Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -190,7 +190,7 @@ static void		uvm_map_unreference_amap(vm_map_entry_t, int);
 int			uvm_map_spacefits(vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t);
 
 int _uvm_tree_sanity(vm_map_t map, char *name);
-static int		uvm_rb_subtree_space(vm_map_entry_t);
+static vsize_t		uvm_rb_subtree_space(vm_map_entry_t);
 
 static __inline int
 uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
@@ -214,7 +214,7 @@ RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
 RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
-static __inline int
+static __inline vsize_t
 uvm_rb_space(vm_map_t map, vm_map_entry_t entry)
 {
 	vm_map_entry_t next;
@@ -229,7 +229,7 @@ uvm_rb_space(vm_map_t map, vm_map_entry_t entry)
 	return (space);
 }
 		
-static int
+static vsize_t
 uvm_rb_subtree_space(vm_map_entry_t entry)
 {
 	vaddr_t space, tmp;
