@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ifmedia.4,v 1.8 2001/11/13 13:54:25 mpech Exp $
-.\"	$NetBSD: ifmedia.4,v 1.1 1998/08/09 00:37:17 thorpej Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.9 2002/04/05 20:29:27 mickey Exp $
+.\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 8, 1998
+.Dd July 19, 2000
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -55,16 +55,17 @@ The media is typically set using the
 .Xr ifconfig 8
 command.
 .Pp
-There are currently three link types supported by
-.Nm ifmedia :
-.Pp
-.Bl -tag -offset indent -width IFM_ETHER -compact
+There are currently four link types supported by
+.Nm Ns :
+.Bl -tag -offset indent -width IFM_IEEE80211 -compact
 .It Dv IFM_ETHER
 Ethernet
 .It Dv IFM_TOKEN
 Token Ring
 .It Dv IFM_FDDI
 FDDI
+.It Dv IFM_IEEE80211
+IEEE802.11 Wireless LAN
 .El
 .Pp
 The following sections describe the possible media settings for each
@@ -78,7 +79,7 @@ option.
 Additional names are acceptable aliases for the media type or option.
 .Sh COMMON MEDIA TYPES AND OPTIONS
 The following media types are shared by all link types:
-.Bl -tag -offset indent -width IFM_MANUAL
+.Bl -tag -offset indent -width IFM_MANUAL -compact
 .It Dv IFM_AUTO
 Autoselect the best media.
 [autoselect, auto]
@@ -95,17 +96,19 @@ The following media options are shared by all link types:
 .It Dv IFM_FDX
 Place the device into full-duplex mode.
 This option only has meaning if the device is normally not full-duplex.
-[full-duplex, fdx]
 .It Dv IFM_HDX
 Place the device into half-duplex mode.
 This option only has meaning if the device is normally not half-duplex.
 [half-duplex, hdx]
 .It Dv IFM_FLAG0
-Driver-defined flag.  [flag0]
+Driver-defined flag.
+[flag0]
 .It Dv IFM_FLAG1
-Driver-defined flag.  [flag1]
+Driver-defined flag.
+[flag1]
 .It Dv IFM_FLAG2
-Driver-defined flag.  [flag2]
+Driver-defined flag.
+[flag2]
 .It Dv IFM_LOOP
 Place the device into hardware loopback mode.
 [loopback, hw-loopback, loop]
@@ -114,42 +117,55 @@ Place the device into hardware loopback mode.
 The following media types are defined for Ethernet:
 .Bl -tag -offset indent -width IFM_1000_FX
 .It Dv IFM_10_T
-10baseT, 10Mb/s over unshielded twisted pair, RJ45 connector.
+10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
 [10baseT, UTP, 10UTP]
 .It Dv IFM_10_2
-10base2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
 [10base2, BNC, 10BNC]
 .It Dv IFM_10_5
-10base5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
+10BASE5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
 [10base5, AUI, 10AUI]
-.It Dv IFM_100_TX
-100baseTX, 100Mb/s over unshielded twisted pair, RJ45 connector.
-[100baseTX, 100TX]
-.It Dv IFM_100_FX
-100baseFX, 100Mb/s over fiber optic cables.
-[100baseFX, 100FX]
-.It Dv IFM_100_T4
-100baseT4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
-connector.
-[100baseT4, 100T4]
-.It Dv IFM_100_VG
-100baseVG AnyLAN.
-[100baseVG, 100VG]
-.It Dv IFM_100_T2
-100baseT2.
-[100baseT2, 100T2]
-.It Dv IFM_1000_FX
-1000baseFX, 1Gb/s over fiber optic cables.
-[1000baseFX, 1000FX]
 .It Dv IFM_10_STP
-10baseSTP, 10Mb/s over shielded twisted pair, DB9 connector.
+10BASE-STP, 10Mb/s over shielded twisted pair, DB9 connector.
 [10baseSTP, STP, 10STP]
 .It Dv IFM_10_FL
-10baseFL, 10Mb/s over fiber optic cables.
+10BASE-FL, 10Mb/s over fiber optic cables.
 [10baseFL, FL, 10FL]
+.It Dv IFM_100_TX
+100BASE-TX, 100Mb/s over unshielded twisted pair, RJ45 connector.
+[100baseTX, 100TX]
+.It Dv IFM_100_FX
+100BASE-FX, 100Mb/s over fiber optic cables.
+[100baseFX, 100FX]
+.It Dv IFM_100_T4
+100BASE-T4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
+connector.
+[100baseT4, 100T4]
+.It Dv IFM_100_T2
+100BASE-T2.
+[100baseT2, 100T2]
+.It Dv IFM_100_VG
+100VG-AnyLAN.
+[100baseVG, 100VG]
+.It Dv IFM_1000_SX
+1000BASE-SX, 1Gb/s over multi-mode fiber optic cables.
+[1000baseSX, 1000SX]
+.It Dv IFM_1000_LX
+1000BASE-LX, 1Gb/s over single-mode fiber optic cables.
+[1000baseLX, 1000LX]
+.It Dv IFM_1000_CX
+1000BASE-CX, 1Gb/s over shielded twisted pair.
+[1000baseCX, 1000CX]
+.It Dv IFM_1000_T
+1000BASE-T, 1Gb/s over category 5 unshielded twisted pair, RJ45 connector.
+[1000baseT, 1000T]
 .El
 .Pp
-There are no link type-specific options defined for Ethernet.
+The following media option is defined for Ethernet:
+.Bl -tag -offset indent -width IFM_ETH_MASTER
+.It Dv IFM_ETH_MASTER
+Configure a 1000BASE-T PHY as a MASTER PHY.
+.El
 .Sh MEDIA TYPES AND OPTIONS FOR TOKEN RING
 The following media types are defined for Token Ring:
 .Bl -tag -offset indent -width IFM_TOK_UTP16
@@ -181,7 +197,7 @@ All routes vs. single route broadcast.
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR FDDI
 The following media types are defined for FDDI:
-.Bl -tag -offset indent -width IFM_FDDI_SMF
+.Bl -tag -offset indent -width IFM_FDDI_SMF -compact
 .It Dv IFM_FDDI_SMF
 Single-mode fiber.
 [Single-mode, SMF]
@@ -199,6 +215,42 @@ The following media options are defined for FDDI:
 Dual-attached station vs. Single-attached station.
 [dual-attach, das]
 .El
+.Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
+The following media types are defined for IEEE802.11 Wireless LAN:
+.Bl -tag -offset indent -width IFM_IEEE80211_DS11 -compact
+.It Dv IFM_IEEE80211_FH1
+Frequency Hopping 1Mbps.
+[FH1]
+.It Dv IFM_IEEE80211_FH2
+Frequency Hopping 2Mbps.
+[FH2]
+.It Dv IFM_IEEE80211_DS1
+Direct Sequence 1Mbps.
+[DS1]
+.It Dv IFM_IEEE80211_DS2
+Direct Sequence 2Mbps.
+[DS2]
+.It Dv IFM_IEEE80211_DS5
+Direct Sequence 5.5Mbps.
+[DS5]
+.It Dv IFM_IEEE80211_DS11
+Direct Sequence 11Mbps.
+[DS11]
+.El
+.Pp
+The following media options are defined for IEEE802.11 Wireless LAN:
+.Bl -tag -offset indent -width IFM_IEEE80211_ADHOC -compact
+.It Dv IFM_IEEE80211_ADHOC
+adhoc mode vs. infrastructure mode [adhoc]
+.It Dv IFM_IEEE80211_HOSTAP
+Host Access Point mode, implemented for
+.Tn Prism 2
+and
+.Tn Prism 2.5
+chipset, only in
+.Xr wi 4
+driver.
+.El
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr ifconfig 8
@@ -210,6 +262,15 @@ interface first appeared in
 The implementation that appeared in
 .Nx 1.3
 was written by Jonathan Stone and Jason R. Thorpe to be compatible with
-the BSDI API.
-It has since gone through several revisions which have extended the API
-while maintaining backwards compatibility with the original API.
+the BSDI API.  It has since gone through several revisions which have
+extended the API while maintaining backwards compatibility with the
+original API.
+.Pp
+Support for the
+.Sy IEEE802.11 Wireless LAN
+link type was added in
+.Nx 1.5 .
+.Pp
+.Sy Host AP
+mode was added in
+.Ox 3.1 .
