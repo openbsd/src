@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.7 2004/08/12 18:02:18 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.8 2004/08/27 15:55:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -59,7 +59,7 @@ cvs_update(int argc, char **argv)
 {
 	int ch, flags;
 
-	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN;
+	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN|CF_NOSYMS;
 
 	while ((ch = getopt(argc, argv, "ACD:dflPpQqRr:")) != -1) {
 		switch (ch) {
