@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.137 2004/04/14 13:43:48 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.138 2004/04/14 23:06:57 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1054,12 +1054,12 @@ haltsys:
 		doboot();
 	}
 
-	for (;;);  /* to keep compiler happy, and me from going crazy */
+	for (;;);
 	/*NOTREACHED*/
 }
 
 #ifdef MVME188
-void
+__dead void
 m188_reset()
 {
 	volatile int cnt;
@@ -1068,11 +1068,23 @@ m188_reset()
 	*sys_syscon->ien1 = 0;
 	*sys_syscon->ien2 = 0;
 	*sys_syscon->ien3 = 0;
-	*sys_syscon->glbres = 1;  /* system reset */
+
+	if (*sys_syscon->global1 & M188_SYSCONNEG) {
+		/* Force only a local reset */
+		*sys_syscon->global1 |= M188_LRST;
+	} else {
+		/* Force a complete VMEbus reset */
+		*sys_syscon->glbres = 1;
+	}
+
 	*sys_syscon->ucsr |= 0x2000; /* clear SYSFAIL* */
 	for (cnt = 0; cnt < 5*1024*1024; cnt++)
 		;
 	*sys_syscon->ucsr |= 0x2000; /* clear SYSFAIL* */
+
+	printf("reset failed\n");
+	for (;;);	/* just in case we survived... */
+	/* NOTREACHED */
 }
 #endif   /* MVME188 */
 
