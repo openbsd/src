@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.66 2001/10/14 17:24:19 millert Exp $
+.\"	$OpenBSD: afterboot.8,v 1.67 2001/10/30 01:03:19 miod Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -289,10 +289,7 @@ line to
 +:*::::::::
 .Pp
 You do this by using
-.Xr vipw 8 ,
-once this is done, you'll need to run
-.Ic pwd_mkdb /etc/master.passwd
-to regenerate the password databases.
+.Xr vipw 8 .
 .Pp
 There are many more YP man pages available to help you.
 You can find more information by starting with
