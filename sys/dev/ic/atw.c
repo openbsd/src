@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.29 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: atw.c,v 1.30 2005/03/26 16:35:25 naddy Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2034,11 +2034,13 @@ atw_filter_setup(struct atw_softc *sc)
 		hash = atw_calchash(enm->enm_addrlo);
 		hashes[hash >> 5] |= 1 << (hash & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
+		sc->sc_opmode |= ATW_NAR_MM;
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
 
 allmulti:
+	sc->sc_opmode |= ATW_NAR_MM;
 	ifp->if_flags |= IFF_ALLMULTI;
 	hashes[0] = hashes[1] = 0xffffffff;
 
