@@ -1,9 +1,10 @@
-/*	$OpenBSD: if_gif.c,v 1.7 2000/01/17 06:29:27 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.8 2000/10/07 04:05:37 itojun Exp $	*/
+/*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -233,13 +234,19 @@ gif_ioctl(ifp, cmd, data)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
-		switch (ifr->ifr_addr.sa_family) {
+		switch (cmd) {
 #ifdef INET
-		case AF_INET:
+		case SIOCSIFPHYADDR:
 			src = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in_aliasreq *)data)->ifra_dstaddr);
+			if (src->sa_len != sizeof(struct sockaddr_in) ||
+			    dst->sa_len != sizeof(struct sockaddr_in))
+				return EINVAL;
+			if (src->sa_family != AF_INET ||
+			    dst->sa_family != AF_INET)
+				return EAFNOSUPPORT;
 
 			/* only one gif can have dst = INADDR_ANY */
 #define satosaddr(sa) (((struct sockaddr_in *)(sa))->sin_addr.s_addr)
@@ -262,11 +269,17 @@ gif_ioctl(ifp, cmd, data)
 			break;
 #endif /* INET */
 #ifdef INET6
-		case AF_INET6:
+		case SIOCSIFPHYADDR_IN6:
 			src = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_addr);
 			dst = (struct sockaddr *)
 				&(((struct in6_aliasreq *)data)->ifra_dstaddr);
+			if (src->sa_len != sizeof(struct sockaddr_in6) ||
+			    dst->sa_len != sizeof(struct sockaddr_in6))
+				return EINVAL;
+			if (src->sa_family != AF_INET6 ||
+			    dst->sa_family != AF_INET6)
+				return EAFNOSUPPORT;
 
 			/* only one gif can have dst = in6addr_any */
 #define satoin6(sa) (&((struct sockaddr_in6 *)(sa))->sin6_addr)
@@ -312,6 +325,7 @@ gif_ioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 		if_up(ifp);		/* send up RTM_IFINFO */
 
+		error = 0;
 		break;
 			
 	case SIOCGIFPSRCADDR:
@@ -323,25 +337,27 @@ gif_ioctl(ifp, cmd, data)
 			goto bad;
 		}
 		src = sc->gif_psrc;
-		switch (sc->gif_psrc->sa_family) {
+		switch (cmd) {
 #ifdef INET
-		case AF_INET:
+		case SIOCGIFPSRCADDR:
 			dst = &ifr->ifr_addr;
-			size = sizeof(struct sockaddr_in);
+			size = sizeof(ifr->ifr_addr);
 			break;
 #endif /* INET */
 #ifdef INET6
-		case AF_INET6:
+		case SIOCGIFPSRCADDR_IN6:
 			dst = (struct sockaddr *)
 				&(((struct in6_ifreq *)data)->ifr_addr);
-			size = sizeof(struct sockaddr_in6);
+			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */
 		default:
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		bcopy((caddr_t)src, (caddr_t)dst, size);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 			
 	case SIOCGIFPDSTADDR:
@@ -353,28 +369,31 @@ gif_ioctl(ifp, cmd, data)
 			goto bad;
 		}
 		src = sc->gif_pdst;
-		switch (sc->gif_pdst->sa_family) {
+		switch (cmd) {
 #ifdef INET
-		case AF_INET:
+		case SIOCGIFPDSTADDR:
 			dst = &ifr->ifr_addr;
-			size = sizeof(struct sockaddr_in);
+			size = sizeof(ifr->ifr_addr);
 			break;
 #endif /* INET */
 #ifdef INET6
-		case AF_INET6:
+		case SIOCGIFPDSTADDR_IN6:
 			dst = (struct sockaddr *)
 				&(((struct in6_ifreq *)data)->ifr_addr);
-			size = sizeof(struct sockaddr_in6);
+			size = sizeof(((struct in6_ifreq *)data)->ifr_addr);
 			break;
 #endif /* INET6 */
 		default:
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		bcopy((caddr_t)src, (caddr_t)dst, size);
+		if (src->sa_len > size)
+			return EINVAL;
+		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
 		break;
 
 	case SIOCSIFFLAGS:
+		/* if_ioctl() takes care of it */
 		break;
 
 	default:
