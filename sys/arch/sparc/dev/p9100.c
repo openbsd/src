@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.23 2003/06/17 21:21:32 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.24 2003/06/28 17:05:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -317,7 +317,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 * XXX there should be a rasops "clear margins" feature
 	 */
 	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width >= 1024));
+	    isconsole && (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	/*

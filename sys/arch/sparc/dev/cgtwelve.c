@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.8 2003/06/06 19:42:47 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.9 2003/06/28 17:05:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -226,7 +226,7 @@ cgtwelveattach(parent, self, args)
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
 	cgtwelve_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgtwelve_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;

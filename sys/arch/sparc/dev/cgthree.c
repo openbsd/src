@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.22 2003/06/06 19:42:47 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.23 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -302,7 +302,7 @@ cgthreeattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.2 2003/06/18 17:40:32 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.3 2003/06/28 17:05:33 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -274,7 +274,7 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	 * XXX there should be a rasops "clear margins" feature
 	 */
 	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width >= 1024));
+	    isconsole && (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, p9000_setcolor);
 
 	/*

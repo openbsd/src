@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.20 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.21 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ cgeightattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits =  mapiodev(ca->ca_ra.ra_reg,
 	    PFOUR_COLOR_OFF_OVERLAY, round_page(sc->sc_sunfb.sf_fbsize));
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
 	cgeight_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgeight_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.18 2003/06/15 21:04:11 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.19 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -263,7 +263,7 @@ tcxattach(parent, self, args)
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	tcx_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.25 2003/06/28 14:26:16 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.26 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -108,22 +108,18 @@ fb_unblank()
 #if NWSDISPLAY > 0
 
 void
-fb_setsize(sf, def_depth, def_width, def_height, node, bustype)
-	struct sunfb *sf;
-	int def_depth, def_width, def_height, node, bustype;
+fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
+    int node, int bustype)
 {
 	int def_linebytes;
 
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
 	switch (bustype) {
 	case BUS_VME16:
 	case BUS_VME32:
 	case BUS_OBIO:
 #if defined(SUN4M)
-		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
+		/* 4m may have SBus-like framebuffer on obio */
+		if (CPU_ISSUN4M) {
 			goto obpsize;
 		}
 #endif
@@ -288,9 +284,7 @@ obpsize:
 int a2int(char *, int);
 
 int
-a2int(cp, deflt)
-	char *cp;
-	int deflt;
+a2int(char *cp, int deflt)
 {
 	int i = 0;
 
@@ -302,16 +296,12 @@ a2int(cp, deflt)
 }
 
 void
-fbwscons_init(sf, isconsole)
-	struct sunfb *sf;
-	int isconsole;
+fbwscons_init(struct sunfb *sf, int flags)
 {
 	int cols, rows;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR;
-	if (!isconsole)
-		sf->sf_ro.ri_flg |= RI_CLEAR;
+	sf->sf_ro.ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
 	sf->sf_ro.ri_depth = sf->sf_depth;
 	sf->sf_ro.ri_stride = sf->sf_linebytes;
 	sf->sf_ro.ri_width = sf->sf_width;
@@ -331,9 +321,9 @@ fbwscons_init(sf, isconsole)
 			rows = (u_short)ep->eeTtyRows;
 			cols = (u_short)ep->eeTtyCols;
 			/* deal with broken nvram contents... */
-			if (rows == 0)
+			if (rows <= 0)
 				rows = 34;
-			if (cols == 0)
+			if (cols <= 0)
 				cols = 80;
 		} else {
 			rows = 34;
@@ -346,28 +336,27 @@ fbwscons_init(sf, isconsole)
 }
 
 void
-fbwscons_console_init(sf, wsc, row, burner)
-	struct sunfb *sf;
-	struct wsscreen_descr *wsc;
-	int row;
-	void (*burner)(void *, u_int, u_int);
+fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
+    void (*burner)(void *, u_int, u_int))
 {
 	long defattr;
-	int *ccolp, *crowp;
 
-	if (CPU_ISSUN4 || romgetcursoraddr(&crowp, &ccolp))
-		ccolp = crowp = NULL;
-	if (ccolp != NULL)
-		sf->sf_ro.ri_ccol = *ccolp;
+	if (CPU_ISSUN4 || romgetcursoraddr(&sf->sf_crowp, &sf->sf_ccolp))
+		sf->sf_ccolp = sf->sf_crowp = NULL;
+	if (sf->sf_ccolp != NULL)
+		sf->sf_ro.ri_ccol = *sf->sf_ccolp;
 
 	if (row < 0) {
-		if (crowp != NULL)
-			sf->sf_ro.ri_crow = *crowp;
+		if (sf->sf_crowp != NULL)
+			sf->sf_ro.ri_crow = *sf->sf_crowp;
 		else
 			/* assume last row */
 			sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
-	} else
+	} else {
 		sf->sf_ro.ri_crow = row;
+		if (sf->sf_crowp != NULL)
+			*sf->sf_crowp = row;
+	}
 
 	/*
 	 * Scale back rows and columns if the font would not otherwise
@@ -406,9 +395,8 @@ fbwscons_console_init(sf, wsc, row, burner)
 }
 
 void
-fbwscons_setcolormap(sf, setcolor)
-	struct sunfb *sf;
-	void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+fbwscons_setcolormap(struct sunfb *sf,
+    void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t))
 {
 	int i;
 	u_char *color;
@@ -439,8 +427,7 @@ fbwscons_setcolormap(sf, setcolor)
  *	otherwise returns pfour ID
  */
 int
-fb_pfour_id(va)
-	void *va;
+fb_pfour_id(void *va)
 {
 	volatile u_int32_t val, save, *pfour = va;
 
@@ -467,8 +454,7 @@ fb_pfour_id(va)
  * Return the status of the video enable.
  */
 int
-fb_pfour_get_video(sf)
-	struct sunfb *sf;
+fb_pfour_get_video(struct sunfb *sf)
 {
 
 	return ((*sf->sf_pfour & PFOUR_REG_VIDEO) != 0);
@@ -478,9 +464,7 @@ fb_pfour_get_video(sf)
  * Enable or disable the framebuffer.
  */
 void
-fb_pfour_set_video(sf, enable)
-	struct sunfb *sf;
-	int enable;
+fb_pfour_set_video(struct sunfb *sf, int enable)
 {
 	volatile u_int32_t pfour;
 

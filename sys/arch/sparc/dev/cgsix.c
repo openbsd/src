@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.27 2003/06/28 13:32:25 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.28 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -349,7 +349,7 @@ cgsixattach(parent, self, args)
 	 * XXX there should be a rasops "clear margins" feature
 	 */
 	fbwscons_init(&sc->sc_sunfb, isconsole &&
-	    (sc->sc_sunfb.sf_width >= 1024));
+	    (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	/*

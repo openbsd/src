@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.4 2003/06/28 15:11:25 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.5 2003/06/28 17:05:33 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	 * below.
 	 */
 	sc->sc_sunfb.sf_depth = 32;
-	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	sc->sc_sunfb.sf_depth = ri->ri_depth = 8;
 	    
 	ri->ri_ops.copyrows = zx_copyrows;
