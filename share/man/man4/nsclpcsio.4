@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nsclpcsio.4,v 1.3 2004/03/21 19:50:44 miod Exp $
+.\"	$OpenBSD: nsclpcsio.4,v 1.4 2004/06/03 18:42:19 grange Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -22,16 +22,27 @@
 .Nd National Semiconductor PC87366 LPC Super I/O
 .Sh SYNOPSIS
 .Cd "nsclpcsio* at isa?"
+.Cd "gpio* at nsclpcsio?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the
-.Tn National Semiconductor PC87366 LPC Super I/O
-hardware monitor to be used with the
+driver provides support for the National Semiconductor PC87366 LPC Super I/O.
+The Super I/O module incorporates several logical devices, the following
+ones are supported: GPIO, VLM and TMS.
+.Pp
+The GPIO logical device provides 29 I/O pins which can be accessed
+through the
+.Xr gpio 4
+framework.
+The
+.Xr gpioctl 8
+program allows to easily manipulate the pins from userland.
+.Pp
+VLM and TMS logical devices provides hardware monitoring capabilities
+to be used with the
 .Xr sysctl 8
 interface.
-.Pp
-Most supported devices possess 17 sensors:
+The following 17 monitoring sensors are available:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "TSENS1" Ta "uK" Ta "Remote diode"
@@ -53,10 +64,31 @@ Most supported devices possess 17 sensors:
 .It Li "TS3" Ta "uV DC" Ta "Thermistor"
 .El
 .Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr gpioctl 8 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
+.Nx 2.0 ,
+.Ox
+support was added in
 .Ox 3.5 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Matthias Drochner Aq drochner@netbsd.org
+for
+.Nx
+and then ported to
+.Ox 3.5
+by
+.An Markus Friedl Aq markus@openbsd.org .
+.Tn GPIO
+suppport was added in
+.Ox 3.6
+by
+.An Alexander Yurchenko Aq grange@openbsd.org .
