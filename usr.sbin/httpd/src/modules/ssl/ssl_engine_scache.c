@@ -86,7 +86,6 @@ void ssl_scache_init(server_rec *s, pool *p)
         ssl_scache_dbm_init(s, p);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHM)
         ssl_scache_shm_init(s, p);
-    ssl_scache_expire(s, time(NULL));
 
 #ifdef SSL_VENDOR
     ap_hook_use("ap::mod_ssl::vendor::scache_init",
@@ -338,6 +337,8 @@ void ssl_scache_dbm_init(server_rec *s, pool *p)
     }
 #endif
     ssl_mutex_off(s);
+    
+    ssl_scache_dbm_expire(s, time(NULL));
 
     return;
 }

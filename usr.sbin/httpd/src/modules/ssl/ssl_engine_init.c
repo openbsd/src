@@ -1026,6 +1026,14 @@ void ssl_init_ModuleKill(void *data)
             sc->pSSLCtx = NULL;
         }
     }
+
+    /*
+     * Try to kill the internals of the SSL library.
+     */
+    ERR_free_strings();
+    ERR_remove_state(0);
+    EVP_cleanup();
+
     return;
 }
 

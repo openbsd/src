@@ -523,7 +523,10 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
                 "Init: Requesting pass phrase from dialog filter program (%s)",
                 sc->szPassPhraseDialogPath);
 
-        cmd = ap_psprintf(p, "%s %s %s", sc->szPassPhraseDialogPath, cpVHostID, cpAlgoType);
+        if (strchr(sc->szPassPhraseDialogPath, ' ') != NULL)
+            cmd = ap_psprintf(p, "\"%s\" %s %s", sc->szPassPhraseDialogPath, cpVHostID, cpAlgoType);
+        else
+            cmd = ap_psprintf(p, "%s %s %s", sc->szPassPhraseDialogPath, cpVHostID, cpAlgoType);
         result = ssl_util_readfilter(s, p, cmd);
         ap_cpystrn(buf, result, bufsize);
         len = strlen(buf);

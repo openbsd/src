@@ -23,6 +23,42 @@
       / __/ | (_) |
   __ |_____(_)___/____________________________________________
 
+  Changes with mod_ssl 2.6.5 (01-May-2000 to 04-Jul-2000)
+
+   *) Removed more memory leaks by freeing even more stuff
+      from the OpenSSL toolkit on module shutdown.
+
+   *) Added missing TLSv1, EXP40 and EXP56 keywords to
+      ssl_reference's documentation of SSLCipherSuite.
+
+   *) Updated INSTALL document for MM 1.1.x.
+
+   *) Added hints about MSIE workarounds (-SSLv3, !EXP56, etc.)
+      to the FAQ entry about MSIE errors.
+
+   *) Added !EXP56 to pre-configured SSLCipherSuite in order to avoid
+      MSIE5.x problems in advance.
+
+   *) Fixed typos in INSTALL: sbin -> bin for apachectl.
+
+   *) mod_ssl's configure script now touches also ssl_expr_scan.l and
+      ssl_expr_parse.y when applying the sources corrupted timestamps do
+      not trigger the lex/yacc Makefile rules (which are intended for
+      developer use only).
+
+   *) Allow spaces in ServerRoot and SSLPassPhraseDialog arguments
+      which is especially important for the Win32 environment.
+
+   *) Fixed syntax errors in ssl_howto.wml: "Deny all" -> "Deny from all"
+
+   *) Be aware of extended SERVER_BASEVERSION strings in configure.
+
+   *) Removed a left-over ssl_scache_expire() call in ssl_scache_init()
+      which made the life of vendors complicated.
+
+   *) Allow more fine-tuned overriding of ap_server_root_relative calls
+      by providing the context of the call.
+
   Changes with mod_ssl 2.6.4 (16-Apr-2000 to 01-May-2000)
 
    *) Fixed Win32 build by adding gdi32.lib to the libraries

@@ -816,7 +816,7 @@ void         ssl_compat_variables(request_rec *);
 #endif
 
 /*  Utility Functions  */
-char        *ssl_util_server_root_relative(pool *, char *);
+char        *ssl_util_server_root_relative(pool *, char *, char *);
 char        *ssl_util_vhostid(pool *, server_rec *);
 void         ssl_util_strupper(char *);
 void         ssl_util_uuencode(char *, const char *, BOOL);

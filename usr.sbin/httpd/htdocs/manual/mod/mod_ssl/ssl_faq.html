@@ -325,8 +325,8 @@ author.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC45"><strong>Why do I get 'no shared ciphers'?</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC46"><strong>HTTPS and name-based vhosts</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC47"><strong>The lock icon in Netscape locks very late</strong></a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC48"><strong>Why do I get I/O errors with my MSIE clients?</strong></a><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC49"><strong>Why do I get I/O errors with my NS clients?</strong></a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC48"><strong>Why do I get I/O errors with MSIE clients?</strong></a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC49"><strong>Why do I get I/O errors with NS clients?</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC50"><strong>About Support</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC51"><strong>Resources in case of problems?</strong></a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ToC52"><strong>Support in case of problems?</strong></a><br>
@@ -1263,20 +1263,55 @@ username/password is still transmitted unencrypted?</strong>&nbsp;&nbsp;
 <p>
 <li><a name="ToC48"></a>
     <a name="io-ie"></a>
-    <strong id="faq">When I connect via HTTPS to an Apache+mod_ssl server with Microsoft Internet
-Explorer (MSIE) I sometimes get I/O errors and the message "bad data from the
-server". What's the reason?</strong>&nbsp;&nbsp;
+    <strong id="faq">When I connect via HTTPS to an Apache+mod_ssl+OpenSSL server with Microsoft Internet
+Explorer (MSIE) I get various I/O errors. What is the reason?</strong>&nbsp;&nbsp;
     [<a href="http://www.modssl.org/docs/2.6/ssl_faq.html#io-ie"><b>L</b></a>]
     <p>
-    The reason is that MSIE's SSL implementation has some subtle bugs related
-    to the HTTP keep-alive facility and the SSL close notify alerts on socket
-    connection close. You've to work-around this by forcing Apache+mod_ssl to
-    not use keep-alive connections and not sending the SSL close notify
-    messages to MSIE clients. This can be done by using the following
-    directive in your SSL-aware virtual host section:
+    The first reason is that the SSL implementation in some MSIE versions has
+    some subtle bugs related to the HTTP keep-alive facility and the SSL close
+    notify alerts on socket connection close. Additionally the interaction
+    between SSL and HTTP/1.1 features are problematic with some MSIE versions,
+    too. You've to work-around these problems by forcing
+    Apache+mod_ssl+OpenSSL to not use HTTP/1.1, keep-alive connections or
+    sending the SSL close notify messages to MSIE clients. This can be done by
+    using the following directive in your SSL-aware virtual host section:
     <pre>
-    SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
-    </pre>
+    SetEnvIf User-Agent ".*MSIE.*" \
+             <b>nokeepalive ssl-unclean-shutdown \
+             downgrade-1.0 force-response-1.0</b></pre>
+    Additionally it is known some MSIE versions have also problems
+    with particular ciphers. Unfortunately one cannot workaround these
+    bugs only for those MSIE particular clients, because the ciphers
+    are already used in the SSL handshake phase. So a MSIE-specific
+    <tt>SetEnvIf</tt> doesn't work to solve these problems. Instead one
+    has to do more drastic adjustments to the global parameters. But
+    before you decide to do this, make sure your clients really have
+    problems. If not, do not do this, because it affects all(!) your
+    clients, i.e., also your non-MSIE clients.
+    <p>
+    The next problem is that 56bit export versions of MSIE 5.x browsers have a
+    broken SSLv3 implementation which badly interacts with OpenSSL versions
+    greater than 0.9.4. You can either accept this and force your clients to
+    upgrade their browsers, or you downgrade to OpenSSL 0.9.4 (hmmm), or you
+    can decide to workaround it by accepting the drawback that your workaround
+    will horribly affect also other browsers:
+    <pre>
+    SSLProtocol all <b>-SSLv3</b></pre>
+    This completely disables the SSLv3 protocol and lets those browsers work.
+    But usually this is an even less acceptable workaround. A more reasonable
+    workaround is to address the problem more closely and disable only the
+    ciphers which cause trouble.
+    <pre>
+    SSLCipherSuite ALL:!ADH:<b>!EXPORT56</b>:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP</pre>
+    This also lets the broken MSIE versions work, but only removes the
+    newer 56bit TLS ciphers.
+    <p>
+    Another problem with MSIE 5.x clients is that they refuse to connect to
+    URLs of the form <tt>https://12.34.56.78/</tt> (IP-addresses are used
+    instead of the hostname), if the server is using the Server Gated
+    Cryptography (SGC) facility. This can only be avoided by using the fully
+    qualified domain name (FQDN) of the website in hyperlinks instead, because
+    MSIE 5.x has an error in the way it handles the SGC negotiation.
 <p>
 <li><a name="ToC49"></a>
     <a name="io-ns"></a>

@@ -616,26 +616,30 @@ specify the preference and order for the ciphers (see <a href="#table1">Table
 <tr id=H><td colspan=2><em>Aliases:</em></td></tr>
 <tr id=D><td><code>SSLv2</code></td>  <td>all SSL version 2.0 ciphers</td></tr>
 <tr id=H><td><code>SSLv3</code></td>  <td>all SSL version 3.0 ciphers</td> </tr>
-<tr id=D><td><code>EXP</code></td>    <td>all export ciphers</td>  </tr>
-<tr id=H><td><code>LOW</code></td>    <td>all low strength ciphers (no export, single DES)</td></tr>
-<tr id=D><td><code>MEDIUM</code></td> <td>all ciphers with 128 bit encryption</td> </tr>
-<tr id=H><td><code>HIGH</code></td>   <td>all ciphers using Triple-DES</td>     </tr>
-<tr id=D><td><code>RSA</code></td>    <td>all ciphers using RSA key exchange</td> </tr>
-<tr id=H><td><code>DH</code></td>     <td>all ciphers using Diffie-Hellman key exchange</td> </tr>
-<tr id=D><td><code>EDH</code></td>    <td>all ciphers using Ephemeral Diffie-Hellman key exchange</td> </tr>
-<tr id=H><td><code>ADH</code></td>    <td>all ciphers using Anonymous Diffie-Hellman key exchange</td> </tr>
-<tr id=D><td><code>DSS</code></td>    <td>all ciphers using DSS authentication</td> </tr>
-<tr id=H><td><code>NULL</code></td>   <td>all ciphers using no encryption</td> </tr>
+<tr id=D><td><code>TLSv1</code></td>  <td>all TLS version 1.0 ciphers</td> </tr>
+<tr id=H><td><code>EXP</code></td>    <td>all export ciphers</td>  </tr>
+<tr id=D><td><code>EXP40</code></td>  <td>all 40-bit export ciphers only</td>  </tr>
+<tr id=H><td><code>EXP56</code></td>  <td>all 56-bit export ciphers only</td>  </tr>
+<tr id=D><td><code>LOW</code></td>    <td>all low strength ciphers (no export, single DES)</td></tr>
+<tr id=H><td><code>MEDIUM</code></td> <td>all ciphers with 128 bit encryption</td> </tr>
+<tr id=D><td><code>HIGH</code></td>   <td>all ciphers using Triple-DES</td>     </tr>
+<tr id=H><td><code>RSA</code></td>    <td>all ciphers using RSA key exchange</td> </tr>
+<tr id=D><td><code>DH</code></td>     <td>all ciphers using Diffie-Hellman key exchange</td> </tr>
+<tr id=H><td><code>EDH</code></td>    <td>all ciphers using Ephemeral Diffie-Hellman key exchange</td> </tr>
+<tr id=D><td><code>ADH</code></td>    <td>all ciphers using Anonymous Diffie-Hellman key exchange</td> </tr>
+<tr id=H><td><code>DSS</code></td>    <td>all ciphers using DSS authentication</td> </tr>
+<tr id=D><td><code>NULL</code></td>   <td>all ciphers using no encryption</td> </tr>
 
 </table>
 </float>
 
 <p>
-Now where this becomes interesting is that these can be put together to
-specify the order and ciphers you wish to use.  To speed this up there are
-also aliases (<code>SSLv2, SSLv3, EXP, LOW, MEDIUM, HIGH</code>) for certain
-groups of ciphers.  These tags can be joined together with prefixes to form
-the <em>cipher-spec</em>. Available prefixes are:
+Now where this becomes interesting is that these can be put together
+to specify the order and ciphers you wish to use. To speed this up
+there are also aliases (<code>SSLv2, SSLv3, TLSv1, EXP, LOW, MEDIUM,
+HIGH</code>) for certain groups of ciphers. These tags can be joined
+together with prefixes to form the <em>cipher-spec</em>. Available
+prefixes are:
 
 <ul>
 <li>none: add cipher to list

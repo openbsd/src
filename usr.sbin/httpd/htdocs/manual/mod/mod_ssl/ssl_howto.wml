@@ -281,7 +281,7 @@ host (so it applies to both HTTPS and HTTP):
 &lt;Directory /usr/local/apache/htdocs&gt;
 \#   Outside the subarea only Intranet access is granted
 Order                deny,allow
-Deny                 all
+Deny                 from all
 Allow                192.160.1.0/24
 &lt;/Directory&gt;
 
@@ -309,7 +309,7 @@ Satisfy              any
 
 \#   Network Access Control
 Order                deny,allow
-Deny                 all
+Deny                 from all
 Allow                192.160.1.0/24
 
 \#   HTTP Basic Authentication
