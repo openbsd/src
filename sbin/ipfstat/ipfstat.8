@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipfstat.8,v 1.19 2000/03/18 22:55:58 aaron Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.20 2000/11/14 18:55:56 aaron Exp $
 .Dd June 13, 1999
 .Dt IPFSTAT 8
 .Os
@@ -7,7 +7,7 @@
 .Nd reports on packet filter statistics and filter lists
 .Sh SYNOPSIS
 .Nm ipfstat
-.Op Fl aAfhIinosv
+.Op Fl aAfghIinosv
 .Op Fl d Ar device
 .Op Fl M Ar core
 .Sh DESCRIPTION
@@ -44,6 +44,9 @@ for interfacing with the kernel.
 .It Fl f
 Show fragment state information (statistics) and held state information (in
 the kernel) if any is present.
+.It Fl g
+Show group information for active and inactive filter, accounting, and
+authentication groups.
 .It Fl h
 Show per-rule the number of times each one scores a
 .Dq hit .
@@ -100,4 +103,3 @@ IP filter state device
 http://coombs.anu.edu.au/ipfilter/
 .Sh BUGS
 If you find any, please send email to me at darrenr@pobox.com.
-
