@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.135 2000/11/15 21:03:00 aaron Exp $
+#	$OpenBSD: Makefile,v 1.136 2000/11/15 21:20:52 aaron Exp $
 
 MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 	atalk.4 atapiscsi.4 audio.4 aue.4 auvia.4 awi.4 bpf.4 bridge.4 \
@@ -9,11 +9,11 @@ MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 	inet.4 inphy.4 iophy.4 ip.4 ipl.4 ipsec.4 isa.4 isapnp.4 iso.4 isp.4 \
 	ksyms.4 kue.4 lkm.4 lmc.4 lo.4 lxtphy.4 midi.4 mii.4 mtdphy.4 \
 	mtio.4 ncr.4 ne.4 neo.4 netintro.4 ns.4 nsip.4 nsphy.4 nsphyter.4 \
-	null.4 ohci.4 opl.4 options.4 pchb.4 pci.4 pciide.4 pcmcia.4 pty.4 \
-	puc.4 qsphy.4 raid.4 random.4 ray.4 rl.4 rln.4 rlphy.4 route.4 scsi.4 \
-	sd.4 ses.4 sf.4 sis.4 sk.4 sl.4 sm.4 spp.4 sppp.4 sqphy.4 ss.4 st.4 \
-	ste.4 sv.4 tb.4 tcic.4 tcp.4 termios.4 ti.4 tl.4 tlphy.4 tp.4 tqphy.4 \
-	tty.4 tun.4 twe.4 tx.4 txphy.4 \
+	null.4 ohci.4 opl.4 options.4 pchb.4 pckbc.4 pckbd.4 pci.4 pciide.4 \
+	pcmcia.4 pty.4 puc.4 qsphy.4 raid.4 random.4 ray.4 rl.4 rln.4 \
+	rlphy.4 route.4 scsi.4 sd.4 ses.4 sf.4 sis.4 sk.4 sl.4 sm.4 spp.4 \
+	sppp.4 sqphy.4 ss.4 st.4 ste.4 sv.4 tb.4 tcic.4 tcp.4 termios.4 ti.4 \
+	tl.4 tlphy.4 tp.4 tqphy.4 tty.4 tun.4 twe.4 tx.4 txphy.4 \
 	uaudio.4 ubsec.4 ucom.4 udp.4 ugen.4 uhci.4 uhid.4 \
 	uk.4 ukbd.4 ukphy.4 ulpt.4 umodem.4 ums.4 umass.4 unix.4 urio.4 usb.4 \
 	uvisor.4 vga.4 vlan.4 vnd.4 vr.4 \
