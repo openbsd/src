@@ -47,7 +47,7 @@ larn -c           create new scoreboards -- prompts for a password
 			    [7mSpecial Notes[m
 
 When [7mdropping gold[m, if you type '*' as your amount, all your gold gets dropped.
-In general, typing in '*' means all of what your interested in.  This is true
+In general, typing in '*' means all of what you're interested in.  This is true
 when visiting the bank, or when contributing at altars.
 
 Larn may need a [7mVT100[m to operate.  A check is made of the environment variable
