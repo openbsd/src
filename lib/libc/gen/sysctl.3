@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.119 2004/01/07 02:13:51 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.120 2004/01/07 19:51:25 markus Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1019,6 +1019,8 @@ The currently defined protocols and names are:
 .It tcp	sack	integer	yes
 .It tcp	sendspace	integer	yes
 .It tcp	slowhz	integer	no
+.It tcp	synbucketlimit	integer	yes
+.It tcp	syncachelimit	integer	yes
 .It udp	baddynamic	array	yes
 .It udp	checksum	integer	yes
 .It udp	recvspace	integer	yes
@@ -1370,6 +1372,10 @@ The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
 (That is, their values must be divided by the tcp.slowhz value to get times
 in seconds.)
+.It Li tcp.syncachelimit
+The maximum number of entries allowed in the TCP syn cache.
+.It Li tcp.synbucketlimit
+The maximum number of entries allowed per hash bucket in the TCP syn cache.
 .It Li udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
