@@ -350,7 +350,7 @@ isc_print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 
 				n = precision;
 				tp = cp;
-				while (n != 0 && *tp != '0')
+				while (n != 0 && *tp != '\0')
 					n--, tp++;
 				length = precision - n;
 			} else {
