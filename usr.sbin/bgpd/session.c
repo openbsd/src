@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.199 2004/11/11 16:56:08 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.200 2004/11/18 14:10:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1022,7 +1022,9 @@ session_connect(struct peer *peer)
 	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
 	if (connect(peer->fd, sa, sa->sa_len) == -1) {
 		if (errno != EINPROGRESS) {
-			log_peer_warn(&peer->conf, "connect");
+			if (errno != peer->lasterr)
+				log_peer_warn(&peer->conf, "connect");
+			peer->lasterr = errno;
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
