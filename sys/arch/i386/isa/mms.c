@@ -1,4 +1,4 @@
-/*	$OpenBSD: mms.c,v 1.11 1999/11/22 07:26:04 matthieu Exp $	*/
+/*	$OpenBSD: mms.c,v 1.12 2000/05/16 18:12:14 mickey Exp $	*/
 /*	$NetBSD: mms.c,v 1.24 1996/05/12 23:12:18 mycroft Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/rndvar.h>
 
 #define	MMS_ADDR	0	/* offset for register select */
 #define	MMS_DATA	1	/* offset for InPort data */
@@ -348,6 +349,7 @@ mmsintr(arg)
 		buffer[2] = dy;
 		buffer[3] = buffer[4] = 0;
 		(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
+		add_mouse_randomness(*(u_int32_t*)buffer);
 
 		if (sc->sc_state & MMS_ASLP) {
 			sc->sc_state &= ~MMS_ASLP;

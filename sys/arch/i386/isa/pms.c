@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.25 2000/01/15 17:40:20 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.26 2000/05/16 18:12:14 mickey Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/rndvar.h>
 
 #define	PMS_DATA	0x60	/* offset for data port, read-write */
 #define	PMS_CNTRL	0x64	/* offset for control port, write-only */
@@ -544,6 +545,7 @@ pmsintr(arg)
 				buffer[2] = dy;
 				buffer[3] = buffer[4] = 0;
 				(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
+				add_mouse_randomness(*(u_int32_t*)buffer);
 
 				if (sc->sc_state & PMS_ASLP) {
 					sc->sc_state &= ~PMS_ASLP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lms.c,v 1.13 1999/11/22 07:25:38 matthieu Exp $	*/
+/*	$OpenBSD: lms.c,v 1.14 2000/05/16 18:12:14 mickey Exp $	*/
 /*	$NetBSD: lms.c,v 1.30 1996/10/21 22:27:41 thorpej Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/rndvar.h>
 
 #define	LMS_DATA	0       /* offset for data port, read-only */
 #define	LMS_SIGN	1       /* offset for signature port, read-write */
@@ -369,6 +370,7 @@ lmsintr(arg)
 		buffer[2] = dy;
 		buffer[3] = buffer[4] = 0;
 		(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
+		add_mouse_randomness(*(u_int32_t*)buffer);
 
 		if (sc->sc_state & LMS_ASLP) {
 			sc->sc_state &= ~LMS_ASLP;
