@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.15 2001/06/23 18:30:36 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.16 2001/06/23 21:56:58 angelos Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -334,9 +334,8 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 			crde->crd_flags |= CRD_F_ENCRYPT;
 		else
 			crde->crd_flags &= ~CRD_F_ENCRYPT;
-		crde->crd_skip = 0;
 		crde->crd_len = cop->len;
-		crde->crd_inject = 0;	/* ??? */
+		crde->crd_inject = 0;
 
 		crde->crd_alg = cse->cipher;
 		crde->crd_key = cse->key;
@@ -358,7 +357,10 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		if ((error = copyin(cop->iv, cse->tmp_iv, cse->txform->blocksize)))
 			goto bail;
 		bcopy(cse->tmp_iv, crde->crd_iv, cse->txform->blocksize);
-		crde->crd_flags |= CRD_F_IV_EXPLICIT;
+		crde->crd_flags |= CRD_F_IV_EXPLICIT | CRD_F_IV_PRESENT;
+	} else {
+		crde->crd_flags |= CRD_F_IV_PRESENT;
+		crde->crd_skip = cse->txform->blocksize;
 	}
 
 	if (cop->mac) {

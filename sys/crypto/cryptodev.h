@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.5 2001/06/23 21:00:49 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.6 2001/06/23 21:57:00 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -278,7 +278,6 @@ struct cryptop {
 	int (*crp_callback)(struct cryptop *); /* Callback function */
 
 	struct cryptop	*crp_next;
-	caddr_t		crp_iv;
 	caddr_t		crp_mac;
 	int		crp_mac_trunc_len;
 };
