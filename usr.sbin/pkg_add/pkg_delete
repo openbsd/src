@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.56 2004/10/11 14:40:04 espie Exp $
+# $OpenBSD: pkg_delete,v 1.57 2004/10/17 09:32:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -81,6 +81,7 @@ sub cleanup_shared_items
 			}
 		}
 	}
+	return unless $state->{extra};
 	if (defined $u) {
 		for my $user (keys %$u) {
 			next if $remaining->{users}->{$user};
@@ -293,7 +294,7 @@ sub delete
 
 	if ($state->{quick}) {
 		unless ($state->{extra}) {
-			print "NOT'deleting file $realname\n";
+			print "NOT deleting file $realname\n";
 			return;
 		}
 	} else {

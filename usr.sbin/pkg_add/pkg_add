@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.77 2004/10/16 11:01:29 espie Exp $
+# $OpenBSD: pkg_add,v 1.78 2004/10/17 09:32:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -472,7 +472,12 @@ sub pre_add($$)
 	my $operation = $state->{not} ? "Pretending to add" : "Adding";
 	
 	if ($pkg ne '-') {
-		print "$operation $pkg\n";
+		my $more = "";
+		if ($state->{do_faked}) {
+			$more = " under ".$state->{destdir};
+		}
+
+		print "$operation $pkg$more\n";
 		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
 		return undef unless can_install($pkgname1, $state);
 	}
@@ -504,7 +509,12 @@ sub pre_add($$)
 			return undef;
 		}
 	} else {
-		print "$operation $pkgname\n";
+		my $modifier = "";
+		if ($state->{do_faked}) {
+			$modifier = " under ".$state->{destdir};
+		}
+			
+		print "$operation $pkgname$modifier\n";
 		return undef unless can_install($pkgname, $state);
 	}
 	# second handling of conflicts
