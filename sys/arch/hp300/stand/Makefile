@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1995/09/23 17:40:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 1996/01/15 01:41:37 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -154,22 +154,23 @@ install: mkboot installboot ${ALL}
 	./mkboot sys_inst sys_inst.lif
 	./mkboot dboot diskboot.lif
 	./mkboot tboot tcopy tapeboot.lif
-	install -c -o bin -g bin -m 555 installboot ${DESTDIR}/usr/mdec
-	install -c -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/usr/mdec/rdboot
+	install -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
+	    ${DESTDIR}/usr/mdec
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 netbsdboot.lif \
+	    ${DESTDIR}/usr/mdec/rdboot
 	rm -f ${DESTDIR}/usr/mdec/bootrd
 	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/bootrd
 	rm -f ${DESTDIR}/usr/mdec/sdboot
 	ln ${DESTDIR}/usr/mdec/rdboot ${DESTDIR}/usr/mdec/sdboot
 	rm -f ${DESTDIR}/usr/mdec/bootsd
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
-	install -d -m 755 -o bin -g bin ${DESTDIR}/usr/mdec/rbootd
-	install -c -o bin -g bin -m 444 netboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
-	install -c -o bin -g bin -m 444 sys_inst.lif ${DESTDIR}/usr/mdec/rbootd/SYS_INST
-	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
-#	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
-#	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
-#	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
-#	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
+	install -d -m 755 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/mdec/rbootd
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 netboot.lif \
+	    ${DESTDIR}/usr/mdec/rbootd/SYS_NBOOT
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sys_inst.lif \
+	    ${DESTDIR}/usr/mdec/rbootd/SYS_INST
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 tapeboot.lif \
+	    ${DESTDIR}/usr/mdec/bootct
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
