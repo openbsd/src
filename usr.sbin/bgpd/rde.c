@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.149 2004/11/11 13:29:37 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.150 2004/11/11 16:50:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -798,7 +798,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 				fasp = path_copy(asp);
 				/* input filter */
-				if (rde_filter(peer, asp, &prefix,
+				if (rde_filter(peer, fasp, &prefix,
 				    prefixlen, DIR_IN) == ACTION_DENY) {
 					path_put(fasp);
 					continue;
