@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.6 1999/02/15 05:11:25 millert Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.7 2002/01/31 03:51:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.7 (Berkeley) 11/2/95";
 #else
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.6 1999/02/15 05:11:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.7 2002/01/31 03:51:21 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -238,20 +238,21 @@ mpool_get(mp, pgno, flags)
 	++mp->pageread;
 #endif
 	off = mp->pagesize * pgno;
-	if (lseek(mp->fd, off, SEEK_SET) != off)
-		return (NULL);
-
-	if ((nr = read(mp->fd, bp->page, mp->pagesize)) != mp->pagesize) {
-		if (nr > 0) {
-			/* A partial read is definitely bad. */
-			errno = EINVAL;
+	if ((nr = pread(mp->fd, bp->page, mp->pagesize, off)) != mp->pagesize) {
+		switch (nr) {
+		case -1:
+			/* errno is set for us by pread(). */
 			return (NULL);
-		} else {
+		case 0:
 			/*
-			 * A zero-length reads, means you need to create a
+			 * A zero-length read means you need to create a
 			 * new page.
 			 */
 			memset(bp->page, 0, mp->pagesize);
+		default:
+			/* A partial read is definitely bad. */
+			errno = EINVAL;
+			return (NULL);
 		}
 	}
 
@@ -426,9 +427,7 @@ mpool_write(mp, bp)
 		(mp->pgout)(mp->pgcookie, bp->pgno, bp->page);
 
 	off = mp->pagesize * bp->pgno;
-	if (lseek(mp->fd, off, SEEK_SET) != off)
-		return (RET_ERROR);
-	if (write(mp->fd, bp->page, mp->pagesize) != mp->pagesize)
+	if (pwrite(mp->fd, bp->page, mp->pagesize, off) != mp->pagesize)
 		return (RET_ERROR);
 
 	bp->flags &= ~MPOOL_DIRTY;
