@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 1999/01/11 05:12:06 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 1999/11/09 14:32:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -1621,7 +1621,7 @@ pmap_map(virt, start, end, prot)
 	int		prot;
 {
 	while (start < end) {
-		pmap_enter(kernel_pmap, virt, start, prot, FALSE);
+		pmap_enter(kernel_pmap, virt, start, prot, FALSE, 0);
 		virt += NBPG;
 		start += NBPG;
 	}
@@ -2438,12 +2438,13 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
  */
 
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	int pte_proto;
 	int s;
