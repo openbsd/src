@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.476 2001/12/19 16:36:24 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.477 2001/12/23 16:45:51 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1514,6 +1514,7 @@
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
 #define	PCI_PRODUCT_NEC_MARTH	0x0074		/* I/O */
 #define	PCI_PRODUCT_NEC_PKUG	0x007d		/* I/O */
+#define	PCI_PRODUCT_NEC_USB2	0x00e0		/* USB 2.0 */
 #define	PCI_PRODUCT_NEC_VERSAMAESTRO	0x8058		/* Versa Maestro */
 #define	PCI_PRODUCT_NEC_VERSAPRONXVA26D	0x803c		/* Versa Va26D Maestro */
 
