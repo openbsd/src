@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.10 1999/10/26 18:27:19 dugsong Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.11 2000/02/14 12:23:05 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -431,5 +431,10 @@ extracted.  They additionally must not end up being split between
 invocations due to exec argument-space limitations (this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
+.Pp
+.Cm @exec Ar command
+can't be used before at least one file has been extracted, even if the
+command does not make use of 
+.Cm "%F", "%f", "%B" .
 .Pp
 Sure to be others.
