@@ -1,3 +1,4 @@
+/*	$OpenBSD: amd7930.c,v 1.5 1996/08/12 01:19:38 downsj Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.10 1996/03/31 22:38:29 pk Exp $	*/
 
 /*
@@ -83,7 +84,7 @@ struct amd7930_softc {
 
         /* sc_au is special in that the hardware interrupt handler uses it */
         struct  auio sc_au;		/* recv and xmit buffers, etc */
-#define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
+#define sc_intrcnt sc_au.au_intrcnt
 };
 
 /* interrupt interfaces */
@@ -305,9 +306,8 @@ amd7930attach(parent, self, args)
 	}
 	pri = ra->ra_intr[0].int_pri;
 	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
-	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
-		ra->ra_vaddr : mapiodev(ra->ra_reg, 0, sizeof (*amd),
-					ca->ca_bustype));
+	amd = (volatile struct amd7930 *)(ra->ra_vaddr ? ra->ra_vaddr :
+		mapiodev(ra->ra_reg, 0, sizeof (*amd), ca->ca_bustype));
 
 	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
 			     AMD_MMR1_GR | AMD_MMR1_STG;
@@ -915,6 +915,7 @@ amd7930hwintr(au0)
 		}
 	}
 
+	*(au->au_intrcnt)++;
 	return (1);
 }
 #endif /* AUDIO_C_HANDLER */
