@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.36 1999/12/12 19:20:03 markus Exp $");
+RCSID("$Id: ssh.c,v 1.37 2000/01/04 00:08:00 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -20,6 +20,10 @@ RCSID("$Id: ssh.c,v 1.36 1999/12/12 19:20:03 markus Exp $");
 #include "authfd.h"
 #include "readconf.h"
 #include "uidswap.h"
+
+/* Flag indicating whether IPv4 or IPv6.  This can be set on the command line.
+   Default value is AF_UNSPEC means both IPv4 and IPv6. */
+int IPv4or6 = AF_UNSPEC;
 
 /* Flag indicating whether debug mode is on.  This can be set on the command line. */
 int debug_flag = 0;
@@ -53,7 +57,7 @@ Options options;
 char *host;
 
 /* socket address the host resolves to */
-struct sockaddr_in hostaddr;
+struct sockaddr_storage hostaddr;
 
 /*
  * Flag to indicate that we have received a window change signal which has
@@ -108,6 +112,8 @@ usage()
 	fprintf(stderr, "              forward them to the other side by connecting to host:port.\n");
 	fprintf(stderr, "  -C          Enable compression.\n");
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
+	fprintf(stderr, "  -4          Use IPv4 only.\n");
+	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	exit(1);
 }
@@ -244,6 +250,14 @@ main(int ac, char **av)
 			optarg = NULL;
 		}
 		switch (opt) {
+		case '4':
+			IPv4or6 = AF_INET;
+			break;
+
+		case '6':
+			IPv4or6 = AF_INET6;
+			break;
+
 		case 'n':
 			stdin_null_flag = 1;
 			break;
@@ -341,8 +355,10 @@ main(int ac, char **av)
 			break;
 
 		case 'R':
-			if (sscanf(optarg, "%hu:%255[^:]:%hu", &fwd_port, buf,
-				   &fwd_host_port) != 3) {
+			if (sscanf(optarg, "%hu/%255[^/]/%hu", &fwd_port, buf,
+			    &fwd_host_port) != 3 &&
+			    sscanf(optarg, "%hu:%255[^:]:%hu", &fwd_port, buf,
+			    &fwd_host_port) != 3) {
 				fprintf(stderr, "Bad forwarding specification '%s'.\n", optarg);
 				usage();
 				/* NOTREACHED */
@@ -351,8 +367,10 @@ main(int ac, char **av)
 			break;
 
 		case 'L':
-			if (sscanf(optarg, "%hu:%255[^:]:%hu", &fwd_port, buf,
-				   &fwd_host_port) != 3) {
+			if (sscanf(optarg, "%hu/%255[^/]/%hu", &fwd_port, buf,
+			    &fwd_host_port) != 3 &&
+			    sscanf(optarg, "%hu:%255[^:]:%hu", &fwd_port, buf,
+			    &fwd_host_port) != 3) {
 				fprintf(stderr, "Bad forwarding specification '%s'.\n", optarg);
 				usage();
 				/* NOTREACHED */
@@ -465,14 +483,17 @@ main(int ac, char **av)
 
 	/* Find canonic host name. */
 	if (strchr(host, '.') == 0) {
-		struct hostent *hp = gethostbyname(host);
-		if (hp != 0) {
-			if (strchr(hp->h_name, '.') != 0)
-				host = xstrdup(hp->h_name);
-			else if (hp->h_aliases != 0
-				 && hp->h_aliases[0] != 0
-				 && strchr(hp->h_aliases[0], '.') != 0)
-				host = xstrdup(hp->h_aliases[0]);
+		struct addrinfo hints;
+		struct addrinfo *ai = NULL;
+		int errgai;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_flags = AI_CANONNAME;
+		errgai = getaddrinfo(host, NULL, &hints, &ai);
+		if (errgai == 0) {
+			if (ai->ai_canonname != NULL)
+				host = xstrdup(ai->ai_canonname);
+			freeaddrinfo(ai);
 		}
 	}
 	/* Disable rhosts authentication if not running as root. */
@@ -579,7 +600,7 @@ main(int ac, char **av)
 
 	/* Log into the remote system.  This never returns if the login fails. */
 	ssh_login(host_private_key_loaded, host_private_key,
-		  host, &hostaddr, original_real_uid);
+		  host, (struct sockaddr *)&hostaddr, original_real_uid);
 
 	/* We no longer need the host private key.  Clear it now. */
 	if (host_private_key_loaded)

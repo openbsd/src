@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.10 1999/11/24 19:53:47 markus Exp $");
+RCSID("$Id: login.c,v 1.11 2000/01/04 00:07:59 markus Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -69,7 +69,7 @@ get_last_login_time(uid_t uid, const char *logname,
 
 void 
 record_login(int pid, const char *ttyname, const char *user, uid_t uid,
-	     const char *host, struct sockaddr_in * addr)
+	     const char *host, struct sockaddr * addr)
 {
 	int fd;
 	struct lastlog ll;

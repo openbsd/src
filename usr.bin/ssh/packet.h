@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: packet.h,v 1.7 1999/12/27 10:46:11 markus Exp $"); */
+/* RCSID("$Id: packet.h,v 1.8 2000/01/04 00:07:59 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -190,5 +190,8 @@ do { \
     packet_disconnect("Packet integrity error. (%d)", (type)); \
   } \
 } while (0)
+
+/* remote host is connected via a socket */
+int	packet_connection_is_on_socket(void);
 
 #endif				/* PACKET_H */
