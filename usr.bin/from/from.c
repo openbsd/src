@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.4 1998/07/10 15:51:20 mickey Exp $	*/
+/*	$OpenBSD: from.c,v 1.5 1999/08/26 14:17:20 aaron Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.4 1998/07/10 15:51:20 mickey Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.5 1999/08/26 14:17:20 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,15 +103,17 @@ main(argc, argv)
 				if (!(pwd = getpwuid(getuid())))
 					errx(1, "no password file entry for you");
 				if (file = getenv("USER")) {
-					(void)sprintf(buf, "%s/%s",
-					    _PATH_MAILDIR, file);
+					(void)snprintf(buf, sizeof(buf),
+						"%s/%s", _PATH_MAILDIR, file);
 					file = buf;
 				} else
-					(void)sprintf(file = buf, "%s/%s",
-					    _PATH_MAILDIR, pwd->pw_name);
+					(void)snprintf(file = buf, sizeof(buf),
+						"%s/%s", _PATH_MAILDIR,
+					        pwd->pw_name);
 			}
 		} else {
-			(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, file);
+			(void)snprintf(buf, sizeof(buf), "%s/%s",
+				_PATH_MAILDIR, file);
 			file = buf;
 		}
 	}
