@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.14 1999/07/19 21:11:26 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.15 1999/08/18 00:26:28 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -30,8 +30,8 @@ major	{ cd = 6 }
 #
 # ISA Bus support
 #
-#include "dev/isa/files.isa"
-#include "dev/isa/files.isapnp"
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
 
 #
 # EISA Bus support
@@ -133,7 +133,6 @@ file	arch/hppa/gsc/lpt_gsc.c		lpt
 #attach	fdc at gsc with fdc_gsc
 #file	arch/hppa/gsc/fdc_gsc.c		fdc
 
-#device	ie: ether, i82586
 attach	ie at gsc with ie_gsc
 file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
 
@@ -158,10 +157,10 @@ device	atwo: audio, mulaw, auconv
 attach	atwo at gsc
 file	arch/hppa/gsc/atwo.c		atwo
 
-# TMS380C26PQL, TMS38054FNL
+# HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
 #device	tms: tokenring
 #attach	tms at gsc
-#file	arch/hppa/gsc/if_tms.c		tr
+#file	arch/hppa/gsc/if_tms.c		tms
 
 # these we don't know yet
 # AMD Supernet2 FDDI ?
