@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.60 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.61 2002/06/11 04:26:17 art Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -632,12 +632,13 @@ link_rtrequest(cmd, rt, info)
  * NOTE: must be called at splsoftnet or equivalent.
  */
 void
-if_down(ifp)
-	register struct ifnet *ifp;
+if_down(struct ifnet *ifp)
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	struct radix_node_head *rnh;
 	int i;
+
+	splassert(IPL_SOFTNET);
 
 	ifp->if_flags &= ~IFF_UP;
 	microtime(&ifp->if_lastchange);
@@ -664,14 +665,15 @@ if_down(ifp)
  * NOTE: must be called at splsoftnet or equivalent.
  */
 void
-if_up(ifp)
-	register struct ifnet *ifp;
+if_up(struct ifnet *ifp)
 {
 #ifdef notyet
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 #endif
 	struct radix_node_head *rnh;
 	int i;
+
+	splassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
 	microtime(&ifp->if_lastchange);
