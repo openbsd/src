@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_src.c,v 1.9 2001/02/06 00:22:23 mickey Exp $	*/
-/*	$KAME: in6_src.c,v 1.27 2000/06/21 08:07:13 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.10 2001/02/16 14:45:12 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,9 +91,9 @@
 #include <netinet6/nd6.h>
 
 /*
- * Return an IPv6 address, which is the most appropriate for given
+ * Return an IPv6 address, which is the most appropriate for a given
  * destination and user specified options.
- * If necessary, this function lookups the routing table and return
+ * If necessary, this function lookups the routing table and returns
  * an entry to the caller for later use.
  */
 struct in6_addr *
@@ -235,12 +235,15 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		}
 		if (ro->ro_rt == (struct rtentry *)0 ||
 		    ro->ro_rt->rt_ifp == (struct ifnet *)0) {
+			struct sockaddr_in6 *sa6;
+
 			/* No route yet, so try to acquire one */
 			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			ro->ro_dst.sin6_family = AF_INET6;
-			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-			ro->ro_dst.sin6_addr = *dst;
-			ro->ro_dst.sin6_scope_id = dstsock->sin6_scope_id;
+			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
+			sa6->sin6_family = AF_INET6;
+			sa6->sin6_len = sizeof(struct sockaddr_in6);
+			sa6->sin6_addr = *dst;
+			sa6->sin6_scope_id = dstsock->sin6_scope_id;
 			if (IN6_IS_ADDR_MULTICAST(dst)) {
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0);
@@ -298,18 +301,22 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
  *     hop limit of the interface specified by router advertisement.
  * 3. The system default hoplimit.
 */
+#define in6pcb		inpcb
+#define in6p_hops	inp_hops	
 int
-in6_selecthlim(inp, ifp)
-	struct inpcb *inp;
+in6_selecthlim(in6p, ifp)
+	struct in6pcb *in6p;
 	struct ifnet *ifp;
 {
-	if (inp && inp->inp_hops >= 0)
-		return(inp->inp_hops);
+	if (in6p && in6p->in6p_hops >= 0)
+		return(in6p->in6p_hops);
 	else if (ifp)
 		return(nd_ifinfo[ifp->if_index].chlim);
 	else
 		return(ip6_defhlim);
 }
+#undef in6pcb
+#undef in6p_hops
 
 /*
  * generate kernel-internal form (scopeid embedded into s6_addr16[1]).
@@ -331,6 +338,8 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 	struct in6_addr *in6;
 	const struct sockaddr_in6 *sin6;
 	struct inpcb *in6p;
+#define in6p_outputopts	inp_outputopts6
+#define in6p_moptions	inp_moptions6
 	struct ifnet **ifpp;
 {
 	struct ifnet *ifp = NULL;
@@ -353,15 +362,15 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 		 * KAME assumption: link id == interface id
 		 */
 
-		if (in6p && in6p->inp_outputopts6 &&
-		    (pi = in6p->inp_outputopts6->ip6po_pktinfo) &&
+		if (in6p && in6p->in6p_outputopts &&
+		    (pi = in6p->in6p_outputopts->ip6po_pktinfo) &&
 		    pi->ipi6_ifindex) {
 			ifp = ifindex2ifnet[pi->ipi6_ifindex];
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
 		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
-			   in6p->inp_moptions6 &&
-			   in6p->inp_moptions6->im6o_multicast_ifp) {
-			ifp = in6p->inp_moptions6->im6o_multicast_ifp;
+			   in6p->in6p_moptions &&
+			   in6p->in6p_moptions->im6o_multicast_ifp) {
+			ifp = in6p->in6p_moptions->im6o_multicast_ifp;
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			/* boundary check */
@@ -378,6 +387,8 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 
 	return 0;
 }
+#undef in6p_outputopts
+#undef in6p_moptions
 
 /*
  * generate standard sockaddr_in6 from embedded form.
@@ -426,4 +437,16 @@ in6_recoverscope(sin6, in6, ifp)
 	}
 
 	return 0;
+}
+
+/*
+ * just clear the embedded scope identifer.
+ * XXX: currently used for bsdi4 only as a supplement function.
+ */
+void
+in6_clearscope(addr)
+	struct in6_addr *addr;
+{
+	if (IN6_IS_SCOPE_LINKLOCAL(addr))
+		addr->s6_addr16[1] = 0;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_var.h,v 1.11 2001/02/16 08:22:06 itojun Exp $	*/
-/*	$KAME: in6_var.h,v 1.31 2000/03/25 07:23:46 sumikawa Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.12 2001/02/16 14:45:12 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -479,7 +479,7 @@ struct	in6_multi {
 	LIST_ENTRY(in6_multi) in6m_entry; /* list glue */
 	struct	in6_addr in6m_addr;	/* IP6 multicast address */
 	struct	ifnet *in6m_ifp;	/* back pointer to ifnet */
-	struct	in6_ifaddr *in6m_ia;    /* back pointer to in6_ifaddr */ 
+	struct	in6_ifaddr *in6m_ia;	/* back pointer to in6_ifaddr */
 	u_int	in6m_refcount;		/* # membership claims by sockets */
 	u_int	in6m_state;		/* state of the membership */
 	u_int	in6m_timer;		/* MLD6 listener report timer */
@@ -582,6 +582,13 @@ int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
 int	in6_prefix_add_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_prefix_remove_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_purgeprefix __P((struct ifnet *));
+
+struct inpcb;
+int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
+	struct inpcb *, struct ifnet **));
+int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
+	struct ifnet *));
+void in6_clearscope __P((struct in6_addr *));
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */
