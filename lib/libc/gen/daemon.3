@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daemon.3,v 1.6 1999/07/09 13:35:16 aaron Exp $
+.\"	$OpenBSD: daemon.3,v 1.7 1999/09/22 22:01:25 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,6 +60,10 @@ is non-zero,
 .Fn daemon
 will redirect standard input, standard output and standard error to
 .Pa /dev/null .
+.Sh RETURN VALUES
+Upon success,
+.Fn daemon
+returns 0; otherwise \-1 is returned.
 .Sh ERRORS
 The function
 .Fn daemon
