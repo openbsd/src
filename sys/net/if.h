@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.22 2001/02/06 00:22:22 mickey Exp $	*/
+/*	$OpenBSD: if.h,v 1.23 2001/05/28 05:16:27 angelos Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -133,8 +133,10 @@ struct ifnet {				/* and the entries */
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */
-	struct	if_data if_data;	/* statistics and other data about if */
-/* procedure handles */
+	struct	if_data if_data;	/* stats and other data about if */
+	int	if_capabilities;	/* interface capabilities */
+
+	/* procedure handles */
 	int	(*if_output)		/* output routine (enqueue) */
 		__P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *));
@@ -199,11 +201,19 @@ struct ifnet {				/* and the entries */
 
 /*
  * Some convenience macros used for setting ifi_baudrate.
- * XXX 1000 vs. 1024? --thorpej@netbsd.org
  */
 #define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
 #define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
 #define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
+
+/* Capabilities that interfaces can advertise. */
+#define	IFCAP_CSUM_IPv4		0x00000001	/* can do IPv4 header csum */
+#define	IFCAP_CSUM_TCPv4	0x00000002	/* can do IPv4/TCP csum */
+#define	IFCAP_CSUM_UDPv4	0x00000004	/* can do IPv4/UDP csum */
+#define	IFCAP_IPSEC_ESPv4	0x00000008	/* can do IPv4/ESP */
+#define	IFCAP_IPSEC_AHv4	0x00000010	/* can do IPv4/AH */
+#define	IFCAP_VLAN_MTU		0x00000020	/* VLAN-compatible MTU */
+#define	IFCAP_VLAN_HWTAGGING	0x00000040	/* hardware VLAN tag support */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
