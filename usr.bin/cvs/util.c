@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2004/12/13 16:59:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -313,7 +313,7 @@ cvs_cksum(const char *file, char *dst, size_t len)
 		return (-1);
 	}
 	if (MD5File(file, dst) == NULL) {
-		cvs_log(LP_ERRNO, "failed to generate file checksum");
+		cvs_log(LP_ERRNO, "failed to generate checksum for %s", file);
 		return (-1);
 	}
 
