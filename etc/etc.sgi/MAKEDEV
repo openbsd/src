@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.2 2004/08/06 23:11:01 deraadt Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.4 2004/08/06 23:16:31 mickey Exp 
 #	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -45,6 +45,13 @@
 # Pseudo terminals:
 #	tty*	Set of 62 slave pseudo terminals
 #	pty*	Set of 62 master pseudo terminals
+# Console ports:
+#	ttyC0	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
 #	tun*	Network tunnel driver
@@ -198,8 +205,6 @@ std)
 	M klog		c 6 0 600
 	;;
 
-
-
 pf*)
 	M pf c 31 0 600
 	;;
@@ -231,6 +236,40 @@ tun*)
 
 bpf*)
 	M bpf$U c 12 $U 600
+	;;
+
+wsmouse*)
+	M wsmouse$U c 27 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 28 0 600
+	M wskbd c 28 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 26 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 25 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 25 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)
@@ -308,8 +347,8 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 ss0 ss1 ch0 local
-	R uk0 random tty00 tty01 tty02 tty03 pf wd0 wd1 wd2 wd3 std
-	R st0 st1 fd
+	R wscons uk0 random tty00 tty01 tty02 tty03 pf wd0 wd1 wd2 wd3
+	R std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)

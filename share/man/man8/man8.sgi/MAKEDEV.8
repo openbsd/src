@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.3 2004/08/06 23:15:26 deraadt Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.4 2004/08/06 23:18:03 mickey Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.sgi/MAKEDEV.md,v 1.3 2004/08/06 23:15:08 deraadt Exp 
+.\"	OpenBSD: etc.sgi/MAKEDEV.md,v 1.4 2004/08/06 23:16:31 mickey Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.3 2004/03/12 18:12:12 miod Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August  6, 2004
+.Dd August  3, 2004
 .Dt MAKEDEV 8 sgi
 .Os
 .Sh NAME
@@ -126,6 +126,29 @@ Set of 62 slave pseudo terminals, see
 .It Ar pty*
 Set of 62 master pseudo terminals, see
 .Xr pty 4 .
+.El
+.Pp
+.Sy Console ports
+.Bl -tag -width tenletters -compact
+.It Ar ttyC0
+Minimal wscons devices, see
+.Xr wscons 4 .
+.It Ar ttyC-F*
+wscons display devices, see
+.Xr wsdisplay 4 .
+.It Ar wskbd*
+wscons keyboards, see
+.Xr wskbd 4 .
+.It Ar wsmux
+wscons keyboard/mouse mux devices, see
+.Xr wsmux 4 .
+.El
+.Pp
+.Sy Pointing devices
+.Bl -tag -width tenletters -compact
+.It Ar wsmouse*
+wscons mice, see
+.Xr wsmouse 4 .
 .El
 .Pp
 .Sy Special purpose devices
