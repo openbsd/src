@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.89 2002/07/06 19:14:20 nordin Exp $
+.\"	$OpenBSD: sysctl.8,v 1.90 2002/09/29 22:08:22 deraadt Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -63,24 +63,22 @@ described as a dotted set of components.
 The options are as follows:
 .Bl -tag -width xxx
 .It Fl a
-list all the currently available string or integer values.
+List all the currently available string or integer values.
 .It Fl A
-list all the known MIB names including tables.
+List all the known MIB names including tables.
 Those with string or integer values will be printed as with the
 .Fl a
 flag; for the table values, the name of the utility to retrieve them is given.
 .It Fl n
-suppress printing of the field name, only output the field value.
+Suppress printing of the field name, only output the field value.
 Useful for setting shell variables.
-For example:
-.Bd -literal -offset indent -compact
-# set psize=`sysctl -n hw.pagesize`
+.Bd -literal
+Example:
+      Set the psize shell variable to the pagesize of the hardware
+    # set psize=`sysctl -n hw.pagesize`
 .Ed
-.Pp
-If just a MIB style name is given,
-the corresponding value is retrieved.
 .It Fl w
-required to set a variable.
+Required to set a variable.
 The MIB name should be followed by an equal sign and the new value.
 .El
 .Pp
@@ -322,62 +320,64 @@ program can get or set debugging variables
 that have been identified for its display.
 This information can be obtained by using the command:
 .Bd -literal -offset indent
-sysctl debug
+$ sysctl debug
 .Ed
+.Pp
 In addition,
 .Nm
 can extract information about the filesystems that have been compiled
 into the running system.
 This information can be obtained by using the command:
 .Bd -literal -offset indent
-sysctl vfs.mounts
+$ sysctl vfs.mounts
 .Ed
+.Pp
 By default, only filesystems that are actively being used are listed.
 Use of the
 .Fl A
 flag lists all the filesystems compiled into the running kernel.
 .Sh EXAMPLES
-For example, to retrieve the maximum number of processes allowed
-in the system, one would use the follow request:
-.Bd -literal -offset indent -compact
+To retrieve the maximum number of processes allowed
+in the system:
+.Bd -literal -offset indent
 $ sysctl kern.maxproc
 .Ed
 .Pp
 To set the maximum number of processes allowed
-in the system to 1000, one would use the follow request:
-.Bd -literal -offset indent -compact
+in the system to 1000:
+.Bd -literal -offset indent
 # sysctl -w kern.maxproc=1000
 .Ed
 .Pp
-Information about the system clock rate may be obtained with:
-.Bd -literal -offset indent -compact
+To retrieve information about the system clock rate:
+.Bd -literal -offset indent
 $ sysctl kern.clockrate
 .Ed
 .Pp
-Information about the load average history may be obtained with
-.Bd -literal -offset indent -compact
+To retrieve information about the load average history:
+.Bd -literal -offset indent
 $ sysctl vm.loadavg
 .Ed
 .Pp
 To make the
 .Xr chown 2
-system call use traditional BSD semantics (don't clear setuid/setgid bits),
-one would do the following:
-.Bd -literal -offset indent -compact
+system call use traditional BSD semantics (don't clear setuid/setgid bits):
+.Bd -literal -offset indent
 # sysctl -w fs.posix.setuid=0
 .Ed
 .Pp
-Set the list of reserved TCP ports that should not be allocated
-by the kernel dynamically.
-This can be used to keep daemons
-from stealing a specific port that another program needs to function.
-List elements may be separated by commas and/or whitespace.
-.Bd -literal -offset indent -compact
+To set the list of reserved TCP ports that should not be allocated
+by the kernel dynamically:
+.Bd -literal -offset indent
 # sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
 .Ed
 .Pp
-It is also possible to add or remove ports from the current list.
-.Bd -literal -offset indent -compact
+This can be used to keep daemons
+from stealing a specific port that another program needs to function.
+List elements may be separated by commas and/or whitespace.
+.Pp
+It is also possible to add or remove ports from the current list:
+.Bd -literal -offset indent
 # sysctl -w net.inet.tcp.baddynamic=+748
 # sysctl -w net.inet.tcp.baddynamic=-871
 .Ed
@@ -385,8 +385,8 @@ It is also possible to add or remove ports from the current list.
 To adjust the number of kernel
 .Nm nfsio
 threads used to service asynchronous
-I/O requests on an NFS client machine use
-.Bd -literal -offset indent -compact
+I/O requests on an NFS client machine:
+.Bd -literal -offset indent
 # sysctl -w vfs.nfs.iothreads=4
 .Ed
 .Pp
