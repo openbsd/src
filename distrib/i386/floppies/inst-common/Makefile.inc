@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.11 1996/12/21 05:20:21 deraadt Exp $
+#	$Id: Makefile.inc,v 1.12 1996/12/21 19:21:47 kstailey Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,7 +15,11 @@ REALIMAGE=	/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
+.if defined(KERBEROS)
+CRUNCHCONF=	${COMMONDIR}/${CBIN}-krb.conf
+.else
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
+.endif
 MTREE=		${COMMONDIR}/mtree.conf
 
 all: ${CBIN}
