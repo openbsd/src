@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 2001/08/17 23:14:30 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -351,7 +351,7 @@ number(lo, hi, prompt)
 	char *prompt;
 {
 	char *p;
-	int sum;
+	int sum, tmp;
 
 	for (sum = 0;;) {
 		msg(prompt);
@@ -366,7 +366,15 @@ number(lo, hi, prompt)
 			sum = lo - 1;
 		else
 			while (isdigit(*p)) {
-				sum = 10 * sum + (*p - '0');
+				tmp = 10 * sum + (*p - '0');
+				/* Overflow */
+				if (tmp < sum) {
+					sum = hi + 1;
+					while (isdigit(*p))
+						++p;
+					break;
+				}
+				sum = tmp;
 				++p;
 			}
 
@@ -375,10 +383,11 @@ number(lo, hi, prompt)
 		if (sum >= lo && sum <= hi)
 			break;
 		if (sum == lo - 1)
-			msg("that doesn't look like a number, try again --> ");
+			msg(quiet ? "Not a number" :
+			    "That doesn't look like a number");
 		else
-		msg("%d is not between %d and %d inclusive, try again --> ",
-			    sum, lo, hi);
+			msg("That is not between %d and %d inclusive",
+			    lo, hi);
 	}
 	return (sum);
 }
