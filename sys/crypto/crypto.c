@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.38 2002/06/11 11:14:29 beck Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.39 2002/07/16 06:12:46 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -303,26 +303,33 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 int
 crypto_unregister(u_int32_t driverid, int alg)
 {
-	int i, s = splimp();
+	int i = CRYPTO_ALGORITHM_MAX + 1, s = splimp();
 	u_int32_t ses;
 
 	/* Sanity checks */
-	if (driverid >= crypto_drivers_num || alg <= 0 ||
-	    alg > CRYPTO_ALGORITHM_MAX || crypto_drivers == NULL ||
+	if (driverid >= crypto_drivers_num || crypto_drivers == NULL ||
+	    ((alg <= 0 || alg > CRYPTO_ALGORITHM_MAX) &&
+		alg != CRYPTO_ALGORITHM_ALL) ||
 	    crypto_drivers[driverid].cc_alg[alg] == 0) {
 		splx(s);
 		return EINVAL;
 	}
 
-	crypto_drivers[driverid].cc_alg[alg] = 0;
-	crypto_drivers[driverid].cc_max_op_len[alg] = 0;
+	if (alg != CRYPTO_ALGORITHM_ALL) {
+		crypto_drivers[driverid].cc_alg[alg] = 0;
+		crypto_drivers[driverid].cc_max_op_len[alg] = 0;
 
-	/* Was this the last algorithm ? */
-	for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
-		if (crypto_drivers[driverid].cc_alg[i] != 0)
-			break;
+		/* Was this the last algorithm ? */
+		for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
+			if (crypto_drivers[driverid].cc_alg[i] != 0)
+				break;
+	}
 
-	if (i == CRYPTO_ALGORITHM_MAX + 1) {
+	/*
+	 * If a driver unregistered its last algorithm or all of them
+	 * (alg == CRYPTO_ALGORITHM_ALL), cleanup its entry.
+	 */
+	if (i == CRYPTO_ALGORITHM_MAX + 1 || alg == CRYPTO_ALGORITHM_ALL) {
 		ses = crypto_drivers[driverid].cc_sessions;
 		bzero(&crypto_drivers[driverid], sizeof(struct cryptocap));
 		if (ses != 0) {
@@ -377,7 +384,7 @@ crypto_kdispatch(struct cryptkop *krp)
 }
 
 /*
- * Dispatch an assymetric crypto request to the appropriate crypto devices.
+ * Dispatch an asymmetric crypto request to the appropriate crypto devices.
  */
 int
 crypto_kinvoke(struct cryptkop *krp)
@@ -437,40 +444,39 @@ crypto_invoke(struct cryptop *crp)
 	}
 
 	hid = (crp->crp_sid >> 32) & 0xffffffff;
-	if (hid >= crypto_drivers_num) {
-		/* Migrate session. */
-		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
-			crp->crp_sid = nid;
-
-		crp->crp_etype = EAGAIN;
-		crypto_done(crp);
-		return 0;
-	}
+	if (hid >= crypto_drivers_num)
+		goto migrate;
 
 	if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
 		crypto_freesession(crp->crp_sid);
 
-	if (crypto_drivers[hid].cc_process == NULL) {
-		/* Migrate session. */
-		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
-			crp->crp_sid = nid;
-
-		crp->crp_etype = EAGAIN;
-		crypto_done(crp);
-		return 0;
-	}
+	if (crypto_drivers[hid].cc_process == NULL)
+		goto migrate;
 
 	error = crypto_drivers[hid].cc_process(crp);
 	if (error) {
-		crp->crp_etype = error;
-		crypto_done(crp);
+		if (error == ERESTART) {
+			/* Unregister driver and migrate session. */
+			crypto_unregister(hid, CRYPTO_ALGORITHM_ALL);
+			goto migrate;
+		} else {
+			crp->crp_etype = error;
+			crypto_done(crp);
+		}
 	}
+
+	return 0;
+
+ migrate:
+	/* Migrate session. */
+	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
+		crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
+
+	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
+		crp->crp_sid = nid;
+
+	crp->crp_etype = EAGAIN;
+	crypto_done(crp);
 	return 0;
 }
 
