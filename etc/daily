@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.20 1997/09/15 06:24:24 pierre Exp $
+#	$OpenBSD: daily,v 1.21 1997/09/15 09:58:08 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -8,7 +8,7 @@ host=`hostname -s`
 echo "Subject: $host daily run output"
 bak=/var/backups
 
-if [ -f /etc/daily.local ];then
+if [ -f /etc/daily.local ]; then
 	echo ""
 	echo "Running daily.local:"
 	. /etc/daily.local
