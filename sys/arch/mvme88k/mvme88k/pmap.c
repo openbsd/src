@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.89 2003/10/24 17:44:51 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.90 2003/10/28 17:33:01 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1389,7 +1389,7 @@ void
 pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 {
 	pt_entry_t *pte, opte;
-	pv_entry_t prev, cur, pvl;
+	pv_entry_t prev, cur, pvl = PV_ENTRY_NULL;
 	struct vm_page *pg;
 	paddr_t pa;
 	vaddr_t va;
@@ -1443,6 +1443,14 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 			pmap->pm_stats.wired_count--;
 
 		pa = ptoa(PG_PFNUM(*pte));
+
+		/*
+		 * Invalidate the pte.
+		 */
+
+		opte = invalidate_pte(pte) & (PG_U | PG_M);
+		flush_atc_entry(users, va, kflush);
+
 		pg = PHYS_TO_VM_PAGE(pa);
 
 		if (pg != NULL) {
@@ -1457,51 +1465,45 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 				panic("pmap_remove_range: null pv_list");
 #endif
 
-			if (pvl->pv_va == va && pvl->pv_pmap == pmap) {
+			prev = PV_ENTRY_NULL;
+			for (cur = pvl; cur != PV_ENTRY_NULL;
+			    cur = cur->pv_next) {
+				if (cur->pv_va == va && cur->pv_pmap == pmap)
+					break;
+				prev = cur;
+			}
+			if (cur == PV_ENTRY_NULL) {
+				panic("pmap_remove_range: mapping for va "
+				    "0x%x (pa 0x%x) not in pv list at 0x%p",
+				    va, pa, pvl);
+			}
+
+			if (prev == PV_ENTRY_NULL) {
 				/*
 				 * Hander is the pv_entry. Copy the next one
 				 * to hander and free the next one (we can't
 				 * free the hander)
 				 */
-				cur = pvl->pv_next;
+				cur = cur->pv_next;
 				if (cur != PV_ENTRY_NULL) {
+					cur->pv_flags = pvl->pv_flags;
 					*pvl = *cur;
 					pool_put(&pvpool, cur);
 				} else {
-					pvl->pv_pmap =  PMAP_NULL;
+					pvl->pv_pmap = PMAP_NULL;
 				}
-
 			} else {
-
-				for (cur = pvl; cur != PV_ENTRY_NULL;
-				    cur = cur->pv_next) {
-					if (cur->pv_va == va && cur->pv_pmap == pmap)
-						break;
-					prev = cur;
-				}
-				if (cur == PV_ENTRY_NULL) {
-					panic("pmap_remove_range: mapping for va "
-					       "0x%x (pa 0x%x) not in pv list at 0x%p\n", va, pa, pvl);
-				}
-
 				prev->pv_next = cur->pv_next;
 				pool_put(&pvpool, cur);
 			}
 		} /* if (pg != NULL) */
 
 		/*
-		 * Reflect modify bits to pager and zero (invalidate,
-		 * remove) the pte entry.
+		 * Reflect modify bits to pager.
 		 */
 
-		opte = invalidate_pte(pte);
-		flush_atc_entry(users, va, kflush);
-
-		if (opte & PG_M) {
-			if (pg != NULL) {
-				/* keep track ourselves too */
-				pvl->pv_flags |= PG_M;
-			}
+		if (opte != 0 && pvl != PV_ENTRY_NULL) {
+			pvl->pv_flags |= opte;
 		}
 
 	} /* for (va = s; ...) */
@@ -2260,7 +2262,6 @@ void
 pmap_collect(pmap_t pmap)
 {
 	vaddr_t sdt_va;		/* outer loop index */
-	vaddr_t sdt_vt;		/* end of segment */
 	sdt_entry_t *sdtp;	/* ptr to index into segment table */
 	pt_entry_t *gdttbl;	/* ptr to first entry in a page table */
 	pt_entry_t *gdttblend;	/* ptr to byte after last entry in
@@ -2300,11 +2301,8 @@ pmap_collect(pmap_t pmap)
 		if (found_gdt_wired)
 			continue; /* can't free this range */
 
-		/* figure out end of range. Watch for wraparound */
-		sdt_vt = MIN(sdt_va + PDT_VA_SPACE, VM_MAX_ADDRESS);
-
 		/* invalidate all maps in this range */
-		pmap_remove_range(pmap, sdt_va, sdt_vt);
+		pmap_remove_range(pmap, sdt_va, sdt_va + PDT_VA_SPACE);
 
 		/*
 		 * we can safely deallocate the page map(s)
@@ -2552,7 +2550,6 @@ changebit_Retry:
 	/* for each listed pmap, update the affected bits */
 	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
 		pmap = pvep->pv_pmap;
-		va = pvep->pv_va;
 		if (!simple_lock_try(&pmap->pm_lock)) {
 			goto changebit_Retry;
 		}
@@ -2563,6 +2560,7 @@ changebit_Retry:
 			kflush = FALSE;
 		}
 
+		va = pvep->pv_va;
 		pte = pmap_pte(pmap, va);
 
 		/*
@@ -2573,8 +2571,8 @@ changebit_Retry:
 		}
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_changebit: pte %x doesn't point to page %x %x",
-			    *pte, pg, VM_PAGE_TO_PHYS(pg));
+			panic("pmap_changebit: pte %x in pmap %x %d doesn't point to page %x %x",
+			    *pte, pmap, kflush, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
 		/*
@@ -2654,7 +2652,7 @@ pmap_testbit(struct vm_page *pg, int bit)
 testbit_Retry:
 
 	if (pvl->pv_flags & bit) {
-		/* we've already cached a this flag for this page,
+		/* we've already cached this flag for this page,
 		   no use looking further... */
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_TBIT)
@@ -2682,7 +2680,17 @@ testbit_Retry:
 		}
 
 		pte = pmap_pte(pvep->pv_pmap, pvep->pv_va);
-		if (pte != PT_ENTRY_NULL && (*pte & bit) != 0) {
+		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+			goto next;
+		}
+
+#ifdef DIAGNOSTIC
+		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
+			panic("pmap_testbit: pte %x in pmap %x %d doesn't point to page %x %x",
+			    *pte, pvep->pv_pmap, pvep->pv_pmap == kernel_pmap ? 1 : 0, pg, VM_PAGE_TO_PHYS(pg));
+#endif
+
+		if ((*pte & bit) != 0) {
 			simple_unlock(&pvep->pv_pmap->pm_lock);
 			pvl->pv_flags |= bit;
 #ifdef DEBUG
@@ -2692,6 +2700,7 @@ testbit_Retry:
 			SPLX(spl);
 			return (TRUE);
 		}
+next:
 		simple_unlock(&pvep->pv_pmap->pm_lock);
 	}
 
