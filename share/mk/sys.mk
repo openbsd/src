@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.11 1997/02/06 10:49:16 niklas Exp $
+#	$OpenBSD: sys.mk,v 1.12 1997/11/05 09:51:06 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -10,7 +10,7 @@
 
 unix=		We run OpenBSD.
 
-.SUFFIXES: .out .a .ln .o .c .cc .C .F .f .r .y .l .s .S .cl .p .h .sh .m4
+.SUFFIXES: .out .a .ln .o .c .cc .C .cxx .F .f .r .y .l .s .S .cl .p .h .sh .m4
 
 .LIBS:		.a
 
@@ -105,6 +105,15 @@ INSTALL?=	install
 .C.o:
 	${COMPILE.cc} ${.IMPSRC}
 .C.a:
+	${COMPILE.cc} ${.IMPSRC}
+	${AR} ${ARFLAGS} $@ $*.o
+	rm -f $*.o
+
+.cxx:
+	${LINK.cc} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.cxx.o:
+	${COMPILE.cc} ${.IMPSRC}
+.cxx.a:
 	${COMPILE.cc} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
 	rm -f $*.o

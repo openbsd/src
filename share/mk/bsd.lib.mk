@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.15 1997/09/08 11:16:10 niklas Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.16 1997/11/05 09:51:06 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -18,7 +18,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries.
 # .so used for PIC object files.  .ln used for lint output files.
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .ln .m4
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .cxx .f .y .l .ln .m4
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
@@ -41,19 +41,19 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
-.cc.o .C.o:
+.cc.o .C.o .cxx.o:
 	@echo "${COMPILE.cc} ${.IMPSRC} -o ${TARGET}"
 	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.po .C.po:
+.cc.po .C.po .cxx.po:
 	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.cc.so .C.so:
+.cc.so .C.so .cxx.so:
 	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
