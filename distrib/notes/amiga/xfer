@@ -7,15 +7,6 @@ Installation is supported from several media types, including:
 	FTP
 	HTTP
 
-The installation program is run under a minimal OpenBSD environment
-provided by one of two means: a ramdisk or a miniroot filesystem.
-We recommend using the ramdisk if your machine is big enough (at
-least 6MB of fastmem is required), otherwise a miniroot filesystem
-needs to be transferred to the OpenBSD swap partition.  This can be
-done from AmigaDOS in the case of a new install or upgrade, or from
-OpenBSD when doing an upgrade.  See the "Preparing your System for
-OpenBSD Installation" section for details.
-
 The steps necessary to prepare the distribution sets for
 installation depend on which method of installation you choose.
 The various methods are explained below.  However, for all methods

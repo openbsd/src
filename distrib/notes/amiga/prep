@@ -31,12 +31,7 @@ Preparing your hard disk with HDToolBox:
 	installation. You can use other configurations after building a
 	customized kernel once your system is running.)  Partitioning is
 	traditionally an area of great confusion and disagreement, and
-	religion plays a large role in most advice you'll get.  The
-	author of this paragraph is a fan of large and few partitions,
-	normally one per disk, unless it's the root disk, where I tend
-	to have /, swap, /tmp, /var & /usr.  I must admit that I step
-	aside from my normal rules of thumb very often due to the context
-	the machine will work in.
+	religion plays a large role in most advice you'll get.
 
 	This should be done as the HDToolBox manual describes.  One thing
 	to note is that if you are not using a Commodore controller you

@@ -53,78 +53,14 @@ To upgrade your system, follow the following instructions:
 
 	Common instructions for both miniroot/ramdisk installations:
 
-	When you reach the prompt asking you for a shell name, just
-	hit return.
-
 	You will be asked which terminal type to use, you should just
 	hit return to select the default (vt220).
 
-	At the question whether to (I)nstall or (U)pgrade choose "U".
+	When prompted, select the (U)pgrade option rather than the
+	(I)install option.
 
-	You will be presented with some information about the upgrade
-	process and a warning message, and will be asked if you wish
-	to proceed with the upgrade process.  If you answer
-	negatively, the upgrade process will stop, and your disk will
-	not be modified.  If you answer affirmatively, the upgrade
-	process will begin, and your disk will be modified.  You may
-	hit Control-C to stop the upgrade process at any time.
-	However, if you hit it at an inopportune moment, your system
-	may be left in an inconsistent (and possibly unusable) state.
-
-	The upgrade program will then check & mount your root filesystem
-	under /mnt and grab some configuration info from it for the
-	continued upgrade process.  You'll be asked if the network
-	should be enabled at this point.  After that is done the rest
-	of the filesystems will be checked and mounted.
-
-	If you don't already have the OpenBSD distribution sets on your
-	disk, look in the installation section for information on how
-	to transfer them to your disk.
-
-	Once the distribution sets are transferred to your disk,
-	continue here.  (Obviously, if the OpenBSD distribution sets
-	are already on your disk, because you've transferred them
-	before starting the upgrade process, you don't need to
-	transfer them again now!)
-
-	After the software has been transferred to the machine (or
-	mounted, in the case of upgrading via NFS).
-
-Your system has now been upgraded to OpenBSD OSREV.
-
-	After all this, your machine is a complete OpenBSD OSREV system.
-	However, that doesn't mean that you're finished with the upgrade
-	process.  There are several things that you should do, or might
-	have to do, to insure that the system works properly.
-
-	First, you will probably want to get the etc{:--:}OSrev.tgz distribution,
-	extract it, and compare its contents with those in your /etc/
-	directory.  You will probably want to replace some of your
-	system configuration files, or incorporate some of the changes
-	in the new versions into yours.
-
-	Second, you might want to check your /dev against the new MAKEDEV
-	script found there, if you have changed the nodes locally.  The
-	upgrade process runs "sh MAKEDEV all" but that may not be enough
-	for your personal setup.
-
-	Third, you must deal with certain changes in the formats of
-	some of the configuration files.  The most notable change is
-	that the "options" given to many of the file systems in
-	/etc/fstab or by hand have changed, and some of the file
-	systems have changed names.  To find out what the new options
-	are, it's suggested that you read the manual page for the
-	file systems' mount commands, for example mount_nfs(8) for
-	NFS.  (Note that the information for mounts of type "ufs",
-	i.e. Fast File Systems, are contained in the mount(8) man
-	page.)
-
-	Finally, you will want to delete old binaries that were part
-	of the version of OpenBSD that you upgraded from and have since
-	been removed from the OpenBSD distribution.  You might also
-	want to recompile any locally-built binaries, to take
-	advantage of the shared libraries.  (Note that any new
-	binaries that you build will be dynamically linked, and
-	therefore take advantage of the shared libraries, by default.
-	For information on how to make statically linked binaries,
-	see the cc(1) and ld(1) manual pages.)
+	The upgrade script will ask you for the existing root partition,
+	and will use the existing filesystems defined in /etc/fstab to
+	installe the new system in, and also preserve files en `/etc'
+	which you are likely to have customized since a previous
+	installation.
