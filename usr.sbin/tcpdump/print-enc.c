@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.3 1999/12/08 13:28:06 itojun Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-enc.c,v 1.4 1999/12/08 21:45:00 angelos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -83,15 +83,11 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h,
 	snapend = p + caplen;
 	
 	hdr = (struct enchdr *)p;
-#if 0
-	printf("SPI 0x%08x (", ntohl(hdr->spi));
 	flags = hdr->flags;
 	ENC_PRINT_TYPE(flags, M_AUTH, "authentic");
 	ENC_PRINT_TYPE(flags, M_CONF, "confidential");
-	ENC_PRINT_TYPE(flags, M_TUNNEL, "tunnel");
-#else
+	/* ENC_PRINT_TYPE(flags, M_TUNNEL, "tunnel"); */
 	printf("SPI 0x%08x: ", ntohl(hdr->spi));
-#endif
 
 	length -= ENC_HDRLEN;
 	ip = (struct ip *)(p + ENC_HDRLEN);
