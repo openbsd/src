@@ -1097,7 +1097,9 @@ ReadRC()
     register char *cp;
     char buf[PATH_MAX];
 
-    if ((cp = getenv("HOME")) != NULL) {
+    if ((cp = getenv("HOME")) != NULL &&
+	(strlen(cp) + strlen(_PATH_NSLOOKUPRC)) < sizeof(buf)) {
+
 	(void) strcpy(buf, cp);
 	(void) strcat(buf, _PATH_NSLOOKUPRC);
 
