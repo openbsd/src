@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.3 2004/02/27 21:55:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -244,6 +244,7 @@ void bioscnputc(dev_t, int);
 int bioscngetc(dev_t);
 void bioscnpollc(dev_t, int);
 void bios_getopt(void);
+bios_diskinfo_t *bios_getdiskinfo(dev_t);
 
 /* bios32.c */
 int  bios32_service(u_int32_t, bios32_entry_t, bios32_entry_info_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2004/02/27 17:41:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2004/02/27 21:55:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -563,6 +563,72 @@ x86_64_init_pcb_tss_ldt(ci)
         ci->ci_idle_tss_sel = tss_alloc(pcb);
 }       
 
+bios_diskinfo_t *
+bios_getdiskinfo(dev)
+	dev_t dev;
+{
+	bios_diskinfo_t *pdi;
+
+	if (bios_diskinfo == NULL)
+		return NULL;
+
+	for (pdi = bios_diskinfo; pdi->bios_number != -1; pdi++) {
+		if ((dev & B_MAGICMASK) == B_DEVMAGIC) { /* search by bootdev */
+			if (pdi->bsd_dev == dev)
+				break;
+		} else {
+			if (pdi->bios_number == dev)
+				break;
+		}
+	}
+
+	if (pdi->bios_number == -1)
+		return NULL;
+	else
+		return pdi;
+}
+
+int
+bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	bios_diskinfo_t *pdi;
+	extern dev_t bootdev;
+	int biosdev;
+
+	/* all sysctl names at this level except diskinfo are terminal */
+	if (namelen != 1 && name[0] != BIOS_DISKINFO)
+		return (ENOTDIR);	       /* overloaded */
+
+	if (!(bootapiver & BAPIV_VECTOR))
+		return EOPNOTSUPP;
+
+	switch (name[0]) {
+	case BIOS_DEV:
+		if ((pdi = bios_getdiskinfo(bootdev)) == NULL)
+			return ENXIO;
+		biosdev = pdi->bios_number;
+		return sysctl_rdint(oldp, oldlenp, newp, biosdev);
+	case BIOS_DISKINFO:
+		if (namelen != 2)
+			return ENOTDIR;
+		if ((pdi = bios_getdiskinfo(name[1])) == NULL)
+			return ENXIO;
+		return sysctl_rdstruct(oldp, oldlenp, newp, pdi, sizeof(*pdi));
+	case BIOS_CKSUMLEN:
+		return sysctl_rdint(oldp, oldlenp, newp, bios_cksumlen);
+	default:
+		return EOPNOTSUPP;
+	}
+	/* NOTREACHED */
+}
+
 /*  
  * machine dependent system variables.
  */ 
@@ -579,12 +645,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	dev_t consdev;
 	dev_t dev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
 	switch (name[0]) {
 	case CPU_CONSDEV:
+		if (namelen != 1)
+			return (ENOTDIR);		/* overloaded */
 		if (cn_tab != NULL)
 			consdev = cn_tab->cn_dev;
 		else
@@ -596,7 +660,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOTDIR);		/* overloaded */
 		dev = chrtoblk((dev_t)name[1]);
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
+	case CPU_BIOS:
+		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen, p);
 	case CPU_ALLOWAPERTURE:
+		if (namelen != 1)
+			return (ENOTDIR);		/* overloaded */
 #ifdef APERTURE
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp,
