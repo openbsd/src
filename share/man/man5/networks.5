@@ -1,5 +1,5 @@
-.\"	$OpenBSD: networks.5,v 1.8 1999/07/09 13:35:38 aaron Exp $
-.\"	$NetBSD: networks.5,v 1.3 1994/11/30 19:31:23 jtc Exp $
+.\"	$OpenBSD: networks.5,v 1.9 2000/03/01 17:55:58 aaron Exp $
+.\"	$NetBSD: networks.5,v 1.9 1999/03/17 20:19:47 garbled Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,58 +39,67 @@
 .Os
 .Sh NAME
 .Nm networks
-.Nd network name data base
+.Nd Internet Protocol network name database
 .Sh DESCRIPTION
 The
-.Xr networks
-file contains information regarding
-the known networks which comprise the
-.Tn DARPA
-Internet.
-For each network a single line should be present with the following information:
+.Nm
+file is used as a local source to translate between Internet Protocol (IP)
+network addresses and network names (and vice versa).
+It can be used in conjunction with the Domain Name System (DNS).
+.Pp
+While the
+.Nm
+file was originally intended to be an exhaustive list of all IP
+networks that the local host could communicate with, distribution
+and update of such a list for the world-wide
+.Tn Internet
+(or, indeed, for any large "enterprise" network) has proven to be
+prohibitive, so the Domain Name System
+is used instead, except as noted.
+.Pp
+For each IP
+network a single line should be present with the following information:
 .Bd -unfilled -offset indent
 official network name
-network number
+ip network number
 aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or tab characters.
-A
-.Dq #
-indicates the beginning of a comment; characters up to the end of
-the line are not interpreted by routines which search the file.
-This file is normally created from the official network data base
-maintained at the Network Information Control Center
-.Pq Tn NIC ,
-though local
-changes may be required to bring it up to date regarding unofficial aliases
-and/or unknown networks.
 .Pp
-Network numbers may be specified in the conventional Internet
-.Dq \&.
+A hash mark
+.Pq Ql #
+indicates the beginning of a comment; subsequent characters up to the end of
+the line are not interpreted by routines which search the file.
+.Pp
+Network number may be specified in the conventional
+.Ql \&.
 (dot) notation using the
 .Xr inet_network 3
-routine
-from the Internet address manipulation library,
+routine from the IP address manipulation library,
 .Xr inet 3 .
-Network names may contain any printable character other than a field
-delimiter, newline, or comment character.
+Network names may contain 
+.Qq a
+through
+.Qq z ,
+zero through nine, and dash
+.Pq Ql \&- .
 .Pp
-The
-.Nm
-file is largely obsoleted by the network information facilities of the
-name server in the following way:
+IP network numbers on the Internet
+are generally assigned to a site by its Internet Service Provider (ISP),
+who, in turn, get network address space assigned to them by one of
+the regional Internet Registries (e.g., ARIN, RIPE NCC, APNIC).
+These registries, in turn, answer to the Internet Assigned Numbers
+Authority (IANA).
 .Pp
-The system configuration file
-.Xr resolv.conf 5
-controls where host name information will be searched for.
-The mechanism provided permits the administrator to describe the
-databases to search; the databases currently known include
-.Xr yp 5 ,
-DNS
-and the
-.Xr hosts 5
-database.
+If a site changes its ISP from one to another, it will generally
+be required to change all its assigned IP addresses as part of the
+conversion; that is, return the previous network numbers to the previous ISP
+and assign addresses to its hosts from IP network address space given by the
+new ISP.
+Thus, it is best for a savvy network manager to configure his
+hosts for easy renumbering, to preserve his ability to easily change his
+ISP should the need arise.
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /etc/networks
@@ -98,14 +107,39 @@ database.
 .Sh SEE ALSO
 .Xr getnetent 3 ,
 .Xr resolver 3 ,
+.Xr resolv.conf 5 ,
+.Xr hostname 7 ,
 .Xr named 8
-.Sh BUGS
-A name server should be used instead of a static file.
-Lines in
-.Pa /etc/networks
-are limited to
-.Dv BUFSIZE
-characters (currently 1024).  Longer lines will be ignored.
+.Rs
+.%R RFC
+.%N 2317
+.%D March 1998
+.%T "Classless IN-ADDR.ARPA delegation"
+.Re
+.Rs
+.%R RFC
+.%N 1918
+.%D February 1996
+.%T "Address Allocation for Private Internets"
+.Re
+.Rs
+.%R RFC
+.%N 1627
+.%D July 1994
+.%T "Network 10 Considered Harmful"
+.Re
+.Rs
+.%R RFC
+.%N 1519
+.%D September 1993
+.%T "Classless Inter-Domain Routing (CIDR): an Address Assignment and Aggregation Strategy"
+.Re
+.Rs
+.%R RFC
+.%N 1101
+.%D April 1989
+.%T "DNS Encoding of Network Names and Other Types"
+.Re
 .Sh HISTORY
 The
 .Nm
