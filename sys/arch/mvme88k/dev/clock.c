@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2004/08/24 07:42:04 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.38 2004/08/24 22:01:29 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -81,7 +81,6 @@
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
 #include <machine/cpu.h>
-#include <machine/cmmu.h>	/* DMA_CACHE_SYNC, etc... */
 
 #include "pcctwo.h"
 #if NPCCTWO > 0
@@ -139,10 +138,12 @@ u_int8_t prof_reset;
 u_int8_t stat_reset;
 #endif
 
+#if NSYSCON > 0
 struct simplelock cio_lock;
 
 #define	CIO_LOCK	simple_lock(&cio_lock)
 #define	CIO_UNLOCK	simple_unlock(&cio_lock)
+#endif
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -247,7 +248,6 @@ sbc_initclock(void)
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
 	    prof_reset;
-
 }
 
 /*
@@ -446,6 +446,7 @@ m188_statintr(void *eframe)
 	newint = statmin + r;
 
 	/* Load time constant CTC #1 */
+	newint <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
 	write_cio(CIO_CT1MSB, (newint & 0xff00) >> 8);
 	write_cio(CIO_CT1LSB, newint & 0xff);
 
@@ -481,15 +482,13 @@ m188_initstatclock(void)
 	statmin = statint - (statvar >> 1);
 }
 
-#define CIO_CNTRL 0xfff8300c
-
 /* Write CIO register */
 void
 write_cio(int reg, u_int val)
 {
 	int s;
 	volatile int i;
-	int *volatile cio_ctrl = (int *volatile)CIO_CNTRL;
+	int *volatile cio_ctrl = (int *volatile)CIO_CTRL;
 
 	s = splclock();
 	CIO_LOCK;
@@ -511,7 +510,7 @@ read_cio(int reg)
 {
 	int c, s;
 	volatile int i;
-	int *volatile cio_ctrl = (int *volatile)CIO_CNTRL;
+	int *volatile cio_ctrl = (int *volatile)CIO_CTRL;
 
 	s = splclock();
 	CIO_LOCK;
@@ -563,6 +562,7 @@ m188_cio_init(unsigned period)
 	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
 
 	/* Load time constant CTC #1 */
+	period <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
 	write_cio(CIO_CT1MSB, (period & 0xff00) >> 8);
 	write_cio(CIO_CT1LSB, period & 0xff);
 
