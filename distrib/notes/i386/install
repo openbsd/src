@@ -192,13 +192,13 @@ process again from scratch.
 		       You need to define a proxy if you are behind a
 		       firewall that blocks outgoing ftp (assuming you
 		       have a proxy available to use).
-		    2) Do you need to use passive mode ftp?  Most modern
-		       ftp servers are capable of dealing with passive
-		       ftp connections.  You only need to enable this
-		       option if you are behind a firewall that allows
-		       outgoing ftp but blocks incoming tcp ports > 1023.
-		       If in doubt say yes to this option.
-		       Note that you will not be asked about passive
+		    2) Do you need to use active mode ftp?  By default,
+		       ftp will attempt to use passive mode and fall
+		       back to an active connection if the server does
+		       not support passive mode.  You only need to enable
+		       this option if you are connecting to a buggy ftp
+		       daemon that implements passive ftp incorrectly.
+		       Note that you will not be asked about active
 		       ftp if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an ftp server
@@ -209,8 +209,8 @@ process again from scratch.
 		       The default value of pub/OpenBSD/2.3/i386
 		       is almost always correct.
 		    5) The login and password for the ftp account.
-		       The default will be correct unless you are
-		       doing non-anonymous ftp.
+		       You will only be asked for a password for
+		       non-anonymous ftp.
 
 		For instructions on how to complete the installation via
 		ftp, see the section named "Common URL installations" below.
@@ -323,11 +323,22 @@ process again from scratch.
 		from local disk partitions, NFS mounted directories and
 		CD-ROMs.
 
-		A list of available distribution sets will be listed.  If
-		any sets has already been extracted, those will be marked
-		with an X.  Enter the name of one distribution set at a
-		time, until all desired distribution sets has been
-		installed on your system.
+		A list of available distribution sets will be listed.
+		You may individually select distribution sets to install
+		or enter `all' to install all of the sets (which is what
+		most users will want to do).  You may also enter `list'
+		to get a file list or `done' when you are done selecting
+		distribution sets.  You may also use wildcards in place of
+		a file name, eg `*.tar.gz' or even `base*|comp*'.  It is
+		also possible to enter an arbitrary filename and have it
+		treated as a file set.
+
+		Once you have selected the file sets you want to install
+		and entered `done' you will be prompted to verify that
+		you really do want to extract file sets.  Assuming you
+		acquiesce, the files will begin to extract.  If not, you
+		will be given the option of installing sets via one of
+		the other install methods.
 
 	Common URL installations:
 		Once you have entered the required information, the
@@ -339,15 +350,16 @@ process again from scratch.
 		none were found.)
 
 		At this point you may individually select distribution
-		sets to install or enter "all" to install all of
-		the sets (which is what most users will want to do).
-		You may also enter "list" to get a file list or
-		"done" when you are done selecting distribution sets.
-		(It is also possible to enter an arbitrary filename
-		and have it treated as a file set).
+		sets to install or enter `all' to install all of the
+		sets (which is what most users will want to do).  You
+		may also enter `list' to get a file list or `done' when
+		you are done selecting distribution sets.  You may also
+		use wildcards in place of a file name, eg `*.tar.gz' or
+		even `base*|comp*'.  It is also possible to enter an
+		arbitrary filename and have it treated as a file set.
 
 		Once you have selected the file sets you want to install
-		and entered "done" you will be prompted to verify that
+		and entered `done' you will be prompted to verify that
 		you really do want to download and install the files.
 		Assuming you acquiesce, the files will begin to download
 		and unpack.  If not, you will be given the option of
