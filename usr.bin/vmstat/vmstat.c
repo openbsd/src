@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.26 1999/03/15 15:38:48 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.27 1999/05/13 22:12:50 alex Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -648,7 +648,7 @@ dointr()
 
 	for (i = 0; i < 2; i++) {
 		(void)printf("%sware interrupts:\n", i ? "\nsoft" : "hard");
-		(void)printf("interrupt       total     rate\n");
+		(void)printf("interrupt         total     rate\n");
 		inttotal = 0;
 		for (j = 0; j < 16; j++, ivp++) {
 			if (ivp->iv_vec && ivp->iv_use && ivp->iv_cnt) {
@@ -657,12 +657,12 @@ dointr()
 					    kvm_geterr(kd));
 					exit(1);
 				}
-				(void)printf("%-12s %8ld %8ld\n", iname,
+				(void)printf("%-12s %10ld %8ld\n", iname,
 				    ivp->iv_cnt, ivp->iv_cnt / uptime);
 				inttotal += ivp->iv_cnt;
 			}
 		}
-		(void)printf("Total        %8ld %8ld\n",
+		(void)printf("Total        %10ld %8ld\n",
 		    inttotal, inttotal / uptime);
 	}
 }
@@ -686,7 +686,7 @@ dointr()
 	kread(X_INTRHAND, intrhand, sizeof(intrhand));
 	kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
 
-	(void)printf("interrupt           total     rate\n");
+	(void)printf("interrupt             total     rate\n");
 	inttotal = 0;
 	for (i = 0; i < 16; i++) {
 		ihp = intrhand[i];
@@ -695,18 +695,18 @@ dointr()
 				errx(1, "vmstat: ih: %s", kvm_geterr(kd));
 			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
 				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
-			printf("%-16.16s %8ld %8ld\n", iname, ih.ih_count, ih.ih_count / uptime);
+			printf("%-16.16s %10ld %8ld\n", iname, ih.ih_count, ih.ih_count / uptime);
 			inttotal += ih.ih_count;
 			ihp = ih.ih_next;
 		}
 	}
 	for (i = 0; i < 16; i++)
 		if (intrstray[i]) {
-			printf("Stray irq %-2d     %8d %8d\n",
+			printf("Stray irq %-2d     %10d %8d\n",
 			       i, intrstray[i], intrstray[i] / uptime);
 			inttotal += intrstray[i];
 		}
-	printf("Total            %8ld %8ld\n", inttotal, inttotal / uptime);
+	printf("Total            %10ld %8ld\n", inttotal, inttotal / uptime);
 }
 #else
 void
@@ -732,12 +732,12 @@ dointr()
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt         total     rate\n");
+	(void)printf("interrupt             total     rate\n");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt)
-			(void)printf("%-14s %8ld %8ld\n", intrname,
+			(void)printf("%-14s %12ld %8ld\n", intrname,
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
@@ -759,13 +759,13 @@ dointr()
 				exit(1);
 			}
 			if (evcnt.ev_count)
-				(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
+				(void)printf("%-14s %12ld %8ld\n", dev.dv_xname,
 				    evcnt.ev_count, evcnt.ev_count / uptime);
 			inttotal += evcnt.ev_count++;
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("Total          %8ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("Total          %12ld %8ld\n", inttotal, inttotal / uptime);
 }
 #endif
 
