@@ -1,4 +1,4 @@
-#	$OpenBSD: XT,v 1.2 1999/09/27 21:21:16 smurph Exp $
+#	$OpenBSD: XT,v 1.3 1999/09/27 21:30:11 smurph Exp $
 
 machine mvme88k
 
@@ -75,35 +75,39 @@ option		DDB		# Kernel debugger
 
 # ------------------------------ devices --------------------------------
 mainbus0 at root
+
 # ------------------------------ mainbus devices ------------------------
 bugtty0 at mainbus0
-#sram0	at mainbus0 addr 0xffe00000
-#vme0	at mainbus0 addr 0xfff40000
+busswitch0 at mainbus0 addr 0xfff00000
 pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
-busswitch0 at mainbus0 addr 0xfff00000
+
 # ----------------------------- busswicth devices -----------------------
 pcctwo0 at busswitch0 offset 0x42000
+
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5
 sclock0	at pcctwo0 ipl 5
 vme0	at pcctwo0 offset 0x40000
 nvram0	at pcctwo0 offset 0xc0000
-ie0	at pcctwo0 offset 0x46000 ipl 3
+ie0	at pcctwo0 offset 0x46000 ipl 1
 siop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 #lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
 #memc0	at pcctwo0 addr 0xfff43000
 #memc1	at pcctwo0 addr 0xfff43100
+
 # ------------------------------ syscon0 devices ------------------------
 clock0	at syscon0 ipl 5
 sclock0	at syscon0 ipl 5
 nvram0	at syscon0 offset 0x80000
 dart0	at syscon0 offset 0x82000 ipl 3
 vme0	at syscon0 offset 0x85000
+
 # ------------------------------ vme0 devices --------------------------
 vmes0	at vme0
 vmel0	at vme0
+
 # ------------------------------ vmes0 devices -------------------------
 vx0	at vmes0 addr 0xff780000 ipl 3 vec 0x70 len 0x10000
 vx1	at vmes0 addr 0xff790000 ipl 3 vec 0x71	len 0x10000
@@ -121,12 +125,15 @@ vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 
 # ------------------------------ svme0 devices -------------------------
 scsibus* at vs?
+
 # ------------------------------ siop0 devices -------------------------
 scsibus* at siop?
-# ------------------------------ scsibus0 devices ----------------------
+
+# ------------------------------ scsibus? devices ----------------------
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
+
 # ------------------------------ pseudo devices ------------------------
 pseudo-device	vnd	4	# paging to files
 pseudo-device	bpfilter 8	# packet filter

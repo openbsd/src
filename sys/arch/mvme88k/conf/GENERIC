@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 1999/09/27 21:21:15 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.10 1999/09/27 21:30:11 smurph Exp $
 
 machine		mvme88k 
 
@@ -33,7 +33,7 @@ clock0	at pcctwo0 ipl 5
 sclock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000
 vme0	at pcctwo0 offset 0x40000
-ie0	at pcctwo0 offset 0x46000 ipl 3
+ie0	at pcctwo0 offset 0x46000 ipl 1
 siop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 #lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
@@ -56,9 +56,9 @@ vx0	at vmes0 addr 0xff780000 ipl 3 vec 0x70 len 0x10000
 vx1	at vmes0 addr 0xff790000 ipl 3 vec 0x71	len 0x10000
 vx2	at vmes0 addr 0xff7a0000 ipl 3 vec 0x72 len 0x10000
 vx3	at vmes0 addr 0xff7b0000 ipl 3 vec 0x73 len 0x10000
-ve0	at vmes0 addr 0xffff1200 ipl 3 vec 0x74 len 0x100
-ve1	at vmes0 addr 0xffff1400 ipl 3 vec 0x75 len 0x100
-ve2	at vmes0 addr 0xffff1600 ipl 3 vec 0x76 len 0x100
+ve0	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
+ve1	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
+ve2	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
 vs0	at vmes0 addr 0xffff9000 ipl 2 vec 0x80 len 0x800
 vs1	at vmes0 addr 0xffff9800 ipl 2 vec 0x82 len 0x800
 vs2	at vmes0 addr 0xffff4800 ipl 2 vec 0x84 len 0x800
