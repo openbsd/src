@@ -2060,7 +2060,7 @@ check_bound_info (info, params)
 	case string_bound_type:
 	case buffer_bound_type:
 	  /* warn about illegal bounds value */
-	  if (length < 1)
+	  if (length < 0)
 	    warning ("non-positive bounds length (%d) detected", length);
 	  /* check if the static buffer is smaller than bound length */
 	  if (array_size < length)
