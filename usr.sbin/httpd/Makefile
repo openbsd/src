@@ -5,7 +5,9 @@ CONFFILES= \
 	conf/srm.conf-dist conf/access.conf-dist conf/httpd.conf-dist \
 	conf/mime.types conf/access.conf conf/httpd.conf conf/srm.conf 
 HTDOCS= \
-	htdocs/apache_pb.gif htdocs/index.html htdocs/openbsdpower.gif
+	htdocs/apache_pb.gif htdocs/index.html htdocs/openbsdpower.gif \
+	htdocs/blowfish.jpg htdocs/bsd_small.gif htdocs/lock.gif \
+	htdocs/logo23.jpg htdocs/logo24.jpg htdocs/smalltitle.gif 
 CGIFILES= \
 	cgi-bin/printenv cgi-bin/test-cgi	
 MANUALFILES= \
