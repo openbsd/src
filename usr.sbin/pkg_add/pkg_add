@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.32 2004/06/21 15:19:33 miod Exp $
+# $OpenBSD: pkg_add,v 1.33 2004/07/11 20:46:08 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -403,6 +403,36 @@ sub borked_script($)
 	}
 }
 
+sub collision_report
+{
+	my $list = shift;
+	my %todo = map {($_, 1)} @$list;
+	my $bypkg = {};
+	
+
+	for my $pkg (installed_packages()) {
+		my $plist = OpenBSD::PackingList->fromfile(installed_info($pkg).CONTENTS, \&OpenBSD::PackingList::FilesOnly);
+		for my $item (@{$plist->{items}}) {
+			next unless $item->IsFile();
+			my $name = $item->fullname();
+			if (defined $todo{$name}) {
+				$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
+				push(@{$bypkg->{$pkg}}, $name);
+				delete $todo{$name};
+			}
+		}
+	}
+	print "Collision: the following files already exist\n";
+	for my $pkg (sort keys %$bypkg) {
+	    for my $item (sort @{$bypkg->{$pkg}}) {
+	    	print "\t$item ($pkg)\n";
+	    }
+	}
+	for my $item (sort keys %todo) {
+	    print "\t$item\n";
+	}
+}
+
 sub really_add($$)
 {
 	my ($handle, $destdir) = @_;
@@ -442,8 +472,7 @@ sub really_add($$)
 		}
 	}
 	if (@$colliding > 0) {
-		print "Collision: the following files already exists\n\t",
-			join("\n\t", @$colliding), "\n";
+		collision_report($colliding);
 	}
 	exit(1) if $problems;
 
