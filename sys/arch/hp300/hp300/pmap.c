@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2001/05/05 21:26:35 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2001/05/06 21:38:59 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.75 1999/06/15 22:18:07 thorpej Exp $	*/
 
 /*-
@@ -1340,10 +1340,10 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 */
 	if (pmap != pmap_kernel()) {
 #ifdef UVM
-		pmap_ptpage_addref(trunc_page(pte));
+		pmap_ptpage_addref(trunc_page((vaddr_t)pte));
 #else
-		(void) vm_map_pageable(pt_map, trunc_page(pte),
-			round_page(pte+1), FALSE);
+		(void) vm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
+		    round_page((vaddr_t)pte + 1), FALSE);
 #endif
 	}
 
@@ -2245,9 +2245,10 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	}
 #else
 	if (pmap != pmap_kernel()) {
-		vaddr_t ptpva = trunc_page(pte);
+		vaddr_t ptpva = trunc_page((vaddr_t)pte);
 
-		(void) vm_map_pageable(pt_map, ptpva, round_page(pte+1), TRUE);
+		(void) vm_map_pageable(pt_map, ptpva,
+		    round_page((vaddr_t)pte + 1), TRUE);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("remove", ptpva);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2001/05/06 00:45:48 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/05/06 21:39:00 millert Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	uva = trunc_page(bp->b_saveaddr = bp->b_data);
+	uva = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 #if defined(UVM)
@@ -365,7 +365,7 @@ vunmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = trunc_page(bp->b_data);
+	kva = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 
