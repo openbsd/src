@@ -1,7 +1,7 @@
 package Text::ParseWords;
 
 use vars qw($VERSION @ISA @EXPORT $PERL_SINGLE_QUOTE);
-$VERSION = "3.22";
+$VERSION = "3.23";
 
 require 5.000;
 
@@ -53,32 +53,27 @@ sub parse_line {
 	use re 'taint'; # if it's tainted, leave it as such
 
     my($delimiter, $keep, $line) = @_;
-    my($quote, $quoted, $unquoted, $delim, $word, @pieces);
+    my($word, @pieces);
 
     while (length($line)) {
-
-	($quote, $quoted, undef, $unquoted, $delim, undef) =
-	    $line =~ m/^(["'])                 # a $quote
-                        ((?:\\[\000-\377]|(?!\1)[^\\])*)  # and $quoted text
-                        \1 		       # followed by the same quote
-                        ([\000-\377]*)	       # and the rest
-		       |                       # --OR--
-                       ^((?:\\[\000-\377]|[^\\"'])*?)     # an $unquoted text
-		      (\Z(?!\n)|(?-x:$delimiter)|(?!^)(?=["']))  
-                                               # plus EOL, delimiter, or quote
-                      ([\000-\377]*)	       # the rest
-		      /x;		       # extended layout
-	return() unless( $quote || length($unquoted) || length($delim));
-
-	$line = $+;
+	$line =~ s/^(["'])			# a $quote
+        	    ((?:\\.|(?!\1)[^\\])*)	# and $quoted text
+		    \1				# followed by the same quote
+		   |				# --OR--
+		   ^((?:\\.|[^\\"'])*?)		# an $unquoted text
+		    (\Z(?!\n)|(?-x:$delimiter)|(?!^)(?=["']))  
+		    				# plus EOL, delimiter, or quote
+		  //xs or return;		# extended layout
+	my($quote, $quoted, $unquoted, $delim) = ($1, $2, $3, $4);
+	return() unless( defined($quote) || length($unquoted) || length($delim));
 
         if ($keep) {
 	    $quoted = "$quote$quoted$quote";
 	}
         else {
-	    $unquoted =~ s/\\([\000-\377])/$1/g;
+	    $unquoted =~ s/\\(.)/$1/sg;
 	    if (defined $quote) {
-		$quoted =~ s/\\([\000-\377])/$1/g if ($quote eq '"');
+		$quoted =~ s/\\(.)/$1/sg if ($quote eq '"');
 		$quoted =~ s/\\([\\'])/$1/g if ( $PERL_SINGLE_QUOTE && $quote eq "'");
             }
 	}

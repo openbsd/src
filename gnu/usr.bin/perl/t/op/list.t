@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..28\n";
+print "1..30\n";
 
 @foo = (1, 2, 3, 4);
 if ($foo[0] == 1 && $foo[3] == 4) {print "ok 1\n";} else {print "not ok 1\n";}
@@ -86,4 +86,13 @@ for ($x = 0; $x < 3; $x++) {
     my @c = (0, undef, undef, 3)[1, 2];
     print "not " unless @b == @c and @c == 2;
     print "ok 28\n";
+
+    @b = (29, scalar @c[()]);
+    print "not " if join(':',@b) ne '29:';
+    print "ok 29\n";
+
+    my %h = (a => 1);
+    @b = (30, scalar @h{()});
+    print "not " if join(':',@b) ne '30:';
+    print "ok 30\n";
 }

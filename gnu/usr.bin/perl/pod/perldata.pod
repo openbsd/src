@@ -631,7 +631,7 @@ of how to arrange for an output ordering.
 
 =head2 Subscripts
 
-An array is subscripted by specifying a dollary sign (C<$>), then the
+An array is subscripted by specifying a dollar sign (C<$>), then the
 name of the array (without the leading C<@>), then the subscript inside
 square brackets.  For example:
 

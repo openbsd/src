@@ -212,7 +212,7 @@ C<DESTROY> plus all functions mentioned in L<perltie> and L<PerlIO::via>.
 
 The C<BEGIN>, C<CHECK>, C<INIT> and C<END> subroutines are not so much
 subroutines as named special code blocks, of which you can have more
-than one in a package, and which you can B<not> call explicitely.  See
+than one in a package, and which you can B<not> call explicitly.  See
 L<perlmod/"BEGIN, CHECK, INIT and END">
 
 =head2 Private Variables via my()

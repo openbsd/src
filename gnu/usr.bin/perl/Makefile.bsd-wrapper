@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.68 2004/08/14 00:12:22 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.69 2005/01/15 21:30:17 millert Exp $
 #
-# Build wrapper for Perl 5.8.5
+# Build wrapper for Perl 5.8.6
 #
 
 # For ``NOMAN'' and ``USE_GCC3''
@@ -70,6 +70,7 @@ MANSRCALL=
     perl583delta 1		pod/perl583delta.pod \
     perl584delta 1		pod/perl584delta.pod \
     perl585delta 1		pod/perl585delta.pod \
+    perl586delta 1		pod/perl586delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -190,6 +191,7 @@ MANSRCALL=
     B::Lint 3p			ext/B/B/Lint.pm \
     B::Showlex 3p		ext/B/B/Showlex.pm \
     B::Stackobj 3p		ext/B/B/Stackobj.pm \
+    B::Stash 3p			ext/B/B/Stash.pm \
     B::Terse 3p			ext/B/B/Terse.pm \
     B::Xref 3p			ext/B/B/Xref.pm \
     Benchmark 3p		lib/Benchmark.pm \

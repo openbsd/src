@@ -12,6 +12,11 @@
  * "'So that was the job I felt I had to do when I started,' thought Sam."
  */
 
+/* This file contains some common functions needed to carry out certain
+ * ops. For example both pp_schomp() and pp_chomp() - scalar and array
+ * chomp operations - call the function do_chomp() found in this file.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_DOOP_C
 #include "perl.h"

@@ -190,8 +190,8 @@ Unary "-" performs arithmetic negation if the operand is numeric.  If
 the operand is an identifier, a string consisting of a minus sign
 concatenated with the identifier is returned.  Otherwise, if the string
 starts with a plus or minus, a string starting with the opposite sign
-is returned.  One effect of these rules is that C<-bareword> is equivalent
-to C<"-bareword">.
+is returned.  One effect of these rules is that -bareword is equivalent
+to "-bareword".
 
 Unary "~" performs bitwise negation, i.e., 1's complement.  For
 example, C<0666 & ~027> is 0640.  (See also L<Integer Arithmetic> and
@@ -219,7 +219,8 @@ pattern, substitution, or transliteration.  The left argument is what is
 supposed to be searched, substituted, or transliterated instead of the default
 $_.  When used in scalar context, the return value generally indicates the
 success of the operation.  Behavior in list context depends on the particular
-operator.  See L</"Regexp Quote-Like Operators"> for details.
+operator.  See L</"Regexp Quote-Like Operators"> for details and 
+L<perlretut> for examples using these operators.
 
 If the right argument is an expression rather than a search pattern,
 substitution, or transliteration, it is interpreted as a search pattern at run
@@ -2033,6 +2034,14 @@ you say
 
 the compiler will precompute the number which that expression
 represents so that the interpreter won't have to.
+
+=head2 No-ops
+
+Perl doesn't officially have a no-op operator, but the bare constants
+C<0> and C<1> are special-cased to not produce a warning in a void
+context, so you can for example safely do
+
+    1 while foo();
 
 =head2 Bitwise String Operators
 

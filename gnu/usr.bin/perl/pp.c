@@ -13,6 +13,13 @@
  * and no knowing what you'll find around a corner.  And Elves, sir!" --Samwise
  */
 
+/* This file contains general pp ("push/pop") functions that execute the
+ * opcodes that make up a perl program. A typical pp function expects to
+ * find its arguments on the stack, and usually pushes its results onto
+ * the stack, hence the 'pp' terminology. Each OP structure contains
+ * a pointer to the relevant pp_foo() function.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_PP_C
 #include "perl.h"
@@ -152,6 +159,8 @@ PP(pp_rv2gv)
 		/* If this is a 'my' scalar and flag is set then vivify
 		 * NI-S 1999/05/07
 		 */
+		if (SvREADONLY(sv))
+		    Perl_croak(aTHX_ PL_no_modify);
 		if (PL_op->op_private & OPpDEREF) {
 		    char *name;
 		    GV *gv;
@@ -169,7 +178,7 @@ PP(pp_rv2gv)
 		    if (SvTYPE(sv) < SVt_RV)
 			sv_upgrade(sv, SVt_RV);
 		    if (SvPVX(sv)) {
-			(void)SvOOK_off(sv);		/* backoff */
+			SvOOK_off(sv);		/* backoff */
 			if (SvLEN(sv))
 			    Safefree(SvPVX(sv));
 			SvLEN(sv)=SvCUR(sv)=0;
@@ -816,12 +825,12 @@ PP(pp_undef)
 	break;
     default:
 	if (SvTYPE(sv) >= SVt_PV && SvPVX(sv) && SvLEN(sv)) {
-	    (void)SvOOK_off(sv);
+	    SvOOK_off(sv);
 	    Safefree(SvPVX(sv));
 	    SvPV_set(sv, Nullch);
 	    SvLEN_set(sv, 0);
 	}
-	(void)SvOK_off(sv);
+	SvOK_off(sv);
 	SvSETMAGIC(sv);
     }
 
@@ -1726,11 +1735,11 @@ PP(pp_lt)
 #ifdef PERL_PRESERVE_IVUV
     else
 #endif
-        if (SvROK(TOPs) && SvROK(TOPm1s)) {
-            SP--;
-            SETs(boolSV(SvRV(TOPs) < SvRV(TOPp1s)));
-            RETURN;
-        }
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
+	SP--;
+	SETs(boolSV(SvRV(TOPs) < SvRV(TOPp1s)));
+	RETURN;
+    }
 #endif
     {
       dPOPnv;
@@ -1804,7 +1813,7 @@ PP(pp_gt)
 #ifdef PERL_PRESERVE_IVUV
     else
 #endif
-        if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         SP--;
         SETs(boolSV(SvRV(TOPs) > SvRV(TOPp1s)));
         RETURN;
@@ -1882,7 +1891,7 @@ PP(pp_le)
 #ifdef PERL_PRESERVE_IVUV
     else
 #endif
-        if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         SP--;
         SETs(boolSV(SvRV(TOPs) <= SvRV(TOPp1s)));
         RETURN;
@@ -1960,7 +1969,7 @@ PP(pp_ge)
 #ifdef PERL_PRESERVE_IVUV
     else
 #endif
-        if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         SP--;
         SETs(boolSV(SvRV(TOPs) >= SvRV(TOPp1s)));
         RETURN;
@@ -1977,7 +1986,7 @@ PP(pp_ne)
 {
     dSP; tryAMAGICbinSET(ne,0);
 #ifndef NV_PRESERVES_UV
-    if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         SP--;
 	SETs(boolSV(SvRV(TOPs) != SvRV(TOPp1s)));
 	RETURN;
@@ -2046,7 +2055,7 @@ PP(pp_ncmp)
 {
     dSP; dTARGET; tryAMAGICbin(ncmp,0);
 #ifndef NV_PRESERVES_UV
-    if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         UV right = PTR2UV(SvRV(POPs));
         UV left = PTR2UV(SvRV(TOPs));
 	SETi((left > right) - (left < right));
@@ -3121,7 +3130,7 @@ PP(pp_substr)
 		sv_magic(TARG, Nullsv, PERL_MAGIC_substr, Nullch, 0);
 	    }
 	    else
-		(void)SvOK_off(TARG);
+		SvOK_off(TARG);
 
 	    LvTYPE(TARG) = 'x';
 	    if (LvTARG(TARG) != sv) {
@@ -3736,7 +3745,7 @@ PP(pp_aslice)
     }
     if (GIMME != G_ARRAY) {
 	MARK = ORIGMARK;
-	*++MARK = *SP;
+	*++MARK = SP > ORIGMARK ? *SP : &PL_sv_undef;
 	SP = MARK;
     }
     RETURN;
@@ -3956,7 +3965,7 @@ PP(pp_hslice)
     }
     if (GIMME != G_ARRAY) {
 	MARK = ORIGMARK;
-	*++MARK = *SP;
+	*++MARK = SP > ORIGMARK ? *SP : &PL_sv_undef;
 	SP = MARK;
     }
     RETURN;
@@ -4132,6 +4141,13 @@ PP(pp_splice)
     if (newlen && !AvREAL(ary) && AvREIFY(ary))
 	av_reify(ary);
 
+    /* make new elements SVs now: avoid problems if they're from the array */
+    for (dst = MARK, i = newlen; i; i--) {
+        SV *h = *dst;
+	*dst = NEWSV(46, 0);
+	sv_setsv(*dst++, h);
+    }
+
     if (diff < 0) {				/* shrinking the area */
 	if (newlen) {
 	    New(451, tmparyval, newlen, SV*);	/* so remember insertion */
@@ -4188,11 +4204,7 @@ PP(pp_splice)
 	    dst[--i] = &PL_sv_undef;
 	
 	if (newlen) {
-	    for (src = tmparyval, dst = AvARRAY(ary) + offset;
-	      newlen; newlen--) {
-		*dst = NEWSV(46, 0);
-		sv_setsv(*dst++, *src++);
-	    }
+ 	    Copy( tmparyval, AvARRAY(ary) + offset, newlen, SV* );
 	    Safefree(tmparyval);
 	}
     }
@@ -4231,10 +4243,10 @@ PP(pp_splice)
 	    }
 	}
 
-	for (src = MARK, dst = AvARRAY(ary) + offset; newlen; newlen--) {
-	    *dst = NEWSV(46, 0);
-	    sv_setsv(*dst++, *src++);
+	if (newlen) {
+	    Copy( MARK, AvARRAY(ary) + offset, newlen, SV* );
 	}
+
 	MARK = ORIGMARK + 1;
 	if (GIMME == G_ARRAY) {			/* copy return vals to stack */
 	    if (length) {
@@ -4441,7 +4453,6 @@ PP(pp_split)
     I32 origlimit = limit;
     I32 realarray = 0;
     I32 base;
-    AV *oldstack = PL_curstack;
     I32 gimme = GIMME_V;
     I32 oldsave = PL_savestack_ix;
     I32 make_mortal = 1;
@@ -4494,8 +4505,7 @@ PP(pp_split)
 		    AvARRAY(ary)[i] = &PL_sv_undef;	/* don't free mere refs */
 	    }
 	    /* temporarily switch stacks */
-	    SWITCHSTACK(PL_curstack, ary);
-	    PL_curstackinfo->si_stack = ary;
+	    SAVESWITCHSTACK(PL_curstack, ary);
 	    make_mortal = 0;
 	}
     }
@@ -4664,7 +4674,6 @@ PP(pp_split)
 	}
     }
 
-    LEAVE_SCOPE(oldsave);
     iters = (SP - PL_stack_base) - base;
     if (iters > maxiters)
 	DIE(aTHX_ "Split loop");
@@ -4690,10 +4699,11 @@ PP(pp_split)
 	}
     }
 
+    PUTBACK;
+    LEAVE_SCOPE(oldsave); /* may undo an earlier SWITCHSTACK */
+    SPAGAIN;
     if (realarray) {
 	if (!mg) {
-	    SWITCHSTACK(ary, oldstack);
-	    PL_curstackinfo->si_stack = oldstack;
 	    if (SvSMAGICAL(ary)) {
 		PUTBACK;
 		mg_set((SV*)ary);

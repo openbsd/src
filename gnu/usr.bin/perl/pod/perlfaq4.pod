@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq4 - Data Manipulation ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq4 - Data Manipulation ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
 
 =head1 DESCRIPTION
 
@@ -559,7 +559,7 @@ C<$timestamp = gmtime(1005613200)> sets $timestamp to "Tue Nov 13 01:00:00
 That doesn't mean that Perl can't be used to create non-Y2K compliant
 programs.  It can.  But so can your pencil.  It's the fault of the user,
 not the language.  At the risk of inflaming the NRA: ``Perl doesn't
-break Y2K, people do.''  See http://language.perl.com/news/y2k.html for
+break Y2K, people do.''  See http://www.perl.org/about/y2k.html for
 a longer exposition.
 
 =head1 Data: Strings
@@ -1715,19 +1715,15 @@ sorting the keys as shown in an earlier question.
 
 =head2 What happens if I add or remove keys from a hash while iterating over it?
 
-Don't do that. :-)
+(contributed by brian d foy)
 
-[lwall] In Perl 4, you were not allowed to modify a hash at all while
-iterating over it.  In Perl 5 you can delete from it, but you still
-can't add to it, because that might cause a doubling of the hash table,
-in which half the entries get copied up to the new top half of the
-table, at which point you've totally bamboozled the iterator code.
-Even if the table doesn't double, there's no telling whether your new
-entry will be inserted before or after the current iterator position.
+The easy answer is "Don't do that!"
 
-Either treasure up your changes and make them after the iterator finishes
-or use keys to fetch all the old keys at once, and iterate over the list
-of keys.
+If you iterate through the hash with each(), you can delete the key
+most recently returned without worrying about it.  If you delete or add
+other keys, the iterator may skip or double up on them since perl
+may rearrange the hash table.  See the
+entry for C<each()> in L<perlfunc>.
 
 =head2 How do I look up a hash element by value?
 

@@ -664,7 +664,8 @@ probably has more rights for the name, though it may be objected
 that Microsoft shouldn't have used JIS as part of the name
 in the first place.
 
-Unambiguous name: C<CP932>. C<IANA> name (not used?): C<Windows-31J>.
+Unambiguous name: C<CP932>. C<IANA> name (also used by Mozilla, and
+provided as an alias by Encode): C<Windows-31J>.
 
 Encode separately supports C<Shift_JIS> and C<cp932>.
 

@@ -22,7 +22,9 @@ sub Fetch { $_ = Encode::decode_utf8($_) if defined $_ }
 
 __END__
 
-=head1 DBM_Filter::utf8
+=head1 NAME
+
+DBM_Filter::utf8 -- UTF-8 DBM Filter
 
 =head1 SYNOPSIS
 

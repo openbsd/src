@@ -783,6 +783,16 @@ usually double the curlies to get the same effect though, because the
 inner curlies will be considered a block that loops once.  See
 L<perlfunc/last>.
 
+=item Can't load '%s' for module %s
+
+(F) The module you tried to load failed to load a dynamic extension. This
+may either mean that you upgraded your version of perl to one that is
+incompatible with your old dynamic extensions (which is known to happen
+between major versions of perl), or (more likely) that your dynamic
+extension was built against an older version of the library that is
+installed on your system. You may need to rebuild your old dynamic
+extensions.
+
 =item Can't localize lexical variable %s
 
 (F) You used local on a variable name that was previously declared as a
@@ -820,6 +830,12 @@ L<perlfunc/require> and L<lib>.
 autoload, but there is no function to autoload.  Most probable causes
 are a misprint in a function/method name or a failure to C<AutoSplit>
 the file, say, by doing C<make install>.
+
+=item Can't locate loadable object for module %s in @INC
+
+(F) The module you loaded is trying to load an external library, like
+for example, C<foo.so> or C<bar.dll>, but the L<DynaLoader> module was
+unable to locate this library.  See L<DynaLoader>.
 
 =item Can't locate object method "%s" via package "%s"
 
@@ -923,6 +939,10 @@ for stdout.
 =item Can't open perl script%s
 
 (F) The script you specified can't be opened for the indicated reason.
+
+If you're debugging a script that uses #!, and normally relies on the
+shell's $PATH search, the -S option causes perl to do that search, so
+you don't have to type the path or C<`which $scriptname`>.
 
 =item Can't read CRTL environ
 
@@ -1795,7 +1815,8 @@ L<perlsec> for more information.
 
 (F) You can't use system(), exec(), or a piped open in a setuid or
 setgid script if C<$ENV{PATH}> contains a directory that is writable by
-the world.  See L<perlsec>.
+the world.  Also, the PATH must not contain any relative directory.
+See L<perlsec>.
 
 =item Insecure $ENV{%s} while running %s
 
@@ -2016,7 +2037,7 @@ when the function is called.
 
 =item Malformed UTF-8 character (%s)
 
-Perl detected something that didn't comply with UTF-8 encoding rules.
+(W utf8) Perl detected something that didn't comply with UTF-8 encoding rules.
 
 One possible cause is that you read in data that you thought to be in
 UTF-8 but it wasn't (it was for example legacy 8-bit data).  Another
@@ -2065,6 +2086,11 @@ ended earlier on the current line.
 
 (W syntax) An underscore (underbar) in a numeric constant did not
 separate two digits.
+
+=item Missing argument to -%c
+
+(F) The argument to the indicated command line switch must follow
+immediately after the switch, without intervening spaces.
 
 =item Missing %sbrace%s on \N{}
 
@@ -2363,11 +2389,6 @@ your system.
 (F) Configure didn't find anything resembling the setreuid() call for
 your system.
 
-=item No space allowed after -%c
-
-(F) The argument to the indicated command line switch must follow
-immediately after the switch, without intervening spaces.
-
 =item No %s specified for -%c
 
 (F) The indicated command line switch needs a mandatory argument, but
@@ -2604,17 +2625,17 @@ C<limit datasize n> (where C<n> is the number of kilobytes) to check
 the current limits and change them, and in ksh/bash/zsh use C<ulimit -a>
 and C<ulimit -d n>, respectively.
 
+=item Out of memory during %s extend
+
+(X) An attempt was made to extend an array, a list, or a string beyond
+the largest possible memory allocation.
+
 =item Out of memory during "large" request for %s
 
 (F) The malloc() function returned 0, indicating there was insufficient
 remaining memory (or virtual memory) to satisfy the request. However,
 the request was judged large enough (compile-time default is 64K), so a
 possibility to shut down by trapping this error is granted.
-
-=item Out of memory during %s extend
-
-(X) An attempt was made to extend an array, a list, or a string beyond
-the largest possible memory allocation.
 
 =item Out of memory during request for %s
 
@@ -3703,16 +3724,26 @@ target of the change to
 are deprecated and one should use the new ithreads instead,
 see L<perl58delta> for more details.
 
-=item Tied variable freed while still in use
-
-(F) An access method for a tied variable (e.g. FETCH) did something to
-free the variable.  Since continuing the current operation is likely
-to result in a coredump, Perl is bailing out instead.
-
 =item times not implemented
 
 (F) Your version of the C library apparently doesn't do times().  I
 suspect you're not running on Unix.
+
+=item "-T" is on the #! line, it must also be used on the command line
+
+(X) The #! line (or local equivalent) in a Perl script contains the
+B<-T> option, but Perl was not invoked with B<-T> in its command line.
+This is an error because, by the time Perl discovers a B<-T> in a
+script, it's too late to properly taint everything from the environment.
+So Perl gives up.
+
+If the Perl script is being executed as a command using the #!
+mechanism (or its local equivalent), this error can usually be fixed by
+editing the #! line so that the B<-T> option is a part of Perl's first
+argument: e.g. change C<perl -n -T> to C<perl -T -n>.
+
+If the Perl script is being executed as C<perl scriptname>, then the
+B<-T> option must appear on the command line: C<perl -T scriptname>.
 
 =item To%s: illegal mapping '%s'
 
@@ -3735,22 +3766,6 @@ system call to call, silly dilly.
 (X) The #! line (or local equivalent) in a Perl script contains the
 B<-M> or B<-m> option.  This is an error because B<-M> and B<-m> options
 are not intended for use inside scripts.  Use the C<use> pragma instead.
-
-=item Too late for "B<-T>" option
-
-(X) The #! line (or local equivalent) in a Perl script contains the
-B<-T> option, but Perl was not invoked with B<-T> in its command line.
-This is an error because, by the time Perl discovers a B<-T> in a
-script, it's too late to properly taint everything from the environment.
-So Perl gives up.
-
-If the Perl script is being executed as a command using the #!
-mechanism (or its local equivalent), this error can usually be fixed by
-editing the #! line so that the B<-T> option is a part of Perl's first
-argument: e.g. change C<perl -n -T> to C<perl -T -n>.
-
-If the Perl script is being executed as C<perl scriptname>, then the
-B<-T> option must appear on the command line: C<perl -T scriptname>.
 
 =item Too late to run %s block
 

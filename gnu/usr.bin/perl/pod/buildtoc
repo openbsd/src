@@ -32,6 +32,7 @@ $masterpodfile = File::Spec->catdir($Up, "pod.lst");
      dmake => File::Spec->catdir($Up, "win32", "makefile.mk"),
      podmak => File::Spec->catdir($Up, "win32", "pod.mak"),
      # plan9 =>  File::Spec->catdir($Up, "plan9", "mkfile"),
+     unix => File::Spec->catdir($Up, "Makefile.SH"),
     );
 
 {
@@ -671,6 +672,27 @@ sub do_vms {
     if $sections > 1;
   $makefile =~ s/\0+/join "\n", '', &generate_descrip_mms_2/se;
   $makefile;
+}
+
+sub do_unix {
+  my $name = shift;
+  my $makefile_SH = join '', @_;
+  die "$0: $name contains NUL bytes" if $makefile_SH =~ /\0/;
+
+  $makefile_SH =~ s/\n\s+-\@test -f \S+ && cd pod && \$\(LNS\) \S+ \S+ && cd \.\. && echo "\S+" >> extra.pods \# See buildtoc\n/\0/gm;
+
+  my $sections = () = $makefile_SH =~ m/\0+/g;
+
+  die "$0: $name contains no copy rules" if $sections < 1;
+  die "$0: $name contains $sections discontigous copy rules"
+    if $sections > 1;
+
+  my @copy_rules = map "\t-\@test -f pod/$Copies{$_} && cd pod && \$(LNS) $Copies{$_} $_ && cd .. && echo \"pod/$_\" >> extra.pods # See buildtoc",
+    keys %Copies;
+
+  $makefile_SH =~ s/\0+/join "\n", '', @copy_rules, ''/se;
+  $makefile_SH;
+
 }
 
 # Do stuff

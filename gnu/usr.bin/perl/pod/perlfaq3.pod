@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq3 - Programming Tools ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq3 - Programming Tools ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
 
 =head1 DESCRIPTION
 
@@ -218,24 +218,24 @@ If you're on Unix, you already have an IDE--Unix itself.  The UNIX
 philosophy is the philosophy of several small tools that each do one
 thing and do it well.  It's like a carpenter's toolbox.
 
-If you want an IDE, check the following:
+If you want an IDE, check the following (in alphabetical order, not
+order of preference):
 
 =over 4
 
+=item Eclipse
+
+The Eclipse Perl Integration Project integrates Perl 
+editing/debugging with Eclipse.
+
+The website for the project is http://e-p-i-c.sf.net/
+
 =item Komodo
 
-ActiveState's cross-platform (as of April 2001 Windows and Linux),
-multi-language IDE has Perl support, including a regular expression
+ActiveState's cross-platform (as of October 2004, that's Windows, Linux,
+and Solaris), multi-language IDE has Perl support, including a regular expression
 debugger and remote debugging
-( http://www.ActiveState.com/Products/Komodo/index.html ).  (Visual
-Perl, a Visual Studio.NET plug-in is currently (early 2001) in beta
-( http://www.ActiveState.com/Products/VisualPerl/index.html )).
-
-=item The Object System
-
-( http://www.castlelink.co.uk/object_system/ ) is a Perl web
-applications development IDE, apparently for any platform
-that runs Perl.
+( http://www.ActiveState.com/Products/Komodo/ ).
 
 =item Open Perl IDE
 
@@ -243,6 +243,11 @@ that runs Perl.
 Open Perl IDE is an integrated development environment for writing
 and debugging Perl scripts with ActiveState's ActivePerl distribution
 under Windows 95/98/NT/2000.
+
+=item OptiPerl
+
+( http://www.optiperl.com/ ) is a Windows IDE with simulated CGI
+environment, including debugger and syntax highlighting editor.
 
 =item PerlBuilder
 
@@ -254,10 +259,11 @@ environment for Windows that supports Perl development.
 ( http://helpconsulting.net/visiperl/ )
 From Help Consulting, for Windows.
 
-=item OptiPerl
+=item Visual Perl
 
-( http://www.optiperl.com/ ) is a Windows IDE with simulated CGI
-environment, including debugger and syntax highlighting editor.
+( http://www.activestate.com/Products/Visual_Perl/ )
+Visual Perl is a Visual Studio.NET plug-in from ActiveState.
+
 
 =back
 
@@ -279,7 +285,7 @@ specifically for programming, such as Textpad
 If you are using MacOS, the same concerns apply.  MacPerl
 (for Classic environments) comes with a simple editor.
 Popular external editors are BBEdit ( http://www.bbedit.com/ )
-or Alpha ( http://www.kelehers.org/alpha/ ). MacOS X users can
+or Alpha ( http://www.his.com/~jguyer/Alpha/Alpha8.html ). MacOS X users can
 use Unix editors as well.
 
 =over 4
@@ -338,7 +344,7 @@ The following are Win32 multilanguage editor/IDESs that support Perl:
 
 =item Codewright
 
-http://www.starbase.com/
+http://www.borland.com/codewright/
 
 =item MultiEdit
 
@@ -399,16 +405,22 @@ no 32k limit).
 
 =over 4
 
-=item BBEdit and BBEdit Lite
+=item Affrus
 
-are text editors for Mac OS that have a Perl sensitivity mode
-( http://web.barebones.com/ ).
+is a full Perl development enivornment with full debugger support (
+http://www.latenightsw.com ).
 
 =item Alpha
 
 is an editor, written and extensible in Tcl, that nonetheless has
 built in support for several popular markup and programming languages
-including Perl and HTML ( http://alpha.olm.net/ ).
+including Perl and HTML ( http://www.his.com/~jguyer/Alpha/Alpha8.html ).
+
+=item BBEdit and BBEdit Lite
+
+are text editors for Mac OS that have a Perl sensitivity mode
+( http://web.barebones.com/ ).
+
 
 =back
 
@@ -454,7 +466,7 @@ to the Athena Widget set.  Both are available from CPAN.  See the
 directory http://www.cpan.org/modules/by-category/08_User_Interfaces/
 
 Invaluable for Perl/Tk programming are the Perl/Tk FAQ at
-http://w4.lns.cornell.edu/%7Epvhp/ptk/ptkTOC.html , the Perl/Tk Reference
+http://phaseit.net/claird/comp.lang.perl.tk/ptkFAQ.html , the Perl/Tk Reference
 Guide available at
 http://www.cpan.org/authors/Stephen_O_Lidie/ , and the
 online manpages at
@@ -780,7 +792,7 @@ Perl install anyway.
 =head2 How can I compile Perl into Java?
 
 You can also integrate Java and Perl with the
-Perl Resource Kit from O'Reilly and Associates.  See
+Perl Resource Kit from O'Reilly Media.  See
 http://www.oreilly.com/catalog/prkunix/ .
 
 Perl 5.6 comes with Java Perl Lingo, or JPL.  JPL, still in

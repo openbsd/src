@@ -47,6 +47,7 @@
 #define SAVEt_MORTALIZESV	36
 #define SAVEt_SHARED_PVREF	37
 #define SAVEt_BOOL		38
+#define SAVEt_SAVESWITCHSTACK	40
 
 #ifndef SCOPE_SAVES_SIGNAL_MASK
 #define SCOPE_SAVES_SIGNAL_MASK 0
@@ -165,6 +166,16 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 	SSCHECK(2);						\
 	SSPUSHPTR((SV*)PL_comppad);				\
 	SSPUSHINT(SAVEt_COMPPAD);				\
+    } STMT_END
+
+#define SAVESWITCHSTACK(f,t) \
+    STMT_START {					\
+	SSCHECK(3);					\
+	SSPUSHPTR((SV*)(f));				\
+	SSPUSHPTR((SV*)(t));				\
+	SSPUSHINT(SAVEt_SAVESWITCHSTACK);		\
+	SWITCHSTACK((f),(t));				\
+	PL_curstackinfo->si_stack = (t);		\
     } STMT_END
 
 #ifdef USE_ITHREADS

@@ -9,6 +9,12 @@
  * over passes, and through long dales, and across many streams.
  */
 
+/* This file contains the functions needed to implement PerlIO, which
+ * is Perl's private replacement for the C stdio library. This is used
+ * by default unless you compile with -Uuseperlio or run with
+ * PERLIO=:stdio (but don't do this unless you know what you're doing)
+ */
+
 /*
  * If we have ActivePerl-like PERL_IMPLICIT_SYS then we need a dTHX to get
  * at the dispatch tables, even when we do not need it for other reasons.

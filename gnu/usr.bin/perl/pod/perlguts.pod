@@ -926,8 +926,11 @@ SV.
 
 The C<name> and C<namlen> arguments are used to associate a string with
 the magic, typically the name of a variable. C<namlen> is stored in the
-C<mg_len> field and if C<name> is non-null and C<namlen> E<gt>= 0 a malloc'd
-copy of the name is stored in C<mg_ptr> field.
+C<mg_len> field and if C<name> is non-null then either a C<savepvn> copy of
+C<name> or C<name> itself is stored in the C<mg_ptr> field, depending on
+whether C<namlen> is greater than zero or equal to zero respectively.  As a
+special case, if C<(name && namlen == HEf_SVKEY)> then C<name> is assumed
+to contain an C<SV*> and is stored as-is with its REFCNT incremented.
 
 The sv_magic function uses C<how> to determine which, if any, predefined
 "Magic Virtual Table" should be assigned to the C<mg_virtual> field.
@@ -943,6 +946,9 @@ structure.  If it is not the same as the C<sv> argument, the reference
 count of the C<obj> object is incremented.  If it is the same, or if
 the C<how> argument is C<PERL_MAGIC_arylen>, or if it is a NULL pointer,
 then C<obj> is merely stored, without the reference count being incremented.
+
+See also C<sv_magicext> in L<perlapi> for a more flexible way to add magic
+to an SV.
 
 There is also a function to add magic to an C<HV>:
 

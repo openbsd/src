@@ -955,9 +955,9 @@ variable instead, see L<perlfunc/warn> and L<perlvar/$ERRNO>.
 Create an interprocess channel.  This returns file descriptors like those
 returned by C<POSIX::open>.
 
-	($fd0, $fd1) = POSIX::pipe();
-	POSIX::write( $fd0, "hello", 5 );
-	POSIX::read( $fd1, $buf, 5 );
+	my ($read, $write) = POSIX::pipe();
+	POSIX::write( $write, "hello", 5 );
+	POSIX::read( $read, $buf, 5 );
 
 See also L<perlfunc/pipe>.
 

@@ -47,6 +47,9 @@ foreach (keys %datahandle) {
 
 my @tests = ();
 
+# [.VMS]TEST.COM calls harness with empty arguments, so clean-up @ARGV
+@ARGV = grep $_ && length( $_ ) => @ARGV;
+
 if (@ARGV) {
     if ($^O eq 'MSWin32') {
 	@tests = map(glob($_),@ARGV);

@@ -12,7 +12,7 @@
 #define _PERLIO_H
 /*
   Interface for perl to IO functions.
-  There is a hierachy of Configure determined #define controls:
+  There is a hierarchy of Configure determined #define controls:
    USE_STDIO   - forces PerlIO_xxx() to be #define-d onto stdio functions.
                  This is used for x2p subdirectory and for conservative
                  builds - "just like perl5.00X used to be".

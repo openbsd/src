@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..37\n";
+print "1..38\n";
 
 # delete() on hash elements
 
@@ -128,4 +128,17 @@ print @{$refary[0]} == 1 ? "ok 35\n" : "not ok 35 @list\n";
     my ($x,$y) = (1, scalar delete @h{()});
     print "not " if defined $y;
     print "ok 37\n";
+}
+
+{
+    # [perl #30733] array delete didn't free returned element
+    my $x = 0;
+    sub X::DESTROY { $x++ }
+    {
+	my @a;
+	$a[0] = bless [], 'X';
+	my $y = delete $a[0];
+    }
+    print "not " unless $x == 1;
+    print "ok 38\n";
 }

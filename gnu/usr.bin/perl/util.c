@@ -13,6 +13,12 @@
  * not content."  --Gandalf
  */
 
+/* This file contains assorted utility routines.
+ * Which is a polite way of saying any stuff that people couldn't think of
+ * a better place for. Amongst other things, it includes the warning and
+ * dieing stuff, plus wrappers for malloc code.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_UTIL_C
 #include "perl.h"
@@ -751,12 +757,12 @@ be freed with the C<Safefree()> function.
 char *
 Perl_savepv(pTHX_ const char *pv)
 {
-    register char *newaddr = Nullch;
-    if (pv) {
-	New(902,newaddr,strlen(pv)+1,char);
-	(void)strcpy(newaddr,pv);
-    }
-    return newaddr;
+    register char *newaddr;
+    if (!pv)
+	return Nullch;
+
+    New(902,newaddr,strlen(pv)+1,char);
+    return strcpy(newaddr,pv);
 }
 
 /* same thing but with a known length */
@@ -780,13 +786,13 @@ Perl_savepvn(pTHX_ const char *pv, register I32 len)
     New(903,newaddr,len+1,char);
     /* Give a meaning to NULL pointer mainly for the use in sv_magic() */
     if (pv) {
-    	Copy(pv,newaddr,len,char);	/* might not be null terminated */
-    	newaddr[len] = '\0';		/* is now */
+	/* might not be null terminated */
+    	newaddr[len] = '\0';
+    	return CopyD(pv,newaddr,len,char);
     }
     else {
-	Zero(newaddr,len+1,char);
+	return ZeroD(newaddr,len+1,char);
     }
-    return newaddr;
 }
 
 /*
@@ -800,12 +806,17 @@ which is shared between threads.
 char *
 Perl_savesharedpv(pTHX_ const char *pv)
 {
-    register char *newaddr = Nullch;
-    if (pv) {
-	newaddr = (char*)PerlMemShared_malloc(strlen(pv)+1);
-    	(void)strcpy(newaddr,pv);
+    register char *newaddr;
+    if (!pv)
+	return Nullch;
+
+    newaddr = (char*)PerlMemShared_malloc(strlen(pv)+1);
+    if (!newaddr) {
+	PerlLIO_write(PerlIO_fileno(Perl_error_log),
+		      PL_no_mem, strlen(PL_no_mem));
+	my_exit(1);
     }
-    return newaddr;
+    return strcpy(newaddr,pv);
 }
 
 
@@ -1030,15 +1041,86 @@ Perl_write_to_stderr(pTHX_ const char* message, int msglen)
     }
 }
 
+/* Common code used by vcroak, vdie and vwarner  */
+
+void S_vdie_common(pTHX_ const char *message, STRLEN msglen, I32 utf8);
+
+char *
+S_vdie_croak_common(pTHX_ const char* pat, va_list* args, STRLEN* msglen,
+		    I32* utf8)
+{
+    char *message;
+
+    if (pat) {
+	SV *msv = vmess(pat, args);
+	if (PL_errors && SvCUR(PL_errors)) {
+	    sv_catsv(PL_errors, msv);
+	    message = SvPV(PL_errors, *msglen);
+	    SvCUR_set(PL_errors, 0);
+	}
+	else
+	    message = SvPV(msv,*msglen);
+	*utf8 = SvUTF8(msv);
+    }
+    else {
+	message = Nullch;
+    }
+
+    DEBUG_S(PerlIO_printf(Perl_debug_log,
+			  "%p: die/croak: message = %s\ndiehook = %p\n",
+			  thr, message, PL_diehook));
+    if (PL_diehook) {
+	S_vdie_common(aTHX_ message, *msglen, *utf8);
+    }
+    return message;
+}
+
+void
+S_vdie_common(pTHX_ const char *message, STRLEN msglen, I32 utf8)
+{
+    HV *stash;
+    GV *gv;
+    CV *cv;
+    /* sv_2cv might call Perl_croak() */
+    SV *olddiehook = PL_diehook;
+
+    assert(PL_diehook);
+    ENTER;
+    SAVESPTR(PL_diehook);
+    PL_diehook = Nullsv;
+    cv = sv_2cv(olddiehook, &stash, &gv, 0);
+    LEAVE;
+    if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
+	dSP;
+	SV *msg;
+
+	ENTER;
+	save_re_context();
+	if (message) {
+	    msg = newSVpvn(message, msglen);
+	    SvFLAGS(msg) |= utf8;
+	    SvREADONLY_on(msg);
+	    SAVEFREESV(msg);
+	}
+	else {
+	    msg = ERRSV;
+	}
+
+	PUSHSTACKi(PERLSI_DIEHOOK);
+	PUSHMARK(SP);
+	XPUSHs(msg);
+	PUTBACK;
+	call_sv((SV*)cv, G_DISCARD);
+	POPSTACK;
+	LEAVE;
+    }
+}
+
 OP *
 Perl_vdie(pTHX_ const char* pat, va_list *args)
 {
     char *message;
     int was_in_eval = PL_in_eval;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-    SV *msv;
     STRLEN msglen;
     I32 utf8 = 0;
 
@@ -1046,58 +1128,7 @@ Perl_vdie(pTHX_ const char* pat, va_list *args)
 			  "%p: die: curstack = %p, mainstack = %p\n",
 			  thr, PL_curstack, PL_mainstack));
 
-    if (pat) {
-	msv = vmess(pat, args);
-	if (PL_errors && SvCUR(PL_errors)) {
-	    sv_catsv(PL_errors, msv);
-	    message = SvPV(PL_errors, msglen);
-	    SvCUR_set(PL_errors, 0);
-	}
-	else
-	    message = SvPV(msv,msglen);
-	utf8 = SvUTF8(msv);
-    }
-    else {
-	message = Nullch;
-	msglen = 0;
-    }
-
-    DEBUG_S(PerlIO_printf(Perl_debug_log,
-			  "%p: die: message = %s\ndiehook = %p\n",
-			  thr, message, PL_diehook));
-    if (PL_diehook) {
-	/* sv_2cv might call Perl_croak() */
-	SV *olddiehook = PL_diehook;
-	ENTER;
-	SAVESPTR(PL_diehook);
-	PL_diehook = Nullsv;
-	cv = sv_2cv(olddiehook, &stash, &gv, 0);
-	LEAVE;
-	if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
-	    dSP;
-	    SV *msg;
-
-	    ENTER;
-	    save_re_context();
-	    if (message) {
-		msg = newSVpvn(message, msglen);
-		SvFLAGS(msg) |= utf8;
-		SvREADONLY_on(msg);
-		SAVEFREESV(msg);
-	    }
-	    else {
-		msg = ERRSV;
-	    }
-
-	    PUSHSTACKi(PERLSI_DIEHOOK);
-	    PUSHMARK(SP);
-	    XPUSHs(msg);
-	    PUTBACK;
-	    call_sv((SV*)cv, G_DISCARD);
-	    POPSTACK;
-	    LEAVE;
-	}
-    }
+    message = S_vdie_croak_common(aTHX_ pat, args, &msglen, &utf8);
 
     PL_restartop = die_where(message, msglen);
     SvFLAGS(ERRSV) |= utf8;
@@ -1138,65 +1169,11 @@ void
 Perl_vcroak(pTHX_ const char* pat, va_list *args)
 {
     char *message;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-    SV *msv;
     STRLEN msglen;
     I32 utf8 = 0;
 
-    if (pat) {
-	msv = vmess(pat, args);
-	if (PL_errors && SvCUR(PL_errors)) {
-	    sv_catsv(PL_errors, msv);
-	    message = SvPV(PL_errors, msglen);
-	    SvCUR_set(PL_errors, 0);
-	}
-	else
-	    message = SvPV(msv,msglen);
-	utf8 = SvUTF8(msv);
-    }
-    else {
-	message = Nullch;
-	msglen = 0;
-    }
+    message = S_vdie_croak_common(aTHX_ pat, args, &msglen, &utf8);
 
-    DEBUG_S(PerlIO_printf(Perl_debug_log, "croak: 0x%"UVxf" %s",
-			  PTR2UV(thr), message));
-
-    if (PL_diehook) {
-	/* sv_2cv might call Perl_croak() */
-	SV *olddiehook = PL_diehook;
-	ENTER;
-	SAVESPTR(PL_diehook);
-	PL_diehook = Nullsv;
-	cv = sv_2cv(olddiehook, &stash, &gv, 0);
-	LEAVE;
-	if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
-	    dSP;
-	    SV *msg;
-
-	    ENTER;
-	    save_re_context();
-	    if (message) {
-		msg = newSVpvn(message, msglen);
-		SvFLAGS(msg) |= utf8;
-		SvREADONLY_on(msg);
-		SAVEFREESV(msg);
-	    }
-	    else {
-		msg = ERRSV;
-	    }
-
-	    PUSHSTACKi(PERLSI_DIEHOOK);
-	    PUSHMARK(SP);
-	    XPUSHs(msg);
-	    PUTBACK;
-	    call_sv((SV*)cv, G_DISCARD);
-	    POPSTACK;
-	    LEAVE;
-	}
-    }
     if (PL_in_eval) {
 	PL_restartop = die_where(message, msglen);
 	SvFLAGS(ERRSV) |= utf8;
@@ -1354,49 +1331,18 @@ Perl_warner(pTHX_ U32  err, const char* pat,...)
 void
 Perl_vwarner(pTHX_ U32  err, const char* pat, va_list* args)
 {
-    char *message;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-    SV *msv;
-    STRLEN msglen;
-    I32 utf8 = 0;
-
-    msv = vmess(pat, args);
-    message = SvPV(msv, msglen);
-    utf8 = SvUTF8(msv);
-
     if (ckDEAD(err)) {
+	SV *msv = vmess(pat, args);
+	STRLEN msglen;
+	char *message = SvPV(msv, msglen);
+	I32 utf8 = SvUTF8(msv);
+
 #ifdef USE_5005THREADS
 	DEBUG_S(PerlIO_printf(Perl_debug_log, "croak: 0x%"UVxf" %s", PTR2UV(thr), message));
 #endif /* USE_5005THREADS */
 	if (PL_diehook) {
-	    /* sv_2cv might call Perl_croak() */
-	    SV *olddiehook = PL_diehook;
-	    ENTER;
-	    SAVESPTR(PL_diehook);
-	    PL_diehook = Nullsv;
-	    cv = sv_2cv(olddiehook, &stash, &gv, 0);
-	    LEAVE;
-	    if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
-		dSP;
-		SV *msg;
-
-		ENTER;
-		save_re_context();
-		msg = newSVpvn(message, msglen);
-		SvFLAGS(msg) |= utf8;
-		SvREADONLY_on(msg);
-		SAVEFREESV(msg);
-
-		PUSHSTACKi(PERLSI_DIEHOOK);
-		PUSHMARK(sp);
-		XPUSHs(msg);
-		PUTBACK;
-		call_sv((SV*)cv, G_DISCARD);
-		POPSTACK;
-		LEAVE;
-	    }
+	    assert(message);
+	    S_vdie_common(aTHX_ message, msglen, utf8);
 	}
 	if (PL_in_eval) {
 	    PL_restartop = die_where(message, msglen);
@@ -1407,36 +1353,7 @@ Perl_vwarner(pTHX_ U32  err, const char* pat, va_list* args)
 	my_failure_exit();
     }
     else {
-	if (PL_warnhook) {
-	    /* sv_2cv might call Perl_warn() */
-	    SV *oldwarnhook = PL_warnhook;
-	    ENTER;
-	    SAVESPTR(PL_warnhook);
-	    PL_warnhook = Nullsv;
-	    cv = sv_2cv(oldwarnhook, &stash, &gv, 0);
-	    LEAVE;
-	    if (cv && !CvDEPTH(cv) && (CvROOT(cv) || CvXSUB(cv))) {
-		dSP;
-		SV *msg;
-
-		ENTER;
-		save_re_context();
-		msg = newSVpvn(message, msglen);
-		SvFLAGS(msg) |= utf8;
-		SvREADONLY_on(msg);
-		SAVEFREESV(msg);
-
-		PUSHSTACKi(PERLSI_WARNHOOK);
-		PUSHMARK(sp);
-		XPUSHs(msg);
-		PUTBACK;
-		call_sv((SV*)cv, G_DISCARD);
-		POPSTACK;
-		LEAVE;
-		return;
-	    }
-	}
-	write_to_stderr(message, msglen);
+	Perl_vwarn(aTHX_ pat, args);
     }
 }
 
@@ -1462,6 +1379,7 @@ Perl_my_setenv(pTHX_ char *nam, char *val)
 #endif
   {
 #ifndef PERL_USE_SAFE_PUTENV
+    if (!PL_use_safe_putenv) {
     /* most putenv()s leak, so we manipulate environ directly */
     register I32 i=setenv_getix(nam);		/* where does it go? */
     int nlen, vlen;
@@ -1502,8 +1420,8 @@ Perl_my_setenv(pTHX_ char *nam, char *val)
     environ[i] = (char*)safesysmalloc((nlen+vlen+2) * sizeof(char));
     /* all that work just for this */
     my_setenv_format(environ[i], nam, nlen, val, vlen);
-
-#else   /* PERL_USE_SAFE_PUTENV */
+    } else {
+# endif
 #   if defined(__CYGWIN__) || defined( EPOC)
     setenv(nam, val, 1);
 #   else
@@ -1518,7 +1436,9 @@ Perl_my_setenv(pTHX_ char *nam, char *val)
     my_setenv_format(new_env, nam, nlen, val, vlen);
     (void)putenv(new_env);
 #   endif /* __CYGWIN__ */
-#endif  /* PERL_USE_SAFE_PUTENV */
+#ifndef PERL_USE_SAFE_PUTENV
+    }
+#endif
   }
 }
 

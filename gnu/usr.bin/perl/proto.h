@@ -1363,4 +1363,7 @@ STATIC HE*	S_hv_fetch_common(pTHX_ HV* tb, SV* key_sv, const char* key, STRLEN k
 PERL_CALLCONV SV*	Perl_hv_scalar(pTHX_ HV* hv);
 PERL_CALLCONV SV*	Perl_magic_scalarpack(pTHX_ HV* hv, MAGIC*	mg);
 
+#if defined(DEBUGGING)
+PERL_CALLCONV int	Perl_get_debug_opts_flags(pTHX_ char **s, int flags);
+#endif
 END_EXTERN_C

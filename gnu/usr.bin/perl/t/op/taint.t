@@ -16,6 +16,7 @@ use strict;
 use Config;
 use File::Spec::Functions;
 
+my $total_tests = 236;
 my $test = 177;
 sub ok ($;$) {
     my($ok, $name) = @_;
@@ -124,7 +125,7 @@ my $echo = "$Invoke_Perl $ECHO";
 
 my $TEST = catfile(curdir(), 'TEST');
 
-print "1..223\n";
+print "1..$total_tests\n";
 
 # First, let's make sure that Perl is checking the dangerous
 # environment variables. Maybe they aren't set yet, so we'll
@@ -1040,4 +1041,40 @@ else
     test 222, !tainted($^O);
     eval '$^O = $^X';
     test 223, $@ =~ /Insecure dependency in/;
+}
+
+EFFECTIVELY_CONSTANTS: {
+    my $tainted_number = 12 + $TAINT0;
+    test 224, tainted( $tainted_number );
+
+    # Even though it's always 0, it's still tainted
+    my $tainted_product = $tainted_number * 0;
+    test 225, tainted( $tainted_product );
+    test 226, $tainted_product == 0;
+}
+
+TERNARY_CONDITIONALS: {
+    my $tainted_true  = $TAINT . "blah blah blah";
+    my $tainted_false = $TAINT0;
+    test 227, tainted( $tainted_true );
+    test 228, tainted( $tainted_false );
+
+    my $result = $tainted_true ? "True" : "False";
+    test 229, $result eq "True";
+    test 230, !tainted( $result );
+
+    $result = $tainted_false ? "True" : "False";
+    test 231, $result eq "False";
+    test 232, !tainted( $result );
+
+    my $untainted_whatever = "The Fabulous Johnny Cash";
+    my $tainted_whatever = "Soft Cell" . $TAINT;
+
+    $result = $tainted_true ? $tainted_whatever : $untainted_whatever;
+    test 233, $result eq "Soft Cell";
+    test 234, tainted( $result );
+
+    $result = $tainted_false ? $tainted_whatever : $untainted_whatever;
+    test 235, $result eq "The Fabulous Johnny Cash";
+    test 236, !tainted( $result );
 }

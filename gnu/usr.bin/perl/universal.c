@@ -14,6 +14,10 @@
  * beginning." --Gandalf, relating Gollum's story
  */
 
+/* This file contains the code that implements the functions in Perl's
+ * UNIVERSAL package, such as UNIVERSAL->can().
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_UNIVERSAL_C
 #include "perl.h"

@@ -14,13 +14,16 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-# Maint doesn't have patch 22353 (op_seq changes)
-
-our $VERSION   = "0.61";
+our $VERSION   = "0.64";
 our @ISA       = qw(Exporter);
-our @EXPORT_OK = qw(set_style set_style_standard add_callback
-		    concise_subref concise_cv concise_main
-		    add_style walk_output);
+our @EXPORT_OK = qw( set_style set_style_standard add_callback
+		     concise_subref concise_cv concise_main
+		     add_style walk_output compile reset_sequence );
+our %EXPORT_TAGS =
+    ( io	=> [qw( walk_output compile reset_sequence )],
+      style	=> [qw( add_style set_style_standard )],
+      cb	=> [qw( add_callback )],
+      mech	=> [qw( concise_subref concise_cv concise_main )],  );
 
 # use #6
 use B qw(class ppname main_start main_root main_cv cstring svref_2object
@@ -35,8 +38,8 @@ my %style =
     "#class pp_#name"],
    "concise" =>
    ["#hyphseq2 (*(   (x( ;)x))*)<#classsym> "
-    . "#exname#arg(?([#targarglife])?)~#flags(?(/#private)?)(x(;~->#next)x)\n",
-    "  (*(    )*)     goto #seq\n",
+    . "#exname#arg(?([#targarglife])?)~#flags(?(/#private)?)(x(;~->#next)x)\n"
+    , "  (*(    )*)     goto #seq\n",
     "(?(<#seq>)?)#exname#arg(?([#targarglife])?)"],
    "linenoise" =>
    ["(x(;(*( )*))x)#noise#arg(?([#targarg])?)(x( ;\n)x)",
@@ -44,8 +47,9 @@ my %style =
     "(?(#seq)?)#noise#arg(?([#targarg])?)"],
    "debug" =>
    ["#class (#addr)\n\top_next\t\t#nextaddr\n\top_sibling\t#sibaddr\n\t"
-    . "op_ppaddr\tPL_ppaddr[OP_#NAME]\n\top_type\t\t#typenum\n\top_seq\t\t"
-    . "#seqnum\n\top_flags\t#flagval\n\top_private\t#privval\n"
+    . "op_ppaddr\tPL_ppaddr[OP_#NAME]\n\top_type\t\t#typenum\n" .
+    ($] > 5.009 ? '' : "\top_seq\t\t#seqnum\n")
+    . "\top_flags\t#flagval\n\top_private\t#privval\n"
     . "(?(\top_first\t#firstaddr\n)?)(?(\top_last\t\t#lastaddr\n)?)"
     . "(?(\top_sv\t\t#svaddr\n)?)",
     "    GOTO #addr\n",
@@ -69,8 +73,9 @@ my $base = 36;		# how <sequence#> is displayed
 my $big_endian = 1;	# more <sequence#> display
 my $tree_style = 0;	# tree-order details
 my $banner = 1;		# print banner before optree is traversed
+my $do_main = 0;	# force printing of main routine
 
-# another factor:
+# another factor: can affect all styles!
 our @callbacks;		# allow external management
 
 set_style_standard("concise");
@@ -104,27 +109,49 @@ sub add_callback {
 }
 
 # output handle, used with all Concise-output printing
-our $walkHandle = \*STDOUT;	# public for your convenience
+our $walkHandle;	# public for your convenience
+BEGIN { $walkHandle = \*STDOUT }
 
 sub walk_output { # updates $walkHandle
     my $handle = shift;
+    return $walkHandle unless $handle; # allow use as accessor
+
     if (ref $handle eq 'SCALAR') {
+	require Config;
+	die "no perlio in this build, can't call walk_output (\\\$scalar)\n"
+	    unless $Config::Config{useperlio};
 	# in 5.8+, open(FILEHANDLE,MODE,REFERENCE) writes to string
-	open my $tmp, '>', $handle;	# but cant re-set an existing filehandle
+	open my $tmp, '>', $handle;	# but cant re-set existing STDOUT
 	$walkHandle = $tmp;		# so use my $tmp as intermediate var
-	return;
+	return $walkHandle;
     }
-    $walkHandle = $handle;
-    my $iotype = ref $walkHandle;
+    my $iotype = ref $handle;
     die "expecting argument/object that can print\n"
-	unless $iotype eq 'GLOB' or $iotype and $walkHandle->can('print');
+	unless $iotype eq 'GLOB' or $iotype and $handle->can('print');
+    $walkHandle = $handle;
 }
 
 sub concise_subref {
     my($order, $coderef) = @_;
     my $codeobj = svref_2object($coderef);
-    die "err: not a coderef: $coderef\n" unless ref $codeobj eq 'B::CV';#CODE';
+
+    return concise_stashref(@_)	
+	unless ref $codeobj eq 'B::CV';
     concise_cv_obj($order, $codeobj);
+}
+
+sub concise_stashref {
+    my($order, $h) = @_;
+    foreach my $k (sort keys %$h) {
+	local *s = $h->{$k};
+	my $coderef = *s{CODE} or next;
+	reset_sequence();
+	print "FUNC: ", *s, "\n";
+	my $codeobj = svref_2object($coderef);
+	next unless ref $codeobj eq 'B::CV';
+	eval { concise_cv_obj($order, $codeobj) }
+	or warn "err $@ on $codeobj";
+    }
 }
 
 # This should have been called concise_subref, but it was exported
@@ -187,18 +214,22 @@ my @tree_decorations =
    [" ", map("$start_sym$_$end_sym", "q", "w", "t", "x", "m"), "", 0],
   );
 
-sub compile {
+
+sub compileOpts {
+    # set rendering state from options and args
     my @options = grep(/^-/, @_);
     my @args = grep(!/^-/, @_);
-    my $do_main = 0;
     for my $o (@options) {
+	# mode/order
 	if ($o eq "-basic") {
 	    $order = "basic";
 	} elsif ($o eq "-exec") {
 	    $order = "exec";
 	} elsif ($o eq "-tree") {
 	    $order = "tree";
-	} elsif ($o eq "-compact") {
+	}
+	# tree-specific
+	elsif ($o eq "-compact") {
 	    $tree_style |= 1;
 	} elsif ($o eq "-loose") {
 	    $tree_style &= ~1;
@@ -206,17 +237,26 @@ sub compile {
 	    $tree_style |= 2;
 	} elsif ($o eq "-ascii") {
 	    $tree_style &= ~2;
-	} elsif ($o eq "-main") {
-	    $do_main = 1;
-	} elsif ($o =~ /^-base(\d+)$/) {
+	}
+	# sequence numbering
+	elsif ($o =~ /^-base(\d+)$/) {
 	    $base = $1;
 	} elsif ($o eq "-bigendian") {
 	    $big_endian = 1;
 	} elsif ($o eq "-littleendian") {
 	    $big_endian = 0;
-	} elsif ($o eq "-banner") {
-	    $banner = 0;
 	}
+	elsif ($o eq "-nobanner") {
+	    $banner = 0;
+	} elsif ($o eq "-banner") {
+	    $banner = 1;
+	}
+	elsif ($o eq "-main") {
+	    $do_main = 1;
+	} elsif ($o eq "-nomain") {
+	    $do_main = 0;
+	}
+	# line-style options
 	elsif (exists $style{substr($o, 1)}) {
 	    $stylename = substr($o, 1);
 	    set_style_standard($stylename);
@@ -224,48 +264,58 @@ sub compile {
 	    warn "Option $o unrecognized";
 	}
     }
+    return (@args);
+}
+
+sub compile {
+    my (@args) = compileOpts(@_);
     return sub {
-	if (@args) {
-	    for my $objname (@args) {
-		if ($objname eq "BEGIN") {
-		    concise_specials("BEGIN", $order,
-				     B::begin_av->isa("B::AV") ?
-				     B::begin_av->ARRAY : ());
-		} elsif ($objname eq "INIT") {
-		    concise_specials("INIT", $order,
-				     B::init_av->isa("B::AV") ?
-				     B::init_av->ARRAY : ());
-		} elsif ($objname eq "CHECK") {
-		    concise_specials("CHECK", $order,
-				     B::check_av->isa("B::AV") ?
-				     B::check_av->ARRAY : ());
-		} elsif ($objname eq "END") {
-		    concise_specials("END", $order,
-				     B::end_av->isa("B::AV") ?
-				     B::end_av->ARRAY : ());
+	my @newargs = compileOpts(@_); # accept new rendering options
+	warn "disregarding non-options: @newargs\n" if @newargs;
+
+	for my $objname (@args) {
+	    next unless $objname; # skip null args to avoid noisy responses
+
+	    if ($objname eq "BEGIN") {
+		concise_specials("BEGIN", $order,
+			       B::begin_av->isa("B::AV") ?
+			       B::begin_av->ARRAY : ());
+	    } elsif ($objname eq "INIT") {
+		concise_specials("INIT", $order,
+			       B::init_av->isa("B::AV") ?
+			       B::init_av->ARRAY : ());
+	    } elsif ($objname eq "CHECK") {
+		concise_specials("CHECK", $order,
+			       B::check_av->isa("B::AV") ?
+			       B::check_av->ARRAY : ());
+	    } elsif ($objname eq "END") {
+		concise_specials("END", $order,
+                                     B::end_av->isa("B::AV") ?
+			       B::end_av->ARRAY : ());
+	    }
+	    else {
+		# convert function names to subrefs
+		my $objref;
+		if (ref $objname) {
+		    print $walkHandle "B::Concise::compile($objname)\n"
+			if $banner;
+		    $objref = $objname;
 		} else {
-		    # convert function names to subrefs
-		    my $objref;
-		    if (ref $objname) {
-			print $walkHandle "B::Concise::compile($objname)\n"
-			    if $banner;
-			$objref = $objname;
-		    } else {
-			$objname = "main::" . $objname unless $objname =~ /::/;
-			print $walkHandle "$objname:\n";
-			no strict 'refs';
-			die "err: unknown function ($objname)\n"
-			    unless *{$objname}{CODE};
-			$objref = \&$objname;
-		    }
-		    concise_subref($order, $objref);
+		    $objname = "main::" . $objname unless $objname =~ /::/;
+		    print $walkHandle "$objname:\n";
+		    no strict 'refs';
+		    die "err: unknown function ($objname)\n"
+			unless *{$objname}{CODE};
+		    $objref = \&$objname;
 		}
+		concise_subref($order, $objref);
 	    }
 	}
 	if (!@args or $do_main) {
 	    print $walkHandle "main program:\n" if $do_main;
 	    concise_main($order);
 	}
+	return @args;	# something
     }
 }
 
@@ -327,6 +377,7 @@ sub reset_sequence {
     # reset the sequence
     %sequence_num = ();
     $seq_max = 1;
+    $lastnext = 0;
 }
 
 sub seq {
@@ -383,9 +434,15 @@ sub walk_exec {
 		push @$targ, $ar;
 		push @todo, [$op->pmreplstart, $ar];
 	    } elsif ($name =~ /^enter(loop|iter)$/) {
-		$labels{$op->nextop->seq} = "NEXT";
-		$labels{$op->lastop->seq} = "LAST";
-		$labels{$op->redoop->seq} = "REDO";		
+		if ($] > 5.009) {
+		    $labels{${$op->nextop}} = "NEXT";
+		    $labels{${$op->lastop}} = "LAST";
+		    $labels{${$op->redoop}} = "REDO";
+		} else {
+		    $labels{$op->nextop->seq} = "NEXT";
+		    $labels{$op->lastop->seq} = "LAST";
+		    $labels{$op->redoop->seq} = "REDO";		
+		}
 	    }
 	}
     }
@@ -429,19 +486,34 @@ sub sequence {
 }
 
 sub fmt_line {    # generate text-line for op.
-    my($hr, $text, $level) = @_;
-    return '' if $hr->{SKIP};	# suppress line if a callback said so
+    my($hr, $op, $text, $level) = @_;
 
+    $_->($hr, $op, \$text, \$level, $stylename) for @callbacks;
+
+    return '' if $hr->{SKIP};	# suppress line if a callback said so
+    return '' if $hr->{goto} and $hr->{goto} eq '-';	# no goto nowhere
+
+    # spec: (?(text1#varText2)?)
     $text =~ s/\(\?\(([^\#]*?)\#(\w+)([^\#]*?)\)\?\)/
 	$hr->{$2} ? $1.$hr->{$2}.$3 : ""/eg;
 
+    # spec: (x(exec_text;basic_text)x)
     $text =~ s/\(x\((.*?);(.*?)\)x\)/$order eq "exec" ? $1 : $2/egs;
+
+    # spec: (*(text)*)
     $text =~ s/\(\*\(([^;]*?)\)\*\)/$1 x $level/egs;
+
+    # spec: (*(text1;text2)*)
     $text =~ s/\(\*\((.*?);(.*?)\)\*\)/$1 x ($level - 1) . $2 x ($level>0)/egs;
+
+    # convert #Var to tag=>val form: Var\t#var
+    $text =~ s/\#([A-Z][a-z]+)(\d+)?/\t\u$1\t\L#$1$2/gs;
+
+    # spec: #varN
     $text =~ s/\#([a-zA-Z]+)(\d+)/sprintf("%-$2s", $hr->{$1})/eg;
 
-    $text =~ s/\#([a-zA-Z]+)/$hr->{$1}/eg;  # populate data into template
-    $text =~ s/[ \t]*~+[ \t]*/ /g;
+    $text =~ s/\#([a-zA-Z]+)/$hr->{$1}/eg;	# populate #var's
+    $text =~ s/[ \t]*~+[ \t]*/ /g;		# squeeze tildes
     chomp $text;
     return "$text\n" if $text ne "";
     return $text; # suppress empty lines
@@ -463,8 +535,7 @@ $priv{"repeat"}{64} = "DOLIST";
 $priv{"leaveloop"}{64} = "CONT";
 @{$priv{$_}}{32,64,96} = ("DREFAV", "DREFHV", "DREFSV")
   for (qw(rv2gv rv2sv padsv aelem helem));
-$priv{"entersub"}{16} = "DBG";
-$priv{"entersub"}{32} = "TARG";
+@{$priv{"entersub"}}{16,32,64} = ("DBG","TARG","NOMOD");
 @{$priv{$_}}{4,8,128} = ("INARGS","AMPER","NO()") for ("entersub", "rv2cv");
 $priv{"gv"}{32} = "EARLYCV";
 $priv{"aelem"}{16} = $priv{"helem"}{16} = "LVDEFER";
@@ -482,7 +553,8 @@ $priv{$_}{16} = "TARGMY"
        "link", "symlink", "mkdir", "rmdir", "wait", "waitpid", "system",
        "exec", "kill", "getppid", "getpgrp", "setpgrp", "getpriority",
        "setpriority", "time", "sleep");
-@{$priv{"const"}}{8,16,32,64,128} = ("STRICT","ENTERED", '$[', "BARE", "WARN");
+$priv{$_}{4} = "REVERSED" for ("enteriter", "iter");
+@{$priv{"const"}}{4,8,16,32,64,128} = ("SHORT","STRICT","ENTERED",'$[',"BARE","WARN");
 $priv{"flip"}{64} = $priv{"flop"}{64} = "LINENUM";
 $priv{"list"}{64} = "GUESSED";
 $priv{"delete"}{64} = "SLICE";
@@ -490,7 +562,7 @@ $priv{"exists"}{64} = "SUB";
 $priv{$_}{64} = "LOCALE"
   for ("sort", "prtf", "sprintf", "slt", "sle", "seq", "sne", "sgt", "sge",
        "scmp", "lc", "uc", "lcfirst", "ucfirst");
-@{$priv{"sort"}}{1,2,4,8} = ("NUM", "INT", "REV", "INPLACE");
+@{$priv{"sort"}}{1,2,4,8,16} = ("NUM", "INT", "REV", "INPLACE","DESC");
 $priv{"threadsv"}{64} = "SVREFd";
 @{$priv{$_}}{16,32,64,128} = ("INBIN","INCR","OUTBIN","OUTCR")
   for ("open", "backtick");
@@ -555,7 +627,10 @@ sub concise_sv {
 	} elsif (class($sv) eq "HV") {
 	    $hr->{svval} .= 'HASH';
 	}
-	return $hr->{svclass} . " " .  $hr->{svval};
+
+	$hr->{svval} = 'undef' unless defined $hr->{svval};
+	my $out = $hr->{svclass};
+	return $out .= " $hr->{svval}" ; 
     }
 }
 
@@ -669,7 +744,14 @@ sub concise_op {
     }
     $h{seq} = $h{hyphseq} = seq($op);
     $h{seq} = "" if $h{seq} eq "-";
-    $h{seqnum} = $op->seq;
+    if ($] > 5.009) {
+	$h{opt} = $op->opt;
+	$h{static} = $op->static;
+	$h{label} = $labels{$$op};
+    } else {
+	$h{seqnum} = $op->seq;
+	$h{label} = $labels{$op->seq};
+    }
     $h{next} = $op->next;
     $h{next} = (class($h{next}) eq "NULL") ? "(end)" : seq($h{next});
     $h{nextaddr} = sprintf("%#x", $ {$op->next});
@@ -683,21 +765,21 @@ sub concise_op {
     $h{privval} = $op->private;
     $h{private} = private_flags($h{name}, $op->private);
     $h{addr} = sprintf("%#x", $$op);
-    $h{label} = $labels{$op->seq};
     $h{typenum} = $op->type;
     $h{noise} = $linenoise[$op->type];
 
-    $_->(\%h, $op, \$format, \$level, $stylename) for @callbacks;
-    return fmt_line(\%h, $format, $level);
+    return fmt_line(\%h, $op, $format, $level);
 }
 
 sub B::OP::concise {
     my($op, $level) = @_;
     if ($order eq "exec" and $lastnext and $$lastnext != $$op) {
 	# insert a 'goto' line
-	my $h = {"seq" => seq($lastnext), "class" => class($lastnext),
-		 "addr" => sprintf("%#x", $$lastnext)};
-	print $walkHandle fmt_line($h, $gotofmt, $level+1);
+	my $synth = {"seq" => seq($lastnext), "class" => class($lastnext),
+		     "addr" => sprintf("%#x", $$lastnext),
+		     "goto" => seq($lastnext), # simplify goto '-' removal
+	     };
+	print $walkHandle fmt_line($synth, $op, $gotofmt, $level+1);
     }
     $lastnext = $op->next;
     print $walkHandle concise_op($op, $level, $format);
@@ -722,10 +804,12 @@ sub b_terse {
 	# insert a 'goto'
 	my $h = {"seq" => seq($lastnext), "class" => class($lastnext),
 		 "addr" => sprintf("%#x", $$lastnext)};
-	print fmt_line($h, $style{"terse"}[1], $level+1);
+	print # $walkHandle
+	    fmt_line($h, $op, $style{"terse"}[1], $level+1);
     }
     $lastnext = $op->next;
-    print concise_op($op, $level, $style{"terse"}[0]);
+    print # $walkHandle 
+	concise_op($op, $level, $style{"terse"}[0]);
 }
 
 sub tree {
@@ -764,29 +848,26 @@ sub tree {
 
 # *** Warning: fragile kludge ahead ***
 # Because the B::* modules run in the same interpreter as the code
-# they're compiling, their presence tends to distort the view we have
-# of the code we're looking at. In particular, perl gives sequence
-# numbers to both OPs in general and COPs in particular. If the
-# program we're looking at were run on its own, these numbers would
-# start at 1. Because all of B::Concise and all the modules it uses
-# are compiled first, though, by the time we get to the user's program
-# the sequence numbers are alreay at pretty high numbers, which would
-# be distracting if you're trying to tell OPs apart. Therefore we'd
-# like to subtract an offset from all the sequence numbers we display,
-# to restore the simpler view of the world. The trick is to know what
-# that offset will be, when we're still compiling B::Concise!  If we
+# they're compiling, their presence tends to distort the view we have of
+# the code we're looking at. In particular, perl gives sequence numbers
+# to COPs. If the program we're looking at were run on its own, this
+# would start at 1. Because all of B::Concise and all the modules it
+# uses are compiled first, though, by the time we get to the user's
+# program the sequence number is already pretty high, which could be
+# distracting if you're trying to tell OPs apart. Therefore we'd like to
+# subtract an offset from all the sequence numbers we display, to
+# restore the simpler view of the world. The trick is to know what that
+# offset will be, when we're still compiling B::Concise!  If we
 # hardcoded a value, it would have to change every time B::Concise or
-# other modules we use do. To help a little, what we do here is
-# compile a little code at the end of the module, and compute the base
-# sequence number for the user's program as being a small offset
-# later, so all we have to worry about are changes in the offset.
-# (Note that we now only play this game with COP sequence numbers. OP
-# sequence numbers aren't used to refer to OPs from a distance, and
-# they don't have much significance, so we just generate our own
-# sequence numbers which are easier to control. This way we also don't
-# stand in the way of a possible future removal of OP sequence
-# numbers).
- 
+# other modules we use do. To help a little, what we do here is compile
+# a little code at the end of the module, and compute the base sequence
+# number for the user's program as being a small offset later, so all we
+# have to worry about are changes in the offset.
+
+# [For 5.8.x and earlier perl is generating sequence numbers for all ops,
+#  and using them to reference labels]
+
+
 # When you say "perl -MO=Concise -e '$a'", the output should look like:
 
 # 4  <@> leave[t1] vKP/REFC ->(end)
@@ -1010,19 +1091,42 @@ obviously mutually exclusive with bigendian.
 
 =head2 Other options
 
+These are pairwise exclusive.
+
 =over 4
 
 =item B<-main>
 
 Include the main program in the output, even if subroutines were also
-specified.  This is the only option that is not sticky (see below)
+specified.  This rendering is normally suppressed when a subroutine
+name or reference is given.
+
+=item B<-nomain>
+
+This restores the default behavior after you've changed it with '-main'
+(it's not normally needed).  If no subroutine name/ref is given, main is
+rendered, regardless of this flag.
+
+=item B<-nobanner>
+
+Renderings usually include a banner line identifying the function name
+or stringified subref.  This suppresses the printing of the banner.
+
+TBC: Remove the stringified coderef; while it provides a 'cookie' for
+each function rendered, the cookies used should be 1,2,3.. not a
+random hex-address.  It also complicates string comparison of two
+different trees.
 
 =item B<-banner>
 
-B::Concise::compile normally prints a banner line identifying the
-function name, or in case of a subref, a generic message including
-(unfortunately) the stringified coderef.  This option suppresses the
-printing of the banner.
+restores default banner behavior.
+
+=item B<-banneris> => subref
+
+TBC: a hookpoint (and an option to set it) for a user-supplied
+function to produce a banner appropriate for users needs.  It's not
+ideal, because the rendering-state variables, which are a natural
+candidate for use in concise.t, are unavailable to the user.
 
 =back
 
@@ -1032,6 +1136,46 @@ If you invoke Concise more than once in a program, you should know that
 the options are 'sticky'.  This means that the options you provide in
 the first call will be remembered for the 2nd call, unless you
 re-specify or change them.
+
+=head1 ABBREVIATIONS
+
+The concise style uses symbols to convey maximum info with minimal
+clutter (like hex addresses).  With just a little practice, you can
+start to see the flowers, not just the branches, in the trees.
+
+=head2 OP class abbreviations
+
+These symbols appear before the op-name, and indicate the
+B:: namespace that represents the ops in your Perl code.
+
+    0      OP (aka BASEOP)  An OP with no children
+    1      UNOP             An OP with one child
+    2      BINOP            An OP with two children
+    |      LOGOP            A control branch OP
+    @      LISTOP           An OP that could have lots of children
+    /      PMOP             An OP with a regular expression
+    $      SVOP             An OP with an SV
+    "      PVOP             An OP with a string
+    {      LOOP             An OP that holds pointers for a loop
+    ;      COP              An OP that marks the start of a statement
+    #      PADOP            An OP with a GV on the pad
+
+=head2 OP flags abbreviations
+
+These symbols represent various flags which alter behavior of the
+opcode, sometimes in opcode-specific ways.
+
+    v      OPf_WANT_VOID    Want nothing (void context)
+    s      OPf_WANT_SCALAR  Want single value (scalar context)
+    l      OPf_WANT_LIST    Want list of any length (list context)
+    K      OPf_KIDS         There is a firstborn child.
+    P      OPf_PARENS       This operator was parenthesized.
+                             (Or block needs explicit scope entry.)
+    R      OPf_REF          Certified reference.
+                             (Return container, not containee).
+    M      OPf_MOD          Will modify (lvalue).
+    S      OPf_STACKED      Some arg is arriving on the stack.
+    *      OPf_SPECIAL      Do something weird for this op (see op.h)
 
 =head1 FORMATTING SPECIFICATIONS
 
@@ -1044,10 +1188,18 @@ mode when branches are encountered.  They're not real opcodes, and are
 inserted to look like a closing curly brace.  The tree-format is tree
 specific.
 
-When a line is rendered, the correct format string is scanned for the
-following items, and data is substituted in, or other manipulations,
-like basic indenting.  Any text that doesn't match a special pattern
-(the items below) is copied verbatim.  (Yes, it's a set of s///g steps.)
+When a line is rendered, the correct format-spec is copied and scanned
+for the following items; data is substituted in, and other
+manipulations like basic indenting are done, for each opcode rendered.
+
+There are 3 kinds of items that may be populated; special patterns,
+#vars, and literal text, which is copied verbatim.  (Yes, it's a set
+of s///g steps.)
+
+=head2 Special Patterns
+
+These items are the primitives used to perform indenting, and to
+select text from amongst alternatives.
 
 =over 4
 
@@ -1070,14 +1222,6 @@ If the value of I<var> is true (not empty or zero), generates the
 value of I<var> surrounded by I<text1> and I<Text2>, otherwise
 nothing.
 
-=item B<#>I<var>
-
-Generates the value of the variable I<var>.
-
-=item B<#>I<var>I<N>
-
-Generates the value of I<var>, left jutified to fill I<N> spaces.
-
 =item B<~>
 
 Any number of tildes and surrounding whitespace will be collapsed to
@@ -1085,18 +1229,57 @@ a single space.
 
 =back
 
-The following variables are recognized:
+=head2 # Variables
+
+These #vars represent opcode properties that you may want as part of
+your rendering.  The '#' is intended as a private sigil; a #var's
+value is interpolated into the style-line, much like "read $this".
+
+These vars take 3 forms:
+
+=over 4
+
+=item B<#>I<var>
+
+A property named 'var' is assumed to exist for the opcodes, and is
+interpolated into the rendering.
+
+=item B<#>I<var>I<N>
+
+Generates the value of I<var>, left justified to fill I<N> spaces.
+Note that this means while you can have properties 'foo' and 'foo2',
+you cannot render 'foo2', but you could with 'foo2a'.  You would be
+wise not to rely on this behavior going forward ;-)
+
+=item B<#>I<Var>
+
+This ucfirst form of #var generates a tag-value form of itself for
+display; it converts '#Var' into a 'Var => #var' style, which is then
+handled as described above.  (Imp-note: #Vars cannot be used for
+conditional-fills, because the => #var transform is done after the check
+for #Var's value).
+
+=back
+
+The following variables are 'defined' by B::Concise; when they are
+used in a style, their respective values are plugged into the
+rendering of each opcode.
+
+Only some of these are used by the standard styles, the others are
+provided for you to delve into optree mechanics, should you wish to
+add a new style (see L</add_style> below) that uses them.  You can
+also add new ones using L<add_callback>.
 
 =over 4
 
 =item B<#addr>
 
-The address of the OP, in hexidecimal.
+The address of the OP, in hexadecimal.
 
 =item B<#arg>
 
 The OP-specific information of the OP (such as the SV for an SVOP, the
-non-local exit pointers for a LOOP, etc.) enclosed in paretheses.
+non-local exit pointers for a LOOP, etc.) enclosed in parentheses.
 
 =item B<#class>
 
@@ -1173,16 +1356,30 @@ The numeric value of the OP's private flags.
 
 =item B<#seq>
 
-The sequence number of the OP. Note that this is now a sequence number
-generated by B::Concise, rather than the real op_seq value (for which
-see B<#seqnum>).
+The sequence number of the OP. Note that this is a sequence number
+generated by B::Concise.
 
 =item B<#seqnum>
+
+5.8.x and earlier only. 5.9 and later do not provide this.
 
 The real sequence number of the OP, as a regular number and not adjusted
 to be relative to the start of the real program. (This will generally be
 a fairly large number because all of B<B::Concise> is compiled before
 your program is).
+
+=item B<#opt>
+
+Whether or not the op has been optimised by the peephole optimiser.
+
+Only available in 5.9 and later.
+
+=item B<#static>
+
+Whether or not the op is statically defined.  This flag is used by the
+B::C compiler backend and indicates that the op should not be freed.
+
+Only available in 5.9 and later.
 
 =item B<#sibaddr>
 
@@ -1221,59 +1418,31 @@ The numeric value of the OP's type, in decimal.
 
 =back
 
-=head1 ABBREVIATIONS
-
-=head2 OP flags abbreviations
-
-    v      OPf_WANT_VOID    Want nothing (void context)
-    s      OPf_WANT_SCALAR  Want single value (scalar context)
-    l      OPf_WANT_LIST    Want list of any length (list context)
-    K      OPf_KIDS         There is a firstborn child.
-    P      OPf_PARENS       This operator was parenthesized.
-                             (Or block needs explicit scope entry.)
-    R      OPf_REF          Certified reference.
-                             (Return container, not containee).
-    M      OPf_MOD          Will modify (lvalue).
-    S      OPf_STACKED      Some arg is arriving on the stack.
-    *      OPf_SPECIAL      Do something weird for this op (see op.h)
-
-=head2 OP class abbreviations
-
-    0      OP (aka BASEOP)  An OP with no children
-    1      UNOP             An OP with one child
-    2      BINOP            An OP with two children
-    |      LOGOP            A control branch OP
-    @      LISTOP           An OP that could have lots of children
-    /      PMOP             An OP with a regular expression
-    $      SVOP             An OP with an SV
-    "      PVOP             An OP with a string
-    {      LOOP             An OP that holds pointers for a loop
-    ;      COP              An OP that marks the start of a statement
-    #      PADOP            An OP with a GV on the pad
-
 =head1 Using B::Concise outside of the O framework
 
-You can use B<B::Concise>, and call compile() directly, and
+The common (and original) usage of B::Concise was for command-line
+renderings of simple code, as given in EXAMPLE.  But you can also use
+B<B::Concise> from your code, and call compile() directly, and
 repeatedly.  By doing so, you can avoid the compile-time only
-operation of 'perl -MO=Concise ..'.  For example, you can use the
-debugger to step through B::Concise::compile() itself.
+operation of O.pm, and even use the debugger to step through
+B::Concise::compile() itself.
 
-When doing so, you can alter Concise output by providing new output
-styles, and optionally by adding callback routines which populate new
-variables that may be rendered as part of those styles.  For all
-following sections, please review L</FORMATTING SPECIFICATIONS>.
+Once you're doing this, you may alter Concise output by adding new
+rendering styles, and by optionally adding callback routines which
+populate new variables, if such were referenced from those (just
+added) styles.  
 
 =head2 Example: Altering Concise Renderings
 
     use B::Concise qw(set_style add_callback);
-    set_style($your_format, $your_gotofmt, $your_treefmt);
+    add_style($yourStyleName => $defaultfmt, $gotofmt, $treefmt);
     add_callback
       ( sub {
             my ($h, $op, $format, $level, $stylename) = @_;
             $h->{variable} = some_func($op);
-        }
-      );
-    B::Concise::compile(@options)->();
+        });
+    $walker = B::Concise::compile(@options,@subnames,@subrefs);
+    $walker->();
 
 =head2 set_style()
 
@@ -1324,27 +1493,37 @@ changed or even used.
 B<compile> accepts options as described above in L</OPTIONS>, and
 arguments, which are either coderefs, or subroutine names.
 
-compile() constructs and returns a coderef, which when invoked, scans
-the optree, and prints the results to STDOUT.  Once you have the
-coderef, you may change the output style; thereafter the coderef renders
-in the new style.
+It constructs and returns a $treewalker coderef, which when invoked,
+traverses, or walks, and renders the optrees of the given arguments to
+STDOUT.  You can reuse this, and can change the rendering style used
+each time; thereafter the coderef renders in the new style.
 
 B<walk_output> lets you change the print destination from STDOUT to
-another open filehandle, or into a string passed as a ref.
+another open filehandle, or (unless you've built with -Uuseperlio)
+into a string passed as a ref.
 
+    my $walker = B::Concise::compile('-terse','aFuncName', \&aSubRef);  # 1
     walk_output(\my $buf);
-    my $walker = B::Concise::compile('-concise','funcName', \&aSubRef);
-    print "Concise Banner for Functions: $buf\n";
-    $walker->();
-    print "Concise Rendering(s)?: $buf\n";
+    $walker->();			# 1 renders -terse
+    set_style_standard('concise');	# 2
+    $walker->();			# 2 renders -concise
+    $walker->(@new);			# 3 renders whatever
+    print "3 different renderings: terse, concise, and @new: $buf\n";
 
-For each subroutine visited by Concise, the $buf will contain a
-banner naming the function or coderef about to be traversed.
-Once $walker is invoked, it prints the actual renderings for each.
+When $walker is called, it traverses the subroutines supplied when it
+was created, and renders them using the current style.  You can change
+the style afterwards in several different ways:
 
-To switch back to one of the standard styles like C<concise> or
-C<terse>, call C<set_style_standard>, or pass the style name into
-B::Concise::compile() (as done above).
+  1. call C<compile>, altering style or mode/order
+  2. call C<set_style_standard>
+  3. call $walker, passing @new options
+
+Passing new options to the $walker is the easiest way to change
+amongst any pre-defined styles (the ones you add are automatically
+recognized as options), and is the only way to alter rendering order
+without calling compile again.  Note however that rendering state is
+still shared amongst multiple $walker objects, so they must still be
+used in a coordinated manner.
 
 =head2 B::Concise::reset_sequence()
 

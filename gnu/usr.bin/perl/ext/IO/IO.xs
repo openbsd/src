@@ -73,52 +73,23 @@ io_blocking(pTHX_ InputStream f, int block)
     RETVAL = fcntl(PerlIO_fileno(f), F_GETFL, 0);
     if (RETVAL >= 0) {
 	int mode = RETVAL;
+	int newmode = mode;
 #ifdef O_NONBLOCK
 	/* POSIX style */
-#if defined(O_NDELAY) && O_NDELAY != O_NONBLOCK
-	/* Ooops has O_NDELAY too - make sure we don't
-	 * get SysV behaviour by mistake. */
 
-	/* E.g. In UNICOS and UNICOS/mk a F_GETFL returns an O_NDELAY
+# ifndef O_NDELAY
+#  define O_NDELAY O_NONBLOCK
+# endif
+	/* Note: UNICOS and UNICOS/mk a F_GETFL returns an O_NDELAY
 	 * after a successful F_SETFL of an O_NONBLOCK. */
 	RETVAL = RETVAL & (O_NONBLOCK | O_NDELAY) ? 0 : 1;
 
-	if (block >= 0) {
-	    if ((mode & O_NDELAY) || ((block == 0) && !(mode & O_NONBLOCK))) {
-	        int ret;
-	        mode = (mode & ~O_NDELAY) | O_NONBLOCK;
-	        ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	        if(ret < 0)
-		    RETVAL = ret;
-	    }
-	    else
-              if ((mode & O_NDELAY) || ((block > 0) && (mode & O_NONBLOCK))) {
-	        int ret;
-	        mode &= ~(O_NONBLOCK | O_NDELAY);
-	        ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	        if(ret < 0)
-		    RETVAL = ret;
-              }
+	if (block == 0) {
+	    newmode &= ~O_NDELAY;
+	    newmode |= O_NONBLOCK;
+	} else if (block > 0) {
+	    newmode &= ~(O_NDELAY|O_NONBLOCK);
 	}
-#else
-	/* Standard POSIX */
-	RETVAL = RETVAL & O_NONBLOCK ? 0 : 1;
-
-	if ((block == 0) && !(mode & O_NONBLOCK)) {
-	    int ret;
-	    mode |= O_NONBLOCK;
-	    ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	    if(ret < 0)
-		RETVAL = ret;
-	 }
-	else if ((block > 0) && (mode & O_NONBLOCK)) {
-	    int ret;
-	    mode &= ~O_NONBLOCK;
-	    ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	    if(ret < 0)
-		RETVAL = ret;
-	 }
-#endif
 #else
 	/* Not POSIX - better have O_NDELAY or we can't cope.
 	 * for BSD-ish machines this is an acceptable alternative
@@ -127,21 +98,18 @@ io_blocking(pTHX_ InputStream f, int block)
 	 */
 	RETVAL = RETVAL & O_NDELAY ? 0 : 1;
 
-	if ((block == 0) && !(mode & O_NDELAY)) {
-	    int ret;
-	    mode |= O_NDELAY;
-	    ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	    if(ret < 0)
-		RETVAL = ret;
-	 }
-	else if ((block > 0) && (mode & O_NDELAY)) {
-	    int ret;
-	    mode &= ~O_NDELAY;
-	    ret = fcntl(PerlIO_fileno(f),F_SETFL,mode);
-	    if(ret < 0)
-		RETVAL = ret;
-	 }
+	if (block == 0) {
+	    newmode |= O_NDELAY;
+	} else if (block > 0) {
+	    newmode &= ~O_NDELAY;
+	}
 #endif
+	if (newmode != mode) {
+	    int ret;
+	    ret = fcntl(PerlIO_fileno(f),F_SETFL,newmode);
+	    if (ret < 0)
+		RETVAL = ret;
+	}
     }
     return RETVAL;
 #else

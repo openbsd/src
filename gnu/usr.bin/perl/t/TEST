@@ -1,7 +1,9 @@
 #!./perl
 
 # This is written in a peculiar style, since we're trying to avoid
-# most of the constructs we'll be testing for.
+# most of the constructs we'll be testing for.  (This comment is
+# probably obsolete on the avoidance side, though still currrent
+# on the peculiarity side.)
 
 $| = 1;
 
@@ -20,7 +22,8 @@ if ($#ARGV >= 0) {
 	$core    = 1 if $1 eq 'core';
 	$verbose = 1 if $1 eq 'v';
 	$torture = 1 if $1 eq 'torture';
-	$with_utf= 1 if $1 eq 'utf8';
+	$with_utf8 = 1 if $1 eq 'utf8';
+	$with_utf16 = 1 if $1 eq 'utf16';
 	$bytecompile = 1 if $1 eq 'bytecompile';
 	$compile = 1 if $1 eq 'compile';
 	$taintwarn = 1 if $1 eq 'taintwarn';
@@ -134,6 +137,32 @@ elsif( $compile ) {
 elsif( $bytecompile ) {
     _testprogs('bytecompile', '', @ARGV);
 }
+elsif ($with_utf16) {
+    for my $e (0, 1) {
+	for my $b (0, 1) {
+	    print STDERR "# ENDIAN $e BOM $b\n";
+	    my @UARGV;
+	    for my $a (@ARGV) {
+		my $u = $a . "." . ($e ? "l" : "b") . "e" . ($b ? "b" : "");
+		my $f = $e ? "v" : "n";
+		push @UARGV, $u;
+		unlink($u);
+		if (open(A, $a)) {
+		    if (open(U, ">$u")) {
+			print U pack("$f", 0xFEFF) if $b;
+			while (<A>) {
+			    print U pack("$f*", unpack("C*", $_));
+			}
+			close(A);
+		    }
+		    close(B);
+		}
+	    }
+	    _testprogs('perl', '', @UARGV);
+	    unlink(@UARGV);
+	}
+    }
+}
 else {
     _testprogs('compile', '',   @ARGV) if -e "../testcompile";
     _testprogs('perl',    '',   @ARGV);
@@ -219,6 +248,9 @@ EOT
  	open(SCRIPT,"<$test") or die "Can't run $test.\n";
  	$_ = <SCRIPT>;
  	close(SCRIPT) unless ($type eq 'deparse');
+	if ($with_utf16) {
+	    $_ =~ tr/\0//d;
+	}
  	if (/#!.*\bperl.*\s-\w*([tT])/) {
  	    $switch = qq{"-$1"};
  	}
@@ -243,7 +275,7 @@ EOT
 	    close(SCRIPT);
 	}
 
-	my $utf = $with_utf ? '-I../lib -Mutf8' : '';
+	my $utf8 = $with_utf8 ? '-I../lib -Mutf8' : '';
 	my $testswitch = '-I. -MTestInit'; # -T will strict . from @INC
 	if ($type eq 'deparse') {
 	    my $deparse =
@@ -275,7 +307,7 @@ EOT
 	    my $bytecompile =
 		"$perl $testswitch $switch -I../lib $bswitch". 
 		"-o$test.plc $test 2>$null &&".
-		"$perl $testswitch $switch -I../lib $utf $test.plc |";
+		"$perl $testswitch $switch -I../lib $utf8 $test.plc |";
 	    open(RESULTS,$bytecompile)
 		or print "can't byte-compile '$bytecompile': $!.\n";
 	}
@@ -288,7 +320,7 @@ EOT
                                . "--num-callers=50 --logfile-fd=3 $perl";
 		$redir = "3>$valgrind_log";
 	    }
-	    my $run = "$perl" . _quote_args("$testswitch $switch $utf") . " $test $redir|";
+	    my $run = "$perl" . _quote_args("$testswitch $switch $utf8") . " $test $redir|";
 	    open(RESULTS,$run) or print "can't run '$run': $!.\n";
 	}
 	else {
@@ -296,7 +328,7 @@ EOT
             my $pl2c = "$testswitch -I../lib ../utils/perlcc --testsuite " .
               # -O9 for good measure, -fcog is broken ATM
                        "$switch -Wb=-O9,-fno-cog -L .. " .
-                       "-I \".. ../lib/CORE\" $args $utf $test -o ";
+                       "-I \".. ../lib/CORE\" $args $utf8 $test -o ";
 
             if( $^O eq 'MSWin32' ) {
                 $test_executable = "$test.exe";

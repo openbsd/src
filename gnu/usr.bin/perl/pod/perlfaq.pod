@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq - frequently asked questions about Perl ($Date: 2003/01/31 17:37:17 $)
+perlfaq - frequently asked questions about Perl ($Date: 2003/12/03 03:02:44 $)
 
 =head1 DESCRIPTION
 
@@ -98,6 +98,7 @@ in respect of this information or its use.
 
 =head1 The Questions
 
+
 =head2 L<perlfaq1>: General Questions About Perl
 
 Very general, high-level questions about Perl.
@@ -119,6 +120,10 @@ Which version of Perl should I use?
 =item *
 
 What are perl4 and perl5?
+
+=item *
+
+What is Ponie?
 
 =item *
 
@@ -169,8 +174,7 @@ How can I convince my sysadmin/supervisor/employees to use version 5/5.6.1/Perl 
 
 =head2 L<perlfaq2>: Obtaining and Learning about Perl
 
-Where to find source and documentation for Perl, support,
-and related matters.
+Where to find source and documentation for Perl, support, and related matters.
 
 =over 4
 
@@ -374,7 +378,6 @@ Where can I learn about linking C with Perl? [h2xs, xsubpp]
 =item *
 
 I've read perlembed, perlguts, etc., but I can't embed perl in
-my C program; what am I doing wrong?
 
 =item *
 
@@ -389,14 +392,17 @@ What's MakeMaker?
 
 =head2 L<perlfaq4>: Data Manipulation
 
-Manipulating numbers, dates, strings, arrays, hashes, and
-miscellaneous data issues.
+Manipulating numbers, dates, strings, arrays, hashes, and miscellaneous data issues.
 
 =over 4
 
 =item *
 
 Why am I getting long decimals (eg, 19.9499999999999) instead of the numbers I should be getting (eg, 19.95)?
+
+=item *
+
+Why is int() broken?
 
 =item *
 
@@ -408,7 +414,7 @@ Does Perl have a round() function?  What about ceil() and floor()?  Trig functio
 
 =item *
 
-How do I convert between numeric representations?
+How do I convert between numeric representations/bases/radixes?
 
 =item *
 
@@ -833,7 +839,7 @@ How do I close a file descriptor by number?
 
 =item *
 
-Why can't I use "C:\temp\foo" in DOS paths?  What doesn't `C:\temp\foo.exe` work?
+Why can't I use "C:\temp\foo" in DOS paths?  Why doesn't `C:\temp\foo.exe` work?
 
 =item *
 
@@ -856,7 +862,7 @@ Why do I get weird spaces when I print an array of lines?
 
 =head2 L<perlfaq6>: Regular Expressions
 
-Pattern matching and regular expressions.
+This section is surprisingly small because the rest of the FAQ is littered with answers involving regular expressions. For example, decoding a URL and checking whether something is a number are handled with regular expressions, but those answers are found elsewhere in this document (in L<perlfaq9>: ``How do I decode or create those %-encodings on the web'' and L<perlfaq4>: ``How do I determine whether a scalar is a number/whole/integer/float'', to be precise).
 
 =over 4
 
@@ -942,7 +948,7 @@ Are Perl regexes DFAs or NFAs?  Are they POSIX compliant?
 
 =item *
 
-What's wrong with using grep or map in a void context?
+What's wrong with using grep in a void context?
 
 =item *
 
@@ -957,8 +963,7 @@ How do I match a pattern that is supplied by the user?
 
 =head2 L<perlfaq7>: General Perl Language Issues
 
-General Perl language issues that don't clearly fit into any of the
-other sections.
+General Perl language issues that don't clearly fit into any of the other sections.
 
 =over 4
 
@@ -1083,8 +1088,7 @@ What does "bad interpreter" mean?
 
 =head2 L<perlfaq8>: System Interaction
 
-Interprocess communication (IPC), control over the user-interface
-(keyboard, screen and pointing devices).
+This section of the Perl FAQ covers questions involving operating system interaction. Topics include interprocess communication (IPC), control over the user-interface (keyboard, screen and pointing devices), and most anything else not related to data manipulation. Read the FAQs and documentation specific to the port of perl to your operating system (eg, L<perlvms>, L<perlplan9>, ...). These should contain more detailed information on the vagaries of your perl.
 
 =over 4
 
@@ -1262,6 +1266,10 @@ How do I open a file without blocking?
 
 =item *
 
+How do I tell the difference between errors from the shell and perl?
+
+=item *
+
 How do I install a module from CPAN?
 
 =item *
@@ -1278,7 +1286,7 @@ How do I add the directory my program lives in to the module/library search path
 
 =item *
 
-How do I add a directory to my include path at runtime?
+How do I add a directory to my include path (@INC) at runtime?
 
 =item *
 

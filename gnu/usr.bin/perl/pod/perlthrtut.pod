@@ -602,7 +602,7 @@ communications between threads.
 =head2 Semaphores: Synchronizing Data Access
 
 Semaphores are a kind of generic locking mechanism. In their most basic
-form, they behave very much like lockable scalars, except that thay
+form, they behave very much like lockable scalars, except that they
 can't hold data, and that they must be explicitly unlocked. In their
 advanced form, they act like a kind of counter, and can allow multiple
 threads to have the 'lock' at any one time.

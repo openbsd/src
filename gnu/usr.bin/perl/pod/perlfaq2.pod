@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
 
 =head1 DESCRIPTION
 
@@ -129,7 +129,7 @@ miscellaneous modules.
 See http://www.cpan.org/modules/00modlist.long.html or
 http://search.cpan.org/ for a more complete list of modules by category.
 
-CPAN is not affiliated with O'Reilly and Associates.
+CPAN is not affiliated with O'Reilly Media.
 
 =head2 Is there an ISO or ANSI certified version of Perl?
 
@@ -218,34 +218,34 @@ This is faster and more productive than just posting a request.
 
 =head2 Perl Books
 
-A number of books on Perl and/or CGI programming are available.  A few of
-these are good, some are OK, but many aren't worth your money.  Tom
-Christiansen maintains a list of these books, some with extensive
-reviews, at http://www.perl.com/perl/critiques/index.html .
+A number of books on Perl and/or CGI programming are available.  A few
+of these are good, some are OK, but many aren't worth your money. 
+There is a list of these books, some with extensive reviews, at
+http://books.perl.org/ .
 
 The incontestably definitive reference book on Perl, written by
-the creator of Perl, is now (July 2000) in its third edition:
+the creator of Perl, is now (Sept 2004) in its third edition:
 
-    Programming Perl (the "Camel Book"):
+	Programming Perl (the "Camel Book"):
 	by Larry Wall, Tom Christiansen, and Jon Orwant
-        0-596-00027-8  [3rd edition July 2000]
+	ISBN 0-596-00027-8  [3rd edition July 2000]
 	http://www.oreilly.com/catalog/pperl3/
-    (English, translations to several languages are also available)
+	(English, translations to several languages are also available)
 
 The companion volume to the Camel containing thousands
 of real-world examples, mini-tutorials, and complete programs is:
 
-    The Perl Cookbook (the "Ram Book"):
+	The Perl Cookbook (the "Ram Book"):
 	by Tom Christiansen and Nathan Torkington,
 	    with Foreword by Larry Wall
-	ISBN 1-56592-243-3 [1st Edition August 1998]
-	http://perl.oreilly.com/catalog/cookbook/
+	ISBN 0-596-00313-7 [2nd Edition August 2003]
+	http://www.oreilly.com/catalog/perlckbk2/
 
 If you're already a seasoned programmer, then the Camel Book might
 suffice for you to learn Perl from.  If you're not, check out the
 Llama book:
 
-    Learning Perl (the "Llama Book")
+	Learning Perl (the "Llama Book")
 	by Randal L. Schwartz and Tom Phoenix
 	ISBN 0-596-00132-0 [3rd edition July 2001]
 	http://www.oreilly.com/catalog/lperl3/
@@ -254,26 +254,26 @@ And for more advanced information on writing larger programs,
 presented in the same style as the Llama book, continue your education
 with the Alpaca book:
 
-    Learning Perl Objects, References, and Modules (the "Alpaca Book")
-       by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
-       ISBN 0-596-00478-8 [1st edition June 2003]
-       http://www.oreilly.com/catalog/lrnperlorm/
+	Learning Perl Objects, References, and Modules (the "Alpaca Book")
+	by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
+	ISBN 0-596-00478-8 [1st edition June 2003]
+	http://www.oreilly.com/catalog/lrnperlorm/
 
 If you're not an accidental programmer, but a more serious and
 possibly even degreed computer scientist who doesn't need as much
 hand-holding as we try to provide in the Llama, please check out the
 delightful book
 
-    Perl: The Programmer's Companion
-        by Nigel Chapman
-        ISBN 0-471-97563-X [1997, 3rd printing Spring 1998]
-        http://www.wiley.com/compbooks/catalog/97563-X.htm
-        http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
+	Perl: The Programmer's Companion
+	by Nigel Chapman
+	ISBN 0-471-97563-X [1997, 3rd printing Spring 1998]
+	http://www.wiley.com/compbooks/catalog/97563-X.htm
+	http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
 
 If you are more at home in Windows the following is available
 (though unfortunately rather dated).
 
-    Learning Perl on Win32 Systems (the "Gecko Book")
+	Learning Perl on Win32 Systems (the "Gecko Book")
 	by Randal L. Schwartz, Erik Olson, and Tom Christiansen,
 	    with foreword by Larry Wall
 	ISBN 1-56592-324-3 [1st edition August 1997]
@@ -296,56 +296,56 @@ Recommended books on (or mostly on) Perl follow.
 
 =item References
 
-    Programming Perl
+	Programming Perl
 	by Larry Wall, Tom Christiansen, and Jon Orwant
 	ISBN 0-596-00027-8 [3rd edition July 2000]
 	http://www.oreilly.com/catalog/pperl3/
 
-    Perl 5 Pocket Reference
-    by Johan Vromans
+	Perl 5 Pocket Reference
+	by Johan Vromans
 	ISBN 0-596-00032-4 [3rd edition May 2000]
 	http://www.oreilly.com/catalog/perlpr3/
 
-    Perl in a Nutshell
-    by Ellen Siever, Stephan Spainhour, and Nathan Patwardhan
+	Perl in a Nutshell
+	by Ellen Siever, Stephan Spainhour, and Nathan Patwardhan
 	ISBN 1-56592-286-7 [1st edition December 1998]
 	http://www.oreilly.com/catalog/perlnut/
 
 =item Tutorials
 
-    Elements of Programming with Perl
+	Elements of Programming with Perl
 	by Andrew L. Johnson
 	ISBN 1-884777-80-5 [1st edition October 1999]
 	http://www.manning.com/Johnson/
 
-    Learning Perl
+	Learning Perl
 	by Randal L. Schwartz and Tom Phoenix
 	ISBN 0-596-00132-0 [3rd edition July 2001]
 	http://www.oreilly.com/catalog/lperl3/
 
-    Learning Perl Objects, References, and Modules
-       by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
-       ISBN 0-596-00478-8 [1st edition June 2003]
-       http://www.oreilly.com/catalog/lrnperlorm/
+	Learning Perl Objects, References, and Modules
+	by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
+	ISBN 0-596-00478-8 [1st edition June 2003]
+	http://www.oreilly.com/catalog/lrnperlorm/
 
-    Learning Perl on Win32 Systems
+	Learning Perl on Win32 Systems
 	by Randal L. Schwartz, Erik Olson, and Tom Christiansen,
 	    with foreword by Larry Wall
 	ISBN 1-56592-324-3 [1st edition August 1997]
 	http://www.oreilly.com/catalog/lperlwin/
 
-    Perl: The Programmer's Companion
+	Perl: The Programmer's Companion
 	by Nigel Chapman
 	ISBN 0-471-97563-X [1997, 3rd printing Spring 1998]
-    http://www.wiley.com/compbooks/catalog/97563-X.htm
-    http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
+	http://www.wiley.com/compbooks/catalog/97563-X.htm
+	http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
 
-    Cross-Platform Perl
+	Cross-Platform Perl
 	by Eric Foster-Johnson
 	ISBN 1-55851-483-X [2nd edition September 2000]
 	http://www.pconline.com/~erc/perlbook.htm
 
-    MacPerl: Power and Ease
+	MacPerl: Power and Ease
 	by Vicki Brown and Chris Nandor,
 	    with foreword by Matthias Neeracher
 	ISBN 1-881957-32-2 [1st edition May 1998]
@@ -353,21 +353,20 @@ Recommended books on (or mostly on) Perl follow.
 
 =item Task-Oriented
 
-    The Perl Cookbook
+	The Perl Cookbook
 	by Tom Christiansen and Nathan Torkington
 	    with foreword by Larry Wall
 	ISBN 1-56592-243-3 [1st edition August 1998]
 	http://www.oreilly.com/catalog/cookbook/
 
-    Effective Perl Programming
+	Effective Perl Programming
 	by Joseph Hall
 	ISBN 0-201-41975-0 [1st edition 1998]
 	http://www.awl.com/
 
-
 =item Special Topics
 
-    Mastering Regular Expressions
+	Mastering Regular Expressions
 	by Jeffrey E. F. Friedl
 	ISBN 0-596-00289-0 [2nd edition July 2002]
 	http://www.oreilly.com/catalog/regex2/
@@ -393,10 +392,15 @@ Recommended books on (or mostly on) Perl follow.
 	ISBN 1-56592-716-8 [1st edition January 2002]
 	http://www.oreilly.com/catalog/mastperltk/
 
-    Extending and Embedding Perl
-       by Tim Jenness and Simon Cozens
-       ISBN 1-930110-82-0 [1st edition August 2002]
-       http://www.manning.com/jenness
+	Extending and Embedding Perl
+	by Tim Jenness and Simon Cozens
+	ISBN 1-930110-82-0 [1st edition August 2002]
+	http://www.manning.com/jenness
+
+	Perl Debugger Pocket Reference
+	by Richard Foley
+	ISBN 0-596-00503-2 [1st edition January 2004]
+	http://www.oreilly.com/catalog/perldebugpr/ 
 
 =back
 
@@ -476,32 +480,6 @@ as do the O'Reilly Perl Resource Kits (in both the Unix flavor
 and in the proprietary Microsoft flavor); the free Unix distributions
 also all come with Perl.
 
-Alternatively, you can purchase commercial incidence based support
-through the Perl Clinic.  The following is a commercial from them:
-
-"The Perl Clinic is a commercial Perl support service operated by
-ActiveState Tool Corp. and The Ingram Group.  The operators have many
-years of in-depth experience with Perl applications and Perl internals
-on a wide range of platforms.
-
-"Through our group of highly experienced and well-trained support engineers,
-we will put our best effort into understanding your problem, providing an
-explanation of the situation, and a recommendation on how to proceed."
-
-Contact The Perl Clinic at
-
-    www.PerlClinic.com
-
-    North America Pacific Standard Time (GMT-8)
-    Tel:    1 604 606-4611 hours 8am-6pm
-    Fax:    1 604 606-4640
-
-    Europe (GMT)
-    Tel:    00 44 1483 862814
-    Fax:    00 44 1483 862801
-
-See also www.perl.com for updates on tutorials, training, and support.
-
 =head2 Where do I send bug reports?
 
 If you are reporting a bug in the perl interpreter or the modules
@@ -518,28 +496,26 @@ Read the perlbug(1) man page (perl5.004 or later) for more information.
 
 =head2 What is perl.com? Perl Mongers? pm.org? perl.org? cpan.org?
 
-The Perl Home Page at http://www.perl.com/ is currently hosted by
-The O'Reilly Network, a subsidiary of O'Reilly and Associates.
+Perl.com at http://www.perl.com/ is part of the O'Reilly Network, a
+subsidiary of O'Reilly Media.
 
-Perl Mongers is an advocacy organization for the Perl language which
-maintains the web site http://www.perl.org/ as a general advocacy
-site for the Perl language.
+The Perl Foundation is an advocacy organization for the Perl language
+which maintains the web site http://www.perl.org/ as a general
+advocacy site for the Perl language. It uses the domain to provide
+general support services to the Perl community, including the hosting
+of mailing lists, web sites, and other services.  The web site
+http://www.perl.org/ is a general advocacy site for the Perl language,
+and there are many other sub-domains for special topics, such as
+
+	http://learn.perl.org/
+	http://use.perl.org/
+	http://jobs.perl.org/
+	http://lists.perl.org/
 
 Perl Mongers uses the pm.org domain for services related to Perl user
 groups, including the hosting of mailing lists and web sites.  See the
 Perl user group web site at http://www.pm.org/ for more information about
 joining, starting, or requesting services for a Perl user group.
-
-Perl Mongers also maintain the perl.org domain to provide general
-support services to the Perl community, including the hosting of mailing
-lists, web sites, and other services.  The web site
-http://www.perl.org/ is a general advocacy site for the Perl language,
-and there are many other sub-domains for special topics, such as
-
-    http://bugs.perl.org/
-    http://history.perl.org/
-    http://lists.perl.org/
-    http://use.perl.org/
 
 http://www.cpan.org/ is the Comprehensive Perl Archive Network,
 a replicated worlwide repository of Perl software, see

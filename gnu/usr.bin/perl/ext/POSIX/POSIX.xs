@@ -1390,20 +1390,25 @@ sigpending(sigset)
 SysRet
 sigprocmask(how, sigset, oldsigset = 0)
 	int			how
-	POSIX::SigSet		sigset
+	POSIX::SigSet		sigset = NO_INIT
 	POSIX::SigSet		oldsigset = NO_INIT
 INIT:
-	if ( items < 3 ) {
-	    oldsigset = 0;
+	if (! SvOK(ST(1))) {
+	    sigset = NULL;
+	} else if (sv_isa(ST(1), "POSIX::SigSet")) {
+	    IV tmp = SvIV((SV*)SvRV(ST(1)));
+	    sigset = INT2PTR(POSIX__SigSet,tmp);
+	} else {
+	    croak("sigset is not of type POSIX::SigSet");
 	}
-	else if (sv_derived_from(ST(2), "POSIX::SigSet")) {
+
+	if (items < 3 || ! SvOK(ST(2))) {
+	    oldsigset = NULL;
+	} else if (sv_isa(ST(2), "POSIX::SigSet")) {
 	    IV tmp = SvIV((SV*)SvRV(ST(2)));
 	    oldsigset = INT2PTR(POSIX__SigSet,tmp);
-	}
-	else {
-	    New(0, oldsigset, 1, sigset_t);
-	    sigemptyset(oldsigset);
-	    sv_setref_pv(ST(2), "POSIX::SigSet", (void*)oldsigset);
+	} else {
+	    croak("oldsigset is not of type POSIX::SigSet");
 	}
 
 SysRet

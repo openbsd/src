@@ -18,7 +18,7 @@ package Math::BigInt;
 my $class = "Math::BigInt";
 require 5.005;
 
-$VERSION = '1.70';
+$VERSION = '1.73';
 use Exporter;
 @ISA =       qw( Exporter );
 @EXPORT_OK = qw( objectify bgcd blcm); 
@@ -55,6 +55,9 @@ use overload
 '|='	=>	sub { $_[0]->bior($_[1]); },
 '**='	=>	sub { $_[0]->bpow($_[1]); },
 
+'<<='	=>	sub { $_[0]->blsft($_[1]); },
+'>>='	=>	sub { $_[0]->brsft($_[1]); },
+
 # not supported by Perl yet
 '..'	=>	\&_pointpoint,
 
@@ -79,9 +82,9 @@ use overload
 'sqrt'  =>	sub { $_[0]->copy()->bsqrt(); },
 '~'	=>	sub { $_[0]->copy()->bnot(); },
 
-# for sub it is a bit tricky to keep b: b-a => -a+b
+# for subtract it's a bit tricky to not modify b: b-a => -a+b
 '-'	=>	sub { my $c = $_[0]->copy; $_[2] ?
-                   $c->bneg()->badd($_[1]) :
+                   $c->bneg()->badd( $_[1]) :
                    $c->bsub( $_[1]) },
 '+'	=>	sub { $_[0]->copy()->badd($_[1]); },
 '*'	=>	sub { $_[0]->copy()->bmul($_[1]); },
@@ -667,7 +670,7 @@ sub bzero
   {
   # create a bigint '+0', if given a BigInt, set it to 0
   my $self = shift;
-  $self = $class if !defined $self;
+  $self = __PACKAGE__ if !defined $self;
  
   if (!ref($self))
     {
@@ -758,7 +761,7 @@ sub bsstr
   # (ref to BFLOAT or num_str ) return num_str
   # Convert number from internal format to scientific string format.
   # internal format is always normalized (no leading zeros, "-0E0" => "+0E0")
-  my $x = shift; $class = ref($x) || $x; $x = $class->new(shift) if !ref($x); 
+  my $x = shift; my $class = ref($x) || $x; $x = $class->new(shift) if !ref($x); 
   # my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_); 
 
   if ($x->{sign} !~ /^[+-]$/)
@@ -775,7 +778,7 @@ sub bsstr
 sub bstr 
   {
   # make a string from bigint object
-  my $x = shift; $class = ref($x) || $x; $x = $class->new(shift) if !ref($x); 
+  my $x = shift; my $class = ref($x) || $x; $x = $class->new(shift) if !ref($x); 
   # my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_); 
 
   if ($x->{sign} !~ /^[+-]$/)
@@ -889,7 +892,8 @@ sub round
   # $r round_mode, if given by caller
   # @args all 'other' arguments (0 for unary, 1 for binary ops)
 
-  # leave bigfloat parts alone
+  # leave bigfloat parts alone (that is only used in BigRat for now and can be
+  # removed once we rewrote BigRat))
   return ($self) if exists $self->{_f} && ($self->{_f} & MB_NEVER_ROUND) != 0;
 
   my $c = ref($self);				# find out class of argument(s)
@@ -942,7 +946,8 @@ sub round
     {
     $self->bfround($p,$r) if !defined $self->{_p} || $self->{_p} <= $p;
     }
-  $self->bnorm();			# after round, normalize
+  # bround() or bfround() already callled bnorm() if necc.
+  $self;
   }
 
 sub bnorm
@@ -1140,6 +1145,14 @@ sub bsub
     return $x;
     }
 
+  require Scalar::Util;
+  if (Scalar::Util::refaddr($x) == Scalar::Util::refaddr($y)) 
+    {
+    # if we get the same variable twice, the result must be zero (the code
+    # below fails in that case)
+    return $x->bzero(@r) if $x->{sign} =~ /^[+-]$/;
+    return $x->bnan();          # NaN, -inf, +inf
+    }
   $y->{sign} =~ tr/+\-/-+/; 	# does nothing for NaN
   $x->badd($y,@r); 		# badd does not leave internal zeros
   $y->{sign} =~ tr/+\-/-+/; 	# refix $y (does nothing for NaN)
@@ -1240,7 +1253,7 @@ sub blcm
     }
   else
     {
-    $x = __PACKAGE__->new($y);
+    $x = $class->new($y);
     }
   my $self = ref($x);
   while (@_) 
@@ -1258,7 +1271,7 @@ sub bgcd
   # GCD -- Euclids algorithm, variant C (Knuth Vol 3, pg 341 ff)
 
   my $y = shift;
-  $y = __PACKAGE__->new($y) if !ref($y);
+  $y = $class->new($y) if !ref($y);
   my $self = ref($y);
   my $x = $y->copy()->babs();			# keep arguments
   return $x->bnan() if $x->{sign} !~ /^[+-]$/;	# x NaN?
@@ -1662,12 +1675,61 @@ sub bpow
 
   return $x if $x->modify('bpow');
 
+  return $x->bnan() if $x->{sign} eq $nan || $y->{sign} eq $nan;
+
+  # inf handling
+  if (($x->{sign} =~ /^[+-]inf$/) || ($y->{sign} =~ /^[+-]inf$/))
+    {
+    if (($x->{sign} =~ /^[+-]inf$/) && ($y->{sign} =~ /^[+-]inf$/))
+      {
+      # +-inf ** +-inf
+      return $x->bnan();
+      }
+    # +-inf ** Y
+    if ($x->{sign} =~ /^[+-]inf/)
+      {
+      # +inf ** 0 => NaN
+      return $x->bnan() if $y->is_zero();
+      # -inf ** -1 => 1/inf => 0
+      return $x->bzero() if $y->is_one('-') && $x->is_negative();
+
+      # +inf ** Y => inf
+      return $x if $x->{sign} eq '+inf';
+
+      # -inf ** Y => -inf if Y is odd
+      return $x if $y->is_odd();
+      return $x->babs();
+      }
+    # X ** +-inf
+
+    # 1 ** +inf => 1
+    return $x if $x->is_one();
+    
+    # 0 ** inf => 0
+    return $x if $x->is_zero() && $y->{sign} =~ /^[+]/;
+
+    # 0 ** -inf => inf
+    return $x->binf() if $x->is_zero();
+
+    # -1 ** -inf => NaN
+    return $x->bnan() if $x->is_one('-') && $y->{sign} =~ /^[-]/;
+
+    # -X ** -inf => 0
+    return $x->bzero() if $x->{sign} eq '-' && $y->{sign} =~ /^[-]/;
+
+    # -1 ** inf => NaN
+    return $x->bnan() if $x->{sign} eq '-';
+
+    # X ** inf => inf
+    return $x->binf() if $y->{sign} =~ /^[+]/;
+    # X ** -inf => 0
+    return $x->bzero();
+    }
+
   return $upgrade->bpow($upgrade->new($x),$y,@r)
    if defined $upgrade && !$y->isa($self);
 
   $r[3] = $y;					# no push!
-  return $x if $x->{sign} =~ /^[+-]inf$/;	# -inf/+inf ** x
-  return $x->bnan() if $x->{sign} eq $nan || $y->{sign} eq $nan;
 
   # cases 0 ** Y, X ** 0, X ** 1, 1 ** Y are handled by Calc or Emu
 
@@ -2027,17 +2089,15 @@ sub bfround
 
 sub _scan_for_nonzero
   {
-  # internal, used by bround()
-  my ($x,$pad,$xs) = @_;
+  # internal, used by bround() to scan for non-zeros after a '5'
+  my ($x,$pad,$xs,$len) = @_;
  
-  my $len = $x->length();
-  return 0 if $len == 1;		# '5' is trailed by invisible zeros
+  return 0 if $len == 1;		# "5" is trailed by invisible zeros
   my $follow = $pad - 1;
   return 0 if $follow > $len || $follow < 1;
 
-  # since we do not know underlying represention of $x, use decimal string
-  my $r = substr ("$x",-$follow);
-  $r =~ /[^0]/ ? 1 : 0;
+  # use the string form to check whether only '0's follow or not
+  substr ($xs,-$follow) =~ /[^0]/ ? 1 : 0;
   }
 
 sub fround
@@ -2087,8 +2147,8 @@ sub bround
   $pad = $len - $scale;
   $pad = abs($scale-1) if $scale < 0;
 
-  # do not use digit(), it is costly for binary => decimal
-
+  # do not use digit(), it is very costly for binary => decimal
+  # getting the entire string is also costly, but we need to do it only once
   my $xs = $CALC->_str($x->{value});
   my $pl = -$pad-1;
 
@@ -2106,7 +2166,7 @@ sub bround
     ($digit_after =~ /[01234]/)			|| 	# round down anyway,
 							# 6789 => round up
     ($digit_after eq '5')			&&	# not 5000...0000
-    ($x->_scan_for_nonzero($pad,$xs) == 0)		&&
+    ($x->_scan_for_nonzero($pad,$xs,$len) == 0)		&&
     (
      ($mode eq 'even') && ($digit_round =~ /[24680]/) ||
      ($mode eq 'odd')  && ($digit_round =~ /[13579]/) ||
@@ -2118,8 +2178,8 @@ sub bround
 	
   if (($pad > 0) && ($pad <= $len))
     {
-    substr($xs,-$pad,$pad) = '0' x $pad;
-    $put_back = 1;
+    substr($xs,-$pad,$pad) = '0' x $pad;		# replace with '00...'
+    $put_back = 1;					# need to put back
     }
   elsif ($pad > $len)
     {
@@ -2128,7 +2188,7 @@ sub bround
 
   if ($round_up)					# what gave test above?
     {
-    $put_back = 1;
+    $put_back = 1;					# need to put back
     $pad = $len, $xs = '0' x $pad if $scale < 0;	# tlr: whack 0.51=>1.0	
 
     # we modify directly the string variant instead of creating a number and
@@ -2143,7 +2203,7 @@ sub bround
     $xs = '1'.$xs if $c == 0;
 
     }
-  $x->{value} = $CALC->_new($xs) if $put_back == 1;	# put back in if needed
+  $x->{value} = $CALC->_new($xs) if $put_back == 1;	# put back, if needed
 
   $x->{_a} = $scale if $scale >= 0;
   if ($scale < 0)

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq1 - General Questions About Perl ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq1 - General Questions About Perl ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
 
 =head1 DESCRIPTION
 
@@ -173,7 +173,7 @@ Probably the best thing to do is try to write equivalent code to do a
 set of tasks.  These languages have their own newsgroups in which you
 can learn about (but hopefully not argue about) them.
 
-Some comparison documents can be found at http://language.perl.com/versus/
+Some comparison documents can be found at http://www.perl.com/doc/FMTEYEWTK/versus/
 if you really can't stop yourself.
 
 =head2 Can I do [task] in Perl?

@@ -16,10 +16,20 @@
 /* Register any extra external extensions */
 char *staticlinkmodules[] = {
     "DynaLoader",
+    /* other similar records will be included from "perllibst.h" */
+#ifdef WITH_STATIC
+#define STATIC1
+#include "perllibst.h"
+#endif
     NULL,
 };
 
 EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);
+/* other similar records will be included from "perllibst.h" */
+#ifdef WITH_STATIC
+#define STATIC2
+#include "perllibst.h"
+#endif
 
 static void
 xs_init(pTHX)
@@ -27,6 +37,11 @@ xs_init(pTHX)
     char *file = __FILE__;
     dXSUB_SYS;
     newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
+    /* other similar records will be included from "perllibst.h" */
+#ifdef WITH_STATIC
+#define STATIC3
+#include "perllibst.h"
+#endif
 }
 
 #ifdef PERL_IMPLICIT_SYS

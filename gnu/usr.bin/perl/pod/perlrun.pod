@@ -6,7 +6,7 @@ perlrun - how to execute the Perl interpreter
 
 B<perl>	S<[ B<-sTtuUWX> ]>
 	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
-	S<[ B<-cw> ] [ B<-d>[:I<debugger>] ] [ B<-D>[I<number/list>] ]>
+	S<[ B<-cw> ] [ B<-d>[B<t>][:I<debugger>] ] [ B<-D>[I<number/list>] ]>
 	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
 	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ]>
 	S<[ B<-P> ]>
@@ -334,9 +334,15 @@ be skipped.
 
 =item B<-d>
 
+=item B<-dt>
+
 runs the program under the Perl debugger.  See L<perldebug>.
+If B<t> is specified, it indicates to the debugger that threads
+will be used in the code being debugged.
 
 =item B<-d:>I<foo[=bar,baz]>
+
+=item B<-dt:>I<foo[=bar,baz]>
 
 runs the program under the control of a debugging, profiling, or
 tracing module installed as Devel::foo. E.g., B<-d:DProf> executes
@@ -344,6 +350,8 @@ the program using the Devel::DProf profiler.  As with the B<-M>
 flag, options may be passed to the Devel::foo package where they
 will be received and interpreted by the Devel::foo::import routine.
 The comma-separated list of options must follow a C<=> character.
+If B<t> is specified, it indicates to the debugger that threads
+will be used in the code being debugged.
 See L<perldebug>.
 
 =item B<-D>I<letters>
@@ -360,8 +368,7 @@ As an alternative, specify a number instead of list of letters (e.g.,
 B<-D14> is equivalent to B<-Dtls>):
 
         1  p  Tokenizing and parsing
-        2  s  Stack snapshots
-                with v, displays all stacks
+        2  s  Stack snapshots (with v, displays all stacks)
         4  l  Context (loop) stack processing
         8  t  Trace execution
        16  o  Method and overloading resolution
@@ -381,7 +388,7 @@ B<-D14> is equivalent to B<-Dtls>):
    262144  R  Include reference counts of dumped variables (eg when using -Ds)
    524288  J  Do not s,t,P-debug (Jump over) opcodes within package DB
   1048576  v  Verbose: use in conjunction with other flags
-  2097152  C  Copy On Write
+  8388608  q  quiet - currently only suppresses the "EXECUTING" message
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see L<Devel::Peek>, L<re> which may change this).
@@ -523,6 +530,10 @@ folks use it for their backup files:
 
     $ perl -pi~ -e 's/foo/bar/' file1 file2 file3...
 
+Note that because B<-i> renames or deletes the original file before
+creating a new file of the same name, UNIX-style soft and hard links will
+not be preserved.
+
 Finally, the B<-i> switch does not impede execution when no
 files are given on the command line.  In this case, no backup is made
 (the original file cannot, of course, be determined) and processing
@@ -595,7 +606,7 @@ Note that the lines are not printed by default.  See B<-p> to have
 lines printed.  If a file named by an argument cannot be opened for
 some reason, Perl warns you about it and moves on to the next file.
 
-Here is an efficient way to delete all files that haven't been modifed for
+Here is an efficient way to delete all files that haven't been modified for
 at least a week:
 
     find . -mtime +7 -print | perl -nle unlink
@@ -723,9 +734,12 @@ original name fails, and if the name does not already end in one
 of those suffixes.  If your Perl was compiled with DEBUGGING turned
 on, using the -Dp switch to Perl shows how the search progresses.
 
-Typically this is used to emulate #! startup on platforms that
-don't support #!.  This example works on many platforms that
-have a shell compatible with Bourne shell:
+Typically this is used to emulate #! startup on platforms that don't
+support #!.  Its also convenient when debugging a script that uses #!,
+and is thus normally found by the shell's $PATH search mechanism.
+
+This example works on many platforms that have a shell compatible with
+Bourne shell:
 
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -wS $0 ${1+"$@"}'
@@ -817,12 +831,14 @@ prints the version and patchlevel of your perl executable.
 prints summary of the major perl configuration values and the current
 values of @INC.
 
-=item B<-V:>I<name>
+=item B<-V:>I<configvar>
 
 Prints to STDOUT the value of the named configuration variable(s),
-with multiples when your query looks like a regex.
-For example,
+with multiples when your configvar argument looks like a regex (has
+non-letters).  For example:
 
+    $ perl -V:libc
+	libc='/lib/libc-2.2.4.so';
     $ perl -V:lib.
 	libs='-lnsl -lgdbm -ldb -ldl -lm -lcrypt -lutil -lc';
 	libc='/lib/libc-2.2.4.so';
@@ -843,7 +859,7 @@ you to embed queries into shell commands.  (mnemonic: PATH separator
     compression-vars:  zcat='' zip='zip'  are here !
 
 A leading colon removes the 'name=' part of the response, this allows
-you to map to the name you need.
+you to map to the name you need.  (mnemonic: empty label)
 
     $ echo "goodvfork="`./perl -Ilib -V::usevfork`
     goodvfork=false;
@@ -1077,6 +1093,11 @@ The command used to load the debugger code.  The default is:
 
 	BEGIN { require 'perl5db.pl' }
 
+=item PERL5DB_THREADED
+
+If set to a true value, indicates to the debugger that the code being
+debugged uses threads.
+
 =item PERL5SHELL (specific to the Win32 port)
 
 May be set to an alternative shell that perl must use internally for
@@ -1091,6 +1112,20 @@ portability concerns.  Besides, perl can use a shell that may not be
 fit for interactive use, and setting COMSPEC to such a shell may
 interfere with the proper functioning of other programs (which usually
 look in COMSPEC to find a shell fit for interactive use).
+
+=item PERL_ALLOW_NON_IFS_LSP (specific to the Win32 port)
+
+Set to 1 to allow the use of non-IFS compatible LSP's.
+Perl normally searches for an IFS-compatible LSP because this is required
+for its emulation of Windows sockets as real filehandles.  However, this may
+cause problems if you have a firewall such as McAfee Guardian which requires
+all applications to use its LSP which is not IFS-compatible, because clearly
+Perl will normally avoid using such an LSP.
+Setting this environment variable to 1 means that Perl will simply use the
+first suitable LSP enumerated in the catalog, which keeps McAfee Guardian
+happy (and in that particular case Perl still works too because McAfee
+Guardian's LSP actually plays some other games which allow applications
+requiring IFS compatibility to work).
 
 =item PERL_DEBUG_MSTATS
 
@@ -1170,7 +1205,7 @@ L<perlvms> and in F<README.vms> in the Perl source distribution.
 In Perls 5.8.1 and later.  If set to C<unsafe> the pre-Perl-5.8.0
 signals behaviour (immediate but unsafe) is restored.  If set to
 C<safe> the safe (or deferred) signals are used.
-See L<perlipc/"Deferred Signals (Safe signals)">.
+See L<perlipc/"Deferred Signals (Safe Signals)">.
 
 =item PERL_UNICODE
 

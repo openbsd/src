@@ -41,12 +41,17 @@ additional software to run (other than what came with your operating
 system).  Currently, this port is capable of using one of the
 following compilers on the Intel x86 architecture:
 
-      Borland C++		version 5.02 or later
-      Microsoft Visual C++	version 4.2 or later
-      MinGW with gcc		gcc version 2.95.2 or later
+      Borland C++           version 5.02 or later
+      Microsoft Visual C++  version 4.2 or later
+      MinGW with gcc        gcc version 2.95.2 or later
 
 The last of these is a high quality freeware compiler.  Use version
 3.2.x or later for the best results with this compiler.
+
+The Microsoft Visual C++ compiler is also now being given away free in
+the "Visual C++ Toolkit 2003", and also as part of the ".NET Framework
+SDK".  This is the same compiler that ships with "Visual Studio .NET 2003
+Professional".
 
 This port can also be built on the Intel IA64 using:
 
@@ -122,7 +127,8 @@ See L</"Make"> above.
 
 The nmake that comes with Visual C++ will suffice for building.
 You will need to run the VCVARS32.BAT file, usually found somewhere
-like C:\MSDEV4.2\BIN.  This will set your build environment.
+like C:\MSDEV4.2\BIN or C:\Program Files\Microsoft Visual Studio\VC98\Bin.
+This will set your build environment.
 
 You can also use dmake to build using Visual C++; provided, however,
 you set OSRELEASE to "microsft" (or whatever the directory name
@@ -130,6 +136,84 @@ under which the Visual C dmake configuration lives) in your environment
 and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
+
+=item Microsoft Visual C++ Toolkit 2003
+
+This free toolkit contains the same compiler and linker that ship with
+Visual Studio .NET 2003 Professional, but doesn't contain everything
+necessary to build Perl.
+
+You will also need to download the "Platform SDK" (the "Core SDK" and "MDAC
+SDK" components are required) for header files, libraries and rc.exe, and
+".NET Framework SDK" for more libraries and nmake.exe.  Note that the latter
+(which also includes the free compiler and linker) requires the ".NET
+Framework Redistributable" to be installed first.  This can be downloaded and
+installed separately, but is included in the "Visual C++ Toolkit 2003" anyway.
+
+These packages can all be downloaded by searching in the Download Center at
+http://www.microsoft.com/downloads/search.aspx?displaylang=en
+
+Note that the "Platform SDK February 2003" download requires Internet Explorer
+5.0 to function.  Alternatively, the very latest version at the time of writing
+(called "Windows XP Service Pack 2 Platform SDK RC2") is now available as an
+ISO-9660 CD image file and does not require IE5 to be downloaded but will only
+work on Windows XP.
+
+According to the download pages the Toolkit and the .NET Framework SDK are only
+supported on Windows 2000/XP/2003, so trying to use these tools on Windows
+95/98/ME and even Windows NT probably won't work.
+
+Install the Toolkit first, then the Platform SDK, then the .NET Framework SDK.
+Setup your environment as follows (assuming default installation locations
+were chosen):
+
+	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin;C:\Program Files\Microsoft SDK\Bin;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin
+	SET INCLUDE=C:\Program Files\Microsoft Visual C++ Toolkit 2003\include;C:\Program Files\Microsoft SDK\include;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\include
+	SET LIB=C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib;C:\Program Files\Microsoft SDK\lib;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib
+
+Several required files will still be missing:
+
+=over 4
+
+=item *
+
+cvtres.exe is required by link.exe when using a .res file.  It is actually
+installed by the .NET Framework SDK, but into a location such as the
+following:
+
+	C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322
+
+Copy it from there to C:\Program Files\Microsoft SDK\Bin
+
+=item *
+
+lib.exe is normally used to build libraries, but link.exe with the /lib
+option also works, so create a batch file called lib.bat in
+C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin containing:
+
+	@echo off
+	link /lib %*
+
+This will work as long as "lib.exe" is invoked simply as "lib" (which it is
+during the Perl build process).
+
+=item *
+
+setargv.obj is required to build perlglob.exe (and perl.exe if the USE_SETARGV
+option is enabled).  The Platform SDK supplies this object file in source form
+in C:\Program Files\Microsoft SDK\src\crt.  Copy setargv.c, cruntime.h and
+internal.h from there to some temporary location and build setargv.obj using
+
+	cl.exe /c /I. /D_CRTBLD setargv.c
+
+Then copy setargv.obj to C:\Program Files\Microsoft SDK\lib
+
+=back
+
+Perl should now build using the win32/Makefile.  You will need to edit that
+file to comment-out CCTYPE = MSVC60 (since that enables delay-loading of the
+Winsock DLL which the free toolkit does not support) and to set CCHOME,
+CCINCDIR and CCLIBDIR as per the environment setup above.
 
 =item Microsoft Platform SDK 64-bit Compiler
 
@@ -139,8 +223,8 @@ shells available after you install the Platform SDK from the Start Menu.
 
 =item MinGW release 3 with gcc
 
-The latest release of MinGW at the time of writing is 3.1.0, which comes 
-with gcc-3.2.3, and can be downloaded here:
+The latest release of MinGW at the time of writing is 3.1.0, which contains 
+gcc-3.2.3.  It can be downloaded here:
 
     http://www.mingw.org/
 
@@ -151,7 +235,7 @@ You also need dmake.  See L</"Make"> above on how to get it.
 
 =item MinGW release 1 with gcc
 
-The MinGW-1.1 bundle comes with gcc-2.95.3.
+The MinGW-1.1 bundle contains gcc-2.95.3.
 
 Make sure you install the binaries that work with MSVCRT.DLL as indicated
 in the README for the GCC bundle.  You may need to set up a few environment
@@ -197,8 +281,7 @@ Make sure you are in the "win32" subdirectory under the perl toplevel.
 This directory contains a "Makefile" that will work with
 versions of nmake that come with Visual C++ or the Platform SDK, and
 a dmake "makefile.mk" that will work for all supported compilers.  The
-defaults in the dmake makefile are setup to build using Microsoft Visual
-C++ 6.0 or newer.
+defaults in the dmake makefile are setup to build using MinGW/gcc.
 
 =item *
 
@@ -224,7 +307,7 @@ If you have either the source or a library that contains des_fcrypt(),
 enable the appropriate option in the makefile.  A ready-to-use version
 of fcrypt.c, based on the version originally written by Eric Young at
 ftp://ftp.funet.fi/pub/crypt/mirrors/dsi/libdes/, is bundled with the
-distribution. Set CRYPT_SRC to fcrypt.c to use this version.
+distribution and CRYPT_SRC is set to use it.
 Alternatively, if you have built a library that contains des_fcrypt(),
 you can set CRYPT_LIB to point to the library name.
 Perl will also build without des_fcrypt(), but the crypt() builtin will
@@ -301,19 +384,20 @@ Please report any other failures as described under L<BUGS AND CAVEATS>.
 Type "dmake install" (or "nmake install").  This will put the newly
 built perl and the libraries under whatever C<INST_TOP> points to in the
 Makefile.  It will also install the pod documentation under
-C<$INST_TOP\$VERSION\lib\pod> and HTML versions of the same under
-C<$INST_TOP\$VERSION\lib\pod\html>.  To use the Perl you just installed,
-you will need to add two components to your PATH environment variable,
-C<$INST_TOP\$VERSION\bin> and C<$INST_TOP\$VERSION\bin\$ARCHNAME>.
-For example:
+C<$INST_TOP\$INST_VER\lib\pod> and HTML versions of the same under
+C<$INST_TOP\$INST_VER\lib\pod\html>.
 
-    set PATH c:\perl\5.6.0\bin;c:\perl\5.6.0\bin\MSWin32-x86;%PATH%
+To use the Perl you just installed you will need to add a new entry to
+your PATH environment variable: C<$INST_TOP\bin>, e.g.
 
-If you opt to comment out INST_VER and INST_ARCH in the makefiles, the
-installation structure is much simpler.  In that case, it will be
-sufficient to add a single entry to the path, for instance:
+    set PATH=c:\perl\bin;%PATH%
 
-    set PATH c:\perl\bin;%PATH%
+If you opted to uncomment C<INST_VER> and C<INST_ARCH> in the makefile
+then the installation structure is a little more complicated and you will
+need to add two new PATH components instead: C<$INST_TOP\$INST_VER\bin> and
+C<$INST_TOP\$INST_VER\bin\$ARCHNAME>, e.g.
+
+    set PATH=c:\perl\5.6.0\bin;c:\perl\5.6.0\bin\MSWin32-x86;%PATH%
 
 =head2 Usage Hints for Perl on Win32
 
@@ -394,7 +478,7 @@ enclosing the whole argument within double quotes.  The backslash and
 the pair of double quotes surrounding the argument will be stripped by
 the C runtime.
 
-The file redirection characters "<", ">", and "|" can be quoted by
+The file redirection characters "E<lt>", "E<gt>", and "|" can be quoted by
 double quotes (although there are suggestions that this may not always
 be true).  Single quotes are not treated as quotes by the shell or
 the C runtime, they don't get stripped by the shell (just to make
@@ -574,11 +658,11 @@ cannot be built using the generic steps shown in the previous section.
 
 To ensure smooth transitioning of existing code that uses the
 ActiveState port, there is a bundle of Win32 extensions that contains
-all of the ActiveState extensions and most other Win32 extensions from
+all of the ActiveState extensions and several other Win32 extensions from
 CPAN in source form, along with many added bugfixes, and with MakeMaker
 support.  This bundle is available at:
 
-   http://www.cpan.org/authors/id/GSAR/libwin32-0.18.zip
+   http://www.cpan.org/modules/by-module/Win32/libwin32-0.191.zip
 
 See the README in that distribution for building and installation
 instructions.  Look for later versions that may be available at the
@@ -603,6 +687,8 @@ binaries transparently.  This means that you could use a 32-bit build
 of Perl on a 64-bit system.  Given this, why would one want to build
 a 64-bit build of Perl?  Here are some reasons why you would bother:
 
+=over
+
 =item *
 
 A 64-bit native application will run much more efficiently on
@@ -620,6 +706,8 @@ Perl automatically provides large file support when built under
 =item *
 
 Embedding Perl inside a 64-bit application.
+
+=back
 
 =back
 
@@ -691,7 +779,9 @@ Here's a diversion:  copy "runperl.bat" to "runperl", and type
 "runperl".  Explain the observed behavior, or lack thereof. :)
 Hint: .gnidnats llits er'uoy fi ,"lrepnur" eteled :tniH
 
-=item Miscellaneous Things
+=back
+
+=head2 Miscellaneous Things
 
 A full set of HTML documentation is installed, so you should be
 able to use it if you have a web browser installed on your
@@ -716,8 +806,6 @@ If you find bugs in perl, you can run C<perlbug> to create a
 bug report (you may have to send it manually if C<perlbug> cannot
 find a mailer on your system).
 
-=back
-
 =head1 BUGS AND CAVEATS
 
 Norton AntiVirus interferes with the build process, particularly if 
@@ -738,7 +826,7 @@ Some of the built-in functions do not act exactly as documented in
 L<perlfunc>, and a few are not implemented at all.  To avoid
 surprises, particularly if you have had prior exposure to Perl
 in other operating environments or if you intend to write code
-that will be portable to other environments.  See L<perlport>
+that will be portable to other environments, see L<perlport>
 for a reasonably definitive list of these differences.
 
 Not all extensions available from CPAN may build or work properly
@@ -746,6 +834,12 @@ in the Win32 environment.  See L</"Building Extensions">.
 
 Most C<socket()> related calls are supported, but they may not
 behave as on Unix platforms.  See L<perlport> for the full list.
+Perl requires Winsock2 to be installed on the system. If you're
+running Win95, you can download Winsock upgrade from here:
+
+http://www.microsoft.com/windows95/downloads/contents/WUAdminTools/S_WUNetworkingTools/W95Sockets2/Default.asp
+
+Later OS versions already include Winsock2 support.
 
 Signal handling may not behave as on Unix platforms (where it
 doesn't exactly "behave", either :).  For instance, calling C<die()>
@@ -756,8 +850,8 @@ variable in the handler.  Using signals under this port should
 currently be considered unsupported.
 
 Please send detailed descriptions of any problems and solutions that 
-you may find to <F<perlbug@perl.com>>, along with the output produced
-by C<perl -V>.
+you may find to E<lt>F<perlbug@perl.org>E<gt>, along with the output
+produced by C<perl -V>.
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -801,6 +895,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 20 April 2002
+Last updated: 30 July 2004
 
 =cut

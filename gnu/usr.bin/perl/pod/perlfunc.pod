@@ -2922,7 +2922,9 @@ works for symmetry, but you really should consider writing something
 to the temporary file first.  You will need to seek() to do the
 reading.
 
-File handles can be opened to "in memory" files held in Perl scalars via:
+Since v5.8.0, perl has built using PerlIO by default.  Unless you've
+changed this (ie Configure -Uuseperlio), you can open file handles to
+"in memory" files held in Perl scalars via:
 
     open($fh, '>', \$variable) || ..
 
@@ -2984,6 +2986,8 @@ Examples:
 	    #...		# whatever
 	}
     }
+
+See L<perliol/> for detailed info on PerlIO.
 
 You may also, in the Bourne shell tradition, specify an EXPR beginning
 with C<< '>&' >>, in which case the rest of the string is interpreted
@@ -3743,9 +3747,14 @@ array in subroutines, just like C<shift>.
 =item pos
 
 Returns the offset of where the last C<m//g> search left off for the variable
-in question (C<$_> is used when the variable is not specified).  May be
-modified to change that offset.  Such modification will also influence
-the C<\G> zero-width assertion in regular expressions.  See L<perlre> and
+in question (C<$_> is used when the variable is not specified).  Note that
+0 is a valid match offset, while C<undef> indicates that the search position
+is reset (usually due to match failure, but can also be because no match has
+yet been performed on the scalar). C<pos> directly accesses the location used
+by the regexp engine to store the offset, so assigning to C<pos> will change
+that offset, and so will also influence the C<\G> zero-width assertion in
+regular expressions. Because a failed C<m//gc> match doesn't reset the offset,
+the return from C<pos> won't change either in this case.  See L<perlre> and
 L<perlop>.
 
 =item print FILEHANDLE LIST
@@ -5379,9 +5388,9 @@ meanings of the fields:
 
 (The epoch was at 00:00 January 1, 1970 GMT.)
 
-(*) The ctime field is non-portable.  In particular, you cannot expect
-it to be a "creation time", see L<perlport/"Files and Filesystems">
-for details.
+(*) Not all fields are supported on all filesystem types. Notably, the
+ctime field is non-portable.  In particular, you cannot expect it to be a
+"creation time", see L<perlport/"Files and Filesystems"> for details.
 
 If C<stat> is passed the special filehandle consisting of an underline, no
 stat is done, but the current contents of the stat structure from the
@@ -5873,11 +5882,9 @@ tell() on pipes, fifos, and sockets usually returns -1.
 
 There is no C<systell> function.  Use C<sysseek(FH, 0, 1)> for that.
 
-Do not use tell() on a filehandle that has been opened using
-sysopen(), use sysseek() for that as described above.  Why?  Because
-sysopen() creates unbuffered, "raw", filehandles, while open() creates
-buffered filehandles.  sysseek() make sense only on the first kind,
-tell() only makes sense on the second kind.
+Do not use tell() (or other buffered I/O operations) on a file handle
+that has been manipulated by sysread(), syswrite() or sysseek().
+Those functions ignore the buffering, while tell() does not.
 
 =item telldir DIRHANDLE
 
@@ -6304,7 +6311,8 @@ files.  The first two elements of the list must be the NUMERICAL access
 and modification times, in that order.  Returns the number of files
 successfully changed.  The inode change time of each file is set
 to the current time.  For example, this code has the same effect as the
-Unix touch(1) command when the files I<already exist>.
+Unix touch(1) command when the files I<already exist> and belong to
+the user running the program:
 
     #!/usr/bin/perl
     $atime = $mtime = time;
@@ -6314,7 +6322,8 @@ Since perl 5.7.2, if the first two elements of the list are C<undef>, then
 the utime(2) function in the C library will be called with a null second
 argument. On most systems, this will set the file's access and
 modification times to the current time (i.e. equivalent to the example
-above.)
+above) and will even work on other users' files where you have write
+permission:
 
     utime undef, undef, @ARGV;
 

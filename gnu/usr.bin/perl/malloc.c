@@ -6,6 +6,12 @@
  * "'The Chamber of Records,' said Gimli. 'I guess that is where we now stand.'"
  */
 
+/* This file contains Perl's own implementation of the malloc library.
+ * It is used if Configure decides that, on your platform, Perl's
+ * version is better than the OS's, or if you give Configure the
+ * -Dusemymalloc command-line option.
+ */
+
 /*
   Here are some notes on configuring Perl's malloc.  (For non-perl
   usage see below.)
@@ -357,6 +363,7 @@
 #      define Free_t void
 #    endif
 #    define Copy(s,d,n,t) (void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
+#    define CopyD(s,d,n,t) memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
 #    define PerlEnv_getenv getenv
 #    define PerlIO_printf fprintf
 #    define PerlIO_stderr() stderr
@@ -2311,8 +2318,7 @@ Perl_strdup(const char *s)
     MEM_SIZE l = strlen(s);
     char *s1 = (char *)Perl_malloc(l+1);
 
-    Copy(s, s1, (MEM_SIZE)(l+1), char);
-    return s1;
+    return CopyD(s, s1, (MEM_SIZE)(l+1), char);
 }
 
 #ifdef PERL_CORE

@@ -18,9 +18,9 @@
 # you may fetch it yourself from your nearest archive site.)
 #
 
-# $Id: Configure,v 1.15 2004/08/14 00:12:22 millert Exp $
+# $Id: Configure,v 1.16 2004/08/15 20:57:29 millert Exp $
 #
-# Generated on Wed May 12 13:00:30 METDST 2004 [metaconfig 3.0 PL70]
+# Generated on Fri Jul 16 12:49:13 METDST 2004 [metaconfig 3.0 PL70]
 # (with additional metaconfig patches by perlbug@perl.org)
 
 cat >c1$$ <<EOF
@@ -91,7 +91,7 @@ paths="$paths /opt/bin /opt/local/bin /opt/local /opt/lbin"
 paths="$paths /usr/5bin /etc /usr/gnu/bin /usr/new /usr/new/bin /usr/nbin"
 paths="$paths /opt/gnu/bin /opt/new /opt/new/bin /opt/nbin"
 paths="$paths /sys5.3/bin /sys5.3/usr/bin /bsd4.3/bin /bsd4.3/usr/ucb"
-paths="$paths /bsd4.3/usr/bin /usr/bsd /bsd43/bin /usr/ccs/bin"
+paths="$paths /bsd4.3/usr/bin /usr/bsd /bsd43/bin /opt/ansic/bin /usr/ccs/bin"
 paths="$paths /etc /usr/lib /usr/ucblib /lib /usr/ccs/lib"
 paths="$paths /sbin /usr/sbin /usr/libexec"
 paths="$paths /system/gnu_library/bin"
@@ -3080,7 +3080,9 @@ EOM
 		aix) osname=aix
 			tmp=`( (oslevel) 2>/dev/null || echo "not found") 2>&1`
 			case "$tmp" in
-			'not found') osvers="$4"."$3" ;;
+			# oslevel can fail with:
+			# oslevel: Unable to acquire lock.
+			*not\ found) osvers="$4"."$3" ;;
 			'<3240'|'<>3240') osvers=3.2.0 ;;
 			'=3240'|'>3240'|'<3250'|'<>3250') osvers=3.2.4 ;;
 			'=3250'|'>3250') osvers=3.2.5 ;;

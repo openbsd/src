@@ -294,7 +294,6 @@ sub FETCH { *a = \1; 1 }
 tie $a, 'main';
 print $a;
 EXPECT
-Tied variable freed while still in use at - line 6.
 ########
 
 #  [20020716.007] - nested FETCHES

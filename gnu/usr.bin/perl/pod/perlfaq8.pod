@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq8 - System Interaction ($Revision: 1.6 $, $Date: 2003/12/03 03:02:45 $)
+perlfaq8 - System Interaction ($Revision: 1.7 $, $Date: 2004/08/09 18:10:15 $)
 
 =head1 DESCRIPTION
 
@@ -413,31 +413,30 @@ foregrounded process group, which you then trap in your process.
 Signals are documented in L<perlipc/"Signals"> and the
 section on ``Signals'' in the Camel.
 
-Be warned that very few C libraries are re-entrant.  Therefore, if you
-attempt to print() in a handler that got invoked during another stdio
-operation your internal structures will likely be in an
-inconsistent state, and your program will dump core.  You can
-sometimes avoid this by using syswrite() instead of print().
+You can set the values of the %SIG hash to be the functions you want 
+to handle the signal.  After perl catches the signal, it looks in %SIG
+for a key with the same name as the signal, then calls the subroutine
+value for that key.
 
-Unless you're exceedingly careful, the only safe things to do inside a
-signal handler are (1) set a variable and (2) exit.  In the first case,
-you should only set a variable in such a way that malloc() is not
-called (eg, by setting a variable that already has a value).
+	# as an anonymous subroutine
+	
+	$SIG{INT} = sub { syswrite(STDERR, "ouch\n", 5 ) };
+	
+	# or a reference to a function
+	
+	$SIG{INT} = \&ouch;
+	
+	# or the name of the function as a string
+	
+	$SIG{INT} = "ouch"; 
 
-For example:
+Perl versions before 5.8 had in its C source code signal handlers which
+would catch the signal and possibly run a Perl function that you had set
+in %SIG.  This violated the rules of signal handling at that level
+causing perl to dump core. Since version 5.8.0, perl looks at %SIG
+*after* the signal has been caught, rather than while it is being caught.
+Previous versions of this answer were incorrect.
 
-    $Interrupted = 0;	# to ensure it has a value
-    $SIG{INT} = sub {
-        $Interrupted++;
-	syswrite(STDERR, "ouch\n", 5);
-    }
-
-However, because syscalls restart by default, you'll find that if
-you're in a "slow" call, such as <FH>, read(), connect(), or
-wait(), that the only way to terminate them is by "longjumping" out;
-that is, by raising an exception.  See the time-out handler for a
-blocking flock() in L<perlipc/"Signals"> or the section on ``Signals''
-in the Camel book.
 
 =head2 How do I modify the shadow password file on a Unix system?
 
@@ -1065,6 +1064,74 @@ sysopen():
     use Fcntl;
     sysopen(FH, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
         or die "can't open /foo/somefile: $!":
+
+=head2 How do I tell the difference between errors from the shell and perl?
+
+(answer contributed by brian d foy, C<< <bdfoy@cpan.org> >>
+
+When you run a Perl script, something else is running the script for you,
+and that something else may output error messages.  The script might
+emit its own warnings and error messages.  Most of the time you cannot
+tell who said what.
+
+You probably cannot fix the thing that runs perl, but you can change how
+perl outputs its warnings by defining a custom warning and die functions.
+
+Consider this script, which has an error you may not notice immediately.
+
+	#!/usr/locl/bin/perl
+
+	print "Hello World\n";
+
+I get an error when I run this from my shell (which happens to be
+bash).  That may look like perl forgot it has a print() function,
+but my shebang line is not the path to perl, so the shell runs the
+script, and I get the error.
+
+	$ ./test
+	./test: line 3: print: command not found
+
+A quick and dirty fix involves a little bit of code, but this may be all
+you need to figure out the problem.
+
+	#!/usr/bin/perl -w
+	
+	BEGIN {
+	$SIG{__WARN__} = sub{ print STDERR "Perl: ", @_; };
+	$SIG{__DIE__}  = sub{ print STDERR "Perl: ", @_; exit 1};
+	}
+	
+	$a = 1 + undef;
+	$x / 0;
+	__END__
+
+The perl message comes out with "Perl" in front.  The BEGIN block
+works at compile time so all of the compilation errors and warnings
+get the "Perl:" prefix too.
+
+	Perl: Useless use of division (/) in void context at ./test line 9.
+	Perl: Name "main::a" used only once: possible typo at ./test line 8.
+	Perl: Name "main::x" used only once: possible typo at ./test line 9.
+	Perl: Use of uninitialized value in addition (+) at ./test line 8.
+	Perl: Use of uninitialized value in division (/) at ./test line 9.
+	Perl: Illegal division by zero at ./test line 9.
+	Perl: Illegal division by zero at -e line 3.
+
+If I don't see that "Perl:", it's not from perl.
+
+You could also just know all the perl errors, and although there are
+some people who may know all of them, you probably don't.  However, they
+all should be in the perldiag manpage. If you don't find the error in
+there, it probably isn't a perl error.
+
+Looking up every message is not the easiest way, so let perl to do it
+for you.  Use the diagnostics pragma with turns perl's normal messages
+into longer discussions on the topic.
+
+	use diagnostics;
+
+If you don't get a paragraph or two of expanded discussion, it
+might not be perl's message.
 
 =head2 How do I install a module from CPAN?
 

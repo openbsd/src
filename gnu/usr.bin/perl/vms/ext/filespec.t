@@ -127,5 +127,5 @@ __path_        vmspath [.__path_]
 ./../.	vmsify	[-]
 
 # Our override of File::Spec->canonpath can do some strange things
-__dev:[__dir.000000]__foo     File::Spec->canonpath   __dev:[__dir]__foo
+__dev:[__dir.000000]__foo     File::Spec->canonpath   __dev:[__dir.000000]__foo
 __dev:[__dir.][000000]__foo   File::Spec->canonpath   __dev:[__dir]__foo

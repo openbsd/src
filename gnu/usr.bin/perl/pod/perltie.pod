@@ -1118,9 +1118,11 @@ You cannot easily tie a multilevel data structure (such as a hash of
 hashes) to a dbm file.  The first problem is that all but GDBM and
 Berkeley DB have size limitations, but beyond that, you also have problems
 with how references are to be represented on disk.  One experimental
-module that does attempt to address this need partially is the MLDBM
-module.  Check your nearest CPAN site as described in L<perlmodlib> for
-source code to MLDBM.
+module that does attempt to address this need is DBM::Deep.  Check your
+nearest CPAN site as described in L<perlmodlib> for source code.  Note
+that despite its name, DBM::Deep does not use dbm.  Another earlier attempt
+at solving the problem is MLDBM, which is also available on the CPAN, but
+which has some fairly serious limitations.
 
 Tied filehandles are still incomplete.  sysopen(), truncate(),
 flock(), fcntl(), stat() and -X can't currently be trapped.

@@ -1,5 +1,5 @@
 package Cwd;
-$VERSION = $VERSION = '2.19';
+$VERSION = $VERSION = '3.01';
 
 =head1 NAME
 
@@ -469,7 +469,8 @@ sub _perl_abs_path(;$)
         my ($dir, $file) = $start =~ m{^(.*)/(.+)$}
 	    or return cwd() . '/' . $start;
 	
-	if (-l _) {
+	# Can't use "-l _" here, because the previous stat was a stat(), not an lstat().
+	if (-l $start) {
 	    my $link_target = readlink($start);
 	    die "Can't resolve link $start: $!" unless defined $link_target;
 	    

@@ -169,7 +169,7 @@ sub open {
 	if (defined($file) && length($file)
 	    && ! File::Spec->file_name_is_absolute($file))
 	{
-	    $file = File::Spec->catfile(File::Spec->curdir(),$file);
+	    $file = File::Spec->rel2abs($file);
 	}
 	$file = IO::Handle::_open_mode_string($mode) . " $file\0";
     }

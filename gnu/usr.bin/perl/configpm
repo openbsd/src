@@ -218,6 +218,34 @@ while (<CONFIG_SH>) {
 }
 close CONFIG_SH;
 
+# Calculation for the keys for byteorder
+# This is somewhat grim, but I need to run fetch_string here.
+our $Config_SH = join "\n", @v_fast, @v_others;
+
+my $t = fetch_string ({}, 'ivtype');
+my $s = fetch_string ({}, 'ivsize');
+
+# byteorder does exist on its own but we overlay a virtual
+# dynamically recomputed value.
+
+# However, ivtype and ivsize will not vary for sane fat binaries
+
+my $f = $t eq 'long' ? 'L!' : $s == 8 ? 'Q': 'I';
+
+my $byteorder_code;
+if ($s == 4 || $s == 8) {
+    my $list = join ',', reverse(2..$s);
+    my $format = 'a'x$s;
+    $byteorder_code = <<"EOT";
+my \$i = 0;
+foreach my \$c ($list) { \$i |= ord(\$c); \$i <<= 8 }
+\$i |= ord(1);
+my \$byteorder = join('', unpack('$format', pack('$f', \$i)));
+EOT
+} else {
+    $byteorder_code = "my \$byteorder = '?'x$s;\n";
+}
+
 print CONFIG @non_v, "\n";
 
 # copy config summary format from the myconfig.SH script
@@ -231,7 +259,7 @@ close(MYCONFIG);
 # before expanding it, because may have been made readonly if a perl
 # interpreter has been cloned.
 
-print CONFIG "\n!END!\n", <<'EOT';
+print CONFIG "\n!END!\n", $byteorder_code, <<'EOT';
 my $summary_expanded;
 
 sub myconfig {
@@ -241,12 +269,19 @@ sub myconfig {
     $summary_expanded;
 }
 
-our $Config_SH : unique = <<'!END!';
+local *_ = \my $a;
+$_ = <<'!END!';
 EOT
 
 print CONFIG join("", @v_fast, sort @v_others);
 
-print CONFIG "!END!\n", $fetch_string;
+print CONFIG <<'EOT';
+!END!
+s/(byteorder=)(['"]).*?\2/$1$2$byteorder$2/m;
+our $Config_SH : unique = $_;
+EOT
+
+print CONFIG $fetch_string;
 
 print CONFIG <<'ENDOFEND';
 
@@ -341,11 +376,15 @@ sub config_re {
 }
 
 sub config_vars {
+    # implements -V:cfgvar option (see perlrun -V:)
     foreach (@_) {
+	# find optional leading, trailing colons; and query-spec
 	my ($notag,$qry,$lncont) = m/^(:)?(.*?)(:)?$/;	# flags fore and aft, 
-	my $prfx = $notag ? '': "$qry=";		# prefix for print
-	my $lnend = $lncont ? ' ' : ";\n";		# ending for print
+	# map colon-flags to print decorations
+	my $prfx = $notag ? '': "$qry=";		# tag-prefix for print
+	my $lnend = $lncont ? ' ' : ";\n";		# line ending for print
 
+	# all config-vars are by definition \w only, any \W means regex
 	if ($qry =~ /\W/) {
 	    my @matches = config_re($qry);
 	    print map "$_$lnend", @matches ? @matches : "$qry: not found"		if !$notag;
@@ -392,44 +431,13 @@ sub TIEHASH {
 ENDOFSET
 }
 
-
-# Calculation for the keys for byteorder
-# This is somewhat grim, but I need to run fetch_string here.
-our $Config_SH = join "\n", @v_fast, @v_others;
-
-my $t = fetch_string ({}, 'ivtype');
-my $s = fetch_string ({}, 'ivsize');
-
-# byteorder does exist on its own but we overlay a virtual
-# dynamically recomputed value.
-
-# However, ivtype and ivsize will not vary for sane fat binaries
-
-my $f = $t eq 'long' ? 'L!' : $s == 8 ? 'Q': 'I';
-
-my $byteorder_code;
-if ($s == 4 || $s == 8) {
-    my $list = join ',', reverse(2..$s);
-    my $format = 'a'x$s;
-    $byteorder_code = <<"EOT";
-my \$i = 0;
-foreach my \$c ($list) { \$i |= ord(\$c); \$i <<= 8 }
-\$i |= ord(1);
-my \$value = join('', unpack('$format', pack('$f', \$i)));
-EOT
-} else {
-    $byteorder_code = "\$value = '?'x$s;\n";
-}
-
 my $fast_config = join '', map { "    $_,\n" }
-    sort values (%v_fast), 'byteorder => $value' ;
+    sort values (%v_fast), 'byteorder => $byteorder' ;
 
-print CONFIG sprintf <<'ENDOFTIE', $byteorder_code, $fast_config;
+print CONFIG sprintf <<'ENDOFTIE', $fast_config;
 
 # avoid Config..Exporter..UNIVERSAL search for DESTROY then AUTOLOAD
 sub DESTROY { }
-
-%s
 
 tie %%Config, 'Config', {
 %s

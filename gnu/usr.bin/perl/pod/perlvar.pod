@@ -778,7 +778,9 @@ you may use the CPAN module C<Linux::Pid>.
 
 The real uid of this process.  (Mnemonic: it's the uid you came I<from>,
 if you're running setuid.)  You can change both the real uid and
-the effective uid at the same time by using POSIX::setuid().
+the effective uid at the same time by using POSIX::setuid().  Since
+changes to $< require a system call, check $! after a change attempt to 
+detect any possible errors.
 
 =item $EFFECTIVE_USER_ID
 
@@ -792,7 +794,8 @@ The effective uid of this process.  Example:
     ($<,$>) = ($>,$<);	# swap real and effective uid
 
 You can change both the effective uid and the real uid at the same
-time by using POSIX::setuid().
+time by using POSIX::setuid().  Changes to $> require a check to $!
+to detect any possible errors after an attempted change. 
 
 (Mnemonic: it's the uid you went I<to>, if you're running setuid.)
 C<< $< >> and C<< $> >> can be swapped only on machines
@@ -815,7 +818,8 @@ set the real gid.  So the value given by C<$(> should I<not> be assigned
 back to C<$(> without being forced numeric, such as by adding zero.
 
 You can change both the real gid and the effective gid at the same
-time by using POSIX::setgid().
+time by using POSIX::setgid().  Changes to $( require a check to $!
+to detect any possible errors after an attempted change.
 
 (Mnemonic: parentheses are used to I<group> things.  The real gid is the
 group you I<left>, if you're running setgid.)
@@ -841,6 +845,8 @@ list, say C< $) = "5 5" >.
 
 You can change both the effective gid and the real gid at the same
 time by using POSIX::setgid() (use only a single numeric argument).
+Changes to $) require a check to $! to detect any possible errors
+after an attempted change.
 
 (Mnemonic: parentheses are used to I<group> things.  The effective gid
 is the group that's I<right> for you, if you're running setgid.)

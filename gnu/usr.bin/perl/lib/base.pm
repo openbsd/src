@@ -152,10 +152,9 @@ sub inherit_fields {
         }
     }
 
-    unless( keys %$bfields ) {
-        foreach my $idx (1..$#{$battr}) {
-            $dattr->[$idx] = $battr->[$idx] & INHERITED;
-        }
+    foreach my $idx (1..$#{$battr}) {
+	next if defined $dattr->[$idx];
+	$dattr->[$idx] = $battr->[$idx] & INHERITED;
     }
 }
 

@@ -13,6 +13,13 @@
  * it has not been hard for me to read your mind and memory.'"
  */
 
+/* This file contains utility routines to dump the contents of SV and OP
+ * structures, as used by command-line options like -Dt and -Dx, and
+ * by Devel::Peek.
+ *
+ * It also holds the debugging version of the  runops function.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_DUMP_C
 #include "perl.h"

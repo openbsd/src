@@ -2992,7 +2992,7 @@ Using splice() past the end of an array now causes a warning.
 =item *
 
 Malformed Unicode encodings (UTF-8 and UTF-16) cause a lot of warnings,
-ad doestrying to use UTF-16 surrogates (which are unimplemented).
+as does trying to use UTF-16 surrogates (which are unimplemented).
 
 =item *
 

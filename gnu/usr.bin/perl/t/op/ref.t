@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-print "1..69\n";
+print "1..70\n";
 
 require 'test.pl';
 
@@ -368,6 +368,18 @@ print "not " if length $result;
 print "ok ",++$test," - freeing self-referential typeglob\n";
 print "# got: $result\n" if length $result;
 
+# using a regex in the destructor for STDOUT segfaulted because the
+# REGEX pad had already been freed (ithreads build only). The
+# object is required to trigger the early freeing of GV refs to to STDOUT
+
+$result = runperl(
+    prog => '$x=bless[]; sub IO::Handle::DESTROY{$_="bad";s/bad/ok/;print}',
+    stderr => 1
+);
+print "not " unless $result =~ /^(ok)+$/;
+print "ok ",++$test," - STDOUT destructor\n";
+print "# got: $result\n" unless $result =~ /^(ok)+$/;
+
 # test global destruction
 
 ++$test;
@@ -386,3 +398,4 @@ package FINALE;
 DESTROY {
     print $_[0][0];
 }
+

@@ -19,12 +19,17 @@ Using the C<splain> standalone filter program:
     perl program 2>diag.out
     splain [-v] [-p] diag.out
 
+Using diagnostics to get stack traces from a misbehaving script:
+
+    perl -Mdiagnostics=-traceonly my_script.pl
+
 =head1 DESCRIPTION
 
 =head2 The C<diagnostics> Pragma
 
 This module extends the terse diagnostics normally emitted by both the
-perl compiler and the perl interpreter, augmenting them with the more
+perl compiler and the perl interpreter (from running perl with a -w 
+switch or C<use warnings>), augmenting them with the more
 explicative and endearing descriptions found in L<perldiag>.  Like the
 other pragmata, it affects the compilation phase of your program rather
 than merely the execution phase.
@@ -52,6 +57,17 @@ Warnings dispatched from perl itself (or more accurately, those that match
 descriptions found in L<perldiag>) are only displayed once (no duplicate
 descriptions).  User code generated warnings a la warn() are unaffected,
 allowing duplicate user messages to be displayed.
+
+This module also adds a stack trace to the error message when perl dies.
+This is useful for pinpointing what caused the death. The B<-traceonly> (or
+just B<-t>) flag turns off the explantions of warning messages leaving just
+the stack traces. So if your script is dieing, run it again with
+
+  perl -Mdiagnostics=-traceonly my_bad_script
+
+to see the call stack at the time of death. By supplying the B<-warntrace>
+(or just B<-w>) flag, any warnings emitted will also come with a stack
+trace.
 
 =head2 The I<splain> Program
 
@@ -167,11 +183,14 @@ Tom Christiansen <F<tchrist@mox.perl.com>>, 25 June 1995.
 use strict;
 use 5.006;
 use Carp;
+$Carp::Internal{__PACKAGE__.""}++;
 
-our $VERSION = 1.13;
+our $VERSION = 1.14;
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
+our $TRACEONLY = 0;
+our $WARNTRACE = 0;
 
 use Config;
 my($privlib, $archlib) = @Config{qw(privlibexp archlibexp)};
@@ -448,6 +467,15 @@ sub import {
 				    next;
 			       };
 
+	/^-t(race)?$/ 		&& do {
+				    $TRACEONLY++;
+				    next;
+			       };
+	/^-w(arntrace)?$/ 		&& do {
+				    $WARNTRACE++;
+				    next;
+			       };
+
 	warn "Unknown flag: $_";
     } 
 
@@ -469,9 +497,13 @@ sub disable {
 sub warn_trap {
     my $warning = $_[0];
     if (caller eq $WHOAMI or !splainthis($warning)) {
-	print STDERR $warning;
+	if ($WARNTRACE) {
+	    print STDERR Carp::longmess($warning);
+	} else {
+	    print STDERR $warning;
+	}
     } 
-    &$oldwarn if defined $oldwarn and $oldwarn and $oldwarn ne \&warn_trap;
+    goto &$oldwarn if defined $oldwarn and $oldwarn and $oldwarn ne \&warn_trap;
 };
 
 sub death_trap {
@@ -481,8 +513,7 @@ sub death_trap {
     # want to explain the exception because it's going to get caught.
     my $in_eval = 0;
     my $i = 0;
-    while (1) {
-      my $caller = (caller($i++))[3] or last;
+    while (my $caller = (caller($i++))[3]) {
       if ($caller eq '(eval)') {
 	$in_eval = 1;
 	last;
@@ -516,6 +547,7 @@ my %old_diag;
 my $count;
 my $wantspace;
 sub splainthis {
+    return 0 if $TRACEONLY;
     local $_ = shift;
     local $\;
     ### &finish_compilation unless %msg;

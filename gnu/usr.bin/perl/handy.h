@@ -559,15 +559,29 @@ The XSUB-writer's interface to the C C<memmove> function.  The C<src> is the
 source, C<dest> is the destination, C<nitems> is the number of items, and C<type> is
 the type.  Can do overlapping moves.  See also C<Copy>.
 
+=for apidoc Am|void *|MoveD|void* src|void* dest|int nitems|type
+Like C<Move> but returns dest. Useful for encouraging compilers to tail-call
+optimise.
+
 =for apidoc Am|void|Copy|void* src|void* dest|int nitems|type
 The XSUB-writer's interface to the C C<memcpy> function.  The C<src> is the
 source, C<dest> is the destination, C<nitems> is the number of items, and C<type> is
 the type.  May fail on overlapping copies.  See also C<Move>.
 
+=for apidoc Am|void *|CopyD|void* src|void* dest|int nitems|type
+
+Like C<Copy> but returns dest. Useful for encouraging compilers to tail-call
+optimise.
+
 =for apidoc Am|void|Zero|void* dest|int nitems|type
 
 The XSUB-writer's interface to the C C<memzero> function.  The C<dest> is the
 destination, C<nitems> is the number of items, and C<type> is the type.
+
+=for apidoc Am|void *|ZeroD|void* dest|int nitems|type
+
+Like C<Zero> but returns dest. Useful for encouraging compilers to tail-call
+optimise.
 
 =for apidoc Am|void|StructCopy|type src|type dest|type
 This is an architecture-independent macro to copy one structure to another.
@@ -605,6 +619,15 @@ hopefully catches attempts to access uninitialized memory.
 #define Copy(s,d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t)))
 #define Zero(d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memzero((char*)(d), (n) * sizeof(t)))
 
+#define MoveD(s,d,n,t)	(MEM_WRAP_CHECK(n,t), memmove((char*)(d),(char*)(s), (n) * sizeof(t)))
+#define CopyD(s,d,n,t)	(MEM_WRAP_CHECK(n,t), memcpy((char*)(d),(char*)(s), (n) * sizeof(t)))
+#ifdef HAS_MEMSET
+#define ZeroD(d,n,t)	(MEM_WRAP_CHECK(n,t), memzero((char*)(d), (n) * sizeof(t)))
+#else
+/* Using bzero(), which returns void.  */
+#define ZeroD(d,n,t)	(MEM_WRAP_CHECK(n,t), memzero((char*)(d), (n) * sizeof(t)),d)
+#endif
+
 #define Poison(d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memset((char*)(d), 0xAB, (n) * sizeof(t)))
 
 #else
@@ -627,6 +650,14 @@ hopefully catches attempts to access uninitialized memory.
 #define Copy(s,d,n,t)	(void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
 #define Zero(d,n,t)	(void)memzero((char*)(d), (n) * sizeof(t))
 
+#define MoveD(s,d,n,t)	memmove((char*)(d),(char*)(s), (n) * sizeof(t))
+#define CopyD(s,d,n,t)	memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
+#ifdef HAS_MEMSET
+#define ZeroD(d,n,t)	memzero((char*)(d), (n) * sizeof(t))
+#else
+#define ZeroD(d,n,t)	((void)memzero((char*)(d), (n) * sizeof(t)),d)
+#endif
+
 #define Poison(d,n,t)	(void)memset((char*)(d), 0xAB, (n) * sizeof(t))
 
 #endif
@@ -640,6 +671,9 @@ hopefully catches attempts to access uninitialized memory.
 #define Move(s,d,n,t)
 #define Copy(s,d,n,t)
 #define Zero(d,n,t)
+#define MoveD(s,d,n,t)	d
+#define CopyD(s,d,n,t)	d
+#define ZeroD(d,n,t)	d
 #define Poison(d,n,t)
 #define Safefree(d)	(d) = (d)
 

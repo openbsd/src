@@ -34,7 +34,7 @@ INST_TOP	*= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	*= \5.8.5
+#INST_VER	*= \5.8.6
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -165,7 +165,14 @@ CRYPT_SRC	*= fcrypt.c
 # extensions if you change the default.  Currently, this cannot be enabled
 # if you ask for USE_IMP_SYS above.
 #
-#PERL_MALLOC	*= define
+PERL_MALLOC	*= define
+
+#
+# set this to enable debugging mstats
+# This must be enabled to use the Devel::Peek::mstat() function.  This cannot
+# be enabled without PERL_MALLOC as well.
+#
+DEBUG_MSTATS  = define
 
 #
 # set the install locations of the compiler include/libraries
@@ -255,6 +262,19 @@ USE_PERLIO	*= undef
 USE_LARGE_FILES	*= undef
 USE_PERLCRT	*= undef
 
+.IF "$(PERL_MALLOC)" == "undef"
+PERL_MALLOC	= undef
+DEBUG_MSTATS   = undef
+.ENDIF
+
+.IF "$(DEBUG_MSTATS)" == "undef"
+DEBUG_MSTATS   = undef
+.ENDIF
+
+.IF "$(DEBUG_MSTATS)" == "define"
+BUILDOPT       += -DPERL_DEBUGGING_MSTATS
+.ENDIF
+
 .IF "$(USE_IMP_SYS)$(USE_MULTI)$(USE_5005THREADS)" == "defineundefundef"
 USE_MULTI	!= define
 .ENDIF
@@ -309,7 +329,7 @@ ARCHNAME	!:= $(ARCHNAME)-thread
 
 # VC 6.0 can load the socket dll on demand.  Makes the test suite
 # run in about 10% less time.
-DELAYLOAD	*= -DELAYLOAD:wsock32.dll -DELAYLOAD:shell32.dll delayimp.lib
+DELAYLOAD	*= -DELAYLOAD:ws2_32.dll -DELAYLOAD:shell32.dll delayimp.lib
 
 .IF "$(CFG)" == "Debug"
 .ELSE
@@ -419,7 +439,7 @@ LIBC		= -lmsvcrt
 LIBFILES	= $(CRYPT_LIB) $(LIBC) \
 		  -lmoldname -lkernel32 -luser32 -lgdi32 \
 		  -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 \
-		  -loleaut32 -lnetapi32 -luuid -lwsock32 -lmpr \
+		  -loleaut32 -lnetapi32 -luuid -lws2_32 -lmpr \
 		  -lwinmm -lversion -lodbc32
 
 .IF  "$(CFG)" == "Debug"
@@ -503,7 +523,7 @@ BUILDOPT	+= -DPERL_MSVCRT_READFIX
 LIBBASEFILES	= $(CRYPT_LIB) \
 		oldnames.lib kernel32.lib user32.lib gdi32.lib winspool.lib \
 		comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib \
-		netapi32.lib uuid.lib wsock32.lib mpr.lib winmm.lib \
+		netapi32.lib uuid.lib ws2_32.lib mpr.lib winmm.lib \
 		version.lib
 
 # win64 doesn't have some libs
@@ -858,7 +878,6 @@ CFG_VARS	=					\
 		usethreads=$(USE_ITHREADS)	~	\
 		use5005threads=$(USE_5005THREADS)	~	\
 		useithreads=$(USE_ITHREADS)	~	\
-		usethreads=$(USE_5005THREADS)	~	\
 		usemultiplicity=$(USE_MULTI)	~	\
 		useperlio=$(USE_PERLIO)		~	\
 		uselargefiles=$(USE_LARGE_FILES)	~	\
@@ -1014,9 +1033,9 @@ $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
 
 perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
 .IF "$(USE_IMP_SYS)" == "define"
-	$(CC) -c -I. $(CFLAGS_O) $(CXX_FLAG) $(OBJOUT_FLAG)$@ perllib.c
+	$(CC) -c -I. -DWITH_STATIC $(CFLAGS_O) $(CXX_FLAG) $(OBJOUT_FLAG)$@ perllib.c
 .ELSE
-	$(CC) -c -I. $(CFLAGS_O) $(OBJOUT_FLAG)$@ perllib.c
+	$(CC) -c -I. -DWITH_STATIC $(CFLAGS_O) $(OBJOUT_FLAG)$@ perllib.c
 .ENDIF
 
 # 1. we don't want to rebuild miniperl.exe when config.h changes
@@ -1032,10 +1051,11 @@ $(DLL_OBJ)	: $(CORE_H)
 $(X2P_OBJ)	: $(CORE_H)
 
 perldll.def : $(MINIPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl
+	$(MINIPERL) -I..\lib buildext.pl --create-perllibst-h $(STATIC_EXT)
 	$(MINIPERL) -w ..\makedef.pl PLATFORM=win32 $(OPTIMIZE) $(DEFINES) \
 	$(BUILDOPT) CCTYPE=$(CCTYPE) > perldll.def
 
-$(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES)
+$(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES) Extensions_static
 .IF "$(CCTYPE)" == "BORLAND"
 	$(LINK32) -Tpd -ap $(BLINK_FLAGS) \
 	    @$(mktmp c0d32$(o) $(PERLDLL_OBJ:s,\,\\)\n \
@@ -1056,10 +1076,12 @@ $(PERLDLL): perldll.def $(PERLDLL_OBJ) $(PERLDLL_RES)
 		perl.exp $(LKPOST))
 .ELSE
 	$(LINK32) -dll -def:perldll.def -out:$@ \
+	    $(shell $(MINIPERL) -I..\lib buildext.pl --list-static-libs) \
 	    @$(mktmp -base:0x28000000 $(BLINK_FLAGS) $(DELAYLOAD) $(LIBFILES) \
 	        $(PERLDLL_RES) $(PERLDLL_OBJ:s,\,\\))
 .ENDIF
 	$(XCOPY) $(PERLIMPLIB) $(COREDIR)
+
 
 $(PERLEXE_ICO): $(MINIPERL) makeico.pl
 	$(MINIPERL) makeico.pl > $@
@@ -1136,8 +1158,12 @@ $(EXTDIR)\DynaLoader\dl_win32.xs: dl_win32.xs
 
 #----------------------------------------------------------------------------------
 Extensions : buildext.pl $(PERLDEP) $(CONFIGPM)
-	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR)
-	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext
+	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) --dynamic
+	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext --dynamic
+
+Extensions_static : buildext.pl
+	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext --static
+	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) --static
 
 # Note: The next two targets explicitly remove a "blibdirs.exists" file that
 # currerntly gets left behind, until CPAN RT Ticket #5616 is resolved.
@@ -1201,7 +1227,7 @@ utils: $(PERLEXE) $(X2P)
 	copy ..\README.vms      ..\pod\perlvms.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perl585delta.pod ..\pod\perldelta.pod
+	copy ..\pod\perl586delta.pod ..\pod\perldelta.pod
 	cd ..\pod && $(MAKE) -f ..\win32\pod.mak converters
 	cd ..\lib && $(PERLEXE) lib_pm.PL
 	$(PERLEXE) $(PL2BAT) $(UTILS)
@@ -1280,6 +1306,7 @@ distclean: realclean
 	-del /f ..\config.sh ..\splittree.pl perlmain.c dlutils.c config.h.new
 	-del /f $(CONFIGPM)
 	-del /f bin\*.bat
+	-del /f perllibst.h
 	-del /f $(PERLEXE_ICO) perl.base
 	-cd .. && del /s *$(a) *.map *.pdb *.ilk *.bs *$(o) .exists pm_to_blib
 	-cd $(EXTDIR) && del /s *.def Makefile Makefile.old

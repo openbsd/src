@@ -171,6 +171,9 @@ Deprecated.  Use C<GIMME_V> instead.
   /* (lower bits may carry MAXARG) */
 #define OPpTARGET_MY		16	/* Target is PADMY. */
 
+/* Private for OP_ENTERITER and OP_ITER */
+#define OPpITER_REVERSED	4	/* for (reverse ...) */
+
 /* Private for OP_CONST */
 #define	OPpCONST_SHORTCIRCUIT	4	/* eg the constant 5 in (5 || foo) */
 #define	OPpCONST_STRICT		8	/* bearword subject to strict 'subs' */
@@ -194,8 +197,9 @@ Deprecated.  Use C<GIMME_V> instead.
 /* Private for OP_SORT */
 #define OPpSORT_NUMERIC		1	/* Optimized away { $a <=> $b } */
 #define OPpSORT_INTEGER		2	/* Ditto while under "use integer" */
-#define OPpSORT_REVERSE		4	/* Descending sort */
+#define OPpSORT_REVERSE		4	/* Reversed sort */
 #define OPpSORT_INPLACE		8	/* sort in-place; eg @a = sort @a */
+#define OPpSORT_DESCEND		16	/* Descending sort */
 /* Private for OP_THREADSV */
 #define OPpDONE_SVREF		64	/* Been through newSVREF once */
 

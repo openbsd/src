@@ -22,7 +22,7 @@ if ($@) {
 }
 print "ok ",$i++,"\n";
 
-eval sprintf "use %.5f;", $];
+eval sprintf "use %.6f;", $];
 if ($@) {
     print STDERR $@,"\n";
     print "not ";
@@ -30,20 +30,20 @@ if ($@) {
 print "ok ",$i++,"\n";
 
 
-eval sprintf "use %.5f;", $] - 0.000001;
+eval sprintf "use %.6f;", $] - 0.000001;
 if ($@) {
     print STDERR $@,"\n";
     print "not ";
 }
 print "ok ",$i++,"\n";
 
-eval sprintf("use %.5f;", $] + 1);
+eval sprintf("use %.6f;", $] + 1);
 unless ($@) {
     print "not ";
 }
 print "ok ",$i++,"\n";
 
-eval sprintf "use %.5f;", $] + 0.00001;
+eval sprintf "use %.6f;", $] + 0.00001;
 unless ($@) {
     print "not ";
 }

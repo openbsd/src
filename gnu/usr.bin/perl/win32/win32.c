@@ -4155,7 +4155,6 @@ static char *base      = NULL;		/* XXX threadead */
 static char *reserved  = NULL;		/* XXX threadead */
 static char *brk       = NULL;		/* XXX threadead */
 static DWORD pagesize  = 0;		/* XXX threadead */
-static DWORD allocsize = 0;		/* XXX threadead */
 
 void *
 sbrk(ptrdiff_t need)
@@ -4168,28 +4167,34 @@ sbrk(ptrdiff_t need)
     * call the OS to commit just one page ...
     */
    pagesize = info.dwPageSize << 3;
-   allocsize = info.dwAllocationGranularity;
   }
- /* This scheme fails eventually if request for contiguous
-  * block is denied so reserve big blocks - this is only
-  * address space not memory ...
-  */
  if (brk+need >= reserved)
   {
-   DWORD size = 64*1024*1024;
+   DWORD size = brk+need-reserved;
    char *addr;
+   char *prev_committed = NULL;
    if (committed && reserved && committed < reserved)
     {
      /* Commit last of previous chunk cannot span allocations */
      addr = (char *) VirtualAlloc(committed,reserved-committed,MEM_COMMIT,PAGE_READWRITE);
      if (addr)
+      {
+      /* Remember where we committed from in case we want to decommit later */
+      prev_committed = committed;
       committed = reserved;
+      }
     }
    /* Reserve some (more) space
+    * Contiguous blocks give us greater efficiency, so reserve big blocks -
+    * this is only address space not memory...
     * Note this is a little sneaky, 1st call passes NULL as reserved
     * so lets system choose where we start, subsequent calls pass
     * the old end address so ask for a contiguous block
     */
+sbrk_reserve:
+   if (size < 64*1024*1024)
+    size = 64*1024*1024;
+   size = ((size + pagesize - 1) / pagesize) * pagesize;
    addr  = (char *) VirtualAlloc(reserved,size,MEM_RESERVE,PAGE_NOACCESS);
    if (addr)
     {
@@ -4201,6 +4206,19 @@ sbrk(ptrdiff_t need)
      if (!brk)
       brk = committed;
     }
+   else if (reserved)
+    {
+      /* The existing block could not be extended far enough, so decommit
+       * anything that was just committed above and start anew */
+      if (prev_committed)
+       {
+       if (!VirtualFree(prev_committed,reserved-prev_committed,MEM_DECOMMIT))
+        return (void *) -1;
+       }
+      reserved = base = committed = brk = NULL;
+      size = need;
+      goto sbrk_reserve;
+    }
    else
     {
      return (void *) -1;
@@ -4211,11 +4229,12 @@ sbrk(ptrdiff_t need)
  if (brk > committed)
   {
    DWORD size = ((brk-committed + pagesize -1)/pagesize) * pagesize;
-   char *addr = (char *) VirtualAlloc(committed,size,MEM_COMMIT,PAGE_READWRITE);
+   char *addr;
+   if (committed+size > reserved)
+    size = reserved-committed;
+   addr = (char *) VirtualAlloc(committed,size,MEM_COMMIT,PAGE_READWRITE);
    if (addr)
-    {
-     committed += size;
-    }
+    committed += size;
    else
     return (void *) -1;
   }
@@ -4807,13 +4826,15 @@ XS(w32_GetFullPathName)
     SV *fullpath;
     char *filepart;
     DWORD len;
+    STRLEN filename_len;
+    char *filename_p;
 
     if (items != 1)
 	Perl_croak(aTHX_ "usage: Win32::GetFullPathName($filename)");
 
     filename = ST(0);
-    fullpath = sv_mortalcopy(filename);
-    SvUPGRADE(fullpath, SVt_PV);
+    filename_p = SvPV(filename, filename_len);
+    fullpath = sv_2mortal(newSVpvn(filename_p, filename_len));
     if (!SvPVX(fullpath) || !SvLEN(fullpath))
         XSRETURN_UNDEF;
 

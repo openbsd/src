@@ -13,6 +13,11 @@
  * have seen more than thou knowest, Gray Fool."  --Denethor
  */
 
+/*
+ * This file contains various utilities for producing debugging output
+ * (mainly related to displaying the stack)
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_DEB_C
 #include "perl.h"

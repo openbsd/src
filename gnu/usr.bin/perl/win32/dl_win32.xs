@@ -68,7 +68,7 @@ static int
 dl_static_linked(char *filename)
 {
     char **p;
-    char* ptr;
+    char *ptr, *hptr;
     static char subStr[] = "/auto/";
     char szBuffer[MAX_PATH];
 
@@ -90,7 +90,14 @@ dl_static_linked(char *filename)
 	ptr = szBuffer;
 
     for (p = staticlinkmodules; *p;p++) {
-	if (strstr(ptr, *p)) return 1;
+	if (hptr = strstr(ptr, *p)) {
+	    /* found substring, need more detailed check if module name match */
+	    if (hptr==ptr) {
+		return strcmp(ptr, *p)==0;
+	    }
+	    if (hptr[strlen(*p)] == 0)
+		return hptr[-1]=='/';
+	}
     };
     return 0;
 }

@@ -16,6 +16,19 @@
  *                     Fire, Foes!  Awake!
  */
 
+/* This file contains 'hot' pp ("push/pop") functions that
+ * execute the opcodes that make up a perl program. A typical pp function
+ * expects to find its arguments on the stack, and usually pushes its
+ * results onto the stack, hence the 'pp' terminology. Each OP structure
+ * contains a pointer to the relevant pp_foo() function.
+ *
+ * By 'hot', we mean common ops whose execution speed is critical.
+ * By gathering them together into a single file, we encourage
+ * CPU cache hits on hot code. Also it could be taken as a warning not to
+ * change any code in this file unless you're sure it won't affect
+ * performance.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_PP_HOT_C
 #include "perl.h"
@@ -235,7 +248,7 @@ PP(pp_eq)
 {
     dSP; tryAMAGICbinSET(eq,0);
 #ifndef NV_PRESERVES_UV
-    if (SvROK(TOPs) && SvROK(TOPm1s)) {
+    if (SvROK(TOPs) && !SvAMAGIC(TOPs) && SvROK(TOPm1s) && !SvAMAGIC(TOPm1s)) {
         SP--;
 	SETs(boolSV(SvRV(TOPs) == SvRV(TOPp1s)));
 	RETURN;
@@ -1542,7 +1555,7 @@ Perl_do_readline(pTHX)
 	    /* undef TARG, and push that undefined value */
 	    if (type != OP_RCATLINE) {
 	        SV_CHECK_THINKFIRST(TARG);
-	        (void)SvOK_off(TARG);
+	        SvOK_off(TARG);
 	    }
 	    PUSHTARG;
 	}
@@ -1608,7 +1621,7 @@ Perl_do_readline(pTHX)
 	    if (gimme == G_SCALAR) {
 		if (type != OP_RCATLINE) {
 		    SV_CHECK_THINKFIRST(TARG);
-		    (void)SvOK_off(TARG);
+		    SvOK_off(TARG);
 		}
 		SPAGAIN;
 		PUSHTARG;
@@ -1908,19 +1921,39 @@ PP(pp_iter)
     }
 
     /* iterate array */
-    if (cx->blk_loop.iterix >= (av == PL_curstack ? cx->blk_oldsp : AvFILL(av)))
-	RETPUSHNO;
+    if (PL_op->op_private & OPpITER_REVERSED) {
+	/* In reverse, use itermax as the min :-)  */
+	if (cx->blk_loop.iterix <= cx->blk_loop.itermax)
+	    RETPUSHNO;
 
-    if (SvMAGICAL(av) || AvREIFY(av)) {
-	SV **svp = av_fetch(av, ++cx->blk_loop.iterix, FALSE);
-	if (svp)
-	    sv = *svp;
-	else
-	    sv = Nullsv;
+	if (SvMAGICAL(av) || AvREIFY(av)) {
+	    SV **svp = av_fetch(av, cx->blk_loop.iterix--, FALSE);
+	    if (svp)
+		sv = *svp;
+	    else
+		sv = Nullsv;
+	}
+	else {
+	    sv = AvARRAY(av)[cx->blk_loop.iterix--];
+	}
     }
     else {
-	sv = AvARRAY(av)[++cx->blk_loop.iterix];
+	if (cx->blk_loop.iterix >= (av == PL_curstack ? cx->blk_oldsp :
+				    AvFILL(av)))
+	    RETPUSHNO;
+
+	if (SvMAGICAL(av) || AvREIFY(av)) {
+	    SV **svp = av_fetch(av, ++cx->blk_loop.iterix, FALSE);
+	    if (svp)
+		sv = *svp;
+	    else
+		sv = Nullsv;
+	}
+	else {
+	    sv = AvARRAY(av)[++cx->blk_loop.iterix];
+	}
     }
+
     if (sv && SvREFCNT(sv) == 0) {
 	*itersvp = Nullsv;
 	Perl_croak(aTHX_ "Use of freed value in iteration");
@@ -2232,7 +2265,7 @@ PP(pp_subst)
 	else
 	    sv_catpvn(dstr, s, strend - s);
 
-	(void)SvOOK_off(TARG);
+	SvOOK_off(TARG);
 	if (SvLEN(TARG))
 	    Safefree(SvPVX(TARG));
 	SvPVX(TARG) = SvPVX(dstr);
@@ -3045,7 +3078,7 @@ Perl_vivify_ref(pTHX_ SV *sv, U32 to_what)
 	if (SvTYPE(sv) < SVt_RV)
 	    sv_upgrade(sv, SVt_RV);
 	else if (SvTYPE(sv) >= SVt_PV) {
-	    (void)SvOOK_off(sv);
+	    SvOOK_off(sv);
 	    Safefree(SvPVX(sv));
 	    SvLEN(sv) = SvCUR(sv) = 0;
 	}

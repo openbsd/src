@@ -17,6 +17,17 @@
  * And whither then?  I cannot say.
  */
 
+/* This file contains control-oriented pp ("push/pop") functions that
+ * execute the opcodes that make up a perl program. A typical pp function
+ * expects to find its arguments on the stack, and usually pushes its
+ * results onto the stack, hence the 'pp' terminology. Each OP structure
+ * contains a pointer to the relevant pp_foo() function.
+ *
+ * Control-oriented means things like pp_enteriter() and pp_next(), which
+ * alter the flow of control of the program.
+ */
+
+
 #include "EXTERN.h"
 #define PERL_IN_PP_CTL_C
 #include "perl.h"
@@ -187,13 +198,16 @@ PP(pp_substcont)
 	{
 	    SV *targ = cx->sb_targ;
 
-	    if (DO_UTF8(dstr) && !SvUTF8(targ))
-		sv_catpvn_utf8_upgrade(dstr, s, cx->sb_strend - s, nsv);
-	    else
-		sv_catpvn(dstr, s, cx->sb_strend - s);
+	    assert(cx->sb_strend >= s);
+	    if(cx->sb_strend > s) {
+		 if (DO_UTF8(dstr) && !SvUTF8(targ))
+		      sv_catpvn_utf8_upgrade(dstr, s, cx->sb_strend - s, nsv);
+		 else
+		      sv_catpvn(dstr, s, cx->sb_strend - s);
+	    }
 	    cx->sb_rxtainted |= RX_MATCH_TAINTED(rx);
 
-	    (void)SvOOK_off(targ);
+	    SvOOK_off(targ);
 	    if (SvLEN(targ))
 		Safefree(SvPVX(targ));
 	    SvPVX(targ) = SvPVX(dstr);
@@ -338,7 +352,8 @@ PP(pp_formline)
     NV value;
     bool gotsome = FALSE;
     STRLEN len;
-    STRLEN fudge = SvCUR(tmpForm) * (IN_BYTES ? 1 : 3) + 1;
+    STRLEN fudge = SvPOK(tmpForm)
+			? (SvCUR(tmpForm) * (IN_BYTES ? 1 : 3) + 1) : 0;
     bool item_is_utf8 = FALSE;
     bool targ_is_utf8 = FALSE;
     SV * nsv = Nullsv;
@@ -1722,11 +1737,22 @@ PP(pp_enteriter)
 		(void) SvPV(right,n_a);
 	    }
 	}
+	else if (PL_op->op_private & OPpITER_REVERSED) {
+	    cx->blk_loop.itermax = -1;
+	    cx->blk_loop.iterix = AvFILL(cx->blk_loop.iterary);
+
+	}
     }
     else {
 	cx->blk_loop.iterary = PL_curstack;
 	AvFILLp(PL_curstack) = SP - PL_stack_base;
-	cx->blk_loop.iterix = MARK - PL_stack_base;
+	if (PL_op->op_private & OPpITER_REVERSED) {
+	    cx->blk_loop.itermax = MARK - PL_stack_base;
+	    cx->blk_loop.iterix = cx->blk_oldsp;
+	}
+	else {
+	    cx->blk_loop.iterix = MARK - PL_stack_base;
+	}
     }
 
     RETURN;
@@ -2105,7 +2131,6 @@ PP(pp_goto)
     char *label;
     int do_dump = (PL_op->op_type == OP_DUMP);
     static char must_have_label[] = "goto must have label";
-    AV *oldav = Nullav;
 
     label = 0;
     if (PL_op->op_flags & OPf_STACKED) {
@@ -2120,6 +2145,7 @@ PP(pp_goto)
 	    SV** mark;
 	    I32 items = 0;
 	    I32 oldsave;
+	    bool reified = 0;
 
 	retry:
 	    if (!CvROOT(cv) && !CvXSUB(cv)) {
@@ -2152,30 +2178,27 @@ PP(pp_goto)
 	    TOPBLOCK(cx);
 	    if (CxREALEVAL(cx))
 		DIE(aTHX_ "Can't goto subroutine from an eval-string");
-	    mark = PL_stack_sp;
 	    if (CxTYPE(cx) == CXt_SUB && cx->blk_sub.hasargs) {
 		/* put @_ back onto stack */
 		AV* av = cx->blk_sub.argarray;
 		
 		items = AvFILLp(av) + 1;
-		PL_stack_sp++;
-		EXTEND(PL_stack_sp, items); /* @_ could have been extended. */
-		Copy(AvARRAY(av), PL_stack_sp, items, SV*);
-		PL_stack_sp += items;
+		EXTEND(SP, items+1); /* @_ could have been extended. */
+		Copy(AvARRAY(av), SP + 1, items, SV*);
 #ifndef USE_5005THREADS
 		SvREFCNT_dec(GvAV(PL_defgv));
 		GvAV(PL_defgv) = cx->blk_sub.savearray;
 #endif /* USE_5005THREADS */
+		CLEAR_ARGARRAY(av);
 		/* abandon @_ if it got reified */
 		if (AvREAL(av)) {
-		    oldav = av;	/* delay until return */
+		    reified = 1;
+		    SvREFCNT_dec(av);
 		    av = newAV();
 		    av_extend(av, items-1);
 		    AvFLAGS(av) = AVf_REIFY;
 		    PAD_SVl(0) = (SV*)(cx->blk_sub.argarray = av);
 		}
-		else
-		    CLEAR_ARGARRAY(av);
 	    }
 	    else if (CvXSUB(cv)) {	/* put GvAV(defgv) back onto stack */
 		AV* av;
@@ -2185,11 +2208,11 @@ PP(pp_goto)
 		av = GvAV(PL_defgv);
 #endif
 		items = AvFILLp(av) + 1;
-		PL_stack_sp++;
-		EXTEND(PL_stack_sp, items); /* @_ could have been extended. */
-		Copy(AvARRAY(av), PL_stack_sp, items, SV*);
-		PL_stack_sp += items;
+		EXTEND(SP, items+1); /* @_ could have been extended. */
+		Copy(AvARRAY(av), SP + 1, items, SV*);
 	    }
+	    mark = SP;
+	    SP += items;
 	    if (CxTYPE(cx) == CXt_SUB &&
 		!(CvDEPTH(cx->blk_sub.cv) = cx->blk_sub.olddepth))
 		SvREFCNT_dec(cx->blk_sub.cv);
@@ -2198,11 +2221,13 @@ PP(pp_goto)
 
 	    /* Now do some callish stuff. */
 	    SAVETMPS;
-	    /* For reified @_, delay freeing till return from new sub */
-	    if (oldav)
-		SAVEFREESV((SV*)oldav);
 	    SAVEFREESV(cv); /* later, undo the 'avoid premature free' hack */
 	    if (CvXSUB(cv)) {
+		if (reified) {
+		    I32 index;
+		    for (index=0; index<items; index++)
+			sv_2mortal(SP[-index]);
+		}
 #ifdef PERL_XSUB_OLDSTYLE
 		if (CvOLDSTYLE(cv)) {
 		    I32 (*fp3)(int,int,int);
@@ -2222,9 +2247,9 @@ PP(pp_goto)
 		    SV **newsp;
 		    I32 gimme;
 
-		    PL_stack_sp--;		/* There is no cv arg. */
 		    /* Push a mark for the start of arglist */
 		    PUSHMARK(mark);
+		    PUTBACK;
 		    (void)(*CvXSUB(cv))(aTHX_ cv);
 		    /* Pop the current context like a decent sub should */
 		    POPBLOCK(cx, PL_curpm);
@@ -2280,7 +2305,6 @@ PP(pp_goto)
 #endif /* USE_5005THREADS */
 		    CX_CURPAD_SAVE(cx->blk_sub);
 		    cx->blk_sub.argarray = av;
-		    ++mark;
 
 		    if (items >= AvMAX(av) + 1) {
 			ary = AvALLOC(av);
@@ -2295,9 +2319,15 @@ PP(pp_goto)
 			    SvPVX(av) = (char*)ary;
 			}
 		    }
+		    ++mark;
 		    Copy(mark,AvARRAY(av),items,SV*);
 		    AvFILLp(av) = items - 1;
 		    assert(!AvREAL(av));
+		    if (reified) {
+			/* transfer 'ownership' of refcnts to new @_ */
+			AvREAL_on(av);
+			AvREIFY_off(av);
+		    }
 		    while (items--) {
 			if (*mark)
 			    SvTEMP_off(*mark);

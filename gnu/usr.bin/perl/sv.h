@@ -581,9 +581,9 @@ Set the length of the string which is in the SV.  See C<SvCUR>.
 #define SvIOK_on(sv)		((void)SvOOK_off(sv), \
 				    SvFLAGS(sv) |= (SVf_IOK|SVp_IOK))
 #define SvIOK_off(sv)		(SvFLAGS(sv) &= ~(SVf_IOK|SVp_IOK|SVf_IVisUV))
-#define SvIOK_only(sv)		((void)SvOK_off(sv), \
+#define SvIOK_only(sv)		(SvOK_off(sv), \
 				    SvFLAGS(sv) |= (SVf_IOK|SVp_IOK))
-#define SvIOK_only_UV(sv)	((void)SvOK_off_exc_UV(sv), \
+#define SvIOK_only_UV(sv)	(SvOK_off_exc_UV(sv), \
 				    SvFLAGS(sv) |= (SVf_IOK|SVp_IOK))
 
 #define SvIOK_UV(sv)		((SvFLAGS(sv) & (SVf_IOK|SVf_IVisUV))	\
@@ -600,7 +600,7 @@ Set the length of the string which is in the SV.  See C<SvCUR>.
 #define SvNOK(sv)		(SvFLAGS(sv) & SVf_NOK)
 #define SvNOK_on(sv)		(SvFLAGS(sv) |= (SVf_NOK|SVp_NOK))
 #define SvNOK_off(sv)		(SvFLAGS(sv) &= ~(SVf_NOK|SVp_NOK))
-#define SvNOK_only(sv)		((void)SvOK_off(sv), \
+#define SvNOK_only(sv)		(SvOK_off(sv), \
 				    SvFLAGS(sv) |= (SVf_NOK|SVp_NOK))
 
 /*
@@ -640,7 +640,7 @@ and leaves the UTF-8 status as it was.
 
 #define SvOOK(sv)		(SvFLAGS(sv) & SVf_OOK)
 #define SvOOK_on(sv)		((void)SvIOK_off(sv), SvFLAGS(sv) |= SVf_OOK)
-#define SvOOK_off(sv)		(SvOOK(sv) && sv_backoff(sv))
+#define SvOOK_off(sv)		((void)(SvOOK(sv) && sv_backoff(sv)))
 
 #define SvFAKE(sv)		(SvFLAGS(sv) & SVf_FAKE)
 #define SvFAKE_on(sv)		(SvFLAGS(sv) |= SVf_FAKE)
@@ -954,6 +954,15 @@ COW)
 Returns a boolean indicating whether the SV is Copy-On-Write shared hash key
 scalar.
 
+=for apidoc Am|void|sv_catpvn_nomg|SV* sv|const char* ptr|STRLEN len
+Like C<sv_catpvn> but doesn't process magic.
+
+=for apidoc Am|void|sv_setsv_nomg|SV* dsv|SV* ssv
+Like C<sv_setsv> but doesn't process magic.
+
+=for apidoc Am|void|sv_catsv_nomg|SV* dsv|SV* ssv
+Like C<sv_catsv> but doesn't process magic.
+
 =cut
 */
 
@@ -1101,6 +1110,7 @@ scalar.
 #define SV_GMAGIC		2
 #define SV_COW_DROP_PV		4	/* Unused in Perl 5.8.x */
 #define SV_UTF8_NO_ENCODING	8
+#define SV_NOSTEAL		16
 
 /* all these 'functions' are now just macros */
 
@@ -1169,7 +1179,7 @@ ssv. May evaluate arguments more than once.
 Like C<SvSetSV>, but does any set magic required afterwards.
 
 =for apidoc Am|void|SvSetMagicSV_nosteal|SV* dsv|SV* ssv
-Like C<SvSetMagicSV>, but does any set magic required afterwards.
+Like C<SvSetSV_nosteal>, but does any set magic required afterwards.
 
 =for apidoc Am|void|SvSHARE|SV* sv
 Arranges for sv to be shared between threads if a suitable module
@@ -1211,10 +1221,7 @@ Returns a pointer to the character buffer.
 #define SvSetSV_nosteal_and(dst,src,finally) \
 	STMT_START {					\
 	    if ((dst) != (src)) {			\
-		U32 tMpF = SvFLAGS(src) & SVs_TEMP;	\
-		SvTEMP_off(src);			\
-		sv_setsv(dst, src);			\
-		SvFLAGS(src) |= tMpF;			\
+		sv_setsv_flags(dst, src, SV_GMAGIC | SV_NOSTEAL);	\
 		finally;				\
 	    }						\
 	} STMT_END

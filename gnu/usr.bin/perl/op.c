@@ -16,6 +16,62 @@
  * either way, as the saying is, if you follow me."  --the Gaffer
  */
 
+/* This file contains the functions that create, manipulate and optimize
+ * the OP structures that hold a compiled perl program.
+ *
+ * A Perl program is compiled into a tree of OPs. Each op contains
+ * structural pointers (eg to its siblings and the next op in the
+ * execution sequence), a pointer to the function that would execute the
+ * op, plus any data specific to that op. For example, an OP_CONST op
+ * points to the pp_const() function and to an SV containing the constant
+ * value. When pp_const() is executed, its job is to push that SV onto the
+ * stack.
+ *
+ * OPs are mainly created by the newFOO() functions, which are mainly
+ * called from the parser (in perly.y) as the code is parsed. For example
+ * the Perl code $a + $b * $c would cause the equivalent of the following
+ * to be called (oversimplifying a bit):
+ *
+ *  newBINOP(OP_ADD, flags,
+ *	newSVREF($a),
+ *	newBINOP(OP_MULTIPLY, flags, newSVREF($b), newSVREF($c))
+ *  )
+ *
+ * Note that during the build of miniperl, a temporary copy of this file
+ * is made, called opmini.c.
+ */
+
+/*
+Perl's compiler is essentially a 3-pass compiler with interleaved phases:
+
+    A bottom-up pass
+    A top-down pass
+    An execution-order pass
+
+The bottom-up pass is represented by all the "newOP" routines and
+the ck_ routines.  The bottom-upness is actually driven by yacc.
+So at the point that a ck_ routine fires, we have no idea what the
+context is, either upward in the syntax tree, or either forward or
+backward in the execution order.  (The bottom-up parser builds that
+part of the execution order it knows about, but if you follow the "next"
+links around, you'll find it's actually a closed loop through the
+top level node.
+
+Whenever the bottom-up parser gets to a node that supplies context to
+its components, it invokes that portion of the top-down pass that applies
+to that part of the subtree (and marks the top node as processed, so
+if a node further up supplies context, it doesn't have to take the
+plunge again).  As a particular subcase of this, as the new node is
+built, it takes all the closed execution loops of its subcomponents
+and links them into a new closed loop for the higher level node.  But
+it's still not the real execution order.
+
+The actual execution order is not known till we get a grammar reduction
+to a top-level unit like a subroutine or file that will be called by
+"name" rather than via a "next" pointer.  At that point, we can call
+into peep() to do that code's portion of the 3rd pass.  It has to be
+recursive, but it's recursive on basic blocks, not on tree nodes.
+*/
 
 #include "EXTERN.h"
 #define PERL_IN_OP_C
@@ -4799,7 +4855,8 @@ Perl_newSVREF(pTHX_ OP *o)
     return newUNOP(OP_RV2SV, 0, scalar(o));
 }
 
-/* Check routines. */
+/* Check routines. See the comments at the top of this file for details
+ * on when these are called */
 
 OP *
 Perl_ck_anoncode(pTHX_ OP *o)
@@ -5965,7 +6022,7 @@ S_simplify_sort(pTHX_ OP *o)
 {
     register OP *kid = cLISTOPo->op_first->op_sibling;	/* get past pushmark */
     OP *k;
-    int reversed;
+    int descending;
     GV *gv;
     if (!(o->op_flags & OPf_STACKED))
 	return;
@@ -5994,11 +6051,12 @@ S_simplify_sort(pTHX_ OP *o)
     if (GvSTASH(gv) != PL_curstash)
 	return;
     if (strEQ(GvNAME(gv), "a"))
-	reversed = 0;
+	descending = 0;
     else if (strEQ(GvNAME(gv), "b"))
-	reversed = 1;
+	descending = 1;
     else
 	return;
+
     kid = k;						/* back to cmp */
     if (kBINOP->op_last->op_type != OP_RV2SV)
 	return;
@@ -6008,13 +6066,13 @@ S_simplify_sort(pTHX_ OP *o)
     kid = kUNOP->op_first;				/* get past rv2sv */
     gv = kGVOP_gv;
     if (GvSTASH(gv) != PL_curstash
-	|| ( reversed
+	|| ( descending
 	    ? strNE(GvNAME(gv), "a")
 	    : strNE(GvNAME(gv), "b")))
 	return;
     o->op_flags &= ~(OPf_STACKED | OPf_SPECIAL);
-    if (reversed)
-	o->op_private |= OPpSORT_REVERSE;
+    if (descending)
+	o->op_private |= OPpSORT_DESCEND;
     if (k->op_type == OP_NCMP)
 	o->op_private |= OPpSORT_NUMERIC;
     if (k->op_type == OP_I_NCMP)
@@ -6354,7 +6412,9 @@ Perl_ck_substr(pTHX_ OP *o)
     return o;
 }
 
-/* A peephole optimizer.  We visit the ops in the order they're to execute. */
+/* A peephole optimizer.  We visit the ops in the order they're to execute.
+ * See the comments at the top of this file for more details about when
+ * peep() is called */
 
 void
 Perl_peep(pTHX_ register OP *o)
@@ -6722,18 +6782,38 @@ Perl_peep(pTHX_ register OP *o)
 	}
 
 	case OP_SORT: {
-	    /* make @a = sort @a act in-place */
-
 	    /* will point to RV2AV or PADAV op on LHS/RHS of assign */
 	    OP *oleft, *oright;
 	    OP *o2;
-
-	    o->op_seq = PL_op_seqmax++;
 
 	    /* check that RHS of sort is a single plain array */
 	    oright = cUNOPo->op_first;
 	    if (!oright || oright->op_type != OP_PUSHMARK)
 		break;
+
+	    /* reverse sort ... can be optimised.  */
+	    if (!cUNOPo->op_sibling) {
+		/* Nothing follows us on the list. */
+		OP *reverse = o->op_next;
+
+		if (reverse->op_type == OP_REVERSE &&
+		    (reverse->op_flags & OPf_WANT) == OPf_WANT_LIST) {
+		    OP *pushmark = cUNOPx(reverse)->op_first;
+		    if (pushmark && (pushmark->op_type == OP_PUSHMARK)
+			&& (cUNOPx(pushmark)->op_sibling == o)) {
+			/* reverse -> pushmark -> sort */
+			o->op_private |= OPpSORT_REVERSE;
+			op_null(reverse);
+			pushmark->op_next = oright->op_next;
+			op_null(oright);
+		    }
+		}
+	    }
+
+	    /* make @a = sort @a act in-place */
+
+	    o->op_seq = PL_op_seqmax++;
+
 	    oright = cUNOPx(oright)->op_sibling;
 	    if (!oright)
 		break;
@@ -6819,9 +6899,97 @@ Perl_peep(pTHX_ register OP *o)
 
 	    break;
 	}
+
+	case OP_REVERSE: {
+	    OP *ourmark, *theirmark, *ourlast, *iter, *expushmark, *rv2av;
+	    OP *gvop = NULL;
+	    LISTOP *enter, *exlist;
+	    o->op_seq = PL_op_seqmax++;
+
+	    enter = (LISTOP *) o->op_next;
+	    if (!enter)
+		break;
+	    if (enter->op_type == OP_NULL) {
+		enter = (LISTOP *) enter->op_next;
+		if (!enter)
+		    break;
+	    }
+	    /* for $a (...) will have OP_GV then OP_RV2GV here.
+	       for (...) just has an OP_GV.  */
+	    if (enter->op_type == OP_GV) {
+		gvop = (OP *) enter;
+		enter = (LISTOP *) enter->op_next;
+		if (!enter)
+		    break;
+		if (enter->op_type == OP_RV2GV) {
+		  enter = (LISTOP *) enter->op_next;
+		  if (!enter)
+		    break;
+		}
+	    }
+
+	    if (enter->op_type != OP_ENTERITER)
+		break;
+
+	    iter = enter->op_next;
+	    if (!iter || iter->op_type != OP_ITER)
+		break;
+	    
+	    expushmark = enter->op_first;
+	    if (!expushmark || expushmark->op_type != OP_NULL
+		|| expushmark->op_targ != OP_PUSHMARK)
+		break;
+
+	    exlist = (LISTOP *) expushmark->op_sibling;
+	    if (!exlist || exlist->op_type != OP_NULL
+		|| exlist->op_targ != OP_LIST)
+		break;
+
+	    if (exlist->op_last != o) {
+		/* Mmm. Was expecting to point back to this op.  */
+		break;
+	    }
+	    theirmark = exlist->op_first;
+	    if (!theirmark || theirmark->op_type != OP_PUSHMARK)
+		break;
+
+	    if (theirmark->op_sibling != o) {
+		/* There's something between the mark and the reverse, eg
+		   for (1, reverse (...))
+		   so no go.  */
+		break;
+	    }
+
+	    ourmark = ((LISTOP *)o)->op_first;
+	    if (!ourmark || ourmark->op_type != OP_PUSHMARK)
+		break;
+
+	    ourlast = ((LISTOP *)o)->op_last;
+	    if (!ourlast || ourlast->op_next != o)
+		break;
+
+	    rv2av = ourmark->op_sibling;
+	    if (rv2av && rv2av->op_type == OP_RV2AV && rv2av->op_sibling == 0
+		&& rv2av->op_flags == (OPf_WANT_LIST | OPf_KIDS)
+		&& enter->op_flags == (OPf_WANT_LIST | OPf_KIDS)) {
+		/* We're just reversing a single array.  */
+		rv2av->op_flags = OPf_WANT_SCALAR | OPf_KIDS | OPf_REF;
+		enter->op_flags |= OPf_STACKED;
+	    }
+
+	    /* We don't have control over who points to theirmark, so sacrifice
+	       ours.  */
+	    theirmark->op_next = ourmark->op_next;
+	    theirmark->op_flags = ourmark->op_flags;
+	    ourlast->op_next = gvop ? gvop : (OP *) enter;
+	    op_null(ourmark);
+	    op_null(o);
+	    enter->op_private |= OPpITER_REVERSED;
+	    iter->op_private |= OPpITER_REVERSED;
+	    
+	    break;
+	}
 	
-
-
 	default:
 	    o->op_seq = PL_op_seqmax++;
 	    break;

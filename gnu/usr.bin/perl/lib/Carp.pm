@@ -39,6 +39,10 @@ croak or shortmess which report the error as being from where
 your module was called.  There is no guarantee that that is where
 the error was, but it is a good educated guess.
 
+You can also alter the way the output and logic of C<Carp> works, by
+changing some global variables in the C<Carp> namespace. See the
+section on C<GLOBAL VARIABLES> below.
+
 Here is a more complete description of how shortmess works.  What
 it does is search the call-stack for a function call stack where
 it hasn't been told that there shouldn't be an error.  If every
@@ -51,7 +55,7 @@ a call shouldn't generate errors work as follows:
 
 =item 1.
 
-Any call from a package to itself is safe. 
+Any call from a package to itself is safe.
 
 =item 2.
 
@@ -95,11 +99,8 @@ This feature is enabled by 'importing' the non-existent symbol
 or by including the string C<MCarp=verbose> in the PERL5OPT
 environment variable.
 
-=head1 BUGS
-
-The Carp routines don't handle exception objects currently.
-If called with a first argument that is a reference, they simply
-call die() or warn(), as appropriate.
+Alternately, you can set the global variable C<$Carp::Verbose> to true.
+See the C<GLOBAL VARIABLES> section below.
 
 =cut
 
@@ -118,16 +119,76 @@ call die() or warn(), as appropriate.
 # $Max(EvalLen|(Arg(Len|Nums)) variables are used to specify how the eval
 # text and function arguments should be formatted when printed.
 
+# Comments added by Jos I. Boumans <kane@dwim.org> 11-Aug-2004
+# I can not get %CarpInternal or %Internal to work as advertised,
+# therefor leaving it out of the below documentation.
+# $CarpLevel may be decprecated according to the last comment, but
+# after 6 years, it's still around and in heavy use ;)
+
+=pod
+
+=head1 GLOBAL VARIABLES
+
+=head2 $Carp::CarpLevel
+
+This variable determines how many call frames are to be skipped when
+reporting where an error occurred on a call to one of C<Carp>'s
+functions. For example:
+
+    $Carp::CarpLevel = 1;
+    sub bar     { .... or _error('Wrong input') }
+    sub _error  { Carp::carp(@_) }
+
+This would make Carp report the error as coming from C<bar>'s caller,
+rather than from C<_error>'s caller, as it normally would.
+
+Defaults to C<0>.
+
+=head2 $Carp::MaxEvalLen
+
+This variable determines how many characters of a string-eval are to
+be shown in the output. Use a value of C<0> to show all text.
+
+Defaults to C<0>.
+
+=head2 $Carp::MaxArgLen
+
+This variable determines how many characters of each argument to a
+function to print. Use a value of C<0> to show the full length of the
+argument.
+
+Defaults to C<64>.
+
+=head2 $Carp::MaxArgNums
+
+This variable determines how many arguments to each function to show.
+Use a value of C<0> to show all arguments to a function call.
+
+Defaults to C<8>.
+
+=head2 $Carp::Verbose
+
+This variable makes C<Carp> use the C<longmess> function at all times.
+This effectively means that all calls to C<carp> become C<cluck> and
+all calls to C<croak> become C<confess>.
+
+Note, this is analogous to using C<use Carp 'verbose'>.
+
+Defaults to C<0>.
+
+=cut
+
+
 $CarpInternal{Carp}++;
 $CarpInternal{warnings}++;
-$CarpLevel = 0;		# How many extra package levels to skip on carp.
-                        # How many calls to skip on confess.
-                        # Reconciling these notions is hard, use
-                        # %Internal and %CarpInternal instead.
-$MaxEvalLen = 0;	# How much eval '...text...' to show. 0 = all.
-$MaxArgLen = 64;        # How much of each argument to print. 0 = all.
-$MaxArgNums = 8;        # How many arguments to print. 0 = all.
-$Verbose = 0;		# If true then make shortmess call longmess instead
+$CarpLevel = 0;     # How many extra package levels to skip on carp.
+                    # How many calls to skip on confess.
+                    # Reconciling these notions is hard, use
+                    # %Internal and %CarpInternal instead.
+$MaxEvalLen = 0;    # How much eval '...text...' to show. 0 = all.
+$MaxArgLen = 64;    # How much of each argument to print. 0 = all.
+$MaxArgNums = 8;    # How many arguments to print. 0 = all.
+$Verbose = 0;       # If true then make shortmess call longmess instead
 
 require Exporter;
 @ISA = ('Exporter');
@@ -135,6 +196,13 @@ require Exporter;
 @EXPORT_OK = qw(cluck verbose longmess shortmess);
 @EXPORT_FAIL = qw(verbose);	# hook to enable verbose mode
 
+=head1 BUGS
+
+The Carp routines don't handle exception objects currently.
+If called with a first argument that is a reference, they simply
+call die() or warn(), as appropriate.
+
+=cut
 
 # if the caller specifies verbose usage ("perl -MCarp=verbose script.pl")
 # then the following method will be called by the Exporter which knows

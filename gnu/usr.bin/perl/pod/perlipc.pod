@@ -355,11 +355,16 @@ with your timeouts.  If you are having problems with such functions,
 you can try using the POSIX sigaction() function, which bypasses the
 Perl safe signals (note that this means subjecting yourself to
 possible memory corruption, as described above).  Instead of setting
-C<$SIG{ALRM}> try something like the following:
+C<$SIG{ALRM}>:
 
-    use POSIX;
-    sigaction SIGALRM, new POSIX::SigAction sub { die "alarm\n" }
-        or die "Error setting SIGALRM handler: $!\n";
+   local $SIG{ALRM} = sub { die "alarm" };
+
+try something like the following:
+
+    use POSIX qw(SIGALRM);
+    POSIX::sigaction(SIGALRM,
+                     POSIX::SigAction->new(sub { die "alarm" }))
+          or die "Error setting SIGALRM handler: $!\n";
 
 =item Restartable system calls
 
@@ -388,7 +393,7 @@ will generate the signal again. The result of this is a rather odd
 "loop". In future Perl's signal mechanism may be changed to avoid this
 - perhaps by simply disallowing %SIG handlers on signals of that
 type. Until then the work-round is not to set a %SIG handler on those
-signals. (Which signals they are is operating system dependant.)
+signals. (Which signals they are is operating system dependent.)
 
 =item Signals triggered by operating system state
 

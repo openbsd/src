@@ -3,8 +3,8 @@
  DB_File.xs -- Perl 5 interface to Berkeley DB 
 
  written by Paul Marquess <pmqs@cpan.org>
- last modified 20th June 2004
- version 1.809
+ last modified 7th August 2004
+ version 1.810
 
  All comments/suggestions/problems are welcome
 
@@ -109,6 +109,7 @@
         1.807 - no change
         1.808 - leak fixed in ParseOpenInfo
         1.809 - no change
+        1.810 - no change
 
 */
 
@@ -397,8 +398,9 @@ typedef DBT DBTKEY ;
 
 #define OutputValue(arg, name)  					\
 	{ if (RETVAL == 0) {						\
+	      SvGETMAGIC(arg) ;          				\
 	      my_sv_setpvn(arg, name.data, name.size) ;			\
-	      TAINT;                                       	\
+	      TAINT;                                       		\
 	      SvTAINTED_on(arg);                                       	\
 	      SvUTF8_off(arg);                                       	\
 	      DBM_ckFilter(arg, filter_fetch_value,"filter_fetch_value") ; 	\
@@ -408,12 +410,13 @@ typedef DBT DBTKEY ;
 #define OutputKey(arg, name)	 					\
 	{ if (RETVAL == 0) 						\
 	  { 								\
+		SvGETMAGIC(arg) ;          				\
 		if (db->type != DB_RECNO) {				\
 		    my_sv_setpvn(arg, name.data, name.size); 		\
 		}							\
 		else 							\
 		    sv_setiv(arg, (I32)*(I32*)name.data - 1); 		\
-	      TAINT;                                       	\
+	      TAINT;                                       		\
 	      SvTAINTED_on(arg);                                       	\
 	      SvUTF8_off(arg);                                       	\
 	      DBM_ckFilter(arg, filter_fetch_key,"filter_fetch_key") ; 	\

@@ -343,7 +343,11 @@ has no effect when G_EVAL is not used.
 
 When G_KEEPERR is used, any errors in the called code will be prefixed
 with the string "\t(in cleanup)", and appended to the current value
-of C<$@>.
+of C<$@>.  an error will not be appended if that same error string is
+already at the end of C<$@>.
+
+In addition, a warning is generated using the appended string. This can be
+disabled using C<no warnings 'misc'>.
 
 The G_KEEPERR flag was introduced in Perl version 5.002.
 

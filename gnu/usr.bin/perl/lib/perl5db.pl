@@ -1,7 +1,7 @@
 
 =head1 NAME 
 
-C<perl5db.pl> - the perl debugger
+perl5db.pl - the perl debugger
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ Unfortunately, though the variables are accessible, they're not well
 documented, so it's generally been a decision that hasn't made a lot of
 difference to most users. Where appropriate, comments have been added to
 make variables more accessible and usable, with the understanding that these
-i<are> debugger internals, and are therefore subject to change. Future
+I<are> debugger internals, and are therefore subject to change. Future
 development should probably attempt to replace the globals with a well-defined
 API, but for now, the variables are what we've got.
 
@@ -104,7 +104,7 @@ Boolean algebra states that the truth table for XOR looks like this:
 =back
 
 As you can see, the first pair applies when C<!> isn't supplied, and
-the second pair applies when it isn't. The XOR simply allows us to
+the second pair applies when it is. The XOR simply allows us to
 compact a more complicated if-then-elseif-else into a more elegant 
 (but perhaps overly clever) single test. After all, it needed this
 explanation...
@@ -112,7 +112,7 @@ explanation...
 =head2 FLAGS, FLAGS, FLAGS
 
 There is a certain C programming legacy in the debugger. Some variables,
-such as C<$single>, C<$trace>, and C<$frame>, have "magical" values composed
+such as C<$single>, C<$trace>, and C<$frame>, have I<magical> values composed
 of 1, 2, 4, etc. (powers of 2) OR'ed together. This allows several pieces
 of state to be stored independently in a single scalar. 
 
@@ -132,22 +132,27 @@ it?
 
 =over 4
 
+=item *
 
-=item * First, doing an arithmetical or bitwise operation on a scalar is
+First, doing an arithmetical or bitwise operation on a scalar is
 just about the fastest thing you can do in Perl: C<use constant> actually
-creates a subroutine call, and array hand hash lookups are much slower. Is
+creates a subroutine call, and array and hash lookups are much slower. Is
 this over-optimization at the expense of readability? Possibly, but the 
 debugger accesses these  variables a I<lot>. Any rewrite of the code will
 probably have to benchmark alternate implementations and see which is the
 best balance of readability and speed, and then document how it actually 
 works.
 
-=item * Second, it's very easy to serialize a scalar number. This is done in 
+=item *
+
+Second, it's very easy to serialize a scalar number. This is done in 
 the restart code; the debugger state variables are saved in C<%ENV> and then
 restored when the debugger is restarted. Having them be just numbers makes
 this trivial. 
 
-=item * Third, some of these variables are being shared with the Perl core 
+=item *
+
+Third, some of these variables are being shared with the Perl core 
 smack in the middle of the interpreter's execution loop. It's much faster for 
 a C program (like the interpreter) to check a bit in a scalar than to access 
 several different variables (or a Perl array).
@@ -176,10 +181,13 @@ The hash C<%{'_<'.$filename}> (aliased locally to C<%dbline> via glob
 assignment) contains breakpoints and actions.  The keys are line numbers; 
 you can set individual values, but not the whole hash. The Perl interpreter 
 uses this hash to determine where breakpoints have been set. Any true value is
-considered to be a breakpoint; C<perl5db.pl> uses "$break_condition\0$action".
+considered to be a breakpoint; C<perl5db.pl> uses C<$break_condition\0$action>.
 Values are magical in numeric context: 1 if the line is breakable, 0 if not.
 
-The scalar ${'_<'.$filename} contains $filename  XXX What?
+The scalar C<${"_<$filename"}> simply contains the string C<_<$filename>.
+This is also the case for evaluated strings that contain subroutines, or
+which are currently being executed.  The $filename for C<eval>ed strings looks
+like C<(eval 34)> or C<(re_eval 19)>.
 
 =head1 DEBUGGER STARTUP
 
@@ -190,7 +198,7 @@ that will be executed (in the debugger's context) after the debugger has
 initialized itself.
 
 Next, it checks the C<PERLDB_OPTS> environment variable and treats its 
-contents as the argument of a debugger <C<o> command.
+contents as the argument of a C<o> command in the debugger.
 
 =head2 STARTUP-ONLY OPTIONS
 
@@ -207,7 +215,7 @@ the TTY to use for debugging i/o.
 =item * noTTY 
 
 if set, goes in NonStop mode.  On interrupt, if TTY is not set,
-uses the value of noTTY or "/tmp/perldbtty$$" to find TTY using
+uses the value of noTTY or F</tmp/perldbtty$$> to find TTY using
 Term::Rendezvous.  Current variant is to have the name of TTY in this
 file.
 
@@ -238,14 +246,14 @@ host:port to connect to on remote host for remote debugging.
 
 The script will run without human intervention, putting trace
 information into C<db.out>.  (If you interrupt it, you had better
-reset C<LineInfo> to something "interactive"!)
+reset C<LineInfo> to something I<interactive>!)
 
 =head1 INTERNALS DESCRIPTION
 
 =head2 DEBUGGER INTERFACE VARIABLES
 
 Perl supplies the values for C<%sub>.  It effectively inserts
-a C<&DB'DB();> in front of each place that can have a
+a C<&DB::DB();> in front of each place that can have a
 breakpoint. At each subroutine call, it calls C<&DB::sub> with
 C<$DB::sub> set to the called subroutine. It also inserts a C<BEGIN
 {require 'perl5db.pl'}> before the first line.
@@ -290,11 +298,11 @@ is entered or exited.
 
 =item * 0 -  No enter/exit messages
 
-=item * 1 - Print "entering" messages on subroutine entry
+=item * 1 - Print I<entering> messages on subroutine entry
 
 =item * 2 - Adds exit messages on subroutine exit. If no other flag is on, acts like 1+2.
 
-=item * 4 - Extended messages: C<in|out> I<context>=I<fully-qualified sub name> from I<file>:I<line>>. If no other flag is on, acts like 1+4.
+=item * 4 - Extended messages: C<< <in|out> I<context>=I<fully-qualified sub name> from I<file>:I<line> >>. If no other flag is on, acts like 1+4.
 
 =item * 8 - Adds parameter information to messages, and overloaded stringify and tied FETCH is enabled on the printed arguments. Ignored if C<4> is not on.
 
@@ -302,7 +310,7 @@ is entered or exited.
 
 =back
 
-To get everything, use C<$frame=30> (or C<o f-30> as a debugger command).
+To get everything, use C<$frame=30> (or C<o f=30> as a debugger command).
 The debugger internally juggles the value of C<$frame> during execution to
 protect external modules that the debugger uses from getting traced.
 
@@ -330,7 +338,7 @@ expression.
 
 =head4 C<$onetimeDumpDepth>
 
-Controls how far down C<dumpvar.pl> will go before printing '...' while
+Controls how far down C<dumpvar.pl> will go before printing C<...> while
 dumping a structure. Numeric. If C<undef>, print all levels.
 
 =head4 C<$signal>
@@ -348,12 +356,12 @@ each subroutine; popped again at the end of each subroutine.
 
 =item * 0 - run continuously.
 
-=item * 1 - single-step, go into subs. The 's' command.
+=item * 1 - single-step, go into subs. The C<s> command.
 
-=item * 2 - single-step, don't go into subs. The 'n' command.
+=item * 2 - single-step, don't go into subs. The C<n> command.
 
-=item * 4 - print current sub depth (turned on to force this when "too much
-recursion" occurs.
+=item * 4 - print current sub depth (turned on to force this when C<too much
+recursion> occurs.
 
 =back
 
@@ -422,7 +430,7 @@ Keys are file names, values are 1 (break when this file is loaded) or undef
 
 =head4 C<%dbline>
 
-Keys are line numbers, values are "condition\0action". If used in numeric
+Keys are line numbers, values are C<condition\0action>. If used in numeric
 context, values are 0 if not breakable, 1 if breakable, no matter what is
 in the actual hash entry.
 
@@ -451,9 +459,9 @@ Keys are subroutine names, values are:
 
 =over 4
 
-=item * 'compile' - break when this sub is compiled
+=item * C<compile> - break when this sub is compiled
 
-=item * 'break +0 if <condition>' - break (conditionally) at the start of this routine. The condition will be '1' if no condition was specified.
+=item * C<< break +0 if <condition> >> - break (conditionally) at the start of this routine. The condition will be '1' if no condition was specified.
 
 =back
 
@@ -462,7 +470,7 @@ Keys are subroutine names, values are:
 This hash keeps track of breakpoints that need to be set for files that have
 not yet been compiled. Keys are filenames; values are references to hashes.
 Each of these hashes is keyed by line number, and its values are breakpoint
-definitions ("condition\0action").
+definitions (C<condition\0action>).
 
 =head1 DEBUGGER INITIALIZATION
 
@@ -493,7 +501,7 @@ package DB;
 use IO::Handle;
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
-$VERSION = 1.27;
+$VERSION = 1.28;
 
 $header = "perl5db.pl version $VERSION";
 
@@ -507,20 +515,20 @@ the process of evaluating code in the user's context.
 The code to be evaluated is passed via the package global variable 
 C<$DB::evalarg>; this is done to avoid fiddling with the contents of C<@_>.
 
-We preserve the current settings of X<C<$trace>>, X<C<$single>>, and X<C<$^D>>;
-add the X<C<$usercontext>> (that's the preserved values of C<$@>, C<$!>,
-C<$^E>, C<$,>, C<$/>, C<$\>, and C<$^W>, grabbed when C<DB::DB> got control,
-and the user's current package) and a add a newline before we do the C<eval()>.
-This causes the proper context to be used when the eval is actually done.
-Afterward, we restore C<$trace>, C<$single>, and C<$^D>.
+Before we do the C<eval()>, we preserve the current settings of C<$trace>,
+C<$single>, C<$^D> and C<$usercontext>.  The latter contains the
+preserved values of C<$@>, C<$!>, C<$^E>, C<$,>, C<$/>, C<$\>, C<$^W> and the
+user's current package, grabbed when C<DB::DB> got control.  This causes the
+proper context to be used when the eval is actually done.  Afterward, we
+restore C<$trace>, C<$single>, and C<$^D>.
 
 Next we need to handle C<$@> without getting confused. We save C<$@> in a
 local lexical, localize C<$saved[0]> (which is where C<save()> will put 
 C<$@>), and then call C<save()> to capture C<$@>, C<$!>, C<$^E>, C<$,>, 
 C<$/>, C<$\>, and C<$^W>) and set C<$,>, C<$/>, C<$\>, and C<$^W> to values
 considered sane by the debugger. If there was an C<eval()> error, we print 
-it on the debugger's output. If X<C<$onetimedump>> is defined, we call 
-X<C<dumpit>> if it's set to 'dump', or X<C<methods>> if it's set to 
+it on the debugger's output. If C<$onetimedump> is defined, we call 
+C<dumpit> if it's set to 'dump', or C<methods> if it's set to 
 'methods'. Setting it to something else causes the debugger to do the eval 
 but not print the result - handy if you want to do something else with it 
 (the "watch expressions" code does this to get the value of the watch
@@ -540,9 +548,9 @@ The variables listed below influence C<DB::eval()>'s execution directly.
 
 =item C<$evalarg> - the thing to actually be eval'ed
 
-=item C<$trace> - Current state of execution tracing (see X<$trace>)
+=item C<$trace> - Current state of execution tracing
 
-=item C<$single> - Current state of single-stepping (see X<$single>)        
+=item C<$single> - Current state of single-stepping
 
 =item C<$onetimeDump> - what is to be displayed after the evaluation 
 
@@ -681,6 +689,13 @@ sub eval {
 # true if $deep is not defined.
 #
 # $Log: perl5db.pl,v $
+# Revision 1.9  2004/08/09 18:09:28  millert
+# merge 5.8.5 into HEAD
+# remove now-unused files
+# crank libperl shared library major number
+# update Makefile.bsd-wrapper
+# tweak openbsd hints file for arm and m68k
+#
 # Revision 1.8  2004/04/07 21:33:04  millert
 # merge local changes into perl-5.8.3
 #
@@ -925,6 +940,8 @@ sub eval {
 #   + removed windowid restriction for forking into an xterm.
 #   + more whitespace again.
 #   + wrapped restart and enabled rerun [-n] (go back n steps) command.
+# Changes: 1.28: Oct 12, 2004 Richard Foley <richard.foley@rfi.net>
+#   + Added threads support (inc. e and E commands)
 ####################################################################
 
 =head1 DEBUGGER INITIALIZATION
@@ -962,12 +979,57 @@ BEGIN {
 
 local ($^W) = 0;    # Switch run-time warnings off during init.
 
+=head2 THREADS SUPPORT
+
+If we are running under a threaded Perl, we require threads and threads::shared
+if the environment variable C<PERL5DB_THREADED> is set, to enable proper
+threaded debugger control.  C<-dt> can also be used to set this.
+
+Each new thread will be announced and the debugger prompt will always inform
+you of each new thread created.  It will also indicate the thread id in which
+we are currently running within the prompt like this:
+
+	[tid] DB<$i>
+
+Where C<[tid]> is an integer thread id and C<$i> is the familiar debugger
+command prompt.  The prompt will show: C<[0]> when running under threads, but
+not actually in a thread.  C<[tid]> is consistent with C<gdb> usage.
+
+While running under threads, when you set or delete a breakpoint (etc.), this
+will apply to all threads, not just the currently running one.  When you are 
+in a currently executing thread, you will stay there until it completes.  With
+the current implementation it is not currently possible to hop from one thread
+to another.
+
+The C<e> and C<E> commands are currently fairly minimal - see C<h e> and C<h E>.
+
+Note that threading support was built into the debugger as of Perl version
+C<5.8.6> and debugger version C<1.2.8>.
+
+=cut
+
+BEGIN {
+  # ensure we can share our non-threaded variables or no-op
+  if ($ENV{PERL5DB_THREADED}) {
+	require threads;
+	require threads::shared;
+	import threads::shared qw(share);
+	$DBGR;
+	share(\$DBGR);
+	lock($DBGR);
+	print "Threads support enabled\n";
+  } else {
+	*lock  = sub(*) {};
+	*share = sub(*) {};
+  }
+}
+
 # This would probably be better done with "use vars", but that wasn't around
 # when this code was originally written. (Neither was "use strict".) And on
 # the principle of not fiddling with something that was working, this was
 # left alone.
 warn(               # Do not ;-)
-                    # These variables control the execution of 'dumpvar.pl'.
+    # These variables control the execution of 'dumpvar.pl'.
     $dumpvar::hashDepth,
     $dumpvar::arrayDepth,
     $dumpvar::dumpDBFiles,
@@ -992,6 +1054,10 @@ warn(               # Do not ;-)
     $second_time,
   )
   if 0;
+
+foreach my $k (keys (%INC)) {
+	&share(\$main::{'_<'.$filename});
+};
 
 # Command-line + PERLLIB:
 # Save the contents of @INC before they are modified elsewhere.
@@ -1160,6 +1226,17 @@ $pretype     = []    unless defined $pretype;
 $CreateTTY   = 3     unless defined $CreateTTY;
 $CommandSet  = '580' unless defined $CommandSet;
 
+share($rl);
+share($warnLevel);
+share($dieLevel);
+share($signalLevel);
+share($pre);
+share($post);
+share($pretype);
+share($rl);
+share($CreateTTY);
+share($CommandSet);
+
 =pod
 
 The default C<die>, C<warn>, and C<signal> handlers are set up.
@@ -1199,8 +1276,8 @@ pager(
 =pod
 
 We set up the command to be used to access the man pages, the command
-recall character ("!" unless otherwise defined) and the shell escape
-character ("!" unless otherwise defined). Yes, these do conflict, and
+recall character (C<!> unless otherwise defined) and the shell escape
+character (C<!> unless otherwise defined). Yes, these do conflict, and
 neither works in the debugger at the moment.
 
 =cut
@@ -1228,7 +1305,7 @@ $maxtrace = 400 unless defined $maxtrace;
 
 =head2 SETTING UP THE DEBUGGER GREETING
 
-The debugger 'greeting'  helps to inform the user how many debuggers are
+The debugger I<greeting> helps to inform the user how many debuggers are
 running, and whether the current debugger is the primary or a child.
 
 If we are the primary, we just hang onto our pid so we'll have it when
@@ -1435,6 +1512,11 @@ if ( exists $ENV{PERLDB_RESTART} ) {
     %break_on_load = get_list("PERLDB_ON_LOAD");
     %postponed     = get_list("PERLDB_POSTPONE");
 
+	share(@hist);
+	share(@truehist);
+	share(%break_on_load);
+	share(%postponed);
+
     # restore breakpoints/actions
     my @had_breakpoints = get_list("PERLDB_VISITED");
     for ( 0 .. $#had_breakpoints ) {
@@ -1471,6 +1553,7 @@ to be anyone there to enter commands.
 
 if ($notty) {
     $runnonstop = 1;
+	share($runnonstop);
 }
 
 =pod
@@ -1525,7 +1608,9 @@ We then determine what the console should be on various systems:
     }
 
 =item * MacOS - use C<Dev:Console:Perl Debug> if this is the MPW version; C<Dev:
-Console> if not. (Note that Mac OS X returns 'darwin', not 'MacOS'. Also note that the debugger doesn't do anything special for 'darwin'. Maybe it should.)
+Console> if not.
+
+Note that Mac OS X returns C<darwin>, not C<MacOS>. Also note that the debugger doesn't do anything special for C<darwin>. Maybe it should.
 
 =cut
 
@@ -1684,6 +1769,8 @@ and if we can.
     # and a I/O description to keep track of.
     $LINEINFO = $OUT     unless defined $LINEINFO;
     $lineinfo = $console unless defined $lineinfo;
+	# share($LINEINFO); # <- unable to share globs
+	share($lineinfo);   # 
 
 =pod
 
@@ -1744,13 +1831,20 @@ them, and hen send execution off to the next statement.
 
 Note that the order in which the commands are processed is very important;
 some commands earlier in the loop will actually alter the C<$cmd> variable
-to create other commands to be executed later. This is all highly "optimized"
+to create other commands to be executed later. This is all highly I<optimized>
 but can be confusing. Check the comments for each C<$cmd ... && do {}> to
 see what's happening in any given command.
 
 =cut
 
 sub DB {
+
+    # lock the debugger and get the thread id for the prompt
+	lock($DBGR);
+	my $tid;
+	if ($ENV{PERL5DB_THREADED}) {
+		$tid = eval { "[".threads->self->tid."]" };
+	}
 
     # Check for whether we should be running continuously or not.
     # _After_ the perl program is compiled, $single is set to 1:
@@ -1881,13 +1975,21 @@ C<watchfunction()> executes:
 
 =over 4 
 
-=item * Returning a false value from the C<watchfunction()> itself.
+=item *
 
-=item * Altering C<$single> to a false value.
+Returning a false value from the C<watchfunction()> itself.
 
-=item * Altering C<$signal> to a false value.
+=item *
 
-=item *  Turning off the '4' bit in C<$trace> (this also disables the
+Altering C<$single> to a false value.
+
+=item *
+
+Altering C<$signal> to a false value.
+
+=item *
+
+Turning off the C<4> bit in C<$trace> (this also disables the
 check for C<watchfunction()>. This can be done with
 
     $trace &= ~4;
@@ -2071,11 +2173,11 @@ The debugger normally shows the line corresponding to the current line of
 execution. Sometimes, though, we want to see the next line, or to move elsewhere
 in the file. This is done via the C<$incr>, C<$start>, and C<$max> variables.
 
-C<$incr> controls by how many lines the "current" line should move forward
-after a command is executed. If set to -1, this indicates that the "current"
+C<$incr> controls by how many lines the I<current> line should move forward
+after a command is executed. If set to -1, this indicates that the I<current>
 line shouldn't change.
 
-C<$start> is the "current" line. It is used for things like knowing where to
+C<$start> is the I<current> line. It is used for things like knowing where to
 move forwards or backwards from when doing an C<L> or C<-> command.
 
 C<$max> tells the debugger where the last line of the current file is. It's
@@ -2088,10 +2190,14 @@ in two parts:
 
 =over 4
 
-=item * The outer part of the loop, starting at the C<CMD> label. This loop
+=item *
+
+The outer part of the loop, starting at the C<CMD> label. This loop
 reads a command and then executes it.
 
-=item * The inner part of the loop, starting at the C<PIPE> label. This part
+=item *
+
+The inner part of the loop, starting at the C<PIPE> label. This part
 is wholly contained inside the C<CMD> block and only executes a command.
 Used to handle commands running inside a pager.
 
@@ -2120,7 +2226,7 @@ the new command. This is faster, but perhaps a bit more convoluted.
             # ... and we got a line of command input ...
             defined(
                 $cmd = &readline(
-                        "$pidprompt  DB"
+                        "$pidprompt $tid DB"
                       . ( '<' x $level )
                       . ( $#hist + 1 )
                       . ( '>' x $level ) . " "
@@ -2129,6 +2235,7 @@ the new command. This is faster, but perhaps a bit more convoluted.
           )
         {
 
+			share($cmd);
             # ... try to execute the input as debugger commands.
 
             # Don't stop running.
@@ -2145,7 +2252,7 @@ the new command. This is faster, but perhaps a bit more convoluted.
 
 =head4 The null command
 
-A newline entered by itself means "re-execute the last command". We grab the
+A newline entered by itself means I<re-execute the last command>. We grab the
 command out of C<$laststep> (where it was recorded previously), and copy it
 back into C<$cmd> to be executed below. If there wasn't any previous command,
 we'll do nothing below (no command will match). If there was, we also save it
@@ -2159,6 +2266,8 @@ it up.
             chomp($cmd);    # get rid of the annoying extra newline
             push( @hist, $cmd ) if length($cmd) > 1;
             push( @truehist, $cmd );
+			share(@hist);
+			share(@truehist);
 
             # This is a restart point for commands that didn't arrive
             # via direct user input. It allows us to 'redo PIPE' to
@@ -2467,7 +2576,7 @@ deal with them instead of processing them in-line.
 
                 # All of these commands were remapped in perl 5.8.0;
                 # we send them off to the secondary dispatcher (see below).
-                $cmd =~ /^([aAbBhilLMoOPvwW]\b|[<>\{]{1,2})\s*(.*)/so && do {
+                $cmd =~ /^([aAbBeEhilLMoOPvwW]\b|[<>\{]{1,2})\s*(.*)/so && do {
                     &cmd_wrapper( $1, $2, $line );
                     next CMD;
                 };
@@ -2528,7 +2637,7 @@ they can't.
 =head4 C<n> - single step, but don't trace down into subs
 
 Done by setting C<$single> to 2, which forces subs to execute straight through
-when entered (see X<DB::sub>). We also save the C<n> command in C<$laststep>,
+when entered (see C<DB::sub>). We also save the C<n> command in C<$laststep>,
 so a null command knows what to re-execute. 
 
 =cut
@@ -2547,7 +2656,7 @@ so a null command knows what to re-execute.
 
 =head4 C<s> - single-step, entering subs
 
-Sets C<$single> to 1, which causes X<DB::sub> to continue tracing inside     
+Sets C<$single> to 1, which causes C<DB::sub> to continue tracing inside     
 subs. Also saves C<s> as C<$lastcmd>.
 
 =cut
@@ -2925,7 +3034,7 @@ C<STDOUT> from getting messed up.
 =head4 C<$rc I<pattern> $rc> - Search command history
 
 Another command to manipulate C<@hist>: this one searches it with a pattern.
-If a command is found, it is placed in C<$cmd> and executed via <redo>.
+If a command is found, it is placed in C<$cmd> and executed via C<redo>.
 
 =cut
 
@@ -3191,6 +3300,24 @@ Return to any given position in the B<true>-history list
                 $cmd =~ /^(R|rerun\s*(.*))$/ && do {
                     my @args = ($1 eq 'R' ? restart() : rerun($2));
 
+                    # Close all non-system fds for a clean restart.  A more
+                    # correct method would be to close all fds that were not
+                    # open when the process started, but this seems to be
+                    # hard.  See "debugger 'R'estart and open database
+                    # connections" on p5p.
+
+                    my $max_fd = 1024; # default if POSIX can't be loaded
+                    if (eval { require POSIX }) {
+                        $max_fd = POSIX::sysconf(POSIX::_SC_OPEN_MAX());
+                    }
+
+                    if (defined $max_fd) {
+                        foreach ($^F+1 .. $max_fd-1) {
+                            next unless open FD_TO_CLOSE, "<&=$_";
+                            close(FD_TO_CLOSE);
+                        }
+                    }
+
                     # And run Perl again.  We use exec() to keep the
                     # PID stable (and that way $ini_pids is still valid).
                     exec(@args) || print $OUT "exec failed: $!\n";
@@ -3200,7 +3327,7 @@ Return to any given position in the B<true>-history list
 
 =head4 C<|, ||> - pipe output through the pager.
 
-FOR C<|>, we save C<OUT> (the debugger's output filehandle) and C<STDOUT>
+For C<|>, we save C<OUT> (the debugger's output filehandle) and C<STDOUT>
 (the program's standard output). For C<||>, we only save C<OUT>. We open a
 pipe to the pager (restoring the output filehandles if this fails). If this
 is the C<|> command, we also set up a C<SIGPIPE> handler which will simply 
@@ -3428,7 +3555,7 @@ the 16 bit is set in C<$frame>).
 It also tracks the subroutine call depth by saving the current setting of
 C<$single> in the C<@stack> package global; if this exceeds the value in
 C<$deep>, C<sub> automatically turns on printing of the current depth by
-setting the 4 bit in C<$single>. In any case, it keeps the current setting
+setting the C<4> bit in C<$single>. In any case, it keeps the current setting
 of stop/don't stop on entry to subs set as it currently is set.
 
 =head3 C<caller()> support
@@ -3452,7 +3579,7 @@ The line number it was defined on
 
 =item * C<$subroutine>
 
-The subroutine name; C<'(eval)'> if an C<eval>().
+The subroutine name; C<(eval)> if an C<eval>().
 
 =item * C<$hasargs>
 
@@ -3476,7 +3603,7 @@ pragma information; subject to change between versions
 
 =item * C<$bitmask>
 
-pragma information: subject to change between versions
+pragma information; subject to change between versions
 
 =item * C<@DB::args>
 
@@ -3488,10 +3615,16 @@ arguments with which the subroutine was invoked
 
 sub sub {
 
+	# lock ourselves under threads
+	lock($DBGR);
+
     # Whether or not the autoloader was running, a scalar to put the
     # sub's return value in (if needed), and an array to put the sub's
     # return value in (if needed).
     my ( $al, $ret, @ret ) = "";
+	if ($sub =~ /^threads::new$/ && $ENV{PERL5DB_THREADED}) {
+		print "creating new thread\n"; 
+	}
 
     # If the last ten characters are C'::AUTOLOAD', note we've traced
     # into AUTOLOAD for $sub.
@@ -3680,8 +3813,8 @@ The C<%set> hash defines the mapping from command letter to subroutine
 name suffix. 
 
 C<%set> is a two-level hash, indexed by set name and then by command name.
-Note that trying to set the CommandSet to 'foobar' simply results in the
-5.8.0 command set being used, since there's no top-level entry for 'foobar'.
+Note that trying to set the CommandSet to C<foobar> simply results in the
+5.8.0 command set being used, since there's no top-level entry for C<foobar>.
 
 =cut 
 
@@ -3718,7 +3851,7 @@ my %set = (    #
 C<cmd_wrapper()> allows the debugger to switch command sets 
 depending on the value of the C<CommandSet> option. 
 
-It tries to look up the command in the X<C<%set>> package-level I<lexical>
+It tries to look up the command in the C<%set> package-level I<lexical>
 (which means external entities can't fiddle with it) and create the name of 
 the sub to call based on the value found in the hash (if it's there). I<All> 
 of the commands to be handled in a set have to be added to C<%set>; if they 
@@ -4024,24 +4157,31 @@ worked on (if it's not the current one).
 
 We can now build functions in pairs: the basic function works on the current
 file, and uses C<$filename_error> as part of its error message. Since this is
-initialized to C<''>, no filename will appear when we are working on the
+initialized to C<"">, no filename will appear when we are working on the
 current file.
 
 The second function is a wrapper which does the following:
 
 =over 4 
 
-=item * Localizes C<$filename_error> and sets it to the name of the file to be processed.
+=item *
 
-=item * Localizes the C<*dbline> glob and reassigns it to point to the file we want to process. 
+Localizes C<$filename_error> and sets it to the name of the file to be processed.
 
-=item * Calls the first function. 
+=item *
 
-The first function works on the "current" (i.e., the one we changed to) file,
+Localizes the C<*dbline> glob and reassigns it to point to the file we want to process. 
+
+=item *
+
+Calls the first function. 
+
+The first function works on the I<current> file (i.e., the one we changed to),
 and prints C<$filename_error> in the error message (the name of the other file)
-if it needs to. When the functions return, C<*dbline> is restored to point to the actual current file (the one we're executing in) and C<$filename_error> is 
-restored to C<''>. This restores everything to the way it was before the 
-second function was called at all.
+if it needs to. When the functions return, C<*dbline> is restored to point
+to the actual current file (the one we're executing in) and
+C<$filename_error> is restored to C<"">. This restores everything to
+the way it was before the second function was called at all.
 
 See the comments in C<breakable_line> and C<breakable_line_in_file> for more
 details.
@@ -4052,7 +4192,7 @@ details.
 
 $filename_error = '';
 
-=head3 breakable_line($from, $to) (API)
+=head3 breakable_line(from, to) (API)
 
 The subroutine decides whether or not a line in the current file is breakable.
 It walks through C<@dbline> within the range of lines specified, looking for
@@ -4135,7 +4275,7 @@ sub breakable_line {
     die "Line$pl $from$upto$filename_error not breakable\n";
 } ## end sub breakable_line
 
-=head3 breakable_line_in_filename($file, $from, $to) (API)
+=head3 breakable_line_in_filename(file, from, to) (API)
 
 Like C<breakable_line>, but look in another file.
 
@@ -4494,15 +4634,66 @@ sub cmd_stop {    # As on ^C, but not signal-safy.
     $signal = 1;
 }
 
+=head3 C<cmd_e> - threads
+
+Display the current thread id:
+
+	e
+
+This could be how (when implemented) to send commands to this thread id (e cmd)
+or that thread id (e tid cmd).
+
+=cut
+
+sub cmd_e {
+    my $cmd  = shift;
+    my $line = shift;
+	unless (exists($INC{'threads.pm'})) {
+		print "threads not loaded($ENV{PERL5DB_THREADED})
+		please run the debugger with PERL5DB_THREADED=1 set in the environment\n";
+	} else {
+		my $tid = threads->self->tid;
+		print "thread id: $tid\n";
+	}
+} ## end sub cmd_e
+
+=head3 C<cmd_E> - list of thread ids
+
+Display the list of available thread ids:
+
+	E
+
+This could be used (when implemented) to send commands to all threads (E cmd).
+
+=cut
+
+sub cmd_E {
+    my $cmd  = shift;
+    my $line = shift;
+	unless (exists($INC{'threads.pm'})) { 
+		print "threads not loaded($ENV{PERL5DB_THREADED})
+		please run the debugger with PERL5DB_THREADED=1 set in the environment\n";
+	} else {
+		my $tid = threads->self->tid;
+		print "thread ids: ".join(', ', 
+			map { ($tid == $_->tid ? '<'.$_->tid.'>' : $_->tid) } threads->list
+		)."\n"; 
+	}
+} ## end sub cmd_E
+
 =head3 C<cmd_h> - help command (command)
 
 Does the work of either
 
 =over 4
 
-=item * Showing all the debugger help
+=item *
 
-=item * Showing help for a specific command
+Showing all the debugger help
+
+=item *
+
+Showing help for a specific command
 
 =back
 
@@ -5070,7 +5261,7 @@ watch expressions.
 If an expression (or partial expression) is specified, we pattern-match
 through the expressions and remove the ones that match. We also discard
 the corresponding values. If no watch expressions are left, we turn off 
-the 'watching expressions' bit.
+the I<watching expressions> bit.
 
 =cut
 
@@ -5130,9 +5321,13 @@ sub cmd_W {
 These are general support routines that are used in a number of places
 throughout the debugger.
 
+=over 4
+
 =item cmd_P
 
 Something to do with assertions
+
+=back
 
 =cut
 
@@ -5343,7 +5538,7 @@ prevent return values from being shown.
 
 C<dumpit()> then checks to see if it needs to load C<dumpvar.pl> and 
 tries to load it (note: if you have a C<dumpvar.pl>  ahead of the 
-installed version in @INC, yours will be used instead. Possible security 
+installed version in C<@INC>, yours will be used instead. Possible security 
 problem?).
 
 It then checks to see if the subroutine C<main::dumpValue> is now defined
@@ -5421,13 +5616,21 @@ Parameters:
 
 =over 4
 
-=item * The filehandle to print to.
+=item *
 
-=item * How many frames to skip before starting trace.
+The filehandle to print to.
 
-=item * How many frames to print.
+=item *
 
-=item * A flag: if true, print a "short" trace without filenames, line numbers, or arguments
+How many frames to skip before starting trace.
+
+=item *
+
+How many frames to print.
+
+=item *
+
+A flag: if true, print a I<short> trace without filenames, line numbers, or arguments
 
 =back
 
@@ -5692,7 +5895,7 @@ This routine mostly just packages up a regular expression to be used
 to check that the thing it's being matched against has properly-matched
 curly braces.
 
-Of note is the definition of the $balanced_brace_re global via ||=, which
+Of note is the definition of the C<$balanced_brace_re> global via C<||=>, which
 speeds things up by only creating the qr//'ed expression once; if it's 
 already defined, we don't try to define it again. A speed hack.
 
@@ -5717,7 +5920,7 @@ sub unbalanced {
 
 C<gets()> is a primitive (very primitive) routine to read continuations.
 It was devised for reading continuations for actions.
-it just reads more input with X<C<readline()>> and returns it.
+it just reads more input with C<readline()> and returns it.
 
 =cut
 
@@ -6260,11 +6463,11 @@ sub option_val {
 
 Handles the parsing and execution of option setting/displaying commands.
 
-An option entered by itself is assumed to be 'set me to 1' (the default value)
+An option entered by itself is assumed to be I<set me to 1> (the default value)
 if the option is a boolean one. If not, the user is prompted to enter a valid
-value or to query the current value (via 'option? ').
+value or to query the current value (via C<option? >).
 
-If 'option=value' is entered, we try to extract a quoted string from the
+If C<option=value> is entered, we try to extract a quoted string from the
 value (if it is quoted). If it's not, we just use the whole value as-is.
 
 We load any modules required to service this option, and then we set it: if
@@ -6446,7 +6649,7 @@ sub get_list {
 The C<catch()> subroutine is the essence of fast and low-impact. We simply
 set an already-existing global scalar variable to a constant value. This 
 avoids allocating any memory possibly in the middle of something that will
-get all confused if we do.
+get all confused if we do, particularily under I<unsafe signals>.
 
 =cut
 
@@ -6589,7 +6792,7 @@ sub noTTY {
 =head2 C<ReadLine>
 
 Sets the C<$rl> option variable. If 0, we use C<Term::ReadLine::Stub> 
-(essentially, no C<readline> processing on this "terminal"). Otherwise, we
+(essentially, no C<readline> processing on this I<terminal>). Otherwise, we
 use C<Term::ReadLine>. Can't be changed after a terminal's in place; we save
 the value in case a restart is done so we can change it then.
 
@@ -6814,9 +7017,9 @@ These subroutines provide functionality for various commands.
 =head2 C<list_modules>
 
 For the C<M> command: list modules loaded and their versions.
-Essentially just runs through the keys in %INC, picks up the 
-$VERSION package globals from each package, gets the file name, and formats the
-information for output.
+Essentially just runs through the keys in %INC, picks each package's
+C<$VERSION> variable, gets the file name, and formats the information
+for output.
 
 =cut
 
@@ -6854,14 +7057,15 @@ Sets up the monster string used to format and print the help.
 
 =head3 HELP MESSAGE FORMAT
 
-The help message is a peculiar format unto itself; it mixes C<pod> 'ornaments'
-(BE<lt>E<gt>, IE<gt>E<lt>) with tabs to come up with a format that's fairly
+The help message is a peculiar format unto itself; it mixes C<pod> I<ornaments>
+(C<< B<> >> C<< I<> >>) with tabs to come up with a format that's fairly
 easy to parse and portable, but which still allows the help to be a little
 nicer than just plain text.
 
-Essentially, you define the command name (usually marked up with BE<gt>E<lt>
-and IE<gt>E<lt>), followed by a tab, and then the descriptive text, ending in a newline. The descriptive text can also be marked up in the same way. If you 
-need to continue the descriptive text to another line, start that line with 
+Essentially, you define the command name (usually marked up with C<< B<> >>
+and C<< I<> >>), followed by a tab, and then the descriptive text, ending in a
+newline. The descriptive text can also be marked up in the same way. If you
+need to continue the descriptive text to another line, start that line with
 just tabs and then enter the marked-up text.
 
 If you are modifying the help text, I<be careful>. The help-string parser is 
@@ -6947,6 +7151,8 @@ B<m> I<expr>        Evals expression in list context, prints methods callable
 B<m> I<class>        Prints methods callable via the given class.
 B<M>        Show versions of loaded modules.
 B<i> I<class>       Prints nested parents of given class.
+B<e>         Display current thread id.
+B<E>         Display all thread ids the current one will be identified: <n>.
 B<y> [I<n> [I<Vars>]]   List lexicals in higher scope <n>.  Vars same as B<V>.
 B<P> Something to do with assertions...
 
@@ -7064,6 +7270,7 @@ I<Data Examination:>     B<expr>     Execute perl code, also see: B<s>,B<n>,B<t>
   B<V> [I<Pk> [I<Vars>]]  List Variables in Package.  Vars can be ~pattern or !pattern.
   B<X> [I<Vars>]       Same as \"B<V> I<current_package> [I<Vars>]\".  B<i> I<class> inheritance tree.
   B<y> [I<n> [I<Vars>]]   List lexicals in higher scope <n>.  Vars same as B<V>.
+  B<e>     Display thread id     B<E> Display all thread ids.
 For more help, type B<h> I<cmd_letter>, or run B<$doccmd perldebug> for all docs.
 END_SUM
 
@@ -7249,7 +7456,7 @@ END_SUM
 Most of what C<print_help> does is just text formatting. It finds the
 C<B> and C<I> ornaments, cleans them off, and substitutes the proper
 terminal control characters to simulate them (courtesy of 
-<Term::ReadLine::TermCap>).
+C<Term::ReadLine::TermCap>).
 
 =cut
 
@@ -7592,9 +7799,9 @@ to named subroutines (including those aliased via glob assignment).
 
 =head2 C<CvGV_name()>
 
-Wrapper for X<CvGV_name_or_bust>; tries to get the name of a reference
+Wrapper for C<CvGV_name_or_bust>; tries to get the name of a reference
 via that routine. If this fails, return the reference again (when the
-reference is stringified, it'll come out as "SOMETHING(0X...)").
+reference is stringified, it'll come out as C<SOMETHING(0x...)>).
 
 =cut
 
@@ -7610,7 +7817,7 @@ Calls L<Devel::Peek> to try to find the glob the ref lives in; returns
 C<undef> if L<Devel::Peek> can't be loaded, or if C<Devel::Peek::CvGV> can't
 find a glob for this ref.
 
-Returns "I<package>::I<glob name>" if the code ref is found in a glob.
+Returns C<< I<package>::I<glob name> >> if the code ref is found in a glob.
 
 =cut
 
@@ -7629,10 +7836,10 @@ sub CvGV_name_or_bust {
 A utility routine used in various places; finds the file where a subroutine 
 was defined, and returns that filename and a line-number range.
 
-Tries to use X<@sub> first; if it can't find it there, it tries building a
-reference to the subroutine and uses X<CvGV_name_or_bust> to locate it,
-loading it into X<@sub> as a side effect (XXX I think). If it can't find it
-this way, it brute-force searches X<%sub>, checking for identical references.
+Tries to use C<@sub> first; if it can't find it there, it tries building a
+reference to the subroutine and uses C<CvGV_name_or_bust> to locate it,
+loading it into C<@sub> as a side effect (XXX I think). If it can't find it
+this way, it brute-force searches C<%sub>, checking for identical references.
 
 =cut
 
@@ -7657,7 +7864,7 @@ sub find_sub {
 
 =head2 C<methods>
 
-A subroutine that uses the utility function X<methods_via> to find all the
+A subroutine that uses the utility function C<methods_via> to find all the
 methods in the class corresponding to the current reference and in 
 C<UNIVERSAL>.
 
@@ -7963,27 +8170,49 @@ debugger has to have set up before the Perl core starts running:
 
 =over 4 
 
-=item * The debugger's own filehandles (copies of STD and STDOUT for now).
+=item *
 
-=item * Characters for shell escapes, the recall command, and the history command.
+The debugger's own filehandles (copies of STD and STDOUT for now).
 
-=item * The maximum recursion depth.
+=item *
 
-=item * The size of a C<w> command's window.
+Characters for shell escapes, the recall command, and the history command.
 
-=item * The before-this-line context to be printed in a C<v> (view a window around this line) command.
+=item *
 
-=item * The fact that we're not in a sub at all right now.
+The maximum recursion depth.
 
-=item * The default SIGINT handler for the debugger.
+=item *
 
-=item * The appropriate value of the flag in C<$^D> that says the debugger is running
+The size of a C<w> command's window.
 
-=item * The current debugger recursion level
+=item *
 
-=item * The list of postponed (XXX define) items and the C<$single> stack
+The before-this-line context to be printed in a C<v> (view a window around this line) command.
 
-=item * That we want no return values and no subroutine entry/exit trace.
+=item *
+
+The fact that we're not in a sub at all right now.
+
+=item *
+
+The default SIGINT handler for the debugger.
+
+=item *
+
+The appropriate value of the flag in C<$^D> that says the debugger is running
+
+=item *
+
+The current debugger recursion level
+
+=item *
+
+The list of postponed items and the C<$single> stack (XXX define this)
+
+=item *
+
+That we want no return values and no subroutine entry/exit trace.
 
 =back
 
@@ -8092,15 +8321,25 @@ sub db_complete {
 
 =over 4
 
-=item * Find all the subroutines that might match in this package
+=item *
 
-=item * Add "postpone", "load", and "compile" as possibles (we may be completing the keyword itself
+Find all the subroutines that might match in this package
 
-=item * Include all the rest of the subs that are known
+=item *
 
-=item * C<grep> out the ones that match the text we have so far
+Add C<postpone>, C<load>, and C<compile> as possibles (we may be completing the keyword itself
 
-=item * Return this as the list of possible completions
+=item *
+
+Include all the rest of the subs that are known
+
+=item *
+
+C<grep> out the ones that match the text we have so far
+
+=item *
+
+Return this as the list of possible completions
 
 =back
 
@@ -8113,7 +8352,7 @@ sub db_complete {
 
 =head3 C<b load>
 
-Get all the possible files from @INC as it currently stands and
+Get all the possible files from C<@INC> as it currently stands and
 select the ones that match the text so far.
 
 =cut
@@ -8221,7 +8460,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =over 4 
 
-=item * Determine the package that the symbol is in. Put it in C<::> (effectively C<main::>) if no package is specified.
+=item *
+
+Determine the package that the symbol is in. Put it in C<::> (effectively C<main::>) if no package is specified.
 
 =cut
 
@@ -8229,7 +8470,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =pod
 
-=item * Figure out the prefix vs. what needs completing.
+=item *
+
+Figure out the prefix vs. what needs completing.
 
 =cut
 
@@ -8238,7 +8481,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =pod
 
-=item * Look through all the symbols in the package. C<grep> out all the possible hashes/arrays/scalars, and then C<grep> the possible matches out of those. C<map> the prefix onto all the possibilities.
+=item *
+
+Look through all the symbols in the package. C<grep> out all the possible hashes/arrays/scalars, and then C<grep> the possible matches out of those. C<map> the prefix onto all the possibilities.
 
 =cut
 
@@ -8247,7 +8492,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =pod
 
-=item * If there's only one hit, and it's a package qualifier, and it's not equal to the initial text, re-complete it using the symbol we actually found.
+=item *
+
+If there's only one hit, and it's a package qualifier, and it's not equal to the initial text, re-complete it using the symbol we actually found.
 
 =cut
 
@@ -8274,7 +8521,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =over 4
 
-=item * If it's C<main>, delete main to just get C<::> leading.
+=item *
+
+If it's C<main>, delete main to just get C<::> leading.
 
 =cut
 
@@ -8282,7 +8531,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =pod
 
-=item * We set the prefix to the item's sigil, and trim off the sigil to get the text to be completed.
+=item *
+
+We set the prefix to the item's sigil, and trim off the sigil to get the text to be completed.
 
 =cut
 
@@ -8291,7 +8542,9 @@ Much like the above, except we have to do a little more cleanup:
 
 =pod
 
-=item * If the package is C<::> (C<main>), create an empty list; if it's something else, create a list of all the packages known.  Append whichever list to a list of all the possible symbols in the current package. C<grep> out the matches to the text entered so far, then C<map> the prefix back onto the symbols.
+=item *
+
+If the package is C<::> (C<main>), create an empty list; if it's something else, create a list of all the packages known.  Append whichever list to a list of all the possible symbols in the current package. C<grep> out the matches to the text entered so far, then C<map> the prefix back onto the symbols.
 
 =cut
 
@@ -8299,7 +8552,9 @@ Much like the above, except we have to do a little more cleanup:
           ( grep /^_?[a-zA-Z]/, keys %$pack ),
           ( $pack eq '::' ? () : ( grep /::$/, keys %:: ) );
 
-=item * If there's only one hit, it's a package qualifier, and it's not equal to the initial text, recomplete using this symbol.
+=item *
+
+If there's only one hit, it's a package qualifier, and it's not equal to the initial text, recomplete using this symbol.
 
 =back
 
@@ -8480,6 +8735,8 @@ sub expand_DollarCaretP_flags {
     );
     return @bits ? join( '|', @bits ) : 0;
 }
+
+=over 4
 
 =item rerun
 
@@ -8718,6 +8975,8 @@ from the environment.
 
 };  # end restart
 
+=back
+
 =head1 END PROCESSING - THE C<END> BLOCK
 
 Come here at the very end of processing. We want to go into a 
@@ -8731,7 +8990,7 @@ We then figure out whether we're truly done (as in the user entered a C<q>
 command, or we finished execution while running nonstop). If we aren't,
 we set C<$single> to 1 (causing the debugger to get control again).
 
-We then call C<DB::fake::at_exit()>, which returns the C<Use 'q' to quit ...">
+We then call C<DB::fake::at_exit()>, which returns the C<Use 'q' to quit ...>
 message and returns control to the debugger. Repeat.
 
 When the user finally enters a C<q> command, C<$fall_off_end> is set to
@@ -8761,7 +9020,7 @@ comments to keep things clear.
 
 =head2 Null command
 
-Does nothing. Used to 'turn off' commands.
+Does nothing. Used to I<turn off> commands.
 
 =cut
 
@@ -9060,7 +9319,7 @@ sub cmd_pre590_prepost {
 
 =head2 C<cmd_prepost>
 
-Actually does all the handling foe C<E<lt>>, C<E<gt>>, C<{{>, C<{>, etc.
+Actually does all the handling for C<E<lt>>, C<E<gt>>, C<{{>, C<{>, etc.
 Since the lists of actions are all held in arrays that are pointed to by
 references anyway, all we have to do is pick the right array reference and
 then use generic code to all, delete, or list actions.

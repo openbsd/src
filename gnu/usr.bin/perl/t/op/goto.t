@@ -7,9 +7,11 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-print "1..33\n";
+print "1..47\n";
 
 require "test.pl";
+
+$purpose; # update per test, and include in print ok's !
 
 while ($?) {
     $foo = 1;
@@ -64,7 +66,9 @@ FINALE:
 print "ok 13\n";
 
 # does goto LABEL handle block contexts correctly?
-
+$purpose = 'handles block contexts correctly (does scope-hopping)';
+# note that this scope-hopping differs from last & next,
+# which always go up-scope strictly.
 my $cond = 1;
 for (1) {
     if ($cond == 1) {
@@ -74,12 +78,12 @@ for (1) {
     elsif ($cond == 0) {
       OTHER:
 	$cond = 2;
-	print "ok 14\n";
+	print "ok 14 - $purpose\n";
 	goto THIRD;
     }
     else {
       THIRD:
-	print "ok 15\n";
+	print "ok 15 - $purpose\n";
     }
 }
 print "ok 16\n";
@@ -87,56 +91,58 @@ print "ok 16\n";
 # Does goto work correctly within a for(;;) loop?
 #  (BUG ID 20010309.004)
 
+$purpose = 'goto inside a for(;;) loop body from inside the body';
 for(my $i=0;!$i++;) {
   my $x=1;
   goto label;
-  label: print (defined $x?"ok ": "not ok ", "17\n")
+  label: print (defined $x?"ok ": "not ok ", "17 - $purpose\n")
 }
 
 # Does goto work correctly going *to* a for(;;) loop?
 #  (make sure it doesn't skip the initializer)
 
+$purpose = 'goto a for(;;) loop, from outside (does initializer)';
 my ($z, $y) = (0);
-FORL1: for($y="ok 18\n"; $z;) {print $y; goto TEST19}
-($y,$z) = ("not ok 18\n", 1);
+FORL1: for($y="ok 18 - $purpose\n"; $z;) {print $y; goto TEST19}
+($y,$z) = ("not ok 18 - $purpose\n", 1);
 goto FORL1;
 
 # Even from within the loop?
-
 TEST19: $z = 0;
-FORL2: for($y="ok 19\n"; 1;) {
+$purpose = 'goto a for(;;) loop, from inside (does initializer)';
+FORL2: for($y="ok 19 - $purpose\n"; 1;) {
   if ($z) {
     print $y;
     last;
   }
-  ($y, $z) = ("not ok 19\n", 1);
+  ($y, $z) = ("not ok 19 - $purpose\n", 1);
   goto FORL2;
 }
 
 # Does goto work correctly within a try block?
 #  (BUG ID 20000313.004)
-
+$purpose = 'works correctly within a try block';
 my $ok = 0;
 eval {
   my $variable = 1;
   goto LABEL20;
   LABEL20: $ok = 1 if $variable;
 };
-print ($ok&&!$@ ? "ok 20\n" : "not ok 20\n");
+print ($ok&&!$@ ? "ok 20" : "not ok 20", " - $purpose\n");
 
 # And within an eval-string?
-
-
+$purpose = 'works correctly within an eval string';
 $ok = 0;
 eval q{
   my $variable = 1;
   goto LABEL21;
   LABEL21: $ok = 1 if $variable;
 };
-print ($ok&&!$@ ? "ok 21\n" : "not ok 21\n");
+print ($ok&&!$@ ? "ok" : "not ok", " 21 - $purpose\n");
 
 
 # Test that goto works in nested eval-string
+$purpose = 'works correctly in a nested eval string';
 $ok = 0;
 {eval q{
   eval q{
@@ -149,7 +155,7 @@ $ok = 0;
 };
 $ok = 0 if $@;
 }
-print ($ok ? "ok 22\n" : "not ok 22\n");
+print ($ok ? "ok" : "not ok", " 22 - $purpose\n");
 
 {
     my $false = 0;
@@ -241,19 +247,21 @@ my $r = runperl(
 print "not " if $r ne "ok\n";
 print "ok 33 - avoid pad without an \@_\n";
 
-
+goto moretests;
 exit;
 
 bypass:
-print "ok 5\n";
+$purpose = 'eval "goto $x"';
+print "ok 5 - $purpose\n";
 
 # Test autoloading mechanism.
 
 sub two {
     ($pack, $file, $line) = caller;	# Should indicate original call stats.
+    $purpose = 'autoloading mechanism.';
     print "@_ $pack $file $line" eq "1 2 3 main $FILE $LINE"
-	? "ok 7\n"
-	: "not ok 7\n";
+	? "ok 7 - $purpose\n"
+	: "not ok 7 - $purpose\n";
 }
 
 sub one {
@@ -267,9 +275,11 @@ $FILE = __FILE__;
 $LINE = __LINE__ + 1;
 &one(1,2,3);
 
+$purpose = 'goto NOWHERE sets $@';
 $wherever = NOWHERE;
 eval { goto $wherever };
-print $@ =~ /Can't find label NOWHERE/ ? "ok 8\n" : "not ok 8\n";
+print $@ =~ /Can't find label NOWHERE/
+ ? "ok 8 - $purpose\n" : "not ok 8 - $purpose\n"; #'
 
 # see if a modified @_ propagates
 {
@@ -290,3 +300,119 @@ auto("ok 12\n");
 
 $wherever = FINALE;
 goto $wherever;
+
+moretests:
+# test goto duplicated labels.
+{
+    my $z = 0;
+    $purpose = "catch goto middle of foreach";
+    eval {
+	$z = 0;
+	for (0..1) {
+	  L4: # not outer scope
+	    $z += 10;
+	    last;
+	}
+	goto L4 if $z == 10;
+	last;
+    };
+    print ($@ =~ /Can't "goto" into the middle of a foreach loop/ #'
+	   ? "ok" : "not ok", " 34 - $purpose\n");    
+
+    $z = 0;
+    # ambiguous label resolution (outer scope means endless loop!)
+    $purpose = "prefer same scope (loop body) to outer scope (loop entry)";
+  L1:
+    for my $x (0..1) {
+	$z += 10;
+	print $z == 10 ? "" : "not ", "ok 35 - $purpose\n";
+	goto L1 unless $x;
+	$z += 10;
+      L1:
+	print $z == 10 ? "" : "not ", "ok 36 - $purpose\n";
+	last;
+    }
+
+    $purpose = "prefer this scope (block body) to outer scope (block entry)";
+    $z = 0;
+  L2: 
+    { 
+	$z += 10;
+	print $z == 10 ? "" : "not ", "ok 37 - $purpose\n";
+	goto L2 if $z == 10;
+	$z += 10;
+      L2:
+	print $z == 10 ? "" : "not ", "ok 38 - $purpose\n";
+    }
+
+
+    { 
+	$purpose = "prefer this scope to inner scope";
+	$z = 0;
+	while (1) {
+	  L3: # not inner scope
+	    $z += 10;
+	    last;
+	}
+	print $z == 10 ? "": "not ", "ok 39 - $purpose\n";
+	goto L3 if $z == 10;
+	$z += 10;
+      L3: # this scope !
+	print $z == 10 ? "" : "not ", "ok 40 - $purpose\n";
+    }
+
+  L4: # not outer scope
+    { 
+	$purpose = "prefer this scope to inner,outer scopes";
+	$z = 0;
+	while (1) {
+	  L4: # not inner scope
+	    $z += 1;
+	    last;
+	}
+	print $z == 1 ? "": "not ", "ok 41 - $purpose\n";
+	goto L4 if $z == 1;
+	$z += 10;
+      L4: # this scope !
+	print $z == 1 ? "": "not ", "ok 42 - $purpose\n";
+    }
+
+    {
+	$purpose = "same label, multiple times in same scope (choose 1st)";
+	my $tnum = 43;
+	my $loop;
+	for $x (0..1) { 
+	  L2: # without this, fails 1 (middle) out of 3 iterations
+	    $z = 0;
+	  L2: 
+	    $z += 10;
+	    print $z == 10 ? "": "not ", "ok $tnum - $purpose\n";
+	    $tnum++;
+	    goto L2 if $z == 10 and not $loop++;
+	}
+    }
+}
+
+# deep recursion with gotos eventually caused a stack reallocation
+# which messed up buggy internals that didn't expect the stack to move
+
+sub recurse1 {
+    unshift @_, "x";
+    goto &recurse2;
+}
+sub recurse2 {
+    $x = shift;
+    $_[0] ? +1 + recurse1($_[0] - 1) : 0
+}
+print "not " unless recurse1(500) == 500;
+print "ok 46 - recursive goto &foo\n";
+
+# [perl #32039] Chained goto &sub drops data too early. 
+
+sub a32039 { @_=("foo"); goto &b32039; }
+sub b32039 { goto &c32039; }
+sub c32039 { print $_[0] eq 'foo' ? "" : "not ", "ok 47 - chained &goto\n" }
+a32039();
+
+
+

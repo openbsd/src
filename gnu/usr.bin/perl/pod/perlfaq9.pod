@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq9 - Networking ($Revision: 1.15 $, $Date: 2003/01/31 17:36:57 $)
+perlfaq9 - Networking ($Revision: 1.6 $, $Date: 2003/12/03 03:02:45 $)
 
 =head1 DESCRIPTION
 
@@ -383,7 +383,7 @@ a database, send mail, or purchase a computer).
 You can't, at least, not in real time.  Bummer, eh?
 
 Without sending mail to the address and seeing whether there's a human
-on the other hand to answer you, you cannot determine whether a mail
+on the other end to answer you, you cannot determine whether a mail
 address is valid.  Even if you apply the mail header standard, you
 can have problems, because there are deliverable addresses that aren't
 RFC-822 (the mail header standard) compliant, and addresses that aren't

@@ -5,6 +5,17 @@
  * "One Ring to rule them all, One Ring to find them..."
  */
 
+/* This file contains functions for executing a regular expression.  See
+ * also regcomp.c which funnily enough, contains functions for compiling
+ * a regular expression.
+ *
+ * This file is also copied at build time to ext/re/re_exec.c, where
+ * it's built with -DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT.
+ * This causes the main functions to be compiled under new names and with
+ * debugging support added, which makes "use re 'debug'" work.
+ 
+ */
+
 /* NOTE: this is derived from Henry Spencer's regexp code, and should not
  * confused with the original package (see point 3 below).  Thanks, Henry!
  */
@@ -954,6 +965,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	char *m;
 	STRLEN ln;
 	STRLEN lnc;
+	register STRLEN uskip;
 	unsigned int c1;
 	unsigned int c2;
 	char *e;
@@ -964,7 +976,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	switch (OP(c)) {
 	case ANYOF:
 	    if (do_utf8) {
-		 while (s < strend) {
+		 while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		      if ((ANYOF_FLAGS(c) & ANYOF_UNICODE) ||
 			  !UTF8_IS_INVARIANT((U8)s[0]) ?
 			  reginclass(c, (U8*)s, 0, do_utf8) :
@@ -976,7 +988,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		      }
 		      else 
 			   tmp = 1;
-		      s += UTF8SKIP(s);
+		      s += uskip;
 		 }
 	    }
 	    else {
@@ -1172,7 +1184,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		tmp = ((OP(c) == BOUND ?
 			isALNUM_uni(tmp) : isALNUM_LC_uvchr(UNI_TO_NATIVE(tmp))) != 0);
 		LOAD_UTF8_CHARCLASS(alnum,"a");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (tmp == !(OP(c) == BOUND ?
 				 swash_fetch(PL_utf8_alnum, (U8*)s, do_utf8) :
 				 isALNUM_LC_utf8((U8*)s)))
@@ -1181,7 +1193,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 			if ((norun || regtry(prog, s)))
 			    goto got_it;
 		    }
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1215,14 +1227,14 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		tmp = ((OP(c) == NBOUND ?
 			isALNUM_uni(tmp) : isALNUM_LC_uvchr(UNI_TO_NATIVE(tmp))) != 0);
 		LOAD_UTF8_CHARCLASS(alnum,"a");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (tmp == !(OP(c) == NBOUND ?
 				 swash_fetch(PL_utf8_alnum, (U8*)s, do_utf8) :
 				 isALNUM_LC_utf8((U8*)s)))
 			tmp = !tmp;
 		    else if ((norun || regtry(prog, s)))
 			goto got_it;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1244,7 +1256,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case ALNUM:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(alnum,"a");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (swash_fetch(PL_utf8_alnum, (U8*)s, do_utf8)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1253,7 +1265,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1273,7 +1285,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case ALNUML:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (isALNUM_LC_utf8((U8*)s)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1282,7 +1294,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1302,7 +1314,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NALNUM:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(alnum,"a");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!swash_fetch(PL_utf8_alnum, (U8*)s, do_utf8)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1311,7 +1323,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1331,7 +1343,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NALNUML:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!isALNUM_LC_utf8((U8*)s)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1340,7 +1352,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1360,7 +1372,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case SPACE:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(space," ");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (*s == ' ' || swash_fetch(PL_utf8_space,(U8*)s, do_utf8)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1369,7 +1381,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1389,7 +1401,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case SPACEL:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (*s == ' ' || isSPACE_LC_utf8((U8*)s)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1398,7 +1410,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1418,7 +1430,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NSPACE:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(space," ");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!(*s == ' ' || swash_fetch(PL_utf8_space,(U8*)s, do_utf8))) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1427,7 +1439,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1447,7 +1459,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NSPACEL:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!(*s == ' ' || isSPACE_LC_utf8((U8*)s))) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1456,7 +1468,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1476,7 +1488,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case DIGIT:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(digit,"0");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (swash_fetch(PL_utf8_digit,(U8*)s, do_utf8)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1485,7 +1497,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1505,7 +1517,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case DIGITL:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (isDIGIT_LC_utf8((U8*)s)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1514,7 +1526,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1534,7 +1546,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NDIGIT:
 	    if (do_utf8) {
 		LOAD_UTF8_CHARCLASS(digit,"0");
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!swash_fetch(PL_utf8_digit,(U8*)s, do_utf8)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1543,7 +1555,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {
@@ -1563,7 +1575,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	case NDIGITL:
 	    PL_reg_flags |= RF_tainted;
 	    if (do_utf8) {
-		while (s < strend) {
+		while (s + (uskip = UTF8SKIP(s)) <= strend) {
 		    if (!isDIGIT_LC_utf8((U8*)s)) {
 			if (tmp && (norun || regtry(prog, s)))
 			    goto got_it;
@@ -1572,7 +1584,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		    }
 		    else
 			tmp = 1;
-		    s += UTF8SKIP(s);
+		    s += uskip;
 		}
 	    }
 	    else {

@@ -5,6 +5,16 @@
  * "A fair jaw-cracker dwarf-language must be."  --Samwise Gamgee
  */
 
+/* This file contains functions for compiling a regular expression.  See
+ * also regexec.c which funnily enough, contains functions for executing
+ * a regular expression.
+ *
+ * This file is also copied at build time to ext/re/re_comp.c, where
+ * it's built with -DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT.
+ * This causes the main functions to be compiled under new names and with
+ * debugging support added, which makes "use re 'debug'" work.
+ */
+
 /* NOTE: this is derived from Henry Spencer's regexp code, and should not
  * confused with the original package (see point 3 below).  Thanks, Henry!
  */

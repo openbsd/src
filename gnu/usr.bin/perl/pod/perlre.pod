@@ -201,7 +201,7 @@ as endpoints of a range, that's not a range, the "-" is understood
 literally.  If Unicode is in effect, C<\s> matches also "\x{85}",
 "\x{2028}, and "\x{2029}", see L<perlunicode> for more details about
 C<\pP>, C<\PP>, and C<\X>, and L<perluniintro> about Unicode in general.
-You can define your own C<\p> and C<\P> propreties, see L<perlunicode>.
+You can define your own C<\p> and C<\P> properties, see L<perlunicode>.
 
 The POSIX character class syntax
 
@@ -582,7 +582,7 @@ track of the number of nested parentheses. For example:
 
 Inside the C<(?{...})> block, C<$_> refers to the string the regular
 expression is matching against. You can also use C<pos()> to know what is
-the current position of matching withing this string.
+the current position of matching within this string.
 
 The C<code> is properly scoped in the following sense: If the assertion
 is backtracked (compare L<"Backtracking">), all changes introduced after

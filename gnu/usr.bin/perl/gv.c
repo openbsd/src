@@ -19,6 +19,15 @@
 
 /*
 =head1 GV Functions
+
+A GV is a structure which corresponds to to a Perl typeglob, ie *foo.
+It is a structure that holds a pointer to a scalar, an array, a hash etc,
+corresponding to $foo, @foo, %foo.
+
+GVs are usually found as values in stashes (symbol table hashes) where
+Perl stores its global variables.
+
+=cut
 */
 
 #include "EXTERN.h"
@@ -1084,7 +1093,7 @@ Perl_gv_fullname4(pTHX_ SV *sv, GV *gv, const char *prefix, bool keepmain)
 {
     HV *hv = GvSTASH(gv);
     if (!hv) {
-	(void)SvOK_off(sv);
+	SvOK_off(sv);
 	return;
     }
     sv_setpv(sv, prefix ? prefix : "");

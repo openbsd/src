@@ -157,7 +157,11 @@ case "$cc" in
 # -bI:$(PERL_INC)/perl.exp  Read the exported symbols from the perl binary
 # -bE:$(BASEEXT).exp	    Export these symbols.  This file contains only one
 #			    symbol: boot_$(EXP)	 can it be auto-generated?
-lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
+if test $usenativedlopen = 'true' ; then
+    lddlflags="$lddlflags -bhalt:4 -bexpall -G -bnoentry -lc"
+else
+    lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
+    fi
 
 case "$use64bitall" in
     $define|true|[yY]*) use64bitint="$define" ;;
@@ -314,7 +318,11 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		ccflags="`echo $ccflags | sed -e 's@ -b@ -Wl,-b@g'`"
 		ldflags="`echo ' '$ldflags | sed -e 's@ -b@ -Wl,-b@g'`"
 		lddlflags="`echo ' '$lddlflags | sed -e 's@ -b@ -Wl,-b@g'`"
-		ld='gcc'
+		lddlflags="`echo ' '$lddlflags | sed -e 's@ -G @ -Wl,-G @g'`"
+		case "$use64bitall" in
+		    $define|true|[yY]*) ld="gcc -maix64"	;;
+		    *)			ld="gcc"		;;
+		    esac
 		echo >&4 "(using ccflags   $ccflags)"
 		echo >&4 "(using ldflags   $ldflags)"
 		echo >&4 "(using lddlflags $lddlflags)"
@@ -379,6 +387,13 @@ EOM
 	# Remove them.
 	ccflags="`echo $ccflags | sed -e 's@-q32@@'`"
 	ldflags="`echo $ldflags | sed -e 's@-b32@@'`"
+	case "$cc" in
+	    *gcc*)
+		ccflags="`echo $ccflags | sed -e 's@-q64@-maix64@'`"
+		ccflags_uselargefiles="`echo $ccflags_uselargefiles | sed -e 's@-q64@-maix64@'`"
+		qacflags="`echo $qacflags | sed -e 's@-q64@-maix64@'`"
+		;;
+	    esac
 	# Tell archiver to use large format.  Unless we remove 'ar'
 	# from 'trylist', the Configure script will just reset it to 'ar'
 	# immediately prior to writing config.sh.  This took me hours
@@ -415,9 +430,19 @@ EOCBU
 
 if test $usenativedlopen = 'true' ; then
     ccflags="$ccflags -DUSE_NATIVE_DLOPEN"
+    # -brtl		    Enables a binary to use run time linking
+    # -bdynamic		    When used with -brtl, tells linker to search for
+    #			    ".so"-suffix libraries as well as ".a" suffix
+    #			    libraries. AIX allows both .so and .a libraries to
+    #			    contain dynamic shared objects.
+    # -bmaxdata:0x80000000  This increases the size of heap memory available
+    #			    to perl. Default is 256 MB, which sounds large but
+    #			    caused a software vendor problems. So this sets
+    #			    heap to 2 GB maximum. Anything higher and you'd
+    #			    want to consider 64 bit perl.
     case "$cc" in
-	*gcc*) ldflags="$ldflags -Wl,-brtl" ;;
-	*)     ldflags="$ldflags -brtl" ;;
+	*gcc*) ldflags="$ldflags -Wl,-brtl -Wl,-bdynamic -Wl,-bmaxdata:0x80000000" ;;
+	*)     ldflags="$ldflags -brtl -bdynamic -bmaxdata:0x80000000" ;;
 	esac
 elif test -f /lib/libC.a -a X"`$cc -v 2>&1 | grep gcc`" = X; then
     # If the C++ libraries, libC and libC_r, are available we will

@@ -12,6 +12,15 @@
  * All that is gold does not glitter, not all those who wander are lost.'
  */
 
+/* This file holds the grammar for the Perl language. If edited, you need
+ * to run regen_perly.pl, which re-creates the files perly.h, perly.tab
+ * and perly.act which are derived from this.
+ *
+ * The main job of of this grammar is to call the various newFOO()
+ * functions in op.c to build a syntax tree of OP structs.
+ * It relies on the lexer in toke.c to do the tokenizing.
+ */
+
 %{
 #include "EXTERN.h"
 #define PERL_IN_PERLY_C

@@ -864,6 +864,8 @@ Perl_av_delete(pTHX_ AV *av, I32 key, I32 flags)
 	SvREFCNT_dec(sv);
 	sv = Nullsv;
     }
+    else if (AvREAL(av))
+	sv = sv_2mortal(sv);
     return sv;
 }
 

@@ -41,6 +41,9 @@
 # The compiler bug has been reported to SGI.
 # -- Allen Smith <allens@cpan.org>
 
+# Modified (10/30/04) to turn off usemallocwrap (PERL_MALLOC_WRAP) in -n32
+# mode - Allen.
+
 case "$use64bitall" in
 $define|true|[yY]*)
     case "`uname -s`" in
@@ -140,7 +143,15 @@ esac'
        test -z "$lddlflags" && lddlflags="-n32 -shared"
        test -z "$libc" && libc='/usr/lib32/libc.so'
        test -z "$plibpth" && plibpth='/usr/lib32 /lib32 /usr/ccs/lib'
-	;;
+
+       # PERL_MALLOC_WRAP gives false alarms ("panic: memory wrap") in IRIX
+       # -n32 mode, resulting in perl compiles never getting further than
+       # miniperl. I am not sure whether it actually does any good in -32 or
+       # -64 mode, especially the latter, but it does not give false
+       # alarms (in testing). -Allen
+
+       usemallocwrap=${usemallocwrap:-false}
+       ;;
 *"cc -64"*)
     case "`uname -s`" in
     IRIX)
@@ -188,6 +199,8 @@ esac'
 		lddlflags="$lddlflags -mabi=64"
 		;;
 	*)	ccflags="$ccflags -DIRIX32_SEMUN_BROKEN_BY_GCC"
+                # XXX Note: It is possible that turning off usemallocwrap is
+                # needed here; insufficient data! - Allen
 		;;
 	esac
 	;;

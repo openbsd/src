@@ -278,7 +278,7 @@ Anyway, here it is.  Should run on perl v4 or greater.  Maybe less.
 
 =cut
 
-$RCSID = '$Id: c2ph.PL,v 1.7 2003/12/03 03:02:50 millert Exp $';
+$RCSID = '$Id: c2ph.PL,v 1.8 2004/08/09 18:10:32 millert Exp $';
 
 use File::Temp;
 
@@ -468,7 +468,7 @@ EOF
 	    $CC $CFLAGS $DEFINES
     and the resulting *.s groped for stab information.  If no files are
     supplied, then stdin is read directly with the assumption that it
-    contains stab information.  All other liens will be ignored.  At
+    contains stab information.  All other lines will be ignored.  At
     most one *.s file should be supplied.
 
 EOF

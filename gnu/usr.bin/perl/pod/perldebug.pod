@@ -1014,6 +1014,12 @@ L<Dumpvalue>,
 and
 L<perlrun>.
 
+When debugging a script that uses #! and is thus normally found in
+$PATH, the -S option causes perl to search $PATH for it, so you don't
+have to type the path or `which $scriptname`.
+
+  $ perl -Sd foo.pl
+
 =head1 BUGS
 
 You cannot get stack frame information or in any fashion debug functions

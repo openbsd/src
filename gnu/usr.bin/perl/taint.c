@@ -14,6 +14,9 @@
  * liar, Saruman, and a corrupter of men's hearts."  --Theoden
  */
 
+/* This file contains a few functions for handling data tainting in Perl
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_TAINT_C
 #include "perl.h"

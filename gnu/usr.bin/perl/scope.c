@@ -13,6 +13,13 @@
  * levels..."
  */
 
+/* This file contains functions to manipulate several of Perl's stacks;
+ * in particular it contains code to push various types of things onto
+ * the savestack, then to pop them off and perform the correct restorative
+ * action for each one. This corresponds to the cleanup Perl does at
+ * each scope exit.
+ */
+
 #include "EXTERN.h"
 #define PERL_IN_SCOPE_C
 #include "perl.h"
@@ -930,14 +937,8 @@ Perl_leave_scope(pTHX_ I32 base)
 		    break;
 		case SVt_PVCV:
 		    Perl_croak(aTHX_ "panic: leave_scope pad code");
-		case SVt_RV:
-		case SVt_IV:
-		case SVt_NV:
-		    (void)SvOK_off(sv);
-		    break;
 		default:
-		    (void)SvOK_off(sv);
-		    (void)SvOOK_off(sv);
+		    SvOK_off(sv);
 		    break;
 		}
 	    }
@@ -1043,6 +1044,15 @@ Perl_leave_scope(pTHX_ I32 base)
 		ptr = SSPOPPTR;
 		if (ptr)
 		    AvARRAY((PAD*)ptr)[off] = (SV*)SSPOPPTR;
+	    }
+	    break;
+	case SAVEt_SAVESWITCHSTACK:
+	    {
+		dSP;
+		AV* t = (AV*)SSPOPPTR;
+		AV* f = (AV*)SSPOPPTR;
+		SWITCHSTACK(t,f);
+		PL_curstackinfo->si_stack = f;
 	    }
 	    break;
 	default:

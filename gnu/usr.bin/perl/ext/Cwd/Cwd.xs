@@ -420,10 +420,10 @@ PPCODE:
     else
         croak("Usage: getdcwd(DRIVE)");
 
-    /* Pass a NULL pointer as the second argument to have space allocated. */
-    if (dir = _getdcwd(drive, NULL, MAXPATHLEN)) {
+    New(0,dir,MAXPATHLEN,char);
+    if (_getdcwd(drive, dir, MAXPATHLEN)) {
         sv_setpvn(TARG, dir, strlen(dir));
-        free(dir);
+        Safefree(dir);
         SvPOK_only(TARG);
     }
     else

@@ -1283,6 +1283,7 @@ You generally want to use the C<SvUPGRADE> macro wrapper. See also C<svtype>.
 bool
 Perl_sv_upgrade(pTHX_ register SV *sv, U32 mt)
 {
+
     char*	pv = NULL;
     U32		cur = 0;
     U32		len = 0;
@@ -1472,7 +1473,7 @@ Perl_sv_upgrade(pTHX_ register SV *sv, U32 mt)
 	SvSTASH(sv)	= stash;
 	AvALLOC(sv)	= 0;
 	AvARYLEN(sv)	= 0;
-	AvFLAGS(sv)	= 0;
+	AvFLAGS(sv)	= AVf_REAL;
 	break;
     case SVt_PVHV:
 	SvANY(sv) = new_XPVHV();
@@ -3252,9 +3253,8 @@ Perl_sv_2pv_flags(pTHX_ register SV *sv, STRLEN *lp, I32 flags)
 	*lp = len;
 	s = SvGROW(sv, len + 1);
 	SvCUR_set(sv, len);
-	(void)strcpy(s, t);
 	SvPOKp_on(sv);
-	return s;
+	return strcpy(s, t);
     }
 }
 
@@ -3639,8 +3639,9 @@ function if the source SV needs to be reused. Does not handle 'set' magic.
 Loosely speaking, it performs a copy-by-value, obliterating any previous
 content of the destination.
 If the C<flags> parameter has the C<SV_GMAGIC> bit set, will C<mg_get> on
-C<ssv> if appropriate, else not. C<sv_setsv> and C<sv_setsv_nomg> are
-implemented in terms of this function.
+C<ssv> if appropriate, else not. If the C<flags> parameter has the
+C<NOSTEAL> bit set then the buffers of temps will not be stolen. <sv_setsv>
+and C<sv_setsv_nomg> are implemented in terms of this function.
 
 You probably want to use one of the assortment of wrappers, such as
 C<SvSetSV>, C<SvSetSV_nosteal>, C<SvSetMagicSV> and
@@ -4003,6 +4004,7 @@ Perl_sv_setsv_flags(pTHX_ SV *dstr, register SV *sstr, I32 flags)
 
 	if (SvTEMP(sstr) &&		/* slated for free anyway? */
 	    SvREFCNT(sstr) == 1 && 	/* and no other references to it? */
+	    (!(flags & SV_NOSTEAL)) &&	/* and we're allowed to steal temps */
 	    !(sflags & SVf_OOK) && 	/* and not involved in OOK hack? */
 	    SvLEN(sstr) 	&&	/* and really is a string */
 	    			/* and won't be needed again, potentially */
@@ -4567,18 +4569,18 @@ Perl_newSV(pTHX_ STRLEN len)
 =for apidoc sv_magicext
 
 Adds magic to an SV, upgrading it if necessary. Applies the
-supplied vtable and returns pointer to the magic added.
+supplied vtable and returns a pointer to the magic added.
 
-Note that sv_magicext will allow things that sv_magic will not.
-In particular you can add magic to SvREADONLY SVs and and more than
-one instance of the same 'how'
+Note that C<sv_magicext> will allow things that C<sv_magic> will not.
+In particular, you can add magic to SvREADONLY SVs, and add more than
+one instance of the same 'how'.
 
-I C<namelen> is greater then zero then a savepvn() I<copy> of C<name> is stored,
-if C<namelen> is zero then C<name> is stored as-is and - as another special
-case - if C<(name && namelen == HEf_SVKEY)> then C<name> is assumed to contain
-an C<SV*> and has its REFCNT incremented
+If C<namlen> is greater than zero then a C<savepvn> I<copy> of C<name> is
+stored, if C<namlen> is zero then C<name> is stored as-is and - as another
+special case - if C<(name && namlen == HEf_SVKEY)> then C<name> is assumed
+to contain an C<SV*> and is stored as-is with its REFCNT incremented.
 
-(This is now used as a subroutine by sv_magic.)
+(This is now used as a subroutine by C<sv_magic>.)
 
 =cut
 */
@@ -4656,6 +4658,9 @@ Perl_sv_magicext(pTHX_ SV* sv, SV* obj, int how, MGVTBL *vtable,
 
 Adds magic to an SV. First upgrades C<sv> to type C<SVt_PVMG> if necessary,
 then adds a new magic item of type C<how> to the head of the magic list.
+
+See C<sv_magicext> (which C<sv_magic> now calls) for a description of the
+handling of the C<name> and C<namlen> arguments.
 
 =cut
 */
@@ -5212,7 +5217,7 @@ Perl_sv_clear(pTHX_ register SV *sv)
     case SVt_PVNV:
     case SVt_PVIV:
       freescalar:
-	(void)SvOOK_off(sv);
+	SvOOK_off(sv);
 	/* FALL THROUGH */
     case SVt_PV:
     case SVt_RV:
@@ -7132,7 +7137,7 @@ Perl_sv_reset(pTHX_ register char *s, HV *stash)
 			sv_unref(sv);
 		    continue;
 		}
-		(void)SvOK_off(sv);
+		SvOK_off(sv);
 		if (SvTYPE(sv) >= SVt_PV) {
 		    SvCUR_set(sv, 0);
 		    if (SvPVX(sv) != Nullch)
@@ -7732,14 +7737,14 @@ Perl_newSVrv(pTHX_ SV *rv, const char *classname)
     if (SvTYPE(rv) < SVt_RV)
 	sv_upgrade(rv, SVt_RV);
     else if (SvTYPE(rv) > SVt_RV) {
-	(void)SvOOK_off(rv);
+	SvOOK_off(rv);
 	if (SvPVX(rv) && SvLEN(rv))
 	    Safefree(SvPVX(rv));
 	SvCUR_set(rv, 0);
 	SvLEN_set(rv, 0);
     }
 
-    (void)SvOK_off(rv);
+    SvOK_off(rv);
     SvRV(rv) = sv;
     SvROK_on(rv);
 
@@ -8109,8 +8114,8 @@ Perl_sv_setpvf_mg_nocontext(SV *sv, const char* pat, ...)
 /*
 =for apidoc sv_setpvf
 
-Processes its arguments like C<sprintf> and sets an SV to the formatted
-output.  Does not handle 'set' magic.  See C<sv_setpvf_mg>.
+Works like C<sv_catpvf> but copies the text into the SV instead of
+appending it.  Does not handle 'set' magic.  See C<sv_setpvf_mg>.
 
 =cut
 */
@@ -8124,7 +8129,16 @@ Perl_sv_setpvf(pTHX_ SV *sv, const char* pat, ...)
     va_end(args);
 }
 
-/* backend for C<sv_setpvf> and C<sv_setpvf_nocontext> */
+/*
+=for apidoc sv_vsetpvf
+
+Works like C<sv_vcatpvf> but copies the text into the SV instead of
+appending it.  Does not handle 'set' magic.  See C<sv_vsetpvf_mg>.
+
+Usually used via its frontend C<sv_setpvf>.
+
+=cut
+*/
 
 void
 Perl_sv_vsetpvf(pTHX_ SV *sv, const char* pat, va_list* args)
@@ -8149,7 +8163,15 @@ Perl_sv_setpvf_mg(pTHX_ SV *sv, const char* pat, ...)
     va_end(args);
 }
 
-/* backend for C<sv_setpvf_mg> C<setpvf_mg_nocontext> */
+/*
+=for apidoc sv_vsetpvf_mg
+
+Like C<sv_vsetpvf>, but also handles 'set' magic.
+
+Usually used via its frontend C<sv_setpvf_mg>.
+
+=cut
+*/
 
 void
 Perl_sv_vsetpvf_mg(pTHX_ SV *sv, const char* pat, va_list* args)
@@ -8198,9 +8220,8 @@ Processes its arguments like C<sprintf> and appends the formatted
 output to an SV.  If the appended data contains "wide" characters
 (including, but not limited to, SVs with a UTF-8 PV formatted with %s,
 and characters >255 formatted with %c), the original SV might get
-upgraded to UTF-8.  Handles 'get' magic, but not 'set' magic.
-C<SvSETMAGIC()> must typically be called after calling this function
-to handle 'set' magic.
+upgraded to UTF-8.  Handles 'get' magic, but not 'set' magic.  See
+C<sv_catpvf_mg>.
 
 =cut */
 
@@ -8213,7 +8234,16 @@ Perl_sv_catpvf(pTHX_ SV *sv, const char* pat, ...)
     va_end(args);
 }
 
-/* backend for C<sv_catpvf> and C<catpvf_mg_nocontext> */
+/*
+=for apidoc sv_vcatpvf
+
+Processes its arguments like C<vsprintf> and appends the formatted output
+to an SV.  Does not handle 'set' magic.  See C<sv_vcatpvf_mg>.
+
+Usually used via its frontend C<sv_catpvf>.
+
+=cut
+*/
 
 void
 Perl_sv_vcatpvf(pTHX_ SV *sv, const char* pat, va_list* args)
@@ -8238,7 +8268,15 @@ Perl_sv_catpvf_mg(pTHX_ SV *sv, const char* pat, ...)
     va_end(args);
 }
 
-/* backend for C<catpvf_mg> and C<catpvf_mg_nocontext> */
+/*
+=for apidoc sv_vcatpvf_mg
+
+Like C<sv_vcatpvf>, but also handles 'set' magic.
+
+Usually used via its frontend C<sv_catpvf_mg>.
+
+=cut
+*/
 
 void
 Perl_sv_vcatpvf_mg(pTHX_ SV *sv, const char* pat, va_list* args)
@@ -8250,10 +8288,10 @@ Perl_sv_vcatpvf_mg(pTHX_ SV *sv, const char* pat, va_list* args)
 /*
 =for apidoc sv_vsetpvfn
 
-Works like C<vcatpvfn> but copies the text into the SV instead of
+Works like C<sv_vcatpvfn> but copies the text into the SV instead of
 appending it.
 
-Usually used via one of its frontends C<sv_setpvf> and C<sv_setpvf_mg>.
+Usually used via one of its frontends C<sv_vsetpvf> and C<sv_vsetpvf_mg>.
 
 =cut
 */
@@ -8318,7 +8356,7 @@ missing (NULL).  When running with taint checks enabled, indicates via
 C<maybe_tainted> if results are untrustworthy (often due to the use of
 locales).
 
-Usually used via one of its frontends C<sv_catpvf> and C<sv_catpvf_mg>.
+Usually used via one of its frontends C<sv_vcatpvf> and C<sv_vcatpvf_mg>.
 
 =cut
 */
@@ -10768,19 +10806,23 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
 
     SvANY(&PL_sv_no)		= new_XPVNV();
     SvREFCNT(&PL_sv_no)		= (~(U32)0)/2;
-    SvFLAGS(&PL_sv_no)		= SVp_NOK|SVf_NOK|SVp_POK|SVf_POK|SVf_READONLY|SVt_PVNV;
+    SvFLAGS(&PL_sv_no)		= SVp_IOK|SVf_IOK|SVp_NOK|SVf_NOK
+				  |SVp_POK|SVf_POK|SVf_READONLY|SVt_PVNV;
     SvPVX(&PL_sv_no)		= SAVEPVN(PL_No, 0);
     SvCUR(&PL_sv_no)		= 0;
     SvLEN(&PL_sv_no)		= 1;
+    SvIVX(&PL_sv_no)		= 0;
     SvNVX(&PL_sv_no)		= 0;
     ptr_table_store(PL_ptr_table, &proto_perl->Isv_no, &PL_sv_no);
 
     SvANY(&PL_sv_yes)		= new_XPVNV();
     SvREFCNT(&PL_sv_yes)	= (~(U32)0)/2;
-    SvFLAGS(&PL_sv_yes)		= SVp_NOK|SVf_NOK|SVp_POK|SVf_POK|SVf_READONLY|SVt_PVNV;
+    SvFLAGS(&PL_sv_yes)		= SVp_IOK|SVf_IOK|SVp_NOK|SVf_NOK
+				  |SVp_POK|SVf_POK|SVf_READONLY|SVt_PVNV;
     SvPVX(&PL_sv_yes)		= SAVEPVN(PL_Yes, 1);
     SvCUR(&PL_sv_yes)		= 1;
     SvLEN(&PL_sv_yes)		= 2;
+    SvIVX(&PL_sv_yes)		= 1;
     SvNVX(&PL_sv_yes)		= 1;
     ptr_table_store(PL_ptr_table, &proto_perl->Isv_yes, &PL_sv_yes);
 
@@ -11498,8 +11540,9 @@ Perl_sv_recode_to_utf8(pTHX_ SV *sv, SV *encoding)
 	FREETMPS;
 	LEAVE;
 	SvUTF8_on(sv);
+	return SvPVX(sv);
     }
-    return SvPVX(sv);
+    return SvPOKp(sv) ? SvPVX(sv) : NULL;
 }
 
 /*

@@ -23,7 +23,9 @@ sub Fetch
 
 __END__
 
-=head1 DBM_Filter::int32
+=head1 NAME
+
+DBM_Filter::int32 -- 32 bit integer DBM Filter
 
 =head1 SYNOPSIS
 

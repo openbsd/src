@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq7 - General Perl Language Issues ($Revision: 1.15 $, $Date: 2003/07/24 02:17:21 $)
+perlfaq7 - General Perl Language Issues ($Revision: 1.6 $, $Date: 2003/12/03 03:02:45 $)
 
 =head1 DESCRIPTION
 
@@ -97,6 +97,16 @@ See L<perllexwarn> for more details.
 	no warnings;          # temporarily turn off warnings
 	$a = $b + $c;         # I know these might be undef
     }
+    
+Additionally, you can enable and disable categories of warnings.
+You turn off the categories you want to ignore and you can still
+get other categories of warnings.  See L<perllexwarn> for the
+complete details, including the category names and hierarchy.
+
+	{
+	no warnings 'uninitialized';
+	$a = $b + $c;
+	}
 
 If you have an older version of Perl, the C<$^W> variable (documented
 in L<perlvar>) controls runtime warnings for a block:
@@ -213,7 +223,7 @@ but encourages closures.
 Here's a classic function-generating function:
 
     sub add_function_generator {
-      return sub { shift + shift };
+      return sub { shift() + shift() };
     }
 
     $add_sub = add_function_generator();
@@ -232,7 +242,7 @@ value that the lexical had when the function was created.
 
     sub make_adder {
         my $addpiece = shift;
-        return sub { shift + $addpiece };
+        return sub { shift() + $addpiece };
     }
 
     $f1 = make_adder(20);

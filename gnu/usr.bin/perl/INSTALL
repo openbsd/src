@@ -657,6 +657,19 @@ architecture-dependent library for your -DDEBUGGING version of perl.
 You can do this by changing all the *archlib* variables in config.sh to
 point to your new architecture-dependent library.
 
+=head3 Environment access
+
+Perl often needs to write to the program's environment, such as when C<%ENV>
+is assigned to. Many implementations of the C library function C<putenv()>
+leak memory, so where possible perl will manipulate the environment directly
+to avoid these leaks. The default is now to perform direct manipulation
+whenever perl is running as a stand alone interpreter, and to call the safe
+but potentially leaky C<putenv()> function when the perl interpreter is
+embedded in another application. You can force perl to always use C<putenv()>
+by compiling with -DPERL_USE_SAVE_PUTENV. You can force an embedded perl to
+use direct manipulation by setting C<PL_use_safe_putenv = 0;> after the
+C<perl_construct()> call.
+
 =head2 Installation Directories
 
 The installation directories can all be changed by answering the
@@ -1677,13 +1690,33 @@ to
 then propagate your changes with B<sh Configure -S> and rebuild
 with B<make depend; make>.
 
-=item Missing functions
+=item Missing functions and Undefined symbols
 
-If you have missing routines, you probably need to add some library or
-other, or you need to undefine some feature that Configure thought was
-there but is defective or incomplete.  Look through config.h for
-likely suspects.  If Configure guessed wrong on a number of functions,
-you might have the L<"nm extraction"> problem discussed above.
+If the build of miniperl fails with a long list of missing functions or
+undefined symbols, check the libs variable in the config.sh file.  It
+should look something like
+
+	libs='-lsocket -lnsl -ldl -lm -lc'
+
+The exact libraries will vary from system to system, but you typically
+need to include at least the math library -lm.  Normally, Configure
+will suggest the correct defaults.  If the libs variable is empty, you
+need to start all over again.  Run
+
+	make distclean
+
+and start from the very beginning.  This time, unless you are sure of
+what you are doing, accept the default list of libraries suggested by
+Configure.
+
+If the libs variable looks correct, you might have the
+L<"nm extraction"> problem discussed above.
+
+If you stil have missing routines or undefined symbols, you probably
+need to add some library or other, or you need to undefine some feature
+that Configure thought was there but is defective or incomplete.  If
+you used a hint file, see if it has any relevant advice.  You can also
+look through through config.h for likely suspects.
 
 =item toke.c
 

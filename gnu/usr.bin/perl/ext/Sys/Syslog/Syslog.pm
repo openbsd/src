@@ -128,6 +128,12 @@ Note that C<openlog> now takes three arguments, just like C<openlog(3)>.
     $! = 55;
     syslog('info', 'problem was %m'); # %m == $! in syslog(3)
 
+    # Log to UDP port on $remotehost instead of logging locally
+    setlogsock('udp');
+    $Sys::Syslog::host = $remotehost;
+    openlog($program, 'ndelay', 'user');
+    syslog('info', 'something happened over here');
+
 =head1 SEE ALSO
 
 L<syslog(3)>

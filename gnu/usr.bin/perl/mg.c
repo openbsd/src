@@ -15,6 +15,24 @@
 
 /*
 =head1 Magical Functions
+
+"Magic" is special data attached to SV structures in order to give them
+"magical" properties.  When any Perl code tries to read from, or assign to,
+an SV marked as magical, it calls the 'get' or 'set' function associated
+with that SV's magic. A get is called prior to reading an SV, in order to
+give it a chance to update its internal value (get on $. writes the line
+number of the last read filehandle into to the SV's IV slot), while
+set is called after an SV has been written to, in order to allow it to make
+use of its changed value (set on $/ copies the SV's new value to the
+PL_rs global variable).
+
+Magic is implemented as a linked list of MAGIC structures attached to the
+SV. Each MAGIC struct holds the type of the magic, a pointer to an array
+of functions that implement the get(), set(), length() etc functions,
+plus space for some flags and pointers. For example, a tied variable has
+a MAGIC structure that contains a pointer to the object associated with the
+tie.
+
 */
 
 #include "EXTERN.h"
@@ -124,6 +142,18 @@ Perl_mg_get(pTHX_ SV *sv)
     int new = 0;
     MAGIC *newmg, *head, *cur, *mg;
     I32 mgs_ix = SSNEW(sizeof(MGS));
+    int was_temp = SvTEMP(sv);
+    /* guard against sv having being freed midway by holding a private
+       reference. */
+
+    /* sv_2mortal has this side effect of turning on the TEMP flag, which can
+       cause the SV's buffer to get stolen (and maybe other stuff).
+       So restore it.
+    */
+    sv_2mortal(SvREFCNT_inc(sv));
+    if (!was_temp) {
+	SvTEMP_off(sv);
+    }
 
     save_magic(mgs_ix, sv);
 
@@ -138,10 +168,6 @@ Perl_mg_get(pTHX_ SV *sv)
 	if (!(mg->mg_flags & MGf_GSKIP) && vtbl && vtbl->svt_get) {
 	    CALL_FPTR(vtbl->svt_get)(aTHX_ sv, mg);
 
-	    /* guard against sv having been freed */
-	    if (SvTYPE(sv) == SVTYPEMASK) {
-		Perl_croak(aTHX_ "Tied variable freed while still in use");
-	    }
 	    /* guard against magic having been deleted - eg FETCH calling
 	     * untie */
 	    if (!SvMAGIC(sv))
@@ -173,6 +199,12 @@ Perl_mg_get(pTHX_ SV *sv)
     }
 
     restore_magic(aTHX_ INT2PTR(void *, (IV)mgs_ix));
+
+    if (SvREFCNT(sv) == 1) {
+	/* We hold the last reference to this SV, which implies that the
+	   SV was deleted as a side effect of the routines we called.  */
+	SvOK_off(sv);
+    }
     return 0;
 }
 
@@ -661,7 +693,7 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
     case '\023':		/* ^S */
         if (*(mg->mg_ptr+1) == '\0') {
 	    if (PL_lex_state != LEX_NOTPARSING)
-		(void)SvOK_off(sv);
+		SvOK_off(sv);
 	    else if (PL_in_eval)
  		sv_setiv(sv, PL_in_eval & ~(EVAL_INREQUIRE));
 	    else
@@ -1046,6 +1078,7 @@ Perl_magic_clear_all_env(pTHX_ SV *sv, MAGIC *mg)
 #      endif
     {
 #      ifndef PERL_USE_SAFE_PUTENV
+    if (!PL_use_safe_putenv) {
     I32 i;
 
     if (environ == PL_origenviron)
@@ -1053,6 +1086,7 @@ Perl_magic_clear_all_env(pTHX_ SV *sv, MAGIC *mg)
     else
 	for (i = 0; environ[i]; i++)
 	    safesysfree(environ[i]);
+    }
 #      endif /* PERL_USE_SAFE_PUTENV */
 
     environ[0] = Nullch;
@@ -1652,7 +1686,7 @@ Perl_magic_getpos(pTHX_ SV *sv, MAGIC *mg)
 	    return 0;
 	}
     }
-    (void)SvOK_off(sv);
+    SvOK_off(sv);
     return 0;
 }
 
@@ -1820,7 +1854,7 @@ Perl_magic_getvec(pTHX_ SV *sv, MAGIC *mg)
     SV *lsv = LvTARG(sv);
 
     if (!lsv) {
-	(void)SvOK_off(sv);
+	SvOK_off(sv);
 	return 0;
     }
 
@@ -1941,7 +1975,7 @@ Perl_magic_killbackrefs(pTHX_ SV *sv, MAGIC *mg)
 		Perl_croak(aTHX_ "panic: magic_killbackrefs");
 	    /* XXX Should we check that it hasn't changed? */
 	    SvRV(svp[i]) = 0;
-	    (void)SvOK_off(svp[i]);
+	    SvOK_off(svp[i]);
 	    SvWEAKREF_off(svp[i]);
 	    svp[i] = Nullsv;
 	}
@@ -2044,7 +2078,7 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
     case '\004':	/* ^D */
 #ifdef DEBUGGING
 	s = SvPV_nolen(sv);
-	PL_debug = get_debug_opts(&s) | DEBUG_TOP_FLAG;
+	PL_debug = get_debug_opts_flags(&s, 0) | DEBUG_TOP_FLAG;
 	DEBUG_x(dump_all());
 #else
 	PL_debug = (SvIOK(sv) ? SvIVX(sv) : sv_2iv(sv)) | DEBUG_TOP_FLAG;

@@ -349,7 +349,7 @@ c2 = perl.c perly.c pp.c pp_hot.c pp_ctl.c pp_sys.c regcomp.c regexec.c utf8.c
 c3 = gv.c sv.c taint.c toke.c util.c deb.c run.c universal.c xsutils.c pad.c
 c4 = globals.c perlio.c perlapi.c numeric.c locale.c pp_pack.c pp_sort.c
 
-c = $(c1) $(c2) $(c3) $(c4) miniperlmain.c perlmain.c
+c = $(c1) $(c2) $(c3) $(c4) miniperlmain.c perlmain.c opmini.c
 
 obj1 = $(mallocobj) gv$(OBJ_EXT) toke$(OBJ_EXT) perly$(OBJ_EXT) op$(OBJ_EXT) pad$(OBJ_EXT) regcomp$(OBJ_EXT) dump$(OBJ_EXT) util$(OBJ_EXT) mg$(OBJ_EXT) reentr$(OBJ_EXT)
 obj2 = hv$(OBJ_EXT) av$(OBJ_EXT) run$(OBJ_EXT) pp_hot$(OBJ_EXT) sv$(OBJ_EXT) pp$(OBJ_EXT) scope$(OBJ_EXT) pp_ctl$(OBJ_EXT) pp_sys$(OBJ_EXT)
@@ -402,11 +402,12 @@ $spitshell >>Makefile <<!GROK!THIS!
 # if we have a symlink forest to another disk (it complains about too many
 # levels of symbolic links, even if we have only two)
 
-opmini\$(OBJ_EXT): op.c config.h
-	\$(RMS) opmini.c
-	\$(CPS) op.c opmini.c
+opmini.c: op.c
+	\$(CPS) op.c opmini.tmp
+	sh mv-if-diff opmini.tmp opmini.c
+
+opmini\$(OBJ_EXT): opmini.c
 	\$(CCCMD) \$(PLDLFLAGS) $DPERL_EXTERNAL_GLOB opmini.c
-	\$(RMS) opmini.c
 
 !GROK!THIS!
 $spitshell >>Makefile <<'!NO!SUBS!'
@@ -784,7 +785,7 @@ extra.pods: miniperl$(EXE_EXT)
 	-@rm -f pod/perlvms.pod
 	-@test -f vms/perlvms.pod && cd pod && $(LNS) ../vms/perlvms.pod perlvms.pod && cd .. && echo "pod/perlvms.pod" >> extra.pods
 	-@rm -f pod/perldelta.pod
-	-@test -f pod/perl585delta.pod && cd pod && $(LNS) perl585delta.pod perldelta.pod && cd .. && echo "pod/perldelta.pod" >> extra.pods
+	-@test -f pod/perl586delta.pod && cd pod && $(LNS) perl586delta.pod perldelta.pod && cd .. && echo "pod/perldelta.pod" >> extra.pods # See buildtoc
 
 extras.make: perl$(EXE_EXT)
 	-@test -s extras.lst && PATH="`pwd`:${PATH}" PERL5LIB="`pwd`/lib" $(LDLIBPTH) ./perl -Ilib -MCPAN -e '@ARGV&&make(@ARGV)' `cat extras.lst`
@@ -982,7 +983,7 @@ veryclean:	_verycleaner _mopup _clobber
 
 # Do not 'make _mopup' directly.
 _mopup:
-	rm -f *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c
+	rm -f *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c opmini.c
 	-rmdir .depending
 	-@test -f extra.pods && rm -f `cat extra.pods`
 	-@test -f vms/README_vms.pod && rm -f vms/README_vms.pod
@@ -1081,6 +1082,7 @@ makedepend: makedepend.SH config.sh
 .PHONY: test check test_prep test_prep_nodll test_prep_pre _test_prep \
 	test_tty test-tty _test_tty test_notty test-notty _test_notty \
 	utest ucheck test.utf8 check.utf8 test.torture torturetest \
+	test.utf16 check.utf16 utest.utf16 ucheck.utf16 \
 	test.third check.third utest.third ucheck.third test_notty.third \
 	test.deparse test_notty.deparse test_harness test_harness_notty \
 	test.bytecompile minitest coretest test.taintwarn
@@ -1142,6 +1144,18 @@ test-notty:	test_notty
 test.torture torturetest:	test_prep
 	PERL=./perl TEST_ARGS=-torture $(MAKE) _test
 
+# Targets for UTF16 testing:
+
+minitest.utf16: minitest.prep
+	- cd t && (rm -f perl$(EXE_EXT); $(LNS) ../miniperl$(EXE_EXT) perl$(EXE_EXT)) \
+		&& $(LDLIBPTH) ./perl TEST -minitest -utf16 base/*.t comp/*.t cmd/*.t run/*.t io/*.t op/*.t uni/*.t </dev/tty
+
+test.utf16 check.utf16: test_prep
+	PERL=./perl $(MAKE) TEST_ARGS=-utf16 _test
+
+utest.utf16 ucheck.utf16: test_prep
+	PERL=./perl $(MAKE) TEST_ARGS="-utf8 -utf16" _test
+
 # Targets for valgrind testing:
 
 test_prep.valgrind: test_prep perl.valgrind
@@ -1188,15 +1202,17 @@ test_notty.deparse:	test_prep
 test.taintwarn:	test_prep
 	PERL=./perl TEST_ARGS=-taintwarn $(MAKE) _test
 
-# Can't depend on lib/Config.pm because that might be where miniperl
-# is crashing.
-minitest: miniperl$(EXE_EXT) lib/re.pm
+minitest.prep:
 	-@test -f lib/lib.pm && test -f lib/Config.pm || \
 	  $(MAKE) lib/Config.pm lib/lib.pm $(unidatafiles)
 	@echo " "
 	@echo "You may see some irrelevant test failures if you have been unable"
 	@echo "to build lib/Config.pm, lib/lib.pm or the Unicode data files."
 	@echo " "
+
+# Can't depend on lib/Config.pm because that might be where miniperl
+# is crashing.
+minitest: miniperl$(EXE_EXT) lib/re.pm minitest.prep
 	- cd t && (rm -f perl$(EXE_EXT); $(LNS) ../miniperl$(EXE_EXT) perl$(EXE_EXT)) \
 		&& $(LDLIBPTH) ./perl TEST -minitest base/*.t comp/*.t cmd/*.t run/*.t io/*.t op/*.t uni/*.t </dev/tty
 

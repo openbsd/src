@@ -26,11 +26,15 @@ install it under a different prefix from /usr/perl5.  Common prefixes
 to use are /usr/local and /opt/perl.
 
 You may wish to put your version of perl in the PATH of all users by
-changing the link /usr/bin/perl.  This is OK, as all perl scripts
-shipped with Solaris use an explicit path.  Solaris ships with a
-range of Solaris-specific modules.  If you choose to install your own
-version of perl you will find the source of many of these modules is
-available on CPAN under the Sun::Solaris:: namespace.
+changing the link /usr/bin/perl.  This is probably OK, as most perl
+scripts shipped with Solaris use an explicit path.  (There are a few
+exceptions, such as /usr/bin/rpm2cpio and /etc/rcm/scripts/README, but
+these are also sufficiently generic that the actual version of perl
+probably doesn't matter too much.)
+
+Solaris ships with a range of Solaris-specific modules.  If you choose
+to install your own version of perl you will find the source of many of
+these modules is available on CPAN under the Sun::Solaris:: namespace.
 
 Solaris may include two versions of perl, e.g. Solaris 9 includes
 both 5.005_03 and 5.6.1.  This is to provide stability across Solaris
@@ -587,7 +591,10 @@ software products, for example the Sun WebServer, which is part of
 the Solaris Server Intranet Extension, or the Sun Directory Services,
 part of Solaris for ISPs) or download the ANDIrand package from
 L<http://www.cosy.sbg.ac.at/~andi/>. If you use SUNWski, make a
-symbolic link /dev/urandom pointing to /dev/random.
+symbolic link /dev/urandom pointing to /dev/random.  For more details,
+see Document ID27606 entitled "Differing /dev/random support requirements
+within Solaris[TM] Operating Environments", available at
+http://sunsolve.sun.com .
 
 It may be possible to use the Entropy Gathering Daemon (written in
 Perl!), available from L<http://www.lothar.com/tech/crypto/>.
@@ -684,4 +691,4 @@ Please report any errors, updates, or suggestions to F<perlbug@perl.org>.
 
 =head1 LAST MODIFIED
 
-$Id: README.solaris,v 1.4 2000/11/11 20:29:58 doughera Exp $
+$Id: README.solaris,v 1.4 2003/12/03 03:02:19 millert Exp $

@@ -493,6 +493,12 @@ is a CV representing a possible closure.
 (SvFAKE and name of '&' is not a meaningful combination currently but could
 become so if C<my sub foo {}> is implemented.)
 
+The flag SVf_PADSTALE is cleared on lexicals each time the my() is executed,
+and set on scope exit. This allows the 'Variable $x is not available' warning
+to be generated in evals, such as 
+
+    { my $x = 1; sub f { eval '$x'} } f();
+
 	AV *	CvPADLIST(CV *cv)
 
 =for hackers

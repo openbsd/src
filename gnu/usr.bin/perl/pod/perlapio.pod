@@ -225,7 +225,7 @@ This corresponds to clearerr(), i.e., clears 'error' and (usually)
 
 This corresponds to fflush().  Sends any buffered write data to the
 underlying file.  If called with C<NULL> this may flush all open
-streams (or core dump with some USE_STDIO implementattions).  Calling
+streams (or core dump with some USE_STDIO implementations).  Calling
 on a handle open for read only, or on which last operation was a read
 of some kind may lead to undefined behaviour on some USE_STDIO
 implementations.  The USE_PERLIO (layers) implementation tries to
