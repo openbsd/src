@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.11 2003/03/18 13:01:36 david Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.12 2003/05/06 08:56:12 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -86,7 +86,7 @@ It is recommended that
 .Fx
 packages that include configuration files, etc., be installed under
 .Pa /emul/freebsd ,
-to avoid naming conflicts with possible 
+to avoid naming conflicts with possible
 .Ox
 counterparts.
 Shared libraries should also be installed in the shadow tree.
@@ -128,7 +128,7 @@ The
 port contains the shared libraries, binaries, and other related files
 necessary to run
 .Fx
-applications. 
+applications.
 .Pp
 .It 2.
 Access to a
@@ -209,7 +209,7 @@ Finally, the
 runtime linker and its config files must be present on the system.
 These files should be copied from the
 .Fx
-system to their appropriate place on the 
+system to their appropriate place on the
 .Ox
 system (in the
 .Pa /emul/freebsd
@@ -260,7 +260,7 @@ Run the
 .Fx
 ldconfig program with directory arguments in which the
 .Fx
-runtime linker should look for shared libs. 
+runtime linker should look for shared libs.
 .Pa /usr/lib
 is standard.
 For example:
@@ -299,7 +299,7 @@ The
 system should now be set up for
 .Fx
 binaries which only need a shared libc.
-Test this by running the 
+Test this by running the
 .Fx
 ldd on itself.
 Suppose that it is installed as ldd-freebsd, it should produce
@@ -392,7 +392,7 @@ The XFree86 libraries are compressed with bzip2 and can be
 extracted with ``bzcat2 <file> | tar pxf -''. Note: The bzip2
 utilities are not part of a base
 .Ox
-sytem.
+system.
 bzip2 can be added via
 .Xr packages 7
 or

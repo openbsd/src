@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.26 2003/04/18 04:27:27 millert Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.27 2003/05/06 08:56:12 jmc Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -47,7 +47,7 @@ native audio transparently.
 Programs that will not work include those that use the Linux
 .Pa /proc
 filesystem
-(which is different from the optional 
+(which is different from the optional
 .Ox
 .Pa /proc
 filesystem), and i386-specific calls, such as enabling virtual 8086 mode.
@@ -403,7 +403,7 @@ Only the DSP device is emulated, the following link should be created:
 CD-ROM support requires a link to the cdrom device, similar to:
 .Pp
 .nf
-/emul/linux/dev/cdrom -> /dev/cd0a   (first scsi cdrom)
+/emul/linux/dev/cdrom -> /dev/cd0a   (first SCSI CD-ROM)
 .fi
 .Ss File systems
 Many Linux binaries expect
@@ -415,7 +415,7 @@ option.
 .Sh BUGS
 The information about Linux distributions may become outdated.
 .Pp
-Linux ELF binaries may be detected as svr4 binaries. 
+Linux ELF binaries may be detected as svr4 binaries.
 This can usually be fixed with
 .Xr elf2olf 1
 by setting the OLF opsys tag to Linux (eg. elf2olf -o linux <linux_binary>).
