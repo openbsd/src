@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.35 2004/01/18 12:22:39 markus Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.36 2004/03/05 12:25:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -159,6 +159,7 @@ int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
 void	carp_set_state(struct carp_softc *, int);
+int	carp_addrcount(struct carp_if *, struct in_ifaddr *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_del_addr(struct carp_softc *, struct sockaddr_in *);
 #ifdef INET6
@@ -262,8 +263,15 @@ carp_setroute(struct carp_softc *sc, int cmd)
 
 	s = splnet();
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET)
-			rtinit(ifa, cmd, RTF_UP | RTF_HOST);
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			int count = carp_addrcount(
+			    (struct carp_if *)sc->sc_ifp->if_carp,
+			    ifatoia(ifa));
+
+			if ((cmd == RTM_ADD && count == 1) ||
+			    (cmd == RTM_DELETE && count == 0))
+				rtinit(ifa, cmd, RTF_UP | RTF_HOST);
+		}
 #ifdef INET6
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			if (cmd == RTM_ADD)
@@ -605,7 +613,7 @@ carp_clone_create(ifc, unit)
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
-	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
 	    unit);
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = 0;
@@ -640,7 +648,8 @@ carpdetach(struct carp_softc *sc)
 
 			/* ripped screaming from in_control(SIOCDIFADDR) */
 			in_ifscrub(&sc->sc_ac.ac_if, ia);
-			TAILQ_REMOVE(&sc->sc_ac.ac_if.if_addrlist, ifa, ifa_list);
+			TAILQ_REMOVE(&sc->sc_ac.ac_if.if_addrlist,
+			    ifa, ifa_list);
 			TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 			IFAFREE((&ia->ia_ifa));
 		}
@@ -871,6 +880,28 @@ carp_send_na(struct carp_softc *sc)
 #endif /* INET6 */
 
 int
+carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia)
+{
+	struct carp_softc *vh;
+	struct ifaddr *ifa;
+	int count = 0;
+
+	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
+		if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING)) {
+			TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist,
+			    ifa_list) {
+				if (ifa->ifa_addr->sa_family == AF_INET &&
+				    ia->ia_addr.sin_addr.s_addr ==
+				    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
+					count++;
+			}
+		}
+	}
+	return (count);
+}
+
+int
 carp_iamatch(void *v, struct in_ifaddr *ia,
     struct in_addr *isaddr, u_int8_t **enaddr)
 {
@@ -887,38 +918,38 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 		 * then we respond, otherwise, just drop the arp packet on
 		 * the floor.
 		 */
-		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-			TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist,
-			    ifa_list) {
-				if (ia->ia_addr.sin_addr.s_addr ==
-				    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
-					count++;
-			}
-		}
+		count = carp_addrcount(cif, ia);
 		if (count == 0) {
 			/* should never reach this */
 			return (0);
 		}
+
 		/* this should be a hash, like pf_hash() */
 		index = isaddr->s_addr % count;
+		count = 0;
 
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-			TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist,
-			    ifa_list) {
-				if (ia->ia_addr.sin_addr.s_addr ==
-				    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
-					if (index == 0 &&
-					    ((vh->sc_ac.ac_if.if_flags &
-					    (IFF_UP|IFF_RUNNING)) ==
-					    (IFF_UP|IFF_RUNNING))) {
-						*enaddr = vh->sc_ac.ac_enaddr;
-						return (1);
+			if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+			    (IFF_UP|IFF_RUNNING)) {
+				TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist,
+				    ifa_list) {
+					if (ifa->ifa_addr->sa_family ==
+					    AF_INET &&
+					    ia->ia_addr.sin_addr.s_addr ==
+					    ifatoia(ifa)->ia_addr.sin_addr.s_addr) {
+						if (count == index) {
+							if (vh->sc_state ==
+							    MASTER) {
+								*enaddr = vh->sc_ac.ac_enaddr;
+								return (1);
+							} else
+								return (0);
+						}
+						count++;
 					}
-					index--;
 				}
 			}
 		}
-		return (0);
 	} else {
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
 			if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
@@ -1706,13 +1737,13 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 }
 
 void
-carp_set_state(struct carp_softc *sc, int state) 
+carp_set_state(struct carp_softc *sc, int state)
 {
 	if (sc->sc_state == state)
 		return;
 
 	sc->sc_state = state;
-	switch(state) {
+	switch (state) {
 	case BACKUP:
 		sc->sc_ac.ac_if.if_link_state = LINK_STATE_DOWN;
 		break;
