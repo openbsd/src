@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.143 2004/09/16 17:58:13 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.144 2004/09/28 12:09:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,15 +158,16 @@ enum enforce_as {
 
 struct filter_set {
 	u_int16_t		flags;
+	u_int8_t		prepend_self;
+	u_int8_t		prepend_peer;
 	u_int32_t		localpref;
 	u_int32_t		med;
 	struct bgpd_addr	nexthop;
-	u_int8_t		prepend;
-	char			pftable[PFTABLE_LEN];
 	struct {
 		int		as;
 		int		type;
 	} community;
+	char			pftable[PFTABLE_LEN];
 };
 
 enum auth_method {
@@ -453,7 +454,9 @@ enum filter_actions {
 
 enum directions {
 	DIR_IN=1,
-	DIR_OUT
+	DIR_OUT,
+	DIR_DEFAULT_IN,		/* only needed to apply default set */
+	DIR_DEFAULT_OUT
 };
 
 enum from_spec {
@@ -479,8 +482,8 @@ enum comp_ops {
 #define	SET_LOCALPREF		0x0001
 #define	SET_MED			0x0002
 #define	SET_NEXTHOP		0x0004
-#define	SET_NEXTHOP6		0x0008
-#define	SET_PREPEND		0x0010
+#define	SET_PREPEND_SELF	0x0008
+#define	SET_PREPEND_PEER	0x0010
 #define	SET_PFTABLE		0x0020
 #define	SET_COMMUNITY		0x0040
 #define	SET_NEXTHOP_REJECT	0x0080

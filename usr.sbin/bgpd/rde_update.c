@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.30 2004/08/20 15:31:56 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.31 2004/09/28 12:09:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -334,6 +334,8 @@ up_generate_updates(struct rde_peer *peer,
 		/* copy attributes for output filter */
 		fasp = path_copy(old->aspath);
 
+		/* default override not needed here as this is a withdraw */
+
 		pt_getaddr(old->prefix, &addr);
 		if (rde_filter(peer, fasp, &addr,
 		    old->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
@@ -430,6 +432,13 @@ up_generate_updates(struct rde_peer *peer,
 
 		/* copy attributes for output filter */
 		fasp = path_copy(new->aspath);
+
+		/*
+		 * apply default outgoing overrides,
+		 * acctually only prepend-self
+		 */
+		rde_apply_set(fasp, &peer->conf.attrset, new->prefix->af,
+		    fasp->peer, DIR_DEFAULT_OUT);
 
 		pt_getaddr(new->prefix, &addr);
 		if (rde_filter(peer, fasp, &addr,

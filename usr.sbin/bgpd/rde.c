@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.144 2004/09/16 17:36:29 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.145 2004/09/28 12:09:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -689,7 +689,7 @@ rde_update_dispatch(struct imsg *imsg)
 	}
 
 	/* apply default overrides */
-	rde_apply_set(asp, &peer->conf.attrset, AF_INET);
+	rde_apply_set(asp, &peer->conf.attrset, AF_INET, peer, DIR_DEFAULT_IN);
 
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
@@ -765,7 +765,8 @@ rde_update_dispatch(struct imsg *imsg)
 		mplen -= pos;
 
 		/* apply default overrides */
-		rde_apply_set(asp, &peer->conf.attrset, AF_INET6);
+		rde_apply_set(asp, &peer->conf.attrset, AF_INET6, peer,
+		    DIR_DEFAULT_IN);
 
 		switch (afi) {
 		case AFI_IPv6:
@@ -1954,13 +1955,15 @@ network_add(struct network_config *nc, int flagstatic)
 	    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 	/* the nexthop is unset unless a default set overrides it */
 
-	/* apply default overrides */
-	rde_apply_set(asp, &nc->attrset, nc->prefix.af);
-
-	if (flagstatic)
+	if (flagstatic) {
+		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerself,
+		    DIR_DEFAULT_IN);
 		path_update(&peerself, asp, &nc->prefix, nc->prefixlen);
-	else
+	} else {
+		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerdynamic,
+		    DIR_DEFAULT_IN);
 		path_update(&peerdynamic, asp, &nc->prefix, nc->prefixlen);
+	}
 }
 
 void

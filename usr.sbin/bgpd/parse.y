@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2004/08/24 15:33:48 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.140 2004/09/28 12:09:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -147,7 +147,8 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
-%token	SET LOCALPREF MED METRIC NEXTHOP PREPEND PFTABLE REJECT BLACKHOLE
+%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE
+%token	PREPEND_SELF PREPEND_PEER PFTABLE
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
@@ -1086,13 +1087,21 @@ filter_set_opt	: LOCALPREF number		{
 		| NEXTHOP REJECT		{
 			$$.flags |= SET_NEXTHOP_REJECT;
 		}
-		| PREPEND number		{
-			$$.flags = SET_PREPEND;
+		| PREPEND_SELF number		{
+			$$.flags = SET_PREPEND_SELF;
 			if ($2 > 128) {
 				yyerror("to many prepends");
 				YYERROR;
 			}
-			$$.prepend = $2;
+			$$.prepend_self = $2;
+		}
+		| PREPEND_PEER number		{
+			$$.flags = SET_PREPEND_PEER;
+			if ($2 > 128) {
+				yyerror("to many prepends");
+				YYERROR;
+			}
+			$$.prepend_peer = $2;
 		}
 		| PFTABLE string		{
 			$$.flags = SET_PFTABLE;
@@ -1238,7 +1247,8 @@ lookup(char *s)
 		{ "pftable",		PFTABLE},
 		{ "prefix",		PREFIX},
 		{ "prefixlen",		PREFIXLEN},
-		{ "prepend-self",	PREPEND},
+		{ "prepend-neighbor",	PREPEND_PEER},
+		{ "prepend-self",	PREPEND_SELF},
 		{ "quick",		QUICK},
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
@@ -1955,8 +1965,10 @@ merge_filterset(struct filter_set *a, struct filter_set *b)
 	if (b->flags & SET_NEXTHOP)
 		memcpy(&a->nexthop, &b->nexthop,
 		    sizeof(a->nexthop));
-	if (b->flags & SET_PREPEND)
-		a->prepend = b->prepend;
+	if (b->flags & SET_PREPEND_SELF)
+		a->prepend_self = b->prepend_self;
+	if (b->flags & SET_PREPEND_PEER)
+		a->prepend_peer = b->prepend_peer;
 	if (b->flags & SET_PFTABLE)
 		strlcpy(a->pftable, b->pftable,
 		    sizeof(a->pftable));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.18 2004/08/10 13:02:08 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.19 2004/09/28 12:09:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 		    f->peer.peerid != peer->conf.id)
 			continue;
 		if (rde_filter_match(f, asp, prefix, prefixlen)) {
-			rde_apply_set(asp, &f->set, prefix->af);
+			rde_apply_set(asp, &f->set, prefix->af, asp->peer, dir);
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)
@@ -56,13 +56,39 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 }
 
 void
-rde_apply_set(struct rde_aspath *asp, struct filter_set *set, sa_family_t af)
+rde_apply_set(struct rde_aspath *asp, struct filter_set *set, sa_family_t af,
+    struct rde_peer *peer, enum directions dir)
 {
 	struct aspath	*new;
 	u_int16_t	 as;
+	u_int8_t	 prepend;
 
 	if (asp == NULL)
 		return;
+
+	if (set->flags & SET_PREPEND_SELF && dir != DIR_DEFAULT_IN) {
+		/* don't apply if this is a incomming default override */
+		as = rde_local_as();
+		prepend = set->prepend_self;
+		new = aspath_prepend(asp->aspath, as, prepend);
+		aspath_put(asp->aspath);
+		asp->aspath = new;
+	}
+
+	if (dir == DIR_DEFAULT_OUT)
+		/*
+		 * default outgoing overrides are only allowed to
+		 * set prepend-self
+		 */
+		return;
+
+	if (set->flags & SET_PREPEND_PEER) {
+		as = peer->conf.remote_as;
+		prepend = set->prepend_peer;
+		new = aspath_prepend(asp->aspath, as, prepend);
+		aspath_put(asp->aspath);
+		asp->aspath = new;
+	}
 
 	if (set->flags & SET_LOCALPREF)
 		asp->lpref = set->localpref;
@@ -73,12 +99,6 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set *set, sa_family_t af)
 
 	nexthop_modify(asp, &set->nexthop, set->flags, af);
 
-	if (set->flags & SET_PREPEND) {
-		as = rde_local_as();
-		new = aspath_prepend(asp->aspath, as, set->prepend);
-		aspath_put(asp->aspath);
-		asp->aspath = new;
-	}
 	if (set->flags & SET_PFTABLE)
 		strlcpy(asp->pftable, set->pftable, sizeof(asp->pftable));
 	if (set->flags & SET_COMMUNITY) {

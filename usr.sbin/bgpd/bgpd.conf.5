@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.37 2004/08/20 14:56:09 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.38 2004/09/28 12:09:31 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -811,6 +811,12 @@ Add the prefix in the update to the specified
 .Xr pf 4
 radix table, regardless of whether or not the path was selected for routing.
 This option may be useful in building realtime blacklists.
+.Pp
+.It Ic prepend-neighbor Ar number
+Prepend the neighbor's AS
+.Ar number
+times to the
+.Em AS path .
 .Pp
 .It Ic prepend-self Ar number
 Prepend the local AS
