@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.4 1996/08/16 00:02:36 dm Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.5 1996/10/20 15:27:48 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -96,11 +96,13 @@ struct pctrst {
 })
 
 /* Read the performance counters (Pentium Pro only) */
-#define rdpmc(ctr)						\
-({								\
-  pctrval v;							\
-  __asm __volatile (".byte 0xf, 0x33" : "=A" (v) : "c" (ctr));	\
-  v;								\
+#define rdpmc(ctr)				\
+({						\
+  pctrval v;					\
+  __asm __volatile (".byte 0xf, 0x33\n"		\
+		    "\tandl $0xff, %%edx"	\
+		    : "=A" (v) : "c" (ctr));	\
+  v;						\
 })
 
 #ifdef _KERNEL

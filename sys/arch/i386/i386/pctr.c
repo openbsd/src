@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.6 1996/08/16 00:02:36 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.7 1996/10/20 15:27:53 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -14,6 +14,7 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioccom.h>
+#include <sys/systm.h>
 
 #include <machine/cputypes.h>
 #include <machine/psl.h>
@@ -105,7 +106,7 @@ p5ctrsel (int fflag, u_int cmd, u_int fn)
   return 0;
 }
 
-static inline int
+static inline void
 p5ctrrd (struct pctrst *st)
 {
   u_int msr11;
@@ -143,7 +144,7 @@ p6ctrsel (int fflag, u_int cmd, u_int fn)
   return 0;
 }
 
-static inline int
+static inline void
 p6ctrrd (struct pctrst *st)
 {
   st->pctr_fn[0] = rdmsr (P6MSR_CTRSEL0);
