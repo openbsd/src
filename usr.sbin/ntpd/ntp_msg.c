@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.5 2004/08/10 19:17:10 henning Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.6 2004/08/30 11:50:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "ntpd.h"
 #include "ntp.h"
@@ -136,6 +137,11 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 	}
 
 	if (sendto(fd, &buf, len, 0, sa, SA_LEN(sa)) != len) {
+		if (errno == ENOBUFS || errno == EHOSTUNREACH ||
+		    errno == ENETDOWN || errno == EHOSTDOWN) {
+			/* logging is futile */
+			return (-1);
+		}
 		log_warn("sendto");
 		return (-1);
 	}
