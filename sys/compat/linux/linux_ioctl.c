@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ioctl.c,v 1.5 1996/04/17 05:23:50 mickey Exp $	*/
+/*	$OpenBSD: linux_ioctl.c,v 1.6 1997/12/07 22:59:15 provos Exp $	*/
 /*	$NetBSD: linux_ioctl.c,v 1.14 1996/04/05 00:01:28 christos Exp $	*/
 
 /*
@@ -73,6 +73,8 @@ linux_sys_ioctl(p, v, retval)
 		return linux_ioctl_audio(p, uap, retval);
 	case 'T':
 		return linux_ioctl_termios(p, uap, retval);
+	case 'S':
+		return linux_ioctl_cdrom(p, uap, retval);
 	case 0x89:
 		return linux_ioctl_socket(p, uap, retval);
 	default:
