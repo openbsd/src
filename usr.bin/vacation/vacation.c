@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.22 2004/03/08 19:08:03 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.23 2004/04/05 07:18:43 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.22 2004/03/08 19:08:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.23 2004/04/05 07:18:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -129,7 +129,6 @@ main(int argc, char *argv[])
 			} else
 				interval = (time_t)LONG_MAX;	/* XXX */
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -470,6 +469,12 @@ sendmessage(char *myname)
 	}
 	close(pvect[0]);
 	sfp = fdopen(pvect[1], "w");
+	if (sfp == NULL) {
+		/* XXX could not fdopen; likely out of memory */
+		fclose(mfp);
+		close(pvect[1]);
+		return;
+	}
 	fprintf(sfp, "To: %s\n", from);
 	while (fgets(buf, sizeof buf, mfp)) {
 		char *s = strstr(buf, "$SUBJECT");
