@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.10 1996/06/02 10:42:58 tholo Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.11 1996/10/16 12:38:05 deraadt Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -294,9 +294,9 @@ int ahb_scsi_cmd __P((struct scsi_xfer *));
 void ahb_timeout __P((void *));
 void ahb_print_ecb __P((struct ahb_ecb *));
 void ahb_print_active_ecb __P((struct ahb_softc *));
+int ahbprint __P((void *, char *));
 
 #define	MAX_SLOTS	15
-static  ahb_slot = 0;		/* slot last board was found in */
 int     ahb_debug = 0;
 #define AHB_SHOWECBS 0x01
 #define AHB_SHOWINTS 0x02
@@ -454,9 +454,12 @@ ahbmatch(parent, match, aux)
 	return (rv);
 }
 
-ahbprint()
+int
+ahbprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	return UNCONF;
 }
 
 /*
@@ -709,6 +712,8 @@ ahb_free_ecb(sc, ecb, flags)
 	splx(s);
 }
 
+static inline void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+
 static inline void
 ahb_init_ecb(sc, ecb)
 	struct ahb_softc *sc;
@@ -726,6 +731,8 @@ ahb_init_ecb(sc, ecb)
 	ecb->nexthash = sc->ecbhash[hashnum];
 	sc->ecbhash[hashnum] = ecb;
 }
+
+static inline void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 
 static inline void
 ahb_reset_ecb(sc, ecb)
@@ -762,8 +769,9 @@ ahb_get_ecb(sc, flags)
 			break;
 		}
 		if (sc->numecbs < AHB_ECB_MAX) {
-			if (ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
-			    M_TEMP, M_NOWAIT)) {
+			ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
+			    M_TEMP, M_NOWAIT);
+			if (ecb) {
 				ahb_init_ecb(sc, ecb);
 				sc->numecbs++;
 			} else {
@@ -932,7 +940,9 @@ ahb_scsi_cmd(xs)
 	int seg;		/* scatter gather seg being worked on */
 	u_long thiskv, thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
+#ifdef TFS
 	struct iovec *iovp;
+#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));

@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.4 1996/10/04 02:51:24 deraadt Exp $
+ *	$Id: ahc_eisa.c,v 1.5 1996/10/16 12:38:07 deraadt Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -196,6 +196,8 @@ void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 struct cfattach ahc_eisa_ca = {
 	sizeof(struct ahc_data), ahc_eisa_match, ahc_eisa_attach
 };
+
+int ahc_eisa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
 
 /*
  * Return irq setting of the board, otherwise -1.
