@@ -515,10 +515,12 @@ ascattach(parent, self, aux)
 	 */
 	switch (cputype) {
 	case ACER_PICA_61:
+		bufsiz = 63 * 1024; /*XXX check if code handles 0 as 64k */
 		asc->dma = &asc->__dma;
 		asc_dma_init(asc->dma);
 		break;
 	default:
+		bufsiz = 64 * 1024;
 	};
 	/*
 	 * Now for timing. The pica has a 25Mhz
