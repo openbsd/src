@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.69 2000/04/04 16:29:27 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.70 2000/05/05 19:10:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.69 2000/04/04 16:29:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.70 2000/05/05 19:10:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -518,13 +518,6 @@ editor_add(lp, mp, freep, p)
 	pp->p_fsize = 1024;
 	pp->p_frag = 8;
 	pp->p_cpg = 16;
-#if NUMBOOT == 1
-	/* Don't clobber boot blocks */
-	if (pp->p_offset == 0) {
-		pp->p_offset = lp->d_secpercyl;
-		pp->p_size -= lp->d_secpercyl;
-	}
-#endif
 	old_offset = pp->p_offset;
 	old_size = pp->p_size;
 
@@ -1739,6 +1732,11 @@ find_bounds(lp, bios_lp)
 		    "disk.\nYou can use the 'b' command to change this.\n",
 		    starting_sector, ending_sector);
 	}
+#elif (NUMBOOT == 1)
+	/* Boot blocks take up the first cylinder */
+	starting_sector = lp->d_secpercyl;
+	printf("\nReserving the first data cylinder for boot blocks.\n"
+	    "You can use the 'b' command to change this.\n");
 #endif
 }
 
