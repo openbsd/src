@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.22 2004/06/11 01:32:13 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.23 2004/09/14 23:45:14 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.22 2004/06/11 01:32:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.23 2004/09/14 23:45:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ VAR var[] = {
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm, MAXCOMLEN},
 	UID("uid", "UID", pvar, POFF(p_uid)),
 	{"upr", "UPR", NULL, 0, pvar, 3, 0, POFF(p_usrpri), UINT8, "d"},
-	{"user", "USER", NULL, LJUST, uname, USERLEN},
+	{"user", "USER", NULL, LJUST, euname, USERLEN},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
 	{"vsz", "VSZ", NULL, 0, vsize, 5},
