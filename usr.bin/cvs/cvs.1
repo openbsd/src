@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.41 2005/02/03 23:00:41 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.42 2005/02/04 18:06:34 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -111,25 +111,34 @@ The default is 6.
 The following commands are supported by
 .Nm .
 .Bl -tag -width "xxxxxxxxxxxx"
-.It Xo Ic add Op Fl m Ar msg
-.Ar file Op ...
+.It Xo Ic add
+.Op Fl k Ar mode
+.Op Fl m Ar msg
+.Ar file ...
 .Xc
 .Pp
-Before a file is known to CVS, it must be added to the repository using
-this command.
+Before a file is known to
+.Nm ,
+it must be added to the repository using this command.
 Adding a file does not actually publish the contents of the
-file, so you must
+file: the
 .Ic commit
-the first revision in order to let other users see the file with the
-.Ic update
-or
-.Ic checkout
-commands.
+command must also be used to publish it into the repository,
+and thus let others access the file.
+.Pp
+Note: since directories have no versioning system, it is sufficient
+to add them with the
+.Ic add
+command alone; the
+.Ic commit
+command is not necessary.
 .Pp
 The
 .Ic add
 command takes the following options:
 .Bl -tag -width Ds -offset 3n
+.It Fl k Ar mode
+Specify the keyword substitution mode.
 .It Fl m Ar msg
 Attach log message
 .Ar msg .
