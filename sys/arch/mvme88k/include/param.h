@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2001/02/01 03:38:18 smurph Exp $ */
+/*	$OpenBSD: param.h,v 1.14 2001/03/07 23:50:35 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,10 +40,17 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.13 2001/02/01 03:38:18 smurph Exp $
+ *	$Id: param.h,v 1.14 2001/03/07 23:50:35 miod Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
+
+#ifdef _KERNEL
+#ifndef _LOCORE
+#include <machine/cpu.h>
+#include <machine/psl.h>
+#endif	/* _LOCORE */
+#endif
 
 #define  _MACHINE       mvme88k
 #define  MACHINE        "mvme88k"
@@ -166,9 +173,8 @@
 #define mvme88k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define mvme88k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-#include <machine/psl.h>
-
 #ifdef   _KERNEL
+extern int delay __P((int));
 #define  DELAY(x)             delay(x)
 #endif
 
