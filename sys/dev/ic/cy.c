@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.7 1996/12/03 11:08:28 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.8 1997/08/04 09:57:19 dgregor Exp $	*/
 
 /*
  * cy.c
@@ -19,8 +19,6 @@
  * can be enabled by defining CY_DEBUG1
  *
  * This version uses the bus_space/io_??() stuff
- *
- * NOT TESTED !!!
  *
  */
 
@@ -62,10 +60,12 @@
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
 
+
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
+
 
 void	cyattach __P((struct device *, struct device *, void *));
 int	cy_probe_common __P((int, bus_space_tag_t, bus_space_handle_t, int));
@@ -87,6 +87,7 @@ static int cy_bus_types[NCY];
 static bus_space_handle_t cy_card_memh[NCY];
 static int cy_open = 0;
 static int cy_events = 0;
+
 
 /*
  * Common probe routine
@@ -346,6 +347,7 @@ cyopen(dev, flag, mode, p)
     }
     splx(s);
 
+    tp = cy->cy_tty;
     tty_attach(tp);
     tp = cy->cy_tty;
     tp->t_oproc = cystart;
@@ -993,23 +995,17 @@ cy_poll(arg)
     int did_something;
 #endif
 
-    /* XXX */
-#ifdef i386
-    disable_intr();
-#endif
+    int s;
+
+    s = splhigh();
+
     if(cy_events == 0 && ++counter < 200) {
-        /* XXX */
-#ifdef i386
-	enable_intr();
-#endif
+        splx(s);
 	goto out;
     }
 
     cy_events = 0;
-    /* XXX */
-#ifdef i386
-    enable_intr();
-#endif
+    splx(s);
 
     for(card = 0; card < cy_cd.cd_ndevs; card++) {
 	sc = cy_cd.cd_devs[card];
@@ -1054,16 +1050,10 @@ cy_poll(arg)
 
 		(*linesw[tp->t_line].l_rint)(chr, tp);
 
-		/* XXX */
-#ifdef i386
-		disable_intr(); /* really necessary? */
-#endif
+                s = splhigh(); /* really necessary? */
 		if((cy->cy_ibuf_rd_ptr += 2) == cy->cy_ibuf_end)
 		  cy->cy_ibuf_rd_ptr = cy->cy_ibuf;
-		/* XXX */
-#ifdef i386
-		enable_intr();
-#endif
+		splx(s);
 
 #ifdef CY_DEBUG1
 		did_something = 1;
@@ -1092,12 +1082,12 @@ cy_poll(arg)
 	    /*
 	     * handle carrier changes
 	     */
-	    disable_intr();
+	    s = splhigh();
 	    if(ISSET(cy->cy_flags, CYF_CARRIER_CHANGED)) {
 		int carrier;
 
 		CLR(cy->cy_flags, CYF_CARRIER_CHANGED);
-		enable_intr();
+		splx(s);
 
 		carrier = ((cy->cy_carrier_stat & CD1400_MSVR2_CD) != 0);
 
@@ -1114,13 +1104,13 @@ cy_poll(arg)
 		did_something = 1;
 #endif
 	    } else {
-		enable_intr();
+		splx(s);
 	    }
 
-	    disable_intr();
+	    s = splhigh();
 	    if(ISSET(cy->cy_flags, CYF_START)) {
 		CLR(cy->cy_flags, CYF_START);
-	      enable_intr();
+              splx(s);
 
 		(*linesw[tp->t_line].l_start)(tp);
 
@@ -1128,7 +1118,7 @@ cy_poll(arg)
 		did_something = 1;
 #endif
 	    } else {
-		enable_intr();
+                splx(s);
 	    }
 
 	    /* could move this to even upper level... */
@@ -1411,11 +1401,12 @@ void
 cy_enable_transmitter(cy)
      struct cy_port *cy;
 {
-    disable_intr();
+    int s;
+    s = splhigh();
     cd_write_reg(cy, CD1400_CAR, cy->cy_port_num & CD1400_CAR_CHAN);
     cd_write_reg(cy, CD1400_SRER, cd_read_reg(cy, CD1400_SRER)
 		 | CD1400_SRER_TXRDY);
-    enable_intr();
+    splx(s);
 }
 
 /*
