@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.14 2002/12/30 18:41:27 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.15 2002/12/30 19:57:34 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -653,7 +653,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 			semptr->semncnt++;
 
 		DPRINTF(("semop:  good night!\n"));
-		error = tsleep((caddr_t)&sema[semid], (PZERO - 4) | PCATCH,
+		error = tsleep((caddr_t)&sema[semid], PLOCK | PCATCH,
 		    "semwait", 0);
 		DPRINTF(("semop:  good morning (error=%d)!\n", error));
 
