@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.30 2004/07/21 07:46:55 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.31 2004/07/21 07:48:04 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -385,6 +385,14 @@ USB_ATTACH(umass)
 	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sCommand,
 	       sWire);
 
+	if (quirk != NULL && quirk->uq_init != NULL) {
+		err = (*quirk->uq_init)(sc);
+		if (err) {
+			umass_disco(sc);
+			USB_ATTACH_ERROR_RETURN;
+		}
+	}
+
 	/*
 	 * In addition to the Control endpoint the following endpoints
 	 * are required:
@@ -546,14 +554,6 @@ USB_ATTACH(umass)
 	default:
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
-	}
-
-	if (quirk != NULL && quirk->uq_init != NULL) {
-		err = (*quirk->uq_init)(sc);
-		if (err) {
-			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
-		}
 	}
 
 	error = 0;
