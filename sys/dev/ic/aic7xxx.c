@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.26 2001/04/06 04:42:06 csapuntz Exp $
+ * $OpenBSD: aic7xxx.c,v 1.27 2001/04/24 18:22:31 deraadt Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -5009,6 +5009,7 @@ bus_reset:
 				printf("%s: Hung target selection\n",
 				       ahc_name(ahc));
 				restart_sequencer(ahc);
+				splx(s);
 				return;
 			}
 
