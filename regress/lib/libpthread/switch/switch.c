@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.4 2003/07/31 21:48:07 deraadt Exp $	*/
+/*	$OpenBSD: switch.c,v 1.5 2003/12/23 20:09:42 miod Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -86,20 +86,16 @@ int
 main(int argc, char *argv[])
 {
 	pthread_t thread;
-	int count = 4;
-	int eof = 0;
+	int ch, count = 4;
 	long i;
 
 	/* Getopt variables. */
 	extern int optind, opterr;
 	extern char *optarg;
 
-	while (!eof)
-	  switch (getopt (argc, argv, "c:d?"))
+	while ((ch = getopt(argc, argv, "c:?")) != -1)
+	  switch (ch)
 	    {
-	    case EOF:
-	      eof = 1;
-	      break;
 	    case 'c':
 	      count = atoi(optarg);
 	      if ((count > 26) || (count < 2)) {
