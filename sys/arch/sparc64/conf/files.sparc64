@@ -94,7 +94,6 @@ file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
 file	arch/sparc64/sparc64/locore2.c
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/process_machdep.c
-file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/mem.c
 file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
