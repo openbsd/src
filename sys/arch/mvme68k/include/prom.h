@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.3 1996/04/28 10:56:27 deraadt Exp $ */
+/*	$OpenBSD: prom.h,v 1.4 1996/05/07 11:25:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -154,3 +154,15 @@ struct mvmeprom_args {
 
 #define MVMEPROM_CALL(x) \
 	asm volatile (__CONCAT("trap #15; .short ", __STRING(x)) )
+#define MVMEPROM_NOARG() \
+	asm volatile ("clrl sp@-")
+#define MVMEPROM_ARG1(arg) \
+	asm volatile ("movel %0, sp@-"::"d" (arg))
+#define MVMEPROM_ARG2(arg) \
+	asm volatile ("movel %0, sp@-"::"d" (arg))
+#define MVMEPROM_RETURN(ret) \
+	asm volatile ("movel sp@+,%0": "=d" (ret):); \
+	return (ret);			/* return a value */
+#define MVMEPROM_STATRET(ret) \
+	asm volatile ("movew ccr,%0": "=d" (ret)); \
+	return (!(ret & 0x4));		/* return a 'status' */

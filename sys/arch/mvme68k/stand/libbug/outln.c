@@ -1,4 +1,4 @@
-/*	$OpenBSD: outln.c,v 1.2 1996/04/28 10:48:44 deraadt Exp $ */
+/*	$OpenBSD: outln.c,v 1.1 1996/05/07 11:25:10 deraadt Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,7 +11,7 @@ void
 mvmeprom_outln(start, end)
 	char *start, *end;
 {
-	asm volatile ("movl %0, sp@-" : "=a" (start));
-	asm volatile ("movl %0, sp@-" : "=a" (end));
+	MVMEPROM_ARG1(start);
+	MVMEPROM_ARG1(end);
 	MVMEPROM_CALL(MVMEPROM_OUTSTRCRLF);
 }

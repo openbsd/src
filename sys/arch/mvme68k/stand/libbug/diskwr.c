@@ -1,3 +1,5 @@
+/*	$OpenBSD: diskwr.c,v 1.1 1996/05/07 11:25:07 deraadt Exp $ */
+
 /*
  * bug routines -- assumes that the necessary sections of memory
  * are preserved.
@@ -12,8 +14,7 @@ mvmeprom_diskwr(arg)
 {
 	int ret;
 
-	asm volatile ("or r2,r0,%0": : "r" (arg) );
+	MVMEPROM_ARG1(arg);
 	MVMEPROM_CALL(MVMEPROM_DSKWR);
-	asm volatile ("or %0,r0,r2" :  "=r" (ret));
-	return (!(ret & 0x4));
+	MVMEPROM_STATRET(ret);
 }

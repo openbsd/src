@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/04/28 10:48:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/05/07 11:25:05 deraadt Exp $
 
 LIB=bug
 
@@ -7,9 +7,9 @@ NOPROFILE=
 
 CFLAGS+=-I${.CURDIR}/../../include
 
-SRCS=delay.c diskrd.c diskwr.c getbrdid.c instat.c outln.c outstr.c \
+SRCS=	delay.c diskrd.c diskwr.c getbrdid.c instat.c outln.c outstr.c \
 	return.c rtc_rd.c
-.PATH:    ${.CURDIR}/../../../../lib/libc_sa ${.CURDIR}/${MACHINE_ARCH}
+.PATH:    ${.CURDIR}/../../../../lib/libc_sa
 
 install:
 

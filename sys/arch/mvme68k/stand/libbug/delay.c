@@ -1,4 +1,4 @@
-/*	$OpenBSD: delay.c,v 1.2 1996/04/28 10:48:36 deraadt Exp $ */
+/*	$OpenBSD: delay.c,v 1.1 1996/05/07 11:25:06 deraadt Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -12,6 +12,6 @@ void
 mvmeprom_delay(msec)
 	int msec;
 {
-	asm volatile ("movel %0,sp@-" :  :"d" (msec));
+	MVMEPROM_ARG1(msec);
 	MVMEPROM_CALL(MVMEPROM_DELAY);
 }

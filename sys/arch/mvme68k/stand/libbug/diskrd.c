@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskrd.c,v 1.2 1996/04/28 10:48:37 deraadt Exp $ */
+/*	$OpenBSD: diskrd.c,v 1.1 1996/05/07 11:25:07 deraadt Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -14,8 +14,7 @@ mvmeprom_diskrd(arg)
 {
 	int ret;
 
-	asm volatile ("movel %0, sp@-"::"d" (arg));
+	MVMEPROM_ARG1(arg);
 	MVMEPROM_CALL(MVMEPROM_DSKRD);
-	asm volatile ("movew ccr,%0": "=d" (ret));
-	return (!(ret & 0x4));
+	MVMEPROM_STATRET(ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc_rd.c,v 1.2 1996/04/28 10:48:47 deraadt Exp $ */
+/*	$OpenBSD: rtc_rd.c,v 1.1 1996/05/07 11:25:12 deraadt Exp $ */
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,6 +11,6 @@ void
 mvmeprom_rtc_rd(ptime)
 	struct mvmeprom_time *ptime;
 {
-	asm volatile ("movel %0,sp@-" :  :"a" (ptime));
+	MVMEPROM_ARG1(ptime);
 	MVMEPROM_CALL(MVMEPROM_RTC_RD);
 }
