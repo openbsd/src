@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"	$OpenBSD: strftime.3,v 1.14 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: strftime.3,v 1.15 2002/05/12 19:51:35 millert Exp $
 .\"
 .Dd January 18, 1998
 .Dt STRFTIME 3
@@ -214,8 +214,10 @@ The
 .Ql \&%G ,
 .Ql \&%g ,
 .Ql \&%k ,
+.Ql \&%l ,
+.Ql \&%s ,
 and
-.Ql \&%l
+.Ql \&%+
 conversion specifications are extensions.
 .Pp
 Use of the ISO 8601 conversions may produce non-intuitive results.
