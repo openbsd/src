@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/04/16 12:38:21 downsj Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/04/21 07:37:36 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -43,8 +43,8 @@ LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-BOOTS=	uboot.lif inst.lif
-BOOTAOUTS=uboot inst
+BOOTS=	uboot.lif
+BOOTAOUTS=uboot
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
@@ -69,16 +69,6 @@ uboot.lif: uboot mkboot
 uboot:	srt0.o uboot.o tgets.o netio.o clock.o conf.o ${LIBS}
 	${LD} -N -T ${RELOC} -e begin srt0.o uboot.o tgets.o netio.o clock.o \
 	    conf.o ${LIBS} -o $@
-	@size $@
-	@echo $@ total size should not exceed 1044480 bytes
-
-# miniroot installation program
-inst.lif: inst mkboot
-	./mkboot inst $@
-
-inst: srt0.o inst.o clock.o conf.o netio.o tgets.o ${LIBS}
-	${LD} -N -T ${RELOC} -e begin srt0.o inst.o clock.o conf.o netio.o \
-	    tgets.o ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
@@ -118,10 +108,6 @@ install:
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/bootct
 	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 inst.lif \
-	    ${DESTDIR}/usr/mdec
-	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_INST
-	ln ${DESTDIR}/usr/mdec/inst.lif ${DESTDIR}/usr/mdec/rbootd/SYS_INST
 
 #obj: _SUBDIRUSE
 
