@@ -133,14 +133,14 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_hname[MAXHOSTNAMELEN+1];
+			char	f_hname[MAXHOSTNAMELEN];
 			struct sockaddr_in	f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
 	char	f_lasttime[16];			/* time of last occurrence */
-	char	f_prevhost[MAXHOSTNAMELEN+1];	/* host from which recd. */
+	char	f_prevhost[MAXHOSTNAMELEN];	/* host from which recd. */
 	int	f_prevpri;			/* pri of f_prevline */
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
@@ -177,7 +177,7 @@ struct	filed *Files;
 struct	filed consfile;
 
 int	Debug;			/* debug flag */
-char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
+char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
 int	finet;			/* Internet datagram socket */
@@ -618,7 +618,8 @@ logmsg(pri, msg, from, flags)
 			f->f_prevpri = pri;
 			(void)strncpy(f->f_lasttime, timestamp, 15);
 			(void)strncpy(f->f_prevhost, from,
-					sizeof(f->f_prevhost));
+					sizeof(f->f_prevhost)-1);
+			f->f_prevhost[sizeof(f->f_prevhost)-1] = '\0';
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
 				(void)strcpy(f->f_prevline, msg);
@@ -1174,8 +1175,10 @@ cfline(line, f, prog)
 	case '@':
 		if (!InetInuse)
 			break;
-		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
-		hp = gethostbyname(p);
+		(void)strncpy(f->f_un.f_forw.f_hname, ++p,
+		    sizeof(f->f_un.f_forw.f_hname)-1);
+		f->f_un.f_forw.f_hname[sizeof(f->f_un.f_forw.f_hname)-1] = '\0';
+		hp = gethostbyname(f->f_un.f_forw.f_hname);
 		if (hp == NULL) {
 			extern int h_errno;
 
