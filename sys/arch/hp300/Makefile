@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/07/14 08:20:13 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/10/23 13:03:56 deraadt Exp $
 #	$NetBSD: Makefile,v 1.5 1995/08/04 07:40:31 thorpej Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -7,7 +7,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR= stand
+SUBDIR= stand ../m68k
 
 THP300=	../hp300/tags
 SHP300=	../hp300/hp300/*.[ch] ../hp300/include/*.h \
