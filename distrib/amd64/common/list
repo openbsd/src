@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 2004/02/08 18:17:12 deraadt Exp $
+#	$OpenBSD: list,v 1.4 2004/02/22 00:24:43 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -24,7 +24,7 @@ LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					sbin/chmod bin/chgrp sbin/chown
 LINK	instbin					sbin/disklabel
-LINK	instbin					sbin/dhclient
+#LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fsck_ffs sbin/fsck
@@ -74,7 +74,7 @@ SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
 
 # dhcp things
-SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
+#SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
@@ -82,4 +82,4 @@ SCRIPT	${CURDIR}/../common/install.md		install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade sbin/dhclient-script
+#SPECIAL	chmod 755 install upgrade sbin/dhclient-script
