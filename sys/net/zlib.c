@@ -32,9 +32,7 @@
 
 #include "zlib.h"
 
-#ifdef STDC
-#  include <string.h>
-#endif
+#include <sys/systm.h>
 
 #ifndef local
 #  define local static
