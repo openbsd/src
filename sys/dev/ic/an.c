@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.16 2001/06/10 19:26:16 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.17 2001/06/23 23:36:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -354,11 +354,10 @@ an_rxeof(sc)
 #endif
 
 	/* Receive packet. */
-	m_adj(m, sizeof(struct ether_header));
 #ifdef ANCACHE
 	an_cache_store(sc, eh, m, rx_frame.an_rx_signal_strength);
 #endif
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 }
 
 void
@@ -1365,7 +1364,7 @@ an_cache_store (sc, eh, m, rx_quality)
 	 * address.
 	 */
 	if (saanp) {
-		ip = mtod(m, struct ip *);
+		ip = (struct ip *)(mtod(m, char *) + sizeof(struct ether_header));
 	}
 
 	/* do a linear search for a matching MAC address
@@ -1374,10 +1373,9 @@ an_cache_store (sc, eh, m, rx_quality)
 	 * . var w_nextitem holds total number of entries already cached
 	 */
 	for(i = 0; i < sc->an_nextitem; i++) {
-		if (! bcmp(eh->ether_shost , sc->an_sigcache[i].macsrc,  6 )) {
+		if (!bcmp(eh->ether_shost , sc->an_sigcache[i].macsrc, 6)) {
 			/* Match!,
-			 * so we already have this entry,
-			 * update the data
+			 * so we already have this entry, update the data
 			 */
 			break;
 		}
