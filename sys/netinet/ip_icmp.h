@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.13 2001/06/09 07:03:42 angelos Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.14 2001/07/04 05:45:34 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -42,6 +42,13 @@
 /*
  * Interface Control Message Protocol Definitions.
  * Per RFC 792, September 1981.
+ * RFC 950, August 1985. (Address Mask Request / Reply)
+ * RFC 1256, September 1991. (Router Advertisement and Solicitation)
+ * RFC 1108, November 1991. (Param Problem, Missing Req. Option)
+ * RFC 1393, January 1993. (Traceroute)
+ * RFC 1475, June 1993. (Datagram Conversion Error)
+ * RFC 1812, June 1995. (adm prohib, host precedence, precedence cutoff)
+ * RFC 2002, October 1996. (Mobility changes to Router Advertisement)
  */
 
 /*
@@ -134,7 +141,7 @@ struct icmp {
 
 /*
  * Definition of type and code field values.
- *	http://www.isi.edu/in-notes/iana/assignments/icmp-parameters
+ *	http://www.iana.org/assignments/icmp-parameters
  */
 #define	ICMP_ECHOREPLY		0		/* echo reply */
 #define	ICMP_UNREACH		3		/* dest unreachable, codes: */
@@ -163,6 +170,8 @@ struct icmp {
 #define	ICMP_ALTHOSTADDR	6		/* alternate host address */
 #define	ICMP_ECHO		8		/* echo service */
 #define	ICMP_ROUTERADVERT	9		/* router advertisement */
+#define		ICMP_ROUTERADVERT_NORMAL		0	/* normal advertisement */
+#define		ICMP_ROUTERADVERT_NOROUTE_COMMON	16	/* selective routing */
 #define	ICMP_ROUTERSOLICIT	10		/* router solicitation */
 #define	ICMP_TIMXCEED		11		/* time exceeded, code: */
 #define		ICMP_TIMXCEED_INTRANS	0		/* ttl==0 in transit */
@@ -177,8 +186,20 @@ struct icmp {
 #define	ICMP_IREQREPLY		16		/* information reply */
 #define	ICMP_MASKREQ		17		/* address mask request */
 #define	ICMP_MASKREPLY		18		/* address mask reply */
+#define	ICMP_TRACEROUTE		30		/* traceroute */
+#define	ICMP_DATACONVERR	31		/* data conversion error */
+#define	ICMP_MOBILE_REDIRECT	32		/* mobile host redirect */
+#define	ICMP_IPV6_WHEREAREYOU	33		/* IPv6 where-are-you */
+#define	ICMP_IPV6_IAMHERE	34		/* IPv6 i-am-here */
+#define	ICMP_MOBILE_REGREQUEST	35		/* mobile registration req */
+#define	ICMP_MOBILE_REGREPLY	36		/* mobile registration reply */
+#define	ICMP_SKIP		39		/* SKIP */
+#define	ICMP_PHOTURIS		40		/* Photuris */
+#define		ICMP_PHOTURIS_UNKNOWN_INDEX	1	/* unknown sec index */
+#define		ICMP_PHOTURIS_AUTH_FAILED	2	/* auth failed */
+#define		ICMP_PHOTURIS_DECRYPT_FAILED	3	/* decrypt failed */
 
-#define	ICMP_MAXTYPE		18
+#define	ICMP_MAXTYPE		40
 
 #define	ICMP_INFOTYPE(type) \
 	((type) == ICMP_ECHOREPLY || (type) == ICMP_ECHO || \
