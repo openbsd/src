@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.16 1997/11/09 22:03:29 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.17 1998/06/25 17:04:29 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.16 1997/11/09 22:03:29 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.17 1998/06/25 17:04:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -949,18 +949,34 @@ void
 swapmode()
 {
 	char *header;
-	int hlen, nswap, nswdev, dmmax, nswapmap, niswap, niswdev;
+	int hlen = 10, nswap, nswdev, dmmax, nswapmap, niswap, niswdev;
 	int s, e, div, i, l, avail, nfree, npfree, used;
 	struct swdevt *sw;
 	long blocksize, *perdev;
 	struct map *swapmap, *kswapmap;
 	struct mapent *mp;
 
+	if (kflag) {
+		header = "1K-blocks";
+		blocksize = 1024;
+		hlen = strlen(header);
+	} else
+		header = getbsize(&hlen, &blocksize);
+
 	KGET(VM_NSWAP, nswap);
 	KGET(VM_NSWDEV, nswdev);
 	KGET(VM_DMMAX, dmmax);
 	KGET(VM_NSWAPMAP, nswapmap);
 	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
+	if (nswap == 0) {
+		if (!totalflag)
+			(void)printf("%-11s %*s %8s %8s %8s  %s\n",
+			    "Device", hlen, header,
+			    "Used", "Avail", "Capacity", "Type");
+		(void)printf("%-11s %*d %8d %8d %5.0f%%\n",
+		    "Total", hlen, 0, 0, 0, 0);
+		return;
+	}
 	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
 	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
 	    (mp = malloc(nswapmap * sizeof(*mp))) == NULL)
@@ -1040,12 +1056,6 @@ swapmode()
 		}
 	}
 
-	if (kflag) {
-		header = "1K-blocks";
-		blocksize = 1024;
-		hlen = strlen(header);
-	} else
-		header = getbsize(&hlen, &blocksize);
 	if (!totalflag)
 		(void)printf("%-11s %*s %8s %8s %8s  %s\n",
 		    "Device", hlen, header,
