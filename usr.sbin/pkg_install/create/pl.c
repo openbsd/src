@@ -1,7 +1,7 @@
-/*	$OpenBSD: pl.c,v 1.10 2003/08/12 06:54:03 espie Exp $	*/
+/*	$OpenBSD: pl.c,v 1.11 2003/08/15 00:03:22 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pl.c,v 1.10 2003/08/12 06:54:03 espie Exp $";
+static const char rcsid[] = "$OpenBSD: pl.c,v 1.11 2003/08/15 00:03:22 espie Exp $";
 #endif
 
 /*
@@ -59,7 +59,13 @@ check_list(char *home, package_t *pkg)
 				p = p->next;
 			break;
 		case PLIST_FILE:
-			(void) snprintf(name, sizeof(name), "%s/%s", there ? there : cwd, p->name);
+			if (BaseDir)
+				(void) snprintf(name, sizeof(name), 
+				    "%s/%s/%s", BaseDir, there ? there : cwd, 
+				    p->name);
+			else
+				(void) snprintf(name, sizeof(name), 
+				    "%s/%s", there ? there : cwd, p->name);
 			if ((cp = MD5File(name, buf)) != NULL) {
 				tmp = new_plist_entry();
 				tmp->name = copy_string(strconcat("MD5:", cp));

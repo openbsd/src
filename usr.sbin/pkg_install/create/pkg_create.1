@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.26 2003/06/26 18:00:40 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.27 2003/08/15 00:03:22 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -41,6 +41,7 @@
 .Op Fl k Ar dscript
 .Op Fl r Ar rscript
 .Op Fl s Ar fake-prefix
+.Op Fl S Ar fake-base
 .Op Fl t Ar template
 .Op Fl X Ar excludefile
 .Op Fl D Ar displayfile
@@ -153,6 +154,10 @@ Set
 .Ar fake-prefix
 as the real initial directory
 to start from in selecting files for the package.
+.It Fl S Ar fake-base
+Set
+.Ar fake-base
+as the prefix to prepend to any file to select for the package.
 .It Fl k Ar dscript
 Set
 .Ar dscript

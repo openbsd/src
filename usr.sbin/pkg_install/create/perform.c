@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.15 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.16 2003/08/15 00:03:22 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.15 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.16 2003/08/15 00:03:22 espie Exp $";
 #endif
 
 /*
@@ -78,6 +78,8 @@ pkg_perform(char **pkgs)
     else
 	suffix = "tgz";
 
+    if (Prefix)
+	add_plist(&plist, PLIST_CWD, Prefix);
     /* If a SrcDir override is set, add it now */
     if (SrcDir) {
 	if (Verbose && !PlistOnly)
@@ -120,11 +122,6 @@ pkg_perform(char **pkgs)
     /* Slurp in the packing list */
     read_plist(&plist, pkg_in);
 
-    /* Prefix should override the packing list */
-    if (Prefix) {
-	delete_plist(&plist, FALSE, PLIST_CWD, NULL);
-	add_plist_top(&plist, PLIST_CWD, Prefix);
-    }
     /*
      * Run down the list and see if we've named it, if not stick in a name
      * at the top.
@@ -297,7 +294,17 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 		fclose(flist);
 	    flist = 0;
 	    args[nargs++] = "-C";
-	    args[nargs++] = p->name;
+	    if (BaseDir) {
+		    size_t size = strlen(BaseDir)+2+strlen(p->name);
+		    args[nargs] = malloc(size);
+		    if (!args[nargs]) {
+			    cleanup(0);
+			    errx(2, "can't get Cwd space");
+		    }
+		    snprintf(args[nargs], size, "%s/%s", BaseDir, p->name);
+		    nargs++;
+	    } else
+		    args[nargs++] = p->name;
 	}
 	else if (p->type == PLIST_IGNORE)
 	     p = p->next;
@@ -308,6 +315,13 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 
     /* fork/exec tar to create the package */
 
+    if (Verbose) {
+    	printf("Running \"");
+    	for (i = 0; i < nargs; i++) {
+		printf("%s ", args[i]);
+	}
+	printf("\"\n");
+    }
     pid = fork();
     if ( pid < 0 )
 	err(2, "failed to fork");
@@ -320,6 +334,12 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     wait(&ret);
     for (i = 0; i < current; i++)
 	unlink(tempfile[i]);
+    if (BaseDir) {
+    	for (i = 0; i < nargs-1; i++) {
+	    if (!strcmp(args[i], "-C"))
+		free(args[++i]);
+	}
+    }
     /* assume either signal or bad exit is enough for us */
     if (ret) {
 	cleanup(0);

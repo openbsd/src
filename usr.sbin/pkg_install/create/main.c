@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.12 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2003/08/15 00:03:22 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: main.c,v 1.12 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/08/15 00:03:22 espie Exp $";
 #endif
 
 /*
@@ -19,7 +19,7 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.12 2003/07/04 17:31:19 avsm Ex
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "Ohvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
+static char Options[] = "Ohvf:p:P:C:c:d:i:k:r:t:X:D:m:s:S:";
 
 char	*Prefix		= NULL;
 char	*Comment	= NULL;
@@ -34,6 +34,7 @@ char	*ExcludeFrom	= NULL;
 char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
 char	*Pkgcfl		= NULL;
+char	*BaseDir	= NULL;
 char	PlayPen[FILENAME_MAX];
 size_t	PlayPenSize	= sizeof(PlayPen);
 int	Dereference	= 0;
@@ -64,6 +65,10 @@ main(int argc, char **argv)
 
 	case 's':
 	    SrcDir = optarg;
+	    break;
+
+	case 'S':
+	    BaseDir = optarg;
 	    break;
 
 	case 'f':
@@ -158,6 +163,6 @@ usage()
 "usage: pkg_create [-Ohv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
-"                  -c comment -d description -f packlist pkg-name");
+"                  -c comment -d description -f packlist -S basedir pkg-name");
     exit(1);
 }
