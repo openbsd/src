@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.11 1995/03/18 14:55:59 cgd Exp $	*/
+/*	$NetBSD: preen.c,v 1.12 1996/05/11 14:27:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static char rcsid[] = "$NetBSD: preen.c,v 1.11 1995/03/18 14:55:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: preen.c,v 1.12 1996/05/11 14:27:50 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -324,6 +324,10 @@ retry:
 		}
 	} else if (S_ISCHR(stblock.st_mode) && !retried) {
 		newname = unrawname(newname);
+		retried++;
+		goto retry;
+	} else if ((fsp = getfsfile(newname)) != 0 && !retried) {
+		newname = fsp->fs_spec;
 		retried++;
 		goto retry;
 	}
