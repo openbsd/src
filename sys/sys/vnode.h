@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.35 2001/06/27 04:51:49 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.36 2001/07/05 07:31:52 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -108,7 +108,6 @@ struct vnode {
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
-		caddr_t		vu_vmdata;	/* private data for vm (VREG) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
@@ -124,7 +123,6 @@ struct vnode {
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
-#define	v_vmdata	v_un.vu_vmdata
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
 
