@@ -417,37 +417,31 @@ struct l1_sec_map {
 	int flags;
 } l1_sec_table[] = {
     {
-	    LUBBOCK_OBIO_VBASE,
-	    LUBBOCK_OBIO_PBASE,
-	    LUBBOCK_OBIO_SIZE,
-	    PTE_NOCACHE,
-    },
-    {
-	    LUBBOCK_GPIO_VBASE,
+	    ZAURUS_GPIO_VBASE,
 	    PXA2X0_GPIO_BASE,
 	    PXA2X0_GPIO_SIZE,
 	    PTE_NOCACHE,
     },
     {
-	    LUBBOCK_CLKMAN_VBASE,
+	    ZAURUS_CLKMAN_VBASE,
 	    PXA2X0_CLKMAN_BASE,
 	    PXA2X0_CLKMAN_SIZE,
 	    PTE_NOCACHE,
     },
     {
-	    LUBBOCK_INTCTL_VBASE,
+	    ZAURUS_INTCTL_VBASE,
 	    PXA2X0_INTCTL_BASE,
 	    PXA2X0_INTCTL_SIZE,
 	    PTE_NOCACHE,
     },
     {
-	    LUBBOCK_INTCTL_VBASE,
+	    ZAURUS_INTCTL_VBASE,
 	    PXA2X0_INTCTL_BASE,
 	    PXA2X0_INTCTL_SIZE,
 	    PTE_NOCACHE,
     },
     {
-	    LUBBOCK_AGPIO_VBASE,
+	    ZAURUS_AGPIO_VBASE,
 	    0x10800000,
 	    0x00010000, /* XXX */
 	    PTE_NOCACHE,
@@ -487,7 +481,7 @@ map_io_area(paddr_t pagedir)
  * before pmap is initialized.
  * size and cacheability are ignored and map one section with nocache.
  */
-static vaddr_t section_free = LUBBOCK_VBASE_FREE;
+static vaddr_t section_free = ZAURUS_VBASE_FREE;
 
 static int
 bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
@@ -517,7 +511,7 @@ copy_io_area_map(pd_entry_t *new_pd)
 	pd_entry_t *cur_pd = read_ttb();
 	vaddr_t va;
 
-	for (va = LUBBOCK_IO_AREA_VBASE;
+	for (va = ZAURUS_IO_AREA_VBASE;
 	     (cur_pd[va>>L1_S_SHIFT] & L1_TYPE_MASK) == L1_TYPE_S;
 	     va += L1_S_SIZE) {
 
@@ -535,7 +529,7 @@ green_on(int virt)
 	/* clobber green led p */
 	volatile u_int16_t *p;
 	if (virt)
-		p = (u_int16_t *)(LUBBOCK_AGPIO_VBASE+0x24);
+		p = (u_int16_t *)(ZAURUS_AGPIO_VBASE+0x24);
 	else
 		p = (u_int16_t *)0x10800024;
 
@@ -602,18 +596,8 @@ initarm(void *arg)
 	struct bus_space tmp_bs_tag;
 	int	(*map_func_save)(void *, bus_addr_t, bus_size_t, int, 
 	    bus_space_handle_t *);
-#if 0
-#define LEDSTEP_P() 	ioreg_write(LUBBOCK_OBIO_PBASE+LUBBOCK_HEXLED, led_data++)
-#define LEDSTEP() hex_led(led_data++)
-#else
-#define LEDSTEP_P() 	
-#define LEDSTEP()
-#endif
 
 
-
-	/* use physical address until pagetable is set */
-	LEDSTEP_P();
 
 #if 0
 	/* XXX */
@@ -626,7 +610,6 @@ initarm(void *arg)
 	 */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-	LEDSTEP_P();
 
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(PXA2X0_INTCTL_BASE);
@@ -687,7 +670,7 @@ initarm(void *arg)
 	}
 
 	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
-	pxa2x0_gpio_bootstrap(LUBBOCK_GPIO_VBASE);
+	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);
 #if 0
 	pxa2x0_gpio_set_function(42, GPIO_ALT_FN_1_IN);
 	pxa2x0_gpio_set_function(43, GPIO_ALT_FN_2_OUT);
@@ -705,27 +688,20 @@ initarm(void *arg)
 #if 1
 	/* turn on clock to UART block.
 	   XXX: this should not be done here. */
-	ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN, CKEN_FFUART|CKEN_BTUART |
-	    ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN));
+	ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN, CKEN_FFUART|CKEN_BTUART |
+	    ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN));
 #endif
 
 	green_on(0);
-
-	LEDSTEP();
 
 	tmp_bs_tag = pxa2x0_bs_tag;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
 	map_func_save = pxa2x0_a4x_bs_tag.bs_map;
 	pxa2x0_a4x_bs_tag.bs_map = bootstrap_bs_map;
 
-	LEDSTEP();
-
-
 	consinit();
-	LEDSTEP();
 #ifdef KGDB
 	kgdb_port_init();
-	LEDSTEP();
 #endif
 
 
@@ -759,8 +735,8 @@ initarm(void *arg)
 		ioreg_write(PXA2X0_MEMCTL_BASE+MEMCTL_MECR,
 			     MECR_NOS|MECR_CIT);
 
-		tmp = ioreg_read(LUBBOCK_SACC_PBASE+SACCSBI_SKCR);
-		ioreg_write(LUBBOCK_SACC_PBASE+SACCSBI_SKCR,
+		tmp = ioreg_read(ZAURUS_SACC_PBASE+SACCSBI_SKCR);
+		ioreg_write(ZAURUS_SACC_PBASE+SACCSBI_SKCR,
 			     (tmp & ~(1<<4)) | (1<<0));
 	}
 
@@ -779,27 +755,9 @@ initarm(void *arg)
 
 
 	{
-		int processor_card_id;
-
-		processor_card_id = 0x000f & 
-			ioreg_read(LUBBOCK_OBIO_VBASE+LUBBOCK_MISCRD);
-		switch(processor_card_id){
-		case 0:
-			/* Cotulla */
-			memstart = 0xa0000000;
-			memsize =  0x02000000; /* 32MB -phone */ 
-			memsize =  0x04000000; /* 64MB */
-			break;
-		case 1:
-			/* XXX: Sabiani */
-			memstart = 0xa0000000;
-			memsize = 0x04000000; /* 64MB */
-			break;
-		default:
-			/* XXX: Unknown  */
-			memstart = 0xa0000000;
-			memsize = 0x04000000; /* 64MB */
-		}
+		/* XXX - all Zaurus have this for now, fix memory sizing */
+		memstart = 0xa0000000;
+		memsize =  0x04000000; /* 64MB */
 	}
 
 #if 0
@@ -924,8 +882,6 @@ initarm(void *arg)
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory");
-
-	LEDSTEP();
 
 	/*
 	 * Allocate a page for the system page mapped to V0x00000000
@@ -1098,19 +1054,14 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 
-	LEDSTEP();
-
 	/* set new intc register address so that splfoo() doesn't
 	   touch illegal address.  */
-	pxa2x0_intr_bootstrap(LUBBOCK_INTCTL_VBASE);
-
-	LEDSTEP();
+	pxa2x0_intr_bootstrap(ZAURUS_INTCTL_VBASE);
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
-	LEDSTEP();
 
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references
@@ -1188,28 +1139,12 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	LEDSTEP();
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
-	LEDSTEP();
 
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
-
-#if 0
-	/* XXX - drahn */
-	{
-		uint16_t sw = ioreg16_read(LUBBOCK_OBIO_VBASE+LUBBOCK_USERSW);
-
-		if (0 == (sw & (1<<13))) /* check S19 */
-			boothowto |= RB_KDB;
-		if (0 == (sw & (1<<12))) /* S20 */
-			boothowto |= RB_SINGLE;
-	}
-#endif
-
-	LEDSTEP();
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
@@ -1293,7 +1228,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	uint32_t ckenreg = ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN);
+	uint32_t ckenreg = ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN);
 #if 0
 	char *console = CONSDEVNAME;
 #endif
@@ -1306,10 +1241,6 @@ consinit(void)
 #if NCOM > 0
 
 #ifdef FFUARTCONSOLE
-	/* Check switch. */
-	/*
-	if (0 == (ioreg_read(LUBBOCK_OBIO_VBASE+LUBBOCK_USERSW) & (1<<15))) {
-	*/
 	if (0) {
 		/* We don't use FF serial when S17=no-dot position */
 	}
@@ -1324,7 +1255,7 @@ consinit(void)
 		/* XXX: can't call pxa2x0_clkman_config yet */
 		pxa2x0_clkman_config(CKEN_FFUART, 1);
 #else
-		ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN,
+		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN,
 		    ckenreg|CKEN_FFUART);
 #endif
 
@@ -1340,7 +1271,7 @@ consinit(void)
 #endif
 	if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
 		comcnspeed, PXA2X0_COM_FREQ, comcnmode)) {
-		ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN,
+		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN,
 		    ckenreg|CKEN_BTUART);
 		return;
 	}
@@ -1358,7 +1289,7 @@ kgdb_port_init(void)
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
 	enum pxa2x0_uart_id uart_id;
-	uint32_t ckenreg = ioreg_read(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN);
+	uint32_t ckenreg = ioreg_read(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN);
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
@@ -1373,29 +1304,9 @@ kgdb_port_init(void)
 	    0 == com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
-		ioreg_write(LUBBOCK_CLKMAN_VBASE+CLKMAN_CKEN, ckenreg);
+		ioreg_write(ZAURUS_CLKMAN_VBASE+CLKMAN_CKEN, ckenreg);
 	}
 #endif
-}
-#endif
-
-#if 0
-/*
- * display a number in hex LED.
- * a digit is blank when the corresponding bit in arg blank is 1
- */
-unsigned short led_control_value = 0;
-
-void
-hex_led_blank(uint32_t value, int blank)
-{
-	int save = disable_interrupts(I32_bit);
-
-	ioreg_write(LUBBOCK_OBIO_VBASE+0x10, value);
-	led_control_value = (led_control_value & 0xff)
-		| ((blank & 0xff)<<8);
-	ioreg_write(LUBBOCK_OBIO_VBASE+0x40, led_control_value);
-	restore_interrupts(save);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
+/*	$OpenBSD: zaurus_reg.h,v 1.3 2005/01/14 18:44:08 drahn Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -31,59 +31,33 @@
  */
 
 
-#ifndef _EVBARM_LUBBOCK_REG_H
-#define _EVBARM_LUBBOCK_REG_H
+#ifndef _EVBARM_ZAURUS_REG_H
+#define _EVBARM_ZAURUS_REG_H
 
 #include <arm/xscale/pxa2x0reg.h>
 
-/* lubbock on-board IOs */
-#define LUBBOCK_OBIO_PBASE PXA2X0_CS2_START /* Physical address */
-#define LUBBOCK_OBIO_SIZE  0x00000100
+#define ZAURUS_SRAM_PBASE (PXA2X0_CS2_START+0x02000000)
+#define ZAURUS_SRAM_SIZE  0x00100000
 
-#define LUBBOCK_SRAM_PBASE (PXA2X0_CS2_START+0x02000000)
-#define LUBBOCK_SRAM_SIZE  0x00100000
-
-#define LUBBOCK_91C96_PBASE PXA2X0_CS3_START
-#define LUBBOCK_91C96_IO	LUBBOCK_91C96_PBASE
-#define LUBBOCK_91C96_ATTRMEM	(LUBBOCK_91C96_PBASE+0x02000000)
+#define ZAURUS_91C96_PBASE PXA2X0_CS3_START
+#define ZAURUS_91C96_IO	ZAURUS_91C96_PBASE
+#define ZAURUS_91C96_ATTRMEM	(ZAURUS_91C96_PBASE+0x02000000)
 
 
 /* SA-1111 companion chip registers */
-#define LUBBOCK_SACC_PBASE PXA2X0_CS4_START
+#define ZAURUS_SACC_PBASE PXA2X0_CS4_START
 
 /*
  * Logical mapping for onboard/integrated peripherals
  */
-#define	LUBBOCK_IO_AREA_VBASE	0xfd000000
-#define LUBBOCK_OBIO_VBASE	0xfd000000
-#define LUBBOCK_GPIO_VBASE	0xfd100000
-#define LUBBOCK_CLKMAN_VBASE 	0xfd200000
-#define LUBBOCK_INTCTL_VBASE 	0xfd300000
-#define LUBBOCK_AGPIO_VBASE	0xfd400000
-#define LUBBOCK_VBASE_FREE	0xfd500000
+#define	ZAURUS_IO_AREA_VBASE	0xfd000000
+#define ZAURUS_GPIO_VBASE	0xfd000000
+#define ZAURUS_CLKMAN_VBASE 	0xfd100000
+#define ZAURUS_INTCTL_VBASE 	0xfd200000
+#define ZAURUS_AGPIO_VBASE	0xfd300000
+#define ZAURUS_VBASE_FREE	0xfd400000
 /* FFUART and/or BTUART are mapped to this area when
    used for console or kgdb port */
-
-/*
- * Onboard register address
- * (offset from LUBBOCK_OBIO_PBASE)
- */
-#define LUBBOCK_SYSTEMID	0x0000
-#define LUBBOCK_HEXLED  	0x0010
-#define LUBBOCK_LEDCTL		0x0040
-#define LUBBOCK_CONFIGSW	0x0050
-#define LUBBOCK_USERSW		0x0060
-#define LUBBOCK_MISCWR		0x0080
-#define  MISCWR_S1PWR	 	(3U<<14)
-#define  MISCWR_LCDDISP		(1U<<8)
-#define  MISCWR_IRDAMODE	(1U<<4)	/* 1=FIR, 0=SIR */
-#define  MISCWR_GREENLED	(1U<<3)
-#define  MISCWR_ENETEN16	(1U<<2)
-#define  MISCWR_PCRESET		(1U<<1)	/* Processor card reset */
-#define  MSICWR_SYSRESET	(1U<<0)
-#define LUBBOCK_MISCRD		0x0090
-#define LUBBOCK_INTRMASK	0x00c0
-#define LUBBOCK_INTRCTL		0x00d0
 
 #define ioreg_read(a)  (*(volatile unsigned *)(a))
 #define ioreg_write(a,v)  (*(volatile unsigned *)(a)=(v))
@@ -94,4 +68,4 @@
 #define ioreg8_read(a)  (*(volatile uint8_t *)(a))
 #define ioreg8_write(a,v)  (*(volatile uint8_t *)(a)=(v))
 
-#endif /* _EVBARM_LUBBOCK_REG_H */
+#endif /* _EVBARM_ZAURUS_REG_H */
