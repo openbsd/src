@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.4 2000/01/11 01:25:01 fgsch Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.5 2000/01/11 19:31:56 fgsch Exp $	*/
 
 /*-
  *
@@ -242,11 +242,9 @@ ipx_pcbconnect(ipxp, nam)
 	}
 	if (ipx_pcblookup(&sipx->sipx_addr, ipxp->ipxp_lport, 0))
 		return (EADDRINUSE);
-	if (ipx_nullhost(ipxp->ipxp_laddr)) {
-		if (ipxp->ipxp_lport == 0)
-			(void) ipx_pcbbind(ipxp, (struct mbuf *)0);
-		ipxp->ipxp_laddr.ipx_host = ipx_thishost;
-	}
+	if (ipxp->ipxp_lport == 0)
+		(void) ipx_pcbbind(ipxp, (struct mbuf *)0);
+
 	ipxp->ipxp_faddr = sipx->sipx_addr;
 	/* Includes ipxp->ipxp_fport = sipx->sipx_port; */
 	return (0);

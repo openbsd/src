@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.4 1999/01/11 05:12:33 millert Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.5 2000/01/11 19:31:56 fgsch Exp $	*/
 
 /*-
  *
@@ -327,9 +327,9 @@ ipxip_route(m)
 	struct sockaddr_in *src;
 
 	/*
-	 * First, make sure we already have an IPX address:
+	 * First, make sure we already have an IPX address.
 	 */
-	if (ipx_hosteqnh(ipx_thishost, ipx_zerohost))
+	if (ipx_ifaddr.tqh_first == NULL)
 		return (EADDRNOTAVAIL);
 	/*
 	 * Now, determine if we can get to the destination
@@ -384,7 +384,10 @@ ipxip_route(m)
 	ifr_ipxip.ifr_dstaddr = * (struct sockaddr *) ipx_dst;
 	ipx_control((struct socket *)0, (int)SIOCSIFDSTADDR,
 		(caddr_t)&ifr_ipxip, (struct ifnet *)ifn);
-	satoipx_addr(ifr_ipxip.ifr_addr).ipx_host = ipx_thishost;
+
+	satoipx_addr(ifr_ipxip.ifr_addr).ipx_host =
+	    ipx_ifaddr->ia_addr.sipx_addr.x_host;
+		
 	return (ipx_control((struct socket *)0, (int)SIOCSIFADDR,
 			(caddr_t)&ifr_ipxip, (struct ifnet *)ifn));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.5 2000/01/11 02:15:37 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.6 2000/01/11 19:31:53 fgsch Exp $	*/
 
 /*-
  *
@@ -240,7 +240,6 @@ ipx_ifinit(ifp, ia, sipx, scrub)
 	int scrub;
 {
 	struct sockaddr_ipx oldaddr;
-	register union ipx_host *h = &ia->ia_addr.sipx_addr.ipx_host;
 	int s = splimp(), error;
 
 	/*
@@ -252,41 +251,19 @@ ipx_ifinit(ifp, ia, sipx, scrub)
 	/*
 	 * The convention we shall adopt for naming is that
 	 * a supplied address of zero means that "we don't care".
-	 * if there is a single interface, use the address of that
-	 * interface as our 6 byte host address.
-	 * if there are multiple interfaces, use any address already
-	 * used.
+	 * Use the MAC address of the interface. If it is an
+	 * interface without a MAC address, like a serial line, the
+	 * address must be supplied.
 	 *
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ipx_hosteqnh(ipx_thishost, ipx_zerohost)) {
-		if (ifp->if_ioctl &&
-		     (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia))) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (error);
-		}
-		ipx_thishost = *h;
-	} else if (ipx_hosteqnh(sipx->sipx_addr.ipx_host, ipx_zerohost)
-	    || ipx_hosteqnh(sipx->sipx_addr.ipx_host, ipx_thishost)) {
-		*h = ipx_thishost;
-		if (ifp->if_ioctl &&
-		     (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia))) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (error);
-		}
-		if (!ipx_hosteqnh(ipx_thishost,*h)) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (EINVAL);
-		}
-	} else {
+	if (ifp->if_ioctl != NULL &&
+	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia))) {
 		ia->ia_addr = oldaddr;
 		splx(s);
-		return (EINVAL);
+		return (error);
 	}
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	/*
@@ -300,7 +277,8 @@ ipx_ifinit(ifp, ia, sipx, scrub)
 	if (ifp->if_flags & IFF_POINTOPOINT)
 		rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
 	else {
-		ia->ia_broadaddr.sipx_addr.ipx_net = ia->ia_addr.sipx_addr.ipx_net;
+		ia->ia_broadaddr.sipx_addr.ipx_net =
+		    ia->ia_addr.sipx_addr.ipx_net;
 		rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_UP);
 	}
 	ia->ia_flags |= IFA_ROUTE;

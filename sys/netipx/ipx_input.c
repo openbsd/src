@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.5 2000/01/11 01:26:21 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.6 2000/01/11 19:31:55 fgsch Exp $	*/
 
 /*-
  *
@@ -75,7 +75,6 @@ int ipxcksum = 0;
 int ipxdonosocks = 0;
 int ipxforwarding = 0;
 
-union ipx_host	ipx_thishost;
 union ipx_net	ipx_zeronet;
 union ipx_host	ipx_zerohost;
 
@@ -136,6 +135,7 @@ ipxintr()
 	register struct ipx *ipx;
 	register struct mbuf *m;
 	register struct ipxpcb *ipxp;
+	struct ipx_ifaddr *ia;
 	register int i;
 	int len, s;
 
@@ -245,17 +245,27 @@ next:
 	/*
 	 * Is this our packet? If not, forward.
 	 */
-	} else if (!ipx_hosteqnh(ipx_thishost,ipx->ipx_dna.ipx_host)) {
+	} else {
+		for (ia = ipx_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+			if (ipx_hosteq(ipx->ipx_dna, ia->ia_addr.sipx_addr) &&
+			    (ipx_neteq(ipx->ipx_dna, ia->ia_addr.sipx_addr) ||
+			    ipx_neteqnn(ipx->ipx_dna.ipx_net, ipx_zeronet)))
+				break;
+
+		if (ia == NULL) {
 #ifdef	IPXDEBUG
-		printf("ipxintr: forwarding to %s\n", ipx_ntoa(ipx->ipx_dna));
+			printf("ipxintr: forwarding to %s\n",
+			    ipx_ntoa(ipx->ipx_dna));
 #endif
-		ipx_forward(m);
-		goto next;
+			ipx_forward(m);
+			goto next;
+		}
 	}
 	/*
 	 * Locate pcb for datagram.
 	 */
-	ipxp = ipx_pcblookup(&ipx->ipx_sna, ipx->ipx_dna.ipx_port, IPX_WILDCARD);
+	ipxp = ipx_pcblookup(&ipx->ipx_sna, ipx->ipx_dna.ipx_port,
+	    IPX_WILDCARD);
 	/*
 	 * Switch out to protocol's input routine.
 	 */
@@ -471,6 +481,7 @@ struct ifnet *ifp;
 {
 	register struct ipxpcb *ipxp;
 	register struct ifaddr *ifa;
+	register struct ipx_ifaddr *ia;
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
@@ -486,7 +497,16 @@ struct ifnet *ifp;
 				continue;
 			ipx = mtod(m0, struct ipx *);
 			ipx->ipx_sna.ipx_net = ipx_zeronet;
-			ipx->ipx_sna.ipx_host = ipx_thishost;
+			for (ia = ipx_ifaddr.tqh_first; ia;
+			    ia = ia->ia_list.tqe_next)
+				if (ifp == ia->ia_ifp)
+					break;
+			if (ia == NULL)
+				ipx->ipx_sna.ipx_host = ipx_zerohost;
+			else
+				ipx->ipx_sna.ipx_host =
+				    ia->ia_addr.sipx_addr.ipx_host;
+
 			if (ifp && (ifp->if_flags & IFF_POINTOPOINT))
 			    for(ifa = ifp->if_addrlist.tqh_first; ifa;
 					ifa = ifa->ifa_list.tqe_next) {

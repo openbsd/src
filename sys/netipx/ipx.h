@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.6 2000/01/11 01:26:20 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.7 2000/01/11 19:31:54 fgsch Exp $	*/
 
 /*-
  *
@@ -195,7 +195,6 @@ extern struct domain ipxdomain;
 extern struct sockaddr_ipx ipx_netmask;
 extern struct sockaddr_ipx ipx_hostmask;
 
-extern union ipx_host	ipx_thishost;
 extern union ipx_net	ipx_zeronet;
 extern union ipx_host	ipx_zerohost;
 extern union ipx_net	ipx_broadnet;
