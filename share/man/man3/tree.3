@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.5 2002/04/22 16:41:54 provos Exp $
+.\"	$OpenBSD: tree.3,v 1.6 2002/06/11 19:02:50 provos Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -432,5 +432,22 @@ for (var = SPLAY_MIN(NAME, head); var != NULL; var = nxt) {
 	free(var);
 }
 .Ed
+.Pp
+Both
+.Fn RB_INSERT
+and
+.Fn SPLAY_INSERT
+return
+.Va NULL
+if the element was inserted in the tree successfully, otherwise they
+return a pointer to the element with the colliding key.
+.Pp
+Accordingly,
+.Fn RB_REMOVE
+and
+.Fn SPLAY_REMOVE
+return the pointer to the removed element otherwise they return
+.Va NULL
+to indicate an error.
 .Sh AUTHORS
 The author of the tree macros is Niels Provos.
