@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.86 2000/11/10 09:39:36 niklas Exp $
+#	$OpenBSD: files.pci,v 1.87 2000/12/17 21:35:02 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -110,6 +110,10 @@ device	aac: scsi
 attach	aac at pci with aac_pci
 file	dev/pci/aac_pci.c		aac_pci
 file	dev/ic/aac.c			aac
+
+# Compaq Array Controllers
+attach	cac at pci with cac_pci
+file	dev/pci/cac_pci.c		cac_pci
 
 # Qlogic ISP 10x0 (PCI) family
 # device declaration in sys/conf/files

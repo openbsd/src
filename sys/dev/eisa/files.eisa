@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.9 1999/11/30 07:55:55 cmetz Exp $
+#	$OpenBSD: files.eisa,v 1.10 2000/12/17 21:35:03 mickey Exp $
 #	$NetBSD: files.eisa,v 1.12 1996/09/01 00:10:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -33,6 +33,10 @@ file	dev/eisa/dpt_eisa.c		dpt_eisa
 # device declaration in sys/conf/files
 attach	uha at eisa with uha_eisa
 file	dev/eisa/uha_eisa.c		uha_eisa
+
+# Compaq Array Controllers
+attach	cac at eisa with cac_eisa
+file	dev/eisa/cac_eisa.c		cac_eisa
 
 # 3Com 3c579 and 3c509 masquerading as EISA Ethernet Controllers
 # device declaration in sys/conf/files

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.215 2000/11/17 15:13:20 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.216 2000/12/17 21:35:04 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -193,6 +193,9 @@ twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 scsibus* at twe?
 aac*	at pci? dev ? function ?	# Adaptec FSA RAID controllers
 scsibus* at aac?
+cac*	at pci? dev ? function ?	# Compaq Smart ARRAY RAID controllers
+cac*	at eisa? slot ?
+scsibus* at cac?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
