@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.175 2003/05/19 02:32:47 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.176 2003/06/03 12:18:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1460,51 +1460,6 @@ main(int argc, char *argv[])
 		if (pfctl_disable(dev, opts))
 			error = 1;
 
-	if (clearopt != NULL) {
-		switch (*clearopt) {
-		case 'r':
-			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
-			break;
-		case 'n':
-			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
-			break;
-		case 'q':
-			pfctl_clear_altq(dev, opts);
-			break;
-		case 's':
-			pfctl_clear_states(dev, opts);
-			break;
-		case 'i':
-			pfctl_clear_stats(dev, opts);
-			break;
-		case 'a':
-			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
-			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
-			pfctl_clear_altq(dev, opts);
-			pfctl_clear_states(dev, opts);
-			pfctl_clear_stats(dev, opts);
-			pfctl_clear_tables(anchorname, rulesetname, opts);
-			break;
-		case 'T':
-			pfctl_clear_tables(anchorname, rulesetname, opts);
-			break;
-		default:
-			assert(0);
-		}
-	}
-	if (state_killers)
-		pfctl_kill_states(dev, opts);
-
-	if (tblcmdopt != NULL) {
-		error = pfctl_command_tables(argc, argv, tableopt,
-		    tblcmdopt, rulesopt, anchorname, rulesetname, opts);
-		rulesopt = NULL;
-	}
-
-	if (rulesopt != NULL)
-		if (pfctl_rules(dev, rulesopt, opts, anchorname, rulesetname))
-			error = 1;
-
 	if (showopt != NULL) {
 		switch (*showopt) {
 		case 'A':
@@ -1555,6 +1510,51 @@ main(int argc, char *argv[])
 			assert(0);
 		}
 	}
+
+	if (clearopt != NULL) {
+		switch (*clearopt) {
+		case 'r':
+			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
+			break;
+		case 'n':
+			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
+			break;
+		case 'q':
+			pfctl_clear_altq(dev, opts);
+			break;
+		case 's':
+			pfctl_clear_states(dev, opts);
+			break;
+		case 'i':
+			pfctl_clear_stats(dev, opts);
+			break;
+		case 'a':
+			pfctl_clear_rules(dev, opts, anchorname, rulesetname);
+			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
+			pfctl_clear_altq(dev, opts);
+			pfctl_clear_states(dev, opts);
+			pfctl_clear_stats(dev, opts);
+			pfctl_clear_tables(anchorname, rulesetname, opts);
+			break;
+		case 'T':
+			pfctl_clear_tables(anchorname, rulesetname, opts);
+			break;
+		default:
+			assert(0);
+		}
+	}
+	if (state_killers)
+		pfctl_kill_states(dev, opts);
+
+	if (tblcmdopt != NULL) {
+		error = pfctl_command_tables(argc, argv, tableopt,
+		    tblcmdopt, rulesopt, anchorname, rulesetname, opts);
+		rulesopt = NULL;
+	}
+
+	if (rulesopt != NULL)
+		if (pfctl_rules(dev, rulesopt, opts, anchorname, rulesetname))
+			error = 1;
 
 	if (opts & PF_OPT_ENABLE)
 		if (pfctl_enable(dev, opts))
