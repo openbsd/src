@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.842 2005/03/09 12:12:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.843 2005/03/10 20:47:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -107,22 +107,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3c450",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
-	    "3c590 10Mbps",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX,
-	    "3c595 100Base-TX",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4,
-	    "3c595 100Base-T4",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII,
-	    "3c595 10Mbps-MII",
-	},
-	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
 	    "3c555 100Base-TX",
 	},
@@ -137,6 +121,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFE575CT,
 	    "3CCFE575CT",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
+	    "3c590 10Mbps",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX,
+	    "3c595 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4,
+	    "3c595 100Base-T4",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII,
+	    "3c595 10Mbps-MII",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRSHPW796,
@@ -177,6 +177,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A,
 	    "3crwe777a AirConnect",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GIG,
+	    "Gig",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
@@ -2175,6 +2179,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AAR-1210SA",
 	},
 	{
+	    PCI_VENDOR_CNET, PCI_PRODUCT_CNET_GIGACARD,
+	    "GigaCard",
+	},
+	{
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
 	    "EX110TX",
 	},
@@ -2689,6 +2697,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T,
 	    "DGE-550T",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T,
+	    "DGE-560T",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -4739,6 +4751,58 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SKv2",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_2,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_4,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_5,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_6,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_7,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8,
+	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8035,
+	    "Yukon 8035",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8036,
+	    "Yukon 8036",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
+	    "Yukon 8052",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8050,
+	    "Yukon 8050",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8053,
+	    "Yukon 8053",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2_BELKIN,
 	    "Belkin F5D5005",
 	},
@@ -6585,6 +6649,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9D21,
 	    "SK-9D21",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx,
+	    "SK-9Sxx",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx,
+	    "SK-9Exx",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
@@ -9069,6 +9141,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PCTEL,
 	    "PCTEL",
+	},
+	{
+	    PCI_VENDOR_CNET,
+	    "CNet",
 	},
 	{
 	    PCI_VENDOR_LMC,
