@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.41 2000/04/18 16:57:14 kjell Exp $
+.\"	$OpenBSD: afterboot.8,v 1.42 2000/04/18 17:27:17 kjell Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -539,14 +539,13 @@ from the master so that the remote commands work.
 .Ss Mail Aliases
 Edit
 .Pa /etc/mail/aliases
-and set the four standard aliases to go to either a mailing list, or
+and set the three standard aliases to go to either a mailing list, or
 the system administrator.
 .Bd -literal -offset indent
 # Well-known aliases -- these should be filled in!
 root:		sysadm
 manager:	sysadm
 dumper:		sysadm
-operator:	sysadm
 .Ed
 .Pp
 Run
