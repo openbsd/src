@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.34 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.35 2002/02/08 19:47:50 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ sys_read(p, v, retval)
 
 	FREF(fp);
 
-	/* dofileread() will unuse the descriptor for us */
+	/* dofileread() will FRELE the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, retval));
 }
@@ -181,7 +181,9 @@ sys_readv(p, v, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-	/* dofilereadv() will unuse the descriptor for us */
+	FREF(fp);
+
+	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, retval));
 }
@@ -273,6 +275,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, retval)
 	if (needfree)
 		free(needfree, M_IOV);
  out:
+	FRELE(fp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.90 2002/02/08 18:58:51 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.91 2002/02/08 19:47:50 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2655,7 +2655,7 @@ sys_pread(p, v, retval)
 
 	FREF(fp);
 
-	/* dofileread() will unuse the descriptor for us */
+	/* dofileread() will FRELE the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, retval));
 }
@@ -2680,7 +2680,7 @@ sys_preadv(p, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 	off_t offset;
-	int error, fd = SCARG(uap, fd);
+	int fd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
@@ -2689,18 +2689,16 @@ sys_preadv(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
+		return (ESPIPE);
 	}
+
+	FREF(fp);
 
 	offset = SCARG(uap, offset);
 
-	/* dofilereadv() will unuse the descriptor for us */
+	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &offset, retval));
-
- out:
-	return (error);
 }
 
 /*
