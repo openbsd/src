@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.117 2003/07/31 11:11:02 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.118 2003/08/04 14:03:17 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -148,6 +148,10 @@ Clean distribution files.
 Uninstall package.
 .It Va package
 Remove package file (and copies in ${CDROM_PACKAGES} and ${FTP_PACKAGES}).
+.It Va readmes
+Clean files generated through the
+.Ar readme
+targets (html files).
 .It Va sub
 With
 .Va install
@@ -336,6 +340,9 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
+.It Ar readmes
+Create an html description of packages, including comments, description,
+and dependencies.
 .It Ar rebuild
 Force rebuild of the port.
 .It Ar regress
@@ -1380,7 +1387,7 @@ and
 Name of the tar binary.
 .It Ev TEMPLATES
 Base location for the templates used in the
-.Ar readme
+.Ar readmes
 target.
 User settings.
 .It Ev TRUST_PACKAGES
