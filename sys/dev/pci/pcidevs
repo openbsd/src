@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.58 1998/06/23 11:42:14 deraadt Exp $
+$OpenBSD: pcidevs,v 1.59 1998/06/25 01:55:04 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -796,7 +796,6 @@ product INTEL 82371SB		0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE		0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB		0x7020	82371SB (Triton II) USB Interface
 product INTEL 82437VX		0x7030	82437VX System Controller (TVX)
-product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
 product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
 product INTEL 82371AB		0x7110	82371AB PIIX4 ISA Bridge
 product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
