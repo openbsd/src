@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.389 2001/04/14 13:37:29 aaron Exp $
+	$OpenBSD: pcidevs,v 1.390 2001/04/29 17:30:53 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -530,6 +530,7 @@ vendor AIRONET		0x14b9	Aironet
 vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
+vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
 vendor NETSEC		0x1660	NetSec
@@ -1720,6 +1721,9 @@ product TI PCI2031		0xac21	PCI2031 PCI-PCI
 product TI PCI1410		0xac50	PCI1410 PCI-CardBus
 product TI PCI1420		0xac51	PCI1420 PCI-CardBus
 product TI PCI1451		0xac52	PCI1451 PCI-CardBus
+
+/* Topic */
+product TOPIC 5634PCV		0x0000	5634PCV SurfRider
 
 /* Toshiba products */
 product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
