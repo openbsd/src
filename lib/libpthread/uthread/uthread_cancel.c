@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.12 2002/03/07 23:05:10 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.13 2002/05/07 05:13:17 pvalchev Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -15,7 +15,8 @@ pthread_cancel(pthread_t pthread)
 
 	if ((ret = _find_thread(pthread)) != 0) {
 		/* NOTHING */
-	} else if (pthread->state == PS_DEAD || pthread->state == PS_DEADLOCK) {
+	} else if (pthread->state == PS_DEAD || pthread->state == PS_DEADLOCK
+	    || (pthread->flags & PTHREAD_EXITING) != 0) {
 		ret = 0;
 	} else {
 		/* Protect the scheduling queues: */
@@ -190,7 +191,8 @@ pthread_testcancel(void)
 	struct pthread	*curthread = _get_curthread();
 
 	if (((curthread->cancelflags & PTHREAD_CANCEL_DISABLE) == 0) &&
-	    ((curthread->cancelflags & PTHREAD_CANCELLING) != 0)) {
+	    ((curthread->cancelflags & PTHREAD_CANCELLING) != 0) &&
+	    ((curthread->flags & PTHREAD_EXITING) == 0)) {
 		/*
 		 * It is possible for this thread to be swapped out
 		 * while performing cancellation; do not allow it
