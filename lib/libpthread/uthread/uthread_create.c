@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.20 2004/02/16 22:51:11 brad Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.21 2005/01/23 19:23:47 kettenis Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stddef.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -44,6 +45,10 @@
 #include <machine/reg.h>
 #include <pthread.h>
 #include "pthread_private.h"
+
+/* Symbols that help gdb find the information it needs. */
+int _thread_next_offset = offsetof(struct pthread, tle.tqe_next);
+int _thread_state_offset = offsetof(struct pthread, state);
 
 int
 pthread_create(pthread_t *thread, const pthread_attr_t *attr,
