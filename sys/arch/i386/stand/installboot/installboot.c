@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.3 1997/03/31 23:06:24 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.4 1997/07/17 22:47:01 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int	verbose, nowrite;
+int	verbose, nowrite, heads, nsectors;
 char	*boot, *proto, *dev;
 struct nlist nl[] = {
 #define X_BLOCK_COUNT	0
@@ -89,9 +89,17 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
+	struct stat sb;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	nsectors = heads = -1;
+	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
 		switch (c) {
+		case 'h':
+			heads = atoi(optarg);
+			break;
+		case 's':
+			nsectors = atoi(optarg);
+			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
@@ -130,6 +138,12 @@ main(argc, argv)
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
+
+	if (fstat(devfd, &sb) < 0)
+		err(1, "stat: %s", dev);
+
+	if (!S_ISCHR(sb.st_mode))
+		errx(1, "%s: Not a character device", dev);
 
 	/* Extract and load block numbers */
 	if (loadblocknums(boot, devfd) != 0)
@@ -261,13 +275,14 @@ static char sblock[SBSIZE];
 
 int
 loadblocknums(boot, devfd)
-char	*boot;
-int	devfd;
+	char	*boot;
+	int	devfd;
 {
 	int		i, fd;
 	struct stat	statbuf;
 	struct statfs	statfsbuf;
 	struct disklabel dl;
+	struct partition *pl;
 	struct fs	*fs;
 	char		*buf;
 	daddr_t		blk, *ap;
@@ -290,6 +305,12 @@ int	devfd;
 	/* check disklabel */
 	if (dl.d_magic != DISKMAGIC)
 		err(1, "bad disklabel magic=%0x8x", dl.d_magic);
+
+	/* get partition pointer */
+	if (fstat(devfd, &statbuf) < 0)
+		err(1, "stat: %s", dev);
+
+	pl = &dl.d_partitions[DISKPART(statbuf.st_rdev)];
 
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);
@@ -346,25 +367,31 @@ int	devfd;
 		printf("Will load %d blocks of size %d each.\n",
 			   ndb, fs->fs_bsize);
 
+	/* adjust disklabel w/ synthetic geometry */
+	if (nsectors > 0)
+		dl.d_nsectors = nsectors;
+	if (heads > 0)
+		dl.d_secpercyl = dl.d_nsectors * heads;
+
 	/*
 	 * Get the block numbers; we don't handle fragments
 	 */
 	ap = ip->di_db;
 	bt = block_table_p;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--)
-		bt += record_block(bt, fsbtodb(fs, *ap),
+		bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
 					    fs->fs_bsize / 512, &dl);
 	if (ndb != 0) {
 
 		/*
 		 * Just one level of indirections; there isn't much room
-		 * for more in the 1st-level bootblocks anyway.
+		 * for more in the 2nd-level /boot anyway.
 		 */
 		blk = fsbtodb(fs, ip->di_ib[0]);
 		devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 		ap = (daddr_t *)buf;
 		for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--)
-			bt += record_block(bt, fsbtodb(fs, *ap),
+			bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
 					   fs->fs_bsize / 512, &dl);
 	}
 
