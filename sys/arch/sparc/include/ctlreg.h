@@ -173,6 +173,7 @@
 #define	SYSEN_DVMA	0x20		/* Enable dvma */
 #define	SYSEN_CACHE	0x10		/* Enable cache */
 #define	SYSEN_IOCACHE	0x40		/* Enable IO cache */
+#define	SYSEN_VIDEO	0x08		/* Enable on-board video */
 #define	SYSEN_RESET	0x04		/* Reset the hardware */
 #define	SYSEN_RESETVME	0x02		/* Reset the VME bus */
 #endif
