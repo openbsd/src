@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.12 1996/09/24 02:40:11 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.13 1996/10/18 14:46:35 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -52,9 +52,13 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/limits.h>
-/* Extra stuff from Matthias Drochner <drochner@zelux6.zel.kfa-juelich.de>
- */
+/* Extra stuff from Matthias Drochner <drochner@zelux6.zel.kfa-juelich.de> */
 #include <sys/queue.h>
+
+/* Bleh!  Need device_register proto */
+#ifdef __alpha__
+#include <machine/autoconf.h>
+#endif /* __alpha__ */
 
 /*
  * Autoconfiguration subroutines.
