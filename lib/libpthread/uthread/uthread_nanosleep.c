@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_nanosleep.c,v 1.3 1999/01/17 23:57:27 d Exp $
+ * $OpenBSD: uthread_nanosleep.c,v 1.4 1999/06/09 07:16:17 d Exp $
  */
 #include <stdio.h>
 #include <errno.h>
@@ -48,7 +48,9 @@ nanosleep(const struct timespec * time_to_sleep,
 	struct timespec remaining_time;
 	struct timeval  tv;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
+
 	/* Check if the time to sleep is legal: */
 	if (time_to_sleep == NULL || time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec > 1000000000 || time_to_sleep->tv_sec < 0) {
 		/* Return an EINVAL error : */
@@ -96,7 +98,10 @@ nanosleep(const struct timespec * time_to_sleep,
 			ret = -1;
 		}
 	}
+
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

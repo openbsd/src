@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_close.c,v 1.4 1999/01/17 23:57:27 d Exp $
+ * $OpenBSD: uthread_close.c,v 1.5 1999/06/09 07:16:16 d Exp $
  */
 #include <stdlib.h>
 #include <unistd.h>
@@ -46,7 +46,9 @@ close(int fd)
 	int		ret;
 	struct stat	sb;
 
+	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
+
 	/* Lock the file descriptor while the file is closed: */
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		/* Get file descriptor status. */
@@ -85,7 +87,10 @@ close(int fd)
 		free(_thread_fd_table[fd]);
 		_thread_fd_table[fd] = NULL;
 	}
+
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

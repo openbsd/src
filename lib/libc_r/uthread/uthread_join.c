@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_join.c,v 1.4 1999/05/26 00:18:24 d Exp $
+ * $OpenBSD: uthread_join.c,v 1.5 1999/06/09 07:16:17 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -100,7 +100,7 @@ pthread_join(pthread_t pthread, void **thread_return)
 		/* Return the thread's return value: */
 		*thread_return = pthread->ret;
 
-	/* This operation was a cancel point: */
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */

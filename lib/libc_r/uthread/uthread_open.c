@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_open.c,v 1.4 1998/04/29 09:59:07 jb Exp $
- * $OpenBSD: uthread_open.c,v 1.3 1999/01/17 23:57:27 d Exp $
+ * $OpenBSD: uthread_open.c,v 1.4 1999/06/09 07:16:17 d Exp $
  *
  */
 #include <stdarg.h>
@@ -49,6 +49,7 @@ open(const char *path, int flags,...)
 	int             mode = 0;
 	va_list         ap;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	/* Check if the file is being created: */
@@ -70,6 +71,7 @@ open(const char *path, int flags,...)
 		fd = -1;
 	}
 
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
 
 	/* Return the file descriptor or -1 on error: */

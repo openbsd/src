@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_wait4.c,v 1.3 1999/01/17 23:57:28 d Exp $
+ * $OpenBSD: uthread_wait4.c,v 1.4 1999/06/09 07:16:17 d Exp $
  */
 #include <errno.h>
 #include <sys/wait.h>
@@ -42,7 +42,9 @@ wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 {
 	pid_t           ret;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
+
 	/* Perform a non-blocking wait4 syscall: */
 	while ((ret = _thread_sys_wait4(pid, istat, options | WNOHANG, rusage)) == 0 && (options & WNOHANG) == 0) {
 		/* Reset the interrupted operation flag: */
@@ -58,7 +60,10 @@ wait4(pid_t pid, int *istat, int options, struct rusage * rusage)
 			break;
 		}
 	}
+
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif

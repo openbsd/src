@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_write.c,v 1.10 1998/09/07 21:55:01 alex Exp $
- * $OpenBSD: uthread_write.c,v 1.3 1999/01/17 23:57:28 d Exp $
+ * $OpenBSD: uthread_write.c,v 1.4 1999/06/09 07:16:17 d Exp $
  *
  */
 #include <sys/types.h>
@@ -51,10 +51,12 @@ write(int fd, const void *buf, size_t nbytes)
 	ssize_t num = 0;
 	ssize_t	ret;
 
+	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
 	/* POSIX says to do just this: */
 	if (nbytes == 0) {
+		/* No longer in a cancellation point: */
 		_thread_leave_cancellation_point();
 		return (0);
 	}
@@ -69,6 +71,7 @@ write(int fd, const void *buf, size_t nbytes)
 			/* File is not open for write: */
 			errno = EBADF;
 			_FD_UNLOCK(fd, FD_WRITE);
+			/* No longer in a cancellation point: */
 			_thread_leave_cancellation_point();
 			return (-1);
 		}
@@ -135,7 +138,10 @@ write(int fd, const void *buf, size_t nbytes)
 		}
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+
+	/* No longer in a cancellation point: */
 	_thread_leave_cancellation_point();
+
 	return (ret);
 }
 #endif
