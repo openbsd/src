@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaddrs.h,v 1.5 2001/01/15 23:23:58 jason Exp $	*/
+/*	$OpenBSD: vaddrs.h,v 1.6 2003/04/23 19:34:07 miod Exp $	*/
 /*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  * Special (fixed) virtual addresses on the SPARC.
  *
  * IO virtual space begins at 0xfe000000 (a segment boundary) and
- * continues up to the DMVA edge at 0xff000000.  (The upper all-1s
+ * continues up to the DVMA edge at 0xff000000.  (The upper all-1s
  * byte is special since some of the hardware supplies this to pad
  * a 24-bit address space out to 32 bits.  This is a legacy of the
  * IBM PC AT bus, actually, just so you know who to blame.)
