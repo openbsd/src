@@ -31,3 +31,4 @@ usr/sbin/chown
 usr/sbin/chroot
 usr/sbin/rdate
 usr/share/misc/termcap
+var

@@ -11,12 +11,15 @@ root
 sbin
 sys
 tmp
+usr/bin/awk
 usr/bin/basename
 usr/bin/chflags
 usr/bin/cksum
 usr/bin/cmp
 usr/bin/cut
 usr/bin/ftp
+usr/bin/grep
+usr/bin/gzip
 usr/bin/less
 usr/bin/more
 usr/bin/rsh
@@ -27,6 +30,7 @@ usr/bin/tftp
 usr/bin/vi
 usr/lib/libc.so.??.?
 usr/lib/libedit.so.?.?
+usr/lib/libm.so.?.?
 usr/lib/libtermcap.so.?.?
 usr/lib/libtermlib.so.?.?
 usr/lib/libutil.so.?.?
@@ -37,3 +41,4 @@ usr/sbin/chown
 usr/sbin/chroot
 usr/sbin/rdate
 usr/share/misc/termcap
+var
