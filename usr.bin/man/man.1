@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.4 1998/03/09 23:20:12 millert Exp $
+.\"	$OpenBSD: man.1,v 1.5 1998/07/20 00:19:10 art Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,6 +49,8 @@
 .Op Fl S Ar subsection
 .Op Ar section
 .Ar name Ar ...
+.Nm man
+.Fl k Ar keyword
 .Sh DESCRIPTION
 The
 .Nm man
@@ -130,6 +132,9 @@ would display for the specified
 and
 .Ar name
 combination.
+.It Fl k
+Locate commands matching
+.Ar keyword
 .El
 .Pp
 The optional
