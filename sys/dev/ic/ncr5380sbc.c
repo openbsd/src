@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.8 1997/06/11 03:13:19 downsj Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.9 1997/09/11 01:02:41 kstailey Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 
 #ifdef DDB
 #include <ddb/db_output.h>
-#endif	/* DDB */
+#endif
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
@@ -145,7 +145,6 @@ void ncr5380_show_req __P((struct sci_req *));
 void ncr5380_show_req __P((struct sci_req *));
 void ncr5380_show_state __P((void));
 #endif	/* DDB */
-
 #else	/* NCR5380_DEBUG */
 
 #define	NCR_BREAK() 		/* nada */
@@ -265,7 +264,10 @@ ncr5380_pio_out(sc, phase, count, data)
 			break;
 
 		/* Put the data on the bus. */
-		*sc->sci_odata = *data++;
+		if (data)
+			*sc->sci_odata = *data++;
+		else
+			*sc->sci_odata = 0;
 
 		/* Tell the target it's there. */
 		icmd |= SCI_ICMD_ACK;
@@ -321,7 +323,10 @@ ncr5380_pio_in(sc, phase, count, data)
 			break;
 
 		/* Read the data bus. */
-		*data++ = *sc->sci_data;
+		if (data)
+			*data++ = *sc->sci_data;
+		else
+			(void) *sc->sci_data;
 
 		/* Tell target we got it. */
 		icmd |= SCI_ICMD_ACK;
@@ -1549,6 +1554,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
+	struct scsi_xfer *xs = sr->sr_xs;
 	int n, phase;
 	int act_flags;
 	register u_char icmd;
@@ -1668,12 +1674,6 @@ have_msg:
 		act_flags |= (ACT_DISCONNECT | ACT_CMD_DONE);
 		break;
 
-	case MSG_DISCONNECT:
-		NCR_TRACE("msg_in: DISCONNECT\n", 0);
-		/* Target is about to disconnect. */
-		act_flags |= ACT_DISCONNECT;
-		break;
-
 	case MSG_PARITY_ERROR:
 		NCR_TRACE("msg_in: PARITY_ERROR\n", 0);
 		/* Resend the last message. */
@@ -1696,6 +1696,14 @@ have_msg:
 	case MSG_NOOP:
 		NCR_TRACE("msg_in: NOOP\n", 0);
 		break;
+
+	case MSG_DISCONNECT:
+		NCR_TRACE("msg_in: DISCONNECT\n", 0);
+		/* Target is about to disconnect. */
+		act_flags |= ACT_DISCONNECT;
+		if ((xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+			break;
+		/*FALLTHROUGH*/
 
 	case MSG_SAVEDATAPOINTER:
 		NCR_TRACE("msg_in: SAVE_PTRS\n", 0);
@@ -1783,9 +1791,8 @@ ncr5380_msg_out(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, resel;
-	int progress, act_flags;
-	register u_char icmd;
+	int act_flags, n, phase, progress;
+	register u_char icmd, msg;
 
 	/* acknowledge phase change */
 	*sc->sci_tcmd = PHASE_MSG_OUT;
@@ -1843,9 +1850,17 @@ nextmsg:
 			NCR_BREAK();
 			goto noop;
 		}
-		resel = (sc->sc_flags & NCR5380_PERMIT_RESELECT) ? 1 : 0;
-		resel &= (sr->sr_flags & (SR_IMMED | SR_SENSE)) ? 0 : 1;
-		sc->sc_omess[0] = MSG_IDENTIFY(sr->sr_lun, resel);
+		/*
+		 * The identify message we send determines whether 
+		 * disconnect/reselect is allowed for this command.
+		 * 0xC0+LUN: allows it, 0x80+LUN disallows it.
+		 */
+		msg = 0xc0;	/* MSG_IDENTIFY(0,1) */
+		if (sc->sc_no_disconnect & (1 << sr->sr_target))
+			msg = 0x80;
+		if (sr->sr_flags & (SR_IMMED | SR_SENSE))
+			msg = 0x80;
+		sc->sc_omess[0] = msg | sr->sr_lun;
 		n = 1;
 		break;
 
@@ -2084,9 +2099,19 @@ ncr5380_data_xfer(sc, phase)
 
 	/* Make sure we have some data to move. */
 	if (sc->sc_datalen <= 0) {
-		printf("%s: can not transfer more data\n",
-		    sc->sc_dev.dv_xname);
-		goto abort;
+		/* Device needs padding. */
+		if (phase == PHASE_DATA_IN)
+			ncr5380_pio_in(sc, phase, 4096, NULL);
+		else
+			ncr5380_pio_out(sc, phase, 4096, NULL);
+		/* Make sure that caused a phase change. */
+		if (SCI_BUS_PHASE(*sc->sci_bus_csr) == phase) {
+			/* More than 4k is just too much! */
+			printf("%s: too much data padding\n",
+			       sc->sc_dev.dv_xname);
+			goto abort;
+		}
+		return ACT_CONTINUE;
 	}
 
 	/*
@@ -2463,7 +2488,7 @@ ncr5380_trace(msg, val)
 	register struct trace_ent *tr;
 	register int s;
 
-	s = splhigh();
+	s = splbio();
 
 	tr = &ncr5380_tracebuf[ncr5380_traceidx];
 
@@ -2510,8 +2535,8 @@ ncr5380_show_req(sr)
 
 	db_printf("TID=%d ",	sr->sr_target);
 	db_printf("LUN=%d ",	sr->sr_lun);
-	db_printf("dh=0x%x ",	sr->sr_dma_hand);
-	db_printf("dptr=0x%x ",	sr->sr_dataptr);
+	db_printf("dh=%p ",	sr->sr_dma_hand);
+	db_printf("dptr=%p ",	sr->sr_dataptr);
 	db_printf("dlen=0x%x ",	sr->sr_datalen);
 	db_printf("flags=%d ",	sr->sr_flags);
 	db_printf("stat=%d ",	sr->sr_status);
@@ -2524,7 +2549,7 @@ ncr5380_show_req(sr)
 #ifdef	SCSIDEBUG
 	show_scsi_xs(xs);
 #else
-	db_printf("xs=0x%x\n", xs);
+	db_printf("xs=%p\n", xs);
 #endif
 }
 
@@ -2549,7 +2574,7 @@ ncr5380_show_state()
 		if (sr->sr_xs) {
 			if (sr == sc->sc_current)
 				k = i;
-			db_printf("req %d: (sr=0x%x)", i, (long)sr);
+			db_printf("req %d: (sr=%p)", i, (long)sr);
 			ncr5380_show_req(sr);
 		}
 	}
@@ -2566,8 +2591,8 @@ ncr5380_show_state()
 	}
 
 	db_printf("sc_state=0x%x\n",	sc->sc_state);
-	db_printf("sc_current=0x%x\n",	sc->sc_current);
-	db_printf("sc_dataptr=0x%x\n",	sc->sc_dataptr);
+	db_printf("sc_current=%p\n",	sc->sc_current);
+	db_printf("sc_dataptr=%p\n",	sc->sc_dataptr);
 	db_printf("sc_datalen=0x%x\n",	sc->sc_datalen);
 
 	db_printf("sc_prevphase=%d\n",	sc->sc_prevphase);
