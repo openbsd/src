@@ -43,7 +43,7 @@ pass in on ppp0 proto udp from any to any port = ntalk
 #  forever timing out.  Don't log ident (auth port) as it's so common.
 #
 block return-rst in log on ppp0 proto tcp from any to any flags S/SA
-block in on ppp0 proto tcp from any to any port = auth flags S/SA
+block return-rst in on ppp0 proto tcp from any to any port = auth flags S/SA
 #
 #  Allow incoming TCP connections to ports between 1024 and 5000, as
 #  these don't have daemons listening but are used by outgoing
