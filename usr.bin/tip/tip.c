@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.6 1997/08/22 22:42:07 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.7 1997/08/25 16:30:13 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.6 1997/08/22 22:42:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.7 1997/08/25 16:30:13 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -273,6 +273,7 @@ daemon_uid()
 
 shell_uid()
 {
+	setegid(gid);
 	seteuid(uid);
 }
 
