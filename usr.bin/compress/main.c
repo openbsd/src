@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2003/12/09 07:34:55 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2003/12/16 18:38:01 henning Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -37,7 +37,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.48 2003/12/09 07:34:55 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.49 2003/12/16 18:38:01 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,9 +99,9 @@ const struct compressor null_method =
 int permission(const char *);
 void setfile(const char *, struct stat *);
 __dead void usage(int);
-int compress(const char *, char *, const struct compressor *,
+int docompress(const char *, char *, const struct compressor *,
     int, struct stat *);
-int decompress(const char *, char *, const struct compressor *,
+int dodecompress(const char *, char *, const struct compressor *,
     int, struct stat *);
 const struct compressor *check_method(int);
 const char *check_suffix(const char *);
@@ -415,7 +415,7 @@ main(int argc, char *argv[])
 		if (verbose > 0 && !pipin && !list)
 			fprintf(stderr, "%s:\t", infile);
 
-		error = (decomp ? decompress : compress)
+		error = (decomp ? dodecompress : docompress)
 			(infile, outfile, method, bits, entry->fts_statp);
 
 		switch (error) {
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 }
 
 int
-compress(const char *in, char *out, const struct compressor *method,
+docompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
@@ -561,7 +561,7 @@ check_method(int fd)
 }
 
 int
-decompress(const char *in, char *out, const struct compressor *method,
+dodecompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
