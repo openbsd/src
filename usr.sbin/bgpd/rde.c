@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.9 2003/12/19 19:24:08 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.10 2003/12/20 14:36:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -76,8 +76,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	pid_t		 pid;
 	struct passwd	*pw;
 	struct pollfd	 pfd[2];
-	size_t		 nfds;
-	int		 n;
+	int		 n, nfds;
 
 	switch (pid = fork()) {
 	case -1:
