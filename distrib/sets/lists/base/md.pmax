@@ -11,7 +11,7 @@
 ./usr/lib/libc_r.so.2.1
 ./usr/lib/libcrypto.so.2.2
 ./usr/lib/libcurses++.so.1.1
-./usr/lib/libcurses.so.7.0
+./usr/lib/libcurses.so.7.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -30,8 +30,8 @@
 ./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.2.2
-./usr/lib/libtermcap.so.7.0
-./usr/lib/libtermlib.so.7.0
+./usr/lib/libtermcap.so.7.1
+./usr/lib/libtermlib.so.7.1
 ./usr/lib/libutil.so.4.4
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3

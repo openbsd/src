@@ -270,8 +270,6 @@
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
-./usr/include/dev/pci/if_alreg.h
-./usr/include/dev/pci/if_axreg.h
 ./usr/include/dev/pci/if_dcreg.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_fxpreg.h
@@ -297,6 +295,7 @@
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pciide_acer_reg.h
+./usr/include/dev/pci/pciide_amd_reg.h
 ./usr/include/dev/pci/pciide_apollo_reg.h
 ./usr/include/dev/pci/pciide_cmd_reg.h
 ./usr/include/dev/pci/pciide_cy693_reg.h
@@ -422,6 +421,8 @@
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/usb
 ./usr/include/dev/usb/hid.h
+./usr/include/dev/usb/if_kuereg.h
+./usr/include/dev/usb/kue_fw.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
@@ -695,6 +696,7 @@
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_gif.h
 ./usr/include/net/if_gre.h
+./usr/include/net/if_ieee80211.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
 ./usr/include/net/if_ppp.h
@@ -1125,6 +1127,7 @@
 ./usr/include/sys/termios.h
 ./usr/include/sys/time.h
 ./usr/include/sys/timeb.h
+./usr/include/sys/timeout.h
 ./usr/include/sys/times.h
 ./usr/include/sys/timex.h
 ./usr/include/sys/tprintf.h
@@ -3343,6 +3346,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/net/if_ieee80211.h
-./usr/include/sys/timeout.h
-./usr/include/dev/pci/pciide_amd_reg.h
