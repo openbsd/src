@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nsclpcsio.4,v 1.1 2004/01/05 20:13:15 markus Exp $
+.\"	$OpenBSD: nsclpcsio.4,v 1.2 2004/01/05 21:02:26 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -15,20 +15,20 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd January 5, 2004
-.Dt nsclpcsio 4
+.Dt NSCLPCSIO 4
 .Os
 .Sh NAME
 .Nm nsclpcsio
-.Nd National Semiconductor PC87366 LPC Super I/O 
+.Nd National Semiconductor PC87366 LPC Super I/O
 .Sh SYNOPSIS
 .Cd "nsclpcsio? at isa?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the
-.Tn National Semiconductor PC87366 LPC Super I/O 
+.Tn National Semiconductor PC87366 LPC Super I/O
 hardware monitor to be used with the
-.Xr sysctl 3
+.Xr sysctl 8
 interface.
 .Pp
 Most supported devices possess 17 sensors:
@@ -52,7 +52,6 @@ Most supported devices possess 17 sensors:
 .It Li "TS2" Ta "uV DC" Ta "Thermistor"
 .It Li "TS3" Ta "uV DC" Ta "Thermistor"
 .El
-.Pp
 .Sh SEE ALSO
 .Xr sensorsd 8 ,
 .Xr sysctl 8
