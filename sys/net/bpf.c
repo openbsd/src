@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.52 2004/09/12 09:35:50 claudio Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.53 2004/09/23 03:31:08 brad Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1054,7 +1054,6 @@ bpfkqfilter(dev_t dev,struct knote *kn)
 		klist = &d->bd_sel.si_note;
 		kn->kn_fop = &bpfread_filtops;
 		break;
-	case EVFILT_WRITE:
 	default:
 		return (1);
 	}
@@ -1073,9 +1072,10 @@ filt_bpfrdetach(struct knote *kn)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct bpf_d *d;
-	int s = splimp();
+	int s;
 
 	d = bpfilter_lookup(minor(dev));
+	s = splimp();
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -1085,15 +1085,12 @@ filt_bpfread(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct bpf_d *d;
-	int res, s;
-
-	kn->kn_data = 0;
 
 	d = bpfilter_lookup(minor(dev));
-	s = splimp();
-	res = d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0);
-	splx(s);
-	return (res);
+	kn->kn_data = d->bd_hlen;
+	if (d->bd_immediate)
+		kn->kn_data += d->bd_slen;
+	return (kn->kn_data > 0);
 }
 
 /*
