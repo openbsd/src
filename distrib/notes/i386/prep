@@ -32,6 +32,13 @@ data loss or filesystem corruption.  Be sure you aren't using geometry
 translation that you don't know about, but that the DOS "fdisk" program
 does!
 
+The OpenBSD root partition must also reside completely within the BIOS
+supported part of the hard disk -- this would typically be 504M, 2G or 8G,
+depending upon the age of the machine and its BIOS.  Due to a limit of the
+OpenBSD boot loader, the root partition must be within the first 8G even if
+the BIOS supports more.  Note that only the root partition has this issue,
+once OpenBSD is loaded, the entire disk is available for use.
+
 Fourth, use the other operating system's "fdisk" program or partition
 editor to create at least one of the partitions to be used for that
 operating system.  If that operating system is already set up to use the
@@ -48,6 +55,7 @@ restore your important files from your backups.  Other operating
 systems will have different needs; most will need to reformat the
 partition, and if it was their "main" partition, will probably need
 to be reinstalled.
+
 Once you've backed all your data up, there is a tool called fips 2.0
 that can shrink your FAT-based DOS/Windows partition to make room for
 OpenBSD.  It is included in the MACHINE tools area of this distribution as
