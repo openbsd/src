@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.107 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.108 2002/03/09 05:13:04 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -148,10 +148,10 @@ do { \
  * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
  * option is enabled.
  */
-#define	TCP_SETUP_ACK(tp, th) \
+#define	TCP_SETUP_ACK(tp, tiflags) \
 do { \
 	if ((tp)->t_flags & TF_DELACK || \
-	    (tcp_ack_on_push && (th)->th_flags & TH_PUSH)) \
+	    (tcp_ack_on_push && (tiflags) & TH_PUSH)) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
@@ -172,12 +172,12 @@ do { \
 
 int
 tcp_reass(tp, th, m, tlen)
-	register struct tcpcb *tp;
-	register struct tcphdr *th;
+	struct tcpcb *tp;
+	struct tcphdr *th;
 	struct mbuf *m;
 	int *tlen;
 {
-	register struct ipqent *p, *q, *nq, *tiqe;
+	struct ipqent *p, *q, *nq, *tiqe;
 	struct socket *so = tp->t_inpcb->inp_socket;
 	int flags;
 
@@ -213,8 +213,8 @@ tcp_reass(tp, th, m, tlen)
 	 * segment.  If it provides all of our data, drop us.
 	 */
 	if (p != NULL) {
-		register struct tcphdr *phdr = p->ipqe_tcp;
-		register int i;
+		struct tcphdr *phdr = p->ipqe_tcp;
+		int i;
 
 		/* conversion to int (in i) handles seq wraparound */
 		i = phdr->th_seq + phdr->th_reseqlen - th->th_seq;
@@ -239,8 +239,8 @@ tcp_reass(tp, th, m, tlen)
 	 * if they are completely covered, dequeue them.
 	 */
 	for (; q != NULL; q = nq) {
-		register struct tcphdr *qhdr = q->ipqe_tcp;
-		register int i = (th->th_seq + *tlen) - qhdr->th_seq;
+		struct tcphdr *qhdr = q->ipqe_tcp;
+		int i = (th->th_seq + *tlen) - qhdr->th_seq;
 
 		if (i <= 0)
 			break;
@@ -309,8 +309,8 @@ tcpdropoldhalfopen(avoidtp, port)
 	struct tcpcb *avoidtp;
 	u_int16_t port;
 {
-	register struct inpcb *inp;
-	register struct tcpcb *tp;
+	struct inpcb *inp;
+	struct tcpcb *tp;
 	int ncheck = 40;
 	int s;
 
@@ -390,16 +390,16 @@ void
 tcp_input(struct mbuf *m, ...)
 #else
 tcp_input(m, va_alist)
-	register struct mbuf *m;
+	struct mbuf *m;
 #endif
 {
 	struct ip *ip;
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	caddr_t optp = NULL;
 	int optlen = 0;
 	int len, tlen, off;
-	register struct tcpcb *tp = 0;
-	register int tiflags;
+	struct tcpcb *tp = 0;
+	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	int hdroptlen = 0;
@@ -412,7 +412,7 @@ tcp_input(m, va_alist)
 	int ts_present = 0;
 	int iphlen;
 	va_list ap;
-	register struct tcphdr *th;
+	struct tcphdr *th;
 #ifdef INET6
 	struct in6_addr laddr6;
 	struct ip6_hdr *ipv6 = NULL;
@@ -1012,7 +1012,7 @@ findpcb:
 			m_adj(m, iphlen + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
-			TCP_SETUP_ACK(tp, th);
+			TCP_SETUP_ACK(tp, tiflags);
 			if (tp->t_flags & TF_ACKNOW)
 				(void) tcp_output(tp);
 			return;
@@ -1056,9 +1056,9 @@ findpcb:
 	 */
 	case TCPS_LISTEN: {
 		struct mbuf *am;
-		register struct sockaddr_in *sin;
+		struct sockaddr_in *sin;
 #ifdef INET6
-		register struct sockaddr_in6 *sin6;
+		struct sockaddr_in6 *sin6;
 #endif /* INET6 */
 
 		if (tiflags & TH_RST)
@@ -1994,7 +1994,7 @@ dodata:							/* XXX */
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
 		    tp->t_state == TCPS_ESTABLISHED) {
-			TCP_SETUP_ACK(tp, th);
+			TCP_SETUP_ACK(tp, tiflags);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
@@ -2695,7 +2695,7 @@ void
 tcp_pulloutofband(so, urgent, m, off)
 	struct socket *so;
 	u_int urgent;
-	register struct mbuf *m;
+	struct mbuf *m;
 	int off;
 {
         int cnt = off + urgent - 1;
@@ -2725,10 +2725,10 @@ tcp_pulloutofband(so, urgent, m, off)
  */
 void
 tcp_xmit_timer(tp, rtt)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	short rtt;
 {
-	register short delta;
+	short delta;
 	short rttmin;
 
 	tcpstat.tcps_rttupdated++;
@@ -2824,7 +2824,7 @@ tcp_xmit_timer(tp, rtt)
  */
 int
 tcp_mss(tp, offer)
-	register struct tcpcb *tp;
+	struct tcpcb *tp;
 	int offer;
 {
 	struct rtentry *rt;
