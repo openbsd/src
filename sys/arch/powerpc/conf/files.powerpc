@@ -78,31 +78,10 @@ device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/powerpc/pci/mpcpcibus.c	mpcpcibr
 
-device	isabr {} : isabus
-attach	isabr at mainbus, pci
-file	arch/powerpc/isa/isabus.c	isabr
-include "../../../scsi/files.scsi"
+
 major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
 major	{cd = 3}
-
-define	pcmcia {}			# XXX dummy decl...
-include	"../../../dev/isa/files.isa"
-#major	{ wd = 5 }		# Not even in bdevsw XXX
-
-device	pckbc { } 
-attach	pckbc at isa
-file	arch/powerpc/isa/pcppi.c	pckbc
-
-device	pckbd
-attach	pckbd at pckbc
-file	arch/powerpc/isa/pckbd.c	pckbd
-
-device	pms
-attach	pms at pckbc
-file	arch/powerpc/isa/pms.c		pms
-
-include "../../../dev/isa/files.isapnp"
-file    arch/powerpc/isa/isapnp_machdep.c   isapnp   
+include "../../../scsi/files.scsi"
 
 #
 # "workstation console" routines
@@ -227,6 +206,16 @@ file arch/powerpc/mac/grf_subr.c                 grf
 device ite: tty
 attach ite at grf
 file arch/powerpc/mac/ite.c                      ite needs-flag
+
+
+# VGA framebuffer
+device        vgafb: wsemuldisplaydev, wsrasteremulops
+file  arch/powerpc/pci/vgafb.c          	vgafb & vgafb_pci
+
+# Generic VGA Framebuffer version
+attach  vgafb at pci with vgafb_pci
+file    arch/powerpc/pci/vgafb_pci.c             vgafb_pci       needs-flag
+
 
 #
 # Machine-independent USB drivers
