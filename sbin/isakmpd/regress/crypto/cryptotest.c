@@ -1,4 +1,5 @@
-/*	$OpenBSD: cryptotest.c,v 1.2 1998/11/15 00:44:07 niklas Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.3 1998/12/21 01:02:29 niklas Exp $	*/
+/*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

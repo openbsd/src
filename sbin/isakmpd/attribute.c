@@ -1,5 +1,5 @@
-/*	$OpenBSD: attribute.c,v 1.3 1998/11/17 11:10:07 niklas Exp $	*/
-/*	$EOM: attribute.c,v 1.5 1998/10/07 16:40:42 niklas Exp $	*/
+/*	$OpenBSD: attribute.c,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
+/*	$EOM: attribute.c,v 1.6 1998/12/01 10:17:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -102,8 +102,8 @@ attribute_set_constant (char *section, char *tag, struct constant_map *map,
   name = conf_get_str (section, tag);
   if (!name)
     {
-      /* XXX Should we really log hard like this?  */
-      log_print ("attribute_set_constant: no %s in the %s section", tag,
+      log_debug (LOG_MISC, 70,
+		 "attribute_set_constant: no %s in the %s section", tag,
 		 section);
       return -1;
     }

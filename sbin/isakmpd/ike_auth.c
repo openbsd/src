@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.8 1998/11/20 23:42:29 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.21 1998/11/20 23:34:56 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.9 1998/12/21 01:02:24 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.22 1998/12/15 16:58:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -110,16 +110,12 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
    * exist, the default.
    */
   t->vtbl->get_dst (t, &dst, &dst_len);
-  key = conf_get_str ("pre_shared",
-		      inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
+  key = conf_get_str (exchange->name, "Authentication");
   if (!key)
     {
-      key = conf_get_str ("pre_shared", "default");
-      if (!key)
-	{
-	  log_print ("pre_shared_gen_skeyid: no key found");
-	  return 0;
-	}
+      log_print ("pre_shared_gen_skeyid: no key found for peer \"%s\"",
+		 exchange->name);
+      return 0;
     }
 
   /* If the key starts with 0x it is in hex format.  */

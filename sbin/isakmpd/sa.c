@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.5 1998/11/20 07:31:56 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.57 1998/11/20 07:10:22 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.6 1998/12/21 01:02:27 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.61 1998/12/17 07:57:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -118,6 +118,21 @@ sa_lookup_from_icookie (u_int8_t *cookie)
   return 0;
 }
 
+/* Lookup an SA by name, case-independent, and phase.  */
+struct sa *
+sa_lookup_by_name (char *name, int phase)
+{
+  int i;
+  struct sa *sa;
+
+  for (i = 0; i < bucket_mask; i++)
+    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
+      if (sa->name && strcasecmp (sa->name, name) == 0
+	  && sa->phase == phase)
+	return sa;
+  return 0;
+}
+
 int
 sa_enter (struct sa *sa)
 {
@@ -192,7 +207,9 @@ sa_lookup (u_int8_t *cookies, u_int8_t *message_id)
        sa && (memcmp (cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0
 	      || (message_id && memcmp (message_id, sa->message_id,
 					ISAKMP_HDR_MESSAGE_ID_LEN)
-		  != 0));
+		  != 0)
+	      || (!message_id && !zero_test (sa->message_id,
+					     ISAKMP_HDR_MESSAGE_ID_LEN)));
        sa = LIST_NEXT (sa, link))
     ;
 
@@ -240,13 +257,15 @@ sa_dump (char *header, struct sa *sa)
   char spi_header[80];
   int i;
 
-  log_debug (LOG_MISC, 10, "%s: phase %d doi %d msgid %08x flags 0x%x",
-	     header, sa->phase, sa->doi->id, decode_32 (sa->message_id),
-	     sa->flags);
+  log_debug (LOG_MISC, 10, "%s: %p %s phase %d doi %d flags 0x%x",
+	     header, sa, sa->name ? sa->name : "<unnamed>", sa->phase,
+	     sa->doi->id, sa->flags);
   log_debug (LOG_MISC, 10,
 	     "%s: icookie %08x%08x rcookie %08x%08x", header,
 	     decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
 	     decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12));
+  log_debug (LOG_MISC, 10, "%s: msgid %08x", header,
+	     decode_32 (sa->message_id));
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
@@ -442,6 +461,14 @@ sa_delete (struct sa *sa, int notify)
   sa_free (sa);
 }
 
+static void
+sa_finalize_rekey_p1 (void *arg)
+{
+  struct sa *sa = arg;
+
+  sa_delete (sa, 1);
+}
+
 /*
  * Establish a new ISAKMP SA.
  * XXX Whatif the peer initiated another SA negotiation?
@@ -449,9 +476,6 @@ sa_delete (struct sa *sa, int notify)
 void
 sa_rekey_p1 (struct sa *sa)
 {
-  /* XXX Fill in the args argument.  */
-  exchange_establish_p1 (sa->transport, sa->exch_type, sa->doi->id, 0);
-
-  /* XXX I want this sa_delete deferred until the new SA is ready.  */
-  sa_delete (sa, 1);
+  exchange_establish_p1 (sa->transport, 0, 0, sa->name, sa_finalize_rekey_p1,
+			 sa);
 }

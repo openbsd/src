@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.37 1998/11/14 23:42:27 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.4 1998/12/21 01:02:27 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.39 1998/12/15 16:58:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -98,6 +98,9 @@ struct sa {
    */
   TAILQ_ENTRY (sa) next;
 
+  /* A name of the major policy deciding offers and acceptable proposals.  */
+  char *name;
+
   /* What transport does this SA denote (ISAKMP SA only).  */
   struct transport *transport;
 
@@ -156,6 +159,7 @@ extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, size_t addr);
 extern void sa_isakmp_upgrade (struct message *);
 extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
+extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
 extern void sa_rekey_p1 (struct sa *);
 extern void sa_report (void);

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 1998/11/17 11:10:06 niklas Exp $
-#	$EOM: Makefile,v 1.32 1998/10/10 16:58:15 niklas Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/12/21 01:02:22 niklas Exp $
+#	$EOM: Makefile,v 1.34 1998/12/18 12:57:27 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,7 @@
 #
 
 PROG=		isakmpd
+BINDIR?=	/sbin
 SRCS=		app.c asn.c asn_useful.c attribute.c cert.c constants.c \
 		conf.c cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
 		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \
@@ -50,9 +51,22 @@ MAN=		isakmpd.8 isakmpd.conf.5
 LDADD=		-lgmp -ldes
 DPADD=		${LIBGMP} ${LIBDES}
 CFLAGS+=	-Wall -I. -I${.CURDIR} -DNEED_SYSDEP_APP
-DEBUG=		-g
 
+# Different debugging & profiling suggestions
+#
+# Include symbolic debugging info
+DEBUG=		-g
+#
+# Do execution time profiles
+#CFLAGS+=	-pg
+#
+# If you have ElectricFence available, you can spot abuses of the heap.
+#LDADD+=		-L/usr/local/lib -lefence
+#
+
+.if !make(install)
 SUBDIR=		regress
+.endif
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num

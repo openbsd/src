@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.3 1998/11/17 11:10:18 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.35 1998/11/14 23:41:21 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.4 1998/12/21 01:02:26 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.38 1998/12/17 07:56:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -82,6 +82,8 @@ static void
 pf_encap_expire (struct encap_msghdr *emsg)
 {
   /* XXX not implemented yet.  */
+
+  /* Identify the IPsec SA and rekey that one.  */
 }
 
 static void
@@ -528,9 +530,11 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int role, int initiator)
   emsg->em_expire_hard = 0;
   emsg->em_expire_soft = 0;
 #else
-  emsg->em_expire_hard = time ((time_t *)0) + (u_int64_t)sa->seconds;
+  emsg->em_expire_hard
+    = sa->seconds ? time ((time_t *)0) + (u_int64_t)sa->seconds : 0;
   /* XXX Perhaps we could calculate something out of the last negotiation.  */
-  emsg->em_expire_soft = time ((time_t *)0) + (u_int64_t)sa->seconds * 9 / 10;
+  emsg->em_expire_soft
+    = sa->seconds ? time ((time_t *)0) + (u_int64_t)sa->seconds * 9 / 10 : 0;
   emsg->em_first_use_hard = 0;
   emsg->em_first_use_soft = 0;
 #endif
@@ -596,6 +600,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int initiator)
 int
 pf_encap_enable_spi (struct sa *sa, int initiator)
 {
+  struct ipsec_sa *isa = sa->data;
   struct encap_msghdr *emsg = 0;
   struct sockaddr *dst, *src;
   int dstlen, srclen;
@@ -614,11 +619,13 @@ pf_encap_enable_spi (struct sa *sa, int initiator)
   memcpy (&emsg->em_ena_spi, proto->spi[!initiator], sizeof emsg->em_ena_spi);
   emsg->em_ena_dst = ((struct sockaddr_in *)dst)->sin_addr;
 
-  emsg->em_ena_isrc.s_addr = ((struct sockaddr_in *)src)->sin_addr.s_addr;
-  emsg->em_ena_ismask.s_addr = 0xffffffff;
-  emsg->em_ena_idst.s_addr = emsg->em_ena_dst.s_addr;
-  emsg->em_ena_idmask.s_addr = 0xffffffff;
-  /* XXX How to deduce if we need ENABLE_FLAG_LOCAL?  */
+  log_debug (LOG_PF_ENCAP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
+	     isa->src_net, isa->src_mask, isa->dst_net, isa->dst_mask);
+  /* XXX Check why byte ordering is backwards.  */
+  emsg->em_ena_isrc.s_addr = htonl (isa->src_net);
+  emsg->em_ena_ismask.s_addr = htonl (isa->src_mask);
+  emsg->em_ena_idst.s_addr = htonl (isa->dst_net);
+  emsg->em_ena_idmask.s_addr = htonl (isa->dst_mask);
   emsg->em_ena_flags = ENABLE_FLAG_REPLACE;
 
   /* XXX What if IPCOMP etc. comes along?  */

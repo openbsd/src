@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 1998/11/15 00:44:08 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/12/21 01:02:30 niklas Exp $
+#	$EOM: Makefile,v 1.3 1998/08/03 21:05:56 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

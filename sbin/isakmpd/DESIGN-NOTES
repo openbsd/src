@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.4 1998/11/17 11:10:05 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.34 1998/10/11 20:25:08 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.5 1998/12/21 01:02:22 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.37 1998/12/20 11:54:04 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -14,8 +14,7 @@ Multiple inclusion protection like this:
 
 #endif /* _HEADERNAME_H_ */
 
-Start all files with RCS ID tags, i.e.
-
+Start all files with RCS ID tags.
 
 GCC -Wall clean, ANSI prototypes.  System dependent facilities should be
 named sysdep_* and be placed in sysdep.c.  Primary target systems are OpenBSD
@@ -129,7 +128,9 @@ Generic SA		Cookie pair + message ID + SPI.
 However it would be really nice to have a name of any SA that is natural
 to use for human beings, for things like deleteing SAs manually.  The simplest
 ID would be the struct sa address.  Another idea would be some kind of sequence
-number, either global or per-destination.
+number, either global or per-destination.  Right now I have introduced a name
+for SAs, non-unique, that binds together SAs and their configuration
+parameters.  This means both manual exchange runs and rekeying are simpler.
 
 The basic idea of control flow
 ------------------------------
@@ -191,17 +192,22 @@ In order to control the daemon you send commands through a FIFO called
 isakmpd.fifo.  The commands are one-letter codes followed by arguments.
 For now, only three commands are planned:
 
-c	connect		Establish an ISAKMP SA with a peer
-d	debug		Toggle some debug flag
+c	"old" connect	Establish a SA with a peer
+C	connect		Establish a named SA with a peer
+d	delete		Delete a SA
+D	debug		Toggle some debug flag
 r	report		Report status information of the daemon
 
 For example you can do:
 
-c udp 127.0.0.1:555 2 1
+c udp 127.0.0.1:555 0 0
 
 to get an ISAKMP SA established with the ISAKMP implementation listening
 on UDP port 555 at the local host.  The SA will be established with an
 identity protection (exchange type 2) exchange and use the IPSEC DOI (DOI 1).
+Another way to do it is via names from the config file:
+
+C ISAKMP-peer
 
 In order to delete an SA you use the 'd' command.  However this is not yet
 supported.
@@ -212,6 +218,8 @@ D 0 99
 
 The report command is just an "r", and results in a list of active exchanges
 and security associations.
+
+I am thinking about adding a "q" command for quit.
 
 The constant descriptions
 -------------------------
@@ -303,6 +311,7 @@ noone else.
 
 In quick mode the identities are implicitly the IP addresses of the peers,
 which must mean the IP addresses actually used for the ISAKMP tunnel.
+Otherwise we today support IPV4_ADDR & IPV4_ADDR_SUBNET as ID types.
 
 License to use
 --------------

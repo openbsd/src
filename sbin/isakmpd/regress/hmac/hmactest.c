@@ -1,4 +1,5 @@
-/*	$OpenBSD: hmactest.c,v 1.2 1998/11/15 00:44:10 niklas Exp $	*/
+/*	$OpenBSD: hmactest.c,v 1.3 1998/12/21 01:02:34 niklas Exp $	*/
+/*	$EOM: hmactest.c,v 1.3 1998/08/09 19:16:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.4 1998/11/20 07:37:44 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.58 1998/11/20 07:18:10 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.5 1998/12/21 01:02:24 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.64 1998/12/17 07:55:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -88,9 +88,9 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   u_int8_t ***transform = 0, ***new_transform;
   u_int8_t **proposal = 0, **new_proposal;
   u_int8_t *sa_buf = 0, *attr, *saved_nextp_sa, *saved_nextp_prop;
-  u_int8_t *buf;
+  u_int8_t *buf, *id;
   u_int8_t *spi;
-  size_t spi_sz;
+  size_t spi_sz, sz;
   struct prf *prf;
   struct hash *hash = hash_get (isa->hash);
   size_t hashsize = hash->hashsize;
@@ -106,6 +106,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   struct conf_list_node *suite, *prot, *xf, *life;
   struct constant_map *id_map;
   char *protocol_id, *transform_id;
+  char *local_id, *remote_id;
 
   /* We want a HASH payload to start with.  XXX Share with ike_main_mode.c?  */
   buf = malloc (ISAKMP_HASH_SZ + hashsize);
@@ -123,7 +124,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
     }
     
   /* Get the list of protocol suites.  */
-  suite_conf = conf_get_list ("Quick mode", "Offered-suites");
+  suite_conf = conf_get_list (exchange->policy, "Suites");
   if (!suite_conf)
     return -1;
 
@@ -234,12 +235,12 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		  for (life = TAILQ_FIRST (&life_conf->fields); life;
 		       life = TAILQ_NEXT (life, link))
 		    {
-		      attribute_set_constant (life->field, "SA_LIFE_TYPE",
+		      attribute_set_constant (life->field, "LIFE_TYPE",
 					      ipsec_duration_cst,
 					      IPSEC_ATTR_SA_LIFE_TYPE, &attr);
 
 		      /* XXX Does only handle 16-bit entities!  */
-		      value = conf_get_num (life->field, "SA_LIFE_DURATION");
+		      value = conf_get_num (life->field, "LIFE_DURATION");
 		      if (value)
 			attr
 			  = attribute_set_basic (attr,
@@ -259,7 +260,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 
 	      attribute_set_constant (xf->field, "GROUP_DESCRIPTION",
 				      ike_group_desc_cst,
-				      IKE_ATTR_GROUP_DESCRIPTION, &attr);
+				      IPSEC_ATTR_GROUP_DESCRIPTION, &attr);
 
 	      value = conf_get_num (xf->field, "KEY_LENGTH");
 	      if (value)
@@ -406,7 +407,42 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	}
     }
 
-  /* XXX Generate optional client ID payloads.  */
+  /* Generate optional client ID payloads.  XXX Share with responder.  */
+  local_id = conf_get_str (exchange->name, "Local-ID");
+  remote_id = conf_get_str (exchange->name, "Remote-ID");
+  if (local_id && remote_id)
+    {
+      id = ipsec_build_id (local_id, &sz);
+      if (!id)
+	return -1;
+      log_debug_buf (LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDic", id,
+		     sz);
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+
+      id = ipsec_build_id (remote_id, &sz);
+      if (!id)
+	return -1;
+      log_debug_buf (LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDrc", id,
+		     sz);
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+    }
+  /* XXX I do not judge these as errors, are they?  */
+  else if (local_id)
+    log_print ("initiator_send_HASH_SA_NONCE: "
+	       "Local-ID given without Remote-ID for \"%s\"",
+	       exchange->name);
+  else if (remote_id)
+    log_print ("initiator_send_HASH_SA_NONCE: "
+	       "Remote-ID given without Local-ID for \"%s\"",
+	       exchange->name);
 
   /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
   log_debug_buf (LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: SKEYID_a",
@@ -483,7 +519,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   struct sa *sa;
   struct proto *proto;
   struct payload *sa_p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]);
-  struct payload *xf;
+  struct payload *xf, *idp;
   struct payload *hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
   struct payload *kep = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
   struct prf *prf;
@@ -593,7 +629,37 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       return -1;
     }
 
-  /* XXX Handle optional client ID payloads.  */
+  /* Handle optional client ID payloads.  */
+  idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
+  if (idp)
+    {
+      /* XXX We should really compare, not override.  */
+      ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+      ie->id_ci = malloc (ie->id_ci_sz);
+      if (!ie->id_ci)
+	return -1;
+      memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
+      idp->flags |= PL_MARK;
+      log_debug_buf (LOG_MISC, 90,
+		     "initiator_recv_HASH_SA_NONCE: IDci",
+		     ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz - ISAKMP_GEN_SZ);
+
+      idp = TAILQ_NEXT (idp, link);
+      /* XXX Is IDci without IDcr valid?  */
+      if (idp)
+	{
+	  ie->id_cr_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+	  ie->id_cr = malloc (ie->id_cr_sz);
+	  if (!ie->id_cr)
+	    return -1;
+	  memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
+	  idp->flags |= PL_MARK;
+	  log_debug_buf (LOG_MISC, 90,
+			 "initiator_recv_HASH_SA_NONCE: IDcr",
+			 ie->id_cr + ISAKMP_GEN_SZ,
+			 ie->id_cr_sz - ISAKMP_GEN_SZ);
+	}
+    }
 
   return 0;
 }
@@ -768,7 +834,7 @@ post_quick_mode (struct message *msg)
 static int
 responder_recv_HASH_SA_NONCE (struct message *msg)
 {
-  struct payload *hashp, *kep;
+  struct payload *hashp, *kep, *idp;
   struct sa *sa;
   struct sa *isakmp_sa = msg->isakmp_sa;
   struct ipsec_sa *isa = isakmp_sa->data;
@@ -890,7 +956,36 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       return -1;
     }
 
-  /* XXX Handle optional client ID payloads.  */
+  /* Handle optional client ID payloads.  */
+  idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
+  if (idp)
+    {
+      ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+      ie->id_ci = malloc (ie->id_ci_sz);
+      if (!ie->id_ci)
+	retval = 1;
+      memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
+      idp->flags |= PL_MARK;
+      log_debug_buf (LOG_MISC, 90,
+		     "responder_recv_HASH_SA_NONCE: IDci",
+		     ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz - ISAKMP_GEN_SZ);
+
+      idp = TAILQ_NEXT (idp, link);
+      /* XXX Is IDci without IDcr valid?  */
+      if (idp)
+	{
+	  ie->id_cr_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+	  ie->id_cr = malloc (ie->id_cr_sz);
+	  if (!ie->id_cr)
+	    retval = 1;
+	  memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
+	  idp->flags |= PL_MARK;
+	  log_debug_buf (LOG_MISC, 90,
+			 "responder_recv_HASH_SA_NONCE: IDcr",
+			 ie->id_cr + ISAKMP_GEN_SZ,
+			 ie->id_cr_sz - ISAKMP_GEN_SZ);
+	}
+    }
 
   return retval;
 }
@@ -911,6 +1006,8 @@ responder_send_HASH_SA_NONCE (struct message *msg)
   int initiator = exchange->initiator;
   char header[80];
   int i;
+  u_int8_t *id;
+  size_t sz;
 
   /* We want a HASH payload to start with.  XXX Share with ike_main_mode.c?  */
   buf = malloc (ISAKMP_HASH_SZ + hashsize);
@@ -941,16 +1038,52 @@ responder_send_HASH_SA_NONCE (struct message *msg)
       return -1;
     }
 
-  /* Generate optional KEY_EXCH payload.  */
+  /* Generate optional KEY_EXCH payload.  This is known as PFS.  */
   if (ie->group && ipsec_gen_g_x (msg))
     {
       /* XXX Log?  */
       return -1;
     }
 
-  /* XXX Generate optional client ID payload.  */
+  /* If the initiator client ID's were acceptable, just mirror them back.  */
+  if (ie->id_ci)
+    {
+      sz = ie->id_ci_sz;
+      id = malloc (sz);
+      if (!id)
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+      memcpy (id, ie->id_ci, sz);
+      log_debug_buf (LOG_MISC, 90, "responder_send_HASH_SA_NONCE: IDic", id,
+		     sz);
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+
+      sz = ie->id_cr_sz;
+      id = malloc (sz);
+      if (!id)
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+      memcpy (id, ie->id_cr, sz);
+      log_debug_buf (LOG_MISC, 90, "responder_send_HASH_SA_NONCE: IDrc", id,
+		     sz);
+      if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
+	{
+	  /* XXX Log?  */
+	  return -1;
+	}
+    }
 
   /* Allocate the prf and start calculating our HASH(2).  XXX Share?  */
+  log_debug (LOG_MISC, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+	     isakmp_sa, isa);
   log_debug_buf (LOG_MISC, 90, "responder_send_HASH_SA_NONCE: SKEYID_a",
 		 isa->skeyid_a, isa->skeyid_len);
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
@@ -1032,6 +1165,8 @@ responder_recv_HASH (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
+  log_debug (LOG_MISC, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+	     isakmp_sa, isa);
   log_debug_buf (LOG_MISC, 90, "responder_recv_HASH: SKEYID_a", isa->skeyid_a,
 		 isa->skeyid_len);
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);

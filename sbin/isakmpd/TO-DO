@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.5 1998/11/20 07:41:30 niklas Exp $
-$EOM: TO-DO,v 1.27 1998/11/20 07:19:49 niklas Exp $
+$OpenBSD: TO-DO,v 1.6 1998/12/21 01:02:23 niklas Exp $
+$EOM: TO-DO,v 1.28 1998/12/17 07:50:49 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -79,3 +79,13 @@ the program is far from ready in any area.
   listener socket.
 
 * Validate the configuration file.
+
+* Do a soft-limit on ISAKMP SA lifetime.
+
+* Let the hard-limit on ISAKMP SA lifetime destroy the SA ASAP.
+
+* IPsec rekeying.
+
+* Store tunnels into SPD, and handle acquire SA events.
+
+* If an exchange is on-going when a rekey event happens, drop the request.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: grouptest.c,v 1.2 1998/11/15 00:44:09 niklas Exp $	*/
+/*	$OpenBSD: grouptest.c,v 1.3 1998/12/21 01:02:34 niklas Exp $	*/
+/*	$EOM: grouptest.c,v 1.2 1998/07/18 21:15:55 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.

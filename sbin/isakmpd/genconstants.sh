@@ -1,6 +1,5 @@
-#	$OpenBSD: genconstants.sh,v 1.3 1998/11/20 07:34:07 niklas Exp $
-#	$EOM: genconstants.sh,v 1.3 1998/11/20 07:17:02 niklas Exp $
-#	$EOM: genconstants.sh,v 1.3 1998/11/20 07:17:02 niklas Exp $
+#	$OpenBSD: genconstants.sh,v 1.4 1998/12/21 01:02:23 niklas Exp $
+#	$EOM: genconstants.sh,v 1.4 1998/11/24 09:13:09 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

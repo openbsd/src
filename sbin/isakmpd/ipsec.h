@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.28 1998/11/14 13:20:11 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.4 1998/12/21 01:02:25 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.29 1998/11/26 09:15:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -83,6 +83,12 @@ struct ipsec_exch {
 
   /* KEYMAT */
   size_t keymat_len;
+
+  /* Phase 2.  */
+  u_int8_t *id_ci;
+  size_t id_ci_sz;
+  u_int8_t *id_cr;
+  size_t id_cr_sz;
 };
 
 struct ipsec_sa {
@@ -95,6 +101,12 @@ struct ipsec_sa {
 
   /* Phase 2.  */
   u_int16_t group_desc;
+
+  /* Tunnel parameters.  */
+  in_addr_t src_net;
+  in_addr_t src_mask;
+  in_addr_t dst_net;
+  in_addr_t dst_mask;
 };
 
 struct ipsec_proto {
@@ -109,6 +121,7 @@ struct ipsec_proto {
 };
 
 extern int ipsec_ah_keylength (struct proto *);
+extern u_int8_t *ipsec_build_id (char *, size_t *);
 extern int ipsec_decode_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
 extern void ipsec_decode_transform (struct message *, struct sa *,
 				    struct proto *, u_int8_t *);

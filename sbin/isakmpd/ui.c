@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.20 1998/11/12 13:01:19 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.4 1998/12/21 01:02:27 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.26 1998/12/19 09:18:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,9 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define BUF_SZ 256
-
+#include "conf.h"
 #include "doi.h"
 #include "exchange.h"
 #include "isakmp.h"
@@ -51,6 +49,8 @@
 #include "transport.h"
 #include "ui.h"
 #include "util.h"
+
+#define BUF_SZ 256
 
 char *ui_fifo = FIFO;
 int ui_socket;
@@ -76,71 +76,18 @@ ui_init ()
     }
 }
 
-/* Parse the connect command found in CMD.  */
+/* New style connect.  */
 static void
 ui_connect (char *cmd)
 {
-  char trpt[11];
-  char addr[81];
-  struct transport *transport = 0;
-  int exchange, doi;
-  struct sa *isakmp_sa = 0;
-  u_int8_t cookies[ISAKMP_HDR_COOKIES_LEN];
+  char name[81];
 
-  if (sscanf (cmd, "c %10s %80s %d %d", trpt, addr, &exchange, &doi) != 4)
+  if (sscanf (cmd, "C %80s", name) != 1)
     {
       log_print ("ui_connect: command \"%s\" malformed", cmd);
       return;
     }
-
-  if (strcasecmp (trpt, "isakmp") == 0)
-    {
-      if (hex2raw (addr, cookies, ISAKMP_HDR_COOKIES_LEN) == -1)
-	{
-	  log_print ("ui_connect: cookiepair \"%s\" malformed", addr);
-	  return;
-	}
-      isakmp_sa = sa_lookup (cookies, 0);
-      if (!isakmp_sa)
-	{
-	  log_print ("ui_connect: transport \"%s %s\" could not be found",
-		     trpt, addr);
-	  return;
-	}
-
-      /* XXX Fill in the args argument.  */
-      exchange_establish_p2 (isakmp_sa, exchange, 0);
-    }
-  else
-    {
-      transport = transport_create (trpt, addr);
-      if (!transport)
-	{
-	  log_print ("ui_connect: transport \"%s %s\" could not be created",
-		     trpt, addr);
-	  return;
-	}
-
-      /* XXX This validity check seems to be a bit dumb.  */
-#if 0
-      /* Only ISAKMP exchange types can be given.  */
-      if (exchange < ISAKMP_EXCH_BASE || exchange >= ISAKMP_EXCH_FUTURE_MIN)
-	{
-	  log_print ("exchange %d is not valid", exchange);
-	  return;
-	}
-#endif
-
-      /* Only valid DOIs can be given.  XXX Uninteresting for phase 2.  */
-      if (!doi_lookup (doi))
-	{
-	  log_print ("DOI %d is not valid", doi);
-	  return;
-	}
-
-      /* XXX Fill in the args argument.  */
-      exchange_establish_p1 (transport, exchange, doi, 0);
-    }
+  exchange_establish (name, 0, 0);
 }
 
 static void
@@ -185,7 +132,7 @@ ui_debug (char *cmd)
 {
   int cls, level;
 
-  if (sscanf (cmd, "d %d %d", &cls, &level) != 2)
+  if (sscanf (cmd, "D %d %d", &cls, &level) != 2)
     {
       log_print ("ui_debug: command \"%s\" malformed", cmd);
       return;
@@ -194,7 +141,7 @@ ui_debug (char *cmd)
 }
 
 /* Report SAs and ongoing exchanges.  */
-static void
+void
 ui_report (char *cmd)
 {
   sa_report ();

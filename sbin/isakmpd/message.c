@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.7 1998/11/20 07:32:50 niklas Exp $	*/
-/*	$EOM: message.c,v 1.101 1998/11/20 07:12:03 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.8 1998/12/21 01:02:26 niklas Exp $	*/
+/*	$EOM: message.c,v 1.103 1998/12/15 16:58:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -988,6 +988,7 @@ message_recv (struct message *msg)
   if (!msg->exchange)
     {
       log_print ("message_recv: no exchange");
+      /* XXX I got here in an informational exchange.. I should not!  */
       message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 1);
       return -1;
     }
@@ -1165,7 +1166,7 @@ message_send_notification (struct message *msg, struct sa *isakmp_sa,
     exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_INFO, &args);
   else
     exchange_establish_p1 (msg->transport, ISAKMP_EXCH_INFO,
-			   msg->exchange->doi->id, &args);
+			   msg->exchange->doi->id, &args, 0, 0);
 }
 
 void
@@ -1394,7 +1395,8 @@ step_transform (struct payload *tp, struct payload **propp,
  * SA payload) we accept as a full protection suite.
  */
 int
-message_negotiate_sa (struct message *msg, int (*validate) (struct sa *))
+message_negotiate_sa (struct message *msg,
+		      int (*validate) (struct exchange *, struct sa *))
 {
   struct payload *tp, *propp, *sap, *next_tp = 0, *next_propp, *next_sap;
   struct payload *saved_tp = 0, *saved_propp = 0, *saved_sap = 0;
@@ -1502,7 +1504,7 @@ message_negotiate_sa (struct message *msg, int (*validate) (struct sa *))
 	   */
 	  if (suite_ok_so_far)
 	    {
-	      if (!validate || validate (sa))
+	      if (!validate || validate (exchange, sa))
 		{
 		  log_debug (LOG_MESSAGE, 30,
 			     "message_negotiate_sa: proposal %d succeeded",

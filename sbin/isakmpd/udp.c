@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.22 1998/10/11 20:25:11 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.4 1998/12/21 01:02:27 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.23 1998/12/15 16:58:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,12 +39,14 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <err.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "conf.h"
 #include "if.h"
 #include "isakmp.h"
 #include "log.h"
@@ -212,14 +214,14 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 }
 
 /*
- * ADDR is either a numeric IP address (we cannot risk doing DNS lookups
+ * ADDR_ARG is either a numeric IP address (we cannot risk doing DNS lookups
  * which might take considerable time) or an address and a UDP port number
  * separated by a colon.  That address specifies a peer ISAKMP daemon we
  * will talk to.  Setup and return a transport useable to talk to that
  * service.
  */
 static struct transport *
-udp_create (char *addr_arg)
+udp_create_old (char *addr_arg)
 {
   struct sockaddr_in dst;
   char *addr_str, *port_str;
@@ -229,19 +231,88 @@ udp_create (char *addr_arg)
   addr_str = strdup (addr_arg);
   if (!addr_str)
     {
-      log_print ("udp_create: strdup (\"%s\") failed", addr_arg);
+      log_print ("udp_create_old: strdup (\"%s\") failed", addr_arg);
       return 0;
     }
+
   port_str = strchr (addr_str, ':');
   if (port_str)
     {
       *port_str++ = '\0';
       port = atoi (port_str);
       if (!port)
-	log_print ("udp_create: connection to port 0 not allowed");
+	{
+	  log_print ("udp_create_old: connection to port 0 not allowed");
+	  free (addr_str);
+	  return 0;
+	}
     }
   else
     port = UDP_DEFAULT_PORT;
+
+  addr = inet_addr (addr_str);
+  if (addr == INADDR_NONE)
+    {
+      log_print ("udp_create_old: inet_addr (\"%s\") failed", addr_str);
+      free (addr_str);
+      return 0;
+    }
+  free (addr_str);
+
+  memset (&dst, 0, sizeof dst);
+  dst.sin_len = sizeof dst;
+  dst.sin_family = AF_INET;
+  dst.sin_addr.s_addr = addr;
+  dst.sin_port = htons (port);
+
+  return udp_clone ((struct udp_transport *)default_transport, &dst);
+}
+
+/*
+ * NAME is a section name found in the config database.  Setup and return
+ * a transport useable to talk to the peer specified by that name
+ */
+static struct transport *
+udp_create (char *name)
+{
+  struct sockaddr_in dst;
+  char *addr_str, *port_str;
+  in_addr_t addr;
+  in_port_t port;
+  struct servent *service;
+
+  /* If an address tag does not exist, try backward compatibility mode.  */
+  addr_str = conf_get_str (name, "Address");
+  if (!addr_str)
+    return udp_create_old (name);
+
+  port_str = conf_get_str (name, "Port");
+  if (port_str)
+    {
+      if (!isdigit (port_str[0]))
+	{
+	  service = getservbyname (port_str, "udp");
+	  if (!service)
+	    {
+	      log_print ("udp_create: service \"%s\" unknown", port_str);
+	      return 0;
+	    }
+	  port = service->s_port;
+	}
+      else
+	{
+	  port = atoi (port_str);
+	  if (!port)
+	    {
+	      log_print ("udp_create: port specification \"%s\" malformed",
+			 port_str);
+	      return 0;
+	    }
+	}
+    }
+  else
+    port = UDP_DEFAULT_PORT;
+
   addr = inet_addr (addr_str);
   if (addr == INADDR_NONE)
     {

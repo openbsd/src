@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.3 1998/11/17 11:10:10 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.15 1998/08/13 21:43:57 provos Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.17 1998/12/15 16:58:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -60,6 +60,19 @@ struct sa;
 struct exchange {
   /* Link to exchanges with the same hash value.  */
   LIST_ENTRY (exchange) link;
+
+  /* A name of the SAs this exchange will result in.  XXX non unique?  */
+  char *name;
+
+  /* A name of the major policy deciding offers and acceptable proposals.  */
+  char *policy;
+
+  /*
+   * A function with a polymorphic argument called after the exchange
+   * has been run to its end, successfully.
+   */
+  void (*finalize) (void *);
+  void *finalize_arg;
 
   /* When several SA's are being negotiated we keep them here.  */
   TAILQ_HEAD (sa_head, sa) sa_list;
@@ -145,8 +158,9 @@ struct exchange {
 
 extern void exchange_finalize (struct message *);
 extern void exchange_free (struct exchange *);
+extern void exchange_establish (char *name, void (*) (void *), void *);
 extern void exchange_establish_p1 (struct transport *, u_int8_t, u_int32_t,
-				   void *);
+				   void *, void (*) (void *), void *);
 extern void exchange_establish_p2 (struct sa *, u_int8_t, void *);
 extern int exchange_gen_nonce (struct message *, size_t);
 extern void exchange_init (void);

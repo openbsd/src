@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.h,v 1.3 1998/11/17 11:10:16 niklas Exp $	*/
-/*	$EOM: log.h,v 1.9 1998/10/19 16:13:34 niklas Exp $	*/
+/*	$OpenBSD: log.h,v 1.4 1998/12/21 01:02:26 niklas Exp $	*/
+/*	$EOM: log.h,v 1.10 1998/12/01 10:19:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -45,6 +45,7 @@ enum log_classes {
   LOG_ENDCLASS
 };
 
+extern FILE *log_current (void);
 extern void log_debug (int, int, const char *, ...);
 extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
 extern void log_debug_cmd (int, int);

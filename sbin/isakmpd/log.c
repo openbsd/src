@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.3 1998/11/17 11:10:16 niklas Exp $	*/
-/*	$EOM: log.c,v 1.13 1998/07/26 00:48:55 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 1998/12/21 01:02:26 niklas Exp $	*/
+/*	$EOM: log.c,v 1.14 1998/12/01 10:19:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -65,6 +65,12 @@ log_to (FILE *f)
   log_output = f;
   if (!f)
     openlog ("isakmpd", 0, LOG_DAEMON);
+}
+
+FILE *
+log_current (void)
+{
+  return log_output;
 }
 
 static void

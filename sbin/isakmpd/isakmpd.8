@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.8,v 1.5 1998/12/15 01:20:42 aaron Exp $
-.\" $EOM: isakmpd.8,v 1.8 1998/10/10 17:28:13 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.6 1998/12/21 01:02:25 niklas Exp $
+.\" $EOM: isakmpd.8,v 1.13 1998/12/21 00:09:36 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -48,6 +48,7 @@
 .Op Fl p Ar listen-port
 .Op Fl P Ar local-port
 .Op Fl r Ar seed
+.Op Fl R Ar report-file
 .Sh DESCRIPTION
 The
 .Nm
@@ -102,9 +103,6 @@ When the
 option is given, the kernel will not take part in the negotiations.
 This is a non-destructive mode so to say, in that it won't alter any
 SAs in the IPSEC stack.
-.It Fl r Ar seed
-If given a deterministic random number sequence will be used internally.
-This is useful for setting up regression tests.
 .It Fl p Ar listen-port
 The
 .Fl p
@@ -113,18 +111,43 @@ option specifies the listen port the daemon will bind to.
 On the other hand, the port specified to capital
 .Fl P
 will be what the daemon binds its local end to when acting as initiator.
+.It Fl r Ar seed
+If given a deterministic random number sequence will be used internally.
+This is useful for setting up regression tests.
+.It Fl R Ar report-file
+When you signal
+.Nm
+a SIGUSR1 it will report its internal state to a report file,
+normally
+.Pa /var/run/isakmpd.report ,
+but this can be changed by feeding
+the file name as an argument to the
+.Fl R
+flag.
 .El
 .Pp
+.Sh BUGS
+The
+.Fl P
+flag does not do what we document, rather it does nothing.
+.Sh FILES
+.Bl -tag -width /var/run/isakmpd.report
+.It Pa /etc/isakmpd.conf
+The configuration file
+.It Pa /var/run/isakmpd.fifo
+The FIFO used to manually control
+.Nm isakmpd
+.It Pa /var/run/isakmpd.report
+The report file
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
 .Xr photurisd 8
 .Sh HISTORY
-The ISAKMP/Oakley key management protocol is described in the Internet drafts
-.%T draft-ietf-ipsec-isakmp ,
-.%T draft-ietf-ipsec-ipsec-doi
+The ISAKMP/Oakley key management protocol is described in the RFCs
+.%T RFC 2407 ,
+.%T RFC 2408
 and
-.%T draft-ietf-ipsec-isakmp-oakley .
+.%T RFC 2409 .
 This implementation was done 1998 by Niklas Hallqvist and Niels Provos,
 sponsored by Ericsson Radio Systems.
-

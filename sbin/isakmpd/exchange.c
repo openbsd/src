@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.6 1998/11/17 11:10:10 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.50 1998/11/14 23:42:23 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.7 1998/12/21 01:02:23 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.60 1998/12/21 00:34:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,19 +35,25 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "cert.h"
+#include "conf.h"
 #include "constants.h"
 #include "cookie.h"
 #include "crypto.h"
 #include "doi.h"
 #include "exchange.h"
+#include "ipsec_num.h"
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
 #include "timer.h"
+#include "transport.h"
 #include "sa.h"
 #include "util.h"
 
@@ -422,6 +428,21 @@ exchange_lookup_from_icookie (u_int8_t *cookie)
   return 0;
 }
 
+/* Lookup a phase 1 exchange out of the name.  */
+static struct exchange *
+exchange_lookup_by_name (char *name, int phase)
+{
+  int i;
+  struct exchange *exchange;
+
+  for (i = 0; i < bucket_mask; i++)
+    for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
+	 exchange = LIST_NEXT (exchange, link))
+      if (strcmp (exchange->name, name) == 0 && exchange->phase == phase)
+	return exchange;
+  return 0;
+}
+
 int
 exchange_enter (struct exchange *exchange)
 {
@@ -486,7 +507,9 @@ exchange_lookup (u_int8_t *msg, int phase2)
 			    ISAKMP_HDR_COOKIES_LEN) != 0
 		    || (phase2 && memcmp (msg + ISAKMP_HDR_MESSAGE_ID_OFF,
 					  exchange->message_id,
-					  ISAKMP_HDR_MESSAGE_ID_LEN) != 0));
+					  ISAKMP_HDR_MESSAGE_ID_LEN) != 0)
+		    || (!phase2 && !zero_test (msg + ISAKMP_HDR_MESSAGE_ID_OFF,
+					       ISAKMP_HDR_MESSAGE_ID_LEN)));
        exchange = LIST_NEXT (exchange, link))
     ;
 
@@ -505,6 +528,7 @@ exchange_create (int phase, int initiator, int doi, int type)
 {
   struct exchange *exchange;
   struct timeval expiration;
+  int delta;
 
   /*
    * We want the exchange zeroed for exchange_free to be able to find out
@@ -534,7 +558,10 @@ exchange_create (int phase, int initiator, int doi, int type)
     }
 
   gettimeofday(&expiration, 0);
-  expiration.tv_sec += EXCHANGE_MAX_TIME;
+  delta = conf_get_num ("General", "Exchange-max-time");
+  if (!delta)
+    delta = EXCHANGE_MAX_TIME;
+  expiration.tv_sec += delta;
   exchange->death = timer_add_event ("exchange_free_aux",
 				     (void (*) (void *))exchange_free_aux,
 				     exchange, &expiration);
@@ -551,10 +578,84 @@ exchange_create (int phase, int initiator, int doi, int type)
 /* Establish a phase 1 exchange.  */
 void
 exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
-		       void *args)
+		       void *args, void (*finalize) (void *), void *arg)
 {
   struct exchange *exchange;
   struct message *msg;
+  struct sockaddr *dst;
+  int dst_len;
+  char *tag = 0;
+  char *str;
+  char *name = args;
+
+  if (exchange_lookup_by_name (name, 1))
+    {
+      /*
+       * Another exchange for this name is already being run.
+       * XXX What about the finalize routine?
+       */
+      return;
+    }
+
+  /* If no exchange type given, fetch from the configuration.  */
+  if (type == 0)
+    {
+      /* XXX Similar code can be found in exchange_setup_p1.  Share?  */
+
+      /* Find out our phase 1 mode.  */
+      t->vtbl->get_dst (t, &dst, &dst_len);
+      tag = conf_get_str (name, "Configuration");
+      if (!tag)
+	{
+	  /* XXX I am not sure a default should be used.  */
+#if 0
+	  tag = conf_get_str ("Phase 1", "Default");
+	  if (!tag)
+	    {
+	      log_print ("exchange_establish_p1: "
+			 "no \"Default\" tag in [Phase 1] section");
+	      return;
+	    }
+#else
+	  log_print ("exchange_establish_p1: "
+		     "no configuration found for peer \"%s\"",
+		     name);
+#endif
+	}
+
+      /* Figure out the DOI.  */
+      str = conf_get_str (tag, "DOI");
+      if (!str)
+	{
+	  log_print ("exchange_establish_p1: no \"DOI\" tag in [%s] section",
+		     tag);
+	  return;
+	}
+      if (strcasecmp (str, "ISAKMP") == 0)
+	doi = ISAKMP_DOI_ISAKMP;
+      else if (strcasecmp (str, "IPSEC") == 0)
+	doi = IPSEC_DOI_IPSEC;
+      else
+	{
+	  log_print ("exchange_establish_p1: DOI \"%s\" unsupported", str);
+	  return;
+	}
+
+      /* What exchange type do we want?  */
+      str = conf_get_str (tag, "EXCHANGE_TYPE");
+      if (!str)
+	{
+	  log_print ("exchange_establish_p1: "
+		     "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
+	  return;
+	}
+      type = constant_value (isakmp_exch_cst, str);
+      if (!type)
+	{
+	  log_print ("exchange_establish_p1: unknown exchange type %s", str);
+	  return;
+	}
+    }
 
   exchange = exchange_create (1, 1, doi, type);
   if (!exchange)
@@ -562,6 +663,17 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
       /* XXX Do something here?  */
       return;
     }
+
+  exchange->name = name ? strdup (name) : "<unnamed>";
+  if (!exchange->name)
+    {
+      /* XXX Log?  */
+      exchange_free (exchange);
+      return;
+    }
+  exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
+  exchange->finalize = finalize;
+  exchange->finalize_arg = arg;
   cookie_gen (t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
   exchange_enter (exchange);
   exchange_dump ("exchange_establish_p1", exchange);
@@ -595,13 +707,64 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, void *args)
   struct exchange *exchange;
   struct message *msg;
   int i;
+  char *tag, *str, *name = args;
+  u_int32_t doi;
 
-  exchange = exchange_create (2, 1, isakmp_sa->doi->id, type);
+  /* Find out our phase 2 modes.  */
+  tag = conf_get_str (name, "Configuration");
+  if (!tag)
+    {
+      log_print ("exchange_establish_p2: no configuration for peer \"%s\"",
+		 name);
+      return;
+    }
+
+  /* Figure out the DOI.  */
+  str = conf_get_str (tag, "DOI");
+  if (!str)
+    doi = isakmp_sa->doi->id;
+  else if (strcasecmp (str, "IPSEC") == 0)
+    doi = IPSEC_DOI_IPSEC;
+  else
+    {
+      log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
+      return;
+    }
+
+  /* What exchange type do we want?  */
+  if (!type)
+    {
+      str = conf_get_str (tag, "EXCHANGE_TYPE");
+      if (!str)
+	{
+	  log_print ("exchange_establish_p2: "
+		     "no \"EXCHANGE_TYPE\" tag in [%s] section", tag);
+	  return;
+	}
+      /* XXX IKE dependent.  */
+      type = constant_value (ike_exch_cst, str);
+      if (!type)
+	{
+	  log_print ("exchange_establish_p2: unknown exchange type %s", str);
+	  return;
+	}
+    }
+
+  exchange = exchange_create (2, 1, doi, type);
   if (!exchange)
     {
       /* XXX Do something here?  */
       return;
     }
+
+  exchange->name = name ? strdup (name) : "<unnamed>";
+  if (!exchange->name)
+    {
+      /* XXX Log?  */
+      exchange_free (exchange);
+      return;
+    }
+  exchange->policy = name ? conf_get_str (name, "Configuration") : 0;
   memcpy (exchange->cookies, isakmp_sa->cookies, ISAKMP_HDR_COOKIES_LEN);
   getrandom (exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
   exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
@@ -633,12 +796,94 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, void *args)
 struct exchange *
 exchange_setup_p1 (struct message *msg, u_int32_t doi)
 {
+  struct transport *t = msg->transport;
   struct exchange *exchange;
+  struct sockaddr *dst;
+  int dst_len;
+  char *name, *policy, *str;
+  u_int32_t want_doi;
+  u_int8_t type;
 
-  exchange = exchange_create (1, 0, doi,
-			      GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base));
+  /* XXX Similar code can be found in exchange_establish_p1.  Share?  */
+
+  /* Find out our inbound phase 1 mode.  */
+  t->vtbl->get_dst (t, &dst, &dst_len);
+  name = conf_get_str ("Phase 1",
+		       inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
+  if (!name)
+    {
+      name = conf_get_str ("Phase 1", "Default");
+      if (!name)
+	{
+	  log_print ("exchange_setup_p1: "
+		     "no \"Default\" tag in [Phase 1] section");
+	  return 0;
+	}
+    }
+
+  policy = conf_get_str (name, "Configuration");
+  if (!policy)
+    {
+      log_print ("exchange_setup_p1: no configuration for peer \"%s\"", name);
+      return 0;
+    }
+
+  /* Figure out the DOI.  */
+  str = conf_get_str (policy, "DOI");
+  if (!str)
+    {
+      log_print ("exchange_setup_p1: no \"DOI\" tag in [%s] section", policy);
+      return 0;
+    }
+  if (strcasecmp (str, "ISAKMP") == 0)
+    want_doi = ISAKMP_DOI_ISAKMP;
+  else if (strcasecmp (str, "IPSEC") == 0)
+    want_doi = IPSEC_DOI_IPSEC;
+  else
+    {
+      log_print ("exchange_setup_p1: DOI \"%s\" unsupported", str);
+      return 0;
+    }
+  if (want_doi != doi)
+    {
+      /* XXX Should I tell what DOI I got?  */
+      log_print ("exchange_setup_p1: expected %s DOI", str);
+      return 0;
+    }
+
+  /* What exchange type do we want?  */
+  str = conf_get_str (policy, "EXCHANGE_TYPE");
+  if (!str)
+    {
+      log_print ("exchange_setup_p1: no \"EXCHANGE_TYPE\" tag in [%s] section",
+		 policy);
+      return 0;
+    }
+  type = constant_value (isakmp_exch_cst, str);
+  if (!type)
+    {
+      log_print ("exchange_setup_p1: unknown exchange type %s", str);
+      return 0;
+    }
+  if (type != GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base))
+    {
+      /* XXX Should I tell what exchange type I got?  */
+      log_print ("exchange_setup_p1: expected exchange type %s", str);
+      return 0;
+    }
+
+  exchange = exchange_create (1, 0, doi, type);
   if (!exchange)
     return 0;
+
+  exchange->name = name ? strdup (name) : "<unnamed>";
+  if (!exchange->name)
+    {
+      /* XXX Log?  */
+      exchange_free (exchange);
+      return 0;
+    }
+  exchange->policy = policy;
   cookie_gen (msg->transport, exchange,
 	      exchange->cookies + ISAKMP_HDR_ICOOKIE_LEN,
 	      ISAKMP_HDR_RCOOKIE_LEN);
@@ -666,19 +911,22 @@ exchange_setup_p2 (struct message *msg, u_int8_t doi)
   return exchange;
 }
 
+/* Dump interesting data about an exchange.  */
 static void
 exchange_dump (char *header, struct exchange *exchange)
 {
   log_debug (LOG_MISC, 10,
-	     "%s: %s phase %d doi %d exchange %d step %d msgid %08x",
-	     header, exchange->initiator ? "initiator" : "responder",
-	     exchange->phase, exchange->doi->id, exchange->type,
-	     exchange->step, decode_32 (exchange->message_id));
+	     "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
+	     header, exchange, exchange->name, exchange->policy,
+	     exchange->initiator ? "initiator" : "responder", exchange->phase,
+	     exchange->doi->id, exchange->type, exchange->step);
   log_debug (LOG_MISC, 10,
 	     "%s: icookie %08x%08x rcookie %08x%08x", header,
 	     decode_32 (exchange->cookies), decode_32 (exchange->cookies + 4),
 	     decode_32 (exchange->cookies + 8),
 	     decode_32 (exchange->cookies + 12));
+  log_debug (LOG_MISC, 10, "%s: msgid %08x", header,
+	     decode_32 (exchange->message_id));
 }
 
 void
@@ -719,6 +967,8 @@ exchange_free_aux (struct exchange *exchange)
     exchange->doi->free_exchange_data (exchange->data);
   if (exchange->data)
     free (exchange->data);
+  if (exchange->name)
+    free (exchange->name);
   exchange_free_aca_list (exchange);
   LIST_REMOVE (exchange, link);
   free (exchange);
@@ -791,6 +1041,8 @@ exchange_finalize (struct message *msg)
       exchange->keystate = 0;
     }
   exchange->doi->finalize_exchange (msg);
+  if (exchange->finalize)
+    exchange->finalize (exchange->finalize_arg);
 
   /* No need for this anymore.  */
   exchange_free (exchange);
@@ -934,4 +1186,99 @@ exchange_add_certs (struct message *msg)
   exchange_free_aca_list (exchange);
 
   return 0;
+}
+
+static void
+exchange_establish_finalize (void *arg)
+{
+  char *name = arg;
+  char *peer;
+  struct sa *isakmp_sa;
+
+  peer = conf_get_str (name, "ISAKMP-peer");
+  if (!peer)
+    {
+      log_print ("exchange_establish_finalize: "
+		 "No ISAKMP-peer given for \"%s\"",
+		 name);
+      return;
+    }
+
+  isakmp_sa = sa_lookup_by_name (peer, 1);
+  if (!isakmp_sa)
+    {
+      log_print ("exchange_establish_finalize: did not find \"%s\" ISAKMP SA",
+		 peer);
+      return;
+    }
+  exchange_establish_p2 (isakmp_sa, 0, name);
+}
+
+void
+exchange_establish (char *name, void (*finalize) (void *), void *arg)
+{
+  int phase;
+  char *trpt;
+  struct transport *transport;
+  char *peer;
+  struct sa *isakmp_sa;
+
+  phase = conf_get_num (name, "Phase");
+  switch (phase)
+    {
+    case 1:
+      trpt = conf_get_str (name, "Transport");
+      if (!trpt)
+	{
+	  log_print ("exchange_establish: No transport given for peer \"%s\"",
+		     name);
+	  return;
+	}
+
+      transport = transport_create (trpt, name);
+      if (!transport)
+	{
+	  log_print ("exchange_establish: "
+		     "transport \"%s\" for peer \"%s\" could not be created",
+		     trpt, name);
+	  return;
+	}
+
+      exchange_establish_p1 (transport, 0, 0, name, finalize, arg);
+      break;
+
+    case 2:
+      peer = conf_get_str (name, "ISAKMP-peer");
+      if (!peer)
+	{
+	  log_print ("exchange_establish: No ISAKMP-peer given for \"%s\"",
+		     name);
+	  return;
+	}
+
+      isakmp_sa = sa_lookup_by_name (peer, 1);
+      if (!isakmp_sa)
+	{
+	  /* XXX Check that peer is really a phase 1 peer.  */
+
+	  /* XXX We leak these names.  */
+	  name = strdup (name);
+	  if (!name)
+	    {
+	      log_error ("exchange_establish: strdup failed",
+			 name);
+	      return;
+	    }
+	  exchange_establish (peer, exchange_establish_finalize, name);
+	}
+      else
+	exchange_establish_p2 (isakmp_sa, 0, name);
+      break;
+
+    default:
+      log_print ("exchange_establish: "
+		 "peer \"%s\" does not have a correct phase (%d)",
+		 name, phase);
+      break;
+    }
 }

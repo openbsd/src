@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.4 1998/11/20 07:34:45 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.63 1998/11/20 07:17:43 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.5 1998/12/21 01:02:24 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.68 1998/12/17 07:54:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "util.h"
 
 static int attribute_unacceptable (u_int16_t, u_int8_t *, u_int16_t, void *);
-static int ike_main_mode_validate_prop (struct sa *);
+static int ike_main_mode_validate_prop (struct exchange *, struct sa *);
 static int initiator_send_SA (struct message *);
 static int initiator_recv_SA (struct message *);
 static int initiator_send_KE_NONCE (struct message *);
@@ -102,7 +102,8 @@ int (*ike_main_mode_responder[]) (struct message *) = {
 static int
 initiator_send_SA (struct message *msg)
 {
-  struct ipsec_exch *ie = msg->exchange->data;
+  struct exchange *exchange = msg->exchange;
+  struct ipsec_exch *ie = exchange->data;
   u_int8_t *proposal = 0, *sa_buf = 0, *attr;
   u_int8_t **transform = 0;
   size_t transforms_len = 0, proposal_len, sa_len;
@@ -114,7 +115,7 @@ initiator_send_SA (struct message *msg)
   struct proto *proto;
 
   /* Get the list of transforms.  */
-  conf = conf_get_list ("Main mode", "Offered-transforms");
+  conf = conf_get_list (exchange->policy, "Transforms");
   if (!conf)
     return -1;
 
@@ -244,8 +245,8 @@ initiator_send_SA (struct message *msg)
     goto bail_out;
   proto->no = 1;
   proto->proto = ISAKMP_PROTO_ISAKMP;
-  proto->sa = TAILQ_FIRST (&msg->exchange->sa_list);
-  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&msg->exchange->sa_list)->protos, proto,
+  proto->sa = TAILQ_FIRST (&exchange->sa_list);
+  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&exchange->sa_list)->protos, proto,
 		     link);
 
   sa_len = ISAKMP_SA_SIT_OFF + IPSEC_SIT_SIT_LEN;
@@ -898,7 +899,7 @@ struct validation_state {
 };
 
 static int
-ike_main_mode_validate_prop (struct sa *sa)
+ike_main_mode_validate_prop (struct exchange *exchange, struct sa *sa)
 {
   struct conf_list *conf, *tags;
   struct conf_list_node *xf, *tag;
@@ -907,7 +908,7 @@ ike_main_mode_validate_prop (struct sa *sa)
   struct attr_node *node;
 
   /* Get the list of transforms.  */
-  conf = conf_get_list ("Main mode", "Accepted-transforms");
+  conf = conf_get_list (exchange->policy, "Transforms");
   if (!conf)
     return 0;
 
@@ -1041,7 +1042,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  for (life = TAILQ_FIRST (&life_conf->fields); life;
 	       life = TAILQ_NEXT (life, link))
 	    {
-	      str = conf_get_str (life->field, "SA_LIFE_TYPE");
+	      str = conf_get_str (life->field, "LIFE_TYPE");
 	      if (!str)
 		/* XXX Log this?  */
 		continue;
@@ -1061,13 +1062,20 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  break;
 
 	case IKE_ATTR_LIFE_DURATION:
-	  rv
-	    = conf_match_num (vs->life, "SA_LIFE_DURATION", decode_16 (value));
+	  if (!vs->life)
+	    {
+	      log_print ("attribute_unacceptable: "
+			 "LIFE_DURATION without LIFE_TYPE");
+	      rv = 0;
+	      goto bail_out;
+	    }
+	  rv = conf_match_num (vs->life, "LIFE_DURATION", decode_16 (value));
 	  break;
 	}
 
     bail_out:
-      conf_free_list (life_conf);
+      if (life_conf)
+	conf_free_list (life_conf);
       return rv;
 
     case IKE_ATTR_KEY_LENGTH:

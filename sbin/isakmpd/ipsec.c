@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.71 1998/11/14 23:42:25 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.4 1998/12/21 01:02:24 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.75 1998/12/15 09:11:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,11 +35,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "attribute.h"
+#include "conf.h"
 #include "constants.h"
 #include "crypto.h"
 #include "dh.h"
@@ -150,14 +153,19 @@ ipsec_finalize_exchange (struct message *msg)
   struct ipsec_sa *isa = isakmp_sa->data;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
-  struct sa *sa;
+  struct sa *sa = 0;
   struct proto *proto, *last_proto = 0;
   int initiator = exchange->initiator;
   struct timeval expiration;
+  int id;
 
   switch (exchange->phase)
     {
     case 1:
+      /* Move over the name to the SA.  */
+      isakmp_sa->name = exchange->name;
+      exchange->name = 0;
+
       switch (exchange->type)
 	{
 	case ISAKMP_EXCH_ID_PROT:
@@ -172,7 +180,7 @@ ipsec_finalize_exchange (struct message *msg)
 	  break;
 	}
 
-      /* If a lifetime was negotiated sutup the death timer.  */
+      /* If a lifetime was negotiated setup the death timer.  */
       if (isakmp_sa->seconds)
 	{
 	  gettimeofday(&expiration, 0);
@@ -199,6 +207,9 @@ ipsec_finalize_exchange (struct message *msg)
 	  for (sa = TAILQ_FIRST (&exchange->sa_list); sa;
 	       sa = TAILQ_NEXT (sa, next))
 	    {
+	      /* Move over the name to the SA.  */
+	      sa->name = exchange->name;
+
 	      for (proto = TAILQ_FIRST (&sa->protos), last_proto = 0; proto;
 		   proto = TAILQ_NEXT (proto, link))
 		{
@@ -214,10 +225,56 @@ ipsec_finalize_exchange (struct message *msg)
 		    return;
 		  last_proto = proto;
 		}
+
+	      /* Figure out the networks.  */
+	      isa = sa->data;
+	      id = GET_ISAKMP_ID_TYPE (ie->id_ci);
+	      switch (id)
+		{
+		case IPSEC_ID_IPV4_ADDR:
+		  isa->src_net
+		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+				 + ISAKMP_ID_DATA_OFF);
+		  isa->src_mask = 0xffffffff;
+		  break;
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+		  isa->src_net
+		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+				 + ISAKMP_ID_DATA_OFF);
+		  isa->src_mask
+		    = decode_32 ((exchange->initiator ? ie->id_ci : ie->id_cr)
+				 + ISAKMP_ID_DATA_OFF + 4);
+		  break;
+		}
+
+	      id = GET_ISAKMP_ID_TYPE (ie->id_cr);
+	      switch (id)
+		{
+		case IPSEC_ID_IPV4_ADDR:
+		  isa->dst_net
+		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+				 + ISAKMP_ID_DATA_OFF);
+		  isa->dst_mask = 0xffffffff;
+		  break;
+		case IPSEC_ID_IPV4_ADDR_SUBNET:
+		  isa->dst_net
+		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+				 + ISAKMP_ID_DATA_OFF);
+		  isa->dst_mask
+		    = decode_32 ((exchange->initiator ? ie->id_cr : ie->id_ci)
+				 + ISAKMP_ID_DATA_OFF + 4);
+		  break;
+		}
+	      log_debug (LOG_MISC, 50,
+			 "ipsec_finalize_exchange: src %x %x dst %x %x",
+			 isa->src_net, isa->src_mask, isa->dst_net,
+			 isa->dst_mask);
+
 	      if (sysdep_ipsec_enable_spi (sa, initiator))
 		/* XXX Tear down this exchange.  */
 		return;
 	    }
+	  exchange->name = 0;
 	  break;
 	}
     }
@@ -230,6 +287,10 @@ ipsec_free_exchange_data (void *vie)
 
   if (ie->sa_i_b)
     free (ie->sa_i_b);
+  if (ie->id_ci)
+    free (ie->id_ci);
+  if (ie->id_cr)
+    free (ie->id_cr);
   if (ie->g_xi)
     free (ie->g_xi);
   if (ie->g_xr)
@@ -384,6 +445,23 @@ ipsec_validate_id_information (u_int8_t type, u_int8_t *extra, u_int8_t *buf,
   if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
     return -1;
 
+  switch (type)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      log_debug_buf (LOG_MESSAGE, 40, "ipsec_validate_id_information: IPv4",
+		     buf, 4);
+      break;
+
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      log_debug_buf (LOG_MESSAGE, 40,
+		     "ipsec_validate_id_information: IPv4 network/netmask",
+		     buf, 8);
+      break;
+
+    default:
+      break;
+    }
+
   if (exchange->phase == 1
       && (proto != IPPROTO_UDP || port != UDP_DEFAULT_PORT)
       && (proto != 0 || port != 0))
@@ -490,7 +568,7 @@ ipsec_initiator (struct message *msg)
   /* Check that the SA is coherent with the IKE rules.  */
   if ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
        && exchange->type != ISAKMP_EXCH_INFO)
-      || (exchange->phase == 2 && exchange->type == ISAKMP_EXCH_ID_PROT))
+      || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE))
     {
       log_print ("ipsec_initiator: unsupported exchange type %d in phase %d",
 		 exchange->type, exchange->phase);
@@ -1018,6 +1096,10 @@ ipsec_esp_enckeylength (struct proto *proto)
       return 8;
     case IPSEC_ESP_3DES:
       return 24;
+    case IPSEC_ESP_CAST:
+      if (!iproto->keylen)
+	return 16;
+      /* Fallthrough */
     default:
       return iproto->keylen / 8;
     }
@@ -1065,4 +1147,143 @@ ipsec_keymat_length (struct proto *proto)
     default:
       return -1;
     }
+}
+
+/*
+ * Out of a named section SECTION in the configuration file build an
+ * ISAKMP ID payload.  Ths payload size should be stashed in SZ.
+ * The caller is responsible for freeing the payload.
+ */
+u_int8_t *
+ipsec_build_id (char *section, size_t *sz)
+{
+  char *type, *address, *netmask;
+  struct in_addr addr, mask;
+  u_int8_t *p;
+  int id;
+
+  type = conf_get_str (section, "ID-type");
+  if (!type)
+    {
+      log_print ("ipsec_build_id: section %s has no ID-type", section);
+      return 0;
+    }
+
+  *sz = ISAKMP_ID_SZ;
+
+  id = constant_value (ipsec_id_cst, type);
+  switch (id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      address = conf_get_str (section, "Address");
+      if (!address)
+	{
+	  log_print ("ipsec_id_build: section %s has no \"Address\" tag",
+		     section);
+	  return 0;
+	}
+
+      if (!inet_aton (address, &addr))
+	{
+	  log_print ("ipsec_id_build: invalid section %s address %s", section,
+		     address);
+	  return 0;
+	}
+
+      *sz += sizeof (in_addr_t);
+      break;
+
+#ifdef notyet
+    case IPSEC_ID_FQDN:
+      return 0;
+
+    case IPSEC_ID_USER_FQDN:
+      return 0;
+#endif
+
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      address = conf_get_str (section, "Network");
+      if (!address)
+	{
+	  log_print ("ipsec_id_build: section %s has no \"Network\" tag",
+		     section);
+	  return 0;
+	}
+
+      if (!inet_aton (address, &addr))
+	{
+	  log_print ("ipsec_id_build: invalid section %s network %s", section,
+		     address);
+	  return 0;
+	}
+
+      netmask = conf_get_str (section, "Netmask");
+      if (!netmask)
+	{
+	  log_print ("ipsec_id_build: section %s has no \"Netmask\" tag",
+		     section);
+	  return 0;
+	}
+
+      if (!inet_aton (netmask, &mask))
+	{
+	  log_print ("ipsec_id_build: invalid section %s network %s", section,
+		     netmask);
+	  return 0;
+	}
+
+      *sz += 2 * sizeof (in_addr_t);
+      break;
+
+#ifdef notyet
+    case IPSEC_ID_IPV6_ADDR:
+      return 0;
+
+    case IPSEC_ID_IPV6_ADDR_SUBNET:
+      return 0;
+
+    case IPSEC_ID_IPV4_RANGE:
+      return 0;
+
+    case IPSEC_ID_IPV6_RANGE:
+      return 0;
+
+    case IPSEC_ID_DER_ASN1_DN:
+      return 0;
+
+    case IPSEC_ID_DER_ASN1_GN:
+      return 0;
+
+    case IPSEC_ID_KEY_ID:
+      return 0;
+#endif
+
+    default:
+      log_print ("ipsec_build_id: unknown ID type \"%s\" in section %s", type,
+		 section);
+      return 0;
+    }
+
+  p = malloc (*sz);
+  if (!p)
+    {
+      log_print ("ipsec_build_id: malloc(%d) failed", *sz);
+      return 0;
+    }
+
+  SET_ISAKMP_ID_TYPE (p, id);
+  SET_ISAKMP_ID_DOI_DATA (p, "\000\000\000");
+  
+  switch (id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      encode_32 (p + ISAKMP_ID_DATA_OFF, ntohl (addr.s_addr));
+      break;
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      encode_32 (p + ISAKMP_ID_DATA_OFF, ntohl (addr.s_addr));
+      encode_32 (p + ISAKMP_ID_DATA_OFF + 4, ntohl (mask.s_addr));
+      break;
+    }
+
+  return p;
 }

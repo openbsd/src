@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.4 1998/11/20 07:33:45 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.23 1998/11/20 07:13:19 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.5 1998/12/21 01:02:25 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.24 1998/12/01 10:18:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -72,12 +72,21 @@ extern int regrand;
  */
 static int sighupped = 0;
 
+/*
+ * If we receive a USR1 signal, this flag gets set to show we need to dump
+ * a report over our internal state ASAP.  The file to report to is settable
+ * via the -R parameter.
+ */
+static int sigusr1ed = 0;
+static char *report_file = "/var/run/isakmpd.report";
+
 static void
 usage ()
 {
   fprintf (stderr,
 	   "usage: %s [-d] [-c config-file] [-D class=level] [-f fifo] [-n]\n"
-	   "          [-p listen-port] [-P local-port] [-r seed]\n",
+	   "          [-p listen-port] [-P local-port] [-r seed]\n"
+	   "          [-R report-file]\n",
 	   sysdep_progname ());
   exit (1);
 }
@@ -117,6 +126,9 @@ parse_args (int argc, char *argv[])
       srandom (strtoul (optarg, NULL, 0));
       regrand = 1;
       break;
+    case 'R':
+      report_file = optarg;
+      break;
     case '?':
     default:
       usage ();
@@ -144,6 +156,35 @@ sighup (int sig)
   sighupped = 1;
 }
 
+/* Report internal state on SIGUSR1.  */
+static void
+report (void)
+{
+  FILE *report = fopen (report_file, "w");
+  FILE *old;
+
+  if (!report)
+    {
+      log_error ("fopen (\"%s\", \"w\") failed");
+      return;
+    }
+
+  /* Divert the log channel to the report file during the report.  */
+  old = log_current ();
+  log_to (report);
+  ui_report ("r");
+  log_to (old);
+  fclose (report);
+
+  sigusr1ed = 0;
+}
+
+static void
+sigusr1 (int sig)
+{
+  sigusr1ed = 1;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -164,11 +205,18 @@ main (int argc, char *argv[])
   /* Reinitialize on HUP reception.  */
   signal (SIGHUP, sighup);
 
+  /* Report state on USR1 reception.  */
+  signal (SIGUSR1, sigusr1);
+
   while (1)
     {
       /* If someone has sent SIGHUP to us, reconfigure.  */
       if (sighupped)
 	reinit ();
+
+      /* and if someone sent SIGUSR1, do a state report.  */
+      if (sigusr1ed)
+	report ();
 
       /* Setup the descriptors to look for incoming messages at.  */
       FD_ZERO (&rfds);

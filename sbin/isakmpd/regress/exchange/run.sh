@@ -1,5 +1,6 @@
 #!/bin/sh
-#	$OpenBSD: run.sh,v 1.2 1998/11/15 00:44:09 niklas Exp $
+#	$OpenBSD: run.sh,v 1.3 1998/12/21 01:02:33 niklas Exp $
+#	$EOM: run.sh,v 1.3 1998/08/03 21:06:00 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: field.c,v 1.3 1998/11/17 11:10:10 niklas Exp $	*/
-/*	$EOM: field.c,v 1.5 1998/09/12 19:26:31 niklas Exp $	*/
+/*	$OpenBSD: field.c,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
+/*	$EOM: field.c,v 1.6 1998/11/27 17:12:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -221,7 +221,7 @@ field_get_num (struct field *f, u_int8_t *buf)
 {
   u_int32_t val;
 
-  if (extract_val(buf + f->offset, f->len, &val))
+  if (extract_val (buf + f->offset, f->len, &val))
     return 0;
   return val;
 }

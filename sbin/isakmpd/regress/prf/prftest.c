@@ -1,4 +1,5 @@
-/*	$OpenBSD: prftest.c,v 1.2 1998/11/15 00:44:11 niklas Exp $	*/
+/*	$OpenBSD: prftest.c,v 1.3 1998/12/21 01:02:35 niklas Exp $	*/
+/*	$EOM: prftest.c,v 1.2 1998/10/07 16:40:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
