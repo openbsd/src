@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.303 2003/01/18 05:07:45 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.304 2003/01/18 06:31:59 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1700,7 +1700,7 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			break;
 		case PF_NAT:
 			if (pf_get_sport(af, proto, &r->rpool, saddr, daddr,
-		            dport, naddr, nport,r->rpool.proxy_port[0],
+		            dport, naddr, nport, r->rpool.proxy_port[0],
 			    r->rpool.proxy_port[1])) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: NAT proxy port allocation "
