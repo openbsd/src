@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.1 1999/07/18 21:25:16 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.2 1999/07/18 22:44:48 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -103,7 +103,7 @@
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
-#include "atapibus.h"
+#include "atapiscsi.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -388,7 +388,7 @@ wdcattach(chp)
 	 */
 	if ((chp->ch_drive[0].drive_flags & DRIVE_ATAPI) ||
 	    (chp->ch_drive[1].drive_flags & DRIVE_ATAPI)) {
-#if NATAPIBUS > 0
+#if NATAPISCSI > 0
 		wdc_atapibus_attach(chp);
 #else
 		/*
@@ -462,7 +462,7 @@ void
 wdc_final_attach(chp)
 	struct channel_softc *chp;
 {
-#if NATAPIBUS > 0
+#if NATAPISCSI > 0
 	wdc_atapibus_final_attach(chp);
 #endif
 }
