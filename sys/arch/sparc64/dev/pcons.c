@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.1 2001/08/19 05:21:37 jason Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.2 2001/09/04 13:22:13 art Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -174,8 +174,10 @@ pconsopen(dev, flag, mode, p)
 	sc = pcons_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
-	if (!(tp = sc->of_tty))
+	if (!(tp = sc->of_tty)) {
 		sc->of_tty = tp = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
 	tp->t_dev = dev;
