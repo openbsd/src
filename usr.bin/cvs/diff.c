@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.13 2004/12/14 21:40:39 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.14 2004/12/28 19:51:07 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -445,17 +445,17 @@ cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
 
 	if (dap->rev1 != NULL) {
 		cvs_sendarg(root, "-r", 0);
-		cvs_sendarg(root, dap->rev1, 1);
+		cvs_sendarg(root, dap->rev1, 0);
 	} else if (dap->date1 != NULL) {
 		cvs_sendarg(root, "-D", 0);
-		cvs_sendarg(root, dap->date1, 1);
+		cvs_sendarg(root, dap->date1, 0);
 	}
 	if (dap->rev2 != NULL) {
 		cvs_sendarg(root, "-r", 0);
-		cvs_sendarg(root, dap->rev2, 1);
+		cvs_sendarg(root, dap->rev2, 0);
 	} else if (dap->date2 != NULL) {
 		cvs_sendarg(root, "-D", 0);
-		cvs_sendarg(root, dap->date2, 1);
+		cvs_sendarg(root, dap->date2, 0);
 	}
 
 	return (0);
