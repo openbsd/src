@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.16 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.17 2004/07/01 18:25:47 otto Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.16 2003/07/29 00:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.17 2004/07/01 18:25:47 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, exitval, pflag;
-	mode_t *set;
+	void *set;
 	mode_t mode, dir_mode;
 
 	setlocale(LC_ALL, "");

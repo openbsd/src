@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.17 2004/02/16 22:12:02 millert Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.18 2004/07/01 18:25:47 otto Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.17 2004/02/16 22:12:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.18 2004/07/01 18:25:47 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 {
 	FTS *ftsp;
 	FTSENT *p;
-	mode_t *set;
+	void *set;
 	long val;
 	int oct, omode;
 	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;

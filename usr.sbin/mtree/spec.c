@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.19 2004/05/02 17:55:53 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.20 2004/07/01 18:25:48 otto Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.19 2004/05/02 17:55:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.20 2004/07/01 18:25:48 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ set(t, ip)
 	char *kw, *val = NULL;
 	struct group *gr;
 	struct passwd *pw;
-	mode_t *m;
+	void *m;
 	int value;
 	u_int32_t fset, fclr;
 	char *ep;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.28 2003/06/26 07:27:29 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.29 2004/07/01 18:25:47 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.28 2003/06/26 07:27:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.29 2004/07/01 18:25:47 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1197,7 +1197,7 @@ PLAN *
 c_perm(char *perm, char ***ignored, int unused)
 {
 	PLAN *new;
-	mode_t *set;
+	void *set;
 
 	ftsoptions &= ~FTS_NOSTAT;
 
