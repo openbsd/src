@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2003/09/04 19:37:07 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2003/09/05 03:56:58 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -299,7 +299,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				*addr += object->load_offs;
 			}
 		}
-
+	}
+	if (pltgot != NULL) {
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 		pltgot[3] = (Elf_Addr)object;
 	}
