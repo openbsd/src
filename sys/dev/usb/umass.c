@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.34 2004/07/21 07:55:51 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.35 2004/07/21 07:57:27 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1025,12 +1025,14 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* FALLTHROUGH if no data phase, err == 0 */
 	case TSTATE_BBB_DATA:
-		/* Command transport phase, error handling (ignored if no data
+		/* Command transport phase error handling (ignored if no data
 		 * phase (fallthrough from previous state)) */
 		if (sc->transfer_dir != DIR_NONE) {
 			/* retrieve the length of the transfer that was done */
 			usbd_get_xfer_status(xfer, NULL, NULL,
-					     &sc->transfer_actlen, NULL);
+			     &sc->transfer_actlen, NULL);
+			DPRINTF(UDMASS_BBB, ("%s: BBB_DATA actlen=%d\n",
+				USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
 
 			if (err) {
 				DPRINTF(UDMASS_BBB, ("%s: Data-%s %d failed, "
@@ -1044,14 +1046,13 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					  (sc->transfer_dir == DIR_IN?
 					    UMASS_BULKIN:UMASS_BULKOUT),
 					  sc->transfer_xfer[XFER_BBB_DCLEAR]);
-					return;
 				} else {
 					/* Unless the error is a pipe stall the
 					 * error is fatal.
 					 */
 					umass_bbb_reset(sc,STATUS_WIRE_FAILED);
-					return;
 				}
+				return;
 			}
 		}
 
@@ -1074,11 +1075,10 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 * err == 0 and the following if block is passed.
 		 */
 		if (err) {	/* should not occur */
-			/* try the transfer below, even if clear stall failed */
-			DPRINTF(UDMASS_BBB, ("%s: bulk-%s stall clear failed"
-				", %s\n", USBDEVNAME(sc->sc_dev),
-				(sc->transfer_dir == DIR_IN? "in":"out"),
-				usbd_errstr(err)));
+			printf("%s: BBB bulk-%s stall clear failed, %s\n",
+			    USBDEVNAME(sc->sc_dev),
+			    (sc->transfer_dir == DIR_IN? "in":"out"),
+			    usbd_errstr(err));
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 		}
@@ -1441,10 +1441,10 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			DPRINTF(UDMASS_CBI, ("%s: failed to send ADSC\n",
 				USBDEVNAME(sc->sc_dev)));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
-
 			return;
 		}
 
+		/* Data transport phase, setup transfer */
 		sc->transfer_state = TSTATE_CBI_DATA;
 		if (sc->transfer_dir == DIR_IN) {
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKIN],
@@ -1453,6 +1453,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
+			return;
 		} else if (sc->transfer_dir == DIR_OUT) {
 			memcpy(sc->data_buffer, sc->transfer_data,
 			       sc->transfer_datalen);
@@ -1462,33 +1463,43 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
+			return;
 		} else {
 			DPRINTF(UDMASS_CBI, ("%s: no data phase\n",
 				USBDEVNAME(sc->sc_dev)));
-			goto dostatus;
 		}
-		return;
 
+		/* FALLTHROUGH if no data phase, err == 0 */
 	case TSTATE_CBI_DATA:
-		/* retrieve the length of the transfer that was done */
-		usbd_get_xfer_status(xfer,NULL,NULL,&sc->transfer_actlen,NULL);
-		DPRINTF(UDMASS_CBI, ("%s: CBI_DATA actlen=%d\n",
-			USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
+		/* Command transport phase error handling (ignored if no data
+		 * phase (fallthrough from previous state)) */
+		if (sc->transfer_dir != DIR_NONE) {
+			/* retrieve the length of the transfer that was done */
+			usbd_get_xfer_status(xfer, NULL, NULL,
+			    &sc->transfer_actlen, NULL);
+			DPRINTF(UDMASS_CBI, ("%s: CBI_DATA actlen=%d\n",
+				USBDEVNAME(sc->sc_dev), sc->transfer_actlen));
 
-		if (err) {
-			DPRINTF(UDMASS_CBI, ("%s: Data-%s %d failed, "
-				"%s\n", USBDEVNAME(sc->sc_dev),
-				(sc->transfer_dir == DIR_IN?"in":"out"),
-				sc->transfer_datalen,usbd_errstr(err)));
+			if (err) {
+				DPRINTF(UDMASS_CBI, ("%s: Data-%s %d failed, "
+					"%s\n", USBDEVNAME(sc->sc_dev),
+					(sc->transfer_dir == DIR_IN?"in":"out"),
+					sc->transfer_datalen,usbd_errstr(err)));
 
-			if (err == USBD_STALLED) {
-				sc->transfer_state = TSTATE_CBI_DCLEAR;
-				umass_clear_endpoint_stall(sc, UMASS_BULKIN,
+				if (err == USBD_STALLED) {
+					sc->transfer_state = TSTATE_CBI_DCLEAR;
+					umass_clear_endpoint_stall(sc,
+					  (sc->transfer_dir == DIR_IN?
+					    UMASS_BULKIN:UMASS_BULKOUT),
 					sc->transfer_xfer[XFER_CBI_DCLEAR]);
-			} else {
-				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+				} else {
+					/* Unless the error is a pipe stall the
+					 * error is fatal.
+					 */
+					umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+				}
+				return;
 			}
-			return;
 		}
 
 		if (sc->transfer_dir == DIR_IN)
@@ -1499,7 +1510,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_actlen, 48));
 
-	dostatus:
+		/* Status phase */
 		if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
 			sc->transfer_state = TSTATE_CBI_STATUS;
 			memset(&sc->sbl, 0, sizeof(sc->sbl));
