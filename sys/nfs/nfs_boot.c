@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.12 2001/11/14 23:37:33 mickey Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.13 2002/01/16 21:51:16 ericj Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -140,16 +140,18 @@ nfs_boot_init(nd, procp)
 	 */
 	if (nfsbootdevname)
 		ifp = ifunit(nfsbootdevname);
-	else
-		for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+	else {
+		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
+		    ifp = TAILQ_NEXT(ifp, if_list)) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
+		}
+	}
 	if (ifp == NULL)
 		panic("nfs_boot: no suitable interface");
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
-	printf("nfs_boot: using network interface '%s'\n",
-	    ireq.ifr_name);
+	printf("nfs_boot: using network interface '%s'\n", ireq.ifr_name);
 
 	/*
 	 * Bring up the interface.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.19 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.20 2002/01/16 21:51:16 ericj Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 
 	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
 loop:
-	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
+	for (np = LIST_FIRST(nhpp); np != NULL; np = LIST_NEXT(np, n_hash)) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
 		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;
@@ -236,7 +236,7 @@ nfs_reclaim(v)
 	 * this nfs node.
 	 */
 	if (vp->v_type == VDIR) {
-		dp = np->n_cookies.lh_first;
+		dp = LIST_FIRST(&np->n_cookies);
 		while (dp) {
 			dp2 = dp;
 			dp = dp->ndm_list.le_next;

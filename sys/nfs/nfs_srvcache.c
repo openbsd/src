@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.7 2001/06/25 03:28:09 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.8 2002/01/16 21:51:16 ericj Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -163,11 +163,11 @@ nfsrv_initcache()
  */
 int
 nfsrv_getcache(nd, slp, repp)
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	struct nfssvc_sock *slp;
 	struct mbuf **repp;
 {
-	register struct nfsrvcache *rp;
+	struct nfsrvcache *rp;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
 	caddr_t bpos;
@@ -180,8 +180,8 @@ nfsrv_getcache(nd, slp, repp)
 	if (!nd->nd_nam2)
 		return (RC_DOIT);
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != 0;
-	    rp = rp->rc_hash.le_next) {
+	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != NULL;
+	    rp = LIST_NEXT(rp, rc_hash)) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
@@ -191,7 +191,7 @@ loop:
 			}
 			rp->rc_flag |= RC_LOCKED;
 			/* If not at end of LRU chain, move it there */
-			if (rp->rc_lru.tqe_next) {
+			if (TAILQ_NEXT(rp, rc_lru)) {
 				TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 				TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);
 			}
@@ -231,11 +231,11 @@ loop:
 		numnfsrvcache++;
 		rp->rc_flag = RC_LOCKED;
 	} else {
-		rp = nfsrvlruhead.tqh_first;
+		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_flag & RC_LOCKED) != 0) {
 			rp->rc_flag |= RC_WANTED;
 			(void) tsleep((caddr_t)rp, PZERO-1, "nfsrc", 0);
-			rp = nfsrvlruhead.tqh_first;
+			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
 		rp->rc_flag |= RC_LOCKED;
 		LIST_REMOVE(rp, rc_hash);
@@ -276,17 +276,17 @@ loop:
  */
 void
 nfsrv_updatecache(nd, repvalid, repmbuf)
-	register struct nfsrv_descript *nd;
+	struct nfsrv_descript *nd;
 	int repvalid;
 	struct mbuf *repmbuf;
 {
-	register struct nfsrvcache *rp;
+	struct nfsrvcache *rp;
 
 	if (!nd->nd_nam2)
 		return;
 loop:
-	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != 0;
-	    rp = rp->rc_hash.le_next) {
+	for (rp = NFSRCHASH(nd->nd_retxid)->lh_first; rp != NULL;
+	    rp = LIST_NEXT(rp, rc_hash)) {
 	    if (nd->nd_retxid == rp->rc_xid && nd->nd_procnum == rp->rc_proc &&
 		netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
 			if ((rp->rc_flag & RC_LOCKED) != 0) {
@@ -327,10 +327,10 @@ loop:
 void
 nfsrv_cleancache()
 {
-	register struct nfsrvcache *rp, *nextrp;
+	struct nfsrvcache *rp, *nextrp;
 
-	for (rp = nfsrvlruhead.tqh_first; rp != 0; rp = nextrp) {
-		nextrp = rp->rc_lru.tqe_next;
+	for (rp = TAILQ_FIRST(&nfsrvlruhead); rp != NULL; rp = nextrp) {
+		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		free(rp, M_NFSD);
