@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -29,542 +29,546 @@ Index
 
 * Menu:
 
-* !, in modules file:                   Excluding directories.
-* &, in modules file:                   Ampersand modules.
-* -a, in modules file:                  Alias modules.
-* -d, in modules file:                  Module options.
-* -e, in modules file:                  Module options.
-* -i, in modules file:                  Module options.
-* -j (merging branches):                Merging a branch.
-* -k (keyword substitution):            Substitution modes.
-* -o, in modules file:                  Module options.
-* -s, in modules file:                  Module options.
-* -t, in modules file:                  Module options.
-* -u, in modules file:                  Module options.
-* .# files:                             update output.
-* .bashrc, setting CVSROOT in:          Specifying a repository.
-* .cshrc, setting CVSROOT in:           Specifying a repository.
-* .cvsrc file:                          ~/.cvsrc.
-* .profile, setting CVSROOT in:         Specifying a repository.
-* .tcshrc, setting CVSROOT in:          Specifying a repository.
+* !, in modules file:                    Excluding directories.
+* &, in modules file:                    Ampersand modules.
+* -a, in modules file:                   Alias modules.
+* -d, in modules file:                   Module options.
+* -e, in modules file:                   Module options.
+* -i, in modules file:                   Module options.
+* -j (merging branches):                 Merging a branch.
+* -k (keyword substitution):             Substitution modes.
+* -o, in modules file:                   Module options.
+* -s, in modules file:                   Module options.
+* -t, in modules file:                   Module options.
+* -u, in modules file:                   Module options.
+* .# files:                              update output.
+* .bashrc, setting CVSROOT in:           Specifying a repository.
+* .cshrc, setting CVSROOT in:            Specifying a repository.
+* .cvsrc file:                           ~/.cvsrc.
+* .profile, setting CVSROOT in:          Specifying a repository.
+* .tcshrc, setting CVSROOT in:           Specifying a repository.
 * /usr/local/cvsroot, as example repository: Repository.
-* :ext::                                Connecting via rsh.
-* :gserver::                            GSSAPI authenticated.
-* :kserver::                            Kerberos authenticated.
-* :local::                              Repository.
-* :pserver::                            Password authentication client.
-* :server::                             Connecting via rsh.
-* <<<<<<<:                              Conflicts example.
-* =======:                              Conflicts example.
-* >>>>>>>:                              Conflicts example.
-* __ files (VMS):                       update output.
-* abandoning work:                      Editing files.
-* Access a branch:                      Accessing branches.
-* add (subcommand):                     Adding files.
-* Adding a tag:                         Tags.
-* Adding files:                         Adding files.
-* Admin (subcommand):                   admin.
-* Administrative files (intro):         Intro administrative files.
-* Administrative files (reference):     Administrative files.
-* Administrative files, editing them:   Intro administrative files.
-* Alias modules:                        Alias modules.
-* ALL in commitinfo:                    commitinfo.
-* Ampersand modules:                    Ampersand modules.
-* annotate (subcommand):                annotate.
-* Atomic transactions, lack of:         Concurrency.
-* attic:                                Attic.
-* authenticated client, using:          Password authentication client.
-* authenticating server, setting up:    Password authentication server.
-* authentication, stream:               Global options.
-* Author keyword:                       Keyword list.
-* Automatically ignored files:          cvsignore.
-* Avoiding editor invocation:           Common options.
-* Backing up, repository:               Backing up.
-* Base directory, in CVS directory:     Working directory storage.
-* BASE, as reserved tag name:           Tags.
-* BASE, special tag:                    Common options.
-* Baserev file, in CVS directory:       Working directory storage.
-* Baserev.tmp file, in CVS directory:   Working directory storage.
-* bill of materials:                    Builds.
-* Binary files:                         Binary files.
-* Branch merge example:                 Merging a branch.
-* Branch number <1>:                    Branches and revisions.
-* Branch number:                        Revision numbers.
-* Branch, accessing:                    Accessing branches.
-* Branch, check out:                    Accessing branches.
-* Branch, creating a:                   Creating a branch.
-* Branch, identifying:                  Accessing branches.
-* Branch, retrieving:                   Accessing branches.
-* Branch, vendor-:                      Tracking sources.
-* Branches motivation:                  Branches motivation.
-* Branches, copying changes between:    Branching and merging.
-* Branches, sticky:                     Accessing branches.
-* Branching:                            Branching and merging.
-* Bringing a file up to date:           Updating a file.
-* Bugs in this manual or CVS:           BUGS.
-* Bugs, reporting:                      BUGS.
-* builds:                               Builds.
-* Changes, copying between branches:    Branching and merging.
-* Changing a log message:               admin options.
-* Check out a branch:                   Accessing branches.
-* checked out copy, keeping:            Keeping a checked out copy.
-* Checkin program:                      Module options.
-* Checkin.prog file, in CVS directory:  Working directory storage.
-* Checking commits:                     commitinfo.
-* Checking out source:                  Getting the source.
-* Checkout (subcommand):                checkout.
-* Checkout program:                     Module options.
+* :ext:, setting up:                     Connecting via rsh.
+* :ext:, troubleshooting:                Connection.
+* :gserver:, setting up:                 GSSAPI authenticated.
+* :kserver:, setting up:                 Kerberos authenticated.
+* :local:, setting up:                   Repository.
+* :pserver:, setting up:                 Password authentication client.
+* :pserver:, troubleshooting:            Connection.
+* :server:, setting up:                  Connecting via rsh.
+* :server:, troubleshooting:             Connection.
+* <<<<<<<:                               Conflicts example.
+* =======:                               Conflicts example.
+* >>>>>>>:                               Conflicts example.
+* __ files (VMS):                        update output.
+* abandoning work:                       Editing files.
+* Access a branch:                       Accessing branches.
+* add (subcommand):                      Adding files.
+* Adding a tag:                          Tags.
+* Adding files:                          Adding files.
+* Admin (subcommand):                    admin.
+* Administrative files (intro):          Intro administrative files.
+* Administrative files (reference):      Administrative files.
+* Administrative files, editing them:    Intro administrative files.
+* Alias modules:                         Alias modules.
+* ALL in commitinfo:                     commitinfo.
+* Ampersand modules:                     Ampersand modules.
+* annotate (subcommand):                 annotate.
+* Atomic transactions, lack of:          Concurrency.
+* attic:                                 Attic.
+* authenticated client, using:           Password authentication client.
+* authenticating server, setting up:     Password authentication server.
+* authentication, stream:                Global options.
+* Author keyword:                        Keyword list.
+* Automatically ignored files:           cvsignore.
+* Avoiding editor invocation:            Common options.
+* Backing up, repository:                Backing up.
+* Base directory, in CVS directory:      Working directory storage.
+* BASE, as reserved tag name:            Tags.
+* BASE, special tag:                     Common options.
+* Baserev file, in CVS directory:        Working directory storage.
+* Baserev.tmp file, in CVS directory:    Working directory storage.
+* bill of materials:                     Builds.
+* Binary files:                          Binary files.
+* Branch merge example:                  Merging a branch.
+* Branch number <1>:                     Branches and revisions.
+* Branch number:                         Revision numbers.
+* Branch, accessing:                     Accessing branches.
+* Branch, check out:                     Accessing branches.
+* Branch, creating a:                    Creating a branch.
+* Branch, identifying:                   Accessing branches.
+* Branch, retrieving:                    Accessing branches.
+* Branch, vendor-:                       Tracking sources.
+* Branches motivation:                   Branches motivation.
+* Branches, copying changes between:     Branching and merging.
+* Branches, sticky:                      Accessing branches.
+* Branching:                             Branching and merging.
+* Bringing a file up to date:            Updating a file.
+* Bugs in this manual or CVS:            BUGS.
+* Bugs, reporting:                       BUGS.
+* builds:                                Builds.
+* Changes, copying between branches:     Branching and merging.
+* Changing a log message:                admin options.
+* Check out a branch:                    Accessing branches.
+* checked out copy, keeping:             Keeping a checked out copy.
+* Checkin program:                       Module options.
+* Checkin.prog file, in CVS directory:   Working directory storage.
+* Checking commits:                      commitinfo.
+* Checking out source:                   Getting the source.
+* Checkout (subcommand):                 checkout.
+* Checkout program:                      Module options.
 * checkout, as term for getting ready to edit: Editing files.
-* Checkout, example:                    Getting the source.
-* checkoutlist:                         CVSROOT storage.
+* Checkout, example:                     Getting the source.
+* checkoutlist:                          CVSROOT storage.
 * choosing, reserved or unreserved checkouts: Choosing a model.
-* Cleaning up:                          Cleaning up.
-* Client/Server Operation:              Remote repositories.
-* Co (subcommand):                      checkout.
-* Command reference:                    Invoking CVS.
-* Command structure:                    Structure.
-* comment leader:                       admin options.
-* Commit (subcommand):                  commit.
-* Commit files:                         commit files.
-* Commit, when to:                      When to commit.
-* Commitinfo:                           commitinfo.
-* Committing changes:                   Committing your changes.
-* Common options:                       Common options.
-* Common syntax of info files:          syntax.
-* compatibility, between CVS versions:  Compatibility.
-* COMSPEC, environment variable:        Environment variables.
-* config, in CVSROOT:                   config.
-* Conflict markers:                     Conflicts example.
-* Conflict resolution:                  Conflicts example.
-* Conflicts (merge example):            Conflicts example.
-* Contributors (CVS program):           What is CVS?.
-* Contributors (manual):                Credits.
-* copying a repository:                 Moving a repository.
-* Copying changes:                      Branching and merging.
-* Correcting a log message:             admin options.
-* Creating a branch:                    Creating a branch.
-* Creating a project:                   Starting a new project.
-* Creating a repository:                Creating a repository.
-* Credits (CVS program):                What is CVS?.
-* Credits (manual):                     Credits.
-* CVS 1.6, and watches:                 Watches Compatibility.
-* CVS command structure:                Structure.
-* CVS directory, in repository:         CVS in repository.
-* CVS directory, in working directory:  Working directory storage.
-* CVS passwd file:                      Password authentication server.
-* CVS, history of:                      What is CVS?.
-* CVS, introduction to:                 What is CVS?.
-* CVS, versions of:                     Compatibility.
-* CVS/Base directory:                   Working directory storage.
-* CVS/Baserev file:                     Working directory storage.
-* CVS/Baserev.tmp file:                 Working directory storage.
-* CVS/Checkin.prog file:                Working directory storage.
-* CVS/Entries file:                     Working directory storage.
-* CVS/Entries.Backup file:              Working directory storage.
-* CVS/Entries.Log file:                 Working directory storage.
-* CVS/Entries.Static file:              Working directory storage.
-* CVS/Notify file:                      Working directory storage.
-* CVS/Notify.tmp file:                  Working directory storage.
-* CVS/Repository file:                  Working directory storage.
-* CVS/Root file:                        Specifying a repository.
-* CVS/Tag file:                         Working directory storage.
-* CVS/Template file:                    Working directory storage.
-* CVS/Update.prog file:                 Working directory storage.
-* CVS_CLIENT_LOG, environment variable: Environment variables.
-* CVS_CLIENT_PORT:                      Kerberos authenticated.
+* Cleaning up:                           Cleaning up.
+* Client/Server Operation:               Remote repositories.
+* Co (subcommand):                       checkout.
+* Command reference:                     Invoking CVS.
+* Command structure:                     Structure.
+* comment leader:                        admin options.
+* Commit (subcommand):                   commit.
+* Commit files:                          commit files.
+* Commit, when to:                       When to commit.
+* Commitinfo:                            commitinfo.
+* Committing changes:                    Committing your changes.
+* Common options:                        Common options.
+* Common syntax of info files:           syntax.
+* compatibility, between CVS versions:   Compatibility.
+* COMSPEC, environment variable:         Environment variables.
+* config, in CVSROOT:                    config.
+* Conflict markers:                      Conflicts example.
+* Conflict resolution:                   Conflicts example.
+* Conflicts (merge example):             Conflicts example.
+* Contributors (CVS program):            What is CVS?.
+* Contributors (manual):                 Credits.
+* copying a repository:                  Moving a repository.
+* Copying changes:                       Branching and merging.
+* Correcting a log message:              admin options.
+* Creating a branch:                     Creating a branch.
+* Creating a project:                    Starting a new project.
+* Creating a repository:                 Creating a repository.
+* Credits (CVS program):                 What is CVS?.
+* Credits (manual):                      Credits.
+* CVS 1.6, and watches:                  Watches Compatibility.
+* CVS command structure:                 Structure.
+* CVS directory, in repository:          CVS in repository.
+* CVS directory, in working directory:   Working directory storage.
+* CVS passwd file:                       Password authentication server.
+* CVS, history of:                       What is CVS?.
+* CVS, introduction to:                  What is CVS?.
+* CVS, versions of:                      Compatibility.
+* CVS/Base directory:                    Working directory storage.
+* CVS/Baserev file:                      Working directory storage.
+* CVS/Baserev.tmp file:                  Working directory storage.
+* CVS/Checkin.prog file:                 Working directory storage.
+* CVS/Entries file:                      Working directory storage.
+* CVS/Entries.Backup file:               Working directory storage.
+* CVS/Entries.Log file:                  Working directory storage.
+* CVS/Entries.Static file:               Working directory storage.
+* CVS/Notify file:                       Working directory storage.
+* CVS/Notify.tmp file:                   Working directory storage.
+* CVS/Repository file:                   Working directory storage.
+* CVS/Root file:                         Specifying a repository.
+* CVS/Tag file:                          Working directory storage.
+* CVS/Template file:                     Working directory storage.
+* CVS/Update.prog file:                  Working directory storage.
+* CVS_CLIENT_LOG, environment variable:  Environment variables.
+* CVS_CLIENT_PORT:                       Kerberos authenticated.
 * CVS_IGNORE_REMOTE_ROOT, environment variable: Environment variables.
-* CVS_PASSFILE, environment variable:   Password authentication client.
-* CVS_RCMD_PORT, environment variable:  Environment variables.
-* CVS_RSH, environment variable:        Environment variables.
-* CVS_SERVER, environment variable:     Connecting via rsh.
+* CVS_PASSFILE, environment variable:    Password authentication client.
+* CVS_RCMD_PORT, environment variable:   Environment variables.
+* CVS_RSH, environment variable:         Environment variables.
+* CVS_SERVER, environment variable:      Connecting via rsh.
 * CVS_SERVER_SLEEP, environment variable: Environment variables.
-* CVSEDITOR, environment variable:      Committing your changes.
-* cvsignore (admin file), global:       cvsignore.
-* CVSIGNORE, environment variable:      Environment variables.
-* CVSREAD, environment variable:        Environment variables.
-* CVSREAD, overriding:                  Global options.
-* cvsroot:                              Repository.
-* CVSROOT (file):                       Administrative files.
-* CVSROOT, environment variable:        Specifying a repository.
-* CVSROOT, module name:                 Intro administrative files.
-* CVSROOT, multiple repositories:       Multiple repositories.
-* CVSROOT, overriding:                  Global options.
-* CVSROOT, storage of files:            CVSROOT storage.
-* CVSROOT/config:                       config.
-* CVSUMASK, environment variable:       File permissions.
-* cvswrappers (admin file):             Wrappers.
+* CVSEDITOR, environment variable:       Committing your changes.
+* cvsignore (admin file), global:        cvsignore.
+* CVSIGNORE, environment variable:       Environment variables.
+* CVSREAD, environment variable:         Environment variables.
+* CVSREAD, overriding:                   Global options.
+* cvsroot:                               Repository.
+* CVSROOT (file):                        Administrative files.
+* CVSROOT, environment variable:         Specifying a repository.
+* CVSROOT, module name:                  Intro administrative files.
+* CVSROOT, multiple repositories:        Multiple repositories.
+* CVSROOT, overriding:                   Global options.
+* CVSROOT, storage of files:             CVSROOT storage.
+* CVSROOT/config:                        config.
+* CVSUMASK, environment variable:        File permissions.
+* cvswrappers (admin file):              Wrappers.
 * CVSWRAPPERS, environment variable <1>: Environment variables.
-* CVSWRAPPERS, environment variable:    Wrappers.
-* Cyclic Software:                      BUGS.
-* Date keyword:                         Keyword list.
-* Dates:                                Common options.
-* dead state:                           Attic.
-* Decimal revision number:              Revision numbers.
-* DEFAULT in commitinfo:                commitinfo.
-* DEFAULT in editinfo:                  editinfo.
-* DEFAULT in verifymsg:                 verifymsg.
-* Defining a module:                    Defining the module.
-* Defining modules (intro):             Intro administrative files.
-* Defining modules (reference manual):  modules.
-* Deleting files:                       Removing files.
-* Deleting revisions:                   admin options.
-* Deleting sticky tags:                 Sticky tags.
-* Descending directories:               Recursive behavior.
-* Diff:                                 Viewing differences.
-* Diff (subcommand):                    diff.
-* Differences, merging:                 Merging two revisions.
-* Directories, moving:                  Moving directories.
-* directories, removing:                Removing directories.
-* Directory, descending:                Recursive behavior.
-* Disjoint repositories:                Multiple repositories.
-* Distributing log messages:            loginfo.
-* driver.c (merge example):             Conflicts example.
-* edit (subcommand):                    Editing files.
-* editinfo (admin file):                editinfo.
-* Editing administrative files:         Intro administrative files.
-* Editing the modules file:             Defining the module.
-* Editor, avoiding invocation of:       Common options.
-* EDITOR, environment variable:         Committing your changes.
-* EDITOR, overriding:                   Global options.
-* Editor, specifying per module:        editinfo.
-* editors (subcommand):                 Watch information.
-* emerge:                               Conflicts example.
-* encryption:                           Global options.
-* Entries file, in CVS directory:       Working directory storage.
+* CVSWRAPPERS, environment variable:     Wrappers.
+* Cyclic Software:                       BUGS.
+* Date keyword:                          Keyword list.
+* Dates:                                 Common options.
+* dead state:                            Attic.
+* Decimal revision number:               Revision numbers.
+* DEFAULT in commitinfo:                 commitinfo.
+* DEFAULT in editinfo:                   editinfo.
+* DEFAULT in verifymsg:                  verifymsg.
+* Defining a module:                     Defining the module.
+* Defining modules (intro):              Intro administrative files.
+* Defining modules (reference manual):   modules.
+* Deleting files:                        Removing files.
+* Deleting revisions:                    admin options.
+* Deleting sticky tags:                  Sticky tags.
+* Descending directories:                Recursive behavior.
+* Diff:                                  Viewing differences.
+* Diff (subcommand):                     diff.
+* Differences, merging:                  Merging two revisions.
+* Directories, moving:                   Moving directories.
+* directories, removing:                 Removing directories.
+* Directory, descending:                 Recursive behavior.
+* Disjoint repositories:                 Multiple repositories.
+* Distributing log messages:             loginfo.
+* driver.c (merge example):              Conflicts example.
+* edit (subcommand):                     Editing files.
+* editinfo (admin file):                 editinfo.
+* Editing administrative files:          Intro administrative files.
+* Editing the modules file:              Defining the module.
+* Editor, avoiding invocation of:        Common options.
+* EDITOR, environment variable:          Committing your changes.
+* EDITOR, overriding:                    Global options.
+* Editor, specifying per module:         editinfo.
+* editors (subcommand):                  Watch information.
+* emerge:                                Conflicts example.
+* encryption:                            Global options.
+* Entries file, in CVS directory:        Working directory storage.
 * Entries.Backup file, in CVS directory: Working directory storage.
-* Entries.Log file, in CVS directory:   Working directory storage.
+* Entries.Log file, in CVS directory:    Working directory storage.
 * Entries.Static file, in CVS directory: Working directory storage.
-* Environment variables:                Environment variables.
-* Errors, reporting:                    BUGS.
-* Example of a work-session:            A sample session.
-* Example of merge:                     Conflicts example.
-* Example, branch merge:                Merging a branch.
+* Environment variables:                 Environment variables.
+* Errors, reporting:                     BUGS.
+* Example of a work-session:             A sample session.
+* Example of merge:                      Conflicts example.
+* Example, branch merge:                 Merging a branch.
 * excluding directories, in modules file: Excluding directories.
-* exit status, of commitinfo:           commitinfo.
-* exit status, of CVS:                  Exit status.
-* exit status, of editor:               Error messages.
-* exit status, of taginfo:              user-defined logging.
-* exit status, of verifymsg:            verifymsg.
-* Export (subcommand):                  export.
-* Export program:                       Module options.
-* Fetching source:                      Getting the source.
-* File had conflicts on merge:          File status.
-* File locking:                         Multiple developers.
-* File permissions, general:            File permissions.
-* File permissions, Windows-specific:   Windows permissions.
-* File status:                          File status.
-* Files, moving:                        Moving files.
-* Files, reference manual:              Administrative files.
-* Fixing a log message:                 admin options.
-* Forcing a tag match:                  Common options.
-* Form for log message:                 rcsinfo.
-* Format of CVS commands:               Structure.
-* Getting started:                      A sample session.
-* Getting the source:                   Getting the source.
-* Global cvsignore:                     cvsignore.
-* Global options:                       Global options.
-* Group:                                File permissions.
-* GSSAPI:                               GSSAPI authenticated.
-* HEAD, as reserved tag name:           Tags.
-* HEAD, special tag:                    Common options.
-* Header keyword:                       Keyword list.
-* History (subcommand):                 history.
-* History browsing:                     History browsing.
-* History file:                         history file.
-* History files:                        Repository files.
-* History of CVS:                       What is CVS?.
-* HOME, environment variable:           Environment variables.
-* HOMEDRIVE, environment variable:      Environment variables.
-* HOMEPATH, environment variable:       Environment variables.
-* Id keyword:                           Keyword list.
-* Ident (shell command):                Using keywords.
-* Identifying a branch:                 Accessing branches.
-* Identifying files:                    Keyword substitution.
-* Ignored files:                        cvsignore.
-* Ignoring files:                       cvsignore.
-* Import (subcommand):                  import.
-* Importing files:                      From files.
+* exit status, of commitinfo:            commitinfo.
+* exit status, of CVS:                   Exit status.
+* exit status, of editor:                Error messages.
+* exit status, of taginfo:               user-defined logging.
+* exit status, of verifymsg:             verifymsg.
+* Export (subcommand):                   export.
+* Export program:                        Module options.
+* Fetching source:                       Getting the source.
+* File had conflicts on merge:           File status.
+* File locking:                          Multiple developers.
+* File permissions, general:             File permissions.
+* File permissions, Windows-specific:    Windows permissions.
+* File status:                           File status.
+* Files, moving:                         Moving files.
+* Files, reference manual:               Administrative files.
+* Fixing a log message:                  admin options.
+* Forcing a tag match:                   Common options.
+* Form for log message:                  rcsinfo.
+* Format of CVS commands:                Structure.
+* Getting started:                       A sample session.
+* Getting the source:                    Getting the source.
+* Global cvsignore:                      cvsignore.
+* Global options:                        Global options.
+* Group:                                 File permissions.
+* GSSAPI:                                GSSAPI authenticated.
+* HEAD, as reserved tag name:            Tags.
+* HEAD, special tag:                     Common options.
+* Header keyword:                        Keyword list.
+* History (subcommand):                  history.
+* History browsing:                      History browsing.
+* History file:                          history file.
+* History files:                         Repository files.
+* History of CVS:                        What is CVS?.
+* HOME, environment variable:            Environment variables.
+* HOMEDRIVE, environment variable:       Environment variables.
+* HOMEPATH, environment variable:        Environment variables.
+* Id keyword:                            Keyword list.
+* Ident (shell command):                 Using keywords.
+* Identifying a branch:                  Accessing branches.
+* Identifying files:                     Keyword substitution.
+* Ignored files:                         cvsignore.
+* Ignoring files:                        cvsignore.
+* Import (subcommand):                   import.
+* Importing files:                       From files.
 * Importing files, from other version control systems: From other version control systems.
-* Importing modules:                    First import.
-* Index:                                Index.
-* Info files (syntax):                  syntax.
-* Informing others:                     Informing others.
-* init (subcommand):                    Creating a repository.
-* installed images (VMS):               File permissions.
-* Introduction to CVS:                  What is CVS?.
-* Invoking CVS:                         Invoking CVS.
-* Isolation:                            History browsing.
-* Join:                                 Merging a branch.
-* keeping a checked out copy:           Keeping a checked out copy.
-* kerberos:                             Kerberos authenticated.
-* Keyword expansion:                    Keyword substitution.
-* Keyword List:                         Keyword list.
-* Keyword substitution:                 Keyword substitution.
-* Kflag:                                Substitution modes.
-* kinit:                                Kerberos authenticated.
-* Known bugs in this manual or CVS:     BUGS.
-* Layout of repository:                 Repository.
-* Left-hand options:                    Global options.
-* Linear development:                   Revision numbers.
-* link, symbolic, importing:            import output.
-* List, mailing list:                   What is CVS?.
-* Locally Added:                        File status.
-* Locally Modified:                     File status.
-* Locally Removed:                      File status.
-* Locker keyword:                       Keyword list.
-* Locking files:                        Multiple developers.
-* locks, cvs:                           Concurrency.
-* Log (subcommand):                     log.
-* Log information, saving:              history file.
-* Log keyword:                          Keyword list.
-* Log message entry:                    Committing your changes.
-* Log message template:                 rcsinfo.
-* Log message, correcting:              admin options.
-* log message, verifying:               verifymsg.
-* Log messages:                         loginfo.
-* Log messages, editing:                editinfo.
-* Login (subcommand):                   Password authentication client.
-* loginfo (admin file):                 loginfo.
-* Logout (subcommand):                  Password authentication client.
-* Mail, automatic mail on commit:       Informing others.
-* Mailing list:                         What is CVS?.
-* Mailing log messages:                 loginfo.
-* Main trunk and branches:              Branching and merging.
-* make:                                 Builds.
-* Many repositories:                    Multiple repositories.
-* Markers, conflict:                    Conflicts example.
-* Merge, an example:                    Conflicts example.
-* Merge, branch example:                Merging a branch.
-* Merging:                              Branching and merging.
-* Merging a branch:                     Merging a branch.
-* Merging a file:                       Updating a file.
-* Merging two revisions:                Merging two revisions.
-* mkmodules:                            Error messages.
+* Importing modules:                     First import.
+* Index:                                 Index.
+* Info files (syntax):                   syntax.
+* Informing others:                      Informing others.
+* init (subcommand):                     Creating a repository.
+* installed images (VMS):                File permissions.
+* Introduction to CVS:                   What is CVS?.
+* Invoking CVS:                          Invoking CVS.
+* Isolation:                             History browsing.
+* Join:                                  Merging a branch.
+* keeping a checked out copy:            Keeping a checked out copy.
+* kerberos:                              Kerberos authenticated.
+* Keyword expansion:                     Keyword substitution.
+* Keyword List:                          Keyword list.
+* Keyword substitution:                  Keyword substitution.
+* Kflag:                                 Substitution modes.
+* kinit:                                 Kerberos authenticated.
+* Known bugs in this manual or CVS:      BUGS.
+* Layout of repository:                  Repository.
+* Left-hand options:                     Global options.
+* Linear development:                    Revision numbers.
+* link, symbolic, importing:             import output.
+* List, mailing list:                    What is CVS?.
+* Locally Added:                         File status.
+* Locally Modified:                      File status.
+* Locally Removed:                       File status.
+* Locker keyword:                        Keyword list.
+* Locking files:                         Multiple developers.
+* locks, cvs:                            Concurrency.
+* Log (subcommand):                      log.
+* Log information, saving:               history file.
+* Log keyword:                           Keyword list.
+* Log message entry:                     Committing your changes.
+* Log message template:                  rcsinfo.
+* Log message, correcting:               admin options.
+* log message, verifying:                verifymsg.
+* Log messages:                          loginfo.
+* Log messages, editing:                 editinfo.
+* Login (subcommand):                    Password authentication client.
+* loginfo (admin file):                  loginfo.
+* Logout (subcommand):                   Password authentication client.
+* Mail, automatic mail on commit:        Informing others.
+* Mailing list:                          What is CVS?.
+* Mailing log messages:                  loginfo.
+* Main trunk and branches:               Branching and merging.
+* make:                                  Builds.
+* Many repositories:                     Multiple repositories.
+* Markers, conflict:                     Conflicts example.
+* Merge, an example:                     Conflicts example.
+* Merge, branch example:                 Merging a branch.
+* Merging:                               Branching and merging.
+* Merging a branch:                      Merging a branch.
+* Merging a file:                        Updating a file.
+* Merging two revisions:                 Merging two revisions.
+* mkmodules:                             Error messages.
 * Modifications, copying between branches: Branching and merging.
-* Module status:                        Module options.
-* Module, defining:                     Defining the module.
-* Modules (admin file):                 modules.
-* Modules file:                         Intro administrative files.
-* Modules file, changing:               Defining the module.
-* modules.db:                           CVSROOT storage.
-* modules.dir:                          CVSROOT storage.
-* modules.pag:                          CVSROOT storage.
-* Motivation for branches:              Branches motivation.
-* moving a repository:                  Moving a repository.
-* Moving directories:                   Moving directories.
-* Moving files:                         Moving files.
-* moving tags:                          tag options.
-* Multiple developers:                  Multiple developers.
-* Multiple repositories:                Multiple repositories.
-* Name keyword:                         Keyword list.
-* Name, symbolic (tag):                 Tags.
-* Needs Checkout:                       File status.
-* Needs Merge:                          File status.
-* Needs Patch:                          File status.
-* Newsgroups:                           What is CVS?.
-* notify (admin file):                  Getting Notified.
-* Notify file, in CVS directory:        Working directory storage.
-* Notify.tmp file, in CVS directory:    Working directory storage.
-* Number, branch <1>:                   Branches and revisions.
-* Number, branch:                       Revision numbers.
-* Number, revision-:                    Revision numbers.
-* option defaults:                      ~/.cvsrc.
-* Options, global:                      Global options.
-* options, in modules file:             Module options.
-* Outdating revisions:                  admin options.
-* Overlap:                              Updating a file.
-* Overriding CVSREAD:                   Global options.
-* Overriding CVSROOT:                   Global options.
-* Overriding EDITOR:                    Global options.
-* Overriding RCSBIN:                    Global options.
-* Overriding TMPDIR:                    Global options.
-* Overview:                             Overview.
-* Parallel repositories:                Multiple repositories.
-* passwd (admin file):                  Password authentication server.
-* password client, using:               Password authentication client.
-* password server, setting up:          Password authentication server.
-* PATH, environment variable:           Environment variables.
-* Per-directory sticky tags/dates:      Working directory storage.
-* Per-module editor:                    editinfo.
-* permissions, general:                 File permissions.
-* permissions, Windows-specific:        Windows permissions.
-* Policy:                               When to commit.
-* Precommit checking:                   commitinfo.
-* Pserver (subcommand):                 Password authentication server.
-* PVCS, importing files from:           From other version control systems.
-* RCS history files:                    Repository files.
-* RCS revision numbers:                 Tags.
-* RCS, importing files from:            From other version control systems.
-* RCS-style locking:                    Multiple developers.
-* RCSBIN, in CVSROOT/config:            config.
-* RCSBIN, overriding:                   Global options.
-* RCSfile keyword:                      Keyword list.
-* rcsinfo (admin file):                 rcsinfo.
-* Rdiff (subcommand):                   rdiff.
-* read-only files, and -r:              Global options.
-* read-only files, and CVSREAD:         Environment variables.
-* read-only files, and watches:         Setting a watch.
-* read-only files, in repository:       File permissions.
-* Read-only mode:                       Global options.
-* read-only repository access:          Read-only access.
-* readers (admin file):                 Read-only access.
-* Recursive (directory descending):     Recursive behavior.
-* Reference manual (files):             Administrative files.
-* Reference manual for variables:       Environment variables.
-* Reference, commands:                  Invoking CVS.
-* regular expression syntax:            syntax.
-* Regular modules:                      Regular modules.
-* Release (subcommand):                 release.
-* Releases, revisions and versions:     Versions revisions releases.
-* Releasing your working copy:          Cleaning up.
-* Remote repositories:                  Remote repositories.
-* Remove (subcommand):                  Removing files.
-* Removing a change:                    Merging two revisions.
-* removing directories:                 Removing directories.
-* Removing files:                       Removing files.
-* Removing your working copy:           Cleaning up.
-* Renaming directories:                 Moving directories.
-* Renaming files:                       Moving files.
-* renaming tags:                        tag options.
-* Replacing a log message:              admin options.
-* Reporting bugs:                       BUGS.
-* Repositories, multiple:               Multiple repositories.
-* Repositories, remote:                 Remote repositories.
-* Repository (intro):                   Repository.
-* Repository file, in CVS directory:    Working directory storage.
-* Repository, backing up:               Backing up.
-* Repository, example:                  Repository.
-* Repository, how data is stored:       Repository storage.
-* repository, moving:                   Moving a repository.
-* Repository, setting up:               Creating a repository.
-* reserved checkouts:                   Multiple developers.
-* Resetting sticky tags:                Sticky tags.
-* Resolving a conflict:                 Conflicts example.
+* Module status:                         Module options.
+* Module, defining:                      Defining the module.
+* Modules (admin file):                  modules.
+* Modules file:                          Intro administrative files.
+* Modules file, changing:                Defining the module.
+* modules.db:                            CVSROOT storage.
+* modules.dir:                           CVSROOT storage.
+* modules.pag:                           CVSROOT storage.
+* Motivation for branches:               Branches motivation.
+* moving a repository:                   Moving a repository.
+* Moving directories:                    Moving directories.
+* Moving files:                          Moving files.
+* moving tags:                           tag options.
+* Multiple developers:                   Multiple developers.
+* Multiple repositories:                 Multiple repositories.
+* Name keyword:                          Keyword list.
+* Name, symbolic (tag):                  Tags.
+* Needs Checkout:                        File status.
+* Needs Merge:                           File status.
+* Needs Patch:                           File status.
+* Newsgroups:                            What is CVS?.
+* notify (admin file):                   Getting Notified.
+* Notify file, in CVS directory:         Working directory storage.
+* Notify.tmp file, in CVS directory:     Working directory storage.
+* Number, branch <1>:                    Branches and revisions.
+* Number, branch:                        Revision numbers.
+* Number, revision-:                     Revision numbers.
+* option defaults:                       ~/.cvsrc.
+* Options, global:                       Global options.
+* options, in modules file:              Module options.
+* Outdating revisions:                   admin options.
+* Overlap:                               Updating a file.
+* Overriding CVSREAD:                    Global options.
+* Overriding CVSROOT:                    Global options.
+* Overriding EDITOR:                     Global options.
+* Overriding RCSBIN:                     Global options.
+* Overriding TMPDIR:                     Global options.
+* Overview:                              Overview.
+* Parallel repositories:                 Multiple repositories.
+* passwd (admin file):                   Password authentication server.
+* password client, using:                Password authentication client.
+* password server, setting up:           Password authentication server.
+* PATH, environment variable:            Environment variables.
+* Per-directory sticky tags/dates:       Working directory storage.
+* Per-module editor:                     editinfo.
+* permissions, general:                  File permissions.
+* permissions, Windows-specific:         Windows permissions.
+* Policy:                                When to commit.
+* Precommit checking:                    commitinfo.
+* PreservePermissions, in CVSROOT/config: config.
+* Pserver (subcommand):                  Password authentication server.
+* PVCS, importing files from:            From other version control systems.
+* RCS history files:                     Repository files.
+* RCS revision numbers:                  Tags.
+* RCS, importing files from:             From other version control systems.
+* RCS-style locking:                     Multiple developers.
+* RCSBIN, in CVSROOT/config:             config.
+* RCSBIN, overriding:                    Global options.
+* RCSfile keyword:                       Keyword list.
+* rcsinfo (admin file):                  rcsinfo.
+* Rdiff (subcommand):                    rdiff.
+* read-only files, and -r:               Global options.
+* read-only files, and CVSREAD:          Environment variables.
+* read-only files, and watches:          Setting a watch.
+* read-only files, in repository:        File permissions.
+* Read-only mode:                        Global options.
+* read-only repository access:           Read-only access.
+* readers (admin file):                  Read-only access.
+* Recursive (directory descending):      Recursive behavior.
+* Reference manual (files):              Administrative files.
+* Reference manual for variables:        Environment variables.
+* Reference, commands:                   Invoking CVS.
+* regular expression syntax:             syntax.
+* Regular modules:                       Regular modules.
+* Release (subcommand):                  release.
+* Releases, revisions and versions:      Versions revisions releases.
+* Releasing your working copy:           Cleaning up.
+* Remote repositories:                   Remote repositories.
+* Remove (subcommand):                   Removing files.
+* Removing a change:                     Merging two revisions.
+* removing directories:                  Removing directories.
+* Removing files:                        Removing files.
+* Removing your working copy:            Cleaning up.
+* Renaming directories:                  Moving directories.
+* Renaming files:                        Moving files.
+* renaming tags:                         tag options.
+* Replacing a log message:               admin options.
+* Reporting bugs:                        BUGS.
+* Repositories, multiple:                Multiple repositories.
+* Repositories, remote:                  Remote repositories.
+* Repository (intro):                    Repository.
+* Repository file, in CVS directory:     Working directory storage.
+* Repository, backing up:                Backing up.
+* Repository, example:                   Repository.
+* Repository, how data is stored:        Repository storage.
+* repository, moving:                    Moving a repository.
+* Repository, setting up:                Creating a repository.
+* reserved checkouts:                    Multiple developers.
+* Resetting sticky tags:                 Sticky tags.
+* Resolving a conflict:                  Conflicts example.
 * Restoring old version of removed file: Sticky tags.
 * Resurrecting old version of dead file: Sticky tags.
-* Retrieve a branch:                    Accessing branches.
+* Retrieve a branch:                     Accessing branches.
 * Retrieving an old revision using tags: Tags.
-* reverting to repository version:      Editing files.
-* Revision keyword:                     Keyword list.
-* Revision management:                  Revision management.
-* Revision numbers:                     Revision numbers.
-* Revision numbers (branches):          Branches and revisions.
-* Revision tree:                        Revision numbers.
-* Revision tree, making branches:       Branching and merging.
+* reverting to repository version:       Editing files.
+* Revision keyword:                      Keyword list.
+* Revision management:                   Revision management.
+* Revision numbers:                      Revision numbers.
+* Revision numbers (branches):           Branches and revisions.
+* Revision tree:                         Revision numbers.
+* Revision tree, making branches:        Branching and merging.
 * Revisions, merging differences between: Merging two revisions.
-* Revisions, versions and releases:     Versions revisions releases.
-* Right-hand options:                   Common options.
-* Root file, in CVS directory:          Specifying a repository.
-* rsh:                                  Connecting via rsh.
-* Rtag (subcommand):                    rtag.
-* rtag, creating a branch using:        Creating a branch.
-* Saving space:                         admin options.
-* SCCS, importing files from:           From other version control systems.
+* Revisions, versions and releases:      Versions revisions releases.
+* Right-hand options:                    Common options.
+* Root file, in CVS directory:           Specifying a repository.
+* rsh:                                   Connecting via rsh.
+* Rtag (subcommand):                     rtag.
+* rtag, creating a branch using:         Creating a branch.
+* Saving space:                          admin options.
+* SCCS, importing files from:            From other version control systems.
 * Security, file permissions in repository: File permissions.
-* security, GSSAPI:                     GSSAPI authenticated.
-* security, kerberos:                   Kerberos authenticated.
-* security, of pserver:                 Password authentication security.
-* security, setuid:                     File permissions.
-* server, CVS:                          Remote repositories.
-* server, temporary directories:        Server temporary directory.
-* setgid:                               File permissions.
-* Setting up a repository:              Creating a repository.
-* setuid:                               File permissions.
-* Signum Support:                       BUGS.
-* Source keyword:                       Keyword list.
-* Source, getting CVS source:           What is CVS?.
-* Source, getting from CVS:             Getting the source.
-* Specifying dates:                     Common options.
-* Spreading information:                Informing others.
-* Starting a project with CVS:          Starting a new project.
-* State keyword:                        Keyword list.
-* Status of a file:                     File status.
-* Status of a module:                   Module options.
-* sticky date:                          Sticky tags.
-* Sticky tags:                          Sticky tags.
-* Sticky tags, resetting:               Sticky tags.
-* Sticky tags/dates, per-directory:     Working directory storage.
-* Storing log messages:                 loginfo.
-* stream authentication:                Global options.
-* Structure:                            Structure.
-* Subdirectories:                       Recursive behavior.
-* Support, getting CVS support:         BUGS.
-* symbolic link, importing:             import output.
-* Symbolic name (tag):                  Tags.
-* Syntax of info files:                 syntax.
-* SystemAuth, in CVSROOT/config:        config.
-* Tag (subcommand):                     tag.
-* Tag file, in CVS directory:           Working directory storage.
-* Tag program:                          Module options.
-* tag, command, introduction:           Tags.
-* tag, creating a branch using:         Creating a branch.
-* tag, example:                         Tags.
-* Tag, retrieving old revisions:        Tags.
-* Tag, symbolic name:                   Tags.
-* taginfo:                              user-defined logging.
-* Tags:                                 Tags.
-* tags, renaming:                       tag options.
-* Tags, sticky:                         Sticky tags.
-* tc, Trivial Compiler (example):       A sample session.
-* Team of developers:                   Multiple developers.
-* TEMP, environment variable:           Environment variables.
-* Template file, in CVS directory:      Working directory storage.
-* Template for log message:             rcsinfo.
-* temporary directories, and server:    Server temporary directory.
-* temporary files, location of:         Environment variables.
-* Third-party sources:                  Tracking sources.
-* Time:                                 Common options.
-* timezone, in input:                   Common options.
-* timezone, in output:                  log.
-* TMP, environment variable:            Environment variables.
-* TMPDIR, environment variable:         Environment variables.
-* TMPDIR, overriding:                   Global options.
-* Trace:                                Global options.
-* Traceability:                         History browsing.
-* Tracking sources:                     Tracking sources.
-* Transactions, atomic, lack of:        Concurrency.
-* Trivial Compiler (example):           A sample session.
-* Typical repository:                   Repository.
-* umask, for repository files:          File permissions.
-* Undoing a change:                     Merging two revisions.
-* unedit (subcommand):                  Editing files.
-* Unknown:                              File status.
-* unreserved checkouts:                 Multiple developers.
-* Up-to-date:                           File status.
-* Update (subcommand):                  update.
-* Update program:                       Module options.
-* update, introduction:                 Updating a file.
-* update, to display file status:       File status.
-* Update.prog file, in CVS directory:   Working directory storage.
-* Updating a file:                      Updating a file.
-* user aliases:                         Password authentication server.
-* users (admin file):                   Getting Notified.
-* Vendor:                               Tracking sources.
-* Vendor branch:                        Tracking sources.
-* verifymsg (admin file):               verifymsg.
-* versions, of CVS:                     Compatibility.
-* Versions, revisions and releases:     Versions revisions releases.
-* Viewing differences:                  Viewing differences.
-* watch add (subcommand):               Getting Notified.
-* watch off (subcommand):               Setting a watch.
-* watch on (subcommand):                Setting a watch.
-* watch remove (subcommand):            Getting Notified.
-* watchers (subcommand):                Watch information.
-* Watches:                              Watches.
-* Wdiff (import example):               First import.
-* web pages, maintaining with CVS:      Keeping a checked out copy.
-* What (shell command):                 Using keywords.
-* What branches are good for:           Branches motivation.
-* What is CVS not?:                     What is CVS not?.
-* What is CVS?:                         What is CVS?.
-* When to commit:                       When to commit.
-* Windows, and permissions:             Windows permissions.
-* Work-session, example of:             A sample session.
-* Working copy:                         Multiple developers.
-* Working copy, removing:               Cleaning up.
-* Wrappers:                             Wrappers.
-* writers (admin file):                 Read-only access.
-* zone, time, in input:                 Common options.
-* zone, time, in output:                log.
+* security, GSSAPI:                      GSSAPI authenticated.
+* security, kerberos:                    Kerberos authenticated.
+* security, of pserver:                  Password authentication security.
+* security, setuid:                      File permissions.
+* server, CVS:                           Remote repositories.
+* server, temporary directories:         Server temporary directory.
+* setgid:                                File permissions.
+* Setting up a repository:               Creating a repository.
+* setuid:                                File permissions.
+* Signum Support:                        BUGS.
+* Source keyword:                        Keyword list.
+* Source, getting CVS source:            What is CVS?.
+* Source, getting from CVS:              Getting the source.
+* Specifying dates:                      Common options.
+* Spreading information:                 Informing others.
+* Starting a project with CVS:           Starting a new project.
+* State keyword:                         Keyword list.
+* Status of a file:                      File status.
+* Status of a module:                    Module options.
+* sticky date:                           Sticky tags.
+* Sticky tags:                           Sticky tags.
+* Sticky tags, resetting:                Sticky tags.
+* Sticky tags/dates, per-directory:      Working directory storage.
+* Storing log messages:                  loginfo.
+* stream authentication:                 Global options.
+* Structure:                             Structure.
+* Subdirectories:                        Recursive behavior.
+* Support, getting CVS support:          BUGS.
+* symbolic link, importing:              import output.
+* Symbolic name (tag):                   Tags.
+* Syntax of info files:                  syntax.
+* SystemAuth, in CVSROOT/config:         config.
+* Tag (subcommand):                      tag.
+* Tag file, in CVS directory:            Working directory storage.
+* Tag program:                           Module options.
+* tag, command, introduction:            Tags.
+* tag, creating a branch using:          Creating a branch.
+* tag, example:                          Tags.
+* Tag, retrieving old revisions:         Tags.
+* Tag, symbolic name:                    Tags.
+* taginfo:                               user-defined logging.
+* Tags:                                  Tags.
+* tags, renaming:                        tag options.
+* Tags, sticky:                          Sticky tags.
+* tc, Trivial Compiler (example):        A sample session.
+* Team of developers:                    Multiple developers.
+* TEMP, environment variable:            Environment variables.
+* Template file, in CVS directory:       Working directory storage.
+* Template for log message:              rcsinfo.
+* temporary directories, and server:     Server temporary directory.
+* temporary files, location of:          Environment variables.
+* Third-party sources:                   Tracking sources.
+* Time:                                  Common options.
+* timezone, in input:                    Common options.
+* timezone, in output:                   log.
+* TMP, environment variable:             Environment variables.
+* TMPDIR, environment variable:          Environment variables.
+* TMPDIR, overriding:                    Global options.
+* Trace:                                 Global options.
+* Traceability:                          History browsing.
+* Tracking sources:                      Tracking sources.
+* Transactions, atomic, lack of:         Concurrency.
+* Trivial Compiler (example):            A sample session.
+* Typical repository:                    Repository.
+* umask, for repository files:           File permissions.
+* Undoing a change:                      Merging two revisions.
+* unedit (subcommand):                   Editing files.
+* Unknown:                               File status.
+* unreserved checkouts:                  Multiple developers.
+* Up-to-date:                            File status.
+* Update (subcommand):                   update.
+* Update program:                        Module options.
+* update, introduction:                  Updating a file.
+* update, to display file status:        File status.
+* Update.prog file, in CVS directory:    Working directory storage.
+* Updating a file:                       Updating a file.
+* user aliases:                          Password authentication server.
+* users (admin file):                    Getting Notified.
+* Vendor:                                Tracking sources.
+* Vendor branch:                         Tracking sources.
+* verifymsg (admin file):                verifymsg.
+* versions, of CVS:                      Compatibility.
+* Versions, revisions and releases:      Versions revisions releases.
+* Viewing differences:                   Viewing differences.
+* watch add (subcommand):                Getting Notified.
+* watch off (subcommand):                Setting a watch.
+* watch on (subcommand):                 Setting a watch.
+* watch remove (subcommand):             Getting Notified.
+* watchers (subcommand):                 Watch information.
+* Watches:                               Watches.
+* Wdiff (import example):                First import.
+* web pages, maintaining with CVS:       Keeping a checked out copy.
+* What (shell command):                  Using keywords.
+* What branches are good for:            Branches motivation.
+* What is CVS not?:                      What is CVS not?.
+* What is CVS?:                          What is CVS?.
+* When to commit:                        When to commit.
+* Windows, and permissions:              Windows permissions.
+* Work-session, example of:              A sample session.
+* Working copy:                          Multiple developers.
+* Working copy, removing:                Cleaning up.
+* Wrappers:                              Wrappers.
+* writers (admin file):                  Read-only access.
+* zone, time, in input:                  Common options.
+* zone, time, in output:                 log.
 
 

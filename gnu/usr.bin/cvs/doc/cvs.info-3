@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -861,6 +861,17 @@ arguments passed to the command are, in order, the TAGNAME, OPERATION
 REPOSITORY, and any remaining are pairs of FILENAME REVISION.  A
 non-zero exit of the filter program will cause the tag to be aborted.
 
+   Here is an example of using taginfo to log tag and rtag commands.
+In the taginfo file put:
+
+     ALL /usr/local/cvsroot/CVSROOT/loggit
+
+   Where `/usr/local/cvsroot/CVSROOT/loggit' contains the following
+script:
+
+     #!/bin/sh
+     echo "$@" >>/home/kingdon/cvsroot/CVSROOT/taglog
+
 
 File: cvs.info,  Node: annotate,  Prev: user-defined logging,  Up: History browsing
 
@@ -974,14 +985,14 @@ neither line ending conversion nor keyword expansion will be done.
    Here is an example of how you can create a new file using the `-kb'
 flag:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.11 1998/02/22 08:30:49 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.12 1998/03/12 07:05:54 tholo Exp $' > kotest
      $ cvs add -kb -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
 
    If a file accidentally gets added without `-kb', one can use the
 `cvs admin' command to recover.  For example:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.11 1998/02/22 08:30:49 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.12 1998/03/12 07:05:54 tholo Exp $' > kotest
      $ cvs add -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
      $ cvs admin -kb kotest

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -20,6 +20,123 @@ manual into another language, under the above conditions for modified
 versions, except that the section entitled "GNU General Public License"
 and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: Global options,  Next: Common options,  Prev: ~/.cvsrc,  Up: CVS commands
+
+Global options
+==============
+
+   The available `cvs_options' (that are given to the left of
+`cvs_command') are:
+
+`--allow-root=ROOTDIR'
+     Specify legal CVSROOT directory.  See *Note Password
+     authentication server::.
+
+`-a'
+     Authenticate all communication between the client and the server.
+     Only has an effect on the CVS client.  As of this writing, this is
+     only implemented when using a GSSAPI connection (*note GSSAPI
+     authenticated::.).  Authentication prevents certain sorts of
+     attacks involving hijacking the active TCP connection.  Enabling
+     authentication does not enable encryption.
+
+`-b BINDIR'
+     In CVS 1.9.18 and older, this specified that RCS programs are in
+     the BINDIR directory.  Current versions of CVS do not run RCS
+     programs; for compatibility this option is accepted, but it does
+     nothing.
+
+`-T TEMPDIR'
+     Use TEMPDIR as the directory where temporary files are located.
+     Overrides the setting of the `$TMPDIR' environment variable and
+     any precompiled directory.  This parameter should be specified as
+     an absolute pathname.
+
+`-d CVS_ROOT_DIRECTORY'
+     Use CVS_ROOT_DIRECTORY as the root directory pathname of the
+     repository.  Overrides the setting of the `$CVSROOT' environment
+     variable.  *Note Repository::.
+
+`-e EDITOR'
+     Use EDITOR to enter revision log information.  Overrides the
+     setting of the `$CVSEDITOR' and `$EDITOR' environment variables.
+     For more information, see *Note Committing your changes::.
+
+`-f'
+     Do not read the `~/.cvsrc' file.  This option is most often used
+     because of the non-orthogonality of the CVS option set.  For
+     example, the `cvs log' option `-N' (turn off display of tag names)
+     does not have a corresponding option to turn the display on.  So
+     if you have `-N' in the `~/.cvsrc' entry for `log', you may need
+     to use `-f' to show the tag names.
+
+`-H'
+`--help'
+     Display usage information about the specified `cvs_command' (but
+     do not actually execute the command).  If you don't specify a
+     command name, `cvs -H' displays overall help for CVS, including a
+     list of other help options.
+
+`-l'
+     Do not log the `cvs_command' in the command history (but execute it
+     anyway).  *Note history::, for information on command history.
+
+`-n'
+     Do not change any files.  Attempt to execute the `cvs_command',
+     but only to issue reports; do not remove, update, or merge any
+     existing files, or create any new files.
+
+     Note that CVS will not necessarily produce exactly the same output
+     as without `-n'.  In some cases the output will be the same, but
+     in other cases CVS will skip some of the processing that would
+     have been required to produce the exact same output.
+
+`-Q'
+     Cause the command to be really quiet; the command will only
+     generate output for serious problems.
+
+`-q'
+     Cause the command to be somewhat quiet; informational messages,
+     such as reports of recursion through subdirectories, are
+     suppressed.
+
+`-r'
+     Make new working files files read-only.  Same effect as if the
+     `$CVSREAD' environment variable is set (*note Environment
+     variables::.).  The default is to make working files writable,
+     unless watches are on (*note Watches::.).
+
+`-s VARIABLE=VALUE'
+     Set a user variable (*note Variables::.).
+
+`-t'
+     Trace program execution; display messages showing the steps of CVS
+     activity.  Particularly useful with `-n' to explore the potential
+     impact of an unfamiliar command.
+
+`-v'
+`--version'
+     Display version and copyright information for CVS.
+
+`-w'
+     Make new working files read-write.  Overrides the setting of the
+     `$CVSREAD' environment variable.  Files are created read-write by
+     default, unless `$CVSREAD' is set or `-r' is given.
+
+`-x'
+     Encrypt all communication between the client and the server.  Only
+     has an effect on the CVS client.  As of this writing, this is only
+     implemented when using a GSSAPI connection (*note GSSAPI
+     authenticated::.) or a Kerberos connection (*note Kerberos
+     authenticated::.).  Enabling encryption implies that message
+     traffic is also authenticated.  Encryption support is not
+     available by default; it must be enabled using a special configure
+     option, `--enable-encryption', when you build CVS.
+
+`-z GZIP-LEVEL'
+     Set the compression level.  Only has an effect on the CVS client.
 
 
 File: cvs.info,  Node: Common options,  Next: admin,  Prev: Global options,  Up: CVS commands
@@ -416,7 +533,7 @@ you undo the effect!
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-5,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.11  1998/02/22 08:30:54  tholo
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.12  1998/03/12 07:05:58  tholo
      output from CVS LOG (*note log::.), and in the `Latest version from Cyclic; files missed in first run
      output from CVS LOG (*note log::.), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
@@ -1212,113 +1329,4 @@ the source::.).
 * import options::              import options
 * import output::               import output
 * import examples::             import examples
-
-
-File: cvs.info,  Node: import options,  Next: import output,  Up: import
-
-import options
---------------
-
-   This standard option is supported by `import' (*note Common
-options::., for a complete description):
-
-`-m MESSAGE'
-     Use MESSAGE as log information, instead of invoking an editor.
-
-   There are the following additional special options.
-
-`-b BRANCH'
-     See *Note Multiple vendor branches::.
-
-`-k SUBST'
-     Indicate the keyword expansion mode desired.  This setting will
-     apply to all files created during the import, but not to any files
-     that previously existed in the repository.  See *Note Substitution
-     modes::, for a list of valid `-k' settings.
-
-`-I NAME'
-     Specify file names that should be ignored during import.  You can
-     use this option repeatedly.  To avoid ignoring any files at all
-     (even those ignored by default), specify `-I !'.
-
-     NAME can be a file name pattern of the same type that you can
-     specify in the `.cvsignore' file.  *Note cvsignore::.
-
-`-W SPEC'
-     Specify file names that should be filtered during import.  You can
-     use this option repeatedly.
-
-     SPEC can be a file name pattern of the same type that you can
-     specify in the `.cvswrappers' file. *Note Wrappers::.
-
-
-File: cvs.info,  Node: import output,  Next: import examples,  Prev: import options,  Up: import
-
-import output
--------------
-
-   `import' keeps you informed of its progress by printing a line for
-each file, preceded by one character indicating the status of the file:
-
-`U FILE'
-     The file already exists in the repository and has not been locally
-     modified; a new revision has been created (if necessary).
-
-`N FILE'
-     The file is a new file which has been added to the repository.
-
-`C FILE'
-     The file already exists in the repository but has been locally
-     modified; you will have to merge the changes.
-
-`I FILE'
-     The file is being ignored (*note cvsignore::.).
-
-`L FILE'
-     The file is a symbolic link; `cvs import' ignores symbolic links.
-     People periodically suggest that this behavior should be changed,
-     but if there is a consensus on what it should be changed to, it
-     doesn't seem to be apparent.  (Various options in the `modules'
-     file can be used to recreate symbolic links on checkout, update,
-     etc.; *note modules::..)
-
-
-File: cvs.info,  Node: import examples,  Prev: import output,  Up: import
-
-import examples
----------------
-
-   See *Note Tracking sources::, and *Note From files::.
-
-
-File: cvs.info,  Node: log,  Next: rdiff,  Prev: import,  Up: CVS commands
-
-log--Print out log information for files
-========================================
-
-   * Synopsis: log [options] [files...]
-
-   * Requires: repository, working directory.
-
-   * Changes: nothing.
-
-   Display log information for files.  `log' used to call the RCS
-utility `rlog'.  Although this is no longer true in the current
-sources, this history determines the format of the output and the
-options, which are not quite in the style of the other CVS commands.
-
-   The output includes the location of the RCS file, the "head"
-revision (the latest revision on the trunk), all symbolic names (tags)
-and some other things.  For each revision, the revision number, the
-author, the number of lines added/deleted and the log message are
-printed.  All times are displayed in Coordinated Universal Time (UTC).
-(Other parts of CVS print times in the local timezone).
-
-   *Warning:* `log' uses `-R' in a way that conflicts with the normal
-use inside CVS (*note Common options::.).
-
-* Menu:
-
-* log options::                 log options
-* log examples::                log examples
 

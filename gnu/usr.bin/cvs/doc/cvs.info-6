@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -20,6 +20,115 @@ manual into another language, under the above conditions for modified
 versions, except that the section entitled "GNU General Public License"
 and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: import options,  Next: import output,  Up: import
+
+import options
+--------------
+
+   This standard option is supported by `import' (*note Common
+options::., for a complete description):
+
+`-m MESSAGE'
+     Use MESSAGE as log information, instead of invoking an editor.
+
+   There are the following additional special options.
+
+`-b BRANCH'
+     See *Note Multiple vendor branches::.
+
+`-k SUBST'
+     Indicate the keyword expansion mode desired.  This setting will
+     apply to all files created during the import, but not to any files
+     that previously existed in the repository.  See *Note Substitution
+     modes::, for a list of valid `-k' settings.
+
+`-I NAME'
+     Specify file names that should be ignored during import.  You can
+     use this option repeatedly.  To avoid ignoring any files at all
+     (even those ignored by default), specify `-I !'.
+
+     NAME can be a file name pattern of the same type that you can
+     specify in the `.cvsignore' file.  *Note cvsignore::.
+
+`-W SPEC'
+     Specify file names that should be filtered during import.  You can
+     use this option repeatedly.
+
+     SPEC can be a file name pattern of the same type that you can
+     specify in the `.cvswrappers' file. *Note Wrappers::.
+
+
+File: cvs.info,  Node: import output,  Next: import examples,  Prev: import options,  Up: import
+
+import output
+-------------
+
+   `import' keeps you informed of its progress by printing a line for
+each file, preceded by one character indicating the status of the file:
+
+`U FILE'
+     The file already exists in the repository and has not been locally
+     modified; a new revision has been created (if necessary).
+
+`N FILE'
+     The file is a new file which has been added to the repository.
+
+`C FILE'
+     The file already exists in the repository but has been locally
+     modified; you will have to merge the changes.
+
+`I FILE'
+     The file is being ignored (*note cvsignore::.).
+
+`L FILE'
+     The file is a symbolic link; `cvs import' ignores symbolic links.
+     People periodically suggest that this behavior should be changed,
+     but if there is a consensus on what it should be changed to, it
+     doesn't seem to be apparent.  (Various options in the `modules'
+     file can be used to recreate symbolic links on checkout, update,
+     etc.; *note modules::..)
+
+
+File: cvs.info,  Node: import examples,  Prev: import output,  Up: import
+
+import examples
+---------------
+
+   See *Note Tracking sources::, and *Note From files::.
+
+
+File: cvs.info,  Node: log,  Next: rdiff,  Prev: import,  Up: CVS commands
+
+log--Print out log information for files
+========================================
+
+   * Synopsis: log [options] [files...]
+
+   * Requires: repository, working directory.
+
+   * Changes: nothing.
+
+   Display log information for files.  `log' used to call the RCS
+utility `rlog'.  Although this is no longer true in the current
+sources, this history determines the format of the output and the
+options, which are not quite in the style of the other CVS commands.
+
+   The output includes the location of the RCS file, the "head"
+revision (the latest revision on the trunk), all symbolic names (tags)
+and some other things.  For each revision, the revision number, the
+author, the number of lines added/deleted and the log message are
+printed.  All times are displayed in Coordinated Universal Time (UTC).
+(Other parts of CVS print times in the local timezone).
+
+   *Warning:* `log' uses `-R' in a way that conflicts with the normal
+use inside CVS (*note Common options::.).
+
+* Menu:
+
+* log options::                 log options
+* log examples::                log examples
 
 
 File: cvs.info,  Node: log options,  Next: log examples,  Up: log
@@ -221,7 +330,9 @@ options::., for a complete description of them):
 
 `-V VN'
      Expand keywords according to the rules current in RCS version VN
-     (the expansion format changed with RCS version 5).
+     (the expansion format changed with RCS version 5).  Note that this
+     option is no longer accepted.  CVS will always expand keywords the
+     way that RCS version 5 does.
 
 
 File: cvs.info,  Node: rdiff examples,  Prev: rdiff options,  Up: rdiff
@@ -720,9 +831,109 @@ Quick reference to CVS commands
 *******************************
 
    This appendix describes how to invoke CVS, with references to where
-each command or feature is described in detail.  Other relevant
-references are the `--help'/`-H' option to CVS (*note Global
-options::.) and *Note Index::.
+each command or feature is described in detail.  For other references
+run the `cvs --help' command, or see *Note Index::.
+
+   A CVS command looks like:
+
+     cvs [ GLOBAL_OPTIONS ] COMMAND [ COMMAND_OPTIONS ] [ COMMAND_ARGS ]
+
+   Global options:
+
+`--allow-root=ROOTDIR'
+     Specify legal CVSROOT directory (server only) (not in CVS 1.9 and
+     older).  See *Note Password authentication server::.
+
+`-a'
+     Authenticate all communication (client only) (not in CVS 1.9 and
+     older).  See *Note Global options::.
+
+`-b'
+     Specify RCS location (CVS 1.9 and older).  See *Note Global
+     options::.
+
+`-d ROOT'
+     Specify the CVSROOT.  See *Note Repository::.
+
+`-e EDITOR'
+     Edit messages with EDITOR.  See *Note Committing your changes::.
+
+`-f'
+     Do not read the `~/.cvsrc' file.  See *Note Global options::.
+
+`-H'
+`--help'
+     Print a help message.  See *Note Global options::.
+
+`-l'
+     Do not log in CVSROOT/history file.  See *Note Global options::.
+
+`-n'
+     Do not change any files.  See *Note Global options::.
+
+`-Q'
+     Cause the command to be really quiet.  See *Note Global options::.
+
+`-q'
+     Cause the command to be somewhat quiet.  See *Note Global
+     options::.
+
+`-r'
+     Make new working files files read-only.  See *Note Global
+     options::.
+
+`-s VARIABLE=VALUE'
+     Set a user variable.  See *Note Variables::.
+
+`-T TEMPDIR'
+     Put temporary files in TEMPDIR.  See *Note Global options::.
+
+`-t'
+     Trace CVS execution.  See *Note Global options::.
+
+`-v'
+`--version'
+     Display version and copyright information for CVS.
+
+`-w'
+     Make new working files read-write.  See *Note Global options::.
+
+`-x'
+     Encrypt all communication (client only).  See *Note Global
+     options::.
+
+`-z GZIP-LEVEL'
+     Set the compression level (client only).
+
+   Keyword expansion modes (*note Substitution modes::.):
+
+     -kkv  $Id: cvs.info-6,v 1.1.1.9 1998/03/12 07:06:00 tholo Exp $
+     -kkvl $Id: cvs.info-6,v 1.1.1.9 1998/03/12 07:06:00 tholo Exp $
+     -kk   $Id: cvs.info-6,v 1.1.1.9 1998/03/12 07:06:00 tholo Exp $
+     -kv   file1,v 1.1 1993/12/09 03:21:13 joe Exp
+     -ko   no expansion
+     -kb   no expansion, file is binary
+
+   Keywords (*note Keyword list::.):
+
+     $Author: tholo $
+     $Date: 1998/03/12 07:06:00 $
+     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-6,v 1.1.1.9 1998/03/12 07:06:00 tholo Exp $
+     $Id: cvs.info-6,v 1.1.1.9 1998/03/12 07:06:00 tholo Exp $
+     $Locker:  $
+     $Name:  $
+     $RCSfile: cvs.info-6,v $
+     $Revision: 1.1.1.9 $
+     $Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-6,v $
+     $State: Exp $
+     $Log: cvs.info-6,v $
+     Revision 1.1.1.9  1998/03/12 07:06:00  tholo
+     Latest version from Cyclic; files missed in first run
+
+     Revision 1.1  1993/12/09 03:30:17  joe
+     Initial revision
+
+   Commands, command options, and command arguments:
 
 `add [OPTIONS] [FILES...]'
      Add a new file/directory.  See *Note Adding files::.
@@ -738,7 +949,7 @@ options::.) and *Note Index::.
      admin::.
 
     `-b[REV]'
-          Set default branch.
+          Set default branch.  See *Note Reverting local changes::.
 
     `-cSTRING'
           Set comment leader.
@@ -1141,8 +1352,8 @@ options::.) and *Note Index::.
           Unidiff output format.  See *Note rdiff options::.
 
     `-V VERS'
-          Use RCS Version VERS for keyword expansion.  See *Note rdiff
-          options::.
+          Use RCS Version VERS for keyword expansion (obsolete).  See
+          *Note rdiff options::.
 
 `release [OPTIONS] DIRECTORY'
      Indicate that a directory is no longer in use.  See *Note
@@ -1402,189 +1613,4 @@ a file `sfile'.
 * Ampersand modules::
 * Excluding directories::     Excluding directories from a module
 * Module options::            Regular and ampersand modules can take options
-
-
-File: cvs.info,  Node: Alias modules,  Next: Regular modules,  Up: modules
-
-Alias modules
--------------
-
-   Alias modules are the simplest kind of module:
-
-`MNAME -a ALIASES...'
-     This represents the simplest way of defining a module MNAME.  The
-     `-a' flags the definition as a simple alias: CVS will treat any
-     use of MNAME (as a command argument) as if the list of names
-     ALIASES had been specified instead.  ALIASES may contain either
-     other module names or paths.  When you use paths in aliases,
-     `checkout' creates all intermediate directories in the working
-     directory, just as if the path had been specified explicitly in
-     the CVS arguments.
-
-   For example, if the modules file contains:
-
-     amodule -a first-dir
-
-then the following two commands are equivalent:
-
-     $ cvs co amodule
-     $ cvs co first-dir
-
-and they each would provide output such as:
-
-     cvs checkout: Updating first-dir
-     U first-dir/file1
-     U first-dir/file2
-     cvs checkout: Updating first-dir/sdir
-     U first-dir/sdir/sfile
-
-
-File: cvs.info,  Node: Regular modules,  Next: Ampersand modules,  Prev: Alias modules,  Up: modules
-
-Regular modules
----------------
-
-`MNAME [ options ] DIR [ FILES... ]'
-     In the simplest case, this form of module definition reduces to
-     `MNAME DIR'.  This defines all the files in directory DIR as
-     module mname.  DIR is a relative path (from `$CVSROOT') to a
-     directory of source in the source repository.  In this case, on
-     checkout, a single directory called MNAME is created as a working
-     directory; no intermediate directory levels are used by default,
-     even if DIR was a path involving several directory levels.
-
-   For example, if a module is defined by:
-
-     regmodule first-dir
-
-then regmodule will contain the files from first-dir:
-
-     $ cvs co regmodule
-     cvs checkout: Updating regmodule
-     U regmodule/file1
-     U regmodule/file2
-     cvs checkout: Updating regmodule/sdir
-     U regmodule/sdir/sfile
-     $
-
-   By explicitly specifying files in the module definition after DIR,
-you can select particular files from directory DIR.  Here is an example:
-
-     regfiles first-dir/sdir sfile
-
-With this definition, getting the regfiles module will create a single
-working directory `regfiles' containing the file listed, which comes
-from a directory deeper in the CVS source repository:
-
-     $ cvs co regfiles
-     U regfiles/sfile
-     $
-
-
-File: cvs.info,  Node: Ampersand modules,  Next: Excluding directories,  Prev: Regular modules,  Up: modules
-
-Ampersand modules
------------------
-
-   A module definition can refer to other modules by including
-`&MODULE' in its definition.
-     MNAME [ options ] &MODULE...
-
-   Then getting the module creates a subdirectory for each such module,
-in the directory containing the module.  For example, if modules
-contains
-
-     ampermod &first-dir
-
-   then a checkout will create an `ampermod' directory which contains a
-directory called `first-dir', which in turns contains all the
-directories and files which live there.  For example, the command
-
-     $ cvs co ampermod
-
-will create the following files:
-
-     ampermod/first-dir/file1
-     ampermod/first-dir/file2
-     ampermod/first-dir/sdir/sfile
-
-   There is one quirk/bug: the messages that CVS prints omit the
-`ampermod', and thus do not correctly display the location to which it
-is checking out the files:
-
-     $ cvs co ampermod
-     cvs checkout: Updating first-dir
-     U first-dir/file1
-     U first-dir/file2
-     cvs checkout: Updating first-dir/sdir
-     U first-dir/sdir/sfile
-     $
-
-   Do not rely on this buggy behavior; it may get fixed in a future
-release of CVS.
-
-
-File: cvs.info,  Node: Excluding directories,  Next: Module options,  Prev: Ampersand modules,  Up: modules
-
-Excluding directories
----------------------
-
-   An alias module may exclude particular directories from other
-modules by using an exclamation mark (`!') before the name of each
-directory to be excluded.
-
-   For example, if the modules file contains:
-
-     exmodule -a first-dir !first-dir/sdir
-
-   then checking out the module `exmodule' will check out everything in
-`first-dir' except any files in the subdirectory `first-dir/sdir'.
-
-
-File: cvs.info,  Node: Module options,  Prev: Excluding directories,  Up: modules
-
-Module options
---------------
-
-   Either regular modules or ampersand modules can contain options,
-which supply additional information concerning the module.
-
-`-d NAME'
-     Name the working directory something other than the module name.
-
-`-e PROG'
-     Specify a program PROG to run whenever files in a module are
-     exported.  PROG runs with a single argument, the module name.
-
-`-i PROG'
-     Specify a program PROG to run whenever files in a module are
-     committed.  PROG runs with a single argument, the full pathname of
-     the affected directory in a source repository.  The `commitinfo',
-     `loginfo', and `verifymsg' files provide other ways to call a
-     program on commit.
-
-`-o PROG'
-     Specify a program PROG to run whenever files in a module are
-     checked out.  PROG runs with a single argument, the module name.
-
-`-s STATUS'
-     Assign a status to the module.  When the module file is printed
-     with `cvs checkout -s' the modules are sorted according to
-     primarily module status, and secondarily according to the module
-     name.  This option has no other meaning.  You can use this option
-     for several things besides status: for instance, list the person
-     that is responsible for this module.
-
-`-t PROG'
-     Specify a program PROG to run whenever files in a module are
-     tagged with `rtag'.  PROG runs with two arguments: the module name
-     and the symbolic tag specified to `rtag'.  It is not run when
-     `tag' is executed.  Generally you will find that taginfo is a
-     better solution (*note user-defined logging::.).
-
-`-u PROG'
-     Specify a program PROG to run whenever `cvs update' is executed
-     from the top-level directory of the checked-out module.  PROG runs
-     with a single argument, the full path to the source repository for
-     this module.
 

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -27,7 +27,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.24.
+1.9.26.
 
 * Menu:
 
@@ -48,6 +48,7 @@ CVS and the Real World.
 * Keyword substitution::        CVS can include the revision inside the file
 * Tracking sources::            Tracking third-party sources
 * Builds::                      Issues related to CVS and builds
+* Special Files::		Devices, links and other non-regular files
 
 References.
 ----------
@@ -391,7 +392,7 @@ modified files you have in your working copy of the sources, and then
 asks you for confirmation before deleting any files or making any note
 in the history file.
 
-   You decide to play it safe and answer `n RET' when `release' asks
+   You decide to play it safe and answer `n <RET>' when `release' asks
 for confirmation.
 
 

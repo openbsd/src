@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.64 from the input
-file ../../work/ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo version 1.67 from the
+input file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -20,6 +20,336 @@ manual into another language, under the above conditions for modified
 versions, except that the section entitled "GNU General Public License"
 and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: Error messages,  Next: Connection,  Up: Troubleshooting
+
+Partial list of error messages
+==============================
+
+   Here is a partial list of error messages that you may see from CVS.
+It is not a complete list--CVS is capable of printing many, many error
+messages, often with parts of them supplied by the operating system,
+but the intention is to list the common and/or potentially confusing
+error messages.
+
+   The messages are alphabetical, but introductory text such as `cvs
+update: ' is not considered in ordering them.
+
+   In some cases the list includes messages printed by old versions of
+CVS (partly because users may not be sure which version of CVS they are
+using at any particular moment).
+
+`cvs COMMAND: authorization failed: server HOST rejected access'
+     This is a generic response when trying to connect to a pserver
+     server which chooses not to provide a specific reason for denying
+     authorization.  Check that the username and password specified are
+     correct and that the CVSROOT specified is allowed by -allow-root
+     in inetd.conf.  See *Note Password authenticated::.
+
+`FILE:LINE: Assertion 'TEXT' failed'
+     The exact format of this message may vary depending on your
+     system.  It indicates a bug in CVS, which can be handled as
+     described in *Note BUGS::.
+
+`cannot change permissions on temporary directory'
+          Operation not permitted
+     This message has been happening in a non-reproducible, occasional
+     way when we run the client/server testsuite, both on Red Hat Linux
+     3.0.3 and 4.1.  We haven't been able to figure out what causes it,
+     nor is it known whether it is specific to linux (or even to this
+     particular machine!).  If the problem does occur on other unices,
+     `Operation not permitted' would be likely to read `Not owner' or
+     whatever the system in question uses for the unix `EPERM' error.
+     If you have any information to add, please let us know as
+     described in *Note BUGS::.  If you experience this error while
+     using CVS, retrying the operation which produced it should work
+     fine.
+
+`cannot open CVS/Entries for reading: No such file or directory'
+     This generally indicates a CVS internal error, and can be handled
+     as with other CVS bugs (*note BUGS::.).  Usually there is a
+     workaround--the exact nature of which would depend on the
+     situation but which hopefully could be figured out.
+
+`cvs [init aborted]: cannot open CVS/Root: No such file or directory'
+     This message is harmless.  Provided it is not accompanied by other
+     errors, the operation has completed successfully.  This message
+     should not occur with current versions of CVS, but it is documented
+     here for the benefit of CVS 1.9 and older.
+
+`cvs [checkout aborted]: cannot rename file FILE to CVS/,,FILE: Invalid argument'
+     This message has been reported as intermittently happening with
+     CVS 1.9 on Solaris 2.5.  The cause is unknown; if you know more
+     about what causes it, let us know as described in *Note BUGS::.
+
+`cvs [COMMAND aborted]: cannot start server via rcmd'
+     This, unfortunately, is a rather nonspecific error message which
+     CVS 1.9 will print if you are running the CVS client and it is
+     having trouble connecting to the server.  Current versions of CVS
+     should print a much more specific error message.  If you get this
+     message when you didn't mean to run the client at all, you
+     probably forgot to specify `:local:', as described in *Note
+     Repository::.
+
+`ci: FILE,v: bad diff output line: Binary files - and /tmp/T2a22651 differ'
+     CVS 1.9 and older will print this message when trying to check in
+     a binary file if RCS is not correctly installed.  Re-read the
+     instructions that came with your RCS distribution and the INSTALL
+     file in the CVS distribution.  Alternately, upgrade to a current
+     version of CVS, which checks in files itself rather than via RCS.
+
+`cvs checkout: could not check out FILE'
+     With CVS 1.9, this can mean that the `co' program (part of RCS)
+     returned a failure.  It should be preceded by another error
+     message, however it has been observed without another error
+     message and the cause is not well-understood.  With the current
+     version of CVS, which does not run `co', if this message occurs
+     without another error message, it is definitely a CVS bug (*note
+     BUGS::.).
+
+`cvs [login aborted]: could not find out home directory'
+     This means that you need to set the environment variables that CVS
+     uses to locate your home directory.  See the discussion of HOME,
+     HOMEDRIVE, and HOMEPATH in *Note Environment variables::.
+
+`cvs update: could not merge revision REV of FILE: No such file or directory'
+     CVS 1.9 and older will print this message if there was a problem
+     finding the `rcsmerge' program.  Make sure that it is in your
+     `PATH', or upgrade to a current version of CVS, which does not
+     require an external `rcsmerge' program.
+
+`cvs [update aborted]: could not patch FILE: No such file or directory'
+     This means that there was a problem finding the `patch' program.
+     Make sure that it is in your `PATH'.  Note that despite
+     appearances the message is *not* referring to whether it can find
+     FILE.  If both the client and the server are running a current
+     version of CVS, then there is no need for an external patch
+     program and you should not see this message.  But if either client
+     or server is running CVS 1.9, then you need `patch'.
+
+`cvs update: could not patch FILE; will refetch'
+     This means that for whatever reason the client was unable to apply
+     a patch that the server sent.  The message is nothing to be
+     concerned about, because inability to apply the patch only slows
+     things down and has no effect on what CVS does.
+
+`dying gasps from SERVER unexpected'
+     There is a known bug in the server for CVS 1.9.18 and older which
+     can cause this.  For me, this was reproducible if I used the `-t'
+     global option.  It was fixed by Andy Piper's 14 Nov 1997 change to
+     src/filesubr.c, if anyone is curious.  If you see the message, you
+     probably can just retry the operation which failed, or if you have
+     discovered information concerning its cause, please let us know as
+     described in *Note BUGS::.
+
+`end of file from server (consult above messages if any)'
+     The most common cause for this message is if you are using an
+     external `rsh' program and it exited with an error.  In this case
+     the `rsh' program should have printed a message, which will appear
+     before the above message.  For more information on setting up a
+     CVS client and server, see *Note Remote repositories::.
+
+`cvs commit: Executing 'mkmodules''
+     This means that your repository is set up for a version of CVS
+     prior to CVS 1.8.  When using CVS 1.8 or later, the above message
+     will be preceded by
+
+          cvs commit: Rebuilding administrative file database
+
+     If you see both messages, the database is being rebuilt twice,
+     which is unnecessary but harmless.  If you wish to avoid the
+     duplication, and you have no versions of CVS 1.7 or earlier in
+     use, remove `-i mkmodules' every place it appears in your `modules'
+     file.  For more information on the `modules' file, see *Note
+     modules::.
+
+`missing author'
+     Typically this can happen if you created an RCS file with your
+     username set to empty.  CVS will, bogusly, create an illegal RCS
+     file with no value for the author field.  The solution is to make
+     sure your username is set to a non-empty value and re-create the
+     RCS file.
+
+`*PANIC* administration files missing'
+     This typically means that there is a directory named CVS but it
+     does not contain the administrative files which CVS puts in a CVS
+     directory.  If the problem is that you created a CVS directory via
+     some mechanism other than CVS, then the answer is simple, use a
+     name other than CVS.  If not, it indicates a CVS bug (*note
+     BUGS::.).
+
+`rcs error: Unknown option: -x,v/'
+     This message will be followed by a usage message for RCS.  It
+     means that you have an old version of RCS (probably supplied with
+     your operating system).  CVS only works with RCS version 5 and
+     later.
+
+`cvs [server aborted]: received broken pipe signal'
+     This message seems to be caused by a hard-to-track-down bug in CVS
+     or the systems it runs on (we don't know--we haven't tracked it
+     down yet!).  It seems to happen only after a CVS command has
+     completed, and you should be able to just ignore the message.
+     However, if you have discovered information concerning its cause,
+     please let us know as described in *Note BUGS::.
+
+`Too many arguments!'
+     This message is typically printed by the `log.pl' script which is
+     in the `contrib' directory in the CVS source distribution.  In
+     some versions of CVS, `log.pl' has been part of the default CVS
+     installation.  The `log.pl' script gets called from the `loginfo'
+     administrative file.  Check that the arguments passed in `loginfo'
+     match what your version of `log.pl' expects.  In particular, the
+     `log.pl' from CVS 1.3 and older expects the logfile as an argument
+     whereas the `log.pl' from CVS 1.5 and newer expects the logfile to
+     be specified with a `-f' option.  Of course, if you don't need
+     `log.pl' you can just comment it out of `loginfo'.
+
+`cvs commit: Up-to-date check failed for `FILE''
+     This means that someone else has committed a change to that file
+     since the last time that you did a `cvs update'.  So before
+     proceeding with your `cvs commit' you need to `cvs update'.  CVS
+     will merge the changes that you made and the changes that the
+     other person made.  If it does not detect any conflicts it will
+     report `M cacErrCodes.h' and you are ready to `cvs commit'.  If it
+     detects conflicts it will print a message saying so, will report
+     `C cacErrCodes.h', and you need to manually resolve the conflict.
+     For more details on this process see *Note Conflicts example::.
+
+`Usage:	diff3 [-exEX3 [-i | -m] [-L label1 -L label3]] file1 file2 file3'
+          Only one of [exEX3] allowed
+     This indicates a problem with the installation of `diff3' and
+     `rcsmerge'.  Specifically `rcsmerge' was compiled to look for GNU
+     diff3, but it is finding unix diff3 instead.  The exact text of
+     the message will vary depending on the system.  The simplest
+     solution is to upgrade to a current version of CVS, which does not
+     rely on external `rcsmerge' or `diff3' programs.
+
+`warning: unrecognized response `TEXT' from cvs server'
+     If TEXT contains a valid response (such as `ok') followed by an
+     extra carriage return character (on many systems this will cause
+     the second part of the message to overwrite the first part), then
+     it probably means that you are using the `:ext:' access method
+     with a version of rsh, such as most non-unix rsh versions, which
+     does not by default provide a transparent data stream.  In such
+     cases you probably want to try `:server:' instead of `:ext:'.  If
+     TEXT is something else, this may signify a problem with your CVS
+     server.  Double-check your installation against the instructions
+     for setting up the CVS server.
+
+`cvs commit: warning: editor session failed'
+     This means that the editor which CVS is using exits with a nonzero
+     exit status.  Some versions of vi will do this even when there was
+     not a problem editing the file.  If so, point the CVSEDITOR
+     environment variable to a small script such as:
+
+          #!/bin/sh
+          vi $*
+          exit 0
+
+
+File: cvs.info,  Node: Connection,  Next: Other problems,  Prev: Error messages,  Up: Troubleshooting
+
+Trouble making a connection to a CVS server
+===========================================
+
+   This section concerns what to do if you are having trouble making a
+connection to a CVS server.  If you are running the CVS command line
+client running on Windows, first upgrade the client to CVS 1.9.12 or
+later.  The error reporting in earlier versions provided much less
+information about what the problem was.  If the client is non-Windows,
+CVS 1.9 should be fine.
+
+   If the error messages are not sufficient to track down the problem,
+the next steps depend largely on which access method you are using.
+
+`:ext:'
+     Try running the rsh program from the command line.  For example:
+     "rsh servername cvs -v" should print CVS version information.  If
+     this doesn't work, you need to fix it before you can worry about
+     CVS problems.
+
+`:server:'
+     You don't need a command line rsh program to use this access
+     method, but if you have an rsh program around, it may be useful as
+     a debugging tool.  Follow the directions given for :ext:.
+
+`:pserver:'
+     One good debugging tool is to "telnet servername 2401".  After
+     connecting, send any text (for example "foo" followed by return).
+     If CVS is working correctly, it will respond with
+
+          cvs [pserver aborted]: bad auth protocol start: foo
+
+     If this fails to work, then make sure inetd is working right.
+     Change the invocation in inetd.conf to run the echo program
+     instead of cvs.  For example:
+
+          2401  stream  tcp  nowait  root /bin/echo echo hello
+
+     After making that change and instructing inetd to re-read its
+     configuration file, "telnet servername 2401" should show you the
+     text hello and then the server should close the connection.  If
+     this doesn't work, you need to fix it before you can worry about
+     CVS problems.
+
+     On AIX systems, the system will often have its own program trying
+     to use port 2401.  This is AIX's problem in the sense that port
+     2401 is registered for use with CVS.  I hear that there is an AIX
+     patch available to address this problem.
+
+
+File: cvs.info,  Node: Other problems,  Prev: Connection,  Up: Troubleshooting
+
+Other common problems
+=====================
+
+   Here is a list of problems which do not fit into the above
+categories.  They are in no particular order.
+
+   * If you are running CVS 1.9.18 or older, and `cvs update' finds a
+     conflict and tries to merge, as described in *Note Conflicts
+     example::, but doesn't tell you there were conflicts, then you may
+     have an old version of RCS.  The easiest solution probably is to
+     upgrade to a current version of CVS, which does not rely on
+     external RCS programs.
+
+
+File: cvs.info,  Node: Credits,  Next: BUGS,  Prev: Troubleshooting,  Up: Top
+
+Credits
+*******
+
+   Roland Pesch, then of Cygnus Support <roland@wrs.com> wrote the
+manual pages which were distributed with CVS 1.3.  Much of their text
+was copied into this manual.  He also read an early draft of this
+manual and contributed many ideas and corrections.
+
+   The mailing-list `info-cvs' is sometimes informative. I have
+included information from postings made by the following persons: David
+G. Grubbs <dgg@think.com>.
+
+   Some text has been extracted from the man pages for RCS.
+
+   The CVS FAQ by David G. Grubbs has provided useful material.  The
+FAQ is no longer maintained, however, and this manual is about the
+closest thing there is to a successor (with respect to documenting how
+to use CVS, at least).
+
+   In addition, the following persons have helped by telling me about
+mistakes I've made:
+
+     Roxanne Brunskill <rbrunski@datap.ca>,
+     Kathy Dyer <dyer@phoenix.ocf.llnl.gov>,
+     Karl Pingle <pingle@acuson.com>,
+     Thomas A Peterson <tap@src.honeywell.com>,
+     Inge Wallin <ingwa@signum.se>,
+     Dirk Koschuetzki <koschuet@fmi.uni-passau.de>
+     and Michael Brown <brown@wi.extrel.com>.
+
+   The list of contributors here is not comprehensive; for a more
+complete list of who has contributed to this manual see the file
+`doc/ChangeLog' in the CVS source distribution.
 
 
 File: cvs.info,  Node: BUGS,  Next: Copying,  Prev: Credits,  Up: Top
