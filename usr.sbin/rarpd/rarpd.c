@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.19 1998/05/03 22:49:09 d Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.20 1998/07/07 17:29:49 art Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.19 1998/05/03 22:49:09 d Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.20 1998/07/07 17:29:49 art Exp $";
 #endif
 
 
@@ -467,8 +467,8 @@ rarp_loop()
 
 	while (1) {
 		memcpy(lfdsp, fdsp, fdsn);
-		if (select(maxfd + 1, lfdsp, (struct fd_set *) 0,
-			(struct fd_set *) 0, (struct timeval *) 0) < 0) {
+		if (select(maxfd + 1, lfdsp, (fd_set *) 0,
+			(fd_set *) 0, (struct timeval *) 0) < 0) {
 			err(FATAL, "select: %s", strerror(errno));
 			/* NOTREACHED */
 		}

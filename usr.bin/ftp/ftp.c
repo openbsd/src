@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.28 1998/06/08 16:55:57 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.29 1998/07/07 17:26:41 art Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.28 1998/06/08 16:55:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.29 1998/07/07 17:26:41 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -389,14 +389,14 @@ getreply(expecteof)
 
 int
 empty(mask, sec)
-	struct fd_set *mask;
+	fd_set *mask;
 	int sec;
 {
 	struct timeval t;
 
 	t.tv_sec = (long) sec;
 	t.tv_usec = 0;
-	return (select(32, mask, (struct fd_set *) 0, (struct fd_set *) 0, &t));
+	return (select(32, mask, (fd_set *) 0, (fd_set *) 0, &t));
 }
 
 jmp_buf	sendabort;
@@ -1392,7 +1392,7 @@ proxtrans(cmd, local, remote)
 	int prox_type, nfnd;
 	volatile int secndflag;
 	char *cmd2;
-	struct fd_set mask;
+	fd_set mask;
 
 #ifdef __GNUC__				/* XXX: to shut up gcc warnings */
 	(void)&oldintr;
@@ -1517,7 +1517,7 @@ reset(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct fd_set mask;
+	fd_set mask;
 	int nfnd = 1;
 
 	FD_ZERO(&mask);
@@ -1586,7 +1586,7 @@ abort_remote(din)
 {
 	char buf[BUFSIZ];
 	int nfnd;
-	struct fd_set mask;
+	fd_set mask;
 
 	if (cout == NULL) {
 		warnx("Lost control connection for abort.");
