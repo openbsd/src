@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.3 2001/02/27 06:43:10 tholo Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.4 2001/06/25 21:11:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -36,6 +36,8 @@
 
 #ifndef _IF_AIRONET_IEEE_H
 #define _IF_AIRONET_IEEE_H
+
+#pragma pack(1)
 
 /*
  * This header defines a simple command interface to the FreeBSD
@@ -140,7 +142,7 @@ struct an_mgmt_hdr {
 	u_int16_t		seq_ctl;
 };
 
-/* 
+/*
  * Aironet IEEE signal strength cache
  *
  * driver keeps cache of last
@@ -161,7 +163,6 @@ struct an_sigcache {
 };
 #endif
 
-#ifndef _KERNEL
 struct an_ltv_key {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
@@ -171,6 +172,11 @@ struct an_ltv_key {
 	u_int8_t		key[16];
 };
 
+/*
+ * Grrr. The manual says the statistics record is 384 bytes in length,
+ * but the card says the record is 404 bytes. There's some padding left
+ * at the end of this structure to account for any discrepancies.
+ */
 struct an_ltv_stats {
 	u_int16_t		an_fudge;
 	u_int16_t		an_len;			/* 0x00 */
@@ -269,8 +275,8 @@ struct an_ltv_stats {
 	u_int32_t		an_lostsync_hostreq;	/* 0x16C */
 	u_int32_t		an_host_tx_bytes;	/* 0x170 */
 	u_int32_t		an_host_rx_bytes;	/* 0x174 */
-	u_int32_t		an_uptime_usecs;	/* 0x178 */
-	u_int32_t		an_uptime_secs;		/* 0x17C */
+	u_int32_t		an_uptime_secs;		/* 0x178 */
+	u_int32_t		an_uptime_usecs;	/* 0x17C */
 	u_int32_t		an_lostsync_better_ap;	/* 0x180 */
 	u_int32_t		an_rsvd[10];
 };
@@ -401,6 +407,12 @@ struct an_ltv_genconfig {
 #define AN_TXPOWER_100MW			100
 #define AN_TXPOWER_250MW			250
 
+/*
+ * Valid SSID list. You can specify up to three SSIDs denoting
+ * the service sets that you want to join. The first SSID always
+ * defaults to "tsunami" which is a handy way to detect the
+ * card.
+ */
 struct an_ltv_ssidlist {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
@@ -412,6 +424,9 @@ struct an_ltv_ssidlist {
 	char			an_ssid3[32];
 };
 
+/*
+ * Valid AP list.
+ */
 struct an_ltv_aplist {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
@@ -421,12 +436,18 @@ struct an_ltv_aplist {
 	u_int8_t		an_ap4[8];
 };
 
+/*
+ * Driver name.
+ */
 struct an_ltv_drvname {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
 	u_int8_t		an_drvname[16];
 };
 
+/*
+ * Frame encapsulation.
+ */
 struct an_rid_encap {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
@@ -457,6 +478,9 @@ struct an_rid_encap {
 #define AN_TXENCAP_RFC1024	0x0000
 #define AN_TXENCAP_80211	0x0002
 
+/*
+ * Card capabilities (read only).
+ */
 struct an_ltv_caps {
 	u_int16_t		an_len;			/* 0x00 */
 	u_int16_t		an_type;		/* XXXX */
@@ -486,6 +510,9 @@ struct an_ltv_caps {
 	u_int16_t		an_req_hw_support;	/* 0x80 */
 };
 
+/*
+ * Access point (read only)
+ */
 struct an_ltv_apinfo {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
@@ -493,12 +520,26 @@ struct an_ltv_apinfo {
 	u_int16_t		an_airo_addr;
 };
 
+/*
+ * Radio info (read only).
+ */
 struct an_ltv_radioinfo {
 	u_int16_t		an_len;
 	u_int16_t		an_type;
 	/* ??? */
 };
 
+/*
+ * Status (read only). Note: the manual claims this RID is 108 bytes
+ * long (0x6A is the last datum, which is 2 bytes long) however when
+ * this RID is read from the NIC, it returns a length of 110. To be
+ * on the safe side, this structure is padded with an extra 16-bit
+ * word. (There is a misprint in the manual which says the macaddr
+ * field is 8 bytes long.)
+ *
+ * Also, the channel_set and current_channel fields appear to be
+ * reversed. Either that, or the hop_period field is unused.
+ */
 struct an_ltv_status {
 	u_int16_t		an_len;			/* 0x00 */
 	u_int16_t		an_type;		/* 0xXX */
@@ -542,6 +583,9 @@ struct an_ltv_status {
 #define AN_STATUS_OPMODE_ASSOCIATED		0x0020
 #define AN_STATUS_OPMODE_ERROR			0x8000
 
+/*
+ * WEP config
+ */
 struct an_ltv_wepkey {
 	u_int16_t		an_len;			/* 0x00 */
 	u_int16_t		an_type;		/* 0xXX */
@@ -557,6 +601,8 @@ struct an_ltv_wepkey {
  * list as many as I know about here for completeness.
  */
 
+#pragma pack()
+
 /*
  * Configuration (read/write)
  */
@@ -564,7 +610,7 @@ struct an_ltv_wepkey {
 #define AN_RID_SSIDLIST		0xFF11	/* Valid SSID list */
 #define AN_RID_APLIST		0xFF12	/* Valid AP list */
 #define AN_RID_DRVNAME		0xFF13	/* ID name of this node for diag */
-#define AN_RID_ENCAPPROTO	0xFF14	/* Payload encapsulation type */
+#define AN_RID_ENCAP		0xFF14	/* Payload encapsulation type */
 #define AN_RID_WEP_VOLATILE	0xFF15	/* Temporary WEP key configuration */
 #define AN_RID_WEP_PERMANENT	0xFF16	/* Permanent WEP key configuration */
 #define AN_RID_ACTUALCFG	0xFF20	/* Current configuration settings */
@@ -573,8 +619,8 @@ struct an_ltv_wepkey {
  * Reporting (read only)
  */
 #define AN_RID_CAPABILITIES	0xFF00	/* PC 4500/4800 capabilities */
-#define AN_RID_AP_INFO		0xFF01	/* Access point info */
-#define AN_RID_RADIO_INFO	0xFF02	/* Radio info */
+#define AN_RID_APINFO		0xFF01	/* Access point info */
+#define AN_RID_RADIOINFO	0xFF02	/* Radio info */
 #define AN_RID_STATUS		0xFF50	/* Current status info */
 
 /*
@@ -586,7 +632,58 @@ struct an_ltv_wepkey {
 #define AN_RID_32BITS_CUM	0xFF68	/* Cumulative 32-bit stats counters */
 #define AN_RID_32BITS_DELTA	0xFF69	/* 32-bit stats (since last clear) */
 #define AN_RID_32BITS_DELTACLR	0xFF6A	/* 32-bit stats, clear on read */
-#endif
 
+#ifdef _KERNEL
+#define AN_TX_RING_CNT	4
+struct an_tx_ring_data {
+	u_int16_t	an_tx_fids[AN_TX_RING_CNT];
+	u_int16_t	an_tx_ring[AN_TX_RING_CNT];
+	int		an_tx_prod;
+	int		an_tx_cons;
+};
+
+struct an_softc	{
+	struct device	sc_dev;
+	struct arpcom	arpcom;
+	void		*sc_ih;
+
+	bus_space_tag_t		an_btag;
+	bus_space_handle_t	an_bhandle;
+
+	struct an_ltv_genconfig	an_config;
+	struct an_ltv_caps	an_caps;
+	struct an_ltv_ssidlist	an_ssidlist;
+	struct an_ltv_aplist	an_aplist;
+	int			an_tx_rate;
+	int			an_rxmode;
+	int			an_gone;
+	int			an_if_flags;
+	u_int8_t		an_txbuf[1536];
+	struct an_tx_ring_data	an_rdata;
+	struct an_ltv_stats	an_stats;
+	struct an_ltv_status	an_status;
+	u_int8_t		an_associated;
+#ifdef ANCACHE
+	int			an_cache_iponly;
+	int			an_cache_mcastonly;
+
+	int			an_sigitems;
+	struct an_sigcache	an_sigcache[MAXANCACHE];
+	int			an_nextitem;
+#endif
+	struct timeout		an_stat_ch;
+};
+
+void	an_release_resources    __P((struct device *));
+int	an_alloc_port           __P((struct device *, int, int));
+int	an_alloc_memory         __P((struct device *, int, int));
+int	an_alloc_irq            __P((struct device *, int, int));
+int	an_probe                __P((struct device *));
+void	an_shutdown             __P((void *));
+int	an_attach               __P((struct an_softc *));
+void	an_init                 __P((struct an_softc *));
+void	an_stop                 __P((struct an_softc *));
+int	an_intr                 __P((void *));
+#endif
 
 #endif
