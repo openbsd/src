@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.49 2003/07/31 22:25:54 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.50 2003/08/29 21:47:36 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -80,6 +80,7 @@ static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 		table.pfrt_flags |= PFR_TFLAG_PERSIST;			\
 		RVTEST(pfr_add_tables(&table, 1, &nadd, flags));	\
 		if (nadd) {						\
+			warn_namespace_collision(table.pfrt_name);	\
 			xprintf(opts, "%d table created", nadd);	\
 			if (opts & PF_OPT_NOACTION)			\
 				return (0);				\
@@ -459,6 +460,47 @@ pfctl_define_table(char *name, int flags, int addrs, const char *anchor,
 
 	return pfr_ina_define(&tbl, ab->pfrb_caddr, ab->pfrb_size, NULL,
 	    NULL, ticket, addrs ? PFR_FLAG_ADDRSTOO : 0);
+}
+
+void
+warn_namespace_collision(const char *filter)
+{
+	struct pfr_buffer b;
+	struct pfr_table *t;
+	const char *name = NULL, *lastcoll;
+	int coll = 0;
+
+	bzero(&b, sizeof(b));
+	b.pfrb_type = PFRB_TABLES;
+	for (;;) {
+		pfr_buf_grow(&b, b.pfrb_size);
+		b.pfrb_size = b.pfrb_msize;
+		if (pfr_get_tables(NULL, b.pfrb_caddr,
+		    &b.pfrb_size, PFR_FLAG_ALLRSETS))
+				err(1, "pfr_get_tables");
+		if (b.pfrb_size <= b.pfrb_msize)
+			break;
+	}
+	PFRB_FOREACH(t, &b) {
+		if (!(t->pfrt_flags & PFR_TFLAG_ACTIVE))
+			continue;
+		if (filter != NULL && strcmp(filter, t->pfrt_name))
+			continue;
+		if (!t->pfrt_anchor[0])
+			name = t->pfrt_name;
+		else if (name != NULL && !strcmp(name, t->pfrt_name)) {
+			coll++;
+			lastcoll = name;
+			name = NULL;
+		}
+	}
+	if (coll == 1)
+		warnx("warning: namespace collision with <%s> global table.",
+		    lastcoll);
+	else if (coll > 1)
+		warnx("warning: namespace collisions with %d global tables.",
+		    coll);
+	pfr_buf_clear(&b);
 }
 
 void

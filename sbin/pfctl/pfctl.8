@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.100 2003/08/28 09:41:22 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.101 2003/08/29 21:47:36 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -118,6 +118,22 @@ For example, to show all filter rules inside anchor
 .Bd -literal -offset indent
 # pfctl -a foo -s rules
 .Ed
+.Pp
+Private tables can also be put inside subrulesets, either by having table
+statements in the
+.Xr pf.conf 5
+file that is loaded in the anchor, or by using regular table commands as in:
+.Bd -literal -offset indent
+# pfctl -a foo:bar -t mytable -T add 1.2.3.4 5.6.7.8
+.Ed
+.Pp
+When a rule referring to a table is loaded in an anchor, the rule will use the
+private table if one is defined, and then fallback to the table defined in the
+main ruleset, if there is one.
+This is similar to C rules for variables.
+It is possible to create distinct tables with the same name in the global
+ruleset and in an anchor, but this is often bad design and a warning will be
+issued in that case.
 .It Fl A
 Load only the queue rules present in the rule file.
 Other rules and options are ignored.
