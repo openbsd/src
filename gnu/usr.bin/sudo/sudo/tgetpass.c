@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgetpass.c,v 1.8 1998/03/31 06:41:16 millert Exp $	*/
+/*	$OpenBSD: tgetpass.c,v 1.9 1998/06/24 16:25:17 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.5
@@ -35,6 +35,9 @@ static char rcsid[] = "Id: tgetpass.c,v 1.60 1998/03/31 05:05:48 millert Exp $";
 #include "config.h"
 
 #include <stdio.h>
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#endif /* STDC_HEADERS */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
