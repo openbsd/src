@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.11 1999/09/29 02:40:28 alex Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.12 1999/12/15 21:31:42 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.11 1999/09/29 02:40:28 alex Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.12 1999/12/15 21:31:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ ypgetpwnam(nam)
 		free(__yplin);
 	if (!(__yplin = (char *)malloc(vallen + 1)))
 		err(1, NULL);
-	strcpy(__yplin, val);
+	strcpy(__yplin, val);	/* ok */
 	free(val);
 
 	return(interpret(&pwent, __yplin));
@@ -295,7 +295,7 @@ ypgetpwuid(uid)
 		free(__yplin);
 	if (!(__yplin = (char *)malloc(vallen + 1)))
 		err(1, NULL);
-	strcpy(__yplin, val);
+	strcpy(__yplin, val);	/* ok */
 	free(val);
 
 	return(interpret(&pwent, __yplin));
