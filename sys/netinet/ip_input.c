@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.50 2000/03/27 07:26:45 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.51 2000/04/04 13:43:02 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -346,7 +346,7 @@ ipv4_input(struct mbuf *m, ...)
 
 	/*
 	 * Check that the amount of data in the buffers
-	 * is as at least much as the IP header would have us expect.
+	 * is at least as much as the IP header would have us expect.
 	 * Trim mbufs if longer than we expect.
 	 * Drop packet if shorter than we expect.
 	 */
@@ -858,6 +858,7 @@ ip_dooptions(m)
 	dst = ip->ip_dst;
 	cp = (u_char *)(ip + 1);
 	cnt = (ip->ip_hl << 2) - sizeof (struct ip);
+
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[IPOPT_OPTVAL];
 		if (opt == IPOPT_EOL)
@@ -871,6 +872,7 @@ ip_dooptions(m)
 				goto bad;
 			}
 		}
+
 		switch (opt) {
 
 		default:
