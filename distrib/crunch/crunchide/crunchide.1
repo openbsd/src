@@ -58,6 +58,14 @@ is designed as a companion program for
 .Xr crunchgen 1 ,
 which automates the process of creating crunched binaries from
 multiple component programs.
+.Sh NOTES
+The ELF version of
+.Nm crunchide
+mangles the symboltable beyond recognition.
+It is therefore not advisable to try to run
+.Xr nm 1
+on a crunched object file. This is due to the nature of the ELF symboltable
+and how some arches uses the symbol attributes for their GOT build.
 .Sh SEE ALSO
 .Xr crunchgen 1 ,
 .Xr ld 1
