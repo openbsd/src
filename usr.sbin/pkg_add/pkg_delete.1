@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.16 2004/12/27 22:54:25 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.17 2005/01/03 01:02:45 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -27,7 +27,7 @@
 .Nm pkg_delete
 .Op Fl cInqvx
 .Op Fl B Ar pkg-destdir
-.Op Fl f Ar keys
+.Op Fl F Ar keywords
 .Ar pkgname Op Ar ...
 .Sh DESCRIPTION
 The
@@ -61,9 +61,9 @@ as the prefix to prepend to any object deleted.
 Delete extra configuration file, mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl f Ar keys
+.It Fl F Ar keywords
 Force removal of the package.
-.Ar keys
+.Ar keywords
 is a comma-separated list of keywords that state what failsafes
 should be waived.
 These include:

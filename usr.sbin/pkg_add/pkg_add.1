@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.31 2004/12/28 14:50:38 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.32 2005/01/03 01:02:45 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -28,7 +28,7 @@
 .Op Fl acInqrvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl f Ar keys
+.Op Fl F Ar keyword
 .Op Fl L Ar localbase
 .Op Fl P Ar type
 .Op Fl Q Ar quick-destdir
@@ -133,9 +133,9 @@ While replacing packages, delete extra configuration file in the old package,
 mentioned as
 .Dl @extra file
 in the packing-list.
-.It Fl f Ar keys
+.It Fl F Ar keywords
 Force installation of the package.
-.Ar keys
+.Ar keywords
 is a comma-separated list of keywords that state what failsafes
 should be waived.
 These include:

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.84 2004/12/27 22:54:25 espie Exp $
+# $OpenBSD: pkg_delete,v 1.85 2005/01/03 01:02:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -30,15 +30,20 @@ use OpenBSD::PackageInfo;
 our %forced = ();
 our $not;
 
-set_usage('pkg_delete [-cInqvx] [-B pkg-destdir] [-f keys] pkgname [...]');
+set_usage('pkg_delete [-cInqvx] [-B pkg-destdir] [-F keywords] pkgname [...]');
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
 
 $opt_v = 0;
 
 try { 
-	getopts('vchxDdnf:qpS:L:B:I',
+	getopts('vchxDdnf:F:qpS:L:B:I',
 	    {'v' => sub {++$opt_v;},
 	     'h' => sub { Usage(); },
+	     'F' => sub { 
+			    for my $o (split/,/, shift) { 
+				    $forced{$o} = 1;
+			    }
+		    },
 	     'f' => sub { 
 			    for my $o (split/,/, shift) { 
 				    $forced{$o} = 1;

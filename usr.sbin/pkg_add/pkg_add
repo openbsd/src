@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.164 2004/12/28 14:50:38 espie Exp $
+# $OpenBSD: pkg_add,v 1.165 2005/01/03 01:02:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -687,15 +687,20 @@ sub reorder
 	}
 }
 
-set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-f keys]',
+set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-F keywords]',
 '[-L localbase] [-P type] [-Q quick-destdir] pkgname [...]');
 
 our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
 $opt_v = 0;
 try { 
-	getopts('aqchvnrxIL:f:B:A:P:Q:',
+	getopts('aqchvnrxIL:f:F:B:A:P:Q:',
 	{'v' => sub {++$opt_v;},
 	 'h' => sub { Usage(); },
+	 'F' => sub { 
+	 		for my $o (split/,/, shift) { 
+				$forced{$o} = 1;
+			}
+	    	},
 	 'f' => sub { 
 	 		for my $o (split/,/, shift) { 
 				$forced{$o} = 1;
@@ -748,6 +753,7 @@ if (defined $state->{destdir}) {
 	$ENV{'PKG_DESTDIR'} = $state->{destdir};
 } else {
 	$state->{destdir} = '';
+	delete $ENV{'PKG_DESTDIR'};
 }
 
 
