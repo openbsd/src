@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.2 2004/04/24 13:37:44 miod Exp $ */
+/* $OpenBSD: lunafb.c,v 1.3 2004/05/10 10:30:23 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -162,7 +162,7 @@ const struct cfdriver fb_cd = {
         NULL, "fb", DV_DULL
 };
 
-extern int hwplanemask;	/* hardware planemask; retrieved at boot */
+extern int hwplanebits;	/* hardware plane bits; retrieved at boot */
 
 int omfb_console;
 int omfb_cnattach(void);
@@ -180,7 +180,7 @@ omfbmatch(parent, cf, aux)
 	if (badaddr((caddr_t)ma->ma_addr, 4))
 		return (0);
 #else
-	if (hwplanemask == 0)
+	if (hwplanebits == 0)
 		return (0);
 #endif
 	return (1);
@@ -346,7 +346,7 @@ omsetcmap(sc, p)
 	if (error != 0)
 		return (error);
 
-	if (hwplanemask == 0x0f) {
+	if (hwplanebits == 4) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 		odac->bt_addr = index;
 		for (i = index; i < count; i++) {
@@ -355,7 +355,7 @@ omsetcmap(sc, p)
 			odac->bt_cmap = sc->sc_cmap.b[i];
 		}
 	}
-	else if (hwplanemask == 0xff) {
+	else if (hwplanebits == 8) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 		ndac->bt_addr = index;
 		for (i = index; i < count; i++) {
@@ -380,12 +380,12 @@ omfb_getdevconfig(paddr, dc)
 		u_int32_t u;
 	} rfcnt;
 
-	switch (hwplanemask) {
-	case 0xff:
+	switch (hwplanebits) {
+	case 8:
 		bpp = 8;	/* XXX check monochrome bit in DIPSW */
 		break;
 	default:
-	case 0x0f:
+	case 4:
 		bpp = 4;	/* XXX check monochrome bit in DIPSW */
 		break;
 	case 1:
@@ -400,7 +400,7 @@ omfb_getdevconfig(paddr, dc)
 	dc->dc_videobase = paddr;
 
 #if 0 /* WHITE on BLACK XXX experiment resulted in WHITE on SKYBLUE... */
-	if (hwplanemask == 0x0f) {
+	if (hwplanebits == 4) {
 		/* XXX Need Bt454 initialization */
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 		odac->bt_addr = 0;
@@ -413,7 +413,7 @@ omfb_getdevconfig(paddr, dc)
 			odac->bt_cmap = 255;
 		}
 	}
-	else if (hwplanemask == 0xff) {
+	else if (hwplanebits == 8) {
 		struct bt458 *ndac = (struct bt458 *)OMFB_RAMDAC;
 
 		ndac->bt_addr = 0x04;

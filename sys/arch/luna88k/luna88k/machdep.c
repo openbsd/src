@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.3 2004/05/07 15:08:25 aoyama Exp $	*/
+/* $OpenBSD: machdep.c,v 1.4 2004/05/10 10:30:24 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -209,7 +209,7 @@ int cpuspeed;
 double cycles_per_microsecond;	/* used in locore.S:delay() */
 int sysconsole = 1;		/* 0 = ttya, 1 = keyboard/mouse, used in dev/sio.c */
 u_int16_t dipswitch = 0;	/* set in locore.S */
-int hwplanemask;		/* set in luna88k_bootstrap() */
+int hwplanebits;		/* set in locore.S */
 
 int netisr;
 
@@ -436,29 +436,18 @@ cpu_startup()
 	}
 
 	/*
-	 * Get frame buffer depth from ROM work area.
+	 * Check frame buffer depth.
 	 */
-	{
-		int depth;
-
-		depth = *((volatile int *)0x00001114);
-		switch (depth) {
-		case 1:
-			hwplanemask = 0x01;
-			break;
-		case 4:
-			hwplanemask = 0x0f;
-			break;
-		case 8:
-			hwplanemask = 0xff;
-			break;
-		default:
-			printf("unexpected frame buffer depth = %d\n", depth);
-			/* FALLTHROUGH */
-		case 0:
-			hwplanemask = 0;	/* No frame buffer */
-			break;
-		}
+	switch (hwplanebits) {
+	case 0:				/* No frame buffer */
+	case 1:
+	case 4:
+	case 8:
+		break;
+	default:
+		printf("unexpected frame buffer depth = %d\n", hwplanebits);
+		hwplanebits = 0;
+		break;
 	}
 
 #if 0 /* just for test */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2004/04/22 08:54:17 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2004/05/10 10:30:24 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -292,6 +292,11 @@ ASLOCAL(master_start)
 	st	r10, r11, lo16(_sysconsole)
 
 1:
+	/* read frame buffer depth from ROM work area */
+	ld	r10, r0,  lo16(0x00001114)	/* frame buffer depth */
+	or.u	r11, r0,  hi16(_hwplanebits)
+	st	r10, r11, lo16(_hwplanebits)
+
 	or	r10,  r0, 0x84			/* initialize pio1 */
 	or.u	r11,  r0, hi16(0x4d00000c)
 	st.b	r10, r11, lo16(0x4d00000c)
