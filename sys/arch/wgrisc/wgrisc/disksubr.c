@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.3 1997/05/11 16:26:05 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 1997/08/01 21:58:38 pefo Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -70,6 +70,10 @@ dk_establish(dk, dev)
  * table needed, attempt to extract it as well. Return buffer
  * for use in signalling errors if requested.
  *
+ * We would like to check if each MBR has a valid BOOT_MAGIC, but
+ * we cannot because it doesn't always exist. So.. we assume the
+ * MBR is valid.
+ *
  * Returns null on success and an error string on failure.
  */
 char *
@@ -110,9 +114,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (dp) {
 	        daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
-		int wander = 1;
-		int n = 0;
-		int loop = 0;
+		int wander = 1, n = 0, loop = 0;
 
 		/*
 		 * Read dos partition table, follow extended partitions.
@@ -120,8 +122,6 @@ readdisklabel(dev, strat, lp, osdep)
 		 */
 		while (wander && n < 8 && loop < 8) {
 		        loop++;
-
-			/* on finding a extended partition wander further */
 			wander = 0;
 
 			/* read boot record */
@@ -136,19 +136,10 @@ readdisklabel(dev, strat, lp, osdep)
 				msg = "dos partition I/O error";
 				goto done;
 			}
-		     
-                	/* 
-			 * We would like to check if each MBR has a valid
-			 * BOOT_MAGIC, but we cannot because it doesn't
-			 * always exist. So.. we assume the MBR is valid.
-			 */
-		     
 			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
-			/*
-			 * Search for our MBR partition
-			 */
 			if (ourpart == -1) {
+				/* Search for our MBR partition */
 				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
 					if (dp2->dp_size &&
@@ -159,15 +150,13 @@ readdisklabel(dev, strat, lp, osdep)
 					if (dp2->dp_size &&
 					    dp2->dp_typ == DOSPTYP_386BSD)
 						ourpart = i;
-			}
-
-			if (ourpart != -1) {
-				dp2 = &dp[ourpart];
-
+				if (ourpart == -1)
+					goto donot;
 				/*
 				 * This is our MBR partition. need sector address
 				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 				 */
+				dp2 = &dp[ourpart];
 				dospartoff = dp2->dp_start + part_blkno;
 				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
@@ -183,19 +172,13 @@ readdisklabel(dev, strat, lp, osdep)
 					lp->d_secpercyl = lp->d_ntracks *
 					    lp->d_nsectors;
 			}
-
+donot:
 			/*
 			 * In case the disklabel read below fails, we want to
-			 * provide a fake label in which m/n/o/p are MBR 
-			 * partitions 0/1/2/3
+			 * provide a fake label in i-p.
 			 */
-			for (dp2=dp, i=0; i < NDOSPART && !wander; i++, dp2++) {
+			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
-
-/*		       		if (dp2->dp_start + dp2->dp_size > 
-				    lp->d_ncylinders * lp->d_secpercyl)
-					continue;
-*/
 
 				if (dp2->dp_size)
 					pp->p_size = dp2->dp_size;
@@ -249,7 +232,7 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_sbsize = 64*1024;		/* XXX ? */
 		lp->d_npartitions = MAXPARTITIONS;
 	}
-	
+
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
@@ -378,8 +361,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }
@@ -387,6 +370,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 
 /*
  * Write disk label back to device after modification.
+ * XXX cannot handle OpenBSD partitions in extended partitions!
  */
 int
 writedisklabel(dev, strat, lp, osdep)
@@ -441,7 +425,7 @@ writedisklabel(dev, strat, lp, osdep)
 			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 		}
 	}
-	
+
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
