@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2001/06/28 04:53:44 hin Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2001/07/08 17:56:52 brad Exp $
 
 KRBDIR	= ${.CURDIR}/${KRBDEPTH}
 KRBSRC	= ${.CURDIR}/${KRBDEPTH}/src
@@ -16,8 +16,4 @@ LIBSL	= -L${KRBDEPTH}/lib/sl -lsl
 
 COMPILE_ET	= /usr/bin/compile_et
 
-.if (${MACHINE_ARCH} != "mips")
 COM_ERR=	-lcom_err_pic
-.else
-COM_ERR=	-lcom_err
-.endif
