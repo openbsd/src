@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.15 2003/06/12 12:59:51 jmc Exp $
+.\"	$OpenBSD: lpd.8,v 1.16 2004/12/16 08:13:13 moritz Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -145,7 +145,7 @@ flag sets
 as the wait time (in seconds) for dead remote server detection.
 If no response is returned from a connected server within this period,
 the connection is closed and a message logged.
-The default is 120 seconds.
+The default is 300 seconds.
 .It Fl W
 The
 .Fl W
