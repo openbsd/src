@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxaarm,v 1.17 2003/02/17 20:51:53 ichiro Exp $
+#	$OpenBSD: files.zaurus,v 1.11 2005/01/16 18:13:10 deraadt Exp $
 #
 # First try for arm-specific configuration info
 #
