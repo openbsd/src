@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.2 1997/02/06 06:19:58 mickey Exp $	*/
+/*	$OpenBSD: cread.c,v 1.3 1997/02/06 06:28:52 mickey Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ unsigned size;
   return(alloc(items * size));
 }
 
-void  zfree (opaque, ptr)
+void  zfree (opaque, ptr, size)
 void *opaque;
 void *ptr;
 size_t size;
