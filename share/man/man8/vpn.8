@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.16 1999/05/16 19:57:40 alex Exp $
+.\" $OpenBSD: vpn.8,v 1.17 1999/05/19 06:01:30 fgsch Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -182,9 +182,9 @@ rules for a tunnel which uses encryption (the ESP IPsec protocol) and
 .Xr photurisd 8
 on security gateway A might look like this:
 .Bd -literal
-# ed0 is the only interface going to the outside.
-block in log on ed0 from any to any
-block out log on ed0 from any to any
+# ne0 is the only interface going to the outside.
+block in log on ne0 from any to any
+block out log on ne0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
@@ -195,8 +195,8 @@ pass out proto esp from gatewA/32 to gatewB/32
 pass in on enc0 from netB/netBmask to netA/netAmask
 
 # Passing in Photuris traffic from the security gateways
-pass in on ed0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
-pass out on ed0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
+pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
+pass out on ne0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
 .Ed
 .Pp
 If there are no other
@@ -281,9 +281,9 @@ Create the ipsec flow on machine B:
 .It
 Configure the firewall rules on machine A:
 .Bd -literal
-# ed0 is the only interface going to the outside.
-block in log on ed0 from any to any
-block out log on ed0 from any to any
+# ne0 is the only interface going to the outside.
+block in log on ne0 from any to any
+block out log on ne0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
@@ -296,9 +296,9 @@ pass in quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
 .It
 Configure the firewall rules on machine B:
 .Bd -literal
-# ed0 is the only interface going to the outside.
-block in log on ed0 from any to any
-block out log on ed0 from any to any
+# ne0 is the only interface going to the outside.
+block in log on ne0 from any to any
+block out log on ne0 from any to any
 block in log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
