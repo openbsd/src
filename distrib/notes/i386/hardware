@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.121 2003/08/01 07:03:21 grange Exp $
+dnl	$OpenBSD: hardware,v 1.122 2003/08/01 15:28:03 nate Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -539,8 +539,17 @@ Supported hardware {:-include-:}:
 		Sundance/Tamarack TC9021 based PCI adapters, including: [G]
 		    D-Link DGE-550T (10/100/1000baseTX)
 		    Antares Microsystems Gigabit Ethernet board
-		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
-		  adapters [A] [B] [C]
+		SysKonnect and Marvell based adapters, including:
+		  [A] [B] [C]
+		    SysKonnect SK-9821 (1000baseT)
+		    SysKonnect SK-9822 (dual 1000baseT)
+		    SysKonnect SK-9841 (1000baseLX)
+		    SysKonnect SK-9842 (dual 1000baseLX)
+		    SysKonnect SK-9843 (1000baseSX)
+		    SysKonnect SK-9844 (dual 1000baseSX)
+		    SysKonnect SK-9821 v2.0 (1000baseT)
+		    SysKonnect SK-9843 v2.0 (1000baseSX)
+		    3Com 3c940 (1000baseT)
 	ATM Adapters
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
 		interfaces [*]
