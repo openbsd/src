@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.21 2004/10/09 02:17:03 brad Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.22 2004/11/18 16:15:33 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -509,6 +509,18 @@ mii_phy_detach(struct device *self, int flags)
 	mii_phy_delete_media(sc);
 
 	return (0);
+}
+
+const struct mii_phydesc *
+mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
+{
+
+	for (; mpd->mpd_name != NULL; mpd++) {
+		if (MII_OUI(ma->mii_id1, ma->mii_id2) == mpd->mpd_oui &&
+		    MII_MODEL(ma->mii_id2) == mpd->mpd_model)
+			return (mpd);
+	}
+	return (NULL);
 }
 
 /*
