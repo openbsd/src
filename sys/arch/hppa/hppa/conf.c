@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1999/05/05 02:40:34 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1999/05/05 02:43:17 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -158,17 +158,19 @@ struct cdevsw   cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 23: RS232 */
 	cdev_disk_init(NFD,fd),		/* 24: floppy drive */
 	cdev_tape_init(NFT,ft),		/* 25: floppy tape */
-	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 26: workstation console */
-	cdev_mouse_init(NWSKBD,wskbd),	/* 27: keyboards */
-	cdev_mouse_init(NWSMOUSE,wsmouse), /* 28: mice */
-	cdev_ksyms_init(NKSYMS,ksyms),	/* 29: Kernel symbols device */
-	cdev_lpt_init(NLPT,lpt),	/* 30: parallel printer */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 26: Kernel symbols device */
+	cdev_lpt_init(NLPT,lpt),	/* 27: parallel printer */
 #ifdef XFS
-	cdev_xfs_init(NXFS,xfs_dev),	/* 31: xfs communication device */
+	cdev_xfs_init(NXFS,xfs_dev),	/* 28: xfs communication device */
 #else
-	cdev_notdef(),			/* 31 */
+	cdev_notdef(),			/* 28 */
 #endif
-					/* 32 */
+					/* 29 */
+#if 0
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* : workstation console */
+	cdev_mouse_init(NWSKBD,wskbd),	/* : keyboards */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* : mice */
+#endif
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
