@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.7 1999/11/24 16:15:25 markus Exp $");
+RCSID("$Id: nchan.c,v 1.8 1999/11/24 20:21:48 markus Exp $");
 
 #include "ssh.h"
 
@@ -202,9 +202,10 @@ chan_send_oclose(Channel *c)
 static void
 chan_shutdown_write(Channel *c)
 {
+	/* shutdown failure is allowed if write failed already */
 	debug("channel %d: shutdown_write", c->self);
 	if (shutdown(c->sock, SHUT_WR) < 0)
-		error("chan_shutdown_write failed for #%d/fd%d: %.100s",
+		debug("chan_shutdown_write failed for #%d/fd%d: %.100s",
 		      c->self, c->sock, strerror(errno));
 }
 static void
