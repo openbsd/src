@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt.c,v 1.5 1997/04/30 05:57:04 tholo Exp $ */
+/* $OpenBSD: bcrypt.c,v 1.6 1997/07/01 20:12:43 provos Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -152,11 +152,12 @@ encode_salt(salt, csalt, clen, logr)
 {
 	salt[0] = '$';
 	salt[1] = BCRYPT_VERSION;
-	salt[2] = '$';
+	salt[2] = 'a';
+	salt[3] = '$';
 
-	snprintf(salt + 3, 4, "%2.2u$", logr);
+	snprintf(salt + 4, 4, "%2.2u$", logr);
 
-	encode_base64((u_int8_t *) salt + 6, csalt, clen);
+	encode_base64((u_int8_t *) salt + 7, csalt, clen);
 }
 /* Generates a salt for this version of crypt.
    Since versions may change. Keeping this here
@@ -200,10 +201,11 @@ bcrypt(key, salt)
 	blf_ctx state;
 	u_int32_t rounds, i, k;
 	u_int16_t j;
-	u_int8_t key_len, salt_len, logr;
+	u_int8_t key_len, salt_len, logr, minor;
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
+
 	/* Discard "$" identifier */
 	salt++;
 
@@ -211,10 +213,25 @@ bcrypt(key, salt)
 		/* How do I handle errors ? Return ':' */
 		return error;
 	}
+
+	/* Check for minor versions */
+	if (salt[1] != '$') {
+	         switch(salt[1]) {
+		 case 'a':
+		         /* 'ab' should not yield the same as 'abab' */
+		         minor = salt[1];
+			 salt++;
+			 break;
+		 default:
+		         return error;
+		 }
+	} else
+	         minor = 0;
+
 	/* Discard version + "$" identifier */
 	salt += 2;
 
-	if (*(salt + 2) != '$')
+	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
 		return error;
 
@@ -228,7 +245,7 @@ bcrypt(key, salt)
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
 	salt_len = BCRYPT_MAXSALT;
-	key_len = strlen(key);
+	key_len = strlen(key) + (minor >= 'a' ? 1 : 0);
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
@@ -259,13 +276,16 @@ bcrypt(key, salt)
 	}
 
 
-	encrypted[0] = '$';
-	encrypted[1] = BCRYPT_VERSION;
-	encrypted[2] = '$';
+	i = 0;
+	encrypted[i++] = '$';
+	encrypted[i++] = BCRYPT_VERSION;
+	if (minor)
+	        encrypted[i++] = minor;
+	encrypted[i++] = '$';
 
-	snprintf(encrypted + 3, 4, "%2.2u$", logr);
+	snprintf(encrypted + i, 4, "%2.2u$", logr);
 
-	encode_base64((u_int8_t *) encrypted + 6, csalt, BCRYPT_MAXSALT);
+	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS);
 	return encrypted;
