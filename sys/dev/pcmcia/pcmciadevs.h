@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.52 2001/01/26 20:17:28 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.53 2001/02/14 17:46:56 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.47 2001/01/26 20:16:58 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.48 2001/02/14 17:46:29 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -469,3 +469,5 @@
 #define	PCMCIA_PRODUCT_SHUTTLE_IDE_ATAPI	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_ZOOM_AIR4000	{ "Zoom", "Air-4000", NULL, NULL }
 #define	PCMCIA_PRODUCT_ZOOM_AIR4000	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_TAMARACK_NE2000	{ "TAMARACK", "Ethernet", NULL, NULL }
+#define	PCMCIA_PRODUCT_TAMARACK_NE2000	PCMCIA_PRODUCT_INVALID
