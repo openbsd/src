@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.9 1997/03/12 13:26:37 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.10 1997/03/14 14:15:22 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->rowbytes * gm->height;
-	gm->fbbase = (caddr_t) (mac68k_vidlog & ~PGOFSET);
+	gm->fbbase = (caddr_t) mac68k_trunc_page(mac68k_vidlog);
 	gm->fboff = mac68k_vidlog & PGOFSET;
 
 	/* Perform common video attachment. */
