@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.6 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.7 2003/06/15 04:35:54 brad Exp $	*/
 /*	$NetBSD: limits.h,v 1.8 2000/08/08 22:31:14 tshiozak Exp $ */
 
 /*
@@ -36,11 +36,6 @@
 #define	_MACHINE_LIMITS_H_
 
 #define	MB_LEN_MAX	32		/* no multibyte characters */
-
-/* Make sure _LP64 is defined if we have a 64-bit compiler */
-#ifndef _LP64
-#define _LP64
-#endif
 
 #if !defined(_ANSI_SOURCE)
 #define	SIZE_MAX	ULONG_MAX	/* max value for a size_t */
