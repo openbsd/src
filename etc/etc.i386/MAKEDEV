@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.28 1996/10/13 00:53:52 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.29 1996/10/15 07:44:22 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -348,11 +348,11 @@ mms*|lms*)
 pms*)
 	unit=`expr $i : '.ms\(.*\)'`
 	rm -f pms${unit}
-	rm -f pms${unit}?
+	rm -f psm${unit}
 	mknod pms${unit} c 37 0
-	mknod pms${unit}r c 37 1
+	mknod psm${unit} c 37 1
 	chown root.wheel pms${unit}
-	chown root.wheel pms${unit}?
+	chown root.wheel psm${unit}
 	;;
 
 mouse*)						# (XXX)
