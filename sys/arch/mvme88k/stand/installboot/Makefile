@@ -3,8 +3,11 @@
 PROG=	installboot
 MAN=	installboot.8
 BINDIR=/usr/mdec
+DPADD=	${LIBUTIL}
+LDADD=	-lutil
 
 # Need this to work in the miniroot
+
 LDSTATIC=	-static
 
 .include <bsd.prog.mk>

@@ -45,9 +45,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
+#include <machine/disklabel.h> 	
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
+char  cdev[80];
+
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
 	{"_block_size"},
@@ -69,6 +73,7 @@ int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
+static void     vid_to_disklabel __P((char *, char*));
 
 
 static void
@@ -115,13 +120,19 @@ main(argc, argv)
 	boot = argv[optind];
 	proto = argv[optind + 1];
 	dev = argv[optind + 2];
-
+	strcpy(cdev, dev);
+	cdev[strlen(cdev)-1] = 'c';
+	
 	if (verbose) {
 		printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
+		printf("cdevice: %s\n", cdev);
 	}
-
+	
+	/* Insert VID into disklabel */
+	vid_to_disklabel(cdev, proto);
+	
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
 		exit(1);
@@ -147,7 +158,7 @@ main(argc, argv)
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
 
-	if ((devfd = open(dev, O_RDWR, 0)) < 0)
+	if ((devfd = open(cdev, O_RDWR, 0)) < 0)
 		err(1, "open: %s", dev);
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
@@ -375,3 +386,87 @@ int	devfd;
 	return 0;
 }
 
+static void
+vid_to_disklabel(dkname, bootproto)
+char *dkname;
+char *bootproto;
+{
+	char *specname;
+	int exe_file, f;
+	struct cpu_disklabel *pcpul;
+	struct stat stat;
+	unsigned int exe_addr;
+	unsigned short exe_addr_u;
+	unsigned short exe_addr_l;
+
+	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
+	bzero(pcpul, sizeof(struct cpu_disklabel));
+
+	if (verbose) 
+		printf("modifying vid.\n");
+
+	exe_file = open(bootproto, O_RDONLY, 0444);
+	if (exe_file == -1) {
+		perror(bootproto);
+		exit(2);
+	}
+
+	f = opendev(dkname, O_RDWR, OPENDEV_PART, &specname);
+
+	if (lseek(f, 0, SEEK_SET) < 0 ||
+		    read(f, pcpul, sizeof(struct cpu_disklabel)) 
+			< sizeof(struct cpu_disklabel))
+			    err(4, "%s", specname);
+
+
+	pcpul->version = 1;
+	strcpy(pcpul->vid_id, "M88K");
+
+	fstat(exe_file, &stat);
+
+	/* size in 256 byte blocks round up after a.out header removed */
+
+	pcpul->vid_oss = 2;
+	pcpul->vid_osl = (((stat.st_size -0x20) +511) / 512) *2;
+
+	lseek(exe_file, 0x14, SEEK_SET);
+	read(exe_file, &exe_addr, 4);
+
+	/* check this, it may not work in both endian. */
+	/* No, it doesn't.  Use a big endian machine for now. SPM */
+
+	{
+		union {
+			struct s {
+				unsigned short s1;
+				unsigned short s2;
+			} s;
+			unsigned long l;
+		} a;
+		a.l = exe_addr;
+		pcpul->vid_osa_u = a.s.s1;
+		pcpul->vid_osa_l = a.s.s2;
+
+	}
+	pcpul->vid_cas = 1;
+	pcpul->vid_cal = 1;
+
+	/* do not want to write past end of structure, not null terminated */
+
+	strncpy(pcpul->vid_mot, "MOTOROLA", 8);
+
+	pcpul->cfg_rec = 0x100;
+	pcpul->cfg_psm = 0x200;
+
+	if (!nowrite) {
+	    if (lseek(f, 0, SEEK_SET) < 0 || 
+		write(f, pcpul, sizeof(struct cpu_disklabel))
+		    < sizeof(struct cpu_disklabel))
+		    	err(4, "%s", specname);
+	}
+	free(pcpul);
+	
+	close(exe_file);
+	close(f);
+
+}

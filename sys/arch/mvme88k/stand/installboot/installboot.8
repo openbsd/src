@@ -1,4 +1,4 @@
-.\"	$Id: installboot.8,v 1.1 1998/08/22 06:38:35 smurph Exp $
+.\"	$Id: installboot.8,v 1.2 1998/12/15 06:32:34 smurph Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8
@@ -10,7 +10,7 @@
 .Nm installboot
 .Op Fl n
 .Op Fl v
-.Ar ufsboot
+.Ar bootsd
 .Ar bootxx
 .Ar rawdev
 .Sh DESCRIPTION
@@ -28,12 +28,12 @@ Do not actually write anything on the disk.
 Be verbose, printing out the block numbers that
 .Ar bootxx
 will use to load
-.Ar ufsboot .
+.Ar bootsd .
 .El
 .Pp
 The arguments are:
-.Bl -tag -width ufsboot
-.It Ar ufsboot
+.Bl -tag -width bootsd
+.It Ar bootsd
 the name of the second-stage boot program in the file system
 where the first-stage boot program is to be installed.
 .It Ar bootxx
@@ -45,6 +45,12 @@ on which the file system containing
 .Ar ufsboot
 is mounted.
 .El
+.Sh EXAMPLE
+.Bd -literal -offset 
+cd /usr/mdec
+cp bootsd /
+installboot -v /bootsd ./bootxx /dev/rsd0a
+.Ed
 .Sh BUGS
 .Nm installboot
 requires simultaneous access to the mounted file system and

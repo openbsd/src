@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.1 1998/08/22 08:27:08 smurph Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.2 1998/12/15 06:32:34 smurph Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -51,7 +51,7 @@
 /*
  * Boot device is derived from ROM provided information.
  */
-#define LOADADDR	0x11000 /* where to load level 2 bootstrap */
+#define LOADADDR	0xCf0000 /* where to load level 2 bootstrap */
 				/* (l2 must relocate itself) */
 
 /* This determines the largest boot program we can load. */
@@ -90,7 +90,7 @@ main()
 	error = copyboot(&f, addr);
 	f.f_dev->dv_close(&f);
 	if (!error) {
-		bugexec((void (*)())addr);
+		bugexec((void (*)())addr + 8);
 	}
 	/* copyboot had a problem... */
 	_rtt();

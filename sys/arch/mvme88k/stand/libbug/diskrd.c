@@ -15,5 +15,5 @@ mvmeprom_diskrd(arg)
 	asm volatile ("or r2,r0,%0": : "r" (arg));
 	MVMEPROM_CALL(MVMEPROM_DSKRD);
 	asm volatile ("or %0,r0,r2" :  "=r" (ret));
-	return (!(ret & 0x4));
+	return ((ret & 0x8));
 }

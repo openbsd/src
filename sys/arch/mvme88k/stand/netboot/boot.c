@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 1998/08/22 08:37:53 smurph Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 1998/12/15 06:32:35 smurph Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -90,7 +90,7 @@ main()
 	bugargs.arg_end   = bugargs.nbarg_end;
 	*bugargs.arg_end = 0; /* ensure */
 
-	printf("\n>> OpenBSD MVME187 netboot [%s]\n", version);
+	printf("\n>> OpenBSD MVME%x netboot [%s]\n", bugargs.cputyp, version);
 
 	ret = parse_args(&file, &howto);
 

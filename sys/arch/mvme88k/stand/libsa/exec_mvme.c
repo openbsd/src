@@ -68,6 +68,7 @@ exec_mvme(file, flag)
 	void (*entry)();
 	register char *cp;
 	register int *ip;
+	int n;
 
 #ifdef	DEBUG
 	printf("exec_mvme: file=%s flag=0x%x\n", file, flag);
@@ -82,6 +83,7 @@ exec_mvme(file, flag)
 	 */
 	if (read(io, (char *)&x, sizeof(x)) != sizeof(x))
 		goto shread;
+
 	if (N_BADMAG(x)) {
 		errno = EFTYPE;
 		goto closeout;
@@ -99,7 +101,14 @@ exec_mvme(file, flag)
 	 * so we must mask that off (has no effect on the other formats
 	 */
 	loadaddr = (void *)(x.a_entry & ~sizeof(x));
-
+	n = x.a_text + x.a_data + x.a_bss + x.a_syms + sizeof(int);
+	
+	/* debugging stuff for netboot
+	printf("hex load address range 0x%x to 0x%x\n", loadaddr, loadaddr+n);
+	printf("dec load address range %ld to %ld\n", loadaddr, loadaddr+n);
+	bzero((void *)loadaddr, n);
+	*/
+	
 	cp = loadaddr;
 	magic = N_GETMAGIC(x);
 	if (magic == ZMAGIC)
@@ -189,6 +198,9 @@ exec_mvme(file, flag)
 	close(io);
 
 	printf("Start @ 0x%x ...\n", (int)entry);
+	printf("Controler Address @ %x ...\n", bugargs.ctrl_addr);
+	if (flag & RB_HALT) mvmeprom_return();
+    
 /*	(addr)(flag, 0, kernel.esym, kernel.smini, kernel.emini);*/
 	(*entry)(flag, 	bugargs.ctrl_addr, cp, kernel.smini, kernel.emini);
 	printf("exec: kernel returned!\n");

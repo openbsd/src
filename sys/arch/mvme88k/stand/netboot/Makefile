@@ -1,10 +1,13 @@
-#	$OpenBSD: Makefile,v 1.4 1998/08/22 09:25:10 smurph Exp $
 
-RELOC=0x3F0000
+#	$OpenBSD: Makefile,v 1.5 1998/12/15 06:32:35 smurph Exp $
+
+RELOC=0xAF0000
 SIZE?=	size
+STRIP?= strip
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSUN_BOOTPARAMS #-DNETIF_DEBUG
+DEFS= -DSUN_BOOTPARAMS 
+#-DNETIF_DEBUG
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${S} -I${S}/lib/libsa
 CFLAGS=	-O2 ${DEFS} ${INCPATH} ${COPTS}
@@ -18,19 +21,21 @@ CLEANFILES+=netboot netboot.bin
 SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
-LIBS= ${LIBSA} ${LIBBUG} ${LIBZ}
-LDFLAGS+= -nostdlib -s -N -T ${RELOC}
+LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} -lgcc -lc -lgcc
+LDFLAGS+= -s -N -T ${RELOC} 
+#LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
 
 all:	netboot.bin
 
 netboot: ${OBJS} ${BUGCRT} ${LIBS}
-	${LD} ${LDFLAGS} -o $@ \
-		${BUGCRT} ${OBJS} ${LIBS}
-	@${SIZE} $@
+	${LD} ${LDFLAGS} \
+		${BUGCRT} ${OBJS} ${LIBS} -o $@
+#	@${SIZE} $@
 
 netboot.bin: netboot
 	${STRIP} netboot
 	dd ibs=32 skip=1 if=netboot of=$@
+#	dd ibs=38 skip=1 if=netboot of=$@
 	chown ${LIBOWN}.${LIBGRP} netboot.bin
 	chmod ${LIBMODE} netboot.bin
 
