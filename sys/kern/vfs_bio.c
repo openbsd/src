@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.61 2002/05/22 00:22:06 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.62 2002/05/24 13:59:33 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -602,7 +602,7 @@ brelse(bp)
 		wakeup_one(&needbuffer);
 	}
 
-	/* Wake up any proceeses waiting for _this_ buffer to become free. */
+	/* Wake up any processes waiting for _this_ buffer to become free. */
 	if (ISSET(bp->b_flags, B_WANTED)) {
 		CLR(bp->b_flags, B_WANTED);
 		wakeup(bp);
