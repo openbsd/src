@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.44 1997/08/25 20:50:38 millert Exp $
+#	$OpenBSD: rc,v 1.45 1997/09/02 14:49:25 kstailey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -101,9 +101,9 @@ if [ X"${rfc1323}" = X"NO" ]; then
 fi
 
 # $photurisd_flags is imported from /etc/netstart;
-# If $photurisd_flags == NO or /etc/photuris/ doesn't exist, then
+# If $photurisd_flags == NO or /etc/photuris/photuris.conf doesn't exist, then
 # photurisd isn't run.
-if [ "X${photurisd_flags}" != X"NO" -a -d /etc/photuris ]; then
+if [ "X${photurisd_flags}" != X"NO" -a -e /etc/photuris/photuris.conf ]; then
 	echo 'starting photurisd';	photurisd ${photurisd_flags}
 fi
 
