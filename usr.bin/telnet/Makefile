@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2000/10/10 15:41:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/05/25 10:24:25 hin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -50,6 +50,12 @@ SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 CFLAGS+=-DENCRYPTION -DAUTHENTICATION -DKRB4
 LDADD+= -lkrb -ldes
 DPADD+= ${LIBDES} ${LIBKRB}
+.endif
+
+.if (${KERBEROS5:L} == "yes")
+CFLAGS+=-DENCRYPTION -DAUTHENTICATION -DKRB5
+LDADD+= -lkrb5
+DPADD+= ${LIBKRB5}
 .endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.27 2000/11/16 19:00:19 millert Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.28 2001/05/25 10:25:22 hin Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.27 2000/11/16 19:00:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.28 2001/05/25 10:25:22 hin Exp $";
 #endif
 #endif /* not lint */
 
@@ -590,8 +590,9 @@ static unsigned char ttytype_sbbuf[] = {
 };
 
     int
-getterminaltype(name)
+getterminaltype(name, name_sz)
     char *name;
+    size_t name_sz;
 {
     int retval = -1;
     void _gettermname();
@@ -605,7 +606,7 @@ getterminaltype(name)
     while (his_will_wont_is_changing(TELOPT_AUTHENTICATION))
 	ttloop();
     if (his_state_is_will(TELOPT_AUTHENTICATION)) {
-	retval = auth_wait(name);
+	retval = auth_wait(name, name_sz);
     }
 #endif
 
@@ -899,7 +900,7 @@ doit(who)
 	 * get terminal type.
 	 */
 	*user_name = 0;
-	level = getterminaltype(user_name);
+	level = getterminaltype(user_name, sizeof(user_name));
 	setenv("TERM", terminaltype ? terminaltype : "network", 1);	/* XXX mem */
 
 	/*

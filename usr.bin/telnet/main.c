@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/01/21 22:46:37 aaron Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2001/05/25 10:24:25 hin Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -47,12 +47,20 @@ static char copyright[] =
 #define OPTS_FORWARD_CREDS	0x00000002
 #define OPTS_FORWARDABLE_CREDS	0x00000001
 
-#if KRB5
+#ifdef KRB5
 #define FORWARD
+/* XXX ugly hack to setup dns-proxy stuff */
+#define Authenticator asn1_Authenticator
+#include <kerberosV/krb5.h>
 #endif
 
 #ifdef KRB4
 #include <kerberosIV/krb.h>
+#endif
+
+#ifdef FORWARD
+int forward_flags;
+static int default_forward=0;
 #endif
 
 /*
@@ -103,6 +111,43 @@ usage()
 	exit(1);
 }
 
+
+#ifdef KRB5
+static void
+krb5_init(void)
+{
+    krb5_context context;
+    krb5_error_code ret;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return;
+
+#if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
+    if (krb5_config_get_bool (context, NULL,
+         "libdefaults", "forward", NULL)) {
+           forward_flags |= OPTS_FORWARD_CREDS;
+           default_forward=1;
+    }
+    if (krb5_config_get_bool (context, NULL,
+         "libdefaults", "forwardable", NULL)) {
+           forward_flags |= OPTS_FORWARDABLE_CREDS;
+           default_forward=1;
+    }
+#endif
+#ifdef  ENCRYPTION
+    if (krb5_config_get_bool (context, NULL,
+        "libdefaults", "encrypt", NULL)) {
+          encrypt_auto(1);
+          decrypt_auto(1); 
+          EncryptVerbose(1);
+        }
+#endif
+
+    krb5_free_context(context);
+}
+#endif
+
 /*
  * main.  Parse arguments, invoke the protocol or command parser.
  */
@@ -119,6 +164,10 @@ main(argc, argv)
 #ifdef	FORWARD
 	extern int forward_flags;
 #endif	/* FORWARD */
+
+#ifdef KRB5
+	krb5_init();
+#endif
 
 	tninit();		/* Clear out things */
 
@@ -203,7 +252,8 @@ main(argc, argv)
 			break;
 		case 'f':
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-			if (forward_flags & OPTS_FORWARD_CREDS) {
+			if ((forward_flags & OPTS_FORWARD_CREDS) &&
+			    !default_forward) {
 			    fprintf(stderr,
 				    "%s: Only one of -f and -F allowed.\n",
 				    prompt);
@@ -218,7 +268,8 @@ main(argc, argv)
 			break;
 		case 'F':
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-			if (forward_flags & OPTS_FORWARD_CREDS) {
+			if ((forward_flags & OPTS_FORWARD_CREDS) &&
+			    !default_forward) {
 			    fprintf(stderr,
 				    "%s: Only one of -f and -F allowed.\n",
 				    prompt);
@@ -300,26 +351,16 @@ main(argc, argv)
 		}
 	}
 
-#ifdef KRB4
-	{
-		char realm[REALM_SZ];
-
-		if (krb_get_lrealm(realm, 0) != KSUCCESS) {
+	if (autologin == -1) {
 #if defined(AUTHENTICATION)
-			auth_disable_name("KERBEROS_V4");
-#endif
-		} else if (autologin == -1) {
-#if defined(AUTHENTICATION)
-			autologin = 1;
+		autologin = 1;
 #endif
 #if defined(ENCRYPTION)
-			encrypt_auto(1);
-			decrypt_auto(1);
+		encrypt_auto(1);
+		decrypt_auto(1);
 #endif
-		}
 	}
-#endif /* KRB4 */
-
+	
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;
 

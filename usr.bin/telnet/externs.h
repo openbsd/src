@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.5 2001/01/22 11:03:38 fgsch Exp $	*/
+/*	$OpenBSD: externs.h,v 1.6 2001/05/25 10:24:25 hin Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -188,7 +188,7 @@ extern jmp_buf
 int net_write(unsigned char *str, int len);
 void net_encrypt(void);
 int telnet_spin(void);
-char *telnet_getenv(char *val);
+char *telnet_getenv(const char *val);
 char *telnet_gets(char *prompt, char *result, int length, int echo);
 #endif
 
@@ -287,7 +287,7 @@ void xmitEC(void);
 
 void     Dump (char, unsigned char *, int);
 void     printoption (char *, int, int);
-void     printsub (char, unsigned char *, int);
+void     printsub (int, unsigned char *, int);
 void     sendnaws (void);
 void     setconnmode (int);
 void     setcommandmode (void);
@@ -357,7 +357,7 @@ void SetNetTrace(char *file);
 void Dump(char direction, unsigned char *buffer, int length);
 void printoption(char *direction, int cmd, int option);
 void optionstatus(void);
-void printsub(char direction, unsigned char *pointer, int length);
+void printsub(int direction, unsigned char *pointer, int length);
 void EmptyTerminal(void);
 void SetForExit(void);
 void Exit(int returnCode);
