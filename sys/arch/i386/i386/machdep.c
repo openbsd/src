@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.257 2003/12/20 18:23:18 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.258 2003/12/29 08:14:18 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1017,6 +1017,31 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"586 class"	/* Default */
 			},
 			natsem6x86_cpu_setup
+		} }
+	},
+	{
+		"SiS SiS SiS ",
+		CPUVENDOR_SIS,
+		"SiS",
+		/* Family 4, not available from SiS */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 class"	/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				"SiS55x", 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+				"586 class"	/* Default */
+			},
+			NULL
 		} }
 	}
 };
