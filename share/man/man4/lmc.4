@@ -1,4 +1,4 @@
-.\" $OpenBSD: lmc.4,v 1.9 2001/03/06 19:56:50 brad Exp $
+.\" $OpenBSD: lmc.4,v 1.10 2001/05/15 09:07:06 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Chris Cappuccio
 .\"
@@ -53,7 +53,9 @@ source.  For the DS1 and DS3 cards with built in CSU/DSU functionality,
 the clock source is always external (from CSU/DSU).  The ability to set cable
 length is not currently implemented.
 .Pp
-Using the sppp driver, you can also use the ppp protocol.  In either
+Using the
+.Xr sppp 4
+driver, you can also use the ppp protocol.  In either
 case, the lmc interface should be configured as a point-to-point link.
 .Pp
 .Sh DIAGNOSTICS
@@ -92,12 +94,6 @@ Only available if compiled with LMC_DEBUG
 .Pp
 Lan Media Corporation has a web site with data, descriptions, and pictures
 of their cards at www.lanmedia.com.
-.Sh HISTORY
-The
-.Nm
-device driver was first released from LMC to support their cards,
-and was later included in
-.Nx 1.4 .
 .Sh AUTHORS
 The
 .Nm
