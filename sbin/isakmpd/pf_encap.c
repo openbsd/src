@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.8 1999/03/24 14:41:41 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.50 1999/03/24 11:04:12 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.9 1999/03/31 00:51:50 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.51 1999/03/30 21:43:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -197,6 +198,21 @@ pf_encap_handler (int fd)
   u_int8_t *buf;
   struct encap_msghdr *emsg;
   ssize_t len;
+  int n;
+
+  /*
+   * As synchronous read/writes to the socket can have taken place between
+   * the select(2) call of the main loop and this handler, we need to recheck
+   * the readability.
+   */
+  if (ioctl (pf_encap_socket, FIONREAD, &n) == -1)
+    {
+      log_error ("pf_encap_handler: ioctl (%d, FIONREAD, &n) failed",
+		 pf_encap_socket);
+      return;
+    }
+  if (!n)
+    return;
 
   /*
    * PF_ENCAP version 1 has a max length equal to the notify length on
@@ -375,7 +391,6 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
 {
   struct encap_msghdr *emsg = 0;
   u_int8_t *spi = 0;
-  /* IPv4-specific, but so is PF_ENCAP.  */
   struct sockaddr_in *ipv4_dst = (struct sockaddr_in *)dst;
 
   emsg = calloc (1, EMT_RESERVESPI_FLEN);
@@ -594,9 +609,6 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
   /* Fill in a well-defined value in this reserved field.  */
   emsg->em_satype = 0;
 
-  /*
-   * XXX Addresses has to be thought through.  Assumes IPv4.
-   */
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
   emsg->em_dst
@@ -727,7 +739,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   emsg->em_ena_dst.s_addr = dst;
 
   log_debug (LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
-	     laddr, lmask, raddr, rmask);
+	     htonl(laddr), htonl(lmask), htonl(raddr), htonl(rmask));
   emsg->em_ena_isrc.s_addr = laddr;
   emsg->em_ena_ismask.s_addr = lmask;
   emsg->em_ena_idst.s_addr = raddr;
