@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.29 1999/09/16 16:27:31 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.30 1999/09/26 17:50:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: if_xl.c,v 1.50 1999/08/02 21:57:57 wpaul Exp $
+ * $FreeBSD: if_xl.c,v 1.57 1999/09/15 07:20:59 wpaul Exp $
  */
 
 /*
@@ -120,6 +120,8 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -143,55 +145,27 @@
  */
 #define XL_USEIOSPACE
 
-/*
- * This #define controls the behavior of autonegotiation during the
- * bootstrap phase. It's possible to have the driver initiate an
- * autonegotiation session and then set a timeout which will cause the
- * autoneg results to be polled later, usually once the kernel has
- * finished booting. This is clever and all, but it can have bad side
- * effects in some cases, particularly where NFS is involved. For
- * example, if we're booting diskless with an NFS rootfs, the network
- * interface has to be up and running before we hit the mountroot()
- * code, otherwise mounting the rootfs will fail and we'll probably
- * panic.
- *
- * Consequently, the 'backgrounded' autoneg behavior is turned off
- * by default and we actually sit and wait 5 seconds for autonegotiation
- * to complete before proceeding with the other device probes. If you
- * choose to use the other behavior, you can uncomment this #define and
- * recompile.
- */
-/* #define XL_BACKGROUND_AUTONEG */
-
 #include <dev/pci/if_xlreg.h>
 
 int xl_probe		__P((struct device *, void *, void *));
 void xl_attach		__P((struct device *, struct device *, void *));
-int xl_intr		__P((void *));
-void xl_shutdown	__P((void *));
 
 int xl_newbuf		__P((struct xl_softc *, struct xl_chain_onefrag *));
 void xl_stats_update	__P((void *));
 int xl_encap		__P((struct xl_softc *, struct xl_chain *,
 						struct mbuf * ));
-
 void xl_rxeof		__P((struct xl_softc *));
 void xl_txeof		__P((struct xl_softc *));
 void xl_txeoc		__P((struct xl_softc *));
+int xl_intr		__P((void *));
 void xl_start		__P((struct ifnet *));
 int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
 void xl_init		__P((void *));
 void xl_stop		__P((struct xl_softc *));
 void xl_watchdog	__P((struct ifnet *));
-u_int8_t xl_calchash	__P((caddr_t));
-void xl_mediacheck	__P((struct xl_softc *));
-void xl_autoneg_mii	__P((struct xl_softc *, int, int));
-void xl_setmode_mii	__P((struct xl_softc *, int));
-void xl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-void xl_getmode_mii	__P((struct xl_softc *));
-void xl_autoneg_xmit	__P((struct xl_softc *));
+void xl_shutdown	__P((void *));
 int xl_ifmedia_upd	__P((struct ifnet *));
-void xl_setmode		__P((struct xl_softc *, int));
+void xl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
 int xl_eeprom_wait	__P((struct xl_softc *));
 int xl_read_eeprom	__P((struct xl_softc *, caddr_t, int, int, int));
@@ -199,18 +173,24 @@ void xl_mii_sync	__P((struct xl_softc *));
 void xl_mii_send	__P((struct xl_softc *, u_int32_t, int));
 int xl_mii_readreg	__P((struct xl_softc *, struct xl_mii_frame *));
 int xl_mii_writereg	__P((struct xl_softc *, struct xl_mii_frame *));
-void xl_phy_writereg	__P((struct xl_softc *, int, int));
-u_int16_t xl_phy_readreg	__P((struct xl_softc *, int));
 
+void xl_setcfg		__P((struct xl_softc *));
+void xl_setmode		__P((struct xl_softc *, int));
+u_int8_t xl_calchash	__P((caddr_t));
 void xl_setmulti	__P((struct xl_softc *));
 void xl_setmulti_hash	__P((struct xl_softc *));
 void xl_reset		__P((struct xl_softc *));
 int xl_list_rx_init	__P((struct xl_softc *));
 int xl_list_tx_init	__P((struct xl_softc *));
 void xl_wait		__P((struct xl_softc *));
+void xl_mediacheck	__P((struct xl_softc *));
 #ifdef notdef
 void xl_testpacket	__P((struct xl_softc *));
 #endif
+
+int xl_miibus_readreg	__P((struct device *, int, int));
+void xl_miibus_writereg	__P((struct device *, int, int, int));
+void xl_miibus_statchg	__P((struct device *));
 
 /*
  * Murphy's law says that it's possible the chip can wedge and
@@ -454,37 +434,57 @@ int xl_mii_writereg(sc, frame)
 	return(0);
 }
 
-u_int16_t xl_phy_readreg(sc, reg)
-	struct xl_softc		*sc;
-	int			reg;
+int
+xl_miibus_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
 {
+	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
+
+	if (phy != 24)
+		return (0);
 
 	bzero((char *)&frame, sizeof(frame));
 
-	frame.mii_phyaddr = sc->xl_phy_addr;
+	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	xl_mii_readreg(sc, &frame);
 
 	return(frame.mii_data);
 }
 
-void xl_phy_writereg(sc, reg, data)
-	struct xl_softc		*sc;
-	int			reg;
-	int			data;
+void
+xl_miibus_writereg(self, phy, reg, data)
+	struct device *self;
+	int phy, reg, data;
 {
+	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
+
+	if (phy != 24)
+		return;
 
 	bzero((char *)&frame, sizeof(frame));
 
-	frame.mii_phyaddr = sc->xl_phy_addr;
+	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	frame.mii_data = data;
 
 	xl_mii_writereg(sc, &frame);
+}
 
-	return;
+void
+xl_miibus_statchg(self)
+	struct device *self;
+{
+	struct xl_softc *sc = (struct xl_softc *)self;
+
+	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, XL_MACCTRL_DUPLEX);
+	else
+		CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
+		    (CSR_READ_1(sc, XL_W3_MAC_CTRL) & ~XL_MACCTRL_DUPLEX));
 }
 
 /*
@@ -646,6 +646,7 @@ void xl_setmulti_hash(sc)
 	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
 
 	if (ifp->if_flags & IFF_ALLMULTI) {
+allmulti:
 		rxfilt |= XL_RXFILTER_ALLMULTI;
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
 		return;
@@ -660,6 +661,10 @@ void xl_setmulti_hash(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
 		h = xl_calchash(enm->enm_addrlo);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
@@ -705,16 +710,11 @@ void xl_testpacket(sc)
 }
 #endif
 
-/*
- * Initiate an autonegotiation session.
- */
-void xl_autoneg_xmit(sc)
+void xl_setcfg(sc)
 	struct xl_softc		*sc;
 {
-	u_int16_t		phy_sts;
 	u_int32_t		icfg;
 
-	xl_reset(sc);
 	XL_SEL_WIN(3);
 	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
 	icfg &= ~XL_ICFG_CONNECTOR_MASK;
@@ -723,331 +723,6 @@ void xl_autoneg_xmit(sc)
 		icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
 	if (sc->xl_media & XL_MEDIAOPT_BTX)
 		icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
-	if (sc->xl_media & XL_MEDIAOPT_BFX)
-		icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
-	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
-
-	xl_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-	DELAY(500);
-	while(xl_phy_readreg(sc, XL_PHY_GENCTL)
-			& PHY_BMCR_RESET);
-
-	phy_sts = xl_phy_readreg(sc, PHY_BMCR);
-	phy_sts |= PHY_BMCR_AUTONEGENBL|PHY_BMCR_AUTONEGRSTR;
-	xl_phy_writereg(sc, PHY_BMCR, phy_sts);
-
-	return;
-}
-
-/*
- * Invoke autonegotiation on a PHY. Also used with the 3Com internal
- * autoneg logic which is mapped onto the MII.
- */
-void xl_autoneg_mii(sc, flag, verbose)
-	struct xl_softc		*sc;
-	int			flag;
-	int			verbose;
-{
-	u_int16_t		phy_sts = 0, media, advert, ability;
-	struct ifnet		*ifp;
-	struct ifmedia		*ifm;
-
-	ifm = &sc->ifmedia;
-	ifp = &sc->arpcom.ac_if;
-
-	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
-
-	/*
-	 * The 100baseT4 PHY on the 3c905-T4 has the 'autoneg supported'
-	 * bit cleared in the status register, but has the 'autoneg enabled'
-	 * bit set in the control register. This is a contradiction, and
-	 * I'm not sure how to handle it. If you want to force an attempt
-	 * to autoneg for 100baseT4 PHYs, #define FORCE_AUTONEG_TFOUR
-	 * and see what happens.
-	 */
-#ifndef FORCE_AUTONEG_TFOUR
-	/*
-	 * First, see if autoneg is supported. If not, there's
-	 * no point in continuing.
-	 */
-	phy_sts = xl_phy_readreg(sc, PHY_BMSR);
-	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
-		if (verbose)
-			printf("xl%d: autonegotiation not supported\n",
-							sc->xl_unit);
-		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;	
-		media = xl_phy_readreg(sc, PHY_BMCR);
-		media &= ~PHY_BMCR_SPEEDSEL;
-		media &= ~PHY_BMCR_DUPLEX;
-		xl_phy_writereg(sc, PHY_BMCR, media);
-		CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
-				(CSR_READ_1(sc, XL_W3_MAC_CTRL) &
-						~XL_MACCTRL_DUPLEX));
-		return;
-	}
-#endif
-
-	switch (flag) {
-	case XL_FLAG_FORCEDELAY:
-		/*
-	 	 * XXX Never use this option anywhere but in the probe
-	 	 * routine: making the kernel stop dead in its tracks
- 		 * for three whole seconds after we've gone multi-user
-		 * is really bad manners.
-	 	 */
-		xl_autoneg_xmit(sc);
-		DELAY(5000000);
-		break;
-	case XL_FLAG_SCHEDDELAY:
-		/*
-		 * Wait for the transmitter to go idle before starting
-		 * an autoneg session, otherwise xl_start() may clobber
-	 	 * our timeout, and we don't want to allow transmission
-		 * during an autoneg session since that can screw it up.
-	 	 */
-		if (sc->xl_cdata.xl_tx_head != NULL) {
-			sc->xl_want_auto = 1;
-			return;
-		}
-		xl_autoneg_xmit(sc);
-		ifp->if_timer = 5;
-		sc->xl_autoneg = 1;
-		sc->xl_want_auto = 0;
-		return;
-		break;
-	case XL_FLAG_DELAYTIMEO:
-		ifp->if_timer = 0;
-		sc->xl_autoneg = 0;
-		break;
-	default:
-		printf("xl%d: invalid autoneg flag: %d\n", sc->xl_unit, flag);
-		return;
-	}
-
-	if (xl_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
-		if (verbose)
-			printf("xl%d: autoneg complete, ", sc->xl_unit);
-		phy_sts = xl_phy_readreg(sc, PHY_BMSR);
-	} else {
-		if (verbose)
-			printf("xl%d: autoneg not complete, ", sc->xl_unit);
-	}
-
-	media = xl_phy_readreg(sc, PHY_BMCR);
-
-	/* Link is good. Report modes and set duplex mode. */
-	if (xl_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT) {
-		if (verbose)
-			printf("link status good ");
-		advert = xl_phy_readreg(sc, XL_PHY_ANAR);
-		ability = xl_phy_readreg(sc, XL_PHY_LPAR);
-
-		if (advert & PHY_ANAR_100BT4 && ability & PHY_ANAR_100BT4) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_T4;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(100baseT4)\n");
-		} else if (advert & PHY_ANAR_100BTXFULL &&
-			ability & PHY_ANAR_100BTXFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_100BTXHALF &&
-			ability & PHY_ANAR_100BTXHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTFULL &&
-			ability & PHY_ANAR_10BTFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 10Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTHALF &&
-			ability & PHY_ANAR_10BTHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 10Mbps)\n");
-		}
-
-		/* Set ASIC's duplex mode to match the PHY. */
-		XL_SEL_WIN(3);
-		if (media & PHY_BMCR_DUPLEX)
-			CSR_WRITE_1(sc, XL_W3_MAC_CTRL, XL_MACCTRL_DUPLEX);
-		else
-			CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
-				(CSR_READ_1(sc, XL_W3_MAC_CTRL) &
-						~XL_MACCTRL_DUPLEX));
-		xl_phy_writereg(sc, PHY_BMCR, media);
-	} else {
-		if (verbose)
-			printf("no carrier (forcing half-duplex, 10Mbps)\n");
-		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-		media &= ~PHY_BMCR_SPEEDSEL;
-		media &= ~PHY_BMCR_DUPLEX;
-		xl_phy_writereg(sc, PHY_BMCR, media);
-		CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
-				(CSR_READ_1(sc, XL_W3_MAC_CTRL) &
-						~XL_MACCTRL_DUPLEX));
-	}
-
-	xl_init(sc);
-
-	if (sc->xl_tx_pend) {
-		sc->xl_autoneg = 0;
-		sc->xl_tx_pend = 0;
-		xl_start(ifp);
-	}
-
-	return;
-}
-
-void xl_getmode_mii(sc)
-	struct xl_softc		*sc;
-{
-	u_int16_t		bmsr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	bmsr = xl_phy_readreg(sc, PHY_BMSR);
-
-	/* fallback */
-	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-
-	if (bmsr & PHY_BMSR_10BTHALF) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	}
-
-	if (bmsr & PHY_BMSR_10BTFULL) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXHALF) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXFULL) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	}
-
-	/* Some also support 100BaseT4. */
-	if (bmsr & PHY_BMSR_100BT4) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
-#ifdef FORCE_AUTONEG_TFOUR
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-#endif
-	}
-
-	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-	}
-
-	return;
-}
-
-/*
- * Set speed and duplex mode.
- */
-void xl_setmode_mii(sc, media)
-	struct xl_softc		*sc;
-	int			media;
-{
-	u_int16_t		bmcr;
-	u_int32_t		icfg;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	/*
-	 * If an autoneg session is in progress, stop it.
-	 */
-	if (sc->xl_autoneg) {
-		printf("xl%d: canceling autoneg session\n", sc->xl_unit);
-		ifp->if_timer = sc->xl_autoneg = sc->xl_want_auto = 0;
-		bmcr = xl_phy_readreg(sc, PHY_BMCR);
-		bmcr &= ~PHY_BMCR_AUTONEGENBL;
-		xl_phy_writereg(sc, PHY_BMCR, bmcr);
-	}
-
-	printf("xl%d: selecting MII, ", sc->xl_unit);
-
-	XL_SEL_WIN(3);
-	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
-	icfg &= ~XL_ICFG_CONNECTOR_MASK;
-	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BT4)
-		icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
-	if (sc->xl_media & XL_MEDIAOPT_BTX) {
-		if (sc->xl_type == XL_TYPE_905B)
-			icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
-		else
-			icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
-	}
-	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
-
-	if (IFM_SUBTYPE(media) == IFM_100_FX) {
-		icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
-		CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-		return;
-	}
-
-	bmcr = xl_phy_readreg(sc, PHY_BMCR);
-
-	bmcr &= ~(PHY_BMCR_AUTONEGENBL|PHY_BMCR_SPEEDSEL|
-			PHY_BMCR_DUPLEX|PHY_BMCR_LOOPBK);
-
-	if (IFM_SUBTYPE(media) == IFM_100_T4) {
-		printf("100Mbps/T4, half-duplex\n");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_100_TX) {
-		printf("100Mbps, ");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_10_T) {
-		printf("10Mbps, ");
-		bmcr &= ~PHY_BMCR_SPEEDSEL;
-	}
-
-	if ((media & IFM_GMASK) == IFM_FDX) {
-		printf("full duplex\n");
-		bmcr |= PHY_BMCR_DUPLEX;
-		XL_SEL_WIN(3);
-		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, XL_MACCTRL_DUPLEX);
-	} else {
-		printf("half duplex\n");
-		bmcr &= ~PHY_BMCR_DUPLEX;
-		XL_SEL_WIN(3);
-		CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
-			(CSR_READ_1(sc, XL_W3_MAC_CTRL) & ~XL_MACCTRL_DUPLEX));
-	}
-
-	xl_phy_writereg(sc, PHY_BMCR, bmcr);
-
-	return;
 }
 
 void xl_setmode(sc, media)
@@ -1211,7 +886,7 @@ xl_probe(parent, match, aux)
  * This routine is a kludge to work around possible hardware faults
  * or manufacturing defects that can cause the media options register
  * (or reset options register, as it's called for the first generation
- * 3cx90x adapters) to return an incorrect result. I have encountered
+ * 3c90x adapters) to return an incorrect result. I have encountered
  * one Dell Latitude laptop docking station with an integrated 3c905-TX
  * which doesn't have any of the 'mediaopt' bits set. This screws up
  * the attach routine pretty badly because it doesn't know what media
@@ -1425,7 +1100,7 @@ void xl_rxeof(sc)
         struct ifnet		*ifp;
 	struct xl_chain_onefrag	*cur_rx;
 	int			total_len = 0;
-	u_int32_t		rxstat;
+	u_int16_t		rxstat;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -1565,9 +1240,6 @@ void xl_txeof(sc)
 	if (sc->xl_cdata.xl_tx_head == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->xl_cdata.xl_tx_tail = NULL;
-		if (sc->xl_want_auto)
-			xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-
 	} else {
 		if (CSR_READ_4(sc, XL_DMACTL) & XL_DMACTL_DOWN_STALLED ||
 			!CSR_READ_4(sc, XL_DOWNLIST_PTR)) {
@@ -1702,11 +1374,14 @@ void xl_stats_update(xsc)
 	struct xl_stats		xl_stats;
 	u_int8_t		*p;
 	int			i;
+	struct mii_data		*mii = NULL;
 
 	bzero((char *)&xl_stats, sizeof(struct xl_stats));
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
+	if (sc->xl_hasmii)
+		mii = &sc->sc_mii;
 
 	p = (u_int8_t *)&xl_stats;
 
@@ -1730,6 +1405,9 @@ void xl_stats_update(xsc)
 	 */
 	XL_SEL_WIN(4);
 	CSR_READ_1(sc, XL_W4_BADSSD);
+
+	if (mii != NULL)
+		mii_tick(mii);
 
 	XL_SEL_WIN(7);
 
@@ -1827,11 +1505,6 @@ void xl_start(ifp)
 	struct xl_chain		*prev = NULL, *cur_tx = NULL, *start_tx;
 
 	sc = ifp->if_softc;
-
-	if (sc->xl_autoneg) {
-		sc->xl_tx_pend = 1;
-		return;
-	}
 
 	/*
 	 * Check for an available queue slot. If there are none,
@@ -1951,21 +1624,9 @@ void xl_init(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			s, i;
 	u_int16_t		rxfilt = 0;
-	u_int16_t		phy_bmcr = 0;
-
-	if (sc->xl_autoneg)
-		return;
+	struct mii_data		*mii = NULL;
 
 	s = splimp();
-
-	/*
-	 * XXX Hack for the 3c905B: the built-in autoneg logic's state
-	 * gets reset by xl_init() when we don't want it to. Try
-	 * to preserve it. (For 3c905 cards with real external PHYs,
-	 * the BMCR register doesn't change, but this doesn't hurt.)
-	 */
-	if (sc->xl_hasmii != 0)
-		phy_bmcr = xl_phy_readreg(sc, PHY_BMCR);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1973,6 +1634,9 @@ void xl_init(xsc)
 	xl_stop(sc);
 
 	xl_wait(sc);
+
+	if (sc->xl_hasmii)
+		mii = &sc->sc_mii;
 
 	/* Init our MAC address */
 	XL_SEL_WIN(2);
@@ -2115,8 +1779,8 @@ void xl_init(xsc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_ENABLE);
 
 	/* Restore state of BMCR */
-	if (sc->xl_hasmii != 0)
-		xl_phy_writereg(sc, PHY_BMCR, phy_bmcr);
+	if (mii != NULL)
+		mii_mediachg(mii);
 
 	/* Select window 7 for normal operations. */
 	XL_SEL_WIN(7);
@@ -2138,13 +1802,17 @@ int xl_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
-	struct ifmedia		*ifm;
+	struct ifmedia		*ifm = NULL;
+	struct mii_data		*mii = NULL;
 
 	sc = ifp->if_softc;
-	ifm = &sc->ifmedia;
 
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return(EINVAL);
+	if (sc->xl_hasmii)
+		mii = &sc->sc_mii;
+	if (mii == NULL)
+		ifm = &sc->ifmedia;
+	else
+		ifm = &mii->mii_media;
 
 	switch(IFM_SUBTYPE(ifm->ifm_media)) {
 	case IFM_100_FX:
@@ -2159,10 +1827,9 @@ int xl_ifmedia_upd(ifp)
 
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 		|| sc->xl_media & XL_MEDIAOPT_BT4) {
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
-			xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-		else
-			xl_setmode_mii(sc, ifm->ifm_media);
+		xl_setcfg(sc);
+		if (sc->xl_hasmii != 0)
+			mii_mediachg(&sc->sc_mii);
 	} else {
 		xl_setmode(sc, ifm->ifm_media);
 	}
@@ -2178,10 +1845,12 @@ void xl_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq	*ifmr;
 {
 	struct xl_softc		*sc;
-	u_int16_t		advert = 0, ability = 0;
 	u_int32_t		icfg;
+	struct mii_data		*mii = NULL;
 
 	sc = ifp->if_softc;
+	if (sc->xl_hasmii != 0)
+		mii = &sc->sc_mii;
 
 	XL_SEL_WIN(3);
 	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG) & XL_ICFG_CONNECTOR_MASK;
@@ -2218,36 +1887,10 @@ void xl_ifmedia_sts(ifp, ifmr)
 	case XL_XCVR_100BTX:
 	case XL_XCVR_AUTO:
 	case XL_XCVR_MII:
-		if (!(xl_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_AUTONEGENBL)) {
-			if (xl_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_SPEEDSEL)
-				ifmr->ifm_active = IFM_ETHER|IFM_100_TX;
-			else
-				ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-			XL_SEL_WIN(3);
-			if (CSR_READ_2(sc, XL_W3_MAC_CTRL) &
-						XL_MACCTRL_DUPLEX)
-				ifmr->ifm_active |= IFM_FDX;
-			else
-				ifmr->ifm_active |= IFM_HDX;
-			break;
-		}
-		ability = xl_phy_readreg(sc, XL_PHY_LPAR);
-		advert = xl_phy_readreg(sc, XL_PHY_ANAR);
-		if (advert & PHY_ANAR_100BT4 &&
-			ability & PHY_ANAR_100BT4) {
-			ifmr->ifm_active = IFM_ETHER|IFM_100_T4;
-		} else if (advert & PHY_ANAR_100BTXFULL &&
-			ability & PHY_ANAR_100BTXFULL) {
-			ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_FDX;
-		} else if (advert & PHY_ANAR_100BTXHALF &&
-			ability & PHY_ANAR_100BTXHALF) {
-			ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_HDX;
-		} else if (advert & PHY_ANAR_10BTFULL &&
-			ability & PHY_ANAR_10BTFULL) {
-			ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_FDX;
-		} else if (advert & PHY_ANAR_10BTHALF &&
-			ability & PHY_ANAR_10BTHALF) {
-			ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_HDX;
+		if (mii != NULL) {
+			mii_pollstat(mii);
+			ifmr->ifm_active = mii->mii_media_active;
+			ifmr->ifm_status = mii->mii_media_status;
 		}
 		break;
 	case XL_XCVR_100BFX:
@@ -2270,6 +1913,7 @@ int xl_ioctl(ifp, command, data)
 	struct ifreq		*ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int			s, error = 0;
+	struct mii_data		*mii = NULL;
 
 	s = splimp();
 
@@ -2312,7 +1956,14 @@ int xl_ioctl(ifp, command, data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
+		if (sc->xl_hasmii != 0)
+			mii = &sc->sc_mii;
+		if (mii == NULL)
+			error = ifmedia_ioctl(ifp, ifr,
+			    &sc->ifmedia, command);
+		else
+			error = ifmedia_ioctl(ifp, ifr,
+			    &mii->mii_media, command);
 		break;
 	default:
 		error = EINVAL;
@@ -2331,13 +1982,6 @@ void xl_watchdog(ifp)
 	u_int16_t		status = 0;
 
 	sc = ifp->if_softc;
-
-	if (sc->xl_autoneg) {
-		xl_autoneg_mii(sc, XL_FLAG_DELAYTIMEO, 1);
-		if (!(ifp->if_flags & IFF_UP))
-			xl_stop(sc);
-		return;
-	}
 
 	ifp->if_oerrors++;
 	XL_SEL_WIN(4);
@@ -2434,10 +2078,10 @@ xl_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t command;
-	u_int16_t phy_sts, phy_vid, phy_did;
 	caddr_t roundptr;
 	u_int round;
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
+	struct ifmedia *ifm;
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
 
@@ -2619,56 +2263,35 @@ xl_attach(parent, self, aux)
 	xl_mediacheck(sc);
 
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
-			|| sc->xl_media & XL_MEDIAOPT_BT4) {
-		/*
-		 * In theory I shouldn't need this, but... if this
-		 * card supports an MII, either an external one or
-		 * an internal fake one, select it in the internal
-		 * config register before trying to probe it.
-		 */
-		u_int32_t		icfg;
+	    || sc->xl_media & XL_MEDIAOPT_BT4) {
+		ifmedia_init(&sc->sc_mii.mii_media, 0,
+		    xl_ifmedia_upd, xl_ifmedia_sts);
+		sc->xl_hasmii = 1;
+		sc->sc_mii.mii_ifp = ifp;
+		sc->sc_mii.mii_readreg = xl_miibus_readreg;
+		sc->sc_mii.mii_writereg = xl_miibus_writereg;
+		sc->sc_mii.mii_statchg = xl_miibus_statchg;
+		xl_setcfg(sc);
+		mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
 
-		XL_SEL_WIN(3);
-		icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
-		icfg &= ~XL_ICFG_CONNECTOR_MASK;
-		if (sc->xl_media & XL_MEDIAOPT_MII ||
-			sc->xl_media & XL_MEDIAOPT_BT4)
-			icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
-		if (sc->xl_media & XL_MEDIAOPT_BTX)
-			icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
-		if (sc->xl_media & XL_MEDIAOPT_BFX)
-			icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
-		CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-
-		for (i = XL_PHYADDR_MIN; i < XL_PHYADDR_MAX + 1; i++) {
-			sc->xl_phy_addr = i;
-			xl_phy_writereg(sc, XL_PHY_GENCTL, PHY_BMCR_RESET);
-			DELAY(500);
-			while(xl_phy_readreg(sc, XL_PHY_GENCTL)
-					& PHY_BMCR_RESET);
-			if ((phy_sts = xl_phy_readreg(sc, XL_PHY_GENSTS)))
-				break;
-		}
-		if (phy_sts) {
-			phy_vid = xl_phy_readreg(sc, XL_PHY_VENID);
-			phy_did = xl_phy_readreg(sc, XL_PHY_DEVID);
-			sc->xl_hasmii = 1;
+		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE,
+			    0, NULL);
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 		}
 		else {
-			printf("%s: MII without any phy!\n",
-			    sc->sc_dev.dv_xname);
-			return;
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 		}
+		ifm = &sc->sc_mii.mii_media;
+	}
+	else {
+		ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
+		ifm = &sc->ifmedia;
 	}
 
-	/*
-	 * Do ifmedia setup.
-	 */
-	ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
-
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
 			ifmedia_add(&sc->ifmedia,
 			    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
@@ -2680,50 +2303,24 @@ xl_attach(parent, self, aux)
 		 */
 		if (sc->xl_type == XL_TYPE_905B &&
 		    sc->xl_media == XL_MEDIAOPT_10FL) {
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL, 0, NULL);
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_HDX,
+			ifmedia_add(ifm, IFM_ETHER|IFM_10_FL, 0, NULL);
+			ifmedia_add(ifm, IFM_ETHER|IFM_10_FL|IFM_HDX,
 			    0, NULL);
 			if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-				ifmedia_add(&sc->ifmedia,
+				ifmedia_add(ifm,
 				    IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
 		} else {
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
+			ifmedia_add(ifm, IFM_ETHER|IFM_10_5, 0, NULL);
 		}
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_2, 0, NULL);
-	}
-
-	/*
-	 * Technically we could use xl_getmode_mii() to scan the
-	 * modes, but the built-in BTX mode on the 3c905B implies
-	 * 10/100 full/half duplex support anyway, so why not just
-	 * do it and get it over with.
-	 */
-	if (sc->xl_media & XL_MEDIAOPT_BTX) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-			ifmedia_add(&sc->ifmedia,
-				IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		if (sc->xl_hasmii != 0)
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER|IFM_10_2, 0, NULL);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BFX) {
 		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
-	}
-
-	/*
-	 * If there's an MII, we have to probe its modes
-	 * separately.
-	 */
-	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BT4) {
-		xl_getmode_mii(sc);
+		ifmedia_add(ifm, IFM_ETHER|IFM_100_FX, 0, NULL);
 	}
 
 	/* Choose a default media. */
@@ -2747,26 +2344,13 @@ xl_attach(parent, self, aux)
 		xl_setmode(sc, media);
 		break;
 	case XL_XCVR_AUTO:
-#ifdef XL_BACKGROUND_AUTONEG
-		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-#else
-		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
-		xl_stop(sc);
-#endif
-		media = sc->ifmedia.ifm_media;
-		break;
 	case XL_XCVR_100BTX:
 	case XL_XCVR_MII:
-#ifdef XL_BACKGROUND_AUTONEG
-		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-#else
-		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
-		xl_stop(sc);
-#endif
-		media = sc->ifmedia.ifm_media;
+		/* Chosen by miibus */
 		break;
 	case XL_XCVR_100BFX:
 		media = IFM_ETHER|IFM_100_FX;
+		xl_setmode(sc, media);
 		break;
 	default:
 		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit,
@@ -2779,7 +2363,8 @@ xl_attach(parent, self, aux)
 		break;
 	}
 
-	ifmedia_set(&sc->ifmedia, media);
+	if (sc->xl_hasmii == 0)
+		ifmedia_set(&sc->ifmedia, media);
 
 	/*
 	 * Call MI attach routines.

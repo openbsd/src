@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.14 1999/09/16 16:27:32 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.15 1999/09/26 17:50:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -534,28 +534,21 @@ struct xl_mii_frame {
 #define XL_TYPE_905B	1
 #define XL_TYPE_90X	2
 
-#define XL_FLAG_FORCEDELAY	1
-#define XL_FLAG_SCHEDDELAY	2
-#define XL_FLAG_DELAYTIMEO	3	
-
 struct xl_softc {
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
+	mii_data_t		sc_mii;		/* mii bus */
 	bus_space_handle_t	xl_bhandle;
 	bus_space_tag_t		xl_btag;
 	struct xl_type		*xl_info;	/* 3Com adapter info */
 	u_int8_t		xl_hasmii;	/* whether we have mii or not */
 	u_int8_t		xl_unit;	/* interface number */
 	u_int8_t		xl_type;
-	u_int8_t		xl_phy_addr;	/* PHY address */
 	u_int32_t		xl_xcvr;
 	u_int16_t		xl_media;
 	u_int16_t		xl_caps;
-	u_int8_t		xl_tx_pend;	/* TX pending */
-	u_int8_t		xl_want_auto;
-	u_int8_t		xl_autoneg;
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
 	caddr_t			xl_ldata_ptr;
@@ -634,50 +627,6 @@ struct xl_stats {
 #define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
 
 /*
- * Texas Instruments PHY identifiers
- *
- * The ThunderLAN manual has a curious and confusing error in it.
- * In chapter 7, which describes PHYs, it says that TI PHYs have
- * the following ID codes, where xx denotes a revision:
- *
- * 0x4000501xx			internal 10baseT PHY
- * 0x4000502xx			TNETE211 100VG-AnyLan PMI
- *
- * The problem here is that these are not valid 32-bit hex numbers:
- * there's one digit too many. My guess is that they mean the internal
- * 10baseT PHY is 0x4000501x and the TNETE211 is 0x4000502x since these
- * are the only numbers that make sense.
- */
-#define TI_PHY_VENDORID		0x4000
-#define TI_PHY_10BT		0x501F
-#define TI_PHY_100VGPMI		0x502F
-
-/*
- * These ID values are for the NS DP83840A 10/100 PHY
- */
-#define NS_PHY_VENDORID		0x2000
-#define NS_PHY_83840A		0x5C0F
-
-/*
- * Level 1 10/100 PHY
- */
-#define LEVEL1_PHY_VENDORID	0x7810
-#define LEVEL1_PHY_LXT970	0x000F
-
-/*
- * Intel 82555 10/100 PHY
- */
-#define INTEL_PHY_VENDORID	0x0A28
-#define INTEL_PHY_82555		0x015F
-
-/*
- * SEEQ 80220 10/100 PHY
- */
-#define SEEQ_PHY_VENDORID	0x0016
-#define SEEQ_PHY_80220		0xF83F
-
-
-/*
  * PCI low memory base and low I/O base register, and
  * other PCI registers. Note: some are only available on
  * the 3c905B, in particular those that related to power management.
@@ -713,107 +662,6 @@ struct xl_stats {
 #define XL_PSTATE_D3		0x0003
 #define XL_PME_EN		0x0010
 #define XL_PME_STATUS		0x8000
-
-#define PHY_UNKNOWN		6
-
-#define XL_PHYADDR_MIN		0x00
-#define XL_PHYADDR_MAX		0x1F
-
-#define XL_PHY_GENCTL		0x00
-#define XL_PHY_GENSTS		0x01
-#define XL_PHY_VENID		0x02
-#define XL_PHY_DEVID		0x03
-#define XL_PHY_ANAR		0x04
-#define XL_PHY_LPAR		0x05
-#define XL_PHY_ANEXP		0x06
-
-#define PHY_ANAR_NEXTPAGE	0x8000
-#define PHY_ANAR_RSVD0		0x4000
-#define PHY_ANAR_TLRFLT		0x2000
-#define PHY_ANAR_RSVD1		0x1000
-#define PHY_ANAR_RSVD2		0x0800
-#define PHY_ANAR_RSVD3		0x0400
-#define PHY_ANAR_100BT4		0x0200
-#define PHY_ANAR_100BTXFULL	0x0100
-#define PHY_ANAR_100BTXHALF	0x0080
-#define PHY_ANAR_10BTFULL	0x0040
-#define PHY_ANAR_10BTHALF	0x0020
-#define PHY_ANAR_PROTO4		0x0010
-#define PHY_ANAR_PROTO3		0x0008
-#define PHY_ANAR_PROTO2		0x0004
-#define PHY_ANAR_PROTO1		0x0002
-#define PHY_ANAR_PROTO0		0x0001
-
-/*
- * These are the register definitions for the PHY (physical layer
- * interface chip).
- */
-/*
- * PHY BMCR Basic Mode Control Register
- */
-#define PHY_BMCR			0x00
-#define PHY_BMCR_RESET			0x8000
-#define PHY_BMCR_LOOPBK			0x4000
-#define PHY_BMCR_SPEEDSEL		0x2000
-#define PHY_BMCR_AUTONEGENBL		0x1000
-#define PHY_BMCR_RSVD0			0x0800	/* write as zero */
-#define PHY_BMCR_ISOLATE		0x0400
-#define PHY_BMCR_AUTONEGRSTR		0x0200
-#define PHY_BMCR_DUPLEX			0x0100
-#define PHY_BMCR_COLLTEST		0x0080
-#define PHY_BMCR_RSVD1			0x0040	/* write as zero, don't care */
-#define PHY_BMCR_RSVD2			0x0020	/* write as zero, don't care */
-#define PHY_BMCR_RSVD3			0x0010	/* write as zero, don't care */
-#define PHY_BMCR_RSVD4			0x0008	/* write as zero, don't care */
-#define PHY_BMCR_RSVD5			0x0004	/* write as zero, don't care */
-#define PHY_BMCR_RSVD6			0x0002	/* write as zero, don't care */
-#define PHY_BMCR_RSVD7			0x0001	/* write as zero, don't care */
-/*
- * RESET: 1 == software reset, 0 == normal operation
- * Resets status and control registers to default values.
- * Relatches all hardware config values.
- *
- * LOOPBK: 1 == loopback operation enabled, 0 == normal operation
- *
- * SPEEDSEL: 1 == 100Mb/s, 0 == 10Mb/s
- * Link speed is selected byt his bit or if auto-negotiation if bit
- * 12 (AUTONEGENBL) is set (in which case the value of this register
- * is ignored).
- *
- * AUTONEGENBL: 1 == Autonegotiation enabled, 0 == Autonegotiation disabled
- * Bits 8 and 13 are ignored when autoneg is set, otherwise bits 8 and 13
- * determine speed and mode. Should be cleared and then set if PHY configured
- * for no autoneg on startup.
- *
- * ISOLATE: 1 == isolate PHY from MII, 0 == normal operation
- *
- * AUTONEGRSTR: 1 == restart autonegotiation, 0 = normal operation
- *
- * DUPLEX: 1 == full duplex mode, 0 == half duplex mode
- *
- * COLLTEST: 1 == collision test enabled, 0 == normal operation
- */
-
-/* 
- * PHY, BMSR Basic Mode Status Register 
- */   
-#define PHY_BMSR			0x01
-#define PHY_BMSR_100BT4			0x8000
-#define PHY_BMSR_100BTXFULL		0x4000
-#define PHY_BMSR_100BTXHALF		0x2000
-#define PHY_BMSR_10BTFULL		0x1000
-#define PHY_BMSR_10BTHALF		0x0800
-#define PHY_BMSR_RSVD1			0x0400	/* write as zero, don't care */
-#define PHY_BMSR_RSVD2			0x0200	/* write as zero, don't care */
-#define PHY_BMSR_RSVD3			0x0100	/* write as zero, don't care */
-#define PHY_BMSR_RSVD4			0x0080	/* write as zero, don't care */
-#define PHY_BMSR_MFPRESUP		0x0040
-#define PHY_BMSR_AUTONEGCOMP		0x0020
-#define PHY_BMSR_REMFAULT		0x0010
-#define PHY_BMSR_CANAUTONEG		0x0008
-#define PHY_BMSR_LINKSTAT		0x0004
-#define PHY_BMSR_JABBER			0x0002
-#define PHY_BMSR_EXTENDED		0x0001
 
 #ifdef __alpha__
 #undef vtophys
