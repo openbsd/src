@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.62 2001/07/07 03:08:49 brian Exp $
+ * $OpenBSD: command.c,v 1.63 2001/07/09 00:08:54 brian Exp $
  */
 
 #include <sys/param.h>
@@ -632,6 +632,8 @@ static struct cmdtab const NatCommands[] =
    (const void *) PKT_ALIAS_LOG},
   {"port", NULL, nat_RedirectPort, LOCAL_AUTH, "port redirection",
    "nat port proto localaddr:port[-port] aliasport[-aliasport]"},
+  {"proto", NULL, nat_RedirectProto, LOCAL_AUTH, "protocol redirection",
+   "nat proto proto localIP [publicIP [remoteIP]]"},
   {"proxy", NULL, nat_ProxyRule, LOCAL_AUTH,
    "proxy control", "nat proxy server host[:port] ..."},
   {"same_ports", NULL, NatOption, LOCAL_AUTH,

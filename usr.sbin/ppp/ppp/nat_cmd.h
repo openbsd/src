@@ -24,13 +24,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: nat_cmd.h,v 1.5 2001/06/07 09:32:55 brian Exp $
+ *	$OpenBSD: nat_cmd.h,v 1.6 2001/07/09 00:08:55 brian Exp $
  */
 
 struct cmdargs;
 
 extern int nat_RedirectPort(struct cmdargs const *);
 extern int nat_RedirectAddr(struct cmdargs const *);
+extern int nat_RedirectProto(struct cmdargs const *);
 extern int nat_ProxyRule(struct cmdargs const *);
 extern int nat_SetTarget(struct cmdargs const *);
 
