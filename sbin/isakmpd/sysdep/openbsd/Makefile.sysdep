@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.3 1999/04/19 21:03:02 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.3 1999/04/13 09:03:39 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.4 1999/07/07 22:05:48 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.4 1999/06/07 00:02:49 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -39,3 +39,14 @@ DPADD+=		${LIBGMP} ${LIBDES}
 
 SRCS+=		pf_key_v2.c
 CFLAGS+=	-DUSE_PF_KEY_V2
+
+USE_KEYNOTE=	yes
+
+.ifdef USE_KEYNOTE
+LDADD+=		-lkeynote -lcrypto -lm
+#DPADD+=	
+
+SRCS+=		policy.c
+CFLAGS+=	-DUSE_KEYNOTE
+.endif
+
