@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.40 1998/03/28 09:29:30 deraadt Exp $
+$OpenBSD: pcidevs,v 1.41 1998/03/28 18:30:25 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -603,6 +603,10 @@ product AVANCE2 ALG2302	0x2302	ALG2302
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+
+/* Brooktree products */
+product BROOKTREE BT848		0x0350	BT848
+product BROOKTREE BT849		0x0351	BT849
 
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
