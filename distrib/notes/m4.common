@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.47 2004/02/08 23:11:31 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.48 2004/02/09 13:32:45 todd Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -34,15 +34,15 @@ out as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.')dnl
 dnl
-dnl Change the quote.  There were too many `word' situations that would have
-dnl to have been changed to ``word''.  The quote gets changed to {:- and -:}.
-dnl It can really be anything, but it needs to be unique.
+dnl Change the quote.  There were too many `word' situations that would
+dnl have to have been changed to ``word''.  The quote gets changed to
+dnl {:- and -:}.  It can really be anything, but it needs to be unique.
 dnl
 changequote(`{:-',`-:}')dnl
 dnl
 dnl Conventions when editing:
-dnl o base`'OSrev is required because if it appears as baseOSrev the defined
-dnl   value OSrev does not get substituted.  Same goes for MACHINE,
+dnl o base`'OSrev is required because if it appears as baseOSrev the
+dnl   defined value OSrev does not get substituted.  Same goes for MACHINE,
 dnl   MACHINE_ARCH and OSREV, assigned as cmd line parameters to m4 in the
 dnl   Makefile.
 dnl o `include' and `define' is required as include and define are both m4
@@ -60,8 +60,8 @@ dnl showsize() must not be on a new line.  It creates its own new line if
 dnl there are sizes to display, otherwise, evaluates to NULL
 dnl
 dnl XXX fix to allow - empty 1st arg, for files uncompressed
-dnl                  - empty 2nd arg, for files where only compressed size is
-dnl                    known
+dnl                  - empty 2nd arg, for files where only compressed size
+dnl                    is known
 dnl
 define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
 		 [ $1 MB gzipped, $2 MB uncompressed ]-:})-:})dnl
@@ -913,3 +913,17 @@ the following:
 	put the "base{:--:}OSrev" set somewhere in your file system.  It
 	is recommended that you upgrade the other sets, as well.-:})dnl
 dnl
+define({:-OpenBSDInstNFS-:},
+{:-Now you must populate the `/dev' directory for your client. If the server
+does not run OpenBSD you might save the MAKEDEV output:
+
+	eo=echo ksh MAKEDEV all > all.sh
+
+and then tailor it for your server operating system before running it.  Note
+that MAKEDEV is written specifically for ksh, and may not work on any other
+bourne shell.
+
+There will be error messages about unknown user and groups. These errors are
+inconsequential for the purpose of installing OpenBSD. However, you may
+want to correct them if you plan to the diskless setup regularly. In that
+case, you may re-run MAKEDEV on your OpenBSD machine once it has booted.-:})dnl
