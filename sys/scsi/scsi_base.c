@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.30 1995/09/26 19:26:55 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.31 1996/01/12 22:43:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -335,10 +335,14 @@ scsi_done(xs)
 	 * If the device has it's own done routine, call it first.
 	 * If it returns a legit error value, return that, otherwise
 	 * it wants us to continue with normal processing.
+	 *
+	 * Make sure the upper-level driver knows that this might not
+	 * actually be the last time they hear from us.  We need to get
+	 * status back.
 	 */
 	if (sc_link->device->done) {
 		SC_DEBUG(sc_link, SDEV_DB2, ("calling private done()\n"));
-		error = (*sc_link->device->done) (xs);
+		error = (*sc_link->device->done)(xs, 0);
 		if (error == EJUSTRETURN)
 			goto done;
 		SC_DEBUG(sc_link, SDEV_DB3, ("continuing with generic done()\n"));
@@ -369,6 +373,15 @@ retry:
 		}
 	}
 done:
+	if (sc_link->device->done) {
+		/*
+		 * Tell the device the operation is actually complete.
+		 * No more will happen with this xfer.  This for
+		 * notification of the upper-level driver only; they
+		 * won't be returning any meaningful information to us.
+		 */
+		(void)(*sc_link->device->done)(xs, 1);
+	}
 	scsi_free_xs(xs, SCSI_NOSLEEP);
 }
 

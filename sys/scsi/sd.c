@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.84 1996/01/07 22:04:02 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.85 1996/01/12 22:43:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -107,7 +107,7 @@ void sdgetdisklabel __P((struct sd_softc *));
 int sd_get_parms __P((struct sd_softc *, int));
 void sdstrategy __P((struct buf *));
 void sdstart __P((struct sd_softc *));
-int sddone __P((struct scsi_xfer *));
+int sddone __P((struct scsi_xfer *, int));
 void sdminphys __P((struct buf *));
 
 struct dkdriver sddkdriver = { sdstrategy };
@@ -589,12 +589,13 @@ sdstart(sd)
 }
 
 int
-sddone(xs)
+sddone(xs, complete)
 	struct scsi_xfer *xs;
+	int complete;
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
 
-	if (xs->bp != NULL)
+	if (complete && (xs->bp != NULL))
 		disk_unbusy(&sd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
 
 	return (0);

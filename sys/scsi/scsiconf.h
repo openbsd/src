@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.25 1995/08/12 20:31:44 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.26 1996/01/12 22:43:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -114,7 +114,13 @@ struct scsi_device {
 	int	(*err_handler)(); /* returns -1 to say err processing done */
 	void	(*start)();
 	int	(*async)();
-	int	(*done)();	/* returns -1 to say done processing done */
+	/*
+	 * When called with `0' as the second argument, we expect status
+	 * back from the upper-level driver.  When called with a `1',
+	 * we're simply notifying the upper-level driver that the command
+	 * is complete and expect no status back.
+	 */
+	int	(*done)( /* struct scsi_xfer *, int */ );
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.79 1996/01/07 22:03:58 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.80 1996/01/12 22:43:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -103,7 +103,7 @@ void cdgetdisklabel __P((struct cd_softc *));
 int cd_get_parms __P((struct cd_softc *, int));
 void cdstrategy __P((struct buf *));
 void cdstart __P((struct cd_softc *));
-int cddone __P((struct scsi_xfer *));
+int cddone __P((struct scsi_xfer *, int));
 
 struct dkdriver cddkdriver = { cdstrategy };
 
@@ -564,12 +564,13 @@ cdstart(cd)
 }
 
 int
-cddone(xs)
+cddone(xs, complete)
 	struct scsi_xfer *xs;
+	int complete;
 {
 	struct cd_softc *cd = xs->sc_link->device_softc;
 
-	if (xs->bp != NULL)
+	if (complete && (xs->bp != NULL))
 		disk_unbusy(&cd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
 
 	return (0);
