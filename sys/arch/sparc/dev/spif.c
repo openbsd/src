@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.3 1999/02/04 15:43:21 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.4 1999/02/23 23:47:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -199,10 +199,10 @@ spifattach(parent, self, aux)
 	sc->sc_regs->stc.msmr = SPIF_MSMR;
 	sc->sc_regs->stc.tsmr = SPIF_TSMR;
 	sc->sc_regs->stc.rsmr = SPIF_RSMR;
-	sc->sc_regs->stc.pprh = SPIF_PPRH;
-	sc->sc_regs->stc.pprl = SPIF_PPRL;
+	sc->sc_regs->stc.pprh = CD180_PPRH;
+	sc->sc_regs->stc.pprl = CD180_PPRL;
 
-	printf(": rev %d chiprev %d osc %dMhz stcpri %d ppcpri %d softpri %d\n",
+	printf(": rev %x chiprev %x osc %dMhz stcpri %d ppcpri %d softpri %d\n",
 	    sc->sc_rev, sc->sc_rev2, sc->sc_osc, stcpri, ppcpri, PIL_TTY);
 
 	if (sc->sc_osc == 10)

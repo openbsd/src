@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifreg.h,v 1.3 1999/02/04 15:43:22 jason Exp $	*/
+/*	$OpenBSD: spifreg.h,v 1.4 1999/02/23 23:47:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -62,6 +62,9 @@ struct ppcregs {
 #define	PPC_CTRL_IRQE		0x10		/* IRQ, 1=enable intrs */
 #define	PPC_CTRL_OUTPUT		0x20		/* direction: 1=ppc out */
 
+/*
+ * The 'stc' is a Cirrus Logic CL-CD180 (either revision B or revision C)
+ */
 struct stcregs {
 	volatile u_int8_t	_unused0[1];	/* 0x00 unused */
 	volatile u_int8_t	ccr;		/* channel command reg */
@@ -133,8 +136,12 @@ struct stcregs {
 	volatile u_int8_t	eosrr;		/* end of service req reg */
 };
 
-/* Service Request Configuration Register */
-#define	CD180_SRCR_PKGTYP		0x80	/* chip package type */
+/* Global Firmware Revision Code Register (rw) */
+#define	CD180_GFRCR_REV_B	0x81		/* CL-CD180B */
+#define	CD180_GFRCR_REV_C	0x82		/* CL-CD180C */
+
+/* Service Request Configuration Register (rw) (CD180C or higher) */
+#define	CD180_SRCR_PKGTYP		0x80	/* pkg type,0=PLCC,1=PQFP */
 #define	CD180_SRCR_REGACKEN		0x40	/* register ack enable */
 #define	CD180_SRCR_DAISYEN		0x20	/* daisy chain enable */
 #define	CD180_SRCR_GLOBPRI		0x10	/* global priority */
@@ -142,7 +149,15 @@ struct stcregs {
 #define	CD180_SRCR_AUTOPRI		0x02	/* automatic priority */
 #define	CD180_SRCR_PRISEL		0x01	/* select rx/tx as high pri */
 
-/* Global Service Vector Register */
+/* Prescalar Period Register High (rw) */
+#define	CD180_PPRH	0xf0		/* high byte */
+#define	CD180_PPRL	0x00		/* low byte */
+
+/* Global Service Vector Register (rw) */
+/* Modem Request Acknowledgement Register (ro) (and IACK equivalent) */
+/* Receive Request Acknowledgement Register (ro) (and IACK equivalent) */
+/* Transmit Request Acknowledgement Register (ro) (and IACK equivalent) */
+#define	CD180_GSVR_USERMASK		0xf8	/* user defined bits */
 #define	CD180_GSVR_IMASK		0x07	/* interrupt type mask */
 #define	CD180_GSVR_NOREQUEST		0x00	/* no request pending */
 #define	CD180_GSVR_STATCHG		0x01	/* modem signal change */
@@ -153,13 +168,26 @@ struct stcregs {
 #define	CD180_GSVR_reserved3		0x06	/* reserved */
 #define	CD180_GSVR_RXEXCEPTION		0x07	/* rx exception request */
 
-/* Global Service Channel Register (1,2,3) */
+/* Service Request Status Register (ro) (CD180C and higher) */
+#define	CD180_SRSR_MREQINT		0x01	/* modem request internal */
+#define	CD180_SRSR_MREQEXT		0x02	/* modem request external */
+#define	CD180_SRSR_TREQINT		0x04	/* tx request internal */
+#define	CD180_SRSR_TREQEXT		0x08	/* tx request external */
+#define	CD180_SRSR_RREQINT		0x10	/* rx request internal */
+#define	CD180_SRSR_RREQEXT		0x20	/* rx request external */
+#define	CD180_SRSR_ILV_MASK		0xc0	/* internal service context */
+#define	CD180_SRSR_ILV_NONE		0x00	/* not in service context */
+#define	CD180_SRSR_ILV_RX		0xc0	/* in rx service context */
+#define	CD180_SRSR_ILV_TX		0x80	/* in tx service context */
+#define	CD180_SRSR_ILV_MODEM		0x40	/* in modem service context */
+
+/* Global Service Channel Register 1,2,3 (rw) */
 #define	CD180_GSCR_CHANNEL(gscr)	(((gscr) >> 2) & 7)
 
-/* Receive Data Count Register */
+/* Receive Data Count Register (ro) */
 #define	CD180_RDCR_MASK			0x0f	/* mask for fifo length */
 
-/* Receive Character Status Register */
+/* Receive Character Status Register (ro) */
 #define	CD180_RCSR_TO			0x80	/* time out */
 #define	CD180_RCSR_SCD2			0x40	/* special char detect 2 */
 #define	CD180_RCSR_SCD1			0x20	/* special char detect 1 */
@@ -169,7 +197,7 @@ struct stcregs {
 #define	CD180_RCSR_FE			0x02	/* framing exception */
 #define	CD180_RCSR_OE			0x01	/* overrun exception */
 
-/* Service Request Enable Register */
+/* Service Request Enable Register (rw) */
 #define	CD180_SRER_DSR			0x80	/* DSR service request */
 #define	CD180_SRER_CD			0x40	/* CD service request */
 #define	CD180_SRER_CTS			0x20	/* CTS service request */
@@ -179,7 +207,7 @@ struct stcregs {
 #define	CD180_SRER_TXE			0x02	/* TX empty service request */
 #define	CD180_SRER_NNDT			0x01	/* No new data timeout req */
 
-/* Channel Command Register */
+/* Channel Command Register (rw) */
 /* Reset Channel Command */
 #define	CD180_CCR_CMD_RESET		0x80	/* chip/channel reset */
 #define CD180_CCR_RESETALL		0x01	/* global reset */
@@ -201,7 +229,7 @@ struct stcregs {
 #define	CD180_CCR_CHAN_RXEN		0x02	/* enable channel rx */
 #define	CD180_CCR_CHAN_RXDIS		0x01	/* disable channel rx */
 
-/* Channel Option Register 1 */
+/* Channel Option Register 1 (rw) */
 #define	CD180_COR1_EVENPAR		0x00	/* even parity */
 #define	CD180_COR1_ODDPAR		0x80	/* odd parity */
 #define	CD180_COR1_PARMODE_NO		0x00	/* no parity */
@@ -218,7 +246,7 @@ struct stcregs {
 #define	CD180_COR1_CS7			0x02	/* 7 bit characters */
 #define	CD180_COR1_CS8			0x03	/* 8 bit characters */
 
-/* Channel Option Register 2 */
+/* Channel Option Register 2 (rw) */
 #define	CD180_COR2_IXM			0x80	/* implied xon mode */
 #define	CD180_COR2_TXIBE		0x40	/* tx in-band flow control */
 #define	CD180_COR2_ETC			0x20	/* embedded tx command enbl */
@@ -228,7 +256,7 @@ struct stcregs {
 #define	CD180_COR2_CTSAE		0x02	/* CTS automatic enable */
 #define	CD180_COR2_DSRAE		0x01	/* DSR automatic enable */
 
-/* Channel Option Register 3 */
+/* Channel Option Register 3 (rw) */
 #define	CD180_COR3_XON2			0x80	/* XON char in spc1&3 */
 #define	CD180_COR3_XON1			0x00	/* XON char in spc1 */
 #define	CD180_COR3_XOFF2		0x40	/* XOFF char in spc2&4 */
@@ -237,7 +265,7 @@ struct stcregs {
 #define	CD180_COR3_SCDE			0x10	/* special char recognition */
 #define	CD180_COR3_RXFIFO_MASK		0x0f	/* rx fifo threshold */
 
-/* Channel Control Status Register */
+/* Channel Control Status Register (ro) */
 #define	CD180_CCSR_RXEN			0x80	/* rx is enabled */
 #define	CD180_CCSR_RXFLOFF		0x40	/* rx flow-off */
 #define	CD180_CCSR_RXFLON		0x20	/* rx flow-on */
@@ -245,28 +273,38 @@ struct stcregs {
 #define	CD180_CCSR_TXFLOFF		0x04	/* tx flow-off */
 #define	CD180_CCSR_TXFLON		0x02	/* tx flow-on */
 
-/* Modem Change Register */
+/* Receiver Bit Register (ro) */
+#define	CD180_RBR_RXD			0x40	/* state of RxD pin */
+#define	CD180_RBR_STARTHUNT		0x20	/* looking for start bit */
+
+/* Modem Change Register (rw) */
 #define	CD180_MCR_DSR			0x80	/* DSR changed */
 #define	CD180_MCR_CD			0x40	/* CD changed */
 #define	CD180_MCR_CTS			0x20	/* CTS changed */
 
-/* Modem Change Option Register 1 */
+/* Modem Change Option Register 1 (rw) */
 #define	CD180_MCOR1_DSRZD		0x80	/* catch 0->1 DSR changes */
 #define	CD180_MCOR1_CDZD		0x40	/* catch 0->1 CD changes */
 #define	CD180_MCOR1_CTSZD		0x40	/* catch 0->1 CTS changes */
 #define	CD180_MCOR1_DTRTHRESH		0x0f	/* DTR threshold mask */
 
-/* Modem Change Option Register 2 */
+/* Modem Change Option Register 2 (rw) */
 #define	CD180_MCOR2_DSROD		0x80	/* catch 1->0 DSR changes */
 #define	CD180_MCOR2_CDOD		0x40	/* catch 1->0 CD changes */
 #define	CD180_MCOR2_CTSOD		0x20	/* catch 1->0 CTS changes */
 
-/* Modem Signal Value Register */
+/* Modem Signal Value Register (rw) */
 #define	CD180_MSVR_DSR			0x80	/* DSR input state */
 #define	CD180_MSVR_CD			0x40	/* CD input state */
 #define	CD180_MSVR_CTS			0x20	/* CTS input state */
 #define	CD180_MSVR_DTR			0x02	/* DTR output state */
 #define	CD180_MSVR_RTS			0x01	/* RTS output state */
+
+/* Modem Signal Value Register - Request To Send (w) (CD180C and higher) */
+#define	CD180_MSVRTS_RTS		0x01	/* RTS signal value */
+
+/* Modem Signal Value Register - Data Terminal Ready (w) (CD180C and higher) */
+#define	CD180_MSVDTR_DTR		0x02	/* DTR signal value */
 
 /*
  * The register map for the SUNW,spif looks something like:
@@ -358,12 +396,6 @@ struct spifregs {
  */
 #define	SERIAL_INTR	0
 #define	PARALLEL_INTR	1
-
-/*
- * prescalar values
- */
-#define	SPIF_PPRH	0xf0		/* high byte */
-#define	SPIF_PPRL	0x00		/* low byte */
 
 /*
  * spif tty flags
