@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.16 1999/02/14 19:24:05 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.17 1999/02/14 21:11:01 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ sys_sendmsg(p, v, retval)
 	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof (msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > UIO_MAXIOV)
+	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		MALLOC(iov, struct iovec *,
@@ -573,7 +573,7 @@ sys_recvmsg(p, v, retval)
 		       sizeof (msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > UIO_MAXIOV)
+	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		MALLOC(iov, struct iovec *,

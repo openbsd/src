@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.16 1999/02/14 19:02:21 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.17 1999/02/14 21:11:01 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ sys_readv(p, v, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
 	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
-		if (SCARG(uap, iovcnt) > UIO_MAXIOV)
+		if (SCARG(uap, iovcnt) > IOV_MAX)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
@@ -318,7 +318,7 @@ sys_writev(p, v, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
 	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
-		if (SCARG(uap, iovcnt) > UIO_MAXIOV)
+		if (SCARG(uap, iovcnt) > IOV_MAX)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
