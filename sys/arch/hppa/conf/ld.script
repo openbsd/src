@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.8 2001/11/29 17:28:09 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -10,7 +10,7 @@ SECTIONS
 	.text :
 	{
 		kernel_text = . ;
-		*(.text)
+		*(.text) *(.text.*)
 		*(.rodata) *(.rodata1)
 		*(.reginfo)
 		*(.init)
