@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.142 2002/12/08 00:22:16 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.143 2002/12/08 20:41:51 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1619,7 +1619,7 @@ routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
 address        = ( interface-name | "(" interface-name ")" | host-name |
                  ipv4-dotted-quad | ipv6-coloned-hex )
 host-list      = host [ [ "," ] host-list ]
-redirost-list  = redirhost [ [","] redirhost-list ]
+redirhost-list = redirhost [ [","] redirhost-list ]
 routehost-list = routehost [ [","] routehost-list ]
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" )
