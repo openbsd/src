@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.64 2002/01/21 17:30:38 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.65 2002/02/01 14:31:19 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -157,6 +157,8 @@ char	*nlistf, *memf;
 
 extern char *__progname;
 
+int verbose = 0;
+
 int
 main(argc, argv)
 	int argc;
@@ -170,7 +172,7 @@ main(argc, argv)
 	char errbuf[_POSIX2_LINE_MAX];
 
 	interval = reps = todo = 0;
-	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:fiM:mN:stw:v")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -198,6 +200,9 @@ main(argc, argv)
 			break;
 		case 'w':
 			interval = atoi(optarg);
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case '?':
 		default:
@@ -932,7 +937,7 @@ domem()
 
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
 	     i++, kp++) {
-		if (kp->kb_calls == 0)
+		if (kp->kb_calls == 0 && !verbose)
 			continue;
 		if (first) {
 			(void)printf("Memory statistics by bucket size\n");
@@ -1067,6 +1072,11 @@ print_pool(struct pool *pp, char *name)
 		    "Idle");
 		first = 0;
 	}
+
+	/* Skip unused pools unless verbose output. */
+	if (pp->pr_nget == 0 && !verbose)
+		return;
+
 	if (pp->pr_maxpages == UINT_MAX)
 		sprintf(maxp, "inf");
 	else
