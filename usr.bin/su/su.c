@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.25 1997/06/21 12:18:05 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.26 1997/06/22 23:03:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.25 1997/06/21 12:18:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.26 1997/06/22 23:03:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -343,7 +343,7 @@ kerberos(username, user, uid)
 		(void)fprintf(stderr, "kerberos su: not in %s's ACL.\n", user);
 		return (1);
 	}
-	(void)snprintf(krbtkfile, sizeof(krbtkfile), "%s_%s_%d", TKT_ROOT,
+	(void)snprintf(krbtkfile, sizeof(krbtkfile), "%s_%s_%u", TKT_ROOT,
 		user, getuid());
 
 	(void)setenv("KRBTKFILE", krbtkfile, 1);
