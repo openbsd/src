@@ -59,6 +59,7 @@
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos_syscallargs.h>
 
+#include <machine/psl.h>
 #include <machine/reg.h>
 
 #ifdef DEBUG
