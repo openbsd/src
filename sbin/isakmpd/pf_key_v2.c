@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.3 1999/03/31 14:27:38 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.3 1999/03/31 14:19:54 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.4 1999/03/31 20:30:38 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.4 1999/03/31 20:24:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1268,8 +1268,27 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   return -1;
 }
 
+static void
+pf_key_v2_stayalive (void *vconn)
+{
+  char *conn = vconn;
+  struct sa *sa;
+
+  /* XXX What if it is phase 1?  */
+  sa = sa_lookup_by_name (conn, 2);
+  if (sa)
+    sa->flags |= SA_FLAG_STAYALIVE;
+}
+
+/* Establish the connection in VCONN and set the stayalive flag for it.  */
+void
+pf_key_v2_startup (void *vconn)
+{
+  exchange_establish ((char *)vconn, pf_key_v2_stayalive, vconn);
+}
+
 /*
- * Establish an on-demand keying route.
+ * Establish a keying route that will generate ACQUIRE messages on use.
  * XXX This is not really belonging in the PF_KEYv2 glue, it should be moved
  * to sysdep.c
  */
@@ -1277,10 +1296,19 @@ int
 pf_key_v2_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 		 in_addr_t rmask, u_int32_t spi, in_addr_t dst, char *conn)
 {
-  log_print ("pf_key_v2_route: not implemented");
-  return -1;
+  struct timeval now;
+
+  /*
+   * As we do not have ACQUIRE notifications just yet, we actually establish
+   * the connection as soon as possible.
+   */
+  gettimeofday (&now, 0);
+  if (!timer_add_event ("pf_key_v2_startup", pf_key_v2_startup, conn, &now))
+    log_print ("pf_key_v2_route: could not add timer event");
+  return 0;
 }
 
+/* Handle a PF_KEY lifetime expiration message PMSG.  */
 static void
 pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
 {
@@ -1301,7 +1329,7 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
     lifenode = pf_key_v2_find_ext (pmsg, SADB_EXT_LIFETIME_SOFT);
   life = lifenode->seg;
 
-  /* XXX IPv4 specific */
+  /* XXX IPv4 specific.  */
   log_debug (LOG_SYSDEP, 20,
 	     "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
 	     life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
@@ -1340,7 +1368,11 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
     {
       /* If we are already renegotiating, don't start over.  */
       if (!exchange_lookup_by_name (sa->name, 2))
-	exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced, sa);
+	{
+	  sa_reference (sa);
+	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
+			      sa);
+	}
     }
 
   if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD)
