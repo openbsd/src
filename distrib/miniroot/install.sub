@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.351 2004/08/09 18:08:50 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.352 2004/09/16 22:23:44 mcbride Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1669,7 +1669,7 @@ questions() {
 	[[ $resp == n ]] && return
 	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200"
 	[[ $resp == done ]] && return
-	echo "set tty $_bd\nstty $_bd $resp" >>/mnt/etc/boot.conf
+	echo "stty $_bd $resp\nset tty $_bd" >>/mnt/etc/boot.conf
 	sed	-e "/^${_td}/s/std.9600/std.${resp}/" \
 		-e "/^${_td}/s/unknown/vt220	/" \
 		-e "/${_td}/s/off/on secure/" /mnt/etc/ttys >/tmp/ttys
