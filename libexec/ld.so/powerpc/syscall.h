@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.10 2002/07/23 23:56:31 mickey Exp $ */
+/*	$OpenBSD: syscall.h,v 1.11 2002/07/24 01:05:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -279,7 +279,7 @@ _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 	    "1:"
 	    : "=r" (status)
 	    : "r" (SYS_getdirentries), "r" (fd), "r" (buf), "r"(nbytes),
-	        "r" (basep)
+	    "r" (basep)
 	    : "0", "3", "4", "5", "6");
 	return status;
 }
@@ -304,6 +304,6 @@ _dl_issetugid()
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
-        return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
 }
 #endif /*__DL_SYSCALL_H__*/

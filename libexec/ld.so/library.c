@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.18 2002/07/24 00:13:25 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.19 2002/07/24 01:05:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -64,7 +64,7 @@ static elf_object_t *_dl_tryload_shlib(const char *libname, int type);
  * This fucntion determines if a given name matches what is specified
  * in a struct sod. The major must match exactly, and the minor must
  * be same or larger.
- * 
+ *
  * sodp is updated with the minor if this matches.
  */
 
@@ -98,7 +98,7 @@ _dl_match_file(struct sod *sodp, char *name, int namelen)
 		match = 1;
 
 		/* return version matched */
-		sodp->sod_minor = lsod.sod_minor; 
+		sodp->sod_minor = lsod.sod_minor;
 	}
 	_dl_free((char *)lsod.sod_name);
 
@@ -119,7 +119,7 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 	struct dirent *dp;
 	int match;
 
-	/* if we are to search default directories, and hints 
+	/* if we are to search default directories, and hints
 	 * are not to be used, search the standard path from ldconfig
 	 * (_dl_hint_search_path) or use the default path
 	 */
@@ -134,7 +134,7 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 			return hint;
 	} else {
 		/* search hints requesting matches for only
-		 * the searchpath directories, 
+		 * the searchpath directories,
 		 */
 		pp = searchpath;
 		while (pp) {
@@ -164,7 +164,7 @@ nohints:
 	if (searchpath == NULL) {
 		if (_dl_hint_search_path != NULL)
 			searchpath = _dl_hint_search_path;
-		else 
+		else
 			searchpath = DEFAULT_PATH;
 	}
 	pp = searchpath;

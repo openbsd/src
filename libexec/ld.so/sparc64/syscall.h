@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.7 2002/07/23 23:56:31 mickey Exp $ */
+/*	$OpenBSD: syscall.h,v 1.8 2002/07/24 01:05:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -61,7 +61,7 @@ int	_dl_getdirentries(int, char*, int, long *);
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
-        return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
 }
 
 #endif /*__DL_SYSCALL_H__*/
