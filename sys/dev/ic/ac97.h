@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.h,v 1.1 1999/09/19 06:45:12 csapuntz Exp $ */
+/*      $OpenBSD: ac97.h,v 1.2 1999/09/21 16:06:28 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -49,6 +49,9 @@ struct ac97_codec_if_vtbl {
 	int (*mixer_get_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
 	int (*mixer_set_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
 	int (*query_devinfo)(struct ac97_codec_if *addr, mixer_devinfo_t *cp);
+	int (*get_portnum_by_name)(struct ac97_codec_if *addr,
+				      char *class, char *device,
+				      char *qualifier);
 };
 
 struct ac97_codec_if {

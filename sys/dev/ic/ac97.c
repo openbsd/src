@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.1 1999/09/19 06:45:12 csapuntz Exp $ */
+/*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -279,11 +279,14 @@ struct ac97_softc {
 int ac97_mixer_get_port __P((struct ac97_codec_if *self, mixer_ctrl_t *cp));
 int ac97_mixer_set_port __P((struct ac97_codec_if *self, mixer_ctrl_t *));
 int ac97_query_devinfo __P((struct ac97_codec_if *self, mixer_devinfo_t *));
+int ac97_get_portnum_by_name __P((struct ac97_codec_if *, char *, char *,
+				  char *));
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port, 
 	ac97_mixer_set_port,
-	ac97_query_devinfo
+	ac97_query_devinfo,
+	ac97_get_portnum_by_name
 };
 
 static struct ac97_codecid {
@@ -607,8 +610,9 @@ ac97_mixer_set_port(codec_if, cp)
 		struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
-		if (cp->un.value.num_channels != 
-		    value->num_channels) return (EINVAL);
+		if ((cp->un.value.num_channels <= 0) ||
+		    (cp->un.value.num_channels > value->num_channels)) 
+			return (EINVAL);
 
 		if (cp->un.value.num_channels == 1) {
 			l = r = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
@@ -646,6 +650,25 @@ ac97_mixer_set_port(codec_if, cp)
 }
 
 int
+ac97_get_portnum_by_name(codec_if, class, device, qualifier)
+	struct ac97_codec_if *codec_if;
+	char *class, *device, *qualifier;
+{
+	struct ac97_softc *as = (struct ac97_softc *)codec_if;
+	int idx;
+
+	for (idx = 0; idx < as->num_source_info; idx++) {
+		struct ac97_source_info *si = &as->source_info[idx];
+		if (ac97_str_equal(class, si->class) &&
+		    ac97_str_equal(device, si->device) &&
+		    ac97_str_equal(qualifier, si->qualifier))
+			return (idx);
+	}
+
+	return (-1);
+}
+
+int
 ac97_mixer_get_port(codec_if, cp)
 	struct ac97_codec_if *codec_if;
 	mixer_ctrl_t *cp;
@@ -680,8 +703,9 @@ ac97_mixer_get_port(codec_if, cp)
 		struct audio_mixer_value *value = si->info;
 		u_int16_t  l, r;
 
-		if (cp->un.value.num_channels != 
-		    value->num_channels) return (EINVAL);
+		if ((cp->un.value.num_channels <= 0) ||
+		    (cp->un.value.num_channels > value->num_channels)) 
+			return (EINVAL);
 
 		if (value->num_channels == 1) {
 			l = r = (val >> si->ofs) & mask;
