@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 1999/01/07 23:16:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 1999/05/22 10:01:09 maja Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -1456,7 +1456,7 @@ kdbpeek(addr)
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
+void stacktrace_subr __P((int, int, int, int, int (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
@@ -1478,7 +1478,7 @@ logstacktrace(a0, a1, a2, a3)
 void
 stacktrace_subr(a0, a1, a2, a3, printfn)
 	int a0, a1, a2, a3;
-	void (*printfn) __P((const char*, ...));
+	int (*printfn) __P((const char*, ...));
 {
 	unsigned pc, sp, fp, ra, va, subr;
 	unsigned instr, mask;
