@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.6 2004/07/26 16:53:58 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.7 2004/07/27 13:12:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -72,7 +72,7 @@ cvs_ent_open(const char *dir, int flags)
 		mode[0] = 'r';
 		break;
 	case O_WRONLY:
-		mode[0] = 'w';
+		mode[0] = 'a';
 		break;
 	}
 
@@ -107,6 +107,8 @@ cvs_ent_open(const char *dir, int flags)
 		len = strlen(ebuf);
 		if ((len > 0) && (ebuf[len - 1] == '\n'))
 			ebuf[--len] = '\0';
+		if (strcmp(ebuf, "D") == 0)
+			break;
 		ent = cvs_ent_parse(ebuf);
 		if (ent == NULL)
 			continue;
@@ -155,12 +157,14 @@ cvs_ent_close(CVSENTRIES *ep)
  * cvs_ent_add()
  *
  * Add the entry <ent> to the Entries file <ef>.
+ * Returns 0 on success, or -1 on failure.
  */
 
 int
 cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 {
 	void *tmp;
+	char nbuf[64];
 
 	if (ef->cef_file == NULL) {
 		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
@@ -174,7 +178,9 @@ cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 		cvs_log(LP_ERRNO, "failed to seek to end of CVS/Entries file");
 		return (-1);
 	}
-	fprintf(ef->cef_file, "%s\n", ent->ce_line);
+	rcsnum_tostr(ent->ce_rev, nbuf, sizeof(nbuf));
+	fprintf(ef->cef_file, "/%s/%s/%s/%s/\n", ent->ce_name, nbuf,
+	    ent->ce_timestamp, ent->ce_opts);
 
 	TAILQ_INSERT_TAIL(&(ef->cef_ent), ent, ce_list);
 	return (0);
