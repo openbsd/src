@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.19 1999/09/30 14:05:41 provos Exp $");
+RCSID("$Id: ssh.c,v 1.20 1999/09/30 18:28:36 provos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -81,8 +81,6 @@ uid_t original_real_uid;
 void
 usage()
 {
-  int i;
-  
   fprintf(stderr, "Usage: %s [options] host [command]\n", av0);
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -l user     Log in using this user name.\n");

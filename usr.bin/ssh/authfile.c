@@ -15,7 +15,7 @@ for reading the passphrase from the user.
 */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.5 1999/09/30 16:55:06 deraadt Exp $");
+RCSID("$Id: authfile.c,v 1.6 1999/09/30 18:28:35 provos Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -267,8 +267,8 @@ load_private_key(const char *filename, const char *passphrase,
     xfree(buffer_get_string(&buffer, NULL));
 
   /* Check that it is a supported cipher. */
-  if (cipher_type != SSH_CIPHER_NONE && 
-     (cipher_mask() & (1 << cipher_type)) == 0)
+  if (((cipher_mask() | SSH_CIPHER_NONE | SSH_AUTHFILE_CIPHER) &
+	(1 << cipher_type)) == 0)
     {
       debug("Unsupported cipher %.100s used in key file %.200s.",
 	    cipher_name(cipher_type), filename);
