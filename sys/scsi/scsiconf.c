@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.77 2004/01/14 02:00:41 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.78 2004/01/17 13:56:56 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -681,10 +681,8 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 			 * Stupid SCSI device that does not handle the IDENTIFY
 			 * message. Mark this LUN as not there.
 			 */
-#ifdef SCSIDEBUG
-			scsibusprint(&sa, scsi->sc_dev.dv_xname);
-			printf(" doesn't support IDENTIFY message.\n");
-#endif	/* SCSIDEBUG */
+			SC_DEBUG(sc_link, SDEV_DB1,
+			    ("IDENTIFY not supported.\n"));
 			goto bad;
 		}
 	}
@@ -693,10 +691,8 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	case SID_QUAL_RSVD:
 	case SID_QUAL_BAD_LU:
 	case SID_QUAL_LU_OFFLINE:
-#ifdef	SCSIDEBUG
-		scsibusprint(&sa, scsi->sc_dev.dv_xname);
-		printf(" Residue in PERIPHERAL QUALIFIER; invalid LUN.\n");
-#endif	/* SCSIDEBUG */
+		SC_DEBUG(sc_link, SDEV_DB1,
+		    ("Bad LUN. SID_QUAL = 0x%02x\n", inqbuf.device & SID_QUAL));
 		goto bad;
 
 	case SID_QUAL_LU_OK:
