@@ -1937,8 +1937,13 @@
 
 (define_insn "return"
   [(return)]
-  ""
+  "reload_completed"
   "ret")
+
+(define_expand "epilogue"
+  [(return)]
+  ""
+  "")
 
 (define_insn "nop"
   [(const_int 0)]
