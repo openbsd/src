@@ -1,4 +1,5 @@
-/*	$Id: ext_srvtab.c,v 1.2 1996/09/15 23:28:08 millert Exp $	*/
+/*	$OpenBSD: ext_srvtab.c,v 1.3 1997/11/21 04:23:43 art Exp $	*/
+/*      $KTH: ext_srvtab.c,v 1.13 1997/05/02 14:27:33 assar Exp $       */
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -17,7 +18,15 @@
  * provided "as is" without express or implied warranty.
  */
 
+/*
+ * This whole program is obsolete and should be replaced by ksrvutil
+ * It's only kept as backwards-compatibilty.
+ */
+
+#include <sys/param.h>
+
 #include <adm_locl.h>
+#include <err.h>
 
 static des_cblock master_key;
 static des_cblock session_key;
@@ -36,32 +45,23 @@ usage(void)
 static void
 StampOutSecrets(void)
 {
-    bzero(master_key, sizeof master_key);
-    bzero(session_key, sizeof session_key);
-    bzero(master_key_schedule, sizeof master_key_schedule);
+    memset(master_key, 0, sizeof master_key);
+    memset(session_key, 0, sizeof session_key);
+    memset(master_key_schedule, 0, sizeof master_key_schedule);
 }
 
 static void
-Die(void)
+FWrite(void *p, int size, int n, FILE *f)
 {
-    StampOutSecrets();
-    exit(1);
-}
-
-static void
-FWrite(char *p, int size, int n, FILE *f)
-{
-    if (fwrite(p, size, n, f) != n) {
-	printf("Error writing output file.  Terminating.\n");
-	Die();
-    }
+    if (fwrite(p, size, n, f) != n) 
+	errx(1, "Error writing output file.  Terminating.\n");
 }
 
 int
 main(int argc, char **argv)
 {
     FILE *fout;
-    char fname[1024];
+    char fname[MAXPATHLEN];
     int fopen_errs = 0;
     int arg;
     Principal princs[40];
@@ -69,7 +69,10 @@ main(int argc, char **argv)
     int prompt = TRUE;
     register int n, i;
     
-    bzero(realm, sizeof(realm));
+    memset(realm, 0, sizeof(realm));
+
+    if (atexit(StampOutSecrets))
+	errx(1, "Out of resurces");
     
     /* Parse commandline arguments */
     if (argc < 2)
@@ -95,32 +98,27 @@ main(int argc, char **argv)
 		usage();
 	    else
 		if (!k_isinst(argv[i])) {
-		fprintf(stderr, "%s: bad instance name: %s\n",
-			progname, argv[i]);
-		usage();
-	    }
+		    StampOutSecrets();
+		    warnx("bad instance name: %s", argv[i]);
+		    usage();
+		}
 	}
     }
 
-    if (kdb_get_master_key (prompt, &master_key, master_key_schedule) != 0) {
-      fprintf (stderr, "Couldn't read master key.\n");
-      fflush (stderr);
-      exit(1);
-    }
+    if (kdb_get_master_key (prompt, &master_key, master_key_schedule) != 0)
+	errx (1, "Couldn't read master key.");
 
-    if (kdb_verify_master_key (&master_key, master_key_schedule, stderr) < 0) {
-      exit(1);
-    }
+    if (kdb_verify_master_key (&master_key, master_key_schedule, stderr) < 0)
+	exit(1);
 
     /* For each arg, search for instances of arg, and produce */
     /* srvtab file */
     if (!realm[0])
-	if (krb_get_lrealm(realm, 1) != KSUCCESS) {
-	    fprintf(stderr, "%s: couldn't get local realm\n", progname);
-	    exit(1);
-	}
-    (void) umask(077);
+	if (krb_get_lrealm(realm, 1) != KSUCCESS)
+	    errx (1, "couldn't get local realm");
 
+    umask(077);
+    
     for (arg = 1; arg < argc; arg++) {
 	if (argv[arg][0] == '-')
 	    continue;
@@ -139,20 +137,17 @@ main(int argc, char **argv)
 	    FWrite(princs[i].instance, strlen(princs[i].instance) + 1,
 		   1, fout);
 	    FWrite(realm, strlen(realm) + 1, 1, fout);
-	    FWrite((char*)&princs[i].key_version,
-		sizeof(princs[i].key_version), 1, fout);
-	    bcopy(&princs[i].key_low, session_key, sizeof(long));
-	    bcopy(&princs[i].key_high, session_key + sizeof(long),
-		  sizeof(long));
+	    FWrite(&princs[i].key_version,
+		   sizeof(princs[i].key_version), 1, fout);
+	    copy_to_key(&princs[i].key_low, &princs[i].key_high, session_key);
 	    kdb_encrypt_key (&session_key, &session_key, 
 			     &master_key, master_key_schedule, DES_DECRYPT);
-	    FWrite((char*)session_key, sizeof session_key, 1, fout);
+	    FWrite(session_key, sizeof session_key, 1, fout);
 	}
 	fclose(fout);
     }
 
-    StampOutSecrets();
-
     exit(fopen_errs);		/* 0 errors if successful */
-
 }
+
+
