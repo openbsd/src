@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2002/09/26 11:39:50 markus Exp $
+# $OpenBSD: Makefile,v 1.17 2003/06/02 08:45:58 markus Exp $
 
 LIB=	ssl
 
@@ -42,18 +42,14 @@ HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h
 .PATH:	${LSSL_SRC}
 
 includes:
-	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
-	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
-	cd ${LSSL_SRC}; for i in $(HDRS); do \
-		f=`basename $$i`; \
-		j="sed 's/<openssl/<ssl/' \
-		       $$i >$$d/$$f && \
-		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		$$d/$$f ${DESTDIR}/usr/include/ssl)"; \
-		echo $$j; \
-		eval "$$j"; \
-	done; \
-	rm -rf $$d
+	@test -d ${DESTDIR}/usr/include/openssl || \
+	    mkdir ${DESTDIR}/usr/include/openssl
+	@cd ${LSSL_SRC}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
+		${DESTDIR}/usr/include/openssl"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done;
 
 .include <bsd.lib.mk>

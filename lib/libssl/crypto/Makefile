@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2003/05/12 02:18:34 markus Exp $
+# $OpenBSD: Makefile,v 1.31 2003/06/02 08:45:58 markus Exp $
 
 LIB=	crypto
 
@@ -216,29 +216,23 @@ HDRS_GEN=\
 	${.OBJDIR}/obj_mac.h
 
 includes: obj_mac.h
-	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
-	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
+	@test -d ${DESTDIR}/usr/include/openssl || \
+	    mkdir ${DESTDIR}/usr/include/openssl
+	@cd ${SSL_SRC}; \
 	for i in $(HDRS); do \
-		f=`basename $$i`; \
-		j="sed 's/<openssl/<ssl/' \
-		       ${SSL_SRC}/$$i >$$d/$$f && \
-		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
-		echo $$j; \
-		eval "$$j"; \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
+		${DESTDIR}/usr/include/openssl"; \
+	    echo $$j; \
+	    eval "$$j"; \
 	done; \
 	for i in $(HDRS_GEN); do \
-		f=`basename $$i`; \
-		j="sed 's/<openssl/<ssl/' \
-		       $$i >$$d/$$f && \
-		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
-		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
-		echo $$j; \
-		eval "$$j"; \
-	done; \
-	rm -rf $$d
+	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
+		${DESTDIR}/usr/include/openssl"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done;
 
 # generated
 CFLAGS+= -I${.OBJDIR}
