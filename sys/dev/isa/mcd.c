@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.15 1996/06/09 19:40:12 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.16 1996/06/10 00:48:05 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ struct mcd_softc {
 #define	MCDF_WLABEL	0x04	/* label is writable */
 #define	MCDF_LABELLING	0x08	/* writing label */
 #define	MCDF_LOADED	0x10	/* parameters loaded */
+#define	MCDF_EJECTING	0x20	/* please eject at close */
 	short	status;
 	short	audio_status;
 	int	blksize;
@@ -418,8 +419,11 @@ mcdclose(dev, flag, fmt, p)
 		(void) mcd_setmode(sc, MCD_MD_SLEEP);
 #endif
 		(void) mcd_setlock(sc, MCD_LK_UNLOCK);
+		if (sc->flags & MCDF_EJECTING) {
+			mcd_eject(sc);
+			sc->flags &= ~MCDF_EJECTING;
+		}
 	}
-
 	mcdunlock(sc);
 	return 0;
 }
@@ -639,7 +643,8 @@ mcdioctl(dev, cmd, addr, flag, p)
 		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
-		return mcd_eject(sc);
+		sc->flags |= MCDF_EJECTING;
+		return (0);
 	case CDIOCALLOW:
 		return mcd_setlock(sc, MCD_LK_UNLOCK);
 	case CDIOCPREVENT:
