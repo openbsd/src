@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.14 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.15 2003/08/01 07:44:05 miod Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,12 +47,10 @@
 #define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
-#define	_BSD_CLOCKID_T_	int
-#define	_BSD_TIMER_T_	int
-
-#include <machine/va-m88k.h>
-
-#define _BSD_VA_LIST_	__va_list
+struct __va_list_tag;
+#define _BSD_VA_LIST_   struct __va_list_tag * /* va_list */
+#define _BSD_CLOCKID_T_	int
+#define _BSD_TIMER_T_	int
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
