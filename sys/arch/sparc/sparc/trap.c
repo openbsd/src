@@ -743,7 +743,8 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, (u_int)v, SEGV_MAPERR, (caddr_t)v);
+		trapsignal(p, SIGSEGV, (ser & SER_WRITE) ? VM_PROT_WRITE :
+		    VM_PROT_READ, SEGV_MAPERR, (caddr_t)v);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
@@ -1015,7 +1016,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, SIGSEGV, (u_int)sfva, SEGV_MAPERR, (caddr_t)sfva);
+		trapsignal(p, SIGSEGV, ftype, SEGV_MAPERR, (caddr_t)sfva);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
