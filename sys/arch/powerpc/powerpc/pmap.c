@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2001/09/03 21:45:08 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2001/09/15 13:21:06 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -66,6 +66,9 @@ static int npgs;
 static u_int nextavail;
 
 static struct mem_region *mem, *avail;
+/*
+#define USE_PMAP_VP
+*/
 
 #if 0
 void
@@ -172,7 +175,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa)
 		mem1 = pool_get(&pmap_vp_pool, PR_NOWAIT);
 		splx(s);
 
-		bzero (mem1, NBPG);
+		bzero (mem1, PAGE_SIZE);
 
 		pm->vps[idx] = mem1;
 #ifdef DEBUG
@@ -645,7 +648,6 @@ avail_end = npgs * NBPG;
 	}
 	
 	for (mp = avail; mp->size; mp++) {
-		bzero((void*)mp->start, mp->size);
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
 			VM_FREELIST_DEFAULT);
@@ -722,7 +724,7 @@ pmap_init()
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
 #ifdef USE_PMAP_VP
-	pool_init(&pmap_vp_pool, NBPG, 0, 0, 0, "ppvl",
+	pool_init(&pmap_vp_pool, PAGE_SIZE, 0, 0, 0, "ppvl",
             0, NULL, NULL, M_VMPMAP);
 #endif
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
@@ -1300,6 +1302,16 @@ pmap_kremove(va, len)
 	}
 }
 
+void pmap_pte_invalidate(vaddr_t va, pte_t *ptp);
+void
+pmap_pte_invalidate(vaddr_t va, pte_t *ptp)
+{
+	ptp->pte_hi &= ~PTE_VALID;
+	asm volatile ("sync");
+	tlbie(va);
+	tlbsync();
+}
+
 
 /*
  * Remove the given range of mapping entries.
@@ -1328,10 +1340,7 @@ pmap_remove(pm, va, endva)
 		idx = pteidx(sr, va);
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID)) {
-				ptp->pte_hi &= ~PTE_VALID;
-				asm volatile ("sync");
-				tlbie(va);
-				tlbsync();
+				pmap_pte_invalidate(va, ptp);
 				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
 				pm->pm_stats.resident_count--;
 				found = 1;
@@ -1342,10 +1351,7 @@ pmap_remove(pm, va, endva)
 		}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
-				ptp->pte_hi &= ~PTE_VALID;
-				asm volatile ("sync");
-				tlbie(va);
-				tlbsync();
+				pmap_pte_invalidate(va, ptp);
 				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
 				pm->pm_stats.resident_count--;
 				found = 1;
@@ -1598,7 +1604,13 @@ pmap_page_protect(pg, prot)
 	vm_offset_t va;
 	int s;
 	struct pmap *pm;
-	struct pv_entry *pv;
+	struct pv_entry *pv, *npv;
+	int idx, i;
+	sr_t sr;
+	pte_t *ptp;
+	struct pte_ovfl *po, *npo;
+	int found;
+	char *pattr;
 	
 	pa &= ~ADDR_POFF;
 	if (prot & VM_PROT_READ) {
@@ -1606,6 +1618,7 @@ pmap_page_protect(pg, prot)
 		return;
 	}
 
+	pattr = pmap_find_attr(pa);
 	pv = pmap_find_pv(pa);
 	if (pv == NULL) 
 		return;
@@ -1614,10 +1627,60 @@ pmap_page_protect(pg, prot)
 	while (pv->pv_idx != -1) {
 		va = pv->pv_va;
 		pm = pv->pv_pmap;
-		if ((va >=uvm.pager_sva) && (va < uvm.pager_eva)) {
-				continue;
+#ifdef USE_PMAP_VP
+		pmap_vp_remove(pm, va);
+#endif /*  USE_PMAP_VP */
+
+		npv = pv->pv_next;
+		if (npv) {
+			*pv = *npv;
+			pmap_free_pv(npv);
+		} else {
+			pv->pv_pmap = 0;
+			pv->pv_idx = -1;
 		}
-		pmap_remove(pm, va, va + NBPG);
+
+		/* now remove this entry from the table */
+		found = 0;
+		sr = ptesr(pm->pm_sr, va);
+		idx = pteidx(sr, va);
+		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++) {
+			if (ptematch(ptp, sr, va, PTE_VALID)) {
+				pmap_pte_invalidate(va, ptp);
+				*pattr |= (ptp->pte_lo & (PTE_REF | PTE_CHG))
+					>> ATTRSHFT;
+				pm->pm_stats.resident_count--;
+				found = 1;
+				break;
+			}
+		}
+		if (found)
+			continue;
+		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0;
+			ptp++)
+		{
+			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
+				pmap_pte_invalidate(va, ptp);
+				*pattr |= (ptp->pte_lo & (PTE_REF | PTE_CHG))
+					>> ATTRSHFT;
+				pm->pm_stats.resident_count--;
+				found = 1;
+				break;
+			}
+		}
+		if (found)
+			continue;
+		for (po = potable[idx].lh_first; po; po = npo) {
+			npo = po->po_list.le_next;
+			if (ptematch(&po->po_pte, sr, va, 0)) {
+				LIST_REMOVE(po, po_list);
+				pofree(po, 1);
+				pm->pm_stats.resident_count--;
+				break;
+			}
+		}
+
+		
 	}
 	splx(s);
 }
