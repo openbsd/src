@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.37 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: sa.h,v 1.38 2004/06/20 15:20:07 ho Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -203,6 +203,13 @@ struct sa {
 	/* The events that will occur when an SA has timed out.  */
 	struct event   *soft_death;
 	struct event   *death;
+
+#if defined (USE_DPD)
+	/* IKE DPD (RFC3706) message sequence number.  */
+	u_int32_t	dpd_seq;	/* sent */
+	u_int32_t	dpd_rseq;	/* recieved */
+	struct event   *dpd_nextev;	/* time of next event */
+#endif
 };
 
 /* This SA is alive.  */
@@ -225,6 +232,9 @@ struct sa {
 
 /* This SA flag is a placeholder for a TRANSACTION exchange "SA flag".  */
 #define SA_FLAG_IKECFG		0x40
+
+/* This SA flag indicates if we should do DPD with the phase 1 SA peer.  */
+#define SA_FLAG_DPD		0x80
 
 extern void     proto_free(struct proto * proto);
 extern int	sa_add_transform(struct sa *, struct payload *, int,

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.96 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.97 2004/06/20 15:20:06 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -47,6 +47,9 @@
 #include "cookie.h"
 #include "crypto.h"
 #include "doi.h"
+#ifdef USE_DPD
+#include "dpd.h"
+#endif
 #include "exchange.h"
 #include "ipsec_num.h"
 #include "isakmp.h"
@@ -186,6 +189,10 @@ exchange_script(struct exchange *exchange)
 #ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		return script_transaction;
+#endif
+#ifdef USE_DPD
+	case ISAKMP_EXCH_DPD:
+		return script_dpd;
 #endif
 	default:
 		if (exchange->type >= ISAKMP_EXCH_DOI_MIN &&
@@ -847,9 +854,10 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 	}
 	msg->exchange = exchange;
 
-	/* Do not create SA for an information or transaction exchange.  */
+	/* Do not create SA for an information, transaction or DPD exchange. */
 	if (exchange->type != ISAKMP_EXCH_INFO
-	    && exchange->type != ISAKMP_EXCH_TRANSACTION) {
+	    && exchange->type != ISAKMP_EXCH_TRANSACTION
+	    && exchange->type != ISAKMP_EXCH_DPD) {
 		/*
 		 * Don't install a transport into this SA as it will be an
 		 * INADDR_ANY address in the local end, which is not good at
@@ -955,8 +963,9 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
          * Do not create SA's for informational exchanges.
          * XXX How to handle new group mode?
          */
-	if (exchange->type != ISAKMP_EXCH_INFO
-	    && exchange->type != ISAKMP_EXCH_TRANSACTION) {
+	if (exchange->type != ISAKMP_EXCH_INFO &&
+	    exchange->type != ISAKMP_EXCH_TRANSACTION &&
+	    exchange->type != ISAKMP_EXCH_DPD) {
 		/* XXX Number of SAs should come from the args structure.  */
 		for (i = 0; i < 1; i++)
 			if (sa_create(exchange, isakmp_sa->transport)) {

@@ -1,4 +1,4 @@
-#	$OpenBSD: isakmp_num.cst,v 1.8 2004/04/28 14:40:00 ho Exp $
+#	$OpenBSD: isakmp_num.cst,v 1.9 2004/06/20 15:20:07 ho Exp $
 #	$EOM: isakmp_num.cst,v 1.3 2000/05/17 03:09:50 angelos Exp $
 
 #
@@ -31,8 +31,8 @@
 
 # XXX Please fill in references to the drafts, chapter & verse for each
 # constant group below.
-# Also think about ranges, can they be specified diferently?  Can we use
-# these constants for vlidity checks?
+# Also think about ranges, can they be specified differently?  Can we use
+# these constants for validity checks?
 
 # ISAKMP payload type.
 ISAKMP_PAYLOAD
@@ -50,16 +50,19 @@ ISAKMP_PAYLOAD
   NOTIFY			11
   DELETE			12
   VENDOR			13
-# XXX the following is not quite legitimate according to the IETF process
+# XXX the following are not quite legitimate according to the IETF process
   ATTRIBUTE			14	# IKE Mode-Config attribute
-  RESERVED_MIN			15	# XXX For now
   SAK				15	# RFC 3547, SA KEK Payload
   SAT				16	# RFC 3547, SA TEK Payload
   KD				17	# RFC 3547, Key Download
   SEQ				18	# RFC 3547, Sequence Number
   POP				19	# RFC 3547, Proof of possession
+  RESERVED_MIN			20
   RESERVED_MAX			127
   PRIVATE_MIN			128
+# XXX values from draft-ietf-ipsec-nat-t-ike-01,02,03. Later drafts specify
+# XXX NAT_D as payload 15 and NAT_OA as 16, but these are allocated by RFC
+# XXX 3547 as seen above.
   NAT_D				130	# NAT Discovery payload
   NAT_OA			131	# NAT Original Address payload
   PRIVATE_MAX			255
@@ -73,9 +76,10 @@ ISAKMP_EXCH
   AUTH_ONLY			3
   AGGRESSIVE			4
   INFO				5
-# XXX the following is not quite legitimate according to the IETF process
+# XXX the following are not quite legitimate according to the IETF process
   TRANSACTION			6
-  FUTURE_MIN			7
+  DPD				7
+  FUTURE_MIN			8
   FUTURE_MAX			31
   DOI_MIN			32
   DOI_MAX			255
@@ -150,6 +154,8 @@ ISAKMP_NOTIFY
   STATUS_DOI_MIN		24576
   STATUS_DOI_MAX		32767
   STATUS_PRIVATE_MIN		32768
+  STATUS_DPD_R_U_THERE		36136
+  STATUS_DPD_R_U_THERE_ACK	36137
   STATUS_PRIVATE_MAX		40959
   STATUS_RESERVED2_MIN		40960
   STATUS_RESERVED2_MAX		65535
