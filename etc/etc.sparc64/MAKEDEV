@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.6 2002/01/12 21:14:57 jason Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.7 2002/01/12 21:25:45 jason Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.39 2002/01/12 21:15:28 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 2002/01/12 21:26:14 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -244,11 +244,11 @@ magma*)
 	while [ $n -lt 16 ]
 	do
 		name=${nam}`hex $n`
-		M tty$name c 71 $(($offset+$n))
+		M tty$name c 71 $(($offset+$n)) 660 dialer uucp
 		n=$(($n+1))
 	done
-	M bpp${nam}0 c 72 $(($offset+0))
-	M bpp${nam}1 c 72 $(($offset+1))
+	M bpp${nam}0 c 72 $(($offset+0)) 600 wheel root
+	M bpp${nam}1 c 72 $(($offset+1)) 600 wheel root
 	;;
 
 
