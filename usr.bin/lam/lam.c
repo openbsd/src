@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.8 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: lam.c,v 1.9 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.8 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.9 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -75,9 +75,7 @@ void	 getargs(char *[]);
 char	*pad(struct openfile *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct	openfile *ip;
 
@@ -98,8 +96,7 @@ main(argc, argv)
 }
 
 void
-getargs(av)
-	char *av[];
+getargs(char *av[])
 {
 	struct	openfile *ip = input;
 	char *p;
@@ -171,8 +168,7 @@ getargs(av)
 }
 
 char *
-pad(ip)
-	struct openfile *ip;
+pad(struct openfile *ip)
 {
 	size_t n;
 	char *lp = linep;
@@ -187,8 +183,7 @@ pad(ip)
 }
 
 char *
-gatherline(ip)
-	struct openfile *ip;
+gatherline(struct openfile *ip)
 {
 	size_t n;
 	char s[BUFSIZ];
@@ -218,8 +213,7 @@ gatherline(ip)
 }
 
 void
-error(msg, s)
-	char *msg, *s;
+error(char *msg, char *s)
 {
 	fprintf(stderr, "lam: ");
 	fprintf(stderr, msg, s);

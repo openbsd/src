@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.9 2003/06/03 02:56:20 millert Exp $	*/
+/*	$OpenBSD: tr.c,v 1.10 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.9 2003/06/03 02:56:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.10 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,9 +95,7 @@ static void setup(int *, char *, STR *, int);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, cnt, lastch, *p;
 	int cflag, dflag, sflag, isstring2;
@@ -237,11 +235,7 @@ main(argc, argv)
 }
 
 static void
-setup(string, arg, str, cflag)
-	int *string;
-	char *arg;
-	STR *str;
-	int cflag;
+setup(int *string, char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
 
@@ -255,7 +249,7 @@ setup(string, arg, str, cflag)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: tr [-cs] string1 string2\n");
 	(void)fprintf(stderr, "       tr [-c] -d string1\n");

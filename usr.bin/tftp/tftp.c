@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.12 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftp.c,v 1.12 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tftp.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -409,14 +409,14 @@ struct timeval tstart;
 struct timeval tstop;
 
 static void
-startclock()
+startclock(void)
 {
 
 	(void)gettimeofday(&tstart, NULL);
 }
 
 static void
-stopclock()
+stopclock(void)
 {
 
 	(void)gettimeofday(&tstop, NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2ecoff.c,v 1.3 2003/04/15 08:33:34 deraadt Exp $	 */
+/* $OpenBSD: elf2ecoff.c,v 1.4 2003/06/10 22:20:46 deraadt Exp $	 */
 /* $NetBSD: elf2ecoff.c,v 1.8 1997/07/20 03:50:54 jonathan Exp $	 */
 
 /*
@@ -282,11 +282,13 @@ usage:
 				unsigned long   gap = ph[i].p_vaddr - cur_vma;
 				char	    obuf[1024];
 				if (gap > 65536) {
-					fprintf(stderr, "Intersegment gap (%d bytes) too large.\n",
-						gap);
+					fprintf(stderr,
+					    "Intersegment gap (%d bytes) too large.\n",
+					    gap);
 					exit(1);
 				}
-				fprintf(stderr, "Warning: %d byte intersegment gap.\n", gap);
+				fprintf(stderr,
+				    "Warning: %d byte intersegment gap.\n", gap);
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
 					int count = write(outfile, obuf,
@@ -326,9 +328,8 @@ usage:
 	exit(0);
 }
 
-copy(out, in, offset, size)
-	int	     out, in;
-	off_t	   offset, size;
+void
+copy(int out, int in, off_t offset, off_t size)
 {
 	char	    ibuf[4096];
 	int	    remaining, cur, count;
@@ -360,9 +361,8 @@ copy(out, in, offset, size)
  * Combine two segments, which must be contiguous.   If pad is true, it's
  * okay for there to be padding between.
  */
-combine(base, new, pad)
-	struct sect    *base, *new;
-	int	     pad;
+void
+combine(struct sect *base, struct sect *new, int pad)
 {
 	if (!base->len)
 		*base = *new;
@@ -380,8 +380,8 @@ combine(base, new, pad)
 	}
 }
 
-phcmp(h1, h2)
-	Elf32_Phdr     *h1, *h2;
+int
+phcmp(Elf32_Phdr *h1, Elf32_Phdr *h2)
 {
 	if (h1->p_vaddr > h2->p_vaddr)
 		return 1;
@@ -391,7 +391,7 @@ phcmp(h1, h2)
 		return 0;
 }
 
-char	   *
+char *
 saveRead(int file, off_t offset, off_t len, char *name)
 {
 	char	   *tmp;

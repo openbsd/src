@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.8 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: biff.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)biff.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: biff.c,v 1.8 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: biff.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,7 @@ static char rcsid[] = "$OpenBSD: biff.c,v 1.8 2003/06/03 02:56:06 millert Exp $"
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int ch;
@@ -102,7 +100,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: biff [y | n]\n");
 	exit(2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.7 2001/01/17 19:29:49 deraadt Exp $	*/
+/*	$OpenBSD: units.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ showunit(struct unittype * theunit)
 
 
 void 
-zeroerror()
+zeroerror(void)
 {
 	fprintf(stderr, "Unit reduces to zero\n");
 }
@@ -615,7 +615,7 @@ showanswer(struct unittype * have, struct unittype * want)
 
 
 void 
-usage()
+usage(void)
 {
 	fprintf(stderr, "units [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
 	fprintf(stderr, "    -f specify units file\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.6 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: expand.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.6 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -58,9 +58,7 @@ static void getstops();
 static void usage();
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, column;
 	int n;
@@ -108,7 +106,8 @@ main(argc, argv)
 					do {
 						putchar(' ');
 						column++;
-					} while (((column - 1) % tabstops[0]) != (tabstops[0] - 1));
+					} while (((column - 1) %
+					    tabstops[0]) != (tabstops[0] - 1));
 					continue;
 				}
 				for (n = 0; n < nstops; n++)
@@ -147,8 +146,7 @@ main(argc, argv)
 }
 
 static void
-getstops(cp)
-	char *cp;
+getstops(char *cp)
 {
 	int i;
 
@@ -174,7 +172,7 @@ bad:
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf (stderr, "usage: expand [-t tablist] [file ...]\n");
 	exit(1);

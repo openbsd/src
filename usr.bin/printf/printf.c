@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.9 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.10 2003/06/10 22:20:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.9 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.10 2003/06/10 22:20:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -105,12 +105,10 @@ warnx(const char *fmt, ...)
 
 int
 #ifdef BUILTIN
-progprintf(argc, argv)
+progprintf(int argc, char *argv[])
 #else
-main(argc, argv)
+main(int argc, char *argv[])
 #endif
-	int argc;
-	char **argv;
 {
 	char *fmt, *start;
 	int fieldwidth, precision;
@@ -262,8 +260,7 @@ main(argc, argv)
  *	Halts processing string and returns 1 if a \c escape is encountered.
  */
 static int
-print_escape_str(str)
-	const char *str;
+print_escape_str(const char *str)
 {
 	int value;
 	int c;
@@ -303,8 +300,7 @@ print_escape_str(str)
  * Print "standard" escape characters 
  */
 static int
-print_escape(str)
-	const char *str;
+print_escape(const char *str)
 {
 	const char *start = str;
 	int value;
@@ -395,9 +391,7 @@ print_escape(str)
 }
 
 static char *
-mklong(str, ch)
-	const char *str;
-	char ch;
+mklong(const char *str, int ch)
 {
 	static char *copy;
 	static int copysize;
@@ -425,7 +419,7 @@ mklong(str, ch)
 }
 
 static int
-getchr()
+getchr(void)
 {
 	if (!*gargv)
 		return((int)'\0');
@@ -433,7 +427,7 @@ getchr()
 }
 
 static char *
-getstr()
+getstr(void)
 {
 	if (!*gargv)
 		return("");
@@ -442,7 +436,7 @@ getstr()
 
 static char *number = "+-.0123456789";
 static int
-getint()
+getint(void)
 {
 	if (!*gargv)
 		return(0);
@@ -454,7 +448,7 @@ getint()
 }
 
 static long
-getlong()
+getlong(void)
 {
 	long val;
 	char *ep;
@@ -472,7 +466,7 @@ getlong()
 }
 
 static unsigned long
-getulong()
+getulong(void)
 {
 	unsigned long val;
 	char *ep;
@@ -490,7 +484,7 @@ getulong()
 }
 
 static double
-getdouble()
+getdouble(void)
 {
 	double val;
 	char *ep;
@@ -508,9 +502,7 @@ getdouble()
 }
 
 static void
-check_conversion(s, ep)
-	const char *s;
-	const char *ep;
+check_conversion(const char *s, const char *ep)
 {
 	if (*ep) {
 		if (ep == s)
@@ -525,7 +517,7 @@ check_conversion(s, ep)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
 }

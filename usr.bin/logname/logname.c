@@ -1,4 +1,4 @@
-/*	$OpenBSD: logname.c,v 1.5 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: logname.c,v 1.6 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
 #endif
-static char rcsid[] = "$OpenBSD: logname.c,v 1.5 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: logname.c,v 1.6 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,9 +52,7 @@ static char rcsid[] = "$OpenBSD: logname.c,v 1.5 2003/06/03 02:56:10 millert Exp
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *p;
@@ -81,7 +79,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: logname\n");
 	exit(1);

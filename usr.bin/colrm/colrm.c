@@ -1,4 +1,4 @@
-/*	$OpenBSD: colrm.c,v 1.7 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: colrm.c,v 1.8 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: colrm.c,v 1.7 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: colrm.c,v 1.8 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,9 +59,7 @@ void check(FILE *);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_long column, start, stop;
 	int ch;
@@ -124,8 +122,7 @@ main(argc, argv)
 }
 
 void
-check(stream)
-	FILE *stream;
+check(FILE *stream)
 {
 	if (feof(stream))
 		exit(0);
@@ -134,7 +131,7 @@ check(stream)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: colrm [start [stop]]\n");
 	exit(1);

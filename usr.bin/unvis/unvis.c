@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.6 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: unvis.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.6 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: unvis.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,9 +50,7 @@ static char rcsid[] = "$OpenBSD: unvis.c,v 1.6 2003/06/03 02:56:21 millert Exp $
 void process(FILE *fp, const char *filename);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 	int ch;
@@ -81,9 +79,7 @@ main(argc, argv)
 }
 
 void
-process(fp, filename)
-	FILE *fp;
-	const char *filename;
+process(FILE *fp, const char *filename)
 {
 	int offset = 0, c, ret;
 	int state = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.6 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.6 2003/06/10 22:20:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ int	plus(char, char);
 void	move(int, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	char *cp, *dp;
@@ -194,8 +192,7 @@ main(argc, argv)
 }
 
 int
-plus(c, d)
-	char c, d;
+plus(char c, char d)
 {
 
 	return ((c == '|' && d == '-') || d == '_');
@@ -204,8 +201,7 @@ plus(c, d)
 int first;
 
 void
-pflush(ol)
-	int ol;
+pflush(int ol)
 {
 	int i;
 	char *cp;
@@ -239,8 +235,7 @@ pflush(ol)
 }
 
 void
-move(l, m)
-	int l, m;
+move(int l, int m)
 {
 	char *cp, *dp;
 

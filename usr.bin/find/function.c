@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.26 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.26 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.27 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -270,7 +270,7 @@ f_always_true(plan, entry)
 }
  
 PLAN *
-c_depth()
+c_depth(void)
 {
 	isdepth = 1;
 
@@ -312,7 +312,7 @@ f_empty(plan, entry)
 }
 
 PLAN *
-c_empty()
+c_empty(void)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -597,7 +597,7 @@ c_flags(flags_str)
  *	basis.
  */
 PLAN *
-c_follow()
+c_follow(void)
 {
 	ftsoptions &= ~FTS_PHYSICAL;
 	ftsoptions |= FTS_LOGICAL;
@@ -807,7 +807,7 @@ f_ls(plan, entry)
 }
  
 PLAN *
-c_ls()
+c_ls(void)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
@@ -1097,7 +1097,7 @@ f_nogroup(plan, entry)
 }
  
 PLAN *
-c_nogroup()
+c_nogroup(void)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -1119,7 +1119,7 @@ f_nouser(plan, entry)
 }
  
 PLAN *
-c_nouser()
+c_nouser(void)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -1225,7 +1225,7 @@ f_print0(plan, entry)
 }
  
 PLAN *
-c_print()
+c_print(void)
 {
 	isoutput = 1;
 
@@ -1233,7 +1233,7 @@ c_print()
 }
 
 PLAN *
-c_print0()
+c_print0(void)
 {
 	isoutput = 1;
 
@@ -1257,7 +1257,7 @@ f_prune(plan, entry)
 }
  
 PLAN *
-c_prune()
+c_prune(void)
 {
 	return (palloc(N_PRUNE, f_prune));
 }
@@ -1408,7 +1408,7 @@ c_user(username)
  *	different device ID (st_dev, see stat() S5.6.2 [POSIX.1])
  */
 PLAN *
-c_xdev()
+c_xdev(void)
 {
 	ftsoptions |= FTS_XDEV;
 
@@ -1439,13 +1439,13 @@ f_expr(plan, entry)
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 PLAN *
-c_openparen()
+c_openparen(void)
 {
 	return (palloc(N_OPENPAREN, (int (*)())-1));
 }
  
 PLAN *
-c_closeparen()
+c_closeparen(void)
 {
 	return (palloc(N_CLOSEPAREN, (int (*)())-1));
 }
@@ -1469,7 +1469,7 @@ f_not(plan, entry)
 }
  
 PLAN *
-c_not()
+c_not(void)
 {
 	return (palloc(N_NOT, f_not));
 }
@@ -1500,7 +1500,7 @@ f_or(plan, entry)
 }
 
 PLAN *
-c_or()
+c_or(void)
 {
 	return (palloc(N_OR, f_or));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.20 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.21 2003/06/10 22:20:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.20 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.21 2003/06/10 22:20:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,7 @@ struct specialev spev[NUMEV];
 void childsig(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *caldir;
@@ -256,7 +254,7 @@ main(argc, argv)
 
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: calendar [-a] [-A num] [-b] [-B num] [-t [[[cc]yy][mm]]dd] "
@@ -266,7 +264,6 @@ usage()
 
 
 void
-childsig(sig)
-	int sig;
+childsig(int signo)
 {
 }

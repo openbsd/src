@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.12 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: id.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.12 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,9 +60,7 @@ struct passwd *
 	who(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct group *gr;
 	struct passwd *pw;
@@ -145,8 +143,7 @@ main(argc, argv)
 }
 
 void
-pretty(pw)
-	struct passwd *pw;
+pretty(struct passwd *pw)
 {
 	struct group *gr;
 	uid_t eid, rid;
@@ -186,7 +183,7 @@ pretty(pw)
 }
 
 void
-current()
+current(void)
 {
 	struct group *gr;
 	struct passwd *pw;
@@ -228,8 +225,7 @@ current()
 }
 
 void
-user(pw)
-	struct passwd *pw;
+user(struct passwd *pw)
 {
 	struct group *gr;
 	char *fmt;
@@ -256,9 +252,7 @@ user(pw)
 }
 
 void
-group(pw, nflag)
-	struct passwd *pw;
-	int nflag;
+group(struct passwd *pw, int nflag)
 {
 	struct group *gr;
 	int cnt, id, lastid, ngroups;
@@ -293,8 +287,7 @@ group(pw, nflag)
 }
 
 struct passwd *
-who(u)
-	char *u;
+who(char *u)
 {
 	struct passwd *pw;
 	uid_t id;
@@ -314,7 +307,7 @@ who(u)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: id [user]\n"
 			      "       id -G [-n] [user]\n"

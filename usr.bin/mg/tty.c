@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.19 2002/08/28 19:48:29 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.20 2003/06/10 22:20:48 deraadt Exp $	*/
 
 /*
  * Terminfo display driver
@@ -220,7 +220,7 @@ tteeop(void)
  * Make a noise.
  */
 void
-ttbeep()
+ttbeep(void)
 {
 	putpad(bell, 1);
 	ttflush();
@@ -360,7 +360,7 @@ ttwindow(top, bot)
  * your terminal size.
  */
 void
-ttnowindow()
+ttnowindow(void)
 {
 	if (change_scroll_region) {
 		putpad(tgoto(change_scroll_region,

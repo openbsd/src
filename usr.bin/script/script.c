@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.18 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: script.c,v 1.19 2003/06/10 22:20:50 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.18 2003/06/03 02:56:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.19 2003/06/10 22:20:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,9 +108,7 @@ void scriptflush(int);
 void handlesigwinch(int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	struct termios rtt;
@@ -198,8 +196,7 @@ main(argc, argv)
 }
 
 void
-finish(signo)
-	int signo;
+finish(int signo)
 {
 	int save_errno = errno;
 	int status, e = 1;
@@ -217,8 +214,7 @@ finish(signo)
 }
 
 void
-handlesigwinch(signo)
-	int signo;
+handlesigwinch(int signo)
 {
 	int save_errno = errno;
 	struct winsize win;
@@ -233,7 +229,7 @@ handlesigwinch(signo)
 }
 
 void
-dooutput()
+dooutput(void)
 {
 	struct sigaction sa;
 	struct itimerval value;
@@ -281,14 +277,13 @@ dooutput()
 }
 
 void
-scriptflush(signo)
-	int signo;
+scriptflush(int signo)
 {
 	flush = 1;
 }
 
 void
-doshell()
+doshell(void)
 {
 	char *shell;
 
@@ -305,7 +300,7 @@ doshell()
 }
 
 void
-fail()
+fail(void)
 {
 
 	(void)kill(0, SIGTERM);
@@ -313,8 +308,7 @@ fail()
 }
 
 void
-done(eval)
-	int eval;
+done(int eval)
 {
 	time_t tvec;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl.c,v 1.7 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: ctl.c,v 1.8 2003/06/10 22:20:52 deraadt Exp $	*/
 /*	$NetBSD: ctl.c,v 1.3 1994/12/09 02:14:10 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl.c,v 1.7 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctl.c,v 1.8 2003/06/10 22:20:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ int	invitation_waiting = 0;
 CTL_MSG msg;
 
 void
-open_sockt()
+open_sockt(void)
 {
 	int length;
 
@@ -82,7 +82,7 @@ open_sockt()
 
 /* open the ctl socket */
 void
-open_ctl()
+open_ctl(void)
 {
 	int length;
 
@@ -102,8 +102,7 @@ open_ctl()
 
 /* print_addr is a debug print routine */
 void
-print_addr(addr)
-	struct sockaddr_in addr;
+print_addr(struct sockaddr_in addr)
 {
 	int i;
 

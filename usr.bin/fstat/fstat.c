@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.43 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.44 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.43 2003/06/03 02:56:08 millert Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.44 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -616,9 +616,7 @@ nfs_filestat(struct vnode *vp, struct filestat *fsp)
 }
 
 int
-xfs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+xfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct xfs_node xfs_node;
 

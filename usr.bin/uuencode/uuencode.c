@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.5 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: uuencode.c,v 1.7 1994/11/17 07:41:15 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uuencode.c,v 1.5 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: uuencode.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -55,13 +55,11 @@ static char rcsid[] = "$OpenBSD: uuencode.c,v 1.5 2003/06/03 02:56:21 millert Ex
 #include <sys/stat.h>
 #include <unistd.h>
 
-static void encode();
-static __dead void usage();
+static void encode(void);
+static __dead void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	int mode;
@@ -110,7 +108,7 @@ main(argc, argv)
  * copy from in to out, encoding as you go along.
  */
 static void
-encode()
+encode(void)
 {
 	int ch, n;
 	char *p;
@@ -151,7 +149,7 @@ encode()
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,"usage: uuencode [infile] remotefile\n");
 	exit(1);

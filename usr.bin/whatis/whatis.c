@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.8 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.9 2003/06/10 22:20:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -62,9 +62,7 @@ void usage(void);
 void whatis(char **, char *, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ENTRY *ep;
 	TAG *tp;
@@ -129,9 +127,7 @@ main(argc, argv)
 }
 
 void
-whatis(argv, path, buildpath)
-	char **argv, *path;
-	int buildpath;
+whatis(char **argv, char *path, int buildpath)
 {
 	char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
@@ -175,8 +171,7 @@ whatis(argv, path, buildpath)
  *	match a full word or a full string
  */
 int
-match(bp, str)
-	char *bp, *str;
+match(char *bp, char *str)
 {
 	int len;
 	char *start;
@@ -213,8 +208,7 @@ match(bp, str)
  *	truncate a string at " - "
  */
 void
-dashtrunc(from, to)
-	char *from, *to;
+dashtrunc(char *from, char *to)
 {
 	int ch;
 
@@ -229,7 +223,7 @@ dashtrunc(from, to)
  *	print usage message and die
  */
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: what.c,v 1.9 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: what.c,v 1.10 2003/06/10 22:20:54 deraadt Exp $	*/
 /*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: what.c,v 1.9 2003/06/03 02:56:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: what.c,v 1.10 2003/06/10 22:20:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,7 @@ extern char *__progname;
  */
 /* ARGSUSED */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct utsname utsn;
 	char match[256];
@@ -103,8 +101,7 @@ main(argc, argv)
 }
 
 static void
-search(match)
-	char *match;
+search(char *match)
 {
 	int c;
 	int i;
@@ -143,7 +140,7 @@ loop:		if (c == '$') {
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s [-s] file ...\n", __progname);

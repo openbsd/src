@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.9 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: invite.c,v 1.10 2003/06/10 22:20:52 deraadt Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.9 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: invite.c,v 1.10 2003/06/10 22:20:52 deraadt Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -64,7 +64,7 @@ int	local_id, remote_id;
 jmp_buf invitebuf;
 
 void
-invite_remote()
+invite_remote(void)
 {
 	int new_sockt;
 	struct itimerval itimer;
@@ -143,8 +143,7 @@ invite_remote()
  * Routine called on interupt to re-invite the callee
  */
 void
-re_invite(dummy)
-	int dummy;
+re_invite(int dummy)
 {
 	message("Ringing your party again");
 	/* force a re-announce */
@@ -170,7 +169,7 @@ static	char *answers[] = {
  * Transmit the invitation and process the response
  */
 void
-announce_invite()
+announce_invite(void)
 {
 	CTL_RESPONSE response;
 
@@ -188,7 +187,7 @@ announce_invite()
  * Tell the daemon to remove your invitation
  */
 void
-send_delete()
+send_delete(void)
 {
 
 	msg.type = DELETE;

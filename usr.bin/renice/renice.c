@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.9 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: renice.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
 #else
-static char rcsid[] = "$OpenBSD: renice.c,v 1.9 2003/06/03 02:56:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,7 @@ void usage(void);
  * running.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int which = PRIO_PROCESS;
 	int errs = 0;
@@ -117,10 +115,7 @@ main(argc, argv)
 }
 
 int
-donice(which, who, prio)
-	int which;
-	uid_t who;
-	int prio;
+donice(int which, uid_t who, int prio)
 {
 	int oldprio;
 
@@ -138,7 +133,7 @@ donice(which, who, prio)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

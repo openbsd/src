@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.14 2003/06/03 02:56:05 millert Exp $	*/
+/*	$OpenBSD: apply.c,v 1.15 2003/06/10 22:20:44 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.14 2003/06/03 02:56:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.15 2003/06/10 22:20:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,7 @@ void	usage(void);
 int	system(const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
 	char *c, *cmd, *p, *q;
@@ -203,8 +201,7 @@ main(argc, argv)
  *	variable as the shell to execute.
  */
 int
-system(command)
-	const char *command;
+system(const char *command)
 {
 	static char *name, *shell;
 	pid_t pid;
@@ -244,7 +241,7 @@ system(command)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: apply [-#] [-a magic] [-d] command argument [...]\n");

@@ -1,9 +1,9 @@
-/*	$OpenBSD: rpcinfo.c,v 1.8 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.9 2003/06/10 22:20:50 deraadt Exp $	*/
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.8 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.9 2003/06/10 22:20:50 deraadt Exp $";
 #endif
 
 /*
@@ -88,9 +88,7 @@ void	get_inet_address(struct sockaddr_in *addr, char *host);
 #define SETS		6	/* set registration for the service */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int c;
 	extern char *optarg;
@@ -201,10 +199,7 @@ main(argc, argv)
 }
 		
 void
-udpping(portnum, argc, argv)
-	u_short portnum;
-	int argc;
-	char **argv;
+udpping(u_short portnum, int argc, char **argv)
 {
 	struct timeval to;
 	struct sockaddr_in addr;
@@ -340,10 +335,7 @@ udpping(portnum, argc, argv)
 }
 
 void
-tcpping(portnum, argc, argv)
-	u_short portnum;
-	int argc;
-	char **argv;
+tcpping(u_short portnum, int argc, char **argv)
 {
 	struct timeval to;
 	struct sockaddr_in addr;
@@ -473,10 +465,7 @@ tcpping(portnum, argc, argv)
  * a good error message.
  */
 int
-pstatus(client, prognum, vers)
-	CLIENT *client;
-	u_long prognum;
-	u_long vers;
+pstatus(CLIENT *client, u_long prognum, u_long vers)
 {
 	struct rpc_err rpcerr;
 
@@ -494,9 +483,7 @@ pstatus(client, prognum, vers)
 }
 
 void
-pmapdump(argc, argv)
-	int argc;
-	char **argv;
+pmapdump(int argc, char **argv)
 {
 	struct sockaddr_in server_addr;
 	struct hostent *hp;
@@ -565,9 +552,7 @@ pmapdump(argc, argv)
  */
 /*ARGSUSED*/
 bool_t
-reply_proc(res, who)
-	caddr_t res;			/* Nothing comes back */
-	struct sockaddr_in *who;	/* Who sent us the reply */
+reply_proc(caddr_t res, struct sockaddr_in *who)
 {
 	struct hostent *hp;
 
@@ -579,9 +564,7 @@ reply_proc(res, who)
 }
 
 void
-brdcst(argc, argv)
-	int argc;
-	char **argv;
+brdcst(int argc, char **argv)
 {
 	enum clnt_stat rpc_stat;
 	u_long prognum, vers_num;
@@ -604,9 +587,7 @@ brdcst(argc, argv)
 }
 
 void
-deletereg(argc, argv)
-	int argc;
-	char **argv;
+deletereg(int argc, char **argv)
 {
 	u_long prog_num, version_num;
 
@@ -626,9 +607,7 @@ deletereg(argc, argv)
 }
 
 void
-setreg(argc, argv)
-	int argc;
-	char **argv;
+setreg(int argc, char **argv)
 {
 	u_long prog_num, version_num, port_num;
 
@@ -670,9 +649,7 @@ usage(char *msg)
 }
 
 int
-getprognum(arg, ulp)
-	char *arg;
-	u_long *ulp;
+getprognum(char *arg, u_long *ulp)
 {
 	struct rpcent *rpc;
 
@@ -690,9 +667,7 @@ getprognum(arg, ulp)
 }
 
 int
-getul(arg, ulp)
-	char *arg;
-	u_long *ulp;
+getul(char *arg, u_long *ulp)
 {
 	u_long ul;
 	int save_errno = errno;
@@ -713,9 +688,7 @@ fail:
 }
 
 void
-get_inet_address(addr, host)
-	struct sockaddr_in *addr;
-	char *host;
+get_inet_address(struct sockaddr_in *addr, char *host)
 {
 	struct hostent *hp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.26 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.27 2003/06/10 22:20:48 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.26 2003/06/03 02:56:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.27 2003/06/10 22:20:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,9 +158,7 @@ bool	lastcmd = NO;
 jmp_buf	tstpbuf;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	bool newrc, already;
 	int rcfirst = 0;		/* first message to print (from .rc) */
@@ -634,8 +632,7 @@ cmnd:
 }
 
 void
-prmesg(length)
-int length;
+prmesg(int length)
 {
 	FILE *outf;
 	char *env_pager;
@@ -682,8 +679,7 @@ int length;
 }
 
 void
-onintr(unused)
-	int unused;
+onintr(int unused)
 {
 	signal(SIGINT, onintr);
 	if (mailing)
@@ -708,8 +704,7 @@ onintr(unused)
  * We have just gotten a susp.  Suspend and prepare to resume.
  */
 void
-onsusp(unused)
-	int unused;
+onsusp(int unused)
 {
 	sigset_t emptyset;
 
@@ -723,8 +718,7 @@ onsusp(unused)
 }
 
 int
-linecnt(f)
-	FILE *f;
+linecnt(FILE *f)
 {
 	off_t oldpos = ftell(f);
 	int l = 0;
@@ -738,9 +732,7 @@ linecnt(f)
 }
 
 int
-next(buf, len)
-	char *buf;
-	int len;
+next(char *buf, int len)
 {
 	int i;
 	sscanf(buf, "%d", &i);
@@ -749,8 +741,7 @@ next(buf, len)
 }
 
 void
-ask(prompt)
-	char *prompt;
+ask(char *prompt)
 {
 	char	inch;
 	int	n, cmsg, fd;
@@ -837,8 +828,7 @@ ask(prompt)
 }
 
 void
-gfrsub(infile)
-	FILE *infile;
+gfrsub(FILE *infile)
 {
 	off_t frompos;
 
@@ -916,8 +906,7 @@ gfrsub(infile)
 }
 
 char *
-nxtfld(s)
-	char *s;
+nxtfld(char *s)
 {
 	if (*s) while (*s && *s > ' ') s++;	/* skip over this field */
 	if (*s) while (*s && *s <= ' ') s++;	/* find start of next field */

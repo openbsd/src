@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.16 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.17 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,8 +59,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.16 2003/06/03 02:56:08 millert Exp $
 char *estrdup(char *);
 
 void
-find_idle_and_ttywrite(w)
-	WHERE *w;
+find_idle_and_ttywrite(WHERE *w)
 {
 	struct stat sb;
 
@@ -88,9 +87,7 @@ estrdup(char *s)
 }
 
 void
-userinfo(pn, pw)
-	PERSON *pn;
-	struct passwd *pw;
+userinfo(PERSON *pn, struct passwd *pw)
 {
 	char *p;
 	char *bp, name[1024];
@@ -131,9 +128,7 @@ userinfo(pn, pw)
 }
 
 int
-match(pw, user)
-	struct passwd *pw;
-	char *user;
+match(struct passwd *pw, char *user)
 {
 	char *p, *t;
 	char name[1024];
@@ -152,11 +147,7 @@ match(pw, user)
 
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
 void
-expandusername(gecos, login, buf, buflen)
-	char *gecos;
-	char *login;
-	char *buf;
-	int buflen;
+expandusername(char *gecos, char *login, char *buf, int buflen)
 {
 	char *p, *bp;
 
@@ -186,8 +177,7 @@ expandusername(gecos, login, buf, buflen)
 }
 
 void
-enter_lastlog(pn)
-	PERSON *pn;
+enter_lastlog(PERSON *pn)
 {
 	WHERE *w;
 	static int opened, fd;
@@ -236,9 +226,7 @@ enter_lastlog(pn)
 }
 
 void
-enter_where(ut, pn)
-	struct utmp *ut;
-	PERSON *pn;
+enter_where(struct utmp *ut, PERSON *pn)
 {
 	WHERE *w = walloc(pn);
 
@@ -252,8 +240,7 @@ enter_where(ut, pn)
 }
 
 PERSON *
-enter_person(pw)
-	struct passwd *pw;
+enter_person(struct passwd *pw)
 {
 	PERSON *pn, **pp;
 
@@ -280,8 +267,7 @@ enter_person(pw)
 }
 
 PERSON *
-find_person(name)
-	char *name;
+find_person(char *name)
 {
 	PERSON *pn;
 
@@ -294,8 +280,7 @@ find_person(name)
 }
 
 int
-hash(name)
-	char *name;
+hash(char *name)
 {
 	int h, i;
 
@@ -307,7 +292,7 @@ hash(name)
 }
 
 PERSON *
-palloc()
+palloc(void)
 {
 	PERSON *p;
 
@@ -317,8 +302,7 @@ palloc()
 }
 
 WHERE *
-walloc(pn)
-	PERSON *pn;
+walloc(PERSON *pn)
 {
 	WHERE *w;
 
@@ -335,8 +319,7 @@ walloc(pn)
 }
 
 char *
-prphone(num)
-	char *num;
+prphone(char *num)
 {
 	char *p;
 	int len;
@@ -390,8 +373,7 @@ prphone(num)
  * The caller is responsible for free()'ing the returned string.
  */
 char *
-vs(src)
-	char *src;
+vs(char *src)
 {
 	char *dst;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.7 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.8 2003/06/10 22:20:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -38,7 +38,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$OpenBSD: rwall.c,v 1.7 2003/06/03 02:56:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwall.c,v 1.8 2003/06/10 22:20:50 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -67,9 +67,7 @@ char *mbuf;
 void makemsg ();
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char *wallhost, res;
 	CLIENT *cl;
@@ -111,8 +109,7 @@ main(argc, argv)
 }
 
 void
-makemsg(fname)
-	char *fname;
+makemsg(char *fname)
 {
 	struct tm *lt;
 	struct passwd *pw;

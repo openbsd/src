@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: pi.c,v 1.6 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: pi.c,v 1.3 1995/09/02 06:15:44 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: pi.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: pi.c,v 1.6 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -204,7 +204,8 @@ boolean piptr(string)
 extern	int	wordc;
 extern	char	**wordv;
 
-Errorclass pi()
+Errorclass
+pi(void)
 {
 	char	**nwordv;
 

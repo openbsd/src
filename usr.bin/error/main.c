@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -116,9 +116,7 @@ void	usage();
  *		Default: stdin
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *ignorename = 0;
 	char **ed_argv;		/* return from touchfiles */
@@ -227,9 +225,7 @@ main(argc, argv)
 }
 
 void
-forkvi(argc, argv)
-	int	argc;
-	char	**argv;
+forkvi(int argc, char **argv)
 {
 	if (query) {
 		switch (inquire(terse ? "Edit? " :
@@ -254,10 +250,7 @@ forkvi(argc, argv)
 }
 
 void
-try(name, argc, argv)
-	char *name;
-	int argc;
-	char **argv;
+try(char *name, int argc, char **argv)
 {
 	argv[0] = name;
 	wordvprint(stdout, argc, argv);
@@ -274,8 +267,8 @@ try(name, argc, argv)
 	execvp(name, argv);
 }
 
-int errorsort(epp1, epp2)
-	Eptr *epp1, *epp2;
+int
+errorsort(Eptr *epp1, Eptr *epp2)
 {
 	reg Eptr ep1, ep2;
 	int order;
@@ -307,7 +300,7 @@ int errorsort(epp1, epp2)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

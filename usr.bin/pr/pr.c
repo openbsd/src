@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.16 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: pr.c,v 1.17 2003/06/10 22:20:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.16 2003/06/03 02:56:14 millert Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.17 2003/06/10 22:20:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,9 +146,7 @@ int	beheaded = 0;	/* header / trailer link */
 char	digs[] = "0123456789";	/* page number translation map */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
     int ret_val;
 

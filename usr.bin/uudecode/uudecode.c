@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.10 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.11 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uudecode.c,v 1.10 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: uudecode.c,v 1.11 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -61,13 +61,11 @@ static char rcsid[] = "$OpenBSD: uudecode.c,v 1.10 2003/06/03 02:56:21 millert E
 #include <unistd.h>
 
 static int decode(int);
-static void usage();
+static void usage(void);
 char *filename;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int rval;
 	int ch;
@@ -206,7 +204,7 @@ decode(int tostdout)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: uudecode [-p] [file ...]\n");
 	exit(1);

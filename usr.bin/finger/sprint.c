@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.7 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.7 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: sprint.c,v 1.7 2003/06/03 02:56:08 millert Exp 
 #include "extern.h"
 
 void
-sflag_print()
+sflag_print(void)
 {
 	PERSON *pn;
 	WHERE *w;
@@ -132,7 +132,7 @@ office:
 }
 
 PERSON **
-sort()
+sort(void)
 {
 	PERSON *pn, **lp;
 	PERSON **list;
@@ -146,15 +146,13 @@ sort()
 }
 
 int
-psort(p, t)
-	const void *p, *t;
+psort(const void *p, const void *t)
 {
 	return(strcmp((*(PERSON **)p)->name, (*(PERSON **)t)->name));
 }
 
 void
-stimeprint(w)
-	WHERE *w;
+stimeprint(WHERE *w)
 {
 	struct tm *delta;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.6 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: logger.c,v 1.7 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.6 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: logger.c,v 1.7 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,9 +64,7 @@ void	usage(void);
  *	log.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, logflags, pri;
 	char *tag, buf[1024];
@@ -138,8 +136,7 @@ main(argc, argv)
  *  Decode a symbolic name to a numeric value
  */
 int
-pencode(s)
-	char *s;
+pencode(char *s)
 {
 	char *save;
 	int fac, lev;
@@ -169,9 +166,7 @@ pencode(s)
 }
 
 int
-decode(name, codetab)
-	char *name;
-	CODE *codetab;
+decode(char *name, CODE *codetab)
 {
 	CODE *c;
 
@@ -186,7 +181,7 @@ decode(name, codetab)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "logger: [-is] [-f file] [-p pri] [-t tag] [ message ... ]\n");

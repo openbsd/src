@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.10 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: tail.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.10 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.11 2003/06/10 22:20:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,9 +65,7 @@ static void obsolete(char **);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	FILE *fp;
@@ -218,8 +216,7 @@ main(argc, argv)
  * the option argument for a -b, -c or -n option gets converted.
  */
 static void
-obsolete(argv)
-	char *argv[];
+obsolete(char *argv[])
 {
 	char *ap, *p, *t;
 	int len;
@@ -301,7 +298,7 @@ obsolete(argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: tail [-f | -r] [-b # | -c # | -n #] [file ...]\n");

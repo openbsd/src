@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.10 2003/06/03 02:56:06 millert Exp $      */
+/*      $OpenBSD: cmp.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.10 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,7 @@ int	lflag, sflag;
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb1, sb2;
 	off_t skip1, skip2;
@@ -101,8 +99,7 @@ main(argc, argv)
 		special = 1;
 		fd1 = 0;
 		file1 = "stdin";
-	}
-	else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
+	} else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
 		if (sflag)
 			exit(ERR_EXIT);
 		else
@@ -119,8 +116,7 @@ main(argc, argv)
 		special = 1;
 		fd2 = 0;
 		file2 = "stdin";
-	}
-	else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
+	} else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
 		if (sflag)
 			exit(ERR_EXIT);
 		else
@@ -160,7 +156,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

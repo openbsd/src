@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.5 2002/12/09 00:45:38 millert Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.6 2003/06/10 22:20:44 deraadt Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -45,9 +45,7 @@
  * device.  Return 0 on success, -1 on failure.
  */
 int
-playfile(fd, dev)
-	int fd;
-	char *dev;
+playfile(int fd, char *dev)
 {
 	static int afd = -1;
 	int rd;
@@ -67,9 +65,7 @@ playfile(fd, dev)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int fd, ch;
 	unsigned long data;

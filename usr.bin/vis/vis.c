@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.6 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: vis.c,v 1.7 2003/06/10 22:20:54 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vis.c,v 1.6 2003/06/03 02:56:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.7 2003/06/10 22:20:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,9 +56,7 @@ int foldit(char *, int, int);
 void process(FILE *, char *);
 
 int
-main(argc, argv) 
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *fp;
 	int ch;
@@ -106,7 +104,7 @@ main(argc, argv)
 		case '?':
 		default:
 			fprintf(stderr, 
-		"usage: vis [-nwctsobf] [-F foldwidth]\n");
+			    "usage: vis [-nwctsobf] [-F foldwidth]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -126,9 +124,7 @@ main(argc, argv)
 }
 	
 void
-process(fp, filename)
-	FILE *fp;
-	char *filename;
+process(FILE *fp, char *filename)
 {
 	static int col = 0;
 	char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */

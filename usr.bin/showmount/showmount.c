@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.12 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.13 2003/06/10 22:20:51 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.12 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.13 2003/06/10 22:20:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -105,9 +105,7 @@ int	xdr_exports(XDR *, struct exportslist **);
  * for detailed information on the protocol.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct exportslist *exp;
 	struct grouplist *grp;
@@ -241,9 +239,7 @@ main(argc, argv)
  * Xdr routine for retrieving the mount dump list
  */
 int
-xdr_mntdump(xdrsp, mlp)
-	XDR *xdrsp;
-	struct mountlist **mlp;
+xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 {
 	struct mountlist *mp, **otp = NULL, *tp;
 	int bool, val, val2;
@@ -320,9 +316,7 @@ next:
  * Xdr routine to retrieve exports list
  */
 int
-xdr_exports(xdrsp, exp)
-	XDR *xdrsp;
-	struct exportslist **exp;
+xdr_exports(XDR *xdrsp, struct exportslist **exp)
 {
 	struct exportslist *ep;
 	struct grouplist *gp;
@@ -364,7 +358,7 @@ xdr_exports(xdrsp, exp)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: showmount [-ade3] host\n");
@@ -375,8 +369,7 @@ usage()
  * Print the binary tree in inorder so that output is sorted.
  */
 void
-print_dump(mp)
-	struct mountlist *mp;
+print_dump(struct mountlist *mp)
 {
 	char	vn[(RPCMNT_NAMELEN+1)*4];
 	char	vp[(RPCMNT_PATHLEN+1)*4];

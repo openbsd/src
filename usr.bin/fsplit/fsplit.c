@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.12 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.12 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -104,8 +104,7 @@ struct stat sbuf;
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
 
 int
-main(argc, argv)
-	char  **argv;
+main(int argc, char *argv[])
 {
 	FILE *ofp;	/* output file */
 	int rv;	/* 1 if got card in output file, 0 otherwise */
@@ -218,15 +217,14 @@ main(argc, argv)
 }
 
 void
-badparms()
+badparms(void)
 {
 	fprintf(stderr, "usage:  fsplit [-e efile] ... [file]\n");
 	exit(1);
 }
 
 int
-saveit(name)
-	char   *name;
+saveit(char *name)
 {
 	int     i;
 	size_t 	n;
@@ -248,9 +246,7 @@ saveit(name)
 }
 
 void
-get_name(name, letters)
-	char   *name;
-	int     letters;
+get_name(char *name, int letters)
 {
 	char *ptr;
 
@@ -267,7 +263,7 @@ get_name(name, letters)
 }
 
 int
-getline()
+getline(void)
 {
 	int c;
 	char *ptr;
@@ -288,7 +284,7 @@ getline()
 }
 /* return 1 for 'end' alone on card (up to col. 72),  0 otherwise */
 int
-lend()
+lend(void)
 {
 	char *p;
 
@@ -316,9 +312,7 @@ lend()
 		name and put in arg string. invent name for unnamed
 		block datas and main programs.		*/
 int
-lname(s, len)
-	char   *s;
-	size_t len;
+lname(char *s, size_t len)
 {
 #define LINESIZE 80
 	char *ptr, *p;
@@ -376,8 +370,7 @@ lname(s, len)
 }
 
 int
-scan_name(s, ptr)
-	char   *s, *ptr;
+scan_name(char *s, char *ptr)
 {
 	char   *sptr;
 
@@ -400,8 +393,7 @@ scan_name(s, ptr)
 }
 
 char   *
-functs(p)
-	char   *p;
+functs(char *p)
 {
 	char *ptr;
 
@@ -428,8 +420,7 @@ functs(p)
 	if blanks and then tab, return ptr after tab,
 	else return 0 (labelled statement, comment or continuation */
 char   *
-skiplab(p)
-	char   *p;
+skiplab(char *p)
 {
 	char *ptr;
 
@@ -447,8 +438,7 @@ skiplab(p)
 /* 	return 0 if m doesn't match initial part of s;
 	otherwise return ptr to next char after m in s */
 char   *
-look(s, m)
-	char   *s, *m;
+look(char *s, char *m)
 {
 	char *sp, *mp;
 

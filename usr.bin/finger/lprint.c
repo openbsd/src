@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.6 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$OpenBSD: lprint.c,v 1.6 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: lprint.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: lprint.c,v 1.6 2003/06/03 02:56:08 millert Exp 
 #define	_PATH_PROJECT	".project"
 
 void
-lflag_print()
+lflag_print(void)
 {
 	PERSON *pn;
 
@@ -75,8 +75,7 @@ lflag_print()
 }
 
 void
-lprint(pn)
-	PERSON *pn;
+lprint(PERSON *pn)
 {
 	struct tm *delta;
 	WHERE *w;
@@ -225,9 +224,7 @@ lprint(pn)
 }
 
 int
-demi_print(str, oddfield)
-	char *str;
-	int oddfield;
+demi_print(char *str, int oddfield)
 {
 	static int lenlast;
 	int lenthis, maxlen;
@@ -265,8 +262,7 @@ demi_print(str, oddfield)
 }
 
 int
-show_text(directory, file_name, header)
-	char *directory, *file_name, *header;
+show_text(char *directory, char *file_name, char *header)
 {
 	int ch, lastc;
 	FILE *fp;
@@ -285,8 +281,7 @@ show_text(directory, file_name, header)
 }
 
 void
-vputc(ch)
-	int ch;
+vputc(int ch)
 {
 	char visout[5], *s2;
 

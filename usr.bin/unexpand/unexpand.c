@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.7 2003/06/03 02:56:20 millert Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: unexpand.c,v 1.7 2003/06/03 02:56:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: unexpand.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -56,9 +56,7 @@ int	all;
 void tabify(char);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *cp;
 
@@ -92,8 +90,7 @@ main(argc, argv)
 }
 
 void
-tabify(c)
-	char c;
+tabify(char c)
 {
 	char *cp, *dp;
 	int dcol;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.29 2003/04/06 20:50:05 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.30 2003/06/10 22:20:45 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -178,7 +178,7 @@ char 		*strstatus(int);
 int		cdid(void);
 
 void
-help()
+help(void)
 {
 	struct cmdtab *c;
 	char *s, n;
@@ -204,7 +204,7 @@ help()
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: %s [-sv] [-f device] [command args ...]\n",
 	    __progname);
@@ -932,7 +932,7 @@ pstatus(char *arg)
 }
 
 int
-cdid()
+cdid(void)
 {
 	unsigned long id;
 	struct ioc_toc_header h;

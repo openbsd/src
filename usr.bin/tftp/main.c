@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -148,13 +148,11 @@ struct cmd cmdtab[] = {
 	{ NULL,		NULL,		NULL }
 };
 
-struct	cmd *getcmd();
-char	*tail();
+struct	cmd *getcmd(char *);
+char	*tail(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct sockaddr_in s_in;
 
@@ -184,9 +182,7 @@ main(argc, argv)
 char    hostname[MAXHOSTNAMELEN];
 
 void
-setpeer(argc, argv)
-	int argc;
-	char *argv[];
+setpeer(int argc, char *argv[])
 {
 	struct hostent *host;
 
@@ -245,9 +241,7 @@ struct	modes {
 };
 
 void
-modecmd(argc, argv)
-	int argc;
-	char *argv[];
+modecmd(int argc, char *argv[])
 {
 	struct modes *p;
 	char *sep;
@@ -280,26 +274,21 @@ modecmd(argc, argv)
 }
 
 void
-setbinary(argc, argv)
-	int argc;
-	char *argv[];
+setbinary(int argc, char *argv[])
 {
 
 	settftpmode("octet");
 }
 
 void
-setascii(argc, argv)
-	int argc;
-	char *argv[];
+setascii(int argc, char *argv[])
 {
 
 	settftpmode("netascii");
 }
 
 static void
-settftpmode(newmode)
-	char *newmode;
+settftpmode(char *newmode)
 {
 	strlcpy(mode, newmode, sizeof mode);
 	if (verbose)
@@ -311,9 +300,7 @@ settftpmode(newmode)
  * Send file(s).
  */
 void
-put(argc, argv)
-	int argc;
-	char *argv[];
+put(int argc, char *argv[])
 {
 	int fd;
 	int n;
@@ -393,8 +380,7 @@ put(argc, argv)
 }
 
 static void
-putusage(s)
-	char *s;
+putusage(char *s)
 {
 	printf("usage: %s file ... host:target, or\n", s);
 	printf("       %s file ... target (when already connected)\n", s);
@@ -404,9 +390,7 @@ putusage(s)
  * Receive file(s).
  */
 void
-get(argc, argv)
-	int argc;
-	char *argv[];
+get(int argc, char *argv[])
 {
 	int fd;
 	int n;
@@ -491,9 +475,7 @@ getusage(s)
 int	rexmtval = TIMEOUT;
 
 void
-setrexmt(argc, argv)
-	int argc;
-	char *argv[];
+setrexmt(int argc, char *argv[])
 {
 	int t;
 
@@ -520,9 +502,7 @@ setrexmt(argc, argv)
 int	maxtimeout = 5 * TIMEOUT;
 
 void
-settimeout(argc, argv)
-	int argc;
-	char *argv[];
+settimeout(int argc, char *argv[])
 {
 	int t;
 
@@ -547,9 +527,7 @@ settimeout(argc, argv)
 }
 
 void
-status(argc, argv)
-	int argc;
-	char *argv[];
+status(int argc, char *argv[])
 {
 	if (connected)
 		printf("Connected to %s.\n", hostname);
@@ -562,7 +540,7 @@ status(argc, argv)
 }
 
 void
-intr()
+intr(void)
 {
 
 	signal(SIGALRM, SIG_IGN);
@@ -571,8 +549,7 @@ intr()
 }
 
 char *
-tail(filename)
-	char *filename;
+tail(char *filename)
 {
 	char *s;
 
@@ -591,7 +568,7 @@ tail(filename)
  * Command parser.
  */
 static __dead void
-command()
+command(void)
 {
 	struct cmd *c;
 
@@ -624,8 +601,7 @@ command()
 }
 
 struct cmd *
-getcmd(name)
-	char *name;
+getcmd(char *name)
 {
 	char *p, *q;
 	struct cmd *c, *found;
@@ -656,7 +632,7 @@ getcmd(name)
  * Slice a string up into argc/argv.
  */
 static int
-makeargv()
+makeargv(void)
 {
 	char *cp;
 	char **argp = margv;
@@ -686,9 +662,7 @@ makeargv()
 }
 
 void
-quit(argc, argv)
-	int argc;
-	char *argv[];
+quit(int argc, char *argv[])
 {
 
 	exit(0);
@@ -698,9 +672,7 @@ quit(argc, argv)
  * Help command.
  */
 void
-help(argc, argv)
-	int argc;
-	char *argv[];
+help(int argc, char *argv[])
 {
 	struct cmd *c;
 
@@ -724,18 +696,14 @@ help(argc, argv)
 }
 
 void
-settrace(argc, argv)
-	int argc;
-	char **argv;
+settrace(int argc, char *argv[])
 {
 	trace = !trace;
 	printf("Packet tracing %s.\n", trace ? "on" : "off");
 }
 
 void
-setverbose(argc, argv)
-	int argc;
-	char **argv;
+setverbose(int argc, char *argv[])
 {
 	verbose = !verbose;
 	printf("Verbose mode %s.\n", verbose ? "on" : "off");

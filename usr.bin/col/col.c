@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.8 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: col.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.8 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -112,9 +112,7 @@ int	no_backspaces;		/* if not to output any backspaces */
 		err(1, "stdout");
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 	CHAR *c;
@@ -320,8 +318,7 @@ main(argc, argv)
 }
 
 void
-flush_lines(nflush)
-	int nflush;
+flush_lines(int nflush)
 {
 	LINE *l;
 
@@ -347,7 +344,7 @@ flush_lines(nflush)
  * feeds.
  */
 void
-flush_blanks()
+flush_blanks(void)
 {
 	int half, i, nb;
 
@@ -376,8 +373,7 @@ flush_blanks()
  * and character set shifts.
  */
 void
-flush_line(l)
-	LINE *l;
+flush_line(LINE *l)
 {
 	CHAR *c, *endc;
 	int nchars, last_col, this_col;
@@ -476,7 +472,7 @@ flush_line(l)
 static LINE *line_freelist;
 
 LINE *
-alloc_line()
+alloc_line(void)
 {
 	LINE *l;
 	int i;
@@ -496,8 +492,7 @@ alloc_line()
 }
 
 void
-free_line(l)
-	LINE *l;
+free_line(LINE *l)
 {
 
 	l->l_next = line_freelist;
@@ -505,9 +500,7 @@ free_line(l)
 }
 
 void *
-xmalloc(p, size)
-	void *p;
-	size_t size;
+xmalloc(void *p, size_t size)
 {
 
 	if (!(p = (void *)realloc(p, size)))
@@ -516,15 +509,14 @@ xmalloc(p, size)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: col [-bfhx] [-l num]\n");
 	exit(1);
 }
 
 void
-dowarn(line)
-	int line;
+dowarn(int line)
 {
 
 	warnx("warning: can't back up %s",

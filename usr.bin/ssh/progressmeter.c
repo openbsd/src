@@ -64,7 +64,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.6 2003/04/07 21:58:05 millert Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.7 2003/06/10 22:20:52 deraadt Exp $");
 
 #include <libgen.h>
 
@@ -124,7 +124,7 @@ start_progress_meter(char *file, off_t filesize, off_t *counter)
 }
 
 void
-stop_progress_meter()
+stop_progress_meter(void)
 {
 	alarm(0);
 	draw_progress_meter();
@@ -157,7 +157,7 @@ foregroundproc(void)
 }
 
 static void
-draw_progress_meter()
+draw_progress_meter(void)
 {
 	static const char spaces[] = "                          "
 	    "                                                   "

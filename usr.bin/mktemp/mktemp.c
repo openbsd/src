@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.11 2003/06/03 01:52:41 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.12 2003/06/10 22:20:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.11 2003/06/03 01:52:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.12 2003/06/10 22:20:48 deraadt Exp $";
 #endif /* not lint */                                                        
 
 #include <paths.h>
@@ -30,9 +30,7 @@ static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.11 2003/06/03 01:52:41 mille
 __dead void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, fd, uflag = 0, quiet = 0, tflag = 0, makedir = 0;
 	char *cp, *template, *tempfile, *prefix = _PATH_TMP;
@@ -126,7 +124,7 @@ main(argc, argv)
 }
 
 __dead void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

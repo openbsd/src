@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.7 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: banner.c,v 1.8 2003/06/10 22:20:44 deraadt Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: banner.c,v 1.7 2003/06/03 02:56:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: banner.c,v 1.8 2003/06/10 22:20:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,7 @@ static long PW = LINELEN;
 /* the char gen code below is lifted from lpd */
 
 static char *
-scnline(key, p, c)
-	int key;
-	char *p;
-	int c;
+scnline(int key, char *p, int c)
 {
 	int scnwidth;
 
@@ -98,8 +95,7 @@ scnline(key, p, c)
 
 
 static int
-dropit(c)
-	int c;
+dropit(int c)
 {
 	switch(c) {
 
@@ -119,9 +115,7 @@ dropit(c)
 }
 
 static void
-scan_out(scfd, scsp, dlm)
-	int scfd, dlm;
-	char *scsp;
+scan_out(int scfd, char *scsp, int dlm)
 {
 	char *strp;
 	int nchrs, j;
@@ -164,9 +158,7 @@ scan_out(scfd, scsp, dlm)
  * for each word, print up to 10 chars in big letters.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char word[10+1];			/* strings limited to 10 chars */
 	

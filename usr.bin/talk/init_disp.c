@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.16 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.17 2003/06/10 22:20:52 deraadt Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.16 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.17 2003/06/10 22:20:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: init_disp.c,v 1.16 2003/06/03 02:56:17 millert 
  * and build the various windows.
  */
 void
-init_display()
+init_display(void)
 {
 	struct sigaction sa;
 
@@ -102,7 +102,7 @@ init_display()
  * connection are the three edit characters.
  */
 void
-set_edit_chars()
+set_edit_chars(void)
 {
 	u_char buf[3];
 	int cc;
@@ -127,16 +127,14 @@ set_edit_chars()
 }
 
 void
-sig_sent(dummy)
-	int dummy;
+sig_sent(int dummy)
 {
 
 	quit("Connection closing.  Exiting", 0);
 }
 
 void
-sig_winch(dummy)
-	int dummy;
+sig_winch(int dummy)
 {
 
 	gotwinch = 1;
@@ -146,9 +144,7 @@ sig_winch(dummy)
  * All done talking...hang up the phone and reset terminal thingy's
  */
 void
-quit(warning, do_perror)
-	char *warning;
-	int do_perror;
+quit(char *warning, int do_perror)
 {
 
 	if (curses_initialized) {
@@ -172,7 +168,7 @@ quit(warning, do_perror)
  * If we get SIGWINCH, recompute both window sizes and refresh things.
  */
 void
-resize_display()
+resize_display(void)
 {
 	struct winsize ws;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.16 2003/05/15 00:11:03 jfb Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.17 2003/06/10 22:20:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -80,7 +80,7 @@ struct clit cmds[] = {
 #define NCMDS	sizeof(cmds)/sizeof(cmds[0])
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 

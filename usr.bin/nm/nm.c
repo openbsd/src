@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.18 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: nm.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.18 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,9 +98,7 @@ void 	print_symbol(const char *, struct nlist *);
  *	parse command line, execute process_file() for each file
  *	specified on the command line.
  */
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern int optind;
 	int ch, errors;
@@ -170,8 +168,7 @@ main(argc, argv)
  *	show symbols in the file given as an argument.  Accepts archive and
  *	object files as input.
  */
-process_file(fname)
-	char *fname;
+process_file(char *fname)
 {
 	struct exec exec_head;
 	FILE *fp;
@@ -216,9 +213,7 @@ process_file(fname)
  * show_archive()
  *	show symbols in the given archive file
  */
-show_archive(fname, fp)
-	char *fname;
-	FILE *fp;
+show_archive(char *fname, FILE *fp)
 {
 	struct ar_hdr ar_head;
 	struct exec exec_head;
@@ -332,9 +327,7 @@ skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
  *	file pointer for fp is expected to be at the beginning of an a.out
  *	header.
  */
-show_objfile(objname, fp)
-	char *objname;
-	FILE *fp;
+show_objfile(char *objname, FILE *fp)
 {
 	struct nlist *names, *np;
 	struct nlist **snames;
@@ -467,8 +460,7 @@ show_objfile(objname, fp)
 }
 
 char *
-symname(sym)
-	struct nlist *sym;
+symname(struct nlist *sym)
 {
 	if (demangle && sym->n_un.n_name[0] == '_') 
 		return sym->n_un.n_name + 1;
@@ -481,9 +473,7 @@ symname(sym)
  *	show one symbol
  */
 void
-print_symbol(objname, sym)
-	const char *objname;
-	struct nlist *sym;
+print_symbol(const char *objname, struct nlist *sym)
 {
 	if (print_file_each_line)
 		(void)printf("%s:", objname);
@@ -520,8 +510,7 @@ print_symbol(objname, sym)
 }
 
 char *
-otherstring(sym)
-	struct nlist *sym;
+otherstring(struct nlist *sym)
 {
 	static char buf[3];
 	char *result;
@@ -543,8 +532,7 @@ otherstring(sym)
  *	return the a description string for an STAB entry
  */
 char *
-typestring(type)
-	unsigned int type;
+typestring(unsigned int type)
 {
 	switch(type) {
 	case N_BCOMM:
@@ -598,8 +586,7 @@ typestring(type)
  *	external, lower case for internal symbols.
  */
 char
-typeletter(type)
-	unsigned int type;
+typeletter(unsigned int type)
 {
 	switch(SYMBOL_TYPE(type)) {
 	case N_ABS:
@@ -629,8 +616,7 @@ typeletter(type)
 }
 
 int
-fname(a0, b0)
-	const void *a0, *b0;
+fname(const void *a0, const void *b0)
 {
 	struct nlist * const *a = a0, * const *b = b0;
 
@@ -638,8 +624,7 @@ fname(a0, b0)
 }
 
 int
-rname(a0, b0)
-	const void *a0, *b0;
+rname(const void *a0, const void *b0)
 {
 	struct nlist * const *a = a0, * const *b = b0;
 
@@ -647,8 +632,7 @@ rname(a0, b0)
 }
 
 int
-value(a0, b0)
-	const void *a0, *b0;
+value(const void *a0, const void *b0)
 {
 	struct nlist * const *a = a0, * const *b = b0;
 
@@ -671,8 +655,7 @@ value(a0, b0)
 }
 
 void *
-emalloc(size)
-	size_t size;
+emalloc(size_t size)
 {
 	char *p;
 
@@ -685,7 +668,7 @@ emalloc(size)
 #define CPPFILT	"/usr/bin/c++filt"
 
 void
-pipe2cppfilt()
+pipe2cppfilt(void)
 {
 	int pip[2];
 	char *argv[2];
@@ -712,7 +695,7 @@ pipe2cppfilt()
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: nm [-aCgnopruw] [file ...]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 2003/06/10 22:20:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2003/06/10 22:20:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2003/06/03 02:56:17 millert Exp $"
 #include "extern.h"
 
 void
-ierr()
+ierr(void)
 {
 
 	warn("%s", fname);
@@ -59,7 +59,7 @@ ierr()
 }
 
 void
-oerr()
+oerr(void)
 {
 
 	err(1, "stdout");

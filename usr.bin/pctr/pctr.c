@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.9 2002/12/15 13:16:12 henning Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.10 2003/06/10 22:20:49 deraadt Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -242,7 +242,7 @@ struct ctrfn p6fn[] = {
 };
 
 static void
-printdesc (char *desc)
+printdesc(char *desc)
 {
 	char *p;
 
@@ -267,7 +267,7 @@ printdesc (char *desc)
 
 /* Print all possible counter functions */
 static void
-list (int fam)
+list(int fam)
 {
 	struct ctrfn *cfnp;
 
@@ -298,7 +298,7 @@ list (int fam)
 }
 
 struct ctrfn *
-fn2cfnp (u_int family, u_int sel)
+fn2cfnp(u_int family, u_int sel)
 {
 	struct ctrfn *cfnp;
 
@@ -316,7 +316,7 @@ fn2cfnp (u_int family, u_int sel)
 }
 
 static char *
-fn2str (int family, u_int sel)
+fn2str(int family, u_int sel)
 {
 	static char buf[128];
 	char um[9] = "";
@@ -332,8 +332,7 @@ fn2str (int family, u_int sel)
 		    sel & P5CTR_U ? 'u' : '-',
 		    sel & P5CTR_K ? 'k' : '-',
 		    fn, cfnp ? cfnp->name : "unknown function");
-	}
-	else if (family == 6) {
+	} else if (family == 6) {
 		fn = sel & 0xff;
 		cfnp = fn2cfnp (family, fn);
 		if (cfnp && cfnp->flags & CFL_MESI)
@@ -354,15 +353,14 @@ fn2str (int family, u_int sel)
 		    sel & P6CTR_U ? 'u' : '-',
 		    fn, cm, um, 7 - (strlen (cm) + strlen (um)), "",
 		    cfnp ? cfnp->name : "unknown function");
-	}
-	else
+	} else
 		return (NULL);
 	return (buf);
 }
 
 /* Print status of counters */
 static void
-readst (void)
+readst(void)
 {
 	int fd, i;
 	struct pctrst st;
@@ -383,7 +381,7 @@ readst (void)
 }
 
 static void
-setctr (int ctr, u_int val)
+setctr(int ctr, u_int val)
 {
 	int fd;
 
@@ -396,7 +394,7 @@ setctr (int ctr, u_int val)
 }
 
 static void
-usage (void)
+usage(void)
 {
 	fprintf(stderr,
 	   "usage:\n"
@@ -431,7 +429,7 @@ usage (void)
 }
 
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
 	u_int ctr;
 	char *cp;
@@ -481,7 +479,7 @@ main (int argc, char **argv)
 		fl |= P6CTR_EN;
 		if (**ap == '-') {
 			cp = *ap;
-			if (usep6ctr)
+			if (usep6ctr) {
 				while (*++cp)
 					switch (*cp) {
 					case 'i':
@@ -499,7 +497,7 @@ main (int argc, char **argv)
 					default:
 						usage ();
 					}
-			else if(usep5ctr)
+			} else if(usep5ctr) {
 				while (*++cp)
 					switch (*cp) {
 					case 'c':
@@ -514,10 +512,10 @@ main (int argc, char **argv)
 					default:
 						usage ();
 					}
+			}
 			ap++;
 			ac--;
-		}
-		else {
+		} else {
 			if (usep6ctr)
 				fl |= P6CTR_U|P6CTR_K;
 			else if (usep5ctr)
@@ -540,7 +538,7 @@ main (int argc, char **argv)
 		}
 		cfnp = fn2cfnp (6, fl);
 		if (usep6ctr && cfnp && (cp = strchr (*ap, '/'))) {
-			if (cfnp->flags & CFL_MESI)
+			if (cfnp->flags & CFL_MESI) {
 				while (*++cp)
 					switch (*cp) {
 					case 'm':
@@ -558,7 +556,7 @@ main (int argc, char **argv)
 					default:
 						usage ();
 					}
-			else if (cfnp->flags & CFL_SA)
+			} else if (cfnp->flags & CFL_SA) {
 				while (*++cp)
 					switch (*cp) {
 					case 'a':
@@ -567,10 +565,9 @@ main (int argc, char **argv)
 					default:
 						usage ();
 					}
-			else
+			} else
 				usage ();
-		}
-		else if (cfnp && (cfnp->flags & CFL_MESI))
+		} else if (cfnp && (cfnp->flags & CFL_MESI))
 			fl |= P6CTR_UM_MESI;
 		ap++;
 		ac--;
@@ -581,8 +578,7 @@ main (int argc, char **argv)
 		if (usep6ctr && ! (fl & 0xff))
 			fl = 0;
 		setctr (ctr, fl);
-	}
-	else
+	} else
 		usage ();
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.12 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.13 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ volatile sig_atomic_t gotwinch = 0;
  * The routine to do the actual talking
  */
 void
-talk()
+talk(void)
 {
 	fd_set read_template, read_set;
 	int nb;
@@ -129,8 +129,7 @@ talk()
  * Display string in the standard location
  */
 void
-message(string)
-	char *string;
+message(char *string)
 {
 	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
 	wprintw(my_win.x_win, "[%s]", string);

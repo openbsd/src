@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.16 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.17 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.16 2003/06/03 02:56:09 millert Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.17 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,9 +65,7 @@ static void no_ktrace(int);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int append, ch, fd, inherit, ops, pidset, trpoints;
@@ -171,8 +169,7 @@ main(argc, argv)
 }
 
 static int
-rpid(p)
-	const char *p;
+rpid(const char *p)
 {
 	static int first;
 
@@ -188,7 +185,7 @@ rpid(p)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage:\tktrace [-aCcdi] [-f trfile] [-g pgid] [-p pid] [-t [ceinsw]]\n\tktrace [-adi] [-f trfile] [-t [ceinsw]] command\n");
@@ -196,8 +193,7 @@ usage()
 }
 
 static void
-no_ktrace(sig)
-	int sig;
+no_ktrace(int signo)
 {
 	char buf[8192];
 

@@ -1,16 +1,14 @@
-/*	$OpenBSD: getopt.c,v 1.4 2001/07/12 05:17:09 deraadt Exp $	*/
+/*	$OpenBSD: getopt.c,v 1.5 2003/06/10 22:20:47 deraadt Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getopt.c,v 1.4 2001/07/12 05:17:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getopt.c,v 1.5 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <unistd.h>
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.10 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: process.c,v 1.11 2003/06/10 22:20:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.10 2003/06/03 02:56:16 millert Exp $";
+static char *rcsid = "$OpenBSD: process.c,v 1.11 2003/06/10 22:20:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,7 +84,7 @@ regmatch_t *match;
 #define OUT(s) { fwrite(s, sizeof(u_char), psl, stdout); }
 
 void
-process()
+process(void)
 {
 	struct s_command *cp;
 	SPACE tspace;
@@ -270,8 +270,7 @@ new:		if (!nflag && !pd)
  * flag to process ranges.  Interprets the non-select (``!'') flag.
  */
 static inline int
-applies(cp)
-	struct s_command *cp;
+applies(struct s_command *cp)
 {
 	int r;
 
@@ -312,8 +311,7 @@ applies(cp)
  *	and then swap them.
  */
 static int
-substitute(cp)
-	struct s_command *cp;
+substitute(struct s_command *cp)
 {
 	SPACE tspace;
 	regex_t *re;
@@ -422,7 +420,7 @@ substitute(cp)
  * therefore it also resets the substitution done (sdone) flag.
  */
 static void
-flush_appends()
+flush_appends(void)
 {
 	FILE *f;
 	int count, i;
@@ -456,8 +454,7 @@ flush_appends()
 }
 
 static void
-lputs(s)
-	char *s;
+lputs(char *s)
 {
 	int count;
 	char *escapes, *p;
@@ -500,11 +497,8 @@ lputs(s)
 }
 
 static inline int
-regexec_e(preg, string, eflags, nomatch, slen)
-	regex_t *preg;
-	const char *string;
-	int eflags, nomatch;
-	size_t slen;
+regexec_e(regex_t *preg, const char *string, int eflags,
+    int nomatch, size_t slen)
 {
 	int eval;
 	
@@ -537,9 +531,7 @@ regexec_e(preg, string, eflags, nomatch, slen)
  * Based on a routine by Henry Spencer
  */
 static void
-regsub(sp, string, src)
-	SPACE *sp;
-	char *string, *src;
+regsub(SPACE *sp, char *string, char *src)
 {
 	int len, no;
 	char c, *dst;
@@ -583,11 +575,7 @@ regsub(sp, string, src)
  *	space as necessary.
  */
 void
-cspace(sp, p, len, spflag)
-	SPACE *sp;
-	char *p;
-	size_t len;
-	enum e_spflag spflag;
+cspace(SPACE *sp, char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
 
@@ -610,8 +598,7 @@ cspace(sp, p, len, spflag)
  * Close all cached opened files and report any errors
  */
 void
-cfclose(cp, end)
-	struct s_command *cp, *end;
+cfclose(struct s_command *cp, struct s_command *end)
 {
 
 	for (; cp != end; cp = cp->next)

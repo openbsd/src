@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.4 2002/02/16 21:27:47 millert Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.5 2003/06/10 22:20:47 deraadt Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -57,7 +57,7 @@ int	semrm(key_t, int);
 void	not_configured(int);
 
 void
-usage()
+usage(void)
 {
         fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
 	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
@@ -65,9 +65,7 @@ usage()
 }
 
 int
-msgrm(key, id)
-	key_t key;
-	int id;
+msgrm(key_t key, int id)
 {
 	if (key) {
 		id = msgget(key, 0);
@@ -78,9 +76,7 @@ msgrm(key, id)
 }
 
 int
-shmrm(key, id)
-	key_t key;
-	int id;
+shmrm(key_t key, int id)
 {
 	if (key) {
 		id = shmget(key, 0, 0);
@@ -91,9 +87,7 @@ shmrm(key, id)
 }
 
 int
-semrm(key, id)
-	key_t key;
-	int id;
+semrm(key_t key, int id)
 {
 	union semun arg;
 
@@ -106,16 +100,13 @@ semrm(key, id)
 }
 
 void
-not_configured(sig)
-	int sig;
+not_configured(int signo)
 {
 	signaled++;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, result, errflg, target_id;
 	key_t target_key;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.4 2003/06/03 02:56:20 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.5 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.4 1994/12/07 00:46:57 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tty.c,v 1.4 2003/06/03 02:56:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.5 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,9 +50,7 @@ static char rcsid[] = "$OpenBSD: tty.c,v 1.4 2003/06/03 02:56:20 millert Exp $";
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, sflag;
 	char *t;
@@ -78,7 +76,7 @@ main(argc, argv)
 
 
 static void
-usage ()
+usage(void)
 {
 	fprintf(stderr, "usage: tty [-s]\n");
 	exit(2);

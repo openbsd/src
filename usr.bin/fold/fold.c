@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.7 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: fold.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.7 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -60,9 +60,7 @@ int count_bytes = 0;
 int split_words = 0;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 	int width;
@@ -125,8 +123,7 @@ main(argc, argv)
  * returns embedded in the input stream.
  */
 static void
-fold(width)
-	int width;
+fold(int width)
 {
 	static char *buf = NULL;
 	static int   buf_max = 0;
@@ -193,9 +190,7 @@ fold(width)
  * calculate the column position 
  */
 static int
-new_column_position(col, ch)
-	int col;
-	int ch;
+new_column_position(int col, int ch)
 {
 	if (!count_bytes) {
 		switch (ch) {

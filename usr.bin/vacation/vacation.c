@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.19 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.20 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.19 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.20 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -98,9 +98,7 @@ void setreply(void);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	struct stat sb;
@@ -203,7 +201,7 @@ main(argc, argv)
  *	read mail headers
  */
 void
-readheaders()
+readheaders(void)
 {
 	ALIAS *cur;
 	char *p;
@@ -313,8 +311,7 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  *	do a nice, slow, search of a string for a substring.
  */
 int
-nsearch(name, str)
-	char *name, *str;
+nsearch(char *name, char *str)
 {
 	int len;
 
@@ -329,7 +326,7 @@ nsearch(name, str)
  *	read the header and return if automagic/junk/bulk/list mail
  */
 int
-junkmail()
+junkmail(void)
 {
 	static struct ignore {
 		char	*name;
@@ -379,7 +376,7 @@ junkmail()
  *	use bcopy for machines with alignment restrictions
  */
 int
-recent()
+recent(void)
 {
 	DBT key, data;
 	time_t then, next;
@@ -409,8 +406,7 @@ recent()
  *	store the reply interval
  */
 void
-setinterval(interval)
-	time_t interval;
+setinterval(time_t interval)
 {
 	DBT key, data;
 
@@ -426,7 +422,7 @@ setinterval(interval)
  *	store that this user knows about the vacation.
  */
 void
-setreply()
+setreply(void)
 {
 	DBT key, data;
 	time_t now;
@@ -444,8 +440,7 @@ setreply()
  *	exec sendmail to send the vacation file to sender
  */
 void
-sendmessage(myname)
-	char *myname;
+sendmessage(char *myname)
 {
 	FILE *mfp, *sfp;
 	int i;
@@ -495,7 +490,7 @@ sendmessage(myname)
 }
 
 void
-usage()
+usage(void)
 {
 	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] login",
 	    getuid());

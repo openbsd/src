@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.6 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: comm.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: comm.c,v 1.6 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: comm.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -63,9 +63,7 @@ void	show(FILE *, char *, char *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int comp, file1done, file2done, read1, read2;
 	int ch, flag1, flag2, flag3;
@@ -166,17 +164,14 @@ main(argc, argv)
 }
 
 void
-show(fp, offset, buf)
-	FILE *fp;
-	char *offset, *buf;
+show(FILE *fp, char *offset, char *buf)
 {
 	while (printf("%s%s", offset, buf) >= 0 && fgets(buf, MAXLINELEN, fp))
 		;
 }
 
 FILE *
-file(name)
-	const char *name;
+file(const char *name)
 {
 	FILE *fp;
 
@@ -188,7 +183,7 @@ file(name)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: comm [-123f] file1 file2\n");
 	exit(1);

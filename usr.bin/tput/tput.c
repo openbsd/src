@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.13 2003/06/03 01:52:41 millert Exp $	*/
+/*	$OpenBSD: tput.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -54,7 +54,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.13 2003/06/03 01:52:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: tput.c,v 1.14 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,9 +80,7 @@ static void   usage(void);
 extern char  *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, exitval, n, Sflag;
 	size_t len;
@@ -200,8 +198,7 @@ main(argc, argv)
 }
 
 static char **
-process(cap, str, argv)
-	char *cap, *str, **argv;
+process(char *cap, char *str, char **argv)
 {
 	char *cp, *s, *nargv[9];
 	int arg_need, popcount, i;
@@ -272,7 +269,7 @@ process(cap, str, argv)
 }
 
 static void
-init()
+init(void)
 {
 	FILE *ifile;
 	size_t len;
@@ -328,7 +325,7 @@ init()
 }
 
 static void
-reset()
+reset(void)
 {
 	FILE *rfile;
 	size_t len;
@@ -354,7 +351,7 @@ reset()
 }
 
 static void
-set_margins()
+set_margins(void)
 {
 
 	/*
@@ -388,7 +385,7 @@ set_margins()
 }
 
 static void
-usage()
+usage(void)
 {
 
 	if (strcmp(__progname, "clear") == 0)

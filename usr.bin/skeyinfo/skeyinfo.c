@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.12 2003/06/03 01:52:41 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.13 2003/06/10 22:20:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-v] [user]\n", __progname);
 	exit(1);

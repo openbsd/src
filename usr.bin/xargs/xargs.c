@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.12 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.13 2003/06/10 22:20:54 deraadt Exp $	*/
 /*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: xargs.c,v 1.12 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: xargs.c,v 1.13 2003/06/10 22:20:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,9 +66,7 @@ void run(char **);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 	char *p, *bbp, *ebp, **bxp, **exp, **xp;
@@ -268,8 +266,7 @@ addch:			if (p < ebp) {
 }
 
 void
-run(argv)
-	char **argv;
+run(char **argv)
 {
 	volatile int noinvoke;
 	char **p;
@@ -331,9 +328,10 @@ run(argv)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr,
-"usage: xargs [-0] [-t] [-n number [-x]] [-s size] [utility [argument ...]]\n");
+	fprintf(stderr,
+	    "usage: xargs [-0] [-t] [-n number [-x]] [-s size] "
+	    "[utility [argument ...]]\n");
 	exit(1);
 }

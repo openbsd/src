@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.20 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.21 2003/06/10 22:20:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.20 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.21 2003/06/10 22:20:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,9 +103,7 @@ static void usage(char *);
 	}
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int (*get)();
 	int ch, i, stdinflag = 0, tmp = 0;
@@ -310,8 +308,7 @@ main(argc, argv)
 }
 
 static void
-onsig(s)
-	int s;
+onsig(int signo)
 {
 
 	cleanup();
@@ -319,7 +316,7 @@ onsig(s)
 }
 
 static void
-cleanup()
+cleanup(void)
 {
 
 	if (toutpath[0])
@@ -327,8 +324,7 @@ cleanup()
 }
 
 static void
-usage(msg)
-	char *msg;
+usage(char *msg)
 {
 	extern char *__progname;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.12 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: du.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.12 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,7 @@ void	 prtout(quad_t, char *, int);
 void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FTS *fts;
 	FTSENT *p;
@@ -224,8 +222,7 @@ typedef struct _ID {
 } ID;
 
 int
-linkchk(p)
-	FTSENT *p;
+linkchk(FTSENT *p)
 {
 	static ID *files;
 	static int maxfiles, nfiles;
@@ -257,8 +254,7 @@ linkchk(p)
 typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
 
 unit_t
-unit_adjust(val)
-	double *val;
+unit_adjust(double *val)
 {
 	double abval;
 	unit_t unit;
@@ -286,10 +282,7 @@ unit_adjust(val)
 }
 
 void
-prtout(size, path, hflag)
-	quad_t size;
-	char *path;
-	int hflag;
+prtout(quad_t size, char *path, int hflag)
 {
 	unit_t unit;
 	double bytes;
@@ -310,7 +303,7 @@ prtout(size, path, hflag)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

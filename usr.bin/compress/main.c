@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2003/06/04 04:55:58 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2003/06/10 22:20:45 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.23 2003/06/04 04:55:58 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.24 2003/06/10 22:20:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,9 +118,7 @@ const struct option longopts[] = {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FTS *ftsp;
 	FTSENT *entry;
@@ -421,12 +419,8 @@ main(argc, argv)
 }
 
 int
-compress(in, out, method, bits, sb)
-	const char *in;
-	const char *out;
-	const struct compressor *method;
-	int bits;
-	struct stat *sb;
+compress(const char *in, const char *out, const struct compressor *method,
+    int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
 	int error, ifd, ofd;
@@ -489,10 +483,7 @@ compress(in, out, method, bits, sb)
 }
 
 const struct compressor *
-check_method(fd, sb, out)
-	int fd;
-	struct stat *sb;
-	const char *out;
+check_method(int fd, struct stat *sb, const char *out)
 {
 	const struct compressor *method;
 
@@ -508,12 +499,8 @@ check_method(fd, sb, out)
 }
 
 int
-decompress(in, out, method, bits, sb)
-	const char *in;
-	const char *out;
-	const struct compressor *method;
-	int bits;
-	struct stat *sb;
+decompress(const char *in, const char *out, const struct compressor *method,
+    int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
 	int error, ifd, ofd;
@@ -578,9 +565,7 @@ decompress(in, out, method, bits, sb)
 }
 
 void
-setfile(name, fs)
-	const char *name;
-	struct stat *fs;
+setfile(const char *name, struct stat *fs)
 {
 	struct timeval tv[2];
 
@@ -610,8 +595,7 @@ setfile(name, fs)
 }
 
 int
-permission(fname)
-	const char *fname;
+permission(const char *fname)
 {
 	int ch, first;
 
@@ -625,7 +609,7 @@ permission(fname)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-cdfghlnLOqrStvV] [-b <bits>] [-[0-9]] [file ...]\n",

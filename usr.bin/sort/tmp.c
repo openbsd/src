@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.5 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.6 2003/06/10 22:20:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)tmp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tmp.c,v 1.5 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmp.c,v 1.6 2003/06/10 22:20:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: tmp.c,v 1.5 2003/06/03 02:56:16 millert Exp $";
 #define _NAME_TMP "sort.XXXXXXXXXX"
 
 FILE *
-ftmp()
+ftmp(void)
 {
 	sigset_t set, oset;
 	FILE *fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.3 2002/03/14 06:51:42 mpech Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.4 2003/06/10 22:20:48 deraadt Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ u_char sample[] = {
 #define GET32(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
 
 void
-usage()
+usage(void)
 {
 	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-q] [-t tempo] [-v] [-x] [file ...]\n",
 		__progname);
@@ -145,8 +145,7 @@ int play = 1;
 int fd;
 
 void
-send_event(ev)
-	seq_event_rec *ev;
+send_event(seq_event_rec *ev)
 {
 	/*
 	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -158,8 +157,7 @@ send_event(ev)
 }
 
 u_long
-getvar(tp)
-	struct track *tp;
+getvar(struct track *tp)
 {
 	u_long r, c;
 
@@ -172,10 +170,7 @@ getvar(tp)
 }
 
 void
-dometa(meta, p, len)
-	u_int meta;
-	u_char *p;
-	u_int len;
+dometa(u_int meta, u_char *p, u_int len)
 {
 	switch (meta) {
 	case META_TEXT:
@@ -217,7 +212,7 @@ dometa(meta, p, len)
 }
 
 void
-midireset()
+midireset(void)
 {
 	/* General MIDI reset sequence */
 	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
@@ -227,9 +222,7 @@ midireset()
 
 #define SYSEX_CHUNK 6
 void
-send_sysex(p, l)
-	u_char *p;
-	u_int l;
+send_sysex(u_char *p, u_int l)
 {
 	seq_event_rec event;
 	u_int n;
@@ -249,9 +242,7 @@ send_sysex(p, l)
 }
 
 void
-playfile(f, name)
-	FILE *f;
-	char *name;
+playfile(FILE *f, char *name)
 {
 	u_char *buf;
 	u_int tot, n, size, nread;
@@ -285,10 +276,7 @@ playfile(f, name)
 }
 
 void
-playdata(buf, tot, name)
-	u_char *buf;
-	u_int tot;
-	char *name;
+playdata(u_char *buf, u_int tot, char *name)
 {
 	int format, ntrks, divfmt, ticks, t, besttrk = 0;
 	u_int len, mlen, status, chan;
@@ -487,9 +475,7 @@ playdata(buf, tot, name)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	int listdevs = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.18 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: size.c,v 1.19 2003/06/10 22:20:51 deraadt Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.18 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.19 2003/06/10 22:20:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,9 +71,7 @@ int	show_objfile(int, char *, FILE *);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, eval;
 
@@ -113,9 +111,7 @@ main(argc, argv)
  *	object files as input.
  */
 int
-process_file(count, fname)
-	int count;
-	char *fname;
+process_file(int count, char *fname)
 {
 	struct exec exec_head;
 	FILE *fp;
@@ -158,10 +154,7 @@ process_file(count, fname)
  *	show symbols in the given archive file
  */
 int
-show_archive(count, fname, fp)
-	int count;
-	char *fname;
-	FILE *fp;
+show_archive(int count, char *fname, FILE *fp)
 {
 	struct ar_hdr ar_head;
 	struct exec exec_head;
@@ -270,10 +263,7 @@ skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
 }
 
 int
-show_objfile(count, name, fp)
-	int count;
-	char *name;
-	FILE *fp;
+show_objfile(int count, char *name, FILE *fp)
 {
 	static int first = 1;
 	struct exec head;
@@ -311,7 +301,7 @@ show_objfile(count, name, fp)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: size [-tw] [file ...]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.8 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rs.c,v 1.9 2003/06/10 22:20:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -105,9 +105,7 @@ void	  putfile(void);
 } while(0)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	getargs(argc, argv);
 	getfile();
@@ -121,7 +119,7 @@ main(argc, argv)
 }
 
 void
-getfile()
+getfile(void)
 {
 	char *p;
 	char *endp;
@@ -187,7 +185,7 @@ getfile()
 }
 
 void
-putfile()
+putfile(void)
 {
 	char **ep;
 	int i, j, n;
@@ -212,9 +210,7 @@ putfile()
 }
 
 void
-prints(s, col)
-	char *s;
-	int col;
+prints(char *s, int col)
 {
 	int n;
 	char *p = s;
@@ -232,8 +228,7 @@ prints(s, col)
 }
 
 void
-usage(msg, s)
-	char *msg, *s;
+usage(char *msg, char *s)
 {
 	warnx(msg, s);
 	fprintf(stderr,
@@ -242,7 +237,7 @@ usage(msg, s)
 }
 
 void
-prepfile()
+prepfile(void)
 {
 	char **ep;
 	int  i;
@@ -335,7 +330,7 @@ prepfile()
 char	ibuf[BSIZE];		/* two screenfuls should do */
 
 int
-getline()	/* get line; maintain curline, curlen; manage storage */
+getline(void)	/* get line; maintain curline, curlen; manage storage */
 {
 	static	int putlength;
 	static	char *endblock = ibuf + BSIZE;
@@ -368,8 +363,7 @@ getline()	/* get line; maintain curline, curlen; manage storage */
 }
 
 char **
-getptrs(sp)
-	char **sp;
+getptrs(char **sp)
 {
 	char **p;
 
@@ -384,9 +378,7 @@ getptrs(sp)
 }
 
 void
-getargs(ac, av)
-	int ac;
-	char *av[];
+getargs(int ac, char *av[])
 {
 	char *p;
 
@@ -495,9 +487,7 @@ getargs(ac, av)
 }
 
 char *
-getlist(list, p)
-	short **list;
-	char *p;
+getlist(short **list, char *p)
 {
 	int count = 1;
 	char *t;
@@ -527,10 +517,10 @@ getlist(list, p)
 	return(t - 1);
 }
 
+/* num = number p points to; if (strict) complain */
+/* returns pointer to end of num */
 char *
-getnum(num, p, strict)	/* num = number p points to; if (strict) complain */
-	int *num, strict;	/* returns pointer to end of num */
-	char *p;
+getnum(int *num, char *p, int strict)
 {
 	char *t = p;
 

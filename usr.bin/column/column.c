@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.8 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: column.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.8 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,9 +71,7 @@ char **list;			/* array of pointers to records */
 char *separator = "\t ";	/* field separator for table option */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct winsize win;
 	FILE *fp;
@@ -135,7 +133,7 @@ main(argc, argv)
 
 #define	TAB	8
 void
-c_columnate()
+c_columnate(void)
 {
 	int chcnt, col, cnt, endcol, numcols;
 	char **lp;
@@ -164,7 +162,7 @@ c_columnate()
 }
 
 void
-r_columnate()
+r_columnate(void)
 {
 	int base, chcnt, cnt, col, endcol, numcols, numrows, row;
 
@@ -193,7 +191,7 @@ r_columnate()
 }
 
 void
-print()
+print(void)
 {
 	int cnt;
 	char **lp;
@@ -209,7 +207,7 @@ typedef struct _tbl {
 #define	DEFCOLS	25
 
 void
-maketbl()
+maketbl(void)
 {
 	TBL *t;
 	int coloff, cnt;
@@ -255,8 +253,7 @@ maketbl()
 #define	MAXLINELEN	(LINE_MAX + 1)
 
 void
-input(fp)
-	FILE *fp;
+input(FILE *fp)
 {
 	static int maxentry;
 	int len;
@@ -288,8 +285,7 @@ input(fp)
 }
 
 void *
-emalloc(size)
-	int size;
+emalloc(int size)
 {
 	char *p;
 
@@ -300,7 +296,7 @@ emalloc(size)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

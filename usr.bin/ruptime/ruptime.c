@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.9 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.9 2003/06/03 02:56:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.10 2003/06/10 22:20:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,9 +67,7 @@ int hscmp(), ucmp(), lcmp(), tcmp();
 void morehosts(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -178,9 +176,7 @@ main(argc, argv)
 }
 
 char *
-interval(tval, updown)
-	time_t tval;
-	char *updown;
+interval(time_t tval, char *updown)
 {
 	static char resbuf[32];
 	int days, hours, minutes;
@@ -203,8 +199,7 @@ interval(tval, updown)
 
 /* alphabetical comparison */
 int
-hscmp(a1, a2)
-	void *a1, *a2;
+hscmp(void *a1, void *a2)
 {
 	struct hs *h1 = a1, *h2 = a2;
 
@@ -213,8 +208,7 @@ hscmp(a1, a2)
 
 /* load average comparison */
 int
-lcmp(a1, a2)
-	void *a1, *a2;
+lcmp(void *a1, void *a2)
 {
 	struct hs *h1 = a1, *h2 = a2;
 
@@ -232,8 +226,7 @@ lcmp(a1, a2)
 
 /* number of users comparison */
 int
-ucmp(a1, a2)
-	void *a1, *a2;
+ucmp(void *a1, void *a2)
 {
 	struct hs *h1 = a1, *h2 = a2;
 
@@ -250,8 +243,7 @@ ucmp(a1, a2)
 
 /* uptime comparison */
 int
-tcmp(a1, a2)
-	void *a1, *a2;
+tcmp(void *a1, void *a2)
 {
 	struct hs *h1 = a1, *h2 = a2;
 
@@ -265,7 +257,7 @@ tcmp(a1, a2)
 }
 
 void
-morehosts()
+morehosts(void)
 {
 	hs = realloc((char *)hs, (hspace *= 2) * sizeof(*hs));
 	if (hs == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.9 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.9 2003/06/03 02:56:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -81,9 +81,7 @@ void	init(void);
 void	find_entries(char *);
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char *argv[])
 {
 	static char	*outfile = "tags";	/* output file */
 	int	aflag;				/* -a: append to tags */
@@ -194,7 +192,7 @@ usage:		(void)fprintf(stderr,
  *	the string CWHITE, else NO.
  */
 void
-init()
+init(void)
 {
 	int		i;
 	unsigned char	*sp;
@@ -226,8 +224,7 @@ init()
  *	which searches the file.
  */
 void
-find_entries(file)
-	char	*file;
+find_entries(char *file)
 {
 	char	*cp;
 

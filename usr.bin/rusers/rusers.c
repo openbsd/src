@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.23 2003/06/04 17:37:16 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.24 2003/06/10 22:20:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,7 +44,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.23 2003/06/04 17:37:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.24 2003/06/10 22:20:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -672,7 +672,7 @@ print_entry(struct host_info *entry, int longfmt)
 }
 
 void
-expandhosts()
+expandhosts(void)
 {
 	struct host_info *new_hostinfo, *entry;
 	u_int count;
@@ -699,7 +699,7 @@ expandhosts()
 }
 
 void
-sorthosts()
+sorthosts(void)
 {
 	int i;
 	int (*compar)(const void *, const void *);

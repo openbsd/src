@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.7 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.8 2003/06/10 22:20:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.7 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.8 2003/06/10 22:20:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ number(pos, bufend, line, lineend, Rflag)
  * rnum over (0,254) -> (255,REC_D+1),(REC_D-1,0))
  */
 void
-num_init()
+num_init(void)
 {
 	int i;
 	TENS[0] = REC_D <=128 ? 130 - '0' : 2 - '0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.26 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.27 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.26 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.27 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,9 +107,7 @@ void	 usage(void);
 #define HOST_WIDTH	24
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
@@ -187,7 +185,7 @@ main(argc, argv)
  */
 
 void
-checkargs()
+checkargs(void)
 {
 	ARG	*step;
 	int	ttyflag = 0;
@@ -227,7 +225,7 @@ checkargs()
  *	read through the wtmp file
  */
 void
-wtmp()
+wtmp(void)
 {
 	struct utmp	*bp;		/* current structure */
 	TTY	*T;			/* tty list entry */
@@ -424,9 +422,7 @@ wtmp()
  *	see if want this entry
  */
 int
-want(bp, check)
-	struct utmp *bp;
-	int check;
+want(struct utmp *bp, int check)
 {
 	ARG *step;
 
@@ -472,9 +468,7 @@ want(bp, check)
  *	add an entry to a linked list of arguments
  */
 void
-addarg(type, arg)
-	int type;
-	char *arg;
+addarg(int type, char *arg)
 {
 	ARG *cur;
 
@@ -491,8 +485,7 @@ addarg(type, arg)
  *	add an entry to a linked list of ttys
  */
 TTY *
-addtty(ttyname)
-	char *ttyname;
+addtty(char *ttyname)
 {
 	TTY *cur;
 
@@ -511,8 +504,7 @@ addtty(ttyname)
  *	off the domain suffix since that's what login(1) does.
  */
 void
-hostconv(arg)
-	char *arg;
+hostconv(char *arg)
 {
 	static int first = 1;
 	static char *hostdot, name[MAXHOSTNAMELEN];
@@ -535,8 +527,7 @@ hostconv(arg)
  *	convert tty to correct name.
  */
 char *
-ttyconv(arg)
-	char *arg;
+ttyconv(char *arg)
 {
 	char *mval;
 	size_t len = 8;
@@ -567,8 +558,7 @@ ttyconv(arg)
  *	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
-dateconv(arg)
-	char *arg;
+dateconv(char *arg)
 {
 	time_t timet;
 	struct tm *t;
@@ -639,8 +629,7 @@ terr:	   errx(1,
  *	on interrupt, we inform the user how far we've gotten
  */
 void
-onintr(signo)
-	int signo;
+onintr(int signo)
 {
 	char str[1024], *ct;
 

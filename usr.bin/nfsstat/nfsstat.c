@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.18 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.18 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,7 @@ void sidewaysintpr(u_int, u_int);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
@@ -185,8 +183,7 @@ main(argc, argv)
 }
 
 void
-getnfsstats(p)
-	struct nfsstats *p;
+getnfsstats(struct nfsstats *p)
 {
 	if (kd) {
 		if (kvm_read(kd, nl[N_NFSSTAT].n_value, p, sizeof(*p)) != sizeof(*p))
@@ -208,8 +205,7 @@ getnfsstats(p)
  * Print a description of the nfs stats.
  */
 void
-intpr(display)
-	u_int display;
+intpr(u_int display)
 {
 	struct nfsstats nfsstats;
 
@@ -346,9 +342,7 @@ intpr(display)
  * First line printed at top of screen is always cumulative.
  */
 void
-sidewaysintpr(interval, display)
-	u_int interval;
-	u_int display;
+sidewaysintpr(u_int interval, u_int display)
 {
 	struct nfsstats nfsstats, lastst;
 	int hdrcnt;
@@ -402,7 +396,7 @@ sidewaysintpr(interval, display)
 }
 
 void
-printhdr()
+printhdr(void)
 {
 	printf("        %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s\n",
 	    "Getattr", "Lookup", "Readlink", "Read", "Write", "Rename",
@@ -415,13 +409,13 @@ printhdr()
  * Sets a flag to not wait for the alarm.
  */
 void
-catchalarm()
+catchalarm(void)
 {
 	signalled = 1;
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 	fprintf(stderr,

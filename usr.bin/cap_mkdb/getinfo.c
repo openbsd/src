@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.6 2003/06/04 16:24:45 deraadt Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.6 2003/06/04 16:24:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,9 +74,7 @@ int	igetnext(char **, char **);
  * return NULL.
  */
 static char *
-igetcap(buf, cap, type)
-	char *buf, *cap;
-	int type;
+igetcap(char *buf, char *cap, int type)
 {
 	char *bp, *cp;
 
@@ -135,10 +133,7 @@ igetcap(buf, cap, type)
  *	  MAX_RECURSION.
  */
 static int
-getent(cap, len, db_array, fd, name, depth)
-	char **cap, **db_array, *name;
-	u_int *len;
-	int fd, depth;
+getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 {
 	char *r_end, *rp, **db_p;
 	int myfd, eof, foundit;
@@ -464,8 +459,7 @@ getent(cap, len, db_array, fd, name, depth)
  * record buf, -1 if not.
  */
 static int
-igetmatch(buf, name)
-	char *buf, *name;
+igetmatch(char *buf, char *name)
 {
 	char *np, *bp;
 
@@ -507,7 +501,7 @@ static int slash;
 static char **dbp;
 
 static int
-igetclose()
+igetclose(void)
 {
 	if (pfp != NULL) {
 		(void)fclose(pfp);
@@ -524,9 +518,7 @@ igetclose()
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-igetnext(bp, db_array)
-        char **bp;
-	char **db_array;
+igetnext(char **bp, char **db_array)
 {
 	size_t len;
 	int status, done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cksum.c,v 1.10 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: cksum.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $	*/
 /*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: cksum.c,v 1.10 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: cksum.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,7 @@ void usage(void);
 extern char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, fd, rval;
 	u_int32_t len, val;
@@ -128,7 +126,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	if (!strcmp(__progname, "cksum"))
 		(void)fprintf(stderr, "usage: cksum [-o 1 | 2] [file ...]\n");

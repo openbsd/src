@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.9 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: hexdump.c,v 1.9 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: hexdump.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,9 +54,7 @@ int length = -1;			/* max bytes to read */
 int	main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FS *tfs;
 	char *p;

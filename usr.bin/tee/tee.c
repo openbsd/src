@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.5 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: tee.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tee.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tee.c,v 1.5 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: tee.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -65,9 +65,7 @@ LIST *head;
 void add(int, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	LIST *p;
 	int n, fd, rval, wval;
@@ -137,9 +135,7 @@ main(argc, argv)
 }
 
 void
-add(fd, name)
-	int fd;
-	char *name;
+add(int fd, char *name)
 {
 	LIST *p;
 

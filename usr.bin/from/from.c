@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.9 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: from.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.9 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.10 2003/06/10 22:20:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,9 +56,7 @@ static char rcsid[] = "$OpenBSD: from.c,v 1.9 2003/06/03 02:56:08 millert Exp $"
 int	match(char *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -133,8 +131,7 @@ main(argc, argv)
 }
 
 int
-match(line, sender)
-	char *line, *sender;
+match(char *line, char *sender)
 {
 	char ch, pch, first, *p, *t;
 

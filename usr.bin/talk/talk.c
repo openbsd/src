@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.c,v 1.6 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: talk.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: talk.c,v 1.6 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: talk.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -60,9 +60,7 @@ static char rcsid[] = "$OpenBSD: talk.c,v 1.6 2003/06/03 02:56:17 millert Exp $"
  */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	get_names(argc, argv);
 	init_display();

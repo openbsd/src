@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2003/06/10 22:20:48 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.55 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.56 2003/06/10 22:20:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ do_look_ahead(int t, const char *token)
  * macro - the work horse..
  */
 static void
-macro()
+macro(void)
 {
 	char token[MAXTOK+1];
 	int t, l;
@@ -573,7 +573,7 @@ inspect(int c, char *tp)
  * within keywrds block.
  */
 static void
-initkwds()
+initkwds(void)
 {
 	size_t i;
 	unsigned int h;
@@ -642,7 +642,7 @@ dump_stack(struct position *t, int lev)
 
 
 static void 
-enlarge_stack()
+enlarge_stack(void)
 {
 	STACKMAX *= 2;
 	mstack = realloc(mstack, sizeof(stae) * STACKMAX);

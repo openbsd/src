@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.20 2003/01/18 23:30:20 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.21 2003/06/10 22:20:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -108,9 +108,7 @@ dostat(int devfd, int modnum, char *modname)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, modnum = -1;
 	char *modname = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.6 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.3 1994/12/09 02:14:22 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.6 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.7 2003/06/10 22:20:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,7 @@ disp_msg(dummy)
 }
 
 void
-start_msgs()
+start_msgs(void)
 {
 	struct itimerval itimer;
 
@@ -71,7 +71,7 @@ start_msgs()
 }
 
 void
-end_msgs()
+end_msgs(void)
 {
 	struct itimerval itimer;
 

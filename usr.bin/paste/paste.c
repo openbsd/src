@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.11 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: paste.c,v 1.12 2003/06/10 22:20:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.11 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.12 2003/06/10 22:20:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,9 +60,7 @@ void	parallel(char **);
 void	sequential(char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -104,8 +102,7 @@ typedef struct _list {
 } LIST;
 
 void
-parallel(argv)
-	char **argv;
+parallel(char **argv)
 {
 	LIST *lp;
 	int cnt;
@@ -186,8 +183,7 @@ parallel(argv)
 }
 
 void
-sequential(argv)
-	char **argv;
+sequential(char **argv)
 {
 	FILE *fp;
 	int cnt;
@@ -235,8 +231,7 @@ sequential(argv)
 }
 
 int
-tr(arg)
-	char *arg;
+tr(char *arg)
 {
 	int cnt;
 	char ch, *p;
@@ -267,7 +262,7 @@ tr(arg)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "paste: [-s] [-d delimiters] file ...\n");
 	exit(1);

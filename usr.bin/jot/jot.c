@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.12 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: jot.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.12 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -85,9 +85,7 @@ void		putdata(double, long);
 static void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	double	xd, yd;
 	long	id;
@@ -290,9 +288,7 @@ main(argc, argv)
 }
 
 void
-putdata(x, notlast)
-	double x;
-	long notlast;
+putdata(double x, long notlast)
 {
 	long		d = x;
 	long	*dp = &d;
@@ -316,8 +312,7 @@ usage(void)
 }
 
 int
-getprec(s)
-	char *s;
+getprec(char *s)
 {
 	char	*p;
 	char	*q;
@@ -334,7 +329,7 @@ getprec(s)
 }
 
 void
-getformat()
+getformat(void)
 {
 	char	*p;
 	size_t sz;

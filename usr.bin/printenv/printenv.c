@@ -1,4 +1,4 @@
-/*	$OpenBSD: printenv.c,v 1.4 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: printenv.c,v 1.5 2003/06/10 22:20:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printenv.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printenv.c,v 1.4 2003/06/03 02:56:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: printenv.c,v 1.5 2003/06/10 22:20:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,9 +51,7 @@ static char rcsid[] = "$OpenBSD: printenv.c,v 1.4 2003/06/03 02:56:14 millert Ex
  * February, 1979
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char **environ;
 	char *cp, **ep;
