@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.46 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.47 2004/10/14 15:27:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -348,6 +348,12 @@ sk_vpd_read(struct sk_softc *sc)
 
 	sk_vpd_read_res(sc, &res, pos);
 
+	/*
+	 * Bail out quietly if the eeprom appears to be missing or empty.
+	 */
+	if (res.vr_id == 0xff && res.vr_len == 0xff && res.vr_pad == 0xff)
+		return;
+
 	if (res.vr_id != VPD_RES_ID) {
 		printf("%s: bad VPD resource id: expected %x got %x\n",
 		    sc->sk_dev.dv_xname, VPD_RES_ID, res.vr_id);
@@ -536,8 +542,6 @@ sk_marv_miibus_statchg(dev)
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
-#define XMAC_POLY	0xEDB88320
-#define GMAC_POLY	0x04C11DB7L
 #define HASH_BITS	6
   
 u_int32_t
