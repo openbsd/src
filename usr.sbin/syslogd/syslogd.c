@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.58 2002/11/21 07:46:48 cloder Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.59 2002/12/22 17:19:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.58 2002/11/21 07:46:48 cloder Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.59 2002/12/22 17:19:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -358,7 +358,7 @@ main(int argc, char *argv[])
 			if (getsockopt(finet, SOL_SOCKET, SO_RCVBUF, &len,
 			    &slen) == 0) {
 				len *= 2;
-				(void)setsockopt(funix[i], SOL_SOCKET,
+				(void)setsockopt(finet, SOL_SOCKET,
 				    SO_RCVBUF, &len, slen);
 			}
 		}
