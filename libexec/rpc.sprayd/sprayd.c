@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprayd.c,v 1.8 2003/07/06 21:57:27 deraadt Exp $*/
+/*	$OpenBSD: sprayd.c,v 1.9 2004/06/02 02:21:15 brad Exp $*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: sprayd.c,v 1.8 2003/07/06 21:57:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprayd.c,v 1.9 2004/06/02 02:21:15 brad Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	SVCXPRT *transp;
 	int sock = 0;
 	int proto = 0;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	socklen_t fromlen;
 
 	/*

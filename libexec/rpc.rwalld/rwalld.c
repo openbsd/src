@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.11 2003/07/06 21:57:27 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.12 2004/06/02 02:21:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.11 2003/07/06 21:57:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.12 2004/06/02 02:21:15 brad Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 {
 	int sock = 0, proto = 0;
 	socklen_t fromlen;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	SVCXPRT *transp;
 
 	if (geteuid() == 0) {

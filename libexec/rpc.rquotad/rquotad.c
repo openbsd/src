@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.18 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.19 2004/06/02 02:21:15 brad Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	SVCXPRT *transp;
 	int sock = 0;
 	int proto = 0;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	socklen_t fromlen;
 
 	fromlen = sizeof(from);
