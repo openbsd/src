@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.11 2001/11/08 23:32:14 deraadt Exp $
+.\"	$OpenBSD: ubsec.4,v 1.12 2001/11/20 20:25:13 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -52,6 +52,8 @@ unit and RSA engine added.
 32 bit version of the above chip.
 .It Broadcom BCM5820
 64 bit version of the chip, and significantly more advanced.
+.It Broadcom BCM5821
+Faster version of the BCM5820.
 .El
 .Pp
 The
@@ -73,3 +75,5 @@ The
 .Nm
 device driver appeared in
 .Ox 2.8 .
+.Sh BUGS
+BCM5821 has not actually been tested.
