@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.19 2004/03/10 03:45:24 tedu Exp $	*/
+/*	$OpenBSD: announce.c,v 1.20 2004/03/10 04:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.19 2004/03/10 03:45:24 tedu Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.20 2004/03/10 04:32:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ announce(CTL_MSG *request, char *remote_machine)
 #define N_CHARS 120
 
 /*
- * Build a block of characters containing the message. 
+ * Build a block of characters containing the message.
  * It is sent blank filled and in a single block to
  * try to keep the message in one piece if the recipient
  * is in vi at the time
@@ -115,7 +115,7 @@ print_mesg(FILE *tf, CTL_MSG *request, char *remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	(void)snprintf(line_buf[i], N_CHARS, 
+	(void)snprintf(line_buf[i], N_CHARS,
 	    "Message from Talk_Daemon@%s at %d:%02d ...",
 	    hostname, localclock->tm_hour , localclock->tm_min );
 	sizes[i] = strlen(line_buf[i]);

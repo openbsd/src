@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.16 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.17 2004/03/10 04:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.16 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.17 2004/03/10 04:32:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -101,7 +101,7 @@ process_request(CTL_MSG *mp, CTL_RESPONSE *rp)
 		strlcpy(buf2, inet_ntoa(satosin(&mp->ctl_addr)->sin_addr),
 		    sizeof(buf2));
 		syslog(LOG_WARNING, "addresses are different, %s != %s",
-		       buf1, buf2);
+		    buf1, buf2);
 	}
 	rp->addr.sa_family = 0;
 	mp->pid = ntohl(mp->pid);

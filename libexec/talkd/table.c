@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.10 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.11 2004/03/10 04:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,13 +31,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.10 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$Id: table.c,v 1.11 2004/03/10 04:32:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
  * Routines to handle insertion, deletion, etc on the table
  * of requests kept by the daemon. Nothing fancy here, linear
- * search on a double-linked list. A time is kept with each 
+ * search on a double-linked list. A time is kept with each
  * entry so that overly old invitations can be eliminated.
  *
  * Consider this a mis-guided attempt at modularity
@@ -106,7 +106,7 @@ find_match(CTL_MSG *request)
 			print_request("", &ptr->request);
 		if (strcmp(request->l_name, ptr->request.r_name) == 0 &&
 		    strcmp(request->r_name, ptr->request.l_name) == 0 &&
-		     ptr->request.type == LEAVE_INVITE)
+		    ptr->request.type == LEAVE_INVITE)
 			return (&ptr->request);
 	}
 	if (debug)
@@ -117,7 +117,7 @@ find_match(CTL_MSG *request)
 
 /*
  * Look for an identical request, as opposed to a complimentary
- * one as find_match does 
+ * one as find_match does
  */
 CTL_MSG *
 find_request(CTL_MSG *request)

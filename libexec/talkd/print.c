@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.8 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.9 2004/03/10 04:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.8 2003/07/29 18:39:23 deraadt Exp $";
+static char rcsid[] = "$Id: print.c,v 1.9 2004/03/10 04:32:45 deraadt Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -43,12 +43,15 @@ static char rcsid[] = "$Id: print.c,v 1.8 2003/07/29 18:39:23 deraadt Exp $";
 #include <stdio.h>
 #include "talkd.h"
 
-static	char *types[] =
-    { "leave_invite", "look_up", "delete", "announce" };
+static	char *types[] = {
+	"leave_invite", "look_up", "delete", "announce"
+};
 #define	NTYPES	(sizeof(types) / sizeof(types[0]))
-static	char *answers[] = 
-    { "success", "not_here", "failed", "machine_unknown", "permission_denied",
-      "unknown_request", "badversion", "badaddr", "badctladdr" };
+
+static	char *answers[] = {
+	"success", "not_here", "failed", "machine_unknown", "permission_denied",
+	"unknown_request", "badversion", "badaddr", "badctladdr"
+};
 #define	NANSWERS	(sizeof(answers) / sizeof(answers[0]))
 
 void
