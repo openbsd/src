@@ -54,7 +54,6 @@
 ./etc/isakmpd/crls
 ./etc/isakmpd/keynote
 ./etc/isakmpd/private
-./etc/kerberosIV
 ./etc/mail
 ./etc/mtree
 ./etc/ppp

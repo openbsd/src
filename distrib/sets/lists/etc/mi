@@ -29,11 +29,6 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
-./etc/kerberosIV/README
-./etc/kerberosIV/krb.conf
-./etc/kerberosIV/krb.equiv
-./etc/kerberosIV/krb.extra
-./etc/kerberosIV/krb.realms
 ./etc/kerberosV
 ./etc/kerberosV/README
 ./etc/kerberosV/krb5.conf.example
