@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.32 2002/07/16 10:21:20 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.33 2002/07/16 10:32:37 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -61,8 +61,8 @@ int
 getuserident(char *homedir, char *buf, int len)
 {
 	char   path[MAXPATHLEN], *p;
-	struct stat st;
 	int    fd, nread;
+	struct stat st;
 
 	if (len == 0)
 		return 0;
@@ -116,10 +116,10 @@ gentoken(char *buf, int len)
 ssize_t
 timed_read(int fd, void *buf, size_t siz, time_t timeout)
 {
-	int error, tot = 0, i, r;
-	char *p = buf;
-	struct pollfd rfd[1];
 	struct timeval tv, start, after, duration, tmp;
+	int error, tot = 0, i, r;
+	struct pollfd rfd[1];
+	char *p = buf;
 
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
@@ -158,9 +158,9 @@ timed_read(int fd, void *buf, size_t siz, time_t timeout)
 ssize_t
 timed_write(int fd, const void *buf, size_t siz, time_t timeout)
 {
-	int error;
 	struct pollfd wfd[2];
 	struct timeval tv;
+	int error;
 
 	wfd[0].fd = fd;
 	wfd[0].events = POLLOUT;
@@ -178,19 +178,16 @@ timed_write(int fd, const void *buf, size_t siz, time_t timeout)
 int
 parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 {
-	char	token[21];
-	char	buf[BUFSIZ], *p;
+	char	token[21], buf[BUFSIZ], *p;
 	struct	in_addr laddr2, faddr2;
 	struct	passwd *pw;
-	int	n;
 	uid_t	uid;
+	int	n;
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "In function parse(), from %s to %s",
 		       gethost4_addr(faddr), gethost4_addr(laddr));
 
-	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "  Before read from remote host");
 	faddr2 = *faddr;
 	laddr2 = *laddr;
 	lport = fport = 0;
@@ -346,19 +343,16 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 int
 parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 {
-	char	token[21];
-	char	buf[BUFSIZ], *p;
+	char	token[21], buf[BUFSIZ], *p;
 	struct	sockaddr_in6 laddr2, faddr2;
 	struct	passwd *pw;
-	int	n;
 	uid_t	uid;
+	int	n;
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "In function parse6(), from %s to %s",
 		       gethost6(faddr), gethost6(laddr));
 
-	if (debug_flag && syslog_flag)
-		syslog(LOG_DEBUG, "  Before read from remote host");
 	faddr2 = *faddr;
 	laddr2 = *laddr;
 	lport = fport = 0;

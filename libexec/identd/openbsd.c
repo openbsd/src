@@ -1,4 +1,4 @@
-/* $OpenBSD: openbsd.c,v 1.17 2002/07/16 10:16:10 deraadt Exp $ */
+/* $OpenBSD: openbsd.c,v 1.18 2002/07/16 10:32:37 deraadt Exp $ */
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -31,7 +31,6 @@
 #include "identd.h"
 #include "error.h"
 
-
 /*
  * Return the user number for the connection owner
  */
@@ -39,9 +38,9 @@ int
 k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
     int lport, uid_t *uid)
 {
-	struct tcp_ident_mapping tir;
-	struct sockaddr_in *fin, *lin;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
+	struct sockaddr_in *fin, *lin;
+	struct tcp_ident_mapping tir;
 	int error = 0;
 	size_t i;
 
@@ -69,7 +68,6 @@ k_getuid(struct in_addr *faddr, int fport, struct in_addr *laddr,
 	return (-1);
 }
 
-
 /*
  * Return the user number for the connection owner
  * New minty IPv6 version.
@@ -78,9 +76,9 @@ int
 k_getuid6(struct sockaddr_in6 *faddr, int fport, struct sockaddr_in6 *laddr,
     int lport, uid_t *uid)
 {
-	struct tcp_ident_mapping tir;
-	struct sockaddr_in6 *fin, *lin;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
+	struct sockaddr_in6 *fin, *lin;
+	struct tcp_ident_mapping tir;
 	int error = 0;
 	size_t i;
 
