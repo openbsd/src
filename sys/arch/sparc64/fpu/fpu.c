@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.2 2001/09/08 22:52:51 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -57,6 +57,23 @@
 
 #include <sparc64/fpu/fpu_emu.h>
 #include <sparc64/fpu/fpu_extern.h>
+
+#ifdef DEBUG
+int fpe_debug = 0;
+
+/*
+ * Dump a `fpn' structure.
+ */
+void
+fpu_dumpfpn(struct fpn *fp)
+{
+	static char *class[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
+
+	printf("%s %c.%x %x %x %xE%d", class[fp->fp_class + 2],
+	    fp->fp_sign ? '-' : ' ', fp->fp_mant[0], fp->fp_mant[1],
+	    fp->fp_mant[2], fp->fp_mant[3], fp->fp_exp);
+}
+#endif
 
 /*
  * fpu_execute returns the following error numbers (0 = no error):
