@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.2 1998/12/18 20:47:34 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -209,7 +209,7 @@ pacct_print()
 	BTREEINFO bti;
 	DBT key, data, ndata;
 	DB *output_pacct_db;
-	struct cmdinfo *cip, ci, ci_total, ci_other, ci_junk;
+	struct cmdinfo ci, ci_total, ci_other, ci_junk;
 	int rv;
 
 	memset(&ci_total, 0, sizeof(ci_total));
@@ -237,8 +237,7 @@ pacct_print()
 	if (rv < 0)
 		warn("retrieving process accounting stats");
 	while (rv == 0) {
-		cip = (struct cmdinfo *) data.data;
-		memcpy(&ci, cip, sizeof(ci));
+		memcpy(&ci, data.data, sizeof(ci));
 
 		/* add to total */
 		add_ci(&ci, &ci_total);
@@ -288,8 +287,7 @@ next:		rv = DB_SEQ(pacct_db, &key, &data, R_NEXT);
 	if (rv < 0)
 		warn("retrieving process accounting report");
 	while (rv == 0) {
-		cip = (struct cmdinfo *) data.data;
-		memcpy(&ci, cip, sizeof(ci));
+		memcpy(&ci, data.data, sizeof(ci));
 
 		print_ci(&ci, &ci_total);
 
