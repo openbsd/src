@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)atan2.c	8.1 (Berkeley) 6/4/93";
  *
  * Required system supported functions :
  *	copysign(x,y)
- *	scalb(x,y)
+ *	scalbn(x,y)
  *	logb(x)
  *	
  * Method :
@@ -213,7 +213,7 @@ double  y,x;
 	y=copysign(y,one); 
 	if((m=(k=logb(y))-logb(x)) > 60) t=big+big; 
 	    else if(m < -80 ) t=y/x;
-	    else { t = y/x ; y = scalb(y,-k); x=scalb(x,-k); }
+	    else { t = y/x ; y = scalbn(y,-k); x=scalbn(x,-k); }
 
     /* begin argument reduction */
 begin:

@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)expm1.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 2/6/85, 3/7/85, 3/21/85, 4/16/85.
  *
  * Required system supported functions:
- *	scalb(x,n)	
+ *	scalbn(x,n)	
  *	copysign(x,y)	
  *	finite(x)
  *
@@ -141,13 +141,13 @@ double x;
 
 			else {
 			    if(k<=prec)
-			      { x=one-scalb(one,-k); z += __exp__E(z,c);}
+			      { x=one-scalbn(one,-k); z += __exp__E(z,c);}
 			    else if(k<100)
-			      { x = __exp__E(z,c)-scalb(one,-k); x+=z; z=one;}
+			      { x = __exp__E(z,c)-scalbn(one,-k); x+=z; z=one;}
 			    else 
 			      { x = __exp__E(z,c)+z; z=one;}
 
-			    return (scalb(x+z,k));  
+			    return (scalbn(x+z,k));  
 			}
 		}
 		/* end of x > lnunfl */
@@ -164,5 +164,5 @@ double x;
 
 	else 
 	/*  expm1(INF) is INF, expm1(+big#) overflows to INF */
-	    return( finite(x) ?  scalb(one,5000) : x);
+	    return( finite(x) ?  scalbn(one,5000) : x);
 }

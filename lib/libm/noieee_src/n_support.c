@@ -59,7 +59,7 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
  * IEEE 754 recommended functions:
  * (a) copysign(x,y) 
  *              returns x with the sign of y. 
- * (b) scalb(x,N) 
+ * (b) scalbn(x,N) 
  *              returns  x * (2**N), for integer values N.
  * (c) logb(x) 
  *              returns the unbiased exponent of x, a signed integer in 
@@ -87,7 +87,7 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
     static const double novf=1.7E308, nunf=3.0E-308,zero=0.0;
 #endif	/* defined(__vax__)||defined(tahoe) */
 
-double scalb(x,N)
+double scalbn(x,N)
 double x; int N;
 {
         int k;
@@ -111,7 +111,7 @@ double x; int N;
         if( (k= *px & mexp ) != mexp ) {
             if( N<-2100) return(nunf*nunf); else if(N>2100) return(novf+novf);
             if( k == 0 ) {
-                 x *= scalb(1.0,(int)prep1);  N -= prep1; return(scalb(x,N));}
+                 x *= scalbn(1.0,(int)prep1);  N -= prep1; return(scalbn(x,N));}
 #endif	/* defined(__vax__)||defined(tahoe) */
 
             if((k = (k>>gap)+ N) > 0 )
@@ -120,7 +120,7 @@ double x; int N;
             else
                 if( k > -prep1 ) 
                                         /* gradual underflow */
-                    {*px=(*px&~mexp)|(short)(1<<gap); x *= scalb(1.0,k-1);}
+                    {*px=(*px&~mexp)|(short)(1<<gap); x *= scalbn(1.0,k-1);}
                 else
                 return(nunf*nunf);
             }
@@ -233,7 +233,7 @@ double x,p;
 
         else  if ( ((*pp & mexp)>>gap) <= 1 ) 
                 /* subnormal p, or almost subnormal p */
-            { double b; b=scalb(1.0,(int)prep1);
+            { double b; b=scalbn(1.0,(int)prep1);
               p *= b; x = drem(x,p); x *= b; return(drem(x,p)/b);}
         else  if ( p >= novf/2)
             { p /= 2 ; x /= 2; return(drem(x,p)*2);}
@@ -299,8 +299,8 @@ double x;
 
     /* scale x to [1,4) */
         n=logb(x);
-        x=scalb(x,-n);
-        if((m=logb(x))!=0) x=scalb(x,-m);       /* subnormal number */
+        x=scalbn(x,-n);
+        if((m=logb(x))!=0) x=scalbn(x,-m);       /* subnormal number */
         m += n; 
         n = m/2;
         if((n+n)!=m) {x *= 2; m -=1; n=m/2;}
@@ -331,7 +331,7 @@ double x;
                 b=1.0+r/4;   if(b>1.0) t=1;
                 if(t>=0) q+=r; }
             
-end:        return(scalb(q,n));
+end:        return(scalbn(q,n));
 }
 
 #if 0

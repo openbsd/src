@@ -41,7 +41,7 @@ _sccsid:
 /*
  * copysign(x,y),
  * logb(x),
- * scalb(x,N),
+ * scalbn(x,N),
  * finite(x),
  * drem(x,y),
  * Coded in vax assembly language by K.C. Ng,  3/14/85.
@@ -103,14 +103,14 @@ _finite:
 	ret
 
 /*
- * double scalb(x,N)
+ * double scalbn(x,N)
  * double x; double N;
  */
-	.globl	_scalb
+	.globl	_scalbn
 	.set	ERANGE,34
 	.text
 	.align	1
-_scalb:
+_scalbn:
 	.word	0x3c
 	movq	4(ap),r0
 	bicl3	$0xffff807f,r0,r3

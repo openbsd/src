@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 7/10/85.
  * KERNEL pow_P() REPLACED BY P. McILROY 7/22/92.
  * Required system supported functions:
- *      scalb(x,n)      
+ *      scalbn(x,n)      
  *      logb(x)         
  *	copysign(x,y)	
  *	finite(x)	

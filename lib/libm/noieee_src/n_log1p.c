@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)log1p.c	8.1 (Berkeley) 6/4/93";
  * REVISED BY K.C. NG on 2/6/85, 3/7/85, 3/24/85, 4/16/85.
  * 
  * Required system supported functions:
- *	scalb(x,n) 
+ *	scalbn(x,n) 
  *	copysign(x,y)
  *	logb(x)	
  *	finite(x)
@@ -129,7 +129,7 @@ double x;
 
 	   /* argument reduction */
 	      if(copysign(x,one)<small) return(x);
-	      k=logb(one+x); z=scalb(x,-k); t=scalb(one,-k);
+	      k=logb(one+x); z=scalbn(x,-k); t=scalbn(one,-k);
 	      if(z+t >= sqrt2 ) 
 		  { k += 1 ; z *= half; t *= half; }
 	      t += negone; x = z + t;

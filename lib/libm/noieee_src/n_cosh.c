@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)cosh.c	8.1 (Berkeley) 6/4/93";
  *
  * Required system supported functions :
  *	copysign(x,y)
- *	scalb(x,N)
+ *	scalbn(x,N)
  *
  * Required kernel function:
  *	exp(x) 
@@ -127,7 +127,7 @@ double x;
         /* for x lies in [lnovfl, lnovfl+ln2], decrease x by ln(2^(max+1)) 
          * and return 2^max*exp(x) to avoid unnecessary overflow 
          */
-	    return(scalb(exp((x-mln2hi)-mln2lo), max)); 
+	    return(scalbn(exp((x-mln2hi)-mln2lo), max)); 
 
 	else 
 	    return(exp(x)*half);	/* for large x,  cosh(x)=exp(x)/2 */
