@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.203 2002/04/13 00:46:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.204 2002/04/13 21:03:31 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1995,11 +1995,14 @@ remount_fs() {
 	done < /etc/fstab
 }
 
-# Preen all filesystems in /etc/fstab, showing individual results.
+# Preen all filesystems in /etc/fstab, showing individual results,
+# but skipping the root filesystem device given in $1. This was
+# already fsck'ed successfully.
 check_fs() {
-	local _dev _rest _badfsck=0
+	local _dev _rest _badfsck=0 _root=$1
 
 	while read _dev _rest; do
+		[ "$_dev" = "$_root" ] && continue
 		echo -n "fsck -p ${_dev}..."
 		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
 			echo "FAILED. You must fsck this device manually."

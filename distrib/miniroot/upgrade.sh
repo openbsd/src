@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.30 2002/04/09 01:01:19 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.31 2002/04/13 21:03:31 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -170,8 +170,8 @@ if ! umount /mnt; then
 fi
 
 # Check filesystems.
-echo "Checking filesystem integrity..."
-if ! check_fs; then
+echo "Checking non-root filesystems..."
+if ! check_fs $_root_filesystem; then
 	# Prevent check_fs() invocation in cleanup_on_exit from fsck'ing.
 	# Remember /etc/fstab is a link, /tmp/fstab.shadow is the file!
 	rm /tmp/fstab.shadow
