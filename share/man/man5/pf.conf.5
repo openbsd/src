@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.233 2003/05/10 23:27:07 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.234 2003/05/11 20:46:11 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -453,6 +453,14 @@ modifier (see below) is recommended in combination with the
 modifier to ensure unique IP identifiers.
 .It Ar min-ttl <number>
 Enforces a minimum ttl for matching ip packets.
+For statefully tracked TCP connections,
+.Ar scrub
+will automatically (without the
+.Ar min-ttl
+modifier) keep the maximum TTL of each side of the connection and apply
+it to all future packets.
+Inhibits an attacker from sending low TTL packets through the firewall that
+change state but expires before being received by the end host.
 .It Ar max-mss <number>
 Enforces a maximum mss for matching tcp packets.
 .It Ar random-id
