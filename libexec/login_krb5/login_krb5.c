@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.8 2001/06/25 18:58:59 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.9 2001/06/25 21:36:49 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -170,15 +170,11 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 }
 
 int
-krb5_login(char *username, char *password, int login, int tickets)
+krb5_login(char *username, char *invokinguser, char *password, int login, int tickets)
 {
 	int return_code = AUTH_FAILED;
-	char *instance, *tmp_name;
 
 	if(username == NULL || password == NULL)
-		return AUTH_FAILED;
-
-	if(strcmp(username, "root") == 0)
 		return AUTH_FAILED;
 
 	ret = krb5_init_context(&context);
@@ -193,19 +189,18 @@ krb5_login(char *username, char *password, int login, int tickets)
 		exit(1);
 	}
 
-	ret = krb5_parse_name(context, username, &princ);
+	if(strcmp(username, "root") == 0) {
+		char *tmp;
+		tmp = malloc(strlen(invokinguser)+6);
+		sprintf(tmp, "%s/root", invokinguser);
+		ret = krb5_parse_name(context, tmp, &princ);
+		free(tmp);
+	} else
+		ret = krb5_parse_name(context, username, &princ);
 	if(ret != 0) {
 		krb5_syslog(context, LOG_ERR, ret, "krb5_parse_name");
 		exit(1);
 	}
-
-	instance = strchr(username, '/');
-	if(instance != NULL) {
-		*instance++ = '\0';
-	} else
-		instance = "";
-
-	krb5_unparse_name(context, princ, &tmp_name);
 
 	ret = krb5_verify_user_lrealm(context, princ, ccache, 
 				      password,
@@ -215,22 +210,6 @@ krb5_login(char *username, char *password, int login, int tickets)
 	switch(ret) {
 	case 0: {
 		struct passwd *pwd;
-
-		/*
-		 * The only instance a user should be allowed to login with
-		 * is "root".
-		 */
-		if((strcmp(instance, "root") == 0)) {
-			if(krb5_kuserok(context, princ, "root"))
-				fprintf(back, BI_AUTH " root\n");
-			else {
-				fprintf(back, BI_REJECT "\n");
-				exit(0);
-			}
-		} else if(strlen(instance) != 0) {
-			fprintf(back, BI_REJECT "\n");
-			exit(0);
-		}
 
 		pwd = getpwnam(username);
 		if(pwd == NULL) {
@@ -304,7 +283,10 @@ main(int argc, char **argv)
 	char *username, *password = NULL;
 	char response[1024];
 	int arg_login = 0, arg_notickets = 0;
-	
+	char invokinguser[MAXLOGNAME];
+
+	invokinguser[0] = '\0';
+
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
 	setpriority(PRIO_PROCESS, 0, 0);
@@ -333,6 +315,9 @@ main(int argc, char **argv)
 				arg_login = 1;
 			else if(strcmp(optarg, "notickets=yes") == 0)
 				arg_notickets = 1;
+			else if(strncmp(optarg, "invokinguser=", 13) == 0)
+				snprintf(invokinguser, sizeof(invokinguser),
+					 "%s", &optarg[13]);
 			/* All other arguments are silently ignored */
 			break;
 		default:
@@ -340,6 +325,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	}
+
 	switch(argc - optind) {
 	case 2:
 		/* class = argv[optind + 1]; */
@@ -396,7 +382,8 @@ main(int argc, char **argv)
 		break;
 	}
 
-	ret = krb5_login(username, password, arg_login, !arg_notickets);
+	ret = krb5_login(username, invokinguser, password, arg_login,
+			 !arg_notickets);
 			 
 #ifdef PASSWD
 	if(ret != AUTH_OK)
