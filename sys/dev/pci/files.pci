@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.81 2000/08/18 02:25:14 mickey Exp $
+#	$OpenBSD: files.pci,v 1.82 2000/08/29 23:45:39 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -276,7 +276,7 @@ file	dev/pci/pccbb.c			cbb
 # SysKonnect 984x gigabit ethernet
 device	skc {}
 attach	skc at pci
-device	sk: ether, ifnet, ifmedia
+device	sk: ether, ifnet, mii, ifmedia
 attach	sk at skc
 file	dev/pci/if_sk.c			skc | sk
 

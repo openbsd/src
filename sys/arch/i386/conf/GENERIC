@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.203 2000/08/18 15:57:08 marc Exp $
+#	$OpenBSD: GENERIC,v 1.204 2000/08/29 23:45:42 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -318,6 +318,8 @@ rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 dcphy*	at mii? phy ?				# Digital Clone PHYs
 dmphy*	at mii? phy ?				# Davicom DM9101 PHYs
 tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
+brgphy*	at mii? phy ?				# Broadcom Gigabit PHYs
+xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
