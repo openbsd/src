@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: api.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: api.c,v 1.2 1997/07/22 11:18:19 provos Exp $";
 #endif
 
 #define _API_C_
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: api.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
 #include <string.h>
 #include "state.h"
 #include "photuris.h"
+#include "config.h"
 #include "api.h"
 #include "errlog.h"
 #include "buffer.h"
@@ -85,43 +86,29 @@ process_api(int fd, int sendsock)
 	if (!sz)
 	     return;
 
-	if (addresses != (char **) NULL)
-	     for (i = 0; i<num_ifs; i++) {
-		  if (addresses[i] == (char *)NULL)
-		       continue;
-		  if (!strcmp(addresses[i], buffer)) {
-		       /* XXX Code to notify kernel of failure here */
-		       log_error(0, "discarded request to initiate KES with localhost");
-		       return;
-		  }
-	     }
-
-	if (inet_addr(buffer) == -1) {
-	     /* XXX Code to notify kernel of failure */
-	     log_error(0, "invalid destination IP address: %s", buffer);
-	     return;
-	}
-
-#ifdef DEBUG
-	printf("[Initiating KES with %s]\n", buffer);
-#endif
-
 	/* Set up a new state object */
 	if ((st = state_new()) == NULL) {
 	     log_error(1, "state_new() in process_api()");
 	     return;
 	}
 
-	/* Default options */
-	st->flags |= IPSEC_OPT_ENC | IPSEC_OPT_AUTH;
+	startup_parse(st, buffer);
 
-	if (start_exchange(sendsock, st, buffer, global_port) == -1) {
-	     log_error(0, "start_exchange in process_api()");
-	     state_value_reset(st);
-	     return;
-	}
+	if (addresses != (char **) NULL && strlen(st->address))
+	     for (i = 0; i<num_ifs; i++) {
+		  if (addresses[i] == (char *)NULL)
+		       continue;
+		  if (!strcmp(addresses[i], st->address)) {
+		       /* XXX Code to notify kernel of failure here */
+		       log_error(0, "discarded request to initiate KES with localhost");
+		       state_value_reset(st);
+		       free(st);
+		       return;
+		  }
+	     }
 
-	state_insert(st);
+	startup_end(st);
+
 #ifdef DEBUG
 	printf("API finished.\n");
 #endif

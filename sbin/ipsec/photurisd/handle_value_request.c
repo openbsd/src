@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.2 1997/07/22 11:18:23 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$Id: handle_value_request.c,v 1.1.1.1 1997/07/18 22:48:50
 #include "packet.h"
 #include "exchange.h"
 #include "secrets.h"
+#include "server.h"
 #include "errlog.h"
 
 int
@@ -81,7 +82,7 @@ handle_value_request(u_char *packet, int size,
 	     tempst.initiator = 0;                   /* We are the Responder */ 
 	     bcopy(header->icookie, tempst.icookie, COOKIE_SIZE); 
 	     strncpy(tempst.address, address, 15); 
-	     tempst.port = port; 
+	     tempst.port = global_port; 
 	     tempst.counter = header->counter;
 	     
 	     cookie_generate(&tempst, rcookie, COOKIE_SIZE); 

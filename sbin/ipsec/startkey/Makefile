@@ -1,7 +1,7 @@
 PROG=   startkey
 SRCS=   startkey.c
-NOMAN=
 
 CFLAGS+= -I${.CURDIR}/../photurisd
+MAN= startkey.1
 
 .include <bsd.prog.mk>

@@ -31,10 +31,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: startkey.c,v 1.1.1.1 1997/07/18 22:50:23 provos Exp $";
+static char rcsid[] = "$Id: startkey.c,v 1.2 1997/07/22 11:18:26 provos Exp $";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -46,8 +47,8 @@ static char rcsid[] = "$Id: startkey.c,v 1.1.1.1 1997/07/18 22:50:23 provos Exp 
 void
 usage(char *name)
 {
-	fprintf(stderr, "Usage: %s [-d dir] <ip address>\n", name);
-	exit();
+	fprintf(stderr, "Usage: %s [-d dir] <options...>\n", name);
+	exit(0);
 }
 
 
@@ -59,7 +60,9 @@ int
 main(int argc, char **argv)
 {
 	int fd, ch;
-	char *dir = PHOTURIS_DIR;
+	int i, len;
+
+	char *dir = PHOTURIS_DIR, *buffer;
 
 	while ((ch = getopt(argc, argv, "d:")) != -1)
 		switch((char)ch) {
@@ -70,12 +73,19 @@ main(int argc, char **argv)
 				usage(argv[0]);
 		}
 
-        if (argc - optind != 1)
+        if (argc - optind < 1)
                 usage(argv[0]);
 
 	argc -= optind;
 	argv += optind;
 
+	for (len=0, i=0; i<argc; i++) {
+	     if (strchr(argv[i], '=')  == NULL) {
+		  fprintf(stderr, "missing = in %s\n", argv[i]);
+		  exit(-1);
+	     }
+	     len += strlen(argv[i])+1;
+	}
 
 	if (chdir(dir) == -1) {
 		fprintf(stderr, "Can't change dir to %s\n", dir);
@@ -83,17 +93,30 @@ main(int argc, char **argv)
 	}
 
 	fd = open(PHOTURIS_FIFO, O_WRONLY | O_NONBLOCK, 0);
+
 	if (fd == -1)
 	{
 		perror("open()");
 		exit(-1);
 	}
-
-	if (write(fd, argv[0], strlen(argv[0])) != strlen(argv[0]))
-	{
-		perror("write()");
-		exit(-1);
+	
+	if ((buffer = calloc(len, sizeof(char))) == NULL) {
+	     perror("calloc()");
+	     exit(-1);
 	}
+
+	for (i=0; i<argc; i++) {
+	     strcpy(buffer+strlen(buffer), argv[i]);
+	     strcat(buffer, " ");
+	}
+
+	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
+	{
+	     perror("write()");
+	     exit(-1);
+	}
+
+	free(buffer);
 
 	close(fd);
 

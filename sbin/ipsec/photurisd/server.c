@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.2 1997/07/22 11:18:25 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -240,7 +240,7 @@ server(void)
 	  timeout.tv_usec = 0;
 	  timeout.tv_sec = schedule_next();
 
-#ifdef DEBUG
+#ifdef DEBUG2
 	  printf("Sleeping for %ld seconds\n", timeout.tv_sec);
 #endif
 

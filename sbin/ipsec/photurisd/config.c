@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.2 1997/07/22 11:18:21 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -142,6 +142,8 @@ init_attributes(void)
 
 	       if (ob == NULL && (ob = attrib_new()) == NULL) 
                     crit_error(1, "attribute_new() in init_attributes()");
+	       else 
+		    def_flag = 1;
 
 	       if (!strcmp(p, "AT_AH_ATTRIB")) {
 		    attrib[0] = AT_AH_ATTRIB;
@@ -432,10 +434,137 @@ init_times(void)
      return 0;
 }
 
+void
+startup_parse(struct stateob *st, char *p2)
+{
+     char *p, *p3;
+
+     while((p=strsep(&p2, " ")) != NULL) {
+	  if ((p3 = strchr(p, '=')) == NULL) {
+	       log_error(0, "missing = in %s in startup_parse()", p);
+	       continue;
+	  }
+	  if (strlen(++p3) == 0) {
+	       log_error(0, "option missing after %s in startup_parse()", p);
+	       continue;
+	  }
+	  if (!strncmp(p, OPT_DST, strlen(OPT_DST))) {
+	       if (inet_addr(p3) == -1) {
+		    log_error(0, "invalid destination IP address: %s", p3);
+		    continue;
+	       }
+	       strncpy(st->address, p3, 15);
+	       st->address[15] = '\0';
+	  } else if (!strncmp(p, OPT_PORT, strlen(OPT_PORT))) {
+	       if ((st->port = atoi(p3)) == 0) {
+		    log_error(0, "invalid port number: %s", p3);
+		    continue;
+	       }
+	  } else if (!strncmp(p, OPT_USER, strlen(OPT_USER))) {
+	       struct passwd *pwd;
+	       if ((st->user = strdup(p3)) == NULL) {
+		    log_error(1, "strdup() in startup_parse()");
+		    continue;
+	       }
+	       if ((pwd = getpwnam(st->user)) == NULL) {
+		    log_error(1, "getpwnam() in startup_parse()");
+		    continue;
+	       }
+	  } else if (!strncmp(p, OPT_OPTIONS, strlen(OPT_OPTIONS))) {
+	       while((p = strsep(&p3, ",")) != NULL) {
+		    if(!strcmp(p, OPT_ENC))
+			 st->flags |= IPSEC_OPT_ENC;
+		    else if(!strcmp(p, OPT_AUTH))
+			 st->flags |= IPSEC_OPT_AUTH;
+		    else {
+			 log_error(0, "Unkown options %s in startup_parse()", p);
+			 continue;
+		    }
+	       }
+	  } else if (!strncmp(p, OPT_TSRC, strlen(OPT_TSRC))) {
+	       p = strsep(&p3, "/");
+	       if (p == NULL || p3 == NULL) {
+		    log_error(0, "tsrc missing addr/mask in startup_parse()");
+		    continue;
+	       }
+	       if ((st->isrc = inet_addr(p)) == -1) {
+		    log_error(0, "invalid tsrc addr %s in startup_parse()",
+			      p);
+		    continue;
+	       }
+	       if ((st->ismask = inet_addr(p3)) == -1 &&
+		   strcmp(p3, "255.255.255.255")) {
+		    log_error(0, "invalid tsrc mask %s in startup_parse()",
+			      p3);
+		    st->isrc = -1;
+		    continue;
+	       }
+	  } else if (!strncmp(p, OPT_TDST, strlen(OPT_TDST))) {
+	       p = strsep(&p3, "/");
+	       if (p == NULL || p3 == NULL) {
+		    log_error(0, "tdst missing addr/mask in startup_parse()");
+		    continue;
+	       }
+	       if ((st->idst = inet_addr(p)) == -1) {
+		    log_error(0, "invalid tdst addr %s in startup_parse()", p);
+		    continue;
+	       }
+	       if ((st->idmask = inet_addr(p3)) == -1 &&
+		   strcmp(p3, "255.255.255.255")) {
+		    log_error(0, "invalid tdst mask %s in startup_parse()", p3);
+		    st->idst = -1;
+		    continue;
+	       }
+	  }
+     }
+}
+
+void
+startup_end(struct stateob *st)
+{
+     if (!strlen(st->address)) {
+	  log_error(0, "no destination given in startup_end()");
+	  state_value_reset(st);
+	  free(st);
+	  return;
+     }
+     if (st->port == 0)
+	  st->port = global_port;
+
+     if (st->flags == 0)
+	  st->flags = IPSEC_OPT_ENC | IPSEC_OPT_AUTH;
+
+     if (st->isrc != -1 && st->idst != -1 && st->isrc && st->idst)
+	  st->flags |= IPSEC_OPT_TUNNEL;
+
+#ifdef DEBUG
+     printf("Starting exchange with: %s:%d and options:", 
+	    st->address, st->port);
+     if (st->flags & IPSEC_OPT_ENC)
+	  printf("%s ", OPT_ENC);
+     if (st->flags & IPSEC_OPT_AUTH)
+	  printf("%s ", OPT_AUTH);
+     if (st->flags & IPSEC_OPT_TUNNEL)
+	  printf("(tunnel mode) ");
+     else
+	  printf("(transport mode) ");
+     if (st->user != NULL)
+	  printf("for user %s", st->user);
+     printf("\n");
+#endif
+     if (start_exchange(global_socket, st, 
+			st->address, st->port) == -1) {
+	  log_error(0, "start_exchange in startup_end()");
+	  state_value_reset(st);
+	  free(st);
+     } else 
+	  state_insert(st);
+}
+
 int
 init_startup(void)
 {
-     char *p, *p2, *p3;
+     char *p, *p2;
      struct stateob *st = NULL;
 
 #ifdef DEBUG
@@ -447,47 +576,12 @@ init_startup(void)
 	  p2 = config_get("");
 	  /* We read a newline or end of file */
 	  if((p2 == NULL || strlen(p2) == 0) && st != NULL) {
-	       if (st->address == NULL) {
-		    log_error(0, "no destination given in init_startip()");
-		    state_value_reset(st);
-		    st = NULL;
-		    if (p2 != NULL)
-			 continue;
-		    else
-			 break;
-	       }
-	       if (st->port == 0)
-		    st->port = global_port;
-	       if (st->flags == 0)
-		    st->flags = IPSEC_OPT_ENC | IPSEC_OPT_AUTH;
-	       if (st->isrc != -1 && st->idst != -1 &&
-		   st->isrc && st->idst)
-		    st->flags |= IPSEC_OPT_TUNNEL;
-
-#ifdef DEBUG
-	       printf("Starting exchange with: %s:%d and options:",
-		      st->address, st->port);
-	       if (st->flags & IPSEC_OPT_ENC)
-		    printf("%s ", OPT_ENC);
-	       if (st->flags & IPSEC_OPT_AUTH)
-		    printf("%s ", OPT_AUTH);
-	       if (st->flags & IPSEC_OPT_TUNNEL)
-		    printf("(tunnel mode) ");
+	       startup_end(st);
+	       st = NULL;
+	       if (p2 != NULL)
+		    continue;
 	       else
-		    printf("(transport mode) ");
-	       if (st->user != NULL)
-		    printf("for user %s", st->user);
-	       printf("\n");
-#endif
-	       if (start_exchange(global_socket, st, 
-				  st->address, st->port) == -1) {
-		    log_error(0, "start_exchange in init_startup()");
-		    state_value_reset(st);
-		    st = NULL;
-	       } else {
-		    state_insert(st);
-		    st = NULL;
-	       }
+		    break;
 	  }
 	  if (p2 == NULL)
 	       break;
@@ -497,89 +591,8 @@ init_startup(void)
 	  if (st == NULL && ((st = state_new()) == NULL))
 		    crit_error(0, "state_new() in init_startup()");
 
-	  while((p=strsep(&p2, " ")) != NULL) {
-	       if ((p3 = strchr(p, '=')) == NULL) {
-		    log_error(0, "missing = in %s in init_startup()", p);
-		    continue;
-	       }
-	       if (strlen(++p3) == 0) {
-		    log_error(0, "option missing after %s in init_startup()",
-			      p);
-		    continue;
-	       }
-	       if (!strncmp(p, OPT_DST, strlen(OPT_DST))) {
-		    if (inet_addr(p3) == -1) {
-			 log_error(0, "invalid destination IP address: %s",
-				   p3);
-			 continue;
-		    }
-		    strncpy(st->address, p3, 15);
-		    st->address[15] = '\0';
-	       } else if (!strncmp(p, OPT_PORT, strlen(OPT_PORT))) {
-		    if ((st->port = atoi(p3)) == 0) {
-			 log_error(0, "invalid port number: %s", p3);
-			 continue;
-		    }
-	       } else if (!strncmp(p, OPT_USER, strlen(OPT_USER))) {
-		    struct passwd *pwd;
-		    if ((st->user = strdup(p3)) == NULL) {
-			 log_error(1, "strdup() in init_startup()");
-			 continue;
-		    }
-		    if ((pwd = getpwnam(st->user)) == NULL) {
-			 log_error(1, "getpwnam() in init_startup()");
-			 continue;
-		    }
-	       } else if (!strncmp(p, OPT_OPTIONS, strlen(OPT_OPTIONS))) {
-		    while((p = strsep(&p3, ",")) != NULL) {
-			 if(!strcmp(p, OPT_ENC))
-			      st->flags |= IPSEC_OPT_ENC;
-			 else if(!strcmp(p, OPT_AUTH))
-			      st->flags |= IPSEC_OPT_AUTH;
-			 else {
-			      log_error(0, "Unkown options %s in init_startup()",
-					p);
-			      continue;
-			 }
-		    }
-	       } else if (!strncmp(p, OPT_TSRC, strlen(OPT_TSRC))) {
-		    p = strsep(&p3, "/");
-		    if (p == NULL || p3 == NULL) {
-			 log_error(0, "tsrc missing addr/mask in init_startup()");
-			 continue;
-		    }
-		    if ((st->isrc = inet_addr(p)) == -1) {
-			 log_error(0, "invalid tsrc addr %s in init_startup()",
-				   p);
-			 continue;
-		    }
-		    if ((st->ismask = inet_addr(p3)) == -1 &&
-			strcmp(p3, "255.255.255.255")) {
-			 log_error(0, "invalid tsrc mask %s in init_startup()",
-				   p3);
-			 st->isrc = -1;
-			 continue;
-		    }
-	       } else if (!strncmp(p, OPT_TDST, strlen(OPT_TDST))) {
-		    p = strsep(&p3, "/");
-		    if (p == NULL || p3 == NULL) {
-			 log_error(0, "tdst missing addr/mask in init_startup()");
-			 continue;
-		    }
-		    if ((st->idst = inet_addr(p)) == -1) {
-			 log_error(0, "invalid tdst addr %s in init_startup()",
-				   p);
-			 continue;
-		    }
-		    if ((st->idmask = inet_addr(p3)) == -1 &&
-			strcmp(p3, "255.255.255.255")) {
-			 log_error(0, "invalid tdst mask %s in init_startup()",
-				   p3);
-			 st->idst = -1;
-			 continue;
-		    }
-	       }
-	  }
+	  startup_parse(st, p2);
+
      }
      close_config_file();
 

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_cookie_response.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: photuris_cookie_response.c,v 1.2 1997/07/22 11:18:23 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: photuris_cookie_response.c,v 1.1.1.1 1997/07/18 22:4
 #include "packets.h"
 #include "state.h"
 #include "cookie.h"
+#include "server.h"
 
 
 /* XXX - on value_request receive we need to set the responder schemes */
@@ -70,7 +71,7 @@ photuris_cookie_response(struct stateob *st, u_char *buffer, int *size,
 	tempst.initiator = 0;                   /* We are the Responder */
 	bcopy(icookie, tempst.icookie, COOKIE_SIZE);
 	strncpy(tempst.address, address, 15);
-	tempst.port = port;
+	tempst.port = global_port;
 
       	bcopy(tempst.icookie, header->icookie, COOKIE_SIZE);
 

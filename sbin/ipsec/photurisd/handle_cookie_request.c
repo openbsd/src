@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_cookie_request.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: handle_cookie_request.c,v 1.2 1997/07/22 11:18:22 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -69,7 +69,7 @@ handle_cookie_request(u_char *packet, int size,
 	header = (struct cookie_request *) packet;
 
 	if ((prev_st=state_find(address)) != NULL) {
-	     int exceeded = 1;
+	     int exceeded = 1, match = 0;
 
 	     st = prev_st;
 
@@ -80,20 +80,20 @@ handle_cookie_request(u_char *packet, int size,
 
 	     tm = time(NULL);
 	     while(prev_st != NULL) {
-		  if ((!prev_st->initiator && 
-		       !bcmp(prev_st->rcookie, header->rcookie, COOKIE_SIZE))||
-		       (prev_st->initiator && 
-			!bcmp(prev_st->icookie, header->rcookie, COOKIE_SIZE)))
-		       break;
 		  if (prev_st->lifetime > tm)
 		       exceeded = 0;
 
 		  if (prev_st->lifetime > st->lifetime)
 		       st = prev_st;
 
+		  if ((!prev_st->initiator && 
+		       !bcmp(prev_st->rcookie, header->rcookie, COOKIE_SIZE))||
+		       (prev_st->initiator && 
+			!bcmp(prev_st->icookie, header->rcookie, COOKIE_SIZE)))
+		       match = 1;
 		  prev_st = state_find_next(prev_st, address);
 	     }
-	     if (prev_st == NULL && !exceeded) {
+	     if (!match && !exceeded) {
 		  packet_size = PACKET_BUFFER_SIZE;
 		  photuris_error_message(st, packet_buffer, &packet_size,
 					 header->icookie, header->rcookie,
@@ -107,8 +107,8 @@ handle_cookie_request(u_char *packet, int size,
 	bcopy(header->icookie, icookie, COOKIE_SIZE);
 
 	packet_size = PACKET_BUFFER_SIZE;
-	if (photuris_cookie_response(prev_st != NULL && 
-				     prev_st->lifetime < tm ? prev_st : NULL, 
+	if (photuris_cookie_response(st != NULL && 
+				     st->lifetime > tm ? st : NULL, 
 				     packet_buffer, &packet_size,
 				     icookie, header->counter,
 				     address, port,
