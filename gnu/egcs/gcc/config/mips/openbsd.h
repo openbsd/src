@@ -36,6 +36,10 @@ Boston, MA 02111-1307, USA.  */
    it as it is until we have some kind of profiling working.  */
 #define LIB_SPEC OBSD_LIB_SPEC
 
+/* We are little endian by default, unless an includer thinks otherwise.  */
+#ifndef TARGET_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT 0
+#endif
 
 #include <mips/mips.h>
 
