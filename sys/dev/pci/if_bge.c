@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.24 2004/04/09 21:52:16 henning Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.25 2004/04/12 06:56:42 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1085,10 +1085,7 @@ bge_chipinit(sc)
 #else
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_MODECTL_WORDSWAP_NONFRAME|
 		    BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA|
-		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS
-/*		    |BGE_MODECTL_TX_NO_PHDR_CSUM| */
-/*		    BGE_MODECTL_RX_NO_PHDR_CSUM */
-);
+		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS);
 #endif
 
 	/*
@@ -1863,6 +1860,10 @@ bge_reset(sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, command);
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
+	/* Enable memory arbiter. */
+	if (sc->bge_asicrev != BGE_ASICREV_BCM5705)
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+
 	/*
 	 * Prevent PXE restart: write a magic number to the
 	 * general communications memory at 0xB50.
@@ -1901,10 +1902,6 @@ bge_reset(sc)
 			break;
 		DELAY(10);
 	}
-
-	/* Enable memory arbiter. */
-	if (sc->bge_asicrev != BGE_ASICREV_BCM5705)
-		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_MODECTL_BYTESWAP_NONFRAME|
