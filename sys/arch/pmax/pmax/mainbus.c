@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 1995/09/12 07:41:30 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 1995/12/28 06:45:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -164,7 +164,8 @@ mbattach(parent, self, aux)
 	 * optional framebuffer.
 	 */
 #if defined(DS3100)
-	if (cputype == DS_PMAX) {
+	/* XXX mipsfair: just a guess */
+	if (cputype == DS_PMAX || cputype == DS_MIPSFAIR) {
 		/*XXX*/
 		sc->sc_bus.ab_intr_establish = kn01_intr_establish;
 		sc->sc_bus.ab_intr_disestablish = kn01_intr_disestablish;

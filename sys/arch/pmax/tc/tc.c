@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.5 1995/10/09 01:45:30 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.6 1995/12/28 06:44:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -170,6 +170,8 @@ cpu_tcdesc(cpu)
 	} else if (cpu == DS_PMAX) {
 		DPRINTF(("tcattach: PMAX, no turbochannel\n"));
 		return NULL;
+	} else if (cpu == DS_MIPSFAIR) {
+		DPRINTF(("tcattach: Mipsfair (5100), no turbochannel\n"));
 	} else {
 		panic("tcattach: Unrecognized bus type 0x%x\n", cpu);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1995/10/07 06:25:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1995/12/28 06:45:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -408,6 +408,24 @@ mach_init(argc, argv, code, cv)
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "3100");
+		break;
+
+	case DS_MIPSFAIR:	/* DS5100 mipsfair */
+		/* XXX just a guess */
+		/*
+		 * Set up interrupt handling and I/O addresses.
+		 */
+		pmax_hardware_intr = kn01_intr;
+		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
+		Mach_splbio = Mach_spl0;
+		Mach_splnet = Mach_spl1;
+		Mach_spltty = Mach_spl2;
+		Mach_splimp = Mach_spl2;
+		Mach_splclock = Mach_spl3;
+		Mach_splstatclock = Mach_spl3;
+		Mach_clock_addr = (volatile struct chiptime *)
+			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
+		strcpy(cpu_model, "5100");
 		break;
 
 #ifdef DS5000
