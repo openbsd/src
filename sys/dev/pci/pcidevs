@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.732 2004/05/10 10:42:19 peter Exp $
+$OpenBSD: pcidevs,v 1.733 2004/05/10 16:06:46 peter Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -241,6 +241,7 @@ vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	LANERGY		0x1812	Lanergy
+vendor	RALINK		0x1814	Ralink
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	HINT		0x3388	Hint
@@ -1958,6 +1959,9 @@ product QLOGIC ISP2300		0x2300	ISP2300
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
+
+/* Ralink Technology Corporation */
+product RALINK RT2460A		0x0101	RT2460A
 
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8029		0x8029	8029
