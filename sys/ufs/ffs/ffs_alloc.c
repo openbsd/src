@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.47 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.48 2004/07/02 13:03:36 mickey Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1417,7 +1417,7 @@ ffs_blkfree(ip, bno, size)
 	}
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
-		printf("bad block %d, ino %d\n", bno, ip->i_number);
+		printf("bad block %d, ino %u\n", bno, ip->i_number);
 		ffs_fserr(fs, ip->i_ffs_uid, "bad block");
 		return;
 	}
@@ -1541,7 +1541,7 @@ ffs_freefile(struct inode *pip, ino_t ino, int mode)
 	cgp->cg_time = time_second;
 	ino %= fs->fs_ipg;
 	if (isclr(cg_inosused(cgp), ino)) {
-		printf("dev = 0x%x, ino = %d, fs = %s\n",
+		printf("dev = 0x%x, ino = %u, fs = %s\n",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)
 			panic("ffs_freefile: freeing free inode");
