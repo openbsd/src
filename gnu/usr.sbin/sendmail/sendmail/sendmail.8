@@ -24,7 +24,6 @@
 .Op Fl v
 .Nm hoststat
 .Nm purgestat
-.Nm smtpd
 .Sh DESCRIPTION
 .Nm Sendmail
 sends a message to one or more
@@ -546,12 +545,6 @@ If invoked as
 .Nm purgestat ,
 .Nm sendmail
 will purge expired entries from the persistent host status database.
-If invoked as
-.Nm smtpd ,
-.Nm sendmail
-will act as a daemon, as if the
-.Fl bd
-option were specified.
 .Sh NOTES
 .Nm sendmail
 often gets blamed for many problems
