@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.19 1997/02/16 04:39:07 downsj Exp $	*/
+/*	$OpenBSD: login.c,v 1.20 1997/04/19 21:01:12 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.19 1997/02/16 04:39:07 downsj Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.20 1997/04/19 21:01:12 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -258,7 +258,8 @@ main(argc, argv)
 				badlogin(tbuf);
 			failures = 0;
 		}
-		(void)strcpy(tbuf, username);
+		(void)strncpy(tbuf, username, sizeof tbuf-1);
+		tbuf[sizeof tbuf-1] = '\0';
 
 		if ((pwd = getpwnam(username)))
 			salt = pwd->pw_passwd;
@@ -497,8 +498,9 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
-	    p + 1 : pwd->pw_shell);
+	(void)strncpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
+	    p + 1 : pwd->pw_shell, sizeof tbuf - 1 - 1);
+	tbuf[sizeof tbuf - 1] = '\0';
 
 	if (setlogin(pwd->pw_name) < 0)
 		syslog(LOG_ERR, "setlogin() failure: %m");
