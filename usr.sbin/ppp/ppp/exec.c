@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.3 1999/05/24 16:39:19 brian Exp $
+ *	$Id: exec.c,v 1.4 1999/06/01 19:08:52 brian Exp $
  */
 
 #include <sys/param.h>
@@ -151,6 +151,7 @@ exec_Create(struct physical *p)
           dup2(fids[1], STDOUT_FILENO);
           dup2(fids[1], STDERR_FILENO);
 
+          log_Printf(LogDEBUG, "Exec'ing ``%s''\n", p->name.base);
           argc = MakeArgs(p->name.base, argv, VECSIZE(argv));
           command_Expand(argv, argc, (char const *const *)argv,
                          p->dl->bundle, 0);
