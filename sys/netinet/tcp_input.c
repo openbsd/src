@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.141 2004/01/09 12:31:44 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.142 2004/01/13 09:22:52 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3930,10 +3930,9 @@ syn_cache_respond(sc, m)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
-	struct tcpcb *tp;
 	struct tcphdr *th;
 	u_int hlen;
-	struct socket *so;
+	struct inpcb *inp;
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
@@ -3954,7 +3953,9 @@ syn_cache_respond(sc, m)
 
 	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
+#ifdef TCP_SACK
 	    ((sc->sc_flags & SCF_SACK_PERMIT) ? 4 : 0) +
+#endif
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 
 	tlen = hlen + sizeof(struct tcphdr) + optlen;
@@ -3982,11 +3983,6 @@ syn_cache_respond(sc, m)
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
-	if (sc->sc_tp) {
-		tp = sc->sc_tp;
-		so = tp->t_inpcb->inp_socket;
-	} else
-		so = NULL;
 	m->m_pkthdr.rcvif = NULL;
 	memset(mtod(m, u_char *), 0, tlen);
 
@@ -4103,17 +4099,15 @@ syn_cache_respond(sc, m)
 #endif
 	}
 
-#if 0
-	/* XXX use IPsec policy on listening socket, on SYN ACK */
-	tp = sc->sc_tp;
-#endif
+	/* use IPsec policy from listening socket, on SYN ACK */
+	inp = sc->sc_tp ? sc->sc_tp->t_inpcb : NULL;
 
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0), 
-		    (struct ip_moptions *)NULL, so);
+		    (struct ip_moptions *)NULL, inp);
 		break;
 #endif
 #ifdef INET6
