@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.22 2003/06/11 20:58:45 markus Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.23 2004/01/18 15:33:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.22 2003/06/11 20:58:45 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.23 2004/01/18 15:33:30 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -359,6 +359,7 @@ static int udp_cksum(register const struct ip *ip,
 #define RADIUS_ACCT_PORT     1813
 #define HSRP_PORT 1985		/*XXX*/
 #define LWRES_PORT 921
+#define MULTICASTDNS_PORT 5353
 
 #ifdef INET6
 #define RIPNG_PORT 521		/*XXX*/
@@ -564,7 +565,9 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))
 		if (ISPORT(NAMESERVER_PORT))
-			ns_print((const u_char *)(up + 1), length);
+			ns_print((const u_char *)(up + 1), length, 0);
+		else if (ISPORT(MULTICASTDNS_PORT))
+			ns_print((const u_char *)(up + 1), length, 1);
 		else if (ISPORT(LWRES_PORT))
 			lwres_print((const u_char *)(up + 1), length);
 		else if (ISPORT(TIMED_PORT))

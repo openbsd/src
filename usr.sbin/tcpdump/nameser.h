@@ -1,4 +1,4 @@
-/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/nameser.h,v 1.3 2003/06/02 23:36:54 millert Exp $ (LBL) */
+/* @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/nameser.h,v 1.4 2004/01/18 15:33:30 otto Exp $ (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,6 +71,7 @@
  * Internet nameserver port number
  */
 #define NAMESERVER_PORT	53
+#define MULTICASTDNS_PORT	5353
 
 /*
  * Currently defined opcodes
@@ -141,10 +142,18 @@
 #define T_SRV		33		/* Server selection */
 #define T_ATMA		34		/* ATM Address */
 #define T_NAPTR		35		/* Naming Authority PoinTeR */
+#define T_KX		36		/* Key Exchanger */
 #define T_CERT		37		/* certificate */
 #define T_A6		38		/* IP6 address */
 #define T_DNAME		39		/* non-terminal redirection */
+#define T_SINK		40		/* SINK */
 #define T_OPT		41		/* EDNS0 option (meta-RR) */
+#define T_APL		42		/* APL */
+#define T_DS		43		/* Delegation Signer */
+#define T_SSHFP		44		/* SSH Key Fingerprint */
+#define T_RRSIG		46		/* RRSIG */
+#define T_NSEC		47		/* NSEC */
+#define T_DNSKEY	48		/* DNSKEY */
 	/* non standard */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */
@@ -169,6 +178,7 @@
 #define C_HS		4		/* for Hesiod name server (MIT) (XXX) */
 	/* Query class values which do not appear in resource records */
 #define C_ANY		255		/* wildcard match */
+#define C_CACHE_FLUSH	0x8000		/* mDNS cache flush flag */
 
 /*
  * Status return codes for T_UNSPEC conversion routines

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.14 2001/03/28 19:46:11 jakob Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.15 2004/01/18 15:33:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.14 2001/03/28 19:46:11 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.15 2004/01/18 15:33:30 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -56,13 +56,13 @@ static const char rcsid[] =
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
 
-static char *ns_ops[] = {
+static const char *ns_ops[] = {
 	"", " inv_q", " stat", " op3", " notify", " update", " op6", " op7",
 	" op8", " updataA", " updateD", " updateDA",
 	" updateM", " updateMA", " zoneInit", " zoneRef",
 };
 
-static char *ns_resp[] = {
+static const char *ns_resp[] = {
 	"", " FormErr", " ServFail", " NXDomain",
 	" NotImp", " Refused", " YXDomain", " YXRRSet",
 	" NXRRSet", " NotAuth", " NotZone", " Resp11",
@@ -71,15 +71,16 @@ static char *ns_resp[] = {
 
 /* skip over a domain name */
 static const u_char *
-ns_nskip(register const u_char *cp, register const u_char *bp)
+ns_nskip(register const u_char *cp)
 {
 	register u_char i;
 
 	if (!TTEST2(*cp, 1))
 		return (NULL);
-	if (((i = *cp++) & INDIR_MASK) == INDIR_MASK)
-		return (cp + 1);
+	i = *cp++;
 	while (i) {
+		if ((i & INDIR_MASK) == INDIR_MASK)
+			return (cp + 1);
 		if ((i & INDIR_MASK) == EDNS0_MASK) {
 			int bitlen, bytelen;
 
@@ -169,7 +170,7 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 	int elt;
 	int data_size = snapend - bp;
 
-	if ((l = labellen(cp)) < 0)
+	if ((l = labellen(cp)) == (u_int)-1)
 		return(NULL);
 	if (!TTEST2(*cp, 1))
 		return(NULL);
@@ -189,7 +190,7 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 				if (!TTEST2(*cp, 1))
 					return(NULL);
 				cp = bp + (((i << 8) | *cp) & 0x3fff);
-				if ((l = labellen(cp)) < 0)
+				if ((l = labellen(cp)) == (u_int)-1)
 					return(NULL);
 				if (!TTEST2(*cp, 1))
 					return(NULL);
@@ -228,7 +229,7 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 			cp += l;
 			chars_processed += l;
 			putchar('.');
-			if ((l = labellen(cp)) < 0)
+			if ((l = labellen(cp)) == (u_int)-1)
 				return(NULL);
 			if (!TTEST2(*cp, 1))
 				return(NULL);
@@ -244,7 +245,7 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 
 /* print a <character-string> */
 static const u_char *
-ns_cprint(register const u_char *cp, register const u_char *bp)
+ns_cprint(register const u_char *cp)
 {
 	register u_int i;
 
@@ -256,57 +257,65 @@ ns_cprint(register const u_char *cp, register const u_char *bp)
 	return (cp + i);
 }
 
+/* http://www.iana.org/assignments/dns-parameters */
 struct tok ns_type2str[] = {
-	{ T_A,		"A" },
-	{ T_NS,		"NS" },
-	{ T_MD,		"MD" },
-	{ T_MF,		"MF" },
-	{ T_CNAME,	"CNAME" },
-	{ T_SOA,	"SOA" },
-	{ T_MB,		"MB" },
-	{ T_MG,		"MG" },
-	{ T_MR,		"MR" },
-	{ T_NULL,	"NULL" },
-	{ T_WKS,	"WKS" },
-	{ T_PTR,	"PTR" },
-	{ T_HINFO,	"HINFO" },
-	{ T_MINFO,	"MINFO" },
-	{ T_MX,		"MX" },
-	{ T_TXT,	"TXT" },
-	{ T_RP,		"RP" },
-	{ T_AFSDB,	"AFSDB" },
-	{ T_X25,	"X25" },
-	{ T_ISDN,	"ISDN" },
-	{ T_RT,		"RT" },
-	{ T_NSAP,	"NSAP" },
+	{ T_A,		"A" },			/* RFC 1035 */
+	{ T_NS,		"NS" },			/* RFC 1035 */
+	{ T_MD,		"MD" },			/* RFC 1035 */
+	{ T_MF,		"MF" },			/* RFC 1035 */
+	{ T_CNAME,	"CNAME" },		/* RFC 1035 */
+	{ T_SOA,	"SOA" },		/* RFC 1035 */
+	{ T_MB,		"MB" },			/* RFC 1035 */
+	{ T_MG,		"MG" },			/* RFC 1035 */
+	{ T_MR,		"MR" },			/* RFC 1035 */
+	{ T_NULL,	"NULL" },		/* RFC 1035 */
+	{ T_WKS,	"WKS" },		/* RFC 1035 */
+	{ T_PTR,	"PTR" },		/* RFC 1035 */
+	{ T_HINFO,	"HINFO" },		/* RFC 1035 */
+	{ T_MINFO,	"MINFO" },		/* RFC 1035 */
+	{ T_MX,		"MX" },			/* RFC 1035 */
+	{ T_TXT,	"TXT" },		/* RFC 1035 */
+	{ T_RP,		"RP" },			/* RFC 1183 */
+	{ T_AFSDB,	"AFSDB" },		/* RFC 1183 */
+	{ T_X25,	"X25" },		/* RFC 1183 */
+	{ T_ISDN,	"ISDN" },		/* RFC 1183 */
+	{ T_RT,		"RT" },			/* RFC 1183 */
+	{ T_NSAP,	"NSAP" },		/* RFC 1706 */
 	{ T_NSAP_PTR,	"NSAP_PTR" },
-	{ T_SIG,	"SIG" },
-	{ T_KEY,	"KEY" },
-	{ T_PX,		"PX" },
-	{ T_GPOS,	"GPOS" },
-	{ T_AAAA,	"AAAA" },
-	{ T_LOC,	"LOC" },
-	{ T_NXT,	"NXT" },
-	{ T_EID,	"EID" },
-	{ T_NIMLOC,	"NIMLOC" },
-	{ T_SRV,	"SRV" },
-	{ T_ATMA,	"ATMA" },
-	{ T_NAPTR,	"NAPTR" },
-	{ T_CERT,	"CERT" },
-	{ T_A6,		"A6" },
-	{ T_DNAME,	"DNAME" },
-	{ T_OPT,	"OPT" },
+	{ T_SIG,	"SIG" },		/* RFC 2535 */
+	{ T_KEY,	"KEY" },		/* RFC 2535 */
+	{ T_PX,		"PX" },			/* RFC 2163 */
+	{ T_GPOS,	"GPOS" },		/* RFC 1712 */
+	{ T_AAAA,	"AAAA" },		/* RFC 1886 */
+	{ T_LOC,	"LOC" },		/* RFC 1876 */
+	{ T_NXT,	"NXT" },		/* RFC 2535 */
+	{ T_EID,	"EID" },		/* Nimrod */
+	{ T_NIMLOC,	"NIMLOC" },		/* Nimrod */
+	{ T_SRV,	"SRV" },		/* RFC 2782 */
+	{ T_ATMA,	"ATMA" },		/* ATM Forum */
+	{ T_NAPTR,	"NAPTR" },		/* RFC 2168, RFC 2915 */
+	{ T_KX,		"KX" },
+	{ T_A6,		"A6" },			/* RFC 2874 */
+	{ T_DNAME,	"DNAME" },		/* RFC 2672 */
+	{ T_SINK,	"SINK" },
+	{ T_OPT,	"OPT" },		/* RFC 2671 */
+	{ T_APL,	"APL" },
+	{ T_DS,		"DS" },
+	{ T_SSHFP,	"SSHFP" },
+	{ T_RRSIG,	"RRSIG" },
+	{ T_NSEC,	"NSEC" },
+	{ T_DNSKEY,	"DNSKEY" },
 	{ T_UINFO,	"UINFO" },
 	{ T_UID,	"UID" },
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
 	{ T_UNSPECA,	"UNSPECA" },
-	{ T_TKEY,	"TKEY" },
-	{ T_TSIG,	"TSIG" },
-	{ T_IXFR,	"IXFR" },
-	{ T_AXFR,	"AXFR" },
-	{ T_MAILB,	"MAILB" },
-	{ T_MAILA,	"MAILA" },
+	{ T_TKEY,	"TKEY" },		/* RFC 2930 */
+	{ T_TSIG,	"TSIG" },		/* RFC 2845 */
+	{ T_IXFR,	"IXFR" },		/* RFC 1995 */
+	{ T_AXFR,	"AXFR" },		/* RFC 1035 */
+	{ T_MAILB,	"MAILB" },		/* RFC 1035 */
+	{ T_MAILA,	"MAILA" },		/* RFC 1035 */
 	{ T_ANY,	"ANY" },
 	{ 0,		NULL }
 };
@@ -321,23 +330,25 @@ struct tok ns_class2str[] = {
 
 /* print a query */
 static const u_char *
-ns_qprint(register const u_char *cp, register const u_char *bp)
+ns_qprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 {
 	register const u_char *np = cp;
 	register u_int i;
 
-	cp = ns_nskip(cp, bp);
+	cp = ns_nskip(cp);
 
 	if (cp == NULL || !TTEST2(*cp, 4))
 		return(NULL);
 
 	/* print the qtype and qclass (if it's not IN) */
-	i = *cp++ << 8;
-	i |= *cp++;
+	i = EXTRACT_16BITS(cp);
+	cp += 2;
 	printf(" %s", tok2str(ns_type2str, "Type%d", i));
-	i = *cp++ << 8;
-	i |= *cp++;
-	if (i != C_IN)
+	i = EXTRACT_16BITS(cp);
+	cp += 2;
+	if (is_mdns && i == (C_IN|C_CACHE_FLUSH))
+		printf(" (Cache flush)");
+	else if (i != C_IN)
 		printf(" %s", tok2str(ns_class2str, "(Class %d)", i));
 
 	fputs("? ", stdout);
@@ -347,7 +358,7 @@ ns_qprint(register const u_char *cp, register const u_char *bp)
 
 /* print a reply */
 static const u_char *
-ns_rprint(register const u_char *cp, register const u_char *bp)
+ns_rprint(register const u_char *cp, register const u_char *bp, int is_mdns)
 {
 	register u_int class;
 	register u_short typ, len;
@@ -358,24 +369,26 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		if ((cp = ns_nprint(cp, bp)) == NULL)
 			return NULL;
 	} else
-		cp = ns_nskip(cp, bp);
+		cp = ns_nskip(cp);
 
 	if (cp == NULL || !TTEST2(*cp, 10))
 		return (snapend);
 
 	/* print the type/qtype and class (if it's not IN) */
-	typ = *cp++ << 8;
-	typ |= *cp++;
-	class = *cp++ << 8;
-	class |= *cp++;
-	if (class != C_IN && typ != T_OPT)
+	typ = EXTRACT_16BITS(cp);
+	cp += 2;
+	class = EXTRACT_16BITS(cp);
+	cp += 2;
+	if (is_mdns && class == (C_IN|C_CACHE_FLUSH))
+		printf(" (Cache flush)");
+	else if (class != C_IN && typ != T_OPT)
 		printf(" %s", tok2str(ns_class2str, "(Class %d)", class));
 
 	/* ignore ttl */
 	cp += 4;
 
-	len = *cp++ << 8;
-	len |= *cp++;
+	len = EXTRACT_16BITS(cp);
+	cp += 2;
 
 	rp = cp + len;
 
@@ -433,8 +446,23 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		break;
 
 	case T_TXT:
+		while (cp < rp) {
+			printf(" \"");
+			cp = ns_cprint(cp);
+			if (cp == NULL)
+				return(NULL);
+			putchar('"');
+		}
+		break;
+
+	case T_SRV:
 		putchar(' ');
-		(void)ns_cprint(cp, bp);
+		if (!TTEST2(*cp, 6))
+			return(NULL);
+		if (ns_nprint(cp + 6, bp) == NULL)
+			return(NULL);
+		printf(":%d %d %d", EXTRACT_16BITS(cp + 4),
+			EXTRACT_16BITS(cp), EXTRACT_16BITS(cp + 2));
 		break;
 
 #ifdef INET6
@@ -519,57 +547,56 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 }
 
 void
-ns_print(register const u_char *bp, u_int length)
+ns_print(register const u_char *bp, u_int length, int is_mdns)
 {
 	register const HEADER *np;
 	register int qdcount, ancount, nscount, arcount;
-	register const u_char *cp = NULL;
+	register const u_char *cp;
+	u_int16_t b2;
 
 	np = (const HEADER *)bp;
 	TCHECK(*np);
 	/* get the byte-order right */
-	qdcount = ntohs(np->qdcount);
-	ancount = ntohs(np->ancount);
-	nscount = ntohs(np->nscount);
-	arcount = ntohs(np->arcount);
+	qdcount = EXTRACT_16BITS(&np->qdcount);
+	ancount = EXTRACT_16BITS(&np->ancount);
+	nscount = EXTRACT_16BITS(&np->nscount);
+	arcount = EXTRACT_16BITS(&np->arcount);
 
 	if (DNS_QR(np)) {
 		/* this is a response */
 		printf(" %d%s%s%s%s%s%s",
-			ntohs(np->id),
+			EXTRACT_16BITS(&np->id),
 			ns_ops[DNS_OPCODE(np)],
 			ns_resp[DNS_RCODE(np)],
 			DNS_AA(np)? "*" : "",
 			DNS_RA(np)? "" : "-",
 			DNS_TC(np)? "|" : "",
-			DNS_CD(np)? "%" : "");
+			DNS_AD(np)? "$" : "");
 
 		if (qdcount != 1)
 			printf(" [%dq]", qdcount);
 		/* Print QUESTION section on -vv */
 		cp = (const u_char *)(np + 1);
 		while (qdcount--) {
-			if (qdcount < ntohs(np->qdcount) - 1)
+			if (qdcount < EXTRACT_16BITS(&np->qdcount) - 1)
 				putchar(',');
 			if (vflag > 1) {
 				fputs(" q:", stdout);
-				if ((cp = ns_qprint((const u_char *)(np + 1), bp))
-				    == NULL)
+				if ((cp = ns_qprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 			} else {
-				if ((cp = ns_nskip((const u_char *)(np + 1), bp))
-				    == NULL)
+				if ((cp = ns_nskip(cp)) == NULL)
 					goto trunc;
 				cp += 4;	/* skip QTYPE and QCLASS */
 			}
 		}
 		printf(" %d/%d/%d", ancount, nscount, arcount);
 		if (ancount--) {
-			if ((cp = ns_rprint(cp, bp)) == NULL)
+			if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 				goto trunc;
 			while (cp < snapend && ancount--) {
 				putchar(',');
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 			}
 		}
@@ -579,11 +606,11 @@ ns_print(register const u_char *bp, u_int length)
 		if (vflag > 1) {
 			if (cp < snapend && nscount--) {
 				fputs(" ns:", stdout);
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 				while (cp < snapend && nscount--) {
 					putchar(',');
-					if ((cp = ns_rprint(cp, bp)) == NULL)
+					if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 						goto trunc;
 				}
 			}
@@ -591,11 +618,11 @@ ns_print(register const u_char *bp, u_int length)
 				goto trunc;
 			if (cp < snapend && arcount--) {
 				fputs(" ar:", stdout);
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 				while (cp < snapend && arcount--) {
 					putchar(',');
-					if ((cp = ns_rprint(cp, bp)) == NULL)
+					if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 						goto trunc;
 				}
 			}
@@ -605,13 +632,14 @@ ns_print(register const u_char *bp, u_int length)
 	}
 	else {
 		/* this is a request */
-		printf(" %d%s%s%s", ntohs(np->id), ns_ops[DNS_OPCODE(np)],
+		printf(" %d%s%s%s", EXTRACT_16BITS(&np->id), ns_ops[DNS_OPCODE(np)],
 		    DNS_RD(np) ? "+" : "",
-		    DNS_AD(np) ? "$" : "");
+		    DNS_CD(np) ? "%" : "");
 
 		/* any weirdness? */
-		if (*(((u_short *)np)+1) & htons(0x6cf))
-			printf(" [b2&3=0x%x]", ntohs(*(((u_short *)np)+1)));
+		b2 = EXTRACT_16BITS(((u_short *)np)+1);
+		if (b2 & 0x6cf)
+			printf(" [b2&3=0x%x]", b2);
 
 		if (DNS_OPCODE(np) == IQUERY) {
 			if (qdcount)
@@ -630,14 +658,15 @@ ns_print(register const u_char *bp, u_int length)
 		if (arcount)
 			printf(" [%dau]", arcount);
 
+		cp = (const u_char *)(np + 1);
 		if (qdcount--) {
-			cp = ns_qprint((const u_char *)(np + 1),
-				       (const u_char *)np);
+			cp = ns_qprint(cp, (const u_char *)np, is_mdns);
 			if (!cp)
 				goto trunc;
 			while (cp < snapend && qdcount--) {
 				cp = ns_qprint((const u_char *)cp,
-					       (const u_char *)np);
+					       (const u_char *)np,
+					       is_mdns);
 				if (!cp)
 					goto trunc;
 			}
@@ -647,14 +676,12 @@ ns_print(register const u_char *bp, u_int length)
 
 		/* Print remaining sections on -vv */
 		if (vflag > 1) {
-			if (!cp)
-				goto trunc;
 			if (ancount--) {
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 				while (cp < snapend && ancount--) {
 					putchar(',');
-					if ((cp = ns_rprint(cp, bp)) == NULL)
+					if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 						goto trunc;
 				}
 			}
@@ -662,11 +689,11 @@ ns_print(register const u_char *bp, u_int length)
 				goto trunc;
 			if (cp < snapend && nscount--) {
 				fputs(" ns:", stdout);
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 				while (nscount-- && cp < snapend) {
 					putchar(',');
-					if ((cp = ns_rprint(cp, bp)) == NULL)
+					if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 						goto trunc;
 				}
 			}
@@ -674,11 +701,11 @@ ns_print(register const u_char *bp, u_int length)
 				goto trunc;
 			if (cp < snapend && arcount--) {
 				fputs(" ar:", stdout);
-				if ((cp = ns_rprint(cp, bp)) == NULL)
+				if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 					goto trunc;
 				while (cp < snapend && arcount--) {
 					putchar(',');
-					if ((cp = ns_rprint(cp, bp)) == NULL)
+					if ((cp = ns_rprint(cp, bp, is_mdns)) == NULL)
 						goto trunc;
 				}
 			}

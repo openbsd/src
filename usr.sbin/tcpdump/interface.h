@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.41 2003/12/15 07:11:31 mcbride Exp $	*/
+/*	$OpenBSD: interface.h,v 1.42 2004/01/18 15:33:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.41 2003/12/15 07:11:31 mcbride Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.42 2004/01/18 15:33:30 otto Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -224,7 +224,7 @@ extern void vrrp_print(const u_char *bp, u_int len, int ttl);
 extern void hsrp_print(const u_char *, u_int);
 extern void nfsreply_print(const u_char *, u_int, const u_char *);
 extern void nfsreq_print(const u_char *, u_int, const u_char *);
-extern void ns_print(const u_char *, u_int);
+extern void ns_print(const u_char *, u_int, int);
 extern void ntp_print(const u_char *, u_int);
 extern void loop_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void null_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
