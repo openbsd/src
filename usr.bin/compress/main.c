@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1997/07/06 22:03:34 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1997/07/08 03:13:19 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.3 1997/07/06 22:03:34 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/07/08 03:13:19 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ main(argc, argv)
 			}
 		}
 
-		if (error && isreg && unlink(outfile) && verbose >= 0)
+		if (error && oreg && unlink(outfile) && verbose >= 0)
 			warn("%s", outfile);
 		else if (!error && verbose > 0)
 			fputs("OK\n", stderr);
@@ -315,7 +315,7 @@ compress(in, out, method, bits)
 		return -1;
 	}
 
-	if (!force && isatty(ofd)) {
+	if (method != M_COMPRESS && !force && isatty(ofd)) {
 		if (verbose >= 0)
 			warnx("%s: won't write compressed data to terminal",
 			      out);
