@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.16 2004/07/06 09:22:31 brad Exp $
+$OpenBSD: cardbusdevs,v 1.17 2004/09/17 23:37:26 brad Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ vendor ADMTEK			0x1317	ADMtek
 vendor ABOCOM			0x13d1	Abocom
 vendor PLANEX			0x14ea	Planex
 vendor NETGEAR			0x168c	Netgear
+vendor LINKSYS			0x1737	Linksys
 vendor INTEL			0x8086	Intel
 vendor ADP			0x9004	Adaptec
 vendor ADP2			0x9005	Adaptec(2)
@@ -106,6 +107,9 @@ product INTEL 82557		0x1229	82557
 /* XXX product name? */
 product INTEL MODEM56		0x1002	Modem
 product INTEL DFE660		0x7192	DFE-660
+
+/* Linksys products */
+product LINKSYS PCM200		0xab09	PCM200
 
 /* Netgear products */
 product NETGEAR HA501	        0x0007  HA501
