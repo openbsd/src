@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_conf.c,v 1.6 1997/11/07 08:07:33 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_conf.c,v 1.7 1998/08/13 06:39:22 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -52,6 +52,8 @@
 #include <dev/pcmcia/pcmcia_ioctl.h>
 
 #ifdef CFG_DEBUG
+static void dump __P((u_char *, int));
+
 static
 void dump(addr, len)
 	u_char *addr;
