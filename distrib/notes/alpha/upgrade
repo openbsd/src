@@ -1,7 +1,2 @@
-dnl	$OpenBSD: upgrade,v 1.6 2002/04/07 22:13:01 miod Exp $
-dnl uncomment once upgrade is available
-dnl OpenBSDUpgrade({:- the CD-ROM or an installation floppy-:})
-Currently, upgrades to OpenBSD OSREV are not available from the installation
-media.
-You can however perform an upgrade manually, by entering a shell after
-booting the installation media, and performing the necessary steps by hand.
+dnl	$OpenBSD: upgrade,v 1.7 2002/04/22 02:19:49 miod Exp $
+OpenBSDUpgrade({:- the CD-ROM or an installation floppy-:})
