@@ -314,7 +314,7 @@ register char	***arg;
 	   if the game is being recovered */
 
 	s = *arg;
-	while (s[0][0] == '-') {
+	while ((s[0] != NULL) && (s[0][0] == '-')) {
 		switch (s[0][1])  {
 
 		/* don't ask if rules or instructions needed */
