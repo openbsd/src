@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.5 1996/09/30 14:36:46 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.6 1996/10/12 00:50:43 deraadt Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -616,11 +616,11 @@ snwatchdog(ifp)
 	if (mtdhead && mtdhead->mtd_mbuf) {
 		/* something still pending for transmit */
 		if (mtdhead->mtd_txp->status == 0)
-			log(LOG_ERR, "%s%d: Tx - timeout\n",
-			    sc->sc_if.if_xname, sc->sc_if.if_softc);
+			log(LOG_ERR, "%s: Tx - timeout\n",
+			    sc->sc_if.if_xname);
 		else
-			log(LOG_ERR, "%s%d: Tx - lost interrupt\n",
-			    sc->sc_if.if_xname, sc->sc_if.if_softc);
+			log(LOG_ERR, "%s: Tx - lost interrupt\n",
+			    sc->sc_if.if_xname);
 		temp = sc->sc_if.if_flags & IFF_UP;
 		snreset(sc);
 		sc->sc_if.if_flags |= temp;
@@ -711,8 +711,8 @@ sonicput(sc, m0)
 	if (fr > FRAGMAX) {
 		mtd_free(mtdnew);
 		m_freem(m0);
-		log(LOG_ERR, "%s%d: tx too many fragments %d\n",
-		    sc->sc_if.if_xname, sc->sc_if.if_softc, fr);
+		log(LOG_ERR, "%s: tx too many fragments %d\n",
+		    sc->sc_if.if_xname, fr);
 		sc->sc_if.if_oerrors++;
 		return (len);
 	}
