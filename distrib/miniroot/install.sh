@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.72 2000/05/07 17:08:26 millert Exp $
+#	$OpenBSD: install.sh,v 1.73 2000/06/01 21:01:28 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -387,7 +387,7 @@ while [ "X${resp}" = X"" ]; do
 
 	echo -n "Password (again): "
 	stty -echo
-	getresp ""
+	getresp -n ""
 	stty echo
 	echo
 	if [ "${_password}" != "${resp}" ]; then
