@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.3 1996/11/28 23:28:02 niklas Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.4 1997/08/12 18:33:25 niklas Exp $	*/
 
 /*
  * cy.c
@@ -72,7 +72,6 @@ cy_probe_pci(parent, match, aux)
      struct device *parent;
      void *match, *aux;
 {
-  vm_offset_t v_addr, p_addr;
   int card = ((struct device *)match)->dv_unit;
   struct pci_attach_args *pa = aux;
   bus_space_tag_t memt;
@@ -116,7 +115,7 @@ cy_probe_pci(parent, match, aux)
     return 0;
   }
 
-  if(bus_space_map(iot, iobase, iosize, &ioh) != 0) {
+  if(bus_space_map(iot, iobase, iosize, 0, &ioh) != 0) {
     bus_space_unmap(memt, memh, memsize);
     printf("cy%d: couldn't map PCI io region\n", card);
     return 0; 
