@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.3 2004/01/13 00:12:15 deraadt Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.4 2004/11/09 19:17:01 claudio Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -247,9 +247,12 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++)
+	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++) {
+		if (m->m_len == 0)
+			continue;
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
 		    m->m_data, m->m_len, NULL, flags, &seg, sgmap);
+	}
 
 	alpha_mb();
 

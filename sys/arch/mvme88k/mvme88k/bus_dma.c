@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.1 2004/05/07 18:10:28 miod Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.2 2004/11/09 19:17:01 claudio Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -288,6 +288,8 @@ bus_dmamap_load_mbuf(t, map, m0, flags)
         seg = 0;
         error = 0;
         for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
                 error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
                     NULL, flags, &lastaddr, &seg, first);
                 first = 0;

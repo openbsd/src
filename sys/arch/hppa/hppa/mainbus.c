@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.60 2004/09/18 21:40:20 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.61 2004/11/09 19:17:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -774,6 +774,8 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	error = 0;
 	lastaddr = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer(NULL, map, m->m_data, m->m_len,
 		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
