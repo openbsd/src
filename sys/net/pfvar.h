@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.9 2001/06/25 10:07:15 art Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.10 2001/06/25 17:17:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -129,13 +129,34 @@ struct pf_status {
 };
 
 /*
- * ioctl parameter structure
+ * ioctl parameter structures
  */
 
-struct pfioc {
-	u_int32_t	 size;
-	u_int16_t	 entries;
-	void		*buffer;
+struct pfioc_rule {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_rule	 rule;
+};
+
+struct pfioc_nat {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_nat	 nat;
+};
+
+struct pfioc_rdr {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_rdr	 rdr;
+};
+
+struct pfioc_state {
+	u_int32_t	 nr;
+	struct pf_state	 state;
+};
+
+struct pfioc_if {
+	char		 ifname[IFNAMSIZ];
 };
 
 /*
@@ -144,16 +165,25 @@ struct pfioc {
 
 #define DIOCSTART	_IO  ('D',  1)
 #define DIOCSTOP	_IO  ('D',  2)
-#define DIOCSETRULES	_IOWR('D',  3, struct pfioc)
-#define DIOCGETRULES	_IOWR('D',  4, struct pfioc)
-#define DIOCSETNAT	_IOWR('D',  5, struct pfioc)
-#define DIOCGETNAT	_IOWR('D',  6, struct pfioc)
-#define DIOCSETRDR	_IOWR('D',  7, struct pfioc)
-#define DIOCGETRDR	_IOWR('D',  8, struct pfioc)
-#define DIOCCLRSTATES	_IO  ('D',  9)
-#define DIOCGETSTATES	_IOWR('D', 10, struct pfioc)
-#define DIOCSETSTATUSIF _IOWR('D', 11, struct pfioc)
-#define DIOCGETSTATUS	_IOWR('D', 12, struct pfioc)
+#define DIOCBEGINRULES	_IOWR('D',  3, u_int32_t)
+#define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule) 
+#define DIOCCOMMITRULES	_IOWR('D',  5, u_int32_t)
+#define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
+#define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule) 
+#define DIOCBEGINNATS	_IOWR('D',  8, u_int32_t)
+#define DIOCADDNAT	_IOWR('D',  9, struct pfioc_nat) 
+#define DIOCCOMMITNATS	_IOWR('D', 10, u_int32_t)
+#define DIOCGETNATS	_IOWR('D', 11, struct pfioc_nat)
+#define DIOCGETNAT	_IOWR('D', 12, struct pfioc_nat) 
+#define DIOCBEGINRDRS	_IOWR('D', 13, u_int32_t)
+#define DIOCADDRDR	_IOWR('D', 14, struct pfioc_rdr) 
+#define DIOCCOMMITRDRS	_IOWR('D', 15, u_int32_t)
+#define DIOCGETRDRS	_IOWR('D', 16, struct pfioc_rdr)
+#define DIOCGETRDR	_IOWR('D', 17, struct pfioc_rdr) 
+#define DIOCCLRSTATES	_IO  ('D', 18)
+#define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
+#define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
+#define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.32 2001/06/25 16:53:20 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.33 2001/06/25 17:17:04 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -74,16 +74,27 @@ struct pf_tree_node {
  * Global variables
  */
 
-struct pf_rule		*pf_rulehead;
-struct pf_nat		*pf_nathead;
-struct pf_rdr		*pf_rdrhead;
-struct pf_state		*pfstatehead;
+struct pf_rule		*pf_rulehead_active;
+struct pf_rule		*pf_rulehead_inactive;
+struct pf_rule		*pf_ruletail_active;
+struct pf_rule		*pf_ruletail_inactive;
+struct pf_nat		*pf_nathead_active;
+struct pf_nat		*pf_nathead_inactive;
+struct pf_rdr		*pf_rdrhead_active;
+struct pf_rdr		*pf_rdrhead_inactive;
+struct pf_state		*pf_statehead;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
 struct timeval		 pftv;
 struct pf_status	 pf_status;
 struct ifnet		*status_ifp;
 
 u_int32_t		 pf_last_purge = 0;
+u_int32_t		 ticket_rules_active = 0;
+u_int32_t		 ticket_rules_inactive = 0;
+u_int32_t		 ticket_nats_active = 0;
+u_int32_t		 ticket_nats_inactive = 0;
+u_int32_t		 ticket_rdrs_active = 0;
+u_int32_t		 ticket_rdrs_inactive = 0;
 u_int16_t		 pf_next_port_tcp = 50001;
 u_int16_t		 pf_next_port_udp = 50001;
 
@@ -365,8 +376,8 @@ insert_state(struct pf_state *state)
 			printf("pf: ERROR! insert failed\n");
 	}
 
-	state->next = pfstatehead;
-	pfstatehead = state;
+	state->next = pf_statehead;
+	pf_statehead = state;
 
 	pf_status.state_inserts++;
 	pf_status.states++;
@@ -376,7 +387,7 @@ void
 purge_expired_states(void)
 {
 	struct pf_tree_key key;
-	struct pf_state *cur = pfstatehead, *prev = NULL;
+	struct pf_state *cur = pf_statehead, *prev = NULL;
 
 	while (cur != NULL) {
 		if (cur->expire <= pftv.tv_sec) {
@@ -401,9 +412,9 @@ purge_expired_states(void)
 			tree_remove(&tree_ext_gwy, &key);
 			if (find_state(tree_ext_gwy, &key) != NULL)
 				printf("pf: ERROR! remove failed\n");
-			(prev ? prev->next : pfstatehead) = cur->next;
+			(prev ? prev->next : pf_statehead) = cur->next;
 			pool_put(&pf_state_pl, cur);
-			cur = (prev ? prev->next : pfstatehead);
+			cur = (prev ? prev->next : pf_statehead);
 			pf_status.state_removals++;
 			pf_status.states--;
 		} else {
@@ -509,32 +520,15 @@ int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	int error = 0;
-	struct pfioc *ub;
-	void *kb = NULL;
 	int s;
 
 	if (!(flags & FWRITE))
 		return (EACCES);
 	
 	if ((cmd != DIOCSTART) && (cmd != DIOCSTOP) && (cmd != DIOCCLRSTATES)) {
-		ub = (struct pfioc *)addr;
-		if (ub == NULL)
+		if (addr == NULL) {
 			return (EINVAL);
-		kb = malloc(ub->size, M_DEVBUF, M_NOWAIT);
-		if (kb == NULL)
-			return (ENOMEM);
-		if (copyin(ub->buffer, kb, ub->size)) {
-			free(kb, M_DEVBUF);
-			return (EIO);
 		}
-	}
-
-	s = splsoftnet();
-
-	microtime(&pftv);
-	if (pftv.tv_sec - pf_last_purge >= 10) {
-		purge_expired_states();
-		pf_last_purge = pftv.tv_sec;
 	}
 
 	switch (cmd) {
@@ -561,143 +555,314 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		break;
 
-	case DIOCSETRULES: {
-		struct pf_rule *rules = (struct pf_rule *)kb, *ruletail = NULL;
-		u_int16_t n;
-		while (pf_rulehead != NULL) {
-			struct pf_rule *next = pf_rulehead->next;
-			pool_put(&pf_rule_pl, pf_rulehead);
-			pf_rulehead = next;
-		}
-		for (n = 0; n < ub->entries; ++n) {
-			struct pf_rule *rule;
+	case DIOCBEGINRULES: {
+		u_int32_t *ticket = (u_int32_t *)addr;
 
-			rule = pool_get(&pf_rule_pl, PR_NOWAIT);
-			if (rule == NULL) {
-				error = ENOMEM;
+		while (pf_rulehead_inactive != NULL) {
+			struct pf_rule *next = pf_rulehead_inactive->next;
+			pool_put(&pf_rule_pl, pf_rulehead_inactive);
+			pf_rulehead_inactive = next;
+		}
+		*ticket = ++ticket_rules_inactive;
+		break;
+	}
+
+	case DIOCADDRULE: {
+		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
+		struct pf_rule *rule;
+
+		if (pr->ticket != ticket_rules_inactive) {
+			error = EBUSY;
+			goto done;
+		}
+		rule = pool_get(&pf_rule_pl, PR_NOWAIT);
+		if (rule == NULL) {
+			error = ENOMEM;
+			goto done;
+		}
+		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
+		rule->ifp = NULL;
+		if (rule->ifname[0]) {
+			rule->ifp = ifunit(rule->ifname);
+			if (rule->ifp == NULL) {
+				pool_put(&pf_rule_pl, rule);
+				error = EINVAL;
 				goto done;
 			}
-			bcopy(rules + n, rule, sizeof(struct pf_rule));
-			rule->ifp = NULL;
-			if (rule->ifname[0]) {
-				rule->ifp = ifunit(rule->ifname);
-				if (rule->ifp == NULL) {
-					pool_put(&pf_rule_pl, rule);
-					error = EINVAL;
-					goto done;
-				}
-			}
-			rule->next = NULL;
-			if (ruletail != NULL) {
-				ruletail->next = rule;
-				ruletail = rule;
-			} else
-				pf_rulehead = ruletail = rule;
 		}
+		rule->next = NULL;
+		if (pf_ruletail_inactive != NULL) {
+			pf_ruletail_inactive->next = rule;
+			pf_ruletail_inactive = rule;
+		} else
+			pf_rulehead_inactive = pf_ruletail_inactive = rule;
+		break;
+	}
+
+	case DIOCCOMMITRULES: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+
+		if (*ticket != ticket_rules_inactive) {
+			error = EBUSY;
+			goto done;
+		}
+		s = splsoftnet();
+		while (pf_rulehead_active != NULL) {
+			struct pf_rule *next = pf_rulehead_active->next;
+			pool_put(&pf_rule_pl, pf_rulehead_active);
+			pf_rulehead_active = next;
+		}
+		pf_rulehead_active = pf_rulehead_inactive;
+		pf_ruletail_active = pf_ruletail_inactive;
+		pf_rulehead_inactive = NULL;
+		pf_ruletail_inactive = NULL;
+		ticket_rules_active = ticket_rules_inactive;
+		splx(s);
 		break;
 	}
 
 	case DIOCGETRULES: {
-		struct pf_rule *rules = (struct pf_rule *)kb;
-		struct pf_rule *rule = pf_rulehead;
-		u_int16_t n = 0;
-		while ((rule != NULL) && (n < ub->entries)) {
-			bcopy(rule, rules + n, sizeof(struct pf_rule));
-			n++;
+		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
+		struct pf_rule *rule;
+
+		s = splsoftnet();
+		rule = pf_rulehead_active;
+		pr->nr = 0;
+		while (rule != NULL) {
+			pr->nr++;
 			rule = rule->next;
 		}
-		ub->entries = n;
+		pr->ticket = ticket_rules_active;
+		splx(s);
 		break;
 	}
 
-	case DIOCSETNAT: {
-		struct pf_nat *nats = (struct pf_nat *)kb;
-		u_int16_t n;
-		while (pf_nathead != NULL) {
-			struct pf_nat *next = pf_nathead->next;
+	case DIOCGETRULE: {
+		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
+		struct pf_rule *rule;
+		u_int32_t nr;
 
-			pool_put(&pf_nat_pl, pf_nathead);
-			pf_nathead = next;
+		if (pr->ticket != ticket_rules_active) {
+			error = EBUSY;
+			goto done;
 		}
-		for (n = 0; n < ub->entries; ++n) {
-			struct pf_nat *nat;
+		s = splsoftnet();
+		rule = pf_rulehead_active;
+		nr = 0;
+		while ((rule != NULL) && (nr < pr->nr)) {
+			rule = rule->next;
+			nr++;
+		}
+		if (rule == NULL) {
+			error = EBUSY;
+			splx(s);
+			goto done;
+		}
+		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
+		splx(s);
+		break;
+	}
 
-			nat = pool_get(&pf_nat_pl, PR_NOWAIT);
-			if (nat == NULL) {
-				error = ENOMEM;
-				goto done;
-			}
-			bcopy(nats + n, nat, sizeof(struct pf_nat));
-			nat->ifp = ifunit(nat->ifname);
-			if (nat->ifp == NULL) {
-				pool_put(&pf_nat_pl, nat);
-				error = EINVAL;
-				goto done;
-			}
-			nat->next = pf_nathead;
-			pf_nathead = nat;
+	case DIOCBEGINNATS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+
+		while (pf_nathead_inactive != NULL) {
+			struct pf_nat *next = pf_nathead_inactive->next;
+			pool_put(&pf_nat_pl, pf_nathead_inactive);
+			pf_nathead_inactive = next;
 		}
+		*ticket = ++ticket_nats_inactive;
+		break;
+	}
+
+	case DIOCADDNAT: {
+		struct pfioc_nat *pn = (struct pfioc_nat *)addr;
+		struct pf_nat *nat;
+
+		if (pn->ticket != ticket_nats_inactive) {
+			error = EBUSY;
+			goto done;
+		}
+		nat = pool_get(&pf_nat_pl, PR_NOWAIT);
+		if (nat == NULL) {
+			error = ENOMEM;
+			goto done;
+		}
+		bcopy(&pn->nat, nat, sizeof(struct pf_nat));
+		nat->ifp = ifunit(nat->ifname);
+		if (nat->ifp == NULL) {
+			pool_put(&pf_nat_pl, nat);
+			error = EINVAL;
+			goto done;
+		}
+		nat->next = pf_nathead_inactive;
+		pf_nathead_inactive = nat;
+		break;
+	}
+
+	case DIOCCOMMITNATS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+
+		if (*ticket != ticket_nats_inactive) {
+			error = EBUSY;
+			goto done;
+		}
+		s = splsoftnet();
+		while (pf_nathead_active != NULL) {
+			struct pf_nat *next = pf_nathead_active->next;
+			pool_put(&pf_nat_pl, pf_nathead_active);
+			pf_nathead_active = next;
+		}
+		pf_nathead_active = pf_nathead_inactive;
+		pf_nathead_inactive = NULL;
+		ticket_nats_active = ticket_nats_inactive;
+		splx(s);
+		break;
+	}
+
+	case DIOCGETNATS: {
+		struct pfioc_nat *pn = (struct pfioc_nat *)addr;
+		struct pf_nat *nat;
+
+		s = splsoftnet();
+		nat = pf_nathead_active;
+		pn->nr = 0;
+		while (nat != NULL) {
+			pn->nr++;
+			nat = nat->next;
+		}
+		pn->ticket = ticket_nats_active;
+		splx(s);
 		break;
 	}
 
 	case DIOCGETNAT: {
-		struct pf_nat *nats = (struct pf_nat *)kb;
-		struct pf_nat *nat = pf_nathead;
-		u_int16_t n = 0;
-		while ((nat != NULL) && (n < ub->entries)) {
-			bcopy(nat, nats + n, sizeof(struct pf_nat));
-			n++;
-			nat = nat->next;
+		struct pfioc_nat *pn = (struct pfioc_nat *)addr;
+		struct pf_nat *nat;
+		u_int32_t nr;
+
+		if (pn->ticket != ticket_nats_active) {
+			error = EBUSY;
+			goto done;
 		}
-		ub->entries = n;
+		s = splsoftnet();
+		nat = pf_nathead_active;
+		nr = 0;
+		while ((nat != NULL) && (nr < pn->nr)) {
+			nat = nat->next;
+			nr++;
+		}
+		if (nat == NULL) {
+			error = EBUSY;
+			splx(s);
+			goto done;
+		}
+		bcopy(nat, &pn->nat, sizeof(struct pf_nat));
+		splx(s);
 		break;
 	}
 
-	case DIOCSETRDR: {
-		struct pf_rdr *rdrs = (struct pf_rdr *)kb;
-		u_int16_t n;
-		while (pf_rdrhead != NULL) {
-			struct pf_rdr *next = pf_rdrhead->next;
+	case DIOCBEGINRDRS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
 
-			pool_put(&pf_rdr_pl, pf_rdrhead);
-			pf_rdrhead = next;
+		while (pf_rdrhead_inactive != NULL) {
+			struct pf_rdr *next = pf_rdrhead_inactive->next;
+			pool_put(&pf_rdr_pl, pf_rdrhead_inactive);
+			pf_rdrhead_inactive = next;
 		}
-		for (n = 0; n < ub->entries; ++n) {
-			struct pf_rdr *rdr;
+		*ticket = ++ticket_rdrs_inactive;
+		break;
+	}
 
-			rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
-			if (rdr == NULL) {
-				error = ENOMEM;
-				goto done;
-			}
-			bcopy(rdrs + n, rdr, sizeof(struct pf_rdr));
-			rdr->ifp = ifunit(rdr->ifname);
-			if (rdr->ifp == NULL) {
-				pool_put(&pf_rdr_pl, rdr);
-				error = EINVAL;
-				goto done;
-			}
-			rdr->next = pf_rdrhead;
-			pf_rdrhead = rdr;
+	case DIOCADDRDR: {
+		struct pfioc_rdr *pr = (struct pfioc_rdr *)addr;
+		struct pf_rdr *rdr;
+
+		if (pr->ticket != ticket_rdrs_inactive) {
+			error = EBUSY;
+			goto done;
 		}
+		rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
+		if (rdr == NULL) {
+			error = ENOMEM;
+			goto done;
+		}
+		bcopy(&pr->rdr, rdr, sizeof(struct pf_rdr));
+		rdr->ifp = ifunit(rdr->ifname);
+		if (rdr->ifp == NULL) {
+			pool_put(&pf_rdr_pl, rdr);
+			error = EINVAL;
+			goto done;
+		}
+		rdr->next = pf_rdrhead_inactive;
+		pf_rdrhead_inactive = rdr;
+		break;
+	}
+
+	case DIOCCOMMITRDRS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+
+		if (*ticket != ticket_rdrs_inactive) {
+			error = EBUSY;
+			goto done;
+		}
+		s = splsoftnet();
+		while (pf_rdrhead_active != NULL) {
+			struct pf_rdr *next = pf_rdrhead_active->next;
+			pool_put(&pf_rdr_pl, pf_rdrhead_active);
+			pf_rdrhead_active = next;
+		}
+		pf_rdrhead_active = pf_rdrhead_inactive;
+		pf_rdrhead_inactive = NULL;
+		ticket_rdrs_active = ticket_rdrs_inactive;
+		splx(s);
+		break;
+	}
+
+	case DIOCGETRDRS: {
+		struct pfioc_rdr *pr = (struct pfioc_rdr *)addr;
+		struct pf_rdr *rdr;
+
+		s = splsoftnet();
+		rdr = pf_rdrhead_active;
+		pr->nr = 0;
+		while (rdr != NULL) {
+			pr->nr++;
+			rdr = rdr->next;
+		}
+		pr->ticket = ticket_rdrs_active;
+		splx(s);
 		break;
 	}
 
 	case DIOCGETRDR: {
-		struct pf_rdr *rdrs = (struct pf_rdr *)kb;
-		struct pf_rdr *rdr = pf_rdrhead;
-		u_int16_t n = 0;
-		while ((rdr != NULL) && (n < ub->entries)) {
-			bcopy(rdr, rdrs + n, sizeof(struct pf_rdr));
-			n++;
-			rdr = rdr->next;
+		struct pfioc_rdr *pr = (struct pfioc_rdr *)addr;
+		struct pf_rdr *rdr;
+		u_int32_t nr;
+
+		if (pr->ticket != ticket_rdrs_active) {
+			error = EBUSY;
+			goto done;
 		}
-		ub->entries = n;
+		s = splsoftnet();
+		rdr = pf_rdrhead_active;
+		nr = 0;
+		while ((rdr != NULL) && (nr < pr->nr)) {
+			rdr = rdr->next;
+			nr++;
+		}
+		if (rdr == NULL) {
+			error = EBUSY;
+			splx(s);
+			goto done;
+		}
+		bcopy(rdr, &pr->rdr, sizeof(struct pf_rdr));
+		splx(s);
 		break;
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state *state = pfstatehead;
+		struct pf_state *state = pf_statehead;
 		while (state != NULL) {
 			state->expire = 0;
 			state = state->next;
@@ -706,29 +871,35 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCGETSTATES: {
-		struct pf_state *states = (struct pf_state *)kb;
+	case DIOCGETSTATE: {
+		struct pfioc_state *ps = (struct pfioc_state *)addr;
 		struct pf_state *state;
-		u_int16_t n = 0;
-		state = pfstatehead;
-		while ((state != NULL) && (n < ub->entries)) {
-			bcopy(state, states + n, sizeof(struct pf_state));
-			states[n].creation = pftv.tv_sec - states[n].creation;
-			if (states[n].expire <= pftv.tv_sec)
-				states[n].expire = 0;
-			else
-				states[n].expire -= pftv.tv_sec;
-			n++;
+		u_int32_t nr;
+
+		state = pf_statehead;
+		nr = 0;
+		while ((state != NULL) && (nr < ps->nr)) {
 			state = state->next;
+			nr++;
 		}
-		ub->entries = n;
+		if (state == NULL) {
+			error = EBUSY;
+			goto done;
+		}
+		bcopy(state, &ps->state, sizeof(struct pf_state));
+		ps->state.creation = pftv.tv_sec - ps->state.creation;
+		if (ps->state.expire <= pftv.tv_sec)
+			ps->state.expire = 0;
+		else
+			ps->state.expire -= pftv.tv_sec;
 		break;
 	}
 
 	case DIOCSETSTATUSIF: {
-		char *ifname = (char *)kb;
-		struct ifnet *ifp = ifunit(ifname);
-		if (ifp == NULL)
+		struct pfioc_if *pi = (struct pfioc_if *)addr;
+		struct ifnet *ifp;
+
+		if ((ifp = ifunit(pi->ifname)) == NULL)
 			error = EINVAL;
 		else
 			status_ifp = ifp;
@@ -736,12 +907,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETSTATUS: {
-		struct pf_status *st = (struct pf_status *)kb;
+		struct pf_status *s = (struct pf_status *)addr;
 		u_int8_t running = pf_status.running;
 		u_int32_t states = pf_status.states;
-		bcopy(&pf_status, st, sizeof(struct pf_status));
-		st->since = st->since ? pftv.tv_sec - st->since : 0;
-		ub->entries = 1;
+
+		bcopy(&pf_status, s, sizeof(struct pf_status));
+		if (s->since)
+			s->since = pftv.tv_sec - s->since;
+		else
+			s->since = 0;
 		bzero(&pf_status, sizeof(struct pf_status));
 		pf_status.running = running;
 		pf_status.states = states;
@@ -755,12 +929,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 done:
-	splx(s);
-	if (kb != NULL) {
-		if (copyout(kb, ub->buffer, ub->size))
-			error = EIO;
-		free(kb, M_DEVBUF);
-	}
 	return (error);
 }
 
@@ -932,7 +1100,7 @@ match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 struct pf_nat *
 get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 {
-	struct pf_nat *n = pf_nathead, *nm = NULL;
+	struct pf_nat *n = pf_nathead_active, *nm = NULL;
 
 	while (n && nm == NULL) {
 		if (n->ifp == ifp &&
@@ -948,7 +1116,7 @@ get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 struct pf_rdr *
 get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 {
-	struct pf_rdr *r = pf_rdrhead, *rm = NULL;
+	struct pf_rdr *r = pf_rdrhead_active, *rm = NULL;
 	while (r && rm == NULL) {
 		if (r->ifp == ifp &&
 		    (!r->proto || r->proto == proto) &&
@@ -969,7 +1137,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct pf_rule *r = pf_rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1113,7 +1281,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct pf_rule *r = pf_rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1233,7 +1401,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 {
 	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
-	struct pf_rule *r = pf_rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead_active, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
