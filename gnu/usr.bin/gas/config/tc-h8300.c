@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-h8300.c,v 1.2 1996/03/30 15:29:34 niklas Exp $	*/
+
 /* tc-h8300.c -- Assemble code for the Hitachi H8/300
    Copyright (C) 1991, 1992 Free Software Foundation.
    
@@ -47,7 +49,7 @@ const pseudo_typeS md_pseudo_table[] = {
 	{ 0,0,0 }
 };
 
-int  md_reloc_size ;
+const int  md_reloc_size ;
 
 const char EXP_CHARS[] = "eE";
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc.h,v 1.2 1996/03/30 15:29:27 niklas Exp $	*/
+
 /* tc.h - target cpu dependent
 
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -17,10 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: tc.h,v 1.1.1.1 1995/10/18 08:39:00 deraadt Exp $
- */
-
 
 /* In theory (mine, at least!) the machine dependent part of the assembler
    should only have to include one file.  This one.  -- JF */
@@ -42,7 +40,7 @@ relax_typeS;
 
 extern const relax_typeS md_relax_table[]; /* Define it in MACHINE.c */
 
-extern int md_reloc_size; /* Size of a relocation record */
+extern const int md_reloc_size; /* Size of a relocation record */
 
 extern void (*md_emit_relocations)();
 

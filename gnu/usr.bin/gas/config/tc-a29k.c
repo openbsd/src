@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-a29k.c,v 1.2 1996/03/30 15:29:32 niklas Exp $	*/
+
 /* tc-a29k.c -- Assemble for the AMD 29000.
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -86,12 +88,12 @@ int md_short_jump_size = 4;
 int md_long_jump_size = 4;
 #if defined(BFD_HEADERS)
 #ifdef RELSZ
-int md_reloc_size = RELSZ;	/* Coff headers */
+const int md_reloc_size = RELSZ;	/* Coff headers */
 #else
-int md_reloc_size = 12;		/* something else headers */
+const int md_reloc_size = 12;		/* something else headers */
 #endif
 #else
-int md_reloc_size = 12;		/* Not bfdized*/
+const int md_reloc_size = 12;		/* Not bfdized*/
 #endif
 
 /* This array holds the chars that always start a comment.  If the

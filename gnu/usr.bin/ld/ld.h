@@ -1,6 +1,5 @@
-/*
- *	$Id: ld.h,v 1.1.1.1 1995/10/18 08:40:55 deraadt Exp $
- */
+/*	$OpenBSD: ld.h,v 1.2 1996/03/30 15:30:02 niklas Exp $	*/
+
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -157,8 +156,10 @@ extern int	netzmagic;
 #define RELOC_PIC_TYPE(r)		((r)->r_baserel? \
 						PIC_TYPE_LARGE:PIC_TYPE_NONE)
 
-#define RELOC_INIT_SEGMENT_RELOC(r)
+#endif
 
+#ifndef RELOC_INIT_SEGMENT_RELOC
+#define RELOC_INIT_SEGMENT_RELOC(r)
 #endif
 
 #ifndef MAX_GOTOFF

@@ -1,24 +1,15 @@
-#	$NetBSD: Makefile,v 1.27 1995/12/07 07:26:32 phil Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/03/30 15:29:23 niklas Exp $
+#	$NetBSD: Makefile,v 1.34 1996/02/18 12:28:15 pk Exp $
 
-SUBDIR+=	bc cpio cvs dc diff diff3 gawk gcc grep groff
+SUBDIR+=	bc cpio cvs dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar texinfo
 
 # some ports don't use the tool chain in /usr/src
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips") && \
-	(${MACHINE_ARCH} != "vax") && (${MACHINE_ARCH} != "ns32k")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "mips")
 SUBDIR+=	gas gdb ld
 .endif
-
-# ns32k and vax wants newer gcc
-.if (${MACHINE_ARCH} == "ns32k") || (${MACHINE_ARCH} == "vax")
-SUBDIR+=        gas gcc gdb ld
-.endif
-
-# XXX alpha still needs the /usr/bin/cpp script.
-.if (${MACHINE_ARCH} == "alpha")
-afterinstall:
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
-	    $(.CURDIR)/gcc2/cpp/usr.bin.cpp.sh $(DESTDIR)/usr/bin/cpp
+.if ${MACHINE_ARCH} != "alpha"
+SUBDIR+=	gcc
 .endif
 
 .include <bsd.subdir.mk>

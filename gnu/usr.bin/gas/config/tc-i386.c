@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-i386.c,v 1.3 1996/03/30 15:29:36 niklas Exp $	*/
+
 /* i386.c -- Assemble code for the Intel 80386
    Copyright (C) 1989, 1991, 1992 Free Software Foundation.
    
@@ -25,7 +27,11 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.2 1996/01/29 06:49:46 deraadt Exp $";
+#if 0
+static char rcsid[] = "$Id: tc-i386.c,v 1.3 1996/03/30 15:29:36 niklas Exp $";
+#else
+static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.3 1996/03/30 15:29:36 niklas Exp $";
+#endif
 #endif
 
 #include "as.h"
@@ -1871,7 +1877,7 @@ register fragS *	fragP;
 
 int md_short_jump_size = 2;	/* size of byte displacement jmp */
 int md_long_jump_size  = 5;	/* size of dword displacement jmp */
-int md_reloc_size = 8;		/* Size of relocation record */
+const int md_reloc_size = 8;		/* Size of relocation record */
 
 void md_create_short_jump(ptr, from_addr, to_addr, frag, to_symbol)
 char	*ptr;

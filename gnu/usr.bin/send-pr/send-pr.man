@@ -1,4 +1,7 @@
 .\" -*- nroff -*-
+.\"
+.\"	$OpenBSD: send-pr.man,v 1.2 1996/03/30 15:30:07 niklas Exp $
+.\"
 .\" ---------------------------------------------------------------------------
 .\"    man page for send-pr (by Heinz G. Seidl, hgs@cygnus.com)
 .\"    updated Feb 1993 for GNATS 3.00 by Jeffrey Osier, jeffrey@cygnus.com
@@ -50,7 +53,7 @@ send-pr \- send problem report (PR) to a central support site
 .B \-\-request-id
 ]
 [
-.B \-v
+.B \-V
 ]
 .SH DESCRIPTION
 .B send-pr
@@ -149,7 +152,7 @@ use a
 of
 .BR net \|'.
 .TP
-.B \-v
+.B \-V
 Display the 
 .B send-pr
 version number.

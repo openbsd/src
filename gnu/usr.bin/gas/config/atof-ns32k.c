@@ -1,3 +1,5 @@
+/*	$OpenBSD: atof-ns32k.c,v 1.2 1996/03/30 15:29:30 niklas Exp $	*/
+
 /* atof_ns32k.c - turn a Flonum into a ns32k floating point number
    Copyright (C) 1987 Free Software Foundation, Inc.
 
@@ -132,10 +134,11 @@ static void
 make_invalid_floating_point_number (words)
      LITTLENUM_TYPE *	words;
 {
-	words[0]= ((unsigned)-1)>>1;	/* Zero the leftmost bit */
-	words[1]= -1;
-	words[2]= -1;
-	words[3]= -1;
+	/* Zero the leftmost bit */
+	words[0]= (LITTLENUM_TYPE) ((unsigned)-1)>>1;
+	words[1]= (LITTLENUM_TYPE) -1;
+	words[2]= (LITTLENUM_TYPE) -1;
+	words[3]= (LITTLENUM_TYPE) -1;
 }
 
 /***********************************************************************\

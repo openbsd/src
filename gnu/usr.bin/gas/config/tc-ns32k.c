@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-ns32k.c,v 1.2 1996/03/30 15:29:50 niklas Exp $	*/
+
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
    
@@ -1824,7 +1826,7 @@ segT segment;
 
 int md_short_jump_size = 3;
 int md_long_jump_size  = 5;
-int md_reloc_size = 8;		/* Size of relocation record */
+const int md_reloc_size = 8;		/* Size of relocation record */
 
 void
     md_create_short_jump(ptr,from_addr,to_addr,frag,to_symbol)

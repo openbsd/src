@@ -1,3 +1,5 @@
+/*	$OpenBSD: i386b-nat.c,v 1.5 1996/03/30 15:29:53 niklas Exp $	*/
+
 /* Native-dependent code for BSD Unix running on i386's, for GDB.
    Copyright 1988, 1989, 1991, 1992 Free Software Foundation, Inc.
 
@@ -16,8 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: i386b-nat.c,v 1.4 1995/12/14 03:42:37 deraadt Exp $
 */
 
 #include <sys/types.h>
@@ -343,7 +343,7 @@ fetch_kcore_registers(pcb)
          * get the register values out of the sys pcb and
          * store them where `read_register' will find them.
          */
-	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs, 0))
+	if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs))
 		error("Cannot read ebx, esi, and edi.");
 	for (i = 0, regno = 0; regno < 3; regno++)
 		supply_register(regno, (char *)&i);
