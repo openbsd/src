@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.3 2000/05/15 06:31:37 niklas Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 2001/01/27 21:15:27 deraadt Exp $
 #	$NetBSD: devlist2h.awk,v 1.1 1999/10/15 06:07:22 haya Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -161,28 +161,13 @@ END {
 
 	printf("\n") > dfile
 
-	printf("struct cardbus_knowndev cardbus_knowndevs[] = {\n") > dfile
+	printf("struct cardbus_known_product cardbus_known_product[] = {\n") \
+	    > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    CARDBUS_VENDOR_%s, CARDBUS_PRODUCT_%s_%s,\n",
 		    products[i, 1], products[i, 1], products[i, 2]) \
 		    > dfile
-		printf("\t    ") > dfile
-		printf("0") > dfile
-		printf(",\n") > dfile
-
-		vendi = vendorindex[products[i, 1]];
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while (vendors[vendi, j] != "") {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[vendi, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
 
 		printf("\t    \"") > dfile
 		j = 4;
@@ -197,11 +182,13 @@ END {
 		printf("\",\n") > dfile
 		printf("\t},\n") > dfile
 	}
+	printf("\t{ 0, 0, NULL }\n") > dfile
+	printf("};\n\n") > dfile
+
+	printf("struct cardbus_known_vendor cardbus_known_vendors[] = {\n") > dfile
 	for (i = 1; i <= nvendors; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    CARDBUS_VENDOR_%s, 0,\n", vendors[i, 1]) \
-		    > dfile
-		printf("\t    CARDBUS_KNOWNDEV_NOPROD,\n") \
 		    > dfile
 		printf("\t    \"") > dfile
 		j = 3;
@@ -214,9 +201,8 @@ END {
 			j++
 		}
 		printf("\",\n") > dfile
-		printf("\t    NULL,\n") > dfile
 		printf("\t},\n") > dfile
 	}
-	printf("\t{ 0, 0, 0, NULL, NULL, }\n") > dfile
+	printf("\t{ 0, 0, NULL }\n") > dfile
 	printf("};\n") > dfile
 }
