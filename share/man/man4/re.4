@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.8 2004/10/29 11:45:01 jsg Exp $
+.\" $OpenBSD: re.4,v 1.9 2005/01/14 03:00:28 pvalchev Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -40,6 +40,7 @@
 .Nd "Realtek 8169/8169S/8110S PCI Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "re* at pci?"
+.Cd "re* at cardbus?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,6 +64,8 @@ Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
 PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 .It
 Xterasys XN-152 10/100/1000 NIC (8169)
+.It
+Netgear GA511 PC Card (8169)
 .El
 .\" .Pp
 .\" NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
