@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2004/07/19 15:09:05 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2004/08/03 00:56:22 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1294,36 +1294,6 @@ extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
-
-#if 0
-void
-beepme(int pitch, int duration)
-{
-#define IO_TIMER1       0x040
-#define IO_PPI          0x061
-#define              TIMER_SEL2      0x80
-#define              TIMER_16BIT     0x30 
-#define              TIMER_SQWAVE    0x06 
-#define TIMER_CNTR2     (IO_TIMER1 + 2)
-#define TIMER_MODE      (IO_TIMER1 + 3)
-#define TIMER_FREQ      1193182
-#define TIMER_DIV(x) ((TIMER_FREQ+(x)/2)/(x))
-
-#define PIT_ENABLETMR2  0x01
-#define PIT_SPKRDATA    0x02
-#define PIT_SPKR        (PIT_ENABLETMR2|PIT_SPKRDATA)
-
-#define PITCH 440
-
-	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-	outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-	outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) / 256);
-	outb(IO_PPI, inb(IO_PPI) | PIT_SPKR);
-	delay(duration / 2);
-	outb(IO_PPI, inb(IO_PPI) & ~PIT_SPKR);
-	delay(duration / 2);
-}
-#endif
 
 void
 init_x86_64(first_avail)
