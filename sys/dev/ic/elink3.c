@@ -194,6 +194,11 @@ epinit(sc)
 		bus_io_write_1(bc, ioh, EP_W2_ADDR_0 + i,
 		    sc->sc_arpcom.ac_enaddr[i]);
 
+	if (sc->bustype == EP_BUS_PCI || sc->bustype == EP_BUS_EISA)
+		/* Reset the station-address receive filter */
+		for (i = 0; i < 6; i++)
+			bus_io_write_1(bc, ioh,EP_W2_RECVMASK_0 + i, 0);
+
 	bus_io_write_2(bc, ioh, EP_COMMAND, RX_RESET);
 	bus_io_write_2(bc, ioh, EP_COMMAND, TX_RESET);
 

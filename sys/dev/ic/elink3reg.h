@@ -87,6 +87,7 @@
  * Window 2 registers. Station Address Setup/Read
  */
 	/* Read/Write */
+#define EP_W2_RECVMASK_0	0x06
 #define EP_W2_ADDR_5		0x05
 #define EP_W2_ADDR_4		0x04
 #define EP_W2_ADDR_3		0x03
@@ -138,6 +139,18 @@
 #define TX_AFTER_X_COLLISIONS	0x02
 #define TX_NO_SQE		0x01
 #define TX_CD_LOST		0x00
+
+/*
+ * Window 7 registers.
+ * Address and length for a single bus-master DMA transfer.
+ */
+#define EP_W7_MASTER_ADDDRES	0x00
+#define EP_W7_RX_ERROR		0x04
+#define EP_W7_MASTER_LEN	0x06
+#define EP_W7_RX_STATUS		0x08
+#define EP_W7_TIMER		0x0a
+#define EP_W7_TX_STATUS		0x0b
+#define EP_W7_MASTER_STATUS	0x0c
 
 /*
  * Register definitions.
