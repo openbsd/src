@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_pcic.c,v 1.13 1997/01/26 11:00:07 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_pcic.c,v 1.14 1997/03/01 22:42:58 niklas Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -246,7 +246,7 @@ pcic_probe(parent, self, aux)
 	void            *aux;
 {
 	struct pcic_softc *pcic = self;
-	struct pcicmaster_softc *pcicm = (struct pcicmaster_softc *) parent;
+	struct pcicmaster_softc *pcicm = (struct pcicmaster_softc *)parent;
 	struct pcic_attach_args *pia = aux;
 	u_int           chip_inf = 0, ochip_inf = 0;
 	int		first = 1;
@@ -279,7 +279,7 @@ pcic_probe(parent, self, aux)
 	 */
 	pcic->sc_ioh = pia->pia_ioh;
 	pcic->sc_iot = pia->pia_iot;
-	pcic->sc_iot = pia->pia_memt;
+	pcic->sc_memt = pia->pia_memt;
 	pcic->sc_adapter.nslots = 0;
 	maxslot = 2;
 	for (i = j = 0; i < maxslot; i++) {
@@ -335,8 +335,9 @@ ok:
 		}
 	}
 	if (pcic->sc_adapter.nslots != 0) {
-		if (bus_space_map(pia->pia_memt, pia->pia_maddr,
-		    pia->pia_msize, 0, &pcic->sc_memh))
+		if (bus_space_map(pia->pia_memt,
+		    pcic->sc_dev.dv_cfdata->cf_loc[1],
+		    pcic->sc_dev.dv_cfdata->cf_loc[2], 0, &pcic->sc_memh))
 			return 0;
 		return 1;
 	}
@@ -438,6 +439,7 @@ pcic_attach(parent, self, aux)
 	 */
 	pba.pba_iot = pia->pia_iot;
 	pba.pba_memt = pia->pia_memt;
+	pba.pba_memh = pcic->sc_memh;
 	pba.pba_maddr = pia->pia_maddr;
 	pba.pba_msize = pia->pia_msize;
 	pba.pba_aux = &pcic->sc_adapter;

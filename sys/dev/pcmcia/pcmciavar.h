@@ -1,4 +1,4 @@
-/*	$Id: pcmciavar.h,v 1.3 1996/11/28 23:28:17 niklas Exp $	*/
+/*	$Id: pcmciavar.h,v 1.4 1997/03/01 22:42:59 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
@@ -292,6 +292,7 @@ struct pcmcia_attach_args {
 struct pcmciabus_attach_args {
 	bus_space_tag_t pba_iot;
 	bus_space_tag_t pba_memt;
+	bus_space_tag_t pba_memh;
 	int	pba_maddr;
 	int	pba_msize;
 	void	*pba_aux;		/* driver specific */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_isa.c,v 1.9 1996/11/29 22:55:05 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_isa.c,v 1.10 1997/03/01 22:42:57 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -86,18 +86,14 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 	int             flag;
 {
 	struct pcmciabus_attach_args *pa = aux;
-	bus_space_handle_t memh;
 
 #ifdef PCMCIA_ISA_DEBUG
 	if (parent != NULL)
 		printf("PARENT %s\n", parent->dv_xname);
 #endif
 	if (flag == 0) {		/* match */
-		if (bus_space_map(pa->pba_memt, pa->pba_maddr, pa->pba_msize,
-		    0, &memh))
-			return 0;
 		pca->scratch_memsiz = pa->pba_msize;
-		pca->scratch_memh = memh;
+		pca->scratch_memh = pa->pba_memh;
 		pca->pa_memt = pa->pba_memt;
 #ifdef PCMCIA_ISA_DEBUG
 		printf("pbaaddr %p maddr %x msize %x\n",
