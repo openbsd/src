@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.65 2002/07/11 20:15:46 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.66 2002/07/11 20:27:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -84,7 +84,6 @@
 
 #include <dev/pci/if_txpreg.h>
 
-#define	tc990_IMAGE_SIZE
 #include <dev/microcode/typhoon/3c990img.h>
 
 /*
