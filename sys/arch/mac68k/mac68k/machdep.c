@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 1998/02/26 15:45:10 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 1998/03/03 04:30:09 ryker Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ int     safepri = PSL_LOWIPL;
  */
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *iomem_ex;
-static	iomem_malloc_safe;
+static	int iomem_malloc_safe;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
@@ -237,7 +237,7 @@ int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
  */
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *iomem_ex;
-static	iomem_malloc_safe;
+static	int iomem_malloc_safe;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
