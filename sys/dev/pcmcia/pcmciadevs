@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.44 2000/10/27 07:53:35 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.45 2001/01/16 20:12:12 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -81,6 +81,7 @@ vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015	RATOC System Inc.
+vendor ELSA			0xd601	Elsa
 
 /*
  * List of known products.  Grouped by vendor.
@@ -130,6 +131,10 @@ product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
 /* Dual */
 product DUAL NE2000		0x0100 Dual NE2000
+
+/* ELSA Products */
+product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
+product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 
 /* Farallon Communications */
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
