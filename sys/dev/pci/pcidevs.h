@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.717 2004/03/03 04:14:59 krw Exp 
+ *	OpenBSD: pcidevs,v 1.718 2004/03/10 00:47:50 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1875,6 +1875,7 @@
 
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O */
+#define	PCI_PRODUCT_PLX_1077	0x1077		/* I/O */
 #define	PCI_PRODUCT_PLX_9050	0x9050		/* I/O 9050 */
 #define	PCI_PRODUCT_PLX_9080	0x9080		/* I/O 9080 */
 
