@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2002/05/24 04:17:01 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2002/06/03 20:30:50 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -194,7 +194,7 @@ static long reloc_target_bitmask[] = {
 	_BM(10), _BM(13), _BM(22),	/* GOT10, GOT13, GOT22 */
 	_BM(10), _BM(22),		/* _PC10, _PC22 */
 	_BM(30), 0,			/* _WPLT30, _COPY */
-	_BM(32), _BM(32), _BM(32),	/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
+	-1, _BM(32), -1,		/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 	_BM(32), _BM(32),		/* _UA32, PLT32 */
 	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
 	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
