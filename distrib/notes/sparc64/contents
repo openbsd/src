@@ -1,5 +1,15 @@
 TopPart
 
+dnl XXX uncomment when miniroot available
+dnl OpenBSDminiroot
+dnl				It can be copied to the swap partition of
+dnl				an existing OpenBSD, NetBSD, Linux or Solaris
+dnl				installation to allow installing or upgrading
+dnl				to OpenBSD OSREV
+dnl
+dnl XXX uncomment when floppy available
+dnl OpenBSDfloppy
+dnl
 OpenBSDdistsets
 
 OpenBSDbsd

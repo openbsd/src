@@ -114,9 +114,16 @@ OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-	It will take a while to load the kernel especially from a floppy
-	or slow network connection, most likely more than a minute.  If
-	some action doesn't eventually happen, or the spinning cursor has
+dnl XXX restore paragraph when floppy available
+dnl	It will take a while to load the kernel especially from a floppy
+dnl	or slow network connection, most likely more than a minute.  If
+dnl	some action doesn't eventually happen, or the spinning cursor has
+dnl	stopped and nothing further has happened, either your boot media
+dnl	is bad, your diskless setup isn't correct, or you may have
+dnl	a hardware or configuration problem.
+	It will take a while to load the kernel especially from a slow
+	network connection, most likely more than a minute.  If some
+	action doesn't eventually happen, or the spinning cursor has
 	stopped and nothing further has happened, either your boot media
 	is bad, your diskless setup isn't correct, or you may have
 	a hardware or configuration problem.
@@ -130,7 +137,7 @@ dnl	it booted from.  Do not be alarmed, this is completely normal.
 dnl	This warning occurs because while OpenBSD/MACHINE can boot from
 dnl	the floppy drive, the kernel itself lacks a floppy driver for some
 dnl	MACHINE models.
-
+dnl
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
 	"sun" if correct.  If you are installing from a serial console
