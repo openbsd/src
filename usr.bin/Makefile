@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2004/01/06 20:07:49 millert Exp $
+#	$OpenBSD: Makefile,v 1.89 2004/01/13 03:43:40 mickey Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
 	kdump keynote ktrace lam last lastcomm leave less lex lndir locate \
 	lock logger login logname look lorder m4 mail make man mesg mg \
 	midiplay mixerctl mkdep mkstr mktemp modstat msgs nc netstat newsyslog \
-	nfsstat nice nohup oldrdist pagesize passwd paste patch pctr pkill \
+	nfsstat nice nm nohup oldrdist pagesize passwd paste patch pctr pkill \
 	pmdb pr printenv printf quota radioctl rdist rdistd readlink renice \
 	rev rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho script sectok sed shar showmount skey \
@@ -29,7 +29,7 @@ SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
 .if (${ELF_TOOLCHAIN:L} == "no")
-SUBDIR+= ar nm ranlib strip strings
+SUBDIR+= ar ranlib strip strings
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
