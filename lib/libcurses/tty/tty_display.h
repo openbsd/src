@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_display.h,v 1.1 1999/01/18 19:10:27 millert Exp $	*/
+/*	$OpenBSD: tty_display.h,v 1.2 2000/03/10 01:35:05 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -133,15 +133,6 @@ struct tty_display_data {
 #define UpdateAttrs(c)	if (D->_current_attr != AttrOf(c)) \
 				vidattr(AttrOf(c));
 #endif
-
-/*
- * Check whether the given character can be output by clearing commands.  This
- * includes test for being a space and not including any 'bad' attributes, such
- * as A_REVERSE.  All attribute flags which don't affect appearance of a space
- * or can be output by clearing (A_COLOR in case of bce-terminal) are excluded.
- */
-#define can_clear_with(ch) \
-	((ch & ~(NONBLANK_ATTR|(back_color_erase ? A_COLOR:0))) == BLANK)
 
 #define XMC_CHANGES(c) ((c) & D->_xmc_suppress)
 

@@ -1,8 +1,8 @@
 '\" t 
-.\" $OpenBSD: curs_attr.3tbl,v 1.7 1999/01/18 19:07:11 millert Exp $
+.\" $OpenBSD: curs_attr.3tbl,v 1.8 2000/03/10 01:35:01 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_attr.3x,v 1.19 1998/12/26 19:25:35 tom Exp $
+.\" $From: curs_attr.3x,v 1.20 2000/02/27 01:46:31 tom Exp $
 .TH curs_attr 3 ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
@@ -77,9 +77,9 @@
 .br
 \fBint wattr_on(WINDOW *win, attr_t attrs, void *opts);\fR
 .br
-\fBint attr_set(attr_t attrs, void *opts);\fR
+\fBint attr_set(attr_t attrs, short pair, void *opts);\fR
 .br
-\fBint wattr_set(WINDOW *win, attr_t attrs, void *opts);\fR
+\fBint wattr_set(WINDOW *win, attr_t attrs, short pair, void *opts);\fR
 .br
 \fBint chgat(int n, attr_t attr, short color,\fR
       \fBconst void *opts)\fR

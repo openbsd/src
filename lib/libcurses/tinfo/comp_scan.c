@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -49,7 +49,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.37 2000/01/15 21:52:23 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.38 2000/02/13 01:01:26 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.

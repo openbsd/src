@@ -1,7 +1,7 @@
-/*	$OpenBSD: curses.priv.h,v 1.24 2000/02/06 07:10:50 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.25 2000/03/10 01:35:01 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.151 2000/02/06 01:57:01 tom Exp $
+ * $From: curses.priv.h,v 1.153 2000/02/19 23:31:39 tom Exp $
  *
  *	curses.priv.h
  *
@@ -621,15 +621,6 @@ extern const char *_nc_visbuf2(int, const char *);
 				vidattr(AttrOf(c))
 #endif
 
-/*
- * Check whether the given character can be output by clearing commands.  This
- * includes test for being a space and not including any 'bad' attributes, such
- * as A_REVERSE.  All attribute flags which don't affect appearance of a space
- * or can be output by clearing (A_COLOR in case of bce-terminal) are excluded.
- */
-#define can_clear_with(ch) \
-	((ch & ~(NONBLANK_ATTR|(back_color_erase ? A_COLOR:0))) == BLANK)
-
 #ifdef NCURSES_EXPANDED
 
 #undef  toggle_attr_on
@@ -639,10 +630,6 @@ extern void _nc_toggle_attr_on(attr_t *, attr_t);
 #undef  toggle_attr_off
 #define toggle_attr_off(S,at) _nc_toggle_attr_off(&(S), at)
 extern void _nc_toggle_attr_off(attr_t *, attr_t);
-
-#undef  can_clear_with
-#define can_clear_with(ch) _nc_can_clear_with(ch)
-extern int _nc_can_clear_with(chtype);
 
 #undef  DelCharCost
 #define DelCharCost(count) _nc_DelCharCost(count)

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.57 2000/01/15 21:44:28 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.63 2000/03/05 04:33:15 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -378,6 +378,21 @@ matches(const char **needle, const char *haystack)
     return (code);
 }
 
+static FILE *
+open_tempfile(char *name)
+{
+    FILE *result = 0;
+#if HAVE_MKSTEMP
+    int fd = mkstemp(name);
+    if (fd >= 0)
+	result = fdopen(fd, "w");
+#else
+    if (tmpnam(name) != 0)
+	result = fopen(name, "w");
+#endif
+    return result;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -392,7 +407,6 @@ main(int argc, char *argv[])
     int outform = F_TERMINFO;	/* output format */
     int sortmode = S_TERMINFO;	/* sort_mode */
 
-    int fd;
     int width = 60;
     bool formatted = FALSE;	/* reformat complex strings? */
     int numbers = 0;		/* format "%'char'" to/from "%{number}" */
@@ -562,9 +576,8 @@ main(int argc, char *argv[])
 		if (access(termcap, F_OK) == 0) {
 		    /* file exists */
 		    source_file = termcap;
-		} else if (strcpy(my_tmpname, "/tmp/tic.XXXXXXXX")
-		    && (fd = mkstemp(my_tmpname)) != -1
-		    && (tmp_fp = fdopen(fd, "w")) != 0) {
+		} else if ((tmp_fp = open_tempfile(my_tmpname)) != 0) {
+		    source_file = my_tmpname;
 		    fprintf(tmp_fp, "%s\n", termcap);
 		    fclose(tmp_fp);
 		    tmp_fp = fopen(source_file, "r");
@@ -722,6 +735,56 @@ TERMINAL *cur_term;		/* tweak to avoid linking lib_cur_term.c */
 #undef CUR
 #define CUR tp->
 
+/*
+ * An sgr string may contain several settings other than the one we're
+ * interested in, essentially sgr0 + rmacs + whatever.  As long as the
+ * "whatever" is contained in the sgr string, that is close enough for our
+ * sanity check.
+ */
+static bool
+similar_sgr(char *a, char *b)
+{
+    while (*b != 0) {
+	while (*a != *b) {
+	    if (*a == 0)
+		return FALSE;
+	    a++;
+	}
+	a++;
+	b++;
+    }
+    return TRUE;
+}
+
+static void
+check_sgr(TERMTYPE * tp, char *zero, int num, char *cap, char *name)
+{
+    char *test = tparm(set_attributes,
+	num == 1,
+	num == 2,
+	num == 3,
+	num == 4,
+	num == 5,
+	num == 6,
+	num == 7,
+	num == 8,
+	num == 9);
+    if (test != 0) {
+	if (PRESENT(cap)) {
+	    if (!similar_sgr(test, cap)) {
+		_nc_warning("%s differs from sgr(%d): %s", name, num,
+		    _nc_visbuf(test));
+	    }
+	} else if (strcmp(test, zero)) {
+	    _nc_warning("sgr(%d) present, but not %s", num, name);
+	}
+    } else if (PRESENT(cap)) {
+	_nc_warning("sgr(%d) missing, but %s present", num, name);
+    }
+}
+
+#define CHECK_SGR(num,name) check_sgr(tp, zero, num, name, #name)
+
 /* other sanity-checks (things that we don't want in the normal
  * logic that reads a terminfo entry)
  */
@@ -778,23 +841,43 @@ check_termtype(TERMTYPE * tp)
 	|| (max_colors > max_pairs))
 	_nc_warning("inconsistent values for max_colors and max_pairs");
 
-    PAIRED(set_foreground, set_background)
-	PAIRED(set_a_foreground, set_a_background)
+    PAIRED(set_foreground, set_background);
+    PAIRED(set_a_foreground, set_a_background);
 
     /*
      * These may be mismatched because the terminal description relies on
      * restoring the cursor visibility by resetting it.
      */
-	ANDMISSING(cursor_invisible, cursor_normal)
-	ANDMISSING(cursor_visible, cursor_normal)
+    ANDMISSING(cursor_invisible, cursor_normal);
+    ANDMISSING(cursor_visible, cursor_normal);
+
+    if (PRESENT(cursor_visible) && PRESENT(cursor_normal)
+	&& !strcmp(cursor_visible, cursor_normal))
+	_nc_warning("cursor_visible is same as cursor_normal");
 
     /*
      * From XSI & O'Reilly, we gather that sc/rc are required if csr is
      * given, because the cursor position after the scrolling operation is
      * performed is undefined.
      */
-	ANDMISSING(change_scroll_region, save_cursor)
-	ANDMISSING(change_scroll_region, restore_cursor)
+    ANDMISSING(change_scroll_region, save_cursor);
+    ANDMISSING(change_scroll_region, restore_cursor);
+
+    if (PRESENT(set_attributes)) {
+	char *zero = tparm(set_attributes, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	zero = strdup(zero);
+	CHECK_SGR(1, enter_standout_mode);
+	CHECK_SGR(2, enter_underline_mode);
+	CHECK_SGR(3, enter_reverse_mode);
+	CHECK_SGR(4, enter_blink_mode);
+	CHECK_SGR(5, enter_dim_mode);
+	CHECK_SGR(6, enter_bold_mode);
+	CHECK_SGR(7, enter_secure_mode);
+	CHECK_SGR(8, enter_protected_mode);
+	CHECK_SGR(9, enter_alt_charset_mode);
+	free(zero);
+    }
 
     /*
      * Some standard applications (e.g., vi) and some non-curses
@@ -802,7 +885,7 @@ check_termtype(TERMTYPE * tp)
      * smir/rmir.  Let's be nice and warn about that, too, even though
      * ncurses handles it.
      */
-	if ((PRESENT(enter_insert_mode) || PRESENT(exit_insert_mode))
+    if ((PRESENT(enter_insert_mode) || PRESENT(exit_insert_mode))
 	&& (PRESENT(insert_character) || PRESENT(parm_ich))) {
 	_nc_warning("non-curses applications may be confused by ich/ich1 with smir/rmir");
     }

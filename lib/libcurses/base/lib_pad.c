@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_pad.c,v 1.1 1999/01/18 19:09:55 millert Exp $	*/
+/*	$OpenBSD: lib_pad.c,v 1.2 2000/03/10 01:35:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_pad.c,v 1.27 1998/06/28 00:10:16 tom Exp $")
+MODULE_ID("$From: lib_pad.c,v 1.28 2000/03/05 00:21:55 David.Mosberger Exp $")
 
 WINDOW *newpad(int l, int c)
 {
@@ -243,6 +243,7 @@ bool	wide;
 		newscr->_cury = win->_cury - pminrow + win->_begy + win->_yoffset;
 		newscr->_curx = win->_curx - pmincol + win->_begx;
 	}
+	newscr->_leaveok = win->_leaveok; 
 	win->_flags &= ~_HASMOVED;
 
 	/*

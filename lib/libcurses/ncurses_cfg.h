@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.17 2000/02/06 07:10:50 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.18 2000/03/10 01:35:01 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -73,6 +73,7 @@
 #define HAVE_LONG_FILE_NAMES 1
 #define HAVE_MEMCCPY 1
 #define HAVE_MENU_H 1
+#define HAVE_MKSTEMP 1
 #define HAVE_NANOSLEEP 1
 #define HAVE_NC_ALLOC_H 1
 #define HAVE_PANEL_H 1

@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse_entry.c,v 1.4 2000/01/16 01:35:18 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.5 2000/03/10 01:35:04 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -49,7 +49,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: parse_entry.c,v 1.41 2000/01/15 22:30:27 tom Exp $")
+MODULE_ID("$From: parse_entry.c,v 1.42 2000/02/13 01:01:26 tom Exp $")
 
 #ifdef LINT
 static short const parametrized[] =

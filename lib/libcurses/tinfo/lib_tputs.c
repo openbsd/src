@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tputs.c,v 1.4 2000/01/16 01:35:18 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.5 2000/03/10 01:35:04 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -47,7 +47,7 @@
 #include <termcap.h>		/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.43 2000/01/15 20:13:04 tom Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.45 2000/02/27 02:33:24 tom Exp $")
 
 char PC = 0;			/* used by termcap library */
 speed_t ospeed = 0;		/* used by termcap library */
@@ -61,9 +61,10 @@ delay_output(int ms)
 {
     T((T_CALLED("delay_output(%d)"), ms));
 
-    if (no_pad_char)
+    if (no_pad_char) {
+	_nc_flush();
 	napms(ms);
-    else {
+    } else {
 	register int nullcount;
 
 	nullcount = (ms * _nc_baudrate(ospeed)) / 10000;

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <!--
-  $From: hackguide.html,v 1.23 1999/01/17 00:15:48 tom Exp $
+  $From: hackguide.html,v 1.24 2000/03/05 01:19:41 tom Exp $
 -->
 <HTML>
 <HEAD>
@@ -19,18 +19,14 @@ this one.
 <H1>Contents</H1>
 <UL>
 <LI><A HREF="#abstract">Abstract</A>
-<P>
 <LI><A HREF="#objective">Objective of the Package</A>
 <UL>
 <LI><A HREF="#whysvr4">Why System V Curses?</A>
 <LI><A HREF="#extensions">How to Design Extensions</A>
 </UL>
-<LI><A HREF="#portability">Portability and Configuration</A><UL>
-</UL>
+<LI><A HREF="#portability">Portability and Configuration</A>
 <LI><A HREF="#documentation">Documentation Conventions</A>
-<P>
 <LI><A HREF="#bugtrack">How to Report Bugs</A>
-<P>
 <LI><A HREF="#ncurslib">A Tour of the Ncurses Library</A>
 <UL>
 <LI><A HREF="#loverview">Library Overview</A>
@@ -40,7 +36,6 @@ this one.
 <LI><A HREF="#output">Output and Screen Updating</A>
 </UL>
 <LI><A HREF="#fmnote">The Forms and Menu Libraries</A>
-<P>
 <LI><A HREF="#tic">A Tour of the Terminfo Compiler</A>
 <UL>
 <LI><A HREF="#nonuse">Translation of Non-<STRONG>use</STRONG> Capabilities</A>
@@ -48,9 +43,7 @@ this one.
 <LI><A HREF="#translation">Source-Form Translation</A>
 </UL>
 <LI><A HREF="#utils">Other Utilities</A>
-<P>
 <LI><A HREF="#style">Style Tips for Developers</A>
-<P>
 <LI><A HREF="#port">Porting Hints</A>
 </UL>
 
@@ -60,24 +53,21 @@ This document is a hacker's tour of the <STRONG>ncurses</STRONG> library and uti
 It discusses design philosophy, implementation methods, and the
 conventions used for coding and documentation.  It is recommended
 reading for anyone who is interested in porting, extending or improving the
-package. <P>
+package.
 
 <H1><A NAME="objective">Objective of the Package</A></H1>
 
 The objective of the <STRONG>ncurses</STRONG> package is to provide a free software API for
 character-cell terminals and terminal emulators with the following
-characteristics: <P>
+characteristics:
 
 <UL>
 <LI>Source-compatible with historical curses implementations (including
      the original BSD curses and System V curses.
-<P>
 <LI>Conformant with the XSI Curses standard issued as part of XPG4 by
      X/Open.
-<P>
 <LI>High-quality -- stable and reliable code, wide portability, good
      packaging, superior documentation.
-<P>
 <LI>Featureful -- should eliminate as much of the drudgery of C interface
      programming as possible, freeing programmers to think at a higher
      level of design.
@@ -86,7 +76,7 @@ characteristics: <P>
 These objectives are in priority order.  So, for example, source
 compatibility with older version must trump featurefulness -- we cannot
 add features if it means breaking the portion of the API corresponding
-to historical curses versions. <P>
+to historical curses versions.
 
 <H2><A NAME="whysvr4">Why System V Curses?</A></H2>
 
@@ -99,7 +89,7 @@ capture BSD's. <P>
 
 More importantly for the future, the XSI Curses standard issued by X/Open
 is explicitly and closely modeled on System V.  So conformance with
-System V took us most of the way to base-level XSI conformance. <P>
+System V took us most of the way to base-level XSI conformance.
 
 <H2><A NAME="extensions">How to Design Extensions</A></H2>
 
@@ -113,7 +103,7 @@ in or out the code that requires the <STRONG>ncurses</STRONG> extension. <P>
 
 For example, there is a macro <CODE>NCURSES_MOUSE_VERSION</CODE> which XSI Curses
 does not define, but which is defined in the <STRONG>ncurses</STRONG> library header.
-You can use this to condition the calls to the mouse API calls. <P>
+You can use this to condition the calls to the mouse API calls.
 
 <H1><A NAME="portability">Portability and Configuration</A></H1>
 
@@ -125,12 +115,11 @@ We encourage (but do not require) developers to make the code friendly
 to less-capable UNIX environments wherever possible. <P>
 
 We encourage developers to support OS-specific optimizations and methods
-not available under POSIX/ANSI, provided only that:  <P>
+not available under POSIX/ANSI, provided only that: 
 
 <UL>
 <LI>All such code is properly conditioned so the build process does not
      attempt to compile it under a plain ANSI/POSIX environment.
-<P>
 <LI>Adding such implementation methods does not introduce incompatibilities
      in the <STRONG>ncurses</STRONG> API between platforms.
 </UL>
@@ -138,12 +127,12 @@ not available under POSIX/ANSI, provided only that:  <P>
 We use GNU <CODE>autoconf(1)</CODE> as a tool to deal with portability issues.
 The right way to leverage an OS-specific feature is to modify the autoconf
 specification files (configure.in and aclocal.m4) to set up a new feature
-macro, which you then use to condition your code. <P>
+macro, which you then use to condition your code.
 
 <H1><A NAME="documentation">Documentation Conventions</A></H1>
 
 There are three kinds of documentation associated with this package.  Each
-has a different preferred format: <P>
+has a different preferred format:
 
 <UL>
 <LI>Package-internal files (README, INSTALL, TO-DO etc.)
@@ -151,14 +140,14 @@ has a different preferred format: <P>
 <LI>Everything else (i.e., narrative documentation).
 </UL>
 
-Our conventions are simple: <P>
+Our conventions are simple:
 <OL>
 <LI><STRONG>Maintain package-internal files in plain text.</STRONG>
      The expected viewer for them <EM>more(1)</EM> or an editor window; there's
-     no point in elaborate mark-up. <P>
+     no point in elaborate mark-up.
 
 <LI><STRONG>Mark up manual pages in the man macros.</STRONG>  These have to be viewable
-     through traditional <EM>man(1)</EM> programs. <P>
+     through traditional <EM>man(1)</EM> programs.
 
 <LI><STRONG>Write everything else in HTML.</STRONG>
 </OL>
@@ -171,7 +160,7 @@ browsing through viewers that are everywhere; (b) more easily readable
 as plain text than most other mark-ups, if you don't have a viewer; and (c)
 carries enough information that you can generate a nice-looking printed
 version from it.  Also, of course, it make exporting things like the
-announcement document to WWW pretty trivial.<P>
+announcement document to WWW pretty trivial.
 
 <H1><A NAME="bugtrack">How to Report Bugs</A></H1>
 
@@ -193,17 +182,17 @@ before contacting us that will help get the bug fixed quickly. <P>
 In order to use our bug-fixing time efficiently, we put people who
 show us they've taken these steps at the head of our queue.  This
 means that if you don't, you'll probably end up at the tail end and
-have to wait a while. <P>
+have to wait a while.
 
 <OL>
-<LI>Develop a recipe to reproduce the bug. <P>
+<LI>Develop a recipe to reproduce the bug.
 
 Bugs we can reproduce are likely to be fixed very quickly, often
 within days.  The most effective single thing you can do to get a
 quick fix is develop a way we can duplicate the bad behavior --
 ideally, by giving us source for a small, portable test program that
 breaks the library. (Even better is a keystroke recipe using one of
-the test programs provided with the distribution.) <P>
+the test programs provided with the distribution.)
 
 <LI>Try to reproduce the bug on a different terminal type. <P>
 
@@ -221,7 +210,7 @@ bug reproduces on both. <P>
 If you have xterm available, it is also good to collect xterm reports for
 different window sizes.  This is especially true if you normally use an
 unusual xterm window size -- a surprising number of the bugs we've seen
-are either triggered or masked by these.  <P>
+are either triggered or masked by these. 
 
 <LI>Generate and examine a trace file for the broken behavior. <P>
 
@@ -248,7 +237,7 @@ through. <P>
 Often you'll find terminfo problems at this stage by noticing that the
 escape sequences put out for various capabilities are wrong.  If not,
 you're likely to learn enough to be able to characterize any bug in
-the screen-update logic quite exactly. <P>
+the screen-update logic quite exactly.
 
 <LI>Report details and symptoms, not just interpretations. <P>
 
@@ -299,7 +288,7 @@ with <CODE>hardscroll</CODE>. <P>
 
 There's one other interactive tester, <CODE>tctest</CODE>, that exercises
 translation between termcap and terminfo formats.  If you have a serious
-need to run this, you probably belong on our development team! <P>
+need to run this, you probably belong on our development team!
 
 <H1><A NAME="ncurslib">A Tour of the Ncurses Library</A></H1>
 
@@ -376,7 +365,8 @@ unlikely to need change, barring bugs or some fundamental
 reorganization in the underlying data structures. <P>
 
 These files are used only for debugging support:
-<blockquote><code>
+<blockquote>
+<code>
 lib_trace.c
 lib_traceatr.c
 lib_tracebits.c
@@ -384,7 +374,8 @@ lib_tracechr.c
 lib_tracedmp.c
 lib_tracemse.c
 trace_buf.c
-</blockquote></code>
+</code>
+</blockquote>
 It is rather unlikely you will ever need to change these, unless
 you want to introduce a new debug trace level for some reasoon.<P>
 
@@ -392,7 +383,8 @@ There is another group of files that do direct I/O via <EM>tputs()</EM>,
 computations on the terminal capabilities, or queries to the OS
 environment, but nevertheless have only fairly low complexity.  These
 include:
-<blockquote><code>
+<blockquote>
+<code>
 lib_acs.c
 lib_beep.c
 lib_color.c
@@ -407,7 +399,8 @@ lib_tparm.c
 lib_tputs.c
 lib_vidattr.c
 read_entry.c.
-</blockquote></code>
+</code>
+</blockquote>
 They are likely to need revision only if
 ncurses is being ported to an environment without an underlying
 terminfo capability representation. <P>
@@ -415,13 +408,15 @@ terminfo capability representation. <P>
 These files
 have serious hooks into
 the tty driver and signal facilities:
-<blockquote><code>
+<blockquote>
+<code>
 lib_kernel.c
 lib_baudrate.c
 lib_raw.c
 lib_tstp.c
 lib_twait.c
-</blockquote></code>
+</code>
+</blockquote>
 If you run into porting snafus
 moving the package to another UNIX, the problem is likely to be in one
 of these files.
@@ -429,7 +424,8 @@ The file <CODE>lib_print.c</CODE> uses sleep(2) and also
 falls in this category.<P>
 
 Almost all of the real work is done in the files
-<blockquote><code>
+<blockquote>
+<code>
 hardscroll.c
 hashmap.c
 lib_addch.c
@@ -440,7 +436,8 @@ lib_mvcur.c
 lib_refresh.c
 lib_setup.c
 lib_vidattr.c
-</blockquote></code>
+</code>
+</blockquote>
 Most of the algorithmic complexity in the
 library lives in these files.
 If there is a real bug in <STRONG>ncurses</STRONG> itself, it's probably here.
@@ -450,7 +447,8 @@ below (see <A HREF="#engine">The Engine Room</A>). <P>
 Finally, there is a group of files that is actually most of the
 terminfo compiler.  The reason this code lives in the <STRONG>ncurses</STRONG>
 library is to support fallback to /etc/termcap.  These files include
-<blockquote><code>
+<blockquote>
+<code>
 alloc_entry.c
 captoinfo.c
 comp_captab.c
@@ -461,8 +459,9 @@ comp_scan.c
 parse_entry.c
 read_termcap.c
 write_entry.c
-</blockquote></code>
-We'll discuss these in the compiler tour. <P>
+</code>
+</blockquote>
+We'll discuss these in the compiler tour.
 
 <H2><A NAME="engine">The Engine Room</A></H2>
 
@@ -487,7 +486,7 @@ Hackers bruised by previous encounters with variant <CODE>select(2)</CODE>
 calls may find the code in <CODE>lib_twait.c</CODE> interesting.  It deals
 with the problem that some BSD selects don't return a reliable
 time-left value.  The function <CODE>timed_wait()</CODE> effectively
-simulates a System V select. <P>
+simulates a System V select.
 
 <H3><A NAME="mouse">Mouse Events</A></H3>
 
@@ -526,7 +525,7 @@ to queue up a series of adjacent mouse reports. <P>
 
 In either case, <CODE>_nc_mouse_parse()</CODE> should be called after the
 series is accepted to parse the digested mouse reports (low-level
-events) into a gesture (a high-level or composite event). <P>
+events) into a gesture (a high-level or composite event).
 
 <H3><A NAME="output">Output and Screen Updating</A></H3>
 
@@ -571,7 +570,7 @@ optimization improves efficiency. <P>
 In the trace-enabled version of the library, it is also possible to disable
 and re-enable various optimizations at runtime by tweaking the variable
 <CODE>_nc_optimize_enable</CODE>.  See the file <CODE>include/curses.h.in</CODE>
-for mask values, near the end. <P>
+for mask values, near the end.
 
 <H1><A NAME="fmnote">The Forms and Menu Libraries</A></H1>
 
@@ -586,7 +585,7 @@ System V's, but will settle for BSD regexps if the former isn't available. <P>
 Historical note: the panels code was written primarily to assist in
 porting u386mon 2.0 (comp.sources.misc v14i001-4) to systems lacking
 panels support; u386mon 2.10 and beyond use it.  This version has been
-slightly cleaned up for <CODE>ncurses</CODE>. <P>
+slightly cleaned up for <CODE>ncurses</CODE>.
 
 <H1><A NAME="tic">A Tour of the Terminfo Compiler</A></H1>
 
@@ -601,7 +600,7 @@ lexical analyzer (in <CODE>comp_scan.c</CODE>).  The lexer chooses its
 mode (termcap or terminfo) based on the first `,' or `:' it finds in
 each entry.  The lexer does all the work of recognizing capability
 names and values; the grammar above it is trivial, just "parse entries
-till you run out of file". <P>
+till you run out of file".
 
 <H2><A NAME="nonuse">Translation of Non-<STRONG>use</STRONG> Capabilities</A></H2>
 
@@ -622,7 +621,7 @@ organization is that the hash table can be in shareable text space). <P>
 Thus, adding a new capability is usually pretty trivial, just a matter
 of adding one line to the <CODE>include/Caps</CODE> file.  We'll have more
 to say about this in the section on <A HREF="#translation">Source-Form
-Translation</A>. <P>
+Translation</A>.
 
 <H2><A NAME="uses">Use Capability Resolution</A></H2>
 
@@ -672,7 +671,7 @@ Name collisions will still be detected, just not as cleanly.  The
 postdates the time of <STRONG>tic</STRONG>'s first call to
 <CODE>write_entry()</CODE>, Thus it will complain about overwriting
 entries newly made during the <STRONG>tic</STRONG> run, but not about
-overwriting ones that predate it. <P>
+overwriting ones that predate it.
 
 <H2><A NAME="translation">Source-Form Translation</A></H2>
 
@@ -697,7 +696,7 @@ For circumstances where you need to do algorithmic translation, there
 are functions in <CODE>parse_entry.c</CODE> called after the parse of each
 entry that are specifically intended to encapsulate such
 translations.  This, for example, is where the AIX <STRONG>box1</STRONG> capability
-get translated to an <STRONG>acsc</STRONG> string.<P>
+get translated to an <STRONG>acsc</STRONG> string.
 
 <H1><A NAME="utils">Other Utilities</A></H1>
 
@@ -709,7 +708,7 @@ capabilities are dumped.  This is necessary in order to handle both
 the ordinary De-compilation case and entry difference reporting. <P>
 
 The <STRONG>tput</STRONG> and <STRONG>clear</STRONG> utilities just do an entry load
-followed by a <CODE>tputs()</CODE> of a selected capability. <P>
+followed by a <CODE>tputs()</CODE> of a selected capability.
 
 <H1><A NAME="style">Style Tips for Developers</A></H1>
 
@@ -739,7 +738,7 @@ data in that file in order to generate the proper table, that's still
 preferable to ad-hoc code -- that's why the fifth field (flags) is
 there. <P>
 
-Have fun! <P>
+Have fun!
 
 <H1><A NAME="port">Porting Hints</A></H1>
 
@@ -751,9 +750,10 @@ the curses internal structures, do all output through other curses
 calls (not including <CODE>tputs()</CODE> and <CODE>putp()</CODE>) and do not
 call any other UNIX routines such as signal(2) or the stdio library.
 Thus, they should not need to be modified for single-terminal
-ports. <P>
+ports. 
 
-<blockquote><code>
+<blockquote>
+<code>
 lib_addch.c
 lib_addstr.c
 lib_bkgd.c
@@ -786,39 +786,45 @@ lib_tputs.c
 lib_unctrl.c
 lib_window.c
 panel.c
-</blockquote></code>
+</code>
+</blockquote>
 <P>
 
-This module is pure curses, but calls outstr(): <P>
+This module is pure curses, but calls outstr():
 
-<blockquote><code>
+<blockquote>
+<code>
 lib_getstr.c
-</blockquote></code>
+</code>
+</blockquote>
 <P>
 
 These modules are pure curses, except that they use <CODE>tputs()</CODE>
-and <CODE>putp()</CODE>: <P>
+and <CODE>putp()</CODE>:
 
-<blockquote><code>
+<blockquote>
+<code>
 lib_beep.c
 lib_color.c
 lib_endwin.c
 lib_options.c
 lib_slk.c
 lib_vidattr.c
-</blockquote></code>
+</code>
+</blockquote>
 <P>
 
-This modules assist in POSIX emulation on non-POSIX systems: <P>
+This modules assist in POSIX emulation on non-POSIX systems:
 <DL>
 <DT> sigaction.c
 <DD> signal calls
 </DL>
 
 The following source files will not be needed for a
-single-terminal-type port. <P>
+single-terminal-type port.
 
-<blockquote><code>
+<blockquote>
+<code>
 alloc_entry.c
 captoinfo.c
 clear.c
@@ -834,11 +840,12 @@ parse_entry.c
 read_entry.c
 tput.c
 write_entry.c
-</blockquote></code>
+</code>
+</blockquote>
 <P>
 
 The following modules will use open()/read()/write()/close()/lseek() on files,
-but no other OS calls. <P>
+but no other OS calls.
 
 <DL>
 <DT>lib_screen.c
@@ -850,7 +857,7 @@ but no other OS calls. <P>
 Modules that would have to be modified for a port start here: <P>
 
 The following modules are `pure curses' but contain assumptions inappropriate
-for a memory-mapped port. <P>
+for a memory-mapped port.
 
 <dl>
 <dt>lib_longname.c<dd>assumes there may be multiple terminals

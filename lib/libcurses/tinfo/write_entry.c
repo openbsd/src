@@ -1,7 +1,7 @@
-/*	$OpenBSD: write_entry.c,v 1.6 2000/01/02 22:06:51 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.7 2000/03/10 01:35:04 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -54,7 +54,7 @@
 #define TRACE_OUT(p)		/*nothing */
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.50 2000/01/01 16:35:44 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.51 2000/02/13 01:01:26 tom Exp $")
 
 static int total_written;
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_outopts.3,v 1.7 1999/01/18 19:07:14 millert Exp $
+.\" $OpenBSD: curs_outopts.3,v 1.8 2000/03/10 01:35:01 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_outopts.3x,v 1.13 1998/12/26 20:02:04 tom Exp $
+.\" $From: curs_outopts.3x,v 1.14 2000/02/27 01:41:58 tom Exp $
 .TH curs_outopts 3 ""
 .SH NAME
 \fBclearok\fR, \fBidlok\fR, \fBidcok immedok\fR,
@@ -153,6 +153,7 @@ time.
 The XSI Curses standard does not mention that the cursor should be
 made invisible as a side-effect of \fBleaveok\fR.
 SVr4 curses documentation does this, but the code does not.
+Use \fBcurs_set\fR to make the cursor invisible.
 .SH NOTES
 Note that \fBclearok\fR, \fBleaveok\fR, \fBscrollok\fR, \fBidcok\fR, \fBnl\fR,
 \fBnonl\fR and \fBsetscrreg\fR may be macros.

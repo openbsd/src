@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_kernel.3,v 1.7 1998/09/13 19:16:20 millert Exp $
+.\" $OpenBSD: curs_kernel.3,v 1.8 2000/03/10 01:35:01 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_kernel.3x,v 1.11 1998/06/27 21:56:38 tom Exp $
+.\" $From: curs_kernel.3x,v 1.12 2000/02/27 01:37:46 tom Exp $
 .TH curs_kernel 3 ""
 .SH NAME
 \fBdef_prog_mode\fR, \fBdef_shell_mode\fR,
@@ -136,6 +136,13 @@ the variables \fIy\fR and \fIx\fR.
 Older SVr4 man pages warn that the return value of \fBcurs_set\fR "is currently
 incorrect".  This implementation gets it right, but it may be unwise to count
 on the correctness of the return value anywhere else.
+
+Both ncurses and SVr4 will call \fBcurs_set\fR in \fBendwin\fR
+if \fBcurs_set\fR
+has been called to make the cursor other than normal, i.e., either
+visible or very visible.
+There is no way for ncurses to determine the initial cursor state to
+restore that.
 .SH PORTABILITY
 The functions \fBsetsyx\fR and \fBgetsyx\fR are not described in the XSI
 Curses standard, Issue 4.  All other functions are as described in XSI Curses.

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_trace.c,v 1.3 2000/01/09 05:06:02 millert Exp $	*/
+/*	$OpenBSD: lib_trace.c,v 1.4 2000/03/10 01:35:05 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,7 +42,7 @@
 
 #include <ctype.h>
 
-MODULE_ID("$From: lib_trace.c,v 1.32 2000/01/08 17:37:04 tom Exp $")
+MODULE_ID("$From: lib_trace.c,v 1.33 2000/02/13 01:01:55 tom Exp $")
 
 unsigned _nc_tracing = 0;	/* always define this */
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_twait.c,v 1.3 2000/02/06 07:10:51 millert Exp $	*/
+/*	$OpenBSD: lib_twait.c,v 1.4 2000/03/10 01:35:05 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -61,7 +61,7 @@
 # endif
 #endif
 
-MODULE_ID("$From: lib_twait.c,v 1.35 2000/02/06 01:57:16 tom Exp $")
+MODULE_ID("$From: lib_twait.c,v 1.36 2000/02/13 01:02:34 tom Exp $")
 
 static long _nc_gettime(bool first)
 {
