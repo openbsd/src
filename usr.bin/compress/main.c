@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2003/07/29 18:33:11 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2003/08/05 18:22:17 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.43 2003/07/29 18:33:11 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.44 2003/08/05 18:22:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -511,7 +511,7 @@ compress(const char *in, char *out, const struct compressor *method,
 
 	if (!error && verbose > 0)
 		verbose_info(out, info.total_out, info.total_in, info.hlen);
-	
+
 	return (error);
 }
 
@@ -808,7 +808,7 @@ verbose_info(const char *file, off_t compressed, off_t uncompressed,
 		    (uncompressed - compressed) * 100.0 / uncompressed, file);
 	}
 	compressed += hlen;
-	fprintf(stderr, "%lld bytes in, %lld bytes out\n", 
+	fprintf(stderr, "%lld bytes in, %lld bytes out\n",
 	    (long long)(decomp ? compressed : uncompressed),
 	    (long long)(decomp ? uncompressed : compressed));
 }

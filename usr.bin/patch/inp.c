@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.23 2003/08/05 18:13:43 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.24 2003/08/05 18:20:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.23 2003/08/05 18:13:43 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.24 2003/08/05 18:20:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -194,7 +194,7 @@ plan_a(const char *filename)
 	}
 	if (i_size > SIZE_MAX) {
 		say("block too large to mmap\n");
- 		return false;
+		return false;
 	}
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
@@ -214,7 +214,7 @@ plan_a(const char *filename)
 	/* test for NUL too, to maintain the behavior of the original code */
 	for (i = 0; i < i_size && i_womp[i] != '\0'; i++) {
 		if (i_womp[i] == '\n')
- 			iline++;
+			iline++;
 	}
 	if (i_size > 0 && i_womp[i_size - 1] != '\n')
 		iline++;
@@ -222,11 +222,11 @@ plan_a(const char *filename)
 
 	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
 
- 	if (i_ptr == NULL) {	/* shucks, it was a near thing */
+	if (i_ptr == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;
- 		return false;
- 	}
+		return false;
+	}
 
 	/* now scan the buffer and build pointer array */
 	iline = 1;
@@ -248,7 +248,7 @@ plan_a(const char *filename)
 			i_womp = NULL;
 			return false;
 		}
-	
+
 		memcpy(p, i_ptr[iline], sz);
 		p[sz] = '\n';
 		i_ptr[iline] = p;

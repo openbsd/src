@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: zforce,v 1.1 2003/07/29 07:32:45 otto Exp $
+# $OpenBSD: zforce,v 1.2 2003/08/05 18:22:17 deraadt Exp $
 #
 # Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
 #
@@ -42,7 +42,7 @@ while test $# -ne 0; do
 					echo "$1" -- renamed to "$n"
 				else
 					ret=1
-					echo $prog: cannot rename "$1" to "$n" 
+					echo $prog: cannot rename "$1" to "$n"
 				fi
 			fi
 			shift

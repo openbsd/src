@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.28 2003/08/01 20:30:48 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.29 2003/08/05 18:20:33 deraadt Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.28 2003/08/01 20:30:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.29 2003/08/05 18:20:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -499,7 +499,7 @@ another_hunk(void)
 			p_end++;
 			if (p_end >= hunkmax)
 				fatal("Internal error: hunk larger than hunk "
-				      "buffer size");
+				    "buffer size");
 			p_char[p_end] = *buf;
 			p_line[p_end] = NULL;
 			switch (*buf) {
@@ -1181,7 +1181,7 @@ pch_swap(void)
 		n++;
 	}
 	if (p_char[0] != '=')
-		fatal("Malformed patch at line %ld: expected '=' found '%c'\n", 
+		fatal("Malformed patch at line %ld: expected '=' found '%c'\n",
 		    p_input_line, p_char[0]);
 	p_char[0] = '*';
 	for (s = p_line[0]; *s; s++)
@@ -1191,8 +1191,8 @@ pch_swap(void)
 	/* now turn the old into the new */
 
 	if (p_char[0] != '*')
-		fatal("Malformed patch at line %ld: expected '*' found '%c'\n", 
-		      p_input_line, p_char[0]);
+		fatal("Malformed patch at line %ld: expected '*' found '%c'\n",
+		    p_input_line, p_char[0]);
 	tp_char[0] = '=';
 	for (s = tp_line[0]; *s; s++)
 		if (*s == '*')
@@ -1207,8 +1207,8 @@ pch_swap(void)
 
 	if (i != p_ptrn_lines + 1)
 		fatal("Malformed patch at line %ld: expected %ld lines, "
-		      "got %ld\n",
-		      p_input_line, p_ptrn_lines + 1, i);
+		    "got %ld\n",
+		    p_input_line, p_ptrn_lines + 1, i);
 
 	i = p_ptrn_lines;
 	p_ptrn_lines = p_repl_lines;
