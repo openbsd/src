@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1996/10/28 14:55:31 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1996/11/05 01:40:29 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
 
 /*
@@ -2166,7 +2166,7 @@ struct cpu_model_info cpu_models[] = {
 
 /* The Performas... */
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
-	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
 	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[12]},
 
