@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.7 1996/08/20 23:47:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.8 1996/09/02 05:01:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -115,6 +115,10 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	register struct cu_data *cu;
 	struct timeval now;
 	struct rpc_msg call_msg;
+	static u_int32_t disrupt;
+
+	if (disrupt == 0)
+		disrupt = (u_int32_t)raddr;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
@@ -152,7 +156,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;
 	cu->cu_recvsz = recvsz;
-	call_msg.rm_xid = getpid() ^ now.tv_sec ^ now.tv_usec;
+	call_msg.rm_xid = (++disrupt) ^ getpid() ^ now.tv_sec ^ now.tv_usec;
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = program;
