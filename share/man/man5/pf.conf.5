@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.62 2002/06/24 09:54:43 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.63 2002/07/01 23:10:33 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -32,7 +32,8 @@
 .Os
 .Sh NAME
 .Nm pf.conf
-.Nd filtering and translation (NAT) rules file for the packet filter
+.Nd filtering and translation (NAT) rules file for the
+packet filter
 .Sh DESCRIPTION
 The
 .Xr pf 4
@@ -101,8 +102,10 @@ unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
 binary-op      = number ( "<>" | "><" ) number .
 op-list        = ( unary-op | binary-op ) [ "," op-list ] .
 
-flags          = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
-flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ] [ "W" ].
+flags          = "flags" ( flag-set | flag-set "/" flag-set |
+                           "/" flag-set ) .
+flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
+                 [ "W" ] .
 
 icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
 ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
@@ -200,7 +203,7 @@ The first matching rule decides what action is taken.
 .Pp
 If no rule matches the packet, the default action is to pass the packet
 up to the filter unmodified.
-It should be noted that that all translations of packets occur before
+It should be noted that all translations of packets occur before
 the filters are applied.
 Hence, rules for redirected packets should specify the address and port
 after translation.
@@ -250,7 +253,7 @@ These netblocks are:
 192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
 .Ed
 .It Em rdr
-The packet is redirected to a another destination and possibly a
+The packet is redirected to another destination and possibly a
 different port.
 .Em rdr
 rules can optionally specify port ranges instead of single ports.
@@ -612,7 +615,7 @@ Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
 Some popular stack implementations choose
 .Cm very
-poor ISNs thus are normally susceptible to ISN prediction exploits.
+poor ISNs and thus are normally susceptible to ISN prediction exploits.
 By applying a "modulate state" rule to a TCP connection, 
 .Em pf
 will create a high quality random sequence number for each connection
@@ -638,8 +641,8 @@ the firewall was rebooted, the state table was flushed, ...
 it will not be able to safely modulate the state of that connection.
 .Em pf
 will fall back and operate as if "keep state" was specified instead.
-Without this fallback, modulation would cause both end hosts to
-each think that the other had somehow lost sync.
+Without this fallback, modulation would cause each host to
+think that the other end had somehow lost sync.
 .Pp
 Caveat:  If the state table is flushed or the firewall is rebooted,
 currently modulated connections can not be continued or picked
@@ -649,11 +652,10 @@ shift the sequencing of each side of a connection
 .Po
 add a random number to each side.
 .Pc
-The sudden withdrawl
-of the modulation will appear to each side of the connection that its
-peer has suddenly shifted its sequence by a random amount.
+Both sides of the connection will notice, that its peer has suddenly
+shifted its sequence by a random amount. 
 Neither side
-will be able to recover and the connection will stall then eventually close.
+will be able to recover and the connection will stall and eventually close.
 .Sh STATE OPTIONS
 Both "keep state" and "modulate state" support the following options:
 .Bl -tag -width timeout_seconds -compact
@@ -693,7 +695,7 @@ Enforces a minimum ttl for matching ip packets.
 Enforces a maximum mss for matching tcp packets.
 .Pp
 Normalization occurs before filtering, scrub rules and pass/block
-rules are evaluated independantly.
+rules are evaluated independently.
 Hence, their relative position in the rule set is not relevant,
 and packets can't be blocked before normalization.
 .Sh FRAGMENT HANDLING
@@ -759,7 +761,8 @@ Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
 .Sh FILTER EXAMPLES
 .Bd -literal
-# The external interface is kue0 (157.161.48.183, the only routable address)
+# The external interface is kue0
+# (157.161.48.183, the only routable address)
 # and the private network is 10.0.0.0/8, for which we are doing NAT.
 
 # use a macro for the interface name, so it can be changed easily
