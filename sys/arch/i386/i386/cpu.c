@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2004/06/23 17:14:31 niklas Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2004/06/23 17:23:27 niklas Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -312,22 +312,20 @@ cpu_attach(parent, self, aux)
 	default:
 		panic("unknown processor type??\n");
 	}
-#else	/* MULTIPROCESSOR */
-	printf("\n");
-#endif	/* !MULTIPROCESSOR */
 
 	/* Mark this ID as taken if it's in the I/O APIC ID area */
 	if (ci->ci_apicid < IOAPIC_ID_MAX)
 		ioapic_id_map &= ~(1 << ci->ci_apicid);
-	
-#ifdef MULTIPROCESSOR
+
 	if (mp_verbose) {
 		printf("%s: kstack at 0x%lx for %d bytes\n",
 		    ci->ci_dev.dv_xname, kstack, USPACE);
 		printf("%s: idle pcb at %p, idle sp at 0x%x\n",
 		    ci->ci_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
-#endif
+#else	/* MULTIPROCESSOR */
+	printf("\n");
+#endif	/* !MULTIPROCESSOR */
 }
 
 /*
