@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.7 2003/06/25 17:28:00 millert Exp $	*/
+/*	$OpenBSD: binary.c,v 1.8 2003/09/07 07:53:44 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -32,18 +32,16 @@
 
 #include "grep.h"
 
-#define BUFFER_SIZE 32
-
 int
 bin_file(FILE *f)
 {
-	char		buf[BUFFER_SIZE];
+	char		buf[BUFSIZ];
 	int		i, m;
 
 	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = (int)fread(buf, 1, BUFFER_SIZE, f)) == 0)
+	if ((m = (int)fread(buf, 1, BUFSIZ, f)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
@@ -58,13 +56,13 @@ bin_file(FILE *f)
 int
 gzbin_file(gzFile *f)
 {
-	char		buf[BUFFER_SIZE];
+	char		buf[BUFSIZ];
 	int		i, m;
 
 	if (gzseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = gzread(f, buf, BUFFER_SIZE)) == 0)
+	if ((m = gzread(f, buf, BUFSIZ)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
@@ -82,7 +80,7 @@ mmbin_file(mmf_t *f)
 	int i;
 
 	/* XXX knows too much about mmf internals */
-	for (i = 0; i < BUFFER_SIZE && i < f->len; i++)
+	for (i = 0; i < BUFSIZ && i < f->len; i++)
 		if (!isprint(f->base[i]) && !isspace(f->base[i]))
 			return 1;
 	mmrewind(f);
