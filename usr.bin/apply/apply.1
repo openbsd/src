@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.13 2000/11/10 05:10:21 aaron Exp $
+.\"	$OpenBSD: apply.1,v 1.14 2000/12/24 11:22:53 aaron Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -42,8 +42,8 @@
 .Nd apply a command to a set of arguments
 .Sh SYNOPSIS
 .Nm apply
-.Op Fl a Ns Ar c
-.Op Fl Ns Ar #
+.Op Fl Ar #
+.Op Fl a Ar magic
 .Op Fl d
 .Ar command argument
 .Op Ar ...
@@ -88,9 +88,9 @@ occur in
 the
 .Fl Ns Ar #
 option is ignored.
-.It Fl a Ns Ar c
+.It Fl a Ar magic
 Use
-.Ar c
+.Ar magic
 as the magic character instead of the default
 .Ql % .
 .It Fl d
