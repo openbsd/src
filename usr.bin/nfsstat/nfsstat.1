@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.6 1999/06/05 01:21:35 aaron Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.7 2000/04/18 15:24:26 mickey Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -44,8 +44,6 @@
 statistics
 .Sh SYNOPSIS
 .Nm nfsstat
-.Op Fl M Ar core
-.Op Fl N Ar system
 .Op Fl w Ar wait
 .Op Fl s
 .Op Fl c
@@ -57,13 +55,6 @@ client and server activity.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl M Ar core
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/kmem .
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /bsd .
 .It Fl w Ar wait
 Display a shorter summary of
 .Tn NFS
@@ -74,13 +65,6 @@ second intervals.
 Display server statistics only.
 .It Fl c
 Display client statistics only.
-.El
-.Sh FILES
-.Bl -tag -width /dev/kmem -compact
-.It Pa /bsd
-default kernel namelist
-.It Pa /dev/kmem
-default memory file
 .El
 .Sh SEE ALSO
 .Xr fstat 1 ,
