@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.128 2002/06/09 00:37:37 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.129 2002/06/17 19:33:37 danh Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.128 2002/06/09 00:37:37 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.129 2002/06/17 19:33:37 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -493,6 +493,9 @@ main(argc, argv, envp)
 
 	sa.sa_handler = lostconn;
 	(void) sigaction(SIGPIPE, &sa, NULL);
+
+	sa.sa_handler = toolong;
+	(void) sigaction(SIGALRM, &sa, NULL);
 
 	addrlen = sizeof(ctrl_addr);
 	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
@@ -1361,7 +1364,6 @@ dataconn(name, size, mode)
 		union sockunion from;
 		int s, fromlen = sizeof(from);
 
-		signal (SIGALRM, toolong);
 		(void) alarm ((unsigned) timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
 		(void) alarm (0);
@@ -1621,7 +1623,6 @@ receive_data(instr, outstr)
 	int c;
 	int cnt;
 	char buf[BUFSIZ];
-	struct sigaction sa;
 	volatile int bare_lfs = 0;
 
 	transflag++;
@@ -1629,10 +1630,6 @@ receive_data(instr, outstr)
 
 	case TYPE_I:
 	case TYPE_L:
-		sigfillset(&sa.sa_mask);
-		sa.sa_flags = SA_RESTART;
-		sigaction(SIGALRM, &sa, NULL);
-
 		do {
 			(void) alarm ((unsigned) timeout);
 			cnt = read(fileno(instr), buf, sizeof(buf));
