@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.115 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.116 2004/09/14 22:09:38 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.115 2004/08/08 19:04:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.116 2004/09/14 22:09:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ struct ctlname debugname[CTL_DEBUG_MAXID];
 struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
 struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
-struct ctlname ttyname[] = CTL_KERN_TTY_NAMES;
+struct ctlname ttysname[] = CTL_KERN_TTY_NAMES;
 struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
 struct ctlname shmname[] = CTL_KERN_SHMINFO_NAMES;
 struct ctlname watchdogname[] = CTL_KERN_WATCHDOG_NAMES;
@@ -1421,7 +1421,7 @@ struct list bpflist = { bpfname, NET_BPF_MAXID };
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
 struct list nchstatslist = { nchstatsname, KERN_NCHSTATS_MAXID };
-struct list ttylist = { ttyname, KERN_TTY_MAXID };
+struct list ttylist = { ttysname, KERN_TTY_MAXID };
 struct list semlist = { semname, KERN_SEMINFO_MAXID };
 struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
