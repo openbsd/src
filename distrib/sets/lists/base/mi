@@ -997,6 +997,7 @@
 ./usr/share/calendar/calendar.pagan
 ./usr/share/calendar/calendar.russian
 ./usr/share/calendar/calendar.usholiday
+./usr/share/calendar/calendar.fictional
 ./usr/share/calendar/calendar.world
 ./usr/share/calendar/de_DE.ISO_8859-1
 ./usr/share/calendar/de_DE.ISO_8859-1/calendar.all
