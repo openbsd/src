@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.21 2004/05/29 12:35:54 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.22 2005/02/24 19:37:19 mickey Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -609,14 +609,14 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 
 	readsize = cs->sc_nccdisks * sizeof(struct ccdcinfo);
 	if ((cip = malloc(readsize)) == NULL) {
-		warn("ccd%d: can't allocate memory for component info",
-		    cs->sc_unit);
+		warn("%s: can't allocate memory for component info",
+		    cs->sc_xname);
 		return;
 	}
 	memset(cip, 0, readsize);
 
 	/* Dump out softc information. */
-	printf("ccd%d\t\t%d\t%d\t", cs->sc_unit, cs->sc_ileave,
+	printf("%s\t\t%d\t0x%x\t", cs->sc_xname, cs->sc_ileave,
 	    cs->sc_cflags & CCDF_USERMASK);
 	fflush(stdout);
 
