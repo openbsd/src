@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.78 2004/12/10 22:35:17 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.79 2004/12/10 23:13:52 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -187,6 +187,7 @@ enum	{ CARP_COUNT_MASTER, CARP_COUNT_RUNNING };
 
 void	carp_multicast_cleanup(struct carp_softc *);
 int	carp_set_ifp(struct carp_softc *, struct ifnet *);
+void	carp_set_enaddr(struct carp_softc *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_join_multicast(struct carp_softc *, struct ifnet *);
 #ifdef INET6
@@ -720,7 +721,7 @@ carp_clone_create(ifc, unit)
 	if_attachhead(ifp);
 
 	if_alloc_sadl(ifp);
-	bcopy(&sc->sc_ac.ac_enaddr, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ac_multiaddrs);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
@@ -1494,12 +1495,36 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		}
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_ac.ac_if.if_flags |= IFF_UP;
+		carp_set_enaddr(sc);
 	} else {
 		carpdetach(sc);
 		sc->sc_ac.ac_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 	}
 	return (0);
 
+}
+
+void
+carp_set_enaddr(struct carp_softc *sc)
+{
+	if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
+		sc->sc_ac.ac_enaddr[0] = 3;
+		sc->sc_ac.ac_enaddr[1] = 0;
+		sc->sc_ac.ac_enaddr[2] = 0x40 >> (sc->sc_vhid - 1);
+		sc->sc_ac.ac_enaddr[3] = 0x40000 >> (sc->sc_vhid - 1);
+		sc->sc_ac.ac_enaddr[4] = 0;
+		sc->sc_ac.ac_enaddr[5] = 0;
+	} else {
+		sc->sc_ac.ac_enaddr[0] = 0;
+		sc->sc_ac.ac_enaddr[1] = 0;
+		sc->sc_ac.ac_enaddr[2] = 0x5e;
+		sc->sc_ac.ac_enaddr[3] = 0;
+		sc->sc_ac.ac_enaddr[4] = 1;
+		sc->sc_ac.ac_enaddr[5] = sc->sc_vhid;
+	}
+
+	bcopy(&sc->sc_ac.ac_enaddr,
+	    LLADDR(sc->sc_ac.ac_if.if_sadl), sc->sc_ac.ac_if.if_addrlen);
 }
 
 int
@@ -1847,14 +1872,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 						return (EINVAL);
 			}
 			sc->sc_vhid = carpr.carpr_vhid;
-			sc->sc_ac.ac_enaddr[0] = 0;
-			sc->sc_ac.ac_enaddr[1] = 0;
-			sc->sc_ac.ac_enaddr[2] = 0x5e;
-			sc->sc_ac.ac_enaddr[3] = 0;
-			sc->sc_ac.ac_enaddr[4] = 1;
-			sc->sc_ac.ac_enaddr[5] = sc->sc_vhid;
-			bcopy(&sc->sc_ac.ac_enaddr,
-			    LLADDR(ifp->if_sadl), ifp->if_addrlen);
+			carp_set_enaddr(sc);
+			carp_set_state(sc, INIT);
 			error--;
 		}
 		if (carpr.carpr_advbase > 0 || carpr.carpr_advskew > 0) {
@@ -1959,12 +1978,8 @@ carp_fix_lladdr(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			struct ether_header *eh;
 
 			eh = mtod(m, struct ether_header *);
-			eh->ether_shost[0] = 0;
-			eh->ether_shost[1] = 0;
-			eh->ether_shost[2] = 0x5e;
-			eh->ether_shost[3] = 0;
-			eh->ether_shost[4] = 1;
-			eh->ether_shost[5] = sc->sc_vhid;
+			bcopy(&sc->sc_ac.ac_enaddr, eh->ether_shost,
+			    sizeof(eh->ether_shost));
 		}
 		break;
 #endif
@@ -1973,12 +1988,8 @@ carp_fix_lladdr(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			struct fddi_header *fh;
 
 			fh = mtod(m, struct fddi_header *);
-			fh->fddi_shost[0] = 0;
-			fh->fddi_shost[1] = 0;
-			fh->fddi_shost[2] = 0x5e;
-			fh->fddi_shost[3] = 0;
-			fh->fddi_shost[4] = 1;
-			fh->fddi_shost[5] = sc->sc_vhid;
+			bcopy(&sc->sc_ac.ac_enaddr, fh->fddi_shost,
+			    sizeof(fh->fddi_shost));
 		}
 		break;
 #endif
@@ -1987,12 +1998,8 @@ carp_fix_lladdr(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			struct token_header *th;
 
 			th = mtod(m, struct token_header *);
-			th->token_shost[0] = 3;
-			th->token_shost[1] = 0;
-			th->token_shost[2] = 0x40 >> (sc->sc_vhid - 1);
-			th->token_shost[3] = 0x40000 >> (sc->sc_vhid - 1);
-			th->token_shost[4] = 0;
-			th->token_shost[5] = 0;
+			bcopy(&sc->sc_ac.ac_enaddr, fh->token_shost,
+			    sizeof(th->token_shost));
 		}
 		break;
 #endif
