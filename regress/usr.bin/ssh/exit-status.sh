@@ -1,4 +1,4 @@
-#	$OpenBSD: exit-status.sh,v 1.4 2002/02/18 11:40:42 markus Exp $
+#	$OpenBSD: exit-status.sh,v 1.5 2002/02/18 12:52:26 markus Exp $
 #	Placed in the Public Domain.
 
 tid="remote exit status"
@@ -6,7 +6,7 @@ tid="remote exit status"
 for p in 1 2; do
 	for s in 0 1 4 5 44; do
 		trace "proto $p status $s"
-		verbose "test $tid: proto $p status $s   \r"
+		verbose "test $tid: proto $p status $s"
 		ssh -$p -F $OBJ/ssh_proxy otherhost exit $s
 		r=$?
 		if [ $r -ne $s ]; then
@@ -22,4 +22,3 @@ for p in 1 2; do
 		fi
 	done
 done
-verbose "\n"
