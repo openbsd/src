@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.26 1999/02/19 15:06:52 millert Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.27 1999/10/14 08:18:49 cmetz Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -536,6 +536,8 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct mbuf *nextrecord;
 	int moff, type = 0;
 	size_t orig_resid = uio->uio_resid;
+	int uio_error = 0;
+	int resid;
 
 	mp = mp0;
 	if (paddr)
@@ -546,6 +548,8 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 		flags = *flagsp &~ MSG_EOR;
 	else
 		flags = 0;
+	if (so->so_state & SS_NBIO)
+		flags |= MSG_DONTWAIT;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
@@ -617,7 +621,7 @@ restart:
 			error = ENOTCONN;
 			goto release;
 		}
-		if (uio->uio_resid == 0)
+		if (uio->uio_resid == 0 && controlp == NULL)
 			goto release;
 		if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT)) {
 			error = EWOULDBLOCK;
@@ -722,12 +726,15 @@ dontblock:
 		 * we must note any additions to the sockbuf when we
 		 * block interrupts again.
 		 */
-		if (mp == 0) {
+		if (mp == 0 && uio_error == 0) {
+			resid = uio->uio_resid;
 			splx(s);
-			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
+			uio_error =
+				uiomove(mtod(m, caddr_t) + moff, (int)len,
+					uio);
 			s = splsoftnet();
-			if (error)
-				goto release;
+			if (uio_error)
+				uio->uio_resid = resid - len;
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {
@@ -817,6 +824,9 @@ dontblock:
 		splx(s);
 		goto restart;
 	}
+
+	if (uio_error)
+		error = uio_error;
 		
 	if (flagsp)
 		*flagsp |= flags;
