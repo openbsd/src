@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.17 2004/07/07 07:31:40 marius Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.18 2004/11/07 20:39:31 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -52,6 +52,7 @@ struct str_msg_execve {
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
 #define SYSTR_MAXFNAME		8
+#define SYSTR_MAXINJECTS        8
 
 struct str_msg_ask {
 	int code;
@@ -74,7 +75,6 @@ struct str_msg_child {
 #define SYSTR_MSG_UGID		5
 #define SYSTR_MSG_POLICYFREE	6
 #define SYSTR_MSG_EXECVE	7
-#define SYSTR_MSG_SCRIPTNAME	8
 
 #define SYSTR_MSG_NOPROCESS(x) \
 	((x)->msg.msg_type == SYSTR_MSG_CHILD || \
@@ -158,6 +158,13 @@ struct systrace_replace {
 	int32_t strr_flags[SYSTR_MAXARGS];
 };
 
+struct systrace_inject {
+	/* On return, this contains the stackgap address. */
+	caddr_t stri_addr;
+	size_t  stri_len;
+	pid_t   stri_pid;
+};
+
 #define STRIOCCLONE		_IOR('s', 100, int)
 #define SYSTR_CLONE		STRIOCCLONE
 #define STRIOCATTACH		_IOW('s', 101, pid_t)
@@ -170,6 +177,7 @@ struct systrace_replace {
 #define STRIOCREPORT		_IOW('s', 108, pid_t)
 #define STRIOCREPLACE		_IOW('s', 109, struct systrace_replace)
 #define STRIOCSCRIPTNAME	_IOW('s', 110, struct systrace_scriptname)
+#define STRIOCINJECT		_IOWR('s', 111, struct systrace_inject)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1

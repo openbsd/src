@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.36 2004/07/07 07:31:40 marius Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.37 2004/11/07 20:39:31 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -86,6 +86,12 @@ struct str_policy {
 	u_char *sysent;
 };
 
+struct str_inject {
+	caddr_t kaddr;
+	caddr_t uaddr;
+	size_t  len;
+};
+
 #define STR_PROC_ONQUEUE	0x01
 #define STR_PROC_WAITANSWER	0x02
 #define STR_PROC_SYSCALLRES	0x04
@@ -117,11 +123,15 @@ struct str_process {
 	uid_t saveuid;
 	gid_t setegid;
 	gid_t savegid;
-	
+
 	int isscript;
 	char scriptname[MAXPATHLEN];
 
 	struct str_message msg;
+
+	caddr_t sg;
+	struct str_inject injects[SYSTR_MAXINJECTS];
+	int  injectind;
 };
 
 struct lock systrace_lck;
@@ -145,6 +155,8 @@ int	systrace_detach(struct str_process *);
 int	systrace_answer(struct str_process *, struct systrace_answer *);
 int     systrace_setscriptname(struct str_process *,
 	    struct systrace_scriptname *);
+int     systrace_prepinject(struct str_process *, struct systrace_inject *);
+int     systrace_inject(struct str_process *, int);
 int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
@@ -293,6 +305,11 @@ systracef_ioctl(fp, cmd, data, p)
 		if (!pid)
 			ret = EINVAL;
 		break;
+	case STRIOCINJECT:
+		pid = ((struct systrace_inject *)data)->stri_pid;
+		if (!pid)
+			ret = EINVAL;
+		break;
 	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
@@ -350,6 +367,9 @@ systracef_ioctl(fp, cmd, data, p)
 	case STRIOCSCRIPTNAME:
 		ret = systrace_setscriptname(strp,
 		    (struct systrace_scriptname *)data);
+		break;
+	case STRIOCINJECT:
+		ret = systrace_prepinject(strp, (struct systrace_inject *)data);
 		break;
 	case STRIOCPOLICY:
 		ret = systrace_policy(fst, (struct systrace_policy *)data);
@@ -755,6 +775,14 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		return (error);
 	}
 
+	/*
+	 * Reset our stackgap allocation.  Note that when resetting
+	 * the stackgap allocation, we expect to get the same address
+	 * base; i.e. that stackgap_init() is idempotent.
+	 */
+	systrace_inject(strp, 0 /* Just reset internal state */);
+	strp->sg = stackgap_init(p->p_emul);
+
 	/* Puts the current process to sleep, return unlocked */
 	error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 	/* lock has been released in systrace_msg_ask() */
@@ -784,12 +812,12 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		report = 1;
 	}
 
+	error = systrace_inject(strp, 1/* Perform copies */);
 	/* Replace the arguments if necessary */
-	if (strp->replace != NULL) {
+	if (!error && strp->replace != NULL)
 		error = systrace_replace(strp, callp->sy_argsize, v);
-		if (error)
-			goto out_unlock;
-	}
+	if (error)
+		goto out_unlock;
 
 	oldemul = p->p_emul;
 	pc = p->p_cred;
@@ -879,9 +907,9 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		goto out;
 	}
 
- out_unlock:
+out_unlock:
 	lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
- out:
+out:
 	return (error);
 }
 
@@ -977,6 +1005,57 @@ systrace_setscriptname(struct str_process *strp, struct systrace_scriptname *ans
 {
 	strlcpy(strp->scriptname,
 	    ans->sn_scriptname, sizeof(strp->scriptname));
+
+	return (0);
+}
+
+int
+systrace_inject(struct str_process *strp, int docopy)
+{
+	int ind, ret = 0;
+
+	for (ind = 0; ind < strp->injectind; ind++) {
+		struct str_inject *inject = &strp->injects[ind];
+		if (!ret && docopy &&
+		    copyout(inject->kaddr, inject->uaddr, inject->len))
+			ret = EINVAL;
+		free(inject->kaddr, M_XDATA);
+	}
+
+	strp->injectind = 0;
+	return (ret);
+}
+
+int
+systrace_prepinject(struct str_process *strp, struct systrace_inject *inj)
+{
+	caddr_t udata, kaddr = NULL;
+	int ret = 0;
+	struct str_inject *inject;
+
+	if (strp->injectind >= SYSTR_MAXINJECTS)
+		return (ENOBUFS);
+
+	udata = stackgap_alloc(&strp->sg, inj->stri_len);
+	if (udata == NULL)
+		return (ENOMEM);
+
+	/*
+	 * We have infact forced a maximum length on stri_len because
+	 * of the stackgap.
+	 */
+
+	kaddr = malloc(inj->stri_len, M_XDATA, M_WAITOK);
+	ret = copyin(inj->stri_addr, kaddr, inj->stri_len);
+	if (ret) {
+		free(kaddr, M_XDATA);
+		return (ret);
+	}
+
+	inject = &strp->injects[strp->injectind++];
+	inject->kaddr = kaddr;
+	inject->uaddr = inj->stri_addr = udata;
+	inject->len = inj->stri_len;
 
 	return (0);
 }
@@ -1323,13 +1402,11 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 {
 	struct systrace_replace *repl = strp->replace;
 	caddr_t kdata, kbase;
-	struct proc *p = strp->proc;
-	caddr_t sg, udata, ubase;
+	caddr_t udata, ubase;
 	int i, maxarg, ind, ret = 0;
 
 	maxarg = argsize/sizeof(register_t);
-	sg = stackgap_init(p->p_emul);
-	ubase = stackgap_alloc(&sg, repl->strr_len);
+	ubase = stackgap_alloc(&strp->sg, repl->strr_len);
 
 	kbase = repl->strr_base;
 	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
