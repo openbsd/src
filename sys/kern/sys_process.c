@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.17 2002/01/30 20:45:35 nordin Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.18 2002/03/11 14:20:35 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -91,6 +91,7 @@ sys_ptrace(p, v, retval)
 	struct iovec iov;
 	int error, write;
 	int temp;
+	struct ptrace_io_desc piod;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -155,6 +156,7 @@ sys_ptrace(p, v, retval)
 	case  PT_READ_D:
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
+	case  PT_IO:
 	case  PT_CONTINUE:
 	case  PT_KILL:
 	case  PT_DETACH:
@@ -231,7 +233,33 @@ sys_ptrace(p, v, retval)
 		if (write == 0)
 			*retval = temp;
 		return (error);
-
+	case  PT_IO:
+		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
+		if (error)
+			return (error);
+		iov.iov_base = piod.piod_addr;
+		iov.iov_len = piod.piod_len;
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(long)piod.piod_offs;
+		uio.uio_resid = piod.piod_len;
+		uio.uio_segflg = UIO_USERSPACE;
+		uio.uio_procp = p;
+		switch (piod.piod_op) {
+		case PIOD_OP_READ_DATA:
+		case PIOD_OP_READ_TEXT:
+			uio.uio_rw = UIO_READ;
+			break;
+		case PIOD_OP_WRITE_DATA:
+		case PIOD_OP_WRITE_TEXT:
+			uio.uio_rw = UIO_WRITE;
+			break;
+		default:
+			return (EINVAL);
+		}
+		error = procfs_domem(p, t, NULL, &uio);
+		*retval = piod.piod_len - uio.uio_resid;
+		return (error);
 #ifdef PT_STEP
 	case  PT_STEP:
 		/*
