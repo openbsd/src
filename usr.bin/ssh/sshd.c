@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.62 1999/11/22 21:02:39 markus Exp $");
+RCSID("$Id: sshd.c,v 1.63 1999/11/22 21:52:42 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -209,6 +209,10 @@ get_authname(int type)
 #ifdef KRB4
   case SSH_CMSG_AUTH_KERBEROS:
     return "kerberos";
+#endif
+#ifdef SKEY
+  case SSH_CMSG_AUTH_TIS_RESPONSE:
+    return "s/key";
 #endif
   }
   fatal("get_authname: unknown auth %d: internal error", type);
@@ -835,6 +839,10 @@ do_connection()
   if (options.afs_token_passing)
     auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
+#ifdef SKEY
+  if (options.skey_authentication == 1)
+    auth_mask |= 1 << SSH_AUTH_TIS;
+#endif
   if (options.password_authentication)
     auth_mask |= 1 << SSH_AUTH_PASSWORD;
   packet_put_int(auth_mask);
@@ -1303,10 +1311,43 @@ do_authloop(struct passwd *pw)
 	xfree(password);
 	break;
   
+#ifdef SKEY
+      case SSH_CMSG_AUTH_TIS:
+	debug("rcvd SSH_CMSG_AUTH_TIS");
+	if (options.skey_authentication == 1) {
+	    char *skeyinfo = skey_keyinfo(pw->pw_name);
+	    if (skeyinfo == NULL) {
+	      debug("generating fake skeyinfo for %.100s.", pw->pw_name);
+	      skeyinfo = skey_fake_keyinfo(pw->pw_name);
+	    }
+	    if (skeyinfo != NULL) {
+	      /* we send our s/key- in tis-challenge messages */
+	      debug("sending challenge '%s'", skeyinfo);
+	      packet_start(SSH_SMSG_AUTH_TIS_CHALLENGE);
+	      packet_put_string(skeyinfo, strlen(skeyinfo));
+	      packet_send();
+	      packet_write_wait();
+	      continue;
+	    }
+	}
+	break;
+      case SSH_CMSG_AUTH_TIS_RESPONSE:
+	debug("rcvd SSH_CMSG_AUTH_TIS_RESPONSE");
+	if (options.skey_authentication == 1) {
+	  char *response = packet_get_string(&dlen);
+	  debug("skey response == '%s'", response);
+	  packet_integrity_check(plen, 4 + dlen, type);
+	  authenticated = (skey_haskey(pw->pw_name) == 0 &&
+			   skey_passcheck(pw->pw_name, response) != -1);
+	  xfree(response);
+	}
+	break;
+#else
       case SSH_CMSG_AUTH_TIS:
 	/* TIS Authentication is unsupported */
-	log("TIS authentication disabled.");
+	log("TIS authentication unsupported.");
 	break;
+#endif
   
       default:
 	/* Any unknown messages will be ignored (and failure returned)

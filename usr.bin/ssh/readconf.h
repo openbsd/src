@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.9 1999/11/14 21:45:07 markus Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.10 1999/11/22 21:52:41 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -38,6 +38,7 @@ typedef struct
   int rhosts_authentication;	/* Try rhosts authentication. */
   int rhosts_rsa_authentication;/* Try rhosts with RSA authentication. */
   int rsa_authentication;	/* Try RSA authentication. */
+  int skey_authentication;	/* Try S/Key or TIS authentication. */
 #ifdef KRB4
   int kerberos_authentication;	/* Try Kerberos authentication. */
 #endif

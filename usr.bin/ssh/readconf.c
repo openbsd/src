@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.15 1999/11/19 16:04:17 markus Exp $");
+RCSID("$Id: readconf.c,v 1.16 1999/11/22 21:52:41 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -91,6 +91,7 @@ typedef enum
   oBadOption,
   oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
   oPasswordAuthentication, oRSAAuthentication, oFallBackToRsh, oUseRsh,
+  oSkeyAuthentication,
 #ifdef KRB4
   oKerberosAuthentication,
 #endif /* KRB4 */
@@ -120,6 +121,7 @@ static struct
   { "rhostsauthentication", oRhostsAuthentication },
   { "passwordauthentication", oPasswordAuthentication },
   { "rsaauthentication", oRSAAuthentication },
+  { "skeyauthentication", oSkeyAuthentication },
 #ifdef KRB4
   { "kerberosauthentication", oKerberosAuthentication },
 #endif /* KRB4 */
@@ -288,6 +290,12 @@ process_config_line(Options *options, const char *host,
       intptr = &options->rhosts_rsa_authentication;
       goto parse_flag;
 
+    case oTISAuthentication:
+      /* fallthrough, there is no difference on the client side */
+    case oSkeyAuthentication:
+      intptr = &options->skey_authentication;
+      goto parse_flag;
+
 #ifdef KRB4
     case oKerberosAuthentication:
       intptr = &options->kerberos_authentication;
@@ -350,15 +358,6 @@ process_config_line(Options *options, const char *host,
     case oNumberOfPasswordPrompts:
       intptr = &options->number_of_password_prompts;
       goto parse_int;
-      
-    case oTISAuthentication:
-      cp = strtok(NULL, WHITESPACE);
-      if (cp != 0 && (strcmp(cp, "yes") == 0 || strcmp(cp, "true") == 0))
-	fprintf(stderr,
-		"%.99s line %d: Warning, TIS is not supported.\n",
-		filename,
-		linenum);
-      break;
 
     case oCompressionLevel:
       intptr = &options->compression_level;
@@ -598,6 +597,7 @@ void initialize_options(Options *options)
   options->use_privileged_port = -1;
   options->rhosts_authentication = -1;
   options->rsa_authentication = -1;
+  options->skey_authentication = -1;
 #ifdef KRB4
   options->kerberos_authentication = -1;
 #endif
@@ -648,6 +648,8 @@ void fill_default_options(Options *options)
     options->rhosts_authentication = 1;
   if (options->rsa_authentication == -1)
     options->rsa_authentication = 1;
+  if (options->skey_authentication == -1)
+    options->skey_authentication = 0;
 #ifdef KRB4
   if (options->kerberos_authentication == -1)
     options->kerberos_authentication = 1;

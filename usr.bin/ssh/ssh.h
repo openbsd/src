@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.23 1999/11/22 21:02:38 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.24 1999/11/22 21:52:42 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -141,7 +141,7 @@ only by root, whereas ssh_config should be world-readable. */
 #define SSH_AUTH_RSA		2
 #define SSH_AUTH_PASSWORD	3
 #define SSH_AUTH_RHOSTS_RSA	4
-				/* 5 is TIS */
+#define SSH_AUTH_TIS		5
 #define SSH_AUTH_KERBEROS	6
 #define SSH_PASS_KERBEROS_TGT	7
 				/* 8 to 15 are reserved */
@@ -195,10 +195,9 @@ only by root, whereas ssh_config should be world-readable. */
 #define SSH_MSG_DEBUG				36	/* string */
 #define SSH_CMSG_REQUEST_COMPRESSION		37	/* level 1-9 (int) */
 #define SSH_CMSG_MAX_PACKET_SIZE		38	/* size 4k-1024k (int) */
-#define SSH_CMSG_AUTH_TIS			39	/* this is proto-1.5, but we ignore TIS */
-#define SSH_SMSG_AUTH_TIS_CHALLENGE		40
-#define SSH_CMSG_AUTH_TIS_RESPONSE		41
-
+#define SSH_CMSG_AUTH_TIS			39	/* we use this for s/key */
+#define SSH_SMSG_AUTH_TIS_CHALLENGE		40	/* challenge (string) */
+#define SSH_CMSG_AUTH_TIS_RESPONSE		41	/* response (string) */
 #define SSH_CMSG_AUTH_KERBEROS			42	/* (KTEXT) */
 #define SSH_SMSG_AUTH_KERBEROS_RESPONSE		43	/* (KTEXT) */
 #define SSH_CMSG_HAVE_KERBEROS_TGT		44	/* credentials (s) */

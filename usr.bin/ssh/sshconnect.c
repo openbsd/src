@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.36 1999/11/19 19:58:18 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.37 1999/11/22 21:52:42 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1494,6 +1494,53 @@ void ssh_login(int host_key_valid,
       for (i = 0; i < options.num_identity_files; i++)
 	if (try_rsa_authentication(pw, options.identity_files[i]))
 	  return; /* Successful connection. */
+    }
+
+  /* Try skey authentication if the server supports it. */
+  if ((supported_authentications & (1 << SSH_AUTH_TIS)) &&
+      options.skey_authentication && !options.batch_mode)
+    {
+      debug("Doing skey authentication.");
+
+      /* request a challenge */
+      packet_start(SSH_CMSG_AUTH_TIS);
+      packet_send();
+      packet_write_wait();
+
+      type = packet_read(&payload_len);
+      if (type != SSH_SMSG_FAILURE && 
+	  type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
+	packet_disconnect("Protocol error: got %d in response "
+			  "to skey auth", type);
+      }
+      if (type != SSH_SMSG_AUTH_TIS_CHALLENGE) {
+	debug("No challenge for skey authentication.");
+      } else {
+	char *challenge, *response;
+	challenge = packet_get_string(&payload_len);                            
+	if (options.cipher == SSH_CIPHER_NONE)
+	  log("WARNING: Encryption is disabled! "
+	      "Reponse will be transmitted in clear text.");
+	fprintf(stderr, "%s\n", challenge);
+	fflush(stderr);
+	for (i = 0; i < options.number_of_password_prompts; i++) {
+	  if (i != 0)
+	    error("Permission denied, please try again.");
+	  response = read_passphrase("Response: ", 0);
+	  packet_start(SSH_CMSG_AUTH_TIS_RESPONSE);
+	  packet_put_string(response, strlen(response));
+	  memset(response, 0, strlen(response));
+	  xfree(response);
+	  packet_send();
+	  packet_write_wait();
+	  type = packet_read(&payload_len);
+	  if (type == SSH_SMSG_SUCCESS)
+	    return;
+	  if (type != SSH_SMSG_FAILURE)
+	    packet_disconnect("Protocol error: got %d in response "
+			      "to skey auth", type);
+	}
+      }
     }
   
   /* Try password authentication if the server supports it. */
