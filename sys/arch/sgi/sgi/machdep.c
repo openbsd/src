@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2004/08/23 14:28:39 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.8 2004/08/26 13:30:25 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,7 +84,7 @@
 
 extern struct consdev *cn_tab;
 extern char kernel_text[];
-extern void makebootdev(char *);
+extern void makebootdev(const char *);
 extern void stacktrace(void);
 
 /* the following is used externally (sysctl_hw) */
@@ -144,7 +144,7 @@ void dumpsys(void);
 void dumpconf(void);
 caddr_t allocsys(caddr_t);
 
-static void dobootopts(char *cp);
+static void dobootopts(int, int32_t *);
 static int atoi(const char *, int, const char **);
 
 #if BYTE_ORDER == BIG_ENDIAN
@@ -163,7 +163,6 @@ caddr_t
 mips_init(int argc, int32_t *argv)
 {
 	char *cp;
-	char *arg0;
 	int i;
 	unsigned firstaddr;
 	caddr_t sd;
@@ -173,7 +172,6 @@ mips_init(int argc, int32_t *argv)
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
 	extern char xtlb_miss_tramp[], e_xtlb_miss_tramp[];
 	extern char exception[], e_exception[];
-	char xxx[100];
 
 	/*
 	 *  Clean up any mess.
@@ -282,14 +280,10 @@ mips_init(int argc, int32_t *argv)
 	/*
 	 *  Figure out where we was booted from.
 	 */
-	if (argc > 1)
-		arg0 = (char *)(long)argv[1];
-	else
-		arg0 = Bios_GetEnvironmentVariable("bootdev");
-
-	if (arg0 == 0)
-		arg0 = "unknown";
-	makebootdev(arg0);
+	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
+	if (cp == NULL)
+		cp = "unknown";
+	makebootdev(cp);
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -302,14 +296,7 @@ mips_init(int argc, int32_t *argv)
 	boothowto = RB_SINGLE | RB_ASKNAME;
 #endif /* RAMDISK_HOOKS */
 
-	dobootopts(Bios_GetEnvironmentVariable("osloadoptions"));
-
-	/*  Check any extra arguments which override.  */
-	for(i = 2; i < argc; i++) {
-		if (*((char *)(long)argv[i]) == '-') {
-			dobootopts((char *)(long)argv[i] + 1);
-		}
-	}
+	dobootopts(argc, argv);
 
 	/* Check l3cache size and disable (hard) if non present. */
 	if (Bios_GetEnvironmentVariable("l3cache") != 0) {
@@ -513,45 +500,27 @@ allocsys(caddr_t v)
  *  Decode boot options.
  */
 static void
-dobootopts(cp)
-	char *cp;
+dobootopts(int argc, int32_t *argv)
 {
-	while(cp && *cp) {
-		switch (*cp++) {
-		case 'm': /* multiuser */
-			boothowto &= ~RB_SINGLE;
-			break;
+	char *cp;
+	int i;
 
-		case 's': /* singleuser */
-			boothowto |= RB_SINGLE;
-			break;
-
-		case 'd': /* use compiled in default root */
-			boothowto |= RB_DFLTROOT;
-			break;
-
-		case 'a': /* ask for names */
-			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'A': /* don't ask for names */
-			boothowto &= ~RB_ASKNAME;
-			break;
-
-		case 't': /* use serial console */
-			boothowto |= RB_SERCONS;
-			break;
-
-		case 'c': /* boot configure */
-			boothowto |= RB_CONFIG;
-			break;
-
-		case 'B': /* Enter debugger */
-			boothowto |= RB_KDB;
-			break;
+	/* XXX Should this be done differently, eg env vs. args? */
+	for (i = 1; i < argc; i++) {
+		cp = (char *)argv[i];
+		if (cp != NULL && strncmp(cp, "OSLoadOptions=", 14) == 0) {
+			if (strcmp(&cp[14], "auto") == 0)
+					boothowto &= ~(RB_SINGLE|RB_ASKNAME);
+			else if (strcmp(&cp[14], "single") == 0)
+					boothowto |= RB_SINGLE;
+			else if (strcmp(&cp[14], "debug") == 0)
+					boothowto |= RB_KDB;
 		}
-
 	}
+
+	cp = Bios_GetEnvironmentVariable("ConsoleOut");
+	if (cp != NULL && strncmp(cp, "serial", 6) == 0)
+		boothowto |= RB_SERCONS;
 }
 
 
@@ -764,8 +733,7 @@ setregs(p, pack, stack, retval)
 int	waittime = -1;
 
 void
-boot(howto)
-	register int howto;
+boot(int howto)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -1018,7 +986,6 @@ printf("perfcnt select %x, proc %p\n", arg1, p);
 		cntval = p->p_md.md_pc_count;
 		cntval += (quad_t)p->p_md.md_pc_spill << 31;
 		result = copyout(&cntval, (void *)arg1, sizeof(cntval));
-printf("perfcnt read %d:%d -> %p\n", p->p_md.md_pc_count, p->p_md.md_pc_spill, arg1);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2004/08/10 19:16:18 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2004/08/26 13:30:25 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -66,10 +66,20 @@ void	swapconf(void);
 extern void dumpconf(void);
 static int findblkmajor(struct device *);
 static struct device * getdisk(char *, int, int, dev_t *);
-struct device * getdevunit(char *, int);
-static struct devmap * findtype(char **);
-void makebootdev(char *cp);
-int getpno(char **);
+struct device *getdevunit(char *, int);
+struct devmap *boot_findtype(char *);
+void makebootdev(const char *cp);
+const char *boot_get_path_component(const char *, char *, int *);
+
+/* Struct translating from ARCS to bsd. */
+struct devmap {
+	char	*att;
+	char	*dev;
+	int	what;
+};
+#define	DEVMAP_TYPE	0x01
+#define	DEVMAP_UNIT	0x02
+#define	DEVMAP_PART	0x04
 
 /*
  * The following several variables are related to
@@ -440,73 +450,90 @@ getdevunit(name, unit)
 	return dev;
 }
 
-struct devmap {
-	char *att;
-	char *dev;
-};
-
-static struct devmap *
-findtype(s)
-	char **s;
+struct devmap *
+boot_findtype(char *s)
 {
 	static struct devmap devmap[] = {
-		{ "/dev/sd",	"sd" },
-		{ "/dev/wd",	"wd" },
-		{ "sd",		"sd" },
-		{ "wd",		"wd" },
+		{ "scsi",	"sd",	DEVMAP_TYPE },
+		{ "disk",	"",	DEVMAP_UNIT },
+		{ "part",	"",	DEVMAP_PART },
+		{ "partition",	"",	DEVMAP_PART },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
 
 	while (dp->att) {
-		if (strncmp (*s, dp->att, strlen(dp->att)) == 0) {
-			*s += strlen(dp->att);
+		if (strcmp (s, dp->att) == 0) {
 			break;
 		}
 		dp++;
 	}
-	return(dp);
+	if (dp->att)
+		return dp ;
+	else
+		return NULL;
 }
 
 /*
  * Look at the string 'bp' and decode the boot device.
- * Boot names look like: '/dev/sd0/bsd'
- *                       '/dev/wd0/bsd
+ * Boot names look like: 'scsi()disk(n)rdisk()partition(0)/bsd'
  */
 void
-makebootdev(bp)
-	char *bp;
+makebootdev(const char *bp)
 {
-	int	unit;
-	char   *dev, *cp;
+	char namebuf[256];
+	const char *cp, *ncp, *ecp, *devname;
+	int	i, unit, partition;
 	struct devmap *dp;
 
-	cp = bp;
-	while(*cp && *cp != '/') {
-		cp++;
+	ecp = cp = bp;
+	unit = partition = 0;
+	devname = NULL;
+
+	while ((ncp = boot_get_path_component(cp, namebuf, &i)) != NULL) {
+		if ((dp = boot_findtype(namebuf)) != NULL) {
+			switch(dp->what) {
+			case DEVMAP_TYPE:
+				devname = dp->dev;
+				break;
+			case DEVMAP_UNIT:
+				unit = i - 1;
+				break;
+			case DEVMAP_PART:
+				partition = i;
+				break;
+			}
+		}
+		cp = ncp;
 	}
-	dp = findtype(&cp);
-	if (!dp->att) {
+
+	if (devname == NULL) {
 		printf("Warning: boot device unrecognized: %s\n", bp);
 		return;
 	}
 
-	dev = dp->dev;
-	unit = getpno(&cp);
-	snprintf(bootdev, sizeof(bootdev), "%s%d%c", dev, unit, 'a');
+	snprintf(bootdev, sizeof(bootdev), "%s%d%c", devname, unit, 'a');
 }
 
-int
-getpno(cp)
-	char **cp;
+const char *
+boot_get_path_component(const char *p, char *comp, int *no)
 {
-	int val = 0;
-	char *cx = *cp;
-
-	while(*cx && *cx >= '0' && *cx <= '9') {
-		val = val * 10 + *cx - '0';
-		cx++;
+	while (*p && *p != '(') {
+		*comp++ = *p++;
 	}
-	*cp = cx;
-	return val;
+	*comp = '\0';
+
+	if (*p == NULL)
+		return NULL;
+
+	*no = 0;
+	p++;
+	while (*p && *p != ')') {
+		if (*p >= '0' && *p <= '9')
+			*no = *no * 10 + *p++ - '0';
+		else
+			return NULL;
+	}
+	return ++p;
 }
+
