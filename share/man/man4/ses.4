@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ses.4,v 1.12 2004/09/30 19:59:25 mickey Exp $
+.\" $OpenBSD: ses.4,v 1.13 2005/03/01 22:20:41 jmc Exp $
 .\"
 .Dd February 22, 2000
 .Dt SES 4
@@ -97,13 +97,13 @@ The
 .Ar N Ns Li th
 .Em SES
 device.
+.El
 .Sh DIAGNOSTICS
 When the kernel is configured with
 .Tn DEBUG
 enabled, the first open to an
 .Em SES
 device will spit out overall enclosure parameters to the console.
-.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
