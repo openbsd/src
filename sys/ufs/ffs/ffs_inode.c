@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.12 1999/02/26 03:56:30 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.13 1999/12/06 06:55:41 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -253,8 +253,6 @@ ffs_truncate(v)
 	if (osize < length) {
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
-		offset = blkoff(fs, length - 1);
-		lbn = lblkno(fs, length - 1);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
