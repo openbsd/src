@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.30 2001/01/20 15:55:20 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.31 2001/01/20 17:34:25 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -515,7 +515,7 @@ authmethod_lookup(const char *name)
 int
 user_key_allowed(struct passwd *pw, Key *key)
 {
-	char line[8192], file[MAXPATHNAME];
+	char line[8192], file[MAXPATHLEN];
 	int found_key = 0;
 	FILE *f;
 	u_long linenum = 0;

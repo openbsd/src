@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.36 2001/01/20 15:55:20 markus Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.37 2001/01/20 17:34:25 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -122,7 +122,7 @@ auth_rsa_challenge_dialog(RSA *pk)
 int
 auth_rsa(struct passwd *pw, BIGNUM *client_n)
 {
-	char line[8192], file[MAXPATHNAME];
+	char line[8192], file[MAXPATHLEN];
 	int authenticated;
 	u_int bits;
 	FILE *f;
