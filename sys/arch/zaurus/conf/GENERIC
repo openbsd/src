@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2005/01/13 16:11:02 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.9 2005/01/13 16:24:16 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -177,12 +177,13 @@ urlphy*	at mii?			# Realtek RTL8150L internal PHY
 ukphy*	at mii?			# "unknown" PHYs
 
 # On-board device support
-obio0		at pxaip? intr 8
+#obio0		at pxaip? intr 8
 #sm0		at obio? addr 0x0c000000 intr 3 	# on-board SMC 91C96
 #options LUBBOCK_SMC91C96_16BIT
 
 # LCD
-lcd0		at obio?
+#lcd0		at obio?
+lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 

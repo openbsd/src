@@ -6,8 +6,6 @@
 maxpartitions	16
 maxusers	2 8 64
 
-include "../../../scsi/files.scsi"
-include "../../../dev/atapiscsi/files.atapiscsi"
 major	{wd = 16}
 major	{sd = 24}
 major	{cd = 26}
@@ -17,34 +15,28 @@ file	arch/arm/arm/conf.c
 
 file	arch/zaurus/zaurus/zaurus_machdep.c
 
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
 
-# LUBBOCK on-board devices (including CPLD)
-device	obio {[addr = -1], [size = -1], [width = -1], [intr = -1]}: bus_space_generic
-attach	obio at pxaip
-file	arch/zaurus/zaurus/obio.c			obio
-
-#device	sacpcic: pcmciabus
-#attach	sacpcic at sacc
-#file	arch/arm/sa11x0/sa11x1_pcic.c			sacpcic needs-flag
-#file	arch/arm/sa11x0/sa11xx_pcic.c			sacpcic
-#file	arch/zaurus/zaurus/zaurus_pcic.c		sacpcic
-
-
 # LCD frame buffer
-attach lcd at obio with lcd_obio
+attach lcd at pxaip with lcd_obio
 file arch/zaurus/zaurus/zaurus_lcd.c			lcd_obio
+
+# GPIO keyboard 
+device zkbd
+attach zkbd at pxaip
+file arch/zaurus/dev/zaurus_kbd.c			zkbd
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-#
-# Machine-independent SCSI drivers
-#
-
 
 # Generic MD files
 file	arch/zaurus/zaurus/autoconf.c
