@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2001/06/24 04:55:11 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2001/06/24 23:26:28 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -99,5 +99,6 @@ void	set_clockintr __P((void (*)(struct clockframe *)));
 void	set_iointr __P((void (*)(void *, int)));
 int	badaddr	__P((void *, u_int32_t));
 void calc_delayconst(void);
+void ofrootfound(void);
 
 #endif /* _MACHINE_AUTOCONF_H_ */

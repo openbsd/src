@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.8 2001/06/24 05:17:04 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.9 2001/06/24 23:26:29 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -52,13 +52,13 @@ typedef u_int sr_t;
 /* V->P mapping data */
 typedef int pmapv_t;
 #define VP_SR_SIZE	32
-#define VP_SR_MASK	VP_SR_SIZE-1
+#define VP_SR_MASK	(VP_SR_SIZE-1)
 #define VP_SR_POS 	27
 #define VP_IDX1_SIZE	1024
-#define VP_IDX1_MASK	VP_IDX1_SIZE-1
+#define VP_IDX1_MASK	(VP_IDX1_SIZE-1)
 #define VP_IDX1_POS 	17
 #define VP_IDX2_SIZE	32
-#define VP_IDX2_MASK	VP_IDX2_SIZE-1
+#define VP_IDX2_MASK	(VP_IDX2_SIZE-1)
 #define VP_IDX2_POS 	12
 
 /*
@@ -102,6 +102,7 @@ void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 
 void pmap_deactivate(struct proc *p);
 void pmap_activate(struct proc *p);
+void pmap_real_memory(vm_offset_t *start, vm_size_t *size);
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
