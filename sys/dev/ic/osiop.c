@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.1 2003/01/08 02:11:38 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.2 2003/02/02 01:50:30 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1807,17 +1807,51 @@ osiop_update_xfer_mode(sc, target)
 {
 	struct osiop_tinfo *ti = &sc->sc_tinfo[target];
 
-	printf("%s: target %d using ", sc->sc_dev.dv_xname, target);
+	printf("%s: target %d now using 8 bit ", sc->sc_dev.dv_xname, target);
 
 	ti->sxfer = 0;
 	ti->sbcl = 0;
 	if (ti->offset != 0) {
 		scsi_period_to_osiop(sc, target);
-		printf("Synchronous (%d offset %d period) ");
+		switch (ti->period) {
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+		case 0x08:
+			/* Reserved transfer period factor */
+			printf("??");
+			break;
+		case 0x09:
+			/* Transfer period = 12.5 ns */
+			printf("80");
+			break;
+		case 0x0a:
+			/* Transfer period = 25 ns */
+			printf("40");
+			break;
+		case 0x0b:
+			/* Transfer period = 30.3 ns */
+			printf("33");
+			break;
+		case 0x0c:
+			/* Transfer period = 50 ns */
+			printf("20");
+			break;
+		default: 
+			/* Transfer period = ti->period*4 ns */
+			printf("%d", 1000/(ti->period*4));
+			break;	
+		}
+		printf(" MHz %d REQ/ACK offset", ti->offset);
 	} else
-		printf("Asynchronous ");
+		printf("asynch");
 
-	printf("data transfers\n");
+	printf(" xfers\n");
 }
 
 /*
