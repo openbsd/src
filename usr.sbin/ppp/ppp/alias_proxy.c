@@ -22,7 +22,7 @@
 
     Initial development: April, 1998 (cjm)
 
-    $OpenBSD: alias_proxy.c,v 1.7 2001/01/29 00:29:32 brian Exp $
+    $OpenBSD: alias_proxy.c,v 1.8 2001/03/25 12:34:34 brian Exp $
 */
 
 
@@ -704,7 +704,6 @@ PacketAliasProxyRule(const char *cmd)
                 }
                 else
                 {
-                    int n;
                     int nbits;
                     char s[sizeof(buffer)];
 
