@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.59 2004/05/16 21:52:20 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.60 2004/06/07 11:14:14 mickey Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -80,7 +80,8 @@ dnl                  - empty 2nd arg, for files where only compressed size
 dnl                    is known
 dnl
 define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
-		 [ $1 MB gzipped, $2 MB uncompressed ]-:})-:})dnl
+		 [ eval($1/1024/1024).eval($1/1024*10/1024%10) MB gzipped, dnl
+eval($2/1024/1024).eval($2/1024*10/1024%10) MB uncompressed ]-:})-:})dnl
 dnl
 dnl
 dnl
