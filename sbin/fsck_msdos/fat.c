@@ -1,5 +1,5 @@
-/*	$OpenBSD: fat.c,v 1.5 1997/03/02 05:25:55 millert Exp $	*/
-/*	$NetBSD: fat.c,v 1.5 1997/01/03 14:32:49 ws Exp $	*/
+/*	$OpenBSD: fat.c,v 1.6 1997/09/11 08:15:26 deraadt Exp $	*/
+/*	$NetBSD: fat.c,v 1.6 1997/09/08 14:05:31 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.5 1997/03/02 05:25:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.6 1997/09/11 08:15:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -140,7 +140,8 @@ readfat(fs, boot, no, fp)
 	fat[0].length = buffer[0]|(buffer[1] << 8)|(buffer[2] << 16);
 	if (boot->Is16BitFat)
 		fat[0].length |= buffer[3] << 24;
-	if (buffer[1] != 0xff || buffer[2] != 0xff
+	if (buffer[0] != boot->Media
+	    || buffer[1] != 0xff || buffer[2] != 0xff
 	    || (boot->Is16BitFat && buffer[3] != 0xff)) {
 		char *msg = boot->Is16BitFat
 			? "FAT starts with odd byte sequence (%02x%02x%02x%02x)\n"
@@ -273,18 +274,6 @@ comparefat(boot, first, second, fatnum)
 	cl_t cl;
 	int ret = FSOK;
 
-	if (first[0].next != second[0].next) {
-		pwarn("Media bytes in cluster 1(%02x) and %d(%02x) differ\n",
-		      first[0].next, fatnum, second[0].next);
-		if (ask(1, "Use media byte from FAT 1")) {
-			second[0].next = first[0].next;
-			ret |= FSFATMOD;
-		} else if (ask(0, "Use media byte from FAT %d", fatnum)) {
-			first[0].next = second[0].next;
-			ret |= FSFATMOD;
-		} else
-			ret |= FSERROR;
-	}
 	for (cl = CLUST_FIRST; cl < boot->NumClusters; cl++)
 		if (first[cl].next != second[cl].next)
 			ret |= clustdiffer(cl, &first[cl].next, &second[cl].next, fatnum);
@@ -326,7 +315,7 @@ checkfat(boot, fat)
 	 */
 	for (head = CLUST_FIRST; head < boot->NumClusters; head++) {
 		/* find next untraveled chain */
-		if (fat[head].head != 0		/* cluster already belongs to some chain*/
+		if (fat[head].head != 0		/* cluster already belongs to some chain */
 		    || fat[head].next == CLUST_FREE
 		    || fat[head].next == CLUST_BAD)
 			continue;		/* skip it. */
@@ -446,16 +435,18 @@ writefat(fs, boot, fat)
 	}
 	(void)memset(buffer, 0, fatsz);
 	boot->NumFree = 0;
-	buffer[0] = (u_char)fat[0].length;
-	buffer[1] = (u_char)(fat[0].length >> 8);
+	p = buffer;
+	*p++ = (u_char)fat[0].length;
+	*p++ = (u_char)(fat[0].length >> 8);
+	*p++ = (u_char)(fat[0].length >> 16);
 	if (boot->Is16BitFat)
-		buffer[3] = (u_char)(fat[0].length >> 24);
-	for (cl = CLUST_FIRST, p = buffer; cl < boot->NumClusters;) {
+		*p++ = (u_char)(fat[0].length >> 24);
+	for (cl = CLUST_FIRST; cl < boot->NumClusters; cl++) {
 		if (boot->Is16BitFat) {
 			p[0] = (u_char)fat[cl].next;
 			if (fat[cl].next == CLUST_FREE)
 				boot->NumFree++;
-			p[1] = (u_char)(fat[cl++].next >> 8);
+			p[1] = (u_char)(fat[cl].next >> 8);
 			p += 2;
 		} else {
 			if (fat[cl].next == CLUST_FREE)
@@ -466,7 +457,7 @@ writefat(fs, boot, fat)
 			p[0] = (u_char)fat[cl].next;
 			p[1] = (u_char)((fat[cl].next >> 8) & 0xf)
 				|(u_char)(fat[cl+1].next << 4);
-			p[2] = (u_char)(fat[cl++].next >> 8);
+			p[2] = (u_char)(fat[++cl].next >> 4);
 			p += 3;
 		}
 	}
