@@ -151,6 +151,9 @@
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
 
+#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
+
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
