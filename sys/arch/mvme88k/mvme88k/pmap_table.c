@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.17 2004/01/05 20:07:03 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.18 2004/05/19 14:30:53 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -45,7 +45,6 @@
 const pmap_table_entry
 m187_board_table[] = {
 	{ BUG187_START, BUG187_START, round_page(BUG187_SIZE), RW, CI },
-	{ SRAM_START  , SRAM_START  , round_page(SRAM_SIZE)  , RW, CG },
 	{ OBIO_START  , OBIO_START  , round_page(OBIO_SIZE)  , RW, CI },
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
