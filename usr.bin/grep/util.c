@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2003/07/20 22:16:52 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2003/10/28 13:23:59 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -469,7 +469,7 @@ grep_strdup(const char *str)
  * Returns:	i >= 0 on failure (position that it failed)
  *		-1 on success
  */
-int
+static int
 grep_cmp(const unsigned char *pattern, const unsigned char *data, size_t len)
 {
 	int i;

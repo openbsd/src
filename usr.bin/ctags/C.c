@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.10 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: C.c,v 1.11 2003/10/28 13:23:59 avsm Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.10 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.11 2003/10/28 13:23:59 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -523,7 +523,7 @@ skip_comment(int commenttype)
  * skip_string --
  *	skip to the end of a string or character constant.
  */
-void
+static void
 skip_string(int key)
 {
 	int	c,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.50 2003/09/07 07:53:01 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.51 2003/10/28 13:23:59 avsm Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.50 2003/09/07 07:53:01 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.51 2003/10/28 13:23:59 avsm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1209,7 +1209,7 @@ readhash(FILE *f)
 	return (sum == 0 ? 1 : sum);
 }
 
-int
+static int
 asciifile(FILE *f)
 {
 	char buf[BUFSIZ];
