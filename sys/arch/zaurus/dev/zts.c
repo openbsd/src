@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.3 2005/01/30 21:55:50 drahn Exp $ */
+/* $OpenBSD: zts.c,v 1.4 2005/02/16 20:09:18 matthieu Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -40,7 +40,7 @@ int      zts_enable(void *);
 void     zts_disable(void *);
 int      zts_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-#define DO_RELATIVE
+#undef DO_RELATIVE
 
 struct zts_softc {
 	struct device sc_dev;
@@ -50,10 +50,8 @@ struct zts_softc {
 	int sc_enabled;
 	int sc_buttons; /* button emulation ? */
 	struct device *sc_wsmousedev;
-#ifdef DO_RELATIVE
 	int sc_oldx;
 	int sc_oldy;
-#endif
 };
 
 #define ADSCTRL_PD0_SH          0       // PD0 bit
@@ -139,6 +137,7 @@ zts_irq(void *v)
 	u_int32_t x;
 	u_int32_t y;
 	int down;
+	extern int zkbd_modstate;
 
 	/* check that pen is down */
 	cmd = (1 << ADSCTRL_PD0_SH) | (1 << ADSCTRL_PD1_SH) |
@@ -188,7 +187,6 @@ zts_irq(void *v)
 		int skip = 0;
 
 		if ( sc->sc_oldx == -1) {
-			extern int zkbd_modstate;
 			if (zkbd_modstate != 0) {
 				/*
 				 * use motifiers with touchpress to indicate
@@ -237,12 +235,30 @@ zts_irq(void *v)
 		sc->sc_oldy = -1;
 	}
 #else
-	
-	if (t0 != 0 && t1 != 0)
-		wsmouse_input(sc->sc_wsmousedev, 0/* XXX buttons */, x, y,
-		    0 /* XXX*/,
+	down = (t0 > 10 && t1 > 10);
+	if (zkbd_modstate != 0 && down) {
+		if(zkbd_modstate & (1 << 1)) {
+			/* Fn */
+			down = 2;
+		}
+		if(zkbd_modstate & (1 << 2)) {
+			/* 'Alt' */
+			down = 4;
+		}
+	}
+	if (!down) {
+		/* x/y values are not reliable when pen is up */
+		x = sc->sc_oldx;
+		y = sc->sc_oldy;
+	}
+	if (down || sc->sc_buttons != down) {
+		wsmouse_input(sc->sc_wsmousedev, down, x, y, 0 /* z */,
 		    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y |
-		    WSMOUSE_INPUT_ABSOLUTE_Z );
+		    WSMOUSE_INPUT_ABSOLUTE_Z);
+		sc->sc_buttons = down;
+		sc->sc_oldx = x;
+		sc->sc_oldy = y;
+	}
 #endif
 
 
@@ -293,4 +309,3 @@ zts_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	return (-1);
 }
-
