@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.10 1997/04/08 04:14:47 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.11 1997/04/09 14:30:49 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
 
 /*
@@ -52,11 +52,12 @@
 #define  NUBUS_TYPE_VIDEO	0x0001
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
-#define    NUBUS_DRHW_TFB	0x0001
-#define    NUBUS_DRHW_WVC	0x0006
-#define    NUBUS_DRHW_M2HRVC	0x0013
-#define    NUBUS_DRHW_CB264	0x013B
+#define    NUBUS_DRHW_TFB	0x0001	/* Apple Toby Frame Buffer */
+#define    NUBUS_DRHW_WVC	0x0006	/* Apple Workstation Video Card */
+#define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
+#define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146
+#define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
 
 /* False DrHW values for video cards masquerading as other cards */
 #define    NUBUS_DRHW_SAM768	0x10000	/* Cornerstone/Samsung 768x1006 */
