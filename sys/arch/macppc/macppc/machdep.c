@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2002/08/20 02:50:43 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2002/09/06 13:42:17 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1224,7 +1224,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 		bus_size_t alloc_size;
 
 		/* need to steal vm space before kernel vm is initialized */
-		alloc_size = round_page(size);
+		alloc_size = round_page(len);
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
 		ppc_kvm_stolen += alloc_size;
@@ -1290,12 +1290,21 @@ mapiodev(pa, len)
 			return (void *)pa;
 		}
 	}
-	va = vaddr = uvm_km_valloc(phys_map, size);
+	if (ppc_malloc_ok == 0) {
+		/* need to steal vm space before kernel vm is initialized */
+		va = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
+		ppc_kvm_stolen += size;
+		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+			panic("ppc_kvm_stolen, out of space");
+		}
+	} else {
+		va = uvm_km_valloc_wait(phys_map, size);
+	}
 
 	if (va == 0)
 		return NULL;
 
-	for (; size > 0; size -= PAGE_SIZE) {
+	for (vaddr = va; size > 0; size -= PAGE_SIZE) {
 		pmap_kenter_cache(vaddr, spa,
 			VM_PROT_READ | VM_PROT_WRITE, PMAP_CACHE_DEFAULT);
 		spa += PAGE_SIZE;
