@@ -1,6 +1,6 @@
-/*	$OpenBSD: log.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2004/07/27 16:19:41 jfb Exp $	*/
 /*
- * Copyright (c) 2004 Jean-Francois Brousseau <jfb@fugusec.net>
+ * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 extern char *__progname;
 
+#ifdef unused
 static char *cvs_log_levels[] = {
 	"debug",
 	"info",
@@ -47,7 +48,7 @@ static char *cvs_log_levels[] = {
 	"alert",
 	"error"
 };
-
+#endif
 
 static int cvs_slpriomap[] = {
 	LOG_DEBUG,
@@ -205,7 +206,6 @@ int
 cvs_vlog(u_int level, const char *fmt, va_list vap)
 {
 	int ecp;
-	pid_t pid;
 	char prefix[64], buf[1024], ebuf[32];
 	FILE *out;
 
@@ -251,4 +251,27 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		errno = ecp;
 
 	return (0);
+}
+
+
+/*
+ * cvs_printf()
+ *
+ * Wrapper function around printf() that prepends a 'M' or 'E' command when
+ * the program is acting as server.
+ */
+
+int
+cvs_printf(const char *fmt, ...)
+{
+	int ret;
+	va_list vap;
+
+	va_start(vap, fmt);
+
+	ret = vprintf(fmt, vap);
+
+	va_end(vap);
+
+	return (ret);
 }
