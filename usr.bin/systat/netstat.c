@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.3 1996/06/26 05:40:09 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.4 1996/07/27 14:55:25 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.3 1996/06/26 05:40:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.4 1996/07/27 14:55:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -468,6 +468,8 @@ cmdnetstat(cmd, args)
 			p->ni_flags |= NIF_LACHG|NIF_FACHG;
 		}
 		nflag = new;
+		wclear(wnd);
+		labelnetstat();
 		goto redisplay;
 	}
 	if (!netcmd(cmd, args))
