@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.37 2000/03/29 07:09:57 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.38 2000/03/29 07:19:50 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -150,6 +150,15 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    DPRINTF(("esp_init(): keylength %d too large (max length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->maxkey, txform->name));
 	    return EINVAL;
 	}
+
+        tdbp->tdb_encalgxform = txform;
+
+        DPRINTF(("esp_init(): initialized TDB with enc algorithm %s\n",
+	         txform->name));
+
+        tdbp->tdb_ivlen = txform->ivmask;
+        if (tdbp->tdb_flags & TDBF_HALFIV)
+          tdbp->tdb_ivlen /= 2;
     }
 
     if (ii->ii_authalg)
@@ -186,37 +195,18 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     }
     
     tdbp->tdb_xform = xsp;
-    tdbp->tdb_encalgxform = txform;
     tdbp->tdb_bitmap = 0;
     tdbp->tdb_rpl = AH_HMAC_INITIAL_RPL;
-
-    DPRINTF(("esp_init(): initialized TDB with enc algorithm %s\n",
-	     txform->name));
-
-    tdbp->tdb_ivlen = txform->ivmask;
-    if (tdbp->tdb_flags & TDBF_HALFIV)
-      tdbp->tdb_ivlen /= 2;
-
-    /* Save the raw keys */
-    if (tdbp->tdb_authalgxform)
-    {
-	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
-	MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen, M_XDATA,
-	       M_WAITOK);
-	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-    }
-
-    if (tdbp->tdb_encalgxform)
-    {
-	tdbp->tdb_emxkeylen = ii->ii_enckeylen;
-	MALLOC(tdbp->tdb_emxkey, u_int8_t *, tdbp->tdb_emxkeylen, M_XDATA,
-	       M_WAITOK);
-	bcopy(ii->ii_enckey, tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
-    }
 
     /* Initialize crypto session */
     if (tdbp->tdb_encalgxform)
     {
+	/* Save the raw keys */
+	tdbp->tdb_emxkeylen = ii->ii_enckeylen;
+	MALLOC(tdbp->tdb_emxkey, u_int8_t *, tdbp->tdb_emxkeylen, M_XDATA,
+	       M_WAITOK);
+	bcopy(ii->ii_enckey, tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
+
 	bzero(&crie, sizeof(crie));
 
 	crie.cri_alg = tdbp->tdb_encalgxform->type;
@@ -233,6 +223,12 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
     if (tdbp->tdb_authalgxform)
     {
+	/* Save the raw keys */
+	tdbp->tdb_amxkeylen = ii->ii_authkeylen;
+	MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen, M_XDATA,
+	       M_WAITOK);
+	bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+
 	bzero(&cria, sizeof(cria));
 
 	cria.cri_alg = tdbp->tdb_authalgxform->type;
