@@ -1,3 +1,5 @@
+/*	$OpenBSD: rrenum.h,v 1.2 1999/12/11 10:33:29 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.

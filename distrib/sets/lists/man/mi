@@ -1629,3 +1629,5 @@
 ./usr/share/man/cat3/inet6_rthdr_getaddr.0
 ./usr/share/man/cat3/inet6_rthdr_getflags.0
 ./usr/share/man/cat8/ping6.0
+./usr/share/man/cat5/rtadvd.conf.0
+./usr/share/man/cat8/rtadvd.0

@@ -1,3 +1,5 @@
+/*	$OpenBSD: advcap.h,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+
 /*
  * Copyright (C) 1994,1995 by Andrey A. Chernov, Moscow, Russia.
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: advcap.c,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+
 /*
  * Copyright (c) 1983 The Regents of the University of California.
  * All rights reserved.

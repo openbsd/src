@@ -1,3 +1,5 @@
+/*	$OpenBSD: if.c,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
