@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.9 2004/05/08 06:11:53 henning Exp $ */
+/*	$OpenBSD: confpars.c,v 1.10 2004/09/09 20:51:57 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -831,9 +831,11 @@ struct tree *parse_ip_addr_or_hostname(cfile, uniform)
 		if (!name)
 			return NULL;
 		h = gethostbyname(name);
-		if (h == NULL)
+		if (h == NULL) {
 			parse_warn("%s (%d): could not resolve hostname",
 			    val, token);
+			return NULL;
+		}
 		rv = tree_const(h->h_addr_list[0], h->h_length);
 		if (!uniform)
 			rv = tree_limit(rv, 4);

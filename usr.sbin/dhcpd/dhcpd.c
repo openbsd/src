@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.19 2004/05/12 10:20:49 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.20 2004/09/09 20:51:57 millert Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 
 	time(&cur_time);
 	if (!readconf())
-		error("Configuration file errors encountered -- exiting");
+		error("Configuration file errors encountered");
 
 	if (cftest)
 		exit(0);
