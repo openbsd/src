@@ -1,19 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 1997/07/14 08:14:51 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/12/17 04:28:48 millert Exp $
 
-LIB=	z
+S=${.CURDIR}/../../../..
+ZDST=${.OBJDIR}
+SADIR=${.CURDIR}/..
 
-.PATH:  ${.CURDIR}/../../../../lib/libz
+.PATH: ${S}/lib/libz
 
-CFLAGS= -O2 -msoft-float -D_ZLIB_PRIVATE -I${.CURDIR}/../../../../lib/libz
-
-SRCS=	adler32.c crc32.c infblock.c infcodes.c inffast.c \
-	inflate.c inftrees.c infutil.c
-
-${OBJS}:	${.CURDIR}/../Makefile.inc
-
-install:
-
-NOPIC=
-NOPROFILE=
-
-.include <bsd.lib.mk>
+.include "${S}/lib/libz/Makefile"
+CFLAGS+=-msoft-float ${SACFLAGS} -I${S}/lib/libsa ${DEBUGFLAGS}
