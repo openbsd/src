@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.20 2001/06/22 19:02:43 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.21 2001/06/22 23:53:52 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -375,9 +375,15 @@ typedef struct hifn_base_command {
 	volatile u_int16_t total_dest_count;
 } hifn_base_command_t;
 
-#define HIFN_BASE_CMD_MAC		(0x1 << 10)
-#define HIFN_BASE_CMD_CRYPT		(0x1 << 11)
-#define HIFN_BASE_CMD_DECODE		(0x1 << 13)
+#define	HIFN_BASE_CMD_MAC		0x0400
+#define	HIFN_BASE_CMD_CRYPT		0x0800
+#define	HIFN_BASE_CMD_DECODE		0x2000
+#define	HIFN_BASE_CMD_SRCLEN_M		0xc000
+#define	HIFN_BASE_CMD_SRCLEN_S		14
+#define	HIFN_BASE_CMD_DSTLEN_M		0x3000
+#define	HIFN_BASE_CMD_DSTLEN_S		12
+#define	HIFN_BASE_CMD_LENMASK_HI	0x30000
+#define	HIFN_BASE_CMD_LENMASK_LO	0x0ffff
 
 /*
  * Structure to help build up the command data structure.
@@ -385,15 +391,25 @@ typedef struct hifn_base_command {
 typedef struct hifn_crypt_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t header_skip;
-	volatile u_int32_t source_count;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
 } hifn_crypt_command_t;
 
-#define HIFN_CRYPT_CMD_ALG_MASK		(0x3 << 0)
-#define HIFN_CRYPT_CMD_ALG_DES		(0x0 << 0)
-#define HIFN_CRYPT_CMD_ALG_3DES		(0x1 << 0)
-#define HIFN_CRYPT_CMD_MODE_CBC		(0x1 << 3)
-#define HIFN_CRYPT_CMD_NEW_KEY		(0x1 << 11)
-#define HIFN_CRYPT_CMD_NEW_IV		(0x1 << 12)
+#define	HIFN_CRYPT_CMD_ALG_MASK		0x0003		/* algorithm: */
+#define	HIFN_CRYPT_CMD_ALG_DES		0x0000		/*   DES */
+#define	HIFN_CRYPT_CMD_ALG_3DES		0x0001		/*   3DES */
+#define	HIFN_CRYPT_CMD_ALG_RC4		0x0002		/*   RC4 */
+#define	HIFN_CRYPT_CMD_MODE_MASK	0x0018		/* DES mode: */
+#define	HIFN_CRYPT_CMD_MODE_ECB		0x0000		/*   ECB */
+#define	HIFN_CRYPT_CMD_MODE_CBC		0x0008		/*   CBC */
+#define	HIFN_CRYPT_CMD_MODE_CFB		0x0010		/*   CFB */
+#define	HIFN_CRYPT_CMD_MODE_OFB		0x0018		/*   OFB */
+#define	HIFN_CRYPT_CMD_CLR_CTX		0x0040		/* clear context */
+#define	HIFN_CRYPT_CMD_NEW_KEY		0x0800		/* expect new key */
+#define	HIFN_CRYPT_CMD_NEW_IV		0x1000		/* expect new iv */
+
+#define	HIFN_CRYPT_CMD_SRCLEN_M		0xc000
+#define	HIFN_CRYPT_CMD_SRCLEN_S		14
 
 /*
  * Structure to help build up the command data structure.
@@ -401,15 +417,22 @@ typedef struct hifn_crypt_command {
 typedef struct hifn_mac_command {
 	volatile u_int16_t masks;
 	volatile u_int16_t header_skip;
-	volatile u_int32_t source_count;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
 } hifn_mac_command_t;
 
-#define HIFN_MAC_CMD_ALG_MD5		(0x1 << 0)
-#define HIFN_MAC_CMD_ALG_SHA1		(0x0 << 0)
-#define HIFN_MAC_CMD_MODE_HMAC		(0x0 << 2)
-#define HIFN_MAC_CMD_TRUNC		(0x1 << 4)
-#define HIFN_MAC_CMD_RESULT		(0x1 << 5)
-#define HIFN_MAC_CMD_APPEND		(0x1 << 6)
+#define	HIFN_MAC_CMD_ALG_MASK		0x0001
+#define	HIFN_MAC_CMD_ALG_SHA1		0x0000
+#define	HIFN_MAC_CMD_ALG_MD5		0x0001
+#define	HIFN_MAC_CMD_MODE_MASK		0x0004
+#define	HIFN_MAC_CMD_MODE_HMAC		0x0000
+#define	HIFN_MAC_CMD_MODE_FULL		0x0004
+#define	HIFN_MAC_CMD_TRUNC		0x0010
+#define	HIFN_MAC_CMD_RESULT		0x0020
+#define	HIFN_MAC_CMD_APPEND		0x0040
+#define	HIFN_MAC_CMD_SRCLEN_M		0xc000
+#define	HIFN_MAC_CMD_SRCLEN_S		14
+
 /*
  * MAC POS IPSec initiates authentication after encryption on encodes
  * and before decryption on decodes.
@@ -429,6 +452,6 @@ typedef struct hifn_mac_command {
 #define HIFN_POLL_SCALAR	0x0
 #endif
 
-#define HIFN_MAX_SEGLEN 0xfffc
-
+#define	HIFN_MAX_SEGLEN 	0xffff		/* maximum dma segment len */
+#define	HIFN_MAX_DMALEN		0x3ffff		/* maximum dma length */
 #endif /* __HIFN_H__ */

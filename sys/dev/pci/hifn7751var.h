@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.21 2001/05/14 02:45:19 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.22 2001/06/22 23:53:52 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -183,8 +183,8 @@ typedef struct hifn_command {
 	struct uio *dst_io;
 	bus_dmamap_t dst_map;
 
-	u_short mac_header_skip, mac_process_len;
-	u_short crypt_header_skip, crypt_process_len;
+	u_int16_t crypt_header_skip, mac_header_skip;
+	u_int32_t crypt_process_len, mac_process_len;
 
 	u_long private_data;
 	struct hifn_softc *softc;

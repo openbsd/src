@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.70 2001/06/22 19:02:44 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.71 2001/06/22 23:53:52 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -883,6 +883,7 @@ hifn_write_command(cmd, buf)
 	hifn_mac_command_t *mac_cmd;
 	hifn_crypt_command_t *cry_cmd;
 	int using_mac, using_crypt, len;
+	u_int32_t dlen;
 
 	buf_pos = buf;
 	using_mac = cmd->base_masks & HIFN_BASE_CMD_MAC;
@@ -890,24 +891,34 @@ hifn_write_command(cmd, buf)
 
 	base_cmd = (hifn_base_command_t *)buf_pos;
 	base_cmd->masks = cmd->base_masks;
-	base_cmd->total_source_count = cmd->src_map->dm_mapsize;
-	base_cmd->total_dest_count = cmd->dst_map->dm_mapsize;
-	base_cmd->session_num = cmd->session_num;
+	dlen = cmd->src_map->dm_mapsize;
+	base_cmd->total_source_count = dlen & HIFN_BASE_CMD_LENMASK_LO;
+	base_cmd->total_dest_count = dlen & HIFN_BASE_CMD_LENMASK_HI;
+	dlen >>= 16;
+	base_cmd->session_num = cmd->session_num |
+	    ((dlen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
+	    ((dlen << HIFN_BASE_CMD_DSTLEN_S) & HIFN_BASE_CMD_DSTLEN_M);
 	buf_pos += sizeof(hifn_base_command_t);
 
 	if (using_mac) {
 		mac_cmd = (hifn_mac_command_t *)buf_pos;
-		mac_cmd->masks = cmd->mac_masks;
+		dlen = cmd->mac_process_len;
+		mac_cmd->source_count = dlen & 0xffff;
+		dlen >>= 16;
+		mac_cmd->masks = cmd->mac_masks |
+		    ((dlen << HIFN_MAC_CMD_SRCLEN_S) & HIFN_MAC_CMD_SRCLEN_M);
 		mac_cmd->header_skip = cmd->mac_header_skip;
-		mac_cmd->source_count = cmd->mac_process_len;
 		buf_pos += sizeof(hifn_mac_command_t);
 	}
 
 	if (using_crypt) {
 		cry_cmd = (hifn_crypt_command_t *)buf_pos;
-		cry_cmd->masks = cmd->cry_masks;
+		dlen = cmd->crypt_process_len;
+		cry_cmd->source_count = dlen & 0xffff;
+		dlen >>= 16;
+		cry_cmd->masks = cmd->cry_masks |
+		    ((dlen << HIFN_CRYPT_CMD_SRCLEN_S) & HIFN_CRYPT_CMD_SRCLEN_M);
 		cry_cmd->header_skip = cmd->crypt_header_skip;
-		cry_cmd->source_count = cmd->crypt_process_len;
 		buf_pos += sizeof(hifn_crypt_command_t);
 	}
 
@@ -986,8 +997,8 @@ hifn_crypto(sc, cmd, crp)
 	u_int32_t cmdlen;
 	int cmdi, resi, s;
 
-	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_SEGLEN * MAX_SCATTER,
-	    MAX_SCATTER, HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
+	if (bus_dmamap_create(sc->sc_dmat, HIFN_MAX_DMALEN, MAX_SCATTER,
+	    HIFN_MAX_SEGLEN, 0, BUS_DMA_NOWAIT, &cmd->src_map))
 		return (-1);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
