@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2002/09/11 18:37:29 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2002/09/12 04:36:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -350,6 +350,10 @@ trap(type, frame)
 
 		if (ret != 0) {
 			if (type & T_USER) {
+#if 0
+if (kdb_trap (type, va, frame))
+	return;
+#endif
 				sv.sival_int = frame->tf_ior;
 				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			} else {
@@ -415,10 +419,17 @@ return;
 		}
 		break;
 
+	case T_CONDITION:
+#if 0
+if (kdb_trap (type, va, frame))
+	return;
+#endif
+		panic("trap: divide by zero in the kernel");
+		break;
+
 	case T_DPROT:
 	case T_IPROT:
 	case T_OVERFLOW:
-	case T_CONDITION:
 	case T_ILLEGAL:
 	case T_HIGHERPL:
 	case T_TAKENBR:
@@ -435,7 +446,7 @@ return;
 if (kdb_trap (type, va, frame))
 	return;
 #endif
-		panic ("trap: unimplemented \'%s\' (%d)", tts, type);
+		panic("trap: unimplemented \'%s\' (%d)", tts, type);
 	}
 
 	if (type & T_USER)
@@ -464,8 +475,8 @@ syscall(frame)
 {
 	register struct proc *p = curproc;
 	register const struct sysent *callp;
-	int nsys, code, argsize, argoff, oerror, error;
-	int args[8], rval[2];
+	int retq, nsys, code, argsize, argoff, oerror, error;
+	register_t args[8], rval[2];
 
 	uvmexp.syscalls++;
 
@@ -476,7 +487,7 @@ syscall(frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	argoff = 4;
+	argoff = 4; retq = 0;
 	switch (code = frame->tf_t1) {
 	case SYS_syscall:
 		code = frame->tf_arg0;
@@ -497,6 +508,7 @@ syscall(frame)
 		args[0] = frame->tf_arg2;
 		args[1] = frame->tf_arg3;
 		argoff = 2;
+		retq = 1;
 		break;
 	default:
 		args[0] = frame->tf_arg0;
@@ -538,7 +550,7 @@ syscall(frame)
 
 			i = 0;
 			switch (code) {
-			case SYS_lseek:
+			case SYS_lseek:		retq = 0;
 			case SYS_truncate:
 			case SYS_ftruncate:	i = 2;	break;
 			case SYS_preadv:
@@ -579,7 +591,7 @@ syscall(frame)
 		p = curproc;			/* changes on exec() */
 		frame = p->p_md.md_regs;
 		frame->tf_ret0 = rval[0];
-		frame->tf_ret1 = rval[1];
+		frame->tf_ret1 = rval[!retq];
 		frame->tf_t1 = 0;
 		break;
 	case ERESTART:
@@ -588,6 +600,7 @@ syscall(frame)
 		break;
 	case EJUSTRETURN:
 		p = curproc;
+		frame = p->p_md.md_regs;
 		break;
 	default:
 	bad:
