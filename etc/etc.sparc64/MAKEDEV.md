@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/01/12 21:08:59 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -114,3 +114,41 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
+
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=Mult($U,64)
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 71 Add($offset,$n)
+		n=Add($n,1)
+	done
+	M bpp${nam}0 c 72 Add($offset,0)
+	M bpp${nam}1 c 72 Add($offset,1)
+	;;
+
+dnl No number allocated yet...
+dnl spif*)
+dnl 	case $U in
+dnl 	0)	offset=0  nam=j;;
+dnl 	1)	offset=16 nam=k;;
+dnl 	2)	offset=32 nam=l;;
+dnl 	*)	echo "bad unit for $i: $U"; exit 127;;
+dnl 	esac
+dnl 	offset=Mult($U,64)
+dnl 	n=0
+dnl 	while [ $n -lt 16 ]
+dnl 	do
+dnl 		name=${nam}`hex $n`
+dnl 		M tty$name c 102 Add($offset,$n)
+dnl 		n=Add($n,1)
+dnl 	done
+dnl 	M bpp${nam}0 c 103 Add($offset,0)
+dnl 	;;
