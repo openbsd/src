@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.70 2000/06/01 04:38:34 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.71 2000/06/01 04:47:55 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -85,6 +85,9 @@
 
 extern u_int8_t get_sa_require  __P((struct inpcb *));
 
+extern int ipsec_auth_default_level;
+extern int ipsec_esp_trans_default_level;
+extern int ipsec_esp_network_default_level;
 #endif /* IPSEC */
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
@@ -92,12 +95,6 @@ static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
 int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
-#endif
-
-#ifdef IPSEC
-extern int ipsec_auth_default_level;
-extern int ipsec_esp_trans_default_level;
-extern int ipsec_esp_network_default_level;
 #endif
 
 /*
@@ -349,7 +346,10 @@ sendit:
 	     inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
 	     inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
 	     inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS)) {
-	        sa_require = get_sa_require(inp);
+	        if (inp == NULL)
+		        sa_require = get_sa_require(NULL);
+		else
+		        sa_require = inp->inp_secrequire;
 
 		/*
 		 * Check if there was an outgoing SA bound to the flow
