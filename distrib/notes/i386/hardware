@@ -45,6 +45,8 @@ Supported devices include:
 	Serial ports:
 		8250/16450-based ports
 		16550-based ports
+		ST16660-base ports
+		XR16850-based ports (only in the pccom driver)
 		AST-style 4-port serial boards [*]
 		BOCA 8-port serial cards [*] 
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [*]
