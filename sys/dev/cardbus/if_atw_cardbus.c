@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.2 2004/07/15 15:39:41 millert Exp $	*/
-/*	$NetBSD: if_atw_cardbus.c,v 1.7 2004/05/08 23:40:01 dyoung Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.3 2004/07/25 13:44:22 millert Exp $	*/
+/*	$NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -399,13 +399,13 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	    PCI_PWR_D0);
 #endif
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
