@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.19 1997/02/07 07:08:12 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.20 1997/02/16 14:49:05 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -168,7 +168,9 @@ ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 int	stat __P((const char *path, struct stat *sb));
 int	fstat __P((int fd, struct stat *sb));
-int	readdir __P((int fd, char *));
+int	opendir __P((char *));
+int	readdir __P((int, char *));
+void	closedir __P((int));
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));
 void	nullsys __P((void));
