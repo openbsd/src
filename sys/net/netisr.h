@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.14 1999/12/08 15:58:30 itojun Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.15 2000/11/08 13:23:40 art Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
  *	@(#)netisr.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NET_NETISR_H_
+#define _NET_NETISR_H_
 /*
  * The networking code runs off software interrupts.
  *
@@ -88,3 +90,5 @@ void	bridgeintr __P((void));
 	{ netisr |= 1<<(anisr); add_net_randomness(anisr); setsoftnet(); }
 #endif
 #endif
+
+#endif /* _NET_NETISR_H_ */
