@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.248 2001/03/12 04:51:41 jason Exp $
+#	$OpenBSD: GENERIC,v 1.249 2001/03/28 20:52:40 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -166,7 +166,7 @@ pccom*	at puc? port ?
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
 cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
-#cy*	at pci?				# PCI cyclom serial card
+cy*	at pci?				# PCI cyclom serial card
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
