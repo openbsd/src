@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.15 2001/04/17 04:34:08 aaron Exp $	*/
+/*	$OpenBSD: an.c,v 1.16 2001/06/10 19:26:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -359,8 +359,6 @@ an_rxeof(sc)
 	an_cache_store(sc, eh, m, rx_frame.an_rx_signal_strength);
 #endif
 	ether_input(ifp, eh, m);
-
-	return;
 }
 
 void
@@ -389,8 +387,6 @@ an_txeof(sc, status)
 
 	sc->an_rdata.an_tx_ring[sc->an_rdata.an_tx_cons] = 0;
 	AN_INC(sc->an_rdata.an_tx_cons, AN_TX_RING_CNT);
-
-	return;
 }
 
 /*
@@ -571,8 +567,6 @@ an_reset(sc)
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
 
 	an_cmd(sc, AN_CMD_DISABLE, 0);
-
-	return;
 }
 
 /*
@@ -860,8 +854,6 @@ an_setdef(sc, areq)
 	/* Reinitialize the card. */
 	if (ifp->if_flags & IFF_UP)
 		an_init(sc);
-
-	return;
 }
 
 /*
@@ -898,8 +890,6 @@ an_promisc(sc, promisc)
 	}
 	/* Turn the MAC back on. */
 	an_cmd(sc, AN_CMD_ENABLE, 0);
-
-	return;
 }
 
 int
@@ -1128,8 +1118,6 @@ an_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	TIMEOUT(sc->an_stat_ch, an_stats_update, sc, hz);
-
-	return;
 }
 
 void
@@ -1219,8 +1207,6 @@ an_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 void
@@ -1245,8 +1231,6 @@ an_stop(sc)
 	UNTIMEOUT(an_stats_update, sc, sc->an_stat_ch);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
-
-	return;
 }
 
 void
@@ -1266,8 +1250,6 @@ an_watchdog(ifp)
 	an_init(sc);
 
 	ifp->if_oerrors++;
-
-	return;
 }
 
 void
@@ -1454,7 +1436,5 @@ an_cache_store (sc, eh, m, rx_quality)
 	bcopy( eh->ether_shost, sc->an_sigcache[cache_slot].macsrc,  6);
 
 	sc->an_sigcache[cache_slot].signal = rx_quality;
-
-	return;
 }
 #endif
