@@ -740,7 +740,7 @@ dointr()
 				inttotal += ivp->iv_cnt;
 			}
 		}
-		(void)printf("Total        %10ld %8ld\n",
+		(void)printf("Total        %8ld %8ld\n",
 		    inttotal, inttotal / uptime);
 	}
 }
