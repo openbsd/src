@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.5 1996/08/10 21:41:15 deraadt Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.6 1996/08/11 20:39:08 niklas Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -129,3 +129,5 @@ int	 strcmp __P((const char *, const char *));
 int	 strncmp __P((const char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 int	 getsn __P((char *, int));
+void	 MD5Init __P((u_int32_t[4]));
+void	 MD5Transform __P((u_int32_t[4], u_int32_t const [16]));
