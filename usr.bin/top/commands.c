@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.1 1997/08/14 14:00:20 downsj Exp $	*/
+/*	$OpenBSD: commands.c,v 1.2 1997/08/22 07:16:26 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -18,32 +18,37 @@
  *  "top" (i.e.:  changing the number of processes to display).
  */
 
-#include "os.h"
+#include <sys/types.h>
+#include <stdio.h>
 #include <ctype.h>
-#include <signal.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
+#include "top.h"
 
 #include "sigdesc.h"		/* generated automatically */
 #include "boolean.h"
 #include "utils.h"
+#include "machine.h"
 
-extern int  errno;
-
-extern char *copyright;
-
-/* imported from screen.c */
-extern int overstrike;
-
-int err_compar();
-char *err_string();
+static char *next_field __P((char *));
+static int scanint __P((char *, int *));
+static char *err_string __P((void));
+static int str_adderr __P((char *, int, int));
+static int str_addarg __P((char *, int, char *, int));
+static int err_compar __P((const void *, const void *));
 
 /*
  *  show_help() - display the help screen; invoked in response to
  *		either 'h' or '?'.
  */
 
+void
 show_help()
 
 {
@@ -90,7 +95,7 @@ u       - display processes for only one user (+ selects all users)\n\
  *  Utility routines that help with some of the commands.
  */
 
-char *next_field(str)
+static char *next_field(str)
 
 register char *str;
 
@@ -107,7 +112,7 @@ register char *str;
     return(*str == '\0' ? NULL : str);
 }
 
-scanint(str, intp)
+static int scanint(str, intp)
 
 char *str;
 int  *intp;
@@ -186,7 +191,7 @@ static char *err_listem =
 
 #define STRMAX 80
 
-char *err_string()
+static char *err_string()
 
 {
     register struct errs *errp;
@@ -246,7 +251,7 @@ char *err_string()
  *	the string "str".
  */
 
-str_adderr(str, len, err)
+static int str_adderr(str, len, err)
 
 char *str;
 int len;
@@ -256,7 +261,7 @@ int err;
     register char *msg;
     register int  msglen;
 
-    msg = err == 0 ? "Not a number" : errmsg(err);
+    msg = err == 0 ? "Not a number" : strerror(err);
     msglen = strlen(msg) + 2;
     if (len <= msglen)
     {
@@ -273,7 +278,7 @@ int err;
  *	is set (indicating that a comma should NOT be added to the front).
  */
 
-str_addarg(str, len, arg, first)
+static int str_addarg(str, len, arg, first)
 
 char *str;
 int  len;
@@ -305,11 +310,13 @@ int  first;
  *	for sorting errors.
  */
 
-err_compar(p1, p2)
+static int err_compar(e1, e2)
 
-register struct errs *p1, *p2;
+const void *e1, *e2;
 
 {
+    register const struct errs *p1 = (struct errs *)e1;
+    register const struct errs *p2 = (struct errs *)e2;
     register int result;
 
     if ((result = p1->errno - p2->errno) == 0)
@@ -323,7 +330,7 @@ register struct errs *p1, *p2;
  *  error_count() - return the number of errors currently logged.
  */
 
-error_count()
+int error_count()
 
 {
     return(errcnt);
@@ -333,7 +340,7 @@ error_count()
  *  show_errors() - display on stdout the current log of errors.
  */
 
-show_errors()
+void show_errors()
 
 {
     register int cnt = 0;
@@ -343,7 +350,7 @@ show_errors()
     while (cnt++ < errcnt)
     {
 	printf("%5s: %s\n", errp->arg,
-	    errp->errno == 0 ? "Not a number" : errmsg(errp->errno));
+	    errp->errno == 0 ? "Not a number" : strerror(errp->errno));
 	errp++;
     }
 }

@@ -1,10 +1,12 @@
-/*	$OpenBSD: top.h,v 1.1 1997/08/14 14:00:26 downsj Exp $	*/
+/*	$OpenBSD: top.h,v 1.2 1997/08/22 07:16:30 downsj Exp $	*/
 
 /*
  *  Top - a top users display for Berkeley Unix
  *
  *  General (global) definitions
  */
+
+#include <sys/cdefs.h>
 
 /* Current major version number */
 #define VERSION		3
@@ -17,11 +19,6 @@
 
 /* Log base 2 of 1024 is 10 (2^10 == 1024) */
 #define LOG1024		10
-
-char *itoa();
-char *itoa7();
-
-char *version_string();
 
 /* Special atoi routine returns either a non-negative number or one of: */
 #define Infinity	-1
@@ -36,3 +33,25 @@ char *version_string();
 
 #define NUM_AVERAGES    3
 
+/* externs */
+extern const char copyright[];
+
+extern int overstrike;
+
+/* commands.c */
+extern void show_help __P((void));
+extern int error_count __P((void));
+extern void show_errors __P((void));
+extern char *kill_procs __P((char *));
+extern char *renice_procs __P((char *));
+
+/* top.c */
+extern void quit __P((int));
+
+/* username.c */
+extern void init_hash __P((void));
+extern char *username __P((uid_t));
+extern uid_t userid __P((char *));
+
+/* version.c */
+extern char *version_string __P((void));

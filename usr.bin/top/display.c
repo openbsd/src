@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.1 1997/08/14 14:00:21 downsj Exp $	*/
+/*	$OpenBSD: display.c,v 1.2 1997/08/22 07:16:27 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -28,9 +28,14 @@
  *        *_process, u_endscreen.
  */
 
-#include "os.h"
+#include <sys/types.h>
+#include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <term.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "screen.h"		/* interface to screen package */
 #include "layout.h"		/* defines for screen position layout */
@@ -45,17 +50,17 @@
 FILE *debug;
 #endif
 
-/* imported from screen.c */
-extern int overstrike;
-
 static int lmpid = 0;
 static int last_hi = 0;		/* used in u_process and u_endscreen */
 static int lastline = 0;
 static int display_width = MAX_COLS;
 
-#define lineindex(l) ((l)*display_width)
+static char *cpustates_tag __P((void));
+static int string_count __P((char **));
+static void summary_format __P((char *, int *, char **));
+static void line_update __P((char *, char *, int, int));
 
-char *printable();
+#define lineindex(l) ((l)*display_width)
 
 /* things initialized by display_init and used thruout */
 
@@ -86,7 +91,7 @@ static void line_update();
 int display_resize()
 
 {
-    register int lines;
+    register int display_lines;
 
     /* first, deallocate any previous buffer that may have been there */
     if (screenbuf != NULL)
@@ -96,7 +101,7 @@ int display_resize()
 
     /* calculate the current dimensions */
     /* if operating in "dumb" mode, we only need one line */
-    lines = smart_terminal ? screen_length - Header_lines : 1;
+    display_lines = smart_terminal ? screen_length - Header_lines : 1;
 
     /* we don't want more than MAX_COLS columns, since the machine-dependent
        modules make static allocations based on MAX_COLS and we don't want
@@ -108,7 +113,7 @@ int display_resize()
     }
 
     /* now, allocate space for the screen buffer */
-    screenbuf = (char *)malloc(lines * display_width);
+    screenbuf = (char *)malloc(display_lines * display_width);
     if (screenbuf == (char *)NULL)
     {
 	/* oops! */
@@ -117,7 +122,7 @@ int display_resize()
 
     /* return number of lines available */
     /* for dumb terminals, pretend like we can show any amount */
-    return(smart_terminal ? lines : Largest);
+    return(smart_terminal ? display_lines : Largest);
 }
 
 int display_init(statics)
@@ -125,16 +130,16 @@ int display_init(statics)
 struct statics *statics;
 
 {
-    register int lines;
+    register int display_lines;
     register char **pp;
     register int *ip;
     register int i;
 
     /* call resize to do the dirty work */
-    lines = display_resize();
+    display_lines = display_resize();
 
     /* only do the rest if we need to */
-    if (lines > -1)
+    if (display_lines > -1)
     {
 	/* save pointers and allocate space for names */
 	procstate_names = statics->procstate_names;
@@ -165,10 +170,10 @@ struct statics *statics;
     }
 
     /* return number of lines available */
-    return(lines);
+    return(display_lines);
 }
 
-i_loadave(mpid, avenrun)
+void i_loadave(mpid, avenrun)
 
 int mpid;
 double *avenrun;
@@ -196,7 +201,7 @@ double *avenrun;
     lmpid = mpid;
 }
 
-u_loadave(mpid, avenrun)
+void u_loadave(mpid, avenrun)
 
 int mpid;
 double *avenrun;
@@ -235,7 +240,7 @@ double *avenrun;
     }
 }
 
-i_timeofday(tod)
+void i_timeofday(tod)
 
 time_t *tod;
 
@@ -280,7 +285,7 @@ static char procstates_buffer[128];
  *		  lastline is valid
  */
 
-i_procstates(total, brkdn)
+void i_procstates(total, brkdn)
 
 int total;
 int *brkdn;
@@ -307,7 +312,7 @@ int *brkdn;
     memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
 }
 
-u_procstates(total, brkdn)
+void u_procstates(total, brkdn)
 
 int total;
 int *brkdn;
@@ -365,7 +370,7 @@ static int cpustates_column;
 
 /* cpustates_tag() calculates the correct tag to use to label the line */
 
-char *cpustates_tag()
+static char *cpustates_tag()
 
 {
     register char *use;
@@ -389,7 +394,7 @@ char *cpustates_tag()
     return(use);
 }
 
-i_cpustates(states)
+void i_cpustates(states)
 
 register int *states;
 
@@ -423,7 +428,7 @@ register int *states;
     memcpy(lcpustates, states, num_cpustates * sizeof(int));
 }
 
-u_cpustates(states)
+void u_cpustates(states)
 
 register int *states;
 
@@ -470,7 +475,7 @@ register int *states;
     }
 }
 
-z_cpustates()
+void z_cpustates()
 
 {
     register int i = 0;
@@ -506,9 +511,9 @@ z_cpustates()
  *                for i_memory ONLY: cursor is on the previous line
  */
 
-char memory_buffer[MAX_COLS];
+static char memory_buffer[MAX_COLS];
 
-i_memory(stats)
+void i_memory(stats)
 
 int *stats;
 
@@ -521,7 +526,7 @@ int *stats;
     fputs(memory_buffer, stdout);
 }
 
-u_memory(stats)
+void u_memory(stats)
 
 int *stats;
 
@@ -552,7 +557,7 @@ static int msglen = 0;
 /* Invariant: msglen is always the length of the message currently displayed
    on the screen (even when next_msg doesn't contain that message). */
 
-i_message()
+void i_message()
 
 {
     while (lastline < y_message)
@@ -573,7 +578,7 @@ i_message()
     }
 }
 
-u_message()
+void u_message()
 
 {
     i_message();
@@ -587,7 +592,7 @@ static int header_length;
  *  Assumptions:  cursor is on the previous line and lastline is consistent
  */
 
-i_header(text)
+void i_header(text)
 
 char *text;
 
@@ -606,7 +611,7 @@ char *text;
 }
 
 /*ARGSUSED*/
-u_header(text)
+void u_header(text)
 
 char *text;		/* ignored */
 
@@ -626,7 +631,7 @@ char *text;		/* ignored */
  *  Assumptions:  lastline is consistent
  */
 
-i_process(line, thisline)
+void i_process(line, thisline)
 
 int line;
 char *thisline;
@@ -653,27 +658,27 @@ char *thisline;
     p = strecpy(base, thisline);
 
     /* zero fill the rest of it */
-    memzero(p, display_width - (p - base));
+    memset(p, 0, display_width - (p - base));
 }
 
-u_process(line, newline)
+void u_process(linenum, linebuf)
 
-int line;
-char *newline;
+int linenum;
+char *linebuf;
 
 {
     register char *optr;
-    register int screen_line = line + Header_lines;
+    register int screen_line = linenum + Header_lines;
     register char *bufferline;
 
     /* remember a pointer to the current line in the screen buffer */
-    bufferline = &screenbuf[lineindex(line)];
+    bufferline = &screenbuf[lineindex(linenum)];
 
     /* truncate the line to conform to our current screen width */
-    newline[display_width] = '\0';
+    linebuf[display_width] = '\0';
 
     /* is line higher than we went on the last display? */
-    if (line >= last_hi)
+    if (linenum >= last_hi)
     {
 	/* yes, just ignore screenbuf and write it out directly */
 	/* get positioned on the correct line */
@@ -689,21 +694,21 @@ char *newline;
 	}
 
 	/* now write the line */
-	fputs(newline, stdout);
+	fputs(linebuf, stdout);
 
 	/* copy it in to the buffer */
-	optr = strecpy(bufferline, newline);
+	optr = strecpy(bufferline, linebuf);
 
 	/* zero fill the rest of it */
-	memzero(optr, display_width - (optr - bufferline));
+	memset(optr, 0, display_width - (optr - bufferline));
     }
     else
     {
-	line_update(bufferline, newline, 0, line + Header_lines);
+	line_update(bufferline, linebuf, 0, linenum + Header_lines);
     }
 }
 
-u_endscreen(hi)
+void u_endscreen(hi)
 
 register int hi;
 
@@ -763,7 +768,7 @@ register int hi;
     }
 }
 
-display_header(t)
+void display_header(t)
 
 int t;
 
@@ -779,7 +784,7 @@ int t;
 }
 
 /*VARARGS2*/
-new_message(type, msgfmt, a1, a2, a3)
+void new_message(type, msgfmt, a1, a2, a3)
 
 int type;
 char *msgfmt;
@@ -819,7 +824,7 @@ caddr_t a1, a2, a3;
     }
 }
 
-clear_message()
+void clear_message()
 
 {
     if (clear_eol(msglen) == 1)
@@ -828,7 +833,7 @@ clear_message()
     }
 }
 
-readline(buffer, size, numeric)
+int readline(buffer, size, numeric)
 
 char *buffer;
 int  size;
@@ -940,7 +945,6 @@ register char **names;
     register char *p;
     register int num;
     register char *thisname;
-    register int useM = No;
 
     /* format each number followed by its string */
     p = str;
@@ -1093,7 +1097,7 @@ int line;
     diff = display_width - newcol;
     if (diff > 0)
     {
-	memzero(old, diff);
+	memset(old, 0, diff);
     }
 
     /* remember where the current line is */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: username.c,v 1.1 1997/08/14 14:00:27 downsj Exp $	*/
+/*	$OpenBSD: username.c,v 1.2 1997/08/22 07:16:31 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -30,16 +30,21 @@
  *  This makes the table size independent of the passwd file size.
  */
 
+#include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <pwd.h>
 
 #include "top.local.h"
 #include "utils.h"
 
 struct hash_el {
-    int  uid;
+    uid_t  uid;
     char name[9];
 };
+
+static int enter_user __P((uid_t, char *, int));
+static int get_user __P((uid_t));
 
 #define    is_empty_hash(x)	(hash_table[x].name[0] == 0)
 
@@ -53,7 +58,7 @@ struct hash_el {
 /* We depend on that for hash_table and YOUR compiler had BETTER do it! */
 struct hash_el hash_table[Table_size];
 
-init_hash()
+void init_hash()
 
 {
     /*
@@ -65,7 +70,7 @@ init_hash()
 
 char *username(uid)
 
-register int uid;
+register uid_t uid;
 
 {
     register int hashindex;
@@ -79,7 +84,7 @@ register int uid;
     return(hash_table[hashindex].name);
 }
 
-int userid(username)
+uid_t userid(username)
 
 char *username;
 
@@ -102,9 +107,9 @@ char *username;
     return(pwd->pw_uid);
 }
 
-int enter_user(uid, name, wecare)
+static int enter_user(uid, name, wecare)
 
-register int  uid;
+register uid_t  uid;
 register char *name;
 int wecare;		/* 1 = enter it always, 0 = nice to have */
 
@@ -138,9 +143,9 @@ int wecare;		/* 1 = enter it always, 0 = nice to have */
  * and cache any entries we pass over while looking.
  */
 
-int get_user(uid)
+static int get_user(uid)
 
-register int uid;
+register uid_t uid;
 
 {
     struct passwd *pwd;

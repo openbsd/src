@@ -1,7 +1,6 @@
-/*	$OpenBSD: top.c,v 1.1 1997/08/14 14:00:26 downsj Exp $	*/
+/*	$OpenBSD: top.c,v 1.2 1997/08/22 07:16:30 downsj Exp $	*/
 
-char *copyright =
-    "Copyright (c) 1984 through 1996, William LeFebvre";
+const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
 /*
  *  Top users/processes display for Unix
@@ -31,10 +30,14 @@ char *copyright =
  *	FD_SET   - macros FD_SET and FD_ZERO are used when defined
  */
 
-#include "os.h"
+#include <sys/types.h>
+#include <stdio.h>
+#include <ctype.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 /* includes specific to top */
@@ -55,26 +58,18 @@ char stdoutbuf[Buffersize];
 /* build Signal masks */
 #define Smask(s)	(1 << ((s) - 1))
 
-/* for system errors */
-extern int errno;
-
-/* for getopt: */
-extern int  optind;
-extern char *optarg;
-
 /* imported from screen.c */
 extern int overstrike;
 
 /* signal handling routines */
-sigret_t leave();
-sigret_t onalrm();
-sigret_t tstop();
+static void leave __P((int));
+static void onalrm __P((int));
+static void tstop __P((int));
 #ifdef SIGWINCH
-sigret_t winch();
+static void winch __P((int));
 #endif
 
-/* internal routines */
-void quit();
+static void reset_display __P((void));
 
 /* values which need to be accessed by signal handlers */
 static int max_topn;		/* maximum displayable processes */
@@ -85,11 +80,6 @@ jmp_buf jmp_int;
 
 /* routines that don't return int */
 
-char *username();
-char *ctime();
-char *kill_procs();
-char *renice_procs();
-
 #ifdef ORDER
 extern int (*proc_compares[])();
 #else
@@ -99,38 +89,17 @@ time_t time();
 
 caddr_t get_process_info();
 
-/* different routines for displaying the user's identification */
-/* (values assigned to get_userid) */
-char *username();
-char *itoa7();
-
-/* display routines that need to be predeclared */
-int i_loadave();
-int u_loadave();
-int i_procstates();
-int u_procstates();
-int i_cpustates();
-int u_cpustates();
-int i_memory();
-int u_memory();
-int i_message();
-int u_message();
-int i_header();
-int u_header();
-int i_process();
-int u_process();
-
 /* pointers to display routines */
-int (*d_loadave)() = i_loadave;
-int (*d_procstates)() = i_procstates;
-int (*d_cpustates)() = i_cpustates;
-int (*d_memory)() = i_memory;
-int (*d_message)() = i_message;
-int (*d_header)() = i_header;
-int (*d_process)() = i_process;
+void (*d_loadave)() = i_loadave;
+void (*d_procstates)() = i_procstates;
+void (*d_cpustates)() = i_cpustates;
+void (*d_memory)() = i_memory;
+void (*d_message)() = i_message;
+void (*d_header)() = i_header;
+void (*d_process)() = i_process;
 
 
-main(argc, argv)
+int main(argc, argv)
 
 int  argc;
 char *argv[];
@@ -904,7 +873,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
  *	screen will get redrawn.
  */
 
-reset_display()
+static void reset_display()
 
 {
     d_loadave    = i_loadave;
@@ -920,14 +889,16 @@ reset_display()
  *  signal handlers
  */
 
-sigret_t leave()	/* exit under normal conditions -- INT handler */
+void leave(unused)	/* exit under normal conditions -- INT handler */
+
+int unused;
 
 {
     end_screen();
     exit(0);
 }
 
-sigret_t tstop(i)	/* SIGTSTP handler */
+void tstop(i)	/* SIGTSTP handler */
 
 int i;
 
@@ -960,7 +931,7 @@ int i;
 }
 
 #ifdef SIGWINCH
-sigret_t winch(i)		/* SIGWINCH handler */
+void winch(i)		/* SIGWINCH handler */
 
 int i;
 
@@ -989,7 +960,9 @@ int status;
     /*NOTREACHED*/
 }
 
-sigret_t onalrm()	/* SIGALRM handler */
+void onalrm(unused)	/* SIGALRM handler */
+
+int unused;
 
 {
     /* this is only used in batch mode to break out of the pause() */

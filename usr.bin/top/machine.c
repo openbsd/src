@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.2 1997/08/17 23:18:47 kstailey Exp $	*/
+/*	$OpenBSD: machine.c,v 1.3 1997/08/22 07:16:28 downsj Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -28,9 +28,9 @@
 #define LASTPID
 #define DOSWAP
 
-#include "os.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <nlist.h>
 #include <math.h>
 #include <kvm.h>
@@ -52,9 +52,9 @@
 static int check_nlist __P((struct nlist *));
 static int getkval __P((unsigned long, int *, int, char *));
 static int swapmode __P((int *, int *));
-extern char* printable __P((char *));
 
 #include "top.h"
+#include "display.h"
 #include "machine.h"
 #include "utils.h"
 
@@ -141,7 +141,7 @@ static kvm_t *kd;
 
 /* these are retrieved from the kernel in _init */
 
-static          long hz;
+static          int hz;
 
 /* these are offsets obtained via nlist and used in the get_ functions */
 
@@ -152,9 +152,9 @@ static pid_t lastpid;
 #endif
 
 /* these are for calculating cpu state percentages */
-static long cp_time[CPUSTATES];
-static long cp_old[CPUSTATES];
-static long cp_diff[CPUSTATES];
+static int cp_time[CPUSTATES];
+static int cp_old[CPUSTATES];
+static int cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
@@ -283,7 +283,7 @@ get_system_info(si)
 struct system_info *si;
 
 {
-    long total;
+    int total;
 
     /* get the cp_time array */
     (void) getkval(cp_time_offset, (int *)cp_time, sizeof(cp_time),
@@ -357,7 +357,7 @@ caddr_t get_process_info(si, sel, compare)
 
 struct system_info *si;
 struct process_select *sel;
-int (*compare)();
+int (*compare) __P((const void *, const void *));
 
 {
     register int i;
@@ -444,7 +444,7 @@ char *(*get_userid)();
 
 {
     register struct kinfo_proc *pp;
-    register long cputime;
+    register int cputime;
     register double pct;
     struct handle *hp;
     char waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
@@ -482,7 +482,7 @@ char *(*get_userid)();
 	    p_wait = EP(pp, e_wmesg);
 	else {
 	    snprintf(waddr, sizeof(waddr), "%x", 
-		(unsigned long)(PP(pp, p_wchan)) & ~KERNBASE);
+		(unsigned int)(PP(pp, p_wchan)) & ~KERNBASE);
 	    p_wait = waddr;
         }
     else
@@ -603,12 +603,13 @@ static unsigned char sorted_state[] =
 };
  
 int
-proc_compare(pp1, pp2)
+proc_compare(v1, v2)
 
-struct proc **pp1;
-struct proc **pp2;
+const void *v1, *v2;
 
 {
+    register struct proc **pp1 = (struct proc **)v1;
+    register struct proc **pp2 = (struct proc **)v2;
     register struct kinfo_proc *p1;
     register struct kinfo_proc *p2;
     register int result;
@@ -662,7 +663,7 @@ struct proc **pp2;
 
 int proc_owner(pid)
 
-int pid;
+pid_t pid;
 
 {
     register int cnt;
@@ -674,7 +675,7 @@ int pid;
     while (--cnt >= 0)
     {
 	pp = *prefp++;	
-	if (PP(pp, p_pid) == (pid_t)pid)
+	if (PP(pp, p_pid) == pid)
 	{
 	    return((int)EP(pp, e_pcred.p_ruid));
 	}

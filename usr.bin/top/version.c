@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.1 1997/08/14 14:00:28 downsj Exp $	*/
+/*	$OpenBSD: version.c,v 1.2 1997/08/22 07:16:32 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -11,14 +11,17 @@
  *  Copyright (c) 1989, 1990, 1992, William LeFebvre, Northwestern University
  */
 
+#include <sys/types.h>
+#include <stdio.h>
+
 #include "top.h"
 #include "patchlevel.h"
-
-static char version[16];
 
 char *version_string()
 
 {
+    static char version[16];
+
     snprintf(version, sizeof(version), "%d.%d", VERSION, PATCHLEVEL);
 #ifdef BETA
     strcat(version, BETA);

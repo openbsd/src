@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.1 1997/08/14 14:00:27 downsj Exp $	*/
+/*	$OpenBSD: utils.c,v 1.2 1997/08/22 07:16:31 downsj Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -15,8 +15,13 @@
  *  This file contains various handy utilities used by top.
  */
 
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "top.h"
-#include "os.h"
 
 int atoiwi(str)
 
@@ -96,10 +101,7 @@ register int val;
 
 {
     register char *ptr;
-    static char buffer[16];	/* result is built here */
-    				/* 16 is sufficient since the largest number
-				   we will ever convert will be 2^32-1,
-				   which is 10 digits. */
+    static char buffer[25];	/* result is built here */
 
     ptr = buffer + sizeof(buffer);
     *--ptr = '\0';
@@ -270,20 +272,20 @@ int *cntp;
  *	useful on BSD mchines for calculating cpu state percentages.
  */
 
-long percentages(cnt, out, new, old, diffs)
+int percentages(cnt, out, new, old, diffs)
 
 int cnt;
 int *out;
-register long *new;
-register long *old;
-long *diffs;
+register int *new;
+register int *old;
+int *diffs;
 
 {
     register int i;
-    register long change;
-    register long total_change;
-    register long *dp;
-    long half_total;
+    register int change;
+    register int total_change;
+    register int *dp;
+    int half_total;
 
     /* initialization */
     total_change = 0;
@@ -295,8 +297,7 @@ long *diffs;
 	if ((change = *new - *old) < 0)
 	{
 	    /* this only happens when the counter wraps */
-	    change = (int)
-		((unsigned long)*new-(unsigned long)*old);
+	    change = ((unsigned int)*new-(unsigned int)*old);
 	}
 	total_change += (*dp++ = change);
 	*old++ = *new++;
@@ -312,38 +313,11 @@ long *diffs;
     half_total = total_change / 2l;
     for (i = 0; i < cnt; i++)
     {
-	*out++ = (int)((*diffs++ * 1000 + half_total) / total_change);
+	*out++ = ((*diffs++ * 1000 + half_total) / total_change);
     }
 
     /* return the total in case the caller wants to use it */
     return(total_change);
-}
-
-/*
- * errmsg(errnum) - return an error message string appropriate to the
- *           error number "errnum".  This is a substitute for the System V
- *           function "strerror" with one important difference:  the string
- *           returned by this function does NOT end in a newline!
- *           N.B.:  there appears to be no reliable way to determine if
- *           "strerror" exists at compile time, so I make do by providing
- *           something of similar functionality.
- */
-
-/* externs referenced by errmsg */
-
-extern char *sys_errlist[];
-extern int sys_nerr;
-
-char *errmsg(errnum)
-
-int errnum;
-
-{
-    if (errnum > 0 && errnum < sys_nerr)
-    {
-	return(sys_errlist[errnum]);
-    }
-    return("No error");
 }
 
 /* format_time(seconds) - format number of seconds into a suitable
@@ -364,12 +338,9 @@ int errnum;
 
 char *format_time(seconds)
 
-long seconds;
+time_t seconds;
 
 {
-    register int value;
-    register int digit;
-    register char *ptr;
     static char result[10];
 
     /* sanity protection */
@@ -393,8 +364,8 @@ long seconds;
     {
 	/* standard method produces MMM:SS */
 	/* we avoid printf as must as possible to make this quick */
-	snprintf(result, sizeof(result), "%3d:%02d", seconds / 60l,
-		seconds % 60l);
+	snprintf(result, sizeof(result), "%3d:%02d", seconds / 60,
+		seconds % 60);
     }
     return(result);
 }

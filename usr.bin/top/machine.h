@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.h,v 1.1 1997/08/14 14:00:23 downsj Exp $	*/
+/*	$OpenBSD: machine.h,v 1.2 1997/08/22 07:16:28 downsj Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -51,10 +51,16 @@ struct process_select
     char *command;	/* only this command (unless == NULL) */
 };
 
-/* routines defined by the machine dependent module */
+/* prototypes */
+extern int display_init __P((struct statics *));
 
-char *format_header();
-char *format_next_process();
-
-/* non-int routines typically used by the machine dependent module */
-char *printable();
+/* machine.c */
+extern int machine_init __P((struct statics *));
+extern char *format_header __P((char *));
+extern void get_system_info __P((struct system_info *));
+extern caddr_t get_process_info __P((struct system_info *,
+				     struct process_select *,
+				     int (*)(const void *, const void *)));
+extern char *format_next_process __P((caddr_t, char *(*)()));
+extern int proc_compate __P((const void *, const void *));
+extern int proc_owner __P((pid_t));
