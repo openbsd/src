@@ -35,7 +35,6 @@ kernel (sys/arch/hppa/*):				mickey@
 * several harware problems (ie disfunctional/untested drivers)
 * wscons devices (hil/*, pckbc/*) unfinished
 * 7300lc-based machines, 8k-based machines
-* dino pci bridge support (found on 7300lc machines, FE)
 * "original snakes" (700,705,710,...) support
 * harmony audio driver
 * isa/eisa dma
@@ -55,7 +54,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.25 2002/12/19 19:36:35 mickey Exp $
+$OpenBSD: TODO,v 1.26 2002/12/20 17:17:28 mickey Exp $
 
 --
 	paranoic mickey
