@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.173 2003/05/18 20:25:15 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.174 2003/05/19 00:54:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,20 +79,20 @@ int	 pfctl_show_anchors(int, int, char *);
 const char	*pfctl_lookup_option(char *, const char **);
 
 const char	*clearopt;
-char	*rulesopt;
+char		*rulesopt;
 const char	*showopt;
 const char	*debugopt;
-char	*anchoropt;
-char	*tableopt;
+char		*anchoropt;
+char		*tableopt;
 const char	*tblcmdopt;
-int	 state_killers;
-char	*state_kill[2];
-int	 loadopt = PFCTL_FLAG_ALL;
-int	 altqsupport;
+int		 state_killers;
+char		*state_kill[2];
+int		 loadopt = PFCTL_FLAG_ALL;
+int		 altqsupport;
 
-int dev = -1;
+int		 dev = -1;
 
-const char *infile;
+const char	*infile;
 
 static const struct {
 	const char	*name;
