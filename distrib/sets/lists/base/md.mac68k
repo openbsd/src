@@ -40,7 +40,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg2c.so.5.24
-./usr/lib/libiberty.so.4.0
+./usr/lib/libiberty.so.4.1
 ./usr/lib/libkadm.so.6.0
 ./usr/lib/libkafs.so.6.0
 ./usr/lib/libkdb.so.6.0
@@ -1243,7 +1243,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/net/net_osdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr_dispatch.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/pfkeyv2.ph
