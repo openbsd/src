@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.54 2001/07/13 23:46:12 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.55 2001/07/17 20:57:49 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -965,6 +965,7 @@ sysctl_diskinit(update, p)
 		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link))
 			tlen += strlen(dk->dk_name) + 1;
+		tlen++;
 
 		if (disknames)
 			free(disknames, M_SYSCTL);
@@ -975,6 +976,7 @@ sysctl_diskinit(update, p)
 		diskstats = malloc(disk_count * sizeof(struct diskstats),
 		    M_SYSCTL, M_WAITOK);
 		disknames = malloc(tlen, M_SYSCTL, M_WAITOK);
+		disknames[0] = '\0';
 
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
