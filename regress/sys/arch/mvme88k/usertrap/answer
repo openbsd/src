@@ -1,13 +1,512 @@
-Privilege violation: Illegal instruction 
-Privilege violation: Illegal instruction 
-Privilege violation: Illegal instruction 
-Alternate system call: Bad system call 
-Alternate system call: Bad system call 
-DDB breakpoint: Illegal instruction 
-DDB trace: Illegal instruction 
-DDB entry: Illegal instruction 
-System call: Bad system call 
-BUG: 
-Software divide by zero: Floating point exception 
-Single step: Trace trap 
-Breakpoint: Trace trap 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Bad system call 
+Bad system call 
+Illegal instruction 
+Illegal instruction 
+Illegal instruction 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Bad system call 
+Trace trap 
+Floating point exception 
+Trace trap 
+Trace trap 
+Trace trap 
+Trace trap 
+Trace trap 
+Trace trap 
+Trace trap 
+Trace trap 
