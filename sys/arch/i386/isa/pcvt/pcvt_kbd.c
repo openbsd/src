@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.24 1999/09/27 01:50:19 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.25 1999/10/04 09:38:19 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1486,11 +1486,11 @@ regular:
 
 	if ((key == 85) && shift_down && kbd_lastkey != 85)
 	{
-		if (vsp->scr_offset > (vsp->screen_rows - 1))
+		if (vsp->scr_offset > vsp->row)
 		{
 			if (!vsp->scrolling)
 			{
-				vsp->scrolling += vsp->screen_rows - 2;
+				vsp->scrolling += vsp->row - 1;
 				if (vsp->Scrollback)
 				{
 					scrollback_save_screen();
@@ -1534,7 +1534,7 @@ scroll_reset:
 			if (vsp->scrolling < 0)
 				vsp->scrolling = 0;
 
-			if (vsp->scrolling <= vsp->screen_rows)
+			if (vsp->scrolling <= vsp->row)
 			{
 				vsp->scrolling = 0;
 				scrollback_restore_screen();
