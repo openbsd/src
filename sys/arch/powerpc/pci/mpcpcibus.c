@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.3 1997/10/21 18:01:44 pefo Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.4 1998/04/06 20:23:21 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -74,7 +74,7 @@ const char *mpc_intr_string __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
-void      mpc_ether_hw_addr __P((u_int8_t *));
+int      mpc_ether_hw_addr __P((u_int8_t *));
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -207,7 +207,7 @@ mpc_attach_hook(parent, self, pba)
 {
 }
 
-void
+int
 mpc_ether_hw_addr(p)
 	u_int8_t *p;
 {
@@ -248,6 +248,7 @@ mpc_ether_hw_addr(p)
 	i = (srom_crc32(p, 126) & 0xFFFF) ^ 0xFFFF;
 	p[126] = i;
 	p[127] = i >> 8;
+	return(1);
 }
 
 int
