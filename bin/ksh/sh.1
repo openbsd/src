@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.47 2004/03/15 08:56:56 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.48 2004/08/04 20:01:44 jaredy Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -39,11 +39,15 @@
 .Nm sh
 .Op Fl +abCefhiklmnprsuvxX
 .Op Fl +o Ar option
-.Oo [ Fl c Ar command-string [
-.Xo Ar command-name ] No \&| Fl s No \&|
-.Ar file No ]\ 
-.Xc
+.Xo
+.Bk -words
+.Oo Oo Fl c Ar command-string
+.Op Ar command-name
+.Li \&| Fl s
+.Li \&| Ar file Oc
+.Ek
 .Op Ar argument ... Oc
+.Xc
 .Sh DESCRIPTION
 .Nm
 is a reimplementation of the Bourne shell, a command interpreter for both
@@ -79,11 +83,15 @@ of a file the shell reads commands from.
 If there are no non-option
 arguments, the shell reads commands from the standard input.
 The name of
-the shell (i.e., the contents of $0) is determined as follows: if the
+the shell (i.e., the contents of
+.Va $0 )
+is determined as follows: if the
 .Fl c
 option is used and there is a non-option argument, it is used as the name;
 if commands are being read from a file, the file is used as the name;
-otherwise, the name the shell was called with (i.e., argv[0]) is used.
+otherwise, the name the shell was called with (i.e.,
+.Li argv[0] )
+is used.
 .Pp
 A shell is
 .Dq interactive
@@ -103,7 +111,7 @@ and
 parameters).
 For non-interactive shells, the
 .Ic trackall
-option is on by default (see
+option is on by default (see the
 .Ic set
 command below).
 .Pp
@@ -174,7 +182,8 @@ is processed.
 Clearing the privileged option causes the shell to set
 its effective user ID (group ID) to its real user ID (group ID).
 .Pp
-If the basename of the name the shell is called with (i.e., argv[0])
+If the basename of the name the shell is called with (i.e.,
+.Li argv[0] )
 starts with
 .Ql -
 or if the
@@ -540,7 +549,7 @@ if no
 .Ar list
 is executed, the exit status is zero.
 .It Xo Ic for Ar name No [
-.Ic in Ar word Ar ... term Ns ]
+.Ic in Ar word ... term Ns ]
 .Ic do Ar list Ic done
 .Xc
 For each
@@ -552,7 +561,11 @@ is set to the word and
 is executed.
 If
 .Ic in
-is not used to specify a word list, the positional parameters ($1, $2, etc.\&)
+is not used to specify a word list, the positional parameters
+.Po
+.Va $1 , $2 ,
+etc.\&
+.Pc
 are used instead.
 For historical reasons, open and close braces may be used instead of
 .Ic do
@@ -1072,7 +1085,9 @@ set directly using assignments:
 Process ID of the last background process started.
 If no background processes have been started, the parameter is not set.
 .It Ev \&#
-The number of positional parameters (i.e., $1, $2, etc.).
+The number of positional parameters (i.e.,
+.Va $1 , $2 ,
+etc.).
 .It Ev \&$
 The process ID of the shell, or the
 .Tn PID
@@ -1083,17 +1098,17 @@ use this mechanism for generating temporary file names; see
 .Xr mktemp 1
 instead.
 .It Ev \&-
-The concatenation of the current single letter options (see
+The concatenation of the current single letter options (see the
 .Ic set
-command below for list of options).
+command below for a list of options).
 .It Ev \&?
 The exit status of the last non-asynchronous command executed.
 If the last command was killed by a signal,
-.Ic \&$?\&
+.Va \&$?\&
 is set to 128 plus the signal number.
 .It Ev 0
 The name the shell was invoked with (i.e.,
-.Ic argv[0] ) ,
+.Li argv[0] ) ,
 or the
 .Ar command-name
 if it was invoked with the
@@ -1114,7 +1129,9 @@ or .-script.
 Further positional parameters may be accessed using
 .Ic ${ Ns Ar number Ns Ic \&} .
 .It Ev \&*
-All positional parameters (except parameter 0), i.e., $1, $2, $3...
+All positional parameters (except parameter 0); i.e.,
+.Va $1 , $2 , $3 ,
+\&...
 If used
 outside of double quotes, parameters are separate words (which are subjected
 to word splitting); if used within double quotes, parameters are separated
@@ -1165,10 +1182,10 @@ Currently set to the
 value as reported by
 .Xr stty 1
 if that value is non-zero.
-This parameter is used by
+This parameter is used by the
 .Ic set Fl o
 and
-.Ic kill -l
+.Ic kill Fl l
 commands to format information columns.
 .It Ev ENV
 If this parameter is found to be set after any profile files are executed, the
@@ -1273,7 +1290,7 @@ Secondary prompt string, by default
 .Dq \&>\ \& ,
 used when more input is needed to complete a command.
 .It Ev PS4
-Used to prefix commands that are printed during execution tracing (see
+Used to prefix commands that are printed during execution tracing (see the
 .Ic set Fl x
 command below).
 The prompt is printed verbatim (i.e., no substitutions are done).
@@ -1789,7 +1806,9 @@ Functions are like
 in that they are executed in the current environment.
 However, unlike
 .Li .-scripts ,
-shell arguments (i.e., positional parameters $1, $2, etc.) are never visible
+shell arguments (i.e., positional parameters
+.Va $1 , $2 ,
+etc.) are never visible
 inside them.
 When the shell is determining the location of a command, functions
 are searched after special built-in commands, before regular and
@@ -1954,7 +1973,7 @@ in
 .Pf non- Tn POSIX
 mode.
 To avoid problems, use the
-.Ic $(...)
+.Ic $(...)\&
 form of command substitution.
 .It
 .Ic kill -l
@@ -2040,7 +2059,7 @@ This construct is used in most shell scripts that use the old
 .Xr getopt 1
 command.
 .It
-Argument expansion of
+Argument expansion of the
 .Ic alias ,
 .Ic export ,
 .Ic readonly ,
@@ -2127,7 +2146,7 @@ cause a non-interactive shell to exit and parameter assignments that are
 specified before the command are kept after the command completes.
 Just to confuse things, if the
 .Ic posix
-option is turned off (see
+option is turned off (see the
 .Ic set
 command below), some special commands are very special in that no field
 splitting, file globbing, brace expansion, nor tilde expansion is performed
@@ -2264,11 +2283,11 @@ is assumed.
 This command is only available on systems which support job control (see
 .Sx Job control
 below for more information).
-.It Xo Ic bind Op Fl m
+.It Xo
+.Ic bind Op Fl m
 .Oo Ar key
 .Op Ns = Ns Ar editing-command
-.Ar ...
-.Oc
+.Ar ... Oc
 .Xc
 Set or view the current emacs command editing key bindings/macros (see
 .Sx Emacs interactive input line editing
@@ -2322,7 +2341,7 @@ If the
 .Fl L
 option (logical path) is used or if the
 .Ic physical
-option (see
+option (see the
 .Ic set
 command below) isn't set, references to
 .Dq \&.\&.
@@ -2657,7 +2676,7 @@ If the
 .Fl L
 option is used or if the
 .Ic physical
-option (see
+option (see the
 .Ic set
 command below) isn't set, the logical path is printed (i.e., the path used to
 .Ic cd
@@ -2755,7 +2774,9 @@ scripts.
 .Op Fl \&-
 .Op Ar arg ...
 .Xc
-The set command can be used to set
+The
+.Ic set
+command can be used to set
 .Pq Ic \&-
 or clear
 .Pq Ic \&+
@@ -2948,7 +2969,7 @@ In vi command-line editing, do command and file name completion when escape
 .It Ic vi-show8
 Prefix characters with the eighth bit set with
 .Dq M\&- .
-If this option is not set, characters in the range 128-160 are printed as is,
+If this option is not set, characters in the range 128\-160 are printed as is,
 which may cause problems.
 .It Ic vi-tabcomplete
 In vi command-line editing, do command and file name completion when tab (^I)
@@ -2965,7 +2986,9 @@ with no option name will list all the options and whether each is on or off;
 will print the long names of all options that are currently on.
 .Pp
 Remaining arguments, if any, are positional parameters and are assigned, in
-order, to the positional parameters (i.e., $1, $2, etc.).
+order, to the positional parameters (i.e.,
+.Va $1 , $2 ,
+etc.).
 If options end with
 .Ql --
 and there are no remaining arguments, all positional parameters are cleared.
@@ -3078,7 +3101,7 @@ is a socket.
 .It Fl o Ar option
 Shell
 .Ar option
-is set (see
+is set (see the
 .Ic set
 command above for a list of options).
 As a non-standard extension, if the option starts with a
@@ -3233,8 +3256,8 @@ is the name of a signal (e.g.,
 .Dv PIPE
 or
 .Dv ALRM )
-or the number of the signal (see
-.Ic kill -l
+or the number of the signal (see the
+.Ic kill Fl l
 command above).
 There are two special signals:
 .Dv EXIT
@@ -3245,7 +3268,7 @@ the shell to exit if the
 .Fl e
 or
 .Ic errexit
-option were see -- see
+option were see \(em see the
 .Ic set
 command above).
 .Dv EXIT
@@ -3634,7 +3657,7 @@ For interactive shells, this number is printed inside
 .Dq \&[..\&] ,
 followed by the process IDs of the processes in the job when an asynchronous
 command is run.
-A job may be referred to in
+A job may be referred to in the
 .Ic bg ,
 .Ic fg ,
 .Ic jobs ,
@@ -3841,7 +3864,7 @@ can be obtained from ftp://ftp.cs.mun.ca/pub/pdksh.
 .Pp
 BTW, the most frequently reported bug is:
 .Bd -literal -offset indent
-echo hi | read a; echo $a\ \ \ # Does not print hi
+$ echo hi | read a; echo $a   # Does not print hi
 .Ed
 .Pp
 I'm aware of this and there is no need to report it.
