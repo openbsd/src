@@ -1,4 +1,5 @@
-/*	$NetBSD: ffs_vnops.c,v 1.5 1994/12/14 13:03:41 mycroft Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.2 1996/02/27 07:27:41 niklas Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.6 1996/02/09 22:22:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +48,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/signalvar.h>
 
 #include <vm/vm.h>
 
@@ -63,7 +65,7 @@
 #include <ufs/ffs/ffs_extern.h>
 
 /* Global vfs data structures for ufs. */
-int (**ffs_vnodeop_p)();
+int (**ffs_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
@@ -109,12 +111,12 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
-int (**ffs_specop_p)();
+int (**ffs_specop_p) __P((void *));
 struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -159,13 +161,13 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
 #ifdef FIFO
-int (**ffs_fifoop_p)();
+int (**ffs_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
@@ -210,7 +212,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*)())NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
@@ -238,14 +240,15 @@ struct ctldebug debug12 = { "doclusterwrite", &doclusterwrite };
  */
 /* ARGSUSED */
 int
-ffs_fsync(ap)
+ffs_fsync(v)
+	void *v;
+{
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	struct timeval tv;
 
@@ -258,15 +261,16 @@ ffs_fsync(ap)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ffs_reclaim(ap)
+ffs_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	int error;
 
-	if (error = ufs_reclaim(vp))
+	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	FREE(vp->v_data, VFSTOUFS(vp->v_mount)->um_devvp->v_tag == VT_MFS ?
 	    M_MFSNODE : M_FFSNODE);
