@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2003/10/16 05:03:22 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2003/10/21 17:05:55 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.13 2003/10/16 05:03:22 deraadt Exp $
+ *      $Id: autoconf.c,v 1.14 2003/10/21 17:05:55 drahn Exp $
  */
 
 /*
@@ -256,10 +256,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp)
 }
 
 struct device *
-parsedisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
+parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
 	char *cp, c;
