@@ -9145,7 +9145,7 @@ expand_expr (exp, target, tmode, modifier)
 	{
 	  if (!flag_trampolines)
 	    {
-	      error_with_decl(exp, "trampoline code generation is not allowed without -ftrampoline");
+	      error_with_decl(exp, "trampoline code generation is not allowed without -ftrampolines");
 	      return const0_rtx;
 	    }
 	  if (warn_trampolines)
