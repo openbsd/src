@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.33 2002/12/06 00:47:32 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.34 2002/12/17 12:42:22 mcbride Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -80,9 +80,13 @@ struct timeval Tstart, Tend;	/* start and end times of session */
 
 int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
-int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
-int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
-int	pfctl_add_binat(struct pfctl *, struct pf_binat *);
+
+int	pfctl_compare_addr_wraps(struct pf_addr_wrap *,
+	    struct pf_addr_wrap *, sa_family_t);
+int	pfctl_compare_pooladdrs(struct pf_pooladdr *,
+	    struct pf_pooladdr *, sa_family_t);
+int	pfctl_compare_pools(struct pf_pool *, struct pf_pool *, sa_family_t);
+int	pfctl_compare_rules(struct pf_rule *, struct pf_rule *);
 
 static int	read_config(FILE *);
 static void	print_message(char *);
@@ -551,9 +555,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	char rulesfile[MAXPATHLEN], buf[1024];
 	char template[] = "/tmp/authpfrules.XXXXXXX";
 	int tmpfile = -1, from_fd = -1, ret = -1;
-	struct pfioc_nat	pn;
-	struct pfioc_binat	pb;
-	struct pfioc_rdr	pd;
 	struct pfioc_rule	pr;
 	struct pfctl		pf;
 	int n, rcount, wcount;
@@ -655,9 +656,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	/* add/delete rules, using parse_rule */
 	memset(&pf, 0, sizeof(pf));
 	pf.dev = dev;
-	pf.pnat = &pn;
-	pf.pbinat = &pb;
-	pf.prdr = &pd;
 	pf.prule = &pr;
 	if (parse_rules(fin, &pf, 0) < 0) {
 		syslog(LOG_ERR,
@@ -766,107 +764,183 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 	return (0);
 }
 
+int
+pfctl_compare_addr_wraps(struct pf_addr_wrap *a, struct pf_addr_wrap *b,
+    sa_family_t af)
+{
+	if (a->addr_dyn != NULL && b->addr_dyn != NULL) {
+		if (strcmp(a->addr_dyn->ifname, b->addr_dyn->ifname))
+			return (1);
+	} else {
+		if (a->addr_dyn != NULL || b->addr_dyn != NULL)
+			return (1);
+		if (PF_ANEQ(&a->addr, &b->addr, af))
+			return (1);
+	}
+	if (PF_ANEQ(&a->mask, &b->mask, af))
+		return (1);
+	return (0);
+}
+
+int
+pfctl_compare_pooladdrs(struct pf_pooladdr *a, struct pf_pooladdr *b,
+    sa_family_t af)
+{
+	if (pfctl_compare_addr_wraps(&a->addr.addr, &b->addr.addr, af))
+		return (1);
+	if (a->addr.port[0] != b->addr.port[0] ||
+	    a->addr.port[1] != b->addr.port[1] ||
+	    a->addr.not != b->addr.not ||
+	    a->addr.port_op != b->addr.port_op)
+		return (1);
+	if (strcmp(a->ifname, b->ifname))
+		return (1);
+	return (0);
+}
+
+int
+pfctl_compare_pools(struct pf_pool *a, struct pf_pool *b, sa_family_t af)
+{
+	struct pf_pooladdr *pa_a, *pa_b;
+
+	if (a->key.key32[0] != b->key.key32[0] ||
+	    a->key.key32[1] != b->key.key32[1] ||
+	    a->key.key32[2] != b->key.key32[2] ||
+	    a->key.key32[3] != b->key.key32[3] ||
+	    a->proxy_port[0] != b->proxy_port[0] ||
+	    a->proxy_port[1] != b->proxy_port[1] ||
+	    a->port_op != b->port_op ||
+	    a->opts != b->opts)
+		return(1);
+	pa_a = TAILQ_FIRST(&a->list);
+	pa_b = TAILQ_FIRST(&b->list);
+	while (pa_a != NULL && pa_b != NULL) {
+		pfctl_compare_pooladdrs(pa_a, pa_b, af);
+		pa_a = TAILQ_NEXT(pa_a, entries);
+		pa_b = TAILQ_NEXT(pa_b, entries);
+	}
+	return (0);
+}
+
+int
+pfctl_compare_rules(struct pf_rule *a, struct pf_rule *b)
+{
+	if (a->return_icmp != b->return_icmp ||
+	    a->return_icmp6 != b->return_icmp6 ||
+	    a->action != b->action ||
+	    a->direction != b->direction ||
+	    a->log != b->log ||
+	    a->quick != b->quick ||
+	    a->keep_state != b->keep_state ||
+	    a->af != b->af ||
+	    a->proto != b->proto ||
+	    a->type != b->type ||
+	    a->code != b->code ||
+	    a->flags != b->flags ||
+	    a->flagset != b->flagset ||
+	    a->rule_flag != b->rule_flag ||
+	    a->min_ttl != b->min_ttl ||
+	    a->tos != b->tos ||
+	    a->allow_opts != b->allow_opts ||
+	    a->ifnot != b->ifnot)
+		return (1);
+	if (pfctl_compare_addr_wraps(&a->src.addr, &b->src.addr, a->af))
+		return (1);
+	if (a->src.port[0] != b->src.port[0] ||
+	    a->src.port[1] != b->src.port[1] ||
+	    a->src.not != b->src.not ||
+	    a->src.port_op != b->src.port_op)
+		return (1);
+	if (pfctl_compare_addr_wraps(&a->dst.addr, &b->dst.addr, a->af))
+		return (1);
+	if (a->dst.port[0] != b->dst.port[0] ||
+	    a->dst.port[1] != b->dst.port[1] ||
+	    a->dst.not != b->dst.not ||
+	    a->dst.port_op != b->dst.port_op)
+		return (1);
+	if (pfctl_compare_pools(&a->rpool, &b->rpool, a->af))
+		return (1);
+	if (strcmp(a->ifname, b->ifname) ||
+	    strcmp(a->anchorname, b->anchorname) ||
+	    strcmp(a->label, b->label))
+		return (1);
+	return (0);
+}
+
+
 /*
  * callback for rule add, used by parser in parse_rules
  */
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
-	struct pfioc_changerule pcr;
+	struct pfioc_rule pcr;
+	u_int32_t mnr, nr, match = 0;
 
 	memset(&pcr, 0, sizeof(pcr));
-	if (Delete_Rules) {
-		pcr.action = PF_CHANGE_REMOVE;
-		memcpy(&pcr.oldrule, r, sizeof(pcr.oldrule));
-	} else {
+	pcr.rule.action = r->action;
+	pcr.action = PF_CHANGE_GET_TICKET;
+	if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
+		syslog(LOG_INFO, "DIOCCHANGERULE %m");
+
+	switch(r->action) {
+	case PF_SCRUB:
+	case PF_DROP:
+	case PF_PASS:
+	default:
 		pcr.action = Rule_Action;
-		memcpy(&pcr.newrule, r, sizeof(pcr.newrule));
-	}
-	if (pfctl_add_pool(pf, &r->rt_pool, r->af))
-		return (1);
-	if (Delete_Rules) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
-			err(1, "DIOCBEGINADDRS");
-	}
-	pcr.pool_ticket = pf->paddr.ticket;
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
-			syslog(LOG_INFO, "DIOCCHANGERULE %m");
-	}
-
-	return 0;
-}
-
-/*
- * callback for nat add, used by parser in parse_rules
- */
-int
-pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
-{
-	struct pfioc_changenat pcr;
-
-	memset(&pcr, 0, sizeof(pcr));
-	if (Delete_Rules) {
-		pcr.action = PF_CHANGE_REMOVE;
-		memcpy(&pcr.oldnat, n, sizeof(pcr.oldnat));
-	} else {
+		break;
+	case PF_NAT:
+	case PF_NONAT:
 		pcr.action = Nat_Action;
-		memcpy(&pcr.newnat, n, sizeof(pcr.newnat));
-	}
-	if (pfctl_add_pool(pf, &n->rpool, n->af))
-		return (1);
-	if (Delete_Rules) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
-			err(1, "DIOCBEGINADDRS");
-	}
-	pcr.pool_ticket = pf->paddr.ticket;
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCCHANGENAT, &pcr))
-			syslog(LOG_INFO, "DIOCCHANGENAT %m");
-	}
-	return 0;
-}
-
-/*
- * callback for rdr add, used by parser in parse_rules
- */
-int
-pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
-{
-	struct pfioc_changerdr pcr;
-
-	memset(&pcr, 0, sizeof(pcr));
-	if (Delete_Rules) {
-		pcr.action = PF_CHANGE_REMOVE;
-		memcpy(&pcr.oldrdr, r, sizeof(pcr.oldrdr));
-	} else {
+		break;
+	case PF_RDR:
+	case PF_NORDR:
 		pcr.action = Rdr_Action;
-		memcpy(&pcr.newrdr, r, sizeof(pcr.newrdr));
+		break;
+	case PF_BINAT:
+	case PF_NOBINAT:
+		/* binat is not supported */
+		return (0);
+		break;
 	}
-	if (pfctl_add_pool(pf, &r->rpool, r->af))
-		return (1);
-	if (Delete_Rules) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
-			err(1, "DIOCBEGINADDRS");
-	}
-	pcr.pool_ticket = pf->paddr.ticket;
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCCHANGERDR, &pcr))
-			syslog(LOG_INFO, "DIOCCHANGERDR %m");
-	}
-	return 0;
-}
 
-/*
- * We don't support adding binat's, since pf doesn't,
- * and I can't for the life of me think of a sane situation where it
- * might be useful.  This is here only because the pfctl parse
- * routines need this defined.
- */
-int
-pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
-{
-	return (0);
+	if (Delete_Rules) {
+		pcr.rule.action = r->action;
+		if (ioctl(pf->dev, DIOCGETRULES, &pcr))
+			syslog(LOG_INFO, "DIOCGETRULES %m");
+		mnr = pcr.nr;
+		for (nr = 0; nr < mnr; ++nr) {
+			if (pcr.action == PF_CHANGE_ADD_HEAD)
+				pcr.nr = nr;
+			else
+				pcr.nr = (mnr - 1) - nr;
+			if (ioctl(dev, DIOCGETRULE, &pcr)) {
+				syslog(LOG_INFO, "DIOCGETRULE %m");
+				return (-1);
+			}
+			if (! pfctl_compare_rules(&pcr.rule, r)) {
+				match++;
+				break;
+			}
+		}
+		if (match && ((pf->opts & PF_OPT_NOACTION) == 0)) {
+			pcr.action = PF_CHANGE_REMOVE;
+			if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
+				syslog(LOG_INFO, "DIOCCHANGERULE %m");
+		}
+	} else {
+		memcpy(&pcr.rule, r, sizeof(pcr.rule));
+		if (pfctl_add_pool(pf, &r->rpool, r->af))
+			return (1);
+		pcr.pool_ticket = pf->paddr.ticket;
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
+				syslog(LOG_INFO, "DIOCCHANGERULE %m");
+		}
+	}
+
+	return 0;
 }
 
 int
