@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.18 2000/06/07 15:25:30 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.19 2000/07/08 16:09:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.18 2000/06/07 15:25:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.19 2000/07/08 16:09:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -543,6 +543,54 @@ c_execdir(argvp)
 	new->e_argv[cnt] = new->e_orig[cnt] = NULL;
 
 	*argvp = argv + 1;
+	return (new);
+}
+
+/*
+ * -flags functions --
+ *
+ *	The flags argument is used to represent file flags bits.
+ */
+int
+f_flags(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	u_int flags;
+
+	flags = entry->fts_statp->st_flags &
+	    (UF_NODUMP | UF_IMMUTABLE | UF_APPEND | UF_OPAQUE |
+	     SF_ARCHIVED | SF_IMMUTABLE | SF_APPEND);
+	if (plan->flags == F_ATLEAST)
+		/* note that plan->fl_flags always is a subset of
+		   plan->fl_mask */
+		return ((flags & plan->fl_mask) == plan->fl_flags);
+	else
+		return (flags == plan->fl_flags);
+	/* NOTREACHED */
+}
+
+PLAN *
+c_flags(flags_str)
+	char *flags_str;
+{
+	PLAN *new;
+	u_int flags, notflags;
+
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_FLAGS, f_flags);
+
+	if (*flags_str == '-') {
+		new->flags = F_ATLEAST;
+		++flags_str;
+	}
+
+	if (string_to_flags(&flags_str, &flags, &notflags) == 1)
+		errx(1, "-flags: %s: illegal flags string", flags_str);
+
+	new->fl_flags = flags;
+	new->fl_mask = flags | notflags;
 	return (new);
 }
  
@@ -1151,7 +1199,7 @@ c_perm(perm)
 	}
 
 	if ((set = setmode(perm)) == NULL)
-		err(1, "-perm: %s: illegal mode string", perm);
+		errx(1, "-perm: %s: illegal mode string", perm);
 
 	new->m_data = getmode(set, 0);
 	free(set);

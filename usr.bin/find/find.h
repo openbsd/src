@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.9 2000/06/07 15:25:30 deraadt Exp $*/
+/* *	$OpenBSD: find.h,v 1.10 2000/07/08 16:09:33 millert Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
-	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR,
-	N_EXPR, N_FOLLOW, N_FSTYPE, N_GROUP, N_INAME, N_INUM, N_LINKS, N_LS,
+	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
+	N_FLAGS, N_FOLLOW, N_FSTYPE, N_GROUP, N_INAME, N_INUM, N_LINKS, N_LS,
 	N_MMIN, N_MAXDEPTH,
 	N_MINDEPTH, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER,
 	N_OK, N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRUNE,
@@ -67,6 +67,10 @@ typedef struct _plandata {
 		gid_t _g_data;			/* gid */
 		ino_t _i_data;			/* inode */
 		mode_t _m_data;			/* mode mask */
+		struct {
+			u_int _f_flags;
+			u_int _f_mask;
+		} fl;
 		nlink_t _l_data;		/* link count */
 		off_t _o_data;			/* file size */
 		struct timespec _t_data;	/* time value */
@@ -87,6 +91,8 @@ typedef struct _plandata {
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
 #define	i_data		p_un._i_data
+#define fl_flags	p_un.fl._f_flags
+#define fl_mask		p_un.fl._f_mask
 #define	g_data		p_un._g_data
 #define	l_data		p_un._l_data
 #define	m_data		p_un._m_data
