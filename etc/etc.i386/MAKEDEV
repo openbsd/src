@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.56 1998/02/17 23:41:50 matthieu Exp $
+#	$OpenBSD: MAKEDEV,v 1.57 1998/03/24 19:00:27 marc Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -114,8 +114,8 @@ all)
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
 	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr
-	sh MAKEDEV fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0 
-	sh MAKEDEV fd1 fdB1 fdC1 fdD1 fdE1 fdF1 fdG1 fdH1 
+	sh MAKEDEV fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
+	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H 
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -201,8 +201,8 @@ rd*)
 	;;
 
 fd*)
-	umask 2 ; unit=`expr $i : 'fd.*\(.\)$'`
-	typnam=`expr $i : 'fd\(.\).*'`
+	umask 2 ; typnam=`expr $i : 'fd.*\(.\)$'`
+	unit=`expr $i : 'fd\(.\).*'`
 	case $typnam in
 	0|1)		typnam=; typnum=0;;	# no type specified, assume A
 	A)		typnam=; typnum=0;;
@@ -219,7 +219,7 @@ fd*)
 	0|1)	blk=2; chr=9;;
 	*)	echo bad unit $unit for $i; exit 1;;
 	esac
-	nam=fd${typnam}${unit}
+	nam=fd${unit}${typnam}
 	rm -f ${nam}? r${nam}?
 	basenum=`expr $unit '*' 128 + $typnum '*' 16`
 	mknod ${nam}a	b $blk `expr $basenum + 0`
