@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.1 2001/09/17 22:00:08 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.2 2001/09/21 03:49:40 jason Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -11,9 +11,8 @@ maxusers	2
 # force default minimum number of buffers and dependents
 option		NBUF=16
 
-# the size for MINIROOTSIZE must insure: 16384+size(bsd) < RELOC(boot,bootxx)
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=4352
+option		MINIROOTSIZE=8192
 
 #option		DDB		# need this to see what's happening
 
