@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.1 2001/09/01 15:55:17 drahn Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.2 2001/09/15 01:42:55 mickey Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -159,6 +159,7 @@ macobio_attach(parent, self, aux)
 	sc->sc_membus_space.bus_reverse = 1;
 
 	ca.ca_iot = &sc->sc_membus_space;
+	ca.ca_dmat = pa->pa_dmat;
 
 	printf("\n");
 

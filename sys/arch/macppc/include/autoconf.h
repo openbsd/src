@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2001/09/01 15:49:06 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 2001/09/15 01:42:55 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -86,6 +86,7 @@ struct confargs {
 	/* macobio hooks ?? */
 	bus_space_tag_t ca_iot;
 	bus_space_tag_t ca_memt; /* XXX */
+	bus_dma_tag_t ca_dmat;
 	u_int32_t ca_node;
 	int ca_nreg;
 	u_int32_t *ca_reg;
