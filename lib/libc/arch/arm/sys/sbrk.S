@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.3 2004/02/02 15:58:19 drahn Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -44,7 +44,11 @@ WEAK_ALIAS(sbrk, _sbrk)
 	.align	0
 	.globl	CURBRK
 	.type	CURBRK,#object
+	.globl	minbrk
+	.type	minbrk,#object
 CURBRK:
+	.word	_C_LABEL(end)
+_ASM_LABEL(minbrk):
 	.word	_C_LABEL(end)
 
 /*
