@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.23 1997/03/29 06:13:21 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.24 1997/04/02 08:24:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.23 1997/03/29 06:13:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.24 1997/04/02 08:24:48 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -78,12 +78,12 @@ struct _dom_binding {
 	unsigned short int dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
-	long int dom_vers;
+	long dom_vers;
 	time_t dom_check_t;
 	time_t dom_ask_t;
 	int dom_lockfd;
 	int dom_alive;
-	int dom_xid;
+	u_int32_t dom_xid;
 	char dom_servlist[MAXPATHLEN];
 	FILE *dom_servlistfp;
 };
@@ -119,8 +119,8 @@ u_long rmtcr_port;
 SVCXPRT *udptransp, *tcptransp;
 SVCXPRT *ludptransp, *ltcptransp;
 
-struct _dom_binding *xid2ypdb __P((int xid));
-int unique_xid __P((struct _dom_binding *ypdb));
+struct _dom_binding *xid2ypdb __P((u_int32_t xid));
+u_int32_t unique_xid __P((struct _dom_binding *ypdb));
 
 /*
  * We name the local RPC functions ypbindproc_XXX_2x() instead
@@ -1095,7 +1095,7 @@ int force;
 
 struct _dom_binding *
 xid2ypdb(xid)
-	int xid;
+	u_int32_t xid;
 {
 	struct _dom_binding *ypdb;
 
@@ -1105,11 +1105,11 @@ xid2ypdb(xid)
 	return (ypdb);
 }
 
-int
+u_int32_t
 unique_xid(ypdb)
 	struct _dom_binding *ypdb;
 {
-	int xid;
+	u_int32_t xid;
 
 	xid = arc4random();
 	while (xid2ypdb(xid) != NULL)
