@@ -1,3 +1,7 @@
+./usr/lib/libcrypto.so.1.0
+./usr/lib/libssl.so.1.0
+./usr/lib/libcrypto_pic.a
+./usr/lib/libssl_pic.a
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m68k

@@ -38,3 +38,7 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+./usr/lib/libcrypto.so.1.0
+./usr/lib/libssl.so.1.0
+./usr/lib/libcrypto_pic.a
+./usr/lib/libssl_pic.a
