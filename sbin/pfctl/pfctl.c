@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.177 2003/06/13 12:10:42 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.178 2003/06/29 12:22:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,7 +49,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -1508,8 +1507,6 @@ main(int argc, char *argv[])
 		case 'T':
 			pfctl_show_tables(anchorname, rulesetname, opts);
 			break;
-		default:
-			assert(0);
 		}
 	}
 
@@ -1541,8 +1538,6 @@ main(int argc, char *argv[])
 		case 'T':
 			pfctl_clear_tables(anchorname, rulesetname, opts);
 			break;
-		default:
-			assert(0);
 		}
 	}
 	if (state_killers)
@@ -1573,8 +1568,6 @@ main(int argc, char *argv[])
 		case 'm':
 			pfctl_debug(dev, PF_DEBUG_MISC, opts);
 			break;
-		default:
-			assert(0);
 		}
 	}
 

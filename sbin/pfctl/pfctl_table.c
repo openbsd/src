@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.44 2003/06/27 15:35:00 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.45 2003/06/29 12:22:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -38,7 +38,6 @@
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -309,7 +308,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		RVTEST(pfr_clr_tstats(&table, 1, &nzero, flags));
 		xprintf(opts, "%d table/stats cleared", nzero);
 	} else
-		assert(0);
+		warnx("pfctl_table: unknown command '%s'", command);
 	if (buffer.caddr)
 		free(buffer.caddr);
 	size = msize = 0;
@@ -319,7 +318,10 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 void
 grow_buffer(size_t bs, int minsize)
 {
-	assert(minsize == 0 || minsize > msize);
+	if (minsize != 0 && minsize <= msize) {
+		warnx("grow_buffer: superfluous call");
+		return;
+	}
 	if (!msize) {
 		msize = minsize;
 		if (msize < 64)
