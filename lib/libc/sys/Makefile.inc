@@ -133,6 +133,7 @@ MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2
 MLINKS+=chmod.2 fchmod.2
 MLINKS+=chown.2 fchown.2
+MLINKS+=chown.2 lchown.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
