@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.298 2003/05/07 00:43:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.299 2003/05/11 17:27:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1074,12 +1074,13 @@ install_mounted_fs() {
 		done)	return
 			;;
 		"")	;;
-		*)	if [[ -d $_mp/$resp ]]; then
-				_dir=$_mp/$resp
-				break
-			else
-				echo "The directory '$resp' does not exist."
-			fi
+		*)
+			# Accept a valid $_mp relative path.
+			[[ -d $_mp/$resp ]] && { _dir=$_mp/$resp ; break ; }
+			# Accept a valid absolute path.
+			[[ -d /$resp ]] && { _dir=/$resp ; break ; }
+			# Otherwise ask again, with original default dir.
+			echo "The directory '$resp' does not exist."
 			;;
 		esac
 	done
