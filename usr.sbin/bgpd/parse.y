@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2004/05/08 18:04:14 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.106 2004/05/08 19:09:34 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,7 @@ int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers *,
 		    struct filter_match *, struct filter_set *);
 int		 str2key(char *, char *, size_t);
+int		 neighbor_consistent(struct peer *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -388,14 +389,8 @@ neighbor	: {	curpeer = new_peer(); }
 			}
 		}
 		    peeropts_h {
-			if (curpeer->conf.local_addr.af &&
-			    curpeer->conf.local_addr.af !=
-			    curpeer->conf.remote_addr.af) {
-				yyerror("local-address and neighbor address "
-				    "must be of the same address family");
+			if (neighbor_consistent(curpeer) == -1)
 				YYERROR;
-			}
-
 			curpeer->next = peer_l;
 			peer_l = curpeer;
 			curpeer = curgroup;
@@ -1580,6 +1575,29 @@ str2key(char *s, char *dest, size_t max_len)
 			return (-1);
 		}
 		dest[i] = strtoul(t, NULL, 16);
+	}
+
+	return (0);
+}
+
+int
+neighbor_consistent(struct peer *p)
+{
+	if (p->conf.local_addr.af &&
+	    p->conf.local_addr.af != p->conf.remote_addr.af) {
+		yyerror("local-address and neighbor address "
+		    "must be of the same address family");
+		return (-1);
+	}
+
+	if ((p->conf.auth.method == AUTH_IPSEC_IKE_ESP ||
+	    p->conf.auth.method == AUTH_IPSEC_IKE_AH ||
+	    p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
+	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
+	    !p->conf.local_addr.af) {
+		yyerror("neighbors with any form of IPsec configured "
+		    "need local-address to be specified");
+		return (-1);
 	}
 
 	return (0);
