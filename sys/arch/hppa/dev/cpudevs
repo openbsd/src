@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.21 2002/12/18 21:34:40 mickey Exp $
+$OpenBSD: cpudevs,v 1.22 2002/12/23 21:54:53 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -244,8 +244,16 @@ board	HP800_A5005X	0x5d5	800/A500-5X (Crescendo 550)
 #board			0x5da	(Marcato W+ DC-)
 board	HP800_L30005X	0x5db	800/L3000-5x (Marcato W+)
 board	HP785_B2600	0x5de	785/B2600 (Piccolo W+)
-board	HP80_A400	0x5e1	800/A400 (Crescendo 400)
+#board	HP		0x5df	(Cantata W2)
+#board	HP		0x5e0	(Cantata DC- W2)
+board	HP80_A400	0x5e1	800/A400 (Crescendo DC- W2)
+#board	HP		0x5e2	(Crescendo 650 W2)
+#board	HP		0x5e3	(Crescendo 750 W2)
+#board	HP		0x5e4	(Keystone/Matterhorn W2 750)
+#board	HP		0x5e5	(PowerBar W+)
+#board	HP		0x5e6	(Keystone/Matterhorn W2 650)
 #board			0x5e7	(Caribe W2 800)
+#board			0x5e8	(Pikes Peak W2)
 
 board	HITACHIW	0x5ff	(Hitachi W)
 
@@ -269,8 +277,8 @@ board	HP715_120L	0x611	715/120L (Scorpio-L)
 board	HP725_80L	0x612	725/80L (Spectra-L)
 board	HP725_100L	0x613	725/100L (Spectra-L)
 board	HP725_120L	0x614	725/120L (Spectra-L)
-#board	HP		0x615	/100 (Piranha)
-#board	HP		0x616	/120 (Piranha)
+#board	HP		0x615	/100 (Piranha 100)
+#board	HP		0x616	/120 (Piranha 120)
 board	HP743_50	0x617	743/50 (Jason)
 board	HP743_100	0x618	743/100 (Jason)
 board	HP715_80M	0x619	715/80 (Mirage)
@@ -331,11 +339,16 @@ nproc	HPPA	4	PA-RISC
 memory	ARCH	0x008	architected memory module
 memory	PDEP	0x009	pdep memory module
 
-bdma	PARALLEL 0x018	Parallel I/O
-bdma	PRDB	0x019	Parallel RDB
-bdma	MIDBUSPSI 0x020	MID_BUS PSI
-bdma	HPPBTPSI 0x02f	HP-PB Transit PSI
-bdma	EXERCISER 0x094	GSC+ Exerciser
+bdma	PARALLEL	0x018	Parallel I/O
+bdma	PRDB		0x019	Parallel RDB
+bdma	MIDBUSPSI	0x020	MID_BUS PSI
+bdma	HPPBTPSI	0x02f	HP-PB Transit PSI
+bdma	HPPBT8023	0x051	HP-PB Transit 802.3
+bdma	HPPBLANCON	0x052	Miura LAN/Console (J2146A)
+bdma	HPPB8024	0x058	HP-PB Transit 802.4
+bdma	LANCONS		0x060	LAN/Console
+bdma	EXERCISER	0x094	GSC+ Exerciser
+bdma	HPPBHFI		0x100	HP-PB HF Interface
 
 #bdirect
 
@@ -354,13 +367,19 @@ adma	NIMBCL	0x04b	Nimbus Control
 adma	MRTI	0x04c	Martian RTI
 adma	ACCMUX	0x04d	ACC Mux
 adma	L8023	0x050	Lanbrusca 802.3
+adma	LQFDDI	0x056	HP-PB LoQuix FDDI
+adma	LQFDDI1	0x057	HP-PB LoQuix FDDI (28670A)
 adma	GTR	0x05e	TI TokenRing
 adma	FWSCSI	0x089	FW SCSI
 adma	NETFC	0x091	Net FC
 adma	YATM	0x092	GSC+ YLIASTER ATM
 adma	MYRI	0x095	Hamlyn GSC+ Network Card
+adma	LFEMU	0x098	Lo-fat Emulator
 adma	VATM	0x09a	GSC+ Venus ATM
 adma	HSCPCI	0x09d	HP HSC-PCI Cards
+adma	ATMGSC	0x09e	Alaxis GSC+ ATM
+adma	SHUSB	0x09f	SummitHawk 230 USB
+adma	SHFETH	0x0a0	SummitHawk 230 100BaseT
 adma	MASSFC	0x0a7	Add-on mass FC
 adma	IPFC	0x380	Interphase NIO-FC
 adma	IPATM	0x381	Interphase NIO-ATM
@@ -376,6 +395,10 @@ adirect	HRM	0x016	HP-PB HRM
 adirect	HRC	0x017	HP-PB HRC
 adirect	LPT	0x03a	Centronics interface
 adirect	ATTDK	0x04e	AT&T DataKit
+adirect	HPIB	0x09b	Test&Meas GSC HPIB
+adirect	ROCKYKBD 0x0a8	Rocky2 Front Keyboard
+adirect	HICONS	0x101	Hitachi Console Module
+adirect	HIBOOT	0x102	Hitachi Boot Module
 
 other	MIDBVM	0x030	MID_BUS Verification Master
 other	MIDBVS	0x034	MID_BUS Verification Slave
@@ -412,10 +435,15 @@ fio	BOOTROM	0x08f	BOOT ROM
 fio	DINOPCK	0x096	Dino PC Keyboard
 fio	EISALAN	0x097	Cascade EISA 100VG lan
 fio	WHPIB	0x099	Wax/Clark/Dino HPIB
+fio	SPPCON	0x0a1	SPP2000 Console TTY
 fio	PCILAN	0x0a2	PCI Plug-In LAN
 fio	PCIDSK	0x0a3	PCI Plug-In Disk
+fio	SPPCORE	0x0a4	SPP2000 Core BA
 fio	SONICET	0x0a6	Sonic Ethernet
 fio	PCIMISC	0x0a9	Misc PCI Plug-in
+fio	METHEUS	0x320	Metheus Frame Buffer
+fio	BARCO	0x340	BARCO CX4500 VME Graphics Console
+fio	HUGHES	0x360	Hughes TOG VME FDDI
 
 # Gecko section
 fio	GSCSI	0x082	Core SCSI
