@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2001/09/19 20:50:57 mickey Exp $     */
+/*	$OpenBSD: trap.c,v 1.17 2001/11/06 02:49:23 art Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -39,9 +39,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 2001/11/06 02:49:23 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -77,9 +77,6 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
-
-#include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 
