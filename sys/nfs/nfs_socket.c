@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.33 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.34 2003/07/10 22:53:19 tedu Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -597,10 +597,12 @@ errout:
 				    error,
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			error = nfs_sndlock(&rep->r_nmp->nm_flag, rep);
-			if (!error)
+			if (!error) {
 				error = nfs_reconnect(rep);
-			if (!error)
-				goto tryagain;
+				if (!error)
+					goto tryagain;
+				nfs_sndunlock(&rep->r_nmp->nm_flag);
+			}
 		}
 	} else {
 		if ((so = rep->r_nmp->nm_so) == NULL)
