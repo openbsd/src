@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 1997/07/25 21:05:36 mickey Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 1998/06/03 17:00:04 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.7 1997/07/25 21:05:36 mickey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.8 1998/06/03 17:00:04 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -341,6 +341,7 @@ signal(s, a)) ()
 {
     struct sigaction sa, osa;
 
+    memset(&sa, 0, sizeof sa);
     sa.sa_handler = a;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tstp.c,v 1.6 1998/01/17 16:27:37 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.7 1998/06/03 17:00:07 deraadt Exp $	*/
 
 
 /***************************************************************************
@@ -125,6 +125,7 @@ static void tstp(int dummy GCC_UNUSED)
 	(void)sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 	/* Now we want to resend SIGSTP to this process and suspend it */
+	memset(&act, 0, sizeof act);
 	act.sa_handler = SIG_DFL;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
@@ -168,6 +169,8 @@ static void cleanup(int sig)
 	 || sig == SIGQUIT) {
 #if HAVE_SIGACTION || HAVE_SIGVEC
 		sigaction_t act;
+
+		memset(&act, 0, sizeof act);
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = 0;
 		act.sa_handler = SIG_IGN;
@@ -258,6 +261,8 @@ void _nc_signal_handler(bool enable)
 static sigaction_t act, oact;
 static int ignore;
 
+	memset(&act, 0, sizeof act);
+
 	if (!ignore)
 	{
 		if (!enable)
@@ -295,6 +300,8 @@ static int ignore;
 	{
 #if HAVE_SIGACTION || HAVE_SIGVEC
 		static sigaction_t act;
+
+		memset(&act, 0, sizeof act);
 		sigemptyset(&act.sa_mask);
 #if USE_SIGWINCH
 		act.sa_handler = sigwinch;

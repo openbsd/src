@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.4 1998/06/03 08:04:01 deraadt Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.5 1998/06/03 17:00:09 deraadt Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -158,6 +158,7 @@ main(argc, argv)
 	 * Make sure the framebuffer gets turned back on when we're
 	 * killed.
 	 */
+	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = sighandler;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_NOCLDSTOP;
