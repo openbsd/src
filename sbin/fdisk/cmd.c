@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.38 2005/01/19 15:48:20 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.39 2005/03/29 19:35:25 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -388,29 +388,38 @@ Xupdate(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 int
 Xflag(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 {
-	int i, pn = -1;
+	int i, pn = -1, val = -1;
+	char *p;
 
 	/* Parse partition table entry number */
 	if (!isdigit(cmd->args[0])) {
-		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
+		printf("Invalid argument: %s <partition number> [value]\n",
+		    cmd->cmd);
 		return (CMD_CONT);
 	}
 	pn = atoi(cmd->args);
+	p = strchr(cmd->args, ' ');
+	if (p != NULL)
+		val = strtol(p + 1, NULL, 0) & 0xff;
 
 	if (pn < 0 || pn > 3) {
 		printf("Invalid partition number.\n");
 		return (CMD_CONT);
 	}
 
-	/* Set active flag */
-	for (i = 0; i < 4; i++) {
-		if (i == pn)
-			mbr->part[i].flag = DOSACTIVE;
-		else
-			mbr->part[i].flag = 0x00;
+	if (val == -1) {
+		/* Set active flag */
+		for (i = 0; i < 4; i++) {
+			if (i == pn)
+				mbr->part[i].flag = DOSACTIVE;
+			else
+				mbr->part[i].flag = 0x00;
+		}
+		printf("Partition %d marked active.\n", pn);
+	} else {
+		mbr->part[pn].flag = val;
+		printf("Partition %d flag value set to 0x%x.\n", pn, val);
 	}
-
-	printf("Partition %d marked active.\n", pn);
 	return (CMD_DIRTY);
 }
 

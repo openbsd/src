@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.44 2005/01/19 15:48:20 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.45 2005/03/29 19:35:25 otto Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -229,6 +229,8 @@ Only one entry can be marked bootable.
 If you wish to boot from an extended
 partition, you will need to mark the partition table entry for the
 extended partition as bootable.
+If an optional value is given, the partition is marked with the given
+value, and other partitions are not touched.
 .It Em update
 Update the machine code and 0xAA55 signature in the memory copy
 of the currently selected boot block.
