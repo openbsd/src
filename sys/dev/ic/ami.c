@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.3 2001/03/14 23:42:33 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.4 2001/03/15 00:43:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -944,6 +944,7 @@ ami_scsi_cmd(xs)
 		AMI_DPRINTF(AMI_D_CMD, ("PREVENT/ALLOW "));
 		return (COMPLETE);
 
+	case SYNCHRONIZE_CACHE:
 	case READ_COMMAND:
 	case READ_BIG:
 	case WRITE_COMMAND:
