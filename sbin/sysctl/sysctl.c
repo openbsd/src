@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.44 1999/12/30 19:06:06 provos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.45 2000/01/07 21:34:58 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.44 1999/12/30 19:06:06 provos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.45 2000/01/07 21:34:58 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.44 1999/12/30 19:06:06 provos Exp $
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/ip_gre.h>
 
 #ifdef INET6
 #include <netinet6/ip6.h>
@@ -947,6 +948,8 @@ struct ctlname udpname[] = UDPCTL_NAMES;
 struct ctlname espname[] = ESPCTL_NAMES;
 struct ctlname ahname[] = AHCTL_NAMES;
 struct ctlname etheripname[] = ETHERIPCTL_NAMES;
+struct ctlname grename[] = GRECTL_NAMES;
+struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
@@ -996,7 +999,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 0, 0 },
+	{ grename, GRECTL_MAXID }, /* GRE */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ espname, ESPCTL_MAXID },	/* esp */
@@ -1004,7 +1007,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 0, 0 },
+	{ mobileipname, MOBILEIPCTL_MAXID }, /* mobileip */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
