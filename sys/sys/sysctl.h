@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.53 2002/06/09 04:26:40 angelos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.54 2002/06/09 05:46:15 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <sys/ucred.h>
 #include <sys/proc.h>
 #endif
+
+#include <sys/resourcevar.h>	/* XXX */
 
 #include <uvm/uvm_extern.h>
 
@@ -276,6 +278,8 @@ struct kinfo_proc {
 		struct	pcred e_pcred;		/* process credentials */
 		struct	ucred e_ucred;		/* current credentials */
 		struct	vmspace e_vm;		/* address space */
+		struct  pstats e_pstats;	/* process stats */
+		int	e_pstats_valid;		/* pstats valid? */
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
 		short	e_jobc;			/* job control counter */

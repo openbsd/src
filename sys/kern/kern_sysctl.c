@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.69 2002/06/09 04:27:25 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.70 2002/06/09 05:46:15 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -960,11 +960,9 @@ again:
  * Fill in an eproc structure for the specified process.
  */
 void
-fill_eproc(p, ep)
-	register struct proc *p;
-	register struct eproc *ep;
+fill_eproc(struct proc *p, struct eproc *ep)
 {
-	register struct tty *tp;
+	struct tty *tp;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_pgrp->pg_session;
@@ -975,13 +973,19 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_tsize = 0;
 		ep->e_vm.vm_dsize = 0;
 		ep->e_vm.vm_ssize = 0;
+		bzero(&ep->e_pstats, sizeof(ep->e_pstats));
+		ep->e_pstats_valid = 0;
 	} else {
-		register struct vmspace *vm = p->p_vmspace;
+		struct vmspace *vm = p->p_vmspace;
 
+		PHOLD(p);	/* need for pstats */
 		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
+		ep->e_pstats = *p->p_stats;
+		ep->e_pstats_valid = 1;
+		PRELE(p);
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
