@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.14 2003/11/03 05:34:44 david Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.15 2004/01/05 09:53:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -315,7 +315,7 @@ struct bpa {
 /*
  * All I/O and Memory modules have 4K-bytes of HPA space associated with
  * it (described above), however not all modules implement every register.
- * The first 2K-bytes of registers are "priviliged".
+ * The first 2K-bytes of registers are "privileged".
  *
  * (WO) == Write Only, (RO) == Read Only
  */

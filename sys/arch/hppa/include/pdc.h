@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.27 2003/10/31 18:46:04 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.28 2004/01/05 09:53:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -432,7 +432,7 @@ struct pdc_iodc_minit {	/* PDC_IODC, PDC_IODC_NINIT or PDC_IODC_DINIT */
 	u_int	stat;		/* HPA.io_status style error returns */
 	u_int	max_spa;	/* size of SPA (in bytes) > max_mem+map_mem */
 	u_int	max_mem;	/* size of "implemented" memory (in bytes) */
-	u_int	map_mem;	/* size of "mapable-only" memory (in bytes) */
+	u_int	map_mem;	/* size of "mappable-only" memory (in bytes) */
 	u_int	filler[28];
 };
 
