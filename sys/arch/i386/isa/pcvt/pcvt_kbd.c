@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.9 1996/09/06 08:40:49 mickey Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.10 1997/05/30 01:43:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -719,6 +719,9 @@ xlatkey2ascii(U_short key)
 #endif
 	static Ovl_tbl	thisdef;
 	int		n;
+
+    static u_char altgr_shft_key[KBDMAXOVLKEYSIZE];
+	
 	void		(*fnc)(void);
 
 	if(key==0)			/* ignore the NON-KEY */
@@ -754,7 +757,14 @@ xlatkey2ascii(U_short key)
 
 			if(altgr_down)
 			{
-				more_chars = (u_char *)thisdef.altgr;
+                if(shift_down) /* XXX this is hack to support simple
+                				AltGr + Shift remapping. This should work
+                				for KOI-8 keymap style */
+                {
+                	altgr_shft_key[0] = *(u_char*)thisdef.altgr+040;
+                	more_chars = (u_char*)altgr_shft_key;
+                }
+                else more_chars = (u_char *)thisdef.altgr;
 			}
 			else if(!ctrl_down && (shift_down || vsp->shift_lock))
 			{

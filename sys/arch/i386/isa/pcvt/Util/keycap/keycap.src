@@ -620,4 +620,17 @@ tg:\
 us|usa|United States mapping:\
 	:de:
 
+# Simple Cyrillic KOI8-R keymap
+# Left Alt is AltGr
+# caps letters can't be printed ( yet )
+# contributed by Roman V. Palagin <romanp@mutant.mybody.ryazan.ru>
+koi8:koi8-r:ru-koi8:ru:dummy cyrillic keymap:\
+	:l1#62:\
+	:A17=\312:A18=\303:A19=\325:A20=\313:A21=\305:A22=\316:\
+	:A23=\307:A24=\333:A25=\335:A26=\332:A27=\310:A28=\337:\
+	:A31=\306:A32=\331:A33=\327:A34=\301:A35=\320:A36=\322:\
+	:A37=\317:A38=\314:A39=\304:A40=\326:A41=\334:\
+	:A45=\302:A46=\321:A47=\336:A48=\323:A49=\315:A50=\311:\
+	:A51=\324:A52=\330:A53=\302:A54=\300:A55=\243:
+
 # EOF

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.4 1996/05/07 13:07:06 mickey Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.5 1997/05/30 01:43:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -950,6 +950,12 @@ vt_designate(struct video_state *svsp)
 #endif
 				break;
 
+   			case 'X': /* KOI8 hack */
+#ifdef HAVECSE_KOI8
+				ctp = cse_koi8;
+#endif			
+				break;
+
 			case 'Y': /* Italian */
 #ifdef HAVECSE_ITALIAN
 				ctp = cse_italian;
@@ -1083,6 +1089,12 @@ vt_designate(struct video_state *svsp)
 #ifdef HAVECSD_FRENCH
 				ctp = csd_french;
 #endif
+				break;
+
+   			case 'X': /* KOI8 hack */
+#ifdef HAVECSD_KOI8
+				ctp = csd_koi8;
+#endif			
 				break;
 
 			case 'Y': /* Italian */

@@ -62,6 +62,7 @@
  *		HAVECS_SWISS
  *		HAVECS_TECHNICAL
  *		HAVECS_ISOLATIN
+ *		HAVECS_KOI8
  *
  *	to add support for a new charcterset, you have to provide the
  *	table named "cs_<charset>",define the according "HAVECS_<CHARSET>"
@@ -253,9 +254,83 @@ u_short csd_isolatin[CSSIZE] = {
 /* 7C */	0x81 | CSL, 0x20 | CSL, 0x20 | CSL, 0x98 | CSL
 };
 
+/*---------------------------------------------------------------------------*
+ *	KOI8-R Characterset
+ *---------------------------------------------------------------------------*/
+
+#define HAVECSD_KOI8 
+u_short csd_koi8[CSSIZE] = {
+/* 20 */	0xA0 | CSL, 0xA1 | CSL, 0xA2 | CSL, 0xA3 | CSL,
+/* 24 */	0xA4 | CSL, 0xA5 | CSL, 0xA6 | CSL, 0xA7 | CSL,
+/* 28 */	0xA8 | CSL, 0xA9 | CSL, 0xAA | CSL, 0xAB | CSL,
+/* 2C */	0xAC | CSL, 0xAD | CSL, 0xAE | CSL, 0xAF | CSL,
+
+/* 30 */	0xB0 | CSL, 0xB1 | CSL, 0xB2 | CSL, 0xB3 | CSL,
+/* 34 */	0xB4 | CSL, 0xB5 | CSL, 0xB6 | CSL, 0xB7 | CSL,
+/* 38 */	0xB8 | CSL, 0xB9 | CSL, 0xBA | CSL, 0xBB | CSL,
+/* 3C */	0xBC | CSL, 0xBD | CSL, 0xBE | CSL, 0xBF | CSL,
+
+/* 40 */	0xC0 | CSL, 0xC1 | CSL, 0xC2 | CSL, 0xC3 | CSL,
+/* 44 */	0xC4 | CSL, 0xC5 | CSL, 0xC6 | CSL, 0xC7 | CSL,
+/* 48 */	0xC8 | CSL, 0xC9 | CSL, 0xCA | CSL, 0xCB | CSL,
+/* 4C */	0xCC | CSL, 0xCD | CSL, 0xCE | CSL, 0xCF | CSL,
+
+/* 50 */	0xD0 | CSL, 0xD1 | CSL, 0xD2 | CSL, 0xD3 | CSL,
+/* 54 */	0xD4 | CSL, 0xD5 | CSL, 0xD6 | CSL, 0xD7 | CSL,
+/* 58 */	0xD8 | CSL, 0xD9 | CSL, 0xDA | CSL, 0xDB | CSL,
+/* 5C */	0xDC | CSL, 0xDD | CSL, 0xDE | CSL, 0xDF | CSL,
+
+/* 60 */	0xE0 | CSL, 0xE1 | CSL, 0xE2 | CSL, 0xE3 | CSL,
+/* 64 */	0xE4 | CSL, 0xE5 | CSL, 0xE6 | CSL, 0xE7 | CSL,
+/* 68 */	0xE8 | CSL, 0xE9 | CSL, 0xEA | CSL, 0xEB | CSL,
+/* 6C */	0xEC | CSL, 0xED | CSL, 0xEE | CSL, 0xEF | CSL,
+
+/* 70 */	0xF0 | CSL, 0xF1 | CSL, 0xF2 | CSL, 0xF3 | CSL,
+/* 74 */	0xF4 | CSL, 0xF5 | CSL, 0xF6 | CSL, 0xF7 | CSL,
+/* 78 */	0xF8 | CSL, 0xF9 | CSL, 0xFA | CSL, 0xFB | CSL,
+/* 7C */	0xFC | CSL, 0xFD | CSL, 0xFE | CSL, 0xFF | CSL
+};
+
 /*===========================================================================*
  *	EXTENDED TABLES FOR EGA/VGA
  *===========================================================================*/
+
+/*---------------------------------------------------------------------------*
+ *	KOI8-R Characterset
+ *---------------------------------------------------------------------------*/
+
+#define HAVECSE_KOI8
+u_short cse_koi8[CSSIZE] = {
+/* 20 */	0xA0 | CSH, 0xA1 | CSH, 0xA2 | CSH, 0xA3 | CSH,
+/* 24 */	0xA4 | CSH, 0xA5 | CSH, 0xA6 | CSH, 0xA7 | CSH,
+/* 28 */	0xA8 | CSH, 0xA9 | CSH, 0xAA | CSH, 0xAB | CSH,
+/* 2C */	0xAC | CSH, 0xAD | CSH, 0xAE | CSH, 0xAF | CSH,
+
+/* 30 */	0xB0 | CSH, 0xB1 | CSH, 0xB2 | CSH, 0xB3 | CSH,
+/* 34 */	0xB4 | CSH, 0xB5 | CSH, 0xB6 | CSH, 0xB7 | CSH,
+/* 38 */	0xB8 | CSH, 0xB9 | CSH, 0xBA | CSH, 0xBB | CSH,
+/* 3C */	0xBC | CSH, 0xBD | CSH, 0xBE | CSH, 0xBF | CSH,
+
+/* 40 */	0xC0 | CSH, 0xC1 | CSH, 0xC2 | CSH, 0xC3 | CSH,
+/* 44 */	0xC4 | CSH, 0xC5 | CSH, 0xC6 | CSH, 0xC7 | CSH,
+/* 48 */	0xC8 | CSH, 0xC9 | CSH, 0xCA | CSH, 0xCB | CSH,
+/* 4C */	0xCC | CSH, 0xCD | CSH, 0xCE | CSH, 0xCF | CSH,
+
+/* 50 */	0xD0 | CSH, 0xD1 | CSH, 0xD2 | CSH, 0xD3 | CSH,
+/* 54 */	0xD4 | CSH, 0xD5 | CSH, 0xD6 | CSH, 0xD7 | CSH,
+/* 58 */	0xD8 | CSH, 0xD9 | CSH, 0xDA | CSH, 0xDB | CSH,
+/* 5C */	0xDC | CSH, 0xDD | CSH, 0xDE | CSH, 0xDF | CSH,
+
+/* 60 */	0xE0 | CSH, 0xE1 | CSH, 0xE2 | CSH, 0xE3 | CSH,
+/* 64 */	0xE4 | CSH, 0xE5 | CSH, 0xE6 | CSH, 0xE7 | CSH,
+/* 68 */	0xE8 | CSH, 0xE9 | CSH, 0xEA | CSH, 0xEB | CSH,
+/* 6C */	0xEC | CSH, 0xED | CSH, 0xEE | CSH, 0xEF | CSH,
+
+/* 70 */	0xF0 | CSH, 0xF1 | CSH, 0xF2 | CSH, 0xF3 | CSH,
+/* 74 */	0xF4 | CSH, 0xF5 | CSH, 0xF6 | CSH, 0xF7 | CSH,
+/* 78 */	0xF8 | CSH, 0xF9 | CSH, 0xFA | CSH, 0xFB | CSH,
+/* 7C */	0xFC | CSH, 0xFD | CSH, 0xFE | CSH, 0xFF | CSH
+};
 
 /*---------------------------------------------------------------------------*
  *	ASCII Characterset
@@ -470,7 +545,6 @@ u_short cse_downloadable[CSSIZE] = {
 /* 70 */	0xF0 | CSH, 0xF1 | CSH, 0xF2 | CSH, 0xF3 | CSH,
 /* 74 */	0xF4 | CSH, 0xF5 | CSH, 0xF6 | CSH, 0xF7 | CSH,
 /* 78 */	0xF8 | CSH, 0xF9 | CSH, 0xFA | CSH, 0xFB | CSH,
-/* 7C */	0xFC | CSH, 0xFD | CSH, 0xFE | CSH, 0xFF | CSH,
+/* 7C */	0xFC | CSH, 0xFD | CSH, 0xFE | CSH, 0xFF | CSH
 };
-
 /* ------------------------- E O F ------------------------------------------*/
