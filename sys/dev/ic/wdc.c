@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.78 2003/11/17 21:50:13 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.79 2003/11/17 22:44:55 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -537,7 +537,7 @@ wdc_ata_present(chp, drive)
 	wdc_set_drive(chp, drive);
 	delay(10);
 
- retry:
+retry:
 	/*
 	   You're actually supposed to wait up to 10 seconds
 	   for DRDY. However, as a practical matter, most
@@ -882,7 +882,7 @@ wdcattach(chp)
 	wdc_delref(chp);
 #endif
 
- exit:
+exit:
 #ifdef WDCDEBUG
 	wdcdebug_mask = savedmask;
 #endif
@@ -1145,8 +1145,8 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
 		if (++time > timeout) {
-			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
-			    "error %x\n", status,
+			WDCDEBUG_PRINT(("wdcwait: timeout, status 0x%x "
+			    "error 0x%x\n", status,
 			    CHP_READ_REG(chp, wdr_error)),
 			    DEBUG_STATUSX | DEBUG_STATUS);
 			return -1;
@@ -1344,6 +1344,12 @@ wdc_probe_caps(drvp, params)
 	if (valid_mode_found)
 		drvp->PIO_mode = drvp->PIO_cap;
 
+	WDCDEBUG_PRINT(("%s: atap_extensions=0x%x, atap_piomode_supp=0x%x, "
+	    "atap_dmamode_supp=0x%x, atap_udmamode_supp=0x%x\n",
+	    __func__, params->atap_extensions, params->atap_piomode_supp,
+	    params->atap_dmamode_supp, params->atap_udmamode_supp),
+	    DEBUG_PROBE);
+
 	/*
 	 * It's not in the specs, but it seems that some drive
 	 * returns 0xffff in atap_extensions when this field is invalid
@@ -1375,7 +1381,7 @@ wdc_probe_caps(drvp, params)
 			 * assume the BIOS set it up correctly
 			 */
 			if (ata_set_mode(drvp, 0x08 | (i + 3),
-				at_poll) != CMD_OK)
+			    at_poll) != CMD_OK)
 				continue;
 
 			/*
@@ -1759,7 +1765,8 @@ __wdccommand_start(chp, xfer)
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
 
 	if ((wdc_c->flags & AT_WRITE) == AT_WRITE) {
-		delay(10);
+		/* wait at least 400ns before reading status register */
+		DELAY(10);
 		if (wait_for_unbusy(chp, wdc_c->timeout) != 0)
 			goto timeout;
 
@@ -1789,10 +1796,9 @@ __wdccommand_start(chp, xfer)
 	__wdccommand_intr(chp, xfer, 0);
 	return;
 
- timeout:
+timeout:	
 	wdc_c->flags |= AT_TIMEOU;
 	__wdccommand_done(chp, xfer);
-	return;
 }
 
 int
@@ -1848,8 +1854,8 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
-	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
-								== 0) {
+	if ((wdc_c->flags & AT_READREG) != 0 &&
+	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		wdc_c->r_head = CHP_READ_REG(chp, wdr_sdh);
 		wdc_c->r_cyl = CHP_READ_REG(chp, wdr_cyl_hi) << 8;
 		wdc_c->r_cyl |= CHP_READ_REG(chp, wdr_cyl_lo);
@@ -1875,7 +1881,6 @@ __wdccommand_done(chp, xfer)
 			wdc_c->callback(wdc_c->callback_arg);
 	wdcstart(chp);
 	WDCDEBUG_PRINT(("__wdccommand_done returned\n"), DEBUG_INTR);
-	return;
 }
 
 /*
@@ -2366,6 +2371,6 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 		goto exit;
 	}
 
- exit:
+exit:
 	return (error);
 }

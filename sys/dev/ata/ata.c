@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.22 2003/11/17 21:50:14 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.23 2003/11/17 22:44:55 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -89,6 +89,8 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
@@ -96,7 +98,8 @@ ata_get_params(drvp, flags, prms)
 	wdc_c.bcount = ATAPARAMS_SIZE;
 
 	if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
-		printf ("WDC_EXEC_COMMAND: %d\n", ret);
+		WDCDEBUG_PRINT(("%s: wdc_exec_command failed: %d\n",
+		    __func__, ret), DEBUG_PROBE);
 		return CMD_AGAIN;
 	}
 
@@ -160,7 +163,9 @@ ata_set_mode(drvp, mode, flags)
 {
 	struct wdc_command wdc_c;
 
-	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("%s: mode=0x%x, flags=0x%x\n", __func__,
+	    mode, flags), DEBUG_PROBE);
+
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	wdc_c.r_command = SET_FEATURES;
@@ -172,6 +177,10 @@ ata_set_mode(drvp, mode, flags)
 	wdc_c.timeout = 1000; /* 1s */
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
 		return CMD_AGAIN;
+
+	WDCDEBUG_PRINT(("%s: after wdc_exec_command() wdc_c.flags=0x%x\n",
+	    __func__, wdc_c.flags), DEBUG_PROBE);
+
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
 	}
