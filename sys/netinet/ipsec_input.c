@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.38 2001/05/20 08:33:33 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.39 2001/05/27 03:37:23 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -452,7 +452,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
      * Record what we've done to the packet (under what SA it was
      * processed).
      */
-    mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
+    mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE, sizeof(struct tdb_ident),
 		     M_NOWAIT);
     if (mtag == NULL)
     {
