@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.2 2001/03/28 06:15:36 fgsch Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.3 2001/03/28 07:13:43 fgsch Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -475,7 +475,7 @@ struct bktr_i2c_softc {
  * memory mapped structure method only works on 32 bit processors
  * with the right type of endianness.
  */
-#if defined(__NetBSD__) || ( defined(__FreeBSD__) && (__FreeBSD_version >=300000) )
+#if defined(__NetBSD__) || defined(__OpenBSD__) || ( defined(__FreeBSD__) && (__FreeBSD_version >=300000) )
 #define INB(bktr,offset)	bus_space_read_1((bktr)->memt,(bktr)->memh,(offset))
 #define INW(bktr,offset)	bus_space_read_2((bktr)->memt,(bktr)->memh,(offset))
 #define INL(bktr,offset)	bus_space_read_4((bktr)->memt,(bktr)->memh,(offset))
