@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.20 2004/01/04 00:29:14 pvalchev Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.21 2004/01/21 06:15:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.20 2004/01/04 00:29:14 pvalchev Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.21 2004/01/21 06:15:18 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -92,6 +92,13 @@ void
 pfsync_ip_print(const u_char *bp, u_int len, const u_char *bp2)
 {
 	struct pfsync_header *hdr = (struct pfsync_header *)bp;
+	struct ip *ip = (struct ip *)bp2;
+
+	if (vflag)
+		printf("%s > %s: ", ipaddr_string(&ip->ip_src),
+	 	   ipaddr_string(&ip->ip_dst));
+	else
+		printf("%s: ", ipaddr_string(&ip->ip_src));
 
 	if (len < PFSYNC_HDRLEN)
 		printf("[|pfsync]");
@@ -121,6 +128,8 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	flags = 0;
 	if (vflag)
 		flags |= PF_OPT_VERBOSE;
+	if (vflag > 1)
+		flags |= PF_OPT_VERBOSE2;
 	if (!nflag)
 		flags |= PF_OPT_USEDNS;
 
@@ -160,6 +169,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			st.proto = s->proto;
 			st.direction = s->direction;
 			st.log = s->log;
+			st.timeout = s->timeout;
 			st.allow_opts = s->allow_opts;
 			st.sync_flags = s->sync_flags;
 
@@ -170,21 +180,21 @@ pfsync_print(struct pfsync_header *hdr, int len)
 		for (i = 1, u = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*u) <= len; i++, d++) {
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(u->id), htonl(u->creatorid));
+			    betoh64(u->id), ntohl(u->creatorid));
 		}
 		break;
 	case PFSYNC_ACT_DEL_C:
 		for (i = 1, d = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*d) <= len; i++, d++) {
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(d->id), htonl(d->creatorid));
+			    betoh64(d->id), ntohl(d->creatorid));
 		}
 		break;
 	case PFSYNC_ACT_UREQ:
 		for (i = 1, r = (void *)((char *)hdr + PFSYNC_HDRLEN);
 		    i <= hdr->count && i * sizeof(*r) <= len; i++, d++) {
 			printf("\tid: %016llx creatorid: %08x\n",
-			    betoh64(r->id), htonl(r->creatorid));
+			    betoh64(r->id), ntohl(r->creatorid));
 		}
 		break;
 	default:
