@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.28 1999/10/28 22:32:20 aaron Exp $
+.\"	$OpenBSD: doc-syms,v 1.29 2000/03/24 19:53:08 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,45 +128,45 @@
 .nr cZ \\n(.s
 .ds aa \&\f\\n(cF\s\\n(cZ
 .if \\n(aC==0 \{\
-.       if \\n(.$==0 \&\\*(tNNetBSD\\*(aa
+.       if \\n(.$==0 \&NetBSD\\*(aa
 .\}
 .if \\n(.$==2 \{\
-.	if "\\$1"0.8"  \&\\*(tNNetBSD\\*(aa 0.8\\*(aa\\$2
-.	if "\\$1"0.8a" \&\\*(tNNetBSD\\*(aa 0.8A\\*(aa\\$2
-.	if "\\$1"0.9"  \&\\*(tNNetBSD\\*(aa 0.9\\*(aa\\$2
-.	if "\\$1"0.9a" \&\\*(tNNetBSD\\*(aa 0.9A\\*(aa\\$2
-.	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa\\$2
-.	if "\\$1"1.0a" \&\\*(tNNetBSD\\*(aa 1.0A\\*(aa\\$2
-.	if "\\$1"1.1"  \&\\*(tNNetBSD\\*(aa 1.1\\*(aa\\$2
-.	if "\\$1"1.2"  \&\\*(tNNetBSD\\*(aa 1.2\\*(aa\\$2
-.	if "\\$1"1.2a" \&\\*(tNNetBSD\\*(aa 1.2A\\*(aa\\$2
-.	if "\\$1"1.2b" \&\\*(tNNetBSD\\*(aa 1.2B\\*(aa\\$2
-.	if "\\$1"1.2c" \&\\*(tNNetBSD\\*(aa 1.2C\\*(aa\\$2
-.	if "\\$1"1.2d" \&\\*(tNNetBSD\\*(aa 1.2D\\*(aa\\$2
-.	if "\\$1"1.2e" \&\\*(tNNetBSD\\*(aa 1.2E\\*(aa\\$2
-.	if "\\$1"1.3"  \&\\*(tNNetBSD\\*(aa 1.3\\*(aa\\$2
-.	if "\\$1"1.4"  \&\\*(tNNetBSD\\*(aa 1.4\\*(aa\\$2
-.	if "\\$1"1.5"  \&\\*(tNNetBSD\\*(aa 1.5\\*(aa\\$2
+.	if "\\$1"0.8"  \&NetBSD 0.8\\*(aa\\$2
+.	if "\\$1"0.8a" \&NetBSD 0.8A\\*(aa\\$2
+.	if "\\$1"0.9"  \&NetBSD 0.9\\*(aa\\$2
+.	if "\\$1"0.9a" \&NetBSD 0.9A\\*(aa\\$2
+.	if "\\$1"1.0"  \&NetBSD 1.0\\*(aa\\$2
+.	if "\\$1"1.0a" \&NetBSD 1.0A\\*(aa\\$2
+.	if "\\$1"1.1"  \&NetBSD 1.1\\*(aa\\$2
+.	if "\\$1"1.2"  \&NetBSD 1.2\\*(aa\\$2
+.	if "\\$1"1.2a" \&NetBSD 1.2A\\*(aa\\$2
+.	if "\\$1"1.2b" \&NetBSD 1.2B\\*(aa\\$2
+.	if "\\$1"1.2c" \&NetBSD 1.2C\\*(aa\\$2
+.	if "\\$1"1.2d" \&NetBSD 1.2D\\*(aa\\$2
+.	if "\\$1"1.2e" \&NetBSD 1.2E\\*(aa\\$2
+.	if "\\$1"1.3"  \&NetBSD 1.3\\*(aa\\$2
+.	if "\\$1"1.4"  \&NetBSD 1.4\\*(aa\\$2
+.	if "\\$1"1.5"  \&NetBSD 1.5\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
-.	if "\\$1"0.8"  \&\\*(tNNetBSD\\*(aa 0.8\\*(aa
-.	if "\\$1"0.8a" \&\\*(tNNetBSD\\*(aa 0.8A\\*(aa
-.	if "\\$1"0.9"  \&\\*(tNNetBSD\\*(aa 0.9\\*(aa
-.	if "\\$1"0.9a" \&\\*(tNNetBSD\\*(aa 0.9A\\*(aa
-.	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa
-.	if "\\$1"1.0a" \&\\*(tNNetBSD\\*(aa 1.0A\\*(aa
-.	if "\\$1"1.1"  \&\\*(tNNetBSD\\*(aa 1.1\\*(aa
-.	if "\\$1"1.2"  \&\\*(tNNetBSD\\*(aa 1.2\\*(aa
-.	if "\\$1"1.2a" \&\\*(tNNetBSD\\*(aa 1.2A\\*(aa
-.	if "\\$1"1.2b" \&\\*(tNNetBSD\\*(aa 1.2B\\*(aa
-.	if "\\$1"1.2c" \&\\*(tNNetBSD\\*(aa 1.2C\\*(aa
-.	if "\\$1"1.2d" \&\\*(tNNetBSD\\*(aa 1.2D\\*(aa
-.	if "\\$1"1.2e" \&\\*(tNNetBSD\\*(aa 1.2E\\*(aa
-.	if "\\$1"1.3"  \&\\*(tNNetBSD\\*(aa 1.3\\*(aa
-.	if "\\$1"1.4"  \&\\*(tNNetBSD\\*(aa 1.4\\*(aa
-.	if "\\$1"1.5"  \&\\*(tNNetBSD\\*(aa 1.5\\*(aa
-.	if "\\$1"."    \&\\*(tNNetBSD\\$1\\*(aa
-.	if "\\$1","    \&\\*(tNNetBSD\\$1\\*(aa
+.	if "\\$1"0.8"  \&NetBSD 0.8\\*(aa
+.	if "\\$1"0.8a" \&NetBSD 0.8A\\*(aa
+.	if "\\$1"0.9"  \&NetBSD 0.9\\*(aa
+.	if "\\$1"0.9a" \&NetBSD 0.9A\\*(aa
+.	if "\\$1"1.0"  \&NetBSD 1.0\\*(aa
+.	if "\\$1"1.0a" \&NetBSD 1.0A\\*(aa
+.	if "\\$1"1.1"  \&NetBSD 1.1\\*(aa
+.	if "\\$1"1.2"  \&NetBSD 1.2\\*(aa
+.	if "\\$1"1.2a" \&NetBSD 1.2A\\*(aa
+.	if "\\$1"1.2b" \&NetBSD 1.2B\\*(aa
+.	if "\\$1"1.2c" \&NetBSD 1.2C\\*(aa
+.	if "\\$1"1.2d" \&NetBSD 1.2D\\*(aa
+.	if "\\$1"1.2e" \&NetBSD 1.2E\\*(aa
+.	if "\\$1"1.3"  \&NetBSD 1.3\\*(aa
+.	if "\\$1"1.4"  \&NetBSD 1.4\\*(aa
+.	if "\\$1"1.5"  \&NetBSD 1.5\\*(aa
+.	if "\\$1"."    \&NetBSD\\$1\\*(aa
+.	if "\\$1","    \&NetBSD\\$1\\*(aa
 .\}
 ..
 .\" Ns Ox macro - OpenBSD
@@ -175,31 +175,31 @@
 .nr cZ \\n(.s
 .ds aa \&\f\\n(cF\s\\n(cZ
 .if \\n(aC==0 \{\
-.       if \\n(.$==0 \&\\*(tNOpenBSD\\*(aa
+.       if \\n(.$==0 \&OpenBSD\\*(aa
 .\}
 .if \\n(.$==2 \{\
-.	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa\\$2
-.	if "\\$1"2.0"  \&\\*(tNOpenBSD\\*(aa 2.0\\*(aa\\$2
-.	if "\\$1"2.1"  \&\\*(tNOpenBSD\\*(aa 2.1\\*(aa\\$2
-.	if "\\$1"2.2"  \&\\*(tNOpenBSD\\*(aa 2.2\\*(aa\\$2
-.	if "\\$1"2.3"  \&\\*(tNOpenBSD\\*(aa 2.3\\*(aa\\$2
-.	if "\\$1"2.4"  \&\\*(tNOpenBSD\\*(aa 2.4\\*(aa\\$2
-.	if "\\$1"2.5"  \&\\*(tNOpenBSD\\*(aa 2.5\\*(aa\\$2
-.	if "\\$1"2.6"  \&\\*(tNOpenBSD\\*(aa 2.6\\*(aa\\$2
-.	if "\\$1"2.7"  \&\\*(tNOpenBSD\\*(aa 2.7\\*(aa\\$2
+.	if "\\$1"1.2"  \&OpenBSD 1.2\\*(aa\\$2
+.	if "\\$1"2.0"  \&OpenBSD 2.0\\*(aa\\$2
+.	if "\\$1"2.1"  \&OpenBSD 2.1\\*(aa\\$2
+.	if "\\$1"2.2"  \&OpenBSD 2.2\\*(aa\\$2
+.	if "\\$1"2.3"  \&OpenBSD 2.3\\*(aa\\$2
+.	if "\\$1"2.4"  \&OpenBSD 2.4\\*(aa\\$2
+.	if "\\$1"2.5"  \&OpenBSD 2.5\\*(aa\\$2
+.	if "\\$1"2.6"  \&OpenBSD 2.6\\*(aa\\$2
+.	if "\\$1"2.7"  \&OpenBSD 2.7\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
-.	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa
-.	if "\\$1"2.0"  \&\\*(tNOpenBSD\\*(aa 2.0\\*(aa
-.	if "\\$1"2.1"  \&\\*(tNOpenBSD\\*(aa 2.1\\*(aa
-.	if "\\$1"2.2"  \&\\*(tNOpenBSD\\*(aa 2.2\\*(aa
-.	if "\\$1"2.3"  \&\\*(tNOpenBSD\\*(aa 2.3\\*(aa
-.	if "\\$1"2.4"  \&\\*(tNOpenBSD\\*(aa 2.4\\*(aa
-.	if "\\$1"2.5"  \&\\*(tNOpenBSD\\*(aa 2.5\\*(aa
-.	if "\\$1"2.6"  \&\\*(tNOpenBSD\\*(aa 2.6\\*(aa
-.	if "\\$1"2.7"  \&\\*(tNOpenBSD\\*(aa 2.7\\*(aa
-.	if "\\$1"."    \&\\*(tNOpenBSD\\$1\\*(aa
-.	if "\\$1","    \&\\*(tNOpenBSD\\$1\\*(aa
+.	if "\\$1"1.2"  \&OpenBSD 1.2\\*(aa
+.	if "\\$1"2.0"  \&OpenBSD 2.0\\*(aa
+.	if "\\$1"2.1"  \&OpenBSD 2.1\\*(aa
+.	if "\\$1"2.2"  \&OpenBSD 2.2\\*(aa
+.	if "\\$1"2.3"  \&OpenBSD 2.3\\*(aa
+.	if "\\$1"2.4"  \&OpenBSD 2.4\\*(aa
+.	if "\\$1"2.5"  \&OpenBSD 2.5\\*(aa
+.	if "\\$1"2.6"  \&OpenBSD 2.6\\*(aa
+.	if "\\$1"2.7"  \&OpenBSD 2.7\\*(aa
+.	if "\\$1"."    \&OpenBSD\\$1\\*(aa
+.	if "\\$1","    \&OpenBSD\\$1\\*(aa
 .\}
 ..
 .\" NS Fx macro -- FreeBSD
@@ -208,13 +208,13 @@
 .nr cZ \\n(.s
 .ds aa \&\f\\n(cF\s\\n(cZ
 .if \\n(aC==0 \{\
-.       ie \\n(.$==0 \&\\*(tNFreeBSD\\*(aa
+.       ie \\n(.$==0 \&FreeBSD\\*(aa
 .       el .aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .\}
 .if \\n(aC>\\n(aP \{\
 .       nr aP \\n(aP+1
 .	ie \\n(C\\n(aP==2 \{\
-.		as b1 \&\\*(tNFreeBSD\ \&\\*(A\\n(aP\\*(aa
+.		as b1 \&FreeBSD\ \&\\*(A\\n(aP\\*(aa
 .		ie \\n(aC>\\n(aP \{\
 .			nr aP \\n(aP+1
 .			nR
@@ -222,7 +222,7 @@
 .		el .aZ
 .	\}
 .	el \{\
-.	       as b1 \&\\*(tNFreeBSD\\*(aa
+.	       as b1 \&FreeBSD\\*(aa
 .	       nR
 .	\}
 .\}
@@ -446,36 +446,38 @@
 .       \}
 .       if "\\*(A\\n(aP"-xpg3" \{\
 .		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 3\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 3\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG3\\*(aa'')
 .		\}
 .		el \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 3\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 3\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG3\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-xpg4" \{\
 .		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 4\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG4\\*(aa'')
 .		\}
 .		el \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 4\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG4\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-xpg4.2" \{\
 .		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4.2\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 4.2\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG4.2\\*(aa'')
 .		\}
 .		el \{\
-.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4.2\\*(aa\\*(sV
+.			ds b1 \&X/Open Portability Guide Issue 4.2\\*(aa\\*(sV
 .			as b1 (``\\*(tNXPG4.2\\*(aa'')
 .		\}
 .       \}
 .	if "\\*(A\\n(aP"-susv2" \{\
-.		ds b1 \&\\*(tNVersion 2 of the Single UNIX Specification\\*(aa
+.		ds b1 \&Version 2 of the Single\\*(aa\\*(sV
+.		as b1 \&\\*(tNUNIX\\*(aa\\*(sV
+.		as b1 \&Specification\\*(aa
 .	\}
 .	ie \\n(aC>\\n(aP \{\
 .		nr aP \\n(aP+1
