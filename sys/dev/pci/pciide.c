@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.27 2000/07/07 18:42:16 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.28 2000/07/07 19:07:21 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -272,6 +272,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82371AB_IDE, /* Intel 82371AB IDE (PIIX4) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82440MX_IDE, /* Intel 82440MX IDE */
 	  0,
 	  piix_chip_map
 	},
@@ -1346,6 +1350,7 @@ piix_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		switch(sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
+		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
