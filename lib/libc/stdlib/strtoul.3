@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.11 2002/11/21 20:54:09 millert Exp $
+.\"	$OpenBSD: strtoul.3,v 1.12 2003/03/06 18:19:26 kjell Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOUL 3
@@ -162,10 +162,8 @@ to
 The
 .Fn strtoull
 function has identical return values except that
-.Dv ULLONG_MIN
-and
 .Dv ULLONG_MAX
-are used to indicate underflow and overflow respectively.
+is used to indicate overflow.
 .Pp
 There is no way to determine if
 .Fn strtoul
