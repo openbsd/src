@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.23 2003/01/23 14:31:19 avsm Exp $
+.\" $OpenBSD: pppd.8,v 1.24 2003/02/09 07:26:45 jmc Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -506,8 +506,8 @@ from pppd for IPCP negotiation.
 Disables the default behaviour when no local IP address is specified,
 which is to determine (if possible) the local IP address from the
 hostname.  With this option, the peer will have to supply the local IP
-address during IPCP negotiation (unless it specified explicitly on the
-command line or in an options file).
+address during IPCP negotiation (unless it was specified explicitly
+on the command line or in an options file).
 .TP
 .B noipx
 Disable the IPXCP and IPX protocols.  This option should only be
@@ -744,7 +744,7 @@ the client, the name of the server, and the secret.  These fields may
 be followed by a list of the IP addresses that the specified client
 may use when connecting to the specified server.
 .LP
-A secrets file is parsed into words as for a options file, so the
+A secrets file is parsed into words as for an options file, so the
 client name, server name and secrets fields must each be one word,
 with any embedded spaces or other special characters quoted or
 escaped.  Any following words on the same line are taken to be a list

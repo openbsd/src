@@ -23,17 +23,17 @@ The
 .Ar device
 is usually one of the following:
 .Pp
-/dev/sd0c
-/dev/sd1c
-/dev/sd2c
-/dev/sd3c
-/dev/sd4c
-/dev/sd5c
-/dev/sd6c
-/dev/wd0c
-/dev/wd1c
-/dev/wd2c
-/dev/wd3c
+.Pa /dev/sd0c
+.Pa /dev/sd1c
+.Pa /dev/sd2c
+.Pa /dev/sd3c
+.Pa /dev/sd4c
+.Pa /dev/sd5c
+.Pa /dev/sd6c
+.Pa /dev/wd0c
+.Pa /dev/wd1c
+.Pa /dev/wd2c
+.Pa /dev/wd3c
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -74,7 +74,7 @@ command help
 .It Em p
 print the partition table
 .It Em P
-(print ordered by base address)
+print ordered by base address
 .It Em i
 initialize partition map
 .It Em s
@@ -111,7 +111,7 @@ The idea being that if we expect you to confirm the decision we
 shouldn't undermine that by allowing you to be precipitate about it.
 .Pp
 Partitions are always specified by their number,
-which the index of the partition entry in the partition map.
+which is the index of the partition entry in the partition map.
 Most of the commands will change the index numbers of all partitions
 after the affected partition.
 You are advised to print the table as frequently as necessary.

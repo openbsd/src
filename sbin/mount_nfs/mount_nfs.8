@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.27 2002/09/14 06:44:05 pvalchev Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.28 2003/02/09 07:26:45 jmc Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -42,6 +42,7 @@
 .Nd mount nfs file systems
 .Sh SYNOPSIS
 .Nm mount_nfs
+.Bk -words
 .Op Fl 23PTUbcdilqs
 .Op Fl D Ar deadthresh
 .Op Fl I Ar readdirsize
@@ -55,6 +56,7 @@
 .Op Fl w Ar writesize
 .Op Fl x Ar retrans
 .Ar rhost:path node
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -128,7 +130,7 @@ Set the maximum size of the group list for the credentials to the
 specified value.
 This should be used for mounts on old servers that cannot handle a
 group list size of 16, as specified in RFC 1057.
-Try 8, if users in a lot of groups cannot get response from the mount
+Try 8, if users in a lot of groups cannot get a response from the mount
 point.
 .It Fl i
 Make the mount interruptible, which implies that file system calls that
@@ -209,7 +211,7 @@ Set the retransmit timeout count for soft mounts to the specified value.
 .El
 .Pp
 In versions prior to
-.Ox 2.7
+.Ox 2.7 ,
 .Nm nfsiod
 daemons were running to improve performance of client NFS I/O.
 This is no longer done this way.

@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.10 2002/06/15 01:33:23 brian Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.11 2003/02/09 07:26:45 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -104,7 +104,7 @@ are understood by
 .Bl -tag -width XXX -offset XXX
 .It Fl auto
 .Nm
-opens the tun interface, configures it then goes into the background.
+opens the tun interface, configures it, then goes into the background.
 The link isn't brought up until outgoing data is detected on the tun
 interface at which point
 .Nm
@@ -181,7 +181,7 @@ will bring the link back up any time it's dropped for any reason.
 This is a no-op, and gives the same behaviour as if none of the above
 modes have been specified.
 .Nm
-loads any sections specified on the command line then provides an
+loads any sections specified on the command line, then provides an
 interactive prompt.
 .El
 .Pp
@@ -200,7 +200,7 @@ at startup, followed by each of the systems specified on the command line.
 .It Provides an interactive user interface.
 Using its command mode, the user can
 easily enter commands to establish the connection with the remote end, check
-the status of connection and close the connection.
+the status of the connection and close the connection.
 All functions can also be optionally password protected for security.
 .It Supports both manual and automatic dialing.
 Interactive mode has a
@@ -543,7 +543,7 @@ commands below for details.
 .Sh MANUAL DIALING
 In the following examples, we assume that your machine name is
 .Dv awfulhak .
-when you invoke
+When you invoke
 .Nm
 (see
 .Sx PERMISSIONS
@@ -763,7 +763,7 @@ If a new IP address is negotiated at connection time,
 .Nm
 will update your default route accordingly.
 .Pp
-You can now use your network applications (ping, telnet, ftp etc.)
+You can now use your network applications (ping, telnet, ftp, etc.)
 in other windows or terminals on your machine.
 If you wish to reuse the current terminal, you can put
 .Nm
@@ -789,7 +789,7 @@ Each line contains one comment, inclusion, label or command:
 A line starting with a
 .Pq Dq #
 character is treated as a comment line.
-Leading whitespace are ignored when identifying comment lines.
+Leading whitespace is ignored when identifying comment lines.
 .It
 An inclusion is a line beginning with the word
 .Sq {!include} .
@@ -1605,7 +1605,7 @@ ensuring that you've put the requisite entry in
 .Pa /etc/ppp/ppp.secret
 (MSCHAPv2 is challenge based, so
 .Xr passwd 5
-cannot be used)
+cannot be used).
 .Pp
 MSCHAPv2 and MPPE are accepted by default, so the client end should work
 without any additional changes (although ensure you have
@@ -1922,7 +1922,7 @@ command for defining the local and remote IP address:
 .Oc
 .Ed
 .Pp
-where,
+where
 .Sq src_addr
 is the IP address that the local side is willing to use,
 .Sq dst_addr
@@ -2087,7 +2087,7 @@ set dial "ABORT BUSY ABORT NO\\\\sCARRIER TIMEOUT 4 \\"\\" \e
 This modem "chat" string means:
 .Bl -bullet
 .It
-Abort if the string "BUSY" or "NO CARRIER" are received.
+Abort if the string "BUSY" or "NO CARRIER" is received.
 .It
 Set the timeout to 4 seconds.
 .It
@@ -2125,7 +2125,7 @@ Expect "login:".
 If it's not received, send a carriage return and expect
 "login:" again.
 .It
-Send "awfulhak"
+Send "awfulhak".
 .It
 Expect "word:" (the tail end of a "Password:" prompt).
 .It
@@ -2412,13 +2412,13 @@ These signals tell
 .Nm
 to exit.
 .It USR1
-This signal, tells
+This signal tells
 .Nm
 to re-open any existing server socket, dropping all existing diagnostic
 connections.
 Sockets that couldn't previously be opened will be retried.
 .It USR2
-This signal, tells
+This signal tells
 .Nm
 to close any existing server socket, dropping all existing diagnostic
 connections.
@@ -2653,7 +2653,7 @@ passwords are sent across the connection.
 A challenge is made when the connection is first made.
 Subsequent challenges may occur.
 If you want to have your peer authenticate itself, you must
-.Dq enable chap .
+.Dq enable chap
 in
 .Pa /etc/ppp/ppp.conf ,
 and have an entry in
@@ -2868,7 +2868,7 @@ authentication is acknowledged or the connection is terminated.
 This is a rather poor security mechanism.
 It is only performed when the connection is first established.
 If you want to have your peer authenticate itself, you must
-.Dq enable pap .
+.Dq enable pap
 in
 .Pa /etc/ppp/ppp.conf ,
 and have an entry in
@@ -5066,7 +5066,7 @@ to do the necessary address translations to enable the process that
 triggers the connection to connect once the link is up despite the
 peer assigning us a new (dynamic) IP address.
 .It set mppe Op 40|56|128|* Op stateless|stateful|*
-This option selects the encryption parameters used when negotiation
+This option selects the encryption parameters used when negotiating
 MPPE.
 MPPE can be disabled entirely with the
 .Dq disable mppe

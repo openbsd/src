@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_null.8,v 1.17 2002/06/26 21:32:02 fgsch Exp $
+.\"	$OpenBSD: mount_null.8,v 1.18 2003/02/09 07:26:45 jmc Exp $
 .\"	$NetBSD: mount_null.8,v 1.4 1996/04/10 20:57:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -194,7 +194,7 @@ when the operation cannot be completely bypassed.
 Each method is appropriate in different situations.
 In both cases, it is the responsibility of the aliasing layer to make
 the operation arguments "correct" for the lower layer
-by mapping an vnode arguments to the lower layer.
+by mapping any vnode arguments to the lower layer.
 .Pp
 The first approach is to call the aliasing layer's bypass routine.
 This method is most suitable when you wish to invoke the operation

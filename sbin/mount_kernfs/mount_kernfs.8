@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_kernfs.8,v 1.17 2002/06/26 21:32:02 fgsch Exp $
+.\"	$OpenBSD: mount_kernfs.8,v 1.18 2003/02/09 07:26:45 jmc Exp $
 .\"	$NetBSD: mount_kernfs.8,v 1.6 1995/03/18 14:57:24 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -72,7 +72,7 @@ at boot time.
 .Pp
 The filesystem includes several regular files which can be read,
 some of which can also be written.
-The contents of the files is in a machine-independent format,
+The contents of the files are in a machine-independent format,
 either a string, or an integer in decimal ASCII.
 Where numbers are returned, a trailing newline character is also added.
 .Pp
@@ -89,7 +89,9 @@ man page for possible options and their meanings.
 .Pp
 Statistics reported by
 .Xr df 1
-on the /kern filesystem will indicate the amount of
+on the
+.Pa /kern
+filesystem will indicate the amount of
 unwired/physical memory instead of
 .Sq disk space ,
 and the number of vnodes
@@ -120,9 +122,9 @@ The 1, 5 and 15 minute load average in kernel fixed-point format.
 The final integer is the fix-point scaling factor.
 All numbers are in decimal ASCII.
 .It Pa machine
-Architecture this kernel compiled for.
+Architecture this kernel was compiled for.
 .It Pa model
-Model of the processor this machine running on.
+Model of the processor this machine is running on.
 .It Pa msgbuf
 Kernel message buffer, also read by
 .Xr syslogd 8 ,

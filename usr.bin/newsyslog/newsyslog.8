@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.31 2003/01/25 05:09:36 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.32 2003/02/09 07:26:45 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -125,7 +125,7 @@ Specify a
 into which archived log files will be written.
 If
 .Ar directory
-is a relative path, it is it is appended to the parent directory
+is a relative path, it is appended to the parent directory
 of each log and the archived log is stored in the result.
 If an absolute path is given, all archived logs are stored in the given
 .Ar directory .
@@ -152,7 +152,7 @@ Note that each
 specified must have an entry in
 .Pa /etc/newsyslog.conf .
 .Pp
-A log can be archived because of two reasons.
+A log can be archived because of two reasons:
 The log file can have
 grown bigger than a preset size in kilobytes, or a preset number of
 hours may have elapsed since the last log archive.
