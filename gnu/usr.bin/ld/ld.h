@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.6 2000/09/21 12:03:12 espie Exp $	*/
+/*	$OpenBSD: ld.h,v 1.7 2002/04/17 15:33:16 espie Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -629,6 +629,7 @@ void	each_full_file __P((void (*)(), void *));
 unsigned long	check_each_file __P((unsigned long (*)(), void *));
 void	mywrite __P((void *, int, int, FILE *));
 void	padfile __P((int, FILE *));
+extern int	will_see_later(const char *);
 
 /* In warnings.c: */
 void	perror_name __P((char *));

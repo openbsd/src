@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.4 2001/10/30 16:47:32 deraadt Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.5 2002/04/17 15:33:16 espie Exp $	- library routines*/
 /*
  */
 
@@ -694,12 +694,6 @@ read_shared_object(fd, entry)
 			struct file_entry *subentry;
 			char *libname, name[MAXPATHLEN]; /*XXX*/
 
-			subentry = (struct file_entry *)
-				xmalloc(sizeof(struct file_entry));
-			bzero(subentry, sizeof(struct file_entry));
-			subentry->superfile = entry;
-			subentry->flags = E_SECONDCLASS;
-
 			if (lseek(fd,
 			    offset - (TEXT_START(entry->header) -
 				      N_TXTOFF(entry->header)),
@@ -715,6 +709,21 @@ read_shared_object(fd, entry)
 			    L_SET) == (off_t)-1)
 				err(1, "%s: lseek", get_file_name(entry));
 			(void)read(fd, name, sizeof(name)); /*XXX*/
+
+			/* Optimization */
+			if (sod.sod_library && will_see_later(name)) {
+				if ((offset = (off_t)sod.sod_next) == 0)
+					break;
+				else
+					continue;
+			}
+
+			subentry = (struct file_entry *)
+				xmalloc(sizeof(struct file_entry));
+			bzero(subentry, sizeof(struct file_entry));
+			subentry->superfile = entry;
+			subentry->flags = E_SECONDCLASS;
+
 			if (sod.sod_library) {
 				int sod_major = sod.sod_major;
 				int sod_minor = sod.sod_minor;
