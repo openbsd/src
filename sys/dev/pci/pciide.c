@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.161 2004/02/07 19:27:24 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.162 2004/02/18 09:49:04 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801ER_SATA, /* Intel 82801ER (ICH5R) SATA */
-	  0,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  piix_chip_map
 	},
 #ifdef notyet
