@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.28 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.29 2002/11/06 14:14:48 gluk Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.28 2002/07/03 22:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.29 2002/11/06 14:14:48 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,42 +77,44 @@ char	**typelist = NULL;
 
 int	selected(const char *);
 char   *catopt(char *, const char *);
+char   *flags2opts(u_int32_t);
 struct statfs
        *getmntpt(const char *);
 int	hasopt(const char *, const char *);
 void	maketypelist(char *);
-void	mangle(char *, int *, const char **);
-int	mountfs(const char *, const char *, const char *, int, const char *,
+void	mangle(char *, int *, const char **, int);
+int	mountfs(const char *, const char *, const char *, const char *,
 	    const char *, int);
 void	prmount(struct statfs *);
 int	disklabelcheck(struct fstab *);
-void	usage(void);
+__dead void	usage(void);
 
 /* Map from mount options to printable formats. */
 static struct opt {
 	int o_opt;
 	int o_silent;
 	const char *o_name;
+	const char *o_optname;
 } optnames[] = {
-	{ MNT_ASYNC,		0,	"asynchronous" },
-	{ MNT_DEFEXPORTED,	1,	"exported to the world" },
-	{ MNT_EXKERB,		1,	"kerberos uid mapping" },
-	{ MNT_EXPORTED,		0,	"NFS exported" },
-	{ MNT_EXPORTANON,	1,	"anon uid mapping" },
-	{ MNT_EXRDONLY,		1,	"exported read-only" },
-	{ MNT_LOCAL,		0,	"local" },
-	{ MNT_NOATIME,		0,	"noatime" },
-	{ MNT_NOATIME,		0,	"noaccesstime" },
-	{ MNT_NODEV,		0,	"nodev" },
-	{ MNT_NOEXEC,		0,	"noexec" },
-	{ MNT_NOSUID,		0,	"nosuid" },
-	{ MNT_QUOTA,		0,	"with quotas" },
-	{ MNT_RDONLY,		0,	"read-only" },
-	{ MNT_ROOTFS,		1,	"root file system" },
-	{ MNT_SYNCHRONOUS,	0,	"synchronous" },
-	{ MNT_SOFTDEP,		0,	"softdep" },
-	{ MNT_UNION,		0,	"union" },
-	{ NULL }
+	{ MNT_ASYNC,		0,	"asynchronous",		"async" },
+	{ MNT_DEFEXPORTED,	1,	"exported to the world", "" },
+	{ MNT_EXKERB,		1,	"kerberos uid mapping",	"" },
+	{ MNT_EXPORTED,		0,	"NFS exported",		"" },
+	{ MNT_EXPORTANON,	1,	"anon uid mapping",	"" },
+	{ MNT_EXRDONLY,		1,	"exported read-only",	"" },
+	{ MNT_LOCAL,		0,	"local",		"" },
+	{ MNT_NOATIME,		0,	"noatime",		"noatime" },
+	{ MNT_NOATIME,		0,	"noaccesstime",		"" },
+	{ MNT_NODEV,		0,	"nodev",		"nodev" },
+	{ MNT_NOEXEC,		0,	"noexec",		"noexec" },
+	{ MNT_NOSUID,		0,	"nosuid",		"nosuid" },
+	{ MNT_QUOTA,		0,	"with quotas",		"" },
+	{ MNT_RDONLY,		0,	"read-only",		"ro" },
+	{ MNT_ROOTFS,		1,	"root file system",	"" },
+	{ MNT_SYNCHRONOUS,	0,	"synchronous",		"sync" },
+	{ MNT_SOFTDEP,		0,	"softdep", 		"softdep" },
+	{ MNT_UNION,		0,	"union",		"" },
+	{ NULL,			0,	"",			"" }
 };
 
 int
@@ -123,10 +125,10 @@ main(int argc, char * const argv[])
 	struct statfs *mntbuf;
 	FILE *mountdfp;
 	pid_t pid;
-	int all, ch, forceall, i, init_flags, mntsize, rval;
-	char *options;
+	int all, ch, forceall, i, mntsize, rval, new;
+	char *options, mntpath[MAXPATHLEN];
 
-	all = forceall = init_flags = 0;
+	all = forceall = 0;
 	options = NULL;
 	vfstype = "ffs";
 	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
@@ -141,14 +143,16 @@ main(int argc, char * const argv[])
 			debug = 1;
 			break;
 		case 'f':
-			init_flags |= MNT_FORCE;
+			if (!hasopt(options, "force"))
+				options = catopt(options, "force");
 			break;
 		case 'o':
 			if (*optarg)
 				options = catopt(options, optarg);
 			break;
 		case 'r':
-			init_flags |= MNT_RDONLY;
+			if (!hasopt(options, "ro"))
+				options = catopt(options, "ro");
 			break;
 		case 't':
 			if (typelist != NULL)
@@ -157,13 +161,15 @@ main(int argc, char * const argv[])
 			vfstype = optarg;
 			break;
 		case 'u':
-			init_flags |= MNT_UPDATE;
+			if (!hasopt(options, "update"))
+				options = catopt(options, "update");
 			break;
 		case 'v':
 			verbose = 1;
 			break;
 		case 'w':
-			init_flags &= ~MNT_RDONLY;
+			if (!hasopt(options, "rw"))
+				options = catopt(options, "rw");
 			break;
 		case '?':
 		default:
@@ -178,6 +184,7 @@ main(int argc, char * const argv[])
 	    strcmp(type, FSTAB_RW) && strcmp(type, FSTAB_RQ))
 
 	rval = 0;
+	new = 0;
 	switch (argc) {
 	case 0:
 		if (all)
@@ -191,9 +198,11 @@ main(int argc, char * const argv[])
 				if (disklabelcheck(fs))
 					continue;
 				if (mountfs(fs->fs_vfstype, fs->fs_spec,
-				    fs->fs_file, init_flags, options,
+				    fs->fs_file, options,
 				    fs->fs_mntops, !forceall))
 					rval = 1;
+				else
+					++new;
 			}
 		else {
 			if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
@@ -204,27 +213,44 @@ main(int argc, char * const argv[])
 				prmount(&mntbuf[i]);
 			}
 		}
-		exit(rval);
+		break;
 	case 1:
 		if (typelist != NULL)
 			usage();
 
-		if (init_flags & MNT_UPDATE) {
-			if ((mntbuf = getmntpt(*argv)) == NULL)
+		if (realpath(*argv, mntpath) == NULL)
+			err(1, "realpath %s", mntpath);
+		if (hasopt(options, "update")) {
+			if ((mntbuf = getmntpt(mntpath)) == NULL)
 				errx(1,
 				    "unknown special file or file system %s.",
 				    *argv);
-			if ((fs = getfsfile(mntbuf->f_mntonname)) == NULL)
-				errx(1, "can't find fstab entry for %s.",
-				    *argv);
-			/* If it's an update, ignore the fstab file options. */
-			fs->fs_mntops = NULL;
+			if ((mntbuf->f_flags & MNT_ROOTFS) &&
+			    !strcmp(mntbuf->f_mntfromname, "root_device")) {
+				/* Lookup fstab for name of root device. */
+				fs = getfsfile(mntbuf->f_mntonname);
+				if (fs == NULL)
+					errx(1,
+					    "can't find fstab entry for %s.",
+					    *argv);
+			} else {
+				fs = malloc(sizeof(*fs));
+				if (fs == NULL)
+					err(1, "malloc");
+				fs->fs_vfstype = mntbuf->f_fstypename;
+				fs->fs_spec = mntbuf->f_mntfromname;
+			}
+			/*
+			 * It's an update, ignore the fstab file options.
+			 * Get the current options, so we can change only
+			 * the options which given via a command line.
+			 */
+			fs->fs_mntops = flags2opts(mntbuf->f_flags);
 			mntonname = mntbuf->f_mntonname;
 		} else {
-			if ((fs = getfsfile(*argv)) == NULL &&
-			    (fs = getfsspec(*argv)) == NULL)
-				errx(1,
-				    "%s: unknown special file or file system.",
+			if ((fs = getfsfile(mntpath)) == NULL &&
+			    (fs = getfsspec(mntpath)) == NULL)
+				errx(1, "can't find fstab entry for %s.",
 				    *argv);
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
@@ -232,7 +258,7 @@ main(int argc, char * const argv[])
 			mntonname = fs->fs_file;
 		}
 		rval = mountfs(fs->fs_vfstype, fs->fs_spec,
-		    mntonname, init_flags, options, fs->fs_mntops, 0);
+		    mntonname, options, fs->fs_mntops, 0);
 		break;
 	case 2:
 		/*
@@ -250,9 +276,8 @@ main(int argc, char * const argv[])
 					vfstype = labelfs;
 			}
 		}
-
 		rval = mountfs(vfstype,
-		    argv[0], argv[1], init_flags, options, NULL, 0);
+		    argv[0], argv[1], options, NULL, 0);
 		break;
 	default:
 		usage();
@@ -262,8 +287,9 @@ main(int argc, char * const argv[])
 	/*
 	 * If the mount was successfully, and done by root, tell mountd the
 	 * good news.  Pid checks are probably unnecessary, but don't hurt.
+	 * XXX This should be done from kernel.
 	 */
-	if (rval == 0 && getuid() == 0 &&
+	if ((rval == 0 || new) && getuid() == 0 &&
 	    (mountdfp = fopen(_PATH_MOUNTDPID, "r")) != NULL) {
 		if (fscanf(mountdfp, "%d", &pid) == 1 &&
 		     pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
@@ -277,29 +303,39 @@ main(int argc, char * const argv[])
 int
 hasopt(const char *mntopts, const char *option)
 {
-	int negative, found;
+	int found;
 	char *opt, *optbuf;
 
-	if (option[0] == 'n' && option[1] == 'o') {
-		negative = 1;
-		option += 2;
-	} else
-		negative = 0;
+	if (mntopts == NULL)
+		return (0);
 	optbuf = strdup(mntopts);
 	found = 0;
-	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
-		if (opt[0] == 'n' && opt[1] == 'o') {
-			if (!strcasecmp(opt + 2, option))
-				found = negative;
-		} else if (!strcasecmp(opt, option))
-			found = !negative;
-	}
+	for (opt = optbuf; !found && opt != NULL; strsep(&opt, ","))
+		found = !strncmp(opt, option, strlen(option));
 	free(optbuf);
 	return (found);
 }
 
+/*
+ * Convert mount(2) flags to list of mount(8) options.
+ */
+char*
+flags2opts(u_int32_t flags)
+{
+	char	*optlist;
+	struct opt *p;
+
+	optlist = NULL;
+	for (p = optnames; p->o_opt; p++) {
+		if (flags & p->o_opt && *p->o_optname)
+			optlist = catopt(optlist, p->o_optname);
+	}
+
+	return(optlist);
+}
+
 int
-mountfs(const char *vfstype, const char *spec, const char *name, int flags,
+mountfs(const char *vfstype, const char *spec, const char *name,
     const char *options, const char *mntopts, int skipmounted)
 {
 	/* List of directories containing mount_xxx subcommands. */
@@ -308,15 +344,14 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 		_PATH_USRSBIN,
 		NULL
 	};
-	const char *argv[100], **edir;
+	const char **argv, **edir;
 	struct statfs sf;
 	pid_t pid;
-	int argc, i, status;
+	int argc, i, status, argvsize;
 	char *optbuf, execname[MAXPATHLEN], mntpath[MAXPATHLEN];
-	char mountname[MAXPATHLEN];
 
 	if (realpath(name, mntpath) == NULL) {
-		warn("realpath %s", name);
+		warn("realpath %s", mntpath);
 		return (1);
 	}
 
@@ -324,6 +359,7 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 
 	if (mntopts == NULL)
 		mntopts = "";
+
 	if (options == NULL) {
 		if (*mntopts == '\0')
 			options = "rw";
@@ -332,15 +368,16 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 			mntopts = "";
 		}
 	}
+
+	/* options follows after mntopts, so they get priority over mntopts */
 	optbuf = catopt(strdup(mntopts), options);
 
-	if (strcmp(name, "/") == 0)
-		flags |= MNT_UPDATE;
-	else if (skipmounted) {
-		if (statfs(name, &sf) < 0) {
-			warn("statfs %s", name);
-			return (1);
-		}
+	if (strcmp(name, "/") == 0) {
+		if (!hasopt(optbuf, "update"))
+			optbuf = catopt(optbuf, "update");
+	} else if (skipmounted) {
+		if (statfs(name, &sf) < 0)
+			err(1, "statfs %s", name);
 		/* XXX can't check f_mntfromname, thanks to mfs, union, etc. */
 		if (strncmp(name, sf.f_mntonname, MNAMELEN) == 0 &&
 		    strncmp(vfstype, sf.f_fstypename, MFSNAMELEN) == 0) {
@@ -352,25 +389,13 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 			return (0);
 		}
 	}
-	if (flags & MNT_FORCE)
-		optbuf = catopt(optbuf, "force");
-	if (flags & MNT_RDONLY)
-		optbuf = catopt(optbuf, "ro");
-	/*
-	 * XXX
-	 * The mount_mfs (newfs) command uses -o to select the
-	 * optimisation mode.  We don't pass the default "-o rw"
-	 * for that reason.
-	 */
-	if (flags & MNT_UPDATE)
-		optbuf = catopt(optbuf, "update");
 
-	(void)snprintf(mountname,
-	    sizeof(mountname), "mount_%s", vfstype);
-
+	argvsize = 64;
+	if((argv = malloc(argvsize * sizeof(char*))) == NULL)
+		err(1, "malloc");
 	argc = 0;
-	argv[argc++] = mountname;
-	mangle(optbuf, &argc, argv);
+	argv[argc++] = NULL;	/* this should be a full path name */
+	mangle(optbuf, &argc, argv, argvsize - 4);
 	argv[argc++] = spec;
 	argv[argc++] = name;
 	argv[argc] = NULL;
@@ -380,6 +405,8 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
+		free(optbuf);
+		free(argv);
 		return (0);
 	}
 
@@ -394,6 +421,7 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 		do {
 			(void)snprintf(execname,
 			    sizeof(execname), "%s/mount_%s", *edir, vfstype);
+			argv[0] = execname;
 			execv(execname, (char * const *)argv);
 			if (errno != ENOENT)
 				warn("exec %s for %s", execname, name);
@@ -405,6 +433,7 @@ mountfs(const char *vfstype, const char *spec, const char *name, int flags,
 		/* NOTREACHED */
 	default:				/* Parent. */
 		free(optbuf);
+		free(argv);
 
 		if (waitpid(pid, &status, 0) < 0) {
 			warn("waitpid");
@@ -600,7 +629,7 @@ maketypelist(char *fslist)
 	/*
 	 * XXX
 	 * Note: the syntax is "noxxx,yyy" for no xxx's and
-	 * no yyy's, not the more intuitive "noyyy,noyyy".
+	 * no yyy's, not the more intuitive "noxxx,noyyy".
 	 */
 	if (fslist[0] == 'n' && fslist[1] == 'o') {
 		fslist += 2;
@@ -644,22 +673,23 @@ catopt(char *s0, const char *s1)
 }
 
 void
-mangle(char *options, int *argcp, const char **argv)
+mangle(char *options, int *argcp, const char **argv, int argcmax)
 {
 	char *p, *s;
 	int argc;
 
+	argcmax -= 2;
 	argc = *argcp;
-	for (s = options; (p = strsep(&s, ",")) != NULL;)
+	for (s = options; argc <= argcmax && (p = strsep(&s, ",")) != NULL;)
 		if (*p != '\0') {
 			if (*p == '-') {
 				argv[argc++] = p;
 				p = strchr(p, '=');
 				if (p) {
 					*p = '\0';
-					argv[argc++] = p+1;
+					argv[argc++] = p + 1;
 				}
-			} else if (strcmp(p, "rw") != 0) {
+			} else {
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
@@ -676,7 +706,7 @@ usage(void)
 	    "usage: mount %s %s\n       mount %s\n       mount %s\n",
 	    "[-dfruvw] [-o options] [-t ffs | external_type]",
 	    "special node",
-	    "[-adfruvw] [-t ffs | external_type]",
+	    "[-Aadfruvw] [-t ffs | external_type]",
 	    "[-dfruvw] special | node");
 	exit(1);
 }
