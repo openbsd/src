@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.162 2002/10/07 13:23:46 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.163 2002/10/07 14:13:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2326,7 +2326,7 @@ check_rulestate(int desired_state)
 int
 kw_cmp(const void *k, const void *e)
 {
-	return (strcmp(k, ((struct keywords *)e)->k_name));
+	return (strcmp(k, ((const struct keywords *)e)->k_name));
 }
 
 int

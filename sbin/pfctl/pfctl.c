@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.83 2002/07/05 14:07:32 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.84 2002/10/07 14:13:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -70,7 +70,6 @@ int	 pfctl_rules(int, char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 
-int	 opts = 0;
 char	*clearopt;
 char	*rulesopt;
 char	*showopt;
@@ -79,7 +78,7 @@ int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
 
-char	*infile;
+const char *infile;
 
 static const struct {
 	const char	*name;
@@ -800,6 +799,7 @@ main(int argc, char *argv[])
 	int dev = -1;
 	int ch;
 	int mode = O_RDONLY;
+	int opts = 0;
 
 	if (argc < 2)
 		usage();
