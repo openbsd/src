@@ -6,7 +6,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2/include
-./usr/lib/libacl.so.4.1
+./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.24.2
 ./usr/lib/libc_r.so.2.1
 ./usr/lib/libcrypto.so.2.2
@@ -16,10 +16,10 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libiberty.so.3.0
-./usr/lib/libkadm.so.5.0
-./usr/lib/libkafs.so.5.1
-./usr/lib/libkdb.so.5.0
-./usr/lib/libkrb.so.7.0
+./usr/lib/libkadm.so.6.0
+./usr/lib/libkafs.so.6.0
+./usr/lib/libkdb.so.6.0
+./usr/lib/libkrb.so.8.0
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
