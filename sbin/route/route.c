@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.81 2004/10/14 15:20:56 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.82 2005/02/17 17:02:24 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.81 2004/10/14 15:20:56 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.82 2005/02/17 17:02:24 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -1105,6 +1105,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
 	const char *state = "unknown";
+	char ifname[IF_NAMESIZE];
 
 	if (verbose == 0)
 		return;
@@ -1118,6 +1119,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		(void) printf("if# %d, ", ifm->ifm_index);
+		if (!nflag && if_indextoname(ifm->ifm_index, ifname) != NULL)
+			(void) printf("name: %s, ", ifname);
 		switch (ifm->ifm_data.ifi_link_state) {
 		case LINK_STATE_DOWN:
 			state = "down";
