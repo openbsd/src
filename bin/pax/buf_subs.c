@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.4 1997/04/06 06:11:10 millert Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.5 1997/07/23 19:15:55 kstailey Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.4 1997/04/06 06:11:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.5 1997/07/23 19:15:55 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.4 1997/04/06 06:11:10 millert Ex
  */
 
 #define MINFBSZ		512		/* default block size for hole detect */
-#define MAXFLT          10              /* default media read error limit */
+#define MAXFLT		10		/* default media read error limit */
 
 /*
  * Need to change bufmem to dynamic allocation when the upper
@@ -74,8 +74,8 @@ static char bufmem[MAXBLK+BLKMULT];	/* i/o buffer + pushback id space */
 static char *buf;			/* normal start of i/o buffer */
 static char *bufend;			/* end or last char in i/o buffer */
 static char *bufpt;			/* read/write point in i/o buffer */
-int blksz = MAXBLK;                    	/* block input/output size in bytes */
-int wrblksz;                      	/* user spec output size in bytes */
+int blksz = MAXBLK;			/* block input/output size in bytes */
+int wrblksz;				/* user spec output size in bytes */
 int maxflt = MAXFLT;			/* MAX consecutive media errors */
 int rdblksz;				/* first read blksize (tapes only) */
 off_t wrlimit;				/* # of bytes written per archive vol */
@@ -767,11 +767,11 @@ rd_wrfile(arcn, ofd, left)
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
-        if (fstat(ofd, &sb) == 0) {
+	if (fstat(ofd, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
-        } else
-                syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+	} else
+		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
 	rem = sz;
 	*left = 0L;
 
@@ -870,11 +870,11 @@ cp_file(arcn, fd1, fd2)
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
-        if (fstat(fd2, &sb) == 0) {
+	if (fstat(fd2, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = sb.st_blksize;
-        } else
-                syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+	} else
+		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
 	rem = sz;
 
 	/*

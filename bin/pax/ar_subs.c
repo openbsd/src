@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.8 1997/06/18 18:48:24 kstailey Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.9 1997/07/23 19:15:54 kstailey Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.8 1997/06/18 18:48:24 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.9 1997/07/23 19:15:54 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ extern sigset_t s_mask;
  * the user: list, append, read ...
  */
 
-static char hdbuf[BLKMULT];             /* space for archive header on read */
+static char hdbuf[BLKMULT];		/* space for archive header on read */
 u_long flcnt;				/* number of files processed */
 
 /*
@@ -1049,7 +1049,7 @@ next_head(arcn)
 			if (!in_resync) {
 				if (act == APPND) {
 					paxwarn(1,
-				          "Archive I/O error, cannot continue");
+					  "Archive I/O error, cannot continue");
 					return(-1);
 				}
 				paxwarn(1,"Archive I/O error. Trying to recover.");

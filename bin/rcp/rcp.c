@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.12 1997/06/29 11:10:28 provos Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.13 1997/07/23 19:19:33 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -399,7 +399,7 @@ source(argc, argv)
 	char *last, *name, buf[BUFSIZ];
 
 	for (indx = 0; indx < argc; ++indx) {
-                name = argv[indx];
+		name = argv[indx];
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb)) {
@@ -864,7 +864,7 @@ oldw(const char *fmt, ...)
 #else
 oldw(fmt, va_alist)
 	char *fmt;
-        va_dcl
+	va_dcl
 #endif
 {
 	char realm[REALM_SZ];
@@ -890,7 +890,7 @@ run_err(const char *fmt, ...)
 #else
 run_err(fmt, va_alist)
 	char *fmt;
-        va_dcl
+	va_dcl
 #endif
 {
 	static FILE *fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.14 1997/06/18 18:48:23 kstailey Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.15 1997/07/23 19:15:53 kstailey Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.14 1997/06/18 18:48:23 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.15 1997/07/23 19:15:53 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static struct stat arsb;		/* stat of archive device at open */
 static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
-char *arcname;                  	/* printable name of archive */
+char *arcname;				/* printable name of archive */
 char *gzip_program;			/* name of gzip program */
 
 static int get_phys __P((void));
@@ -110,7 +110,7 @@ ar_open(name)
 	char *name;
 #endif
 {
-        struct mtget mb;
+	struct mtget mb;
 
 	if (arfd != -1)
 		(void)close(arfd);
@@ -761,7 +761,7 @@ ar_rdsync()
 	long fsbz;
 	off_t cpos;
 	off_t mpos;
-        struct mtop mb;
+	struct mtop mb;
 
 	/*
 	 * Fail resync attempts at user request (done) or this is going to be
@@ -917,7 +917,7 @@ ar_rev(sksz)
 #endif
 {
 	off_t cpos;
-        struct mtop mb;
+	struct mtop mb;
 	register int phyblk; 
 
 	/*
@@ -1277,10 +1277,10 @@ ar_next()
 			tty_prnt("Empty file name, try again\n");
 			continue;
 		}
-                if (!strcmp(buf, "..")) {
-                        tty_prnt("Illegal file name: .. try again\n");
-                        continue;
-                }
+		if (!strcmp(buf, "..")) {
+			tty_prnt("Illegal file name: .. try again\n");
+			continue;
+		}
 		if (strlen(buf) > PAXPATHLEN) {
 			tty_prnt("File name too long, try again\n");
 			continue;

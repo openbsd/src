@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.3 1996/06/23 14:20:31 deraadt Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.4 1997/07/23 19:15:56 kstailey Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.3 1996/06/23 14:20:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.4 1997/07/23 19:15:56 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -513,7 +513,7 @@ cpio_wr(arcn)
 	 */
 	if (ul_asc((u_long)MAGIC, hd->c_magic, sizeof(hd->c_magic), OCT) ||
 	    ul_asc((u_long)arcn->sb.st_dev, hd->c_dev, sizeof(hd->c_dev),
-	        OCT) ||
+		OCT) ||
 	    ul_asc((u_long)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
 		OCT) ||
 	    ul_asc((u_long)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),

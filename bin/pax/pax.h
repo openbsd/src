@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.8 1997/04/06 06:11:14 millert Exp $	*/
+/*	$OpenBSD: pax.h,v 1.9 1997/07/23 19:15:58 kstailey Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -229,10 +229,10 @@ typedef struct oplist {
  * General Macros
  */
 #ifndef MIN
-#define        MIN(a,b) (((a)<(b))?(a):(b))
+#define	       MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-#define MAJOR(x)        major(x)
-#define MINOR(x)        minor(x)
+#define MAJOR(x)	major(x)
+#define MINOR(x)	minor(x)
 #define TODEV(x, y)	makedev((x), (y))
 
 /*

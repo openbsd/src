@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.27 1997/06/18 20:06:30 kstailey Exp $	*/
+/*	$OpenBSD: options.c,v 1.28 1997/07/23 19:15:57 kstailey Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.27 1997/06/18 20:06:30 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.28 1997/07/23 19:15:57 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ pax_options(argc, argv)
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
 	register char *pt;
-        FSUB tmp;
+	FSUB tmp;
 	extern char *optarg;
 	extern int optind;
 
@@ -892,7 +892,7 @@ mkpath(path)
 				return (-1);
 			}
 		} else if (!S_ISDIR(sb.st_mode)) {
-		        syswarn(1, ENOTDIR, "%s", path);
+			syswarn(1, ENOTDIR, "%s", path);
 			return (-1);
 		}
 
@@ -921,7 +921,7 @@ cpio_options(argc, argv)
 	register int c, i;
 	size_t len;
 	char *str;
-        FSUB tmp;
+	FSUB tmp;
 	FILE *fp;
 
 	kflag = 1;
@@ -1204,11 +1204,11 @@ c_frmt(const void *a, const void *b)
 #else
 static int
 c_frmt(a, b)
-        void *a;
-        void *b;
+	void *a;
+	void *b;
 #endif
 {
-        return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
+	return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
 }
 
 /*
@@ -1453,7 +1453,7 @@ pax_usage()
 	(void)fputs("       pax -r [-cdiknuvDYZ] [-E limit] ", stderr);
 	(void)fputs("[-f archive] [-o options] ... \n", stderr);
 	(void)fputs("           [-p string] ... [-s replstr] ... ", stderr);
-	(void)fputs("[-U user] ... [-G group] ...\n           ", stderr);
+	(void)fputs("[-U user] ... [-G group] ...\n	      ", stderr);
 	(void)fputs("[-T [from_date][,to_date]] ... ", stderr);
 	(void)fputs(" [pattern ...]\n", stderr);
 	(void)fputs("       pax -w [-dituvHLPX] [-b blocksize] ", stderr);
