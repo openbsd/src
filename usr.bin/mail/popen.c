@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.30 2001/11/21 20:41:55 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.31 2001/11/23 00:03:24 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.30 2001/11/21 20:41:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.31 2001/11/23 00:03:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,14 +128,7 @@ Popen(char *cmd, char *mode)
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	/*
-	 * If cmd contains meta chars wrap it in a shell.
-	 */
-	if (strpbrk(cmd, "$&*(){}[]'\";\\|?<>~`"))
-		pid = start_command(value("SHELL"), &nset, fd0, fd1,
-		    "-c", cmd, NULL);
-	else
-		pid = start_command(cmd, &nset, fd0, fd1, NULL);
+	pid = start_command(value("SHELL"), &nset, fd0, fd1, "-c", cmd, NULL);
 	if (pid < 0) {
 		(void)close(p[READ]);
 		(void)close(p[WRITE]);
@@ -450,7 +443,6 @@ handle_spool_locks(int action)
 			    stderr);
 			return(-1);
 		}
-		(void)kill(lock_pid, SIGTERM);
 		(void)Pclose(lockfp);
 		lockfp = NULL;
 	} else if (action == 1) {
