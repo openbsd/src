@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.64 2001/09/27 15:37:33 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.65 2001/09/27 21:35:46 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -2005,8 +2005,6 @@ comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-#if 0
-	/* XXX not needed? */
 	bus_space_tag_t iot = comconsiot;
 	bus_space_handle_t ioh = comconsioh;
 
@@ -2014,7 +2012,6 @@ comcnputc(dev, c)
 		cominit(iot, ioh, comdefaultrate);
 		comconsinit = 1;
 	}
-#endif
 	com_common_putc(comconsiot, comconsioh, c);
 
 }
