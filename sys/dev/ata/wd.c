@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.10 1999/11/17 01:22:55 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.11 2000/04/07 09:12:44 niklas Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -208,7 +208,7 @@ struct	wd_ioctl *wi_get __P((void));
 void	wdioctlstrategy __P((struct buf *));
 
 void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
-static void  wdgetdisklabel __P((dev_t dev, struct wd_softc *, 
+void  wdgetdisklabel __P((dev_t dev, struct wd_softc *, 
 				 struct disklabel *,
 				 struct cpu_disklabel *, int));
 void  wdstrategy	__P((struct buf *));
@@ -226,7 +226,7 @@ cdev_decl(wd);
 bdev_decl(wd);
 
 #ifdef DKBAD
-static void bad144intern __P((struct wd_softc *));
+void	bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock	__P((struct wd_softc *));
 void	wdunlock	__P((struct wd_softc *));
@@ -812,7 +812,7 @@ wdgetdefaultlabel(wd, lp)
 /*
  * Fabricate a default disk label, and try to read the correct one.
  */
-static void
+void
 wdgetdisklabel(dev, wd, lp, clp, spoofonly)
 	dev_t  dev;
 	struct wd_softc *wd;
