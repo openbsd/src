@@ -1,3 +1,4 @@
+dnl	$OpenBSD: upgrade,v 1.16 2002/03/30 19:33:20 miod Exp $
 To do the upgrade, and if you are using the miniroot installation, you
 must have the OpenBSD kernel on AmigaDOS and you must transfer the root
 filesystem miniroot{:--:}OSrev.fs onto the swap partition of the OpenBSD hard disk.
@@ -61,6 +62,6 @@ To upgrade your system, follow the following instructions:
 
 	The upgrade script will ask you for the existing root partition,
 	and will use the existing filesystems defined in /etc/fstab to
-	installe the new system in, and also preserve files en `/etc'
+	install the new system in, and also preserve files in `/etc'
 	which you are likely to have customized since a previous
 	installation.

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.30 2002/03/28 01:23:44 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.31 2002/03/30 19:33:17 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -641,7 +641,7 @@ dnl OpenBSDXferBareTape describes how to set up a non-bootable distribution
 dnl tape, and takes as an optional argument, the list of X11 sets which
 dnl may be put on the tape.
 define({:-OpenBSDXferBareTape-:},
-{:-Create an installation tape:
+{:-Creating an installation tape:
 
 	While you won't be able to boot OpenBSD from a tape, you can use
 	one to provide the installation sets.  To do so, you need to make
@@ -686,7 +686,7 @@ dnl on the tape. Then at least one, and up to three arguments list the first
 dnl files to be put on the tape to make it bootable. Each filename can be
 dnl followed by dd(1) arguments (such as conv=sync).
 define({:-OpenBSDXferBootTape-:},
-{:-Create an (optionally bootable) installation tape:
+{:-Creating an (optionally bootable) installation tape:
 
 	To install OpenBSD from a tape, you need to make a tape that
 	contains the distribution set files, each in "tar" format or in
