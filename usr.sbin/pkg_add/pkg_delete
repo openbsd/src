@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.30 2004/08/05 23:36:39 espie Exp $
+# $OpenBSD: pkg_delete,v 1.31 2004/08/06 07:05:16 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -115,6 +115,12 @@ sub delete
 	my $h = $state->{dirs_to_rm};
 	$h->{$name} = [] unless defined $h->{$name};
 	push(@{$h->{$name}}, $state->{pkgname});
+}
+
+package OpenBSD::PackingElement::DirRm;
+sub delete
+{
+	&OpenBSD::PackingElement::DirBase::delete;
 }
 
 package OpenBSD::PackingElement::Unexec;
