@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.2 1998/09/05 20:00:05 art Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.3 1998/10/28 18:08:50 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -74,10 +74,6 @@ main(int argc, char **argv)
 	int error;
 	int ch;
 	int mntflags = 0;
-	int afsd = 0;
-
-	if (strstr(__progname, "mount_afs"))
-		afsd = 1;
 
 	optind = optreset = 1;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -100,13 +96,6 @@ main(int argc, char **argv)
 
 	if (error != 0)
 		err(1, "mount");
-
-#ifdef not_yet
-	if (afsd) {
-		execl(_PATH_AFSD, "afsd", NULL);
-		err(1, "Error starting afsd:");
-	}
-#endif
 
 	return 0;
 }
