@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.31 2001/07/10 00:07:21 millert Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.32 2001/07/10 03:03:44 millert Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -38,6 +38,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <net/pfvar.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -625,12 +626,23 @@ next_number(char **s)
 u_int32_t
 next_addr(char **w)
 {
-	u_int8_t a, b, c, d;
-	a = next_number(w);
-	b = next_number(w);
-	c = next_number(w);
-	d = next_number(w);
-	return (htonl((a << 24) | (b << 16) | (c << 8) | d));
+	struct in_addr ia;
+	struct hostent *hp;
+	char *slash;
+
+	if ((slash = strchr(*w, '/')))
+		*slash = '\0';
+	if (inet_aton(*w, &ia) != 1) {
+		if ((hp = gethostbyname(*w)) == NULL)
+			return(0);
+		memcpy(&ia.s_addr, hp->h_addr, sizeof(ia.s_addr));
+	}
+	if (slash) {
+		*slash = '/';
+		*w = slash;
+	} else
+		*w += strlen(*w);
+	return(ia.s_addr);
 }
 
 u_int8_t
@@ -801,6 +813,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 				w = next_word(&l);
 			}
 			r->src.addr = next_addr(&w);
+			if (r->src.addr == 0) {
+				error(n, "unresolvable host %s\n", w);
+				return (0);
+			}
 			if (!*w)
 				r->src.mask = 0xFFFFFFFF;
 			else if (*w == '/')
@@ -865,6 +881,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 				w = next_word(&l);
 			}
 			r->dst.addr = next_addr(&w);
+			if (r->dst.addr == 0) {
+				error(n, "unresolvable host %s\n", w);
+				return (0);
+			}
 			if (!*w)
 				r->dst.mask = 0xFFFFFFFF;
 			else if (*w == '/')
@@ -1065,6 +1085,10 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 			w = next_word(&l);
 		}
 		nat->saddr = next_addr(&w);
+		if (nat->saddr == 0) {
+			error(n, "unresolvable host %s\n", w);
+			return (0);
+		}
 		if (!*w)
 			nat->smask = 0xFFFFFFFF;
 		else if (*w == '/')
@@ -1090,6 +1114,10 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 			w = next_word(&l);
 		}
 		nat->daddr = next_addr(&w);
+		if (nat->daddr == 0) {
+			error(n, "unresolvable host %s\n", w);
+			return (0);
+		}
 		if (!*w)
 			nat->dmask = 0xFFFFFFFF;
 		else if (*w == '/')
@@ -1110,6 +1138,10 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 
 	/* external addr */
 	nat->raddr = next_addr(&w);
+	if (nat->raddr == 0) {
+		error(n, "unresolvable host %s\n", w);
+		return (0);
+	}
 	w = next_word(&l);
 
 	/* no further options expected */
@@ -1161,6 +1193,10 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 			w = next_word(&l);
 		}
 		rdr->saddr = next_addr(&w);
+		if (rdr->saddr == 0) {
+			error(n, "unresolvable host %s\n", w);
+			return (0);
+		}
 		if (!*w)
 			rdr->smask = 0xFFFFFFFF;
 		else if (*w == '/')
@@ -1201,6 +1237,10 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 			w = next_word(&l);
 		}
 		rdr->daddr = next_addr(&w);
+		if (rdr->daddr == 0) {
+			error(n, "unresolvable host %s\n", w);
+			return (0);
+		}
 		if (!*w)
 			rdr->dmask = 0xFFFFFFFF;
 		else if (*w == '/')
@@ -1239,6 +1279,10 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 
 	/* internal addr */
 	rdr->raddr = next_addr(&w);
+	if (rdr->raddr == 0) {
+		error(n, "unresolvable host %s\n", w);
+		return (0);
+	}
 	w = next_word(&l);
 
 	/* internal port */
