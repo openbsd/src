@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.18 1997/05/05 05:27:30 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.19 1997/05/10 22:19:36 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@ export VERSION
 
 ALLSETS="base etc misc comp text man game"	# default install sets
 UPGRSETS="base misc comp text man game"		# default upgrade sets
+SNAPSETS="bin dev etc games man misc sbin text \
+	  usr.bin usr.binutils usr.games usr.include \
+	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
