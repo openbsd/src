@@ -39,6 +39,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsfnms.c,v $
+ * Revision 1.2  1998/03/04 01:05:03  angelos
+ * mktemp() -> mkstemp()
+ *
  * Revision 1.1  1996/08/12 04:08:18  millert
  * rcs 5.7 + OpenBSD changes
  *
@@ -181,7 +184,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(fnmsId, "$Id: rcsfnms.c,v 1.1 1996/08/12 04:08:18 millert Exp $")
+libId(fnmsId, "$Id: rcsfnms.c,v 1.2 1998/03/04 01:05:03 angelos Exp $")
 
 static char const *bindex P((char const*,int));
 static int fin2open P((char const*, size_t, char const*, size_t, char const*, size_t, RILE*(*)P((struct buf*,struct stat*,int)), int));
@@ -288,6 +291,9 @@ maketemp(n)
 {
 	char *p;
 	char const *t = tpnames[n];
+#	if has_mktemp
+	int fd;
+#	endif
 
 	if (t)
 		return t;
@@ -299,10 +305,12 @@ maketemp(n)
 	    size_t tplen = dir_useful_len(tp);
 	    p = testalloc(tplen + 10);
 	    VOID sprintf(p, "%.*s%cT%cXXXXXX", (int)tplen, tp, SLASH, '0'+n);
-	    if (!mktemp(p) || !*p)
+	    fd = mkstemp(p);
+	    if (fd < 0 || !*p)
 		faterror("can't make temporary pathname `%.*s%cT%cXXXXXX'",
 			(int)tplen, tp, SLASH, '0'+n
 		);
+	    close(fd);
 #	else
 	    static char tpnamebuf[TEMPNAMES][L_tmpnam];
 	    p = tpnamebuf[n];
