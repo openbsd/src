@@ -142,7 +142,7 @@ quotaon -a
 
 # build ps databases
 echo 'building databases...'
-kvm_mkdb /netbsd
+kvm_mkdb /bsd
 dev_mkdb
 
 chmod 666 /dev/tty[pqrs]*
