@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.20 2000/03/03 16:49:25 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.21 2000/03/23 10:13:58 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
 #include <sys/sched.h>
+#include <sys/timeout.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -64,6 +65,33 @@
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
 
+void scheduler_start __P((void));
+
+void roundrobin __P((void *));
+void schedcpu __P((void *));
+void updatepri __P((struct proc *));
+void endtsleep __P((void *));
+
+void
+scheduler_start()
+{
+	static struct timeout roundrobin_to;
+	static struct timeout schedcpu_to;
+
+	/*
+	 * We avoid polluting the global namespace by keeping the scheduler
+	 * timeouts static in this function.
+	 * We setup the timeouts here and kick rundrobin and schedcpu once to
+	 * make them do their job.
+	 */
+
+	timeout_set(&roundrobin_to, roundrobin, &roundrobin_to);
+	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
+
+	roundrobin(&roundrobin_to);
+	schedcpu(&schedcpu_to);
+}
+
 /*
  * We need to keep track on how many times we call roundrobin before we
  * actually attempt a switch (that is when we call mi_switch()).
@@ -71,11 +99,6 @@ int	lbolt;			/* once a second sleep address */
  * blocking the scheduling.
  */
 int	roundrobin_attempts;
-
-void roundrobin __P((void *));
-void schedcpu __P((void *));
-void updatepri __P((struct proc *));
-void endtsleep __P((void *));
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -85,10 +108,11 @@ void
 roundrobin(arg)
 	void *arg;
 {
+	struct timeout *to = (struct timeout *)arg;
 
 	need_resched();
 	roundrobin_attempts++;
-	timeout(roundrobin, NULL, hz / 10);
+	timeout_add(to, hz / 10);
 }
 
 /*
@@ -184,10 +208,11 @@ void
 schedcpu(arg)
 	void *arg;
 {
-	register fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
-	register struct proc *p;
-	register int s;
-	register unsigned int newcpu;
+	struct timeout *to = (struct timeout *)arg;
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	struct proc *p;
+	int s;
+	unsigned int newcpu;
 	int phz;
 
 	/*
@@ -251,7 +276,7 @@ schedcpu(arg)
 	vmmeter();
 #endif
 	wakeup((caddr_t)&lbolt);
-	timeout(schedcpu, (void *)0, hz);
+	timeout_add(to, hz);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.50 2000/03/22 21:35:37 mickey Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.51 2000/03/23 10:13:58 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -188,8 +188,7 @@ main(framep)
 	int s;
 	register_t rval[2];
 	extern struct pdevinit pdevinit[];
-	extern void roundrobin __P((void *));
-	extern void schedcpu __P((void *));
+	extern void scheduler_start __P((void));
 	extern void disk_init __P((void));
 
 	/*
@@ -372,9 +371,8 @@ main(framep)
 	kmstartup();
 #endif
 
-	/* Kick off timeout driven events by calling first time. */
-	roundrobin(NULL);
-	schedcpu(NULL);
+	/* Start the scheduler */
+	scheduler_start();
 
 	/* Configure root/swap devices */
 	if (md_diskconf)
