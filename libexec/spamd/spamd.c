@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.38 2003/08/23 21:22:34 dhartmei Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.39 2003/08/24 23:20:19 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -537,7 +537,7 @@ closecon(struct con *cp)
 	time_t t;
 
 	time(&t);
-	syslog_r(LOG_INFO, &sdata, "%s disconnected after %ld seconds.",
+	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.",
 	    cp->addr, (long)(t - cp->s));
 	if (debug > 0)
 		printf("%s connected for %ld seconds.\n", cp->addr,
