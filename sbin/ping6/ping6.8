@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.4 2000/02/16 05:59:20 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.5 2000/02/28 14:06:39 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: ping6.8,v 1.11 1999/12/23 17:39:45 itojun Exp
+.\"     KAME Id: ping6.8,v 1.13 2000/02/28 13:33:19 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -40,8 +40,7 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm
 .\" without ipsec, or new ipsec
-.Op Fl dfnqvw
-.\".Op Fl dfnqRvw
+.Op Fl dfnqRvw
 .\" old ipsec
 .\" .Op Fl AdEfnqRvw
 .Op Fl a Ar addrtype
@@ -53,7 +52,7 @@ packets to network hosts
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .\" new ipsec
-.Op Fl P Ar policy
+.\".Op Fl P Ar policy
 .Op Fl S Ar sourceaddr
 .Op Fl s Ar packetsize
 .Op Ar hops...
@@ -83,17 +82,19 @@ Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 must be a string constructed of the following charaters.
 .Bl -tag -width Ds -compact
 .It Ic a
-requires all the responder's unicast addresses. If the charater is ommited,
+requests all the responder's unicast addresses. If the charater is ommited,
 only those addresses which belong to the interface which has the
-responder's address are required.
+responder's address are requests.
+.It Ic c
+requests responder's IPv4-compatible and IPv4-mapped addresses.
 .It Ic g
-requires responder's global-scope addresses.
+requests responder's global-scope addresses.
 .It Ic s
-requires responder's site-local addresses.
+requests responder's site-local addresses.
 .It Ic l
-requires responder's link-local addresses.
+requests responder's link-local addresses.
 .It Ic A
-requires responder's anycast addresses. Without this character, the responder
+requests responder's anycast addresses. Without this character, the responder
 will return unicast addresses only. With this character, the responder
 will return anycast addresses only.
 Note that the specification does not specify how to get responder's
@@ -177,20 +178,20 @@ messages.
 Quiet output.
 Nothing is displayed except the summary lines at startup time and
 when finished.
-.\".It Fl R
-.\"Make the kernel believe that the target
-.\".Ar host
-.\".Po
-.\"or the first
-.\".Ar hop
-.\"if you specify
-.\".Ar hops
-.\".Pc
-.\"is reachable, by injecting upper-layer reachability confirmation hint.
-.\"The option is meaningful only if the target
-.\".Ar host
-.\".Pq or the first hop
-.\"is a neighbor.
+.It Fl R
+Make the kernel believe that the target
+.Ar host
+.Po
+or the first
+.Ar hop
+if you specify
+.Ar hops
+.Pc
+is reachable, by injecting upper-layer reachability confirmation hint.
+The option is meaningful only if the target
+.Ar host
+.Pq or the first hop
+is a neighbor.
 .It Fl S Ar sourceaddr
 Specifies the source address of request packets.
 The source address must be one of the unicast addresses of the sending

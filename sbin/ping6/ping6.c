@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.3 2000/02/16 05:59:20 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.4 2000/02/28 14:06:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -302,6 +302,10 @@ main(argc, argv)
 				 switch(*cp) {
 				 case 'a':
 					 naflags |= NI_NODEADDR_FLAG_ALL;
+					 break;
+				 case 'c':
+				 case 'C':
+					 naflags |= NI_NODEADDR_FLAG_COMPAT;
 					 break;
 				 case 'l':
 				 case 'L':
@@ -1808,8 +1812,8 @@ usage()
 		      "AE"
 #endif
 #endif		      
-		      "] [-a [alsg]] [-b sockbufsiz] [-c count] [-I interface]\n\
-             [-i wait] [-l preload] [-p pattern] [-S sourceaddr]\n\
+		      "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n\
+             [-I interface] [-i wait] [-l preload] [-p pattern] [-S sourceaddr]\n\
              [-s packetsize] [-h hoplimit] [hops...] host\n");
 	exit(1);
 }
