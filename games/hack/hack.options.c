@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.options.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.options.c,v 1.8 2003/07/06 02:07:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.options.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.options.c,v 1.8 2003/07/06 02:07:45 avsm Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -171,8 +171,7 @@ parseoptions(char *opts, boolean from_env)
 		}
 		op = strchr(opts,':');
 		if(!op) goto bad;
-		(void) strncpy(plname, op+1, sizeof(plname)-1);
-		plname[sizeof(plname)-1] = '\0';
+		(void) strlcpy(plname, op+1, sizeof(plname));
 		return;
 	}
 

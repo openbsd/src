@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.9 2003/07/06 02:07:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.end.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.end.c,v 1.9 2003/07/06 02:07:45 avsm Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -340,10 +340,8 @@ topten()
 	t0->plchar = pl_character[0];
 	t0->sex = (flags.female ? 'F' : 'M');
 	t0->uid = uid;
-	(void) strncpy(t0->name, plname, NAMSZ);
-	(t0->name)[NAMSZ] = 0;
-	(void) strncpy(t0->death, killer, DTHSZ);
-	(t0->death)[DTHSZ] = 0;
+	(void) strlcpy(t0->name, plname, sizeof t0->name);
+	(void) strlcpy(t0->death, killer, sizeof t0->death);
 	(void) strlcpy(t0->date, getdate(), sizeof t0->date);
 
 	/* assure minimum number of points */

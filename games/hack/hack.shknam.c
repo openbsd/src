@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.shknam.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.shknam.c,v 1.7 2003/07/06 02:07:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.shknam.c,v 1.6 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.shknam.c,v 1.7 2003/07/06 02:07:45 avsm Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -200,8 +200,7 @@ findname(char *nampt, size_t len, char let)
 		/* Not enough names, try general name */
 		if(let) findname(nampt, len, 0);
 		else {
-			(void) strncpy(nampt, "Dirk", len-1);
-			nampt[len-1] = '\0';
+			(void) strlcpy(nampt, "Dirk", len);
 		}
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.shk.c,v 1.9 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.shk.c,v 1.10 2003/07/06 02:07:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.shk.c,v 1.9 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.shk.c,v 1.10 2003/07/06 02:07:45 avsm Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -332,8 +332,7 @@ inshop()
 		    /* He seems to be new here */
 		    ESHK(shopkeeper)->visitct = 0;
 		    ESHK(shopkeeper)->following = 0;
-		    (void) strncpy(ESHK(shopkeeper)->customer,plname,PL_NSIZ-1);
-		    ESHK(shopkeeper)->customer[PL_NSIZ-1] = '\0';
+		    (void) strlcpy(ESHK(shopkeeper)->customer,plname,PL_NSIZ);
 		    NOTANGRY(shopkeeper) = 1;
 		}
 		if(!ESHK(shopkeeper)->following) {

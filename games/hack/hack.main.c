@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.12 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.13 2003/07/06 02:07:45 avsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.main.c,v 1.12 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.main.c,v 1.13 2003/07/06 02:07:45 avsm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,13 +155,11 @@ main(int argc, char **argv)
 
 	  initoptions();
 	  if(!*plname && (s = getenv("LOGNAME")))
-		(void) strncpy(plname, s, sizeof(plname)-1);
+		(void) strlcpy(plname, s, sizeof(plname));
 	  if(!*plname && (s = getenv("USER")))
-		(void) strncpy(plname, s, sizeof(plname)-1);
+		(void) strlcpy(plname, s, sizeof(plname));
 	  if(!*plname && (s = getlogin()))
-		(void) strncpy(plname, s, sizeof(plname)-1);
-	  if(*plname)
-		plname[sizeof(plname)-1] = '\0';
+		(void) strlcpy(plname, s, sizeof(plname));
 	}
 
 	/*
@@ -225,22 +223,17 @@ main(int argc, char **argv)
 #endif
 		case 'u':
 			if(argv[0][2]) {
-			  (void) strncpy(plname, argv[0]+2, sizeof(plname)-1);
-			  plname[sizeof(plname)-1] = '\0';
+			  (void) strlcpy(plname, argv[0]+2, sizeof(plname));
 			} else if(argc > 1) {
 			  argc--;
 			  argv++;
-			  (void) strncpy(plname, argv[0], sizeof(plname)-1);
-			  plname[sizeof(plname)-1] = '\0';
+			  (void) strlcpy(plname, argv[0], sizeof(plname));
 			} else
 				printf("Player name expected after -u\n");
 			break;
 		default:
 			/* allow -T for Tourist, etc. */
-			(void) strncpy(pl_character, argv[0]+1,
-				sizeof(pl_character)-1);
-			plname[sizeof(pl_character)-1] = '\0';
-
+			(void) strlcpy(pl_character, argv[0]+1, sizeof(pl_character));
 			/* printf("Unknown option: %s\n", *argv); */
 		}
 	}
