@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.2 2001/06/26 03:14:58 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.3 2001/06/26 07:18:36 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -280,17 +280,27 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	/* Reset the IOP and request status. */
 	printf("I2O adapter");
 
+	/* Allocate a scratch DMA map for small miscellaneous shared data. */
+	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_scr_dmamap) != 0) {
+		printf("%s: cannot create dmamap\n", sc->sc_dv.dv_xname);
+		return;
+	}
+
 	if ((rv = iop_reset(sc)) != 0) {
 		printf("%s: not responding (reset)\n", sc->sc_dv.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 		return;
 	}
 	if ((rv = iop_status_get(sc, 1)) != 0) {
-		printf("%s: not responding (get status)\n", sc->sc_dv.dv_xname);
+		printf("%s: not responding (get status)\n",
+		    sc->sc_dv.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 		return;
 	}
 	sc->sc_flags |= IOP_HAVESTATUS;
-	iop_strvis(sc, sc->sc_status.productid, sizeof(sc->sc_status.productid),
-	    ident, sizeof(ident));
+	iop_strvis(sc, sc->sc_status.productid,
+	    sizeof(sc->sc_status.productid), ident, sizeof(ident));
 	printf(" <%s>\n", ident);
 
 #ifdef I2ODEBUG
@@ -317,8 +327,10 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	/* Allocate message wrappers. */
 	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT);
-	if (!im)
+	if (!im) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 		return;
+	}
 	bzero(im, sizeof(*im) * sc->sc_maxib);
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
@@ -331,6 +343,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		if (rv != 0) {
 			printf("%s: couldn't create dmamap (%d)",
 			    sc->sc_dv.dv_xname, rv);
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 			return;
 		}
 
@@ -340,7 +353,9 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	/* Initalise the IOP's outbound FIFO. */
 	if (iop_ofifo_init(sc) != 0) {
-		printf("%s: unable to init oubound FIFO\n", sc->sc_dv.dv_xname);
+		printf("%s: unable to init oubound FIFO\n",
+		    sc->sc_dv.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_scr_dmamap);
 		return;
 	}
 
@@ -486,6 +501,7 @@ iop_config_interrupts(struct device *self)
 	ia.ia_tid = I2O_TID_IOP;
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
 #endif
+
 	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL, curproc);
 	if ((rv = iop_reconfigure(sc, 0)) == -1) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
@@ -1292,15 +1308,10 @@ iop_reset(struct iop_softc *sc)
 	struct i2o_exec_iop_reset mf;
 	int rv = 0;
 	int state = 0;
-	bus_dmamap_t map;
 	bus_dma_segment_t seg;
 	int nsegs;
 	u_int32_t *sw;
 	paddr_t pa;
-
-	if (bus_dmamap_create(sc->sc_dmat, sizeof *sw, 1, sizeof *sw, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &map) != 0)
-		return (ENOMEM);
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof *sw, sizeof *sw, 0, &seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0) {
@@ -1326,22 +1337,22 @@ iop_reset(struct iop_softc *sc)
 	mf.statuslow = pa & ~(u_int32_t)0;
 	mf.statushigh = sizeof pa > sizeof mf.statuslow ? pa >> 32 : 0;
 
-	if (bus_dmamap_load(sc->sc_dmat, map, &sw, sizeof *sw, NULL,
-	    BUS_DMA_NOWAIT)) {
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_scr_dmamap, &sw, sizeof *sw,
+	    NULL, BUS_DMA_NOWAIT)) {
 		rv = ENOMEM;
 		goto release;
 	}
 	state++;
 
-	bus_dmamap_sync(sc->sc_dmat, map, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
 		goto release;
 
 	/* XXX */
 	POLL(2500,
-	    (bus_dmamap_sync(sc->sc_dmat, map, BUS_DMASYNC_POSTREAD),
-	    *sw != 0));
+	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap,
+	    BUS_DMASYNC_POSTREAD), *sw != 0));
 	if (*sw != I2O_RESET_IN_PROGRESS) {
 		printf("%s: reset rejected, status 0x%x\n",
 		    sc->sc_dv.dv_xname, *sw);
@@ -1364,12 +1375,11 @@ iop_reset(struct iop_softc *sc)
 
  release:
 	if (state > 2)
-		bus_dmamap_unload(sc->sc_dmat, map);
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
 	if (state > 1)
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sw, sizeof *sw);
 	if (state > 0)
 		bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
-	bus_dmamap_destroy(sc->sc_dmat, map);
 	return (rv);
 }
 
