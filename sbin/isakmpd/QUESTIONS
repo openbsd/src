@@ -1,4 +1,4 @@
-$Id: QUESTIONS,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+$OpenBSD: QUESTIONS,v 1.2 1998/11/15 00:43:48 niklas Exp $
 
 Does the spec limit the count of SA payloads in a message?  Where if so?
 [ Only the specific IKE main mode does.  In the IKE spec.]

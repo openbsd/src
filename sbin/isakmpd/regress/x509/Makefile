@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1998/11/15 00:44:11 niklas Exp $
+
 # Test X509
 
 PROG=		x509test

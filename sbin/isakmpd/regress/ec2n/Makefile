@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1998/11/15 00:44:08 niklas Exp $
+
 
 # Test EC2N:
 

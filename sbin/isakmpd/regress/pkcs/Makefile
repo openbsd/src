@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1998/11/15 00:44:10 niklas Exp $
+
 # Test PKCS#1
 
 PROG=		pkcstest

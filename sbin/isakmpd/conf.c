@@ -1,4 +1,4 @@
-/*	$Id: conf.c,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 1998/11/15 00:43:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: run.sh,v 1.1.1.1 1998/11/15 00:03:50 niklas Exp $
+#	$OpenBSD: run.sh,v 1.2 1998/11/15 00:44:09 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
