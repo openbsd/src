@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.112 1998/12/28 21:19:55 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.113 1999/01/08 03:15:54 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -920,7 +920,8 @@
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
 
 /* Macronix */
-#define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC */
+#define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 98713 */
+#define	PCI_PRODUCT_MACRONIX_MX98715	0x0531		/* PMAC 98715 */
 
 /* Madge Networks products */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
