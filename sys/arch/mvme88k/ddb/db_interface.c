@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.29 2003/10/05 20:23:52 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2003/10/05 22:20:28 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -528,7 +528,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 
 	src = (char *)addr;
 
-	while(--size >= 0) {
+	while(size-- > 0) {
 		*data++ = *src++;
 	}
 }
@@ -548,7 +548,7 @@ db_write_bytes(db_addr_t addr, size_t size, char *data)
 
 	dst = (char *)addr;
 
-	while (--size >= 0) {
+	while (size-- > 0) {
 		*dst++ = *data++;
 	}
 	/* XXX test return value */
