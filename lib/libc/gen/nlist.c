@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.23 1998/01/02 05:32:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.24 1998/01/20 22:10:48 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ __aout_fdnlist(fd, list)
 	register struct nlist *list;
 {
 	register struct nlist *p, *s;
-	register void * strtab;
+	register void *strtab;
 	register off_t stroff, symoff;
 	register u_long symsize;
 	register int nent, cc;
@@ -131,7 +131,7 @@ __aout_fdnlist(fd, list)
 			if (soff == 0 || (s->n_type & N_STAB) != 0)
 				continue;
 			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(&strtab[soff], p->n_un.n_name)) {
+				if (!strcmp(&((char *)strtab)[soff], p->n_un.n_name)) {
 					p->n_value = s->n_value;
 					p->n_type = s->n_type;
 					p->n_desc = s->n_desc;
