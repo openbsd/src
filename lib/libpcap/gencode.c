@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.17 2002/07/09 17:03:00 provos Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.18 2002/11/29 18:27:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.17 2002/07/09 17:03:00 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.18 2002/11/29 18:27:54 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -623,6 +623,11 @@ init_linktype(type)
 	case DLT_PFLOG:
 		off_linktype = 0;
 		off_nl = 28;
+		return;
+
+	case DLT_PFSYNC:
+		off_linktype = -1;
+		off_nl = 4;
 		return;
 
 	case DLT_RAW:
