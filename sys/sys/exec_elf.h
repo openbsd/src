@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.29 2001/06/06 23:18:46 art Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.30 2001/08/19 15:20:25 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -154,8 +154,10 @@ typedef struct {
 #define EM_MIPS_RS4_BE	10		/* MIPS R4000 Big-Endian */
 #define EM_SPARC64	11		/* SPARC v9 64-bit unoffical */
 #define EM_PARISC	15		/* HPPA */
+#define EM_SPARC32PLUS	18		/* Enhanced instruction set SPARC */
 #define EM_PPC		20		/* PowerPC */
 #define EM_ALPHA	41		/* DEC ALPHA */
+#define EM_SPARCV9	43		/* SPARC version 9 */
 #define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
 #define EM_VAX		75		/* DEC VAX */
 #define EM_NUM		15		/* number of machine types */
