@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.118 2002/11/25 03:25:56 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.119 2002/11/25 03:38:17 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -32,8 +32,7 @@
 .Os
 .Sh NAME
 .Nm pf.conf
-.Nd filtering, translation (NAT) and queue rules file for the
-packet filter
+.Nd packet filter configuration file
 .Sh DESCRIPTION
 The
 .Xr pf 4
@@ -64,20 +63,27 @@ matches the semantics of the underlying engine; in most cases rules
 are evaluated in the order in which they are specified.
 .Pp
 .Sh MACROS
-Where is the fucking introductory paragraph for this section?
+Much like in
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be set and later expanded.
+Macro names must start with a letter and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (e.g.
+.Pa pass ,
+.Pa in ,
+.Pa out Ns ).
+Macros are not expanded recursively.
 .Pp
-.Xr pfctl 8
-supports macro definition and expansion like:
+For example,
+.Pp
 .Bd -literal
     ext_if = "kue0"
     pass out on $ext_if           from any to any         keep state
     pass in  on $ext_if proto tcp from any to any port 25 keep state
 .Ed
 .Pp
-Macro names must start with a letter and may contain letters, digits
-and underscores.
-Macro names may not be pf reserved words (e.g.  pass, in, out).
-Macros are not expanded recursively.
 .Sh OPTIONS
 A variety of global options can be adjusted to tune
 .Xr pf 4
@@ -145,7 +151,8 @@ Other protocols are handled similarly to UDP:
 .It Em other.multiple
 .El
 .Pp
-Example:
+For example:
+.Pp
 .Bd -literal
     set timeout tcp.established 3600
     set timeout { tcp.opening 30, tcp.closing 900 }
@@ -157,7 +164,9 @@ These statistics can be viewed using
     # pfctl -s info
 .Ed
 .Pp
-In this example pf is told to collect statistics on the interface named dc0:
+In this example
+.Xr pf 4
+collects statistics on the interface named dc0:
 .Bd -literal
     set loginterface dc0
 .Ed
@@ -217,7 +226,9 @@ Pains will be taken to avoid dropping legitimate connections at the
 expense of greater memory utilization (possibly much greater on a busy
 network) and slightly increased processor utilization.
 .El
-Example:
+.Pp
+For example:
+.Pp
 .Bd -literal
     set optimization aggressive
 .Ed
@@ -234,7 +245,9 @@ Packet is dropped silently
 TCP packets are dropped with a TCP RST, UDP packets are dropped with an
 ICMP UNREACHABLE, and all other packets are dropped silently.
 .El
-Example:
+.Pp
+For example:
+.Pp
 .Bd -literal
     set block-policy return
 .Ed
@@ -339,7 +352,7 @@ is optional and specifies the maximum rate for all queues on this interface.
 All queues for this interface have to be listed after
 .Em queue .
 .Pp
-For example, the interface
+In the following example, the interface
 .Pa dc0
 should queue up to 5 Mbit/s in two queues using CBQ.
 .Bd -literal
@@ -406,7 +419,7 @@ Relative values are calculated against the bandwidth of the parent queue.
 Where is the section discussion NAT / translation?
 .Pp
 This is the only part of NAT that is fucking documented:
-.Bl -item -width xxxx
+.Bl -tag -width xxxx
 .It Pa no
 Causes matching packets to remain untranslated.
 .El
@@ -740,7 +753,8 @@ the protocol name.
 the rule number.
 .El
 .Pp
-Example:
+For example:
+.Pp
 .Bd -literal
     ips = "{ 1.2.3.4, 1.2.3.5 }"
     pass in proto tcp from any to $ips port >1023 label "$dstaddr:$dstport"
@@ -757,7 +771,7 @@ Note that evaluation takes place at parse time.
 Packets matching this rule will be assigned to the specified queue.
 See QUEUE RULES for setup details.
 .Pp
-Example:
+For example:
 .Pp
 .Bd -literal
     pass in proto tcp from any to any port 25 queue mail
@@ -864,7 +878,9 @@ With
 .Em nat
 rules, the
 .Em static-port
-option prevents pf from modifying the source port on tcp and udp packets.
+option prevents
+.Xr pf 4
+from modifying the source port on tcp and udp packets.
 .El
 .Sh STATEFUL INSPECTION
 .Xr pf 4
