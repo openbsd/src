@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.30 2000/02/21 21:05:59 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.31 2000/02/23 16:43:41 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -1324,30 +1324,46 @@ fsrtoname(impl, vers, fver, buf)
 	return (buf);
 }
 
+/*
+ * Whack the slow sun4/sun4c {,u}{mul,div,rem} functions with
+ * fast V8 ones
+ * We are called once before pmap_bootstrap and once after. We only do stuff
+ * in the "before" case. We happen to know that the kernel text is not
+ * write-protected then.
+ * XXX - investigate cache flushing, right now we can't do it because the
+ *       flushes try to do va -> pa conversions.
+ */
+extern int _mulreplace, _mulreplace_end, _mul;
+extern int _umulreplace, _umulreplace_end, _umul;
+extern int _divreplace, _divreplace_end, _div;
+extern int _udivreplace, _udivreplace_end, _udiv;
+extern int _remreplace, _remreplace_end, _rem;
+extern int _uremreplace, _uremreplace_end, _urem;
+
+struct replace {
+	void *from, *frome, *to;
+} ireplace[] = {
+	{ &_mulreplace, &_mulreplace_end, &_mul },
+	{ &_umulreplace, &_umulreplace_end, &_umul },
+	{ &_divreplace, &_divreplace_end, &_div },
+	{ &_udivreplace, &_udivreplace_end, &_udiv },
+	{ &_remreplace, &_remreplace_end, &_rem },
+ 	{ &_uremreplace, &_uremreplace_end, &_urem },
+};
+
 void
 replacemul()
 {
-	extern char *_umulreplace, *_umulreplace_end;
-	extern char *_mulreplace, *_mulreplace_end;
-	extern char *_mul, *_umul;
-	int i, j, s;
+	static int replacedone = 0;
+	int i, s;
 
-	return;
+	if (replacedone)
+		return;
+	replacedone = 1;
 
-	/*
-	 * Whack the slow sun4/sun4c umul/mul functions with
-	 * fast V8 ones
-	 */
 	s = splhigh();
-	cpuinfo.cache_flush_all();
-	for (i = 0; i < _umulreplace_end - _umulreplace; i++) {
-		j = _umulreplace[i];
-		pmap_writetext(&_umul[i], j);
-	}
-	for (i = 0; i < _mulreplace_end - _mulreplace; i++) {
-		j = _mulreplace[i];
-		pmap_writetext(&_mul[i], j);
-	}
-	cpuinfo.cache_flush_all();
+	for (i = 0; i < sizeof(ireplace)/sizeof(ireplace[0]); i++)
+		bcopy(ireplace[i].from, ireplace[i].to,
+		    ireplace[i].frome - ireplace[i].from);
 	splx(s);
 }
