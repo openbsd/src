@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.53 2001/12/13 20:16:48 mpech Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.54 2002/02/23 22:07:20 millert Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -378,10 +378,56 @@ for
 .Tn AFI
 37 type addresses.
 .It Cm nwid Ar id
-(IEEE 802.11 devices only, specifically
-.Xr ray 4 )
-.br
+(IEEE 802.11 devices only)
 Configure network ID for IEEE 802.11-based wireless network interfaces.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+The empty string allows the interface to connect to any available
+access points.
+.It Cm nwkey Ar key
+(IEEE 802.11 devices only)
+Enable WEP encryption for IEEE 802.11-based wireless network interfaces
+using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits, or a set of keys
+of the form
+.Ar n:k1,k2,k3,k4 ,
+where 
+.Ar n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Ar k1
+through
+.Ar k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Po So , Sc Pc
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+For IEEE 802.11 wireless networks, the length of each key is restricted to
+40 bits, i.e. a 5-character string or 10 hexadecimal digits.
+WaveLAN/IEEE Gold and newer Prism cards will also accept a 104 bit
+(13 character) key.
+.It Cm nwkey Cm persist
+(IEEE 802.11 devices only)
+Enable WEP encryption for IEEE 802.11-based wireless network interfaces
+with the persistent key stored in the network card.
+.It Cm nwkey Cm persist: Ns Ar key
+(IEEE 802.11 devices only)
+Write
+.Ar key
+to the persistent memory of the network card, and
+enable WEP encryption for IEEE 802.11-based wireless network interfaces
+using that
+.Ar key .
+.It Fl nwkey
+(IEEE 802.11 devices only)
+Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
 .It Cm phase
 The argument following this specifies the version (phase) of the
 AppleTalk network attached to the interface.
@@ -389,6 +435,15 @@ Values of 1 or 2 are permitted.
 .It Cm pltime Ar n
 (inet6 only)
 Set preferred lifetime for the address.
+.It Cm powersave
+(IEEE 802.11 devices only)
+Enable 802.11 power saving mode.
+.It Fl powersave
+(IEEE 802.11 devices only)
+Disable 802.11 power saving mode.
+.It Cm powersavesleep Ar duration
+(IEEE 802.11 devices only)
+Set the receiver sleep duration (in milliseconds) for 802.11 power saving mode.
 .It Cm prefixlen Ar n
 (inet and inet6 only)
 Effect is similar to
