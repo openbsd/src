@@ -1,4 +1,4 @@
-/*	$OpenBSD: flashreg.h,v 1.4 1996/04/28 11:03:20 deraadt Exp $ */
+/*	$OpenBSD: flashreg.h,v 1.5 2000/01/29 04:11:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -55,6 +55,7 @@
 #define FLII_INTEL_28F020	0xbd
 #define FLII_INTEL_28F008SA	0xa1
 #define FLII_INTEL_28F008SA_L	0xa2
+#define FLII_INTEL_28F016SA	0xa0
 
 struct flashii {
 	char	*name;

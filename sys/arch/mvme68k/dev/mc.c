@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.6 2000/01/06 03:21:42 smurph Exp $ */
+/*	$OpenBSD: mc.c,v 1.7 2000/01/29 04:11:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,7 +32,7 @@
  */
 
 /*
- * VME162 MCchip
+ * VME162/VME172 MCchip
  */
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -213,9 +213,33 @@ mc_enableflashwrite(on)
 {
 	struct mcsoftc *sc = (struct mcsoftc *) mc_cd.cd_devs[0];
 	volatile u_char *ena, x;
-
-	ena = (u_char *)sc->sc_vaddr +
-	    (on ? MC_ENAFLASHWRITE_OFFSET : MC_DISFLASHWRITE_OFFSET);
-	x = *ena;
+	/* 
+	 * Check MC chip revision, as the way to enable flash writes
+	 * has been changed from a memory location in BBRAM to a 
+	 * bit in the Flash Control Reg.  XXX - smurph
+	 */
+	if (sc->sc_mc->mc_chiprev == 0x01) {
+		if (on) 
+			sc->sc_mc->mc_flashctl |= MC_FLASHCTL_WRITE;
+		else
+			sc->sc_mc->mc_flashctl &= ~MC_FLASHCTL_WRITE;
+	} else {
+		ena = (u_char *)sc->sc_vaddr +
+			 (on ? MC_ENAFLASHWRITE_OFFSET : MC_DISFLASHWRITE_OFFSET);
+		x = *ena;
+	}
+}
+/*
+ * Function to check if we booted from flash or prom.
+ * If we booted from PROM, flash mem is avaliable.
+ */
+int 
+mc_hasflash(void)
+{
+	struct mcsoftc *sc = (struct mcsoftc *) mc_cd.cd_devs[0];
+   if (sc->sc_mc->mc_input & MC_INPUT_PROM)
+		return 1;
+	else 
+		return 0;
 }
 #endif

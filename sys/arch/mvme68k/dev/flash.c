@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.5 1996/04/28 11:11:50 deraadt Exp $ */
+/*	$OpenBSD: flash.c,v 1.6 2000/01/29 04:11:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -84,6 +84,7 @@ int flasherasezone __P((struct flashsoftc *sc, int addr));
 struct flashii intel_flashii[] = {
 	{ "28F008SA",	FLII_INTEL_28F008SA,	1024*1024,	64*1024 },
 	{ "28F008SA-L",	FLII_INTEL_28F008SA_L,	1024*1024,	64*1024 },
+	{ "28F016SA",	FLII_INTEL_28F016SA,	1024*1024,	64*1024 },
 	{ NULL },
 };
 
@@ -92,8 +93,8 @@ struct flashmanu {
 	u_char	manu;
 	struct flashii *flashii;
 } flashmanu[] = {
-	{ "intel",	FLMANU_INTEL,		intel_flashii },
-	{ NULL }
+	{ "intel", FLMANU_INTEL, intel_flashii },
+	{ NULL, 0, NULL }
 };
 
 int
@@ -118,13 +119,20 @@ flashmatch(parent, cf, args)
 	if (cputyp == CPU_167)
 		return (0);
 #endif
+#ifdef MVME177
+	/*
+	 * XXX: 177 has no flash.
+	 */
+	if (cputyp == CPU_177)
+		return (0);
+#endif
 
 	if (badpaddr(ca->ca_paddr, 1))
 		return (0);
 
-	/*
-	 * XXX: need to determine if it is flash or rom
-	 */
+	if (!mc_hasflash())
+		return 0;
+   
 	return (1);
 }
 
@@ -146,6 +154,11 @@ flashattach(parent, self, args)
 		mc_enableflashwrite(1);
 		break;
 #endif
+#ifdef MVME172
+	case CPU_172:
+		mc_enableflashwrite(1);
+		break;
+#endif
 	}
 
 	/* read manufacturer and product identifier from flash */
@@ -154,7 +167,6 @@ flashattach(parent, self, args)
 	sc->sc_manu = sc->sc_vaddr[0];
 	sc->sc_ii = sc->sc_vaddr[1];
 	sc->sc_vaddr[0] = FLCMD_RESET;
-
 	for (manu = 0; flashmanu[manu].name; manu++)
 		if (flashmanu[manu].manu == sc->sc_manu)
 			break;

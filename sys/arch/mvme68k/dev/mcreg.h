@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcreg.h,v 1.4 2000/01/06 03:21:42 smurph Exp $ */
+/*	$OpenBSD: mcreg.h,v 1.5 2000/01/29 04:11:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -71,15 +71,23 @@ struct mcreg {
    #define MC_MEMOPTIONS_DRAM4M2	0x04
    #define MC_MEMOPTIONS_DRAM8M	0x05
    #define MC_MEMOPTIONS_DRAM16M	0x07
-/*0x01*/   	volatile u_char		mc_sramsize;
-/*0x01*/   	volatile u_char		mc_resv1;
-/*0x01*/   	volatile u_char		mc_ieerr;
-/*0x01*/   	volatile u_char		mc_resv2;
-/*0x01*/   	volatile u_char		mc_ieirq;
-/*0x01*/   	volatile u_char		mc_iefailirq;
-/*0x01*/   	volatile u_char		mc_ncrerr;
-/*0x01*/   	volatile u_char		mc_input;
-/*0x01*/   	volatile u_char		mc_ver;
+/*0x26*/   	volatile u_char		mc_sramsize;
+/*0x27*/   	volatile u_char		mc_resv1;
+/*0x28*/   	volatile u_char		mc_ieerr;
+/*0x29*/   	volatile u_char		mc_resv2;
+/*0x2A*/   	volatile u_char		mc_ieirq;
+/*0x2B*/   	volatile u_char		mc_iefailirq;
+/*0x2C*/   	volatile u_char		mc_ncrerr;
+/*0x2D*/   	volatile u_char		mc_input;
+	#define MC_INPUT_USR1 	0x80
+	#define MC_INPUT_USR2 	0x40
+	#define MC_INPUT_USR3 	0x20
+	#define MC_INPUT_USR4 	0x10
+	#define MC_INPUT_PROM 	0x08
+	#define MC_INPUT_BUG3 	0x04
+	#define MC_INPUT_BUG2 	0x02
+	#define MC_INPUT_BUG1 	0x01
+/*0x2E*/   	volatile u_char		mc_ver;
 /*0x01*/   	volatile u_char		mc_ncrirq;
 /*0x01*/   	volatile u_long		mc_t3cmp;
 /*0x01*/   	volatile u_long		mc_t3count;
@@ -88,6 +96,7 @@ struct mcreg {
 /*0x01*/   	volatile u_char		mc_busclock;
 /*0x01*/   	volatile u_char		mc_promtime;
 /*0x01*/   	volatile u_char		mc_flashctl;
+	#define MC_FLASHCTL_WRITE	0x08
 /*0x01*/   	volatile u_char		mc_abortirq;
 /*0x01*/   	volatile u_char		mc_resetctl;
 /*0x01*/   	volatile u_char		mc_watchdogctl;
@@ -163,3 +172,5 @@ extern struct mcreg *sys_mc;
 void mc_enableflashwrite __P((int on));
 #define MC_ENAFLASHWRITE_OFFSET	0xcc000
 #define MC_DISFLASHWRITE_OFFSET	0xc8000
+int mc_hasflash __P((void));
+

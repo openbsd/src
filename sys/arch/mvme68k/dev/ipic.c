@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.5 1996/11/23 21:45:58 kstailey Exp $ */
+/*	$OpenBSD: ipic.c,v 1.6 2000/01/29 04:11:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -165,7 +165,14 @@ ipicattach(parent, self, args)
 	sc->sc_ipspace = (caddr_t)IPIC_IPSPACE;
 	sc->sc_nip = 2;
 
-	printf(": rev %d\n", sc->sc_ipic->ipic_chiprev);
+	/* 
+	 * Bug in IP2 chip. ipic_chiprev should be 0x01 if 
+	 * the MC chip is rev 1. XXX - smurph
+	 */
+	if (sys_mc->mc_chiprev == 0x01) 
+      printf(": rev 1\n");
+	else
+		printf(": rev %d\n", sc->sc_ipic->ipic_chiprev);
 
 	sc->sc_ipic->ipic_reset = IPIC_RESET;
 	delay(2);
