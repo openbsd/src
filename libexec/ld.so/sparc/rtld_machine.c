@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2003/02/15 22:39:13 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -356,7 +356,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	value = ooff + this->st_value;
 
 	/* if PLT is protected, allow the write */
-	if (object->plt_addr != NULL && object->plt_size != 0) {
+	if (object->plt_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
 		/* mprotect the actual modified region, not the whole plt */
@@ -367,7 +367,7 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	_dl_reloc_plt(addr, value);
 
 	/* if PLT is (to be protected, change back to RO/X */
-	if (object->plt_addr != NULL && object->plt_size != 0) {
+	if (object->plt_size != 0) {
 		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_EXEC);
@@ -384,6 +384,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	extern void _dl_bind_start(void);	/* XXX */
 	Elf_Addr ooff;
 	const Elf_Sym *this;
+	Elf_Addr plt_addr;
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
@@ -414,6 +415,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		__asm __volatile("nop;nop;nop;nop;nop");
 	}
 
+	object->got_addr = NULL;
+	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
@@ -428,30 +431,47 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
+	plt_addr = 0;
+	object->plt_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_start", object, &this,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
 	    NULL);
 	if (this != NULL)
-		object->plt_addr = ooff + this->st_value;
+		plt_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_end", object, &this,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
 	    NULL);
 	if (this != NULL)
-		object->plt_size = ooff + this->st_value  - object->plt_addr;
+		object->plt_size = ooff + this->st_value  - plt_addr;
+
+	if (object->got_addr == NULL)
+		object->got_start = NULL;
+	else {
+		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
+		object->got_size += object->got_addr - object->got_start;
+		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
+	}
+	if (plt_addr == NULL)
+		object->plt_start = NULL;
+	else {
+		object->plt_start = ELF_TRUNC(plt_addr, _dl_pagesz);
+		object->plt_size += plt_addr - object->plt_start;
+		object->plt_size = ELF_ROUND(object->plt_size, _dl_pagesz);
+	}
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 		return;
 	}
 
-	if (object->got_addr != NULL && object->got_size != 0)
+	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ);
-	if (object->plt_addr != NULL && object->plt_size != 0)
-		_dl_mprotect((void*)object->plt_addr, object->plt_size,
+	if (object->plt_size != 0)
+		_dl_mprotect((void*)object->plt_start, object->plt_size,
 		    PROT_READ|PROT_EXEC);
 }
 

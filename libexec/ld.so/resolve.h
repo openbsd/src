@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.21 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.22 2003/02/15 22:39:13 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -62,8 +62,9 @@ typedef struct elf_object {
 
 	u_int32_t  load_size;
 	Elf_Addr	got_addr;
+	Elf_Addr	got_start;
 	size_t		got_size;
-	Elf_Addr	plt_addr;
+	Elf_Addr	plt_start;
 	size_t		plt_size;
 
 	union {
@@ -197,5 +198,8 @@ extern char *_dl_debug;
 #define	DL_NO_SYMBOL		6
 #define	DL_INVALID_HANDLE	7
 #define	DL_INVALID_CTL		8
+
+#define ELF_ROUND(x,malign) (((x) + (malign)-1) & ~((malign)-1))
+#define ELF_TRUNC(x,malign) ((x) & ~((malign)-1))
 
 #endif /* _RESOLVE_H_ */

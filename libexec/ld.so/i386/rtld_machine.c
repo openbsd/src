@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2003/02/02 16:57:58 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2003/02/15 22:39:13 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -380,18 +380,18 @@ _dl_bind(elf_object_t *object, int index)
 	}
 
 	/* if GOT is protected, allow the write */
-	if (object->got_addr != NULL && object->got_size != 0) {
+	if (object->got_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-		_dl_mprotect((void*)object->got_addr, object->got_size,
+		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ|PROT_WRITE);
 	}
 
 	_dl_reloc_plt(addr, ooff + this->st_value);
 
 	/* put the GOT back to RO */
-	if (object->got_addr != NULL && object->got_size != 0) {
-		_dl_mprotect((void*)object->got_addr, object->got_size,
+	if (object->got_size != 0) {
+		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
@@ -419,6 +419,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_REL)
 		return;
 
+	object->got_addr = NULL;
+	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
@@ -433,19 +435,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
-	if (this != NULL)
-		object->plt_addr = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, SYM_NOTPLT,
-	    NULL);
-	if (this != NULL)
-		object->plt_size = ooff + this->st_value  - object->plt_addr;
+	if (object->got_addr == NULL)
+		object->got_start = NULL;
+	else {
+		object->got_start = ELF_TRUNC(object->got_addr, _dl_pagesz);
+		object->got_size += object->got_addr - object->got_start;
+		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
+	}
 
 	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
@@ -471,7 +467,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 
 	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
-	if (object->got_addr != NULL && object->got_size != 0)
-		_dl_mprotect((void*)object->got_addr, object->got_size,
+	if (object->got_size != 0)
+		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
 }
