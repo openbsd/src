@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.21 1995/11/28 08:10:09 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.22 1996/01/08 03:27:36 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -72,3 +72,4 @@ compat/hpux/hpux_sig.c			optional compat_hpux
 compat/hpux/hpux_syscalls.c		optional compat_hpux
 compat/hpux/hpux_sysent.c		optional compat_hpux
 compat/hpux/hpux_tty.c			optional compat_hpux
+arch/hp300/hp300/hpux_machdep.c		optional compat_hpux
