@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.127 2000/01/02 14:25:07 itojun Exp $
+#	$OpenBSD: rc,v 1.128 2000/01/30 02:17:00 mickey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -108,7 +108,7 @@ fi
 if [ -f /etc/sysctl.conf ]; then
 (
 	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' /etc/sysctl.conf | grep -v '^$'`
+	set -- `sed -e 's/#.*$//' -e '/^$/d' /etc/sysctl.conf`
 	while [ $# -ge 1 ] ; do
 		sysctl -w $1
 		shift 1
@@ -147,7 +147,7 @@ syslogd ${syslogd_flags}
 if [ -f /etc/ifaliases ]; then
 (
 	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' /etc/ifaliases | grep -v '^$'`
+	set -- `sed -e 's/#.*$//' -e '/^$/d' /etc/ifaliases`
 	while [ $# -ge 3 ] ; do
 		ifconfig $1 inet alias $2 netmask $3
 		route -n add -host $2 localhost
