@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.22 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.23 2004/05/25 18:07:20 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -194,33 +194,43 @@ int _dl_symcachestat_lookups;
 
 Elf_Addr
 _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
-    elf_object_t *startlook, const Elf_Sym **ref, int flags, int req_size)
+    elf_object_t *startlook, const Elf_Sym **ref, const elf_object_t **pobj,
+    int flags, int req_size)
 {
 	Elf_Addr ret;
 	const Elf_Sym *sym;
 	const char *symn;
+	const elf_object_t *sobj;
 
 	_dl_symcachestat_lookups ++;
 	if ((_dl_symcache != NULL) &&
 	     (symidx < req_obj->nchains) &&
+	     (_dl_symcache[symidx].obj != NULL) &&
 	     (_dl_symcache[symidx].sym != NULL) &&
 	     (_dl_symcache[symidx].flags == flags)) {
 
 		_dl_symcachestat_hits++;
+		sobj = _dl_symcache[symidx].obj;
 		*ref = _dl_symcache[symidx].sym;
-		return _dl_symcache[symidx].offset;
+		if (pobj)
+			*pobj = sobj;
+		return sobj->load_offs;
 	}
 
 	sym = req_obj->dyn.symtab;
 	sym += symidx;
 	symn = req_obj->dyn.strtab + sym->st_name;
 
-	ret = _dl_find_symbol(symn, startlook, ref, flags, req_size, req_obj);
+	ret = _dl_find_symbol(symn, startlook, ref, &sobj,
+	    flags, req_size, req_obj);
+
+	if (pobj)
+		*pobj = sobj;
 
 	if ((_dl_symcache != NULL) &&
 	     (symidx < req_obj->nchains)) {
 		_dl_symcache[symidx].sym = *ref;
-		_dl_symcache[symidx].offset = ret;
+		_dl_symcache[symidx].obj = sobj;
 		_dl_symcache[symidx].flags = flags;
 	}
 
@@ -229,7 +239,8 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int flags, int req_size, elf_object_t *req_obj)
+    const Elf_Sym **ref, const elf_object_t **pobj,
+    int flags, int req_size, elf_object_t *req_obj)
 {
 	const Elf_Sym *weak_sym = NULL;
 	unsigned long h = 0;
@@ -296,6 +307,9 @@ found:
 		    _dl_progname, req_obj->load_name,
 		    object->load_name, name);
 	}
+
+	if (pobj)
+		*pobj = object;
 
 	return (object->load_offs);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.14 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.15 2004/05/25 18:07:20 mickey Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -70,7 +70,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		if (ELF32_R_SYM(relocs->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
-			ooff = _dl_find_symbol(symn, _dl_objects, &this,
+			ooff = _dl_find_symbol(symn, _dl_objects, &this, NULL,
 			SYM_SEARCH_ALL | SYM_NOWARNNOTFOUND | SYM_PLT,
 			sym->st_size, object);
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
@@ -157,25 +157,25 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 
 	this = NULL;
-	ooff = _dl_find_symbol("__got_start", object, &this,
+	ooff = _dl_find_symbol("__got_start", object, &this, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__got_end", object, &this,
+	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", object, &this,
+	ooff = _dl_find_symbol("__plt_start", object, &this, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->plt_addr = ooff + this->st_value;
 
 	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", object, &this,
+	ooff = _dl_find_symbol("__plt_end", object, &this, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - object->plt_addr;
@@ -191,7 +191,7 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
-				    _dl_objects, &this,
+				    _dl_objects, &this, NULL,
 				    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
 				    symp->st_size, object);
 				if (this)
@@ -202,7 +202,7 @@ DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			symp->st_shndx == SHN_UNDEF) {
 			this = 0;
 			ooff = _dl_find_symbol(strt + symp->st_name,
-			    _dl_objects, &this,
+			    _dl_objects, &this, NULL,
 			    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT,
 			    symp->st_size, object);
 			if (this)

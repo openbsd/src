@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.76 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.77 2004/05/25 18:07:20 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -406,7 +406,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		Elf_Addr ooff;
 
 		sym = NULL;
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
+		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, NULL,
 		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
@@ -733,7 +733,7 @@ _dl_fixup_user_env(void)
 	dummy_obj.load_name = "ld.so";
 
 	sym = NULL;
-	ooff = _dl_find_symbol("environ", _dl_objects, &sym,
+	ooff = _dl_find_symbol("environ", _dl_objects, &sym, NULL,
 	    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, &dummy_obj);
 	if (sym != NULL)
 		*((char ***)(sym->st_value + ooff)) = _dl_so_envp;

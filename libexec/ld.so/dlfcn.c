@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.35 2004/05/25 15:56:18 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.36 2004/05/25 18:07:20 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -137,7 +137,7 @@ dlsym(void *handle, const char *name)
 		return(0);
 	}
 
-	retval = (void *)_dl_find_symbol(name, object, &sym,
+	retval = (void *)_dl_find_symbol(name, object, &sym, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_NOTPLT, 0, object);
 	if (sym != NULL)
 		retval += sym->st_value;
