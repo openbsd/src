@@ -1,0 +1,157 @@
+.\"	$OpenBSD: dhcrelay.8,v 1.1 2004/04/12 21:10:28 henning Exp $
+.\"
+.\" Copyright (c) 1997 The Internet Software Consortium.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
+.\" Enterprises.  To learn more about the Internet Software Consortium,
+.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
+.\" Enterprises, see ``http://www.vix.com''.
+.\"
+.Dd January 1, 1997
+.Dt DHCRELAY 8
+.Os
+.Sh NAME
+.Nm dhcrelay
+.Nd Dynamic Host Configuration Protocol Relay Agent
+.Sh SYNOPSIS
+.Nm dhcrelay
+.Op Fl p Ar port
+.Op Fl d
+.Op Fl q
+.Xo
+.Oo Fl i Ar if0 Oo Ar ...
+.Fl i Ar ifN Oc Oc
+.Xc
+.Ar server0 Op Ar ... serverN
+.Sh DESCRIPTION
+The Internet Software Consortium DHCP Relay Agent,
+.Nm dhcrelay ,
+provides a means for relaying DHCP and BOOTP requests from a subnet to which
+no DHCP server is directly connected to one or more DHCP servers on other
+subnets.
+.Sh OPERATION
+The DHCP Relay Agent listens for DHCP requests on all interfaces
+attached to a host, unless one or more interfaces are specified on the
+command line with the
+.Fl i
+flag.
+.Pp
+When a query is received,
+.Nm
+forwards it to the list of DHCP servers specified on the command line.
+When a reply is received, it is broadcast or unicast on the network from
+whence the original request came.
+.Pp
+It is possible to specify a set of interfaces on which
+.Nm
+will listen, so that if
+.Nm
+is connected through one interface to a network on which there is no DHCP
+server, but is connected on another interface to a network on which there
+is a DHCP server, it will not relay DHCP and BOOTP requests from the network
+on which the server exists to that server.
+This is an imperfect solution.
+.Sh COMMAND LINE
+The names of the network interfaces that
+.Nm
+should attempt to configure may be specified on the command line using the
+.Fl i
+option.
+If no interface names are specified on the command line,
+.Nm
+will identify all network interfaces, eliminating non-broadcast interfaces
+if possible, and attempt to configure each interface.
+.Pp
+If
+.Nm
+should listen and transmit on a port other than the standard (port 67), the
+.Fl p
+flag may used.
+It should be followed by the UDP port number that
+.Nm
+should use.
+This is mostly useful for debugging purposes.
+If the
+.Fl p
+flag is specified, the relay agent will transmit responses to clients
+at a port number that is one greater than the one specified \- i.e., if
+you specify
+.Fl p
+67, then the relay agent will listen on port 67 and transmit to port 68.
+Transmissions to servers will be sent to the same port number
+that is specified with the
+.Fl p
+flag.
+.Pp
+.Nm
+will normally run in the foreground until it has configured
+an interface, and then will revert to running in the background.
+To force
+.Nm
+to always run as a foreground process, the
+.Fl d
+flag should be specified.
+This is useful when running
+.Nm
+under a debugger, or when running it out of inittab on System V systems.
+.Pp
+.Nm
+will normally print its network configuration on startup.
+This can be annoying in a system startup script \- to disable this
+behaviour, specify the
+.Fl q
+flag.
+.Pp
+The name of at least one DHCP server to which DHCP and BOOTP requests
+should be relayed must be specified on the command line.
+.Sh SEE ALSO
+.Xr dhclient 8 ,
+.Xr dhcpd 8
+.Pp
+RFC 2132, RFC 2131.
+.Sh AUTHORS
+.Nm
+has been written for the Internet Software Consortium by
+.An Ted Lemon Aq mellon@fugue.com
+in cooperation with Vixie Enterprises.
+To learn more about the Internet Software Consortium, see
+.Pa http://www.vix.com/isc .
+To learn more about Vixie Enterprises, see
+.Pa http://www.vix.com .
+.Sh BUGS
+Relayed DHCP traffic could actually safely be protected by IPsec, but
+like
+.Xr dhcpd 8
+and
+.Xr dhclient 8 ,
+.Nm
+will bypass IPsec for all its traffic.
