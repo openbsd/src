@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.7 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: confpars.c,v 1.8 2004/05/06 22:05:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -235,10 +235,10 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		/* Otherwise, cons up a fake shared network structure
 		   and populate it with the lone subnet... */
 
-		share = new_shared_network ("parse_statement");
+		share = new_shared_network("parse_statement");
 		if (!share)
 			error("No memory for shared subnet");
-		share->group = clone_group (group, "parse_statement:subnet");
+		share->group = clone_group(group, "parse_statement:subnet");
 		share->group->shared_network = share;
 
 		parse_subnet_declaration(cfile, share);
@@ -249,7 +249,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 				share->subnets->interface;
 
 			/* Make the shared network name from network number. */
-			n = piaddr (share->subnets->net);
+			n = piaddr(share->subnets->net);
 			t = malloc(strlen(n) + 1);
 			if (!t)
 				error("no memory for subnet name");
@@ -348,7 +348,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		tree = parse_ip_addr_or_hostname(cfile, 0);
 		if (!tree)
 			break;
-		cache = tree_cache (tree);
+		cache = tree_cache(tree);
 		if (!tree_evaluate (cache))
 			error("next-server is not known");
 		group->next_server.len = 4;
@@ -533,7 +533,7 @@ void parse_host_declaration(cfile, group)
 		error("can't allocate host decl struct %s.", name);
 
 	host->name = name;
-	host->group = clone_group (group, "parse_host_declaration");
+	host->group = clone_group(group, "parse_host_declaration");
 
 	if (!parse_lbrace(cfile))
 		return;
@@ -597,7 +597,7 @@ void parse_class_declaration(cfile, group, type)
 	class = add_class (type, val);
 	if (!class)
 		error("No memory for class %s.", val);
-	class->group = clone_group (group, "parse_class_declaration");
+	class->group = clone_group(group, "parse_class_declaration");
 
 	if (!parse_lbrace(cfile))
 		return;
@@ -631,7 +631,7 @@ void parse_shared_net_declaration(cfile, group)
 	char *name;
 	int declaration = 0;
 
-	share = new_shared_network ("parse_shared_net_declaration");
+	share = new_shared_network("parse_shared_net_declaration");
 	if (!share)
 		error("No memory for shared subnet");
 	share->leases = NULL;
@@ -639,7 +639,7 @@ void parse_shared_net_declaration(cfile, group)
 	share->insertion_point = NULL;
 	share->next = NULL;
 	share->interface = NULL;
-	share->group = clone_group (group, "parse_shared_net_declaration");
+	share->group = clone_group(group, "parse_shared_net_declaration");
 	share->group->shared_network = share;
 
 	/* Get the name of the shared network... */
@@ -825,17 +825,17 @@ struct tree *parse_ip_addr_or_hostname(cfile, uniform)
 	struct tree *rv;
 
 	token = peek_token(&val, cfile);
-	if (is_identifier (token)) {
+	if (is_identifier(token)) {
 		name = parse_host_name(cfile);
 		if (!name)
 			return NULL;
-		rv = tree_host_lookup (name);
+		rv = tree_host_lookup(name);
 		if (!uniform)
-			rv = tree_limit (rv, 4);
+			rv = tree_limit(rv, 4);
 	} else if (token == NUMBER) {
 		if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
 			return NULL;
-		rv = tree_const (addr, len);
+		rv = tree_const(addr, len);
 	} else {
 		if (token != RBRACE && token != LBRACE)
 			token = next_token(&val, cfile);
@@ -865,7 +865,7 @@ struct tree_cache *parse_fixed_addr_param(cfile)
 	do {
 		tmp = parse_ip_addr_or_hostname(cfile, 0);
 		if (tree)
-			tree = tree_concat (tree, tmp);
+			tree = tree_concat(tree, tmp);
 		else
 			tree = tmp;
 		token = peek_token(&val, cfile);
@@ -875,7 +875,7 @@ struct tree_cache *parse_fixed_addr_param(cfile)
 
 	if (!parse_semi(cfile))
 		return NULL;
-	return tree_cache (tree);
+	return tree_cache(tree);
 }
 
 /* option_parameter :== identifier DOT identifier <syntax> SEMI
@@ -900,7 +900,7 @@ void parse_option_param(cfile, group)
 	struct tree *t;
 
 	token = next_token(&val, cfile);
-	if (!is_identifier (token)) {
+	if (!is_identifier(token)) {
 		parse_warn("expecting identifier after option keyword.");
 		if (token != SEMI)
 			skip_to_semi(cfile);
@@ -917,7 +917,7 @@ void parse_option_param(cfile, group)
 
 		/* The next token should be an identifier... */
 		token = next_token(&val, cfile);
-		if (!is_identifier (token)) {
+		if (!is_identifier(token)) {
 			parse_warn("expecting identifier after '.'");
 			if (token != SEMI)
 				skip_to_semi(cfile);
@@ -1011,7 +1011,7 @@ void parse_option_param(cfile, group)
 			case 't': /* Text string... */
 				token = next_token(&val, cfile);
 				if (token != STRING
-				    && !is_identifier (token)) {
+				    && !is_identifier(token)) {
 					parse_warn("expecting string.");
 					if (token != SEMI)
 						skip_to_semi(cfile);
@@ -1026,7 +1026,7 @@ void parse_option_param(cfile, group)
 				t = parse_ip_addr_or_hostname(cfile, uniform);
 				if (!t)
 					return;
-				tree = tree_concat (tree, t);
+				tree = tree_concat(tree, t);
 				break;
 
 			case 'L': /* Unsigned 32-bit integer... */
@@ -1039,7 +1039,7 @@ void parse_option_param(cfile, group)
 					return;
 				}
 				convert_num(buf, val, 0, 32);
-				tree = tree_concat(tree, tree_const (buf, 4));
+				tree = tree_concat(tree, tree_const(buf, 4));
 				break;
 			case 's':	/* Signed 16-bit integer. */
 			case 'S':	/* Unsigned 16-bit integer. */
@@ -1051,7 +1051,7 @@ void parse_option_param(cfile, group)
 					return;
 				}
 				convert_num(buf, val, 0, 16);
-				tree = tree_concat(tree, tree_const (buf, 2));
+				tree = tree_concat(tree, tree_const(buf, 2));
 				break;
 			case 'b':	/* Signed 8-bit integer. */
 			case 'B':	/* Unsigned 8-bit integer. */
@@ -1063,11 +1063,11 @@ void parse_option_param(cfile, group)
 					return;
 				}
 				convert_num(buf, val, 0, 8);
-				tree = tree_concat(tree, tree_const (buf, 1));
+				tree = tree_concat(tree, tree_const(buf, 1));
 				break;
 			case 'f': /* Boolean flag. */
 				token = next_token(&val, cfile);
-				if (!is_identifier (token)) {
+				if (!is_identifier(token)) {
 					parse_warn("expecting identifier.");
 					if (token != SEMI)
 						skip_to_semi(cfile);
@@ -1085,7 +1085,7 @@ void parse_option_param(cfile, group)
 						skip_to_semi(cfile);
 					return;
 				}
-				tree = tree_concat(tree, tree_const (buf, 1));
+				tree = tree_concat(tree, tree_const(buf, 1));
 				break;
 			default:
 				warn("Bad format %c in parse_option_param.",
@@ -1110,7 +1110,7 @@ void parse_option_param(cfile, group)
 		skip_to_semi(cfile);
 		return;
 	}
-	group->options[option->code] = tree_cache (tree);
+	group->options[option->code] = tree_cache(tree);
 }
 
 /* timestamp :== date
@@ -1243,7 +1243,7 @@ struct lease *parse_lease_declaration(cfile)
 			case CLASS:
 				seenbit = 32;
 				token = next_token(&val, cfile);
-				if (!is_identifier (token)) {
+				if (!is_identifier(token)) {
 					if (token != SEMI)
 						skip_to_semi(cfile);
 					return NULL;
@@ -1309,7 +1309,7 @@ struct lease *parse_lease_declaration(cfile)
 		}
 		if (seenmask & seenbit) {
 			parse_warn("Too many %s parameters in lease %s\n",
-			    tbuf, piaddr (lease.ip_addr));
+			    tbuf, piaddr(lease.ip_addr));
 		} else
 			seenmask |= seenbit;
 
