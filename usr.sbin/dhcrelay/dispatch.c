@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.3 2004/05/04 21:23:10 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.4 2004/06/22 01:10:49 canacar Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -217,7 +217,7 @@ another:
 		for (l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
 
-			if ((fds[i].revents & POLLIN)) {
+			if ((fds[i].revents & (POLLIN | POLLHUP))) {
 				fds[i].revents = 0;
 				if (ip && (l->handler != got_one ||
 				    !ip->dead))
