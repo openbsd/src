@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.8 1999/01/20 06:10:59 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.9 1999/01/20 06:38:52 millert Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -71,15 +71,23 @@ fi
 
 umask 077
 
+# For '&' expansion in gecos
+TEMP=${LOGNAME}
+while test ${#TEMP} -gt 1; do
+    TEMP=${TEMP%?}
+done
+typeset -u FIRSTCHAR=${TEMP}
+EXPANSION="${FIRSTCHAR}${LOGNAME#?}"
+
 # How to read the passwd database.
 if [ -f /bin/domainname ]; then
   if [ "`/bin/domainname`" != ""  -a -f /usr/bin/ypcat ]; then
     PASSWD="/usr/bin/ypcat passwd 2>/dev/null | cat - /etc/passwd | grep '^$LOGNAME:' |
-      cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$LOGNAME/g'"
+      cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$EXPANSION/g'"
   fi
 fi
 if [ "$PASSWD" = "" ]; then
-  PASSWD="cat /etc/passwd | grep '^$LOGNAME:' | cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$LOGNAME/g'"
+  PASSWD="cat /etc/passwd | grep '^$LOGNAME:' | cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$EXPANSION/g'"
 fi
 
 if [ "`echo -n foo`" = foo ]; then
