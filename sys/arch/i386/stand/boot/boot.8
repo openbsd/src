@@ -1,6 +1,6 @@
-.\"	$OpenBSD: boot.8,v 1.24 2000/12/27 18:50:53 brad Exp $
+.\"	$OpenBSD: boot.8,v 1.25 2001/01/16 16:43:14 mickey Exp $
 .\"
-.\" Copyright (c) 1997-2000 Michael Shalayeff
+.\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -220,8 +220,6 @@ Variables include:
 .Bl -tag -compact -width boothow
 .It Nm addr
 Address at which to load the kernel.
-.It Nm howto
-Options to pass to the loaded kernel.
 .It Nm debug
 Debug flag if
 .Nm
@@ -230,13 +228,18 @@ was compiled with DEBUG defined.
 Boot device name (i.e.,
 .Li fd0a ,
 .Li sd0a ) .
+.It Nm howto
+Options to pass to the loaded kernel.
+.It Nm image
+File name containing the kernel image.
+.It Nm timeout
+Number of seconds boot will wait for human intervention before
+booting the default kernel image.
 .It Nm tty
 Active console device name (i.e.,
 .Li com0 ,
 .Li com1 ,
 .Li pc0 ) .
-.It Nm image
-File name containing the kernel image.
 .El
 .It stty Op Ar device Op Ar speed
 Displays or sets the
