@@ -234,8 +234,8 @@ systracef_ioctl(fp, cmd, data, p)
 	
 	switch (cmd) {
 	case FIONBIO:
-        case FIOASYNC:
-                return (0);
+	case FIOASYNC:
+		return (0);
 
 	case STRIOCDETACH:
 	case STRIOCREPORT:
@@ -243,17 +243,17 @@ systracef_ioctl(fp, cmd, data, p)
 		if (!pid)
 			ret = EINVAL;
 		break;
- 	case STRIOCANSWER:
+	case STRIOCANSWER:
 		pid = ((struct systrace_answer *)data)->stra_pid;
 		if (!pid)
 			ret = EINVAL;
 		break;
- 	case STRIOCIO:
+	case STRIOCIO:
 		pid = ((struct systrace_io *)data)->strio_pid;
 		if (!pid)
 			ret = EINVAL;
 		break;
- 	case STRIOCGETCWD:
+	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
@@ -262,7 +262,7 @@ systracef_ioctl(fp, cmd, data, p)
 	case STRIOCRESCWD:
 	case STRIOCPOLICY:
 		break;
- 	case STRIOCREPLACE:
+	case STRIOCREPLACE:
 		pid = ((struct systrace_replace *)data)->strr_pid;
 		if (!pid)
 			ret = EINVAL;
@@ -515,7 +515,7 @@ systraceioctl(dev, cmd, data, flag, p)
 
 		if (suser(p->p_ucred, &p->p_acflag) == 0)
 			fst->issuser = 1;
-    
+
 		error = falloc(p, &f, &fd);
 		if (error) {
 			FREE(fst, M_XDATA);
