@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.167 2004/05/06 14:07:43 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.168 2004/05/06 14:41:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -939,7 +939,7 @@ session_setup_socket(struct peer *p)
 		while (setsockopt(p->fd, SOL_SOCKET, SO_SNDBUF, &bsize,
 		    sizeof(bsize)) == -1)
 			bsize /= 2;
- 	}
+	}
 
 	return (0);
 }
