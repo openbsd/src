@@ -1241,6 +1241,7 @@ main(int argc, char **argv)
 			wrtermcap(tcapbuf);
 			fputs("';\n", stdout);
 		}
+		(void)printf(t);
 	}
 #else
 	if (sflag) {
