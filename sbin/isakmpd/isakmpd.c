@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.12 1999/07/07 22:11:45 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.35 1999/06/26 23:30:38 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.13 1999/08/05 22:40:57 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.36 1999/08/05 15:01:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -53,6 +53,7 @@
 #include "transport.h"
 #include "udp.h"
 #include "ui.h"
+#include "util.h"
 
 #ifdef USE_KEYNOTE
 #include "policy.h"
@@ -63,11 +64,6 @@
  * to stderr instead of syslog.
  */
 int debug = 0;
-
-/*
- * Use -r seed to initalize random numbers to a deterministic sequence.
- */
-extern int regrand;
 
 /*
  * If we receive a SIGHUP signal, this flag gets set to show we need to
@@ -166,8 +162,12 @@ reinit (void)
    * XXX This means we discard exchange->last_msg, is this really ok?
    */
 
+  /* Reinitialize PRNG if we are in deterministic mode.  */
+  if (regrand)
+    srandom (strtoul (optarg, 0, 0));
+
   /* Reread config file. */
-  conf_init ();
+  conf_reinit ();
 
 #ifdef USE_KEYNOTE
   /* Reread the policies. */
@@ -254,7 +254,7 @@ main (int argc, char *argv[])
   fd_set *rfds, *wfds;
   int n, m;
   size_t mask_size;
-  struct timeval tv, *timeout = &tv;
+  struct timeval tv, *timeout;
 
   parse_args (argc, argv);
   init ();
@@ -324,6 +324,7 @@ main (int argc, char *argv[])
 	n = m;
 
       /* Find out when the next timed event is.  */
+      timeout = &tv;
       timer_next_event (&timeout);
 
       n = select (n, rfds, wfds, 0, timeout);
