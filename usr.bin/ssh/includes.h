@@ -13,7 +13,7 @@ This file includes most of the needed system headers.
 
 */
 
-/* RCSID("$Id: includes.h,v 1.2 1999/09/29 12:59:13 provos Exp $"); */
+/* RCSID("$Id: includes.h,v 1.3 1999/09/29 18:16:19 dugsong Exp $"); */
 
 #ifndef INCLUDES_H
 #define INCLUDES_H
@@ -56,6 +56,7 @@ YOU_LOSE
 #if defined(bsd_44) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__PARAGON__)
 #include <sys/param.h>
 #include <machine/endian.h>
+#include <netgroup.h>
 #endif
 #if defined(linux)
 #include <endian.h>
@@ -68,10 +69,6 @@ YOU_LOSE
 #include <fcntl.h>
 #include <assert.h>
 #include <signal.h>
-
-#ifdef sparc
-#undef HAVE_SYS_IOCTL_H
-#endif
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>

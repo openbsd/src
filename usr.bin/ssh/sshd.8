@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.2 1999/09/26 22:30:06 deraadt Exp $
+.\" $Id: sshd.8,v 1.3 1999/09/29 18:16:21 dugsong Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -165,9 +165,9 @@ and empty lines are interpreted as comments.
 The following keywords are possible.
 .Bl -tag -width Ds
 .It Cm AFSTokenPassing
-Specifies whether to accept AFS tokens passed from the client. Default
-is
+Specifies whether an AFS token may be forwarded to the server. Default is
 .Dq yes .
+.Pp
 .It Cm AllowHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is allowed only from hosts
@@ -232,7 +232,8 @@ in both the server and the client configuration files.
 Specifies whether Kerberos authentication is allowed. This can
 be in the form of a Kerberos ticket, or if PasswordAuthentication
 is yes, the password provided by the user will be validated through
-the Kerberos KDC / AFS kaserver / DCE Security Server. Default is yes.
+the Kerberos KDC. Default is
+.Dq yes .
 .It Cm KerberosOrLocalPasswd
 If set then if password authentication through Kerberos fails then
 the password will be validated via any additional local mechanism
@@ -242,10 +243,13 @@ or SecurID. Default is
 .Dq no .
 .It Cm KerberosTgtPassing
 Specifies whether a Kerberos TGT may be forwarded to the server.
-Default is no, TGT forwarding does only work with the AFS kaserver.
+Default is 
+.Dq no ,
+as this only works when the Kerberos KDC is actually an AFS kaserver.
 .It Cm KerberosTicketCleanup
 Specifies whether to automatically destroy the user's
-ticket cache file on logout. Default is yes.
+ticket cache file on logout. Default is
+.Dq yes .
 .It Cm KeyRegenerationInterval
 The server key is automatically regenerated after this many seconds
 (if it has been used).  The purpose of regeneration is to prevent

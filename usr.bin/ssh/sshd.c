@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.4 1999/09/29 17:42:10 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.5 1999/09/29 18:16:21 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -66,12 +66,7 @@ int deny_severity = LOG_WARNING;
 #endif
 
 #ifdef KRB4
-#include <sys/param.h>
-#include <krb.h>
 char *ticket = NULL;
-#ifdef AFS
-#include <kafs.h>
-#endif /* AFS */
 #endif /* KRB4 */
 
 /* Local Xauthority file. */
@@ -794,7 +789,7 @@ void do_connection(int privileged_port)
   char *user;
   unsigned int cipher_type, auth_mask, protocol_flags;
   int plen, slen;
-  u_int32_t rand;
+  u_int32_t rand = 0;
 
   /* Generate check bytes that the client must send back in the user packet
      in order for it to be accepted; this is used to defy ip spoofing 
@@ -844,11 +839,9 @@ void do_connection(int privileged_port)
   if (options.kerberos_authentication && (access(KEYFILE, R_OK) == 0))
     auth_mask |= 1 << SSH_AUTH_KERBEROS;
 #endif
-#ifdef KERBEROS_TGT_PASSING
+#ifdef AFS
   if (options.kerberos_tgt_passing)
     auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
-#endif
-#ifdef AFS
   if (options.afs_token_passing && k_hasafs())
     auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
@@ -1066,25 +1059,25 @@ do_authentication(char *user, int privileged_port)
       switch (type)
 	{
 
-#ifdef KERBEROS_TGT_PASSING
+#ifdef AFS
 	case SSH_CMSG_HAVE_KERBEROS_TGT:
 	  if (!options.kerberos_tgt_passing)
 	    {
+	      /* packet_get_all(); */
 	      log("Kerberos tgt passing disabled.");
 	      break;
 	    }
-	  /* Accept Kerberos tgt. */
-	  {
+	  else {
+	    /* Accept Kerberos tgt. */
 	    int dlen;
-	    char *data = packet_get_string(&dlen);
+	    char *tgt = packet_get_string(&dlen);
 	    packet_integrity_check(plen, 4 + dlen, type);
-	    if (!auth_kerberos_tgt(pw, data))
-	      debug("Kerberos tgt REFUSED for %.100s", user);
+	    if (!auth_kerberos_tgt(pw, tgt))
+	      debug("Kerberos tgt REFUSED for %s", user);
+	    xfree(tgt);
 	  }
 	  continue;
-#endif /* KERBEROS_TGT_PASSING */
-	  
-#ifdef AFS
+
 	case SSH_CMSG_HAVE_AFS_TOKEN:
 	  if (!options.afs_token_passing || !k_hasafs()) {
 	    /* packet_get_all(); */
@@ -1097,7 +1090,7 @@ do_authentication(char *user, int privileged_port)
 	    char *token_string = packet_get_string(&dlen);
 	    packet_integrity_check(plen, 4 + dlen, type);
 	    if (!auth_afs_token(user, pw->pw_uid, token_string))
-	      debug("AFS token REFUSED for %.100s", user);
+	      debug("AFS token REFUSED for %s", user);
 	    xfree(token_string);
 	    continue;
 	  }
@@ -1107,31 +1100,33 @@ do_authentication(char *user, int privileged_port)
 	case SSH_CMSG_AUTH_KERBEROS:
 	  if (!options.kerberos_authentication)
 	    {
+	      /* packet_get_all(); */
 	      log("Kerberos authentication disabled.");
 	      break;
 	    }
-	  {
+	  else {
 	    /* Try Kerberos v4 authentication. */
 	    KTEXT_ST auth;
 	    char *tkt_user = NULL;
 	    char *kdata = packet_get_string((unsigned int *)&auth.length);
 	    packet_integrity_check(plen, 4 + auth.length, type);
 
-	    memcpy(auth.dat, kdata, auth.length);
+	    if (auth.length < MAX_KTXT_LEN)
+	      memcpy(auth.dat, kdata, auth.length);
 	    xfree(kdata);
-
+	    
 	    if (auth_krb4(user, &auth, &tkt_user)) {
 	      /* Client has successfully authenticated to us. */
-	      log("Kerberos authentication accepted %.100s for account "
-		  "%.100s from %.200s", tkt_user, user,
-		  get_canonical_hostname());
+	      log("Kerberos authentication accepted %s for account "
+		  "%s from %s", tkt_user, user, get_canonical_hostname());
 	      /* authentication_type = SSH_AUTH_KERBEROS; */
 	      authenticated = 1;
 	      xfree(tkt_user);
-	      break;
 	    }
-	    log("Kerberos authentication failed for account "
-		"%.100s from %.200s", user, get_canonical_hostname());
+	    else {
+	      log("Kerberos authentication failed for account "
+		  "%s from %s", user, get_canonical_hostname());
+	    }
 	  }
 	  break;
 #endif /* KRB4 */
@@ -1698,10 +1693,10 @@ void pty_cleanup_proc(void *context)
 
   debug("pty_cleanup_proc called");
 
-#if defined(KRB4) || defined(AFS)
+#if defined(KRB4)
   /* Destroy user's ticket cache file. */
   (void) dest_tkt();
-#endif /* KRB4 || AFS */
+#endif /* KRB4 */
   
   /* Record that the user has logged out. */
   record_logout(cu->pid, cu->ttyname);
@@ -2212,7 +2207,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   if (display)
     child_set_env(&env, &envsize, "DISPLAY", display);
 
-#ifdef KRB4 /* XXX - how to make these coexist? */
+#ifdef KRB4
   if (ticket)
     child_set_env(&env, &envsize, "KRBTKFILE", ticket);
 #endif /* KRB4 */

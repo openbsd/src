@@ -5,14 +5,13 @@
   Originally written by Mark Riordan 12 August 1990 and 17 Feb 1991
   and placed in the public domain.
 
-  dugsong@UMICH.EDU
+  Dug Song <dugsong@UMICH.EDU>
 */
   
 #include "includes.h"
 
 #ifdef AFS
 #include <krb.h>
-#include <kafs.h>
 
 char six2pr[64] = {
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
@@ -52,7 +51,7 @@ int uuencode(unsigned char *bufin, unsigned int nbytes, char *bufcoded)
 int uudecode(const char *bufcoded, unsigned char *bufplain, int outbufsize)
 {
   /* single character decode */
-#define DEC(c) pr2six[c]
+#define DEC(c) pr2six[(unsigned char)c]
 #define MAXVAL 63
   
   static int first = 1;
@@ -75,7 +74,7 @@ int uudecode(const char *bufcoded, unsigned char *bufplain, int outbufsize)
      If this would decode into more bytes than would fit into
      the output buffer, adjust the number of input bytes downwards. */
   bufin = bufcoded;
-  while (pr2six[(unsigned char)*(bufin++)] <= MAXVAL);
+  while (DEC(*(bufin++)) <= MAXVAL);
   nprbytes = bufin - bufcoded - 1;
   nbytesdecoded = ((nprbytes+3)/4) * 3;
   if (nbytesdecoded > outbufsize)
@@ -91,7 +90,7 @@ int uudecode(const char *bufcoded, unsigned char *bufplain, int outbufsize)
     nprbytes -= 4;
   }
   if (nprbytes & 03) {
-    if (pr2six[bufin[-2]] > MAXVAL)
+    if (DEC(bufin[-2]) > MAXVAL)
       nbytesdecoded -= 2;
     else 
       nbytesdecoded -= 1;

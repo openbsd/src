@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.3 1999/09/28 04:45:37 provos Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.4 1999/09/29 18:16:21 dugsong Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -586,13 +586,22 @@ struct envstring {
 #ifdef KRB4
 #include <krb.h>
 
-int ssh_tf_init(uid_t uid);
+/* Performs Kerberos v4 mutual authentication with the client. This returns
+   0 if the client could not be authenticated, and 1 if authentication was
+   successful.  This may exit if there is a serious protocol violation. */
 int auth_krb4(const char *server_user, KTEXT auth, char **client);
+int ssh_tf_init(uid_t uid);
+
+#ifdef AFS
+#include <kafs.h>
+
+/* Accept passed Kerberos v4 ticket-granting ticket and AFS tokens. */
 int auth_kerberos_tgt(struct passwd *pw, const char *string);
 int auth_afs_token(char *server_user, uid_t uid, const char *string);
 
 int creds_to_radix(CREDENTIALS *creds, unsigned char *buf);
 int radix_to_creds(const char *buf, CREDENTIALS *creds);
+#endif /* AFS */
 
 #endif /* KRB4 */
 

@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.4 1999/09/29 00:10:16 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.5 1999/09/29 18:16:19 dugsong Exp $");
 
 #ifndef HAVE_GETHOSTNAME
 #include <sys/utsname.h>
@@ -1347,7 +1347,7 @@ void x11_request_forwarding_with_spoofing(const char *proto, const char *data)
   char *new_data;
   int screen_number;
   const char *cp;
-  u_int32_t rand;
+  u_int32_t rand = 0;
 
   cp = getenv("DISPLAY");
   if (cp)

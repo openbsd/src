@@ -2,10 +2,11 @@
 
    auth-kerberos.c
 
-   Hacked together by Dug Song <dugsong@umich.edu>.
+   Dug Song <dugsong@UMICH.EDU>
 
-   Kerberos authentication and ticket-passing routines.
+   Kerberos v4 authentication and ticket-passing routines.
 
+   $Id: auth-krb4.c,v 1.2 1999/09/29 18:16:18 dugsong Exp $
 */
 
 #include "includes.h"
@@ -14,27 +15,24 @@
 #include "ssh.h"
 
 #ifdef KRB4
-#include <sys/param.h>
-#include <krb.h>
-
 int ssh_tf_init(uid_t uid)
 {
   extern char *ticket;
   char *tkt_root = TKT_ROOT;
   struct stat st;
   int fd;
-
+  
   /* Set unique ticket string manually since we're still root. */
   ticket = xmalloc(MAXPATHLEN);
 #ifdef AFS
   if (lstat("/ticket", &st) != -1)
     tkt_root = "/ticket/";
 #endif /* AFS */
-  sprintf(ticket, "%.100s%d_%d", tkt_root, uid, getpid());
+  snprintf(ticket, MAXPATHLEN, "%s%d_%d", tkt_root, uid, getpid());
   (void) krb_set_tkt_string(ticket);
 
   /* Make sure we own this ticket file, and we created it. */
-  if (lstat(ticket, &st) < 0 && errno == ENOENT) {
+  if (lstat(ticket, &st) == -1 && errno == ENOENT) {
     /* good, no ticket file exists. create it. */
     if ((fd = open(ticket, O_RDWR|O_CREAT|O_EXCL, 0600)) != -1) {
       close(fd);
@@ -48,7 +46,7 @@ int ssh_tf_init(uid_t uid)
       return 1;
   }
   /* Failure. */
-  log("WARNING: bad ticket file %.100s", ticket);
+  log("WARNING: bad ticket file %s", ticket);
   return 0;
 }
 
@@ -76,21 +74,20 @@ int auth_krb4(const char *server_user, KTEXT auth, char **client)
   instance[0] = '*'; instance[1] = 0;
   
   /* Get the encrypted request, challenge, and session key. */
-  r = krb_rd_req(auth, KRB4_SERVICE_NAME, instance, 0, &adat, "");
-  if (r != KSUCCESS) {
+  if ((r = krb_rd_req(auth, KRB4_SERVICE_NAME, instance, 0, &adat, ""))) {
     packet_send_debug("Kerberos V4 krb_rd_req: %.100s", krb_err_txt[r]);
     return 0;
   }
   des_key_sched((des_cblock *)adat.session, schedule);
   
   *client = xmalloc(MAX_K_NAME_SZ);
-  sprintf(*client, "%.100s%.100s%.100s@%.100s", adat.pname, *adat.pinst ? "." : "",
-		 adat.pinst, adat.prealm);
+  (void) snprintf(*client, MAX_K_NAME_SZ, "%s%s%s@%s", adat.pname,
+                  *adat.pinst ? "." : "", adat.pinst, adat.prealm);
 
   /* Check ~/.klogin authorization now. */
   if (kuserok(&adat, (char *)server_user) != KSUCCESS) {
     packet_send_debug("Kerberos V4 .klogin authorization failed!");
-    log("Kerberos V4 .klogin authorization failed for %.100s to account %.100s",
+    log("Kerberos V4 .klogin authorization failed for %s to account %s",
 	*client, server_user);
     return 0;
   }
@@ -102,7 +99,7 @@ int auth_krb4(const char *server_user, KTEXT auth, char **client)
      message, admitting our failure. */
   if ((r = krb_mk_priv((u_char *)&cksum, reply.dat, sizeof(cksum)+1,
 		       schedule, &adat.session, &local, &foreign)) < 0) {
-    packet_send_debug("Kerberos V4 mk_priv: (%d) %.100s", r, krb_err_txt[r]);
+    packet_send_debug("Kerberos V4 mk_priv: (%d) %s", r, krb_err_txt[r]);
     reply.dat[0] = 0;
     reply.length = 0;
   }
@@ -121,11 +118,6 @@ int auth_krb4(const char *server_user, KTEXT auth, char **client)
 #endif /* KRB4 */
 
 #ifdef AFS
-#include <kafs.h>
-
-
-#ifdef KERBEROS_TGT_PASSING
-
 int auth_kerberos_tgt(struct passwd *pw, const char *string)
 {
   CREDENTIALS creds;
@@ -141,19 +133,19 @@ int auth_kerberos_tgt(struct passwd *pw, const char *string)
     strcpy(creds.service, "krbtgt");
   
   if (strcmp(creds.service, "krbtgt")) {
-    log("Kerberos V4 tgt (%.100s%.100s%.100s@%.100s) rejected for uid %d",
+    log("Kerberos V4 tgt (%s%s%s@%s) rejected for uid %d",
 	creds.pname, creds.pinst[0] ? "." : "", creds.pinst, creds.realm,
 	pw->pw_uid);
-    packet_send_debug("Kerberos V4 tgt (%.100s%.100s%.100s@%.100s) rejected for uid %d",
+    packet_send_debug("Kerberos V4 tgt (%s%s%s@%s) rejected for uid %d",
 		      creds.pname, creds.pinst[0] ? "." : "", creds.pinst,
 		      creds.realm, pw->pw_uid);
     goto auth_kerberos_tgt_failure;
   }
   if (!ssh_tf_init(pw->pw_uid) ||
       (r = in_tkt(creds.pname, creds.pinst)) ||
-      (r = save_credentials(creds.service,creds.instance,creds.realm,
-			    creds.session,creds.lifetime,creds.kvno,
-			    &creds.ticket_st,creds.issue_date))) {
+      (r = save_credentials(creds.service, creds.instance, creds.realm,
+			    creds.session, creds.lifetime, creds.kvno,
+			    &creds.ticket_st, creds.issue_date))) {
     xfree(ticket);
     ticket = NULL;
     packet_send_debug("Kerberos V4 tgt refused: couldn't save credentials");
@@ -161,7 +153,7 @@ int auth_kerberos_tgt(struct passwd *pw, const char *string)
   }
   /* Successful authentication, passed all checks. */
   chown(ticket, pw->pw_uid, pw->pw_gid);
-  packet_send_debug("Kerberos V4 ticket accepted (%.100s.%.100s@%.100s, %.100s%.100s%.100s@%.100s)",
+  packet_send_debug("Kerberos V4 tgt accepted (%s.%s@%s, %s%s%s@%s)",
 		    creds.service, creds.instance, creds.realm,
 		    creds.pname, creds.pinst[0] ? "." : "",
 		    creds.pinst, creds.realm);
@@ -178,7 +170,6 @@ auth_kerberos_tgt_failure:
   packet_write_wait();
   return 0;
 }
-#endif /* KERBEROS_TGT_PASSING */
 
 int auth_afs_token(char *server_user, uid_t uid, const char *string)
 {
@@ -199,16 +190,16 @@ int auth_afs_token(char *server_user, uid_t uid, const char *string)
     uid = atoi(creds.pname + 7);
   
   if (kafs_settoken(creds.realm, uid, &creds)) {
-    log("AFS token (%.100s@%.100s) rejected for uid %d",
-	creds.pname, creds.realm, uid);
-    packet_send_debug("AFS token (%.100s@%.100s) rejected for uid %d", creds.pname,
+    log("AFS token (%s@%s) rejected for uid %d", creds.pname,
+	creds.realm, uid);
+    packet_send_debug("AFS token (%s@%s) rejected for uid %d", creds.pname,
 		      creds.realm, uid);
     packet_start(SSH_SMSG_FAILURE);
     packet_send();
     packet_write_wait();
     return 0;
   }
-  packet_send_debug("AFS token accepted (%.100s@%.100s, %.100s@%.100s)", creds.service,
+  packet_send_debug("AFS token accepted (%s@%s, %s@%s)", creds.service,
 		    creds.realm, creds.pname, creds.realm);
   packet_start(SSH_SMSG_SUCCESS);
   packet_send();

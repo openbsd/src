@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.8 1999/09/29 12:16:35 provos Exp $");
+RCSID("$Id: ssh.c,v 1.9 1999/09/29 18:16:20 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -88,9 +88,9 @@ usage()
   fprintf(stderr, "  -l user     Log in using this user name.\n");
   fprintf(stderr, "  -n          Redirect input from /dev/null.\n");
   fprintf(stderr, "  -a          Disable authentication agent forwarding.\n");
-#if defined(KERBEROS_TGT_PASSING) || defined(AFS)
-  fprintf(stderr, "              This also disables passing of AFS tokens/Kerberos tickets.\n");
-#endif /* KERBEROS_TGT_PASSING || AFS */
+#ifdef AFS
+  fprintf(stderr, "  -k          Disable Kerberos ticket and AFS token forwarding.\n");
+#endif /* AFS */
   fprintf(stderr, "  -x          Disable X11 connection forwarding.\n");
   fprintf(stderr, "  -i file     Identity for RSA authentication (default: ~/.ssh/identity).\n");
   fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
@@ -179,7 +179,7 @@ main(int ac, char **av)
   struct stat st;
   struct passwd *pw, pwcopy;
   int interactive = 0, dummy;
-  uid_t original_real_uid;
+  static uid_t original_real_uid;
   uid_t original_effective_uid;
   int plen;
 
@@ -298,14 +298,13 @@ main(int ac, char **av)
 
 	case 'a':
 	  options.forward_agent = 0;
-#ifdef KERBEROS_TGT_PASSING
-	  options.kerberos_tgt_passing = 0;
-#endif
-#ifdef AFS
-	  options.afs_token_passing = 0;
-#endif
 	  break;
-
+#ifdef AFS
+	case 'k':
+	  options.kerberos_tgt_passing = 0;
+	  options.afs_token_passing = 0;
+	  break;
+#endif
 	case 'i':
 	  if (stat(optarg, &st) < 0)
 	    {
@@ -726,7 +725,7 @@ main(int ac, char **av)
 	 otherwise for the local connection. */
       if (!got_data)
 	{
-          u_int32_t rand;
+          u_int32_t rand = 0;
 
 	  strcpy(proto, "MIT-MAGIC-COOKIE-1");
           for (i = 0; i < 16; i++) {

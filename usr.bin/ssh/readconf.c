@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.4 1999/09/29 17:52:12 deraadt Exp $");
+RCSID("$Id: readconf.c,v 1.5 1999/09/29 18:16:19 dugsong Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -93,11 +93,8 @@ typedef enum
 #ifdef KRB4
   oKerberosAuthentication,
 #endif /* KRB4 */
-#ifdef KERBEROS_TGT_PASSING
-  oKerberosTgtPassing,
-#endif
 #ifdef AFS
-  oAFSTokenPassing,
+  oKerberosTgtPassing, oAFSTokenPassing,
 #endif
   oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward, 
   oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
@@ -123,10 +120,8 @@ static struct
 #ifdef KRB4
   { "kerberosauthentication", oKerberosAuthentication },
 #endif /* KRB4 */
-#ifdef KERBEROS_TGT_PASSING
-  { "kerberostgtpassing", oKerberosTgtPassing },
-#endif
 #ifdef AFS
+  { "kerberostgtpassing", oKerberosTgtPassing },
   { "afstokenpassing", oAFSTokenPassing },
 #endif
   { "fallbacktorsh", oFallBackToRsh },
@@ -287,13 +282,11 @@ void process_config_line(Options *options, const char *host,
       goto parse_flag;
 #endif /* KRB4 */
 
-#ifdef KERBEROS_TGT_PASSING
+#ifdef AFS
     case oKerberosTgtPassing:
       intptr = &options->kerberos_tgt_passing;
       goto parse_flag;
-#endif
 
-#ifdef AFS
     case oAFSTokenPassing:
       intptr = &options->afs_token_passing;
       goto parse_flag;
@@ -574,10 +567,8 @@ void initialize_options(Options *options)
 #ifdef KRB4
   options->kerberos_authentication = -1;
 #endif
-#ifdef KERBEROS_TGT_PASSING
-  options->kerberos_tgt_passing = -1;
-#endif
 #ifdef AFS
+  options->kerberos_tgt_passing = -1;
   options->afs_token_passing = -1;
 #endif
   options->password_authentication = -1;
@@ -625,15 +616,13 @@ void fill_default_options(Options *options)
 #ifdef KRB4
   if (options->kerberos_authentication == -1)
     options->kerberos_authentication = 1;
-#endif
-#ifdef KERBEROS_TGT_PASSING
+#endif /* KRB4 */
+#ifdef AFS
   if (options->kerberos_tgt_passing == -1)
     options->kerberos_tgt_passing = 1;
-#endif
-#ifdef AFS
   if (options->afs_token_passing == -1)
     options->afs_token_passing = 1;
-#endif
+#endif /* AFS */
   if (options->password_authentication == -1)
     options->password_authentication = 1;
   if (options->rhosts_rsa_authentication == -1)

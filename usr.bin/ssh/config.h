@@ -226,9 +226,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
    This can be done at configure time with the --with-afs argument. */
 /* #undef AFS */
 
-/* Define this if you want to enable nonstandard krb4 TGT forwarding. */
-/* #undef KERBEROS_TGT_PASSING */
-
 /* Define this if you want to add optional compression support. */
 #define WITH_ZLIB 1
 

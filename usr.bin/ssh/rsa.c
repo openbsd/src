@@ -35,7 +35,7 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.2 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: rsa.c,v 1.3 1999/09/29 18:16:20 dugsong Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -47,7 +47,6 @@ int
 rsa_alive()
 {
   RSA *key;
-  extern char *__progname;
 
   key = RSA_generate_key(32, 3, NULL, NULL);
   if (key == NULL)

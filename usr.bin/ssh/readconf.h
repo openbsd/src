@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.2 1999/09/29 00:10:16 deraadt Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.3 1999/09/29 18:16:20 dugsong Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -40,10 +40,8 @@ typedef struct
 #ifdef KRB4
   int kerberos_authentication;	/* Try Kerberos authentication. */
 #endif
-#ifdef KERBEROS_TGT_PASSING
-  int kerberos_tgt_passing;	/* Try Kerberos tgt passing. */
-#endif
 #ifdef AFS
+  int kerberos_tgt_passing;	/* Try Kerberos tgt passing. */
   int afs_token_passing;	/* Try AFS token passing. */
 #endif
   int password_authentication;	/* Try password authentication. */

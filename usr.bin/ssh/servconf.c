@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.3 1999/09/29 00:10:16 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.4 1999/09/29 18:16:20 dugsong Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -46,14 +46,10 @@ void initialize_server_options(ServerOptions *options)
 #ifdef KRB4
   options->kerberos_authentication = -1;
   options->kerberos_or_local_passwd = -1;
-#endif
-#if defined(KRB4) || defined(AFS)
   options->kerberos_ticket_cleanup = -1;
 #endif
-#ifdef KERBEROS_TGT_PASSING
-  options->kerberos_tgt_passing = -1;
-#endif
 #ifdef AFS
+  options->kerberos_tgt_passing = -1;
   options->afs_token_passing = -1;
 #endif
   options->password_authentication = -1;
@@ -116,19 +112,15 @@ void fill_default_server_options(ServerOptions *options)
     options->kerberos_authentication = 1;
   if (options->kerberos_or_local_passwd == -1)
     options->kerberos_or_local_passwd = 0;
-#endif
-#if defined(KRB4) || defined(AFS)
   if (options->kerberos_ticket_cleanup == -1)
     options->kerberos_ticket_cleanup = 1;
-#endif
-#ifdef KERBEROS_TGT_PASSING
+#endif /* KRB4 */
+#ifdef AFS
   if (options->kerberos_tgt_passing == -1)
     options->kerberos_tgt_passing = 0;
-#endif
-#ifdef AFS
   if (options->afs_token_passing == -1)
     options->afs_token_passing = 1;
-#endif
+#endif /* AFS */
   if (options->password_authentication == -1)
     options->password_authentication = 1;
   if (options->permit_empty_passwd == -1)
@@ -144,16 +136,10 @@ typedef enum
   sPermitRootLogin, sQuietMode, sFascistLogging, sLogFacility,
   sRhostsAuthentication, sRhostsRSAAuthentication, sRSAAuthentication,
 #ifdef KRB4
-  sKerberosAuthentication, sKerberosOrLocalPasswd,
-#endif
-#if defined(KRB4) || defined(AFS)
-  sKerberosTicketCleanup,
-#endif
-#ifdef KERBEROS_TGT_PASSING
-  sKerberosTgtPassing,
+  sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
 #endif
 #ifdef AFS
-  sAFSTokenPassing,
+  sKerberosTgtPassing, sAFSTokenPassing,
 #endif
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
@@ -182,14 +168,10 @@ static struct
 #ifdef KRB4
   { "kerberosauthentication", sKerberosAuthentication },
   { "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
-#endif
-#if defined(KRB4) || defined(AFS)
   { "kerberosticketcleanup", sKerberosTicketCleanup },
 #endif
-#ifdef KERBEROS_TGT_PASSING
-  { "kerberostgtpassing", sKerberosTgtPassing },
-#endif
 #ifdef AFS
+  { "kerberostgtpassing", sKerberosTgtPassing },
   { "afstokenpassing", sAFSTokenPassing },
 #endif
   { "passwordauthentication", sPasswordAuthentication },
@@ -396,21 +378,17 @@ void read_server_config(ServerOptions *options, const char *filename)
  	case sKerberosOrLocalPasswd:
  	  intptr = &options->kerberos_or_local_passwd;
  	  goto parse_flag;
-#endif
 
-#if defined(KRB4) || defined(AFS)
 	case sKerberosTicketCleanup:
 	  intptr = &options->kerberos_ticket_cleanup;
 	  goto parse_flag;
 #endif
 	  
-#ifdef KERBEROS_TGT_PASSING
+#ifdef AFS
 	case sKerberosTgtPassing:
 	  intptr = &options->kerberos_tgt_passing;
 	  goto parse_flag;
-#endif
 
-#ifdef AFS
 	case sAFSTokenPassing:
 	  intptr = &options->afs_token_passing;
 	  goto parse_flag;
