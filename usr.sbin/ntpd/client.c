@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.31 2004/08/13 12:26:13 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.32 2004/08/16 11:14:15 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,22 @@
 #include "ntpd.h"
 
 int	client_update(struct ntp_peer *);
+void	set_next(struct ntp_peer *, time_t);
+void	set_deadline(struct ntp_peer *, time_t);
+
+void
+set_next(struct ntp_peer *p, time_t t)
+{
+	p->next = time(NULL) + t;
+	p->deadline = 0;
+}
+
+void
+set_deadline(struct ntp_peer *p, time_t t)
+{
+	p->deadline = time(NULL) + t;
+	p->next = 0;
+}
 
 int
 client_peer_init(struct ntp_peer *p)
@@ -71,7 +87,7 @@ client_addr_init(struct ntp_peer *p)
 	    (p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
 		fatal("client_query socket");
 
-	p->next = time(NULL);
+	set_next(p, 0);
 
 	return (0);
 }
@@ -102,7 +118,7 @@ int
 client_query(struct ntp_peer *p)
 {
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
+		set_next(p, INTERVAL_QUERY_PATHETIC);
 		return (-1);
 	}
 
@@ -126,14 +142,12 @@ client_query(struct ntp_peer *p)
 
 	if (ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->addr->ss,
 	    &p->query->msg, NTP_MSGSIZE_NOAUTH, 0) == -1) {
-		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
-		p->deadline = 0;
+		set_next(p, INTERVAL_QUERY_PATHETIC);
 		return (-1);
 	}
 
 	p->state = STATE_QUERY_SENT;
-	p->next = 0;
-	p->deadline = time(NULL) + QUERYTIME_MAX;
+	set_deadline(p, QUERYTIME_MAX);
 
 	return (0);
 }
@@ -223,8 +237,7 @@ client_dispatch(struct ntp_peer *p)
 			    (QSCALE_OFF_MAX / abs_offset);
 	}
 
-	p->next = time(NULL) + interval;
-	p->deadline = 0;
+	set_next(p, interval);
 	p->state = STATE_REPLY_RECEIVED;
 
 	/* every received reply which we do not discard increases trust */
