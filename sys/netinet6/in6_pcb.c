@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.20 2000/10/11 09:14:14 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.21 2000/12/21 00:54:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -587,11 +587,15 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
 			 *
 			 * XXX: we assume in_rtchange does not free the PCB.
 			 */
-			if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr))
+			if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr,
+			    faddr)) {
 				in_rtchange(inp, errno);
 
-			if (notify == in_rtchange)
-				continue; /* there's nothing to do any more */
+				if (notify == in_rtchange) {
+					/* there's nothing to do any more */
+					continue;
+				}
+			}
 		}
 
 		if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||

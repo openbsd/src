@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.37 2000/12/13 09:47:08 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.38 2000/12/21 00:54:10 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -976,7 +976,7 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
 	(void) in6_pcbnotify(&tcbtable, (struct sockaddr *)&sin6, 0,
-	    &zeroin6_addr, 0, EMSGSIZE, tcp_mtudisc);
+	    &zeroin6_addr, 0, PRC_MSGSIZE, tcp_mtudisc);
 }
 #endif /* INET6 */
 
