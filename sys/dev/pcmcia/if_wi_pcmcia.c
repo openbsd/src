@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.34 2002/06/21 08:31:09 henning Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.35 2002/06/22 22:10:38 fgsch Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -368,6 +368,7 @@ wi_pcmcia_attach(parent, self, aux)
 	sc->wi_ltag = sc->wi_btag = psc->sc_pcioh.iot;
 	sc->wi_lhandle = sc->wi_bhandle = psc->sc_pcioh.ioh;
 	sc->wi_cor_offset = WI_COR_OFFSET;
+	sc->wi_flags |= WI_FLAGS_BUS_PCMCIA;
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);

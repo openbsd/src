@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.20 2002/06/21 03:02:00 fgsch Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.21 2002/06/22 22:10:38 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,50 +83,36 @@
  */
 
 #if defined(__sparc__)
-
-#define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), htole32(val))
-#define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), htole16(val))
-#define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), val)
-
-#define CSR_READ_4(sc, reg)		\
-	letoh32(bus_space_read_4(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg)))
-#define CSR_READ_2(sc, reg)		\
-	letoh16(bus_space_read_2(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg)))
-#define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg))
-
+#define WI_IS_BE	(sc->wi_flags & WI_FLAGS_BUS_PCMCIA)
 #else
+#define WI_IS_BE 	0
+#endif
 
 #define CSR_WRITE_4(sc, reg, val)	\
 	bus_space_write_4(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), val)
+	    sc->sc_pci ? reg * 2: reg), WI_IS_BE ? htole32(val) : (val))
 #define CSR_WRITE_2(sc, reg, val)	\
 	bus_space_write_2(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), val)
+	    (sc->sc_pci ? reg * 2: reg), WI_IS_BE ? htole16(val) : (val))
 #define CSR_WRITE_1(sc, reg, val)	\
 	bus_space_write_1(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg), val)
+	    (sc->sc_pci ? reg * 2: reg), val)
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg))
+	(WI_IS_BE ?			\
+	letoh32(bus_space_read_4(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci ? reg * 2: reg))) :			\
+	bus_space_read_4(sc->wi_btag, sc->wi_bhandle,		\
+	    (sc->sc_pci ? reg * 2: reg)))
 #define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg))
+	(WI_IS_BE ?			\
+	letoh16(bus_space_read_2(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci ? reg * 2: reg))) :			\
+	bus_space_read_2(sc->wi_btag, sc->wi_bhandle,		\
+	    (sc->sc_pci ? reg * 2: reg)))
 #define CSR_READ_1(sc, reg)		\
 	bus_space_read_1(sc->wi_btag, sc->wi_bhandle,	\
-	    (sc->sc_pci? reg * 2: reg))
-
-#endif
+	    (sc->sc_pci ? reg * 2: reg))
 
 #define CSR_READ_RAW_2(sc, ba, dst, sz) \
 	bus_space_read_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, \
