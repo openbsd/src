@@ -558,7 +558,8 @@ pmap_init(phys_start, phys_end)
 	 * map where we want it.
 	 */
 	addr = AMIGA_UPTBASE;
-	s = min(AMIGA_UPTMAXSIZE, maxproc * AMIGA_UPTSIZE);
+	s = AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE < maxproc ?
+	    AMIGA_UPTMAXSIZE : maxproc * AMIGA_UPTSIZE;
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
