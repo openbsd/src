@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.8 2003/02/14 20:23:20 jason Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.9 2004/02/02 20:43:37 brad Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -8,12 +8,6 @@
  * Switch stacks.
  * On sparc this also means we switch register windows.
  */
-
-#ifdef __sparcv9__
-#define flushw		.word 0x81580000
-#else
-#define flushw		t ST_FLUSHWIN
-#endif
 
 #define SA(x)	(((x)+7)&(~0x7))
 #define MINFRAME ((16+1+6)*4)	
@@ -28,7 +22,7 @@ ENTRY(_thread_machdep_switch)
 	save	%sp, -SA(MINFRAME), %sp
 
 	/* flush all windows (except current one) into memory frames */
-	flushw
+	t ST_FLUSHWIN
 
 	/* switch the stack pointer and return address */
 	st 	%fp, [%i1 + 0]
