@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.23 2003/08/23 22:52:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -260,7 +260,7 @@ swapconf()
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+			    (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
@@ -279,7 +279,7 @@ struct nam2blk {
 } nam2blk[] = {
 	{ "sd",		4 },
 	{ "st",		7 },
-   { "rd",     9 },
+	{ "rd",		9 },
 };
 
 int
@@ -333,7 +333,7 @@ parsedisk(str, len, defpart, devp)
 		return (NULL);
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= 'h') {
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -385,7 +385,7 @@ setroot()
 #endif
 
 	printf("boot device: %s\n",
-		(bootdv) ? bootdv->dv_xname : "<unknown>");
+	    (bootdv) ? bootdv->dv_xname : "<unknown>");
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
@@ -403,14 +403,14 @@ setroot()
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
-				if (dv != NULL) {
+				if (dv) {
 					bootdv = dv;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}
 			}
 			dv = getdisk(buf, len, 0, &nrootdev);
-			if (dv != NULL) {
+			if (dv) {
 				bootdv = dv;
 				break;
 			}
@@ -460,9 +460,7 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-
 	} else if (mountroot == NULL) {
-
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
@@ -488,9 +486,7 @@ gotswap:
 		}
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-
 	} else {
-
 		/*
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
