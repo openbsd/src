@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2004/11/07 10:25:59 espie Exp $
+#	$OpenBSD: Makefile,v 1.20 2005/03/02 10:12:41 espie Exp $
 
 FIBOMAX=25
 M4=m4
@@ -6,9 +6,10 @@ M4=m4
 .SUFFIXES: .m4 .m4.uu
 CLEANFILES+= ff_after_dnl.m4 strangequotes.m4 fibo.out
 
-REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 test-fibo \
+REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 \
+    test-m4wrap3 test-gm4wrap3 test-fibo \
     test-patterns trip test-strangequotes test-redef test-quotes \
-    test-weird test-args test-esyscmd test-eval test-gnupatterns
+    test-weird test-args test-esyscmd test-eval test-gnupatterns \
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -21,6 +22,12 @@ test-m4wrap:
 
 test-m4wrap2:
 	test `${M4} ${.CURDIR}/m4wrap2.m4 | wc -c` == 0
+
+test-m4wrap3:
+	${M4} ${.CURDIR}/m4wrap3.m4 | diff - ${.CURDIR}/m4wrap3.out
+
+test-gm4wrap3:
+	${M4} -g ${.CURDIR}/m4wrap3.m4 | diff - ${.CURDIR}/gm4wrap3.out
 
 test-patterns:
 	${M4} ${.CURDIR}/patterns.m4 | diff - ${.CURDIR}/patterns.out
