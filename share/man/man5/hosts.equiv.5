@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.1 1997/11/30 05:35:25 deraadt Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.2 1998/11/26 04:25:58 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,8 +47,9 @@ The
 .Nm hosts.equiv
 and
 .Nm .rhosts
-files list hosts and users which are ``trusted'' by the local host when a
-connection is made via
+files list hosts and users which are
+.Dq trusted
+by the local host when a connection is made via
 .Xr rlogind 8 ,
 .Xr rshd 8 ,
 or any other server that uses
@@ -63,49 +64,53 @@ hostname [username]
 .Ed
 .Pp
 The
-.Em hostname
+.Ar hostname
 may be specified as a host name (typically a fully qualified host
 name in a DNS environment) or address,
-.Em +@netgroup
+.Ar +@netgroup
 (from which only the host names are checked),
-or a ``+'' wildcard (allow all hosts).
+or a
+.Dq +
+wildcard (allow all hosts).
 .Pp
 The
-.Em username ,
+.Ar username ,
 if specified, may be given as a user name on the remote host,
-.Em +@netgroup
+.Ar +@netgroup
 (from which only the user names are checked),
-or a ``+'' wildcard (allow all remote users).
+or a
+.Dq +
+wildcard (allow all remote users).
 .Pp
 If a
-.Em username
+.Ar username
 is specified, only that user from the specified host may login to the
 local machine.  If a
-.Em username
+.Ar username
 is not specified, any user may login with the same user name.
 .Sh EXAMPLES
 .Li somehost
 .Bd -filled -offset indent -compact
-A common usage:  users on
-.Em somehost
+A common usage; users on
+.Ar somehost
 may login to the local host as the same user name.
 .Ed
 .Li somehost username
 .Bd -filled -offset indent -compact
 The user
-.Em username
+.Ar username
 on
-.Em somehost
+.Ar somehost
 may login to the local host.  If specified in
-.Em /etc/hosts.equiv ,
+.Pa /etc/hosts.equiv ,
 the user may login with only the same user name.
 .Ed
 .Li +@anetgroup username
 .Bd -filled -offset indent -compact
 The user
-.Em username
+.Ar username
 may login to the local host from any machine listed in the netgroup
-.Em anetgroup .
+.Ar anetgroup .
 .Ed
 .Bd -literal -compact
 +
@@ -116,10 +121,10 @@ Two severe security hazards.  In the first case, allows a user on any
 machine to login to the local host as the same user name.  In the second
 case, allows any user on any machine to login to the local host (as any
 user, if in
-.Em /etc/hosts.equiv ) .
+.Pa /etc/hosts.equiv ) .
 .Ed
 .Sh WARNINGS
-The username checks provided by this mechanism are
+The user name checks provided by this mechanism are
 .Em not
 secure, as the remote user name is received by the server unchecked
 for validity.  Therefore this mechanism should only be used
@@ -129,26 +134,28 @@ A numeric host address instead of a host name can help security
 considerations somewhat; the address is then used directly by
 .Xr iruserok 3 .
 .Pp
-When a username (or netgroup, or +) is specified in
-.Em /etc/hosts.equiv ,
+When a user name (or netgroup, or
+.Dq + )
+is specified in
+.Pa /etc/hosts.equiv ,
 that user (or group of users, or all users, respectively) may login to
 the local host as
 .Em any local user .
 Usernames in
-.Em /etc/hosts.equiv
+.Pa /etc/hosts.equiv
 should therefore be used with extreme caution, or not at all.
 .Pp
 A
-.Em .rhosts
+.Pa .rhosts
 file must be owned by the user whose home directory it resides in, and
 must be writable only by that user.
 .Pp
 Logins as root only check root's
-.Em .rhosts
+.Pa .rhosts
 file; the
-.Em /etc/hosts.equiv
+.Pa /etc/hosts.equiv
 file is not checked for security.  Access permitted through root's
-.Em .rhosts
+.Pa .rhosts
 file is typically only for
 .Xr rsh 1 ,
 as root must still login on the console for an interactive login such as
@@ -156,9 +163,9 @@ as root must still login on the console for an interactive login such as
 .Sh FILES
 .Bl -tag -width /etc/hosts.equiv -compact
 .It Pa /etc/hosts.equiv
-Global trusted host-user pairs list
+global trusted host-user pairs list
 .It Pa ~/.rhosts
-Per-user trusted host-user pairs list
+per-user trusted host-user pairs list
 .El
 .Sh SEE ALSO
 .Xr rcp 1 ,
@@ -177,4 +184,7 @@ file format appeared in
 The
 .Xr ruserok 3
 implementation currently skips negative entries (preceded with a
-``-'' sign) and does not treat them as ``short-circuit'' negative entries.
+.Dq \&-
+sign) and does not treat them as
+.Dq short-circuit
+negative entries.

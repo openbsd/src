@@ -1,3 +1,4 @@
+.\"	$OpenBSD: phones.5,v 1.2 1998/11/26 04:25:59 aaron Exp $
 .\"	$NetBSD: phones.5,v 1.3 1994/11/30 19:31:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -47,16 +48,28 @@ private phone numbers for the
 .Xr tip 1
 program.  This file is normally unreadable, and so may contain
 privileged information.  The format of the file is a series of lines
-of the form: <system-name>[\ \et]*<phone-number>.  The system name is
-one of those defined in the
+of the form:
+.Pp
+.D1 Li <system-name>[\ \et]*<phone-number>
+.Pp
+The system name is one of those defined in the
 .Xr remote 5
 file and the phone number is constructed from any sequence of
-characters terminated only by ``,'' or the end of the line.
-The ``='' and ``*'' characters are
+characters terminated only by
+.Dq \&,
+or the end of the line. The
+.Dq =
+and
+.Dq \&*
+characters are
 indicators to the auto call units to pause and wait for a second dial
-tone (when going through an exchange).  The ``='' is required by the
+tone (when going through an exchange).  The
+.Dq =
+is required by the
 .Tn DF02-AC
-and the ``*'' is required by the
+and the
+.Dq \&*
+is required by the
 .Tn BIZCOMP
 1030.
 .Pp

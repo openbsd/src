@@ -1,3 +1,4 @@
+.\"	$OpenBSD: types.5,v 1.4 1998/11/26 04:25:59 aaron Exp $
 .\"	$NetBSD: types.5,v 1.3 1994/11/30 19:31:34 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -43,9 +44,9 @@
 .Fd #include <sys/types.h>
 .Sh DESCRIPTION
 The file
-.Pa sys/types.h
+.Aq Pa sys/types.h
 contains the defined data types used in the kernel (most are
-used through out the system).
+used throughout the system).
 .Bd -literal
 #ifndef _TYPES_H_
 #define	_TYPES_H_
@@ -138,9 +139,9 @@ typedef	struct fd_set {
 #endif /* !_TYPES_H_ */
 .Ed
 .Sh SEE ALSO
-.Xr fs 5 ,
+.Xr lseek 2 ,
 .Xr time 3 ,
-.Xr lseek 2
+.Xr fs 5
 .Sh HISTORY
 A
 .Nm

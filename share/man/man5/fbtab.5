@@ -1,4 +1,5 @@
-.\" this is comment
+.\"	$OpenBSD: fbtab.5,v 1.3 1998/11/26 04:25:58 aaron Exp $
+.\"
 .Dd August 22, 1994
 .Dt FBTAB 5
 .Os
@@ -12,23 +13,32 @@ file contains lines which specify how the permissions and
 ownership of various system files should be changed based on
 the user's login device name.
 .Pp
-Comments start with a # and extend to the end of the line.
+Comments start with a
+.Dq #
+and extend to the end of the line.
 Blank lines or lines with only a comment are ignored.
 .Pp
 All other lines consist of three fields delimited by
 whitespace.
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It Login Device
-The device you have logged in on, e.g. /dev/ttyv0.
+The device you have logged in on (e.g.,
+.Dq /dev/ttyv0 ) .
 .It File Permission 
 An octal permission number (0600), as used by
 .Xr chmod 2 .
 .It Other devices
-The final field is a ":"-delimited list of devices, e.g.
-/dev/console:/dev/fd0a.
+The final field is a colon
+.Pq Sq \&:
+delimited list of devices (e.g.,
+.Dq /dev/console:/dev/fd0a ) .
 All device names are absolute paths.
-A path that ends in "/*" refers to all
-directory entries except "." and "..".
+A path that ends in
+.Dq /\&*
+refers to all directory entries except
+.Dq \&.
+and
+.Dq \&.\&. .
 .El
 .Pp
 The
@@ -47,10 +57,6 @@ the files once again belonging to root.
 .Sh FILES
 .Bl -tag -width /etc/fbtab -compact
 .It Pa /etc/fbtab
-The
-.Nm
-file resides in
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr login 1 ,

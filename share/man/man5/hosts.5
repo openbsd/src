@@ -1,3 +1,4 @@
+.\"	$OpenBSD: hosts.5,v 1.5 1998/11/26 04:25:58 aaron Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -53,7 +54,9 @@ Aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or
-tab characters.  A ``#'' indicates the beginning of
+tab characters.  A
+.Dq #
+indicates the beginning of
 a comment; characters up to the end of the line are
 not interpreted by routines which search the file.
 .Pp
@@ -91,8 +94,9 @@ sites on the
 .Tn DARPA
 Internet.
 .Pp
-Network addresses are specified in the conventional
-``.'' (dot) notation using the
+Network addresses are specified in the conventional Internet
+.Dq \&.
+(dot) notation using the
 .Xr inet_addr 3
 routine
 from the Internet address manipulation library,
@@ -103,26 +107,22 @@ or comment character.
 .Sh FILES
 .Bl -tag -width /etc/hosts -compact
 .It Pa /etc/hosts
-The
-.Nm hosts
-file resides in
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
-.Xr ifconfig 8 ,
 .Xr resolv.conf 5 ,
+.Xr ifconfig 8 ,
 .Xr named 8
 .Rs
 .%T "Name Server Operations Guide for BIND"
 .Re
 .Sh BUGS
 A name server should be used instead of a static file.
-.br
+.Pp
 Lines in
 .Pa /etc/hosts
 are limited to
-.Ev BUFSIZE
+.Dv BUFSIZE
 characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The

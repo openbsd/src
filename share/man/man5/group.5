@@ -1,3 +1,4 @@
+.\"	$OpenBSD: group.5,v 1.2 1998/11/26 04:25:58 aaron Exp $
 .\"	$NetBSD: group.5,v 1.4 1995/07/28 06:41:39 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -42,19 +43,18 @@
 .Nd format of the group permissions file
 .Sh DESCRIPTION
 The file
-.Aq Pa /etc/group
+.Pa /etc/group
 consists of newline separated
 .Tn ASCII
 records, one per group, containing four colon
-.Ql \&:
+.Pq Sq \&:
 separated fields. These fields are as follows:
+.Pp
 .Bl -tag -width password -offset indent -compact
 .It group
 Name of the group.
 .It passwd
-Group's
-.Em encrypted
-password.
+Group's encrypted password.
 .It gid
 The group's decimal ID.
 .It member
@@ -73,9 +73,7 @@ across a group of systems) since they control file access.
 The
 .Ar passwd
 field
-is an optional
-.Em encrypted
-password.
+is an optional encrypted password.
 This field is rarely used
 and an asterisk is normally placed in it rather than leaving it blank.
 The 
@@ -87,7 +85,8 @@ A user is automatically in a group if that group was specified
 in their
 .Pa /etc/passwd
 entry and does not need to be added to that group in the
-.Pa /etc/group file.
+.Pa /etc/group
+file.
 .\" .Pp
 .\" When the system reads the file
 .\" .Pa /etc/group
@@ -115,11 +114,14 @@ which causes the specified group to be included from the
 .Pa group.byname
 YP map.
 .Pp
-If no group name is specified, or the ``+'' (plus sign) appears alone
+If no group name is specified, or the
+.Dq +
+(plus sign) appears alone
 on line, all groups are included from the YP map.
 .Pp
-YP references may appear anywhere in the file, but the single ``+'' form
-should be on the last line, for historical reasons.
+YP references may appear anywhere in the file, but the single
+.Dq +
+form should be on the last line, for historical reasons.
 Only the first group with a specific name encountered, whether in the
 .Nm
 file itself, or included via YP, will be used.
@@ -128,10 +130,10 @@ file itself, or included via YP, will be used.
 .It Pa /etc/group
 .El
 .Sh SEE ALSO
-.Xr setgroups 2 ,
-.Xr initgroups 3 ,
-.Xr crypt 3 ,
 .Xr passwd 1 ,
+.Xr setgroups 2 ,
+.Xr crypt 3 ,
+.Xr initgroups 3 ,
 .Xr passwd 5 ,
 .Xr yp 8
 .Sh BUGS

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: protocols.5,v 1.3 1998/11/26 04:25:59 aaron Exp $
 .\"	$NetBSD: protocols.5,v 1.3 1994/11/30 19:31:27 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -53,7 +54,9 @@ aliases
 .Ed
 .Pp
 Items are separated by any number of blanks and/or
-tab characters.  A ``#'' indicates the beginning of
+tab characters.  A
+.Dq #
+indicates the beginning of
 a comment; characters up to the end of the line are
 not interpreted by routines which search the file.
 .Pp
@@ -63,20 +66,15 @@ or comment character.
 .Sh FILES
 .Bl -tag -width /etc/protocols -compact
 .It Pa /etc/protocols
-The
-.Nm protocols
-file resides in
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr getprotoent 3
 .Sh BUGS
 A name server should be used instead of a static file.
-.br
 Lines in
 .Pa /etc/protocols
 are limited to
-.Ev BUFSIZE
+.Dv BUFSIZE
 characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The

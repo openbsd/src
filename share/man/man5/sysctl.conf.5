@@ -1,4 +1,4 @@
-.\" $OpenBSD: sysctl.conf.5,v 1.2 1998/06/26 03:08:39 millert Exp $
+.\" $OpenBSD: sysctl.conf.5,v 1.3 1998/11/26 04:25:59 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .Dd June 25, 1998
 .Os
-.Dt SYSCTL.CONF 8
+.Dt SYSCTL.CONF 5
 .Sh NAME
 .Nm sysctl.conf
 .Nd sysctl variables to set at bootup
@@ -41,8 +41,10 @@ early on in the boot sequence.
 .Pp
 The file is made up of
 .Xr sysctl 8
-variable assignments (variable=value) with comments designated by a hash,
-.Dq # .
+variable assignments
+.Pq Ar variable Ns No = Ns Ar value
+with comments designated by a hash mark
+.Pq Sq # .
 .Sh EXAMPLES
 To turn on IP forwarding, one would use the following line:
 .Bd -literal -offset indent
@@ -55,12 +57,14 @@ the debugger, the following can be used:
 ddb.panic=0
 .Ed
 .Sh FILES
-.Pa /etc/sysctl.conf
+.Bl -tag -width /etc/sysctl.conf -compact
+.It Pa /etc/sysctl.conf
+.El
 .Sh SEE ALSO
 .Xr rc 8 ,
 .Xr sysctl 8
 .Sh HISTORY
-The file 
+A
 .Nm sysctl.conf
-first appeared in
+file first appeared in
 .Ox 2.3 .

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: fs.5,v 1.4 1998/11/26 04:25:58 aaron Exp $
 .\"	$NetBSD: fs.5,v 1.3 1994/11/30 19:31:17 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -172,14 +173,15 @@ super-block data does not change, so the copies need not be
 referenced further unless disaster strikes.
 .Pp
 Addresses stored in inodes are capable of addressing fragments
-of `blocks'. File system blocks of at most size
+of
+.Dq blocks .
+File system blocks of at most size
 .Dv MAXBSIZE
 can 
 be optionally broken into 2, 4, or 8 pieces, each of which is
 addressable; these pieces may be
 .Dv DEV_BSIZE ,
-or some multiple of
-a
+or some multiple of a
 .Dv DEV_BSIZE
 unit.
 .Pp
@@ -190,7 +192,7 @@ necessary.  The file system format retains only a single pointer
 to such a fragment, which is a piece of a single large block that
 has been divided.  The size of such a fragment is determinable from
 information in the inode, using the
-.Fn blksize fs ip lbn
+.Fn blksize
 macro.
 .Pp
 The file system records space availability at the fragment level;
@@ -228,14 +230,18 @@ The element
 specifies whether the file system should try to minimize the time spent
 allocating blocks, or if it should attempt to minimize the space
 fragmentation on the disk.
-If the value of fs_minfree (see above) is less than 5%,
+If the value of
+.Fa fs_minfree
+(see above) is less than 5%,
 then the file system defaults to optimizing for space to avoid
 running out of full sized blocks.
-If the value of minfree is greater than or equal to 5%,
+If the value of
+.Fa fs_minfree
+is greater than or equal to 5%,
 fragmentation is unlikely to be problematical, and
 the file system defaults to optimizing for time.
 .Pp
-.Em Cylinder group related limits :
+.Ss Cylinder group related limits
 Each cylinder keeps track of the availability of blocks at different
 rotational positions, so that sequential blocks can be laid out
 with minimum rotational latency. With the default of 8 distinguished
@@ -268,7 +274,7 @@ it is possible to create files of size
 .Dv MINBSIZE
 must be big enough to hold a cylinder group block,
 thus changes to
-.Pq Fa struct cg
+.Fa struct cg
 must keep its size within
 .Dv MINBSIZE .
 Note that super-blocks are never more than size
@@ -293,20 +299,18 @@ These blocks are read in from
 .Fa fs_cssize )
 in addition to the super-block.
 .Pp
-.Sy N.B.:
-.Xr sizeof Pq Fa struct csum
+Note that
+.Fn sizeof "struct csum"
 must be a power of two in order for
 the
 .Fn fs_cs
 macro to work.
 .Pp
-The
-.Em "Super-block for a file system" :
+.Ss Super-block for a file system
 The size of the rotational layout tables
 is limited by the fact that the super-block is of size
 .Dv SBSIZE .
-The size of these tables is
-.Em inversely
+The size of these tables is inversely
 proportional to the block
 size of the file system. The size of the tables is
 increased when sector sizes are not powers of two,
@@ -315,17 +319,16 @@ included before the rotational pattern repeats
 .Pq Fa fs_cpc .
 The size of the rotational layout
 tables is derived from the number of bytes remaining in
-.Pq Fa struct fs .
+.Fa struct fs .
 .Pp
 The number of blocks of data per cylinder group
 is limited because cylinder groups are at most one block.
 The inode and free block tables
 must fit into a single block after deducting space for
 the cylinder group structure
-.Pq Fa struct cg .
+.Fa struct cg .
 .Pp
-The
-.Em Inode :
+.Ss Inodes
 The inode is the focus of all file activity in the
 .Tn UNIX
 file system.
@@ -333,7 +336,9 @@ There is a unique inode allocated
 for each active file,
 each current directory, each mounted-on file,
 text file, and the root.
-An inode is `named' by its device/i-number pair.
+An inode is
+.Dq named
+by its device/i-number pair.
 For further information, see the include file
 .Aq Pa ufs/ufs/inode.h .
 .Sh HISTORY

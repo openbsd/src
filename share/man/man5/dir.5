@@ -1,3 +1,4 @@
+.\"	$OpenBSD: dir.5,v 1.4 1998/11/26 04:25:58 aaron Exp $
 .\"	$NetBSD: dir.5,v 1.5 1995/03/28 17:30:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -64,23 +65,22 @@ and is called a file system (or referred to as a file system tree).
 Each directory file contains two special directory entries; one is a pointer
 to the directory itself
 called dot
-.Ql \&.
+.Pq Dq \&.
 and the other a pointer to its parent directory called dot-dot
-.Ql \&.. .
+.Pq Dq \&.. .
 Dot and dot-dot
 are valid pathnames, however,
 the system root directory
-.Ql / ,
+.Pq Dq / ,
 has no parent and dot-dot points to itself like dot.
 .Pp
 File system nodes are ordinary directory files on which has
 been grafted a file system object, such as a physical disk or a
-partitioned area of such a disk.
-(See
-.Xr mount 8 . )
+partitioned area of such a disk (see
+.Xr mount 8 ) .
 .Pp
 The directory entry format is defined in the file
-.Aq dirent.h :
+.Aq Pa dirent.h :
 .Bd -literal
 #ifndef _DIRENT_H_
 #define _DIRENT_H_

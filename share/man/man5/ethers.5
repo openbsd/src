@@ -1,3 +1,4 @@
+.\"	$OpenBSD: ethers.5,v 1.7 1998/11/26 04:25:58 aaron Exp $
 .\"	$NetBSD: ethers.5,v 1.2 1994/11/30 19:31:16 jtc Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
@@ -13,13 +14,14 @@ The
 .Nm ethers
 file maps Ethernet addresses to host names.
 Lines consist of an address and a host name, separated by any number of blanks and/or tab characters.
-A ``#'' indicates the beginning of a comment; characters up to the end of
+A
+.Dq #
+indicates the beginning of a comment; characters up to the end of
 the line are not interpreted by routines which search the file.
 .Pp
-Ethernet addresses are expressed as six hexadecimal numbers separated by colons.  The functions described in 
+Ethernet addresses are expressed as six hexadecimal numbers separated by
+colons. The functions described in 
 .Xr ethers 3
-and
-.Xr ether_aton 3
 can read and produce this format.
 .Pp
 The
@@ -28,21 +30,17 @@ file has support for YP functionality.
 .Sh FILES
 .Bl -tag -width /etc/ethers -compact
 .It Pa /etc/ethers
-The
-.Nm ethers
-file resides in
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr ethers 3 ,
 .Xr diskless 8
 .Sh BUGS
 A name server should be used instead of a static file.
-.br
+.Pp
 Lines in
 .Pa /etc/ethers
 are limited to
-.Ev BUFSIZE
+.Dv BUFSIZE
 characters (currently 1024).  Longer lines will be ignored.
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.6 1998/07/24 20:49:13 deraadt Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.7 1998/11/26 04:25:59 aaron Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -74,8 +74,8 @@ entries are present,
 the default is to use the name server on the local machine.
 (The algorithm used is to try a name server, and if the query times out,
 try the next, until out of name servers,
-then repeat trying all the name servers
-until a maximum number of retries are made).
+then repeat trying all name servers
+until a maximum number of retries are performed.)
 .It Sy domain
 Local domain name.
 Most queries for names within this domain can use short names
@@ -85,7 +85,8 @@ If no
 entry is present, the domain is determined
 from the local host name returned by
 .Xr gethostname 3 ;
-the domain part is taken to be everything after the first `.'.
+the domain part is taken to be everything after the first
+.Dq \&. .
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
 .It Sy lookup
@@ -95,18 +96,19 @@ and
 .Xr gethostbyaddr 3 .
 It specifies which databases should be searched,
 and the order to do so.
-The legal space-separated values are
-.Bl -tag -width bind
+The legal space-separated values are:
+.Pp
+.Bl -tag -width bind -compact
 .It Sy bind
-use the Domain Name server by querying the
-.Xr named 8
+Use the Domain Name server by querying
+.Xr named 8 .
 .It Sy file
-search for entries in
-.Nm /etc/hosts
+Search for entries in
+.Pa /etc/hosts .
 .It Sy yp
-talk to the YP system if
+Talk to the YP system if
 .Xr ypbind 8
-is running
+is running.
 .El
 .Pp
 If the
@@ -121,7 +123,7 @@ file does not exist, then the only database used is
 .Sy file .
 .Pp
 .It Sy search
-Search list for host-name lookup.
+Search list for hostname lookup.
 The search list is normally determined from the local domain name;
 by default, it begins with the local domain name, then successive
 parent domains that have at least two components in their names.
@@ -140,18 +142,21 @@ for one of the domains.
 The search list is currently limited to six domains
 with a total of 1024 characters.
 .It Sy sortlist
-Sortlist allows addresses returned by gethostbyname to
-be sorted.
-A sortlist is specified by IP address netmask pairs.
+Allows addresses returned by
+.Xr gethostbyname 3
+to be sorted.
+A
+.Sy sortlist
+is specified by IP address netmask pairs.
 The netmask is optional and defaults to the natural
 netmask of the net.
 The IP address and optional network pairs are separated by
 slashes.
-Up to 10 pairs may be specified, ie.
+Up to 10 pairs may be specified, i.e.:
 .Pp
 .Sy sortlist 130.155.160.0/255.255.240.0 130.155.0.0
 .It Sy options
-Options allows certain internal resolver variables to be modified.
+Allows certain internal resolver variables to be modified.
 The syntax is:
 .Pp
 .Sy options option ...
@@ -159,17 +164,19 @@ The syntax is:
 where option is one of the following:
 .Bl -tag -width ndots:n
 .It Sy debug
-sets RES_DEBUG in _res.options.
+Sets RES_DEBUG in _res.options.
 .It Sy inet6
-enable support for IPv6 addresses, by setting RES_USE_INET6 in
+Enables support for IPv6 addresses, by setting RES_USE_INET6 in
 _res.options (see
-.Xr resolver 3 ).
+.Xr resolver 3 ) .
 .It Sy ndots:n
-sets a threshold for the number of dots which
+Sets a threshold for the number of dots which
 must appear in a name given to res_query (see
 .Xr resolver 3 )
 before an initial absolute query will be made.
-The default for n is 1, meaning that if there are any
+The default for
+.Ar n
+is 1, meaning that if there are any
 dots in a name, the name will be tried first as an absolute
 name before any search list elements are appended to it.
 .El
@@ -202,23 +209,19 @@ environment variable
 to a space-separated list of resolver options as explained above.
 .Pp
 The keyword and value must appear on a single line, and the keyword
-(e.g.
+(e.g.,
 .Sy nameserver )
 must start the line.  The value follows
-the keyword, separated by white space.
+the keyword, separated by whitespace.
 .Sh FILES
 .Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/resolv.conf
-The file
-.Nm resolv.conf
-resides in
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr resolver 3 ,
-.Xr hostname 7 ,
 .Xr hosts 5 ,
+.Xr hostname 7 ,
 .Xr named 8
 .Rs
 .%T "Name Server Operations Guide for BIND"

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: utmp.5,v 1.7 1998/11/26 04:26:00 aaron Exp $
 .\"	$NetBSD: utmp.5,v 1.5 1994/11/30 19:31:35 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -47,12 +48,13 @@
 The file
 .Aq Pa utmp.h
 declares the structures used to record information about current
-users in the file
-.Nm utmp ,
-logins and logouts in the file
-.Nm wtmp ,
-and last logins in the file
-.Nm lastlog .
+users in the
+.Nm utmp
+file, logins and logouts in the
+.Nm wtmp
+file, and last logins in the
+.Nm lastlog
+file.
 The time stamps of date changes, shutdowns and reboots are also logged in
 the
 .Nm wtmp
@@ -92,17 +94,18 @@ Each time a user logs in, the
 program looks up the user's
 .Tn UID
 in the file
-.Nm lastlog.
+.Nm lastlog .
 If it is found, the timestamp of the last time the user logged
 in, the terminal line and the hostname
-are written to the standard output. (Providing the login is not
-.Em quiet ,
+are written to the standard output (provided the login is not
+.Dq quiet ,
 see
-.Xr login 1 . )
+.Xr login 1 ) .
 The
 .Xr login
-program then records the new login time in the file
-.Nm lastlog .
+program then records the new login time in the 
+.Nm lastlog
+file.
 .Pp
 After the new
 .Fa lastlog
@@ -110,9 +113,9 @@ record is written,
 .\" the
 .\" .Xr libutil 3
 .\" routine
-the file
+the
 .Nm utmp
-is opened and the
+file is opened and the
 .Fa utmp
 record for the user inserted.
 This record remains there until
@@ -128,16 +131,16 @@ and
 .Pp
 Next, the
 .Xr login
-program opens the file
-.Nm wtmp ,
-and appends the user's
+program opens the
+.Nm wtmp
+file and appends the user's
 .Fa utmp
 record.
-! When the user logs out, a
+When the user logs out, a
 .Fa utmp
-! record with the tty line, an updated time stamp, and zero'd name and host
-! fields is appended to the file. (See
-.Xr init 8 . )
+record with the tty line, an updated timestamp, and zeroed name and host
+fields is appended to the file (see
+.Xr init 8 ) .
 The
 .Nm wtmp
 file is used by the programs
@@ -145,57 +148,59 @@ file is used by the programs
 and
 .Xr ac 8 .
 .Pp
-In the event of a date change, a shutdown or reboot, the
+In the event of a date change, shutdown, or reboot, the
 following items are logged in the
 .Nm wtmp
-file.
+file:
 .Pp
 .Bl -tag -width shutdownxx -compact
 .It Li reboot
 .It Li shutdown
 A system reboot or shutdown has been initiated.
-The character
-.Ql \&~
-is placed in the field
+A tilde
+.Pq Sq \&~
+character is placed in the field
 .Fa ut_line ,
 and
-.Li reboot
+.Dq reboot
 or
-.Li shutdown
+.Dq shutdown
 in the field
-.Fa ut_name .
-(See
+.Fa ut_name
+(see
 .Xr shutdown 8
 and
-.Xr reboot 8 . )
+.Xr reboot 8 ) .
 .Pp
 .It Li date
-The system time has been manually or automatically updated.
-(See
-.Xr date 1 . )
+The system time has been manually or automatically updated (see
+.Xr date 1 ) .
 The command name
 .Xr date
 is recorded in the field
 .Fa ut_name .
 In the field
 .Fa ut_line ,
-the character
-.Ql \\*(Ba
-indicates the time prior to the change, and the character
-.Ql \&{
-indicates the new time.
+the
+.Dq \&|
+character indicates the time prior to the change and the
+.Dq \&{
+character indicates the new time.
 .El
 .Sh FILES
 .Bl -tag -width /var/log/lastlog -compact
 .It Pa /var/run/utmp
-The
-.Nm utmp file.
+the
+.Nm utmp
+file
 .It Pa /var/log/wtmp
-The
-.Nm wtmp file.
+the
+.Nm wtmp
+file
 .It Pa /var/log/lastlog
-The
-.Nm lastlog file.
+the
+.Nm lastlog
+file
 .El
 .Sh SEE ALSO
 .Xr last 1 ,
