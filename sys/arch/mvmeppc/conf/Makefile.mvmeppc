@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.18 2004/01/26 06:54:09 miod Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.19 2004/11/19 06:41:14 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -113,7 +113,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.cats,v 1.2 2004/02/03 23:07:30 miod Exp $
-#	$OpenBSD: Makefile.cats,v 1.2 2004/02/03 23:07:30 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.3 2004/11/19 06:41:13 miod Exp $
+#	$OpenBSD: Makefile.cats,v 1.3 2004/11/19 06:41:13 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -119,7 +119,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

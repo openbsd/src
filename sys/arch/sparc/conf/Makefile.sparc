@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.33 2003/11/20 08:38:52 espie Exp $
+#	$OpenBSD: Makefile.sparc,v 1.34 2004/11/19 06:41:14 miod Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -119,7 +119,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD

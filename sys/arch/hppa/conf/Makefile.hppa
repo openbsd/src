@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.23 2003/11/20 08:38:52 espie Exp $
+#	$OpenBSD: Makefile.hppa,v 1.24 2004/11/19 06:41:13 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -126,7 +126,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-S -x
 .endif
 
 %LOAD
