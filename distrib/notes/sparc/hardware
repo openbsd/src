@@ -65,13 +65,14 @@ Supported devices {:-include-:}:
 	Miscellaneous devices:
 		Sun floppy disk drive on sun4c machines.
 		Sun keyboard and mouse.
-		sun4c/Classic audio.
+		sun4c/Classic AMD audio.
+		sun4m (ss4/ss5) CS4231 audio.
 		Sun SBus Expansion Subsystem (SUNW,xbox)
 
 
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines (Will not boot correctly on multiple CPU sun4m)
-	Audio driver for sun4m machines
+	Audio driver for some sun4m machines (LX,ZX,ss10,ss20)
 	Floppy driver for sun4m (can boot/install from ramdisk floppies though)
 	Interrupt driven SCSI driver for Sun 4/100's and 4/200's
         VME mti 16-port serial card
