@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.12 2002/04/11 15:34:27 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.13 2002/04/15 19:47:33 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -186,7 +186,7 @@ wihap_init(struct wi_softc *sc)
 	struct wihap_info *whi = &sc->wi_hostap_info;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-		printf("wihap_init: sc=0x%x whi=0x%x\n", (int)sc, (int)whi);
+		printf("wihap_init: sc=0x%x whi=0x%x\n", sc, whi);
 
 	bzero(whi, sizeof(struct wihap_info));
 
@@ -272,8 +272,7 @@ wihap_shutdown(struct wi_softc *sc)
 	int s;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-		printf("wihap_shutdown: sc=0x%x whi=0x%x\n",
-		    (int)sc, (int)whi);
+		printf("wihap_shutdown: sc=0x%x whi=0x%x\n", sc, whi);
 
 	if (!(whi->apflags & WIHAPFL_ACTIVE))
 		return;
@@ -301,7 +300,7 @@ wihap_shutdown(struct wi_softc *sc)
 
 		/* Delete the structure. */
 		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
-			printf("wihap_shutdown: FREE(sta=0x%x)\n", (int)sta);
+			printf("wihap_shutdown: FREE(sta=0x%x)\n", sta);
 		next = LIST_NEXT(sta, list);
 		FREE(sta, M_DEVBUF);
 		sta = next;
