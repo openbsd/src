@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.2 2002/01/25 03:24:53 jason Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.3 2002/02/01 15:52:06 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -222,6 +222,8 @@ comkbd_attach(parent, self, aux)
 		printf(": can't map register space\n");
                 return;
 	}
+
+	printf("\n");
 
 	if (console) {
 		comkbd_init(sc);
