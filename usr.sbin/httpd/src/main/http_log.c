@@ -1,3 +1,5 @@
+/*	$OpenBSD: http_log.c,v 1.13 2002/08/15 15:49:33 henning Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
