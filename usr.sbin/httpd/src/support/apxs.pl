@@ -184,13 +184,13 @@ sub Getopts {
 }
 
 sub usage {
-    print STDERR "Usage: apxs -g [-S <var>=<val>] -n <modname>\n";
-    print STDERR "       apxs -q [-S <var>=<val>] <query> ...\n";
-    print STDERR "       apxs -c [-S <var>=<val>] [-o <dsofile>] [-D <name>[=<value>]]\n";
-    print STDERR "               [-I <incdir>] [-L <libdir>] [-l <libname>] [-Wc,<flags>]\n";
-    print STDERR "               [-Wl,<flags>] <files> ...\n";
-    print STDERR "       apxs -i [-S <var>=<val>] [-a] [-A] [-n <modname>] <dsofile> ...\n";
-    print STDERR "       apxs -e [-S <var>=<val>] [-a] [-A] [-n <modname>] <dsofile> ...\n";
+    print STDERR "Usage: apxs -c [-D variable[=value]] [-I incdir] [-L libdir] [-l libname]\n";
+    print STDERR "               [-o dsofile] [-S variable=value] [-Wc,compiler-flags]\n";
+    print STDERR "               [-Wl,linker-flags] file ...\n";
+    print STDERR "       apxs -e [-Aa] [-n name] [-S variable=value] dsofile ...\n";
+    print STDERR "       apxs -g [-S variable=value] -n name\n";
+    print STDERR "       apxs -i [-Aa] [-n name] [-S variable=value] dsofile ...\n";
+    print STDERR "       apxs -q [-S variable=value] query ...\n";
     exit(1);
 }
 
