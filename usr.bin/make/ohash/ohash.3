@@ -1,3 +1,30 @@
+.\"	$OpenBSD: ohash.3,v 1.2 2001/01/28 15:45:44 espie Exp $
+.\"
+.\" Copyright (c) 1999 Marc Espie.
+.\"
+.\" Code written for the OpenBSD project.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+.\" PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
 .Dd November 3, 1999
 .Dt OPEN_HASH 3
 .Os
@@ -13,12 +40,12 @@
 .Nm hash_first ,
 .Nm hash_next ,
 .Nm hash_entries
-.Nd light-weight open hashing 
+.Nd light-weight open hashing
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <stddef.h>
 .Fd #include <ohash.h>
-.Ft void 
+.Ft void
 .Fn hash_init "struct hash *h" "unsigned int size" "struct hash_info *info"
 .Ft void
 .Fn hash_delete "struct hash *h"
@@ -42,43 +69,43 @@
 .Fn hash_entries "struct hash *h"
 .Sh DESCRIPTION
 Those functions have been designed as a fast, extensible alternative to
-the usual hash table functions.  
-These provide storing and retrieval of records indexed by keys, 
-where a key is a contiguous sequence of bytes at a fixed position in 
-each record.  
+the usual hash table functions.
+These provide storing and retrieval of records indexed by keys,
+where a key is a contiguous sequence of bytes at a fixed position in
+each record.
 Keys can either be  null-terminated strings, or fixed-size memory areas.
 All functions take a pointer to a hash structure as the
 .Fa h
-function argument.  
+function argument.
 Storage for this structure should be provided by user code.
 .Pp
 .Fn hash_init
 initializes the table to store roughly 2 to the power
 .Fa size
-elements.  
+elements.
 .Fa info
-holds the position of the key in each record, and two pointers to 
+holds the position of the key in each record, and two pointers to
 .Xr calloc 3
 and
 .Xr free 3
 -like functions, to use for managing the table internal storage.
 .Pp
 .Fn hash_delete
-frees storage internal to 
+frees storage internal to
 .Fa h .
 Elements themselves should be freed by the user first, using  for instance
-.Fn hash_first 
+.Fn hash_first
 and
 .Fn hash_next .
 .Pp
 .Fn hash_lookup_string ,
-.Fn hash_lookup_interval 
+.Fn hash_lookup_interval
 and
 .Fn hash_lookup_memory
-are the basic look-up element functions.  
-The hashing function result is provided by the user as 
+are the basic look-up element functions.
+The hashing function result is provided by the user as
 .Fa hv .
-These return a 
+These return a
 .Qq slot
 in the hash table
 .Fa h ,
@@ -88,26 +115,26 @@ to be used with
 or
 .Fn hash_remove .
 This slot is only valid up to the next call to
-.Fn hash_insert 
+.Fn hash_insert
 or
 .Fn hash_remove .
 .Pp
 .Fn hash_lookup_string
 and
 .Fn hash_lookup_interval
-handle string-like keys. 
+handle string-like keys.
 .Fn hash_lookup_string
-assumes a null-terminated 
+assumes a null-terminated
 .Ft char *
 .Fa k ,
-whereas 
+whereas
 .Fn hash_lookup_interval
-assumes the key is the interval between 
+assumes the key is the interval between
 .Fa start
 and
 .Fa end ,
-exclusive.  
-In both cases, the actual elements stored in the hash should contain 
+exclusive.
+In both cases, the actual elements stored in the hash should contain
 null-terminated keys.
 .Pp
 .Fn hash_lookup_memory
@@ -117,37 +144,37 @@ of size
 .Fa s .
 All bytes are significant in key comparison.
 .Pp
-.Fn hash_find 
-retrieves an element from a slot 
-.Fa i 
-returned by the 
+.Fn hash_find
+retrieves an element from a slot
+.Fa i
+returned by the
 .Fn hash_lookup*
-functions.  
-It returns 
-.Va NULL 
+functions.
+It returns
+.Va NULL
 if the slot is empty.
 .Pp
 .Fn hash_insert
-inserts a new element 
+inserts a new element
 .Fa p
-at slot 
+at slot
 .Fa i .
-Slot 
+Slot
 .Fa i
 must be empty and element
 .Fa p
-must have a key corresponding to the 
+must have a key corresponding to the
 .Fn hash_lookup*
 call.
 .Pp
 .Fn hash_remove
 removes element of hash table at slot
 .Fa i .
-It returns the removed element, for user code to dispose of, or 
+It returns the removed element, for user code to dispose of, or
 .Va NULL
 if the slot was empty.
 .Pp
-.Fn hash_first 
+.Fn hash_first
 and
 .Fn hash_next
 can be used to access all elements in a hash table, like this:
@@ -159,11 +186,11 @@ can be used to access all elements in a hash table, like this:
 .Pp
 .Fa i
 points to an auxiliary unsigned integer used to record the current position
-in the hash table.  
-Those functions are safe to use even while entries are added to/removed 
-from the table, but in such a case they don't guarantee that new entries 
-will be returned.  
-As a special case, they can safely be used to free elements in the table. 
+in the hash table.
+Those functions are safe to use even while entries are added to/removed
+from the table, but in such a case they don't guarantee that new entries
+will be returned.
+As a special case, they can safely be used to free elements in the table.
 .Pp
 .Fn hash_entries
 returns the number of elements in the hash table.
@@ -171,33 +198,33 @@ returns the number of elements in the hash table.
 Only
 .Fn hash_init ,
 .Fn hash_insert ,
-.Fn hash_remove 
+.Fn hash_remove
 and
 .Fn hash_delete
-may call the user-supplied memory functions.  
-It is the responsability of the user memory allocation code to verify 
-that those calls did not fail. 
+may call the user-supplied memory functions.
+It is the responsability of the user memory allocation code to verify
+that those calls did not fail.
 .Pp
-In case memory allocation fails, 
+In case memory allocation fails,
 .Fn hash_init
 returns a useless hash table.
 .Fn hash_insert
 and
 .Fn hash_remove
 still perform the requested operation, but the returned table should be
-considered read-only.  
+considered read-only.
 It can still be accessed by
 .Fn hash_lookup* ,
 .Fn hash_find ,
-.Fn hash_first 
+.Fn hash_first
 and
 .Fn hash_next
 to dump relevant information to disk before aborting.
 .Sh THREAD SAFETY
-The open hashing functions are not thread-safe by design.  
+The open hashing functions are not thread-safe by design.
 In particular, it cannot be guaranteed that a
 .Qq slot
-will not move in a threaded environment between a 
+will not move in a threaded environment between a
 .Fn hash_lookup*
 and a
 .Fn hash_find ,
