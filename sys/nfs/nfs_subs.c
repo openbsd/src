@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.40 2002/01/16 21:51:16 ericj Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.41 2002/02/10 22:02:05 nate Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1654,7 +1654,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 
 	saddr = mtod(nam, struct sockaddr_in *);
 	if (saddr->sin_family == AF_INET &&
-	    ((ntohs(saddr->sin_port) >= IPPORT_RESERVED && !nfs_norsvport) ||
+	    (ntohs(saddr->sin_port) >= IPPORT_RESERVED ||
 	    (slp->ns_so->so_type == SOCK_STREAM && ntohs(saddr->sin_port) == 20))) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
