@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.71 2002/06/10 18:08:59 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.72 2002/06/10 20:45:35 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -895,17 +895,13 @@ x509_cert_insert (int id, void *scert)
     }
 
 #ifdef USE_POLICY
-#ifdef USE_KEYNOTE
   if (x509_generate_kn (id, cert) == 0)
-#else
-    if (libkeynote && x509_generate_kn (id, cert) == 0)
-#endif
-      {
-	LOG_DBG ((LOG_POLICY, 50,
-		  "x509_cert_insert: x509_generate_kn failed"));
-	X509_free (cert);
-	return 0;
-      }
+    {
+      LOG_DBG ((LOG_POLICY, 50,
+		"x509_cert_insert: x509_generate_kn failed"));
+      X509_free (cert);
+      return 0;
+    }
 #endif /* USE_POLICY */
 
   res = x509_hash_enter (cert);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.63 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.64 2002/06/10 20:45:35 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1594,7 +1594,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   if (message_negotiate_sa (msg, check_policy))
     goto cleanup;
 #else
-  if (message_negotiate_sa (msg, libkeynote ? check_policy : 0))
+  if (message_negotiate_sa (msg, 0))
     goto cleanup;
 #endif
 #else
@@ -1693,11 +1693,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	}
     }
 #if !defined (USE_POLICY) && !defined (USE_KEYNOTE)
-#ifdef USE_POLICY
-  else if (!libkeynote)
-#else
   else
-#endif
     {
       /*
        * This code is no longer necessary, as policy determines acceptance
