@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2001/12/08 21:41:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2001/12/09 01:13:17 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -67,9 +67,6 @@
 #include <machine/pmap_table.h>
 #include <machine/pte.h>
 
-#include <mvme88k/dev/pcctworeg.h>
-#include <mvme88k/dev/clreg.h>
-
 /*
  *  VM externals
  */
@@ -90,36 +87,36 @@ extern vm_offset_t      virtual_avail, virtual_end;
 /*
  * conditional debugging
  */
-   #define CD_NONE		0x00
-   #define CD_NORM		0x01
-   #define CD_FULL		0x02
+#define CD_NONE		0x00
+#define CD_NORM		0x01
+#define CD_FULL		0x02
 
-   #define CD_ACTIVATE		0x0000004	/* pmap_activate */
-   #define CD_KMAP		0x0000008	/* pmap_expand_kmap */
-   #define CD_MAP		0x0000010	/* pmap_map */
-   #define CD_MAPB		0x0000020	/* pmap_map_batc */
-   #define CD_CACHE		0x0000040	/* pmap_cache_ctrl */
-   #define CD_BOOT		0x0000080	/* pmap_bootstrap */
-   #define CD_INIT		0x0000100	/* pmap_init */
-   #define CD_CREAT		0x0000200	/* pmap_create */
-   #define CD_FREE		0x0000400	/* pmap_free_tables */
-   #define CD_DESTR		0x0000800	/* pmap_destroy */
-   #define CD_RM		0x0001000	/* pmap_remove */
-   #define CD_RMAL		0x0002000	/* pmap_remove_all */
-   #define CD_COW		0x0004000	/* pmap_copy_on_write */
-   #define CD_PROT		0x0008000	/* pmap_protect */
-   #define CD_EXP		0x0010000	/* pmap_expand */
-   #define CD_ENT		0x0020000	/* pmap_enter */
-   #define CD_UPD		0x0040000	/* pmap_update */
-   #define CD_COL		0x0080000	/* pmap_collect */
-   #define CD_CMOD		0x0100000	/* pmap_clear_modify */
-   #define CD_IMOD		0x0200000	/* pmap_is_modified */
-   #define CD_CREF		0x0400000	/* pmap_clear_reference */
-   #define CD_PGMV		0x0800000	/* pagemove */
-   #define CD_CHKPV		0x1000000	/* check_pv_list */
-   #define CD_CHKPM		0x2000000	/* check_pmap_consistency */
-   #define CD_CHKM		0x4000000	/* check_map */
-   #define CD_ALL		0x0FFFFFC
+#define CD_ACTIVATE	0x0000004	/* pmap_activate */
+#define CD_KMAP		0x0000008	/* pmap_expand_kmap */
+#define CD_MAP		0x0000010	/* pmap_map */
+#define CD_MAPB		0x0000020	/* pmap_map_batc */
+#define CD_CACHE	0x0000040	/* pmap_cache_ctrl */
+#define CD_BOOT		0x0000080	/* pmap_bootstrap */
+#define CD_INIT		0x0000100	/* pmap_init */
+#define CD_CREAT	0x0000200	/* pmap_create */
+#define CD_FREE		0x0000400	/* pmap_free_tables */
+#define CD_DESTR	0x0000800	/* pmap_destroy */
+#define CD_RM		0x0001000	/* pmap_remove */
+#define CD_RMAL		0x0002000	/* pmap_remove_all */
+#define CD_COW		0x0004000	/* pmap_copy_on_write */
+#define CD_PROT		0x0008000	/* pmap_protect */
+#define CD_EXP		0x0010000	/* pmap_expand */
+#define CD_ENT		0x0020000	/* pmap_enter */
+#define CD_UPD		0x0040000	/* pmap_update */
+#define CD_COL		0x0080000	/* pmap_collect */
+#define CD_CMOD		0x0100000	/* pmap_clear_modify */
+#define CD_IMOD		0x0200000	/* pmap_is_modified */
+#define CD_CREF		0x0400000	/* pmap_clear_reference */
+#define CD_PGMV		0x0800000	/* pagemove */
+#define CD_CHKPV	0x1000000	/* check_pv_list */
+#define CD_CHKPM	0x2000000	/* check_pmap_consistency */
+#define CD_CHKM		0x4000000	/* check_map */
+#define CD_ALL		0x0FFFFFC
 
 int pmap_con_dbg = CD_NONE;
 #endif /* DEBUG */
@@ -334,7 +331,7 @@ extern vm_offset_t bugromva;
 extern vm_offset_t sramva;
 extern vm_offset_t obiova;
 
-void flush_atc_entry __P((long, vm_offset_t, int));
+void flush_atc_entry __P((long, vm_offset_t, boolean_t));
 unsigned int m88k_protection __P((pmap_t, vm_prot_t));
 pt_entry_t *pmap_expand_kmap __P((vm_offset_t, vm_prot_t));
 void pmap_free_tables __P((pmap_t));
@@ -360,7 +357,7 @@ void pmap_release __P((pmap_t));
  *      kernel  nonzero if supervisor mode, zero if user mode
  */
 void 
-flush_atc_entry(long users, vm_offset_t va, int kernel)
+flush_atc_entry(long users, vm_offset_t va, boolean_t kernel)
 {
 	register int cpu;
 	long tusers = users;
@@ -579,8 +576,10 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 			curproc, start, end, virt, prot, cmode);
 #endif
 
+#ifdef DIAGNOSTIC
 	if (start > end)
 		panic("pmap_map: start greater than end address");
+#endif
 
 	aprot = m88k_protection (kernel_pmap, prot);
 
@@ -592,7 +591,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			if ((pte = pmap_expand_kmap(virt, VM_PROT_READ|VM_PROT_WRITE)) == PT_ENTRY_NULL)
-				panic ("pmap_map: Cannot allocate pte table");
+				panic("pmap_map: Cannot allocate pte table");
 
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_MAP | CD_FULL)) == (CD_MAP | CD_FULL))
@@ -680,8 +679,10 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 			start, end, virt, prot);
 #endif
 
+#ifdef DIAGNOSTIC
 	if (start > end)
 		panic("pmap_map_batc: start greater than end address");
+#endif
 
 	aprot = m88k_protection (kernel_pmap, prot);
 	template.bits = trunc_page(start) | aprot | DT_VALID | cmode;
@@ -714,7 +715,7 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 			batctmp.field.lba = M88K_BTOBLK(virt);
 			batctmp.field.pba = M88K_BTOBLK(phys);
 
-			for ( i = 0; i < max_cpus; i++)
+			for (i = 0; i < max_cpus; i++)
 				if (cpu_sets[i])
 					cmmu_set_pair_batc_entry(i, batc_used, 
 								 batctmp.bits);
@@ -741,7 +742,7 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 		}
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			if ((pte = pmap_expand_kmap(virt, VM_PROT_READ|VM_PROT_WRITE)) == PT_ENTRY_NULL)
-				panic ("pmap_map_batc: Cannot allocate pte table");
+				panic("pmap_map_batc: Cannot allocate pte table");
 
 #ifdef	DEBUG
 		if (pmap_con_dbg & CD_MAPB)
@@ -798,7 +799,7 @@ pmap_cache_ctrl(pmap_t pmap, vm_offset_t s, vm_offset_t e, unsigned mode)
 	int		spl;
 	pt_entry_t	*pte;
 	vm_offset_t	va;
-	int		kflush;
+	boolean_t	kflush;
 	int		cpu;
 	register unsigned	users;
 	register pte_template_t	opte;
@@ -813,17 +814,18 @@ pmap_cache_ctrl(pmap_t pmap, vm_offset_t s, vm_offset_t e, unsigned mode)
 	}
 #endif /* DEBUG */
 
-	if (pmap == PMAP_NULL) {
+#ifdef DIAGNOSTIC
+	if (pmap == PMAP_NULL)
 		panic("pmap_cache_ctrl: pmap is NULL");
-	}
+#endif
 
 	PMAP_LOCK(pmap, spl);
 
 	users = pmap->cpus_using;
 	if (pmap == kernel_pmap) {
-		kflush = 1;
+		kflush = TRUE;
 	} else {
-		kflush = 0;
+		kflush = FALSE;
 	}
 
 	for (va = s; va < e; va += PAGE_SIZE) {
@@ -933,9 +935,10 @@ pmap_bootstrap(vm_offset_t load_start,
 		printf("pmap_bootstrap : \"load_start\" 0x%x\n", load_start);
 	}
 #endif
-	if (!PAGE_ALIGNED(load_start)) {
+#ifdef DIAGNOSTIC
+	if (!PAGE_ALIGNED(load_start))
 		panic("pmap_bootstrap : \"load_start\" not on the m88k page boundary : 0x%x", load_start);
-	}
+#endif
 
 	simple_lock_init(&kernel_pmap->lock);
 
@@ -957,7 +960,7 @@ pmap_bootstrap(vm_offset_t load_start,
 
 	*phys_start = round_page(*phys_start);
 	*virt_start = *phys_start +
-		      (trunc_page((unsigned)&kernelstart) - load_start);
+	    (trunc_page((unsigned)&kernelstart) - load_start);
 
 	/*
 	 * Initialize kernel_pmap structure
@@ -1035,7 +1038,7 @@ pmap_bootstrap(vm_offset_t load_start,
 
 	s_text = load_start;	     /* paddr of text */
 	e_text = load_start + ((unsigned)&etext -
-			       trunc_page((unsigned)&kernelstart));
+	    trunc_page((unsigned)&kernelstart));
 	/* paddr of end of text section*/
 	e_text = round_page(e_text);
 
@@ -1096,7 +1099,7 @@ pmap_bootstrap(vm_offset_t load_start,
 		*phys_start = round_page(*phys_start);
 	}
 
-#if defined(MVME187) || defined (MVME197)
+#if defined (MVME187) || defined (MVME197)
 	/*
 	 *  Get ethernet buffer - need etherlen bytes physically contiguous.
 	 *  1 to 1 mapped as well???. There is actually a bug in the macros
@@ -1129,7 +1132,7 @@ pmap_bootstrap(vm_offset_t load_start,
 		}
 	}
 
-#endif /* defined(MVME187) || defined (MVME197) */
+#endif /* defined (MVME187) || defined (MVME197) */
 
 	*virt_start = round_page(*virt_start);
 	*virt_end = VM_MAX_KERNEL_ADDRESS;
@@ -1166,7 +1169,7 @@ pmap_bootstrap(vm_offset_t load_start,
 	}
 #endif
 
-	for (  ; ptable->size != 0xffffffffU; ptable++)
+	for (; ptable->size != 0xffffffffU; ptable++)
 		if (ptable->size) {
 			/*
 			 * size-1, 'cause pmap_map rounds up to next pagenumber
@@ -1360,7 +1363,7 @@ pmap_init(void)
 	s = round_page(s);
 	addr = (vaddr_t)uvm_km_zalloc(kernel_map, s);
 
-	pv_head_table =  (pv_entry_t)addr;
+	pv_head_table = (pv_entry_t)addr;
 	addr += PV_TABLE_SIZE(npages);
 
 	/*
@@ -1510,10 +1513,9 @@ pmap_pinit(pmap_t p)
 	p->sdt_vaddr = segdt;
 	pmap_extract(kernel_pmap, (vaddr_t)segdt, (paddr_t *)&p->sdt_paddr);
 
-	if (!PAGE_ALIGNED(p->sdt_paddr)) {
-		printf("pmap_create: std table = %x\n",(int)p->sdt_paddr);
-		panic("pmap_create: sdt_table not aligned on page boundary");
-	}
+	if (!PAGE_ALIGNED(p->sdt_paddr))
+		panic("pmap_create: sdt_table 0x%x not aligned on page boundary",
+		    (int)p->sdt_paddr);
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
@@ -1618,10 +1620,11 @@ pmap_free_tables(pmap_t pmap)
 	*/
 	i = VM_MIN_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
 	j = VM_MAX_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
-	if ( j < 1024 )	j++;
+	if (j < 1024)
+		j++;
 
 	/* Segment table Loop */
-	for ( ; i < j; i++) {
+	for (; i < j; i++) {
 		sdt_va = PDT_TABLE_GROUP_VA_SPACE*i;
 		if ((gdttbl = pmap_pte(pmap, (vm_offset_t)sdt_va)) != PT_ENTRY_NULL) {
 #ifdef DEBUG
@@ -1694,9 +1697,10 @@ pmap_destroy(pmap_t p)
 		return;
 	}
 
-	if (p == kernel_pmap) {
+#ifdef DIAGNOSTIC
+	if (p == kernel_pmap)
 		panic("pmap_destroy: Attempt to destroy kernel pmap");
-	}
+#endif
 
 	CHECK_PMAP_CONSISTENCY("pmap_destroy");
 
@@ -1794,28 +1798,23 @@ pmap_reference(pmap_t p)
 void
 pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 {
-	int			pfn;
-	int			num_removed = 0;
-	int			num_unwired = 0;
-	pt_entry_t		*pte;
-	pv_entry_t		prev, cur;
-	pv_entry_t		pvl;
-	vm_offset_t		pa, va, tva;
-	register unsigned	users;
-	register pte_template_t	opte;
-	int			kflush;
-
-	if (e < s)
-		panic("pmap_remove_range: end < start");
+	int		pfn;
+	pt_entry_t	*pte;
+	pv_entry_t	prev, cur;
+	pv_entry_t	pvl;
+	vm_offset_t	pa, va;
+	unsigned	users;
+	pte_template_t	opte;
+	boolean_t	kflush;
 
 	/*
-	 * Pmap has been locked by pmap_remove.
+	 * Pmap has been locked by the caller.
 	 */
 	users = pmap->cpus_using;
 	if (pmap == kernel_pmap) {
-		kflush = 1;
+		kflush = TRUE;
 	} else {
-		kflush = 0;
+		kflush = FALSE;
 	}
 
 	/*
@@ -1847,10 +1846,12 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 			continue;	 /* no page mapping */
 		}
 
-		num_removed++;
-
+		/*
+		 * Update statistics.
+		 */
+		pmap->stats.resident_count--;
 		if (pte->wired)
-			num_unwired++;
+			pmap->stats.wired_count--;
 
 		pfn = pte->pfn;
 		pa = ptoa(pfn);
@@ -1864,9 +1865,10 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 			pvl = PA_TO_PVH(pa);
 			CHECK_PV_LIST(pa, pvl, "pmap_remove_range before");
 
-			if (pvl->pmap == PMAP_NULL) {
+#ifdef DIAGNOSTIC
+			if (pvl->pmap == PMAP_NULL)
 				panic("pmap_remove_range: null pv_list");
-			}
+#endif
 
 			if (pvl->va == va && pvl->pmap == pmap) {
 
@@ -1909,14 +1911,13 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 		 * Reflect modify bits to pager and zero (invalidate,
 		 * remove) the pte entry.
 		 */
-		tva = va;
 
 		/*
 		 * Invalidate pte temporarily to avoid being written back
 		 * the modified bit and/or the reference bit by other cpu.
 		 */
 		opte.bits = invalidate_pte(pte);
-		flush_atc_entry(users, tva, kflush);
+		flush_atc_entry(users, va, kflush);
 
 		if (opte.pte.modified) {
 			if (PMAP_MANAGED(pa)) {
@@ -1930,14 +1931,7 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 			}
 		}
 
-	} /* end for ( va = s; ...) */
-
-	/*
-	 * Update the counts
-	 */
-	pmap->stats.resident_count -= num_removed;
-	pmap->stats.wired_count -= num_unwired;
-
+	} /* end for( va = s; ...) */
 } /* pmap_remove_range */
 
 /*
@@ -1977,8 +1971,10 @@ pmap_remove(pmap_t map, vm_offset_t s, vm_offset_t e)
 
 	CHECK_PAGE_ALIGN(s, "pmap_remove start addr");
 
+#ifdef DIAGNOSTIC
 	if (s > e)
 		panic("pmap_remove: start greater than end address");
+#endif
 
 	PMAP_LOCK(map, spl);
 	pmap_remove_range(map, s, e);
@@ -2027,15 +2023,17 @@ pmap_remove(pmap_t map, vm_offset_t s, vm_offset_t e)
 void
 pmap_remove_all(vm_offset_t phys)
 {
-	pv_entry_t		pvl, cur;
-	register pt_entry_t	*pte;
-	register vm_offset_t	va;
-	register pmap_t		pmap;
-	int			spl;
-	int			dbgcnt = 0;
-	register unsigned	users;
-	register pte_template_t	opte;
-	int			kflush;
+	pv_entry_t	pvl, cur;
+	pt_entry_t	*pte;
+	vm_offset_t	va;
+	pmap_t		pmap;
+	int		spl;
+	unsigned	users;
+	pte_template_t	opte;
+	boolean_t	kflush;
+#ifdef DEBUG
+	int		dbgcnt = 0;
+#endif
 
 	if (!PMAP_MANAGED(phys)) {
 		/* not a managed page. */
@@ -2069,9 +2067,9 @@ remove_all_Retry:
 		}
 		users = pmap->cpus_using;
 		if (pmap == kernel_pmap) {
-			kflush = 1;
+			kflush = TRUE;
 		} else {
-			kflush = 0;
+			kflush = FALSE;
 		}
 
 		pte = pmap_pte(pmap, va);
@@ -2081,8 +2079,10 @@ remove_all_Retry:
 		 * the PV list and the pmap are in synch.
 		 */
 		if (pte == PT_ENTRY_NULL) {
+#ifdef DEBUG
 			printf("(pmap_remove_all :%x) phys %x pmap %x va %x dbgcnt %x\n",
 			       (unsigned)curproc, phys, (unsigned)pmap, va, dbgcnt);
+#endif
 			panic("pmap_remove_all: pte NULL");
 		}
 		if (!PDT_VALID(pte))
@@ -2090,7 +2090,7 @@ remove_all_Retry:
 		if (ptoa(pte->pfn) != phys)
 			panic("pmap_remove_all: pte doesn't point to page");
 		if (pte->wired)
-			panic("pmap_remove_all: removing  a wired page");
+			panic("pmap_remove_all: removing a wired page");
 
 		pmap->stats.resident_count--;
 
@@ -2125,13 +2125,14 @@ remove_all_Retry:
 		 */
 
 		simple_unlock(&pmap->lock);
+#ifdef DEBUG
 		dbgcnt++;
+#endif
 	}
 	CHECK_PV_LIST(phys, pvl, "pmap_remove_all after");
 
 	UNLOCK_PVH(phys);
 	SPLX(spl);
-
 } /* pmap_remove_all() */
 
 /*
@@ -2162,12 +2163,12 @@ remove_all_Retry:
 void
 pmap_copy_on_write(vm_offset_t phys)
 {
-	register pv_entry_t  pv_e;
-	register pt_entry_t  *pte;
-	int                  spl;
-	register unsigned    users;
-	register pte_template_t      opte;
-	int                  kflush;
+	pv_entry_t	pv_e;
+	pt_entry_t	*pte;
+	int		spl;
+	unsigned	users;
+	pte_template_t	opte;
+	boolean_t	kflush;
 
 	if (!PMAP_MANAGED(phys)) {
 #ifdef DEBUG
@@ -2211,9 +2212,9 @@ copy_on_write_Retry:
 
 		users = pmap->cpus_using;
 		if (pmap == kernel_pmap) {
-			kflush = 1;
+			kflush = TRUE;
 		} else {
-			kflush = 0;
+			kflush = FALSE;
 		}
 
 		/*
@@ -2279,14 +2280,14 @@ out:
 void
 pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 {
-	pte_template_t		maprot;
-	unsigned		ap;
-	int			spl;
-	pt_entry_t		*pte;
-	vm_offset_t		va;
-	register unsigned	users;
-	register pte_template_t	opte;
-	int			kflush;
+	pte_template_t	maprot;
+	unsigned	ap;
+	int		spl;
+	pt_entry_t	*pte;
+	vm_offset_t	va;
+	unsigned	users;
+	pte_template_t	opte;
+	boolean_t	kflush;
 
 	if (pmap == PMAP_NULL || prot & VM_PROT_WRITE)
 		return;
@@ -2295,8 +2296,10 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 		return;
 	}
 
+#ifdef DIAGNOSTIC
 	if (s > e)
 		panic("pmap_protect: start grater than end address");
+#endif
 
 	maprot.bits = m88k_protection(pmap, prot);
 	ap = maprot.pte.prot;
@@ -2305,9 +2308,9 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 
 	users = pmap->cpus_using;
 	if (pmap == kernel_pmap) {
-		kflush = 1;
+		kflush = TRUE;
 	} else {
-		kflush = 0;
+		kflush = FALSE;
 	}
 
 	CHECK_PAGE_ALIGN(s, "pmap_protect");
@@ -2387,6 +2390,7 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
  *
  * Special Assumptions
  *	no pmap locks held
+ *      pmap != kernel_pmap
  *
  * 1:	This routine immediately allocates space for a page table.
  *
@@ -2408,9 +2412,10 @@ pmap_expand(pmap_t map, vm_offset_t v)
 	sdt_entry_t	*sdt;
 	pt_entry_t	*pte;
 
-	if (map == PMAP_NULL) {
+#ifdef DIAGNOSTIC
+	if (map == PMAP_NULL)
 		panic("pmap_expand: pmap is NULL");
-	}
+#endif
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_EXP | CD_NORM)) == (CD_EXP | CD_NORM))
@@ -2418,21 +2423,6 @@ pmap_expand(pmap_t map, vm_offset_t v)
 #endif
 
 	CHECK_PAGE_ALIGN (v, "pmap_expand");
-
-	/*
-	 * Handle kernel pmap in pmap_expand_kmap().
-	 */
-	if (map == kernel_pmap) {
-		PMAP_LOCK(map, spl);
-		if (pmap_expand_kmap(v, VM_PROT_READ|VM_PROT_WRITE) == PT_ENTRY_NULL)
-			panic ("pmap_expand: Cannot allocate kernel pte table");
-		PMAP_UNLOCK(map, spl);
-#ifdef DEBUG
-		if ((pmap_con_dbg & (CD_EXP | CD_FULL)) == (CD_EXP | CD_FULL))
-			printf("(pmap_expand :%x) kernel_pmap\n", curproc);
-#endif
-		return;
-	}
 
 	/* XXX */
 	pdt_vaddr = uvm_km_zalloc(kernel_map, PAGE_SIZE);
@@ -2569,13 +2559,13 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 	vm_offset_t	old_pa;
 	pte_template_t	template;
 	pv_entry_t	pvl;
-	register unsigned	users;
-	register pte_template_t	opte;
+	unsigned	users;
+	pte_template_t	opte;
 	int		kflush;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t	wired = (flags & PMAP_WIRED) != 0;
 
-	CHECK_PAGE_ALIGN (va, "pmap_entry - VA");
-	CHECK_PAGE_ALIGN (pa, "pmap_entry - PA");
+	CHECK_PAGE_ALIGN(va, "pmap_entry - VA");
+	CHECK_PAGE_ALIGN(pa, "pmap_entry - PA");
 
 	/*
 	 *	Range check no longer use, since we use whole address space
@@ -2584,12 +2574,12 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
 		if (pmap == kernel_pmap)
-			printf ("(pmap_enter :%x) pmap kernel va %x pa %x\n", curproc, va, pa);
+			printf("(pmap_enter :%x) pmap kernel va %x pa %x\n", curproc, va, pa);
 		else
-			printf ("(pmap_enter :%x) pmap %x  va %x pa %x\n", curproc, pmap, va, pa);
+			printf("(pmap_enter :%x) pmap %x  va %x pa %x\n", curproc, pmap, va, pa);
 	}
 #endif
-	ap = m88k_protection (pmap, prot);
+	ap = m88k_protection(pmap, prot);
 
 	/*
 	 *	Must allocate a new pvlist entry while we're unlocked;
@@ -2599,21 +2589,27 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 	 *	the allocated entry later (if we no longer need it).
 	 */
 	pv_e = PV_ENTRY_NULL;
-Retry:
 
 	PMAP_LOCK(pmap, spl);
 	users = pmap->cpus_using;
 
+Retry:
 	/*
 	 * Expand pmap to include this pte.
 	 */
 	while ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL) {
-		/*
-		 * Must unlock to expand the pmap.
-		 */
-		PMAP_UNLOCK(pmap, spl);
-		pmap_expand(pmap, va);
-		PMAP_LOCK(pmap, spl);
+		if (pmap == kernel_pmap) {
+			if (pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE) ==
+			    PT_ENTRY_NULL)
+				panic("pmap_expand: Cannot allocate kernel pte table");
+		} else {
+			/*
+			 * Must unlock to expand the pmap.
+			 */
+			PMAP_UNLOCK(pmap, spl);
+			pmap_expand(pmap, va);
+			PMAP_LOCK(pmap, spl);
+		}
 	}
 	/*
 	 *	Special case if the physical page is already mapped
@@ -2622,9 +2618,9 @@ Retry:
 	old_pa = ptoa(pte->pfn);
 	if (old_pa == pa) {
 		if (pmap == kernel_pmap) {
-			kflush = 1;
+			kflush = TRUE;
 		} else {
-			kflush = 0;
+			kflush = FALSE;
 		}
 
 		/*
@@ -2680,7 +2676,7 @@ Retry:
 			}
 #endif
 			if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
-				flush_atc_entry(users, va, 1);
+				flush_atc_entry(users, va, TRUE);
 			} else {
 				pmap_remove_range(pmap, va, va + PAGE_SIZE);
 			}
@@ -2729,7 +2725,6 @@ Retry:
 				 */
 				if (pv_e == PV_ENTRY_NULL) {
 					UNLOCK_PVH(pa);
-					PMAP_UNLOCK(pmap, spl);
 					pv_e = pool_get(&pvpool, PR_NOWAIT);
 					goto Retry;
 				}
@@ -2801,7 +2796,7 @@ pmap_unwire(pmap_t map, vm_offset_t v)
 	PMAP_LOCK(map, spl);
 
 	if ((pte = pmap_pte(map, v)) == PT_ENTRY_NULL)
-		panic ("pmap_unwire: pte missing");
+		panic("pmap_unwire: pte missing");
 
 	if (pte->wired) {
 		/* unwired mapping */
@@ -2847,8 +2842,10 @@ pmap_extract(pmap_t pmap, vm_offset_t va, paddr_t *pap)
 	int   i;
 	int         spl;
 
+#ifdef DIAGNOSTIC
 	if (pmap == PMAP_NULL)
 		panic("pmap_extract: pmap is NULL");
+#endif
 
 	/*
 	 * check BATC first
@@ -2965,18 +2962,13 @@ pmap_collect(pmap_t pmap)
 	int     spl;
 	unsigned int i,j;
 
-
-
-	if (pmap == PMAP_NULL) {
+#ifdef DIAGNOSTIC
+	if (pmap == PMAP_NULL)
 		panic("pmap_collect: pmap is NULL");
-	}
-	if (pmap == kernel_pmap) {
-#ifdef MACH_KERNEL
-		return;
-#else
+
+	if (pmap == kernel_pmap)
 		panic("pmap_collect attempted on kernel pmap");
 #endif
-	}
 
 	CHECK_PMAP_CONSISTENCY ("pmap_collect");
 
@@ -2998,13 +2990,14 @@ pmap_collect(pmap_t pmap)
 
 	i = VM_MIN_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
 	j = VM_MAX_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
-	if ( j < 1024 )	j++;
+	if (j < 1024)
+		j++;
 
 	/* Segment table loop */
-	for ( ; i < j; i++, sdtp += PDT_TABLE_GROUP_SIZE) {
+	for (; i < j; i++, sdtp += PDT_TABLE_GROUP_SIZE) {
 		sdt_va = VM_MIN_ADDRESS + PDT_TABLE_GROUP_VA_SPACE*i;
 
-		gdttbl = pmap_pte(pmap, (vm_offset_t)sdt_va);
+		gdttbl = pmap_pte(pmap, sdt_va);
 
 		if (gdttbl == PT_ENTRY_NULL)
 			continue; /* no maps in this range */
@@ -3030,12 +3023,12 @@ pmap_collect(pmap_t pmap)
 			 VM_MAX_ADDRESS;
 
 		/* invalidate all maps in this range */
-		pmap_remove_range (pmap, (vm_offset_t)sdt_va,(vm_offset_t)sdt_vt);
+		pmap_remove_range(pmap, sdt_va, sdt_vt);
 
 		/*
 		 * we can safely deallocated the page map(s)
 		 */
-		for (sdt = sdtp; sdt < (sdtp+PDT_TABLE_GROUP_SIZE); sdt++) {
+		for (sdt = sdtp; sdt < (sdtp + PDT_TABLE_GROUP_SIZE); sdt++) {
 			((sdt_entry_template_t *) sdt) -> bits = 0;
 			((sdt_entry_template_t *) sdt+SDT_ENTRIES) -> bits = 0;
 		}
@@ -3226,7 +3219,7 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 	/*
 	 *	Map source physical address.
 	 */
-	aprot = m88k_protection (kernel_pmap, VM_PROT_READ | VM_PROT_WRITE);
+	aprot = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE);
 
 	srcva = (vm_offset_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	dstva = (vm_offset_t)(phys_map_vaddr2 + (cpu << PAGE_SHIFT));
@@ -3289,31 +3282,30 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 boolean_t
 pmap_clear_modify(struct vm_page *pg)
 {
-	pv_entry_t    pvl;
-	pv_entry_t    pvep;
-	pt_entry_t    *pte;
-	pmap_t     pmap;
-	int        spl;
-	vm_offset_t      va;
-	unsigned      users;
-	pte_template_t   opte;
-	int        kflush;
-	paddr_t		phys = VM_PAGE_TO_PHYS(pg);
+	pv_entry_t	pvl;
+	pv_entry_t	pvep;
+	pt_entry_t	*pte;
+	pmap_t		pmap;
+	int		spl;
+	vm_offset_t	va;
+	unsigned	users;
+	pte_template_t	opte;
+	boolean_t	kflush;
 	boolean_t	ret;
+	paddr_t		phys = VM_PAGE_TO_PHYS(pg);
 
 	ret = pmap_is_modified(pg);
 
 #ifdef DIAGNOSTIC
-	if (!PMAP_MANAGED(phys)) {
+	if (!PMAP_MANAGED(phys))
 		panic("pmap_clear_modify: not managed?");
-	}
 #endif
 
 	SPLVM(spl);
 
 clear_modify_Retry:
 	pvl = PA_TO_PVH(phys);
-	CHECK_PV_LIST (phys, pvl, "pmap_clear_modify");
+	CHECK_PV_LIST(phys, pvl, "pmap_clear_modify");
 	LOCK_PVH(phys);
 
 	/* update corresponding pmap_modify_list element */
@@ -3339,9 +3331,9 @@ clear_modify_Retry:
 		}
 		users = pmap->cpus_using;
 		if (pmap == kernel_pmap) {
-			kflush = 1;
+			kflush = TRUE;
 		} else {
-			kflush = 0;
+			kflush = FALSE;
 		}
 
 		pte = pmap_pte(pmap, va);
@@ -3409,9 +3401,8 @@ pmap_is_modified(struct vm_page *pg)
 	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DIAGNOSTIC
-	if (!PMAP_MANAGED(phys)) {
+	if (!PMAP_MANAGED(phys))
 		panic("pmap_is_modified: not managed?");
-	}
 #endif
 
 	SPLVM(spl);
@@ -3420,7 +3411,7 @@ pmap_is_modified(struct vm_page *pg)
 	CHECK_PV_LIST (phys, pvl, "pmap_is_modified");
 is_mod_Retry:
 
-	if ((boolean_t) PA_TO_ATTRIB(phys)) {
+	if ((boolean_t)PA_TO_ATTRIB(phys)) {
 		/* we've already cached a modify flag for this page,
 		   no use looking further... */
 #ifdef DEBUG
@@ -3514,16 +3505,15 @@ pmap_clear_reference(struct vm_page *pg)
 	vm_offset_t	va;
 	unsigned	users;
 	pte_template_t	opte;
-	int		kflush;
+	boolean_t	kflush;
 	paddr_t		phys;
 	boolean_t	ret;
 
 	phys = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DIAGNOSTIC
-	if (!PMAP_MANAGED(phys)) {
+	if (!PMAP_MANAGED(phys))
 		panic("pmap_clear_reference: not managed?");
-	}
 #endif
 	ret = pmap_is_referenced(pg);
 
@@ -3556,9 +3546,9 @@ pmap_clear_reference(struct vm_page *pg)
 		}
 		users = pmap->cpus_using;
 		if (pmap == kernel_pmap) {
-			kflush = 1;
+			kflush = TRUE;
 		} else {
-			kflush = 0;
+			kflush = FALSE;
 		}
 
 		pte = pmap_pte(pmap, va);
@@ -3719,40 +3709,38 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 void
 pagemove(vm_offset_t from, vm_offset_t to, int size)
 {
-	vm_offset_t      pa;
-	pt_entry_t    *srcpte, *dstpte;
-	pv_entry_t    pvl;
-	int        spl;
-	unsigned      users;
-	pte_template_t   opte;
+	vm_offset_t	pa;
+	pt_entry_t	*srcpte, *dstpte;
+	pv_entry_t	pvl;
+	int		spl;
+	unsigned	users;
+	pte_template_t	opte;
 
 	PMAP_LOCK(kernel_pmap, spl);
 
 	users = kernel_pmap->cpus_using;
 
 	while (size > 0) {
-
 		/*
 		 * check if the source addr is mapped
 		 */
-		if ((srcpte = pmap_pte(kernel_pmap, (vm_offset_t)from)) == PT_ENTRY_NULL) {
-			printf("pagemove: source vaddr 0x%x\n", from);
-			panic("pagemove: source addr not mapped");
+		if ((srcpte = pmap_pte(kernel_pmap, from)) == PT_ENTRY_NULL) {
+			panic("pagemove: source addr 0x%x not mapped", from);
 		}
 
 		/*
 		 *
 		 */
-		if ((dstpte = pmap_pte(kernel_pmap, (vm_offset_t)to)) == PT_ENTRY_NULL)
-			if ((dstpte = pmap_expand_kmap((vm_offset_t)to, VM_PROT_READ | VM_PROT_WRITE))
-			    == PT_ENTRY_NULL)
+		if ((dstpte = pmap_pte(kernel_pmap, to)) == PT_ENTRY_NULL)
+			if ((dstpte = pmap_expand_kmap(to,
+			    VM_PROT_READ | VM_PROT_WRITE)) == PT_ENTRY_NULL)
 				panic("pagemove: Cannot allocate destination pte");
-			/*
-			 *
-			 */
+		/*
+		 *
+		 */
 		if (dstpte->dtype == DT_VALID) {
-			printf("pagemove: destination vaddr 0x%x, pte = 0x%x\n", to, *((unsigned *)dstpte));
-			panic("pagemove: destination pte already valid");
+			panic("pagemove: destination pte 0x%x (vaddr 0x%x)"
+			    " already valid", *((unsigned *)dstpte), to);
 		}
 
 #ifdef DEBUG
@@ -3771,7 +3759,7 @@ pagemove(vm_offset_t from, vm_offset_t to, int size)
 			LOCK_PVH(pa);
 			pvl = PA_TO_PVH(pa);
 			CHECK_PV_LIST(pa, pvl, "pagemove");
-			pvl->va = (vm_offset_t)to;
+			pvl->va = to;
 			UNLOCK_PVH(pa);
 		}
 
@@ -3782,7 +3770,7 @@ pagemove(vm_offset_t from, vm_offset_t to, int size)
 		 * and/or the reference being written back by other cpu.
 		 */
 		opte.bits = invalidate_pte(srcpte);
-		flush_atc_entry(users, from, 1);
+		flush_atc_entry(users, from, TRUE);
 		((pte_template_t *)dstpte)->bits = opte.bits;
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
@@ -3797,9 +3785,9 @@ pagemove(vm_offset_t from, vm_offset_t to, int size)
 void
 cache_flush_loop(int mode, vm_offset_t pa, int size)
 {
-	int     i;
-	int     ncpus;
-	void    (*cfunc)(int cpu, vm_offset_t physaddr, int size);
+	int	i;
+	int	ncpus;
+	void	(*cfunc)(int cpu, vm_offset_t physaddr, int size);
 
 	switch (mode) {
 	default:
@@ -3920,7 +3908,7 @@ check_pv_list(vm_offset_t phys, pv_entry_t pv_h, char *who)
 		 * We can't call pmap_extract since it requires lock.
 		 */
 		if ((pte = pmap_pte(pv_e->pmap, pv_e->va)) == PT_ENTRY_NULL)
-			pa = (vm_offset_t)0;
+			pa = 0;
 		else
 			pa = ptoa(pte->pfn) | (pv_e->va & PAGE_MASK);
 
@@ -3957,7 +3945,7 @@ check_pv_list(vm_offset_t phys, pv_entry_t pv_h, char *who)
  *	Special Assumptions:
  *		No locking required.
  *
- *	This function sequences through the given range of  addresses. For
+ *	This function sequences through the given range of addresses. For
  * each page, pmap_pte is called to obtain the page table entry. If
  * its valid, and the physical page it maps is managed, the PV list is
  * searched for the corresponding pmap/va entry. If not found, or if
@@ -4416,7 +4404,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 */
 	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL) {
 		if (pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE) == PT_ENTRY_NULL)
-			panic ("pmap_kenter_pa: Cannot allocate kernel pte table");
+			panic("pmap_kenter_pa: Cannot allocate kernel pte table");
 	}
 
 	/*
@@ -4475,8 +4463,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		kernel_pmap->stats.resident_count--;
 		kernel_pmap->stats.wired_count--;
 
-		flush_atc_entry(users, va, 1);
-
+		flush_atc_entry(users, va, TRUE);
 	}
 	PMAP_UNLOCK(map, spl);
 }
