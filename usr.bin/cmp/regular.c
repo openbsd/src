@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.4 2000/10/12 10:03:20 kevlo Exp $      */
+/*      $OpenBSD: regular.c,v 1.5 2000/10/12 13:33:47 deraadt Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: regular.c,v 1.4 2000/10/12 10:03:20 kevlo Exp $";
+static char rcsid[] = "$OpenBSD: regular.c,v 1.5 2000/10/12 13:33:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,10 +82,10 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 	}
 
 	if ((p1 = mmap(NULL, (size_t)length, PROT_READ,
-		       MAP_PRIVATE, fd1, skip1)) == MAP_FAILED)
-		goto mmap failed;
+	    MAP_PRIVATE, fd1, skip1)) == MAP_FAILED)
+		goto mmap_failed;
 	if ((p2 = mmap(NULL, (size_t)length, PROT_READ,
-		       MAP_PRIVATE, fd2, skip2)) == MAP_FAILED) {
+	    MAP_PRIVATE, fd2, skip2)) == MAP_FAILED) {
 		munmap(p1, (size_t)length);
 		goto mmap_failed;
 	}
