@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.67 2004/05/30 22:35:43 tedu Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.68 2004/07/21 01:02:09 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -189,11 +189,23 @@ static void		uvm_mapent_free(vm_map_entry_t);
 static void		uvm_map_entry_unwire(vm_map_t, vm_map_entry_t);
 static void		uvm_map_reference_amap(vm_map_entry_t, int);
 static void		uvm_map_unreference_amap(vm_map_entry_t, int);
-
 int			uvm_map_spacefits(vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t);
 
+struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *);
+void			uvm_mapent_free(struct vm_map_entry *);
+
+
+/*
+ * Tree manipulation.
+ */
+void uvm_rb_insert(struct vm_map *, struct vm_map_entry *);
+void uvm_rb_remove(struct vm_map *, struct vm_map_entry *);
+vsize_t uvm_rb_space(struct vm_map *, struct vm_map_entry *);
+
+#ifdef DEBUG
 int _uvm_tree_sanity(vm_map_t map, const char *name);
-static vsize_t		uvm_rb_subtree_space(vm_map_entry_t);
+#endif
+static vsize_t uvm_rb_subtree_space(struct vm_map_entry *);
 
 static __inline int
 uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
@@ -217,8 +229,8 @@ RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
 RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
-static __inline vsize_t
-uvm_rb_space(vm_map_t map, vm_map_entry_t entry)
+vsize_t
+uvm_rb_space(struct vm_map *map, struct vm_map_entry *entry)
 {
 	vm_map_entry_t next;
 	vaddr_t space;
@@ -233,7 +245,7 @@ uvm_rb_space(vm_map_t map, vm_map_entry_t entry)
 }
 		
 static vsize_t
-uvm_rb_subtree_space(vm_map_entry_t entry)
+uvm_rb_subtree_space(struct vm_map_entry *entry)
 {
 	vaddr_t space, tmp;
 
@@ -253,7 +265,7 @@ uvm_rb_subtree_space(vm_map_entry_t entry)
 	return (space);
 }
 
-static __inline void
+static void
 uvm_rb_fixup(vm_map_t map, vm_map_entry_t entry)
 {
 	/* We need to traverse to the very top */
@@ -263,8 +275,8 @@ uvm_rb_fixup(vm_map_t map, vm_map_entry_t entry)
 	} while ((entry = RB_PARENT(entry, rb_entry)) != NULL);
 }
 
-static __inline void
-uvm_rb_insert(vm_map_t map, vm_map_entry_t entry)
+void
+uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
 	vaddr_t space = uvm_rb_space(map, entry);
 	vm_map_entry_t tmp;
@@ -280,8 +292,8 @@ uvm_rb_insert(vm_map_t map, vm_map_entry_t entry)
 		uvm_rb_fixup(map, entry->prev);
 }
 
-static __inline void
-uvm_rb_remove(vm_map_t map, vm_map_entry_t entry)
+void
+uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 {
 	vm_map_entry_t parent;
 
@@ -299,6 +311,7 @@ uvm_rb_remove(vm_map_t map, vm_map_entry_t entry)
 #define uvm_tree_sanity(x,y)
 #endif
 
+#ifdef DEBUG
 int
 _uvm_tree_sanity(vm_map_t map, const char *name)
 {
@@ -356,18 +369,14 @@ _uvm_tree_sanity(vm_map_t map, const char *name)
 #endif
 	return (-1);
 }
-
-/*
- * local inlines
- */
+#endif
 
 /*
  * uvm_mapent_alloc: allocate a map entry
  */
 
-static __inline vm_map_entry_t
-uvm_mapent_alloc(map)
-	vm_map_t map;
+struct vm_map_entry *
+uvm_mapent_alloc(struct vm_map *map)
 {
 	struct vm_map_entry *me;
 	int s;
@@ -407,9 +416,8 @@ uvm_mapent_alloc(map)
  * => XXX: static pool for kernel map?
  */
 
-static __inline void
-uvm_mapent_free(me)
-	vm_map_entry_t me;
+void
+uvm_mapent_free(struct vm_map_entry *me)
 {
 	int s;
 	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
