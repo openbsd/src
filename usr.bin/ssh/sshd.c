@@ -11,7 +11,9 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.71 1999/12/08 00:08:09 provos Exp $");
+RCSID("$Id: sshd.c,v 1.72 1999/12/08 04:36:41 deraadt Exp $");
+
+#include <poll.h>
 
 #include "xmalloc.h"
 #include "rsa.h"
