@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.5 1997/02/26 03:01:04 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.6 1997/06/20 05:41:52 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -72,138 +72,138 @@ void	ip4_input __P((struct mbuf *, int));
 void
 ip4_input(register struct mbuf *m, int iphlen)
 {
-	struct ip *ipo, *ipi;
-	struct ifqueue *ifq = NULL;
-	int s;
-	/*
-	 * Strip IP options, if any.
-	 */
+    struct ip *ipo, *ipi;
+    struct ifqueue *ifq = NULL;
+    int s;
+    /*
+     * Strip IP options, if any.
+     */
 
-	ip4stat.ip4s_ipackets++;
-	if (iphlen > sizeof (struct ip))
-	{
-		ip_stripoptions(m, (struct mbuf *)0);
-		iphlen = sizeof (struct ip);
-	}
+    ip4stat.ip4s_ipackets++;
+    if (iphlen > sizeof (struct ip))
+    {
+	ip_stripoptions(m, (struct mbuf *)0);
+	iphlen = sizeof (struct ip);
+    }
 	
-	/*
-	 * Make sure next IP header is in the first mbuf.
-	 *
-	 * Careful here! we are receiving the packet from ipintr;
-	 * this means that the ip_len field has been adjusted to
-	 * not count the ip header, and is also in host order.
-	 */
+    /*
+     * Make sure next IP header is in the first mbuf.
+     *
+     * Careful here! we are receiving the packet from ipintr;
+     * this means that the ip_len field has been adjusted to
+     * not count the ip header, and is also in host order.
+     */
 
+    ipo = mtod(m, struct ip *);
+
+    if (m->m_len < iphlen + sizeof (struct ip))
+    {
+	if ((m = m_pullup(m, iphlen + sizeof (struct ip))) == 0)
+	{
+	    ip4stat.ip4s_hdrops++;
+	    return;
+	}
 	ipo = mtod(m, struct ip *);
-
-	if (m->m_len < iphlen + sizeof (struct ip))
-	{
-		if ((m = m_pullup(m, iphlen + sizeof (struct ip))) == 0)
-		{
-			ip4stat.ip4s_hdrops++;
-			return;
-		}
-		ipo = mtod(m, struct ip *);
-	}
-	ipi = (struct ip *)((caddr_t)ipo + iphlen);
+    }
+    ipi = (struct ip *)((caddr_t)ipo + iphlen);
 	
-	/*
-	 * RFC 1853 specifies that the inner TTL should not be touched on
-	 * decapsulation.
-	 */
+    /*
+     * RFC 1853 specifies that the inner TTL should not be touched on
+     * decapsulation.
+     */
 
-	if (ipi->ip_v != IPVERSION)
-	{
-		ip4stat.ip4s_notip4++;
-		return;
-	}
-	
-	/*
-	 * Interface pointer is already in first mbuf; chop off the 
-	 * `outer' header and reschedule.
-	 */
-
-	m->m_len -= iphlen;
-	m->m_pkthdr.len -= iphlen;
-	m->m_data += iphlen;
-	
-	/*
-	 * Interface pointer stays the same; if no IPsec processing has
-	 * been done (or will be done), this will point to a normal 
-  	 * interface. Otherwise, it'll point to an encap interface, which
- 	 * will allow a packet filter to distinguish between secure and
-	 * untrusted packets.
- 	 */
-
-	ifq = &ipintrq;
-
-	s = splimp();			/* isn't it already? */
-	if (IF_QFULL(ifq))
-	{
-		IF_DROP(ifq);
-		m_freem(m);
-		ip4stat.ip4s_qfull++;
-		splx(s);
-		return;
-	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(NETISR_IP);
-	splx(s);
-	
+    if (ipi->ip_v != IPVERSION)
+    {
+	ip4stat.ip4s_notip4++;
 	return;
+    }
+	
+    /*
+     * Interface pointer is already in first mbuf; chop off the 
+     * `outer' header and reschedule.
+     */
+
+    m->m_len -= iphlen;
+    m->m_pkthdr.len -= iphlen;
+    m->m_data += iphlen;
+	
+    /*
+     * Interface pointer stays the same; if no IPsec processing has
+     * been done (or will be done), this will point to a normal 
+     * interface. Otherwise, it'll point to an encap interface, which
+     * will allow a packet filter to distinguish between secure and
+     * untrusted packets.
+     */
+
+    ifq = &ipintrq;
+
+    s = splimp();			/* isn't it already? */
+    if (IF_QFULL(ifq))
+    {
+	IF_DROP(ifq);
+	m_freem(m);
+	ip4stat.ip4s_qfull++;
+	splx(s);
+	return;
+    }
+    IF_ENQUEUE(ifq, m);
+    schednetisr(NETISR_IP);
+    splx(s);
+	
+    return;
 }
 
 int
 ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
 {
-	struct ip *ipo, *ipi;
-	struct ip4_xdata *xd;
-	ushort ilen;
+    struct ip *ipo, *ipi;
+    struct ip4_xdata *xd;
+    ushort ilen;
 
-	ip4stat.ip4s_opackets++;
-	ipi = mtod(m, struct ip *);
-	ilen = ntohs(ipi->ip_len);
+    ip4stat.ip4s_opackets++;
+    ipi = mtod(m, struct ip *);
+    ilen = ntohs(ipi->ip_len);
 
-	M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
-	if (m == 0)
-	  return ENOBUFS;
+    M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
+    if (m == 0)
+      return ENOBUFS;
 
-	ipo = mtod(m, struct ip *);
+    ipo = mtod(m, struct ip *);
 	
-	ipo->ip_v = IPVERSION;
-	ipo->ip_hl = 5;
-	ipo->ip_tos = ipi->ip_tos;
-	ipo->ip_len = htons(ilen + sizeof (struct ip));
-	/* ipo->ip_id = htons(ip_id++); */
-	get_random_bytes((void *)&(ipo->ip_id), sizeof(ipo->ip_id));
-	ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
-	xd = (struct ip4_xdata *)tdb->tdb_xdata;
-	switch (xd->ip4_ttl)
-	{
-	    case IP4_SAME_TTL:
-		ipo->ip_ttl = ipi->ip_ttl;
-		break;
-	    case IP4_DEFAULT_TTL:
-		ipo->ip_ttl = ip_defttl;
-		break;
-	    default:
-		ipo->ip_ttl = xd->ip4_ttl;
-	}
+    ipo->ip_v = IPVERSION;
+    ipo->ip_hl = 5;
+    ipo->ip_tos = ipi->ip_tos;
+    ipo->ip_len = htons(ilen + sizeof (struct ip));
+    /* ipo->ip_id = htons(ip_id++); */
+    get_random_bytes((void *)&(ipo->ip_id), sizeof(ipo->ip_id));
+    ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
+    xd = (struct ip4_xdata *)tdb->tdb_xdata;
+    switch (xd->ip4_ttl)
+    {
+	case IP4_SAME_TTL:
+	    ipo->ip_ttl = ipi->ip_ttl;
+	    break;
+	case IP4_DEFAULT_TTL:
+	    ipo->ip_ttl = ip_defttl;
+	    break;
+	default:
+	    ipo->ip_ttl = xd->ip4_ttl;
+    }
 	
-	ipo->ip_p = IPPROTO_IPIP;
-	ipo->ip_sum = 0;
-	ipo->ip_src = gw->sen_ipsp_src;
-	ipo->ip_dst = gw->sen_ipsp_dst;
+    ipo->ip_p = IPPROTO_IPIP;
+    ipo->ip_sum = 0;
+    ipo->ip_src = gw->sen_ipsp_src;
+    ipo->ip_dst = gw->sen_ipsp_dst;
 	
 /*	printf("ip4_output: [%x->%x](l=%d, p=%d)", 
-	       ntohl(ipi->ip_src.s_addr), ntohl(ipi->ip_dst.s_addr),
-	       ilen, ipi->ip_p);
+	ntohl(ipi->ip_src.s_addr), ntohl(ipi->ip_dst.s_addr),
+	ilen, ipi->ip_p);
 	printf(" through [%x->%x](l=%d, p=%d)\n", 
-	       ntohl(ipo->ip_src.s_addr), ntohl(ipo->ip_dst.s_addr),
-	       ipo->ip_len, ipo->ip_p);*/
+	ntohl(ipo->ip_src.s_addr), ntohl(ipo->ip_dst.s_addr),
+	ipo->ip_len, ipo->ip_p);*/
 
-	*mp = m;
-	return 0;
+    *mp = m;
+    return 0;
 
 /*	return ip_output(m, NULL, NULL, IP_ENCAPSULATED, NULL);*/
 }
@@ -211,46 +211,46 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
 int
 ipe4_attach()
 {
-	return 0;
+    return 0;
 }
 
 int
 ipe4_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
-        struct ip4_xdata *xd;
-	struct ip4_xencap txd;
-	struct encap_msghdr *em;
+    struct ip4_xdata *xd;
+    struct ip4_xencap txd;
+    struct encap_msghdr *em;
 	
 #ifdef ENCDEBUG
-        if (encdebug)
-	  printf("ipe4_init: setting up\n");
+    if (encdebug)
+      printf("ipe4_init: setting up\n");
 #endif
-	tdbp->tdb_xform = xsp;
-	MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ip4_xdata), M_XDATA,
-	       M_WAITOK);
-	if (tdbp->tdb_xdata == NULL)
-	  return ENOBUFS;
-	bzero(tdbp->tdb_xdata, sizeof (struct ip4_xdata));
-	xd = (struct ip4_xdata *)tdbp->tdb_xdata;
+    tdbp->tdb_xform = xsp;
+    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ip4_xdata), M_XDATA,
+	   M_WAITOK);
+    if (tdbp->tdb_xdata == NULL)
+      return ENOBUFS;
+    bzero(tdbp->tdb_xdata, sizeof (struct ip4_xdata));
+    xd = (struct ip4_xdata *)tdbp->tdb_xdata;
 	
-	em = mtod(m, struct encap_msghdr *);
-	if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ip4_xencap))
-	{
-	    free((caddr_t)tdbp->tdb_xdata, M_XDATA);
-	    tdbp->tdb_xdata = NULL;
-	    return EINVAL;
-	}
-	m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
-		   (caddr_t)&txd);
-	xd->ip4_ttl = txd.ip4_ttl;
-	return 0;
+    em = mtod(m, struct encap_msghdr *);
+    if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ip4_xencap))
+    {
+	free((caddr_t)tdbp->tdb_xdata, M_XDATA);
+	tdbp->tdb_xdata = NULL;
+	return EINVAL;
+    }
+    m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
+	       (caddr_t)&txd);
+    xd->ip4_ttl = txd.ip4_ttl;
+    return 0;
 }
 
 int
 ipe4_zeroize(struct tdb *tdbp)
 {
-        FREE(tdbp->tdb_xdata, M_XDATA);
-	return 0;
+    FREE(tdbp->tdb_xdata, M_XDATA);
+    return 0;
 }
 
 
@@ -258,7 +258,7 @@ ipe4_zeroize(struct tdb *tdbp)
 void
 ipe4_input(struct mbuf *m, ...)
 {
-	printf("ipe4_input: should never be called\n");
-	if (m)
-	  m_freem(m);
+    printf("ipe4_input: should never be called\n");
+    if (m)
+      m_freem(m);
 }

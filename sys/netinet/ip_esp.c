@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.3 1997/02/26 20:53:09 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.4 1997/06/20 05:41:49 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -68,97 +68,97 @@ void	esp_input __P((struct mbuf *, int));
 void
 esp_input(register struct mbuf *m, int iphlen)
 {
-	struct ip *ipo;
-	struct ifqueue *ifq = NULL;
-	int s;
-	u_long spi;
-	struct tdb *tdbp;
+    struct ip *ipo;
+    struct ifqueue *ifq = NULL;
+    int s;
+    u_long spi;
+    struct tdb *tdbp;
 	
-	espstat.esps_input++;
+    espstat.esps_input++;
 
-	/*
-	 * Strip IP options, if any.
-	 */
+    /*
+     * Strip IP options, if any.
+     */
 
-	if (iphlen > sizeof (struct ip))
+    if (iphlen > sizeof (struct ip))
+    {
+	ip_stripoptions(m, (struct mbuf *)0);
+	iphlen = sizeof (struct ip);
+    }
+	
+    /*
+     * Make sure that at least the SPI is in the same mbuf
+     */
+
+    ipo = mtod(m, struct ip *);
+    if (m->m_len < iphlen + ESP_FLENGTH)
+    {
+	if ((m = m_pullup(m, iphlen + ESP_FLENGTH)) == 0)
 	{
-		ip_stripoptions(m, (struct mbuf *)0);
-		iphlen = sizeof (struct ip);
+	    espstat.esps_hdrops++;
+	    return;
 	}
-	
-	/*
-	 * Make sure that at least the SPI is in the same mbuf
-	 */
-
 	ipo = mtod(m, struct ip *);
-	if (m->m_len < iphlen + ESP_FLENGTH)
-	{
-		if ((m = m_pullup(m, iphlen + ESP_FLENGTH)) == 0)
-		{
-			espstat.esps_hdrops++;
-			return;
-		}
-		ipo = mtod(m, struct ip *);
-	}
-	spi = *((u_long *)((caddr_t)ipo + iphlen));
+    }
+    spi = *((u_long *)((caddr_t)ipo + iphlen));
 
-	/*
-	 * Find tunnel control block and (indirectly) call the appropriate
-	 * kernel crypto routine. The resulting mbuf chain is a valid
-	 * IP packet ready to go through input processing.
-	 */
+    /*
+     * Find tunnel control block and (indirectly) call the appropriate
+     * kernel crypto routine. The resulting mbuf chain is a valid
+     * IP packet ready to go through input processing.
+     */
 
-	tdbp = gettdb(spi, ipo->ip_dst);
-	if (tdbp == NULL)
-	{
+    tdbp = gettdb(spi, ipo->ip_dst);
+    if (tdbp == NULL)
+    {
 #ifdef ENCDEBUG
-		if (encdebug)
-		  printf("esp_input: no tdb for spi=%x\n", spi);
+	if (encdebug)
+	  printf("esp_input: no tdb for spi=%x\n", spi);
 #endif ENCDEBUG
-		m_freem(m);
-		espstat.esps_notdb++;
-		return;
-	}
+	m_freem(m);
+	espstat.esps_notdb++;
+	return;
+    }
 	
-	if (tdbp->tdb_xform == NULL)
-	{
+    if (tdbp->tdb_xform == NULL)
+    {
 #ifdef ENCDEBUG
-		if (encdebug)
-		  printf("esp_input: no xform for spi=%x\n", spi);
+	if (encdebug)
+	  printf("esp_input: no xform for spi=%x\n", spi);
 #endif ENCDEBUG
-		m_freem(m);
-		espstat.esps_noxform++;
-		return;
-	}
+	m_freem(m);
+	espstat.esps_noxform++;
+	return;
+    }
 
-	m->m_pkthdr.rcvif = tdbp->tdb_rcvif;
+    m->m_pkthdr.rcvif = tdbp->tdb_rcvif;
 
-	m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
+    m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
 
-	if (m == NULL)
-	{
-		espstat.esps_badkcr++;
-		return;
-	}
+    if (m == NULL)
+    {
+	espstat.esps_badkcr++;
+	return;
+    }
 
-	/*
-	 * Interface pointer is already in first mbuf; chop off the 
-	 * `outer' header and reschedule.
-	 */
+    /*
+     * Interface pointer is already in first mbuf; chop off the 
+     * `outer' header and reschedule.
+     */
 
-	ifq = &ipintrq;
+    ifq = &ipintrq;
 
-	s = splimp();			/* isn't it already? */
-	if (IF_QFULL(ifq))
-	{
-		IF_DROP(ifq);
-		m_freem(m);
-		espstat.esps_qfull++;
-		splx(s);
-		return;
-	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(NETISR_IP);
+    s = splimp();			/* isn't it already? */
+    if (IF_QFULL(ifq))
+    {
+	IF_DROP(ifq);
+	m_freem(m);
+	espstat.esps_qfull++;
 	splx(s);
 	return;
+    }
+    IF_ENQUEUE(ifq, m);
+    schednetisr(NETISR_IP);
+    splx(s);
+    return;
 }

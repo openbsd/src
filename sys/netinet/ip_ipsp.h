@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.4 1997/02/28 02:55:33 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.5 1997/06/20 05:41:53 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -29,30 +29,37 @@
 
 struct tdb				/* tunnel descriptor block */
 {
-	struct tdb	*tdb_hnext;	/* next in hash chain */
-	struct tdb	*tdb_onext;	/* next in output */
-	struct tdb	*tdb_inext;	/* next in input (prev!) */
-	u_long		tdb_spi;	/* SPI to use */
-	u_long		tdb_flags;	/* Flags related to this TDB */
-#define TDBF_UNIQUE	0x0001
-	struct in_addr	tdb_dst;	/* dest address for this SPI */
-	struct ifnet	*tdb_rcvif;	/* related rcv encap interface */
-	struct xformsw	*tdb_xform;	/* transformation to use */
-	caddr_t		tdb_xdata;	/* transformation data (opaque) */
+    struct tdb	   *tdb_hnext;  	/* next in hash chain */
+    struct tdb	   *tdb_onext;	        /* next in output */
+    struct tdb	   *tdb_inext;  	/* next in input (prev!) */
+    u_int32_t	    tdb_spi;    	/* SPI to use */
+    u_int32_t	    tdb_flags;  	/* Flags related to this TDB */
+#define TDBF_UNIQUE	0x0001		/* This should not be used by others */
+#define TDBF_TIMER      0x0002		/* Check the timers */
+#define TDBF_BYTES      0x0004		/* Update the byte counters */
+    u_int64_t       tdb_bytes;		/* Expire after so many bytes passed */
+    u_int64_t       tdb_cur_bytes;	/* Current count of bytes */
+    u_int64_t       tdb_soft_timeout;	/* Send a soft-expire warning */
+    u_int64_t       tdb_hard_timeout;	/* When does the SPI expire */
+    u_int64_t       tdb_established;	/* When was the SPI established */
+    struct in_addr  tdb_dst;	        /* dest address for this SPI */
+    struct ifnet   *tdb_rcvif;	        /* related rcv encap interface */
+    struct xformsw *tdb_xform;	        /* transformation to use */
+    caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
 };
 
 #define TDB_HASHMOD	257
 
 struct xformsw
 {
-	u_short		xf_type;	/* Unique ID of xform */
-	u_short		xf_flags;	/* flags (see below) */
-	char		*xf_name;	/* human-readable name */
-	int		(*xf_attach)(void);	/* called at config time */
-	int		(*xf_init)(struct tdb *, struct xformsw *, struct mbuf *);	/* xform initialization */
-	int		(*xf_zeroize)(struct tdb *); /* termination */
-	struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *);	/* called when packet received */
-	int		(*xf_output)(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);	/* called when packet sent */
+    u_short		xf_type;	/* Unique ID of xform */
+    u_short		xf_flags;	/* flags (see below) */
+    char		*xf_name;	/* human-readable name */
+    int		(*xf_attach)(void);	/* called at config time */
+    int		(*xf_init)(struct tdb *, struct xformsw *, struct mbuf *);	/* xform initialization */
+    int		(*xf_zeroize)(struct tdb *); /* termination */
+    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *);	/* called when packet received */
+    int		(*xf_output)(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);	/* called when packet sent */
 };
 
 #define XF_IP4		1		/* IP inside IP */
@@ -64,6 +71,8 @@ struct xformsw
 #define XF_AHHMACSHA1	7		/* AH-HMAC-SHA1 with opt replay prot */
 #define XF_ESPDESMD5	8		/* ESP DES-CBC + MD5 */
 #define XF_ESP3DESMD5	9		/* ESP 3DES-CBC + MD5 */
+#define XF_NEWESP       10		/* The new ESP transforms */
+#define XF_NEWAH        11		/* The new AH transforms */
 
 #define XFT_AUTH	0x0001
 #define XFT_CONF	0x0100
@@ -74,11 +83,11 @@ struct xformsw
 static __inline u_int64_t
 htonq(u_int64_t q)
 {
-        register u_int32_t u, l;
-        u = q >> 32;
-        l = (u_int32_t) q;
+    register u_int32_t u, l;
+    u = q >> 32;
+    l = (u_int32_t) q;
         
-        return htonl(u) | ((u_int64_t)htonl(l) << 32);
+    return htonl(u) | ((u_int64_t)htonl(l) << 32);
 }
 
 #define ntohq(_x) htonq(_x)
@@ -113,6 +122,10 @@ extern int ahmd5_attach(void), ahmd5_init(struct tdb *, struct xformsw *, struct
 extern int ahmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
 extern struct mbuf *ahmd5_input(struct mbuf *, struct tdb *);
 
+extern int ahsha1_attach(void), ahsha1_init(struct tdb *, struct xformsw *, struct mbuf *), ahsha1_zeroize(struct tdb *);
+extern int ahsha1_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
+extern struct mbuf *ahsha1_input(struct mbuf *, struct tdb *);
+
 extern int ahhmacmd5_attach(void), ahhmacmd5_init(struct tdb *, struct xformsw *, struct mbuf *), ahhmacmd5_zeroize(struct tdb *);
 extern int ahhmacmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
 extern struct mbuf *ahhmacmd5_input(struct mbuf *, struct tdb *);
@@ -124,6 +137,10 @@ extern struct mbuf *ahhmacsha1_input(struct mbuf *, struct tdb *);
 extern int espdes_attach(void), espdes_init(struct tdb *, struct xformsw *, struct mbuf *), espdes_zeroize(struct tdb *);
 extern int espdes_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
 extern struct mbuf *espdes_input(struct mbuf *, struct tdb *);
+
+extern int esp3des_attach(void), esp3des_init(struct tdb *, struct xformsw *, struct mbuf *), esp3des_zeroize(struct tdb *);
+extern int esp3des_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);
+extern struct mbuf *esp3des_input(struct mbuf *, struct tdb *);
 
 extern int espdesmd5_attach(void), espdesmd5_init(struct tdb *, struct xformsw *, struct mbuf *), espdesmd5_zeroize(struct tdb *);
 extern int espdesmd5_output(struct mbuf *, struct sockaddr_encap *, struct tdb *, struct mbuf **);

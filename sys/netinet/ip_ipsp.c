@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.6 1997/02/24 14:06:42 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.7 1997/06/20 05:41:53 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -69,27 +69,33 @@ int encdebug = 1;
  */
 
 struct xformsw xformsw[] = {
-{ XF_IP4,		0,		"IPv4 Simple Encapsulation",
-  ipe4_attach,		ipe4_init,	ipe4_zeroize,
-  (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input,		ipe4_output, },
-{ XF_AHMD5,		XFT_AUTH,	"Keyed MD5 Authentication",
-  ahmd5_attach,		ahmd5_init,	ahmd5_zeroize,
-  ahmd5_input,		ahmd5_output, },
-{ XF_ESPDES,		XFT_CONF,	"DES-CBC Encryption",
-  espdes_attach,	espdes_init,	espdes_zeroize,
-  espdes_input,	espdes_output, },
-{ XF_AHHMACMD5,		XFT_AUTH,	"HMAC MD5 Authentication",
-  ahhmacmd5_attach,	ahhmacmd5_init,	ahhmacmd5_zeroize,
-  ahhmacmd5_input,	ahhmacmd5_output, },
-{ XF_AHHMACSHA1,	XFT_AUTH,	"HMAC SHA1 Authentication",
-  ahhmacsha1_attach,	ahhmacsha1_init, ahhmacsha1_zeroize,
-  ahhmacsha1_input,	ahhmacsha1_output, },
-{ XF_ESPDESMD5,		XFT_CONF,     "DES-CBC Encryption + MD5 Authentication",
-  espdesmd5_attach,	espdesmd5_init,	espdesmd5_zeroize,
-  espdesmd5_input,	espdesmd5_output, },
-{ XF_ESP3DESMD5,	XFT_CONF,     "3DES-CBC Encryption + MD5 Authentication",
-  esp3desmd5_attach,	esp3desmd5_init,	esp3desmd5_zeroize,
-  esp3desmd5_input,	esp3desmd5_output, },
+    { XF_IP4,		0,		"IPv4 Simple Encapsulation",
+      ipe4_attach,		ipe4_init,	ipe4_zeroize,
+      (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input,		ipe4_output, },
+    { XF_AHMD5,		XFT_AUTH,	"Keyed MD5 Authentication",
+      ahmd5_attach,		ahmd5_init,	ahmd5_zeroize,
+      ahmd5_input,		ahmd5_output, },
+    { XF_AHSHA1,		XFT_AUTH,	"Keyed SHA1 Authentication",
+      ahsha1_attach,		ahsha1_init,	ahsha1_zeroize,
+      ahsha1_input,		ahsha1_output, },
+    { XF_ESPDES,		XFT_CONF,	"DES-CBC Encryption",
+      espdes_attach,	espdes_init,	espdes_zeroize,
+      espdes_input,	espdes_output, },
+    { XF_ESP3DES,		XFT_CONF,	"3DES-CBC Encryption",
+      esp3des_attach,	esp3des_init,	esp3des_zeroize,
+      esp3des_input,	esp3des_output, },
+    { XF_AHHMACMD5,		XFT_AUTH,	"HMAC MD5 Authentication",
+      ahhmacmd5_attach,	ahhmacmd5_init,	ahhmacmd5_zeroize,
+      ahhmacmd5_input,	ahhmacmd5_output, },
+    { XF_AHHMACSHA1,	XFT_AUTH,	"HMAC SHA1 Authentication",
+      ahhmacsha1_attach,	ahhmacsha1_init, ahhmacsha1_zeroize,
+      ahhmacsha1_input,	ahhmacsha1_output, },
+    { XF_ESPDESMD5,		XFT_CONF,     "DES-CBC Encryption + MD5 Authentication",
+      espdesmd5_attach,	espdesmd5_init,	espdesmd5_zeroize,
+      espdesmd5_input,	espdesmd5_output, },
+    { XF_ESP3DESMD5,	XFT_CONF,     "3DES-CBC Encryption + MD5 Authentication",
+      esp3desmd5_attach,	esp3desmd5_init,	esp3desmd5_zeroize,
+      esp3desmd5_input,	esp3desmd5_output, },
 };
 
 struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
@@ -110,83 +116,83 @@ int ipspkernfs_dirty = 1;
 struct tdb *
 gettdb(u_long spi, struct in_addr dst)
 {
-	int hashval;
-	struct tdb *tdbp;
+    int hashval;
+    struct tdb *tdbp;
 	
-	hashval = (spi+dst.s_addr) % TDB_HASHMOD;
+    hashval = (spi+dst.s_addr) % TDB_HASHMOD;
 	
-	for (tdbp = tdbh[hashval]; tdbp; tdbp = tdbp->tdb_hnext)
-	  if ((tdbp->tdb_spi == spi) && (tdbp->tdb_dst.s_addr == dst.s_addr))
-	    break;
+    for (tdbp = tdbh[hashval]; tdbp; tdbp = tdbp->tdb_hnext)
+      if ((tdbp->tdb_spi == spi) && (tdbp->tdb_dst.s_addr == dst.s_addr))
+	break;
 	
-	return tdbp;
+    return tdbp;
 }
 
 void
 puttdb(struct tdb *tdbp)
 {
-	int hashval;
-	hashval = ((tdbp->tdb_spi + tdbp->tdb_dst.s_addr) % TDB_HASHMOD);
-	tdbp->tdb_hnext = tdbh[hashval];
-	tdbh[hashval] = tdbp;
-	ipspkernfs_dirty = 1;
+    int hashval;
+    hashval = ((tdbp->tdb_spi + tdbp->tdb_dst.s_addr) % TDB_HASHMOD);
+    tdbp->tdb_hnext = tdbh[hashval];
+    tdbh[hashval] = tdbp;
+    ipspkernfs_dirty = 1;
 }
 
 int
 tdb_delete(struct tdb *tdbp, int delchain)
 {
-	struct tdb *tdbpp;
-	int hashval;
+    struct tdb *tdbpp;
+    int hashval;
 
-	hashval = ((tdbp->tdb_spi + tdbp->tdb_dst.s_addr) % TDB_HASHMOD);
+    hashval = ((tdbp->tdb_spi + tdbp->tdb_dst.s_addr) % TDB_HASHMOD);
 
-	if (tdbh[hashval] == tdbp)
+    if (tdbh[hashval] == tdbp)
+    {
+	tdbpp = tdbp;
+	tdbh[hashval] = tdbp->tdb_hnext;
+    }
+    else
+      for (tdbpp = tdbh[hashval]; tdbpp != NULL; tdbpp = tdbpp->tdb_hnext)
+	if (tdbpp->tdb_hnext == tdbp)
 	{
-		tdbpp = tdbp;
-		tdbh[hashval] = tdbp->tdb_hnext;
+	    tdbpp->tdb_hnext = tdbp->tdb_hnext;
+	    tdbpp = tdbp;
 	}
-	else
-	  for (tdbpp = tdbh[hashval]; tdbpp != NULL; tdbpp = tdbpp->tdb_hnext)
-	    if (tdbpp->tdb_hnext == tdbp)
-	    {
-		tdbpp->tdb_hnext = tdbp->tdb_hnext;
-		tdbpp = tdbp;
-	    }
 
-	if (tdbp != tdbpp)
-	  return EINVAL;		/* Should never happen */
+    if (tdbp != tdbpp)
+      return EINVAL;		/* Should never happen */
 	
-	ipspkernfs_dirty = 1;
-	tdbpp = tdbp->tdb_onext;
-	(*(tdbp->tdb_xform->xf_zeroize))(tdbp);
-	FREE(tdbp, M_TDB);
-	if (delchain && tdbpp)
-	  return tdb_delete(tdbpp, delchain);
-	else
-	  return 0;
+    ipspkernfs_dirty = 1;
+    tdbpp = tdbp->tdb_onext;
+    (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+    FREE(tdbp, M_TDB);
+    if (delchain && tdbpp)
+      return tdb_delete(tdbpp, delchain);
+    else
+      return 0;
 }
 
 int
 tdb_init(struct tdb *tdbp, struct mbuf *m)
 {
-	int alg;
-	struct encap_msghdr *em;
-	struct xformsw *xsp;
+    int alg;
+    struct encap_msghdr *em;
+    struct xformsw *xsp;
 	
-	em = mtod(m, struct encap_msghdr *);
-	alg = em->em_alg;
+    em = mtod(m, struct encap_msghdr *);
+    alg = em->em_alg;
 
-	for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
-	  if (xsp->xf_type == alg)
-	    return (*(xsp->xf_init))(tdbp, xsp, m);
+    for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
+      if (xsp->xf_type == alg)
+	return (*(xsp->xf_init))(tdbp, xsp, m);
 
 #ifdef ENCDEBUG
-	if (encdebug)
-	  printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi, ntohl(tdbp->tdb_dst.s_addr));
+    if (encdebug)
+      printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi, ntohl(tdbp->tdb_dst.s_addr));
 #endif
 	
-	m_freem(m);
-	return EINVAL;
+    m_freem(m);
+    return EINVAL;
 }
 
 
@@ -238,13 +244,13 @@ ipsp_kern(int off, char **bufp, int len)
       {
 	  b = (char *)&(tdbp->tdb_dst.s_addr);
 	  k += sprintf(ipspkernfs + k, 
-		"SPI=%x, destination=%d.%d.%d.%d, interface=%s\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
-		ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
-		((int)b[2] & 0xff), ((int)b[3] & 0xff), 
-		(tdbp->tdb_rcvif ? tdbp->tdb_rcvif->if_xname : "none"),
-		tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
-		(tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
-		(tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
+		       "SPI=%x, destination=%d.%d.%d.%d, interface=%s\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
+		       ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
+		       ((int)b[2] & 0xff), ((int)b[3] & 0xff), 
+		       (tdbp->tdb_rcvif ? tdbp->tdb_rcvif->if_xname : "none"),
+		       tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
+		       (tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
+		       (tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
       }
 
     ipspkernfs[k] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_sha1.c,v 1.3 1997/02/24 14:06:44 niklas Exp $	*/
+/*	$OpenBSD: ip_sha1.c,v 1.4 1997/06/20 05:41:54 provos Exp $	*/
 
 /*
 SHA-1 in C
@@ -141,7 +141,7 @@ unsigned long j;
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
 {
-unsigned long i, j;
+unsigned long i;
 unsigned char finalcount[8];
 
     for (i = 0; i < 8; i++) {
@@ -157,13 +157,15 @@ unsigned char finalcount[8];
         digest[i] = (unsigned char)
          ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
+#if 0	/* We want to use this for "keyfill" */
     /* Wipe variables */
-    i = j = 0;
+    i = 0;
     bzero(context->buffer, 64);
     bzero(context->state, 20);
     bzero(context->count, 8);
     bzero(&finalcount, 8);
 #ifdef SHA1HANDSOFF  /* make SHA1Transform overwrite it's own static vars */
     SHA1Transform(context->state, context->buffer);
+#endif
 #endif
 }

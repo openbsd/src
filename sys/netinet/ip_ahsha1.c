@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacmd5.c,v 1.8 1997/06/20 05:41:47 provos Exp $	*/
+/*	$OpenBSD: ip_ahsha1.c,v 1.1 1997/06/20 05:41:49 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -24,7 +24,8 @@
  */
 
 /*
- * Based on RFC 2085.
+ * Authentication Header Processing
+ * Per RFC1852 (Metzger & Simpson, 1995)
  */
 
 #include <sys/param.h>
@@ -37,15 +38,11 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/socketvar.h>
-
 #include <machine/cpu.h>
-#include <machine/endian.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -55,76 +52,54 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
+#include <sys/socketvar.h>
+#include <net/raw_cb.h>
 #include <net/encap.h>
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 
 /*
- * ahhmacmd5_attach() is called from the transformation initialization code.
+ * ahsha1_attach() is called from the transformation initialization code.
  * It just returns.
  */
 
 int
-ahhmacmd5_attach()
+ahsha1_attach()
 {
     return 0;
 }
 
 /*
- * ahhmacmd5_init() is called when an SPI is being set up. It interprets the
+ * ahsha1_init() is called when an SPI is being set up. It interprets the
  * encap_msghdr present in m, and sets up the transformation data.
  */
 
 int
-ahhmacmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
+ahsha1_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
-    struct ahhmacmd5_xdata *xd;
-    struct ahhmacmd5_xencap txd;
+    struct ahsha1_xdata *xd;
     struct encap_msghdr *em;
-    int len;
 	
     tdbp->tdb_xform = xsp;
 
-    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ahhmacmd5_xdata),
+    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ahsha1_xdata),
 	   M_XDATA, M_WAITOK);
     if (tdbp->tdb_xdata == NULL)
       return ENOBUFS;
-    bzero(tdbp->tdb_xdata, sizeof (struct ahhmacmd5_xdata));
-    bzero(&txd, sizeof(struct ahhmacmd5_xencap));
-    xd = (struct ahhmacmd5_xdata *)tdbp->tdb_xdata;
+    bzero(tdbp->tdb_xdata, sizeof (struct ahsha1_xdata));
+    xd = (struct ahsha1_xdata *)tdbp->tdb_xdata;
 
     em = mtod(m, struct encap_msghdr *);
-    if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ahhmacmd5_xencap))
+    if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ahsha1_xdata))
     {
 	free((caddr_t)tdbp->tdb_xdata, M_XDATA);
 	tdbp->tdb_xdata = NULL;
 	return EINVAL;
     }
-	
-    m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN, 
-	       (caddr_t)&txd);
-
-    xd->amx_rpl = 1;
-    xd->amx_alen = txd.amx_alen;
-    xd->amx_bitmap = 0;
-    xd->amx_wnd = txd.amx_wnd;
-	
-    MD5Init(&(xd->amx_ictx));
-    MD5Init(&(xd->amx_octx));
-	
-    for (len = 0; len < AHHMACMD5_KMAX; len++)
-      txd.amx_key[len] ^= HMACMD5_IPAD_VAL;
-
-    MD5Update(&(xd->amx_ictx), txd.amx_key, AHHMACMD5_KMAX);
-
-    for (len = 0; len < AHHMACMD5_KMAX; len++)
-      txd.amx_key[len] ^= (HMACMD5_IPAD_VAL ^ HMACMD5_OPAD_VAL);
-
-    MD5Update(&(xd->amx_octx), txd.amx_key, AHHMACMD5_KMAX);
-    bzero(&txd, sizeof(struct ahhmacmd5_xencap));
+    m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
+	       (caddr_t)xd);
     bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
-
     return 0;
 }
 
@@ -133,43 +108,40 @@ ahhmacmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
  */
 
 int
-ahhmacmd5_zeroize(struct tdb *tdbp)
+ahsha1_zeroize(struct tdb *tdbp)
 {
     FREE(tdbp->tdb_xdata, M_XDATA);
     return 0;
 }
 
 /*
- * ahhmacmd5_input() gets called to verify that an input packet
+ * ahsha1_input() gets called to verify that an input packet
  * passes authentication.
  */
 
 extern struct ifnet loif;
 
 struct mbuf *
-ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
+ahsha1_input(struct mbuf *m, struct tdb *tdb)
 {
-    struct ahhmacmd5_xdata *xd;
+    struct ahsha1_xdata *xd;
     struct ip *ip, ipo;
     struct ah *ah;
-    struct ahhmacmd5 aho, *ahp;
+    struct ahsha1 aho;
     struct ifnet *rcvif;
-    int ohlen, len, count, off, ado, errc;
-    u_int64_t btsx;
+    int ohlen, len, count, off;
     struct mbuf *m0;
-    MD5_CTX ctx; 
+    SHA1_CTX ctx; 
 	
-    xd = (struct ahhmacmd5_xdata *)tdb->tdb_xdata;
+    xd = (struct ahsha1_xdata *)tdb->tdb_xdata;
     ohlen = sizeof (struct ip) + AH_FLENGTH + xd->amx_alen;
-    if (xd->amx_wnd >= 0)
-      ohlen += HMACMD5_RPLENGTH;
 
     rcvif = m->m_pkthdr.rcvif;
     if (rcvif == NULL)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("ahhmacmd5_input: receive interface is NULL!!!\n");
+	  printf("ahsha1_input: receive interface is NULL!!!\n");
 #endif
 	rcvif = &loif;
     }
@@ -185,23 +157,6 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 
     ip = mtod(m, struct ip *);
     ah = (struct ah *)(ip + 1);
-    ahp = (struct ahhmacmd5 *)ah;
-
-    if (xd->amx_wnd >= 0)
-      ado = HMACMD5_RPLENGTH;
-    else
-      ado = 0;
-
-    if (ah->ah_hl * sizeof(u_int32_t) != xd->amx_alen + ado)
-    {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ahhmacmd5_input: bad authenticator length\n");
-#endif
-	ahstat.ahs_badauthl++;
-	m_freem(m);
-	return NULL;
-    }
 
     ipo = *ip;
     ipo.ip_tos = 0;
@@ -212,13 +167,12 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_ttl = 0;
     ipo.ip_sum = 0;
 
-    ctx = xd->amx_ictx;
-    MD5Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
-    if (xd->amx_wnd >= 0)
-      MD5Update(&ctx, (unsigned char *)ahp, AH_FLENGTH + HMACMD5_RPLENGTH);
-    else
-      MD5Update(&ctx, (unsigned char *)ahp, AH_FLENGTH);
-    MD5Update(&ctx, ipseczeroes, xd->amx_alen);
+    SHA1Init(&ctx);
+    SHA1Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
+    SHA1Final(NULL, &ctx);		/* non-std usage of SHA1Final! */
+    SHA1Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
+    SHA1Update(&ctx, (unsigned char *)ah, AH_FLENGTH);
+    SHA1Update(&ctx, ipseczeroes, xd->amx_alen);
 
     /*
      * Code shamelessly stolen from m_copydata
@@ -230,7 +184,7 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     while (off > 0)
     {
 	if (m0 == 0)
-	  panic("ahhmacmd5_input: m_copydata (off)");
+	  panic("ahsha1_input: m_copydata (off)");
 	if (off < m0->m_len)
 	  break;
 	off -= m0->m_len;
@@ -240,61 +194,27 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ahhmacmd5_input: m_copydata (copy)");
+	  panic("ahsha1_input: m_copydata (copy)");
 	count = min(m0->m_len - off, len);
-	MD5Update(&ctx, mtod(m0, unsigned char *) + off, count);
+	SHA1Update(&ctx, mtod(m0, unsigned char *) + off, count);
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    MD5Final((unsigned char *)(&(aho.ah_data[0])), &ctx);
-    ctx = xd->amx_octx;
-    MD5Update(&ctx, (unsigned char *)(&(aho.ah_data[0])), HMACMD5_HASHLEN);
-    MD5Final((unsigned char *)(&(aho.ah_data[0])), &ctx);
 
-    if (bcmp(aho.ah_data, ah->ah_data + ado, xd->amx_alen))
+    SHA1Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
+    SHA1Final((unsigned char *)(&(aho.ah_data[0])), &ctx);
+	
+    if (bcmp(aho.ah_data, ah->ah_data, xd->amx_alen))
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  printf("ahhmacmd5_input: bad auth\n"); /* XXX */
+	  printf("ahsha1_input: bad auth\n"); /* XXX */
 #endif
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
-    }
-	
-    if (xd->amx_wnd >= 0)
-    {
-	btsx = ntohq(ahp->ah_rpl);
-	if ((errc = checkreplaywindow64(btsx, &(xd->amx_rpl), 
-					xd->amx_wnd, &(xd->amx_bitmap)))
-	    != 0)
-	{
-	    switch(errc)
-	    {
-		case 1:
-#ifdef ENCDEBUG
-		    printf("ahhmacmd5_input: replay counter wrapped\n");
-#endif
-		    ahstat.ahs_wrap++;
-		    break;
-		case 2:
-#ifdef ENCDEBUG
-		    printf("ahhmacmd5_input: received old packet\n");
-#endif
-		    ahstat.ahs_replay++;
-		    break;
-		case 3:
-#ifdef ENCDEBUG
-		    printf("ahhmacmd5_input: packet already received\n");
-#endif
-		    ahstat.ahs_replay++;
-		    break;
-	    }
-	    m_freem(m);
-	    return NULL;
-	}
     }
 	
     ipo = *ip;
@@ -320,15 +240,16 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 #define AHXPORT 
 
 int
-ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+ahsha1_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
 {
-    struct ahhmacmd5_xdata *xd;
+    struct ahsha1_xdata *xd;
     struct ip *ip, ipo;
-    struct ah *ah;
-    struct ahhmacmd5 *ahp, aho;
+    struct ah *ah, aho;
     register int len, off, count;
     register struct mbuf *m0;
-    MD5_CTX ctx;
+	
+    SHA1_CTX ctx;
+	
     int ilen, ohlen;
 	
     ahstat.ahs_output++;
@@ -338,7 +259,7 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	
     ip = mtod(m, struct ip *);
 	
-    xd = (struct ahhmacmd5_xdata *)tdb->tdb_xdata;
+    xd = (struct ahsha1_xdata *)tdb->tdb_xdata;
 
     ilen = ntohs(ip->ip_len);
 
@@ -347,9 +268,7 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 #else
     ohlen = sizeof (struct ip) + AH_FLENGTH + xd->amx_alen;
 #endif
-    if (xd->amx_wnd >= 0)
-      ohlen += HMACMD5_RPLENGTH;
-
+	
     ipo.ip_v = IPVERSION;
     ipo.ip_hl = 5;
     ipo.ip_tos = 0;
@@ -368,33 +287,17 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
     ipo.ip_dst = gw->sen_ipsp_dst;
     aho.ah_nh = IPPROTO_IP4;
 #endif
-    aho.ah_hl = (xd->amx_alen >> 2);
-    if (xd->amx_wnd >= 0)
-      aho.ah_hl += (HMACMD5_RPLENGTH / sizeof(u_int32_t));
+    aho.ah_hl = xd->amx_alen >> 2;
     aho.ah_rv = 0;
     aho.ah_spi = tdb->tdb_spi;
 
-    if (xd->amx_wnd >= 0)
-    {
-	if (xd->amx_rpl == 0)
-	{
-#ifdef ENCDEBUG
-	    printf("ahhmacmd5_output: key should have changed long ago\n");
-#endif
-	    ahstat.ahs_wrap++;
-	    return NULL;
-	}
-    }
+    SHA1Init(&ctx);
 
-    aho.ah_rpl = htonq(xd->amx_rpl++);
-
-    ctx = xd->amx_ictx;
-    MD5Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
-    if (xd->amx_wnd >= 0)
-      MD5Update(&ctx, (unsigned char *)&aho, AH_FLENGTH + HMACMD5_RPLENGTH);
-    else
-      MD5Update(&ctx, (unsigned char *)&aho, AH_FLENGTH);
-    MD5Update(&ctx, ipseczeroes, xd->amx_alen);
+    SHA1Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
+    SHA1Final(NULL, &ctx);
+    SHA1Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
+    SHA1Update(&ctx, (unsigned char *)&aho, AH_FLENGTH);
+    SHA1Update(&ctx, ipseczeroes, xd->amx_alen);
 
 #ifdef AHXPORT
     off = sizeof (struct ip);
@@ -412,19 +315,15 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ahhmacmd5_output: m_copydata");
+	  panic("ahsha1_output: m_copydata");
 	count = min(m0->m_len - off, len);
-	MD5Update(&ctx, mtod(m0, unsigned char *) + off, count);
-
+	SHA1Update(&ctx, mtod(m0, unsigned char *) + off, count);
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    MD5Final((unsigned char *)(&(aho.ah_data[0])), &ctx);
-    ctx = xd->amx_octx;
-    MD5Update(&ctx, (unsigned char *)(&(aho.ah_data[0])), HMACMD5_HASHLEN);
-    MD5Final((unsigned char *)(&(aho.ah_data[0])), &ctx);
+    SHA1Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
 
     ipo.ip_tos = ip->ip_tos;
     ipo.ip_id = ip->ip_id;
@@ -442,21 +341,14 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	
     ip = mtod(m, struct ip *);
     ah = (struct ah *)(ip + 1);
-    ahp = (struct ahhmacmd5 *)ah; 
     *ip = ipo;
     ah->ah_nh = aho.ah_nh;
     ah->ah_hl = aho.ah_hl;
     ah->ah_rv = aho.ah_rv;
     ah->ah_spi = aho.ah_spi;
-    if (xd->amx_wnd >= 0)
-    {
-	ahp->ah_rpl = aho.ah_rpl;
-	bcopy((unsigned char *)(&(aho.ah_data[0])), 
-	      ahp->ah_data, xd->amx_alen);
-    }
-    else
-      bcopy((unsigned char *)(&(aho.ah_data[0])), 
-	    ah->ah_data, xd->amx_alen);
+
+
+    SHA1Final(&(ah->ah_data[0]), &ctx);
 
     *mp = m;
 	
