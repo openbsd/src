@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.10 2003/07/09 20:23:33 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.11 2003/09/08 18:59:15 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -147,8 +147,7 @@ typedef struct {
 .Ed
 .Pp
 The fields have the following meanings:
-.Pp
-.Bl -tag -width "e_phentsize" -compact -offset indent
+.Bl -tag -width "e_phentsize" -offset indent
 .It Dv e_ident
 This array of bytes specifies to interpret the file,
 independent of the processor or the file's remaining contents.
@@ -158,8 +157,7 @@ the prefix
 and may contain values which start with the prefix
 .Sy ELF .
 The following macros are defined:
-.Pp
-.Bl -tag -width "EI_VERSION" -compact \" EI_ABIVERSION
+.Bl -tag -width "EI_VERSION" \" EI_ABIVERSION
 .It Dv EI_MAG0
 The first byte of the magic number.
 It must be filled with
@@ -332,9 +330,9 @@ This member identifies the file version:
 .Pp
 .Bl -tag -width "EV_CURRENT" -compact
 .It Dv EV_NONE
-Invalid version
+Invalid version.
 .It Dv EV_CURRENT
-Current version
+Current version.
 .El
 .It Dv e_entry
 This member gives the virtual address to which the system first transfers
@@ -392,8 +390,7 @@ with the section name string table.
 If the file has no section name string
 table, this member holds the value
 .Sy SHN_UNDEF .
-.Pp
-.Bl -tag -width "SHN_LORESERVE" -compact
+.Bl -tag -width "SHN_LORESERVE"
 .It Dv SHN_UNDEF
 This value marks an undefined, missing, irrelevant, or otherwise meaningless
 section reference.
@@ -403,15 +400,15 @@ relative to section number
 .Sy SHN_UNDEF
 is an undefined symbol.
 .It Dv SHN_LORESERVE
-This value specifies the lower bound of the range of reserved indexes.
+This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
 Values greater than or equal to
 .Sy SHN_HIPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
 Values less than or equal to
 .Sy SHN_LOPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies absolute values for the corresponding reference.
 For
@@ -480,13 +477,11 @@ The main difference between the 32-bit and the 64-bit program header lies
 only in the location of a
 .Sy p_flags
 member in the total struct.
-.Pp
-.Bl -tag -width "p_offset" -compact -offset indent
+.Bl -tag -width "p_offset" -offset indent
 .It Dv p_type
 This member of the Phdr struct tells what kind of segment this array
 element describes or how to interpret the array element's information.
-.Bl -tag -width "PT_DYNAMIC" -compact
-.Pp
+.Bl -tag -width "PT_DYNAMIC"
 .It Dv PT_NULL
 The array element is unused and the other members' values are undefined.
 This lets the program header have ignored entries.
@@ -518,7 +513,7 @@ path name to invoke as an interpreter.
 This segment type is meaningful
 only for executable files (though it may occur for shared objects).
 However it may not occur more than once in a file.
-If it is present it must precede any loadable segment entry.
+If it is present, it must precede any loadable segment entry.
 .It Dv PT_NOTE
 The array element specifies the location and size for auxiliary information.
 .It Dv PT_SHLIB
@@ -532,15 +527,15 @@ This segment type may not occur more than once in a file.
 Moreover, it may
 only occur if the program header table is part of the memory image of the
 program.
-If it is present it must precede any loadable segment entry.
+If it is present, it must precede any loadable segment entry.
 .It Dv PT_LOPROC
 Values greater than or equal to
 .Sy PT_HIPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .It Dv PT_HIPROC
-Value less than or equal to
+Values less than or equal to
 .Sy PT_LOPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .El
 .Pp
 .It Dv p_offset
@@ -620,8 +615,7 @@ Some section
 header table indices are reserved.
 An object file does not have sections for
 these special indices:
-.Pp
-.Bl -tag -width "SHN_LORESERVE" -compact
+.Bl -tag -width "SHN_LORESERVE"
 .It Dv SHN_UNDEF
 This value marks an undefined, missing, irrelevant or otherwise meaningless
 section reference.
@@ -630,11 +624,11 @@ This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
 Values greater than or equal to
 .Sy SHN_HIPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
 Values less than or equal to
 .Sy SHN_LOPROC
-is reserved for processor-specific semantics.
+are reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies the absolute value for the corresponding reference.
 For
@@ -685,8 +679,7 @@ typedef struct {
 	Elf64_Xword     sh_entsize;
 } Elf64_Shdr;
 .Ed
-.Pp
-.Bl -tag -width "sh_addralign" -compact
+.Bl -tag -width "sh_addralign"
 .It Dv sh_name
 This member specifies the name of the section.
 Its value is an index
@@ -694,8 +687,7 @@ into the section header string table section, giving the location of
 a null-terminated string.
 .It Dv sh_type
 This member categorizes the section's contents and semantics.
-.Pp
-.Bl -tag -width "SHT_PROGBITS" -compact
+.Bl -tag -width "SHT_PROGBITS"
 .It Dv SHT_NULL
 This value marks the section header as inactive.
 It does not
@@ -703,7 +695,7 @@ have an associated section.
 Other members of the section header
 have undefined values.
 .It Dv SHT_PROGBITS
-The section holds information defined by the program, whose
+This section holds information defined by the program, whose
 format and meaning are determined solely by the program.
 .It Dv SHT_SYMTAB
 This section holds a symbol table.
@@ -862,7 +854,7 @@ fixed-size entries.
 .El
 .Pp
 Various sections hold program and control information:
-.Bl -tag -width ".shstrtab" -compact
+.Bl -tag -width ".shstrtab"
 .It .bss
 This section holds uninitialized data that contributes to the program's
 memory image.
@@ -870,7 +862,7 @@ By definition, the system initializes the data with zeros
 when the program begins to run.
 This section is of type
 .Sy SHT_NOBITS .
-The attributes types are
+The attribute types are
 .Sy SHF_ALLOC
 and
 .Sy SHF_WRITE .
@@ -1135,8 +1127,7 @@ typedef struct {
 	Elf64_Xword     st_size;
 } Elf64_Sym;
 .Ed
-.Pp
-.Bl -tag -width "st_value" -compact
+.Bl -tag -width "st_value"
 .It Dv st_name
 This member holds an index into the object file's symbol string table,
 which holds character representations of the symbol names.
@@ -1152,8 +1143,7 @@ This member holds zero if the symbol
 has no size or an unknown size.
 .It Dv st_info
 This member specifies the symbol's type and binding attributes:
-.Pp
-.Bl -tag -width "STT_SECTION" -compact
+.Bl -tag -width "STT_SECTION"
 .It Dv STT_NOTYPE
 The symbol's type is not defined.
 .It Dv STT_OBJECT
@@ -1167,7 +1157,7 @@ this type exist primarily for relocation and normally have
 .Sy STB_LOCAL
 bindings.
 .It Dv STT_FILE
-By convention the symbol's name gives the name of the source file
+By convention, the symbol's name gives the name of the source file
 associated with the object file.
 A file symbol has
 .Sy STB_LOCAL
@@ -1185,8 +1175,7 @@ This value down to and including
 .Sy STT_LOPROC
 is reserved for processor-specific semantics.
 .El
-.Pp
-.Bl -tag -width "STB_GLOBAL" -compact
+.Bl -tag -width "STB_GLOBAL"
 .It Dv STB_LOCAL
 Local symbols are not visible outside the object file containing their
 definition.
@@ -1280,8 +1269,7 @@ typedef struct {
 	Elf64_Sxword    r_addend;
 } Elf64_Rela;
 .Ed
-.Pp
-.Bl -tag -width "r_offset" -compact
+.Bl -tag -width "r_offset"
 .It Dv r_offset
 This member gives the location at which to apply the relocation action.
 For a relocatable file, the value is the byte offset from the beginning
