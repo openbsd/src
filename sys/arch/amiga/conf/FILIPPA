@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.4 1996/05/02 06:43:28 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.5 1996/05/04 13:40:24 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -55,8 +55,8 @@ options		KERNFS		# Kernel parameter filesystem (Recommended)
 options		FDESC		# /dev/fd filesystem
 options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
-options		ADOSFS		# AmigaDOS file system
-options		"CD9660"	# ISO 9660 file system, with Rock Ridge
+#options		ADOSFS		# AmigaDOS file system
+#options		"CD9660"	# ISO 9660 file system, with Rock Ridge
 options		UNION           # union file system
 #options		UMAPFS          # uid/gid remapping filesystem
 #options	PORTAL		# Portal filesystem
@@ -204,14 +204,15 @@ sd1	at scsibus0 target 3 lun ?	# scsi disks
 
 st0	at scsibus0 target 5 lun ?	# scsi tapes
 st*	at scsibus? target ? lun ?	# scsi tapes
-cd0	at scsibus0 target 6 lun ?	# scsi cd's
-cd*	at scsibus? target ? lun ?	# scsi cd's
+#cd0	at scsibus0 target 6 lun ?	# scsi cd's
+#cd*	at scsibus? target ? lun ?	# scsi cd's
+#ss*	at scsibus? target ? lun ?	# scsi scanners
 
 ggbus*	at zbus0			# Goldengate bridge
 isa*	at ggbus?
 
-cross*	at zbus0			# CrossLink bridge
-isa*	at cross?
+#cross*	at zbus0			# CrossLink bridge
+#isa*	at cross?
 
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -228,9 +229,9 @@ com7	at ast? slave ? flags 1
 com8	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
 com9	at isa? port 0x0f8 irq 10
 
-lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
+#lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
 
 # XXX should be ed0 but clashes with Zorro ed device
 isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
