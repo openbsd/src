@@ -48,7 +48,6 @@
 struct user;
 extern int  copykstack __P((struct user *up));
 extern void MachSaveCurFPState __P((struct proc *p));
-extern int switch_exit __P((void)); /* XXX never really returns? */
 extern void blkclr __P((caddr_t val, int size));   /* bulk aligned bzero */
 
 /* MIPS-generic locore functions used by trap.c */
