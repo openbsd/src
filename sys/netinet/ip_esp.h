@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.9 1997/07/14 08:48:46 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.10 1997/08/26 12:02:49 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -55,6 +55,13 @@ struct esp_old
     u_int8_t	esp_iv[8];	/* iv[4] may actually be data! */
 };
 
+struct esp_new
+{
+    u_int32_t   esp_spi;        /* Security Parameter Index */
+    u_int32_t   esp_rpl;        /* Sequence Number, Replay Counter */
+    u_int8_t    esp_iv[8];      /* Data may start already at iv[0]! */
+};
+
 struct espstat
 {
     u_int32_t	esps_hdrops;	/* packet shorter than header shows */
@@ -109,7 +116,7 @@ struct esp_new_xencap
 {
     u_int32_t   edx_enc_algorithm;
     u_int32_t   edx_hash_algorithm;
-    int32_t	edx_ivlen;	/* 0 or 8 */
+    u_int32_t	edx_ivlen;	/* 0 or 8 */
     u_int32_t	edx_keylen;
     u_int32_t	edx_wnd;
     u_int32_t   edx_flags;
@@ -123,7 +130,7 @@ struct esp_new_xdata
 {
     u_int32_t   edx_enc_algorithm;
     u_int32_t   edx_hash_algorithm;
-    int32_t     edx_ivlen;      /* 0 or 8 */
+    u_int32_t   edx_ivlen;      /* 0 or 8 */
     u_int32_t   edx_rpl;	/* Replay counter */
     u_int32_t   edx_wnd;	/* Replay window */
     u_int32_t   edx_bitmap;
@@ -161,6 +168,7 @@ struct esp_new_xdata
 #define edx_sha1_octx	Hashes.SHA1stuff.edx_octx
 
 #define ESP_OLD_FLENGTH		12
+#define ESP_NEW_FLENGTH         16
 
 #ifdef _KERNEL
 struct espstat espstat;

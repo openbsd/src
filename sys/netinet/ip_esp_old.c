@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.4 1997/07/27 23:30:36 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.5 1997/08/26 12:02:50 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -310,10 +310,9 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	}
 
 	ip = mtod(m, struct ip *);
-	esp = (struct esp_old *) ((u_int8_t *) ip + (ip->ip_hl << 2));
     }
-    else
-      esp = (struct esp_old *) (ip + 1);
+
+    esp = (struct esp_old *) ((u_int8_t *) ip + (ip->ip_hl << 2));
 
     ipo = *ip;
 
