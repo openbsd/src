@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_driver.c,v 1.6 2000/01/07 14:50:21 peter Exp $	*/
-/*	$NetBSD: rf_driver.c,v 1.19 1999/12/07 02:54:08 oster Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.7 2000/01/08 20:57:12 peter Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.20 2000/01/07 03:03:44 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -159,7 +159,7 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 #define WAIT_FOR_QUIESCENCE(_raid_) \
 	tsleep(&((_raid_)->accesses_suspended),PRIBIO,"raidframe quiesce", 0);
 
-#define IO_BUF_ERR(bp, err, unit) { \
+#define IO_BUF_ERR(bp, err) { \
 	bp->b_flags |= B_ERROR; \
 	bp->b_resid = bp->b_bcount; \
 	bp->b_error = err; \
@@ -699,7 +699,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 
 	if (!raidPtr->valid) {
 		RF_ERRORMSG("RAIDframe driver not successfully configured.  Rejecting access.\n");
-		IO_BUF_ERR(bp, EINVAL, raidPtr->raidid);
+		IO_BUF_ERR(bp, EINVAL);
 		return (EINVAL);
 	}
 
@@ -722,7 +722,7 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
 		    (u_long) raidAddress, (u_long) numBlocks, (u_long) raidPtr->totalSectors);
 
-			IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
+			IO_BUF_ERR(bp, ENOSPC);
 			return (ENOSPC);
 	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
