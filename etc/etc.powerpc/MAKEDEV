@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.15 1998/04/06 20:17:16 pefo Exp $
+#       $OpenBSD: MAKEDEV,v 1.16 1998/05/29 04:22:18 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -83,9 +83,12 @@ case $i in
 all)
 	sh MAKEDEV std fd
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh MAKEDEV ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
+	sh MAKEDEV ofdisk5 ofdisk6 ofdisk7 ofdisk8 ofdisk9 
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV rd0
+	sh MAKEDEV ttyo0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV tun0 tun1 tun2 tun3
@@ -96,7 +99,9 @@ all)
 ramdisk)
 	sh MAKEDEV std
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
+	sh MAKEDEV ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
 	sh MAKEDEV rd0
+	sh MAKEDEV ttyo0
 	sh MAKEDEV tty00 tty01 pty0
 	;;
 
@@ -127,15 +132,16 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|ccd*)
+sd*|ccd*|ofdisk*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=2; chr=8;;
+	ofdisk*) name=ofdisk; blk=4; chr=13;;
 	ccd*) name=ccd; blk=16; chr=18;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
-	0|1|2|3|4|5|6)
+	0|1|2|3|4|5|6|7|8|9)
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
 		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
@@ -225,6 +231,19 @@ vnd*)
 	umask 77
 	;;
 
+ttyo*)
+	unit=`expr $i : 'ttyo\(.*\)'`
+	rm -f ser${unit} tty${unit} ttyo${unit}
+	case ${unit} in
+	0|1)
+		mknod ttyo${unit} c 14 ${unit}
+		chown uucp.wheel ttyo${unit}
+		;;
+	*)
+		echo bad unit for serial tty in: $i
+		;;
+	esac
+	;;
 tty0*)
 	unit=`expr $i : 'tty0\(.*\)'`
 	rm -f ser${unit} tty${unit} tty0${unit}
