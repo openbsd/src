@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2001/06/27 07:32:52 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.45 2001/07/09 06:44:11 mickey Exp $
 #
 # PPC GENERIC config file
 #
@@ -56,6 +56,9 @@ pciide*		at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet
+iop*		at pci? dev ? function ?	# I2O processor
+ioprbs*		at iop? tid ?			# I2O arrays
+iopsp*		at iop? tid ?			# I2O SCSI pass-through
 
 exphy*		at mii? phy ?			# 3Com internal PHYs
 inphy*		at mii? phy ?			# Intel 82555 PHYs
@@ -96,13 +99,16 @@ abtn*		at adb?				# ADB button?
 awacs*		at macobio?			# Apple audio device
 audio*		at awacs?
 
-scsibus*	at siop?
 #scsibus*	at adv?
 #scsibus*	at ahc?
+#scsibus*	at ami?
 #scsibus*	at bha?
 #scsibus*	at esp?
 #scsibus*	at mesh?
+scsibus*	at ioprbs?
+scsibus*	at iopsp?
 #scsibus*	at pcscp?
+scsibus*	at siop?
 
 wdc*		at macobio? flags 0x0
 wd*		at wdc? drive ? flags 0x0000
