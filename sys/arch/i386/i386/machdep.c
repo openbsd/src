@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.307 2004/07/15 07:20:40 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.308 2004/07/16 06:02:47 david Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -276,7 +276,6 @@ caddr_t	allocsys(caddr_t);
 void	setup_buffers(vaddr_t *);
 void	dumpsys(void);
 int	cpu_dump(void);
-void	old_identifycpu(void);
 void	init386(paddr_t);
 void	consinit(void);
 void	(*cpuresetfn)(void);
@@ -383,6 +382,7 @@ cpu_startup()
 	int sz;
 	vaddr_t minaddr, maxaddr, va;
 	paddr_t pa;
+	extern int cpu_id;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -401,8 +401,17 @@ cpu_startup()
 	printf("%s", version);
 	startrtclock();
 
-	/* XXX Merge with identifycpu */
-	old_identifycpu();
+	/*
+	 * XXX SMP XXX identifycpu shouldn't need to be called here, but
+	 * mpbios is broken otherwise.  Also, curcpu is not quite fully
+	 * initialized this early either, so some extra work is needed.
+	 */
+	strlcpy(curcpu()->ci_dev.dv_xname, "cpu0",
+	    sizeof(curcpu()->ci_dev.dv_xname));
+	curcpu()->ci_signature = cpu_id;
+	curcpu()->ci_feature_flags = cpu_feature;
+	identifycpu(curcpu());
+
 	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024U);
 
 	/*
@@ -437,7 +446,7 @@ cpu_startup()
 	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024U);
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
-		nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
+	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1132,7 +1141,7 @@ winchip_cpu_setup(cpu_device, model, step)
 		curcpu()->ci_feature_flags &= ~CPUID_TSC;
 		/* Disable RDTSC instruction from user-level. */
 		lcr4(rcr4() | CR4_TSD);
-		printf("%s: TSC disabled\n", curcpu()->ci_dev.dv_xname);
+		printf("%s: TSC disabled\n", cpu_device);
 		break;
 	}
 #endif
@@ -1277,8 +1286,7 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 		/* disable access to ccr4/ccr5 */
 		cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-		printf("%s: xchg bug workaround performed\n",
-		       curcpu()->ci_dev.dv_xname);
+		printf("%s: xchg bug workaround performed\n", cpu_device);
 		break;	/* fallthrough? */
 	case 4:	/* GXm */
 		/* Unset the TSC bit until calibrate_delay() gets fixed. */
@@ -1331,8 +1339,7 @@ intel586_cpu_setup(cpu_device, model, step)
 #if defined(I586_CPU)
 	if (!cpu_f00f_bug) {
 		fix_f00f();
-		printf("%s: F00F bug workaround installed\n",
-		    curcpu()->ci_dev.dv_xname);
+		printf("%s: F00F bug workaround installed\n", cpu_device);
 	}
 #endif
 }
@@ -1420,7 +1427,7 @@ intel686_common_cpu_setup(const char *cpu_device, int model, int step)
 void
 intel686_cpu_setup(const char *cpu_device, int model, int step)
 {
-        struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = curcpu();
 	/* XXX SMP int model = (ci->ci_signature >> 4) & 15; */
 	/* XXX SMP int step = ci->ci_signature & 15; */
 	u_quad_t msr119;
@@ -1442,8 +1449,7 @@ intel686_cpu_setup(const char *cpu_device, int model, int step)
 		msr119 |= 0x0000000000200000LL;
 		wrmsr(MSR_BBL_CR_CTL, msr119);
 
-		printf("%s: disabling processor serial number\n",
-		       ci->ci_dev.dv_xname);
+		printf("%s: disabling processor serial number\n", cpu_device);
 		ci->ci_feature_flags &= ~CPUID_SER;
 		ci->ci_level = 2;
 	}
@@ -1533,8 +1539,6 @@ cyrix3_cpu_name(model, step)
 	return name;
 }
 
-/* XXXSMP: must be shared with UP */
-#ifdef MULTIPROCESSOR
 /*
  * Print identification for the given CPU.
  * XXX XXX
@@ -1565,10 +1569,8 @@ identifycpu(struct cpu_info *ci)
 	int family, model, step, modif, cachesize;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	char *brandstr_from, *brandstr_to;
-	int skipspace;
-
 	char *cpu_device = ci->ci_dev.dv_xname;
-	/* XXX SMP XXX void (*cpu_setup)(const char *, int, int); */
+	int skipspace;
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1595,10 +1597,10 @@ identifycpu(struct cpu_info *ci)
 		step = ci->ci_signature & 15;
 #ifdef CPUDEBUG
 		printf("%s: family %x model %x step %x\n", cpu_device, family,
-			model, step);
+		    model, step);
 		printf("%s: cpuid level %d cache eax %x ebx %x ecx %x edx %x\n",
-			cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
-			cpu_cache_ecx, cpu_cache_edx);
+		    cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
+		    cpu_cache_ecx, cpu_cache_edx);
 #endif
 
 		for (i = 0; i < max; i++) {
@@ -1652,11 +1654,11 @@ identifycpu(struct cpu_info *ci)
 				name = intel686_cpu_name(model);
 			/* Special hack for the VIA C3 series. */
 			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
-				   model == 7) {
+			    model == 7) {
 				name = cyrix3_cpu_name(model, step);
 			/* Special hack for the TMS5x00 series. */
 			} else if (vendor == CPUVENDOR_TRANSMETA &&
-				  family == 5 && model == 4) {
+			    family == 5 && model == 4) {
 				name = tm86_cpu_name(model);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
@@ -1674,6 +1676,7 @@ identifycpu(struct cpu_info *ci)
 	cachesize = -1;
 	if (vendor == CPUVENDOR_INTEL && cpuid_level >= 2 && family < 0xf) {
 		int intel_cachetable[] = { 0, 128, 256, 512, 1024, 2048 };
+
 		if ((cpu_cache_edx & 0xFF) >= 0x40 &&
 		    (cpu_cache_edx & 0xFF) <= 0x45)
 			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
@@ -1697,19 +1700,20 @@ identifycpu(struct cpu_info *ci)
 		snprintf(cpu_brandstr, 48 /* sizeof(cpu_brandstr) */,
 		    "%s %s%s", vendorname, modifier, name);
 	}
+
 	if ((ci->ci_flags & CPUF_BSP) == 0) {
 		if (cachesize > -1) {
 			snprintf(cpu_model, sizeof(cpu_model),
-				"%s (%s%s%s%s-class, %dKB L2 cache)",
-				cpu_brandstr,
-				((*token) ? "\"" : ""), ((*token) ? token : ""),
-				((*token) ? "\" " : ""), classnames[class], cachesize);
+			    "%s (%s%s%s%s-class, %dKB L2 cache)",
+			    cpu_brandstr,
+			    ((*token) ? "\"" : ""), ((*token) ? token : ""),
+			    ((*token) ? "\" " : ""), classnames[class], cachesize);
 		} else {
 			snprintf(cpu_model, sizeof(cpu_model),
-				"%s (%s%s%s%s-class)",
-				cpu_brandstr,
-				((*token) ? "\"" : ""), ((*token) ? token : ""),
-				((*token) ? "\" " : ""), classnames[class]);
+			    "%s (%s%s%s%s-class)",
+			    cpu_brandstr,
+			    ((*token) ? "\"" : ""), ((*token) ? token : ""),
+			    ((*token) ? "\" " : ""), classnames[class]);
 		}
 
 		printf("%s: %s", cpu_device, cpu_model);
@@ -1744,8 +1748,8 @@ identifycpu(struct cpu_info *ci)
 			int numbits = 0;
 
 			printf("%s: ", cpu_device);
-			max = sizeof(i386_cpuid_features)
-				/ sizeof(i386_cpuid_features[0]);
+			max = sizeof(i386_cpuid_features) /
+			    sizeof(i386_cpuid_features[0]);
 			for (i = 0; i < max; i++) {
 				if (ci->ci_feature_flags &
 				    i386_cpuid_features[i].feature_bit) {
@@ -1754,303 +1758,25 @@ identifycpu(struct cpu_info *ci)
 					numbits++;
 				}
 			}
+			max = sizeof(i386_cpuid_ecxfeatures)
+				/ sizeof(i386_cpuid_ecxfeatures[0]);
+			for (i = 0; i < max; i++) {
+				if (cpu_ecxfeature &
+				    i386_cpuid_ecxfeatures[i].feature_bit) {
+					printf("%s%s", (numbits == 0 ? "" : ","),
+					    i386_cpuid_ecxfeatures[i].feature_name);
+					numbits++;
+				}
+			}
 			printf("\n");
 		}
 	}
 
-	cpu_class = class;
-	ci->cpu_class = class;
-
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-	switch (cpu_class) {
-#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU) && !defined(I686_CPU)
-#error No CPU classes configured.
-#endif
-#ifndef I686_CPU
-	case CPUCLASS_686:
-		printf("NOTICE: this kernel does not support Pentium Pro CPU class\n");
-#ifdef I586_CPU
-		printf("NOTICE: lowering CPU class to i586\n");
-		cpu_class = CPUCLASS_586;
-		break;
-#endif
-#endif
-#ifndef I586_CPU
-	case CPUCLASS_586:
-		printf("NOTICE: this kernel does not support Pentium CPU class\n");
-#ifdef I486_CPU
-		printf("NOTICE: lowering CPU class to i486\n");
-		cpu_class = CPUCLASS_486;
-		break;
-#endif
-#endif
-#ifndef I486_CPU
-	case CPUCLASS_486:
-		printf("NOTICE: this kernel does not support i486 CPU class\n");
-#ifdef I386_CPU
-		printf("NOTICE: lowering CPU class to i386\n");
-		cpu_class = CPUCLASS_386;
-		break;
-#endif
-#endif
-#ifndef I386_CPU
-	case CPUCLASS_386:
-		printf("NOTICE: this kernel does not support i386 CPU class\n");
-		panic("no appropriate CPU class available");
-#endif
-	default:
-		break;
-	}
-
-	if (cpu == CPU_486DLC) {
-#ifndef CYRIX_CACHE_WORKS
-		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
-#else
-#ifndef CYRIX_CACHE_REALLY_WORKS
-		printf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
-#else
-		printf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
-#endif
-#endif
-	}
-
-}
-#endif	/* MULTIPROCESSOR */
-
-char *
-tm86_cpu_name(model)
-	int model;
-{
-	u_int32_t regs[4];
-	char *name = NULL;
-
-	cpuid(0x80860001, regs);
-
-	switch(model) {
-	case 4:
-		if (((regs[1] >> 16) & 0xff) >= 0x3)
-			name = "TMS5800";
-		else
-			name = "TMS5600";
-	}
-
-	return name;
-}
-
-void
-old_identifycpu()
-{
-	extern char cpu_vendor[];
-	extern char cpu_brandstr[];
-	extern int cpu_id;
-#ifdef CPUDEBUG
-	extern int cpu_cache_eax, cpu_cache_ebx, cpu_cache_ecx, cpu_cache_edx;
-#else
-	extern int cpu_cache_edx;
-#endif
-	const char *name, *modifier, *vendorname, *token;
-	const char *cpu_device = "cpu0";
-	int class = CPUCLASS_386, vendor, i, max;
-	int family, model, step, modif, cachesize;
-	const struct cpu_cpuid_nameclass *cpup = NULL;
-	void (*cpu_setup)(const char *, int, int);
-	char *brandstr_from, *brandstr_to;
-	int skipspace;
-
-	if (cpuid_level == -1) {
-#ifdef DIAGNOSTIC
-		if (cpu < 0 || cpu >=
-		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
-			panic("unknown cpu type %d", cpu);
-#endif
-		name = i386_nocpuid_cpus[cpu].cpu_name;
-		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
-		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
-		model = -1;
-		step = -1;
-		class = i386_nocpuid_cpus[cpu].cpu_class;
-		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
-		modifier = "";
-		token = "";
-	} else {
-		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
-		modif = (cpu_id >> 12) & 3;
-		family = (cpu_id >> 8) & 15;
-		if (family < CPU_MINFAMILY)
-			panic("identifycpu: strange family value");
-		model = (cpu_id >> 4) & 15;
-		step = cpu_id & 15;
-#ifdef CPUDEBUG
-		printf("%s: family %x model %x step %x\n", cpu_device, family,
-			model, step);
-		printf("%s: cpuid level %d cache eax %x ebx %x ecx %x edx %x\n",
-			cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
-			cpu_cache_ecx, cpu_cache_edx);
-#endif
-
-		for (i = 0; i < max; i++) {
-			if (!strncmp(cpu_vendor,
-			    i386_cpuid_cpus[i].cpu_id, 12)) {
-				cpup = &i386_cpuid_cpus[i];
-				break;
-			}
-		}
-
-		if (cpup == NULL) {
-			vendor = CPUVENDOR_UNKNOWN;
-			if (cpu_vendor[0] != '\0')
-				vendorname = &cpu_vendor[0];
-			else
-				vendorname = "Unknown";
-			if (family > CPU_MAXFAMILY)
-				family = CPU_MAXFAMILY;
-			class = family - 3;
-			if (class > CPUCLASS_686)
-				class = CPUCLASS_686;
-			modifier = "";
-			name = "";
-			token = "";
-			cpu_setup = NULL;
-		} else {
-			token = cpup->cpu_id;
-			vendor = cpup->cpu_vendor;
-			vendorname = cpup->cpu_vendorname;
-			/*
-			 * Special hack for the VIA C3 series.
-			 *
-			 * VIA bought Centaur Technology from IDT in Aug 1999
-			 * and marketed the processors as VIA Cyrix III/C3.
-			 */
-			if (vendor == CPUVENDOR_IDT && family >= 6) {
-				vendor = CPUVENDOR_VIA;
-				vendorname = "VIA";
-			}
-			modifier = modifiers[modif];
-			if (family > CPU_MAXFAMILY) {
-				family = CPU_MAXFAMILY;
-				model = CPU_DEFMODEL;
-			} else if (model > CPU_MAXMODEL)
-				model = CPU_DEFMODEL;
-			i = family - CPU_MINFAMILY;
-
-			/* Special hack for the PentiumII/III series. */
-			if (vendor == CPUVENDOR_INTEL && family == 6 &&
-			    (model == 5 || model == 7)) {
-				name = intel686_cpu_name(model);
-			/* Special hack for the VIA C3 series. */
-			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
-				   model == 7) {
-				name = cyrix3_cpu_name(model, step);
-			/* Special hack for the TMS5x00 series. */
-			} else if (vendor == CPUVENDOR_TRANSMETA &&
-				  family == 5 && model == 4) {
-				name = tm86_cpu_name(model);
-			} else
-				name = cpup->cpu_family[i].cpu_models[model];
-			if (name == NULL) {
-				name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
-				if (name == NULL)
-					name = "";
-			}
-			class = cpup->cpu_family[i].cpu_class;
-			cpu_setup = cpup->cpu_family[i].cpu_setup;
-		}
-	}
-
-	/* Find the amount of on-chip L2 cache.  Add support for AMD K6-3...*/
-	cachesize = -1;
-	if (vendor == CPUVENDOR_INTEL && cpuid_level >= 2 && family < 0xf) {
-		int intel_cachetable[] = { 0, 128, 256, 512, 1024, 2048 };
-		if ((cpu_cache_edx & 0xFF) >= 0x40 &&
-		    (cpu_cache_edx & 0xFF) <= 0x45)
-			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
-	}
-
-	/* Remove leading and duplicated spaces from cpu_brandstr */
-	brandstr_from = brandstr_to = cpu_brandstr;
-	skipspace = 1;
-	while (*brandstr_from != '\0') {
-		if (!skipspace || *brandstr_from != ' ') {
-			skipspace = 0;
-			*(brandstr_to++) = *brandstr_from;
-		}
-		if (*brandstr_from == ' ')
-			skipspace = 1;
-		brandstr_from++;
-	}
-	*brandstr_to = '\0';
-
-	if (cpu_brandstr[0] == '\0') {
-		snprintf(cpu_brandstr, 48 /* sizeof(cpu_brandstr) */,
-		    "%s %s%s", vendorname, modifier, name);
-	}
-
-	if (cachesize > -1) {
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s (%s%s%s%s-class, %dKB L2 cache)",
-		    cpu_brandstr,
-		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
-		    ((*token) ? "\" " : ""), classnames[class], cachesize);
-	} else {
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s (%s%s%s%s-class)",
-		    cpu_brandstr,
-		    ((*token) ? "\"" : ""), ((*token) ? token : ""),
-		    ((*token) ? "\" " : ""), classnames[class]);
-	}
-
-	printf("%s: %s", cpu_device, cpu_model);
-
-#if defined(I586_CPU) || defined(I686_CPU)
-	if (cpu_feature & CPUID_TSC) {			/* Has TSC */
-		calibrate_cyclecounter();
-		if (pentium_mhz > 994) {
-			int ghz, fr;
-
-			ghz = (pentium_mhz + 9) / 1000;
-			fr = ((pentium_mhz + 9) / 10 ) % 100;
-			if (fr)
-				printf(" %d.%02d GHz", ghz, fr);
-			else
-				printf(" %d GHz", ghz);
-		} else
-			printf(" %d MHz", pentium_mhz);
-	}
-#endif
-	printf("\n");
-
-	if (cpu_feature) {
-		int numbits = 0;
-
-		printf("%s: ", cpu_device);
-		max = sizeof(i386_cpuid_features)
-			/ sizeof(i386_cpuid_features[0]);
-		for (i = 0; i < max; i++) {
-			if (cpu_feature & i386_cpuid_features[i].feature_bit) {
-				printf("%s%s", (numbits == 0 ? "" : ","),
-				    i386_cpuid_features[i].feature_name);
-				numbits++;
-			}
-		}
-		max = sizeof(i386_cpuid_ecxfeatures)
-			/ sizeof(i386_cpuid_ecxfeatures[0]);
-		for (i = 0; i < max; i++) {
-			if (cpu_ecxfeature &
-			    i386_cpuid_ecxfeatures[i].feature_bit) {
-				printf("%s%s", (numbits == 0 ? "" : ","),
-				    i386_cpuid_ecxfeatures[i].feature_name);
-				numbits++;
-			}
-		}
-		printf("\n");
-	}
-
+#ifndef MULTIPROCESSOR
 	/* configure the CPU if needed */
-	if (cpu_setup != NULL)
-		cpu_setup(cpu_device, model, step);
+	if (ci->cpu_setup != NULL)
+		(ci->cpu_setup)(cpu_device, model, step);
+#endif
 
 #ifndef SMALL_KERNEL
 #if defined(I586_CPU) || defined(I686_CPU)
@@ -2105,6 +1831,8 @@ old_identifycpu()
 		break;
 	}
 
+	ci->cpu_class = class;
+
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
@@ -2121,7 +1849,7 @@ old_identifycpu()
 	/*
 	 * On a 486 or above, enable ring 0 write protection.
 	 */
-	if (cpu_class >= CPUCLASS_486)
+	if (ci->cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
 
@@ -2147,7 +1875,26 @@ old_identifycpu()
 	} else
 		i386_use_fxsave = 0;
 #endif /* I686_CPU */
+}
 
+char *
+tm86_cpu_name(model)
+	int model;
+{
+	u_int32_t regs[4];
+	char *name = NULL;
+
+	cpuid(0x80860001, regs);
+
+	switch(model) {
+	case 4:
+		if (((regs[1] >> 16) & 0xff) >= 0x3)
+			name = "TMS5800";
+		else
+			name = "TMS5600";
+	}
+
+	return name;
 }
 
 #ifndef SMALL_KERNEL
