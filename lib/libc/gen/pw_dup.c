@@ -1,7 +1,7 @@
-/*	$OpenBSD: pw_dup.c,v 1.1 2000/11/21 00:49:58 millert Exp $	*/
+/*	$OpenBSD: pw_dup.c,v 1.2 2002/04/29 18:43:08 millert Exp $	*/
 
 /*
- * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000,2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,39 +28,50 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pw_dup.c,v 1.1 2000/11/21 00:49:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: pw_dup.c,v 1.2 2002/04/29 18:43:08 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#include <pwd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <pwd.h>
 
 struct passwd *
-pw_dup(pw)
-	const struct passwd *pw;
+pw_dup(const struct passwd *pw)
 {
-	struct passwd *newpw;
-	char *cp;
-	size_t siz;
+	char		*cp;
+	size_t		 nsize, psize, csize, gsize, dsize, ssize, total;
+	struct passwd	*newpw;
 
 	/* Allocate in one big chunk for easy freeing */
-	siz = sizeof(struct passwd);
-	if (pw->pw_name)
-		siz += strlen(pw->pw_name) + 1;
-	if (pw->pw_passwd)
-		siz += strlen(pw->pw_passwd) + 1;
-	if (pw->pw_class)
-		siz += strlen(pw->pw_class) + 1;
-	if (pw->pw_gecos)
-		siz += strlen(pw->pw_gecos) + 1;
-	if (pw->pw_dir)
-		siz += strlen(pw->pw_dir) + 1;
-	if (pw->pw_shell)
-		siz += strlen(pw->pw_shell) + 1;
-	if ((cp = malloc(siz)) == NULL)
+	total = sizeof(struct passwd);
+	if (pw->pw_name) {
+		nsize = strlen(pw->pw_name) + 1;
+		total += nsize;
+	}
+	if (pw->pw_passwd) {
+		psize = strlen(pw->pw_passwd) + 1;
+		total += psize;
+	}
+	if (pw->pw_class) {
+		csize = strlen(pw->pw_class) + 1;
+		total += csize;
+	}
+	if (pw->pw_gecos) {
+		gsize = strlen(pw->pw_gecos) + 1;
+		total += gsize;
+	}
+	if (pw->pw_dir) {
+		dsize = strlen(pw->pw_dir) + 1;
+		total += dsize;
+	}
+	if (pw->pw_shell) {
+		ssize = strlen(pw->pw_shell) + 1;
+		total += ssize;
+	}
+	if ((cp = malloc(total)) == NULL)
 		return(NULL);
 	newpw = (struct passwd *)cp;
 
@@ -68,43 +79,37 @@ pw_dup(pw)
 	 * Copy in passwd contents and make strings relative to space
 	 * at the end of the buffer.
 	 */
-	memcpy(newpw, pw, sizeof(struct passwd));
+	(void)memcpy(newpw, pw, sizeof(struct passwd));
 	cp += sizeof(struct passwd);
 	if (pw->pw_name) {
-		siz = strlen(pw->pw_name) + 1;
-		memcpy(cp, pw->pw_name, siz);
+		(void)memcpy(cp, pw->pw_name, nsize);
 		newpw->pw_name = cp;
-		cp += siz;
+		cp += nsize;
 	}
 	if (pw->pw_passwd) {
-		siz = strlen(pw->pw_passwd) + 1;
-		memcpy(cp, pw->pw_passwd, siz);
+		(void)memcpy(cp, pw->pw_passwd, psize);
 		newpw->pw_passwd = cp;
-		cp += siz;
+		cp += psize;
 	}
 	if (pw->pw_class) {
-		siz = strlen(pw->pw_class) + 1;
-		memcpy(cp, pw->pw_class, siz);
+		(void)memcpy(cp, pw->pw_class, csize);
 		newpw->pw_class = cp;
-		cp += siz;
+		cp += csize;
 	}
 	if (pw->pw_gecos) {
-		siz = strlen(pw->pw_gecos) + 1;
-		memcpy(cp, pw->pw_gecos, siz);
+		(void)memcpy(cp, pw->pw_gecos, gsize);
 		newpw->pw_gecos = cp;
-		cp += siz;
+		cp += gsize;
 	}
 	if (pw->pw_dir) {
-		siz = strlen(pw->pw_dir) + 1;
-		memcpy(cp, pw->pw_dir, siz);
+		(void)memcpy(cp, pw->pw_dir, dsize);
 		newpw->pw_dir = cp;
-		cp += siz;
+		cp += dsize;
 	}
 	if (pw->pw_shell) {
-		siz = strlen(pw->pw_shell) + 1;
-		memcpy(cp, pw->pw_shell, siz);
+		(void)memcpy(cp, pw->pw_shell, ssize);
 		newpw->pw_shell = cp;
-		cp += siz;
+		cp += ssize;
 	}
 
 	return(newpw);
