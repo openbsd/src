@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.3 1996/06/26 05:31:55 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.4 1996/07/12 02:09:48 downsj Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.3 1996/06/26 05:31:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.4 1996/07/12 02:09:48 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ display(tempname, fd, pw)
 	    "#Changing user database information for %s.\n", pw->pw_name);
 	if (!uid) {
 		(void)fprintf(fp, "Login: %s\n", pw->pw_name);
-		(void)fprintf(fp, "Password: %s\n", pw->pw_passwd);
+		(void)fprintf(fp, "Encrypted password: %s\n", pw->pw_passwd);
 		(void)fprintf(fp, "Uid [#]: %d\n", pw->pw_uid);
 		(void)fprintf(fp, "Gid [# or name]: %d\n", pw->pw_gid);
 		(void)fprintf(fp, "Change [month day year]: %s\n",
