@@ -1,3 +1,4 @@
+MAN = httpd.8
 SUBDIR+=src
 WWWROOT=/var/www
 CONFFILES= \
@@ -111,3 +112,4 @@ distribution:
 	done
 
 .include<bsd.subdir.mk>
+.include<bsd.man.mk>
