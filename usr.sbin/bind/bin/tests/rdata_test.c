@@ -920,7 +920,7 @@ main(int argc, char *argv[]) {
 		}
 	}
 
-	memset(&dctx, '0', sizeof(dctx));
+	memset(&dctx, 0, sizeof(dctx));
 	dctx.allowed = DNS_COMPRESS_ALL;
 
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
