@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.8 1998/02/03 19:47:13 deraadt Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.9 2001/01/16 23:35:31 d Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 		cp += sprintf(cp, " (");
 		if (classp->name == NULL)
 			cp += sprintf(cp,
-			    "unknown class 0x%2x, subclass 0x%02x",
+			    "unknown class 0x%02x, subclass 0x%02x",
 			    class, subclass);
 		else {
 			cp += sprintf(cp, "class %s, ", classp->name);
