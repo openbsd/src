@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_kern.c,v 1.3 1998/11/20 12:13:32 d Exp $
- * $OpenBSD: uthread_kern.c,v 1.3 1998/11/20 12:13:32 d Exp $
+ * $Id: uthread_kern.c,v 1.4 1998/12/21 07:42:03 d Exp $
+ * $OpenBSD: uthread_kern.c,v 1.4 1998/12/21 07:42:03 d Exp $
  *
  */
 #include <errno.h>
@@ -43,6 +43,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <sys/uio.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
@@ -66,6 +67,8 @@ _thread_kern_sched(struct sigcontext * scp)
 	struct timespec ts1;
 	struct timeval  tv;
 	struct timeval  tv1;
+	struct rusage	ru;
+	static struct rusage ru_prev;
 
 	/*
 	 * Flag the pthread kernel as executing scheduler code
@@ -83,7 +86,8 @@ _thread_kern_sched(struct sigcontext * scp)
 		memcpy(&_thread_run->saved_sigcontext, scp, sizeof(_thread_run->saved_sigcontext));
 
 		/* Save the floating point data: */
-		_thread_machdep_save_float_state(_thread_run);
+		if (_thread_run->attr.flags & PTHREAD_NOFLOAT == 0)
+			_thread_machdep_save_float_state(_thread_run);
 
 		/* Flag the signal context as the last state saved: */
 		_thread_run->sig_saved = 1;
@@ -110,6 +114,16 @@ _thread_kern_sched(struct sigcontext * scp)
 
 	/* Save errno. */
 	_thread_run->error = errno;
+
+	/* Accumulate time spent */
+	if (getrusage(RUSAGE_SELF, &ru))
+		PANIC("Cannot get resource usage");
+	timersub(&ru.ru_utime, &ru_prev.ru_utime, &tv);
+	timeradd(&tv, &_thread_run->ru_utime, &_thread_run->ru_utime);
+	timersub(&ru.ru_stime, &ru_prev.ru_stime, &tv);
+	timeradd(&tv, &_thread_run->ru_stime, &_thread_run->ru_stime);
+	memcpy(&ru_prev.ru_utime, &ru.ru_utime, sizeof ru_prev.ru_utime);
+	memcpy(&ru_prev.ru_stime, &ru.ru_stime, sizeof ru_prev.ru_stime);
 
 	/*
 	 * Enter a the scheduling loop that finds the next thread that is
@@ -203,10 +217,18 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * thread has run for: 
 			 */
 			if (_thread_run->slice_usec != -1) {
- 			        _thread_run->slice_usec += (_thread_run->last_inactive.tv_sec -
-				        _thread_run->last_active.tv_sec) * 1000000 +
-				        _thread_run->last_inactive.tv_usec -
-				        _thread_run->last_active.tv_usec;
+				if (timerisset(&_thread_run->last_active)) {
+					struct timeval s;
+
+					timersub(&_thread_run->last_inactive,
+					    &_thread_run->last_active,
+					    &s);
+					_thread_run->slice_usec = 
+					    s.tv_usec + 1000000 * s.tv_sec;
+					if (_thread_run->slice_usec < 0)
+						PANIC("slice_usec");
+				} else
+					_thread_run->slice_usec = -1;
                         }
 
 			/*
@@ -569,7 +591,8 @@ _thread_kern_sched(struct sigcontext * scp)
 			if (_thread_run->sig_saved == 1) {
 
 				/* Restore the floating point state: */
-				_thread_machdep_restore_float_state(_thread_run);
+				if (_thread_run->attr.flags & PTHREAD_NOFLOAT == 0)
+					_thread_machdep_restore_float_state(_thread_run);
 				/*
 				 * Do a sigreturn to restart the thread that
 				 * was interrupted by a signal: 
