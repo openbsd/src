@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.6 1999/07/31 03:55:28 deraadt Exp $
+.\"	$OpenBSD: chflags.1,v 1.7 1999/10/05 19:56:27 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -58,25 +58,30 @@ utility modifies the file flags of the listed files
 as specified by the
 .Ar flags
 operand.
+The
+.Ar flags
+of a file dictate special restrictions beyond those enforced by its
+mode/permissions.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl R
+Recursively descend through any specified directory arguments.
+Change the flags of the file hierarchies rooted
+in the files instead of just the files themselves.
 .It Fl H
 If the
 .Fl R
-option is specified, symbolic links on the command line are followed.
+option is also specified, symbolic links on the command line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
 .It Fl L
 If the
 .Fl R
-option is specified, all symbolic links are followed.
+option is also specified, all symbolic links are followed.
 .It Fl P
 If the
 .Fl R
-option is specified, no symbolic links are followed.
-.It Fl R
-Change the file flags for the file hierarchies rooted
-in the files instead of just the files themselves.
+option is also specified, no symbolic links are followed.
 .El
 .Pp
 Flags are a comma separated list of keywords.
