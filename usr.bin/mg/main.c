@@ -1,10 +1,11 @@
-/*	$OpenBSD: main.c,v 1.10 2001/05/24 03:05:24 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2001/05/24 09:47:34 art Exp $	*/
 
 /*
  *	Mainline.
  */
 
 #include	"def.h"
+#include	"funmap.h"
 
 #ifndef NO_MACRO
 #include	"macro.h"
@@ -36,6 +37,7 @@ main(argc, argv)
 	dirinit();		/* Get current directory.	*/
 #endif	/* !NO_DIR */
 	edinit();		/* Buffers, windows.		*/
+	funmap_init();		/* Functions.			*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
 
 	/*

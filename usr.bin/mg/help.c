@@ -1,10 +1,11 @@
-/*	$OpenBSD: help.c,v 1.13 2001/05/24 09:06:21 art Exp $	*/
+/*	$OpenBSD: help.c,v 1.14 2001/05/24 09:47:34 art Exp $	*/
 
 /*
  * Help functions for Mg 2
  */
 
 #include "def.h"
+#include "funmap.h"
 
 #ifndef NO_HELP
 #include "kbd.h"
