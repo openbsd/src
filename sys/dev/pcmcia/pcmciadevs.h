@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.13 1999/05/16 23:14:13 niklas Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.14 1999/05/27 13:39:14 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.11 1999/05/16 22:42:44 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.12 1999/05/27 13:32:38 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -231,6 +231,9 @@
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_CIS_NEWMEDIA_MULTIMEDIA	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA	0x100b
+#define	PCMCIA_STR_NEWMEDIA_MULTIMEDIA	"NewMedia Multimedia Sound/SCSI"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
