@@ -41,6 +41,10 @@ Supported devices {:-include-:}:
 			ST01/02
 			Future Domain TMC-885
 			Future Domain TMC-950
+	RAID controllers:
+		DPT SmartCache III/IV PCI/EISA adapters 
+		ICP-Vortex GDT 6XXXRP series
+		3ware Escalade 3W-5x00, 3W-6x00
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
@@ -169,7 +173,8 @@ Supported devices {:-include-:}:
 			STB TV PCI Television Tuner
 			Miro PC TV
 			Intel Smart Video Recorder III
-		APM v1.1 power management.
+		APM v1.1 power management,
+		PCI BIOS v2.x interrupt and address configuration.
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
@@ -256,6 +261,15 @@ SCSI tapes	st0	first SCSI tape (by SCSI id)
 
 SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
 		cd1	second SCSI CD-ROM (by SCSI id)
+
+DPT SmartCache III/IV PCI/EISA adapters 
+		dpt0	any	any	any
+
+ICP-Vortex GDT 6XXXRP series
+		gdt0	any	any	any
+
+3ware Escalade 3W-5x00, 3W-6x00
+		twe0	any	any	any
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 		we0	0x280	9
@@ -449,3 +463,43 @@ OK, this is the tough part. Somebody has to wade in and rewrite the
 OpenBSD PCMCIA subsystem to support multiple adapters on multiple busses.
 Nobody's done this yet. You have the source, so you truly can
 "Use The Source, Luke."  
+
+SPECIAL CARE FOR PCI BIOS
+ 
+As all BIOS implementations and subsystems this one has bugs too.
+Sometimes specifications are unclear about interfaces and/or
+data validation.
+These all cause our driver for PCI BIOS to misbehave in more or
+less fatal ways, such as panics on pcibios0 configuration or
+pci device attachments, or unconfigured pci devices due to
+irq and/or I/O address misconfiguration.
+
+Fast workaround
+
+Boot by giving the -c flag to the initial boot request.
+Following the loading of the kernel, the user is presented with a
+
+UKC>
+
+Then type the following commands:
+
+UKC> change bios0
+165 bios0 at mainbus0 bus -1 flags 0x0
+change [n] y
+bus [-1] ? <enter>
+flags [0] ? 3
+165 bios0 changed
+165 bios0 at mainbus0 bus -1 flags 0x3
+UKC> quit
+
+This will disable the pcibios0 attachment.
+Sometimes, especially when hangs occur on particular pci device
+attachments, moving pci cards into a different slot helps.
+
+Fixing for good
+
+Try to gather dmesg output from the failing configuration, for
+example by using serial console (see boot(8)) and send it to
+mickey@openbsd.org along with descriptions of your hardware setup.
+Dig in the code and fix problems.
+
