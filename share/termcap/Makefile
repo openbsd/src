@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 1996/04/24 23:45:04 mickey Exp $
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.2 1996/01/29 01:28:45 deraadt Exp $
 
 MAN=	termcap.5
 

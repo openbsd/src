@@ -1,3 +1,4 @@
+#	$OpenBSD: termcap.src,v 1.4 1996/04/24 23:45:07 mickey Exp $
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
 #	Version 9.12.3
@@ -701,72 +702,282 @@ qnx|qnx4|qnx console:\
 # both <ich1> and <smir> are specified (an original VT220 
 # shows the same buggy behaviour!), <ich1> has been taken
 # out of this entry. for reference, it should be <ich1>=\E[@.
+
+#---------------------------------------------------------------------------
+#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
+#	termcap entries for pure VT220-Emulation and 25, 28, 35, 40, 43 and
+#	50 lines entries
+#	80 columns
+#---------------------------------------------------------------------------
+pcvt25|dec vt220 with 25 lines:\
+	:li#25:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;25r\E[25;1H:\
+	:tc=pcvtXX:
+
+pcvt28|dec vt220 with 28 lines:\
+	:li#28:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;28r\E[28;1H:\
+	:tc=pcvtXX:
+
+pcvt35|dec vt220 with 35 lines:\
+	:li#35:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;35r\E[35;1H:\
+	:tc=pcvtXX:
+
+pcvt40|dec vt220 with 40 lines:\
+	:li#40:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;40r\E[40;1H:\
+	:tc=pcvtXX:
+
+pcvt43|dec vt220 with 43 lines:\
+	:li#43:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;43r\E[43;1H:\
+	:tc=pcvtXX:
+
+pcvt50|dec vt220 with 50 lines:\
+	:li#50:\
+	:co#80:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;50r\E[50;1H:\
+	:tc=pcvtXX:
+
+#---------------------------------------------------------------------------
+#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
+#	termcap entries for pure VT220-Emulation and 25, 28, 35, 40, 43 and
+#	50 lines entries
+#	132 columns
+#---------------------------------------------------------------------------
+pcvt25w|dec vt220 with 25 lines and 132 cols:\
+	:li#25:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;25r\E[25;1H:\
+	:tc=pcvtXX:
+
+pcvt28w|dec vt220 with 28 lines and 132 cols:\
+	:li#28:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;28r\E[28;1H:\
+	:tc=pcvtXX:
+
+pcvt35w|dec vt220 with 35 lines and 132 cols:\
+	:li#35:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;35r\E[35;1H:\
+	:tc=pcvtXX:
+
+pcvt40w|dec vt220 with 40 lines and 132 cols:\
+	:li#40:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;40r\E[40;1H:\
+	:tc=pcvtXX:
+
+pcvt43w|dec vt220 with 43 lines and 132 cols:\
+	:li#43:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;43r\E[43;1H:\
+	:tc=pcvtXX:
+
+pcvt50w|dec vt220 with 50 lines and 132 cols:\
+	:li#50:\
+	:co#132:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;50r\E[50;1H:\
+	:tc=pcvtXX:
+
+#---------------------------------------------------------------------------
+#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
+#	termcap entries for HP-Emulation and 25, 28, 35, 40, 43 and 50
+#	lines entries. note that the HP-Emulation uses the bottom 3 lines
+#	for status and function key labels, so we get always 3 lines less.
+#	"Xs" is a nonstandard, private flag indicating HP-like fkey labels
+#	80 column entries
+#---------------------------------------------------------------------------
+pcvt22h|dec vt220 with HP-fkey labels and 22 lines:\
+	:li#22:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;22r\E[22;1H:\
+	:tc=pcvtXX:
+
+pcvt25h|dec vt220 with HP-fkey labels and 25 lines:\
+	:li#25:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;25r\E[25;1H:\
+	:tc=pcvtXX:
+
+pcvt32h|dec vt220 with HP-fkey labels and 32 lines:\
+	:li#32:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;32r\E[32;1H:\
+	:tc=pcvtXX:
+
+pcvt37h|dec vt220 with HP-fkey labels and 37 lines:\
+	:li#37:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;37r\E[37;1H:\
+	:tc=pcvtXX:
+
+pcvt40h|dec vt220 with HP-fkey labels and 40 lines:\
+	:li#40:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;40r\E[40;1H:\
+	:tc=pcvtXX:
+
+pcvt47h|dec vt220 with HP-fkey labels and 47 lines:\
+	:li#47:\
+	:co#80:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;47r\E[47;1H:\
+	:tc=pcvtXX:
+
+#---------------------------------------------------------------------------
+#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
+#	termcap entries for HP-Emulation and 25, 28, 35, 40, 43 and 50
+#	lines entries. note that the HP-Emulation uses the bottom 3 lines
+#	for status and function key labels, so we get always 3 lines less.
+#	"Xs" is a nonstandard, private flag indicating HP-like fkey labels
+#	132 column entries
+#---------------------------------------------------------------------------
+pcvt22hw|dec vt220 with HP-fkey labels, 22 lines and 132 cols:\
+	:li#22:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;22r\E[22;1H:\
+	:tc=pcvtXX:
+
+pcvt25hw|dec vt220 with HP-fkey labels, 25 lines and 132 cols:\
+	:li#25:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;25r\E[25;1H:\
+	:tc=pcvtXX:
+
+pcvt32hw|dec vt220 with HP-fkey labels, 32 lines and 132 cols:\
+	:li#32:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;32r\E[32;1H:\
+	:tc=pcvtXX:
+
+pcvt37hw|dec vt220 with HP-fkey labels, 37 lines and 132 cols:\
+	:li#37:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;37r\E[37;1H:\
+	:tc=pcvtXX:
+
+pcvt40hw|dec vt220 with HP-fkey labels, 40 lines and 132 cols:\
+	:li#40:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;40r\E[40;1H:\
+	:tc=pcvtXX:
+
+pcvt47hw|dec vt220 with HP-fkey labels, 47 lines and 132 cols:\
+	:li#47:\
+	:co#132:\
+	:Xs:\
+	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;47r\E[47;1H:\
+	:tc=pcvtXX:
+
+#---------------------------------------------------------------------------
+#	main entry, without "is" and "li" capabilities
+#
+#	NOTE: because the 386BSD "vi"/"elvis" seems to have a bug if
+#		both "ic" and "im" are specified (an original VT220 
+#		shows the same buggy behaviour!), "ic" has been taken
+#		out of this entry. for reference, it should be "ic=\E[@".
+#
+#---------------------------------------------------------------------------
 pcvtXX|pcvt vt200 emulator (DEC VT220):\
-	:am:km:mi:ms:xn:\
-	:it#8:vt#3:\
-	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
-	:LE=\E[%dD:RA=\E[?7l:RI=\E[%dC:SA=\E[?7h:SF=\E[%dS:\
-	:SR=\E[%dT:UP=\E[%dA:\
-	:ac=llmmkkjjuuttvvwwqqxxnnoosspprr``aaffgg~~..--++\054\054hhII00yyzz:\
-	:ae=\E(B:al=\E[L:as=\E(0:bl=^G:cb=\E[1K:cd=\E[J:\
-	:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:\
-	:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=\E[B:\
-	:ei=\E[4l:ho=\E[H:\
-	:i1=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:im=\E[4h:\
-	:k1=\E[17~:k2=\E[18~:k3=\E[19~:k4=\E[20~:k5=\E[21~:\
-	:k6=\E[23~:k7=\E[24~:k8=\E[25~:kD=\E[3~:kH=\E[4~:\
-	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kd=\EOB:\
-	:ke=\E[?1l\E>:kh=\E[1~:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:\
-	:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:\
-	:nd=\E[C:nw=\EE:\
-	:r1=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
-	:rf=/usr/share/tabset/vt100:sc=\E7:se=\E[27m:sf=\ED:\
-	:so=\E[7m:sr=\EM:st=\EH:ta=^I:ue=\E[24m:up=\E[A:\
-	:us=\E[4m:
+	:AL=\E[%dL:\
+	:DC=\E[%dP:\
+	:DL=\E[%dM:\
+	:DO=\E[%dB:\
+	:IC=\E[%d@:\
+	:LE=\E[%dD:\
+	:RI=\E[%dC:\
+	:SF=\E[%dS:\
+	:SR=\E[%dT:\
+	:UP=\E[%dA:\
+	:ac=llmmkkjjuuttvvwwqqxxnnoosspprr\140\140aaffgg~~..--++\054\054hhII00yyzz:\
+	:ae=\E(B:\
+	:al=\E[L:\
+	:am:\
+	:as=\E(0:\
+	:bl=^G:\
+	:bs:\
+	:cb=\E[1K:\
+	:cd=\E[J:\
+	:ce=\E[K:\
+	:cl=\E[H\E[J:\
+	:cm=\E[%i%d;%dH:\
+	:cr=^M:\
+	:cs=\E[%i%d;%dr:\
+	:ct=\E[3g:\
+	:dc=\E[P:\
+	:dl=\E[M:\
+	:do=\E[B:\
+	:ei=\E[4l:\
+	:ho=\E[H:\
+	:im=\E[4h:\
+	:it#8:\
+	:k1=\E[17~:\
+	:k2=\E[18~:\
+	:k3=\E[19~:\
+	:k4=\E[20~:\
+	:k5=\E[21~:\
+	:k6=\E[23~:\
+	:k7=\E[24~:\
+	:k8=\E[25~:\
+	:kD=\E[3~:\
+	:kH=\E[4~:\
+	:kI=\E[2~:\
+	:kN=\E[6~:\
+	:kP=\E[5~:\
+	:kb=\177:\
+	:kd=\EOB:\
+	:ke=\E[?1l\E>:\
+	:kh=\E[1~:\
+	:kl=\EOD:\
+	:km:\
+	:kr=\EOC:\
+	:ks=\E[?1h\E=:\
+	:ku=\EOA:\
+	:le=^H:\
+	:mb=\E[5m:\
+	:md=\E[1m:\
+	:me=\E[m:\
+	:mi:\
+	:mr=\E[7m:\
+	:ms:\
+	:nd=\E[C:\
+	:nw=\EE:\
+	:pt:\
+	:rc=\E8:\
+	:rf=/usr/share/tabset/vt100:\
+	:rs=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
+	:sc=\E7:\
+	:se=\E[27m:\
+	:sf=\ED:\
+	:so=\E[7m:\
+	:sr=\EM:\
+	:st=\EH:\
+	:ta=^I:\
+	:ue=\E[24m:\
+	:up=\E[A:\
+	:us=\E[4m:\
+	:vt#3:\
+	:xn:
 
-#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
-#	termcap entries for pure VT220-Emulation and 25, 28, 35, 40, 43 and
-#	50 lines entries; 80 columns
-pcvt25|dec vt220 emulation with 25 lines:\
-	:co#80:li#25:\
-	:is=\E[1;25r\E[25;1H:tc=pcvtXX:
-pcvt28|dec vt220 emulation with 28 lines:\
-	:co#80:li#28:\
-	:is=\E[1;28r\E[28;1H:tc=pcvtXX:
-pcvt35|dec vt220 emulation with 35 lines:\
-	:co#80:li#35:\
-	:is=\E[1;35r\E[35;1H:tc=pcvtXX:
-pcvt40|dec vt220 emulation with 40 lines:\
-	:co#80:li#40:\
-	:is=\E[1;40r\E[40;1H:tc=pcvtXX:
-pcvt43|dec vt220 emulation with 43 lines:\
-	:co#80:li#43:\
-	:is=\E[1;43r\E[43;1H:tc=pcvtXX:
-pcvt50|dec vt220 emulation with 50 lines:\
-	:co#80:li#50:\
-	:is=\E[1;50r\E[50;1H:tc=pcvtXX:
-
-#	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
-#	termcap entries for pure VT220-Emulation and 25, 28, 35, 40, 43 and
-#	50 lines entries; 132 columns
-pcvt25w|dec vt220 emulation with 25 lines and 132 cols:\
-	:co#132:li#25:\
-	:is=\E[1;25r\E[25;1H:tc=pcvtXX:
-pcvt28w|dec vt220 emulation with 28 lines and 132 cols:\
-	:co#132:li#28:\
-	:is=\E[1;28r\E[28;1H:tc=pcvtXX:
-pcvt35w|dec vt220 emulation with 35 lines and 132 cols:\
-	:co#132:li#35:\
-	:is=\E[1;35r\E[35;1H:tc=pcvtXX:
-pcvt40w|dec vt220 emulation with 40 lines and 132 cols:\
-	:co#132:li#40:\
-	:is=\E[1;40r\E[40;1H:tc=pcvtXX:
-pcvt43w|dec vt220 emulation with 43 lines and 132 cols:\
-	:co#132:li#43:\
-	:is=\E[1;43r\E[43;1H:tc=pcvtXX:
-pcvt50w|dec vt220 emulation with 50 lines and 132 cols:\
-	:co#132:li#50:\
-	:is=\E[1;50r\E[50;1H:tc=pcvtXX:
+#---------------------------- E O F -------------------------------------------
 
 #### 386BSD and BSD/OS Consoles
 #
