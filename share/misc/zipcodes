@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.11 2003/02/24 19:26:50 deraadt Exp $
+#	$OpenBSD: zipcodes,v 1.12 2003/08/08 16:36:26 jose Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -12873,6 +12873,7 @@
 30021:Clarkston, GA
 30026:Atlanta, GA
 30027:Conley, GA
+30028:Cumming, GA
 30029:Atlanta, GA
 30030:Decatur, GA
 30031:Decatur, GA
@@ -12882,6 +12883,8 @@
 30035:Decatur, GA
 30037:Decatur, GA
 30038:Lithonia, GA
+30040:Cumming, GA
+30041:Cumming, GA
 30042:Atlanta, GA
 30043:Atlanta, GA
 30045:Atlanta, GA
@@ -12943,7 +12946,6 @@
 30124:Cave Spring, GA
 30125:Cedartown, GA
 30129:Coosa, GA
-30130:Cumming, GA
 30132:Dallas, GA
 30133:Douglasville, GA
 30134:Douglasville, GA
