@@ -1,5 +1,5 @@
 .\"
-.\" $Id: groff_mm.7_in,v 1.1 2000/04/09 08:25:18 millert Exp $
+.\" $Id: groff_mm.7_in,v 1.2 2003/01/06 06:48:50 cloder Exp $
 .\"
 .de T2
 .ne 2v
@@ -1269,7 +1269,7 @@ The argument will be appended to the reference data, printed
 at either the first or last author. The reference data is the location,
 department and initials specified with \fB.AU\fP.
 It will be printed at the first author, otherwise at the last.
-No reference data will be printed if the author(s) is specifed
+No reference data will be printed if the author(s) is specified
 thru \fB.WA\fP/\fB.WE\fP.
 See \fBLetter internals\fP.
 .TP
