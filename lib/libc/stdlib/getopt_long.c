@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.7 2002/12/07 19:48:32 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.8 2002/12/08 07:23:09 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.7 2002/12/07 19:48:32 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.8 2002/12/08 07:23:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -348,8 +348,7 @@ start:
 			nonopt_start = nonopt_end = -1;
 			return (-1);
 		}
-		if ((*(place = nargv[optind]) != '-')
-		    || (place[1] == '\0')) {    /* found non-option */
+		if (*(place = nargv[optind]) != '-') {	/* found non-option */
 			place = EMSG;
 			if (flags & FLAG_ALLARGS) {
 				/*
@@ -383,8 +382,11 @@ start:
 		if (nonopt_start != -1 && nonopt_end == -1)
 			nonopt_end = optind;
 
-		/* check for "--" or "--foo" with no long options */
-		if (*++place == '-' &&
+		/*
+		 * Check for "--" or "--foo" with no long options
+		 * but if place is simply "-" leave it unmolested.
+		 */
+		if (place[1] != '\0' && *++place == '-' &&
 		    (place[1] == '\0' || long_options == NULL)) {
 			optind++;
 			place = EMSG;
@@ -402,8 +404,13 @@ start:
 		}
 	}
 
-	/* check long options if we have any */
-	if (long_options != NULL &&
+	/*
+	 * Check long options if:
+	 *  1) we were passed some
+	 *  2) the arg is not just "-"
+	 *  3) either the arg starts with -- we are getopt_long_only()
+	 */
+	if (long_options != NULL && place != nargv[optind] &&
 	    (*place == '-' || (flags & FLAG_LONGONLY))) {
 		short_too = 0;
 		if (*place == '-')
