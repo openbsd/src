@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.11 1999/12/16 17:02:45 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.12 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ typedef struct Buffer_ {
 typedef BUFFER *Buffer;
 
 /* Internal support for Buf_AddChar.  */
-void BufOverflow __P((Buffer));
+extern void BufOverflow __P((Buffer));
 
 /* User interface */
 
@@ -75,7 +75,7 @@ do {			      			\
 #define BUF_ERROR 256
 
 /* Buf_AddChars -- Add a number of chars to the buffer.  */
-void Buf_AddChars __P((Buffer, size_t, const char *));
+extern void Buf_AddChars __P((Buffer, size_t, const char *));
 /* Buf_Reset -- Remove all chars from a buffer.  */
 #define Buf_Reset(bp)	((void)((bp)->inPtr = (bp)->buffer))
 /* Buf_AddSpace -- Add a space to buffer.  */
@@ -94,10 +94,10 @@ void Buf_AddChars __P((Buffer, size_t, const char *));
 
 /* Buf_Init -- Initialize a buffer. If no initial size is given, 
  *	a reasonable default is used.  */
-void Buf_Init __P((Buffer, size_t));
+extern void Buf_Init __P((Buffer, size_t));
 /* Buf_Destroy -- Nuke a buffer and all its resources.  */
-void Buf_Destroy __P((Buffer));
+extern void Buf_Destroy __P((Buffer));
 /* Buf_ReplaceLastChar -- Replace the last char in a buffer.  */
-void Buf_ReplaceLastChar __P((Buffer, char));
+extern void Buf_ReplaceLastChar __P((Buffer, char));
 
 #endif /* _BUF_H */

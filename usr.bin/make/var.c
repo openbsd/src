@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.47 2000/08/21 10:44:21 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.48 2000/09/14 13:32:08 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -66,14 +66,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
-#else
-static char rcsid[] = "$OpenBSD: var.c,v 1.47 2000/08/21 10:44:21 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * var.c --
  *	Variable-handling functions
@@ -128,6 +120,15 @@ static char rcsid[] = "$OpenBSD: var.c,v 1.47 2000/08/21 10:44:21 espie Exp $";
 #include    "ohash.h"
 #include    "hashconsts.h"
 #include    "varmodifiers.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: var.c,v 1.48 2000/09/14 13:32:08 espie Exp $";
+#endif
+#endif /* not lint */
 
 static SymTable *CTXT_GLOBAL, *CTXT_CMD, *CTXT_ENV;
 
@@ -309,7 +310,7 @@ quick_lookup(name, end, pk)
 void 
 Varq_Set(idx, val, gn)
     int 	idx;
-    char 	*val;
+    const char 	*val;
     GNode 	*gn;
 {
     /* We only look for a variable in the given context since anything set
@@ -324,7 +325,6 @@ Varq_Set(idx, val, gn)
     } else {
 	Buf_Reset(&(v->val));
 	Buf_AddString(&(v->val), val);
-
     }
     if (DEBUG(VAR))
 	printf("%s:%s = %s\n", gn->name, varnames[idx], val);
@@ -333,10 +333,10 @@ Varq_Set(idx, val, gn)
 void 
 Varq_Append(idx, val, gn)
     int		idx;
-    char	*val;
+    const char	*val;
     GNode	*gn;
 {
-    Var *v = gn->context.locals[idx];
+    Var 	*v = gn->context.locals[idx];
 
     if (v == NULL) {
     	v = new_var(varnames[idx], val);
@@ -516,7 +516,7 @@ varfind(name, end, ctxt, flags, idx, k)
  *	The added variable
  *
  * Side Effects:
- *	The new variable is placed at the front of the given context
+ *	The new variable is placed in the given context.
  *	The name and val arguments are duplicated so they may
  *	safely be freed.
  *-----------------------------------------------------------------------
@@ -538,10 +538,10 @@ VarAdd(name, val, ctxt)
 
     idx = quick_lookup(name, &end, &k);
 
-    if (idx != -1) {
+    if (idx != -1)
     	Parse_Error(PARSE_FATAL, "Trying to set dynamic variable %s",
 	    v->name);
-    } else
+    else
 	hash_insert(ctxt, hash_lookup_interval(ctxt, name, end, k), v);
     return v;
 }
@@ -551,19 +551,14 @@ VarAdd(name, val, ctxt)
  *-----------------------------------------------------------------------
  * VarDelete  --
  *	Delete a variable and all the space associated with it.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	None
  *-----------------------------------------------------------------------
  */
 static void
 VarDelete(vp)
-    void *vp;
+    void 	*vp;
 {
-    Var *v = (Var *) vp;
+    Var 	*v = (Var *) vp;
+
     Buf_Destroy(&(v->val));
     free(v);
 }
@@ -575,22 +570,18 @@ VarDelete(vp)
  * Var_Delete --
  *	Remove a variable from a context.
  *
- * Results:
- *	None.
- *
  * Side Effects:
  *	The Var structure is removed and freed.
- *
  *-----------------------------------------------------------------------
  */
 void
 Var_Delete(name, ctxt)
-    char    	  *name;
-    GSymT	  *ctxt;
+    const char	*name;
+    GSymT	*ctxt;
 {
-    Var *v;
-    u_int32_t k;
-    const char *end = NULL;
+    Var 	*v;
+    u_int32_t 	k;
+    const char 	*end = NULL;
 
     if (DEBUG(VAR))
 	printf("%s:delete %s\n", context_name(ctxt), name);
@@ -605,9 +596,6 @@ Var_Delete(name, ctxt)
  *-----------------------------------------------------------------------
  * Var_Set --
  *	Set the variable name to the value val in the given context.
- *
- * Results:
- *	None.
  *
  * Side Effects:
  *	If the variable doesn't yet exist, a new record is created for it.
@@ -624,11 +612,11 @@ Var_Delete(name, ctxt)
  */
 void
 Var_Set(name, val, ctxt)
-    char	*name;	/* name of variable to set */
-    char	*val;	/* value to give to the variable */
+    const char	*name;	/* name of variable to set */
+    const char	*val;	/* value to give to the variable */
     GSymT       *ctxt;	/* context in which to set it */
 {
-    register Var   *v;
+    Var   *v;
 
     /*
      * We only look for a variable in the given context since anything set
@@ -641,7 +629,6 @@ Var_Set(name, val, ctxt)
     else {
 	Buf_Reset(&(v->val));
 	Buf_AddString(&(v->val), val);
-
     }
     if (DEBUG(VAR))
 	printf("%s:%s = %s\n", context_name(ctxt), name, val);
@@ -664,9 +651,6 @@ Var_Set(name, val, ctxt)
  *	The variable of the given name has the given value appended to it in
  *	the given context.
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	If the variable doesn't exist, it is created. Else the strings
  *	are concatenated (with a space in between).
@@ -682,11 +666,11 @@ Var_Set(name, val, ctxt)
  */
 void
 Var_Append(name, val, ctxt)
-    char	*name;	/* Name of variable to modify */
-    char	*val;	/* String to append to it */
+    const char	*name;	/* Name of variable to modify */
+    const char	*val;	/* String to append to it */
     GSymT	*ctxt;	/* Context in which this should occur */
 {
-    register Var   *v;
+    Var   	*v;
 
     v = VarFind(name, (SymTable *)ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
@@ -695,8 +679,6 @@ Var_Append(name, val, ctxt)
     } else {
 	Buf_AddSpace(&(v->val));
 	Buf_AddString(&(v->val), val);
-
-
     }
     if (DEBUG(VAR))
 	printf("%s:%s = %s\n", context_name(ctxt), name, VarValue(v));
@@ -709,18 +691,14 @@ Var_Append(name, val, ctxt)
  *
  * Results:
  *	TRUE if it does, FALSE if it doesn't
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 Boolean
 Var_Exists(name, ctxt)
-    char	*name;    	/* Variable to find */
+    const char	*name;    	/* Variable to find */
     GSymT	*ctxt;    	/* Context in which to start search */
 {
-    Var	    	  *v;
+    Var		*v;
 
     v = VarFind(name, (SymTable *)ctxt, FIND_MINE|FIND_ENV);
 
@@ -737,17 +715,14 @@ Var_Exists(name, ctxt)
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't
- *
- * Side Effects:
- *	None
  *-----------------------------------------------------------------------
  */
 char *
 Var_Value(name, ctxt)
-    char	*name;	/* name to find */
+    const char	*name;	/* name to find */
     GSymT	*ctxt;	/* context in which to search for it */
 {
-    Var            *v;
+    Var		*v;
 
     v = VarFind(name, (SymTable *)ctxt, FIND_ENV | FIND_MINE);
     if (v != NULL) 
@@ -768,21 +743,21 @@ Var_Value(name, ctxt)
  */
 static Var *
 var_name_with_dollar(str, pos, ctxt, err, endc)
-    char *str;			/* First dollar in variable name */
-    char **pos;			/* Current position in variable spec */
+    char 	*str;		/* First dollar in variable name */
+    char 	**pos;		/* Current position in variable spec */
     SymTable   	*ctxt;    	/* The context for the variable */
     Boolean 	err;    	/* TRUE if undefined variables are an error */
     char	endc;		/* End character for spec */
 {
-    BUFFER buf;			/* Store the variable name */
-    size_t sublen;		/* Deal with recursive expansions */
-    Boolean subfree;		
-    char *n; 			/* Sub name */
-    Var *v;
+    BUFFER 	buf;		/* Store the variable name */
+    size_t 	sublen;		/* Deal with recursive expansions */
+    Boolean 	subfree;		
+    char 	*n; 		/* Sub name */
+    Var 	*v;
 
     Buf_Init(&buf, MAKE_BSIZE);
 
-    while (1) {
+    for (;;) {
 	Buf_AddInterval(&buf, str, *pos);
 	n = Var_Parse(*pos, ctxt, err, &sublen, &subfree);
 	if (n != NULL)

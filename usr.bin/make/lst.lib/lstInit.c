@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInit.c,v 1.9 2000/06/17 14:43:39 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.10 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.9 2000/06/17 14:43:39 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * init.c --
  *	Initialize a new linked list.
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstInit.c,v 1.10 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.52 2000/06/23 16:41:53 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.53 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
-#else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.52 2000/06/23 16:41:53 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * parse.c --
@@ -104,6 +96,15 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.52 2000/06/23 16:41:53 espie Exp $"
 #include "buf.h"
 #include "pathnames.h"
 #include "lowparse.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: parse.c,v 1.53 2000/09/14 13:32:07 espie Exp $";
+#endif
+#endif /* not lint */
 
 static LIST    		targets;	/* targets we're working on */
 #ifdef CLEANUP
@@ -220,7 +221,6 @@ static void ParseAddDir __P((void *, void *));
 static void ParseClearPath __P((void *));
 static void ParseDoDependency __P((char *));
 static void ParseAddCmd __P((void *, void *));
-static int __inline ParseReadc __P((void));
 static void ParseHasCommands __P((void *));
 static void ParseDoInclude __P((char *));
 #ifdef SYSVINCLUDE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.6 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.7 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -55,19 +55,19 @@ typedef struct Path {
     Hash_Table    files;    	/* Hash table of files in directory */
 } Path;
 
-void Dir_Init __P((void));
-void Dir_End __P((void));
-Boolean Dir_HasWildcards __P((char *));
-void Dir_Expand __P((char *, Lst, Lst));
-char *Dir_FindFile __P((char *, Lst));
-Boolean Dir_MTime __P((GNode *));
-void Dir_AddDir __P((Lst, char *));
-char *Dir_MakeFlags __P((char *, Lst));
-void Dir_ClearPath __P((Lst));
-void Dir_Concat __P((Lst, Lst));
-void Dir_PrintDirectories __P((void));
-void Dir_PrintPath __P((Lst));
-void Dir_Destroy __P((void *));
-void *Dir_CopyDir __P((void *));
+extern void Dir_Init __P((void));
+extern void Dir_End __P((void));
+extern Boolean Dir_HasWildcards __P((char *));
+extern void Dir_Expand __P((char *, Lst, Lst));
+extern char *Dir_FindFile __P((char *, Lst));
+extern Boolean Dir_MTime __P((GNode *));
+extern void Dir_AddDir __P((Lst, char *));
+extern char *Dir_MakeFlags __P((char *, Lst));
+extern void Dir_ClearPath __P((Lst));
+extern void Dir_Concat __P((Lst, Lst));
+extern void Dir_PrintDirectories __P((void));
+extern void Dir_PrintPath __P((Lst));
+extern void Dir_Destroy __P((void *));
+extern void *Dir_CopyDir __P((void *));
 
 #endif /* _DIR */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.3 2000/07/17 23:54:26 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.4 2000/09/14 13:32:07 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -61,11 +61,9 @@ static IFile *new_ifile __P((char *, FILE *));
 static IFile *new_istring __P((char *, char *, unsigned long));
 static void free_ifile __P((IFile *));
 static void ParseVErrorInternal __P((char *, unsigned long, int, char *, va_list));
-static int skiptoendofline __P((void));
 static int newline __P((void));
 #define ParseReadc()	current->ptr < current->end ? *current->ptr++ : newline()
 static void ParseUnreadc __P((char));
-static int ParseSkipEmptyLines __P((Buffer));
 static int	    fatals = 0;
 
 /*-

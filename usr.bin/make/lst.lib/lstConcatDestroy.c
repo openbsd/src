@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstConcatDestroy.c,v 1.1 2000/06/17 14:44:26 espie Exp $	*/
+/*	$OpenBSD: lstConcatDestroy.c,v 1.2 2000/09/14 13:32:08 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstConcatDestroy.c,v 1.1 2000/06/17 14:44:26 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * listConcatDestroy.c --
  *	Function to concatentate two lists.
  */
 
 #include    "lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstConcatDestroy.c,v 1.2 2000/09/14 13:32:08 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------
@@ -72,11 +73,6 @@ Lst_ConcatDestroy(l1, l2)
     Lst    	  	l1; 	/* The list to which l2 is to be appended */
     Lst    	  	l2; 	/* The list to append to l1 */
 {
-    LstNode  	ln;     	/* original LstNode */
-    LstNode  	nln;    	/* new LstNode */
-    LstNode  	last;   	/* the last element in the list. Keeps
-				 * bookkeeping until the end */
-
     if (l2->firstPtr != NULL) {
 	/*
 	 * We set the nextPtr of the

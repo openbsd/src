@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDestroy.c,v 1.10 2000/06/17 14:43:38 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.11 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.10 2000/06/17 14:43:38 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstDestroy.c --
  *	Nuke a list and all its resources
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.11 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

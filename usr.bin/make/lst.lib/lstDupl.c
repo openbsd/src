@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDupl.c,v 1.12 2000/06/17 14:43:39 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -37,14 +37,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.12 2000/06/17 14:43:39 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * listDupl.c --
  *	Duplicate a list. This includes duplicating the individual
@@ -52,6 +44,15 @@ static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.12 2000/06/17 14:43:39 espie Exp 
  */
 
 #include    "lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstNext.c,v 1.7 2000/06/17 14:43:40 espie Exp $	*/
+/*	$OpenBSD: lstNext.c,v 1.8 2000/09/14 13:32:10 espie Exp $	*/
 /*	$NetBSD: lstNext.c,v 1.5 1996/11/06 17:59:49 christos Exp $	*/
 
 /*
@@ -37,14 +37,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstNext.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstNext.c,v 1.7 2000/06/17 14:43:40 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstNext.c --
  *	Return the next node for a list.
@@ -56,6 +48,15 @@ static char rcsid[] = "$OpenBSD: lstNext.c,v 1.7 2000/06/17 14:43:40 espie Exp $
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstNext.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstNext.c,v 1.8 2000/09/14 13:32:10 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

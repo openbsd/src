@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.23 2000/06/23 16:41:52 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
-#else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.23 2000/06/23 16:41:52 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * dir.c --
@@ -97,6 +89,15 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.23 2000/06/23 16:41:52 espie Exp $";
 #include "make.h"
 #include "hash.h"
 #include "dir.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $";
+#endif
+#endif /* not lint */
 
 /*
  *	A search path consists of a Lst of Path structures. A Path structure

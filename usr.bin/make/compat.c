@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.32 2000/06/30 23:26:25 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.33 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -39,14 +39,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
-#else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.32 2000/06/30 23:26:25 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * compat.c --
  *	The routines in this file implement the full-compatibility
@@ -71,6 +63,15 @@ static char rcsid[] = "$OpenBSD: compat.c,v 1.32 2000/06/30 23:26:25 espie Exp $
 #include    "hash.h"
 #include    "dir.h"
 #include    "job.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: compat.c,v 1.33 2000/09/14 13:32:06 espie Exp $";
+#endif
+#endif /* not lint */
 
 /*
  * The following array is used to make a fast determination of which

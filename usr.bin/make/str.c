@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.14 2000/07/17 23:01:20 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.15 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -39,15 +39,16 @@
  * SUCH DAMAGE.
  */
 
+#include "make.h"
+
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.14 2000/07/17 23:01:20 espie Exp $";
+UNUSED
+static char rcsid[] = "$OpenBSD: str.c,v 1.15 2000/09/14 13:32:07 espie Exp $";
 #endif
 #endif				/* not lint */
-
-#include "make.h"
 
 /*-
  * str_concat --

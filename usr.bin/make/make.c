@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.20 2000/06/23 16:18:09 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.21 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -39,14 +39,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: make.c,v 1.20 2000/06/23 16:18:09 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * make.c --
  *	The functions which perform the examination of targets and
@@ -83,6 +75,15 @@ static char rcsid[] = "$OpenBSD: make.c,v 1.20 2000/06/23 16:18:09 espie Exp $";
 #include    "hash.h"
 #include    "dir.h"
 #include    "job.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: make.c,v 1.21 2000/09/14 13:32:07 espie Exp $";
+#endif
+#endif /* not lint */
 
 static LIST     toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by

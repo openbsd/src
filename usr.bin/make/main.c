@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2000/07/31 21:01:40 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -38,20 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.40 2000/07/31 21:01:40 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * main.c --
@@ -105,6 +91,23 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.40 2000/07/31 21:01:40 espie Exp $";
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
+
+#ifndef lint
+UNUSED
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: main.c,v 1.41 2000/09/14 13:32:07 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS

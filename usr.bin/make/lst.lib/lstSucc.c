@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstSucc.c,v 1.6 2000/06/17 14:34:11 espie Exp $	*/
+/*	$OpenBSD: lstSucc.c,v 1.7 2000/09/14 13:32:10 espie Exp $	*/
 /*	$NetBSD: lstSucc.c,v 1.5 1996/11/06 17:59:52 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.6 2000/06/17 14:34:11 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstSucc.c --
  *	return the successor to a given node
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.7 2000/09/14 13:32:10 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

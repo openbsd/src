@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.12 1999/12/16 17:02:45 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.13 2000/09/14 13:32:05 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -66,14 +66,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.12 1999/12/16 17:02:45 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * buf.c --
  *	Functions for automatically-expanded buffers.
@@ -82,6 +74,15 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.12 1999/12/16 17:02:45 espie Exp $";
 #include    "sprite.h"
 #include    "make.h"
 #include    "buf.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: buf.c,v 1.13 2000/09/14 13:32:05 espie Exp $";
+#endif
+#endif /* not lint */
 
 /* BufExpand --
  * 	Expand the given buffer to hold the given number of additional

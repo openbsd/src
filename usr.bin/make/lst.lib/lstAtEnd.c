@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAtEnd.c,v 1.6 2000/06/10 01:41:06 espie Exp $	*/
+/*	$OpenBSD: lstAtEnd.c,v 1.7 2000/09/14 13:32:08 espie Exp $	*/
 /*	$NetBSD: lstAtEnd.c,v 1.5 1996/11/06 17:59:32 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstAtEnd.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstAtEnd.c,v 1.6 2000/06/10 01:41:06 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstAtEnd.c --
  *	Add a node at the end of the list
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstAtEnd.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstAtEnd.c,v 1.7 2000/09/14 13:32:08 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

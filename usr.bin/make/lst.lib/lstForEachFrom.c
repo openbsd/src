@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.8 2000/06/17 14:34:08 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.9 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -37,14 +37,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.8 2000/06/17 14:34:08 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * lstForEachFrom.c --
  *	Perform a given function on all elements of a list starting from
@@ -52,6 +44,15 @@ static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.8 2000/06/17 14:34:08 espi
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.9 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.34 2000/06/30 23:26:25 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.35 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
-#else
-static char rcsid[] = "$OpenBSD: job.c,v 1.34 2000/06/30 23:26:25 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * job.c --
@@ -128,6 +120,14 @@ static char rcsid[] = "$OpenBSD: job.c,v 1.34 2000/06/30 23:26:25 espie Exp $";
 # define STATIC static
 #endif
 
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: job.c,v 1.35 2000/09/14 13:32:06 espie Exp $";
+#endif
+#endif /* not lint */
 
 /*
  * error handling variables

@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.24 2000/06/23 16:27:29 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.25 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -54,6 +54,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifdef __GNUC__
+#define UNUSED	__attribute__((unused))
+#else
+#define UNUSED
+#endif
 
 #if !defined(MAKE_BOOTSTRAP) && defined(BSD4_4)
 # include <sys/cdefs.h>

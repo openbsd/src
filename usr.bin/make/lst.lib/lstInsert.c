@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.10 2000/06/17 14:43:39 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.11 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.10 2000/06/17 14:43:39 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstInsert.c --
  *	Insert a new datum before an old one
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.11 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

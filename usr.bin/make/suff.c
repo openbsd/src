@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.35 2000/06/23 16:41:53 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.36 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
-#else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.35 2000/06/23 16:41:53 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * suff.c --
@@ -102,6 +94,15 @@ static char rcsid[] = "$OpenBSD: suff.c,v 1.35 2000/06/23 16:41:53 espie Exp $";
 #include	  "make.h"
 #include	  "hash.h"
 #include	  "dir.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: suff.c,v 1.36 2000/09/14 13:32:07 espie Exp $";
+#endif
+#endif /* not lint */
 
 static LIST      sufflist;	/* Lst of suffixes */
 #ifdef CLEANUP
@@ -167,7 +168,6 @@ static int SuffSuffHasNameP __P((void *, void *));
 static int SuffSuffIsPrefix __P((void *, void *));
 static int SuffGNHasNameP __P((void *, void *));
 static void SuffUnRef __P((Lst, Suff *));
-static void SuffFree __P((void *));
 static void SuffInsert __P((Lst, Suff *));
 static void SuffRemove __P((Lst, Suff *));
 static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
@@ -341,39 +341,6 @@ SuffUnRef(l, s)
     LstNode ln = Lst_Member(l, s);
     if (ln != NULL)
 	Lst_Remove(l, ln);
-}
-
-/*-
- *-----------------------------------------------------------------------
- * SuffFree  --
- *	Free up all memory associated with the given suffix structure.
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	the suffix entry is detroyed
- *-----------------------------------------------------------------------
- */
-static void
-SuffFree(sp)
-    void *sp;
-{
-    Suff           *s = (Suff *) sp;
-
-    if (s == suffNull)
-	suffNull = NULL;
-
-    if (s == emptySuff)
-	emptySuff = NULL;
-
-    Lst_Destroy(&s->ref, NOFREE);
-    Lst_Destroy(&s->children, NOFREE);
-    Lst_Destroy(&s->parents, NOFREE);
-    Lst_Destroy(&s->searchPath, Dir_Destroy);
-
-    free(s->name);
-    free(s);
 }
 
 /*-
@@ -1595,7 +1562,6 @@ SuffFindArchiveDeps(gn, slst)
     char    	*eoarch;    /* End of archive portion */
     char    	*eoname;    /* End of member portion */
     GNode   	*mem;	    /* Node for member */
-    int	    	i;  	    /* Index into copy and vals */
     Suff    	*ms;	    /* Suffix descriptor for member */
     char    	*name;	    /* Start of member's name */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.25 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.26 2000/09/14 13:32:08 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
-#else
-static char *rcsid = "$OpenBSD: targ.c,v 1.25 2000/06/23 16:23:26 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * targ.c --
@@ -91,6 +83,15 @@ static char *rcsid = "$OpenBSD: targ.c,v 1.25 2000/06/23 16:23:26 espie Exp $";
 #include	  "hash.h"
 #include	  "dir.h"
 
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
+#else
+UNUSED
+static char *rcsid = "$OpenBSD: targ.c,v 1.26 2000/09/14 13:32:08 espie Exp $";
+#endif
+#endif /* not lint */
+
 static LIST       allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
 static LIST	  allGNs;	/* List of all the GNodes */
@@ -111,10 +112,7 @@ static void TargFreeGN __P((void *));
  * Targ_Init --
  *	Initialize this module
  *
- * Results:
- *	None
- *
- * Side Effects:
+* Side Effects:
  *	The allTargets list and the targets hash table are initialized
  *-----------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDeQueue.c,v 1.9 2000/06/17 14:34:07 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.10 2000/09/14 13:32:09 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -37,20 +37,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.9 2000/06/17 14:34:07 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * LstDeQueue.c --
  *	Remove the node and return its datum from the head of the list
  */
 
 #include	"lstInt.h"
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.10 2000/09/14 13:32:09 espie Exp $";
+#endif
+#endif /* not lint */
+
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.20 2000/07/17 23:54:26 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.21 2000/09/14 13:32:06 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -39,14 +39,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
-#else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.20 2000/07/17 23:54:26 espie Exp $";
-#endif
-#endif /* not lint */
-
 /*-
  * cond.c --
  *	Functions to handle conditionals in a makefile.
@@ -62,6 +54,15 @@ static char rcsid[] = "$OpenBSD: cond.c,v 1.20 2000/07/17 23:54:26 espie Exp $";
 #include    "hash.h"
 #include    "dir.h"
 #include    "buf.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: cond.c,v 1.21 2000/09/14 13:32:06 espie Exp $";
+#endif
+#endif /* not lint */
 
 /*
  * The parsing of conditional expressions is based on this grammar:

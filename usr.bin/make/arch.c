@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.31 2000/06/23 16:20:01 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.32 2000/09/14 13:32:05 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -38,14 +38,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
-#else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.31 2000/06/23 16:20:01 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  * arch.c --
@@ -109,6 +101,15 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.31 2000/06/23 16:20:01 espie Exp $";
 #include    "hash.h"
 #include    "dir.h"
 #include    "config.h"
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
+#else
+UNUSED
+static char rcsid[] = "$OpenBSD: arch.c,v 1.32 2000/09/14 13:32:05 espie Exp $";
+#endif
+#endif /* not lint */
 
 #ifdef TARGET_MACHINE
 #undef MACHINE
@@ -1008,9 +1009,8 @@ Arch_MTime (gn)
     GNode	  *gn;	      /* Node describing archive member */
 {
     struct ar_hdr *arhPtr;    /* Header of desired member */
-    time_t	  modTime;    /* Modification time as an integer */
 
-    arhPtr = ArchStatMember (Varq_Value(ARCHIVE_INDEX, gn),
+    arhPtr = ArchStatMember(Varq_Value(ARCHIVE_INDEX, gn),
 			     Varq_Value(MEMBER_INDEX, gn),
 			     TRUE);
     if (arhPtr != NULL) {

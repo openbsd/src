@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.17 2000/06/23 16:15:49 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.18 2000/09/14 13:32:07 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -104,96 +104,91 @@ typedef void * (*DuplicateProc) __P((void *));
 #define NOCOPY		((DuplicateProc)0)
 
 /*
- * Creation/destruction functions
+ * Constructors/destructors
  */
-/* CTOR/DTOR, ala C++ */
 /* Create a new list */
-void		Lst_Init __P((Lst));
+extern void		Lst_Init __P((Lst));
 /* Destroy an old one */
-void		Lst_Destroy __P((Lst, SimpleProc));
+extern void		Lst_Destroy __P((Lst, SimpleProc));
 
 /* Duplicate an existing list */
-Lst		Lst_Clone __P((Lst, Lst, DuplicateProc));
+extern Lst		Lst_Clone __P((Lst, Lst, DuplicateProc));
 /* True if list is empty */
-Boolean		Lst_IsEmpty __P((Lst));
+extern Boolean		Lst_IsEmpty __P((Lst));
 
 /*
- * Functions to modify a list
+ * List modifications
  */
 /* Insert an element before another */
-void		Lst_Insert __P((Lst, LstNode, void *));
+extern void		Lst_Insert __P((Lst, LstNode, void *));
 /* Insert an element after another */
-void		Lst_Append __P((Lst, LstNode, void *));
+extern void		Lst_Append __P((Lst, LstNode, void *));
 /* Place an element at the front of a lst. */
-void		Lst_AtFront __P((Lst, void *));
+extern void		Lst_AtFront __P((Lst, void *));
 /* Place an element at the end of a lst. */
-void		Lst_AtEnd __P((Lst, void *));
+extern void		Lst_AtEnd __P((Lst, void *));
 /* Remove an element */
-void		Lst_Remove __P((Lst, LstNode));
+extern void		Lst_Remove __P((Lst, LstNode));
 /* Replace a node with a new value */
-void		Lst_Replace __P((LstNode, void *));
+extern void		Lst_Replace __P((LstNode, void *));
 /* Concatenate two lists, destructive.  */
-void		Lst_ConcatDestroy __P((Lst, Lst));
+extern void		Lst_ConcatDestroy __P((Lst, Lst));
 /* Concatenate two lists, non destructive */
-void		Lst_Concat __P((Lst, Lst));
+extern void		Lst_Concat __P((Lst, Lst));
 
 /*
- * Node-specific functions
+ * Node handling
  */
 /* Return first element in list */
 #define	Lst_First(l)	((l)->firstPtr)
 /* Return last element in list */
 #define Lst_Last(l)	((l)->lastPtr)
 /* Return successor to given element */
-LstNode		Lst_Succ __P((LstNode));
+extern LstNode		Lst_Succ __P((LstNode));
 /* Return successor to existing element */
 #define Lst_Adv(ln)	((ln)->nextPtr)
 /* Get datum from LstNode */
 #define Lst_Datum(ln)	((ln)->datum)
 
 /*
- * Functions for entire lists
+ * Apply to entire lists
  */
 
 /* Find an element in a list */
 #define Lst_Find(l, cProc, d)	Lst_FindFrom(Lst_First(l), cProc, d)
 
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom __P((LstNode, FindProc, void *));
+extern LstNode		Lst_FindFrom __P((LstNode, FindProc, void *));
 
 /* Apply a function to all elements of a lst */
 #define Lst_ForEach(l, proc, d)	Lst_ForEachFrom(Lst_First(l), proc, d)
 /* Apply a function to all elements of a lst starting from a certain point.  */
-void		Lst_ForEachFrom __P((LstNode, ForEachProc, void *));
-void		Lst_Every __P((Lst, SimpleProc));
+extern void		Lst_ForEachFrom __P((LstNode, ForEachProc, void *));
+extern void		Lst_Every __P((Lst, SimpleProc));
 
 
-/*
- * See if the given datum is on the list. Returns the LstNode containing
- * the datum
- */
-LstNode		Lst_Member __P((Lst, void *));
+/* Find datum in a list. Returns the LstNode containing the datum */
+extern LstNode		Lst_Member __P((Lst, void *));
 
 /*
- * these functions are for dealing with a list as a table, of sorts.
- * An idea of the "current element" is kept and used by all the functions
- * between Lst_Open() and Lst_Close().
+ * Visitor-like pattern.  Except the visitor is kept in the list.
+ * Error-prone and wasteful (used by only a few lists), to be killed.
  */
 /* Open the list */
-void		Lst_Open __P((Lst));
+extern void		Lst_Open __P((Lst));
 /* Next element please */
-LstNode		Lst_Next __P((Lst));
+extern LstNode		Lst_Next __P((Lst));
 /* Done yet? */
-Boolean		Lst_IsAtEnd __P((Lst));
+extern Boolean		Lst_IsAtEnd __P((Lst));
 /* Finish table access */
-void		Lst_Close __P((Lst));
+extern void		Lst_Close __P((Lst));
 
 /*
- * for using the list as a queue
+ * Queue manipulators
  */
 /* Place an element at tail of queue */
-void		Lst_EnQueue __P((Lst, void *));
+extern void		Lst_EnQueue __P((Lst, void *));
 /* Remove an element from head of queue */
-void *	Lst_DeQueue __P((Lst));
+extern void *	Lst_DeQueue __P((Lst));
 
 #endif /* _LST_H_ */
