@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.285 2002/12/14 15:33:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.286 2003/01/25 15:46:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -910,7 +910,7 @@ install_get_files () {
 		if [ $? -ne 0 ]; then
 			echo "'${_f}' did not install correctly."
 		else
-			SETSDONE=`addel ${_f} ${SETSDONE}`
+			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 		fi
 	done
 }
@@ -1466,14 +1466,14 @@ set_timezone() {
 #	2) baseXX
 #	3) etcXX
 #
-# If a 'problem' set is found, remove it from SETSDONE list.
+# If a 'problem' set is found, add it back to DEFAULTSETS.
 sane_install() {
 	local _insane
 
 	# Check if bsd is installed and >0 bytes in size.
 	if [[ ! -s /mnt/bsd ]]; then
 		_insane=y
-		SETSDONE=`rmel bsd $SETSDONE`
+		DEFAULTSETS=$(addel bsd $DEFAULTSETS)
 		cat << __EOT
 
 *** /bsd is not present in the installed system, or is 0 bytes long. OpenBSD
@@ -1484,7 +1484,7 @@ __EOT
 	# Check if baseXX is installed.
 	if [[ ! -x /mnt/bin/cat || ! -x /mnt/dev/MAKEDEV ]]; then
 		_insane=y
-		SETSDONE=`rmel base${VERSION}.tgz $SETSDONE`
+		DEFAULTSETS=$(addel base${VERSION}.tgz $DEFAULTSETS)
 		cat << __EOT
 
 *** One or both of the executable files /bin/cat and /dev/MAKEDEV are not
@@ -1496,7 +1496,7 @@ __EOT
 	# Check if etcXX is installed.
 	if [[ ! -d /mnt/etc || ! -d /mnt/usr/share/zoneinfo || ! -d /mnt/dev ]]; then
 		_insane=y
-		SETSDONE=`rmel etc${VERSION}.tgz $SETSDONE`
+		DEFAULTSETS=$(addel etc${VERSION}.tgz $DEFAULTSETS)
 		cat << __EOT
 
 *** One or more of the directories /etc, /usr/share/zoneinfo and /dev are not
@@ -1825,7 +1825,6 @@ for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
 done
 
 # Global variable using during sets installation
-SETSDONE=
 GET_FILES=
 
 # decide upon an editor
