@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.15 1999/07/18 03:20:18 csapuntz Exp $	*/
+/*	$OpenBSD: pci.c,v 1.16 2001/01/27 05:02:39 mickey Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -177,6 +177,16 @@ pciattach(parent, self, aux)
 			   We don't support turning off I/O or memory
 			   on broken hardware. <csapuntz@stanford.edu> */
 			pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+#ifdef __i386__
+			/*
+			 * on i386 we really need to know the device tag
+			 * and not the pci bridge tag, in intr_map
+			 * to be able to program the device and the
+			 * pci interrupt router.
+			 */
+			pa.pa_intrtag = tag;
+			pa.pa_intrswiz = 0;
+#else
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
 				pa.pa_intrtag = tag;
@@ -184,6 +194,7 @@ pciattach(parent, self, aux)
 				pa.pa_intrswiz = pba->pba_intrswiz + device;
 				pa.pa_intrtag = pba->pba_intrtag;
 			}
+#endif
 			pin = PCI_INTERRUPT_PIN(intr);
 			if (pin == PCI_INTERRUPT_PIN_NONE) {
 				/* no interrupt */
