@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.19 1997/09/09 04:27:27 millert Exp $ */
+/*	$OpenBSD: printjob.c,v 1.20 2000/06/28 23:52:36 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1222,7 +1222,7 @@ init()
 	sprintf(&pxlength[2], "%ld", PY);
 	cgetstr(bp, "rm", &RM);
 	if ((s = checkremote()))
-		syslog(LOG_WARNING, s);
+		syslog(LOG_WARNING, "%s", s);
 
 	cgetstr(bp, "af", &AF);
 	cgetstr(bp, "of", &OF);
