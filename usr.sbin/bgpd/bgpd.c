@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.102 2004/07/28 16:00:02 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.103 2004/08/03 13:43:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -333,6 +333,7 @@ main(int argc, char *argv[])
 	control_cleanup();
 	kr_shutdown();
 	pftable_clear_all();
+	free(conf.listen_addrs);
 
 	do {
 		if ((pid = wait(NULL)) == -1 &&
