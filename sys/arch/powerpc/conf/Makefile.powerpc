@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.8 1998/05/29 04:15:27 rahnds Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.9 2000/10/20 20:54:26 deraadt Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -135,7 +135,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 		[Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
