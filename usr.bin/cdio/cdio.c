@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.21 2002/03/20 13:40:57 espie Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.22 2002/03/21 17:43:48 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -176,7 +176,7 @@ main(argc, argv)
 
 	for (;;) {
 		switch (getopt(argc, argv, "svf:")) {
-		case EOF:
+		case -1:
 			break;
 		case 's':
 			verbose = 0;
