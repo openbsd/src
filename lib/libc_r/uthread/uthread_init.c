@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_init.c,v 1.7 1999/01/10 23:11:33 d Exp $
  */
 
 #include <errno.h>
@@ -50,8 +51,9 @@
 
 /* Allocate space for global thread variables here: */
 
-struct pthread		  _thread_kern_thread;
-struct pthread * volatile _thread_run = &_thread_kern_thread;
+static struct pthread	  kern_thread;
+struct pthread * volatile _thread_kern_threadp = &kern_thread;
+struct pthread * volatile _thread_run = &kern_thread;
 struct pthread * volatile _thread_single = NULL;
 struct pthread * volatile _thread_link_list = NULL;
 int             	  _thread_kern_pipe[2] = { -1, -1 };
@@ -187,7 +189,7 @@ _thread_init(void)
 	/* Make the write pipe non-blocking: */
 	else if (_thread_sys_fcntl(_thread_kern_pipe[1], F_SETFL, flags | O_NONBLOCK) == -1) {
 		/* Abort this application: */
-		PANIC("Cannot get kernel write pipe flags");
+		PANIC("Cannot make kernel write pipe non-blocking");
 	}
 	/* Allocate memory for the thread structure of the initial thread: */
 	else if ((_thread_initial = (pthread_t) malloc(sizeof(struct pthread))) == NULL) {
@@ -198,9 +200,9 @@ _thread_init(void)
 		PANIC("Cannot allocate memory for initial thread");
 	} else {
 		/* Zero the global kernel thread structure: */
-		memset(&_thread_kern_thread, 0, sizeof(struct pthread));
-		_thread_kern_thread.magic = PTHREAD_MAGIC;
-		pthread_set_name_np(&_thread_kern_thread, "kern");
+		memset(_thread_kern_threadp, 0, sizeof(struct pthread));
+		_thread_kern_threadp->magic = PTHREAD_MAGIC;
+		pthread_set_name_np(_thread_kern_threadp, "kern");
 
 		/* Zero the initial thread: */
 		memset(_thread_initial, 0, sizeof(struct pthread));
@@ -224,6 +226,7 @@ _thread_init(void)
 		_thread_initial->error = 0;
 		_thread_initial->magic = PTHREAD_MAGIC;
 		pthread_set_name_np(_thread_initial, "init");
+		_SPINUNLOCK(&_thread_initial->lock);
 		_thread_link_list = _thread_initial;
 		_thread_run = _thread_initial;
 
