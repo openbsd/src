@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.84 2002/07/31 00:13:36 itojun Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.85 2003/02/15 22:57:58 jason Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -113,6 +113,7 @@ static struct sadb_alg aalgs[] =
 static struct sadb_alg calgs[] =
 {
     { SADB_X_CALG_DEFLATE, 0, 0, 0},
+    { SADB_X_CALG_LZS, 0, 0, 0},
 };
 
 extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
@@ -2035,9 +2036,12 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	else if (ipo->ipo_sproto == IPPROTO_IPCOMP)
 	{
 	    /* Set the compression algorithm */
-            if (!strncasecmp(ipsec_def_comp, "deflate", sizeof("deflate")))
-            {
+            if (!strncasecmp(ipsec_def_comp, "deflate", sizeof("deflate"))) {
                 sadb_comb->sadb_comb_encrypt = SADB_X_CALG_DEFLATE;
+                sadb_comb->sadb_comb_encrypt_minbits = 0;
+                sadb_comb->sadb_comb_encrypt_maxbits = 0;
+            } else if (!strncasecmp(ipsec_def_comp, "lzs", sizeof("lzs"))) {
+                sadb_comb->sadb_comb_encrypt = SADB_X_CALG_LZS;
                 sadb_comb->sadb_comb_encrypt_minbits = 0;
                 sadb_comb->sadb_comb_encrypt_maxbits = 0;
             }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.11 2002/11/12 18:23:13 jason Exp $	*/
+/*	$OpenBSD: xform.h,v 1.12 2003/02/15 22:57:58 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -84,4 +84,6 @@ extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
 extern struct comp_algo comp_algo_deflate;
+extern struct comp_algo comp_algo_lzs;
+
 #endif /* _CRYPTO_XFORM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.12 2002/06/09 23:15:42 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.13 2003/02/15 22:57:59 jason Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -162,6 +162,9 @@ export_sa(void **p, struct tdb *tdb)
 		switch (tdb->tdb_compalgxform->type) {
 		case CRYPTO_DEFLATE_COMP:
 			sadb_sa->sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
+			break;
+		case CRYPTO_LZS_COMP:
+			sadb_sa->sadb_sa_encrypt = SADB_X_CALG_LZS;
 			break;
 		}
 	}

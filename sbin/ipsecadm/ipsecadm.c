@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.64 2002/07/03 22:32:33 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.65 2003/02/15 22:57:58 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -105,6 +105,7 @@ transform xf[] = {
 	{ "sha1", SADB_X_AALG_SHA1, XF_AUTH | AH_OLD },
 	{ "rmd160", SADB_AALG_RIPEMD160HMAC, XF_AUTH | AH_NEW | ESP_NEW },
 	{ "deflate", SADB_X_CALG_DEFLATE, XF_COMP | IPCOMP },
+	{ "lzs", SADB_X_CALG_LZS, XF_COMP | IPCOMP },
 };
 
 #define ROUNDUP(x) (((x) + sizeof(u_int64_t) - 1) & ~(sizeof(u_int64_t) - 1))

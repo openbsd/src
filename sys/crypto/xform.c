@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.20 2002/11/12 18:23:13 jason Exp $	*/
+/*	$OpenBSD: xform.c,v 1.21 2003/02/15 22:57:58 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -95,6 +95,7 @@ int RMD160Update_int(void *, u_int8_t *, u_int16_t);
 
 u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
+u_int32_t lzs_dummy(u_int8_t *, u_int32_t, u_int8_t **);
 
 /* Encryption instances */
 struct enc_xform enc_xform_des = {
@@ -224,6 +225,12 @@ struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
 	90, deflate_compress,
 	deflate_decompress
+};
+
+struct comp_algo comp_algo_lzs = {
+	CRYPTO_DEFLATE_COMP, "LZS",
+	90, lzs_dummy,
+	lzs_dummy
 };
 
 /*
@@ -477,4 +484,14 @@ deflate_decompress(data, size, out)
 	u_int8_t **out;
 {
 	return deflate_global(data, size, 1, out);
+}
+
+u_int32_t
+lzs_dummy(data, size, out)
+	u_int8_t *data;
+	u_int32_t size;
+	u_int8_t **out;
+{
+	*out = NULL;
+	return (0);
 }
