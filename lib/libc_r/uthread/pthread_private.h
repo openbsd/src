@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.11 1999/01/18 00:00:32 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.12 1999/01/18 00:03:35 d Exp $
  *
  */
 
@@ -597,6 +597,8 @@ void	_thread_enter_cancellation_point(void);
 void	_thread_leave_cancellation_point(void);
 void	_thread_cancellation_point(void);
 void	_thread_atfork(int);
+int	_thread_slow_atomic_lock(volatile _spinlock_lock_t *);
+int	_thread_slow_atomic_is_locked(volatile _spinlock_lock_t *);
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H

@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: spinlock.h,v 1.2 1999/01/08 08:25:37 d Exp $
- * $OpenBSD: spinlock.h,v 1.2 1999/01/08 08:25:37 d Exp $
+ * $Id: spinlock.h,v 1.3 1999/01/18 00:03:34 d Exp $
+ * $OpenBSD: spinlock.h,v 1.3 1999/01/18 00:03:34 d Exp $
  *
  * Lock definitions used in both libc and libpthread.
  *
@@ -72,8 +72,6 @@ void	_spinlock_debug __P((spinlock_t *, const char *, int));
 /* is_locked functions() return 1 if lock is locked. */
 int	_atomic_lock __P((volatile _spinlock_lock_t *));
 int	_atomic_is_locked __P((volatile _spinlock_lock_t *));
-int	_thread_slow_atomic_lock __P((volatile _spinlock_lock_t *));
-int	_thread_slow_atomic_is_locked __P((volatile _spinlock_lock_t *));
 __END_DECLS
 
 #endif /* _SPINLOCK_H_ */
