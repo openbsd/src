@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.17 1998/12/15 16:58:40 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.5 1999/02/26 03:38:22 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.18 1999/02/06 14:57:52 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -165,6 +165,7 @@ extern void exchange_establish_p2 (struct sa *, u_int8_t, void *);
 extern int exchange_gen_nonce (struct message *, size_t);
 extern void exchange_init (void);
 extern struct exchange *exchange_lookup (u_int8_t *, int);
+extern struct exchange *exchange_lookup_by_name (char *, int);
 extern struct exchange *exchange_lookup_from_icookie (u_int8_t *);
 extern void exchange_report (void);
 extern void exchange_run (struct message *);
