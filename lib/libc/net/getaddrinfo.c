@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.11 2000/02/15 18:53:08 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.12 2000/02/16 12:53:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -50,6 +50,25 @@
  *   when globbing NULL hostname (to loopback, or wildcard).  Is it the right
  *   thing to do?  What is the relationship with post-RFC2553 AI_ADDRCONFIG
  *   in ai_flags?
+ * - (post-2553) semantics of AI_ADDRCONFIG itself is too vague.
+ *   (1) what should we do against numeric hostname (2) what should we do
+ *   against NULL hostname (3) what is AI_ADDRCONFIG itself.  AF not ready?
+ *   non-loopback address configured?  global address configured?
+ * - The code makes use of following calls when asked to resolver with
+ *   ai_family  = PF_UNSPEC:
+ *	getipnodebyname(host, AF_INET6);
+ *	getipnodebyname(host, AF_INET);
+ *   This will result in the following queries if the node is configure to
+ *   prefer /etc/hosts than DNS:
+ *	lookup /etc/hosts for IPv6 address
+ *	lookup DNS for IPv6 address
+ *	lookup /etc/hosts for IPv4 address
+ *	lookup DNS for IPv4 address
+ *   which may not meet people's requirement.
+ *   The right thing to happen is to have underlying layer which does
+ *   PF_UNSPEC lookup (lookup both) and return chain of addrinfos.
+ *   This would result in a bit of code duplicate with _dns_ghbyname() and
+ *   friends.
  */
 
 #define INET6
@@ -523,7 +542,7 @@ explore_fqdn(pai, hostname, servname, res)
 	for (i = 0; aplist[i] != NULL; i++) {
 		af = hp->h_addrtype;
 		ap = aplist[i];
-#ifdef AF_INET6
+#ifdef INET6
 		if (af == AF_INET6
 		 && IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
 			af = AF_INET;
@@ -716,7 +735,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	const struct afd *afd;
 	struct addrinfo *cur;
 	int error;
-	char *cp, *hostname2 = NULL, *scope;
+	char *cp, *hostname2 = NULL, *scope, *addr;
 	struct sockaddr_in6 *sin6;
 
 	/*
@@ -733,6 +752,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	if (cp == NULL)
 		return explore_numeric(pai, hostname, servname, res);
 
+#if 1
 	/*
 	 * Handle special case of <scope id><delimiter><scoped_address>
 	 */
@@ -742,9 +762,21 @@ explore_numeric_scope(pai, hostname, servname, res)
 	/* terminate at the delimiter */
 	hostname2[cp - hostname] = '\0';
 	scope = hostname2;
-	cp++;
+	addr = cp + 1;
+#else
+	/*
+	 * Handle special case of <scoped_address><delimiter><scope id>
+	 */
+	hostname2 = strdup(hostname);
+	if (hostname2 == NULL)
+		return EAI_MEMORY;
+	/* terminate at the delimiter */
+	hostname2[cp - hostname] = '\0';
+	addr = hostname2;
+	scope = cp + 1;
+#endif
 
-	error = explore_numeric(pai, cp, servname, res);
+	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
 		int scopeid;
 

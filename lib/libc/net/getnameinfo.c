@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.8 2000/02/09 12:22:09 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.9 2000/02/16 12:53:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -235,6 +235,10 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				if (scopelen + 1 + numaddrlen + 1 > hostlen)
 					return ENI_MEMORY;
 
+#if 1
+				/*
+				 * construct <scopeid><delim><numeric-addr>
+				 */
 				/*
 				 * Shift the host string to allocate
 				 * space for the scope ID part.
@@ -245,6 +249,15 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 				memcpy(host, scopebuf, scopelen);
 				host[scopelen] = SCOPE_DELIMITER;
 				host[scopelen + 1 + numaddrlen] = '\0';
+#else
+				/*
+				 * construct <numeric-addr><delim><scopeid>
+				 */
+				memcpy(host + numaddrlen + 1, scopebuf,
+				    scopelen);
+				host[numaddrlen] = SCOPE_DELIMITER;
+				host[numaddrlen + 1 + scopelen] = '\0';
+#endif
 			}
 		}
 #endif /* INET6 */
