@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.12 2001/06/03 17:02:53 espie Exp $	*/
+/*	$OpenBSD: md5.c,v 1.13 2001/06/03 18:04:16 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -81,7 +81,7 @@ static void digest_time(struct hash_functions *);
 int
 main(int argc, char **argv)
 {
-	int ch, digest_type;
+	int fl, digest_type;
 	int pflag, tflag, xflag;
 	char *input_string;
 
@@ -95,8 +95,8 @@ main(int argc, char **argv)
 
 	input_string = NULL;
 	pflag = tflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "ps:tx")) != -1) {
-		switch (ch) {
+	while ((fl = getopt(argc, argv, "ps:tx")) != -1) {
+		switch (fl) {
 		case 'p':
 			pflag = 1;
 			break;
@@ -116,7 +116,9 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (pflag + tflag + xflag + argc < 1)
+	/* All arguments are mutually exclusive */
+	fl = pflag + tflag + xflag + (input_string != NULL);
+	if (fl > 1 || (fl && argc))
 		usage();
 
 	if (tflag)
