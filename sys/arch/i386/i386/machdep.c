@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.153 2001/03/28 19:50:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.154 2001/03/30 22:18:29 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -326,6 +326,7 @@ int allowaperture = 0;
 #endif
 
 void	winchip_cpu_setup __P((const char *, int, int));
+void	cyrix3_cpu_setup __P((const char *, int, int));
 void	cyrix6x86_cpu_setup __P((const char *, int, int));
 void	intel586_cpu_setup __P((const char *, int, int));
 void	intel686_cpu_setup __P((const char *, int, int));
@@ -920,7 +921,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0,
 				"VIA Cyrix III"		/* Default */
 			},
-			winchip_cpu_setup
+			cyrix3_cpu_setup
 		} }
 	},
 	{
@@ -1026,7 +1027,7 @@ winchip_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU)
 	extern int cpu_feature;
 
 	switch (model) {
@@ -1037,9 +1038,28 @@ winchip_cpu_setup(cpu_device, model, step)
 
 		printf("%s: broken TSC disabled\n", cpu_device);
 		break;
+	}
+#endif
+}
+
+void
+cyrix3_cpu_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+#if defined(I686_CPU)
+	extern int cpu_feature;
+	unsigned int val;
+
+	switch (model) {
 	case 6: /* VIA Cyrix III */
-		cpu_feature |= CPUID_CX8;
-		cpu_feature |= CPUID_3DNOW;
+		__asm __volatile("cpuid"
+		    : "=d" (val) : "a" (0x80000001) : "ebx", "ecx");
+		if (val & (1U << 31)) {
+			cpu_feature |= CPUID_3DNOW;
+		} else {
+			cpu_feature &= ~CPUID_3DNOW;
+		}
 		break;
 	}
 #endif
