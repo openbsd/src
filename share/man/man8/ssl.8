@@ -118,6 +118,30 @@ See
 for more details on adding RSA capable libraries.
 
 Once your ssl libraries are updated, the ssl libraries will be fully functional.
+.Sh RANDOM DATA SOURCE
+OpenBSD uses the 
+.Xr arandom 4
+device as the default source for random data when needed by the routines in
+libcrypto and libssl. If the
+.Xr arandom 4
+device does not exist or is not readable, many of the routines will fail.
+This is most commonly seen by users as the
+.Ar RSA
+routines failing in applications such as 
+.Xr ssh 1 ,
+and 
+.Xr httpd 8 ,
+even after the 
+.Ar RSA
+capable versions of the library have been added to the system.
+.Pp
+It is important to remember when using a random data source for certificate
+and key generation that the random data source should not be visible by
+people who could duplicate the process and come up with the same result.
+You should ensure that nobody who you don't trust is in a position to read
+the same random data used by you to generate keys and certificates. See
+.Xr openssl 1
+for more information on how to use different sources of random data. 
 .Sh SERVER CERTIFICATES
 The most common uses of
 .Ar SSL/TLS
@@ -264,6 +288,7 @@ Patents can be renewed.
 .Xr isakmpd 8 ,
 .Xr pkg_add 1 ,
 .Xr openssl 1 ,
+.Xr arandom 4,
 .Xr ssl 3 ,
 .Xr rc 8
 .Sh HISTORY
