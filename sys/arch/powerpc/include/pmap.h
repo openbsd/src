@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2001/05/26 03:27:58 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2001/06/24 05:17:04 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -72,10 +72,13 @@ struct pmap {
 };
 
 typedef	struct pmap *pmap_t;
+void ptemodify(vm_offset_t pa, u_int mask, u_int val);
 
 #ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
+int ptebits(paddr_t pa, int bit);
+
 
 #define pmap_clear_modify(pa)		(ptemodify((pa), PTE_CHG, 0))
 #define	pmap_clear_reference(pa)	(ptemodify((pa), PTE_REF, 0))
@@ -96,6 +99,9 @@ extern struct pmap kernel_pmap_;
 #define PMAP_UNMAP_POOLPAGE(va)	((paddr_t)va)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
+
+void pmap_deactivate(struct proc *p);
+void pmap_activate(struct proc *p);
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
