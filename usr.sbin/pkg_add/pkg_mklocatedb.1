@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.3 2005/03/03 11:52:15 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.4 2005/03/03 17:22:04 jmc Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -53,8 +53,9 @@ and the end result should be redirected to a file.
 .Pp
 In addition,
 .Nm
-can also list files in the base sets of an OpenBSD distribution, which
-are not exactly packages in the usual sense.
+can also list files in the base sets of an
+.Ox
+distribution, which are not exactly packages in the usual sense.
 .Pp
 The options are as follows:
 .Bl -tag -width opt
@@ -71,7 +72,7 @@ see
 .Xr release 8
 .Pc .
 .Nm
-will lists release tar balls from that directory.
+will list release tar balls from that directory.
 .It Fl s Ar src
 Specify the location of
 .Ox
