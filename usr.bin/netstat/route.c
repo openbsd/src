@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.35 2000/02/05 18:46:50 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.36 2000/05/18 01:20:48 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.35 2000/02/05 18:46:50 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.36 2000/05/18 01:20:48 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -433,7 +433,7 @@ p_sockaddr(sa, mask, flags, width)
 	register char *cp = workbuf;
 	size_t n;
 
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 	case AF_INET:
 	    {
 		register struct sockaddr_in *sin = (struct sockaddr_in *)sa;
@@ -725,59 +725,62 @@ netname6(sa6, mask)
 	masklen = 0;
 	lim = (u_char *)(mask + 1);
 	i = 0;
-	for (p = (u_char *)mask; p < lim; p++) {
-		if (final && *p) {
-			illegal++;
-			sin6.sin6_addr.s6_addr[i++] = 0x00;
-			continue;
-		}
+	if (mask) {
+		for (p = (u_char *)mask; p < lim; p++) {
+			if (final && *p) {
+				illegal++;
+				sin6.sin6_addr.s6_addr[i++] = 0x00;
+				continue;
+			}
 
-		switch (*p & 0xff) {
-		case 0xff:
-			masklen += 8;
-			break;
-		case 0xfe:
-			masklen += 7;
-			final++;
-			break;
-		case 0xfc:
-			masklen += 6;
-			final++;
-			break;
-		case 0xf8:
-			masklen += 5;
-			final++;
-			break;
-		case 0xf0:
-			masklen += 4;
-			final++;
-			break;
-		case 0xe0:
-			masklen += 3;
-			final++;
-			break;
-		case 0xc0:
-			masklen += 2;
-			final++;
-			break;
-		case 0x80:
-			masklen += 1;
-			final++;
-			break;
-		case 0x00:
-			final++;
-			break;
-		default:
-			final++;
-			illegal++;
-			break;
-		}
+			switch (*p & 0xff) {
+			case 0xff:
+				masklen += 8;
+				break;
+			case 0xfe:
+				masklen += 7;
+				final++;
+				break;
+			case 0xfc:
+				masklen += 6;
+				final++;
+				break;
+			case 0xf8:
+				masklen += 5;
+				final++;
+				break;
+			case 0xf0:
+				masklen += 4;
+				final++;
+				break;
+			case 0xe0:
+				masklen += 3;
+				final++;
+				break;
+			case 0xc0:
+				masklen += 2;
+				final++;
+				break;
+			case 0x80:
+				masklen += 1;
+				final++;
+				break;
+			case 0x00:
+				final++;
+				break;
+			default:
+				final++;
+				illegal++;
+				break;
+			}
 
-		if (!illegal)
-			sin6.sin6_addr.s6_addr[i++] &= *p;
-		else
-			sin6.sin6_addr.s6_addr[i++] = 0x00;
-	}
+			if (!illegal)
+				sin6.sin6_addr.s6_addr[i++] &= *p;
+			else
+				sin6.sin6_addr.s6_addr[i++] = 0x00;
+		}
+	} else
+		masklen = 128;
 
 	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr))
 		return("default");
