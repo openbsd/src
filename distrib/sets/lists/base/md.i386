@@ -4,6 +4,7 @@
 ./dev/scan0
 ./dev/scan1
 ./dev/sound
+./etc/wsconsctl.conf
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/ldconfig
