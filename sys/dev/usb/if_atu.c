@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.4 2004/11/09 21:08:49 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.5 2004/11/10 21:45:23 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -194,6 +194,7 @@ int atu_media_change(struct ifnet *ifp);
 void atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
 int atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
     int listlen, int need_mbuf, int bufsize, struct atu_list_head *list);
+int atu_rx_list_init(struct atu_softc *);
 void atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
     int listlen);
 void atu_print_beacon(struct atu_softc *sc, struct atu_rxpkt *pkt);
@@ -1767,7 +1768,6 @@ USB_ATTACH(atu)
 	sc->atu_encrypt = ATU_WEP_OFF;
 
 	/* Initialise transfer lists */
-	SLIST_INIT(&sc->atu_cdata.atu_rx_free);
 	SLIST_INIT(&sc->atu_cdata.atu_tx_free);
 	SLIST_INIT(&sc->atu_cdata.atu_mgmt_free);
 
@@ -1879,14 +1879,14 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			DPRINTF(("%s: no memory for rx list -- packet dropped!\n",
+			DPRINTF(("%s: no memory for rx list\n",
 			    USBDEVNAME(sc->atu_dev)));
 			return(ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			DPRINTF(("%s: no memory for rx list -- packet dropped!\n",
+			DPRINTF(("%s: no memory for rx list\n",
 			    USBDEVNAME(sc->atu_dev)));
 			m_freem(m_new);
 			return(ENOBUFS);
@@ -1899,6 +1899,39 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 	}
 	c->atu_mbuf = m_new;
 	return(0);
+}
+
+int
+atu_rx_list_init(struct atu_softc *sc)
+{
+	struct atu_cdata	*cd = &sc->atu_cdata;
+	struct atu_chain	*c;
+	int			i;
+
+	DPRINTFN(10, ("%s: atu_rx_list_init: enter\n",
+	    USBDEVNAME(sc->atu_dev)));
+
+	for (i = 0; i < ATU_RX_LIST_CNT; i++) {
+		c = &cd->atu_rx_chain[i];
+		c->atu_sc = sc;
+		c->atu_idx = i;
+		if (c->atu_xfer != NULL) {
+			printf("UGH RX\n");
+		}
+		if (c->atu_xfer == NULL) {
+			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
+			if (c->atu_xfer == NULL)
+				return (ENOBUFS);
+			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
+			    ATU_RX_BUFSZ);
+			if (c->atu_buf == NULL) /* XXX free xfer */
+				return (ENOBUFS);
+			if (atu_newbuf(sc, c, NULL) == ENOBUFS) /* XXX free? */
+				return(ENOBUFS);
+		}
+	}
+
+	return (0);
 }
 
 int
@@ -2341,13 +2374,14 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	m = c->atu_mbuf;
-
 	if (total_len <= 1) {
-		DPRINTF(("%s: atuw_rxeof: too short\n",
+		DPRINTF(("%s: atu_rxeof: too short\n",
 		    USBDEVNAME(sc->atu_dev)));
 		goto done;
 	}
+
+	m = c->atu_mbuf;
+	memcpy(mtod(m, char *), c->atu_buf, total_len);
 
 	pkt = mtod(m, struct atu_rxpkt *);
 
@@ -2470,13 +2504,11 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 done1:
 	splx(s);
 done:
-	/* Put transfer back into rx-chain */
-	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_rx_free, c, atu_list);
-
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX],
-	    c, mtod(c->atu_mbuf, char *), ATU_RX_BUFSZ,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, atu_rxeof);
+	    c, c->atu_buf, ATU_RX_BUFSZ,
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    USBD_NO_TIMEOUT, atu_rxeof);
 	usbd_transfer(c->atu_xfer);
 }
 
@@ -2761,9 +2793,8 @@ atu_init(void *xsc)
 	}
 
 	/* Init RX ring */
-	if (atu_xfer_list_init(sc, cd->atu_rx_chain, ATU_RX_LIST_CNT, 1,
-	    0, &cd->atu_rx_free)) {
-		DPRINTF(("%s: rx list init failed\n", USBDEVNAME(sc->atu_dev)));
+	if (atu_rx_list_init(sc)) {
+		printf("%s: rx list init failed\n", USBDEVNAME(sc->atu_dev));
 	}
 
 	/* Init mgmt ring */
@@ -2799,8 +2830,9 @@ atu_init(void *xsc)
 		c = &sc->atu_cdata.atu_rx_chain[i];
 
 		usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX],
-		    c, mtod(c->atu_mbuf, char *), ATU_RX_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, atu_rxeof);
+		    c, c->atu_buf, ATU_RX_BUFSZ,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_NO_TIMEOUT, atu_rxeof);
 		usbd_transfer(c->atu_xfer);
 	}
 
