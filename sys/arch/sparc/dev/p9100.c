@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.22 2003/06/13 23:40:12 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.23 2003/06/17 21:21:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -28,8 +28,9 @@
  */
 
 /*
- * color display (p9100) driver.  Based on cgthree.c and the NetBSD
- * p9100 driver.
+ * color display (p9100) driver.
+ * Initially based on cgthree.c and the NetBSD p9100 driver, then hacked
+ * beyond recognition.
  */
 
 #include <sys/param.h>
@@ -59,6 +60,8 @@
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/sbusvar.h>
 
+#include <dev/ic/p9000.h>
+
 #include "tctrl.h"
 #if NTCTRL > 0
 #include <sparc/dev/tctrlvar.h>
@@ -69,8 +72,8 @@ struct p9100_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	rom_reg	sc_phys;	/* phys address description */
-	struct	p9100_cmd *sc_cmd;	/* command registers (dac, etc) */
-	struct	p9100_ctl *sc_ctl;	/* control registers (draw engine) */
+	volatile u_int8_t *sc_cmd;	/* command registers (dac, etc) */
+	volatile u_int8_t *sc_ctl;	/* control registers (draw engine) */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
 	int	sc_nscreens;
@@ -143,206 +146,44 @@ struct cfdriver pnozz_cd = {
 #define	P9100_REG_VRAM	2
 
 /*
- * System control and command registers
- * (IBM RGB528 RamDac, p9100, video coprocessor)
+ * IBM RGB525 RAMDAC registers
  */
-struct p9100_ctl {
-	/* System control registers: 0x0000 - 0x00ff */
-	struct p9100_scr {
-		volatile u_int32_t	:32;
-		volatile u_int32_t	scr;		/* system config reg */
-#define	SCR_ID_MASK		0x00000007
-#define	SCR_PIXEL_MASK		0x1c000000
-#define	SCR_PIXEL_8BPP		0x08000000
-#define	SCR_PIXEL_16BPP		0x0c000000
-#define	SCR_PIXEL_24BPP		0x1c000000
-#define	SCR_PIXEL_32BPP		0x14000000
-		volatile u_int32_t	ir;		/* interrupt reg */
-		volatile u_int32_t	ier;		/* interrupt enable */
-#define	IER_MASTER_ENABLE	0x00000080
-#define	IER_MASTER_INTERRUPT	0x00000040
-#define	IER_VBLANK_ENABLE	0x00000020
-#define	IER_VBLANK_INTERRUPT	0x00000010
-#define	IER_PICK_ENABLE		0x00000008
-#define	IER_PICK_INTERRUPT	0x00000004
-#define	IER_IDLE_ENABLE		0x00000002
-#define	IER_IDLE_INTERRUPT	0x00000001
-		volatile u_int32_t	arbr;		/* alt read bank reg */
-		volatile u_int32_t	awbr;		/* alt write bank reg */
-		volatile u_int32_t	unused1[58];
-	} ctl_scr;
 
-	/* Video control registers: 0x0100 - 0x017f */
-	struct p9100_vcr {
-		volatile u_int32_t	:32;
-		volatile u_int32_t	hcr;		/* horizontal cntr */
-		volatile u_int32_t	htr;		/* horizontal total */
-		volatile u_int32_t	hsre;		/* horiz sync rising */
-		volatile u_int32_t	hbre;		/* horiz blank rising */
-		volatile u_int32_t	hbfe;		/* horiz blank fallng */
-		volatile u_int32_t	hcp;		/* horiz cntr preload */
-		volatile u_int32_t	vcr;		/* vertical cntr */
-		volatile u_int32_t	vl;		/* vertical length */
-		volatile u_int32_t	vsre;		/* vert sync rising */
-		volatile u_int32_t	vbre;		/* vert blank rising */
-		volatile u_int32_t	vbfe;		/* vert blank fallng */
-		volatile u_int32_t	vcp;		/* vert cntr preload */
-		volatile u_int32_t	sra;		/* scrn repaint addr */
-		volatile u_int32_t	srtc1;		/* scrn rpnt time 1 */
-#define	SRTC1_VIDEN	0x00000020
-		volatile u_int32_t	qsf;		/* qsf counter */
-		volatile u_int32_t	srtc2;		/* scrn rpnt time 2 */
-		volatile u_int32_t	unused1[15];
-	} ctl_vcr;
-
-	/* VRAM control registers: 0x0180 - 0x1ff */
-	struct p9100_vram {
-		volatile u_int32_t	:32;
-		volatile u_int32_t	mc;		/* memory config */
-		volatile u_int32_t	rp;		/* refresh period */
-		volatile u_int32_t	rc;		/* refresh count */
-		volatile u_int32_t	rasmax;		/* ras low maximum */
-		volatile u_int32_t	rascur;		/* ras low current */
-		volatile u_int32_t	dacfifo;	/* free fifo */
-		volatile u_int32_t	unused1[25];
-	} ctl_vram;
-
-	/* IBM RGB528 RAMDAC registers: 0x0200 - 0x3ff */
-	struct p9100_dac {
-		volatile u_int32_t	pwraddr;	/* wr palette address */
-		volatile u_int32_t	paldata;	/* palette data */
-		volatile u_int32_t	pixmask;	/* pixel mask */
-		volatile u_int32_t	prdaddr;	/* rd palette address */
-		volatile u_int32_t	idxlow;		/* reg index low */
-		volatile u_int32_t	idxhigh;	/* reg index high */
-		volatile u_int32_t	regdata;	/* register data */
-		volatile u_int32_t	idxctrl;	/* index control */
-		volatile u_int32_t	unused1[120];
-	} ctl_dac;
-
-	/* Video coprocessor interface: 0x0400 - 0x1fff */
-	volatile u_int32_t	ctl_vci[768];
-};
+/* Palette write address */
+#define	IBM525_WRADDR			0
+/* Palette data */
+#define	IBM525_DATA			1
+/* Pixel mask */
+#define	IBM525_PIXMASK			2
+/* Read palette address */
+#define	IBM525_RDADDR			3
+/* Register index low */
+#define	IBM525_IDXLOW			4
+/* Register index high */
+#define	IBM525_IDXHIGH			5
+/* Register data */
+#define	IBM525_REGDATA			6
+/* Index control */
+#define	IBM525_IDXCONTROL		7
 
 /*
- * Power 9100 Drawing engine
+ * P9100 read/write macros
  */
 
-struct p9100_coord {
-	volatile u_int32_t	:32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	abs_x32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	abs_y32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	abs_x16y16;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	rel_x32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	rel_y32;
-	volatile u_int32_t	:32;
-	volatile u_int32_t	rel_x16y16;
-	volatile u_int32_t	:32;
-};
+#define	P9100_READ_CTL(sc,reg) \
+	*(volatile u_int32_t *)((sc)->sc_ctl + (reg))
+#define	P9100_READ_CMD(sc,reg) \
+	*(volatile u_int32_t *)((sc)->sc_cmd + (reg))
+#define	P9100_READ_RAMDAC(sc,reg) \
+	*(volatile u_int32_t *)((sc)->sc_ctl + P9100_RAMDAC_REGISTER(reg))
 
-/* How to encode a x16y16 value */
-#define	P9100_COORDS(col,row)	((((col) & 0x0fff) << 16) | ((row) & 0x0fff))
-
-struct p9100_cmd {
-	/* Parameter engine 0x2000-0x217f */
-	struct cmd_pe {
-	volatile u_int32_t	status;		/* status register */
-#define	STATUS_QUAD_BUSY	0x80000000
-#define	STATUS_BLIT_BUSY	0x40000000
-#define	STATUS_PICK_DETECTED	0x00000080
-#define	STATUS_PIXEL_ERROR	0x00000040
-#define	STATUS_BLIT_ERROR	0x00000020
-#define	STATUS_QUAD_ERROR	0x00000010
-#define	STATUS_QUAD_CONCAVE	0x00000008
-#define	STATUS_QUAD_OUTSIDE	0x00000004
-#define	STATUS_QUAD_INSIDE	0x00000002
-#define	STATUS_QUAD_STRADDLE	0x00000001
-	volatile u_int32_t	blit;		/* blit command */
-	volatile u_int32_t	quad;		/* quad command */
-	volatile u_int32_t	pixel8;		/* P9000 pixel8 command */
-	volatile u_int32_t	:32;
-	volatile u_int32_t	nextpixels;	/* next_pixels command */
-	volatile u_int32_t	unused1[(0x80 - 0x18) / 4];
-	volatile u_int32_t	pixel1[32];	/* pixel1 command */
-	volatile u_int32_t	unused2[(0x180 - 0x100) / 4];
-
-	/* Parameter engine registers 0x2180-0x21ff */
-	volatile u_int32_t	:32;
-	volatile u_int32_t	oor;		/* out of range register */
-	volatile u_int32_t	:32;
-	volatile u_int32_t	cindex;		/* index register */
-	volatile u_int32_t	winoffset;	/* window offset (16+16) */
-	volatile u_int32_t	winmin;		/* window minimum */
-	volatile u_int32_t	winmax;		/* window maximum */
-	volatile u_int32_t	:32;
-	volatile u_int32_t	yclip;
-	volatile u_int32_t	xclip;
-	volatile u_int32_t	xedgeless;
-	volatile u_int32_t	xedgegreater;
-	volatile u_int32_t	yedgeless;
-	volatile u_int32_t	yedgegreater;
-	volatile u_int32_t	unused3[(0x200 - 0x1b8) / 4];
-	} pe;
-
-	/* Drawing engine 0x2200-0x2fff */
-	struct cmd_de {
-	volatile u_int32_t	color0;		/* fg color */
-	volatile u_int32_t	color1;		/* bg color */
-	volatile u_int32_t	planemask;	/* 8-bit plane mask */
-	volatile u_int32_t	drawmode;	
-#define	DM_PICK_CONTROL		0x00000008
-#define	DM_PICK_ENABLE		0x00000004
-#define	DM_BUFFER_CONTROL	0x00000002
-#define	DM_BUFFER_ENABLE0	0x00000000
-#define	DM_BUFFER_ENABLE1	0x00000001
-	volatile u_int32_t	patternx;	/* Quad 16x16 pattern origin */
-	volatile u_int32_t	patterny;	/* (4-bit) */
-	volatile u_int32_t	raster;
-	volatile u_int32_t	pixel8;		/* Pixel8 extra storage */
-	volatile u_int32_t	winmin;		/* window min, same as above */
-	volatile u_int32_t	winmax;		/* window max, same as above */
-	volatile u_int32_t	unused1[(0x38 - 0x28) / 4];
-	volatile u_int32_t	color2;
-	volatile u_int32_t	color3;
-	volatile u_int32_t	unused2[(0x80 - 0x40) / 4];
-	volatile u_int32_t	pattern[4];	/* pattern for quad fill */
-	volatile u_int32_t	user[4];	/* user defined registers */
-	volatile u_int32_t	bwinmin;	/* byte window minimum */
-	volatile u_int32_t	bwinmax;	/* byte window maximum */
-	volatile u_int32_t	unused3[(0x3000 - 0x22a8) / 4];
-	} de;
-
-	/* Device coordinates 0x3000-0x31ff */
-	struct cmd_dc {
-	struct p9100_coord	coord[4];
-	volatile u_int32_t	unused[(0x200 - 0x100) / 4];
-	} dc;
-
-	/* Load coordinates 0x3200-0x33ff */
-	struct cmd_lc {
-	struct p9100_coord	point;
-	struct p9100_coord	line;
-	struct p9100_coord	tri;
-	struct p9100_coord	quad;
-	struct p9100_coord	rect;
-	} lc;
-};
-
-/* How to encode a color in 8 bit mode, for the drawing engine */
-#define	P9100_COLOR8(col)		((col) | ((col) << 8) | ((col) << 16))
-
-/* P9100 minterms for the raster register */
-#define	P9100_RASTER_SRC	0x00cc
-#define	P9100_RASTER_DST	0x00aa
-#define	P9100_RASTER_PATTERN	0x00f0
-#define	P9100_RASTER_MASK	0x00ff
+#define	P9100_WRITE_CTL(sc,reg,value) \
+	*(volatile u_int32_t *)((sc)->sc_ctl + (reg)) = (value)
+#define	P9100_WRITE_CMD(sc,reg,value) \
+	*(volatile u_int32_t *)((sc)->sc_cmd + (reg)) = (value)
+#define	P9100_WRITE_RAMDAC(sc,reg,value) \
+	*(volatile u_int32_t *)((sc)->sc_ctl + P9100_RAMDAC_REGISTER(reg)) = \
+	    (value)
 
 /*
  * On the Tadpole, the first write to a register group is ignored until
@@ -356,17 +197,22 @@ struct p9100_cmd {
  * This is specific to the Tadpole design, and not a limitation of the
  * Power 9100 hardware.
  */
-#define	P9100_SELECT_SCR(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_scr.scr)
-#define	P9100_SELECT_VCR(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vcr.hcr)
-#define	P9100_SELECT_VRAM(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vram.mc)
-#define	P9100_SELECT_DAC(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_dac.pwraddr)
-#define	P9100_SELECT_VCI(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vci[0])
-#define	P9100_SELECT_DE_LOW(sc)	((sc)->sc_junk = (sc)->sc_cmd->de.color0)
+#define	P9100_SELECT_SCR(sc) \
+	(sc)->sc_junk = P9100_READ_CTL(sc, P9000_SYSTEM_CONFIG)
+#define	P9100_SELECT_VCR(sc) \
+	(sc)->sc_junk = P9100_READ_CTL(sc, P9000_HCR)
+#define	P9100_SELECT_VRAM(sc) \
+	(sc)->sc_junk = P9100_READ_CTL(sc, P9000_MCR)
+#define	P9100_SELECT_DAC(sc) \
+	(sc)->sc_junk = P9100_READ_CTL(sc, P9100_RAMDAC_REGISTER(0))
+#define	P9100_SELECT_PE(sc) \
+	(sc)->sc_junk = P9100_READ_CMD(sc, P9000_PE_STATUS)
+#define	P9100_SELECT_DE_LOW(sc)	\
+	(sc)->sc_junk = P9100_READ_CMD(sc, P9000_DE_FG_COLOR)
 #define	P9100_SELECT_DE_HIGH(sc) \
-	((sc)->sc_junk = (sc)->sc_cmd->de.bwinmax)
-#define	P9100_SELECT_PE(sc)	((sc)->sc_junk = (sc)->sc_cmd->pe.cindex)
+	(sc)->sc_junk = P9100_READ_CMD(sc, P9000_DE_PATTERN(0))
 #define	P9100_SELECT_COORD(sc,field) \
-	((sc)->sc_junk = (sc)->sc_cmd->##field##.abs_x32)
+	(sc)->sc_junk = P9100_READ_CMD(sc, field)
 
 /*
  * For some reason, every write to a DAC register needs to be followed by a
@@ -376,7 +222,7 @@ struct p9100_cmd {
 #define	P9100_FLUSH_DAC(sc) \
 	do { \
 		P9100_SELECT_VRAM(sc); \
-		(sc)->sc_junk = (sc)->sc_ctl->ctl_vram.dacfifo; \
+		(sc)->sc_junk = P9100_READ_CTL(sc, P9100_FREE_FIFO); \
 	} while (0)
 
 int
@@ -422,7 +268,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	isconsole = node == fbnode;
 
 	P9100_SELECT_SCR(sc);
-	scr = sc->sc_ctl->ctl_scr.scr;
+	scr = P9100_READ_CTL(sc, P9000_SYSTEM_CONFIG);
 	switch (scr & SCR_PIXEL_MASK) {
 	case SCR_PIXEL_32BPP:
 		fb_depth = 32;
@@ -457,7 +303,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 
 	/* Disable frame buffer interrupts */
 	P9100_SELECT_SCR(sc);
-	sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | 0;
+	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE, IER_MASTER_ENABLE | 0);
 
 	/*
 	 * If the framebuffer width is under 1024x768, we will switch from the
@@ -471,7 +317,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 * XXX there should be a rasops "clear margins" feature
 	 */
 	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width != 800));
+	    isconsole && (sc->sc_sunfb.sf_width >= 1024));
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	/*
@@ -497,7 +343,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
-		if (sc->sc_sunfb.sf_width == 800)
+		if (sc->sc_sunfb.sf_width < 1024)
 			row = 0;	/* screen has been cleared above */
 		else
 			row = -1;
@@ -690,12 +536,12 @@ p9100_loadcmap_immediate(struct p9100_softc *sc, u_int start, u_int ncolors)
 	u_char *p;
 
 	P9100_SELECT_DAC(sc);
-	sc->sc_ctl->ctl_dac.pwraddr = start << 16;
+	P9100_WRITE_RAMDAC(sc, IBM525_WRADDR, start << 16);
 	P9100_FLUSH_DAC(sc);
 
 	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; ncolors-- > 0; p++) {
 		P9100_SELECT_DAC(sc);
-		sc->sc_ctl->ctl_dac.paldata = (*p) << 16;
+		P9100_WRITE_RAMDAC(sc, IBM525_DATA, (*p) << 16);
 		P9100_FLUSH_DAC(sc);
 	}
 }
@@ -703,11 +549,11 @@ p9100_loadcmap_immediate(struct p9100_softc *sc, u_int start, u_int ncolors)
 static __inline__ void
 p9100_loadcmap_deferred(struct p9100_softc *sc, u_int start, u_int ncolors)
 {
-
 	/* Schedule an interrupt for next retrace */
 	P9100_SELECT_SCR(sc);
-	sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | IER_MASTER_INTERRUPT |
-	    IER_VBLANK_ENABLE | IER_VBLANK_INTERRUPT;
+	P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE,
+	    IER_MASTER_ENABLE | IER_MASTER_INTERRUPT |
+	    IER_VBLANK_ENABLE | IER_VBLANK_INTERRUPT);
 }
 
 void
@@ -719,13 +565,12 @@ p9100_burner(void *v, u_int on, u_int flags)
 
 	s = splhigh();
 	P9100_SELECT_VCR(sc);
-	vcr = sc->sc_ctl->ctl_vcr.srtc1;
+	vcr = P9100_READ_CTL(sc, P9000_SRTC1);
 	if (on)
 		vcr |= SRTC1_VIDEN;
 	else
 		vcr &= ~SRTC1_VIDEN;
-	/* XXX - what about WSDISPLAY_BURN_VBLANK? */
-	sc->sc_ctl->ctl_vcr.srtc1 = vcr;
+	P9100_WRITE_CTL(sc, P9000_SRTC1, vcr);
 #if NTCTRL > 0
 	tadpole_set_video(on);
 #endif
@@ -737,12 +582,13 @@ p9100_intr(void *v)
 {
 	struct p9100_softc *sc = v;
 
-	if (sc->sc_ctl->ctl_scr.ir & IER_VBLANK_INTERRUPT) {
+	if (P9100_READ_CTL(sc, P9000_INTERRUPT) & IER_VBLANK_INTERRUPT) {
 		p9100_loadcmap_immediate(sc, 0, 256);
 
 		/* Disable further interrupts now */
 		/* P9100_SELECT_SCR(sc); */
-		sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | 0;
+		P9100_WRITE_CTL(sc, P9000_INTERRUPT_ENABLE,
+		    IER_MASTER_ENABLE | 0);
 
 		return (1);
 	}
@@ -759,38 +605,39 @@ static __inline__ void p9100_drain(struct p9100_softc *);
 static __inline__ void
 p9100_drain(struct p9100_softc *sc)
 {
-	while (sc->sc_cmd->pe.status & (STATUS_QUAD_BUSY | STATUS_BLIT_BUSY));
+	while (P9100_READ_CMD(sc, P9000_PE_STATUS) &
+	    (STATUS_QUAD_BUSY | STATUS_BLIT_BUSY));
 }
 
 void
 p9100_ras_init(struct p9100_softc *sc)
 {
-
 	/*
 	 * Setup safe defaults for the parameter and drawing engine, in
 	 * order to minimize the operations to do for ri_ops.
 	 */
 
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.drawmode = DM_PICK_CONTROL | 0 |
-	    DM_BUFFER_CONTROL | DM_BUFFER_ENABLE0;
+	P9100_WRITE_CMD(sc, P9000_DE_DRAWMODE,
+	    DM_PICK_CONTROL | 0 | DM_BUFFER_CONTROL | DM_BUFFER_ENABLE0);
 
-	sc->sc_cmd->de.patternx = 0;
-	sc->sc_cmd->de.patterny = 0;
-	sc->sc_cmd->de.planemask = 0xffffffff;	/* enable all planes */
+	P9100_WRITE_CMD(sc, P9000_DE_PATTERN_ORIGIN_X, 0);
+	P9100_WRITE_CMD(sc, P9000_DE_PATTERN_ORIGIN_Y, 0);
+	/* enable all planes */
+	P9100_WRITE_CMD(sc, P9000_DE_PLANEMASK, 0xffffffff);
 
 	/* Unclip */
-	sc->sc_cmd->de.winmin = 0;
-	sc->sc_cmd->de.winmax =
-	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1);
+	P9100_WRITE_CMD(sc, P9000_DE_WINMIN, 0);
+	P9100_WRITE_CMD(sc, P9000_DE_WINMAX,
+	    P9000_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1));
 
 	P9100_SELECT_DE_HIGH(sc);
-	sc->sc_cmd->de.bwinmin = 0;
-	sc->sc_cmd->de.bwinmax =
-	    P9100_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1);
+	P9100_WRITE_CMD(sc, P9100_DE_B_WINMIN, 0);
+	P9100_WRITE_CMD(sc, P9100_DE_B_WINMAX,
+	    P9000_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1));
 
 	P9100_SELECT_PE(sc);
-	sc->sc_cmd->pe.winoffset = 0;
+	P9100_WRITE_CMD(sc, P9000_PE_WINOFFSET, 0);
 }
 
 void
@@ -810,18 +657,21 @@ p9100_ras_copycols(void *v, int row, int src, int dst, int n)
 
 	p9100_drain(sc);
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.raster = P9100_RASTER_SRC & P9100_RASTER_MASK;
+	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
+	    P9100_RASTER_SRC & P9100_RASTER_MASK);
 
-	P9100_SELECT_COORD(sc,dc.coord[0]);
-	sc->sc_cmd->dc.coord[0].abs_x16y16 = P9100_COORDS(src, row);
-	sc->sc_cmd->dc.coord[1].abs_x16y16 =
-	    P9100_COORDS(src + n, row + ri->ri_font->fontheight - 1);
-	P9100_SELECT_COORD(sc,dc.coord[2]);
-	sc->sc_cmd->dc.coord[2].abs_x16y16 = P9100_COORDS(dst, row);
-	sc->sc_cmd->dc.coord[3].abs_x16y16 =
-	    P9100_COORDS(dst + n, row + ri->ri_font->fontheight - 1);
+	P9100_SELECT_COORD(sc, P9000_DC_COORD(0));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(0) + P9000_COORD_XY,
+	    P9000_COORDS(src, row));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(1) + P9000_COORD_XY,
+	    P9000_COORDS(src + n, row + ri->ri_font->fontheight - 1));
+	P9100_SELECT_COORD(sc, P9000_DC_COORD(2));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(2) + P9000_COORD_XY,
+	    P9000_COORDS(dst, row));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(3) + P9000_COORD_XY,
+	    P9000_COORDS(dst + n, row + ri->ri_font->fontheight - 1));
 
-	sc->sc_junk = sc->sc_cmd->pe.blit;
+	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_BLIT);
 
 	p9100_drain(sc);
 }
@@ -841,18 +691,21 @@ p9100_ras_copyrows(void *v, int src, int dst, int n)
 
 	p9100_drain(sc);
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.raster = P9100_RASTER_SRC & P9100_RASTER_MASK;
+	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
+	    P9100_RASTER_SRC & P9100_RASTER_MASK);
 
-	P9100_SELECT_COORD(sc,dc.coord[0]);
-	sc->sc_cmd->dc.coord[0].abs_x16y16 = P9100_COORDS(ri->ri_xorigin, src);
-	sc->sc_cmd->dc.coord[1].abs_x16y16 =
-	    P9100_COORDS(ri->ri_xorigin + ri->ri_emuwidth - 1, src + n);
-	P9100_SELECT_COORD(sc,dc.coord[2]);
-	sc->sc_cmd->dc.coord[2].abs_x16y16 = P9100_COORDS(ri->ri_xorigin, dst);
-	sc->sc_cmd->dc.coord[3].abs_x16y16 =
-	    P9100_COORDS(ri->ri_xorigin + ri->ri_emuwidth - 1, dst + n);
+	P9100_SELECT_COORD(sc, P9000_DC_COORD(0));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(0) + P9000_COORD_XY,
+	    P9000_COORDS(ri->ri_xorigin, src));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(1) + P9000_COORD_XY,
+	    P9000_COORDS(ri->ri_xorigin + ri->ri_emuwidth - 1, src + n));
+	P9100_SELECT_COORD(sc, P9000_DC_COORD(2));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(2) + P9000_COORD_XY,
+	    P9000_COORDS(ri->ri_xorigin, dst));
+	P9100_WRITE_CMD(sc, P9000_DC_COORD(3) + P9000_COORD_XY,
+	    P9000_COORDS(ri->ri_xorigin + ri->ri_emuwidth - 1, dst + n));
 
-	sc->sc_junk = sc->sc_cmd->pe.blit;
+	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_BLIT);
 
 	p9100_drain(sc);
 }
@@ -874,15 +727,17 @@ p9100_ras_erasecols(void *v, int row, int col, int n, long int attr)
 
 	p9100_drain(sc);
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.raster = P9100_RASTER_PATTERN & P9100_RASTER_MASK;
-	sc->sc_cmd->de.color0 = P9100_COLOR8(bg);
+	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
+	    P9100_RASTER_PATTERN & P9100_RASTER_MASK);
+	P9100_WRITE_CMD(sc, P9100_DE_COLOR0, P9100_COLOR8(bg));
 
-	P9100_SELECT_COORD(sc,lc.rect);
-	sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(col, row);
-	sc->sc_cmd->lc.rect.abs_x16y16 =
-	    P9100_COORDS(col + n, row + ri->ri_font->fontheight);
+	P9100_SELECT_COORD(sc, P9000_LC_RECT);
+	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+	    P9000_COORDS(col, row));
+	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+	    P9000_COORDS(col + n, row + ri->ri_font->fontheight));
 
-	sc->sc_junk = sc->sc_cmd->pe.quad;
+	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9100_drain(sc);
 }
@@ -898,26 +753,28 @@ p9100_ras_eraserows(void *v, int row, int n, long int attr)
 
 	p9100_drain(sc);
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.raster = P9100_RASTER_PATTERN & P9100_RASTER_MASK;
-	sc->sc_cmd->de.color0 = P9100_COLOR8(bg);
+	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
+	    P9100_RASTER_PATTERN & P9100_RASTER_MASK);
+	P9100_WRITE_CMD(sc, P9100_DE_COLOR0, P9100_COLOR8(bg));
 
-	P9100_SELECT_COORD(sc,lc.rect);
+	P9100_SELECT_COORD(sc, P9000_LC_RECT);
 	if (n == ri->ri_rows && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
-		sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(0, 0);
-		sc->sc_cmd->lc.rect.abs_x16y16 =
-		    P9100_COORDS(ri->ri_width, ri->ri_height);
+		P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+		    P9000_COORDS(0, 0));
+		P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+		    P9000_COORDS(ri->ri_width, ri->ri_height));
 	} else {
 		n *= ri->ri_font->fontheight;
 		row *= ri->ri_font->fontheight;
 		row += ri->ri_yorigin;
 
-		sc->sc_cmd->lc.rect.abs_x16y16 =
-		    P9100_COORDS(ri->ri_xorigin, row);
-		sc->sc_cmd->lc.rect.abs_x16y16 =
-		    P9100_COORDS(ri->ri_xorigin + ri->ri_emuwidth, row + n);
+		P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+		    P9000_COORDS(ri->ri_xorigin, row));
+		P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+		    P9000_COORDS(ri->ri_xorigin + ri->ri_emuwidth, row + n));
 	}
 
-	sc->sc_junk = sc->sc_cmd->pe.quad;
+	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9100_drain(sc);
 }
@@ -934,15 +791,17 @@ p9100_ras_do_cursor(struct rasops_info *ri)
 	p9100_drain(sc);
 
 	P9100_SELECT_DE_LOW(sc);
-	sc->sc_cmd->de.raster = (~P9100_RASTER_DST) & P9100_RASTER_MASK;
+	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
+	    (~P9100_RASTER_DST) & P9100_RASTER_MASK);
 
-	P9100_SELECT_COORD(sc,lc.rect);
-	sc->sc_cmd->lc.rect.abs_x16y16 = P9100_COORDS(col, row);
-	sc->sc_cmd->lc.rect.abs_x16y16 =
-	    P9100_COORDS(col + ri->ri_font->fontwidth,
-	        row + ri->ri_font->fontheight);
+	P9100_SELECT_COORD(sc, P9000_LC_RECT);
+	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+	    P9000_COORDS(col, row));
+	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
+	    P9000_COORDS(col + ri->ri_font->fontwidth,
+	        row + ri->ri_font->fontheight));
 
-	sc->sc_junk = sc->sc_cmd->pe.quad;
+	sc->sc_junk = P9100_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9100_drain(sc);
 }

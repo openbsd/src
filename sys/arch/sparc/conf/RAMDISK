@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.44 2003/05/25 21:55:44 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.45 2003/06/17 21:21:31 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -271,7 +271,12 @@ wsdisplay* at zx?
 vigra*	at sbus?
 wsdisplay* at vigra?
 
-# Weitek p9100 found on Tadpole 3GS/3GX
+# Weitex P9000 found on Tadpole SPARCbook 3, with external ``Chameleon'' RAMDAC
+p9k0	at sbus?
+btcham0	at obio?
+wsdisplay* at p9k?
+
+# Weitek P9100 found on Tadpole SPARCbook 3GS/3GX/3TX/3XP
 pnozz0	at sbus?
 wsdisplay* at pnozz?
 

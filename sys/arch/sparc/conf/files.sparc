@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.54 2003/05/15 04:13:14 miod Exp $
+#	$OpenBSD: files.sparc,v 1.55 2003/06/17 21:21:31 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -190,7 +190,16 @@ device	cgtwelve: wsemuldisplaydev, rasops1, rasops32, wsemul_sun
 attach	cgtwelve at sbus
 file	arch/sparc/dev/cgtwelve.c	cgtwelve
 
-# Onboard Weitek p9100 found on Tadpole 3GS/3GX
+# Onboard Weitek P9000 found on Tadpole SPARCbook 3, and BT ``Chameleon'' RAMDAC
+device	p9k: wsemuldisplaydev, rasops8, wsemul_sun, bt_dac
+attach	p9k at sbus
+file	arch/sparc/dev/p9000.c		p9k
+
+device	btcham
+attach	btcham at obio
+file	arch/sparc/dev/bt445.c		btcham
+
+# Onboard Weitek p9100 found on Tadpole SPARCbook 3GS/3GX/3TX/3XP
 device	pnozz: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun, bt_dac
 attach	pnozz at sbus
 file	arch/sparc/dev/p9100.c		pnozz
