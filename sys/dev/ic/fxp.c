@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.65 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.66 2005/01/15 18:48:12 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -488,6 +488,12 @@ fxp_attach_common(sc, intrstr)
 			printf(", cksum @ 0x%x: 0x%x -> 0x%x\n",
 			    i, data, cksum);
 		}
+	}
+
+	/* Receiver lock-up workaround detection. */
+	fxp_read_eeprom(sc, &data, 3, 1);
+	if ((data & 0x03) != 0x03) {
+		sc->sc_flags |= FXPF_RECV_WORKAROUND;
 	}
 
 	/*
@@ -1026,8 +1032,9 @@ fxp_stats_update(arg)
 	if (sp->rx_good) {
 		ifp->if_ipackets += letoh32(sp->rx_good);
 		sc->rx_idle_secs = 0;
-	} else
+	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->rx_idle_secs++;
+	}
 	ifp->if_ierrors +=
 	    letoh32(sp->rx_crc_errors) +
 	    letoh32(sp->rx_alignment_errors) +
