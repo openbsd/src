@@ -1,9 +1,10 @@
-/*	$OpenBSD: in6_ifattach.h,v 1.1 1999/12/08 06:50:21 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.h,v 1.2 2000/04/17 04:44:50 itojun Exp $	*/
+/*	$KAME: in6_ifattach.h,v 1.9 2000/04/12 05:35:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,18 +34,8 @@
 #define _NETINET6_IN6_IFATTACH_H_
 
 #ifdef _KERNEL
-extern int found_first_ifid;
-
-int in6_ifattach_getifid __P((struct ifnet *));
-void in6_ifattach_p2p __P((void));
-void in6_ifattach __P((struct ifnet *, u_int, caddr_t, int));
+void in6_ifattach __P((struct ifnet *, struct ifnet *));
 void in6_ifdetach __P((struct ifnet *));
 #endif /* _KERNEL */
-
-#define IN6_IFT_LOOP	1
-#define IN6_IFT_P2P	2
-#define IN6_IFT_802	3
-#define IN6_IFT_P2P802	4
-#define IN6_IFT_ARCNET	5
 
 #endif /* _NETINET6_IN6_IFATTACH_H_ */

@@ -1,10 +1,10 @@
-/*	$OpenBSD: nd6.h,v 1.4 2000/02/28 11:55:22 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.16 2000/02/24 16:34:51 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.5 2000/04/17 04:44:51 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.19 2000/03/25 07:23:57 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -67,10 +67,13 @@ struct nd_ifinfo {
 	u_int32_t basereachable;	/* BaseReachableTime */
 	u_int32_t reachable;		/* Reachable Time */
 	u_int32_t retrans;		/* Retrans Timer */
+	u_int32_t flags;		/* Flags */
 	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t chlim;			/* CurHopLimit */
 	u_int8_t receivedra;
 };
+
+#define ND6_IFF_PERFORMNUD	0x1
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */

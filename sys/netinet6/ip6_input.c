@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.9 2000/03/22 03:50:35 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.10 2000/04/17 04:44:50 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.72 2000/03/21 09:23:19 itojun Exp $	*/
 
 /*
@@ -182,17 +182,13 @@ static void
 ip6_init2(dummy)
 	void *dummy;
 {
-	int ret;
-
-	/* get EUI64 from somewhere */
-	ret = in6_ifattach_getifid(NULL);
 
 #if 1
 	/*
 	 * to route local address of p2p link to loopback,
 	 * assign loopback address first. 
 	 */
-	in6_ifattach(&loif[0], IN6_IFT_LOOP, NULL, 0);
+	in6_ifattach(&loif[0], NULL);
 #else
 	/* you MUST bring lo0 up manually, in rc script. */
 #endif

@@ -1,5 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.17 2000/03/22 03:48:30 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.63 2000/03/21 05:18:38 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.75 2000/04/12 03:51:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -82,11 +81,9 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include "gif.h"
-
 #if NGIF > 0
 #include <net/if_gif.h>
 #endif
-
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
@@ -309,7 +306,7 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct	sockaddr_in6 oldaddr;
 #ifdef COMPAT_IN6IFIOCTL
-	struct sockaddr_in6 net;
+	struct	sockaddr_in6 net;
 #endif
 	int error = 0, hostIsNew, prefixIsNew;
 	int newifaddr;
@@ -350,6 +347,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSPFXFLUSH_IN6:
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCSDEFIFACE_IN6:
+	case SIOCSIFINFO_FLAGS:
 		if (!privileged)
 			return(EPERM);
 		/*fall through*/
@@ -396,8 +394,7 @@ in6_control(so, cmd, data, ifp, p)
 				/* interface ID is not embedded by the user */
 				sa6->sin6_addr.s6_addr16[1] =
 					htons(ifp->if_index);
-			}
-			else if (sa6->sin6_addr.s6_addr16[1] !=
+			} else if (sa6->sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				return(EINVAL);	/* ifid is contradict */
 			}
@@ -434,7 +431,7 @@ in6_control(so, cmd, data, ifp, p)
 		 * on a single interface, SIOCSIFxxx ioctls are not suitable
 		 * and should be unused.
 		 */
-#endif 
+#endif
 		if (ifra->ifra_addr.sin6_family != AF_INET6)
 			return(EAFNOSUPPORT);
 		if (!privileged)
@@ -584,8 +581,7 @@ in6_control(so, cmd, data, ifp, p)
 				/* interface ID is not embedded by the user */
 				ia->ia_dstaddr.sin6_addr.s6_addr16[1]
 					= htons(ifp->if_index);
-			}
-			else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
+			} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
 				ia->ia_dstaddr = oldaddr;
 				return(EINVAL);	/* ifid is contradict */
@@ -606,7 +602,7 @@ in6_control(so, cmd, data, ifp, p)
 		}
 		break;
 
-#endif 
+#endif
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia->ia6_lifetime;
 		break;
@@ -681,7 +677,7 @@ in6_control(so, cmd, data, ifp, p)
 				ia->ia_prefixmask.sin6_addr.s6_addr32[3];
 		ia->ia_net = net;
 		break;
-#endif 
+#endif
 
 	case SIOCAIFADDR_IN6:
 		prefixIsNew = 0;
@@ -1267,8 +1263,7 @@ in6_savemkludge(oia)
 
 		if (mk->mk_head.lh_first != NULL) {
 			LIST_INSERT_HEAD(&in6_mk, mk, mk_entry);
-		}
-		else {
+		} else {
 			FREE(mk, M_IPMADDR);
 		}
 	}
@@ -1734,7 +1729,7 @@ in6_ifawithscope(oifp, dst)
 	register struct ifnet *oifp;
 	register struct in6_addr *dst;
 {
-	int dst_scope =	in6_addrscope(dst), src_scope, best_scope;
+	int dst_scope =	in6_addrscope(dst), src_scope, best_scope = 0;
 	int blen = -1;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
@@ -2074,64 +2069,13 @@ in6_if_up(ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
-	struct sockaddr_dl *sdl;
-	int type;
-	struct ether_addr ea;
-	int off;
 	int dad_delay;		/* delay ticks before DAD output */
 
-	bzero(&ea, sizeof(ea));
-	sdl = NULL;
+	/*
+	 * special cases, like 6to4, are handled in in6_ifattach
+	 */
+	in6_ifattach(ifp, NULL);
 
-	for (ifa = ifp->if_addrlist.tqh_first;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
-	{
-		if (ifa->ifa_addr->sa_family == AF_INET6
-		 && IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr)) {
-			goto dad;
-		}
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		break;
-	}
-
-	switch (ifp->if_type) {
-	case IFT_LOOP:
-		in6_ifattach(ifp, IN6_IFT_LOOP, NULL, 1);
-		break;
-	case IFT_SLIP:
-	case IFT_PPP:
-	case IFT_DUMMY:
-	case IFT_GIF:
-	case IFT_FAITH:
-		type = IN6_IFT_P2P;
-		in6_ifattach(ifp, type, 0, 1);
-		break;
-	case IFT_ETHER:
-	case IFT_FDDI:
-	case IFT_ATM:
-		type = IN6_IFT_802;
-		if (sdl == NULL)
-			break;
-		off = sdl->sdl_nlen;
-		if (bcmp(&sdl->sdl_data[off], &ea, sizeof(ea)) != 0)
-			in6_ifattach(ifp, type, LLADDR(sdl), 0);
-		break;
-	case IFT_ARCNET:
-		type = IN6_IFT_ARCNET;
-		if (sdl == NULL)
-			break;
-		off = sdl->sdl_nlen;
-		if (sdl->sdl_data[off] != 0)	/* XXX ?: */
-			in6_ifattach(ifp, type, LLADDR(sdl), 0);
-		break;
-	default:
-		break;
-	}
-
-dad:
 	dad_delay = 0;
 	for (ifa = ifp->if_addrlist.tqh_first;
 	     ifa;
