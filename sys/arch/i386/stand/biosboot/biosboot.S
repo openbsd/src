@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.20 1997/09/05 17:58:49 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.21 1997/11/05 02:12:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,6 +59,12 @@
 #else /* !DEBUG */
 #define DBGMSG(msg)	/* */
 #endif /* !DEBUG */
+#define	puts(s)			\
+	data32;			\
+	movl	$s, %esi;	\
+	/* call	Lmessage */;	\
+	.byte	0xe8;		\
+	.word	Lmessage - . - 2
 
 	.text
 
@@ -147,12 +153,7 @@ ebpb:	.long	16		/* hidden sectors */
 	int	$0x14
 	popl	%dx
 #endif
-
-	data32
-	movl	$1b, %esi
-	# call	Lmessage
-	.byte	0xe8
-	.word	Lmessage - . - 2
+	puts(1b)
 
 	data32
 	xorl	%ebx, %ebx		/* put it at %es:0 */
@@ -177,8 +178,7 @@ ebpb:	.long	16		/* hidden sectors */
 	jnc	3f
 
 	/* read error */
-       	data32
-	movl    $2f, %esi
+	puts(2f)
 	jmp	5f
 2:	.asciz	"\r\nRead error\r\n"
 
@@ -195,11 +195,7 @@ ebpb:	.long	16		/* hidden sectors */
 	popl	%cx
 	loop	1b
 
-	data32
-	movl    $2f, %esi	/* new line */
-	# call	Lmessage
-	.byte	0xe8
-	.word	Lmessage - . - 2
+	puts(2f)
 
 	xorl	%si, %si
 	cld
@@ -210,12 +206,8 @@ ebpb:	.long	16		/* hidden sectors */
 	.word	ZMAGIC
 	je	3f
 
-	data32
-	movl	$1f, %esi
+	puts(1f)
 5:
-	# call	Lmessage
-	.byte	0xe8
-	.word	Lmessage - . - 2
 	cli
 	hlt
 1:	.ascii	"Bad magic"
