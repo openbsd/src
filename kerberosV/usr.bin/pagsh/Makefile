@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2002/05/11 00:20:19 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2002/06/11 15:30:16 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,7 +6,6 @@ KRBDEPTH=../..
 PROG=	pagsh
 
 .PATH:	${KRB5SRC}/appl/afsutil
-NOMAN=
 
 CFLAGS+=-I${KRB5SRC}/lib/roken
 DPADD+=	${LIBKRB5} ${LIBDES} ${LIBKAFS} ${LIBKRB} ${LIBASN1} ${LIBCRYPTO} \
