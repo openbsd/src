@@ -100,6 +100,7 @@ int pfkeyv2_get(struct tdb *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
+int pfkeyv2_flush_walker(struct tdb *, void *);
 
 #define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
@@ -673,6 +674,15 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
 }
 #endif /* 0 */
 
+int 
+pfkeyv2_flush_walker(struct tdb *sa, void *xf_type_vp)
+{
+  if (!(*((u_short *)xf_type_vp)) || 
+      sa->tdb_xform->xf_type == *((u_short *)xf_type_vp))
+    tdb_delete(sa, 0, 0);
+  return 0;
+}
+
 int
 pfkeyv2_send(struct socket *socket, void *message, int len)
 {
@@ -1122,9 +1132,45 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       break;
 
     case SADB_FLUSH:
-/* XXX netsec_sadb_flush(((struct sadb_msg *)headers[0])->sadb_msg_satype); */
+    {
       rval = 0;
+      switch(((struct sadb_msg *)headers[0])->sadb_msg_satype)
+      {
+      case SADB_SATYPE_UNSPEC:  
+          i = 0; 
+          break;
+      case SADB_SATYPE_AH:
+          i = XF_NEW_AH; 
+          break;
+      case SADB_SATYPE_ESP:
+          i = XF_NEW_ESP; 
+          break;
+      case SADB_X_SATYPE_AH_OLD:
+          i = XF_OLD_AH; 
+          break;
+      case SADB_X_SATYPE_ESP_OLD:
+          i = XF_OLD_ESP; 
+          break;
+      case SADB_X_SATYPE_IPIP:
+          i = XF_IP4; 
+          break; 
+#if 0  /* Not yet */
+      case SADB_X_SATYPE_TCPSIGNATURE:
+          i = XF_TCPSIGNATURE; 
+          break;
+#endif
+      default:
+          rval = EINVAL; /* Unknown/unsupported type */
+      }
+      
+      if (!rval)
+      {
+          s = spltdb();
+          tdb_walk(pfkeyv2_flush_walker, (u_short *)&i);
+          goto splxret;
+      }
       break;
+    }
 
     case SADB_DUMP:
       {
@@ -1132,10 +1178,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
         dump_state.sadb_msg = (struct sadb_msg *)headers[0];
         dump_state.socket = socket;
 	
-/** XXX
-        if (!(rval = netsec_sadb_walk(pfkeyv2_dump_walker, &dump_state, 1)))
+#if 0 /* notyet */
+        if (!(rval = tdb_walk(pfkeyv2_dump_walker, &dump_state)))
 	  goto realret;
-*/
+#endif
+
 	if ((rval == ENOMEM) || (rval == ENOBUFS))
 	  rval = 0;
       }
