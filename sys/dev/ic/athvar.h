@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.1 2004/11/02 02:45:37 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.2 2004/11/23 09:39:29 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -49,11 +49,14 @@
 
 #include <dev/ic/ar5xxx.h>
 
+#include "gpio.h"
+
 #define	ATH_TIMEOUT		1000
 
 #define	ATH_RXBUF	40		/* number of RX buffers */
 #define	ATH_TXBUF	60		/* number of TX buffers */
 #define	ATH_TXDESC	8		/* number of descriptors per buffer */
+#define ATH_MAXGPIO	10		/* maximal number of gpio pins */
 
 struct ath_recv_hist {
 	int		arh_ticks;	/* sample time by system clock */
@@ -323,7 +326,14 @@ struct ath_softc {
 #endif
 
         u_int8_t                sc_broadcast_addr[IEEE80211_ADDR_LEN];
+
+#if NGPIO > 0
+	struct gpio_chipset_tag sc_gpio_gc;	/* gpio(4) framework */
+	gpio_pin_t		sc_gpio_pins[ATH_MAXGPIO];
+#endif
 };
+
+
 
 /*
  * Wrapper code
@@ -334,6 +344,7 @@ struct ath_softc {
 
 #define	ATH_ATTACHED		0x0001		/* attach has succeeded */
 #define ATH_ENABLED		0x0002		/* chip is enabled */
+#define ATH_GPIO		0x0004		/* gpio device attached */
 
 #define	ATH_IS_ENABLED(sc)	((sc)->sc_flags & ATH_ENABLED)
 #endif
@@ -378,7 +389,7 @@ struct ath_softc {
 typedef unsigned long u_intptr_t;
 
 int	ath_attach(u_int16_t, struct ath_softc *);
-int	ath_detach(struct ath_softc *);
+int	ath_detach(struct ath_softc *, int);
 void	ath_resume(struct ath_softc *, int);
 void	ath_suspend(struct ath_softc *, int);
 #ifdef __NetBSD__
@@ -472,18 +483,16 @@ int	ath_intr(void *);
 #define	ath_hal_detach(_ah) \
 	((*(_ah)->ah_detach)(_ah))
 
-#ifdef SOFTLED
-#define ath_hal_gpioCfgOutput(_ah, _gpio) \
+#define ath_hal_gpiocfgoutput(_ah, _gpio) \
         ((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
-#define ath_hal_gpioCfgInput(_ah, _gpio) \
+#define ath_hal_gpiocfginput(_ah, _gpio) \
         ((*(_ah)->ah_gpioCfgInput)((_ah), (_gpio)))
-#define ath_hal_gpioGet(_ah, _gpio) \
+#define ath_hal_gpioget(_ah, _gpio) \
         ((*(_ah)->ah_gpioGet)((_ah), (_gpio)))
-#define ath_hal_gpioSet(_ah, _gpio, _b) \
+#define ath_hal_gpioset(_ah, _gpio, _b) \
         ((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
-#define ath_hal_gpioSetIntr(_ah, _gpioSel, _b) \
-        ((*(_ah)->ah_gpioSetIntr)((_ah), (_sel), (_b)))
-#endif
+#define ath_hal_gpiosetintr(_ah, _gpio, _b) \
+        ((*(_ah)->ah_gpioSetIntr)((_ah), (_gpio), (_b)))
 
 #define	ath_hal_setopmode(_ah) \
 	((*(_ah)->ah_setPCUConfig)((_ah)))

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.3 2004/11/11 20:11:28 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.4 2004/11/23 09:39:28 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/timeout.h>
+#include <sys/gpio.h>
 
 #include <machine/endian.h>
 #include <machine/bus.h>
@@ -78,6 +79,8 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
+
+#include <dev/gpio/gpiovar.h>
 
 #include <dev/ic/athvar.h>
 
@@ -153,6 +156,13 @@ void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
 int	ath_enable(struct ath_softc *);
 void	ath_disable(struct ath_softc *);
 void	ath_power(int, void *);
+
+#if NGPIO > 0
+int	ath_gpio_attach(struct ath_softc *);
+int	ath_gpio_pin_read(void *, int);
+void	ath_gpio_pin_write(void *, int, int);
+void	ath_gpio_pin_ctl(void *, int, int);
+#endif
 
 #ifdef __FreeBSD__
 SYSCTL_DECL(_hw_ath);
@@ -598,6 +608,11 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	printf(", %s, address %s\n", ieee80211_regdomain2name(ath_regdomain),
 	       ether_sprintf(ic->ic_myaddr));
 
+#if NGPIO > 0
+	if (ath_gpio_attach(sc) == 0)
+		sc->sc_flags |= ATH_GPIO;
+#endif
+
 	return 0;
 bad2:
 	ath_desc_free(sc);
@@ -609,13 +624,16 @@ bad:
 }
 
 int
-ath_detach(struct ath_softc *sc)
+ath_detach(struct ath_softc *sc, int flags)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
 
+	config_detach_children(&sc->sc_dev, flags);
+
 	if ((sc->sc_flags & ATH_ATTACHED) == 0)
 		return (0);
+
 	DPRINTF(ATH_DEBUG_ANY, ("%s: if_flags %x\n", __func__, ifp->if_flags));
 	
 	s = splnet();
@@ -638,6 +656,7 @@ ath_detach(struct ath_softc *sc)
 	ATH_TXQ_LOCK_DESTROY(sc);
 
 #endif /* __FreeBSD__ */
+
 	return 0;
 }
 
@@ -3620,3 +3639,75 @@ ath_printtxbuf(struct ath_buf *bf, int done)
 	}
 }
 #endif /* AR_DEBUG */
+
+#if NGPIO > 0
+int
+ath_gpio_attach(struct ath_softc *sc)
+{
+	struct ath_hal *ah = sc->sc_ah;
+	struct gpiobus_attach_args gba;
+	int i;
+
+	if (ah->ah_gpio_npins < 1)
+		return 0;
+	
+	/* Initialize gpio pins array */
+	for (i = 0; i < ah->ah_gpio_npins; i++) {
+		sc->sc_gpio_pins[i].pin_num = i;
+		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
+		    GPIO_PIN_OUTPUT;
+
+		/* Set pin mode to input */
+		ath_hal_gpiocfginput(ah, i);
+		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_INPUT;
+
+		/* Get pin input */
+		sc->sc_gpio_pins[i].pin_state = ath_hal_gpioget(ah, i) ?
+		    GPIO_PIN_HIGH : GPIO_PIN_LOW;
+	}
+
+	/* Create gpio controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = ath_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = ath_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = ath_gpio_pin_ctl;
+
+	gba.gba_name = "gpio";
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = ah->ah_gpio_npins;
+
+	if (config_found(&sc->sc_dev, &gba, gpiobus_print) == NULL)
+		return (ENODEV);
+
+	return (0);
+}
+
+int
+ath_gpio_pin_read(void *arg, int pin)
+{
+	struct ath_softc *sc = arg;
+	struct ath_hal *ah = sc->sc_ah;
+	return (ath_hal_gpioget(ah, pin) ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
+}
+
+void
+ath_gpio_pin_write(void *arg, int pin, int value)
+{
+	struct ath_softc *sc = arg;
+	struct ath_hal *ah = sc->sc_ah;
+	ath_hal_gpioset(ah, pin, value ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
+}
+
+void
+ath_gpio_pin_ctl(void *arg, int pin, int flags)
+{
+	struct ath_softc *sc = arg;
+	struct ath_hal *ah = sc->sc_ah;
+
+	if (flags & GPIO_PIN_INPUT)
+		ath_hal_gpiocfginput(ah, pin);
+	else if (flags & GPIO_PIN_OUTPUT)
+		ath_hal_gpiocfgoutput(ah, pin);
+}
+#endif /* NGPIO */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.1 2004/11/02 02:45:37 reyk Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.2 2004/11/23 09:39:29 reyk Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 
 #include <machine/endian.h>
  
@@ -68,7 +69,6 @@
 #include <net/bpf.h>
 #endif 
 
-
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -77,16 +77,15 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
-
-#include <dev/ic/athvar.h>
+#include <dev/gpio/gpiovar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
+
+#include <dev/ic/athvar.h>
 
 /*
  * PCI configuration space registers
@@ -211,7 +210,7 @@ ath_cardbus_detach(struct device *self, int flags)
 		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
-	rv = ath_detach(sc);
+	rv = ath_detach(sc, flags);
 	if (rv)
 		return (rv);
 

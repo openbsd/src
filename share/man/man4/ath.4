@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.8 2004/11/08 23:05:42 deraadt Exp $
+.\"	$OpenBSD: ath.4,v 1.9 2004/11/23 09:39:29 reyk Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -51,6 +51,7 @@
 .Sh SYNOPSIS
 .Cd "ath* at pci? dev ? function ?"
 .Cd "ath* at cardbus? dev ? function ?"
+.Cd "gpio* at ath?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -249,6 +250,7 @@ This should not happen.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,
+.Xr gpio 4 ,
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.2 2004/11/02 03:19:15 brad Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.3 2004/11/23 09:39:29 reyk Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 
 #include <machine/bus.h>
  
@@ -67,13 +68,13 @@
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
 
-#include <dev/ic/athvar.h>
+#include <dev/gpio/gpiovar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/device.h>
+#include <dev/ic/athvar.h>
 
 /*
  * PCI glue.
@@ -235,7 +236,7 @@ ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
-	ath_detach(&psc->sc_sc);
+	ath_detach(&psc->sc_sc, flags);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);

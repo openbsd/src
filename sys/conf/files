@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.319 2004/11/17 14:12:59 deraadt Exp $
+#	$OpenBSD: files,v 1.320 2004/11/23 09:39:29 reyk Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -329,7 +329,7 @@ file	dev/ic/ar5210.c		ar5xxx
 #file	dev/ic/ar5212.c		ar5xxx
 
 # Atheros AR5k (802.11/a/b/g) driver
-device	ath: ether, ifnet, ifmedia, ar5xxx, wlan
+device	ath: ether, ifnet, ifmedia, ar5xxx, wlan, gpiobus
 file	dev/ic/ath.c		ath
 
 # ADMtek ADM8211 802.11
