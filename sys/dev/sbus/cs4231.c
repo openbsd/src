@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.21 2003/07/03 20:36:07 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.22 2004/09/29 19:17:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -260,8 +260,6 @@ cs4231_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_burst = burst & sbusburst;
 
 	printf("\n");
-
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	audio_attach_mi(&cs4231_sa_hw_if, sc, &sc->sc_dev);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.7 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.8 2004/09/29 19:17:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -69,7 +69,6 @@ struct cs4231_softc {
 	bus_dma_tag_t sc_dmatag;
 	bus_space_tag_t	sc_bustag;	/* CS4231/APC register tag */
 	bus_space_handle_t sc_regs;	/* CS4231/APC register handle */
-	struct	evcnt sc_intrcnt;	/* statistics */
 	int	sc_burst;		/* XXX: DMA burst size in effect */
 	int	sc_open;		/* already open? */
 

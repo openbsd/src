@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.15 2003/07/03 21:02:13 jason Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.16 2004/09/29 19:17:43 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -529,9 +529,6 @@ espattach(struct esp_softc *esc, struct ncr53c9x_glue *gluep)
 	/* Establish interrupt channel */
 	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO, 0,
 				     ncr53c9x_intr, sc, sc->sc_dev.dv_xname);
-
-	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/* Turn on target selection using the `dma' method */
 	if (sc->sc_rev != NCR_VARIANT_FAS366)

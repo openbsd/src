@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231var.h,v 1.6 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: ce4231var.h,v 1.7 2004/09/29 19:17:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -62,7 +62,6 @@ struct ce4231_softc {
 	bus_space_handle_t sc_cdmahandle; /* capture DMA handle */
 	bus_space_handle_t sc_pdmahandle; /* playback DMA handle */
 	bus_space_handle_t sc_auxhandle;  /* AUX handle */
-	struct	evcnt sc_intrcnt;	/* statistics */
 	int	sc_open;		/* already open? */
 	int	sc_locked;		/* locked? */
 

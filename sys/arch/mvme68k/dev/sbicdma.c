@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.12 2004/09/29 19:17:40 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -138,9 +138,6 @@ sbicdmaattach(parent, self, args)
 
 	sbicreset(sc);
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_dmaintrcnt);
-
 	config_found(self, &sc->sc_link, sbicdmaprint);
 }
 
@@ -214,7 +211,6 @@ printf("dmaintr%d ", stat);
 		if (stat & PCC_DMACSR_DMAERRDATA) {
 			printf("%s: DMA bus error\n", sc->sc_dev.dv_xname);
 		}
-		sc->sc_dmaintrcnt.ev_count++;
 		return (1);
 	}
 	return (0);
@@ -239,7 +235,6 @@ printf("scintr%d ", stat);
 		sys_pcc->pcc_sbicirq = 0;
 		sbicintr(sc);
 		ret = 1;
-		sc->sc_intrcnt.ev_count++;
 	}
 	return (ret);
 }

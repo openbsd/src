@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.16 2004/09/28 18:37:43 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.17 2004/09/29 19:17:43 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -453,9 +453,6 @@ zs_attach(zsc, zsd, pri)
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 
-	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
-
-
 	/*
 	 * Set the master interrupt enable and interrupt vector.
 	 * (common to both channels, do it on A)
@@ -500,7 +497,6 @@ zshard(arg)
 	while ((rr3 = zsc_intr_hard(zsc))) {
 		/* Count up the interrupts. */
 		rval |= rr3;
-		zsc->zsc_intrcnt.ev_count++;
 	}
 	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&

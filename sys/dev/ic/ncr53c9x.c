@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.23 2004/06/21 23:50:35 tholo Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.24 2004/09/29 19:17:43 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1928,8 +1928,6 @@ ncr53c9x_intr(arg)
 again:
 	/* and what do the registers say... */
 	ncr53c9x_readregs(sc);
-
-	sc->sc_intrcnt.ev_count++;
 
 	/*
 	 * At the moment, only a SCSI Bus Reset or Illegal
