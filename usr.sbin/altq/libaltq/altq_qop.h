@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_qop.h,v 1.1.1.1 2001/06/27 18:23:23 kjc Exp $	*/
+/*	$OpenBSD: altq_qop.h,v 1.2 2002/02/13 08:21:45 kjc Exp $	*/
 /*	$KAME: altq_qop.h,v 1.4 2000/10/18 09:15:18 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -124,8 +124,7 @@ struct fltrinfo {
 	int			dontwarn;	/* supress warning msg */
 };
 
-int DoCommand(char *infile, FILE *infp);
-
+int do_command(FILE *infp);
 int qcmd_enable(const char *ifname);
 int qcmd_disable(const char *ifname);
 int qcmd_delete_if(const char *ifname);
