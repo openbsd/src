@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.16 1997/12/03 00:19:32 rees Exp $	*/
+/*	$OpenBSD: apm.c,v 1.17 1997/12/11 00:58:44 rees Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -751,12 +751,14 @@ apmopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
 		return ENXIO;
 	
+	sc = apm_cd.cd_devs[APMUNIT(dev)];
+
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE))
@@ -783,12 +785,14 @@ apmclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
 		return ENXIO;
 	
+	sc = apm_cd.cd_devs[APMUNIT(dev)];
+
 	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
 
 	switch (APMDEV(dev)) {
@@ -814,7 +818,7 @@ apmioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 	struct apmregs regs;
@@ -822,9 +826,11 @@ apmioctl(dev, cmd, data, flag, p)
 	struct apm_ctl *actl;
 
 	/* apm0 only */
-	if (APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
 		return ENXIO;
 	
+	sc = apm_cd.cd_devs[APMUNIT(dev)];
+
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
@@ -906,12 +912,14 @@ apmselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
 		return ENXIO;
 	
+	sc = apm_cd.cd_devs[APMUNIT(dev)];
+
 	switch (rw) {
 	case FREAD:
 		if (sc->event_count)
