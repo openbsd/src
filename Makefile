@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1996/04/23 09:47:22 mickey Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/05/06 20:31:44 deraadt Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
@@ -24,12 +24,12 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-#beforeinstall:
-#.ifndef DESTDIR
-#	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
-#.else
-#	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
-#.endif
+beforeinstall:
+.ifndef DESTDIR
+	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+.else
+	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
+.endif
 
 afterinstall:
 .ifndef NOMAN
@@ -38,7 +38,7 @@ afterinstall:
 
 build:
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
-	(cd ${.CURDIR}/include && ${MAKE} install)
+	${MAKE} includes
 .if defined(KERBEROS)
 	(cd ${.CURDIR}/kerberosIV/include && ${MAKE} install)
 .endif
