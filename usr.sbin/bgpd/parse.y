@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2004/02/09 00:00:41 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.55 2004/02/09 01:46:34 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1033,7 +1033,6 @@ alloc_peer(void)
 	p->next = NULL;
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_UNDEF;
-	p->conf.max_prefix = ULONG_MAX;
 
 	return (p);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.92 2004/02/07 11:42:30 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.93 2004/02/09 01:46:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -131,7 +131,7 @@ struct peer_config {
 	char			 descr[PEER_DESCR_LEN];
 	struct bgpd_addr	 remote_addr;
 	struct bgpd_addr	 local_addr;
-	u_long			 max_prefix;
+	u_int32_t		 max_prefix;
 	u_int16_t		 remote_as;
 	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */

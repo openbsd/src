@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.74 2004/02/07 11:42:30 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.75 2004/02/09 01:46:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -422,7 +422,8 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		nlri_len -= pos;
 		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
-		if (peer->prefix_cnt >= peer->conf.max_prefix) {
+		if (peer->conf.max_prefix &&
+		    peer->prefix_cnt >= peer->conf.max_prefix) {
 			log_peer_warnx(&peer->conf, "prefix limit reached");
 			rde_update_err(peer, ERR_UPD_UNSPECIFIC);
 			break;
@@ -907,7 +908,6 @@ network_init(struct network_head *net_l)
 	bzero(&peerself, sizeof(peerself));
 	peerself.state = PEER_UP;
 	peerself.remote_bgpid = conf->bgpid;
-	peerself.conf.max_prefix = ULONG_MAX;
 	peerself.conf.remote_as = conf->as;
 	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
 	    "LOCAL AS %hu", conf->as);
