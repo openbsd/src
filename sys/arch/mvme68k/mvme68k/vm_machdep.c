@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/09/19 20:50:56 mickey Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.30 2001/09/29 21:26:33 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,8 +71,8 @@
 void
 cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
-   void *stack;
-   size_t stacksize;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -141,13 +141,6 @@ cpu_exit(p)
 	uvmexp.swtch++;
 	switch_exit(p);
 	/* NOTREACHED */
-}
-
-void
-cpu_cleanup(p)
-	struct proc *p;
-{
-
 }
 
 /*
@@ -232,24 +225,6 @@ physunaccess(vaddr, size)
 }
 
 /*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-setredzone(pte, vaddr)
-	pt_entry_t *pte;
-	caddr_t vaddr;
-{
-}
-
-/*
  * Convert kernel VA to physical address
  */
 int
@@ -262,8 +237,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern vm_map_t phys_map;
 
 /*
  * Map an IO request into kernel virtual address space.
@@ -286,8 +259,11 @@ vmapbuf(bp, siz)
 	vm_offset_t kva;
 	vm_offset_t pa;
 
+#ifdef DIAGNOSTIC
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
+#endif
+
 	addr = bp->b_saveaddr = bp->b_data;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
@@ -317,8 +293,11 @@ vunmapbuf(bp, siz)
 	register int npf;
 	vm_offset_t kva;
 
+#ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
+#endif
+
 	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
