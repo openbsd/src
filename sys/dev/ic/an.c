@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.30 2003/09/23 11:13:20 avsm Exp $	*/
+/*	$OpenBSD: an.c,v 1.31 2003/09/25 22:32:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -241,13 +241,13 @@ an_attach(sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	bzero(sc->an_config.an_nodename, sizeof(sc->an_config.an_nodename));
-	bcopy(AN_DEFAULT_NODENAME, sc->an_config.an_nodename,
-	    sizeof(AN_DEFAULT_NODENAME) - 1);
+	strlcpy(sc->an_config.an_nodename, AN_DEFAULT_NODENAME,
+	    sizeof(sc->an_config.an_nodename));
 
 	bzero(sc->an_ssidlist.an_ssid1, sizeof(sc->an_ssidlist.an_ssid1));
-	bcopy(AN_DEFAULT_NETNAME, sc->an_ssidlist.an_ssid1,
-	    sizeof(AN_DEFAULT_NETNAME) - 1);
-	sc->an_ssidlist.an_ssid1_len = strlen(AN_DEFAULT_NETNAME);
+	strlcpy(sc->an_ssidlist.an_ssid1, AN_DEFAULT_NETNAME,
+	    sizeof(sc->an_ssidlist.an_ssid1));
+	sc->an_ssidlist.an_ssid1_len = strlen(sc->an_ssidlist.an_ssid1);
 
 	sc->an_config.an_opmode = AN_OPMODE_INFRASTRUCTURE_STATION;
 
