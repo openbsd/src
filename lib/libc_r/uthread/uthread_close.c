@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.6 1999/11/25 07:01:33 d Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.7 2000/01/06 07:14:28 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,7 +46,6 @@ close(int fd)
 {
 	int		flags;
 	int		ret;
-	int		status;
 	struct stat	sb;
 	struct fd_table_entry	*entry;
 
