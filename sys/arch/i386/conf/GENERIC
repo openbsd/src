@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 1997/07/03 07:24:16 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.42 1997/08/25 05:28:05 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -84,7 +84,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
