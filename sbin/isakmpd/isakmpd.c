@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.35 2001/08/23 23:11:02 angelos Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.36 2001/08/24 13:53:02 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include "init.h"
 #include "libcrypto.h"
 #include "log.h"
+#include "sa.h"
 #include "timer.h"
 #include "transport.h"
 #include "udp.h"
@@ -87,6 +88,20 @@ static int sighupped = 0;
 static int sigusr1ed = 0;
 static char *report_file = "/var/run/isakmpd.report";
 
+/*
+ * If we receive a USR2 signal, this flag gets set to show we need to
+ * rehash our SA soft expiration timers to a uniform distribution.
+ * XXX Perhaps this is a really bad idea?
+ */
+static int sigusr2ed = 0;
+
+/*
+ * If we recieve a TERM signal, perform a "clean shutdown" of the daemon.
+ * This includes to send DELETE notifications for all our active SAs.
+ */
+static int sigtermed = 0;
+void daemon_shutdown_now (int);
+
 /* The default path of the PID file.  */
 static char *pid_file = "/var/run/isakmpd.pid";
 
@@ -94,13 +109,6 @@ static char *pid_file = "/var/run/isakmpd.pid";
 /* The path of the IKE packet capture log file.  */
 static char *pcap_file = 0;
 #endif
-
-/*
- * If we receive a USR2 signal, this flag gets set to show we need to
- * rehash our SA soft expiration timers to a uniform distribution.
- * XXX Perhaps this is a really bad idea?
- */
-static int sigusr2ed = 0;
 
 static void
 usage (void)
@@ -318,6 +326,61 @@ sigusr2 (int sig)
   sigusr2ed = 1;
 }
 
+static int
+phase2_sa_check (struct sa *sa, void *arg)
+{
+  return sa->phase == 2;
+}
+
+static void
+daemon_shutdown (void)
+{
+  /* Perform a (protocol-wise) clean shutdown of the daemon.  */
+  struct sa *sa;
+  static int msg_counter = 0;
+
+  if (sigtermed == 1)
+    {
+      log_print ("isakmpd: shutting down...");
+
+      /* Delete all active phase 2 SAs.  */
+      while ((sa = sa_find (phase2_sa_check, NULL)))
+	{
+	  /* Each DELETE is another (outgoing) message.  */
+	  msg_counter++;
+	  sa_delete (sa, 1);
+	}
+
+      /*
+       * As there may have been other messages queued before these, we
+       * add a 'grace factor' to make sure all the DELETEs actually get
+       * sent before we shut down. The select() loop will just spin
+       * a number of more times before we actually do the exit.
+       */
+      msg_counter = ++msg_counter * 2;
+
+      /* XXX Phase 1, transports, timers, exchanges, connections, ...?  */
+    }
+  else if (sigtermed >= msg_counter)
+    {
+      /* Goodbye.  */
+#ifdef USE_DEBUG
+      log_packet_stop ();
+#endif
+      log_print ("isakmpd: exit");
+      exit (0);
+    }
+
+  sigtermed++;
+}
+
+/* called on SIGTERM */
+void
+daemon_shutdown_now (int sig)
+{
+  sigtermed = 1;
+}
+
 /* Write pid file.  */
 static void
 write_pid_file (void)
@@ -367,6 +430,9 @@ main (int argc, char *argv[])
   /* Rehash soft expiration timers on USR2 reception.  */
   signal (SIGUSR2, sigusr2);
 
+  /* Do a clean daemon shutdown on TERM reception.  */
+  signal (SIGTERM, daemon_shutdown_now);
+
 #ifdef USE_DEBUG
   /* If we wanted IKE packet capture to file, initialize it now.  */
   if (pcap_file != 0)
@@ -396,6 +462,20 @@ main (int argc, char *argv[])
       /* and if someone sent SIGUSR2, do a timer rehash.  */
       if (sigusr2ed)
 	rehash_timers ();
+
+      /*
+       * and if someone set 'sigtermed' (SIGTERM or via the UI), this
+       * indicated we should start a shutdown of the daemon.
+       *
+       * Note: Since _one_ message is sent per iteration of this enclosing
+       * while-loop, and we want to send a number of DELETE notifications, 
+       * we must loop atleast this number of times. The daemon_shutdown()
+       * function starts by queueing the DELETEs, all other calls just
+       * increments the 'sigtermed' variable until it reaches a "safe"
+       * value, and the daemon exits.
+       */
+      if (sigtermed)
+	daemon_shutdown ();
 
       /* Setup the descriptors to look for incoming messages at.  */
       memset (rfds, 0, mask_size);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.20 2001/07/06 14:37:12 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.21 2001/08/24 13:53:02 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -58,6 +58,9 @@
 #include "util.h"
 
 #define BUF_SZ 256
+
+/* from isakmpd.c */
+void daemon_shutdown_now (int);
 
 char *ui_fifo = FIFO;
 int ui_socket;
@@ -257,6 +260,18 @@ ui_packetlog (char *cmd)
 }
 #endif /* USE_DEBUG */
 
+static void
+ui_shutdown_daemon (char *cmd)
+{
+  if (strlen (cmd) == 1)
+    {
+      log_print ("ui_shutdown_daemon: received shutdown command");
+      daemon_shutdown_now (0);
+    }
+  else
+    log_print ("ui_shutdown_daemon: command \"%s\" malformed", cmd);
+}
+
 /* Report SAs and ongoing exchanges.  */
 void
 ui_report (char *cmd)
@@ -298,6 +313,16 @@ ui_handle_command (char *line)
       break;
 #endif
 
+#ifdef USE_DEBUG
+    case 'p':
+      ui_packetlog (line);
+      break;
+#endif
+
+    case 'Q':
+      ui_shutdown_daemon (line);
+      break;
+
     case 'r':
       ui_report (line);
       break;
@@ -305,12 +330,6 @@ ui_handle_command (char *line)
     case 't':
       ui_teardown (line);
       break;
-
-#ifdef USE_DEBUG
-    case 'p':
-      ui_packetlog (line);
-      break;
-#endif
 
     default:
       log_print ("ui_handle_messages: unrecognized command: '%c'", line[0]);
