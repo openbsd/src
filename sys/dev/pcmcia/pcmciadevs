@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.65 2001/05/28 04:21:03 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.66 2001/06/07 22:41:00 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -380,7 +380,6 @@ product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
 product SARAMNCOM NS_1100M	{ "NANOSPEED", "HFA384x/IEEE", NULL, NULL }
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version&sp01.02", NULL }
 product ADDTRON AWP100		{ "Addtron", "AWP-100&spWireless&spPCMCIA", "Version&sp01.02", NULL }
-product LINKSYS WPC11		{ "OEM", "PRISM2&spIEEE&sp802.11&spPC-Card", "Version&sp01.02", NULL }
 product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01", NULL }
 product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product SMC 2632W		{ "SMC", "SMC2632W", "Version&sp01.02", NULL }

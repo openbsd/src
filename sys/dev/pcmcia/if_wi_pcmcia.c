@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.4 2001/06/07 04:49:07 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.5 2001/06/07 22:41:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -181,11 +181,6 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  "I-O DATA WN-B11/PCM",
-	},
-	{ PCMCIA_VENDOR_LINKSYS,
-	  PCMCIA_PRODUCT_LINKSYS_WPC11,
-	  PCMCIA_CIS_LINKSYS_WPC11,
-	  "Linksys WPC11",
 	},
 	{ 0,
 	  0,
