@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.5 1998/07/10 15:05:21 mickey Exp $	*/
+/*	$OpenBSD: file.h,v 1.6 1998/10/13 07:51:51 deraadt Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -30,6 +30,7 @@
 #ifndef __file_h__
 #define __file_h__
 
+typedef int8_t int8;
 typedef int32_t int32;
 typedef u_int32_t uint32;
 
@@ -47,12 +48,12 @@ struct magic {
 #define ADD	4		/* if '>&' appears,  */
 	short cont_level;	/* level of ">" */
 	struct {
-		char type;	/* byte short long */
+		int8 type;	/* byte short long */
 		int32 offset;	/* offset from indirection */
 	} in;
 	int32 offset;		/* offset to magic number */
 	unsigned char reln;	/* relation (0=eq, '>'=gt, etc) */
-	char type;		/* int, short, long or string. */
+	int8 type;		/* int, short, long or string. */
 	char vallen;		/* length of string value, if any */
 #define 			BYTE	1
 #define				SHORT	2
