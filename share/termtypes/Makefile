@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1998/12/07 18:23:36 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 1998/12/07 19:53:41 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
@@ -17,11 +17,13 @@ terminfo.src: termtypes.master
 terminfo.db: terminfo.src
 	info_mkdb -f terminfo ${.OBJDIR}/terminfo.src
 
+# Note the disgusting ed hack to remove three lines from xterm
 termcap.src: termtypes.master
 	tic -C ${.ALLSRC} | sed \
 	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
 	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.OBJDIR}/termcap.src
+	echo "1\n/^xterm|\n\nd\nd\nd\n.\nw\nq\n" | ed - ${.OBJDIR}/termcap.src >/dev/null 2>&1
 
 termcap.db: termcap.src
 	cap_mkdb -f termcap ${.OBJDIR}/termcap.src
