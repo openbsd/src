@@ -1,5 +1,5 @@
 /*
- * $Id: pppctl.c,v 1.3 1997/12/18 00:30:44 brian Exp $
+ * $Id: pppctl.c,v 1.4 1997/12/21 02:26:56 brian Exp $
  */
 
 #include <sys/types.h>
@@ -210,6 +210,7 @@ main(int argc, char **argv)
         sock = (struct sockaddr *)&ifsun;
         socksz = sizeof ifsun;
 
+        memset(&ifsun, '\0', sizeof ifsun);
         ifsun.sun_len = strlen(argv[arg]);
         if (ifsun.sun_len > sizeof ifsun.sun_path - 1) {
             fprintf(stderr, "%s: Path too long\n", argv[arg]);
@@ -239,6 +240,7 @@ main(int argc, char **argv)
         socksz = sizeof ifsin;
         hlen = strlen(host);
 
+        memset(&ifsin, '\0', sizeof ifsin);
         if (strspn(host, "0123456789.") == hlen) {
             if (!inet_aton(host, &ifsin.sin_addr)) {
                 fprintf(stderr, "Cannot translate %s\n", host);
