@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_al.c,v 1.1 1999/10/28 21:53:55 aaron Exp $ */
+/*	$OpenBSD: if_al.c,v 1.2 1999/10/29 07:38:23 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1433,10 +1433,7 @@ void al_rxeof(sc)
 		eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
+		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
