@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.15 1997/04/19 20:43:11 deraadt Exp $
+#	$OpenBSD: BABY,v 1.16 1997/04/29 05:15:15 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -52,7 +52,6 @@ option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 option		QUOTA		# UFS quotas
-option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client

@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.4 1997/04/11 19:27:23 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.5 1997/04/29 05:15:16 deraadt Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -50,7 +50,6 @@ options		LKM		# loadable kernel modules
 
 options		FFS		# UFS
 #options	QUOTA		# UFS quotas
-#options	LFS		# log-structured file system
 options		MFS		# memory file system
 
 options		NFSCLIENT	# Network File System client

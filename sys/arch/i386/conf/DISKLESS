@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.16 1996/12/11 00:39:58 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.17 1997/04/29 05:15:15 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -51,7 +51,6 @@ option		USER_LDT	# user-settable LDT; used by WINE
 option		LKM		# loadable kernel modules
 
 #option		FFS,QUOTA	# UFS and quotas
-#option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client

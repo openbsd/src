@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.7 1997/03/26 21:53:29 niklas Exp $
+#	$OpenBSD: ARCTIC,v 1.8 1997/04/29 05:16:40 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -33,7 +33,6 @@ option		FDESC		# user file descriptor filesystem (/dev/fd)
 option		FIFO		# POSIX fifo support (in all filesystems)
 option		FFS,QUOTA	# fast filesystem with user and group quotas
 option		KERNFS		# kernel data-structure filesystem
-#option 	LFS		# Log-based filesystem (still experimental)
 option		MFS		# memory-based filesystem
 option		MSDOSFS		# Ability to read write MS-Dos filsystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 1997/04/10 16:29:11 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.15 1997/04/29 05:16:41 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -33,7 +33,6 @@ options		FDESC		# user file descriptor filesystem (/dev/fd)
 options		FIFO		# POSIX fifo support (in all filesystems)
 options		FFS,QUOTA	# fast filesystem with user and group quotas
 options		KERNFS		# kernel data-structure filesystem
-#options 	LFS		# Log-based filesystem (still experimental)
 options		MFS		# memory-based filesystem
 options		MSDOSFS		# Ability to read write MS-Dos filsystem
 options		NFSCLIENT	# Sun NFS-compatible filesystem (client)

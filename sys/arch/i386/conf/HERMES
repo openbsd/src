@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.2 1997/04/11 11:35:34 kstailey Exp $
+# $OpenBSD: HERMES,v 1.3 1997/04/29 05:15:17 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -48,7 +48,6 @@ options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 options		FFS		# UFS
 #options	QUOTA		# UFS quotas
-#options	LFS		# log-structured file system
 options		MFS		# memory file system
 
 options		NFSCLIENT	# Network File System client

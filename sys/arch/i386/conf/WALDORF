@@ -49,7 +49,6 @@ option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 #option		QUOTA		# UFS quotas
-#option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client

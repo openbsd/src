@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.13 1996/11/28 23:37:35 niklas Exp $
+#	$OpenBSD: OPRAH,v 1.14 1997/04/29 05:15:18 deraadt Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -51,7 +51,6 @@ option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 #option		QUOTA		# UFS quotas
-option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client

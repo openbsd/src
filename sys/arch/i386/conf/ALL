@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.12 1996/12/11 00:39:56 deraadt Exp $
+#	$OpenBSD: ALL,v 1.13 1997/04/29 05:15:14 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -55,7 +55,6 @@ option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 option		QUOTA		# UFS quotas
-option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client
