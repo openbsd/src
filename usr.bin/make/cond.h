@@ -1,7 +1,7 @@
 #ifndef COND_H
 #define COND_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.h,v 1.1 2001/05/23 12:34:41 espie Exp $ */
+/*	$OpenBSD: cond.h,v 1.2 2002/06/11 21:12:11 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -36,6 +36,9 @@
 #define COND_PARSE	0	/* Parse the next lines */
 #define COND_SKIP	1	/* Skip the next lines */
 #define COND_INVALID	2	/* Not a conditional statement */
+#define COND_ISFOR	3
+#define COND_ISUNDEF	4
+#define COND_ISINCLUDE	5
 
 /* whattodo = Cond_Eval(line);
  *	Parses a conditional expression (without the leading dot),

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.27 2002/04/17 16:45:02 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.28 2002/06/11 21:12:11 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include "dir.h"
 #include "buf.h"
 #include "cond.h"
+#include "cond_int.h"
+#include "condhashconsts.h"
 #include "error.h"
 #include "var.h"
 #include "varname.h"
@@ -59,6 +61,7 @@
 #include "main.h"
 #include "gnode.h"
 #include "lst.h"
+#include "ohash.h"
 
 
 /* The parsing of conditional expressions is based on this grammar:
@@ -113,20 +116,36 @@ static Token CondHandleDefault(bool);
 static const char *find_cond(const char *);
 
 
-static struct If {
-    char	*form;		/* Form of if */
-    int 	formlen;	/* Length of form */
-    bool	doNot;		/* true if default function should be negated */
+struct If {
+    bool	isElse;		/* true for else forms */
+    bool	doNot;		/* true for embedded negation */
     bool	(*defProc)(struct Name *);
-				/* Default function to apply */
-} ifs[] = {
-    { "ifdef",	  5,	  false,  CondDoDefined },
-    { "ifndef",   6,	  true,   CondDoDefined },
-    { "ifmake",   6,	  false,  CondDoMake },
-    { "ifnmake",  7,	  true,   CondDoMake },
-    { "if",	  2,	  false,  CondDoDefined },
-    { NULL,	  0,	  false,  NULL }
+    				/* function to apply */
 };
+
+static struct If ifs[] = {
+    { false,	false,	CondDoDefined },	/* if, ifdef */
+    { false,	true,	CondDoDefined },	/* ifndef */
+    { false,	false,	CondDoMake },		/* ifmake */
+    { false,	true,	CondDoMake },		/* ifnmake */
+    { true,	false,	CondDoDefined },	/* elif, elifdef */
+    { true,	true,	CondDoDefined },	/* elifndef */
+    { true,	false,	CondDoMake },		/* elifmake */
+    { true,	true,	CondDoMake },		/* elifnmake */
+    { true,	false,	NULL }
+};
+
+#define COND_IF_INDEX		0
+#define COND_IFDEF_INDEX	0
+#define COND_IFNDEF_INDEX	1
+#define COND_IFMAKE_INDEX	2
+#define COND_IFNMAKE_INDEX	3
+#define COND_ELIF_INDEX		4
+#define COND_ELIFDEF_INDEX	4
+#define COND_ELIFNDEF_INDEX	5
+#define COND_ELIFMAKE_INDEX	6
+#define COND_ELIFNMAKE_INDEX	7
+#define COND_ELSE_INDEX		8
 
 static bool	  condInvert;		/* Invert the default function */
 static bool	  (*condDefProc)	/* Default function to apply */
@@ -836,101 +855,196 @@ CondE(doEval)
     return l;
 }
 
-/* A conditional line looks like this:
- *	    <cond-type> <expr>
+/* Evaluate conditional in line.  
+ * returns COND_SKIP, COND_PARSE, COND_INVALID, COND_ISFOR, COND_ISINCLUDE,
+ * COND_ISUNDEF.
+ * A conditional line looks like this:
+ *	<cond-type> <expr>
  *	where <cond-type> is any of if, ifmake, ifnmake, ifdef,
  *	ifndef, elif, elifmake, elifnmake, elifdef, elifndef
  *	and <expr> consists of &&, ||, !, make(target), defined(variable)
  *	and parenthetical groupings thereof.
  */
 int
-Cond_Eval(line)
-    const char	    *line;    /* Line to parse */
+Cond_Eval(const char *line)
 {
-    struct If	    *ifp;
-    bool	    isElse;
-    bool	    value = false;
-    int 	    level;	/* Level at which to report errors. */
+    /* find end of keyword */
+    const char	*end;
+    u_int32_t 	k;
+    size_t 	len;
+    struct If	*ifp;
+    bool	value = false;
+    int		level;	/* Level at which to report errors. */
 
     level = PARSE_FATAL;
 
-    /* Stuff we are looking for can be if*, elif*, else, or endif.
-     * otherwise, this is not our turf.  */
-
-    /* Find what type of if we're dealing with. The result is left
-     * in ifp and isElse is set true if it's an elif line.  */
-    if (line[0] == 'e' && line[1] == 'l') {
-	line += 2;
-	isElse = true;
-    } else if (strncmp(line, "endif", 5) == 0) {
+    for (end = line; islower(*end); end++)
+	;
+    /* quick path: recognize special targets early on */
+    if (*end == '.' || *end == ':')
+    	return COND_INVALID;
+    len = end - line;
+    k = ohash_interval(line, &end);
+    switch(k % MAGICSLOTS2) {
+    case K_COND_IF % MAGICSLOTS2:
+	if (k == K_COND_IF && len == strlen(COND_IF) && 
+	    strncmp(line, COND_IF, len) == 0) {
+	    ifp = ifs + COND_IF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_IFDEF % MAGICSLOTS2:
+	if (k == K_COND_IFDEF && len == strlen(COND_IFDEF) && 
+	    strncmp(line, COND_IFDEF, len) == 0) {
+	    ifp = ifs + COND_IFDEF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_IFNDEF % MAGICSLOTS2:
+	if (k == K_COND_IFNDEF && len == strlen(COND_IFNDEF) && 
+	    strncmp(line, COND_IFNDEF, len) == 0) {
+	    ifp = ifs + COND_IFNDEF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_IFMAKE % MAGICSLOTS2:
+	if (k == K_COND_IFMAKE && len == strlen(COND_IFMAKE) && 
+	    strncmp(line, COND_IFMAKE, len) == 0) {
+	    ifp = ifs + COND_IFMAKE_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_IFNMAKE % MAGICSLOTS2:
+	if (k == K_COND_IFNMAKE && len == strlen(COND_IFNMAKE) && 
+	    strncmp(line, COND_IFNMAKE, len) == 0) {
+	    ifp = ifs + COND_IFNMAKE_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELIF % MAGICSLOTS2:
+	if (k == K_COND_ELIF && len == strlen(COND_ELIF) && 
+	    strncmp(line, COND_ELIF, len) == 0) {
+	    ifp = ifs + COND_ELIF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELIFDEF % MAGICSLOTS2:
+	if (k == K_COND_ELIFDEF && len == strlen(COND_ELIFDEF) && 
+	    strncmp(line, COND_ELIFDEF, len) == 0) {
+	    ifp = ifs + COND_ELIFDEF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELIFNDEF % MAGICSLOTS2:
+	if (k == K_COND_ELIFNDEF && len == strlen(COND_ELIFNDEF) && 
+	    strncmp(line, COND_ELIFNDEF, len) == 0) {
+	    ifp = ifs + COND_ELIFNDEF_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELIFMAKE % MAGICSLOTS2:
+	if (k == K_COND_ELIFMAKE && len == strlen(COND_ELIFMAKE) && 
+	    strncmp(line, COND_ELIFMAKE, len) == 0) {
+	    ifp = ifs + COND_ELIFMAKE_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELIFNMAKE % MAGICSLOTS2:
+	if (k == K_COND_ELIFNMAKE && len == strlen(COND_ELIFNMAKE) && 
+	    strncmp(line, COND_ELIFNMAKE, len) == 0) {
+	    ifp = ifs + COND_ELIFNMAKE_INDEX;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ELSE % MAGICSLOTS2:
+	/* valid conditional whose value is the inverse
+	 * of the previous if we parsed.  */
+	if (k == K_COND_ELSE && len == strlen(COND_ELSE) && 
+	    strncmp(line, COND_ELSE, len) == 0) {
+	    if (condTop == MAXIF) {
+		Parse_Error(level, "if-less else");
+		return COND_INVALID;
+	    } else if (skipIfLevel == 0) {
+		value = !condStack[condTop].value;
+		ifp = ifs + COND_ELSE_INDEX;
+	    } else
+		return COND_SKIP;
+	} else
+	    return COND_INVALID;
+	break;
+    case K_COND_ENDIF % MAGICSLOTS2:
+	if (k == K_COND_ENDIF && len == strlen(COND_ENDIF) && 
+	    strncmp(line, COND_ENDIF, len) == 0) {
 	/* End of a conditional section. If skipIfLevel is non-zero, that
 	 * conditional was skipped, so lines following it should also be
 	 * skipped. Hence, we return COND_SKIP. Otherwise, the conditional
 	 * was read so succeeding lines should be parsed (think about it...)
 	 * so we return COND_PARSE, unless this endif isn't paired with
 	 * a decent if.  */
-	if (skipIfLevel != 0) {
-	    skipIfLevel -= 1;
-	    return COND_SKIP;
-	} else {
-	    if (condTop == MAXIF) {
-		Parse_Error(level, "if-less endif");
-		return COND_INVALID;
+	    if (skipIfLevel != 0) {
+		skipIfLevel -= 1;
+		return COND_SKIP;
 	    } else {
-		skipLine = false;
-		condTop += 1;
-		return COND_PARSE;
+		if (condTop == MAXIF) {
+		    Parse_Error(level, "if-less endif");
+		    return COND_INVALID;
+		} else {
+		    skipLine = false;
+		    condTop += 1;
+		    return COND_PARSE;
+		}
 	    }
-	}
-    } else
-	isElse = false;
-
-    /* Figure out what sort of conditional it is -- what its default
-     * function is, etc. -- by looking in the table of valid "ifs" */
-    for (ifp = ifs; ifp->form != NULL; ifp++) {
-	if (strncmp(ifp->form, line, ifp->formlen) == 0)
-	    break;
+	} else
+	    return COND_INVALID;
+	break;
+	/* Recognize other keywords there, to simplify parser's task */
+    case K_COND_FOR % MAGICSLOTS2:
+    	if (k == K_COND_FOR && len == strlen(COND_FOR) &&
+	    strncmp(line, COND_FOR, len) == 0)
+	    return COND_ISFOR;
+	else
+	    return COND_INVALID;
+    case K_COND_UNDEF % MAGICSLOTS2:
+    	if (k == K_COND_UNDEF && len == strlen(COND_UNDEF) &&
+	    strncmp(line, COND_UNDEF, len) == 0)
+	    return COND_ISUNDEF;
+	else
+	    return COND_INVALID;
+    case K_COND_INCLUDE % MAGICSLOTS2:
+    	if (k == K_COND_INCLUDE && len == strlen(COND_INCLUDE) &&
+	    strncmp(line, COND_INCLUDE, len) == 0)
+	    return COND_ISINCLUDE;
+	else
+	    return COND_INVALID;
+    default:
+	/* Not a valid conditional type. No error...  */
+	return COND_INVALID;
     }
 
-    if (ifp->form == NULL) {
-	/* Nothing fits. If the first word on the line is actually
-	 * "else", it's a valid conditional whose value is the inverse
-	 * of the previous if we parsed.  */
-	if (isElse && line[0] == 's' && line[1] == 'e') {
-	    if (condTop == MAXIF) {
-		Parse_Error(level, "if-less else");
-		return COND_INVALID;
-	    } else if (skipIfLevel == 0)
-		value = !condStack[condTop].value;
-	    else
-		return COND_SKIP;
-	} else
-	    /* Not a valid conditional type. No error...  */
+    if (ifp->isElse) {
+	if (condTop == MAXIF) {
+	    Parse_Error(level, "if-less elif");
 	    return COND_INVALID;
-    } else {
-	if (isElse) {
-	    if (condTop == MAXIF) {
-		Parse_Error(level, "if-less elif");
-		return COND_INVALID;
-	    } else if (skipIfLevel != 0) {
-		/* If skipping this conditional, just ignore the whole thing.
-		 * If we don't, the user might be employing a variable that's
-		 * undefined, for which there's an enclosing ifdef that
-		 * we're skipping...  */
-		return COND_SKIP;
-	    }
-	} else if (skipLine) {
-	    /* Don't even try to evaluate a conditional that's not an else if
-	     * we're skipping things...  */
-	    skipIfLevel += 1;
+	} else if (skipIfLevel != 0) {
+	    /* If skipping this conditional, just ignore the whole thing.
+	     * If we don't, the user might be employing a variable that's
+	     * undefined, for which there's an enclosing ifdef that
+	     * we're skipping...  */
 	    return COND_SKIP;
 	}
+    } else if (skipLine) {
+	/* Don't even try to evaluate a conditional that's not an else if
+	 * we're skipping things...  */
+	skipIfLevel += 1;
+	return COND_SKIP;
+    }
 
+    if (ifp->defProc) {
 	/* Initialize file-global variables for parsing.  */
 	condDefProc = ifp->defProc;
 	condInvert = ifp->doNot;
 
-	line += ifp->formlen;
+	line += len;
 
 	while (*line == ' ' || *line == '\t')
 	    line++;
@@ -960,7 +1074,8 @@ Cond_Eval(line)
 		break;
 	}
     }
-    if (!isElse)
+    
+    if (!ifp->isElse)
 	condTop -= 1;
     else if (skipIfLevel != 0 || condStack[condTop].value) {
 	/* If this is an else-type conditional, it should only take effect

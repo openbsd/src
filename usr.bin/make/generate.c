@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: generate.c,v 1.4 2001/05/23 12:34:43 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.5 2002/06/11 21:12:11 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -69,12 +69,14 @@ char *table_cond[] = {
 	M(COND_IFMAKE),
 	M(COND_IFNMAKE),
 	M(COND_ELSE),
+	M(COND_ELIF),
 	M(COND_ELIFDEF),
 	M(COND_ELIFNDEF),
 	M(COND_ELIFMAKE),
 	M(COND_ELIFNMAKE),
 	M(COND_ENDIF),
 	M(COND_FOR),
+	M(COND_ENDFOR),
 	M(COND_INCLUDE),
 	M(COND_UNDEF),
 	NULL

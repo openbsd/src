@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.66 2001/11/11 12:35:02 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.67 2002/06/11 21:12:11 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1406,35 +1406,31 @@ ParseIsCond(linebuf, copy, line)
 	/* FALLTHROUGH */
     case COND_PARSE:
 	return true;
-    default:
+    case COND_ISFOR: {
+	For *loop;
+
+	loop = For_Eval(line+3);
+	if (loop != NULL) {
+	    bool ok;
+	    do {
+		/* Find the matching endfor.  */
+		line = ParseReadLoopLine(linebuf);
+		if (line == NULL) {
+		    Parse_Error(PARSE_FATAL,
+			     "Unexpected end of file in for loop.\n");
+		    return false;
+		}
+		ok = For_Accumulate(loop, line);
+	    } while (ok);
+	    For_Run(loop);
+	    return true;
+	}
 	break;
     }
-
-    {
-    For *loop;
-
-    loop = For_Eval(line);
-    if (loop != NULL) {
-	bool ok;
-	do {
-	    /* Find the matching endfor.  */
-	    line = ParseReadLoopLine(linebuf);
-	    if (line == NULL) {
-		Parse_Error(PARSE_FATAL,
-			 "Unexpected end of file in for loop.\n");
-		return false;
-	    }
-	    ok = For_Accumulate(loop, line);
-	} while (ok);
-	For_Run(loop);
-	return true;
-    }
-    }
-
-    if (strncmp(line, "include", 7) == 0) {
+    case COND_ISINCLUDE:
 	ParseDoInclude(line + 7);
 	return true;
-    } else if (strncmp(line, "undef", 5) == 0) {
+    case COND_ISUNDEF: {
 	char *cp;
 
 	line+=5;
@@ -1446,6 +1442,10 @@ ParseIsCond(linebuf, copy, line)
 	Var_Delete(line);
 	return true;
     }
+    default:
+	break;
+    }
+
     return false;
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2002/04/22 21:45:01 miod Exp $
+#	$OpenBSD: Makefile,v 1.35 2002/06/11 21:12:11 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -9,6 +9,7 @@ CFLAGS+=-DUSE_TIMESPEC
 CFLAGS+=-DHAS_BOOL_H
 CFLAGS+=-DHAS_PATHS_H
 CFLAGS+=-DHAS_EXTENDED_GETCWD
+#CFLAGS+=-DHAS_STATS
 
 SRCS=	arch.c buf.c cmd_exec.c compat.c cond.c dir.c error.c for.c \
 	init.c job.c lowparse.c main.c make.c memory.c parse.c \
@@ -28,7 +29,7 @@ CLEANFILES+= varhashconsts.h condhashconsts.h generate.o generate
 beforedepend: varhashconsts.h condhashconsts.h
 # may need tweaking if you add variable synonyms or change the hash function
 MAGICVARSLOTS=77
-MAGICCONDSLOTS=43
+MAGICCONDSLOTS=65
 
 varhashconsts.h: generate
 	${.OBJDIR}/generate 1 ${MAGICVARSLOTS} >${.TARGET}
@@ -47,6 +48,7 @@ regress: check
 
 # kludge for people who forget to make depend
 var.o: varhashconsts.h
+cond.o: condhashconsts.h
 
 .if make(install)
 SUBDIR+= PSD.doc
