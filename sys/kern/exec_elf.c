@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.5 1996/04/18 17:15:52 niklas Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.6 1996/05/22 07:44:28 etheisen Exp $	*/
 /*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
@@ -159,17 +159,17 @@ elf_check_header(eh, type)
 	int type;
 {
 
-	if (bcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0)
+	if (bcmp(eh->e_ident, ELFMAG, SELFMAG) != 0)
 		return ENOEXEC;
 
 	switch (eh->e_machine) {
 	/* XXX */
 #ifdef i386
-	case Elf32_em_386:
-	case Elf32_em_486:
+	case EM_386:
+	case EM_486:
 #endif
 #ifdef sparc
-	case Elf32_em_sparc:
+	case EM_SPARC:
 #endif
 		break;
 
@@ -217,9 +217,9 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 		diff = uaddr - *addr;
 	}
 
-	*prot |= (ph->p_flags & Elf32_pf_r) ? VM_PROT_READ : 0;
-	*prot |= (ph->p_flags & Elf32_pf_w) ? VM_PROT_WRITE : 0;
-	*prot |= (ph->p_flags & Elf32_pf_x) ? VM_PROT_EXECUTE : 0;
+	*prot |= (ph->p_flags & PF_R) ? VM_PROT_READ : 0;
+	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
+	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
 
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
@@ -305,7 +305,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 				    sizeof(eh))) != 0)
 		goto bad;
 
-	if ((error = elf_check_header(&eh, Elf32_et_dyn)) != 0)
+	if ((error = elf_check_header(&eh, ET_DYN)) != 0)
 		goto bad;
 
 	phsize = eh.e_phnum * sizeof(Elf32_Phdr);
@@ -323,7 +323,7 @@ elf_load_file(p, path, vcset, entry, ap, last)
 		int prot = 0;
 
 		switch (ph[i].p_type) {
-		case Elf32_pt_load:
+		case PT_LOAD:
 			elf_load_psection(vcset, nd.ni_vp, &ph[i], &addr,
 						&size, &prot);
 			/* If entry is within this section it must be text */
@@ -335,9 +335,9 @@ elf_load_file(p, path, vcset, entry, ap, last)
 			addr += size;
 			break;
 
-		case Elf32_pt_dynamic:
-		case Elf32_pt_phdr:
-		case Elf32_pt_note:
+		case PT_DYNAMIC:
+		case PT_PHDR:
+		case PT_NOTE:
 			break;
 
 		default:
@@ -380,7 +380,7 @@ exec_elf_makecmds(p, epp)
 	if (epp->ep_hdrvalid < sizeof(Elf32_Ehdr))
 		return ENOEXEC;
 
-	if (elf_check_header(eh, Elf32_et_exec))
+	if (elf_check_header(eh, ET_EXEC))
 		return ENOEXEC;
 
 	/*
@@ -413,7 +413,7 @@ exec_elf_makecmds(p, epp)
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
-		if (pp->p_type == Elf32_pt_interp) {
+		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= sizeof(interp))
 				goto bad;
 			if ((error = elf_read_from(p, epp->ep_vp, pp->p_offset,
@@ -452,7 +452,7 @@ exec_elf_makecmds(p, epp)
 		pp = &ph[i];
 
 		switch (ph[i].p_type) {
-		case Elf32_pt_load:
+		case PT_LOAD:
 			/*
 			 * XXX
 			 * Can handle only 2 sections: text and data
@@ -474,17 +474,17 @@ exec_elf_makecmds(p, epp)
 			}
 			break;
 
-		case Elf32_pt_shlib:
+		case PT_SHLIB:
 			error = ENOEXEC;
 			goto bad;
 
-		case Elf32_pt_interp:
+		case PT_INTERP:
 			/* Already did this one */
-		case Elf32_pt_dynamic:
-		case Elf32_pt_note:
+		case PT_DYNAMIC:
+		case PT_NOTE:
 			break;
 
-		case Elf32_pt_phdr:
+		case PT_PHDR:
 			/* Note address of program headers (in text segment) */
 			phdr = pp->p_vaddr;
 		break;
