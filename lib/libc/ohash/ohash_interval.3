@@ -1,0 +1,98 @@
+.\"	$OpenBSD: ohash_interval.3,v 1.1 2001/03/02 13:27:07 espie Exp $
+.\"
+.\" Copyright (c) 2001 Marc Espie.
+.\"
+.\" Code written for the OpenBSD project.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+.\" A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+.\" PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 23, 2001
+.Dt OPEN_HASH_HELPER 3
+.Nm ohash_interval ,
+.Nm ohash_create_entry ,
+.Nm ohash_qlookup ,
+.Nm ohash_qlookupi
+.Nm helper functions for open hashing
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <stddef.h>
+.Fd #include <ohash.h>
+.Ft u_int32_t
+.Fn ohash_interval "const char *start" "const char **pend"
+.Ft "void *"
+.Fn ohash_create_entry "struct ohash_info *info" "const char *start" "const char **pend"
+.Ft "unsigned int"
+.Fn ohash_qlookupi "struct ohash *h" "const char *start" "const char **pend"
+.Ft "unsigned int"
+.Fn ohash_qlookup "struct ohash *h" "const char *start"
+.Sh DESCRIPTION
+These functions are commonly used to simplify open hashing usage, and use
+similar conventions. They operate indifferently on null-terminated strings
+.Po
+by setting
+.Fa *pend
+=
+.Dv NULL
+.Pc
+or memory ranges
+.Po
+deliminated by
+.Fa start
+and
+.Fa *pend
+.Pc .
+For null-terminated strings, as a side effect, those functions
+set
+.Fa *pend
+to the terminating null byte.
+.Pp
+.Fn ohash_interval
+is a simple hashing function that yields good results on many data sets.
+.Pp
+.Fn ohash_create_entry
+can be used to create a new record with a given key. In that case,
+the alloc field of
+.Fa info
+should point to a
+.Xr malloc 3
+-like function to allocate the storage.
+.Pp
+.Fn ohash_qlookupi
+is a wrapper function that simply calls
+.Fn ohash_interval
+and
+.Fn ohash_lookup_interval .
+.Pp
+.Fn ohash_qlookup
+is a variation on
+.Fn ohash_qlookupi
+designed for null-terminated strings.
+.Sh SEE ALSO
+.Xr ohash_init 3
+.Sh STANDARDS
+Those functions are completely non-standard and should be avoided in
+portable programs.
+.Sh HISTORY
+Those functions were designed and written for
+.Ox
+make
+by Marc Espie in 1999.
