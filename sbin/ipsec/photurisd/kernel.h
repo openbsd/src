@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.3 1997/07/26 20:55:16 provos Exp $ */
+/* $Id: kernel.h,v 1.4 1998/03/04 11:43:33 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -40,13 +40,21 @@
 #ifdef _KERNEL_C_
 #define EXTERN
 
+#define ESP_OLD   0x01
+#define ESP_NEW   0x02
+#define AH_OLD    0x04
+#define AH_NEW    0x08
+
+#define XF_ENC    0x10
+#define XF_AUTH   0x20
+
+
 int kernel_xf_set(struct encap_msghdr *em);
 int kernel_xf_read(struct encap_msghdr *em, int msglen);
 
-int kernel_des(char *srcaddress, char *dstaddress, 
-	       u_int8_t *spi, u_int8_t *secret, int tunnel);
-int kernel_md5(char *srcaddress, char *dstaddress, 
-	       u_int8_t *spi, u_int8_t *secret, int tunnel);
+int kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets);
+int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, 
+	       u_int8_t *secrets);
 
 int kernel_group_spi(char *address, u_int8_t *spi);
 
@@ -61,6 +69,9 @@ int kernel_delete_spi(char *address, u_int8_t *spi, int proto);
 #else
 #define EXTERN extern
 #endif
+
+EXTERN int kernel_get_offset(int id);
+EXTERN int kernel_valid(int encoff, int authoff);
 
 EXTERN u_int32_t kernel_reserve_spi( char *srcaddress, int options);
 EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, u_int32_t spi, 

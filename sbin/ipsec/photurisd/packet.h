@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: packet.h,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $ */
+/* $Id: packet.h,v 1.2 1998/03/04 11:43:36 provos Exp $ */
 /*
  * packet.h: 
  * prototyped for receiving and anwsering packets
@@ -45,6 +45,11 @@
 
 EXTERN int handle_packet(int, char *);
 EXTERN void send_packet(void);
+EXTERN int packet_check(u_char *packet, u_int16_t size, struct packet *format);
 EXTERN void packet_save(struct stateob *, u_int8_t *, u_int16_t);
+#ifdef DEBUG
+EXTERN void packet_ordered_dump(u_int8_t *packet, u_int16_t size, struct packet *format);
+EXTERN void packet_dump(u_int8_t *packet, u_int16_t plen, u_int16_t start);
+#endif
 
 #endif /* _STATE_H */

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photuris_packet_encrypt.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: photuris_packet_encrypt.c,v 1.2 1998/03/04 11:43:41 provos Exp $";
 #endif 
 
 #define _ENCRYPT_C_
@@ -63,15 +63,6 @@ packet_mask(u_int8_t *packet, u_int16_t len, u_int8_t *key)
      int i;
      for (i=0; i<len; i++)
 	  packet[i] ^= key[i];
-}
-
-int
-packet_make_iv(u_int32_t *iv, u_int32_t *packet)
-{
-     iv[0] = iv[0] ^ packet[0];
-     iv[1] = iv[1] ^ packet[1];
-
-     return 1;
 }
 
 int
@@ -113,6 +104,8 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
      des_cblock keys[4], *input;
      des_key_schedule key1,key2,key3;
      u_int8_t *pkey;
+     u_int16_t order = 0;
+     int i;
      
      input = (des_cblock *)payload;
 
@@ -131,7 +124,7 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	  }
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 payloadlen*8, 0, 1) == -1)
+				 payloadlen*8, &order, 1) == -1)
 	       return -1;
 #ifdef DEBUG 
 	  {  
@@ -150,33 +143,39 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 #ifdef DEBUG
 	  printf("[Packet encryption: DES]\n");
 #endif
-	  pkey = calloc(payloadlen + 16, sizeof(u_int8_t));
+	  pkey = calloc(payloadlen + 8, sizeof(u_int8_t));
 	  if(pkey == NULL) {
 	       log_error(1, "Not enough memory for privacy secret");
 	       return -1;
 	  }
+	  /* XOR Mask */
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 payloadlen*8+128, 0, 1) == -1)
+				 payloadlen*8, &order, 1) == -1)
+	       return -1;
+	  /* DES Key */
+	  if(compute_privacy_key(st, pkey+payloadlen, 
+				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
+				 64, &order, 1) == -1)
 	       return -1;
 #ifdef DEBUG 
 	  {  
 	       int i; 
 	       char buffer[3000]; 
 	       i = 3000; 
-	       bin2hex(buffer, &i, pkey, payloadlen+16); 
+	       bin2hex(buffer, &i, pkey, payloadlen+8); 
 	       printf("Encrypt key: %s\n", buffer ); 
 	  } 
 #endif 
 	  bcopy(pkey+payloadlen, &keys[0], 8);
 	  des_set_odd_parity(&keys[0]);
-	  bcopy(pkey+payloadlen+8, &keys[1], 8);
+
+	  /* Zero IV, we will mask the packet instead */
+	  bzero(&keys[1], 8);
 
 	  des_set_key(&keys[0], key1);
 
 	  packet_mask(payload, payloadlen, pkey);
-
-	  packet_make_iv((u_int32_t *)&keys[1], (u_int32_t *)(payload - 8));
 
 	  des_cbc_encrypt(input,input,payloadlen, key1,&keys[1], DES_ENCRYPT);
 	  break;
@@ -186,21 +185,29 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 #ifdef DEBUG
 	  printf("[Packet encryption: 3DES]\n");
 #endif
-	  pkey = calloc(payloadlen+32, sizeof(u_int8_t));
+	  pkey = calloc(payloadlen+24, sizeof(u_int8_t));
 	  if(pkey == NULL) {
 	       log_error(1, "Not enough memory for owner privacy secret");
 	       return -1;
 	  }
+	  /* XOR Mask */
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 payloadlen*8+256, 0, 1) == -1)
+				 payloadlen*8, &order, 1) == -1)
 	       return -1;
+	  /* 3 DES Keys */
+	  for (i=0; i<3; i++) {
+	       if(compute_privacy_key(st, pkey+payloadlen + (i<<3), 
+				      payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
+				      64, &order, 1) == -1)
+		    return -1;
+	  }
 #ifdef DEBUG
 	  { 
 	       int i;
 	       char buffer[3000];
 	       i = 3000;
-	       bin2hex(buffer, &i, pkey, payloadlen+32);
+	       bin2hex(buffer, &i, pkey, payloadlen+24);
 	       printf("Encrypt key: %s\n", buffer );
 	  }
 #endif
@@ -210,15 +217,15 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	  des_set_odd_parity(&keys[1]);
 	  bcopy(pkey+payloadlen+16, &keys[2], 8);
 	  des_set_odd_parity(&keys[2]);
-	  bcopy(pkey+payloadlen+24, &keys[3], 8);
+
+	  /* Zero IV, we will make the packet instead */
+	  bzero(&keys[3], 8);
 
 	  des_set_key(&keys[0], key1);
 	  des_set_key(&keys[1], key2);
 	  des_set_key(&keys[2], key3);
 
 	  packet_mask(payload, payloadlen, pkey);
-
-	  packet_make_iv((u_int32_t *)&keys[3], (u_int32_t *)(payload - 8));
 
 	  des_ede3_cbc_encrypt(input, input, payloadlen,
 			   key1, key2, key3, &keys[3], DES_ENCRYPT);
@@ -241,6 +248,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
      des_cblock keys[4], *input;
      des_key_schedule key1,key2,key3;
      u_int8_t *pkey;
+     u_int16_t order = 0;
 
      input = (des_cblock *)payload;
 
@@ -259,7 +267,7 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	  }
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 *payloadlen*8, 0, 0) == -1)
+				 *payloadlen*8, &order, 0) == -1)
 	       return -1;
 #ifdef DEBUG 
 	  {  
@@ -277,30 +285,36 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 #ifdef DEBUG
 	  printf("[Packet decryption: DES]\n");
 #endif
-	  pkey = calloc(*payloadlen+16, sizeof(u_int8_t));
+	  pkey = calloc(*payloadlen+8, sizeof(u_int8_t));
 	  if(pkey == NULL) {
 	       log_error(1, "Not enough memory for privacy secret");
 	       return -1;
 	  }
+	  /* XOR Mask */
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 *payloadlen*8+128, 0, 0) == -1)
+				 *payloadlen*8, &order, 0) == -1)
+	       return -1;
+	  /* DES Key */
+	  if(compute_privacy_key(st, pkey + *payloadlen, 
+				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
+				 64, &order, 0) == -1)
 	       return -1;
 #ifdef DEBUG 
 	  {  
 	       int i = 3000; 
 	       char buffer[3000]; 
-	       bin2hex(buffer, &i, pkey, *payloadlen+ 16); 
+	       bin2hex(buffer, &i, pkey, *payloadlen + 8); 
 	       printf("Decrypt key: %s\n", buffer ); 
 	  } 
 #endif 
 	  bcopy(pkey+*payloadlen, &keys[0], 8);
 	  des_set_odd_parity(&keys[0]);
-	  bcopy(pkey+*payloadlen+8, &keys[1], 8);
+
+	  /* Zero IV, we will mask the packet instead */
+	  bzero(&keys[1], 8);
 
 	  des_set_key(&keys[0], key1);
-
-	  packet_make_iv((u_int32_t *)&keys[1], (u_int32_t *)(payload - 8));
 
 	  des_cbc_encrypt(input,input,*payloadlen, key1,&keys[1], DES_DECRYPT);
 
@@ -312,20 +326,28 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 #ifdef DEBUG
 	  printf("[Packet decryption: 3DES]\n");
 #endif
-	  pkey  = calloc(*payloadlen + 32, sizeof(u_int8_t));
+	  pkey  = calloc(*payloadlen + 24, sizeof(u_int8_t));
 	  if(pkey == NULL) {
 	       log_error(1, "Not enough memory for privacy secret");
 	       return -1;
 	  }
+	  /* XOR Mask */
 	  if(compute_privacy_key(st, pkey, 
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
-				 *payloadlen*8+256, 0, 0) == -1)
+				 *payloadlen*8, &order, 0) == -1)
 	       return -1;
+	  /* 3 DES keys + 1 DES IV */
+	  for (i=0; i<3; i++) {
+	       if(compute_privacy_key(st, pkey + *payloadlen + (i<<3), 
+				      payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
+				      64, &order, 0) == -1)
+		    return -1;
+	  }
 #ifdef DEBUG
 	  { 
 	       int i = 3000;
 	       char buffer[3000];
-	       bin2hex(buffer, &i, pkey, *payloadlen+32);
+	       bin2hex(buffer, &i, pkey, *payloadlen+24);
 	       printf("Decrypt key: %s\n", buffer );
 	  }
 #endif
@@ -335,13 +357,13 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	  des_set_odd_parity(&keys[1]);
 	  bcopy(pkey+*payloadlen+16, &keys[2], 8);
 	  des_set_odd_parity(&keys[2]);
-	  bcopy(pkey+*payloadlen+24, &keys[3], 8);
+
+	  /* Zero IV, we will mask the packet instead */
+	  bzero(&keys[3], 8);
 
 	  des_set_key(&keys[0], key1);
 	  des_set_key(&keys[1], key2);
 	  des_set_key(&keys[2], key3);
-
-	  packet_make_iv((u_int32_t *)&keys[3], (u_int32_t *)(payload - 8));
 
 	  des_ede3_cbc_encrypt(input, input, *payloadlen,
 			   key1, key2, key3, &keys[3], DES_DECRYPT);

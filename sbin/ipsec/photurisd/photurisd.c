@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.5 1997/09/14 10:37:52 deraadt Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.6 1998/03/04 11:43:47 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -67,10 +67,11 @@ usage(void)
 {
      FILE *f = stderr;
 
-     fprintf(f, "usage: photurisd [-ci] [-d directory]\n");
+     fprintf(f, "usage: photurisd [-ci] [-d directory] [-p port]\n");
      fprintf(f, "\t-c  check primes on startup\n");
-     fprintf(f, "\t-t  ignore startup file %s\n", PHOTURIS_STARTUP);
+     fprintf(f, "\t-i  ignore startup file %s\n", PHOTURIS_STARTUP);
      fprintf(f, "\t-d  specifies the startup dir\n");
+     fprintf(f, "\t-p  specifies the local port to bind to\n");
      exit(1);
 }
      
@@ -115,8 +116,9 @@ main(int argc, char **argv)
      char *dir = PHOTURIS_DIR;
 
      daemon_mode = 0;
+     global_port = 0;
 
-     while ((ch = getopt(argc, argv, "cid:")) != -1)
+     while ((ch = getopt(argc, argv, "cid:p:")) != -1)
 	  switch((char)ch) {
 	  case 'c':
 	       primes = 1;
@@ -126,6 +128,9 @@ main(int argc, char **argv)
 	       break;
 	  case 'd':
 	       dir = optarg;
+	       break;
+	  case 'p':
+	       global_port = atoi(optarg);
 	       break;
 	  case '?':
 	  default:

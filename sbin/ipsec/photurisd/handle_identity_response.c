@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_response.c,v 1.4 1997/09/02 17:26:37 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_response.c,v 1.5 1998/03/04 11:43:21 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -60,16 +60,32 @@ static char rcsid[] = "$Id: handle_identity_response.c,v 1.4 1997/09/02 17:26:37
 #ifdef IPSEC
 #include "kernel.h"
 #endif
+#ifdef DEBUG
+#include "packet.h"
+#endif
 
 int
 handle_identity_response(u_char *packet, int size, char *address,
 			 char *local_address)
 {
+        struct packet_sub parts[] = {
+	     { "IDChoice", FLD_ATTRIB, FMD_ATT_ONE, 0, },
+	     { "Identity", FLD_VARPRE, 0, 0, },
+	     { "Verification", FLD_VARPRE, 0, 0, },
+	     { "Attributes", FLD_ATTRIB, FMD_ATT_FILL, 0, },
+	     { NULL }
+	};
+
+        struct packet id_msg = {
+	     "Identity Response",
+	     IDENTITY_MESSAGE_MIN, 0, parts
+	};
+
 	struct identity_message *header;
 	struct stateob *st;
 	struct spiob *spi;
-	u_int8_t *p, *attributes;
-	u_int16_t i, asize, attribsize, tmp;
+	u_int8_t *attributes;
+	u_int16_t i, attribsize, tmp;
 	u_int8_t signature[22];  /* XXX - constant */
 
 	if (size < IDENTITY_MESSAGE_MIN)
@@ -91,31 +107,25 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     goto verification_failed;
 	}
 
-	/* Verify message */
-	if (!(i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header))))
-	     goto verification_failed;
-	
-	asize = IDENTITY_MESSAGE_MIN;
-
-	p = IDENTITY_MESSAGE_CHOICE(header);
-	asize += p[1] + 2;
-	p += p[1] + 2;
-	asize += varpre2octets(p);
-	p += varpre2octets(p);
-
-	attributes = p + i;
-	asize += i;                            /* Verification size */
-	asize += packet[size-1];               /* Padding size */
-	attribsize = 0;
-	while(asize + attribsize < size)
-	     attribsize += attributes[attribsize+1] + 2;
-
-	asize += attribsize;
-
-	if (asize != size) {
-	     log_error(0, "wrong packet size in handle_identity_response()");
-	     return 0;
+#ifdef DEBUG
+	printf("Identity Response (after decryption):\n");
+	packet_dump((u_int8_t *)header, size, 0);
+#endif
+	/* Verify message structure */
+	if (packet_check(packet, size - packet[size-1], &id_msg) == -1) {
+	     log_error(0, "bad packet structure in handle_identity_response()");
+	     return -1;
 	}
+
+	i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header));
+	if (!i || i != parts[2].size || i >sizeof(signature)) {
+	     log_error(0, "verification size mismatch in handle_identity_response()");
+	     goto verification_failed;
+	}
+	bcopy(parts[2].where, signature, parts[2].size);
+	
+	attributes = parts[3].where;
+	attribsize = parts[3].size;
 
 	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
 			    attributes, attribsize)) {
@@ -123,51 +133,34 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     return 0;
 	}
 
-	if (i > sizeof(signature)) {
-	     log_error(0, "verification too long in handle_identity_response()");
-	     goto verification_failed;
-	}
-
-	bcopy(p, signature, i);
-	bzero(p, i);
 
 	/* Fill the state object */
-	if (st->uSPIidentver == NULL) {
-	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
-		  log_error(1, "calloc() in handle_identity_response()"); 
-		  goto verification_failed;
-	     }
-	     bcopy(signature, st->uSPIidentver, i);
-	     st->uSPIidentversize = i;
+	if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
+	     log_error(1, "calloc() in handle_identity_response()"); 
+	     goto verification_failed;
 	}
+	bcopy(signature, st->uSPIidentver, i);
+	st->uSPIidentversize = i;
 
-	p = IDENTITY_MESSAGE_CHOICE(header);
-	if (st->uSPIidentchoice == NULL) {
-	     if((st->uSPIidentchoice = calloc(p[1]+2, sizeof(u_int8_t))) == NULL) {
-		  log_error(1, "calloc() in handle_identity_response()");
-		  goto verification_failed;
-	     }
-	     bcopy(p, st->uSPIidentchoice, p[1]+2);
-	     st->uSPIidentchoicesize = p[1]+2;
+	if((st->uSPIidentchoice = calloc(parts[0].size, sizeof(u_int8_t))) == NULL) {
+	     log_error(1, "calloc() in handle_identity_response()");
+	     goto verification_failed;
 	}
+	bcopy(parts[0].where, st->uSPIidentchoice, parts[0].size);
+	st->uSPIidentchoicesize = parts[0].size;
 
-	p += p[1] + 2;
-	if (st->uSPIident == NULL) {
-	     if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
-		  log_error(1, "calloc() in handle_identity_response()"); 
-		  goto verification_failed;
-	     }
-	     bcopy(p, st->uSPIident, varpre2octets(p));
+	if((st->uSPIident = calloc(parts[1].size, sizeof(u_int8_t))) == NULL) {
+	     log_error(1, "calloc() in handle_identity_response()"); 
+	     goto verification_failed;
 	}
+	bcopy(parts[1].where, st->uSPIident, parts[1].size);
 	
-	if (st->uSPIattrib == NULL) {
-	     if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
-		  log_error(1, "calloc() in handle_identity_response()");
-		  goto verification_failed;
-	     }
-	     bcopy(attributes, st->uSPIattrib, attribsize);
-	     st->uSPIattribsize = attribsize;
+	if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
+	     log_error(1, "calloc() in handle_identity_response()");
+	     goto verification_failed;
 	}
+	bcopy(attributes, st->uSPIattrib, attribsize);
+	st->uSPIattribsize = attribsize;
 
 	if (get_secrets(st, ID_REMOTE) == -1) {
 	     log_error(0, "get_secrets() in in handle_identity_response()");

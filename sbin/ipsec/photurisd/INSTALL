@@ -14,7 +14,7 @@ add -DIPSEC to the CFLAGS.
 Run make.
 
 After starting the photurisd on two machines, you can start the program
-startkey <ip-number-of-the-other-machine> to start a key exchange.
+startkey dst=<ip-number-of-the-other-machine> to start a key exchange.
 
 For the daemon to work with other IPSec implementations you should look
 in the sources for #ifdef IPSEC.

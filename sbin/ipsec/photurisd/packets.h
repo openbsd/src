@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: packets.h,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $ */
+/* $Id: packets.h,v 1.2 1998/03/04 11:43:37 provos Exp $ */
 /*
  * packets.h:
  */
@@ -52,6 +52,29 @@
 
 #define COOKIE_SIZE 16
 #define SPI_SIZE 4
+
+/* General packet definition */
+
+#define FLD_CONST	0
+#define FLD_VARPRE	1
+#define FLD_ATTRIB	2
+
+#define FMD_ATT_ONE	0
+#define FMD_ATT_FILL	1
+
+struct packet_sub {
+        char *field;		/* Name of Field */
+        int type;		/* Type of Field */
+        int mod;		/* Modifier: */
+        u_int16_t size;		/* Pointer to start of Field */
+        void *where;		/* Pointer to start of Field */
+};
+
+struct packet {
+        char *name;
+        int min, max;
+        struct packet_sub *parts;
+};
 
 struct cookie_request {
 	u_int8_t icookie[COOKIE_SIZE];

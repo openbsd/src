@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.5 1997/09/14 10:37:49 deraadt Exp $";
+static char rcsid[] = "$Id: config.c,v 1.6 1998/03/04 11:43:15 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -68,9 +68,13 @@ static char rcsid[] = "$Id: config.c,v 1.5 1997/09/14 10:37:49 deraadt Exp $";
 #include "buffer.h"
 #include "scheme.h"
 #include "api.h"
+#ifdef IPSEC
+#include "kernel.h"
+#endif
 
 
 static FILE *config_fp;
+static struct cfgx *cfgxroot;
 
 static void 
 open_config_file(char *file)
@@ -120,17 +124,92 @@ config_get(char *token)
 }
 
 int
+cfgx_insert(char *name, int id)
+{
+     struct cfgx *ob;
+
+     if ((ob = malloc(sizeof(struct cfgx))) == NULL)
+	  return -1;
+
+     ob->name = strdup(name);
+     ob->id = id;
+
+     ob->next = cfgxroot;
+     cfgxroot = ob;
+
+     return 0;
+}
+
+struct cfgx *
+cfgx_get(char *name)
+{
+     struct cfgx *ob;
+     
+     for(ob = cfgxroot; ob; ob = ob->next)
+	  if (ob->name && !strcmp(name, ob->name))
+	       break;
+
+     return ob;
+}
+
+void
+cfgx_clear(void)
+{
+     struct cfgx *ob;
+     while(cfgxroot) {
+	  ob = cfgxroot;
+	  cfgxroot = cfgxroot->next;
+	  free(ob);
+     }
+}
+
+/*
+ * Parses the type of an attribute: ident|enc|auth.
+ */
+
+int
+parse_type(char *line) 
+{
+
+     int type = 0;
+     while (*line) {
+	  if (!strncmp(line, "ident", 5)) {
+	       type |= AT_ID;
+	       line += 5;
+	  } else if (!strncmp(line, "enc", 3)) {
+	       type |= AT_ENC;
+	       line += 3;
+	  } else if (!strncmp(line, "auth", 4)) {
+	       type |= AT_AUTH;
+	       line += 4;
+	  } else
+	       return -1;
+	  while (isspace(*line))
+	       line++;
+	  if (*line && *line++ != '|')
+	       return -1;
+     }
+
+     return type;
+}
+
+int
 init_attributes(void)
 {
      char *p, *p2;
-     struct attribute_list *ob = NULL;
+     attribute_list *ob = NULL;
      struct in_addr in;
-     int def_flag = 0;
+     int i, def_flag = 0;
      char attrib[257];
+     struct cfgx *cfgattrib = NULL;
 
 #ifdef DEBUG
      printf("[Setting up attributes]\n");
 #endif
+
+     /* Set up attribute delimeter */
+     cfgx_insert("AT_AH_ATTRIB", AT_AH_ATTRIB);
+     cfgx_insert("AT_ESP_ATTRIB", AT_ESP_ATTRIB);
 
      open_config_file(attrib_file);
      while((p2 = config_get("")) != NULL) {
@@ -141,35 +220,84 @@ init_attributes(void)
 	  if (p2 == NULL || inet_addr(p) == -1 || 
 	       inet_network(p2) == -1) {  /* Attributes follow now */
 
-	       if (ob == NULL && (ob = attrib_new()) == NULL) 
-                    crit_error(1, "attribute_new() in init_attributes()");
-	       else 
-		    def_flag = 1;
+	       cfgattrib = cfgx_get(p);
+	       if (cfgattrib == NULL && strchr(p, ',') != NULL) {
+		    char *name, *p3, *p4;
+		    attrib_t tmpatt, *ob;
 
-	       if (!strcmp(p, "AT_AH_ATTRIB")) {
-		    attrib[0] = AT_AH_ATTRIB;
-		    attrib[1] = 0;
-	       } else if (!strcmp(p, "AT_ESP_ATTRIB")) { 
-                    attrib[0] = AT_ESP_ATTRIB; 
-                    attrib[1] = 0; 
-               } else if (!strcmp(p, "AT_MD5_DP")) { 
-                    attrib[0] = AT_MD5_DP; 
-                    attrib[1] = 0; 
-               } else if (!strcmp(p, "AT_SHA1_DP")) { 
-                    attrib[0] = AT_SHA1_DP; 
-                    attrib[1] = 0; 
-               } else if (!strcmp(p, "AT_MD5_KDP")) {  
-                    attrib[0] = AT_MD5_KDP;  
-                    attrib[1] = 0;  
-               } else if (!strcmp(p, "AT_DES_CBC")) {  
-                    attrib[0] = AT_DES_CBC;  
-                    attrib[1] = 0;  
-               } else {
+		    p4 = p;
+
+		    if (p2 != NULL)
+			 p4[strlen(p4)] = ' ';
+
+		    name = strsep(&p4, ",");
+		    while (isspace(*name))
+			 name++;
+		    i = strlen(name) - 1;
+		    while (isspace(name[i]) && i > 0)
+			 name[i--] = 0;
+
+		    if ((p2 = strsep(&p4, ",")) == NULL ||
+			(p3 = strsep(&p4, ",")) == NULL) {
+			 log_error(0, "Mal formated attribute definition for %s in init_attributess()", name);
+			 continue;
+		    }
+
+		    if ((tmpatt.id = atoi(p2)) <= 0) {
+			 log_error(0, "Bad id %s for %s in init_attributes()", p2, name);
+			 continue;
+		    }
+
+		    if ((tmpatt.klen = atoi(p4)) < 0) {
+			 log_error(0, "Bad key length %s for %s in init_attributes()", p4, name);
+			 continue;
+		    }
+
+		    while (isspace(*p3)) 
+			 p3++;
+		    i = strlen(p3) - 1;
+		    while (isspace(p3[i]) && i > 0)
+			 p3[i--] = 0;
+
+		    if ((tmpatt.type = parse_type(p3)) == -1) {
+			 log_error(0, "Unkown attribute type %s for %s in init_attributes()", p3, name);
+			 continue;
+		    }
+
+#ifdef IPSEC
+		    if ((tmpatt.type & ~AT_ID) &&
+			(tmpatt.koff = kernel_get_offset(tmpatt.id)) == -1) {
+			 log_error(0, "Attribute %s not supported by kernel in init_attributes()", name);
+			 continue;
+		    }
+#endif
+		    
+		    if ((ob = calloc(1, sizeof(attrib_t))) == NULL)
+			 crit_error(1, "calloc() in init_attributes()");
+
+		    *ob = tmpatt;
+		    putattrib(ob);
+		    cfgx_insert(name, ob->id);
+		    cfgattrib = cfgx_get(name);
+#ifdef DEBUG
+		    printf("New attribute: %s, id: %d, type: %d, klen: %d\n", name, ob->id, ob->type, ob->klen);
+#endif
+	       }
+
+	       if (cfgattrib == NULL) {
 		    log_error(0, "Unknown attribute %s in init_attributes()", 
 			      p);
 		    continue;
 	       }
 
+	       if (ob == NULL && (ob = attrib_new()) == NULL) 
+                    crit_error(1, "attribute_new() in init_attributes()");
+	       else 
+		    def_flag = 1;
+
+	       attrib[0] = cfgattrib->id;
+	       attrib[1] = 0;
+		    
 	       /* Copy attributes in object */
 	       ob->attributes = realloc(ob->attributes, 
 					ob->attribsize + attrib[1] +2);
@@ -209,6 +337,8 @@ init_attributes(void)
 
      if (!def_flag)
 	  crit_error(0, "No default attribute list in init_attributes()");
+
+     cfgx_clear();
      return 1;
 }
 
@@ -444,7 +574,7 @@ startup_parse(struct stateob *st, char *p2)
      char *p, *p3;
      struct hostent *hp;
 
-     while((p=strsep(&p2, " ")) != NULL) {
+     while((p=strsep(&p2, " ")) != NULL && strlen(p)) {
 	  if ((p3 = strchr(p, '=')) == NULL) {
 	       log_error(0, "missing = in %s in startup_parse()", p);
 	       continue;
@@ -629,7 +759,9 @@ reconfig(int sig)
 {
      log_error(0, "Reconfiguring on SIGHUP");
 
-     attrib_cleanup();
+     clearattrib();		/* Clear attribute id hash */
+     attrib_cleanup();		/* Clear list of offered attributes */
+
      identity_cleanup(NULL);
      mod_cleanup();
      
@@ -763,7 +895,7 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
 int 
 pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
 {
-     struct attribute_list *ob;
+     attribute_list *ob;
      int mode = 0, i, n, count, first;
      
      if ((ob = attrib_find(st->address)) == NULL) {
@@ -806,6 +938,154 @@ pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
 }
 
 
+/*
+ * Select attributes we actually want to use for the SA.
+ */
+
+int
+select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
+{
+     u_int16_t count = 0;
+     u_int8_t *wantesp, *wantah, *offeresp, *offerah, *p;
+     u_int16_t wantespsize, wantahsize, offerespsize, offerahsize;
+     attribute_list *ob; 
+     attrib_t *attprop;
+     
+     if ((ob = attrib_find(NULL)) == NULL) { 
+	  log_error(0, "attrib_find() for default in select_attrib() in "
+		    "exchange to %s", st->address); 
+	  return -1; 
+     } 
+     
+     /* Take from Owner */
+     get_attrib_section(ob->attributes, ob->attribsize, 
+			&wantesp, &wantespsize, AT_ESP_ATTRIB);
+     get_attrib_section(ob->attributes, ob->attribsize, 
+			&wantah, &wantahsize, AT_AH_ATTRIB);
+
+     
+     /* Take from User */
+     get_attrib_section(st->uSPIoattrib, st->uSPIoattribsize,
+			&offeresp, &offerespsize, AT_ESP_ATTRIB);
+     get_attrib_section(st->uSPIoattrib, st->uSPIoattribsize,
+			&offerah, &offerahsize, AT_AH_ATTRIB);
+     
+     p = buffer;
+     if (wantesp != NULL && offeresp != NULL && (st->flags & IPSEC_OPT_ENC)) {
+	  /* Take the ESP section */
+	  char *tp = wantesp, *ta = wantesp;
+	  u_int16_t tpsize = 0, tasize = 0;
+	  int res;
+	  attrib_t *attah = NULL;
+	  
+	  attprop = NULL;
+	  /* We travers the ESP section and look for the first ENC attribute */
+	  while (tpsize < wantespsize) {
+	       if (isinattrib(offeresp, offerespsize, tp[tpsize])) {
+		    attprop = getattrib(tp[tpsize]);
+		    if (attprop != NULL && attprop->type == AT_ENC)
+			 break;
+	       }
+	       tpsize += tp[tpsize+1]+2;
+	  }
+	  if (tpsize >= wantespsize)
+	       attprop = NULL;
+
+	  /* If we find a fitting AH, we take it */
+	  while (attprop != NULL && tasize < wantespsize) {
+	       if (isinattrib(offeresp, offerespsize, ta[tasize])) {
+		    attah = getattrib(ta[tasize]);
+		    if (attah != NULL && (attah->type & AT_AUTH)) {
+#ifdef IPSEC
+			 res = kernel_valid(attprop->koff, attah->koff);
+#else
+			 res = 0;
+#endif
+			 if (res == AT_ENC) {
+			      /* 
+			       * Our ESP attribute does not allow AH, but 
+			       * since the ESP attribute is our first choice, 
+			       * dont try for other.
+			       */
+			      attah = NULL;
+			      break;
+			 } else if (res != AT_AUTH) 
+			      break;
+		    }
+	       }
+	       
+	       tasize += ta[tasize+1]+2;
+	  }
+	  if (tasize >= wantespsize)
+	       attah = NULL;
+	       
+	  if (attprop != NULL) {
+	       /* Put proper header in there */
+	       p[0] = AT_ESP_ATTRIB;
+	       p[1] = 0;
+	       count += 2;
+	       p += 2;
+
+	       /* We are using our own attributes, safe to proceed */
+	       bcopy(wantesp+tpsize, p, wantesp[tpsize+1] + 2);
+	       count += wantesp[tpsize+1] + 2;
+	       p += wantesp[tpsize+1] + 2;
+
+	       if (attah != NULL) {
+		    /* We are using our own attributes, safe to proceed */
+		    bcopy(wantesp+tasize, p, wantesp[tasize+1] + 2);
+		    count += wantesp[tasize+1] + 2;
+		    p += wantesp[tasize+1] + 2;
+	       }
+	  }
+     }
+
+     if (wantah != NULL && offerah != NULL && (st->flags & IPSEC_OPT_AUTH)) {
+	  /* Take the AH section */
+	  u_int8_t *tp = wantah;
+	  u_int16_t tpsize = 0;
+
+	  attprop = NULL;
+	  /* We travers the AH section and look for the first AH attribute */
+	  while (tpsize < wantahsize) {
+	       if (isinattrib(offerah, offerahsize, tp[tpsize])) {
+		    attprop = getattrib(tp[tpsize]);
+		    if (attprop != NULL && (attprop->type & AT_AUTH))
+			 break;
+	       }
+	       tpsize += tp[tpsize+1]+2;
+	  }
+	  if (tpsize >= wantahsize)
+	       attprop = NULL;
+
+	  if (attprop != NULL) {
+	       /* Put proper header in there */
+	       p[0] = AT_AH_ATTRIB;
+	       p[1] = 0;
+	       count += 2;
+	       p += 2;
+
+	       /* We are using our own attributes, safe to proceed */
+	       bcopy(wantah+tpsize, p, wantah[tpsize+1] + 2);
+	       count += wantah[tpsize+1] + 2;
+	       p += wantah[tpsize+1] + 2;
+	  }
+     }
+
+     if (count == 0) {
+	  log_error(0, "Offered and wanted list of attributes did not have a common subset in select_attrib()");
+	  return -1;
+     }
+
+     if ((*attributes=calloc(count,sizeof(u_int8_t))) == NULL) {
+	  log_error(1, "Out of memory for SPI attributes (%d)", count);
+	  return -1;
+     }
+     *attribsize = count;
+     bcopy(buffer, *attributes, count);
+
+     return 0;
+}
 /*
  * Removes whitespace from the end of a string
  */

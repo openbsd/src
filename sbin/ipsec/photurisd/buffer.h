@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: buffer.h,v 1.1.1.1 1997/07/18 22:48:51 provos Exp $ */
+/* $Id: buffer.h,v 1.2 1998/03/04 11:43:12 provos Exp $ */
 /*
  * buffer.h: 
  * variables with buffers.
@@ -40,8 +40,8 @@
 #define BUFFER_SIZE        8192
 
 #ifndef _BUFFER_C
-extern char buffer[];
-extern char packet_buffer[];
+extern u_char buffer[];
+extern u_char packet_buffer[];
 extern int packet_size;
 #endif
 

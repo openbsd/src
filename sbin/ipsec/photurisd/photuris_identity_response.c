@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_identity_response.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: photuris_identity_response.c,v 1.2 1998/03/04 11:43:40 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -45,6 +45,9 @@ static char rcsid[] = "$Id: photuris_identity_response.c,v 1.1.1.1 1997/07/18 22
 #include "state.h"
 #include "identity.h"
 #include "encrypt.h"
+#ifdef DEBUG
+#include "packet.h"
+#endif
 
 int
 photuris_identity_response(struct stateob *st, u_char *buffer, int *size)
@@ -114,6 +117,11 @@ photuris_identity_response(struct stateob *st, u_char *buffer, int *size)
 
         /* Create verification data */  
         create_identity_verification(st, verifyp, (u_int8_t *)header, asize);  
+
+#ifdef DEBUG
+	printf("Identity-Response (before encryption):\n");
+	packet_dump((u_int8_t *)header, asize, 0);
+#endif
  
         /* Encrypt the packet after SPI if wished for */
 	packet_encrypt(st, IDENTITY_MESSAGE_CHOICE(header), 

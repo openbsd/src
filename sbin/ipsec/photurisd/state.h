@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.4 1997/09/02 17:26:49 provos Exp $ */
+/* $Id: state.h,v 1.5 1998/03/04 11:43:55 provos Exp $ */
 /*
  * state.h: 
  * state object
@@ -69,7 +69,6 @@ struct stateob {
   char address[16];                /* Remote address */
   u_int16_t port;                  /* Remote port */
 
-
   u_int8_t icookie[COOKIE_SIZE];   /* Initator cookie */
   u_int8_t rcookie[COOKIE_SIZE];   /* Responder cookie */
   u_int8_t counter;                /* Connection counter */
@@ -85,6 +84,7 @@ struct stateob {
   u_int16_t roschemesize;           /* Responder offered schemes size */
 
   u_int8_t oSPI[SPI_SIZE];          /* Owner SPI */ 
+  u_int8_t oSPITBV[3];              /* Three Byte Value */
   u_int8_t *oSPIident;              /* Owner SPI identification */
   u_int8_t *oSPIattrib;             /* Owner SPI attributes */
   u_int16_t oSPIattribsize;
@@ -100,6 +100,7 @@ struct stateob {
   time_t olifetime;                 /* Owner SPI lifetime */
 
   u_int8_t uSPI[SPI_SIZE];          /* User SPI */
+  u_int8_t uSPITBV[3];              /* Three Byte Value */
   u_int8_t *uSPIident;              /* User SPI identification */
   u_int8_t *uSPIattrib;             /* User SPI attributes */
   u_int16_t uSPIattribsize;
@@ -126,6 +127,8 @@ struct stateob {
   int retries;                      /* Number of retransmits */
   u_int8_t *packet;                 /* Buffer for retransmits */
   u_int16_t packetlen;
+  u_int8_t packetsig[16];           /* MD5 hash of an old packet */
+
   time_t lifetime;                  /* Lifetime for the exchange */
   time_t exchange_lifetime;         /* Use this as default */
   time_t spi_lifetime;              /* Use this as default */

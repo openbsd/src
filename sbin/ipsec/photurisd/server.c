@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.2 1997/07/22 11:18:25 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.3 1998/03/04 11:43:52 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -80,17 +80,18 @@ init_server(void)
      struct ifconf ifconf; 
      char buf[1024];
 
+     if (global_port == 0) {
 #ifndef PHOTURIS_PORT  
-     struct servent *ser;
+	  struct servent *ser;
 
-     if ((ser = getservbyname("photuris", "udp")) == (struct servent *) NULL)
-          crit_error(1, "getservbyname() in init_server()");
+	  if ((ser = getservbyname("photuris", "udp")) == (struct servent *) NULL)
+	       crit_error(1, "getservbyname(\"photuris\") in init_server()");
 
-     global_port = ser->s_port;
+	  global_port = ser->s_port;
 #else  
-     global_port = PHOTURIS_PORT;
+	  global_port = PHOTURIS_PORT;
 #endif  
-
+     }
 
      if ((proto = getprotobyname("udp")) == (struct protoent *) NULL)
           crit_error(1, "getprotobyname() in init_server()"); 

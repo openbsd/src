@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.4 1997/07/26 20:55:17 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.5 1998/03/04 11:43:53 provos Exp $";
 #endif
 
 #define _SPI_C_
@@ -76,80 +76,10 @@ make_spi(struct stateob *st, char *local_address,
      u_int16_t i;
 
      if(*attributes == NULL) {           /* We are in need of attributes */
-	  u_int16_t count = 0;
-	  u_int8_t *wanted, *offered, *p;
-	  u_int16_t wantedsize, offeredsize;
-	  u_int16_t mode = 0;            /* We only take when in ah|esp mode */
-	  int first = 0;                 /* Obmit AH|ESP header if not needed*/
-	  struct attribute_list *ob; 
-      
-	  if ((ob = attrib_find(NULL)) == NULL) { 
-	       log_error(0, "attrib_find() for default in make_spi() in "
-			 "exchange to %s", st->address); 
-	       return -1; 
-	  } 
-
-	  /* Take from Owner */
-	  wanted = ob->attributes;
-	  wantedsize = ob->attribsize;
-
-	  /* Take from User */
-	  offered = st->uSPIoattrib;
-	  offeredsize = st->uSPIoattribsize;
-	  
-	  /* This should never happen */
-	  if(wantedsize>BUFFER_SIZE)
-	       return -1;
-
-	  p = buffer;
-	  while(wantedsize>0) {
-	       /* Scan the offered attributes */
-	       if (*wanted == AT_AH_ATTRIB && 
-		   (st->flags & IPSEC_OPT_AUTH)) {
-		    first = 1;
-		    mode = AT_AH_ATTRIB;
-	       } else if (*wanted == AT_ESP_ATTRIB &&
-			  (st->flags & IPSEC_OPT_ENC)) {
-		    mode = AT_ESP_ATTRIB;
-		    first = 1;
-	       }
-	       
-	       /* 
-		* Take attributes only from AH or ESP sections.
-		* Obmit AH or ESP header when there are no entries
-		* in that section.
-		* XXX - put && first && in if to take only one attrib
-		* in each section.
-		*/
-
-	       if (mode && first &&
-		   *wanted != AT_AH_ATTRIB && *wanted != AT_ESP_ATTRIB &&
-		   isinattrib(offered, offeredsize, *wanted)) {
-		    
-		    /* Put prober header in there */
-		    if (first) {
-			 p[0] = mode;
-			 p[1] = 0;
-			 first = 0;
-			 count += 2;
-			 p += 2;
-		    }
-		    /* We are using our own attributes, safe to proceed */
-		    bcopy(wanted, p, *(wanted+1) + 2);
-		    count += *(wanted+1) + 2;
-		    p += *(wanted+1) + 2;
-	       }
-	       if(wantedsize - *(wanted+1) - 2 > wantedsize)
-		    break;
-	       wantedsize -= *(wanted+1) + 2;
-	       wanted += *(wanted+1) + 2;
-	  }
-	  if((*attributes=calloc(count,sizeof(u_int8_t))) == NULL) {
-	       log_error(1, "Out of memory for SPI attributes (%d)", count);
+	  if (select_attrib(st, attributes, attribsize) == -1) {
+	       log_error(0, "select_attrib() in make_spi()");
 	       return -1;
 	  }
-	  *attribsize = count;
-	  bcopy(buffer, *attributes, count);
      }
 	
      /* Just grab a random number, this should be uniq */

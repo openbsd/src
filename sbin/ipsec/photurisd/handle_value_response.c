@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_response.c,v 1.3 1997/09/02 17:26:41 provos Exp $";
+static char rcsid[] = "$Id: handle_value_response.c,v 1.4 1998/03/04 11:43:27 provos Exp $";
 #endif
 
 #include <stdlib.h>
@@ -62,14 +62,26 @@ handle_value_response(u_char *packet, int size, char *address,
 		      char *local_address)
 
 {
+        struct packet_sub parts[] = {
+	     { "Exchange Value", FLD_VARPRE, 0, 0, },
+	     { "Offered Attributes", FLD_ATTRIB, FMD_ATT_FILL, 0, },
+	     { NULL }
+	};
+	struct packet vr_msg = {
+	     "Value Response",
+	     VALUE_RESPONSE_MIN, 0, parts
+	};
 	struct value_response *header;
 	struct stateob *st;
 	mpz_t test;
-	u_int8_t *p;
-	u_int16_t i, asize;
 
 	if (size < VALUE_RESPONSE_MIN)
 	     return -1;	/* packet too small  */
+
+	if (packet_check(packet, size, &vr_msg) == -1) {
+	     log_error(0, "bad packet structure in handle_value_response()");
+	     return -1;
+	}
 
 	header = (struct value_response *) packet;
 
@@ -80,56 +92,43 @@ handle_value_response(u_char *packet, int size, char *address,
 	if (st->phase != VALUE_REQUEST)
 	     return -1;     /* We don't want this packet */
 
-	/* Check exchange value - XXX doesn't check long form */
-	p = VALUE_RESPONSE_VALUE(header);
-	asize = VALUE_RESPONSE_MIN + varpre2octets(p);
-	p += varpre2octets(p);
-	if (asize >= size)
-	     return -1;  /* Exchange value too big */
-	     
-	/* Check attributes */
-	i = 0;
-	while(asize + i < size)
-	     i += p[i+1] + 2;
-
-	if (asize + i != size)
-	     return -1;  /* attributes dont match udp length */
-
 	/* Now check the exchange value for defects */
-	mpz_init_set_varpre(test, VALUE_RESPONSE_VALUE(header));
+	mpz_init_set_varpre(test, parts[0].where);
 	if (!exchange_check_value(test, st->generator, st->modulus)) {
 	     mpz_clear(test);
 	     return 0;
 	}
 	mpz_clear(test);
 
+	/* Reserved Field for TBV */
+	bcopy(header->reserved, st->uSPITBV, 3);
+
 	/* Fill the state object */
-	st->uSPIoattrib = calloc(i, sizeof(u_int8_t));
+	st->uSPIoattrib = calloc(parts[1].size, sizeof(u_int8_t));
 	if (st->uSPIoattrib == NULL) {
 	     state_value_reset(st);
 	     state_unlink(st);
 	     return -1;
 	}
-	bcopy(p, st->uSPIoattrib, i);  
-	st->uSPIoattribsize = i;  
+	bcopy(parts[1].where, st->uSPIoattrib, parts[1].size);  
+	st->uSPIoattribsize = parts[1].size;  
 
 #ifdef DEBUG 
 	{
 	     int i = BUFFER_SIZE; 
-	     bin2hex(buffer, &i, VALUE_RESPONSE_VALUE(header), 
-		     varpre2octets(VALUE_RESPONSE_VALUE(header))); 
+	     bin2hex(buffer, &i, parts[0].where, parts[0].size);
 	     printf("Got exchange value 0x%s\n", buffer); 
 	}
 #endif 
 
 	/* Set exchange value */
-	st->texchangesize = varpre2octets(VALUE_RESPONSE_VALUE(header));
+	st->texchangesize = parts[0].size;
 	st->texchange = calloc(st->texchangesize, sizeof(u_int8_t));
 	if (st->texchange == NULL) {
 	     log_error(1, "calloc() in handle_value_response()");
 	     return -1;
 	}
-	bcopy(VALUE_RESPONSE_VALUE(header), st->texchange, st->texchangesize);
+	bcopy(parts[0].where, st->texchange, st->texchangesize);
 
 	/* Compute the shared secret now */
 	compute_shared_secret(st, &(st->shared), &(st->sharedsize));

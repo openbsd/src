@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: buffer.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: buffer.c,v 1.2 1998/03/04 11:43:11 provos Exp $";
 #endif
 
 #include <sys/types.h>
@@ -42,5 +42,5 @@ static char rcsid[] = "$Id: buffer.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $"
 #include "buffer.h"
 
 int packet_size;
-char buffer[BUFFER_SIZE];
-char packet_buffer[PACKET_BUFFER_SIZE];
+u_char buffer[BUFFER_SIZE];
+u_char packet_buffer[PACKET_BUFFER_SIZE];

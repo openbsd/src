@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: packet.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: packet.c,v 1.2 1998/03/04 11:43:35 provos Exp $";
 #endif
 
 #define _PACKET_C_
@@ -41,6 +41,7 @@ static char rcsid[] = "$Id: packet.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $"
 #include <stdlib.h>
 #include <stdio.h> 
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h> 
 #include <sys/socket.h> 
 #include <netinet/in.h> 
@@ -52,6 +53,7 @@ static char rcsid[] = "$Id: packet.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $"
 #include "errlog.h"
 #include "buffer.h"
 #include "config.h"
+#include "scheme.h"
 #include "packet.h"
 #include "server.h"
 
@@ -207,6 +209,72 @@ send_packet(void)
      } 
 }
 
+/*
+ * packet_check() checks the format of the received packet against
+ * the specified logical format. The position and size of the fields
+ * are returned.
+ */
+
+int
+packet_check(u_char *packet, u_int16_t size, struct packet *format)
+{
+     struct packet_sub *parts = format->parts;
+     u_int16_t off, val, fsize;
+
+     if (format->max != 0 && size > format->max)
+	  return -1;
+     if (size < format->min)
+	  return -1;
+
+     off = format->min;
+     packet += off;
+
+     while (off < size && parts != NULL && parts->field != NULL) {
+	  parts->where = packet;
+	  switch (parts->type) {
+	  case FLD_CONST:
+	       off += parts->size;
+	       packet += parts->size;
+	       fsize = parts->size;
+	       break;
+	  case FLD_VARPRE:
+	       val = varpre2octets(packet);
+	       off += val;
+	       packet += val;
+	       fsize = val;
+	       break;
+	  case FLD_ATTRIB:
+	       if (parts->mod == FMD_ATT_FILL) {
+		    fsize = 0;
+		    while (off < size) {
+			 val = packet[1] + 2;
+			 off += val;
+			 packet += val;
+			 fsize += val;
+		    }
+	       } else {
+		    val = packet[1] + 2;
+		    off += val;
+		    packet += val;
+		    fsize = val;
+	       }
+	       break;
+	  default:
+	       return -1;
+	  }
+	  if (parts->size == 0)
+	       parts->size = fsize;
+	  else if(parts->size != fsize)
+	       return -1;
+	  parts++;
+     }
+
+     if (off != size || (parts != NULL && parts->field != NULL))
+	  return -1;
+
+     return 0;
+}
+
 void
 packet_save(struct stateob *st, u_int8_t *buffer, u_int16_t len)
 {
@@ -221,3 +289,53 @@ packet_save(struct stateob *st, u_int8_t *buffer, u_int16_t len)
      bcopy(buffer, st->packet, len);
      st->packetlen = len;
 }
+
+#ifdef DEBUG
+void
+packet_ordered_dump(u_int8_t *packet, u_int16_t size, struct packet *format)
+{
+     struct packet_sub *parts = format->parts;
+     u_int16_t off = 0;
+
+     printf("Packet Header (%s):\n", format->name);
+     packet_dump(packet, format->min, off);
+
+     off += format->min;
+     packet += format->min;
+     while (off < size) {
+	  printf("%s (%d):\n", parts->field, parts->size);
+	  packet_dump(packet, parts->size, off);
+	  off += parts->size;
+	  packet += parts->size;
+
+	  parts++;
+     }
+}
+
+void
+packet_dump(u_int8_t *packet, u_int16_t plen, u_int16_t start)
+{
+     char tmp[73], dump[33];
+     int i, size, len, off;
+     
+     off = 0;
+     while (off < plen) {
+	  memset(tmp, ' ', sizeof(tmp));
+	  tmp[72] = 0;
+
+	  sprintf(tmp, "%04x ", (u_int32_t)(off + start));
+
+	  len = 33;
+	  size = plen - off > 16 ? 16 : plen - off;
+	  bin2hex(dump, &len, packet, size);
+	  for (i=0; i<size; i++) {
+	       bcopy(dump+i*2, tmp+5+i*3, 2);
+	       tmp[5 + 16*3 + 3 + i] = isprint(packet[i]) ? packet[i] : '.';
+	  }
+	  printf("%s\n", tmp);
+
+	  off += size;
+	  packet += size;
+     }
+}
+#endif

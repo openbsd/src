@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.4 1997/09/02 17:26:42 provos Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.5 1998/03/04 11:43:29 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -78,12 +78,12 @@ static union {
 /* XXX - argh, cast the funtions */
 
 static struct idxform idxform[] = {
-     { HASH_MD5, MD5_SIZE, (void *)&Ctx.md5ctx, 
+     { HASH_MD5, 5, MD5_SIZE, (void *)&Ctx.md5ctx, 
        sizeof(MD5_CTX), (void *)&Ctx2.md5ctx,
        (void (*)(void *))MD5Init, 
        (void (*)(void *, unsigned char *, unsigned int))MD5Update, 
        (void (*)(unsigned char *, void *))MD5Final },
-     { HASH_SHA1, SHA1_SIZE, (void *)&Ctx.sha1ctx, 
+     { HASH_SHA1, 6, SHA1_SIZE, (void *)&Ctx.sha1ctx, 
        sizeof(SHA1_CTX), (void *)&Ctx2.sha1ctx,
        (void (*)(void *))SHA1Init, 
        (void (*)(void *, unsigned char *, unsigned int))SHA1Update, 
@@ -364,19 +364,19 @@ get_secrets(struct stateob *st, int mode)
 	  st->oSPIident[0] = ((strlen(local_ident)+1) >> 5) & 0xFF;
 	  st->oSPIident[1] = ((strlen(local_ident)+1) << 3) & 0xFF;
 
-	  st->oSPIsecret = calloc(strlen(local_secret)+1,sizeof(u_int8_t));
+	  st->oSPIsecretsize = strlen(local_secret);
+	  st->oSPIsecret = calloc(st->oSPIsecretsize,sizeof(u_int8_t));
 	  if(st->oSPIsecret == NULL)
 	       return -1; 
-	  strcpy(st->oSPIsecret,local_secret);
-	  st->oSPIsecretsize = strlen(local_secret)+1;
+	  strncpy(st->oSPIsecret, local_secret, st->oSPIsecretsize);
      }
      if(st->uSPIident != NULL && st->uSPIsecret == NULL && 
 	(mode & ID_REMOTE)) {
-          st->uSPIsecret = calloc(strlen(remote_secret)+1,sizeof(u_int8_t)); 
+	  st->uSPIsecretsize = strlen(remote_secret);
+          st->uSPIsecret = calloc(st->uSPIsecretsize,sizeof(u_int8_t)); 
           if(st->uSPIsecret == NULL) 
                return -1;  
-          strcpy(st->uSPIsecret,remote_secret); 
-	  st->uSPIsecretsize = strlen(remote_secret)+1;
+          strncpy(st->uSPIsecret, remote_secret, st->uSPIsecretsize); 
      } 
      return 0;
 }
@@ -386,31 +386,29 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 		 u_int8_t *attributes, u_int16_t attribsize)
 {
      u_int16_t rsize, asize, tmp;
+     attrib_t *ob;
      int mode = 0;
      rsize = *size;
 
      /* XXX - preference of identity choice ? */
      tmp = 0;
-     while(attribsize>0 && !tmp) {
-	  switch(*attributes) {
-	  case AT_MD5_DP:
-	  case AT_SHA1_DP:
-	       tmp = 1;
+     while(attribsize>0) {
+	  /* Check if we support this identity choice */
+	  if ((ob = getattrib(*attributes)) != NULL &&
+	      (ob->type & AT_ID))
 	       break;
-	  default:
-	       if(attribsize -(*(attributes+1)+2) > attribsize) {
-		    attribsize=0;
-		    break;
-	       }
-	       attribsize -= *(attributes+1)+2;
-	       attributes += *(attributes+1)+2;
+
+	  if(attribsize -(*(attributes+1)+2) > attribsize) {
+	       attribsize=0;
 	       break;
-	  }	
+	  }
+	  attribsize -= *(attributes+1)+2;
+	  attributes += *(attributes+1)+2;
      }
 
      if(attribsize == 0) {
 	  log_error(0, "No identity choice found in offered attributes "
-		    "in choose_identity");
+		    "in choose_identity()");
 	  return -1;
      }
      
@@ -440,7 +438,7 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 	  return -1;
 
      /* oSPIident is varpre already */
-     tmp = 2+strlen(st->oSPIident+2)+1;
+     tmp = varpre2octets(st->oSPIident);
      if(rsize < tmp)
 	  return -1;
      
@@ -455,15 +453,27 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 u_int16_t
 get_identity_verification_size(struct stateob *st, u_int8_t *choice)
 {
-     switch(*choice) {
-     case AT_MD5_DP:
-	  return (128/8)+2;
-     case AT_SHA1_DP:
-	  return (160/8)+2;
-     default:
+     struct idxform *hash;
+
+     if ((hash = get_hash_id(*choice)) == NULL) {
 	  log_error(0, "Unknown identity choice: %d\n", *choice);
 	  return 0;
      }
+
+     return hash->hashsize+2;
+}
+
+/*
+ * Gets a hash corresponding with a Photuris ID
+ */
+
+struct idxform *get_hash_id(int id)
+{
+     int i;
+     for (i=0; i<sizeof(idxform)/sizeof(idxform[0]); i++)
+	  if (id == idxform[i].id)
+	       return &idxform[i];
+     return NULL;
 }
 
 struct idxform *get_hash(enum hashes hashtype)
@@ -481,22 +491,12 @@ create_verification_key(struct stateob *st, u_int8_t *buffer, u_int16_t *size,
 			int owner)
 {
      struct idxform *hash;
+     int id = owner ? *(st->oSPIidentchoice) : *(st->uSPIidentchoice);
 
-     switch(owner ? *(st->oSPIidentchoice) : *(st->uSPIidentchoice)) {
-     case AT_MD5_DP:
-	  hash = get_hash(HASH_MD5);
-	  break;
-     case AT_SHA1_DP:
-	  hash = get_hash(HASH_SHA1);
-	  break;
-     default:
-	  log_error(0, "Unkown identity choice %d in create_verification_key",
-		    owner ? *(st->oSPIidentchoice):*(st->uSPIidentchoice));
+     if ((hash = get_hash_id(id)) == NULL) {
+	  log_error(0, "Unkown identity choice %d in create_verification_key", id);
           return -1; 
      }
-
-     if (hash == NULL)
-	  return -1;
 
      if (*size < hash->hashsize)
 	  return -1;
@@ -521,21 +521,11 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
      int hash_size;
      struct idxform *hash;
 
-     switch(*(st->oSPIidentchoice)) {
-     case AT_MD5_DP:
-	  hash = get_hash(HASH_MD5);
-	  break;
-     case AT_SHA1_DP:
-	  hash = get_hash(HASH_SHA1);
-	  break;
-     default:
+     if ((hash = get_hash_id(*(st->oSPIidentchoice))) == NULL) {
 	  log_error(0, "Unkown identity choice %d in create_verification_key",
 		    *(st->oSPIidentchoice));
           return 0; 
      }
-
-     if (hash == NULL)
-	  return 0;
 
      hash_size = idsign(st, hash, buffer+2, packet,size);
 
@@ -567,21 +557,11 @@ verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 { 
      struct idxform *hash;
 
-     switch(*(st->uSPIidentchoice)) {
-     case AT_MD5_DP:
-	  hash = get_hash(HASH_MD5);
-	  break;
-     case AT_SHA1_DP:
-	  hash = get_hash(HASH_SHA1);
-	  break;
-     default:
+     if ((hash = get_hash_id(*(st->uSPIidentchoice))) == NULL) {
 	  log_error(0, "Unkown identity choice %d in create_verification_key",
 		    *(st->uSPIidentchoice));
           return 0; 
      }
-
-     if (hash == NULL)
-	  return 0;
 
      if (varpre2octets(buffer) != hash->hashsize +2)
 	  return 0;
@@ -596,7 +576,6 @@ int
 idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,  
        u_int8_t *packet, u_int16_t psize) 
 {
-     struct identity_message *p;
      u_int8_t key[HASH_MAX];
      u_int16_t keylen = HASH_MAX;
 
@@ -606,24 +585,15 @@ idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 
      /* Our verification key */
      hash->Update(hash->ctx, key, keylen); 
+     /* Key fill */
+     hash->Final(NULL, hash->ctx);
 
-     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
-     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE);
-
-     /* Hash type, lifetime + spi fields */
-     p = (struct identity_message *)packet;
-     hash->Update(hash->ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
-
-     hash->Update(hash->ctx, st->roschemes, st->roschemesize);
-
-     /* Our exchange value */
-     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize); 
-     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize);
-     hash->Update(hash->ctx, st->oSPIident, strlen(st->oSPIident));
-
-     /* Their exchange value */
-     hash->Update(hash->ctx, st->texchange, st->texchangesize);
-     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize);
+     /* 
+      * Hash Cookies, type, lifetime + spi fields +
+      * SPI owner Identity Choice + Identity 
+      */
+     hash->Update(hash->ctx, packet, IDENTITY_MESSAGE_MIN + 
+		  st->oSPIidentchoicesize + varpre2octets(st->oSPIident));
 
      if(st->uSPIident != NULL) {
 	  hash->Update(hash->ctx, st->uSPIidentver, st->uSPIidentversize);
@@ -633,10 +603,23 @@ idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      packet += IDENTITY_MESSAGE_MIN;
      psize -= IDENTITY_MESSAGE_MIN + packet[1] + 2;
      packet += packet[1] + 2;
-     psize -= varpre2octets(packet) + 2 + MD5_SIZE;
-     packet += varpre2octets(packet) + 2 + MD5_SIZE;
+     psize -= varpre2octets(packet) + 2 + hash->hashsize;
+     packet += varpre2octets(packet) + 2 + hash->hashsize;
 
      hash->Update(hash->ctx, packet, psize);
+
+     /* Our exchange value */
+     hash->Update(hash->ctx, st->oSPITBV, 3);
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize); 
+     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize);
+
+     /* Their exchange value */
+     hash->Update(hash->ctx, st->uSPITBV, 3);
+     hash->Update(hash->ctx, st->texchange, st->texchangesize);
+     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize);
+
+     /* Responder offered schemes */
+     hash->Update(hash->ctx, st->roschemes, st->roschemesize);
 
      /* Data fill */
      hash->Final(NULL, hash->ctx);
@@ -654,35 +637,25 @@ idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 	 u_int8_t *packet, u_int16_t psize)
 {
      u_int8_t digest[HASH_MAX];
-     struct identity_message *p;
      u_int8_t key[HASH_MAX];
      u_int16_t keylen = HASH_MAX;
+     struct identity_message *p = (struct identity_message *)packet;
 
      create_verification_key(st, key, &keylen, 0); /* User direction */
  
-     p = (struct identity_message *)packet;
-
      hash->Init(hash->ctx); 
  
      /* Their verification key */
      hash->Update(hash->ctx, key, keylen); 
+     /* Key fill */
+     hash->Final(NULL, hash->ctx);
  
-     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE); 
-     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE); 
-
-     /* Hash type, lifetime + spi fields */
-     hash->Update(hash->ctx, (char *)&(p->type), IDENTITY_MESSAGE_MIN - 2*COOKIE_SIZE);
-
-     hash->Update(hash->ctx, st->roschemes, st->roschemesize); 
- 
-     /* Their exchange value */ 
-     hash->Update(hash->ctx, st->texchange, st->texchangesize); 
-     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize); 
-     hash->Update(hash->ctx, st->uSPIident, strlen(st->uSPIident)); 
- 
-     /* Our exchange value */ 
-     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);  
-     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize); 
+     /* 
+      * Hash Cookies, type, lifetime + spi fields +
+      * SPI owner Identity Choice + Identity 
+      */
+     hash->Update(hash->ctx, packet, IDENTITY_MESSAGE_MIN +
+		  st->uSPIidentchoicesize + varpre2octets(st->uSPIident)); 
 
      /* Determine if the sender knew our secret already */
      if(p->type != IDENTITY_REQUEST) {
@@ -692,10 +665,23 @@ idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      packet += IDENTITY_MESSAGE_MIN;
      psize -= IDENTITY_MESSAGE_MIN + packet[1] + 2;
      packet += packet[1] + 2;
-     psize -= varpre2octets(packet) + 2 + MD5_SIZE;
-     packet += varpre2octets(packet) + 2 + MD5_SIZE;
+     psize -= varpre2octets(packet) + 2 + hash->hashsize;
+     packet += varpre2octets(packet) + 2 + hash->hashsize;
      hash->Update(hash->ctx, packet, psize);
 
+     /* Their exchange value */ 
+     hash->Update(hash->ctx, st->uSPITBV, 3);
+     hash->Update(hash->ctx, st->texchange, st->texchangesize); 
+     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize); 
+ 
+     /* Our exchange value */ 
+     hash->Update(hash->ctx, st->oSPITBV, 3);
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);  
+     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize); 
+
+     /* Responder offered schemes */
+     hash->Update(hash->ctx, st->roschemes, st->roschemesize); 
+ 
      /* Data fill */
      hash->Final(NULL, hash->ctx); 
 

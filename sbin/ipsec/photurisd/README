@@ -1,7 +1,7 @@
 This is an implementation of the Photuris keymanagement protocol
 according to the drafts:
-	draft-simpson-photuris-12.txt
-	draft-simpson-photuris-schemes-01.txt
+	draft-simpson-photuris-18.txt
+	draft-simpson-photuris-schemes-04.txt
 
 For quick installation instructions read INSTALL, or otherwise
 README.howtouse for more complete information.

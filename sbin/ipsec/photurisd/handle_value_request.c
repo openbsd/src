@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.4 1997/09/02 17:26:40 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.5 1998/03/04 11:43:26 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,16 +63,30 @@ handle_value_request(u_char *packet, int size,
 		     u_int8_t *schemes, u_int16_t ssize)
 
 {
+        struct packet_sub parts[] = {
+	     { "Exchange Value", FLD_VARPRE, 0, 0, },
+	     { "Offered Attributes", FLD_ATTRIB, FMD_ATT_FILL, 0, },
+	     { NULL }
+	};
+	struct packet vr_msg = {
+	     "Value Request",
+	     VALUE_REQUEST_MIN, 0, parts
+	};
 	struct value_request *header;
 	struct stateob *st;
 	mpz_t test, gen, mod;
 	u_int8_t *p, *modp, *refp, *genp = NULL;
-	u_int16_t i, sstart, vsize, asize, modsize, modflag;
+	u_int16_t sstart, vsize, modsize, modflag;
 	u_int8_t scheme_ref[2];
 	u_int8_t rcookie[COOKIE_SIZE];
 
 	if (size < VALUE_REQUEST_MIN)
 	     return -1;	/* packet too small  */
+
+	if (packet_check(packet, size, &vr_msg) == -1) {
+	     log_error(0, "bad packet structure in handle_value_request()");
+	     return -1;
+	}
 
 	header = (struct value_request *) packet;
 
@@ -99,11 +113,7 @@ handle_value_request(u_char *packet, int size,
 	     }
 
 	     /* Check exchange value - XXX doesn't check long form */
-	     p = VALUE_REQUEST_VALUE(header);
-	     vsize = varpre2octets(p);
-	     asize = VALUE_REQUEST_MIN + vsize;
-	     if (asize >= size)
-		  return -1;   /* Exchange value too big */
+	     vsize = parts[0].size;
 
 	     /* Check schemes - selected length is in exchange value*/
 	     sstart = 0;
@@ -137,19 +147,8 @@ handle_value_request(u_char *packet, int size,
 	     if (sstart >= ssize)
 		  return -1;   /* Did not find a scheme - XXX log */
 
-	     p = VALUE_REQUEST_VALUE(header) + vsize;
-	     
-	     /* Check attributes */
-	     i = 0;
-	     while(asize + i < size)
-		  i += p[i+1] + 2;
-
-	     /* This 'i' is used below as well as p */
-	     if (asize + i != size)
-		  return -1;  /* attributes dont match udp length */
-
 	     /* now check the exchange value */
-	     mpz_init_set_varpre(test, VALUE_REQUEST_VALUE(header));
+	     mpz_init_set_varpre(test, parts[0].where);
 	     mpz_init_set_varpre(mod, modp);
 	     mpz_init(gen);
 	     if (exchange_set_generator(gen, header->scheme, genp) == -1 ||
@@ -170,13 +169,13 @@ handle_value_request(u_char *packet, int size,
 	     st->flags = IPSEC_OPT_ENC|IPSEC_OPT_AUTH;
 
 	     /* Fill the state object */
-	     st->uSPIoattrib = calloc(i, sizeof(u_int8_t));
+	     st->uSPIoattrib = calloc(parts[1].size, sizeof(u_int8_t));
              if (st->uSPIoattrib == NULL) {
                   state_value_reset(st);
 		  return -1;
 	     }
-             bcopy(p, st->uSPIoattrib, i);  
-             st->uSPIoattribsize = i;  
+             bcopy(parts[1].where, st->uSPIoattrib, parts[1].size);  
+             st->uSPIoattribsize = parts[1].size;  
 
 	     /* Save scheme, which will be used by both parties */
 	     vsize = 2 + varpre2octets(modp);
@@ -204,19 +203,19 @@ handle_value_request(u_char *packet, int size,
 #ifdef DEBUG
 	     {
 		  int i = BUFFER_SIZE;
-		  bin2hex(buffer, &i, VALUE_REQUEST_VALUE(header), varpre2octets(VALUE_REQUEST_VALUE(header)));
+		  bin2hex(buffer, &i, parts[0].where, varpre2octets(VALUE_REQUEST_VALUE(header)));
 		  printf("Got exchange value 0x%s\n", buffer);
 	     }
 #endif
 
 	     /* Set exchange value */
-	     st->texchangesize = varpre2octets(VALUE_REQUEST_VALUE(header));
+	     st->texchangesize = parts[0].size;
 	     st->texchange = calloc(st->texchangesize, sizeof(u_int8_t));
 	     if (st->texchange == NULL) {
 		  log_error(1, "calloc() in handle_value_request()");
 		  return -1;
 	     }
-	     bcopy(VALUE_REQUEST_VALUE(header), st->texchange, st->texchangesize);
+	     bcopy(parts[0].where, st->texchange, st->texchangesize);
 
 
 	     /* Fill in the state object with generic data */
@@ -225,6 +224,7 @@ handle_value_request(u_char *packet, int size,
 	     st->counter = header->counter;
              bcopy(header->icookie, st->icookie, COOKIE_SIZE);  
              bcopy(header->rcookie, st->rcookie, COOKIE_SIZE);  
+	     bcopy(&header->counter, st->uSPITBV, 3);
 
 	     if ((st->roschemes = calloc(ssize, sizeof(u_int8_t))) == NULL) {
 		  state_value_reset(st);

@@ -34,7 +34,7 @@ How to get it working ?
    happens, or remove -DIPSEC if you dont want to actually setup encrypted
    and authenticated connections within the kernel)
 6. start ./photurid on two hosts.
-7. ./startkey host1 (for example ./startkey 134.100.33.22)
+7. ./startkey dst=host1 (for example ./startkey dst=134.100.33.22)
 
    If you compiled the photuris daemon with -DDEBUG you should see an
    exchange of values now and finally the shared secret from which the
@@ -58,7 +58,7 @@ How to get it working ?
   
    Add the following two lines into your kernel config file:
 config IPSEC
-pseudo-device enc 4
+pseudo-device enc 1
 
   Possible configuration
   

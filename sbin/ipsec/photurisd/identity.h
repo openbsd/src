@@ -51,11 +51,12 @@ enum hashes {
      HASH_SHA1 };
 
 struct idxform {
-     enum hashes type;        /* Type of the transform */
-     u_int8_t hashsize;       /* Size of the hash */
-     void *ctx;               /* Pointer to a context */
+     enum hashes type;		/* Type of the transform */
+     int id;			/* Photuris Attribute ID */
+     u_int8_t hashsize;		/* Size of the hash */
+     void *ctx;			/* Pointer to a context */
      int ctxsize;
-     void *ctx2;              /* Pointer to a 2nd context for speedup */
+     void *ctx2;		/* Pointer to a 2nd context for speedup */
      void (*Init)(void *);
      void (*Update)(void *, unsigned char *, unsigned int);
      void (*Final)(unsigned char *, void *);
@@ -109,6 +110,7 @@ int create_identity_verification(struct stateob *st, u_int8_t *buffer,
 int  verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 				  u_int8_t *packet, u_int16_t size);
 
+struct idxform *get_hash_id(int id);
 struct idxform *get_hash(enum hashes hashtype);
 int create_verification_key(struct stateob *, u_int8_t *, u_int16_t *, int);
 

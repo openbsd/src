@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: attributes.c,v 1.2 1997/07/19 12:07:40 provos Exp $";
+static char rcsid[] = "$Id: attributes.c,v 1.3 1998/03/04 11:43:08 provos Exp $";
 #endif
 
 #define _ATTRIBUTES_C_
@@ -47,7 +47,44 @@ static char rcsid[] = "$Id: attributes.c,v 1.2 1997/07/19 12:07:40 provos Exp $"
 #include "config.h"
 #include "attributes.h"
 
-static struct attribute_list *attribob = NULL;
+static attribute_list *attribob = NULL;
+static attrib_t *attribhash[ATTRIBHASHMOD];
+
+/* Put or get attribute properties from the hashtable */
+
+void
+putattrib(attrib_t *attrib)
+{
+     int hashval = attrib->id % ATTRIBHASHMOD;
+     attrib->next = attribhash[hashval];
+     attribhash[hashval] = attrib;
+}
+
+attrib_t *
+getattrib(int id) 
+{
+     int hashval = id % ATTRIBHASHMOD;
+     attrib_t *attrib;
+
+     for(attrib=attribhash[hashval]; attrib; attrib = attrib->next)
+	  if (attrib->id == id)
+	       break;
+
+     return attrib;
+}
+
+void
+clearattrib(void)
+{
+     int i;
+     attrib_t *attrib;
+
+     for (i=0; i<ATTRIBHASHMOD; i++)
+	  while ((attrib=attribhash[i]) != NULL) {
+	       attribhash[i] = attrib->next;
+	       free(attrib);
+	  }
+}
 
 int
 isinattrib(u_int8_t *attributes, u_int16_t attribsize, u_int8_t attribute)
@@ -63,6 +100,41 @@ isinattrib(u_int8_t *attributes, u_int16_t attribsize, u_int8_t attribute)
      }
      return 0;
 }
+
+void
+get_attrib_section(u_int8_t *set, u_int16_t setsize, 
+		   u_int8_t **subset, u_int16_t *subsetsize,
+		   u_int8_t section)
+{
+     int i = 0;
+     u_int8_t *tset;
+     u_int16_t tsetsize;
+
+     while (i < setsize) {
+	  if (set[i] == section)
+	       break;
+	  i += set[i+1] + 2;
+     }
+
+     if ((i >= setsize) || (i+set[i+1] + 2 > setsize)) {
+	  *subset = NULL;
+	  *subsetsize = 0;
+	  return;
+     }
+
+     tset = *subset = set+i+set[i+1]+2;
+     tsetsize = *subsetsize = setsize - i - set[i+1] - 2;
+
+     i = 0;
+     while (i < tsetsize) {
+	  if (tset[i] == AT_ESP_ATTRIB || tset[i] == AT_AH_ATTRIB) {
+	       *subsetsize = i;
+	       return;
+	  }
+	  i += tset[i+1]+2;
+     }
+}
+
 
 int 
 isattribsubset(u_int8_t *set, u_int16_t setsize, 
@@ -80,9 +152,9 @@ isattribsubset(u_int8_t *set, u_int16_t setsize,
 }
 
 int
-attrib_insert(struct attribute_list *ob)
+attrib_insert(attribute_list *ob)
 {
-     struct attribute_list *tmp;
+     attribute_list *tmp;
 
      ob->next = NULL;
 
@@ -100,9 +172,9 @@ attrib_insert(struct attribute_list *ob)
 }
 
 int
-attrib_unlink(struct attribute_list *ob)
+attrib_unlink(attribute_list *ob)
 {
-     struct attribute_list *tmp;
+     attribute_list *tmp;
      if(attribob == ob) {
 	  attribob = ob->next;
 	  free(ob);
@@ -119,26 +191,26 @@ attrib_unlink(struct attribute_list *ob)
      return 0;
 }
 
-struct attribute_list *
+attribute_list *
 attrib_new(void)
 {
-     struct attribute_list *p;
+     attribute_list *p;
 
-     if((p = calloc(1, sizeof(struct attribute_list)))==NULL)
+     if((p = calloc(1, sizeof(attribute_list)))==NULL)
 	  return NULL;
 
      return p;
 }
 
 int
-attrib_value_reset(struct attribute_list *ob)
+attrib_value_reset(attribute_list *ob)
 { 
      if (ob->address != NULL)
 	  free(ob->address);
      if (ob->attributes != NULL)
 	  free(ob->attributes);
 
-     bzero(ob, sizeof(struct attribute_list));
+     bzero(ob, sizeof(attribute_list));
      return 1;
 }
 
@@ -148,11 +220,11 @@ attrib_value_reset(struct attribute_list *ob)
  * list.
  */
 
-struct attribute_list *
+attribute_list *
 attrib_find(char *address)
 {
-     struct attribute_list *tmp = attribob;
-     struct attribute_list *null = NULL;
+     attribute_list *tmp = attribob;
+     attribute_list *null = NULL;
      while(tmp!=NULL) {
 	  if (tmp->address == NULL) {
 	       null = tmp;
@@ -172,8 +244,8 @@ attrib_find(char *address)
 void
 attrib_cleanup()
 {
-     struct attribute_list *p;
-     struct attribute_list *tmp = attribob;
+     attribute_list *p;
+     attribute_list *tmp = attribob;
      while(tmp!=NULL) {
 	  p = tmp;
 	  tmp = tmp->next;

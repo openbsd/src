@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: encrypt.h,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $ */
+/* $Id: encrypt.h,v 1.2 1998/03/04 11:43:18 provos Exp $ */
 /*
  * encrypt.h:
  * prototypes for photuris_packet_encrypt.c
@@ -45,8 +45,6 @@
 #else 
 #define EXTERN extern 
 #endif
-
-EXTERN int packet_make_iv(u_int32_t *iv, u_int32_t *packet);
 
 EXTERN int packet_create_padding(struct stateob *st, u_int16_t size, 
 				 u_int8_t *padd,  u_int16_t *rsize);

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.4 1997/09/02 17:26:36 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_request.c,v 1.5 1998/03/04 11:43:20 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -55,19 +55,37 @@ static char rcsid[] = "$Id: handle_identity_request.c,v 1.4 1997/09/02 17:26:36 
 #include "errlog.h"
 #include "schedule.h"
 #include "attributes.h"
+#include "md5.h"
 #ifdef IPSEC
 #include "kernel.h"
+#endif
+#ifdef DEBUG
+#include "packet.h"
 #endif
 
 int
 handle_identity_request(u_char *packet, int size, char *address, 
 			char *local_address)
 {
+        struct packet_sub parts[] = {
+	     { "IDChoice", FLD_ATTRIB, FMD_ATT_ONE, 0, },
+	     { "Identity", FLD_VARPRE, 0, 0, },
+	     { "Verification", FLD_VARPRE, 0, 0, },
+	     { "Attributes", FLD_ATTRIB, FMD_ATT_FILL, 0, },
+	     { NULL }
+	};
+
+        struct packet id_msg = {
+	     "Identity Request", 
+	     IDENTITY_MESSAGE_MIN, 0, parts
+	};
+
 	struct identity_message *header;
 	struct stateob *st;
 	struct spiob *spi;
+	MD5_CTX ctx;
 	u_int8_t *p, *attributes;
-	u_int16_t i, asize, attribsize, tmp;
+	u_int16_t i, attribsize, tmp;
 	u_int8_t signature[22];  /* XXX - constant */
 
 	if (size < IDENTITY_MESSAGE_MIN)
@@ -95,31 +113,45 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     goto verification_failed;
 	}
 
-	/* Verify message */
-	if (!(i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header))))
-	     goto verification_failed;
-
-	asize = IDENTITY_MESSAGE_MIN;
-
-	p = IDENTITY_MESSAGE_CHOICE(header);
-	asize += p[1] + 2;
-	p += p[1] + 2;
-	asize += varpre2octets(p);
-	p += varpre2octets(p);
-
-	attributes = p + i;
-	asize += i;                            /* Verification size */
-	asize += packet[size-1];               /* Padding size */
-	attribsize = 0;
-	while(asize + attribsize < size)
-	     attribsize += attributes[attribsize+1] + 2;
-
-	asize += attribsize;
-
-	if (asize != size) {
-	     log_error(0, "wrong packet size in handle_identity_request()");
-	     return 0;
+#ifdef DEBUG
+	printf("Identity-Request (after decryption):\n");
+	packet_dump(packet, size, 0);
+#endif
+	/* Verify message structure */
+	if (packet_check((u_int8_t *)header, size - packet[size-1], &id_msg) == -1) {
+	     log_error(0, "bad packet structure in handle_identity_request()");
+	     return -1;
 	}
+
+#ifdef DEBUG
+	packet_ordered_dump(packet, size - packet[size-1], &id_msg);
+#endif
+
+	/* Create a signature of this packet */
+	MD5Init(&ctx);
+	MD5Update(&ctx, packet, size);
+	MD5Final(signature, &ctx);
+
+	if (st->phase != VALUE_RESPONSE) {
+	     /* 
+	      * Compare with the identity request which got verified
+	      * initially. If matching resend our response.
+	      */
+
+	     if (bcmp(signature, st->packetsig, sizeof(st->packetsig)))
+		  goto verification_failed;
+
+	     /* We got send the old packet again */
+	     bcopy(st->packet, packet_buffer, st->packetlen);
+	     packet_size = st->packetlen;
+	     
+	     send_packet();
+	     return 0;
+	} else
+	     bcopy(signature, st->packetsig, sizeof(st->packetsig));
+
+	attributes = parts[3].where;
+	attribsize = parts[3].size;
 
 	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
 			    attributes, attribsize)) {
@@ -127,101 +159,87 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     return 0;
 	}
 
-	if (i > sizeof(signature)) {
-	     log_error(0, "verification too long in handle_identity_request()");
+	i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header));
+	if (!i || i != parts[2].size || i > sizeof(signature)) {
+	     log_error(0, "verification size mismatch in handle_identity_request()");
 	     goto verification_failed;
 	}
 
-	bcopy(p, signature, i);
-	bzero(p, i);
+	bcopy(parts[2].where, signature, i);
 
-	if (st->phase == VALUE_RESPONSE) {
-	     /* Fill the state object, but only if we have not dont so before */
-	     if (st->uSPIidentver == NULL) {
-		  if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
-		       log_error(1, "calloc() in handle_identity_request()"); 
-		       goto verification_failed;
-		  }
-		  bcopy(signature, st->uSPIidentver, i);
-		  st->uSPIidentversize = i;
-	     }
-	     
-	     p = IDENTITY_MESSAGE_CHOICE(header);
-	     if (st->uSPIidentchoice == NULL) {
-		  if((st->uSPIidentchoice = calloc(p[1]+2, sizeof(u_int8_t))) == NULL) {
-		       log_error(1, "calloc() in handle_identity_request()");
-		       goto verification_failed;
-		  }
-		  bcopy(p, st->uSPIidentchoice, p[1]+2);
-		  st->uSPIidentchoicesize = p[1]+2;
-	     }
-
-	     p += p[1] + 2;
-	     if (st->uSPIident == NULL) {
-		  if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
-		       log_error(1,"calloc() in handle_identity_request()"); 
-		       goto verification_failed;
-		  }
-		  bcopy(p, st->uSPIident, varpre2octets(p));
-	     }
-	
-	     if (st->uSPIattrib == NULL) {
-		  if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
-		       log_error(1, "calloc() in handle_identity_request()");
-		       return -1;
-		  }
-		  bcopy(attributes, st->uSPIattrib, attribsize);
-		  st->uSPIattribsize = attribsize;
-	     }
-
-	     if (st->oSPIident == NULL && 
-		 get_secrets(st, (ID_REMOTE|ID_LOCAL)) == -1) {
-		  log_error(0, "get_secrets() in in handle_identity_request()");
+	/* Fill the state object, but only if we have not dont so before */
+	if (st->uSPIidentver == NULL) {
+	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
+		  log_error(1, "calloc() in handle_identity_request()"); 
 		  goto verification_failed;
 	     }
-
+	     bcopy(signature, st->uSPIidentver, i);
+	     st->uSPIidentversize = i;
 	}
-
-	if (!verify_identity_verification(st, signature, packet, size)) {
-	     if (st->phase != SPI_UPDATE) {
-		  /* 
-		   * Clean up everything used from this packet 
-		   * but only if we did not get a valid packet before.
-		   * Otherwise this could be used as Denial of Service.
-		   */
-		  free(st->uSPIidentchoice);
-		  st->uSPIidentchoice = NULL; st->uSPIidentchoicesize = 0;
-		  free(st->uSPIidentver);
-		  st->uSPIidentver = NULL; st->uSPIidentversize = 0;
-		  free(st->uSPIattrib);
-		  st->uSPIattrib = NULL; st->uSPIattribsize = 0;
-		  free(st->uSPIident);
-		  st->uSPIident = NULL;
-		  free(st->oSPIident);
-		  st->oSPIident = NULL;
-
-		  /* Clean up secrets */
-		  free(st->oSPIsecret);
-		  st->oSPIsecret = NULL; st->oSPIsecretsize = 0;
-		  free(st->uSPIsecret);
-		  st->uSPIsecret = NULL; st->uSPIsecretsize = 0;
+	
+	p = IDENTITY_MESSAGE_CHOICE(header);
+	if (st->uSPIidentchoice == NULL) {
+	     if((st->uSPIidentchoice = calloc(p[1]+2, sizeof(u_int8_t))) == NULL) {
+		  log_error(1, "calloc() in handle_identity_request()");
+		  goto verification_failed;
 	     }
-
+	     bcopy(p, st->uSPIidentchoice, p[1]+2);
+	     st->uSPIidentchoicesize = p[1]+2;
+	}
+	
+	p += p[1] + 2;
+	if (st->uSPIident == NULL) {
+	     if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
+		  log_error(1,"calloc() in handle_identity_request()"); 
+		  goto verification_failed;
+	     }
+	     bcopy(p, st->uSPIident, varpre2octets(p));
+	}
+	
+	if (st->uSPIattrib == NULL) {
+	     if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
+		  log_error(1, "calloc() in handle_identity_request()");
+		  return -1;
+	     }
+	     bcopy(attributes, st->uSPIattrib, attribsize);
+	     st->uSPIattribsize = attribsize;
+	}
+	
+	if (st->oSPIident == NULL && 
+	    get_secrets(st, (ID_REMOTE|ID_LOCAL)) == -1) {
+	     log_error(0, "get_secrets() in in handle_identity_request()");
+	     goto verification_failed;
+	}
+	
+	if (!verify_identity_verification(st, signature, packet, size)) {
+	     /* 
+	      * Clean up everything used from this packet 
+	      * but only if we did not get a valid packet before.
+	      * Otherwise this could be used as Denial of Service.
+	      */
+	     free(st->uSPIidentchoice);
+	     st->uSPIidentchoice = NULL; st->uSPIidentchoicesize = 0;
+	     free(st->uSPIidentver);
+	     st->uSPIidentver = NULL; st->uSPIidentversize = 0;
+	     free(st->uSPIattrib);
+	     st->uSPIattrib = NULL; st->uSPIattribsize = 0;
+	     free(st->uSPIident);
+	     st->uSPIident = NULL;
+	     free(st->oSPIident);
+	     st->oSPIident = NULL;
+	     
+	     /* Clean up secrets */
+	     free(st->oSPIsecret);
+	     st->oSPIsecret = NULL; st->oSPIsecretsize = 0;
+	     free(st->uSPIsecret);
+	     st->uSPIsecret = NULL; st->uSPIsecretsize = 0;
+	     
 	verification_failed:
 	     log_error(0, "verification failed in handle_identity_request()");
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,
 				    header->icookie, header->rcookie,
 				    0, VERIFICATION_FAILURE);
-	     send_packet();
-	     return 0;
-	}
-
-	if (st->phase != VALUE_RESPONSE) {
-	     /* We got send the old packet again */
-	     bcopy(st->packet, packet_buffer, st->packetlen);
-	     packet_size = st->packetlen;
-	     
 	     send_packet();
 	     return 0;
 	}

@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.5 1997/09/03 08:44:41 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.6 1998/03/04 11:43:49 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -80,7 +80,7 @@ schedule_insert(int type, int off, u_int8_t *cookie, u_int16_t cookie_size)
 	       bin2hex(buffer, &i, cookie, cookie_size);
 	  }
 	  printf("Adding event type %d, due in %d seconds, cookie %s\n",
-		 type, off, cookie == NULL ? "None" : buffer);
+		 type, off, cookie == NULL ? "None" : (char *)buffer);
      }
 #endif
      
@@ -199,7 +199,8 @@ schedule_process(int sock)
 	  switch(tmp->event) {
 	  case REKEY:
 #ifdef DEBUG
-	       printf("Resetting secrets\n");
+	       if (state_root() != NULL)
+		    printf("Resetting secrets\n");
 #endif
 	       reset_secret();
 	       tmp->tm = time(NULL) + REKEY_TIMEOUT;
@@ -243,7 +244,7 @@ schedule_process(int sock)
 			 state_copy_flags(st, newst);
 #ifdef DEBUG
 			 printf("Starting a new exchange to %s:%d with updated rcookie and"
-				"counter.\n", newst->address, newst->port);
+				" counter.\n", newst->address, newst->port);
 #endif /* DEBUG */
 			 start_exchange(sock, newst, st->address, st->port);
 			 state_insert(newst);
@@ -300,7 +301,13 @@ schedule_process(int sock)
 		    break;
 	       }
 	       if ((st = state_find_cookies(spi->address, spi->icookie, NULL)) == NULL) {
+#ifdef DEBUG2
+		    /* 
+		     * This happens always when an exchange expires but
+		     * updates are still scheduled for it.
+		     */
 		    log_error(0, "state_find_cookies() in schedule_process()");
+#endif
 		    break;
 	       }
 

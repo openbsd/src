@@ -42,18 +42,13 @@
 #define EXTERN extern
 #endif
 
-#define AT_PAD        0
-#define AT_AH_ATTRIB  1
-#define AT_ESP_ATTRIB 2
-#define AT_MD5_DP     3
-#define AT_SHA1_DP    4
-#define AT_MD5_KDP    5
-#define AT_SHA1_KDP   6
-#define AT_DES_CBC    8
-#define AT_ORG        255
+#define AT_ID		1
+#define AT_ENC		2
+#define AT_AUTH		4
 
-#define MD5_KEYLEN    384
-#define DES_KEYLEN    64
+#define AT_PAD		0
+#define AT_AH_ATTRIB	1
+#define AT_ESP_ATTRIB	2
 
 /* XXX - Only for the moment */
 #define DH_G_2_MD5          2
@@ -69,23 +64,40 @@
 #define DH_G_5_3DES_SHA1    20
 #define DH_G_VAR_3DES_SHA1  28
 
-struct attribute_list {
-     struct attribute_list *next;
+typedef struct _attribute_list {
+     struct _attribute_list *next;
      char *address;
      in_addr_t netmask;
      u_int8_t *attributes;
      u_int16_t attribsize;
-};
+} attribute_list;
+
+typedef struct _attrib_t {
+     struct _attrib_t *next;
+     int id;			/* Photuris Attribute ID */
+     int koff;			/* Offset into kernel data structure */
+     int type;			/* Type of attribute: ident, enc, auth */
+     int klen;			/* required key length */
+} attrib_t;
+
+#define ATTRIBHASHMOD		17
+
+EXTERN void putattrib(attrib_t *attrib);
+EXTERN attrib_t *getattrib(int id);
+EXTERN void clearattrib(void);
+
+EXTERN void get_attrib_section(u_int8_t *, u_int16_t, u_int8_t **, u_int16_t *,
+			       u_int8_t);
 
 EXTERN int isinattrib(u_int8_t *attributes, u_int16_t attribsize, 
 		      u_int8_t attribute);
 EXTERN int isattribsubset(u_int8_t *set, u_int16_t setsize, 
 			  u_int8_t *subset, u_int16_t subsetsize);
-EXTERN struct attribute_list *attrib_new(void);
-EXTERN int attrib_insert(struct attribute_list *);
-EXTERN int attrib_unlink(struct attribute_list *);
-EXTERN int attrib_value_reset(struct attribute_list *);
-EXTERN struct attribute_list *attrib_find(char *);
+EXTERN attribute_list *attrib_new(void);
+EXTERN int attrib_insert(attribute_list *);
+EXTERN int attrib_unlink(attribute_list *);
+EXTERN int attrib_value_reset(attribute_list *);
+EXTERN attribute_list *attrib_find(char *);
 EXTERN void attrib_cleanup(void);
 
 #endif /* ATTRIBUTES_H */

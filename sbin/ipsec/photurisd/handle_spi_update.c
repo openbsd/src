@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.4 1997/09/02 17:26:40 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.5 1998/03/04 11:43:24 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,12 +63,21 @@ int
 handle_spi_update(u_char *packet, int size, char *address, 
 			char *local_address)
 {
+        struct packet_sub parts[] = {
+	     { "Verification", FLD_VARPRE, 0, 0, },
+	     { "Attributes", FLD_ATTRIB, FMD_ATT_FILL, 0, },
+	     { NULL }
+	};
+        struct packet spi_msg = {
+	     "SPI Update", 
+	     SPI_UPDATE_MIN, 0, parts
+	};
 	struct spi_update *header;
 	struct stateob *st;
 	struct spiob *spi;
 	time_t lifetime;
-	u_int8_t *p, *attributes;
-	u_int16_t i, asize, attribsize, tmp;
+	u_int8_t *attributes;
+	u_int16_t i, attribsize, tmp;
 	u_int8_t signature[22];  /* XXX - constant */
 
 	if (size < SPI_UPDATE_MIN)
@@ -96,40 +105,27 @@ handle_spi_update(u_char *packet, int size, char *address,
 	     goto verification_failed;
 	}
 
-	/* Verify message */
-	if (!(i = get_validity_verification_size(st)))
-	     goto verification_failed;
-	
-	asize = SPI_UPDATE_MIN + i;
-
-	p = SPI_UPDATE_VERIFICATION(header);
-
-	attributes = p + i;
-	asize += packet[size-1];           /* Padding size */
-	attribsize = 0;
-	while(asize + attribsize < size)
-	     attribsize += attributes[attribsize+1] + 2;
-
-	asize += attribsize;
-
-	if (asize != size) {
-	     log_error(0, "wrong packet size in handle_spi_update()");
-	     return 0;
+	/* Verify message structure*/
+	if (packet_check((u_int8_t *)header, size - packet[size-1], &spi_msg) == -1) {
+	     log_error(0, "bad packet structure in handle_spi_update()");
+	     return -1;
 	}
+
+	i = get_validity_verification_size(st);
+	if (!i || i != parts[0].size || i > sizeof(signature)) {
+	     log_error(0, "verification size mismatch in handle_spi_update()");
+	     goto verification_failed;
+	}
+	bcopy(parts[0].where, signature, i);
+	
+	attributes = parts[1].where;
+	attribsize = parts[1].size;
 
 	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
 			    attributes, attribsize)) {
 	     log_error(0, "attributes are not a subset in handle_spi_update()");
 	     return 0;
 	}
-
-	if (i > sizeof(signature)) {
-	     log_error(0, "verification too long in handle_spi_update()");
-	     goto verification_failed;
-	}
-
-	bcopy(p, signature, i);
-	bzero(p, i);
 
 	if (!verify_validity_verification(st, signature, packet, size)) {
 	verification_failed:

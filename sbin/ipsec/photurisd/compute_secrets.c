@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: compute_secrets.c,v 1.4 1997/09/02 17:26:35 provos Exp $"; 
+static char rcsid[] = "$Id: compute_secrets.c,v 1.5 1998/03/04 11:43:14 provos Exp $"; 
 #endif 
 
 #define _SECRETS_C_
@@ -62,12 +62,13 @@ static char rcsid[] = "$Id: compute_secrets.c,v 1.4 1997/09/02 17:26:35 provos E
 #include "errlog.h"
 
 int privacykey(struct stateob *st, struct idxform *hash, u_int8_t *key, 
-	       u_int8_t *packet, u_int16_t bytes, u_int16_t order, int owner);
+	       u_int8_t *packet, u_int16_t bytes, u_int16_t *order, int owner);
 int
 compute_shared_secret(struct stateob *st, 
 		      u_int8_t **shared, u_int16_t *sharedsize)
 {
      struct moduli_cache *mod;
+     int header;
 
      mpz_t tmp, bits, tex;
 
@@ -94,11 +95,21 @@ compute_shared_secret(struct stateob *st,
      mpz_clear(bits);
      mpz_clear(tmp);
 
+     /* The shared secret is not used with the size part */
+     if (buffer[0] == 255 && buffer[1] == 255)
+	  header = 8;
+     else if (buffer[0] == 255)
+	  header = 4;
+     else
+	  header = 2;
+
+     *sharedsize -= header;
+
      if((*shared = calloc(*sharedsize,sizeof(u_int8_t))) == NULL) {
           log_error(0, "Not enough memory for shared secret in compute_shared_secret()");
           return -1;
      }
-     bcopy(buffer, *shared, *sharedsize);
+     bcopy(buffer+header, *shared, *sharedsize);
      return 0;
 }
 
@@ -167,20 +178,23 @@ make_session_keys(struct stateob *st, struct spiob *spi)
      return 0;
 }
 
+/*
+ * Return length of requried session key in bits. 
+ * DES would be 64 bits.
+ */
 
 int
 get_session_key_length(u_int8_t *attribute)
 {
-     switch(*attribute) {
-     case AT_MD5_KDP:
-	  return MD5_KEYLEN;
-     case AT_DES_CBC:
-	  return DES_KEYLEN;
-     default:
+     attrib_t *ob;
+
+     if ((ob = getattrib(*attribute)) == NULL) {
 	  log_error(0, "Unknown attribute %d in get_session_key_length()", 
 		    *attribute);
 	  return -1;
      }
+
+     return ob->klen << 3;
 }
 
 /*
@@ -197,7 +211,7 @@ compute_session_key(struct stateob *st, u_int8_t *key,
      struct idxform *hash;
      u_int16_t size, i, n;
      u_int8_t digest[HASH_MAX];
-     int bits, hbits;
+     int bits;
 
      switch(ntohs(*((u_int16_t *)st->scheme))) {
      case DH_G_2_MD5: 
@@ -230,11 +244,8 @@ compute_session_key(struct stateob *st, u_int8_t *key,
      if(bits & 0x7)
 	  size++;
 
-     hbits = (hash->hashsize << 3);
-     *order += (*order%hbits) ? hbits - (*order%hbits) : 0;
-
      /* As many shared secrets we used already */
-     n = *order/hbits;
+     n = *order;
 
      hash->Init(hash->ctx);
      hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
@@ -259,6 +270,9 @@ compute_session_key(struct stateob *st, u_int8_t *key,
 	  bcopy(hash->ctx2, hash->ctx, hash->ctxsize);
 
 	  hash->Final(digest, hash->ctx2);
+	  /* One iteration more */
+	  n++;
+
 	  bcopy(digest, key, size>hash->hashsize ? hash->hashsize : size);
 	  key += size>hash->hashsize ? hash->hashsize : size;
 
@@ -266,7 +280,7 @@ compute_session_key(struct stateob *st, u_int8_t *key,
 	  size -= size>hash->hashsize ? hash->hashsize : size;
      } while(size > 0);  
      
-     *order += bits + (bits%hbits ? hbits - (bits%hbits) : 0 );
+     *order = n;
 
      return bits;
 }
@@ -333,12 +347,12 @@ init_privacy_key(struct stateob *st, int owner)
 }
 
 /*
- * order gives the number of bits already used for keys
+ * order gives the number of iterations already done for keys
  */
 
 int
 compute_privacy_key(struct stateob *st, u_int8_t *key, u_int8_t *packet,
-		    u_int16_t bits, u_int16_t order, int owner)
+		    u_int16_t bits, u_int16_t *order, int owner)
 {
      u_int16_t size;
      struct idxform *hash;
@@ -376,9 +390,9 @@ compute_privacy_key(struct stateob *st, u_int8_t *key, u_int8_t *packet,
 int
 privacykey(struct stateob *st, struct idxform *hash, 
 	   u_int8_t *key, u_int8_t *packet, 
-	   u_int16_t bytes, u_int16_t order, int owner) 
+	   u_int16_t bytes, u_int16_t *order, int owner) 
 {
-     u_int16_t i, n, hbits;
+     u_int16_t i, n;
      u_int8_t digest[HASH_MAX];
      
      /* SPIprivacyctx contains the hashed exchangevalues */
@@ -388,8 +402,7 @@ privacykey(struct stateob *st, struct idxform *hash,
      hash->Update(hash->ctx2, packet, 2*COOKIE_SIZE + 4 + SPI_SIZE); 
      
      /* As many shared secrets we used already */ 
-     hbits = (hash->hashsize << 3);
-     n = order/hbits + (order%hbits ? 1 : 0); 
+     n = *order;
      for(i=0; i<n; i++) 
 	  hash->Update(hash->ctx2, st->shared, st->sharedsize); 
 
@@ -404,8 +417,12 @@ privacykey(struct stateob *st, struct idxform *hash,
  
 	  /* Unsigned integer arithmetic */ 
           bytes -= bytes>hash->hashsize ? hash->hashsize : bytes; 
+	  
+	  /* Increment the times we called Final */
+	  i++;
      } while(bytes > 0);   
 
+     *order = i;
      return 0;
 }
 
