@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.29 2001/05/16 12:49:45 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.30 2001/05/23 14:50:15 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -573,7 +573,7 @@ sys_fpathconf(p, v, retval)
 		return (VOP_PATHCONF(vp, SCARG(uap, name), retval));
 
 	default:
-		panic("fpathconf");
+		return (EOPNOTSUPP);
 	}
 	/*NOTREACHED*/
 }
