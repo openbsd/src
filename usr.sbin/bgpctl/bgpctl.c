@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.58 2004/05/20 12:17:04 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.59 2004/05/21 11:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -53,6 +53,7 @@ void		 print_timer(const char *, time_t, u_int);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 void		 show_fib_head(void);
+void		 show_network_head(void);
 int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
@@ -83,6 +84,7 @@ main(int argc, char *argv[])
 	struct sockaddr_un	 sun;
 	int			 fd, n, done;
 	struct imsg		 imsg;
+	struct network_config	 net;
 	struct parse_result	*res;
 
 	if ((res = parse(argc, argv)) == NULL)
@@ -184,6 +186,30 @@ main(int argc, char *argv[])
 		printf("request sent.\n");
 		done = 1;
 		break;
+	case NETWORK_ADD:
+	case NETWORK_REMOVE:
+		bzero(&net, sizeof(net));
+		memcpy(&net.prefix, &res->addr, sizeof(res->addr));
+		net.prefixlen = res->prefixlen;
+		/* attribute sets are not supported */
+		if (res->action == NETWORK_ADD)
+			imsg_compose(&ibuf, IMSG_NETWORK_ADD, 0,
+			    &net, sizeof(net));
+		else
+			imsg_compose(&ibuf, IMSG_NETWORK_REMOVE, 0,
+			    &net, sizeof(net));
+		printf("request sent.\n");
+		done = 1;
+		break;
+	case NETWORK_FLUSH:
+		imsg_compose(&ibuf, IMSG_NETWORK_FLUSH, 0, NULL, 0);
+		printf("request sent.\n");
+		done = 1;
+		break;
+	case NETWORK_SHOW:
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NETWORK, 0, NULL, 0);
+		show_network_head();
+		break;
 	}
 
 	while (ibuf.w.queued)
@@ -224,6 +250,9 @@ main(int argc, char *argv[])
 			case SHOW_RIB:
 				done = show_rib_summary_msg(&imsg);
 				break;
+			case NETWORK_SHOW:
+				done = show_fib_msg(&imsg);
+				break;
 			case NONE:
 			case RELOAD:
 			case FIB:
@@ -232,6 +261,9 @@ main(int argc, char *argv[])
 			case NEIGHBOR:
 			case NEIGHBOR_UP:
 			case NEIGHBOR_DOWN:
+			case NETWORK_ADD:
+			case NETWORK_REMOVE:
+			case NETWORK_FLUSH:
 				break;
 			}
 			imsg_free(&imsg);
@@ -516,6 +548,13 @@ show_fib_head(void)
 	printf("flags destination          gateway\n");
 }
 
+void
+show_network_head(void)
+{
+	printf("flags: S = Static\n");
+	printf("flags destination\n");
+}
+
 int
 show_fib_msg(struct imsg *imsg)
 {
@@ -524,6 +563,7 @@ show_fib_msg(struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
+	case IMSG_CTL_SHOW_NETWORK:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute))
 			errx(1, "wrong imsg len");
 		k = imsg->data;
