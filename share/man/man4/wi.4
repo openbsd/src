@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4,v 1.6 2001/02/07 20:35:54 todd Exp $
+.\"	$OpenBSD: wi.4,v 1.7 2001/04/06 19:11:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -43,10 +43,29 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for WaveLAN/IEEE PCCARD adapters (also known
-as WaveLAN II cards) which support IEEE 802.11 Direct Sequence.
-The driver also supports Addtron AWP-100 cards, which just show up
-with the same product id as the WaveLAN cards.
+driver provides support for WaveLAN/IEEE and compatible pcmcia adapters
+(also known as WaveLAN II cards) which support IEEE 802.11 Direct Sequence.
+The compatible cards supported are:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It 3Com AirConnect Wireless LAN
+.It Corega Wireless LAN PCC-11
+.It Corega Wireless LAN PCCA-11
+.It Intersil Prism II
+.It Samsung MagicLAN SWL-2000N
+.It SMC 2632 EZ Connect Wireless PC Card
+.It NANOSPEED ROOT-RZ2000 WLAN Card
+.It XI300 Wireless LAN
+.It Compaq Agency NC5004 Wireless Card
+.It Contec FLEXLAN/FX-DS110-PCC
+.It TDK LAK-CD011WL
+.It NEC Wireless Card CMZ-RT-WP
+.It NTT-ME 11Mbps Wireless LAN PC Card
+.It Addtron AWP-100
+.It Cabletron RoamAbout
+.It I-O DATA WN-B11/PCM
+.El
+.Pp
 Note that while Lucent sells both ISA and PCMCIA
 WaveLAN/IEEE devices, the ISA product is actually a PCMCIA card in an
 ISA to PCMCIA bridge adapter. Consequently, the

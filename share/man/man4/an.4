@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.12 2001/01/11 19:41:55 angelos Exp $
+.\"	$OpenBSD: an.4,v 1.13 2001/04/06 19:11:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -44,11 +44,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Aironet Communications 4500 and 4800
-(aka Cisco 340) IEEE 802.11 Direct Sequence wireless network adapters.
+driver provides support for the Aironet Communications 4500, 4800
+(aka Cisco 340), and Cisco 350
+IEEE 802.11 Direct Sequence wireless network adapters.
 This includes the ISA, PCI, and PCMCIA varieties.
 The 4500 series adapters operate at 1 and 2Mbps while
-the 4800 series can operate at 1, 2, 5.5, and 11Mbps.
+the 4800 and 350 series can operate at 1, 2, 5.5, and 11Mbps.
 The ISA, PCI,
 and PCMCIA devices are all based on the same core PCMCIA modules
 and all have the same programming interface.
