@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.6 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.7 2002/07/19 22:22:54 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +66,7 @@ static int
 print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
-	int flags = (int)tl->trans_addr;
+	int flags = (intptr_t)tl->trans_addr;
 	int isread = 0;
 
 	p = str;
@@ -109,7 +110,7 @@ static int
 linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
-	int flags = (int)tl->trans_addr;
+	int flags = (intptr_t)tl->trans_addr;
 	int isread = 0;
 
 	p = str;
@@ -151,7 +152,7 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 static int
 print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int mode = (int)tl->trans_addr;
+	int mode = (intptr_t)tl->trans_addr;
 
 	mode &= 00007777;
 	snprintf(buf, buflen, "%o", mode);
@@ -162,7 +163,7 @@ print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 static int
 print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 {
-	int number = (int)tl->trans_addr;
+	int number = (intptr_t)tl->trans_addr;
 
 	snprintf(buf, buflen, "%d", number);
 
