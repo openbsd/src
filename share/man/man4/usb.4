@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.28 2004/03/22 20:30:14 miod Exp $
+.\"	$OpenBSD: usb.4,v 1.29 2004/04/02 01:10:08 deraadt Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -121,7 +121,9 @@ Mass Storage Devices, e.g., external disk drives.
 .Ss Ethernet adapters
 .Bl -tag -width 12n -offset ind -compact
 .It Xr aue 4
-ADMtek AN986 / ADM8511 Pegasus family USB Ethernet.
+ADMtek AN986 / ADM8511 Pegasus family USB Ethernet interfaces.
+.It Xr axe 4
+ASIX Electronics AX88172 USB Ethernet interfaces.
 .It Xr cue 4
 CATC USB-EL1201A-based Ethernet interfaces.
 .It Xr kue 4
@@ -414,6 +416,7 @@ Human Interface Devices
 .Pq Tn HID .
 .Sh SEE ALSO
 .Xr aue 4 ,
+.Xr axe 4 ,
 .Xr cardbus 4 ,
 .Xr cue 4 ,
 .Xr eisa 4 ,
