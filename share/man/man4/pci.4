@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.50 2001/10/24 17:35:23 millert Exp $
+.\"	$OpenBSD: pci.4,v 1.51 2001/10/30 00:22:56 mickey Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -255,31 +255,31 @@ VGA graphics cards.
 .El
 .Ss Audio devices
 .Bl -tag -width 10n -offset ind
+.It Xr auich 4
+Integrated Intel 82801AA/AB/BA/CA and 440MX sound devices.
+.It Xr auvia 4
+Integrated AC97 audio controller of the VIA Technologies
+VT82C686A Southbridge.
+.It Xr clcs 4
+Cirrus Logic CrystalClear CS4280 sound devices.
+.It Xr clct 4
+Cirrus Logic CrystalClear CS4281 sound devices.
+.It Xr cmpci 4
+C-Media CMI8x38 sound devices.
 .It Xr eap 4
 Ensoniq AudioPCI sound devices.
 .It Xr emu 4
 Creative Labs SBLive! and PCI 512 audio device driver.
 .It Xr eso 4
 ESS Solo-1 PCI AudioDrive sound devices.
-.It Xr maestro 4
-ESS Maestro 1, 2 and 2E sound devices.
-.It Xr sv 4
-S3 SonicVibes sound devices.
-.It Xr neo 4
-NeoMagic 256AV/ZX sound devices.
 .It Xr fms 4
 Forte Media FM801 sound devices.
-.It Xr auvia 4
-Integrated AC97 audio controller of the VIA Technologies
-VT82C686A Southbridge.
-.It Xr cmpci 4
-C-Media CMI8x38 sound devices.
-.It Xr auich 4
-Intel 82801AA/AB and 440MX sound devices.
-.It Xr clcs 4
-Cirrus Logic CrystalClear CS4280 sound devices.
-.It Xr clct 4
-Cirrus Logic CrystalClear CS4281 sound devices.
+.It Xr maestro 4
+ESS Maestro 1, 2 and 2E sound devices.
+.It Xr neo 4
+NeoMagic 256AV/ZX sound devices.
+.It Xr sv 4
+S3 SonicVibes sound devices.
 .It Xr yds 4
 Yamaha DS-XG sound devices.
 .El
