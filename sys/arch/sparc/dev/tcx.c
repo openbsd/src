@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.11 2002/09/30 18:07:29 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.12 2002/10/01 20:55:14 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -63,6 +63,9 @@
 
 /*
  * color display (TCX) driver.
+ *
+ * XXX Use of the vertical retrace interrupt to update the colormap is not
+ * enabled by default, as it hangs the system on some machines.
  */
 
 #include <sys/param.h>
@@ -279,9 +282,12 @@ tcxattach(parent, self, args)
 	tcx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	tcx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-	sc->sc_ih.ih_fun = tcx_intr;
-	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
+		sc->sc_ih.ih_fun = tcx_intr;
+		sc->sc_ih.ih_arg = sc;
+		intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih,
+		    IPL_FB);
+	}
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,
@@ -347,7 +353,12 @@ tcx_ioctl(dev, cmd, data, flags, p)
 			error = bt_putcmap(&sc->sc_cmap, cm);
 			if (error)
 				return (error);
-			tcx_loadcmap_deferred(sc, cm->index, cm->count);
+			if (ISSET(sc->sc_sunfb.sf_flags, TCX_INTR)) {
+				tcx_loadcmap_deferred(sc, cm->index, cm->count);
+			} else {
+				bt_loadcmap(&sc->sc_cmap, sc->sc_bt,
+				    cm->index, cm->count, 1);
+			}
 		}
 		break;
 
