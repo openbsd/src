@@ -112,11 +112,6 @@ include <dev/ic/am7930reg.h>
 include <dev/ic/am7930var.h>
 endif
 
-ifdef notyet
-include <sparc64/dev/fdreg.h>
-include <sparc64/dev/fdvar.h>
-endif
-
 # general constants
 export	BSD
 export	USRSTACK
@@ -252,19 +247,6 @@ struct	mbuf
 member	m_next
 member	m_data
 member	m_len
-
-ifdef notyet
-# floppy trap handler fields
-struct	fdcio
-member	FDC_REG_MSR	fdcio_reg_msr
-member	FDC_REG_FIFO	fdcio_reg_fifo
-member	FDC_ISTATE	fdcio_istate
-member	FDC_STATUS	fdcio_status
-member	FDC_NSTAT	fdcio_nstat
-member	FDC_DATA	fdcio_data
-member	FDC_TC		fdcio_tc
-member	FDC_EVCNT	fdcio_intrcnt.ev_count
-endif
 
 ifdef notyet
 # db_regs structure so we can save all registers
