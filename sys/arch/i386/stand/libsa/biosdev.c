@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.68 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.69 2004/06/23 00:21:49 tom Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,6 +34,7 @@
 #include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
+#include <isofs/cd9660/iso.h>
 #include "disk.h"
 #include "debug.h"
 #include "libsa.h"
@@ -47,6 +48,7 @@ static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
 extern int debug;
 int bios_bootdev;
+int bios_cddev = -1;		/* Set by srt0 if coming from CD */
 
 #if 0
 struct biosdisk {
@@ -241,17 +243,35 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	int dev = bd->bios_number;
 	int j, error;
 	void *bb;
+	int bbsize = nsect * DEV_BSIZE;
 
-	/* use a bounce buffer to not cross 64k DMA boundary */
-	if ((((u_int32_t)buf) & ~0xffff) !=
-	    (((u_int32_t)buf + nsect * DEV_BSIZE) & ~0xffff)) {
+	if (bd->flags & BDI_EL_TORITO) {	/* It's a CD device */
+		dev &= 0xff;			/* Mask out this flag bit */
+
+		/*
+		 * sys/lib/libsa/cd9600.c converts 2,048-byte CD sectors
+		 * to DEV_BSIZE blocks before calling the device strategy
+		 * routine.  However, the El Torito spec says that the
+		 * BIOS will work in 2,048-byte sectors.  So shift back.
+		 */
+		off >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
+		nsect >>= (ISO_DEFAULT_BLOCK_SHIFT - DEV_BSHIFT);
+	}
+
+	/*
+	 * Use a bounce buffer to not cross 64k DMA boundary, and to
+	 * not access above 1 MB.
+	 */
+	if (((((u_int32_t)buf) & ~0xffff) !=
+	    (((u_int32_t)buf + bbsize) & ~0xffff)) ||
+	    (((u_int32_t)buf) > 0x100000)) {
 		/*
 		 * XXX we believe that all the io is buffered
 		 * by fs routines, so no big reads anyway
 		 */
-		bb = alloca(nsect * DEV_BSIZE);
+		bb = alloca(bbsize);
 		if (rw != F_READ)
-			bcopy(buf, bb, nsect * DEV_BSIZE);
+			bcopy(buf, bb, bbsize);
 	} else
 		bb = buf;
 
@@ -302,7 +322,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	}
 
 	if (bb != buf && rw == F_READ)
-		bcopy(bb, buf, nsect * DEV_BSIZE);
+		bcopy(bb, buf, bbsize);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -441,6 +461,9 @@ biosopen(struct open_file *f, ...)
 		biosdev |= 0x80;
 		break;
 	case 2:  /* fd */
+		break;
+	case 6:  /* cd */
+		biosdev = bios_bootdev & 0xff;
 		break;
 	default:
 		return ENXIO;
