@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.6 2000/04/19 09:43:49 itojun Exp $
+.\"	$OpenBSD: gif.4,v 1.7 2000/04/24 13:26:49 itojun Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,19 +68,6 @@ to disable the use of IPv6 as inner header
 Finally, the routing table may be used to route the packets toward the
 .Nm
 interface.
-.\"
-.Ss Backward compatibility
-The
-.Nm
-interface will capture packets toward a IPv4-in-IPv4 tunnel used by a
-.Xr tun 4
-multicast tunnel device
-.Pq used in MBone community .
-For compatibility, IPv4-in-IPv4 traffic will be matched to
-.Nm
-interfaces first, then sent to
-.Xr tun 4
-if no match is found.
 .\"
 .Sh SEE ALSO
 .Xr inet 4 ,
