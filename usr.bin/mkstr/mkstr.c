@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkstr.c,v 1.5 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: mkstr.c,v 1.6 2002/05/27 03:14:22 deraadt Exp $	*/
 /*	$NetBSD: mkstr.c,v 1.4 1995/09/28 06:22:20 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mkstr.c,v 1.5 2002/02/16 21:27:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkstr.c,v 1.6 2002/05/27 03:14:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ void process(void);
 int match(char *);
 void copystr(void);
 int octdigit(char);
-unsigned hashit(char *, char, unsigned);
+unsigned int hashit(char *, char, unsigned);
 int fgetNUL(char *, int, FILE *);
 
 int
@@ -263,15 +263,15 @@ inithash()
 
 struct	hash {
 	long	hval;
-	unsigned hpt;
+	unsigned int hpt;
 	struct	hash *hnext;
 } *bucket[NBUCKETS];
 
-unsigned
+unsigned int
 hashit(str, really, fakept)
 	char *str;
 	char really;
-	unsigned fakept;
+	unsigned int fakept;
 {
 	int i;
 	struct hash *hp;

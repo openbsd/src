@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.8 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: value.c,v 1.9 2002/05/27 03:14:22 deraadt Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.8 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.9 2002/05/27 03:14:22 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -266,7 +266,7 @@ vprint(p)
 
 static int
 vaccess(mode, rw)
-	unsigned mode, rw;
+	unsigned int mode, rw;
 {
 	if (mode & (rw<<PUBLIC))
 		return (1);

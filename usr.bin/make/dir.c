@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.37 2001/11/11 12:35:02 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.38 2002/05/27 03:14:21 deraadt Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ record_stamp(file, t)
     const char		*file;
     TIMESTAMP		t;
 {
-    unsigned		slot;
+    unsigned int	slot;
     const char		*end = NULL;
     struct file_stamp	*n;
 
@@ -276,7 +276,7 @@ add_file(p, file)
     Path		*p;
     const char		*file;
 {
-    unsigned		slot;
+    unsigned int	slot;
     const char		*end = NULL;
     char		*n;
     struct ohash 	*h = &p->files;
@@ -306,7 +306,7 @@ free_hash(h)
     struct ohash 	*h;
 {
     void		*e;
-    unsigned		i;
+    unsigned int	i;
 
     for (e = ohash_first(h, &i); e != NULL; e = ohash_next(h, &i))
 	free(e);

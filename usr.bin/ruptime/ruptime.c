@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.7 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.8 2002/05/27 03:14:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.7 2002/02/16 21:27:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.8 2002/05/27 03:14:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -190,17 +190,17 @@ interval(tval, updown)
 	int days, hours, minutes;
 
 	if (tval < 0 || tval > 999*24*60*60) {
-		(void)sprintf(resbuf, "%s     ??:??", updown);
+		(void)snprintf(resbuf, sizeof resbuf, "%s     ??:??", updown);
 		return(resbuf);
 	}
 	minutes = (tval + 59) / 60;		/* round to minutes */
 	hours = minutes / 60; minutes %= 60;
 	days = hours / 24; hours %= 24;
 	if (days)
-		(void)sprintf(resbuf, "%s %3d+%02d:%02d",
+		(void)snprintf(resbuf, sizeof resbuf, "%s %3d+%02d:%02d",
 		    updown, days, hours, minutes);
 	else
-		(void)sprintf(resbuf, "%s     %2d:%02d",
+		(void)snprintf(resbuf, sizeof resbuf, "%s     %2d:%02d",
 		    updown, hours, minutes);
 	return(resbuf);
 }

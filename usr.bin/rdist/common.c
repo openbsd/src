@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.13 2002/05/06 19:48:14 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.14 2002/05/27 03:14:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.13 2002/05/06 19:48:14 millert Exp $";
+"$OpenBSD: common.c,v 1.14 2002/05/27 03:14:22 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -928,8 +928,8 @@ char *xrealloc(baseptr, amt)
  * calloc with error checking
  */
 char *xcalloc(num, esize)
-	unsigned num;
-	unsigned esize;
+	unsigned int num;
+	unsigned int esize;
 {
 	char *ptr;
 	extern POINTER *calloc();

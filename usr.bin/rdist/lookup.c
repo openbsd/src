@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.9 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.10 2002/05/27 03:14:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: lookup.c,v 6.8 1996/07/19 16:49:55 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: lookup.c,v 1.9 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: lookup.c,v 1.10 2002/05/27 03:14:22 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)lookup.c	5.1 (Berkeley) 6/6/85";
@@ -137,7 +137,7 @@ lookup(name, action, value)	/* %% in name.  Ignore quotas in name */
 	int action;
 	struct namelist *value;
 {
-	unsigned n;
+	unsigned int n;
 	char *cp;
 	struct syment *s;
 	char ebuf[BUFSIZ];

@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.12 2002/02/16 21:27:51 millert Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.13 2002/05/27 03:14:22 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char     sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.12 2002/02/16 21:27:51 millert Exp $";
+static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.13 2002/05/27 03:14:22 deraadt Exp $";
 #endif
 
 /*
@@ -486,9 +486,9 @@ c_initialize()
 char            rpcgen_table_dcl[] = "struct rpcgen_table {\n\
 	char	*(*proc)();\n\
 	xdrproc_t	xdr_arg;\n\
-	unsigned	len_arg;\n\
+	unsigned int	len_arg;\n\
 	xdrproc_t	xdr_res;\n\
-	unsigned	len_res;\n\
+	unsigned int	len_res;\n\
 };\n";
 
 
