@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.5 1997/02/03 15:56:45 deraadt Exp $
+.\"	$OpenBSD: doc-syms,v 1.6 1997/02/14 03:53:02 tholo Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,7 +202,7 @@
 .de St
 .if \\n(aC==0 \{\
 .	ie \\n(.$==0 \{\
-.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.2 | -p1003.1b | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 ] \\*(Pu ... (#\\n(.c)
+.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.2 | -p1003.1b | -p1387.2-95 | -p1387.2 | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 ] \\*(Pu ... (#\\n(.c)
 .	\}
 .	el \{\
 .		ds mN St
@@ -283,6 +283,26 @@
 .		el \{\
 .			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
 .			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
+.		\}
+.       \}
+.       if "\\*(A\\n(aP"-p1387.2-95" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
+.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
+.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
+.		\}
+.       \}
+.       if "\\*(A\\n(aP"-p1387.2" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2
+.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1387.2\\*(sV
+.			as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ansiC" \{\
