@@ -1,4 +1,4 @@
-/*	$OpenBSD: fixunsdfsi.S,v 1.2 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: fixunsdfsi.S,v 1.3 2003/07/21 18:43:55 jason Exp $	*/
 /*	$NetBSD: fixunsdfsi.S,v 1.3 2000/07/25 04:26:12 mycroft Exp $	*/
 /*
  * Copyright (c) 1992, 1993
@@ -45,22 +45,25 @@
  */
 
 	.align	8
-Lbig:
+Lbigd:
 	.word	0x43e00000		! .double 2^63
 	.word	0			! (who me, not trust the assembler?)
+Lbigf:
+	.word	0x5f000000		! .float 2^63
 
 /*
- * Same as above but to unsigned long
+ *unsigned long __dtoul(double):
+ *	double -> unsigned long
  */
 ENTRY(__dtoul)
 	sub	%sp, 16, %sp
 	std	%f2, [%sp + 64 + BIAS + 8]
 #ifdef PIC
-	PICCY_SET(Lbig, %g1, %o0)
+	PICCY_SET(Lbigd, %g1, %o0)
 	ldd	[%g1], %f2
 #else
-	sethi	%hi(Lbig), %g1
-	ldd	[%g1 + %lo(Lbig)], %f2
+	sethi	%hi(Lbigd), %g1
+	ldd	[%g1 + %lo(Lbigd)], %f2
 #endif
 	fcmped	%f0, %f2		! d < 2^63, or NaN, or -Inf?
 	nop				! (fpop2 delay)
@@ -86,5 +89,49 @@ ENTRY(__dtoul)
 	std	%f0, [%sp + 64 + BIAS]	! return result
 	ldx	[%sp + 64 + BIAS], %o0
 	ldd	[%sp + 64 + BIAS + 8], %f2
+	retl
+	 add	%sp, 16, %sp
+
+/*
+ *unsigned long __ftoul(float):
+ *	float -> unsigned long
+ */
+ENTRY(__ftoul)
+	sub	%sp, 16, %sp
+	st	%f1, [%sp + 64 + BIAS + 8]
+	st	%f2, [%sp + 64 + BIAS + 12]
+#ifdef PIC
+	PICCY_SET(Lbigf, %g1, %o0)
+	ld	[%g1], %f2
+#else
+	sethi	%hi(Lbigf), %g1
+	ld	[%g1 + %lo(Lbigf)], %f2
+#endif
+	fcmpes	%f0, %f2		! d < 2^63, or NaN, or -Inf?
+	nop				! (fpop2 delay)
+	fbul,a	1f			! if so, use fdtoi to convert to int
+	 fstox	%f0, %f0		!        (this includes negatives!)
+
+	! d does not fit in an int, so subtract 2^63, convert,
+	! and add 2^63 again (sigh).  Just hope the intermediate
+	! fits (if not, the result is undefined anyway).
+
+	fsubs	%f0, %f2, %f0		! d -= 2^63
+	fstox	%f0, %f0		! convert to int
+	std	%f0, [%sp + 64 + BIAS]	! move into return reg
+	ldx	[%sp + 64 + BIAS], %o0
+	sethi	%hi(0x80000000), %o1
+	sllx	%o1, 32, %o1
+	add	%o0, %o1, %o0		! add 2^63
+	ld	[%sp + 64 + BIAS + 8], %f1
+	ld	[%sp + 64 + BIAS + 12], %f2
+	retl
+	 add	%sp, 16, %sp
+
+1:
+	std	%f0, [%sp + 64 + BIAS]	! return result
+	ldx	[%sp + 64 + BIAS], %o0
+	ld	[%sp + 64 + BIAS + 8], %f1
+	ld	[%sp + 64 + BIAS + 12], %f2
 	retl
 	 add	%sp, 16, %sp
