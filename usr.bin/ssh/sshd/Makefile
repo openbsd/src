@@ -4,7 +4,7 @@ PROG=	sshd
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
-LDADD=	-lkrb -lcrypto -ldes -lutil -lz -lkrb
+LDADD=	-lkrb -lcrypto -ldes -lutil -lz
 MAN=	sshd.8
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
