@@ -1,8 +1,9 @@
-/*	$OpenBSD: asn.h,v 1.3 1998/11/17 11:10:07 niklas Exp $	*/
-/*	$EOM: asn.h,v 1.16 1998/08/21 13:47:56 provos Exp $	*/
+/*	$OpenBSD: asn.h,v 1.4 1999/04/19 20:01:48 niklas Exp $	*/
+/*	$EOM: asn.h,v 1.18 1999/04/05 18:27:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +86,7 @@ struct asn_objectid {
 
 struct asn_handler {
   enum asn_tags type;
-  void (*free) (struct norm_type *);
+  void (*deallocate) (struct norm_type *);
   u_int32_t (*get_encoded_len) (struct norm_type *, u_int8_t *type);
   u_int8_t *(*decode) (u_int8_t *, u_int32_t, struct norm_type *);
   u_int8_t *(*encode) (struct norm_type *, u_int8_t *);
