@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.433 2001/08/23 05:41:14 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.434 2001/08/23 16:16:43 csapuntz Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4152,7 +4152,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
-	    "VT82C686A PCI-ISA",
+	    "VT82C686 PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
@@ -4200,11 +4200,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
-	    "VT82C686A SMBus",
+	    "VT82C686 SMBus",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97,
-	    "VT82C686A AC-97 Audio",
+	    "VT82C686 AC-97 Audio",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
@@ -4212,7 +4212,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ACM,
-	    "VT82C686A AC-97 Modem",
+	    "VT82C686 AC-97 Modem",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
