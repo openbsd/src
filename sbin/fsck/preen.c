@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: preen.c,v 1.8 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -80,16 +80,16 @@ static int nrun = 0, ndisks = 0;
 
 static struct diskentry *finddisk(const char *);
 static void addpart(const char *, const char *, const char *, void *);
-static int startdisk __P((struct diskentry *, 
-    int (*)(const char *, const char *, const char *, void *, pid_t *)));
+static int startdisk(struct diskentry *, 
+    int (*)(const char *, const char *, const char *, void *, pid_t *));
 static void printpart(void);
 
 int
 checkfstab(flags, maxrun, docheck, checkit)
 	int flags, maxrun;
 	void *(*docheck)(struct fstab *);
-	int (*checkit) __P((const char *, const char *, const char *, void *,
-	    pid_t *));
+	int (*checkit)(const char *, const char *, const char *, void *,
+	    pid_t *);
 {
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
@@ -324,8 +324,8 @@ addpart(type, devname, mntpt, auxarg)
 static int
 startdisk(d, checkit)
 	struct diskentry *d;
-	int (*checkit) __P((const char *, const char *, const char *, void *,
-	    pid_t *));
+	int (*checkit)(const char *, const char *, const char *, void *,
+	    pid_t *);
 {
 	struct partentry *p = d->d_part.tqh_first;
 	int rv;

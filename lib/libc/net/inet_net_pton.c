@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.1 1997/03/13 19:07:30 downsj Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.2 2002/02/17 19:42:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static const char rcsid[] = "$From: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_net_pton.c,v 1.1 1997/03/13 19:07:30 downsj Exp $";
+static const char rcsid[] = "$OpenBSD: inet_net_pton.c,v 1.2 2002/02/17 19:42:23 millert Exp $";
 #endif
 #endif
 
@@ -37,8 +37,7 @@ static const char rcsid[] = "$OpenBSD: inet_net_pton.c,v 1.1 1997/03/13 19:07:30
 #include <string.h>
 #include <stdlib.h>
 
-static int	inet_net_pton_ipv4 __P((const char *src, u_char *dst,
-					size_t size));
+static int	inet_net_pton_ipv4(const char *, u_char *, size_t);
 
 /*
  * static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.9 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: dump.h,v 1.10 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -90,10 +90,6 @@ long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
 
-#ifndef __P
-#include <sys/cdefs.h>
-#endif
-
 /* operator interface functions */
 void	broadcast(char *message);
 time_t	do_stats(void);
@@ -109,8 +105,8 @@ void	timeest(void);
 struct	dinode;
 long	blockest(struct dinode *dp);
 void	mapfileino(ino_t, u_int64_t *, int *);
-int	mapfiles __P((ino_t maxino, u_int64_t *tapesize, char *disk,
-		    char * const *dirv));
+int	mapfiles(ino_t maxino, u_int64_t *tapesize, char *disk,
+	    char * const *dirv);
 int	mapdirs(ino_t maxino, u_int64_t *tapesize);
 
 /* file dumping routines */

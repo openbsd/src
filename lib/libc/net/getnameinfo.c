@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.22 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.23 2002/02/17 19:42:23 millert Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -81,8 +81,8 @@ struct sockinet {
 };
 
 #ifdef INET6
-static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
-				 size_t, int));
+static int ip6_parsenumeric(const struct sockaddr *, const char *, char *,
+    size_t, int);
 static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 #endif
 

@@ -1,8 +1,8 @@
-/*	$OpenBSD: com_extern.h,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.5 2002/02/17 19:42:34 millert Exp $	*/
 
 #ifndef HAVE_BSEARCH
-void	*bsearch __P((const void *, const void *, size_t,
-   size_t, int (*)(const void *, const void *)));
+void	*bsearch(const void *, const void *, size_t,
+   size_t, int (*)(const void *, const void *));
 #endif
 #ifndef HAVE_SETENV
 int setenv(const char *, const char *, int);
@@ -177,13 +177,11 @@ int rcv_read(SCR *, FREF *);
 int screen_init(GS *, SCR *, SCR **);
 int screen_end(SCR *);
 SCR *screen_next(SCR *);
-int f_search __P((SCR *,
-   MARK *, MARK *, char *, size_t, char **, u_int));
-int b_search __P((SCR *,
-   MARK *, MARK *, char *, size_t, char **, u_int));
+int f_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
+int b_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
 void search_busy(SCR *, busy_t);
-int seq_set __P((SCR *, CHAR_T *,
-   size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int));
+int seq_set(SCR *, CHAR_T *,
+   size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int);
 int seq_delete(SCR *, CHAR_T *, size_t, seq_t);
 int seq_mdel(SEQ *);
 SEQ *seq_find

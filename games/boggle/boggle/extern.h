@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/04/24 12:22:37 cgd Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@ char	*nextword(FILE *);
 FILE	*opendict(char *);
 void	 playgame(void);
 void	 prompt(char *);
-void	 prtable __P((char *[],
-	    int, int, int, void (*)(char *[], int), int (*)(char *[], int)));
+void	 prtable(char *[],
+	    int, int, int, void (*)(char *[], int), int (*)(char *[], int));
 void	 putstr(char *);
 void	 redraw(void);
 void	 results(void);

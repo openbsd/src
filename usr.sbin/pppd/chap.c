@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.9 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: chap.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.9 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -69,8 +69,7 @@ static void ChapLowerUp(int);
 static void ChapLowerDown(int);
 static void ChapInput(int, u_char *, int);
 static void ChapProtocolReject(int);
-static int  ChapPrintPkt __P((u_char *, int,
-			      void (*)(void *, char *, ...), void *));
+static int  ChapPrintPkt(u_char *, int, void (*)(void *, char *, ...), void *);
 
 struct protent chap_protent = {
     PPP_CHAP,

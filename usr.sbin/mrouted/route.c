@@ -40,14 +40,12 @@ unsigned int nroutes;			/* current number of route entries  */
 /*
  * Private functions.
  */
-static int init_children_and_leaves	__P((struct rtentry *r,
-						vifi_t parent));
+static int init_children_and_leaves(struct rtentry *r, vifi_t parent);
 static int find_route(u_int32_t origin, u_int32_t mask);
 static void create_route(u_int32_t origin, u_int32_t mask);
 static void discard_route(struct rtentry *prev_r);
 static int compare_rts(const void *rt1, const void *rt2);
-static int report_chunk		__P((struct rtentry *start_rt, vifi_t vifi,
-						u_int32_t dst));
+static int report_chunk(struct rtentry *start_rt, vifi_t vifi, u_int32_t dst);
 
 /*
  * Initialize the routing table and associated variables.

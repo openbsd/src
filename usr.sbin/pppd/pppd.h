@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.11 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.12 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -156,9 +156,8 @@ struct protent {
     /* Close the protocol */
     void (*close)(int unit, char *reason);
     /* Print a packet in readable form */
-    int  (*printpkt) __P((u_char *pkt, int len,
-			  void (*printer)(void *, char *, ...),
-			  void *arg));
+    int  (*printpkt)(u_char *pkt, int len,
+	void (*printer)(void *, char *, ...), void *arg);
     /* Process a received data packet */
     void (*datainput)(int unit, u_char *pkt, int len);
     int  enabled_flag;		/* 0 iff protocol is disabled */
@@ -183,20 +182,20 @@ void detach(void);		/* Detach from controlling tty */
 void die(int);			/* Cleanup and exit */
 void quit(void);		/* like die(1) */
 void novm(char *);		/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(void *), void *arg, int t));
+void timeout(void (*func)(void *), void *arg, int t);
 				/* Call func(arg) after t seconds */
-void untimeout __P((void (*func)(void *), void *arg));
+void untimeout(void (*func)(void *), void *arg);
 				/* Cancel call to func(arg) */
 int run_program(char *prog, char **args, int must_exist);
 				/* Run program prog with args in child */
 void demuxprotrej(int, int);
 				/* Demultiplex a Protocol-Reject */
-void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
-		void *));	/* Format a packet in human-readable form */
+void format_packet(u_char *, int, void (*) (void *, char *, ...), void *);
+				/* Format a packet in human-readable form */
 void log_packet(u_char *, int, char *, int);
 				/* Format a packet and log it with syslog */
-void print_string __P((char *, int,  void (*) (void *, char *, ...),
-		void *));	/* Format a string for output */
+void print_string(char *, int,  void (*) (void *, char *, ...), void *);
+				/* Format a string for output */
 int fmtmsg(char *, int, char *, ...);		/* sprintf++ */
 int vfmtmsg(char *, int, char *, va_list);	/* vsprintf++ */
 void script_setenv(char *, char *);	/* set script env var */
@@ -311,8 +310,8 @@ int  set_filters(struct bpf_program *pass, struct bpf_program *active);
 int  parse_args(int argc, char **argv);
 				/* Parse options from arguments given */
 void usage(void);		/* Print a usage message */
-int  options_from_file __P((char *filename, int must_exist, int check_prot,
-			    int privileged));
+int  options_from_file(char *filename, int must_exist, int check_prot,
+		       int privileged);
 				/* Parse options from an options file */
 int  options_from_user(void);	/* Parse options from user's .ppprc */
 int  options_for_tty(void);	/* Parse options from /etc/ppp/options.tty */

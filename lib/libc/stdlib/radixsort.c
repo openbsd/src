@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: radixsort.c,v 1.4 2002/02/16 21:27:24 millert Exp $";
+static char *rcsid = "$OpenBSD: radixsort.c,v 1.5 2002/02/17 19:42:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -63,8 +63,8 @@ typedef struct {
 static __inline void simplesort
 (const u_char **, int, int, const u_char *, u_int);
 static void r_sort_a(const u_char **, int, int, const u_char *, u_int);
-static void r_sort_b __P((const u_char **,
-	    const u_char **, int, int, const u_char *, u_int));
+static void r_sort_b(const u_char **,
+	    const u_char **, int, int, const u_char *, u_int);
 
 #define	THRESHOLD	20		/* Divert to simplesort(). */
 #define	SIZE		512		/* Default stack size. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/17 19:42:29 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/03/18 14:59:43 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ void		 freeentry(struct entry *);
 void		 freename(char *);
 int	 	 genliteraldir(char *, ino_t);
 char		*gentempname(struct entry *);
-void		 getfile __P((void (*)(char *, long), void (*)(char *, long)));
+void		 getfile(void (*)(char *, long), void (*)(char *, long));
 void		 getvol(long);
 void		 initsymtable(char *);
 int	 	 inodetype(ino_t);
@@ -99,7 +99,7 @@ void	 	 skipdirs(void);
 void		 skipfile(void);
 void		 skipmaps(void);
 void		 swabst(u_char *, u_char *);
-void	 	 treescan __P((char *, ino_t, long (*)(char *, ino_t, int)));
+void	 	 treescan(char *, ino_t, long (*)(char *, ino_t, int));
 ino_t		 upperbnd(ino_t);
 long		 verifyfile(char *, ino_t, int);
 void		 xtrnull(char *, long);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2002/02/17 19:42:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,8 +41,8 @@ int	 __big_delete(HTAB *, BUFHEAD *);
 int	 __big_insert(HTAB *, BUFHEAD *, const DBT *, const DBT *);
 int	 __big_keydata(HTAB *, BUFHEAD *, DBT *, DBT *, int);
 int	 __big_return(HTAB *, BUFHEAD *, int, DBT *, int);
-int	 __big_split __P((HTAB *, BUFHEAD *, BUFHEAD *, BUFHEAD *,
-		int, u_int32_t, SPLIT_RETURN *));
+int	 __big_split(HTAB *, BUFHEAD *, BUFHEAD *, BUFHEAD *,
+	    int, u_int32_t, SPLIT_RETURN *);
 int	 __buf_free(HTAB *, int, int);
 void	 __buf_init(HTAB *, int);
 u_int32_t	 __call_hash(HTAB *, char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.9 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.9 2002/02/16 21:28:06 millert Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -71,8 +71,8 @@ struct nentry {
 
 
 static DB       *ng_insert(DB *, const char *);
-static void	 ng_reventry __P((DB *, DB *, struct nentry *, char *,
-				  size_t, struct stringlist *));
+static void	 ng_reventry(DB *, DB *, struct nentry *, char *,
+		    size_t, struct stringlist *);
 
 static void	 ng_print(struct nentry *, struct string *);
 static void	 ng_rprint(DB *, struct string *);

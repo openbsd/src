@@ -55,12 +55,12 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main __P((int, char *[]));
-void	print_shmid_ds __P((struct shmid_ds *, mode_t));
-void	sigsys_handler __P((int));
-void	sigchld_handler __P((int));
-void	cleanup __P((void));
-void	receiver __P((void));
+int	main(int, char *[]);
+void	print_shmid_ds(struct shmid_ds *, mode_t);
+void	sigsys_handler(int);
+void	sigchld_handler(int);
+void	cleanup(void);
+void	receiver(void);
 
 const char *m_str = "The quick brown fox jumped over the lazy dog.";
 

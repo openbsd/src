@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.8 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: lcp.c,v 1.31 1997/11/27 06:08:44 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: lcp.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: lcp.c,v 1.8 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -116,8 +116,7 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
 static void lcp_init(int);
 static void lcp_input(int, u_char *, int);
 static void lcp_protrej(int);
-static int  lcp_printpkt __P((u_char *, int,
-			      void (*)(void *, char *, ...), void *));
+static int  lcp_printpkt(u_char *, int, void (*)(void *, char *, ...), void *);
 
 struct protent lcp_protent = {
     PPP_LCP,

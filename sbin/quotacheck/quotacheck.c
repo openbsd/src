@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.12 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.13 2002/02/17 19:42:29 millert Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.12 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.13 2002/02/17 19:42:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,8 +115,7 @@ struct fileusage *
 	 addid(u_long, int, char *);
 char	*blockcheck(char *);
 void	 bread(daddr_t, char *, long);
-int	 chkquota __P((const char *, const char *,
-			const char *, void *, pid_t *));
+int	 chkquota(const char *, const char *, const char *, void *, pid_t *);
 void	 freeinodebuf(void);
 struct dinode *
 	 getnextinode(ino_t);

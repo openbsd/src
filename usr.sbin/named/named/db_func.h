@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_func.h,v 1.5 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: db_func.h,v 1.6 2002/02/17 19:42:37 millert Exp $	*/
 
 /* db_proc.h - prototypes for functions in db_*.c
  *
@@ -6,11 +6,11 @@
  */
 
 /* ++from db_update.c++ */
-extern int		db_update __P((char name[],
-				       struct databuf *odp,
-				       struct databuf *newdp,
-				       int flags,
-				       struct hashbuf *htp)),
+extern int		db_update(char name[],
+				  struct databuf *odp,
+				  struct databuf *newdp,
+				  int flags,
+				  struct hashbuf *htp),
 			db_cmp(struct databuf *,struct databuf *),
 			findMyZone(struct namebuf *np, int class);
 extern void		fixttl(struct databuf *dp);
@@ -37,17 +37,14 @@ extern u_int		db_getclev(const char *);
 
 /* ++from db_load.c++ */
 extern void		endline(FILE *),
-			get_netlist __P((FILE *, struct netinfo **,
-					 int, char *)),
+			get_netlist(FILE *, struct netinfo **, int, char *),
 			free_netlist(struct netinfo **);
 extern int		getword(char *, int, FILE *, int),
 			getnum(FILE *, const char *, int),
-			db_load __P((const char *, const char *,
-				     struct zoneinfo *, const char *)),
-			position_on_netlist __P((struct in_addr,
-						 struct netinfo *));
-extern struct netinfo	*addr_on_netlist __P((struct in_addr,
-					      struct netinfo *));
+			db_load(const char *, const char *,
+			    struct zoneinfo *, const char *),
+			position_on_netlist(struct in_addr, struct netinfo *);
+extern struct netinfo	*addr_on_netlist(struct in_addr, struct netinfo *);
 /* --from db_load.c-- */
 
 /* ++from db_glue.c++ */
@@ -74,12 +71,10 @@ extern char		*protocolname(int),
 #ifndef BSD
 extern int		getdtablesize(void);
 #endif
-extern struct databuf	*rm_datum __P((struct databuf *,
-				       struct namebuf *,
-				       struct databuf *));
-extern struct namebuf	*rm_name __P((struct namebuf *, 
-				      struct namebuf **,
-				      struct namebuf *));
+extern struct databuf	*rm_datum(struct databuf *, struct namebuf *,
+			    struct databuf *);
+extern struct namebuf	*rm_name(struct namebuf *, struct namebuf **,
+			    struct namebuf *);
 #ifdef INVQ
 extern void		addinv(struct namebuf *, struct databuf *),
 			rminv(struct databuf *);
@@ -87,14 +82,14 @@ struct invbuf		*saveinv(void);
 #endif
 extern char *		ctimel(long);
 extern struct in_addr	data_inaddr(const u_char *data);
-extern void		setsignal __P((int, int, SIG_FN (*)())),
-			resignal __P((int, int, SIG_FN (*)()));
+extern void		setsignal(int, int, SIG_FN (*)()),
+			resignal(int, int, SIG_FN (*)());
 extern void		db_free(struct databuf *);
 /* --from db_glue.c-- */
 
 /* ++from db_lookup.c++ */
-extern struct namebuf	*nlookup __P((const char *, struct hashbuf **,
-				      const char **, int));
+extern struct namebuf	*nlookup(const char *, struct hashbuf **,
+			    const char **, int);
 extern struct namebuf	*np_parent(struct namebuf *);
 extern int		match(struct databuf *, int, int);
 /* --from db_lookup.c-- */

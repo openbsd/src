@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: merge.c,v 1.4 2002/02/16 21:27:24 millert Exp $";
+static char *rcsid = "$OpenBSD: merge.c,v 1.5 2002/02/17 19:42:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,8 +58,8 @@ static char *rcsid = "$OpenBSD: merge.c,v 1.4 2002/02/16 21:27:24 millert Exp $"
 #include <stdlib.h>
 #include <string.h>
 
-static void setup __P((u_char *, u_char *, size_t, size_t, int (*)()));
-static void insertionsort __P((u_char *, size_t, size_t, int (*)()));
+static void setup(u_char *, u_char *, size_t, size_t, int (*)());
+static void insertionsort(u_char *, size_t, size_t, int (*)());
 
 #define ISIZE sizeof(int)
 #define PSIZE sizeof(u_char *)

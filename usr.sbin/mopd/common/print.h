@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: print.h,v 1.5 2002/02/17 19:42:36 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: print.h,v 1.4 2002/02/16 21:28:04 millert Exp $
+ *	$OpenBSD: print.h,v 1.5 2002/02/17 19:42:36 millert Exp $
  *
  */
 
@@ -56,8 +56,7 @@ void	mopPrintHeader(FILE *, u_char *, int);
 void	mopPrintMopHeader(FILE *, u_char *, int);
 void	mopPrintDevice(FILE *, u_char);
 void	mopPrintTime(FILE *, u_char *);
-void	mopPrintInfo      __P((FILE *, u_char *, int *, u_short,
-			       u_char, int));
+void	mopPrintInfo(FILE *, u_char *, int *, u_short, u_char, int);
 __END_DECLS
 #endif
 

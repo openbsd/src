@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.42 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.43 2002/02/17 19:42:28 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -150,18 +150,17 @@ struct fhreturn {
 
 /* Global defs */
 char	*add_expdir(struct dirlist **, char *, int);
-void	add_dlist __P((struct dirlist **, struct dirlist *,
-	    struct grouplist *, int));
+void	add_dlist(struct dirlist **, struct dirlist *, struct grouplist *, int);
 void	add_mlist(char *, char *);
 int	check_dirpath(char *);
 int	check_options(struct dirlist *);
 int	chk_host(struct dirlist *, in_addr_t, int *, int *);
 void	del_mlist(char *, char *);
 struct dirlist *dirp_search(struct dirlist *, char *);
-int	do_mount __P((struct exportlist *, struct grouplist *, int,
-	    struct ucred *, char *, int, struct statfs *));
-int	do_opt __P((char **, char **, struct exportlist *, struct grouplist *,
-	    int *, int *, struct ucred *));
+int	do_mount(struct exportlist *, struct grouplist *, int, struct ucred *,
+	    char *, int, struct statfs *);
+int	do_opt(char **, char **, struct exportlist *, struct grouplist *,
+	    int *, int *, struct ucred *);
 struct	exportlist *ex_search(fsid_t *);
 struct	exportlist *get_exp(void);
 void	free_dir(struct dirlist *);
@@ -178,8 +177,8 @@ void	get_mountlist(void);
 int	get_net(char *, struct netmsk *, int);
 void	getexp_err(struct exportlist *, struct grouplist *);
 struct grouplist *get_grp(void);
-void	hang_dirp __P((struct dirlist *, struct grouplist *,
-	    struct exportlist *, int));
+void	hang_dirp(struct dirlist *, struct grouplist *, struct exportlist *,
+	    int);
 void	mntsrv(struct svc_req *, SVCXPRT *);
 void	nextfield(char **, char **);
 void	out_of_mem(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.41 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.42 2002/02/17 19:42:29 millert Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -270,8 +270,8 @@ void	 pr_suptypes(struct icmp6_nodeinfo *, size_t);
 void	 pr_nodeaddr(struct icmp6_nodeinfo *, int);
 int	 myechoreply(const struct icmp6_hdr *);
 int	 mynireply(const struct icmp6_nodeinfo *);
-char *dnsdecode __P((const u_char **, const u_char *, const u_char *,
-	u_char *, size_t));
+char	*dnsdecode(const u_char **, const u_char *, const u_char *, u_char *,
+	    size_t);
 void	 pr_pack(u_char *, int, struct msghdr *);
 void	 pr_exthdrs(struct msghdr *);
 void	 pr_ip6opt(void *);

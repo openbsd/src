@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.3 2002/02/16 21:27:25 millert Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.4 2002/02/17 19:42:24 millert Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -61,10 +61,8 @@ int _yp_check(char **);
 
 #ifdef YPMATCHCACHE
 
-static bool_t ypmatch_add __P((const char *, const char *,
-    u_int, char *, u_int));
-static bool_t ypmatch_find __P((const char *, const char *,
-    u_int, char **, u_int *));
+static bool_t ypmatch_add(const char *, const char *, u_int, char *, u_int);
+static bool_t ypmatch_find(const char *, const char *, u_int, char **, u_int *);
 
 static struct ypmatch_ent {
 	struct ypmatch_ent 	*next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.36 2002/02/16 21:27:17 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.37 2002/02/17 19:42:21 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -159,12 +159,12 @@ int	 nice(int);
 void	 psignal(unsigned int, const char *);
 extern __const char *__const sys_siglist[];
 int	 profil(char *, size_t, unsigned long, unsigned int);
-int	 rcmd __P((char **, int, const char *,
-		const char *, const char *, int *));
-int	 rcmd_af __P((char **, int, const char *,
-		const char *, const char *, int *, int));
-int	 rcmdsh __P((char **, int, const char *,
-		const char *, const char *, char *));
+int	 rcmd(char **, int, const char *,
+	    const char *, const char *, int *);
+int	 rcmd_af(char **, int, const char *,
+	    const char *, const char *, int *, int);
+int	 rcmdsh(char **, int, const char *,
+	    const char *, const char *, char *);
 char	*re_comp(const char *);
 int	 re_exec(const char *);
 int	 readlink(const char *, char *, size_t);

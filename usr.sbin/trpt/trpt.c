@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.9 2002/02/16 21:28:10 millert Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.10 2002/02/17 19:42:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ extern	char *__progname;
 
 int	main(int, char *[]);
 void	dotrace(caddr_t);
-void	tcp_trace __P((short, short, struct tcpcb *, struct tcpcb *,
-	    struct tcpiphdr *, int));
+void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
+	    struct tcpiphdr *, int);
 int	numeric(const void *, const void *);
 void	usage(void);
 

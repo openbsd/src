@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.3 2002/02/16 21:27:32 millert Exp $	*/
+/*	$OpenBSD: test.h,v 1.4 2002/02/17 19:42:27 millert Exp $	*/
 
 #ifndef _h_test_
 #define _h_test_
@@ -12,10 +12,10 @@
 int	_thread_sys_write(int, const char*, size_t);
 __dead void _thread_sys__exit(int) __attribute__((__noreturn__));
 
-static __dead void __vpanic __P((const char *, const char *, const char *, 
-	int, const char *, va_list)) __attribute__((__noreturn__));
-static __dead void __panic __P((const char *, const char *, const char *,
-	int, const char *, ...)) __attribute__((__noreturn__));
+static __dead void __vpanic(const char *, const char *, const char *, 
+	int, const char *, va_list) __attribute__((__noreturn__));
+static __dead void __panic(const char *, const char *, const char *,
+	int, const char *, ...) __attribute__((__noreturn__));
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <pthread.h>

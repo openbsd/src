@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/17 19:42:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,29 +38,28 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-void	 append  __P((u_char **, int, int, FILE *, void (*)(), struct field *));
+void	 append(u_char **, int, int, FILE *, void (*)(), struct field *);
 void	 concat(FILE *, FILE *);
-length_t enterkey __P((RECHEADER *,
-	    DBT *, int, struct field *));
+length_t enterkey(RECHEADER *, DBT *, int, struct field *);
 void	 fixit(int *, char **);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
-void	 fmerge __P((int, union f_handle,
-	    int, int (*)(), FILE *, void (*)(), struct field *));
+void	 fmerge(int, union f_handle,
+	    int, int (*)(), FILE *, void (*)(), struct field *);
 void	 fsort(int, int, union f_handle, int, FILE *, struct field *);
-int	 geteasy __P((int, union f_handle,
-	    int, RECHEADER *, u_char *, struct field *));
-int	 getnext __P((int, union f_handle,
-	    int, RECHEADER *, u_char *, struct field *));
-int	 makekey __P((int, union f_handle,
-	    int, RECHEADER *, u_char *, struct field *));
-int	 makeline __P((int, union f_handle,
-	    int, RECHEADER *, u_char *, struct field *));
-void	 merge __P((int, int, int (*)(), FILE *, void (*)(), struct field *));
+int	 geteasy(int, union f_handle,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 getnext(int, union f_handle,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 makekey(int, union f_handle,
+	    int, RECHEADER *, u_char *, struct field *);
+int	 makeline(int, union f_handle,
+	    int, RECHEADER *, u_char *, struct field *);
+void	 merge(int, int, int (*)(), FILE *, void (*)(), struct field *);
 void	 num_init(void);
 void	 onepass(u_char **, int, long, long *, u_char *, FILE *);
 int	 optval(int, int);
-void	 order __P((union f_handle, int (*)(), struct field *));
+void	 order(union f_handle, int (*)(), struct field *);
 void	 putline(RECHEADER *, FILE *);
 void	 putrec(RECHEADER *, FILE *);
 void	 rd_append(int, union f_handle, int, FILE *, u_char *, u_char *);

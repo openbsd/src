@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_load.c,v 1.6 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: db_load.c,v 1.7 2002/02/17 19:42:37 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
 static char rcsid[] = "$From: db_load.c,v 8.33 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_load.c,v 1.6 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_load.c,v 1.7 2002/02/17 19:42:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,12 +117,12 @@ static int		gettoken(register FILE *, const char *),
 			getservices(int, char *, FILE *, const char *),
 			getcharstring(char *, char *, int, int, int, FILE *, const char *);
 static void		makename(char *, const char *);
-static int		makename_ok __P((char *name, const char *origin,
-					 int class,
-					 enum transport transport,
-					 enum context context,
-					 const char *owner,
-					 const char *filename, int lineno));
+static int		makename_ok(char *name, const char *origin,
+				    int class,
+				    enum transport transport,
+				    enum context context,
+				    const char *owner,
+				    const char *filename, int lineno);
 static int		getmlword(char *, int, FILE *, int);
 static int		getallwords(char *, int, FILE *, int);
 static u_int32_t	wordtouint32(char *);

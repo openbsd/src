@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.h,v 1.5 2002/02/16 21:28:11 millert Exp $ */
+/*	$OpenBSD: yplib_host.h,v 1.6 2002/02/17 19:42:40 millert Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -34,26 +34,24 @@
 #ifndef _YPLIB_HOST_H_
 #define _YPLIB_HOST_H_
 
-int	yp_match_host 	__P((CLIENT *client, char *indomain, char *inmap,
-			    const char *inkey, int inkeylen, char **outval,
-			    int *outvallen));
-int	yp_first_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    char **outkey, int *outkeylen, char **outval,
-			    int *outvallen));
-int	yp_next_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    char *inkey, int inkeylen, char **outkey,
-			    int *outkeylen, char **outval, int *outvallen));
-int	yp_master_host	__P((CLIENT *client,
-			    char *indomain, char *inmap, char **outname));
-int	yp_order_host	__P((CLIENT *client,
-			    char *indomain, char *inmap, u_int32_t *outorder));
-int	yp_all_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    struct ypall_callback *incallback));
-int	yp_maplist_host	__P((CLIENT *client, char *indomain,
-			    struct ypmaplist **outmaplist));
+int	yp_match_host(CLIENT *client, char *indomain, char *inmap,
+	    const char *inkey, int inkeylen, char **outval, int *outvallen);
+int	yp_first_host(CLIENT *client, char *indomain, char *inmap,
+	    char **outkey, int *outkeylen, char **outval, int *outvallen);
+int	yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
+	    int inkeylen, char **outkey, int *outkeylen, char **outval,
+	    int *outvallen);
+int	yp_master_host(CLIENT *client, char *indomain, char *inmap,
+	    char **outname);
+int	yp_order_host(CLIENT *client, char *indomain, char *inmap,
+	    u_int32_t *outorder);
+int	yp_all_host(CLIENT *client, char *indomain, char *inmap,
+	    struct ypall_callback *incallback);
+int	yp_maplist_host(CLIENT *client, char *indomain,
+	    struct ypmaplist **outmaplist);
 CLIENT *yp_bind_local(u_long program, u_long version);
-CLIENT *yp_bind_host	__P((char *server, u_long program, u_long version,
-			    u_short port, int usetcp));
+CLIENT *yp_bind_host(char *server, u_long program, u_long version,
+	    u_short port, int usetcp);
 
 #endif /* _YPLIB_HOST_H_ */
 

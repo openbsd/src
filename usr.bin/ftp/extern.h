@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2002/02/17 19:42:30 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -141,8 +141,8 @@ void	pwd(int, char **);
 void	quit(int, char **);
 void	quote(int, char **);
 void	quote1(const char *, int, char **);
-void    recvrequest __P((const char *, const char *, const char *,
-	    const char *, int, int));
+void    recvrequest(const char *, const char *, const char *,
+	    const char *, int, int);
 void	reget(int, char **);
 char   *remglob(char **, int, char **);
 off_t	remotesize(const char *, int);

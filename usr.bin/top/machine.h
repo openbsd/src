@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.h,v 1.3 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: machine.h,v 1.4 2002/02/17 19:42:33 millert Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -58,9 +58,8 @@ extern int display_init(struct statics *);
 extern int machine_init(struct statics *);
 extern char *format_header(char *);
 extern void get_system_info(struct system_info *);
-extern caddr_t get_process_info __P((struct system_info *,
-				     struct process_select *,
-				     int (*)(const void *, const void *)));
-extern char *format_next_process __P((caddr_t, char *(*)()));
+extern caddr_t get_process_info(struct system_info *, struct process_select *,
+    int (*)(const void *, const void *));
+extern char *format_next_process(caddr_t, char *(*)());
 extern int proc_compate(const void *, const void *);
 extern int proc_owner(pid_t);

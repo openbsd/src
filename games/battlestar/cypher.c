@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.12 2000/09/26 04:42:56 pjanzen Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.13 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.12 2000/09/26 04:42:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.13 2002/02/17 19:42:20 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 #include "pathnames.h"
 
-static void verb_with_all __P((unsigned int *, int, int (*)(void), const char *));
+static void verb_with_all(unsigned int *, int, int (*)(void), const char *);
 
 /* returns 0 if error or no more commands to do,
  *         1 if there are more commands remaining on the current input line

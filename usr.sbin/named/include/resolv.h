@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.4 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.5 2002/02/17 19:42:37 millert Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1987, 1989, 1993
@@ -170,19 +170,19 @@ struct __res_state {
 typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
 	res_sendhookact;
 
-typedef res_sendhookact (*res_send_qhook)__P((struct sockaddr_in * const *ns,
-					      const u_char **query,
-					      int *querylen,
-					      u_char *ans,
-					      int anssiz,
-					      int *resplen));
+typedef res_sendhookact (*res_send_qhook)(struct sockaddr_in * const *ns,
+					  const u_char **query,
+					  int *querylen,
+					  u_char *ans,
+					  int anssiz,
+					  int *resplen);
 
-typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr_in *ns,
-					      const u_char *query,
-					      int querylen,
-					      u_char *ans,
-					      int anssiz,
-					      int *resplen));
+typedef res_sendhookact (*res_send_rhook)(const struct sockaddr_in *ns,
+					  const u_char *query,
+					  int querylen,
+					  u_char *ans,
+					  int anssiz,
+					  int *resplen);
 
 struct res_sym {
 	int	number;		/* Identifying number, like T_MX */
@@ -267,31 +267,30 @@ const char *	p_type(int);
 void		p_query(const u_char *);
 const u_char *	p_cdnname(const u_char *, const u_char *, int, FILE *);
 const u_char *	p_cdname(const u_char *, const u_char *, FILE *);
-const u_char *	p_fqnname __P((const u_char *cp, const u_char *msg,
-			       int, char *, int));
+const u_char *	p_fqnname(const u_char *cp, const u_char *msg,
+		   int, char *, int);
 const u_char *	p_fqname(const u_char *, const u_char *, FILE *);
 const u_char *	p_rr(const u_char *, const u_char *, FILE *);
 const char *	p_option(u_long option);
 char *		p_secstodate(u_long);
 int		dn_count_labels(char *);
-int		dn_comp __P((const char *, u_char *, int,
-			     u_char **, u_char **));
-int		dn_expand __P((const u_char *, const u_char *, const u_char *,
-			       char *, int));
+int		dn_comp(const char *, u_char *, int, u_char **, u_char **);
+int		dn_expand(const u_char *, const u_char *, const u_char *,
+		    char *, int);
 int		res_init(void);
 u_int		res_randomid(void);
 int		res_query(const char *, int, int, u_char *, int);
 int		res_search(const char *, int, int, u_char *, int);
-int		res_querydomain __P((const char *, const char *, int, int,
-				     u_char *, int));
-int		res_mkquery __P((int, const char *, int, int, const u_char *, int,
-				 const u_char *, u_char *, int));
+int		res_querydomain(const char *, const char *, int, int,
+		    u_char *, int);
+int		res_mkquery(int, const char *, int, int, const u_char *, int,
+		    const u_char *, u_char *, int);
 int		res_send(const u_char *, int, u_char *, int);
 int		res_isourserver(const struct sockaddr_in *);
-int		res_nameinquery __P((const char *, int, int,
-				     const u_char *, const u_char *));
-int		res_queriesmatch __P((const u_char *, const u_char *,
-				      const u_char *, const u_char *));
+int		res_nameinquery(const char *, int, int,
+		    const u_char *, const u_char *);
+int		res_queriesmatch(const u_char *, const u_char *,
+		    const u_char *, const u_char *);
 void		res_close(void);
 __END_DECLS
 

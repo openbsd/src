@@ -1,4 +1,4 @@
-/*	$OpenBSD: portald.h,v 1.4 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: portald.h,v 1.5 2002/02/17 19:42:28 millert Exp $	*/
 /*	$NetBSD: portald.h,v 1.4 1995/04/23 10:33:23 cgd Exp $	*/
 
 /*
@@ -61,20 +61,16 @@ struct qelem {
 typedef struct provider provider;
 struct provider {
 	char *pr_match;
-	int (*pr_func) __P((struct portal_cred *,
-				char *key, char **v, int so, int *fdp));
+	int (*pr_func)(struct portal_cred *, char *, char **, int, int *);
 };
 extern provider providers[];
 
 /*
  * Portal providers
  */
-extern int portal_exec __P((struct portal_cred *,
-				char *key, char **v, int so, int *fdp));
-extern int portal_file __P((struct portal_cred *,
-				char *key, char **v, int so, int *fdp));
-extern int portal_tcp __P((struct portal_cred *,
-				char *key, char **v, int so, int *fdp));
+extern int portal_exec(struct portal_cred *, char *, char **, int, int *);
+extern int portal_file(struct portal_cred *, char *, char **, int, int *);
+extern int portal_tcp(struct portal_cred *, char *, char **, int, int *);
 
 /*
  * Global functions

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.23 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.24 2002/02/17 19:42:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.23 2002/02/16 21:27:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.24 2002/02/17 19:42:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,8 +81,8 @@ int des_read(int, char *, int);
 int des_write(int, char *, int);
 
 int krcmd(char **, u_short, char *, char *, int *, char *);
-int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
-		      CREDENTIALS *, Key_schedule));
+int krcmd_mutual(char **, u_short, char *, char *, int *, char *,
+    CREDENTIALS *, Key_schedule);
 #endif
 
 void usage(void);

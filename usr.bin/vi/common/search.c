@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: search.c,v 1.7 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -142,8 +142,7 @@ prev:			if (sp->re == NULL) {
  * f_search --
  *	Do a forward search.
  *
- * PUBLIC: int f_search __P((SCR *,
- * PUBLIC:    MARK *, MARK *, char *, size_t, char **, u_int));
+ * PUBLIC: int f_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
  */
 int
 f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
@@ -286,8 +285,7 @@ f_search(sp, fm, rm, ptrn, plen, eptrn, flags)
  * b_search --
  *	Do a backward search.
  *
- * PUBLIC: int b_search __P((SCR *,
- * PUBLIC:    MARK *, MARK *, char *, size_t, char **, u_int));
+ * PUBLIC: int b_search(SCR *, MARK *, MARK *, char *, size_t, char **, u_int);
  */
 int
 b_search(sp, fm, rm, ptrn, plen, eptrn, flags)

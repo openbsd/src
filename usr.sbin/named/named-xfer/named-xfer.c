@@ -1,4 +1,4 @@
-/*	$OpenBSD: named-xfer.c,v 1.9 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: named-xfer.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -97,7 +97,7 @@ char copyright[] =
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
 static char rcsid[] = "$From: named-xfer.c,v 8.24 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.9 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,8 +158,8 @@ static	char		*ProgName;
 
 static	void		usage(const char *);
 static	int		getzone(struct zoneinfo *, u_int32_t, int),
-			print_output __P((struct zoneinfo *, u_int32_t,
-					  u_char *, int, u_char *)),
+			print_output(struct zoneinfo *, u_int32_t,
+			    u_char *, int, u_char *),
 			netread(int, char *, int, int);
 static	SIG_FN		read_alarm();
 static	SIG_FN		term_handler();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clean.h,v 1.3 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: clean.h,v 1.4 2002/02/17 19:42:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -115,8 +115,8 @@ int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
 int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
 void	 munmap_segment(FS_INFO *, caddr_t, int);
 void	 reread_fs_info(FS_INFO *, int);
-void	 toss __P((void *, int *, size_t,
-	      int (*)(const void *, const void *, const void *), void *));
+void	 toss(void *, int *, size_t,
+	      int (*)(const void *, const void *, const void *), void *);
 
 /*
  * USEFUL DEBUGGING FUNCTIONS:

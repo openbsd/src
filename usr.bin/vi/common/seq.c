@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: seq.c,v 1.6 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -32,8 +32,8 @@ static const char sccsid[] = "@(#)seq.c	10.10 (Berkeley) 3/30/96";
  * seq_set --
  *	Internal version to enter a sequence.
  *
- * PUBLIC: int seq_set __P((SCR *, CHAR_T *,
- * PUBLIC:    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int));
+ * PUBLIC: int seq_set(SCR *, CHAR_T *,
+ * PUBLIC:    size_t, CHAR_T *, size_t, CHAR_T *, size_t, seq_t, int);
  */
 int
 seq_set(sp, name, nlen, input, ilen, output, olen, stype, flags)

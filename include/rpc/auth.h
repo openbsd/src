@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: auth.h,v 1.4 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -106,8 +106,8 @@ typedef struct __rpc_auth {
 		/* nextverf & serialize */
 		int	(*ah_marshal)(struct __rpc_auth *, XDR *);
 		/* validate varifier */
-		int	(*ah_validate) __P((struct __rpc_auth *,
-			    struct opaque_auth *));
+		int	(*ah_validate)(struct __rpc_auth *,
+			    struct opaque_auth *);
 		/* refresh credentials */
 		int	(*ah_refresh)(struct __rpc_auth *);
 		/* destroy this structure */
@@ -172,8 +172,7 @@ struct sockaddr_in;
 extern AUTH *authunix_create(char *, int, int, int, int *);
 extern AUTH *authunix_create_default(void);
 extern AUTH *authnone_create(void);
-extern AUTH *authdes_create		__P((char *, u_int,
-					    struct sockaddr_in *, des_block *));
+extern AUTH *authdes_create(char *, u_int, struct sockaddr_in *, des_block *);
 __END_DECLS
 
 #define AUTH_NONE	0		/* no authentication */

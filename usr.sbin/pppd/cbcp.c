@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbcp.c,v 1.3 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: cbcp.c,v 1.4 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: cbcp.c,v 1.2 1997/04/30 05:50:26 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbcp.c,v 1.3 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: cbcp.c,v 1.4 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -48,9 +48,8 @@ static void cbcp_open(int unit);
 static void cbcp_lowerup(int unit);
 static void cbcp_input(int unit, u_char *pkt, int len);
 static void cbcp_protrej(int unit);
-static int  cbcp_printpkt  __P((u_char *pkt, int len,
-				void (*printer)(void *, char *, ...),
-				void *arg));
+static int  cbcp_printpkt(u_char *pkt, int len,
+    void (*printer)(void *, char *, ...), void *arg);
 
 struct protent cbcp_protent = {
     PPP_CBCP,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.7 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: lp.h,v 1.8 2002/02/17 19:42:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -113,7 +113,7 @@ void     dump(char *, char *, int);
 void	 fatal(const char *, ...);
 int	 getline(FILE *);
 int	 getport(char *, int);
-int	 getq __P((struct queue *(*[])));
+int	 getq(struct queue *(*[]));
 void     header(void);
 void     inform(char *);
 int      inlist(char *, char *);

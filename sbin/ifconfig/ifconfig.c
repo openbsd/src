@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.56 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.57 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.56 2002/02/16 21:27:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.57 2002/02/17 19:42:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,8 +303,8 @@ const char *get_media_type_string(int);
 const char *get_media_subtype_string(int);
 int	get_media_subtype(int, const char *);
 int	get_media_options(int, const char *);
-int	lookup_media_word __P((const struct ifmedia_description *, int,
-	    const char *));
+int	lookup_media_word(const struct ifmedia_description *, int,
+	    const char *);
 void	print_media_word(int, int, int);
 void	process_media_commands(void);
 void	init_current_media(void);

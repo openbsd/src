@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtable.c,v 1.5 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: prtable.c,v 1.6 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: prtable.c,v 1.2 1995/03/21 12:14:42 cgd Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 
 #define NCOLS	5
 
-static int	get_maxlen __P((char *[], int, int (*)(char **, int)));
+static int	get_maxlen(char *[], int, int (*)(char **, int));
 
 /*
  * Routine to print a table

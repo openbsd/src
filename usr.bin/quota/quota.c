@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.18 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: quota.c,v 1.19 2002/02/17 19:42:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.18 2002/02/16 21:27:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.19 2002/02/17 19:42:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -87,14 +87,13 @@ struct quotause {
 #define	FOUND	0x01
 
 int	alldigits(char *);
-int	callaurpc __P((char *, int, int, int, xdrproc_t, void *,
-	    xdrproc_t, void *));
+int	callaurpc(char *, int, int, int, xdrproc_t, void *, xdrproc_t, void *);
 int	main(int, char **);
-int	getnfsquota __P((struct statfs *, struct fstab *, struct quotause *,
-	    long, int));
+int	getnfsquota(struct statfs *, struct fstab *, struct quotause *,
+	    long, int);
 struct quotause	*getprivs(long id, int quotatype);
-int	getufsquota __P((struct statfs *, struct fstab *, struct quotause *,
-	    long, int));
+int	getufsquota(struct statfs *, struct fstab *, struct quotause *,
+	    long, int);
 void	heading(int, u_long, const char *, const char *);
 void	showgid(gid_t);
 void	showgrpname(const char *);

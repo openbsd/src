@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.6 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: svc.h,v 1.7 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -79,19 +79,18 @@ typedef struct __rpc_svcxprt {
 	u_short		xp_port;	 /* associated port number */
 	struct xp_ops {
 		/* receive incomming requests */
-		bool_t	(*xp_recv) __P((struct __rpc_svcxprt *,
-			    struct rpc_msg *));
+		bool_t	(*xp_recv)(struct __rpc_svcxprt *,
+			    struct rpc_msg *);
 		/* get transport status */
 		enum xprt_stat (*xp_stat)(struct __rpc_svcxprt *);
 		/* get arguments */
-		bool_t	(*xp_getargs) __P((struct __rpc_svcxprt *, xdrproc_t,
-			    caddr_t));
+		bool_t	(*xp_getargs)(struct __rpc_svcxprt *, xdrproc_t,
+			    caddr_t);
 		/* send reply */
-		bool_t	(*xp_reply) __P((struct __rpc_svcxprt *,
-			    struct rpc_msg *));
+		bool_t	(*xp_reply)(struct __rpc_svcxprt *, struct rpc_msg *);
 		/* free mem allocated for args */
-		bool_t	(*xp_freeargs) __P((struct __rpc_svcxprt *, xdrproc_t,
-			    caddr_t));
+		bool_t	(*xp_freeargs)(struct __rpc_svcxprt *, xdrproc_t,
+			    caddr_t);
 		/* destroy this struct */
 		void	(*xp_destroy)(struct __rpc_svcxprt *);
 	} *xp_ops;
@@ -170,8 +169,8 @@ struct svc_req {
  *	int protocol;    like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
-extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long,
-		    void (*)(struct svc_req *, SVCXPRT *), int));
+extern bool_t	svc_register(SVCXPRT *, u_long, u_long,
+		    void (*)(struct svc_req *, SVCXPRT *), int);
 __END_DECLS
 
 /*

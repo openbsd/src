@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.25 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: mount.c,v 1.26 2002/02/17 19:42:28 millert Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.25 2002/02/16 21:27:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.26 2002/02/17 19:42:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ struct statfs
 int	hasopt(const char *, const char *);
 void	maketypelist(char *);
 void	mangle(char *, int *, const char **);
-int	mountfs __P((const char *, const char *, const char *,
-			int, const char *, const char *, int));
+int	mountfs(const char *, const char *, const char *, int, const char *,
+	    const char *, int);
 void	prmount(struct statfs *);
 int	disklabelcheck(struct fstab *);
 void	usage(void);

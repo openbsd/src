@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2002/02/17 19:42:35 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ static struct nvlist **nextdefopt;
 static struct nvlist **nextmkopt;
 
 static __dead void stop(void);
-static int do_option __P((struct hashtab *, struct nvlist ***,
-			const char *, const char *, const char *));
+static int do_option(struct hashtab *, struct nvlist ***,
+    const char *, const char *, const char *);
 static int crosscheck(void);
 static int badstar(void);
 static int mksymlinks(void);

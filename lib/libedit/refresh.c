@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.5 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.6 2002/02/17 19:42:25 millert Exp $	*/
 /*	$NetBSD: refresh.c,v 1.2 1997/01/11 06:48:07 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: refresh.c,v 1.5 2002/02/16 21:27:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: refresh.c,v 1.6 2002/02/17 19:42:25 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -58,18 +58,15 @@ static char rcsid[] = "$OpenBSD: refresh.c,v 1.5 2002/02/16 21:27:26 millert Exp
 
 private	void	re_addc(EditLine *, int);
 private	void	re_update_line(EditLine *, char *, char *, int);
-private	void	re_insert		__P((EditLine *, char *, int, int, 
-					     char *, int));
-private	void	re_delete		__P((EditLine *, char *, int, int, 
-					     int));
+private	void	re_insert(EditLine *, char *, int, int, char *, int);
+private	void	re_delete(EditLine *, char *, int, int, int);
 private	void	re_fastputc(EditLine *, int);
 
 private	void	re__strncopy(char *, char *, size_t);
 private	void	re__copy_and_pad(char *, char *, size_t);
 
 #ifdef DEBUG_REFRESH
-private	void	re_printstr		__P((EditLine *, char *, char *, 
-					     char *));
+private	void	re_printstr(EditLine *, char *, char *, char *);
 # define __F el->el_errfile
 # define RE_DEBUG(a, b, c)	do 				\
 				    if (a) {			\

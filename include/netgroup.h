@@ -1,4 +1,4 @@
-/* * $OpenBSD: netgroup.h,v 1.4 2002/02/16 21:27:17 millert Exp $*/
+/* * $OpenBSD: netgroup.h,v 1.5 2002/02/17 19:42:21 millert Exp $*/
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -61,8 +61,7 @@ __BEGIN_DECLS
 void	setnetgrent(const char *);
 int	getnetgrent(const char **, const char **, const char **);
 void	endnetgrent(void);
-int	innetgr		__P((const char *, const char *, const char *,
-			     const char *));
+int	innetgr(const char *, const char *, const char *, const char *);
 #ifdef _NETGROUP_PRIVATE
 struct stringlist;
 

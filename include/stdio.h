@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.20 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.21 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -342,11 +342,11 @@ __END_DECLS
  * Stdio function-access interface.
  */
 __BEGIN_DECLS
-FILE	*funopen __P((const void *,
+FILE	*funopen(const void *,
 		int (*)(void *, char *, int),
 		int (*)(void *, const char *, int),
 		fpos_t (*)(void *, fpos_t, int),
-		int (*)(void *)));
+		int (*)(void *));
 __END_DECLS
 #define	fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
 #define	fwopen(cookie, fn) funopen(cookie, 0, fn, 0, 0)

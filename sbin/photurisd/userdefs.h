@@ -1,4 +1,4 @@
-/* $OpenBSD: userdefs.h,v 1.3 2001/01/28 22:45:18 niklas Exp $ */
+/* $OpenBSD: userdefs.h,v 1.4 2002/02/17 19:42:28 millert Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -54,7 +54,6 @@
 
 #ifdef _AIX
 #define NEED_UTYPES
-#define __P(x) x
 #define SYS_MACHINE
 #define SYS_LTYPES
 #define NEED_STRSEP

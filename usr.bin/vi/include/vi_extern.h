@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi_extern.h,v 1.7 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vi_extern.h,v 1.8 2002/02/17 19:42:34 millert Exp $	*/
 
 int cs_init(SCR *, VCS *);
 int cs_next(SCR *, VCS *);
@@ -84,8 +84,8 @@ int v_sentencef(SCR *, VICMD *);
 int v_sentenceb(SCR *, VICMD *);
 int v_status(SCR *, VICMD *);
 int v_tcmd(SCR *, VICMD *, ARG_CHAR_T, u_int);
-int v_txt __P((SCR *, VICMD *, MARK *,
-   const char *, size_t, ARG_CHAR_T, recno_t, u_long, u_int32_t));
+int v_txt(SCR *, VICMD *, MARK *,
+   const char *, size_t, ARG_CHAR_T, recno_t, u_long, u_int32_t);
 int v_txt_auto(SCR *, recno_t, TEXT *, size_t, TEXT *);
 int v_ulcase(SCR *, VICMD *);
 int v_mulcase(SCR *, VICMD *);

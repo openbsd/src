@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.12 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.13 2002/02/17 19:42:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ static void	   cl_func_std(GS *);
 static CL_PRIVATE *cl_init(GS *);
 static GS	  *gs_init(char *);
 static void	   perr(char *, char *);
-static int	   setsig __P((int, struct sigaction *, void (*)(int)));
+static int	   setsig(int, struct sigaction *, void (*)(int));
 static void	   sig_end(GS *);
 static void	   term_init(char *, char *);
 

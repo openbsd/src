@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/17 19:42:28 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/03/18 14:58:48 cgd Exp $	*/
 
 /*-
@@ -40,8 +40,8 @@ u_long	cksum(void *, size_t);
 u_short	dkcksum(struct disklabel *);
 void	fatal(const char *fmt, ...);
 u_int	log2(u_int);
-int	make_lfs __P((int, struct disklabel *, struct partition *, int,
-		int, int, int));
+int	make_lfs(int, struct disklabel *, struct partition *, int,
+	    int, int, int);
 int	mkfs(struct partition *, char *, int, int);
 
 extern char	*progname;

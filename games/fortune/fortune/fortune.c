@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.12 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.13 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.12 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.13 2002/02/17 19:42:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,8 +128,8 @@ FILEDESC	*Fortfile;		/* Fortune file to use */
 STRFILE		Noprob_tbl;		/* sum of data for all no prob files */
 
 int	 add_dir(FILEDESC *);
-int	 add_file __P((int,
-	    char *, char *, FILEDESC **, FILEDESC **, FILEDESC *));
+int	 add_file(int,
+	    char *, char *, FILEDESC **, FILEDESC **, FILEDESC *);
 void	 all_forts(FILEDESC *, char *);
 char	*copy(char *, u_int);
 void	 display(FILEDESC *);

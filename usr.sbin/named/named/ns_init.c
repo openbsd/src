@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.7 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.8 2002/02/17 19:42:37 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: ns_init.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.7 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.8 2002/02/17 19:42:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,10 +92,9 @@ static void		zoneinit(struct zoneinfo *),
 			do_reload(char *, int, int),
 			free_forwarders(void),
 			ns_limit(const char *name, int value),
-			ns_checknames __P((const char *names,
-					   const char *severity)),
-			ns_rlimit __P((const char *name, enum limit limit,
-				       long value)),
+			ns_checknames(const char *names, const char *severity),
+			ns_rlimit(const char *name, enum limit limit,
+				  long value),
 			ns_option(const char *name);
 
 static struct zoneinfo	*find_zone(char *, int, int);

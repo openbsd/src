@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.32 2002/02/16 21:28:08 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.33 2002/02/17 19:42:39 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.32 2002/02/16 21:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.33 2002/02/17 19:42:39 millert Exp $";
 #endif
 
 
@@ -96,8 +96,8 @@ void   rarp_loop(void);
 void   lookup_addrs(char *, struct if_info *);
 void   usage(void);
 void   rarp_process(struct if_info *, u_char *);
-void   rarp_reply    __P((struct if_info *, struct if_addr *,
-	struct ether_header *, u_int32_t, struct hostent *));
+void   rarp_reply(struct if_info *, struct if_addr *,
+	    struct ether_header *, u_int32_t, struct hostent *);
 void   update_arptab(u_char *, u_int32_t);
 void   err(int, const char *,...);
 void   debug(const char *,...);

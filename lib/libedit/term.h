@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.5 2002/02/17 19:42:25 millert Exp $	*/
 /*	$NetBSD: term.h,v 1.4 1997/01/11 06:48:14 lukem Exp $	*/
 
 /*-
@@ -95,8 +95,7 @@ protected int  term_init(EditLine *);
 protected void term_bind_arrow(EditLine *);
 protected void term_print_arrow(EditLine *, char *);
 protected int  term_clear_arrow(EditLine *, char *);
-protected int  term_set_arrow		__P((EditLine *, char *, 
-					     key_value_t *, int));
+protected int  term_set_arrow(EditLine *, char *, key_value_t *, int);
 protected void term_end(EditLine *);
 protected int  term_set(EditLine *, char *);
 protected int  term_settc(EditLine *, int, char **);

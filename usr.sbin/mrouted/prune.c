@@ -57,8 +57,8 @@ static struct ptable *	find_prune_entry(u_int32_t vr, struct ptable *pt);
 static void		expire_prune(vifi_t vifi, struct gtable *gt);
 static void		send_prune(struct gtable *gt);
 static void		send_graft(struct gtable *gt);
-static void		send_graft_ack __P((u_int32_t src, u_int32_t dst,
-					u_int32_t origin, u_int32_t grp));
+static void		send_graft_ack(u_int32_t src, u_int32_t dst,
+			    u_int32_t origin, u_int32_t grp);
 static void		update_kernel(struct gtable *g);
 static char *		scaletime(u_long t);
 

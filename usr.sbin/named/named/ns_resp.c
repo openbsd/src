@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_resp.c,v 1.6 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_resp.c,v 1.7 2002/02/17 19:42:37 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_resp.c,v 8.41 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.6 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.7 2002/02/17 19:42:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,17 +135,15 @@ struct flush_set {
 	struct db_list *fs_last;
 };
 
-static void		rrsetadd __P((struct flush_set *, char *,
-				      struct databuf *)),
+static void		rrsetadd(struct flush_set *, char *, struct databuf *),
 			rrsetupdate(struct flush_set *, int flags),
 			flushrrset(struct flush_set *),
 			free_flushset(struct flush_set *);
 static int		rrsetcmp(char *, struct db_list *),
 			check_root(void),
 			check_ns(void),
-			rrextract __P((u_char *, int, u_char *,
-				       struct databuf **, char *, int,
-				       char **));
+			rrextract(u_char *, int, u_char *, struct databuf **,
+				  char *, int, char **);
 
 static void		add_related_additional(char *);
 static void		free_related_additional(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.h,v 1.9 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: rpc.h,v 1.10 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: rpc.h,v 1.5 1994/12/04 01:15:30 cgd Exp $	*/
 
 /*
@@ -93,10 +93,10 @@ extern void setrpcent(int);
 extern void endrpcent(void);
 
 extern int get_myaddress(struct sockaddr_in *);
-extern int registerrpc __P((int, int, int, char *(*)(char [UDPMSGSIZE]),
-	xdrproc_t, xdrproc_t));
-extern int callrpc __P((char *, int, int, int, xdrproc_t, char *,
-	xdrproc_t , char *));
+extern int registerrpc(int, int, int, char *(*)(char [UDPMSGSIZE]),
+	xdrproc_t, xdrproc_t);
+extern int callrpc(char *, int, int, int, xdrproc_t, char *,
+	xdrproc_t , char *);
 extern int getrpcport(char *, int, int, int);
 
 extern bool_t xdr_opaque_auth(XDR *, struct opaque_auth *);

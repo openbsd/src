@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.6 2002/02/17 19:42:20 millert Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -278,8 +278,8 @@ void	bdump(FILE *);
 #endif
 void	bdwho(int);
 int	better(struct spotstr *, struct spotstr *, int);
-int	checkframes __P((struct combostr *, struct combostr *,
-				 struct spotstr *, int, struct ovlp_info *));
+int	checkframes(struct combostr *, struct combostr *,
+	    struct spotstr *, int, struct ovlp_info *);
 #ifdef DEBUG
 void	clearcombo(struct combostr *, int);
 #endif

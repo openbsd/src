@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.h,v 1.2 2002/02/16 21:27:29 millert Exp $	*/
+/*	$OpenBSD: scsi.h,v 1.3 2002/02/17 19:42:26 millert Exp $	*/
 
 /* Copyright (c) 1994 HD Associates (hd@world.std.com)
  * All rights reserved.
@@ -54,26 +54,23 @@ scsireq_t *scsireq_reset(scsireq_t *);
 scsireq_t *scsireq_new(void);
 
 int scsireq_buff_decode(u_char *, size_t, char *, ...);
-int scsireq_buff_decode_visit __P((u_char *, size_t, char *,
-void (*a)(void *, int, void *, int, char *), void *));
+int scsireq_buff_decode_visit(u_char *, size_t, char *,
+    void (*a)(void *, int, void *, int, char *), void *);
 
 int scsireq_decode(scsireq_t *, char *, ...);
-int scsireq_decode_visit __P((scsireq_t *, char *,
-void (*) (void *, int, void *, int, char *), void *));
+int scsireq_decode_visit(scsireq_t *, char *,
+    void (*)(void *, int, void *, int, char *), void *);
 
 int scsireq_encode(scsireq_t *, char *, ...);
-int scsireq_encode_visit __P((scsireq_t *, char *,
-	int (*)(void *, char *), void *));
-int scsireq_buff_encode_visit __P((u_char *, size_t, char *,
-	int (*)(void *, char *), void *));
+int scsireq_encode_visit(scsireq_t *, char *,
+    int (*)(void *, char *), void *);
+int scsireq_buff_encode_visit(u_char *, size_t, char *,
+    int (*)(void *, char *), void *);
 
-scsireq_t *scsireq_build __P((scsireq_t *,
-	u_long, caddr_t, u_long,
-	char *, ...));
+scsireq_t *scsireq_build(scsireq_t *, u_long, caddr_t, u_long, char *, ...);
 
-scsireq_t *scsireq_build_visit __P((scsireq_t *,
-	u_long, caddr_t, u_long, char *,
-	int (*)(void *, char *), void *));
+scsireq_t *scsireq_build_visit(scsireq_t *, u_long, caddr_t, u_long, char *,
+    int (*)(void *, char *), void *);
 
 int scsireq_enter(int, scsireq_t *);
 

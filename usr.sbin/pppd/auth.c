@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.21 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: auth.c,v 1.22 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.21 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.22 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -143,8 +143,8 @@ static int  get_pap_passwd(char *);
 static int  have_pap_secret(void);
 static int  have_chap_secret(char *, char *, u_int32_t);
 static int  ip_addr_check(u_int32_t, struct wordlist *);
-static int  scan_authfile __P((FILE *, char *, char *, u_int32_t, char *,
-			       struct wordlist **, char *));
+static int  scan_authfile(FILE *, char *, char *, u_int32_t, char *,
+		struct wordlist **, char *);
 static void free_wordlist(struct wordlist *);
 static void auth_script(char *);
 static void set_allowed_addrs(int, struct wordlist *);

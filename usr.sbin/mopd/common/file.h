@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: file.h,v 1.5 2002/02/17 19:42:36 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.4 2002/02/16 21:28:04 millert Exp $
+ *	$OpenBSD: file.h,v 1.5 2002/02/17 19:42:36 millert Exp $
  *
  */
 
@@ -58,11 +58,10 @@ void	mopFileSwapX(u_char *, int, int);
 int	CheckMopFile(int);
 int	GetMopFileInfo(int, u_long *, u_long *);
 int	CheckAOutFile(int);
-int	GetAOutFileInfo __P((int, u_long *, u_long *, u_long *, u_long *,
-			     u_long *, u_long *, u_long *, u_long *, int *));
-int	GetFileInfo     __P((int, u_long *, u_long *, int *,
-			     u_long *, u_long *, u_long *, u_long *,
-			     u_long *, u_long *));
+int	GetAOutFileInfo(int, u_long *, u_long *, u_long *, u_long *,
+			u_long *, u_long *, u_long *, u_long *, int *);
+int	GetFileInfo(int, u_long *, u_long *, int *, u_long *, u_long *,
+		    u_long *, u_long *, u_long *, u_long *);
 __END_DECLS
 #endif
 

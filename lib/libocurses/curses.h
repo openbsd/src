@@ -334,7 +334,7 @@ int	 tgetnum(char *);
 int	 tgetflag(char *);
 char	*tgetstr(char *, char **);
 char	*tgoto(char *, int, int);
-void	 tputs __P((char *, int, void (*)(int)));
+void	 tputs(char *, int, void (*)(int));
 __END_DECLS
 
 #endif /* !_OCURSES_H_ */

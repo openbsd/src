@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrenum.h,v 1.4 2001/01/21 15:42:36 itojun Exp $	*/
+/*	$OpenBSD: rrenum.h,v 1.5 2002/02/17 19:42:39 millert Exp $	*/
 /*	$KAME: rrenum.h,v 1.3 2001/01/21 15:37:14 itojun Exp $	*/
 
 /*
@@ -30,5 +30,5 @@
  * SUCH DAMAGE.
  */
 
-void rr_input __P((int, struct icmp6_router_renum *, struct in6_pktinfo *,
-	struct sockaddr_in6 *, struct in6_addr *));
+void rr_input(int, struct icmp6_router_renum *, struct in6_pktinfo *,
+    struct sockaddr_in6 *, struct in6_addr *);

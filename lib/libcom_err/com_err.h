@@ -47,14 +47,6 @@
 #include <stdarg.h>
 #endif
 
-#ifndef __P
-#ifdef __STDC__
-#define __P(X) X
-#else
-#define __P(X) ()
-#endif
-#endif
-
 
 /*
  * For compatibility with MIT's com_err the com_right.h include

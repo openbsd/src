@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_util.c,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_util.c,v 1.6 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -33,8 +33,7 @@ static const char sccsid[] = "@(#)ex_util.c	10.23 (Berkeley) 6/19/96";
  * ex_cinit --
  *	Create an EX command structure.
  *
- * PUBLIC: void ex_cinit __P((EXCMD *,
- * PUBLIC:    int, int, recno_t, recno_t, int, ARGS **));
+ * PUBLIC: void ex_cinit(EXCMD *, int, int, recno_t, recno_t, int, ARGS **);
  */
 void
 ex_cinit(cmdp, cmd_id, naddr, lno1, lno2, force, ap)

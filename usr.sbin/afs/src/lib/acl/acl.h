@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: acl.h,v 1.2 2002/02/16 21:28:00 millert Exp $ */
+/* $Id: acl.h,v 1.3 2002/02/17 19:42:35 millert Exp $ */
 
 #ifndef __ACL_H
 #define __ACL_H
@@ -44,10 +44,6 @@
 #include <atypes.h>
 #ifndef HAVE_KRB_PRINCIPAL
 #include <stds.h>
-#endif
-
-#ifndef __P
-#define __P(x) x
 #endif
 
 void acl_canonicalize_principal(char *principal, char *canon);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: server.h,v 1.7 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -211,8 +211,8 @@ void	cleanup(int);
 void	mon_execute(PLAYER *);
 void	execute(PLAYER *);
 void	add_shot(int, int, int, char, int, PLAYER *, int, char);
-BULLET *create_shot __P((int, int, int, char, int, int, PLAYER *, IDENT *,
-	int, char));
+BULLET *create_shot(int, int, int, char, int, int, PLAYER *, IDENT *,
+	    int, char);
 void	ammo_update(PLAYER *);
 
 /* expl.c */

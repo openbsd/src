@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.13 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.14 2002/02/17 19:42:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -66,20 +66,18 @@ u_int32_t client_cookie;
 u_int16_t client_sessionid;
 int pppfd, client_state;
 
-static int getpackets __P((int, char *, char *, struct ether_addr *,
-    struct ether_addr *));
+static int getpackets(int, char *, char *, struct ether_addr *,
+    struct ether_addr *);
 static int send_padi(int, struct ether_addr *, u_int8_t *);
-static int send_padr __P((int, char *, struct ether_addr *,
+static int send_padr(int, char *, struct ether_addr *, struct ether_addr *,
+    struct ether_header *, struct pppoe_header *, struct tag_list *);
+static int recv_pado(int, char *, struct ether_addr *, struct ether_addr *,
+    struct ether_header *, struct pppoe_header *, u_long, u_int8_t *);
+static int recv_pads(int, char *, char *, struct ether_addr *,
     struct ether_addr *, struct ether_header *, struct pppoe_header *,
-    struct tag_list *));
-static int recv_pado __P((int, char *, struct ether_addr *,
-    struct ether_addr *, struct ether_header *, struct pppoe_header *,
-    u_long, u_int8_t *));
-static int recv_pads __P((int, char *, char *, struct ether_addr *,
-    struct ether_addr *, struct ether_header *, struct pppoe_header *,
-    u_long, u_int8_t *));
-static int recv_padt __P((int, struct ether_addr *, struct ether_addr *,
-    struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
+    u_long, u_int8_t *);
+static int recv_padt(int, struct ether_addr *, struct ether_addr *,
+    struct ether_header *, struct pppoe_header *, u_long, u_int8_t *);
 
 void timer_handler(int);
 int timer_set(u_int);

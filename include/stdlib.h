@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.16 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.17 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -95,12 +95,12 @@ typedef struct {
 __BEGIN_DECLS
 __dead void	 abort(void);
 int	 abs(int);
-int	 atexit __P((void (*)(void)));
+int	 atexit(void (*)(void));
 double	 atof(const char *);
 int	 atoi(const char *);
 long	 atol(const char *);
-void	*bsearch __P((const void *, const void *, size_t,
-	    size_t, int (*)(const void *, const void *)));
+void	*bsearch(const void *, const void *, size_t, size_t,
+	    int (*)(const void *, const void *));
 void	*calloc(size_t, size_t);
 div_t	 div(int, int);
 __dead void	 exit(int);
@@ -109,8 +109,7 @@ char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
 void	*malloc(size_t);
-void	 qsort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
+void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
 int	 rand_r(unsigned int *);
 void	*realloc(void *, size_t);
@@ -166,14 +165,12 @@ extern	 int optreset;
 int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
-int	 heapsort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
-int	 mergesort __P((void *, size_t, size_t,
-	    int (*)(const void *, const void *)));
-int	 radixsort __P((const unsigned char **, int, const unsigned char *,
-	    unsigned));
-int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
-	    unsigned));
+int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 mergesort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 radixsort(const unsigned char **, int, const unsigned char *,
+	    unsigned);
+int	 sradixsort(const unsigned char **, int, const unsigned char *,
+	    unsigned);
 
 char	*initstate(unsigned int, char *, size_t);
 long	 random(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.8 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.9 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -76,8 +76,7 @@ static int flags = 0;
 
 int main(int, char *[]);
 
-static int checkfs __P((const char *, const char *, const char *, void *,
-    pid_t *));
+static int checkfs(const char *, const char *, const char *, void *, pid_t *);
 static int selected(const char *);
 static void addoption(char *);
 static const char *getoptions(const char *);

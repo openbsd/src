@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.9 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.10 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -32,8 +32,8 @@ static const char sccsid[] = "@(#)ex_argv.c	10.26 (Berkeley) 9/20/96";
 
 static int argv_alloc(SCR *, size_t);
 static int argv_comp(const void *, const void *);
-static int argv_fexp __P((SCR *, EXCMD *,
-	char *, size_t, char *, size_t *, char **, size_t *, int));
+static int argv_fexp(SCR *, EXCMD *,
+	char *, size_t, char *, size_t *, char **, size_t *, int);
 static int argv_lexp(SCR *, EXCMD *, char *);
 static int argv_sexp(SCR *, char **, size_t *, size_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.9 2002/02/16 21:28:09 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.10 2002/02/17 19:42:39 millert Exp $	*/
 /*	$KAME: if.c,v 1.15 2001/05/22 06:04:17 jinmei Exp $	*/
 
 /*
@@ -80,8 +80,8 @@ static int get_llflag(const char *name);
 #ifndef HAVE_GETIFADDRS
 static unsigned int if_maxindex(void);
 #endif
-static void get_rtaddrs __P((int addrs, struct sockaddr *sa,
-			     struct sockaddr **rti_info));
+static void get_rtaddrs(int addrs, struct sockaddr *sa,
+    struct sockaddr **rti_info);
 
 int
 ifinit()

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.15 2002/02/16 21:27:24 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.16 2002/02/17 19:42:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,10 +60,8 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.15 2002/02/16 21:27:24 millert Ex
 #include "local.h"
 #include "fvwrite.h"
 
-static void __find_arguments __P((const char *fmt0, va_list ap,
-	va_list **argtable));
-static int __grow_type_table __P((unsigned char **typetable,
-	int *tablesize));
+static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable);
+static int __grow_type_table(unsigned char **typetable, int *tablesize);
 
 /*
  * Flush out all the vectors defined by the given uio,

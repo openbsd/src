@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2002/02/16 22:33:16 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -324,8 +324,8 @@ int str_end(const char *);
 void closeon(struct ship *, struct ship *, char[], int, int, int);
 int score(char[], struct ship *, struct ship *, int);
 void move_ship(const char *, struct ship *, unsigned char *, short *, short *, char *);
-void try __P((char[], char [], int, int, int, int, int, struct ship *,
-    struct ship *, int *, int));
+void try(char[], char [], int, int, int, int, int, struct ship *,
+    struct ship *, int *, int);
 void rmend(char *);
 
 /* dr_3.c */
@@ -345,8 +345,7 @@ void grap(struct ship *, struct ship *);
 
 /* dr_5.c */
 void subtract(struct ship *, int, int [3], struct ship *, int);
-int mensent __P((struct ship *, struct ship *, int[3], struct ship **, int *,
-    int));
+int mensent(struct ship *, struct ship *, int[3], struct ship **, int *, int);
 
 /* dr_main.c */
 int dr_main(void);

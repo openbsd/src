@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.h,v 1.2 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: fsutil.h,v 1.3 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -54,5 +54,5 @@ char *estrdup(const char *);
 #define	CHECK_DEBUG	4
 
 struct fstab;
-int checkfstab __P((int, int, void *(*)(struct fstab *), 
-    int (*) (const char *, const char *, const char *, void *, pid_t *)));
+int checkfstab(int, int, void *(*)(struct fstab *), 
+    int (*) (const char *, const char *, const char *, void *, pid_t *));

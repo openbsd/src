@@ -32,13 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: qsort.c,v 1.6 2002/02/16 21:27:24 millert Exp $";
+static char *rcsid = "$OpenBSD: qsort.c,v 1.7 2002/02/17 19:42:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 
-static __inline char	*med3 __P((char *, char *, char *, int (*)()));
+static __inline char	*med3(char *, char *, char *, int (*)());
 static __inline void	 swapfunc(char *, char *, int, int);
 
 #define min(a, b)	(a) < (b) ? a : b

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.20 2002/02/16 21:28:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.21 2002/02/17 19:42:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,8 +109,8 @@ void	 quit(char *);
 void	 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 int	 verify(char *);
 void	 handleread(int s);
-int	 Sendto __P((int, const void *, size_t, int,
-	    const struct sockaddr *, socklen_t));
+int	 Sendto(int, const void *, size_t, int, const struct sockaddr *,
+	    socklen_t);
 char	*interval(int, char *);
 
 void

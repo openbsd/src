@@ -1,17 +1,9 @@
-/* $OpenBSD: stand.h,v 1.3 2002/02/16 21:28:07 millert Exp $ */
+/* $OpenBSD: stand.h,v 1.4 2002/02/17 19:42:38 millert Exp $ */
 
 /* provided to cater for BSD idiosyncrasies */
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG)
 #include <sys/param.h>
-#endif
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(x)	x
-#else
-#define __P(x) ()
-#endif
 #endif
 
 #if defined(BSD4_4)

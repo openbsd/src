@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.14 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.14 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.15 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -118,17 +118,14 @@ static char rcsid[] = "$OpenBSD: chat.c,v 1.14 2002/02/16 21:28:07 millert Exp $
 #define SIGTYPE void
 #endif
 
-#undef __P
 #undef __V
 
 #ifdef __STDC__
 #include <stdarg.h>
 #define __V(x)	x
-#define __P(x)	x
 #else
 #include <varargs.h>
 #define __V(x)	(va_alist) va_dcl
-#define __P(x)	()
 #define const
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.3 1997/07/30 15:42:47 kstailey Exp $	*/
+/*	$OpenBSD: tree.c,v 1.4 2002/02/17 19:42:37 millert Exp $	*/
 
 /* tree - balanced binary tree library
  *
@@ -79,12 +79,11 @@ static char	*debugFuncs[256];
 #endif
 
 
-static tree *	sprout	__P( (tree **, tree_t, int *, int (*)(), void (*)()) );
-static int	delete	__P( (tree **, int (*)(), tree_t, void (*)(),
-			      int *, int *) );
-static void	del	__P( (tree **, int *, tree **, void (*)(), int *) );
-static void	bal_L	__P( (tree **, int *) );
-static void	bal_R	__P( (tree **, int *) );
+static tree *	sprout(tree **, tree_t, int *, int (*)(), void (*)());
+static int	delete(tree **, int (*)(), tree_t, void (*)(), int *, int *);
+static void	del(tree **, int *, tree **, void (*)(), int *);
+static void	bal_L(tree **, int *);
+static void	bal_R(tree **, int *);
 
 
 void

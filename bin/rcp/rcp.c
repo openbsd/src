@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.26 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.27 2002/02/17 19:42:19 millert Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ int	 kerberos(char **, char *, char *, char *);
 void	 oldw(const char *, ...);
 /* XXX from ../../usr.bin/rlogin/krcmd.c */
 int krcmd(char **, u_short, char *, char *, int *, char *);
-int krcmd_mutual __P((char **, u_short, char *, char *, int *,
-		       char *, CREDENTIALS *, Key_schedule));
+int krcmd_mutual(char **, u_short, char *, char *, int *,
+		 char *, CREDENTIALS *, Key_schedule);
 #endif
 int	 response(void);
 void	 rsource(char *, struct stat *);

@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.10 2002/02/16 21:28:05 millert Exp $";
+    "@(#) $Id: mtrace.c,v 1.11 2002/02/17 19:42:37 millert Exp $";
 #endif
 
 #include <netdb.h>
@@ -149,21 +149,19 @@ u_int32_t			get_netmask(int s, u_int32_t dst);
 int			get_ttl(struct resp_buf *buf);
 int			t_diff(u_long a, u_long b);
 u_long			fixtime(u_long time);
-int			send_recv __P((u_int32_t dst, int type, int code,
-					int tries, struct resp_buf *save));
+int			send_recv(u_int32_t dst, int type, int code,
+			    int tries, struct resp_buf *save);
 char *			print_host(u_int32_t addr);
 char *			print_host2(u_int32_t addr1, u_int32_t addr2);
 void			print_trace(int index, struct resp_buf *buf);
 int			what_kind(struct resp_buf *buf, char *why);
 char *			scale(int *hop);
-void			stat_line __P((struct tr_resp *r, struct tr_resp *s,
-					int have_next, int *res));
-void			fixup_stats __P((struct resp_buf *base,
-					struct resp_buf *prev,
-					struct resp_buf *new));
-int			print_stats __P((struct resp_buf *base,
-					struct resp_buf *prev,
-					struct resp_buf *new));
+void			stat_line(struct tr_resp *r, struct tr_resp *s,
+			    int have_next, int *res);
+void			fixup_stats(struct resp_buf *base,
+			    struct resp_buf *prev, struct resp_buf *new);
+int			print_stats(struct resp_buf *base,
+			    struct resp_buf *prev, struct resp_buf *new);
 void			check_vif_state(void);
 
 int			main(int argc, char *argv[]);

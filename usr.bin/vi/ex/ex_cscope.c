@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.7 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.8 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -93,8 +93,7 @@ static CC const cscope_cmds[] = {
 
 static TAGQ	*create_cs_cmd(SCR *, char *, size_t *);
 static int	 csc_help(SCR *, char *);
-static void	 csc_file __P((SCR *,
-		    CSC *, char *, char **, size_t *, int *));
+static void	 csc_file(SCR *, CSC *, char *, char **, size_t *, int *);
 static int	 get_paths(SCR *, CSC *);
 static CC const	*lookup_ccmd(char *);
 static int	 parse(SCR *, CSC *, TAGQ *, int *);

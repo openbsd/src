@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.5 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: term.c,v 1.6 2002/02/17 19:42:25 millert Exp $	*/
 /*	$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: term.c,v 1.5 2002/02/16 21:27:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.6 2002/02/17 19:42:25 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -254,8 +254,7 @@ private struct termcapval {
 private	void	term_rebuffer_display(EditLine *);
 private	void	term_free_display(EditLine *);
 private	void	term_alloc_display(EditLine *);
-private	void	term_alloc		__P((EditLine *,
-					     struct termcapstr *, char *)); 
+private	void	term_alloc(EditLine *, struct termcapstr *, char *); 
 private void	term_init_arrow(EditLine *);
 private void	term_reset_arrow(EditLine *);
 

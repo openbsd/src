@@ -55,12 +55,12 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main __P((int, char *[]));
-void	print_semid_ds __P((struct semid_ds *, mode_t));
-void	sigsys_handler __P((int));
-void	sigchld_handler __P((int));
-void	cleanup __P((void));
-void	waiter __P((void));
+int	main(int, char *[]);
+void	print_semid_ds(struct semid_ds *, mode_t);
+void	sigsys_handler(int);
+void	sigchld_handler(int);
+void	cleanup(void);
+void	waiter(void);
 
 int	sender_semid = -1;
 pid_t	child_pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.1 2002/02/16 13:58:18 art Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.2 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -56,12 +56,12 @@
 #include <time.h>
 #include <unistd.h>
 
-int	main __P((int, char *[]));
-void	print_msqid_ds __P((struct msqid_ds *, mode_t));
-void	sigsys_handler __P((int));
-void	sigchld_handler __P((int));
-void	cleanup __P((void));
-void	receiver __P((void));
+int	main(int, char *[]);
+void	print_msqid_ds(struct msqid_ds *, mode_t);
+void	sigsys_handler(int);
+void	sigchld_handler(int);
+void	cleanup(void);
+void	receiver(void);
 
 #define	MESSAGE_TEXT_LEN	256
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.15 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.16 2002/02/17 19:42:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.15 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.16 2002/02/17 19:42:31 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -51,10 +51,8 @@ static int	 makeconn(char *);
 static int	 okname(char *);
 static void	 closeconn(void);
 static void	 cmptime(char *);
-static void	 doarrow __P((char **,
-		    struct namelist *, char *, struct subcmd *));
-static void	 dodcolon __P((char **,
-		    struct namelist *, char *, struct subcmd *));
+static void	 doarrow(char **, struct namelist *, char *, struct subcmd *);
+static void	 dodcolon(char **, struct namelist *, char *, struct subcmd *);
 static void	 notify(char *, char *, struct namelist *, time_t);
 static void	 rcmptime(struct stat *);
 

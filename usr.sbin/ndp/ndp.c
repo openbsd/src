@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.13 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.14 2002/02/17 19:42:38 millert Exp $	*/
 /*	$KAME: ndp.c,v 1.69 2001/07/23 14:46:31 itojun Exp $	*/
 
 /*
@@ -146,8 +146,7 @@ int set(int, char **);
 void get(char *);
 int delete(char *);
 void dump(struct in6_addr *);
-static struct in6_nbrinfo *getnbrinfo __P((struct in6_addr *addr,
-					   int ifindex, int));
+static struct in6_nbrinfo *getnbrinfo(struct in6_addr *addr, int ifindex, int);
 static char *ether_str(struct sockaddr_dl *);
 int ndp_ether_aton(char *, u_char *);
 void usage(void);

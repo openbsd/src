@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.8 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: file.h,v 1.9 2002/02/17 19:42:30 millert Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -78,17 +78,6 @@ struct magic {
 	char nospflag;		/* supress space character */
 	char desc[MAXDESC];	/* description */
 };
-
-#include <stdio.h>	/* Include that here, to make sure __P gets defined */
-
-#ifndef __P
-# ifdef __STDC__ || __cplusplus
-#  define __P(a) a
-# else
-#  define __P(a) ()
-#  define const
-# endif
-#endif
 
 extern int   apprentice(char *, int);
 extern int   ascmagic(unsigned char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.14 2002/02/16 21:27:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.15 2002/02/17 19:42:27 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -97,14 +97,14 @@ static struct dirTodoNode *newDirTodo(void);
 static void freeDirTodo(struct dirTodoNode *);
 static char *fullpath(struct dosDirEntry *);
 static u_char calcShortSum(u_char *);
-static int delete __P((int, struct bootblock *, struct fatEntry *, cl_t, int,
-    cl_t, int, int));
-static int removede __P((int, struct bootblock *, struct fatEntry *, u_char *,
-    u_char *, cl_t, cl_t, cl_t, char *, int));
-static int checksize __P((struct bootblock *, struct fatEntry *, u_char *,
-    struct dosDirEntry *));
-static int readDosDirSection __P((int, struct bootblock *, struct fatEntry *,
-    struct dosDirEntry *));
+static int delete(int, struct bootblock *, struct fatEntry *, cl_t, int,
+    cl_t, int, int);
+static int removede(int, struct bootblock *, struct fatEntry *, u_char *,
+    u_char *, cl_t, cl_t, cl_t, char *, int);
+static int checksize(struct bootblock *, struct fatEntry *, u_char *,
+    struct dosDirEntry *);
+static int readDosDirSection(int, struct bootblock *, struct fatEntry *,
+    struct dosDirEntry *);
 
 /*
  * Manage free dosDirEntry structures.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.9 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: stree.c,v 1.10 2002/02/17 19:42:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -67,7 +67,7 @@ Static TREE *Trothl(TREE *, TREE *);
 Static TREE *Trothh(TREE *, TREE *);
 Static void Tbalance(TREE **);
 Static TREE *Tinsertavl(TREE **, char *, int, int *);
-Static int Tsubprocess __P((TREE *, int, int (*f )(TREE *, void *), void *));
+Static int Tsubprocess(TREE *, int, int (*f )(TREE *, void *), void *);
 Static int Tprintone(TREE *, void *);
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypclnt.h,v 1.5 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: ypclnt.h,v 1.6 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: ypclnt.h,v 1.7 1995/07/14 21:11:10 christos Exp $	*/
 
 /*
@@ -72,16 +72,14 @@ struct dom_binding;
 int	_yp_dobind(const char *, struct dom_binding **);
 void	yp_unbind(const char *);
 int	yp_get_default_domain(char **);
-int	yp_match 	__P((const char *, const char *, const char *,
-			     int , char **, int *));
-int	yp_first 	__P((const char *, const char *, char **, int *,
-			     char **, int *));
-int	yp_next		__P((const char *, const char *, const char *,
-			     int, char **, int *, char **, int *));
+int	yp_match(const char *, const char *, const char *, int , char **,
+	    int *);
+int	yp_first(const char *, const char *, char **, int *, char **, int *);
+int	yp_next(const char *, const char *, const char *, int, char **, int *,
+	    char **, int *);
 int	yp_master(const char *, const char *, char **);
 int	yp_order(const char *, const char *, int *);
-int	yp_all		__P((const char *, const char *,
-			     struct ypall_callback *));
+int	yp_all(const char *, const char *, struct ypall_callback *);
 char *	yperr_string(int);
 int	ypprot_err(unsigned int);
 struct ypmaplist;

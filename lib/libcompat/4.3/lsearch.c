@@ -43,8 +43,8 @@ static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #include <search.h>
 
 typedef int (*cmp_fn_t)(const void *, const void *);
-static void *linear_base __P((const void *, const void *, size_t *, size_t,
-			     cmp_fn_t, int));
+static void *linear_base(const void *, const void *, size_t *, size_t,
+    cmp_fn_t, int);
 
 void *
 lsearch(key, base, nelp, width, compar)
@@ -52,6 +52,7 @@ lsearch(key, base, nelp, width, compar)
 	size_t *nelp, width;
 	cmp_fn_t compar;
 {
+
 	return(linear_base(key, base, nelp, width, compar, 1));
 }
 

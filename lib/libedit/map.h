@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: map.h,v 1.5 2002/02/17 19:42:25 millert Exp $	*/
 /*	$NetBSD: map.h,v 1.2 1997/01/11 06:48:01 lukem Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@ protected void	map_end(EditLine *);
 protected void	map_init_vi(EditLine *);
 protected void	map_init_emacs(EditLine *);
 protected int	map_set_editor(EditLine *, char *);
-protected int	map_addfunc		__P((EditLine *, const char *, 
-					     const char *, el_func_t));
+protected int	map_addfunc(EditLine *, const char *, const char *, el_func_t);
 
 #endif /* _h_el_map */

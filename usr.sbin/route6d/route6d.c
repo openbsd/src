@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.23 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.24 2002/02/17 19:42:39 millert Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.23 2002/02/16 21:28:08 millert Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.24 2002/02/17 19:42:39 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -223,10 +223,10 @@ void sockopt(struct ifc *);
 void ifconfig(void);
 void ifconfig1(const char *, const struct sockaddr *, struct ifc *, int);
 void rtrecv(void);
-int rt_del __P((const struct sockaddr_in6 *, const struct sockaddr_in6 *,
-	const struct sockaddr_in6 *));
-int rt_deladdr __P((struct ifc *, const struct sockaddr_in6 *,
-	const struct sockaddr_in6 *));
+int rt_del(const struct sockaddr_in6 *, const struct sockaddr_in6 *,
+    const struct sockaddr_in6 *);
+int rt_deladdr(struct ifc *, const struct sockaddr_in6 *,
+    const struct sockaddr_in6 *);
 void filterconfig(void);
 int getifmtu(int);
 const char *rttypes(struct rt_msghdr *);
@@ -242,8 +242,7 @@ void ifdump0(FILE *, const struct ifc *);
 void rtdump(int);
 void rt_entry(struct rt_msghdr *, int);
 void rtdexit(void);
-void riprequest __P((struct ifc *, struct netinfo6 *, int,
-	struct sockaddr_in6 *));
+void riprequest(struct ifc *, struct netinfo6 *, int, struct sockaddr_in6 *);
 void ripflush(struct ifc *, struct sockaddr_in6 *);
 void sendrequest(struct ifc *);
 int sin6mask2len(const struct sockaddr_in6 *);

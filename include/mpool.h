@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: mpool.h,v 1.8 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-
@@ -99,8 +99,8 @@ typedef struct MPOOL {
 
 __BEGIN_DECLS
 MPOOL	*mpool_open(void *, int, pgno_t, pgno_t);
-void	 mpool_filter __P((MPOOL *, void (*)(void *, pgno_t, void *),
-	    void (*)(void *, pgno_t, void *), void *));
+void	 mpool_filter(MPOOL *, void (*)(void *, pgno_t, void *),
+	    void (*)(void *, pgno_t, void *), void *);
 void	*mpool_new(MPOOL *, pgno_t *, u_int);
 void	*mpool_get(MPOOL *, pgno_t, u_int);
 int	 mpool_delete(MPOOL *, void *);

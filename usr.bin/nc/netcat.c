@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.43 2002/02/17 03:24:56 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.44 2002/02/17 19:42:31 millert Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -70,7 +70,7 @@ int timeout;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX];
 
-ssize_t	atomicio __P((ssize_t (*)(), int, void *, size_t));
+ssize_t	atomicio(ssize_t (*)(), int, void *, size_t);
 void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
 void	help(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.10 2002/02/16 21:27:30 millert Exp $*/
+/*	$OpenBSD: identd.h,v 1.11 2002/02/17 19:42:26 millert Exp $*/
 
 /*
 **
@@ -45,7 +45,7 @@ char	*gethost4(struct sockaddr_in *);
 char	*gethost4_addr(struct in_addr *);
 char	*gethost6(struct sockaddr_in6 *);
 int	k_getuid(struct in_addr *, int, struct in_addr *, int, uid_t *);
-int	k_getuid6 __P((struct sockaddr_in6 *, int, struct sockaddr_in6 *,
-	int, uid_t *));
+int	k_getuid6(struct sockaddr_in6 *, int, struct sockaddr_in6 *,
+	    int, uid_t *);
 
 #endif

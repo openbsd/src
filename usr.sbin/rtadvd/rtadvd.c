@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.14 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.15 2002/02/17 19:42:39 millert Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -131,14 +131,14 @@ static void die(void);
 static void sock_open(void);
 static void rtsock_open(void);
 static void rtadvd_input(void);
-static void rs_input __P((int, struct nd_router_solicit *,
-			  struct in6_pktinfo *, struct sockaddr_in6 *));
-static void ra_input __P((int, struct nd_router_advert *,
-			  struct in6_pktinfo *, struct sockaddr_in6 *));
-static int prefix_check __P((struct nd_opt_prefix_info *, struct rainfo *,
-			     struct sockaddr_in6 *));
-static int nd6_options __P((struct nd_opt_hdr *, int,
-			    union nd_opts *, u_int32_t));
+static void rs_input(int, struct nd_router_solicit *,
+    struct in6_pktinfo *, struct sockaddr_in6 *);
+static void ra_input(int, struct nd_router_advert *,
+    struct in6_pktinfo *, struct sockaddr_in6 *);
+static int prefix_check(struct nd_opt_prefix_info *, struct rainfo *,
+    struct sockaddr_in6 *);
+static int nd6_options(struct nd_opt_hdr *, int,
+    union nd_opts *, u_int32_t);
 static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
 static void rtmsg_input(void);

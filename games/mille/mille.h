@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.6 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: mille.h,v 1.7 2002/02/17 19:42:20 millert Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ void	show_card(int, int, CARD, CARD *);
 void	show_score(int, int, int, int *);
 void	shuffle(void);
 void	sort(CARD *);
-bool	varpush __P((int, ssize_t(int, const struct iovec *, int)));
+bool	varpush(int, ssize_t(int, const struct iovec *, int));
 #ifdef EXTRAP
 void	extrapolate(PLAY *);
 void	undoex(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipxcp.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: ipxcp.c,v 1.7 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.6 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.7 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -101,8 +101,8 @@ static void ipxcp_lowerup(int);
 static void ipxcp_lowerdown(int);
 static void ipxcp_input(int, u_char *, int);
 static void ipxcp_protrej(int);
-static int  ipxcp_printpkt __P((u_char *, int,
-				void (*)(void *, char *, ...), void *));
+static int  ipxcp_printpkt(u_char *, int,
+    void (*)(void *, char *, ...), void *);
 
 struct protent ipxcp_protent = {
     PPP_IPXCP,

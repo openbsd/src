@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.17 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.18 2002/02/17 19:42:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,10 +138,10 @@ static Char	*g_strchr(Char *, int);
 static int	 g_stat(Char *, struct stat *, glob_t *);
 static int	 glob0(const Char *, glob_t *);
 static int	 glob1(Char *, Char *, glob_t *, size_t *);
-static int	 glob2 __P((Char *, Char *, Char *, Char *, Char *, Char *,
-		    glob_t *, size_t *));
-static int	 glob3 __P((Char *, Char *, Char *, Char *, Char *, Char *,
-		    Char *, Char *, glob_t *, size_t *));
+static int	 glob2(Char *, Char *, Char *, Char *, Char *, Char *,
+		    glob_t *, size_t *);
+static int	 glob3(Char *, Char *, Char *, Char *, Char *, Char *,
+		    Char *, Char *, glob_t *, size_t *);
 static int	 globextend(const Char *, glob_t *, size_t *);
 static const Char *
 		 globtilde(const Char *, Char *, size_t, glob_t *);

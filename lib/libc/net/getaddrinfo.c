@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.32 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.33 2002/02/17 19:42:23 millert Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -200,18 +200,18 @@ struct res_target {
 };
 
 static int str_isnumber(const char *);
-static int explore_fqdn __P((const struct addrinfo *, const char *,
-	const char *, struct addrinfo **));
-static int explore_null __P((const struct addrinfo *,
-	const char *, struct addrinfo **));
-static int explore_numeric __P((const struct addrinfo *, const char *,
-	const char *, struct addrinfo **));
-static int explore_numeric_scope __P((const struct addrinfo *, const char *,
-	const char *, struct addrinfo **));
-static int get_canonname __P((const struct addrinfo *,
-	struct addrinfo *, const char *));
-static struct addrinfo *get_ai __P((const struct addrinfo *,
-	const struct afd *, const char *));
+static int explore_fqdn(const struct addrinfo *, const char *,
+	const char *, struct addrinfo **);
+static int explore_null(const struct addrinfo *,
+	const char *, struct addrinfo **);
+static int explore_numeric(const struct addrinfo *, const char *,
+	const char *, struct addrinfo **);
+static int explore_numeric_scope(const struct addrinfo *, const char *,
+	const char *, struct addrinfo **);
+static int get_canonname(const struct addrinfo *,
+	struct addrinfo *, const char *);
+static struct addrinfo *get_ai(const struct addrinfo *,
+	const struct afd *, const char *);
 static int get_portmatch(const struct addrinfo *, const char *);
 static int get_port(struct addrinfo *, const char *, int);
 static const struct afd *find_afd(int);
@@ -225,23 +225,21 @@ static int ip6_str2scopeid(char *, struct sockaddr_in6 *);
 static void _sethtent(void);
 static void _endhtent(void);
 static struct addrinfo * _gethtent(const char *, const struct addrinfo *);
-static struct addrinfo *_files_getaddrinfo __P((const char *,
-	const struct addrinfo *));
+static struct addrinfo *_files_getaddrinfo(const char *,
+	const struct addrinfo *);
 
 #ifdef YP
 static struct addrinfo *_yphostent(char *, const struct addrinfo *);
-static struct addrinfo *_yp_getaddrinfo __P((const char *,
-	const struct addrinfo *));
+static struct addrinfo *_yp_getaddrinfo(const char *,
+	const struct addrinfo *);
 #endif
 
-static struct addrinfo *getanswer __P((const querybuf *, int, const char *, int,
-	const struct addrinfo *));
+static struct addrinfo *getanswer(const querybuf *, int, const char *, int,
+	const struct addrinfo *);
 static int res_queryN(const char *, struct res_target *);
 static int res_searchN(const char *, struct res_target *);
-static int res_querydomainN __P((const char *, const char *,
-	struct res_target *));
-static struct addrinfo *_dns_getaddrinfo __P((const char *,
-	const struct addrinfo *));
+static int res_querydomainN(const char *, const char *, struct res_target *);
+static struct addrinfo *_dns_getaddrinfo(const char *, const struct addrinfo *);
 
 
 /* XXX macros that make external reference is BAD. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.23 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: sem.c,v 1.24 2002/02/17 19:42:35 millert Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -80,10 +80,10 @@ static struct devi **nextpseudo;
 static int has_errobj(struct nvlist *, void *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
 static int exclude(struct nvlist *, const char *, const char *);
-static int resolve __P((struct nvlist **, const char *, const char *,
-			struct nvlist *, int));
-static int lresolve __P((struct nvlist **, const char *, const char *,
-			struct nvlist *, int));
+static int resolve(struct nvlist **, const char *, const char *,
+    struct nvlist *, int);
+static int lresolve(struct nvlist **, const char *, const char *,
+    struct nvlist *, int);
 static struct devi *newdevi(const char *, int, struct devbase *d);
 static struct devi *getdevi(const char *);
 static const char *concat(const char *, int);

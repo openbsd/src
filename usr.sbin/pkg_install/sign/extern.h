@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.4 2002/02/16 21:28:07 millert Exp $ */
+/* $OpenBSD: extern.h,v 1.5 2002/02/17 19:42:38 millert Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -38,19 +38,19 @@ struct mygzip_header;
 struct signature;
 
 /* common.c */
-extern int read_header_and_diagnose __P((FILE *file, \
+extern int read_header_and_diagnose(FILE *file, \
 	/*@out@*/struct mygzip_header *h, /*@null@*/struct signature **sign, \
-	const char *filename));
+	const char *filename);
 extern int reap(pid_t pid);
 
 /* sign.c */
-extern int sign __P((/*@observer@*/const char *filename, int type, \
-	/*@null@*/const char *userid, char *envp[]));
+extern int sign(/*@observer@*/const char *filename, int type, \
+	/*@null@*/const char *userid, char *envp[]);
 
 /* check.c */
-extern int check_signature __P((/*@dependent@*/FILE *file, \
+extern int check_signature(/*@dependent@*/FILE *file, \
 	/*@null@*/const char *userid, char *envp[], \
-	/*@observer@*/const char *filename));
+	/*@observer@*/const char *filename);
 
 #define PKG_BADSIG 0
 #define PKG_GOODSIG 1
@@ -65,14 +65,13 @@ typedef /*@observer@*/char *pchar;
 /* sha1.c */
 #define SHA1_DB_NAME	"/var/db/pkg/SHA1"
 
-extern void *new_sha1_checker __P((struct mygzip_header *h, \
+extern void *new_sha1_checker(struct mygzip_header *h, \
 	struct signature *sign, const char *userid, char *envp[], \
-	const char *filename));
+	const char *filename);
 
-extern void sha1_add __P((void *arg, const char *buffer, \
-	size_t length));
+extern void sha1_add(void *arg, const char *buffer, size_t length);
 
 extern int sha1_sign_ok(void *arg);
 
-extern int retrieve_sha1_marker __P((const char *filename, \
-	struct signature **sign, const char *userid));
+extern int retrieve_sha1_marker(const char *filename, \
+	struct signature **sign, const char *userid);

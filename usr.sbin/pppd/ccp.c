@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.9 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -31,7 +31,7 @@
 #if 0
 static char rcsid[] = "Id: ccp.c,v 1.22 1998/03/25 01:25:02 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.9 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -55,9 +55,8 @@ static void ccp_lowerup(int unit);
 static void ccp_lowerdown(int);
 static void ccp_input(int unit, u_char *pkt, int len);
 static void ccp_protrej(int unit);
-static int  ccp_printpkt __P((u_char *pkt, int len,
-			      void (*printer)(void *, char *, ...),
-			      void *arg));
+static int  ccp_printpkt(u_char *pkt, int len,
+    void (*printer)(void *, char *, ...), void *arg);
 static void ccp_datainput(int unit, u_char *pkt, int len);
 
 struct protent ccp_protent = {

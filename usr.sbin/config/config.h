@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.16 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.17 2002/02/17 19:42:35 millert Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -55,12 +55,6 @@
 #if !defined(MAKE_BOOTSTRAP) && defined(BSD)
 #include <sys/cdefs.h>
 #include <paths.h>
-#else /* ...BSD */
-#if defined(__STDC__) || defined(__cplusplus)
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#else /* ...STDC */
-#define	__P(protos)	()		/* traditional C preprocessor */
-#endif /* ...STDC */
 #endif /* ...BSD */
 
 #ifdef __STDC__
@@ -384,8 +378,7 @@ char	*sourcepath(const char *);
 void	error(const char *, ...);			/* immediate errs */
 void	xerror(const char *, int, const char *, ...);	/* delayed errs */
 __dead void panic(const char *, ...);
-struct nvlist *newnv __P((const char *, const char *, void *, int,
-	    struct nvlist *));
+struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
 

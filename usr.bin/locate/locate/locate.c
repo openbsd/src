@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $
+ *	$OpenBSD: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $
+ *      $Id: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $
  */
 
 #ifndef lint
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.12 2002/02/17 19:42:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,9 +102,6 @@ static char rcsid[] = "$OpenBSD: locate.c,v 1.11 2002/02/16 21:27:48 millert Exp
 
 #ifdef sun
 #include <netinet/in.h> /* SunOS byteorder(3) htohl(3) */
-#ifndef __P
-#define __P(x) x
-#endif
 #endif
 
 #include "locate.h"

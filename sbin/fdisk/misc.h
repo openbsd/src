@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: misc.h,v 1.8 2002/02/17 19:42:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,7 +62,7 @@ static const struct unit_type {
 /* Prototypes */
 int unit_lookup(char *);
 int ask_cmd(cmd_t *);
-int ask_num __P((const char *, int, int, int, int, void (*help)(void)));
+int ask_num(const char *, int, int, int, int, void (*help)(void));
 int ask_yn(const char *);
 u_int16_t getshort(void *);
 u_int32_t getlong(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.11 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.12 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -36,8 +36,7 @@ static const char sccsid[] = "@(#)ex_subst.c	10.37 (Berkeley) 9/15/96";
 
 static int re_conv(SCR *, char **, size_t *, int *);
 static int re_cscope_conv(SCR *, char **, size_t *, int *);
-static int re_sub __P((SCR *,
-		char *, char **, size_t *, size_t *, regmatch_t [10]));
+static int re_sub(SCR *, char *, char **, size_t *, size_t *, regmatch_t [10]);
 static int re_tag_conv(SCR *, char **, size_t *, int *);
 static int s(SCR *, EXCMD *, char *, regex_t *, u_int);
 
@@ -889,8 +888,8 @@ err:		rval = 1;
  * re_compile --
  *	Compile the RE.
  *
- * PUBLIC: int re_compile __P((SCR *,
- * PUBLIC:     char *, size_t, char **, size_t *, regex_t *, u_int));
+ * PUBLIC: int re_compile(SCR *,
+ * PUBLIC:     char *, size_t, char **, size_t *, regex_t *, u_int);
  */
 int
 re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/02/17 19:42:18 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ Char	 *globone(Char *, int);
 int	  Gmatch(Char *, Char *);
 void	  ginit(void);
 Char	**globall(Char **);
-void	  rscan __P((Char **, void (*)()));
+void	  rscan(Char **, void (*)());
 void	  tglob(Char **);
 void	  trim(Char **);
 #ifdef FILEC
@@ -296,8 +296,8 @@ void	 plist(struct varent *);
  */
 void	donice(Char **, struct command *);
 void	dotime(Char **, struct command *);
-void	prusage __P((struct rusage *, struct rusage *,
-	    struct timeval *, struct timeval *));
+void	prusage(struct rusage *, struct rusage *,
+	    struct timeval *, struct timeval *);
 void	ruadd(struct rusage *, struct rusage *);
 void	settimes(void);
 void	pcsecs(long);

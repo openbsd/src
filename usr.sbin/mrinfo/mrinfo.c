@@ -108,9 +108,9 @@ vifi_t  numvifs;		/* to keep loader happy */
 char *			inet_name(u_int32_t addr);
 void			ask(u_int32_t dst);
 void			ask2(u_int32_t dst);
-int			get_number __P((int *var, int deflt, char ***pargv,
-					int *pargc));
-u_int32_t			host_addr(char *name);
+int			get_number(int *var, int deflt, char ***pargv,
+			    int *pargc);
+u_int32_t		host_addr(char *name);
 void			usage(void);
 
 /* to shut up -Wstrict-prototypes */

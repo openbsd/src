@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.13 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.14 2002/02/17 19:42:27 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.13 2002/02/16 21:27:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.14 2002/02/17 19:42:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ extern	int cartridge;
 extern	char *host;
 char	*nexttape;
 
-static	ssize_t atomic __P((ssize_t (*)(), int, char *, int));
+static	ssize_t atomic(ssize_t (*)(), int, char *, int);
 static	void doslave(int, int);
 static	void enslave(void);
 static	void flushtape(void);

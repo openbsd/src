@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.12 2002/02/16 21:27:55 millert Exp $ */
+/* $OpenBSD: tsort.c,v 1.13 2002/02/17 19:42:33 millert Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -132,8 +132,8 @@ static struct node *node_lookup(struct ohash *, const char *, const char *);
 static void usage(void);
 static struct node *new_node(const char *, const char *);
 
-static unsigned int read_pairs __P((FILE *, struct ohash *, int, 
-    const char *, unsigned int, int));
+static unsigned int read_pairs(FILE *, struct ohash *, int, 
+    const char *, unsigned int, int);
 static void split_nodes(struct ohash *, struct array *, struct array *);
 static void make_transparent(struct ohash *);
 static void insert_arc(struct node *, struct node *);
@@ -143,8 +143,8 @@ static void dump_node(struct node *);
 static void dump_array(struct array *);
 static void dump_hash(struct ohash *);
 #endif
-static unsigned int read_hints __P((FILE *, struct ohash *, int, 
-    const char *, unsigned int));
+static unsigned int read_hints(FILE *, struct ohash *, int, 
+    const char *, unsigned int);
 static struct node *find_smallest_node(struct array *);
 static struct node *find_good_cycle_break(struct array *);
 static void print_cycle(struct array *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.15 2002/02/16 21:28:09 millert Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.16 2002/02/17 19:42:39 millert Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -96,10 +96,10 @@ static int ifreconfig(char *ifname);
 #endif
 static int make_packet(struct ifinfo *ifinfo);
 static struct timeval *rtsol_check_timer(void);
-static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
-			     struct timeval *result));
-static void TIMEVAL_SUB __P((struct timeval *a, struct timeval *b,
-			     struct timeval *result));
+static void TIMEVAL_ADD(struct timeval *a, struct timeval *b,
+    struct timeval *result);
+static void TIMEVAL_SUB(struct timeval *a, struct timeval *b,
+    struct timeval *result);
 
 static void rtsold_set_dump_file(void);
 static void usage(char *progname);

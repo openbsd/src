@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: key.h,v 1.5 2002/02/17 19:42:25 millert Exp $	*/
 /*	$NetBSD: key.h,v 1.2 1997/01/11 06:47:59 lukem Exp $	*/
 
 /*-
@@ -68,16 +68,12 @@ protected void 		key_end(EditLine *);
 protected key_value_t *	key_map_cmd(EditLine *, int);
 protected key_value_t *	key_map_str(EditLine *, char *);
 protected void		key_reset(EditLine *);
-protected int 		key_get		__P((EditLine *, char *, 
-					     key_value_t *));
-protected void		key_add		__P((EditLine *, char *, key_value_t *,
-					     int));
-protected void		key_clear	__P((EditLine *, el_action_t *,
-					     char *));
+protected int 		key_get(EditLine *, char *, key_value_t *);
+protected void		key_add(EditLine *, char *, key_value_t *, int);
+protected void		key_clear(EditLine *, el_action_t *, char *);
 protected int		key_delete(EditLine *, char *);
 protected void		key_print(EditLine *, char *);
-protected void	        key_kprint	__P((EditLine *, char *, 
-					     key_value_t *, int));
+protected void	        key_kprint(EditLine *, char *, key_value_t *, int);
 protected char 	       *key__decode_str(char *, char *, char *);
 
 #endif /* _h_el_key */

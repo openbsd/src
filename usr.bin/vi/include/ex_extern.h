@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_extern.h,v 1.6 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: ex_extern.h,v 1.7 2002/02/17 19:42:34 millert Exp $	*/
 
 int ex(SCR **);
 int ex_cmd(SCR *);
@@ -34,8 +34,7 @@ int ex_display(SCR *, EXCMD *);
 int ex_edit(SCR *, EXCMD *);
 int ex_equal(SCR *, EXCMD *);
 int ex_file(SCR *, EXCMD *);
-int ex_filter __P((SCR *, 
-   EXCMD *, MARK *, MARK *, MARK *, char *, enum filtertype));
+int ex_filter(SCR *, EXCMD *, MARK *, MARK *, MARK *, char *, enum filtertype);
 int ex_global(SCR *, EXCMD *);
 int ex_v(SCR *, EXCMD *);
 int ex_g_insdel(SCR *, lnop_t, recno_t);
@@ -87,8 +86,7 @@ int ex_stop(SCR *, EXCMD *);
 int ex_s(SCR *, EXCMD *);
 int ex_subagain(SCR *, EXCMD *);
 int ex_subtilde(SCR *, EXCMD *);
-int re_compile __P((SCR *,
-    char *, size_t, char **, size_t *, regex_t *, u_int));
+int re_compile(SCR *, char *, size_t, char **, size_t *, regex_t *, u_int);
 void re_error(SCR *, int, regex_t *);
 int ex_tag_first(SCR *, char *);
 int ex_tag_push(SCR *, EXCMD *);
@@ -110,8 +108,7 @@ int ex_undo(SCR *, EXCMD *);
 int ex_help(SCR *, EXCMD *);
 int ex_usage(SCR *, EXCMD *);
 int ex_viusage(SCR *, EXCMD *);
-void ex_cinit __P((EXCMD *,
-   int, int, recno_t, recno_t, int, ARGS **));
+void ex_cinit(EXCMD *, int, int, recno_t, recno_t, int, ARGS **);
 void ex_cadd(EXCMD *, ARGS *, char *, size_t);
 int ex_getline(SCR *, FILE *, size_t *);
 int ex_ncheck(SCR *, int);
@@ -123,7 +120,6 @@ int ex_wn(SCR *, EXCMD *);
 int ex_wq(SCR *, EXCMD *);
 int ex_write(SCR *, EXCMD *);
 int ex_xit(SCR *, EXCMD *);
-int ex_writefp __P((SCR *,
-   char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
+int ex_writefp(SCR *, char *, FILE *, MARK *, MARK *, u_long *, u_long *, int);
 int ex_yank(SCR *, EXCMD *);
 int ex_z(SCR *, EXCMD *);

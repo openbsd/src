@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.h,v 1.3 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: pppoe.h,v 1.4 2002/02/17 19:42:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -136,11 +136,10 @@ struct pppoe_session *session_find_fd(int);
 
 int runppp(int, char *);
 int bpf_to_ppp(int, u_long, u_int8_t *);
-int ppp_to_bpf __P((int, int, struct ether_addr *, struct ether_addr *,
-    u_int16_t));
+int ppp_to_bpf(int, int, struct ether_addr *, struct ether_addr *, u_int16_t);
 int send_padt(int, struct ether_addr *, struct ether_addr *, u_int16_t);
-void recv_debug __P((int, struct ether_addr *,
-    struct ether_header *, struct pppoe_header *, u_long, u_int8_t *));
+void recv_debug(int, struct ether_addr *,
+    struct ether_header *, struct pppoe_header *, u_long, u_int8_t *);
 void debug_packet(u_int8_t *, int);
 
 u_int32_t cookie_bake(void);

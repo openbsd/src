@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.12 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.13 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -243,8 +243,8 @@ txt_map_end(sp)
  * v_txt --
  *	Vi text input.
  *
- * PUBLIC: int v_txt __P((SCR *, VICMD *, MARK *,
- * PUBLIC:    const char *, size_t, ARG_CHAR_T, recno_t, u_long, u_int32_t));
+ * PUBLIC: int v_txt(SCR *, VICMD *, MARK *,
+ * PUBLIC:    const char *, size_t, ARG_CHAR_T, recno_t, u_long, u_int32_t);
  */
 int
 v_txt(sp, vp, tm, lp, len, prompt, ai_line, rcount, flags)

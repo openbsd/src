@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.9 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.10 2002/02/17 19:42:35 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
 
 /*
@@ -50,10 +50,9 @@ void		enddefs(void);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 int		defattr(const char *, struct nvlist *);
-void		defdev __P((struct devbase *, int, struct nvlist *,
-			struct nvlist *));
-void		defdevattach __P((struct deva *, struct devbase *,
-			struct nvlist *, struct nvlist *));
+void		defdev(struct devbase *, int, struct nvlist *, struct nvlist *);
+void		defdevattach(struct deva *, struct devbase *,
+		    struct nvlist *, struct nvlist *);
 struct devbase *getdevbase(const char *name);
 struct deva    *getdevattach(const char *name);
 struct attr    *getattr(const char *name);

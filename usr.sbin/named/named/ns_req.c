@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.8 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.9 2002/02/17 19:42:37 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.8 2002/02/16 21:28:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.9 2002/02/17 19:42:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,30 +111,30 @@ struct addinfo {
 
 enum req_action { Finish, Refuse, Return };
 
-static enum req_action	req_query __P((HEADER *hp, u_char **cpp, u_char *eom,
-				       struct qstream *qsp,
-				       int *buflenp, int *msglenp,
-				       u_char *msg, int dfd,
-				       struct sockaddr_in *from));
+static enum req_action	req_query(HEADER *hp, u_char **cpp, u_char *eom,
+				  struct qstream *qsp,
+				  int *buflenp, int *msglenp,
+				  u_char *msg, int dfd,
+				  struct sockaddr_in *from);
 
-static enum req_action	req_iquery __P((HEADER *hp, u_char **cpp, u_char *eom,
-					int *buflenp, u_char *msg,
-					struct sockaddr_in *from));
+static enum req_action	req_iquery(HEADER *hp, u_char **cpp, u_char *eom,
+				   int *buflenp, u_char *msg,
+				   struct sockaddr_in *from);
 
 #ifdef BIND_NOTIFY
-static enum req_action	req_notify __P((HEADER *hp, u_char **cpp, u_char *eom,
-					u_char *msg,struct sockaddr_in *from));
+static enum req_action	req_notify(HEADER *hp, u_char **cpp, u_char *eom,
+				   u_char *msg,struct sockaddr_in *from);
 #endif
 
 static void		fwritemsg(FILE *, u_char *, int),
-			doaxfr __P((struct namebuf *, FILE *,
-				    struct namebuf *, int)),
-			startxfr __P((struct qstream *, struct namebuf *,
-				      u_char *, int, int, const char *));
+			doaxfr(struct namebuf *, FILE *,
+			       struct namebuf *, int),
+			startxfr(struct qstream *, struct namebuf *,
+				 u_char *, int, int, const char *);
 
 static struct addinfo	addinfo[NADDRECS];
-static void		addname __P((const char *, const char *,
-				     u_int16_t, u_int16_t));
+static void		addname(const char *, const char *,
+				u_int16_t, u_int16_t);
 static void		copyCharString(u_char **, const char *);
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.3 2002/02/16 21:28:02 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.4 2002/02/17 19:42:36 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.2 1996/02/28 01:13:20 thorpej Exp $	*/
 
 /*-
@@ -83,8 +83,7 @@ struct	strvaltabent {
  */
 struct	extabent {
 	char	*ex_keyword;		/* keyword for this entry */
-	void	(*ex_handler) __P((struct extabent *,
-		    struct opiocdesc *, char *));
+	void	(*ex_handler)(struct extabent *, struct opiocdesc *, char *);
 					/* handler function for this entry */
 };
 #endif /* __sparc__ */

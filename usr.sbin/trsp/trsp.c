@@ -1,4 +1,4 @@
-/*	$OpenBSD: trsp.c,v 1.8 2002/02/16 21:28:10 millert Exp $	*/
+/*	$OpenBSD: trsp.c,v 1.9 2002/02/17 19:42:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -143,8 +143,8 @@ extern	char *__progname;
 int	main(int, char *[]);
 void	dotrace(caddr_t);
 int	numeric(const void *, const void *);
-void	spp_trace __P((short, short, struct sppcb *, struct sppcb *,
-	    struct spidp *, int));
+void	spp_trace(short, short, struct sppcb *, struct sppcb *,
+	    struct spidp *, int);
 void	usage(void);
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.28 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.29 2002/02/17 19:42:31 millert Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.28 2002/02/16 21:27:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.29 2002/02/17 19:42:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,8 @@ int des_read(int, char *, int);
 int des_write(int, char *, int);
 
 int krcmd(char **, u_short, char *, char *, int *, char *);
-int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
-		      CREDENTIALS *, Key_schedule));
+int krcmd_mutual(char **, u_short, char *, char *, int *, char *,
+    CREDENTIALS *, Key_schedule);
 #endif
 
 #ifndef TIOCPKT_WINDOW

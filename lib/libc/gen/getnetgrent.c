@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.11 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.12 2002/02/17 19:42:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.11 2002/02/16 21:27:22 millert Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.12 2002/02/17 19:42:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,15 +72,14 @@ static int		getstring(char **, int, char **);
 static struct netgroup	*getnetgroup(char **);
 static int		 lookup(const char *, char *, char **, int);
 static void		 addgroup(char *, struct stringlist *, char *);
-static int		 in_check __P((const char *, const char *,
-				       const char *, struct netgroup *));
-static int		 in_find __P((char *, struct stringlist *,
-				      char *, const char *,
-				      const char *, const char *));
-static char		*in_lookup1 __P((const char *, const char *,
-					 const char *, int));
-static int		 in_lookup __P((const char *, const char *,
-					const char *, const char *, int));
+static int		 in_check(const char *, const char *,
+			    const char *, struct netgroup *);
+static int		 in_find(char *, struct stringlist *,
+			    char *, const char *, const char *, const char *);
+static char		*in_lookup1(const char *, const char *,
+			    const char *, int);
+static int		 in_lookup(const char *, const char *,
+			    const char *, const char *, int);
 
 /*
  * _ng_sl_init(): Initialize a string list

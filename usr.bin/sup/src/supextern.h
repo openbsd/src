@@ -1,12 +1,4 @@
-/*     $OpenBSD: supextern.h,v 1.6 2002/02/16 21:27:54 millert Exp $  */
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(a)	a
-#else
-#define	__P(a) ()
-#endif
-#endif
+/*     $OpenBSD: supextern.h,v 1.7 2002/02/17 19:42:33 millert Exp $  */
 
 /* atoo.c */
 unsigned int atoo(char *);
@@ -118,8 +110,8 @@ void Tfree(TREE **);
 TREE *Tinsert(TREE **, char *, int);
 TREE *Tsearch(TREE *, char *);
 TREE *Tlookup(TREE *, char *);
-int Trprocess __P((TREE *, int (*)(TREE *, void *), void *));
-int Tprocess __P((TREE *, int (*)(TREE *, void *), void *));
+int Trprocess(TREE *, int (*)(TREE *, void *), void *);
+int Tprocess(TREE *, int (*)(TREE *, void *), void *);
 void Tprint(TREE *, char *);
 
 /* supcmeat.c */
@@ -172,7 +164,7 @@ int msglist(void);
 int msgneed(void);
 int msgdeny(void);
 int msgsend(void);
-int msgrecv __P((int (*)(TREE *, va_list), ...));
+int msgrecv(int (*)(TREE *, va_list), ...);
 int msgdone(void);
 int msggoaway(void);
 int msgxpatch(void);

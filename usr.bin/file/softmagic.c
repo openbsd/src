@@ -1,4 +1,4 @@
-/*	$OpenBSD: softmagic.c,v 1.6 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: softmagic.c,v 1.7 2002/02/17 19:42:30 millert Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -37,12 +37,11 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: softmagic.c,v 1.6 2002/02/16 21:27:46 millert Exp $";
+static char *moduleid = "$OpenBSD: softmagic.c,v 1.7 2002/02/17 19:42:30 millert Exp $";
 #endif	/* lint */
 
 static int match(unsigned char *, int);
-static int mget		__P((union VALUETYPE *,
-			     unsigned char *, struct magic *, int));
+static int mget(union VALUETYPE *, unsigned char *, struct magic *, int);
 static int mcheck(union VALUETYPE *, struct magic *);
 static int32 mprint(union VALUETYPE *, struct magic *);
 static void mdebug(int32, char *, int);

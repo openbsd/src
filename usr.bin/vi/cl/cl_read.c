@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.10 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.11 2002/02/17 19:42:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,8 +37,8 @@ static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 #include "../ex/script.h"
 #include "cl.h"
 
-static input_t	cl_read __P((SCR *,
-    u_int32_t, CHAR_T *, size_t, int *, struct timeval *));
+static input_t	cl_read(SCR *,
+		    u_int32_t, CHAR_T *, size_t, int *, struct timeval *);
 static int	cl_resize(SCR *, size_t, size_t);
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: gzip.h,v 1.3 2002/02/16 21:28:07 millert Exp $ */
+/* $OpenBSD: gzip.h,v 1.4 2002/02/17 19:42:38 millert Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -66,16 +66,16 @@ struct signature {
 #define GZIP_SIGNED 		1	/* gzip file, signature parsed ok */
 #define GZIP_NOT_GZIP 		2	/* not a proper gzip file */
 #define GZIP_NOT_PGPSIGNED 	3	/* gzip file, unknown extension */
-extern int gzip_read_header __P((FILE *f, /*@out@*/struct mygzip_header *h, \
-	/*@null@*/struct signature **sign));
+extern int gzip_read_header(FILE *f, /*@out@*/struct mygzip_header *h, \
+	/*@null@*/struct signature **sign);
 /* gzip_write_header returns 1 for success */
-extern int gzip_write_header __P((FILE *f, const struct mygzip_header *h, \
-	/*@null@*/struct signature *sign));
+extern int gzip_write_header(FILE *f, const struct mygzip_header *h, \
+	/*@null@*/struct signature *sign);
 /* writing header to memory. Returns size needed, or 0 if buffer too small
    buffer must be at least 14 characters */
-extern int gzip_copy_header __P((const struct mygzip_header *h, \
+extern int gzip_copy_header(const struct mygzip_header *h, \
 	/*@null@*/struct signature *sign, \
-	void (*add)(void *, const char *, size_t), void *data));
+	void (*add)(void *, const char *, size_t), void *data);
 
 extern void free_signature(/*@null@*/struct signature *sign);
 extern void sign_fill_tag(struct signature *sign);

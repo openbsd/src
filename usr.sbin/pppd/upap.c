@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: upap.c,v 1.8 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: upap.c,v 1.11 1997/04/30 05:59:56 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: upap.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: upap.c,v 1.8 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -48,8 +48,7 @@ static void upap_lowerup(int);
 static void upap_lowerdown(int);
 static void upap_input(int, u_char *, int);
 static void upap_protrej(int);
-static int  upap_printpkt __P((u_char *, int,
-			       void (*)(void *, char *, ...), void *));
+static int  upap_printpkt(u_char *, int, void (*)(void *, char *, ...), void *);
 
 struct protent pap_protent = {
     PPP_PAP,

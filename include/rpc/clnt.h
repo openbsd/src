@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.6 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.7 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -120,22 +120,22 @@ typedef struct __rpc_client {
 	AUTH	*cl_auth;			/* authenticator */
 	struct clnt_ops {
 		/* call remote procedure */
-		enum clnt_stat	(*cl_call) __P((struct __rpc_client *,
+		enum clnt_stat	(*cl_call)(struct __rpc_client *,
 				    u_long, xdrproc_t, caddr_t, xdrproc_t,
-				    caddr_t, struct timeval));
+				    caddr_t, struct timeval);
 		/* abort a call */
 		void		(*cl_abort)(struct __rpc_client *);
 		/* get specific error code */
-		void		(*cl_geterr) __P((struct __rpc_client *,
-				    struct rpc_err *));
+		void		(*cl_geterr)(struct __rpc_client *,
+				    struct rpc_err *);
 		/* frees results */
-		bool_t		(*cl_freeres) __P((struct __rpc_client *,
-				    xdrproc_t, caddr_t));
+		bool_t		(*cl_freeres)(struct __rpc_client *,
+				    xdrproc_t, caddr_t);
 		/* destroy this structure */
 		void		(*cl_destroy)(struct __rpc_client *);
 		/* the ioctl() of rpc */
-		bool_t          (*cl_control) __P((struct __rpc_client *, u_int,
-				    void *));
+		bool_t          (*cl_control)(struct __rpc_client *, u_int,
+				    void *);
 	} *cl_ops;
 	caddr_t			cl_private;	/* private stuff */
 } CLIENT;
@@ -285,12 +285,8 @@ __END_DECLS
  *	u_int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clnttcp_create	__P((struct sockaddr_in *,
-				     u_long,
-				     u_long,
-				     int *,
-				     u_int,
-				     u_int));
+extern CLIENT *clnttcp_create(struct sockaddr_in *, u_long, u_long, int *,
+    u_int, u_int);
 __END_DECLS
 
 
@@ -316,18 +312,10 @@ __END_DECLS
  *	u_int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clntudp_create	__P((struct sockaddr_in *,
-				     u_long,
-				     u_long,
-				     struct timeval,
-				     int *));
-extern CLIENT *clntudp_bufcreate __P((struct sockaddr_in *,
-				     u_long,
-				     u_long,
-				     struct timeval,
-				     int *,
-				     u_int,
-				     u_int));
+extern CLIENT *clntudp_create(struct sockaddr_in *, u_long, u_long,
+    struct timeval, int *);
+extern CLIENT *clntudp_bufcreate(struct sockaddr_in *, u_long, u_long,
+    struct timeval, int *, u_int, u_int);
 __END_DECLS
 
 

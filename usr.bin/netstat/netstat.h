@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.20 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.21 2002/02/17 19:42:31 millert Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -151,5 +151,4 @@ void	mrt_stats(u_long, u_long);
 void	atalkprotopr(u_long, char *);
 void	ddp_stats(u_long, char *);
 char	*atalk_print(const struct sockaddr *, int);
-char	*atalk_print2 __P((const struct sockaddr *,
-		const struct sockaddr *, int));
+char	*atalk_print2(const struct sockaddr *, const struct sockaddr *, int);

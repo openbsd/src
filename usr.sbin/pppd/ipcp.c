@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.7 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.8 2002/02/17 19:42:38 millert Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: ipcp.c,v 1.34 1998/04/28 23:38:09 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipcp.c,v 1.7 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ipcp.c,v 1.8 2002/02/17 19:42:38 millert Exp $";
 #endif
 #endif
 
@@ -101,8 +101,7 @@ static void ipcp_lowerup(int);
 static void ipcp_lowerdown(int);
 static void ipcp_input(int, u_char *, int);
 static void ipcp_protrej(int);
-static int  ipcp_printpkt __P((u_char *, int,
-			       void (*)(void *, char *, ...), void *));
+static int  ipcp_printpkt(u_char *, int, void (*)(void *, char *, ...), void *);
 static void ip_check_options(void);
 static int  ip_demand_conf(int);
 static int  ip_active_pkt(u_char *, int);

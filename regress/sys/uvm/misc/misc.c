@@ -55,10 +55,10 @@
 #include <unistd.h>
 #include <string.h>	/* for memset declaration (?) */
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
-int	check_residency __P((void *, int));
+int	check_residency(void *, int);
 
 int	pgsize;
 int	verbose;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.9 2002/02/16 21:27:39 millert Exp $
+.\"	$OpenBSD: audio.9,v 1.10 2002/02/17 19:42:29 millert Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,18 +55,18 @@ struct audio_hw_if {
 	int	(*drain)(void *);
 
 	int	(*query_encoding)(void *, struct audio_encoding *);
-	int	(*set_params)__P((void *, int, int,
-			struct audio_params *, struct audio_params *));
+	int	(*set_params)(void *, int, int,
+		    struct audio_params *, struct audio_params *);
 	int	(*round_blocksize)(void *, int);
 
 	int	(*commit_settings)(void *);
 
 	int	(*init_output)(void *, void *, int);
 	int	(*init_input)(void *, void *, int);
-	int	(*start_output)__P((void *, void *, int,
-				    void (*)(void *), void *));
-	int	(*start_input)__P((void *, void *, int,
-				   void (*)(void *), void *));
+	int	(*start_output)(void *, void *, int,
+		    void (*)(void *), void *);
+	int	(*start_input)(void *, void *, int,
+		    void (*)(void *), void *);
 	int	(*halt_output)(void *);
 	int	(*halt_input)(void *);
 
@@ -89,10 +89,10 @@ struct audio_hw_if {
 
 	int 	(*get_props)(void *);
 
-	int	(*trigger_output)__P((void *, void *, void *, int,
-			void (*)(void *), void *, struct audio_params *));
-	int	(*trigger_input)__P((void *, void *, void *, int,
-			void (*)(void *), void *, struct audio_params *));
+	int	(*trigger_output)(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
+	int	(*trigger_input)(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
 };
 
 struct audio_params {

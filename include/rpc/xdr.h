@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.4 2002/02/17 19:42:21 millert Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -291,9 +291,9 @@ extern void   xdrstdio_create(XDR *, FILE *, enum xdr_op);
 #endif
 
 /* XDR pseudo records for tcp */
-extern void   xdrrec_create	__P((XDR *, u_int, u_int, char *,
-				    int (*)(caddr_t, caddr_t, int),
-				    int (*)(caddr_t, caddr_t, int)));
+extern void   xdrrec_create(XDR *, u_int, u_int, char *,
+			    int (*)(caddr_t, caddr_t, int),
+			    int (*)(caddr_t, caddr_t, int));
 
 /* make end of xdr record */
 extern bool_t xdrrec_endofrecord(XDR *, int);

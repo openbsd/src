@@ -100,9 +100,9 @@ char *			graph_name(u_int32_t addr, char *buf);
 void			graph_edges(Node *node);
 void			elide_aliases(Node *node);
 void			graph_map(void);
-int			get_number __P((int *var, int deflt, char ***pargv,
-						int *pargc));
-u_int32_t			host_addr(char *name);
+int			get_number(int *var, int deflt, char ***pargv,
+			    int *pargc);
+u_int32_t		host_addr(char *name);
 
 
 Node *find_node(addr, ptr)

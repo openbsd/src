@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_validate.c,v 1.4 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: ns_validate.c,v 1.5 2002/02/17 19:42:37 millert Exp $	*/
 
 /**************************************************************************
  * ns_validate.c (was security.c in original ISI contribution)
@@ -28,12 +28,10 @@
 #ifdef VALIDATE
 
 static int		isvalid(struct namebuf *, int, int, char *, int),
-			check_addr_ns __P((struct databuf **,
-					   struct sockaddr_in *,
-					   char *)),
-			check_in_tables __P((struct databuf **,
-					     struct sockaddr_in *,
-					     char *));
+			check_addr_ns(struct databuf **,
+				      struct sockaddr_in *, char *),
+			check_in_tables(struct databuf **,
+					struct sockaddr_in *, char *);
 #if 0
 static void		stick_in_queue(char *, int, int, char *);
 #endif

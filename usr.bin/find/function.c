@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.22 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.23 2002/02/17 19:42:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.22 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.23 2002/02/17 19:42:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ static char rcsid[] = "$OpenBSD: function.c,v 1.22 2002/02/16 21:27:46 millert E
 	}								\
 }
 
-static PLAN *palloc __P((enum ntype, int (*)(PLAN *, FTSENT *)));
+static PLAN *palloc(enum ntype, int (*)(PLAN *, FTSENT *));
 
 extern int dotfd;
 extern time_t now;

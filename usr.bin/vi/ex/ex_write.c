@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.7 2002/02/17 19:42:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -274,8 +274,8 @@ exwr(sp, cmdp, cmd)
  * ex_writefp --
  *	Write a range of lines to a FILE *.
  *
- * PUBLIC: int ex_writefp __P((SCR *,
- * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int));
+ * PUBLIC: int ex_writefp(SCR *,
+ * PUBLIC:    char *, FILE *, MARK *, MARK *, u_long *, u_long *, int);
  */
 int
 ex_writefp(sp, name, fp, fm, tm, nlno, nch, silent)

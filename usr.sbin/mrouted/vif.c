@@ -45,8 +45,8 @@ static void DelVif(void *arg);
 static int SetTimer(int vifi, struct listaddr *g);
 static int DeleteTimer(int id);
 static void SendQuery(void *arg);
-static int SetQueryTimer __P((struct listaddr *g, vifi_t vifi, int to_expire,
-					int q_time));
+static int SetQueryTimer(struct listaddr *g, vifi_t vifi, int to_expire,
+    int q_time);
 
 
 /*

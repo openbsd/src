@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.12 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.13 2002/02/17 19:42:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -88,14 +88,6 @@ static	int	BUFSIZE;		/* maximum number in buffer */
 static	int	bufcnt;			/* current number in buffer */
 
 #define fixit(a) (a[0] ? a : ".")
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(a)	a
-#else
-#define __P(a)	()
-#endif
-#endif
 
 int expand(char *, char **, int);
 static void glob(char *);
