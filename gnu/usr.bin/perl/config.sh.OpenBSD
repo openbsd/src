@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.3 1996/08/20 18:01:36 downsj Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.4 1996/08/23 15:22:39 downsj Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -103,7 +103,7 @@ d_dirnamlen='define'
 if [ $_dynaload -ne 0 ]; then
 	d_dlerror='define'
 	d_dlopen='define'
-	d_dlsymun='define'
+	d_dlsymun=''
 else
 	d_dlerror='undef'
 	d_dlopen='undef'
