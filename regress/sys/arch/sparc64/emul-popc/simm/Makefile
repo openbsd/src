@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2003/07/10 15:19:55 jason Exp $
 
 # -O2 breaks this
 CFLAGS=-g
