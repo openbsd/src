@@ -99,6 +99,7 @@
 ./etc/rmt
 ./etc/rpc
 ./etc/security
+./etc/sensorsd.conf
 ./etc/services
 ./etc/shells
 ./etc/skel/.cshrc
