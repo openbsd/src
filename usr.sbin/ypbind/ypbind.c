@@ -1,3 +1,5 @@
+/*	$OpenBSD: ypbind.c,v 1.7 1996/06/08 08:24:51 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -31,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.6 1996/05/24 11:43:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.7 1996/06/08 08:24:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
