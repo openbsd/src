@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.11 2002/02/01 18:56:46 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.12 2002/03/04 23:02:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -36,6 +36,8 @@
  *	implement console scroll-back;
  *	X11 support.
  */
+
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +127,6 @@ sti_attach_common(sc)
 {
 	struct sti_inqconfout cfg;
 	bus_space_handle_t fbh;
-	struct wsemuldisplaydev_attach_args waa;
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
 	struct sti_fontcfg *ff;
@@ -346,14 +347,20 @@ sti_attach_common(sc)
 	sti_default_screen.fontwidth = ff->width;
 	sti_default_screen.fontheight = ff->height;
 
-	/* attach WSDISPLAY */
-	bzero(&waa, sizeof(waa));
-	waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
-	waa.scrdata = &sti_default_screenlist;
-	waa.accessops = &sti_accessops;
-	waa.accesscookie = sc;
+#if NWSDISPLAY > 0
+	{
+		struct wsemuldisplaydev_attach_args waa;
 
-	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+		/* attach WSDISPLAY */
+		bzero(&waa, sizeof(waa));
+		waa.console = sc->sc_flags & STI_CONSOLE? 1 : 0;
+		waa.scrdata = &sti_default_screenlist;
+		waa.accessops = &sti_accessops;
+		waa.accesscookie = sc;
+
+		config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+	}
+#endif
 }
 
 int
