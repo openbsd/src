@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2003/09/03 01:15:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2003/09/03 14:48:57 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,6 +64,7 @@
 #include <machine/locore.h>
 #ifdef M88100
 #include <machine/m88100.h>
+#include <machine/m8820x.h>
 #endif
 #ifdef M88110
 #include <machine/m88110.h>
@@ -341,7 +342,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 #endif 
 
 		switch (pbus_type) {
-		case 3:	/* bus error */
+		case CMMU_PFSR_BERROR:
 			/*
 		 	 * If it is a guarded access, bus error is OK.
 		 	 */
@@ -368,7 +369,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 				return;
 			}
 			break;
-		case 0: /* no fault */
+		case CMMU_PFSR_SUCCESS:
 			/*
 			 * The fault was resolved. Call data_access_emulation 
 			 * to drain the data unit pipe line and reset dmt0 
@@ -379,8 +380,8 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			frame->dpfsr = 0;
 			frame->dmt0 = 0;
 			return;
-		case 4:	/* seg fault */
-		case 5:	/* page fault */
+		case CMMU_PFSR_SFAULT:
+		case CMMU_PFSR_PFAULT:
 			result = uvm_fault(map, va, 0, ftype);
 			if (result == 0) {
 				/*
@@ -457,11 +458,11 @@ user_fault:
 		/* Call uvm_fault() to resolve non-bus error faults */
 		switch (pbus_type) {
 #if 0
-		case 0:
+		case CMMU_PFSR_SUCCESS:
 			result = 0;
 			break;
 #endif
-		case 3:
+		case CMMU_PFSR_BERROR:
 			result = EACCES;
 			break;
 		default:
@@ -513,7 +514,8 @@ user_fault:
 			 * (behaviour experienced on MVME187C)
 			 */
 			if (va == 0 && type == (T_DATAFLT + T_USER) &&
-			    pbus_type == 5 && SYSTEMMODE(frame->epsr)) {
+			    pbus_type == CMMU_PFSR_PFAULT &&
+			    SYSTEMMODE(frame->epsr)) {
 				frame->dpfsr = 0;
 				frame->dmt0 = 0;
 			}
