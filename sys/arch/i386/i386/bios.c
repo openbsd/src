@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.27 2000/04/16 05:07:29 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.28 2000/07/25 22:36:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -81,7 +81,7 @@ struct cfdriver bios_cd = {
 
 extern dev_t bootdev;
 
-#if NAPM > 0
+#if NAPM > 0 || defined(DEBUG)
 bios_apminfo_t *apm;
 #endif
 #if NPCI > 0
@@ -220,6 +220,9 @@ bios_getopt()
 				extern int comdefaultrate; /* ic/com.c */
 				comdefaultrate = cdp->conspeed;
 #endif
+				printf(" console 0x%x:%d",
+				    cdp->consdev, cdp->conspeed);
+
 				cnset(cdp->consdev);
 			}
 			break;
