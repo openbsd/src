@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.37 2004/06/26 13:53:55 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.38 2004/06/28 21:27:40 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -294,8 +294,8 @@ and
 .Fl netmask .
 For example:
 .Bd -literal -offset indent
-# route add src 180.83.46.98 180.83.46.97
-# route add src 192.168.10/24 dst 10.5.1/24 180.83.46.97
+# route add -src 180.83.46.98 180.83.46.97
+# route add -src 192.168.10/24 -dst 10.5.1/24 180.83.46.97
 .Ed
 .Pp
 In a
@@ -334,9 +334,9 @@ the routing tables.
 Default gateway address.
 .El
 .Sh DIAGNOSTICS
-.Bl -tag -width Ds
-.It Sy "add [host \&| network ] %s: gateway %s flags %x"
-The specified route is being added to the tables.
+.Bl -diag
+.It "%s: gateway %s flags %x"
+The specified route is being added to or deleted from the tables.
 The values printed are from the routing table entry supplied in the
 .Xr ioctl 2
 call.
@@ -344,23 +344,21 @@ If the gateway address used was not the primary address of the gateway
 (the first one returned by
 .Xr gethostbyname 3 ) ,
 the gateway address is printed numerically as well as symbolically.
-.It Sy "delete [ host &| network ] %s: gateway %s flags %x"
-As above, but when deleting an entry.
-.It Sy "%s %s done"
+.It "%s %s done"
 When the
 .Cm flush
 command is specified, each routing table entry deleted
 is indicated with a message of this form.
-.It Sy "Network is unreachable"
+.It "Network is unreachable"
 An attempt to add a route failed because the gateway listed was not
 on a directly connected network.
 The next-hop gateway must be given.
-.It Sy "not in table"
+.It "not in table"
 A
 .Cm delete
 operation was attempted for an entry which
 wasn't present in the tables.
-.It Sy "routing table overflow"
+.It "routing table overflow"
 An
 .Cm add
 operation was attempted, but the system was
@@ -396,5 +394,7 @@ message if there is no default route.
 See case
 .Dv RTM_ADD
 in
-.Pa sys/net/rtsock.c:route_output
+.Fn route_output
+from
+.Pa sys/net/rtsock.c
 for details.
