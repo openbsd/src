@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.5 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -592,13 +592,7 @@ OF_stdout()
  * This is not safe, but then what do you expect?
  */
 void
-#ifdef __STDC__
 prom_printf(const char *fmt, ...)
-#else
-prom_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	int len;
 	static char buf[256];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_output.c,v 1.3 1996/05/10 12:31:15 deraadt Exp $	*/
+/*	$OpenBSD: hd_output.c,v 1.4 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: hd_output.c,v 1.7 1996/05/07 02:36:06 thorpej Exp $	*/
 
 /*
@@ -70,13 +70,7 @@
  */
 
 int
-#if __STDC__
 hd_output(struct mbuf *m0, ...)
-#else
-hd_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	register struct hdcb *hdp;
 	register struct mbuf *m = m0;
@@ -211,13 +205,7 @@ hd_send_iframe(hdp, buf, poll_bit)
 }
 
 int
-#if __STDC__
 hd_ifoutput(struct mbuf *m, ...)
-#else
-hd_ifoutput(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct hdcb *hdp;
 	register struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.11 2001/06/27 03:49:55 angelos Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.12 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -81,13 +81,7 @@ u_short spp_newchecks[50];
 
 /*ARGSUSED*/
 void
-#if __STDC__
 spp_input(struct mbuf *m, ...)
-#else
-spp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct nspcb *nsp;
 	register struct sppcb *cb;
@@ -739,13 +733,7 @@ register struct nspcb *nsp;
 #endif
 
 int
-#if __STDC__
 spp_output(struct mbuf *m0, ...)
-#else
-spp_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	register struct sppcb *cb = NULL;
 	struct socket *so;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.46 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.47 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -286,13 +286,7 @@ struct sockaddr_in icmpmask = { 8, 0 };
  * Process a received ICMP message.
  */
 void
-#if __STDC__
 icmp_input(struct mbuf *m, ...)
-#else
-icmp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct icmp *icp;
 	register struct ip *ip = mtod(m, struct ip *);

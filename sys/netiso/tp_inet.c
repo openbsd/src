@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.7 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.8 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -374,13 +374,7 @@ tpip_mtu(v)
  */
 
 int
-#if __STDC__
 tpip_output(struct mbuf *m0, ...)
-#else
-tpip_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	struct inpcb   *inp;
@@ -417,13 +411,7 @@ tpip_output(m0, va_alist)
 
 /* ARGSUSED */
 int
-#if __STDC__
 tpip_output_dg(struct mbuf *m0, ...)
-#else
-tpip_output_dg(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	struct in_addr *laddr, *faddr;
@@ -512,13 +500,7 @@ bad:
  * NOTES:
  */
 void
-#if __STDC__
 tpip_input(struct mbuf *m, ...)
-#else
-tpip_input(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	int             iplen;
 	struct sockaddr_in src, dst;

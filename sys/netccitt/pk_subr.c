@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_subr.c,v 1.5 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: pk_subr.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
 
 /*
@@ -1142,15 +1142,7 @@ format_ntn(xcp)
 
 /* VARARGS1 */
 void
-#if __STDC__
 pk_message(int lcn, struct x25config * xcp, char * fmt,...)
-#else
-pk_message(lcn, xcp, fmt, va_alist)
-	int             lcn;
-	struct x25config *xcp;
-	char           *fmt;
-	va_dcl
-#endif
 {
 	va_list         ap;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_output.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: ddp_output.c,v 1.5 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -99,13 +99,7 @@ int ddp_route(struct mbuf *, struct route * );
 int	ddp_cksum = 1;
 
 int
-#if __STDC__
 ddp_output(struct mbuf *m, ...)
-#else
-ddp_output(m, va_alist)
-	struct mbuf	*m;
-	va_dcl
-#endif
 {
     struct ddpcb	*ddp;
     struct ddpehdr	*deh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.7 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.8 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -323,16 +323,7 @@ OF_package_to_path(phandle, buf, buflen)
  * The following two functions may need to be re-worked to be 64-bit clean.
  */
 int
-#ifdef	__STDC__
 OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
-#else
-OF_call_method(method, ihandle, nargs, nreturns, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	int nreturns;
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct {
@@ -370,15 +361,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 }
 
 int
-#ifdef	__STDC__
 OF_call_method_1(char *method, int ihandle, int nargs, ...)
-#else
-OF_call_method_1(method, ihandle, nargs, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct {
@@ -726,14 +709,7 @@ OF_set_symbol_lookup(s2v, v2s)
 }
 
 int
-#ifdef	__STDC__
 OF_interpret(char *cmd, int nreturns, ...)
-#else
-OF_interpret(cmd, nreturns, va_alist)
-	char *cmd;
-	int nreturns;
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_output.c,v 1.3 1999/01/11 05:12:29 millert Exp $	*/
+/*	$OpenBSD: llc_output.c,v 1.4 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: llc_output.c,v 1.3 1996/02/13 22:04:47 christos Exp $	*/
 
 /* 
@@ -69,13 +69,7 @@
  */
 
 int
-#if __STDC__
 llc_output(struct mbuf *m, ...)
-#else
-llc_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct llc_linkcb *linkp;
 	register int    i = splimp();

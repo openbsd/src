@@ -1,4 +1,4 @@
-/*	$OpenBSD: idp_usrreq.c,v 1.4 1997/01/18 17:31:02 briggs Exp $	*/
+/*	$OpenBSD: idp_usrreq.c,v 1.5 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: idp_usrreq.c,v 1.9 1996/02/13 22:13:43 christos Exp $	*/
 
 /*
@@ -67,13 +67,7 @@
  *  This may also be called for raw listeners.
  */
 void
-#if __STDC__
 idp_input(struct mbuf *m, ...)
-#else
-idp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct nspcb *nsp;
 	register struct idp *idp = mtod(m, struct idp *);
@@ -161,13 +155,7 @@ idp_drop(nsp, errno)
 int noIdpRoute;
 
 int
-#if __STDC__
 idp_output(struct mbuf *m0, ...)
-#else
-idp_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	register struct mbuf *m;

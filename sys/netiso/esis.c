@@ -1,4 +1,4 @@
-/*	$OpenBSD: esis.c,v 1.6 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: esis.c,v 1.7 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: esis.c,v 1.14 1996/05/07 02:45:04 thorpej Exp $	*/
 
 /*-
@@ -245,13 +245,7 @@ release:
  * NOTES:
  */
 void
-#if __STDC__
 esis_input(struct mbuf *m0, ...)
-#else
-esis_input(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
 	register struct esis_fixed *pdu = mtod(m0, struct esis_fixed *);
@@ -1003,13 +997,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
  * NOTES:
  */
 void
-#if __STDC__
 isis_input(struct mbuf *m0, ...)
-#else
-isis_input(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
 	register struct rawcb *rp, *first_rp = 0;
@@ -1072,13 +1060,7 @@ isis_input(m0, va_alist)
 }
 
 int
-#if __STDC__
 isis_output(struct mbuf *m, ...)
-#else
-isis_output(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	register struct sockaddr_dl *sdl;
 	register struct ifnet *ifp;

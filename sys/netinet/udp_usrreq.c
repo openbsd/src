@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.75 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.76 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -151,13 +151,7 @@ udp6_input(mp, offp, proto)
 #endif
 
 void
-#if __STDC__
 udp_input(struct mbuf *m, ...)
-#else
-udp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct ip *ip;
 	register struct udphdr *uh;
@@ -870,13 +864,7 @@ udp_ctlinput(cmd, sa, v)
 }
 
 int
-#if __STDC__
 udp_output(struct mbuf *m, ...)
-#else
-udp_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct inpcb *inp;
 	struct mbuf *addr, *control;

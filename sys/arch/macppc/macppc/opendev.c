@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.5 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -100,16 +100,7 @@ OF_package_to_path(phandle, buf, buflen)
 
 
 int
-#ifdef	__STDC__
 OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
-#else
-OF_call_method(method, ihandle, nargs, nreturns, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	int nreturns;
-	va_dcl
-#endif
 {
 	va_list ap;
 	static struct {
@@ -150,15 +141,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	return 0;
 }
 int
-#ifdef	__STDC__
 OF_call_method_1(char *method, int ihandle, int nargs, ...)
-#else
-OF_call_method_1(method, ihandle, nargs, va_alist)
-	char *method;
-	int ihandle;
-	int nargs;
-	va_dcl
-#endif
 {
 	va_list ap;
 	static struct {

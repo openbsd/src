@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.108 2002/03/09 05:13:04 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.109 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -386,12 +386,7 @@ tcp6_input(mp, offp, proto)
  * protocol specification dated September, 1981 very closely.
  */
 void
-#if __STDC__
 tcp_input(struct mbuf *m, ...)
-#else
-tcp_input(m, va_alist)
-	struct mbuf *m;
-#endif
 {
 	struct ip *ip;
 	struct inpcb *inp;

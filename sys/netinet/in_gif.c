@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.22 2001/12/07 09:32:45 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.23 2002/03/15 18:19:52 millert Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -166,13 +166,7 @@ in_gif_output(ifp, family, m, rt)
 }
 
 void
-#if __STDC__
 in_gif_input(struct mbuf *m, ...)
-#else
-in_gif_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off;
 	struct gif_softc *sc;

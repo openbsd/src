@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_input.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_input.c,v 1.5 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: tp_input.c,v 1.9 1996/03/16 23:13:51 christos Exp $	*/
 
 /*-
@@ -418,13 +418,7 @@ ok:
  * reasonable minimum.
  */
 void
-#if __STDC__
 tp_input(struct mbuf *m, ...)
-#else
-tp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;	/* NSAP addresses */
 	caddr_t         cons_channel;

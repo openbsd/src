@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_output.c,v 1.2 1996/03/04 08:20:28 niklas Exp $	*/
+/*	$OpenBSD: ns_output.c,v 1.3 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: ns_output.c,v 1.8 1996/02/13 22:14:01 christos Exp $	*/
 
 /*
@@ -61,13 +61,7 @@ int ns_output_cnt = 0;
 struct mbuf *ns_lastout;
 
 int
-#if __STDC__
 ns_output(struct mbuf *m0, ...)
-#else
-ns_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct route *ro;
 	int flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_cons.c,v 1.7 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_cons.c,v 1.8 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
@@ -222,13 +222,7 @@ tpcons_ctlinput(cmd, siso, v)
  * No return value.
  */
 void
-#if __STDC__
 tpcons_input(struct mbuf *m, ...)
-#else
-tpcons_input(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;
 	caddr_t         channel;
@@ -266,13 +260,7 @@ tpcons_input(m, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct isopcb  *isop;
 	int             datalen;
@@ -341,13 +329,7 @@ tpcons_output(m0, va_alist)
  */
 
 int
-#if __STDC__
 tpcons_output_dg(struct mbuf *m0, ...)
-#else
-tpcons_output_dg(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	caddr_t         chan;
@@ -371,13 +353,7 @@ struct mbuf;
 int tpcons_output(struct mbuf *m0, ...);
 
 int
-#if __STDC__
 tpcons_output(struct mbuf *m0, ...)
-#else
-tpcons_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	return 0;
 }

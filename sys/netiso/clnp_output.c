@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_output.c,v 1.3 1996/04/21 22:29:16 deraadt Exp $	*/
+/*	$OpenBSD: clnp_output.c,v 1.4 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: clnp_output.c,v 1.9 1996/04/13 01:34:32 cgd Exp $	*/
 
 /*-
@@ -181,13 +181,7 @@ int             clnp_id = 0;	/* id for segmented dgrams */
  *			iso_addrmatch1.
  */
 int
-#if __STDC__
 clnp_output(struct mbuf *m0, ...)
-#else
-clnp_output(m0, va_alist)
-	struct mbuf    *m0;	/* data for the packet */
-	va_dcl
-#endif
 {
 	struct isopcb  *isop;	/* iso pcb */
 	int             datalen;/* number of bytes of data in m0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.3 2002/03/14 01:27:13 millert Exp $ */
+/*	$OpenBSD: ses.c,v 1.4 2002/03/15 18:19:53 millert Exp $ */
 /*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
@@ -594,7 +594,6 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 	return (error);
 }
 
-#ifdef	__STDC__
 static void
 ses_log(struct ses_softc *ssc, const char *fmt, ...)
 {
@@ -605,21 +604,6 @@ ses_log(struct ses_softc *ssc, const char *fmt, ...)
 	vprintf(fmt, ap);
 	va_end(ap);
 }
-#else
-static void
-ses_log(ssc, fmt, va_alist)
-	struct ses_softc *ssc;
-	char *fmt;
-	va_dcl
-{
-	va_list ap;
-
-	printf("%s: ", ssc->sc_device.dv_xname);
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-#endif
 
 /*
  * The code after this point runs on many platforms,

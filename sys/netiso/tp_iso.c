@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_iso.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.5 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
@@ -386,13 +386,7 @@ tpclnp_mtu(v)
  */
 
 int
-#if __STDC__
 tpclnp_output(struct mbuf *m0, ...)
-#else
-tpclnp_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	int             datalen;
 	struct isopcb  *isop;
@@ -439,13 +433,7 @@ tpclnp_output(m0, va_alist)
  */
 
 int
-#if __STDC__
 tpclnp_output_dg(struct mbuf *m0, ...)
-#else
-tpclnp_output_dg(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct isopcb   tmppcb;
 	int             err;
@@ -515,13 +503,7 @@ tpclnp_output_dg(m0, va_alist)
  * No return value.
  */
 void
-#if __STDC__
 tpclnp_input(struct mbuf *m, ...)
-#else
-tpclnp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src, *dst;
 	int             clnp_len, ce_bit;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.5 2002/03/14 01:27:11 millert Exp $ */
+/* $OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -92,14 +92,8 @@ u_int16_t ip_randomid(void);
  * of 0 - (mod-1)
  */
 
-#ifdef __STDC__
 static u_int16_t
 pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
-#else
-static u_int16_t
-pmod(gen, exp, mod)
-	u_int16_t gen, exp, mod;
-#endif
 {
 	u_int16_t s, t, u;
 

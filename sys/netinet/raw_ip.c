@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.24 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.25 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -121,13 +121,7 @@ struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
  * mbuf chain.
  */
 void
-#if __STDC__
 rip_input(struct mbuf *m, ...)
-#else
-rip_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct inpcb *inp;
@@ -184,13 +178,7 @@ rip_input(m, va_alist)
  * Tack on options user may have setup with control call.
  */
 int
-#if __STDC__
 rip_output(struct mbuf *m, ...)
-#else
-rip_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct socket *so;
 	u_long dst;

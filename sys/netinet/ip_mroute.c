@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.24 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.25 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)ip_mroute.c 8.2 (Berkeley) 11/15/93
- * $Id: ip_mroute.c,v 1.24 2002/03/14 01:27:11 millert Exp $
+ * $Id: ip_mroute.c,v 1.25 2002/03/15 18:19:52 millert Exp $
  */
 
 /*
@@ -1496,13 +1496,7 @@ encap_send(ip, vifp, m)
  * ENCAP_PROTO and a local destination address).
  */
 void
-#if __STDC__
 ipip_mroute_input(struct mbuf *m, ...)
-#else
-ipip_mroute_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register int hlen;
 	register struct ip *ip = mtod(m, struct ip *);

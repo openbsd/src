@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.142 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.143 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -97,13 +97,7 @@ static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
  * The mbuf opt, if present, will not be freed.
  */
 int
-#if __STDC__
 ip_output(struct mbuf *m0, ...)
-#else
-ip_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	register struct ip *ip, *mhip;
 	register struct ifnet *ifp;

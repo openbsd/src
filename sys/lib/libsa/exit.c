@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.5 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: exit.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -28,21 +28,13 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef __STDC__
+
 #include <machine/stdarg.h>
-#else
-#include <machine/varargs.h>
-#endif
 
 #include "stand.h"
 
 __dead void
-#ifdef __STDC__
 panic(const char *fmt, ...)
-#else
-panic(fmt /*, va_alist */)
-	char *fmt;
-#endif
 {
     extern void closeall(void);
     va_list ap;
@@ -53,11 +45,7 @@ panic(fmt /*, va_alist */)
         closeall();
     }
 
-#ifdef __STDC__
     va_start(ap, fmt);
-#else
-    va_start(ap);
-#endif
     vprintf(fmt, ap);
     printf("\n");
     va_end(ap);

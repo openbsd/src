@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.13 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.14 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -118,13 +118,7 @@ rti_delete(ifp)
 }
 
 void
-#if __STDC__
 igmp_input(struct mbuf *m, ...)
-#else
-igmp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register int iphlen;
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.20 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.21 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -176,13 +176,7 @@ route_usrreq(so, req, m, nam, control)
 
 /*ARGSUSED*/
 int
-#if __STDC__
 route_output(struct mbuf *m, ...)
-#else
-route_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct rt_msghdr *rtm = 0;
 	register struct radix_node *rn = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.16 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.17 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -61,17 +61,8 @@
  * The VM space and limits, etc. will be shared with proc0.
  */
 int
-#if __STDC__
 kthread_create(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
-#else
-kthread_create(func, arg, newpp, fmt, va_alist)
-	void (*func)(void *);
-	void *arg;
-	struct proc **newpp;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	struct proc *p2;
 	register_t rv[2];

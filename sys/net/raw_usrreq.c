@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.4 2001/12/11 05:13:37 jason Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.5 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -71,13 +71,7 @@ raw_init()
  * Raw protocol interface.
  */
 void
-#if __STDC__
 raw_input(struct mbuf *m0, ...)
-#else
-raw_input(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	register struct rawcb *rp;
 	register struct mbuf *m = m0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: idrp_usrreq.c,v 1.2 1996/03/04 10:35:20 mickey Exp $	*/
+/*	$OpenBSD: idrp_usrreq.c,v 1.3 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: idrp_usrreq.c,v 1.5 1996/02/13 22:09:33 christos Exp $	*/
 
 /*
@@ -88,13 +88,7 @@ idrp_init()
  * No return value.
  */
 void
-#if __STDC__
 idrp_input(struct mbuf *m, ...)
-#else
-idrp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src, *dst;
 	va_list ap;
@@ -121,13 +115,7 @@ bad:		m_freem(m);
 }
 
 int
-#if __STDC__
 idrp_output(struct mbuf *m, ...)
-#else
-idrp_output(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct mbuf *addr;
 	register struct sockaddr_iso *siso;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.3 1999/04/20 20:01:02 mickey Exp $	*/
+/*	$OpenBSD: lf.c,v 1.4 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -38,12 +38,7 @@
 #include "dev_hppa.h"
 
 int
-#ifdef __STDC__
 lfopen(struct open_file *f, ...)
-#else
-lfopen(f, va_alist)
-	struct open_file *f;
-#endif
 {
 	register struct hppa_dev *dp = f->f_devdata;;
 

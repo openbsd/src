@@ -1,4 +1,4 @@
-/*	$OpenBSD: cltp_usrreq.c,v 1.2 1996/03/04 10:35:06 mickey Exp $	*/
+/*	$OpenBSD: cltp_usrreq.c,v 1.3 2002/03/15 18:19:53 millert Exp $	*/
 /*	$NetBSD: cltp_usrreq.c,v 1.9 1996/02/13 22:08:59 christos Exp $	*/
 
 /*
@@ -79,13 +79,7 @@ int             cltp_cksum = 1;
 
 /* ARGUSED */
 void
-#if __STDC__
 cltp_input(struct mbuf *m0, ...)
-#else
-cltp_input(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct sockaddr *srcsa, *dstsa;
 	u_int           cons_channel;
@@ -222,13 +216,7 @@ cltp_ctlinput(cmd, sa, dummy)
 }
 
 int
-#if __STDC__
 cltp_output(struct mbuf *m, ...)
-#else
-cltp_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct isopcb *isop;
 	register int    len;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.14 2002/03/14 03:16:11 millert Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.15 2002/03/15 18:19:52 millert Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -216,13 +216,7 @@ gre_input2(m , hlen, proto)
  * IPPROTO_GRE and a local destination address).
  */
 void
-#if __STDC__
 gre_input(struct mbuf *m, ...)
-#else
-gre_input(m, va_alist)
-        struct mbuf *m;
-        va_dcl
-#endif
 {
 	register int hlen,ret;
 	va_list ap;
@@ -254,13 +248,7 @@ gre_input(m, va_alist)
  */
 
 void
-#if __STDC__
 gre_mobile_input(struct mbuf *m, ...)
-#else
-gre_mobile_input(m, va_alist)
-        struct mbuf *m;
-        va_dcl
-#endif
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct mobip_h *mip = mtod(m, struct mobip_h *);

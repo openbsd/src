@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_input.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: pk_input.c,v 1.5 2002/03/15 18:19:52 millert Exp $	*/
 /*	$NetBSD: pk_input.c,v 1.7 1996/02/13 22:05:21 christos Exp $	*/
 
 /*
@@ -340,13 +340,7 @@ struct mbuf_cache pk_input_cache = {0};
 	 ((xp)->packet_cause >= X25_RESTART_DTE_ORIGINATED2))
 
 void
-#if __STDC__
 pk_input(struct mbuf *m, ...)
-#else
-pk_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	register struct x25_packet *xp;
 	register struct pklcd *lcp;
