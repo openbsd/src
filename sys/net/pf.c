@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.237 2002/07/12 15:52:26 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.238 2002/07/15 17:52:44 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2298,8 +2298,6 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
-		else if (r->ifp != NULL && r->ifp != ifp)
-			r = TAILQ_NEXT(r, entries);
 		else if (r->type && r->type != icmptype + 1)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->code && r->code != icmpcode + 1)
