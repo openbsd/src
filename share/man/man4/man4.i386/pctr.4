@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.16 2002/10/01 07:14:14 miod Exp $
+.\"	$OpenBSD: pctr.4,v 1.17 2003/03/07 09:39:07 jmc Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -352,7 +352,7 @@ Total lines allocated in the DCU.
 Number of M state lines allocated in the DCU.
 .It 0x47 DCU_M_LINES_OUT
 Number of M state lines evicted from the DCU.
-This includes evictions via snoop HITM, intervention or replacement
+This includes evictions via snoop HITM, intervention or replacement.
 .It 0x48 DCU_MISS_OUTSTANDING
 Weighted number of cycles while a DCU miss is outstanding.
 .It 0x60 BUS_REQ_OUTSTANDING
@@ -409,10 +409,10 @@ Number of instruction fetch misses.
 Number of ITLB misses.
 .It 0x86 IFU_MEM_STALL
 Number of cycles that the instruction fetch pipe stage is stalled,
-including cache mises, ITLB misses, ITLB faults, and victim cache
-evictions
+including cache misses, ITLB misses, ITLB faults, and victim cache
+evictions.
 .It 0x87 ILD_STALL
-Number of cycles that the instruction length decoder is stalled
+Number of cycles that the instruction length decoder is stalled.
 .It 0xa2 RESOURCE_STALLS
 Number of cycles during which there are resource-related stalls.
 .It 0xc0 INST_RETIRED
