@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.789 2004/10/30 14:12:16 deraadt Exp $
+$OpenBSD: pcidevs,v 1.790 2004/11/06 01:54:12 reyk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -268,6 +268,7 @@ vendor	ADP		0x9004	Adaptec
 vendor	ADP2		0x9005	Adaptec
 vendor	ATRONICS	0x907f	Atronics
 vendor	NETMOS		0x9710	NetMos
+vendor	3COM2		0xa727	3Com
 vendor	TIGERJET	0xe159	TigerJet Network
 vendor	ENDACE		0xeace	Endace
 vendor	BELKIN		0xec80	Belkin Components
@@ -289,6 +290,8 @@ product O2MICRO OZ6972		0x6972	OZ69[17]2 CardBus
 /* 3Com Products */
 product 3COM 3C985		0x0001	3c985
 product 3COM 3C996		0x0003	3c996
+product 3COM 3CRDAG675		0x0013	3CRDAG675 (Atheros AR5212)
+product 3COM2 3CRPAG175		0x0013	3CRPAG175 (Atheros AR5212)
 product 3COM 3C_MPCI_MODEM	0x1007	V.90 Modem
 product 3COM 3C940		0x1700	3c940
 product 3COM 3C339		0x3390	3c339
@@ -737,6 +740,7 @@ product ATHEROS AR5311		0x0011 AR5211
 product ATHEROS AR5211		0x0012 AR5211
 product ATHEROS AR5212		0x0013 AR5212
 product ATHEROS AR5210_AP	0x0207 AR5210 (Early)
+product ATHEROS AR5212_IBM	0x1014 AR5212 (IBM MiniPCI)
 product ATHEROS AR5210_DEFAULT	0x1107 AR5210 (no eeprom)
 product ATHEROS AR5212_DEFAULT	0x1113 AR5212 (no eeprom)
 product ATHEROS AR5211_DEFAULT	0x1112 AR5211 (no eeprom)
