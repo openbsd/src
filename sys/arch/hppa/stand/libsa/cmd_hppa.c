@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.2 2002/03/06 23:09:44 miod Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.3 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -90,19 +90,19 @@ struct consoledev graphics[MAX_GRAPHICS];
 
 int walked;
 
-void bus_walk __P((int));
-void register_device __P((struct consoledev *, int,
-			  struct device_path *, struct iodc_data *, int, int));
+void bus_walk(int);
+void register_device(struct consoledev *, int,
+			  struct device_path *, struct iodc_data *, int, int);
 
-int Xconsole __P((void));
-void print_console __P((void));
-int set_graphics __P((struct device_path *, int, char *));
-int set_serial __P((struct device_path *, int, char *));
-int set_console __P((struct device_path *));
+int Xconsole(void);
+void print_console(void);
+int set_graphics(struct device_path *, int, char *);
+int set_serial(struct device_path *, int, char *);
+int set_console(struct device_path *);
 
-int Xkeyboard __P((void));
-void print_keyboard __P((void));
-int set_keyboard __P((struct device_path *));
+int Xkeyboard(void);
+void print_keyboard(void);
+int set_keyboard(struct device_path *);
 
 struct cmd_table cmd_machine[] = {
 	{ "console",	CMDT_CMD,	Xconsole },

@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.21 2001/12/05 01:57:14 provos Exp $ */
+/* $OpenBSD: param.h,v 1.22 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -165,7 +165,7 @@ void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
 
 /* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0 __P((void));			/* drop ipl to zero */
+int spl0(void);			/* drop ipl to zero */
 /* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */

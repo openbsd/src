@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.13 2001/02/20 19:39:30 mickey Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.14 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.14 1997/03/18 18:44:53 veego Exp $	*/
 
 /*
@@ -133,25 +133,25 @@ struct	ae_softc {
 /* offsets for:	   ID,   REGS,    MEM */
 int	aestd[] = { 0, 0x0370, 0x8000 };
 
-int	aematch __P((struct device *, void *, void *));
-void	aeattach __P((struct device *, struct device *, void *));
-void	aewatchdog __P((struct ifnet *));
-void	aestop __P((struct ae_softc *));
-void	aememinit __P((struct ae_softc *));
-void	aereset __P((struct ae_softc *));
-void	aeinit __P((struct ae_softc *));
-void	aestart __P((struct ifnet *));
-int	aeintr __P((void *));
-void	aetint __P((struct ae_softc *));
-void	aerint __P((struct ae_softc *));
-void	aeread __P((struct ae_softc *, u_char *, int));
-static	void wcopyfrom __P((char *, char *, int));
-static	void wcopyto __P((char *, char *, int));
-static	void wzero __P((char *, int));
-int	aeput __P((char *, struct mbuf *));
-struct	mbuf *aeget __P((struct ae_softc *, u_char *, int));
-int	aeioctl __P((struct ifnet *, u_long, caddr_t));
-void	aesetladrf __P((struct arpcom *, u_int16_t *));
+int	aematch(struct device *, void *, void *);
+void	aeattach(struct device *, struct device *, void *);
+void	aewatchdog(struct ifnet *);
+void	aestop(struct ae_softc *);
+void	aememinit(struct ae_softc *);
+void	aereset(struct ae_softc *);
+void	aeinit(struct ae_softc *);
+void	aestart(struct ifnet *);
+int	aeintr(void *);
+void	aetint(struct ae_softc *);
+void	aerint(struct ae_softc *);
+void	aeread(struct ae_softc *, u_char *, int);
+static	void wcopyfrom(char *, char *, int);
+static	void wcopyto(char *, char *, int);
+static	void wzero(char *, int);
+int	aeput(char *, struct mbuf *);
+struct	mbuf *aeget(struct ae_softc *, u_char *, int);
+int	aeioctl(struct ifnet *, u_long, caddr_t);
+void	aesetladrf(struct arpcom *, u_int16_t *);
 
 struct cfattach ae_ca = {
 	sizeof(struct ae_softc), aematch, aeattach

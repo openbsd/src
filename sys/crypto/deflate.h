@@ -1,4 +1,4 @@
-/* $OpenBSD: deflate.h,v 1.2 2001/07/16 15:25:40 jjbg Exp $ */
+/* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -42,9 +42,9 @@
 #define MINCOMP		2	/* won't be used, but must be defined */
 #define ZBUF		10
 
-u_int32_t deflate_global __P((u_int8_t *, u_int32_t, int, u_int8_t **));
-void *z_alloc __P((void *, u_int, u_int));
-void z_free     __P((void *, void *, u_int));
+u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **);
+void *z_alloc(void *, u_int, u_int);
+void z_free(void *, void *, u_int);
 
 struct deflate_buf {
 	u_int8_t *out;

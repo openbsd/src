@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.1 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.2 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -58,8 +58,8 @@
 #include <scsi/atapi_disk.h>
 #include <scsi/sdvar.h>
 
-static int	sd_atapibus_get_parms __P((struct sd_softc *,
-		    struct disk_parms *, int));
+static int	sd_atapibus_get_parms(struct sd_softc *,
+		    struct disk_parms *, int);
 
 const struct sd_ops sd_atapibus_ops = {
 	sd_atapibus_get_parms,

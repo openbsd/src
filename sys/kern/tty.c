@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.50 2002/01/30 20:45:35 nordin Exp $	*/
+/*	$OpenBSD: tty.c,v 1.51 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -65,16 +65,16 @@
 #include <uvm/uvm_extern.h>
 #include <dev/rndvar.h>
 
-static int ttnread __P((struct tty *));
-static void ttyblock __P((struct tty *));
-void ttyunblock __P((struct tty *));
-static void ttyecho __P((int, struct tty *));
-static void ttyrubo __P((struct tty *, int));
-static int proc_compare __P((struct proc *, struct proc *));
-int	filt_ttyread __P((struct knote *kn, long hint));
-void 	filt_ttyrdetach __P((struct knote *kn));
-int	filt_ttywrite __P((struct knote *kn, long hint));
-void 	filt_ttywdetach __P((struct knote *kn));
+static int ttnread(struct tty *);
+static void ttyblock(struct tty *);
+void ttyunblock(struct tty *);
+static void ttyecho(int, struct tty *);
+static void ttyrubo(struct tty *, int);
+static int proc_compare(struct proc *, struct proc *);
+int	filt_ttyread(struct knote *kn, long hint);
+void 	filt_ttyrdetach(struct knote *kn);
+int	filt_ttywrite(struct knote *kn, long hint);
+void 	filt_ttywdetach(struct knote *kn);
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";

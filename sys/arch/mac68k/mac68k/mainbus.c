@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 1997/03/12 13:37:01 briggs Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.7 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.7 1996/12/17 06:47:41 scottr Exp $	*/
 
 /*
@@ -41,9 +41,9 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-static int	mainbus_match __P((struct device *, void *, void *));
-static void	mainbus_attach __P((struct device *, struct device *, void *));
-static int	mainbus_search __P((struct device *, void *, void *));
+static int	mainbus_match(struct device *, void *, void *);
+static void	mainbus_attach(struct device *, struct device *, void *);
+static int	mainbus_search(struct device *, void *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach

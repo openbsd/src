@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.8 2001/11/05 19:45:34 art Exp $ */
+/*	$OpenBSD: vmes.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -48,8 +48,8 @@
  * functions will decide how many address bits are relevant.
  */
 
-void vmesattach __P((struct device *, struct device *, void *));
-int  vmesmatch __P((struct device *, void *, void *));
+void vmesattach(struct device *, struct device *, void *);
+int  vmesmatch(struct device *, void *, void *);
 
 struct cfattach vmes_ca = {
 	sizeof(struct vmessoftc), vmesmatch, vmesattach

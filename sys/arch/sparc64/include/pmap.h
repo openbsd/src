@@ -156,31 +156,31 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-int pmap_count_res __P((pmap_t pmap));
-/* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
+int pmap_count_res(pmap_t pmap);
+/* int pmap_change_wiring(pmap_t pm, vaddr_t va, boolean_t wired); */
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
 #define pmap_from_phys_address(x,f)	((x)&~PGOFSET)
 #define	pmap_phys_address(x)		(x)
 #define	pmap_update(pm)			/* nothing (yet) */
 
-void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
+void pmap_bootstrap(u_long kernelstart, u_long kernelend, u_int numctx);
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define PMAP_PREFER(pa, va)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT+1))))
 
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 
 /* SPARC specific? */
-void		pmap_redzone __P((void));
-int             pmap_dumpsize __P((void));
-int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
+void		pmap_redzone(void);
+int             pmap_dumpsize(void);
+int             pmap_dumpmmu __P((int (*)(dev_t, daddr_t, caddr_t, size_t),
                                  daddr_t));
-int		pmap_pa_exists __P((paddr_t));
+int		pmap_pa_exists(paddr_t);
 struct proc;
-void		switchexit __P((struct proc *));
+void		switchexit(struct proc *);
 
 /* SPARC64 specific */
-int	ctx_alloc __P((struct pmap*));
-void	ctx_free __P((struct pmap*));
+int	ctx_alloc(struct pmap*);
+void	ctx_free(struct pmap*);
 
 
 #endif	/* _KERNEL */

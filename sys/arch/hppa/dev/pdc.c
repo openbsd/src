@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.22 2002/03/06 23:06:23 miod Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.23 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -59,8 +59,8 @@ pz_device_t *pz_kbd, *pz_cons;
 hppa_hpa_t conaddr;
 int conunit;
 
-int pdcmatch __P((struct device *, void *, void*));
-void pdcattach __P((struct device *, struct device *, void *));
+int pdcmatch(struct device *, void *, void*);
+void pdcattach(struct device *, struct device *, void *);
 
 struct cfattach pdc_ca = {
 	sizeof(pdcsoftc_t), pdcmatch, pdcattach
@@ -70,10 +70,10 @@ struct cfdriver pdc_cd = {
 	NULL, "pdc", DV_DULL
 };
 
-void pdcstart __P((struct tty *tp));
-void pdctimeout __P((void *v));
-int pdcparam __P((struct tty *tp, struct termios *));
-int pdccnlookc __P((dev_t dev, int *cp));
+void pdcstart(struct tty *tp);
+void pdctimeout(void *v);
+int pdcparam(struct tty *tp, struct termios *);
+int pdccnlookc(dev_t dev, int *cp);
 
 /* serial console speed table */
 static int pdc_speeds[] = {

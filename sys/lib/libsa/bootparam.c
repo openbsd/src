@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.8 1998/05/31 23:39:16 mickey Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.9 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
@@ -77,11 +77,11 @@ struct xdr_inaddr {
 	int32_t	addr[4];
 };
 
-int xdr_inaddr_encode __P((char **p, struct in_addr ia));
-int xdr_inaddr_decode __P((char **p, struct in_addr *ia));
+int xdr_inaddr_encode(char **p, struct in_addr ia);
+int xdr_inaddr_decode(char **p, struct in_addr *ia);
 
-int xdr_string_encode __P((char **p, char *str, int len));
-int xdr_string_decode __P((char **p, char *str, int *len_p));
+int xdr_string_encode(char **p, char *str, int len);
+int xdr_string_decode(char **p, char *str, int *len_p);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.2 1997/04/08 04:41:27 briggs Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: itevar.h,v 1.1 1996/05/05 06:16:49 briggs Exp $	*/
 
 /*
@@ -32,25 +32,25 @@
 
 #include <machine/adbsys.h>
 
-int	ite_intr __P((adb_event_t *event));
-int	iteon __P((dev_t dev, int flags));
-int	iteoff __P((dev_t dev, int flags));
-void	itereset __P((void));
+int	ite_intr(adb_event_t *event);
+int	iteon(dev_t dev, int flags);
+int	iteoff(dev_t dev, int flags);
+void	itereset(void);
 
 #ifndef CN_DEAD
 #include <dev/cons.h>
 #endif
 
-void	itestop __P((struct tty * tp, int flag));
-void	itestart __P((register struct tty * tp));
-int	iteopen __P((dev_t dev, int mode, int devtype, struct proc * p));
-int	iteclose __P((dev_t dev, int flag, int mode, struct proc * p));
-int	iteread __P((dev_t dev, struct uio * uio, int flag));
-int	itewrite __P((dev_t dev, struct uio * uio, int flag));
-int	iteioctl __P((dev_t, int, caddr_t, int, struct proc *));
-struct tty	*itetty __P((dev_t dev));
+void	itestop(struct tty * tp, int flag);
+void	itestart(register struct tty * tp);
+int	iteopen(dev_t dev, int mode, int devtype, struct proc * p);
+int	iteclose(dev_t dev, int flag, int mode, struct proc * p);
+int	iteread(dev_t dev, struct uio * uio, int flag);
+int	itewrite(dev_t dev, struct uio * uio, int flag);
+int	iteioctl(dev_t, int, caddr_t, int, struct proc *);
+struct tty	*itetty(dev_t dev);
 
-int	itecnprobe __P((struct consdev * cp));
-int	itecninit __P((struct consdev * cp));
-int	itecngetc __P((dev_t dev));
-int	itecnputc __P((dev_t dev, int c));
+int	itecnprobe(struct consdev * cp);
+int	itecninit(struct consdev * cp);
+int	itecngetc(dev_t dev);
+int	itecnputc(dev_t dev, int c);

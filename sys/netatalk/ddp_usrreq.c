@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.5 2001/07/06 03:06:28 angelos Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.6 2002/03/14 01:27:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -72,19 +72,19 @@
 #include <netatalk/ddp_var.h>
 #include <netatalk/at_extern.h>
 
-int ddp_usrreq	__P((struct socket *, int, struct mbuf *,
-			struct mbuf *, struct mbuf * ));
-static void at_sockaddr	__P(( struct ddpcb *, struct mbuf * ));
-static int at_pcbsetaddr	__P(( struct ddpcb *, struct mbuf *,
-			struct proc * ));
-static int at_pcbconnect	__P(( struct ddpcb *, struct mbuf *,
-			struct proc *));
-static void at_pcbdisconnect	__P(( struct ddpcb * ));
-static int at_pcballoc	__P(( struct socket * ));
-static void at_pcbdetach __P(( struct socket *, struct ddpcb * ));
-struct ddpcb *ddp_search	__P(( struct sockaddr_at *,
-			struct sockaddr_at *, struct at_ifaddr * ));
-void ddp_init	__P((void));
+int ddp_usrreq(struct socket *, int, struct mbuf *,
+			struct mbuf *, struct mbuf * );
+static void at_sockaddr( struct ddpcb *, struct mbuf * );
+static int at_pcbsetaddr( struct ddpcb *, struct mbuf *,
+			struct proc * );
+static int at_pcbconnect( struct ddpcb *, struct mbuf *,
+			struct proc *);
+static void at_pcbdisconnect( struct ddpcb * );
+static int at_pcballoc( struct socket * );
+static void at_pcbdetach( struct socket *, struct ddpcb * );
+struct ddpcb *ddp_search( struct sockaddr_at *,
+			struct sockaddr_at *, struct at_ifaddr * );
+void ddp_init(void);
 
 struct ddpcb	*ddpcb = NULL;
 u_long		ddp_sendspace = DDP_MAXSZ; /* Max ddp size + 1 (ddp_type) */

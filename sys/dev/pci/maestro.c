@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.13 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.14 2002/03/14 01:26:59 millert Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -115,7 +115,7 @@ struct maestro_channel {
 	u_int16_t		end;
 	u_int16_t		current;
 	u_int			wpwa;
-	void			(*intr) __P((void *));
+	void			(*intr)(void *);
 	void			*intr_arg;
 };
 
@@ -154,75 +154,75 @@ struct maestro_softc {
 typedef	u_int16_t wpreg_t;
 typedef	u_int16_t wcreg_t;
 
-salloc_t salloc_new __P((caddr_t, size_t, int));
-void	salloc_destroy __P((salloc_t));
-caddr_t	salloc_alloc __P((salloc_t, size_t));
-void	salloc_free __P((salloc_t, caddr_t));
-void	salloc_insert __P((salloc_t, struct salloc_head *, 
-		struct salloc_zone *, int));
+salloc_t salloc_new(caddr_t, size_t, int);
+void	salloc_destroy(salloc_t);
+caddr_t	salloc_alloc(salloc_t, size_t);
+void	salloc_free(salloc_t, caddr_t);
+void	salloc_insert(salloc_t, struct salloc_head *, 
+		struct salloc_zone *, int);
 
-int	maestro_match __P((struct device *, void *, void *));
-void	maestro_attach __P((struct device *, struct device *, void *));
-int	maestro_intr __P((void *));
+int	maestro_match(struct device *, void *, void *);
+void	maestro_attach(struct device *, struct device *, void *);
+int	maestro_intr(void *);
 
-int	maestro_open __P((void *, int));
-void	maestro_close __P((void *));
-int	maestro_query_encoding __P((void *, struct audio_encoding *));
-int	maestro_set_params __P((void *, int, int, struct audio_params *, 
-			    struct audio_params *));
-int	maestro_round_blocksize __P((void *, int));
-int	maestro_halt_output __P((void *));
-int	maestro_halt_input __P((void *));
-int	maestro_getdev __P((void *, struct audio_device *));
-int	maestro_set_port __P((void *, mixer_ctrl_t *));
-int	maestro_get_port __P((void *, mixer_ctrl_t *));
-int	maestro_query_devinfo __P((void *, mixer_devinfo_t *));
-void	*maestro_malloc __P((void *, int, size_t, int, int));
-void	maestro_free __P((void *, void *, int));
-size_t	maestro_round_buffersize __P((void *, int, size_t));
-paddr_t	maestro_mappage __P((void *, void *, off_t, int));
-int	maestro_get_props __P((void *));
+int	maestro_open(void *, int);
+void	maestro_close(void *);
+int	maestro_query_encoding(void *, struct audio_encoding *);
+int	maestro_set_params(void *, int, int, struct audio_params *, 
+			    struct audio_params *);
+int	maestro_round_blocksize(void *, int);
+int	maestro_halt_output(void *);
+int	maestro_halt_input(void *);
+int	maestro_getdev(void *, struct audio_device *);
+int	maestro_set_port(void *, mixer_ctrl_t *);
+int	maestro_get_port(void *, mixer_ctrl_t *);
+int	maestro_query_devinfo(void *, mixer_devinfo_t *);
+void	*maestro_malloc(void *, int, size_t, int, int);
+void	maestro_free(void *, void *, int);
+size_t	maestro_round_buffersize(void *, int, size_t);
+paddr_t	maestro_mappage(void *, void *, off_t, int);
+int	maestro_get_props(void *);
 int	maestro_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 				void *, struct audio_params *));
 int	maestro_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 			       void *, struct audio_params *));
 
-int	maestro_attach_codec __P((void *, struct ac97_codec_if *));
-int	maestro_read_codec __P((void *, u_int8_t, u_int16_t *));
-int	maestro_write_codec __P((void *, u_int8_t, u_int16_t));
-void	maestro_reset_codec __P((void *));
+int	maestro_attach_codec(void *, struct ac97_codec_if *);
+int	maestro_read_codec(void *, u_int8_t, u_int16_t *);
+int	maestro_write_codec(void *, u_int8_t, u_int16_t);
+void	maestro_reset_codec(void *);
 
-void	maestro_initcodec __P((void *));
+void	maestro_initcodec(void *);
 
-void	maestro_set_speed __P((struct maestro_channel *, u_long *));
-void	maestro_init __P((struct maestro_softc *));
-void	maestro_power __P((struct maestro_softc *, int));
-void	maestro_powerhook __P((int, void *));
+void	maestro_set_speed(struct maestro_channel *, u_long *);
+void	maestro_init(struct maestro_softc *);
+void	maestro_power(struct maestro_softc *, int);
+void	maestro_powerhook(int, void *);
 
-void 	maestro_channel_start __P((struct maestro_channel *));
-void 	maestro_channel_stop __P((struct maestro_channel *));
-void 	maestro_channel_advance_dma __P((struct maestro_channel *));
-void	maestro_channel_suppress_jitter __P((struct maestro_channel *));
+void 	maestro_channel_start(struct maestro_channel *);
+void 	maestro_channel_stop(struct maestro_channel *);
+void 	maestro_channel_advance_dma(struct maestro_channel *);
+void	maestro_channel_suppress_jitter(struct maestro_channel *);
 
-int	maestro_get_flags __P((struct pci_attach_args *));
+int	maestro_get_flags(struct pci_attach_args *);
 
-void	ringbus_setdest __P((struct maestro_softc *, int, int));
+void	ringbus_setdest(struct maestro_softc *, int, int);
 
-wpreg_t	wp_reg_read __P((struct maestro_softc *, int));
-void	wp_reg_write __P((struct maestro_softc *, int, wpreg_t));
-wpreg_t	wp_apu_read __P((struct maestro_softc *, int, int));
-void	wp_apu_write __P((struct maestro_softc *, int, int, wpreg_t));
-void	wp_settimer __P((struct maestro_softc *, u_int));
-void	wp_starttimer __P((struct maestro_softc *));
-void	wp_stoptimer __P((struct maestro_softc *));
+wpreg_t	wp_reg_read(struct maestro_softc *, int);
+void	wp_reg_write(struct maestro_softc *, int, wpreg_t);
+wpreg_t	wp_apu_read(struct maestro_softc *, int, int);
+void	wp_apu_write(struct maestro_softc *, int, int, wpreg_t);
+void	wp_settimer(struct maestro_softc *, u_int);
+void	wp_starttimer(struct maestro_softc *);
+void	wp_stoptimer(struct maestro_softc *);
 
-wcreg_t	wc_reg_read __P((struct maestro_softc *, int));
-void	wc_reg_write __P((struct maestro_softc *, int, wcreg_t));
-wcreg_t	wc_ctrl_read __P((struct maestro_softc *, int));
-void	wc_ctrl_write __P((struct maestro_softc *, int, wcreg_t));
+wcreg_t	wc_reg_read(struct maestro_softc *, int);
+void	wc_reg_write(struct maestro_softc *, int, wcreg_t);
+wcreg_t	wc_ctrl_read(struct maestro_softc *, int);
+void	wc_ctrl_write(struct maestro_softc *, int, wcreg_t);
 
-u_int maestro_calc_timer_freq __P((struct maestro_channel *));
-void maestro_update_timer __P((struct maestro_softc *));
+u_int maestro_calc_timer_freq(struct maestro_channel *);
+void maestro_update_timer(struct maestro_softc *);
 
 struct cfdriver maestro_cd = {
 	NULL, "maestro", DV_DULL
@@ -896,7 +896,7 @@ maestro_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	void *hdl;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {
@@ -996,7 +996,7 @@ maestro_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	void *hdl;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rtreg.h,v 1.3 1998/04/17 15:55:52 niklas Exp $	*/
+/*	$OpenBSD: grf_rtreg.h,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: grf_rtreg.h,v 1.7 1996/04/21 21:11:23 veego Exp $	*/
 
 /*
@@ -523,6 +523,6 @@ static __inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int grfrt_cnprobe __P((void));
-void grfrt_iteinit __P((struct grf_softc *));
+int grfrt_cnprobe(void);
+void grfrt_iteinit(struct grf_softc *);
 #endif /* _GRF_RTREG_H */

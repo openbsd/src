@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.13 2001/02/20 19:39:29 mickey Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.14 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.26 1997/03/17 17:51:42 is Exp $	*/
 
 /*
@@ -96,30 +96,30 @@ struct ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int ed_zbus_match __P((struct device *, void *, void *));
-void ed_zbus_attach __P((struct device *, struct device *, void *));
-int edintr __P((void *));
-int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
-void ed_start __P((struct ifnet *));
-void ed_watchdog __P((struct ifnet *));
-void ed_reset __P((struct ed_softc *));
-void ed_init __P((struct ed_softc *));
-void ed_stop __P((struct ed_softc *));
-void ed_getmcaf __P((struct arpcom *, u_long *));
-u_short ed_put __P((struct ed_softc *, struct mbuf *, caddr_t));
+int ed_zbus_match(struct device *, void *, void *);
+void ed_zbus_attach(struct device *, struct device *, void *);
+int edintr(void *);
+int ed_ioctl(struct ifnet *, u_long, caddr_t);
+void ed_start(struct ifnet *);
+void ed_watchdog(struct ifnet *);
+void ed_reset(struct ed_softc *);
+void ed_init(struct ed_softc *);
+void ed_stop(struct ed_softc *);
+void ed_getmcaf(struct arpcom *, u_long *);
+u_short ed_put(struct ed_softc *, struct mbuf *, caddr_t);
 
 #define inline	/* XXX for debugging purposes */
 
-void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
-static inline void ed_rint __P((struct ed_softc *));
-static inline void ed_xmit __P((struct ed_softc *));
-static inline caddr_t ed_ring_copy __P((struct ed_softc *, caddr_t, caddr_t,
-					u_short));
+void ed_get_packet(struct ed_softc *, caddr_t, u_short);
+static inline void ed_rint(struct ed_softc *);
+static inline void ed_xmit(struct ed_softc *);
+static inline caddr_t ed_ring_copy(struct ed_softc *, caddr_t, caddr_t,
+					u_short);
 
-static inline void NIC_PUT __P((struct ed_softc *, int, u_char)); 
-static inline u_char NIC_GET __P((struct ed_softc *, int));
-static inline void word_copy __P((caddr_t, caddr_t, int));
-struct mbuf *ed_ring_to_mbuf __P((struct ed_softc *, caddr_t, struct mbuf *, u_short));
+static inline void NIC_PUT(struct ed_softc *, int, u_char); 
+static inline u_char NIC_GET(struct ed_softc *, int);
+static inline void word_copy(caddr_t, caddr_t, int);
+struct mbuf *ed_ring_to_mbuf(struct ed_softc *, caddr_t, struct mbuf *, u_short);
 
 struct cfattach ed_zbus_ca = {
 	sizeof(struct ed_softc), ed_zbus_match, ed_zbus_attach

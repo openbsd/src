@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.h,v 1.4 2001/01/19 06:37:37 itojun Exp $       */
+/*      $OpenBSD: if_atm.h,v 1.5 2002/03/14 01:27:11 millert Exp $       */
 
 /*
  *
@@ -36,6 +36,6 @@
  * if_atm.h
  */
 
-void atm_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-int atmresolve __P((struct rtentry *, struct mbuf *, struct sockaddr *, 
-		struct atm_pseudohdr *));
+void atm_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+int atmresolve(struct rtentry *, struct mbuf *, struct sockaddr *, 
+		struct atm_pseudohdr *);

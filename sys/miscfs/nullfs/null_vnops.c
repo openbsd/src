@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.14 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.15 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -190,17 +190,17 @@
 
 int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
-int	null_getattr __P((void *));
-int	null_inactive __P((void *));
-int	null_reclaim __P((void *));
-int	null_print __P((void *));
-int	null_strategy __P((void *));
-int	null_bwrite __P((void *));
-int	null_lock __P((void *));
-int	null_unlock __P((void *));
-int	null_islocked __P((void *));
-int	null_lookup __P((void *));
-int	null_open __P((void *));
+int	null_getattr(void *);
+int	null_inactive(void *);
+int	null_reclaim(void *);
+int	null_print(void *);
+int	null_strategy(void *);
+int	null_bwrite(void *);
+int	null_lock(void *);
+int	null_unlock(void *);
+int	null_islocked(void *);
+int	null_lookup(void *);
+int	null_open(void *);
 
 /*
  * This is the 10-Apr-92 bypass routine.
@@ -612,7 +612,7 @@ null_lookup(v)
 /*
  * Global vfs data structures
  */
-int (**null_vnodeop_p) __P((void *));
+int (**null_vnodeop_p)(void *);
 struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_default_desc,	null_bypass },
 

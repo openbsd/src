@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rt.c,v 1.11 1997/09/18 13:39:53 niklas Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.12 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
 
-int rt_ioctl __P((struct grf_softc *gp, u_long, void *));
+int rt_ioctl(struct grf_softc *gp, u_long, void *);
 
 /*
  * marked true early so that retina_cnprobe() can tell if we are alive. 
@@ -258,8 +258,8 @@ static const long FQTab[16] =
 static struct MonDef *default_monitor = &DEFAULT_MONDEF;
 #endif
 
-int retina_alive __P((struct MonDef *));
-int rt_load_mon __P((struct grf_softc *, struct MonDef *));
+int retina_alive(struct MonDef *);
+int rt_load_mon(struct grf_softc *, struct MonDef *);
 
 
 /*
@@ -764,22 +764,22 @@ rt_load_mon(gp, md)
 	return(1);
 }
 
-void grfrtattach __P((struct device *, struct device *, void *));
-int grfrtprint __P((void *, const char *));
-int grfrtmatch __P((struct device *, void *, void *));
+void grfrtattach(struct device *, struct device *, void *);
+int grfrtprint(void *, const char *);
+int grfrtmatch(struct device *, void *, void *);
  
-int rt_mode __P((struct grf_softc *, u_long, void *, u_long, int));
-int rt_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int rt_setvmode __P((struct grf_softc *, unsigned, int));
-int rt_getspritepos __P((struct grf_softc *, struct grf_position *));
-int rt_setspritepos __P((struct grf_softc *, struct grf_position *));
-int rt_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int rt_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int rt_getspritemax __P((struct grf_softc *, struct grf_position *));
-int rt_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int rt_putcmap __P((struct grf_softc *, struct grf_colormap *));
-int rt_bitblt __P((struct grf_softc *, struct grf_bitblt *));
-int rt_blank __P((struct grf_softc *, int *));
+int rt_mode(struct grf_softc *, u_long, void *, u_long, int);
+int rt_getvmode(struct grf_softc *, struct grfvideo_mode *);
+int rt_setvmode(struct grf_softc *, unsigned, int);
+int rt_getspritepos(struct grf_softc *, struct grf_position *);
+int rt_setspritepos(struct grf_softc *, struct grf_position *);
+int rt_getspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+int rt_setspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+int rt_getspritemax(struct grf_softc *, struct grf_position *);
+int rt_getcmap(struct grf_softc *, struct grf_colormap *);
+int rt_putcmap(struct grf_softc *, struct grf_colormap *);
+int rt_bitblt(struct grf_softc *, struct grf_bitblt *);
+int rt_blank(struct grf_softc *, int *);
 
 struct cfattach grfrt_ca = {
 	sizeof(struct grf_softc), grfrtmatch, grfrtattach

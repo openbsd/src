@@ -1,4 +1,4 @@
-/*	$OpenBSD: psc.c,v 1.1 1998/05/08 22:13:02 gene Exp $	*/
+/*	$OpenBSD: psc.c,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: psc.c,v 1.4 1998/04/24 05:27:26 scottr Exp $	*/
 
 /*-
@@ -39,27 +39,27 @@
 #include <machine/cpu.h>
 #include <machine/psc.h>
 
-void		psc_lev3_intr __P((struct frame *));
-static void	psc_lev3_noint __P((void *));
-int		psc_lev4_intr __P((struct frame *));
-static int	psc_lev4_noint __P((void *));
-void		psc_lev5_intr __P((struct frame *));
-static void	psc_lev5_noint __P((void *));
-void		psc_lev6_intr __P((struct frame *));
-static void	psc_lev6_noint __P((void *));
-void		psc_spurintr __P((struct frame *));
+void		psc_lev3_intr(struct frame *);
+static void	psc_lev3_noint(void *);
+int		psc_lev4_intr(struct frame *);
+static int	psc_lev4_noint(void *);
+void		psc_lev5_intr(struct frame *);
+static void	psc_lev5_noint(void *);
+void		psc_lev6_intr(struct frame *);
+static void	psc_lev6_noint(void *);
+void		psc_spurintr(struct frame *);
 
-void	(*lev3_intrvec) __P((struct frame *));
-int	(*lev4_intrvec) __P((struct frame *));
-void	(*lev5_intrvec) __P((struct frame *));
-void	(*lev6_intrvec) __P((struct frame *));
+void	(*lev3_intrvec)(struct frame *);
+int	(*lev4_intrvec)(struct frame *);
+void	(*lev5_intrvec)(struct frame *);
+void	(*lev6_intrvec)(struct frame *);
 
-extern int	zshard __P((void *));			/* from zs.c */
+extern int	zshard(void *);			/* from zs.c */
 
-void	(*psc3_ihandler) __P((void *)) = psc_lev3_noint;
+void	(*psc3_ihandler)(void *) = psc_lev3_noint;
 void	*psc3_iarg;
 
-int (*psc4_itab[4]) __P((void *)) = {
+int (*psc4_itab[4])(void *) = {
 	psc_lev4_noint, /* 0 */
 	zshard,         /* 1 */
 	zshard,         /* 2 */
@@ -70,7 +70,7 @@ void *psc4_iarg[4] = {
 	(void *)0, (void *)1, (void *)2, (void *)3
 };
 
-void (*psc5_itab[2]) __P((void *)) = {
+void (*psc5_itab[2])(void *) = {
 	psc_lev5_noint, /* 0 */
 	psc_lev5_noint  /* 1 */
 };
@@ -79,7 +79,7 @@ void *psc5_iarg[2] = {
 	(void *)0, (void *)1
 };
 
-void (*psc6_itab[3]) __P((void *)) = {
+void (*psc6_itab[3])(void *) = {
 	psc_lev6_noint, /* 0 */
 	psc_lev6_noint, /* 1 */
 	psc_lev6_noint  /* 2 */

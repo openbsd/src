@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.14 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: grf.c,v 1.15 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
@@ -82,18 +82,18 @@
 #define ite_reinit(d)
 #endif
 
-int grfon __P((dev_t));
-int grfoff __P((dev_t));
-int grfsinfo __P((dev_t, struct grfdyninfo *));
+int grfon(dev_t);
+int grfoff(dev_t);
+int grfsinfo(dev_t, struct grfdyninfo *);
 #ifdef BANKEDDEVPAGER
-int grfbanked_get __P((dev_t, off_t, int));
-int grfbanked_cur __P((dev_t));
-int grfbanked_set __P((dev_t, int));
+int grfbanked_get(dev_t, off_t, int);
+int grfbanked_cur(dev_t);
+int grfbanked_set(dev_t, int);
 #endif
 
-void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, void *, void *));
-int grfprint __P((void *, const char *));
+void grfattach(struct device *, struct device *, void *);
+int grfmatch(struct device *, void *, void *);
+int grfprint(void *, const char *);
 /*
  * pointers to grf drivers device structs 
  */

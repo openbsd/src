@@ -1,4 +1,4 @@
-/*	$OpenBSD: oldmon.h,v 1.7 2001/08/08 13:48:21 art Exp $	*/
+/*	$OpenBSD: oldmon.h,v 1.8 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
@@ -116,15 +116,12 @@ struct saioreq {
  */
 struct om_boottable {
 	char	b_devname[2];		/* The name of the device */
-	int	(*b_probe) __P((void));	/* probe() --> -1 or found controller
+	int	(*b_probe)(void);	/* probe() --> -1 or found controller
 					   number */
-	int	(*b_boot) __P((void));	/* boot(bp) --> -1 or start address */
-	int	(*b_open)
-		__P((struct saioreq *));/* open(iobp) --> -1 or 0 */
-	int	(*b_close)
-		__P((struct saioreq *));/* close(iobp) --> -1 or 0 */
-	int	(*b_strategy)
-		__P((struct saioreq *, int));/* strategy(iobp,rw) --> -1 or 0 */
+	int	(*b_boot)(void);	/* boot(bp) --> -1 or start address */
+	int	(*b_open)(struct saioreq *);/* open(iobp) --> -1 or 0 */
+	int	(*b_close)(struct saioreq *);/* close(iobp) --> -1 or 0 */
+	int	(*b_strategy)(struct saioreq *, int);/* strategy(iobp,rw) --> -1 or 0 */
 	char	*b_desc;		/* Printable string describing dev */
 	struct devinfo *b_devinfo;      /* info to configure device. */
 };
@@ -154,7 +151,7 @@ struct om_bootparam {
  */
 struct om_vector {
 	char	*initSp;		/* Initial system stack ptr for hardware */
-	int	(*startMon) __P((void));/* Initial PC for hardware */
+	int	(*startMon)(void);/* Initial PC for hardware */
 	int	*diagberr;		/* Bus err handler for diags */
 
 	/* Monitor and hardware revision and identification */
@@ -162,10 +159,10 @@ struct om_vector {
  	u_long	*memorySize;		/* Usable memory in bytes */
 
 	/* Single-character input and output */
-	int	(*getChar) __P((void));	/* Get char from input source */
-	void	(*putChar) __P((int));	/* Put char to output sink */
-	int	(*mayGet) __P((void));	/* Maybe get char, or -1 */
-	int	(*mayPut) __P((int));	/* Maybe put char, or -1 */
+	int	(*getChar)(void);	/* Get char from input source */
+	void	(*putChar)(int);	/* Put char to output sink */
+	int	(*mayGet)(void);	/* Maybe get char, or -1 */
+	int	(*mayPut)(int);	/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -175,8 +172,8 @@ struct om_vector {
 #define	PROMDEV_TTYB	2		/* in/out to ttyb */
 
 	/* Keyboard input (scanned by monitor nmi routine) */
-	int	(*getKey) __P((void));	/* Get next key if one exists */
-	int	(*initGetKey) __P((void));/* Initialize get key */
+	int	(*getKey)(void);	/* Get next key if one exists */
+	int	(*initGetKey)(void);/* Initialize get key */
 	u_int	*translation;		/* Kbd translation selector */
 	u_char	*keyBid;		/* Keyboard ID byte */
 	int	*screen_x;		/* V2: Screen x pos (R/O) */
@@ -187,36 +184,36 @@ struct om_vector {
 	char	*monId;
 
 	/* Frame buffer output and terminal emulation */
-	int	(*fbWriteChar) __P((void));/* Write a character to FB */
+	int	(*fbWriteChar)(void);/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
-	void	(*fbWriteStr) __P((char *, int));
+	void	(*fbWriteStr)(char *, int);
 					/* Quickly write string to FB */
 
 	/* Reboot interface routine -- resets and reboots system. */
-	void	(*reBoot) __P((char *));	/* e.g. reBoot("xy()vmunix") */
+	void	(*reBoot)(char *);	/* e.g. reBoot("xy()vmunix") */
 
 	/* Line input and parsing */
 	u_char	*lineBuf;		/* The line input buffer */
 	u_char	**linePtr;		/* Cur pointer into linebuf */
 	int	*lineSize;		/* length of line in linebuf */
-	int	(*getLine) __P((void));	/* Get line from user */
-	u_char	(*getNextChar) __P((void));/* Get next char from linebuf */
-	u_char	(*peekNextChar) __P((void));/* Peek at next char */
+	int	(*getLine)(void);	/* Get line from user */
+	u_char	(*getNextChar)(void);/* Get next char from linebuf */
+	u_char	(*peekNextChar)(void);/* Peek at next char */
 	int	*fbThere;		/* =1 if frame buffer there */
-	int	(*getNum) __P((void));	/* Grab hex num from line */
+	int	(*getNum)(void);	/* Grab hex num from line */
 
 	/* Print formatted output to current output sink */
-	int	(*printf) __P((void));	/* Similar to "Kernel printf" */
-	int	(*printHex) __P((void));/* Format N digits in hex */
+	int	(*printf)(void);	/* Similar to "Kernel printf" */
+	int	(*printHex)(void);/* Format N digits in hex */
 
 	/* Led stuff */
 	u_char	*leds;			/* RAM copy of LED register */
-	int	(*setLeds) __P((void));	/* Sets LED's and RAM copy */
+	int	(*setLeds)(void);	/* Sets LED's and RAM copy */
 
 	/* Non-maskable interrupt  (nmi) information */
-	int	(*nmiAddr) __P((void));	/* Addr for level 7 vector */
-	void	(*abortEntry) __P((void));/* Entry for keyboard abort */
+	int	(*nmiAddr)(void);	/* Addr for level 7 vector */
+	void	(*abortEntry)(void);/* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
 
 	/* Frame buffer type: see <machine/fbio.h> */
@@ -234,11 +231,10 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	void	(*exitToMon) __P((void)) __attribute__((__noreturn__));/* Exit from user program */
+	void	(*exitToMon)(void) __attribute__((__noreturn__));/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
-	void	(*setcxsegmap)		/* Set seg in any context */
-		    __P((int, caddr_t, int));
-	void	(**vector_cmd) __P((u_long, char *));/* V2: Handler for 'v' cmd */
+	void	(*setcxsegmap)		/* Set seg in any context */(int, caddr_t, int);
+	void	(**vector_cmd)(u_long, char *);/* V2: Handler for 'v' cmd */
   	u_long	*ExpectedTrapSig;
   	u_long	*TrapVectorTable;
 	int	dummy1z;
@@ -306,8 +302,8 @@ struct saif {
 
 
 #if defined(SUN4)
-void	oldmon_w_trace __P((u_long));
-void	oldmon_w_cmd __P((u_long, char *));
+void	oldmon_w_trace(u_long);
+void	oldmon_w_cmd(u_long, char *);
 #endif
 
 #endif /* _MACHINE_OLDMON_H */

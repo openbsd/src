@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2002/02/21 06:12:31 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.18 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -149,7 +149,7 @@ struct pv_page {
 #define KERNEL_DATA_PROT (TLB_AR_KRW | (KERNEL_ACCESS_ID << 1))
 
 #ifdef _KERNEL
-extern void gateway_page __P((void));
+extern void gateway_page(void);
 
 #define	PMAP_STEAL_MEMORY	/* we have some memory to steal */
 
@@ -194,7 +194,7 @@ pmap_prot(struct pmap *pmap, int prot)
 	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
 }
 
-void pmap_bootstrap __P((vaddr_t *, vaddr_t *));
+void pmap_bootstrap(vaddr_t *, vaddr_t *);
 #endif /* _KERNEL */
 
 #endif /* _MACHINE_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.3 2001/01/11 21:30:30 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -217,8 +217,8 @@ typedef struct sti_cfg {
 
 /* routine types */
 #define	STI_DEP(n) \
-	typedef int (*sti_##n##_t) __P(( \
-	  sti_##n##flags_t, sti_##n##in_t, sti_##n##out_t, sti_cfg_t));
+	typedef int (*sti_##n##_t)( \
+	  sti_##n##flags_t, sti_##n##in_t, sti_##n##out_t, sti_cfg_t);
 
 typedef struct sti_initflags {
 	u_int32_t	flags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_vmes.c,v 1.6 2000/08/28 21:59:35 miod Exp $	*/
+/*	$OpenBSD: if_ie_vmes.c,v 1.7 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: if_ie_vmes.c,v 1.5 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
@@ -66,23 +66,23 @@
 #include <sun3/dev/if_iereg.h>
 #include <sun3/dev/if_ievar.h>
 
-static void ie_vmereset __P((struct ie_softc *));
-static void ie_vmeattend __P((struct ie_softc *));
-static void ie_vmerun __P((struct ie_softc *));
+static void ie_vmereset(struct ie_softc *);
+static void ie_vmeattend(struct ie_softc *);
+static void ie_vmerun(struct ie_softc *);
 
 /*
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void wcopy __P((const void *, void *, u_int));
-static void wzero __P((void *, u_int));
+static void wcopy(const void *, void *, u_int);
+static void wzero(void *, u_int);
 
 /*
  * New-style autoconfig attachment
  */
 
-static int  ie_vmes_match __P((struct device *, void *, void *));
-static void ie_vmes_attach __P((struct device *, struct device *, void *));
+static int  ie_vmes_match(struct device *, void *, void *);
+static void ie_vmes_attach(struct device *, struct device *, void *);
 
 struct cfattach ie_vmes_ca = {
 	sizeof(struct ie_softc), ie_vmes_match, ie_vmes_attach

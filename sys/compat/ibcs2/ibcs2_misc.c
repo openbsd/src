@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.21 2002/02/12 22:14:00 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.22 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -336,8 +336,8 @@ ibcs2_sys_mount(p, v, retval)
  * This is quite ugly, but what do you expect from compatibility code?
  */
 
-int ibcs2_readdir_callback __P((void *, struct dirent *, off_t));
-int ibcs2_classicread_callback __P((void *, struct dirent *, off_t));
+int ibcs2_readdir_callback(void *, struct dirent *, off_t);
+int ibcs2_classicread_callback(void *, struct dirent *, off_t);
 
 struct ibcs2_readdir_callback_args {
 	caddr_t outp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia.c,v 1.2 1996/06/04 12:49:12 niklas Exp $	*/
+/*	$OpenBSD: cia.c,v 1.3 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: cia.c,v 1.6 1995/02/12 19:34:17 chopps Exp $	*/
 
 /*
@@ -52,12 +52,12 @@
 
 struct cia_intr_dispatch {
   u_char	mask;
-  void		(*handler) __P ((int));
+  void		(*handler)(int);
 };
 
-static void not_used __P((int));
-void kbdintr  __P((int));
-void parintr  __P((int));
+static void not_used(int);
+void kbdintr(int);
+void parintr(int);
 
 /* handlers for CIA-A (IPL-2) */
 static struct cia_intr_dispatch ciaa_ints[] = {

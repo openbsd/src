@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.7 2001/08/09 14:15:22 niklas Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -82,19 +82,19 @@ typedef struct {
 	u_long sig[LINUX__NSIG_WORDS];
 } linux_sigset_t;
 
-typedef void	(*linux_handler_t) __P((int));
+typedef void	(*linux_handler_t)(int);
 
 struct linux_old_sigaction {
 	linux_handler_t		sa__handler;
 	linux_old_sigset_t	sa_mask;
 	u_long			sa_flags;
-	void			(*sa_restorer) __P((void));
+	void			(*sa_restorer)(void);
 };
 
 struct linux_sigaction {
 	linux_handler_t		sa__handler;
 	u_long			sa_flags;
-	void			(*sa_restorer) __P((void));
+	void			(*sa_restorer)(void);
 	linux_sigset_t		sa_mask;
 };
 
@@ -121,26 +121,26 @@ struct linux_sigaltstack {
 extern int bsd_to_linux_sig[];
 extern int linux_to_bsd_sig[];
 
-void linux_old_to_bsd_sigset __P((const linux_old_sigset_t *, sigset_t *));
-void bsd_to_linux_old_sigset __P((const sigset_t *, linux_old_sigset_t *));
+void linux_old_to_bsd_sigset(const linux_old_sigset_t *, sigset_t *);
+void bsd_to_linux_old_sigset(const sigset_t *, linux_old_sigset_t *);
 
-void linux_old_extra_to_bsd_sigset __P((const linux_old_sigset_t *,
-    const unsigned long *, sigset_t *));
-void bsd_to_linux_old_extra_sigset __P((const sigset_t *,
-    linux_old_sigset_t *, unsigned long *));
+void linux_old_extra_to_bsd_sigset(const linux_old_sigset_t *,
+    const unsigned long *, sigset_t *);
+void bsd_to_linux_old_extra_sigset(const sigset_t *,
+    linux_old_sigset_t *, unsigned long *);
 
-void linux_to_bsd_sigset __P((const linux_sigset_t *, sigset_t *));
-void bsd_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
+void linux_to_bsd_sigset(const linux_sigset_t *, sigset_t *);
+void bsd_to_linux_sigset(const sigset_t *, linux_sigset_t *);
 
-void linux_old_to_bsd_sigaction __P((struct linux_old_sigaction *, 
-    struct sigaction *));
-void bsd_to_linux_old_sigaction __P((struct sigaction *, 
-    struct linux_old_sigaction *));
+void linux_old_to_bsd_sigaction(struct linux_old_sigaction *, 
+    struct sigaction *);
+void bsd_to_linux_old_sigaction(struct sigaction *, 
+    struct linux_old_sigaction *);
 
-void linux_to_bsd_sigaction __P((struct linux_sigaction *,
-    struct sigaction *));
-void bsd_to_linux_sigaction __P((struct sigaction *,
-    struct linux_sigaction *));
+void linux_to_bsd_sigaction(struct linux_sigaction *,
+    struct sigaction *);
+void bsd_to_linux_sigaction(struct sigaction *,
+    struct linux_sigaction *);
 
 int  linux_to_bsd_signal (int, int *);
 int  bsd_to_linux_signal (int, int *);

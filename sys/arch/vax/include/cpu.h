@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.11 2001/05/05 22:34:26 art Exp $      */
+/*      $OpenBSD: cpu.h,v 1.12 2002/03/14 01:26:48 millert Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -53,19 +53,19 @@
  * struct for the current cpu is set up in locore.c.
  */
 struct	cpu_dep {
-	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
-	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
-	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
+	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
+	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
+	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
-	void	(*cpu_conf) __P((void));
-	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
-	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
+	void	(*cpu_conf)(void);
+	int	(*cpu_clkread)(time_t);	/* Read cpu clock time */
+	void	(*cpu_clkwrite)(void);	/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */
 	short	cpu_scbsz;	/* (estimated) size of system control block */
-	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
-	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
-	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
-	void	(*cpu_subconf) __P((struct device *));/*config cpu dep. devs */
+	void	(*cpu_halt)(void); /* Cpu dependent halt call */
+	void	(*cpu_reboot)(int); /* Cpu dependent reboot call */
+	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
+	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
 };
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
@@ -116,24 +116,24 @@ extern	int     want_resched;   /* resched() was called */
 struct device;
 
 /* Some low-level prototypes */
-int	badaddr __P((caddr_t, int));
-void	cpu_swapin __P((struct proc *));
-int	hp_getdev __P((int, int, struct device **));
-int	sd_getdev __P((int, int, int, int, char **));
-int	ra_getdev __P((int, int, int, char **));
-int	bdevtomaj __P((int));
-void	dumpconf __P((void));
-void	dumpsys __P((void));
-void	swapconf __P((void));
-void	disk_printtype __P((int, int));
-void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
-vaddr_t	vax_map_physmem __P((paddr_t, int));
-void	vax_unmap_physmem __P((vaddr_t, int));
-void	ioaccess __P((vaddr_t, paddr_t, int));
-void	iounaccess __P((vaddr_t, int));
-void	findcpu __P((void));
+int	badaddr(caddr_t, int);
+void	cpu_swapin(struct proc *);
+int	hp_getdev(int, int, struct device **);
+int	sd_getdev(int, int, int, int, char **);
+int	ra_getdev(int, int, int, char **);
+int	bdevtomaj(int);
+void	dumpconf(void);
+void	dumpsys(void);
+void	swapconf(void);
+void	disk_printtype(int, int);
+void	disk_reallymapin(struct buf *, struct pte *, int, int);
+vaddr_t	vax_map_physmem(paddr_t, int);
+void	vax_unmap_physmem(vaddr_t, int);
+void	ioaccess(vaddr_t, paddr_t, int);
+void	iounaccess(vaddr_t, int);
+void	findcpu(void);
 #ifdef DDB
-int	kdbrint __P((int));
+int	kdbrint(int);
 #endif
 #endif /* _KERNEL */
 #endif /* _VAX_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.120 2002/03/13 00:24:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.121 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -162,12 +162,12 @@ int	pmapdebug = 0;
 /*
  * Internal helpers.
  */
-static __inline struct pvlist *pvhead __P((int));
-static __inline struct pvlist *pvalloc __P((void));
-static __inline void pvfree __P((struct pvlist *));
+static __inline struct pvlist *pvhead(int);
+static __inline struct pvlist *pvalloc(void);
+static __inline void pvfree(struct pvlist *);
 
 #if defined(SUN4M)
-static u_int	VA2PA __P((caddr_t));
+static u_int	VA2PA(caddr_t);
 #endif
 
 /*
@@ -221,13 +221,13 @@ struct pool_allocator pgt_allocator = {
 	pgt_page_alloc, pgt_page_free, 0,
 };
 
-void    pcache_flush __P((caddr_t, caddr_t, int));
+void    pcache_flush(caddr_t, caddr_t, int);
 void
 pcache_flush(va, pa, n)
         caddr_t va, pa;
         int     n;
 {
-        void (*f)__P((int,int)) = cpuinfo.pcache_flush_line;
+        void (*f)(int,int) = cpuinfo.pcache_flush_line;
 
         while ((n -= 4) >= 0)
                 (*f)((u_int)va+n, (u_int)pa+n);
@@ -402,9 +402,9 @@ vaddr_t pagetables_start, pagetables_end;
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 
-static void pmap_page_upload __P((paddr_t));
-void pmap_pinit __P((pmap_t));
-void pmap_release __P((pmap_t));
+static void pmap_page_upload(paddr_t);
+void pmap_pinit(pmap_t);
+void pmap_release(pmap_t);
 
 int mmu_has_hole;
 
@@ -462,9 +462,9 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M)
 #define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
 				    ASI_SRMMUFP)
-u_int	*getptep4m __P((struct pmap *, vaddr_t));
-static __inline void	setpgt4m __P((int *, int));
-void	setpte4m __P((vaddr_t va, int pte));
+u_int	*getptep4m(struct pmap *, vaddr_t);
+static __inline void	setpgt4m(int *, int);
+void	setpte4m(vaddr_t va, int pte);
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -486,35 +486,35 @@ void	setpte4m __P((vaddr_t va, int pte));
  */
 
 #if defined(SUN4M)
-static void mmu_setup4m_L1 __P((int, struct pmap *));
-static void mmu_setup4m_L2 __P((int, struct regmap *));
-static void  mmu_setup4m_L3 __P((int, struct segmap *));
-void	mmu_reservemon4m __P((struct pmap *));
+static void mmu_setup4m_L1(int, struct pmap *);
+static void mmu_setup4m_L2(int, struct regmap *);
+static void  mmu_setup4m_L3(int, struct segmap *);
+void	mmu_reservemon4m(struct pmap *);
 
-void	pmap_rmk4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-void	pmap_rmu4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-int	pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
-			  int, struct pvlist *, int));
-int	pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
-			  int, struct pvlist *, int));
-void	pv_changepte4m __P((struct pvlist *, int, int));
-int	pv_syncflags4m __P((struct pvlist *));
-int	pv_link4m __P((struct pvlist *, struct pmap *, vaddr_t, int));
-void	pv_unlink4m __P((struct pvlist *, struct pmap *, vaddr_t));
+void	pmap_rmk4m(struct pmap *, vaddr_t, vaddr_t, int, int);
+void	pmap_rmu4m(struct pmap *, vaddr_t, vaddr_t, int, int);
+int	pmap_enk4m(struct pmap *, vaddr_t, vm_prot_t,
+			  int, struct pvlist *, int);
+int	pmap_enu4m(struct pmap *, vaddr_t, vm_prot_t,
+			  int, struct pvlist *, int);
+void	pv_changepte4m(struct pvlist *, int, int);
+int	pv_syncflags4m(struct pvlist *);
+int	pv_link4m(struct pvlist *, struct pmap *, vaddr_t, int);
+void	pv_unlink4m(struct pvlist *, struct pmap *, vaddr_t);
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
-void	mmu_reservemon4_4c __P((int *, int *));
-void	pmap_rmk4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-void	pmap_rmu4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-int	pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
-			  int, struct pvlist *, int));
-int	pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
-			  int, struct pvlist *, int));
-void	pv_changepte4_4c __P((struct pvlist *, int, int));
-int	pv_syncflags4_4c __P((struct pvlist *));
-int	pv_link4_4c __P((struct pvlist *, struct pmap *, vaddr_t, int));
-void	pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
+void	mmu_reservemon4_4c(int *, int *);
+void	pmap_rmk4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
+void	pmap_rmu4_4c(struct pmap *, vaddr_t, vaddr_t, int, int);
+int	pmap_enk4_4c(struct pmap *, vaddr_t, vm_prot_t,
+			  int, struct pvlist *, int);
+int	pmap_enu4_4c(struct pmap *, vaddr_t, vm_prot_t,
+			  int, struct pvlist *, int);
+void	pv_changepte4_4c(struct pvlist *, int, int);
+int	pv_syncflags4_4c(struct pvlist *);
+int	pv_link4_4c(struct pvlist *, struct pmap *, vaddr_t, int);
+void	pv_unlink4_4c(struct pvlist *, struct pmap *, vaddr_t);
 #endif
 
 #if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
@@ -529,22 +529,22 @@ void	pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
 
 /* function pointer declarations */
 /* from pmap.h: */
-boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
-boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
-void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
-boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
-boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
-void		(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-void		(*pmap_kremove_p) __P((vaddr_t, vsize_t));
-void		(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
-void		(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-void            (*pmap_zero_page_p) __P((paddr_t));
-void	       	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
+boolean_t	(*pmap_clear_modify_p)(struct vm_page *);
+boolean_t	(*pmap_clear_reference_p)(struct vm_page *);
+void		(*pmap_copy_page_p)(paddr_t, paddr_t);
+int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+boolean_t	(*pmap_is_modified_p)(struct vm_page *);
+boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
+void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+void		(*pmap_kremove_p)(vaddr_t, vsize_t);
+void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
+void		(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+void            (*pmap_zero_page_p)(paddr_t);
+void	       	(*pmap_changeprot_p)(pmap_t, vaddr_t, vm_prot_t, int);
 /* local: */
-void 		(*pmap_rmk_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void 		(*pmap_rmk_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
+void 		(*pmap_rmu_p)(struct pmap *, vaddr_t, vaddr_t, int, int);
 
 #define		pmap_rmk	(*pmap_rmk_p)
 #define		pmap_rmu	(*pmap_rmu_p)
@@ -709,15 +709,15 @@ setpte4m(va, pte)
 } while (0)
 
 
-static void sortm __P((struct memarr *, int));
-void	ctx_alloc __P((struct pmap *));
-void	ctx_free __P((struct pmap *));
-void	pv_flushcache __P((struct pvlist *));
-void	kvm_iocache __P((caddr_t, int));
+static void sortm(struct memarr *, int);
+void	ctx_alloc(struct pmap *);
+void	ctx_free(struct pmap *);
+void	pv_flushcache(struct pvlist *);
+void	kvm_iocache(caddr_t, int);
 #ifdef DEBUG
-void	pm_check __P((char *, struct pmap *));
-void	pm_check_k __P((char *, struct pmap *));
-void	pm_check_u __P((char *, struct pmap *));
+void	pm_check(char *, struct pmap *);
+void	pm_check_k(char *, struct pmap *);
+void	pm_check_u(char *, struct pmap *);
 #endif
 
 /*
@@ -1146,10 +1146,10 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-struct mmuentry *me_alloc __P((struct mmuhd *, struct pmap *, int, int));
-void		me_free __P((struct pmap *, u_int));
-struct mmuentry	*region_alloc __P((struct mmuhd *, struct pmap *, int));
-void		region_free __P((struct pmap *, u_int));
+struct mmuentry *me_alloc(struct mmuhd *, struct pmap *, int, int);
+void		me_free(struct pmap *, u_int);
+struct mmuentry	*region_alloc(struct mmuhd *, struct pmap *, int);
+void		region_free(struct pmap *, u_int);
 
 /*
  * Change contexts.  We need the old context number as well as the new
@@ -2559,10 +2559,10 @@ int nptesg;
 #endif
 
 #if defined(SUN4M)
-static void pmap_bootstrap4m __P((void));
+static void pmap_bootstrap4m(void);
 #endif
 #if defined(SUN4) || defined(SUN4C)
-static void pmap_bootstrap4_4c __P((int, int, int));
+static void pmap_bootstrap4_4c(int, int, int);
 #endif
 
 /*
@@ -6460,7 +6460,7 @@ pmap_dumpsize()
 int
 pmap_dumpmmu(dump, blkno)
 	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 {
 	kcore_seg_t	*ksegp;
 	cpu_kcore_hdr_t	*kcpup;
@@ -6619,7 +6619,7 @@ pmap_writetext(dst, ch)
 
 #ifdef EXTREME_DEBUG
 
-static void test_region __P((int, int, int));
+static void test_region(int, int, int);
 
 void
 debug_pagetables()

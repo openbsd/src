@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_if.h,v 1.3 1997/07/23 20:37:20 mickey Exp $	*/
+/*	$OpenBSD: ipx_if.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 
 /*-
  *
@@ -95,10 +95,10 @@ extern struct	ifqueue	ipxintrq;	/* IPX input packet queue */
 extern struct	ipx_ifaddrhead ipx_ifaddr;
 
 struct ipx_ifaddr *
-	ipx_iaonnetof __P((struct ipx_addr *dst));
-int	ipx_ifinit __P((struct ifnet *ifp, struct ipx_ifaddr *ia,
-			struct sockaddr_ipx *sipx, int scrub));
-void	ipx_ifscrub __P((struct ifnet *ifp, struct ipx_ifaddr *ia));
+	ipx_iaonnetof(struct ipx_addr *dst);
+int	ipx_ifinit(struct ifnet *ifp, struct ipx_ifaddr *ia,
+			struct sockaddr_ipx *sipx, int scrub);
+void	ipx_ifscrub(struct ifnet *ifp, struct ipx_ifaddr *ia);
 #endif
 
 #endif /* !_NETIPX_IPX_IF_H_ */

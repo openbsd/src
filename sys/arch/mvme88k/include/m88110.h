@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.11 2001/12/22 09:49:39 smurph Exp $ */
+/*	$OpenBSD: m88110.h,v 1.12 2002/03/14 01:26:39 millert Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -143,94 +143,94 @@
 /*
  * Prototypes from "mvme88k/mvme88k/m88110_cmmu.c"
  */
-void m88110_show_apr __P((unsigned));
-void m88110_show_sctr __P((unsigned));
-void m88110_setup_board_config __P((void));
-void m88110_setup_cmmu_config __P((void));
-void m88110_cmmu_dump_config __P((void));
-void m88110_cpu_configuration_print __P((int));
-void m88110_cmmu_shutdown_now __P((void));
-void m88110_cmmu_parity_enable __P((void));
-unsigned m88110_cmmu_cpu_number __P((void));
-unsigned m88110_cmmu_get_idr __P((unsigned));
-void m88110_cmmu_set_sapr __P((unsigned));
-void m88110_cmmu_remote_set_sapr __P((unsigned, unsigned));
-void m88110_cmmu_set_uapr __P((unsigned));
-void m88110_cmmu_set_batc_entry __P((unsigned, unsigned, unsigned, unsigned));
-void m88110_cmmu_set_pair_batc_entry __P((unsigned, unsigned, unsigned));
-void m88110_cmmu_flush_remote_tlb __P((unsigned, unsigned, vm_offset_t, int));
-void m88110_cmmu_flush_tlb __P((unsigned, vm_offset_t, int));
-void m88110_cmmu_pmap_activate __P((unsigned, unsigned, 
+void m88110_show_apr(unsigned);
+void m88110_show_sctr(unsigned);
+void m88110_setup_board_config(void);
+void m88110_setup_cmmu_config(void);
+void m88110_cmmu_dump_config(void);
+void m88110_cpu_configuration_print(int);
+void m88110_cmmu_shutdown_now(void);
+void m88110_cmmu_parity_enable(void);
+unsigned m88110_cmmu_cpu_number(void);
+unsigned m88110_cmmu_get_idr(unsigned);
+void m88110_cmmu_set_sapr(unsigned);
+void m88110_cmmu_remote_set_sapr(unsigned, unsigned);
+void m88110_cmmu_set_uapr(unsigned);
+void m88110_cmmu_set_batc_entry(unsigned, unsigned, unsigned, unsigned);
+void m88110_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
+void m88110_cmmu_flush_remote_tlb(unsigned, unsigned, vm_offset_t, int);
+void m88110_cmmu_flush_tlb(unsigned, vm_offset_t, int);
+void m88110_cmmu_pmap_activate(unsigned, unsigned, 
 				  batc_template_t i_batc[BATC_MAX],
-				  batc_template_t d_batc[BATC_MAX]));
-void m88110_cmmu_flush_remote_cache __P((int, vm_offset_t, int));
-void m88110_cmmu_flush_cache __P((vm_offset_t, int));
-void m88110_cmmu_flush_remote_inst_cache __P((int, vm_offset_t, int));
-void m88110_cmmu_flush_inst_cache __P((vm_offset_t, int));
-void m88110_cmmu_flush_remote_data_cache __P((int, vm_offset_t, int));
-void m88110_cmmu_flush_data_cache __P((vm_offset_t, int));
-void m88110_dma_cachectl __P((vm_offset_t, int, int));
+				  batc_template_t d_batc[BATC_MAX]);
+void m88110_cmmu_flush_remote_cache(int, vm_offset_t, int);
+void m88110_cmmu_flush_cache(vm_offset_t, int);
+void m88110_cmmu_flush_remote_inst_cache(int, vm_offset_t, int);
+void m88110_cmmu_flush_inst_cache(vm_offset_t, int);
+void m88110_cmmu_flush_remote_data_cache(int, vm_offset_t, int);
+void m88110_cmmu_flush_data_cache(vm_offset_t, int);
+void m88110_dma_cachectl(vm_offset_t, int, int);
 
 #if DDB
-unsigned m88110_cmmu_get_by_mode __P((int, int));
-void m88110_cmmu_show_translation __P((unsigned, unsigned, unsigned, int));
-void m88110_cmmu_cache_state __P((unsigned, unsigned));
-void m88110_show_cmmu_info __P((unsigned));
+unsigned m88110_cmmu_get_by_mode(int, int);
+void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
+void m88110_cmmu_cache_state(unsigned, unsigned);
+void m88110_show_cmmu_info(unsigned);
 #endif
 
-void m88110_cmmu_init __P((void));
-int m88110_table_search __P((pmap_t, vm_offset_t, int, int, int));
+void m88110_cmmu_init(void);
+int m88110_table_search(pmap_t, vm_offset_t, int, int, int);
 
-void set_icmd __P((unsigned value));
-void set_ictl __P((unsigned value));
-void set_isar __P((unsigned value));
-void set_isap __P((unsigned value));
-void set_iuap __P((unsigned value));
-void set_iir  __P((unsigned value));
-void set_ibp  __P((unsigned value));
-void set_ippu __P((unsigned value));
-void set_ippl __P((unsigned value));
-void set_isr  __P((unsigned value));
-void set_ilar __P((unsigned value));
-void set_ipar __P((unsigned value));
-void set_dcmd __P((unsigned value));
-void set_dctl __P((unsigned value));
-void set_dsar __P((unsigned value));
-void set_dsap __P((unsigned value));
-void set_duap __P((unsigned value));
-void set_dir  __P((unsigned value));
-void set_dbp  __P((unsigned value));
-void set_dppu __P((unsigned value));
-void set_dppl __P((unsigned value));
-void set_dsr  __P((unsigned value));
-void set_dlar __P((unsigned value));
-void set_dpar __P((unsigned value));
+void set_icmd(unsigned value);
+void set_ictl(unsigned value);
+void set_isar(unsigned value);
+void set_isap(unsigned value);
+void set_iuap(unsigned value);
+void set_iir(unsigned value);
+void set_ibp(unsigned value);
+void set_ippu(unsigned value);
+void set_ippl(unsigned value);
+void set_isr(unsigned value);
+void set_ilar(unsigned value);
+void set_ipar(unsigned value);
+void set_dcmd(unsigned value);
+void set_dctl(unsigned value);
+void set_dsar(unsigned value);
+void set_dsap(unsigned value);
+void set_duap(unsigned value);
+void set_dir(unsigned value);
+void set_dbp(unsigned value);
+void set_dppu(unsigned value);
+void set_dppl(unsigned value);
+void set_dsr(unsigned value);
+void set_dlar(unsigned value);
+void set_dpar(unsigned value);
 
 /* get routines */
-unsigned get_icmd __P((void));
-unsigned get_ictl __P((void));
-unsigned get_isar __P((void));
-unsigned get_isap __P((void));
-unsigned get_iuap __P((void));
-unsigned get_iir  __P((void));
-unsigned get_ibp  __P((void));
-unsigned get_ippu __P((void));
-unsigned get_ippl __P((void));
-unsigned get_isr  __P((void));
-unsigned get_ilar __P((void));
-unsigned get_ipar __P((void));
-unsigned get_dcmd __P((void));
-unsigned get_dctl __P((void));
-unsigned get_dsar __P((void));
-unsigned get_dsap __P((void));
-unsigned get_duap __P((void));
-unsigned get_dir  __P((void));
-unsigned get_dbp  __P((void));
-unsigned get_dppu __P((void));
-unsigned get_dppl __P((void));
-unsigned get_dsr  __P((void));
-unsigned get_dlar __P((void));
-unsigned get_dpar __P((void));
+unsigned get_icmd(void);
+unsigned get_ictl(void);
+unsigned get_isar(void);
+unsigned get_isap(void);
+unsigned get_iuap(void);
+unsigned get_iir(void);
+unsigned get_ibp(void);
+unsigned get_ippu(void);
+unsigned get_ippl(void);
+unsigned get_isr(void);
+unsigned get_ilar(void);
+unsigned get_ipar(void);
+unsigned get_dcmd(void);
+unsigned get_dctl(void);
+unsigned get_dsar(void);
+unsigned get_dsap(void);
+unsigned get_duap(void);
+unsigned get_dir(void);
+unsigned get_dbp(void);
+unsigned get_dppu(void);
+unsigned get_dppl(void);
+unsigned get_dsr(void);
+unsigned get_dlar(void);
+unsigned get_dpar(void);
 
 /* Cache inlines */
 

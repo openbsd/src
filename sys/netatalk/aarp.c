@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.3 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -80,17 +80,17 @@
 #include <netatalk/phase2.h>
 #include <netatalk/at_extern.h>
 
-static void aarptimer		__P((void *));
-struct ifaddr *at_ifawithnet	__P((struct sockaddr_at *, struct ifaddr *));
-static void aarpwhohas		__P((struct arpcom *, struct sockaddr_at *));
-int aarpresolve			__P((struct arpcom *, struct mbuf *,
-					struct sockaddr_at *, u_int8_t *));
-void aarpinput			__P((struct arpcom *, struct mbuf *));
-static void at_aarpinput	__P((struct arpcom *, struct mbuf *));
-static void aarptfree		__P((struct aarptab *));
-struct aarptab *aarptnew	__P((struct at_addr *));
-void aarpprobe			__P((void *));
-void aarp_clean			__P((void));
+static void aarptimer(void *);
+struct ifaddr *at_ifawithnet(struct sockaddr_at *, struct ifaddr *);
+static void aarpwhohas(struct arpcom *, struct sockaddr_at *);
+int aarpresolve(struct arpcom *, struct mbuf *,
+					struct sockaddr_at *, u_int8_t *);
+void aarpinput(struct arpcom *, struct mbuf *);
+static void at_aarpinput(struct arpcom *, struct mbuf *);
+static void aarptfree(struct aarptab *);
+struct aarptab *aarptnew(struct at_addr *);
+void aarpprobe(void *);
+void aarp_clean(void);
 
 #ifdef GATEWAY
 #define AARPTAB_BSIZ	16

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.4 1997/01/24 19:56:33 niklas Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.5 2002/03/14 01:26:26 millert Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.4 1996/11/13 21:13:06 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <netinet/in.h>
 
-u_int64_t in_cksumdata __P((caddr_t, int));
+u_int64_t in_cksumdata(caddr_t, int);
 
 /*
  * Checksum routine for Internet Protocol family headers
@@ -85,7 +85,7 @@ union q_util {
 	u_int64_t q;
 };
 
-u_int64_t	in_cksumdata __P((caddr_t buf, int len));
+u_int64_t	in_cksumdata(caddr_t buf, int len);
 
 u_int64_t
 in_cksumdata(buf, len)

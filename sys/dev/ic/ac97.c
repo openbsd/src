@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.28 2002/01/09 19:27:27 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.29 2002/03/14 01:26:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -287,12 +287,12 @@ struct ac97_softc {
 	u_int16_t shadow_reg[128];
 };
 
-int ac97_mixer_get_port __P((struct ac97_codec_if *self, mixer_ctrl_t *cp));
-int ac97_mixer_set_port __P((struct ac97_codec_if *self, mixer_ctrl_t *));
-int ac97_query_devinfo __P((struct ac97_codec_if *self, mixer_devinfo_t *));
-int ac97_get_portnum_by_name __P((struct ac97_codec_if *, char *, char *,
-				  char *));
-void ac97_restore_shadow __P((struct ac97_codec_if *self));
+int ac97_mixer_get_port(struct ac97_codec_if *self, mixer_ctrl_t *cp);
+int ac97_mixer_set_port(struct ac97_codec_if *self, mixer_ctrl_t *);
+int ac97_query_devinfo(struct ac97_codec_if *self, mixer_devinfo_t *);
+int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
+				  char *);
+void ac97_restore_shadow(struct ac97_codec_if *self);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -450,11 +450,11 @@ const char * const ac97feature[] = {
 };
 
 
-int ac97_str_equal __P((const char *, const char *));
-void ac97_setup_source_info __P((struct ac97_softc *));
-void ac97_setup_defaults __P((struct ac97_softc *));
-int ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
-int ac97_write __P((struct ac97_softc *, u_int8_t, u_int16_t));
+int ac97_str_equal(const char *, const char *);
+void ac97_setup_source_info(struct ac97_softc *);
+void ac97_setup_defaults(struct ac97_softc *);
+int ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
+int ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
 
 #define AC97_DEBUG 10
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.7 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.8 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -56,24 +56,24 @@ struct cpu_softc;
 struct module_info {
 	int  cpu_type;
 	enum vactype vactype;
-	void (*cpu_match) __P((struct cpu_softc *, struct module_info *, int));
-	void (*getcacheinfo) __P((struct cpu_softc *sc, int node));
-	void (*hotfix) __P((struct cpu_softc *));
-	void (*mmu_enable) __P((void));
-	void (*cache_enable) __P((void));
+	void (*cpu_match)(struct cpu_softc *, struct module_info *, int);
+	void (*getcacheinfo)(struct cpu_softc *sc, int node);
+	void (*hotfix)(struct cpu_softc *);
+	void (*mmu_enable)(void);
+	void (*cache_enable)(void);
 	int  ncontext;			/* max. # of contexts (we use) */
 
-	void (*get_syncflt) __P((void));
-	int  (*get_asyncflt) __P((u_int *, u_int *));
-	void (*cache_flush) __P((caddr_t, u_int));
-	void (*vcache_flush_page) __P((int));
-	void (*vcache_flush_segment) __P((int, int));
-	void (*vcache_flush_region) __P((int));
-	void (*vcache_flush_context) __P((void));
-	void (*pcache_flush_line) __P((int, int));
-	void (*pure_vcache_flush) __P((void));
-	void (*cache_flush_all)__P((void));
-	void (*memerr) __P((unsigned, u_int, u_int, struct trapframe *));
+	void (*get_syncflt)(void);
+	int  (*get_asyncflt)(u_int *, u_int *);
+	void (*cache_flush)(caddr_t, u_int);
+	void (*vcache_flush_page)(int);
+	void (*vcache_flush_segment)(int, int);
+	void (*vcache_flush_region)(int);
+	void (*vcache_flush_context)(void);
+	void (*pcache_flush_line)(int, int);
+	void (*pure_vcache_flush)(void);
+	void (*cache_flush_all)(void);
+	void (*memerr)(unsigned, u_int, u_int, struct trapframe *);
 };
 
 
@@ -160,15 +160,15 @@ struct cpu_softc {
 	 */
 
 	/* bootup things: access to physical memory */
-	u_int	(*read_physmem) __P((u_int addr, int space));
-	void	(*write_physmem) __P((u_int addr, u_int data));
-	void	(*cache_tablewalks) __P((void));
-	void	(*mmu_enable) __P((void));
-	void	(*hotfix) __P((struct cpu_softc *));
+	u_int	(*read_physmem)(u_int addr, int space);
+	void	(*write_physmem)(u_int addr, u_int data);
+	void	(*cache_tablewalks)(void);
+	void	(*mmu_enable)(void);
+	void	(*hotfix)(struct cpu_softc *);
 
 	/* locore defined: */
-	void	(*get_syncflt) __P((void));		/* Not C-callable */
-	int	(*get_asyncflt) __P((u_int *, u_int *));
+	void	(*get_syncflt)(void);		/* Not C-callable */
+	int	(*get_asyncflt)(u_int *, u_int *);
 
        	/* Synchronous Fault Status; temporary storage */
        	struct {
@@ -177,31 +177,30 @@ struct cpu_softc {
 	} syncfltdump;
 
 	/* Cache handling functions */
-	void	(*cache_enable) __P((void));
-	void	(*cache_flush)__P((caddr_t, u_int));
-	void	(*vcache_flush_page)__P((int));
-	void	(*vcache_flush_segment)__P((int, int));
-	void	(*vcache_flush_region)__P((int));
-	void	(*vcache_flush_context)__P((void));
-	void	(*pcache_flush_line)__P((int, int));
-	void	(*pure_vcache_flush) __P((void));
-	void	(*cache_flush_all)__P((void));
+	void	(*cache_enable)(void);
+	void	(*cache_flush)(caddr_t, u_int);
+	void	(*vcache_flush_page)(int);
+	void	(*vcache_flush_segment)(int, int);
+	void	(*vcache_flush_region)(int);
+	void	(*vcache_flush_context)(void);
+	void	(*pcache_flush_line)(int, int);
+	void	(*pure_vcache_flush)(void);
+	void	(*cache_flush_all)(void);
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */
-	void		(*hwbcopy)
-				__P((const void *from, void *to, size_t len));
-	void		(*hwbzero) __P((void *buf, size_t len));
+	void		(*hwbcopy)(const void *from, void *to, size_t len);
+	void		(*hwbzero)(void *buf, size_t len);
 
 	/* routine to clear mbus-sbus buffers */
-	void		(*mbusflush) __P((void));
+	void		(*mbusflush)(void);
 #endif
 
 	/*
 	 * Memory error handler; parity errors, unhandled NMIs and other
 	 * unrecoverable faults end up here.
 	 */
-	void    (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
+	void    (*memerr)(unsigned, u_int, u_int, struct trapframe *);
 	/* XXX: Add more here! */
 };
 
@@ -281,9 +280,9 @@ struct cpu_softc {
 /*
  * Related function prototypes
  */
-void getcpuinfo __P((struct cpu_softc *sc, int node));
-void mmu_install_tables __P((struct cpu_softc *));
-void pmap_alloc_cpu __P((struct cpu_softc *));
+void getcpuinfo(struct cpu_softc *sc, int node);
+void mmu_install_tables(struct cpu_softc *);
+void pmap_alloc_cpu(struct cpu_softc *);
 
 #define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
 #endif	/* _SPARC_CPUVAR_H */

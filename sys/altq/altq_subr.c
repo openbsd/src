@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.5 2002/02/13 08:11:48 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.6 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -74,35 +74,35 @@
 /*
  * internal function prototypes
  */
-static void	tbr_timeout __P((void *));
-static int 	extract_ports4 __P((struct mbuf *, struct ip *,
-				    struct flowinfo_in *));
+static void	tbr_timeout(void *);
+static int 	extract_ports4(struct mbuf *, struct ip *,
+				    struct flowinfo_in *);
 #ifdef INET6
-static int 	extract_ports6 __P((struct mbuf *, struct ip6_hdr *,
-				    struct flowinfo_in6 *));
+static int 	extract_ports6(struct mbuf *, struct ip6_hdr *,
+				    struct flowinfo_in6 *);
 #endif
-static int	apply_filter4 __P((u_int32_t, struct flow_filter *,
-				   struct flowinfo_in *));
-static int	apply_ppfilter4 __P((u_int32_t, struct flow_filter *,
-				     struct flowinfo_in *));
+static int	apply_filter4(u_int32_t, struct flow_filter *,
+				   struct flowinfo_in *);
+static int	apply_ppfilter4(u_int32_t, struct flow_filter *,
+				     struct flowinfo_in *);
 #ifdef INET6
-static int	apply_filter6 __P((u_int32_t, struct flow_filter6 *,
-					   struct flowinfo_in6 *));
+static int	apply_filter6(u_int32_t, struct flow_filter6 *,
+					   struct flowinfo_in6 *);
 #endif
-static int	apply_tosfilter4 __P((u_int32_t, struct flow_filter *,
-					     struct flowinfo_in *));
-static u_long	get_filt_handle __P((struct acc_classifier *, int));
-static struct acc_filter *filth_to_filtp __P((struct acc_classifier *,
-					      u_long));
-static u_int32_t filt2fibmask __P((struct flow_filter *));
+static int	apply_tosfilter4(u_int32_t, struct flow_filter *,
+					     struct flowinfo_in *);
+static u_long	get_filt_handle(struct acc_classifier *, int);
+static struct acc_filter *filth_to_filtp(struct acc_classifier *,
+					      u_long);
+static u_int32_t filt2fibmask(struct flow_filter *);
 
-static void 	ip4f_cache __P((struct ip *, struct flowinfo_in *));
-static int 	ip4f_lookup __P((struct ip *, struct flowinfo_in *));
-static int 	ip4f_init __P((void));
-static struct ip4_frag	*ip4f_alloc __P((void));
-static void 	ip4f_free __P((struct ip4_frag *));
+static void 	ip4f_cache(struct ip *, struct flowinfo_in *);
+static int 	ip4f_lookup(struct ip *, struct flowinfo_in *);
+static int 	ip4f_init(void);
+static struct ip4_frag	*ip4f_alloc(void);
+static void 	ip4f_free(struct ip4_frag *);
 
-int (*altq_input) __P((struct mbuf *, int)) = NULL;
+int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
 

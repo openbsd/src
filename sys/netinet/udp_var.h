@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.12 2001/06/23 06:03:14 angelos Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.13 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -96,21 +96,21 @@ struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
 #if defined(INET6) && !defined(TCP6)
-void	udp6_ctlinput __P((int, struct sockaddr *, void *));
-int	udp6_input __P((struct mbuf **, int *, int));
-int	udp6_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+void	udp6_ctlinput(int, struct sockaddr *, void *);
+int	udp6_input(struct mbuf **, int *, int);
+int	udp6_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif /* INET6 && !TCP6 */
-void	 *udp_ctlinput __P((int, struct sockaddr *, void *));
-void	 udp_init __P((void));
-void	 udp_input __P((struct mbuf *, ...));
+void	 *udp_ctlinput(int, struct sockaddr *, void *);
+void	 udp_init(void);
+void	 udp_input(struct mbuf *, ...);
 #ifdef INET6
-int	 udp6_output __P((struct inpcb *, struct mbuf *, struct mbuf *,
-	struct mbuf *));
+int	 udp6_output(struct inpcb *, struct mbuf *, struct mbuf *,
+	struct mbuf *);
 #endif /* INET6 */
-int	 udp_output __P((struct mbuf *, ...));
-int	 udp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	 udp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+int	 udp_output(struct mbuf *, ...);
+int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	 udp_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *);
 #endif /* _KERNEL */
 #endif /* _NETINET_UDP_VAR_H_ */

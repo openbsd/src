@@ -1,8 +1,8 @@
-/*	$OpenBSD: disk.h,v 1.3 1996/10/30 22:40:42 niklas Exp $	*/
+/*	$OpenBSD: disk.h,v 1.4 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: disk.h,v 1.1 1995/11/23 02:39:42 cgd Exp $	*/
 
-int	diskstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-/* int     diskopen __P((struct open_file *, int, int, int)); */
-int     diskclose __P((struct open_file *));
+int	diskstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+/* int     diskopen(struct open_file *, int, int, int); */
+int     diskclose(struct open_file *);
 
 #define	diskioctl	noioctl

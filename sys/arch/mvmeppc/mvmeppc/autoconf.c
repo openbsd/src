@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2001/12/05 23:58:41 tdeval Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2002/03/14 01:26:41 millert Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.3 2001/12/05 23:58:41 tdeval Exp $
+ *      $Id: autoconf.c,v 1.4 2002/03/14 01:26:41 millert Exp $
  */
 
 /*
@@ -62,17 +62,17 @@
 
 #include <machine/autoconf.h>
 
-struct  device *parsedisk __P((char *, int, int, dev_t *));
-void    setroot __P((void));
-void	swapconf __P((void));
-extern void	dumpconf __P((void));
-int findblkmajor __P((struct device *));
-char *findblkname __P((int));
-static struct device * getdisk __P((char *, int, int, dev_t *));
-struct device * getdevunit __P((char *, int));
-static struct devmap * findtype __P((char **));
-void makebootdev __P((char *cp));
-int getpno __P((char **));
+struct  device *parsedisk(char *, int, int, dev_t *);
+void    setroot(void);
+void	swapconf(void);
+extern void	dumpconf(void);
+int findblkmajor(struct device *);
+char *findblkname(int);
+static struct device * getdisk(char *, int, int, dev_t *);
+struct device * getdevunit(char *, int);
+static struct devmap * findtype(char **);
+void makebootdev(char *cp);
+int getpno(char **);
 void diskconf();
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.14 2002/03/08 20:33:43 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.15 2002/03/14 01:26:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -69,35 +69,35 @@ int o_virq_max;
 
 struct evcnt evirq[ICU_LEN];
 
-static int fakeintr __P((void *));
-static char *intr_typename __P((int type));
-static void intr_calculatemasks __P((void));
-static __inline int cntlzw __P((int x));
-static int mapirq __P((int irq));
-int openpic_prog_button __P((void *arg));
-void openpic_enable_irq_mask __P((int irq_mask));
+static int fakeintr(void *);
+static char *intr_typename(int type);
+static void intr_calculatemasks(void);
+static __inline int cntlzw(int x);
+static int mapirq(int irq);
+int openpic_prog_button(void *arg);
+void openpic_enable_irq_mask(int irq_mask);
 
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
 
-static __inline u_int openpic_read __P((int));
-static __inline void openpic_write __P((int, u_int));
-void openpic_enable_irq __P((int, int));
-void openpic_disable_irq __P((int));
-void openpic_init __P((void));
-void openpic_set_priority __P((int, int));
-static __inline int openpic_read_irq __P((int));
-static __inline void openpic_eoi __P((int));
+static __inline u_int openpic_read(int);
+static __inline void openpic_write(int, u_int);
+void openpic_enable_irq(int, int);
+void openpic_disable_irq(int);
+void openpic_init(void);
+void openpic_set_priority(int, int);
+static __inline int openpic_read_irq(int);
+static __inline void openpic_eoi(int);
 
 struct openpic_softc {
 	struct device sc_dev;
 };
 
-int	openpic_match __P((struct device *parent, void *cf, void *aux));
-void	openpic_attach __P((struct device *, struct device *, void *));
-void	openpic_do_pending_int __P((void));
-void	openpic_collect_preconf_intr __P((void));
-void	ext_intr_openpic __P((void));
+int	openpic_match(struct device *parent, void *cf, void *aux);
+void	openpic_attach(struct device *, struct device *, void *);
+void	openpic_do_pending_int(void);
+void	openpic_collect_preconf_intr(void);
+void	ext_intr_openpic(void);
 
 struct cfattach openpic_ca = { 
 	sizeof(struct openpic_softc),
@@ -134,9 +134,9 @@ extern void_f *pending_int_f;
 
 vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
-	int (*ih_fun) __P((void *)), void *ih_arg, char *name);
+	int (*ih_fun)(void *), void *ih_arg, char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
-void openpic_collect_preconf_intr __P((void));
+void openpic_collect_preconf_intr(void);
 
 void
 openpic_attach(parent, self, aux)
@@ -214,7 +214,7 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 	char *name;
 {

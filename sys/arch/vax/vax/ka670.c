@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.3 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -52,13 +52,13 @@
 #include <machine/ka670.h>
 #include <machine/clock.h>
 
-static	void ka670_conf __P((void));
+static	void ka670_conf(void);
 
-static	int ka670_mchk __P((caddr_t));
-static	void ka670_memerr __P((void));
-static	int ka670_cache_init __P((void));	/* "int mapen" as argument? */
-static	void ka670_halt __P((void));
-static	void ka670_reboot __P((int));
+static	int ka670_mchk(caddr_t);
+static	void ka670_memerr(void);
+static	int ka670_cache_init(void);	/* "int mapen" as argument? */
+static	void ka670_halt(void);
+static	void ka670_reboot(int);
 
 struct	cpu_dep ka670_calls = {
 	0,

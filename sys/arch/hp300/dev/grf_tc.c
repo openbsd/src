@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_tc.c,v 1.8 2000/11/10 15:33:05 provos Exp $	*/
+/*	$OpenBSD: grf_tc.c,v 1.9 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_tc.c,v 1.11 1997/03/31 07:34:18 scottr Exp $	*/
 
 /*
@@ -75,20 +75,20 @@
 
 #include "ite.h"
 
-int	tc_init __P((struct grf_data *, int, caddr_t));
-int	tc_mode __P((struct grf_data *, int, caddr_t));
+int	tc_init(struct grf_data *, int, caddr_t);
+int	tc_mode(struct grf_data *, int, caddr_t);
 
-void	topcat_common_attach __P((struct grfdev_softc *, caddr_t, u_int8_t));
+void	topcat_common_attach(struct grfdev_softc *, caddr_t, u_int8_t);
 
-int	topcat_intio_match __P((struct device *, void *, void *));
-void	topcat_intio_attach __P((struct device *, struct device *, void *));
+int	topcat_intio_match(struct device *, void *, void *);
+void	topcat_intio_attach(struct device *, struct device *, void *);
 
-int	topcat_dio_match __P((struct device *, void *, void *));
-void	topcat_dio_attach __P((struct device *, struct device *, void *));
+int	topcat_dio_match(struct device *, void *, void *);
+void	topcat_dio_attach(struct device *, struct device *, void *);
 
-int	topcat_console_scan __P((int, caddr_t, void *));
-void	topcatcnprobe __P((struct consdev *cp));
-void	topcatcninit __P((struct consdev *cp));
+int	topcat_console_scan(int, caddr_t, void *);
+void	topcatcnprobe(struct consdev *cp);
+void	topcatcninit(struct consdev *cp);
 
 struct cfattach topcat_intio_ca = {
 	sizeof(struct grfdev_softc), topcat_intio_match, topcat_intio_attach
@@ -123,14 +123,14 @@ struct grfsw hrmcatseye_grfsw = {
 };
 
 #if NITE > 0
-void	topcat_init __P((struct ite_data *));
-void	topcat_deinit __P((struct ite_data *));
-void	topcat_putc __P((struct ite_data *, int, int, int, int));
-void	topcat_cursor __P((struct ite_data *, int));
-void	topcat_clear __P((struct ite_data *, int, int, int, int));
-void	topcat_scroll __P((struct ite_data *, int, int, int, int));
-void	topcat_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+void	topcat_init(struct ite_data *);
+void	topcat_deinit(struct ite_data *);
+void	topcat_putc(struct ite_data *, int, int, int, int);
+void	topcat_cursor(struct ite_data *, int);
+void	topcat_clear(struct ite_data *, int, int, int, int);
+void	topcat_scroll(struct ite_data *, int, int, int, int);
+void	topcat_windowmove(struct ite_data *, int, int, int, int,
+		int, int, int);
 
 /* Topcat/catseye ite switch */
 struct itesw topcat_itesw = {

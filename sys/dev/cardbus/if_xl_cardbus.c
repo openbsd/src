@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.9 2000/09/29 05:28:28 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.10 2002/03/14 01:26:53 millert Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -82,10 +82,10 @@
 
 #define CARDBUS_3C575BTX_FUNCSTAT_PCIREG  CARDBUS_BASE2_REG  /* means 0x18 */
 
-int xl_cardbus_match		__P((struct device *, void *, void *));
-void xl_cardbus_attach		__P((struct device *, struct device *,void *));
-int xl_cardbus_detach		__P((struct device *, int));
-void xl_cardbus_intr_ack	__P((struct xl_softc *));
+int xl_cardbus_match(struct device *, void *, void *);
+void xl_cardbus_attach(struct device *, struct device *,void *);
+int xl_cardbus_detach(struct device *, int);
+void xl_cardbus_intr_ack(struct xl_softc *);
 
 #define XL_CARDBUS_BOOMERANG	0x0001
 #define XL_CARDBUS_CYCLONE	0x0002
@@ -173,8 +173,7 @@ const struct xl_cardbus_product {
 	  NULL },
 };
 
-const struct xl_cardbus_product *xl_cardbus_lookup
-    __P((const struct cardbus_attach_args *));
+const struct xl_cardbus_product *xl_cardbus_lookup(const struct cardbus_attach_args *);
 
 const struct xl_cardbus_product *
 xl_cardbus_lookup(ca)

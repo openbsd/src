@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.34 2001/08/24 05:14:05 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.35 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -82,47 +82,47 @@
 #include <sparc/dev/hmereg.h>
 #include <sparc/dev/hmevar.h>
 
-int	hmematch	__P((struct device *, void *, void *));
-void	hmeattach	__P((struct device *, struct device *, void *));
-void	hmewatchdog	__P((struct ifnet *));
-int	hmeintr		__P((void *));
-int	hmeioctl	__P((struct ifnet *, u_long, caddr_t));
-void	hmereset	__P((struct hme_softc *));
-void	hmestart	__P((struct ifnet *));
-void	hmestop		__P((struct hme_softc *));
-void	hmeinit		__P((struct hme_softc *));
-void	hme_meminit	__P((struct hme_softc *));
+int	hmematch(struct device *, void *, void *);
+void	hmeattach(struct device *, struct device *, void *);
+void	hmewatchdog(struct ifnet *);
+int	hmeintr(void *);
+int	hmeioctl(struct ifnet *, u_long, caddr_t);
+void	hmereset(struct hme_softc *);
+void	hmestart(struct ifnet *);
+void	hmestop(struct hme_softc *);
+void	hmeinit(struct hme_softc *);
+void	hme_meminit(struct hme_softc *);
 
-void	hme_tcvr_bb_writeb  __P((struct hme_softc *, int));
-int	hme_tcvr_bb_readb   __P((struct hme_softc *, int));
+void	hme_tcvr_bb_writeb(struct hme_softc *, int);
+int	hme_tcvr_bb_readb(struct hme_softc *, int);
 
-void	hme_poll_stop	__P((struct hme_softc *sc));
+void	hme_poll_stop(struct hme_softc *sc);
 
-int	hme_rint	__P((struct hme_softc *));
-int	hme_tint	__P((struct hme_softc *));
-int	hme_mint	__P((struct hme_softc *, u_int32_t));
-int	hme_eint	__P((struct hme_softc *, u_int32_t));
+int	hme_rint(struct hme_softc *);
+int	hme_tint(struct hme_softc *);
+int	hme_mint(struct hme_softc *, u_int32_t);
+int	hme_eint(struct hme_softc *, u_int32_t);
 
-void	hme_reset_rx	__P((struct hme_softc *));
-void	hme_reset_tx	__P((struct hme_softc *));
+void	hme_reset_rx(struct hme_softc *);
+void	hme_reset_tx(struct hme_softc *);
 
-void		hme_read __P((struct hme_softc *, int, int));
-int		hme_put __P((struct hme_softc *, int, struct mbuf *));
+void		hme_read(struct hme_softc *, int, int);
+int		hme_put(struct hme_softc *, int, struct mbuf *);
 
 /*
  * ifmedia glue
  */
-int	hme_mediachange __P((struct ifnet *));
-void	hme_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	hme_mediachange(struct ifnet *);
+void	hme_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*
  * mii glue
  */
-int	hme_mii_read __P((struct device *, int, int));
-void	hme_mii_write __P((struct device *, int, int, int));
-void	hme_mii_statchg __P((struct device *));
+int	hme_mii_read(struct device *, int, int);
+void	hme_mii_write(struct device *, int, int, int);
+void	hme_mii_statchg(struct device *);
 
-void	hme_mcreset __P((struct hme_softc *));
+void	hme_mcreset(struct hme_softc *);
 
 struct cfattach hme_ca = {
 	sizeof (struct hme_softc), hmematch, hmeattach
@@ -162,7 +162,7 @@ hmeattach(parent, self, aux)
 	int pri;
 	struct bootpath *bp;
 	/* XXX the following declaration should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -373,49 +373,49 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, int, boolean_t));
-static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct vm_page	*pmap_alloc_ptp(struct pmap *, int, boolean_t);
+static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
 #define ALLOCPV_NONEED	2	/* don't need PV, just growing cache */
-static struct pv_entry	*pmap_alloc_pvpage __P((struct pmap *, int));
-static void		 pmap_enter_pv __P((struct pv_head *,
+static struct pv_entry	*pmap_alloc_pvpage(struct pmap *, int);
+static void		 pmap_enter_pv(struct pv_head *,
 					    struct pv_entry *, struct pmap *,
-					    vaddr_t, struct vm_page *));
-static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
-static void		 pmap_free_pv_doit __P((struct pv_entry *));
-static void		 pmap_free_pvpage __P((void));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
-static boolean_t	 pmap_is_curpmap __P((struct pmap *));
-static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
-static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
-					     vaddr_t));
-static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *,
-					      pt_entry_t *, vaddr_t));
-static void		 pmap_remove_ptes __P((struct pmap *,
+					    vaddr_t, struct vm_page *);
+static void		 pmap_free_pv(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
+static void		 pmap_free_pv_doit(struct pv_entry *);
+static void		 pmap_free_pvpage(void);
+static struct vm_page	*pmap_get_ptp(struct pmap *, int, boolean_t);
+static boolean_t	 pmap_is_curpmap(struct pmap *);
+static pt_entry_t	*pmap_map_ptes(struct pmap *);
+static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
+					     vaddr_t);
+static boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *,
+					      pt_entry_t *, vaddr_t);
+static void		 pmap_remove_ptes(struct pmap *,
 					       struct pmap_remove_record *,
 					       struct vm_page *, vaddr_t,
-					       vaddr_t, vaddr_t));
-static struct vm_page	*pmap_steal_ptp __P((struct uvm_object *,
-					     vaddr_t));
-static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
-static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
-static void		 pmap_tmpunmap_pa __P((void));
-static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
-static boolean_t	 pmap_transfer_ptes __P((struct pmap *,
+					       vaddr_t, vaddr_t);
+static struct vm_page	*pmap_steal_ptp(struct uvm_object *,
+					     vaddr_t);
+static vaddr_t		 pmap_tmpmap_pa(paddr_t);
+static pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
+static void		 pmap_tmpunmap_pa(void);
+static void		 pmap_tmpunmap_pvepte(struct pv_entry *);
+static boolean_t	 pmap_transfer_ptes(struct pmap *,
 					 struct pmap_transfer_location *,
 					 struct pmap *,
 					 struct pmap_transfer_location *,
-					 int, boolean_t));
-static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
+					 int, boolean_t);
+static boolean_t	 pmap_try_steal_pv(struct pv_head *,
 						struct pv_entry *,
-						struct pv_entry *));
-static void		pmap_unmap_ptes __P((struct pmap *));
+						struct pv_entry *);
+static void		pmap_unmap_ptes(struct pmap *);
 
-void			pmap_pinit __P((pmap_t));
-void			pmap_release __P((pmap_t));
+void			pmap_pinit(pmap_t);
+void			pmap_release(pmap_t);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -3625,7 +3625,7 @@ out:
 }
 
 #ifdef DEBUG
-void pmap_dump __P((struct pmap *, vaddr_t, vaddr_t));
+void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
 
 /*
  * pmap_dump: dump all the mappings from a pmap

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.13 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.14 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5.4.1 1996/05/25 22:13:35 jtc Exp $	*/
 
 /*
@@ -58,16 +58,16 @@
 
 int umap_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
-int	umap_bypass	__P((void *));
-int	umap_getattr	__P((void *));
-int	umap_inactive	__P((void *));
-int	umap_reclaim	__P((void *));
-int	umap_print	__P((void *));
-int	umap_rename	__P((void *));
-int	umap_strategy	__P((void *));
-int	umap_bwrite	__P((void *));
-int	umap_unlock	__P((void *));
-int	umap_lock	__P((void *));
+int	umap_bypass(void *);
+int	umap_getattr(void *);
+int	umap_inactive(void *);
+int	umap_reclaim(void *);
+int	umap_print(void *);
+int	umap_rename(void *);
+int	umap_strategy(void *);
+int	umap_bwrite(void *);
+int	umap_unlock(void *);
+int	umap_lock(void *);
 
 /*
  * Global vfs data structures
@@ -77,7 +77,7 @@ int	umap_lock	__P((void *));
  * go away with a merged buffer/block cache.
  *
  */
-int (**umap_vnodeop_p) __P((void *));
+int (**umap_vnodeop_p)(void *);
 struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc, umap_bypass },
 

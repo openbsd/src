@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.4 1997/11/30 06:10:38 gene Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.2 1996/06/07 10:27:19 briggs Exp $	*/
 
 /*
@@ -60,13 +60,13 @@
  * MacII hardware DOES dake care of the delay for us.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
 #endif	/* _KERNEL */
 
 /*
@@ -81,21 +81,21 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
  * This could be a macro if you like.
  */
 #ifdef _KERNEL
-void zsc_req_softint __P((struct zsc_softc *zsc));
+void zsc_req_softint(struct zsc_softc *zsc);
 
 /* Handle user request to enter kernel debugger. */
-void	zs_abort __P((struct zstty_softc *zst));
+void	zs_abort(struct zstty_softc *zst);
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
-	    struct proc *p));
+int	zsmdioctl(struct tty *tp, u_long com, caddr_t data, int flag,
+	    struct proc *p);
 
 /* Clean up at end of tty attach */
-void zstty_mdattach __P((struct zsc_softc *zsc, struct zstty_softc *zst,
-	    struct zs_chanstate *cs, struct tty *tp));  
+void zstty_mdattach(struct zsc_softc *zsc, struct zstty_softc *zst,
+	    struct zs_chanstate *cs, struct tty *tp);  
 
 /* Callback for "external" clock sources */
-void zsmd_setclock  __P((struct zs_chanstate *cs));
+void zsmd_setclock(struct zs_chanstate *cs);
 #endif	/* _KERNEL */
 
 /*

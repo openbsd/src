@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.40 2002/02/12 18:41:20 art Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.41 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -81,9 +81,9 @@
 #include <compat/common/compat_dir.h>
 
 /* linux_misc.c */
-static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
-int	linux_select1 __P((struct proc *, register_t *, int, fd_set *,
-     fd_set *, fd_set *, struct timeval *));
+static void bsd_to_linux_statfs(struct statfs *, struct linux_statfs *);
+int	linux_select1(struct proc *, register_t *, int, fd_set *,
+     fd_set *, fd_set *, struct timeval *);
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -935,7 +935,7 @@ linux_sys_readdir(p, v, retval)
  *
  * Note that this doesn't handle union-mounted filesystems.
  */
-int linux_readdir_callback __P((void *, struct dirent *, off_t));
+int linux_readdir_callback(void *, struct dirent *, off_t);
 
 struct linux_readdir_callback_args {
 	caddr_t outp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_debug.h,v 1.2 1996/10/26 09:34:56 mickey Exp $	*/
+/*	$OpenBSD: spx_debug.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 
 /*-
  *
@@ -73,8 +73,8 @@ extern char *prurequests[];
 extern char *sanames[];
 extern char *tcpstates[];
 
-void	spx_trace __P((int act, int ostate, struct spxpcb *sp, struct spx *si,
-		       int req));
+void	spx_trace(int act, int ostate, struct spxpcb *sp, struct spx *si,
+		       int req);
 #endif
 
 #endif /* !_NETIPX_SPX_DEBUG_H_ */

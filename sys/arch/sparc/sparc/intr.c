@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.17 2001/11/06 19:53:16 miod Exp $ */
+/*	$OpenBSD: intr.c,v 1.18 2002/03/14 01:26:44 millert Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -78,8 +78,8 @@
 #include <netinet6/ip6_var.h>
 #endif
 
-void	strayintr __P((struct clockframe *));
-int	soft01intr __P((void *));
+void	strayintr(struct clockframe *);
+int	soft01intr(void *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -148,7 +148,7 @@ soft01intr(fp)
 }
 
 #if defined(SUN4M)
-void	nmi_hard __P((void));
+void	nmi_hard(void);
 void
 nmi_hard()
 {
@@ -297,7 +297,7 @@ intr_establish(level, ih)
 void
 intr_fasttrap(level, vec)
 	int level;
-	void (*vec) __P((void));
+	void (*vec)(void);
 {
 	struct trapvec *tv;
 	u_long hi22, lo10;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.2 2001/08/19 05:44:27 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.3 2002/03/14 01:27:14 millert Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -93,11 +93,11 @@
 extern int	schedhz;			/* ideally: 16 */
 
 #ifdef	_SYS_PROC_H_
-void schedclock __P((struct proc *p));
-static __inline void scheduler_fork_hook __P((
-	struct proc *parent, struct proc *child));
-static __inline void scheduler_wait_hook __P((
-	struct proc *parent, struct proc *child));
+void schedclock(struct proc *p);
+static __inline void scheduler_fork_hook(
+	struct proc *parent, struct proc *child);
+static __inline void scheduler_wait_hook(
+	struct proc *parent, struct proc *child);
 
 /* Inherit the parent's scheduler history */
 

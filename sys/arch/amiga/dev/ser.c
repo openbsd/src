@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.11 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: ser.c,v 1.12 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
@@ -80,8 +80,8 @@
 #define SERUNIT(dev)   (minor(dev) & 0x7f)
 #define SERCUA(dev)    (minor(dev) & 0x80)
 
-void serattach __P((struct device *, struct device *, void *));
-int sermatch __P((struct device *, void *, void *));
+void serattach(struct device *, struct device *, void *);
+int sermatch(struct device *, void *, void *);
 
 struct ser_softc {
 	struct device dev;
@@ -107,21 +107,21 @@ struct cfdriver ser_cd = {
 
 #define splser() spl5()
 
-void	serstart __P((struct tty *));
-int	serparam __P((struct tty *, struct termios *)); 
-void	serintr __P((int));
-int	serhwiflow __P((struct tty *, int));
-int	sermctl __P((dev_t dev, int, int));
-void	ser_fastint __P((void));
-void	sereint __P((int, int));
-static	void ser_putchar __P((struct tty *, u_short));
-void	ser_outintr __P((void));
-void	sercnprobe __P((struct consdev *));
-void	sercninit __P((struct consdev *));
-void	serinit __P((int, int));          
-int	sercngetc __P((dev_t dev));
-void	sercnputc __P((dev_t, int));
-void	sercnpollc __P((dev_t, int));
+void	serstart(struct tty *);
+int	serparam(struct tty *, struct termios *); 
+void	serintr(int);
+int	serhwiflow(struct tty *, int);
+int	sermctl(dev_t dev, int, int);
+void	ser_fastint(void);
+void	sereint(int, int);
+static	void ser_putchar(struct tty *, u_short);
+void	ser_outintr(void);
+void	sercnprobe(struct consdev *);
+void	sercninit(struct consdev *);
+void	serinit(int, int);          
+int	sercngetc(dev_t dev);
+void	sercnputc(dev_t, int);
+void	sercnpollc(dev_t, int);
 
 int	ser_active;
 int	ser_hasfifo;
@@ -183,7 +183,7 @@ long	serintrcount[16];
 long	sermintcount[16];
 #endif
 
-void	sermint __P((register int unit));
+void	sermint(register int unit);
 
 int
 sermatch(pdp, match, auxp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.12 2001/03/09 02:18:00 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.13 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -163,12 +163,12 @@ struct clockinfo {
 #define TIMER_ABSTIME	0x1	/* absolute timer */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-int	itimerfix __P((struct timeval *tv));
-int	itimerdecr __P((struct itimerval *itp, int usec));
-void	microtime __P((struct timeval *tv));
-void	settime __P((struct timeval *tv));
-int	ratecheck __P((struct timeval *, const struct timeval *));
-int	ppsratecheck __P((struct timeval *, int *, int));
+int	itimerfix(struct timeval *tv);
+int	itimerdecr(struct itimerval *itp, int usec);
+void	microtime(struct timeval *tv);
+void	settime(struct timeval *tv);
+int	ratecheck(struct timeval *, const struct timeval *);
+int	ppsratecheck(struct timeval *, int *, int);
 #else /* !_KERNEL */
 #include <time.h>
 
@@ -176,16 +176,16 @@ int	ppsratecheck __P((struct timeval *, int *, int));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	adjtime __P((const struct timeval *, struct timeval *));
-int	clock_getres __P((clockid_t, struct timespec *));
-int	clock_gettime __P((clockid_t, struct timespec *));
-int	clock_settime __P((clockid_t, const struct timespec *));
-int	futimes __P((int, const struct timeval *));
-int	getitimer __P((int, struct itimerval *));
-int	gettimeofday __P((struct timeval *, struct timezone *));
-int	setitimer __P((int, const struct itimerval *, struct itimerval *));
-int	settimeofday __P((const struct timeval *, const struct timezone *));
-int	utimes __P((const char *, const struct timeval *));
+int	adjtime(const struct timeval *, struct timeval *);
+int	clock_getres(clockid_t, struct timespec *);
+int	clock_gettime(clockid_t, struct timespec *);
+int	clock_settime(clockid_t, const struct timespec *);
+int	futimes(int, const struct timeval *);
+int	getitimer(int, struct itimerval *);
+int	gettimeofday(struct timeval *, struct timezone *);
+int	setitimer(int, const struct itimerval *, struct itimerval *);
+int	settimeofday(const struct timeval *, const struct timezone *);
+int	utimes(const char *, const struct timeval *);
 __END_DECLS
 #endif /* !POSIX */
 

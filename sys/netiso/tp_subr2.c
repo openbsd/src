@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_subr2.c,v 1.3 1996/04/21 22:29:59 deraadt Exp $	*/
+/*	$OpenBSD: tp_subr2.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_subr2.c,v 1.11 1996/03/26 22:27:01 christos Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@ SOFTWARE.
 #include <netccitt/pk_extern.h>
 
 #if 0
-static void copyQOSparms __P((struct tp_conn_param *, struct tp_conn_param *));
+static void copyQOSparms(struct tp_conn_param *, struct tp_conn_param *);
 #endif
 
 /*

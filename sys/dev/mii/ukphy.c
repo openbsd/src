@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.9 2001/06/08 02:16:41 nate Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.10 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -85,8 +85,8 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-int	ukphymatch __P((struct device *, void *, void *));
-void	ukphyattach __P((struct device *, struct device *, void *));
+int	ukphymatch(struct device *, void *, void *);
+void	ukphyattach(struct device *, struct device *, void *);
 
 struct cfattach ukphy_ca = {
 	sizeof(struct mii_softc), ukphymatch, ukphyattach, mii_phy_detach,
@@ -97,7 +97,7 @@ struct cfdriver ukphy_cd = {
 	NULL, "ukphy", DV_DULL
 };
 
-int	ukphy_service __P((struct mii_softc *, struct mii_data *, int));
+int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 
 int
 ukphymatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif.h,v 1.3 1996/10/29 08:44:10 mickey Exp $	*/
+/*	$OpenBSD: netif.h,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: netif.h,v 1.4 1995/09/14 23:45:30 pk Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
@@ -7,12 +7,12 @@
 
 struct netif_driver {
 	char	*netif_bname;
-	int	(*netif_match) __P((struct netif *, void *));
-	int	(*netif_probe) __P((struct netif *, void *));
-	void	(*netif_init) __P((struct iodesc *, void *));
-	int	(*netif_get) __P((struct iodesc *, void *, size_t, time_t));
-	int	(*netif_put) __P((struct iodesc *, void *, size_t));
-	void	(*netif_end) __P((struct netif *));
+	int	(*netif_match)(struct netif *, void *);
+	int	(*netif_probe)(struct netif *, void *);
+	void	(*netif_init)(struct iodesc *, void *);
+	int	(*netif_get)(struct iodesc *, void *, size_t, time_t);
+	int	(*netif_put)(struct iodesc *, void *, size_t);
+	void	(*netif_end)(struct netif *);
 	struct	netif_dif *netif_ifs;
 	int	netif_nifs;
 };
@@ -48,17 +48,17 @@ extern int			n_netif_drivers;
 
 extern int			netif_debug;
 
-void		netif_init __P((void));
-struct netif	*netif_select __P((void *));
-int		netif_probe __P((struct netif *, void *));
-void		netif_attach __P((struct netif *, struct iodesc *, void *));
-void		netif_detach __P((struct netif *));
-ssize_t		netif_get __P((struct iodesc *, void *, size_t, time_t));
-ssize_t		netif_put __P((struct iodesc *, void *, size_t));
+void		netif_init(void);
+struct netif	*netif_select(void *);
+int		netif_probe(struct netif *, void *);
+void		netif_attach(struct netif *, struct iodesc *, void *);
+void		netif_detach(struct netif *);
+ssize_t		netif_get(struct iodesc *, void *, size_t, time_t);
+ssize_t		netif_put(struct iodesc *, void *, size_t);
 
-int		netif_open __P((void *));
-int		netif_close __P((int));
+int		netif_open(void *);
+int		netif_close(int);
 
-struct iodesc	*socktodesc __P((int));
+struct iodesc	*socktodesc(int);
 	
 #endif /* __SYS_LIBNETBOOT_NETIF_H */

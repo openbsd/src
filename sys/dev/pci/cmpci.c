@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.6 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -68,31 +68,31 @@
 /*
  * Low-level HW interface
  */
-static __inline uint8_t cmpci_mixerreg_read __P((struct cmpci_softc *,
-                                                 uint8_t));
-static __inline void cmpci_mixerreg_write __P((struct cmpci_softc *,
-                                               uint8_t, uint8_t));
-static __inline void cmpci_reg_partial_write_4 __P((struct cmpci_softc *,
+static __inline uint8_t cmpci_mixerreg_read(struct cmpci_softc *,
+                                                 uint8_t);
+static __inline void cmpci_mixerreg_write(struct cmpci_softc *,
+                                               uint8_t, uint8_t);
+static __inline void cmpci_reg_partial_write_4(struct cmpci_softc *,
                                                     int, int,
-                                                    uint32_t, uint32_t));
-static __inline void cmpci_reg_set_4 __P((struct cmpci_softc *,
-                                          int, uint32_t));
-static __inline void cmpci_reg_clear_4 __P((struct cmpci_softc *,
-                                            int, uint32_t));
-static int cmpci_rate_to_index __P((int));
-static __inline int cmpci_index_to_rate __P((int));
-static __inline int cmpci_index_to_divider __P((int));
+                                                    uint32_t, uint32_t);
+static __inline void cmpci_reg_set_4(struct cmpci_softc *,
+                                          int, uint32_t);
+static __inline void cmpci_reg_clear_4(struct cmpci_softc *,
+                                            int, uint32_t);
+static int cmpci_rate_to_index(int);
+static __inline int cmpci_index_to_rate(int);
+static __inline int cmpci_index_to_divider(int);
 
-static int cmpci_adjust __P((int, int));
-static void cmpci_set_mixer_gain __P((struct cmpci_softc *, int));
-static int cmpci_set_in_ports __P((struct cmpci_softc *, int));
+static int cmpci_adjust(int, int);
+static void cmpci_set_mixer_gain(struct cmpci_softc *, int);
+static int cmpci_set_in_ports(struct cmpci_softc *, int);
 
 
 /*
  * autoconf interface
  */
-int cmpci_match __P((struct device *, void *, void *));
-void cmpci_attach __P((struct device *, struct device *, void *));
+int cmpci_match(struct device *, void *, void *);
+void cmpci_attach(struct device *, struct device *, void *);
 
 struct cfdriver cmpci_cd = {
 	NULL, "cmpci", DV_DULL
@@ -109,39 +109,39 @@ struct audio_device cmpci_device = {
 };
 
 /* interrupt */
-int cmpci_intr __P((void *));
+int cmpci_intr(void *);
 
 
 /*
  * DMA stuff
  */
-int cmpci_alloc_dmamem __P((struct cmpci_softc *,
-                            size_t, int, int, caddr_t *));
-int cmpci_free_dmamem __P((struct cmpci_softc *, caddr_t, int));
-struct cmpci_dmanode * cmpci_find_dmamem __P((struct cmpci_softc *,
-                                                     caddr_t));
+int cmpci_alloc_dmamem(struct cmpci_softc *,
+                            size_t, int, int, caddr_t *);
+int cmpci_free_dmamem(struct cmpci_softc *, caddr_t, int);
+struct cmpci_dmanode * cmpci_find_dmamem(struct cmpci_softc *,
+                                                     caddr_t);
 
 /*
  * Interface to machine independent layer
  */
-int cmpci_open __P((void *, int));
-void cmpci_close __P((void *));
-int cmpci_query_encoding __P((void *, struct audio_encoding *));
-int cmpci_set_params __P((void *, int, int,
+int cmpci_open(void *, int);
+void cmpci_close(void *);
+int cmpci_query_encoding(void *, struct audio_encoding *);
+int cmpci_set_params(void *, int, int,
                           struct audio_params *,
-                          struct audio_params *));
-int cmpci_round_blocksize __P((void *, int));
-int cmpci_halt_output __P((void *));
-int cmpci_halt_input __P((void *));
-int cmpci_getdev __P((void *, struct audio_device *));
-int cmpci_set_port __P((void *, mixer_ctrl_t *));
-int cmpci_get_port __P((void *, mixer_ctrl_t *));
-int cmpci_query_devinfo __P((void *, mixer_devinfo_t *));
-void *cmpci_malloc __P((void *, int, size_t, int, int));
-void cmpci_free __P((void *, void *, int));
-size_t cmpci_round_buffersize __P((void *, int, size_t));
-paddr_t cmpci_mappage __P((void *, void *, off_t, int));
-int cmpci_get_props __P((void *));
+                          struct audio_params *);
+int cmpci_round_blocksize(void *, int);
+int cmpci_halt_output(void *);
+int cmpci_halt_input(void *);
+int cmpci_getdev(void *, struct audio_device *);
+int cmpci_set_port(void *, mixer_ctrl_t *);
+int cmpci_get_port(void *, mixer_ctrl_t *);
+int cmpci_query_devinfo(void *, mixer_devinfo_t *);
+void *cmpci_malloc(void *, int, size_t, int, int);
+void cmpci_free(void *, void *, int);
+size_t cmpci_round_buffersize(void *, int, size_t);
+paddr_t cmpci_mappage(void *, void *, off_t, int);
+int cmpci_get_props(void *);
 int cmpci_trigger_output __P((void *, void *, void *, int,
                               void (*)(void *), void *,
                               struct audio_params *));
@@ -1103,7 +1103,7 @@ cmpci_find_dmamem(sc, addr)
 
 #if 0
 void
-cmpci_print_dmamem __P((struct cmpci_dmanode *p));
+cmpci_print_dmamem(struct cmpci_dmanode *p);
 void
 cmpci_print_dmamem(p)
 	struct cmpci_dmanode *p;
@@ -1498,7 +1498,7 @@ cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
         void *handle;
         void *start, *end;
         int blksize;
-        void (*intr) __P((void *));
+        void (*intr)(void *);
         void *arg;
         struct audio_params *param;
 {
@@ -1540,7 +1540,7 @@ cmpci_trigger_input(handle, start, end, blksize, intr, arg, param)
         void *handle;
         void *start, *end;
         int blksize;
-        void (*intr) __P((void *));
+        void (*intr)(void *);
         void *arg;
         struct audio_params *param;
 {

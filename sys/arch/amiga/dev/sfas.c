@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.14 2001/11/30 22:08:16 miod Exp $  */
+/*    $OpenBSD: sfas.c,v 1.15 2002/03/14 01:26:29 millert Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -62,39 +62,39 @@
 #include <amiga/dev/sfasvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void sfasinitialize __P((struct sfas_softc *));
-void sfas_minphys   __P((struct buf *bp));
-int  sfas_scsicmd   __P((struct scsi_xfer *xs));
-void sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
-void sfas_scsidone  __P((struct sfas_softc *dev, struct scsi_xfer *xs,
-			 int stat));
-void sfasiwait __P((struct sfas_softc *dev));
-void sfasreset __P((struct sfas_softc *dev, int how));
-int  sfasselect __P((struct sfas_softc *dev, struct sfas_pending *pendp,
+void sfasinitialize(struct sfas_softc *);
+void sfas_minphys(struct buf *bp);
+int  sfas_scsicmd(struct scsi_xfer *xs);
+void sfas_donextcmd(struct sfas_softc *dev, struct sfas_pending *pendp);
+void sfas_scsidone(struct sfas_softc *dev, struct scsi_xfer *xs,
+			 int stat);
+void sfasiwait(struct sfas_softc *dev);
+void sfasreset(struct sfas_softc *dev, int how);
+int  sfasselect(struct sfas_softc *dev, struct sfas_pending *pendp,
 			 unsigned char *cbuf, int clen,
-			 unsigned char *buf, int len, int mode));
-void sfasicmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
-int  sfas_postaction __P((struct sfas_softc *dev, sfas_regmap_p rp,
-			struct nexus *nexus));
-int  sfas_midaction __P((struct sfas_softc *dev, sfas_regmap_p rp,
-			struct nexus *nexus));
-void sfas_init_nexus __P((struct sfas_softc *dev, struct nexus *nexus));
-int  sfasgo __P((struct sfas_softc *dev, struct sfas_pending *pendp));
-void sfas_save_pointers __P((struct sfas_softc *dev));
-void sfas_restore_pointers __P((struct sfas_softc *dev));
-void sfas_ixfer __P((struct sfas_softc *dev));
-void sfas_build_sdtrm __P((struct sfas_softc *dev, int period, int offset));
-int  sfas_select_unit __P((struct sfas_softc *dev, short target));
-struct nexus *sfas_arbitate_target __P((struct sfas_softc *dev, int target));
-void sfas_setup_nexus __P((struct sfas_softc *dev, struct nexus *nexus,
+			 unsigned char *buf, int len, int mode);
+void sfasicmd(struct sfas_softc *dev, struct sfas_pending *pendp);
+int  sfas_postaction(struct sfas_softc *dev, sfas_regmap_p rp,
+			struct nexus *nexus);
+int  sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp,
+			struct nexus *nexus);
+void sfas_init_nexus(struct sfas_softc *dev, struct nexus *nexus);
+int  sfasgo(struct sfas_softc *dev, struct sfas_pending *pendp);
+void sfas_save_pointers(struct sfas_softc *dev);
+void sfas_restore_pointers(struct sfas_softc *dev);
+void sfas_ixfer(struct sfas_softc *dev);
+void sfas_build_sdtrm(struct sfas_softc *dev, int period, int offset);
+int  sfas_select_unit(struct sfas_softc *dev, short target);
+struct nexus *sfas_arbitate_target(struct sfas_softc *dev, int target);
+void sfas_setup_nexus(struct sfas_softc *dev, struct nexus *nexus,
 			struct sfas_pending *pendp, unsigned char *cbuf,
-			int clen, unsigned char *buf, int len, int mode));
-void sfas_request_sense __P((struct sfas_softc *dev, struct nexus *nexus));
-int sfas_pretests __P((struct sfas_softc *dev, sfas_regmap_p rp));
+			int clen, unsigned char *buf, int len, int mode);
+void sfas_request_sense(struct sfas_softc *dev, struct nexus *nexus);
+int sfas_pretests(struct sfas_softc *dev, sfas_regmap_p rp);
 #ifdef SFAS_NEED_VM_PATCH
-void sfas_unlink_vm_link __P((struct sfas_softc *dev));
-void sfas_link_vm_link __P((struct sfas_softc *dev,
-				struct vm_link_data *vm_link_data));
+void sfas_unlink_vm_link(struct sfas_softc *dev);
+void sfas_link_vm_link(struct sfas_softc *dev,
+				struct vm_link_data *vm_link_data);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wt.c,v 1.14 2001/11/06 00:30:38 art Exp $	*/
+/*	$OpenBSD: wt.c,v 1.15 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
@@ -159,23 +159,23 @@ struct wt_softc {
 cdev_decl(wt);
 bdev_decl(wt);
 
-int wtwait __P((struct wt_softc *sc, int catch, char *msg));
-int wtcmd __P((struct wt_softc *sc, int cmd));
-int wtstart __P((struct wt_softc *sc, int flag, void *vaddr, size_t len));
-void wtdma __P((struct wt_softc *sc));
-void wttimer __P((void *arg));
-void wtclock __P((struct wt_softc *sc));
-int wtreset __P((struct wt_softc *sc));
-int wtsense __P((struct wt_softc *sc, int verbose, int ignore));
-int wtstatus __P((struct wt_softc *sc));
-void wtrewind __P((struct wt_softc *sc));
-int wtreadfm __P((struct wt_softc *sc));
-int wtwritefm __P((struct wt_softc *sc));
-u_char wtpoll __P((struct wt_softc *sc, int mask, int bits));
+int wtwait(struct wt_softc *sc, int catch, char *msg);
+int wtcmd(struct wt_softc *sc, int cmd);
+int wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len);
+void wtdma(struct wt_softc *sc);
+void wttimer(void *arg);
+void wtclock(struct wt_softc *sc);
+int wtreset(struct wt_softc *sc);
+int wtsense(struct wt_softc *sc, int verbose, int ignore);
+int wtstatus(struct wt_softc *sc);
+void wtrewind(struct wt_softc *sc);
+int wtreadfm(struct wt_softc *sc);
+int wtwritefm(struct wt_softc *sc);
+u_char wtpoll(struct wt_softc *sc, int mask, int bits);
 
-int wtprobe __P((struct device *, void *, void *));
-void wtattach __P((struct device *, struct device *, void *));
-int wtintr __P((void *sc));
+int wtprobe(struct device *, void *, void *);
+void wtattach(struct device *, struct device *, void *);
+int wtintr(void *sc);
 
 struct cfattach wt_ca = {
 	sizeof(struct wt_softc), wtprobe, wtattach

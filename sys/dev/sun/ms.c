@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.8 1997/08/08 21:21:37 niklas Exp $	*/
+/*	$OpenBSD: ms.c,v 1.9 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ msselect(dev, rw, p)
  * Middle layer (translator)
  ****************************************************************/
 
-static void ms_input __P((struct ms_softc *, int c));
+static void ms_input(struct ms_softc *, int c);
 
 
 /*
@@ -487,10 +487,10 @@ out:
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void ms_rxint __P((struct zs_chanstate *));
-static void ms_txint __P((struct zs_chanstate *));
-static void ms_stint __P((struct zs_chanstate *));
-static void ms_softint __P((struct zs_chanstate *));
+static void ms_rxint(struct zs_chanstate *);
+static void ms_txint(struct zs_chanstate *);
+static void ms_stint(struct zs_chanstate *);
+static void ms_softint(struct zs_chanstate *);
 
 static void
 ms_rxint(cs)

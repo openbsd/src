@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.c,v 1.7 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.8 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -68,14 +68,14 @@ struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 static volatile struct ka820clock *ka820_clkpage;
 
-static int ka820_match __P((struct device *, struct cfdata *, void *));
-static void ka820_attach __P((struct device *, struct device *, void*));
-static void ka820_memerr __P((void));
-static void ka820_conf __P((void));
-static int ka820_mchk __P((caddr_t));
+static int ka820_match(struct device *, struct cfdata *, void *);
+static void ka820_attach(struct device *, struct device *, void*);
+static void ka820_memerr(void);
+static void ka820_conf(void);
+static int ka820_mchk(caddr_t);
 static int ka820_clkread(time_t base);
 static void ka820_clkwrite(void);
-static void rxcdintr __P((void *));
+static void rxcdintr(void *);
 static void vaxbierr(void *);
 
 struct	cpu_dep ka820_calls = {
@@ -227,8 +227,8 @@ struct ms820regs {
 #define MS2_INTLVADDR	0x00000100	/* error was in bank 1 (ro) */
 #define MS2_SYN		0x0000007f	/* error syndrome (ro, rw diag) */
 
-static int ms820_match __P((struct device *, struct cfdata *, void *));
-static void ms820_attach __P((struct device *, struct device *, void*));
+static int ms820_match(struct device *, struct cfdata *, void *);
+static void ms820_attach(struct device *, struct device *, void*);
 
 struct mem_bi_softc {
 	struct device sc_dev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.16 2001/05/08 17:30:41 aaron Exp $	*/
+/*	$OpenBSD: via.c,v 1.17 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
 
 /*-
@@ -47,20 +47,20 @@
 #include <machine/frame.h>
 #include <machine/viareg.h>
 
-static void	via1_noint __P((void *));
-static void	via2_noint __P((void *));
-static void	slot_ignore __P((void *, int));
-static void	slot_noint __P((void *, int));
-void	mrg_adbintr __P((void *));
-void	mrg_pmintr __P((void *));
-void	rtclock_intr __P((void *));
-void	profclock __P((void *));
-void	via1_intr __P((struct frame *));
-void	via2_nubus_intr __P((void *));
-void	rbv_nubus_intr __P((void *));
+static void	via1_noint(void *);
+static void	via2_noint(void *);
+static void	slot_ignore(void *, int);
+static void	slot_noint(void *, int);
+void	mrg_adbintr(void *);
+void	mrg_pmintr(void *);
+void	rtclock_intr(void *);
+void	profclock(void *);
+void	via1_intr(struct frame *);
+void	via2_nubus_intr(void *);
+void	rbv_nubus_intr(void *);
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
-void (*via1itab[7]) __P((void *))={
+void (*via1itab[7])(void *)={
 	via1_noint,
 	via1_noint,
 	mrg_adbintr,
@@ -70,7 +70,7 @@ void (*via1itab[7]) __P((void *))={
 	rtclock_intr,
 };	/* VIA1 interrupt handler table */
 
-void (*via2itab[7]) __P((void *))={
+void (*via2itab[7])(void *)={
 	via2_noint,
 	via2_nubus_intr,
 	via2_noint,
@@ -85,10 +85,10 @@ void *via2iarg[7] = {
 	(void *) 4, (void *) 5, (void *) 6
 };	/* Arg array for VIA2 interrupts. */
 
-void		via2_intr __P((struct frame *));
-void		rbv_intr __P((struct frame *));
+void		via2_intr(struct frame *);
+void		rbv_intr(struct frame *);
 
-void		(*real_via2_intr) __P((struct frame *));
+void		(*real_via2_intr)(struct frame *);
 
 /*
  * Nubus slot interrupt routines and parameters for slots 9-15.  Note
@@ -96,7 +96,7 @@ void		(*real_via2_intr) __P((struct frame *));
  * as a slot 15 interrupt; this slot is quite fictitious in real-world
  * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
  */
-void (*slotitab[7]) __P((void *, int)) = {
+void (*slotitab[7])(void *, int) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
@@ -292,7 +292,7 @@ static int	nubus_intr_mask = 0;
 int
 add_nubus_intr(slot, func, client_data)
 	int slot;
-	void (*func) __P((void *, int));
+	void (*func)(void *, int);
 	void *client_data;
 {
 	int	s;

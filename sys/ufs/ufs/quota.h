@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.h,v 1.3 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: quota.h,v 1.4 2002/03/14 01:27:15 millert Exp $	*/
 /*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
@@ -141,10 +141,10 @@ int     ufs_quota_free_inode2(struct inode *, struct ucred *, enum ufs_quota_fla
 
 int     ufs_quota_delete(struct inode *);
 
-int	getinoquota __P((struct inode *));
-int	quotaoff __P((struct proc *, struct mount *, int));
-int	qsync __P((struct mount *mp));
-int	ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int	getinoquota(struct inode *);
+int	quotaoff(struct proc *, struct mount *, int);
+int	qsync(struct mount *mp);
+int	ufs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 
 void    ufs_quota_init(void);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.6 2002/01/30 20:45:34 nordin Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.7 2002/03/14 01:26:53 millert Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -90,17 +90,17 @@ struct com_cardbus_softc {
 
 #define DEVNAME(CSC) ((CSC)->cc_com.sc_dev.dv_xname)
 
-int	com_cardbus_match __P((struct device *, void *, void *));
-void	com_cardbus_attach __P((struct device *, struct device *, void *));
-int	com_cardbus_detach __P((struct device *, int));
+int	com_cardbus_match(struct device *, void *, void *);
+void	com_cardbus_attach(struct device *, struct device *, void *);
+int	com_cardbus_detach(struct device *, int);
 
-void	com_cardbus_setup __P((struct com_cardbus_softc *));
-int	com_cardbus_enable __P((struct com_softc *));
-void	com_cardbus_disable __P((struct com_softc *));
-struct csdev *com_cardbus_find_csdev __P((struct cardbus_attach_args *));
-int	com_cardbus_gofigure __P((struct cardbus_attach_args *,
-    struct com_cardbus_softc *));
-void	com_cardbus_attach2 __P((struct com_softc *));
+void	com_cardbus_setup(struct com_cardbus_softc *);
+int	com_cardbus_enable(struct com_softc *);
+void	com_cardbus_disable(struct com_softc *);
+struct csdev *com_cardbus_find_csdev(struct cardbus_attach_args *);
+int	com_cardbus_gofigure(struct cardbus_attach_args *,
+    struct com_cardbus_softc *);
+void	com_cardbus_attach2(struct com_softc *);
 
 #if NCOM_CARDBUS
 struct cfattach com_cardbus_ca = {

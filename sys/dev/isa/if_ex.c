@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.7 2001/06/27 06:34:46 kjc Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.8 2002/03/14 01:26:56 millert Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -122,20 +122,20 @@ static char irq2eemap[] = { -1, -1, 0, 1, -1, 2, -1, -1, -1, 0, 3, 4, -1, -1,
 			    -1, -1 };
 static u_char ee2irqmap[] = { 9, 3, 5, 10, 11, 0, 0, 0 };
 
-static int ex_probe __P((struct device *, void *, void *));
-static void ex_attach __P((struct device *, struct device *, void *));
-static void ex_init __P((struct ex_softc *));
-static void ex_start __P((struct ifnet *));
-static void ex_stop __P((struct ex_softc *));
-static int ex_ioctl __P((struct ifnet *, u_long, caddr_t));
-static void ex_reset __P((struct ex_softc *));
-static void ex_watchdog __P((struct ifnet *));
+static int ex_probe(struct device *, void *, void *);
+static void ex_attach(struct device *, struct device *, void *);
+static void ex_init(struct ex_softc *);
+static void ex_start(struct ifnet *);
+static void ex_stop(struct ex_softc *);
+static int ex_ioctl(struct ifnet *, u_long, caddr_t);
+static void ex_reset(struct ex_softc *);
+static void ex_watchdog(struct ifnet *);
 
-static u_short eeprom_read __P((struct ex_softc *, int));
-static int look_for_card __P((struct isa_attach_args *, struct ex_softc *sc));
-static int exintr __P((void *));
-static void ex_tx_intr __P((struct ex_softc *));
-static void ex_rx_intr __P((struct ex_softc *));
+static u_short eeprom_read(struct ex_softc *, int);
+static int look_for_card(struct isa_attach_args *, struct ex_softc *sc);
+static int exintr(void *);
+static void ex_tx_intr(struct ex_softc *);
+static void ex_rx_intr(struct ex_softc *);
 
 
 struct cfattach ex_ca = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.197 2002/02/17 22:59:52 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.198 2002/03/14 01:26:32 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -270,18 +270,18 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
-caddr_t	allocsys __P((caddr_t));
-void	setup_buffers __P((vm_offset_t *));
-void	dumpsys __P((void));
-int	cpu_dump __P((void));
-void	identifycpu __P((void));
-void	init386 __P((vm_offset_t));
-void	consinit __P((void));
+caddr_t	allocsys(caddr_t);
+void	setup_buffers(vm_offset_t *);
+void	dumpsys(void);
+int	cpu_dump(void);
+void	identifycpu(void);
+void	init386(vm_offset_t);
+void	consinit(void);
 
-int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
-	    int, bus_space_handle_t *));
-int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-    bus_size_t, struct proc *, int, paddr_t *, int *, int));
+int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *);
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
@@ -306,7 +306,7 @@ int comkgdbrate = KGDBRATE;
 #endif
 int comkgdbmode = KGDBMODE;
 #endif /* NCOM  || NPCCOM */
-void kgdb_port_init __P((void));
+void kgdb_port_init(void);
 #endif /* KGDB */
 
 #ifdef APERTURE
@@ -317,12 +317,12 @@ int allowaperture = 0;
 #endif
 #endif
 
-void	winchip_cpu_setup __P((const char *, int, int));
-void	cyrix3_cpu_setup __P((const char *, int, int));
-void	cyrix6x86_cpu_setup __P((const char *, int, int));
-void	intel586_cpu_setup __P((const char *, int, int));
-void	intel686_cpu_setup __P((const char *, int, int));
-char *	intel686_cpu_name __P((int));
+void	winchip_cpu_setup(const char *, int, int);
+void	cyrix3_cpu_setup(const char *, int, int);
+void	cyrix6x86_cpu_setup(const char *, int, int);
+void	intel586_cpu_setup(const char *, int, int);
+void	intel686_cpu_setup(const char *, int, int);
+char *	intel686_cpu_name(int);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -1145,7 +1145,7 @@ identifycpu()
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif, cachesize;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
-	void (*cpu_setup) __P((const char *, int, int));
+	void (*cpu_setup)(const char *, int, int);
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -1353,7 +1353,7 @@ identifycpu()
 }
 
 #ifdef COMPAT_IBCS2
-void ibcs2_sendsig __P((sig_t, int, int, u_long, int, union sigval));
+void ibcs2_sendsig(sig_t, int, int, u_long, int, union sigval);
 
 void
 ibcs2_sendsig(catcher, sig, mask, code, type, val)
@@ -1703,7 +1703,7 @@ dumpconf()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 
@@ -1742,7 +1742,7 @@ dumpsys()
 	register u_int i, j, npg;
 	register int maddr;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 	register char *str;
 	extern int msgbufmapped;

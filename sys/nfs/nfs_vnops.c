@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.49 2002/02/23 23:47:13 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.50 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 /*
  * Global vfs data structures for nfs
  */
-int (**nfsv2_vnodeop_p) __P((void *));
+int (**nfsv2_vnodeop_p)(void *);
 struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, nfs_lookup },	/* lookup */
@@ -126,7 +126,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, nfs_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };
@@ -134,7 +134,7 @@ struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 /*
  * Special device vnode ops
  */
-int (**spec_nfsv2nodeop_p) __P((void *));
+int (**spec_nfsv2nodeop_p)(void *);
 struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },	/* lookup */
@@ -173,13 +173,13 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
 
 #ifdef FIFO
-int (**fifo_nfsv2nodeop_p) __P((void *));
+int (**fifo_nfsv2nodeop_p)(void *);
 struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
@@ -218,7 +218,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
@@ -3101,7 +3101,7 @@ nfsfifo_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3126,7 +3126,7 @@ nfsfifo_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 	struct nfsnode *np = VTONFS(ap->a_vp);
 
 	/*
@@ -3156,7 +3156,7 @@ nfsfifo_close(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 
 	if (np->n_flag & (NACC | NUPD)) {
 		if (np->n_flag & NACC) {

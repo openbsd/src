@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_isa.c,v 1.1 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: bha_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: bha_isa.c,v 1.14 1998/08/15 10:10:51 mycroft Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@ int nbtports;
 
 #define	BHA_ISA_IOSIZE	4
 
-int	bha_isa_probe __P((struct device *, void *, void *));
-void	bha_isa_attach __P((struct device *, struct device *, void *));
+int	bha_isa_probe(struct device *, void *, void *);
+void	bha_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach bha_isa_ca = {
 	sizeof(struct bha_softc), bha_isa_probe, bha_isa_attach

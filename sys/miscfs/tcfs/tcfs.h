@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs.h,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
+/*	$OpenBSD: tcfs.h,v 1.4 2002/03/14 01:27:08 millert Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -40,13 +40,13 @@ struct tcfs_node {
 	struct vnode		*tcfs_vnode;	/* Back pointer */
 };
 
-extern int tcfs_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit));
+extern int tcfs_node_create(struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit);
 
 #define	MOUNTTOTCFSMOUNT(mp) ((struct tcfs_mount *)((mp)->mnt_data))
 #define	VTOTCFS(vp) ((struct tcfs_node *)(vp)->v_data)
 #define	TCFSTOV(xp) ((xp)->tcfs_vnode)
 #ifdef TCFS_DIAGNOSTIC
-extern struct vnode *tcfs_checkvp __P((struct vnode *vp, char *fil, int lno));
+extern struct vnode *tcfs_checkvp(struct vnode *vp, char *fil, int lno);
 #define	TCFSVPTOLOWERVP(vp) tcfs_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	TCFSVPTOLOWERVP(vp) (VTOTCFS(vp)->tcfs_lowervp)
@@ -55,14 +55,14 @@ extern struct vnode *tcfs_checkvp __P((struct vnode *vp, char *fil, int lno));
 #define TCFS_VP2UKT(vp) ((MOUNTTOTCFSMOUNT(((vp)->v_mount)))->tcfs_uid_kt)
 #define TCFS_VP2GKT(vp) ((MOUNTTOTCFSMOUNT(((vp)->v_mount)))->tcfs_gid_kt)
 
-#define tcfs_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	struct vnode **)))eopnotsupp)
-#define tcfs_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
+#define tcfs_fhtovp ((int (*)(struct mount *, struct fid *, \
+	struct vnode **))eopnotsupp)
+#define tcfs_vptofh ((int (*)(struct vnode *, struct fid *))eopnotsupp)
 
-extern int (**tcfs_vnodeop_p) __P((void *));
+extern int (**tcfs_vnodeop_p)(void *);
 extern struct vfsops tcfs_vfsops;
 
-int tcfs_init __P((struct vfsconf *));
+int tcfs_init(struct vfsconf *);
 
 #define BLOCKSIZE       1024
 #define SBLOCKSIZE         8
@@ -74,28 +74,28 @@ int tcfs_init __P((struct vfsconf *));
 
 /*      prototyphes             */
 
-int     tcfs_bypass __P((void *));
-int     tcfs_open __P((void *));
-int     tcfs_getattr __P((void *));
-int     tcfs_setattr __P((void *));
-int     tcfs_inactive __P((void *));
-int     tcfs_reclaim __P((void *));
-int     tcfs_print __P((void *));
-int     tcfs_strategy __P((void *));
-int     tcfs_bwrite __P((void *));
-int     tcfs_lock __P((void *));
-int     tcfs_unlock __P((void *));
-int     tcfs_islocked __P((void *));
-int     tcfs_read __P((void *));
-int     tcfs_readdir __P((void *));
-int     tcfs_write __P((void *));
-int     tcfs_create __P((void *));
-int     tcfs_mknod __P((void *));
-int     tcfs_mkdir __P((void *));
-int     tcfs_link __P((void *));
-int     tcfs_symlink __P((void *));
-int     tcfs_rename __P((void *));
-int     tcfs_lookup __P((void *));
+int     tcfs_bypass(void *);
+int     tcfs_open(void *);
+int     tcfs_getattr(void *);
+int     tcfs_setattr(void *);
+int     tcfs_inactive(void *);
+int     tcfs_reclaim(void *);
+int     tcfs_print(void *);
+int     tcfs_strategy(void *);
+int     tcfs_bwrite(void *);
+int     tcfs_lock(void *);
+int     tcfs_unlock(void *);
+int     tcfs_islocked(void *);
+int     tcfs_read(void *);
+int     tcfs_readdir(void *);
+int     tcfs_write(void *);
+int     tcfs_create(void *);
+int     tcfs_mknod(void *);
+int     tcfs_mkdir(void *);
+int     tcfs_link(void *);
+int     tcfs_symlink(void *);
+int     tcfs_rename(void *);
+int     tcfs_lookup(void *);
 
 void *tcfs_getukey(struct ucred *, struct proc *, struct vnode *);
 void *tcfs_getpkey(struct ucred *, struct proc *, struct vnode *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_arith_proto.h,v 1.2 1996/05/29 21:05:14 niklas Exp $	*/
+/*	$OpenBSD: fpu_arith_proto.h,v 1.3 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: fpu_arith_proto.h,v 1.1 1995/11/03 04:47:00 briggs Exp $	*/
 
 /*
@@ -42,54 +42,54 @@
  */
 
 /* fpu_add.c */
-struct fpn * fpu_add __P((struct fpemu *fe));
+struct fpn * fpu_add(struct fpemu *fe);
 
 /* fpu_div.c */
-struct fpn * fpu_div __P((struct fpemu *fe));
+struct fpn * fpu_div(struct fpemu *fe);
 
 /* fpu_exp.c */
-struct fpn * fpu_etox __P((struct fpemu *fe));
-struct fpn * fpu_etoxm1 __P((struct fpemu *fe));
-struct fpn * fpu_tentox __P((struct fpemu *fe));
-struct fpn * fpu_twotox __P((struct fpemu *fe));
+struct fpn * fpu_etox(struct fpemu *fe);
+struct fpn * fpu_etoxm1(struct fpemu *fe);
+struct fpn * fpu_tentox(struct fpemu *fe);
+struct fpn * fpu_twotox(struct fpemu *fe);
 
 /* fpu_getexp.c */
-struct fpn * fpu_getexp __P((struct fpemu *fe));
-struct fpn * fpu_getman __P((struct fpemu *fe));
+struct fpn * fpu_getexp(struct fpemu *fe);
+struct fpn * fpu_getman(struct fpemu *fe);
 
 /* fpu_hyperb.c */
-struct fpn * fpu_atanh __P((struct fpemu *fe));
-struct fpn * fpu_cosh __P((struct fpemu *fe));
-struct fpn * fpu_sinh __P((struct fpemu *fe));
-struct fpn * fpu_tanh __P((struct fpemu *fe));
+struct fpn * fpu_atanh(struct fpemu *fe);
+struct fpn * fpu_cosh(struct fpemu *fe);
+struct fpn * fpu_sinh(struct fpemu *fe);
+struct fpn * fpu_tanh(struct fpemu *fe);
 
 /* fpu_int.c */
-struct fpn * fpu_intrz __P((struct fpemu *fe));
-struct fpn * fpu_int __P((struct fpemu *fe));
+struct fpn * fpu_intrz(struct fpemu *fe);
+struct fpn * fpu_int(struct fpemu *fe);
 
 /* fpu_log.c */
-struct fpn * fpu_log10 __P((struct fpemu *fe));
-struct fpn * fpu_log2 __P((struct fpemu *fe));
-struct fpn * fpu_logn __P((struct fpemu *fe));
-struct fpn * fpu_lognp1 __P((struct fpemu *fe));
+struct fpn * fpu_log10(struct fpemu *fe);
+struct fpn * fpu_log2(struct fpemu *fe);
+struct fpn * fpu_logn(struct fpemu *fe);
+struct fpn * fpu_lognp1(struct fpemu *fe);
 
 /* fpu_mulc */
-struct fpn * fpu_mul __P((struct fpemu *fe));
+struct fpn * fpu_mul(struct fpemu *fe);
 
 /* fpu_rem.c */
-struct fpn * fpu_rem __P((struct fpemu *fe));
-struct fpn * fpu_mod __P((struct fpemu *fe));
+struct fpn * fpu_rem(struct fpemu *fe);
+struct fpn * fpu_mod(struct fpemu *fe);
 
 /* fpu_sqrt.c */
-struct fpn * fpu_sqrt __P((struct fpemu *fe));
+struct fpn * fpu_sqrt(struct fpemu *fe);
 
 /* fpu_trig.c */
-struct fpn * fpu_acos __P((struct fpemu *fe));
-struct fpn * fpu_asin __P((struct fpemu *fe));
-struct fpn * fpu_atan __P((struct fpemu *fe));
-struct fpn * fpu_cos __P((struct fpemu *fe));
-struct fpn * fpu_sin __P((struct fpemu *fe));
-struct fpn * fpu_tan __P((struct fpemu *fe));
-struct fpn * fpu_sincos __P((struct fpemu *fe, int regc));
+struct fpn * fpu_acos(struct fpemu *fe);
+struct fpn * fpu_asin(struct fpemu *fe);
+struct fpn * fpu_atan(struct fpemu *fe);
+struct fpn * fpu_cos(struct fpemu *fe);
+struct fpn * fpu_sin(struct fpemu *fe);
+struct fpn * fpu_tan(struct fpemu *fe);
+struct fpn * fpu_sincos(struct fpemu *fe, int regc);
 
 #endif /* _FPU_ARITH_PROTO_H_ */

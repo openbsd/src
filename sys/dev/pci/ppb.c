@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.10 2000/01/15 08:16:24 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.11 2002/03/14 01:26:59 millert Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-int	ppbmatch __P((struct device *, void *, void *));
-void	ppbattach __P((struct device *, struct device *, void *));
+int	ppbmatch(struct device *, void *, void *);
+void	ppbattach(struct device *, struct device *, void *);
 
 struct cfattach ppb_ca = {
 	sizeof(struct device), ppbmatch, ppbattach
@@ -61,7 +61,7 @@ struct cfdriver ppb_cd = {
 	NULL, "ppb", DV_DULL
 };
 
-int	ppbprint __P((void *, const char *pnp));
+int	ppbprint(void *, const char *pnp);
 
 int
 ppbmatch(parent, match, aux)

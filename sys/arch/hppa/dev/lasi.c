@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.7 2002/02/12 06:42:26 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.8 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -72,9 +72,9 @@ struct lasi_softc {
 	struct gsc_attach_args ga;	/* for deferred attach */
 };
 
-int	lasimatch __P((struct device *, void *, void *));
-void	lasiattach __P((struct device *, struct device *, void *));
-void	lasi_gsc_attach __P((struct device *));
+int	lasimatch(struct device *, void *, void *);
+void	lasiattach(struct device *, struct device *, void *);
+void	lasi_gsc_attach(struct device *);
 
 struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
@@ -84,11 +84,11 @@ struct cfdriver lasi_cd = {
 	NULL, "lasi", DV_DULL
 };
 
-void lasi_intr_establish __P((void *v, u_int32_t mask));
-void lasi_intr_disestablish __P((void *v, u_int32_t mask));
-u_int32_t lasi_intr_check __P((void *v));
-void lasi_intr_ack __P((void *v, u_int32_t mask));
-void lasi_cold_hook __P((int on));
+void lasi_intr_establish(void *v, u_int32_t mask);
+void lasi_intr_disestablish(void *v, u_int32_t mask);
+u_int32_t lasi_intr_check(void *v);
+void lasi_intr_ack(void *v, u_int32_t mask);
+void lasi_cold_hook(int on);
 
 
 int
@@ -154,7 +154,7 @@ lasiattach(parent, self, aux)
 	if (sc->sc_dev.dv_unit)
 		config_defer(self, lasi_gsc_attach);
 	else {
-		extern void (*cold_hook) __P((int));
+		extern void (*cold_hook)(int);
 
 		lasi_gsc_attach(self);
 		cold_hook = lasi_cold_hook;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.1 1998/09/26 19:09:15 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -87,8 +87,8 @@
 
 #include <dev/isa/isavar.h>
 
-int	sm_isa_match __P((struct device *, void *, void *));
-void	sm_isa_attach __P((struct device *, struct device *, void *));
+int	sm_isa_match(struct device *, void *, void *);
+void	sm_isa_attach(struct device *, struct device *, void *);
 
 struct sm_isa_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */

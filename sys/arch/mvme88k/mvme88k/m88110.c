@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.5 2001/12/24 04:12:40 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.6 2002/03/14 01:26:40 millert Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -99,15 +99,15 @@ unsigned patc_inst_l[32];
 #define USER	0
 
 /* FORWARDS */
-unsigned batc_val __P((unsigned phys, unsigned virt, unsigned prot));
-void patc_insert __P((unsigned upper, unsigned lower, int which));
-void patc_clear __P((void));
-void patc_sync __P((int which));
-void patc_load __P((int index, unsigned upper, unsigned lower, int which));
-void m88110_cmmu_sync_cache __P((vm_offset_t physaddr, int size));
-void m88110_cmmu_sync_inval_cache __P((vm_offset_t physaddr, int size));
-void m88110_cmmu_inval_cache __P((vm_offset_t physaddr, int size));
-int probe_mmu __P((vm_offset_t va, int data));
+unsigned batc_val(unsigned phys, unsigned virt, unsigned prot);
+void patc_insert(unsigned upper, unsigned lower, int which);
+void patc_clear(void);
+void patc_sync(int which);
+void patc_load(int index, unsigned upper, unsigned lower, int which);
+void m88110_cmmu_sync_cache(vm_offset_t physaddr, int size);
+void m88110_cmmu_sync_inval_cache(vm_offset_t physaddr, int size);
+void m88110_cmmu_inval_cache(vm_offset_t physaddr, int size);
+int probe_mmu(vm_offset_t va, int data);
 
 /* This is the function table for the mc88110 built-in CMMUs */
 struct cmmu_p cmmu88110 = {

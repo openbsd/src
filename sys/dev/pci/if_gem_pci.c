@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.7 2002/02/22 20:15:28 jason Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.8 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -80,8 +80,8 @@ struct gem_pci_softc {
 	void			*gsc_ih;
 };
 
-int	gem_match_pci __P((struct device *, void *, void *));
-void	gem_attach_pci __P((struct device *, struct device *, void *));
+int	gem_match_pci(struct device *, void *, void *);
+void	gem_attach_pci(struct device *, struct device *, void *);
 
 struct cfattach gem_pci_ca = {
 	sizeof(struct gem_pci_softc), gem_match_pci, gem_attach_pci
@@ -123,7 +123,7 @@ gem_attach_pci(parent, self, aux)
 	pci_intr_handle_t intrhandle;
 #ifdef __sparc__
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 #endif
 	const char *intrstr;
 	int type;

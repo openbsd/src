@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_ul.c,v 1.13 1997/09/18 13:39:54 niklas Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.14 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: grf_ul.c,v 1.24 1997/07/29 17:50:01 veego Exp $	*/
 
 #define UL_DEBUG
@@ -58,19 +58,19 @@
 
 extern u_int16_t tmscode[];
 
-int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
-int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
-int ul_putcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
-int ul_bitblt __P((struct grf_softc *, struct grf_bitblt *, dev_t));
-int ul_blank __P((struct grf_softc *, int *, dev_t));
+int ul_ioctl(struct grf_softc *, u_long, void *, dev_t);
+int ul_getcmap(struct grf_softc *, struct grf_colormap *, dev_t);
+int ul_putcmap(struct grf_softc *, struct grf_colormap *, dev_t);
+int ul_bitblt(struct grf_softc *, struct grf_bitblt *, dev_t);
+int ul_blank(struct grf_softc *, int *, dev_t);
 
-static int ulisr __P((void *));
-int ulowell_alive __P((struct grfvideo_mode *));
-static void ul_load_code __P((struct grf_softc *));
-static int ul_load_mon __P((struct grf_softc *, struct grfvideo_mode *));
-static int ul_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-static int ul_setvmode __P((struct grf_softc *, unsigned));
-static __inline void ul_setfb __P((struct grf_softc *, u_long));
+static int ulisr(void *);
+int ulowell_alive(struct grfvideo_mode *);
+static void ul_load_code(struct grf_softc *);
+static int ul_load_mon(struct grf_softc *, struct grfvideo_mode *);
+static int ul_getvmode(struct grf_softc *, struct grfvideo_mode *);
+static int ul_setvmode(struct grf_softc *, unsigned);
+static __inline void ul_setfb(struct grf_softc *, u_long);
 
 /*
  * marked true early so that ulowell_cnprobe() can tell if we are alive. 
@@ -436,11 +436,11 @@ ul_load_mon(gp, md)
 	return(1);
 }
 
-int ul_mode __P((struct grf_softc *, u_long, void *, u_long, int));
+int ul_mode(struct grf_softc *, u_long, void *, u_long, int);
 
-void grfulattach __P((struct device *, struct device *, void *));
-int grfulprint __P((void *, const char *));
-int grfulmatch __P((struct device *, void *, void *));
+void grfulattach(struct device *, struct device *, void *);
+int grfulprint(void *, const char *);
+int grfulmatch(struct device *, void *, void *);
  
 struct cfattach grful_ca = {
 	sizeof(struct grf_ul_softc), grfulmatch, grfulattach

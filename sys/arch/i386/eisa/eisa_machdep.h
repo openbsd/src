@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.3 1998/01/20 18:40:13 niklas Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.4 2002/03/14 01:26:32 millert Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
@@ -54,13 +54,13 @@ typedef int eisa_intr_handle_t;
 /*
  * Functions provided to machine-independent EISA code.
  */
-void		eisa_attach_hook __P((struct device *, struct device *,
-		    struct eisabus_attach_args *));
-int		eisa_maxslots __P((eisa_chipset_tag_t));
-int		eisa_intr_map __P((eisa_chipset_tag_t, u_int,
-		    eisa_intr_handle_t *));
-const char	*eisa_intr_string __P((eisa_chipset_tag_t, eisa_intr_handle_t));
+void		eisa_attach_hook(struct device *, struct device *,
+		    struct eisabus_attach_args *);
+int		eisa_maxslots(eisa_chipset_tag_t);
+int		eisa_intr_map(eisa_chipset_tag_t, u_int,
+		    eisa_intr_handle_t *);
+const char	*eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t);
 void		*eisa_intr_establish __P((eisa_chipset_tag_t,
 		    eisa_intr_handle_t, int, int, int (*)(void *), void *,
 		    char *));
-void		eisa_intr_disestablish __P((eisa_chipset_tag_t, void *));
+void		eisa_intr_disestablish(eisa_chipset_tag_t, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.5 2001/03/06 13:55:02 ho Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -118,11 +118,11 @@ struct fdc_attach_args {
 };
 
 /* Functions from fdc.c. */
-int fdcresult __P((struct fdc_softc *));
-int out_fdc __P((bus_space_tag_t, bus_space_handle_t, u_char));
-void fdcstart __P((struct fdc_softc *));
-void fdcstatus __P((struct device *, int, char *));
-void fdcpseudointr __P((void *));
+int fdcresult(struct fdc_softc *);
+int out_fdc(bus_space_tag_t, bus_space_handle_t, u_char);
+void fdcstart(struct fdc_softc *);
+void fdcstatus(struct device *, int, char *);
+void fdcpseudointr(void *);
 
 /* Functions from fd.c. */
-struct fd_type *fd_nvtotype __P((char *, int, int));
+struct fd_type *fd_nvtotype(char *, int, int);

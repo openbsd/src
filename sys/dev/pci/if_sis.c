@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.21 2002/02/15 20:45:31 nordin Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.22 2002/03/14 01:26:59 millert Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -105,46 +105,46 @@
 
 #include <dev/pci/if_sisreg.h>
 
-int sis_probe		__P((struct device *, void *, void *));
-void sis_attach		__P((struct device *, struct device *, void *));
-int sis_intr		__P((void *));
-void sis_shutdown	__P((void *));
-int sis_newbuf		__P((struct sis_softc *, struct sis_desc *,
-				struct mbuf *));
-int sis_encap		__P((struct sis_softc *, struct mbuf *, u_int32_t *));
-void sis_rxeof		__P((struct sis_softc *));
-void sis_rxeoc		__P((struct sis_softc *));
-void sis_txeof		__P((struct sis_softc *));
-void sis_tick		__P((void *));
-void sis_start		__P((struct ifnet *));
-int sis_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void sis_init		__P((void *));
-void sis_stop		__P((struct sis_softc *));
-void sis_watchdog	__P((struct ifnet *));
-int sis_ifmedia_upd	__P((struct ifnet *));
-void sis_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+int sis_probe(struct device *, void *, void *);
+void sis_attach(struct device *, struct device *, void *);
+int sis_intr(void *);
+void sis_shutdown(void *);
+int sis_newbuf(struct sis_softc *, struct sis_desc *,
+				struct mbuf *);
+int sis_encap(struct sis_softc *, struct mbuf *, u_int32_t *);
+void sis_rxeof(struct sis_softc *);
+void sis_rxeoc(struct sis_softc *);
+void sis_txeof(struct sis_softc *);
+void sis_tick(void *);
+void sis_start(struct ifnet *);
+int sis_ioctl(struct ifnet *, u_long, caddr_t);
+void sis_init(void *);
+void sis_stop(struct sis_softc *);
+void sis_watchdog(struct ifnet *);
+int sis_ifmedia_upd(struct ifnet *);
+void sis_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-u_int16_t sis_reverse	__P((u_int16_t));
-void sis_delay		__P((struct sis_softc *));
-void sis_eeprom_idle	__P((struct sis_softc *));
-void sis_eeprom_putbyte	__P((struct sis_softc *, int));
-void sis_eeprom_getword	__P((struct sis_softc *, int, u_int16_t *));
+u_int16_t sis_reverse(u_int16_t);
+void sis_delay(struct sis_softc *);
+void sis_eeprom_idle(struct sis_softc *);
+void sis_eeprom_putbyte(struct sis_softc *, int);
+void sis_eeprom_getword(struct sis_softc *, int, u_int16_t *);
 #ifdef __i386__
-void sis_read_cmos	__P((struct sis_softc *, struct pci_attach_args *, caddr_t, int, int));
+void sis_read_cmos(struct sis_softc *, struct pci_attach_args *, caddr_t, int, int);
 #endif
-void sis_read_630ea1_enaddr    __P((struct sis_softc *, struct pci_attach_args *));
-void sis_read_eeprom	__P((struct sis_softc *, caddr_t, int, int, int));
+void sis_read_630ea1_enaddr(struct sis_softc *, struct pci_attach_args *);
+void sis_read_eeprom(struct sis_softc *, caddr_t, int, int, int);
 
-int sis_miibus_readreg	__P((struct device *, int, int));
-void sis_miibus_writereg	__P((struct device *, int, int, int));
-void sis_miibus_statchg	__P((struct device *));
+int sis_miibus_readreg(struct device *, int, int);
+void sis_miibus_writereg(struct device *, int, int, int);
+void sis_miibus_statchg(struct device *);
 
-void sis_setmulti_sis	__P((struct sis_softc *));
-void sis_setmulti_ns	__P((struct sis_softc *));
-u_int32_t sis_crc	__P((struct sis_softc *, caddr_t));
-void sis_reset		__P((struct sis_softc *));
-int sis_list_rx_init	__P((struct sis_softc *));
-int sis_list_tx_init	__P((struct sis_softc *));
+void sis_setmulti_sis(struct sis_softc *);
+void sis_setmulti_ns(struct sis_softc *);
+u_int32_t sis_crc(struct sis_softc *, caddr_t);
+void sis_reset(struct sis_softc *);
+int sis_list_rx_init(struct sis_softc *);
+int sis_list_tx_init(struct sis_softc *);
 
 #define SIS_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\

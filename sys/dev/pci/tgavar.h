@@ -1,4 +1,4 @@
-/* $OpenBSD: tgavar.h,v 1.4 2001/03/18 04:37:21 nate Exp $ */
+/* $OpenBSD: tgavar.h,v 1.5 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
@@ -43,7 +43,7 @@ struct fbcurpos;
 struct tga_conf {
 	char	    *tgac_name;		/* name for this board type */
 
-	struct ramdac_funcs *(*ramdac_funcs) __P((void));
+	struct ramdac_funcs *(*ramdac_funcs)(void);
 
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
 	vsize_t   tgac_cspace_size;	/* core space size */
@@ -90,7 +90,7 @@ struct tga_devconfig {
 	int	    dc_blanked;		/* currently had video disabled */
 	void	    *dc_ramdac_private; /* RAMDAC private storage */
 
-	void	    (*dc_ramdac_intr) __P((void *));
+	void	    (*dc_ramdac_intr)(void *);
 	int		dc_intrenabled; /* can we depend on interrupts yet? */
 };
 	
@@ -118,22 +118,22 @@ struct tga_softc {
 	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||		\
 	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
 
-int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
-		      int, int, int));
+int tga_cnattach(bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+		      int, int, int);
 
-int	tga_identify __P((struct tga_devconfig *));
-const struct tga_conf *tga_getconf __P((int));
+int	tga_identify(struct tga_devconfig *);
+const struct tga_conf *tga_getconf(int);
 
-int     tga_builtin_set_cursor __P((struct tga_devconfig *,
-	    struct wsdisplay_cursor *));
-int     tga_builtin_get_cursor __P((struct tga_devconfig *,
-	    struct wsdisplay_cursor *));
-int     tga_builtin_set_curpos __P((struct tga_devconfig *,
-	    struct wsdisplay_curpos *));
-int     tga_builtin_get_curpos __P((struct tga_devconfig *,
-	    struct wsdisplay_curpos *));
-int     tga_builtin_get_curmax __P((struct tga_devconfig *,
-	    struct wsdisplay_curpos *));
+int     tga_builtin_set_cursor(struct tga_devconfig *,
+	    struct wsdisplay_cursor *);
+int     tga_builtin_get_cursor(struct tga_devconfig *,
+	    struct wsdisplay_cursor *);
+int     tga_builtin_set_curpos(struct tga_devconfig *,
+	    struct wsdisplay_curpos *);
+int     tga_builtin_get_curpos(struct tga_devconfig *,
+	    struct wsdisplay_curpos *);
+int     tga_builtin_get_curmax(struct tga_devconfig *,
+	    struct wsdisplay_curpos *);
 
 /* Read a TGA register */
 #define TGARREG(dc,reg) (bus_space_read_4((dc)->dc_memt, (dc)->dc_regs, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_syscallargs.h,v 1.19 2002/03/14 00:44:20 miod Exp $	*/
+/*	$OpenBSD: freebsd_syscallargs.h,v 1.20 2002/03/14 01:26:49 millert Exp $	*/
 
 /*
  * System call argument lists.
@@ -260,245 +260,245 @@ struct freebsd_sys_sigpending40_args {
  * System call prototypes.
  */
 
-int	sys_nosys	__P((struct proc *, void *, register_t *));
-int	sys_exit	__P((struct proc *, void *, register_t *));
-int	sys_fork	__P((struct proc *, void *, register_t *));
-int	sys_read	__P((struct proc *, void *, register_t *));
-int	sys_write	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_open	__P((struct proc *, void *, register_t *));
-int	sys_close	__P((struct proc *, void *, register_t *));
-int	sys_wait4	__P((struct proc *, void *, register_t *));
-int	compat_43_freebsd_sys_creat	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_link	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_unlink	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_chdir	__P((struct proc *, void *, register_t *));
-int	sys_fchdir	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_mknod	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_chmod	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_chown	__P((struct proc *, void *, register_t *));
-int	sys_obreak	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_getfsstat	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_lseek	__P((struct proc *, void *, register_t *));
-int	sys_getpid	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_mount	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_unmount	__P((struct proc *, void *, register_t *));
-int	sys_setuid	__P((struct proc *, void *, register_t *));
-int	sys_getuid	__P((struct proc *, void *, register_t *));
-int	sys_geteuid	__P((struct proc *, void *, register_t *));
+int	sys_nosys(struct proc *, void *, register_t *);
+int	sys_exit(struct proc *, void *, register_t *);
+int	sys_fork(struct proc *, void *, register_t *);
+int	sys_read(struct proc *, void *, register_t *);
+int	sys_write(struct proc *, void *, register_t *);
+int	freebsd_sys_open(struct proc *, void *, register_t *);
+int	sys_close(struct proc *, void *, register_t *);
+int	sys_wait4(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_creat(struct proc *, void *, register_t *);
+int	freebsd_sys_link(struct proc *, void *, register_t *);
+int	freebsd_sys_unlink(struct proc *, void *, register_t *);
+int	freebsd_sys_chdir(struct proc *, void *, register_t *);
+int	sys_fchdir(struct proc *, void *, register_t *);
+int	freebsd_sys_mknod(struct proc *, void *, register_t *);
+int	freebsd_sys_chmod(struct proc *, void *, register_t *);
+int	freebsd_sys_chown(struct proc *, void *, register_t *);
+int	sys_obreak(struct proc *, void *, register_t *);
+int	freebsd_sys_getfsstat(struct proc *, void *, register_t *);
+int	compat_43_sys_lseek(struct proc *, void *, register_t *);
+int	sys_getpid(struct proc *, void *, register_t *);
+int	freebsd_sys_mount(struct proc *, void *, register_t *);
+int	freebsd_sys_unmount(struct proc *, void *, register_t *);
+int	sys_setuid(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	sys_geteuid(struct proc *, void *, register_t *);
 #ifdef PTRACE
-int	freebsd_sys_ptrace	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_ptrace(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_recvmsg	__P((struct proc *, void *, register_t *));
-int	sys_sendmsg	__P((struct proc *, void *, register_t *));
-int	sys_recvfrom	__P((struct proc *, void *, register_t *));
-int	sys_accept	__P((struct proc *, void *, register_t *));
-int	sys_getpeername	__P((struct proc *, void *, register_t *));
-int	sys_getsockname	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_access	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_chflags	__P((struct proc *, void *, register_t *));
-int	sys_fchflags	__P((struct proc *, void *, register_t *));
-int	sys_sync	__P((struct proc *, void *, register_t *));
-int	sys_kill	__P((struct proc *, void *, register_t *));
-int	compat_43_freebsd_sys_stat	__P((struct proc *, void *, register_t *));
-int	sys_getppid	__P((struct proc *, void *, register_t *));
-int	compat_43_freebsd_sys_lstat	__P((struct proc *, void *, register_t *));
-int	sys_dup	__P((struct proc *, void *, register_t *));
-int	sys_opipe	__P((struct proc *, void *, register_t *));
-int	sys_getegid	__P((struct proc *, void *, register_t *));
-int	sys_profil	__P((struct proc *, void *, register_t *));
+int	sys_recvmsg(struct proc *, void *, register_t *);
+int	sys_sendmsg(struct proc *, void *, register_t *);
+int	sys_recvfrom(struct proc *, void *, register_t *);
+int	sys_accept(struct proc *, void *, register_t *);
+int	sys_getpeername(struct proc *, void *, register_t *);
+int	sys_getsockname(struct proc *, void *, register_t *);
+int	freebsd_sys_access(struct proc *, void *, register_t *);
+int	freebsd_sys_chflags(struct proc *, void *, register_t *);
+int	sys_fchflags(struct proc *, void *, register_t *);
+int	sys_sync(struct proc *, void *, register_t *);
+int	sys_kill(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_stat(struct proc *, void *, register_t *);
+int	sys_getppid(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_lstat(struct proc *, void *, register_t *);
+int	sys_dup(struct proc *, void *, register_t *);
+int	sys_opipe(struct proc *, void *, register_t *);
+int	sys_getegid(struct proc *, void *, register_t *);
+int	sys_profil(struct proc *, void *, register_t *);
 #ifdef KTRACE
-int	sys_ktrace	__P((struct proc *, void *, register_t *));
+int	sys_ktrace(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_sigaction	__P((struct proc *, void *, register_t *));
-int	sys_getgid	__P((struct proc *, void *, register_t *));
-int	sys_sigprocmask	__P((struct proc *, void *, register_t *));
-int	sys_getlogin	__P((struct proc *, void *, register_t *));
-int	sys_setlogin	__P((struct proc *, void *, register_t *));
-int	sys_acct	__P((struct proc *, void *, register_t *));
-int	sys_sigpending	__P((struct proc *, void *, register_t *));
-int	sys_sigaltstack	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_ioctl	__P((struct proc *, void *, register_t *));
-int	sys_reboot	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_revoke	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_symlink	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_readlink	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_execve	__P((struct proc *, void *, register_t *));
-int	sys_umask	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_chroot	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_fstat	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getkerninfo	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getpagesize	__P((struct proc *, void *, register_t *));
-int	sys_msync	__P((struct proc *, void *, register_t *));
-int	sys_vfork	__P((struct proc *, void *, register_t *));
-int	sys_sbrk	__P((struct proc *, void *, register_t *));
-int	sys_sstk	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_mmap	__P((struct proc *, void *, register_t *));
-int	sys_ovadvise	__P((struct proc *, void *, register_t *));
-int	sys_munmap	__P((struct proc *, void *, register_t *));
-int	sys_mprotect	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_madvise	__P((struct proc *, void *, register_t *));
-int	sys_mincore	__P((struct proc *, void *, register_t *));
-int	sys_getgroups	__P((struct proc *, void *, register_t *));
-int	sys_setgroups	__P((struct proc *, void *, register_t *));
-int	sys_getpgrp	__P((struct proc *, void *, register_t *));
-int	sys_setpgid	__P((struct proc *, void *, register_t *));
-int	sys_setitimer	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
-int	sys_swapon	__P((struct proc *, void *, register_t *));
-int	sys_getitimer	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
-int	sys_dup2	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_fcntl	__P((struct proc *, void *, register_t *));
-int	sys_select	__P((struct proc *, void *, register_t *));
-int	sys_fsync	__P((struct proc *, void *, register_t *));
-int	sys_setpriority	__P((struct proc *, void *, register_t *));
-int	sys_socket	__P((struct proc *, void *, register_t *));
-int	sys_connect	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_accept	__P((struct proc *, void *, register_t *));
-int	sys_getpriority	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_send	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_recv	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_sigreturn	__P((struct proc *, void *, register_t *));
-int	sys_bind	__P((struct proc *, void *, register_t *));
-int	sys_setsockopt	__P((struct proc *, void *, register_t *));
-int	sys_listen	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sigvec	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sigblock	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sigsetmask	__P((struct proc *, void *, register_t *));
-int	sys_sigsuspend	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sigstack	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_recvmsg	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sendmsg	__P((struct proc *, void *, register_t *));
+int	sys_sigaction(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	sys_sigprocmask(struct proc *, void *, register_t *);
+int	sys_getlogin(struct proc *, void *, register_t *);
+int	sys_setlogin(struct proc *, void *, register_t *);
+int	sys_acct(struct proc *, void *, register_t *);
+int	sys_sigpending(struct proc *, void *, register_t *);
+int	sys_sigaltstack(struct proc *, void *, register_t *);
+int	freebsd_sys_ioctl(struct proc *, void *, register_t *);
+int	sys_reboot(struct proc *, void *, register_t *);
+int	freebsd_sys_revoke(struct proc *, void *, register_t *);
+int	freebsd_sys_symlink(struct proc *, void *, register_t *);
+int	freebsd_sys_readlink(struct proc *, void *, register_t *);
+int	freebsd_sys_execve(struct proc *, void *, register_t *);
+int	sys_umask(struct proc *, void *, register_t *);
+int	freebsd_sys_chroot(struct proc *, void *, register_t *);
+int	compat_43_sys_fstat(struct proc *, void *, register_t *);
+int	compat_43_sys_getkerninfo(struct proc *, void *, register_t *);
+int	compat_43_sys_getpagesize(struct proc *, void *, register_t *);
+int	sys_msync(struct proc *, void *, register_t *);
+int	sys_vfork(struct proc *, void *, register_t *);
+int	sys_sbrk(struct proc *, void *, register_t *);
+int	sys_sstk(struct proc *, void *, register_t *);
+int	compat_43_sys_mmap(struct proc *, void *, register_t *);
+int	sys_ovadvise(struct proc *, void *, register_t *);
+int	sys_munmap(struct proc *, void *, register_t *);
+int	sys_mprotect(struct proc *, void *, register_t *);
+int	freebsd_sys_madvise(struct proc *, void *, register_t *);
+int	sys_mincore(struct proc *, void *, register_t *);
+int	sys_getgroups(struct proc *, void *, register_t *);
+int	sys_setgroups(struct proc *, void *, register_t *);
+int	sys_getpgrp(struct proc *, void *, register_t *);
+int	sys_setpgid(struct proc *, void *, register_t *);
+int	sys_setitimer(struct proc *, void *, register_t *);
+int	compat_43_sys_wait(struct proc *, void *, register_t *);
+int	sys_swapon(struct proc *, void *, register_t *);
+int	sys_getitimer(struct proc *, void *, register_t *);
+int	compat_43_sys_gethostname(struct proc *, void *, register_t *);
+int	compat_43_sys_sethostname(struct proc *, void *, register_t *);
+int	compat_43_sys_getdtablesize(struct proc *, void *, register_t *);
+int	sys_dup2(struct proc *, void *, register_t *);
+int	freebsd_sys_fcntl(struct proc *, void *, register_t *);
+int	sys_select(struct proc *, void *, register_t *);
+int	sys_fsync(struct proc *, void *, register_t *);
+int	sys_setpriority(struct proc *, void *, register_t *);
+int	sys_socket(struct proc *, void *, register_t *);
+int	sys_connect(struct proc *, void *, register_t *);
+int	compat_43_sys_accept(struct proc *, void *, register_t *);
+int	sys_getpriority(struct proc *, void *, register_t *);
+int	compat_43_sys_send(struct proc *, void *, register_t *);
+int	compat_43_sys_recv(struct proc *, void *, register_t *);
+int	freebsd_sys_sigreturn(struct proc *, void *, register_t *);
+int	sys_bind(struct proc *, void *, register_t *);
+int	sys_setsockopt(struct proc *, void *, register_t *);
+int	sys_listen(struct proc *, void *, register_t *);
+int	compat_43_sys_sigvec(struct proc *, void *, register_t *);
+int	compat_43_sys_sigblock(struct proc *, void *, register_t *);
+int	compat_43_sys_sigsetmask(struct proc *, void *, register_t *);
+int	sys_sigsuspend(struct proc *, void *, register_t *);
+int	compat_43_sys_sigstack(struct proc *, void *, register_t *);
+int	compat_43_sys_recvmsg(struct proc *, void *, register_t *);
+int	compat_43_sys_sendmsg(struct proc *, void *, register_t *);
 #ifdef TRACE
-int	sys_vtrace	__P((struct proc *, void *, register_t *));
+int	sys_vtrace(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_gettimeofday	__P((struct proc *, void *, register_t *));
-int	sys_getrusage	__P((struct proc *, void *, register_t *));
-int	sys_getsockopt	__P((struct proc *, void *, register_t *));
-int	sys_readv	__P((struct proc *, void *, register_t *));
-int	sys_writev	__P((struct proc *, void *, register_t *));
-int	sys_settimeofday	__P((struct proc *, void *, register_t *));
-int	sys_fchown	__P((struct proc *, void *, register_t *));
-int	sys_fchmod	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_recvfrom	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_setreuid	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_setregid	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_rename	__P((struct proc *, void *, register_t *));
-int	compat_43_freebsd_sys_truncate	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_ftruncate	__P((struct proc *, void *, register_t *));
-int	sys_flock	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_mkfifo	__P((struct proc *, void *, register_t *));
-int	sys_sendto	__P((struct proc *, void *, register_t *));
-int	sys_shutdown	__P((struct proc *, void *, register_t *));
-int	sys_socketpair	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_mkdir	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_rmdir	__P((struct proc *, void *, register_t *));
-int	sys_utimes	__P((struct proc *, void *, register_t *));
-int	sys_adjtime	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getpeername	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_gethostid	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sethostid	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getrlimit	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_setrlimit	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_killpg	__P((struct proc *, void *, register_t *));
-int	sys_setsid	__P((struct proc *, void *, register_t *));
-int	sys_quotactl	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_quota	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getsockname	__P((struct proc *, void *, register_t *));
+int	sys_gettimeofday(struct proc *, void *, register_t *);
+int	sys_getrusage(struct proc *, void *, register_t *);
+int	sys_getsockopt(struct proc *, void *, register_t *);
+int	sys_readv(struct proc *, void *, register_t *);
+int	sys_writev(struct proc *, void *, register_t *);
+int	sys_settimeofday(struct proc *, void *, register_t *);
+int	sys_fchown(struct proc *, void *, register_t *);
+int	sys_fchmod(struct proc *, void *, register_t *);
+int	compat_43_sys_recvfrom(struct proc *, void *, register_t *);
+int	compat_43_sys_setreuid(struct proc *, void *, register_t *);
+int	compat_43_sys_setregid(struct proc *, void *, register_t *);
+int	freebsd_sys_rename(struct proc *, void *, register_t *);
+int	compat_43_freebsd_sys_truncate(struct proc *, void *, register_t *);
+int	compat_43_sys_ftruncate(struct proc *, void *, register_t *);
+int	sys_flock(struct proc *, void *, register_t *);
+int	freebsd_sys_mkfifo(struct proc *, void *, register_t *);
+int	sys_sendto(struct proc *, void *, register_t *);
+int	sys_shutdown(struct proc *, void *, register_t *);
+int	sys_socketpair(struct proc *, void *, register_t *);
+int	freebsd_sys_mkdir(struct proc *, void *, register_t *);
+int	freebsd_sys_rmdir(struct proc *, void *, register_t *);
+int	sys_utimes(struct proc *, void *, register_t *);
+int	sys_adjtime(struct proc *, void *, register_t *);
+int	compat_43_sys_getpeername(struct proc *, void *, register_t *);
+int	compat_43_sys_gethostid(struct proc *, void *, register_t *);
+int	compat_43_sys_sethostid(struct proc *, void *, register_t *);
+int	compat_43_sys_getrlimit(struct proc *, void *, register_t *);
+int	compat_43_sys_setrlimit(struct proc *, void *, register_t *);
+int	compat_43_sys_killpg(struct proc *, void *, register_t *);
+int	sys_setsid(struct proc *, void *, register_t *);
+int	sys_quotactl(struct proc *, void *, register_t *);
+int	compat_43_sys_quota(struct proc *, void *, register_t *);
+int	compat_43_sys_getsockname(struct proc *, void *, register_t *);
 #if defined(NFSCLIENT) || defined(NFSSERVER)
-int	sys_nfssvc	__P((struct proc *, void *, register_t *));
+int	sys_nfssvc(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_43_sys_getdirentries	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_statfs	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_fstatfs	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_getdirentries(struct proc *, void *, register_t *);
+int	freebsd_sys_statfs(struct proc *, void *, register_t *);
+int	freebsd_sys_fstatfs(struct proc *, void *, register_t *);
 #ifdef NFSCLIENT
-int	freebsd_sys_getfh	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_getfh(struct proc *, void *, register_t *);
 #else
 #endif
-int	compat_09_sys_getdomainname	__P((struct proc *, void *, register_t *));
-int	compat_09_sys_setdomainname	__P((struct proc *, void *, register_t *));
-int	compat_09_sys_uname	__P((struct proc *, void *, register_t *));
-int	sys_sysarch	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_rtprio	__P((struct proc *, void *, register_t *));
+int	compat_09_sys_getdomainname(struct proc *, void *, register_t *);
+int	compat_09_sys_setdomainname(struct proc *, void *, register_t *);
+int	compat_09_sys_uname(struct proc *, void *, register_t *);
+int	sys_sysarch(struct proc *, void *, register_t *);
+int	freebsd_sys_rtprio(struct proc *, void *, register_t *);
 #if defined(SYSVSEM) && !defined(alpha)
-int	compat_10_sys_semsys	__P((struct proc *, void *, register_t *));
+int	compat_10_sys_semsys(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVMSG) && !defined(alpha)
-int	compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
+int	compat_10_sys_msgsys(struct proc *, void *, register_t *);
 #else
 #endif
 #if defined(SYSVSHM) && !defined(alpha)
-int	compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
+int	compat_10_sys_shmsys(struct proc *, void *, register_t *);
 #else
 #endif
-int	freebsd_ntp_adjtime	__P((struct proc *, void *, register_t *));
-int	sys_setgid	__P((struct proc *, void *, register_t *));
-int	sys_setegid	__P((struct proc *, void *, register_t *));
-int	sys_seteuid	__P((struct proc *, void *, register_t *));
+int	freebsd_ntp_adjtime(struct proc *, void *, register_t *);
+int	sys_setgid(struct proc *, void *, register_t *);
+int	sys_setegid(struct proc *, void *, register_t *);
+int	sys_seteuid(struct proc *, void *, register_t *);
 #ifdef LFS
-int	lfs_bmapv	__P((struct proc *, void *, register_t *));
-int	lfs_markv	__P((struct proc *, void *, register_t *));
-int	lfs_segclean	__P((struct proc *, void *, register_t *));
-int	lfs_segwait	__P((struct proc *, void *, register_t *));
+int	lfs_bmapv(struct proc *, void *, register_t *);
+int	lfs_markv(struct proc *, void *, register_t *);
+int	lfs_segclean(struct proc *, void *, register_t *);
+int	lfs_segwait(struct proc *, void *, register_t *);
 #else
 #endif
-int	freebsd_sys_stat	__P((struct proc *, void *, register_t *));
-int	sys_fstat	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_lstat	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_pathconf	__P((struct proc *, void *, register_t *));
-int	sys_fpathconf	__P((struct proc *, void *, register_t *));
-int	sys_getrlimit	__P((struct proc *, void *, register_t *));
-int	sys_setrlimit	__P((struct proc *, void *, register_t *));
-int	sys_getdirentries	__P((struct proc *, void *, register_t *));
-int	sys_mmap	__P((struct proc *, void *, register_t *));
-int	sys_nosys	__P((struct proc *, void *, register_t *));
-int	sys_lseek	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_truncate	__P((struct proc *, void *, register_t *));
-int	sys_ftruncate	__P((struct proc *, void *, register_t *));
-int	sys___sysctl	__P((struct proc *, void *, register_t *));
-int	sys_mlock	__P((struct proc *, void *, register_t *));
-int	sys_munlock	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_stat(struct proc *, void *, register_t *);
+int	sys_fstat(struct proc *, void *, register_t *);
+int	freebsd_sys_lstat(struct proc *, void *, register_t *);
+int	freebsd_sys_pathconf(struct proc *, void *, register_t *);
+int	sys_fpathconf(struct proc *, void *, register_t *);
+int	sys_getrlimit(struct proc *, void *, register_t *);
+int	sys_setrlimit(struct proc *, void *, register_t *);
+int	sys_getdirentries(struct proc *, void *, register_t *);
+int	sys_mmap(struct proc *, void *, register_t *);
+int	sys_nosys(struct proc *, void *, register_t *);
+int	sys_lseek(struct proc *, void *, register_t *);
+int	freebsd_sys_truncate(struct proc *, void *, register_t *);
+int	sys_ftruncate(struct proc *, void *, register_t *);
+int	sys___sysctl(struct proc *, void *, register_t *);
+int	sys_mlock(struct proc *, void *, register_t *);
+int	sys_munlock(struct proc *, void *, register_t *);
 #ifdef FREEBSD_BASED_ON_44LITE_R2
-int	freebsd_sys_undelete	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_undelete(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_getpgid	__P((struct proc *, void *, register_t *));
-int	sys_poll	__P((struct proc *, void *, register_t *));
+int	sys_getpgid(struct proc *, void *, register_t *);
+int	sys_poll(struct proc *, void *, register_t *);
 #ifdef SYSVSEM
-int	sys___semctl	__P((struct proc *, void *, register_t *));
-int	sys_semget	__P((struct proc *, void *, register_t *));
-int	sys_semop	__P((struct proc *, void *, register_t *));
+int	sys___semctl(struct proc *, void *, register_t *);
+int	sys_semget(struct proc *, void *, register_t *);
+int	sys_semop(struct proc *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVMSG
-int	sys_msgctl	__P((struct proc *, void *, register_t *));
-int	sys_msgget	__P((struct proc *, void *, register_t *));
-int	sys_msgsnd	__P((struct proc *, void *, register_t *));
-int	sys_msgrcv	__P((struct proc *, void *, register_t *));
+int	sys_msgctl(struct proc *, void *, register_t *);
+int	sys_msgget(struct proc *, void *, register_t *);
+int	sys_msgsnd(struct proc *, void *, register_t *);
+int	sys_msgrcv(struct proc *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVSHM
-int	sys_shmat	__P((struct proc *, void *, register_t *));
-int	sys_shmctl	__P((struct proc *, void *, register_t *));
-int	sys_shmdt	__P((struct proc *, void *, register_t *));
-int	sys_shmget	__P((struct proc *, void *, register_t *));
+int	sys_shmat(struct proc *, void *, register_t *);
+int	sys_shmctl(struct proc *, void *, register_t *);
+int	sys_shmdt(struct proc *, void *, register_t *);
+int	sys_shmget(struct proc *, void *, register_t *);
 #else
 #endif
-int	sys_clock_gettime	__P((struct proc *, void *, register_t *));
-int	sys_nanosleep	__P((struct proc *, void *, register_t *));
-int	sys_minherit	__P((struct proc *, void *, register_t *));
-int	sys_rfork	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_poll2	__P((struct proc *, void *, register_t *));
-int	sys_issetugid	__P((struct proc *, void *, register_t *));
-int	sys_lchown	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_sigprocmask40	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_sigsuspend40	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_sigaction40	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_sigpending40	__P((struct proc *, void *, register_t *));
+int	sys_clock_gettime(struct proc *, void *, register_t *);
+int	sys_nanosleep(struct proc *, void *, register_t *);
+int	sys_minherit(struct proc *, void *, register_t *);
+int	sys_rfork(struct proc *, void *, register_t *);
+int	freebsd_sys_poll2(struct proc *, void *, register_t *);
+int	sys_issetugid(struct proc *, void *, register_t *);
+int	sys_lchown(struct proc *, void *, register_t *);
+int	freebsd_sys_sigprocmask40(struct proc *, void *, register_t *);
+int	freebsd_sys_sigsuspend40(struct proc *, void *, register_t *);
+int	freebsd_sys_sigaction40(struct proc *, void *, register_t *);
+int	freebsd_sys_sigpending40(struct proc *, void *, register_t *);

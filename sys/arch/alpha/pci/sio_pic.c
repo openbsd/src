@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.19 2001/10/26 01:28:06 nate Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.20 2002/03/14 01:26:27 millert Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -122,21 +122,21 @@ u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
 #endif
 
-void		sio_setirqstat __P((int, int, int));
-int		sio_intr_alloc __P((void *, int, int, int *));
+void		sio_setirqstat(int, int, int);
+int		sio_intr_alloc(void *, int, int, int *);
 
-u_int8_t	(*sio_read_elcr) __P((int));
-void		(*sio_write_elcr) __P((int, u_int8_t));
-static void	specific_eoi __P((int));
+u_int8_t	(*sio_read_elcr)(int);
+void		(*sio_write_elcr)(int, u_int8_t);
+static void	specific_eoi(int);
 #ifdef BROKEN_PROM_CONSOLE
-void		sio_intr_shutdown __P((void *));
+void		sio_intr_shutdown(void *);
 #endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
-int		i82378_setup_elcr __P((void));
-u_int8_t	i82378_read_elcr __P((int));
-void		i82378_write_elcr __P((int, u_int8_t));
+int		i82378_setup_elcr(void);
+u_int8_t	i82378_read_elcr(int);
+void		i82378_write_elcr(int, u_int8_t);
 
 bus_space_handle_t sio_ioh_elcr;
 
@@ -180,9 +180,9 @@ i82378_write_elcr(elcr, val)
 
 /******************** Cypress CY82C693 ELCR functions ********************/
 
-int		cy82c693_setup_elcr __P((void));
-u_int8_t	cy82c693_read_elcr __P((int));
-void		cy82c693_write_elcr __P((int, u_int8_t));
+int		cy82c693_setup_elcr(void);
+u_int8_t	cy82c693_read_elcr(int);
+void		cy82c693_write_elcr(int, u_int8_t);
 
 const struct cy82c693_handle *sio_cy82c693_handle;
 
@@ -270,7 +270,7 @@ cy82c693_write_elcr(elcr, val)
  * they should panic.
  */
 
-int (*sio_elcr_setup_funcs[]) __P((void)) = {
+int (*sio_elcr_setup_funcs[])(void) = {
 	cy82c693_setup_elcr,
 	i82378_setup_elcr,
 	NULL,

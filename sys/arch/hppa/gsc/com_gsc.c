@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.11 2002/02/05 04:09:41 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.12 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -50,8 +50,8 @@ struct com_gsc_regs {
 	u_int8_t reset;
 };
 
-int	com_gsc_probe __P((struct device *, void *, void *));
-void	com_gsc_attach __P((struct device *, struct device *, void *));
+int	com_gsc_probe(struct device *, void *, void *);
+void	com_gsc_attach(struct device *, struct device *, void *);
 
 struct cfattach com_gsc_ca = {
 	sizeof(struct com_softc), com_gsc_probe, com_gsc_attach

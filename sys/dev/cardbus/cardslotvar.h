@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslotvar.h,v 1.1 2000/04/08 05:50:52 aaron Exp $ */
+/*	$OpenBSD: cardslotvar.h,v 1.2 2002/03/14 01:26:53 millert Exp $ */
 /*	$NetBSD: cardslotvar.h,v 1.5 2000/03/13 23:52:38 soren Exp $	*/
 
 /*
@@ -120,6 +120,6 @@ typedef struct cardslot_softc *cardslot_t;
 
 #define IS_CARDSLOT_INSERT_REMOVE_EV(x) (0 <= (x) && (x) <= 3)
 
-void cardslot_event_throw __P((cardslot_t cs, int ev));
+void cardslot_event_throw(cardslot_t cs, int ev);
 
 #endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */

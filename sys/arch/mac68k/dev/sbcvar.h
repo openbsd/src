@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.2 2001/07/04 08:52:46 niklas Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct sbc_softc {
 	volatile struct sbc_regs *sc_regs;
 	volatile vm_offset_t	sc_drq_addr;
 	volatile vm_offset_t	sc_nodrq_addr;
-	void			(*sc_clrintr) __P((struct ncr5380_softc *));
+	void			(*sc_clrintr)(struct ncr5380_softc *);
 	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
 };
@@ -107,17 +107,17 @@ extern int	sbc_options;
 extern struct scsi_adapter sbc_ops;
 extern struct scsi_device sbc_dev;
 
-int	sbc_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
-int	sbc_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-void	sbc_irq_intr __P((void *));
-void	sbc_drq_intr __P((void *));
-void	sbc_dma_alloc __P((struct ncr5380_softc *));
-void	sbc_dma_free __P((struct ncr5380_softc *));
-void	sbc_dma_poll __P((struct ncr5380_softc *));
-void	sbc_dma_setup __P((struct ncr5380_softc *));
-void	sbc_dma_start __P((struct ncr5380_softc *));
-void	sbc_dma_eop __P((struct ncr5380_softc *));
-void	sbc_dma_stop __P((struct ncr5380_softc *));
+int	sbc_pdma_in(struct ncr5380_softc *, int, int, u_char *);
+int	sbc_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+void	sbc_irq_intr(void *);
+void	sbc_drq_intr(void *);
+void	sbc_dma_alloc(struct ncr5380_softc *);
+void	sbc_dma_free(struct ncr5380_softc *);
+void	sbc_dma_poll(struct ncr5380_softc *);
+void	sbc_dma_setup(struct ncr5380_softc *);
+void	sbc_dma_start(struct ncr5380_softc *);
+void	sbc_dma_eop(struct ncr5380_softc *);
+void	sbc_dma_stop(struct ncr5380_softc *);
 #ifdef SBC_DEBUG
-void	decode_5380_intr __P((struct ncr5380_softc *));
+void	decode_5380_intr(struct ncr5380_softc *);
 #endif

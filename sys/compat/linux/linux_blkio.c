@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_blkio.c,v 1.4 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: linux_blkio.c,v 1.5 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_blkio.c,v 1.3 2001/01/18 17:48:04 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ linux_ioctl_blkio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	int error;
 	struct filedesc *fdp;
 	struct file *fp;
-	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ioctlf)(struct file *, u_long, caddr_t, struct proc *);
 	struct partinfo partp;
 	struct disklabel label;
 

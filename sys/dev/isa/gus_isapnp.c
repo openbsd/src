@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.2 2001/01/29 05:30:31 mickey Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.3 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -130,8 +130,8 @@
 #include "gusreg.h"
 #include "gusvar.h"
 
-int	gus_isapnp_match __P((struct device *, void *, void *));
-void	gus_isapnp_attach __P((struct device *, struct device *, void *));
+int	gus_isapnp_match(struct device *, void *, void *);
+void	gus_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach gus_isapnp_ca = {
 	sizeof(struct gus_softc), gus_isapnp_match, gus_isapnp_attach

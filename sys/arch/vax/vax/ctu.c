@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.4 2000/04/27 01:10:11 bjc Exp $ */
+/*	$OpenBSD: ctu.c,v 1.5 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -87,18 +87,18 @@ struct tu_softc {
 
 struct	ivec_dsp tu_recv, tu_xmit;
 
-void	ctutintr __P((void *));
-void	cturintr __P((void *));
-void	ctuattach __P((void));
-void	ctustart __P((struct buf *));
-void	ctuwatch __P((void *));
-short	ctu_cksum __P((unsigned short *, int));
+void	ctutintr(void *);
+void	cturintr(void *);
+void	ctuattach(void);
+void	ctustart(struct buf *);
+void	ctuwatch(void *);
+short	ctu_cksum(unsigned short *, int);
 
-int	ctuopen __P((dev_t, int, int, struct proc *));
-int	ctuclose __P((dev_t, int, int, struct proc *));
-void	ctustrategy __P((struct buf *));
-int	ctuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
+int	ctuopen(dev_t, int, int, struct proc *);
+int	ctuclose(dev_t, int, int, struct proc *);
+void	ctustrategy(struct buf *);
+int	ctuioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	ctudump(dev_t, daddr_t, caddr_t, size_t);
 
 static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 

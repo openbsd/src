@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.15 2001/12/22 18:45:35 smurph Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.16 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -63,8 +63,8 @@ struct pcctwosoftc {
 	struct pcctworeg *sc_pcc2;	/* the actual registers */
 };
 
-void pcctwoattach __P((struct device *, struct device *, void *));
-int  pcctwomatch __P((struct device *, void *, void *));
+void pcctwoattach(struct device *, struct device *, void *);
+int  pcctwomatch(struct device *, void *, void *);
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
@@ -78,8 +78,8 @@ struct pcctworeg *sys_pcc2 = NULL;
 
 int pcc2bus;
 
-int pcctwo_print __P((void *args, const char *bus));
-int pcctwo_scan __P((struct device *parent, void *child, void *args));
+int pcctwo_print(void *args, const char *bus);
+int pcctwo_scan(struct device *parent, void *child, void *args);
 
 int
 pcctwomatch(parent, vcf, args)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.9 2001/09/10 16:21:05 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.10 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -195,18 +195,18 @@ struct stat {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	chmod __P((const char *, mode_t));
-int	fstat __P((int, struct stat *));
-int	mknod __P((const char *, mode_t, dev_t));
-int	mkdir __P((const char *, mode_t));
-int	mkfifo __P((const char *, mode_t));
-int	stat __P((const char *, struct stat *));
-mode_t	umask __P((mode_t));
+int	chmod(const char *, mode_t);
+int	fstat(int, struct stat *);
+int	mknod(const char *, mode_t, dev_t);
+int	mkdir(const char *, mode_t);
+int	mkfifo(const char *, mode_t);
+int	stat(const char *, struct stat *);
+mode_t	umask(mode_t);
 #ifndef _POSIX_SOURCE
-int	chflags __P((const char *, unsigned int));
-int	fchflags __P((int, unsigned int));
-int	fchmod __P((int, mode_t));
-int	lstat __P((const char *, struct stat *));
+int	chflags(const char *, unsigned int);
+int	fchflags(int, unsigned int);
+int	fchmod(int, mode_t);
+int	lstat(const char *, struct stat *);
 #endif
 __END_DECLS
 #endif

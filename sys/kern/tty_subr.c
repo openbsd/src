@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.15 2001/09/28 13:03:56 art Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.16 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
  */
 #define QMEM(n)		((((n)-1)/NBBY)+1)
 
-void	cinit __P((void));
-void	clrbits __P((u_char *, int, int));
+void	cinit(void);
+void	clrbits(u_char *, int, int);
 
 /*
  * Initialize clists.

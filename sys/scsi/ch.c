@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.11 2001/06/22 14:35:42 deraadt Exp $	*/
+/*	$OpenBSD: ch.c,v 1.12 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -94,8 +94,8 @@ struct ch_softc {
 #define CHF_ROTATE	0x01		/* picker can rotate */
 
 /* Autoconfiguration glue */
-int	chmatch __P((struct device *, void *, void *));
-void	chattach __P((struct device *, struct device *, void *));
+int	chmatch(struct device *, void *, void *);
+void	chattach(struct device *, struct device *, void *);
 
 struct cfattach ch_ca = {
 	sizeof(struct ch_softc), chmatch, chattach
@@ -115,13 +115,13 @@ struct scsi_device ch_switch = {
 	NULL, NULL, NULL, NULL
 };
 
-int	ch_move __P((struct ch_softc *, struct changer_move *));
-int	ch_exchange __P((struct ch_softc *, struct changer_exchange *));
-int	ch_position __P((struct ch_softc *, struct changer_position *));
-int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
-int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
-int	ch_get_params __P((struct ch_softc *, int));
-void	ch_get_quirks __P((struct ch_softc *, struct scsi_inquiry_data *));
+int	ch_move(struct ch_softc *, struct changer_move *);
+int	ch_exchange(struct ch_softc *, struct changer_exchange *);
+int	ch_position(struct ch_softc *, struct changer_position *);
+int	ch_usergetelemstatus(struct ch_softc *, int, u_int8_t *);
+int	ch_getelemstatus(struct ch_softc *, int, int, caddr_t, size_t);
+int	ch_get_params(struct ch_softc *, int);
+void	ch_get_quirks(struct ch_softc *, struct scsi_inquiry_data *);
 
 /*
  * SCSI changer quirks.

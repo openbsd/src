@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.23 2002/02/15 20:45:30 nordin Exp $ */
+/*	$OpenBSD: cl.c,v 1.24 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -158,44 +158,44 @@ struct {
 };
 
 /* prototypes */
-int clcnprobe __P((struct consdev *cp));
-int clcninit __P((struct consdev *cp));
-int clcngetc __P((dev_t dev));
-int clcnputc __P((dev_t dev, u_char c));
-u_char cl_clkdiv __P((int speed));
-u_char cl_clknum __P((int speed));
-u_char cl_clkrxtimeout __P((int speed));
-void clstart __P((struct tty *tp));
-void cl_unblock __P((struct tty *tp));
-int clccparam __P((struct clsoftc *sc, struct termios *par, int channel));
+int clcnprobe(struct consdev *cp);
+int clcninit(struct consdev *cp);
+int clcngetc(dev_t dev);
+int clcnputc(dev_t dev, u_char c);
+u_char cl_clkdiv(int speed);
+u_char cl_clknum(int speed);
+u_char cl_clkrxtimeout(int speed);
+void clstart(struct tty *tp);
+void cl_unblock(struct tty *tp);
+int clccparam(struct clsoftc *sc, struct termios *par, int channel);
 
-int clparam __P((struct tty *tp, struct termios *t));
-int cl_mintr __P((struct clsoftc *sc));
-int cl_txintr __P((struct clsoftc *sc));
-int cl_rxintr __P((struct clsoftc *sc));
-void cl_overflow __P((struct clsoftc *sc, int channel, time_t *ptime, u_char *msg));
-void cl_parity __P((struct clsoftc *sc, int channel));
-void cl_frame __P((struct clsoftc *sc, int channel));
-void cl_break __P(( struct clsoftc *sc, int channel));
-int clmctl __P((dev_t dev, int bits, int how));
-void cl_dumpport __P((int channel));
+int clparam(struct tty *tp, struct termios *t);
+int cl_mintr(struct clsoftc *sc);
+int cl_txintr(struct clsoftc *sc);
+int cl_rxintr(struct clsoftc *sc);
+void cl_overflow(struct clsoftc *sc, int channel, time_t *ptime, u_char *msg);
+void cl_parity(struct clsoftc *sc, int channel);
+void cl_frame(struct clsoftc *sc, int channel);
+void cl_break( struct clsoftc *sc, int channel);
+int clmctl(dev_t dev, int bits, int how);
+void cl_dumpport(int channel);
 
-int	clprobe __P((struct device *parent, void *self, void *aux));
-void	clattach __P((struct device *parent, struct device *self, void *aux));
+int	clprobe(struct device *parent, void *self, void *aux);
+void	clattach(struct device *parent, struct device *self, void *aux);
 
-int clopen  __P((dev_t dev, int flag, int mode, struct proc *p));
-int clclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int clread  __P((dev_t dev, struct uio *uio, int flag));
-int clwrite __P((dev_t dev, struct uio *uio, int flag));
-int clioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-int clstop  __P((struct tty *tp, int flag));
+int clopen(dev_t dev, int flag, int mode, struct proc *p);
+int clclose(dev_t dev, int flag, int mode, struct proc *p);
+int clread(dev_t dev, struct uio *uio, int flag);
+int clwrite(dev_t dev, struct uio *uio, int flag);
+int clioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
+int clstop(struct tty *tp, int flag);
 
-static void cl_initchannel __P((struct clsoftc *sc, int channel));
-static void clputc __P((struct clsoftc *sc, int unit, u_char c));
-static u_char clgetc __P((struct clsoftc *sc, int *channel));
+static void cl_initchannel(struct clsoftc *sc, int channel);
+static void clputc(struct clsoftc *sc, int unit, u_char c);
+static u_char clgetc(struct clsoftc *sc, int *channel);
 static void cloutput __P( (struct tty *tp));
-void cl_softint __P((struct clsoftc *sc));
-void cl_appendbufn __P((struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt));
+void cl_softint(struct clsoftc *sc);
+void cl_appendbufn(struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt);
 
 struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach

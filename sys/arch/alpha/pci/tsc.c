@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.6 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: tsc.c,v 1.7 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -53,8 +53,8 @@
 
 #define tsc() { Generate ctags(1) key. }
 
-int	tscmatch __P((struct device *, void *, void *));
-void	tscattach __P((struct device *, struct device *, void *));
+int	tscmatch(struct device *, void *, void *);
+void	tscattach(struct device *, struct device *, void *);
 
 struct cfattach tsc_ca = {
 	sizeof(struct tsc_softc), tscmatch, tscattach,
@@ -66,10 +66,10 @@ struct cfdriver tsc_cd = {
 
 struct tsp_config tsp_configuration[2];
 
-static int tscprint __P((void *, const char *pnp));
+static int tscprint(void *, const char *pnp);
 
-int	tspmatch __P((struct device *, void *, void *));
-void	tspattach __P((struct device *, struct device *, void *));
+int	tspmatch(struct device *, void *, void *);
+void	tspattach(struct device *, struct device *, void *);
 
 struct cfattach tsp_ca = {
 	sizeof(struct tsp_softc), tspmatch, tspattach,
@@ -80,11 +80,11 @@ struct cfdriver tsp_cd = {
 };
 
 
-static int tspprint __P((void *, const char *pnp));
+static int tspprint(void *, const char *pnp);
 
 #if	0
-static int tsp_bus_get_window __P((int, int,
-	struct alpha_bus_space_translation *));
+static int tsp_bus_get_window(int, int,
+	struct alpha_bus_space_translation *);
 #endif
 
 /* There can be only one */

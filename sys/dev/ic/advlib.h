@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.h,v 1.5 2001/04/06 04:42:06 csapuntz Exp $	*/
+/*	$OpenBSD: advlib.h,v 1.6 2002/03/14 01:26:53 millert Exp $	*/
 /*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -1321,18 +1321,18 @@ typedef struct asceep_config
 /******************************************************************************/
 
 
-void AscInitASC_SOFTC __P((ASC_SOFTC *));
-u_int16_t AscInitFromEEP __P((ASC_SOFTC *));
-u_int16_t AscInitFromASC_SOFTC __P((ASC_SOFTC *));
-int AscInitDriver __P((ASC_SOFTC *));
-void AscReInitLram __P((ASC_SOFTC *));
-int AscFindSignature __P((bus_space_tag_t, bus_space_handle_t));
-int AscISR __P((ASC_SOFTC *));
-int AscExeScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *));
-void AscInquiryHandling __P((ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *));
-int AscAbortCCB __P((ASC_SOFTC *, u_int32_t));
-int AscResetBus __P((ASC_SOFTC *));
-int AscResetDevice __P((ASC_SOFTC *, u_char));
+void AscInitASC_SOFTC(ASC_SOFTC *);
+u_int16_t AscInitFromEEP(ASC_SOFTC *);
+u_int16_t AscInitFromASC_SOFTC(ASC_SOFTC *);
+int AscInitDriver(ASC_SOFTC *);
+void AscReInitLram(ASC_SOFTC *);
+int AscFindSignature(bus_space_tag_t, bus_space_handle_t);
+int AscISR(ASC_SOFTC *);
+int AscExeScsiQueue(ASC_SOFTC *, ASC_SCSI_Q *);
+void AscInquiryHandling(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
+int AscAbortCCB(ASC_SOFTC *, u_int32_t);
+int AscResetBus(ASC_SOFTC *);
+int AscResetDevice(ASC_SOFTC *, u_char);
 
 
 /******************************************************************************/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.4 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$OpenBSD: crl.c,v 1.5 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: crl.c,v 1.6 2000/01/24 02:40:33 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -67,13 +67,13 @@ struct {
 	int	crl_ds;		/* saved drive status */
 } crlstat;
 
-void	crlintr __P((void *));
-void	crlattach __P((void));
-static	void crlstart __P((void));
+void	crlintr(void *);
+void	crlattach(void);
+static	void crlstart(void);
 
-int	crlopen __P((dev_t, int, struct proc *));
-int	crlclose __P((dev_t, int, struct proc *));
-int	crlrw __P((dev_t, struct uio *, int));
+int	crlopen(dev_t, int, struct proc *);
+int	crlclose(dev_t, int, struct proc *);
+int	crlrw(dev_t, struct uio *, int);
 
 
 struct	ivec_dsp crl_intr;

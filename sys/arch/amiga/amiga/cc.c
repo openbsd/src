@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.7 1998/03/01 16:06:00 niklas Exp $	*/
+/*	$OpenBSD: cc.c,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: cc.c,v 1.11 1997/06/23 23:46:23 is Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #define INLINE
 #endif
 
-void	defchannel_handler __P((int));
+void	defchannel_handler(int);
 
 /* init all the "custom chips" */
 void

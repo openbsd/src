@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 1997/01/16 04:04:04 kstailey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.8 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.12 1996/11/20 18:57:05 gwr Exp $	*/
 
 /*-
@@ -62,19 +62,19 @@ struct confargs {
 #define cf_intpri	cf_loc[1]
 #define cf_intvec	cf_loc[2]
 
-int bus_scan __P((struct device *, void *, void *));
-int bus_print __P((void *, const char *));
-int bus_peek __P((int, int, int));
-char * bus_mapin __P((int, int, int));
+int bus_scan(struct device *, void *, void *);
+int bus_print(void *, const char *);
+int bus_peek(int, int, int);
+char * bus_mapin(int, int, int);
 
-typedef int (*isr_func_t) __P((void *));
-void isr_add_custom __P((int, void *));
-void isr_add_autovect __P((isr_func_t, void *arg, int level));
-void isr_add_vectored __P((isr_func_t, void *arg, int pri, int vec));
+typedef int (*isr_func_t)(void *);
+void isr_add_custom(int, void *);
+void isr_add_autovect(isr_func_t, void *arg, int level);
+void isr_add_vectored(isr_func_t, void *arg, int pri, int vec);
 
-void isr_soft_request __P((int level));
-void isr_soft_clear __P((int level));
+void isr_soft_request(int level);
+void isr_soft_clear(int level);
 
 /* Bus-error tolerant access to mapped address. */
-int     peek_byte __P((caddr_t));
-int     peek_word __P((caddr_t));
+int     peek_byte(caddr_t);
+int     peek_word(caddr_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.17 2001/09/27 04:01:42 jason Exp $	*/
+/*	$OpenBSD: esp.c,v 1.18 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -128,8 +128,8 @@
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>
 
-void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, void *, void *));
+void	espattach(struct device *, struct device *, void *);
+int	espmatch(struct device *, void *, void *);
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -153,16 +153,16 @@ struct scsi_device esp_dev = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_dma_go __P((struct ncr53c9x_softc *));
-void	esp_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	esp_read_reg(struct ncr53c9x_softc *, int);
+void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	esp_dma_isintr(struct ncr53c9x_softc *);
+void	esp_dma_reset(struct ncr53c9x_softc *);
+int	esp_dma_intr(struct ncr53c9x_softc *);
+int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+void	esp_dma_go(struct ncr53c9x_softc *);
+void	esp_dma_stop(struct ncr53c9x_softc *);
+int	esp_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,

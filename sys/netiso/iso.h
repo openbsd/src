@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.h,v 1.2 1996/03/04 10:35:28 mickey Exp $	*/
+/*	$OpenBSD: iso.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: iso.h,v 1.8 1996/02/13 22:09:58 christos Exp $	*/
 
 /*-
@@ -184,8 +184,8 @@ extern struct protosw isosw[];
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct iso_addr *iso_addr __P((const char *));
-char           *iso_ntoa __P((const struct iso_addr *));
+struct iso_addr *iso_addr(const char *);
+char           *iso_ntoa(const struct iso_addr *);
 
 /* THESE DON'T EXIST YET */
 struct hostent *iso_gethostbyname(), *iso_gethostbyaddr();

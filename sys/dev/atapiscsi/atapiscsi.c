@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.56 2002/02/01 10:10:03 art Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.57 2002/03/14 01:26:52 millert Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -107,47 +107,47 @@ int wdcdebug_atapi_mask = 0;
 /* When polling, let the exponential backoff max out at 1 second's interval. */
 #define ATAPI_POLL_MAXTIC (hz)
 
-void  wdc_atapi_start __P((struct channel_softc *,struct wdc_xfer *));
+void  wdc_atapi_start(struct channel_softc *,struct wdc_xfer *);
 
-void  wdc_atapi_timer_handler __P((void *));
+void  wdc_atapi_timer_handler(void *);
 
-void  wdc_atapi_real_start __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_real_start_2 __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_intr_command __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_intr_data __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_intr_complete __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_pio_intr __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_send_packet __P((struct channel_softc *, struct wdc_xfer *,
-    int, struct atapi_return_args *));
-void  wdc_atapi_ctrl __P((struct channel_softc *, struct wdc_xfer *, 
-    int, struct atapi_return_args *));
+void  wdc_atapi_real_start(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_real_start_2(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_intr_command(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_intr_data(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_intr_complete(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_pio_intr(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_send_packet(struct channel_softc *, struct wdc_xfer *,
+    int, struct atapi_return_args *);
+void  wdc_atapi_ctrl(struct channel_softc *, struct wdc_xfer *, 
+    int, struct atapi_return_args *);
 
-char  *wdc_atapi_in_data_phase __P((struct wdc_xfer *, int, int));
+char  *wdc_atapi_in_data_phase(struct wdc_xfer *, int, int);
 
-int   wdc_atapi_intr __P((struct channel_softc *, struct wdc_xfer *, int));
-void  wdc_atapi_done __P((struct channel_softc *, struct wdc_xfer *,
-	int, struct atapi_return_args *));
-void  wdc_atapi_reset __P((struct channel_softc *, struct wdc_xfer *,
-	int, struct atapi_return_args *));
-void  wdc_atapi_reset_2 __P((struct channel_softc *, struct wdc_xfer *,
-	int, struct atapi_return_args *));
+int   wdc_atapi_intr(struct channel_softc *, struct wdc_xfer *, int);
+void  wdc_atapi_done(struct channel_softc *, struct wdc_xfer *,
+	int, struct atapi_return_args *);
+void  wdc_atapi_reset(struct channel_softc *, struct wdc_xfer *,
+	int, struct atapi_return_args *);
+void  wdc_atapi_reset_2(struct channel_softc *, struct wdc_xfer *,
+	int, struct atapi_return_args *);
 
-void  wdc_atapi_tape_done __P((struct channel_softc *, struct wdc_xfer *,
-	int, struct atapi_return_args *));
+void  wdc_atapi_tape_done(struct channel_softc *, struct wdc_xfer *,
+	int, struct atapi_return_args *);
 #define MAX_SIZE MAXPHYS
 
 struct atapiscsi_softc;
 struct atapiscsi_xfer;
 
-int	atapiscsi_match __P((struct device *, void *, void *));
-void	atapiscsi_attach __P((struct device *, struct device *, void *));
-int     atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
+int	atapiscsi_match(struct device *, void *, void *);
+void	atapiscsi_attach(struct device *, struct device *, void *);
+int     atapi_to_scsi_sense(struct scsi_xfer *, u_int8_t);
 
 struct atapiscsi_softc {
 	struct device  sc_dev;
@@ -159,10 +159,10 @@ struct atapiscsi_softc {
 	int drive;
 };
 
-void  wdc_atapi_minphys __P((struct buf *bp));
-int   wdc_atapi_ioctl __P((struct scsi_link *,
-	u_long, caddr_t, int, struct proc *));
-int   wdc_atapi_send_cmd __P((struct scsi_xfer *sc_xfer));
+void  wdc_atapi_minphys(struct buf *bp);
+int   wdc_atapi_ioctl(struct scsi_link *,
+	u_long, caddr_t, int, struct proc *);
+int   wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
 
 static struct scsi_adapter atapiscsi_switch = 
 {
@@ -496,7 +496,7 @@ atapi_to_scsi_sense(xfer, flags)
 	return (ret);
 }
 
-int wdc_atapi_drive_selected __P((struct channel_softc *, int));
+int wdc_atapi_drive_selected(struct channel_softc *, int);
 
 int
 wdc_atapi_drive_selected(chp, drive)
@@ -514,10 +514,10 @@ enum atapi_context {
 	ctxt_interrupt = 2
 };
 
-void wdc_atapi_the_machine __P((struct channel_softc *, struct wdc_xfer *,
-    enum atapi_context));
+void wdc_atapi_the_machine(struct channel_softc *, struct wdc_xfer *,
+    enum atapi_context);
 
-void wdc_atapi_the_poll_machine __P((struct channel_softc *, struct wdc_xfer *));
+void wdc_atapi_the_poll_machine(struct channel_softc *, struct wdc_xfer *);
 
 void
 wdc_atapi_start(chp, xfer)
@@ -689,7 +689,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 }
 
 
-void wdc_atapi_update_status __P((struct channel_softc *));
+void wdc_atapi_update_status(struct channel_softc *);
 
 void
 wdc_atapi_update_status(chp)

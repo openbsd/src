@@ -1,4 +1,4 @@
-/*	$OpenBSD: drsc.c,v 1.5 2001/02/07 07:46:50 art Exp $	*/
+/*	$OpenBSD: drsc.c,v 1.6 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: drsc.c,v 1.9 1996/12/23 09:09:57 veego Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
 
-void drscattach __P((struct device *, struct device *, void *));
-int drscmatch __P((struct device *, void *, void *));
-int drsc_dmaintr __P((struct siop_softc *));
+void drscattach(struct device *, struct device *, void *);
+int drscmatch(struct device *, void *, void *);
+int drsc_dmaintr(struct siop_softc *);
 #ifdef DEBUG
-void drsc_dump __P((void));
+void drsc_dump(void);
 #endif
 
 struct scsi_adapter drsc_scsiswitch = {

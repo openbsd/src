@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_pcb.c,v 1.3 1996/04/21 22:29:29 deraadt Exp $	*/
+/*	$OpenBSD: iso_pcb.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: iso_pcb.c,v 1.10 1996/04/13 01:34:56 cgd Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ iso_pcbnotify(head, siso, errno, notify)
 	struct isopcb  *head;
 	register struct sockaddr_iso *siso;
 	int             errno;
-	void (*notify) __P((struct isopcb *));
+	void (*notify)(struct isopcb *);
 {
 	register struct isopcb *isop;
 	int             s = splimp();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2001/12/06 18:53:01 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.19 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: mem.c,v 1.25 1999/03/27 00:30:06 mycroft Exp $	*/
 
 /*
@@ -61,11 +61,11 @@ extern u_int lowram;
 extern char *extiobase;
 static caddr_t devzeropage;
 
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-paddr_t	mmmmap __P((dev_t, off_t, int));
-int	mmioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	mmopen(dev_t, int, int);
+int	mmclose(dev_t, int, int);
+int	mmrw(dev_t, struct uio *, int);
+paddr_t	mmmmap(dev_t, off_t, int);
+int	mmioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*ARGSUSED*/
 int

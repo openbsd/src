@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.12 2002/02/15 20:45:29 nordin Exp $	*/
+/*	$OpenBSD: scc.c,v 1.13 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -115,9 +115,9 @@
 #define	SCCLINE(dev)	(minor(dev) & 0x1)
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
-void	(*sccDivertXInput) __P((int cc)); /* X windows keyboard input routine */
-void	(*sccMouseEvent) __P((int));	/* X windows mouse motion event routine */
-void	(*sccMouseButtons) __P((int));	/* X windows mouse buttons event routine */
+void	(*sccDivertXInput)(int cc); /* X windows keyboard input routine */
+void	(*sccMouseEvent)(int);	/* X windows mouse motion event routine */
+void	(*sccMouseButtons)(int);	/* X windows mouse buttons event routine */
 #ifdef DEBUG
 int	debugChar;
 #endif
@@ -127,7 +127,7 @@ struct pdma {
 	char	*p_mem;
 	char	*p_end;
 	int	p_arg;
-	void	(*p_fcn) __P((struct tty *tp));
+	void	(*p_fcn)(struct tty *tp);
 };
 
 struct scc_softc {
@@ -193,11 +193,11 @@ struct speedtab sccspeedtab[] = {
 
 /* Definition of the driver for autoconfig. */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	sccmatch  __P((struct device *, void *, void *));
+int	sccmatch(struct device *, void *, void *);
 #else
-int	sccmatch  __P((struct device *, struct cfdata *, void *));
+int	sccmatch(struct device *, struct cfdata *, void *);
 #endif
-void	sccattach __P((struct device *, struct device *, void *));
+void	sccattach(struct device *, struct device *, void *);
 
 struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
@@ -209,20 +209,20 @@ struct cfdriver scc_cd = {
 
 cdev_decl(scc);
 
-int	cold_sccparam __P((struct tty *, struct termios *,
-		    struct scc_softc *sc));
-int	sccGetc __P((dev_t));
-void	sccPollc __P((dev_t, int));
-void	sccPutc __P((dev_t, int));
-int	sccintr __P((void *));
-int	sccmctl __P((dev_t, int, int));
-int	sccparam __P((struct tty *, struct termios *));
-void	sccreset __P((struct scc_softc *));
-void	sccstart __P((struct tty *));
-void	scc_alphaintr __P((int));
-void	scc_modem_intr __P((dev_t));
+int	cold_sccparam(struct tty *, struct termios *,
+		    struct scc_softc *sc);
+int	sccGetc(dev_t);
+void	sccPollc(dev_t, int);
+void	sccPutc(dev_t, int);
+int	sccintr(void *);
+int	sccmctl(dev_t, int, int);
+int	sccparam(struct tty *, struct termios *);
+void	sccreset(struct scc_softc *);
+void	sccstart(struct tty *);
+void	scc_alphaintr(int);
+void	scc_modem_intr(dev_t);
 #ifdef SCC_DEBUG
-void	scc_rr __P((char *, scc_regmap_t *));
+void	scc_rr(char *, scc_regmap_t *);
 #endif
 
 /*
@@ -234,8 +234,8 @@ static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
 };
-void	scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
-void	scc_oconsinit __P((struct scc_softc *, dev_t));
+void	scc_consinit(dev_t dev, scc_regmap_t *sccaddr);
+void	scc_oconsinit(struct scc_softc *, dev_t);
 
 
 /*
@@ -413,7 +413,7 @@ sccattach(parent, self, aux)
 		if (cntr == 0)
 			tty_attach(tp);
 		pdp->p_arg = (long)tp;
-		pdp->p_fcn = (void (*)__P((struct tty*)))0;
+		pdp->p_fcn = (void (*)(struct tty*))0;
 		tp->t_dev = (dev_t)((sc->sc_dv.dv_unit << 1) | cntr);
 		pdp++;
 	}

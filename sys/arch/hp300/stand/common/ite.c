@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.1 1997/07/14 08:14:17 downsj Exp $	*/
+/*	$OpenBSD: ite.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include "consdefs.h"
 #include "samachdep.h"
 
-void	ite_deinit_noop __P((struct ite_data *));
+void	ite_deinit_noop(struct ite_data *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,

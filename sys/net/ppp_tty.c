@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.13 2002/02/13 08:14:48 kjc Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.14 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -110,23 +110,23 @@
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
 
-int	pppopen __P((dev_t dev, struct tty *tp));
-int	pppclose __P((struct tty *tp, int flag));
-int	pppread __P((struct tty *tp, struct uio *uio, int flag));
-int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
-int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data, int flag,
-		       struct proc *));
-int	pppinput __P((int c, struct tty *tp));
-int	pppstart __P((struct tty *tp, int));
+int	pppopen(dev_t dev, struct tty *tp);
+int	pppclose(struct tty *tp, int flag);
+int	pppread(struct tty *tp, struct uio *uio, int flag);
+int	pppwrite(struct tty *tp, struct uio *uio, int flag);
+int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+		       struct proc *);
+int	pppinput(int c, struct tty *tp);
+int	pppstart(struct tty *tp, int);
 
-u_int16_t pppfcs __P((u_int16_t fcs, u_char *cp, int len));
-void	pppasyncstart __P((struct ppp_softc *));
-void	pppasyncctlp __P((struct ppp_softc *));
-void	pppasyncrelinq __P((struct ppp_softc *));
-void	ppp_timeout __P((void *));
-void	pppgetm __P((struct ppp_softc *sc));
-void	pppdumpb __P((u_char *b, int l));
-void	ppplogchar __P((struct ppp_softc *, int));
+u_int16_t pppfcs(u_int16_t fcs, u_char *cp, int len);
+void	pppasyncstart(struct ppp_softc *);
+void	pppasyncctlp(struct ppp_softc *);
+void	pppasyncrelinq(struct ppp_softc *);
+void	ppp_timeout(void *);
+void	pppgetm(struct ppp_softc *sc);
+void	pppdumpb(u_char *b, int l);
+void	ppplogchar(struct ppp_softc *, int);
 
 /*
  * Some useful mbuf macros not in mbuf.h.

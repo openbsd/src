@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2002/03/13 18:27:36 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -160,18 +160,18 @@ int allowaperture = 0;
 
 void ofw_dbg(char *str);
 
-caddr_t allocsys __P((caddr_t));
-void dumpsys __P((void));
-void systype __P((char *name));
-int lcsplx __P((int ipl));	/* called from LCore */
-int power4e_get_eth_addr __P((void));
-void nameinterrupt __P((int replace, char *newstr));
-void ppc_intr_setup __P((intr_establish_t *establish,
-    intr_disestablish_t *disestablish));
+caddr_t allocsys(caddr_t);
+void dumpsys(void);
+void systype(char *name);
+int lcsplx(int ipl);	/* called from LCore */
+int power4e_get_eth_addr(void);
+void nameinterrupt(int replace, char *newstr);
+void ppc_intr_setup(intr_establish_t *establish,
+    intr_disestablish_t *disestablish);
 void *ppc_intr_establish __P((void *lcv, pci_intr_handle_t ih, int type,
-    int level, int (*func) __P((void *)), void *arg, char *name));
-int bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int cacheable,
-    bus_space_handle_t *bshp));
+    int level, int (*func)(void *), void *arg, char *name));
+int bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp);
 
 /*
  * Extent maps to manage I/O. Allocate storage for 8 regions in each,
@@ -208,8 +208,8 @@ initppc(startkernel, endkernel, args)
 #if NIPKDB > 0
 	extern ipkdblow, ipkdbsize;
 #endif
-	extern void consinit __P((void));
-	extern void callback __P((void *));
+	extern void consinit(void);
+	extern void callback(void *);
 	extern void *msgbuf_addr;
 	int exc, scratch;
 
@@ -491,10 +491,10 @@ void ofw_dbg(char *str)
 
 void
 install_extint(handler)
-	void (*handler) __P((void));
+	void (*handler)(void);
 {
-	void extint __P((void));
-	void extsize __P((void));
+	void extint(void);
+	void extsize(void);
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
@@ -1038,7 +1038,7 @@ ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 	pci_intr_handle_t ih;
 	int type;
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	char *name;
 {
@@ -1132,10 +1132,10 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	}
 	return 0;
 }
-bus_addr_t bus_space_unmap_p __P((bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size));
-void bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size));
+bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
+			  bus_size_t size);
+void bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+			  bus_size_t size);
 bus_addr_t
 bus_space_unmap_p(t, bsh, size)
 	bus_space_tag_t t;

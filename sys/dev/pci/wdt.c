@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.3 2001/02/03 06:19:13 mickey Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.4 2002/03/14 01:27:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -67,32 +67,32 @@ struct wdt_softc {
 };
 
 /* externally visible functions */
-int wdtprobe __P((struct device *, void *, void *));
-void wdtattach __P((struct device *, struct device *, void *));
-int wdtopen __P((dev_t, int, int, struct proc *));
-int wdtclose __P((dev_t, int, int, struct proc *));
-int wdtioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int wdtprobe(struct device *, void *, void *);
+void wdtattach(struct device *, struct device *, void *);
+int wdtopen(dev_t, int, int, struct proc *);
+int wdtclose(dev_t, int, int, struct proc *);
+int wdtioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /* static functions */
-static int wdt_is501 __P((struct wdt_softc *wdt));
-static void wdt_8254_count __P((struct wdt_softc *wdt, int counter, u_int16_t v));
-static void wdt_8254_mode __P((struct wdt_softc *wdt, int counter, int mode));
-static void wdt_set_timeout __P((struct wdt_softc *wdt, unsigned seconds));
-static void wdt_timeout __P((void *arg));
-static void wdt_init_timer __P((struct wdt_softc *wdt));
-static void wdt_buzzer_off __P((struct wdt_softc *wdt));
-static int wdt_read_temperature __P((struct wdt_softc *wdt));
-static int wdt_read_status __P((struct wdt_softc *wdt));
-static void wdt_display_status __P((struct wdt_softc *wdt));
-static int wdt_get_state __P((struct wdt_softc *wdt, struct wdt_state *state));
-static void wdt_shutdown __P((void *arg));
-static int wdt_sched __P((struct wdt_softc *wdt, struct proc *p));
-static void wdt_timer_disable __P((struct wdt_softc *wdt));
-static void wdt_timer_enable __P((struct wdt_softc *wdt, unsigned seconds));
+static int wdt_is501(struct wdt_softc *wdt);
+static void wdt_8254_count(struct wdt_softc *wdt, int counter, u_int16_t v);
+static void wdt_8254_mode(struct wdt_softc *wdt, int counter, int mode);
+static void wdt_set_timeout(struct wdt_softc *wdt, unsigned seconds);
+static void wdt_timeout(void *arg);
+static void wdt_init_timer(struct wdt_softc *wdt);
+static void wdt_buzzer_off(struct wdt_softc *wdt);
+static int wdt_read_temperature(struct wdt_softc *wdt);
+static int wdt_read_status(struct wdt_softc *wdt);
+static void wdt_display_status(struct wdt_softc *wdt);
+static int wdt_get_state(struct wdt_softc *wdt, struct wdt_state *state);
+static void wdt_shutdown(void *arg);
+static int wdt_sched(struct wdt_softc *wdt, struct proc *p);
+static void wdt_timer_disable(struct wdt_softc *wdt);
+static void wdt_timer_enable(struct wdt_softc *wdt, unsigned seconds);
 #if WDT_DISABLE_BUZZER
-static void wdt_buzzer_disable __P((struct wdt_softc *wdt));
+static void wdt_buzzer_disable(struct wdt_softc *wdt);
 #else
-static void wdt_buzzer_enable __P((struct wdt_softc *wdt));
+static void wdt_buzzer_enable(struct wdt_softc *wdt);
 #endif
 
 struct cfattach wdt_ca = {

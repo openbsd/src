@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.16 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -121,16 +121,16 @@ extern struct idprom idprom;
 static int oldclk = 0;
 struct intersil7170 *i7;
 
-long	oclk_get_secs __P((void));
-void	oclk_get_dt __P((struct intersil_dt *));
-void	dt_to_gmt __P((struct intersil_dt *, long *));
-void	oclk_set_dt __P((struct intersil_dt *));
-void	oclk_set_secs __P((long));
-void	gmt_to_dt __P((long *, struct intersil_dt *));
+long	oclk_get_secs(void);
+void	oclk_get_dt(struct intersil_dt *);
+void	dt_to_gmt(struct intersil_dt *, long *);
+void	oclk_set_dt(struct intersil_dt *);
+void	oclk_set_secs(long);
+void	gmt_to_dt(long *, struct intersil_dt *);
 #endif
 
-int	oclockmatch __P((struct device *, void *, void *));
-void	oclockattach __P((struct device *, struct device *, void *));
+int	oclockmatch(struct device *, void *, void *);
+void	oclockattach(struct device *, struct device *, void *);
 
 struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
@@ -154,13 +154,13 @@ char		*eeprom_va = NULL;
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
-int	eeprom_take __P((void));
-void	eeprom_give __P((void));
-int	eeprom_update __P((char *, int, int));
+int	eeprom_take(void);
+void	eeprom_give(void);
+int	eeprom_update(char *, int, int);
 #endif
 
-int	eeprom_match __P((struct device *, void *, void *));
-void	eeprom_attach __P((struct device *, struct device *, void *));
+int	eeprom_match(struct device *, void *, void *);
+void	eeprom_attach(struct device *, struct device *, void *);
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -170,8 +170,8 @@ struct	cfdriver eeprom_cd = {
 	NULL, "eeprom", DV_DULL
 };
 
-int	clockmatch __P((struct device *, void *, void *));
-void	clockattach __P((struct device *, struct device *, void *));
+int	clockmatch(struct device *, void *, void *);
+void	clockattach(struct device *, struct device *, void *);
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
@@ -181,8 +181,8 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
-int	timermatch __P((struct device *, void *, void *));
-void	timerattach __P((struct device *, struct device *, void *));
+int	timermatch(struct device *, void *, void *);
+void	timerattach(struct device *, struct device *, void *);
 
 struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
 struct counter_4m	*counterreg_4m;
@@ -197,10 +197,10 @@ struct cfdriver timer_cd = {
 };
 
 struct chiptime;
-void clk_wenable __P((int));
-void myetheraddr __P((u_char *));
-int chiptotime __P((int, int, int, int, int, int));
-void timetochip __P((struct chiptime *));
+void clk_wenable(int);
+void myetheraddr(u_char *);
+int chiptotime(int, int, int, int, int, int);
+void timetochip(struct chiptime *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 

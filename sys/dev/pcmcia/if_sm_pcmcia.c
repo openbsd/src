@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.15 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.16 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -82,10 +82,10 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	sm_pcmcia_match __P((struct device *, void *, void *));
-void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
-int	sm_pcmcia_detach __P((struct device *, int));
-int	sm_pcmcia_activate __P((struct device *, enum devact));
+int	sm_pcmcia_match(struct device *, void *, void *);
+void	sm_pcmcia_attach(struct device *, struct device *, void *);
+int	sm_pcmcia_detach(struct device *, int);
+int	sm_pcmcia_activate(struct device *, enum devact);
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -102,13 +102,13 @@ struct cfattach sm_pcmcia_ca = {
 	sm_pcmcia_detach, sm_pcmcia_activate
 };
 
-int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
-void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
+int	sm_pcmcia_enable(struct smc91cxx_softc *);
+void	sm_pcmcia_disable(struct smc91cxx_softc *);
 
-int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
-int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
+int	sm_pcmcia_ascii_enaddr(const char *, u_int8_t *);
+int	sm_pcmcia_funce_enaddr(struct device *, u_int8_t *);
 
-int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
+int	sm_pcmcia_lannid_ciscallback(struct pcmcia_tuple *, void *);
 
 struct sm_pcmcia_product {
 	u_int16_t	spp_vendor;	/* vendor ID */

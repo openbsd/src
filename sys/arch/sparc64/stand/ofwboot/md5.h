@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.h,v 1.2 2001/08/20 19:55:33 jason Exp $	*/
+/*	$OpenBSD: md5.h,v 1.3 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: md5.h,v 1.1 2000/08/20 14:58:38 mrg Exp $	*/
 
 /*
@@ -43,13 +43,13 @@ typedef struct MD5Context {
 } MD5_CTX;
 
 __BEGIN_DECLS
-void	MD5Init __P((MD5_CTX *));
-void	MD5Update __P((MD5_CTX *, const unsigned char *, unsigned int));
-void	MD5Final __P((unsigned char[16], MD5_CTX *));
+void	MD5Init(MD5_CTX *);
+void	MD5Update(MD5_CTX *, const unsigned char *, unsigned int);
+void	MD5Final(unsigned char[16], MD5_CTX *);
 #ifndef _KERNEL
-char	*MD5End __P((MD5_CTX *, char *));
-char	*MD5File __P((const char *, char *));
-char	*MD5Data __P((const unsigned char *, unsigned int, char *));
+char	*MD5End(MD5_CTX *, char *);
+char	*MD5File(const char *, char *);
+char	*MD5Data(const unsigned char *, unsigned int, char *);
 #endif /* _KERNEL */
 __END_DECLS
 

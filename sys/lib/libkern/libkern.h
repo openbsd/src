@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.16 2000/12/18 18:40:44 provos Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.17 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -47,15 +47,15 @@
 #endif
 
 
-LIBKERN_INLINE int imax __P((int, int));
-LIBKERN_INLINE int imin __P((int, int));
-LIBKERN_INLINE u_int max __P((u_int, u_int));
-LIBKERN_INLINE u_int min __P((u_int, u_int));
-LIBKERN_INLINE long lmax __P((long, long));
-LIBKERN_INLINE long lmin __P((long, long));
-LIBKERN_INLINE u_long ulmax __P((u_long, u_long));
-LIBKERN_INLINE u_long ulmin __P((u_long, u_long));
-LIBKERN_INLINE int abs __P((int));
+LIBKERN_INLINE int imax(int, int);
+LIBKERN_INLINE int imin(int, int);
+LIBKERN_INLINE u_int max(u_int, u_int);
+LIBKERN_INLINE u_int min(u_int, u_int);
+LIBKERN_INLINE long lmax(long, long);
+LIBKERN_INLINE long lmin(long, long);
+LIBKERN_INLINE u_long ulmax(u_long, u_long);
+LIBKERN_INLINE u_long ulmin(u_long, u_long);
+LIBKERN_INLINE int abs(int);
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
@@ -152,27 +152,27 @@ abs(j)
 #endif
 
 /* Prototypes for non-quad routines. */
-void	 __assert __P((const char *, const char *, int, const char *))
+void	 __assert(const char *, const char *, int, const char *)
 	    __attribute__ ((__noreturn__));
-int	 bcmp __P((const void *, const void *, size_t));
-int	 ffs __P((int));
-int	 locc __P((int, char *, u_int));
-void	*memchr __P((const void *, int, size_t));
-int	 memcmp __P((const void *, const void *, size_t));
-u_long	 random __P((void));
-void	 srandom __P((u_long));
-int	 scanc __P((u_int, const u_char *, const u_char *, int));
-int	 skpc __P((int, size_t, u_char *));
-size_t	 strlen __P((const char *));
-char	*strcat __P((char *, const char *));
-char	*strcpy __P((char *, const char *));
-char	*strncpy __P((char *, const char *, size_t));
-size_t	 strlcpy __P((char *, const char *, size_t));
-size_t	 strlcat __P((char *, const char *, size_t));
-int	 strcmp __P((const char *, const char *));
-int	 strncmp __P((const char *, const char *, size_t));
-int	 strncasecmp __P((const char *, const char *, size_t));
-int	 getsn __P((char *, int));
+int	 bcmp(const void *, const void *, size_t);
+int	 ffs(int);
+int	 locc(int, char *, u_int);
+void	*memchr(const void *, int, size_t);
+int	 memcmp(const void *, const void *, size_t);
+u_long	 random(void);
+void	 srandom(u_long);
+int	 scanc(u_int, const u_char *, const u_char *, int);
+int	 skpc(int, size_t, u_char *);
+size_t	 strlen(const char *);
+char	*strcat(char *, const char *);
+char	*strcpy(char *, const char *);
+char	*strncpy(char *, const char *, size_t);
+size_t	 strlcpy(char *, const char *, size_t);
+size_t	 strlcat(char *, const char *, size_t);
+int	 strcmp(const char *, const char *);
+int	 strncmp(const char *, const char *, size_t);
+int	 strncasecmp(const char *, const char *, size_t);
+int	 getsn(char *, int);
 
 extern u_int8_t const __bcd2bin[], __bin2bcd[];
 #define	bcd2bin(b)	(__bcd2bin[(b)&0xff])

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.26 2002/01/28 19:31:56 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.27 2002/03/14 01:26:51 millert Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -302,7 +302,7 @@ db_malloc_print_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 #if defined(MALLOC_DEBUG)
-	extern void debug_malloc_printit __P((int (*) __P((const char *, ...)), vaddr_t));
+	extern void debug_malloc_printit __P((int (*)(const char *, ...), vaddr_t));
 
 	if (!have_addr)
 		addr = 0;
@@ -534,7 +534,7 @@ db_fncall(addr, have_addr, count, modif)
 	db_expr_t	args[MAXARGS];
 	int		nargs = 0;
 	db_expr_t	retval;
-	db_expr_t	(*func) __P((db_expr_t, ...));
+	db_expr_t	(*func)(db_expr_t, ...);
 	int		t;
 
 	if (!db_expression(&fn_addr)) {
@@ -542,7 +542,7 @@ db_fncall(addr, have_addr, count, modif)
 	    db_flush_lex();
 	    return;
 	}
-	func = (db_expr_t (*) __P((db_expr_t, ...))) fn_addr;
+	func = (db_expr_t (*)(db_expr_t, ...)) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.66 2002/03/09 23:37:09 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.67 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -74,8 +74,8 @@
 /*
  * Declarations
  */
-void scsi_probedev __P((struct scsibus_softc *, int, int));
-int scsi_probe_bus __P((int bus, int target, int lun));
+void scsi_probedev(struct scsibus_softc *, int, int);
+int scsi_probe_bus(int bus, int target, int lun);
 
 struct scsi_device probe_switch = {
 	NULL,
@@ -84,13 +84,13 @@ struct scsi_device probe_switch = {
 	NULL,
 };
 
-int scsibusmatch __P((struct device *, void *, void *));
-void scsibusattach __P((struct device *, struct device *, void *));
-int  scsibusactivate __P((struct device *, enum devact));
-int  scsibusdetach __P((struct device *, int));
-void scsibuszeroref __P((struct device *));
+int scsibusmatch(struct device *, void *, void *);
+void scsibusattach(struct device *, struct device *, void *);
+int  scsibusactivate(struct device *, enum devact);
+int  scsibusdetach(struct device *, int);
+void scsibuszeroref(struct device *);
 
-int scsibussubmatch __P((struct device *, void *, void *));
+int scsibussubmatch(struct device *, void *, void *);
 
 
 
@@ -109,7 +109,7 @@ int scsidebug_level = SCSIDEBUG_LEVEL;
 
 int scsi_autoconf = SCSI_AUTOCONF;
 
-int scsibusprint __P((void *, const char *));
+int scsibusprint(void *, const char *);
 
 int
 scsiprint(aux, pnp)

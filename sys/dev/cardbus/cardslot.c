@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.1 2000/04/08 05:50:52 aaron Exp $ */
+/*	$OpenBSD: cardslot.c,v 1.2 2002/03/14 01:26:53 millert Exp $ */
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -60,15 +60,15 @@
 
 
 
-STATIC void cardslotattach __P((struct device *, struct device *, void *));
+STATIC void cardslotattach(struct device *, struct device *, void *);
 
-STATIC int cardslotmatch __P((struct device *, void *, void *));
-static void create_slot_manager __P((void *));
-static void cardslot_event_thread __P((void *arg));
+STATIC int cardslotmatch(struct device *, void *, void *);
+static void create_slot_manager(void *);
+static void cardslot_event_thread(void *arg);
 
-STATIC int cardslot_cb_print __P((void *aux, const char *pcic));
-static int cardslot_16_print __P((void *, const char *));
-static int cardslot_16_submatch __P((struct device *, void *,void *));
+STATIC int cardslot_cb_print(void *aux, const char *pcic);
+static int cardslot_16_print(void *, const char *);
+static int cardslot_16_submatch(struct device *, void *,void *);
 
 struct cfattach cardslot_ca = {
 	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach

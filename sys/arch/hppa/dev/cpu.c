@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2002/03/06 20:24:03 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -49,8 +49,8 @@ struct cpu_softc {
 	void *sc_ih;
 };
 
-int	cpumatch __P((struct device *, void *, void *));
-void	cpuattach __P((struct device *, struct device *, void *));
+int	cpumatch(struct device *, void *, void *);
+void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpumatch, cpuattach

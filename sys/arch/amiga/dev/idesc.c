@@ -1,4 +1,4 @@
-/*	$OpenBSD: idesc.c,v 1.10 1999/07/27 08:49:46 niklas Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.11 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
@@ -235,22 +235,22 @@ struct idec_softc
 	struct ide_softc	sc_ide[2];
 };
 
-int ide_scsicmd __P((struct scsi_xfer *));
+int ide_scsicmd(struct scsi_xfer *);
 
-void idescattach __P((struct device *, struct device *, void *));
-int idescmatch __P((struct device *, void *, void *));
+void idescattach(struct device *, struct device *, void *);
+int idescmatch(struct device *, void *, void *);
 
-int  ideicmd __P((struct idec_softc *, int, void *, int, void *, int));
-int  idego __P((struct idec_softc *, struct scsi_xfer *));
-int  idegetsense __P((struct idec_softc *, struct scsi_xfer *));
-void ideabort __P((struct idec_softc *, ide_regmap_p, char *));
-void ideerror __P((struct idec_softc *, ide_regmap_p, u_char));
-int idestart __P((struct idec_softc *));
-int idereset __P((struct idec_softc *));
-void idesetdelay __P((int));
-void ide_scsidone __P((struct idec_softc *, int));
-void ide_donextcmd __P((struct idec_softc *));
-int  idesc_intr __P((void *));
+int  ideicmd(struct idec_softc *, int, void *, int, void *, int);
+int  idego(struct idec_softc *, struct scsi_xfer *);
+int  idegetsense(struct idec_softc *, struct scsi_xfer *);
+void ideabort(struct idec_softc *, ide_regmap_p, char *);
+void ideerror(struct idec_softc *, ide_regmap_p, u_char);
+int idestart(struct idec_softc *);
+int idereset(struct idec_softc *);
+void idesetdelay(int);
+void ide_scsidone(struct idec_softc *, int);
+void ide_donextcmd(struct idec_softc *);
+int  idesc_intr(void *);
 
 struct scsi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
@@ -292,11 +292,11 @@ struct {
  * protos.
  */
 
-int idecommand __P((struct ide_softc *, int, int, int, int, int));
-int idewait __P((struct idec_softc *, int));
-int idegetctlr __P((struct ide_softc *));
-int ideiread __P((struct ide_softc *, long, u_char *, int));
-int ideiwrite __P((struct ide_softc *, long, u_char *, int));
+int idecommand(struct ide_softc *, int, int, int, int, int);
+int idewait(struct idec_softc *, int);
+int idegetctlr(struct ide_softc *);
+int ideiread(struct ide_softc *, long, u_char *, int);
+int ideiwrite(struct ide_softc *, long, u_char *, int);
 
 #define wait_for_drq(ide) idewait(ide, IDES_DRQ)
 #define wait_for_ready(ide) idewait(ide, IDES_READY | IDES_SEEKCMPLT)
@@ -305,7 +305,7 @@ int ideiwrite __P((struct ide_softc *, long, u_char *, int));
 int ide_no_int = 0;
 
 #ifdef DEBUG 
-void ide_dump_regs __P((ide_regmap_p));
+void ide_dump_regs(ide_regmap_p);
 
 int ide_debug = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.6 2001/12/05 03:04:38 hugh Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.7 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -77,24 +77,24 @@ struct mt_softc {
 #define MT_OFFLINE	0
 #define MT_ONLINE	1
 
-int	mtmatch __P((struct device *, struct cfdata *, void *));
-void	mtattach __P((struct device *, struct device *, void *));
-void	mtdgram __P((struct device *, struct mscp *, struct mscp_softc *));
-void	mtiodone __P((struct device *, struct buf *));
-int	mtonline __P((struct device *, struct mscp *));
-int	mtgotstatus __P((struct device *, struct mscp *));
-int	mtioerror __P((struct device *, struct mscp *, struct buf *));
-void	mtfillin __P((struct buf *, struct mscp *));
-int	mtopen __P((dev_t, int, int, struct proc *));
-int	mtclose __P((dev_t, int, int, struct proc *));
-void	mtstrategy __P((struct buf *));
-int	mtread __P((dev_t, struct uio *));
-int	mtwrite __P((dev_t, struct uio *));
-int	mtioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	mtdump __P((dev_t, daddr_t, caddr_t, size_t));
-int	mtcmd __P((struct mt_softc *, int, int, int));
-void	mtcmddone __P((struct device *, struct mscp *));
-int	mt_putonline __P((struct mt_softc *));
+int	mtmatch(struct device *, struct cfdata *, void *);
+void	mtattach(struct device *, struct device *, void *);
+void	mtdgram(struct device *, struct mscp *, struct mscp_softc *);
+void	mtiodone(struct device *, struct buf *);
+int	mtonline(struct device *, struct mscp *);
+int	mtgotstatus(struct device *, struct mscp *);
+int	mtioerror(struct device *, struct mscp *, struct buf *);
+void	mtfillin(struct buf *, struct mscp *);
+int	mtopen(dev_t, int, int, struct proc *);
+int	mtclose(dev_t, int, int, struct proc *);
+void	mtstrategy(struct buf *);
+int	mtread(dev_t, struct uio *);
+int	mtwrite(dev_t, struct uio *);
+int	mtioctl(dev_t, int, caddr_t, int, struct proc *);
+int	mtdump(dev_t, daddr_t, caddr_t, size_t);
+int	mtcmd(struct mt_softc *, int, int, int);
+void	mtcmddone(struct device *, struct mscp *);
+int	mt_putonline(struct mt_softc *);
 
 struct	mscp_device mt_device = {
 	mtdgram,

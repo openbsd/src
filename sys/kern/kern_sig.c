@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.55 2002/02/22 19:19:28 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.56 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -82,9 +82,9 @@ int	filt_signal(struct knote *kn, long hint);
 struct filterops sig_filtops =
 	{ 0, filt_sigattach, filt_sigdetach, filt_signal };
 
-void proc_stop __P((struct proc *p));
-void killproc __P((struct proc *, char *));
-int cansignal __P((struct proc *, struct pcred *, struct proc *, int));
+void proc_stop(struct proc *p);
+void killproc(struct proc *, char *);
+int cansignal(struct proc *, struct pcred *, struct proc *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
 

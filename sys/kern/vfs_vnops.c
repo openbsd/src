@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.39 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.40 2002/03/14 01:27:06 millert Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -57,15 +57,15 @@
 
 #include <uvm/uvm_extern.h>
 
-int	vn_read __P((struct file *fp, off_t *off, struct uio *uio, 
-	    struct ucred *cred));
-int	vn_write __P((struct file *fp, off_t *off, struct uio *uio, 
-	    struct ucred *cred));
-int	vn_select __P((struct file *fp, int which, struct proc *p));
-int	vn_kqfilter __P((struct file *fp, struct knote *kn));
-int 	vn_closefile __P((struct file *fp, struct proc *p));
-int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
-	    struct proc *p));
+int	vn_read(struct file *fp, off_t *off, struct uio *uio, 
+	    struct ucred *cred);
+int	vn_write(struct file *fp, off_t *off, struct uio *uio, 
+	    struct ucred *cred);
+int	vn_select(struct file *fp, int which, struct proc *p);
+int	vn_kqfilter(struct file *fp, struct knote *kn);
+int 	vn_closefile(struct file *fp, struct proc *p);
+int	vn_ioctl(struct file *fp, u_long com, caddr_t data,
+	    struct proc *p);
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_select, vn_kqfilter, vn_statfile,

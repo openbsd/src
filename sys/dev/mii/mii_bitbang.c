@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_bitbang.c,v 1.1 2001/03/11 02:48:19 aaron Exp $	*/
+/*	$OpenBSD: mii_bitbang.c,v 1.2 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -48,9 +48,9 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/mii_bitbang.h>
 
-void	mii_bitbang_sync __P((struct device *, mii_bitbang_ops_t));
-void	mii_bitbang_sendbits __P((struct device *, mii_bitbang_ops_t,
-	    u_int32_t, int));
+void	mii_bitbang_sync(struct device *, mii_bitbang_ops_t);
+void	mii_bitbang_sendbits(struct device *, mii_bitbang_ops_t,
+	    u_int32_t, int);
 
 #define	WRITE(x)							\
 do {									\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_es.c,v 1.12 2001/02/20 19:39:29 mickey Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.13 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: if_es.c,v 1.16 1996/12/23 09:10:17 veego Exp $	*/
 
 /*
@@ -110,21 +110,21 @@ int	estxint2 = 0;	/* IST_TX active after IST_TX_EMPTY */
 int	estxint3 = 0;	/* IST_TX interrupt processed */
 int	estxint4 = 0;	/* ~TEMPTY counts */
 int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
-void	es_dump_smcregs __P((char *, union smcregs *));
+void	es_dump_smcregs(char *, union smcregs *);
 #endif
 
-int esintr __P((void *));
-void esstart __P((struct ifnet *));
-void eswatchdog __P((struct ifnet *));
-int esioctl __P((struct ifnet *, u_long, caddr_t));
-void esrint __P((struct es_softc *));
-void estint __P((struct es_softc *));
-void esinit __P((struct es_softc *));
-void esreset __P((struct es_softc *));
-void esstop __P((struct es_softc *));
+int esintr(void *);
+void esstart(struct ifnet *);
+void eswatchdog(struct ifnet *);
+int esioctl(struct ifnet *, u_long, caddr_t);
+void esrint(struct es_softc *);
+void estint(struct es_softc *);
+void esinit(struct es_softc *);
+void esreset(struct es_softc *);
+void esstop(struct es_softc *);
 
-int esmatch __P((struct device *, void *, void *));
-void esattach __P((struct device *, struct device *, void *));
+int esmatch(struct device *, void *, void *);
+void esattach(struct device *, struct device *, void *);
 
 struct cfattach es_ca = {
 	sizeof(struct es_softc), esmatch, esattach

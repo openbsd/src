@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.3 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.4 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -206,24 +206,24 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
-static void zs_shutdown __P((struct zstty_softc *));
-static void	zsstart __P((struct tty *));
-static int	zsparam __P((struct tty *, struct termios *));
-static void zs_modem __P((struct zstty_softc *, int));
-static void tiocm_to_zs __P((struct zstty_softc *, u_long, int));
-static int  zs_to_tiocm __P((struct zstty_softc *));
-static int    zshwiflow __P((struct tty *, int));
-static void  zs_hwiflow __P((struct zstty_softc *));
-static void zs_maskintr __P((struct zstty_softc *));
+static void zs_shutdown(struct zstty_softc *);
+static void	zsstart(struct tty *);
+static int	zsparam(struct tty *, struct termios *);
+static void zs_modem(struct zstty_softc *, int);
+static void tiocm_to_zs(struct zstty_softc *, u_long, int);
+static int  zs_to_tiocm(struct zstty_softc *);
+static int    zshwiflow(struct tty *, int);
+static void  zs_hwiflow(struct zstty_softc *);
+static void zs_maskintr(struct zstty_softc *);
 
-struct zstty_softc *zs_device_lookup __P((struct cfdriver *, int));
+struct zstty_softc *zs_device_lookup(struct cfdriver *, int);
 
 /* Low-level routines. */
-static void zstty_rxint   __P((struct zs_chanstate *));
-static void zstty_stint   __P((struct zs_chanstate *, int));
-static void zstty_txint   __P((struct zs_chanstate *));
-static void zstty_softint __P((struct zs_chanstate *));
-static void zstty_diag __P((void *));
+static void zstty_rxint(struct zs_chanstate *);
+static void zstty_stint(struct zs_chanstate *, int);
+static void zstty_txint(struct zs_chanstate *);
+static void zstty_softint(struct zs_chanstate *);
+static void zstty_diag(void *);
 
 
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
@@ -1205,9 +1205,9 @@ zs_hwiflow(zst)
  ****************************************************************/
 
 #define	integrate	static inline
-integrate void zstty_rxsoft __P((struct zstty_softc *, struct tty *));
-integrate void zstty_txsoft __P((struct zstty_softc *, struct tty *));
-integrate void zstty_stsoft __P((struct zstty_softc *, struct tty *));
+integrate void zstty_rxsoft(struct zstty_softc *, struct tty *);
+integrate void zstty_txsoft(struct zstty_softc *, struct tty *);
+integrate void zstty_stsoft(struct zstty_softc *, struct tty *);
 /*
  * receiver ready interrupt.
  * called at splzs
@@ -1394,7 +1394,7 @@ zstty_rxsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	int (*rint)(int c, struct tty *tp) = linesw[tp->t_line].l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char rr1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink.h,v 1.5 1999/12/27 21:34:40 fgsch Exp $	*/
+/*	$OpenBSD: elink.h,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: elink.h,v 1.4 1996/04/30 22:16:31 thorpej Exp $	*/
 
 /*
@@ -37,5 +37,5 @@
 #define	ELINK_509_POLY	0xcf
 #define	TLINK_619_POLY	0x63
 
-void elink_reset __P((bus_space_tag_t, bus_space_handle_t, int));
-void elink_idseq __P((bus_space_tag_t, bus_space_handle_t, u_char p));
+void elink_reset(bus_space_tag_t, bus_space_handle_t, int);
+void elink_idseq(bus_space_tag_t, bus_space_handle_t, u_char p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_ibus.c,v 1.1 2000/04/27 03:14:51 bjc Exp $	*/
+/*	$OpenBSD: uba_ibus.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uba_ibus.c,v 1.1 1999/08/07 10:36:47 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -63,10 +63,10 @@
  * It has an address space of 4MB (22 address bits), therefore the name,
  * and is hardware compatible with all 16 and 18 bits Q-bus devices.
  */
-static	int	qba_match __P((struct device *, struct cfdata *, void *));
-static	void	qba_attach __P((struct device *, struct device *, void *));
-static	void	qba_beforescan __P((struct uba_softc*));
-static	void	qba_init __P((struct uba_softc*));
+static	int	qba_match(struct device *, struct cfdata *, void *);
+static	void	qba_attach(struct device *, struct device *, void *);
+static	void	qba_beforescan(struct uba_softc*);
+static	void	qba_init(struct uba_softc*);
 
 struct	cfattach uba_ibus_ca = {
 	sizeof(struct uba_vsoftc), (cfmatch_t)qba_match, qba_attach

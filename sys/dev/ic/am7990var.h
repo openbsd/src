@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990var.h,v 1.8 1998/09/16 22:41:20 jason Exp $	*/
+/*	$OpenBSD: am7990var.h,v 1.9 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
 
 /*
@@ -62,16 +62,11 @@ struct am7990_softc {
 	 *	copy to/from buffer
 	 *	zero bytes in buffer
 	 */
-	void	(*sc_copytodesc)
-		    __P((struct am7990_softc *, void *, int, int));
-	void	(*sc_copyfromdesc)
-		    __P((struct am7990_softc *, void *, int, int));
-	void	(*sc_copytobuf)
-		    __P((struct am7990_softc *, void *, int, int));
-	void	(*sc_copyfrombuf)
-		    __P((struct am7990_softc *, void *, int, int));
-	void	(*sc_zerobuf)
-		    __P((struct am7990_softc *, int, int));
+	void	(*sc_copytodesc)(struct am7990_softc *, void *, int, int);
+	void	(*sc_copyfromdesc)(struct am7990_softc *, void *, int, int);
+	void	(*sc_copytobuf)(struct am7990_softc *, void *, int, int);
+	void	(*sc_copyfrombuf)(struct am7990_softc *, void *, int, int);
+	void	(*sc_zerobuf)(struct am7990_softc *, int, int);
 
 	/*
 	 * Machine-dependent functions:
@@ -81,13 +76,11 @@ struct am7990_softc {
 	 *	hardware init hook - may be NULL
 	 *	no carrier hook - may be NULL
 	 */
-	u_int16_t (*sc_rdcsr)
-		    __P((struct am7990_softc *, u_int16_t));
-	void	(*sc_wrcsr)
-		    __P((struct am7990_softc *, u_int16_t, u_int16_t));
-	void	(*sc_hwreset) __P((struct am7990_softc *));
-	void	(*sc_hwinit) __P((struct am7990_softc *));
-	void	(*sc_nocarrier) __P((struct am7990_softc *));
+	u_int16_t (*sc_rdcsr)(struct am7990_softc *, u_int16_t);
+	void	(*sc_wrcsr)(struct am7990_softc *, u_int16_t, u_int16_t);
+	void	(*sc_hwreset)(struct am7990_softc *);
+	void	(*sc_hwinit)(struct am7990_softc *);
+	void	(*sc_nocarrier)(struct am7990_softc *);
 
 	int	sc_hasifmedia;
 	struct	ifmedia sc_ifmedia;
@@ -120,16 +113,16 @@ struct am7990_softc {
 /* Export this to machine-dependent drivers. */
 extern struct cfdriver le_cd;
 
-void am7990_config __P((struct am7990_softc *));
-void am7990_init __P((struct am7990_softc *));
-int am7990_ioctl __P((struct ifnet *, u_long, caddr_t));
-void am7990_meminit __P((struct am7990_softc *));
-void am7990_reset __P((struct am7990_softc *));
-void am7990_setladrf __P((struct arpcom *, u_int16_t *));
-void am7990_start __P((struct ifnet *));
-void am7990_stop __P((struct am7990_softc *));
-void am7990_watchdog __P((struct ifnet *));
-int am7990_intr __P((void *));
+void am7990_config(struct am7990_softc *);
+void am7990_init(struct am7990_softc *);
+int am7990_ioctl(struct ifnet *, u_long, caddr_t);
+void am7990_meminit(struct am7990_softc *);
+void am7990_reset(struct am7990_softc *);
+void am7990_setladrf(struct arpcom *, u_int16_t *);
+void am7990_start(struct ifnet *);
+void am7990_stop(struct am7990_softc *);
+void am7990_watchdog(struct ifnet *);
+int am7990_intr(void *);
 
 /*
  * The following functions are only useful on certain cpu/bus
@@ -137,16 +130,16 @@ int am7990_intr __P((void *));
  * maximum efficiency, but machine-independent versions are provided
  * for drivers that have not yet been optimized.
  */
-void am7990_copytobuf_contig __P((struct am7990_softc *, void *, int, int));
-void am7990_copyfrombuf_contig __P((struct am7990_softc *, void *, int, int));
-void am7990_zerobuf_contig __P((struct am7990_softc *, int, int));
+void am7990_copytobuf_contig(struct am7990_softc *, void *, int, int);
+void am7990_copyfrombuf_contig(struct am7990_softc *, void *, int, int);
+void am7990_zerobuf_contig(struct am7990_softc *, int, int);
 
 #if 0	/* Example only - see am7990.c */
-void am7990_copytobuf_gap2 __P((struct am7990_softc *, void *, int, int));
-void am7990_copyfrombuf_gap2 __P((struct am7990_softc *, void *, int, int));
-void am7990_zerobuf_gap2 __P((struct am7990_softc *, int, int));
+void am7990_copytobuf_gap2(struct am7990_softc *, void *, int, int);
+void am7990_copyfrombuf_gap2(struct am7990_softc *, void *, int, int);
+void am7990_zerobuf_gap2(struct am7990_softc *, int, int);
 
-void am7990_copytobuf_gap16 __P((struct am7990_softc *, void *, int, int));
-void am7990_copyfrombuf_gap16 __P((struct am7990_softc *, void *, int, int));
-void am7990_zerobuf_gap16 __P((struct am7990_softc *, int, int));
+void am7990_copytobuf_gap16(struct am7990_softc *, void *, int, int);
+void am7990_copyfrombuf_gap16(struct am7990_softc *, void *, int, int);
+void am7990_zerobuf_gap16(struct am7990_softc *, int, int);
 #endif /* Example only */

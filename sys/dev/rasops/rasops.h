@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.1 2001/03/18 04:32:44 nate Exp $ */
+/*	$OpenBSD: rasops.h,v 1.2 2002/03/14 01:27:02 millert Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -104,7 +104,7 @@ struct rasops_info {
 	int	ri_caps;
 
 	/* Callbacks so we can share some code */
-	void	(*ri_do_cursor) __P((struct rasops_info *));
+	void	(*ri_do_cursor)(struct rasops_info *);
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
@@ -127,21 +127,21 @@ struct rasops_info {
  * Per-depth initalization functions. These should not be called outside
  * the rasops code.
  */
-void	rasops1_init __P((struct rasops_info *));
-void	rasops2_init __P((struct rasops_info *));
-void	rasops4_init __P((struct rasops_info *));
-void	rasops8_init __P((struct rasops_info *));
-void	rasops15_init __P((struct rasops_info *));
-void	rasops24_init __P((struct rasops_info *));
-void	rasops32_init __P((struct rasops_info *));
+void	rasops1_init(struct rasops_info *);
+void	rasops2_init(struct rasops_info *);
+void	rasops4_init(struct rasops_info *);
+void	rasops8_init(struct rasops_info *);
+void	rasops15_init(struct rasops_info *);
+void	rasops24_init(struct rasops_info *);
+void	rasops32_init(struct rasops_info *);
 
 /* rasops.c */
-int	rasops_init __P((struct rasops_info *, int, int));
-int	rasops_reconfig __P((struct rasops_info *, int, int));
-void	rasops_unpack_attr __P((long, int *, int *, int *));
-void	rasops_eraserows __P((void *, int, int, long));
-void	rasops_erasecols __P((void *, int, int, int, long));
-void	rasops_copycols __P((void *, int, int, int, int));
+int	rasops_init(struct rasops_info *, int, int);
+int	rasops_reconfig(struct rasops_info *, int, int);
+void	rasops_unpack_attr(long, int *, int *, int *);
+void	rasops_eraserows(void *, int, int, long);
+void	rasops_erasecols(void *, int, int, int, long);
+void	rasops_copycols(void *, int, int, int, int);
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];

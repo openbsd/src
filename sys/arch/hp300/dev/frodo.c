@@ -1,4 +1,4 @@
-/*	$OpenBSD: frodo.c,v 1.2 2001/05/10 20:17:54 millert Exp $	*/
+/*	$OpenBSD: frodo.c,v 1.3 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@
  * Description of a Frodo interrupt handler.
  */
 struct frodo_isr {
-	int	(*isr_func) __P((void *));
+	int	(*isr_func)(void *);
 	void	*isr_arg;
 	int	isr_priority;
 };
@@ -101,15 +101,15 @@ struct frodo_softc {
 	int		sc_refcnt;	/* number of interrupt refs */
 };
 
-int	frodomatch __P((struct device *, void *, void *));
-void	frodoattach __P((struct device *, struct device *, void *));
+int	frodomatch(struct device *, void *, void *);
+void	frodoattach(struct device *, struct device *, void *);
 
-int	frodoprint __P((void *, const char *));
-int	frodosubmatch __P((struct device *, void *, void *));
+int	frodoprint(void *, const char *);
+int	frodosubmatch(struct device *, void *, void *);
 
-int	frodointr __P((void *));
+int	frodointr(void *);
 
-void	frodo_imask __P((struct frodo_softc *, u_int16_t, u_int16_t));
+void	frodo_imask(struct frodo_softc *, u_int16_t, u_int16_t);
 
 struct cfattach frodo_ca = {
 	sizeof(struct frodo_softc), frodomatch, frodoattach
@@ -248,7 +248,7 @@ frodoprint(aux, pnp)
 void
 frodo_intr_establish(frdev, func, arg, line, priority)
 	struct device *frdev;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	int line;
 	int priority;

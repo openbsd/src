@@ -1,4 +1,4 @@
-/*	$OpenBSD: midisynvar.h,v 1.1 1999/01/02 00:02:37 niklas Exp $	*/
+/*	$OpenBSD: midisynvar.h,v 1.2 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: midisynvar.h,v 1.3 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -43,18 +43,18 @@
 typedef struct midisyn midisyn;
 
 struct midisyn_methods {
-	int  (*open)	__P((midisyn *, int));
-	void (*close)   __P((midisyn *));
-	int  (*ioctl)   __P((midisyn *, u_long, caddr_t, int, struct proc *));
-	int  (*allocv)  __P((midisyn *, u_int32_t, u_int32_t));
-	void (*noteon)  __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-	void (*noteoff) __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-	void (*keypres) __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-	void (*ctlchg)  __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-	void (*pgmchg)  __P((midisyn *, u_int32_t, u_int32_t));
-	void (*chnpres) __P((midisyn *, u_int32_t, u_int32_t));
-	void (*pitchb)  __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-	void (*sysex)   __P((midisyn *, u_int32_t));
+	int  (*open)(midisyn *, int);
+	void (*close)(midisyn *);
+	int  (*ioctl)(midisyn *, u_long, caddr_t, int, struct proc *);
+	int  (*allocv)(midisyn *, u_int32_t, u_int32_t);
+	void (*noteon)(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+	void (*noteoff)(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+	void (*keypres)(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+	void (*ctlchg)(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+	void (*pgmchg)(midisyn *, u_int32_t, u_int32_t);
+	void (*chnpres)(midisyn *, u_int32_t, u_int32_t);
+	void (*pitchb)(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+	void (*sysex)(midisyn *, u_int32_t);
 };
 
 struct voice {
@@ -91,7 +91,7 @@ struct midi_softc;
 
 extern struct midi_hw_if midisyn_hw_if;
 
-void	midisyn_attach __P((struct midi_softc *, midisyn *));
+void	midisyn_attach(struct midi_softc *, midisyn *);
 
 #define MIDISYN_FREQ_TO_HZ(f) ((f) >> 16)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stvar.h,v 1.3 1997/04/16 11:56:17 downsj Exp $	*/
+/*	$OpenBSD: stvar.h,v 1.4 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: stvar.h,v 1.6 1997/04/02 22:37:40 scottr Exp $	*/
 
 /*
@@ -212,13 +212,13 @@ struct st_softc {
 #define STF_MOVED	0x0040
 
 #ifdef _KERNEL
-void	stcommand __P((dev_t, u_int, int));
-void	stustart __P((int));
+void	stcommand(dev_t, u_int, int);
+void	stustart(int);
 
-void	ststart __P((void *));
-void	stgo __P((void *));
-void	stintr __P((void *, int));
+void	ststart(void *);
+void	stgo(void *);
+void	stintr(void *, int);
 
-void	stxsense __P((int, int, int, struct st_softc *));
-void	prtkey __P((struct st_softc *));
+void	stxsense(int, int, int, struct st_softc *);
+void	prtkey(struct st_softc *);
 #endif /* _KERNEL */

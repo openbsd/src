@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.51 2002/01/16 20:50:16 miod Exp $	*/
+/*	$OpenBSD: apm.c,v 1.52 2002/03/14 01:26:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -94,15 +94,15 @@ struct apm_softc {
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
-int apmprobe __P((struct device *, void *, void *));
-void apmattach __P((struct device *, struct device *, void *));
+int apmprobe(struct device *, void *, void *);
+void apmattach(struct device *, struct device *, void *);
 
 struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmprobe, apmattach
 };
 
-void filt_apmrdetach __P((struct knote *kn));
-int filt_apmread __P((struct knote *kn, long hint));
+void filt_apmrdetach(struct knote *kn);
+int filt_apmread(struct knote *kn, long hint);
 
 struct filterops apmread_filtops =
 	{ 1, NULL, filt_apmrdetach, filt_apmread};
@@ -160,25 +160,25 @@ struct apmregs {
 	u_int32_t	dx;
 };
 
-int  apmcall __P((u_int, u_int, struct apmregs *));
-void apm_power_print __P((struct apm_softc *, struct apmregs *));
-int  apm_handle_event __P((struct apm_softc *, struct apmregs *));
-void apm_set_ver __P((struct apm_softc *));
-int  apm_periodic_check __P((struct apm_softc *));
-void apm_thread_create __P((void *v));
-void apm_thread __P((void *));
-void apm_disconnect __P((struct apm_softc *));
-void apm_perror __P((const char *, struct apmregs *));
-void apm_powmgt_enable __P((int onoff));
-void apm_powmgt_engage __P((int onoff, u_int devid));
-/* void apm_devpowmgt_enable __P((int onoff, u_int devid)); */
-int  apm_record_event __P((struct apm_softc *sc, u_int type));
-const char *apm_err_translate __P((int code));
+int  apmcall(u_int, u_int, struct apmregs *);
+void apm_power_print(struct apm_softc *, struct apmregs *);
+int  apm_handle_event(struct apm_softc *, struct apmregs *);
+void apm_set_ver(struct apm_softc *);
+int  apm_periodic_check(struct apm_softc *);
+void apm_thread_create(void *v);
+void apm_thread(void *);
+void apm_disconnect(struct apm_softc *);
+void apm_perror(const char *, struct apmregs *);
+void apm_powmgt_enable(int onoff);
+void apm_powmgt_engage(int onoff, u_int devid);
+/* void apm_devpowmgt_enable(int onoff, u_int devid); */
+int  apm_record_event(struct apm_softc *sc, u_int type);
+const char *apm_err_translate(int code);
 
 #define	apm_get_powstat(r) apmcall(APM_POWER_STATUS, APM_DEV_ALLDEVS, r)
-void	apm_standby __P((void));
-void	apm_suspend __P((void));
-void	apm_resume __P((struct apm_softc *, struct apmregs *));
+void	apm_standby(void);
+void	apm_suspend(void);
+void	apm_resume(struct apm_softc *, struct apmregs *);
 
 static int __inline
 apm_get_event(struct apmregs *r)

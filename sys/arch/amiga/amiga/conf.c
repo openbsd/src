@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2001/12/11 23:19:02 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -182,9 +182,9 @@ struct cdevsw	cdevsw[] =
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
 #ifdef BANKEDDEVPAGER
-extern int grfbanked_get __P((int, int, int));
-extern int grfbanked_set __P((int, int));
-extern int grfbanked_cur __P((int));
+extern int grfbanked_get(int, int, int);
+extern int grfbanked_set(int, int);
+extern int grfbanked_cur(int);
 
 struct bankeddevsw bankeddevsw[sizeof (cdevsw) / sizeof (cdevsw[0])] = {
   { 0, 0, 0 },						/* 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.37 2002/02/26 20:24:58 jason Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.38 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -78,10 +78,10 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-void arptfree __P((struct llinfo_arp *));
-void arptimer __P((void *));
-struct llinfo_arp *arplookup __P((u_int32_t, int, int));
-void in_arpinput __P((struct mbuf *));
+void arptfree(struct llinfo_arp *);
+void arptimer(void *);
+struct llinfo_arp *arplookup(u_int32_t, int, int);
+void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
@@ -99,10 +99,10 @@ struct ifnet *myip_ifp = NULL;
 #ifdef DDB
 #include <uvm/uvm_extern.h>
 
-void	db_print_sa __P((struct sockaddr *));
-void	db_print_ifa __P((struct ifaddr *));
-void	db_print_llinfo __P((caddr_t));
-int	db_show_radix_node __P((struct radix_node *, void *));
+void	db_print_sa(struct sockaddr *);
+void	db_print_ifa(struct ifaddr *);
+void	db_print_llinfo(caddr_t);
+int	db_show_radix_node(struct radix_node *, void *);
 #endif
 
 /*

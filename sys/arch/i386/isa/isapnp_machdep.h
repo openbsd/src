@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp_machdep.h,v 1.1 1997/12/21 14:44:34 downsj Exp $	*/
+/*	$OpenBSD: isapnp_machdep.h,v 1.2 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: isapnp_machdep.h,v 1.2 1997/10/04 17:32:32 thorpej Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 /*
  * Functions provided to machine-independent ISA PnP code.
  */
-int	isapnp_map __P((struct isapnp_softc *));
-void	isapnp_unmap __P((struct isapnp_softc *));
-int	isapnp_map_readport __P((struct isapnp_softc *));
-void	isapnp_unmap_readport __P((struct isapnp_softc *));
+int	isapnp_map(struct isapnp_softc *);
+void	isapnp_unmap(struct isapnp_softc *);
+int	isapnp_map_readport(struct isapnp_softc *);
+void	isapnp_unmap_readport(struct isapnp_softc *);

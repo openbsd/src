@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.16 2001/08/26 00:45:08 fgsch Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.17 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -279,22 +279,22 @@ struct ahb_softc {
 	struct scsi_link sc_link;
 };
 
-void ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
-int ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
-void ahb_send_immed __P((struct ahb_softc *, int, u_long));
-int ahbintr __P((void *));
-void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
-void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *, int));
-struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
-struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
-int ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_softc *));
-void ahb_init __P((struct ahb_softc *));
-void ahbminphys __P((struct buf *));
-int ahb_scsi_cmd __P((struct scsi_xfer *));
-void ahb_timeout __P((void *));
-void ahb_print_ecb __P((struct ahb_ecb *));
-void ahb_print_active_ecb __P((struct ahb_softc *));
-int ahbprint __P((void *, const char *));
+void ahb_send_mbox(struct ahb_softc *, int, struct ahb_ecb *);
+int ahb_poll(struct ahb_softc *, struct scsi_xfer *, int);
+void ahb_send_immed(struct ahb_softc *, int, u_long);
+int ahbintr(void *);
+void ahb_done(struct ahb_softc *, struct ahb_ecb *);
+void ahb_free_ecb(struct ahb_softc *, struct ahb_ecb *, int);
+struct ahb_ecb *ahb_get_ecb(struct ahb_softc *, int);
+struct ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, physaddr);
+int ahb_find(bus_space_tag_t, bus_space_handle_t, struct ahb_softc *);
+void ahb_init(struct ahb_softc *);
+void ahbminphys(struct buf *);
+int ahb_scsi_cmd(struct scsi_xfer *);
+void ahb_timeout(void *);
+void ahb_print_ecb(struct ahb_ecb *);
+void ahb_print_active_ecb(struct ahb_softc *);
+int ahbprint(void *, const char *);
 
 #define	MAX_SLOTS	15
 int     ahb_debug = 0;
@@ -318,8 +318,8 @@ struct scsi_device ahb_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	ahbmatch __P((struct device *, void *, void *));
-void	ahbattach __P((struct device *, struct device *, void *));
+int	ahbmatch(struct device *, void *, void *);
+void	ahbattach(struct device *, struct device *, void *);
 
 struct cfattach ahb_ca = {
 	sizeof(struct ahb_softc), ahbmatch, ahbattach
@@ -713,7 +713,7 @@ ahb_free_ecb(sc, ecb, flags)
 	splx(s);
 }
 
-static inline void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+static inline void ahb_init_ecb(struct ahb_softc *, struct ahb_ecb *);
 
 static inline void
 ahb_init_ecb(sc, ecb)
@@ -733,7 +733,7 @@ ahb_init_ecb(sc, ecb)
 	sc->ecbhash[hashnum] = ecb;
 }
 
-static inline void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+static inline void ahb_reset_ecb(struct ahb_softc *, struct ahb_ecb *);
 
 static inline void
 ahb_reset_ecb(sc, ecb)

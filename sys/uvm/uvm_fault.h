@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.h,v 1.11 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_fault.h,v 1.12 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_fault.h,v 1.14 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
@@ -73,12 +73,12 @@ struct uvm_faultinfo {
  */
 
 
-int uvmfault_anonget __P((struct uvm_faultinfo *, struct vm_amap *,
-			  struct vm_anon *));
+int uvmfault_anonget(struct uvm_faultinfo *, struct vm_amap *,
+			  struct vm_anon *);
 
-int uvm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t, vm_prot_t));
-void uvm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
-void uvm_fault_unwire_locked __P((vm_map_t, vaddr_t, vaddr_t));
+int uvm_fault_wire(vm_map_t, vaddr_t, vaddr_t, vm_prot_t);
+void uvm_fault_unwire(vm_map_t, vaddr_t, vaddr_t);
+void uvm_fault_unwire_locked(vm_map_t, vaddr_t, vaddr_t);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.2 1996/05/09 22:20:47 niklas Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.3 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.2 1996/04/30 11:52:30 briggs Exp $ */
 
 /*
@@ -60,10 +60,10 @@
 #include "fpu_arith.h"
 
 /* Conversion from internal format -- note asymmetry. */
-static u_int	fpu_ftoi __P((struct fpemu *fe, struct fpn *fp));
-static u_int	fpu_ftos __P((struct fpemu *fe, struct fpn *fp));
-static u_int	fpu_ftod __P((struct fpemu *fe, struct fpn *fp, u_int *));
-static u_int	fpu_ftox __P((struct fpemu *fe, struct fpn *fp, u_int *));
+static u_int	fpu_ftoi(struct fpemu *fe, struct fpn *fp);
+static u_int	fpu_ftos(struct fpemu *fe, struct fpn *fp);
+static u_int	fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *);
+static u_int	fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *);
 
 /*
  * Round a number (algorithm from Motorola MC68882 manual, modified for

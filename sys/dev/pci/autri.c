@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.5 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: autri.c,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -71,16 +71,15 @@ int autridebug = 0;
 # define DPRINTFN(n,x)
 #endif
 
-int	autri_match __P((struct device *, void *, void *));
-void	autri_attach __P((struct device *, struct device *, void *));
-int	autri_intr __P((void *));
+int	autri_match(struct device *, void *, void *);
+void	autri_attach(struct device *, struct device *, void *);
+int	autri_intr(void *);
 
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
 
-int autri_allocmem
-    __P((struct autri_softc *, size_t, size_t, struct autri_dma *));
-int autri_freemem __P((struct autri_softc *, struct autri_dma *));
+int autri_allocmem(struct autri_softc *, size_t, size_t, struct autri_dma *);
+int autri_freemem(struct autri_softc *, struct autri_dma *);
 
 #define TWRITE1(sc, r, x) bus_space_write_1((sc)->memt, (sc)->memh, (r), (x))
 #define TWRITE2(sc, r, x) bus_space_write_2((sc)->memt, (sc)->memh, (r), (x))
@@ -89,31 +88,28 @@ int autri_freemem __P((struct autri_softc *, struct autri_dma *));
 #define TREAD2(sc, r) bus_space_read_2((sc)->memt, (sc)->memh, (r))
 #define TREAD4(sc, r) bus_space_read_4((sc)->memt, (sc)->memh, (r))
 
-static __inline void autri_reg_set_1 __P((struct autri_softc *, int, uint8_t));
-static __inline void autri_reg_clear_1
-    __P((struct autri_softc *, int, uint8_t));
-static __inline void autri_reg_set_4
-    __P((struct autri_softc *, int, uint32_t));
-static __inline void autri_reg_clear_4
-    __P((struct autri_softc *, int, uint32_t));
+static __inline void autri_reg_set_1(struct autri_softc *, int, uint8_t);
+static __inline void autri_reg_clear_1(struct autri_softc *, int, uint8_t);
+static __inline void autri_reg_set_4(struct autri_softc *, int, uint32_t);
+static __inline void autri_reg_clear_4(struct autri_softc *, int, uint32_t);
 
-int	autri_attach_codec __P((void *sc, struct ac97_codec_if *));
-int	autri_read_codec __P((void *sc, u_int8_t a, u_int16_t *d));
-int	autri_write_codec __P((void *sc, u_int8_t a, u_int16_t d));
-void	autri_reset_codec __P((void *sc));
+int	autri_attach_codec(void *sc, struct ac97_codec_if *);
+int	autri_read_codec(void *sc, u_int8_t a, u_int16_t *d);
+int	autri_write_codec(void *sc, u_int8_t a, u_int16_t d);
+void	autri_reset_codec(void *sc);
 
 void autri_powerhook(int why,void *addr);
-int  autri_init __P((void *sc));
-struct autri_dma *autri_find_dma __P((struct autri_softc *, void *));
-void autri_setup_channel __P((struct autri_softc *sc,int mode,
-				    struct audio_params *param));
-void autri_enable_interrupt __P((struct autri_softc *sc, int ch));
-void autri_disable_interrupt __P((struct autri_softc *sc, int ch));
-void autri_startch __P((struct autri_softc *sc, int ch, int ch_intr));
-void autri_stopch __P((struct autri_softc *sc, int ch, int ch_intr));
-void autri_enable_loop_interrupt __P((void *sc));
+int  autri_init(void *sc);
+struct autri_dma *autri_find_dma(struct autri_softc *, void *);
+void autri_setup_channel(struct autri_softc *sc,int mode,
+				    struct audio_params *param);
+void autri_enable_interrupt(struct autri_softc *sc, int ch);
+void autri_disable_interrupt(struct autri_softc *sc, int ch);
+void autri_startch(struct autri_softc *sc, int ch, int ch_intr);
+void autri_stopch(struct autri_softc *sc, int ch, int ch_intr);
+void autri_enable_loop_interrupt(void *sc);
 #if 0
-void autri_disable_loop_interrupt __P((void *sc));
+void autri_disable_loop_interrupt(void *sc);
 #endif
 
 struct cfdriver autri_cd = {
@@ -124,32 +120,30 @@ struct cfattach autri_ca = {
 	sizeof(struct autri_softc), autri_match, autri_attach
 };
 
-int	autri_open __P((void *, int));
-void	autri_close __P((void *));
-int	autri_query_encoding __P((void *, struct audio_encoding *));
-int	autri_set_params
-    __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	autri_round_blocksize __P((void *, int));
+int	autri_open(void *, int);
+void	autri_close(void *);
+int	autri_query_encoding(void *, struct audio_encoding *);
+int	autri_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	autri_round_blocksize(void *, int);
 int	autri_trigger_output
     __P((void *, void *, void *, int, void (*)(void *), void *,
     struct audio_params *));
 int	autri_trigger_input
     __P((void *, void *, void *, int, void (*)(void *), void *,
     struct audio_params *));
-int	autri_halt_output __P((void *));
-int	autri_halt_input __P((void *));
-int	autri_getdev __P((void *, struct audio_device *));
-int	autri_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	autri_mixer_get_port __P((void *, mixer_ctrl_t *));
-void*	autri_malloc __P((void *, int, size_t, int, int));
-void	autri_free __P((void *, void *, int));
-size_t	autri_round_buffersize __P((void *, int, size_t));
-paddr_t	autri_mappage __P((void *, void *, off_t, int));
-int	autri_get_props __P((void *));
-int	autri_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
+int	autri_halt_output(void *);
+int	autri_halt_input(void *);
+int	autri_getdev(void *, struct audio_device *);
+int	autri_mixer_set_port(void *, mixer_ctrl_t *);
+int	autri_mixer_get_port(void *, mixer_ctrl_t *);
+void*	autri_malloc(void *, int, size_t, int, int);
+void	autri_free(void *, void *, int);
+size_t	autri_round_buffersize(void *, int, size_t);
+paddr_t	autri_mappage(void *, void *, off_t, int);
+int	autri_get_props(void *);
+int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
 
-int	autri_get_portnum_by_name
-    __P((struct autri_softc *, char *, char *, char *));
+int	autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
 
 struct audio_hw_if autri_hw_if = {
 	autri_open,
@@ -1394,7 +1388,7 @@ autri_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {
@@ -1438,7 +1432,7 @@ autri_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {

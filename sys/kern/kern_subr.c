@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.20 2001/07/27 09:55:07 niklas Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.21 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ void *
 hook_establish(head, tail, fn, arg)
 	struct hook_desc_head *head;
 	int tail;
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 	struct hook_desc *hdp;
@@ -256,7 +256,7 @@ dohooks(head)
 
 struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
-	void	(*sfd_fn) __P((int, void *));
+	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
 };
 
@@ -265,7 +265,7 @@ CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
 
 void *
 powerhook_establish(fn, arg)
-	void (*fn) __P((int, void *));
+	void (*fn)(int, void *);
 	void *arg;
 {
 	struct powerhook_desc *ndp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.h,v 1.2 2000/03/03 00:54:55 todd Exp $ */
+/*	$OpenBSD: power.h,v 1.3 2002/03/14 01:26:43 millert Exp $ */
 /*	$NetBSD: power.h,v 1.2 1996/05/16 15:56:57 abrown Exp $ */
 
 /*
@@ -57,4 +57,4 @@
 volatile u_char *power_reg;
 #endif
 
-void powerdown __P((void));		/* power off function */
+void powerdown(void);		/* power off function */

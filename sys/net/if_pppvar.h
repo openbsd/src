@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.9 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.10 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -61,9 +61,9 @@ struct ppp_softc {
 	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */
-	void	(*sc_start) __P((struct ppp_softc *));	/* start output proc */
-	void	(*sc_ctlp) __P((struct ppp_softc *)); /* rcvd control pkt */
-	void	(*sc_relinq) __P((struct ppp_softc *)); /* relinquish ifunit */
+	void	(*sc_start)(struct ppp_softc *);	/* start output proc */
+	void	(*sc_ctlp)(struct ppp_softc *); /* rcvd control pkt */
+	void	(*sc_relinq)(struct ppp_softc *); /* relinquish ifunit */
 	u_int16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
 	struct	ifqueue sc_rawq;	/* received packets */
@@ -104,14 +104,14 @@ struct ppp_softc {
 #ifdef _KERNEL
 struct	ppp_softc ppp_softc[NPPP];
 
-struct	ppp_softc *pppalloc __P((pid_t pid));
-void	pppdealloc __P((struct ppp_softc *sc));
-int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
-		      int flag, struct proc *p));
-void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
-struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
-void	ppp_restart __P((struct ppp_softc *sc));
-int	pppoutput __P((struct ifnet *, struct mbuf *,
-		       struct sockaddr *, struct rtentry *));
+struct	ppp_softc *pppalloc(pid_t pid);
+void	pppdealloc(struct ppp_softc *sc);
+int	pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data,
+		      int flag, struct proc *p);
+void	ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost);
+struct	mbuf *ppp_dequeue(struct ppp_softc *sc);
+void	ppp_restart(struct ppp_softc *sc);
+int	pppoutput(struct ifnet *, struct mbuf *,
+		       struct sockaddr *, struct rtentry *);
 #endif /* _KERNEL */
 #endif /* _NET_IF_PPPVAR_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.7 2001/10/04 19:37:52 mickey Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.8 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
@@ -139,17 +139,17 @@ struct wsmouse_softc {
 #endif
 };
 
-int	wsmouse_match __P((struct device *, void *, void *));
-void	wsmouse_attach __P((struct device *, struct device *, void *));
-int	wsmouse_detach __P((struct device *, int));
-int	wsmouse_activate __P((struct device *, enum devact));
+int	wsmouse_match(struct device *, void *, void *);
+void	wsmouse_attach(struct device *, struct device *, void *);
+int	wsmouse_detach(struct device *, int);
+int	wsmouse_activate(struct device *, enum devact);
 
-int	wsmouse_do_ioctl __P((struct wsmouse_softc *, u_long, caddr_t, 
-			      int, struct proc *));
+int	wsmouse_do_ioctl(struct wsmouse_softc *, u_long, caddr_t, 
+			      int, struct proc *);
 
-int	wsmousedoclose __P((struct device *, int, int, struct proc *));
-int	wsmousedoioctl __P((struct device *, u_long, caddr_t, int, 
-			    struct proc *));
+int	wsmousedoclose(struct device *, int, int, struct proc *);
+int	wsmousedoioctl(struct device *, u_long, caddr_t, int, 
+			    struct proc *);
 
 struct cfdriver wsmouse_cd = {
 	NULL, "wsmouse", DV_TTY

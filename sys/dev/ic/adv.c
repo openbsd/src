@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.11 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: adv.c,v 1.12 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -71,27 +71,27 @@
 /******************************************************************************/
 
 
-static void adv_enqueue __P((ASC_SOFTC *, struct scsi_xfer *, int));
-static struct scsi_xfer *adv_dequeue __P((ASC_SOFTC *));
+static void adv_enqueue(ASC_SOFTC *, struct scsi_xfer *, int);
+static struct scsi_xfer *adv_dequeue(ASC_SOFTC *);
 
-static int adv_alloc_ccbs __P((ASC_SOFTC *));
-static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
-static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static void adv_reset_ccb __P((ADV_CCB *));
-static int adv_init_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *, int));
-static void adv_queue_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static void adv_start_ccbs __P((ASC_SOFTC *));
+static int adv_alloc_ccbs(ASC_SOFTC *);
+static int adv_create_ccbs(ASC_SOFTC *, ADV_CCB *, int);
+static void adv_free_ccb(ASC_SOFTC *, ADV_CCB *);
+static void adv_reset_ccb(ADV_CCB *);
+static int adv_init_ccb(ASC_SOFTC *, ADV_CCB *);
+static ADV_CCB *adv_get_ccb(ASC_SOFTC *, int);
+static void adv_queue_ccb(ASC_SOFTC *, ADV_CCB *);
+static void adv_start_ccbs(ASC_SOFTC *);
 
-static u_int8_t *adv_alloc_overrunbuf __P((char *dvname, bus_dma_tag_t));
+static u_int8_t *adv_alloc_overrunbuf(char *dvname, bus_dma_tag_t);
 
-static int adv_scsi_cmd __P((struct scsi_xfer *));
-static void advminphys __P((struct buf *));
-static void adv_narrow_isr_callback __P((ASC_SOFTC *, ASC_QDONE_INFO *));
+static int adv_scsi_cmd(struct scsi_xfer *);
+static void advminphys(struct buf *);
+static void adv_narrow_isr_callback(ASC_SOFTC *, ASC_QDONE_INFO *);
 
-static int adv_poll __P((ASC_SOFTC *, struct scsi_xfer *, int));
-static void adv_timeout __P((void *));
-static void adv_watchdog __P((void *));
+static int adv_poll(ASC_SOFTC *, struct scsi_xfer *, int);
+static void adv_timeout(void *);
+static void adv_watchdog(void *);
 
 
 /******************************************************************************/

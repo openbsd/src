@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.2 2002/03/13 21:01:19 jason Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -76,8 +76,8 @@ struct hmesbus_softc {
 	struct	sbusdev		hsc_sbus;	/* SBus device */
 };
 
-int	hmematch_sbus __P((struct device *, void *, void *));
-void	hmeattach_sbus __P((struct device *, struct device *, void *));
+int	hmematch_sbus(struct device *, void *, void *);
+void	hmeattach_sbus(struct device *, struct device *, void *);
 
 struct cfattach hme_sbus_ca = {
 	sizeof(struct hmesbus_softc), hmematch_sbus, hmeattach_sbus
@@ -109,7 +109,7 @@ hmeattach_sbus(parent, self, aux)
 	u_int32_t burst, sbusburst;
 	int node;
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	node = sa->sa_node;
 

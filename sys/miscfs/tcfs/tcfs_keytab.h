@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_keytab.h,v 1.5 2000/11/16 20:02:21 provos Exp $	*/
+/*	$OpenBSD: tcfs_keytab.h,v 1.6 2002/03/14 01:27:08 millert Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -100,24 +100,24 @@ int		_tcfs_keytab_hash __P(unsigned int));
 #define		tcfs_keytab_hash(u)	((u)%KEYTABSIZE)
 #endif
 
-tcfs_keytab_node	*tcfs_keytab_newnode __P((void));
-tcfs_keytab_node	*tcfs_keytab_newgidnode __P((void));
-void			 tcfs_keytab_dispnode __P((tcfs_keytab_node*));
-tcfs_keytab		*tcfs_keytab_init __P((void));
-void			 tcfs_keytab_dispose __P((tcfs_keytab*));
-tcfs_keytab_node	*tcfs_keytab_fetch_uid __P((tcfs_keytab *, uid_t));
-int			 tcfs_keytab_push_gidpart __P((struct tcfs_mount *,tcfs_keytab_node *,uid_t, gid_t,int,char*));
-tcfs_keytab_node	*tcfs_keytab_fetch_gid __P((tcfs_keytab *, gid_t));
-tcfs_keytab_node	*tcfs_keytab_fetch_pid __P((tcfs_keytab *, uid_t, pid_t));
-int			 tcfs_keytab_push_uid __P((tcfs_keytab*, uid_t, void* ));
-int			 tcfs_keytab_push_pid __P((tcfs_keytab*, uid_t, pid_t, void *));
-int			 tcfs_keytab_push_gid __P((struct tcfs_mount *,tcfs_keytab *, uid_t, gid_t, int, char *));
-int			 tcfs_keytab_rm_uid __P((tcfs_keytab *, uid_t));
-int			 tcfs_keytab_rm_pid __P((tcfs_keytab *, uid_t, pid_t));
-int			 tcfs_keytab_rm_gidpart __P((tcfs_keytab_node *,uid_t, gid_t));
-int			 tcfs_keytab_rm_gid __P((tcfs_keytab*, uid_t, gid_t));
-int			 tcfs_interp __P((struct tcfs_mount *, tcfs_keytab_node*));
-int			 tcfs_keytab_check_uid __P((tcfs_keytab *, uid_t));
-int			 tcfs_keytab_check_pid __P((tcfs_keytab *, uid_t, pid_t));
-int			 tcfs_keytab_check_gid __P((tcfs_keytab *, gid_t));
+tcfs_keytab_node	*tcfs_keytab_newnode(void);
+tcfs_keytab_node	*tcfs_keytab_newgidnode(void);
+void			 tcfs_keytab_dispnode(tcfs_keytab_node*);
+tcfs_keytab		*tcfs_keytab_init(void);
+void			 tcfs_keytab_dispose(tcfs_keytab*);
+tcfs_keytab_node	*tcfs_keytab_fetch_uid(tcfs_keytab *, uid_t);
+int			 tcfs_keytab_push_gidpart(struct tcfs_mount *,tcfs_keytab_node *,uid_t, gid_t,int,char*);
+tcfs_keytab_node	*tcfs_keytab_fetch_gid(tcfs_keytab *, gid_t);
+tcfs_keytab_node	*tcfs_keytab_fetch_pid(tcfs_keytab *, uid_t, pid_t);
+int			 tcfs_keytab_push_uid(tcfs_keytab*, uid_t, void* );
+int			 tcfs_keytab_push_pid(tcfs_keytab*, uid_t, pid_t, void *);
+int			 tcfs_keytab_push_gid(struct tcfs_mount *,tcfs_keytab *, uid_t, gid_t, int, char *);
+int			 tcfs_keytab_rm_uid(tcfs_keytab *, uid_t);
+int			 tcfs_keytab_rm_pid(tcfs_keytab *, uid_t, pid_t);
+int			 tcfs_keytab_rm_gidpart(tcfs_keytab_node *,uid_t, gid_t);
+int			 tcfs_keytab_rm_gid(tcfs_keytab*, uid_t, gid_t);
+int			 tcfs_interp(struct tcfs_mount *, tcfs_keytab_node*);
+int			 tcfs_keytab_check_uid(tcfs_keytab *, uid_t);
+int			 tcfs_keytab_check_pid(tcfs_keytab *, uid_t, pid_t);
+int			 tcfs_keytab_check_gid(tcfs_keytab *, gid_t);
 #endif /* _TCFS_KEYTAB_H_ */

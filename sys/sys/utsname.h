@@ -1,4 +1,4 @@
-/*	$OpenBSD: utsname.h,v 1.3 2000/04/01 10:13:26 jakob Exp $	*/
+/*	$OpenBSD: utsname.h,v 1.4 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: utsname.h,v 1.6 1994/06/29 06:46:11 cgd Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ struct utsname {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	uname __P((struct utsname *));
+int	uname(struct utsname *);
 __END_DECLS
 
 #endif	/* !_SYS_UTSNAME_H */

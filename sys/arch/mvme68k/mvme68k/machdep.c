@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2002/01/23 17:51:52 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.65 2002/03/14 01:26:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -162,11 +162,11 @@ extern struct emul emul_sunos;
  *  XXX this is to fake out the console routines, while 
  *  booting. New and improved! :-) smurph
  */
-void bootcnprobe __P((struct consdev *));
-void bootcninit __P((struct consdev *));
-void bootcnputc __P((dev_t, int));
-int  bootcngetc __P((dev_t));
-extern void nullcnpollc __P((dev_t, int));
+void bootcnprobe(struct consdev *);
+void bootcninit(struct consdev *);
+void bootcnputc(dev_t, int);
+int  bootcngetc(dev_t);
+extern void nullcnpollc(dev_t, int);
 
 #define bootcnpollc nullcnpollc
 
@@ -622,7 +622,7 @@ static struct haltvec *halts;
 /* XXX insert by priority */
 void
 halt_establish(fn, pri)
-	void (*fn) __P((void));
+	void (*fn)(void);
 	int pri;
 {
 	struct haltvec *hv, *h;
@@ -787,7 +787,7 @@ dumpsys()
 	int psize;
 	daddr_t blkno;			/* current block to write */
 					/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;				/* page being dumped */
 	paddr_t maddr;			/* PA being dumped */
 	int error;			/* error code from (*dump)() */
@@ -904,7 +904,7 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 void
 initvectors()
 {
-	typedef void trapfun __P((void));
+	typedef void trapfun(void);
 
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060) || defined(M68040)
@@ -1075,8 +1075,7 @@ cpu_exec_aout_makecmds(p, epp)
 
 #ifdef COMPAT_SUNOS
 	{
-		extern sunos_exec_aout_makecmds
-		__P((struct proc *, struct exec_package *));
+		extern sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 			return (0);
 	}

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.21 2002/01/07 19:04:46 mickey Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.22 2002/03/14 01:26:55 millert Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -166,10 +166,10 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
-	int            (*dma_init) __P((void *, int, int, void *, size_t,
-	                int));
-	void           (*dma_start) __P((void *, int, int));
-	int            (*dma_finish) __P((void *, int, int));
+	int            (*dma_init)(void *, int, int, void *, size_t,
+	                int);
+	void           (*dma_start)(void *, int, int);
+	int            (*dma_finish)(void *, int, int);
 /* flags passed to DMA functions */
 #define WDC_DMA_READ 0x01
 #define WDC_DMA_IRQW 0x02
@@ -179,14 +179,14 @@ struct wdc_softc { /* Per controller state */
 #define WDC_DMAST_UNDER 0x04    /* DMA underrun */
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
-	int            (*claim_hw) __P((void *, int));
-	void            (*free_hw) __P((void *));
+	int            (*claim_hw)(void *, int);
+	void            (*free_hw)(void *);
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
-	void 		(*set_modes) __P((struct channel_softc *));
+	void 		(*set_modes)(struct channel_softc *);
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
-	void            (*irqack) __P((struct channel_softc *));
+	void            (*irqack)(struct channel_softc *);
 };
 
  /*
@@ -217,17 +217,17 @@ struct wdc_xfer {
 	int c_skip;        /* bytes already transferred */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	LIST_ENTRY(wdc_xfer) free_list;
-	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
-	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
-        void (*c_kill_xfer) __P((struct channel_softc *, struct wdc_xfer *));
+	void (*c_start)(struct channel_softc *, struct wdc_xfer *);
+	int  (*c_intr)(struct channel_softc *, struct wdc_xfer *, int);
+        void (*c_kill_xfer)(struct channel_softc *, struct wdc_xfer *);
 
 	/* Used by ATAPISCSI */
  	volatile int endticks;
 	struct timeout atapi_poll_to;
-	void (*next) __P((struct channel_softc *, struct wdc_xfer *, int,
-			 struct atapi_return_args *));
-	void (*c_done)  __P((struct channel_softc *, struct wdc_xfer *, int,
-			 struct atapi_return_args *));
+	void (*next)(struct channel_softc *, struct wdc_xfer *, int,
+			 struct atapi_return_args *);
+	void (*c_done)(struct channel_softc *, struct wdc_xfer *, int,
+			 struct atapi_return_args *);
 	
 	/* Used for tape devices */
 	int  transfer_len;
@@ -238,32 +238,32 @@ struct wdc_xfer {
  * or bus-specific backends.
  */
 
-int   wdcprobe __P((struct channel_softc *));
-void  wdcattach __P((struct channel_softc *));
-int   wdcdetach __P((struct channel_softc *, int));
-int   wdcactivate __P((struct device *, enum devact));
-int   wdcintr __P((void *));
-void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
-struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
+int   wdcprobe(struct channel_softc *);
+void  wdcattach(struct channel_softc *);
+int   wdcdetach(struct channel_softc *, int);
+int   wdcactivate(struct device *, enum devact);
+int   wdcintr(void *);
+void  wdc_exec_xfer(struct channel_softc *, struct wdc_xfer *);
+struct wdc_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_CANSLEEP 0x00
 #define WDC_NOSLEEP 0x01
-void   wdc_free_xfer  __P((struct channel_softc *, struct wdc_xfer *));
-void  wdcstart __P((struct channel_softc *));
-void  wdcrestart __P((void*));
-int   wdcreset	__P((struct channel_softc *, int));
+void   wdc_free_xfer(struct channel_softc *, struct wdc_xfer *);
+void  wdcstart(struct channel_softc *);
+void  wdcrestart(void*);
+int   wdcreset(struct channel_softc *, int);
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
-int   wdc_wait_for_status __P((struct channel_softc *, int, int, int));
-int   wdc_dmawait __P((struct channel_softc *, struct wdc_xfer *, int));
-void  wdcbit_bucket __P((struct channel_softc *, int));
+int   wdc_wait_for_status(struct channel_softc *, int, int, int);
+int   wdc_dmawait(struct channel_softc *, struct wdc_xfer *, int);
+void  wdcbit_bucket(struct channel_softc *, int);
 
-void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
-	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
-void   wdccommandshort __P((struct channel_softc *, int, int));
-void  wdctimeout	__P((void *arg));
+void  wdccommand(struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
+	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t);
+void   wdccommandshort(struct channel_softc *, int, int);
+void  wdctimeout(void *arg);
 
-int	wdc_addref __P((struct channel_softc *));
-void	wdc_delref __P((struct channel_softc *));
+int	wdc_addref(struct channel_softc *);
+void	wdc_delref(struct channel_softc *);
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
@@ -278,15 +278,15 @@ void	wdc_delref __P((struct channel_softc *));
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000
 
-int   atapi_print       __P((void *, const char *));
+int   atapi_print(void *, const char *);
 
-void wdc_disable_intr __P((struct channel_softc *));
-void wdc_enable_intr __P((struct channel_softc *));
-int wdc_select_drive __P((struct channel_softc *, int, int));
+void wdc_disable_intr(struct channel_softc *);
+void wdc_enable_intr(struct channel_softc *);
+int wdc_select_drive(struct channel_softc *, int, int);
 
-void wdc_output_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
-void wdc_input_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
+void wdc_output_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
+void wdc_input_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 
-void wdc_print_current_modes __P((struct channel_softc *));
+void wdc_print_current_modes(struct channel_softc *);
 
-int wdc_ioctl __P((struct ata_drive_datas *, u_long, caddr_t, int, struct proc *));
+int wdc_ioctl(struct ata_drive_datas *, u_long, caddr_t, int, struct proc *);

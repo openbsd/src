@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi96.c,v 1.7 2001/08/26 00:45:08 fgsch Exp $	*/
+/*	$OpenBSD: scsi96.c,v 1.8 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: scsi96.c,v 1.21 1996/10/13 03:21:29 christos Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 static int ncr53c96_reset_target(int adapter, int target);
 static int ncr53c96_poll(int adapter, int timeout);
 static int ncr53c96_send_cmd(struct scsi_xfer * xs);
-static int scsiprint __P((void *, const char *));
-static void resetchip __P((void));
+static int scsiprint(void *, const char *);
+static void resetchip(void);
 
 struct scsi_adapter ncr53c96_switch = {
 	ncr53c96_scsi_cmd,	/* scsi_cmd()		 */
@@ -97,8 +97,8 @@ struct scsi_device ncr53c96_dev = {
 	NULL,			/* Use default "done" routine.	    */
 };
 
-static int	ncr96probe __P((struct device *, void *, void *));
-static void	ncr96attach __P((struct device *, struct device *, void *));
+static int	ncr96probe(struct device *, void *, void *);
+static void	ncr96attach(struct device *, struct device *, void *);
 
 struct cfattach ncr96scsi_ca = {
 	sizeof(struct ncr53c96_softc), ncr96probe, ncr96attach
@@ -281,14 +281,14 @@ ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
  * Actual chip control.
  */
 
-extern void	ncr53c96_intr __P((int));
+extern void	ncr53c96_intr(int);
 
 extern void
 ncr53c96_intr(int adapter)
 {
 }
 
-extern int	ncr53c96_irq_intr __P((void));
+extern int	ncr53c96_irq_intr(void);
 
 extern int
 ncr53c96_irq_intr(void)
@@ -297,7 +297,7 @@ ncr53c96_irq_intr(void)
 	return 1;
 }
 
-extern int	ncr53c96_drq_intr __P((void));
+extern int	ncr53c96_drq_intr(void);
 extern int
 ncr53c96_drq_intr(void)
 {

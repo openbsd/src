@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.h,v 1.1 1997/09/13 14:16:19 niklas Exp $	*/
+/*	$OpenBSD: ds.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: ds.h,v 1.1 1997/07/06 22:22:01 is Exp $	*/
 
 /*-
@@ -82,9 +82,9 @@
  */
 
 struct ds_handle {
-	int (*ds_read_bit) __P((void *));
-	void (*ds_write_bit) __P((void *, int));
-	void (*ds_reset) __P((void *));
+	int (*ds_read_bit)(void *);
+	void (*ds_write_bit)(void *, int);
+	void (*ds_reset)(void *);
 	void *ds_hw_handle;
 };
 
@@ -93,8 +93,8 @@ struct ds_handle {
  * the same 1-wire bus as the DS2404 RTC.
  */
 
-static __inline u_int8_t ds_read_byte __P((struct ds_handle *));
-static __inline void ds_write_byte __P((struct ds_handle *, unsigned int));
+static __inline u_int8_t ds_read_byte(struct ds_handle *);
+static __inline void ds_write_byte(struct ds_handle *, unsigned int);
 
 static __inline u_int8_t
 ds_read_byte(dsh)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 1999/01/11 05:11:41 millert Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 2002/03/14 01:26:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -77,15 +77,15 @@
 
 int     le_debug = 0;
 
-void le_end __P((struct netif *));
-void le_error __P((struct netif *, char *, volatile struct lereg1 *));
-int le_get __P((struct iodesc *, void *, size_t, time_t));
-void le_init __P((struct iodesc *, void *));
-int le_match __P((struct netif *, void *));
-int le_poll __P((struct iodesc *, void *, int));
-int le_probe __P((struct netif *, void *));
-int le_put __P((struct iodesc *, void *, size_t));
-void le_reset __P((struct netif *, u_char *));
+void le_end(struct netif *);
+void le_error(struct netif *, char *, volatile struct lereg1 *);
+int le_get(struct iodesc *, void *, size_t, time_t);
+void le_init(struct iodesc *, void *);
+int le_match(struct netif *, void *);
+int le_poll(struct iodesc *, void *, int);
+int le_probe(struct netif *, void *);
+int le_put(struct iodesc *, void *, size_t);
+void le_reset(struct netif *, u_char *);
 
 struct netif_stats le_stats;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.2 2001/06/22 14:35:43 deraadt Exp $ */
+/*	$OpenBSD: ses.c,v 1.3 2002/03/14 01:27:13 millert Exp $ */
 /*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
@@ -96,12 +96,12 @@ typedef enum {
 struct ses_softc;
 typedef struct ses_softc ses_softc_t;
 typedef struct {
-	int (*softc_init) 	__P((ses_softc_t *, int));
-	int (*init_enc)		__P((ses_softc_t *));
-	int (*get_encstat)	__P((ses_softc_t *, int));
-	int (*set_encstat)	__P((ses_softc_t *, ses_encstat, int));
-	int (*get_objstat)	__P((ses_softc_t *, ses_objstat *, int));
-	int (*set_objstat)	__P((ses_softc_t *, ses_objstat *, int));
+	int (*softc_init)(ses_softc_t *, int);
+	int (*init_enc)(ses_softc_t *);
+	int (*get_encstat)(ses_softc_t *, int);
+	int (*set_encstat)(ses_softc_t *, ses_encstat, int);
+	int (*get_objstat)(ses_softc_t *, ses_objstat *, int);
+	int (*set_objstat)(ses_softc_t *, ses_objstat *, int);
 } encvec;
 
 #define	ENCI_SVALID	0x80
@@ -118,23 +118,23 @@ typedef struct {
 #define	SEN_ID		"UNISYS           SUN_SEN"
 #define	SEN_ID_LEN	24
 
-static enctyp ses_type __P((void *, int));
+static enctyp ses_type(void *, int);
 
 
 /* Forward reference to Enclosure Functions */
-static int ses_softc_init __P((ses_softc_t *, int));
-static int ses_init_enc __P((ses_softc_t *));
-static int ses_get_encstat __P((ses_softc_t *, int));
-static int ses_set_encstat __P((ses_softc_t *, uint8_t, int));
-static int ses_get_objstat __P((ses_softc_t *, ses_objstat *, int));
-static int ses_set_objstat __P((ses_softc_t *, ses_objstat *, int));
+static int ses_softc_init(ses_softc_t *, int);
+static int ses_init_enc(ses_softc_t *);
+static int ses_get_encstat(ses_softc_t *, int);
+static int ses_set_encstat(ses_softc_t *, uint8_t, int);
+static int ses_get_objstat(ses_softc_t *, ses_objstat *, int);
+static int ses_set_objstat(ses_softc_t *, ses_objstat *, int);
 
-static int safte_softc_init __P((ses_softc_t *, int));
-static int safte_init_enc __P((ses_softc_t *));
-static int safte_get_encstat __P((ses_softc_t *, int));
-static int safte_set_encstat __P((ses_softc_t *, uint8_t, int));
-static int safte_get_objstat __P((ses_softc_t *, ses_objstat *, int));
-static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
+static int safte_softc_init(ses_softc_t *, int);
+static int safte_init_enc(ses_softc_t *);
+static int safte_get_encstat(ses_softc_t *, int);
+static int safte_set_encstat(ses_softc_t *, uint8_t, int);
+static int safte_get_objstat(ses_softc_t *, ses_objstat *, int);
+static int safte_set_objstat(ses_softc_t *, ses_objstat *, int);
 
 /*
  * Platform implementation defines/functions for SES internal kernel stuff
@@ -162,12 +162,12 @@ static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
 #define	WRITE_BUFFER		0x3b
 #define	READ_BUFFER		0x3c
 
-int sesopen __P((dev_t, int, int, struct proc *));
-int sesclose __P((dev_t, int, int, struct proc *));
-int sesioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int sesopen(dev_t, int, int, struct proc *);
+int sesclose(dev_t, int, int, struct proc *);
+int sesioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));
-static void ses_log	__P((struct ses_softc *, const char *, ...));
+static int ses_runcmd(struct ses_softc *, char *, int, char *, int *);
+static void ses_log(struct ses_softc *, const char *, ...);
 
 /*
  * General NetBSD kernel stuff.
@@ -196,9 +196,9 @@ struct ses_softc {
 #define	MATCHTYPE	void
 #endif
 
-static int ses_match __P((struct device *, MATCHTYPE *, void *));
-static void ses_attach __P((struct device *, struct device *, void *));
-static enctyp ses_device_type __P((struct scsipibus_attach_args *));
+static int ses_match(struct device *, MATCHTYPE *, void *);
+static void ses_attach(struct device *, struct device *, void *);
+static enctyp ses_device_type(struct scsipibus_attach_args *);
 
 struct cfattach ses_ca = {
 	sizeof (struct ses_softc), ses_match, ses_attach

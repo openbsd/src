@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.10 2000/04/27 03:14:44 bjc Exp $ */
+/*	$OpenBSD: hp.c,v 1.11 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -74,19 +74,19 @@ struct	hp_softc {
 	int	sc_physnr;		/* Physical disk number */
 };
 
-int     hpmatch __P((struct device *, struct cfdata *, void *));
-void    hpattach __P((struct device *, struct device *, void *));
-void	hpstrategy __P((struct buf *));
-void	hpstart __P((struct mba_device *));
-int	hpattn __P((struct mba_device *));
-enum	xfer_action hpfinish __P((struct mba_device *, int, int *));
-int	hpopen __P((dev_t, int, int));
-int	hpclose __P((dev_t, int, int));
-int	hpioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	hpdump __P((dev_t, caddr_t, caddr_t, size_t));
-int	hpread __P((dev_t, struct uio *));
-int	hpwrite __P((dev_t, struct uio *));
-int	hpsize __P((dev_t));
+int     hpmatch(struct device *, struct cfdata *, void *);
+void    hpattach(struct device *, struct device *, void *);
+void	hpstrategy(struct buf *);
+void	hpstart(struct mba_device *);
+int	hpattn(struct mba_device *);
+enum	xfer_action hpfinish(struct mba_device *, int, int *);
+int	hpopen(dev_t, int, int);
+int	hpclose(dev_t, int, int);
+int	hpioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	hpdump(dev_t, caddr_t, caddr_t, size_t);
+int	hpread(dev_t, struct uio *);
+int	hpwrite(dev_t, struct uio *);
+int	hpsize(dev_t);
 
 struct	cfattach hp_ca = {
 	sizeof(struct hp_softc), hpmatch, hpattach

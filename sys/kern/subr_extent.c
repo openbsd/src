@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.19 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.20 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -69,13 +69,12 @@
 #define db_printf printf
 #endif
 
-static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
-	    int, struct extent_region *, struct extent_region *));
-static	struct extent_region *extent_alloc_region_descriptor
-	    __P((struct extent *, int));
-static	void extent_free_region_descriptor __P((struct extent *,
-	    struct extent_region *));
-static	void extent_register __P((struct extent *));
+static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
+	    int, struct extent_region *, struct extent_region *);
+static	struct extent_region *extent_alloc_region_descriptor(struct extent *, int);
+static	void extent_free_region_descriptor(struct extent *,
+	    struct extent_region *);
+static	void extent_register(struct extent *);
 
 /*
  * Macro to align to an arbitrary power-of-two boundary.

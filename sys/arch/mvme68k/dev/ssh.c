@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.1 2001/02/18 17:41:08 deraadt Exp $ */
+/*	$OpenBSD: ssh.c,v 1.2 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -66,16 +66,16 @@ extern u_int   kvtop();
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void ssh_select __P((struct ssh_softc *));
-void sshabort __P((struct ssh_softc *, ssh_regmap_p, char *));
-void ssherror __P((struct ssh_softc *, ssh_regmap_p, u_char));
-void sshstart __P((struct ssh_softc *));
-void sshreset __P((struct ssh_softc *));
-void sshsetdelay __P((int));
-void ssh_scsidone __P((struct ssh_acb *, int));
-void ssh_sched __P((struct ssh_softc *));
-int  ssh_poll __P((struct ssh_softc *, struct ssh_acb *));
-int  sshintr __P((struct ssh_softc *));
+void ssh_select(struct ssh_softc *);
+void sshabort(struct ssh_softc *, ssh_regmap_p, char *);
+void ssherror(struct ssh_softc *, ssh_regmap_p, u_char);
+void sshstart(struct ssh_softc *);
+void sshreset(struct ssh_softc *);
+void sshsetdelay(int);
+void ssh_scsidone(struct ssh_acb *, int);
+void ssh_sched(struct ssh_softc *);
+int  ssh_poll(struct ssh_softc *, struct ssh_acb *);
+int  sshintr(struct ssh_softc *);
 
 /* 53C710 script */
 const

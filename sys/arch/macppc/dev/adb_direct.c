@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -165,7 +165,7 @@
  * A structure for storing information about each ADB device.
  */
 struct ADBDevEntry {
-	void	(*ServiceRtPtr) __P((void));
+	void	(*ServiceRtPtr)(void);
 	void	*DataAreaAddr;
 	int	devType;
 	int	origAddr;
@@ -252,48 +252,48 @@ struct	timeout adb_softintr_timeout;
 volatile u_char *Via1Base;
 extern int adb_polling;			/* Are we polling? */
 
-void	pm_setup_adb __P((void));
-void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
-int	pm_adb_op __P((u_char *, void *, void *, int));
-void	pm_init_adb_device __P((void));
+void	pm_setup_adb(void);
+void	pm_check_adb_devices(int);
+void	pm_intr(void);
+int	pm_adb_op(u_char *, void *, void *, int);
+void	pm_init_adb_device(void);
 
 /*
  * The following are private routines.
  */
 #ifdef ADB_DEBUG
-void	print_single __P((u_char *));
+void	print_single(u_char *);
 #endif
-void	adb_intr_II __P((void));
-void	adb_intr_IIsi __P((void));
-void	adb_intr_cuda __P((void));
-void	adb_soft_intr __P((void));
-int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_cuda __P((u_char *, u_char *, void *, void *, int));
-void	adb_intr_cuda_test __P((void));
-void	adb_cuda_tickle __P((void));
-void	adb_pass_up __P((struct adbCommand *));
-void	adb_op_comprout __P((caddr_t, caddr_t, int));
-void	adb_reinit __P((void));
-int	count_adbs __P((void));
-int	get_ind_adb_info __P((ADBDataBlock *, int));
-int	get_adb_info __P((ADBDataBlock *, int));
-int	set_adb_info __P((ADBSetInfoBlock *, int));
-void	adb_setup_hw_type __P((void));
-int	adb_op __P((Ptr, Ptr, Ptr, short));
-void	adb_read_II __P((u_char *));
-void	adb_hw_setup __P((void));
-void	adb_hw_setup_IIsi __P((u_char *));
-void	adb_comp_exec __P((void));
-int	adb_cmd_result __P((u_char *));
-int	adb_cmd_extra __P((u_char *));
-int	adb_guess_next_device __P((void));
-int	adb_prog_switch_enable __P((void));
-int	adb_prog_switch_disable __P((void));
+void	adb_intr_II(void);
+void	adb_intr_IIsi(void);
+void	adb_intr_cuda(void);
+void	adb_soft_intr(void);
+int	send_adb_II(u_char *, u_char *, void *, void *, int);
+int	send_adb_IIsi(u_char *, u_char *, void *, void *, int);
+int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
+void	adb_intr_cuda_test(void);
+void	adb_cuda_tickle(void);
+void	adb_pass_up(struct adbCommand *);
+void	adb_op_comprout(caddr_t, caddr_t, int);
+void	adb_reinit(void);
+int	count_adbs(void);
+int	get_ind_adb_info(ADBDataBlock *, int);
+int	get_adb_info(ADBDataBlock *, int);
+int	set_adb_info(ADBSetInfoBlock *, int);
+void	adb_setup_hw_type(void);
+int	adb_op(Ptr, Ptr, Ptr, short);
+void	adb_read_II(u_char *);
+void	adb_hw_setup(void);
+void	adb_hw_setup_IIsi(u_char *);
+void	adb_comp_exec(void);
+int	adb_cmd_result(u_char *);
+int	adb_cmd_extra(u_char *);
+int	adb_guess_next_device(void);
+int	adb_prog_switch_enable(void);
+int	adb_prog_switch_disable(void);
 /* we should create this and it will be the public version */
-int	send_adb __P((u_char *, void *, void *));
-int setsoftadb __P((void));
+int	send_adb(u_char *, void *, void *);
+int setsoftadb(void);
 
 #ifdef ADB_DEBUG
 /*
@@ -1007,7 +1007,7 @@ adb_soft_intr(void)
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
-			((int (*) __P((u_char *, u_char*, int))) comprout)
+			((int (*)(u_char *, u_char*, int)) comprout)
 			    (buffer, compdata, cmd);
 #if 0
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.h,v 1.1 2001/03/18 04:30:24 nate Exp $ */
+/*	$OpenBSD: wsfont.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 /* 	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
 
 /*-
@@ -73,14 +73,14 @@ struct wsdisplay_font;
 #define WSFONT_RDONLY	(0x04)
 
 /* wsfont.c */
-void	wsfont_init __P((void));
-int	wsfont_find __P((char *, int, int, int));
-int	wsfont_add __P((struct wsdisplay_font *, int));
-int	wsfont_remove __P((int));
-void	wsfont_enum __P((void (*) __P((char *, int, int, int))));
-int	wsfont_lock __P((int, struct wsdisplay_font **, int, int));
-int	wsfont_unlock __P((int));
-int	wsfont_getflg __P((int, int *, int *));
-int	wsfont_map_unichar __P((struct wsdisplay_font *, int));
+void	wsfont_init(void);
+int	wsfont_find(char *, int, int, int);
+int	wsfont_add(struct wsdisplay_font *, int);
+int	wsfont_remove(int);
+void	wsfont_enum __P((void (*)(char *, int, int, int)));
+int	wsfont_lock(int, struct wsdisplay_font **, int, int);
+int	wsfont_unlock(int);
+int	wsfont_getflg(int, int *, int *);
+int	wsfont_map_unichar(struct wsdisplay_font *, int);
 
 #endif	/* !_WSFONT_H_ */

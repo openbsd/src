@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.6 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.7 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -100,39 +100,39 @@ struct bmac_softc {
 
 extern u_int *heathrow_FCR;
 
-static __inline int bmac_read_reg __P((struct bmac_softc *, int));
-static __inline void bmac_write_reg __P((struct bmac_softc *, int, int));
-static __inline void bmac_set_bits __P((struct bmac_softc *, int, int));
-static __inline void bmac_reset_bits __P((struct bmac_softc *, int, int));
+static __inline int bmac_read_reg(struct bmac_softc *, int);
+static __inline void bmac_write_reg(struct bmac_softc *, int, int);
+static __inline void bmac_set_bits(struct bmac_softc *, int, int);
+static __inline void bmac_reset_bits(struct bmac_softc *, int, int);
 
-static int bmac_match __P((struct device *, void *, void *));
-static void bmac_attach __P((struct device *, struct device *, void *));
-static void bmac_reset_chip __P((struct bmac_softc *));
-static void bmac_init __P((struct bmac_softc *));
-static void bmac_init_dma __P((struct bmac_softc *));
-static int bmac_intr __P((void *));
+static int bmac_match(struct device *, void *, void *);
+static void bmac_attach(struct device *, struct device *, void *);
+static void bmac_reset_chip(struct bmac_softc *);
+static void bmac_init(struct bmac_softc *);
+static void bmac_init_dma(struct bmac_softc *);
+static int bmac_intr(void *);
 #ifdef WHY_IS_THIS_XXXX
-static int bmac_tx_intr __P((void *));
+static int bmac_tx_intr(void *);
 #endif /* WHY_IS_THIS_XXXX */
-static int bmac_rint __P((void *));
-static void bmac_reset __P((struct bmac_softc *));
-static void bmac_stop __P((struct bmac_softc *));
-static void bmac_start __P((struct ifnet *));
-static void bmac_transmit_packet __P((struct bmac_softc *, void *, int));
-static int bmac_put __P((struct bmac_softc *, caddr_t, struct mbuf *));
-static struct mbuf *bmac_get __P((struct bmac_softc *, caddr_t, int));
-static void bmac_watchdog __P((struct ifnet *));
-static int bmac_ioctl __P((struct ifnet *, u_long, caddr_t));
-static int bmac_mediachange __P((struct ifnet *));
-static void bmac_mediastatus __P((struct ifnet *, struct ifmediareq *));
-static void bmac_setladrf __P((struct bmac_softc *));
+static int bmac_rint(void *);
+static void bmac_reset(struct bmac_softc *);
+static void bmac_stop(struct bmac_softc *);
+static void bmac_start(struct ifnet *);
+static void bmac_transmit_packet(struct bmac_softc *, void *, int);
+static int bmac_put(struct bmac_softc *, caddr_t, struct mbuf *);
+static struct mbuf *bmac_get(struct bmac_softc *, caddr_t, int);
+static void bmac_watchdog(struct ifnet *);
+static int bmac_ioctl(struct ifnet *, u_long, caddr_t);
+static int bmac_mediachange(struct ifnet *);
+static void bmac_mediastatus(struct ifnet *, struct ifmediareq *);
+static void bmac_setladrf(struct bmac_softc *);
 
-int bmac_mii_readreg __P((struct device *, int, int));
-void bmac_mii_writereg __P((struct device *, int, int, int));
-void bmac_mii_statchg __P((struct device *));
-void bmac_mii_tick __P((void *));
-u_int32_t bmac_mbo_read __P((struct device *));
-void bmac_mbo_write __P((struct device *, u_int32_t));
+int bmac_mii_readreg(struct device *, int, int);
+void bmac_mii_writereg(struct device *, int, int, int);
+void bmac_mii_statchg(struct device *);
+void bmac_mii_tick(void *);
+u_int32_t bmac_mbo_read(struct device *);
+void bmac_mbo_write(struct device *, u_int32_t);
 
 struct cfattach bm_ca = {
 	sizeof(struct bmac_softc), bmac_match, bmac_attach

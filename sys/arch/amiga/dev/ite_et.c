@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_et.c,v 1.4 1997/09/18 13:39:58 niklas Exp $	*/
+/*	$OpenBSD: ite_et.c,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_et.c,v 1.3 1997/03/05 22:50:41 veego Exp $	*/
 
 /*
@@ -58,13 +58,13 @@ int et_console = 1;
 int et_console = 0;
 #endif
 
-void et_init __P((struct ite_softc *ip));
-void et_cursor __P((struct ite_softc *ip, int flag));
-void et_deinit __P((struct ite_softc *ip));
-void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
-void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
-void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
-    int dir));
+void et_init(struct ite_softc *ip);
+void et_cursor(struct ite_softc *ip, int flag);
+void et_deinit(struct ite_softc *ip);
+void et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
+void et_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
+void et_scroll(struct ite_softc *ip, int sy, int sx, int count,
+    int dir);
 static void etbcopy(const void *src, void *dst, size_t len);
 
 

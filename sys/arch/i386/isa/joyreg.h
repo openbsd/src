@@ -1,4 +1,4 @@
-/*	$OpenBSD: joyreg.h,v 1.2 1999/01/13 07:26:01 niklas Exp $	*/
+/*	$OpenBSD: joyreg.h,v 1.3 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -66,5 +66,5 @@ struct joy_softc {
 	int	timeout[2];
 };
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
+int		joyopen(dev_t, int, int, struct proc *);
+int		joyclose(dev_t, int, int, struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2002/01/25 23:54:40 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -108,32 +108,32 @@ extern	int kgdb_debug_panic;
 static	int rootnode;
 char platform_type[32];
 
-static	char *str2hex __P((char *, int *));
-static	int mbprint __P((void *, const char *));
-static	void crazymap __P((char *, int *));
-int	st_crazymap __P((int));
-void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, void *, void *));
-static	void mainbus_attach __P((struct device *, struct device *, void *));
-static	int getstr __P((char *, int));
-void	setroot __P((void));
-void	swapconf __P((void));
-void	diskconf __P((void));
-static	struct device *getdisk __P((char *, int, int, dev_t *));
-int	findblkmajor __P((struct device *));
-char	*findblkname __P((int));
+static	char *str2hex(char *, int *);
+static	int mbprint(void *, const char *);
+static	void crazymap(char *, int *);
+int	st_crazymap(int);
+void	sync_crash(void);
+int	mainbus_match(struct device *, void *, void *);
+static	void mainbus_attach(struct device *, struct device *, void *);
+static	int getstr(char *, int);
+void	setroot(void);
+void	swapconf(void);
+void	diskconf(void);
+static	struct device *getdisk(char *, int, int, dev_t *);
+int	findblkmajor(struct device *);
+char	*findblkname(int);
 
 struct device *booted_device;
 struct	bootpath bootpath[8];
 int	nbootpath;
-static	void bootpath_build __P((void));
-static	void bootpath_print __P((struct bootpath *));
-void bootpath_compat __P((struct bootpath *, int));
+static	void bootpath_build(void);
+static	void bootpath_print(struct bootpath *);
+void bootpath_compat(struct bootpath *, int);
 
-char *bus_compatible __P((struct bootpath *, struct device *));
-int bus_class __P((struct device *));
-int instance_match __P((struct device *, void *, struct bootpath *bp));
-void nail_bootdev __P((struct device *, struct bootpath *));
+char *bus_compatible(struct bootpath *, struct device *);
+int bus_class(struct device *);
+int instance_match(struct device *, void *, struct bootpath *bp);
+void nail_bootdev(struct device *, struct bootpath *);
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -229,8 +229,8 @@ bootstrap(nctx)
 	extern int end;	/* End of kernel */
 #ifndef	__arch64__
 	/* Assembly glue for the PROM */
-	extern void OF_sym2val32 __P((void *));
-	extern void OF_val2sym32 __P((void *));
+	extern void OF_sym2val32(void *);
+	extern void OF_val2sym32(void *);
 #endif
 
 	/* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.3 2001/08/25 13:33:36 hugh Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -70,13 +70,13 @@
 #include <vax/if/sgecreg.h>
 #include <vax/if/sgecvar.h>
 
-static	void	zeinit __P((struct ze_softc *));
-static	void	zestart __P((struct ifnet *));
-static	int	zeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	ze_add_rxbuf __P((struct ze_softc *, int));
-static	void	ze_setup __P((struct ze_softc *));
-static	void	zetimeout __P((struct ifnet *));
-static	int	zereset __P((struct ze_softc *));
+static	void	zeinit(struct ze_softc *);
+static	void	zestart(struct ifnet *);
+static	int	zeioctl(struct ifnet *, u_long, caddr_t);
+static	int	ze_add_rxbuf(struct ze_softc *, int);
+static	void	ze_setup(struct ze_softc *);
+static	void	zetimeout(struct ifnet *);
+static	int	zereset(struct ze_softc *);
 
 #define	ZE_WCSR(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)

@@ -1,4 +1,4 @@
-/* * $OpenBSD: freebsd_ptrace.h,v 1.2 1996/08/02 20:34:47 niklas Exp $*/
+/* * $OpenBSD: freebsd_ptrace.h,v 1.3 2002/03/14 01:26:49 millert Exp $*/
 /*-
  * Copyright (c) 1984, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,13 +55,13 @@
 
 #define	FREEBSD_PT_FIRSTMACH	32	/* for machine-specific requests */
 
-void netbsd_to_freebsd_ptrace_regs __P((struct reg *, struct fpreg *,
-					struct freebsd_ptrace_reg *));
-void freebsd_to_netbsd_ptrace_regs __P((struct freebsd_ptrace_reg *,
-					struct reg *, struct fpreg *));
-int freebsd_ptrace_getregs __P((struct freebsd_ptrace_reg *, caddr_t,
-				register_t *));
-int freebsd_ptrace_setregs __P((struct freebsd_ptrace_reg *, caddr_t,
-				int));
+void netbsd_to_freebsd_ptrace_regs(struct reg *, struct fpreg *,
+					struct freebsd_ptrace_reg *);
+void freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *,
+					struct reg *, struct fpreg *);
+int freebsd_ptrace_getregs(struct freebsd_ptrace_reg *, caddr_t,
+				register_t *);
+int freebsd_ptrace_setregs(struct freebsd_ptrace_reg *, caddr_t,
+				int);
 
 #endif	/* !_FREEBSD_PTRACE_H_ */

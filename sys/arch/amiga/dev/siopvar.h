@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.3 1996/05/02 06:44:36 niklas Exp $	*/
+/*	$OpenBSD: siopvar.h,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: siopvar.h,v 1.14 1996/04/21 21:12:38 veego Exp $	*/
 
 /*
@@ -196,12 +196,12 @@ struct	siop_softc {
 #define	STS_INTERMED	0x10	/* Intermediate status sent */
 #define	STS_EXT		0x80	/* Extended status valid */
 
-void siop_minphys __P((struct buf *bp));
-int siop_scsicmd __P((struct scsi_xfer *));
-void siopinitialize __P((struct siop_softc *));
-void siopintr __P((struct siop_softc *));
+void siop_minphys(struct buf *bp);
+int siop_scsicmd(struct scsi_xfer *);
+void siopinitialize(struct siop_softc *);
+void siopintr(struct siop_softc *);
 #ifdef DEBUG
-void siop_dump __P((struct siop_softc *));
+void siop_dump(struct siop_softc *);
 #endif
 
 #endif /* _SIOPVAR_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.40 2002/01/21 05:33:14 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.41 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -128,11 +128,11 @@ int ip6_sourcecheck_interval;		/* XXX */
 
 struct ip6stat ip6stat;
 
-static void ip6_init2 __P((void *));
+static void ip6_init2(void *);
 
-static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
+static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 #ifdef PULLDOWN_TEST
-static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
+static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.12 2001/06/09 06:16:39 angelos Exp $	*/
+/*	$OpenBSD: route.h,v 1.13 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -257,8 +257,8 @@ struct rttimer {
 	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
 	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
 	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
-	void            	(*rtt_func) __P((struct rtentry *, 
-						 struct rttimer *));
+	void            	(*rtt_func)(struct rtentry *, 
+						 struct rttimer *);
 	time_t          	rtt_time; /* When this timer was registered */
 };
 
@@ -289,46 +289,46 @@ struct	rtstat	rtstat;
 struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct	socket;
-void	 route_init __P((void));
-int	 route_output __P((struct mbuf *, ...));
-int	 route_usrreq __P((struct socket *, int, struct mbuf *,
-			   struct mbuf *, struct mbuf *));
-void	 rt_ifmsg __P((struct ifnet *));
-void	 rt_maskedcopy __P((struct sockaddr *,
-	    struct sockaddr *, struct sockaddr *));
-void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
-void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
-int	 rt_setgate __P((struct rtentry *, struct sockaddr *,
-			 struct sockaddr *));
-void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
+void	 route_init(void);
+int	 route_output(struct mbuf *, ...);
+int	 route_usrreq(struct socket *, int, struct mbuf *,
+			   struct mbuf *, struct mbuf *);
+void	 rt_ifmsg(struct ifnet *);
+void	 rt_maskedcopy(struct sockaddr *,
+	    struct sockaddr *, struct sockaddr *);
+void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
+void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+int	 rt_setgate(struct rtentry *, struct sockaddr *,
+			 struct sockaddr *);
+void	 rt_setmetrics(u_long, struct rt_metrics *, struct rt_metrics *);
 int      rt_timer_add __P((struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
 	     struct rttimer_queue *));
-void	 rt_timer_init __P((void));
+void	 rt_timer_init(void);
 struct rttimer_queue *
-	 rt_timer_queue_create __P((u_int));
-void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
-void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
-void	 rt_timer_remove_all __P((struct rtentry *));
-unsigned long	rt_timer_count __P((struct rttimer_queue *));
-void	 rt_timer_timer __P((void *));
-void	 rtable_init __P((void **));
-void	 rtalloc __P((struct route *));
+	 rt_timer_queue_create(u_int);
+void	 rt_timer_queue_change(struct rttimer_queue *, long);
+void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
+void	 rt_timer_remove_all(struct rtentry *);
+unsigned long	rt_timer_count(struct rttimer_queue *);
+void	 rt_timer_timer(void *);
+void	 rtable_init(void **);
+void	 rtalloc(struct route *);
 struct rtentry *
-	 rtalloc1 __P((struct sockaddr *, int));
-void	 rtalloc_noclone __P((struct route *, int));
+	 rtalloc1(struct sockaddr *, int);
+void	 rtalloc_noclone(struct route *, int);
 struct rtentry *
-	 rtalloc2 __P((struct sockaddr *, int, int));
-void	 rtfree __P((struct rtentry *));
-int	 rt_getifa __P((struct rt_addrinfo *));
-int	 rtinit __P((struct ifaddr *, int, int));
-int	 rtioctl __P((u_long, caddr_t, struct proc *));
-void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
+	 rtalloc2(struct sockaddr *, int, int);
+void	 rtfree(struct rtentry *);
+int	 rt_getifa(struct rt_addrinfo *);
+int	 rtinit(struct ifaddr *, int, int);
+int	 rtioctl(u_long, caddr_t, struct proc *);
+void	 rtredirect(struct sockaddr *, struct sockaddr *,
 			 struct sockaddr *, int, struct sockaddr *,
-			 struct rtentry **));
-int	 rtrequest __P((int, struct sockaddr *,
+			 struct rtentry **);
+int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
-			struct rtentry **));
-int	 rtrequest1 __P((int, struct rt_addrinfo *, struct rtentry **));
+			struct rtentry **);
+int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.h,v 1.10 2001/06/09 06:16:37 angelos Exp $       */
+/*      $OpenBSD: if_atm.h,v 1.11 2002/03/14 01:27:09 millert Exp $       */
 
 /*
  *
@@ -95,10 +95,10 @@ struct atmllc {
 }
 
 #ifdef _KERNEL
-void	atm_ifattach __P((struct ifnet *));
-void	atm_input __P((struct ifnet *, struct atm_pseudohdr *,
-		struct mbuf *, void *));
-int	atm_output __P((struct ifnet *, struct mbuf *, struct sockaddr *, 
-		struct rtentry *));
+void	atm_ifattach(struct ifnet *);
+void	atm_input(struct ifnet *, struct atm_pseudohdr *,
+		struct mbuf *, void *);
+int	atm_output(struct ifnet *, struct mbuf *, struct sockaddr *, 
+		struct rtentry *);
 #endif /* _KERNEL */
 #endif /* _NET_IF_ATM_H_ */

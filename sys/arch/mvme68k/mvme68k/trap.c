@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2001/12/08 02:24:06 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.42 2002/03/14 01:26:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -166,7 +166,7 @@ void (*sir_routines[NSIR])();
 void *sir_args[NSIR];
 u_char next_sir;
 
-int  writeback __P((struct frame *fp, int docachepush));
+int  writeback(struct frame *fp, int docachepush);
 
 /*
  * trap and syscall both need the following work done before returning

@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.3 2002/02/23 04:42:35 jason Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -66,8 +66,8 @@ struct beeper_softc {
 
 #define	BEEP_REG	0
 
-int	beeper_match __P((struct device *, void *, void *));
-void	beeper_attach __P((struct device *, struct device *, void *));
+int	beeper_match(struct device *, void *, void *);
+void	beeper_attach(struct device *, struct device *, void *);
 
 struct cfattach beeper_ca = {
 	sizeof(struct beeper_softc), beeper_match, beeper_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2001/05/16 00:38:16 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.14 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #define _KERNEL
 #include "include/pte.h"
 
-int loadfile __P((char *, u_int64_t *));
+int loadfile(char *, u_int64_t *);
 
 char boot_file[128];
 char boot_flags[128];

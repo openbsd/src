@@ -1,4 +1,4 @@
-/* $OpenBSD: netbsd_getcwd.c,v 1.5 2001/09/05 23:38:28 art Exp $ */
+/* $OpenBSD: netbsd_getcwd.c,v 1.6 2002/03/14 01:26:50 millert Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-int proc_isunder __P((struct proc *, struct proc*)); /* missing from proc.h */
+int proc_isunder(struct proc *, struct proc*); /* missing from proc.h */
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
@@ -58,17 +58,17 @@ int proc_isunder __P((struct proc *, struct proc*)); /* missing from proc.h */
 #include <compat/netbsd/netbsd_syscallargs.h>
 
 static int
-netbsd_getcwd_scandir __P((struct vnode **, struct vnode **,
-    char **, char *, struct proc *));
+netbsd_getcwd_scandir(struct vnode **, struct vnode **,
+    char **, char *, struct proc *);
 static int
-netbsd_getcwd_getcache __P((struct vnode **, struct vnode **,
-    char **, char *));
+netbsd_getcwd_getcache(struct vnode **, struct vnode **,
+    char **, char *);
 static int
-netbsd_getcwd_common __P((struct vnode *, struct vnode *,
-		   char **, char *, int, int, struct proc *));
+netbsd_getcwd_common(struct vnode *, struct vnode *,
+		   char **, char *, int, int, struct proc *);
 
 static int
-netbsd_vn_isunder __P((struct vnode *, struct vnode *, struct proc *));
+netbsd_vn_isunder(struct vnode *, struct vnode *, struct proc *);
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.28 2002/02/17 06:11:05 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.29 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -55,8 +55,8 @@
 
 #include <machine/cpu.h>
 
-void	settime __P((struct timeval *));
-void	itimerround __P((struct timeval *));
+void	settime(struct timeval *);
+void	itimerround(struct timeval *);
 
 /* 
  * Time of day and interval timer support.

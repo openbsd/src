@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.4 2001/11/06 22:46:00 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.5 2002/03/14 01:26:41 millert Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -52,18 +52,18 @@
 
 #include <dev/cons.h>
 
-void PPC1_exit __P((void)) __attribute__((__noreturn__));
-void PPC1_boot __P((char *bootspec)) __attribute__((__noreturn__));
-void PPC1_mem_regions __P((struct mem_region **memp, struct mem_region **availp));
-void PPC1_vmon __P((void));
-unsigned char PPC1_nvram_rd __P((unsigned long offset));
-void PPC1_nvram_wr __P((unsigned long offset, unsigned char val));
-unsigned long PPC1_tps __P((void));
+void PPC1_exit(void) __attribute__((__noreturn__));
+void PPC1_boot(char *bootspec) __attribute__((__noreturn__));
+void PPC1_mem_regions(struct mem_region **memp, struct mem_region **availp);
+void PPC1_vmon(void);
+unsigned char PPC1_nvram_rd(unsigned long offset);
+void PPC1_nvram_wr(unsigned long offset, unsigned char val);
+unsigned long PPC1_tps(void);
 
-int PPC1_clock_read __P((int *sec, int *min, int *hour, int *day,
-								 int *mon, int *yr));
-int PPC1_clock_write __P((int sec, int min, int hour, int day,
-								  int mon, int yr));
+int PPC1_clock_read(int *sec, int *min, int *hour, int *day,
+								 int *mon, int *yr);
+int PPC1_clock_write(int sec, int min, int hour, int day,
+								  int mon, int yr);
 
 struct firmware ppc1_firmware = {
 	PPC1_mem_regions,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.14 2001/05/05 20:56:33 art Exp $	*/
+/*	$OpenBSD: fd.c,v 1.15 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
@@ -185,43 +185,43 @@ struct fdcargs {
 	int unit;
 };
 
-int	fdcmatch __P((struct device *, void *, void *));
-void	fdcattach __P((struct device *, struct device *, void *));
-int	fdcprint __P((void *, const char *));
-int	fdmatch __P((struct device *, void *, void *));
-void	fdattach __P((struct device *, struct device *, void *));
+int	fdcmatch(struct device *, void *, void *);
+void	fdcattach(struct device *, struct device *, void *);
+int	fdcprint(void *, const char *);
+int	fdmatch(struct device *, void *, void *);
+void	fdattach(struct device *, struct device *, void *);
 
-void	fdintr __P((int));
-void	fdidxintr __P((void));
-int	fdpulseintr __P((void *));
-void	fdstrategy __P((struct buf *));
-int	fdloaddisk __P((struct fd_softc *));
-int	fdgetdisklabel __P((struct fd_softc *, dev_t));
-int	fdsetdisklabel __P((struct fd_softc *, struct disklabel *));
-int	fdputdisklabel __P((struct fd_softc *, dev_t));
-struct	fdtype * fdcgetfdtype __P((int));
-void	fdmotoroff __P((void *));
-void	fdsetpos __P((struct fd_softc *, int, int));
-void	fdselunit __P((struct fd_softc *));
-void	fdstart __P((struct fd_softc *));
-void	fdcont __P((struct fd_softc *));
-void	fddmastart __P((struct fd_softc *, int));
-void	fdcalibrate __P((void *));
-void	fddmadone __P((struct fd_softc *, int));
-void	fddone __P((struct fd_softc *));
-void	fdfindwork __P((int));
-void	fdminphys __P((struct buf *));
-void	fdcachetoraw __P((struct fd_softc *));
-void	amcachetoraw __P((struct fd_softc *));
-int	amrawtocache __P((struct fd_softc *));
-u_long	*fdfindsync __P((u_long *, u_long *));
-int	fdrawtocache __P((struct fd_softc *));
-void	mscachetoraw __P((struct fd_softc *));
-int	msrawtocache __P((struct fd_softc *));
-u_long	*mfmblkencode __P((u_long *, u_long *, u_long *, int));
-u_long	*mfmblkdecode __P((u_long *, u_long *, u_long *, int));
-u_short	*msblkdecode __P((u_short *, u_char *, int));
-u_short	*msblkencode __P((u_short *, u_char *, int, u_short *));
+void	fdintr(int);
+void	fdidxintr(void);
+int	fdpulseintr(void *);
+void	fdstrategy(struct buf *);
+int	fdloaddisk(struct fd_softc *);
+int	fdgetdisklabel(struct fd_softc *, dev_t);
+int	fdsetdisklabel(struct fd_softc *, struct disklabel *);
+int	fdputdisklabel(struct fd_softc *, dev_t);
+struct	fdtype * fdcgetfdtype(int);
+void	fdmotoroff(void *);
+void	fdsetpos(struct fd_softc *, int, int);
+void	fdselunit(struct fd_softc *);
+void	fdstart(struct fd_softc *);
+void	fdcont(struct fd_softc *);
+void	fddmastart(struct fd_softc *, int);
+void	fdcalibrate(void *);
+void	fddmadone(struct fd_softc *, int);
+void	fddone(struct fd_softc *);
+void	fdfindwork(int);
+void	fdminphys(struct buf *);
+void	fdcachetoraw(struct fd_softc *);
+void	amcachetoraw(struct fd_softc *);
+int	amrawtocache(struct fd_softc *);
+u_long	*fdfindsync(u_long *, u_long *);
+int	fdrawtocache(struct fd_softc *);
+void	mscachetoraw(struct fd_softc *);
+int	msrawtocache(struct fd_softc *);
+u_long	*mfmblkencode(u_long *, u_long *, u_long *, int);
+u_long	*mfmblkdecode(u_long *, u_long *, u_long *, int);
+u_short	*msblkdecode(u_short *, u_char *, int);
+u_short	*msblkencode(u_short *, u_char *, int, u_short *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 

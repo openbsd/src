@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.5 2001/11/01 17:14:10 millert Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -58,15 +58,15 @@
 
 #include <dev/isa/sbdspvar.h>
 
-static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
+static	int sbfind(struct device *, struct sbdsp_softc *, struct isa_attach_args *);
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	sb_isa_match __P((struct device *, void *, void *));
+int	sb_isa_match(struct device *, void *, void *);
 #else
-int	sb_isa_match __P((struct device *, struct cfdata *, void *));
+int	sb_isa_match(struct device *, struct cfdata *, void *);
 #endif
-void	sb_isa_attach __P((struct device *, struct device *, void *));
+void	sb_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach sb_isa_ca = {
 	sizeof(struct sbdsp_softc), sb_isa_match, sb_isa_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_fifoq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_fifoq.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -58,12 +58,12 @@
 static fifoq_state_t *fifoq_list = NULL;
 
 /* internal function prototypes */
-static int		fifoq_enqueue __P((struct ifaltq *, struct mbuf *,
-					   struct altq_pktattr *));
-static struct mbuf 	*fifoq_dequeue __P((struct ifaltq *, int));
-static int 		fifoq_detach __P((fifoq_state_t *));
-static int		fifoq_request __P((struct ifaltq *, int, void *));
-static void 		fifoq_purge __P((fifoq_state_t *));
+static int		fifoq_enqueue(struct ifaltq *, struct mbuf *,
+					   struct altq_pktattr *);
+static struct mbuf 	*fifoq_dequeue(struct ifaltq *, int);
+static int 		fifoq_detach(fifoq_state_t *);
+static int		fifoq_request(struct ifaltq *, int, void *);
+static void 		fifoq_purge(fifoq_state_t *);
 
 /*
  * fifoq device interface

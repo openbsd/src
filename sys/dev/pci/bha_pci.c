@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.1 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.2 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@
 
 #define	PCI_CBIO	0x10
 
-int	bha_pci_match __P((struct device *, void *, void *));
-void	bha_pci_attach __P((struct device *, struct device *, void *));
+int	bha_pci_match(struct device *, void *, void *);
+void	bha_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach bha_pci_ca = {
 	sizeof(struct bha_softc), bha_pci_match, bha_pci_attach

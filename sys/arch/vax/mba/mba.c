@@ -1,4 +1,4 @@
-/*	$OpenBSD: mba.c,v 1.8 2001/11/06 19:53:17 miod Exp $ */
+/*	$OpenBSD: mba.c,v 1.9 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: mba.c,v 1.18 2000/01/24 02:40:36 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -70,13 +70,13 @@ struct	mbaunit mbaunit[] = {
 	{0,		0,	0}
 };
 
-int	mbamatch __P((struct device *, struct cfdata *, void *));
-void	mbaattach __P((struct device *, struct device *, void *));
-void	mbaintr __P((void *));
-int	mbaprint __P((void *, const char *));
-void	mbaqueue __P((struct mba_device *));
-void	mbastart __P((struct mba_softc *));
-void	mbamapregs __P((struct mba_softc *));
+int	mbamatch(struct device *, struct cfdata *, void *);
+void	mbaattach(struct device *, struct device *, void *);
+void	mbaintr(void *);
+int	mbaprint(void *, const char *);
+void	mbaqueue(struct mba_device *);
+void	mbastart(struct mba_softc *);
+void	mbamapregs(struct mba_softc *);
 
 struct	cfattach mba_cmi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach

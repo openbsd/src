@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 2001/11/06 22:45:54 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.3 2002/03/14 01:26:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -40,9 +40,9 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, void *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
+static int	mbmatch(struct device *, void *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
@@ -52,9 +52,9 @@ struct cfdriver mainbus_cd = {
 };
 
 void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	mb_intr_disestablish __P((struct confargs *));
-caddr_t	mb_cvtaddr __P((struct confargs *));
-int	mb_matchname __P((struct confargs *, char *));
+void	mb_intr_disestablish(struct confargs *);
+caddr_t	mb_cvtaddr(struct confargs *);
+int	mb_matchname(struct confargs *, char *);
 
 static int attached = 0;
 
@@ -126,7 +126,7 @@ mbprint(aux, pnp)
 void
 mb_intr_establish(ca, handler, val)
 	struct confargs *ca;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *val;
 {
 	panic("can never mb_intr_establish");

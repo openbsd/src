@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2001/06/25 00:43:12 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -81,15 +81,15 @@
 struct device	*booted_device;
 int		booted_partition;
 
-struct device *parsedisk __P((char *, int, int, dev_t *));
-static struct device *getdisk __P((char *, int, int, dev_t *));
-static int findblkmajor __P((struct device *));
-static int getstr __P((char *, int));
-static void findbootdev __P((void));
-static int target_to_unit __P((u_long, u_long, u_long));
+struct device *parsedisk(char *, int, int, dev_t *);
+static struct device *getdisk(char *, int, int, dev_t *);
+static int findblkmajor(struct device *);
+static int getstr(char *, int);
+static void findbootdev(void);
+static int target_to_unit(u_long, u_long, u_long);
 
-void	setroot __P((void));
-void	swapconf __P((void));
+void	setroot(void);
+void	swapconf(void);
 
 void
 cpu_configure()

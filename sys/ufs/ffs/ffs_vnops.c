@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.26 2002/02/22 20:37:46 drahn Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.27 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #include <ufs/ffs/ffs_extern.h>
 
 /* Global vfs data structures for ufs. */
-int (**ffs_vnodeop_p) __P((void *));
+int (**ffs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ufs_lookup },		/* lookup */
@@ -117,7 +117,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
 
-int (**ffs_specop_p) __P((void *));
+int (**ffs_specop_p)(void *);
 struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
@@ -167,7 +167,7 @@ struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
 
 #ifdef FIFO
-int (**ffs_fifoop_p) __P((void *));
+int (**ffs_fifoop_p)(void *);
 struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */

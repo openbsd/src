@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.9 2002/03/14 00:42:25 miod Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.10 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ static vfs_namemap_t signames[] = {
 };
 
 #ifdef PTRACE
-static int procfs_control __P((struct proc *, struct proc *, int));
+static int procfs_control(struct proc *, struct proc *, int);
 
 static int
 procfs_control(curp, p, op)

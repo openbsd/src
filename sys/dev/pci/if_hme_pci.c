@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.5 2002/03/13 21:02:54 jason Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ struct hme_pci_softc {
 	void			*hsc_ih;
 };
 
-int	hmematch_pci __P((struct device *, void *, void *));
-void	hmeattach_pci __P((struct device *, struct device *, void *));
+int	hmematch_pci(struct device *, void *, void *);
+void	hmeattach_pci(struct device *, struct device *, void *);
 
 struct cfattach hme_pci_ca = {
 	sizeof(struct hme_pci_softc), hmematch_pci, hmeattach_pci
@@ -106,7 +106,7 @@ hmeattach_pci(parent, self, aux)
 	struct hme_softc *sc = &hsc->hsc_hme;
 	pci_intr_handle_t intrhandle;
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 	pcireg_t csr;
 	const char *intrstr;
 	int type;

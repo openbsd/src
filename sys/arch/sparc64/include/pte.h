@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: pte.h,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -121,8 +121,8 @@ struct sun4u_tte {
 typedef struct sun4u_tte pte_t;
 
 /* Assembly routine to flush a mapping */
-extern void tlb_flush_pte __P((vaddr_t addr, int ctx));
-extern void tlb_flush_ctx __P((int ctx));
+extern void tlb_flush_pte(vaddr_t addr, int ctx);
+extern void tlb_flush_ctx(int ctx);
 
 #endif /* _LOCORE */
 

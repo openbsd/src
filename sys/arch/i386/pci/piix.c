@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.5 2001/01/25 00:07:40 mickey Exp $	*/
+/*	$OpenBSD: piix.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -89,11 +89,11 @@
 #define	DPRINTF(arg)
 #endif
 
-int	piix_getclink __P((pciintr_icu_handle_t, int, int *));
-int	piix_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	piix_set_intr __P((pciintr_icu_handle_t, int, int));
+int	piix_getclink(pciintr_icu_handle_t, int, int *);
+int	piix_get_intr(pciintr_icu_handle_t, int, int *);
+int	piix_set_intr(pciintr_icu_handle_t, int, int);
 #ifdef PIIX_DEBUG
-void	piix_pir_dump __P((struct piix_handle *));
+void	piix_pir_dump(struct piix_handle *);
 #endif
 
 const struct pciintr_icu piix_pci_icu = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.6 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.7 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct cis_state {
 	struct pcmcia_function *pf;
 };
 
-int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
+int	pcmcia_parse_cis_tuple(struct pcmcia_tuple *, void *);
 
 void
 pcmcia_read_cis(sc)
@@ -91,7 +91,7 @@ pcmcia_read_cis(sc)
 int
 pcmcia_scan_cis(dev, fct, arg)
 	struct device *dev;
-	int (*fct) __P((struct pcmcia_tuple *, void *));
+	int (*fct)(struct pcmcia_tuple *, void *);
 	void *arg;
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;

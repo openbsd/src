@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2001/11/28 16:13:29 art Exp $     */
+/*	$OpenBSD: trap.c,v 1.21 2002/03/14 01:26:49 millert Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,10 +61,10 @@
 volatile int startsysc = 0, faultdebug = 0;
 #endif
 
-static __inline void userret __P((struct proc *, struct trapframe *, u_quad_t));
+static __inline void userret(struct proc *, struct trapframe *, u_quad_t);
 
-void	arithflt __P((struct trapframe *));
-void	syscall __P((struct trapframe *));
+void	arithflt(struct trapframe *);
+void	syscall(struct trapframe *);
 
 char *traptypes[]={
 	"reserved addressing",

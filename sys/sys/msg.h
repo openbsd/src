@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.7 2001/09/28 01:42:54 millert Exp $	*/
+/*	$OpenBSD: msg.h,v 1.8 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -176,14 +176,14 @@ extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int msgctl __P((int, int, struct msqid_ds *));
-int msgget __P((key_t, int));
-int msgsnd __P((int, const void *, size_t, int));
-int msgrcv __P((int, void *, size_t, long, int));
+int msgctl(int, int, struct msqid_ds *);
+int msgget(key_t, int);
+int msgsnd(int, const void *, size_t, int);
+int msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
-void msginit __P((void));
-void msqid_n2o __P((struct msqid_ds *, struct omsqid_ds *));
+void msginit(void);
+void msqid_n2o(struct msqid_ds *, struct omsqid_ds *);
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

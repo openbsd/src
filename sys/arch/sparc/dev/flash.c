@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.1 1999/07/23 19:11:26 jason Exp $	*/
+/*	$OpenBSD: flash.c,v 1.2 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -48,15 +48,15 @@
 #include <sparc/cpu.h>
 #include <sparc/sparc/cpuvar.h>
 
-int	flashmatch	__P((struct device *, void *, void *));
-void	flashattach	__P((struct device *, struct device *, void *));
+int	flashmatch(struct device *, void *, void *);
+void	flashattach(struct device *, struct device *, void *);
 
-int	flashopen	__P((dev_t, int, int, struct proc *p));
-int	flashclose	__P((dev_t, int, int, struct proc *p));
-int	flashread	__P((dev_t, struct uio *, int));
-int	flashwrite	__P((dev_t, struct uio *, int));
-int	flashrw		__P((dev_t, struct uio *, int));
-int	flashioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
+int	flashopen(dev_t, int, int, struct proc *p);
+int	flashclose(dev_t, int, int, struct proc *p);
+int	flashread(dev_t, struct uio *, int);
+int	flashwrite(dev_t, struct uio *, int);
+int	flashrw(dev_t, struct uio *, int);
+int	flashioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*
  * We see the flash-memory in 512k windows.  The current window is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_gb.c,v 1.1 1997/07/14 08:14:19 downsj Exp $	*/
+/*	$OpenBSD: ite_gb.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: ite_gb.c,v 1.8 1996/03/03 04:23:36 thorpej Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 #define REGBASE     	((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER 	gbox_windowmove
 
-void	gbox_windowmove __P((struct ite_data *, int, int, int, int,
-	    int, int, int));
+void	gbox_windowmove(struct ite_data *, int, int, int, int,
+	    int, int, int);
 
 void
 gbox_init(ip)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs_kgdb.c,v 1.5 1997/01/16 04:04:01 kstailey Exp $	*/
+/*	$OpenBSD: zs_kgdb.c,v 1.6 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: zs_kgdb.c,v 1.9 1996/11/20 18:57:04 gwr Exp $	*/
 
 /*-
@@ -79,10 +79,10 @@ struct zschan {
 extern int kgdb_dev;
 extern int kgdb_rate;
 
-struct zschan * zs_get_chan_addr __P((int zsc_unit, int channel));
+struct zschan * zs_get_chan_addr(int zsc_unit, int channel);
 
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg,	int c));
+extern int  zs_getc(void *arg);
+extern void zs_putc(void *arg,	int c);
 
 struct zsops zsops_kgdb;
 

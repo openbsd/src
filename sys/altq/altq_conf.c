@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_conf.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_conf.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_conf.c,v 1.11 2001/06/21 11:00:36 kjc Exp $	*/
 
 /*
@@ -149,9 +149,9 @@ int	naltqsw = sizeof (altqsw) / sizeof (altqsw[0]);
 static	d_open_t	altqopen;
 static	d_close_t	altqclose;
 static	d_ioctl_t	altqioctl;
-static void altq_drvinit __P((void *));
+static void altq_drvinit(void *);
 #else
-void	altqattach __P((int));
+void	altqattach(int);
 #endif
 
 #if defined(__FreeBSD__)
@@ -329,8 +329,8 @@ SYSINIT(altqdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,altq_drvinit,NULL)
 /*
  * KLD support
  */
-static int altq_module_register __P((struct altq_module_data *));
-static int altq_module_deregister __P((struct altq_module_data *));
+static int altq_module_register(struct altq_module_data *);
+static int altq_module_deregister(struct altq_module_data *);
 
 static struct altq_module_data *altq_modules[ALTQT_MAX];
 static struct altqsw noqdisc = {"noq", noopen, noclose, noioctl};

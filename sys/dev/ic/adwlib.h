@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.9 2001/11/11 21:59:19 krw Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.10 2002/03/14 01:26:53 millert Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -1101,13 +1101,13 @@ typedef struct {
  * Adw Library functions available to drivers.
  */
 
-int	AdwInitFromEEPROM __P((ADW_SOFTC *));
-int	AdwInitDriver __P((ADW_SOFTC *));
-int	AdwExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-int	AdwISR __P((ADW_SOFTC *));
-void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
-int	AdwSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
-int	AdwResetSCSIBus __P((ADW_SOFTC *));
-int	AdwResetCCB __P((ADW_SOFTC *));
+int	AdwInitFromEEPROM(ADW_SOFTC *);
+int	AdwInitDriver(ADW_SOFTC *);
+int	AdwExeScsiQueue(ADW_SOFTC *, ADW_SCSI_REQ_Q *);
+int	AdwISR(ADW_SOFTC *);
+void	AdwResetChip(bus_space_tag_t, bus_space_handle_t);
+int	AdwSendIdleCmd(ADW_SOFTC *, u_int16_t, u_int32_t);
+int	AdwResetSCSIBus(ADW_SOFTC *);
+int	AdwResetCCB(ADW_SOFTC *);
 
 #endif	/* _ADVANSYS_WIDE_LIBRARY_H_ */

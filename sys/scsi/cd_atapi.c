@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_atapi.c,v 1.1 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: cd_atapi.c,v 1.2 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: cd_atapi.c,v 1.10 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
@@ -73,12 +73,12 @@
 #include <scsi/scsiconf.h>
 
 
-static int cd_atapibus_setchan __P((struct cd_softc *, int, int, int, int, int));
-static int cd_atapibus_getvol __P((struct cd_softc *, struct ioc_vol *, int));
-static int cd_atapibus_setvol __P((struct cd_softc *, const struct ioc_vol *,
-	    int));
-static int cd_atapibus_set_pa_immed __P((struct cd_softc *, int));
-static int cd_atapibus_load_unload __P((struct cd_softc *, int, int));
+static int cd_atapibus_setchan(struct cd_softc *, int, int, int, int, int);
+static int cd_atapibus_getvol(struct cd_softc *, struct ioc_vol *, int);
+static int cd_atapibus_setvol(struct cd_softc *, const struct ioc_vol *,
+	    int);
+static int cd_atapibus_set_pa_immed(struct cd_softc *, int);
+static int cd_atapibus_load_unload(struct cd_softc *, int, int);
 
 const struct cd_ops cd_atapibus_ops = {
 	cd_atapibus_setchan,

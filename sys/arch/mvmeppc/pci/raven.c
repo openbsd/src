@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.5 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: raven.c,v 1.6 2002/03/14 01:26:41 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -55,24 +55,24 @@
 #include <mvmeppc/pci/pcibrvar.h>
 #include <mvmeppc/pci/ravenreg.h>
 
-int	 mpcpcibrmatch __P((struct device *, void *, void *));
-void	 mpcpcibrattach __P((struct device *, struct device *, void *));
+int	 mpcpcibrmatch(struct device *, void *, void *);
+void	 mpcpcibrattach(struct device *, struct device *, void *);
 
-void	 mpc_attach_hook __P((struct device *, struct device *,
-				struct pcibus_attach_args *));
-int	 mpc_bus_maxdevs __P((void *, int));
-pcitag_t mpc_make_tag __P((void *, int, int, int));
-void	 mpc_decompose_tag __P((void *, pcitag_t, int *, int *, int *));
-pcireg_t mpc_conf_read __P((void *, pcitag_t, int));
-void	 mpc_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void	 mpc_attach_hook(struct device *, struct device *,
+				struct pcibus_attach_args *);
+int	 mpc_bus_maxdevs(void *, int);
+pcitag_t mpc_make_tag(void *, int, int, int);
+void	 mpc_decompose_tag(void *, pcitag_t, int *, int *, int *);
+pcireg_t mpc_conf_read(void *, pcitag_t, int);
+void	 mpc_conf_write(void *, pcitag_t, int, pcireg_t);
 
-int      mpc_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
-const char *mpc_intr_string __P((void *, pci_intr_handle_t));
-int	 mpc_intr_line __P((void *, pci_intr_handle_t));
+int      mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
+const char *mpc_intr_string(void *, pci_intr_handle_t);
+int	 mpc_intr_line(void *, pci_intr_handle_t);
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
-void     mpc_intr_disestablish __P((void *, void *));
-int      mpc_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
+void     mpc_intr_disestablish(void *, void *);
+int      mpc_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -82,7 +82,7 @@ struct cfdriver mpcpcibr_cd = {
 	NULL, "mpcpcibr", DV_DULL,
 };
 
-static int      mpcpcibrprint __P((void *, const char *pnp));
+static int      mpcpcibrprint(void *, const char *pnp);
 
 struct pcibr_config mpc_config;
 
@@ -485,7 +485,7 @@ mpc_intr_string(lcv, ih)
 
 typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
             int, int, int (*func)(void *), void *, char *));
-typedef void     (intr_disestablish_t) __P((void *, void *));
+typedef void     (intr_disestablish_t)(void *, void *);
 extern intr_establish_t *intr_establish_func;
 extern intr_disestablish_t *intr_disestablish_func;
 
@@ -494,7 +494,7 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 	void *lcv;
 	pci_intr_handle_t ih;
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	char *name;
 {

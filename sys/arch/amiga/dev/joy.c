@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.1 2000/09/02 13:45:40 espie Exp $ */
+/*	$OpenBSD: joy.c,v 1.2 2002/03/14 01:26:29 millert Exp $ */
 
 /*
  * Copyright (c) 2000 Marc Espie.
@@ -38,8 +38,8 @@
 
 
 
-int joymatch __P((struct device *, void *, void *));
-void joyattach __P((struct device *, struct device *, void *));
+int joymatch(struct device *, void *, void *);
+void joyattach(struct device *, struct device *, void *);
 
 struct cfattach joy_ca = {
 	sizeof(struct device), joymatch, joyattach

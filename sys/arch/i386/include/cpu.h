@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.40 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.41 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -93,13 +93,13 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay __P((int));
+void	delay(int);
 
 #if defined(I586_CPU) || defined(I686_CPU)
 /*
  * High resolution clock support (Pentium only)
  */
-void	calibrate_cyclecounter __P((void));
+void	calibrate_cyclecounter(void);
 #ifndef	HZ
 extern u_quad_t pentium_base_tsc;
 #define CPU_CLOCKUPDATE(otime, ntime)					\
@@ -134,7 +134,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
-	void (*cpu_setup) __P((const char *, int, int));
+	void (*cpu_setup)(const char *, int, int);
 };
 
 struct cpu_cpuid_nameclass {
@@ -144,7 +144,7 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup) __P((const char *, int, int));
+		void (*cpu_setup)(const char *, int, int);
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -170,68 +170,68 @@ extern int pentium_mhz;
 #ifdef I586_CPU
 /* F00F bug fix stuff for pentium cpu */
 extern int cpu_f00f_bug;
-void fix_f00f __P((void));
+void fix_f00f(void);
 #endif
 
 /* dkcsum.c */
-void	dkcsumattach __P((void));
+void	dkcsumattach(void);
 
 /* machdep.c */
-void	dumpconf __P((void));
-void	cpu_reset __P((void));
-void	i386_proc0_tss_ldt_init __P((void));
+void	dumpconf(void);
+void	cpu_reset(void);
+void	i386_proc0_tss_ldt_init(void);
 
 /* locore.s */
 struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
-short	fusword __P((u_short *));
-int	susword __P((u_short *t, u_short));
+void	lgdt(struct region_descriptor *);
+void	fillw(short, void *, size_t);
+short	fusword(u_short *);
+int	susword(u_short *t, u_short);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	proc_trampoline __P((void));
+void	savectx(struct pcb *);
+void	switch_exit(struct proc *);
+void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock __P((void));
-void	startrtclock __P((void));
-void	rtcdrain __P((void *));
+void	initrtclock(void);
+void	startrtclock(void);
+void	rtcdrain(void *);
 
 /* npx.c */
-void	npxdrop __P((void));
-void	npxsave __P((void));
+void	npxdrop(void);
+void	npxsave(void);
 
 #if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
 /* math_emulate.c */
-int	math_emulate __P((struct trapframe *));
+int	math_emulate(struct trapframe *);
 #endif
 
 #ifdef USER_LDT
 /* sys_machdep.h */
-void	i386_user_cleanup __P((struct pcb *));
-int	i386_get_ldt __P((struct proc *, void *, register_t *));
-int	i386_set_ldt __P((struct proc *, void *, register_t *));
+void	i386_user_cleanup(struct pcb *);
+int	i386_get_ldt(struct proc *, void *, register_t *);
+int	i386_set_ldt(struct proc *, void *, register_t *);
 #endif
 
 /* isa_machdep.c */
-void	isa_defaultirq __P((void));
-int	isa_nmi __P((void));
+void	isa_defaultirq(void);
+int	isa_nmi(void);
 
 /* pmap.c */
-void	pmap_bootstrap __P((vm_offset_t));
+void	pmap_bootstrap(vm_offset_t);
 
 /* vm_machdep.c */
-int	kvtop __P((caddr_t));
+int	kvtop(caddr_t);
 
 #ifdef VM86
 /* vm86.c */
-void	vm86_gpfault __P((struct proc *, int));
+void	vm86_gpfault(struct proc *, int);
 #endif /* VM86 */
 
 #ifdef GENERIC
 /* swapgeneric.c */
-void	setconf __P((void));
+void	setconf(void);
 #endif /* GENERIC */
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.6 2001/04/14 04:48:01 aaron Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.7 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -45,14 +45,14 @@
 #include <dev/wscons/wsemul_vt100var.h>
 #include <dev/wscons/ascii.h>
 
-void	*wsemul_vt100_cnattach __P((const struct wsscreen_descr *, void *,
-				  int, int, long));
-void	*wsemul_vt100_attach __P((int console, const struct wsscreen_descr *,
-				  void *, int, int, void *, long));
-void	wsemul_vt100_output __P((void *cookie, const u_char *data, u_int count,
-				 int));
-void	wsemul_vt100_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
-void	wsemul_vt100_resetop __P((void *, enum wsemul_resetops));
+void	*wsemul_vt100_cnattach(const struct wsscreen_descr *, void *,
+				  int, int, long);
+void	*wsemul_vt100_attach(int console, const struct wsscreen_descr *,
+				  void *, int, int, void *, long);
+void	wsemul_vt100_output(void *cookie, const u_char *data, u_int count,
+				 int);
+void	wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp);
+void	wsemul_vt100_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_vt100_ops = {
 	"vt100",
@@ -66,15 +66,15 @@ const struct wsemul_ops wsemul_vt100_ops = {
 
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
 
-void wsemul_vt100_init __P((struct wsemul_vt100_emuldata *,
+void wsemul_vt100_init(struct wsemul_vt100_emuldata *,
 			    const struct wsscreen_descr *, void *, int, int,
-			    long));
+			    long);
 
-void wsemul_vt100_output_normal __P((struct wsemul_vt100_emuldata *, u_char,
-				     int));
-void wsemul_vt100_output_c0c1 __P((struct wsemul_vt100_emuldata *, u_char,
-				   int));
-typedef u_int vt100_handler __P((struct wsemul_vt100_emuldata *, u_char));
+void wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *, u_char,
+				     int);
+void wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *, u_char,
+				   int);
+typedef u_int vt100_handler(struct wsemul_vt100_emuldata *, u_char);
 static vt100_handler
 wsemul_vt100_output_esc,
 wsemul_vt100_output_csi,

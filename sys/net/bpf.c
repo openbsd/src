@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.30 2001/10/02 18:04:35 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.31 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -79,19 +79,19 @@ struct bpf_if	*bpf_iflist;
 struct bpf_d	*bpf_dtab;
 int nbpfilter;
 
-int	bpf_allocbufs __P((struct bpf_d *));
-void	bpf_freed __P((struct bpf_d *));
-void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-void	bpf_mcopy __P((const void *, void *, size_t));
-int	bpf_movein __P((struct uio *, int, struct mbuf **, struct sockaddr *));
-void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
-void	bpf_detachd __P((struct bpf_d *));
-int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-int	bpfselect __P((dev_t, int, struct proc *));
-static __inline void bpf_wakeup __P((struct bpf_d *));
+int	bpf_allocbufs(struct bpf_d *);
+void	bpf_freed(struct bpf_d *);
+void	bpf_ifname(struct ifnet *, struct ifreq *);
+void	bpf_mcopy(const void *, void *, size_t);
+int	bpf_movein(struct uio *, int, struct mbuf **, struct sockaddr *);
+void	bpf_attachd(struct bpf_d *, struct bpf_if *);
+void	bpf_detachd(struct bpf_d *);
+int	bpf_setif(struct bpf_d *, struct ifreq *);
+int	bpfselect(dev_t, int, struct proc *);
+static __inline void bpf_wakeup(struct bpf_d *);
 void	bpf_catchpacket __P((struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t)));
-void	bpf_reset_d __P((struct bpf_d *));
+void	bpf_reset_d(struct bpf_d *);
 
 int
 bpf_movein(uio, linktype, mp, sockp)
@@ -1064,7 +1064,7 @@ bpf_catchpacket(d, pkt, pktlen, snaplen, cpfn)
 	register struct bpf_d *d;
 	register u_char *pkt;
 	register size_t pktlen, snaplen;
-	register void (*cpfn) __P((const void *, void *, size_t));
+	register void (*cpfn)(const void *, void *, size_t);
 {
 	register struct bpf_hdr *hp;
 	register int totlen, curlen;

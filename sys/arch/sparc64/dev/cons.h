@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.1 2001/08/19 05:21:37 jason Exp $	*/
+/*	$OpenBSD: cons.h,v 1.2 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: cons.h,v 1.3 2000/05/19 05:26:17 eeh Exp $	*/
 
 /*-
@@ -48,22 +48,22 @@ struct pconssoftc {
 
 /* These are shared with the consinit OBP console */
 extern int stdin, stdout;
-void pcons_cnpollc __P((dev_t dev, int on));
+void pcons_cnpollc(dev_t dev, int on);
 
 struct consdev;
 struct zs_chanstate;
 
 extern void *zs_conschan;
 
-extern void nullcnprobe __P((struct consdev *));
+extern void nullcnprobe(struct consdev *);
 
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg, int c));
+extern int  zs_getc(void *arg);
+extern void zs_putc(void *arg, int c);
 
 struct zschan *
-zs_get_chan_addr __P((int zsc_unit, int channel));
+zs_get_chan_addr(int zsc_unit, int channel);
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
-void zskgdb __P((struct zs_chanstate *));
+void zs_kgdb_init(void);
+void zskgdb(struct zs_chanstate *);
 #endif

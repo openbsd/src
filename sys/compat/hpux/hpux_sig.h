@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.h,v 1.1 1997/04/16 09:18:11 downsj Exp $	*/
+/*	$OpenBSD: hpux_sig.h,v 1.2 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: hpux_sig.h,v 1.1 1997/04/01 19:59:03 scottr Exp $	*/
 
 /*
@@ -48,8 +48,8 @@
  */
 
 #ifdef _KERNEL
-int	hpuxtobsdsig __P((int));
-int	bsdtohpuxsig __P((int));
-int	hpuxtobsdmask __P((int));
-int	bsdtohpuxmask __P((int));
+int	hpuxtobsdsig(int);
+int	bsdtohpuxsig(int);
+int	hpuxtobsdmask(int);
+int	bsdtohpuxmask(int);
 #endif /* _KERNEL */

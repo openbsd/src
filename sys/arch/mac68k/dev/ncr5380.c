@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.16 2001/08/26 00:45:08 fgsch Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.17 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -73,9 +73,9 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys __P((struct buf *bp));
-static int	ncr5380_scsi_cmd __P((struct scsi_xfer *xs));
-static void	ncr5380_show_scsi_cmd __P((struct scsi_xfer *xs));
+static void	ncr5380_minphys(struct buf *bp);
+static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
@@ -197,8 +197,8 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, void *, void *));
+void	ncr_attach(struct device *, struct device *, void *);
+int	ncr_match(struct device *, void *, void *);
 
 /*
  * Tricks to make driver-name configurable

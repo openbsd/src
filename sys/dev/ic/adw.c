@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.25 2001/11/11 21:59:19 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.26 2002/03/14 01:26:53 millert Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -70,30 +70,30 @@
 /******************************************************************************/
 
 
-void adw_enqueue __P((ADW_SOFTC *, struct scsi_xfer *, int));
-struct scsi_xfer *adw_dequeue __P((ADW_SOFTC *));
+void adw_enqueue(ADW_SOFTC *, struct scsi_xfer *, int);
+struct scsi_xfer *adw_dequeue(ADW_SOFTC *);
 
-int adw_alloc_controls __P((ADW_SOFTC *));
-int adw_alloc_carriers __P((ADW_SOFTC *));
-int adw_create_ccbs __P((ADW_SOFTC *, ADW_CCB *, int));
-void adw_free_ccb __P((ADW_SOFTC *, ADW_CCB *));
-void adw_reset_ccb __P((ADW_CCB *));
-int adw_init_ccb __P((ADW_SOFTC *, ADW_CCB *));
-ADW_CCB *adw_get_ccb __P((ADW_SOFTC *, int));
-int adw_queue_ccb __P((ADW_SOFTC *, ADW_CCB *, int));
+int adw_alloc_controls(ADW_SOFTC *);
+int adw_alloc_carriers(ADW_SOFTC *);
+int adw_create_ccbs(ADW_SOFTC *, ADW_CCB *, int);
+void adw_free_ccb(ADW_SOFTC *, ADW_CCB *);
+void adw_reset_ccb(ADW_CCB *);
+int adw_init_ccb(ADW_SOFTC *, ADW_CCB *);
+ADW_CCB *adw_get_ccb(ADW_SOFTC *, int);
+int adw_queue_ccb(ADW_SOFTC *, ADW_CCB *, int);
 
-int adw_scsi_cmd __P((struct scsi_xfer *));
-int adw_build_req __P((struct scsi_xfer *, ADW_CCB *, int));
-void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
-void adw_minphys __P((struct buf *));
-void adw_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-void adw_async_callback __P((ADW_SOFTC *, u_int8_t));
+int adw_scsi_cmd(struct scsi_xfer *);
+int adw_build_req(struct scsi_xfer *, ADW_CCB *, int);
+void adw_build_sglist(ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *);
+void adw_minphys(struct buf *);
+void adw_isr_callback(ADW_SOFTC *, ADW_SCSI_REQ_Q *);
+void adw_async_callback(ADW_SOFTC *, u_int8_t);
 
-void adw_print_info __P((ADW_SOFTC *, int));
+void adw_print_info(ADW_SOFTC *, int);
 
-int adw_poll __P((ADW_SOFTC *, struct scsi_xfer *, int));
-void adw_timeout __P((void *));
-void adw_reset_bus __P((ADW_SOFTC *));
+int adw_poll(ADW_SOFTC *, struct scsi_xfer *, int);
+void adw_timeout(void *);
+void adw_reset_bus(ADW_SOFTC *);
 
 
 /******************************************************************************/

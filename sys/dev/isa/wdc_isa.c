@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.7 2001/03/25 13:11:58 csapuntz Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.8 2002/03/14 01:26:56 millert Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -78,21 +78,21 @@ struct wdc_isa_softc {
 };
 
 #ifndef __OpenBSD__
-int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
+int	wdc_isa_probe(struct device *, struct cfdata *, void *);
 #else
-int	wdc_isa_probe	__P((struct device *, void *, void *));
+int	wdc_isa_probe(struct device *, void *, void *);
 #endif
-void	wdc_isa_attach	__P((struct device *, struct device *, void *));
+void	wdc_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach wdc_isa_ca = {
 	sizeof(struct wdc_isa_softc), wdc_isa_probe, wdc_isa_attach
 };
 
 #if NISADMA > 0
-static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
-static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
-static void 	wdc_isa_dma_start __P((void*, int, int));
-static int	wdc_isa_dma_finish __P((void*, int, int));
+static void	wdc_isa_dma_setup(struct wdc_isa_softc *);
+static int	wdc_isa_dma_init(void*, int, int, void *, size_t, int);
+static void 	wdc_isa_dma_start(void*, int, int);
+static int	wdc_isa_dma_finish(void*, int, int);
 #endif	/* NISADMA > 0 */
 
 int

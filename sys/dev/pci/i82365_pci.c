@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.5 2001/09/21 17:55:43 miod Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.6 2002/03/14 01:26:58 millert Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
  */
 #define	PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-int	pcic_pci_match __P((struct device *, void *, void *));
-void	pcic_pci_attach __P((struct device *, struct device *, void *));
+int	pcic_pci_match(struct device *, void *, void *);
+void	pcic_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach pcic_pci_ca = {
 	sizeof(struct pcic_pci_softc), pcic_pci_match, pcic_pci_attach
@@ -106,7 +106,7 @@ pcic_pci_match(parent, match, aux)
 	return (1);
 }
 
-void pcic_isa_config_interrupts __P((struct device *));
+void pcic_isa_config_interrupts(struct device *);
 
 void
 pcic_pci_attach(parent, self, aux)

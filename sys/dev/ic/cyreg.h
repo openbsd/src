@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.6 2001/08/20 04:41:39 smart Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.7 2002/03/14 01:26:54 millert Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -179,8 +179,8 @@ struct cy_softc {
 #endif
 };
 
-int	cy_probe_common __P((int, bus_space_tag_t, bus_space_handle_t, int));
-void	cy_attach __P((struct device *, struct device *, void *));
-int	cy_intr __P((void *));
+int	cy_probe_common(int, bus_space_tag_t, bus_space_handle_t, int);
+void	cy_attach(struct device *, struct device *, void *);
+int	cy_intr(void *);
 
 #endif	/* _DEV_IC_CYREG_H_ */

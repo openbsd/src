@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trtcm_isa.c,v 1.2 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: if_trtcm_isa.c,v 1.3 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRTCMISADEBUG
@@ -60,15 +60,15 @@
 
 #include <dev/ic/elink3reg.h>
 
-u_int16_t	tcmreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
+u_int16_t	tcmreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
 #ifdef TRTCMISADEBUG
-void	tcmdumpeeprom __P((bus_space_tag_t, bus_space_handle_t));
+void	tcmdumpeeprom(bus_space_tag_t, bus_space_handle_t);
 #endif
 
-int	trtcm_isa_probe __P((struct device *, void *, void *));
+int	trtcm_isa_probe(struct device *, void *, void *);
 
-int	trtcm_isa_mediachange __P((struct tr_softc *));
-void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
+int	trtcm_isa_mediachange(struct tr_softc *);
+void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
 
 /*
  * TODO:
@@ -79,7 +79,7 @@ void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
  * DIR_SET_DEFAULT_RING_SPEED or set the speed in the eeprom ??
  */
 
-static	void tcmaddcard __P((int, int, int, int, u_int, int, int));
+static	void tcmaddcard(int, int, int, int, u_int, int, int);
 
 /*
  * This keeps track of which ISAs have been through a 3com probe sequence.

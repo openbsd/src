@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.57 2002/02/17 22:59:53 maja Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.58 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -90,8 +90,7 @@ struct	pkthdr {
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)		/* free routine if not the usual */
-		    __P((caddr_t, u_int, void *));
+	void	(*ext_free)		/* free routine if not the usual */(caddr_t, u_int, void *);
 	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;
@@ -540,46 +539,46 @@ extern	int mbtypes[];			/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;
 
-void	mbinit __P((void));
-struct	mbuf *m_copym2 __P((struct mbuf *, int, int, int));
-struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
-struct	mbuf *m_free __P((struct mbuf *));
-struct	mbuf *m_get __P((int, int));
-struct	mbuf *m_getclr __P((int, int));
-struct	mbuf *m_gethdr __P((int, int));
-struct	mbuf *m_prepend __P((struct mbuf *, int, int));
-struct	mbuf *m_pulldown __P((struct mbuf *, int, int, int *));
-struct	mbuf *m_pullup __P((struct mbuf *, int));
-struct	mbuf *m_pullup2 __P((struct mbuf *, int));
-struct	mbuf *m_split __P((struct mbuf *, int, int));
-struct  mbuf *m_inject __P((struct mbuf *, int, int, int));
-struct  mbuf *m_getptr __P((struct mbuf *, int, int *));
-void	m_adj __P((struct mbuf *, int));
-int	m_clalloc __P((int, int));
-void	m_copyback __P((struct mbuf *, int, int, caddr_t));
-void	m_freem __P((struct mbuf *));
-void	m_reclaim __P((void *, int));
-void	m_copydata __P((struct mbuf *, int, int, caddr_t));
-void	m_cat __P((struct mbuf *, struct mbuf *));
+void	mbinit(void);
+struct	mbuf *m_copym2(struct mbuf *, int, int, int);
+struct	mbuf *m_copym(struct mbuf *, int, int, int);
+struct	mbuf *m_free(struct mbuf *);
+struct	mbuf *m_get(int, int);
+struct	mbuf *m_getclr(int, int);
+struct	mbuf *m_gethdr(int, int);
+struct	mbuf *m_prepend(struct mbuf *, int, int);
+struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
+struct	mbuf *m_pullup(struct mbuf *, int);
+struct	mbuf *m_pullup2(struct mbuf *, int);
+struct	mbuf *m_split(struct mbuf *, int, int);
+struct  mbuf *m_inject(struct mbuf *, int, int, int);
+struct  mbuf *m_getptr(struct mbuf *, int, int *);
+void	m_adj(struct mbuf *, int);
+int	m_clalloc(int, int);
+void	m_copyback(struct mbuf *, int, int, caddr_t);
+void	m_freem(struct mbuf *);
+void	m_reclaim(void *, int);
+void	m_copydata(struct mbuf *, int, int, caddr_t);
+void	m_cat(struct mbuf *, struct mbuf *);
 struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
-	    void (*) __P((const void *, void *, size_t))));
-void	m_zero __P((struct mbuf *));
+	    void (*)(const void *, void *, size_t)));
+void	m_zero(struct mbuf *);
 int	m_apply __P((struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
 
 /* Packet tag routines */
-struct m_tag *m_tag_get __P((int, int, int));
-void	m_tag_free __P((struct m_tag *));
-void	m_tag_prepend __P((struct mbuf *, struct m_tag *));
-void	m_tag_unlink __P((struct mbuf *, struct m_tag *));
-void	m_tag_delete __P((struct mbuf *, struct m_tag *));
-void	m_tag_delete_chain __P((struct mbuf *, struct m_tag *));
-struct m_tag *m_tag_find __P((struct mbuf *, int, struct m_tag *));
-struct m_tag *m_tag_copy __P((struct m_tag *));
-int	m_tag_copy_chain __P((struct mbuf *, struct mbuf *));
-void	m_tag_init __P((struct mbuf *));
-struct m_tag *m_tag_first __P((struct mbuf *));
-struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
+struct m_tag *m_tag_get(int, int, int);
+void	m_tag_free(struct m_tag *);
+void	m_tag_prepend(struct mbuf *, struct m_tag *);
+void	m_tag_unlink(struct mbuf *, struct m_tag *);
+void	m_tag_delete(struct mbuf *, struct m_tag *);
+void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
+struct m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
+struct m_tag *m_tag_copy(struct m_tag *);
+int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
+void	m_tag_init(struct mbuf *);
+struct m_tag *m_tag_first(struct mbuf *);
+struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
 #define PACKET_TAG_NONE				0  /* Nadda */

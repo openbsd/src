@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasic.c,v 1.7 1999/01/11 05:11:04 millert Exp $	*/
+/*	$OpenBSD: ioasic.c,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: ioasic.c,v 1.10 1996/12/05 01:39:41 cgd Exp $	*/
 
 /*
@@ -53,11 +53,11 @@ struct ioasic_softc {
 
 /* Definition of the driver for autoconfig. */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	ioasicmatch __P((struct device *, void *, void *));
+int	ioasicmatch(struct device *, void *, void *);
 #else
-int	ioasicmatch __P((struct device *, struct cfdata *, void *));
+int	ioasicmatch(struct device *, struct cfdata *, void *);
 #endif
-void	ioasicattach __P((struct device *, struct device *, void *));
+void	ioasicattach(struct device *, struct device *, void *);
 int     ioasicprint(void *, const char *);
 
 struct cfattach ioasic_ca = {
@@ -68,8 +68,8 @@ struct cfdriver ioasic_cd = {
 	NULL, "ioasic", DV_DULL,
 };
 
-int	ioasic_intr __P((void *));
-int	ioasic_intrnull __P((void *));
+int	ioasic_intr(void *);
+int	ioasic_intrnull(void *);
 
 #define	C(x)	((void *)(x))
 
@@ -98,7 +98,7 @@ struct ioasic_dev {
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
 struct ioasicintr {
-	int	(*iai_func) __P((void *));
+	int	(*iai_func)(void *);
 	void	*iai_arg;
 } ioasicintrs[IOASIC_NCOOKIES];
 
@@ -223,7 +223,7 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 	struct device *ioa;
 	void *cookie, *arg;
 	tc_intrlevel_t level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 {
 	u_long dev, i;
 

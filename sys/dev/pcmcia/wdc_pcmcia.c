@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.13 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.14 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -84,10 +84,10 @@ struct wdc_pcmcia_softc {
 #define WDC_PCMCIA_ATTACH       0x0001
 };
 
-static int wdc_pcmcia_match	__P((struct device *, void *, void *));
-static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
-int    wdc_pcmcia_detach   __P((struct device *, int));
-int    wdc_pcmcia_activate __P((struct device *, enum devact));
+static int wdc_pcmcia_match(struct device *, void *, void *);
+static void wdc_pcmcia_attach(struct device *, struct device *, void *);
+int    wdc_pcmcia_detach(struct device *, int);
+int    wdc_pcmcia_activate(struct device *, enum devact);
 
 struct cfattach wdc_pcmcia_ca = {
 	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
@@ -139,13 +139,13 @@ struct wdc_pcmcia_disk_device_interface_args {
 	int ddi_curfn;		/* function we are currently parsing in CIS */
 };
 
-int	wdc_pcmcia_disk_device_interface_callback __P((struct pcmcia_tuple *,
-	    void *));
-int	wdc_pcmcia_disk_device_interface __P((struct pcmcia_function *));
+int	wdc_pcmcia_disk_device_interface_callback(struct pcmcia_tuple *,
+	    void *);
+int	wdc_pcmcia_disk_device_interface(struct pcmcia_function *);
 struct wdc_pcmcia_product *
-	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
+	wdc_pcmcia_lookup(struct pcmcia_attach_args *);
 
-int	wdc_pcmcia_enable __P((void *, int));
+int	wdc_pcmcia_enable(void *, int);
 
 int
 wdc_pcmcia_disk_device_interface_callback(tuple, arg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.10 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.11 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -91,9 +91,9 @@
 
 #include <dev/ic/xlreg.h>
 
-int xl_pci_match	__P((struct device *, void *, void *));
-void xl_pci_attach	__P((struct device *, struct device *, void *));
-void xl_pci_intr_ack	__P((struct xl_softc *));
+int xl_pci_match(struct device *, void *, void *);
+void xl_pci_attach(struct device *, struct device *, void *);
+void xl_pci_intr_ack(struct xl_softc *);
 
 struct cfattach xl_pci_ca = {
 	sizeof(struct xl_softc), xl_pci_match, xl_pci_attach,

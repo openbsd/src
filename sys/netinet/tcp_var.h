@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.41 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.42 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -360,84 +360,84 @@ extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
 #endif
 
-int	 tcp_attach __P((struct socket *));
-void	 tcp_canceltimers __P((struct tcpcb *));
+int	 tcp_attach(struct socket *);
+void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
-	 tcp_close __P((struct tcpcb *));
+	 tcp_close(struct tcpcb *);
 #if defined(INET6) && !defined(TCP6)
-void	 tcp6_ctlinput __P((int, struct sockaddr *, void *));
+void	 tcp6_ctlinput(int, struct sockaddr *, void *);
 #endif
-void	 *tcp_ctlinput __P((int, struct sockaddr *, void *));
-int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+void	 *tcp_ctlinput(int, struct sockaddr *, void *);
+int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf **);
 struct tcpcb *
-	 tcp_disconnect __P((struct tcpcb *));
+	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *
-	 tcp_drop __P((struct tcpcb *, int));
-void	 tcp_dooptions __P((struct tcpcb *, u_char *, int, struct tcphdr *,
-		int *, u_int32_t *, u_int32_t *)); 
-void	 tcp_drain __P((void));
-void	 tcp_init __P((void));
+	 tcp_drop(struct tcpcb *, int);
+void	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
+		int *, u_int32_t *, u_int32_t *); 
+void	 tcp_drain(void);
+void	 tcp_init(void);
 #if defined(INET6) && !defined(TCP6)
-int	 tcp6_input __P((struct mbuf **, int *, int));
+int	 tcp6_input(struct mbuf **, int *, int);
 #endif
-void	 tcp_input __P((struct mbuf *, ...));
-int	 tcp_mss __P((struct tcpcb *, int));
-void	 tcp_mss_update __P((struct tcpcb *));
-void	 tcp_mtudisc __P((struct inpcb *, int));
-void	 tcp_mtudisc_increase __P((struct inpcb *, int));
+void	 tcp_input(struct mbuf *, ...);
+int	 tcp_mss(struct tcpcb *, int);
+void	 tcp_mss_update(struct tcpcb *);
+void	 tcp_mtudisc(struct inpcb *, int);
+void	 tcp_mtudisc_increase(struct inpcb *, int);
 #ifdef INET6
-void	tcp6_mtudisc __P((struct inpcb *, int));
-void	tcp6_mtudisc_callback __P((struct in6_addr *));
+void	tcp6_mtudisc(struct inpcb *, int);
+void	tcp6_mtudisc_callback(struct in6_addr *);
 #endif
 struct tcpcb *
-	 tcp_newtcpcb __P((struct inpcb *));
-void	 tcp_notify __P((struct inpcb *, int));
-int	 tcp_output __P((struct tcpcb *));
-void	 tcp_pulloutofband __P((struct socket *, u_int, struct mbuf *, int));
-void	 tcp_quench __P((struct inpcb *, int));
-int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
-void	 tcp_rscale __P((struct tcpcb *, u_long));
-void	 tcp_respond __P((struct tcpcb *, caddr_t, struct mbuf *, tcp_seq,
-		tcp_seq, int));
-void	 tcp_setpersist __P((struct tcpcb *));
-void	 tcp_slowtimo __P((void));
+	 tcp_newtcpcb(struct inpcb *);
+void	 tcp_notify(struct inpcb *, int);
+int	 tcp_output(struct tcpcb *);
+void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
+void	 tcp_quench(struct inpcb *, int);
+int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
+void	 tcp_rscale(struct tcpcb *, u_long);
+void	 tcp_respond(struct tcpcb *, caddr_t, struct mbuf *, tcp_seq,
+		tcp_seq, int);
+void	 tcp_setpersist(struct tcpcb *);
+void	 tcp_slowtimo(void);
 struct mbuf *
-	 tcp_template __P((struct tcpcb *));
-void	 tcp_trace __P((int, int, struct tcpcb *, caddr_t, int, int));
+	 tcp_template(struct tcpcb *);
+void	 tcp_trace(int, int, struct tcpcb *, caddr_t, int, int);
 struct tcpcb *
-	 tcp_usrclosed __P((struct tcpcb *));
-int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+	 tcp_usrclosed(struct tcpcb *);
+int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #if defined(INET6) && !defined(TCP6)
-int	 tcp6_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+int	 tcp6_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif
-int	 tcp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
-void	 tcp_xmit_timer __P((struct tcpcb *, int));
-void	 tcpdropoldhalfopen __P((struct tcpcb *, u_int16_t));
+int	 tcp_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *);
+void	 tcp_xmit_timer(struct tcpcb *, int);
+void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 #ifdef TCP_SACK
-int	 tcp_sack_option __P((struct tcpcb *,struct tcphdr *,u_char *,int));
-void	 tcp_update_sack_list __P((struct tcpcb *tp));
-void	 tcp_del_sackholes __P((struct tcpcb *, struct tcphdr *));
-void	 tcp_clean_sackreport __P((struct tcpcb *tp));
-void	 tcp_sack_adjust __P((struct tcpcb *tp));
+int	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
+void	 tcp_update_sack_list(struct tcpcb *tp);
+void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+void	 tcp_clean_sackreport(struct tcpcb *tp);
+void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *
-	 tcp_sack_output __P((struct tcpcb *tp));
-int	 tcp_sack_partialack __P((struct tcpcb *, struct tcphdr *));
+	 tcp_sack_output(struct tcpcb *tp);
+int	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
 #ifdef DEBUG
-void	 tcp_print_holes __P((struct tcpcb *tp));
+void	 tcp_print_holes(struct tcpcb *tp);
 #endif
 #endif /* TCP_SACK */
 #if defined(TCP_SACK)
-int	 tcp_newreno __P((struct tcpcb *, struct tcphdr *));
-u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
+int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
+u_long	 tcp_seq_subtract(u_long, u_long ); 
 #endif /* TCP_SACK */
 #ifdef TCP_SIGNATURE
-int	tcp_signature_apply __P((caddr_t, caddr_t, unsigned int));
+int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
 #endif /* TCP_SIGNATURE */
-void	tcp_rndiss_init __P((void));
-tcp_seq	tcp_rndiss_next __P((void));
+void	tcp_rndiss_init(void);
+tcp_seq	tcp_rndiss_next(void);
 u_int16_t
-	tcp_rndiss_encrypt __P((u_int16_t));
+	tcp_rndiss_encrypt(u_int16_t);
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_VAR_H_ */

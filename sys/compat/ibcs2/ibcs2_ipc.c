@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_ipc.c,v 1.6 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: ibcs2_ipc.c,v 1.7 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_ipc.c,v 1.7 1997/01/18 01:51:41 mycroft Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ struct ibcs2_msqid_ds {
 	ibcs2_time_t msg_ctime;
 };
 
-void cvt_msqid2imsqid __P((struct msqid_ds *, struct ibcs2_msqid_ds *));
-void cvt_imsqid2msqid __P((struct ibcs2_msqid_ds *, struct msqid_ds *));
+void cvt_msqid2imsqid(struct msqid_ds *, struct ibcs2_msqid_ds *);
+void cvt_imsqid2msqid(struct ibcs2_msqid_ds *, struct msqid_ds *);
 
 void
 cvt_msqid2imsqid(bp, ibp)
@@ -208,11 +208,11 @@ struct ibcs2_sem {
 	u_short semzcnt;
 };
 
-void cvt_semid2isemid __P((struct semid_ds *, struct ibcs2_semid_ds *));
-void cvt_isemid2semid __P((struct ibcs2_semid_ds *, struct semid_ds *));
+void cvt_semid2isemid(struct semid_ds *, struct ibcs2_semid_ds *);
+void cvt_isemid2semid(struct ibcs2_semid_ds *, struct semid_ds *);
 #ifdef notdef
-void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
-void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
+void cvt_sem2isem(struct sem *, struct ibcs2_sem *);
+void cvt_isem2sem(struct ibcs2_sem *, struct sem *);
 
 void
 cvt_sem2isem(bp, ibp)
@@ -352,8 +352,8 @@ struct ibcs2_shmid_ds {
 	ibcs2_time_t shm_ctime;
 };
 
-void cvt_shmid2ishmid __P((struct shmid_ds *, struct ibcs2_shmid_ds *));
-void cvt_ishmid2shmid __P((struct ibcs2_shmid_ds *, struct shmid_ds *));
+void cvt_shmid2ishmid(struct shmid_ds *, struct ibcs2_shmid_ds *);
+void cvt_ishmid2shmid(struct ibcs2_shmid_ds *, struct shmid_ds *);
 
 void
 cvt_shmid2ishmid(bp, ibp)

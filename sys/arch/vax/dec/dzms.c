@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzms.c,v 1.1 2001/05/16 22:15:17 hugh Exp $	*/
+/*	$OpenBSD: dzms.c,v 1.2 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -81,9 +81,9 @@ struct dzms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-static int  dzms_match __P((struct device *, struct cfdata *, void *));
-static void dzms_attach __P((struct device *, struct device *, void *));
-static int dzms_input __P((void *, int));
+static int  dzms_match(struct device *, struct cfdata *, void *);
+static void dzms_attach(struct device *, struct device *, void *);
+static int dzms_input(void *, int);
 
 struct cfattach dzms_ca = {
 	sizeof(struct dzms_softc), (cfmatch_t)dzms_match, dzms_attach,
@@ -93,9 +93,9 @@ struct	cfdriver lkms_cd = {
 	NULL, "lkms", DV_DULL
 };
 
-static int  dzms_enable __P((void *));
-static int  dzms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static void dzms_disable __P((void *));
+static int  dzms_enable(void *);
+static int  dzms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void dzms_disable(void *);
 
 const struct wsmouse_accessops dzms_accessops = {
 	dzms_enable,

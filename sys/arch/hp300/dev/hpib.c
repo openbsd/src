@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.8 1997/07/06 08:01:53 downsj Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.9 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,8 @@
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 
-int	hpibbusmatch __P((struct device *, void *, void *));
-void	hpibbusattach __P((struct device *, struct device *, void *));
+int	hpibbusmatch(struct device *, void *, void *);
+void	hpibbusattach(struct device *, struct device *, void *);
 
 struct cfattach hpibbus_ca = {
 	sizeof(struct hpibbus_softc), hpibbusmatch, hpibbusattach
@@ -65,15 +65,15 @@ struct cfdriver hpibbus_cd = {
 	NULL, "hpibbus", DV_DULL
 };
 
-void	hpibbus_attach_children __P((struct hpibbus_softc *));
-int	hpibbussearch __P((struct device *, void *, void *));
-int	hpibbusprint __P((void *, const char *));
+void	hpibbus_attach_children(struct hpibbus_softc *);
+int	hpibbussearch(struct device *, void *, void *);
+int	hpibbusprint(void *, const char *);
 
-int	hpibbus_alloc __P((struct hpibbus_softc *, int, int));
-void	hpibbus_free __P((struct hpibbus_softc *, int, int));
+int	hpibbus_alloc(struct hpibbus_softc *, int, int);
+void	hpibbus_free(struct hpibbus_softc *, int, int);
 
-void	hpibstart __P((void *));
-void	hpibdone __P((void *));
+void	hpibstart(void *);
+void	hpibdone(void *);
 
 int	hpibtimeout = 100000;	/* # of status tests before we give up */
 int	hpibidtimeout = 10000;	/* # of status tests for hpibid() calls */
@@ -363,7 +363,7 @@ hpibswait(unit, slave)
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
 	int timo = hpibtimeout;
-	int mask, (*ppoll) __P((struct hpibbus_softc *));
+	int mask, (*ppoll)(struct hpibbus_softc *);
 
 	ppoll = sc->sc_ops->hpib_ppoll;
 	mask = 0x80 >> slave;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.20 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: grf.c,v 1.21 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -81,8 +81,8 @@
 #define	iteoff(u,f)
 #endif
 
-int	grfmatch __P((struct device *, void *, void *));
-void	grfattach __P((struct device *, struct device *, void *));
+int	grfmatch(struct device *, void *, void *);
+void	grfattach(struct device *, struct device *, void *);
 
 struct cfdriver grf_cd = {
 	NULL, "grf", DV_DULL

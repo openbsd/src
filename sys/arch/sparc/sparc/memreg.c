@@ -1,4 +1,4 @@
-/*	$OpenBSD: memreg.c,v 1.9 2000/02/21 17:08:37 art Exp $	*/
+/*	$OpenBSD: memreg.c,v 1.10 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
@@ -62,8 +62,8 @@
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
 
-int memregmatch __P((struct device *, void *, void *));
-void memregattach __P((struct device *, struct device *, void *));
+int memregmatch(struct device *, void *, void *);
+void memregattach(struct device *, struct device *, void *);
 
 struct cfattach memreg_ca = {
 	sizeof(struct device), memregmatch, memregattach
@@ -74,7 +74,7 @@ struct cfdriver memreg_cd = {
 };
 
 #if defined(SUN4M)
-void hardmemerr4m __P((unsigned int, u_int, u_int, u_int, u_int));
+void hardmemerr4m(unsigned int, u_int, u_int, u_int, u_int);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucc.c,v 1.6 2001/02/19 18:26:27 art Exp $	*/
+/*	$OpenBSD: aucc.c,v 1.7 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: aucc.c,v 1.22 1998/01/12 10:39:10 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #define AUCC_ALLDMAF (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3)
 
 #ifdef AUDIO_DEBUG
-/*extern printf __P((const char *,...));*/
+/*extern printf(const char *,...);*/
 int     auccdebug = 1;
 #define DPRINTF(x)      if (auccdebug) printf x
 #else
@@ -92,16 +92,16 @@ struct aucc_softc {
 };
 
 /* interrupt interfaces */
-void aucc_inthdl __P((int)); 
+void aucc_inthdl(int); 
 
 /* forward declarations */
-int	init_aucc __P((struct aucc_softc *));
-u_int	freqtoper  __P((u_int));
-u_int	pertofreq  __P((u_int));
+int	init_aucc(struct aucc_softc *);
+u_int	freqtoper(u_int);
+u_int	pertofreq(u_int);
 
 /* autoconfiguration driver */
-void	auccattach __P((struct device *, struct device *, void *));
-int	auccmatch __P((struct device *, void *, void *));
+void	auccattach(struct device *, struct device *, void *);
+int	auccmatch(struct device *, void *, void *);
 
 struct cfattach aucc_ca = {
 	sizeof(struct aucc_softc),
@@ -159,26 +159,26 @@ unsigned char ulaw_to_lin[] = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int	aucc_open __P((void *, int));
-void	aucc_close __P((void *));
-int	aucc_set_out_sr __P((void *, u_long));
-int	aucc_query_encoding __P((void *, struct audio_encoding *));
-int	aucc_round_blocksize __P((void *, int));
-int	aucc_commit_settings __P((void *));
+int	aucc_open(void *, int);
+void	aucc_close(void *);
+int	aucc_set_out_sr(void *, u_long);
+int	aucc_query_encoding(void *, struct audio_encoding *);
+int	aucc_round_blocksize(void *, int);
+int	aucc_commit_settings(void *);
 int	aucc_start_output __P((void *, void *, int, void (*)(void *),
 	    void *));
 int	aucc_start_input __P((void *, void *, int, void (*)(void *),
 	    void *));
-int	aucc_halt_output __P((void *));
-int	aucc_halt_input __P((void *));
-int	aucc_getdev __P((void *, struct audio_device *));
-int	aucc_set_port __P((void *, mixer_ctrl_t *));
-int	aucc_get_port __P((void *, mixer_ctrl_t *));
-int	aucc_query_devinfo __P((void *, mixer_devinfo_t *));
-void	aucc_encode __P((int, int, int, u_char *, u_short **));
-int	aucc_set_params __P((void *, int, int,
-	    struct audio_params *, struct audio_params *));
-int	aucc_get_props __P((void *));
+int	aucc_halt_output(void *);
+int	aucc_halt_input(void *);
+int	aucc_getdev(void *, struct audio_device *);
+int	aucc_set_port(void *, mixer_ctrl_t *);
+int	aucc_get_port(void *, mixer_ctrl_t *);
+int	aucc_query_devinfo(void *, mixer_devinfo_t *);
+void	aucc_encode(int, int, int, u_char *, u_short **);
+int	aucc_set_params(void *, int, int,
+	    struct audio_params *, struct audio_params *);
+int	aucc_get_props(void *);
 
 struct audio_hw_if sa_hw_if = {
 	aucc_open,
@@ -471,7 +471,7 @@ aucc_start_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	struct aucc_softc *sc;
@@ -587,7 +587,7 @@ aucc_start_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	return (ENXIO); /* no input */

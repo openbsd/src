@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.41 2002/03/08 07:25:29 mickey Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.42 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -61,12 +61,12 @@
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
 
-void scheduler_start __P((void));
+void scheduler_start(void);
 
-void roundrobin __P((void *));
-void schedcpu __P((void *));
-void updatepri __P((struct proc *));
-void endtsleep __P((void *));
+void roundrobin(void *);
+void schedcpu(void *);
+void updatepri(struct proc *);
+void endtsleep(void *);
 
 void
 scheduler_start()

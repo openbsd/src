@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.15 2002/01/23 19:16:09 fgsch Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.16 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -282,61 +282,61 @@ union nd_opts {
 
 /* XXX: need nd6_var.h?? */
 /* nd6.c */
-void nd6_init __P((void));
-void nd6_ifattach __P((struct ifnet *));
-int nd6_is_addr_neighbor __P((struct sockaddr_in6 *, struct ifnet *));
-void nd6_option_init __P((void *, int, union nd_opts *));
-struct nd_opt_hdr *nd6_option __P((union nd_opts *));
-int nd6_options __P((union nd_opts *));
-struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
-void nd6_setmtu __P((struct ifnet *));
-void nd6_timer __P((void *));
-void nd6_purge __P((struct ifnet *));
-struct llinfo_nd6 *nd6_free __P((struct rtentry *));
-void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
-int nd6_resolve __P((struct ifnet *, struct rtentry *,
-		     struct mbuf *, struct sockaddr *, u_char *));
-void nd6_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-void nd6_p2p_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
-struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
-	char *, int, int, int));
+void nd6_init(void);
+void nd6_ifattach(struct ifnet *);
+int nd6_is_addr_neighbor(struct sockaddr_in6 *, struct ifnet *);
+void nd6_option_init(void *, int, union nd_opts *);
+struct nd_opt_hdr *nd6_option(union nd_opts *);
+int nd6_options(union nd_opts *);
+struct	rtentry *nd6_lookup(struct in6_addr *, int, struct ifnet *);
+void nd6_setmtu(struct ifnet *);
+void nd6_timer(void *);
+void nd6_purge(struct ifnet *);
+struct llinfo_nd6 *nd6_free(struct rtentry *);
+void nd6_nud_hint(struct rtentry *, struct in6_addr *, int);
+int nd6_resolve(struct ifnet *, struct rtentry *,
+		     struct mbuf *, struct sockaddr *, u_char *);
+void nd6_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+void nd6_p2p_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+int nd6_ioctl(u_long, caddr_t, struct ifnet *);
+struct rtentry *nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
+	char *, int, int, int);
 /* for test */
-int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
-		    struct sockaddr_in6 *, struct rtentry *));
-int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
-			 struct sockaddr *, u_char *));
+int nd6_output(struct ifnet *, struct ifnet *, struct mbuf *,
+		    struct sockaddr_in6 *, struct rtentry *);
+int nd6_storelladdr(struct ifnet *, struct rtentry *, struct mbuf *,
+			 struct sockaddr *, u_char *);
 
 /* nd6_nbr.c */
-void nd6_na_input __P((struct mbuf *, int, int));
-void nd6_na_output __P((struct ifnet *, struct in6_addr *,
- 			struct in6_addr *, u_long, int, struct sockaddr *));
-void nd6_ns_input __P((struct mbuf *, int, int));
-void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
-			struct in6_addr *, struct llinfo_nd6 *, int));
-caddr_t nd6_ifptomac __P((struct ifnet *));
-void nd6_dad_start __P((struct ifaddr *, int *));
-void nd6_dad_stop __P((struct ifaddr *));
-void nd6_dad_duplicated __P((struct ifaddr *));
+void nd6_na_input(struct mbuf *, int, int);
+void nd6_na_output(struct ifnet *, struct in6_addr *,
+ 			struct in6_addr *, u_long, int, struct sockaddr *);
+void nd6_ns_input(struct mbuf *, int, int);
+void nd6_ns_output(struct ifnet *, struct in6_addr *,
+			struct in6_addr *, struct llinfo_nd6 *, int);
+caddr_t nd6_ifptomac(struct ifnet *);
+void nd6_dad_start(struct ifaddr *, int *);
+void nd6_dad_stop(struct ifaddr *);
+void nd6_dad_duplicated(struct ifaddr *);
 
 /* nd6_rtr.c */
-void nd6_rs_input __P((struct mbuf *, int, int));
-void nd6_ra_input __P((struct mbuf *, int, int));
-void prelist_del __P((struct nd_prefix *));
-void defrouter_addreq __P((struct nd_defrouter *));
-void defrouter_delreq __P((struct nd_defrouter *, int));
-void defrouter_select __P((void));
-void defrtrlist_del __P((struct nd_defrouter *));
-void prelist_remove __P((struct nd_prefix *));
-int prelist_update __P((struct nd_prefix *, struct nd_defrouter *,
-	struct mbuf *));
-void pfxlist_onlink_check __P((void));
-struct nd_defrouter *defrouter_lookup __P((struct in6_addr *,
-					   struct ifnet *));
-int in6_ifdel __P((struct ifnet *, struct in6_addr *));
-int in6_init_prefix_ltimes __P((struct nd_prefix *ndpr));
-void rt6_flush __P((struct in6_addr *, struct ifnet *));
-int nd6_setdefaultiface __P((int));
+void nd6_rs_input(struct mbuf *, int, int);
+void nd6_ra_input(struct mbuf *, int, int);
+void prelist_del(struct nd_prefix *);
+void defrouter_addreq(struct nd_defrouter *);
+void defrouter_delreq(struct nd_defrouter *, int);
+void defrouter_select(void);
+void defrtrlist_del(struct nd_defrouter *);
+void prelist_remove(struct nd_prefix *);
+int prelist_update(struct nd_prefix *, struct nd_defrouter *,
+	struct mbuf *);
+void pfxlist_onlink_check(void);
+struct nd_defrouter *defrouter_lookup(struct in6_addr *,
+					   struct ifnet *);
+int in6_ifdel(struct ifnet *, struct in6_addr *);
+int in6_init_prefix_ltimes(struct nd_prefix *ndpr);
+void rt6_flush(struct in6_addr *, struct ifnet *);
+int nd6_setdefaultiface(int);
 
 #endif /* _KERNEL */
 

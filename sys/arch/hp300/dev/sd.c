@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.23 2001/08/26 00:15:37 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.24 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -73,8 +73,8 @@ extern int physio();
 extern void TBIS();
 */
 
-int	sdmatch __P((struct device *, void *, void *));
-void	sdattach __P((struct device *, struct device *, void *));
+int	sdmatch(struct device *, void *, void *);
+void	sdattach(struct device *, struct device *, void *);
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach
@@ -122,22 +122,22 @@ static char legal_cmds[256] = {
 /* bdev_decl(sd); */
 /* cdev_decl(sd); */
 /* XXX we should use macros to do these... */
-int	sdopen __P((dev_t, int, int, struct proc *));
-int	sdclose __P((dev_t, int, int, struct proc *));
+int	sdopen(dev_t, int, int, struct proc *);
+int	sdclose(dev_t, int, int, struct proc *);
 
-int	sdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	sdread __P((dev_t, struct uio *, int));
-void	sdreset __P((struct sd_softc *));
-int	sdwrite __P((dev_t, struct uio *, int));
+int	sdioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	sdread(dev_t, struct uio *, int);
+void	sdreset(struct sd_softc *);
+int	sdwrite(dev_t, struct uio *, int);
 
-void	sdstrategy __P((struct buf *));
-int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
-int	sdsize __P((dev_t));
+void	sdstrategy(struct buf *);
+int	sddump(dev_t, daddr_t, caddr_t, size_t);
+int	sdsize(dev_t);
 
-static void 	sdgetgeom __P((struct sd_softc *));
-static void	sdlblkstrat __P((struct buf *, int));
-static int	sderror __P((struct sd_softc *, int));
-static void	sdfinish __P((struct sd_softc *, struct buf *));
+static void 	sdgetgeom(struct sd_softc *);
+static void	sdlblkstrat(struct buf *, int);
+static int	sderror(struct sd_softc *, int);
+static void	sdfinish(struct sd_softc *, struct buf *);
 
 /*
  * Perform a mode-sense on page 0x04 (rigid geometry).

@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.1 2000/11/13 20:12:34 aaron Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.2 2002/03/14 01:26:55 millert Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -65,7 +65,7 @@ struct pckbc_internal {
 	struct timeout t_cleanup;
 };
 
-typedef void (*pckbc_inputfcn) __P((void *, int));
+typedef void (*pckbc_inputfcn)(void *, int);
 
 /*
  * State per device.
@@ -78,7 +78,7 @@ struct pckbc_softc {
 	void *inputarg[PCKBC_NSLOTS];
 	char *subname[PCKBC_NSLOTS];
 
-	void (*intr_establish) __P((struct pckbc_softc *, pckbc_slot_t));
+	void (*intr_establish)(struct pckbc_softc *, pckbc_slot_t);
 };
 
 struct pckbc_attach_args {
@@ -90,29 +90,29 @@ extern const char *pckbc_slot_names[];
 extern struct pckbc_internal pckbc_consdata;
 extern int pckbc_console_attached;
 
-void pckbc_set_inputhandler __P((pckbc_tag_t, pckbc_slot_t,
-				 pckbc_inputfcn, void *, char *));
+void pckbc_set_inputhandler(pckbc_tag_t, pckbc_slot_t,
+				 pckbc_inputfcn, void *, char *);
 
-void pckbc_flush __P((pckbc_tag_t, pckbc_slot_t));
-int pckbc_poll_cmd __P((pckbc_tag_t, pckbc_slot_t, u_char *, int,
-			int, u_char *, int));
-int pckbc_enqueue_cmd __P((pckbc_tag_t, pckbc_slot_t, u_char *, int,
-			   int, int, u_char *));
-int pckbc_send_cmd __P((bus_space_tag_t, bus_space_handle_t, u_char));
-int pckbc_poll_data __P((pckbc_tag_t, pckbc_slot_t));
-int pckbc_poll_data1 __P((bus_space_tag_t, bus_space_handle_t,
-			  bus_space_handle_t, pckbc_slot_t, int));
-void pckbc_set_poll __P((pckbc_tag_t, pckbc_slot_t, int));
-int pckbc_xt_translation __P((pckbc_tag_t, pckbc_slot_t, int));
-void pckbc_slot_enable __P((pckbc_tag_t, pckbc_slot_t, int));
+void pckbc_flush(pckbc_tag_t, pckbc_slot_t);
+int pckbc_poll_cmd(pckbc_tag_t, pckbc_slot_t, u_char *, int,
+			int, u_char *, int);
+int pckbc_enqueue_cmd(pckbc_tag_t, pckbc_slot_t, u_char *, int,
+			   int, int, u_char *);
+int pckbc_send_cmd(bus_space_tag_t, bus_space_handle_t, u_char);
+int pckbc_poll_data(pckbc_tag_t, pckbc_slot_t);
+int pckbc_poll_data1(bus_space_tag_t, bus_space_handle_t,
+			  bus_space_handle_t, pckbc_slot_t, int);
+void pckbc_set_poll(pckbc_tag_t, pckbc_slot_t, int);
+int pckbc_xt_translation(pckbc_tag_t, pckbc_slot_t, int);
+void pckbc_slot_enable(pckbc_tag_t, pckbc_slot_t, int);
 
-void pckbc_attach __P((struct pckbc_softc *));
-int pckbc_cnattach __P((bus_space_tag_t, bus_addr_t, bus_size_t,
-			pckbc_slot_t));
-int pckbc_is_console __P((bus_space_tag_t, bus_addr_t));
-int pckbcintr __P((void *));
+void pckbc_attach(struct pckbc_softc *);
+int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t,
+			pckbc_slot_t);
+int pckbc_is_console(bus_space_tag_t, bus_addr_t);
+int pckbcintr(void *);
 
 /* md hook for use without mi wscons */
-int pckbc_machdep_cnattach __P((pckbc_tag_t, pckbc_slot_t));
+int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.10 2001/05/08 16:16:11 mickey Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.11 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -58,8 +58,8 @@ struct vga_pci_softc {
 #endif
 };
 
-int	vga_pci_match __P((struct device *, void *, void *));
-void	vga_pci_attach __P((struct device *, struct device *, void *));
+int	vga_pci_match(struct device *, void *, void *);
+void	vga_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,

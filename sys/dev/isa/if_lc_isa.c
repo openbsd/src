@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.1 2001/07/13 17:26:44 niklas Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -79,10 +79,10 @@
 
 extern struct cfdriver lc_cd;
 
-int	lemac_isa_find __P((struct lemac_softc *, struct isa_attach_args *,
-    int));
-int	lemac_isa_probe __P((struct device *, void *, void *));
-void	lemac_isa_attach __P((struct device *, struct device *, void *));
+int	lemac_isa_find(struct lemac_softc *, struct isa_attach_args *,
+    int);
+int	lemac_isa_probe(struct device *, void *, void *);
+void	lemac_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach lc_isa_ca = {
 	sizeof(struct lemac_softc), lemac_isa_probe, lemac_isa_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.7 1997/05/01 18:32:49 briggs Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.8 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -67,12 +67,12 @@
 #include "if_aereg.h"
 #include "if_aevar.h"
 
-static int	ae_nubus_match __P((struct device *, void *, void *));
-static void	ae_nubus_attach __P((struct device *, struct device *, void *));
-static int	ae_nb_card_vendor __P((struct nubus_attach_args *));
-static int	ae_nb_get_enaddr __P((struct nubus_attach_args *, u_int8_t *));
+static int	ae_nubus_match(struct device *, void *, void *);
+static void	ae_nubus_attach(struct device *, struct device *, void *);
+static int	ae_nb_card_vendor(struct nubus_attach_args *);
+static int	ae_nb_get_enaddr(struct nubus_attach_args *, u_int8_t *);
 #ifdef DEBUG
-static void	ae_nb_watchdog __P((struct ifnet *));
+static void	ae_nb_watchdog(struct ifnet *);
 #endif
 
 struct cfattach ae_nubus_ca = {

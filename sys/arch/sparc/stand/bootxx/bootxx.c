@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.1 1997/09/17 10:46:16 downsj Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.2 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -60,14 +60,14 @@ int32_t			block_count = MAXBLOCKNUM;
 daddr_t			block_table[MAXBLOCKNUM] = { 0 };
 
 
-void	loadboot __P((struct open_file *, caddr_t));
+void	loadboot(struct open_file *, caddr_t);
 
 int
 main()
 {
 	char	*dummy;
 	size_t	n;
-	register void (*entry)__P((caddr_t)) = (void (*)__P((caddr_t)))LOADADDR;
+	register void (*entry)(caddr_t) = (void (*)(caddr_t))LOADADDR;
 
 	prom_init();
 	io.f_flags = F_RAW;

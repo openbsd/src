@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.15 2001/11/06 19:53:19 miod Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.16 2002/03/14 01:26:59 millert Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -79,46 +79,46 @@
 
 #include <dev/pci/if_stereg.h>
 
-int ste_probe		__P((struct device *, void *, void *));
-void ste_attach		__P((struct device *, struct device *, void *));
-int ste_intr		__P((void *));
-void ste_shutdown	__P((void *));
-void ste_init		__P((void *));
-void ste_rxeof		__P((struct ste_softc *));
-void ste_txeoc		__P((struct ste_softc *));
-void ste_txeof		__P((struct ste_softc *));
-void ste_stats_update	__P((void *));
-void ste_stop		__P((struct ste_softc *));
-void ste_reset		__P((struct ste_softc *));
-int ste_ioctl		__P((struct ifnet *, u_long, caddr_t));
-int ste_encap		__P((struct ste_softc *, struct ste_chain *,
-					struct mbuf *));
-void ste_start		__P((struct ifnet *));
-void ste_watchdog	__P((struct ifnet *));
-int ste_newbuf		__P((struct ste_softc *,
+int ste_probe(struct device *, void *, void *);
+void ste_attach(struct device *, struct device *, void *);
+int ste_intr(void *);
+void ste_shutdown(void *);
+void ste_init(void *);
+void ste_rxeof(struct ste_softc *);
+void ste_txeoc(struct ste_softc *);
+void ste_txeof(struct ste_softc *);
+void ste_stats_update(void *);
+void ste_stop(struct ste_softc *);
+void ste_reset(struct ste_softc *);
+int ste_ioctl(struct ifnet *, u_long, caddr_t);
+int ste_encap(struct ste_softc *, struct ste_chain *,
+					struct mbuf *);
+void ste_start(struct ifnet *);
+void ste_watchdog(struct ifnet *);
+int ste_newbuf(struct ste_softc *,
 					struct ste_chain_onefrag *,
-					struct mbuf *));
-int ste_ifmedia_upd	__P((struct ifnet *));
-void ste_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+					struct mbuf *);
+int ste_ifmedia_upd(struct ifnet *);
+void ste_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void ste_mii_sync	__P((struct ste_softc *));
-void ste_mii_send	__P((struct ste_softc *, u_int32_t, int));
-int ste_mii_readreg	__P((struct ste_softc *,
-					struct ste_mii_frame *));
-int ste_mii_writereg	__P((struct ste_softc *,
-					struct ste_mii_frame *));
-int ste_miibus_readreg	__P((struct device *, int, int));
-void ste_miibus_writereg	__P((struct device *, int, int, int));
-void ste_miibus_statchg	__P((struct device *));
+void ste_mii_sync(struct ste_softc *);
+void ste_mii_send(struct ste_softc *, u_int32_t, int);
+int ste_mii_readreg(struct ste_softc *,
+					struct ste_mii_frame *);
+int ste_mii_writereg(struct ste_softc *,
+					struct ste_mii_frame *);
+int ste_miibus_readreg(struct device *, int, int);
+void ste_miibus_writereg(struct device *, int, int, int);
+void ste_miibus_statchg(struct device *);
 
-int ste_eeprom_wait	__P((struct ste_softc *));
-int ste_read_eeprom	__P((struct ste_softc *, caddr_t, int,
-							int, int));
-void ste_wait		__P((struct ste_softc *));
-u_int8_t ste_calchash	__P((caddr_t));
-void ste_setmulti	__P((struct ste_softc *));
-int ste_init_rx_list	__P((struct ste_softc *));
-void ste_init_tx_list	__P((struct ste_softc *));
+int ste_eeprom_wait(struct ste_softc *);
+int ste_read_eeprom(struct ste_softc *, caddr_t, int,
+							int, int);
+void ste_wait(struct ste_softc *);
+u_int8_t ste_calchash(caddr_t);
+void ste_setmulti(struct ste_softc *);
+int ste_init_rx_list(struct ste_softc *);
+void ste_init_tx_list(struct ste_softc *);
 
 #define STE_SETBIT4(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.6 1997/04/14 18:47:56 gene Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.7 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
 
 /*-
@@ -46,26 +46,26 @@ typedef struct adb_trace_xlate_s {
 extern adb_trace_xlate_t adb_trace_xlations[];
 
 /* adb.c */
-void    adb_asmcomplete __P((void));
-void	adb_enqevent __P((adb_event_t *event));
-void	adb_handoff __P((adb_event_t *event));
-void	adb_autorepeat __P((void *keyp));
-void	adb_dokeyupdown __P((adb_event_t *event));
-void	adb_keymaybemouse __P((adb_event_t *event));
-void	adb_processevent __P((adb_event_t *event));
-int	adbopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbread __P((dev_t dev, struct uio *uio, int flag));
-int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
-int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
-int	adbselect __P((dev_t dev, int rw, struct proc *p));
+void    adb_asmcomplete(void);
+void	adb_enqevent(adb_event_t *event);
+void	adb_handoff(adb_event_t *event);
+void	adb_autorepeat(void *keyp);
+void	adb_dokeyupdown(adb_event_t *event);
+void	adb_keymaybemouse(adb_event_t *event);
+void	adb_processevent(adb_event_t *event);
+int	adbopen(dev_t dev, int flag, int mode, struct proc *p);
+int	adbclose(dev_t dev, int flag, int mode, struct proc *p);
+int	adbread(dev_t dev, struct uio *uio, int flag);
+int	adbwrite(dev_t dev, struct uio *uio, int flag);
+int	adbioctl(dev_t , int , caddr_t , int , struct proc *);
+int	adbselect(dev_t dev, int rw, struct proc *p);
 
 /* adbsysadm.s */
-void	extdms_complete __P((void));
+void	extdms_complete(void);
 
 /* adbsys.c */
-void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	extdms_init __P((int));
+void	adb_complete(caddr_t buffer, caddr_t data_area, int adb_command);
+void	extdms_init(int);
 
 #ifndef MRG_ADB
 
@@ -77,14 +77,14 @@ void	extdms_init __P((int));
 #define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
 
 /* adb_direct.c */
-int	adb_poweroff __P((void));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock * info, int index));
-int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *t));
-int	adb_set_date_time __P((unsigned long t));
+int	adb_poweroff(void);
+int	CountADBs(void);
+void	ADBReInit(void);
+int	GetIndADB(ADBDataBlock * info, int index);
+int	GetADBInfo(ADBDataBlock * info, int adbAddr);
+int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
+int	ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum);
+int	adb_read_date_time(unsigned long *t);
+int	adb_set_date_time(unsigned long t);
 
 #endif

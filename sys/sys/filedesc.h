@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.14 2002/02/08 16:32:27 art Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.15 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -114,21 +114,21 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
-void	filedesc_init __P((void));
-int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
-	    int error));
-int	fdalloc __P((struct proc *p, int want, int *result));
-void	fdexpand __P((struct proc *));
-int	falloc __P((struct proc *p, struct file **resultfp, int *resultfd));
-struct	filedesc *fdinit __P((struct proc *p));
-struct	filedesc *fdshare __P((struct proc *p));
-struct	filedesc *fdcopy __P((struct proc *p));
-void	fdfree __P((struct proc *p));
-int	fdrelease __P((struct proc *p, int));
-void	fdremove __P((struct filedesc *, int));
-void	fdcloseexec __P((struct proc *));
-struct file *fd_getfile __P((struct filedesc *, int fd));
+void	filedesc_init(void);
+int	dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode,
+	    int error);
+int	fdalloc(struct proc *p, int want, int *result);
+void	fdexpand(struct proc *);
+int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
+struct	filedesc *fdinit(struct proc *p);
+struct	filedesc *fdshare(struct proc *p);
+struct	filedesc *fdcopy(struct proc *p);
+void	fdfree(struct proc *p);
+int	fdrelease(struct proc *p, int);
+void	fdremove(struct filedesc *, int);
+void	fdcloseexec(struct proc *);
+struct file *fd_getfile(struct filedesc *, int fd);
 
-int	closef __P((struct file *, struct proc *));
-int	getsock __P((struct filedesc *, int, struct file **));
+int	closef(struct file *, struct proc *);
+int	getsock(struct filedesc *, int, struct file **);
 #endif

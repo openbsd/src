@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_ess.c,v 1.1 1999/06/22 16:20:04 niklas Exp $	*/
+/*	$OpenBSD: opl_ess.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: opl_ess.c,v 1.3 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
@@ -58,10 +58,10 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/essvar.h>
 
-extern int	ess_speaker_ctl __P((void *, int));
+extern int	ess_speaker_ctl(void *, int);
 
-int	opl_ess_match __P((struct device *, void *, void *));
-void	opl_ess_attach __P((struct device *, struct device *, void *));
+int	opl_ess_match(struct device *, void *, void *);
+void	opl_ess_attach(struct device *, struct device *, void *);
 
 struct cfattach opl_ess_ca = {
 	sizeof (struct opl_softc), opl_ess_match, opl_ess_attach

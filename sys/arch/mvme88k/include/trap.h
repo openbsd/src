@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.15 2001/12/22 17:57:11 smurph Exp $ */
+/*	$OpenBSD: trap.h,v 1.16 2002/03/14 01:26:39 millert Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,29 +73,29 @@
 #define T_USER		29	/* user mode fault */
 
 #ifndef _LOCORE
-void panictrap		__P((int, struct m88100_saved_state *));
-void test_trap		__P((struct m88100_saved_state *));
-void error_fault	__P((struct m88100_saved_state *));
-void error_reset	__P((struct m88100_saved_state *));
-unsigned ss_get_value	__P((struct proc *, unsigned, int));
-int ss_put_value	__P((struct proc *, unsigned, unsigned, int));
+void panictrap(int, struct m88100_saved_state *);
+void test_trap(struct m88100_saved_state *);
+void error_fault(struct m88100_saved_state *);
+void error_reset(struct m88100_saved_state *);
+unsigned ss_get_value(struct proc *, unsigned, int);
+int ss_put_value(struct proc *, unsigned, unsigned, int);
 unsigned ss_branch_taken __P((unsigned, unsigned, 
-			      unsigned (*func) __P((unsigned int, struct trapframe *)),
+			      unsigned (*func)(unsigned int, struct trapframe *),
 			      struct trapframe *));  /* 'opaque' */
-unsigned ss_getreg_val	__P((unsigned, struct trapframe *));
-int ss_inst_branch	__P((unsigned));
-int ss_inst_delayed	__P((unsigned));
-unsigned ss_next_instr_address __P((struct proc *, unsigned, unsigned));
-int cpu_singlestep	__P((register struct proc *));
+unsigned ss_getreg_val(unsigned, struct trapframe *);
+int ss_inst_branch(unsigned);
+int ss_inst_delayed(unsigned);
+unsigned ss_next_instr_address(struct proc *, unsigned, unsigned);
+int cpu_singlestep(register struct proc *);
 
 #ifdef M88100
-void m88100_trap	__P((unsigned, struct m88100_saved_state *));
-void m88100_syscall	__P((register_t, struct m88100_saved_state *));
+void m88100_trap(unsigned, struct m88100_saved_state *);
+void m88100_syscall(register_t, struct m88100_saved_state *);
 #endif /* M88100 */
 
 #ifdef M88110
-void m88110_trap	__P((unsigned, struct m88100_saved_state *));
-void m88110_syscall	__P((register_t, struct m88100_saved_state *));
+void m88110_trap(unsigned, struct m88100_saved_state *);
+void m88110_syscall(register_t, struct m88100_saved_state *);
 #endif /* M88110 */
 
 #endif /* _LOCORE */

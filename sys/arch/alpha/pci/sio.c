@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.26 2001/10/26 11:14:09 art Exp $	*/
+/*	$OpenBSD: sio.c,v 1.27 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -56,13 +56,13 @@ struct sio_softc {
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	siomatch __P((struct device *, void *, void *));
+int	siomatch(struct device *, void *, void *);
 #else
-int	siomatch __P((struct device *, struct cfdata *, void *));
+int	siomatch(struct device *, struct cfdata *, void *);
 #endif
-void	sioattach __P((struct device *, struct device *, void *));
+void	sioattach(struct device *, struct device *, void *);
 
-extern int sio_intr_alloc __P((isa_chipset_tag_t *, int, int, int *));
+extern int sio_intr_alloc(isa_chipset_tag_t *, int, int, int *);
 
 
 struct cfattach sio_ca = {
@@ -74,9 +74,9 @@ struct cfdriver sio_cd = {
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	pcebmatch __P((struct device *, void *, void *));
+int	pcebmatch(struct device *, void *, void *);
 #else
-int	pcebmatch __P((struct device *, struct cfdata *, void *));
+int	pcebmatch(struct device *, struct cfdata *, void *);
 #endif
 
 struct cfattach pceb_ca = {
@@ -93,14 +93,14 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-int	sioprint __P((void *, const char *pnp));
-void	sio_isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-void	sio_eisa_attach_hook __P((struct device *, struct device *,
-	    struct eisabus_attach_args *));
-int	sio_eisa_maxslots __P((void *));
-int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
-void	sio_bridge_callback __P((void *));
+int	sioprint(void *, const char *pnp);
+void	sio_isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+void	sio_eisa_attach_hook(struct device *, struct device *,
+	    struct eisabus_attach_args *);
+int	sio_eisa_maxslots(void *);
+int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
+void	sio_bridge_callback(void *);
 
 int
 siomatch(parent, match, aux)

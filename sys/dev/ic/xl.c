@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.34 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: xl.c,v 1.35 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -146,57 +146,57 @@
 
 #include <dev/ic/xlreg.h>
 
-int xl_newbuf		__P((struct xl_softc *, struct xl_chain_onefrag *));
-void xl_stats_update	__P((void *));
-int xl_encap		__P((struct xl_softc *, struct xl_chain *,
-    struct mbuf * ));
-int xl_encap_90xB	__P((struct xl_softc *, struct xl_chain *,
-    struct mbuf * ));
-void xl_rxeof		__P((struct xl_softc *));
-int xl_rx_resync	__P((struct xl_softc *));
-void xl_txeof		__P((struct xl_softc *));
-void xl_txeof_90xB	__P((struct xl_softc *));
-void xl_txeoc		__P((struct xl_softc *));
-int xl_intr		__P((void *));
-void xl_start		__P((struct ifnet *));
-void xl_start_90xB	__P((struct ifnet *));
-int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void xl_init		__P((void *));
-void xl_stop		__P((struct xl_softc *));
-void xl_freetxrx	__P((struct xl_softc *));
-void xl_watchdog	__P((struct ifnet *));
-void xl_shutdown	__P((void *));
-int xl_ifmedia_upd	__P((struct ifnet *));
-void xl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+int xl_newbuf(struct xl_softc *, struct xl_chain_onefrag *);
+void xl_stats_update(void *);
+int xl_encap(struct xl_softc *, struct xl_chain *,
+    struct mbuf * );
+int xl_encap_90xB(struct xl_softc *, struct xl_chain *,
+    struct mbuf * );
+void xl_rxeof(struct xl_softc *);
+int xl_rx_resync(struct xl_softc *);
+void xl_txeof(struct xl_softc *);
+void xl_txeof_90xB(struct xl_softc *);
+void xl_txeoc(struct xl_softc *);
+int xl_intr(void *);
+void xl_start(struct ifnet *);
+void xl_start_90xB(struct ifnet *);
+int xl_ioctl(struct ifnet *, u_long, caddr_t);
+void xl_init(void *);
+void xl_stop(struct xl_softc *);
+void xl_freetxrx(struct xl_softc *);
+void xl_watchdog(struct ifnet *);
+void xl_shutdown(void *);
+int xl_ifmedia_upd(struct ifnet *);
+void xl_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-int xl_eeprom_wait	__P((struct xl_softc *));
-int xl_read_eeprom	__P((struct xl_softc *, caddr_t, int, int, int));
-void xl_mii_sync	__P((struct xl_softc *));
-void xl_mii_send	__P((struct xl_softc *, u_int32_t, int));
-int xl_mii_readreg	__P((struct xl_softc *, struct xl_mii_frame *));
-int xl_mii_writereg	__P((struct xl_softc *, struct xl_mii_frame *));
+int xl_eeprom_wait(struct xl_softc *);
+int xl_read_eeprom(struct xl_softc *, caddr_t, int, int, int);
+void xl_mii_sync(struct xl_softc *);
+void xl_mii_send(struct xl_softc *, u_int32_t, int);
+int xl_mii_readreg(struct xl_softc *, struct xl_mii_frame *);
+int xl_mii_writereg(struct xl_softc *, struct xl_mii_frame *);
 
-void xl_setcfg		__P((struct xl_softc *));
-void xl_setmode		__P((struct xl_softc *, int));
-u_int8_t xl_calchash	__P((caddr_t));
-void xl_setmulti	__P((struct xl_softc *));
-void xl_setmulti_hash	__P((struct xl_softc *));
-void xl_reset		__P((struct xl_softc *, int));
-int xl_list_rx_init	__P((struct xl_softc *));
-int xl_list_tx_init	__P((struct xl_softc *));
-int xl_list_tx_init_90xB	__P((struct xl_softc *));
-void xl_wait		__P((struct xl_softc *));
-void xl_mediacheck	__P((struct xl_softc *));
-void xl_choose_xcvr	__P((struct xl_softc *, int));
+void xl_setcfg(struct xl_softc *);
+void xl_setmode(struct xl_softc *, int);
+u_int8_t xl_calchash(caddr_t);
+void xl_setmulti(struct xl_softc *);
+void xl_setmulti_hash(struct xl_softc *);
+void xl_reset(struct xl_softc *, int);
+int xl_list_rx_init(struct xl_softc *);
+int xl_list_tx_init(struct xl_softc *);
+int xl_list_tx_init_90xB(struct xl_softc *);
+void xl_wait(struct xl_softc *);
+void xl_mediacheck(struct xl_softc *);
+void xl_choose_xcvr(struct xl_softc *, int);
 #ifdef notdef
-void xl_testpacket	__P((struct xl_softc *));
+void xl_testpacket(struct xl_softc *);
 #endif
 
-int xl_miibus_readreg	__P((struct device *, int, int));
-void xl_miibus_writereg	__P((struct device *, int, int, int));
-void xl_miibus_statchg	__P((struct device *));
+int xl_miibus_readreg(struct device *, int, int);
+void xl_miibus_writereg(struct device *, int, int, int);
+void xl_miibus_statchg(struct device *);
 
-void xl_power __P((int, void *));
+void xl_power(int, void *);
 
 void
 xl_power(why, arg)

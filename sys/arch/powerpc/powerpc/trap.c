@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2002/03/13 18:27:37 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -55,9 +55,9 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
 
-static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
-int badaddr __P((char *addr, u_int32_t len));
-void trap __P((struct trapframe *frame));
+static int fix_unaligned(struct proc *p, struct trapframe *frame);
+int badaddr(char *addr, u_int32_t len);
+void trap(struct trapframe *frame);
 
 /* These definitions should probably be somewhere else				XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
@@ -68,7 +68,7 @@ volatile int want_resched;
 struct proc *ppc_vecproc;
 
 #ifdef DDB
-void ppc_dumpbt __P((struct trapframe *frame));
+void ppc_dumpbt(struct trapframe *frame);
 
 void
 ppc_dumpbt(struct trapframe *frame)

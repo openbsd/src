@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.13 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.14 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -119,30 +119,30 @@
 				/* SRAM structure */
 #define GDT_MPR_SZ	0x4000
 
-int	gdt_pci_probe __P((struct device *, void *, void *));
-void	gdt_pci_attach __P((struct device *, struct device *, void *));
-void	gdt_pci_enable_intr __P((struct gdt_softc *));
+int	gdt_pci_probe(struct device *, void *, void *);
+void	gdt_pci_attach(struct device *, struct device *, void *);
+void	gdt_pci_enable_intr(struct gdt_softc *);
 
-void	gdt_pci_copy_cmd __P((struct gdt_softc *, struct gdt_ccb *));
-u_int8_t gdt_pci_get_status __P((struct gdt_softc *));
-void	gdt_pci_intr __P((struct gdt_softc *, struct gdt_intr_ctx *));
-void	gdt_pci_release_event __P((struct gdt_softc *, struct gdt_ccb *));
-void	gdt_pci_set_sema0 __P((struct gdt_softc *));
-int	gdt_pci_test_busy __P((struct gdt_softc *));
+void	gdt_pci_copy_cmd(struct gdt_softc *, struct gdt_ccb *);
+u_int8_t gdt_pci_get_status(struct gdt_softc *);
+void	gdt_pci_intr(struct gdt_softc *, struct gdt_intr_ctx *);
+void	gdt_pci_release_event(struct gdt_softc *, struct gdt_ccb *);
+void	gdt_pci_set_sema0(struct gdt_softc *);
+int	gdt_pci_test_busy(struct gdt_softc *);
 
-void	gdt_pcinew_copy_cmd __P((struct gdt_softc *, struct gdt_ccb *));
-u_int8_t gdt_pcinew_get_status __P((struct gdt_softc *));
-void	gdt_pcinew_intr __P((struct gdt_softc *, struct gdt_intr_ctx *));
-void	gdt_pcinew_release_event __P((struct gdt_softc *, struct gdt_ccb *));
-void	gdt_pcinew_set_sema0 __P((struct gdt_softc *));
-int	gdt_pcinew_test_busy __P((struct gdt_softc *));
+void	gdt_pcinew_copy_cmd(struct gdt_softc *, struct gdt_ccb *);
+u_int8_t gdt_pcinew_get_status(struct gdt_softc *);
+void	gdt_pcinew_intr(struct gdt_softc *, struct gdt_intr_ctx *);
+void	gdt_pcinew_release_event(struct gdt_softc *, struct gdt_ccb *);
+void	gdt_pcinew_set_sema0(struct gdt_softc *);
+int	gdt_pcinew_test_busy(struct gdt_softc *);
 
-void	gdt_mpr_copy_cmd __P((struct gdt_softc *, struct gdt_ccb *));
-u_int8_t gdt_mpr_get_status __P((struct gdt_softc *));
-void	gdt_mpr_intr __P((struct gdt_softc *, struct gdt_intr_ctx *));
-void	gdt_mpr_release_event __P((struct gdt_softc *, struct gdt_ccb *));
-void	gdt_mpr_set_sema0 __P((struct gdt_softc *));
-int	gdt_mpr_test_busy __P((struct gdt_softc *));
+void	gdt_mpr_copy_cmd(struct gdt_softc *, struct gdt_ccb *);
+u_int8_t gdt_mpr_get_status(struct gdt_softc *);
+void	gdt_mpr_intr(struct gdt_softc *, struct gdt_intr_ctx *);
+void	gdt_mpr_release_event(struct gdt_softc *, struct gdt_ccb *);
+void	gdt_mpr_set_sema0(struct gdt_softc *);
+int	gdt_mpr_test_busy(struct gdt_softc *);
 
 struct cfattach gdt_pci_ca = {
 	sizeof (struct gdt_softc), gdt_pci_probe, gdt_pci_attach

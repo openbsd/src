@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2002/02/22 19:25:17 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -319,19 +319,19 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void userret __P((struct proc *, int,  u_quad_t));
-static __inline void share_fpu __P((struct proc *, struct trapframe64 *));
+static __inline void userret(struct proc *, int,  u_quad_t);
+static __inline void share_fpu(struct proc *, struct trapframe64 *);
 
-void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
-void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
-	vaddr_t va, vaddr_t sfva, u_long sfsr));
-void data_access_error __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr));
-void text_access_fault __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t pc, u_long sfsr));
-void text_access_error __P((struct trapframe64 *tf, unsigned type, 
-	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr));
-void syscall __P((struct trapframe64 *, register_t code, register_t pc));
+void trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate);
+void data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc, 
+	vaddr_t va, vaddr_t sfva, u_long sfsr);
+void data_access_error(struct trapframe64 *tf, unsigned type, 
+	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr);
+void text_access_fault(struct trapframe64 *tf, unsigned type, 
+	vaddr_t pc, u_long sfsr);
+void text_access_error(struct trapframe64 *tf, unsigned type, 
+	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr);
+void syscall(struct trapframe64 *, register_t code, register_t pc);
 
 /*
  * Define the code needed before returning to user mode, for

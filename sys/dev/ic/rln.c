@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.13 2001/07/08 23:38:06 fgsch Exp $	*/
+/*	$OpenBSD: rln.c,v 1.14 2002/03/14 01:26:55 millert Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -48,34 +48,34 @@ struct cfdriver rln_cd = {
 	NULL, "rln", DV_IFNET
 };
 
-void	rlninit __P((struct rln_softc *));
-void	rlnstart __P((struct ifnet*));
-void	rlnwatchdog __P((struct ifnet*));
-int	rlnioctl __P((struct ifnet *, u_long, caddr_t));
-void	rlnstop __P((struct rln_softc *));
+void	rlninit(struct rln_softc *);
+void	rlnstart(struct ifnet*);
+void	rlnwatchdog(struct ifnet*);
+int	rlnioctl(struct ifnet *, u_long, caddr_t);
+void	rlnstop(struct rln_softc *);
 
 /* Interrupt handler. */
-void	rlnsoftintr __P((void *));
+void	rlnsoftintr(void *);
 
 /* Packet I/O. */
-int	rln_transmit __P((struct rln_softc *, struct mbuf *,
-			int, int));
-struct mbuf * rlnget __P((struct rln_softc *, struct rln_mm_cmd *,
-			int));
+int	rln_transmit(struct rln_softc *, struct mbuf *,
+			int, int);
+struct mbuf * rlnget(struct rln_softc *, struct rln_mm_cmd *,
+			int);
 
 /* Card protocol-level functions. */
-int	rln_getenaddr __P((struct rln_softc *, u_int8_t *));
-int	rln_getpromvers __P((struct rln_softc *, char *, int));
-int	rln_sendinit __P((struct rln_softc *));
+int	rln_getenaddr(struct rln_softc *, u_int8_t *);
+int	rln_getpromvers(struct rln_softc *, char *, int);
+int	rln_sendinit(struct rln_softc *);
 #if notyet
-int	rln_roamconfig __P((struct rln_softc *));
-int	rln_roam __P((struct rln_softc *));
-int	rln_multicast __P((struct rln_softc *, int));
-int	rln_searchsync __P((struct rln_softc *));
-int	rln_iosetparam __P((struct rln_softc *, struct rln_param *));
-int	rln_lockprom __P((struct rln_softc *));
-int	rln_ito __P((struct rln_softc *));
-int	rln_standby __P((struct rln_softc *));
+int	rln_roamconfig(struct rln_softc *);
+int	rln_roam(struct rln_softc *);
+int	rln_multicast(struct rln_softc *, int);
+int	rln_searchsync(struct rln_softc *);
+int	rln_iosetparam(struct rln_softc *, struct rln_param *);
+int	rln_lockprom(struct rln_softc *);
+int	rln_ito(struct rln_softc *);
+int	rln_standby(struct rln_softc *);
 #endif
 
 /* Back-end attach and configure. Assumes card has been reset. */

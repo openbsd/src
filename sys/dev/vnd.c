@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.31 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.32 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -144,19 +144,19 @@ int numvnd = 0;
 struct dkdriver vnddkdriver = { vndstrategy };
 
 /* called by main() at boot time */
-void	vndattach __P((int));
+void	vndattach(int);
 
-void	vndclear __P((struct vnd_softc *));
-void	vndstart __P((struct vnd_softc *));
-int	vndsetcred __P((struct vnd_softc *, struct ucred *));
-void	vndthrottle __P((struct vnd_softc *, struct vnode *));
-void	vndiodone __P((struct buf *));
-void	vndshutdown __P((void));
-void	vndgetdisklabel __P((dev_t, struct vnd_softc *));
-void	vndencrypt __P((struct vnd_softc *, caddr_t, size_t, daddr_t, int));
+void	vndclear(struct vnd_softc *);
+void	vndstart(struct vnd_softc *);
+int	vndsetcred(struct vnd_softc *, struct ucred *);
+void	vndthrottle(struct vnd_softc *, struct vnode *);
+void	vndiodone(struct buf *);
+void	vndshutdown(void);
+void	vndgetdisklabel(dev_t, struct vnd_softc *);
+void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr_t, int);
 
-int	vndlock __P((struct vnd_softc *));
-void	vndunlock __P((struct vnd_softc *));
+int	vndlock(struct vnd_softc *);
+void	vndunlock(struct vnd_softc *);
 
 void
 vndencrypt(vnd, addr, size, off, encrypt)
@@ -983,7 +983,7 @@ vndthrottle(vnd, vp)
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
-	extern int (**nfsv2_vnodeop_p) __P((void *));
+	extern int (**nfsv2_vnodeop_p)(void *);
 
 	if (vp->v_op == nfsv2_vnodeop_p)
 		vnd->sc_maxactive = 2;

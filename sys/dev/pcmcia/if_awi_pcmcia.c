@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.9 2001/08/17 21:52:16 deraadt Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.10 2002/03/14 01:27:00 millert Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,15 +95,15 @@ struct awi_pcmcia_softc {
 	void *sc_powerhook;			/* power hook descriptor */
 };
 
-static int awi_pcmcia_match __P((struct device *, void *, void *));
-static void awi_pcmcia_attach __P((struct device *, struct device *, void *));
-static int awi_pcmcia_detach __P((struct device *, int));
-static int awi_pcmcia_enable __P((struct awi_softc *));
-static void awi_pcmcia_disable __P((struct awi_softc *));
-static void awi_pcmcia_powerhook __P((int, void *));
+static int awi_pcmcia_match(struct device *, void *, void *);
+static void awi_pcmcia_attach(struct device *, struct device *, void *);
+static int awi_pcmcia_detach(struct device *, int);
+static int awi_pcmcia_enable(struct awi_softc *);
+static void awi_pcmcia_disable(struct awi_softc *);
+static void awi_pcmcia_powerhook(int, void *);
 
-static int	awi_pcmcia_find __P((struct awi_pcmcia_softc *,
-    struct pcmcia_attach_args *, struct pcmcia_config_entry *));
+static int	awi_pcmcia_find(struct awi_pcmcia_softc *,
+    struct pcmcia_attach_args *, struct pcmcia_config_entry *);
 
 struct cfattach awi_pcmcia_ca = {
 	sizeof(struct awi_pcmcia_softc), awi_pcmcia_match, awi_pcmcia_attach,
@@ -148,7 +148,7 @@ static struct awi_pcmcia_product {
 };
 
 static struct awi_pcmcia_product *
-	awi_pcmcia_lookup __P((struct pcmcia_attach_args *));
+	awi_pcmcia_lookup(struct pcmcia_attach_args *);
 
 static struct awi_pcmcia_product *
 awi_pcmcia_lookup(pa)

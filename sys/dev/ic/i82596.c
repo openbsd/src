@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.8 2002/03/08 08:49:42 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.9 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -186,40 +186,40 @@ Mode of operation:
 #define	PURGE(addr,size)
 #endif
 
-void	i82596_reset 	__P((struct ie_softc *, int));
-void	i82596_watchdog	__P((struct ifnet *));
-int	i82596_init 	__P((struct ie_softc *));
-int	i82596_ioctl 	__P((struct ifnet *, u_long, caddr_t));
-void	i82596_start 	__P((struct ifnet *));
+void	i82596_reset(struct ie_softc *, int);
+void	i82596_watchdog(struct ifnet *);
+int	i82596_init(struct ie_softc *);
+int	i82596_ioctl(struct ifnet *, u_long, caddr_t);
+void	i82596_start(struct ifnet *);
 
-int	i82596_rint 	__P((struct ie_softc *, int));
-int	i82596_tint 	__P((struct ie_softc *, int));
+int	i82596_rint(struct ie_softc *, int);
+int	i82596_tint(struct ie_softc *, int);
 
-int   	i82596_mediachange 	__P((struct ifnet *));
-void  	i82596_mediastatus 	__P((struct ifnet *, struct ifmediareq *));
+int   	i82596_mediachange(struct ifnet *);
+void  	i82596_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int 	i82596_readframe	__P((struct ie_softc *, int));
-int	i82596_get_rbd_list	__P((struct ie_softc *,
-					     u_int16_t *, u_int16_t *, int *));
-void	i82596_release_rbd_list	__P((struct ie_softc *, u_int16_t, u_int16_t));
-int	i82596_drop_frames	__P((struct ie_softc *));
-int	i82596_chk_rx_ring	__P((struct ie_softc *));
+int 	i82596_readframe(struct ie_softc *, int);
+int	i82596_get_rbd_list(struct ie_softc *,
+					     u_int16_t *, u_int16_t *, int *);
+void	i82596_release_rbd_list(struct ie_softc *, u_int16_t, u_int16_t);
+int	i82596_drop_frames(struct ie_softc *);
+int	i82596_chk_rx_ring(struct ie_softc *);
 
-void	i82596_start_transceiver __P((struct ie_softc *));
-void	i82596_stop 		__P((struct ie_softc *));
-void 	i82596_xmit 		__P((struct ie_softc *));
+void	i82596_start_transceiver(struct ie_softc *);
+void	i82596_stop(struct ie_softc *);
+void 	i82596_xmit(struct ie_softc *);
 
-void 	i82596_setup_bufs	__P((struct ie_softc *));
-void	i82596_simple_command	__P((struct ie_softc *, int, int));
-int 	ie_cfg_setup		__P((struct ie_softc *, int, int, int));
-int	ie_ia_setup		__P((struct ie_softc *, int));
-void 	ie_run_tdr		__P((struct ie_softc *, int));
-int 	ie_mc_setup 		__P((struct ie_softc *, int));
-void 	ie_mc_reset 		__P((struct ie_softc *));
-int	i82596_cmd_wait		__P((struct ie_softc *));
+void 	i82596_setup_bufs(struct ie_softc *);
+void	i82596_simple_command(struct ie_softc *, int, int);
+int 	ie_cfg_setup(struct ie_softc *, int, int, int);
+int	ie_ia_setup(struct ie_softc *, int);
+void 	ie_run_tdr(struct ie_softc *, int);
+int 	ie_mc_setup(struct ie_softc *, int);
+void 	ie_mc_reset(struct ie_softc *);
+int	i82596_cmd_wait(struct ie_softc *);
 
 #ifdef I82596_DEBUG
-void 	print_rbd	__P((struct ie_softc *, int));
+void 	print_rbd(struct ie_softc *, int);
 #endif
 
 struct cfdriver ie_cd = {

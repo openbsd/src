@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc_obio.c,v 1.2 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: if_mc_obio.c,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: if_mc_obio.c,v 1.4 1998/01/13 19:24:54 scottr Exp $	*/
 
 /*-
@@ -60,17 +60,17 @@
 #define MACE_REG_BASE	0x50F1C000
 #define MACE_PROM_BASE	0x50F08000
 
-hide int	mc_obio_match __P((struct device *, void *, void *));
-hide void	mc_obio_attach __P((struct device *, struct device *, void *));
-hide void	mc_obio_init __P((struct mc_softc *sc));
-hide void	mc_obio_put __P((struct mc_softc *sc, u_int len));
-hide int	mc_dmaintr __P((void *arg));
-hide void	mc_reset_rxdma __P((struct mc_softc *sc));
-hide void	mc_reset_rxdma_set __P((struct mc_softc *, int set));
-hide void	mc_reset_txdma __P((struct mc_softc *sc));
-hide int	mc_obio_getaddr __P((struct mc_softc *, u_int8_t *));
+hide int	mc_obio_match(struct device *, void *, void *);
+hide void	mc_obio_attach(struct device *, struct device *, void *);
+hide void	mc_obio_init(struct mc_softc *sc);
+hide void	mc_obio_put(struct mc_softc *sc, u_int len);
+hide int	mc_dmaintr(void *arg);
+hide void	mc_reset_rxdma(struct mc_softc *sc);
+hide void	mc_reset_rxdma_set(struct mc_softc *, int set);
+hide void	mc_reset_txdma(struct mc_softc *sc);
+hide int	mc_obio_getaddr(struct mc_softc *, u_int8_t *);
 
-extern int	kvtop __P((register caddr_t addr));
+extern int	kvtop(register caddr_t addr);
 
 struct cfattach mc_obio_ca = {
 	sizeof(struct mc_softc), mc_obio_match, mc_obio_attach

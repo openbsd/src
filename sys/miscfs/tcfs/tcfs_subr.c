@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_subr.c,v 1.2 2000/06/17 20:25:55 provos Exp $	*/
+/*	$OpenBSD: tcfs_subr.c,v 1.3 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: tcfs_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -69,9 +69,9 @@ LIST_HEAD(tcfs_node_hashhead, tcfs_node) *tcfs_node_hashtbl;
 u_long tcfs_node_hash;
 
 static struct vnode *
-	tcfs_node_find __P((struct mount *, struct vnode *));
+	tcfs_node_find(struct mount *, struct vnode *);
 static int
-	tcfs_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
+	tcfs_node_alloc(struct mount *, struct vnode *, struct vnode **);
 /*
  * Initialise cache headers
  */
@@ -143,7 +143,7 @@ tcfs_node_alloc(mp, lowervp, vpp)
 	struct tcfs_node *xp;
 	struct vnode *vp, *nvp;
 	int error;
-	extern int (**dead_vnodeop_p) __P((void *));
+	extern int (**dead_vnodeop_p)(void *);
 	struct proc *p = curproc;
 
 

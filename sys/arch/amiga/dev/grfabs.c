@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfabs.c,v 1.2 1996/05/02 06:43:53 niklas Exp $	*/
+/*	$OpenBSD: grfabs.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: grfabs.c,v 1.5 1996/04/21 21:11:25 veego Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ struct vbl_node grf_vbl_node;
 #define ABS(type, val) \
     (type) (((int)(val) < 0) ? -(val) : (val))
 
-void grf_vbl_function __P((void *data));
-dmode_t *get_best_display_mode __P((u_long, u_long, u_char));
+void grf_vbl_function(void *data);
+dmode_t *get_best_display_mode(u_long, u_long, u_char);
 
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cg4.c,v 1.10 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cg4.c,v 1.11 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: cg4.c,v 1.11 1996/10/29 19:54:19 gwr Exp $	*/
 
 /*
@@ -108,8 +108,8 @@ struct cg4_softc {
 };
 
 /* autoconfiguration driver */
-static void	cg4attach __P((struct device *, struct device *, void *));
-static int	cg4match __P((struct device *, void *, void *));
+static void	cg4attach(struct device *, struct device *, void *);
+static int	cg4match(struct device *, void *, void *);
 
 struct cfattach cgfour_ca = {
 	sizeof(struct cg4_softc), cg4match, cg4attach
@@ -121,19 +121,19 @@ struct cfdriver cgfour_cd = {
 
 /* frame buffer generic driver */
 
-static int	cg4gattr   __P((struct fbdevice *, struct fbgattr *));
-static int	cg4gvideo  __P((struct fbdevice *, int *));
-static int	cg4svideo  __P((struct fbdevice *, int *));
-static int	cg4getcmap __P((struct fbdevice *, struct fbcmap *));
-static int	cg4putcmap __P((struct fbdevice *, struct fbcmap *));
+static int	cg4gattr(struct fbdevice *, struct fbgattr *);
+static int	cg4gvideo(struct fbdevice *, int *);
+static int	cg4svideo(struct fbdevice *, int *);
+static int	cg4getcmap(struct fbdevice *, struct fbcmap *);
+static int	cg4putcmap(struct fbdevice *, struct fbcmap *);
 
-static void	cg4a_init   __P((struct cg4_softc *));
-static void	cg4a_svideo __P((struct cg4_softc *, int));
-static void	cg4a_ldcmap __P((struct cg4_softc *));
+static void	cg4a_init(struct cg4_softc *);
+static void	cg4a_svideo(struct cg4_softc *, int);
+static void	cg4a_ldcmap(struct cg4_softc *);
 
-static void	cg4b_init   __P((struct cg4_softc *));
-static void	cg4b_svideo __P((struct cg4_softc *, int));
-static void	cg4b_ldcmap __P((struct cg4_softc *));
+static void	cg4b_init(struct cg4_softc *);
+static void	cg4b_svideo(struct cg4_softc *, int);
+static void	cg4b_ldcmap(struct cg4_softc *);
 
 static struct fbdriver cg4_fbdriver = {
 	cg4open, cg4close, cg4mmap, cg4gattr,

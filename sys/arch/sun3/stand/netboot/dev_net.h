@@ -1,8 +1,8 @@
-/*	$OpenBSD: dev_net.h,v 1.2 2001/07/04 08:33:54 niklas Exp $	*/
+/*	$OpenBSD: dev_net.h,v 1.3 2002/03/14 01:26:47 millert Exp $	*/
 
 
-int	net_open __P((struct open_file *, ...));
-int	net_close __P((struct open_file *));
+int	net_open(struct open_file *, ...);
+int	net_close(struct open_file *);
 int	net_ioctl();
 int	net_strategy();
 

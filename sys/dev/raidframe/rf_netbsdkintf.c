@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_netbsdkintf.c,v 1.8 2001/07/09 17:20:07 fgsch Exp $	*/
+/*	$OpenBSD: rf_netbsdkintf.c,v 1.9 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: rf_netbsdkintf.c,v 1.93 2000/07/14 15:26:29 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -180,17 +180,17 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   RF_SectorCount_t numSect, caddr_t buf,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
 		   int logBytesPerSector, struct proc * b_proc);
-static void raidinit __P((RF_Raid_t *));
+static void raidinit(RF_Raid_t *);
 
-void raidattach __P((int));
-int raidsize __P((dev_t));
-int raidopen __P((dev_t, int, int, struct proc *));
-int raidclose __P((dev_t, int, int, struct proc *));
-int raidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int raidwrite __P((dev_t, struct uio *, int));
-int raidread __P((dev_t, struct uio *, int));
-void raidstrategy __P((struct buf *));
-int raiddump __P((dev_t, daddr_t, caddr_t, size_t));
+void raidattach(int);
+int raidsize(dev_t);
+int raidopen(dev_t, int, int, struct proc *);
+int raidclose(dev_t, int, int, struct proc *);
+int raidioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int raidwrite(dev_t, struct uio *, int);
+int raidread(dev_t, struct uio *, int);
+void raidstrategy(struct buf *);
+int raiddump(dev_t, daddr_t, caddr_t, size_t);
 
 /*
  * Pilfered from ccd.c
@@ -257,39 +257,39 @@ int numraid = 0;
 /* declared here, and made public, for the benefit of KVM stuff.. */
 struct raid_softc *raid_softc;
 
-static void raidgetdefaultlabel __P((RF_Raid_t *, struct raid_softc *, 
-				     struct disklabel *));
-static void raidgetdisklabel __P((dev_t));
-static void raidmakedisklabel __P((struct raid_softc *));
+static void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, 
+				     struct disklabel *);
+static void raidgetdisklabel(dev_t);
+static void raidmakedisklabel(struct raid_softc *);
 
-static int raidlock __P((struct raid_softc *));
-static void raidunlock __P((struct raid_softc *));
+static int raidlock(struct raid_softc *);
+static void raidunlock(struct raid_softc *);
 
-static void rf_markalldirty __P((RF_Raid_t *));
-void rf_mountroot_hook __P((struct device *));
+static void rf_markalldirty(RF_Raid_t *);
+void rf_mountroot_hook(struct device *);
 
 struct device *raidrootdev;
 
-void rf_ReconThread __P((struct rf_recon_req *));
+void rf_ReconThread(struct rf_recon_req *);
 /* XXX what I want is: */
-/*void rf_ReconThread __P((RF_Raid_t *raidPtr));  */
-void rf_RewriteParityThread __P((RF_Raid_t *raidPtr));
-void rf_CopybackThread __P((RF_Raid_t *raidPtr));
-void rf_ReconstructInPlaceThread __P((struct rf_recon_req *));
-void rf_buildroothack __P((void *));
+/*void rf_ReconThread(RF_Raid_t *raidPtr);  */
+void rf_RewriteParityThread(RF_Raid_t *raidPtr);
+void rf_CopybackThread(RF_Raid_t *raidPtr);
+void rf_ReconstructInPlaceThread(struct rf_recon_req *);
+void rf_buildroothack(void *);
 
-RF_AutoConfig_t *rf_find_raid_components __P((void));
-RF_ConfigSet_t *rf_create_auto_sets __P((RF_AutoConfig_t *));
-static int rf_does_it_fit __P((RF_ConfigSet_t *,RF_AutoConfig_t *));
-static int rf_reasonable_label __P((RF_ComponentLabel_t *));
-void rf_create_configuration __P((RF_AutoConfig_t *,RF_Config_t *,
-				  RF_Raid_t *));
-int rf_set_autoconfig __P((RF_Raid_t *, int));
-int rf_set_rootpartition __P((RF_Raid_t *, int));
-void rf_release_all_vps __P((RF_ConfigSet_t *));
-void rf_cleanup_config_set __P((RF_ConfigSet_t *));
-int rf_have_enough_components __P((RF_ConfigSet_t *));
-int rf_auto_config_set __P((RF_ConfigSet_t *, int *));
+RF_AutoConfig_t *rf_find_raid_components(void);
+RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
+static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
+static int rf_reasonable_label(RF_ComponentLabel_t *);
+void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *,
+				  RF_Raid_t *);
+int rf_set_autoconfig(RF_Raid_t *, int);
+int rf_set_rootpartition(RF_Raid_t *, int);
+void rf_release_all_vps(RF_ConfigSet_t *);
+void rf_cleanup_config_set(RF_ConfigSet_t *);
+int rf_have_enough_components(RF_ConfigSet_t *);
+int rf_auto_config_set(RF_ConfigSet_t *, int *);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place.

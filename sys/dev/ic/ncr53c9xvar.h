@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.9 2001/09/27 04:01:42 jason Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.10 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -250,19 +250,19 @@ struct ncr53c9x_softc;
  */
 struct ncr53c9x_glue {
 	/* Mandatory entry points. */
-	u_char	(*gl_read_reg) __P((struct ncr53c9x_softc *, int));
-	void	(*gl_write_reg) __P((struct ncr53c9x_softc *, int, u_char));
-	int	(*gl_dma_isintr) __P((struct ncr53c9x_softc *));
-	void	(*gl_dma_reset) __P((struct ncr53c9x_softc *));
-	int	(*gl_dma_intr) __P((struct ncr53c9x_softc *));
-	int	(*gl_dma_setup) __P((struct ncr53c9x_softc *,
-		    caddr_t *, size_t *, int, size_t *));
-	void	(*gl_dma_go) __P((struct ncr53c9x_softc *));
-	void	(*gl_dma_stop) __P((struct ncr53c9x_softc *));
-	int	(*gl_dma_isactive) __P((struct ncr53c9x_softc *));
+	u_char	(*gl_read_reg)(struct ncr53c9x_softc *, int);
+	void	(*gl_write_reg)(struct ncr53c9x_softc *, int, u_char);
+	int	(*gl_dma_isintr)(struct ncr53c9x_softc *);
+	void	(*gl_dma_reset)(struct ncr53c9x_softc *);
+	int	(*gl_dma_intr)(struct ncr53c9x_softc *);
+	int	(*gl_dma_setup)(struct ncr53c9x_softc *,
+		    caddr_t *, size_t *, int, size_t *);
+	void	(*gl_dma_go)(struct ncr53c9x_softc *);
+	void	(*gl_dma_stop)(struct ncr53c9x_softc *);
+	int	(*gl_dma_isactive)(struct ncr53c9x_softc *);
 
 	/* Optional entry points. */
-	void	(*gl_clear_latched_intr) __P((struct ncr53c9x_softc *));
+	void	(*gl_clear_latched_intr)(struct ncr53c9x_softc *);
 };
 
 struct ncr53c9x_softc {
@@ -434,9 +434,9 @@ struct ncr53c9x_softc {
 #define	ncr53c9x_cpb2stp(sc, cpb)	\
 	((250 * (cpb)) / (sc)->sc_freq)
 
-void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
-	    struct scsi_adapter *, struct scsi_device *));
-int	ncr53c9x_scsi_cmd __P((struct scsi_xfer *));
-void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
-int	ncr53c9x_intr __P((void *));
-void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
+void	ncr53c9x_attach(struct ncr53c9x_softc *,
+	    struct scsi_adapter *, struct scsi_device *);
+int	ncr53c9x_scsi_cmd(struct scsi_xfer *);
+void	ncr53c9x_reset(struct ncr53c9x_softc *);
+int	ncr53c9x_intr(void *);
+void	ncr53c9x_init(struct ncr53c9x_softc *, int);

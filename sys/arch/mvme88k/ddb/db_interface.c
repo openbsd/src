@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.24 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.25 2002/03/14 01:26:38 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -54,32 +54,32 @@
 extern label_t *db_recover;
 extern unsigned int db_maxoff;
 extern unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
-extern int frame_is_sane __P((db_regs_t *));
-extern void cnpollc __P((int));
-void kdbprinttrap __P((int type, int code));
+extern int frame_is_sane(db_regs_t *);
+extern void cnpollc(int);
+void kdbprinttrap(int type, int code);
 
-void m88k_db_trap __P((int type, struct m88100_saved_state *regs));
-int ddb_nmi_trap __P((int level, db_regs_t *eframe));
-void ddb_error_trap __P((char *error, db_regs_t *eframe));
-void db_read_bytes __P((vm_offset_t addr, int size, char *data));
-void db_write_bytes __P((char *addr, int size, char *data));
-void db_putc __P((int c));
-int db_getc __P((void));
-void cpu_interrupt_to_db __P((int cpu_no));
-char *db_task_name __P((void));
-int m88k_dmx_print __P((unsigned, unsigned, unsigned, unsigned));
-void m88k_db_pause __P((unsigned));
-void m88k_db_print_frame __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_registers __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_where __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_frame_search __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_iflush __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_dflush __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_peek __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_noise __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_translate __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_cmmucfg __P((db_expr_t, int, db_expr_t, char *));
-void m88k_db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
+void m88k_db_trap(int type, struct m88100_saved_state *regs);
+int ddb_nmi_trap(int level, db_regs_t *eframe);
+void ddb_error_trap(char *error, db_regs_t *eframe);
+void db_read_bytes(vm_offset_t addr, int size, char *data);
+void db_write_bytes(char *addr, int size, char *data);
+void db_putc(int c);
+int db_getc(void);
+void cpu_interrupt_to_db(int cpu_no);
+char *db_task_name(void);
+int m88k_dmx_print(unsigned, unsigned, unsigned, unsigned);
+void m88k_db_pause(unsigned);
+void m88k_db_print_frame(db_expr_t, int, db_expr_t, char *);
+void m88k_db_registers(db_expr_t, int, db_expr_t, char *);
+void m88k_db_where(db_expr_t, int, db_expr_t, char *);
+void m88k_db_frame_search(db_expr_t, int, db_expr_t, char *);
+void m88k_db_iflush(db_expr_t, int, db_expr_t, char *);
+void m88k_db_dflush(db_expr_t, int, db_expr_t, char *);
+void m88k_db_peek(db_expr_t, int, db_expr_t, char *);
+void m88k_db_noise(db_expr_t, int, db_expr_t, char *);
+void m88k_db_translate(db_expr_t, int, db_expr_t, char *);
+void m88k_db_cmmucfg(db_expr_t, int, db_expr_t, char *);
+void m88k_db_prom_cmd(db_expr_t, int, db_expr_t, char *);
 
 int 	db_active = 0;
 int 	db_noisy = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.20 2001/02/03 05:26:47 mickey Exp $ */
+/*	$OpenBSD: pss.c,v 1.21 2002/03/14 01:26:56 millert Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -152,59 +152,59 @@ int	pssdebug = 0;
 #define DPRINTF(x)
 #endif
 
-int	pssprobe __P((struct device *, void *, void *));
-void	pssattach __P((struct device *, struct device *, void *));
+int	pssprobe(struct device *, void *, void *);
+void	pssattach(struct device *, struct device *, void *);
 
-int	spprobe __P((struct device *, void *, void *));
-void	spattach __P((struct device *, struct device *, void *));
+int	spprobe(struct device *, void *, void *);
+void	spattach(struct device *, struct device *, void *);
 
 #ifdef notyet
-int	mpuprobe __P((struct device *, void *, void *));
-void	mpuattach __P((struct device *, struct device *, void *));
+int	mpuprobe(struct device *, void *, void *);
+void	mpuattach(struct device *, struct device *, void *);
 
-int	pcdprobe __P((struct device *, void *, void *));
-void	pcdattach __P((struct device *, struct device *, void *));
+int	pcdprobe(struct device *, void *, void *);
+void	pcdattach(struct device *, struct device *, void *);
 #endif
 
-int	pssintr __P((void *));
+int	pssintr(void *);
 #ifdef notyet
-int	mpuintr __P((void *));
+int	mpuintr(void *);
 #endif
 
-int	pss_speaker_ctl __P((void *, int));
+int	pss_speaker_ctl(void *, int);
 
-int	pss_getdev __P((void *, struct audio_device *));
+int	pss_getdev(void *, struct audio_device *);
 
-int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
+int	pss_mixer_set_port(void *, mixer_ctrl_t *);
+int	pss_mixer_get_port(void *, mixer_ctrl_t *);
+int	pss_query_devinfo(void *, mixer_devinfo_t *);
 
 #ifdef PSS_DSP
-void	pss_dspwrite __P((struct pss_softc *, int));
+void	pss_dspwrite(struct pss_softc *, int);
 #endif
-void	pss_setaddr __P((int, int));
-int	pss_setint __P((int, int));
-int	pss_setdma __P((int, int));
-int	pss_testirq __P((struct pss_softc *, int));
-int	pss_testdma __P((struct pss_softc *, int));
+void	pss_setaddr(int, int);
+int	pss_setint(int, int);
+int	pss_setdma(int, int);
+int	pss_testirq(struct pss_softc *, int);
+int	pss_testdma(struct pss_softc *, int);
 #ifdef notyet
-int	pss_reset_dsp __P((struct pss_softc *));
-int	pss_download_dsp __P((struct pss_softc *, u_char *, int));
+int	pss_reset_dsp(struct pss_softc *);
+int	pss_download_dsp(struct pss_softc *, u_char *, int);
 #endif
 #ifdef AUDIO_DEBUG
-void	pss_dump_regs __P((struct pss_softc *));
+void	pss_dump_regs(struct pss_softc *);
 #endif
-int	pss_set_master_gain __P((struct pss_softc *, struct ad1848_volume *));
-int	pss_set_master_mode __P((struct pss_softc *, int));
-int	pss_set_treble __P((struct pss_softc *, u_int));
-int	pss_set_bass __P((struct pss_softc *, u_int));
-int	pss_get_master_gain __P((struct pss_softc *, struct ad1848_volume *));
-int	pss_get_master_mode __P((struct pss_softc *, u_int *));
-int	pss_get_treble __P((struct pss_softc *, u_char *));
-int	pss_get_bass __P((struct pss_softc *, u_char *));
+int	pss_set_master_gain(struct pss_softc *, struct ad1848_volume *);
+int	pss_set_master_mode(struct pss_softc *, int);
+int	pss_set_treble(struct pss_softc *, u_int);
+int	pss_set_bass(struct pss_softc *, u_int);
+int	pss_get_master_gain(struct pss_softc *, struct ad1848_volume *);
+int	pss_get_master_mode(struct pss_softc *, u_int *);
+int	pss_get_treble(struct pss_softc *, u_char *);
+int	pss_get_bass(struct pss_softc *, u_char *);
 
 #ifdef AUDIO_DEBUG
-void	wss_dump_regs __P((struct ad1848_softc *));
+void	wss_dump_regs(struct ad1848_softc *);
 #endif
 
 /*

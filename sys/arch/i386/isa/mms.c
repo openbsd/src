@@ -1,4 +1,4 @@
-/*	$OpenBSD: mms.c,v 1.15 2001/08/07 19:24:27 jason Exp $ */
+/*	$OpenBSD: mms.c,v 1.16 2002/03/14 01:26:33 millert Exp $ */
 /*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
@@ -54,17 +54,17 @@ struct mms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int mmsprobe __P((struct device *, void *, void *));
-void mmsattach __P((struct device *, struct device *, void *));
-int mmsintr __P((void *));
+int mmsprobe(struct device *, void *, void *);
+void mmsattach(struct device *, struct device *, void *);
+int mmsintr(void *);
 
 struct cfattach mms_ca = {
 	sizeof(struct mms_softc), mmsprobe, mmsattach
 };
 
-int	mms_enable __P((void *));
-int	mms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	mms_disable __P((void *));
+int	mms_enable(void *);
+int	mms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	mms_disable(void *);
 
 const struct wsmouse_accessops mms_accessops = {
 	mms_enable,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.54 2002/01/31 00:16:42 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.55 2002/03/14 01:26:52 millert Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -453,15 +453,15 @@ rnd_qlen(void)
 	return (len < 0)? -len : len;
 }
 
-void dequeue_randomness __P((void *));
+void dequeue_randomness(void *);
 
-static __inline void add_entropy_words __P((const u_int32_t *, u_int n));
-static __inline void extract_entropy __P((register u_int8_t *, int));
+static __inline void add_entropy_words(const u_int32_t *, u_int n);
+static __inline void extract_entropy(register u_int8_t *, int);
 
-static __inline u_int8_t arc4_getbyte __P((void));
-static __inline void arc4_stir __P((void));
-void arc4_reinit __P((void *v));
-void arc4maybeinit __P((void));
+static __inline u_int8_t arc4_getbyte(void);
+static __inline void arc4_stir(void);
+void arc4_reinit(void *v);
+void arc4maybeinit(void);
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tr_isa.c,v 1.2 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: if_tr_isa.c,v 1.3 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_tr_isa.c,v 1.4 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRISADEBUG
@@ -59,18 +59,18 @@
 #include <dev/ic/tropicvar.h>
 
 
-int	tr_isa_probe __P((struct device *, void *, void *));
-int	trtcm_isa_probe __P((struct device *, void *, void *));
-int	tribm_isa_probe __P((struct device *, void *, void *));
-void	tr_isa_attach __P((struct device *, struct device *, void *));
-int	tr_isa_map_io __P((struct isa_attach_args *, bus_space_handle_t *,
-	    bus_space_handle_t *));
-void	tr_isa_unmap_io __P((struct isa_attach_args *, bus_space_handle_t,
-	    bus_space_handle_t));
-int	trtcm_isa_mediachange __P((struct tr_softc *));
-void	trtcm_isa_mediastatus __P((struct tr_softc *, struct ifmediareq *));
+int	tr_isa_probe(struct device *, void *, void *);
+int	trtcm_isa_probe(struct device *, void *, void *);
+int	tribm_isa_probe(struct device *, void *, void *);
+void	tr_isa_attach(struct device *, struct device *, void *);
+int	tr_isa_map_io(struct isa_attach_args *, bus_space_handle_t *,
+	    bus_space_handle_t *);
+void	tr_isa_unmap_io(struct isa_attach_args *, bus_space_handle_t,
+	    bus_space_handle_t);
+int	trtcm_isa_mediachange(struct tr_softc *);
+void	trtcm_isa_mediastatus(struct tr_softc *, struct ifmediareq *);
 #ifdef TRISADEBUG
-void	tr_isa_dumpaip __P((bus_space_tag_t, bus_space_handle_t));
+void	tr_isa_dumpaip(bus_space_tag_t, bus_space_handle_t);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_debug.c,v 1.2 1996/03/04 10:34:46 mickey Exp $	*/
+/*	$OpenBSD: clnp_debug.c,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: clnp_debug.c,v 1.6 1996/02/13 22:08:13 christos Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ struct addr_rfc986 u_bad = {
 	{0x00, 0x01},
 	{0x01, 0xc0, 0x0c, 0x0c, 0xab, 0x11}
 };
-int main        __P((void));
+int main(void);
 
 #include <stdio.h>
 int
@@ -140,9 +140,9 @@ main()
 unsigned int    clnp_debug;
 static char     letters[] = "0123456789abcdef";
 
-char           *clnp_hexp __P((char *, int, char *));
-char           *clnp_iso_addrp __P((struct iso_addr *));
-char           *clnp_saddr_isop __P((struct sockaddr_iso *));
+char           *clnp_hexp(char *, int, char *);
+char           *clnp_iso_addrp(struct iso_addr *);
+char           *clnp_saddr_isop(struct sockaddr_iso *);
 
 /*
  *	Print buffer in hex, return addr of where we left off.

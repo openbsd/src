@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 2002/03/07 18:08:08 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -347,9 +347,9 @@ struct alpha_bus_space {
 
 
 /*
- *	void bus_space_write_raw_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_raw_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_int8_t *addr, size_t count));
+ *	    const u_int8_t *addr, size_t count);
  *
  * Write `count' bytes in 2, 4 or 8 byte wide quantities to bus space
  * described by tag/handle and starting at `offset' from the

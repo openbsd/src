@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.42 2001/07/06 00:23:09 smurph Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.43 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -407,10 +407,10 @@ struct isa_softc {
  */
 
 /* ISA interrupt sharing types */
-char	*isa_intr_typename __P((int type));
+char	*isa_intr_typename(int type);
 
-void	isascan __P((struct device *parent, void *match));
-int	isaprint __P((void *, const char *));
+void	isascan(struct device *parent, void *match);
+int	isaprint(void *, const char *);
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This
@@ -421,8 +421,8 @@ int	isaprint __P((void *, const char *));
 /*
  * ISA PnP prototypes and support macros.
  */
-static __inline void isapnp_write_reg __P((struct isapnp_softc *, int, u_char));
-static __inline u_char isapnp_read_reg __P((struct isapnp_softc *, int));
+static __inline void isapnp_write_reg(struct isapnp_softc *, int, u_char);
+static __inline u_char isapnp_read_reg(struct isapnp_softc *, int);
 
 static __inline void
 isapnp_write_reg(sc, r, v)
@@ -443,24 +443,24 @@ isapnp_read_reg(sc, r)
 }
 
 struct isa_attach_args *
-    isapnp_get_resource __P((struct isapnp_softc *, int));
-char *isapnp_id_to_vendor __P((char *, const u_char *));
+    isapnp_get_resource(struct isapnp_softc *, int);
+char *isapnp_id_to_vendor(char *, const u_char *);
 
-int isapnp_config __P((bus_space_tag_t, bus_space_tag_t,
-    struct isa_attach_args *));
-void isapnp_unconfig __P((bus_space_tag_t, bus_space_tag_t,
-    struct isa_attach_args *));
+int isapnp_config(bus_space_tag_t, bus_space_tag_t,
+    struct isa_attach_args *);
+void isapnp_unconfig(bus_space_tag_t, bus_space_tag_t,
+    struct isa_attach_args *);
 
-void isapnp_isa_attach_hook __P((struct isa_softc *));
+void isapnp_isa_attach_hook(struct isa_softc *);
 #ifdef DEBUG_ISAPNP
-void isapnp_print_mem __P((const char *, const struct isapnp_region *));
-void isapnp_print_io __P((const char *, const struct isapnp_region *));
-void isapnp_print_irq __P((const char *, const struct isapnp_pin *));
-void isapnp_print_drq __P((const char *, const struct isapnp_pin *));
-void isapnp_print_dep_start __P((const char *, const u_char));
-void isapnp_print_attach __P((const struct isa_attach_args *));
-void isapnp_get_config __P((struct isapnp_softc *,
-	struct isa_attach_args *));
-void isapnp_print_config __P((const struct isa_attach_args *));
+void isapnp_print_mem(const char *, const struct isapnp_region *);
+void isapnp_print_io(const char *, const struct isapnp_region *);
+void isapnp_print_irq(const char *, const struct isapnp_pin *);
+void isapnp_print_drq(const char *, const struct isapnp_pin *);
+void isapnp_print_dep_start(const char *, const u_char);
+void isapnp_print_attach(const struct isa_attach_args *);
+void isapnp_get_config(struct isapnp_softc *,
+	struct isa_attach_args *);
+void isapnp_print_config(const struct isa_attach_args *);
 #endif	/* DEBUG_ISAPNP */
 #endif /* _DEV_ISA_ISAVAR_H_ */

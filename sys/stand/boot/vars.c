@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.6 2001/05/02 16:32:10 mickey Exp $	*/
+/*	$OpenBSD: vars.c,v 1.7 2002/03/14 01:27:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -40,17 +40,17 @@
 extern const char version[];
 extern int debug;
 
-static int Xaddr __P((void));
-static int Xdevice __P((void));
+static int Xaddr(void);
+static int Xdevice(void);
 #ifdef DEBUG
-static int Xdebug __P((void));
+static int Xdebug(void);
 #endif
-static int Ximage __P((void));
-static int Xhowto __P((void));
-static int Xtty __P((void));
-static int Xtimeout __P((void));
-int Xset __P((void));
-int Xenv __P((void));
+static int Ximage(void);
+static int Xhowto(void);
+static int Xtty(void);
+static int Xtimeout(void);
+int Xset(void);
+int Xenv(void);
 
 const struct cmd_table cmd_set[] = {
 	{"addr",   CMDT_VAR, Xaddr},

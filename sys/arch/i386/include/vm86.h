@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.h,v 1.7 1996/05/30 09:30:11 deraadt Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.8 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: vm86.h,v 1.8 1996/05/03 19:26:32 christos Exp $	*/
 
 #undef	VM86_USE_VIF
@@ -81,15 +81,15 @@ struct vm86_struct {
 #define VCPU_586		5
 
 #ifdef _KERNEL
-int i386_vm86 __P((struct proc *, char *, register_t *));
-void vm86_gpfault __P((struct proc *, int));
-void vm86_return __P((struct proc *, int));
-static __inline void clr_vif __P((struct proc *));
-static __inline void set_vif __P((struct proc *));
-static __inline void set_vflags __P((struct proc *, int));
-static __inline int get_vflags __P((struct proc *));
-static __inline void set_vflags_short __P((struct proc *, int));
-static __inline int get_vflags_short __P((struct proc *));
+int i386_vm86(struct proc *, char *, register_t *);
+void vm86_gpfault(struct proc *, int);
+void vm86_return(struct proc *, int);
+static __inline void clr_vif(struct proc *);
+static __inline void set_vif(struct proc *);
+static __inline void set_vflags(struct proc *, int);
+static __inline int get_vflags(struct proc *);
+static __inline void set_vflags_short(struct proc *, int);
+static __inline int get_vflags_short(struct proc *);
 
 static __inline void
 clr_vif(p)
@@ -182,5 +182,5 @@ get_vflags_short(p)
 	return (flags);
 }
 #else
-int i386_vm86 __P((struct vm86_struct *vmcp));
+int i386_vm86(struct vm86_struct *vmcp);
 #endif

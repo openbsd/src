@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.12 1999/04/28 09:28:15 art Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.13 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.8 1996/03/05 02:35:39 thorpej Exp $	*/
 
 /*
@@ -68,10 +68,10 @@
 LIST_HEAD(umap_node_hashhead, umap_node) *umap_node_hashtbl;
 u_long umap_node_hash;
 
-static id_t umap_findid __P((id_t, id_map_t, int));
-static struct vnode *umap_node_find __P((struct mount *, struct vnode *));
-static int umap_node_alloc __P((struct mount *, struct vnode *,
-				struct vnode **));
+static id_t umap_findid(id_t, id_map_t, int);
+static struct vnode *umap_node_find(struct mount *, struct vnode *);
+static int umap_node_alloc(struct mount *, struct vnode *,
+				struct vnode **);
 
 /*
  * Initialise cache headers
@@ -202,7 +202,7 @@ umap_node_alloc(mp, lowervp, vpp)
 	struct vnode *vp, *nvp;
 	int error;
 	struct proc *p = curproc;
-	extern int (**dead_vnodeop_p) __P((void *));
+	extern int (**dead_vnodeop_p)(void *);
 
 	if ((error = getnewvnode(VT_UMAP, mp, umap_vnodeop_p, &vp)) != 0)
 		return (error);

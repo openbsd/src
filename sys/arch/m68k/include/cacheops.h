@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops.h,v 1.2 2001/05/15 01:43:14 millert Exp $	*/
+/*	$OpenBSD: cacheops.h,v 1.3 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: cacheops.h,v 1.1 1997/06/02 20:26:37 leo Exp $	*/
 
 /*-
@@ -122,16 +122,16 @@
 #define	_MULTI_CPU
 #endif
 
-void	_TBIA __P((void));
-void	_TBIS __P((vaddr_t));
-void	_TBIAS __P((void));
-void	_TBIAU __P((void));
-void	_ICIA __P((void));
-void	_ICPA __P((void));
-void	_DCIA __P((void));
-void	_DCIS __P((void));
-void	_DCIU __P((void));
-void	_DCIAS __P((paddr_t));
+void	_TBIA(void);
+void	_TBIS(vaddr_t);
+void	_TBIAS(void);
+void	_TBIAU(void);
+void	_ICIA(void);
+void	_ICPA(void);
+void	_DCIA(void);
+void	_DCIS(void);
+void	_DCIU(void);
+void	_DCIAS(paddr_t);
 
 #define	TBIA()		_TBIA()
 #define	TBIS(va)	_TBIS((va))
@@ -146,15 +146,15 @@ void	_DCIAS __P((paddr_t));
 
 #if defined(M68040)||defined(M68060)
 
-void	_PCIA __P((void));
-void	_DCFA __P((void));
-void	_ICPL __P((paddr_t));
-void	_ICPP __P((paddr_t));
-void	_DCPL __P((paddr_t));
-void	_DCPP __P((paddr_t));
-void	_DCPA __P((void));
-void	_DCFL __P((paddr_t));
-void	_DCFP __P((paddr_t));
+void	_PCIA(void);
+void	_DCFA(void);
+void	_ICPL(paddr_t);
+void	_ICPP(paddr_t);
+void	_DCPL(paddr_t);
+void	_DCPP(paddr_t);
+void	_DCPA(void);
+void	_DCFL(paddr_t);
+void	_DCFP(paddr_t);
 
 #define	PCIA()		_PCIA()
 #define	DCFA()		_DCFA()

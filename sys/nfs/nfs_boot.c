@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.13 2002/01/16 21:51:16 ericj Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.14 2002/03/14 01:27:13 millert Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -99,14 +99,14 @@ nfs_boot_getfh(bpsin, key, ndmntp)
  */
 
 /* bootparam RPC */
-static int bp_whoami __P((struct sockaddr_in *bpsin,
-	struct in_addr *my_ip, struct in_addr *gw_ip));
-static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
-	struct sockaddr_in *mdsin, char *servname, char *path, int retries));
+static int bp_whoami(struct sockaddr_in *bpsin,
+	struct in_addr *my_ip, struct in_addr *gw_ip);
+static int bp_getfile(struct sockaddr_in *bpsin, char *key,
+	struct sockaddr_in *mdsin, char *servname, char *path, int retries);
 
 /* mountd RPC */
-static int md_mount __P((struct sockaddr_in *mdsin, char *path,
-	u_char *fh));
+static int md_mount(struct sockaddr_in *mdsin, char *path,
+	u_char *fh);
 
 char	*nfsbootdevname;
 

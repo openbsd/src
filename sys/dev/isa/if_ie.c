@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.23 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.24 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -227,8 +227,8 @@ struct ie_softc {
 
 	struct arpcom sc_arpcom;
 
-	void (*reset_586) __P((struct ie_softc *));
-	void (*chan_attn) __P((struct ie_softc *));
+	void (*reset_586)(struct ie_softc *);
+	void (*chan_attn)(struct ie_softc *);
 
 	enum ie_hardware hard_type;
 	int hard_vers;
@@ -259,65 +259,65 @@ struct ie_softc {
 #endif
 };
 
-void iewatchdog __P((struct ifnet *));
-int ieintr __P((void *));
-void iestop __P((struct ie_softc *));
-int ieinit __P((struct ie_softc *));
-int ieioctl __P((struct ifnet *, u_long, caddr_t));
-void iestart __P((struct ifnet *));
-static void el_reset_586 __P((struct ie_softc *));
-static void sl_reset_586 __P((struct ie_softc *));
-static void el_chan_attn __P((struct ie_softc *));
-static void sl_chan_attn __P((struct ie_softc *));
-static void slel_get_address __P((struct ie_softc *));
+void iewatchdog(struct ifnet *);
+int ieintr(void *);
+void iestop(struct ie_softc *);
+int ieinit(struct ie_softc *);
+int ieioctl(struct ifnet *, u_long, caddr_t);
+void iestart(struct ifnet *);
+static void el_reset_586(struct ie_softc *);
+static void sl_reset_586(struct ie_softc *);
+static void el_chan_attn(struct ie_softc *);
+static void sl_chan_attn(struct ie_softc *);
+static void slel_get_address(struct ie_softc *);
 
-static void ee16_reset_586 __P((struct ie_softc *));
-static void ee16_chan_attn __P((struct ie_softc *));
-static void ee16_interrupt_enable __P((struct ie_softc *));
-void ee16_eeprom_outbits __P((struct ie_softc *, int, int));
-void ee16_eeprom_clock __P((struct ie_softc *, int));
-u_short ee16_read_eeprom __P((struct ie_softc *, int));
-int ee16_eeprom_inbits __P((struct ie_softc *));
+static void ee16_reset_586(struct ie_softc *);
+static void ee16_chan_attn(struct ie_softc *);
+static void ee16_interrupt_enable(struct ie_softc *);
+void ee16_eeprom_outbits(struct ie_softc *, int, int);
+void ee16_eeprom_clock(struct ie_softc *, int);
+u_short ee16_read_eeprom(struct ie_softc *, int);
+int ee16_eeprom_inbits(struct ie_softc *);
 
-void iereset __P((struct ie_softc *));
-void ie_readframe __P((struct ie_softc *, int));
-void ie_drop_packet_buffer __P((struct ie_softc *));
-void ie_find_mem_size __P((struct ie_softc *));
-static int command_and_wait __P((struct ie_softc *, int,
-    void volatile *, int));
-void ierint __P((struct ie_softc *));
-void ietint __P((struct ie_softc *));
-void iexmit __P((struct ie_softc *));
-struct mbuf *ieget __P((struct ie_softc *,
-    struct ether_header *, int *));
-void iememinit __P((void *, struct ie_softc *));
-static int mc_setup __P((struct ie_softc *, void *));
-static void mc_reset __P((struct ie_softc *));
+void iereset(struct ie_softc *);
+void ie_readframe(struct ie_softc *, int);
+void ie_drop_packet_buffer(struct ie_softc *);
+void ie_find_mem_size(struct ie_softc *);
+static int command_and_wait(struct ie_softc *, int,
+    void volatile *, int);
+void ierint(struct ie_softc *);
+void ietint(struct ie_softc *);
+void iexmit(struct ie_softc *);
+struct mbuf *ieget(struct ie_softc *,
+    struct ether_header *, int *);
+void iememinit(void *, struct ie_softc *);
+static int mc_setup(struct ie_softc *, void *);
+static void mc_reset(struct ie_softc *);
 
 #ifdef IEDEBUG
-void print_rbd __P((volatile struct ie_recv_buf_desc *));
+void print_rbd(volatile struct ie_recv_buf_desc *);
 
 int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int	ieprobe __P((struct device *, void *, void *));
-void	ieattach __P((struct device *, struct device *, void *));
-int	sl_probe __P((struct ie_softc *, struct isa_attach_args *));
-int	el_probe __P((struct ie_softc *, struct isa_attach_args *));
-int	ee16_probe __P((struct ie_softc *, struct isa_attach_args *));
-int	check_ie_present __P((struct ie_softc *, caddr_t, u_int));
+int	ieprobe(struct device *, void *, void *);
+void	ieattach(struct device *, struct device *, void *);
+int	sl_probe(struct ie_softc *, struct isa_attach_args *);
+int	el_probe(struct ie_softc *, struct isa_attach_args *);
+int	ee16_probe(struct ie_softc *, struct isa_attach_args *);
+int	check_ie_present(struct ie_softc *, caddr_t, u_int);
 
-static __inline void ie_setup_config __P((volatile struct ie_config_cmd *,
-    int, int));
-static __inline void ie_ack __P((struct ie_softc *, u_int));
-static __inline int ether_equal __P((u_char *, u_char *));
-static __inline int check_eh __P((struct ie_softc *, struct ether_header *,
-    int *));
-static __inline int ie_buflen __P((struct ie_softc *, int));
-static __inline int ie_packet_len __P((struct ie_softc *));
+static __inline void ie_setup_config(volatile struct ie_config_cmd *,
+    int, int);
+static __inline void ie_ack(struct ie_softc *, u_int);
+static __inline int ether_equal(u_char *, u_char *);
+static __inline int check_eh(struct ie_softc *, struct ether_header *,
+    int *);
+static __inline int ie_buflen(struct ie_softc *, int);
+static __inline int ie_packet_len(struct ie_softc *);
 
-static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
+static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 
 struct cfattach ie_isa_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach

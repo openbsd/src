@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcds.c,v 1.8 1999/01/11 05:11:05 millert Exp $	*/
+/*	$OpenBSD: tcds.c,v 1.9 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: tcds.c,v 1.16 1996/12/05 01:39:45 cgd Exp $	*/
 
 /*
@@ -57,12 +57,12 @@ struct tcds_softc {
 
 /* Definition of the driver for autoconfig. */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	tcdsmatch __P((struct device *, void *, void *));
+int	tcdsmatch(struct device *, void *, void *);
 #else
-int	tcdsmatch __P((struct device *, struct cfdata *, void *));
+int	tcdsmatch(struct device *, struct cfdata *, void *);
 #endif
-void	tcdsattach __P((struct device *, struct device *, void *));
-int     tcdsprint __P((void *, const char *));
+void	tcdsattach(struct device *, struct device *, void *);
+int     tcdsprint(void *, const char *);
 
 struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
@@ -72,8 +72,8 @@ struct cfdriver tcds_cd = {
 	NULL, "tcds", DV_DULL,
 };
 
-/*static*/ int	tcds_intr __P((void *));
-/*static*/ int	tcds_intrnull __P((void *));
+/*static*/ int	tcds_intr(void *);
+/*static*/ int	tcds_intrnull(void *);
 
 int
 tcdsmatch(parent, cfdata, aux)
@@ -227,7 +227,7 @@ tcds_intr_establish(tcds, cookie, level, func, arg)
 	struct device *tcds;
 	void *cookie, *arg;
 	tc_intrlevel_t level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 {
 	struct tcds_softc *sc = (struct tcds_softc *)tcds;
 	u_long slot;

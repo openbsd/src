@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.8 1999/12/18 16:42:19 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.9 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -58,10 +58,10 @@ static	char vm_rfc1048[4] = VM_RFC1048;
 static	char vm_cmu[4] = VM_CMU;
 
 /* Local forwards */
-static	ssize_t bootpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, time_t));
-static	void vend_cmu __P((u_char *));
-static	void vend_rfc1048 __P((u_char *, u_int));
+static	ssize_t bootpsend(struct iodesc *, void *, size_t);
+static	ssize_t bootprecv(struct iodesc *, void *, size_t, time_t);
+static	void vend_cmu(u_char *);
+static	void vend_rfc1048(u_char *, u_int);
 
 /* Fetch required bootp infomation */
 void

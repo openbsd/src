@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.27 2001/08/03 16:17:47 tholo Exp $ */
+/* $OpenBSD: vga.c,v 1.28 2002/03/14 01:26:55 millert Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -91,17 +91,17 @@ int vgaconsole, vga_console_type, vga_console_attached;
 struct vgascreen vga_console_screen;
 struct vga_config vga_console_vc;
 
-int vga_selectfont __P((struct vga_config *, struct vgascreen *,
-    const char *, const char *));
-void	vga_init_screen __P((struct vga_config *, struct vgascreen *,
-    const struct wsscreen_descr *, int, long *));
-void	vga_init __P((struct vga_config *, bus_space_tag_t, bus_space_tag_t));
-void vga_setfont __P((struct vga_config *, struct vgascreen *));
+int vga_selectfont(struct vga_config *, struct vgascreen *,
+    const char *, const char *);
+void	vga_init_screen(struct vga_config *, struct vgascreen *,
+    const struct wsscreen_descr *, int, long *);
+void	vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
+void vga_setfont(struct vga_config *, struct vgascreen *);
 
-int vga_mapchar __P((void *, int, unsigned int *));
-void vga_putchar __P((void *, int, int, u_int, long));
-int vga_alloc_attr __P((void *, int, int, int, long *));
-void	vga_copyrows __P((void *, int, int, int));
+int vga_mapchar(void *, int, unsigned int *);
+void vga_putchar(void *, int, int, u_int, long);
+int vga_alloc_attr(void *, int, int, int, long *);
+void	vga_copyrows(void *, int, int, int);
 
 static const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
@@ -212,19 +212,19 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	vga_mmap __P((void *, off_t, int));
-int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
-			      void **, int *, int *, long *));
-void	vga_free_screen __P((void *, void *));
+int	vga_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	vga_mmap(void *, off_t, int);
+int	vga_alloc_screen(void *, const struct wsscreen_descr *,
+			      void **, int *, int *, long *);
+void	vga_free_screen(void *, void *);
 int	vga_show_screen __P((void *, void *, int,
 			     void (*) (void *, int, int), void *));
-int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
-void	vga_scrollback __P((void *, void *, int));
-void	vga_burner __P((void *v, u_int on, u_int flags));
-u_int16_t vga_getchar __P((void *, int, int));
+int	vga_load_font(void *, void *, struct wsdisplay_font *);
+void	vga_scrollback(void *, void *, int);
+void	vga_burner(void *v, u_int on, u_int flags);
+u_int16_t vga_getchar(void *, int, int);
 
-void vga_doswitch __P((struct vga_config *));
+void vga_doswitch(struct vga_config *);
 
 const struct wsdisplay_accessops vga_accessops = {
 	vga_ioctl,
@@ -506,7 +506,7 @@ vga_extended_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
-	int (*map) __P((void *, vaddr_t, int));
+	int (*map)(void *, vaddr_t, int);
 {
 #endif /* arc */
 	int console;
@@ -721,7 +721,7 @@ vga_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	struct vgascreen *scr = cookie, *oldscr;
@@ -1143,7 +1143,7 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	_e000U
 };
 
-int vga_pcvt_mapchar __P((int, unsigned int *));
+int vga_pcvt_mapchar(int, unsigned int *);
 
 int
 vga_pcvt_mapchar(uni, index)
@@ -1163,7 +1163,7 @@ vga_pcvt_mapchar(uni, index)
 
 #endif /* WSCONS_SUPPORT_PCVTFONTS */
 
-int _vga_mapchar __P((void *, struct vgafont *, int, unsigned int *));
+int _vga_mapchar(void *, struct vgafont *, int, unsigned int *);
 
 int
 _vga_mapchar(id, font, uni, index)

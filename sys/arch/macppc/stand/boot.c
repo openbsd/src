@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2001/12/15 22:26:18 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -67,11 +67,11 @@ int boothowto;
 int debug;
 
 #ifdef POWERPC_BOOT_ELF
-int	elf_exec __P((int, Elf32_Ehdr *, u_int32_t *, void **));
+int	elf_exec(int, Elf32_Ehdr *, u_int32_t *, void **);
 #endif
 
 #ifdef POWERPC_BOOT_AOUT
-int	aout_exec __P((int, struct exec *, u_int32_t *, void **));
+int	aout_exec(int, struct exec *, u_int32_t *, void **);
 #endif
 
 static void

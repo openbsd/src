@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkbad.c,v 1.5 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: dkbad.c,v 1.6 2002/03/14 01:26:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,7 +40,7 @@
 #include <sys/buf.h>
 #include <sys/dkbad.h>
 
-int isbad __P((struct dkbad *, int, int, int));
+int isbad(struct dkbad *, int, int, int);
 
 /*
  * Search the bad sector table looking for

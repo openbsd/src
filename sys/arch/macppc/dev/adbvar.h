@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.2 2001/10/03 14:45:37 drahn Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.3 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*-
@@ -86,25 +86,25 @@ struct adb_softc {
 
 
 /* adb.c */
-void	adb_enqevent __P((adb_event_t *event));
-void	adb_handoff __P((adb_event_t *event));
-void	adb_autorepeat __P((void *keyp));
-void	adb_dokeyupdown __P((adb_event_t *event));
-void	adb_keymaybemouse __P((adb_event_t *event));
-void	adb_processevent __P((adb_event_t *event));
-int	adbopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	adbread __P((dev_t dev, struct uio *uio, int flag));
-int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
-int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
-int	adbpoll __P((dev_t dev, int events, struct proc *p));
+void	adb_enqevent(adb_event_t *event);
+void	adb_handoff(adb_event_t *event);
+void	adb_autorepeat(void *keyp);
+void	adb_dokeyupdown(adb_event_t *event);
+void	adb_keymaybemouse(adb_event_t *event);
+void	adb_processevent(adb_event_t *event);
+int	adbopen(dev_t dev, int flag, int mode, struct proc *p);
+int	adbclose(dev_t dev, int flag, int mode, struct proc *p);
+int	adbread(dev_t dev, struct uio *uio, int flag);
+int	adbwrite(dev_t dev, struct uio *uio, int flag);
+int	adbioctl(dev_t , int , caddr_t , int , struct proc *);
+int	adbpoll(dev_t dev, int events, struct proc *p);
 
 /* adbsys.c */
-void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_msa3_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	adb_mm_nonemp_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	extdms_init __P((int));
-void	extdms_complete __P((caddr_t, caddr_t, int));
+void	adb_complete(caddr_t buffer, caddr_t data_area, int adb_command);
+void	adb_msa3_complete(caddr_t buffer, caddr_t data_area, int adb_command);
+void	adb_mm_nonemp_complete(caddr_t buffer, caddr_t data_area, int adb_command);
+void	extdms_init(int);
+void	extdms_complete(caddr_t, caddr_t, int);
 
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x01	/* don't know */
@@ -121,14 +121,14 @@ extern int adbHardware;                 /* in adb_direct.c */
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
 /* adb_direct.c */
-int	adb_poweroff __P((void));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock * info, int index));
-int	GetADBInfo __P((ADBDataBlock * info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *t));
-int	adb_set_date_time __P((unsigned long t));
-int	adb_intr __P((void *arg));
-void	adb_cuda_autopoll __P((void));
+int	adb_poweroff(void);
+int	CountADBs(void);
+void	ADBReInit(void);
+int	GetIndADB(ADBDataBlock * info, int index);
+int	GetADBInfo(ADBDataBlock * info, int adbAddr);
+int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
+int	ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum);
+int	adb_read_date_time(unsigned long *t);
+int	adb_set_date_time(unsigned long t);
+int	adb_intr(void *arg);
+void	adb_cuda_autopoll(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.1 2001/03/18 04:30:24 nate Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -186,9 +186,9 @@ static const u_char reverse[256] = {
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff, 
 };
 
-static struct	font *wsfont_find0 __P((int));
-static void	wsfont_revbit __P((struct wsdisplay_font *));
-static void	wsfont_revbyte __P((struct wsdisplay_font *));
+static struct	font *wsfont_find0(int);
+static void	wsfont_revbit(struct wsdisplay_font *);
+static void	wsfont_revbyte(struct wsdisplay_font *);
 
 /*
  * Reverse the bit order of a font
@@ -242,7 +242,7 @@ wsfont_revbyte(font)
  */
 void
 wsfont_enum(cb)
-	void (*cb) __P((char *, int, int, int));
+	void (*cb)(char *, int, int, int);
 {
 	struct wsdisplay_font *f;
 	struct font *ent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.3 2001/10/26 07:36:46 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.4 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -50,37 +50,37 @@
 /*
  * function prototypes
  */
-static struct priq_if *priq_attach __P((struct ifaltq *, u_int));
-static int priq_detach __P((struct priq_if *));
-static int priq_clear_interface __P((struct priq_if *));
-static int priq_request __P((struct ifaltq *, int, void *));
-static void priq_purge __P((struct priq_if *));
-static struct priq_class *priq_class_create __P((struct priq_if *,
-						 int, int, int));
-static int priq_class_destroy __P((struct priq_class *));
-static int priq_enqueue __P((struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *));
-static struct mbuf *priq_dequeue __P((struct ifaltq *, int));
+static struct priq_if *priq_attach(struct ifaltq *, u_int);
+static int priq_detach(struct priq_if *);
+static int priq_clear_interface(struct priq_if *);
+static int priq_request(struct ifaltq *, int, void *);
+static void priq_purge(struct priq_if *);
+static struct priq_class *priq_class_create(struct priq_if *,
+						 int, int, int);
+static int priq_class_destroy(struct priq_class *);
+static int priq_enqueue(struct ifaltq *, struct mbuf *,
+			     struct altq_pktattr *);
+static struct mbuf *priq_dequeue(struct ifaltq *, int);
 
-static int priq_addq __P((struct priq_class *, struct mbuf *));
-static struct mbuf *priq_getq __P((struct priq_class *));
-static struct mbuf *priq_pollq __P((struct priq_class *));
-static void priq_purgeq __P((struct priq_class *));
+static int priq_addq(struct priq_class *, struct mbuf *);
+static struct mbuf *priq_getq(struct priq_class *);
+static struct mbuf *priq_pollq(struct priq_class *);
+static void priq_purgeq(struct priq_class *);
 
-int priqopen __P((dev_t, int, int, struct proc *));
-int priqclose __P((dev_t, int, int, struct proc *));
-int priqioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
-static int priqcmd_if_attach __P((struct priq_interface *));
-static int priqcmd_if_detach __P((struct priq_interface *));
-static int priqcmd_add_class __P((struct priq_add_class *));
-static int priqcmd_delete_class __P((struct priq_delete_class *));
-static int priqcmd_modify_class __P((struct priq_modify_class *));
-static int priqcmd_add_filter __P((struct priq_add_filter *));
-static int priqcmd_delete_filter __P((struct priq_delete_filter *));
-static int priqcmd_class_stats __P((struct priq_class_stats *));
-static void get_class_stats __P((struct class_stats *, struct priq_class *));
-static struct priq_class *clh_to_clp __P((struct priq_if *, u_long));
-static u_long clp_to_clh __P((struct priq_class *));
+int priqopen(dev_t, int, int, struct proc *);
+int priqclose(dev_t, int, int, struct proc *);
+int priqioctl(dev_t, ioctlcmd_t, caddr_t, int, struct proc *);
+static int priqcmd_if_attach(struct priq_interface *);
+static int priqcmd_if_detach(struct priq_interface *);
+static int priqcmd_add_class(struct priq_add_class *);
+static int priqcmd_delete_class(struct priq_delete_class *);
+static int priqcmd_modify_class(struct priq_modify_class *);
+static int priqcmd_add_filter(struct priq_add_filter *);
+static int priqcmd_delete_filter(struct priq_delete_filter *);
+static int priqcmd_class_stats(struct priq_class_stats *);
+static void get_class_stats(struct class_stats *, struct priq_class *);
+static struct priq_class *clh_to_clp(struct priq_if *, u_long);
+static u_long clp_to_clh(struct priq_class *);
 
 /* pif_list keeps all priq_if's allocated. */
 static struct priq_if *pif_list = NULL;

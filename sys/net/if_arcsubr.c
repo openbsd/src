@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.9 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.10 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define	ARC_PHDSMTU	1500
 #endif
 
-static struct mbuf *arc_defrag __P((struct ifnet *, struct mbuf *));
+static struct mbuf *arc_defrag(struct ifnet *, struct mbuf *);
 
 /*
  * RC1201 requires us to have this configurable. We have it only per 

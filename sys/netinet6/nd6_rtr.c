@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.12 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.13 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -58,25 +58,25 @@
 
 #define SDL(s)	((struct sockaddr_dl *)s)
 
-static struct nd_defrouter *defrtrlist_update __P((struct nd_defrouter *));
-static int prelist_add __P((struct nd_prefix *, struct nd_defrouter *));
-static struct nd_prefix *prefix_lookup __P((struct nd_prefix *));
-static struct in6_ifaddr *in6_ifadd __P((struct ifnet *, struct in6_addr *,
-			  struct in6_addr *, int));
-static struct nd_pfxrouter *pfxrtr_lookup __P((struct nd_prefix *,
-					       struct nd_defrouter *));
-static void pfxrtr_add __P((struct nd_prefix *, struct nd_defrouter *));
-static void pfxrtr_del __P((struct nd_pfxrouter *));
-static struct nd_pfxrouter *find_pfxlist_reachable_router __P((struct nd_prefix *));
-static void nd6_detach_prefix __P((struct nd_prefix *));
-static void nd6_attach_prefix __P((struct nd_prefix *));
-static void defrouter_addifreq __P((struct ifnet *));
+static struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);
+static int prelist_add(struct nd_prefix *, struct nd_defrouter *);
+static struct nd_prefix *prefix_lookup(struct nd_prefix *);
+static struct in6_ifaddr *in6_ifadd(struct ifnet *, struct in6_addr *,
+			  struct in6_addr *, int);
+static struct nd_pfxrouter *pfxrtr_lookup(struct nd_prefix *,
+					       struct nd_defrouter *);
+static void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
+static void pfxrtr_del(struct nd_pfxrouter *);
+static struct nd_pfxrouter *find_pfxlist_reachable_router(struct nd_prefix *);
+static void nd6_detach_prefix(struct nd_prefix *);
+static void nd6_attach_prefix(struct nd_prefix *);
+static void defrouter_addifreq(struct ifnet *);
 
-static void in6_init_address_ltimes __P((struct nd_prefix *ndpr,
+static void in6_init_address_ltimes(struct nd_prefix *ndpr,
 					 struct in6_addrlifetime *lt6,
-					 int update_vltime));
+					 int update_vltime);
 
-static int rt6_deleteroute __P((struct radix_node *, void *));
+static int rt6_deleteroute(struct radix_node *, void *);
 
 extern int nd6_recalc_reachtm_interval;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.2 2002/01/15 22:00:12 jason Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.15 2001/05/11 01:40:48 thorpej Exp $	*/
 
 /*
@@ -52,13 +52,13 @@
  */
 struct zs_chanstate;
 struct zsops {
-	void	(*zsop_rxint) __P((struct zs_chanstate *));
+	void	(*zsop_rxint)(struct zs_chanstate *);
 					/* receive char available */
-	void	(*zsop_stint) __P((struct zs_chanstate *, int));
+	void	(*zsop_stint)(struct zs_chanstate *, int);
 					/* external/status */
-	void	(*zsop_txint) __P((struct zs_chanstate *));
+	void	(*zsop_txint)(struct zs_chanstate *);
 					/* xmit buffer empty */
-	void	(*zsop_softint) __P((struct zs_chanstate *));
+	void	(*zsop_softint)(struct zs_chanstate *);
 					/* process software interrupt */
 };
 
@@ -116,8 +116,8 @@ struct zs_chanstate {
 	char	cs_spare1;  	/* (for skippy :) */
 
 	/* power management hooks */
-	int	(*enable) __P((struct zs_chanstate *));
-	void	(*disable) __P((struct zs_chanstate *));
+	int	(*enable)(struct zs_chanstate *);
+	void	(*disable)(struct zs_chanstate *);
 	int	enabled;
 
 	/* MD code might define a larger variant of this. */
@@ -142,17 +142,17 @@ struct zsc_attach_args {
 #define ZS_HWFLAG_USE_CONSDEV  	32	/* Use console ops from `consdev' */
 #define	ZS_HWFLAG_NORESET	64	/* Don't reset at attach time */
 
-int 	zsc_intr_soft __P((void *));
-int 	zsc_intr_hard __P((void *));
+int 	zsc_intr_soft(void *);
+int 	zsc_intr_hard(void *);
 
-void	zs_abort __P((struct zs_chanstate *));
-void	zs_break __P((struct zs_chanstate *, int));
-void	zs_iflush __P((struct zs_chanstate *));
-void	zs_loadchannelregs __P((struct zs_chanstate *));
-int 	zs_set_speed __P((struct zs_chanstate *, int));
-int 	zs_set_modes __P((struct zs_chanstate *, int));
+void	zs_abort(struct zs_chanstate *);
+void	zs_break(struct zs_chanstate *, int);
+void	zs_iflush(struct zs_chanstate *);
+void	zs_loadchannelregs(struct zs_chanstate *);
+int 	zs_set_speed(struct zs_chanstate *, int);
+int 	zs_set_modes(struct zs_chanstate *, int);
 
 extern int zs_major;
 
-int zs_check_kgdb __P((struct zs_chanstate *, int));
+int zs_check_kgdb(struct zs_chanstate *, int);
 

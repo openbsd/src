@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.2 2002/01/10 00:11:14 nordin Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.3 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -89,10 +89,10 @@ struct dzkbd_softc {
 	struct device *sc_wskbddev;
 };
 
-static int	dzkbd_input __P((void *, int));
+static int	dzkbd_input(void *, int);
 
-static int	dzkbd_match __P((struct device *, struct cfdata *, void *));
-static void	dzkbd_attach __P((struct device *, struct device *, void *));
+static int	dzkbd_match(struct device *, struct cfdata *, void *);
+static void	dzkbd_attach(struct device *, struct device *, void *);
 
 struct cfattach dzkbd_ca = {
 	sizeof(struct dzkbd_softc), (cfmatch_t)dzkbd_match, dzkbd_attach,
@@ -102,9 +102,9 @@ struct	cfdriver lkkbd_cd = {
 	NULL, "lkkbd", DV_DULL
 };
 
-static int	dzkbd_enable __P((void *, int));
-static void	dzkbd_set_leds __P((void *, int));
-static int	dzkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int	dzkbd_enable(void *, int);
+static void	dzkbd_set_leds(void *, int);
+static int	dzkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops dzkbd_accessops = {
 	dzkbd_enable,
@@ -120,7 +120,7 @@ const struct wskbd_consops dzkbd_consops = {
 	dzkbd_cnpollc,
 };
 
-static int dzkbd_sendchar __P((void *, u_char));
+static int dzkbd_sendchar(void *, u_char);
 
 const struct wskbd_mapdata dzkbd_keymapdata = {
 	zskbd_keydesctab,

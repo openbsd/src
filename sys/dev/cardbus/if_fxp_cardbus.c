@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.3 2001/08/09 21:12:51 jason Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.4 2002/03/14 01:26:53 millert Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -87,10 +87,10 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
-int fxp_cardbus_match __P((struct device *, void *, void *));
-void fxp_cardbus_attach __P((struct device *, struct device *, void *));
-int fxp_cardbus_detach __P((struct device * self, int flags));
-void fxp_cardbus_setup __P((struct fxp_softc * sc));
+int fxp_cardbus_match(struct device *, void *, void *);
+void fxp_cardbus_attach(struct device *, struct device *, void *);
+int fxp_cardbus_detach(struct device * self, int flags);
+void fxp_cardbus_setup(struct fxp_softc * sc);
 
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;

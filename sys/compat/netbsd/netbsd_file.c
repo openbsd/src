@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_file.c,v 1.2 2002/02/12 18:41:20 art Exp $	*/
+/*	$OpenBSD: netbsd_file.c,v 1.3 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -60,9 +60,9 @@
 const char netbsd_emul_path[] = "/emul/netbsd";
 
 #if 0
-static char * convert_from_netbsd_mount_type __P((int));
-void statfs_to_netbsd_statfs __P((struct proc *, struct mount *,
-	struct statfs *, struct netbsd_statfs *));
+static char * convert_from_netbsd_mount_type(int);
+void statfs_to_netbsd_statfs(struct proc *, struct mount *,
+	struct statfs *, struct netbsd_statfs *);
 
 struct netbsd_statfs {
 	long	f_spare2;		/* placeholder */

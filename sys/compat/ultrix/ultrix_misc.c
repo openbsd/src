@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.23 2002/02/12 13:05:31 art Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.24 2002/03/14 01:26:51 millert Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -145,8 +145,8 @@ extern char *ultrix_syscallnames[];
 #endif /* __vax__ */
 
 
-extern void ULTRIX_EXEC_SETREGS __P((struct proc *, struct exec_package *,
-					u_long, register_t *));
+extern void ULTRIX_EXEC_SETREGS(struct proc *, struct exec_package *,
+					u_long, register_t *);
 extern char sigcode[], esigcode[];
 
 struct emul emul_ultrix = {

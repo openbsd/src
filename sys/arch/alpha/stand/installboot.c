@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.10 1997/10/27 16:52:03 millert Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.11 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -66,11 +66,11 @@ struct bbinfo *bbinfop;
 int	max_block_count;
 
 
-char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int, unsigned long));
-static void	devread __P((int, void *, daddr_t, size_t, char *));
-static void	usage __P((void));
-int 		main __P((int, char *[]));
+char		*loadprotoblocks(char *, long *);
+int		loadblocknums(char *, int, unsigned long);
+static void	devread(int, void *, daddr_t, size_t, char *);
+static void	usage(void);
+int 		main(int, char *[]);
 
 int	isofsblk = 0;
 int	isofseblk = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.17 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.18 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -73,9 +73,9 @@
 #define	DEFPA_CBMA	(PCI_MAPREG_START + 0)	/* Config Base Memory Address */
 #define	DEFPA_CBIO	(PCI_MAPREG_START + 4)	/* Config Base I/O Address */
 
-int  pdq_pci_ifintr	__P((void *));
-int  pdq_pci_match	__P((struct device *, void *, void *));
-void pdq_pci_attach	__P((struct device *, struct device *, void *aux));
+int  pdq_pci_ifintr(void *);
+int  pdq_pci_match(struct device *, void *, void *);
+void pdq_pci_attach(struct device *, struct device *, void *aux);
 
 int
 pdq_pci_ifintr(arg)

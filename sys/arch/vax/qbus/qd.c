@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.2 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: qd.c,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -240,12 +240,12 @@ int QDlast_DMAtype;             /* type of the last DMA operation */
  */
 #define TOY ((time.tv_sec * 100) + (time.tv_usec / 10000))
 
-void qd_attach __P((struct device *, struct device *, void *));
-static int qd_match __P((struct device *, struct cfdata *, void *));
+void qd_attach(struct device *, struct device *, void *);
+static int qd_match(struct device *, struct cfdata *, void *);
 
-static void qddint __P((void *));	/* DMA gate array intrpt service */
-static void qdaint __P((void *));	/* Dragon ADDER intrpt service */
-static void qdiint __P((void *));
+static void qddint(void *);	/* DMA gate array intrpt service */
+static void qdaint(void *);	/* Dragon ADDER intrpt service */
+static void qdiint(void *);
 
 #define QDPRIOR (PZERO-1)		/* must be negative */
 #define FALSE	0
@@ -330,17 +330,17 @@ extern	char *q_special[];
 extern struct cdevsw *consops;
 cons_decl(qd);
 cdev_decl(qd);
-void setup_dragon __P((int));
-void init_shared __P((int));
-void clear_qd_screen __P((int));
-void ldfont __P((int));
-void ldcursor __P((int, short *));
-void setup_input __P((int));
-void blitc __P((int, u_char));
-void scroll_up __P((volatile struct adder *));
-void write_ID __P((volatile struct adder *, short, short));
-int wait_status __P((volatile struct adder *, int));
-void led_control __P((int, int, int));
+void setup_dragon(int);
+void init_shared(int);
+void clear_qd_screen(int);
+void ldfont(int);
+void ldcursor(int, short *);
+void setup_input(int);
+void blitc(int, u_char);
+void scroll_up(volatile struct adder *);
+void write_ID(volatile struct adder *, short, short);
+int wait_status(volatile struct adder *, int);
+void led_control(int, int, int);
 void qdstart(struct tty *);
 void qdearly(void);
 int qdpolling = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_zbus.c,v 1.2 2001/03/12 05:36:57 aaron Exp $	*/
+/*	$OpenBSD: if_ne_zbus.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: if_ne_zbus.c,v 1.5 2000/01/23 21:06:13 aymeric Exp $	*/
 
 /*-
@@ -76,14 +76,14 @@
 #include <amiga/dev/zbusvar.h>
 
 #ifdef __NetBSD__
-int	ne_zbus_match __P((struct device *, struct cfdata *, void *));
+int	ne_zbus_match(struct device *, struct cfdata *, void *);
 #else
-int	ne_zbus_match __P((struct device *, void *, void *));
+int	ne_zbus_match(struct device *, void *, void *);
 #endif
-void	ne_zbus_attach __P((struct device *, struct device *, void *));
-int	ne_zbus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	ne_zbus_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+void	ne_zbus_attach(struct device *, struct device *, void *);
+int	ne_zbus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	ne_zbus_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 struct ne_zbus_softc {
 	struct ne2000_softc	sc_ne2000;

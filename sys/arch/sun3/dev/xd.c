@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.15 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.16 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $	*/
 
 /*
@@ -201,46 +201,46 @@
  */
 
 /* internals */
-int	xdc_cmd __P((struct xdc_softc *, int, int, int, int, int, char *, int));
-char   *xdc_e2str __P((int));
-int	xdc_error __P((struct xdc_softc *, struct xd_iorq *,
-		   struct xd_iopb *, int, int));
-int	xdc_ioctlcmd __P((struct xd_softc *, dev_t dev, struct xd_iocmd *));
-void	xdc_perror __P((struct xd_iorq *, struct xd_iopb *, int));
-int	xdc_piodriver __P((struct xdc_softc *, int, int));
-int	xdc_remove_iorq __P((struct xdc_softc *));
-int	xdc_reset __P((struct xdc_softc *, int, int, int, struct xd_softc *));
-inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
+int	xdc_cmd(struct xdc_softc *, int, int, int, int, int, char *, int);
+char   *xdc_e2str(int);
+int	xdc_error(struct xdc_softc *, struct xd_iorq *,
+		   struct xd_iopb *, int, int);
+int	xdc_ioctlcmd(struct xd_softc *, dev_t dev, struct xd_iocmd *);
+void	xdc_perror(struct xd_iorq *, struct xd_iopb *, int);
+int	xdc_piodriver(struct xdc_softc *, int, int);
+int	xdc_remove_iorq(struct xdc_softc *);
+int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
+inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *,
 			    struct xd_softc *, int, u_long, int,
-			    caddr_t, struct buf *));
-void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-void	xdc_start __P((struct xdc_softc *, int));
-int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
-int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
-void	xdc_tick __P((void *));
-void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+			    caddr_t, struct buf *);
+void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
+void	xdc_start(struct xdc_softc *, int);
+int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
+int	xdc_submit_iorq(struct xdc_softc *, int, int);
+void	xdc_tick(void *);
+void	xdc_xdreset(struct xdc_softc *, struct xd_softc *);
 
 /* machine interrupt hook */
-int	xdcintr __P((void *));
+int	xdcintr(void *);
 
 /* {b,c}devsw */
-int	xdclose __P((dev_t, int, int));
-int	xddump __P((dev_t));
-int	xdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	xdopen __P((dev_t, int, int));
-int	xdread __P((dev_t, struct uio *));
-int	xdwrite __P((dev_t, struct uio *));
-int	xdsize __P((dev_t));
-void	xdstrategy __P((struct buf *));
+int	xdclose(dev_t, int, int);
+int	xddump(dev_t);
+int	xdioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	xdopen(dev_t, int, int);
+int	xdread(dev_t, struct uio *);
+int	xdwrite(dev_t, struct uio *);
+int	xdsize(dev_t);
+void	xdstrategy(struct buf *);
 
 /* autoconf */
-int	xdcmatch __P((struct device *, void *, void *));
-void	xdcattach __P((struct device *, struct device *, void *));
-int	xdmatch __P((struct device *, void *, void *));
-void	xdattach __P((struct device *, struct device *, void *));
+int	xdcmatch(struct device *, void *, void *);
+void	xdcattach(struct device *, struct device *, void *);
+int	xdmatch(struct device *, void *, void *);
+void	xdattach(struct device *, struct device *, void *);
 
-static	void xddummystrat __P((struct buf *));
-int	xdgetdisklabel __P((struct xd_softc *, void *));
+static	void xddummystrat(struct buf *);
+int	xdgetdisklabel(struct xd_softc *, void *);
 
 /*
  * cfdrivers: device driver interface to autoconfig

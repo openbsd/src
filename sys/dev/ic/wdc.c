@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.46 2002/01/23 00:39:47 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.47 2002/03/14 01:26:55 millert Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -98,13 +98,13 @@
 
 struct pool wdc_xfer_pool;
 
-static void  __wdcerror	  __P((struct channel_softc*, char *));
-static int   __wdcwait_reset  __P((struct channel_softc *, int));
-void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
-void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
-int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
-int   wdprint __P((void *, const char *));
-void  wdc_kill_pending __P((struct channel_softc *));
+static void  __wdcerror(struct channel_softc*, char *);
+static int   __wdcwait_reset(struct channel_softc *, int);
+void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
+void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);	
+int   __wdccommand_intr(struct channel_softc *, struct wdc_xfer *, int);
+int   wdprint(void *, const char *);
+void  wdc_kill_pending(struct channel_softc *);
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -125,20 +125,20 @@ int wdc_nxfer = 0;
 
 int at_poll = AT_POLL;
 
-u_int8_t wdc_default_read_reg __P((struct channel_softc *, enum wdc_regs));
-void wdc_default_write_reg __P((struct channel_softc *, enum wdc_regs, u_int8_t));
-void wdc_default_read_raw_multi_2 __P((struct channel_softc *, 
-    void *, unsigned int));
-void wdc_default_write_raw_multi_2 __P((struct channel_softc *, 
-    void *, unsigned int));
-void wdc_default_read_raw_multi_4 __P((struct channel_softc *, 
-    void *, unsigned int));
-void wdc_default_write_raw_multi_4 __P((struct channel_softc *, 
-    void *, unsigned int));
+u_int8_t wdc_default_read_reg(struct channel_softc *, enum wdc_regs);
+void wdc_default_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
+void wdc_default_read_raw_multi_2(struct channel_softc *, 
+    void *, unsigned int);
+void wdc_default_write_raw_multi_2(struct channel_softc *, 
+    void *, unsigned int);
+void wdc_default_read_raw_multi_4(struct channel_softc *, 
+    void *, unsigned int);
+void wdc_default_write_raw_multi_4(struct channel_softc *, 
+    void *, unsigned int);
 
-int wdc_floating_bus __P((struct channel_softc *, int));
-int wdc_preata_drive __P((struct channel_softc *, int));
-int wdc_ata_present __P((struct channel_softc *, int));
+int wdc_floating_bus(struct channel_softc *, int);
+int wdc_preata_drive(struct channel_softc *, int);
+int wdc_ata_present(struct channel_softc *, int);
 
 struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_read_reg,
@@ -1801,10 +1801,10 @@ struct wdc_ioctl {
 	struct ata_drive_datas *wi_drvp;
 };
 
-struct	wdc_ioctl *wdc_ioctl_find __P((struct buf *));
-void	wdc_ioctl_free __P((struct wdc_ioctl *));
-struct	wdc_ioctl *wdc_ioctl_get __P((void));
-void	wdc_ioctl_strategy __P((struct buf *));
+struct	wdc_ioctl *wdc_ioctl_find(struct buf *);
+void	wdc_ioctl_free(struct wdc_ioctl *);
+struct	wdc_ioctl *wdc_ioctl_get(void);
+void	wdc_ioctl_strategy(struct buf *);
 
 LIST_HEAD(, wdc_ioctl) wi_head;
 

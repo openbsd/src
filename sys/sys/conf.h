@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.51 2002/01/23 04:48:02 ericj Exp $	*/
+/*	$OpenBSD: conf.h,v 1.52 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -66,11 +66,11 @@ struct knote;
 
 #ifdef _KERNEL
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	void n __P((struct buf *))
+#define	dev_type_open(n)	int n(dev_t, int, int, struct proc *)
+#define	dev_type_close(n)	int n(dev_t, int, int, struct proc *)
+#define	dev_type_strategy(n)	void n(struct buf *)
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
+	int n(dev_t, u_long, caddr_t, int, struct proc *)
 
 #define	dev_decl(n,t)	__CONCAT(dev_type_,t)(__CONCAT(n,t))
 #define	dev_init(c,n,t) \
@@ -82,16 +82,16 @@ struct knote;
  * Block device switch table
  */
 struct bdevsw {
-	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
-				     struct proc *p));
-	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
-				     struct proc *p));
-	void	(*d_strategy)	__P((struct buf *bp));
-	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
-				     int fflag, struct proc *p));
-	int	(*d_dump)	__P((dev_t dev, daddr_t blkno, caddr_t va,
-				    size_t size));
-	int	(*d_psize)	__P((dev_t dev));
+	int	(*d_open)(dev_t dev, int oflags, int devtype,
+				     struct proc *p);
+	int	(*d_close)(dev_t dev, int fflag, int devtype,
+				     struct proc *p);
+	void	(*d_strategy)(struct buf *bp);
+	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data,
+				     int fflag, struct proc *p);
+	int	(*d_dump)(dev_t dev, daddr_t blkno, caddr_t va,
+				    size_t size);
+	int	(*d_psize)(dev_t dev);
 	int	d_type;
 };
 
@@ -100,8 +100,8 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, size_t))
-#define	dev_type_size(n)	int n __P((dev_t))
+#define	dev_type_dump(n)	int n(dev_t, daddr_t, caddr_t, size_t)
+#define	dev_type_size(n)	int n(dev_t)
 
 /* bdevsw-specific initializations */
 #define	dev_size_init(c,n)	(c > 0 ? __CONCAT(n,size) : 0)
@@ -141,21 +141,21 @@ extern struct bdevsw bdevsw[];
  * Character device switch table
  */
 struct cdevsw {
-	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
-				     struct proc *p));
-	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
-				     struct proc *));
-	int	(*d_read)	__P((dev_t dev, struct uio *uio, int ioflag));
-	int	(*d_write)	__P((dev_t dev, struct uio *uio, int ioflag));
-	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
-				     int fflag, struct proc *p));
-	int	(*d_stop)	__P((struct tty *tp, int rw));
+	int	(*d_open)(dev_t dev, int oflags, int devtype,
+				     struct proc *p);
+	int	(*d_close)(dev_t dev, int fflag, int devtype,
+				     struct proc *);
+	int	(*d_read)(dev_t dev, struct uio *uio, int ioflag);
+	int	(*d_write)(dev_t dev, struct uio *uio, int ioflag);
+	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data,
+				     int fflag, struct proc *p);
+	int	(*d_stop)(struct tty *tp, int rw);
 	struct tty *
-		(*d_tty)	__P((dev_t dev));
-	int	(*d_select)	__P((dev_t dev, int which, struct proc *p));
-	paddr_t	(*d_mmap)	__P((dev_t, off_t, int));
+		(*d_tty)(dev_t dev);
+	int	(*d_select)(dev_t dev, int which, struct proc *p);
+	paddr_t	(*d_mmap)(dev_t, off_t, int);
 	u_int	d_type;
-	int	(*d_kqfilter)	__P((dev_t dev, struct knote *kn));
+	int	(*d_kqfilter)(dev_t dev, struct knote *kn);
 };
 
 #ifdef _KERNEL
@@ -163,13 +163,13 @@ struct cdevsw {
 extern struct cdevsw cdevsw[];
 
 /* cdevsw-specific types */
-#define	dev_type_read(n)	int n __P((dev_t, struct uio *, int))
-#define	dev_type_write(n)	int n __P((dev_t, struct uio *, int))
-#define	dev_type_stop(n)	int n __P((struct tty *, int))
-#define	dev_type_tty(n)		struct tty *n __P((dev_t))
-#define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_mmap(n)	paddr_t n __P((dev_t, off_t, int))
-#define dev_type_kqfilter(n)	int n __P((dev_t, struct knote *))
+#define	dev_type_read(n)	int n(dev_t, struct uio *, int)
+#define	dev_type_write(n)	int n(dev_t, struct uio *, int)
+#define	dev_type_stop(n)	int n(struct tty *, int)
+#define	dev_type_tty(n)		struct tty *n(dev_t)
+#define	dev_type_select(n)	int n(dev_t, int, struct proc *)
+#define	dev_type_mmap(n)	paddr_t n(dev_t, off_t, int)
+#define dev_type_kqfilter(n)	int n(dev_t, struct knote *)
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
@@ -377,7 +377,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
-void	randomattach __P((void));
+void	randomattach(void);
 
 /* open, close, ioctl, select */
 #define	cdev_usb_init(c,n) { \
@@ -439,17 +439,17 @@ extern char devioc[], devcls[];
  * Line discipline switch table
  */
 struct linesw {
-	int	(*l_open)	__P((dev_t dev, struct tty *tp));
-	int	(*l_close)	__P((struct tty *tp, int flags));
-	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_write)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_ioctl)	__P((struct tty *tp, u_long cmd, caddr_t data,
-				     int flag, struct proc *p));
-	int	(*l_rint)	__P((int c, struct tty *tp));
-	int	(*l_start)	__P((struct tty *tp));
-	int	(*l_modem)	__P((struct tty *tp, int flag));
+	int	(*l_open)(dev_t dev, struct tty *tp);
+	int	(*l_close)(struct tty *tp, int flags);
+	int	(*l_read)(struct tty *tp, struct uio *uio,
+				     int flag);
+	int	(*l_write)(struct tty *tp, struct uio *uio,
+				     int flag);
+	int	(*l_ioctl)(struct tty *tp, u_long cmd, caddr_t data,
+				     int flag, struct proc *p);
+	int	(*l_rint)(int c, struct tty *tp);
+	int	(*l_start)(struct tty *tp);
+	int	(*l_modem)(struct tty *tp, int flag);
 };
 
 #ifdef _KERNEL
@@ -472,11 +472,11 @@ struct swdevt {
 #ifdef _KERNEL
 extern struct swdevt swdevt[];
 
-int	chrtoblk __P((dev_t));
-int	blktochr __P((dev_t));
-int	iskmemdev __P((dev_t));
-int	iszerodev __P((dev_t));
-dev_t	getnulldev __P((void));
+int	chrtoblk(dev_t);
+int	blktochr(dev_t);
+int	iskmemdev(dev_t);
+int	iszerodev(dev_t);
+dev_t	getnulldev(void);
 
 cdev_decl(filedesc);
 

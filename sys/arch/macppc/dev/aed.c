@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
+/*	$OpenBSD: aed.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -54,17 +54,17 @@
  * Function declarations.
  */
 #ifdef __NetBSD__
-static int	aedmatch __P((struct device *, struct cfdata *, void *));
+static int	aedmatch(struct device *, struct cfdata *, void *);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-static int	aedmatch __P((struct device *, void *, void *));
+static int	aedmatch(struct device *, void *, void *);
 #endif /* __OpenBSD__ */
-static void	aedattach __P((struct device *, struct device *, void *));
-static void	aed_emulate_mouse __P((adb_event_t *event));
-static void	aed_kbdrpt __P((void *kstate));
-static void	aed_dokeyupdown __P((adb_event_t *event));
-static void	aed_handoff __P((adb_event_t *event));
-static void	aed_enqevent __P((adb_event_t *event));
+static void	aedattach(struct device *, struct device *, void *);
+static void	aed_emulate_mouse(adb_event_t *event);
+static void	aed_kbdrpt(void *kstate);
+static void	aed_dokeyupdown(adb_event_t *event);
+static void	aed_handoff(adb_event_t *event);
+static void	aed_enqevent(adb_event_t *event);
 
 /*
  * Global variables.

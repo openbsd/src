@@ -1,4 +1,4 @@
-/*	$OpenBSD: crx.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
+/*	$OpenBSD: crx.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: crx.c,v 1.4 2000/01/24 02:40:33 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -129,7 +129,7 @@ crxclose(dev, flags, fmt, p)
 /*
  * Perform a read (uio->uio_rw==UIO_READ) or write (uio->uio_rw==UIO_WRITE).
  */
-int	crxrw __P((dev_t, struct uio *, int));
+int	crxrw(dev_t, struct uio *, int);
 int
 crxrw(dev, uio, flags)
 	dev_t dev;

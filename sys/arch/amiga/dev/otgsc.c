@@ -1,4 +1,4 @@
-/*	$OpenBSD: otgsc.c,v 1.6 1997/01/18 12:26:35 niklas Exp $	*/
+/*	$OpenBSD: otgsc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: otgsc.c,v 1.17 1996/12/23 09:10:27 veego Exp $	*/
 
 /*
@@ -48,14 +48,14 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void otgscattach __P((struct device *, struct device *, void *));
-int otgscmatch __P((struct device *, void *, void *));
+void otgscattach(struct device *, struct device *, void *);
+int otgscmatch(struct device *, void *, void *);
 
-int otgsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int otgsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int otgsc_intr __P((void *));
+int otgsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int otgsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int otgsc_intr(void *);
 
 struct scsi_adapter otgsc_scsiswitch = {
 	sci_scsicmd,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.5 1997/01/28 10:54:10 deraadt Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.6 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -48,15 +48,15 @@
 #include <machine/autoconf.h>
 #include <mvme68k/dev/pccreg.h>
 
-void    wdscattach      __P((struct device *, struct device *, void *));
-int     wdscmatch       __P((struct device *, struct cfdata *, void *));
+void    wdscattach(struct device *, struct device *, void *);
+int     wdscmatch(struct device *, struct cfdata *, void *);
 
-void    wdsc_enintr     __P((struct sbic_softc *));
-int     wdsc_dmago      __P((struct sbic_softc *, char *, int, int));
-int     wdsc_dmanext    __P((struct sbic_softc *));
-void    wdsc_dmastop    __P((struct sbic_softc *));
-int     wdsc_dmaintr    __P((struct sbic_softc *));
-int     wdsc_scsiintr   __P((struct sbic_softc *));
+void    wdsc_enintr(struct sbic_softc *);
+int     wdsc_dmago(struct sbic_softc *, char *, int, int);
+int     wdsc_dmanext(struct sbic_softc *);
+void    wdsc_dmastop(struct sbic_softc *);
+int     wdsc_dmaintr(struct sbic_softc *);
+int     wdsc_scsiintr(struct sbic_softc *);
 
 struct scsi_adapter wdsc_scsiswitch = {
     sbic_scsicmd,

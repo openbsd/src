@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.8 1999/01/13 07:26:01 niklas Exp $	*/
+/*	$OpenBSD: joy.c,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 #include <i386/isa/timerreg.h>
 #include <i386/isa/joyreg.h>
 
-static int	joy_get_tick __P((void));
+static int	joy_get_tick(void);
 
 struct cfdriver joy_cd = {
 	NULL, "joy", DV_DULL

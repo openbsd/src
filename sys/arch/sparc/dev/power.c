@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.5 1999/05/05 07:08:03 deraadt Exp $	*/
+/*	$OpenBSD: power.c,v 1.6 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -50,8 +50,8 @@
 
 #include <sparc/dev/power.h>
 
-static int powermatch __P((struct device *, void *, void *));
-static void powerattach __P((struct device *, struct device *, void *));
+static int powermatch(struct device *, void *, void *);
+static void powerattach(struct device *, struct device *, void *);
 
 struct cfattach power_ca = {
 	sizeof(struct device), powermatch, powerattach

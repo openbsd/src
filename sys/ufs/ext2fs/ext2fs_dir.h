@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.5 2001/09/18 00:25:59 art Exp $	*/
+/*	$OpenBSD: ext2fs_dir.h,v 1.6 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ struct	ext2fs_direct {
 
 #define E2IFTODT(mode)    (((mode) & 0170000) >> 12)
 
-static __inline__ u_int8_t inot2ext2dt __P((u_int16_t))
+static __inline__ u_int8_t inot2ext2dt(u_int16_t)
     __attribute__((__unused__));
 static __inline__ u_int8_t
 inot2ext2dt(type)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.30 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.31 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -88,43 +88,43 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
 static u_long fdhash;
 
-int	fdesc_badop	__P((void *));
+int	fdesc_badop(void *);
 
-int	fdesc_lookup	__P((void *));
+int	fdesc_lookup(void *);
 #define	fdesc_create	eopnotsupp
 #define	fdesc_mknod	eopnotsupp
-int	fdesc_open	__P((void *));
+int	fdesc_open(void *);
 #define	fdesc_close	nullop
 #define	fdesc_access	nullop
-int	fdesc_getattr	__P((void *));
-int	fdesc_setattr	__P((void *));
-int	fdesc_read	__P((void *));
-int	fdesc_write	__P((void *));
-int	fdesc_ioctl	__P((void *));
-int	fdesc_select	__P((void *));
+int	fdesc_getattr(void *);
+int	fdesc_setattr(void *);
+int	fdesc_read(void *);
+int	fdesc_write(void *);
+int	fdesc_ioctl(void *);
+int	fdesc_select(void *);
 #define	fdesc_fsync	nullop
 #define	fdesc_remove	eopnotsupp
 #define fdesc_revoke    vop_generic_revoke
-int	fdesc_link	__P((void *));
+int	fdesc_link(void *);
 #define	fdesc_rename	eopnotsupp
 #define	fdesc_mkdir	eopnotsupp
 #define	fdesc_rmdir	eopnotsupp
-int	fdesc_symlink	__P((void *));
-int	fdesc_readdir	__P((void *));
-int	fdesc_readlink	__P((void *));
-int	fdesc_inactive	__P((void *));
-int	fdesc_reclaim	__P((void *));
+int	fdesc_symlink(void *);
+int	fdesc_readdir(void *);
+int	fdesc_readlink(void *);
+int	fdesc_inactive(void *);
+int	fdesc_reclaim(void *);
 #define	fdesc_lock	vop_generic_lock
 #define	fdesc_unlock	vop_generic_unlock
 #define	fdesc_bmap	fdesc_badop
 #define	fdesc_strategy	fdesc_badop
-int	fdesc_print	__P((void *));
-int	fdesc_pathconf	__P((void *));
+int	fdesc_print(void *);
+int	fdesc_pathconf(void *);
 #define	fdesc_islocked	vop_generic_islocked
 #define	fdesc_advlock	eopnotsupp
 #define	fdesc_bwrite	eopnotsupp
 
-int (**fdesc_vnodeop_p) __P((void *));
+int (**fdesc_vnodeop_p)(void *);
 struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fdesc_lookup },	/* lookup */
@@ -161,7 +161,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, fdesc_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fdesc_advlock },	/* advlock */
 	{ &vop_bwrite_desc, fdesc_bwrite },	/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 
 struct vnodeopv_desc fdesc_vnodeop_opv_desc =

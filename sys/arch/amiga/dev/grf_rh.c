@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rh.c,v 1.13 1997/09/18 13:39:52 niklas Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.14 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_rh.c,v 1.27 1997/07/29 17:52:05 veego Exp $	*/
 
 /*
@@ -54,13 +54,13 @@
 
 enum mode_type { MT_TXTONLY, MT_GFXONLY, MT_BOTH };
 
-int rh_mondefok __P((struct MonDef *));
+int rh_mondefok(struct MonDef *);
 
-u_short rh_CompFQ __P((u_int fq));
-int rh_load_mon __P((struct grf_softc *gp, struct MonDef *md));
-int rh_getvmode __P((struct grf_softc *gp, struct grfvideo_mode *vm));
-int rh_setvmode __P((struct grf_softc *gp, unsigned int mode, 
-                     enum mode_type type));
+u_short rh_CompFQ(u_int fq);
+int rh_load_mon(struct grf_softc *gp, struct MonDef *md);
+int rh_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm);
+int rh_setvmode(struct grf_softc *gp, unsigned int mode, 
+                     enum mode_type type);
 
 /* make it patchable, and settable by kernel config option */
 #ifndef RH_MEMCLK
@@ -1527,10 +1527,10 @@ int rh_default_gfx = 4;
 
 static struct MonDef *current_mon;	/* EVIL */
 
-int  rh_mode     __P((struct grf_softc *, u_long, void *, u_long, int));
-void grfrhattach __P((struct device *, struct device *, void *));
-int  grfrhprint  __P((void *, const char *));
-int  grfrhmatch  __P((struct device *, void *, void *));
+int  rh_mode(struct grf_softc *, u_long, void *, u_long, int);
+void grfrhattach(struct device *, struct device *, void *);
+int  grfrhprint(void *, const char *);
+int  grfrhmatch(struct device *, void *, void *);
 
 struct cfattach grfrh_ca = {
 	sizeof(struct grf_softc), grfrhmatch, grfrhattach

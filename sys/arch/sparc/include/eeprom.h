@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.8 1997/11/11 12:50:53 niklas Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.9 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -361,7 +361,7 @@ struct eeprom {
 
 #ifdef _KERNEL
 extern	char *eeprom_va;
-int	eeprom_uio __P((struct uio *));
+int	eeprom_uio(struct uio *);
 
 /*
  * Compatibility defines with NetBSD's eeprom.h.

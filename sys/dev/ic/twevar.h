@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.3 2001/05/10 20:07:35 mickey Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -86,6 +86,6 @@ struct twe_softc {
 #define TWE_UNLOCK_TWE(sc, lock) splx(lock)
 typedef int twe_lock_t;
 
-void	tweminphys __P((struct buf *bp));
-int	twe_attach __P((struct twe_softc *));
-int	twe_intr __P((void *));
+void	tweminphys(struct buf *bp);
+int	twe_attach(struct twe_softc *);
+int	twe_intr(void *);

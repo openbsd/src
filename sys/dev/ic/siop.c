@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.18 2002/01/23 13:34:38 pefo Exp $ */
+/*	$OpenBSD: siop.c,v 1.19 2002/03/14 01:26:55 millert Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -74,18 +74,18 @@
 /* number of scheduler slots (needs to match script) */
 #define SIOP_NSLOTS 40
 
-void	siop_reset __P((struct siop_softc *));
-void	siop_handle_reset __P((struct siop_softc *));
-int	siop_handle_qtag_reject __P((struct siop_cmd *));
-void	siop_scsicmd_end __P((struct siop_cmd *));
-void	siop_start __P((struct siop_softc *));
-void 	siop_timeout __P((void *));
-int	siop_scsicmd __P((struct scsi_xfer *));
-void	siop_dump_script __P((struct siop_softc *));
-int	siop_morecbd __P((struct siop_softc *));
-struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
-void	siop_add_reselsw __P((struct siop_softc *, int));
-void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
+void	siop_reset(struct siop_softc *);
+void	siop_handle_reset(struct siop_softc *);
+int	siop_handle_qtag_reject(struct siop_cmd *);
+void	siop_scsicmd_end(struct siop_cmd *);
+void	siop_start(struct siop_softc *);
+void 	siop_timeout(void *);
+int	siop_scsicmd(struct scsi_xfer *);
+void	siop_dump_script(struct siop_softc *);
+int	siop_morecbd(struct siop_softc *);
+struct siop_lunsw *siop_get_lunsw(struct siop_softc *);
+void	siop_add_reselsw(struct siop_softc *, int);
+void	siop_update_scntl3(struct siop_softc *, struct siop_target *);
 
 struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
@@ -113,13 +113,13 @@ static int siop_stat_intr_done = 0;
 static int siop_stat_intr_xferdisc = 0;
 static int siop_stat_intr_lunresel = 0;
 static int siop_stat_intr_qfull = 0;
-void siop_printstats __P((void));
+void siop_printstats(void);
 #define INCSTAT(x) x++
 #else
 #define INCSTAT(x) 
 #endif
 
-static __inline__ void siop_script_sync __P((struct siop_softc *, int));
+static __inline__ void siop_script_sync(struct siop_softc *, int);
 static __inline__ void
 siop_script_sync(sc, ops)
 	struct siop_softc *sc;
@@ -130,7 +130,7 @@ siop_script_sync(sc, ops)
 		    0, PAGE_SIZE, ops);
 }
 
-static __inline__ u_int32_t siop_script_read __P((struct siop_softc *, u_int));
+static __inline__ u_int32_t siop_script_read(struct siop_softc *, u_int);
 static __inline__ u_int32_t
 siop_script_read(sc, offset)
 	struct siop_softc *sc;
@@ -143,8 +143,8 @@ siop_script_read(sc, offset)
 	}
 }
 
-static __inline__ void siop_script_write __P((struct siop_softc *, u_int,
-	u_int32_t));
+static __inline__ void siop_script_write(struct siop_softc *, u_int,
+	u_int32_t);
 static __inline__ void
 siop_script_write(sc, offset, val)
 	struct siop_softc *sc;

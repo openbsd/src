@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_etreg.h,v 1.4 1997/09/18 13:39:51 niklas Exp $	*/
+/*	$OpenBSD: grf_etreg.h,v 1.5 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_etreg.h,v 1.4 1997/07/29 17:42:06 veego Exp $	*/
 
 /*
@@ -380,9 +380,9 @@ static inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int et_mode __P((register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3));
-int et_load_mon __P((struct grf_softc *gp, struct grfettext_mode *gv)); 
-int grfet_cnprobe __P((void));
-void grfet_iteinit __P((struct grf_softc *gp));
+int et_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3);
+int et_load_mon(struct grf_softc *gp, struct grfettext_mode *gv); 
+int grfet_cnprobe(void);
+void grfet_iteinit(struct grf_softc *gp);
 
 #endif /* _GRF_ETREG_H */

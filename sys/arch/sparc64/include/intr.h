@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1.1.1 2001/08/18 04:16:40 jason Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -58,7 +58,7 @@ void *
 softintr_establish __P((int level, void (*fun)(void *), void *arg));
 
 void
-softintr_disestablish __P((void *cookie));
+softintr_disestablish(void *cookie);
 
 void
-softintr_schedule __P((void *cookie));
+softintr_schedule(void *cookie);

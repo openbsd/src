@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.3 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -142,35 +142,35 @@ struct mesh_softc {
 #define scsipi_done 	  scsi_done
 #endif
 
-static __inline int mesh_read_reg __P((struct mesh_softc *, int));
-static __inline void mesh_set_reg __P((struct mesh_softc *, int, int));
+static __inline int mesh_read_reg(struct mesh_softc *, int);
+static __inline void mesh_set_reg(struct mesh_softc *, int, int);
 
-int mesh_match __P((struct device *, struct cfdata *, void *));
-void mesh_attach __P((struct device *, struct device *, void *));
-void mesh_shutdownhook __P((void *));
-int mesh_intr __P((void *));
-void mesh_error __P((struct mesh_softc *, struct mesh_scb *, int, int));
-void mesh_select __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_identify __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_command __P((struct mesh_softc *, struct mesh_scb *));
-int mesh_dma_setup __P((struct mesh_softc *, struct mesh_scb *));
-int mesh_dataio __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_status __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_msgin __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_msgout __P((struct mesh_softc *, int));
-void mesh_bus_reset __P((struct mesh_softc *));
-void mesh_reset __P((struct mesh_softc *));
-int mesh_stp __P((struct mesh_softc *, int));
-void mesh_setsync __P((struct mesh_softc *, struct mesh_tinfo *));
-struct mesh_scb *mesh_get_scb __P((struct mesh_softc *));
-void mesh_free_scb __P((struct mesh_softc *, struct mesh_scb *));
-int mesh_scsi_cmd __P((struct scsi_xfer *));
-void mesh_sched __P((struct mesh_softc *));
-int mesh_poll __P((struct mesh_softc *, struct scsi_xfer *));
-void mesh_done __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_timeout __P((void *));
-void mesh_sense __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_minphys __P((struct buf *));
+int mesh_match(struct device *, struct cfdata *, void *);
+void mesh_attach(struct device *, struct device *, void *);
+void mesh_shutdownhook(void *);
+int mesh_intr(void *);
+void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
+void mesh_select(struct mesh_softc *, struct mesh_scb *);
+void mesh_identify(struct mesh_softc *, struct mesh_scb *);
+void mesh_command(struct mesh_softc *, struct mesh_scb *);
+int mesh_dma_setup(struct mesh_softc *, struct mesh_scb *);
+int mesh_dataio(struct mesh_softc *, struct mesh_scb *);
+void mesh_status(struct mesh_softc *, struct mesh_scb *);
+void mesh_msgin(struct mesh_softc *, struct mesh_scb *);
+void mesh_msgout(struct mesh_softc *, int);
+void mesh_bus_reset(struct mesh_softc *);
+void mesh_reset(struct mesh_softc *);
+int mesh_stp(struct mesh_softc *, int);
+void mesh_setsync(struct mesh_softc *, struct mesh_tinfo *);
+struct mesh_scb *mesh_get_scb(struct mesh_softc *);
+void mesh_free_scb(struct mesh_softc *, struct mesh_scb *);
+int mesh_scsi_cmd(struct scsi_xfer *);
+void mesh_sched(struct mesh_softc *);
+int mesh_poll(struct mesh_softc *, struct scsi_xfer *);
+void mesh_done(struct mesh_softc *, struct mesh_scb *);
+void mesh_timeout(void *);
+void mesh_sense(struct mesh_softc *, struct mesh_scb *);
+void mesh_minphys(struct buf *);
 
 
 #define MESH_DATAOUT	0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_net.c,v 1.7 2002/02/12 13:05:31 art Exp $	*/
+/*	$OpenBSD: hpux_net.c,v 1.8 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: hpux_net.c,v 1.14 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -83,10 +83,10 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt	__P((struct proc *, void *, register_t *));
-int	hpux_sys_getsockopt	__P((struct proc *, void *, register_t *));
+int	hpux_sys_setsockopt(struct proc *, void *, register_t *);
+int	hpux_sys_getsockopt(struct proc *, void *, register_t *);
 
-void	socksetsize __P((int, struct mbuf *));
+void	socksetsize(int, struct mbuf *);
 
 
 #define MINBSDIPCCODE	0x3EE
@@ -98,7 +98,7 @@ void	socksetsize __P((int, struct mbuf *));
  */
 
 struct hpuxtobsdipc {
-	int (*rout) __P((struct proc *, void *, register_t *));
+	int (*rout)(struct proc *, void *, register_t *);
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
 	{ sys_socket,			3 }, /* 3ee */

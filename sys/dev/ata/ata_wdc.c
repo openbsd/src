@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.12 2001/11/28 19:49:36 csapuntz Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.13 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -114,13 +114,13 @@ struct cfdriver wdc_cd = {
 };
 #endif
 
-void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
-void  _wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
-int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
-void  wdc_ata_bio_kill_xfer __P((struct channel_softc *,struct wdc_xfer *));
-void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
-int   wdc_ata_ctrl_intr __P((struct channel_softc *, struct wdc_xfer *, int));
-int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
+void  wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
+void  _wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
+int   wdc_ata_bio_intr(struct channel_softc *, struct wdc_xfer *, int);
+void  wdc_ata_bio_kill_xfer(struct channel_softc *,struct wdc_xfer *);
+void  wdc_ata_bio_done(struct channel_softc *, struct wdc_xfer *); 
+int   wdc_ata_ctrl_intr(struct channel_softc *, struct wdc_xfer *, int);
+int   wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */

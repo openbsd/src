@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.9 1996/12/08 01:03:05 niklas Exp $	*/
+/*	$OpenBSD: tc.c,v 1.10 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: tc.c,v 1.20 1996/10/22 21:37:29 cgd Exp $	*/
 
 /*
@@ -47,12 +47,12 @@ struct tc_softc {
 
 	void	(*sc_intr_establish) __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
-	void	(*sc_intr_disestablish) __P((struct device *, void *));
+	void	(*sc_intr_disestablish)(struct device *, void *);
 };
 
 /* Definition of the driver for autoconfig. */
-int	tcmatch __P((struct device *, void *, void *));
-void	tcattach __P((struct device *, struct device *, void *));
+int	tcmatch(struct device *, void *, void *);
+void	tcattach(struct device *, struct device *, void *);
 
 struct cfattach tc_ca = {
 	sizeof(struct tc_softc), tcmatch, tcattach
@@ -62,10 +62,10 @@ struct cfdriver tc_cd = {
 	NULL, "tc", DV_DULL
 };
 
-int	tcprint __P((void *, const char *));
-int	tcsubmatch __P((struct device *, void *, void *));
-int	tc_checkslot __P((tc_addr_t, char *));
-void	tc_devinfo __P((const char *, char *));
+int	tcprint(void *, const char *);
+int	tcsubmatch(struct device *, void *, void *);
+int	tc_checkslot(tc_addr_t, char *);
+void	tc_devinfo(const char *, char *);
 
 int
 tcmatch(parent, cfdata, aux)
@@ -278,7 +278,7 @@ tc_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie, *arg;
 	tc_intrlevel_t level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 {
 	struct tc_softc *sc = (struct tc_softc *)dev;
 

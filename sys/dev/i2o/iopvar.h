@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.6 2001/06/26 20:05:22 niklas Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.7 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -165,7 +165,7 @@ struct iop_attach_args {
 #define	iopcf_tid	cf_loc[IOPCF_TID]		/* TID */
 
 void	iop_init(struct iop_softc *, const char *);
-int	iop_intr __P((void *));
+int	iop_intr(void *);
 int	iop_lct_get(struct iop_softc *);
 int	iop_param_op(struct iop_softc *, int, struct iop_initiator *, int,
 	    int, void *, size_t);

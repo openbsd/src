@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.11 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.12 2002/03/14 01:26:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -72,21 +72,21 @@
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void ssh_select __P((struct ssh_softc *));
-void sshabort __P((struct ssh_softc *, ssh_regmap_p, char *));
-void ssherror __P((struct ssh_softc *, ssh_regmap_p, u_char));
-void sshstart __P((struct ssh_softc *));
-int  ssh_checkintr __P((struct ssh_softc *, u_char, u_char, u_char, int *));
-void sshreset __P((struct ssh_softc *));
-void sshsetdelay __P((int));
-void ssh_scsidone __P((struct ssh_acb *, int));
-void ssh_sched __P((struct ssh_softc *));
-int  ssh_poll __P((struct ssh_softc *, struct ssh_acb *));
-int  sshintr __P((struct ssh_softc *));
-void scsi_period_to_ssh __P((struct ssh_softc *, int));
-void ssh_start __P((struct ssh_softc *, int, int, u_char *, int, u_char *, int)); 
-void ssh_dump_acb __P((struct ssh_acb *));
-void sshinitialize __P((struct ssh_softc *sc));
+void ssh_select(struct ssh_softc *);
+void sshabort(struct ssh_softc *, ssh_regmap_p, char *);
+void ssherror(struct ssh_softc *, ssh_regmap_p, u_char);
+void sshstart(struct ssh_softc *);
+int  ssh_checkintr(struct ssh_softc *, u_char, u_char, u_char, int *);
+void sshreset(struct ssh_softc *);
+void sshsetdelay(int);
+void ssh_scsidone(struct ssh_acb *, int);
+void ssh_sched(struct ssh_softc *);
+int  ssh_poll(struct ssh_softc *, struct ssh_acb *);
+int  sshintr(struct ssh_softc *);
+void scsi_period_to_ssh(struct ssh_softc *, int);
+void ssh_start(struct ssh_softc *, int, int, u_char *, int, u_char *, int); 
+void ssh_dump_acb(struct ssh_acb *);
+void sshinitialize(struct ssh_softc *sc);
 
 /* 53C710 script */
 const
@@ -168,8 +168,8 @@ int	sshphmm = 0;
 	ssh_trix = (ssh_trix + 4) & (SSH_TRACE_SIZE - 1);
 u_char	ssh_trbuf[SSH_TRACE_SIZE];
 int	ssh_trix;
-void ssh_dump __P((struct ssh_softc *));
-void ssh_dump_trace __P((void));
+void ssh_dump(struct ssh_softc *);
+void ssh_dump_trace(void);
 #else
 #define SSH_TRACE(a,b,c,d)
 #endif
@@ -179,7 +179,7 @@ int kludge_city = 1;
 /*
  * dummy routine to debug while loops
  */
-void wdummy __P((void));
+void wdummy(void);
 
 void
 wdummy(void)

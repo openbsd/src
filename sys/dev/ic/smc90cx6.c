@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.4 2002/03/12 09:51:20 kjc Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.5 2002/03/14 01:26:55 millert Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -176,19 +176,19 @@ struct bah_softc {
 #endif
 };
 
-int	bah_zbus_match __P((struct device *, void *, void *));
-void	bah_zbus_attach __P((struct device *, struct device *, void *));
-void	bah_init __P((struct bah_softc *));
-void	bah_reset __P((struct bah_softc *));
-void	bah_stop __P((struct bah_softc *));
-void	bah_start __P((struct ifnet *));
-int	bahintr __P((struct bah_softc *sc));
-int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
-void	bah_watchdog __P((struct ifnet *));
-void	movepout __P((u_char *from, u_char __volatile *to, int len));
-void	movepin __P((u_char __volatile *from, u_char *to, int len));
-void	bah_srint __P((void *vsc, void *dummy));
-void	callstart __P((void *vsc, void *dummy));
+int	bah_zbus_match(struct device *, void *, void *);
+void	bah_zbus_attach(struct device *, struct device *, void *);
+void	bah_init(struct bah_softc *);
+void	bah_reset(struct bah_softc *);
+void	bah_stop(struct bah_softc *);
+void	bah_start(struct ifnet *);
+int	bahintr(struct bah_softc *sc);
+int	bah_ioctl(struct ifnet *, unsigned long, caddr_t);
+void	bah_watchdog(struct ifnet *);
+void	movepout(u_char *from, u_char __volatile *to, int len);
+void	movepin(u_char __volatile *from, u_char *to, int len);
+void	bah_srint(void *vsc, void *dummy);
+void	callstart(void *vsc, void *dummy);
 
 #ifdef BAHTIMINGS
 int	clkread();

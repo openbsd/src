@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropicvar.h,v 1.2 2001/08/19 15:07:30 miod Exp $	*/
+/*	$OpenBSD: tropicvar.h,v 1.3 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: tropicvar.h,v 1.4 1999/10/17 23:53:45 cgd Exp $	*/
 
 /* 
@@ -73,8 +73,8 @@ struct	tr_softc {
 	struct timeout init_timeout;
 	struct timeout reinit_timeout;
 
-	int (*sc_mediachange) __P((struct tr_softc *));
-	void (*sc_mediastatus) __P((struct tr_softc *, struct ifmediareq *));
+	int (*sc_mediachange)(struct tr_softc *);
+	void (*sc_mediastatus)(struct tr_softc *, struct ifmediareq *);
 	struct rbcb rbc;	/* receiver buffer control block */
 	bus_size_t sc_aca;	/* offset of adapter ACA */
 	bus_size_t sc_ssb;	/* offset of System Status Block */
@@ -94,12 +94,12 @@ struct	tr_softc {
 	unsigned short exsap_station;	/* station assigned by open sap cmd */
 };
 
-int tr_config __P((struct tr_softc *));
-int tr_attach __P((struct tr_softc *));
-int tr_intr __P((void *));
-void tr_init __P((void *));
-int tr_ioctl __P((struct ifnet *, u_long, caddr_t));
-void tr_stop __P((struct tr_softc *));
-int tr_reset __P((struct tr_softc *));
-void tr_sleep __P((struct tr_softc *));
-int tr_setspeed __P((struct tr_softc *, u_int8_t));
+int tr_config(struct tr_softc *);
+int tr_attach(struct tr_softc *);
+int tr_intr(void *);
+void tr_init(void *);
+int tr_ioctl(struct ifnet *, u_long, caddr_t);
+void tr_stop(struct tr_softc *);
+int tr_reset(struct tr_softc *);
+void tr_sleep(struct tr_softc *);
+int tr_setspeed(struct tr_softc *, u_int8_t);

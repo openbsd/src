@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.3 2002/01/04 05:19:26 jason Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
@@ -115,6 +115,6 @@ struct sbus_softc {
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
 };
 
-bus_addr_t sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
+bus_addr_t sbus_bus_addr(bus_space_tag_t, u_int, u_int);
 
 #endif /* _SBUS_VAR_SPARC64_H_ */

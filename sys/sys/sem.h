@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.11 2001/09/28 01:42:54 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.12 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -180,16 +180,16 @@ extern int	*semu;			/* undo structure pool */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int semctl __P((int, int, int, ...));
-int __semctl __P((int, int, int, union semun *));
-int semget __P((key_t, int, int));
-int semop __P((int, struct sembuf *, u_int));
-int semconfig __P((int));
+int semctl(int, int, int, ...);
+int __semctl(int, int, int, union semun *);
+int semget(key_t, int, int);
+int semop(int, struct sembuf *, u_int);
+int semconfig(int);
 __END_DECLS
 #else
-void seminit __P((void));
-void semexit __P((struct proc *));
-void semid_n2o __P((struct semid_ds *, struct osemid_ds *));
+void seminit(void);
+void semexit(struct proc *);
+void semid_n2o(struct semid_ds *, struct osemid_ds *);
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */

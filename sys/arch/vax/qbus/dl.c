@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.2 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: dl.c,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -107,20 +107,20 @@ struct dl_softc {
 	struct tty	*sc_tty;
 };
 
-static	int	dl_match __P((struct device *, struct cfdata *, void *));
-static	void	dl_attach __P((struct device *, struct device *, void *));
-static	void	dlrint __P((void *));
-static	void	dlxint __P((void *));
-static	void	dlstart __P((struct tty *));
-static	int	dlparam __P((struct tty *, struct termios *));
-static	void	dlbrk __P((struct dl_softc *, int));
-struct	tty *	dltty __P((dev_t));
-	int	dlopen __P((dev_t, int, int, struct proc *));
-	int	dlclose __P((dev_t, int, int, struct proc *));
-	int	dlread __P((dev_t, struct uio *, int));
-	int	dlwrite __P((dev_t, struct uio *, int));
-	int	dlioctl __P((dev_t, int, caddr_t, int, struct proc *));
-	void	dlstop __P((struct tty *, int));
+static	int	dl_match(struct device *, struct cfdata *, void *);
+static	void	dl_attach(struct device *, struct device *, void *);
+static	void	dlrint(void *);
+static	void	dlxint(void *);
+static	void	dlstart(struct tty *);
+static	int	dlparam(struct tty *, struct termios *);
+static	void	dlbrk(struct dl_softc *, int);
+struct	tty *	dltty(dev_t);
+	int	dlopen(dev_t, int, int, struct proc *);
+	int	dlclose(dev_t, int, int, struct proc *);
+	int	dlread(dev_t, struct uio *, int);
+	int	dlwrite(dev_t, struct uio *, int);
+	int	dlioctl(dev_t, int, caddr_t, int, struct proc *);
+	void	dlstop(struct tty *, int);
 
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), (cfmatch_t)dl_match, dl_attach

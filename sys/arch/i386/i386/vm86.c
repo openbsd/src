@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.c,v 1.13 2002/01/16 20:50:16 miod Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.14 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -70,8 +70,8 @@
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void fast_intxx __P((struct proc *, int));
-static __inline int is_bitset __P((int, caddr_t));
+static void fast_intxx(struct proc *, int);
+static __inline int is_bitset(int, caddr_t);
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)

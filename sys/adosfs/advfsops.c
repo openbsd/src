@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.21 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.22 2002/03/14 01:26:25 millert Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -50,23 +50,23 @@
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <adosfs/adosfs.h>
 
-int	 adosfs_init __P((struct vfsconf *));
-int	 adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-    struct proc *));
-int	 adosfs_start __P((struct mount *, int, struct proc *));
-int	 adosfs_unmount __P((struct mount *, int, struct proc *));
-int	 adosfs_root __P((struct mount *, struct vnode **));
-int	 adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-    struct proc *));
-int	 adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	 adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	 adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	 adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	 adosfs_init(struct vfsconf *);
+int	 adosfs_mount(struct mount *, const char *, void *, struct nameidata *,
+    struct proc *);
+int	 adosfs_start(struct mount *, int, struct proc *);
+int	 adosfs_unmount(struct mount *, int, struct proc *);
+int	 adosfs_root(struct mount *, struct vnode **);
+int	 adosfs_quotactl(struct mount *, int, uid_t, caddr_t,
+    struct proc *);
+int	 adosfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	 adosfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	 adosfs_vget(struct mount *, ino_t, struct vnode **);
+int	 adosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 
-int	 adosfs_vptofh __P((struct vnode *, struct fid *));
+int	 adosfs_vptofh(struct vnode *, struct fid *);
 
-int	 adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
-int	 adosfs_loadbitmap __P((struct adosfsmount *));
+int	 adosfs_mountfs(struct vnode *, struct mount *, struct proc *);
+int	 adosfs_loadbitmap(struct adosfsmount *);
 
 int
 adosfs_mount(mp, path, data, ndp, p)

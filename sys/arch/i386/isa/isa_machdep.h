@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.15 1999/01/13 07:26:00 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.16 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
 
 /*-
@@ -105,13 +105,13 @@ struct isabus_attach_args;	/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
-int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
-int	isa_intr_check __P((isa_chipset_tag_t, int, int));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
+int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
+int	isa_intr_check(isa_chipset_tag_t, int, int);
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, char *ih_what));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
@@ -219,6 +219,6 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
 /*
  * Miscellanous functions.
  */
-void sysbeep __P((int, int));		/* beep with the system speaker */
+void sysbeep(int, int);		/* beep with the system speaker */
 
 #endif /* _I386_ISA_MACHDEP_H_ XXX */

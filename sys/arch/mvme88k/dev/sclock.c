@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.11 2002/03/05 22:11:37 miod Exp $ */
+/*	$OpenBSD: sclock.c,v 1.12 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -116,14 +116,14 @@ struct simplelock cio_lock;
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 
-int	sclockmatch	__P((struct device *, void *, void *));
-void	sclockattach	__P((struct device *, struct device *, void *));
+int	sclockmatch(struct device *, void *, void *);
+void	sclockattach(struct device *, struct device *, void *);
 
-void	sbc_initstatclock	__P((void));
-void	m188_initstatclock	__P((void));
-void	m188_cio_init		__P((unsigned));
-u_char	read_cio		__P((unsigned));
-void	write_cio		__P((unsigned, unsigned));
+void	sbc_initstatclock(void);
+void	m188_initstatclock(void);
+void	m188_cio_init(unsigned);
+u_char	read_cio(unsigned);
+void	write_cio(unsigned, unsigned);
 
 struct sclocksoftc {
 	struct device			sc_dev;
@@ -138,8 +138,8 @@ struct cfdriver sclock_cd = {
         NULL, "sclock", DV_DULL, 0
 }; 
 
-int	sbc_statintr	__P((void *));
-int	m188_statintr	__P((void *));
+int	sbc_statintr(void *);
+int	m188_statintr(void *);
 
 int	sclockbus;
 u_char	stat_reset;

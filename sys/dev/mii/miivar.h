@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.13 2001/10/05 18:33:33 nate Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.14 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -61,9 +61,9 @@ struct mii_softc;
 /*
  * Callbacks from MII layer into network interface device driver.
  */
-typedef	int (*mii_readreg_t) __P((struct device *, int, int));
-typedef	void (*mii_writereg_t) __P((struct device *, int, int, int));
-typedef	void (*mii_statchg_t) __P((struct device *));
+typedef	int (*mii_readreg_t)(struct device *, int, int);
+typedef	void (*mii_writereg_t)(struct device *, int, int, int);
+typedef	void (*mii_statchg_t)(struct device *);
 
 /*
  * A network interface driver has one of these structures in its softc.
@@ -103,12 +103,12 @@ typedef struct mii_data mii_data_t;
  * This call is used by the MII layer to call into the PHY driver
  * to perform a `service request'.
  */
-typedef	int (*mii_downcall_t) __P((struct mii_softc *, struct mii_data *, int));
+typedef	int (*mii_downcall_t)(struct mii_softc *, struct mii_data *, int);
 
 /*
  * This is a call back into the PHY driver made by a `status request'.
  */
-typedef void (*mii_statusreq_t) __P((struct mii_softc *));
+typedef void (*mii_statusreq_t)(struct mii_softc *);
 
 /*
  * Requests that can be made to the downcall.
@@ -219,35 +219,35 @@ struct mii_media {
 #define mii_phy_probe(x, y, z) \
 	mii_attach((x), (y), (z), MII_PHY_ANY, MII_OFFSET_ANY, 0)
 
-void	mii_attach __P((struct device *, struct mii_data *, int, int,
-	    int, int));
-void	mii_activate __P((struct mii_data *, enum devact, int, int));
-void	mii_detach __P((struct mii_data *, int, int));
+void	mii_attach(struct device *, struct mii_data *, int, int,
+	    int, int);
+void	mii_activate(struct mii_data *, enum devact, int, int);
+void	mii_detach(struct mii_data *, int, int);
 
-int	mii_mediachg __P((struct mii_data *));
-void	mii_tick __P((struct mii_data *));
-void	mii_pollstat __P((struct mii_data *));
-void	mii_down __P((struct mii_data *));
+int	mii_mediachg(struct mii_data *);
+void	mii_tick(struct mii_data *);
+void	mii_pollstat(struct mii_data *);
+void	mii_down(struct mii_data *);
 
-int	mii_phy_activate __P((struct device *, enum devact));
-int	mii_phy_detach __P((struct device *, int));
+int	mii_phy_activate(struct device *, enum devact);
+int	mii_phy_detach(struct device *, int);
 
-void	mii_phy_add_media __P((struct mii_softc *));
-void	mii_phy_delete_media __P((struct mii_softc *));
+void	mii_phy_add_media(struct mii_softc *);
+void	mii_phy_delete_media(struct mii_softc *);
 
-void	mii_phy_setmedia __P((struct mii_softc *));
-int	mii_phy_auto __P((struct mii_softc *, int));
-void	mii_phy_reset __P((struct mii_softc *));
-void	mii_phy_down __P((struct mii_softc *));
-int	mii_phy_tick __P((struct mii_softc *));
+void	mii_phy_setmedia(struct mii_softc *);
+int	mii_phy_auto(struct mii_softc *, int);
+void	mii_phy_reset(struct mii_softc *);
+void	mii_phy_down(struct mii_softc *);
+int	mii_phy_tick(struct mii_softc *);
 
-void	mii_phy_status __P((struct mii_softc *));
-void	mii_phy_update __P((struct mii_softc *, int));
-void	mii_phy_statusmsg __P((struct mii_softc *));
+void	mii_phy_status(struct mii_softc *);
+void	mii_phy_update(struct mii_softc *, int);
+void	mii_phy_statusmsg(struct mii_softc *);
 
-void	ukphy_status __P((struct mii_softc *));
+void	ukphy_status(struct mii_softc *);
 
-int	mii_anar __P((int));
+int	mii_anar(int);
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */

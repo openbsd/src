@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.11 2001/06/23 02:14:22 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.12 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ u_long idvhash;
 
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
-static u_int cd9660_chars2ui __P((u_char *, int));
+static u_int cd9660_chars2ui(u_char *, int);
 
 /*
  * Initialize hash links for inodes and dnodes.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.14 1997/09/12 23:17:54 martin Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.15 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -56,7 +56,7 @@
 #include <machine/vm86.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, int, caddr_t));
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, int, caddr_t);
 
 void
 svr4_getcontext(p, uc, mask, oonstack)

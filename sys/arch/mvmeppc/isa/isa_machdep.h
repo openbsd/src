@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.1 2001/06/26 21:57:51 smurph Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -52,11 +52,11 @@ struct isabus_attach_args;	/* XXX */
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
+void	isa_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, char *ih_what));
-void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 #define __NO_ISA_INTR_CHECK
 /*

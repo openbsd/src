@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -44,15 +44,15 @@
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/ascii.h>
 
-void	*wsemul_dumb_cnattach __P((const struct wsscreen_descr *, void *,
-				   int, int, long));
-void	*wsemul_dumb_attach __P((int console, const struct wsscreen_descr *,
-				 void *, int, int, void *, long));
-void	wsemul_dumb_output __P((void *cookie, const u_char *data, u_int count,
-				int));
-int	wsemul_dumb_translate __P((void *cookie, keysym_t, char **));
-void	wsemul_dumb_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
-void	wsemul_dumb_resetop __P((void *, enum wsemul_resetops));
+void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
+				   int, int, long);
+void	*wsemul_dumb_attach(int console, const struct wsscreen_descr *,
+				 void *, int, int, void *, long);
+void	wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
+				int);
+int	wsemul_dumb_translate(void *cookie, keysym_t, char **);
+void	wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp);
+void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_dumb_ops = {
 	"dumb",

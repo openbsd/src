@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 2000/03/26 23:31:59 deraadt Exp $ */
+/*	$OpenBSD: zs.c,v 1.10 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -130,16 +130,16 @@ int   zs_cons_unit = 0;
 int   zs_is_console = 0;
 struct   sccregs *zs_cons_scc;
 
-int   zsopen   __P((dev_t, int, int, struct proc *));
-void  zsstart  __P((struct tty *));
-int   zsparam  __P((struct tty *, struct termios *));
-int   zsirq __P((int unit));
-int   zsregs   __P((void *va, int unit, volatile u_char **crp,
-						  volatile u_char **drp));
-int   zspclk   __P((void));
+int   zsopen(dev_t, int, int, struct proc *);
+void  zsstart(struct tty *);
+int   zsparam(struct tty *, struct termios *);
+int   zsirq(int unit);
+int   zsregs(void *va, int unit, volatile u_char **crp,
+						  volatile u_char **drp);
+int   zspclk(void);
 
 u_long   sir_zs;
-void  zs_softint __P((void));
+void  zs_softint(void);
 
 #define zsunit(dev)	(minor(dev) >> 1)
 #define zsside(dev)	(minor(dev) & 1)
@@ -147,8 +147,8 @@ void  zs_softint __P((void));
 /*
  * Autoconfiguration stuff.
  */
-void  zsattach __P((struct device *, struct device *, void *));
-int   zsmatch __P((struct device *, void *, void *));
+void  zsattach(struct device *, struct device *, void *);
+int   zsmatch(struct device *, void *, void *);
 
 struct cfattach zs_ca = {
 	sizeof(struct zssoftc), zsmatch, zsattach

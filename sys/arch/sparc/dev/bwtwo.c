@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.19 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.20 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -103,11 +103,11 @@ struct bwtwo_softc {
 };
 
 /* autoconfiguration driver */
-static void	bwtwoattach __P((struct device *, struct device *, void *));
-static int	bwtwomatch __P((struct device *, void *, void *));
-static void	bwtwounblank __P((struct device *));
-static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
-static int	bwtwo_get_video __P((struct bwtwo_softc *));
+static void	bwtwoattach(struct device *, struct device *, void *);
+static int	bwtwomatch(struct device *, void *, void *);
+static void	bwtwounblank(struct device *);
+static void	bwtwo_set_video(struct bwtwo_softc *, int);
+static int	bwtwo_get_video(struct bwtwo_softc *);
 
 struct cfattach bwtwo_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach

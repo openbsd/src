@@ -1,4 +1,4 @@
-/*	$OpenBSD: wesc.c,v 1.7 1997/01/18 12:26:35 niklas Exp $	*/
+/*	$OpenBSD: wesc.c,v 1.8 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: wesc.c,v 1.19 1996/12/23 09:10:30 veego Exp $	*/
 
 /*
@@ -51,11 +51,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void wescattach __P((struct device *, struct device *, void *));
-int wescmatch __P((struct device *, void *, void *));
-int wesc_dmaintr __P((void *));
+void wescattach(struct device *, struct device *, void *);
+int wescmatch(struct device *, void *, void *);
+int wesc_dmaintr(void *);
 #ifdef DEBUG
-void wesc_dump __P((void));
+void wesc_dump(void);
 #endif
 
 struct scsi_adapter wesc_scsiswitch = {

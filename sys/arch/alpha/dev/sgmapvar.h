@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmapvar.h,v 1.1 2001/03/21 17:26:38 art Exp $ */
+/* $OpenBSD: sgmapvar.h,v 1.2 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
@@ -85,12 +85,12 @@ struct sgmap_log_entry {
 extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;
 extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
 
-void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
+void	alpha_sgmap_init(bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
-	    bus_size_t));
+	    bus_size_t);
 
-int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
-	    struct alpha_sgmap *, int));
-void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));
+int	alpha_sgmap_alloc(bus_dmamap_t, bus_size_t,
+	    struct alpha_sgmap *, int);
+void	alpha_sgmap_free(bus_dmamap_t, struct alpha_sgmap *);
 
 #endif	/* _ALPHA_COMMON_SGMAPVAR_H */

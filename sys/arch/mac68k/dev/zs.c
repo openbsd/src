@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.13 1999/11/15 06:12:49 d Exp $	*/
+/*	$OpenBSD: zs.c,v 1.14 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -111,8 +111,8 @@ dev_t	mac68k_zsdev;
 /* Mac stuff, some vestages of old mac serial driver here */
 volatile unsigned char *sccA = 0;
 
-static struct zschan	*zs_get_chan_addr __P((int zsc_unit, int channel));
-void			zs_init __P((void));
+static struct zschan	*zs_get_chan_addr(int zsc_unit, int channel);
+void			zs_init(void);
 
 static struct zschan *
 zs_get_chan_addr(zsc_unit, channel)
@@ -185,9 +185,9 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match __P((struct device *, void *, void *));
-static void	zsc_attach __P((struct device *, struct device *, void *));
-static int	zsc_print __P((void *aux, const char *name));
+static int	zsc_match(struct device *, void *, void *);
+static void	zsc_attach(struct device *, struct device *, void *);
+static int	zsc_print(void *aux, const char *name);
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
@@ -197,8 +197,8 @@ struct cfdriver zsc_cd = {
 	NULL, "zsc", DV_DULL
 };
 
-int	zshard __P((void *));
-int	zssoft __P((void *));
+int	zshard(void *);
+int	zssoft(void *);
 
 
 /*
@@ -570,10 +570,10 @@ void  zs_write_data(cs, val)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
-static void	zs_putc __P((register volatile struct zschan *, int));
-static int	zs_getc __P((register volatile struct zschan *));
-static void	zscnsetup __P((void));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
+static void	zs_putc(register volatile struct zschan *, int);
+static int	zs_getc(register volatile struct zschan *);
+static void	zscnsetup(void);
+extern int	zsopen( dev_t dev, int flags, int mode, struct proc *p);
 
 /*
  * Console functions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.17 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.18 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -299,63 +299,63 @@ typedef	void (*ray_cmd_func_t)(struct ray_softc *);
 #define BROADCAST_DEAUTH (0xc0)
 
 /* prototypes */
-int ray_alloc_ccs __P((struct ray_softc *, bus_size_t *, u_int, u_int));
-bus_size_t ray_fill_in_tx_ccs __P((struct ray_softc *, size_t, u_int, u_int));
-void ray_attach __P((struct device *, struct device *, void *));
-ray_cmd_func_t ray_ccs_done __P((struct ray_softc *, bus_size_t));
-void ray_check_ccs __P((void *));
-void ray_check_scheduled __P((void *));
-void ray_cmd_cancel __P((struct ray_softc *, int));
-void ray_cmd_schedule __P((struct ray_softc *, int));
-void ray_cmd_ran __P((struct ray_softc *, int));
-int ray_cmd_is_running __P((struct ray_softc *, int));
-int ray_cmd_is_scheduled __P((struct ray_softc *, int));
-void ray_cmd_done __P((struct ray_softc *, int));
-int ray_detach __P((struct device *, int));
-int ray_activate __P((struct device *, enum devact));
-void ray_disable __P((struct ray_softc *));
-void ray_download_params __P((struct ray_softc *));
-int ray_enable __P((struct ray_softc *));
-u_int ray_find_free_tx_ccs __P((struct ray_softc *, u_int));
-u_int8_t ray_free_ccs __P((struct ray_softc *, bus_size_t));
-void ray_free_ccs_chain __P((struct ray_softc *, u_int));
-void ray_if_start __P((struct ifnet *));
-int ray_init __P((struct ray_softc *));
-int ray_intr __P((void *));
-void ray_intr_start __P((struct ray_softc *));
-int ray_ioctl __P((struct ifnet *, u_long, caddr_t));
-int ray_issue_cmd __P((struct ray_softc *, bus_size_t, u_int));
-int ray_match __P((struct device *, struct cfdata *, void *));
-int ray_media_change __P((struct ifnet *));
-void ray_media_status __P((struct ifnet *, struct ifmediareq *));
-void ray_power __P((int, void *));
-ray_cmd_func_t ray_rccs_intr __P((struct ray_softc *, bus_size_t));
-void ray_recv __P((struct ray_softc *, bus_size_t));
-void ray_recv_auth __P((struct ray_softc *,struct ieee80211_frame*));
-void ray_report_params __P((struct ray_softc *));
-void ray_reset __P((struct ray_softc *));
-void ray_reset_resetloop __P((void *));
-int ray_send_auth __P((struct ray_softc *, u_int8_t *, u_int8_t));
-void ray_set_pending __P((struct ray_softc *, u_int));
-void ray_shutdown __P((void *));
-int ray_simple_cmd __P((struct ray_softc *, u_int, u_int));
-void ray_start_assoc __P((struct ray_softc *));
-void ray_start_join_net __P((struct ray_softc *));
-ray_cmd_func_t ray_start_join_net_done __P((struct ray_softc *,
-    u_int, bus_size_t, u_int));
-void ray_start_join_timo __P((void *));
-void ray_stop __P((struct ray_softc *));
-void ray_update_error_counters __P((struct ray_softc *));
-void ray_update_mcast __P((struct ray_softc *));
-ray_cmd_func_t ray_update_params_done __P((struct ray_softc *,
-    bus_size_t, u_int));
-void ray_update_params __P((struct ray_softc *));
-void ray_update_promisc __P((struct ray_softc *));
-void ray_update_subcmd __P((struct ray_softc *));
-int ray_user_report_params __P((struct ray_softc *,
-    struct ray_param_req *));
-int ray_user_update_params __P((struct ray_softc *,
-    struct ray_param_req *));
+int ray_alloc_ccs(struct ray_softc *, bus_size_t *, u_int, u_int);
+bus_size_t ray_fill_in_tx_ccs(struct ray_softc *, size_t, u_int, u_int);
+void ray_attach(struct device *, struct device *, void *);
+ray_cmd_func_t ray_ccs_done(struct ray_softc *, bus_size_t);
+void ray_check_ccs(void *);
+void ray_check_scheduled(void *);
+void ray_cmd_cancel(struct ray_softc *, int);
+void ray_cmd_schedule(struct ray_softc *, int);
+void ray_cmd_ran(struct ray_softc *, int);
+int ray_cmd_is_running(struct ray_softc *, int);
+int ray_cmd_is_scheduled(struct ray_softc *, int);
+void ray_cmd_done(struct ray_softc *, int);
+int ray_detach(struct device *, int);
+int ray_activate(struct device *, enum devact);
+void ray_disable(struct ray_softc *);
+void ray_download_params(struct ray_softc *);
+int ray_enable(struct ray_softc *);
+u_int ray_find_free_tx_ccs(struct ray_softc *, u_int);
+u_int8_t ray_free_ccs(struct ray_softc *, bus_size_t);
+void ray_free_ccs_chain(struct ray_softc *, u_int);
+void ray_if_start(struct ifnet *);
+int ray_init(struct ray_softc *);
+int ray_intr(void *);
+void ray_intr_start(struct ray_softc *);
+int ray_ioctl(struct ifnet *, u_long, caddr_t);
+int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
+int ray_match(struct device *, struct cfdata *, void *);
+int ray_media_change(struct ifnet *);
+void ray_media_status(struct ifnet *, struct ifmediareq *);
+void ray_power(int, void *);
+ray_cmd_func_t ray_rccs_intr(struct ray_softc *, bus_size_t);
+void ray_recv(struct ray_softc *, bus_size_t);
+void ray_recv_auth(struct ray_softc *,struct ieee80211_frame*);
+void ray_report_params(struct ray_softc *);
+void ray_reset(struct ray_softc *);
+void ray_reset_resetloop(void *);
+int ray_send_auth(struct ray_softc *, u_int8_t *, u_int8_t);
+void ray_set_pending(struct ray_softc *, u_int);
+void ray_shutdown(void *);
+int ray_simple_cmd(struct ray_softc *, u_int, u_int);
+void ray_start_assoc(struct ray_softc *);
+void ray_start_join_net(struct ray_softc *);
+ray_cmd_func_t ray_start_join_net_done(struct ray_softc *,
+    u_int, bus_size_t, u_int);
+void ray_start_join_timo(void *);
+void ray_stop(struct ray_softc *);
+void ray_update_error_counters(struct ray_softc *);
+void ray_update_mcast(struct ray_softc *);
+ray_cmd_func_t ray_update_params_done(struct ray_softc *,
+    bus_size_t, u_int);
+void ray_update_params(struct ray_softc *);
+void ray_update_promisc(struct ray_softc *);
+void ray_update_subcmd(struct ray_softc *);
+int ray_user_report_params(struct ray_softc *,
+    struct ray_param_req *);
+int ray_user_update_params(struct ray_softc *,
+    struct ray_param_req *);
 
 #define	ray_read_region(sc,off,p,c) \
 	bus_space_read_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
@@ -363,7 +363,7 @@ int ray_user_update_params __P((struct ray_softc *,
 	bus_space_write_region_1((sc)->sc_memt, (sc)->sc_memh, (off), (p), (c))
 
 #ifdef RAY_DO_SIGLEV
-void ray_update_siglev __P((struct ray_softc *, u_int8_t *, u_int8_t));
+void ray_update_siglev(struct ray_softc *, u_int8_t *, u_int8_t);
 #endif
 
 #ifdef RAY_DEBUG
@@ -394,7 +394,7 @@ struct timeval rtv, tv1, tv2, *ttp, *ltp;
 #define	HEXDF_NOOFFSET		0x2
 #define HEXDF_NOASCII		0x4
 void hexdump(const u_int8_t *, int, int, int, int);
-void ray_dump_mbuf __P((struct ray_softc *, struct mbuf *));
+void ray_dump_mbuf(struct ray_softc *, struct mbuf *);
 
 #else	/* !RAY_DEBUG */
 

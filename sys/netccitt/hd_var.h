@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd_var.h,v 1.2 1996/03/04 07:36:27 niklas Exp $	*/
+/*	$OpenBSD: hd_var.h,v 1.3 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: hd_var.h,v 1.7 1996/02/13 22:04:34 christos Exp $	*/
 
 /*
@@ -77,8 +77,7 @@ struct	hdcb {
 	struct	ifaddr *hd_ifa;	/* device's X.25 network address */
 	struct	x25config *hd_xcp;
 	caddr_t	hd_pkp;		/* Level III junk */
-	int	(*hd_output)	/* separate entry for HDLC direct output */
-			__P((struct mbuf *, ...));
+	int	(*hd_output)	/* separate entry for HDLC direct output */(struct mbuf *, ...);
 
 	/* link statistics */
 
@@ -114,37 +113,37 @@ int	hd_n2;			/* frame retransmission limit */
 
 
 /* hd_debug.c */
-void hd_trace __P((struct hdcb *, int , struct Hdlc_frame *));
-int hd_dumptrace __P((struct hdcb *));
+void hd_trace(struct hdcb *, int , struct Hdlc_frame *);
+int hd_dumptrace(struct hdcb *);
 
 /* hd_input.c */
-void hdintr __P((void));
-int process_rxframe __P((struct hdcb *, struct mbuf *));
-int process_iframe __P((struct hdcb *, struct mbuf *, struct Hdlc_iframe *));
-bool range_check __P((int, int , int ));
-void process_sframe __P((struct hdcb *, struct Hdlc_sframe *, int));
-bool valid_nr __P((struct hdcb *, int , int));
+void hdintr(void);
+int process_rxframe(struct hdcb *, struct mbuf *);
+int process_iframe(struct hdcb *, struct mbuf *, struct Hdlc_iframe *);
+bool range_check(int, int , int );
+void process_sframe(struct hdcb *, struct Hdlc_sframe *, int);
+bool valid_nr(struct hdcb *, int , int);
 
 /* hd_output.c */
-int hd_output __P((struct mbuf *, ...));
-void hd_start __P((struct hdcb *));
-void hd_send_iframe __P((struct hdcb *, struct mbuf *, int));
-int hd_ifoutput __P((struct mbuf *, ...));
-void hd_resend_iframe __P((struct hdcb *));
+int hd_output(struct mbuf *, ...);
+void hd_start(struct hdcb *);
+void hd_send_iframe(struct hdcb *, struct mbuf *, int);
+int hd_ifoutput(struct mbuf *, ...);
+void hd_resend_iframe(struct hdcb *);
 
 /* hd_subr.c */
-void hd_init __P((void));
-void *hd_ctlinput __P((int , struct sockaddr *, void *));
-void hd_initvars __P((struct hdcb *));
-int hd_decode __P((struct hdcb *, struct Hdlc_frame *));
-void hd_writeinternal __P((struct hdcb *, int, int ));
-void hd_append __P((struct hdtxq *, struct mbuf *));
-void hd_flush __P((struct ifnet *));
-void hd_message __P((struct hdcb *, char *));
-int hd_status __P((struct hdcb *));
-struct mbuf *hd_remove __P((struct hdtxq *));
+void hd_init(void);
+void *hd_ctlinput(int , struct sockaddr *, void *);
+void hd_initvars(struct hdcb *);
+int hd_decode(struct hdcb *, struct Hdlc_frame *);
+void hd_writeinternal(struct hdcb *, int, int );
+void hd_append(struct hdtxq *, struct mbuf *);
+void hd_flush(struct ifnet *);
+void hd_message(struct hdcb *, char *);
+int hd_status(struct hdcb *);
+struct mbuf *hd_remove(struct hdtxq *);
 
 /* hd_timer.c */
-void hd_timer __P((void));
+void hd_timer(void);
 
 #endif

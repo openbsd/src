@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.12 2001/02/01 18:05:30 art Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.13 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -53,11 +53,11 @@
 #include <machine/pte.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	cfbmatch __P((struct device *, void *, void *));
+int	cfbmatch(struct device *, void *, void *);
 #else
-int	cfbmatch __P((struct device *, struct cfdata *, void *));
+int	cfbmatch(struct device *, struct cfdata *, void *);
 #endif
-void	cfbattach __P((struct device *, struct device *, void *));
+void	cfbattach(struct device *, struct device *, void *);
 
 struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
@@ -67,7 +67,7 @@ struct cfdriver cfb_cd = {
 	NULL, "cfb", DV_DULL,
 };
 
-void	cfb_getdevconfig __P((tc_addr_t dense_addr, struct cfb_devconfig *dc));
+void	cfb_getdevconfig(tc_addr_t dense_addr, struct cfb_devconfig *dc);
 struct cfb_devconfig cfb_console_dc;
 tc_addr_t cfb_consaddr;
 
@@ -98,13 +98,13 @@ struct wsscreen_list cfb_screenlist = {
         sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	cfbmmap __P((void *, off_t, int));
+int	cfbioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	cfbmmap(void *, off_t, int);
 
-int	cfbintr __P((void *));
-static int      cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-		          void **, int *, int *, long *));
-static void     cfb_free_screen __P((void *, void *));
+int	cfbintr(void *);
+static int      cfb_alloc_screen(void *, const struct wsscreen_descr *,
+		          void **, int *, int *, long *);
+static void     cfb_free_screen(void *, void *);
 static int      cfb_show_screen __P((void *, void *, int,
                                      void (*) (void *, int, int), void *));
 
@@ -369,7 +369,7 @@ cfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	return (0);

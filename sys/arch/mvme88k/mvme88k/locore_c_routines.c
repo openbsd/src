@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.24 2002/02/05 23:16:08 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.25 2002/03/14 01:26:40 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -102,9 +102,9 @@ static char *bytes[] =
 #define DAE_DEBUG(stuff)
 #endif
 
-void setlevel __P((int));
+void setlevel(int);
 #ifdef DDB
-void db_setlevel __P((int));
+void db_setlevel(int);
 #endif
 
 #ifdef M88100

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.48 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.49 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -117,41 +117,41 @@ struct ed_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 };
 
-int edprobe __P((struct device *, void *, void *));
-void edattach __P((struct device *, struct device *, void *));
-int ed_find __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
-int ed_probe_generic8390 __P((bus_space_tag_t, bus_space_handle_t, int));
-int ed_find_WD80x3 __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
-int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
-int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
-int edintr __P((void *));
-int edioctl __P((struct ifnet *, u_long, caddr_t));
-void edstart __P((struct ifnet *));
-void edwatchdog __P((struct ifnet *));
-void edreset __P((struct ed_softc *));
-void edinit __P((struct ed_softc *));
-void edstop __P((struct ed_softc *));
+int edprobe(struct device *, void *, void *);
+void edattach(struct device *, struct device *, void *);
+int ed_find(struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia);
+int ed_probe_generic8390(bus_space_tag_t, bus_space_handle_t, int);
+int ed_find_WD80x3(struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia);
+int ed_find_3Com(struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia);
+int ed_find_Novell(struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia);
+int edintr(void *);
+int edioctl(struct ifnet *, u_long, caddr_t);
+void edstart(struct ifnet *);
+void edwatchdog(struct ifnet *);
+void edreset(struct ed_softc *);
+void edinit(struct ed_softc *);
+void edstop(struct ed_softc *);
 
-void ed_shared_writemem __P((struct ed_softc *, caddr_t, int, int));
-void ed_shared_readmem __P((struct ed_softc *, int, caddr_t, int));
+void ed_shared_writemem(struct ed_softc *, caddr_t, int, int);
+void ed_shared_readmem(struct ed_softc *, int, caddr_t, int);
 
 #define inline	/* XXX for debugging porpoises */
 
-void ed_getmcaf __P((struct arpcom *, u_int32_t *));
-void edread __P((struct ed_softc *, int, int));
-struct mbuf *edget __P((struct ed_softc *, int, int));
-static __inline void ed_rint __P((struct ed_softc *));
-static __inline void ed_xmit __P((struct ed_softc *));
-static __inline int ed_ring_copy __P((struct ed_softc *, int, caddr_t,
-					u_int16_t));
+void ed_getmcaf(struct arpcom *, u_int32_t *);
+void edread(struct ed_softc *, int, int);
+struct mbuf *edget(struct ed_softc *, int, int);
+static __inline void ed_rint(struct ed_softc *);
+static __inline void ed_xmit(struct ed_softc *);
+static __inline int ed_ring_copy(struct ed_softc *, int, caddr_t,
+					u_int16_t);
 
-void ed_pio_readmem __P((struct ed_softc *, u_int16_t, caddr_t, u_int16_t));
-void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_int16_t, u_int16_t));
-u_int16_t ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_int16_t));
+void ed_pio_readmem(struct ed_softc *, u_int16_t, caddr_t, u_int16_t);
+void ed_pio_writemem(struct ed_softc *, caddr_t, u_int16_t, u_int16_t);
+u_int16_t ed_pio_write_mbufs(struct ed_softc *, struct mbuf *, u_int16_t);
 
 #if NED_ISA > 0
 struct cfattach ed_isa_ca = {
@@ -171,19 +171,19 @@ struct cfdriver ed_cd = {
 #if NED_PCMCIA > 0 
 #include <dev/pcmcia/pcmciavar.h>
 
-int ed_pcmcia_match __P((struct device *, void *, void *));
-void ed_pcmcia_attach __P((struct device *, struct device *, void *));
-int ed_pcmcia_detach __P((struct device *));
+int ed_pcmcia_match(struct device *, void *, void *);
+void ed_pcmcia_attach(struct device *, struct device *, void *);
+int ed_pcmcia_detach(struct device *);
 
 struct cfattach ed_pcmcia_ca = {
 	sizeof(struct ed_softc), ed_pcmcia_match, edattach, ed_pcmcia_detach
 };
 
-int ed_pcmcia_isa_attach __P((struct device *, void *, void *,
-    struct pcmcia_link *));
-int edmod __P((struct pcmcia_link *, struct device *, struct pcmcia_conf *,
-    struct cfdata *cf));
-int ed_remove __P((struct pcmcia_link *, struct device *));
+int ed_pcmcia_isa_attach(struct device *, void *, void *,
+    struct pcmcia_link *);
+int edmod(struct pcmcia_link *, struct device *, struct pcmcia_conf *,
+    struct cfdata *cf);
+int ed_remove(struct pcmcia_link *, struct device *);
 
 /* additional setup needed for pcmcia devices */
 int
@@ -371,8 +371,8 @@ ed_pcmcia_detach(self)
 
 #define PCI_CBIO		0x10	/* Configuration Base IO Address */
 
-int	ed_pci_match __P((struct device *, void *, void *));
-void	ed_pci_attach __P((struct device *, struct device *, void *));
+int	ed_pci_match(struct device *, void *, void *);
+void	ed_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach ed_pci_ca = {
 	sizeof(struct ed_softc), ed_pci_match, ed_pci_attach

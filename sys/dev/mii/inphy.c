@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.7 2001/04/17 01:19:21 jason Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.8 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@
 
 #include <dev/mii/inphyreg.h>
 
-int	inphymatch __P((struct device *, void *, void *));
-void	inphyattach __P((struct device *, struct device *, void *));
+int	inphymatch(struct device *, void *, void *);
+void	inphyattach(struct device *, struct device *, void *);
 
 struct cfattach inphy_ca = {
 	sizeof(struct mii_softc), inphymatch, inphyattach, mii_phy_detach,
@@ -101,8 +101,8 @@ struct cfdriver inphy_cd = {
 	NULL, "inphy", DV_DULL
 };
 
-int	inphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	inphy_status __P((struct mii_softc *));
+int	inphy_service(struct mii_softc *, struct mii_data *, int);
+void	inphy_status(struct mii_softc *);
 
 int
 inphymatch(parent, match, aux)

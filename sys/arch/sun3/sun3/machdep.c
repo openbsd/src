@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2002/02/17 22:59:53 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -129,13 +129,13 @@ int	bufpages = 0;
 #endif
 int	bufcachepercent = BUFCACHEPERCENT;
 
-static caddr_t allocsys __P((caddr_t));
-static void identifycpu __P((void));
-static void initcpu __P((void));
-static void reboot_sync __P((void));
-int  reboot2 __P((int, char *)); /* share with sunos_misc.c */
+static caddr_t allocsys(caddr_t);
+static void identifycpu(void);
+static void initcpu(void);
+static void reboot_sync(void);
+int  reboot2(int, char *); /* share with sunos_misc.c */
 
-void straytrap __P((struct trapframe));	/* called from locore.s */
+void straytrap(struct trapframe);	/* called from locore.s */
 
 /*
  * Console initialization: called early on from main,
@@ -641,7 +641,7 @@ dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
-	int (*getsize) __P((dev_t));
+	int (*getsize)(dev_t);
 
 	if (dumpdev == NODEV)
 		return;
@@ -843,8 +843,7 @@ cpu_exec_aout_makecmds(p, epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_SUNOS
-	extern int sunos_exec_aout_makecmds
-		__P((struct proc *, struct exec_package *));
+	extern int sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
 	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif

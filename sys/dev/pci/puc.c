@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.5 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: puc.c,v 1.6 2002/03/14 01:26:59 millert Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -82,15 +82,15 @@ struct puc_softc {
 		struct device	*dev;
 
                 /* filled in by port attachments */
-                int             (*ihand) __P((void *));
+                int             (*ihand)(void *);
                 void            *ihandarg;
         } sc_ports[PUC_MAX_PORTS];
 };
 
-int	puc_match __P((struct device *, void *, void *));
-void	puc_attach __P((struct device *, struct device *, void *));
-int	puc_print __P((void *, const char *));
-int	puc_submatch __P((struct device *, void *, void *));
+int	puc_match(struct device *, void *, void *);
+void	puc_attach(struct device *, struct device *, void *);
+int	puc_print(void *, const char *);
+int	puc_submatch(struct device *, void *, void *);
 
 struct cfattach puc_ca = {
 	sizeof(struct puc_softc), puc_match, puc_attach
@@ -101,9 +101,9 @@ struct cfdriver puc_cd = {
 };
 
 static const struct puc_device_description *
-	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
+	puc_find_description(pcireg_t, pcireg_t, pcireg_t, pcireg_t);
 static const char *
-	puc_port_type_name __P((int));
+	puc_port_type_name(int);
 
 int
 puc_match(parent, match, aux)

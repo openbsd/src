@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: linux_cdrom.c,v 1.7 2002/02/13 20:43:42 jasoni Exp $	*/
+/*	$OpenBSD: linux_cdrom.c,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -48,8 +48,8 @@
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_cdrom.h>
 
-void bsd_addr_to_linux_addr __P((union msf_lba *bsd,
-    union linux_cdrom_addr *linux, int format));
+void bsd_addr_to_linux_addr(union msf_lba *bsd,
+    union linux_cdrom_addr *linux, int format);
 
 void 
 bsd_addr_to_linux_addr(bsd, linux, format)

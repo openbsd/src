@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.8 2001/01/26 22:23:03 mickey Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.9 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: eisa.c,v 1.15 1996/10/21 22:31:01 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-int	eisamatch __P((struct device *, void *, void *));
-void	eisaattach __P((struct device *, struct device *, void *));
+int	eisamatch(struct device *, void *, void *);
+void	eisaattach(struct device *, struct device *, void *);
 
 struct cfattach eisa_ca = {
 	sizeof(struct device), eisamatch, eisaattach
@@ -60,9 +60,9 @@ struct cfdriver eisa_cd = {
 	NULL, "eisa", DV_DULL
 };
 
-int	eisasubmatch __P((struct device *, void *, void *));
-int	eisaprint __P((void *, const char *));
-void	eisa_devinfo __P((const char *, char *));
+int	eisasubmatch(struct device *, void *, void *);
+int	eisaprint(void *, const char *);
+void	eisa_devinfo(const char *, char *);
 
 int
 eisamatch(parent, match, aux)

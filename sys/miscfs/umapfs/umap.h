@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap.h,v 1.8 1997/11/06 05:58:46 csapuntz Exp $	*/
+/*	$OpenBSD: umap.h,v 1.9 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: umap.h,v 1.6 1996/02/09 22:41:00 christos Exp $	*/
 
 /*
@@ -77,23 +77,23 @@ struct umap_node {
 	struct vnode	*umap_vnode;	/* Back pointer to vnode/umap_node */
 };
 
-extern int	umap_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
-extern id_t	umap_reverse_findid __P((id_t id, id_map_t, int nentries));
-extern void	umap_mapids __P((struct mount *v_mount, struct ucred *credp));
+extern int	umap_node_create(struct mount *mp, struct vnode *target, struct vnode **vpp);
+extern id_t	umap_reverse_findid(id_t id, id_map_t, int nentries);
+extern void	umap_mapids(struct mount *v_mount, struct ucred *credp);
 
 #define	MOUNTTOUMAPMOUNT(mp) ((struct umap_mount *)((mp)->mnt_data))
 #define	VTOUMAP(vp) ((struct umap_node *)(vp)->v_data)
 #define UMAPTOV(xp) ((xp)->umap_vnode)
 #ifdef UMAPFS_DIAGNOSTIC
-extern struct vnode *umap_checkvp __P((struct vnode *vp, char *fil, int lno));
+extern struct vnode *umap_checkvp(struct vnode *vp, char *fil, int lno);
 #define	UMAPVPTOLOWERVP(vp) umap_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	UMAPVPTOLOWERVP(vp) (VTOUMAP(vp)->umap_lowervp)
 #endif
 
-extern int (**umap_vnodeop_p) __P((void *));
+extern int (**umap_vnodeop_p)(void *);
 extern struct vfsops umap_vfsops;
 
-int umapfs_init __P((struct vfsconf *));
+int umapfs_init(struct vfsconf *);
 
 #endif /* _KERNEL */

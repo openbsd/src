@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2002/02/21 23:27:12 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -91,10 +91,10 @@ extern struct emul emul_bsdos;
 
 #include "npx.h"
 
-static __inline void userret __P((struct proc *, int, u_quad_t));
-void trap __P((struct trapframe));
-int trapwrite __P((unsigned));
-void syscall __P((struct trapframe));
+static __inline void userret(struct proc *, int, u_quad_t);
+void trap(struct trapframe);
+int trapwrite(unsigned);
+void syscall(struct trapframe);
 
 /*
  * Define the code needed before returning to user mode, for

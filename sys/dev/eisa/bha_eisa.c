@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_eisa.c,v 1.2 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: bha_eisa.c,v 1.3 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: bha_eisa.c,v 1.16 1998/08/15 10:10:49 mycroft Exp $	*/
 
 /*-
@@ -60,9 +60,9 @@
 
 #define	BHA_EISA_IOCONF		0x0c
 
-int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
-int	bha_eisa_match __P((struct device *, void *, void *));
-void	bha_eisa_attach __P((struct device *, struct device *, void *));
+int	bha_eisa_address(bus_space_tag_t, bus_space_handle_t, int *);
+int	bha_eisa_match(struct device *, void *, void *);
+void	bha_eisa_attach(struct device *, struct device *, void *);
 
 struct cfattach bha_eisa_ca = {
 	sizeof(struct bha_softc), bha_eisa_match, bha_eisa_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.5 2000/11/10 09:42:14 niklas Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -85,7 +85,7 @@ struct gdt_ccb {
 #define GDT_GCF_WATCHDOG 	0x4
 };
 
-static __inline__ int gdt_ccb_set_cmd __P((struct gdt_ccb *, int));
+static __inline__ int gdt_ccb_set_cmd(struct gdt_ccb *, int);
 static __inline__ int
 gdt_ccb_set_cmd(ccb, flag)
 	struct gdt_ccb *ccb;
@@ -209,12 +209,12 @@ struct gdt_softc {
 	u_int16_t sc_raw_feat;
 	u_int16_t sc_cache_feat;
 
-	void (*sc_copy_cmd) __P((struct gdt_softc *, struct gdt_ccb *));
-	u_int8_t (*sc_get_status) __P((struct gdt_softc *));
-	void (*sc_intr) __P((struct gdt_softc *, struct gdt_intr_ctx *));
-	void (*sc_release_event) __P((struct gdt_softc *, struct gdt_ccb *));
-	void (*sc_set_sema0) __P((struct gdt_softc *));
-	int (*sc_test_busy) __P((struct gdt_softc *));
+	void (*sc_copy_cmd)(struct gdt_softc *, struct gdt_ccb *);
+	u_int8_t (*sc_get_status)(struct gdt_softc *);
+	void (*sc_intr)(struct gdt_softc *, struct gdt_intr_ctx *);
+	void (*sc_release_event)(struct gdt_softc *, struct gdt_ccb *);
+	void (*sc_set_sema0)(struct gdt_softc *);
+	int (*sc_test_busy)(struct gdt_softc *);
 };
 
 /* XXX These have to become spinlocks in case of SMP */
@@ -222,16 +222,16 @@ struct gdt_softc {
 #define GDT_UNLOCK_GDT(gdt, lock) splx(lock)
 typedef int gdt_lock_t;
 
-void	gdtminphys __P((struct buf *));
-int	gdt_attach __P((struct gdt_softc *));
-int	gdt_intr __P((void *));
+void	gdtminphys(struct buf *);
+int	gdt_attach(struct gdt_softc *);
+int	gdt_intr(void *);
 
 #ifdef __GNUC__
 /* These all require correctly aligned buffers */
-static __inline__ void gdt_enc16 __P((u_int8_t *, u_int16_t));
-static __inline__ void gdt_enc32 __P((u_int8_t *, u_int32_t));
-static __inline__ u_int16_t gdt_dec16 __P((u_int8_t *));
-static __inline__ u_int32_t gdt_dec32 __P((u_int8_t *));
+static __inline__ void gdt_enc16(u_int8_t *, u_int16_t);
+static __inline__ void gdt_enc32(u_int8_t *, u_int32_t);
+static __inline__ u_int16_t gdt_dec16(u_int8_t *);
+static __inline__ u_int32_t gdt_dec32(u_int8_t *);
 
 static __inline__ void
 gdt_enc16(addr, value)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_pci.c,v 1.7 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: lca_pci.c,v 1.8 2002/03/14 01:26:27 millert Exp $	*/
 /* $NetBSD: lca_pci.c,v 1.13 1997/09/02 13:19:35 thorpej Exp $ */
 
 /*
@@ -42,14 +42,14 @@
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-void		lca_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		lca_bus_maxdevs __P((void *, int));
-pcitag_t	lca_make_tag __P((void *, int, int, int));
-void		lca_decompose_tag __P((void *, pcitag_t, int *, int *,
-		    int *));
-pcireg_t	lca_conf_read __P((void *, pcitag_t, int));
-void		lca_conf_write __P((void *, pcitag_t, int, pcireg_t));
+void		lca_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		lca_bus_maxdevs(void *, int);
+pcitag_t	lca_make_tag(void *, int, int, int);
+void		lca_decompose_tag(void *, pcitag_t, int *, int *,
+		    int *);
+pcireg_t	lca_conf_read(void *, pcitag_t, int);
+void		lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 lca_pci_init(pc, v)

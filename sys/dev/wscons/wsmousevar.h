@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.3 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -42,10 +42,10 @@
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsmouse_accessops {
-	int	(*enable) __P((void *));
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p));
-	void	(*disable) __P((void *));
+	int	(*enable)(void *);
+	int	(*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
+		    struct proc *p);
+	void	(*disable)(void *);
 };
 
 /*
@@ -62,7 +62,7 @@ struct wsmousedev_attach_args {
 /*
  * Autoconfiguration helper functions.
  */
-int	wsmousedevprint __P((void *, const char *));
+int	wsmousedevprint(void *, const char *);
 
 /*
  * Callbacks from the mouse driver to the wsmouse interface driver.
@@ -71,5 +71,5 @@ int	wsmousedevprint __P((void *, const char *));
 #define WSMOUSE_INPUT_ABSOLUTE_X	(1<<0)
 #define WSMOUSE_INPUT_ABSOLUTE_Y	(1<<1)
 #define WSMOUSE_INPUT_ABSOLUTE_Z	(1<<2)
-void	wsmouse_input __P((struct device *kbddev, u_int btns,
-			   int x, int y, int z, u_int flags));
+void	wsmouse_input(struct device *kbddev, u_int btns,
+			   int x, int y, int z, u_int flags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2002/02/01 21:48:23 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -131,7 +131,7 @@ struct cpu_info {
 	u_long			ci_simple_locks;/* # of simple locks held */
 
 	/* Spinning up the CPU */
-	void			(*ci_spinup) __P((void)); /* spinup routine */
+	void			(*ci_spinup)(void); /* spinup routine */
 	void			*ci_initstack;
 	paddr_t			ci_paddr;	/* Phys addr of this structure. */
 };
@@ -196,8 +196,8 @@ extern struct intrhand soft01intr, soft01net, soft01clock;
 #define setsoftint()	send_softint(-1, IPL_SOFTINT, &soft01intr)
 #define setsoftnet()	send_softint(-1, IPL_SOFTNET, &soft01net)
 #else
-void setsoftint __P((void));
-void setsoftnet __P((void));
+void setsoftint(void);
+void setsoftnet(void);
 #endif
 
 int	want_ast;
@@ -237,7 +237,7 @@ int	foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 struct intrhand {
-	int			(*ih_fun) __P((void *));
+	int			(*ih_fun)(void *);
 	void			*ih_arg;
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
@@ -250,70 +250,70 @@ struct intrhand {
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
-void	intr_establish __P((int level, struct intrhand *));
+void	intr_establish(int level, struct intrhand *);
 
 /* cpu.c */
-paddr_t cpu_alloc __P((void));
-u_int64_t cpu_init __P((paddr_t, int));
+paddr_t cpu_alloc(void);
+u_int64_t cpu_init(paddr_t, int);
 /* disksubr.c */
 struct dkbad;
-int isbad __P((struct dkbad *bt, int, int, int));
+int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-int	ldcontrolb __P((caddr_t));
-void	dumpconf __P((void));
-caddr_t	reserve_dumppages __P((caddr_t));
+int	ldcontrolb(caddr_t);
+void	dumpconf(void);
+caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
-int	tickintr __P((void *)); /* level 10 (tick) interrupt code */
-int	clockintr __P((void *));/* level 10 (clock) interrupt code */
-int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
+int	tickintr(void *); /* level 10 (tick) interrupt code */
+int	clockintr(void *);/* level 10 (clock) interrupt code */
+int	statintr(void *);	/* level 14 (statclock) interrupt code */
 /* locore.s */
 struct fpstate64;
-void	savefpstate __P((struct fpstate64 *));
-void	loadfpstate __P((struct fpstate64 *));
-u_int64_t	probeget __P((paddr_t, int, int));
-int	probeset __P((paddr_t, int, int, u_int64_t));
+void	savefpstate(struct fpstate64 *);
+void	loadfpstate(struct fpstate64 *);
+u_int64_t	probeget(paddr_t, int, int);
+int	probeset(paddr_t, int, int, u_int64_t);
 #if 0
-void	write_all_windows __P((void));
-void	write_user_windows __P((void));
+void	write_all_windows(void);
+void	write_user_windows(void);
 #else
 #define	 write_all_windows() __asm __volatile("flushw" : : )
 #define	 write_user_windows() __asm __volatile("flushw" : : )
 #endif
-void 	proc_trampoline __P((void));
+void 	proc_trampoline(void);
 struct pcb;
-void	snapshot __P((struct pcb *));
-struct frame *getfp __P((void));
-int	xldcontrolb __P((caddr_t, struct pcb *));
-void	copywords __P((const void *, void *, size_t));
-void	qcopy __P((const void *, void *, size_t));
-void	qzero __P((void *, size_t));
-void	switchtoctx __P((int));
+void	snapshot(struct pcb *);
+struct frame *getfp(void);
+int	xldcontrolb(caddr_t, struct pcb *);
+void	copywords(const void *, void *, size_t);
+void	qcopy(const void *, void *, size_t);
+void	qzero(void *, size_t);
+void	switchtoctx(int);
 /* locore2.c */
-void	remrq __P((struct proc *));
+void	remrq(struct proc *);
 /* trap.c */
-void	kill_user_windows __P((struct proc *));
-int	rwindow_save __P((struct proc *));
+void	kill_user_windows(struct proc *);
+int	rwindow_save(struct proc *);
 /* amd7930intr.s */
-void	amd7930_trap __P((void));
+void	amd7930_trap(void);
 /* cons.c */
-int	cnrom __P((void));
+int	cnrom(void);
 /* zs.c */
 void zsconsole __P((struct tty *, int, int, void (**)(struct tty *, int)));
 #ifdef KGDB
-void zs_kgdb_init __P((void));
+void zs_kgdb_init(void);
 #endif
 /* fb.c */
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
-void kgdb_connect __P((int));
-void kgdb_panic __P((void));
+void kgdb_connect(int);
+void kgdb_panic(void);
 #endif
 /* emul.c */
-int	fixalign __P((struct proc *, struct trapframe64 *));
-int	emulinstr __P((vaddr_t, struct trapframe64 *));
+int	fixalign(struct proc *, struct trapframe64 *);
+int	emulinstr(vaddr_t, struct trapframe64 *);
 
 /*
  *
@@ -334,8 +334,8 @@ struct trapvec {
 };
 extern struct trapvec *trapbase;	/* the 256 vectors */
 
-extern void wzero __P((void *, u_int));
-extern void wcopy __P((const void *, void *, u_int));
+extern void wzero(void *, u_int);
+extern void wcopy(const void *, void *, u_int);
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

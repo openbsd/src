@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.1 2000/01/25 04:18:18 smurph Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.2 2002/03/14 01:26:37 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,7 +126,7 @@ struct	vs_softc {
 #define WQO_RFWQ           0x0020   /* report frozen work queue bit */
 #define WQO_INIT           0x8000   /* work queue init bit */
 
-void vs_minphys __P((struct buf *bp));
-int vs_scsicmd __P((struct scsi_xfer *));
+void vs_minphys(struct buf *bp);
+int vs_scsicmd(struct scsi_xfer *);
 
 #endif /* _M328VAR_H */

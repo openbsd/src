@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.38 2002/03/13 00:24:18 miod Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.39 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -65,9 +65,9 @@
 
 #include <uvm/uvm_extern.h>
 
-int selscan __P((struct proc *, fd_set *, fd_set *, int, register_t *));
-int seltrue __P((dev_t, int, struct proc *));
-void pollscan __P((struct proc *, struct pollfd *, int, register_t *));
+int selscan(struct proc *, fd_set *, fd_set *, int, register_t *);
+int seltrue(dev_t, int, struct proc *);
+void pollscan(struct proc *, struct pollfd *, int, register_t *);
 
 /*
  * Read system call.

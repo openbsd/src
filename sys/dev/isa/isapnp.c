@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.31 2001/09/21 17:55:43 miod Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.32 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -48,28 +48,28 @@
 
 #include <dev/isa/pnpdevs.h>
 
-void isapnp_init __P((struct isapnp_softc *));
-static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
-int isapnp_findcard __P((struct isapnp_softc *));
-void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
-int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
-int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
-int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
-int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
-    struct isa_attach_args *, int));
-struct isa_attach_args *isapnp_bestconfig __P((struct device *,
-    struct isapnp_softc *, struct isa_attach_args **));
-void isapnp_print_region __P((const char *, struct isapnp_region *,
-    size_t));
-void isapnp_configure __P((struct isapnp_softc *,
-    const struct isa_attach_args *));
-void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
-int isapnp_print __P((void *, const char *));
-int isapnp_submatch __P((struct device *, void *, void *));
-int isapnp_com_submatch __P((struct device *, void *, void *));
-int isapnp_find __P((struct isapnp_softc *, int));
-int isapnp_match __P((struct device *, void *, void *));
-void isapnp_attach __P((struct device *, struct device *, void *));
+void isapnp_init(struct isapnp_softc *);
+static __inline u_char isapnp_shift_bit(struct isapnp_softc *);
+int isapnp_findcard(struct isapnp_softc *);
+void isapnp_free_region(bus_space_tag_t, struct isapnp_region *);
+int isapnp_alloc_region(bus_space_tag_t, struct isapnp_region *);
+int isapnp_alloc_irq(isa_chipset_tag_t, struct isapnp_pin *);
+int isapnp_alloc_drq(struct device *, struct isapnp_pin *);
+int isapnp_testconfig(bus_space_tag_t, bus_space_tag_t,
+    struct isa_attach_args *, int);
+struct isa_attach_args *isapnp_bestconfig(struct device *,
+    struct isapnp_softc *, struct isa_attach_args **);
+void isapnp_print_region(const char *, struct isapnp_region *,
+    size_t);
+void isapnp_configure(struct isapnp_softc *,
+    const struct isa_attach_args *);
+void isapnp_print_pin(const char *, struct isapnp_pin *, size_t);
+int isapnp_print(void *, const char *);
+int isapnp_submatch(struct device *, void *, void *);
+int isapnp_com_submatch(struct device *, void *, void *);
+int isapnp_find(struct isapnp_softc *, int);
+int isapnp_match(struct device *, void *, void *);
+void isapnp_attach(struct device *, struct device *, void *);
 
 #ifdef DEBUG_ISAPNP
 # define DPRINTF(a) printf a

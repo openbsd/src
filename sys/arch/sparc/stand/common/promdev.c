@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.3 2001/01/29 03:59:05 jason Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -49,31 +49,31 @@
 /* u_long	_randseed = 1; */
 
 
-int	obp_close __P((struct open_file *));
-int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-ssize_t	obp_xmit __P((struct promdata *, void *, size_t));
-ssize_t	obp_recv __P((struct promdata *, void *, size_t));
-int	prom0_close __P((struct open_file *));
-int	prom0_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-void	prom0_iclose __P((struct saioreq *));
-int	prom0_iopen __P((struct promdata *));
-ssize_t	prom0_xmit __P((struct promdata *, void *, size_t));
-ssize_t	prom0_recv __P((struct promdata *, void *, size_t));
+int	obp_close(struct open_file *);
+int	obp_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+ssize_t	obp_xmit(struct promdata *, void *, size_t);
+ssize_t	obp_recv(struct promdata *, void *, size_t);
+int	prom0_close(struct open_file *);
+int	prom0_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+void	prom0_iclose(struct saioreq *);
+int	prom0_iopen(struct promdata *);
+ssize_t	prom0_xmit(struct promdata *, void *, size_t);
+ssize_t	prom0_recv(struct promdata *, void *, size_t);
 
-static char	*prom_mapin __P((u_long, int, int));
+static char	*prom_mapin(u_long, int, int);
 
-int	getdevtype __P((int, char *));
-int	getprop __P((int, char *, void *, int));
-char	*getpropstring __P((int, char *));
+int	getdevtype(int, char *);
+int	getprop(int, char *, void *, int);
+char	*getpropstring(int, char *);
 
-static void	prom0_fake __P((void));
+static void	prom0_fake(void);
 
 extern struct filesystem file_system_nfs[];
 extern struct filesystem file_system_cd9660[];
 extern struct filesystem file_system_ufs[];
 
-int prom_open __P((struct open_file *f, ...)) { return 0; }
-int prom_ioctl __P((struct open_file *f, u_long c, void *d)) { return EIO; }
+int prom_open(struct open_file *f, ...) { return 0; }
+int prom_ioctl(struct open_file *f, u_long c, void *d) { return EIO; }
 
 struct devsw devsw[] = {
 	{ "prom0", prom0_strategy, prom_open, prom0_close, prom_ioctl },

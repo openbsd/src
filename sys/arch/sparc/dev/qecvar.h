@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.8 2001/01/30 07:17:07 jason Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.9 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -47,6 +47,6 @@ struct qec_softc {
 	u_int32_t	sc_rsize;	/* qec buffer size for receive */
 };
 
-void	qec_reset __P((struct qec_softc *));
-int	qec_put __P((u_int8_t *, struct mbuf *));
-struct mbuf *qec_get __P((struct ifnet *, u_int8_t *, int));
+void	qec_reset(struct qec_softc *);
+int	qec_put(u_int8_t *, struct mbuf *);
+struct mbuf *qec_get(struct ifnet *, u_int8_t *, int);

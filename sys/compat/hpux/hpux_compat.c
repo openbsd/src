@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.17 2002/03/14 00:42:25 miod Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.18 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -112,11 +112,11 @@ extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 
-int	hpux_shmctl1 __P((struct proc *, struct hpux_sys_shmctl_args *,
-	    register_t *, int));
-int	hpuxtobsdioctl __P((u_long));
+int	hpux_shmctl1(struct proc *, struct hpux_sys_shmctl_args *,
+	    register_t *, int);
+int	hpuxtobsdioctl(u_long);
 
-static int	hpux_scale __P((struct timeval *));
+static int	hpux_scale(struct timeval *);
 
 /*
  * HP-UX fork and vfork need to map the EAGAIN return value appropriately.
@@ -673,7 +673,7 @@ hpux_shmctl1(p, uap, retval, isnew)
 	struct ucred *cred = p->p_ucred;
 	struct hpux_shmid_ds sbuf;
 	int error;
-	extern struct shmid_ds *shm_find_segment_by_shmid __P((int));
+	extern struct shmid_ds *shm_find_segment_by_shmid(int);
 
 	if ((shp = shm_find_segment_by_shmid(SCARG(uap, shmid))) == NULL)
 		return EINVAL;

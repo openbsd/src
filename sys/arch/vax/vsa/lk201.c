@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201.c,v 1.3 1999/01/11 05:12:09 millert Exp $	*/
+/*	$OpenBSD: lk201.c,v 1.4 2002/03/14 01:26:49 millert Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -17,7 +17,7 @@
 
 
 /* Exported functions */
-extern int kbdMapChar __P((int keycode));
+extern int kbdMapChar(int keycode);
 
 extern void KBDReset __P(( dev_t dev, void (*putc) (dev_t, int) ));
 
@@ -195,7 +195,7 @@ static u_char kbdInitString[] = {
 void
 KBDReset(kbddev, putc)
 	dev_t kbddev;
-	void (*putc) __P((dev_t, int));
+	void (*putc)(dev_t, int);
 {
 	register int i;
 	static int inKBDReset;
@@ -292,7 +292,7 @@ done:
 }
 
 
-static int (*raw_kbd_getc) __P((dev_t dev)) = NULL;
+static int (*raw_kbd_getc)(dev_t dev) = NULL;
 static dev_t lk_in_dev = NODEV;
 
 /*
@@ -300,7 +300,7 @@ static dev_t lk_in_dev = NODEV;
  */
 void
 lk_divert(getfn, in_dev)
-	int (*getfn) __P ((dev_t dev)) ;
+	int (*getfn)(dev_t dev) ;
 	dev_t in_dev;
 {
 	raw_kbd_getc = getfn;
@@ -356,8 +356,8 @@ LKgetc(dev)
 void
 MouseInit(mdev, putc, getc)
 	dev_t mdev;
-	void (*putc) __P((dev_t, int));
-	int (*getc) __P((dev_t));
+	void (*putc)(dev_t, int);
+	int (*getc)(dev_t);
 {
 	int id_byte1, id_byte2, id_byte3, id_byte4;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.17 2001/01/29 07:04:10 mickey Exp $	*/
+/*	$OpenBSD: wds.c,v 1.18 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -145,32 +145,31 @@ TAILQ_HEAD(, wds_buf) wds_free_buffer;
 int wds_debug = WDSDEBUG;
 #endif
 
-integrate void    wds_wait
-    __P((bus_space_tag_t, bus_space_handle_t, int, int, int));
-int     wds_cmd __P((struct wds_softc *, u_char *, int));
-integrate void wds_finish_scbs __P((struct wds_softc *));
-int     wdsintr __P((void *));
-integrate void wds_reset_scb __P((struct wds_softc *, struct wds_scb *));
-void    wds_free_scb __P((struct wds_softc *, struct wds_scb *));
-void	wds_free_buf __P((struct wds_softc *, struct wds_buf *));
-integrate void wds_init_scb __P((struct wds_softc *, struct wds_scb *));
-struct	wds_scb *wds_get_scb __P((struct wds_softc *, int, int));
-struct	wds_buf *wds_get_buf __P((struct wds_softc *, int));
-struct	wds_scb *wds_scb_phys_kv __P((struct wds_softc *, u_long));
-void	wds_queue_scb __P((struct wds_softc *, struct wds_scb *));
-void	wds_collect_mbo __P((struct wds_softc *));
-void	wds_start_scbs __P((struct wds_softc *));
-void    wds_done __P((struct wds_softc *, struct wds_scb *, u_char));
-int	wds_find __P((struct isa_attach_args *, struct wds_softc *));
-void	wds_init __P((struct wds_softc *));
-void	wds_inquire_setup_information __P((struct wds_softc *));
-void    wdsminphys __P((struct buf *));
-int     wds_scsi_cmd __P((struct scsi_xfer *));
-void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
-int	wds_poll __P((struct wds_softc *, struct scsi_xfer *, int));
-int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
-void	wds_timeout __P((void *));
-int	wdsprint __P((void *, const char *));
+integrate void    wds_wait(bus_space_tag_t, bus_space_handle_t, int, int, int);
+int     wds_cmd(struct wds_softc *, u_char *, int);
+integrate void wds_finish_scbs(struct wds_softc *);
+int     wdsintr(void *);
+integrate void wds_reset_scb(struct wds_softc *, struct wds_scb *);
+void    wds_free_scb(struct wds_softc *, struct wds_scb *);
+void	wds_free_buf(struct wds_softc *, struct wds_buf *);
+integrate void wds_init_scb(struct wds_softc *, struct wds_scb *);
+struct	wds_scb *wds_get_scb(struct wds_softc *, int, int);
+struct	wds_buf *wds_get_buf(struct wds_softc *, int);
+struct	wds_scb *wds_scb_phys_kv(struct wds_softc *, u_long);
+void	wds_queue_scb(struct wds_softc *, struct wds_scb *);
+void	wds_collect_mbo(struct wds_softc *);
+void	wds_start_scbs(struct wds_softc *);
+void    wds_done(struct wds_softc *, struct wds_scb *, u_char);
+int	wds_find(struct isa_attach_args *, struct wds_softc *);
+void	wds_init(struct wds_softc *);
+void	wds_inquire_setup_information(struct wds_softc *);
+void    wdsminphys(struct buf *);
+int     wds_scsi_cmd(struct scsi_xfer *);
+void	wds_sense(struct wds_softc *, struct wds_scb *);
+int	wds_poll(struct wds_softc *, struct scsi_xfer *, int);
+int	wds_ipoll(struct wds_softc *, struct wds_scb *, int);
+void	wds_timeout(void *);
+int	wdsprint(void *, const char *);
 
 struct scsi_adapter wds_switch = {
 	wds_scsi_cmd,
@@ -187,8 +186,8 @@ struct scsi_device wds_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	wdsprobe __P((struct device *, void *, void *));
-void	wdsattach __P((struct device *, struct device *, void *));
+int	wdsprobe(struct device *, void *, void *);
+void	wdsattach(struct device *, struct device *, void *);
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach

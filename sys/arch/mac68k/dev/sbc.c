@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.13 2001/09/09 21:48:31 miod Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.14 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
-static	void	sbc_minphys __P((struct buf *bp));
+static	void	sbc_minphys(struct buf *bp);
 
 struct scsi_adapter	sbc_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
@@ -98,8 +98,8 @@ struct cfdriver sbc_cd = {
 	NULL, "sbc", DV_DULL
 };
 
-static	int	sbc_ready __P((struct ncr5380_softc *));
-static	void	sbc_wait_not_req __P((struct ncr5380_softc *));
+static	int	sbc_ready(struct ncr5380_softc *);
+static	void	sbc_wait_not_req(struct ncr5380_softc *);
 
 static void
 sbc_minphys(struct buf *bp)

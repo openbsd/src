@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.17 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.18 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -122,9 +122,9 @@ struct cgsix_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgsixattach __P((struct device *, struct device *, void *));
-static int	cgsixmatch __P((struct device *, void *, void *));
-static void	cg6_unblank __P((struct device *));
+static void	cgsixattach(struct device *, struct device *, void *);
+static int	cgsixmatch(struct device *, void *, void *);
+static void	cg6_unblank(struct device *);
 
 struct cfattach cgsix_ca = {
 	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
@@ -153,11 +153,11 @@ int cgsix_use_rasterconsole = 1;
 
 extern int fbnode;
 
-static void cg6_reset __P((struct cgsix_softc *));
-static void cg6_loadcmap __P((struct cgsix_softc *, int, int));
-static void cg6_loadomap __P((struct cgsix_softc *));
-static void cg6_setcursor __P((struct cgsix_softc *));/* set position */
-static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
+static void cg6_reset(struct cgsix_softc *);
+static void cg6_loadcmap(struct cgsix_softc *, int, int);
+static void cg6_loadomap(struct cgsix_softc *);
+static void cg6_setcursor(struct cgsix_softc *);/* set position */
+static void cg6_loadcursor(struct cgsix_softc *);/* set shape */
 
 /*
  * Match a cgsix.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.c,v 1.4 1999/09/16 13:20:06 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_signal.c,v 1.5 2002/03/14 01:26:50 millert Exp $	*/
 
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
@@ -53,17 +53,17 @@
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
-static void netbsd_to_openbsd_sigaction __P((struct netbsd_sigaction *,
-	struct sigaction *));
+static void netbsd_to_openbsd_sigaction(struct netbsd_sigaction *,
+	struct sigaction *);
 
-static void openbsd_to_netbsd_sigaction __P((struct sigaction *,
-	struct netbsd_sigaction *));
+static void openbsd_to_netbsd_sigaction(struct sigaction *,
+	struct netbsd_sigaction *);
 
-static void netbsd_to_openbsd_sigaltstack __P((struct netbsd_sigaltstack *,
-	struct sigaltstack *));
+static void netbsd_to_openbsd_sigaltstack(struct netbsd_sigaltstack *,
+	struct sigaltstack *);
 
-static void openbsd_to_netbsd_sigaltstack __P((struct sigaltstack *,
-	struct netbsd_sigaltstack *));
+static void openbsd_to_netbsd_sigaltstack(struct sigaltstack *,
+	struct netbsd_sigaltstack *);
 
 static void
 openbsd_to_netbsd_sigaction(obsa, nbsa)

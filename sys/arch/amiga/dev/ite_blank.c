@@ -1,4 +1,4 @@
-/* $OpenBSD: ite_blank.c,v 1.2 2001/08/20 19:35:18 miod Exp $ */
+/* $OpenBSD: ite_blank.c,v 1.3 2002/03/14 01:26:29 millert Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -40,8 +40,8 @@
 
 #define SUBR_BLANK(ip, mode)	((ip)->grf->g_mode((ip)->grf, GM_GRFIOCTL, &(mode), GRFIOCBLANK, (ip)->grf->g_grfdev ))
 
-void ite_blank __P((void *));
-void ite_unblank __P((struct ite_softc *));
+void ite_blank(void *);
+void ite_unblank(struct ite_softc *);
 
 static int blanked_screen = 0;
 static int blank_enabled = 0;

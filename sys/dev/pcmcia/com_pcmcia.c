@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.30 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.31 2002/03/14 01:27:00 millert Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -148,18 +148,18 @@ struct com_pcmcia_product {
 	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
-int com_pcmcia_match __P((struct device *, void *, void *));
-void com_pcmcia_attach __P((struct device *, struct device *, void *));
-int com_pcmcia_detach __P((struct device *, int));
-void com_pcmcia_cleanup __P((void *));
-int com_pcmcia_activate __P((struct device *, enum devact));
+int com_pcmcia_match(struct device *, void *, void *);
+void com_pcmcia_attach(struct device *, struct device *, void *);
+int com_pcmcia_detach(struct device *, int);
+void com_pcmcia_cleanup(void *);
+int com_pcmcia_activate(struct device *, enum devact);
 
-int com_pcmcia_enable __P((struct com_softc *));
-void com_pcmcia_disable __P((struct com_softc *));
-int com_pcmcia_enable1 __P((struct com_softc *));
-void com_pcmcia_disable1 __P((struct com_softc *));
+int com_pcmcia_enable(struct com_softc *);
+void com_pcmcia_disable(struct com_softc *);
+int com_pcmcia_enable1(struct com_softc *);
+void com_pcmcia_disable1(struct com_softc *);
 
-void com_pcmcia_attach2 __P((struct com_softc *));
+void com_pcmcia_attach2(struct com_softc *);
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */

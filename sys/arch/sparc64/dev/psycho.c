@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.14 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.15 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -70,48 +70,48 @@ int psycho_debug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
-static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
-    pci_chipset_tag_t));
-void psycho_get_bus_range __P((int, int *));
-void psycho_get_ranges __P((int, struct psycho_ranges **, int *));
-void psycho_set_intr __P((struct psycho_softc *, int, void *, 
-    u_int64_t *, u_int64_t *));
+static pci_chipset_tag_t psycho_alloc_chipset(struct psycho_pbm *, int,
+    pci_chipset_tag_t);
+void psycho_get_bus_range(int, int *);
+void psycho_get_ranges(int, struct psycho_ranges **, int *);
+void psycho_set_intr(struct psycho_softc *, int, void *, 
+    u_int64_t *, u_int64_t *);
 
 /* Interrupt handlers */
-int psycho_ue __P((void *));
-int psycho_ce __P((void *));
-int psycho_bus_a __P((void *));
-int psycho_bus_b __P((void *));
-int psycho_bus_error __P((struct psycho_softc *, int));
-int psycho_powerfail __P((void *));
-int psycho_wakeup __P((void *));
+int psycho_ue(void *);
+int psycho_ce(void *);
+int psycho_bus_a(void *);
+int psycho_bus_b(void *);
+int psycho_bus_error(struct psycho_softc *, int);
+int psycho_powerfail(void *);
+int psycho_wakeup(void *);
 
 /* IOMMU support */
-void psycho_iommu_init __P((struct psycho_softc *, int));
+void psycho_iommu_init(struct psycho_softc *, int);
 
 /*
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
-paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
-int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-    bus_size_t, int, vaddr_t, bus_space_handle_t *));
+paddr_t psycho_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+int _psycho_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
+    bus_size_t, int, vaddr_t, bus_space_handle_t *);
 void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
-    int (*) __P((void *)), void *));
+    int (*)(void *), void *));
 
-int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-    bus_size_t, struct proc *, int));
-void psycho_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-int psycho_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-    bus_dma_segment_t *, int, bus_size_t, int));
-void psycho_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-    bus_size_t, int));
-int psycho_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-    bus_dma_segment_t *, int, int *, int));
-void psycho_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *, int));
-int psycho_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-    caddr_t *, int));
-void psycho_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
+int psycho_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+    bus_size_t, struct proc *, int);
+void psycho_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+int psycho_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+    bus_dma_segment_t *, int, bus_size_t, int);
+void psycho_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+    bus_size_t, int);
+int psycho_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+    bus_dma_segment_t *, int, int *, int);
+void psycho_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int psycho_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
+    caddr_t *, int);
+void psycho_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -119,10 +119,10 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 /*
  * autoconfiguration
  */
-int	psycho_match __P((struct device *, void *, void *));
-void	psycho_attach __P((struct device *, struct device *, void *));
-int	psycho_print __P((void *aux, const char *p));
-int	psycho_get_childspace __P((int));
+int	psycho_match(struct device *, void *, void *);
+void	psycho_attach(struct device *, struct device *, void *);
+int	psycho_print(void *aux, const char *p);
+int	psycho_get_childspace(int);
 
 
 struct cfattach psycho_ca = {
@@ -950,7 +950,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 	int ihandle;
 	int level;
 	int flags;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	struct psycho_pbm *pp = t->cookie;

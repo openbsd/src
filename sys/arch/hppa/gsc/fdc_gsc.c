@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
+/*	$OpenBSD: fdc_gsc.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -46,8 +46,8 @@
 #include <hppa/dev/cpudevs.h>
 
 /* controller driver configuration */
-int fdc_gsc_probe __P((struct device *, void *, void *));
-void fdc_gsc_attach __P((struct device *, struct device *, void *));
+int fdc_gsc_probe(struct device *, void *, void *);
+void fdc_gsc_attach(struct device *, struct device *, void *);
 
 struct cfattach fdc_gsc_ca = {
 	sizeof(struct fdc_softc), fdc_gsc_probe, fdc_gsc_attach

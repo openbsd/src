@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.23 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.24 2002/03/14 01:27:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -123,10 +123,10 @@ int xedebug = XEDEBUG_DEF;
 #define DPRINTF(cat, x) (void)0
 #endif	/* XEDEBUG */
 
-int	xe_pcmcia_match __P((struct device *, void *, void *));
-void	xe_pcmcia_attach __P((struct device *, struct device *, void *));
-int	xe_pcmcia_detach __P((struct device *, int));
-int	xe_pcmcia_activate __P((struct device *, enum devact));
+int	xe_pcmcia_match(struct device *, void *, void *);
+void	xe_pcmcia_attach(struct device *, struct device *, void *);
+int	xe_pcmcia_detach(struct device *, int);
+int	xe_pcmcia_activate(struct device *, enum devact);
 
 /*
  * In case this chipset ever turns up out of pcmcia attachments (very
@@ -175,29 +175,29 @@ struct cfattach xe_pcmcia_ca = {
 	xe_pcmcia_detach, xe_pcmcia_activate
 };
 
-void	xe_cycle_power __P((struct xe_softc *));
-int	xe_ether_ioctl __P((struct ifnet *, u_long cmd, caddr_t));
-void	xe_full_reset __P((struct xe_softc *));
-void	xe_init __P((struct xe_softc *));
-int	xe_intr __P((void *));
-int	xe_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	xe_mdi_read __P((struct device *, int, int));
-void	xe_mdi_write __P((struct device *, int, int, int));
-int	xe_mediachange __P((struct ifnet *));
-void	xe_mediastatus __P((struct ifnet *, struct ifmediareq *));
-int	xe_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
-u_int32_t xe_pcmcia_interpret_manfid __P((struct device *));
-int	xe_pcmcia_lan_nid_ciscallback __P((struct pcmcia_tuple *, void *));
-int	xe_pcmcia_manfid_ciscallback __P((struct pcmcia_tuple *, void *));
-u_int16_t xe_get __P((struct xe_softc *));
-void	xe_reset __P((struct xe_softc *));
-void	xe_set_address __P((struct xe_softc *));
-void	xe_start __P((struct ifnet *));
-void	xe_statchg __P((struct device *));
-void	xe_stop __P((struct xe_softc *));
-void	xe_watchdog __P((struct ifnet *));
+void	xe_cycle_power(struct xe_softc *);
+int	xe_ether_ioctl(struct ifnet *, u_long cmd, caddr_t);
+void	xe_full_reset(struct xe_softc *);
+void	xe_init(struct xe_softc *);
+int	xe_intr(void *);
+int	xe_ioctl(struct ifnet *, u_long, caddr_t);
+int	xe_mdi_read(struct device *, int, int);
+void	xe_mdi_write(struct device *, int, int, int);
+int	xe_mediachange(struct ifnet *);
+void	xe_mediastatus(struct ifnet *, struct ifmediareq *);
+int	xe_pcmcia_funce_enaddr(struct device *, u_int8_t *);
+u_int32_t xe_pcmcia_interpret_manfid(struct device *);
+int	xe_pcmcia_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
+int	xe_pcmcia_manfid_ciscallback(struct pcmcia_tuple *, void *);
+u_int16_t xe_get(struct xe_softc *);
+void	xe_reset(struct xe_softc *);
+void	xe_set_address(struct xe_softc *);
+void	xe_start(struct ifnet *);
+void	xe_statchg(struct device *);
+void	xe_stop(struct xe_softc *);
+void	xe_watchdog(struct ifnet *);
 #ifdef XEDEBUG
-void	xe_reg_dump __P((struct xe_softc *));
+void	xe_reg_dump(struct xe_softc *);
 #endif	/* XEDEBUG */
 
 int
@@ -857,7 +857,7 @@ xe_get(sc)
  */
 
 /* Let the MII serial management be idle for one period. */
-static INLINE void xe_mdi_idle __P((struct xe_softc *));
+static INLINE void xe_mdi_idle(struct xe_softc *);
 static INLINE void
 xe_mdi_idle(sc)
 	struct xe_softc *sc;
@@ -876,7 +876,7 @@ xe_mdi_idle(sc)
 }
 
 /* Pulse out one bit of data. */
-static INLINE void xe_mdi_pulse __P((struct xe_softc *, int));
+static INLINE void xe_mdi_pulse(struct xe_softc *, int);
 static INLINE void
 xe_mdi_pulse(sc, data)
 	struct xe_softc *sc;
@@ -897,7 +897,7 @@ xe_mdi_pulse(sc, data)
 }
 
 /* Probe one bit of data. */
-static INLINE int xe_mdi_probe __P((struct xe_softc *sc));
+static INLINE int xe_mdi_probe(struct xe_softc *sc);
 static INLINE int
 xe_mdi_probe(sc)
 	struct xe_softc *sc;
@@ -920,7 +920,7 @@ xe_mdi_probe(sc)
 }
 
 /* Pulse out a sequence of data bits. */
-static INLINE void xe_mdi_pulse_bits __P((struct xe_softc *, u_int32_t, int));
+static INLINE void xe_mdi_pulse_bits(struct xe_softc *, u_int32_t, int);
 static INLINE void
 xe_mdi_pulse_bits(sc, data, len)
 	struct xe_softc *sc;

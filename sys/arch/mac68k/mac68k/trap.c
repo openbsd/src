@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -139,14 +139,14 @@ int mmupid = -1;
 #endif
 
 /* trap() and syscall() only called from locore */
-void	trap __P((int, u_int, u_int, struct frame));
-void	syscall __P((register_t, struct frame));
+void	trap(int, u_int, u_int, struct frame);
+void	syscall(register_t, struct frame);
 
 #if defined(M68040)
-static int	writeback __P((struct frame *, int));
+static int	writeback(struct frame *, int);
 #if DEBUG
-static void dumpssw __P((u_short));
-static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw(u_short);
+static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
@@ -519,25 +519,25 @@ copyfault:
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_SERIAL) {
-			void zssoft __P((int));
+			void zssoft(int);
 			siroff(SIR_SERIAL);
 			uvmexp.softs++;
 			zssoft(0);
 		}
 		if (ssir & SIR_NET) {
-			void netintr __P((void));
+			void netintr(void);
 			siroff(SIR_NET);
 			uvmexp.softs++;
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
-			void softclock __P((void));
+			void softclock(void);
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
 			softclock();
 		}
 		if (ssir & SIR_DTMGR) {
-			void mrg_execute_deferred __P((void));
+			void mrg_execute_deferred(void);
 			siroff(SIR_DTMGR);
 			uvmexp.softs++;
 			mrg_execute_deferred();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.15 2002/01/14 21:34:39 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.16 2002/03/14 01:26:39 millert Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -68,25 +68,25 @@
 #include <mvme68k/dev/vme.h>		/* vme_findvec() */
 #endif /* mvme88k */
 
-int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
-void vs_chksense         __P((struct scsi_xfer *));
-void vs_reset            __P((struct vs_softc *));
-void vs_resync           __P((struct vs_softc *));
-int  vs_initialize       __P((struct vs_softc *));
-int  vs_nintr            __P((struct vs_softc *));
-int  vs_eintr            __P((struct vs_softc *));
-int  vs_poll             __P((struct vs_softc *, struct scsi_xfer *));
-void vs_scsidone         __P((struct vs_softc *, struct scsi_xfer *, int));
-M328_CQE  * vs_getcqe    __P((struct vs_softc *));
-M328_IOPB * vs_getiopb   __P((struct vs_softc *));
-void vs_copy __P((void *, void *, unsigned short));
-void vs_zero __P((void *, u_long));
-int do_vspoll __P((struct vs_softc *, int));
-void thaw_queue __P((struct vs_softc *, u_int8_t));
-void vs_link_sg_element __P((sg_list_element_t *, vm_offset_t, int));
-void vs_link_sg_list __P((sg_list_element_t *, vm_offset_t, int));
+int  vs_checkintr(struct vs_softc *, struct scsi_xfer *, int *);
+void vs_chksense(struct scsi_xfer *);
+void vs_reset(struct vs_softc *);
+void vs_resync(struct vs_softc *);
+int  vs_initialize(struct vs_softc *);
+int  vs_nintr(struct vs_softc *);
+int  vs_eintr(struct vs_softc *);
+int  vs_poll(struct vs_softc *, struct scsi_xfer *);
+void vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
+M328_CQE  * vs_getcqe(struct vs_softc *);
+M328_IOPB * vs_getiopb(struct vs_softc *);
+void vs_copy(void *, void *, unsigned short);
+void vs_zero(void *, u_long);
+int do_vspoll(struct vs_softc *, int);
+void thaw_queue(struct vs_softc *, u_int8_t);
+void vs_link_sg_element(sg_list_element_t *, vm_offset_t, int);
+void vs_link_sg_list(sg_list_element_t *, vm_offset_t, int);
 
-static __inline__ void vs_clear_return_info __P((struct vs_softc *));
+static __inline__ void vs_clear_return_info(struct vs_softc *);
 
 /* 
  * 16 bit 's' memory functions.  MVME328 is a D16 board.

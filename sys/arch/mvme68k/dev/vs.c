@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.6 2001/11/06 00:30:38 art Exp $ */
+/*	$OpenBSD: vs.c,v 1.7 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -66,16 +66,16 @@
 #include <mvme68k/dev/vsvar.h>
 #endif
 
-int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
-int  vs_chksense         __P((struct scsi_xfer *));
-void vs_reset            __P((struct vs_softc *));
-void vs_resync           __P((struct vs_softc *));
-void vs_initialize       __P((struct vs_softc *));
-int  vs_intr             __P((struct vs_softc *));
-int  vs_poll             __P((struct vs_softc *, struct scsi_xfer *));
-void vs_scsidone         __P((struct scsi_xfer *, int));
-M328_CQE  * vs_getcqe    __P((struct vs_softc *));
-M328_IOPB * vs_getiopb   __P((struct vs_softc *));
+int  vs_checkintr(struct vs_softc *, struct scsi_xfer *, int *);
+int  vs_chksense(struct scsi_xfer *);
+void vs_reset(struct vs_softc *);
+void vs_resync(struct vs_softc *);
+void vs_initialize(struct vs_softc *);
+int  vs_intr(struct vs_softc *);
+int  vs_poll(struct vs_softc *, struct scsi_xfer *);
+void vs_scsidone(struct scsi_xfer *, int);
+M328_CQE  * vs_getcqe(struct vs_softc *);
+M328_IOPB * vs_getiopb(struct vs_softc *);
 
 extern u_int   kvtop();
 /* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.8 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * cy_pci.c
@@ -22,8 +22,8 @@
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
 
-int cy_pci_match __P((struct device *, void *, void *));
-void cy_pci_attach __P((struct device *, struct device *, void *));
+int cy_pci_match(struct device *, void *, void *);
+void cy_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach cy_pci_ca = {
 	sizeof(struct cy_softc), cy_pci_match, cy_pci_attach

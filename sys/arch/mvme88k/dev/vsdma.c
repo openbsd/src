@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.8 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.9 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -57,13 +57,13 @@
 #include <mvme68k/dev/vme.h>
 #endif /* mvme88k */
 
-int     vsmatch         __P((struct device *, void *, void *));
-void    vsattach        __P((struct device *, struct device *, void *));
-int     vsprint         __P((void *auxp, char *));
-int     vs_initialize   __P((struct vs_softc *));
-int     vs_intr         __P((struct vs_softc *));
-int     vs_nintr        __P((void *));
-int     vs_eintr        __P((void *));
+int     vsmatch(struct device *, void *, void *);
+void    vsattach(struct device *, struct device *, void *);
+int     vsprint(void *auxp, char *);
+int     vs_initialize(struct vs_softc *);
+int     vs_intr(struct vs_softc *);
+int     vs_nintr(void *);
+int     vs_eintr(void *);
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,

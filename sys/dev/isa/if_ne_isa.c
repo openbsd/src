@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.5 2001/03/12 05:36:59 aaron Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -93,8 +93,8 @@
 
 #include <dev/isa/isavar.h>
 
-int	ne_isa_match __P((struct device *, void *, void *));
-void	ne_isa_attach __P((struct device *, struct device *, void *));
+int	ne_isa_match(struct device *, void *, void *);
+void	ne_isa_attach(struct device *, struct device *, void *);
 
 struct ne_isa_softc {
 	struct	ne2000_softc sc_ne2000;		/* real "ne2000" softc */

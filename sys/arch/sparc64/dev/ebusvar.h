@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusvar.h,v 1.3 2001/10/07 15:27:12 jason Exp $	*/
+/*	$OpenBSD: ebusvar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: ebusvar.h,v 1.5 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -71,8 +71,8 @@ struct ebus_softc {
 	int				sc_nintmap;
 };
 
-bus_dma_tag_t ebus_alloc_dma_tag __P((struct ebus_softc *, bus_dma_tag_t));
-bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
+bus_dma_tag_t ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
+bus_space_tag_t ebus_alloc_bus_tag(struct ebus_softc *, int);
 
 #define ebus_bus_map(t, bt, a, s, f, v, hp) \
 	bus_space_map2(t, bt, a, s, f, v, hp)

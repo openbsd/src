@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.7 1999/01/11 05:12:25 millert Exp $	*/
+/*	$OpenBSD: arp.c,v 1.8 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
@@ -64,8 +64,8 @@ struct arp_list {
 int arp_num = 1;
 
 /* Local forwards */
-static	ssize_t arpsend __P((struct iodesc *, void *, size_t));
-static	ssize_t arprecv __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t arpsend(struct iodesc *, void *, size_t);
+static	ssize_t arprecv(struct iodesc *, void *, size_t, time_t);
 
 /* Broadcast an ARP packet, asking who has addr on interface d */
 u_char *

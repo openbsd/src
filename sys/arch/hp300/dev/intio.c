@@ -1,4 +1,4 @@
-/*	$OpenBSD: intio.c,v 1.2 1997/02/03 04:47:36 downsj Exp $	*/
+/*	$OpenBSD: intio.c,v 1.3 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: intio.c,v 1.2 1997/01/30 09:18:54 thorpej Exp $	*/
 
 /*-
@@ -47,10 +47,10 @@
  
 #include <hp300/dev/intiovar.h>
 
-int	intiomatch __P((struct device *, void *, void *));
-void	intioattach __P((struct device *, struct device *, void *));
-int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, void *, void *));
+int	intiomatch(struct device *, void *, void *);
+void	intioattach(struct device *, struct device *, void *);
+int	intioprint(void *, const char *);
+int	intiosearch(struct device *, void *, void *);
 
 struct cfattach intio_ca = {
 	sizeof(struct device), intiomatch, intioattach

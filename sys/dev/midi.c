@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.7 2002/01/10 18:49:07 mickey Exp $	*/
+/*	$OpenBSD: midi.c,v 1.8 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -75,22 +75,22 @@ int	mididebug = 0;
 
 int midi_wait;
 
-void	midi_in __P((void *, int));
-void	midi_out __P((void *));
-int	midi_start_output __P((struct midi_softc *, int));
-int	midi_sleep_timo __P((int *, char *, int));
-int	midi_sleep __P((int *, char *));
-void	midi_wakeup __P((int *));
-void	midi_initbuf __P((struct midi_buffer *));
-void	midi_timeout __P((void *));
+void	midi_in(void *, int);
+void	midi_out(void *);
+int	midi_start_output(struct midi_softc *, int);
+int	midi_sleep_timo(int *, char *, int);
+int	midi_sleep(int *, char *);
+void	midi_wakeup(int *);
+void	midi_initbuf(struct midi_buffer *);
+void	midi_timeout(void *);
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	midiprobe __P((struct device *, void *, void *));
+int	midiprobe(struct device *, void *, void *);
 #else
-int	midiprobe __P((struct device *, struct cfdata *, void *));
+int	midiprobe(struct device *, struct cfdata *, void *);
 #endif
-void	midiattach __P((struct device *, struct device *, void *));
+void	midiattach(struct device *, struct device *, void *);
 
 struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach
@@ -311,7 +311,7 @@ deliver:
 	sc->in_state = MIDI_IN_START;
 #if NSEQUENCER > 0
 	if (sc->seqopen) {
-		extern void midiseq_in __P((struct midi_dev *,u_char *,int));
+		extern void midiseq_in(struct midi_dev *,u_char *,int);
 		midiseq_in(sc->seq_md, sc->in_msg, sc->in_pos);
 		return;
 	}
@@ -746,7 +746,7 @@ midi_getinfo(dev, mi)
 
 #if (NMIDI > 0 || NMIDIBUS > 0) && NAUDIO > 0
 
-int	midiprint __P((void *, const char *));
+int	midiprint(void *, const char *);
 
 struct device *
 midi_attach_mi(mhwp, hdlp, dev)

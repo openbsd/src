@@ -1,4 +1,4 @@
-/*	$OpenBSD: eonvar.h,v 1.3 2001/01/19 06:37:38 itojun Exp $	*/
+/*	$OpenBSD: eonvar.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: eonvar.h,v 1.6 1996/02/13 22:09:18 christos Exp $	*/
 
 /*-
@@ -174,13 +174,13 @@ struct eon_llinfo {
 #define el_eonhdr el_ei.ei_eh
 
 #ifdef _KERNEL
-void eonprotoinit __P((void));
-void eonattach   __P((void));
-int eonioctl    __P((struct ifnet *, u_long, caddr_t));
-void eoniphdr    __P((struct eon_iphdr *, caddr_t, struct route *, int, int));
-void eonrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-int eonoutput   __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		     struct rtentry *));
-void eoninput    __P((struct mbuf *, ...));
-void *eonctlinput __P((int, struct sockaddr *, void *));
+void eonprotoinit(void);
+void eonattach(void);
+int eonioctl(struct ifnet *, u_long, caddr_t);
+void eoniphdr(struct eon_iphdr *, caddr_t, struct route *, int, int);
+void eonrtrequest(int, struct rtentry *, struct rt_addrinfo *);
+int eonoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+		     struct rtentry *);
+void eoninput(struct mbuf *, ...);
+void *eonctlinput(int, struct sockaddr *, void *);
 #endif

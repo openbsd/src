@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2002/02/12 06:42:26 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -61,13 +61,13 @@
 
 #include <hppa/dev/cpudevs.h>
 
-void	setroot __P((void));
-void	swapconf __P((void));
-void	dumpconf __P((void));
+void	setroot(void);
+void	swapconf(void);
+void	dumpconf(void);
 
-static int findblkmajor __P((struct device *dv));
+static int findblkmajor(struct device *dv);
 
-void (*cold_hook) __P((int)); /* see below */
+void (*cold_hook)(int); /* see below */
 register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
 
 /*
@@ -75,7 +75,7 @@ register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
  */
 #ifdef USELEDS
 struct timeout heartbeat_tmo;
-void heartbeat __P((void *));
+void heartbeat(void *);
 extern int hz;
 #endif
 

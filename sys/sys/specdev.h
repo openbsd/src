@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.12 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.13 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ struct vnode *speclisth[SPECHSZ];
 /*
  * Prototypes for special file operations on vnodes.
  */
-extern	int (**spec_vnodeop_p) __P((void *));
+extern	int (**spec_vnodeop_p)(void *);
 struct	nameidata;
 struct	componentname;
 struct	ucred;
@@ -81,24 +81,24 @@ struct	flock;
 struct	buf;
 struct	uio;
 
-int	spec_badop	__P((void *));
-int	spec_ebadf	__P((void *));
+int	spec_badop(void *);
+int	spec_ebadf(void *);
 
-int	spec_lookup	__P((void *));
+int	spec_lookup(void *);
 #define	spec_create	spec_badop
 #define	spec_mknod	spec_badop
-int	spec_open	__P((void *));
-int	spec_close	__P((void *));
+int	spec_open(void *);
+int	spec_close(void *);
 #define	spec_access	spec_ebadf
 #define	spec_getattr	spec_ebadf
 #define	spec_setattr	spec_ebadf
-int	spec_read	__P((void *));
-int	spec_write	__P((void *));
+int	spec_read(void *);
+int	spec_write(void *);
 #define	spec_lease_check nullop
-int	spec_ioctl	__P((void *));
-int	spec_select	__P((void *));
-int	spec_kqfilter	__P((void *));
-int	spec_fsync	__P((void *));
+int	spec_ioctl(void *);
+int	spec_select(void *);
+int	spec_kqfilter(void *);
+int	spec_fsync(void *);
 #define	spec_remove	spec_badop
 #define	spec_link	spec_badop
 #define	spec_rename	spec_badop
@@ -108,16 +108,16 @@ int	spec_fsync	__P((void *));
 #define	spec_readdir	spec_badop
 #define	spec_readlink	spec_badop
 #define	spec_abortop	spec_badop
-int spec_inactive __P((void *));
+int spec_inactive(void *);
 #define	spec_reclaim	nullop
 #define spec_lock       vop_generic_lock
 #define spec_unlock     vop_generic_unlock
 #define spec_islocked   vop_generic_islocked
-int	spec_bmap	__P((void *));
-int	spec_strategy	__P((void *));
-int	spec_print	__P((void *));
-int	spec_pathconf	__P((void *));
-int	spec_advlock	__P((void *));
+int	spec_bmap(void *);
+int	spec_strategy(void *);
+int	spec_print(void *);
+int	spec_pathconf(void *);
+int	spec_advlock(void *);
 #define	spec_reallocblks spec_badop
 #define	spec_bwrite	vop_generic_bwrite
 #define spec_revoke     vop_generic_revoke

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.9 2001/11/09 00:12:19 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.10 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -58,7 +58,7 @@ struct confargs {
 #define BUS_SYSCON    6
 #define BUS_BUSSWITCH 7
 
-int always_match __P((struct device *, struct cfdata *, void *));
+int always_match(struct device *, struct cfdata *, void *);
 
 #define DEVICE_UNIT(device) (device->dv_unit)
 #define CFDATA_LOC(cfdata) (cfdata->cf_loc)
@@ -69,9 +69,9 @@ extern int	bootpart;	/* boot partition (disk) */
 
 extern	struct device *bootdv; /* boot device */
 
-void	*mapiodev __P((void *pa, int size));
-void	unmapiodev __P((void *kva, int size));
+void	*mapiodev(void *pa, int size);
+void	unmapiodev(void *kva, int size);
 
-struct device *getdevunit __P((char *name, int unit));
+struct device *getdevunit(char *name, int unit);
 
 #endif

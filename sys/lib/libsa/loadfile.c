@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.1 2001/06/23 01:47:40 drahn Exp $ */
+/* $OpenBSD: loadfile.c,v 1.2 2002/03/14 01:27:07 millert Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,15 +96,15 @@
 
 #ifdef BOOT_ECOFF
 #include <sys/exec_ecoff.h>
-static int coff_exec __P((int, struct ecoff_exechdr *, u_long *, int));
+static int coff_exec(int, struct ecoff_exechdr *, u_long *, int);
 #endif
 #ifdef BOOT_ELF
 #include <sys/exec_elf.h>
-static int elf_exec __P((int, Elf_Ehdr *, u_long *, int));
+static int elf_exec(int, Elf_Ehdr *, u_long *, int);
 #endif
 #ifdef BOOT_AOUT
 #include <sys/exec_aout.h>
-static int aout_exec __P((int, struct exec *, u_long *, int));
+static int aout_exec(int, struct exec *, u_long *, int);
 #endif
 
 /*

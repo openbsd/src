@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_dma.c,v 1.3 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: lca_dma.c,v 1.4 2002/03/14 01:26:27 millert Exp $	*/
 /* $NetBSD: lca_dma.c,v 1.13 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -59,26 +59,26 @@
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-bus_dma_tag_t lca_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
+bus_dma_tag_t lca_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	lca_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+int	lca_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-void	lca_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	lca_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-int	lca_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	lca_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	lca_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	lca_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	lca_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	lca_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	lca_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	lca_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	lca_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	lca_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G

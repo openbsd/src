@@ -1,4 +1,4 @@
-/*	$OpenBSD: raster_op.c,v 1.3 1996/04/18 23:48:12 niklas Exp $ */
+/*	$OpenBSD: raster_op.c,v 1.4 2002/03/14 01:27:02 millert Exp $ */
 /*	$NetBSD: raster_op.c,v 1.4 1996/03/14 19:02:30 christos Exp $ */
 
 /*-
@@ -500,9 +500,9 @@ static u_int32_t bytemask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 
 
 /* Forward routines. */
 
-static int raster_blit __P((struct raster *, u_int32_t *, int, int, int,
+static int raster_blit(struct raster *, u_int32_t *, int, int, int,
 			    struct raster *, u_int32_t *, int, int, int,
-			    int, int));
+			    int, int);
 
 /* Raster operations.  */
 

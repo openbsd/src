@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.12 2001/02/20 19:39:35 mickey Exp $ */
+/*	$OpenBSD: if_qe.c,v 1.13 2002/03/14 01:26:48 millert Exp $ */
 /*      $NetBSD: if_qe.c,v 1.39 2000/01/24 02:40:29 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -98,15 +98,15 @@ struct	qe_softc {
 	int		sc_setup;	/* Setup packet in queue	*/
 };
 
-static	int	qematch __P((struct device *, struct cfdata *, void *));
-static	void	qeattach __P((struct device *, struct device *, void *));
-static	void	qeinit __P((struct qe_softc *));
-static	void	qestart __P((struct ifnet *));
-static	void	qeintr __P((void *));
-static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
-static	int	qe_add_rxbuf __P((struct qe_softc *, int));
-static	void	qe_setup __P((struct qe_softc *));
-static	void	qetimeout __P((struct ifnet *));
+static	int	qematch(struct device *, struct cfdata *, void *);
+static	void	qeattach(struct device *, struct device *, void *);
+static	void	qeinit(struct qe_softc *);
+static	void	qestart(struct ifnet *);
+static	void	qeintr(void *);
+static	int	qeioctl(struct ifnet *, u_long, caddr_t);
+static	int	qe_add_rxbuf(struct qe_softc *, int);
+static	void	qe_setup(struct qe_softc *);
+static	void	qetimeout(struct ifnet *);
 
 struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), (cfmatch_t)qematch, qeattach

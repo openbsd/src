@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_var.h,v 1.6 1996/10/21 11:07:12 mickey Exp $	*/
+/*	$OpenBSD: ns_var.h,v 1.7 2002/03/14 01:27:13 millert Exp $	*/
 
 #ifdef _KERNEL
 struct socket;
@@ -15,57 +15,57 @@ struct in_addr;
 struct sockaddr;
 
 /* ns.c */
-int ns_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
-void ns_ifscrub __P((struct ifnet *, struct ns_ifaddr *));
-int ns_ifinit __P((struct ifnet *, struct ns_ifaddr *, struct sockaddr_ns *,
-		   int));
-struct ns_ifaddr *ns_iaonnetof __P((struct ns_addr *));
+int ns_control(struct socket *, u_long, caddr_t, struct ifnet *);
+void ns_ifscrub(struct ifnet *, struct ns_ifaddr *);
+int ns_ifinit(struct ifnet *, struct ns_ifaddr *, struct sockaddr_ns *,
+		   int);
+struct ns_ifaddr *ns_iaonnetof(struct ns_addr *);
 
 /* ns_cksum.c */
-u_short ns_cksum __P((struct mbuf *, int));
+u_short ns_cksum(struct mbuf *, int);
 
 /* ns_error.c */
-int ns_err_x __P((int));
-void ns_error __P((struct mbuf *, int, int ));
-void ns_printhost __P((struct ns_addr *));
-void ns_err_input __P((struct mbuf *));
-u_long nstime __P((void));
-int ns_echo __P((struct mbuf *));
+int ns_err_x(int);
+void ns_error(struct mbuf *, int, int );
+void ns_printhost(struct ns_addr *);
+void ns_err_input(struct mbuf *);
+u_long nstime(void);
+int ns_echo(struct mbuf *);
 
 /* ns_input.c */
-void ns_init __P((void));
-void nsintr __P((void));
-void *idp_ctlinput __P((int, struct sockaddr *, void *));
-void idp_forward __P((struct mbuf *));
-int idp_do_route __P((struct ns_addr *, struct route *));
-void idp_undo_route __P((struct route *));
-void ns_watch_output __P((struct mbuf *, struct ifnet *));
+void ns_init(void);
+void nsintr(void);
+void *idp_ctlinput(int, struct sockaddr *, void *);
+void idp_forward(struct mbuf *);
+int idp_do_route(struct ns_addr *, struct route *);
+void idp_undo_route(struct route *);
+void ns_watch_output(struct mbuf *, struct ifnet *);
 
 /* ns_ip.c */
-struct ifnet_en *nsipattach __P((void));
-int nsipioctl __P((struct ifnet *, u_long, caddr_t));
-void idpip_input __P((struct mbuf *, ...));
-int nsipoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,     
-		struct rtentry *));
-void nsipstart __P((struct ifnet *));
-int nsip_route __P((struct mbuf *));
-int nsip_free __P((struct ifnet *));
-void *nsip_ctlinput __P((int, struct sockaddr *, void *));
-int nsip_rtchange __P((struct in_addr *));
+struct ifnet_en *nsipattach(void);
+int nsipioctl(struct ifnet *, u_long, caddr_t);
+void idpip_input(struct mbuf *, ...);
+int nsipoutput(struct ifnet *, struct mbuf *, struct sockaddr *,     
+		struct rtentry *);
+void nsipstart(struct ifnet *);
+int nsip_route(struct mbuf *);
+int nsip_free(struct ifnet *);
+void *nsip_ctlinput(int, struct sockaddr *, void *);
+int nsip_rtchange(struct in_addr *);
 
 /* ns_output.c */
-int ns_output __P((struct mbuf *, ...));
+int ns_output(struct mbuf *, ...);
 
 /* ns_pcb.c */
-int ns_pcballoc __P((struct socket *, struct nspcb *));
-int ns_pcbbind __P((struct nspcb *, struct mbuf *));
-int ns_pcbconnect __P((struct nspcb *, struct mbuf *));
-void ns_pcbdisconnect __P((struct nspcb *));
-void ns_pcbdetach __P((struct nspcb *));
-void ns_setsockaddr __P((struct nspcb *, struct mbuf *));
-void ns_setpeeraddr __P((struct nspcb *, struct mbuf *));
+int ns_pcballoc(struct socket *, struct nspcb *);
+int ns_pcbbind(struct nspcb *, struct mbuf *);
+int ns_pcbconnect(struct nspcb *, struct mbuf *);
+void ns_pcbdisconnect(struct nspcb *);
+void ns_pcbdetach(struct nspcb *);
+void ns_setsockaddr(struct nspcb *, struct mbuf *);
+void ns_setpeeraddr(struct nspcb *, struct mbuf *);
 void ns_pcbnotify __P((struct ns_addr *, int, void (*)(struct nspcb *), long));
-void ns_rtchange __P((struct nspcb *));
-struct nspcb *ns_pcblookup __P((struct ns_addr *, u_short, int));
+void ns_rtchange(struct nspcb *);
+struct nspcb *ns_pcblookup(struct ns_addr *, u_short, int);
 
 #endif

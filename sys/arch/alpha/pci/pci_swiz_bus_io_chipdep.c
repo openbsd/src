@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.2 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -43,132 +43,132 @@
 #define	__S(S)		__STRING(S)
 
 /* mapping/unmapping */
-int		__C(CHIP,_io_map) __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
-void		__C(CHIP,_io_unmap) __P((void *, bus_space_handle_t,
-		    bus_size_t));
-int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, bus_space_handle_t *));
+int		__C(CHIP,_io_map)(void *, bus_addr_t, bus_size_t, int,
+		    bus_space_handle_t *);
+void		__C(CHIP,_io_unmap)(void *, bus_space_handle_t,
+		    bus_size_t);
+int		__C(CHIP,_io_subregion)(void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 /* allocation/deallocation */
-int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
+int		__C(CHIP,_io_alloc)(void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
-                    bus_space_handle_t *));
-void		__C(CHIP,_io_free) __P((void *, bus_space_handle_t,
-		    bus_size_t));
+                    bus_space_handle_t *);
+void		__C(CHIP,_io_free)(void *, bus_space_handle_t,
+		    bus_size_t);
 
 /* barrier */
-inline void	__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_size_t, int));
+inline void	__C(CHIP,_io_barrier)(void *, bus_space_handle_t,
+		    bus_size_t, bus_size_t, int);
 
 /* read (single) */
-inline u_int8_t	__C(CHIP,_io_read_1) __P((void *, bus_space_handle_t,
-		    bus_size_t));
-inline u_int16_t __C(CHIP,_io_read_2) __P((void *, bus_space_handle_t,
-		    bus_size_t));
-inline u_int32_t __C(CHIP,_io_read_4) __P((void *, bus_space_handle_t,
-		    bus_size_t));
-inline u_int64_t __C(CHIP,_io_read_8) __P((void *, bus_space_handle_t,
-		    bus_size_t));
+inline u_int8_t	__C(CHIP,_io_read_1)(void *, bus_space_handle_t,
+		    bus_size_t);
+inline u_int16_t __C(CHIP,_io_read_2)(void *, bus_space_handle_t,
+		    bus_size_t);
+inline u_int32_t __C(CHIP,_io_read_4)(void *, bus_space_handle_t,
+		    bus_size_t);
+inline u_int64_t __C(CHIP,_io_read_8)(void *, bus_space_handle_t,
+		    bus_size_t);
 
 /* read multiple */
-void		__C(CHIP,_io_read_multi_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_read_multi_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t *, bus_size_t));
-void		__C(CHIP,_io_read_multi_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t *, bus_size_t));
-void		__C(CHIP,_io_read_multi_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t *, bus_size_t));
+void		__C(CHIP,_io_read_multi_1)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_read_multi_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t *, bus_size_t);
+void		__C(CHIP,_io_read_multi_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t *, bus_size_t);
+void		__C(CHIP,_io_read_multi_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t *, bus_size_t);
 
 /* read region */
-void		__C(CHIP,_io_read_region_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_read_region_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t *, bus_size_t));
-void		__C(CHIP,_io_read_region_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t *, bus_size_t));
-void		__C(CHIP,_io_read_region_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t *, bus_size_t));
+void		__C(CHIP,_io_read_region_1)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_read_region_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t *, bus_size_t);
+void		__C(CHIP,_io_read_region_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t *, bus_size_t);
+void		__C(CHIP,_io_read_region_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t *, bus_size_t);
 
 /* write (single) */
-inline void	__C(CHIP,_io_write_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t));
-inline void	__C(CHIP,_io_write_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t));
-inline void	__C(CHIP,_io_write_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t));
-inline void	__C(CHIP,_io_write_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t));
+inline void	__C(CHIP,_io_write_1)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t);
+inline void	__C(CHIP,_io_write_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t);
+inline void	__C(CHIP,_io_write_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t);
+inline void	__C(CHIP,_io_write_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t);
 
 /* write multiple */
-void		__C(CHIP,_io_write_multi_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_write_multi_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int16_t *, bus_size_t));
-void		__C(CHIP,_io_write_multi_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int32_t *, bus_size_t));
-void		__C(CHIP,_io_write_multi_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int64_t *, bus_size_t));
+void		__C(CHIP,_io_write_multi_1)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_write_multi_2)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		__C(CHIP,_io_write_multi_4)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		__C(CHIP,_io_write_multi_8)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
 
 /* write region */
-void		__C(CHIP,_io_write_region_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_write_region_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int16_t *, bus_size_t));
-void		__C(CHIP,_io_write_region_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int32_t *, bus_size_t));
-void		__C(CHIP,_io_write_region_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, const u_int64_t *, bus_size_t));
+void		__C(CHIP,_io_write_region_1)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_write_region_2)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int16_t *, bus_size_t);
+void		__C(CHIP,_io_write_region_4)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int32_t *, bus_size_t);
+void		__C(CHIP,_io_write_region_8)(void *, bus_space_handle_t,
+		    bus_size_t, const u_int64_t *, bus_size_t);
 
 /* set multiple */
-void		__C(CHIP,_io_set_multi_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t, bus_size_t));
-void		__C(CHIP,_io_set_multi_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t, bus_size_t));
-void		__C(CHIP,_io_set_multi_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t, bus_size_t));
-void		__C(CHIP,_io_set_multi_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t, bus_size_t));
+void		__C(CHIP,_io_set_multi_1)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t);
+void		__C(CHIP,_io_set_multi_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t);
+void		__C(CHIP,_io_set_multi_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t);
+void		__C(CHIP,_io_set_multi_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t);
 
 /* set region */
-void		__C(CHIP,_io_set_region_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t, bus_size_t));
-void		__C(CHIP,_io_set_region_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int16_t, bus_size_t));
-void		__C(CHIP,_io_set_region_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int32_t, bus_size_t));
-void		__C(CHIP,_io_set_region_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int64_t, bus_size_t));
+void		__C(CHIP,_io_set_region_1)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t, bus_size_t);
+void		__C(CHIP,_io_set_region_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int16_t, bus_size_t);
+void		__C(CHIP,_io_set_region_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int32_t, bus_size_t);
+void		__C(CHIP,_io_set_region_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int64_t, bus_size_t);
 
 /* copy */
-void		__C(CHIP,_io_copy_1) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_io_copy_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_io_copy_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void		__C(CHIP,_io_copy_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		__C(CHIP,_io_copy_1)(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		__C(CHIP,_io_copy_2)(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		__C(CHIP,_io_copy_4)(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void		__C(CHIP,_io_copy_8)(void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 /* read multiple raw */
-void		__C(CHIP,_io_read_raw_multi_2) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_read_raw_multi_4) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
-void		__C(CHIP,_io_read_raw_multi_8) __P((void *, bus_space_handle_t,
-		    bus_size_t, u_int8_t *, bus_size_t));
+void		__C(CHIP,_io_read_raw_multi_2)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_read_raw_multi_4)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
+void		__C(CHIP,_io_read_raw_multi_8)(void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t);
 
 /* write multiple raw */
-void		__C(CHIP,_io_write_raw_multi_2) __P((void *,
+void		__C(CHIP,_io_write_raw_multi_2)(void *,
 		    bus_space_handle_t, bus_size_t, const u_int8_t *,
-		    bus_size_t));
-void		__C(CHIP,_io_write_raw_multi_4) __P((void *,
+		    bus_size_t);
+void		__C(CHIP,_io_write_raw_multi_4)(void *,
 		    bus_space_handle_t, bus_size_t, const u_int8_t *,
-		    bus_size_t));
-void		__C(CHIP,_io_write_raw_multi_8) __P((void *,
+		    bus_size_t);
+void		__C(CHIP,_io_write_raw_multi_8)(void *,
 		    bus_space_handle_t, bus_size_t, const u_int8_t *,
-		    bus_size_t));
+		    bus_size_t);
 
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.8 1997/02/13 21:49:16 kstailey Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.9 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
@@ -45,13 +45,13 @@
 
 #include "fpu_emulate.h"
 
-static int fpu_emul_fmovmcr __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_fmovm __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_arith __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
-static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
-static int test_cc __P((struct fpemu *fe, int pred));
-static struct fpn *fpu_cmp __P((struct fpemu *fe));
+static int fpu_emul_fmovmcr(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_fmovm(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_arith(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_type1(struct fpemu *fe, struct instruction *insn);
+static int fpu_emul_brcc(struct fpemu *fe, struct instruction *insn);
+static int test_cc(struct fpemu *fe, int pred);
+static struct fpn *fpu_cmp(struct fpemu *fe);
 
 #if !defined(DL_DEFAULT)
 #  if defined(DEBUG_WITH_FPU)

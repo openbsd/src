@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpcivar.h,v 1.2 2000/08/26 13:07:50 kevlo Exp $	*/
+/*	$OpenBSD: cmpcivar.h,v 1.3 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -115,7 +115,7 @@ struct cmpci_softc {
 
 	/* each channel */
 	struct {
-		void (*intr) __P((void *));
+		void (*intr)(void *);
 		void *intr_arg;
 	} sc_play, sc_rec;
 

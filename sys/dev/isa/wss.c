@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.20 1999/01/24 15:58:54 mickey Exp $	*/
+/*	$OpenBSD: wss.c,v 1.21 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -74,11 +74,11 @@ struct audio_device wss_device = {
 	"WSS"
 };
 
-int	wss_getdev __P((void *, struct audio_device *));
+int	wss_getdev(void *, struct audio_device *);
 
-int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
+int	wss_mixer_set_port(void *, mixer_ctrl_t *);
+int	wss_mixer_get_port(void *, mixer_ctrl_t *);
+int	wss_query_devinfo(void *, mixer_devinfo_t *);
 
 /*
  * Define our interface to the higher level audio driver.

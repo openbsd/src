@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.h,v 1.2 1996/10/26 09:34:52 mickey Exp $	*/
+/*	$OpenBSD: ipx_ip.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 
 /*-
  *
@@ -58,17 +58,17 @@ struct ifnet_en {
 extern struct ifnet ipxipif;
 extern struct ifnet_en *ipxip_list;
 
-void	ipxipprotoinit __P((void));
-struct ifnet_en * ipxipattach __P((void));
-void	*ipxip_ctlinput __P((int cmd, struct sockaddr *sa, void *arg));
-int	ipxip_free __P((struct ifnet *ifp));
-void	ipxip_input __P((struct mbuf *m, ... ));
-int	ipxipioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
-int	ipxipoutput __P((struct ifnet *ifp, struct mbuf *m,
-			 struct sockaddr *dst, struct rtentry *rt));
-int	ipxip_route __P((struct mbuf *m));
-void	ipxip_rtchange __P((struct in_addr *dst));
-void	ipxipstart __P((struct ifnet *ifp));
+void	ipxipprotoinit(void);
+struct ifnet_en * ipxipattach(void);
+void	*ipxip_ctlinput(int cmd, struct sockaddr *sa, void *arg);
+int	ipxip_free(struct ifnet *ifp);
+void	ipxip_input(struct mbuf *m, ... );
+int	ipxipioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+int	ipxipoutput(struct ifnet *ifp, struct mbuf *m,
+			 struct sockaddr *dst, struct rtentry *rt);
+int	ipxip_route(struct mbuf *m);
+void	ipxip_rtchange(struct in_addr *dst);
+void	ipxipstart(struct ifnet *ifp);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.24 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.25 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -146,14 +146,14 @@ static int ad1848_init_values[] = {
     0			/* lower record count */
 };
 
-void	ad1848_reset __P((struct ad1848_softc *));
-int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
-void	ad1848_mute_monitor __P((void *, int));
+void	ad1848_reset(struct ad1848_softc *);
+int	ad1848_set_speed(struct ad1848_softc *, u_long *);
+void	ad1848_mute_monitor(void *, int);
 
-static int ad_read __P((struct ad1848_softc *, int));
-static void ad_write __P((struct ad1848_softc *, int, int));
-static void ad_set_MCE __P((struct ad1848_softc *, int));
-static void wait_for_calibration __P((struct ad1848_softc *));
+static int ad_read(struct ad1848_softc *, int);
+static void ad_write(struct ad1848_softc *, int, int);
+static void ad_set_MCE(struct ad1848_softc *, int);
+static void wait_for_calibration(struct ad1848_softc *);
 
 #define ADREAD(sc, addr) bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr))
 #define ADWRITE(sc, addr, data) bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr), (data))
@@ -245,7 +245,7 @@ wait_for_calibration(sc)
 }
 
 #ifdef AUDIO_DEBUG
-void ad1848_dump_regs __P((struct ad1848_softc *));
+void ad1848_dump_regs(struct ad1848_softc *);
 
 void
 ad1848_dump_regs(sc)
@@ -771,7 +771,7 @@ ad1848_get_mic_gain(sc, gp)
 }
 
 
-static ad1848_devmap_t *ad1848_mixer_find_dev __P((ad1848_devmap_t *, int, mixer_ctrl_t *));
+static ad1848_devmap_t *ad1848_mixer_find_dev(ad1848_devmap_t *, int, mixer_ctrl_t *);
 
 static ad1848_devmap_t *
 ad1848_mixer_find_dev(map, cnt, cp)
@@ -1017,8 +1017,8 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 {
     struct ad1848_softc *sc = addr;
     int error, bits, enc;
-    void (*pswcode) __P((void *, u_char *buf, int cnt));
-    void (*rswcode) __P((void *, u_char *buf, int cnt));
+    void (*pswcode)(void *, u_char *buf, int cnt);
+    void (*rswcode)(void *, u_char *buf, int cnt);
 
     DPRINTF(("ad1848_set_params: %d %d %d %ld\n", 
 	     p->encoding, p->precision, p->channels, p->sample_rate));
@@ -1465,7 +1465,7 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     void *addr;
     void *p;
     int cc;
-    void (*intr) __P((void *));
+    void (*intr)(void *);
     void *arg;
 {
     struct ad1848_softc *sc = addr;
@@ -1550,7 +1550,7 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     void *addr;
     void *p;
     int cc;
-    void (*intr) __P((void *));
+    void (*intr)(void *);
     void *arg;
 {
     struct ad1848_softc *sc = addr;

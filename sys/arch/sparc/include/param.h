@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.24 2002/03/13 00:24:21 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.25 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -165,12 +165,12 @@ extern vaddr_t		dvma_base;
 extern vaddr_t		dvma_end;
 extern struct extent	*dvmamap_extent;
 
-extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
-extern caddr_t	dvma_malloc_space  __P((size_t, void *, int, int));
-extern void	dvma_free __P((caddr_t, size_t, void *));
+extern caddr_t	kdvma_mapin(caddr_t, int, int);
+extern caddr_t	dvma_malloc_space(size_t, void *, int, int);
+extern void	dvma_free(caddr_t, size_t, void *);
 #define		dvma_malloc(len,kaddr,flags)	dvma_malloc_space(len,kaddr,flags,0)
 
-extern void	delay __P((unsigned int));
+extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
 
 extern int cputyp;

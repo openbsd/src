@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_300.c,v 1.8 2000/11/08 21:48:43 art Exp $ */
+/* $OpenBSD: dec_3000_300.c,v 1.9 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -60,9 +60,9 @@
 
 #include "wsdisplay.h"
 
-void dec_3000_300_init __P((void));
-static void dec_3000_300_cons_init __P((void));
-static void dec_3000_300_device_register __P((struct device *, void *));
+void dec_3000_300_init(void);
+static void dec_3000_300_cons_init(void);
+static void dec_3000_300_device_register(struct device *, void *);
 
 const struct alpha_variation_table dec_3000_300_variations[] = {
 	{ SV_ST_PELICAN, "DEC 3000/300 (\"Pelican\")" },

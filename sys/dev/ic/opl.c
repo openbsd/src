@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.2 2001/05/01 02:21:42 mickey Exp $	*/
+/*	$OpenBSD: opl.c,v 1.3 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -111,22 +111,22 @@ static void opl_command(struct opl_softc *, int, int, int);
 void opl_reset(struct opl_softc *);
 void opl_freq_to_fnum (int freq, int *block, int *fnum);
 
-int oplsyn_open __P((midisyn *ms, int));
-void oplsyn_close __P((midisyn *));
-void oplsyn_reset __P((void *));
-void oplsyn_noteon __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_noteoff __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_keypressure __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_ctlchange __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_pitchbend __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_loadpatch __P((midisyn *, struct sysex_info *, struct uio *));
+int oplsyn_open(midisyn *ms, int);
+void oplsyn_close(midisyn *);
+void oplsyn_reset(void *);
+void oplsyn_noteon(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_noteoff(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_keypressure(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_ctlchange(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_pitchbend(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_loadpatch(midisyn *, struct sysex_info *, struct uio *);
 
 
-void opl_set_op_reg __P((struct opl_softc *, int, int, int, u_char));
-void opl_set_ch_reg __P((struct opl_softc *, int, int, u_char));
-void opl_load_patch __P((struct opl_softc *, int));
-u_int32_t opl_get_block_fnum __P((int freq));
-int opl_calc_vol __P((int regbyte, int volume, int main_vol));
+void opl_set_op_reg(struct opl_softc *, int, int, int, u_char);
+void opl_set_ch_reg(struct opl_softc *, int, int, u_char);
+void opl_load_patch(struct opl_softc *, int);
+u_int32_t opl_get_block_fnum(int freq);
+int opl_calc_vol(int regbyte, int volume, int main_vol);
 
 struct cfdriver opl_cd = {
 	NULL, "opl", DV_DULL

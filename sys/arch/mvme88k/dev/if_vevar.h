@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vevar.h,v 1.2 2001/08/26 02:37:07 miod Exp $	*/
+/*	$OpenBSD: if_vevar.h,v 1.3 2002/03/14 01:26:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -55,16 +55,11 @@ struct vam7990_softc {
 	 *	copy to/from buffer
 	 *	zero bytes in buffer
 	 */
-	void	(*sc_copytodesc)
-		    __P((struct vam7990_softc *, void *, int, int));
-	void	(*sc_copyfromdesc)
-		    __P((struct vam7990_softc *, void *, int, int));
-	void	(*sc_copytobuf)
-		    __P((struct vam7990_softc *, void *, int, int));
-	void	(*sc_copyfrombuf)
-		    __P((struct vam7990_softc *, void *, int, int));
-	void	(*sc_zerobuf)
-		    __P((struct vam7990_softc *, int, int));
+	void	(*sc_copytodesc)(struct vam7990_softc *, void *, int, int);
+	void	(*sc_copyfromdesc)(struct vam7990_softc *, void *, int, int);
+	void	(*sc_copytobuf)(struct vam7990_softc *, void *, int, int);
+	void	(*sc_copyfrombuf)(struct vam7990_softc *, void *, int, int);
+	void	(*sc_zerobuf)(struct vam7990_softc *, int, int);
 
 	/*
 	 * Machine-dependent functions:
@@ -74,13 +69,11 @@ struct vam7990_softc {
 	 *	hardware init hook - may be NULL
 	 *	no carrier hook - may be NULL
 	 */
-	u_int16_t (*sc_rdcsr)
-		    __P((struct vam7990_softc *, u_int16_t));
-	void	(*sc_wrcsr)
-		    __P((struct vam7990_softc *, u_int16_t, u_int16_t));
-	void	(*sc_hwreset) __P((struct vam7990_softc *));
-	void	(*sc_hwinit) __P((struct vam7990_softc *));
-	void	(*sc_nocarrier) __P((struct vam7990_softc *));
+	u_int16_t (*sc_rdcsr)(struct vam7990_softc *, u_int16_t);
+	void	(*sc_wrcsr)(struct vam7990_softc *, u_int16_t, u_int16_t);
+	void	(*sc_hwreset)(struct vam7990_softc *);
+	void	(*sc_hwinit)(struct vam7990_softc *);
+	void	(*sc_nocarrier)(struct vam7990_softc *);
 
 	int	sc_hasifmedia;
 	struct	ifmedia sc_ifmedia;
@@ -113,16 +106,16 @@ struct vam7990_softc {
 /* Export this to machine-dependent drivers. */
 extern struct cfdriver ve_cd;
 
-void ve_config __P((struct vam7990_softc *));
-void ve_init __P((struct vam7990_softc *));
-int ve_ioctl __P((struct ifnet *, u_long, caddr_t));
-void ve_meminit __P((struct vam7990_softc *));
-void ve_reset __P((struct vam7990_softc *));
-void ve_setladrf __P((struct arpcom *, u_int16_t *));
-void ve_start __P((struct ifnet *));
-void ve_stop __P((struct vam7990_softc *));
-void ve_watchdog __P((struct ifnet *));
-int ve_intr __P((void *));
+void ve_config(struct vam7990_softc *);
+void ve_init(struct vam7990_softc *);
+int ve_ioctl(struct ifnet *, u_long, caddr_t);
+void ve_meminit(struct vam7990_softc *);
+void ve_reset(struct vam7990_softc *);
+void ve_setladrf(struct arpcom *, u_int16_t *);
+void ve_start(struct ifnet *);
+void ve_stop(struct vam7990_softc *);
+void ve_watchdog(struct ifnet *);
+int ve_intr(void *);
 
 /*
  * The following functions are only useful on certain cpu/bus
@@ -130,9 +123,9 @@ int ve_intr __P((void *));
  * maximum efficiency, but machine-independent versions are provided
  * for drivers that have not yet been optimized.
  */
-void ve_copytobuf_contig __P((struct vam7990_softc *, void *, int, int));
-void ve_copyfrombuf_contig __P((struct vam7990_softc *, void *, int, int));
-void ve_zerobuf_contig __P((struct vam7990_softc *, int, int));
+void ve_copytobuf_contig(struct vam7990_softc *, void *, int, int);
+void ve_copyfrombuf_contig(struct vam7990_softc *, void *, int, int);
+void ve_zerobuf_contig(struct vam7990_softc *, int, int);
 
 
 

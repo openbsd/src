@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdvar.h,v 1.2 2001/06/22 14:35:42 deraadt Exp $	*/
+/*	$OpenBSD: cdvar.h,v 1.3 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: cdvar.h,v 1.10 1999/02/02 13:02:49 bouyer Exp $	*/
 
 /*
@@ -65,12 +65,12 @@ struct cd_softc {
 };
 
 struct cd_ops {
-	int	(*cdo_setchan) __P((struct cd_softc *, int, int, int, int,
-		    int));
-	int	(*cdo_getvol) __P((struct cd_softc *, struct ioc_vol *, int));
-	int	(*cdo_setvol) __P((struct cd_softc *, const struct ioc_vol *,
-		    int));
-	int	(*cdo_set_pa_immed) __P((struct cd_softc *, int));
-	int	(*cdo_load_unload) __P((struct cd_softc *, int, int));
+	int	(*cdo_setchan)(struct cd_softc *, int, int, int, int,
+		    int);
+	int	(*cdo_getvol)(struct cd_softc *, struct ioc_vol *, int);
+	int	(*cdo_setvol)(struct cd_softc *, const struct ioc_vol *,
+		    int);
+	int	(*cdo_set_pa_immed)(struct cd_softc *, int);
+	int	(*cdo_load_unload)(struct cd_softc *, int, int);
 };
 

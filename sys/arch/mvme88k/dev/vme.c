@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.18 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.19 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -58,17 +58,17 @@
 #include <mvme88k/dev/sysconreg.h>
 #endif
 
-int  vmematch __P((struct device *, void *, void *));
-void vmeattach __P((struct device *, struct device *, void *));
+int  vmematch(struct device *, void *, void *);
+void vmeattach(struct device *, struct device *, void *);
 
-void vme2chip_init __P((struct vmesoftc *));
-u_long vme2chip_map __P((u_long, int, int));
-int vme2abort __P((void *));
-int sysconabort __P((void *));
-void vmeunmap __P((void *, int));
-int vmeprint __P((void *, const char *));
+void vme2chip_init(struct vmesoftc *);
+u_long vme2chip_map(u_long, int, int);
+int vme2abort(void *);
+int sysconabort(void *);
+void vmeunmap(void *, int);
+int vmeprint(void *, const char *);
 
-void vmesyscon_init __P((struct vmesoftc *));
+void vmesyscon_init(struct vmesoftc *);
 
 int vmebustype;
 int vmevecbase;

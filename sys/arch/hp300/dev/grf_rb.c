@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rb.c,v 1.7 2000/11/10 15:33:05 provos Exp $	*/
+/*	$OpenBSD: grf_rb.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_rb.c,v 1.11 1997/03/31 07:34:17 scottr Exp $	*/
 
 /*
@@ -75,18 +75,18 @@
 
 #include "ite.h"
 
-int	rb_init __P((struct grf_data *gp, int, caddr_t));
-int	rb_mode __P((struct grf_data *gp, int, caddr_t));
+int	rb_init(struct grf_data *gp, int, caddr_t);
+int	rb_mode(struct grf_data *gp, int, caddr_t);
 
-int	rbox_intio_match __P((struct device *, void *, void *));
-void	rbox_intio_attach __P((struct device *, struct device *, void *));
+int	rbox_intio_match(struct device *, void *, void *);
+void	rbox_intio_attach(struct device *, struct device *, void *);
 
-int	rbox_dio_match __P((struct device *, void *, void *));
-void	rbox_dio_attach __P((struct device *, struct device *, void *));
+int	rbox_dio_match(struct device *, void *, void *);
+void	rbox_dio_attach(struct device *, struct device *, void *);
 
-int	rbox_console_scan __P((int, caddr_t, void *));
-void	rboxcnprobe __P((struct consdev *cp));
-void	rboxcninit __P((struct consdev *cp));
+int	rbox_console_scan(int, caddr_t, void *);
+void	rboxcnprobe(struct consdev *cp);
+void	rboxcninit(struct consdev *cp);
 
 struct cfattach rbox_intio_ca = {
 	sizeof(struct grfdev_softc), rbox_intio_match, rbox_intio_attach
@@ -106,14 +106,14 @@ struct grfsw rbox_grfsw = {
 };
 
 #if NITE > 0
-void	rbox_init __P((struct ite_data *));
-void	rbox_deinit __P((struct ite_data *));
-void	rbox_putc __P((struct ite_data *, int, int, int, int));
-void	rbox_cursor __P((struct ite_data *, int));
-void	rbox_clear __P((struct ite_data *, int, int, int, int));
-void	rbox_scroll __P((struct ite_data *, int, int, int, int));
-void	rbox_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+void	rbox_init(struct ite_data *);
+void	rbox_deinit(struct ite_data *);
+void	rbox_putc(struct ite_data *, int, int, int, int);
+void	rbox_cursor(struct ite_data *, int);
+void	rbox_clear(struct ite_data *, int, int, int, int);
+void	rbox_scroll(struct ite_data *, int, int, int, int);
+void	rbox_windowmove(struct ite_data *, int, int, int, int,
+		int, int, int);
 
 /* Renaissance ite switch */
 struct itesw rbox_itesw = {

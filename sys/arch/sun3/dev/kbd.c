@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.8 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.9 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
 
 /*
@@ -190,18 +190,18 @@ struct zsops zsops_kbd;
  * Definition of the driver for autoconfig.
  ****************************************************************/
 
-static int	kbd_match __P((struct device *, void *, void *));
-static void	kbd_attach __P((struct device *, struct device *, void *));
+static int	kbd_match(struct device *, void *, void *);
+static void	kbd_attach(struct device *, struct device *, void *);
 
-static int	kbd_drain_tx __P((struct kbd_softc *));
-static void	kbd_input_string __P((struct kbd_softc *, char *str));
-static void	kbd_input_funckey __P((struct kbd_softc *,register int));
-static void	kbd_input_keysym __P((struct kbd_softc *,register int));
-static void	kbd_input_raw __P((struct kbd_softc *,register int));
-static void	kbd_rxint __P((register struct zs_chanstate *));
-static void	kbd_txint __P((register struct zs_chanstate *));
-static void	kbd_stint __P((register struct zs_chanstate *));
-static void	kbd_softint __P((register struct zs_chanstate *));
+static int	kbd_drain_tx(struct kbd_softc *);
+static void	kbd_input_string(struct kbd_softc *, char *str);
+static void	kbd_input_funckey(struct kbd_softc *,register int);
+static void	kbd_input_keysym(struct kbd_softc *,register int);
+static void	kbd_input_raw(struct kbd_softc *,register int);
+static void	kbd_rxint(register struct zs_chanstate *);
+static void	kbd_txint(register struct zs_chanstate *);
+static void	kbd_stint(register struct zs_chanstate *);
+static void	kbd_softint(register struct zs_chanstate *);
 
 struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbd_match, kbd_attach
@@ -395,14 +395,14 @@ kbdselect(dev, rw, p)
 
 
 static int kbd_ioccmd(struct kbd_softc *k, int *data);
-static int kbd_iockeymap __P((struct kbd_state *ks,
-	u_long cmd, struct kiockeymap *kio));
+static int kbd_iockeymap(struct kbd_state *ks,
+	u_long cmd, struct kiockeymap *kio);
 
 static int kbd_iocsled(struct kbd_softc *k, int *data);
 
 #ifdef	KIOCGETKEY
-static int kbd_oldkeymap __P((struct kbd_state *ks,
-	u_long cmd, struct okiockey *okio));
+static int kbd_oldkeymap(struct kbd_state *ks,
+	u_long cmd, struct okiockey *okio);
 #endif
 
 int

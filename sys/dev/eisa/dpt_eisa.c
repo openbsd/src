@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_eisa.c,v 1.1 1999/11/30 07:55:56 cmetz Exp $	*/
+/*	$OpenBSD: dpt_eisa.c,v 1.2 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $	*/
 
 /*
@@ -66,14 +66,14 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.2 1999/10/18 21:59:19 ad Exp $");
 #define DPT_EISA_IOCONF			0x90
 #define DPT_EISA_EATA_REG_OFFSET	0x88
 
-int	dpt_eisa_irq __P((bus_space_tag_t, bus_space_handle_t, int *));
+int	dpt_eisa_irq(bus_space_tag_t, bus_space_handle_t, int *);
 #ifdef __NetBSD__
-int	dpt_eisa_match __P((struct device *, struct cfdata *, void *));
+int	dpt_eisa_match(struct device *, struct cfdata *, void *);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-int	dpt_eisa_match __P((struct device *, void *, void *));
+int	dpt_eisa_match(struct device *, void *, void *);
 #endif /* __OpenBSD__ */
-void	dpt_eisa_attach __P((struct device *, struct device *, void *));
+void	dpt_eisa_attach(struct device *, struct device *, void *);
 
 struct cfattach dpt_eisa_ca = {
 	sizeof(struct dpt_softc), dpt_eisa_match, dpt_eisa_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.c,v 1.8 2001/05/16 12:49:48 ho Exp $	*/
+/*	$OpenBSD: eeprom.c,v 1.9 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
 /*
@@ -54,12 +54,12 @@ int ee_console;		/* for convenience of drivers */
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
-static int  eeprom_match __P((struct device *, void *vcf, void *args));
-static void eeprom_attach __P((struct device *, struct device *, void *));
-static int  ee_update __P((caddr_t, int, int));
-static int  ee_take __P((void));
-static void ee_give __P((void));
-int ee_get_byte __P((int, int));
+static int  eeprom_match(struct device *, void *vcf, void *args);
+static void eeprom_attach(struct device *, struct device *, void *);
+static int  ee_update(caddr_t, int, int);
+static int  ee_take(void);
+static void ee_give(void);
+int ee_get_byte(int, int);
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach

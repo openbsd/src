@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.12 2001/11/11 21:59:19 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.13 2002/03/14 01:26:54 millert Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -61,10 +61,10 @@ struct cfdriver iha_cd = {
 };
 
 struct scsi_adapter iha_switch = {
-	iha_scsi_cmd,	/*  int (*scsi_cmd) __P((struct scsi_xfer *)); */
-	iha_minphys,	/* void (*scsi_minphys) __P((struct buf *));   */
-	NULL,		/*  int (*open_target_lu) __P((void));         */
-	NULL		/*  int (*close_target_lu) __P((void));        */
+	iha_scsi_cmd,	/*  int (*scsi_cmd)(struct scsi_xfer *); */
+	iha_minphys,	/* void (*scsi_minphys)(struct buf *);   */
+	NULL,		/*  int (*open_target_lu)(void);         */
+	NULL		/*  int (*close_target_lu)(void);        */
 };
 
 struct scsi_device iha_dev = {
@@ -91,93 +91,93 @@ static const u_int8_t iha_rate_tbl[8] = {
 	62	/* 250ns, 4M	  */
 };
 
-u_int8_t iha_data_over_run __P((struct iha_scsi_req_q *));
-void iha_push_sense_request __P((struct iha_softc *, struct iha_scsi_req_q *));
-void iha_timeout __P((void *));
-int  iha_alloc_scbs __P((struct iha_softc *));
-void iha_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
-			     struct iha_nvram *));
-void iha_se2_instr __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
-u_int16_t iha_se2_rd __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
-void iha_reset_scsi_bus __P((struct iha_softc *));
-void iha_reset_chip __P((struct iha_softc *,
-			    bus_space_tag_t, bus_space_handle_t));
-void iha_reset_dma __P((bus_space_tag_t, bus_space_handle_t));
-void iha_reset_tcs __P((struct tcs *, u_int8_t));
-void iha_print_info __P((struct iha_softc *, int));
-void iha_done_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-void iha_exec_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-void iha_main __P((struct iha_softc *, bus_space_tag_t, bus_space_handle_t));
-void iha_scsi __P((struct iha_softc *, bus_space_tag_t, bus_space_handle_t));
-int  iha_wait __P((struct iha_softc *, bus_space_tag_t, bus_space_handle_t,
-		      u_int8_t));
-void iha_mark_busy_scb __P((struct iha_scsi_req_q *));
-void iha_append_free_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-struct iha_scsi_req_q *iha_pop_free_scb __P((struct iha_softc *));
-void iha_append_done_scb __P((struct iha_softc *, struct iha_scsi_req_q *,
-				 u_int8_t));
-struct iha_scsi_req_q *iha_pop_done_scb __P((struct iha_softc *));
-void iha_append_pend_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-void iha_push_pend_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-void iha_del_pend_scb __P((struct iha_softc *, struct iha_scsi_req_q *));
-struct iha_scsi_req_q *iha_find_pend_scb __P((struct iha_softc *));
-void iha_sync_done __P((struct iha_softc *,
-			   bus_space_tag_t, bus_space_handle_t));
-void iha_wide_done __P((struct iha_softc *,
-			   bus_space_tag_t, bus_space_handle_t));
-void iha_bad_seq __P((struct iha_softc *));
-int  iha_next_state __P((struct iha_softc *,
-			    bus_space_tag_t, bus_space_handle_t));
-int  iha_state_1 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_2 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_3 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_4 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_5 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_6 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_state_8 __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-void iha_set_ssig __P((bus_space_tag_t,
-			  bus_space_handle_t, u_int8_t, u_int8_t));
-int  iha_xpad_in __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_xpad_out __P((struct iha_softc *,
-			  bus_space_tag_t, bus_space_handle_t));
-int  iha_xfer_data __P((struct iha_scsi_req_q *,
+u_int8_t iha_data_over_run(struct iha_scsi_req_q *);
+void iha_push_sense_request(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_timeout(void *);
+int  iha_alloc_scbs(struct iha_softc *);
+void iha_read_eeprom(bus_space_tag_t, bus_space_handle_t,
+			     struct iha_nvram *);
+void iha_se2_instr(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+u_int16_t iha_se2_rd(bus_space_tag_t, bus_space_handle_t, u_int8_t);
+void iha_reset_scsi_bus(struct iha_softc *);
+void iha_reset_chip(struct iha_softc *,
+			    bus_space_tag_t, bus_space_handle_t);
+void iha_reset_dma(bus_space_tag_t, bus_space_handle_t);
+void iha_reset_tcs(struct tcs *, u_int8_t);
+void iha_print_info(struct iha_softc *, int);
+void iha_done_scb(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_exec_scb(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_main(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
+void iha_scsi(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
+int  iha_wait(struct iha_softc *, bus_space_tag_t, bus_space_handle_t,
+		      u_int8_t);
+void iha_mark_busy_scb(struct iha_scsi_req_q *);
+void iha_append_free_scb(struct iha_softc *, struct iha_scsi_req_q *);
+struct iha_scsi_req_q *iha_pop_free_scb(struct iha_softc *);
+void iha_append_done_scb(struct iha_softc *, struct iha_scsi_req_q *,
+				 u_int8_t);
+struct iha_scsi_req_q *iha_pop_done_scb(struct iha_softc *);
+void iha_append_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_push_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
+void iha_del_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
+struct iha_scsi_req_q *iha_find_pend_scb(struct iha_softc *);
+void iha_sync_done(struct iha_softc *,
+			   bus_space_tag_t, bus_space_handle_t);
+void iha_wide_done(struct iha_softc *,
+			   bus_space_tag_t, bus_space_handle_t);
+void iha_bad_seq(struct iha_softc *);
+int  iha_next_state(struct iha_softc *,
+			    bus_space_tag_t, bus_space_handle_t);
+int  iha_state_1(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_2(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_3(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_4(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_5(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_6(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_state_8(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+void iha_set_ssig(bus_space_tag_t,
+			  bus_space_handle_t, u_int8_t, u_int8_t);
+int  iha_xpad_in(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_xpad_out(struct iha_softc *,
+			  bus_space_tag_t, bus_space_handle_t);
+int  iha_xfer_data(struct iha_scsi_req_q *,
 			   bus_space_tag_t, bus_space_handle_t,
-			   int direction));
-int  iha_status_msg __P((struct iha_softc *,
-			    bus_space_tag_t, bus_space_handle_t));
-int  iha_msgin __P((struct iha_softc *, bus_space_tag_t, bus_space_handle_t));
-int  iha_msgin_sdtr __P((struct iha_softc *));
-int  iha_msgin_extended __P((struct iha_softc *,
-				bus_space_tag_t, bus_space_handle_t));
-int  iha_msgin_ignore_wid_resid __P((struct iha_softc *,
-					bus_space_tag_t, bus_space_handle_t));
-int  iha_msgout __P((struct iha_softc *,
-			bus_space_tag_t, bus_space_handle_t, u_int8_t));
-int  iha_msgout_extended __P((struct iha_softc *,
-				 bus_space_tag_t, bus_space_handle_t));
-void iha_msgout_abort __P((struct iha_softc *,
-			      bus_space_tag_t, bus_space_handle_t,  u_int8_t));
-int  iha_msgout_reject __P((struct iha_softc *,
-			       bus_space_tag_t, bus_space_handle_t));
-int  iha_msgout_sdtr __P((struct iha_softc *,
-			     bus_space_tag_t, bus_space_handle_t));
-int  iha_msgout_wdtr __P((struct iha_softc *,
-			     bus_space_tag_t, bus_space_handle_t));
-void iha_select __P((struct iha_softc *,
+			   int direction);
+int  iha_status_msg(struct iha_softc *,
+			    bus_space_tag_t, bus_space_handle_t);
+int  iha_msgin(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
+int  iha_msgin_sdtr(struct iha_softc *);
+int  iha_msgin_extended(struct iha_softc *,
+				bus_space_tag_t, bus_space_handle_t);
+int  iha_msgin_ignore_wid_resid(struct iha_softc *,
+					bus_space_tag_t, bus_space_handle_t);
+int  iha_msgout(struct iha_softc *,
+			bus_space_tag_t, bus_space_handle_t, u_int8_t);
+int  iha_msgout_extended(struct iha_softc *,
+				 bus_space_tag_t, bus_space_handle_t);
+void iha_msgout_abort(struct iha_softc *,
+			      bus_space_tag_t, bus_space_handle_t,  u_int8_t);
+int  iha_msgout_reject(struct iha_softc *,
+			       bus_space_tag_t, bus_space_handle_t);
+int  iha_msgout_sdtr(struct iha_softc *,
+			     bus_space_tag_t, bus_space_handle_t);
+int  iha_msgout_wdtr(struct iha_softc *,
+			     bus_space_tag_t, bus_space_handle_t);
+void iha_select(struct iha_softc *,
 			bus_space_tag_t, bus_space_handle_t,
-			struct iha_scsi_req_q *, u_int8_t));
-void iha_busfree __P((struct iha_softc *,
-			 bus_space_tag_t, bus_space_handle_t));
-int  iha_resel __P((struct iha_softc *, bus_space_tag_t, bus_space_handle_t));
-void iha_abort_xs __P((struct iha_softc *, struct scsi_xfer *, u_int8_t));
+			struct iha_scsi_req_q *, u_int8_t);
+void iha_busfree(struct iha_softc *,
+			 bus_space_tag_t, bus_space_handle_t);
+int  iha_resel(struct iha_softc *, bus_space_tag_t, bus_space_handle_t);
+void iha_abort_xs(struct iha_softc *, struct scsi_xfer *, u_int8_t);
 
 /*
  * iha_intr - the interrupt service routine for the iha driver

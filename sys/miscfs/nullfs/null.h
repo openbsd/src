@@ -1,4 +1,4 @@
-/*	$OpenBSD: null.h,v 1.10 1998/08/06 19:34:38 csapuntz Exp $	*/
+/*	$OpenBSD: null.h,v 1.11 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
@@ -59,23 +59,23 @@ struct null_node {
 	struct vnode		*null_vnode;	/* Back pointer */
 };
 
-extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit));
+extern int null_node_create(struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit);
 
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
 #define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
 #define	NULLTOV(xp) ((xp)->null_vnode)
 #ifdef NULLFS_DIAGNOSTIC
-extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
+extern struct vnode *null_checkvp(struct vnode *vp, char *fil, int lno);
 #define	NULLVPTOLOWERVP(vp) null_checkvp((vp), __FILE__, __LINE__)
 #else
 #define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
 #endif
 
-extern int (**null_vnodeop_p) __P((void *));
+extern int (**null_vnodeop_p)(void *);
 extern struct vfsops null_vfsops;
 
-int nullfs_init __P((struct vfsconf *));
-int null_bypass __P((void *));
+int nullfs_init(struct vfsconf *);
+int null_bypass(void *);
 
 
 #endif /* _KERNEL */

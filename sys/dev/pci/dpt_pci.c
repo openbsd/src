@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt_pci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: dpt_pci.c,v 1.4 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
@@ -67,12 +67,12 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $");
 #define	PCI_CBIO	0x10	/* Configuration base I/O address */
 
 #ifdef __NetBSD__
-int	dpt_pci_match __P((struct device *, struct cfdata *, void *));
+int	dpt_pci_match(struct device *, struct cfdata *, void *);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-int	dpt_pci_match __P((struct device *, void *, void *));
+int	dpt_pci_match(struct device *, void *, void *);
 #endif /* __OpenBSD__ */
-void	dpt_pci_attach __P((struct device *, struct device *, void *));
+void	dpt_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach dpt_pci_ca = {
 	sizeof(struct dpt_softc), dpt_pci_match, dpt_pci_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_usrreq.c,v 1.3 2001/05/16 12:53:35 ho Exp $	*/
+/*	$OpenBSD: pk_usrreq.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: pk_usrreq.c,v 1.10 1996/02/13 22:05:43 christos Exp $	*/
 
 /*
@@ -63,8 +63,8 @@
 #include <netccitt/pk_var.h>
 #include <netccitt/pk_extern.h>
 
-static void old_to_new __P((struct mbuf *));
-static void new_to_old __P((struct mbuf *));
+static void old_to_new(struct mbuf *);
+static void new_to_old(struct mbuf *);
 /*
  *
  *  X.25 Packet level protocol interface to socket abstraction.

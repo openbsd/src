@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccreg.h,v 1.3 1996/04/28 11:03:27 deraadt Exp $ */
+/*	$OpenBSD: pccreg.h,v 1.4 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -153,6 +153,6 @@ extern struct pccreg *sys_pcc;
 #define ZS1_PHYS_147	(INTIOBASE_147 + 0x3800)
 
 /* XXX */
-int	pccintr_establish __P((int vec, struct intrhand *ih));
+int	pccintr_establish(int vec, struct intrhand *ih);
 
 #define PCC_GENCTL_IEN	0x10

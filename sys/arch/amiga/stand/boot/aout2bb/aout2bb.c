@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: aout2bb.c,v 1.2 1997/03/22 00:20:48 niklas Exp $
+ * $OpenBSD: aout2bb.c,v 1.3 2002/03/14 01:26:29 millert Exp $
  * $NetBSD: aout2bb.c,v 1.2 1996/12/31 22:39:58 veego Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -51,7 +51,7 @@
 #include "aout2bb.h"
 #include "chksum.h"
 
-void usage __P((void));
+void usage(void);
 int intcmp(const void *, const void *);
 int main(int argc, char *argv[]);
 

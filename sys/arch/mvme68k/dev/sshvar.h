@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshvar.h,v 1.1 2001/02/18 17:41:09 deraadt Exp $ */
+/*	$OpenBSD: sshvar.h,v 1.2 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -197,7 +197,7 @@ struct	ssh_softc {
 #define	STS_INTERMED	0x10	/* Intermediate status sent */
 #define	STS_EXT		0x80	/* Extended status valid */
 
-void ssh_minphys __P((struct buf *bp));
-int ssh_scsicmd __P((struct scsi_xfer *));
+void ssh_minphys(struct buf *bp);
+int ssh_scsicmd(struct scsi_xfer *);
 
 #endif /* _SSHVAR_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.10 2001/06/30 08:35:27 csapuntz Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.11 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -100,25 +100,25 @@ struct	nfsmount {
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount __P((struct mount *mp, const char *path, void *data,
-		struct nameidata *ndp, struct proc *p));
-int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
-		struct mbuf *nam, char *pth, char *hst));
-int	nfs_mountroot __P((void));
-void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *, struct nfs_args *));
-int	nfs_start __P((struct mount *mp, int flags, struct proc *p));
-int	nfs_unmount __P((struct mount *mp, int mntflags, struct proc *p));
-int	nfs_root __P((struct mount *mp, struct vnode **vpp));
-int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, caddr_t arg,
-		struct proc *p));
-int	nfs_statfs __P((struct mount *mp, struct statfs *sbp, struct proc *p));
-int	nfs_sync __P((struct mount *mp, int waitfor, struct ucred *cred,
-		struct proc *p));
-int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
-int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp));
-int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, struct ucred *,
-			struct proc *));
-void	nfs_init __P((void));
+int	nfs_mount(struct mount *mp, const char *path, void *data,
+		struct nameidata *ndp, struct proc *p);
+int	mountnfs(struct nfs_args *argp, struct mount *mp,
+		struct mbuf *nam, char *pth, char *hst);
+int	nfs_mountroot(void);
+void	nfs_decode_args(struct nfsmount *, struct nfs_args *, struct nfs_args *);
+int	nfs_start(struct mount *mp, int flags, struct proc *p);
+int	nfs_unmount(struct mount *mp, int mntflags, struct proc *p);
+int	nfs_root(struct mount *mp, struct vnode **vpp);
+int	nfs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
+		struct proc *p);
+int	nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p);
+int	nfs_sync(struct mount *mp, int waitfor, struct ucred *cred,
+		struct proc *p);
+int	nfs_vget(struct mount *, ino_t, struct vnode **);
+int	nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp);
+int	nfs_vptofh(struct vnode *vp, struct fid *fhp);
+int	nfs_fsinfo(struct nfsmount *, struct vnode *, struct ucred *,
+			struct proc *);
+void	nfs_init(void);
 
 #endif

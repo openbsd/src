@@ -1,4 +1,4 @@
-/*	$OpenBSD: adosfs.h,v 1.10 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.11 2002/03/14 01:26:25 millert Exp $	*/
 /*	$NetBSD: adosfs.h,v 1.12 1996/10/08 22:18:02 thorpej Exp $	*/
 
 /*
@@ -137,16 +137,16 @@ struct adosfsmount {
  */
 #define adoswordn(bp,wn) betoh32(*((u_int32_t *)(bp)->b_data + (wn)))
 
-u_int32_t	 adoscksum __P((struct buf *, int));
-int		 adoscaseequ __P((const char *, const char *, int, int));
-int		 adoshash __P((const char *, int, int, int));
-int		 adunixprot __P((int));
-int		 adosfs_getblktype __P((struct adosfsmount *, struct buf *));
+u_int32_t	 adoscksum(struct buf *, int);
+int		 adoscaseequ(const char *, const char *, int, int);
+int		 adoshash(const char *, int, int, int);
+int		 adunixprot(int);
+int		 adosfs_getblktype(struct adosfsmount *, struct buf *);
 
-struct vnode	*adosfs_ahashget __P((struct mount *, ino_t));
-int		 adosfs_ainshash __P((struct adosfsmount *, struct anode *));
-void		 adosfs_aremhash __P((struct anode *));
+struct vnode	*adosfs_ahashget(struct mount *, ino_t);
+int		 adosfs_ainshash(struct adosfsmount *, struct anode *);
+void		 adosfs_aremhash(struct anode *);
 
-int		 adosfs_lookup __P((void *));
+int		 adosfs_lookup(void *);
 
-int		(**adosfs_vnodeop_p) __P((void *));
+int		(**adosfs_vnodeop_p)(void *);

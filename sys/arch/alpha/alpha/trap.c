@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.30 2002/03/12 11:58:14 art Exp $ */
+/* $OpenBSD: trap.c,v 1.31 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -120,23 +120,23 @@
 #include <compat/osf1/osf1_syscall.h>
 #endif
 
-void		userret __P((struct proc *, u_int64_t, u_quad_t));
+void		userret(struct proc *, u_int64_t, u_quad_t);
 
-unsigned long	Sfloat_to_reg __P((unsigned int));
-unsigned int	reg_to_Sfloat __P((unsigned long));
-unsigned long	Tfloat_reg_cvt __P((unsigned long));
+unsigned long	Sfloat_to_reg(unsigned int);
+unsigned int	reg_to_Sfloat(unsigned long);
+unsigned long	Tfloat_reg_cvt(unsigned long);
 #ifdef FIX_UNALIGNED_VAX_FP
-unsigned long	Ffloat_to_reg __P((unsigned int));
-unsigned int	reg_to_Ffloat __P((unsigned long));
-unsigned long	Gfloat_reg_cvt __P((unsigned long));
+unsigned long	Ffloat_to_reg(unsigned int);
+unsigned int	reg_to_Ffloat(unsigned long);
+unsigned long	Gfloat_reg_cvt(unsigned long);
 #endif
 
-int		unaligned_fixup __P((unsigned long, unsigned long,
-		    unsigned long, struct proc *));
+int		unaligned_fixup(unsigned long, unsigned long,
+		    unsigned long, struct proc *);
 int		handle_opdec(struct proc *p, u_int64_t *ucodep);
 
-static void printtrap __P((const unsigned long, const unsigned long,
-      const unsigned long, const unsigned long, struct trapframe *, int, int));
+static void printtrap(const unsigned long, const unsigned long,
+      const unsigned long, const unsigned long, struct trapframe *, int, int);
 
 /*
  * Initialize the trap vectors for the current processor.

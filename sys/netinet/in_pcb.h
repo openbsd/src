@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.38 2001/07/05 08:31:47 jjbg Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.39 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -235,52 +235,52 @@ struct baddynamicports {
 
 #define sotopf(so)  (so->so_proto->pr_domain->dom_family)
 
-void	 in_losing __P((struct inpcb *));
-int	 in_pcballoc __P((struct socket *, void *));
-int	 in_pcbbind __P((void *, struct mbuf *));
-int	 in_pcbconnect __P((void *, struct mbuf *));
-void	 in_pcbdetach __P((void *));
-void	 in_pcbdisconnect __P((void *));
+void	 in_losing(struct inpcb *);
+int	 in_pcballoc(struct socket *, void *);
+int	 in_pcbbind(void *, struct mbuf *);
+int	 in_pcbconnect(void *, struct mbuf *);
+void	 in_pcbdetach(void *);
+void	 in_pcbdisconnect(void *);
 struct inpcb *
-	 in_pcbhashlookup __P((struct inpcbtable *, struct in_addr,
-			       u_int, struct in_addr, u_int));
+	 in_pcbhashlookup(struct inpcbtable *, struct in_addr,
+			       u_int, struct in_addr, u_int);
 #ifdef INET6
 struct inpcb *
-	 in6_pcbhashlookup __P((struct inpcbtable *, struct in6_addr *,
-			       u_int, struct in6_addr *, u_int));
-int	 in6_pcbbind __P((struct inpcb *, struct mbuf *));
-int	 in6_pcbconnect __P((struct inpcb *, struct mbuf *));
-int	 in6_setsockaddr __P((struct inpcb *, struct mbuf *));
-int	 in6_setpeeraddr __P((struct inpcb *, struct mbuf *));
+	 in6_pcbhashlookup(struct inpcbtable *, struct in6_addr *,
+			       u_int, struct in6_addr *, u_int);
+int	 in6_pcbbind(struct inpcb *, struct mbuf *);
+int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
+int	 in6_setsockaddr(struct inpcb *, struct mbuf *);
+int	 in6_setpeeraddr(struct inpcb *, struct mbuf *);
 #endif /* INET6 */
-void	 in_pcbinit __P((struct inpcbtable *, int));
+void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
-	 in_pcblookup __P((struct inpcbtable *, void *, u_int, void *,
-	    u_int, int));
+	 in_pcblookup(struct inpcbtable *, void *, u_int, void *,
+	    u_int, int);
 void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
 void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
 	    int, void (*)(struct inpcb *, int)));
-void	 in_pcbrehash __P((struct inpcb *));
-void	 in_rtchange __P((struct inpcb *, int));
-void	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
-void	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
-int	 in_baddynamic __P((u_int16_t, u_int16_t));
-extern struct sockaddr_in *in_selectsrc __P((struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *));
+void	 in_pcbrehash(struct inpcb *);
+void	 in_rtchange(struct inpcb *, int);
+void	 in_setpeeraddr(struct inpcb *, struct mbuf *);
+void	 in_setsockaddr(struct inpcb *, struct mbuf *);
+int	 in_baddynamic(u_int16_t, u_int16_t);
+extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *);
 struct rtentry *
-	in_pcbrtentry __P((struct inpcb *));
+	in_pcbrtentry(struct inpcb *);
 
 /* INET6 stuff */
 int	in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 			   u_int, struct sockaddr *, u_int, int, void *,
 			   void (*)(struct inpcb *, int)));
-struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
+struct 	in6_addr *in6_selectsrc(struct sockaddr_in6 *,
 				     struct ip6_pktopts *,
 				     struct ip6_moptions *,
 				     struct route_in6 *,
-				     struct in6_addr *, int *));
-int	in6_selecthlim __P((struct inpcb *, struct ifnet *));
-int	in6_pcbsetport __P((struct in6_addr *, struct inpcb *));
+				     struct in6_addr *, int *);
+int	in6_selecthlim(struct inpcb *, struct ifnet *);
+int	in6_pcbsetport(struct in6_addr *, struct inpcb *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IN_PCB_H_ */

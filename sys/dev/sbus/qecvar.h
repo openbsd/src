@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.1 2001/08/20 22:09:27 jason Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.2 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: qecvar.h,v 1.4 1999/01/17 20:47:50 pk Exp $	*/
 
 /*-
@@ -75,4 +75,4 @@ struct qec_ring {
 	int	rb_td_nbusy;
 };
 
-void	qec_meminit __P((struct qec_ring *, unsigned int));
+void	qec_meminit(struct qec_ring *, unsigned int);

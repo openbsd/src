@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.6 2001/07/31 22:08:14 pvalchev Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -62,11 +62,11 @@ cdev_decl(spkr);
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int spkrprobe __P((struct device *, void *, void *));
+int spkrprobe(struct device *, void *, void *);
 #else
-int spkrprobe __P((struct device *, struct cfdata *, void *));
+int spkrprobe(struct device *, struct cfdata *, void *);
 #endif
-void spkrattach __P((struct device *, struct device *, void *));
+void spkrattach(struct device *, struct device *, void *);
 
 struct spkr_softc {
 	struct device sc_dev;
@@ -84,11 +84,11 @@ static pcppi_tag_t ppicookie;
 
 #define SPKRPRI (PZERO - 1)
 
-static void tone __P((u_int, u_int));
-static void rest __P((int));
-static void playinit __P((void));
-static void playtone __P((int, int, int));
-static void playstring __P((char *, int));
+static void tone(u_int, u_int);
+static void rest(int);
+static void playinit(void);
+static void playtone(int, int, int);
+static void playstring(char *, int);
 
 static
 void tone(hz, ticks)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: daadio.c,v 1.1 1999/07/23 19:11:24 jason Exp $	*/
+/*	$OpenBSD: daadio.c,v 1.2 2002/03/14 01:26:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -59,9 +59,9 @@
 #include <sparc/dev/fgavar.h>
 #include <sparc/dev/daadioreg.h>
 
-int	daadiomatch	__P((struct device *, void *, void *));
-void	daadioattach	__P((struct device *, struct device *, void *));
-int	daadiointr	__P((void *));
+int	daadiomatch(struct device *, void *, void *);
+void	daadioattach(struct device *, struct device *, void *);
+int	daadiointr(void *);
 
 struct daadio_softc {
 	struct		device sc_dv;		/* base device */
@@ -78,8 +78,8 @@ struct cfdriver daadio_cd = {
 	NULL, "daadio", DV_DULL
 };
 
-void	daadio_ier_setbit __P((struct daadio_softc *, u_int8_t));
-void	daadio_ier_clearbit __P((struct daadio_softc *, u_int8_t));
+void	daadio_ier_setbit(struct daadio_softc *, u_int8_t);
+void	daadio_ier_clearbit(struct daadio_softc *, u_int8_t);
 
 int
 daadiomatch(parent, vcf, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_signal.h,v 1.1 2001/02/02 19:48:08 tholo Exp $	*/
+/*	$OpenBSD: freebsd_signal.h,v 1.2 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.42 1998/12/21 10:35:00 drochner Exp $	*/
 
 /*
@@ -78,8 +78,8 @@ typedef struct __freebsd_siginfo {
  */
 struct freebsd_sigaction {
     union {
-	void    (*__freebsd_sa_handler) __P((int));
-	void    (*__freebsd_sa_sigaction) __P((int, struct __freebsd_siginfo *, void *));
+	void    (*__freebsd_sa_handler)(int);
+	void    (*__freebsd_sa_sigaction)(int, struct __freebsd_siginfo *, void *);
     } __freebsd_sigaction_u;                /* signal handler */
     int     freebsd_sa_flags;               /* see signal options below */
     freebsd_sigset_t freebsd_sa_mask;               /* signal mask to apply */

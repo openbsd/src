@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp.h,v 1.2 1996/03/04 10:34:44 mickey Exp $	*/
+/*	$OpenBSD: clnp.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: clnp.h,v 1.10 1996/02/13 22:08:09 christos Exp $	*/
 
 /*-
@@ -470,76 +470,76 @@ struct iso_ifaddr;
 struct route_iso;
 
 /* clnp_debug.c */
-char *clnp_hexp __P((char *, int, char *));
-char *clnp_iso_addrp __P((struct iso_addr *));
-char *clnp_saddr_isop __P((struct sockaddr_iso *));
+char *clnp_hexp(char *, int, char *);
+char *clnp_iso_addrp(struct iso_addr *);
+char *clnp_saddr_isop(struct sockaddr_iso *);
 
 /* clnp_er.c */
-void clnp_er_input __P((struct mbuf *, struct iso_addr *, u_int));
-void clnp_discard __P((struct mbuf *, u_int));
-void clnp_emit_er __P((struct mbuf *, u_int));
-int clnp_er_index __P((u_int));
+void clnp_er_input(struct mbuf *, struct iso_addr *, u_int);
+void clnp_discard(struct mbuf *, u_int);
+void clnp_emit_er(struct mbuf *, u_int);
+int clnp_er_index(u_int);
 
-int clnp_fragment __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		       int, int, int, struct rtentry *));
-struct mbuf *clnp_reass __P((struct mbuf *, struct iso_addr *,
-			     struct iso_addr *, struct clnp_segment *));
-int clnp_newpkt __P((struct mbuf *, struct iso_addr *, struct iso_addr *,
-		     struct clnp_segment *));
-void clnp_insert_frag __P((struct clnp_fragl *, struct mbuf *,
-			   struct clnp_segment *));
-struct mbuf    *clnp_comp_pdu __P((struct clnp_fragl *));
+int clnp_fragment(struct ifnet *, struct mbuf *, struct sockaddr *,
+		       int, int, int, struct rtentry *);
+struct mbuf *clnp_reass(struct mbuf *, struct iso_addr *,
+			     struct iso_addr *, struct clnp_segment *);
+int clnp_newpkt(struct mbuf *, struct iso_addr *, struct iso_addr *,
+		     struct clnp_segment *);
+void clnp_insert_frag(struct clnp_fragl *, struct mbuf *,
+			   struct clnp_segment *);
+struct mbuf    *clnp_comp_pdu(struct clnp_fragl *);
 #ifdef TROLL
-float troll_random __P((void));
-int troll_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		      struct rtentry *));
+float troll_random(void);
+int troll_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		      struct rtentry *);
 #endif
 
 /* clnp_input.c */
-void clnp_init  __P((void));
-void clnlintr    __P((void));
-void clnp_input __P((struct mbuf *, ...));
+void clnp_init(void);
+void clnlintr(void);
+void clnp_input(struct mbuf *, ...);
 
 /* clnp_options.c */
-void clnp_update_srcrt __P((struct mbuf *, struct clnp_optidx *));
-void clnp_dooptions __P((struct mbuf *, struct clnp_optidx *, struct ifnet *,
-			 struct iso_addr *));
-int clnp_set_opts __P((struct mbuf **, struct mbuf **));
-int clnp_opt_sanity __P((struct mbuf *, caddr_t, int, struct clnp_optidx *));
+void clnp_update_srcrt(struct mbuf *, struct clnp_optidx *);
+void clnp_dooptions(struct mbuf *, struct clnp_optidx *, struct ifnet *,
+			 struct iso_addr *);
+int clnp_set_opts(struct mbuf **, struct mbuf **);
+int clnp_opt_sanity(struct mbuf *, caddr_t, int, struct clnp_optidx *);
 
 /* clnp_output.c */
-int clnp_output __P((struct mbuf *, ...));
-void clnp_ctloutput __P((void));
+int clnp_output(struct mbuf *, ...);
+void clnp_ctloutput(void);
 
 /* clnp_raw.c */
-void rclnp_input __P((struct mbuf *, ...));
-int rclnp_output __P((struct mbuf *, ...));
-int rclnp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-int clnp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+void rclnp_input(struct mbuf *, ...);
+int rclnp_output(struct mbuf *, ...);
+int rclnp_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int clnp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *);
 
 /* clnp_subr.c */
-struct mbuf    *clnp_data_ck __P((struct mbuf *, int));
-caddr_t clnp_extract_addr __P((caddr_t, int, struct iso_addr *,
-			       struct iso_addr *));
-int clnp_ours   __P((struct iso_addr *));
-void clnp_forward __P((struct mbuf *, int, struct iso_addr *,
-		       struct clnp_optidx *, int, struct snpa_hdr *));
-caddr_t clnp_insert_addr __P((caddr_t, struct iso_addr *, struct iso_addr *));
-int clnp_route  __P((struct iso_addr *, struct route_iso *, int,
-		     struct sockaddr **, struct iso_ifaddr **));
-int clnp_srcroute __P((struct mbuf *, struct clnp_optidx *, struct route_iso *,
+struct mbuf    *clnp_data_ck(struct mbuf *, int);
+caddr_t clnp_extract_addr(caddr_t, int, struct iso_addr *,
+			       struct iso_addr *);
+int clnp_ours(struct iso_addr *);
+void clnp_forward(struct mbuf *, int, struct iso_addr *,
+		       struct clnp_optidx *, int, struct snpa_hdr *);
+caddr_t clnp_insert_addr(caddr_t, struct iso_addr *, struct iso_addr *);
+int clnp_route(struct iso_addr *, struct route_iso *, int,
+		     struct sockaddr **, struct iso_ifaddr **);
+int clnp_srcroute(struct mbuf *, struct clnp_optidx *, struct route_iso *,
 		       struct sockaddr **, struct iso_ifaddr **,
-		       struct iso_addr *));
-int clnp_echoreply __P((struct mbuf *, int, struct sockaddr_iso *,
-		        struct sockaddr_iso *, struct clnp_optidx *));
-int clnp_badmtu __P((struct ifnet *, struct rtentry *, int, char *));
-void clnp_ypocb  __P((caddr_t, caddr_t, u_int));
+		       struct iso_addr *);
+int clnp_echoreply(struct mbuf *, int, struct sockaddr_iso *,
+		        struct sockaddr_iso *, struct clnp_optidx *);
+int clnp_badmtu(struct ifnet *, struct rtentry *, int, char *);
+void clnp_ypocb(caddr_t, caddr_t, u_int);
 
 /* clnp_timer.c */
-struct clnp_fragl *clnp_freefrags __P((struct clnp_fragl *));
-void clnp_slowtimo __P((void));
-void clnp_drain __P((void));
+struct clnp_fragl *clnp_freefrags(struct clnp_fragl *);
+void clnp_slowtimo(void);
+void clnp_drain(void);
 
 #ifdef	TROLL
 struct troll    trollctl;

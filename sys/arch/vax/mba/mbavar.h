@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbavar.h,v 1.4 2000/04/27 03:14:45 bjc Exp $ */
+/*	$OpenBSD: mbavar.h,v 1.5 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: mbavar.h,v 1.5 2000/01/21 23:39:56 thorpej Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -91,11 +91,11 @@ struct	mba_attach_args {
 struct	mba_device {
 	struct	mba_device *md_back;	/* linked list of runnable devices */
 	    /* Start routine to be called by mbastart. */
-	void	(*md_start) __P((struct mba_device *));
+	void	(*md_start)(struct mba_device *);
 	    /* Routine to be called after attn intr */
-	int	(*md_attn)__P((struct mba_device *));
+	int	(*md_attn)(struct mba_device *);
 	    /* Call after xfer finish */
-	enum	xfer_action (*md_finish) __P((struct mba_device *, int, int *));
+	enum	xfer_action (*md_finish)(struct mba_device *, int, int *);
 	void	*md_softc;	/* Backpointer to this units softc. */
 	struct	mba_softc *md_mba;
 	struct	buf_queue md_q;	/* queue of I/O requests */
@@ -118,5 +118,5 @@ struct  mbaunit {
 };
 
 /* Common prototypes */
-void	mbaqueue __P((struct mba_device *));
+void	mbaqueue(struct mba_device *);
 

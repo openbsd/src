@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 2001/09/01 15:44:20 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.2 2002/03/14 01:26:36 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -75,7 +75,7 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL, NULL, 0
 };
 
-void config_l2cr __P((void));
+void config_l2cr(void);
 
 int
 cpumatch(parent, cfdata, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.9 2002/02/05 23:15:33 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.10 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -87,13 +87,13 @@ struct sysconsoftc {
 	struct intrhand sc_m188ih;	/* `m188 interrupt' */
 };
 
-void sysconattach __P((struct device *, struct device *, void *));
-int  sysconmatch __P((struct device *, void *, void *));
-void setupiackvectors __P((void));
-int  sysconabort __P((void *));
-int  sysconacfail __P((void *));
-int  sysconsysfail __P((void *));
-int  sysconm188 __P((void *));
+void sysconattach(struct device *, struct device *, void *);
+int  sysconmatch(struct device *, void *, void *);
+void setupiackvectors(void);
+int  sysconabort(void *);
+int  sysconacfail(void *);
+int  sysconsysfail(void *);
+int  sysconm188(void *);
 
 struct cfattach syscon_ca = {
 	sizeof(struct sysconsoftc), sysconmatch, sysconattach
@@ -105,8 +105,8 @@ struct cfdriver syscon_cd = {
 
 struct sysconreg *sys_syscon = NULL;
 
-int syscon_print __P((void *args, const char *bus));
-int syscon_scan __P((struct device *parent, void *child, void *args));
+int syscon_print(void *args, const char *bus);
+int syscon_scan(struct device *parent, void *child, void *args);
 
 int
 sysconmatch(parent, vcf, args)

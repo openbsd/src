@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.17 2002/03/05 22:11:37 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.18 2002/03/14 01:26:39 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,8 +65,8 @@ struct nvramsoftc {
 	void *      sc_regs;
 };
 
-void    nvramattach     __P((struct device *, struct device *, void *));
-int     nvrammatch __P((struct device *, void *, void *));
+void    nvramattach(struct device *, struct device *, void *);
+int     nvrammatch(struct device *, void *, void *);
 
 struct cfattach nvram_ca = { 
 	sizeof(struct nvramsoftc), nvrammatch, nvramattach
@@ -76,15 +76,15 @@ struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL, 0
 };
 
-int nvramopen __P((dev_t dev, int flag, int mode));
-int nvramclose __P((dev_t dev, int flag, int mode));
-int nvramioctl __P((dev_t dev, int cmd, caddr_t data, int flag,
-    struct proc *p));
-int nvramread __P((dev_t dev, struct uio *uio, int flags));
-int nvramwrite __P((dev_t dev, struct uio *uio, int flags));
-paddr_t nvrammmap __P((dev_t dev, off_t off, int prot));
+int nvramopen(dev_t dev, int flag, int mode);
+int nvramclose(dev_t dev, int flag, int mode);
+int nvramioctl(dev_t dev, int cmd, caddr_t data, int flag,
+    struct proc *p);
+int nvramread(dev_t dev, struct uio *uio, int flags);
+int nvramwrite(dev_t dev, struct uio *uio, int flags);
+paddr_t nvrammmap(dev_t dev, off_t off, int prot);
 
-u_long chiptotime __P((int, int, int, int, int, int));
+u_long chiptotime(int, int, int, int, int, int);
 
 int
 nvrammatch(parent, vcf, args)
@@ -242,7 +242,7 @@ struct chiptime {
 	int     year;
 };
 
-void timetochip __P((struct chiptime *c));
+void timetochip(struct chiptime *c);
 
 void
 timetochip(c)

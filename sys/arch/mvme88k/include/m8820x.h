@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.5 2001/12/22 09:49:39 smurph Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.6 2002/03/14 01:26:39 millert Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -128,41 +128,41 @@
 /*
  * Prototypes from "mvme88k/mvme88k/m8820x.c"
  */
-void m8820x_show_apr __P((unsigned));
-void m8820x_setup_board_config __P((void));
-void m8820x_setup_cmmu_config __P((void));
-void m8820x_cmmu_dump_config __P((void));
-void m8820x_cpu_configuration_print __P((int));
-void m8820x_cmmu_shutdown_now __P((void));
-void m8820x_cmmu_parity_enable __P((void));
-unsigned m8820x_cmmu_cpu_number __P((void));
-unsigned m8820x_cmmu_get_idr __P((unsigned));
-void m8820x_cmmu_set_sapr __P((unsigned));
-void m8820x_cmmu_remote_set_sapr __P((unsigned, unsigned));
-void m8820x_cmmu_set_uapr __P((unsigned));
-void m8820x_cmmu_set_batc_entry __P((unsigned, unsigned, unsigned, unsigned));
-void m8820x_cmmu_set_pair_batc_entry __P((unsigned, unsigned, unsigned));
-void m8820x_cmmu_flush_remote_tlb __P((unsigned, unsigned, vm_offset_t, int));
-void m8820x_cmmu_flush_tlb __P((unsigned, vm_offset_t, int));
-void m8820x_cmmu_pmap_activate __P((unsigned, unsigned, 
+void m8820x_show_apr(unsigned);
+void m8820x_setup_board_config(void);
+void m8820x_setup_cmmu_config(void);
+void m8820x_cmmu_dump_config(void);
+void m8820x_cpu_configuration_print(int);
+void m8820x_cmmu_shutdown_now(void);
+void m8820x_cmmu_parity_enable(void);
+unsigned m8820x_cmmu_cpu_number(void);
+unsigned m8820x_cmmu_get_idr(unsigned);
+void m8820x_cmmu_set_sapr(unsigned);
+void m8820x_cmmu_remote_set_sapr(unsigned, unsigned);
+void m8820x_cmmu_set_uapr(unsigned);
+void m8820x_cmmu_set_batc_entry(unsigned, unsigned, unsigned, unsigned);
+void m8820x_cmmu_set_pair_batc_entry(unsigned, unsigned, unsigned);
+void m8820x_cmmu_flush_remote_tlb(unsigned, unsigned, vm_offset_t, int);
+void m8820x_cmmu_flush_tlb(unsigned, vm_offset_t, int);
+void m8820x_cmmu_pmap_activate(unsigned, unsigned, 
     batc_template_t i_batc[BATC_MAX],
-				  batc_template_t d_batc[BATC_MAX]));
-void m8820x_cmmu_flush_remote_cache __P((int, vm_offset_t, int));
-void m8820x_cmmu_flush_cache __P((vm_offset_t, int));
-void m8820x_cmmu_flush_remote_inst_cache __P((int, vm_offset_t, int));
-void m8820x_cmmu_flush_inst_cache __P((vm_offset_t, int));
-void m8820x_cmmu_flush_remote_data_cache __P((int, vm_offset_t, int));
-void m8820x_cmmu_flush_data_cache __P((vm_offset_t, int));
-void m8820x_dma_cachectl __P((vm_offset_t, int, int));
+				  batc_template_t d_batc[BATC_MAX]);
+void m8820x_cmmu_flush_remote_cache(int, vm_offset_t, int);
+void m8820x_cmmu_flush_cache(vm_offset_t, int);
+void m8820x_cmmu_flush_remote_inst_cache(int, vm_offset_t, int);
+void m8820x_cmmu_flush_inst_cache(vm_offset_t, int);
+void m8820x_cmmu_flush_remote_data_cache(int, vm_offset_t, int);
+void m8820x_cmmu_flush_data_cache(vm_offset_t, int);
+void m8820x_dma_cachectl(vm_offset_t, int, int);
 
 #if DDB
-unsigned m8820x_cmmu_get_by_mode __P((int, int));
-void m8820x_cmmu_show_translation __P((unsigned, unsigned, unsigned, int));
-void m8820x_cmmu_cache_state __P((unsigned, unsigned));
-void m8820x_show_cmmu_info __P((unsigned));
+unsigned m8820x_cmmu_get_by_mode(int, int);
+void m8820x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
+void m8820x_cmmu_cache_state(unsigned, unsigned);
+void m8820x_show_cmmu_info(unsigned);
 #endif 
 
-void m8820x_cmmu_init __P((void));
+void m8820x_cmmu_init(void);
 
 #endif	/* _LOCORE */
 

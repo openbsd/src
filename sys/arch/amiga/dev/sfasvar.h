@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfasvar.h,v 1.3 2001/06/27 05:44:44 nate Exp $	*/
+/*	$OpenBSD: sfasvar.h,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: sfasvar.h,v 1.4 1996/04/21 21:12:33 veego Exp $	*/
 
 /*
@@ -203,20 +203,17 @@ struct	sfas_softc {
 	u_char			 sc_config_flags;
 
 /* Generic DMA functions */
-	int		       (*sc_setup_dma)
-					__P((struct sfas_softc *sc,
-					    vm_offset_t ptr, int len, int mode));
-	int		       (*sc_build_dma_chain)
-					__P((struct sfas_softc *sc,
+	int		       (*sc_setup_dma)(struct sfas_softc *sc,
+					    vm_offset_t ptr, int len, int mode);
+	int		       (*sc_build_dma_chain)(struct sfas_softc *sc,
 					    struct sfas_dma_chain *chain,
-					    void *p, int l));
-	int		       (*sc_need_bump)
-					__P((struct sfas_softc *sc,
-					    vm_offset_t ptr, int len));
+					    void *p, int l);
+	int		       (*sc_need_bump)(struct sfas_softc *sc,
+					    vm_offset_t ptr, int len);
 
 /* Generic Led data */
 	int			 sc_led_status;
-	void			(*sc_led) __P((struct sfas_softc *sc, int mode));
+	void			(*sc_led)(struct sfas_softc *sc, int mode);
 
 /* Nexus list */
 	struct nexus		 sc_nexus[8];
@@ -298,9 +295,9 @@ struct	sfas_softc {
 #define SFAS_SLOW_CABLE	 0x08	/* Cable is "unsafe" for fast scsi-2 */
 #define SFAS_SLOW_START	 0x10	/* There are slow starters on the bus */
 
-void	sfasinitialize __P((struct sfas_softc *sc));
-void	sfas_minphys   __P((struct buf *bp));
-int	sfas_scsicmd   __P((struct scsi_xfer *));
-void	sfasintr	__P((struct sfas_softc *dev));
+void	sfasinitialize(struct sfas_softc *sc);
+void	sfas_minphys(struct buf *bp);
+int	sfas_scsicmd(struct scsi_xfer *);
+void	sfasintr(struct sfas_softc *dev);
 
 #endif /* _SFASVAR_H_ */

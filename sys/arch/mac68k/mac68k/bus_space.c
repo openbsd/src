@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.15 2002/01/16 20:50:16 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.16 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -50,8 +50,8 @@
 
 #include <uvm/uvm_extern.h>
 
-int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
-	    int, bus_space_handle_t *));
+int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *);
 
 extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;

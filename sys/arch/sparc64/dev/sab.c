@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.5 2002/01/18 21:15:56 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.6 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -118,42 +118,42 @@ struct sabtty_softc *sabtty_cons_output;
 #define	SAB_WRITE(sc,r,v)	\
     bus_space_write_1((sc)->sc_bt, (sc)->sc_bh, (r), (v))
 
-int sab_match __P((struct device *, void *, void *));
-void sab_attach __P((struct device *, struct device *, void *));
-int sab_print __P((void *, const char *));
-int sab_intr __P((void *));
-void sab_softintr __P((void *));
-void sab_cnputc __P((dev_t, int));
-int sab_cngetc __P((dev_t));
-void sab_cnpollc __P((dev_t, int));
+int sab_match(struct device *, void *, void *);
+void sab_attach(struct device *, struct device *, void *);
+int sab_print(void *, const char *);
+int sab_intr(void *);
+void sab_softintr(void *);
+void sab_cnputc(dev_t, int);
+int sab_cngetc(dev_t);
+void sab_cnpollc(dev_t, int);
 
-int sabtty_match __P((struct device *, void *, void *));
-void sabtty_attach __P((struct device *, struct device *, void *));
-void sabtty_start __P((struct tty *));
-int sabtty_param __P((struct tty *, struct termios *));
-int sabtty_intr __P((struct sabtty_softc *, int *));
-void sabtty_softintr __P((struct sabtty_softc *));
-int sabtty_mdmctrl __P((struct sabtty_softc *, int, int));
-void sabtty_cec_wait __P((struct sabtty_softc *));
-void sabtty_tec_wait __P((struct sabtty_softc *));
-void sabtty_reset __P((struct sabtty_softc *));
-void sabtty_flush __P((struct sabtty_softc *));
-int sabtty_speed __P((int));
-void sabtty_console_flags __P((struct sabtty_softc *));
-void sabtty_cnpollc __P((struct sabtty_softc *, int));
-void sabtty_shutdown __P((void *));
-int sabttyparam __P((struct sabtty_softc *, struct tty *, struct termios *));
+int sabtty_match(struct device *, void *, void *);
+void sabtty_attach(struct device *, struct device *, void *);
+void sabtty_start(struct tty *);
+int sabtty_param(struct tty *, struct termios *);
+int sabtty_intr(struct sabtty_softc *, int *);
+void sabtty_softintr(struct sabtty_softc *);
+int sabtty_mdmctrl(struct sabtty_softc *, int, int);
+void sabtty_cec_wait(struct sabtty_softc *);
+void sabtty_tec_wait(struct sabtty_softc *);
+void sabtty_reset(struct sabtty_softc *);
+void sabtty_flush(struct sabtty_softc *);
+int sabtty_speed(int);
+void sabtty_console_flags(struct sabtty_softc *);
+void sabtty_cnpollc(struct sabtty_softc *, int);
+void sabtty_shutdown(void *);
+int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
-int sabttyopen __P((dev_t, int, int, struct proc *));
-int sabttyclose __P((dev_t, int, int, struct proc *));
-int sabttyread __P((dev_t, struct uio *, int));
-int sabttywrite __P((dev_t, struct uio *, int));
-int sabttyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int sabttystop __P((struct tty *, int));
-struct tty *sabttytty __P((dev_t));
-void sabtty_cnputc __P((struct sabtty_softc *, int));
-int sabtty_cngetc __P((struct sabtty_softc *));
-void sabtty_abort __P((struct sabtty_softc *));
+int sabttyopen(dev_t, int, int, struct proc *);
+int sabttyclose(dev_t, int, int, struct proc *);
+int sabttyread(dev_t, struct uio *, int);
+int sabttywrite(dev_t, struct uio *, int);
+int sabttyioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int sabttystop(struct tty *, int);
+struct tty *sabttytty(dev_t);
+void sabtty_cnputc(struct sabtty_softc *, int);
+int sabtty_cngetc(struct sabtty_softc *);
+void sabtty_abort(struct sabtty_softc *);
 
 struct cfattach sab_ca = {
 	sizeof(struct sab_softc), sab_match, sab_attach

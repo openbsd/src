@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.6 2001/10/24 08:16:42 jjbg Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -197,29 +197,29 @@ struct syslog_data {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	closelog __P((void));
-void	openlog __P((const char *, int, int));
-int	setlogmask __P((int));
-void	syslog __P((int, const char *, ...))
+void	closelog(void);
+void	openlog(const char *, int, int);
+int	setlogmask(int);
+void	syslog(int, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
-void	closelog_r __P((struct syslog_data *));
-void	openlog_r __P((const char *, int, int, struct syslog_data *));
-int	setlogmask_r __P((int, struct syslog_data *));
-void	syslog_r __P((int, struct syslog_data *, const char *, ...))
+void	vsyslog(int, const char *, _BSD_VA_LIST_);
+void	closelog_r(struct syslog_data *);
+void	openlog_r(const char *, int, int, struct syslog_data *);
+int	setlogmask_r(int, struct syslog_data *);
+void	syslog_r(int, struct syslog_data *, const char *, ...)
      __attribute__((__format__(__printf__,3,4)));
-void	vsyslog_r __P((int, struct syslog_data *, const char *, 
-     _BSD_VA_LIST_));
+void	vsyslog_r(int, struct syslog_data *, const char *, 
+     _BSD_VA_LIST_);
 __END_DECLS
 
 #else /* !_KERNEL */
 
-void	logpri __P((int));
-void	log __P((int, const char *, ...))
+void	logpri(int);
+void	log(int, const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
-int	addlog __P((const char *, ...))
+int	addlog(const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
-void	logwakeup __P((void));
+void	logwakeup(void);
 
 #endif /* !_KERNEL */
 #endif /* !_SYS_SYSLOG_H_ */

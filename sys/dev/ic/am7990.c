@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.27 2001/07/27 15:30:42 tholo Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.28 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -72,23 +72,23 @@
 #include <dev/ic/am7990var.h>
 
 #ifdef LEDEBUG
-void am7990_recv_print __P((struct am7990_softc *, int));
-void am7990_xmit_print __P((struct am7990_softc *, int));
+void am7990_recv_print(struct am7990_softc *, int);
+void am7990_xmit_print(struct am7990_softc *, int);
 #endif
 
-integrate void am7990_rint __P((struct am7990_softc *));
-integrate void am7990_tint __P((struct am7990_softc *));
+integrate void am7990_rint(struct am7990_softc *);
+integrate void am7990_tint(struct am7990_softc *);
 
-integrate int am7990_put __P((struct am7990_softc *, int, struct mbuf *));
-integrate struct mbuf *am7990_get __P((struct am7990_softc *, int, int));
-integrate void am7990_read __P((struct am7990_softc *, int, int)); 
+integrate int am7990_put(struct am7990_softc *, int, struct mbuf *);
+integrate struct mbuf *am7990_get(struct am7990_softc *, int, int);
+integrate void am7990_read(struct am7990_softc *, int, int); 
 
-hide void am7990_shutdown __P((void *));
+hide void am7990_shutdown(void *);
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 
 #if 0	/* XXX what do we do about this?!  --thorpej */
-static inline u_int16_t ether_cmp __P((void *, void *));
+static inline u_int16_t ether_cmp(void *, void *);
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and

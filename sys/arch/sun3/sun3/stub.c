@@ -1,4 +1,4 @@
-/*	$OpenBSD: stub.c,v 1.8 2001/05/30 20:37:54 miod Exp $	*/
+/*	$OpenBSD: stub.c,v 1.9 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: stub.c,v 1.13 1996/11/20 18:57:37 gwr Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <machine/machdep.h>
 
 #ifndef DDB
-void  Debugger __P((void));
+void  Debugger(void);
 
 /*
  * When DDB is included, Debugger() comes from db_interface.c

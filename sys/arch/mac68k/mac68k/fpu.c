@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.10 1998/02/14 09:22:38 gene Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.11 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: fpu.c,v 1.23 1998/01/12 19:22:22 thorpej Exp $	*/
 
 /*-
@@ -59,9 +59,9 @@ int     fputype;
 
 extern int *nofault;
 
-static int  fpu_match __P((struct device *, void *, void *));
-static void fpu_attach __P((struct device *, struct device *, void *));
-static int  fpu_probe __P((void));
+static int  fpu_match(struct device *, void *, void *);
+static void fpu_attach(struct device *, struct device *, void *);
+static int  fpu_probe(void);
 
 struct cfattach fpu_ca = {
 	sizeof(struct device), fpu_match, fpu_attach

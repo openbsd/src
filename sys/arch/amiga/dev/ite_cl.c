@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_cl.c,v 1.4 2000/12/15 17:41:45 espie Exp $	*/
+/*	$OpenBSD: ite_cl.c,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_cl.c,v 1.3.2.1 1999/06/28 23:22:17 perry Exp $	*/
 
 /*
@@ -58,13 +58,13 @@ int cl_console = 1;
 int cl_console = 0;
 #endif
 
-void cl_init __P((struct ite_softc *ip));
-void cl_cursor __P((struct ite_softc *ip, int flag));
-void cl_deinit __P((struct ite_softc *ip));
-void cl_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
-void cl_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
-void cl_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
-    int dir));
+void cl_init(struct ite_softc *ip);
+void cl_cursor(struct ite_softc *ip, int flag);
+void cl_deinit(struct ite_softc *ip);
+void cl_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
+void cl_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
+void cl_scroll(struct ite_softc *ip, int sy, int sx, int count,
+    int dir);
 
 
 /*

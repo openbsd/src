@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.39 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.40 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ struct nd_prhead nd_prefix = { 0 };
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 static struct sockaddr_in6 all1_sa;
 
-static void nd6_slowtimo __P((void *));
+static void nd6_slowtimo(void *);
 
 struct timeout nd6_slowtimo_ch;
 struct timeout nd6_timer_ch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.9 1998/12/22 07:58:46 deraadt Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.10 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -58,11 +58,11 @@
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static __inline void svr4_sigfillset __P((svr4_sigset_t *));
-void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *,
-				struct sigaction *));
-void bsd_to_svr4_sigaction __P((const struct sigaction *,
-				struct svr4_sigaction *));
+static __inline void svr4_sigfillset(svr4_sigset_t *);
+void svr4_to_bsd_sigaction(const struct svr4_sigaction *,
+				struct sigaction *);
+void bsd_to_svr4_sigaction(const struct sigaction *,
+				struct svr4_sigaction *);
 
 static __inline void
 svr4_sigfillset(s)

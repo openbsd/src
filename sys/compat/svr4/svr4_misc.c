@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.40 2002/02/12 22:13:22 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.41 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -91,20 +91,20 @@
 
 #include <uvm/uvm_extern.h>
 
-static __inline clock_t timeval_to_clock_t __P((struct timeval *));
-static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
+static __inline clock_t timeval_to_clock_t(struct timeval *);
+static int svr4_setinfo(struct proc *, int, svr4_siginfo_t *);
 
 struct svr4_hrtcntl_args;
-static int svr4_hrtcntl	__P((struct proc *, struct svr4_hrtcntl_args *,
-    register_t *));
-static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
-    struct svr4_statvfs *));
-static void bsd_statfs_to_svr4_statvfs64 __P((const struct statfs *,
-    struct svr4_statvfs64 *));
-static struct proc *svr4_pfind __P((pid_t pid));
+static int svr4_hrtcntl(struct proc *, struct svr4_hrtcntl_args *,
+    register_t *);
+static void bsd_statfs_to_svr4_statvfs(const struct statfs *,
+    struct svr4_statvfs *);
+static void bsd_statfs_to_svr4_statvfs64(const struct statfs *,
+    struct svr4_statvfs64 *);
+static struct proc *svr4_pfind(pid_t pid);
 
-static int svr4_mknod __P((struct proc *, register_t *, char *,
-			   svr4_mode_t, svr4_dev_t));
+static int svr4_mknod(struct proc *, register_t *, char *,
+			   svr4_mode_t, svr4_dev_t);
 
 int
 svr4_sys_wait(p, v, retval)
@@ -218,8 +218,8 @@ svr4_sys_time(p, v, retval)
  * This is quite ugly, but what do you expect from compatibility code?
  */
 
-int svr4_readdir_callback __P((void *, struct dirent *, off_t));
-int svr4_readdir64_callback __P((void *, struct dirent *, off_t));
+int svr4_readdir_callback(void *, struct dirent *, off_t);
+int svr4_readdir64_callback(void *, struct dirent *, off_t);
 
 struct svr4_readdir_callback_args {
 	caddr_t outp;

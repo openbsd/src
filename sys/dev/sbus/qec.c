@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -53,25 +53,25 @@
 #include <dev/sbus/qecreg.h>
 #include <dev/sbus/qecvar.h>
 
-static int	qecprint	__P((void *, const char *));
-static int	qecmatch	__P((struct device *, void *, void *));
-static void	qecattach	__P((struct device *, struct device *, void *));
-void		qec_init	__P((struct qec_softc *));
+static int	qecprint(void *, const char *);
+static int	qecmatch(struct device *, void *, void *);
+static void	qecattach(struct device *, struct device *, void *);
+void		qec_init(struct qec_softc *);
 
-static int qec_bus_map __P((
+static int qec_bus_map(
 		bus_space_tag_t,
 		bus_type_t,		/*slot*/
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
+		bus_space_handle_t *);
 static void *qec_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
 		int,			/*flags*/
-		int (*) __P((void *)),	/*handler*/
+		int (*)(void *),	/*handler*/
 		void *));		/*arg*/
 
 struct cfattach qec_ca = {
@@ -274,7 +274,7 @@ qec_intr_establish(t, pri, level, flags, handler, arg)
 	int pri;
 	int level;
 	int flags;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	struct qec_softc *sc = t->cookie;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.2 1999/09/07 12:36:20 jason Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.3 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -100,14 +100,14 @@ struct tctrl_softc {
 	struct evcnt sc_intrcnt;	/* interrupt counting */
 };
 
-int tctrl_match		__P((struct device *, void *, void *));
-void tctrl_attach	__P((struct device *, struct device *, void *));
+int tctrl_match(struct device *, void *, void *);
+void tctrl_attach(struct device *, struct device *, void *);
 
-void tctrl_write_data		__P((struct tctrl_softc *, u_int8_t));
-u_int8_t tctrl_read_data	__P((struct tctrl_softc *));
-int tctrl_intr			__P((void *));
-void tctrl_setup_bitport	__P((struct tctrl_softc *, int));
-void tctrl_process_response	__P((struct tctrl_softc *));
+void tctrl_write_data(struct tctrl_softc *, u_int8_t);
+u_int8_t tctrl_read_data(struct tctrl_softc *);
+int tctrl_intr(void *);
+void tctrl_setup_bitport(struct tctrl_softc *, int);
+void tctrl_process_response(struct tctrl_softc *);
 
 struct cfattach tctrl_ca = {
 	sizeof(struct tctrl_softc), tctrl_match, tctrl_attach

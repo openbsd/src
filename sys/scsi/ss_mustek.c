@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.8 1997/03/11 03:40:50 kstailey Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.9 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -69,15 +69,15 @@
 
 #define MUSTEK_RETRIES 4
 
-int mustek_set_params __P((struct ss_softc *, struct scan_io *));
-int mustek_trigger_scanner __P((struct ss_softc *));
-void mustek_minphys __P((struct ss_softc *, struct buf *));
-int mustek_read __P((struct ss_softc *, struct buf *));
-int mustek_rewind_scanner __P((struct ss_softc *));
+int mustek_set_params(struct ss_softc *, struct scan_io *);
+int mustek_trigger_scanner(struct ss_softc *);
+void mustek_minphys(struct ss_softc *, struct buf *);
+int mustek_read(struct ss_softc *, struct buf *);
+int mustek_rewind_scanner(struct ss_softc *);
 
 /* only used internally */
-int mustek_get_status __P((struct ss_softc *, int, int));
-void mustek_compute_sizes __P((struct ss_softc *));
+int mustek_get_status(struct ss_softc *, int, int);
+void mustek_compute_sizes(struct ss_softc *);
 
 /*
  * structure for the special handlers

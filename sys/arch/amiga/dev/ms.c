@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.5 2001/09/13 13:34:53 jj Exp $	*/
+/*	$OpenBSD: ms.c,v 1.6 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ms.c,v 1.14 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
@@ -73,12 +73,12 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-void msattach __P((struct device *, struct device *, void *));
-int msmatch __P((struct device *, void *, void *));
+void msattach(struct device *, struct device *, void *);
+int msmatch(struct device *, void *, void *);
 
-void msintr __P((void *));
-void ms_enable __P((dev_t));
-void ms_disable __P((dev_t));
+void msintr(void *);
+void ms_enable(dev_t);
+void ms_disable(dev_t);
 
 struct ms_softc {
 	struct device sc_dev;

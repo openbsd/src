@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2002/02/21 06:12:30 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -204,12 +204,12 @@ TAILQ_HEAD(, pv_page) pv_page_freelist;
 u_int pv_nfree;
 
 #ifdef PMAPDEBUG
-void pmap_hptdump __P((int sp));
+void pmap_hptdump(int sp);
 #endif
 
 u_int	kern_prot[8], user_prot[8];
 
-void pmap_pinit __P((pmap_t));
+void pmap_pinit(pmap_t);
 #define	pmap_sid(pmap, va) \
 	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.50 2001/12/09 12:57:26 jason Exp $	*/
+/*	$OpenBSD: if.c,v 1.51 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -107,23 +107,23 @@
 #include <net/if_bridge.h>
 #endif
 
-void	if_attachsetup __P((struct ifnet *));
-int	if_detach_rtdelete __P((struct radix_node *, void *));
-int	if_mark_ignore __P((struct radix_node *, void *));
-int	if_mark_unignore __P((struct radix_node *, void *));
+void	if_attachsetup(struct ifnet *);
+int	if_detach_rtdelete(struct radix_node *, void *);
+int	if_mark_ignore(struct radix_node *, void *);
+int	if_mark_unignore(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
 
-void	if_detached_start __P((struct ifnet *));
-int	if_detached_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	if_detached_watchdog __P((struct ifnet *));
+void	if_detached_start(struct ifnet *);
+int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
+void	if_detached_watchdog(struct ifnet *);
 
 #ifdef INET6
 /*
  * XXX: declare here to avoid to include many inet6 related files..
  * should be more generalized?
  */
-extern void nd6_setmtu __P((struct ifnet *));
+extern void nd6_setmtu(struct ifnet *);
 #endif 
 
 /*

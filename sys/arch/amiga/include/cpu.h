@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2002/02/23 00:31:11 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
 
 /*
@@ -148,33 +148,33 @@ int machineid;
 /*
  * Prototypes from amiga_init.c
  */
-void	*alloc_z2mem __P((long));
+void	*alloc_z2mem(long);
 
 /*
  * Prototypes from autoconf.c
  */
-int	is_a1200 __P((void));
-int	is_a3000 __P((void));
-int	is_a4000 __P((void));
+int	is_a1200(void);
+int	is_a3000(void);
+int	is_a4000(void);
 #ifdef DRACO
-int	is_draco __P((void));
+int	is_draco(void);
 #endif
 
 /*
  * Prototypes from clock.c
  */
-u_long	clkread __P((void));
+u_long	clkread(void);
 
 #ifdef DRACO
 /*
  * Prototypes from kbd.c
  */
-void	drkbdintr __P((void));
+void	drkbdintr(void);
 
 /*
  * Prototypes from drsc.c
  */
-void	drsc_handler __P((void));
+void	drsc_handler(void);
 #endif
 
 /*
@@ -184,68 +184,68 @@ struct fpframe;
 struct user;
 struct pcb;
 
-void	doboot __P((void)) __attribute__((__noreturn__));
-void	loadustp __P((int));
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-u_int	probeva __P((u_int, u_int));
-void	proc_trampoline __P((void));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	DCIAS __P((vm_offset_t));
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
+void	doboot(void) __attribute__((__noreturn__));
+void	loadustp(int);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+u_int	probeva(u_int, u_int);
+void	proc_trampoline(void);
+void	savectx(struct pcb *);
+void	switch_exit(struct proc *);
+void	DCIAS(vm_offset_t);
+void	DCIA(void);
+void	DCIS(void);
+void	DCIU(void);
+void	ICIA(void);
+void	ICPA(void);
+void	PCIA(void);
+void	TBIA(void);
+void	TBIS(vm_offset_t);
+void	TBIAS(void);
+void	TBIAU(void);
 #if defined(M68040) || defined(M68060)
-void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
+void	DCFA(void);
+void	DCFP(vm_offset_t);
+void	DCFL(vm_offset_t);
+void	DCPL(vm_offset_t);
+void	DCPP(vm_offset_t);
+void	ICPL(vm_offset_t);
+void	ICPP(vm_offset_t);
 #endif
 
 /*
  * Prototypes from machdep.c
  */
-int	badaddr __P((caddr_t));
-int	badbaddr __P((caddr_t));
-void	bootsync __P((void));
-void	dumpconf __P((void));
+int	badaddr(caddr_t);
+int	badbaddr(caddr_t);
+void	bootsync(void);
+void	dumpconf(void);
 
 /*
  * Prototypes from sys_machdep.c:
  */
-int	cachectl __P((int, caddr_t, int));
-int	dma_cachectl __P((caddr_t, int));
+int	cachectl(int, caddr_t, int);
+int	dma_cachectl(caddr_t, int);
 
 /*
  * Prototypes from vm_machdep.c
  */
-int	kvtop __P((caddr_t));
-void	physaccess __P((caddr_t,  caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
+int	kvtop(caddr_t);
+void	physaccess(caddr_t,  caddr_t, int, int);
+void	physunaccess(caddr_t, int);
 
 #ifdef GENERIC
 /*
  * Prototypes from swapgeneric.c:
  */
-void	setconf __P((void));
+void	setconf(void);
 #endif
 
 /*
  * Prototypes from pmap.c:
  */
-void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+void	pmap_bootstrap(vm_offset_t, vm_offset_t);
+vm_offset_t pmap_map(vm_offset_t, vm_offset_t, vm_offset_t, int);
 
 #endif /* _KERNEL */
 

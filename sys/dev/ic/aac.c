@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.12 2002/03/05 07:46:44 niklas Exp $	*/
+/*	$OpenBSD: aac.c,v 1.13 2002/03/14 01:26:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -71,44 +71,44 @@
 #define AAC_BIGSECS		63	/* mapping 255*63 */
 #define AAC_SECS32		0x1f	/* round capacity */
 
-void	aac_bio_complete __P((struct aac_ccb *));
-void	aac_complete __P((void *, int));
-void	aac_copy_internal_data __P((struct scsi_xfer *, u_int8_t *, size_t));
-struct scsi_xfer *aac_dequeue __P((struct aac_softc *));
-int	aac_dequeue_fib __P((struct aac_softc *, int, u_int32_t *,
-    struct aac_fib **));
-char   *aac_describe_code __P((struct aac_code_lookup *, u_int32_t));
-void	aac_describe_controller __P((struct aac_softc *));
-void	aac_enqueue __P((struct aac_softc *, struct scsi_xfer *, int));
-void	aac_enqueue_ccb __P((struct aac_softc *, struct aac_ccb *));
-int	aac_enqueue_fib __P((struct aac_softc *, int, u_int32_t, u_int32_t));
-void	aac_eval_mapping __P((u_int32_t, int *, int *, int *));
-int	aac_exec_ccb __P((struct aac_ccb *));
-void	aac_free_ccb __P((struct aac_softc *, struct aac_ccb *));
-struct aac_ccb *aac_get_ccb __P((struct aac_softc *, int));
+void	aac_bio_complete(struct aac_ccb *);
+void	aac_complete(void *, int);
+void	aac_copy_internal_data(struct scsi_xfer *, u_int8_t *, size_t);
+struct scsi_xfer *aac_dequeue(struct aac_softc *);
+int	aac_dequeue_fib(struct aac_softc *, int, u_int32_t *,
+    struct aac_fib **);
+char   *aac_describe_code(struct aac_code_lookup *, u_int32_t);
+void	aac_describe_controller(struct aac_softc *);
+void	aac_enqueue(struct aac_softc *, struct scsi_xfer *, int);
+void	aac_enqueue_ccb(struct aac_softc *, struct aac_ccb *);
+int	aac_enqueue_fib(struct aac_softc *, int, u_int32_t, u_int32_t);
+void	aac_eval_mapping(u_int32_t, int *, int *, int *);
+int	aac_exec_ccb(struct aac_ccb *);
+void	aac_free_ccb(struct aac_softc *, struct aac_ccb *);
+struct aac_ccb *aac_get_ccb(struct aac_softc *, int);
 #if 0
-void	aac_handle_aif __P((struct aac_softc *, struct aac_aif_command *));
+void	aac_handle_aif(struct aac_softc *, struct aac_aif_command *);
 #endif
-void	aac_host_command __P((struct aac_softc *));
-void	aac_host_response __P((struct aac_softc *));
-int	aac_init __P((struct aac_softc *));
-int	aac_internal_cache_cmd __P((struct scsi_xfer *));
-int	aac_map_command __P((struct aac_ccb *));
+void	aac_host_command(struct aac_softc *);
+void	aac_host_response(struct aac_softc *);
+int	aac_init(struct aac_softc *);
+int	aac_internal_cache_cmd(struct scsi_xfer *);
+int	aac_map_command(struct aac_ccb *);
 #ifdef AAC_DEBUG
-void	aac_print_fib __P((struct aac_softc *, struct aac_fib *, char *));
+void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
 #endif
-int	aac_raw_scsi_cmd __P((struct scsi_xfer *));
-int	aac_scsi_cmd __P((struct scsi_xfer *));
-int	aac_start __P((struct aac_ccb *));
-void	aac_start_ccbs __P((struct aac_softc *));
-void	aac_startup __P((struct aac_softc *));
-int	aac_sync_command __P((struct aac_softc *, u_int32_t, u_int32_t,
-    u_int32_t, u_int32_t, u_int32_t, u_int32_t *));
-int	aac_sync_fib __P((struct aac_softc *, u_int32_t, u_int32_t, void *,
-    u_int16_t, void *, u_int16_t *));
-void	aac_timeout __P((void *));
-void	aac_unmap_command __P((struct aac_ccb *));
-void	aac_watchdog __P((void *));
+int	aac_raw_scsi_cmd(struct scsi_xfer *);
+int	aac_scsi_cmd(struct scsi_xfer *);
+int	aac_start(struct aac_ccb *);
+void	aac_start_ccbs(struct aac_softc *);
+void	aac_startup(struct aac_softc *);
+int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
+    u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
+int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
+    u_int16_t, void *, u_int16_t *);
+void	aac_timeout(void *);
+void	aac_unmap_command(struct aac_ccb *);
+void	aac_watchdog(void *);
 
 struct cfdriver aac_cd = {
 	NULL, "aac", DV_DULL
@@ -127,24 +127,24 @@ struct scsi_device aac_dev = {
 };
 
 /* i960Rx interface */    
-int	aac_rx_get_fwstatus __P((struct aac_softc *));
-void	aac_rx_qnotify __P((struct aac_softc *, int));
-int	aac_rx_get_istatus __P((struct aac_softc *));
-void	aac_rx_clear_istatus __P((struct aac_softc *, int));
-void	aac_rx_set_mailbox __P((struct aac_softc *, u_int32_t, u_int32_t,
-    u_int32_t, u_int32_t, u_int32_t));
-int	aac_rx_get_mailboxstatus __P((struct aac_softc *));
-void	aac_rx_set_interrupts __P((struct aac_softc *, int));
+int	aac_rx_get_fwstatus(struct aac_softc *);
+void	aac_rx_qnotify(struct aac_softc *, int);
+int	aac_rx_get_istatus(struct aac_softc *);
+void	aac_rx_clear_istatus(struct aac_softc *, int);
+void	aac_rx_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
+    u_int32_t, u_int32_t, u_int32_t);
+int	aac_rx_get_mailboxstatus(struct aac_softc *);
+void	aac_rx_set_interrupts(struct aac_softc *, int);
 
 /* StrongARM interface */
-int	aac_sa_get_fwstatus __P((struct aac_softc *));
-void	aac_sa_qnotify __P((struct aac_softc *, int));
-int	aac_sa_get_istatus __P((struct aac_softc *));
-void	aac_sa_clear_istatus __P((struct aac_softc *, int));
-void	aac_sa_set_mailbox __P((struct aac_softc *, u_int32_t, u_int32_t,
-    u_int32_t, u_int32_t, u_int32_t));
-int	aac_sa_get_mailboxstatus __P((struct aac_softc *));
-void	aac_sa_set_interrupts __P((struct aac_softc *, int));
+int	aac_sa_get_fwstatus(struct aac_softc *);
+void	aac_sa_qnotify(struct aac_softc *, int);
+int	aac_sa_get_istatus(struct aac_softc *);
+void	aac_sa_clear_istatus(struct aac_softc *, int);
+void	aac_sa_set_mailbox(struct aac_softc *, u_int32_t, u_int32_t,
+    u_int32_t, u_int32_t, u_int32_t);
+int	aac_sa_get_mailboxstatus(struct aac_softc *);
+void	aac_sa_set_interrupts(struct aac_softc *, int);
 
 struct aac_interface aac_rx_interface = {
 	aac_rx_get_fwstatus,

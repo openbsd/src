@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ioctl.c,v 1.10 2002/02/13 19:08:06 art Exp $	 */
+/*	$OpenBSD: svr4_ioctl.c,v 1.11 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_ioctl.c,v 1.16 1996/04/11 12:54:41 christos Exp $	 */
 
 /*
@@ -56,7 +56,7 @@
 #include <compat/svr4/svr4_sockio.h>
 
 #ifdef DEBUG_SVR4
-static void svr4_decode_cmd __P((u_long, char *, char *, int *, int *));
+static void svr4_decode_cmd(u_long, char *, char *, int *, int *);
 /*
  * Decode an ioctl command symbolically
  */
@@ -93,8 +93,8 @@ svr4_sys_ioctl(p, v, retval)
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
-	int (*fun) __P((struct file *, struct proc *, register_t *,
-			int, u_long, caddr_t));
+	int (*fun)(struct file *, struct proc *, register_t *,
+			int, u_long, caddr_t);
 	int error = 0;
 #ifdef DEBUG_SVR4
 	char		 dir[4];

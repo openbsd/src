@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmi.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
+/*	$OpenBSD: cmi.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: cmi.c,v 1.2 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -40,9 +40,9 @@
 #include <machine/sid.h>
 #include <machine/ka750.h>
 
-static	int cmi_print __P((void *, const char *));
-static	int cmi_match __P((struct device *, struct cfdata *, void *));
-static	void cmi_attach __P((struct device *, struct device *, void*));
+static	int cmi_print(void *, const char *);
+static	int cmi_match(struct device *, struct cfdata *, void *);
+static	void cmi_attach(struct device *, struct device *, void*);
 
 struct	cfattach cmi_ca = {
 	sizeof(struct device), cmi_match, cmi_attach

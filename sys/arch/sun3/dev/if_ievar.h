@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ievar.h,v 1.4 1997/01/16 04:03:48 kstailey Exp $	*/
+/*	$OpenBSD: if_ievar.h,v 1.5 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: if_ievar.h,v 1.6 1996/03/26 14:38:33 gwr Exp $	*/
 
 /*
@@ -68,11 +68,11 @@ struct ie_softc {
 	caddr_t sc_reg;		/* KVA of card's register */
 
 	enum	ie_hardware hard_type;	/* card type */
-	void	(*reset_586) __P((struct ie_softc *)); /* three card */
-	void	(*chan_attn) __P((struct ie_softc *)); /* dependant */
-	void	(*run_586) __P((struct ie_softc *));   /* functions */
-	void	(*sc_bcopy) __P((const void *, void *, u_int));
-	void	(*sc_bzero) __P((void *, u_int));
+	void	(*reset_586)(struct ie_softc *); /* three card */
+	void	(*chan_attn)(struct ie_softc *); /* dependant */
+	void	(*run_586)(struct ie_softc *);   /* functions */
+	void	(*sc_bcopy)(const void *, void *, u_int);
+	void	(*sc_bzero)(void *, u_int);
 
 	int	want_mcsetup;	/* flag for multicast setup */
 	int	promisc;	/* are we in promisc mode? */
@@ -118,5 +118,5 @@ struct ie_softc {
 };
 
 
-extern void ie_attach __P((struct ie_softc *));
-extern int  ie_intr __P((void *));
+extern void ie_attach(struct ie_softc *);
+extern int  ie_intr(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.4 2000/07/21 17:41:02 mickey Exp $ */
+/*	$OpenBSD: lpt.c,v 1.5 2002/03/14 01:26:54 millert Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -104,9 +104,9 @@ struct cfdriver lpt_cd = {
 #define	NOT_READY_ERR() \
     lpt_not_ready(bus_space_read_1(iot, ioh, lpt_status), sc)
 
-int	lpt_not_ready __P((u_int8_t, struct lpt_softc *));
-void	lptwakeup __P((void *arg));
-int	lptpushbytes __P((struct lpt_softc *));
+int	lpt_not_ready(u_int8_t, struct lpt_softc *);
+void	lptwakeup(void *arg);
+int	lptpushbytes(struct lpt_softc *);
 
 /*
  * Internal routine to lptprobe to do port tests of one byte value.

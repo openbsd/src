@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.4 1997/07/25 18:21:56 mickey Exp $	*/
+/*	$OpenBSD: exit.c,v 1.5 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ panic(fmt /*, va_alist */)
 	char *fmt;
 #endif
 {
-    extern void closeall __P((void));
+    extern void closeall(void);
     va_list ap;
     static int paniced;
     

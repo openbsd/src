@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.17 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: fb.c,v 1.18 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -187,7 +187,7 @@ fbmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)(dev_t, off_t, int) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
@@ -361,10 +361,10 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
-static void fb_bell __P((int));
+static void fb_bell(int);
 
 #if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
-static int a2int __P((char *, int));
+static int a2int(char *, int);
 
 static int
 a2int(cp, deflt)

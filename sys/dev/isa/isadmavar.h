@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.12 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.13 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.10 1997/08/04 22:13:33 augustss Exp $	*/
 
 /*-
@@ -60,10 +60,10 @@ struct isadma_seg {		/* a physical contiguous segment */
 	bus_dmamap_t dmam;	/* DMA handle for bus_dma routines. */
 };
 
-int isadma_map __P((caddr_t, vm_size_t, struct isadma_seg *, int));
-void isadma_unmap __P((caddr_t, vm_size_t, int, struct isadma_seg *));
-void isadma_copytobuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
-void isadma_copyfrombuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
+int isadma_map(caddr_t, vm_size_t, struct isadma_seg *, int);
+void isadma_unmap(caddr_t, vm_size_t, int, struct isadma_seg *);
+void isadma_copytobuf(caddr_t, vm_size_t, int, struct isadma_seg *);
+void isadma_copyfrombuf(caddr_t, vm_size_t, int, struct isadma_seg *);
 
 #define isadma_acquire(c)		isa_dma_acquire(isa_dev, (c))
 #define isadma_release(c)		isa_dma_release(isa_dev, (c))
@@ -84,29 +84,29 @@ void isadma_copyfrombuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 
 struct proc;
 
-void	   isa_dmacascade __P((struct device *, int));
+void	   isa_dmacascade(struct device *, int);
 
-int	   isa_dmamap_create __P((struct device *, int, bus_size_t, int));
-void	   isa_dmamap_destroy __P((struct device *, int));
+int	   isa_dmamap_create(struct device *, int, bus_size_t, int);
+void	   isa_dmamap_destroy(struct device *, int);
 
-int	   isa_dmastart __P((struct device *, int, void *, bus_size_t,
-	       struct proc *, int, int));
-void	   isa_dmaabort __P((struct device *, int));
-bus_size_t isa_dmacount __P((struct device *, int));
-int	   isa_dmafinished __P((struct device *, int));
-void	   isa_dmadone __P((struct device *, int));
+int	   isa_dmastart(struct device *, int, void *, bus_size_t,
+	       struct proc *, int, int);
+void	   isa_dmaabort(struct device *, int);
+bus_size_t isa_dmacount(struct device *, int);
+int	   isa_dmafinished(struct device *, int);
+void	   isa_dmadone(struct device *, int);
 
-int	   isa_dmamem_alloc __P((struct device *, int, bus_size_t,
-	       bus_addr_t *, int));
-void	   isa_dmamem_free __P((struct device *, int, bus_addr_t, bus_size_t));
-int	   isa_dmamem_map __P((struct device *, int, bus_addr_t, bus_size_t,
-	       caddr_t *, int));
-void	   isa_dmamem_unmap __P((struct device *, int, caddr_t, size_t));
-int	   isa_dmamem_mmap __P((struct device *, int, bus_addr_t, bus_size_t,
-	       int, int, int));
+int	   isa_dmamem_alloc(struct device *, int, bus_size_t,
+	       bus_addr_t *, int);
+void	   isa_dmamem_free(struct device *, int, bus_addr_t, bus_size_t);
+int	   isa_dmamem_map(struct device *, int, bus_addr_t, bus_size_t,
+	       caddr_t *, int);
+void	   isa_dmamem_unmap(struct device *, int, caddr_t, size_t);
+int	   isa_dmamem_mmap(struct device *, int, bus_addr_t, bus_size_t,
+	       int, int, int);
 
-int	   isa_drq_isfree __P((struct device *, int));
+int	   isa_drq_isfree(struct device *, int);
 
-void      *isa_malloc __P((struct device *, int, size_t, int, int));
-void	   isa_free __P((void *, int));
-paddr_t	   isa_mappage __P((void *, off_t, int));
+void      *isa_malloc(struct device *, int, size_t, int, int);
+void	   isa_free(void *, int);
+paddr_t	   isa_mappage(void *, off_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.10 2002/02/16 05:41:28 smurph Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.11 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.10 2002/02/16 05:41:28 smurph Exp $
+ *	$Id: ahc_eisa.c,v 1.11 2002/03/14 01:26:53 millert Exp $
  */
 
 #include "eisa.h"
@@ -58,9 +58,9 @@
 #define AHC_EISA_SLOT_OFFSET	0xc00
 #define AHC_EISA_IOSIZE		0x100
 
-int   ahc_eisa_irq __P((bus_space_tag_t, bus_space_handle_t));
-int   ahc_eisa_match __P((struct device *, void *, void *));
-void  ahc_eisa_attach __P((struct device *, struct device *, void *));
+int   ahc_eisa_irq(bus_space_tag_t, bus_space_handle_t);
+int   ahc_eisa_match(struct device *, void *, void *);
+void  ahc_eisa_attach(struct device *, struct device *, void *);
 
 
 struct cfattach ahc_eisa_ca = {

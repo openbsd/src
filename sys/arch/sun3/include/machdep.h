@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.16 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.17 2002/03/14 01:26:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -73,67 +73,67 @@ extern vm_offset_t avail_start, avail_end;
 /* The "hole" (used to skip the Sun3/50 video RAM) */
 extern vm_offset_t hole_start, hole_size;
 
-void	ICIA __P((void));
-void	DCIA __P((void));
-void	DCIU __P((void));
+void	ICIA(void);
+void	DCIA(void);
+void	DCIU(void);
 
-void	cache_enable __P((void));
+void	cache_enable(void);
 void	cache_flush_page(vm_offset_t pgva);
 void	cache_flush_segment(vm_offset_t sgva);
 void	cache_flush_context(void);
 
-int 	cachectl __P((int req, caddr_t addr, int len));
+int 	cachectl(int req, caddr_t addr, int len);
 
-void	cninit __P((void));
+void	cninit(void);
 
-void	dumpconf __P((void));
-void	dumpsys __P((void));
+void	dumpconf(void);
+void	dumpsys(void);
 
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 
-int 	fpu_emulate __P((struct frame *, struct fpframe *));
+int 	fpu_emulate(struct frame *, struct fpframe *);
 
 /* Backward compatibility... */
 #define getsr	_getsr
 
-void**	getvbr __P((void));
+void**	getvbr(void);
 
-vm_offset_t high_segment_alloc __P((int npages));
+vm_offset_t high_segment_alloc(int npages);
 
-void	initfpu __P((void));
+void	initfpu(void);
 
-void	intreg_init __P((void));
+void	intreg_init(void);
 
-void	isr_init __P((void));
-void	isr_config __P((void));
+void	isr_init(void);
+void	isr_config(void);
 
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
-void	proc_do_uret __P((void));
-void	proc_trampoline __P((void));
+void	proc_do_uret(void);
+void	proc_trampoline(void);
 
-void	pmap_bootstrap __P((void));
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-int 	pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
-void	pmap_get_ksegmap __P((u_char *));
-void	pmap_get_pagemap __P((int *pt, int off));
+void	pmap_bootstrap(void);
+vm_offset_t pmap_map(vm_offset_t, vm_offset_t, vm_offset_t, int);
+int 	pmap_fault_reload(struct pmap *, vm_offset_t, int);
+void	pmap_get_ksegmap(u_char *);
+void	pmap_get_pagemap(int *pt, int off);
 
-int	reboot2 __P((int, char *));
+int	reboot2(int, char *);
 
-void	savectx __P((struct pcb *));
+void	savectx(struct pcb *);
 
-void	setvbr __P((void **));
+void	setvbr(void **);
 
-void	sun3_mon_abort __P((void));
-void	sun3_mon_halt __P((void));
-void	sun3_mon_reboot __P((char *));
-void	sun3_pmeg_init __P((void));
-void	sun3_reserve_pmeg __P((int pmeg_num));
+void	sun3_mon_abort(void);
+void	sun3_mon_halt(void);
+void	sun3_mon_reboot(char *);
+void	sun3_pmeg_init(void);
+void	sun3_reserve_pmeg(int pmeg_num);
 
-void	swapconf __P((void));
-void	swapgeneric __P((void));
+void	swapconf(void);
+void	swapgeneric(void);
 
-void	switch_exit __P((struct proc *));
+void	switch_exit(struct proc *);
 
 #endif	/* _KERNEL */

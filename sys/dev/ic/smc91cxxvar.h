@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxxvar.h,v 1.3 2000/02/02 19:09:58 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxxvar.h,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: smc91cxxvar.h,v 1.4 1997/10/15 05:56:13 explorer Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@ struct smc91cxx_softc {
 	struct	ifmedia sc_media;	/* our media info */
 
 	/* Power management hooks and state. */
-	int	(*sc_enable) __P((struct smc91cxx_softc *));
-	void	(*sc_disable) __P((struct smc91cxx_softc *));
+	int	(*sc_enable)(struct smc91cxx_softc *);
+	void	(*sc_disable)(struct smc91cxx_softc *);
 	int	sc_enabled;
 
 #if NRND > 0
@@ -68,7 +68,7 @@ struct smc91cxx_softc {
 	bus_space_write_2((sc)->sc_bst, (sc)->sc_bsh,			\
 	    BANK_SELECT_REG_W, (x))
 
-void	smc91cxx_attach __P((struct smc91cxx_softc *, u_int8_t *));
-int	smc91cxx_intr __P((void *));
-void	smc91cxx_init __P((struct smc91cxx_softc *));
-void	smc91cxx_stop __P((struct smc91cxx_softc *));
+void	smc91cxx_attach(struct smc91cxx_softc *, u_int8_t *);
+int	smc91cxx_intr(void *);
+void	smc91cxx_init(struct smc91cxx_softc *);
+void	smc91cxx_stop(struct smc91cxx_softc *);

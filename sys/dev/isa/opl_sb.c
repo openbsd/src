@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_sb.c,v 1.1 1999/01/02 00:02:45 niklas Exp $	*/
+/*	$OpenBSD: opl_sb.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: opl_sb.c,v 1.4 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
@@ -61,11 +61,11 @@
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	opl_sb_match __P((struct device *, void *, void *));
+int	opl_sb_match(struct device *, void *, void *);
 #else
-int	opl_sb_match __P((struct device *, struct cfdata *, void *));
+int	opl_sb_match(struct device *, struct cfdata *, void *);
 #endif
-void	opl_sb_attach __P((struct device *, struct device *, void *));
+void	opl_sb_attach(struct device *, struct device *, void *);
 
 struct cfattach opl_sb_ca = {
 	sizeof (struct opl_softc), opl_sb_match, opl_sb_attach

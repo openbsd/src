@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.21 2002/02/13 19:08:06 art Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.22 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -50,14 +50,14 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
 
-static u_long svr4_to_bsd_cmd __P((u_long));
-static int svr4_to_bsd_flags __P((int));
-static int bsd_to_svr4_flags __P((int));
-static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
-static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
-static void bsd_to_svr3_flock __P((struct flock *, struct svr4_flock_svr3 *));
-static void svr3_to_bsd_flock __P((struct svr4_flock_svr3 *, struct flock *));
-static int fd_truncate __P((struct proc *, int, struct flock *, register_t *));
+static u_long svr4_to_bsd_cmd(u_long);
+static int svr4_to_bsd_flags(int);
+static int bsd_to_svr4_flags(int);
+static void bsd_to_svr4_flock(struct flock *, struct svr4_flock *);
+static void svr4_to_bsd_flock(struct svr4_flock *, struct flock *);
+static void bsd_to_svr3_flock(struct flock *, struct svr4_flock_svr3 *);
+static void svr3_to_bsd_flock(struct svr4_flock_svr3 *, struct flock *);
+static int fd_truncate(struct proc *, int, struct flock *, register_t *);
 
 static u_long
 svr4_to_bsd_cmd(cmd)

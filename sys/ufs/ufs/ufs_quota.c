@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.12 2002/03/12 20:42:08 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.13 2002/03/14 01:27:15 millert Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -102,24 +102,24 @@ struct dquot {
  */
 #define	NODQUOT		NULL
 
-void	dqref __P((struct dquot *));
-void	dqrele __P((struct vnode *, struct dquot *));
-int	dqsync __P((struct vnode *, struct dquot *));
+void	dqref(struct dquot *);
+void	dqrele(struct vnode *, struct dquot *);
+int	dqsync(struct vnode *, struct dquot *);
 
 #ifdef DIAGNOSTIC
-void	chkdquot __P((struct inode *));
+void	chkdquot(struct inode *);
 #endif
 
-int	getquota __P((struct mount *, u_long, int, caddr_t));
-int	quotaon __P((struct proc *, struct mount *, int, caddr_t));
-int	setquota __P((struct mount *, u_long, int, caddr_t));
-int	setuse __P((struct mount *, u_long, int, caddr_t));
+int	getquota(struct mount *, u_long, int, caddr_t);
+int	quotaon(struct proc *, struct mount *, int, caddr_t);
+int	setquota(struct mount *, u_long, int, caddr_t);
+int	setuse(struct mount *, u_long, int, caddr_t);
 
-int	chkdqchg __P((struct inode *, long, struct ucred *, int));
-int	chkiqchg __P((struct inode *, long, struct ucred *, int));
+int	chkdqchg(struct inode *, long, struct ucred *, int);
+int	chkiqchg(struct inode *, long, struct ucred *, int);
 
-int dqget __P((struct vnode *, u_long, struct ufsmount *, int,
-	       struct dquot **));
+int dqget(struct vnode *, u_long, struct ufsmount *, int,
+	       struct dquot **);
 
 int     quotaon_vnode(struct vnode *, void *);
 int     quotaoff_vnode(struct vnode *, void *);

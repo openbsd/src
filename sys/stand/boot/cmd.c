@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.46 2000/01/20 19:56:48 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.47 2002/03/14 01:27:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -39,20 +39,20 @@
 
 #define CTRL(c)	((c)&0x1f)
 
-static int Xboot __P((void));
-static int Xecho __P((void));
-static int Xhelp __P((void));
-static int Xls __P((void));
-static int Xnop __P((void));
-static int Xreboot __P((void));
-static int Xstty __P((void));
-static int Xtime __P((void));
+static int Xboot(void);
+static int Xecho(void);
+static int Xhelp(void);
+static int Xls(void);
+static int Xnop(void);
+static int Xreboot(void);
+static int Xstty(void);
+static int Xtime(void);
 #ifdef MACHINE_CMD
-static int Xmachine __P((void));
+static int Xmachine(void);
 extern const struct cmd_table MACHINE_CMD[];
 #endif
-extern int Xset __P((void));
-extern int Xenv __P((void));
+extern int Xset(void);
+extern int Xenv(void);
 
 extern const struct cmd_table cmd_set[];
 const struct cmd_table cmd_table[] = {
@@ -72,13 +72,12 @@ const struct cmd_table cmd_table[] = {
 	{NULL, 0},
 };
 
-static void ls __P((char *, register struct stat *));
-static int readline __P((register char *, size_t, int));
-char *nextword __P((register char *));
-static char *whatcmd
-	__P((register const struct cmd_table **ct, register char *));
-static int docmd __P((void));
-static char *qualify __P((char *));
+static void ls(char *, register struct stat *);
+static int readline(register char *, size_t, int);
+char *nextword(register char *);
+static char *whatcmd(register const struct cmd_table **ct, register char *);
+static int docmd(void);
+static char *qualify(char *);
 
 char cmd_buf[133];
 

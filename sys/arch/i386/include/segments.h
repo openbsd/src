@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.8 2000/12/06 17:18:58 deraadt Exp $	*/
+/*	$OpenBSD: segments.h,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -132,10 +132,10 @@ extern union descriptor gdt[], ldt[];
 extern struct gate_descriptor idt_region[];
 extern struct gate_descriptor *idt;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
-void setregion __P((struct region_descriptor *, void *, size_t));
-void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
-    int, int));
+void setgate(struct gate_descriptor *, void *, int, int, int, int);
+void setregion(struct region_descriptor *, void *, size_t);
+void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+    int, int);
 #endif /* _KERNEL */
 
 #endif /* !_LOCORE */

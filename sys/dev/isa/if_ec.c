@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.3 2001/03/12 05:36:59 aaron Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.4 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -117,28 +117,28 @@ struct ec_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-int	ec_probe __P((struct device *, void *, void *));
-void	ec_attach __P((struct device *, struct device *, void *));
+int	ec_probe(struct device *, void *, void *);
+void	ec_attach(struct device *, struct device *, void *);
 
 struct cfattach ec_ca = {
 	sizeof(struct ec_softc), ec_probe, ec_attach
 };
 
-int	ec_set_media __P((struct ec_softc *, int));
+int	ec_set_media(struct ec_softc *, int);
 
-void	ec_media_init __P((struct dp8390_softc *));
+void	ec_media_init(struct dp8390_softc *);
 
-int	ec_mediachange __P((struct dp8390_softc *));
-void	ec_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
+int	ec_mediachange(struct dp8390_softc *);
+void	ec_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
-void	ec_init_card __P((struct dp8390_softc *));
-int	ec_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-int	ec_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-void	ec_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-int	ec_fake_test_mem __P((struct dp8390_softc *));
-int	ec_test_mem __P((struct dp8390_softc *));
+void	ec_init_card(struct dp8390_softc *);
+int	ec_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+int	ec_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+int	ec_fake_test_mem(struct dp8390_softc *);
+int	ec_test_mem(struct dp8390_softc *);
 
-__inline void ec_readmem __P((struct ec_softc *, int, u_int8_t *, int));
+__inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,

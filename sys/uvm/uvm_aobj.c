@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.25 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.26 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -167,19 +167,19 @@ struct pool uvm_aobj_pool;
  * local functions
  */
 
-static struct uao_swhash_elt	*uao_find_swhash_elt __P((struct uvm_aobj *,
-							  int, boolean_t));
-static int			 uao_find_swslot __P((struct uvm_aobj *, int));
-static boolean_t		 uao_flush __P((struct uvm_object *,
-						voff_t, voff_t, int));
-static void			 uao_free __P((struct uvm_aobj *));
-static int			 uao_get __P((struct uvm_object *, voff_t,
+static struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *,
+							  int, boolean_t);
+static int			 uao_find_swslot(struct uvm_aobj *, int);
+static boolean_t		 uao_flush(struct uvm_object *,
+						voff_t, voff_t, int);
+static void			 uao_free(struct uvm_aobj *);
+static int			 uao_get(struct uvm_object *, voff_t,
 					      vm_page_t *, int *, int,
-					      vm_prot_t, int, int));
-static boolean_t		 uao_releasepg __P((struct vm_page *,
-						    struct vm_page **));
-static boolean_t		 uao_pagein __P((struct uvm_aobj *, int, int));
-static boolean_t		 uao_pagein_page __P((struct uvm_aobj *, int));
+					      vm_prot_t, int, int);
+static boolean_t		 uao_releasepg(struct vm_page *,
+						    struct vm_page **);
+static boolean_t		 uao_pagein(struct uvm_aobj *, int, int);
+static boolean_t		 uao_pagein_page(struct uvm_aobj *, int);
 
 /*
  * aobj_pager

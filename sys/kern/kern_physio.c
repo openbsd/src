@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.18 2001/12/10 17:37:51 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.19 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@
  * I/O, so raw I/O requests don't have to be single-threaded.
  */
 
-struct buf *getphysbuf __P((void));
-void putphysbuf __P((struct buf *bp));
+struct buf *getphysbuf(void);
+void putphysbuf(struct buf *bp);
 
 /*
  * Do "physical I/O" on behalf of a user.  "Physical I/O" is I/O directly
@@ -73,11 +73,11 @@ void putphysbuf __P((struct buf *bp));
  */
 int
 physio(strategy, bp, dev, flags, minphys, uio)
-	void (*strategy) __P((struct buf *));
+	void (*strategy)(struct buf *);
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	void (*minphys) __P((struct buf *));
+	void (*minphys)(struct buf *);
 	struct uio *uio;
 {
 	struct iovec *iovp;

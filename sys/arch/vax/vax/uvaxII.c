@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvaxII.c,v 1.9 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: uvaxII.c,v 1.10 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: uvaxII.c,v 1.10 1996/10/13 03:36:04 christos Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@ struct uvaxIIcpu *uvaxIIcpu_ptr;
 
 #if VAX630
 struct	ka630clock *ka630clk_ptr;
-static	time_t	ka630_clkread __P((int *));
-static	void	ka630_clkwrite __P((time_t));
+static	time_t	ka630_clkread(int *);
+static	void	ka630_clkwrite(time_t);
 
 struct watclk {
     u_short wat_sec;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_emit.c,v 1.7 2001/06/23 03:54:58 angelos Exp $	*/
+/*	$OpenBSD: tp_emit.c,v 1.8 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_emit.c,v 1.8 1996/03/16 23:13:48 christos Exp $	*/
 
 /*-
@@ -858,7 +858,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	int             erlen;
 	struct tp_pcb  *tpcb;
 	caddr_t         cons_channel;
-        int 	      (*dgout_routine) __P((struct mbuf *, ...));
+        int 	      (*dgout_routine)(struct mbuf *, ...);
 {
 	int             dutype;
 	int             datalen = 0;

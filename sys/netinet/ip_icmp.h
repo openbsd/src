@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.15 2002/01/12 00:51:59 ericj Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.16 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -209,14 +209,14 @@ struct icmp {
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
 #ifdef _KERNEL
-void	icmp_error __P((struct mbuf *, int, int, n_long, struct ifnet *));
-void	icmp_input __P((struct mbuf *, ...));
-void	icmp_init __P((void));
-void	icmp_reflect __P((struct mbuf *));
-void	icmp_send __P((struct mbuf *, struct mbuf *));
-int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+void	icmp_error(struct mbuf *, int, int, n_long, struct ifnet *);
+void	icmp_input(struct mbuf *, ...);
+void	icmp_init(void);
+void	icmp_reflect(struct mbuf *);
+void	icmp_send(struct mbuf *, struct mbuf *);
+int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 struct rtentry *
 	icmp_mtudisc_clone(struct sockaddr *);
-void	icmp_mtudisc __P((struct icmp *));
+void	icmp_mtudisc(struct icmp *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ICMP_H_ */

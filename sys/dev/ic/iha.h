@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.9 2001/11/11 21:59:19 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.10 2002/03/14 01:26:54 millert Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -435,9 +435,9 @@ struct iha_nvram {
 
 /* Functions used by higher SCSI layers, the kernel, or iha.c and iha_pci.c  */
 
-int  iha_scsi_cmd   __P((struct scsi_xfer *));
-int  iha_intr	    __P((void *));
-void iha_minphys    __P((struct buf *));
-int  iha_init_tulip __P((struct iha_softc *));
+int  iha_scsi_cmd(struct scsi_xfer *);
+int  iha_intr(void *);
+void iha_minphys(struct buf *);
+int  iha_init_tulip(struct iha_softc *);
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 2001/12/05 00:11:51 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: pmap.h,v 1.18 1997/01/27 19:41:06 gwr Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ extern struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 
 /* This is called from locore.s:cpu_switch() */
-void pmap_switch __P((pmap_t pmap));
+void pmap_switch(pmap_t pmap);
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vm_offset_t, vm_offset_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cvreg.h,v 1.7 1997/09/18 13:39:50 niklas Exp $	*/
+/*	$OpenBSD: grf_cvreg.h,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_cvreg.h,v 1.5 1996/05/19 21:05:30 veego Exp $	*/
 
 /*
@@ -82,14 +82,14 @@ struct grfcvtext_mode {
 #define vgaw16(ba, reg, val) \
 	*((unsigned short *)  (((volatile caddr_t)ba)+reg)) = val
 
-int grfcv_cnprobe __P((void));
-void grfcv_iteinit __P((struct grf_softc *));
-static __inline void GfxBusyWait __P((volatile caddr_t));    
-static __inline void GfxFifoWait __P((volatile caddr_t));    
-static __inline unsigned char RAttr __P((volatile caddr_t, short)); 
-static __inline unsigned char RSeq __P((volatile caddr_t, short)); 
-static __inline unsigned char RCrt __P((volatile caddr_t, short)); 
-static __inline unsigned char RGfx __P((volatile caddr_t, short)); 
+int grfcv_cnprobe(void);
+void grfcv_iteinit(struct grf_softc *);
+static __inline void GfxBusyWait(volatile caddr_t);    
+static __inline void GfxFifoWait(volatile caddr_t);    
+static __inline unsigned char RAttr(volatile caddr_t, short); 
+static __inline unsigned char RSeq(volatile caddr_t, short); 
+static __inline unsigned char RCrt(volatile caddr_t, short); 
+static __inline unsigned char RGfx(volatile caddr_t, short); 
 
 
 /*

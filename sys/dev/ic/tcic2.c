@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.2 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.3 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -66,24 +66,24 @@ int	tcic_debug = 1;
 
 #define	TCIC_MEM_ALIGN	TCIC_MEM_PAGESIZE
 
-void	tcic_attach_socket __P((struct tcic_handle *));
-void	tcic_init_socket __P((struct tcic_handle *));
+void	tcic_attach_socket(struct tcic_handle *);
+void	tcic_init_socket(struct tcic_handle *);
 
-int	tcic_submatch __P((struct device *, void *, void *));
-int	tcic_print  __P((void *arg, const char *pnp));
-int	tcic_intr_socket __P((struct tcic_handle *));
+int	tcic_submatch(struct device *, void *, void *);
+int	tcic_print(void *arg, const char *pnp);
+int	tcic_intr_socket(struct tcic_handle *);
 
-void	tcic_attach_card __P((struct tcic_handle *));
-void	tcic_detach_card __P((struct tcic_handle *, int));
-void	tcic_deactivate_card __P((struct tcic_handle *));
+void	tcic_attach_card(struct tcic_handle *);
+void	tcic_detach_card(struct tcic_handle *, int);
+void	tcic_deactivate_card(struct tcic_handle *);
 
-void	tcic_chip_do_mem_map __P((struct tcic_handle *, int));
-void	tcic_chip_do_io_map __P((struct tcic_handle *, int));
+void	tcic_chip_do_mem_map(struct tcic_handle *, int);
+void	tcic_chip_do_io_map(struct tcic_handle *, int);
 
-void	tcic_create_event_thread __P((void *));
-void	tcic_event_thread __P((void *));
+void	tcic_create_event_thread(void *);
+void	tcic_event_thread(void *);
 
-void	tcic_queue_event __P((struct tcic_handle *, int));
+void	tcic_queue_event(struct tcic_handle *, int);
 
 struct cfdriver tcic_cd = {
 	NULL, "tcic", DV_DULL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.7 2001/12/15 02:41:33 deraadt Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.8 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@
 
 #include <dev/mii/lxtphyreg.h>
 
-int	lxtphymatch __P((struct device *, void *, void *));
-void	lxtphyattach __P((struct device *, struct device *, void *));
+int	lxtphymatch(struct device *, void *, void *);
+void	lxtphyattach(struct device *, struct device *, void *);
 
 struct cfattach lxtphy_ca = {
 	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_phy_detach,
@@ -101,9 +101,9 @@ struct cfdriver lxtphy_cd = {
 	NULL, "lxtphy", DV_DULL
 };
 
-int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	lxtphy_status __P((struct mii_softc *));
-void	lxtphy_reset __P((struct mii_softc *));
+int	lxtphy_service(struct mii_softc *, struct mii_data *, int);
+void	lxtphy_status(struct mii_softc *);
+void	lxtphy_reset(struct mii_softc *);
 
 int
 lxtphymatch(parent, match, aux)

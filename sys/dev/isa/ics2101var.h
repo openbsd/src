@@ -1,4 +1,4 @@
-/* $OpenBSD: ics2101var.h,v 1.3 1998/04/26 21:02:45 provos Exp $ */
+/* $OpenBSD: ics2101var.h,v 1.4 2002/03/14 01:26:56 millert Exp $ */
 /* $NetBSD: ics2101var.h,v 1.5 1997/10/09 07:57:24 jtc Exp $ */
 
 /*-
@@ -52,5 +52,5 @@ struct ics2101_softc {
 	u_char sc_mute[ICSMIX_CHAN_5+1][2];/* muted? */
 };
 
-void ics2101_mix_attenuate __P((struct ics2101_softc *, u_int, u_int, u_int));
-void ics2101_mix_mute __P((struct ics2101_softc *, u_int, u_int, u_int));
+void ics2101_mix_attenuate(struct ics2101_softc *, u_int, u_int, u_int);
+void ics2101_mix_mute(struct ics2101_softc *, u_int, u_int, u_int);

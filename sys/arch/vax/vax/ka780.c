@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka780.c,v 1.6 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: ka780.c,v 1.7 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka780.c,v 1.14 1999/08/07 10:36:49 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -48,11 +48,11 @@
 #include <machine/cpu.h>
 #include <machine/clock.h>
 
-static	void	ka780_memerr __P((void));
-static	int	ka780_mchk __P((caddr_t));
-static	void	ka780_conf __P((void));
-static	int mem_sbi_match __P((struct device *, struct cfdata *, void *));
-static	void mem_sbi_attach __P((struct device *, struct device *, void*));
+static	void	ka780_memerr(void);
+static	int	ka780_mchk(caddr_t);
+static	void	ka780_conf(void);
+static	int mem_sbi_match(struct device *, struct cfdata *, void *);
+static	void mem_sbi_attach(struct device *, struct device *, void*);
 
 struct	cfattach mem_sbi_ca = {
 	sizeof(struct mem_softc), mem_sbi_match, mem_sbi_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.2 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1997/04/16 20:29:23 thorpej Exp $	*/
 
 /*
@@ -38,19 +38,19 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-int OF_finddevice __P((char *name));
-int OF_instance_to_package __P((int ihandle));
-int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+int OF_finddevice(char *name);
+int OF_instance_to_package(int ihandle);
+int OF_getprop(int handle, char *prop, void *buf, int buflen);
 #ifdef	__notyet__
-int OF_setprop __P((int handle, char *prop, void *buf, int len));
+int OF_setprop(int handle, char *prop, void *buf, int len);
 #endif
-int OF_open __P((char *dname));
-void OF_close __P((int handle));
-int OF_write __P((int handle, void *addr, int len));
-int OF_read __P((int handle, void *addr, int len));
-int OF_seek __P((int handle, u_quad_t pos));
-void *OF_claim __P((void *virt, u_int size, u_int align));
-void OF_release __P((void *virt, u_int size));
-int OF_milliseconds __P((void));
+int OF_open(char *dname);
+void OF_close(int handle);
+int OF_write(int handle, void *addr, int len);
+int OF_read(int handle, void *addr, int len);
+int OF_seek(int handle, u_quad_t pos);
+void *OF_claim(void *virt, u_int size, u_int align);
+void OF_release(void *virt, u_int size);
+int OF_milliseconds(void);
 void OF_chain __P((void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.25 2002/03/07 01:08:57 provos Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.26 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -276,8 +276,8 @@ LIST_HEAD(vmi_list, vm_map_intrsafe);
 extern simple_lock_data_t vmi_list_slock;
 extern struct vmi_list vmi_list;
 
-static __inline int vmi_list_lock __P((void));
-static __inline void vmi_list_unlock __P((int));
+static __inline int vmi_list_lock(void);
+static __inline void vmi_list_unlock(int);
 
 static __inline int
 vmi_list_lock()
@@ -324,34 +324,34 @@ extern vaddr_t	uvm_maxkaddr;
  */
 
 MAP_INLINE
-void		uvm_map_deallocate __P((vm_map_t));
+void		uvm_map_deallocate(vm_map_t);
 
-int		uvm_map_clean __P((vm_map_t, vaddr_t, vaddr_t, int));
-void		uvm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
-void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
+int		uvm_map_clean(vm_map_t, vaddr_t, vaddr_t, int);
+void		uvm_map_clip_start(vm_map_t, vm_map_entry_t, vaddr_t);
+void		uvm_map_clip_end(vm_map_t, vm_map_entry_t, vaddr_t);
 MAP_INLINE
-vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
-int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
-			vm_map_t, vaddr_t *, int));
-vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, voff_t, vsize_t, int));
-int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
-int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
-void		uvm_map_init __P((void));
-boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, vm_map_entry_t *));
+vm_map_t	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
+int		uvm_map_extract(vm_map_t, vaddr_t, vsize_t, 
+			vm_map_t, vaddr_t *, int);
+vm_map_entry_t	uvm_map_findspace(vm_map_t, vaddr_t, vsize_t, vaddr_t *,
+			struct uvm_object *, voff_t, vsize_t, int);
+int		uvm_map_inherit(vm_map_t, vaddr_t, vaddr_t, vm_inherit_t);
+int		uvm_map_advice(vm_map_t, vaddr_t, vaddr_t, int);
+void		uvm_map_init(void);
+boolean_t	uvm_map_lookup_entry(vm_map_t, vaddr_t, vm_map_entry_t *);
 MAP_INLINE
-void		uvm_map_reference __P((vm_map_t));
-int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t,
-			vm_map_entry_t, int));
-int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vsize_t,
-			vaddr_t *));
-void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
-int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
+void		uvm_map_reference(vm_map_t);
+int		uvm_map_replace(vm_map_t, vaddr_t, vaddr_t,
+			vm_map_entry_t, int);
+int		uvm_map_reserve(vm_map_t, vsize_t, vaddr_t, vsize_t,
+			vaddr_t *);
+void		uvm_map_setup(vm_map_t, vaddr_t, vaddr_t, int);
+int		uvm_map_submap(vm_map_t, vaddr_t, vaddr_t, vm_map_t);
 MAP_INLINE
-int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
-void		uvm_unmap_detach __P((vm_map_entry_t,int));
-int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
-				      vm_map_entry_t *));
+int		uvm_unmap(vm_map_t, vaddr_t, vaddr_t);
+void		uvm_unmap_detach(vm_map_entry_t,int);
+int		uvm_unmap_remove(vm_map_t, vaddr_t, vaddr_t,
+				      vm_map_entry_t *);
 
 #endif /* _KERNEL */
 
@@ -389,8 +389,8 @@ int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static __inline boolean_t vm_map_lock_try __P((vm_map_t));
-static __inline void vm_map_lock __P((vm_map_t));
+static __inline boolean_t vm_map_lock_try(vm_map_t);
+static __inline void vm_map_lock(vm_map_t);
 extern const char vmmapbsy[];
 
 static __inline boolean_t

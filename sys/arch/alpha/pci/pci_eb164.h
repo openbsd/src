@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_eb164.h,v 1.2 1997/11/10 15:53:12 niklas Exp $	*/
+/*	$OpenBSD: pci_eb164.h,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: pci_eb164.h,v 1.1 1996/11/11 21:08:13 cgd Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-void	pci_eb164_pickintr __P((struct cia_config *));
+void	pci_eb164_pickintr(struct cia_config *);
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt eb164_intr_evcnt;

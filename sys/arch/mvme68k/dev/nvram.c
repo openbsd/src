@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.8 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: nvram.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -58,8 +58,8 @@ struct nvramsoftc {
 	struct clockreg *sc_regs;
 };
 
-void    nvramattach __P((struct device *, struct device *, void *));
-int     nvrammatch __P((struct device *, void *, void *));
+void    nvramattach(struct device *, struct device *, void *);
+int     nvrammatch(struct device *, void *, void *);
 
 struct cfattach nvram_ca = {
 	sizeof(struct nvramsoftc), nvrammatch, nvramattach

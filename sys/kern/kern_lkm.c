@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.36 2002/01/09 19:05:17 ericj Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.37 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -93,8 +93,8 @@ static int _lkm_vfs(struct lkm_table *, int);
 static int _lkm_dev(struct lkm_table *, int);
 static int _lkm_exec(struct lkm_table *, int);
 
-void lkminit __P((void));
-int lkmexists __P((struct lkm_table *));
+void lkminit(void);
+int lkmexists(struct lkm_table *);
 
 void
 lkminit()
@@ -415,7 +415,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			return (ENXIO);
 		}
 
-		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
+		curp->entry = (int (*)(struct lkm_table *, int, int))
 		    (*((long *) (data)));
 
 #ifdef LKM_DEBUG

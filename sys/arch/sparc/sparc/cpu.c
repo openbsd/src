@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.36 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.37 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -84,8 +84,8 @@ extern char mainbus_model[];		/* from autoconf.c */
 int	foundfpu;			/* from machine/cpu.h */
 
 /* The CPU configuration driver. */
-void cpu_attach __P((struct device *, struct device *, void *));
-int  cpu_match __P((struct device *, void *, void *));
+void cpu_attach(struct device *, struct device *, void *);
+int  cpu_match(struct device *, void *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
@@ -95,11 +95,11 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_CPU
 };
 
-char *fsrtoname __P((int, int, int, char *));
-void cache_print __P((struct cpu_softc *));
-void cpu_spinup __P((struct cpu_softc *));
-void fpu_init __P((struct cpu_softc *));
-void replacemul __P((void));
+char *fsrtoname(int, int, int, char *);
+void cache_print(struct cpu_softc *);
+void cpu_spinup(struct cpu_softc *);
+void fpu_init(struct cpu_softc *);
+void replacemul(void);
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -358,40 +358,40 @@ cache_print(sc)
 /*------------*/
 
 
-void cpumatch_unknown __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_sun4 __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_sun4c __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_ms __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_viking __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_hypersparc __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_turbosparc __P((struct cpu_softc *, struct module_info *, int));
+void cpumatch_unknown(struct cpu_softc *, struct module_info *, int);
+void cpumatch_sun4(struct cpu_softc *, struct module_info *, int);
+void cpumatch_sun4c(struct cpu_softc *, struct module_info *, int);
+void cpumatch_ms(struct cpu_softc *, struct module_info *, int);
+void cpumatch_viking(struct cpu_softc *, struct module_info *, int);
+void cpumatch_hypersparc(struct cpu_softc *, struct module_info *, int);
+void cpumatch_turbosparc(struct cpu_softc *, struct module_info *, int);
 
-void getcacheinfo_sun4 __P((struct cpu_softc *, int node));
-void getcacheinfo_sun4c __P((struct cpu_softc *, int node));
-void getcacheinfo_obp __P((struct cpu_softc *, int node));
+void getcacheinfo_sun4(struct cpu_softc *, int node);
+void getcacheinfo_sun4c(struct cpu_softc *, int node);
+void getcacheinfo_obp(struct cpu_softc *, int node);
 
-void sun4_hotfix __P((struct cpu_softc *));
-void viking_hotfix __P((struct cpu_softc *));
-void turbosparc_hotfix __P((struct cpu_softc *));
-void swift_hotfix __P((struct cpu_softc *));
+void sun4_hotfix(struct cpu_softc *);
+void viking_hotfix(struct cpu_softc *);
+void turbosparc_hotfix(struct cpu_softc *);
+void swift_hotfix(struct cpu_softc *);
 
-void ms1_mmu_enable __P((void));
-void viking_mmu_enable __P((void));
-void swift_mmu_enable __P((void));
-void hypersparc_mmu_enable __P((void));
+void ms1_mmu_enable(void);
+void viking_mmu_enable(void);
+void swift_mmu_enable(void);
+void hypersparc_mmu_enable(void);
 
-void srmmu_get_syncflt __P((void));
-void ms1_get_syncflt __P((void));
-void viking_get_syncflt __P((void));
-void swift_get_syncflt __P((void));
-void turbosparc_get_syncflt __P((void));
-void hypersparc_get_syncflt __P((void));
-void cypress_get_syncflt __P((void));
+void srmmu_get_syncflt(void);
+void ms1_get_syncflt(void);
+void viking_get_syncflt(void);
+void swift_get_syncflt(void);
+void turbosparc_get_syncflt(void);
+void hypersparc_get_syncflt(void);
+void cypress_get_syncflt(void);
 
-int srmmu_get_asyncflt __P((u_int *, u_int *));
-int hypersparc_get_asyncflt __P((u_int *, u_int *));
-int cypress_get_asyncflt __P((u_int *, u_int *));
-int no_asyncflt_regs __P((u_int *, u_int *));
+int srmmu_get_asyncflt(u_int *, u_int *);
+int hypersparc_get_asyncflt(u_int *, u_int *);
+int cypress_get_asyncflt(u_int *, u_int *);
+int no_asyncflt_regs(u_int *, u_int *);
 
 struct module_info module_unknown = {
 	CPUTYP_UNKNOWN,
@@ -491,7 +491,7 @@ getcacheinfo_sun4(sc, node)
 }
 
 struct	idprom idprom;
-void	getidprom __P((struct idprom *, int size));
+void	getidprom(struct idprom *, int size);
 
 void
 cpumatch_sun4(sc, mp, node)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.4 1997/12/26 23:43:51 deraadt Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -45,18 +45,18 @@
 
 #include <dev/isa/isavar.h>
 
-int isapnp_wait_status __P((struct isapnp_softc *));
+int isapnp_wait_status(struct isapnp_softc *);
 struct isa_attach_args *
-    isapnp_newdev __P((struct isa_attach_args *));
+    isapnp_newdev(struct isa_attach_args *);
 struct isa_attach_args *
-    isapnp_newconf __P((struct isa_attach_args *));
-void isapnp_merge __P((struct isa_attach_args *,
-    const struct isa_attach_args *));
+    isapnp_newconf(struct isa_attach_args *);
+void isapnp_merge(struct isa_attach_args *,
+    const struct isa_attach_args *);
 struct isa_attach_args *
-    isapnp_flatten __P((struct isa_attach_args *));
-int isapnp_process_tag __P((u_char, u_char, u_char *,
+    isapnp_flatten(struct isa_attach_args *);
+int isapnp_process_tag(u_char, u_char, u_char *,
     struct isa_attach_args **, struct isa_attach_args **,
-    struct isa_attach_args **));
+    struct isa_attach_args **);
 
 #ifdef DEBUG_ISAPNP
 # define DPRINTF(a) printf a

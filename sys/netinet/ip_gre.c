@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.12 2001/09/04 00:57:44 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.13 2002/03/14 01:27:11 millert Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -84,8 +84,8 @@
 /* Needs IP headers. */
 #include <net/if_gre.h>
 
-struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
-static int gre_input2 __P((struct mbuf *, int, u_char));
+struct gre_softc *gre_lookup(struct mbuf *, u_int8_t);
+static int gre_input2(struct mbuf *, int, u_char);
 
 /*
  * Decapsulate.

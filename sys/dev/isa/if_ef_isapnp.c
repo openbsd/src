@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.13 2001/06/27 06:34:45 kjc Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.14 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -113,31 +113,31 @@ struct ef_softc {
 #define	EF_MII_DATA		0x02		/* data bit */
 #define	EF_MII_DIR		0x04		/* direction */
 
-int ef_isapnp_match	__P((struct device *, void *, void *));
-void ef_isapnp_attach	__P((struct device *, struct device *, void *));
+int ef_isapnp_match(struct device *, void *, void *);
+void ef_isapnp_attach(struct device *, struct device *, void *);
 
-void efstart		__P((struct ifnet *));
-int efioctl		__P((struct ifnet *, u_long, caddr_t));
-void efwatchdog		__P((struct ifnet *));
-void efreset		__P((struct ef_softc *));
-void efstop		__P((struct ef_softc *));
-void efsetmulti		__P((struct ef_softc *));
-int efbusyeeprom	__P((struct ef_softc *));
-int efintr		__P((void *));
-void efinit		__P((struct ef_softc *));
-void efcompletecmd	__P((struct ef_softc *, u_int, u_int));
-void eftxstat		__P((struct ef_softc *));
-void efread		__P((struct ef_softc *));
-struct mbuf *efget	__P((struct ef_softc *, int totlen));
+void efstart(struct ifnet *);
+int efioctl(struct ifnet *, u_long, caddr_t);
+void efwatchdog(struct ifnet *);
+void efreset(struct ef_softc *);
+void efstop(struct ef_softc *);
+void efsetmulti(struct ef_softc *);
+int efbusyeeprom(struct ef_softc *);
+int efintr(void *);
+void efinit(struct ef_softc *);
+void efcompletecmd(struct ef_softc *, u_int, u_int);
+void eftxstat(struct ef_softc *);
+void efread(struct ef_softc *);
+struct mbuf *efget(struct ef_softc *, int totlen);
 
-void ef_miibus_writereg	__P((struct device *, int, int, int));
-void ef_miibus_statchg	__P((struct device *));
-int ef_miibus_readreg	__P((struct device *, int, int));
-void ef_mii_writeb	__P((struct ef_softc *, int));
-void ef_mii_sync	__P((struct ef_softc *));
-int ef_ifmedia_upd	__P((struct ifnet *));
-void ef_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-void ef_tick		__P((void *));
+void ef_miibus_writereg(struct device *, int, int, int);
+void ef_miibus_statchg(struct device *);
+int ef_miibus_readreg(struct device *, int, int);
+void ef_mii_writeb(struct ef_softc *, int);
+void ef_mii_sync(struct ef_softc *);
+int ef_ifmedia_upd(struct ifnet *);
+void ef_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void ef_tick(void *);
 
 struct cfdriver ef_cd = {
 	NULL, "ef", DV_IFNET

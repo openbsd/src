@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.82 2002/03/14 01:24:21 jason Exp $	*/
+/*	$OpenBSD: com.c,v 1.83 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -104,11 +104,11 @@
 cdev_decl(com);
 bdev_decl(com);
 
-static u_char tiocm_xxx2mcr __P((int));
+static u_char tiocm_xxx2mcr(int);
 
-void	compwroff __P((struct com_softc *));
-void	com_raisedtr __P((void *));
-void	com_enable_debugport	__P((struct com_softc *));
+void	compwroff(struct com_softc *);
+void	com_raisedtr(void *);
+void	com_enable_debugport(struct com_softc *);
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
@@ -131,8 +131,8 @@ int com_kgdb_addr;
 bus_space_tag_t com_kgdb_iot;
 bus_space_handle_t com_kgdb_ioh;
 
-int    com_kgdb_getc __P((void *));
-void   com_kgdb_putc __P((void *, int));
+int    com_kgdb_getc(void *);
+void   com_kgdb_putc(void *, int);
 #endif /* KGDB */
 
 #define	DEVUNIT(x)	(minor(x) & 0x7f)

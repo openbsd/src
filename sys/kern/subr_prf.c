@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.38 2002/01/23 15:46:48 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.39 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -97,8 +97,8 @@ extern int uvm_doswapencrypt;
  * local prototypes
  */
 
-int	 kprintf __P((const char *, int, void *, char *, va_list));
-void	 putchar __P((int, int, struct tty *));
+int	 kprintf(const char *, int, void *, char *, va_list);
+void	 putchar(int, int, struct tty *);
 
 
 /*
@@ -137,7 +137,7 @@ int	db_console = 0;
  * [e.g. to a "virtual console"].
  */
 
-void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
+void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 
 
 /*

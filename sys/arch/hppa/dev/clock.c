@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2002/02/01 19:03:18 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -54,7 +54,7 @@
 
 struct timeval time;
 
-void startrtclock __P((void));
+void startrtclock(void);
 
 void
 cpu_initclocks()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_gb.c,v 1.6 1997/04/16 11:56:03 downsj Exp $	*/
+/*	$OpenBSD: grf_gb.c,v 1.7 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_gb.c,v 1.11 1997/03/31 07:34:15 scottr Exp $	*/
 
 /*
@@ -85,19 +85,19 @@ u_char crtc_init_data[CRTC_DATA_LENGTH] = {
     0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
 
-int	gb_init __P((struct grf_data *gp, int, caddr_t));
-int	gb_mode __P((struct grf_data *gp, int, caddr_t));
-void	gb_microcode __P((struct gboxfb *));
+int	gb_init(struct grf_data *gp, int, caddr_t);
+int	gb_mode(struct grf_data *gp, int, caddr_t);
+void	gb_microcode(struct gboxfb *);
 
-int	gbox_intio_match __P((struct device *, void *, void *));
-void	gbox_intio_attach __P((struct device *, struct device *, void *));
+int	gbox_intio_match(struct device *, void *, void *);
+void	gbox_intio_attach(struct device *, struct device *, void *);
 
-int	gbox_dio_match __P((struct device *, void *, void *));
-void	gbox_dio_attach __P((struct device *, struct device *, void *));
+int	gbox_dio_match(struct device *, void *, void *);
+void	gbox_dio_attach(struct device *, struct device *, void *);
 
-int	gbox_console_scan __P((int, caddr_t, void *));
-void	gboxcnprobe __P((struct consdev *cp));
-void	gboxcninit __P((struct consdev *cp));
+int	gbox_console_scan(int, caddr_t, void *);
+void	gboxcnprobe(struct consdev *cp);
+void	gboxcninit(struct consdev *cp);
 
 struct cfattach gbox_intio_ca = {
 	sizeof(struct grfdev_softc), gbox_intio_match, gbox_intio_attach
@@ -117,14 +117,14 @@ struct grfsw gbox_grfsw = {
 };
 
 #if NITE > 0
-void	gbox_init __P((struct ite_data *));
-void	gbox_deinit __P((struct ite_data *));
-void	gbox_putc __P((struct ite_data *, int, int, int, int));
-void	gbox_cursor __P((struct ite_data *, int));
-void	gbox_clear __P((struct ite_data *, int, int, int, int));
-void	gbox_scroll __P((struct ite_data *, int, int, int, int));
-void	gbox_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+void	gbox_init(struct ite_data *);
+void	gbox_deinit(struct ite_data *);
+void	gbox_putc(struct ite_data *, int, int, int, int);
+void	gbox_cursor(struct ite_data *, int);
+void	gbox_clear(struct ite_data *, int, int, int, int);
+void	gbox_scroll(struct ite_data *, int, int, int, int);
+void	gbox_windowmove(struct ite_data *, int, int, int, int,
+		int, int, int);
 
 /* Gatorbox ite switch */
 struct itesw gbox_itesw = {

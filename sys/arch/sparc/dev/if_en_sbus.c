@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_sbus.c,v 1.3 1997/08/08 08:25:08 downsj Exp $	*/
+/*	$OpenBSD: if_en_sbus.c,v 1.4 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: if_en_sbus.c,v 1.4 1997/05/24 20:16:22 pk Exp $	*/
 
 /*
@@ -84,8 +84,8 @@ struct en_sbus_softc {
  * prototypes
  */
 
-static	int en_sbus_match __P((struct device *, void *, void *));
-static	void en_sbus_attach __P((struct device *, struct device *, void *));
+static	int en_sbus_match(struct device *, void *, void *);
+static	void en_sbus_attach(struct device *, struct device *, void *);
 
 /*
  * SBUS autoconfig attachments

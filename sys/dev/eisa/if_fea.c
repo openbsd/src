@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.12 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.13 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -81,11 +81,11 @@
  *
  */
 
-void pdq_eisa_subprobe	__P((bus_space_tag_t, bus_space_handle_t,
-    u_int32_t *, u_int32_t *, u_int32_t *));
-void pdq_eisa_devinit	__P((pdq_softc_t *));
-int pdq_eisa_match	__P((struct device *, void *, void *));
-void pdq_eisa_attach	__P((struct device *, struct device *, void *));
+void pdq_eisa_subprobe(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t *, u_int32_t *, u_int32_t *);
+void pdq_eisa_devinit(pdq_softc_t *);
+int pdq_eisa_match(struct device *, void *, void *);
+void pdq_eisa_attach(struct device *, struct device *, void *);
 
 #define	DEFEA_INTRENABLE		0x8	/* level interrupt */
 static int pdq_eisa_irqs[4] = { 9, 10, 11, 15 };

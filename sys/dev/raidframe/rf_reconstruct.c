@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.10 2001/01/02 09:06:26 peter Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.11 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -83,26 +83,26 @@ static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
 #define RF_RECOND_INC       1
 
-RF_RaidReconDesc_t *rf_AllocRaidReconDesc __P((RF_Raid_t *, RF_RowCol_t, RF_RowCol_t, RF_RaidDisk_t *, int, RF_RowCol_t, RF_RowCol_t));
-int rf_ProcessReconEvent __P((RF_Raid_t *, RF_RowCol_t, RF_ReconEvent_t *));
-int rf_IssueNextReadRequest __P((RF_Raid_t *, RF_RowCol_t, RF_RowCol_t));
-int rf_TryToRead __P((RF_Raid_t *, RF_RowCol_t, RF_RowCol_t));
-int rf_ComputePSDiskOffsets __P((RF_Raid_t *, RF_StripeNum_t, RF_RowCol_t, RF_RowCol_t, RF_SectorNum_t *, RF_SectorNum_t *, RF_RowCol_t *, RF_RowCol_t *, RF_SectorNum_t *));
+RF_RaidReconDesc_t *rf_AllocRaidReconDesc(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t, RF_RaidDisk_t *, int, RF_RowCol_t, RF_RowCol_t);
+int rf_ProcessReconEvent(RF_Raid_t *, RF_RowCol_t, RF_ReconEvent_t *);
+int rf_IssueNextReadRequest(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t);
+int rf_TryToRead(RF_Raid_t *, RF_RowCol_t, RF_RowCol_t);
+int rf_ComputePSDiskOffsets(RF_Raid_t *, RF_StripeNum_t, RF_RowCol_t, RF_RowCol_t, RF_SectorNum_t *, RF_SectorNum_t *, RF_RowCol_t *, RF_RowCol_t *, RF_SectorNum_t *);
 int rf_ReconReadDoneProc(void *, int);
 int rf_ReconWriteDoneProc(void *, int);
 void rf_CheckForNewMinHeadSep(RF_Raid_t *, RF_RowCol_t, RF_HeadSepLimit_t);
 int rf_CheckHeadSeparation(RF_Raid_t *, RF_PerDiskReconCtrl_t *, RF_RowCol_t, RF_RowCol_t, RF_HeadSepLimit_t, RF_ReconUnitNum_t);
-void rf_ForceReconReadDoneProc __P((void *, int));
-void rf_ShutdownReconstruction __P((void *));
+void rf_ForceReconReadDoneProc(void *, int);
+void rf_ShutdownReconstruction(void *);
 
 /*
  * these functions are inlined on gcc. If they are used more than
  * once, it is strongly advised to un-line them
  */
-void rf_FreeReconDesc __P((RF_RaidReconDesc_t *));
-int rf_IssueNextWriteRequest __P((RF_Raid_t *, RF_RowCol_t));
-int rf_CheckForcedOrBlockedReconstruction __P((RF_Raid_t *, RF_ReconParityStripeStatus_t *, RF_PerDiskReconCtrl_t *, RF_RowCol_t, RF_RowCol_t, RF_StripeNum_t, RF_ReconUnitNum_t));
-void rf_SignalReconDone __P((RF_Raid_t *));
+void rf_FreeReconDesc(RF_RaidReconDesc_t *);
+int rf_IssueNextWriteRequest(RF_Raid_t *, RF_RowCol_t);
+int rf_CheckForcedOrBlockedReconstruction(RF_Raid_t *, RF_ReconParityStripeStatus_t *, RF_PerDiskReconCtrl_t *, RF_RowCol_t, RF_RowCol_t, RF_StripeNum_t, RF_ReconUnitNum_t);
+void rf_SignalReconDone(RF_Raid_t *);
 
 struct RF_ReconDoneProc_s {
 	void    (*proc) (RF_Raid_t *, void *);

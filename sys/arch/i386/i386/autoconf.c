@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2002/01/09 23:08:34 nordin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2002/03/14 01:26:32 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -65,13 +65,13 @@
 
 #include <dev/cons.h>
 
-int findblkmajor __P((struct device *dv));
-char *findblkname __P((int));
+int findblkmajor(struct device *dv);
+char *findblkname(int);
 
-void rootconf __P((void));
-void swapconf __P((void));
-void setroot __P((void));
-void diskconf __P((void));
+void rootconf(void);
+void swapconf(void);
+void setroot(void);
+void diskconf(void);
 
 /*
  * The following several variables are related to

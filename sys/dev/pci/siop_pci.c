@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci.c,v 1.2 2001/03/01 17:14:28 krw Exp $ */
+/*	$OpenBSD: siop_pci.c,v 1.3 2002/03/14 01:27:00 millert Exp $ */
 /*	$NetBSD: siop_pci.c,v 1.8 2000/05/15 07:53:17 bouyer Exp $	*/
 
 /*
@@ -46,8 +46,8 @@
 #include <dev/ic/siopvar.h>
 #include <dev/pci/siop_pci_common.h>
 
-int     siop_pci_match __P((struct device *, void *, void *));
-void    siop_pci_attach __P((struct device *, struct device *, void *));
+int     siop_pci_match(struct device *, void *, void *);
+void    siop_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach siop_pci_ca = {
 	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach

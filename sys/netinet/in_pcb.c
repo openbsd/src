@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.59 2002/01/21 05:33:14 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.60 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	u_int fport_arg, lport_arg;
 	struct in_addr laddr;
 	int errno;
-	void (*notify) __P((struct inpcb *, int));
+	void (*notify)(struct inpcb *, int);
 {
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
@@ -611,7 +611,7 @@ in_pcbnotifyall(table, dst, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
 	int errno;
-	void (*notify) __P((struct inpcb *, int));
+	void (*notify)(struct inpcb *, int);
 {
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;

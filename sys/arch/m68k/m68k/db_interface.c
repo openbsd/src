@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.24 1997/02/18 22:27:32 gwr Exp $	*/
 
 /* 
@@ -53,7 +53,7 @@ extern label_t	*db_recover;
 int	db_active = 0;
 db_regs_t	ddb_regs;
 
-static void kdbprinttrap __P((int, int));
+static void kdbprinttrap(int, int);
 
 /*
  * Received keyboard interrupt sequence.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.6 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: cache.h,v 1.7 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -150,55 +150,55 @@ extern int cache_alias_bits;
 /*
  * Routines for dealing with the cache.
  */
-void	sun4_cache_enable __P((void));		/* turn it on */
-void	ms1_cache_enable __P((void));		/* turn it on */
-void	viking_cache_enable __P((void));	/* turn it on */
-void	hypersparc_cache_enable __P((void));	/* turn it on */
-void	swift_cache_enable __P((void));		/* turn it on */
-void	cypress_cache_enable __P((void));	/* turn it on */
-void	turbosparc_cache_enable __P((void));	/* turn it on */
+void	sun4_cache_enable(void);		/* turn it on */
+void	ms1_cache_enable(void);		/* turn it on */
+void	viking_cache_enable(void);	/* turn it on */
+void	hypersparc_cache_enable(void);	/* turn it on */
+void	swift_cache_enable(void);		/* turn it on */
+void	cypress_cache_enable(void);	/* turn it on */
+void	turbosparc_cache_enable(void);	/* turn it on */
 
-void	sun4_vcache_flush_context __P((void));	/* flush current context */
-void	sun4_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	sun4_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	sun4_vcache_flush_page __P((int va));	/* flush page in cur ctx */
-void	sun4_cache_flush __P((caddr_t, u_int));/* flush region */
+void	sun4_vcache_flush_context(void);	/* flush current context */
+void	sun4_vcache_flush_region(int);	/* flush region in cur ctx */
+void	sun4_vcache_flush_segment(int, int);/* flush seg in cur ctx */
+void	sun4_vcache_flush_page(int va);	/* flush page in cur ctx */
+void	sun4_cache_flush(caddr_t, u_int);/* flush region */
 
-void	srmmu_vcache_flush_context __P((void));	/* flush current context */
-void	srmmu_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	srmmu_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
-void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
-void	hypersparc_pure_vcache_flush __P((void));
+void	srmmu_vcache_flush_context(void);	/* flush current context */
+void	srmmu_vcache_flush_region(int);	/* flush region in cur ctx */
+void	srmmu_vcache_flush_segment(int, int);/* flush seg in cur ctx */
+void	srmmu_vcache_flush_page(int va);	/* flush page in cur ctx */
+void	srmmu_cache_flush(caddr_t, u_int);/* flush region */
+void	hypersparc_pure_vcache_flush(void);
 
-void	ms1_cache_flush_all __P((void));
-void	srmmu_cache_flush_all __P((void));
-void	cypress_cache_flush_all __P((void));
-void	hypersparc_cache_flush_all __P((void));
+void	ms1_cache_flush_all(void);
+void	srmmu_cache_flush_all(void);
+void	cypress_cache_flush_all(void);
+void	hypersparc_cache_flush_all(void);
 
-void	ms1_cache_flush __P((caddr_t, u_int));
-void	viking_cache_flush __P((caddr_t, u_int));
-void	viking_pcache_flush_line __P((int, int));
-void	srmmu_pcache_flush_line __P((int, int));
+void	ms1_cache_flush(caddr_t, u_int);
+void	viking_cache_flush(caddr_t, u_int);
+void	viking_pcache_flush_line(int, int);
+void	srmmu_pcache_flush_line(int, int);
 
-extern void sparc_noop __P((void));
+extern void sparc_noop(void);
 
 #define noop_vcache_flush_context \
-	(void (*)__P((void))) sparc_noop
+	(void (*)(void)) sparc_noop
 #define noop_vcache_flush_region \
-	(void (*)__P((int))) sparc_noop
+	(void (*)(int)) sparc_noop
 #define noop_vcache_flush_segment \
-	(void (*)__P((int,int))) sparc_noop
+	(void (*)(int,int)) sparc_noop
 #define noop_vcache_flush_page \
-	(void (*)__P((int))) sparc_noop
+	(void (*)(int)) sparc_noop
 #define noop_cache_flush \
-	(void (*)__P((caddr_t, u_int))) sparc_noop
+	(void (*)(caddr_t, u_int)) sparc_noop
 #define noop_pcache_flush_line \
-	(void (*)__P((int, int))) sparc_noop
+	(void (*)(int, int)) sparc_noop
 #define noop_pure_vcache_flush \
-	(void (*)__P((void))) sparc_noop
+	(void (*)(void)) sparc_noop
 #define noop_cache_flush_all \
-	(void (*)__P((void))) sparc_noop
+	(void (*)(void)) sparc_noop
 
 #define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
 #define cache_flush_segment(vr,vs)	cpuinfo.vcache_flush_segment(vr,vs)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnvar.h,v 1.4 2000/12/13 15:58:39 mickey Exp $	*/
+/*	$OpenBSD: rlnvar.h,v 1.5 2002/03/14 01:26:55 millert Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -82,37 +82,37 @@ struct rln_mm_cmd;			/* fwd decl */
 #define RLN_WAKEUP_SET		0xff
 #define RLN_WAKEUP_NOCHANGE	(0x80|0x10)
 
-void		rlnconfig __P((struct rln_softc *));
-int		rlnintr __P((void *));
-void		rlninit __P((struct rln_softc *));
-void		rlnstop __P((struct rln_softc *));
-void		rlnread __P((struct rln_softc *, struct rln_mm_cmd *, int));
-int		rln_enable __P((struct rln_softc *, int));
-int		rln_reset __P((struct rln_softc *));
-u_int8_t	rln_wakeup __P((struct rln_softc *, u_int8_t));
-int		rln_rx_request __P((struct rln_softc *, int));
-int		rln_rx_data __P((struct rln_softc *, void *, int));
-void		rln_rx_pdata __P((struct rln_softc *, void *, int,
-			struct rln_pdata *));
-void		rln_rx_end __P((struct rln_softc *));
-void		rln_clear_nak __P((struct rln_softc *));
-u_int8_t	rln_newseq __P((struct rln_softc *));
+void		rlnconfig(struct rln_softc *);
+int		rlnintr(void *);
+void		rlninit(struct rln_softc *);
+void		rlnstop(struct rln_softc *);
+void		rlnread(struct rln_softc *, struct rln_mm_cmd *, int);
+int		rln_enable(struct rln_softc *, int);
+int		rln_reset(struct rln_softc *);
+u_int8_t	rln_wakeup(struct rln_softc *, u_int8_t);
+int		rln_rx_request(struct rln_softc *, int);
+int		rln_rx_data(struct rln_softc *, void *, int);
+void		rln_rx_pdata(struct rln_softc *, void *, int,
+			struct rln_pdata *);
+void		rln_rx_end(struct rln_softc *);
+void		rln_clear_nak(struct rln_softc *);
+u_int8_t	rln_newseq(struct rln_softc *);
 
-void		rln_msg_tx_data __P((struct rln_softc *, void *, u_int16_t,
-			struct rln_msg_tx_state *));
-int		rln_msg_tx_start __P((struct rln_softc *, void *, int,
-			struct rln_msg_tx_state *));
-int		rln_msg_tx_end __P((struct rln_softc *, 
-			struct rln_msg_tx_state *));
-int		rln_msg_txrx __P((struct rln_softc *, void *, int, 
-			void *, int));
+void		rln_msg_tx_data(struct rln_softc *, void *, u_int16_t,
+			struct rln_msg_tx_state *);
+int		rln_msg_tx_start(struct rln_softc *, void *, int,
+			struct rln_msg_tx_state *);
+int		rln_msg_tx_end(struct rln_softc *, 
+			struct rln_msg_tx_state *);
+int		rln_msg_txrx(struct rln_softc *, void *, int, 
+			void *, int);
 
-int		rln_mbox_create __P((struct rln_softc *, u_int8_t, void *,
-			size_t));
-int		rln_mbox_wait __P((struct rln_softc *, u_int8_t, int));
-int		rln_mbox_lock __P((struct rln_softc *, u_int8_t, void **,
-			size_t*));
-void		rln_mbox_unlock __P((struct rln_softc *, u_int8_t, size_t));
+int		rln_mbox_create(struct rln_softc *, u_int8_t, void *,
+			size_t);
+int		rln_mbox_wait(struct rln_softc *, u_int8_t, int);
+int		rln_mbox_lock(struct rln_softc *, u_int8_t, void **,
+			size_t*);
+void		rln_mbox_unlock(struct rln_softc *, u_int8_t, size_t);
 
 /* debug all card operations */
 #ifdef RLNDEBUG

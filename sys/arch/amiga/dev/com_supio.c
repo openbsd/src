@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_supio.c,v 1.3 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: com_supio.c,v 1.4 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: com_supio.c,v 1.3 1997/08/27 20:41:30 is Exp $	*/
 
 /*-
@@ -68,9 +68,9 @@ struct comsupio_softc {
 	struct isr sc_isr;
 };
 
-int com_supio_match __P((struct device *, void *, void *));
-void com_supio_attach __P((struct device *, struct device *, void *));
-void com_supio_cleanup __P((void *));
+int com_supio_match(struct device *, void *, void *);
+void com_supio_attach(struct device *, struct device *, void *);
+void com_supio_cleanup(void *);
 
 static int      comconsaddr;
 static bus_space_handle_t comconsioh; 

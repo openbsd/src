@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.h,v 1.4 1996/11/29 22:55:05 niklas Exp $	*/
+/*	$OpenBSD: opti.h,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -69,8 +69,8 @@
 #define OPTI_SB		(1)	/* Sound Blaster Pro(tm) compatible */
 
 #ifdef _KERNEL
-int	opti_cd_setup __P(( int, int, int, int ));
-int	opti_snd_setup __P(( int, int, int, int ));
+int	opti_cd_setup( int, int, int, int );
+int	opti_snd_setup( int, int, int, int );
 #endif
 
 #endif	/* __OPTI_HEADER__ */

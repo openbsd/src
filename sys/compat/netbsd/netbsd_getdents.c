@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_getdents.c,v 1.5 2002/02/12 18:41:20 art Exp $	*/
+/*	$OpenBSD: netbsd_getdents.c,v 1.6 2002/03/14 01:26:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,8 +53,8 @@
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
-static int netbsd_vn_readdir __P((struct file *, char *, int, u_int, int *,
-	struct proc *, off_t **, int *));
+static int netbsd_vn_readdir(struct file *, char *, int, u_int, int *,
+	struct proc *, off_t **, int *);
 
 static int
 netbsd_vn_readdir(fp, buf, segflg, count, done, p, cookies, ncookies)
@@ -92,8 +92,8 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
+	extern int (**union_vnodeop_p)(void *);
+	extern struct vnode *union_dircache(struct vnode *);
 
 	if (count == auio.uio_resid && (vp->v_op == union_vnodeop_p)) {
 		struct vnode *lvp;

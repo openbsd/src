@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.22 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.23 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -117,51 +117,51 @@
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/xmaciireg.h>
 
-int skc_probe		__P((struct device *, void *, void *));
-void skc_attach		__P((struct device *, struct device *self, void *aux));
-int sk_probe		__P((struct device *, void *, void *));
-void sk_attach		__P((struct device *, struct device *self, void *aux));
-int skcprint		__P((void *, const char *));
-int sk_attach_xmac	__P((struct sk_softc *, int));
-int sk_intr		__P((void *));
-void sk_intr_bcom	__P((struct sk_if_softc *));
-void sk_intr_xmac	__P((struct sk_if_softc *));
-void sk_rxeof		__P((struct sk_if_softc *));
-void sk_txeof		__P((struct sk_if_softc *));
-int sk_encap		__P((struct sk_if_softc *, struct mbuf *, u_int32_t *));
-void sk_start		__P((struct ifnet *));
-int sk_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void sk_init		__P((void *));
-void sk_init_xmac	__P((struct sk_if_softc *));
-void sk_stop		__P((struct sk_if_softc *));
-void sk_watchdog	__P((struct ifnet *));
-void sk_shutdown	__P((void *));
-int sk_ifmedia_upd	__P((struct ifnet *));
-void sk_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-void sk_reset		__P((struct sk_softc *));
-int sk_newbuf		__P((struct sk_if_softc *, struct sk_chain *,
-    struct mbuf *));
-int sk_init_rx_ring	__P((struct sk_if_softc *));
-void sk_init_tx_ring	__P((struct sk_if_softc *));
-u_int32_t sk_win_read_4	__P((struct sk_softc *, int));
-u_int16_t sk_win_read_2	__P((struct sk_softc *, int));
-u_int8_t sk_win_read_1	__P((struct sk_softc *, int));
-void sk_win_write_4	__P((struct sk_softc *, int, u_int32_t));
-void sk_win_write_2	__P((struct sk_softc *, int, u_int32_t));
-void sk_win_write_1	__P((struct sk_softc *, int, u_int32_t));
-u_int8_t sk_vpd_readbyte	__P((struct sk_softc *, int));
-void sk_vpd_read_res	__P((struct sk_softc *,
-					struct vpd_res *, int));
-void sk_vpd_read	__P((struct sk_softc *));
+int skc_probe(struct device *, void *, void *);
+void skc_attach(struct device *, struct device *self, void *aux);
+int sk_probe(struct device *, void *, void *);
+void sk_attach(struct device *, struct device *self, void *aux);
+int skcprint(void *, const char *);
+int sk_attach_xmac(struct sk_softc *, int);
+int sk_intr(void *);
+void sk_intr_bcom(struct sk_if_softc *);
+void sk_intr_xmac(struct sk_if_softc *);
+void sk_rxeof(struct sk_if_softc *);
+void sk_txeof(struct sk_if_softc *);
+int sk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
+void sk_start(struct ifnet *);
+int sk_ioctl(struct ifnet *, u_long, caddr_t);
+void sk_init(void *);
+void sk_init_xmac(struct sk_if_softc *);
+void sk_stop(struct sk_if_softc *);
+void sk_watchdog(struct ifnet *);
+void sk_shutdown(void *);
+int sk_ifmedia_upd(struct ifnet *);
+void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void sk_reset(struct sk_softc *);
+int sk_newbuf(struct sk_if_softc *, struct sk_chain *,
+    struct mbuf *);
+int sk_init_rx_ring(struct sk_if_softc *);
+void sk_init_tx_ring(struct sk_if_softc *);
+u_int32_t sk_win_read_4(struct sk_softc *, int);
+u_int16_t sk_win_read_2(struct sk_softc *, int);
+u_int8_t sk_win_read_1(struct sk_softc *, int);
+void sk_win_write_4(struct sk_softc *, int, u_int32_t);
+void sk_win_write_2(struct sk_softc *, int, u_int32_t);
+void sk_win_write_1(struct sk_softc *, int, u_int32_t);
+u_int8_t sk_vpd_readbyte(struct sk_softc *, int);
+void sk_vpd_read_res(struct sk_softc *,
+					struct vpd_res *, int);
+void sk_vpd_read(struct sk_softc *);
 
-int sk_miibus_readreg	__P((struct device *, int, int));
-void sk_miibus_writereg	__P((struct device *, int, int, int));
-void sk_miibus_statchg	__P((struct device *));
+int sk_miibus_readreg(struct device *, int, int);
+void sk_miibus_writereg(struct device *, int, int, int);
+void sk_miibus_statchg(struct device *);
 
-u_int32_t sk_calchash	__P((caddr_t));
-void sk_setfilt		__P((struct sk_if_softc *, caddr_t, int));
-void sk_setmulti	__P((struct sk_if_softc *));
-void sk_tick		__P((void *));
+u_int32_t sk_calchash(caddr_t);
+void sk_setfilt(struct sk_if_softc *, caddr_t, int);
+void sk_setmulti(struct sk_if_softc *);
+void sk_tick(void *);
 
 #define SK_SETBIT(sc, reg, x)		\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)

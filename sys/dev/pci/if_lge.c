@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.8 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -120,43 +120,43 @@
 
 #include <dev/pci/if_lgereg.h>
 
-int lge_probe		__P((struct device *, void *, void *));
-void lge_attach		__P((struct device *, struct device *, void *));
+int lge_probe(struct device *, void *, void *);
+void lge_attach(struct device *, struct device *, void *);
 
-int lge_alloc_jumbo_mem	__P((struct lge_softc *));
-void lge_free_jumbo_mem	__P((struct lge_softc *));
-void *lge_jalloc	__P((struct lge_softc *));
-void lge_jfree		__P((caddr_t, u_int, void *));
+int lge_alloc_jumbo_mem(struct lge_softc *);
+void lge_free_jumbo_mem(struct lge_softc *);
+void *lge_jalloc(struct lge_softc *);
+void lge_jfree(caddr_t, u_int, void *);
 
-int lge_newbuf		__P((struct lge_softc *, struct lge_rx_desc *,
-			     struct mbuf *));
-int lge_encap		__P((struct lge_softc *, struct mbuf *, u_int32_t *));
-void lge_rxeof		__P((struct lge_softc *, int));
-void lge_rxeoc		__P((struct lge_softc *));
-void lge_txeof		__P((struct lge_softc *));
-int lge_intr		__P((void *));
-void lge_tick		__P((void *));
-void lge_start		__P((struct ifnet *));
-int lge_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void lge_init		__P((void *));
-void lge_stop		__P((struct lge_softc *));
-void lge_watchdog	__P((struct ifnet *));
-void lge_shutdown	__P((void *));
-int lge_ifmedia_upd	__P((struct ifnet *));
-void lge_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+int lge_newbuf(struct lge_softc *, struct lge_rx_desc *,
+			     struct mbuf *);
+int lge_encap(struct lge_softc *, struct mbuf *, u_int32_t *);
+void lge_rxeof(struct lge_softc *, int);
+void lge_rxeoc(struct lge_softc *);
+void lge_txeof(struct lge_softc *);
+int lge_intr(void *);
+void lge_tick(void *);
+void lge_start(struct ifnet *);
+int lge_ioctl(struct ifnet *, u_long, caddr_t);
+void lge_init(void *);
+void lge_stop(struct lge_softc *);
+void lge_watchdog(struct ifnet *);
+void lge_shutdown(void *);
+int lge_ifmedia_upd(struct ifnet *);
+void lge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void lge_eeprom_getword	__P((struct lge_softc *, int, u_int16_t *));
-void lge_read_eeprom	__P((struct lge_softc *, caddr_t, int, int, int));
+void lge_eeprom_getword(struct lge_softc *, int, u_int16_t *);
+void lge_read_eeprom(struct lge_softc *, caddr_t, int, int, int);
 
-int lge_miibus_readreg	__P((struct device *, int, int));
-void lge_miibus_writereg	__P((struct device *, int, int, int));
-void lge_miibus_statchg	__P((struct device *));
+int lge_miibus_readreg(struct device *, int, int);
+void lge_miibus_writereg(struct device *, int, int, int);
+void lge_miibus_statchg(struct device *);
 
-void lge_setmulti	__P((struct lge_softc *));
-u_int32_t lge_crc	__P((struct lge_softc *, caddr_t));
-void lge_reset		__P((struct lge_softc *));
-int lge_list_rx_init	__P((struct lge_softc *));
-int lge_list_tx_init	__P((struct lge_softc *));
+void lge_setmulti(struct lge_softc *);
+u_int32_t lge_crc(struct lge_softc *, caddr_t);
+void lge_reset(struct lge_softc *);
+int lge_list_rx_init(struct lge_softc *);
+int lge_list_tx_init(struct lge_softc *);
 
 #ifdef LGE_USEIOSPACE
 #define LGE_RES			SYS_RES_IOPORT

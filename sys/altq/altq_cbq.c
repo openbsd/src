@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -59,28 +59,28 @@ static cbq_state_t *cbq_list = NULL;
  * Forward Declarations.
  */
 
-static int	cbq_add_class __P((struct cbq_add_class *));
-static int	cbq_delete_class __P((struct cbq_delete_class *));
-static int	cbq_modify_class __P((struct cbq_modify_class *));
-static int 	cbq_class_create __P((cbq_state_t *, struct cbq_add_class *,
-				      struct rm_class *, struct rm_class *));
-static int	cbq_class_destroy __P((cbq_state_t *, struct rm_class *));
-static struct rm_class  *clh_to_clp __P((cbq_state_t *, u_long));
-static int	cbq_add_filter __P((struct cbq_add_filter *));
-static int	cbq_delete_filter __P((struct cbq_delete_filter *));
+static int	cbq_add_class(struct cbq_add_class *);
+static int	cbq_delete_class(struct cbq_delete_class *);
+static int	cbq_modify_class(struct cbq_modify_class *);
+static int 	cbq_class_create(cbq_state_t *, struct cbq_add_class *,
+				      struct rm_class *, struct rm_class *);
+static int	cbq_class_destroy(cbq_state_t *, struct rm_class *);
+static struct rm_class  *clh_to_clp(cbq_state_t *, u_long);
+static int	cbq_add_filter(struct cbq_add_filter *);
+static int	cbq_delete_filter(struct cbq_delete_filter *);
 
-static int	cbq_clear_hierarchy __P((struct cbq_interface *));
-static int	cbq_clear_interface __P((cbq_state_t *));
-static int	cbq_request __P((struct ifaltq *, int, void *));
-static int	cbq_set_enable __P((struct cbq_interface *, int));
-static int	cbq_ifattach __P((struct cbq_interface *));
-static int	cbq_ifdetach __P((struct cbq_interface *));
-static int	cbq_enqueue __P((struct ifaltq *, struct mbuf *,
-				 struct altq_pktattr *));
-static struct mbuf 	*cbq_dequeue __P((struct ifaltq *, int));
-static void	cbqrestart __P((struct ifaltq *));
-static void 	get_class_stats __P((class_stats_t *, struct rm_class *));
-static int 	cbq_getstats __P((struct cbq_getstats *));
+static int	cbq_clear_hierarchy(struct cbq_interface *);
+static int	cbq_clear_interface(cbq_state_t *);
+static int	cbq_request(struct ifaltq *, int, void *);
+static int	cbq_set_enable(struct cbq_interface *, int);
+static int	cbq_ifattach(struct cbq_interface *);
+static int	cbq_ifdetach(struct cbq_interface *);
+static int	cbq_enqueue(struct ifaltq *, struct mbuf *,
+				 struct altq_pktattr *);
+static struct mbuf 	*cbq_dequeue(struct ifaltq *, int);
+static void	cbqrestart(struct ifaltq *);
+static void 	get_class_stats(class_stats_t *, struct rm_class *);
+static int 	cbq_getstats(struct cbq_getstats *);
 static void	cbq_purge(cbq_state_t *);
 
 static int

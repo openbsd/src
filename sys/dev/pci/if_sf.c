@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.16 2002/02/15 20:45:31 nordin Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.17 2002/03/14 01:26:59 millert Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -124,43 +124,43 @@
 
 #include <dev/pci/if_sfreg.h>
 
-int sf_probe		__P((struct device *, void *, void *));
-void sf_attach		__P((struct device *, struct device *, void *));
-int sf_intr		__P((void *));
-void sf_shutdown	__P((void *));
-void sf_stats_update	__P((void *));
-void sf_rxeof		__P((struct sf_softc *));
-void sf_txeof		__P((struct sf_softc *));
-int sf_encap		__P((struct sf_softc *, struct sf_tx_bufdesc_type0 *,
-				struct mbuf *));
-void sf_start		__P((struct ifnet *));
-int sf_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void sf_init		__P((void *));
-void sf_stop		__P((struct sf_softc *));
-void sf_watchdog	__P((struct ifnet *));
-int sf_ifmedia_upd	__P((struct ifnet *));
-void sf_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-void sf_reset		__P((struct sf_softc *));
-int sf_init_rx_ring	__P((struct sf_softc *));
-void sf_init_tx_ring	__P((struct sf_softc *));
-int sf_newbuf		__P((struct sf_softc *, struct sf_rx_bufdesc_type0 *,
-				struct mbuf *));
-void sf_setmulti	__P((struct sf_softc *));
-int sf_setperf		__P((struct sf_softc *, int, caddr_t));
-int sf_sethash		__P((struct sf_softc *, caddr_t, int));
+int sf_probe(struct device *, void *, void *);
+void sf_attach(struct device *, struct device *, void *);
+int sf_intr(void *);
+void sf_shutdown(void *);
+void sf_stats_update(void *);
+void sf_rxeof(struct sf_softc *);
+void sf_txeof(struct sf_softc *);
+int sf_encap(struct sf_softc *, struct sf_tx_bufdesc_type0 *,
+				struct mbuf *);
+void sf_start(struct ifnet *);
+int sf_ioctl(struct ifnet *, u_long, caddr_t);
+void sf_init(void *);
+void sf_stop(struct sf_softc *);
+void sf_watchdog(struct ifnet *);
+int sf_ifmedia_upd(struct ifnet *);
+void sf_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+void sf_reset(struct sf_softc *);
+int sf_init_rx_ring(struct sf_softc *);
+void sf_init_tx_ring(struct sf_softc *);
+int sf_newbuf(struct sf_softc *, struct sf_rx_bufdesc_type0 *,
+				struct mbuf *);
+void sf_setmulti(struct sf_softc *);
+int sf_setperf(struct sf_softc *, int, caddr_t);
+int sf_sethash(struct sf_softc *, caddr_t, int);
 #ifdef notdef
-int sf_setvlan		__P((struct sf_softc *, int, u_int32_t));
+int sf_setvlan(struct sf_softc *, int, u_int32_t);
 #endif
 
-u_int8_t sf_read_eeprom	__P((struct sf_softc *, int));
-u_int32_t sf_calchash	__P((caddr_t));
+u_int8_t sf_read_eeprom(struct sf_softc *, int);
+u_int32_t sf_calchash(caddr_t);
 
-int sf_miibus_readreg	__P((struct device *, int, int));
-void sf_miibus_writereg	__P((struct device *, int, int, int));
-void sf_miibus_statchg	__P((struct device *));
+int sf_miibus_readreg(struct device *, int, int);
+void sf_miibus_writereg(struct device *, int, int, int);
+void sf_miibus_statchg(struct device *);
 
-u_int32_t csr_read_4	__P((struct sf_softc *, int));
-void csr_write_4	__P((struct sf_softc *, int, u_int32_t));
+u_int32_t csr_read_4(struct sf_softc *, int);
+void csr_write_4(struct sf_softc *, int, u_int32_t);
 
 #define SF_SETBIT(sc, reg, x)	\
 	csr_write_4(sc, reg, csr_read_4(sc, reg) | x)

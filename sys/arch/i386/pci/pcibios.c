@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.24 2001/05/12 19:12:44 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.25 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -122,18 +122,18 @@ int pcibios_flags = 0;
 struct bios32_entry pcibios_entry;
 struct bios32_entry_info pcibios_entry_info;
 
-struct pcibios_intr_routing *pcibios_pir_init __P((struct pcibios_softc *));
+struct pcibios_intr_routing *pcibios_pir_init(struct pcibios_softc *);
 
-int	pcibios_get_status __P((struct pcibios_softc *,
+int	pcibios_get_status(struct pcibios_softc *,
 	    u_int32_t *, u_int32_t *, u_int32_t *,
-	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *));
-int	pcibios_get_intr_routing __P((struct pcibios_softc *,
-	    struct pcibios_intr_routing *, int *, u_int16_t *));
+	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *);
+int	pcibios_get_intr_routing(struct pcibios_softc *,
+	    struct pcibios_intr_routing *, int *, u_int16_t *);
 
-int	pcibios_return_code __P((struct pcibios_softc *, u_int16_t, const char *));
+int	pcibios_return_code(struct pcibios_softc *, u_int16_t, const char *);
 
-void	pcibios_print_exclirq __P((struct pcibios_softc *));
-void	pcibios_print_pir_table __P((void));
+void	pcibios_print_exclirq(struct pcibios_softc *);
+void	pcibios_print_pir_table(void);
 
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
@@ -142,8 +142,8 @@ struct cfdriver pcibios_cd = {
 	NULL, "pcibios", DV_DULL
 };
 
-int pcibiosprobe __P((struct device *, void *, void *));
-void pcibiosattach __P((struct device *, struct device *, void *));
+int pcibiosprobe(struct device *, void *, void *);
+void pcibiosattach(struct device *, struct device *, void *);
 
 struct cfattach pcibios_ca = {
 	sizeof(struct pcibios_softc), pcibiosprobe, pcibiosattach
@@ -524,7 +524,7 @@ pci_device_foreach(sc, pc, maxbus, func)
 	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	int maxbus;
-	void (*func) __P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t));
+	void (*func)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t);
 {
 	const struct pci_quirkdata *qd;
 	int bus, device, function, maxdevs, nfuncs;

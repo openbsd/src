@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd756.c,v 1.2 2001/01/25 00:07:40 mickey Exp $	*/
+/*	$OpenBSD: amd756.c,v 1.3 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -89,13 +89,13 @@ struct viper_handle {
 	pcitag_t ph_tag;
 };
 
-int amd756_getclink __P((pciintr_icu_handle_t, int, int *));
-int amd756_get_intr __P((pciintr_icu_handle_t, int, int *));
-int amd756_set_intr __P((pciintr_icu_handle_t, int, int));
-int amd756_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int amd756_set_trigger __P((pciintr_icu_handle_t, int, int));
+int amd756_getclink(pciintr_icu_handle_t, int, int *);
+int amd756_get_intr(pciintr_icu_handle_t, int, int *);
+int amd756_set_intr(pciintr_icu_handle_t, int, int);
+int amd756_get_trigger(pciintr_icu_handle_t, int, int *);
+int amd756_set_trigger(pciintr_icu_handle_t, int, int);
 #ifdef VIPER_DEBUG
-static void amd756_pir_dump __P((struct viper_handle *));
+static void amd756_pir_dump(struct viper_handle *);
 #endif
 
 const struct pciintr_icu amd756_pci_icu = {

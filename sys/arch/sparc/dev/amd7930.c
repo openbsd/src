@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.18 1999/08/06 01:26:49 jason Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.19 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct amd7930_softc {
 
 /* interrupt interfaces */
 #ifdef AUDIO_C_HANDLER
-int	amd7930hwintr __P((void *));
+int	amd7930hwintr(void *);
 #if defined(SUN4M)
 #define AUDIO_SET_SWINTR do {		\
 	if (CPU_ISSUN4M)		\
@@ -103,15 +103,15 @@ int	amd7930hwintr __P((void *));
 #else
 struct auio *auiop;
 #endif /* AUDIO_C_HANDLER */
-int	amd7930swintr __P((void *));
+int	amd7930swintr(void *);
 
 /* forward declarations */
-void	audio_setmap __P((volatile struct amd7930 *, struct mapreg *));
-static void init_amd __P((volatile struct amd7930 *));
+void	audio_setmap(volatile struct amd7930 *, struct mapreg *);
+static void init_amd(volatile struct amd7930 *);
 
 /* autoconfiguration driver */
-void	amd7930attach __P((struct device *, struct device *, void *));
-int	amd7930match __P((struct device *, void *, void *));
+void	amd7930attach(struct device *, struct device *, void *);
+int	amd7930match(struct device *, void *, void *);
 
 struct cfattach audioamd_ca = {
 	sizeof(struct amd7930_softc), amd7930match, amd7930attach
@@ -204,23 +204,23 @@ static const u_short ger_coeff[] = {
 /*
  * Define our interface to the higher level audio driver.
  */
-int	amd7930_open __P((void *, int));
-void	amd7930_close __P((void *));
-int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	amd7930_round_blocksize __P((void *, int));
-int	amd7930_commit_settings __P((void *));
+int	amd7930_open(void *, int);
+void	amd7930_close(void *);
+int	amd7930_query_encoding(void *, struct audio_encoding *);
+int	amd7930_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	amd7930_round_blocksize(void *, int);
+int	amd7930_commit_settings(void *);
 int	amd7930_start_output __P((void *, void *, int, void (*)(void *),
 				  void *));
 int	amd7930_start_input __P((void *, void *, int, void (*)(void *),
 				 void *));
-int	amd7930_halt_output __P((void *));
-int	amd7930_halt_input __P((void *));
-int	amd7930_getdev __P((void *, struct audio_device *));
-int	amd7930_set_port __P((void *, mixer_ctrl_t *));
-int	amd7930_get_port __P((void *, mixer_ctrl_t *));
-int	amd7930_query_devinfo __P((void *, mixer_devinfo_t *));
-int	amd7930_get_props __P((void *));
+int	amd7930_halt_output(void *);
+int	amd7930_halt_input(void *);
+int	amd7930_getdev(void *, struct audio_device *);
+int	amd7930_set_port(void *, mixer_ctrl_t *);
+int	amd7930_get_port(void *, mixer_ctrl_t *);
+int	amd7930_query_devinfo(void *, mixer_devinfo_t *);
+int	amd7930_get_props(void *);
 
 struct audio_hw_if sa_hw_if = {
 	amd7930_open,
@@ -480,7 +480,7 @@ amd7930_start_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	register struct amd7930_softc *sc = addr;
@@ -512,7 +512,7 @@ amd7930_start_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	register struct amd7930_softc *sc = addr;

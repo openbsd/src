@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.h,v 1.2 1996/08/02 20:35:05 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_exec.h,v 1.3 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_exec.h,v 1.4 1995/03/14 15:12:24 scottb Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ struct coff_slhdr {
 #define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 128)
 
 struct exec_package;
-int     exec_ibcs2_coff_makecmds __P((struct proc *, struct exec_package *));
+int     exec_ibcs2_coff_makecmds(struct proc *, struct exec_package *);
 
 /*
  * x.out (XENIX)
@@ -281,6 +281,6 @@ struct xiter {
 
 #define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
 
-int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
+int     exec_ibcs2_xout_makecmds(struct proc *, struct exec_package *);
 
 #endif /* !_IBCS2_EXEC_H_ */

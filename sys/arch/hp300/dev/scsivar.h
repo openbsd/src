@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsivar.h,v 1.5 1997/04/16 11:56:15 downsj Exp $	*/
+/*	$OpenBSD: scsivar.h,v 1.6 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: scsivar.h,v 1.7 1997/03/31 07:40:05 scottr Exp $	*/
 
 /*
@@ -55,9 +55,9 @@ struct scsiqueue {
 	/*
 	 * Callbacks used to start and stop the target driver.
 	 */
-	void	(*sq_start) __P((void *));
-	void	(*sq_go) __P((void *));
-	void	(*sq_intr) __P((void *, int));
+	void	(*sq_start)(void *);
+	void	(*sq_go)(void *);
+	void	(*sq_intr)(void *, int);
 };
 
 struct scsi_inquiry;
@@ -71,25 +71,25 @@ struct oscsi_attach_args {
 };
 
 #ifdef _KERNEL
-int	scsi_print __P((void *, const char *));
+int	scsi_print(void *, const char *);
 
-void	scsi_delay __P((int));
-void	scsistart __P((void *));
-void	scsireset __P((int));
-int	scsi_test_unit_rdy __P((int, int, int));
-int	scsi_request_sense __P((int, int, int, u_char *, u_int));
-int	scsi_immed_command __P((int, int, int, struct scsi_fmt_cdb *,
-				u_char *, u_int, int));
-int	scsi_tt_read __P((int, int, int, u_char *, u_int, daddr_t, int));
-int	scsi_tt_write __P((int, int, int, u_char *, u_int, daddr_t, int));
-int	scsireq __P((struct device *, struct scsiqueue *));
-int	scsiustart __P((int));
-void	scsistart __P((void *));
-int	scsigo __P((int, int, int, struct buf *, struct scsi_fmt_cdb *, int));
-void	scsidone __P((void *));
-int	scsiintr __P((void *));
-void	scsifree __P((struct device *, struct scsiqueue *));
-int	scsi_tt_oddio __P((int, int, int, u_char *, u_int, int, int));
-void	scsi_str __P((char *, char *, size_t));
-int	scsi_probe_device __P((int, int, int, struct scsi_inquiry *, int));
+void	scsi_delay(int);
+void	scsistart(void *);
+void	scsireset(int);
+int	scsi_test_unit_rdy(int, int, int);
+int	scsi_request_sense(int, int, int, u_char *, u_int);
+int	scsi_immed_command(int, int, int, struct scsi_fmt_cdb *,
+				u_char *, u_int, int);
+int	scsi_tt_read(int, int, int, u_char *, u_int, daddr_t, int);
+int	scsi_tt_write(int, int, int, u_char *, u_int, daddr_t, int);
+int	scsireq(struct device *, struct scsiqueue *);
+int	scsiustart(int);
+void	scsistart(void *);
+int	scsigo(int, int, int, struct buf *, struct scsi_fmt_cdb *, int);
+void	scsidone(void *);
+int	scsiintr(void *);
+void	scsifree(struct device *, struct scsiqueue *);
+int	scsi_tt_oddio(int, int, int, u_char *, u_int, int, int);
+void	scsi_str(char *, char *, size_t);
+int	scsi_probe_device(int, int, int, struct scsi_inquiry *, int);
 #endif

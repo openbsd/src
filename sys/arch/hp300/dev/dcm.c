@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.12 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.13 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -251,30 +251,30 @@ struct	dcm_softc {
 
 cdev_decl(dcm);
 
-int	dcmintr __P((void *));
-void	dcmpint __P((struct dcm_softc *, int, int));
-void	dcmrint __P((struct dcm_softc *));
-void	dcmreadbuf __P((struct dcm_softc *, int));
-void	dcmxint __P((struct dcm_softc *, int));
-void	dcmmint __P((struct dcm_softc *, int, int));
+int	dcmintr(void *);
+void	dcmpint(struct dcm_softc *, int, int);
+void	dcmrint(struct dcm_softc *);
+void	dcmreadbuf(struct dcm_softc *, int);
+void	dcmxint(struct dcm_softc *, int);
+void	dcmmint(struct dcm_softc *, int, int);
 
-int	dcmparam __P((struct tty *, struct termios *));
-void	dcmstart __P((struct tty *));
-int	dcmstop __P((struct tty *, int));
-int	dcmmctl __P((dev_t, int, int));
-void	dcmsetischeme __P((int, int));
-void	dcminit __P((struct dcmdevice *, int, int));
+int	dcmparam(struct tty *, struct termios *);
+void	dcmstart(struct tty *);
+int	dcmstop(struct tty *, int);
+int	dcmmctl(dev_t, int, int);
+void	dcmsetischeme(int, int);
+void	dcminit(struct dcmdevice *, int, int);
 
-int	dcmselftest __P((struct dcm_softc *));
+int	dcmselftest(struct dcm_softc *);
 
-int	dcm_console_scan __P((int, caddr_t, void *));
-void	dcmcnprobe __P((struct consdev *));
-void	dcmcninit __P((struct consdev *));
-int	dcmcngetc __P((dev_t));
-void	dcmcnputc __P((dev_t, int));
+int	dcm_console_scan(int, caddr_t, void *);
+void	dcmcnprobe(struct consdev *);
+void	dcmcninit(struct consdev *);
+int	dcmcngetc(dev_t);
+void	dcmcnputc(dev_t, int);
 
-int	dcmmatch __P((struct device *, void *, void *));
-void	dcmattach __P((struct device *, struct device *, void *));
+int	dcmmatch(struct device *, void *, void *);
+void	dcmattach(struct device *, struct device *, void *);
 
 struct cfattach dcm_ca = {
 	sizeof(struct dcm_softc), dcmmatch, dcmattach

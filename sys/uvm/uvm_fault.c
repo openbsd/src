@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.30 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.31 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -175,8 +175,8 @@ static struct uvm_advice uvmadvice[] = {
  * private prototypes
  */
 
-static void uvmfault_amapcopy __P((struct uvm_faultinfo *));
-static __inline void uvmfault_anonflush __P((struct vm_anon **, int));
+static void uvmfault_amapcopy(struct uvm_faultinfo *);
+static __inline void uvmfault_anonflush(struct vm_anon **, int);
 
 /*
  * inline functions

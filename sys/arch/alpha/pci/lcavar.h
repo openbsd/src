@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcavar.h,v 1.9 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.10 2002/03/14 01:26:27 millert Exp $	*/
 /* $NetBSD: lcavar.h,v 1.7 1997/06/06 23:54:32 thorpej Exp $ */
 
 /*
@@ -61,9 +61,9 @@ struct lca_softc {
 	struct	lca_config *sc_lcp;
 };
 
-void	lca_init __P((struct lca_config *, int));
-void	lca_pci_init __P((pci_chipset_tag_t, void *));
-void	lca_dma_init __P((struct lca_config *));
+void	lca_init(struct lca_config *, int);
+void	lca_pci_init(pci_chipset_tag_t, void *);
+void	lca_dma_init(struct lca_config *);
 
-void	lca_bus_io_init __P((bus_space_tag_t, void *));
-void	lca_bus_mem_init __P((bus_space_tag_t, void *));
+void	lca_bus_io_init(bus_space_tag_t, void *);
+void	lca_bus_mem_init(bus_space_tag_t, void *);

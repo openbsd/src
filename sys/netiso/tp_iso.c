@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_iso.c,v 1.3 1996/04/21 22:29:50 deraadt Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
@@ -525,7 +525,7 @@ tpclnp_input(m, va_alist)
 {
 	struct sockaddr_iso *src, *dst;
 	int             clnp_len, ce_bit;
-	void            (*input) __P((struct mbuf *, ...)) = tp_input;
+	void            (*input)(struct mbuf *, ...) = tp_input;
 	va_list		ap;
 
 	va_start(ap, m);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.51 2001/10/08 01:50:48 drahn Exp $	*/
+/*	$OpenBSD: sd.c,v 1.52 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -89,22 +89,22 @@
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
-int	sdmatch __P((struct device *, void *, void *));
-void	sdattach __P((struct device *, struct device *, void *));
-int	sdactivate __P((struct device *, enum devact));
-int	sddetach __P((struct device *, int));
-void	sdzeroref __P((struct device *));
+int	sdmatch(struct device *, void *, void *);
+void	sdattach(struct device *, struct device *, void *);
+int	sdactivate(struct device *, enum devact);
+int	sddetach(struct device *, int);
+void	sdzeroref(struct device *);
 
-void	sdminphys __P((struct buf *));
-void	sdgetdisklabel __P((dev_t, struct sd_softc *, struct disklabel *,
-			    struct cpu_disklabel *, int));
-void	sdstart __P((void *));
-void	sddone __P((struct scsi_xfer *));
-void	sd_shutdown __P((void *));
-int	sd_reassign_blocks __P((struct sd_softc *, u_long));
-int	sd_interpret_sense __P((struct scsi_xfer *));
+void	sdminphys(struct buf *);
+void	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *,
+			    struct cpu_disklabel *, int);
+void	sdstart(void *);
+void	sddone(struct scsi_xfer *);
+void	sd_shutdown(void *);
+int	sd_reassign_blocks(struct sd_softc *, u_long);
+int	sd_interpret_sense(struct scsi_xfer *);
 
-void	viscpy __P((u_char *, u_char *, int));
+void	viscpy(u_char *, u_char *, int);
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach,

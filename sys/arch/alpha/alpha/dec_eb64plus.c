@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb64plus.c,v 1.1 2002/01/23 03:20:41 ericj Exp $ */
+/* $OpenBSD: dec_eb64plus.c,v 1.2 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: dec_eb64plus.c,v 1.25 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -68,9 +68,9 @@
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_eb64plus_init __P((void));
-static void dec_eb64plus_cons_init __P((void));
-static void dec_eb64plus_device_register __P((struct device *, void *));
+void dec_eb64plus_init(void);
+static void dec_eb64plus_cons_init(void);
+static void dec_eb64plus_device_register(struct device *, void *);
 
 const struct alpha_variation_table dec_eb64plus_variations[] = {
 	{ 0, "DEC EB64+" },

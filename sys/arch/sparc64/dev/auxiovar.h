@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxiovar.h,v 1.3 2002/02/01 21:48:23 jason Exp $	*/
+/*	$OpenBSD: auxiovar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: auxiovar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -63,6 +63,6 @@ struct auxio_softc {
  * as AUXREG_VA depends on NBPG which is not a constant.
  */
 volatile u_char *auxio_reg;
-unsigned int auxregbisc __P((int, int));
-void auxio_led_blink __P((void *));
+unsigned int auxregbisc(int, int);
+void auxio_led_blink(void *);
 #endif

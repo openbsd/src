@@ -1,4 +1,4 @@
-/* $OpenBSD: kgdb_stub.c,v 1.2 2001/09/20 17:02:31 mpech Exp $ */
+/* $OpenBSD: kgdb_stub.c,v 1.3 2002/03/14 01:27:04 millert Exp $ */
 /*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
@@ -70,18 +70,18 @@ int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 label_t *kgdb_recover = 0;
 
-static void kgdb_copy __P((void *, void *, int));
-/* static void kgdb_zero __P((void *, int)); */
-static void kgdb_send __P((u_char *));
-static int kgdb_recv __P((u_char *, int));
-static int digit2i __P((u_char));
-static u_char i2digit __P((int));
-static void mem2hex __P((void *, void *, int));
-static u_char *hex2mem __P((void *, u_char *, int));
-static vaddr_t hex2i __P((u_char **));
+static void kgdb_copy(void *, void *, int);
+/* static void kgdb_zero(void *, int); */
+static void kgdb_send(u_char *);
+static int kgdb_recv(u_char *, int);
+static int digit2i(u_char);
+static u_char i2digit(int);
+static void mem2hex(void *, void *, int);
+static u_char *hex2mem(void *, u_char *, int);
+static vaddr_t hex2i(u_char **);
 
-static int (*kgdb_getc) __P((void *));
-static void (*kgdb_putc) __P((void *, int));
+static int (*kgdb_getc)(void *);
+static void (*kgdb_putc)(void *, int);
 static void *kgdb_ioarg;
 
 static u_char buffer[KGDB_BUFLEN];
@@ -302,8 +302,8 @@ kgdb_recv(bp, maxlen)
  */
 void
 kgdb_attach(getfn, putfn, ioarg)
-	int (*getfn) __P((void *));
-	void (*putfn) __P((void *, int));
+	int (*getfn)(void *);
+	void (*putfn)(void *, int);
 	void *ioarg;
 {
 	kgdb_getc = getfn;

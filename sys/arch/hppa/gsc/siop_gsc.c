@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
+/*	$OpenBSD: siop_gsc.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -47,8 +47,8 @@
 
 #include <hppa/dev/cpudevs.h>
 
-int	ncr53c7xx_gsc_probe __P((struct device *, void *, void *));
-void	ncr53c7xx_gsc_attach __P((struct device *, struct device *, void *));
+int	ncr53c7xx_gsc_probe(struct device *, void *, void *);
+void	ncr53c7xx_gsc_attach(struct device *, struct device *, void *);
 
 struct cfattach ncr_ca = {
 	sizeof(struct ncr53c7xx_softc),

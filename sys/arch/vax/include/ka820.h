@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.h,v 1.3 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$OpenBSD: ka820.h,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka820.h,v 1.3 2000/01/24 02:40:32 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -140,5 +140,5 @@ struct ka820clock {
 	u_short csr3;
 };
 
-void	crxintr __P((void *arg));
+void	crxintr(void *arg);
 #endif

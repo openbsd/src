@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.10 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.11 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -48,21 +48,21 @@
 /*
  * Prototypes for dead operations on vnodes.
  */
-int	dead_badop	__P((void *));
-int	dead_ebadf	__P((void *));
+int	dead_badop(void *);
+int	dead_ebadf(void *);
 
-int	dead_lookup	__P((void *));
+int	dead_lookup(void *);
 #define dead_create	dead_badop
 #define dead_mknod	dead_badop
-int	dead_open	__P((void *));
+int	dead_open(void *);
 #define dead_close	nullop
 #define dead_access	dead_ebadf
 #define dead_getattr	dead_ebadf
 #define dead_setattr	dead_ebadf
-int	dead_read	__P((void *));
-int	dead_write	__P((void *));
-int	dead_ioctl	__P((void *));
-int	dead_select	__P((void *));
+int	dead_read(void *);
+int	dead_write(void *);
+int	dead_ioctl(void *);
+int	dead_select(void *);
 #define dead_fsync	nullop
 #define dead_remove	dead_badop
 #define dead_link	dead_badop
@@ -75,19 +75,19 @@ int	dead_select	__P((void *));
 #define dead_abortop	dead_badop
 #define dead_inactive	nullop
 #define dead_reclaim	nullop
-int	dead_lock	__P((void *));
+int	dead_lock(void *);
 #define dead_unlock	vop_generic_unlock
-int	dead_bmap	__P((void *));
-int	dead_strategy	__P((void *));
-int	dead_print	__P((void *));
+int	dead_bmap(void *);
+int	dead_strategy(void *);
+int	dead_print(void *);
 #define dead_islocked	vop_generic_islocked
 #define dead_pathconf	dead_ebadf
 #define dead_advlock	dead_ebadf
 #define dead_bwrite	nullop
 
-int	chkvnlock __P((struct vnode *));
+int	chkvnlock(struct vnode *);
 
-int (**dead_vnodeop_p) __P((void *));
+int (**dead_vnodeop_p)(void *);
 
 struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -124,7 +124,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, dead_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },	/* advlock */
 	{ &vop_bwrite_desc, dead_bwrite },	/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.55 2002/01/31 04:07:38 rees Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.56 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -140,45 +140,45 @@ struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
-void ep_vortex_probemedia	__P((struct ep_softc *sc));
-void ep_isa_probemedia		__P((struct ep_softc *sc));
+void ep_vortex_probemedia(struct ep_softc *sc);
+void ep_isa_probemedia(struct ep_softc *sc);
 
-void eptxstat			__P((struct ep_softc *));
-int epstatus			__P((struct ep_softc *));
-int epioctl			__P((struct ifnet *, u_long, caddr_t));
-void epstart			__P((struct ifnet *));
-void epwatchdog			__P((struct ifnet *));
-void epreset			__P((struct ep_softc *));
-void epread			__P((struct ep_softc *));
-struct mbuf *epget		__P((struct ep_softc *, int));
-void epmbuffill			__P((void *));
-void epmbufempty		__P((struct ep_softc *));
-void epsetfilter		__P((struct ep_softc *));
-void ep_roadrunner_mii_enable	__P((struct ep_softc *));
-int epsetmedia			__P((struct ep_softc *, int));
+void eptxstat(struct ep_softc *);
+int epstatus(struct ep_softc *);
+int epioctl(struct ifnet *, u_long, caddr_t);
+void epstart(struct ifnet *);
+void epwatchdog(struct ifnet *);
+void epreset(struct ep_softc *);
+void epread(struct ep_softc *);
+struct mbuf *epget(struct ep_softc *, int);
+void epmbuffill(void *);
+void epmbufempty(struct ep_softc *);
+void epsetfilter(struct ep_softc *);
+void ep_roadrunner_mii_enable(struct ep_softc *);
+int epsetmedia(struct ep_softc *, int);
 
 /* ifmedia callbacks */
-int ep_media_change		__P((struct ifnet *));
-void ep_media_status		__P((struct ifnet *, struct ifmediareq *));
+int ep_media_change(struct ifnet *);
+void ep_media_status(struct ifnet *, struct ifmediareq *);
 
 /* MII callbacks */
-int ep_mii_readreg		__P((struct device *, int, int));
-void ep_mii_writereg		__P((struct device *, int, int, int));
-void ep_statchg			__P((struct device *));
+int ep_mii_readreg(struct device *, int, int);
+void ep_mii_writereg(struct device *, int, int, int);
+void ep_statchg(struct device *);
 
-void    ep_mii_setbit		__P((struct ep_softc *, u_int16_t));
-void    ep_mii_clrbit		__P((struct ep_softc *, u_int16_t));
-u_int16_t ep_mii_readbit	__P((struct ep_softc *, u_int16_t));
-void    ep_mii_sync		__P((struct ep_softc *));
-void    ep_mii_sendbits		__P((struct ep_softc *, u_int32_t, int));
+void    ep_mii_setbit(struct ep_softc *, u_int16_t);
+void    ep_mii_clrbit(struct ep_softc *, u_int16_t);
+u_int16_t ep_mii_readbit(struct ep_softc *, u_int16_t);
+void    ep_mii_sync(struct ep_softc *);
+void    ep_mii_sendbits(struct ep_softc *, u_int32_t, int);
 
-int epbusyeeprom		__P((struct ep_softc *));
-u_int16_t ep_read_eeprom	__P((struct ep_softc *, u_int16_t));
+int epbusyeeprom(struct ep_softc *);
+u_int16_t ep_read_eeprom(struct ep_softc *, u_int16_t);
 
-static inline void ep_reset_cmd __P((struct ep_softc *sc, u_int cmd,u_int arg));
-static inline void ep_finish_reset __P((bus_space_tag_t, bus_space_handle_t));
-static inline void ep_discard_rxtop __P((bus_space_tag_t, bus_space_handle_t));
-static __inline int ep_w1_reg	__P((struct ep_softc *, int));
+static inline void ep_reset_cmd(struct ep_softc *sc, u_int cmd,u_int arg);
+static inline void ep_finish_reset(bus_space_tag_t, bus_space_handle_t);
+static inline void ep_discard_rxtop(bus_space_tag_t, bus_space_handle_t);
+static __inline int ep_w1_reg(struct ep_softc *, int);
 
 /*
  * Issue a (reset) command, and be sure it has completed.

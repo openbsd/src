@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.27 2002/02/21 06:17:19 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.28 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -54,8 +54,8 @@ struct mainbus_softc {
 	hppa_hpa_t sc_hpa;
 };
 
-int	mbmatch __P((struct device *, void *, void *));
-void	mbattach __P((struct device *, struct device *, void *));
+int	mbmatch(struct device *, void *, void *);
+void	mbattach(struct device *, struct device *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
@@ -422,19 +422,19 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t 
 		*(volatile u_int64_t *)h = vv;
 }
 
-void mbus_rrm_2 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int16_t*a, bus_size_t c));
-void mbus_rrm_4 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int32_t*a, bus_size_t c));
-void mbus_rrm_8 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int64_t*a, bus_size_t c));
+void mbus_rrm_2(void *v, bus_space_handle_t h,
+		     bus_size_t o, u_int16_t*a, bus_size_t c);
+void mbus_rrm_4(void *v, bus_space_handle_t h,
+		     bus_size_t o, u_int32_t*a, bus_size_t c);
+void mbus_rrm_8(void *v, bus_space_handle_t h,
+		     bus_size_t o, u_int64_t*a, bus_size_t c);
 
-void mbus_wrm_2 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int16_t *a, bus_size_t c));
-void mbus_wrm_4 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int32_t *a, bus_size_t c));
-void mbus_wrm_8 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int64_t *a, bus_size_t c));
+void mbus_wrm_2(void *v, bus_space_handle_t h,
+		     bus_size_t o, const u_int16_t *a, bus_size_t c);
+void mbus_wrm_4(void *v, bus_space_handle_t h,
+		     bus_size_t o, const u_int32_t *a, bus_size_t c);
+void mbus_wrm_8(void *v, bus_space_handle_t h,
+		     bus_size_t o, const u_int64_t *a, bus_size_t c);
 
 void
 mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
@@ -500,19 +500,19 @@ mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_s
 		*((volatile u_int64_t *)h)++ = *(a++);
 }
 
-void mbus_rrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int16_t *a, bus_size_t c));
-void mbus_rrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int32_t *a, bus_size_t c));
-void mbus_rrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int64_t *a, bus_size_t c));
+void mbus_rrr_2(void *v, bus_space_handle_t h,
+		   bus_size_t o, u_int16_t *a, bus_size_t c);
+void mbus_rrr_4(void *v, bus_space_handle_t h,
+		   bus_size_t o, u_int32_t *a, bus_size_t c);
+void mbus_rrr_8(void *v, bus_space_handle_t h,
+		   bus_size_t o, u_int64_t *a, bus_size_t c);
 
-void mbus_wrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int16_t *a, bus_size_t c));
-void mbus_wrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int32_t *a, bus_size_t c));
-void mbus_wrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int64_t *a, bus_size_t c));
+void mbus_wrr_2(void *v, bus_space_handle_t h,
+		   bus_size_t o, const u_int16_t *a, bus_size_t c);
+void mbus_wrr_4(void *v, bus_space_handle_t h,
+		   bus_size_t o, const u_int32_t *a, bus_size_t c);
+void mbus_wrr_8(void *v, bus_space_handle_t h,
+		   bus_size_t o, const u_int64_t *a, bus_size_t c);
 
 void
 mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
@@ -592,8 +592,8 @@ mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 
 
 /* ugly typecast macro */
-#define	crr(n)	((void (*) __P((void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t)))(n))
-#define	cwr(n)	((void (*) __P((void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t)))(n))
+#define	crr(n)	((void (*)(void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t))(n))
+#define	cwr(n)	((void (*)(void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t))(n))
 
 const struct hppa_bus_space_tag hppa_bustag = {
 	NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.17 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.18 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -87,32 +87,23 @@
  */
 
 struct uvm_pagerops {
-	void		(*pgo_init) __P((void));/* init pager */
-	void		(*pgo_reference)	/* add reference to obj */
-			 __P((struct uvm_object *));		
-	void			(*pgo_detach)	/* drop reference to obj */
-			 __P((struct uvm_object *));
-	int			(*pgo_fault)	/* special nonstd fault fn */
-			 __P((struct uvm_faultinfo *, vaddr_t,
+	void		(*pgo_init)(void);/* init pager */
+	void		(*pgo_reference)	/* add reference to obj */(struct uvm_object *);		
+	void			(*pgo_detach)	/* drop reference to obj */(struct uvm_object *);
+	int			(*pgo_fault)	/* special nonstd fault fn */(struct uvm_faultinfo *, vaddr_t,
 				 vm_page_t *, int, int, vm_fault_t,
-				 vm_prot_t, int));
-	boolean_t		(*pgo_flush)	/* flush pages out of obj */
-			 __P((struct uvm_object *, voff_t, voff_t, int));
-	int			(*pgo_get)	/* get/read page */
-			 __P((struct uvm_object *, voff_t,
-				 vm_page_t *, int *, int, vm_prot_t, int, int));
-	int			(*pgo_put)	/* put/write page */
-			 __P((struct uvm_object *, vm_page_t *, 
-				 int, boolean_t));
-	void			(*pgo_cluster)	/* return range of cluster */
-			__P((struct uvm_object *, voff_t, voff_t *,
-				voff_t *));
-	struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */
-			 __P((struct uvm_object *, struct vm_page **,
+				 vm_prot_t, int);
+	boolean_t		(*pgo_flush)	/* flush pages out of obj */(struct uvm_object *, voff_t, voff_t, int);
+	int			(*pgo_get)	/* get/read page */(struct uvm_object *, voff_t,
+				 vm_page_t *, int *, int, vm_prot_t, int, int);
+	int			(*pgo_put)	/* put/write page */(struct uvm_object *, vm_page_t *, 
+				 int, boolean_t);
+	void			(*pgo_cluster)	/* return range of cluster */(struct uvm_object *, voff_t, voff_t *,
+				voff_t *);
+	struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */(struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, voff_t,
-				 voff_t));
-	boolean_t		(*pgo_releasepg)	/* release page */
-			 __P((struct vm_page *, struct vm_page **));
+				 voff_t);
+	boolean_t		(*pgo_releasepg)	/* release page */(struct vm_page *, struct vm_page **);
 };
 
 /* pager flags [mostly for flush] */
@@ -151,22 +142,22 @@ struct uvm_pagerops {
  * prototypes
  */
 
-void		uvm_pager_dropcluster __P((struct uvm_object *, 
+void		uvm_pager_dropcluster(struct uvm_object *, 
 					struct vm_page *, struct vm_page **, 
-					int *, int));
-void		uvm_pager_init __P((void));
-int		uvm_pager_put __P((struct uvm_object *, struct vm_page *, 
+					int *, int);
+void		uvm_pager_init(void);
+int		uvm_pager_put(struct uvm_object *, struct vm_page *, 
 				   struct vm_page ***, int *, int, 
-				   voff_t, voff_t));
+				   voff_t, voff_t);
 
-PAGER_INLINE struct vm_page *uvm_pageratop __P((vaddr_t));
+PAGER_INLINE struct vm_page *uvm_pageratop(vaddr_t);
 
-vaddr_t		uvm_pagermapin __P((struct vm_page **, int, int));
-void		uvm_pagermapout __P((vaddr_t, int));
-struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
+vaddr_t		uvm_pagermapin(struct vm_page **, int, int);
+void		uvm_pagermapout(vaddr_t, int);
+struct vm_page **uvm_mk_pcluster(struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
-				       voff_t, voff_t));
-int		uvm_errno2vmerror __P((int));
+				       voff_t, voff_t);
+int		uvm_errno2vmerror(int);
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: via82c586.c,v 1.8 2001/06/08 03:18:04 mickey Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -82,11 +82,11 @@
 #include <i386/pci/via82c586reg.h>
 #include <i386/pci/piixvar.h>
 
-int	via82c586_getclink __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_set_intr __P((pciintr_icu_handle_t, int, int));
-int	via82c586_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	via82c586_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	via82c586_getclink(pciintr_icu_handle_t, int, int *);
+int	via82c586_get_intr(pciintr_icu_handle_t, int, int *);
+int	via82c586_set_intr(pciintr_icu_handle_t, int, int);
+int	via82c586_get_trigger(pciintr_icu_handle_t, int, int *);
+int	via82c586_set_trigger(pciintr_icu_handle_t, int, int);
 
 const struct pciintr_icu via82c586_pci_icu = {
 	via82c586_getclink,

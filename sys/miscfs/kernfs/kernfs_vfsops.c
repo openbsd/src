@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.17 2002/02/17 04:29:52 art Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.18 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -60,13 +60,13 @@
 
 dev_t rrootdev = NODEV;
 
-void	kernfs_get_rrootdev __P((void));
-int	kernfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-			  struct proc *));
-int	kernfs_start __P((struct mount *, int, struct proc *));
-int	kernfs_unmount __P((struct mount *, int, struct proc *));
-int	kernfs_root __P((struct mount *, struct vnode **));
-int	kernfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+void	kernfs_get_rrootdev(void);
+int	kernfs_mount(struct mount *, const char *, void *, struct nameidata *,
+			  struct proc *);
+int	kernfs_start(struct mount *, int, struct proc *);
+int	kernfs_unmount(struct mount *, int, struct proc *);
+int	kernfs_root(struct mount *, struct vnode **);
+int	kernfs_statfs(struct mount *, struct statfs *, struct proc *);
 
 void
 kernfs_get_rrootdev()

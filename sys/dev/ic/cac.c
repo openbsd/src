@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.10 2001/12/31 04:05:58 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.11 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -102,8 +102,8 @@ struct cfdriver cac_cd = {
 	NULL, "cac", DV_DULL
 };
 
-int     cac_scsi_cmd __P((struct scsi_xfer *));
-void	cacminphys __P((struct buf *bp));
+int     cac_scsi_cmd(struct scsi_xfer *);
+void	cacminphys(struct buf *bp);
 
 struct scsi_adapter cac_switch = {
 	cac_scsi_cmd, cacminphys, 0, 0,
@@ -120,10 +120,10 @@ int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
 int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 int	cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	int drive, int blkno, int flags, struct scsi_xfer *xs);
-int	cac_get_dinfo __P((struct cac_softc *sc, int target));
-int	cac_flush __P((struct cac_softc *sc));
-void	cac_shutdown __P((void *));
-void	cac_copy_internal_data __P((struct scsi_xfer *xs, void *v, size_t size));
+int	cac_get_dinfo(struct cac_softc *sc, int target);
+int	cac_flush(struct cac_softc *sc);
+void	cac_shutdown(void *);
+void	cac_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 
 struct	cac_ccb *cac_l0_completed(struct cac_softc *);
 int	cac_l0_fifo_full(struct cac_softc *);

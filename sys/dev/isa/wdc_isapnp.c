@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_isapnp.c,v 1.6 2001/07/08 06:41:37 fgsch Exp $	*/
+/*	$OpenBSD: wdc_isapnp.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: wdc_isapnp.c,v 1.13 1999/03/22 10:00:12 mycroft Exp $	*/
 
 /*-
@@ -62,17 +62,17 @@ struct wdc_isapnp_softc {
 	int	sc_drq;
 };
 
-int	wdc_isapnp_match 	__P((struct device *, void *, void *));
-void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
+int	wdc_isapnp_match(struct device *, void *, void *);
+void	wdc_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach wdc_isapnp_ca = {
 	sizeof(struct wdc_isapnp_softc), wdc_isapnp_match, wdc_isapnp_attach
 };
 
 #ifdef notyet
-static void	wdc_isapnp_dma_setup __P((struct wdc_isapnp_softc *));
-static void	wdc_isapnp_dma_start __P((void *, void *, size_t, int));
-static void	wdc_isapnp_dma_finish __P((void *));
+static void	wdc_isapnp_dma_setup(struct wdc_isapnp_softc *);
+static void	wdc_isapnp_dma_start(void *, void *, size_t, int);
+static void	wdc_isapnp_dma_finish(void *);
 #endif
 
 int

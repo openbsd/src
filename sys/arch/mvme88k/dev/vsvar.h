@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.4 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.5 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -175,20 +175,20 @@ struct  vs_softc {
 #define WQO_RFWQ           0x0020   /* report frozen work queue bit */
 #define WQO_INIT           0x8000   /* work queue init bit */
 
-void vs_minphys __P((struct buf *bp));
-int vs_scsicmd __P((struct scsi_xfer *));
+void vs_minphys(struct buf *bp);
+int vs_scsicmd(struct scsi_xfer *);
 /*
  * Scatter/gather functions
  */
 
-M328_SG vs_alloc_scatter_gather __P((void));
-void    vs_dealloc_scatter_gather __P((M328_SG sg));
-void    vs_link_scatter_gather_element __P((sg_list_element_t *element,
+M328_SG vs_alloc_scatter_gather(void);
+void    vs_dealloc_scatter_gather(M328_SG sg);
+void    vs_link_scatter_gather_element(sg_list_element_t *element,
 					    register vm_offset_t phys_add,
-					    register int len));
-void    vs_link_scatter_gather_list __P((sg_list_element_t *list,
+					    register int len);
+void    vs_link_scatter_gather_list(sg_list_element_t *list,
 					 register vm_offset_t phys_add,
-					 register int elements));
-M328_SG vs_build_memory_structure __P((struct scsi_xfer *xs, M328_IOPB *iopb));
+					 register int elements);
+M328_SG vs_build_memory_structure(struct scsi_xfer *xs, M328_IOPB *iopb);
 
 #endif /* _M328VAR_H */

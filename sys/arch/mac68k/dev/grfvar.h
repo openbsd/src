@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.9 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.10 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -74,9 +74,9 @@ struct grf_softc {
 	struct	grfmode *sc_grfmode;	/* forwarded ... */
 	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
-	int	(*sc_mode) __P((struct grf_softc *, int, void *));
+	int	(*sc_mode)(struct grf_softc *, int, void *);
 					/* map virtual addr to physical addr */
-	caddr_t	(*sc_phys) __P((struct grf_softc *, vm_offset_t));
+	caddr_t	(*sc_phys)(struct grf_softc *, vm_offset_t);
 };
 
 /*
@@ -86,11 +86,11 @@ struct grfbus_attach_args {
 	char	*ga_name;		/* name of semantics to attach */
 	struct	grfmode *ga_grfmode;	/* forwarded ... */
 	nubus_slot	*ga_slot;
-	int	(*ga_mode) __P((struct grf_softc *, int, void *));
-	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
+	int	(*ga_mode)(struct grf_softc *, int, void *);
+	caddr_t	(*ga_phys)(struct grf_softc *, vm_offset_t);
 };
 
-typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vm_offset_t addr));
+typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vm_offset_t addr);
 
 /* flags */
 #define	GF_ALIVE	0x01
@@ -140,18 +140,18 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-int	grfopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	grfclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	grfioctl __P((dev_t, int, caddr_t, int, struct proc *p));
-int	grfselect __P((dev_t dev, int rw, struct proc *p));
-paddr_t	grfmmap __P((dev_t dev, off_t off, int prot));
-int	grfon __P((dev_t dev));
-int	grfoff __P((dev_t dev));
-int	grfaddr __P((struct grf_softc *gp, register int off));
-int	grfmap __P((dev_t dev, caddr_t *addrp, struct proc *p));
-int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
+int	grfopen(dev_t dev, int flag, int mode, struct proc *p);
+int	grfclose(dev_t dev, int flag, int mode, struct proc *p);
+int	grfioctl(dev_t, int, caddr_t, int, struct proc *p);
+int	grfselect(dev_t dev, int rw, struct proc *p);
+paddr_t	grfmmap(dev_t dev, off_t off, int prot);
+int	grfon(dev_t dev);
+int	grfoff(dev_t dev);
+int	grfaddr(struct grf_softc *gp, register int off);
+int	grfmap(dev_t dev, caddr_t *addrp, struct proc *p);
+int	grfunmap(dev_t dev, caddr_t addr, struct proc *p);
 
 void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *),
 	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
-int	grfbusprint __P((void *, const char *));
+int	grfbusprint(void *, const char *);

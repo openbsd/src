@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2001/12/11 17:45:52 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -102,9 +102,9 @@
  * Language spec sez we must list exactly one parameter, even though we
  * actually supply three.  Ugh!
  */
-#define	SIG_DFL		(void (*)__P((int)))0
-#define	SIG_IGN		(void (*)__P((int)))1
-#define	SIG_ERR		(void (*)__P((int)))-1
+#define	SIG_DFL		(void (*)(int))0
+#define	SIG_IGN		(void (*)(int))1
+#define	SIG_ERR		(void (*)(int))-1
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
@@ -116,8 +116,8 @@ typedef unsigned int sigset_t;
  */
 struct	sigaction {
 	union {		/* signal handler */
-		void	(*__sa_handler) __P((int));
-		void	(*__sa_sigaction) __P((int, siginfo_t *, void *));
+		void	(*__sa_handler)(int);
+		void	(*__sa_sigaction)(int, siginfo_t *, void *);
 	} __sigaction_u;
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
@@ -148,7 +148,7 @@ struct	sigaction {
 #define	SIG_SETMASK	3	/* set specified signal set */
 
 #ifndef _POSIX_SOURCE
-typedef	void (*sig_t) __P((int));	/* type of signal function */
+typedef	void (*sig_t)(int);	/* type of signal function */
 
 /*
  * Structure used in sigaltstack call.
@@ -168,7 +168,7 @@ struct	sigaltstack {
  * Signal vector "template" used in sigvec call.
  */
 struct	sigvec {
-	void	(*sv_handler) __P((int)); /* signal handler */
+	void	(*sv_handler)(int); /* signal handler */
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
@@ -201,6 +201,6 @@ struct	sigstack {
  * defined by <sys/signal.h>.
  */
 __BEGIN_DECLS
-void	(*signal __P((int, void (*) __P((int))))) __P((int));
+void	(*signal __P((int, void (*)(int))))(int);
 __END_DECLS
 #endif	/* !_SYS_SIGNAL_H_ */

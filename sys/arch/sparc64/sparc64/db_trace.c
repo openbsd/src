@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -39,12 +39,12 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-void db_dump_fpstate __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
-void db_print_window __P((u_int64_t));
+void db_dump_fpstate(db_expr_t, int, db_expr_t, char *);
+void db_dump_window(db_expr_t, int, db_expr_t, char *);
+void db_dump_stack(db_expr_t, int, db_expr_t, char *);
+void db_dump_trap(db_expr_t, int, db_expr_t, char *);
+void db_dump_ts(db_expr_t, int, db_expr_t, char *);
+void db_print_window(u_int64_t);
 
 #if 0
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
@@ -66,7 +66,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	char		c, *cp = modif;
-	int		(*pr) __P((const char *, ...));
+	int		(*pr)(const char *, ...);
 
 	pr = db_printf;
 

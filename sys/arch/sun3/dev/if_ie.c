@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.15 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.16 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.15 1996/10/30 00:24:33 gwr Exp $ */
 
 /*-
@@ -168,38 +168,38 @@ static struct mbuf *last_not_for_us;
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-void iewatchdog __P((struct ifnet *));
-int ieinit __P((struct ie_softc *));
-int ieioctl __P((struct ifnet *, u_long, caddr_t));
-void iestart __P((struct ifnet *));
-void iereset __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc *, int));
-static void ie_drop_packet_buffer __P((struct ie_softc *));
-static int command_and_wait __P((struct ie_softc *, int, void volatile *, int));
-static __inline__ void ie_setup_config __P((volatile struct ie_config_cmd *,
-					    int, int));
-static void ierint __P((struct ie_softc *));
-static void ietint __P((struct ie_softc *));
-static void setup_bufs __P((struct ie_softc *));
-static int mc_setup __P((struct ie_softc *, void *));
-static void mc_reset __P((struct ie_softc *));
-static int ie_setupram __P((struct ie_softc *));
-static __inline__ caddr_t Align __P((caddr_t));
-static __inline__ void ie_ack __P((struct ie_softc *, u_int));
-static __inline__ u_short ether_cmp __P((u_char *, u_char *));
-static __inline__ int check_eh __P((struct ie_softc *, struct ether_header *,
-				    int *));
-static __inline__ int ie_buflen __P((struct ie_softc *, int));
-static __inline__ int ie_packet_len __P((struct ie_softc *));
-static __inline__ void iexmit __P((struct ie_softc *));
-static __inline__ int ieget __P((struct ie_softc *, struct mbuf **,
-				 struct ether_header *, int *));
-static void chan_attn_timeout __P((void *));
-static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
-static void iestop __P((struct ie_softc *));
+void iewatchdog(struct ifnet *);
+int ieinit(struct ie_softc *);
+int ieioctl(struct ifnet *, u_long, caddr_t);
+void iestart(struct ifnet *);
+void iereset(struct ie_softc *);
+static void ie_readframe(struct ie_softc *, int);
+static void ie_drop_packet_buffer(struct ie_softc *);
+static int command_and_wait(struct ie_softc *, int, void volatile *, int);
+static __inline__ void ie_setup_config(volatile struct ie_config_cmd *,
+					    int, int);
+static void ierint(struct ie_softc *);
+static void ietint(struct ie_softc *);
+static void setup_bufs(struct ie_softc *);
+static int mc_setup(struct ie_softc *, void *);
+static void mc_reset(struct ie_softc *);
+static int ie_setupram(struct ie_softc *);
+static __inline__ caddr_t Align(caddr_t);
+static __inline__ void ie_ack(struct ie_softc *, u_int);
+static __inline__ u_short ether_cmp(u_char *, u_char *);
+static __inline__ int check_eh(struct ie_softc *, struct ether_header *,
+				    int *);
+static __inline__ int ie_buflen(struct ie_softc *, int);
+static __inline__ int ie_packet_len(struct ie_softc *);
+static __inline__ void iexmit(struct ie_softc *);
+static __inline__ int ieget(struct ie_softc *, struct mbuf **,
+				 struct ether_header *, int *);
+static void chan_attn_timeout(void *);
+static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
+static void iestop(struct ie_softc *);
 
 #ifdef IEDEBUG
-void print_rbd __P((volatile struct ie_recv_buf_desc *));
+void print_rbd(volatile struct ie_recv_buf_desc *);
 int     in_ierint = 0;
 int     in_ietint = 0;
 #endif

@@ -105,18 +105,18 @@ struct cfdriver tlphy_cd = {
 	NULL, "tlphy", DV_DULL
 };
 
-int	tlphymatch __P((struct device *, void *, void *));
-void	tlphyattach __P((struct device *, struct device *, void *));
+int	tlphymatch(struct device *, void *, void *);
+void	tlphyattach(struct device *, struct device *, void *);
 
 struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
-int	tlphy_auto __P((struct tlphy_softc *, int));
-void	tlphy_acomp __P((struct tlphy_softc *));
-void	tlphy_status __P((struct mii_softc *));
+int	tlphy_service(struct mii_softc *, struct mii_data *, int);
+int	tlphy_auto(struct tlphy_softc *, int);
+void	tlphy_acomp(struct tlphy_softc *);
+void	tlphy_status(struct mii_softc *);
 
 int
 tlphymatch(parent, match, aux)

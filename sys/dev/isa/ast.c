@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.17 1997/07/07 16:38:22 niklas Exp $	*/
+/*	$OpenBSD: ast.c,v 1.18 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
@@ -60,10 +60,10 @@ struct ast_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int astprobe __P((struct device *, void *, void *));
-void astattach __P((struct device *, struct device *, void *));
-int astintr __P((void *));
-int astprint __P((void *, const char *));
+int astprobe(struct device *, void *, void *);
+void astattach(struct device *, struct device *, void *);
+int astintr(void *);
+int astprint(void *, const char *);
 
 struct cfattach ast_ca = {
 	sizeof(struct ast_softc), astprobe, astattach

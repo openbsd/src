@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_cv.c,v 1.3 1996/05/29 10:15:28 niklas Exp $	*/
+/*	$OpenBSD: ite_cv.c,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_cv.c,v 1.3 1996/05/19 21:05:58 veego Exp $	*/
 
 /*
@@ -60,12 +60,12 @@
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 
-void cv_ite_init __P((struct ite_softc *));
-void cv_ite_deinit __P((struct ite_softc *));
-static void cv_cursor __P((struct ite_softc *, int));
-static void cv_putc __P((struct ite_softc *, int, int, int, int));
-static void cv_clear __P((struct ite_softc *, int, int, int, int));
-static void cv_scroll __P((struct ite_softc *, int, int, int, int));
+void cv_ite_init(struct ite_softc *);
+void cv_ite_deinit(struct ite_softc *);
+static void cv_cursor(struct ite_softc *, int);
+static void cv_putc(struct ite_softc *, int, int, int, int);
+static void cv_clear(struct ite_softc *, int, int, int, int);
+static void cv_scroll(struct ite_softc *, int, int, int, int);
 
 /*
  * called from grf_cv to return console priority

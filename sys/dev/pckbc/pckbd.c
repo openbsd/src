@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.3 2002/02/18 05:25:14 jason Exp $ */
+/* $OpenBSD: pckbd.c,v 1.4 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -132,18 +132,18 @@ struct pckbd_softc {
 #endif
 };
 
-static int pckbd_is_console __P((pckbc_tag_t, pckbc_slot_t));
+static int pckbd_is_console(pckbc_tag_t, pckbc_slot_t);
 
-int pckbdprobe __P((struct device *, void *, void *));
-void pckbdattach __P((struct device *, struct device *, void *));
+int pckbdprobe(struct device *, void *, void *);
+void pckbdattach(struct device *, struct device *, void *);
 
 struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
 };
 
-int	pckbd_enable __P((void *, int));
-void	pckbd_set_leds __P((void *, int));
-int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	pckbd_enable(void *, int);
+void	pckbd_set_leds(void *, int);
+int	pckbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 const struct wskbd_accessops pckbd_accessops = {
 	pckbd_enable,
@@ -151,9 +151,9 @@ const struct wskbd_accessops pckbd_accessops = {
 	pckbd_ioctl,
 };
 
-void	pckbd_cngetc __P((void *, u_int *, int *));
-void	pckbd_cnpollc __P((void *, int));
-void	pckbd_cnbell __P((void *, u_int, u_int, u_int));
+void	pckbd_cngetc(void *, u_int *, int *);
+void	pckbd_cnpollc(void *, int);
+void	pckbd_cnbell(void *, u_int, u_int, u_int);
 
 const struct wskbd_consops pckbd_consops = {
 	pckbd_cngetc,
@@ -174,20 +174,20 @@ const struct wskbd_mapdata pckbd_keymapdata = {
  * Hackish support for a bell on the PC Keyboard; when a suitable feeper
  * is found, it attaches itself into the pckbd driver here.
  */
-void	(*pckbd_bell_fn) __P((void *, u_int, u_int, u_int, int));
+void	(*pckbd_bell_fn)(void *, u_int, u_int, u_int, int);
 void	*pckbd_bell_fn_arg;
 
-void	pckbd_bell __P((u_int, u_int, u_int, int));
+void	pckbd_bell(u_int, u_int, u_int, int);
 
-int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
-int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
-			int));
-void	pckbd_input __P((void *, int));
+int	pckbd_set_xtscancode(pckbc_tag_t, pckbc_slot_t);
+int	pckbd_init(struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
+			int);
+void	pckbd_input(void *, int);
 
-static int	pckbd_decode __P((struct pckbd_internal *, int,
-				  u_int *, int *));
-static int	pckbd_led_encode __P((int));
-static int	pckbd_led_decode __P((int));
+static int	pckbd_decode(struct pckbd_internal *, int,
+				  u_int *, int *);
+static int	pckbd_led_encode(int);
+static int	pckbd_led_decode(int);
 
 struct pckbd_internal pckbd_consdata;
 
@@ -611,7 +611,7 @@ pckbd_bell(pitch, period, volume, poll)
 
 void
 pckbd_hookup_bell(fn, arg)
-	void (*fn) __P((void *, u_int, u_int, u_int, int));
+	void (*fn)(void *, u_int, u_int, u_int, int);
 	void *arg;
 {
 

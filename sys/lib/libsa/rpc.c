@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.10 1998/02/23 20:32:30 niklas Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.11 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: rpc.c,v 1.16 1996/10/13 02:29:06 christos Exp $	*/
 
 /*
@@ -97,8 +97,8 @@ struct rpc_reply {
 };
 
 /* Local forwards */
-static	ssize_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
-static	int rpc_getport __P((struct iodesc *, n_long, n_long));
+static	ssize_t recvrpc(struct iodesc *, void *, size_t, time_t);
+static	int rpc_getport(struct iodesc *, n_long, n_long);
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */

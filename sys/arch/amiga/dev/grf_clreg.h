@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_clreg.h,v 1.7 1997/09/18 13:39:49 niklas Exp $	*/
+/*	$OpenBSD: grf_clreg.h,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_clreg.h,v 1.6 1997/03/21 09:40:58 veego Exp $	*/
 
 /*
@@ -306,11 +306,11 @@ struct grfcltext_mode {
 		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); \
 	} while (0)
 
-int cl_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
-			u_long a2, int a3));
-int cl_load_mon __P((struct grf_softc *gp, struct grfcltext_mode *gv)); 
-int grfcl_cnprobe __P((void));
-void grfcl_iteinit __P((struct grf_softc *gp));
+int cl_mode(register struct grf_softc *gp, u_long cmd, void *arg,
+			u_long a2, int a3);
+int cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *gv); 
+int grfcl_cnprobe(void);
+void grfcl_iteinit(struct grf_softc *gp);
 
 #endif /* _GRF_RHREG_H */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_filio.c,v 1.4 1997/11/04 07:48:51 niklas Exp $	 */
+/*	$OpenBSD: svr4_filio.c,v 1.5 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_filio.c,v 1.5 1996/04/11 12:54:40 christos Exp $	 */
 
 /*
@@ -64,7 +64,7 @@ svr4_fil_ioctl(fp, p, retval, fd, cmd, data)
 	int error;
 	int num;
 	struct filedesc *fdp = p->p_fd;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long,  caddr_t, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;

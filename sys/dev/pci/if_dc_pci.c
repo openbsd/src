@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.27 2002/03/06 23:14:17 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.28 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -98,13 +98,13 @@ struct dc_type dc_devs[] = {
 	{ 0, 0 }
 };
 
-int dc_pci_match		__P((struct device *, void *, void *));
-void dc_pci_attach		__P((struct device *, struct device *, void *));
-void dc_pci_acpi		__P((struct device *, void *));
+int dc_pci_match(struct device *, void *, void *);
+void dc_pci_attach(struct device *, struct device *, void *);
+void dc_pci_acpi(struct device *, void *);
 
-extern void dc_eeprom_width	__P((struct dc_softc *));
-extern void dc_read_srom	__P((struct dc_softc *, int));
-extern void dc_parse_21143_srom	__P((struct dc_softc *));
+extern void dc_eeprom_width(struct dc_softc *);
+extern void dc_read_srom(struct dc_softc *, int);
+extern void dc_parse_21143_srom(struct dc_softc *);
 
 /*
  * Probe for a 21143 or clone chip. Check the PCI vendor and device
@@ -463,7 +463,7 @@ void dc_pci_attach(parent, self, aux)
 
 #ifdef __sparc64__
 	{
-		extern void myetheraddr __P((u_char *));
+		extern void myetheraddr(u_char *);
 		myetheraddr(sc->arpcom.ac_enaddr);
 		sc->sc_hasmac = 1;
 	}

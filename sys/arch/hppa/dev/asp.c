@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.6 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -126,8 +126,8 @@ struct asp_softc {
 /* ASP "Primary Controller" HPA */
 #define	ASP_CHPA	0xF0800000
 
-int	aspmatch __P((struct device *, void *, void *));
-void	aspattach __P((struct device *, struct device *, void *));
+int	aspmatch(struct device *, void *, void *);
+void	aspattach(struct device *, struct device *, void *);
 
 struct cfattach asp_ca = {
 	sizeof(struct asp_softc), aspmatch, aspattach
@@ -137,10 +137,10 @@ struct cfdriver asp_cd = {
 	NULL, "asp", DV_DULL
 };
 
-void asp_intr_establish __P((void *v, u_int32_t mask));
-void asp_intr_disestablish __P((void *v, u_int32_t mask));
-u_int32_t asp_intr_check __P((void *v));
-void asp_intr_ack __P((void *v, u_int32_t mask));
+void asp_intr_establish(void *v, u_int32_t mask);
+void asp_intr_disestablish(void *v, u_int32_t mask);
+u_int32_t asp_intr_check(void *v);
+void asp_intr_ack(void *v, u_int32_t mask);
 
 int
 aspmatch(parent, cfdata, aux)   

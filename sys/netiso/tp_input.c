@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_input.c,v 1.3 1996/04/21 22:29:47 deraadt Exp $	*/
+/*	$OpenBSD: tp_input.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_input.c,v 1.9 1996/03/16 23:13:51 christos Exp $	*/
 
 /*-
@@ -119,8 +119,8 @@ SOFTWARE.
 
 #include <machine/stdarg.h>
 
-static struct socket *tp_newsocket __P((struct socket *, struct sockaddr *,
-					caddr_t, u_int, u_int));
+static struct socket *tp_newsocket(struct socket *, struct sockaddr *,
+					caddr_t, u_int, u_int);
 
 struct mbuf    *
 tp_inputprep(m)
@@ -428,7 +428,7 @@ tp_input(m, va_alist)
 {
 	struct sockaddr *faddr, *laddr;	/* NSAP addresses */
 	caddr_t         cons_channel;
-	int             (*dgout_routine) __P((struct mbuf *, ...));
+	int             (*dgout_routine)(struct mbuf *, ...);
 	int             ce_bit;
 	register struct tp_pcb *tpcb;
 	register struct tpdu *hdr;
@@ -456,7 +456,7 @@ tp_input(m, va_alist)
 	laddr = va_arg(ap, struct sockaddr *);
 	cons_channel = va_arg(ap, caddr_t);
 	/* XXX: Does va_arg does not work for function ptrs */
-	dgout_routine = (int (*) __P((struct mbuf *, ...))) va_arg(ap, void *);
+	dgout_routine = (int (*)(struct mbuf *, ...)) va_arg(ap, void *);
 	ce_bit = va_arg(ap, int);
 	va_end(ap);
 

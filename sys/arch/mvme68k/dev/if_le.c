@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.16 2001/12/21 20:45:51 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.17 2002/03/14 01:26:37 millert Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -80,10 +80,10 @@ struct cfattach le_ca = {
 
 static int lebustype;
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-hide void vlewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t vlerdcsr __P((struct am7990_softc *, u_int16_t));
+hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+hide void vlewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+hide u_int16_t vlerdcsr(struct am7990_softc *, u_int16_t);
 
 /* send command to the nvram controller */
 nvram_cmd(sc, cmd, addr )

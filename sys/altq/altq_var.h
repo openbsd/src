@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.2 2002/02/13 08:06:14 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ struct callout {
 /* dummy callout structure */
 struct callout {
 	void		*c_arg;			/* function argument */
-	void		(*c_func) __P((void *));/* functiuon to call */
+	void		(*c_func)(void *);/* functiuon to call */
 };
 #define	CALLOUT_INIT(c)		do { bzero((c), sizeof(*(c))); } while (0)
 #define	CALLOUT_RESET(c,t,f,a)	do {	(c)->c_arg = (a);	\
@@ -228,18 +228,18 @@ typedef void (timeout_t)(void *);
 
 struct ifnet; struct mbuf; struct flowinfo;
 
-void *altq_lookup __P((char *, int));
-int altq_extractflow __P((struct mbuf *, int, struct flowinfo *, u_int32_t));
-int acc_add_filter __P((struct acc_classifier *, struct flow_filter *,
-			   void *, u_long *));
-int acc_delete_filter __P((struct acc_classifier *, u_long));
-int acc_discard_filters __P((struct acc_classifier *, void *, int));
-void *acc_classify __P((void *, struct mbuf *, int));
-u_int8_t read_dsfield __P((struct mbuf *, struct altq_pktattr *));
-void write_dsfield __P((struct mbuf *, struct altq_pktattr *, u_int8_t));
-void altq_assert __P((const char *, int, const char *));
-int tbr_set __P((struct ifaltq *, struct tb_profile *));
-int tbr_get __P((struct ifaltq *, struct tb_profile *));
+void *altq_lookup(char *, int);
+int altq_extractflow(struct mbuf *, int, struct flowinfo *, u_int32_t);
+int acc_add_filter(struct acc_classifier *, struct flow_filter *,
+			   void *, u_long *);
+int acc_delete_filter(struct acc_classifier *, u_long);
+int acc_discard_filters(struct acc_classifier *, void *, int);
+void *acc_classify(void *, struct mbuf *, int);
+u_int8_t read_dsfield(struct mbuf *, struct altq_pktattr *);
+void write_dsfield(struct mbuf *, struct altq_pktattr *, u_int8_t);
+void altq_assert(const char *, int, const char *);
+int tbr_set(struct ifaltq *, struct tb_profile *);
+int tbr_get(struct ifaltq *, struct tb_profile *);
 
 #endif /* _KERNEL */
 #endif /* _ALTQ_ALTQ_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.9 2002/03/05 20:10:51 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.10 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -217,35 +217,35 @@ struct cfattach zskbd_ca = {
 
 struct zsops zsops_kbd;
 
-static void zs_modem __P((struct zskbd_softc *, int));
-static void  zs_hwiflow __P((struct zskbd_softc *));
-static void zs_maskintr __P((struct zskbd_softc *));
+static void zs_modem(struct zskbd_softc *, int);
+static void  zs_hwiflow(struct zskbd_softc *);
+static void zs_maskintr(struct zskbd_softc *);
 
-struct zskbd_softc *zskbd_device_lookup __P((struct cfdriver *, int));
+struct zskbd_softc *zskbd_device_lookup(struct cfdriver *, int);
 
 /* Low-level routines. */
-static void zskbd_rxint   __P((struct zs_chanstate *));
-static void zskbd_stint   __P((struct zs_chanstate *, int));
-static void zskbd_txint   __P((struct zs_chanstate *));
-static void zskbd_softint __P((struct zs_chanstate *));
-static void zskbd_diag __P((void *));
+static void zskbd_rxint(struct zs_chanstate *);
+static void zskbd_stint(struct zs_chanstate *, int);
+static void zskbd_txint(struct zs_chanstate *);
+static void zskbd_softint(struct zs_chanstate *);
+static void zskbd_diag(void *);
 
-void zskbd_init __P((struct zskbd_softc *));
-void zskbd_putc __P((struct zskbd_softc *, u_int8_t));
-void zskbd_raw __P((struct zskbd_softc *, u_int8_t));
+void zskbd_init(struct zskbd_softc *);
+void zskbd_putc(struct zskbd_softc *, u_int8_t);
+void zskbd_raw(struct zskbd_softc *, u_int8_t);
 
 /* wskbd glue */
-int zskbd_enable __P((void *, int));
-void zskbd_set_leds __P((void *, int));
-int zskbd_get_leds __P((struct zskbd_softc *));
-int zskbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void zskbd_cngetc __P((void *, u_int *, int *));
-void zskbd_cnpollc __P((void *, int));
+int zskbd_enable(void *, int);
+void zskbd_set_leds(void *, int);
+int zskbd_get_leds(struct zskbd_softc *);
+int zskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void zskbd_cngetc(void *, u_int *, int *);
+void zskbd_cnpollc(void *, int);
 
-void zsstart_tx __P((struct zskbd_softc *));
-int zsenqueue_tx __P((struct zskbd_softc *, u_char *, int));
-void zskbd_bell __P((struct zskbd_softc *, u_int, u_int, u_int));
-void zskbd_bellstop __P((void *));
+void zsstart_tx(struct zskbd_softc *);
+int zsenqueue_tx(struct zskbd_softc *, u_char *, int);
+void zskbd_bell(struct zskbd_softc *, u_int, u_int, u_int);
+void zskbd_bellstop(void *);
 
 struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
@@ -764,9 +764,9 @@ zs_hwiflow(zst)
  ****************************************************************/
 
 #define	integrate
-integrate void zskbd_rxsoft __P((struct zskbd_softc *));
-integrate void zskbd_txsoft __P((struct zskbd_softc *));
-integrate void zskbd_stsoft __P((struct zskbd_softc *));
+integrate void zskbd_rxsoft(struct zskbd_softc *);
+integrate void zskbd_txsoft(struct zskbd_softc *);
+integrate void zskbd_stsoft(struct zskbd_softc *);
 /*
  * receiver ready interrupt.
  * called at splzs

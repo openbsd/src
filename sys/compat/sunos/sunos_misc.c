@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.35 2002/03/14 00:42:25 miod Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.36 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
 # include <machine/machdep.h>	/* for prototype of reboot2() */
 #endif
 
-static int sunstatfs __P((struct statfs *, caddr_t));
+static int sunstatfs(struct statfs *, caddr_t);
 
 int
 sunos_sys_wait4(p, v, retval)
@@ -378,7 +378,7 @@ sunos_sys_sigpending(p, v, retval)
  *
  * This is quite ugly, but what do you expect from compatibility code?
  */
-int sunos_readdir_callback __P((void *, struct dirent *, off_t));
+int sunos_readdir_callback(void *, struct dirent *, off_t);
 
 struct sunos_readdir_callback_args {
 	caddr_t outp;

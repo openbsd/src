@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.10 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -75,28 +75,28 @@ struct {
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 extern int pci_mode;
-int		pci_mode_detect __P((void));
+int		pci_mode_detect(void);
 
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook __P((struct device *, struct device *,
-		    struct pcibus_attach_args *));
-int		pci_bus_maxdevs __P((pci_chipset_tag_t, int));
-pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
-pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
-		    pcireg_t));
+void		pci_attach_hook(struct device *, struct device *,
+		    struct pcibus_attach_args *);
+int		pci_bus_maxdevs(pci_chipset_tag_t, int);
+pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
+void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
+		    pcireg_t);
 struct pci_attach_args;
-int		pci_intr_map __P((struct pci_attach_args *,
-		    pci_intr_handle_t *));
+int		pci_intr_map(struct pci_attach_args *,
+		    pci_intr_handle_t *);
 #define		pci_intr_line(ih)	((ih).line)
-const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *));
-void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
-void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *));
+void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
+		    int *, int *, int *);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,

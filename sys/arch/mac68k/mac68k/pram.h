@@ -1,4 +1,4 @@
-/*	$OpenBSD: pram.h,v 1.5 1997/04/14 18:48:07 gene Exp $	*/
+/*	$OpenBSD: pram.h,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: pram.h,v 1.3 1996/05/05 06:18:53 briggs Exp $	*/
 
 /*
@@ -70,8 +70,8 @@ void writeExtPram(char *addr, int loc, int len);
 unsigned long	getPramTime(void);
 void 		setPramTime(unsigned long time);
 
-unsigned long	pram_readtime __P((void));
-void		pram_settime __P((unsigned long));
+unsigned long	pram_readtime(void);
+void		pram_settime(unsigned long);
 
 #ifndef MRG_ADB		/* These functions exist only when ADB/PRAM/RTC
 			 * access isn't done via the MRG_ADB method. */

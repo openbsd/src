@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.26 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: param.h,v 1.27 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -169,7 +169,7 @@
 #include <machine/intr.h>
 
 #ifdef   _KERNEL
-extern int delay __P((int));
+extern int delay(int);
 #define  DELAY(x)             delay(x)
 
 extern int cputyp;

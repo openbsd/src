@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2000/10/18 21:00:33 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -69,8 +69,8 @@ struct rdbmap {
 #define b_cylin b_resid
 #define baddr(bp) (void *)((bp)->b_un.b_addr)
 
-u_long rdbchksum __P((void *));
-struct adostype getadostype __P((u_long));
+u_long rdbchksum(void *);
+struct adostype getadostype(u_long);
 struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *));
 

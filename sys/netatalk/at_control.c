@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.3 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -79,19 +79,19 @@
 
 #include <dev/rndvar.h>
 
-int	at_control	__P(( u_long, caddr_t, struct ifnet *, struct proc * ));
-static int at_scrub	__P(( struct ifnet *, struct at_ifaddr * ));
-static int at_ifinit	__P(( struct ifnet *, struct at_ifaddr *,
-				struct sockaddr_at * ));
-int at_broadcast	__P(( struct sockaddr_at * ));
+int	at_control( u_long, caddr_t, struct ifnet *, struct proc * );
+static int at_scrub( struct ifnet *, struct at_ifaddr * );
+static int at_ifinit( struct ifnet *, struct at_ifaddr *,
+				struct sockaddr_at * );
+int at_broadcast( struct sockaddr_at * );
 
-static int aa_dorangeroute	__P((struct ifaddr *, u_int, u_int, int));
-static int aa_addsingleroute	__P((struct ifaddr *, struct at_addr *,
-					struct at_addr *));
-static int aa_delsingleroute	__P((struct ifaddr *, struct at_addr *,
-					struct at_addr *));
-static int aa_dosingleroute	__P((struct ifaddr *, struct at_addr *,
-					struct at_addr *, int, int ));
+static int aa_dorangeroute(struct ifaddr *, u_int, u_int, int);
+static int aa_addsingleroute(struct ifaddr *, struct at_addr *,
+					struct at_addr *);
+static int aa_delsingleroute(struct ifaddr *, struct at_addr *,
+					struct at_addr *);
+static int aa_dosingleroute(struct ifaddr *, struct at_addr *,
+					struct at_addr *, int, int );
 
 # define sateqaddr(a,b)	((a)->sat_len == (b)->sat_len && \
 		    (a)->sat_family == (b)->sat_family && \

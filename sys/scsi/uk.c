@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.6 1997/08/31 07:41:53 downsj Exp $	*/
+/*	$OpenBSD: uk.c,v 1.7 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,8 @@ struct uk_softc {
 	struct scsi_link *sc_link;	/* all the inter level info */
 };
 
-int ukmatch __P((struct device *, void *, void *));
-void ukattach __P((struct device *, struct device *, void *));
+int ukmatch(struct device *, void *, void *);
+void ukattach(struct device *, struct device *, void *);
 
 struct cfattach uk_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach

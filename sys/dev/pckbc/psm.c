@@ -1,4 +1,4 @@
-/* $OpenBSD: psm.c,v 1.3 2001/02/19 02:27:05 jbm Exp $ */
+/* $OpenBSD: psm.c,v 1.4 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -52,17 +52,17 @@ struct pms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int pmsprobe __P((struct device *, void *, void *));
-void pmsattach __P((struct device *, struct device *, void *));
-void pmsinput __P((void *, int));
+int pmsprobe(struct device *, void *, void *);
+void pmsattach(struct device *, struct device *, void *);
+void pmsinput(void *, int);
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
-int	pms_enable __P((void *));
-int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	pms_disable __P((void *));
+int	pms_enable(void *);
+int	pms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	pms_disable(void *);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,

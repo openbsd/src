@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.23 2002/02/10 23:15:05 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.24 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -95,9 +95,9 @@
  * local prototypes
  */
 
-static void		uvmpd_scan __P((void));
-static boolean_t	uvmpd_scan_inactive __P((struct pglist *));
-static void		uvmpd_tune __P((void));
+static void		uvmpd_scan(void);
+static boolean_t	uvmpd_scan_inactive(struct pglist *);
+static void		uvmpd_tune(void);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages

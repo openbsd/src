@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.11 2001/10/05 18:33:33 nate Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.12 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ const struct mii_media mii_media_table[] = {
 	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA },		/* 1000base-FDX */
 };
 
-void	mii_phy_auto_timeout __P((void *));
+void	mii_phy_auto_timeout(void *);
 
 void
 mii_phy_setmedia(sc)

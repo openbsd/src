@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.2 2000/07/21 17:41:04 mickey Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.3 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
 
-int	lpt_puc_probe __P((struct device *, void *, void *));
-void	lpt_puc_attach __P((struct device *, struct device *, void *));
+int	lpt_puc_probe(struct device *, void *, void *);
+void	lpt_puc_attach(struct device *, struct device *, void *);
 
 struct cfattach lpt_puc_ca = {
 	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach

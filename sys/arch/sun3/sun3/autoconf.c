@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -73,12 +73,12 @@
 /* Want compile-time initialization here. */
 int cold = 1;
 
-void setroot __P((void));
-void swapconf __P((void));
-int findblkmajor __P((struct device *));
-struct device *getdisk __P((char *, int, int, dev_t *));
-struct device *parsedisk __P((char *, int, int, dev_t *));
-int getstr __P((char *, int));
+void setroot(void);
+void swapconf(void);
+int findblkmajor(struct device *);
+struct device *getdisk(char *, int, int, dev_t *);
+struct device *parsedisk(char *, int, int, dev_t *);
+int getstr(char *, int);
 
 void
 cpu_configure()
@@ -366,12 +366,12 @@ struct nam2blk {
 };
 
 /* This takes the args: name, ctlr, unit */
-typedef struct device *(*findfunc_t) __P((char *, int, int));
+typedef struct device *(*findfunc_t)(char *, int, int);
 
-struct device *find_dev_byname __P((char *));
-struct device *net_find __P((char *, int, int));
-struct device *scsi_find __P((char *, int, int));
-struct device *xx_find __P((char *, int, int));
+struct device *find_dev_byname(char *);
+struct device *net_find(char *, int, int);
+struct device *scsi_find(char *, int, int);
+struct device *xx_find(char *, int, int);
 
 struct prom_n2f {
 	char name[4];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.17 1999/10/03 20:37:25 ho Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.18 2002/03/14 01:26:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,7 +49,7 @@
 #define MAX_CKSUMLEN MAXBSIZE / DEV_BSIZE	/* Max # of blks to cksum */
 
 /* Local Prototypes */
-static int disksum __P((int));
+static int disksum(int);
 
 /* List of disk devices we found/probed */
 struct disklist_lh disklist;

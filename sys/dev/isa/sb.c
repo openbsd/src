@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.20 1999/07/20 16:36:05 deraadt Exp $	*/
+/*	$OpenBSD: sb.c,v 1.21 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -66,11 +66,11 @@ struct cfdriver sb_cd = {
 
 #if NMIDI > 0
 int	sb_mpu401_open __P((void *, int, 
-			     void (*iintr)__P((void *, int)),
-			     void (*ointr)__P((void *)), void *arg));
-void	sb_mpu401_close __P((void *));
-int	sb_mpu401_output __P((void *, int));
-void	sb_mpu401_getinfo __P((void *, struct midi_info *));
+			     void (*iintr)(void *, int),
+			     void (*ointr)(void *), void *arg));
+void	sb_mpu401_close(void *);
+int	sb_mpu401_output(void *, int);
+void	sb_mpu401_getinfo(void *, struct midi_info *);
 
 struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
@@ -95,7 +95,7 @@ struct audio_device sb_device = {
 	"sb"
 };
 
-int	sb_getdev __P((void *, struct audio_device *));
+int	sb_getdev(void *, struct audio_device *);
 
 /*
  * Define our interface to the higher level audio driver.
@@ -322,8 +322,8 @@ int
 sb_mpu401_open(addr, flags, iintr, ointr, arg)
 	void *addr;
 	int flags;
-	void (*iintr)__P((void *, int));
-	void (*ointr)__P((void *));
+	void (*iintr)(void *, int);
+	void (*ointr)(void *);
 	void *arg;
 {
 	return mpu_open(SBMPU(addr), flags, iintr, ointr, arg);

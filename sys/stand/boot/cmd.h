@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.10 1998/05/25 19:17:42 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.11 2002/03/14 01:27:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,7 +40,7 @@ struct cmd_table {
 #define CMDT_VAR 1
 #define CMDT_SET 2
 #define CMDT_MDC 3
-	int (*cmd_exec) __P((void));
+	int (*cmd_exec)(void);
 };
 
 struct cmd_state {
@@ -58,6 +58,6 @@ struct cmd_state {
 };
 extern struct cmd_state cmd;
 
-int getcmd __P((void));
-int read_conf __P((void));
-int bootparse __P((int));
+int getcmd(void);
+int read_conf(void);
+int bootparse(int);

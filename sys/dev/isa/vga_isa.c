@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_isa.c,v 1.7 2000/11/15 20:17:38 aaron Exp $ */
+/* $OpenBSD: vga_isa.c,v 1.8 2002/03/14 01:26:56 millert Exp $ */
 /* $NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp $ */
 
 /*
@@ -52,8 +52,8 @@ struct vga_isa_softc {
 #endif
 };
 
-int	vga_isa_match __P((struct device *, void *, void *));
-void	vga_isa_attach __P((struct device *, struct device *, void *));
+int	vga_isa_match(struct device *, void *, void *);
+void	vga_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach vga_isa_ca = {
 	sizeof(struct vga_isa_softc), vga_isa_match, vga_isa_attach,

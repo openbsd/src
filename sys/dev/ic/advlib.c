@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.c,v 1.7 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: advlib.c,v 1.8 2002/03/14 01:26:53 millert Exp $	*/
 /*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -81,161 +81,161 @@
 /******************************************************************************/
 
 /* Initializzation routines */
-static u_int32_t AscLoadMicroCode __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, u_int16_t));
-static void AscInitLram __P((ASC_SOFTC *));
-static void AscInitQLinkVar __P((ASC_SOFTC *));
-static int AscResetChipAndScsiBus __P((bus_space_tag_t, bus_space_handle_t));
-static u_int16_t AscGetChipBusType __P((bus_space_tag_t, bus_space_handle_t));
+static u_int32_t AscLoadMicroCode(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t *, u_int16_t);
+static void AscInitLram(ASC_SOFTC *);
+static void AscInitQLinkVar(ASC_SOFTC *);
+static int AscResetChipAndScsiBus(bus_space_tag_t, bus_space_handle_t);
+static u_int16_t AscGetChipBusType(bus_space_tag_t, bus_space_handle_t);
 
 /* Chip register routines */
-static void AscSetBank __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
+static void AscSetBank(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 
 /* RISC Chip routines */
-static int AscStartChip __P((bus_space_tag_t, bus_space_handle_t));
-static int AscStopChip __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscSetChipScsiID __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t));
-static u_int8_t AscGetChipScsiCtrl __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscGetChipVersion __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static int AscSetRunChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t, u_int8_t));
-static int AscSetChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t, u_int8_t));
-static int AscHostReqRiscHalt __P((bus_space_tag_t, bus_space_handle_t));
-static int AscIsChipHalted __P((bus_space_tag_t, bus_space_handle_t));
-static void AscSetChipIH __P((bus_space_tag_t, bus_space_handle_t, u_int16_t));
+static int AscStartChip(bus_space_tag_t, bus_space_handle_t);
+static int AscStopChip(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t AscSetChipScsiID(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t);
+static u_int8_t AscGetChipScsiCtrl(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t AscGetChipVersion(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static int AscSetRunChipSynRegAtID(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t, u_int8_t);
+static int AscSetChipSynRegAtID(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t, u_int8_t);
+static int AscHostReqRiscHalt(bus_space_tag_t, bus_space_handle_t);
+static int AscIsChipHalted(bus_space_tag_t, bus_space_handle_t);
+static void AscSetChipIH(bus_space_tag_t, bus_space_handle_t, u_int16_t);
 
 /* Lram routines */
-static u_int8_t AscReadLramByte __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static void AscWriteLramByte __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int8_t));
-static u_int16_t AscReadLramWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static void AscWriteLramWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t));
-static u_int32_t AscReadLramDWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static void AscWriteLramDWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int32_t));
-static void AscMemWordSetLram __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t, int));
-static void AscMemWordCopyToLram __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, int));
-static void AscMemWordCopyFromLram __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, int));
-static void AscMemDWordCopyToLram __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int32_t *, int));
-static u_int32_t AscMemSumLramWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, int));
-static int AscTestExternalLram __P((bus_space_tag_t, bus_space_handle_t));
+static u_int8_t AscReadLramByte(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static void AscWriteLramByte(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int8_t);
+static u_int16_t AscReadLramWord(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static void AscWriteLramWord(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t);
+static u_int32_t AscReadLramDWord(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static void AscWriteLramDWord(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int32_t);
+static void AscMemWordSetLram(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t, int);
+static void AscMemWordCopyToLram(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t *, int);
+static void AscMemWordCopyFromLram(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int16_t *, int);
+static void AscMemDWordCopyToLram(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, u_int32_t *, int);
+static u_int32_t AscMemSumLramWord(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t, int);
+static int AscTestExternalLram(bus_space_tag_t, bus_space_handle_t);
 
 /* MicroCode routines */
-static u_int16_t AscInitMicroCodeVar __P((ASC_SOFTC *));
-static u_int32_t AscGetOnePhyAddr __P((ASC_SOFTC *, u_int8_t *, u_int32_t));
-static u_int32_t AscGetSGList __P((ASC_SOFTC *, u_int8_t *, u_int32_t,
-					ASC_SG_HEAD *));
+static u_int16_t AscInitMicroCodeVar(ASC_SOFTC *);
+static u_int32_t AscGetOnePhyAddr(ASC_SOFTC *, u_int8_t *, u_int32_t);
+static u_int32_t AscGetSGList(ASC_SOFTC *, u_int8_t *, u_int32_t,
+					ASC_SG_HEAD *);
 
 /* EEProm routines */
-static int AscWriteEEPCmdReg __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t));
-static int AscWriteEEPDataReg __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static void AscWaitEEPRead __P((void));
-static void AscWaitEEPWrite __P((void));
-static u_int16_t AscReadEEPWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t));
-static u_int16_t AscWriteEEPWord __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t, u_int16_t));
-static u_int16_t AscGetEEPConfig __P((bus_space_tag_t, bus_space_handle_t,
-					ASCEEP_CONFIG *, u_int16_t));
-static int AscSetEEPConfig __P((bus_space_tag_t, bus_space_handle_t,
-					ASCEEP_CONFIG *, u_int16_t));
-static int AscSetEEPConfigOnce __P((bus_space_tag_t, bus_space_handle_t,
-					ASCEEP_CONFIG *, u_int16_t));
+static int AscWriteEEPCmdReg(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t);
+static int AscWriteEEPDataReg(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static void AscWaitEEPRead(void);
+static void AscWaitEEPWrite(void);
+static u_int16_t AscReadEEPWord(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t);
+static u_int16_t AscWriteEEPWord(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t, u_int16_t);
+static u_int16_t AscGetEEPConfig(bus_space_tag_t, bus_space_handle_t,
+					ASCEEP_CONFIG *, u_int16_t);
+static int AscSetEEPConfig(bus_space_tag_t, bus_space_handle_t,
+					ASCEEP_CONFIG *, u_int16_t);
+static int AscSetEEPConfigOnce(bus_space_tag_t, bus_space_handle_t,
+					ASCEEP_CONFIG *, u_int16_t);
 #ifdef ASC_DEBUG
-static void AscPrintEEPConfig __P((ASCEEP_CONFIG *, u_int16_t));
+static void AscPrintEEPConfig(ASCEEP_CONFIG *, u_int16_t);
 #endif
 
 /* Interrupt routines */
-static void AscIsrChipHalted __P((ASC_SOFTC *));
-static int AscIsrQDone __P((ASC_SOFTC *));
-static int AscWaitTixISRDone __P((ASC_SOFTC *, u_int8_t));
-static int AscWaitISRDone __P((ASC_SOFTC *));
-static u_int8_t _AscCopyLramScsiDoneQ __P((bus_space_tag_t, bus_space_handle_t,
+static void AscIsrChipHalted(ASC_SOFTC *);
+static int AscIsrQDone(ASC_SOFTC *);
+static int AscWaitTixISRDone(ASC_SOFTC *, u_int8_t);
+static int AscWaitISRDone(ASC_SOFTC *);
+static u_int8_t _AscCopyLramScsiDoneQ(bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, ASC_QDONE_INFO *,
-					u_int32_t));
-static void AscGetQDoneInfo __P((bus_space_tag_t, bus_space_handle_t, u_int16_t,
-					ASC_QDONE_INFO *));
-static void AscToggleIRQAct __P((bus_space_tag_t, bus_space_handle_t));
-static void AscDisableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
-static void AscEnableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscGetChipIRQ __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static u_int8_t AscSetChipIRQ __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t, u_int16_t));
-static void AscAckInterrupt __P((bus_space_tag_t, bus_space_handle_t));
-static u_int32_t AscGetMaxDmaCount __P((u_int16_t));
-static u_int16_t AscGetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t));
-static u_int16_t AscSetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
-static u_int8_t AscGetIsaDmaSpeed __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscSetIsaDmaSpeed __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t));
+					u_int32_t);
+static void AscGetQDoneInfo(bus_space_tag_t, bus_space_handle_t, u_int16_t,
+					ASC_QDONE_INFO *);
+static void AscToggleIRQAct(bus_space_tag_t, bus_space_handle_t);
+static void AscDisableInterrupt(bus_space_tag_t, bus_space_handle_t);
+static void AscEnableInterrupt(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t AscGetChipIRQ(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static u_int8_t AscSetChipIRQ(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t, u_int16_t);
+static void AscAckInterrupt(bus_space_tag_t, bus_space_handle_t);
+static u_int32_t AscGetMaxDmaCount(u_int16_t);
+static u_int16_t AscGetIsaDmaChannel(bus_space_tag_t, bus_space_handle_t);
+static u_int16_t AscSetIsaDmaChannel(bus_space_tag_t, bus_space_handle_t,
+					u_int16_t);
+static u_int8_t AscGetIsaDmaSpeed(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t AscSetIsaDmaSpeed(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t);
 		
 /* Messages routines */
-static void AscHandleExtMsgIn __P((ASC_SOFTC *, u_int16_t, u_int8_t,
-					ASC_SCSI_BIT_ID_TYPE, int, u_int8_t));
-static u_int8_t AscMsgOutSDTR __P((ASC_SOFTC *, u_int8_t, u_int8_t));
+static void AscHandleExtMsgIn(ASC_SOFTC *, u_int16_t, u_int8_t,
+					ASC_SCSI_BIT_ID_TYPE, int, u_int8_t);
+static u_int8_t AscMsgOutSDTR(ASC_SOFTC *, u_int8_t, u_int8_t);
 		
 /* SDTR routines */
-static void AscSetChipSDTR __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t, u_int8_t));
-static u_int8_t AscCalSDTRData __P((ASC_SOFTC *, u_int8_t, u_int8_t));
-static u_int8_t AscGetSynPeriodIndex __P((ASC_SOFTC *, u_int8_t));
+static void AscSetChipSDTR(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t, u_int8_t);
+static u_int8_t AscCalSDTRData(ASC_SOFTC *, u_int8_t, u_int8_t);
+static u_int8_t AscGetSynPeriodIndex(ASC_SOFTC *, u_int8_t);
 		
 /* Queue routines */
-static int AscSendScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
-static int AscSgListToQueue __P((int));
-static u_int AscGetNumOfFreeQueue __P((ASC_SOFTC *, u_int8_t, u_int8_t));
-static int AscPutReadyQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
-static void AscPutSCSIQ __P((bus_space_tag_t, bus_space_handle_t,
-					 u_int16_t, ASC_SCSI_Q *));
-static int AscPutReadySgListQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
-static u_int8_t AscAllocFreeQueue __P((bus_space_tag_t, bus_space_handle_t,
-					u_int8_t));
-static u_int8_t AscAllocMultipleFreeQueue __P((bus_space_tag_t,
+static int AscSendScsiQueue(ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t);
+static int AscSgListToQueue(int);
+static u_int AscGetNumOfFreeQueue(ASC_SOFTC *, u_int8_t, u_int8_t);
+static int AscPutReadyQueue(ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t);
+static void AscPutSCSIQ(bus_space_tag_t, bus_space_handle_t,
+					 u_int16_t, ASC_SCSI_Q *);
+static int AscPutReadySgListQueue(ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t);
+static u_int8_t AscAllocFreeQueue(bus_space_tag_t, bus_space_handle_t,
+					u_int8_t);
+static u_int8_t AscAllocMultipleFreeQueue(bus_space_tag_t,
 					bus_space_handle_t,
-					u_int8_t, u_int8_t));
-static int AscStopQueueExe __P((bus_space_tag_t, bus_space_handle_t));
-static void AscStartQueueExe __P((bus_space_tag_t, bus_space_handle_t));
-static void AscCleanUpBusyQueue __P((bus_space_tag_t, bus_space_handle_t));
-static int _AscWaitQDone __P((bus_space_tag_t, bus_space_handle_t,
-					ASC_SCSI_Q *));
-static int AscCleanUpDiscQueue __P((bus_space_tag_t, bus_space_handle_t));
+					u_int8_t, u_int8_t);
+static int AscStopQueueExe(bus_space_tag_t, bus_space_handle_t);
+static void AscStartQueueExe(bus_space_tag_t, bus_space_handle_t);
+static void AscCleanUpBusyQueue(bus_space_tag_t, bus_space_handle_t);
+static int _AscWaitQDone(bus_space_tag_t, bus_space_handle_t,
+					ASC_SCSI_Q *);
+static int AscCleanUpDiscQueue(bus_space_tag_t, bus_space_handle_t);
 		
 /* Abort and Reset CCB routines */
-static int AscRiscHaltedAbortCCB __P((ASC_SOFTC *, u_int32_t));
-static int AscRiscHaltedAbortTIX __P((ASC_SOFTC *, u_int8_t));
+static int AscRiscHaltedAbortCCB(ASC_SOFTC *, u_int32_t);
+static int AscRiscHaltedAbortTIX(ASC_SOFTC *, u_int8_t);
 		
 /* Error Handling routines */
-static int AscSetLibErrorCode __P((ASC_SOFTC *, u_int16_t));
+static int AscSetLibErrorCode(ASC_SOFTC *, u_int16_t);
 		
 /* Handle bugged borads routines */
-static int AscTagQueuingSafe __P((ASC_SCSI_INQUIRY *));
-static void AscAsyncFix __P((ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *));
+static int AscTagQueuingSafe(ASC_SCSI_INQUIRY *);
+static void AscAsyncFix(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
 		
 /* Miscellaneous routines */
-static int AscCompareString __P((u_char *, u_char *, int));
+static int AscCompareString(u_char *, u_char *, int);
 		
 /* Device oriented routines */
-static int DvcEnterCritical __P((void));
-static void DvcLeaveCritical __P((int));
-static void DvcSleepMilliSecond __P((u_int32_t));
-//static void DvcDelayMicroSecond __P((u_int32_t));
-static void DvcDelayNanoSecond __P((u_int32_t));
+static int DvcEnterCritical(void);
+static void DvcLeaveCritical(int);
+static void DvcSleepMilliSecond(u_int32_t);
+//static void DvcDelayMicroSecond(u_int32_t);
+static void DvcDelayNanoSecond(u_int32_t);
 
 
 /******************************************************************************/

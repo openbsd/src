@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhavar.h,v 1.1 1996/11/28 23:27:55 niklas Exp $	*/
+/*	$OpenBSD: uhavar.h,v 1.2 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: uhavar.h,v 1.3 1996/10/21 22:34:43 thorpej Exp $	*/
 
 /*
@@ -44,9 +44,9 @@ struct uha_softc {
 	int sc_irq, sc_drq;
 	void *sc_ih;
 
-	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
-	int (*poll) __P((struct uha_softc *, struct scsi_xfer *, int));
-	void (*init) __P((struct uha_softc *));
+	void (*start_mbox)(struct uha_softc *, struct uha_mscp *);
+	int (*poll)(struct uha_softc *, struct scsi_xfer *, int);
+	void (*init)(struct uha_softc *);
 
 	struct uha_mscp *sc_mscphash[MSCP_HASH_SIZE];
 	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
@@ -55,7 +55,7 @@ struct uha_softc {
 	struct scsi_link sc_link;
 };
 
-void	uha_attach __P((struct uha_softc *));
-void	uha_timeout __P((void *arg));
-struct	uha_mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
-void	uha_done __P((struct uha_softc *, struct uha_mscp *));
+void	uha_attach(struct uha_softc *);
+void	uha_timeout(void *arg);
+struct	uha_mscp *uha_mscp_phys_kv(struct uha_softc *, u_long);
+void	uha_done(struct uha_softc *, struct uha_mscp *);

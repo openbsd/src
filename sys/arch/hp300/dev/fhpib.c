@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.9 2001/05/01 16:51:09 millert Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.10 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -80,18 +80,18 @@ int	doppollint = 1;	/* use ppoll interrupts instead of watchdog */
 int	fhpibppolldelay = 50;
 #endif
 
-void	fhpibifc __P((struct fhpibdevice *));
-void	fhpibdmadone __P((void *));
-int	fhpibwait __P((struct fhpibdevice *, int));
+void	fhpibifc(struct fhpibdevice *);
+void	fhpibdmadone(void *);
+int	fhpibwait(struct fhpibdevice *, int);
 
-void	fhpibreset __P((struct hpibbus_softc *));
-int	fhpibsend __P((struct hpibbus_softc *, int, int, void *, int));
-int	fhpibrecv __P((struct hpibbus_softc *, int, int, void *, int));
-int	fhpibppoll __P((struct hpibbus_softc *));
-void	fhpibppwatch __P((void *));
-void	fhpibgo __P((struct hpibbus_softc *, int, int, void *, int, int, int));
-void	fhpibdone __P((struct hpibbus_softc *));
-int	fhpibintr __P((void *));
+void	fhpibreset(struct hpibbus_softc *);
+int	fhpibsend(struct hpibbus_softc *, int, int, void *, int);
+int	fhpibrecv(struct hpibbus_softc *, int, int, void *, int);
+int	fhpibppoll(struct hpibbus_softc *);
+void	fhpibppwatch(void *);
+void	fhpibgo(struct hpibbus_softc *, int, int, void *, int, int, int);
+void	fhpibdone(struct hpibbus_softc *);
+int	fhpibintr(void *);
 
 /*
  * Our controller ops structure.
@@ -118,8 +118,8 @@ struct fhpib_softc {
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
 };
 
-int	fhpibmatch __P((struct device *, void *, void *));
-void	fhpibattach __P((struct device *, struct device *, void *));
+int	fhpibmatch(struct device *, void *, void *);
+void	fhpibattach(struct device *, struct device *, void *);
 
 struct cfattach fhpib_ca = {
 	sizeof(struct fhpib_softc), fhpibmatch, fhpibattach

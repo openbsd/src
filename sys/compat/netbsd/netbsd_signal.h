@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.h,v 1.2 1999/09/26 11:16:36 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_signal.h,v 1.3 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.42 1998/12/21 10:35:00 drochner Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ typedef struct {
  * Signal vector "template" used in sigaction call.
  */
 struct	netbsd_sigaction {
-	void	(*netbsd_sa_handler) __P((int));/* signal handler */
+	void	(*netbsd_sa_handler)(int);/* signal handler */
 	netbsd_sigset_t netbsd_sa_mask;		/* signal mask to apply */
 	int	netbsd_sa_flags;		/* see signal options below */
 };

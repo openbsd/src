@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.6 2001/08/18 16:50:03 aaron Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.7 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -65,25 +65,25 @@ struct dp8390_softc {
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
 
-	int	(*test_mem) __P((struct dp8390_softc *));
-	void	(*init_card) __P((struct dp8390_softc *));
-	void	(*stop_card) __P((struct dp8390_softc *));
-	void	(*read_hdr) __P((struct dp8390_softc *,
-		    int, struct dp8390_ring *));
-	void	(*recv_int) __P((struct dp8390_softc *));
-	int	(*ring_copy) __P((struct dp8390_softc *,
-		    int, caddr_t, u_short));
-	int	(*write_mbuf) __P((struct dp8390_softc *, struct mbuf *, int));
+	int	(*test_mem)(struct dp8390_softc *);
+	void	(*init_card)(struct dp8390_softc *);
+	void	(*stop_card)(struct dp8390_softc *);
+	void	(*read_hdr)(struct dp8390_softc *,
+		    int, struct dp8390_ring *);
+	void	(*recv_int)(struct dp8390_softc *);
+	int	(*ring_copy)(struct dp8390_softc *,
+		    int, caddr_t, u_short);
+	int	(*write_mbuf)(struct dp8390_softc *, struct mbuf *, int);
 
-	int	(*sc_enable) __P((struct dp8390_softc *));
-	void	(*sc_disable) __P((struct dp8390_softc *));
+	int	(*sc_enable)(struct dp8390_softc *);
+	void	(*sc_disable)(struct dp8390_softc *);
 
-	void	(*sc_media_init) __P((struct dp8390_softc *));
-	void	(*sc_media_fini) __P((struct dp8390_softc *));
+	void	(*sc_media_init)(struct dp8390_softc *);
+	void	(*sc_media_fini)(struct dp8390_softc *);
 
-	int	(*sc_mediachange) __P((struct dp8390_softc *));
-	void	(*sc_mediastatus) __P((struct dp8390_softc *,
-		    struct ifmediareq *));
+	int	(*sc_mediachange)(struct dp8390_softc *);
+	void	(*sc_mediastatus)(struct dp8390_softc *,
+		    struct ifmediareq *);
 };
 
 /*
@@ -142,24 +142,24 @@ struct dp8390_softc {
 #define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
 				    ((sc)->sc_reg_map[reg]), (val))
 
-int	dp8390_config __P((struct dp8390_softc *));
-int	dp8390_intr __P((void *));
-int	dp8390_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	dp8390_start __P((struct ifnet *));
-void	dp8390_watchdog __P((struct ifnet *));
-void	dp8390_reset __P((struct dp8390_softc *));
-void	dp8390_init __P((struct dp8390_softc *));
-void	dp8390_stop __P((struct dp8390_softc *));
+int	dp8390_config(struct dp8390_softc *);
+int	dp8390_intr(void *);
+int	dp8390_ioctl(struct ifnet *, u_long, caddr_t);
+void	dp8390_start(struct ifnet *);
+void	dp8390_watchdog(struct ifnet *);
+void	dp8390_reset(struct dp8390_softc *);
+void	dp8390_init(struct dp8390_softc *);
+void	dp8390_stop(struct dp8390_softc *);
 
-int	dp8390_mediachange __P((struct ifnet *));
-void	dp8390_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	dp8390_mediachange(struct ifnet *);
+void	dp8390_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	dp8390_media_init __P((struct dp8390_softc *));
+void	dp8390_media_init(struct dp8390_softc *);
 
-int	dp8390_detach __P((struct dp8390_softc *, int));
+int	dp8390_detach(struct dp8390_softc *, int);
 
-void	dp8390_rint __P((struct dp8390_softc *));
+void	dp8390_rint(struct dp8390_softc *);
 
-void	dp8390_getmcaf __P((struct arpcom *, u_int8_t *));
-struct mbuf *dp8390_get __P((struct dp8390_softc *, int, u_short));
-void	dp8390_read __P((struct dp8390_softc *, int, u_short));
+void	dp8390_getmcaf(struct arpcom *, u_int8_t *);
+struct mbuf *dp8390_get(struct dp8390_softc *, int, u_short);
+void	dp8390_read(struct dp8390_softc *, int, u_short);

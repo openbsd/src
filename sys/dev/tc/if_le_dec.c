@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_dec.c,v 1.4 1998/09/16 22:41:21 jason Exp $	*/
+/*	$OpenBSD: if_le_dec.c,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: if_le_dec.c,v 1.3 1996/10/13 01:38:38 christos Exp $	*/
 
 /*-
@@ -64,12 +64,12 @@
 #include <dev/tc/tcvar.h>
 
 /* access LANCE registers */
-void le_dec_writereg __P((volatile u_short *regptr, u_short val));
+void le_dec_writereg(volatile u_short *regptr, u_short val);
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-hide void le_dec_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_dec_rdcsr __P((struct am7990_softc *, u_int16_t));  
+hide void le_dec_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+hide u_int16_t le_dec_rdcsr(struct am7990_softc *, u_int16_t);  
 
 void
 dec_le_common_attach(sc, eap)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: cpu.h,v 1.8 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -271,7 +271,7 @@ struct intrhand {
 
 struct haltvec {
 	struct haltvec *hv_next;
-	void	(*hv_fn) __P((void));
+	void	(*hv_fn)(void);
 	int	hv_pri;
 };
 #endif

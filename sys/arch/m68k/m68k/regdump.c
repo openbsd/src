@@ -1,4 +1,4 @@
-/*	$OpenBSD: regdump.c,v 1.2 1997/10/08 07:07:50 niklas Exp $	*/
+/*	$OpenBSD: regdump.c,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: regdump.c,v 1.1 1997/04/09 19:21:47 thorpej Exp $	*/
 
 /*
@@ -52,10 +52,10 @@
 #include <machine/psl.h>
 
 /* XXX until m68k/cpu.h has it */
-void regdump __P((struct trapframe *, int));
+void regdump(struct trapframe *, int);
 
-void dumpmem __P((int *, int, int));
-char *hexstr __P((int, int));
+void dumpmem(int *, int, int);
+char *hexstr(int, int);
 
 /*
  * Print a register and stack dump.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.14 2000/12/06 17:19:01 deraadt Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.15 2002/03/14 01:27:12 millert Exp $	*/
 
 /*-
  *
@@ -219,38 +219,38 @@ struct route;
 struct sockaddr;
 struct socket;
 struct ipxpcb;
-void	ipx_abort __P((struct ipxpcb *ipxp));
-u_short	ipx_cksum __P((struct mbuf *m, int len));
-int	ipx_control __P((struct socket *so, u_long cmd, caddr_t data,
-			 struct ifnet *ifp));
-void	*ipx_ctlinput __P((int cmd, struct sockaddr *arg_as_sa, void *dummy));
-int	ipx_ctloutput __P((int req, struct socket *so, int level, int name,
-			   struct mbuf **value));
-int	ipx_do_route __P((struct ipx_addr *src, struct route *ro));
-void	ipx_drop __P((struct ipxpcb *ipxp, int errno));
-void	ipx_forward __P((struct mbuf *m));
-void	ipx_init __P((void));
-void	ipx_input __P((struct mbuf *, ...));
-void	ipxintr __P((void));
-int	ipx_output __P((struct mbuf *m0, ...));
-int	ipx_outputfl __P((struct mbuf *m0, struct route *ro, int flags));
-int	ipx_output_type20 __P((struct mbuf *m));
-int	ipx_raw_usrreq __P((struct socket *so, int req, struct mbuf *m,
-			    struct mbuf *nam, struct mbuf *control));
-void	ipx_undo_route __P((struct route *ro));
-int	ipx_usrreq __P((struct socket *so, int req, struct mbuf *m,
-			struct mbuf *nam, struct mbuf *control));
-void	ipx_watch_output __P((struct mbuf *m, struct ifnet *ifp));
-int	ipx_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	ipx_printhost __P((struct ipx_addr *addr));
+void	ipx_abort(struct ipxpcb *ipxp);
+u_short	ipx_cksum(struct mbuf *m, int len);
+int	ipx_control(struct socket *so, u_long cmd, caddr_t data,
+			 struct ifnet *ifp);
+void	*ipx_ctlinput(int cmd, struct sockaddr *arg_as_sa, void *dummy);
+int	ipx_ctloutput(int req, struct socket *so, int level, int name,
+			   struct mbuf **value);
+int	ipx_do_route(struct ipx_addr *src, struct route *ro);
+void	ipx_drop(struct ipxpcb *ipxp, int errno);
+void	ipx_forward(struct mbuf *m);
+void	ipx_init(void);
+void	ipx_input(struct mbuf *, ...);
+void	ipxintr(void);
+int	ipx_output(struct mbuf *m0, ...);
+int	ipx_outputfl(struct mbuf *m0, struct route *ro, int flags);
+int	ipx_output_type20(struct mbuf *m);
+int	ipx_raw_usrreq(struct socket *so, int req, struct mbuf *m,
+			    struct mbuf *nam, struct mbuf *control);
+void	ipx_undo_route(struct route *ro);
+int	ipx_usrreq(struct socket *so, int req, struct mbuf *m,
+			struct mbuf *nam, struct mbuf *control);
+void	ipx_watch_output(struct mbuf *m, struct ifnet *ifp);
+int	ipx_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	ipx_printhost(struct ipx_addr *addr);
 
 #endif /* _KERNEL */
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct	ipx_addr ipx_addr __P((const char *));
-char	*ipx_ntoa __P((struct ipx_addr));
+struct	ipx_addr ipx_addr(const char *);
+char	*ipx_ntoa(struct ipx_addr);
 __END_DECLS
 
 #endif /* !_NETIPX_IPX_H_ */

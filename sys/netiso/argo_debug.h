@@ -1,4 +1,4 @@
-/*	$OpenBSD: argo_debug.h,v 1.3 1997/09/07 19:43:22 millert Exp $	*/
+/*	$OpenBSD: argo_debug.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: argo_debug.h,v 1.7 1996/02/13 22:07:57 christos Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ SOFTWARE.
 
 #ifndef _NETISO_ARGO_DEBUG_H_
 #define _NETISO_ARGO_DEBUG_H_
-void Dump_buf __P((caddr_t, int));
+void Dump_buf(caddr_t, int);
 #define dump_buf(a, b) Dump_buf((caddr_t)(a), (int)(b))
 
 /***********************************************

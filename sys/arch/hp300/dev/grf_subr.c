@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_subr.c,v 1.5 1997/04/16 11:56:05 downsj Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.6 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_subr.c,v 1.4 1997/03/31 07:34:18 scottr Exp $	*/
 
 /*-
@@ -54,12 +54,12 @@
 
 #include <hp300/dev/itevar.h>
 
-int	grfdevprint __P((void *, const char *));
+int	grfdevprint(void *, const char *);
 
 void
 grfdev_attach(sc, init, regs, sw, isw)
 	struct grfdev_softc *sc;
-	int (*init) __P((struct grf_data *, int, caddr_t));
+	int (*init)(struct grf_data *, int, caddr_t);
 	caddr_t regs;
 	struct grfsw *sw;
 	struct itesw *isw;

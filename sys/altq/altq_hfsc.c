@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.3 2001/10/26 07:36:46 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.4 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -61,77 +61,77 @@
 /*
  * function prototypes
  */
-static struct hfsc_if *hfsc_attach __P((struct ifaltq *, u_int));
-static int hfsc_detach __P((struct hfsc_if *));
-static int hfsc_clear_interface __P((struct hfsc_if *));
-static int hfsc_request __P((struct ifaltq *, int, void *));
-static void hfsc_purge __P((struct hfsc_if *));
-static struct hfsc_class *hfsc_class_create __P((struct hfsc_if *,
-		 struct service_curve *, struct hfsc_class *, int, int));
-static int hfsc_class_destroy __P((struct hfsc_class *));
-static int hfsc_class_modify __P((struct hfsc_class *,
-			  struct service_curve *, struct service_curve *));
-static struct hfsc_class *hfsc_nextclass __P((struct hfsc_class *));
+static struct hfsc_if *hfsc_attach(struct ifaltq *, u_int);
+static int hfsc_detach(struct hfsc_if *);
+static int hfsc_clear_interface(struct hfsc_if *);
+static int hfsc_request(struct ifaltq *, int, void *);
+static void hfsc_purge(struct hfsc_if *);
+static struct hfsc_class *hfsc_class_create(struct hfsc_if *,
+		 struct service_curve *, struct hfsc_class *, int, int);
+static int hfsc_class_destroy(struct hfsc_class *);
+static int hfsc_class_modify(struct hfsc_class *,
+			  struct service_curve *, struct service_curve *);
+static struct hfsc_class *hfsc_nextclass(struct hfsc_class *);
 
-static int hfsc_enqueue __P((struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *));
-static struct mbuf *hfsc_dequeue __P((struct ifaltq *, int));
+static int hfsc_enqueue(struct ifaltq *, struct mbuf *,
+			     struct altq_pktattr *);
+static struct mbuf *hfsc_dequeue(struct ifaltq *, int);
 
-static int hfsc_addq __P((struct hfsc_class *, struct mbuf *));
-static struct mbuf *hfsc_getq __P((struct hfsc_class *));
-static struct mbuf *hfsc_pollq __P((struct hfsc_class *));
-static void hfsc_purgeq __P((struct hfsc_class *));
+static int hfsc_addq(struct hfsc_class *, struct mbuf *);
+static struct mbuf *hfsc_getq(struct hfsc_class *);
+static struct mbuf *hfsc_pollq(struct hfsc_class *);
+static void hfsc_purgeq(struct hfsc_class *);
 
-static void set_active __P((struct hfsc_class *, int));
-static void set_passive __P((struct hfsc_class *));
+static void set_active(struct hfsc_class *, int);
+static void set_passive(struct hfsc_class *);
 
-static void init_ed __P((struct hfsc_class *, int));
-static void update_ed __P((struct hfsc_class *, int));
-static void update_d __P((struct hfsc_class *, int));
-static void init_v __P((struct hfsc_class *, int));
-static void update_v __P((struct hfsc_class *, int));
-static ellist_t *ellist_alloc __P((void));
-static void ellist_destroy __P((ellist_t *));
-static void ellist_insert __P((struct hfsc_class *));
-static void ellist_remove __P((struct hfsc_class *));
-static void ellist_update __P((struct hfsc_class *));
-struct hfsc_class *ellist_get_mindl __P((ellist_t *));
-static actlist_t *actlist_alloc __P((void));
-static void actlist_destroy __P((actlist_t *));
-static void actlist_insert __P((struct hfsc_class *));
-static void actlist_remove __P((struct hfsc_class *));
-static void actlist_update __P((struct hfsc_class *));
+static void init_ed(struct hfsc_class *, int);
+static void update_ed(struct hfsc_class *, int);
+static void update_d(struct hfsc_class *, int);
+static void init_v(struct hfsc_class *, int);
+static void update_v(struct hfsc_class *, int);
+static ellist_t *ellist_alloc(void);
+static void ellist_destroy(ellist_t *);
+static void ellist_insert(struct hfsc_class *);
+static void ellist_remove(struct hfsc_class *);
+static void ellist_update(struct hfsc_class *);
+struct hfsc_class *ellist_get_mindl(ellist_t *);
+static actlist_t *actlist_alloc(void);
+static void actlist_destroy(actlist_t *);
+static void actlist_insert(struct hfsc_class *);
+static void actlist_remove(struct hfsc_class *);
+static void actlist_update(struct hfsc_class *);
 
-static __inline u_int64_t seg_x2y __P((u_int64_t, u_int64_t));
-static __inline u_int64_t seg_y2x __P((u_int64_t, u_int64_t));
-static __inline u_int64_t m2sm __P((u_int));
-static __inline u_int64_t m2ism __P((u_int));
-static __inline u_int64_t d2dx __P((u_int));
-static u_int sm2m __P((u_int64_t));
-static u_int dx2d __P((u_int64_t));
+static __inline u_int64_t seg_x2y(u_int64_t, u_int64_t);
+static __inline u_int64_t seg_y2x(u_int64_t, u_int64_t);
+static __inline u_int64_t m2sm(u_int);
+static __inline u_int64_t m2ism(u_int);
+static __inline u_int64_t d2dx(u_int);
+static u_int sm2m(u_int64_t);
+static u_int dx2d(u_int64_t);
 
-static void sc2isc __P((struct service_curve *, struct internal_sc *));
-static void rtsc_init __P((struct runtime_sc *, struct internal_sc *,
-			   u_int64_t, u_int64_t));
-static u_int64_t rtsc_y2x __P((struct runtime_sc *, u_int64_t));
-static u_int64_t rtsc_x2y __P((struct runtime_sc *, u_int64_t));
-static void rtsc_min __P((struct runtime_sc *, struct internal_sc *,
-			  u_int64_t, u_int64_t));
+static void sc2isc(struct service_curve *, struct internal_sc *);
+static void rtsc_init(struct runtime_sc *, struct internal_sc *,
+			   u_int64_t, u_int64_t);
+static u_int64_t rtsc_y2x(struct runtime_sc *, u_int64_t);
+static u_int64_t rtsc_x2y(struct runtime_sc *, u_int64_t);
+static void rtsc_min(struct runtime_sc *, struct internal_sc *,
+			  u_int64_t, u_int64_t);
 
-int hfscopen __P((dev_t, int, int, struct proc *));
-int hfscclose __P((dev_t, int, int, struct proc *));
-int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
-static int hfsccmd_if_attach __P((struct hfsc_attach *));
-static int hfsccmd_if_detach __P((struct hfsc_interface *));
-static int hfsccmd_add_class __P((struct hfsc_add_class *));
-static int hfsccmd_delete_class __P((struct hfsc_delete_class *));
-static int hfsccmd_modify_class __P((struct hfsc_modify_class *));
-static int hfsccmd_add_filter __P((struct hfsc_add_filter *));
-static int hfsccmd_delete_filter __P((struct hfsc_delete_filter *));
-static int hfsccmd_class_stats __P((struct hfsc_class_stats *));
-static void get_class_stats __P((struct class_stats *, struct hfsc_class *));
-static struct hfsc_class *clh_to_clp __P((struct hfsc_if *, u_long));
-static u_long clp_to_clh __P((struct hfsc_class *));
+int hfscopen(dev_t, int, int, struct proc *);
+int hfscclose(dev_t, int, int, struct proc *);
+int hfscioctl(dev_t, ioctlcmd_t, caddr_t, int, struct proc *);
+static int hfsccmd_if_attach(struct hfsc_attach *);
+static int hfsccmd_if_detach(struct hfsc_interface *);
+static int hfsccmd_add_class(struct hfsc_add_class *);
+static int hfsccmd_delete_class(struct hfsc_delete_class *);
+static int hfsccmd_modify_class(struct hfsc_modify_class *);
+static int hfsccmd_add_filter(struct hfsc_add_filter *);
+static int hfsccmd_delete_filter(struct hfsc_delete_filter *);
+static int hfsccmd_class_stats(struct hfsc_class_stats *);
+static void get_class_stats(struct class_stats *, struct hfsc_class *);
+static struct hfsc_class *clh_to_clp(struct hfsc_if *, u_long);
+static u_long clp_to_clh(struct hfsc_class *);
 
 /*
  * macros

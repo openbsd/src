@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.16 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: file.h,v 1.17 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -64,21 +64,21 @@ struct file {
 	long	f_msgcount;	/* references from message queue */
 	struct	ucred *f_cred;	/* credentials associated with descriptor */
 	struct	fileops {
-		int	(*fo_read)	__P((struct file *fp, off_t *, 
+		int	(*fo_read)(struct file *fp, off_t *, 
 					     struct uio *uio,
-					     struct ucred *cred));
-		int	(*fo_write)	__P((struct file *fp, off_t *,
+					     struct ucred *cred);
+		int	(*fo_write)(struct file *fp, off_t *,
 					     struct uio *uio,
-					     struct ucred *cred));
-		int	(*fo_ioctl)	__P((struct file *fp, u_long com,
-					    caddr_t data, struct proc *p));
-		int	(*fo_select)	__P((struct file *fp, int which,
-					     struct proc *p));
-		int	(*fo_kqfilter)	__P((struct file *fp,
-					     struct knote *kn));
-		int	(*fo_stat)	__P((struct file *fp, struct stat *sb,
-					     struct proc *p));
-		int	(*fo_close)	__P((struct file *fp, struct proc *p));
+					     struct ucred *cred);
+		int	(*fo_ioctl)(struct file *fp, u_long com,
+					    caddr_t data, struct proc *p);
+		int	(*fo_select)(struct file *fp, int which,
+					     struct proc *p);
+		int	(*fo_kqfilter)(struct file *fp,
+					     struct knote *kn);
+		int	(*fo_stat)(struct file *fp, struct stat *sb,
+					     struct proc *p);
+		int	(*fo_close)(struct file *fp, struct proc *p);
 	} *f_ops;
 	off_t	f_offset;
 	caddr_t	f_data;		/* private data */
@@ -110,9 +110,9 @@ extern int maxfiles;			/* kernel limit on number of open files */
 extern int nfiles;			/* actual number of open files */
 extern struct fileops vnops;		/* vnode operations for files */
 
-int     dofileread __P((struct proc *, int, struct file *, void *, size_t,
-            off_t *, register_t *));
-int     dofilewrite __P((struct proc *, int, struct file *, const void *,
-            size_t, off_t *, register_t *));
+int     dofileread(struct proc *, int, struct file *, void *, size_t,
+            off_t *, register_t *);
+int     dofilewrite(struct proc *, int, struct file *, const void *,
+            size_t, off_t *, register_t *);
 
 #endif /* _KERNEL */

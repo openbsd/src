@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.9 2001/06/22 14:10:59 deraadt Exp $	*/
+/*	$OpenBSD: disk.h,v 1.10 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -109,15 +109,15 @@ struct disk {
 };
 
 struct dkdriver {
-	void	(*d_strategy) __P((struct buf *));
+	void	(*d_strategy)(struct buf *);
 #ifdef notyet
-	int	(*d_open) __P((dev_t dev, int ifmt, int, struct proc *));
-	int	(*d_close) __P((dev_t dev, int, int ifmt, struct proc *));
-	int	(*d_ioctl) __P((dev_t dev, u_long cmd, caddr_t data, int fflag,
-				struct proc *));
-	int	(*d_dump) __P((dev_t));
-	void	(*d_start) __P((struct buf *, daddr_t));
-	int	(*d_mklabel) __P((struct disk *));
+	int	(*d_open)(dev_t dev, int ifmt, int, struct proc *);
+	int	(*d_close)(dev_t dev, int, int ifmt, struct proc *);
+	int	(*d_ioctl)(dev_t dev, u_long cmd, caddr_t data, int fflag,
+				struct proc *);
+	int	(*d_dump)(dev_t);
+	void	(*d_start)(struct buf *, daddr_t);
+	int	(*d_mklabel)(struct disk *);
 #endif
 };
 
@@ -153,18 +153,18 @@ TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
 extern	int disk_count;			/* number of disks in global disklist */
 extern	int disk_change;		/* disk attached/detached */
 
-void	disk_init __P((void));
-int	disk_construct __P((struct disk *, char *));
-void	disk_attach __P((struct disk *));
-void	disk_detach __P((struct disk *));
-void	disk_busy __P((struct disk *));
-void	disk_unbusy __P((struct disk *, long));
-void	disk_resetstat __P((struct disk *));
-struct	disk *disk_find __P((char *));
+void	disk_init(void);
+int	disk_construct(struct disk *, char *);
+void	disk_attach(struct disk *);
+void	disk_detach(struct disk *);
+void	disk_busy(struct disk *);
+void	disk_unbusy(struct disk *, long);
+void	disk_resetstat(struct disk *);
+struct	disk *disk_find(char *);
 
-int	disk_lock __P((struct disk *));
-void    disk_unlock __P((struct disk *));
+int	disk_lock(struct disk *);
+void    disk_unlock(struct disk *);
 
 struct device;
-void	dk_establish __P((struct disk *, struct device *));
+void	dk_establish(struct disk *, struct device *);
 #endif

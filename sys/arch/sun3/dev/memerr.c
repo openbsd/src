@@ -1,4 +1,4 @@
-/*	$OpenBSD: memerr.c,v 1.8 1997/01/16 04:03:50 kstailey Exp $	*/
+/*	$OpenBSD: memerr.c,v 1.9 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: memerr.c,v 1.6 1996/11/13 07:05:14 thorpej Exp $ */
 
 /*
@@ -73,10 +73,10 @@ struct memerr_softc {
 	/* XXX: counters? */
 };
 
-static int  memerr_match __P((struct device *, void *vcf, void *args));
-static void memerr_attach __P((struct device *, struct device *, void *));
-static int  memerr_interrupt __P((void *));
-static void memerr_correctable __P((struct memerr_softc *));
+static int  memerr_match(struct device *, void *vcf, void *args);
+static void memerr_attach(struct device *, struct device *, void *);
+static int  memerr_interrupt(void *);
+static void memerr_correctable(struct memerr_softc *);
 
 struct cfattach memerr_ca = {
 	sizeof(struct memerr_softc), memerr_match, memerr_attach

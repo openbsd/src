@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.3 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: dhu.c,v 1.17 2000/01/24 02:40:28 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -131,21 +131,21 @@ static struct speedtab dhuspeedtab[] = {
   {      -1,	-1		}
 };
 
-static int	dhu_match __P((struct device *, struct cfdata *, void *));
-static void	dhu_attach __P((struct device *, struct device *, void *));
-static	void	dhurint __P((void *));
-static	void	dhuxint __P((void *));
-static	void	dhustart __P((struct tty *));
-static	int	dhuparam __P((struct tty *, struct termios *));
-static	int	dhuiflow __P((struct tty *, int));
-static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
-	int	dhuopen __P((dev_t, int, int, struct proc *));
-	int	dhuclose __P((dev_t, int, int, struct proc *));
-	int	dhuread __P((dev_t, struct uio *, int));
-	int	dhuwrite __P((dev_t, struct uio *, int));
-	int	dhuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-	void	dhustop __P((struct tty *, int));
-struct tty *	dhutty __P((dev_t));
+static int	dhu_match(struct device *, struct cfdata *, void *);
+static void	dhu_attach(struct device *, struct device *, void *);
+static	void	dhurint(void *);
+static	void	dhuxint(void *);
+static	void	dhustart(struct tty *);
+static	int	dhuparam(struct tty *, struct termios *);
+static	int	dhuiflow(struct tty *, int);
+static unsigned	dhumctl(struct dhu_softc *,int, int, int);
+	int	dhuopen(dev_t, int, int, struct proc *);
+	int	dhuclose(dev_t, int, int, struct proc *);
+	int	dhuread(dev_t, struct uio *, int);
+	int	dhuwrite(dev_t, struct uio *, int);
+	int	dhuioctl(dev_t, u_long, caddr_t, int, struct proc *);
+	void	dhustop(struct tty *, int);
+struct tty *	dhutty(dev_t);
 
 struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), (cfmatch_t)dhu_match, dhu_attach

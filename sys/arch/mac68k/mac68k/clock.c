@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 1998/05/22 05:26:43 gene Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
@@ -100,7 +100,7 @@
 int	clock_debug = 0;
 #endif
 
-void	rtclock_intr __P((void));
+void	rtclock_intr(void);
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -288,8 +288,8 @@ profclock(pclk)
 #endif
 #endif
 
-static u_long	ugmt_2_pramt __P((u_long));
-static u_long	pramt_2_ugmt __P((u_long));
+static u_long	ugmt_2_pramt(u_long);
+static u_long	pramt_2_ugmt(u_long);
 
 /*
  * Convert GMT to Mac PRAM time, using rtc_offset
@@ -447,7 +447,7 @@ delay(usec)
 	while ((cycles-- > 0) && delay_flag);
 }
 
-static unsigned	dummy_delay __P((unsigned));
+static unsigned	dummy_delay(unsigned);
 /*
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
@@ -468,7 +468,7 @@ dummy_delay(usec)
 	return ((delay_factor >> 7) - cycles);
 }
 
-static void	delay_timer1_irq __P((void *));
+static void	delay_timer1_irq(void *);
 
 static void
 delay_timer1_irq(dummy)

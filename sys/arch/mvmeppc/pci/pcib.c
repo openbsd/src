@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.1 2001/06/26 21:57:57 smurph Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -53,10 +53,10 @@
 
 #include "isa.h"
 
-int	pcibmatch __P((struct device *, void *, void *));
-void	pcibattach __P((struct device *, struct device *, void *));
-void	pcib_callback __P((struct device *));
-int	pcib_print __P((void *, const char *));
+int	pcibmatch(struct device *, void *, void *);
+void	pcibattach(struct device *, struct device *, void *);
+void	pcib_callback(struct device *);
+int	pcib_print(void *, const char *);
 
 struct ppc_bus_space ppc_isa_io, ppc_isa_mem;
 

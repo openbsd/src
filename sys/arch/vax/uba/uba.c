@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.14 2002/01/18 02:09:27 miod Exp $	   */
+/*	$OpenBSD: uba.c,v 1.15 2002/03/14 01:26:48 millert Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -68,12 +68,12 @@
 
 volatile int /* rbr, rcvec,*/ svec;
 
-static	int ubasearch __P((struct device *, struct cfdata *, void *));
-static	int ubaprint __P((void *, const char *));
+static	int ubasearch(struct device *, struct cfdata *, void *);
+static	int ubaprint(void *, const char *);
 #if 0
-static	void ubastray __P((int));
+static	void ubastray(int);
 #endif
-static	void ubainitmaps __P((struct uba_softc *));
+static	void ubainitmaps(struct uba_softc *);
 
 extern struct cfdriver uba_cd;
 
@@ -81,7 +81,7 @@ extern struct cfdriver uba_cd;
 
 #if defined(DW780) || defined(DW750)
 
-int	dw_match __P((struct device *, struct cfdata *, void *));
+int	dw_match(struct device *, struct cfdata *, void *);
 
 int
 dw_match(parent, cf, aux)
@@ -109,14 +109,14 @@ dw_match(parent, cf, aux)
 /*
  * The DW780 are directly connected to the SBI on 11/780 and 8600.
  */
-void	dw780_attach __P((struct device *, struct device *, void *));
-void	dw780_beforescan __P((struct uba_softc *));
-void	dw780_afterscan __P((struct uba_softc *));
-int	dw780_errchk __P((struct uba_softc *));
-void	dw780_init __P((struct uba_softc *));
-void	dw780_purge __P((struct uba_softc *, int));
-void	uba_dw780int __P((int));
-static	void ubaerror __P((struct uba_softc *, int *, int *));
+void	dw780_attach(struct device *, struct device *, void *);
+void	dw780_beforescan(struct uba_softc *);
+void	dw780_afterscan(struct uba_softc *);
+int	dw780_errchk(struct uba_softc *);
+void	dw780_init(struct uba_softc *);
+void	dw780_purge(struct uba_softc *, int);
+void	uba_dw780int(int);
+static	void ubaerror(struct uba_softc *, int *, int *);
 
 struct	cfattach uba_sbi_ca = {
 	sizeof(struct uba_softc), dw_match, dw780_attach
@@ -318,9 +318,9 @@ ubaerror(uh, ipl, uvec)
  * and bus status/command registers, the latter are (partly) IPR's
  * on 750.
  */
-void	dw750_attach __P((struct device *, struct device *, void *));
-void	dw750_init __P((struct uba_softc *));
-void	dw750_purge __P((struct uba_softc *, int));
+void	dw750_attach(struct device *, struct device *, void *);
+void	dw750_init(struct uba_softc *);
+void	dw750_purge(struct uba_softc *, int);
 
 struct	cfattach uba_cmi_ca = {
 	sizeof(struct uba_softc), dw_match, dw750_attach
@@ -377,10 +377,10 @@ dw750_purge(sc, bdp)
  * This driver can only handle map registers up to 1MB due to map info
  * storage, but that should be enough for normal purposes.
  */
-int	qba_match __P((struct device *, struct cfdata *, void *));
-void	qba_attach __P((struct device *, struct device *, void *));
-void	qba_beforescan __P((struct uba_softc*));
-void	qba_init __P((struct uba_softc*));
+int	qba_match(struct device *, struct cfdata *, void *);
+void	qba_attach(struct device *, struct device *, void *);
+void	qba_beforescan(struct uba_softc*);
+void	qba_init(struct uba_softc*);
 
 struct	cfattach uba_mainbus_ca = {
 	sizeof(struct uba_softc), qba_match, qba_attach

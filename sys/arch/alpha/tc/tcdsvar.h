@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcdsvar.h,v 1.5 1997/01/24 19:58:24 niklas Exp $	*/
+/*	$OpenBSD: tcdsvar.h,v 1.6 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: tcdsvar.h,v 1.5 1996/11/13 21:13:38 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@ struct tcds_slotconfig {
 	int	sc_slot;
 	struct tcds_softc *sc_tcds;		/* to frob TCDS regs */
 	struct esp_softc *sc_esp;		/* to frob child's regs */
-	int	(*sc_intrhand) __P((void *));	/* intr. handler */
+	int	(*sc_intrhand)(void *);	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 
 	/*
@@ -86,24 +86,24 @@ struct tcdsdev_attach_args {
  */
 void	tcds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 	    int (*)(void *), void *));
-void	tcds_intr_disestablish __P((struct device *, void *));
-void	tcds_dma_enable __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
-int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
-int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
-void	tcds_scsi_reset __P((struct tcds_slotconfig *));
-int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
+void	tcds_intr_disestablish(struct device *, void *);
+void	tcds_dma_enable(struct tcds_slotconfig *, int);
+void	tcds_scsi_enable(struct tcds_slotconfig *, int);
+int	tcds_scsi_iserr(struct tcds_slotconfig *);
+int	tcds_scsi_isintr(struct tcds_slotconfig *, int);
+void	tcds_scsi_reset(struct tcds_slotconfig *);
+int	tcds_scsi_iserr(struct tcds_slotconfig *);
 
 /*
  * TCDS DMA functions (used the the 53c94 driver)
  */
-int	tcds_dma_isintr	__P((struct tcds_slotconfig *));
-void	tcds_dma_reset __P((struct tcds_slotconfig *));
-int	tcds_dma_intr __P((struct tcds_slotconfig *));
-int	tcds_dma_setup __P((struct tcds_slotconfig *, caddr_t *, size_t *,
-	    int, size_t *));
-void	tcds_dma_go __P((struct tcds_slotconfig *));
-int	tcds_dma_isactive __P((struct tcds_slotconfig *));
+int	tcds_dma_isintr(struct tcds_slotconfig *);
+void	tcds_dma_reset(struct tcds_slotconfig *);
+int	tcds_dma_intr(struct tcds_slotconfig *);
+int	tcds_dma_setup(struct tcds_slotconfig *, caddr_t *, size_t *,
+	    int, size_t *);
+void	tcds_dma_go(struct tcds_slotconfig *);
+int	tcds_dma_isactive(struct tcds_slotconfig *);
 
 /*
  * The TCDS (bus) cfdriver, so that subdevices can more

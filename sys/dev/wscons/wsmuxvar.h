@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.4 2001/03/30 16:38:14 aaron Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: wsmuxvar.h,v 1.1 1999/07/29 18:20:43 augustss Exp $	*/
 
 /*
@@ -54,14 +54,14 @@ struct wsmux_softc {
 };
 
 struct wsmuxops {
-	int (*dopen) __P((dev_t, int, int, struct proc *));
-	int (*dclose) __P((struct device *, int, int, struct proc *));
-	int (*dioctl) __P((struct device *, u_long, caddr_t, int, 
-			   struct proc *));
-	int (*ddispioctl) __P((struct device *, u_long, caddr_t, int, 
-			       struct proc *));
-	int (*dsetdisplay) __P((struct device *, struct wsmux_softc *));
-	int (*dissetdisplay) __P((struct device *));
+	int (*dopen)(dev_t, int, int, struct proc *);
+	int (*dclose)(struct device *, int, int, struct proc *);
+	int (*dioctl)(struct device *, u_long, caddr_t, int, 
+			   struct proc *);
+	int (*ddispioctl)(struct device *, u_long, caddr_t, int, 
+			       struct proc *);
+	int (*dsetdisplay)(struct device *, struct wsmux_softc *);
+	int (*dissetdisplay)(struct device *);
 };
 
 
@@ -72,27 +72,27 @@ struct wsmuxops {
 #define WSMOUSEDEVCF_MUX		0
 #define WSMOUSEDEVCF_MUX_DEFAULT	-1
 
-struct wsmux_softc *wsmux_create __P((const char *name, int no));
-int	wsmux_attach_sc __P((
+struct wsmux_softc *wsmux_create(const char *name, int no);
+int	wsmux_attach_sc(
 	  struct wsmux_softc *,
 	  int, struct device *, struct wseventvar *,
 	  struct wsmux_softc **,
-	  struct wsmuxops *));
-int	wsmux_detach_sc __P((struct wsmux_softc *, struct device *));
-void	wsmux_attach __P((
+	  struct wsmuxops *);
+int	wsmux_detach_sc(struct wsmux_softc *, struct device *);
+void	wsmux_attach(
 	  int, int, struct device *, struct wseventvar *,
 	  struct wsmux_softc **,
-	  struct wsmuxops *));
-void	wsmux_detach __P((int, struct device *));
+	  struct wsmuxops *);
+void	wsmux_detach(int, struct device *);
 
-int	wsmux_displayioctl __P((struct device *dev, u_long cmd,
-	    caddr_t data, int flag, struct proc *p));
+int	wsmux_displayioctl(struct device *dev, u_long cmd,
+	    caddr_t data, int flag, struct proc *p);
 
-int	wsmuxdoioctl __P((struct device *, u_long, caddr_t,int,struct proc *));
+int	wsmuxdoioctl(struct device *, u_long, caddr_t,int,struct proc *);
 
-int	wsmux_add_mux __P((int, struct wsmux_softc *));
-int	wsmux_rem_mux __P((int, struct wsmux_softc *));
-int	wskbd_add_mux __P((int, struct wsmux_softc *));
-int	wskbd_rem_mux __P((int, struct wsmux_softc *));
-int	wsmouse_add_mux __P((int, struct wsmux_softc *));
-int	wsmouse_rem_mux __P((int, struct wsmux_softc *));
+int	wsmux_add_mux(int, struct wsmux_softc *);
+int	wsmux_rem_mux(int, struct wsmux_softc *);
+int	wskbd_add_mux(int, struct wsmux_softc *);
+int	wskbd_rem_mux(int, struct wsmux_softc *);
+int	wsmouse_add_mux(int, struct wsmux_softc *);
+int	wsmouse_rem_mux(int, struct wsmux_softc *);

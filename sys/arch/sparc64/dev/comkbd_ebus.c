@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.4 2002/02/12 16:53:06 jason Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.5 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -97,27 +97,27 @@ struct comkbd_softc {
 #define	COM_READ(sc,r) \
     bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (r))
 
-int comkbd_match __P((struct device *, void *, void *));
-void comkbd_attach __P((struct device *, struct device *, void *));
-int comkbd_iskbd __P((int));
+int comkbd_match(struct device *, void *, void *);
+void comkbd_attach(struct device *, struct device *, void *);
+int comkbd_iskbd(int);
 
 /* wskbd glue */
-void comkbd_cnpollc __P((void *, int));
-void comkbd_cngetc __P((void *, u_int *, int *));
-int comkbd_enable __P((void *, int));
-void comkbd_setleds __P((void *, int));
-int comkbd_getleds __P((struct comkbd_softc *));
-int comkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+void comkbd_cnpollc(void *, int);
+void comkbd_cngetc(void *, u_int *, int *);
+int comkbd_enable(void *, int);
+void comkbd_setleds(void *, int);
+int comkbd_getleds(struct comkbd_softc *);
+int comkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 /* internals */
-void comkbd_enqueue __P((struct comkbd_softc *, u_int8_t *, u_int));
-void comkbd_raw __P((struct comkbd_softc *, u_int8_t));
-void comkbd_init __P((struct comkbd_softc *));
-void comkbd_putc __P((struct comkbd_softc *, u_int8_t));
-int comkbd_intr __P((void *));
-void comkbd_soft __P((void *));
-void comkbd_bellstop __P((void *));
-void comkbd_bell __P((struct comkbd_softc *, u_int, u_int, u_int));
+void comkbd_enqueue(struct comkbd_softc *, u_int8_t *, u_int);
+void comkbd_raw(struct comkbd_softc *, u_int8_t);
+void comkbd_init(struct comkbd_softc *);
+void comkbd_putc(struct comkbd_softc *, u_int8_t);
+int comkbd_intr(void *);
+void comkbd_soft(void *);
+void comkbd_bellstop(void *);
+void comkbd_bell(struct comkbd_softc *, u_int, u_int, u_int);
 
 struct cfattach comkbd_ca = {
 	sizeof(struct comkbd_softc), comkbd_match, comkbd_attach

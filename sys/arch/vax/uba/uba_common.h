@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_common.h,v 1.1 2000/04/27 03:14:51 bjc Exp $	*/
+/*	$OpenBSD: uba_common.h,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uba_common.h,v 1.2 1999/06/21 16:23:01 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -85,4 +85,4 @@ struct uba_regs {
 	int	pad3[UBAIOPAGES];	/* no maps for device address space */
 };
 
-void	uba_dma_init __P((struct uba_vsoftc *));
+void	uba_dma_init(struct uba_vsoftc *);

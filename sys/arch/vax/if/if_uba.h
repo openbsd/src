@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uba.h,v 1.4 1997/05/29 00:04:34 niklas Exp $	*/
+/*	$OpenBSD: if_uba.h,v 1.5 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: if_uba.h,v 1.6 1996/08/20 14:07:50 ragge Exp $	*/
 
 /*
@@ -135,10 +135,10 @@ struct ifuba {
 		if_ubaput(&(ifu)->ifu_info, &(ifu)->ifu_xmt, m)
 
 /* Prototypes */
-int	if_ubaminit __P((struct ifubinfo *, struct uba_softc *, int, int,
-	    struct ifrw *, int, struct ifxmt *, int));
-int	if_ubaput __P((struct ifubinfo *, struct ifxmt *, struct mbuf *));
-struct mbuf *if_ubaget __P((struct ifubinfo *, struct ifrw *, int,
-	struct ifnet *));
+int	if_ubaminit(struct ifubinfo *, struct uba_softc *, int, int,
+	    struct ifrw *, int, struct ifxmt *, int);
+int	if_ubaput(struct ifubinfo *, struct ifxmt *, struct mbuf *);
+struct mbuf *if_ubaget(struct ifubinfo *, struct ifrw *, int,
+	struct ifnet *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.22 2002/03/04 21:24:11 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.23 2002/03/14 01:26:51 millert Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -273,8 +273,8 @@ void	crypto_thread(void);
 int	crypto_invoke(struct cryptop *);
 void	crypto_done(struct cryptop *);
 
-void	cuio_copydata __P((struct uio *, int, int, caddr_t));
-void	cuio_copyback __P((struct uio *, int, int, caddr_t));
+void	cuio_copydata(struct uio *, int, int, caddr_t);
+void	cuio_copyback(struct uio *, int, int, caddr_t);
 int	cuio_getptr(struct uio *, int, int *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t);

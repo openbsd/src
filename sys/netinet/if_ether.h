@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.18 2002/03/01 05:06:24 kjc Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.19 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -191,15 +191,15 @@ u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 struct	ifqueue arpintrq;
 
-void	arpwhohas __P((struct arpcom *, struct in_addr *));
-void	arpintr __P((void));
-int	arpresolve __P((struct arpcom *,
-	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
-void	arp_ifinit __P((struct arpcom *, struct ifaddr *));
-void	arp_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+void	arpwhohas(struct arpcom *, struct in_addr *);
+void	arpintr(void);
+int	arpresolve(struct arpcom *,
+	    struct rtentry *, struct mbuf *, struct sockaddr *, u_char *);
+void	arp_ifinit(struct arpcom *, struct ifaddr *);
+void	arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
-int	ether_addmulti __P((struct ifreq *, struct arpcom *));
-int	ether_delmulti __P((struct ifreq *, struct arpcom *));
+int	ether_addmulti(struct ifreq *, struct arpcom *);
+int	ether_delmulti(struct ifreq *, struct arpcom *);
 #endif /* _KERNEL */
 
 /*
@@ -272,27 +272,27 @@ struct ether_multistep {
 
 extern struct ifnet *myip_ifp;
 
-void arp_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-int arpresolve __P((struct arpcom *, struct rtentry *, struct mbuf *,
-		    struct sockaddr *, u_char *));
-void arpintr __P((void));
-int arpioctl __P((u_long, caddr_t));
-void arp_ifinit __P((struct arpcom *, struct ifaddr *));
-void arprequest __P((struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *));
-void revarpinput __P((struct mbuf *));
-void in_revarpinput __P((struct mbuf *));
-void revarprequest __P((struct ifnet *));
-int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
-int revarpwhoami __P((struct in_addr *, struct ifnet *));
-int db_show_arptab __P((void));
+void arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+int arpresolve(struct arpcom *, struct rtentry *, struct mbuf *,
+		    struct sockaddr *, u_char *);
+void arpintr(void);
+int arpioctl(u_long, caddr_t);
+void arp_ifinit(struct arpcom *, struct ifaddr *);
+void arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
+void revarpinput(struct mbuf *);
+void in_revarpinput(struct mbuf *);
+void revarprequest(struct ifnet *);
+int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
+int revarpwhoami(struct in_addr *, struct ifnet *);
+int db_show_arptab(void);
 
 #else
 
-char *ether_ntoa __P((struct ether_addr *));
-struct ether_addr *ether_aton __P((char *));
-int ether_ntohost __P((char *, struct ether_addr *));
-int ether_hostton __P((char *, struct ether_addr *));
-int ether_line __P((char *, struct ether_addr *, char *));
+char *ether_ntoa(struct ether_addr *);
+struct ether_addr *ether_aton(char *);
+int ether_ntohost(char *, struct ether_addr *);
+int ether_hostton(char *, struct ether_addr *);
+int ether_line(char *, struct ether_addr *, char *);
 
 #endif /* _KERNEL */
 #endif /* _NETINET_IF_ETHER_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.4 1999/01/11 05:11:46 millert Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.5 2002/03/14 01:26:40 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -56,16 +56,16 @@
 
 int     ie_debug = 0;
 
-void ie_stop __P((struct netif *));
-void ie_end __P((struct netif *));
-void ie_error __P((struct netif *, char *, volatile struct iereg *));
-int ie_get __P((struct iodesc *, void *, size_t, time_t));
-void ie_init __P((struct iodesc *, void *));
-int ie_match __P((struct netif *, void *));
-int ie_poll __P((struct iodesc *, void *, int));
-int ie_probe __P((struct netif *, void *));
-int ie_put __P((struct iodesc *, void *, size_t));
-void ie_reset __P((struct netif *, u_char *));
+void ie_stop(struct netif *);
+void ie_end(struct netif *);
+void ie_error(struct netif *, char *, volatile struct iereg *);
+int ie_get(struct iodesc *, void *, size_t, time_t);
+void ie_init(struct iodesc *, void *);
+int ie_match(struct netif *, void *);
+int ie_poll(struct iodesc *, void *, int);
+int ie_probe(struct netif *, void *);
+int ie_put(struct iodesc *, void *, size_t);
+void ie_reset(struct netif *, u_char *);
 
 struct netif_stats ie_stats;
 

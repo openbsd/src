@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_vfsops.c,v 1.4 2001/02/20 01:50:10 assar Exp $	*/
+/*	$OpenBSD: tcfs_vfsops.c,v 1.5 2002/03/14 01:27:08 millert Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -36,16 +36,16 @@
 #include <sys/malloc.h>
 #include <miscfs/tcfs/tcfs.h>
 
-int	tcfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	tcfs_start __P((struct mount *, int, struct proc *));
-int	tcfs_unmount __P((struct mount *, int, struct proc *));
-int	tcfs_root __P((struct mount *, struct vnode **));
-int	tcfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
-int	tcfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	tcfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	tcfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	tcfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	tcfs_start(struct mount *, int, struct proc *);
+int	tcfs_unmount(struct mount *, int, struct proc *);
+int	tcfs_root(struct mount *, struct vnode **);
+int	tcfs_quotactl(struct mount *, int, uid_t, caddr_t,
+			     struct proc *);
+int	tcfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	tcfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	tcfs_vget(struct mount *, ino_t, struct vnode **);
 
 /*
  * Mount tcfs layer
@@ -335,8 +335,8 @@ tcfs_vget(mp, ino, vpp)
 	return VFS_VGET(MOUNTTOTCFSMOUNT(mp)->tcfsm_vfs, ino, vpp);
 }
 
-#define tcfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-           size_t, struct proc *)))eopnotsupp)
+#define tcfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+           size_t, struct proc *))eopnotsupp)
 
 struct vfsops tcfs_vfsops = {
 	tcfs_mount,

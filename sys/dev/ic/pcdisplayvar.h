@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.4 2001/04/14 04:44:01 aaron Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.5 2002/03/14 01:26:55 millert Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -60,10 +60,10 @@ struct pcdisplay_handle {
 	bus_space_handle_t ph_ioh_6845, ph_memh;
 };
 
-static inline u_int8_t _pcdisplay_6845_read __P((struct pcdisplay_handle *,
-						 int));
-static inline void _pcdisplay_6845_write __P((struct pcdisplay_handle *,
-					      int, u_int8_t));
+static inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *,
+						 int);
+static inline void _pcdisplay_6845_write(struct pcdisplay_handle *,
+					      int, u_int8_t);
 
 static inline u_int8_t _pcdisplay_6845_read(ph, reg)
 	struct pcdisplay_handle *ph;
@@ -87,15 +87,15 @@ static inline void _pcdisplay_6845_write(ph, reg, val)
 #define pcdisplay_6845_write(ph, reg, val) \
 	_pcdisplay_6845_write(ph, offsetof(struct reg_mc6845, reg), val)
 
-void	pcdisplay_cursor_init __P((struct pcdisplayscreen *, int));
-void	pcdisplay_cursor __P((void *, int, int, int));
+void	pcdisplay_cursor_init(struct pcdisplayscreen *, int);
+void	pcdisplay_cursor(void *, int, int, int);
 #if 0
-unsigned int pcdisplay_mapchar_simple __P((void *, int));
+unsigned int pcdisplay_mapchar_simple(void *, int);
 #endif
-int pcdisplay_mapchar __P((void *, int, unsigned int *));
-void	pcdisplay_putchar __P((void *, int, int, u_int, long));
-u_int16_t pcdisplay_getchar __P((void *, int, int));
-void	pcdisplay_copycols __P((void *, int, int, int,int));
-void	pcdisplay_erasecols __P((void *, int, int, int, long));
-void	pcdisplay_copyrows __P((void *, int, int, int));
-void	pcdisplay_eraserows __P((void *, int, int, long));
+int pcdisplay_mapchar(void *, int, unsigned int *);
+void	pcdisplay_putchar(void *, int, int, u_int, long);
+u_int16_t pcdisplay_getchar(void *, int, int);
+void	pcdisplay_copycols(void *, int, int, int,int);
+void	pcdisplay_erasecols(void *, int, int, int, long);
+void	pcdisplay_copyrows(void *, int, int, int);
+void	pcdisplay_eraserows(void *, int, int, long);

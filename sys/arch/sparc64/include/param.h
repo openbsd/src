@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 2002/02/19 05:22:57 jason Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -263,12 +263,12 @@ extern struct map	*dvmamap;
 #define rctov(n)		(ctob(((n)-1))+dvma_base)
 #define vtorc(v)		((btoc((v)-dvma_base))+1)
 
-extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
-extern caddr_t	dvma_malloc __P((size_t, void *, int));
-extern void	dvma_free __P((caddr_t, size_t, void *));
+extern caddr_t	kdvma_mapin(caddr_t, int, int);
+extern caddr_t	dvma_malloc(size_t, void *, int);
+extern void	dvma_free(caddr_t, size_t, void *);
 #endif
 
-extern void	delay __P((unsigned int));
+extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
 
 extern int cputyp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.16 2000/11/09 18:06:39 mickey Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.17 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -88,9 +88,9 @@ struct ep_softc {
 	u_char	txashift;		/* shift in SET_TX_AVAIL_THRESH */
 };
 
-u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
-int	epintr __P((void *));
-void	epstop __P((struct ep_softc *));
-void	epinit __P((struct ep_softc *));
-int	ep_detach __P((struct device *));
+u_int16_t epreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
+void	epconfig(struct ep_softc *, u_short, u_int8_t *);
+int	epintr(void *);
+void	epstop(struct ep_softc *);
+void	epinit(struct ep_softc *);
+int	ep_detach(struct device *);

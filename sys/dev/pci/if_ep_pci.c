@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.20 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.21 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -82,8 +82,8 @@
 #define PCI_CONN		0x48    /* Connector type */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
-int ep_pci_match __P((struct device *, void *, void *));
-void ep_pci_attach __P((struct device *, struct device *, void *));
+int ep_pci_match(struct device *, void *, void *);
+void ep_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach ep_pci_ca = {
 	sizeof(struct ep_softc), ep_pci_match, ep_pci_attach

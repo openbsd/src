@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_sbi.c,v 1.1 2000/04/27 03:14:51 bjc Exp $	*/
+/*	$OpenBSD: uba_sbi.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uba_sbi.c,v 1.1 1999/06/21 16:23:01 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -85,16 +85,16 @@ char    ubasr_bits[] = UBASR_BITS;
 /*
  * The DW780 are directly connected to the SBI on 11/780 and 8600.
  */
-static	int	dw780_match __P((struct device *, struct cfdata *, void *));
-static	void	dw780_attach __P((struct device *, struct device *, void *));
-static	void	dw780_init __P((struct uba_softc*));
-static	void    dw780_beforescan __P((struct uba_softc *));
-static	void    dw780_afterscan __P((struct uba_softc *));
-static	int     dw780_errchk __P((struct uba_softc *));
-static	void    uba_dw780int __P((int));
-static  void	ubaerror __P((struct uba_softc *, int *, int *));
+static	int	dw780_match(struct device *, struct cfdata *, void *);
+static	void	dw780_attach(struct device *, struct device *, void *);
+static	void	dw780_init(struct uba_softc*);
+static	void    dw780_beforescan(struct uba_softc *);
+static	void    dw780_afterscan(struct uba_softc *);
+static	int     dw780_errchk(struct uba_softc *);
+static	void    uba_dw780int(int);
+static  void	ubaerror(struct uba_softc *, int *, int *);
 #ifdef notyet
-static	void	dw780_purge __P((struct uba_softc *, int));
+static	void	dw780_purge(struct uba_softc *, int);
 #endif
 
 struct	cfattach uba_sbi_ca = {
@@ -212,7 +212,7 @@ uba_dw780int(uba)
 	int	br, vec, arg;
 	struct	uba_vsoftc *vc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = vc->uv_uba;
-	void	(*func) __P((int));
+	void	(*func)(int);
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];

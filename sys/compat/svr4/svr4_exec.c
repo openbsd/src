@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.13 2001/11/06 19:53:18 miod Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.14 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -51,8 +51,8 @@
 #include <compat/svr4/svr4_exec.h>
 #include <compat/svr4/svr4_errno.h>
 
-static void *svr4_copyargs __P((struct exec_package *, struct ps_strings *,
-			       void *, void *));
+static void *svr4_copyargs(struct exec_package *, struct ps_strings *,
+			       void *, void *);
 
 const char svr4_emul_path[] = "/emul/svr4";
 extern char svr4_sigcode[], svr4_esigcode[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.1 1997/09/17 10:46:18 downsj Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.2 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: dvma.c,v 1.2 1995/09/17 00:50:56 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -96,7 +96,7 @@ dvma_mapout(char *addr, size_t len)
 	return ((char *)va);
 }
 
-extern char *alloc __P((int));
+extern char *alloc(int);
 
 char *
 dvma_alloc(int len)

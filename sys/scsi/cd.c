@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.58 2002/02/01 10:06:18 hin Exp $	*/
+/*	$OpenBSD: cd.c,v 1.59 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -110,39 +110,39 @@ struct cd_toc {
 
 #define	CDLABELDEV(dev)	(MAKECDDEV(major(dev), CDUNIT(dev), RAW_PART))
 
-int	cdmatch __P((struct device *, void *, void *));
-void	cdattach __P((struct device *, struct device *, void *));
-int	cdactivate __P((struct device *, enum devact));
-int	cddetach __P((struct device *, int));
-void    cdzeroref __P((struct device *));
+int	cdmatch(struct device *, void *, void *);
+void	cdattach(struct device *, struct device *, void *);
+int	cdactivate(struct device *, enum devact);
+int	cddetach(struct device *, int);
+void    cdzeroref(struct device *);
 
-void	cdstart __P((void *));
-void	cdminphys __P((struct buf *));
-void	cdgetdisklabel __P((dev_t, struct cd_softc *, struct disklabel *,
-			    struct cpu_disklabel *, int));
-void	cddone __P((struct scsi_xfer *));
-u_long	cd_size __P((struct cd_softc *, int));
-void	lba2msf __P((u_long, u_char *, u_char *, u_char *));
-u_long	msf2lba __P((u_char, u_char, u_char));
-int	cd_play __P((struct cd_softc *, int, int));
-int	cd_play_tracks __P((struct cd_softc *, int, int, int, int));
-int	cd_play_msf __P((struct cd_softc *, int, int, int, int, int, int));
-int	cd_pause __P((struct cd_softc *, int));
-int	cd_reset __P((struct cd_softc *));
-int	cd_read_subchannel __P((struct cd_softc *, int, int, int,
-	    struct cd_sub_channel_info *, int ));
-int	cd_read_toc __P((struct cd_softc *, int, int, void *,
-			 int, int ));
-int	cd_get_parms __P((struct cd_softc *, int));
-int	cd_load_toc __P((struct cd_softc *, struct cd_toc *));
+void	cdstart(void *);
+void	cdminphys(struct buf *);
+void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *,
+			    struct cpu_disklabel *, int);
+void	cddone(struct scsi_xfer *);
+u_long	cd_size(struct cd_softc *, int);
+void	lba2msf(u_long, u_char *, u_char *, u_char *);
+u_long	msf2lba(u_char, u_char, u_char);
+int	cd_play(struct cd_softc *, int, int);
+int	cd_play_tracks(struct cd_softc *, int, int, int, int);
+int	cd_play_msf(struct cd_softc *, int, int, int, int, int, int);
+int	cd_pause(struct cd_softc *, int);
+int	cd_reset(struct cd_softc *);
+int	cd_read_subchannel(struct cd_softc *, int, int, int,
+	    struct cd_sub_channel_info *, int );
+int	cd_read_toc(struct cd_softc *, int, int, void *,
+			 int, int );
+int	cd_get_parms(struct cd_softc *, int);
+int	cd_load_toc(struct cd_softc *, struct cd_toc *);
 
-int    dvd_auth __P((struct cd_softc *, union dvd_authinfo *));
-int    dvd_read_physical __P((struct cd_softc *, union dvd_struct *));
-int    dvd_read_copyright __P((struct cd_softc *, union dvd_struct *));
-int    dvd_read_disckey __P((struct cd_softc *, union dvd_struct *));
-int    dvd_read_bca __P((struct cd_softc *, union dvd_struct *));
-int    dvd_read_manufact __P((struct cd_softc *, union dvd_struct *));
-int    dvd_read_struct __P((struct cd_softc *, union dvd_struct *));
+int    dvd_auth(struct cd_softc *, union dvd_authinfo *);
+int    dvd_read_physical(struct cd_softc *, union dvd_struct *);
+int    dvd_read_copyright(struct cd_softc *, union dvd_struct *);
+int    dvd_read_disckey(struct cd_softc *, union dvd_struct *);
+int    dvd_read_bca(struct cd_softc *, union dvd_struct *);
+int    dvd_read_manufact(struct cd_softc *, union dvd_struct *);
+int    dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach,

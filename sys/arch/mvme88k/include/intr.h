@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2002/02/10 23:15:05 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2002/03/14 01:26:39 millert Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -82,11 +82,11 @@ extern int intrcnt[M88K_NIRQ];
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-unsigned setipl __P((unsigned level));
+unsigned setipl(unsigned level);
 #ifdef DDB
-unsigned db_setipl __P((unsigned level));
+unsigned db_setipl(unsigned level);
 #endif 
-int spl0 __P((void));
+int spl0(void);
 #endif /* _LOCORE */
 
 /* needs major cleanup - XXX nivas */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.13 2002/01/28 21:42:40 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.14 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -114,11 +114,11 @@
 #define WI_PCI_LOMEM		0x18	/* ISA membase */
 #define WI_PCI_LOIO		0x1C	/* ISA iobase */
 
-const struct wi_pci_product *wi_pci_lookup __P((struct pci_attach_args *pa));
-int	wi_pci_match	__P((struct device *, void *, void *));
-void	wi_pci_attach	__P((struct device *, struct device *, void *));
-int	wi_intr		__P((void *));
-int	wi_attach	__P((struct wi_softc *, int));
+const struct wi_pci_product *wi_pci_lookup(struct pci_attach_args *pa);
+int	wi_pci_match(struct device *, void *, void *);
+void	wi_pci_attach(struct device *, struct device *, void *);
+int	wi_intr(void *);
+int	wi_attach(struct wi_softc *, int);
 
 struct cfattach wi_pci_ca = {
 	sizeof (struct wi_softc), wi_pci_match, wi_pci_attach

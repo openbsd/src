@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2002/01/25 15:43:59 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -67,19 +67,19 @@
 
 paddr_t cpu0paddr;/* XXXXXXXXXXXXXXXX */
 
-extern int64_t asmptechk __P((int64_t *pseg[], int addr)); /* DEBUG XXXXX */
+extern int64_t asmptechk(int64_t *pseg[], int addr); /* DEBUG XXXXX */
 
 #define IS_VM_PHYSADDR(PA) (vm_physseg_find(atop(PA), NULL) != -1)
 
 #if 0
-static int pseg_check __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
+static int pseg_check(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
 static int
 pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
 {
 	int i, k, s;
 	paddr_t *pdir, *ptbl;
-	extern int pseg_set __P((struct pmap*, vaddr_t addr, int64_t tte,
-		paddr_t spare));
+	extern int pseg_set(struct pmap*, vaddr_t addr, int64_t tte,
+		paddr_t spare);
 
 	if (!spare) return pseg_set(pm, addr, tte, spare);
 
@@ -110,13 +110,13 @@ pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
 
 /* These routines are in assembly to allow access thru physical mappings */
 #if 1
-extern int64_t pseg_get __P((struct pmap*, vaddr_t addr));
-extern int pseg_set __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
-extern paddr_t pseg_find __P((struct pmap*, vaddr_t addr, paddr_t spare));
+extern int64_t pseg_get(struct pmap*, vaddr_t addr);
+extern int pseg_set(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
+extern paddr_t pseg_find(struct pmap*, vaddr_t addr, paddr_t spare);
 #else
-static int64_t pseg_get __P((struct pmap*, vaddr_t addr));
-static int pseg_set __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
-static paddr_t pseg_find __P((struct pmap*, vaddr_t addr, paddr_t spare));
+static int64_t pseg_get(struct pmap*, vaddr_t addr);
+static int pseg_set(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
+static paddr_t pseg_find(struct pmap*, vaddr_t addr, paddr_t spare);
 
 static int64_t pseg_get(struct pmap* pm, vaddr_t addr) {
 	paddr_t *pdir, *ptbl;
@@ -172,8 +172,8 @@ static paddr_t pseg_find(struct pmap* pm, vaddr_t addr, paddr_t spare) {
 
 #endif
 
-extern struct vm_page *vm_page_alloc1 __P((void));
-extern void vm_page_free1 __P((struct vm_page *));
+extern struct vm_page *vm_page_alloc1(void);
+extern void vm_page_free1(struct vm_page *);
 
 
 #ifdef DEBUG
@@ -244,12 +244,12 @@ typedef struct pv_entry {
 pv_entry_t	pv_table;	/* array of entries, one per page */
 static struct pool pv_pool;
 static struct pool pmap_pool;
-extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
-extern void	pmap_enter_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
-extern void	pmap_page_cache __P((struct pmap *pm, paddr_t pa, int mode));
+extern void	pmap_remove_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
+extern void	pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa);
+extern void	pmap_page_cache(struct pmap *pm, paddr_t pa, int mode);
 
-void	pmap_pinit __P((struct pmap *));
-void	pmap_release __P((struct pmap *));
+void	pmap_pinit(struct pmap *);
+void	pmap_release(struct pmap *);
 
 /*
  * First and last managed physical addresses.  XXX only used for dumping the system.
@@ -305,9 +305,9 @@ static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
 
 int avail_start, avail_end;	/* These are used by ps & family */
 
-static int ptelookup_va __P((vaddr_t va)); /* sun4u */
+static int ptelookup_va(vaddr_t va); /* sun4u */
 #if notyet
-static void tsb_enter __P((int ctx, int64_t va, int64_t data));
+static void tsb_enter(int ctx, int64_t va, int64_t data);
 #endif
 
 struct pmap_stats {
@@ -383,7 +383,7 @@ int	pmap_pages_stolen = 0;
 #endif
 
 #ifdef NOTDEF_DEBUG
-void pv_check __P((void));
+void pv_check(void);
 void
 pv_check()
 {
@@ -471,7 +471,7 @@ do {									\
  * can lose ref/mod info!!!!
  *
  */
-static void pmap_enter_kpage __P((vaddr_t, int64_t));
+static void pmap_enter_kpage(vaddr_t, int64_t);
 static void
 pmap_enter_kpage(va, data)
 	vaddr_t va;
@@ -505,7 +505,7 @@ pmap_enter_kpage(va, data)
  * See checp bootargs to see if we need to enable bootdebug.
  */
 #ifdef DEBUG
-void pmap_bootdebug __P((void));
+void pmap_bootdebug(void);
 void
 pmap_bootdebug() 
 {
@@ -543,7 +543,7 @@ pmap_bootdebug()
  * size of the E$/NBPG.  However, different CPUs can have different sized
  * E$, so we need to take the GCM of the E$ size.
  */
-static int pmap_calculate_colors __P((void));
+static int pmap_calculate_colors(void);
 static int 
 pmap_calculate_colors() {
 	int node = 0;
@@ -1359,7 +1359,7 @@ remap_data:
 	{ 
 		extern vaddr_t u0[2];
 		extern struct pcb* proc0paddr;
-		extern void main __P((void));
+		extern void main(void);
 		paddr_t pa;
 
 		/* Initialize all the pointers to u0 */
@@ -2640,7 +2640,7 @@ pmap_dumpsize()
 int
 pmap_dumpmmu(dump, blkno)
 	register daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 {
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;
@@ -3831,7 +3831,7 @@ vm_page_free1(mem)
 
 #ifdef DDB
 
-void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
+void db_dump_pv(db_expr_t, int, db_expr_t, char *);
 void
 db_dump_pv(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -3859,7 +3859,7 @@ db_dump_pv(addr, have_addr, count, modif)
 /*
  * Test ref/modify handling.
  */
-void pmap_testout __P((void));
+void pmap_testout(void);
 void
 pmap_testout()
 {

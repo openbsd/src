@@ -1,4 +1,4 @@
-/*	$OpenBSD: atzsc.c,v 1.6 1997/01/18 12:26:23 niklas Exp $	*/
+/*	$OpenBSD: atzsc.c,v 1.7 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: atzsc.c,v 1.22 1996/12/23 09:09:52 veego Exp $	*/
 
 /*
@@ -52,17 +52,17 @@
 #include <amiga/dev/atzscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-void atzscattach __P((struct device *, struct device *, void *));
-int atzscmatch __P((struct device *, void *, void *));
+void atzscattach(struct device *, struct device *, void *);
+int atzscmatch(struct device *, void *, void *);
 
-void atzsc_enintr __P((struct sbic_softc *));
-void atzsc_dmastop __P((struct sbic_softc *));
-int atzsc_dmanext __P((struct sbic_softc *));
-int atzsc_dmaintr __P((void *));
-int atzsc_dmago __P((struct sbic_softc *, char *, int, int));
+void atzsc_enintr(struct sbic_softc *);
+void atzsc_dmastop(struct sbic_softc *);
+int atzsc_dmanext(struct sbic_softc *);
+int atzsc_dmaintr(void *);
+int atzsc_dmago(struct sbic_softc *, char *, int, int);
 
 #ifdef DEBUG
-void atzsc_dump __P((void));
+void atzsc_dump(void);
 #endif
 
 struct scsi_adapter atzsc_scsiswitch = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_ccreg.h,v 1.2 1996/05/02 06:43:43 niklas Exp $	*/
+/*	$OpenBSD: grf_ccreg.h,v 1.3 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_ccreg.h,v 1.9 1996/04/21 21:11:10 veego Exp $	*/
 
 /*
@@ -30,6 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-int grfcc_cnprobe __P((void));
-void grfcc_iteinit __P((struct grf_softc *));
-int cc_mode __P((struct grf_softc *, u_long, void *, u_long, int));
+int grfcc_cnprobe(void);
+void grfcc_iteinit(struct grf_softc *);
+int cc_mode(struct grf_softc *, u_long, void *, u_long, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp857xreg.h,v 1.1 1997/02/19 20:17:01 pefo Exp $ */
+/*	$OpenBSD: dp857xreg.h,v 1.2 2002/03/14 01:26:54 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -92,8 +92,8 @@
 #define	DP_LASTTODREG	CLK_WEEKDAY
 
 typedef u_int dp_todregs[SIZE_DP857X];
-u_int dp857x_read __P((void *sc, u_int reg));
-void dp857x_write __P((void *sc, u_int reg, u_int datum));
+u_int dp857x_read(void *sc, u_int reg);
+void dp857x_write(void *sc, u_int reg, u_int datum);
 
 /*
  * Get all of the TOD/Alarm registers

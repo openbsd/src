@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_cons.c,v 1.6 2001/09/05 22:32:40 deraadt Exp $	*/
+/*	$OpenBSD: tp_cons.c,v 1.7 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_cons.c,v 1.8 1996/02/14 21:32:37 christos Exp $	*/
 
 /*-
@@ -368,7 +368,7 @@ tpcons_output_dg(m0, va_alist)
 
 struct mbuf;
 
-int tpcons_output __P((struct mbuf *m0, ...));
+int tpcons_output(struct mbuf *m0, ...);
 
 int
 #if __STDC__

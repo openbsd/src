@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.14 2000/06/07 15:39:24 espie Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.15 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -73,10 +73,10 @@
 #define __P(x)
 #endif
 #endif
-void err __P((int, const char *, ...));
-void errx __P((int, const char *, ...));
-void warn __P((const char *, ...));
-void warnx __P((const char *, ...));
+void err(int, const char *, ...);
+void errx(int, const char *, ...);
+void warn(const char *, ...);
+void warnx(const char *, ...);
 #endif
 
 extern const char _version[];
@@ -158,19 +158,19 @@ struct boot_memlist {
 struct boot_memlist memlist;
 struct boot_memlist *kmemlist;
 
-void get_mem_config __P((void **, u_long *, u_long *));
-void get_cpuid __P((void));
-void get_eclock __P((void));
-void get_AGA __P((void));
-void usage __P((void));
-void verbose_usage __P((void));
-void Version __P((void));
-void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
-		int, int, u_long, u_long, int));
-void startit_end __P((void));
+void get_mem_config(void **, u_long *, u_long *);
+void get_cpuid(void);
+void get_eclock(void);
+void get_AGA(void);
+void usage(void);
+void verbose_usage(void);
+void Version(void);
+void startit(void *, u_long, u_long, void *, u_long, u_long, int, void *,
+		int, int, u_long, u_long, int);
+void startit_end(void);
 
-extern void open_libraries __P((void));
-extern void ensure_no_poolmem __P((void));
+extern void open_libraries(void);
+extern void ensure_no_poolmem(void);
 
 extern struct ExecBase *SysBase;
 extern char *optarg;
@@ -207,8 +207,8 @@ main(argc, argv)
 	int *nkcd;
 	void *fmem;
 	char *esym;
-	void (*start_it) __P((void *, u_long, u_long, void *, u_long, u_long,
-	     int, void *, int, int, u_long, u_long, int)) = startit;
+	void (*start_it)(void *, u_long, u_long, void *, u_long, u_long,
+	     int, void *, int, int, u_long, u_long, int) = startit;
 
 	program_name = argv[0];
 	boothowto = RB_AUTOBOOT;

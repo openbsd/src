@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.12 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.13 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct cgeight_softc {
 static void	cgeightattach(struct device *, struct device *, void *);
 static int	cgeightmatch(struct device *, void *, void *);
 #if defined(SUN4)
-static void	cgeightunblank __P((struct device *));
+static void	cgeightunblank(struct device *);
 #endif
 
 struct cfattach cgeight_ca = {
@@ -112,9 +112,9 @@ static struct fbdriver cgeightfbdriver = {
 extern int fbnode;
 extern struct tty *fbconstty;
 
-static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
-static int cgeight_get_video __P((struct cgeight_softc *));
-static void cgeight_set_video __P((struct cgeight_softc *, int));
+static void cgeightloadcmap(struct cgeight_softc *, int, int);
+static int cgeight_get_video(struct cgeight_softc *);
+static void cgeight_set_video(struct cgeight_softc *, int);
 #endif
 
 /*

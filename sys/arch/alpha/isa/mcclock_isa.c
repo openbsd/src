@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock_isa.c,v 1.6 1997/01/24 19:57:24 niklas Exp $	*/
+/*	$OpenBSD: mcclock_isa.c,v 1.7 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: mcclock_isa.c,v 1.5 1996/12/05 01:39:29 cgd Exp $	*/
 
 /*
@@ -48,19 +48,19 @@ struct mcclock_isa_softc {
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	mcclock_isa_match __P((struct device *, void *, void *));
+int	mcclock_isa_match(struct device *, void *, void *);
 #else
-int	mcclock_isa_match __P((struct device *, struct cfdata *, void *));
+int	mcclock_isa_match(struct device *, struct cfdata *, void *);
 #endif
-void	mcclock_isa_attach __P((struct device *, struct device *, void *));
+void	mcclock_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach mcclock_isa_ca = {
 	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
 	    mcclock_isa_attach, 
 };
 
-void	mcclock_isa_write __P((struct mcclock_softc *, u_int, u_int));
-u_int	mcclock_isa_read __P((struct mcclock_softc *, u_int));
+void	mcclock_isa_write(struct mcclock_softc *, u_int, u_int);
+u_int	mcclock_isa_read(struct mcclock_softc *, u_int);
 
 const struct mcclock_busfns mcclock_isa_busfns = {
 	mcclock_isa_write, mcclock_isa_read,

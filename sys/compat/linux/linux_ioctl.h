@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ioctl.h,v 1.6 2001/05/24 06:00:09 jasoni Exp $	*/
+/*	$OpenBSD: linux_ioctl.h,v 1.7 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_ioctl.h,v 1.4 1996/04/05 00:01:36 christos Exp $	*/
 
 /*
@@ -79,15 +79,15 @@
 #define	LINUX_IOCGROUP(x)	_LINUX_IOC_TYPE(x)
 
 struct linux_sys_ioctl_args;
-int linux_ioctl_audio __P((struct proc *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_machdepioctl __P((struct proc *, void *, register_t *));
-int linux_ioctl_termios __P((struct proc *, void *, register_t *));
-int linux_ioctl_cdrom __P((struct proc *, void *, register_t *));
-int linux_ioctl_socket __P((struct proc *, void *, register_t *));
-int linux_ioctl_hdio __P((struct proc *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_fdio __P((struct proc *, struct linux_sys_ioctl_args *,
-    register_t *));
-int linux_ioctl_blkio __P((struct proc *, struct linux_sys_ioctl_args *,
-    register_t *));
+int linux_ioctl_audio(struct proc *, struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_machdepioctl(struct proc *, void *, register_t *);
+int linux_ioctl_termios(struct proc *, void *, register_t *);
+int linux_ioctl_cdrom(struct proc *, void *, register_t *);
+int linux_ioctl_socket(struct proc *, void *, register_t *);
+int linux_ioctl_hdio(struct proc *, struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_fdio(struct proc *, struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_blkio(struct proc *, struct linux_sys_ioctl_args *,
+    register_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.2 2001/12/07 00:49:06 miod Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn. All rights reserved.
@@ -39,8 +39,8 @@
 
 #include <dev/ofw/openfirm.h>
 
-static int	memcmatch __P((struct device *, void *, void *));
-static void	memcattach __P((struct device *, struct device *, void *));
+static int	memcmatch(struct device *, void *, void *);
+static void	memcattach(struct device *, struct device *, void *);
 
 struct memc_softc {
 	struct device sc_dev;

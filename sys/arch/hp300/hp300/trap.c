@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2001/12/06 18:53:01 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -110,13 +110,13 @@ extern struct emul emul_hpux;
 extern struct emul emul_sunos;
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((int type, u_int code, u_int v, struct frame frame));
-void	syscall __P((register_t code, struct frame frame));
+int	writeback(struct frame *fp, int docachepush);
+void	trap(int type, u_int code, u_int v, struct frame frame);
+void	syscall(register_t code, struct frame frame);
 
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
 
 int	astpending;
@@ -563,7 +563,7 @@ dopanic:
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_NET) {
-			void netintr __P((void));
+			void netintr(void);
 			siroff(SIR_NET);
 			uvmexp.softs++;
 			netintr();
@@ -642,7 +642,7 @@ dopanic:
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti __P((pmap_t, vaddr_t));
+			int pmap_mapmulti(pmap_t, vaddr_t);
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);

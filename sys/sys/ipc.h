@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.6 1998/11/15 19:19:53 deraadt Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -96,16 +96,16 @@ struct oipc_perm {
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
 
-int ipcperm __P((struct ucred *, struct ipc_perm *, int));
-void ipc_n2o __P((struct ipc_perm *, struct oipc_perm *));
-void ipc_o2n __P((struct oipc_perm *, struct ipc_perm *));
+int ipcperm(struct ucred *, struct ipc_perm *, int);
+void ipc_n2o(struct ipc_perm *, struct oipc_perm *);
+void ipc_o2n(struct oipc_perm *, struct ipc_perm *);
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-key_t	ftok __P((const char *, int));
+key_t	ftok(const char *, int);
 __END_DECLS
 #endif
 #endif /* !_SYS_IPC_H_ */

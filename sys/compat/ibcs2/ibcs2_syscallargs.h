@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_syscallargs.h,v 1.9 2001/08/26 04:14:26 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_syscallargs.h,v 1.10 2002/03/14 01:26:50 millert Exp $	*/
 
 /*
  * System call argument lists.
@@ -362,95 +362,95 @@ struct ibcs2_sys_rename_args {
  * System call prototypes.
  */
 
-int	sys_nosys	__P((struct proc *, void *, register_t *));
-int	sys_exit	__P((struct proc *, void *, register_t *));
-int	sys_fork	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_read	__P((struct proc *, void *, register_t *));
-int	sys_write	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_open	__P((struct proc *, void *, register_t *));
-int	sys_close	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_waitsys	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_creat	__P((struct proc *, void *, register_t *));
-int	sys_link	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_unlink	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_execv	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_chdir	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_time	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_mknod	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_chmod	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_chown	__P((struct proc *, void *, register_t *));
-int	sys_obreak	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_stat	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_lseek	__P((struct proc *, void *, register_t *));
-int	sys_getpid	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_mount	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_umount	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_setuid	__P((struct proc *, void *, register_t *));
-int	sys_getuid	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_stime	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_alarm	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_fstat	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_pause	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_utime	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_access	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_nice	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_statfs	__P((struct proc *, void *, register_t *));
-int	sys_sync	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_kill	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_fstatfs	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_pgrpsys	__P((struct proc *, void *, register_t *));
-int	sys_dup	__P((struct proc *, void *, register_t *));
-int	sys_opipe	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_times	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_plock	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_setgid	__P((struct proc *, void *, register_t *));
-int	sys_getgid	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sigsys	__P((struct proc *, void *, register_t *));
+int	sys_nosys(struct proc *, void *, register_t *);
+int	sys_exit(struct proc *, void *, register_t *);
+int	sys_fork(struct proc *, void *, register_t *);
+int	ibcs2_sys_read(struct proc *, void *, register_t *);
+int	sys_write(struct proc *, void *, register_t *);
+int	ibcs2_sys_open(struct proc *, void *, register_t *);
+int	sys_close(struct proc *, void *, register_t *);
+int	ibcs2_sys_waitsys(struct proc *, void *, register_t *);
+int	ibcs2_sys_creat(struct proc *, void *, register_t *);
+int	sys_link(struct proc *, void *, register_t *);
+int	ibcs2_sys_unlink(struct proc *, void *, register_t *);
+int	ibcs2_sys_execv(struct proc *, void *, register_t *);
+int	ibcs2_sys_chdir(struct proc *, void *, register_t *);
+int	ibcs2_sys_time(struct proc *, void *, register_t *);
+int	ibcs2_sys_mknod(struct proc *, void *, register_t *);
+int	ibcs2_sys_chmod(struct proc *, void *, register_t *);
+int	ibcs2_sys_chown(struct proc *, void *, register_t *);
+int	sys_obreak(struct proc *, void *, register_t *);
+int	ibcs2_sys_stat(struct proc *, void *, register_t *);
+int	compat_43_sys_lseek(struct proc *, void *, register_t *);
+int	sys_getpid(struct proc *, void *, register_t *);
+int	ibcs2_sys_mount(struct proc *, void *, register_t *);
+int	ibcs2_sys_umount(struct proc *, void *, register_t *);
+int	ibcs2_sys_setuid(struct proc *, void *, register_t *);
+int	sys_getuid(struct proc *, void *, register_t *);
+int	ibcs2_sys_stime(struct proc *, void *, register_t *);
+int	ibcs2_sys_alarm(struct proc *, void *, register_t *);
+int	ibcs2_sys_fstat(struct proc *, void *, register_t *);
+int	ibcs2_sys_pause(struct proc *, void *, register_t *);
+int	ibcs2_sys_utime(struct proc *, void *, register_t *);
+int	ibcs2_sys_access(struct proc *, void *, register_t *);
+int	ibcs2_sys_nice(struct proc *, void *, register_t *);
+int	ibcs2_sys_statfs(struct proc *, void *, register_t *);
+int	sys_sync(struct proc *, void *, register_t *);
+int	ibcs2_sys_kill(struct proc *, void *, register_t *);
+int	ibcs2_sys_fstatfs(struct proc *, void *, register_t *);
+int	ibcs2_sys_pgrpsys(struct proc *, void *, register_t *);
+int	sys_dup(struct proc *, void *, register_t *);
+int	sys_opipe(struct proc *, void *, register_t *);
+int	ibcs2_sys_times(struct proc *, void *, register_t *);
+int	ibcs2_sys_plock(struct proc *, void *, register_t *);
+int	ibcs2_sys_setgid(struct proc *, void *, register_t *);
+int	sys_getgid(struct proc *, void *, register_t *);
+int	ibcs2_sys_sigsys(struct proc *, void *, register_t *);
 #ifdef SYSVMSG
-int	ibcs2_sys_msgsys	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_msgsys(struct proc *, void *, register_t *);
 #else
 #endif
-int	ibcs2_sys_sysi86	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_sysi86(struct proc *, void *, register_t *);
 #ifdef SYSVSHM
-int	ibcs2_sys_shmsys	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_shmsys(struct proc *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVSEM
-int	ibcs2_sys_semsys	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_semsys(struct proc *, void *, register_t *);
 #else
 #endif
-int	ibcs2_sys_ioctl	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_uadmin	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_utssys	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_execve	__P((struct proc *, void *, register_t *));
-int	sys_umask	__P((struct proc *, void *, register_t *));
-int	sys_chroot	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_fcntl	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_ulimit	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_rmdir	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_mkdir	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_getdents	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sysfs	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_getmsg	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_putmsg	__P((struct proc *, void *, register_t *));
-int	sys_poll	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_symlink	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_lstat	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_readlink	__P((struct proc *, void *, register_t *));
-int	sys_sigreturn	__P((struct proc *, void *, register_t *));
-int	xenix_sys_rdchk	__P((struct proc *, void *, register_t *));
-int	xenix_sys_chsize	__P((struct proc *, void *, register_t *));
-int	xenix_sys_ftime	__P((struct proc *, void *, register_t *));
-int	xenix_sys_nap	__P((struct proc *, void *, register_t *));
-int	sys_select	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_eaccess	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sigaction	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sigprocmask	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sigpending	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sigsuspend	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_getgroups	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_setgroups	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_sysconf	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_pathconf	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_fpathconf	__P((struct proc *, void *, register_t *));
-int	ibcs2_sys_rename	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_ioctl(struct proc *, void *, register_t *);
+int	ibcs2_sys_uadmin(struct proc *, void *, register_t *);
+int	ibcs2_sys_utssys(struct proc *, void *, register_t *);
+int	ibcs2_sys_execve(struct proc *, void *, register_t *);
+int	sys_umask(struct proc *, void *, register_t *);
+int	sys_chroot(struct proc *, void *, register_t *);
+int	ibcs2_sys_fcntl(struct proc *, void *, register_t *);
+int	ibcs2_sys_ulimit(struct proc *, void *, register_t *);
+int	ibcs2_sys_rmdir(struct proc *, void *, register_t *);
+int	ibcs2_sys_mkdir(struct proc *, void *, register_t *);
+int	ibcs2_sys_getdents(struct proc *, void *, register_t *);
+int	ibcs2_sys_sysfs(struct proc *, void *, register_t *);
+int	ibcs2_sys_getmsg(struct proc *, void *, register_t *);
+int	ibcs2_sys_putmsg(struct proc *, void *, register_t *);
+int	sys_poll(struct proc *, void *, register_t *);
+int	ibcs2_sys_symlink(struct proc *, void *, register_t *);
+int	ibcs2_sys_lstat(struct proc *, void *, register_t *);
+int	ibcs2_sys_readlink(struct proc *, void *, register_t *);
+int	sys_sigreturn(struct proc *, void *, register_t *);
+int	xenix_sys_rdchk(struct proc *, void *, register_t *);
+int	xenix_sys_chsize(struct proc *, void *, register_t *);
+int	xenix_sys_ftime(struct proc *, void *, register_t *);
+int	xenix_sys_nap(struct proc *, void *, register_t *);
+int	sys_select(struct proc *, void *, register_t *);
+int	ibcs2_sys_eaccess(struct proc *, void *, register_t *);
+int	ibcs2_sys_sigaction(struct proc *, void *, register_t *);
+int	ibcs2_sys_sigprocmask(struct proc *, void *, register_t *);
+int	ibcs2_sys_sigpending(struct proc *, void *, register_t *);
+int	ibcs2_sys_sigsuspend(struct proc *, void *, register_t *);
+int	ibcs2_sys_getgroups(struct proc *, void *, register_t *);
+int	ibcs2_sys_setgroups(struct proc *, void *, register_t *);
+int	ibcs2_sys_sysconf(struct proc *, void *, register_t *);
+int	ibcs2_sys_pathconf(struct proc *, void *, register_t *);
+int	ibcs2_sys_fpathconf(struct proc *, void *, register_t *);
+int	ibcs2_sys_rename(struct proc *, void *, register_t *);

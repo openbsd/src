@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.1 2000/05/16 23:49:12 mickey Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -106,10 +106,10 @@ struct wseventvar {
 		psignal((ev)->io, SIGIO); \
 }
 
-void	wsevent_init __P((struct wseventvar *));
-void	wsevent_fini __P((struct wseventvar *));
-int	wsevent_read __P((struct wseventvar *, struct uio *, int));
-int	wsevent_poll __P((struct wseventvar *, int, struct proc *));
+void	wsevent_init(struct wseventvar *);
+void	wsevent_fini(struct wseventvar *);
+int	wsevent_read(struct wseventvar *, struct uio *, int);
+int	wsevent_poll(struct wseventvar *, int, struct proc *);
 
 /*
  * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the

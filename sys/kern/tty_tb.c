@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tb.c,v 1.2 1996/03/03 17:20:13 niklas Exp $	*/
+/*	$OpenBSD: tty_tb.c,v 1.3 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: tty_tb.c,v 1.18 1996/02/04 02:17:36 christos Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ struct	tbconf {
 	short	tbc_uiosize;	/* size of data record returned user */
 	int	tbc_sync;	/* mask for finding sync byte/bit */
 				/* decoding routine */
-    	void    (*tbc_decode) __P((struct tbconf *, char *, union tbpos *));
+    	void    (*tbc_decode)(struct tbconf *, char *, union tbpos *);
 	u_char	*tbc_run;	/* enter run mode sequence */
 	u_char	*tbc_point;	/* enter point mode sequence */
 	u_char	*tbc_stop;	/* stop sequence */
@@ -74,11 +74,11 @@ struct	tbconf {
 #define	TBF_INPROX	0x2	/* tablet has proximity info */
 };
 
-static void gtcodecode __P((struct tbconf *, char *, union tbpos *));
-static void tbolddecode __P((struct tbconf *, char *, union tbpos *));
-static void tblresdecode __P((struct tbconf *, char *, union tbpos *));
-static void tbhresdecode __P((struct tbconf *, char *, union tbpos *));
-static void poldecode __P((struct tbconf *, char *, union tbpos *));
+static void gtcodecode(struct tbconf *, char *, union tbpos *);
+static void tbolddecode(struct tbconf *, char *, union tbpos *);
+static void tblresdecode(struct tbconf *, char *, union tbpos *);
+static void tbhresdecode(struct tbconf *, char *, union tbpos *);
+static void poldecode(struct tbconf *, char *, union tbpos *);
 
 
 struct	tbconf tbconf[TBTYPE] = {
@@ -109,12 +109,12 @@ struct tb {
 } tb[NTB];
 
 
-int	tbopen __P((dev_t, struct tty *));
-void	tbclose __P((struct tty *));
-int	tbread __P((struct tty *, struct uio *));
-void	tbinput __P((int, struct tty *));
-int	tbtioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
-void	tbattach __P((int));
+int	tbopen(dev_t, struct tty *);
+void	tbclose(struct tty *);
+int	tbread(struct tty *, struct uio *);
+void	tbinput(int, struct tty *);
+int	tbtioctl(struct tty *, u_long, caddr_t, int, struct proc *);
+void	tbattach(int);
 
 /*
  * Open as tablet discipline; called on discipline change.

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_500.c,v 1.8 2000/11/08 21:48:43 art Exp $ */
+/* $OpenBSD: dec_3000_500.c,v 1.9 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: dec_3000_500.c,v 1.29 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -59,9 +59,9 @@
 
 #include "wsdisplay.h"
 
-void dec_3000_500_init __P((void));
-static void dec_3000_500_cons_init __P((void));
-static void dec_3000_500_device_register __P((struct device *, void *));
+void dec_3000_500_init(void);
+static void dec_3000_500_cons_init(void);
+static void dec_3000_500_device_register(struct device *, void *);
 
 static const char dec_3000_500_sp[] = "DEC 3000/400 (\"Sandpiper\")";
 static const char dec_3000_500_sf[] = "DEC 3000/500 (\"Flamingo\")";

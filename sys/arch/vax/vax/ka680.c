@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.7 2002/01/31 11:42:52 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.8 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -50,15 +50,15 @@
 #include <machine/clock.h>
 #include <machine/scb.h>
 
-static void	ka680_conf __P((void));
-static void	ka680_cache_enable __P((void));
-static void	ka680_softmem __P((void *));
-static void	ka680_hardmem __P((void *));
-static void	ka680_steal_pages __P((void));
-static void	ka680_memerr __P((void));
-static int	ka680_mchk __P((caddr_t));
-static void	ka680_halt __P((void));
-static void	ka680_reboot __P((int));
+static void	ka680_conf(void);
+static void	ka680_cache_enable(void);
+static void	ka680_softmem(void *);
+static void	ka680_hardmem(void *);
+static void	ka680_steal_pages(void);
+static void	ka680_memerr(void);
+static int	ka680_mchk(caddr_t);
+static void	ka680_halt(void);
+static void	ka680_reboot(int);
  
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches

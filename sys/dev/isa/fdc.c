@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.14 2001/03/06 13:55:02 ho Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.15 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -83,8 +83,8 @@
 #include "fd.h"
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, void *, void *));
-void fdcattach __P((struct device *, struct device *, void *));
+int fdcprobe(struct device *, void *, void *);
+void fdcattach(struct device *, struct device *, void *);
 
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
@@ -94,8 +94,8 @@ struct cfdriver fdc_cd = {
 	NULL, "fdc", DV_DULL
 };
 
-int fddprint __P((void *, const char *));
-int fdcintr __P((void *));
+int fddprint(void *, const char *);
+int fdcintr(void *);
 
 int
 fdcprobe(parent, match, aux)
@@ -339,7 +339,7 @@ fdcintr(arg)
 {
 #if NFD > 0
 	struct fdc_softc *fdc = arg;
-	extern int fdintr __P((struct fdc_softc *));
+	extern int fdintr(struct fdc_softc *);
 
 	/* Will switch on device type, shortly. */
 	return (fdintr(fdc));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.8 2002/01/23 18:41:07 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.9 2002/03/14 01:27:00 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1302,23 +1302,23 @@ static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 #define bktr_mmap       bktrmmap
 
 #ifdef __OpenBSD__
-int	bktr_open __P((dev_t, int, int, struct proc *));
-int	bktr_close __P((dev_t, int, int, struct proc *));
-int	bktr_read __P((dev_t, struct uio *, int));
-int	bktr_write __P((dev_t, struct uio *, int));
-int	bktr_ioctl __P((dev_t, ioctl_cmd_t, caddr_t, int, struct proc *));
-paddr_t	bktr_mmap __P((dev_t, off_t, int));
+int	bktr_open(dev_t, int, int, struct proc *);
+int	bktr_close(dev_t, int, int, struct proc *);
+int	bktr_read(dev_t, struct uio *, int);
+int	bktr_write(dev_t, struct uio *, int);
+int	bktr_ioctl(dev_t, ioctl_cmd_t, caddr_t, int, struct proc *);
+paddr_t	bktr_mmap(dev_t, off_t, int);
 #endif
 
 vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
                                  vm_offset_t, vm_offset_t);
 
 #if defined(__OpenBSD__)
-static int      bktr_probe __P((struct device *, void *, void *));
+static int      bktr_probe(struct device *, void *, void *);
 #else
-static int      bktr_probe __P((struct device *, struct cfdata *, void *));
+static int      bktr_probe(struct device *, struct cfdata *, void *);
 #endif
-static void     bktr_attach __P((struct device *, struct device *, void *));
+static void     bktr_attach(struct device *, struct device *, void *);
 
 struct cfattach bktr_ca = {
         sizeof(struct bktr_softc), bktr_probe, bktr_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.6 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /* 
@@ -104,9 +104,9 @@ struct tcx_softc {
 };
 
 /* autoconfiguration driver */
-static void	tcxattach __P((struct device *, struct device *, void *));
-static int	tcxmatch __P((struct device *, void *, void *));
-static void	tcx_unblank __P((struct device *));
+static void	tcxattach(struct device *, struct device *, void *);
+static int	tcxmatch(struct device *, void *, void *);
+static void	tcx_unblank(struct device *);
 
 struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
@@ -123,8 +123,8 @@ static struct fbdriver tcx_fbdriver = {
 
 extern int fbnode;
 
-static void tcx_reset __P((struct tcx_softc *));
-static void tcx_loadcmap __P((struct tcx_softc *, int, int));
+static void tcx_reset(struct tcx_softc *);
+static void tcx_loadcmap(struct tcx_softc *, int, int);
 
 #define OBPNAME	"SUNW,tcx"
 /*

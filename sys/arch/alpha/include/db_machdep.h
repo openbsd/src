@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2002/03/14 01:26:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -82,22 +82,22 @@ db_regs_t		ddb_regs;
 #define	inst_trap_return(ins)	((ins) & 0)		/* XXX */
 #define	inst_return(ins)	(((ins) & 0xfc000000) == 0x68000000)
 
-int	alpha_debug __P((unsigned long, unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
-db_addr_t db_branch_taken __P((int, db_addr_t, db_regs_t *));
-boolean_t db_inst_branch __P((int));
-boolean_t db_inst_call __P((int));
-boolean_t db_inst_load __P((int));
-boolean_t db_inst_return __P((int));
-boolean_t db_inst_store __P((int));
-boolean_t db_inst_trap_return __P((int));
-boolean_t db_inst_unconditional_flow_transfer __P((int));
-u_long	db_register_value  __P((db_regs_t *, int));
-int	db_valid_breakpoint __P((db_addr_t));
-int	ddb_trap __P((unsigned long, unsigned long, unsigned long,
-    unsigned long, struct trapframe *));
-int	kdb_trap __P((int, int, db_regs_t *));
-db_addr_t next_instr_address __P((db_addr_t, int));
+int	alpha_debug(unsigned long, unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
+db_addr_t db_branch_taken(int, db_addr_t, db_regs_t *);
+boolean_t db_inst_branch(int);
+boolean_t db_inst_call(int);
+boolean_t db_inst_load(int);
+boolean_t db_inst_return(int);
+boolean_t db_inst_store(int);
+boolean_t db_inst_trap_return(int);
+boolean_t db_inst_unconditional_flow_transfer(int);
+u_long	db_register_value(db_regs_t *, int);
+int	db_valid_breakpoint(db_addr_t);
+int	ddb_trap(unsigned long, unsigned long, unsigned long,
+    unsigned long, struct trapframe *);
+int	kdb_trap(int, int, db_regs_t *);
+db_addr_t next_instr_address(db_addr_t, int);
 
 #if 1
 /* Backwards compatibility until we switch all archs to use the db_ prefix */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.3 2002/01/03 19:28:37 jason Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -39,8 +39,8 @@
 #include <dev/ofw/openfirm.h>
 #include <lib/libkern/libkern.h>
 
-extern void ofw_stack __P((void));
-extern void ofbcopy __P((const void *, void *, size_t));
+extern void ofw_stack(void);
+extern void ofbcopy(const void *, void *, size_t);
 
 int
 OF_instance_to_package(ihandle)

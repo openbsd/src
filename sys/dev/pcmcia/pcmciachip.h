@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciachip.h,v 1.4 2001/08/17 21:52:16 deraadt Exp $ */
+/*	$OpenBSD: pcmciachip.h,v 1.5 2002/03/14 01:27:01 millert Exp $ */
 /*	$NetBSD: pcmciachip.h,v 1.5 2000/01/13 08:58:51 joda Exp $	*/
 
 /*
@@ -59,39 +59,39 @@ typedef int pcmcia_mem_handle_t;
 
 struct pcmcia_chip_functions {
 	/* memory space allocation */
-	int	(*mem_alloc) __P((pcmcia_chipset_handle_t, bus_size_t,
-		    struct pcmcia_mem_handle *));
-	void	(*mem_free) __P((pcmcia_chipset_handle_t,
-		    struct pcmcia_mem_handle *));
+	int	(*mem_alloc)(pcmcia_chipset_handle_t, bus_size_t,
+		    struct pcmcia_mem_handle *);
+	void	(*mem_free)(pcmcia_chipset_handle_t,
+		    struct pcmcia_mem_handle *);
 
 	/* memory space window mapping */
-	int	(*mem_map) __P((pcmcia_chipset_handle_t, int, bus_addr_t,
+	int	(*mem_map)(pcmcia_chipset_handle_t, int, bus_addr_t,
 		    bus_size_t, struct pcmcia_mem_handle *,
-		    bus_addr_t *, int *));
-	void	(*mem_unmap) __P((pcmcia_chipset_handle_t, int));
+		    bus_addr_t *, int *);
+	void	(*mem_unmap)(pcmcia_chipset_handle_t, int);
 
 	/* I/O space allocation */
-	int	(*io_alloc) __P((pcmcia_chipset_handle_t, bus_addr_t,
-		    bus_size_t, bus_size_t, struct pcmcia_io_handle *));
-	void	(*io_free) __P((pcmcia_chipset_handle_t,
-		    struct pcmcia_io_handle *));
+	int	(*io_alloc)(pcmcia_chipset_handle_t, bus_addr_t,
+		    bus_size_t, bus_size_t, struct pcmcia_io_handle *);
+	void	(*io_free)(pcmcia_chipset_handle_t,
+		    struct pcmcia_io_handle *);
 
 	/* I/O space window mapping */
-	int	(*io_map) __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-		    bus_size_t, struct pcmcia_io_handle *, int *));
-	void	(*io_unmap) __P((pcmcia_chipset_handle_t, int));
+	int	(*io_map)(pcmcia_chipset_handle_t, int, bus_addr_t,
+		    bus_size_t, struct pcmcia_io_handle *, int *);
+	void	(*io_unmap)(pcmcia_chipset_handle_t, int);
 
 	/* interrupt glue */
 	void	*(*intr_establish) __P((pcmcia_chipset_handle_t,
 		    struct pcmcia_function *, int, int (*)(void *), void *, char *));
-	void	(*intr_disestablish) __P((pcmcia_chipset_handle_t, void *));
+	void	(*intr_disestablish)(pcmcia_chipset_handle_t, void *);
 
 	/* card enable/disable */
-	void	(*socket_enable) __P((pcmcia_chipset_handle_t));
-	void	(*socket_disable) __P((pcmcia_chipset_handle_t));
+	void	(*socket_enable)(pcmcia_chipset_handle_t);
+	void	(*socket_disable)(pcmcia_chipset_handle_t);
 
 	/* card detection */
-	int (*card_detect) __P((pcmcia_chipset_handle_t));  
+	int (*card_detect)(pcmcia_chipset_handle_t);  
 };
 
 /* Memory space functions. */
@@ -147,9 +147,9 @@ struct pcmciabus_attach_args {
 
 /* interfaces for the chipset to call pcmcia */
 
-int	pcmcia_card_attach __P((struct device *));
-void	pcmcia_card_detach __P((struct device *, int));
-void	pcmcia_card_deactivate __P((struct device *));
-int	pcmcia_card_gettype __P((struct device *));
+int	pcmcia_card_attach(struct device *);
+void	pcmcia_card_detach(struct device *, int);
+void	pcmcia_card_deactivate(struct device *);
+int	pcmcia_card_gettype(struct device *);
 
 #endif /* _PCMCIA_PCMCIACHIP_H_ */

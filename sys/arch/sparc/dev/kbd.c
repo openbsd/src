@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.15 2001/09/24 23:06:02 mickey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.16 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -377,8 +377,8 @@ struct kbd_state {
 struct kbd_softc {
 	struct	tty *k_cons;		/* uplink for ASCII data to console */
 	struct	tty *k_kbd;		/* downlink for output to keyboard */
-	void	(*k_open) __P((struct tty *));	/* enable dataflow */
-	void	(*k_close) __P((struct tty *));	/* disable dataflow */
+	void	(*k_open)(struct tty *);	/* enable dataflow */
+	void	(*k_close)(struct tty *);	/* disable dataflow */
 	int	k_evmode;		/* set if we should produce events */
 	struct	kbd_state k_state;	/* ASCII decode state */
 	struct	evvar k_events;		/* event queue state */
@@ -388,12 +388,12 @@ struct kbd_softc {
 } kbd_softc;
 
 /* Prototypes */
-void	kbd_reset __P((struct kbd_state *));
-static	int kbd_translate __P((int, struct kbd_state *));
-void	kbdattach __P((int));
-void	kbd_repeat __P((void *arg));
-u_short	kbd_cnv_entry __P((u_short));
-u_short	kbd_cnv_out __P((u_short));
+void	kbd_reset(struct kbd_state *);
+static	int kbd_translate(int, struct kbd_state *);
+void	kbdattach(int);
+void	kbd_repeat(void *arg);
+u_short	kbd_cnv_entry(u_short);
+u_short	kbd_cnv_out(u_short);
 
 /* set in kbdattach() */
 int kbd_repeat_start;
@@ -419,8 +419,8 @@ kbd_ascii(tp)
 void
 kbd_serial(tp, iopen, iclose)
 	struct tty *tp;
-	void (*iopen) __P((struct tty *));
-	void (*iclose) __P((struct tty *));
+	void (*iopen)(struct tty *);
+	void (*iclose)(struct tty *);
 {
 	register struct kbd_softc *k;
 	register char *cp;

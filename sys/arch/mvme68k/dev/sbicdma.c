@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.6 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.7 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -54,16 +54,16 @@
 #include <mvme68k/dev/sbicvar.h>
 #include <mvme68k/dev/dmavar.h>
 
-void	sbicdmaattach	__P((struct device *, struct device *, void *));
-int	sbicdmamatch	__P((struct device *, void *, void *));
-int	sbicdmaprint	__P((void *auxp, const char *));
+void	sbicdmaattach(struct device *, struct device *, void *);
+int	sbicdmamatch(struct device *, void *, void *);
+int	sbicdmaprint(void *auxp, const char *);
 
-void	sbicdma_dmafree	__P((struct sbic_softc *));
-void	sbicdma_dmastop	__P((struct sbic_softc *));
-int	sbicdma_dmanext	__P((struct sbic_softc *));
-int	sbicdma_dmago	__P((struct sbic_softc *, char *, int, int));
-int	sbicdma_dmaintr	__P((struct sbic_softc *));
-int	sbicdma_scintr	__P((struct sbic_softc *));
+void	sbicdma_dmafree(struct sbic_softc *);
+void	sbicdma_dmastop(struct sbic_softc *);
+int	sbicdma_dmanext(struct sbic_softc *);
+int	sbicdma_dmago(struct sbic_softc *, char *, int, int);
+int	sbicdma_dmaintr(struct sbic_softc *);
+int	sbicdma_scintr(struct sbic_softc *);
 
 struct scsi_adapter sbicdma_scsiswitch = {
 	sbic_scsicmd,

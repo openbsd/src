@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.2 2000/08/05 18:45:42 niklas Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.3 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -76,13 +76,13 @@ struct sd_scsibus_mode_sense_data {
 	union scsi_disk_pages pages;
 };
 
-int	sd_scsibus_mode_sense __P((struct sd_softc *,
-	    struct sd_scsibus_mode_sense_data *, int, int));
-int	sd_scsibus_get_parms __P((struct sd_softc *,
-	    struct disk_parms *, int));
-int	sd_scsibus_get_optparms __P((struct sd_softc *,
-	    struct disk_parms *, int));
-void	sd_scsibus_flush __P((struct sd_softc *, int));
+int	sd_scsibus_mode_sense(struct sd_softc *,
+	    struct sd_scsibus_mode_sense_data *, int, int);
+int	sd_scsibus_get_parms(struct sd_softc *,
+	    struct disk_parms *, int);
+int	sd_scsibus_get_optparms(struct sd_softc *,
+	    struct disk_parms *, int);
+void	sd_scsibus_flush(struct sd_softc *, int);
 
 const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,

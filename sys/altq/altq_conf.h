@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_conf.h,v 1.1 2001/06/27 05:28:35 kjc Exp $	*/
+/*	$OpenBSD: altq_conf.h,v 1.2 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_conf.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -52,9 +52,9 @@
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-typedef int d_open_t __P((dev_t, int, int, struct proc *));
-typedef int d_close_t __P((dev_t, int, int, struct proc *));
-typedef int d_ioctl_t __P((dev_t, u_long, caddr_t, int, struct proc *));
+typedef int d_open_t(dev_t, int, int, struct proc *);
+typedef int d_close_t(dev_t, int, int, struct proc *);
+typedef int d_ioctl_t(dev_t, u_long, caddr_t, int, struct proc *);
 
 #define	noopen	(dev_type_open((*))) enodev
 #define	noclose	(dev_type_close((*))) enodev
@@ -62,9 +62,9 @@ typedef int d_ioctl_t __P((dev_t, u_long, caddr_t, int, struct proc *));
 #endif /* __NetBSD__ || __OpenBSD__ */
 
 #if defined(__OpenBSD__)
-int altqopen __P((dev_t, int, int, struct proc *));
-int altqclose __P((dev_t, int, int, struct proc *));
-int altqioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int altqopen(dev_t, int, int, struct proc *);
+int altqclose(dev_t, int, int, struct proc *);
+int altqioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #endif
 
 /*
@@ -98,9 +98,9 @@ moduledata_t name##_mod = {						\
 };									\
 DECLARE_MODULE(name, name##_mod, SI_SUB_DRIVERS, SI_ORDER_MIDDLE+96)
 
-void altq_module_incref __P((int));
-void altq_module_declref __P((int));
-int altq_module_handler __P((module_t, int, void *));
+void altq_module_incref(int);
+void altq_module_declref(int);
+int altq_module_handler(module_t, int, void *);
 
 #endif /* ALTQ_KLD */
 

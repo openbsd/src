@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.5 2002/03/05 22:11:37 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.6 2002/03/14 01:26:39 millert Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -56,8 +56,8 @@ struct bussw_softc {
 	struct bussw_reg        *sc_bussw;
 };
 
-void    bussw_attach    __P((struct device *, struct device *, void *));
-int     bussw_match __P((struct device *, void *, void *));
+void    bussw_attach(struct device *, struct device *, void *);
+int     bussw_match(struct device *, void *, void *);
 
 struct cfattach bussw_ca = { 
 	sizeof(struct bussw_softc), bussw_match, bussw_attach
@@ -67,9 +67,9 @@ struct cfdriver bussw_cd = {
 	NULL, "bussw", DV_DULL, 0
 };
 
-int bussw_print __P((void *args, const char *bus));
-int bussw_scan __P((struct device *parent, void *child, void *args));
-int busswabort __P((void *));
+int bussw_print(void *args, const char *bus);
+int bussw_scan(struct device *parent, void *child, void *args);
+int busswabort(void *);
 
 int
 bussw_match(parent, vcf, args)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.15 2002/01/14 21:34:41 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.16 2002/03/14 01:26:39 millert Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -11,99 +11,99 @@
 
 /* locore_asm_routines.S */
 
-unsigned int do_load_word __P((vm_offset_t address,
-    boolean_t supervisor_mode));
-unsigned int do_load_half __P((vm_offset_t address,
-    boolean_t supervisor_mode));
-unsigned int do_load_byte __P((vm_offset_t address,
-    boolean_t supervisor_mode));
+unsigned int do_load_word(vm_offset_t address,
+    boolean_t supervisor_mode);
+unsigned int do_load_half(vm_offset_t address,
+    boolean_t supervisor_mode);
+unsigned int do_load_byte(vm_offset_t address,
+    boolean_t supervisor_mode);
 
-void do_store_word __P((vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode));
-void do_store_half __P((vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode));
-void do_store_byte __P((vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode));
+void do_store_word(vm_offset_t address, unsigned int data,
+    boolean_t supervisor_mode);
+void do_store_half(vm_offset_t address, unsigned int data,
+    boolean_t supervisor_mode);
+void do_store_byte(vm_offset_t address, unsigned int data,
+    boolean_t supervisor_mode);
 
-unsigned do_xmem_word __P((vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode));
-unsigned do_xmem_byte __P((vm_offset_t address, unsigned int data,
-    boolean_t supervisor_mode));
+unsigned do_xmem_word(vm_offset_t address, unsigned int data,
+    boolean_t supervisor_mode);
+unsigned do_xmem_byte(vm_offset_t address, unsigned int data,
+    boolean_t supervisor_mode);
 
-unsigned read_processor_identification_register __P((void));
-int badaddr __P((vm_offset_t addr, int size));
+unsigned read_processor_identification_register(void);
+int badaddr(vm_offset_t addr, int size);
 #define badwordaddr(x) badaddr(x, 4)
-void set_cpu_number __P((unsigned number));
-void doboot __P((void));
-int db_are_interrupts_disabled __P((void));
+void set_cpu_number(unsigned number);
+void doboot(void);
+int db_are_interrupts_disabled(void);
 
-void fubail __P((void));
-void subail __P((void));
+void fubail(void);
+void subail(void);
 
-int guarded_access __P((unsigned char *volatile address,
-    unsigned len, u_char *vec));
+int guarded_access(unsigned char *volatile address,
+    unsigned len, u_char *vec);
 
 /* locore_c_routines.c */
 
 #ifdef M88100
-void dae_print __P((unsigned *eframe));
-void data_access_emulation __P((unsigned *eframe));
+void dae_print(unsigned *eframe);
+void data_access_emulation(unsigned *eframe);
 #endif 
 
-unsigned spl __P((void));
-unsigned getipl __P((void));
+unsigned spl(void);
+unsigned getipl(void);
 #ifdef DDB
-unsigned db_spl __P((void));
-unsigned db_getipl __P((void));
+unsigned db_spl(void);
+unsigned db_getipl(void);
 #endif
 
 
 /* machdep.c */
 
-void _doboot __P((void));
-vm_offset_t get_slave_stack __P((void));
-void slave_pre_main __P((void));
-int slave_main __P((void));
-int intr_findvec __P((int start, int end));
-void bugsyscall __P((void));
-void myetheraddr __P((u_char *cp));
-void dosoftint __P((void));
-void MY_info __P((struct trapframe *f, caddr_t p, int flags, char *s));
-void MY_info_done __P((struct trapframe *f, int flags));
-void mvme_bootstrap __P((void));
+void _doboot(void);
+vm_offset_t get_slave_stack(void);
+void slave_pre_main(void);
+int slave_main(void);
+int intr_findvec(int start, int end);
+void bugsyscall(void);
+void myetheraddr(u_char *cp);
+void dosoftint(void);
+void MY_info(struct trapframe *f, caddr_t p, int flags, char *s);
+void MY_info_done(struct trapframe *f, int flags);
+void mvme_bootstrap(void);
 #ifdef MVME187
-void m187_ext_int __P((u_int v, struct m88100_saved_state *eframe));
+void m187_ext_int(u_int v, struct m88100_saved_state *eframe);
 #endif
 #ifdef MVME188
-void m188_reset __P((void));
-void m188_ext_int __P((u_int v, struct m88100_saved_state *eframe));
-unsigned int safe_level __P((unsigned mask, unsigned curlevel));
+void m188_reset(void);
+void m188_ext_int(u_int v, struct m88100_saved_state *eframe);
+unsigned int safe_level(unsigned mask, unsigned curlevel);
 #endif
 #ifdef MVME197
-void m197_ext_int __P((u_int v, struct m88100_saved_state *eframe));
+void m197_ext_int(u_int v, struct m88100_saved_state *eframe);
 #endif
 
 /* eh.S */
 
 struct proc;
-void proc_do_uret __P((struct proc *));
+void proc_do_uret(struct proc *);
 #ifdef M88100
-void sigsys __P((void));
-void sigtrap __P((void));
-void stepbpt __P((void));
-void userbpt __P((void));
-void syscall_handler __P((void));
+void sigsys(void);
+void sigtrap(void);
+void stepbpt(void);
+void userbpt(void);
+void syscall_handler(void);
 #endif 
 #ifdef M88110
-void m88110_sigsys __P((void));
-void m88110_sigtrap __P((void));
-void m88110_stepbpt __P((void));
-void m88110_userbpt __P((void));
-void m88110_syscall_handler __P((void));
+void m88110_sigsys(void);
+void m88110_sigtrap(void);
+void m88110_stepbpt(void);
+void m88110_userbpt(void);
+void m88110_syscall_handler(void);
 #endif 
 
 /* process.S */
-void savectx __P((struct pcb *));
-void switch_exit __P((struct proc *));
+void savectx(struct pcb *);
+void switch_exit(struct proc *);
 
 #endif /* _MACHINE_LOCORE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.1 2001/03/18 04:32:45 nate Exp $ */
+/*	$OpenBSD: rasops24.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
 /* 	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -53,14 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops24_erasecols __P((void *, int, int, int, long));
-static void 	rasops24_eraserows __P((void *, int, int, long));
-static void 	rasops24_putchar __P((void *, int, int, u_int, long attr));
+static void 	rasops24_erasecols(void *, int, int, int, long);
+static void 	rasops24_eraserows(void *, int, int, long);
+static void 	rasops24_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-static void 	rasops24_putchar8 __P((void *, int, int, u_int, long attr));
-static void 	rasops24_putchar12 __P((void *, int, int, u_int, long attr));
-static void 	rasops24_putchar16 __P((void *, int, int, u_int, long attr));
-static void	rasops24_makestamp __P((struct rasops_info *, long));
+static void 	rasops24_putchar8(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar12(void *, int, int, u_int, long attr);
+static void 	rasops24_putchar16(void *, int, int, u_int, long attr);
+static void	rasops24_makestamp(struct rasops_info *, long);
 #endif
 
 /*

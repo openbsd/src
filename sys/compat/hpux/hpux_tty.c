@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_tty.c,v 1.7 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.8 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
@@ -80,8 +80,8 @@ hpux_termio(fd, com, data, p)
 	struct hpux_termios htios;
 	int line, error;
 	int newi = 0;
-	int (*ioctlrout) __P((struct file *fp, u_long com,
-	    caddr_t data, struct proc *p));
+	int (*ioctlrout)(struct file *fp, u_long com,
+	    caddr_t data, struct proc *p);
 
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);

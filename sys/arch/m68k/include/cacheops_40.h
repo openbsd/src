@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_40.h,v 1.3 2001/05/15 01:43:14 millert Exp $	*/
+/*	$OpenBSD: cacheops_40.h,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: cacheops_40.h,v 1.1 1997/06/02 20:26:41 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 /*
  * Invalidate entire TLB.
  */
-void TBIA_40 __P((void));
+void TBIA_40(void);
 extern __inline__ void
 TBIA_40()
 {
@@ -50,7 +50,7 @@ TBIA_40()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_40 __P((vaddr_t));
+void TBIS_40(vaddr_t);
 extern __inline__ void
 TBIS_40(va)
 	vaddr_t	va;
@@ -69,7 +69,7 @@ TBIS_40(va)
 /*
  * Invalidate supervisor side of TLB
  */
-void TBIAS_40 __P((void));
+void TBIAS_40(void);
 extern __inline__ void
 TBIAS_40()
 {
@@ -82,7 +82,7 @@ TBIAS_40()
 /*
  * Invalidate user side of TLB
  */
-void TBIAU_40 __P((void));
+void TBIAU_40(void);
 extern __inline__ void
 TBIAU_40()
 {
@@ -95,14 +95,14 @@ TBIAU_40()
 /*
  * Invalidate instruction cache
  */
-void ICIA_40 __P((void));
+void ICIA_40(void);
 extern __inline__ void
 ICIA_40()
 {
 	__asm __volatile (" .word 0xf498;"); /* cinva ic */
 }
 
-void ICPA_40 __P((void));
+void ICPA_40(void);
 extern __inline__ void
 ICPA_40()
 {
@@ -112,28 +112,28 @@ ICPA_40()
 /*
  * Invalidate data cache.
  */
-void DCIA_40 __P((void));
+void DCIA_40(void);
 extern __inline__ void
 DCIA_40()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIS_40 __P((void));
+void DCIS_40(void);
 extern __inline__ void
 DCIS_40()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIU_40 __P((void));
+void DCIU_40(void);
 extern __inline__ void
 DCIU_40()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIAS_40 __P((paddr_t));
+void DCIAS_40(paddr_t);
 extern __inline__ void
 DCIAS_40(pa)
 	paddr_t	pa;
@@ -143,14 +143,14 @@ DCIAS_40(pa)
 	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
-void PCIA_40 __P((void));
+void PCIA_40(void);
 extern __inline__ void
 PCIA_40()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCFA_40 __P((void));
+void DCFA_40(void);
 extern __inline__ void
 DCFA_40()
 {
@@ -158,7 +158,7 @@ DCFA_40()
 }
 
 /* invalidate instruction physical cache line */
-void ICPL_40 __P((paddr_t));
+void ICPL_40(paddr_t);
 extern __inline__ void
 ICPL_40(pa)
 	paddr_t	pa;
@@ -169,7 +169,7 @@ ICPL_40(pa)
 }
 
 /* invalidate instruction physical cache page */
-void ICPP_40 __P((paddr_t));
+void ICPP_40(paddr_t);
 extern __inline__ void
 ICPP_40(pa)
 	paddr_t	pa;
@@ -180,7 +180,7 @@ ICPP_40(pa)
 }
 
 /* invalidate data physical cache line */
-void DCPL_40 __P((paddr_t));
+void DCPL_40(paddr_t);
 extern __inline__ void
 DCPL_40(pa)
 	paddr_t	pa;
@@ -191,7 +191,7 @@ DCPL_40(pa)
 }
 
 /* invalidate data physical cache page */
-void DCPP_40 __P((paddr_t));
+void DCPP_40(paddr_t);
 extern __inline__ void
 DCPP_40(pa)
 	paddr_t	pa;
@@ -202,7 +202,7 @@ DCPP_40(pa)
 }
 
 /* invalidate data physical all */
-void DCPA_40 __P((void));
+void DCPA_40(void);
 extern __inline__ void
 DCPA_40()
 {
@@ -210,7 +210,7 @@ DCPA_40()
 }
 
 /* data cache flush line */
-void DCFL_40 __P((paddr_t));
+void DCFL_40(paddr_t);
 extern __inline__ void
 DCFL_40(pa)
 	paddr_t	pa;
@@ -221,7 +221,7 @@ DCFL_40(pa)
 }
 
 /* data cache flush page */
-void DCFP_40 __P((paddr_t));
+void DCFP_40(paddr_t);
 extern __inline__ void
 DCFP_40(pa)
 	paddr_t	pa;

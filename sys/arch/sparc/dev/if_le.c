@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.18 2001/06/11 00:29:49 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.19 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -79,26 +79,26 @@
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 
-int	lematch __P((struct device *, void *, void *));
-void	leattach __P((struct device *, struct device *, void *));
+int	lematch(struct device *, void *, void *);
+void	leattach(struct device *, struct device *, void *);
 
 /*
  * ifmedia interfaces
  */
-int	lemediachange __P((struct ifnet *));
-void	lemediastatus __P((struct ifnet *, struct ifmediareq *));
+int	lemediachange(struct ifnet *);
+void	lemediastatus(struct ifnet *, struct ifmediareq *);
 
 #if defined(SUN4M)
 /*
  * media change methods (only for sun4m)
  */
-void	lesetutp __P((struct am7990_softc *));
-void	lesetaui __P((struct am7990_softc *));
+void	lesetutp(struct am7990_softc *);
+void	lesetaui(struct am7990_softc *);
 #endif /* SUN4M */
 
 #if defined(SUN4M)	/* XXX */
-int	myleintr __P((void *));
-int	ledmaintr __P((struct dma_softc *));
+int	myleintr(void *);
+int	ledmaintr(struct dma_softc *);
 
 int
 myleintr(arg)
@@ -127,11 +127,11 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-hide void lehwreset __P((struct am7990_softc *));
-hide void lehwinit __P((struct am7990_softc *));
-hide void lenocarrier __P((struct am7990_softc *));
+hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+hide void lehwreset(struct am7990_softc *);
+hide void lehwinit(struct am7990_softc *);
+hide void lenocarrier(struct am7990_softc *);
 
 hide void
 lewrcsr(sc, port, val)
@@ -423,7 +423,7 @@ leattach(parent, self, aux)
 #endif
 
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);

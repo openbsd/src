@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.7 2001/11/28 19:47:54 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.8 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -155,50 +155,50 @@ struct be_softc {
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 };
 
-int	bematch __P((struct device *, void *, void *));
-void	beattach __P((struct device *, struct device *, void *));
+int	bematch(struct device *, void *, void *);
+void	beattach(struct device *, struct device *, void *);
 
-void	beinit __P((struct be_softc *));
-void	bestart __P((struct ifnet *));
-void	bestop __P((struct be_softc *));
-void	bewatchdog __P((struct ifnet *));
-int	beioctl __P((struct ifnet *, u_long, caddr_t));
-void	bereset __P((struct be_softc *));
+void	beinit(struct be_softc *);
+void	bestart(struct ifnet *);
+void	bestop(struct be_softc *);
+void	bewatchdog(struct ifnet *);
+int	beioctl(struct ifnet *, u_long, caddr_t);
+void	bereset(struct be_softc *);
 
-int	beintr __P((void *));
-int	berint __P((struct be_softc *));
-int	betint __P((struct be_softc *));
-int	beqint __P((struct be_softc *, u_int32_t));
-int	beeint __P((struct be_softc *, u_int32_t));
+int	beintr(void *);
+int	berint(struct be_softc *);
+int	betint(struct be_softc *);
+int	beqint(struct be_softc *, u_int32_t);
+int	beeint(struct be_softc *, u_int32_t);
 
-static void	be_read __P((struct be_softc *, int, int));
-static int	be_put __P((struct be_softc *, int, struct mbuf *));
-static struct mbuf *be_get __P((struct be_softc *, int, int));
+static void	be_read(struct be_softc *, int, int);
+static int	be_put(struct be_softc *, int, struct mbuf *);
+static struct mbuf *be_get(struct be_softc *, int, int);
 
-void	be_pal_gate __P((struct be_softc *, int));
+void	be_pal_gate(struct be_softc *, int);
 
 /* ifmedia callbacks */
-void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
-int	be_ifmedia_upd __P((struct ifnet *));
+void	be_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+int	be_ifmedia_upd(struct ifnet *);
 
-void	be_mcreset __P((struct be_softc *));
+void	be_mcreset(struct be_softc *);
 
 /* MII methods & callbacks */
-static int	be_mii_readreg __P((struct device *, int, int));
-static void	be_mii_writereg __P((struct device *, int, int, int));
-static void	be_mii_statchg __P((struct device *));
+static int	be_mii_readreg(struct device *, int, int);
+static void	be_mii_writereg(struct device *, int, int, int);
+static void	be_mii_statchg(struct device *);
 
 /* MII helpers */
-static void	be_mii_sync __P((struct be_softc *));
-static void	be_mii_sendbits __P((struct be_softc *, int, u_int32_t, int));
-static int	be_mii_reset __P((struct be_softc *, int));
-static int	be_tcvr_read_bit __P((struct be_softc *, int));
-static void	be_tcvr_write_bit __P((struct be_softc *, int, int));
+static void	be_mii_sync(struct be_softc *);
+static void	be_mii_sendbits(struct be_softc *, int, u_int32_t, int);
+static int	be_mii_reset(struct be_softc *, int);
+static int	be_tcvr_read_bit(struct be_softc *, int);
+static void	be_tcvr_write_bit(struct be_softc *, int, int);
 
-void	be_tick __P((void *));
-void	be_intphy_auto __P((struct be_softc *));
-void	be_intphy_status __P((struct be_softc *));
-int	be_intphy_service __P((struct be_softc *, struct mii_data *, int));
+void	be_tick(void *);
+void	be_intphy_auto(struct be_softc *);
+void	be_intphy_status(struct be_softc *);
+int	be_intphy_service(struct be_softc *, struct mii_data *, int);
 
 
 struct cfattach be_ca = {
@@ -239,7 +239,7 @@ beattach(parent, self, aux)
 	int instance;
 	int rseg, error;
 	u_int32_t v;
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.c,v 1.10 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: ka650.c,v 1.11 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -65,12 +65,12 @@ int	*KA650_CACHE_ptr;
 #define	CACHEOFF	0
 #define	CACHEON		1
 
-static	void	ka650setcache __P((int));
-static	void	ka650_halt __P((void));
-static	void	ka650_reboot __P((int));
-static	void    uvaxIII_conf __P((void));
-static	void    uvaxIII_memerr __P((void));
-static	int     uvaxIII_mchk __P((caddr_t));
+static	void	ka650setcache(int);
+static	void	ka650_halt(void);
+static	void	ka650_reboot(int);
+static	void    uvaxIII_conf(void);
+static	void    uvaxIII_memerr(void);
+static	int     uvaxIII_mchk(caddr_t);
 
 struct	cpu_dep	ka650_calls = {
 	0, /* No special page stealing anymore */

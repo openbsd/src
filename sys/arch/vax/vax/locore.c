@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.22 2002/01/31 11:44:53 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.23 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -50,8 +50,8 @@
 #include <machine/pmap.h>
 #include <machine/nexus.h>
 
-void	start __P((void));
-void	main __P((void));
+void	start(void);
+void	main(void);
 
 extern	paddr_t avail_end;
 paddr_t	esym;

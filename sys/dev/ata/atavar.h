@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.9 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.10 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -153,34 +153,34 @@ struct wdc_command {
     int timeout;	 /* timeout (in ms) */
     void *data;          /* Data buffer address */
     int bcount;           /* number of bytes to transfer */
-    void (*callback) __P((void*)); /* command to call once command completed */
+    void (*callback)(void*); /* command to call once command completed */
     void *callback_arg;  /* argument passed to *callback() */
 };
 
 extern int at_poll;
 
-int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
+int wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 #define WDC_COMPLETE 0x01
 #define WDC_QUEUED   0x02
 #define WDC_TRY_AGAIN 0x03
 
-void wdc_probe_caps __P((struct ata_drive_datas*, struct ataparams *));
-void wdc_print_caps __P((struct ata_drive_datas*));
-int  wdc_downgrade_mode __P((struct ata_drive_datas*));
+void wdc_probe_caps(struct ata_drive_datas*, struct ataparams *);
+void wdc_print_caps(struct ata_drive_datas*);
+int  wdc_downgrade_mode(struct ata_drive_datas*);
 
-void wdc_reset_channel __P((struct ata_drive_datas *));
+void wdc_reset_channel(struct ata_drive_datas *);
 
-int wdc_ata_addref __P((struct ata_drive_datas *));
-void wdc_ata_delref __P((struct ata_drive_datas *));
-void wdc_ata_kill_pending __P((struct ata_drive_datas *));
+int wdc_ata_addref(struct ata_drive_datas *);
+void wdc_ata_delref(struct ata_drive_datas *);
+void wdc_ata_kill_pending(struct ata_drive_datas *);
 
-int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
-	 struct ataparams *));
-int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
+int ata_get_params(struct ata_drive_datas*, u_int8_t,
+	 struct ataparams *);
+int ata_set_mode(struct ata_drive_datas*, u_int8_t, u_int8_t);
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-void ata_dmaerr __P((struct ata_drive_datas *));
-void ata_perror __P((struct ata_drive_datas *, int, char *));
+void ata_dmaerr(struct ata_drive_datas *);
+void ata_perror(struct ata_drive_datas *, int, char *);

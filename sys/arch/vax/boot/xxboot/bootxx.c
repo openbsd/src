@@ -1,4 +1,4 @@
-/* $OpenBSD: bootxx.c,v 1.2 2000/10/04 04:16:40 bjc Exp $ */
+/* $OpenBSD: bootxx.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
 /* $NetBSD: bootxx.c,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -64,8 +64,8 @@ struct rom_softc {
 	int unit;
 } rom_softc;
 
-int	romstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int romopen __P((struct open_file *, int, int, int, int));
+int	romstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int romopen(struct open_file *, int, int, int, int);
 
 struct fs_ops	file_system[] = {
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
@@ -77,7 +77,7 @@ struct devsw	devsw[] = {
 };
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
-int	command __P((int cmd, int arg));
+int	command(int cmd, int arg);
 
 /*
  * Boot program... argume passed in r10 and r11 determine whether boot

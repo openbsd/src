@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.12 2002/03/04 23:02:47 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.13 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -58,14 +58,14 @@ struct cfdriver sti_cd = {
 	NULL, "sti", DV_DULL
 };
 
-void sti_cursor __P((void *v, int on, int row, int col));
-int  sti_mapchar __P((void *v, int uni, u_int *index));
-void sti_putchar __P((void *v, int row, int col, u_int uc, long attr));
-void sti_copycols __P((void *v, int row, int srccol, int dstcol, int ncols));
-void sti_erasecols __P((void *v, int row, int startcol, int ncols, long attr));
-void sti_copyrows __P((void *v, int srcrow, int dstrow, int nrows));
-void sti_eraserows __P((void *v, int row, int nrows, long attr));
-int  sti_alloc_attr __P((void *v, int fg, int bg, int flags, long *));
+void sti_cursor(void *v, int on, int row, int col);
+int  sti_mapchar(void *v, int uni, u_int *index);
+void sti_putchar(void *v, int row, int col, u_int uc, long attr);
+void sti_copycols(void *v, int row, int srccol, int dstcol, int ncols);
+void sti_erasecols(void *v, int row, int startcol, int ncols, long attr);
+void sti_copyrows(void *v, int srcrow, int dstrow, int nrows);
+void sti_eraserows(void *v, int row, int nrows, long attr);
+int  sti_alloc_attr(void *v, int fg, int bg, int flags, long *);
 
 struct wsdisplay_emulops sti_emulops = {
 	sti_cursor,
@@ -78,14 +78,14 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_alloc_attr
 };
 
-int sti_ioctl __P((void *v, u_long cmd, caddr_t data, int flag, struct proc *p));
-paddr_t sti_mmap __P((void *v, off_t offset, int prot));
-int sti_alloc_screen __P((void *v, const struct wsscreen_descr *type,
-	void **cookiep, int *cxp, int *cyp, long *defattr));
-	void sti_free_screen __P((void *v, void *cookie));
+int sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p);
+paddr_t sti_mmap(void *v, off_t offset, int prot);
+int sti_alloc_screen(void *v, const struct wsscreen_descr *type,
+	void **cookiep, int *cxp, int *cyp, long *defattr);
+	void sti_free_screen(void *v, void *cookie);
 int sti_show_screen __P((void *v, void *cookie, int waitok,
-	void (*cb) __P((void *, int, int)), void *cbarg));
-int sti_load_font __P((void *v, void *cookie, struct wsdisplay_font *));
+	void (*cb)(void *, int, int), void *cbarg));
+int sti_load_font(void *v, void *cookie, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops sti_accessops = {
 	sti_ioctl,
@@ -116,10 +116,10 @@ enum sti_bmove_funcs {
 	bmf_clear, bmf_copy, bmf_invert, bmf_underline
 };
 
-int sti_init __P((struct sti_softc *sc, int mode));
-int sti_inqcfg __P((struct sti_softc *sc, struct sti_inqconfout *out));
-void sti_bmove __P((struct sti_softc *sc, int, int, int, int, int, int,
-	enum sti_bmove_funcs));
+int sti_init(struct sti_softc *sc, int mode);
+int sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out);
+void sti_bmove(struct sti_softc *sc, int, int, int, int, int, int,
+	enum sti_bmove_funcs);
 
 void
 sti_attach_common(sc)
@@ -498,7 +498,7 @@ sti_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	return 0;

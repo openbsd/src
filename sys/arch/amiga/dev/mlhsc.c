@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlhsc.c,v 1.6 1997/01/18 12:26:34 niklas Exp $	*/
+/*	$OpenBSD: mlhsc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: mlhsc.c,v 1.16 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
@@ -48,13 +48,13 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void mlhscattach __P((struct device *, struct device *, void *));
-int mlhscmatch __P((struct device *, void *, void *));
+void mlhscattach(struct device *, struct device *, void *);
+int mlhscmatch(struct device *, void *, void *);
 
-int mlhsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int mlhsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
+int mlhsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int mlhsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
 
 struct scsi_adapter mlhsc_scsiswitch = {
 	sci_scsicmd,

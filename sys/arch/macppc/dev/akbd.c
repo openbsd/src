@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -62,14 +62,14 @@
 /*
  * Function declarations.
  */
-static int	akbdmatch __P((struct device *, void *, void *));
-static void	akbdattach __P((struct device *, struct device *, void *));
-void		kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
+static int	akbdmatch(struct device *, void *, void *);
+static void	akbdattach(struct device *, struct device *, void *);
+void		kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
+static void	kbd_processevent(adb_event_t *event, struct akbd_softc *);
 #ifdef notyet
-static u_char	getleds __P((int));
-static int	setleds __P((struct akbd_softc *, u_char));
-static void	blinkleds __P((struct akbd_softc *));
+static u_char	getleds(int);
+static int	setleds(struct akbd_softc *, u_char);
+static void	blinkleds(struct akbd_softc *);
 #endif
 
 /* Driver definition. */
@@ -83,10 +83,10 @@ struct cfdriver akbd_cd = {
 
 extern struct cfdriver akbd_cd;
 
-int akbd_enable __P((void *, int));
-void akbd_set_leds __P((void *, int));
-int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int akbd_intr __P((adb_event_t *event));
+int akbd_enable(void *, int);
+void akbd_set_leds(void *, int);
+int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int akbd_intr(adb_event_t *event);
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -94,8 +94,8 @@ struct wskbd_accessops akbd_accessops = {
 	akbd_ioctl,
 };
 
-void akbd_cngetc __P((void *, u_int *, int *));
-void akbd_cnpollc __P((void *, int));
+void akbd_cngetc(void *, u_int *, int *);
+void akbd_cnpollc(void *, int);
 
 struct wskbd_consops akbd_consops = {
 	akbd_cngetc,

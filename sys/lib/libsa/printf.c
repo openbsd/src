@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.14 1999/08/16 09:21:38 downsj Exp $	*/
+/*	$OpenBSD: printf.c,v 1.15 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static void kprintn __P((void (*)(int), u_long, int));
 static void kdoprnt __P((void (*)(int), const char *, va_list));
 
 #ifndef	STRIPPED
-static void sputchar __P((int));
+static void sputchar(int);
 static char *sbuf;
 
 static void
@@ -132,7 +132,7 @@ vprintf(const char *fmt, va_list ap)
 
 static void
 kdoprnt(put, fmt, ap)
-	void (*put)__P((int));
+	void (*put)(int);
 	const char *fmt;
 	va_list ap;
 {
@@ -226,7 +226,7 @@ reswitch:	switch (ch = *fmt++) {
 
 static void
 kprintn(put, ul, base)
-	void (*put)__P((int));
+	void (*put)(int);
 	unsigned long ul;
 	int base;
 {

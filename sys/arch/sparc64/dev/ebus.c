@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.7 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.8 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ int ebus_debug = 0x0;
 #include <sparc64/dev/ebusvar.h>
 #include <sparc64/sparc64/cache.h>
 
-int	ebus_match __P((struct device *, void *, void *));
-void	ebus_attach __P((struct device *, struct device *, void *));
+int	ebus_match(struct device *, void *, void *);
+void	ebus_attach(struct device *, struct device *, void *);
 
 struct cfattach ebus_ca = {
 	sizeof(struct ebus_softc), ebus_match, ebus_attach
@@ -89,34 +89,34 @@ struct cfdriver ebus_cd = {
 };
 
 
-int	ebus_setup_attach_args __P((struct ebus_softc *, int,
-	    struct ebus_attach_args *));
-void	ebus_destroy_attach_args __P((struct ebus_attach_args *));
-int	ebus_print __P((void *, const char *));
-void	ebus_find_ino __P((struct ebus_softc *, struct ebus_attach_args *));
-int	ebus_find_node __P((struct pci_attach_args *));
+int	ebus_setup_attach_args(struct ebus_softc *, int,
+	    struct ebus_attach_args *);
+void	ebus_destroy_attach_args(struct ebus_attach_args *);
+int	ebus_print(void *, const char *);
+void	ebus_find_ino(struct ebus_softc *, struct ebus_attach_args *);
+int	ebus_find_node(struct pci_attach_args *);
 
 /*
  * here are our bus space and bus dma routines.
  */
-static paddr_t ebus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
-static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int _ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
-				bus_space_handle_t *));
+				bus_space_handle_t *);
 static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
-				int (*) __P((void *)), void *));
+				int (*)(void *), void *));
 
-static int ebus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-			  bus_size_t, struct proc *, int));
-static void ebus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static void ebus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-				  bus_size_t, int));
-int ebus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-			   bus_dma_segment_t *, int, int *, int));
-void ebus_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *, int));
-int ebus_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-			 caddr_t *, int));
-void ebus_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
+static int ebus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+			  bus_size_t, struct proc *, int);
+static void ebus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+static void ebus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+				  bus_size_t, int);
+int ebus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+			   bus_dma_segment_t *, int, int *, int);
+void ebus_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int ebus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
+			 caddr_t *, int);
+void ebus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 
 int
 ebus_match(parent, match, aux)
@@ -537,7 +537,7 @@ ebus_intr_establish(t, pri, level, flags, handler, arg)
 	int pri;
 	int level;
 	int flags;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	return (bus_intr_establish(t->parent, pri, level, flags,

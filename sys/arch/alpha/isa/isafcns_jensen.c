@@ -1,4 +1,4 @@
-/*	$OpenBSD: isafcns_jensen.c,v 1.5 1999/01/11 05:11:02 millert Exp $	*/
+/*	$OpenBSD: isafcns_jensen.c,v 1.6 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: isafcns_jensen.c,v 1.4 1996/10/13 02:59:54 christos Exp $	*/
 
 /*
@@ -32,19 +32,19 @@
 #include <machine/pio.h>
 #include <machine/pte.h>
 
-static u_int8_t		jensen_inb __P((int port));
-/* static void		jensen_insb __P((int port, void *addr, int cnt)); */
-static u_int16_t	jensen_inw __P((int port));
-/* static void		jensen_insw __P((int port, void *addr, int cnt)); */
-u_int32_t		jensen_inl __P((int port));
-/* static void		jensen_insl __P((int port, void *addr, int cnt)); */
+static u_int8_t		jensen_inb(int port);
+/* static void		jensen_insb(int port, void *addr, int cnt); */
+static u_int16_t	jensen_inw(int port);
+/* static void		jensen_insw(int port, void *addr, int cnt); */
+u_int32_t		jensen_inl(int port);
+/* static void		jensen_insl(int port, void *addr, int cnt); */
 
-static void		jensen_outb __P((int port, u_int8_t datum));
-/* static void		jensen_outsb __P((int port, void *addr, int cnt)); */
-static void		jensen_outw __P((int port, u_int16_t datum));
-/* static void		jensen_outsw __P((int port, void *addr, int cnt)); */
-static void		jensen_outl __P((int port, u_int32_t datum));
-/* static void		jensen_outsl __P((int port, void *addr, int cnt)); */
+static void		jensen_outb(int port, u_int8_t datum);
+/* static void		jensen_outsb(int port, void *addr, int cnt); */
+static void		jensen_outw(int port, u_int16_t datum);
+/* static void		jensen_outsw(int port, void *addr, int cnt); */
+static void		jensen_outl(int port, u_int32_t datum);
+/* static void		jensen_outsl(int port, void *addr, int cnt); */
 
 struct alpha_isafcndesc jensen_isafcns = {
 	jensen_inb,	0 /* jensen_insb */,

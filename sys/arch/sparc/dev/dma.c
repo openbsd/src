@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.16 1999/09/10 23:32:02 art Exp $	*/
+/*	$OpenBSD: dma.c,v 1.17 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -59,20 +59,20 @@
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>
 
-int dmaprint		__P((void *, const char *));
-void dmaattach		__P((struct device *, struct device *, void *));
-int dmamatch		__P((struct device *, void *, void *));
-void dma_reset		__P((struct dma_softc *, int));
-void espdma_reset	__P((struct dma_softc *));
-int ledmamatch		__P((struct device *, void *, void *));
-void ledma_reset	__P((struct dma_softc *));
-void dma_enintr		__P((struct dma_softc *));
-int dma_isintr		__P((struct dma_softc *));
-int espdmaintr		__P((struct dma_softc *));
-int ledmaintr		__P((struct dma_softc *));
-int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *,
-			     int, size_t *));
-void dma_go		__P((struct dma_softc *));
+int dmaprint(void *, const char *);
+void dmaattach(struct device *, struct device *, void *);
+int dmamatch(struct device *, void *, void *);
+void dma_reset(struct dma_softc *, int);
+void espdma_reset(struct dma_softc *);
+int ledmamatch(struct device *, void *, void *);
+void ledma_reset(struct dma_softc *);
+void dma_enintr(struct dma_softc *);
+int dma_isintr(struct dma_softc *);
+int espdmaintr(struct dma_softc *);
+int ledmaintr(struct dma_softc *);
+int dma_setup(struct dma_softc *, caddr_t *, size_t *,
+			     int, size_t *);
+void dma_go(struct dma_softc *);
 
 struct cfattach dma_ca = {
 	sizeof(struct dma_softc), dmamatch, dmaattach

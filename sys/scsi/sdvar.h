@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.2 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.3 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -96,9 +96,9 @@ struct sd_softc {
 };
 
 struct sd_ops {
-	int	(*sdo_get_parms) __P((struct sd_softc *, struct disk_parms *,
-		    int));
-	void	(*sdo_flush) __P((struct sd_softc *, int));
+	int	(*sdo_get_parms)(struct sd_softc *, struct disk_parms *,
+		    int);
+	void	(*sdo_flush)(struct sd_softc *, int);
 };
 #define	SDGP_RESULT_OK		0	/* paramters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */

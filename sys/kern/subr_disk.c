@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.20 2001/05/14 07:16:12 angelos Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.21 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 	register struct disklabel *lp;
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	register int (*pr) __P((const char *, ...));
+	register int (*pr)(const char *, ...);
 	char partname = 'a' + part;
 	int sn;
 
@@ -453,7 +453,7 @@ dk_mountroot()
 {
 	dev_t rawdev, rrootdev;
 	int part = DISKPART(rootdev);
-	int (*mountrootfn) __P((void));
+	int (*mountrootfn)(void);
 	struct disklabel dl;
 	int error;
 
@@ -484,7 +484,7 @@ dk_mountroot()
 #ifdef EXT2FS
 	case FS_EXT2FS:
 		{
-		extern int ext2fs_mountroot __P((void));
+		extern int ext2fs_mountroot(void);
 		mountrootfn = ext2fs_mountroot;
 		}
 		break;
@@ -492,7 +492,7 @@ dk_mountroot()
 #ifdef FFS
 	case FS_BSDFFS:
 		{
-		extern int ffs_mountroot __P((void));
+		extern int ffs_mountroot(void);
 		mountrootfn = ffs_mountroot;
 		}
 		break;
@@ -500,7 +500,7 @@ dk_mountroot()
 #ifdef LFS
 	case FS_BSDLFS:
 		{
-		extern int lfs_mountroot __P((void));
+		extern int lfs_mountroot(void);
 		mountrootfn = lfs_mountroot;
 		}
 		break;
@@ -508,7 +508,7 @@ dk_mountroot()
 #ifdef CD9660
 	case FS_ISO9660:
 		{
-		extern int cd9660_mountroot __P((void));
+		extern int cd9660_mountroot(void);
 		mountrootfn = cd9660_mountroot;
 		}
 		break;
@@ -516,7 +516,7 @@ dk_mountroot()
 	default:
 #ifdef FFS
 		{ 
-		extern int ffs_mountroot __P((void));
+		extern int ffs_mountroot(void);
 
 		printf("filesystem type %d not known.. assuming ffs\n",
 		    dl.d_partitions[part].p_fstype);

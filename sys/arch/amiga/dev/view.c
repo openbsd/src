@@ -1,4 +1,4 @@
-/*	$OpenBSD: view.c,v 1.5 2001/11/01 12:13:45 art Exp $	*/
+/*	$OpenBSD: view.c,v 1.6 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
 
 /*
@@ -56,14 +56,14 @@
 
 #include "view.h"
 
-static void view_display __P((struct view_softc *));
-static void view_remove __P((struct view_softc *));
-static int view_setsize __P((struct view_softc *, struct view_size *));
+static void view_display(struct view_softc *);
+static void view_remove(struct view_softc *);
+static int view_setsize(struct view_softc *, struct view_size *);
 
-int view_get_colormap __P((struct view_softc *, colormap_t *));
-int view_set_colormap __P((struct view_softc *, colormap_t *));
+int view_get_colormap(struct view_softc *, colormap_t *);
+int view_set_colormap(struct view_softc *, colormap_t *);
 
-void viewattach __P((int));
+void viewattach(int);
 
 struct view_softc views[NVIEW];
 int view_inited;			/* also checked in ite_cc.c */

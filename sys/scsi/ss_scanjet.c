@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.23 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.24 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -55,20 +55,20 @@
 
 #define SCANJET_RETRIES 4
 
-int scanjet_set_params __P((struct ss_softc *, struct scan_io *));
-int scanjet_trigger_scanner __P((struct ss_softc *));
-int scanjet_read __P((struct ss_softc *, struct buf *));
+int scanjet_set_params(struct ss_softc *, struct scan_io *);
+int scanjet_trigger_scanner(struct ss_softc *);
+int scanjet_read(struct ss_softc *, struct buf *);
 
 /* only used internally */
-int scanjet_ctl_write __P((struct ss_softc *, char *, u_int, int));
-int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
-int scanjet_set_window __P((struct ss_softc *, int));
-int scanjet_compute_sizes __P((struct ss_softc *, int));
+int scanjet_ctl_write(struct ss_softc *, char *, u_int, int);
+int scanjet_ctl_read(struct ss_softc *, char *, u_int, int);
+int scanjet_set_window(struct ss_softc *, int);
+int scanjet_compute_sizes(struct ss_softc *, int);
 /* Maybe move to libkern? */
 #define atoi local_atoi
 #define strchr local_strchr
-__inline static int atoi __P((const char *));
-__inline static char *strchr __P((/* const */ char *, char));
+__inline static int atoi(const char *);
+__inline static char *strchr(/* const */ char *, char);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.9 2001/12/05 03:04:38 hugh Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.10 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -100,23 +100,23 @@ struct ra_softc {
 
 #define rx_softc ra_softc
 
-void	rxattach __P((struct device *, struct device *, void *));
-int	rx_putonline __P((struct rx_softc *));
-void	rrmakelabel __P((struct disklabel *, long));
+void	rxattach(struct device *, struct device *, void *);
+int	rx_putonline(struct rx_softc *);
+void	rrmakelabel(struct disklabel *, long);
 
 #if NRA
 
-int	ramatch __P((struct device *, struct cfdata *, void *));
-void	raattach __P((struct device *, struct device *, void *));
-int	raopen __P((dev_t, int, int, struct proc *));
-int	raclose __P((dev_t, int, int, struct proc *));
-void	rastrategy __P((struct buf *));
-int	raread __P((dev_t, struct uio *));
-int	rawrite __P((dev_t, struct uio *));
-int	raioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	radump __P((dev_t, daddr_t, caddr_t, size_t));
-int	rasize __P((dev_t));
-int	ra_putonline __P((struct ra_softc *));
+int	ramatch(struct device *, struct cfdata *, void *);
+void	raattach(struct device *, struct device *, void *);
+int	raopen(dev_t, int, int, struct proc *);
+int	raclose(dev_t, int, int, struct proc *);
+void	rastrategy(struct buf *);
+int	raread(dev_t, struct uio *);
+int	rawrite(dev_t, struct uio *);
+int	raioctl(dev_t, int, caddr_t, int, struct proc *);
+int	radump(dev_t, daddr_t, caddr_t, size_t);
+int	rasize(dev_t);
+int	ra_putonline(struct ra_softc *);
 
 struct	cfattach ra_ca = {
 	sizeof(struct ra_softc), (cfmatch_t)ramatch, rxattach
@@ -528,15 +528,15 @@ int ra_getdev(adaptor, controller, unit, uname)
 
 #if NRX
 
-int	rxmatch __P((struct device *, struct cfdata *, void *));
-int	rxopen __P((dev_t, int, int, struct proc *));
-int	rxclose __P((dev_t, int, int, struct proc *));
-void	rxstrategy __P((struct buf *));
-int	rxread __P((dev_t, struct uio *));
-int	rxwrite __P((dev_t, struct uio *));
-int	rxioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	rxdump __P((dev_t, daddr_t, caddr_t, size_t));
-int	rxsize __P((dev_t));
+int	rxmatch(struct device *, struct cfdata *, void *);
+int	rxopen(dev_t, int, int, struct proc *);
+int	rxclose(dev_t, int, int, struct proc *);
+void	rxstrategy(struct buf *);
+int	rxread(dev_t, struct uio *);
+int	rxwrite(dev_t, struct uio *);
+int	rxioctl(dev_t, int, caddr_t, int, struct proc *);
+int	rxdump(dev_t, daddr_t, caddr_t, size_t);
+int	rxsize(dev_t);
 
 struct	cfattach rx_ca = {
 	sizeof(struct rx_softc), (cfmatch_t)rxmatch, rxattach
@@ -820,14 +820,14 @@ rxsize(dev)
 
 #endif /* NRX */
 
-void	rrdgram __P((struct device *, struct mscp *, struct mscp_softc *));
-void	rriodone __P((struct device *, struct buf *));
-int	rronline __P((struct device *, struct mscp *));
-int	rrgotstatus __P((struct device *, struct mscp *));
-void	rrreplace __P((struct device *, struct mscp *));
-int	rrioerror __P((struct device *, struct mscp *, struct buf *));
-void	rrfillin __P((struct buf *, struct mscp *));
-void	rrbb __P((struct device *, struct mscp *, struct buf *));
+void	rrdgram(struct device *, struct mscp *, struct mscp_softc *);
+void	rriodone(struct device *, struct buf *);
+int	rronline(struct device *, struct mscp *);
+int	rrgotstatus(struct device *, struct mscp *);
+void	rrreplace(struct device *, struct mscp *);
+int	rrioerror(struct device *, struct mscp *, struct buf *);
+void	rrfillin(struct buf *, struct mscp *);
+void	rrbb(struct device *, struct mscp *, struct buf *);
 
 
 struct	mscp_device ra_device = {

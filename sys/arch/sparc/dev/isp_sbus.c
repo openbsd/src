@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.19 2001/12/14 00:20:54 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.20 2002/03/14 01:26:43 millert Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -98,8 +98,8 @@ struct isp_sbussoftc {
 };
 
 
-static int isp_match __P((struct device *, void *, void *));
-static void isp_sbus_attach __P((struct device *, struct device *, void *));
+static int isp_match(struct device *, void *, void *);
+static void isp_sbus_attach(struct device *, struct device *, void *);
 struct cfattach isp_sbus_ca = {
 	sizeof (struct isp_sbussoftc), isp_match, isp_sbus_attach
 };

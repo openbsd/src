@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.16 2001/08/26 00:45:08 fgsch Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.17 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -272,22 +272,22 @@ static const char *bases[] = {
 #define	nbases		(sizeof(bases) / sizeof(bases[0]))
 #endif
 
-int seaintr __P((void *));
-int sea_scsi_cmd __P((struct scsi_xfer *));
-void sea_timeout __P((void *));
-void sea_done __P((struct sea_softc *, struct sea_scb *));
-struct sea_scb *sea_get_scb __P((struct sea_softc *, int));
-void sea_free_scb __P((struct sea_softc *, struct sea_scb *, int));
-static void sea_main __P((void));
-static void sea_information_transfer __P((struct sea_softc *));
-int sea_poll __P((struct sea_softc *, struct scsi_xfer *, int));
-void sea_init __P((struct sea_softc *));
-void sea_send_scb __P((struct sea_softc *sea, struct sea_scb *scb));
-void sea_reselect __P((struct sea_softc *sea));
-int sea_select __P((struct sea_softc *sea, struct sea_scb *scb));
-int sea_transfer_pio __P((struct sea_softc *sea, u_char *phase,
-    int *count, u_char **data));
-int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
+int seaintr(void *);
+int sea_scsi_cmd(struct scsi_xfer *);
+void sea_timeout(void *);
+void sea_done(struct sea_softc *, struct sea_scb *);
+struct sea_scb *sea_get_scb(struct sea_softc *, int);
+void sea_free_scb(struct sea_softc *, struct sea_scb *, int);
+static void sea_main(void);
+static void sea_information_transfer(struct sea_softc *);
+int sea_poll(struct sea_softc *, struct scsi_xfer *, int);
+void sea_init(struct sea_softc *);
+void sea_send_scb(struct sea_softc *sea, struct sea_scb *scb);
+void sea_reselect(struct sea_softc *sea);
+int sea_select(struct sea_softc *sea, struct sea_scb *scb);
+int sea_transfer_pio(struct sea_softc *sea, u_char *phase,
+    int *count, u_char **data);
+int sea_abort(struct sea_softc *, struct sea_scb *scb);
 
 struct scsi_adapter sea_switch = {
 	sea_scsi_cmd,
@@ -304,9 +304,9 @@ struct scsi_device sea_dev = {
 	NULL,		/* Use default 'done' routine */
 };
 
-int	seaprobe __P((struct device *, void *, void *));
-void	seaattach __P((struct device *, struct device *, void *));
-int	seaprint __P((void *, const char *));
+int	seaprobe(struct device *, void *, void *);
+void	seaattach(struct device *, struct device *, void *);
+int	seaprint(void *, const char *);
 
 struct cfattach sea_ca = {
 	sizeof(struct sea_softc), seaprobe, seaattach

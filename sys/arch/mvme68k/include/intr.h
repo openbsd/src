@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2001/11/23 00:47:46 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2002/03/14 01:26:37 millert Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -78,6 +78,6 @@ u_long	allocate_sir __P((void (*proc)(), void *arg));
 #define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
 
 /* locore.s */
-int	spl0 __P((void));
+int	spl0(void);
 #endif /* _KERNEL */
 #endif /* _MVME68K_INTR_H_ */

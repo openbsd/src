@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.2 2001/08/20 19:55:33 jason Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.3 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -37,18 +37,18 @@
 
 #include <machine/cpu.h>
 
-vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
-vaddr_t OF_alloc_virt __P((int len, int align));
-int OF_free_virt __P((vaddr_t vaddr, int len));
-int OF_unmap_virt __P((vaddr_t vaddr, int len));
-vaddr_t OF_map_phys __P((paddr_t paddr, off_t size, vaddr_t vaddr, int mode));
-paddr_t OF_alloc_phys __P((int len, int align));
-paddr_t OF_claim_phys __P((paddr_t phys, int len));
-int OF_free_phys __P((paddr_t paddr, int len));
+vaddr_t OF_claim_virt(vaddr_t vaddr, int len);
+vaddr_t OF_alloc_virt(int len, int align);
+int OF_free_virt(vaddr_t vaddr, int len);
+int OF_unmap_virt(vaddr_t vaddr, int len);
+vaddr_t OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode);
+paddr_t OF_alloc_phys(int len, int align);
+paddr_t OF_claim_phys(paddr_t phys, int len);
+int OF_free_phys(paddr_t paddr, int len);
 
 extern int openfirmware(void *);
 
-void setup __P((void));
+void setup(void);
 
 #if 0
 #ifdef XCOFF_GLUE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.13 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.14 2002/03/14 01:26:50 millert Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@
 #include <compat/netbsd/netbsd_syscallargs.h>
 #include <compat/netbsd/netbsd_util.h>
 
-static void openbsd_to_netbsd_stat __P((struct stat *, struct netbsd_stat *));
+static void openbsd_to_netbsd_stat(struct stat *, struct netbsd_stat *);
 
 static void
 openbsd_to_netbsd_stat(obst, nbst)

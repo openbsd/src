@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.h,v 1.4 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: adv.h,v 1.5 2002/03/14 01:26:53 millert Exp $	*/
 /*      $NetBSD: adv.h,v 1.3 1998/09/26 16:02:56 dante Exp $        */
 
 /*
@@ -87,9 +87,9 @@ struct adv_control
 
 /******************************************************************************/
 
-int adv_init __P((ASC_SOFTC *sc));
-void adv_attach __P((ASC_SOFTC *sc));
-int adv_intr __P((void *arg));
+int adv_init(ASC_SOFTC *sc);
+void adv_attach(ASC_SOFTC *sc);
+int adv_intr(void *arg);
 
 /******************************************************************************/
 

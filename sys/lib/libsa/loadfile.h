@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.1 2001/06/23 01:47:40 drahn Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.2 2002/03/14 01:27:07 millert Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,6 @@
 #define	COUNT_HDR	0x2000
 #define COUNT_ALL	0x3f00
 
-int loadfile __P((const char *, u_long *, int));
+int loadfile(const char *, u_long *, int);
 
 #include <machine/loadfile_machdep.h>

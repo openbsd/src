@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.10 2001/11/05 17:25:57 art Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.11 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 1996/11/19 04:53:07 cgd Exp $	*/
 
 /*
@@ -36,12 +36,12 @@ typedef struct alpha_isa_chipset *isa_chipset_tag_t;
 struct alpha_isa_chipset {
 	void	*ic_v;
 
-	void	(*ic_attach_hook) __P((struct device *, struct device *,
-		    struct isabus_attach_args *));
+	void	(*ic_attach_hook)(struct device *, struct device *,
+		    struct isabus_attach_args *);
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
 		    int (*)(void *), void *, char *));
-	void	(*ic_intr_disestablish) __P((void *, void *));
-	int	(*ic_intr_alloc) __P((isa_chipset_tag_t *, int, int, int *));
+	void	(*ic_intr_disestablish)(void *, void *);
+	int	(*ic_intr_alloc)(isa_chipset_tag_t *, int, int, int *);
 };
 
 /*
@@ -62,7 +62,7 @@ struct alpha_isa_chipset {
  * alpha-specific ISA functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */ 
-int	isa_display_console __P((bus_space_tag_t, bus_space_tag_t));
+int	isa_display_console(bus_space_tag_t, bus_space_tag_t);
 
 #ifdef _ALPHA_BUS_DMA_PRIVATE
 int	isadma_bounce_dmamap_create(bus_dma_tag_t, bus_size_t, int,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.13 2002/02/15 20:45:31 nordin Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.14 2002/03/14 01:26:55 millert Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -131,38 +131,38 @@
  * so failure to positively identify the chip is not a fatal error.
  */
 
-void rl_tick		__P((void *));
-void rl_shutdown	__P((void *));
+void rl_tick(void *);
+void rl_shutdown(void *);
 
-int rl_encap		__P((struct rl_softc *, struct mbuf * ));
+int rl_encap(struct rl_softc *, struct mbuf * );
 
-void rl_rxeof		__P((struct rl_softc *));
-void rl_txeof		__P((struct rl_softc *));
-void rl_start		__P((struct ifnet *));
-int rl_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void rl_init		__P((void *));
-void rl_stop		__P((struct rl_softc *));
-void rl_watchdog	__P((struct ifnet *));
-int rl_ifmedia_upd	__P((struct ifnet *));
-void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void rl_rxeof(struct rl_softc *);
+void rl_txeof(struct rl_softc *);
+void rl_start(struct ifnet *);
+int rl_ioctl(struct ifnet *, u_long, caddr_t);
+void rl_init(void *);
+void rl_stop(struct rl_softc *);
+void rl_watchdog(struct ifnet *);
+int rl_ifmedia_upd(struct ifnet *);
+void rl_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void rl_eeprom_putbyte	__P((struct rl_softc *, int));
-void rl_eeprom_getword	__P((struct rl_softc *, int, u_int16_t *));
-void rl_read_eeprom	__P((struct rl_softc *, caddr_t, int, int, int));
+void rl_eeprom_putbyte(struct rl_softc *, int);
+void rl_eeprom_getword(struct rl_softc *, int, u_int16_t *);
+void rl_read_eeprom(struct rl_softc *, caddr_t, int, int, int);
 
-void rl_mii_sync	__P((struct rl_softc *));
-void rl_mii_send	__P((struct rl_softc *, u_int32_t, int));
-int rl_mii_readreg	__P((struct rl_softc *, struct rl_mii_frame *));
-int rl_mii_writereg	__P((struct rl_softc *, struct rl_mii_frame *));
+void rl_mii_sync(struct rl_softc *);
+void rl_mii_send(struct rl_softc *, u_int32_t, int);
+int rl_mii_readreg(struct rl_softc *, struct rl_mii_frame *);
+int rl_mii_writereg(struct rl_softc *, struct rl_mii_frame *);
 
-int rl_miibus_readreg	__P((struct device *, int, int));
-void rl_miibus_writereg	__P((struct device *, int, int, int));
-void rl_miibus_statchg	__P((struct device *));
+int rl_miibus_readreg(struct device *, int, int);
+void rl_miibus_writereg(struct device *, int, int, int);
+void rl_miibus_statchg(struct device *);
 
-u_int8_t rl_calchash	__P((caddr_t));
-void rl_setmulti	__P((struct rl_softc *));
-void rl_reset		__P((struct rl_softc *));
-int rl_list_tx_init	__P((struct rl_softc *));
+u_int8_t rl_calchash(caddr_t);
+void rl_setmulti(struct rl_softc *);
+void rl_reset(struct rl_softc *);
+int rl_list_tx_init(struct rl_softc *);
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\

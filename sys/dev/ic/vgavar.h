@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.5 2001/05/08 16:16:10 mickey Exp $ */
+/* $OpenBSD: vgavar.h,v 1.6 2002/03/14 01:26:55 millert Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -54,22 +54,22 @@ struct vga_config {
 	struct vgafont *vc_fonts[8];
 
 	struct vgascreen *wantedscreen;
-	void (*switchcb) __P((void *, int, int));
+	void (*switchcb)(void *, int, int);
 	void *switchcbarg;
 
 #ifdef arc
-	paddr_t (*vc_mmap) __P((void *, off_t, int));
+	paddr_t (*vc_mmap)(void *, off_t, int);
 #endif
 
 	struct timeout vc_switch_timeout;
 };
 
-static inline u_int8_t _vga_attr_read __P((struct vga_handle *, int));
-static inline void _vga_attr_write __P((struct vga_handle *, int, u_int8_t));
-static inline u_int8_t _vga_ts_read __P((struct vga_handle *, int));
-static inline void _vga_ts_write __P((struct vga_handle *, int, u_int8_t));
-static inline u_int8_t _vga_gdc_read __P((struct vga_handle *, int));
-static inline void _vga_gdc_write __P((struct vga_handle *, int, u_int8_t));
+static inline u_int8_t _vga_attr_read(struct vga_handle *, int);
+static inline void _vga_attr_write(struct vga_handle *, int, u_int8_t);
+static inline u_int8_t _vga_ts_read(struct vga_handle *, int);
+static inline void _vga_ts_write(struct vga_handle *, int, u_int8_t);
+static inline u_int8_t _vga_gdc_read(struct vga_handle *, int);
+static inline void _vga_gdc_write(struct vga_handle *, int, u_int8_t);
 
 static inline u_int8_t _vga_attr_read(vh, reg)
 	struct vga_handle *vh;
@@ -162,23 +162,23 @@ static inline void _vga_gdc_write(vh, reg, val)
 #define vga_6845_write(vh, reg, val) \
 	pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
 
-int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
-void	vga_common_attach __P((struct device *, bus_space_tag_t,
-			       bus_space_tag_t, int));
+int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
+void	vga_common_attach(struct device *, bus_space_tag_t,
+			       bus_space_tag_t, int);
 #ifdef arc
 void	vga_extended_attach __P((struct device *, bus_space_tag_t,
 				 bus_space_tag_t, int,
-				 int (*) __P((void *, off_t, int))));
+				 int (*)(void *, off_t, int)));
 #endif
-int	vga_is_console __P((bus_space_tag_t, int));
+int	vga_is_console(bus_space_tag_t, int);
 
-int	vga_cnattach __P((bus_space_tag_t, bus_space_tag_t, int, int));
+int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 
 struct wsscreen_descr;
-void vga_loadchars __P((struct vga_handle *, int, int, int, int, char *));
-void vga_setfontset __P((struct vga_handle *, int, int));
-void vga_setscreentype __P((struct vga_handle *,
-			    const struct wsscreen_descr *));
+void vga_loadchars(struct vga_handle *, int, int, int, int, char *);
+void vga_setfontset(struct vga_handle *, int, int);
+void vga_setscreentype(struct vga_handle *,
+			    const struct wsscreen_descr *);
 #if NVGA_PCI > 0
-int vga_pci_ioctl __P((void *, u_long, caddr_t, int, struct proc *)); 
+int vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *); 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.16 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.17 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -130,49 +130,49 @@
 
 #include <dev/pci/if_wbreg.h>
 
-int wb_probe		__P((struct device *, void *, void *));
-void wb_attach		__P((struct device *, struct device *, void *));
+int wb_probe(struct device *, void *, void *);
+void wb_attach(struct device *, struct device *, void *);
 
-void wb_bfree		__P((caddr_t, u_int, void *));
-int wb_newbuf		__P((struct wb_softc *, struct wb_chain_onefrag *,
-    struct mbuf *));
-int wb_encap		__P((struct wb_softc *, struct wb_chain *,
-    struct mbuf *));
+void wb_bfree(caddr_t, u_int, void *);
+int wb_newbuf(struct wb_softc *, struct wb_chain_onefrag *,
+    struct mbuf *);
+int wb_encap(struct wb_softc *, struct wb_chain *,
+    struct mbuf *);
 
-void wb_rxeof		__P((struct wb_softc *));
-void wb_rxeoc		__P((struct wb_softc *));
-void wb_txeof		__P((struct wb_softc *));
-void wb_txeoc		__P((struct wb_softc *));
-int wb_intr		__P((void *));
-void wb_tick		__P((void *));
-void wb_start		__P((struct ifnet *));
-int wb_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void wb_init		__P((void *));
-void wb_stop		__P((struct wb_softc *));
-void wb_watchdog	__P((struct ifnet *));
-void wb_shutdown	__P((void *));
-int wb_ifmedia_upd	__P((struct ifnet *));
-void wb_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void wb_rxeof(struct wb_softc *);
+void wb_rxeoc(struct wb_softc *);
+void wb_txeof(struct wb_softc *);
+void wb_txeoc(struct wb_softc *);
+int wb_intr(void *);
+void wb_tick(void *);
+void wb_start(struct ifnet *);
+int wb_ioctl(struct ifnet *, u_long, caddr_t);
+void wb_init(void *);
+void wb_stop(struct wb_softc *);
+void wb_watchdog(struct ifnet *);
+void wb_shutdown(void *);
+int wb_ifmedia_upd(struct ifnet *);
+void wb_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void wb_eeprom_putbyte	__P((struct wb_softc *, int));
-void wb_eeprom_getword	__P((struct wb_softc *, int, u_int16_t *));
-void wb_read_eeprom	__P((struct wb_softc *, caddr_t, int, int, int));
-void wb_mii_sync	__P((struct wb_softc *));
-void wb_mii_send	__P((struct wb_softc *, u_int32_t, int));
-int wb_mii_readreg	__P((struct wb_softc *, struct wb_mii_frame *));
-int wb_mii_writereg	__P((struct wb_softc *, struct wb_mii_frame *));
+void wb_eeprom_putbyte(struct wb_softc *, int);
+void wb_eeprom_getword(struct wb_softc *, int, u_int16_t *);
+void wb_read_eeprom(struct wb_softc *, caddr_t, int, int, int);
+void wb_mii_sync(struct wb_softc *);
+void wb_mii_send(struct wb_softc *, u_int32_t, int);
+int wb_mii_readreg(struct wb_softc *, struct wb_mii_frame *);
+int wb_mii_writereg(struct wb_softc *, struct wb_mii_frame *);
 
-void wb_setcfg		__P((struct wb_softc *, u_int32_t));
-u_int8_t wb_calchash	__P((caddr_t));
-void wb_setmulti	__P((struct wb_softc *));
-void wb_reset		__P((struct wb_softc *));
-void wb_fixmedia	__P((struct wb_softc *));
-int wb_list_rx_init	__P((struct wb_softc *));
-int wb_list_tx_init	__P((struct wb_softc *));
+void wb_setcfg(struct wb_softc *, u_int32_t);
+u_int8_t wb_calchash(caddr_t);
+void wb_setmulti(struct wb_softc *);
+void wb_reset(struct wb_softc *);
+void wb_fixmedia(struct wb_softc *);
+int wb_list_rx_init(struct wb_softc *);
+int wb_list_tx_init(struct wb_softc *);
 
-int wb_miibus_readreg	__P((struct device *, int, int));
-void wb_miibus_writereg	__P((struct device *, int, int, int));
-void wb_miibus_statchg	__P((struct device *));
+int wb_miibus_readreg(struct device *, int, int);
+void wb_miibus_writereg(struct device *, int, int, int);
+void wb_miibus_statchg(struct device *);
 
 #define WB_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\

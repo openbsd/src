@@ -1,4 +1,4 @@
-/*	$OpenBSD: par.c,v 1.8 2001/08/20 19:35:18 miod Exp $	*/
+/*	$OpenBSD: par.c,v 1.9 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: par.c,v 1.16 1996/12/23 09:10:28 veego Exp $	*/
 
 /*
@@ -91,19 +91,19 @@ int	pardebug = 0;
 #define PDB_NOCHECK	0x80
 #endif
 
-int parrw __P((dev_t, struct uio *));
-int parhztoms __P((int));
-int parmstohz __P((int));
-int parsend __P((u_char *, int));
-int parreceive __P((u_char *, int));
-int parsendch __P((u_char));
+int parrw(dev_t, struct uio *);
+int parhztoms(int);
+int parmstohz(int);
+int parsend(u_char *, int);
+int parreceive(u_char *, int);
+int parsendch(u_char);
 
-void partimo __P((void *));
-void parstart __P((void *));
-void parintr __P((void *));
+void partimo(void *);
+void parstart(void *);
+void parintr(void *);
 
-void parattach __P((struct device *, struct device *, void *));
-int parmatch __P((struct device *, void *, void *));
+void parattach(struct device *, struct device *, void *);
+int parmatch(struct device *, void *, void *);
 
 struct cfattach par_ca = {
 	sizeof(struct device), parmatch, parattach

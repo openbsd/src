@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbdvar.h,v 1.1 2000/05/16 23:49:12 mickey Exp $ */
+/* $OpenBSD: wskbdvar.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wskbdvar.h,v 1.8 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
@@ -42,10 +42,10 @@
  * with these functions, which is passed to them when they are invoked.
  */
 struct wskbd_accessops {
-	int	(*enable) __P((void *, int));
-	void    (*set_leds) __P((void *, int));
-	int     (*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-			      struct proc *p));
+	int	(*enable)(void *, int);
+	void    (*set_leds)(void *, int);
+	int     (*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
+			      struct proc *p);
 };
 
 /*
@@ -55,9 +55,9 @@ struct wskbd_accessops {
  * with these functions, which is passed to them when they are invoked.
  */
 struct wskbd_consops {
-	void    (*getc) __P((void *, u_int *, int *));
-	void    (*pollc) __P((void *, int));
-	void	(*bell) __P((void *, u_int, u_int, u_int));
+	void    (*getc)(void *, u_int *, int *);
+	void    (*pollc)(void *, int);
+	void	(*bell)(void *, u_int, u_int, u_int);
 };
 
 /*
@@ -82,21 +82,21 @@ struct wskbddev_attach_args {
 /*
  * Autoconfiguration helper functions.
  */
-void	wskbd_cnattach __P((const struct wskbd_consops *, void *,
-			    const struct wskbd_mapdata *));
-void	wskbd_cndetach __P((void));
-int	wskbddevprint __P((void *, const char *));
+void	wskbd_cnattach(const struct wskbd_consops *, void *,
+			    const struct wskbd_mapdata *);
+void	wskbd_cndetach(void);
+int	wskbddevprint(void *, const char *);
 
 /*
  * Callbacks from the keyboard driver to the wskbd interface driver.
  */
-void	wskbd_input __P((struct device *kbddev, u_int type, int value));
+void	wskbd_input(struct device *kbddev, u_int type, int value);
 /* for WSDISPLAY_COMPAT_RAWKBD */
-void	wskbd_rawinput __P((struct device *, u_char *, int));
+void	wskbd_rawinput(struct device *, u_char *, int);
 
 /*
  * Console interface.
  */
-int	wskbd_cngetc __P((dev_t dev));
-void	wskbd_cnpollc __P((dev_t dev, int poll));
-void	wskbd_cnbell __P((dev_t, u_int, u_int, u_int));
+int	wskbd_cngetc(dev_t dev);
+void	wskbd_cnpollc(dev_t dev, int poll);
+void	wskbd_cnbell(dev_t, u_int, u_int, u_int);

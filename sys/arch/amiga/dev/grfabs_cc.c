@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfabs_cc.c,v 1.6 1997/09/10 20:56:42 niklas Exp $	*/
+/*	$OpenBSD: grfabs_cc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: grfabs_cc.c,v 1.16 1997/06/10 18:30:28 veego Exp $	*/
 
 /*
@@ -139,8 +139,8 @@ dmdata_t *h_this_data;
 #define AGA_VGA31KHZ	0x0020
 
 int aga_enable = 0;	/* set by start_c(), or can be patched */
-colormap_t *cc_alloc_aga_colormap __P((int));
-int cc_use_aga_colormap __P((view_t *, colormap_t *));
+colormap_t *cc_alloc_aga_colormap(int);
+int cc_use_aga_colormap(view_t *, colormap_t *);
 #endif
 
 /* monitor functions. */

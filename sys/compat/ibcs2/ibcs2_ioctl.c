@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_ioctl.c,v 1.10 2002/02/14 22:57:18 pvalchev Exp $	*/
+/*	$OpenBSD: ibcs2_ioctl.c,v 1.11 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_ioctl.c,v 1.12 1996/08/10 09:08:26 mycroft Exp $	*/
 
 /*
@@ -112,10 +112,10 @@ static u_long s2btab[] = {
 	38400,
 };
 
-static void stios2btios __P((struct ibcs2_termios *, struct termios *));
-static void btios2stios __P((struct termios *, struct ibcs2_termios *));
-static void stios2stio __P((struct ibcs2_termios *, struct ibcs2_termio *));
-static void stio2stios __P((struct ibcs2_termio *, struct ibcs2_termios *));
+static void stios2btios(struct ibcs2_termios *, struct termios *);
+static void btios2stios(struct termios *, struct ibcs2_termios *);
+static void stios2stio(struct ibcs2_termios *, struct ibcs2_termio *);
+static void stio2stios(struct ibcs2_termio *, struct ibcs2_termios *);
 
 static void
 stios2btios(st, bt)
@@ -342,7 +342,7 @@ ibcs2_sys_ioctl(p, v, retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ctl)(struct file *, u_long, caddr_t, struct proc *);
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)

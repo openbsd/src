@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_input.c,v 1.2 1998/06/11 06:18:43 deraadt Exp $	*/
+/*	$OpenBSD: ddp_input.c,v 1.3 2002/03/14 01:27:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -75,12 +75,12 @@
 #include <netatalk/ddp_var.h>
 #include <netatalk/at_extern.h>
 
-void atintr	__P((void));
-void ddp_input		__P((struct mbuf *, struct ifnet *,
-				struct elaphdr *, int));
+void atintr(void);
+void ddp_input(struct mbuf *, struct ifnet *,
+				struct elaphdr *, int);
 #if 0
-static void m_printm	__P((struct mbuf *));
-static void bprint	__P(( char *, int ));
+static void m_printm(struct mbuf *);
+static void bprint( char *, int );
 #endif
 
 int		ddp_forward = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.10 1997/01/15 05:35:47 kstailey Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.11 2002/03/14 01:26:55 millert Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
@@ -175,16 +175,16 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
-static void	zsstart __P((struct tty *));
-static int	zsparam __P((struct tty *, struct termios *));
-static void	zs_modem __P((struct zstty_softc *zst, int onoff));
-static int	zshwiflow __P((struct tty *, int));
-static void	zs_hwiflow __P((struct zstty_softc *, int));
-static void	zstty_rxint __P((register struct zs_chanstate *));
-static void	zstty_txint __P((register struct zs_chanstate *));
-static void	zstty_stint __P((register struct zs_chanstate *));
-static void	zstty_softint __P((struct zs_chanstate *));
-static void	zsoverrun __P((struct zstty_softc *, long *, char *));
+static void	zsstart(struct tty *);
+static int	zsparam(struct tty *, struct termios *);
+static void	zs_modem(struct zstty_softc *zst, int onoff);
+static int	zshwiflow(struct tty *, int);
+static void	zs_hwiflow(struct zstty_softc *, int);
+static void	zstty_rxint(register struct zs_chanstate *);
+static void	zstty_txint(register struct zs_chanstate *);
+static void	zstty_stint(register struct zs_chanstate *);
+static void	zstty_softint(struct zs_chanstate *);
+static void	zsoverrun(struct zstty_softc *, long *, char *);
 /*
  * zstty_match: how is this zs channel configured?
  */

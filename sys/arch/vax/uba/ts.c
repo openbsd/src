@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.6 2002/02/15 20:45:30 nordin Exp $ */
+/*	$OpenBSD: ts.c,v 1.7 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -179,25 +179,25 @@ struct	ts_softc {
 	short	sc_ipl;			/* interrupt priority, Q-bus */
 };
 
-void	tsintr __P((int));
-int	tsinit __P((struct ts_softc *));
-void	tscommand __P((dev_t, int, int));
-int	tsstatus __P((int));
-int	tsexec __P((int, int));
-int	tsstart __P((struct ts_softc *, struct buf *));
-int	tswchar __P((int));
-void	tsreset __P((int));
-void	tsxstatus __P((struct tsmsg *));
-int	tsmatch __P((struct device *, void *, void *));
-void	tsattach __P((struct device *, struct device *, void *));
-void	tsstrategy __P((struct buf *));
+void	tsintr(int);
+int	tsinit(struct ts_softc *);
+void	tscommand(dev_t, int, int);
+int	tsstatus(int);
+int	tsexec(int, int);
+int	tsstart(struct ts_softc *, struct buf *);
+int	tswchar(int);
+void	tsreset(int);
+void	tsxstatus(struct tsmsg *);
+int	tsmatch(struct device *, void *, void *);
+void	tsattach(struct device *, struct device *, void *);
+void	tsstrategy(struct buf *);
 
-int	tsopen __P((dev_t, int, int, struct proc *));
-int	tsclose __P((dev_t, int, int, struct proc *));
-int	tsioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	tsread __P((dev_t, struct uio *));
-int	tswrite __P((dev_t, struct uio *));
-int	tsdump __P((dev_t, daddr_t, caddr_t, size_t));
+int	tsopen(dev_t, int, int, struct proc *);
+int	tsclose(dev_t, int, int, struct proc *);
+int	tsioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	tsread(dev_t, struct uio *);
+int	tswrite(dev_t, struct uio *);
+int	tsdump(dev_t, daddr_t, caddr_t, size_t);
 
 struct	cfdriver ts_cd = {
 	NULL, "ts", DV_DULL

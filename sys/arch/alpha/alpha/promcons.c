@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.6 2001/02/03 12:10:40 art Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.7 2002/03/14 01:26:26 millert Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -52,9 +52,9 @@
 static struct  tty *prom_tty[1];
 static struct  timeout prom_to;
 
-void promstart __P((struct tty *));
-void promtimeout __P((void *));
-int promparam __P((struct tty *, struct termios *));
+void promstart(struct tty *);
+void promtimeout(void *);
+int promparam(struct tty *, struct termios *);
 cdev_decl(prom);
 cons_decl(prom);
 

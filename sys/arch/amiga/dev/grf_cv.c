@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cv.c,v 1.16 1998/01/15 14:14:35 niklas Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.17 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_cv.c,v 1.24 1997/07/30 11:05:55 veego Exp $	*/
 
 /*
@@ -68,38 +68,38 @@
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	grfcvmatch  __P((struct device *, void *, void *));
-void	grfcvattach __P((struct device *, struct device *, void *));
-int	grfcvprint  __P((void *, const char *));
+int	grfcvmatch(struct device *, void *, void *);
+void	grfcvattach(struct device *, struct device *, void *);
+int	grfcvprint(void *, const char *);
 
-int	cvintr __P((void *));
-int	cv_has_4mb __P((volatile caddr_t));
-unsigned short cv_compute_clock __P((unsigned long));
-void	cv_boardinit __P((struct grf_softc *));
-int	cv_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int	cv_setvmode __P((struct grf_softc *, unsigned int));
-int	cv_blank __P((struct grf_softc *, int *));
-int	cv_mode __P((register struct grf_softc *, u_long, void *, u_long, int));
-int	cv_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
-int	cv_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-int	cv_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cv_putcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cv_toggle __P((struct grf_softc *));
-int	cv_mondefok __P((struct grfvideo_mode *));
-int	cv_load_mon __P((struct grf_softc *, struct grfcvtext_mode *));
-void	cv_inittextmode __P((struct grf_softc *));
-static __inline void cv_write_port __P((unsigned short, volatile caddr_t));
-static __inline void cvscreen __P((int, volatile caddr_t));
-static __inline void gfx_on_off __P((int, volatile caddr_t));
+int	cvintr(void *);
+int	cv_has_4mb(volatile caddr_t);
+unsigned short cv_compute_clock(unsigned long);
+void	cv_boardinit(struct grf_softc *);
+int	cv_getvmode(struct grf_softc *, struct grfvideo_mode *);
+int	cv_setvmode(struct grf_softc *, unsigned int);
+int	cv_blank(struct grf_softc *, int *);
+int	cv_mode(register struct grf_softc *, u_long, void *, u_long, int);
+int	cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
+int	cv_setmonitor(struct grf_softc *, struct grfvideo_mode *);
+int	cv_getcmap(struct grf_softc *, struct grf_colormap *);
+int	cv_putcmap(struct grf_softc *, struct grf_colormap *);
+int	cv_toggle(struct grf_softc *);
+int	cv_mondefok(struct grfvideo_mode *);
+int	cv_load_mon(struct grf_softc *, struct grfcvtext_mode *);
+void	cv_inittextmode(struct grf_softc *);
+static __inline void cv_write_port(unsigned short, volatile caddr_t);
+static __inline void cvscreen(int, volatile caddr_t);
+static __inline void gfx_on_off(int, volatile caddr_t);
 
 #ifndef CV_NO_HARDWARE_CURSOR
-int	cv_getspritepos __P((struct grf_softc *, struct grf_position *));
-int	cv_setspritepos __P((struct grf_softc *, struct grf_position *));
-static __inline short M2I __P((short));
-int	cv_getspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-void	cv_setup_hwc __P((struct grf_softc *));
-int	cv_setspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-int	cv_getspritemax  __P((struct grf_softc *,struct grf_position *));
+int	cv_getspritepos(struct grf_softc *, struct grf_position *);
+int	cv_setspritepos(struct grf_softc *, struct grf_position *);
+static __inline short M2I(short);
+int	cv_getspriteinfo(struct grf_softc *,struct grf_spriteinfo *);
+void	cv_setup_hwc(struct grf_softc *);
+int	cv_setspriteinfo(struct grf_softc *,struct grf_spriteinfo *);
+int	cv_getspritemax(struct grf_softc *,struct grf_position *);
 #endif	/* !CV_NO_HARDWARE_CURSOR */
 
 /*

@@ -28,4 +28,4 @@
  * rights to redistribute these changes.
  */
 
-void	pci_eb64plus_pickintr __P((struct apecs_config *));
+void	pci_eb64plus_pickintr(struct apecs_config *);

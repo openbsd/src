@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.1 2001/06/26 21:57:47 smurph Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -39,30 +39,30 @@ struct mem_region {
 	vm_size_t size;
 };
 
-void mem_regions __P((struct mem_region **, struct mem_region **));
+void mem_regions(struct mem_region **, struct mem_region **);
 
 /*
  * These two functions get used solely in boot() in machdep.c.
  *
  * Not sure whether boot itself should be implementation dependent instead.	XXX
  */
-typedef void (exit_f) __P((void)) /*__attribute__((__noreturn__))*/ ;
-typedef void (boot_f) __P((char *bootspec)) /* __attribute__((__noreturn__))*/ ;
-typedef void (vmon_f) __P((void));
-typedef unsigned char (nvram_rd_f) __P((unsigned long offset));
-typedef void (nvram_wr_f) __P((unsigned long offset, unsigned char val));
-typedef unsigned long (tps_f) __P((void));
+typedef void (exit_f)(void) /*__attribute__((__noreturn__))*/ ;
+typedef void (boot_f)(char *bootspec) /* __attribute__((__noreturn__))*/ ;
+typedef void (vmon_f)(void);
+typedef unsigned char (nvram_rd_f)(unsigned long offset);
+typedef void (nvram_wr_f)(unsigned long offset, unsigned char val);
+typedef unsigned long (tps_f)(void);
 
 
-typedef void (mem_regions_f) __P((struct mem_region **memp,
-	struct mem_region **availp));
+typedef void (mem_regions_f)(struct mem_region **memp,
+	struct mem_region **availp);
 
-typedef int (clock_read_f) __P((int *sec, int *min, int *hour, int *day,
-									int *mon, int *yr));
-typedef int (clock_write_f) __P((int sec, int min, int hour, int day,
-									 int mon, int yr));
-typedef int (time_read_f) __P((u_long *sec));
-typedef int (time_write_f) __P((u_long sec));
+typedef int (clock_read_f)(int *sec, int *min, int *hour, int *day,
+									int *mon, int *yr);
+typedef int (clock_write_f)(int sec, int min, int hour, int day,
+									 int mon, int yr);
+typedef int (time_read_f)(u_long *sec);
+typedef int (time_write_f)(u_long sec);
 
 /* firmware interface.
  * regardless of type of firmware used several items

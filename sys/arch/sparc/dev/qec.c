@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.14 2002/02/08 18:52:25 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.15 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -63,11 +63,11 @@
 #include <sparc/dev/qecreg.h>
 #include <sparc/dev/qecvar.h>
 
-int	qecprint	__P((void *, const char *));
-int	qecmatch	__P((struct device *, void *, void *));
-void	qecattach	__P((struct device *, struct device *, void *));
-void	qec_fix_range	__P((struct qec_softc *, struct sbus_softc *));
-void	qec_translate	__P((struct qec_softc *, struct confargs *));
+int	qecprint(void *, const char *);
+int	qecmatch(struct device *, void *, void *);
+void	qecattach(struct device *, struct device *, void *);
+void	qec_fix_range(struct qec_softc *, struct sbus_softc *);
+void	qec_translate(struct qec_softc *, struct confargs *);
 
 struct cfattach qec_ca = {
 	sizeof(struct qec_softc), qecmatch, qecattach

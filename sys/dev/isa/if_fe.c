@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.18 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.19 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -178,8 +178,8 @@ struct fe_softc {
 	u_char	proto_bmpr13;	/* BMPR13 prototype. */
 
 	/* Vendor specific hooks. */
-	void	(*init) __P((struct fe_softc *)); /* Just before fe_init(). */
-	void	(*stop) __P((struct fe_softc *)); /* Just after fe_stop(). */
+	void	(*init)(struct fe_softc *); /* Just before fe_init(). */
+	void	(*stop)(struct fe_softc *); /* Just after fe_stop(). */
 
 	/* Transmission buffer management. */
 	u_short	txb_size;	/* total bytes in TX buffer */
@@ -197,32 +197,32 @@ struct fe_softc {
 #define sc_enaddr	sc_arpcom.ac_enaddr
 
 /* Standard driver entry points.  These can be static. */
-int	feprobe		__P((struct device *, void *, void *));
-void	feattach	__P((struct device *, struct device *, void *));
-int	feintr		__P((void *));
-void	fe_init		__P((struct fe_softc *));
-int	fe_ioctl	__P((struct ifnet *, u_long, caddr_t));
-void	fe_start	__P((struct ifnet *));
-void	fe_reset	__P((struct fe_softc *));
-void	fe_watchdog	__P((struct ifnet *));
+int	feprobe(struct device *, void *, void *);
+void	feattach(struct device *, struct device *, void *);
+int	feintr(void *);
+void	fe_init(struct fe_softc *);
+int	fe_ioctl(struct ifnet *, u_long, caddr_t);
+void	fe_start(struct ifnet *);
+void	fe_reset(struct fe_softc *);
+void	fe_watchdog(struct ifnet *);
 
 /* Local functions.  Order of declaration is confused.  FIXME. */
-int	fe_probe_fmv	__P((struct fe_softc *, struct isa_attach_args *));
-int	fe_probe_ati	__P((struct fe_softc *, struct isa_attach_args *));
-int	fe_probe_mbh	__P((struct fe_softc *, struct isa_attach_args *));
-void	fe_init_mbh	__P((struct fe_softc *));
-int	fe_get_packet	__P((struct fe_softc *, int));
-void	fe_stop		__P((struct fe_softc *));
-void	fe_tint		__P((/*struct fe_softc *, u_char*/));
-void	fe_rint		__P((/*struct fe_softc *, u_char*/));
+int	fe_probe_fmv(struct fe_softc *, struct isa_attach_args *);
+int	fe_probe_ati(struct fe_softc *, struct isa_attach_args *);
+int	fe_probe_mbh(struct fe_softc *, struct isa_attach_args *);
+void	fe_init_mbh(struct fe_softc *);
+int	fe_get_packet(struct fe_softc *, int);
+void	fe_stop(struct fe_softc *);
+void	fe_tint(/*struct fe_softc *, u_char*/);
+void	fe_rint(/*struct fe_softc *, u_char*/);
 static inline
-void	fe_xmit		__P((struct fe_softc *));
-void	fe_write_mbufs	__P((struct fe_softc *, struct mbuf *));
-void	fe_getmcaf	__P((struct arpcom *, u_char *));
-void	fe_setmode	__P((struct fe_softc *));
-void	fe_loadmar	__P((struct fe_softc *));
+void	fe_xmit(struct fe_softc *);
+void	fe_write_mbufs(struct fe_softc *, struct mbuf *);
+void	fe_getmcaf(struct arpcom *, u_char *);
+void	fe_setmode(struct fe_softc *);
+void	fe_loadmar(struct fe_softc *);
 #if FE_DEBUG >= 1
-void	fe_dump		__P((int, struct fe_softc *));
+void	fe_dump(int, struct fe_softc *);
 #endif
 
 struct cfattach fe_ca = {

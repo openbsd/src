@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.h,v 1.1 1997/03/31 00:24:02 downsj Exp $	*/
+/*	$OpenBSD: hpux_machdep.h,v 1.2 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: hpux_machdep.h,v 1.6 1997/03/16 10:02:40 thorpej Exp $	*/
 
 /*-
@@ -66,15 +66,15 @@ struct hpuxsigcontext {
 	int	_hsc_ap;		/* pointer to hpuxsigstate */
 };
 
-int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
-int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
-void	hpux_cpu_bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
-void	hpux_cpu_uname __P((struct hpux_utsname *));
-int	hpux_cpu_sysconf_arch __P((void));
-int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
+int	hpux_cpu_makecmds(struct proc *, struct exec_package *);
+int	hpux_cpu_vmcmd(struct proc *, struct exec_vmcmd *);
+void	hpux_cpu_bsd_to_hpux_stat(struct stat *, struct hpux_stat *);
+void	hpux_cpu_uname(struct hpux_utsname *);
+int	hpux_cpu_sysconf_arch(void);
+int	hpux_to_bsd_uoff(int *, int *, struct proc *);
 
-void	hpux_sendsig __P((sig_t, int, int, u_long, int, union sigval));
-void	hpux_setregs __P((struct proc *, struct exec_package *,
-	    u_long, register_t *));
+void	hpux_sendsig(sig_t, int, int, u_long, int, union sigval);
+void	hpux_setregs(struct proc *, struct exec_package *,
+	    u_long, register_t *);
 
 #endif /* ! _MVME68K_HPUX_MACHDEP_H_ */

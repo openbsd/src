@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.6 2002/03/12 14:37:40 art Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -83,17 +83,17 @@ struct reg;
 struct fpreg;
 #endif
 
-void	proc_reparent __P((struct proc *child, struct proc *newparent));
+void	proc_reparent(struct proc *child, struct proc *newparent);
 #ifdef PT_GETFPREGS
-int	process_read_fpregs __P((struct proc *p, struct fpreg *regs));
+int	process_read_fpregs(struct proc *p, struct fpreg *regs);
 #endif
-int	process_read_regs __P((struct proc *p, struct reg *regs));
-int	process_set_pc __P((struct proc *p, caddr_t addr));
-int	process_sstep __P((struct proc *p, int sstep));
+int	process_read_regs(struct proc *p, struct reg *regs);
+int	process_set_pc(struct proc *p, caddr_t addr);
+int	process_sstep(struct proc *p, int sstep);
 #ifdef PT_SETFPREGS
-int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
+int	process_write_fpregs(struct proc *p, struct fpreg *regs);
 #endif
-int	process_write_regs __P((struct proc *p, struct reg *regs));
+int	process_write_regs(struct proc *p, struct reg *regs);
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
@@ -104,7 +104,7 @@ int	process_write_regs __P((struct proc *p, struct reg *regs));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ptrace __P((int _request, pid_t _pid, caddr_t _addr, int _data));
+int	ptrace(int _request, pid_t _pid, caddr_t _addr, int _data);
 __END_DECLS
 
 #endif /* !_KERNEL */

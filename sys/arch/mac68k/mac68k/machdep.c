@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 #include <machine/pmap.h>
 #include <net/netisr.h>
 
-void netintr __P((void));
+void netintr(void);
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -176,7 +176,7 @@ u_int32_t mac68k_vidphys;	/* physical addr */
 u_int32_t mac68k_vidlen;	/* mem length */
 
 /* Callback and cookie to run bell */
-int	(*mac68k_bell_callback) __P((void *, int, int, int));
+int	(*mac68k_bell_callback)(void *, int, int, int);
 caddr_t	mac68k_bell_cookie;
 
 struct vm_map *exec_map = NULL;  
@@ -234,19 +234,19 @@ int	iomem_malloc_safe;
 /* XXX should be in locore.s for consistency */
 int	astpending = 0;
 
-static void	identifycpu __P((void));
-static u_long	get_physical __P((u_int, u_long *));
+static void	identifycpu(void);
+static u_long	get_physical(u_int, u_long *);
 
-void	initcpu __P((void));
-int	cpu_dumpsize __P((void));
+void	initcpu(void);
+int	cpu_dumpsize(void);
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
-void	cpu_init_kcore_hdr __P((void));
+void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void	dumpsys __P((void));
-void	mac68k_init __P((void));
-void	straytrap __P((int, int));
-void	nmihand __P((struct frame));
+void	dumpsys(void);
+void	mac68k_init(void);
+void	straytrap(int, int);
+void	nmihand(struct frame);
 
 /*
  * Machine-dependent crash dump header info.
@@ -525,14 +525,14 @@ void
 initcpu()
 {
 #if defined(M68040) || defined(M68060)
-	extern void (*vectab[256]) __P((void));
-	void addrerr4060 __P((void));
+	extern void (*vectab[256])(void);
+	void addrerr4060(void);
 #endif
 #ifdef M68060
-	void buserr60 __P((void));
+	void buserr60(void);
 #endif
 #ifdef M68040
-	void buserr40 __P((void));
+	void buserr40(void);
 #endif
 
 	switch (cputype) {
@@ -554,9 +554,9 @@ initcpu()
 	DCIS();
 }
 
-void doboot __P((void))
+void doboot(void)
 	__attribute__((__noreturn__));
-void via_shutdown __P((void));
+void via_shutdown(void);
 
 /*
  * Set registers on exec.
@@ -751,7 +751,7 @@ cpu_dumpsize()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	daddr_t *blknop;
 {
 	int buf[dbtob(1) / sizeof(int)];
@@ -835,7 +835,7 @@ dumpsys()
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
@@ -964,7 +964,7 @@ microtime(tvp)
 	splx(s);
 }
 
-void straytrap __P((int, int));
+void straytrap(int, int);
 
 void
 straytrap(pc, evec)
@@ -980,7 +980,7 @@ straytrap(pc, evec)
 
 int	*nofault;
 
-int badaddr __P((caddr_t));
+int badaddr(caddr_t);
 
 int
 badaddr(addr)
@@ -1123,7 +1123,7 @@ netintr()
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-void	nmihand __P((struct frame));
+void	nmihand(struct frame);
 
 void
 nmihand(frame)
@@ -1151,7 +1151,7 @@ nmihand(frame)
  * for RAM to be aliased across all memory--or for it to appear that
  * there is more RAM than there really is.
  */
-int	get_top_of_ram __P((void));
+int	get_top_of_ram(void);
 
 int
 get_top_of_ram()
@@ -1207,8 +1207,8 @@ cpu_exec_aout_makecmds(p, epp)
 
 #ifdef COMPAT_SUNOS
 	{
-		extern int sunos_exec_aout_makecmds __P((struct proc *,
-			        struct exec_package *));
+		extern int sunos_exec_aout_makecmds(struct proc *,
+			        struct exec_package *);
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 			return 0;
 	}
@@ -1221,8 +1221,8 @@ static char *envbuf = NULL;
 /*
  * getenvvars: Grab a few useful variables
  */
-void		getenvvars __P((u_long, char *));
-static long	getenv __P((char *));
+void		getenvvars(u_long, char *);
+static long	getenv(char *);
 
 void
 getenvvars(flag, buf)
@@ -1328,7 +1328,7 @@ getenvvars(flag, buf)
  	mrg_ADBIntrPtr = (caddr_t)getenv("ADBINTERRUPT");
 }
 
-static char	toupper __P((char));
+static char	toupper(char);
 
 static char
 toupper(c)
@@ -2183,7 +2183,7 @@ struct {
 
 char	cpu_model[120];		/* for sysctl() */
 
-int	mach_cputype __P((void));
+int	mach_cputype(void);
 
 int
 mach_cputype()
@@ -2219,7 +2219,7 @@ identifycpu()
 	printf("cpu: delay factor %d\n", delay_factor);
 }
 
-static void	get_machine_info __P((void));
+static void	get_machine_info(void);
 
 static void
 get_machine_info()
@@ -2242,7 +2242,7 @@ romvec_t *mrg_MacOSROMVectors = 0;
 /*
  * Sets a bunch of machine-specific variables
  */
-void	setmachdep __P((void));
+void	setmachdep(void);
 
 void
 setmachdep()
@@ -2545,8 +2545,8 @@ gray_bar()
 #endif
 
 /* in locore */
-extern u_long ptest040 __P((caddr_t addr, u_int fc));
-extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
+extern u_long ptest040(caddr_t addr, u_int fc);
+extern int get_pte(u_int addr, u_long pte[2], u_short * psr);
 
 /*
  * LAK (7/24/94): given a logical address, puts the physical address
@@ -2610,7 +2610,7 @@ get_physical(u_int addr, u_long * phys)
 	return 1;
 }
 
-static void	check_video __P((char *, u_long, u_long));
+static void	check_video(char *, u_long, u_long);
 
 static void
 check_video(id, limit, maxm)
@@ -2827,7 +2827,7 @@ get_mapping(void)
 /*
  * Debugging code for locore page-traversal routine.
  */
-void printstar __P((void));
+void printstar(void);
 void
 printstar(void)
 {
@@ -2856,7 +2856,7 @@ printstar(void)
 
 void
 mac68k_set_bell_callback(callback, cookie)
-	int (*callback) __P((void *, int, int, int));
+	int (*callback)(void *, int, int, int);
 	void *cookie;
 {
 	mac68k_bell_callback = callback;

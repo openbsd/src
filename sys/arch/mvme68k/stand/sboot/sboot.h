@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.6 1997/10/07 22:50:05 deraadt Exp $ */
+/*	$OpenBSD: sboot.h,v 1.7 2002/03/14 01:26:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -38,37 +38,37 @@
 extern caddr_t end;
 
 /* console */
-void puts __P((char *));
-char *ngets __P((char *, int));
+void puts(char *);
+char *ngets(char *, int);
 
 /* sboot */
-void callrom __P((void));
-void do_cmd __P((char *, char*));
+void callrom(void);
+void do_cmd(char *, char*);
 
 /* le */
 #define LANCE_ADDR 0xfffe0778
 #define ERAM_ADDR  0xfffe0774
 #define LANCE_REG_ADDR 0xfffe1800
-void le_end __P((void));
-void le_init __P((void));
-int le_get __P((u_char *, size_t, u_long));
-int le_put __P((u_char *, size_t));
+void le_end(void);
+void le_init(void);
+int le_get(u_char *, size_t, u_long);
+int le_put(u_char *, size_t);
 
 /* etherfun */
 #define READ 0
 #define ACKN 1 
-void do_rev_arp __P((void));
-int get_rev_arp __P((void));
-int rev_arp __P((void));
-void do_send_tftp __P((int));
-int do_get_file __P((void)); 
-void tftp_file __P((char *, u_long));
+void do_rev_arp(void);
+int get_rev_arp(void);
+int rev_arp(void);
+void do_send_tftp(int);
+int do_get_file(void); 
+void tftp_file(char *, u_long);
 
 /* clock */
-u_long ttime __P((void));
+u_long ttime(void);
 
 /* checksum */
-u_long oc_cksum __P((void *, u_long, u_long));
+u_long oc_cksum(void *, u_long, u_long);
 
 #define CONS_ZS_ADDR (0xfffe3002)
 #define CLOCK_ADDR (0xfffe07f8)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.4 2001/06/25 21:42:31 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.5 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	struct device *dev;
 	struct pci_attach_args *pa;
 	int chan;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	int irq;

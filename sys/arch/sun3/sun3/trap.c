@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -78,9 +78,9 @@ extern struct emul emul_sunos;
 extern char fubail[], subail[];
 
 /* These are called from locore.s */
-void syscall __P((register_t code, struct frame));
-void trap __P((int type, u_int code, u_int v, struct frame));
-int  nodb_trap __P((int type, struct frame *));
+void syscall(register_t code, struct frame);
+void trap(int type, u_int code, u_int v, struct frame);
+int  nodb_trap(int type, struct frame *);
 
 
 int astpending;

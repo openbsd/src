@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.11 2001/06/22 14:14:10 deraadt Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.12 2002/03/14 01:27:06 millert Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ extern struct vnodeop_desc *vfs_op_descs[];
  */
 int vfs_opv_numops;
 
-typedef int (*PFI) __P((void *));
+typedef int (*PFI)(void *);
 
 /*
  * A miscellaneous routine.
@@ -115,7 +115,7 @@ void
 vfs_opv_init_explicit(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 	struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
@@ -169,7 +169,7 @@ vfs_opv_init_default(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
 	int j;
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1997/09/14 07:02:05 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -58,30 +58,30 @@ int	debug = 0;	/* XXX */
 /*
  * Device configuration
  */
-int	netstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	netopen __P((struct open_file *, ...));
-int	netclose __P((struct open_file *));
+int	netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	netopen(struct open_file *, ...);
+int	netclose(struct open_file *);
 #define netioctl	noioctl
 
-int	ctstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	ctopen __P((struct open_file *, ...));
-int	ctclose __P((struct open_file *));
+int	ctstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	ctopen(struct open_file *, ...);
+int	ctclose(struct open_file *);
 #define	ctioctl		noioctl
 
-int	hdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	hdopen __P((struct open_file *, ...));
-int	hdclose __P((struct open_file *));
+int	hdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	hdopen(struct open_file *, ...);
+int	hdclose(struct open_file *);
 #define hdioctl		noioctl
 
-int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	sdopen __P((struct open_file *, ...));
-int	sdclose __P((struct open_file *));
+int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdopen(struct open_file *, ...);
+int	sdclose(struct open_file *);
 #define	sdioctl		noioctl
 
 #define xxstrategy	\
-	(int (*) __P((void *, int, daddr_t, size_t, void *, size_t *)))nullsys
-#define xxopen		(int (*) __P((struct open_file *, ...)))nodev
-#define xxclose		(int (*) __P((struct open_file *)))nullsys
+	(int (*)(void *, int, daddr_t, size_t, void *, size_t *))nullsys
+#define xxopen		(int (*)(struct open_file *, ...))nodev
+#define xxclose		(int (*)(struct open_file *))nullsys
 
 /*
  * Note: "le" isn't a major offset.
@@ -107,7 +107,7 @@ int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 /*
  * Physical unit/lun detection.
  */
-int	punitzero __P((int, int, int *));
+int	punitzero(int, int, int *);
 
 int
 punitzero(ctlr, slave, punit)
@@ -118,7 +118,7 @@ punitzero(ctlr, slave, punit)
 	return (0);
 }
 
-extern	int ctpunit __P((int, int, int *));
+extern	int ctpunit(int, int, int *);
 #define	xxpunit		punitzero
 #define	hdpunit		punitzero
 #define	sdpunit		punitzero

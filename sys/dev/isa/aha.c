@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.42 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: aha.c,v 1.43 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -139,25 +139,25 @@ struct aha_softc {
 int	aha_debug = 1;
 #endif /* AHADEBUG */
 
-int aha_cmd __P((int, struct aha_softc *, int, u_char *, int, u_char *));
-integrate void aha_finish_ccbs __P((struct aha_softc *));
-int ahaintr __P((void *));
-integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
-void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
-integrate void aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
-struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
-struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
-void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
-void aha_collect_mbo __P((struct aha_softc *));
-void aha_start_ccbs __P((struct aha_softc *));
-void aha_done __P((struct aha_softc *, struct aha_ccb *));
-int aha_find __P((struct isa_attach_args *, struct aha_softc *, int));
-void aha_init __P((struct aha_softc *));
-void aha_inquire_setup_information __P((struct aha_softc *));
-void ahaminphys __P((struct buf *));
-int aha_scsi_cmd __P((struct scsi_xfer *));
-int aha_poll __P((struct aha_softc *, struct scsi_xfer *, int));
-void aha_timeout __P((void *arg));
+int aha_cmd(int, struct aha_softc *, int, u_char *, int, u_char *);
+integrate void aha_finish_ccbs(struct aha_softc *);
+int ahaintr(void *);
+integrate void aha_reset_ccb(struct aha_softc *, struct aha_ccb *);
+void aha_free_ccb(struct aha_softc *, struct aha_ccb *);
+integrate void aha_init_ccb(struct aha_softc *, struct aha_ccb *);
+struct aha_ccb *aha_get_ccb(struct aha_softc *, int);
+struct aha_ccb *aha_ccb_phys_kv(struct aha_softc *, u_long);
+void aha_queue_ccb(struct aha_softc *, struct aha_ccb *);
+void aha_collect_mbo(struct aha_softc *);
+void aha_start_ccbs(struct aha_softc *);
+void aha_done(struct aha_softc *, struct aha_ccb *);
+int aha_find(struct isa_attach_args *, struct aha_softc *, int);
+void aha_init(struct aha_softc *);
+void aha_inquire_setup_information(struct aha_softc *);
+void ahaminphys(struct buf *);
+int aha_scsi_cmd(struct scsi_xfer *);
+int aha_poll(struct aha_softc *, struct scsi_xfer *, int);
+void aha_timeout(void *arg);
 
 struct scsi_adapter aha_switch = {
 	aha_scsi_cmd,
@@ -174,9 +174,9 @@ struct scsi_device aha_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int	aha_isapnp_probe __P((struct device *, void *, void *));
-int	ahaprobe __P((struct device *, void *, void *));
-void	ahaattach __P((struct device *, struct device *, void *));
+int	aha_isapnp_probe(struct device *, void *, void *);
+int	ahaprobe(struct device *, void *, void *);
+void	ahaattach(struct device *, struct device *, void *);
 
 struct cfattach aha_isapnp_ca = {
 	sizeof(struct aha_softc), aha_isapnp_probe, ahaattach

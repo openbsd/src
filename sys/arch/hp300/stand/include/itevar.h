@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.1 1997/07/14 08:14:35 downsj Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: itevar.h,v 1.1 1996/03/03 04:23:42 thorpej Exp $	*/
 
 /*
@@ -83,14 +83,14 @@ struct ite_data {
 
 struct itesw {
 	int	ite_hwid;
-	void	(*ite_init) __P((struct ite_data *));
-	void	(*ite_deinit) __P((struct ite_data *));
-	void	(*ite_clear) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_putc) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_cursor) __P((struct ite_data *, int));
-	void	(*ite_scroll) __P((struct ite_data *, int, int, int, int));
-	u_char	(*ite_readbyte) __P((struct ite_data *, int));
-	void	(*ite_writeglyph) __P((struct ite_data *, u_char *, u_char *));
+	void	(*ite_init)(struct ite_data *);
+	void	(*ite_deinit)(struct ite_data *);
+	void	(*ite_clear)(struct ite_data *, int, int, int, int);
+	void	(*ite_putc)(struct ite_data *, int, int, int, int);
+	void	(*ite_cursor)(struct ite_data *, int);
+	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
+	u_char	(*ite_readbyte)(struct ite_data *, int);
+	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
 };
 
 /* Flags */
@@ -195,38 +195,38 @@ extern	int nitesw;
 /*
  * Prototypes.
  */
-u_char	ite_readbyte __P((struct ite_data *, int));
-void	ite_writeglyph __P((struct ite_data *, u_char *, u_char *));
+u_char	ite_readbyte(struct ite_data *, int);
+void	ite_writeglyph(struct ite_data *, u_char *, u_char *);
 
 /*
  * Framebuffer-specific ITE prototypes.
  */
-void	topcat_init __P((struct ite_data *));
-void	topcat_clear __P((struct ite_data *, int, int, int, int));
-void	topcat_putc __P((struct ite_data *, int, int, int, int));
-void	topcat_cursor __P((struct ite_data *, int));
-void	topcat_scroll __P((struct ite_data *, int, int, int, int));
+void	topcat_init(struct ite_data *);
+void	topcat_clear(struct ite_data *, int, int, int, int);
+void	topcat_putc(struct ite_data *, int, int, int, int);
+void	topcat_cursor(struct ite_data *, int);
+void	topcat_scroll(struct ite_data *, int, int, int, int);
 
-void	gbox_init __P((struct ite_data *));
-void	gbox_clear __P((struct ite_data *, int, int, int, int));
-void	gbox_putc __P((struct ite_data *, int, int, int, int));
-void	gbox_cursor __P((struct ite_data *, int));
-void	gbox_scroll __P((struct ite_data *, int, int, int, int));
+void	gbox_init(struct ite_data *);
+void	gbox_clear(struct ite_data *, int, int, int, int);
+void	gbox_putc(struct ite_data *, int, int, int, int);
+void	gbox_cursor(struct ite_data *, int);
+void	gbox_scroll(struct ite_data *, int, int, int, int);
 
-void	rbox_init __P((struct ite_data *));
-void	rbox_clear __P((struct ite_data *, int, int, int, int));
-void	rbox_putc __P((struct ite_data *, int, int, int, int));
-void	rbox_cursor __P((struct ite_data *, int));
-void	rbox_scroll __P((struct ite_data *, int, int, int, int));
+void	rbox_init(struct ite_data *);
+void	rbox_clear(struct ite_data *, int, int, int, int);
+void	rbox_putc(struct ite_data *, int, int, int, int);
+void	rbox_cursor(struct ite_data *, int);
+void	rbox_scroll(struct ite_data *, int, int, int, int);
 
-void	dvbox_init __P((struct ite_data *));
-void	dvbox_clear __P((struct ite_data *, int, int, int, int));
-void	dvbox_putc __P((struct ite_data *, int, int, int, int));
-void	dvbox_cursor __P((struct ite_data *, int));
-void	dvbox_scroll __P((struct ite_data *, int, int, int, int));
+void	dvbox_init(struct ite_data *);
+void	dvbox_clear(struct ite_data *, int, int, int, int);
+void	dvbox_putc(struct ite_data *, int, int, int, int);
+void	dvbox_cursor(struct ite_data *, int);
+void	dvbox_scroll(struct ite_data *, int, int, int, int);
 
-void	hyper_init __P((struct ite_data *));
-void	hyper_clear __P((struct ite_data *, int, int, int, int));
-void	hyper_putc __P((struct ite_data *, int, int, int, int));
-void	hyper_cursor __P((struct ite_data *, int));
-void	hyper_scroll __P((struct ite_data *, int, int, int, int));
+void	hyper_init(struct ite_data *);
+void	hyper_clear(struct ite_data *, int, int, int, int);
+void	hyper_putc(struct ite_data *, int, int, int, int);
+void	hyper_cursor(struct ite_data *, int);
+void	hyper_scroll(struct ite_data *, int, int, int, int);

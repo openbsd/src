@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_psycho.c,v 1.3 2002/01/31 18:35:19 jason Exp $	*/
+/*	$OpenBSD: uperf_psycho.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -51,8 +51,8 @@
 #include <arch/sparc64/dev/psychovar.h>
 #include <arch/sparc64/dev/uperfvar.h>
 
-int uperf_psycho_match __P((struct device *, void *, void *));
-void uperf_psycho_attach __P((struct device *, struct device *, void *));
+int uperf_psycho_match(struct device *, void *, void *);
+void uperf_psycho_attach(struct device *, struct device *, void *);
 
 struct uperf_psycho_softc {
 	struct uperf_softc	sc_usc;
@@ -63,10 +63,10 @@ struct cfattach uperf_psycho_ca = {
 	sizeof(struct uperf_psycho_softc), uperf_psycho_match, uperf_psycho_attach
 };
 
-int uperf_psycho_getcnt __P((void *, int, u_int32_t *, u_int32_t *));
-int uperf_psycho_clrcnt __P((void *, int));
-int uperf_psycho_getcntsrc __P((void *, int, u_int *, u_int *));
-int uperf_psycho_setcntsrc __P((void *, int, u_int, u_int));
+int uperf_psycho_getcnt(void *, int, u_int32_t *, u_int32_t *);
+int uperf_psycho_clrcnt(void *, int);
+int uperf_psycho_getcntsrc(void *, int, u_int *, u_int *);
+int uperf_psycho_setcntsrc(void *, int, u_int, u_int);
 
 struct uperf_src uperf_psycho_srcs[] = {
 	{ UPERFSRC_SDVRA, UPERF_CNT0|UPERF_CNT1, PSY_PMCRSEL_SDVRA },

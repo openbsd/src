@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.24 2002/03/13 18:27:36 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.25 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -119,13 +119,13 @@ boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
 #define PMAP_MAP_POOLPAGE(pa) ((vaddr_t)pa)
 #define PMAP_UNMAP_POOLPAGE(va)       ((paddr_t)va)
 
-void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
+void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 
-void pmap_pinit __P((struct pmap *));
-void pmap_release __P((struct pmap *));
+void pmap_pinit(struct pmap *);
+void pmap_release(struct pmap *);
 
-void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
-void switchexit __P((struct proc *));
+void pmap_real_memory(vm_offset_t *start, vm_size_t *size);
+void switchexit(struct proc *);
 
 int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr);
 #define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;

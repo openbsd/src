@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_23.c,v 1.1 2001/05/16 17:14:38 millert Exp $	*/
+/*	$OpenBSD: kern_ipc_23.c,v 1.2 2002/03/14 01:26:49 millert Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -70,7 +70,7 @@
 
 #ifdef SYSVMSG
 
-void msg_freehdr __P((struct msg *));
+void msg_freehdr(struct msg *);
 
 int
 compat_23_sys_msgctl(p, v, retval)
@@ -211,8 +211,8 @@ compat_23_sys_msgctl(p, v, retval)
 
 #ifdef SYSVSHM
 
-struct shmid_ds *shm_find_segment_by_shmid __P((int));
-void shm_deallocate_segment __P((struct shmid_ds *));
+struct shmid_ds *shm_find_segment_by_shmid(int);
+void shm_deallocate_segment(struct shmid_ds *);
 
 #define SHMSEG_REMOVED		0x0400		/* XXX */
 
@@ -281,7 +281,7 @@ compat_23_sys_shmctl(p, v, retval)
 
 #ifdef SYSVSEM
 
-void semundo_clear __P((int, int));
+void semundo_clear(int, int);
 
 int
 compat_23_sys___semctl(p, v, retval)

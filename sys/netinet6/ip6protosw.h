@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.4 2001/02/16 16:00:58 itojun Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.5 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -122,32 +122,22 @@ struct ip6protosw {
 	short	pr_flags;		/* see below */
 
 /* protocol-protocol hooks */
-	int	(*pr_input)		/* input to protocol (from below) */
-			__P((struct mbuf **, int *, int));
-	int	(*pr_output)		/* output to protocol (from above) */
-			__P((struct mbuf *, ...));
-	void	(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, void *));
-	int	(*pr_ctloutput)		/* control output (from above) */
-			__P((int, struct socket *, int, int, struct mbuf **));
+	int	(*pr_input)		/* input to protocol (from below) */(struct mbuf **, int *, int);
+	int	(*pr_output)		/* output to protocol (from above) */(struct mbuf *, ...);
+	void	(*pr_ctlinput)		/* control input (from below) */(int, struct sockaddr *, void *);
+	int	(*pr_ctloutput)		/* control output (from above) */(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
-	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct proc *));
+	int	(*pr_usrreq)		/* user request: see list below */(struct socket *, int, struct mbuf *,
+			     struct mbuf *, struct mbuf *, struct proc *);
 
 /* utility hooks */
-	void	(*pr_init)		/* initialization hook */
-			__P((void));
+	void	(*pr_init)		/* initialization hook */(void);
 
-	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			__P((void));
-	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			__P((void));
-	void	(*pr_drain)		/* flush any excess space possible */
-			__P((void));
-	int	(*pr_sysctl)		/* sysctl for protocol */
-			__P((int *, u_int, void *, size_t *, void *, size_t));
+	void	(*pr_fasttimo)		/* fast timeout (200ms) */(void);
+	void	(*pr_slowtimo)		/* slow timeout (500ms) */(void);
+	void	(*pr_drain)		/* flush any excess space possible */(void);
+	int	(*pr_sysctl)		/* sysctl for protocol */(int *, u_int, void *, size_t *, void *, size_t);
 };
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

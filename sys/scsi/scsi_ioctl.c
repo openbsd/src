@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.14 2002/01/07 19:04:46 mickey Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.15 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -63,10 +63,10 @@ struct scsi_ioctl {
 
 LIST_HEAD(, scsi_ioctl) si_head;
 
-struct scsi_ioctl *si_get __P((void));
-void si_free __P((struct scsi_ioctl *));
-struct scsi_ioctl *si_find __P((struct buf *));
-void scsistrategy __P((struct buf *));
+struct scsi_ioctl *si_get(void);
+void si_free(struct scsi_ioctl *);
+struct scsi_ioctl *si_find(struct buf *);
+void scsistrategy(struct buf *);
 
 struct scsi_ioctl *
 si_get()

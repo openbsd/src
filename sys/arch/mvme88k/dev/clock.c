@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2002/01/14 21:34:38 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.19 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -118,12 +118,12 @@ int timerok = 0;
 
 u_long delay_factor = 1;
 
-static int	clockmatch	__P((struct device *, void *, void *));
-static void	clockattach	__P((struct device *, struct device *, void *));
+static int	clockmatch(struct device *, void *, void *);
+static void	clockattach(struct device *, struct device *, void *);
 
 void	sbc_initclock(void);
 void	m188_initclock(void);
-void	m188_timer_init	__P((unsigned));
+void	m188_timer_init(unsigned);
 
 struct clocksoftc {
 	struct device	sc_dev;
@@ -139,8 +139,8 @@ struct cfdriver clock_cd = {
         NULL, "clock", DV_DULL, 0
 }; 
 
-int	sbc_clockintr	__P((void *));
-int	m188_clockintr	__P((void *));
+int	sbc_clockintr(void *);
+int	m188_clockintr(void *);
 
 int	clockbus;
 u_char	prof_reset;

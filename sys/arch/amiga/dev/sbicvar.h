@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.4 2001/01/25 03:50:46 todd Exp $	*/
+/*	$OpenBSD: sbicvar.h,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: sbicvar.h,v 1.11 1996/04/21 21:12:23 veego Exp $	*/
 
 /*
@@ -138,10 +138,10 @@ struct	sbic_softc {
 	u_long	sc_dmamask;		/* dma valid mem mask */
 	struct	dma_chain *sc_cur;
 	struct	dma_chain *sc_last;
-	int  (*sc_dmago)	__P((struct sbic_softc *, char *, int, int));
-	int  (*sc_dmanext)	__P((struct sbic_softc *));
-	void (*sc_enintr)	__P((struct sbic_softc *));
-	void (*sc_dmastop)	__P((struct sbic_softc *));
+	int  (*sc_dmago)(struct sbic_softc *, char *, int, int);
+	int  (*sc_dmanext)(struct sbic_softc *);
+	void (*sc_enintr)(struct sbic_softc *);
+	void (*sc_dmastop)(struct sbic_softc *);
 	u_short	gtsc_bankmask;		/* GVP specific bank selected */
 };
 
@@ -224,12 +224,12 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsi_xfer *));
-void sbicinit __P((struct sbic_softc *));
-int  sbicintr __P((struct sbic_softc *));
+void sbic_minphys(struct buf *bp);
+int sbic_scsicmd(struct scsi_xfer *);
+void sbicinit(struct sbic_softc *);
+int  sbicintr(struct sbic_softc *);
 #ifdef DEBUG
-void sbic_dump __P((struct sbic_softc *dev));
+void sbic_dump(struct sbic_softc *dev);
 #endif
 
 #endif /* _SBICVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.10 1998/03/03 04:54:47 ryker Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.11 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -103,15 +103,15 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
-static void	zsstart __P((struct tty *));
-static int	zsparam __P((struct tty *, struct termios *));
-static void	zs_modem __P((struct zstty_softc *zst, int onoff));
-static int	zshwiflow __P((struct tty *, int));
-static void	zs_hwiflow __P((struct zstty_softc *, int));
-static int	zsgetbaud __P((register struct zs_chanstate *,
+static void	zsstart(struct tty *);
+static int	zsparam(struct tty *, struct termios *);
+static void	zs_modem(struct zstty_softc *zst, int onoff);
+static int	zshwiflow(struct tty *, int);
+static void	zs_hwiflow(struct zstty_softc *, int);
+static int	zsgetbaud(register struct zs_chanstate *,
 		    register int *rate, register int *tc, register u_char *rr4,
 		    register u_char *rr11, register u_char *rr14,
-		    register int *source, register int *sourceflag));
+		    register int *source, register int *sourceflag);
 
 /*
  * zstty_match: how is this zs channel configured?
@@ -1091,11 +1091,11 @@ zs_hwiflow(zst, stop)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void	zstty_rxint __P((register struct zs_chanstate *));
-static void	zstty_txint __P((register struct zs_chanstate *));
-static void	zstty_stint __P((register struct zs_chanstate *));
-static void	zsoverrun __P((struct zstty_softc *, long *, char *));
-static void	zstty_softint __P((struct zs_chanstate *));
+static void	zstty_rxint(register struct zs_chanstate *);
+static void	zstty_txint(register struct zs_chanstate *);
+static void	zstty_stint(register struct zs_chanstate *);
+static void	zsoverrun(struct zstty_softc *, long *, char *);
+static void	zstty_softint(struct zs_chanstate *);
 /*
  * XXX: need to do input flow-control to avoid ring overrun.
  */

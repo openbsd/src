@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2002/02/20 19:33:01 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -153,12 +153,12 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 /*
  * exported methods for cpus
  */
-int (*cpu_desidhash) __P((void));
-int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
-int (*cpu_ibtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-int (*cpu_dbtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
+int (*cpu_desidhash)(void);
+int (*cpu_hpt_init)(vaddr_t hpt, vsize_t hptsize);
+int (*cpu_ibtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot);
+int (*cpu_dbtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot);
 
 dev_t	bootdev;
 int	totalphysmem, resvmem, physmem, esym;
@@ -175,11 +175,11 @@ struct vm_map *phys_map = NULL;
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
 
-void delay_init __P((void));
-static __inline void fall __P((int, int, int, int, int));
-void dumpsys __P((void));
-void hpmc_dump __P((void));
-void hppa_user2frame __P((struct trapframe *sf, struct trapframe *tf));
+void delay_init(void);
+static __inline void fall(int, int, int, int, int);
+void dumpsys(void);
+void hpmc_dump(void);
+void hppa_user2frame(struct trapframe *sf, struct trapframe *tf);
 
 /*
  * wide used hardware params
@@ -202,37 +202,37 @@ extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
 extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
-int iibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int idbtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_t __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_l __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int pbtlb_g __P((int i));
-int hpti_l __P((vaddr_t, vsize_t));
-int hpti_g __P((vaddr_t, vsize_t));
-int desidhash_x __P((void));
-int desidhash_s __P((void));
-int desidhash_t __P((void));
-int desidhash_l __P((void));
-int desidhash_g __P((void));
+int iibtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot);
+int idbtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot);
+int ibtlb_t(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot);
+int ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot);
+int ibtlb_g(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+    vsize_t sz, u_int prot);
+int pbtlb_g(int i);
+int hpti_l(vaddr_t, vsize_t);
+int hpti_g(vaddr_t, vsize_t);
+int desidhash_x(void);
+int desidhash_s(void);
+int desidhash_t(void);
+int desidhash_l(void);
+int desidhash_g(void);
 const struct hppa_cpu_typed {
 	char name[8];
 	enum hppa_cpu_type type;
 	int  arch;
 	int  features;
-	int (*desidhash) __P((void));
+	int (*desidhash)(void);
 	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
-	int (*dbtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*ibtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-	int (*btlbprg) __P((int i));
-	int (*hptinit) __P((vaddr_t hpt, vsize_t hptsize));
+	int (*dbtlbins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot);
+	int (*ibtlbins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot);
+	int (*btlbprg)(int i);
+	int (*hptinit)(vaddr_t hpt, vsize_t hptsize);
 } cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
@@ -1035,7 +1035,7 @@ dumpsys()
 	int psize, bytes, i, n;
 	register caddr_t maddr;
 	register daddr_t blkno;
-	register int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	register int error;
 
 	/* Save registers

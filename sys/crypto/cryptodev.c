@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.33 2002/03/05 15:59:41 markus Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.34 2002/03/14 01:26:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -75,14 +75,14 @@ struct fcrypt {
 	int		sesn;
 };
 
-void	cryptoattach __P((int));
+void	cryptoattach(int);
 
-int	cryptoopen __P((dev_t, int, int, struct proc *));
-int	cryptoclose __P((dev_t, int, int, struct proc *));
-int	cryptoread __P((dev_t, struct uio *, int));
-int	cryptowrite __P((dev_t, struct uio *, int));
-int	cryptoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cryptoselect __P((dev_t, int, struct proc *));
+int	cryptoopen(dev_t, int, int, struct proc *);
+int	cryptoclose(dev_t, int, int, struct proc *);
+int	cryptoread(dev_t, struct uio *, int);
+int	cryptowrite(dev_t, struct uio *, int);
+int	cryptoioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	cryptoselect(dev_t, int, struct proc *);
 
 int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *);

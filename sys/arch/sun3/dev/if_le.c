@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 2000/08/28 22:03:01 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.13 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -83,15 +83,15 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match __P((struct device *, void *, void *));
-static void	le_attach __P((struct device *, struct device *, void *));
+static int	le_match(struct device *, void *, void *);
+static void	le_attach(struct device *, struct device *, void *);
 
 struct cfattach le_ca = {
 	sizeof(struct le_softc), le_match, le_attach
 };
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 
 hide void
 lewrcsr(sc, port, val)

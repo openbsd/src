@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.8 2002/01/30 06:53:56 drahn Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.9 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ int awacs_query_devinfo(void *, mixer_devinfo_t *);
 size_t awacs_round_buffersize(void *, int, size_t);
 paddr_t awacs_mappage(void *, void *, off_t, int);
 int awacs_get_props(void *);
-void *awacs_allocm __P((void *, int, size_t, int, int));
+void *awacs_allocm(void *, int, size_t, int, int);
 
 static inline u_int awacs_read_reg(struct awacs_softc *, int);
 static inline void awacs_write_reg(struct awacs_softc *, int, int);
@@ -122,7 +122,7 @@ void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
 int awacs_set_rate(struct awacs_softc *, int);
-void awacs_mono16_to_stereo16 __P((void *v, u_char *p, int cc));
+void awacs_mono16_to_stereo16(void *v, u_char *p, int cc);
 
 struct cfattach awacs_ca = {
 	sizeof(struct awacs_softc), awacs_match, awacs_attach

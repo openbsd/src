@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_hy.c,v 1.7 2000/11/10 15:33:05 provos Exp $	*/
+/*	$OpenBSD: grf_hy.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_hy.c,v 1.9 1997/03/31 07:34:16 scottr Exp $	*/
 
 /*
@@ -79,16 +79,16 @@
 
 caddr_t badhyaddr = (caddr_t) -1;
 
-int	hy_init __P((struct grf_data *gp, int, caddr_t));
-int	hy_mode __P((struct grf_data *gp, int, caddr_t));
-void	hyper_ite_fontinit __P((struct ite_data *));
+int	hy_init(struct grf_data *gp, int, caddr_t);
+int	hy_mode(struct grf_data *gp, int, caddr_t);
+void	hyper_ite_fontinit(struct ite_data *);
 
-int	hyper_dio_match __P((struct device *, void *, void *));
-void	hyper_dio_attach __P((struct device *, struct device *, void *));
+int	hyper_dio_match(struct device *, void *, void *);
+void	hyper_dio_attach(struct device *, struct device *, void *);
 
-int	hyper_console_scan __P((int, caddr_t, void *));
-void	hypercnprobe __P((struct consdev *cp));
-void	hypercninit __P((struct consdev *cp));
+int	hyper_console_scan(int, caddr_t, void *);
+void	hypercnprobe(struct consdev *cp);
+void	hypercninit(struct consdev *cp);
 
 struct cfattach hyper_dio_ca = {
 	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
@@ -104,15 +104,15 @@ struct grfsw hyper_grfsw = {
 };
 
 #if NITE > 0
-void	hyper_init __P((struct ite_data *));
-void	hyper_deinit __P((struct ite_data *));
-void	hyper_int_fontinit __P((struct ite_data *));
-void	hyper_putc __P((struct ite_data *, int, int, int, int));
-void	hyper_cursor __P((struct ite_data *, int));
-void	hyper_clear __P((struct ite_data *, int, int, int, int));
-void	hyper_scroll __P((struct ite_data *, int, int, int, int));
-void	hyper_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+void	hyper_init(struct ite_data *);
+void	hyper_deinit(struct ite_data *);
+void	hyper_int_fontinit(struct ite_data *);
+void	hyper_putc(struct ite_data *, int, int, int, int);
+void	hyper_cursor(struct ite_data *, int);
+void	hyper_clear(struct ite_data *, int, int, int, int);
+void	hyper_scroll(struct ite_data *, int, int, int, int);
+void	hyper_windowmove(struct ite_data *, int, int, int, int,
+		int, int, int);
 
 /* Hyperion ite switch */
 struct itesw hyper_itesw = {

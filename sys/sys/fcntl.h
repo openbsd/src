@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.6 2000/04/21 15:47:27 millert Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -194,11 +194,11 @@ struct flock {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	open __P((const char *, int, ...));
-int	creat __P((const char *, mode_t));
-int	fcntl __P((int, int, ...));
+int	open(const char *, int, ...);
+int	creat(const char *, mode_t);
+int	fcntl(int, int, ...);
 #ifndef _POSIX_SOURCE
-int	flock __P((int, int));
+int	flock(int, int);
 #endif /* !_POSIX_SOURCE */
 __END_DECLS
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.11 2001/09/23 07:05:06 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.12 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -143,8 +143,8 @@ struct apci_softc {
 #define	APCI_ISCONSOLE	0x02		/* unit is console */
 #define	APCI_SOFTCAR	0x04		/* soft carrier */
 
-int	apcimatch __P((struct device *, void *, void *));
-void	apciattach __P((struct device *, struct device *, void *));
+int	apcimatch(struct device *, void *, void *);
+void	apciattach(struct device *, struct device *, void *);
 
 struct cfattach apci_ca = {
 	sizeof(struct apci_softc), apcimatch, apciattach
@@ -154,14 +154,14 @@ struct cfdriver apci_cd = {
 	NULL, "apci", DV_TTY
 };
 
-int	apciintr __P((void *));
-void	apcieint __P((struct apci_softc *, int));
-void	apcimint __P((struct apci_softc *, u_char));
-int	apciparam __P((struct tty *, struct termios *));
-void	apcistart __P((struct tty *));
-int	apcimctl __P((struct apci_softc *, int, int));
-void	apciinit __P((struct apciregs *, int));
-void	apcitimeout __P((void *));
+int	apciintr(void *);
+void	apcieint(struct apci_softc *, int);
+void	apcimint(struct apci_softc *, u_char);
+int	apciparam(struct tty *, struct termios *);
+void	apcistart(struct tty *);
+int	apcimctl(struct apci_softc *, int, int);
+void	apciinit(struct apciregs *, int);
+void	apcitimeout(void *);
 
 cdev_decl(apci);
 
@@ -197,10 +197,10 @@ struct apciregs *apci_cn = NULL;	/* console hardware */
 int	apciconsinit;			/* has been initialized */
 int	apcimajor;			/* our major number */
 
-void	apcicnprobe __P((struct consdev *));
-void	apcicninit __P((struct consdev *));
-int	apcicngetc __P((dev_t));
-void	apcicnputc __P((dev_t, int));
+void	apcicnprobe(struct consdev *);
+void	apcicninit(struct consdev *);
+int	apcicngetc(dev_t);
+void	apcicnputc(dev_t, int);
 
 
 int

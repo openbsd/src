@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.2 2001/07/04 08:43:28 niklas Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.3 2002/03/14 01:26:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -62,8 +62,8 @@ struct bpp_softc {
 	volatile struct bppregs *sc_regs;
 };
 
-static int bppmatch __P((struct device *, void *, void *));
-static void bppattach __P((struct device *, struct device *, void *));
+static int bppmatch(struct device *, void *, void *);
+static void bppattach(struct device *, struct device *, void *);
 
 #define BPPUNIT(s)	minor(s)
 
@@ -75,11 +75,11 @@ struct cfdriver bpp_cd = {
 	NULL, "bpp", DV_DULL
 };
 
-static __inline__ void bpp_outb __P((struct bpp_softc *, u_int8_t));
-static __inline__ u_int8_t bpp_inb __P((struct bpp_softc *));
-static void bppreset __P((struct bpp_softc *, int));
-static void bppresetmode __P((struct bpp_softc *));
-static int bpppushbytes __P((struct bpp_softc *));
+static __inline__ void bpp_outb(struct bpp_softc *, u_int8_t);
+static __inline__ u_int8_t bpp_inb(struct bpp_softc *);
+static void bppreset(struct bpp_softc *, int);
+static void bppresetmode(struct bpp_softc *);
+static int bpppushbytes(struct bpp_softc *);
 
 static int
 bppmatch(parent, vcf, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.3 2001/02/03 07:29:29 mickey Exp $	*/
+/*	$OpenBSD: uha.c,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -86,12 +86,12 @@
 
 #define KVTOPHYS(x)	vtophys(x)
 
-integrate void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
-void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
-integrate void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
-struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
-void uhaminphys __P((struct buf *));
-int uha_scsi_cmd __P((struct scsi_xfer *));
+integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
+void uha_free_mscp(struct uha_softc *, struct uha_mscp *);
+integrate void uha_init_mscp(struct uha_softc *, struct uha_mscp *);
+struct uha_mscp *uha_get_mscp(struct uha_softc *, int);
+void uhaminphys(struct buf *);
+int uha_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter uha_switch = {
 	uha_scsi_cmd,
@@ -115,7 +115,7 @@ struct cfdriver uha_cd = {
 #define	UHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 #ifdef __OpenBSD__
-int	uhaprint __P((void *, const char *));
+int	uhaprint(void *, const char *);
 
 int
 uhaprint(aux, name)

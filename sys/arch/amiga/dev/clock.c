@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2002/01/24 20:31:08 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.15 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
@@ -98,11 +98,11 @@ struct clockframe hardclock_frame;
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch __P((struct device *, void *, void *));
-void clockattach __P((struct device *, struct device *, void *));
-void cpu_initclocks __P((void));
-void calibrate_delay __P((struct device *));
-int clockintr __P((void *));
+int clockmatch(struct device *, void *, void *);
+void clockattach(struct device *, struct device *, void *);
+void cpu_initclocks(void);
+void calibrate_delay(struct device *);
+int clockintr(void *);
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach

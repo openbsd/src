@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.h,v 1.6 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.7 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
@@ -127,9 +127,9 @@ struct ifpppcstatsreq {
 #define SIOCGPPPCSTATS	_IOWR('i', 122, struct ifpppcstatsreq)
 
 #ifdef _KERNEL
-void pppattach __P((void));
-int pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		   struct rtentry *));
-void pppintr __P((void));
+void pppattach(void);
+int pppoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+		   struct rtentry *);
+void pppintr(void);
 #endif
 #endif /* _NET_IF_PPP_H_ */

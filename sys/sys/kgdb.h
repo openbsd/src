@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb.h,v 1.1 2001/01/24 09:37:57 hugh Exp $	*/
+/*	$OpenBSD: kgdb.h,v 1.2 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: kgdb.h,v 1.5 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -90,17 +90,17 @@ extern int kgdb_debug_init, kgdb_debug_panic;
 extern label_t *kgdb_recover;
 
 void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *ioarg));
-void kgdb_connect __P((int));
-void kgdb_panic __P((void));
-int kgdb_trap __P((int, db_regs_t *));
+void kgdb_connect(int);
+void kgdb_panic(void);
+int kgdb_trap(int, db_regs_t *);
 
 /*
  * Machine dependent functions needed by kgdb_stub.c
  */
-int kgdb_signal __P((int));
-int kgdb_acc __P((vaddr_t, size_t));
-void kgdb_getregs __P((db_regs_t *, kgdb_reg_t *));
-void kgdb_setregs __P((db_regs_t *, kgdb_reg_t *));
+int kgdb_signal(int);
+int kgdb_acc(vaddr_t, size_t);
+void kgdb_getregs(db_regs_t *, kgdb_reg_t *);
+void kgdb_setregs(db_regs_t *, kgdb_reg_t *);
 
 #endif	/* _KERNEL */
 #endif /* !_SYS_KGDB_H_ */

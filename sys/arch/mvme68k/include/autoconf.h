@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.6 1997/03/31 00:23:58 downsj Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.7 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,7 +66,7 @@ struct	device *bootdv; /* boot device */
 /* PARTITIONSHIFT from disklabel.h */
 #define PARTITIONMASK   ((1 << PARTITIONSHIFT) - 1) 
 
-void	*mapiodev __P((void *pa, int size));
-void	unmapiodev __P((void *kva, int size));
+void	*mapiodev(void *pa, int size);
+void	unmapiodev(void *kva, int size);
 
 #endif

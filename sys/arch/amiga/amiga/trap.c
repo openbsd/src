@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2001/12/22 21:25:59 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -178,20 +178,20 @@ extern struct pcb *curpcb;
 extern char fubail[], subail[];
 
 /* XXX until we get it from m68k/cpu.h */
-extern void    regdump __P((struct trapframe *, int));
+extern void    regdump(struct trapframe *, int);
 
-int	_write_back __P((u_int, u_int, u_int, u_int, struct vm_map *));
-void	panictrap __P((int, u_int, u_int, struct frame *));
-void	trapcpfault __P((struct proc *, struct frame *));
-void	trapmmufault __P((int, u_int, u_int, struct frame *, struct proc *,
-    u_quad_t));
-void	trap __P((int, u_int, u_int, struct frame));
+int	_write_back(u_int, u_int, u_int, u_int, struct vm_map *);
+void	panictrap(int, u_int, u_int, struct frame *);
+void	trapcpfault(struct proc *, struct frame *);
+void	trapmmufault(int, u_int, u_int, struct frame *, struct proc *,
+    u_quad_t);
+void	trap(int, u_int, u_int, struct frame);
 #ifdef DDB
 #include <m68k/db_machdep.h>
-int	db_trap __P((int, db_regs_t *));
+int	db_trap(int, db_regs_t *);
 #endif
-void	syscall __P((register_t, struct frame));
-void	_wb_fault __P((void));
+void	syscall(register_t, struct frame);
+void	_wb_fault(void);
 
 /*ARGSUSED*/
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.12 2002/02/12 13:05:32 art Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.13 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -63,14 +63,14 @@
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
-#define portal_init ((int (*) __P((struct vfsconf *)))nullop)
+#define portal_init ((int (*)(struct vfsconf *))nullop)
 
-int	portal_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	portal_start __P((struct mount *, int, struct proc *));
-int	portal_unmount __P((struct mount *, int, struct proc *));
-int	portal_root __P((struct mount *, struct vnode **));
-int	portal_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	portal_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	portal_start(struct mount *, int, struct proc *);
+int	portal_unmount(struct mount *, int, struct proc *);
+int	portal_root(struct mount *, struct vnode **);
+int	portal_statfs(struct mount *, struct statfs *, struct proc *);
 
 
 /*
@@ -250,20 +250,20 @@ portal_statfs(mp, sbp, p)
 }
 
 
-#define portal_sync ((int (*) __P((struct mount *, int, struct ucred *, \
-				  struct proc *)))nullop)
+#define portal_sync ((int (*)(struct mount *, int, struct ucred *, \
+				  struct proc *))nullop)
 
-#define portal_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct vnode **)))eopnotsupp)
-#define portal_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-	    struct proc *)))eopnotsupp)
-#define portal_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define portal_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+#define portal_fhtovp ((int (*)(struct mount *, struct fid *, \
+	    struct vnode **))eopnotsupp)
+#define portal_quotactl ((int (*)(struct mount *, int, uid_t, caddr_t, \
+	    struct proc *))eopnotsupp)
+#define portal_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *))eopnotsupp)
+#define portal_vget ((int (*)(struct mount *, ino_t, struct vnode **)) \
 	    eopnotsupp)
-#define portal_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
-#define portal_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
-	int *, struct ucred **)))eopnotsupp)
+#define portal_vptofh ((int (*)(struct vnode *, struct fid *))eopnotsupp)
+#define portal_checkexp ((int (*)(struct mount *, struct mbuf *,	\
+	int *, struct ucred **))eopnotsupp)
 
 struct vfsops portal_vfsops = {
 	portal_mount,

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.54 2002/03/14 00:42:24 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.55 2002/03/14 01:26:48 millert Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -121,7 +121,7 @@
 
 #include "smg.h"
 
-caddr_t allocsys __P((caddr_t));
+caddr_t allocsys(caddr_t);
 
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 5

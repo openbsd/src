@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.31 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.32 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -107,8 +107,8 @@
 /*
  * Inline function to copy a 16-bit aligned 32-bit quantity.
  */
-static __inline void fxp_lwcopy __P((volatile u_int32_t *,
-	volatile u_int32_t *));
+static __inline void fxp_lwcopy(volatile u_int32_t *,
+	volatile u_int32_t *);
 static __inline void
 fxp_lwcopy(src, dst)
 	volatile u_int32_t *src, *dst;
@@ -152,24 +152,24 @@ static u_char fxp_cb_config_template[] = {
 	0x5	/* 21 */
 };
 
-int fxp_mediachange		__P((struct ifnet *));
-void fxp_mediastatus		__P((struct ifnet *, struct ifmediareq *));
-void fxp_scb_wait	__P((struct fxp_softc *));
-void fxp_start			__P((struct ifnet *));
-int fxp_ioctl			__P((struct ifnet *, u_long, caddr_t));
-void fxp_init			__P((void *));
-void fxp_stop			__P((struct fxp_softc *, int));
-void fxp_watchdog		__P((struct ifnet *));
-int fxp_add_rfabuf		__P((struct fxp_softc *, struct mbuf *));
-int fxp_mdi_read		__P((struct device *, int, int));
-void fxp_mdi_write		__P((struct device *, int, int, int));
-void fxp_autosize_eeprom	__P((struct fxp_softc *));
-void fxp_statchg		__P((struct device *));
-void fxp_read_eeprom		__P((struct fxp_softc *, u_int16_t *,
-				    int, int));
-void fxp_stats_update		__P((void *));
-void fxp_mc_setup		__P((struct fxp_softc *, int));
-void fxp_scb_cmd		__P((struct fxp_softc *, u_int8_t));
+int fxp_mediachange(struct ifnet *);
+void fxp_mediastatus(struct ifnet *, struct ifmediareq *);
+void fxp_scb_wait(struct fxp_softc *);
+void fxp_start(struct ifnet *);
+int fxp_ioctl(struct ifnet *, u_long, caddr_t);
+void fxp_init(void *);
+void fxp_stop(struct fxp_softc *, int);
+void fxp_watchdog(struct ifnet *);
+int fxp_add_rfabuf(struct fxp_softc *, struct mbuf *);
+int fxp_mdi_read(struct device *, int, int);
+void fxp_mdi_write(struct device *, int, int, int);
+void fxp_autosize_eeprom(struct fxp_softc *);
+void fxp_statchg(struct device *);
+void fxp_read_eeprom(struct fxp_softc *, u_int16_t *,
+				    int, int);
+void fxp_stats_update(void *);
+void fxp_mc_setup(struct fxp_softc *, int);
+void fxp_scb_cmd(struct fxp_softc *, u_int8_t);
 
 /*
  * Set initial transmit threshold at 64 (512 bytes). This is
@@ -220,8 +220,8 @@ fxp_scb_wait(sc)
  * Operating system-specific autoconfiguration glue
  *************************************************************/
 
-void	fxp_shutdown __P((void *));
-void	fxp_power __P((int, void *));
+void	fxp_shutdown(void *);
+void	fxp_power(int, void *);
 
 struct cfdriver fxp_cd = {
 	NULL, "fxp", DV_IFNET

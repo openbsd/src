@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.2 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: uda.c,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -78,15 +78,15 @@ struct	uda_softc {
 	int	sc_inq;
 };
 
-static	int	udamatch __P((struct device *, struct cfdata *, void *));
-static	void	udaattach __P((struct device *, struct device *, void *));
+static	int	udamatch(struct device *, struct cfdata *, void *);
+static	void	udaattach(struct device *, struct device *, void *);
 static	void	udareset(struct device *);
-static	void	udaintr __P((void *));
-int	udaready __P((struct uba_unit *));
-void	udactlrdone __P((struct device *));
-int	udaprint __P((void *, const char *));
-void	udasaerror __P((struct device *, int));
-void	udago __P((struct device *, struct mscp_xi *));
+static	void	udaintr(void *);
+int	udaready(struct uba_unit *);
+void	udactlrdone(struct device *);
+int	udaprint(void *, const char *);
+void	udasaerror(struct device *, int);
+void	udago(struct device *, struct mscp_xi *);
 
 struct	cfattach mtc_ca = {
 	sizeof(struct uda_softc), (cfmatch_t)udamatch, udaattach

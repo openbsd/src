@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.31 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.32 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -52,19 +52,19 @@ int	pcmcia_verbose = 1;
 int	pcmcia_verbose = 0;
 #endif
 
-int	pcmcia_match __P((struct device *, void *, void *));
-int	pcmcia_submatch __P((struct device *, void *, void *));
-void	pcmcia_attach __P((struct device *, struct device *, void *));
-int	pcmcia_print __P((void *, const char *));
-void	pcmcia_card_detach_notify __P((struct device *, void *));
-void	pcmcia_power __P((int why, void *arg));
+int	pcmcia_match(struct device *, void *, void *);
+int	pcmcia_submatch(struct device *, void *, void *);
+void	pcmcia_attach(struct device *, struct device *, void *);
+int	pcmcia_print(void *, const char *);
+void	pcmcia_card_detach_notify(struct device *, void *);
+void	pcmcia_power(int why, void *arg);
 
-static inline void pcmcia_socket_enable __P((pcmcia_chipset_tag_t,
-					     pcmcia_chipset_handle_t *));
-static inline void pcmcia_socket_disable __P((pcmcia_chipset_tag_t,
-					      pcmcia_chipset_handle_t *));
+static inline void pcmcia_socket_enable(pcmcia_chipset_tag_t,
+					     pcmcia_chipset_handle_t *);
+static inline void pcmcia_socket_disable(pcmcia_chipset_tag_t,
+					      pcmcia_chipset_handle_t *);
 
-int pcmcia_card_intr __P((void *));
+int pcmcia_card_intr(void *);
 
 struct cfdriver pcmcia_cd = {
 	NULL, "pcmcia", DV_DULL
@@ -686,7 +686,7 @@ void *
 pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
 	struct pcmcia_function *pf;
 	int ipl;
-	int (*ih_fct) __P((void *));
+	int (*ih_fct)(void *);
 	void *ih_arg;
 	char *xname;
 {

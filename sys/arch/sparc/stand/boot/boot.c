@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 1999/06/21 23:35:41 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
 
 #include <sparc/stand/common/promdev.h>
 
-void copyunix __P((int, char *));
-void promsyms __P((int, struct exec *));
+void copyunix(int, char *);
+void promsyms(int, struct exec *);
 int debug;
 int netif_debug;
 
@@ -59,9 +59,9 @@ char			*strtab;
 int			strtablen;
 char			fbuf[80], dbuf[128];
 
-typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
+typedef void (*entry_t)(caddr_t, int, int, int, long, long);
 
-void	loadfile __P((int, caddr_t));
+void	loadfile(int, caddr_t);
 
 main()
 {

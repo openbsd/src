@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -112,7 +112,7 @@ extern union sir sir;
 #define SIR_CLOCK	1
 
 #if defined(SUN4M)
-extern void	raise __P((int, int));
+extern void	raise(int, int);
 #if !(defined(SUN4) || defined(SUN4C))
 #define setsoftint()	raise(0,1)
 #else /* both defined */
@@ -155,13 +155,13 @@ extern int	foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 };
 extern struct intrhand *intrhand[15];
-void	intr_establish __P((int level, struct intrhand *));
-void	vmeintr_establish __P((int vec, int level, struct intrhand *));
+void	intr_establish(int level, struct intrhand *);
+void	vmeintr_establish(int vec, int level, struct intrhand *);
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
@@ -171,68 +171,68 @@ void	vmeintr_establish __P((int vec, int level, struct intrhand *));
 void	intr_fasttrap __P((int level, void (*vec)(void)));
 
 /* auxreg.c */
-void led_blink __P((void *));
+void led_blink(void *);
 /* scf.c */
-void scfblink __P((void *));
+void scfblink(void *);
 /* disksubr.c */
 struct dkbad;
-int isbad __P((struct dkbad *bt, int, int, int));
+int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-int	ldcontrolb __P((caddr_t));
-void	dumpconf __P((void));
-caddr_t	reserve_dumppages __P((caddr_t));
+int	ldcontrolb(caddr_t);
+void	dumpconf(void);
+caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
-void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
-int	clockintr __P((void *));/* level 10 (clock) interrupt code */
-int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
+void	lo_microtime(struct timeval *);
+int	statintr(void *);
+int	clockintr(void *);/* level 10 (clock) interrupt code */
+int	statintr(void *);	/* level 14 (statclock) interrupt code */
 /* locore.s */
 struct fpstate;
-void	savefpstate __P((struct fpstate *));
-void	loadfpstate __P((struct fpstate *));
-int	probeget __P((caddr_t, int));
-void	write_all_windows __P((void));
-void	write_user_windows __P((void));
-void 	proc_trampoline __P((void));
+void	savefpstate(struct fpstate *);
+void	loadfpstate(struct fpstate *);
+int	probeget(caddr_t, int);
+void	write_all_windows(void);
+void	write_user_windows(void);
+void 	proc_trampoline(void);
 struct pcb;
-void	snapshot __P((struct pcb *));
-struct frame *getfp __P((void));
-int	xldcontrolb __P((caddr_t, struct pcb *));
-void	copywords __P((const void *, void *, size_t));
-void	qcopy __P((const void *, void *, size_t));
-void	qzero __P((void *, size_t));
+void	snapshot(struct pcb *);
+struct frame *getfp(void);
+int	xldcontrolb(caddr_t, struct pcb *);
+void	copywords(const void *, void *, size_t);
+void	qcopy(const void *, void *, size_t);
+void	qzero(void *, size_t);
 /* locore2.c */
-void	remrunqueue __P((struct proc *));
+void	remrunqueue(struct proc *);
 /* trap.c */
-void	kill_user_windows __P((struct proc *));
-int	rwindow_save __P((struct proc *));
+void	kill_user_windows(struct proc *);
+int	rwindow_save(struct proc *);
 /* amd7930intr.s */
-void	amd7930_trap __P((void));
+void	amd7930_trap(void);
 /* cons.c */
-int	cnrom __P((void));
+int	cnrom(void);
 /* zs.c */
 void zsconsole __P((struct tty *, int, int, int (**)(struct tty *, int)));
 #ifdef KGDB
-void zs_kgdb_init __P((void));
+void zs_kgdb_init(void);
 #endif
 /* fb.c */
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 /* cache.c */
-void cache_flush __P((caddr_t, u_int));
+void cache_flush(caddr_t, u_int);
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
-void kgdb_connect __P((int));
-void kgdb_panic __P((void));
+void kgdb_connect(int);
+void kgdb_panic(void);
 #endif
 /* iommu.c */
-void	iommu_enter __P((u_int, u_int));
-void	iommu_remove __P((u_int, u_int));
+void	iommu_enter(u_int, u_int);
+void	iommu_remove(u_int, u_int);
 /* emul.c */
 struct trapframe;
-int fixalign __P((struct proc *, struct trapframe *));
-int emulinstr __P((int, struct trapframe *));
+int fixalign(struct proc *, struct trapframe *);
+int emulinstr(int, struct trapframe *);
 
 /*
  *
@@ -253,8 +253,8 @@ struct trapvec {
 };
 extern struct trapvec *trapbase;	/* the 256 vectors */
 
-extern void wzero __P((void *, u_int));
-extern void wcopy __P((const void *, void *, u_int));
+extern void wzero(void *, u_int);
+extern void wcopy(const void *, void *, u_int);
 
 #endif /* _KERNEL */
 #endif /* _SPARC_CPU_H_ */

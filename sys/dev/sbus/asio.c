@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.2 2002/03/08 04:34:37 jason Exp $	*/
+/*	$OpenBSD: asio.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -80,10 +80,10 @@ struct asio_attach_args {
 	u_int8_t aaa_inten;
 };
 
-int	asio_match __P((struct device *, void *, void *));
-void	asio_attach __P((struct device *, struct device *, void *));
-int	asio_print __P((void *, const char *));
-void	asio_intr_enable __P((struct device *, u_int8_t));
+int	asio_match(struct device *, void *, void *);
+void	asio_attach(struct device *, struct device *, void *);
+int	asio_print(void *, const char *);
+void	asio_intr_enable(struct device *, u_int8_t);
 
 struct cfattach asio_ca = {
 	sizeof(struct asio_softc), asio_match, asio_attach
@@ -93,8 +93,8 @@ struct cfdriver asio_cd = {
 	NULL, "asio", DV_DULL
 };
 
-int	com_asio_match __P((struct device *, void *, void *));
-void	com_asio_attach __P((struct device *, struct device *, void *));
+int	com_asio_match(struct device *, void *, void *);
+void	com_asio_attach(struct device *, struct device *, void *);
 
 struct cfattach com_asio_ca = {
 	sizeof(struct com_softc), com_asio_match, com_asio_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.6 2001/02/20 01:50:08 assar Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.7 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -84,32 +84,32 @@ struct iso_mnt {
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
-int cd9660_mount __P((struct mount *, const char *, void *,
-                      struct nameidata *, struct proc *));
-int cd9660_start __P((struct mount *, int, struct proc *));
-int cd9660_unmount __P((struct mount *, int, struct proc *));
-int cd9660_root __P((struct mount *, struct vnode **));
-int cd9660_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int cd9660_statfs __P((struct mount *, struct statfs *, struct proc *));
-int cd9660_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
-int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int cd9660_vptofh __P((struct vnode *, struct fid *));
-int cd9660_init __P((struct vfsconf *));
-int cd9660_check_export __P((struct mount *, struct mbuf *, int *,
-                             struct ucred **));
-#define cd9660_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-                                    size_t, struct proc *)))eopnotsupp)
+int cd9660_mount(struct mount *, const char *, void *,
+                      struct nameidata *, struct proc *);
+int cd9660_start(struct mount *, int, struct proc *);
+int cd9660_unmount(struct mount *, int, struct proc *);
+int cd9660_root(struct mount *, struct vnode **);
+int cd9660_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
+int cd9660_statfs(struct mount *, struct statfs *, struct proc *);
+int cd9660_sync(struct mount *, int, struct ucred *, struct proc *);
+int cd9660_vget(struct mount *, ino_t, struct vnode **);
+int cd9660_fhtovp(struct mount *, struct fid *, struct vnode **);
+int cd9660_vptofh(struct vnode *, struct fid *);
+int cd9660_init(struct vfsconf *);
+int cd9660_check_export(struct mount *, struct mbuf *, int *,
+                             struct ucred **);
+#define cd9660_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+                                    size_t, struct proc *))eopnotsupp)
 
-int cd9660_mountroot __P((void)); 
+int cd9660_mountroot(void); 
 
-extern int (**cd9660_vnodeop_p) __P((void *));
-extern int (**cd9660_specop_p) __P((void *));
+extern int (**cd9660_vnodeop_p)(void *);
+extern int (**cd9660_specop_p)(void *);
 #ifdef FIFO
-extern int (**cd9660_fifoop_p) __P((void *));
+extern int (**cd9660_fifoop_p)(void *);
 #endif
 
-int isochar __P((const u_char *, const u_char *, int, u_char *));
-int isofncmp __P((const u_char *, int, const u_char *, int, int));
-void isofntrans __P((u_char *, int, u_char *, u_short *, int, int, int));
-ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));
+int isochar(const u_char *, const u_char *, int, u_char *);
+int isofncmp(const u_char *, int, const u_char *, int, int);
+void isofntrans(u_char *, int, u_char *, u_short *, int, int, int);
+ino_t isodirino(struct iso_directory_record *, struct iso_mnt *);

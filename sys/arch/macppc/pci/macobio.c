@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.2 2001/09/15 01:42:55 mickey Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.3 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -46,12 +46,12 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-void macobio_attach __P((struct device *, struct device *, void *));
-int macobio_match __P((struct device *, void *, void *));
-int macobio_print __P((void *, const char *));
+void macobio_attach(struct device *, struct device *, void *);
+int macobio_match(struct device *, void *, void *);
+int macobio_print(void *, const char *);
 void *undef_mac_establish __P((void * lcv, int irq, int type, int level,
-    int (*ih_fun) __P((void *)), void *ih_arg, char *name));
-void mac_intr_disestab __P((void *lcp, void *arg));
+    int (*ih_fun)(void *), void *ih_arg, char *name));
+void mac_intr_disestab(void *lcp, void *arg);
 
 struct macobio_softc {
 	struct device sc_dev;
@@ -232,7 +232,7 @@ undef_mac_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 	char *name;
 {
@@ -257,7 +257,7 @@ mac_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 	char *name;
 {

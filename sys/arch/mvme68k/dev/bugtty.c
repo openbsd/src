@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.5 2002/02/15 20:45:30 nordin Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.6 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -47,8 +47,8 @@
 
 #include "bugtty.h"
 
-int bugttymatch __P((struct device *parent, void *self, void *aux));
-void bugttyattach __P((struct device *parent, struct device *self, void *aux));
+int bugttymatch(struct device *parent, void *self, void *aux);
+void bugttyattach(struct device *parent, struct device *self, void *aux);
 
 struct cfattach bugtty_ca = {
 	sizeof(struct device), bugttymatch, bugttyattach
@@ -59,17 +59,17 @@ struct cfdriver bugtty_cd = {
 };
 
 /* prototypes */
-int bugttycnprobe __P((struct consdev *cp));
-int bugttycninit __P((struct consdev *cp));
-int bugttycngetc __P((dev_t dev));
-int bugttycnputc __P((dev_t dev, char c));
+int bugttycnprobe(struct consdev *cp);
+int bugttycninit(struct consdev *cp);
+int bugttycngetc(dev_t dev);
+int bugttycnputc(dev_t dev, char c);
 
-int bugttyopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int bugttyclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int bugttyread __P((dev_t dev, struct uio *uio, int flag));
-int bugttywrite __P((dev_t dev, struct uio *uio, int flag));
-int bugttyioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-int bugttystop __P((struct tty *tp, int flag));
+int bugttyopen(dev_t dev, int flag, int mode, struct proc *p);
+int bugttyclose(dev_t dev, int flag, int mode, struct proc *p);
+int bugttyread(dev_t dev, struct uio *uio, int flag);
+int bugttywrite(dev_t dev, struct uio *uio, int flag);
+int bugttyioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
+int bugttystop(struct tty *tp, int flag);
 
 #define DIALOUT(x) ((x) & 0x80)
 #define SWFLAGS(dev) (bugttyswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
@@ -116,7 +116,7 @@ bugttyattach(parent, self, aux)
 	printf("\n");
 }
 
-void bugttyoutput __P((struct tty *tp));
+void bugttyoutput(struct tty *tp);
 
 int bugttydefaultrate = TTYDEF_SPEED;
 int bugttyswflags;

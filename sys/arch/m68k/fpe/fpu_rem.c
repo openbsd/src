@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_rem.c,v 1.2 1996/05/09 22:20:48 niklas Exp $	*/
+/*	$OpenBSD: fpu_rem.c,v 1.3 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: fpu_rem.c,v 1.3 1996/04/30 12:02:54 briggs Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
  *                R := 0. Return signQ, last 7 bits of Q, and R.
  */                
 
-static struct fpn * __fpu_modrem __P((struct fpemu *fe, int modrem));
+static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
 
 static struct fpn *
 __fpu_modrem(fe, modrem)

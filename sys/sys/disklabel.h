@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.20 2000/11/25 21:32:05 hugh Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.21 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -353,20 +353,19 @@ struct partinfo {
 };
 
 #ifdef _KERNEL
-void	 diskerr
-	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
-void	 disksort __P((struct buf *, struct buf *));
-u_int	 dkcksum __P((struct disklabel *));
-int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
-	    struct cpu_disklabel *));
+void	 diskerr(struct buf *, char *, char *, int, int, struct disklabel *);
+void	 disksort(struct buf *, struct buf *);
+u_int	 dkcksum(struct disklabel *);
+int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
+	    struct cpu_disklabel *);
 char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *, int));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
-int	 bounds_check_with_label __P((struct buf *, struct disklabel *,
-	    struct cpu_disklabel *, int));
+int	 bounds_check_with_label(struct buf *, struct disklabel *,
+	    struct cpu_disklabel *, int);
 #ifdef CD9660
-int iso_disklabelspoof __P((dev_t dev, void (*strat) __P((struct buf *)),
+int iso_disklabelspoof __P((dev_t dev, void (*strat)(struct buf *),
 	struct disklabel *lp));
 #endif
 #endif
@@ -377,7 +376,7 @@ int iso_disklabelspoof __P((dev_t dev, void (*strat) __P((struct buf *)),
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct disklabel *getdiskbyname __P((const char *));
+struct disklabel *getdiskbyname(const char *);
 __END_DECLS
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.8 2002/03/02 09:36:43 miod Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.9 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,47 +40,47 @@
 
 extern dev_t bootdev;
 
-void pdc_init __P((void));
+void pdc_init(void);
 struct pz_device;
-struct pz_device *pdc_findev __P((int, int));
+struct pz_device *pdc_findev(int, int);
 
-int iodcstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int iodcstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 
-int ctopen __P((struct open_file *, ...));
-int ctclose __P((struct open_file *));
+int ctopen(struct open_file *, ...);
+int ctclose(struct open_file *);
 
-int dkopen __P((struct open_file *, ...));
-int dkclose __P((struct open_file *));
+int dkopen(struct open_file *, ...);
+int dkclose(struct open_file *);
 
-int lfopen __P((struct open_file *, ...));
-int lfstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int lfclose __P((struct open_file *));
+int lfopen(struct open_file *, ...);
+int lfstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int lfclose(struct open_file *);
 
-void ite_probe __P((struct consdev *));
-void ite_init __P((struct consdev *));
-int ite_getc __P((dev_t));
-void ite_putc __P((dev_t, int));
-void ite_pollc __P((dev_t, int));
+void ite_probe(struct consdev *);
+void ite_init(struct consdev *);
+int ite_getc(dev_t);
+void ite_putc(dev_t, int);
+void ite_pollc(dev_t, int);
 
-void machdep __P((void));
-void devboot __P((dev_t, char *));
-void fcacheall __P((void));
+void machdep(void);
+void devboot(dev_t, char *);
+void fcacheall(void);
 
-int     lif_open __P((char *path, struct open_file *f));
-int     lif_close __P((struct open_file *f));
-int     lif_read __P((struct open_file *f, void *buf,
-                size_t size, size_t *resid));
-int     lif_write __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-off_t   lif_seek __P((struct open_file *f, off_t offset, int where));
-int     lif_stat __P((struct open_file *f, struct stat *sb));
-int     lif_readdir __P((struct open_file *f, char *name));
+int     lif_open(char *path, struct open_file *f);
+int     lif_close(struct open_file *f);
+int     lif_read(struct open_file *f, void *buf,
+                size_t size, size_t *resid);
+int     lif_write(struct open_file *f, void *buf,
+		size_t size, size_t *resid);
+off_t   lif_seek(struct open_file *f, off_t offset, int where);
+int     lif_stat(struct open_file *f, struct stat *sb);
+int     lif_readdir(struct open_file *f, char *name);
 
 union x_header;
 struct x_param;
-int	som_probe __P((int, union x_header *));
-int	som_load __P((int, struct x_param *));
-int	som_ldsym __P((int, struct x_param *));
+int	som_probe(int, union x_header *);
+int	som_load(int, struct x_param *);
+int	som_ldsym(int, struct x_param *);
 
 extern int debug;
 

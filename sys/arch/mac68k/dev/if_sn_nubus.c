@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.13 2001/07/04 08:52:45 niklas Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.14 2002/03/14 01:26:35 millert Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -52,10 +52,10 @@
 #include "if_snreg.h"
 #include "if_snvar.h"
 
-static int	sn_nubus_match __P((struct device *, void *, void *));
-static void	sn_nubus_attach __P((struct device *, struct device *, void *));
-static int	sn_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
-		    struct nubus_attach_args *));
+static int	sn_nubus_match(struct device *, void *, void *);
+static void	sn_nubus_attach(struct device *, struct device *, void *);
+static int	sn_nb_card_vendor(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *);
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach

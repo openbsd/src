@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.5 1997/09/21 04:21:06 niklas Exp $	*/
+/*	$OpenBSD: control.h,v 1.6 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: control.h,v 1.14 1996/11/20 18:57:06 gwr Exp $	*/
 
 /*-
@@ -85,18 +85,18 @@
 
 #include <sys/types.h>
 
-unsigned char get_control_byte __P((char *));
-unsigned int get_control_word __P((char *));
-void set_control_byte __P((char *, unsigned char));
-void set_control_word __P((char *, unsigned int));
+unsigned char get_control_byte(char *);
+unsigned int get_control_word(char *);
+void set_control_byte(char *, unsigned char);
+void set_control_word(char *, unsigned int);
 
-int get_context __P((void));
-void set_context __P((int));
+int get_context(void);
+void set_context(int);
      
-vm_offset_t get_pte __P((vm_offset_t va));
-void set_pte __P((vm_offset_t, vm_offset_t));
+vm_offset_t get_pte(vm_offset_t va);
+void set_pte(vm_offset_t, vm_offset_t);
      
-unsigned char get_segmap __P((vm_offset_t));
-void set_segmap __P((vm_offset_t va, unsigned char));
-void set_segmap_allctx __P((vm_offset_t va, unsigned char));
+unsigned char get_segmap(vm_offset_t);
+void set_segmap(vm_offset_t va, unsigned char);
+void set_segmap_allctx(vm_offset_t va, unsigned char);
 

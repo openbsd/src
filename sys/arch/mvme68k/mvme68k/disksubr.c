@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.23 2001/08/06 20:45:07 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.24 2002/03/14 01:26:38 millert Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -48,14 +48,14 @@
 int disksubr_debug = 0;
 #endif
 
-static void bsdtocpulabel __P((struct disklabel *lp,
-	struct cpu_disklabel *clp));
-static void cputobsdlabel __P((struct disklabel *lp,
-	struct cpu_disklabel *clp));
+static void bsdtocpulabel(struct disklabel *lp,
+	struct cpu_disklabel *clp);
+static void cputobsdlabel(struct disklabel *lp,
+	struct cpu_disklabel *clp);
 
 #ifdef DEBUG
-static void printlp __P((struct disklabel *lp, char *str));
-static void printclp __P((struct cpu_disklabel *clp, char *str));
+static void printlp(struct disklabel *lp, char *str);
+static void printclp(struct cpu_disklabel *clp, char *str);
 #endif
 
 void
@@ -113,7 +113,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp, spoofonly)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 	int spoofonly;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.27 2001/02/10 20:40:03 millert Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.28 2002/03/14 01:26:51 millert Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.29 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /* 
@@ -42,18 +42,18 @@
 
 #include <ddb/db_aout.h>
 
-boolean_t	db_aout_sym_init __P((int, void *, void *, const char *));
-db_sym_t	db_aout_lookup __P((db_symtab_t *, char *));
-db_sym_t	db_aout_search_symbol __P((db_symtab_t *, db_addr_t,
-		    db_strategy_t, db_expr_t *));
-void		db_aout_symbol_values __P((db_symtab_t *, db_sym_t,
-		    char **, db_expr_t *));
-boolean_t	db_aout_line_at_pc __P((db_symtab_t *, db_sym_t,
-		    char **, int *, db_expr_t));
-boolean_t	db_aout_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
-		    char **));
-void		db_aout_forall __P((db_symtab_t *,
-		    db_forall_func_t db_forall_func, void *));
+boolean_t	db_aout_sym_init(int, void *, void *, const char *);
+db_sym_t	db_aout_lookup(db_symtab_t *, char *);
+db_sym_t	db_aout_search_symbol(db_symtab_t *, db_addr_t,
+		    db_strategy_t, db_expr_t *);
+void		db_aout_symbol_values(db_symtab_t *, db_sym_t,
+		    char **, db_expr_t *);
+boolean_t	db_aout_line_at_pc(db_symtab_t *, db_sym_t,
+		    char **, int *, db_expr_t);
+boolean_t	db_aout_sym_numargs(db_symtab_t *, db_sym_t, int *,
+		    char **);
+void		db_aout_forall(db_symtab_t *,
+		    db_forall_func_t db_forall_func, void *);
 
 db_symformat_t db_symformat_aout = {
 	"a.out",

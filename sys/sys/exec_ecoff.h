@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.h,v 1.6 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: exec_ecoff.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: exec_ecoff.h,v 1.9 1996/05/09 23:42:08 cgd Exp $	*/
 
 /*
@@ -104,10 +104,10 @@ struct ecoff_exechdr {
 	ECOFF_SEGMENT_ALIGNMENT(ep))))
 
 #ifdef _KERNEL
-int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
-int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *));
-int	exec_ecoff_prep_omagic __P((struct proc *, struct exec_package *));
-int	exec_ecoff_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_ecoff_prep_zmagic __P((struct proc *, struct exec_package *));
+int	exec_ecoff_makecmds(struct proc *, struct exec_package *);
+int	cpu_exec_ecoff_hook(struct proc *, struct exec_package *);
+int	exec_ecoff_prep_omagic(struct proc *, struct exec_package *);
+int	exec_ecoff_prep_nmagic(struct proc *, struct exec_package *);
+int	exec_ecoff_prep_zmagic(struct proc *, struct exec_package *);
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */

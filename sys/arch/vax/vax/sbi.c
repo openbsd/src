@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.c,v 1.8 2000/04/27 01:10:13 bjc Exp $ */
+/*	$OpenBSD: sbi.c,v 1.9 2002/03/14 01:26:49 millert Exp $ */
 /*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -43,9 +43,9 @@
 #include <machine/cpu.h>
 #include <machine/nexus.h>
 
-static	int sbi_print __P((void *, const char *));
-static	int sbi_match __P((struct device *, struct cfdata *, void *));
-static	void sbi_attach __P((struct device *, struct device *, void*));
+static	int sbi_print(void *, const char *);
+static	int sbi_match(struct device *, struct cfdata *, void *);
+static	void sbi_attach(struct device *, struct device *, void*);
 
 int
 sbi_print(aux, name)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadkmap.c,v 1.2 1996/10/04 22:35:36 niklas Exp $	*/
+/*	$OpenBSD: loadkmap.c,v 1.3 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: loadkmap.c,v 1.4 1994/10/26 02:07:09 cgd Exp $	*/
 
 #include <sys/types.h>
@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-void load_kmap __P((const char *));
+void load_kmap(const char *);
 void dump_kmap(); 
 
 int

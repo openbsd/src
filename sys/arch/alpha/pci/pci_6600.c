@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.7 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.8 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -76,22 +76,22 @@
 static char *irqtype = "6600 irq";
 static struct tsp_config *sioprimary;
 
-void dec_6600_intr_disestablish __P((void *, void *));
+void dec_6600_intr_disestablish(void *, void *);
 void *dec_6600_intr_establish __P((
     void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *));
-const char *dec_6600_intr_string __P((void *, pci_intr_handle_t));
-int dec_6600_intr_line __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_6600_intr_evcnt __P((void *, pci_intr_handle_t));
-int dec_6600_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
+const char *dec_6600_intr_string(void *, pci_intr_handle_t);
+int dec_6600_intr_line(void *, pci_intr_handle_t);
+const struct evcnt *dec_6600_intr_evcnt(void *, pci_intr_handle_t);
+int dec_6600_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *));
-void  dec_6600_pciide_compat_intr_disestablish __P((void *, void *));
+void  dec_6600_pciide_compat_intr_disestablish(void *, void *);
 
 struct alpha_shared_intr *dec_6600_pci_intr;
 
-void dec_6600_iointr __P((void *framep, unsigned long vec));
-extern void dec_6600_intr_enable __P((int irq));
-extern void dec_6600_intr_disable __P((int irq));
+void dec_6600_iointr(void *framep, unsigned long vec);
+extern void dec_6600_intr_enable(int irq);
+extern void dec_6600_intr_disable(int irq);
 
 void
 pci_6600_pickintr(pcp)
@@ -249,7 +249,7 @@ dec_6600_intr_establish(acv, ih, level, func, arg, name)
         void *acv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 	char *name;
 {
 	void *cookie;
@@ -360,7 +360,7 @@ dec_6600_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	struct device *dev;
 	struct pci_attach_args *pa;
 	int chan;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

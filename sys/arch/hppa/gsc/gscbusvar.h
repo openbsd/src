@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.5 2002/02/16 02:24:05 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.6 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -34,10 +34,10 @@ struct gscbus_ic {
 	enum {gsc_unknown = 0, gsc_lasi, gsc_wax, gsc_asp} gsc_type;
 	void *gsc_dv;
 
-	void (*gsc_intr_establish) __P((void *v, u_int32_t mask));
-	void (*gsc_intr_disestablish) __P((void *v, u_int32_t mask));
-	u_int32_t (*gsc_intr_check) __P((void *v));
-	void (*gsc_intr_ack) __P((void *v, u_int32_t mask));
+	void (*gsc_intr_establish)(void *v, u_int32_t mask);
+	void (*gsc_intr_disestablish)(void *v, u_int32_t mask);
+	u_int32_t (*gsc_intr_check)(void *v);
+	void (*gsc_intr_ack)(void *v, u_int32_t mask);
 };
 
 struct gsc_attach_args {
@@ -56,7 +56,7 @@ struct gsc_attach_args {
 
 struct gscbus_intr {
 	int pri;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 	struct evcnt evcnt;
 };
@@ -75,10 +75,10 @@ struct gsc_softc {
 };
 
 void *gsc_intr_establish __P((struct gsc_softc *sc, int pri, int irq,
-			       int (*handler) __P((void *v)), void *arg,
+			       int (*handler)(void *v), void *arg,
 			       struct device *name));
-void gsc_intr_disestablish __P((struct gsc_softc *sc, void *v));
-int gsc_intr __P((void *));
+void gsc_intr_disestablish(struct gsc_softc *sc, void *v);
+int gsc_intr(void *);
 
-int gscprint __P((void *, const char *));
+int gscprint(void *, const char *);
 

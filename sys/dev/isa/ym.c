@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.9 1999/10/06 12:48:33 fgsch Exp $ */
+/* $OpenBSD: ym.c,v 1.10 2002/03/14 01:26:57 millert Exp $ */
 
 
 /*
@@ -55,17 +55,17 @@
 #include <dev/ic/mpuvar.h>
 #include <dev/isa/ymvar.h>
 
-int ym_getdev __P((void *, struct audio_device *));
-int ym_mixer_set_port __P((void *, mixer_ctrl_t *));
-int ym_mixer_get_port __P((void *, mixer_ctrl_t *));
-int ym_query_devinfo __P((void *, mixer_devinfo_t *));
-int ym_intr __P((void *));
+int ym_getdev(void *, struct audio_device *);
+int ym_mixer_set_port(void *, mixer_ctrl_t *);
+int ym_mixer_get_port(void *, mixer_ctrl_t *);
+int ym_query_devinfo(void *, mixer_devinfo_t *);
+int ym_intr(void *);
 
-static void ym_mute __P((struct ym_softc *, int, int));
-static void ym_set_master_gain __P((struct ym_softc *, struct ad1848_volume *));
-static void ym_set_mic_gain __P((struct ym_softc *, int));
-static void ym_set_3d __P((struct ym_softc *, mixer_ctrl_t *,
-	struct ad1848_volume *, int));
+static void ym_mute(struct ym_softc *, int, int);
+static void ym_set_master_gain(struct ym_softc *, struct ad1848_volume *);
+static void ym_set_mic_gain(struct ym_softc *, int);
+static void ym_set_3d(struct ym_softc *, mixer_ctrl_t *,
+	struct ad1848_volume *, int);
 
 struct audio_hw_if ym_hw_if = {
 	ad1848_open,
@@ -107,15 +107,15 @@ struct audio_device ym_device = {
 	"ym"
 };
 
-static __inline int ym_read __P((struct ym_softc *, int));
-static __inline void ym_write __P((struct ym_softc *, int, int));
+static __inline int ym_read(struct ym_softc *, int);
+static __inline void ym_write(struct ym_softc *, int, int);
 
 #if NMIDI > 0
-int	ym_mpu401_open __P((void *, int, void (*iintr) __P((void *, int)),
-	    void (*ointr) __P((void *)), void *arg));
-void	ym_mpu401_close __P((void *));
-int	ym_mpu401_output __P((void *, int));
-void	ym_mpu401_getinfo __P((void *, struct midi_info *));
+int	ym_mpu401_open __P((void *, int, void (*iintr)(void *, int),
+	    void (*ointr)(void *), void *arg));
+void	ym_mpu401_close(void *);
+int	ym_mpu401_output(void *, int);
+void	ym_mpu401_getinfo(void *, struct midi_info *);
 
 struct midi_hw_if ym_mpu401_hw_if = {
 	ym_mpu401_open,
@@ -602,8 +602,8 @@ int
 ym_mpu401_open(addr, flags, iintr, ointr, arg)
 	void   *addr;
 	int     flags;
-	void    (*iintr) __P((void *, int));
-	void    (*ointr) __P((void *));
+	void    (*iintr)(void *, int);
+	void    (*ointr)(void *);
 	void   *arg;
 {
 	return mpu_open(YMMPU(addr), flags, iintr, ointr, arg);

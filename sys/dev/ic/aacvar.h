@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.1 2000/11/10 09:39:36 niklas Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.2 2002/03/14 01:26:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -131,14 +131,14 @@ struct aac_common {
  * Interface operations
  */
 struct aac_interface {
-	int	(*aif_get_fwstatus) __P((struct aac_softc *));
-	void	(*aif_qnotify) __P((struct aac_softc *, int));
-	int	(*aif_get_istatus) __P((struct aac_softc *));
-	void	(*aif_set_istatus) __P((struct aac_softc *, int));
-	void	(*aif_set_mailbox) __P((struct aac_softc *, u_int32_t,
-	    u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-	int	(*aif_get_mailboxstatus) __P((struct aac_softc *));
-	void	(*aif_set_interrupts) __P((struct aac_softc *, int));
+	int	(*aif_get_fwstatus)(struct aac_softc *);
+	void	(*aif_qnotify)(struct aac_softc *, int);
+	int	(*aif_get_istatus)(struct aac_softc *);
+	void	(*aif_set_istatus)(struct aac_softc *, int);
+	void	(*aif_set_mailbox)(struct aac_softc *, u_int32_t,
+	    u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	int	(*aif_get_mailboxstatus)(struct aac_softc *);
+	void	(*aif_set_interrupts)(struct aac_softc *, int);
 };
 extern struct aac_interface aac_rx_interface;
 extern struct aac_interface aac_sa_interface;
@@ -268,16 +268,16 @@ struct aac_softc {
 #define AAC_UNLOCK(sc, lock) splx(lock)
 typedef int aac_lock_t;
 
-void	aacminphys __P((struct buf *));
-int	aac_attach __P((struct aac_softc *));
-int	aac_intr __P((void *));
+void	aacminphys(struct buf *);
+int	aac_attach(struct aac_softc *);
+int	aac_intr(void *);
 
 #ifdef __GNUC__
 /* These all require correctly aligned buffers */
-static __inline__ void aac_enc16 __P((u_int8_t *, u_int16_t));
-static __inline__ void aac_enc32 __P((u_int8_t *, u_int32_t));
-static __inline__ u_int16_t aac_dec16 __P((u_int8_t *));
-static __inline__ u_int32_t aac_dec32 __P((u_int8_t *));
+static __inline__ void aac_enc16(u_int8_t *, u_int16_t);
+static __inline__ void aac_enc32(u_int8_t *, u_int32_t);
+static __inline__ u_int16_t aac_dec16(u_int8_t *);
+static __inline__ u_int32_t aac_dec32(u_int8_t *);
 
 static __inline__ void
 aac_enc16(addr, value)

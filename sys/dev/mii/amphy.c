@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.2 2000/11/20 16:22:15 jason Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.3 2002/03/14 01:26:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,8 +56,8 @@
 
 #include <dev/mii/amphyreg.h>
 
-int	amphymatch __P((struct device *, void *, void *));
-void	amphyattach __P((struct device *, struct device *, void *));
+int	amphymatch(struct device *, void *, void *);
+void	amphyattach(struct device *, struct device *, void *);
 
 struct cfattach amphy_ca = {
 	sizeof(struct mii_softc), amphymatch, amphyattach, mii_phy_detach,
@@ -68,8 +68,8 @@ struct cfdriver amphy_cd = {
 	NULL, "amphy", DV_DULL
 };
 
-int	amphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	amphy_status __P((struct mii_softc *));
+int	amphy_service(struct mii_softc *, struct mii_data *, int);
+void	amphy_status(struct mii_softc *);
 
 int
 amphymatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.74 2001/06/25 02:06:40 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.75 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -109,9 +109,9 @@ extern int ip6_defhlim;
 int	udpcksum = 1;
 
 
-static	void udp_detach __P((struct inpcb *));
-static	void udp_notify __P((struct inpcb *, int));
-static	struct mbuf *udp_saveopt __P((caddr_t, int, int));
+static	void udp_detach(struct inpcb *);
+static	void udp_notify(struct inpcb *, int);
+static	struct mbuf *udp_saveopt(caddr_t, int, int);
 
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
@@ -684,7 +684,7 @@ udp6_ctlinput(cmd, sa, d)
 		u_int16_t uh_sport;
 		u_int16_t uh_dport;
 	} *uhp;
-	void (*notify) __P((struct inpcb *, int)) = udp_notify;
+	void (*notify)(struct inpcb *, int) = udp_notify;
 
 	if (sa == NULL)
 		return;
@@ -842,7 +842,7 @@ udp_ctlinput(cmd, sa, v)
 	register struct ip *ip = v;
 	register struct udphdr *uhp;
 	extern int inetctlerrmap[];
-	void (*notify) __P((struct inpcb *, int)) = udp_notify;
+	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
 
 	if (sa == NULL)

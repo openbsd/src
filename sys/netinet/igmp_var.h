@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.4 2001/06/09 07:03:40 angelos Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.5 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -76,11 +76,11 @@ struct igmpstat igmpstat;
  */
 #define	IGMP_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
 
-void	igmp_init __P((void));
-void	igmp_input __P((struct mbuf *, ...));
-void	igmp_joingroup __P((struct in_multi *));
-void	igmp_leavegroup __P((struct in_multi *));
-void	igmp_fasttimo __P((void));
-void	igmp_slowtimo __P((void));
+void	igmp_init(void);
+void	igmp_input(struct mbuf *, ...);
+void	igmp_joingroup(struct in_multi *);
+void	igmp_leavegroup(struct in_multi *);
+void	igmp_fasttimo(void);
+void	igmp_slowtimo(void);
 #endif /* _KERNEL */
 #endif /* _NETINET_IGMP_VAR_H_ */

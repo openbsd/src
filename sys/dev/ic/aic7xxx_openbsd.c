@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.2 2002/03/14 00:04:09 krw Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.3 2002/03/14 01:26:54 millert Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.2 2002/03/14 00:04:09 krw Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.3 2002/03/14 01:26:54 millert Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -42,8 +42,8 @@ struct cfdriver ahc_cd = {
 	NULL, "ahc", DV_DULL
 };
 
-int32_t		ahc_action __P((struct scsi_xfer *xs));
-static void	ahc_minphys __P((struct buf *bp));
+int32_t		ahc_action(struct scsi_xfer *xs);
+static void	ahc_minphys(struct buf *bp);
 
 static struct scsi_adapter ahc_switch =
 {
@@ -73,26 +73,26 @@ int     ahc_debug = AHC_DEBUG;
 #endif
 
 #if UNUSED
-static void	ahc_dump_targcmd __P((struct target_cmd *cmd));
+static void	ahc_dump_targcmd(struct target_cmd *cmd);
 #endif
-void		ahc_build_free_scb_list __P((struct ahc_softc *ahc));
-int		ahc_execute_scb __P((void *arg, bus_dma_segment_t *dm_segs,
-				     int nsegments));
-int		ahc_poll __P((struct ahc_softc *ahc, int wait));
-void		ahc_timeout __P((void *));
-int		ahc_setup_data __P((struct ahc_softc *ahc,
+void		ahc_build_free_scb_list(struct ahc_softc *ahc);
+int		ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs,
+				     int nsegments);
+int		ahc_poll(struct ahc_softc *ahc, int wait);
+void		ahc_timeout(void *);
+int		ahc_setup_data(struct ahc_softc *ahc,
 				    struct scsi_xfer *xs,
-				    struct scb *scb));
-void		ahc_set_recoveryscb __P((struct ahc_softc *ahc,
-					 struct scb *scb));
-int		ahc_init_scbdata __P((struct ahc_softc *ahc));
-void		ahc_fini_scbdata __P((struct ahc_softc *ahc));
+				    struct scb *scb);
+void		ahc_set_recoveryscb(struct ahc_softc *ahc,
+					 struct scb *scb);
+int		ahc_init_scbdata(struct ahc_softc *ahc);
+void		ahc_fini_scbdata(struct ahc_softc *ahc);
 
-int		ahc_istagged_device __P((struct ahc_softc *ahc,
+int		ahc_istagged_device(struct ahc_softc *ahc,
 					 struct scsi_xfer *xs,
-					 int nocmdcheck));
-void		ahc_check_tags __P((struct ahc_softc *ahc,
-				    struct scsi_xfer *xs));
+					 int nocmdcheck);
+void		ahc_check_tags(struct ahc_softc *ahc,
+				    struct scsi_xfer *xs);
 
 /*
  * Routines to manage busy targets.  The old driver didn't need to
@@ -101,12 +101,12 @@ void		ahc_check_tags __P((struct ahc_softc *ahc,
  * have to pause the sequencer for chips that don't have the
  * auto-pause feature.  XXX smurph
  */
-static __inline u_int	ahc_pause_index_busy_tcl __P((struct ahc_softc *ahc, 
-						      u_int tcl));
-static __inline void	ahc_pause_unbusy_tcl __P((struct ahc_softc *ahc,
-						  u_int tcl));
-static __inline void	ahc_pause_busy_tcl __P((struct ahc_softc *ahc,
-						u_int tcl, u_int busyid));
+static __inline u_int	ahc_pause_index_busy_tcl(struct ahc_softc *ahc, 
+						      u_int tcl);
+static __inline void	ahc_pause_unbusy_tcl(struct ahc_softc *ahc,
+						  u_int tcl);
+static __inline void	ahc_pause_busy_tcl(struct ahc_softc *ahc,
+						u_int tcl, u_int busyid);
 
 static __inline u_int
 ahc_pause_index_busy_tcl(ahc, tcl)

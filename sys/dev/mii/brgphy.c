@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.7 2001/10/05 18:30:54 nate Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.8 2002/03/14 01:26:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -56,8 +56,8 @@
 
 #include <dev/mii/brgphyreg.h>
 
-int brgphy_probe __P((struct device *, void *, void *));
-void brgphy_attach __P((struct device *, struct device *, void *));
+int brgphy_probe(struct device *, void *, void *);
+void brgphy_attach(struct device *, struct device *, void *);
 
 struct cfattach brgphy_ca = {
 	sizeof(struct mii_softc), brgphy_probe, brgphy_attach, mii_phy_detach,
@@ -68,11 +68,11 @@ struct cfdriver brgphy_cd = {
 	NULL, "brgphy", DV_DULL
 };
 
-int	brgphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	brgphy_status __P((struct mii_softc *));
+int	brgphy_service(struct mii_softc *, struct mii_data *, int);
+void	brgphy_status(struct mii_softc *);
 
-int	brgphy_mii_phy_auto __P((struct mii_softc *, int));
-extern void	mii_phy_auto_timeout __P((void *));
+int	brgphy_mii_phy_auto(struct mii_softc *, int);
+extern void	mii_phy_auto_timeout(void *);
 
 int brgphy_probe(parent, match, aux)
 	struct device *parent;

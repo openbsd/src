@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.10 1998/05/03 07:12:51 gene Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.11 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -58,9 +58,9 @@ typedef unsigned char	u_char;
 
 
 #ifdef MRG_ADB
-int     adb_poweroff __P((void));
-int     adb_read_date_time __P((unsigned long *t));
-int     adb_set_date_time __P((unsigned long t));
+int     adb_poweroff(void);
+int     adb_read_date_time(unsigned long *t);
+int     adb_set_date_time(unsigned long t);
 #endif
 
 /* more verbose for testing */
@@ -150,7 +150,7 @@ int     adb_set_date_time __P((unsigned long t));
  * A structure for storing information about each ADB device.
  */
 struct ADBDevEntry {
-	void	(*ServiceRtPtr) __P((void));
+	void	(*ServiceRtPtr)(void);
 	void	*DataAreaAddr;
 	char	devType;
 	char	origAddr;
@@ -204,48 +204,48 @@ int	ADBNumDevices;		/* num. of ADB devices found with ADBReInit */
 
 extern struct mac68k_machine_S mac68k_machine;
 
-int	zshard __P((int));
+int	zshard(int);
 
-void	pm_setup_adb __P((void));
-void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
-int	pm_adb_op __P((u_char *, void *, void *, int));
-void	pm_init_adb_device __P((void));
+void	pm_setup_adb(void);
+void	pm_check_adb_devices(int);
+void	pm_intr(void);
+int	pm_adb_op(u_char *, void *, void *, int);
+void	pm_init_adb_device(void);
 
 /*
  * The following are private routines.
  */
-void	print_single __P((u_char *));
-void	adb_intr __P((void));
-void	adb_intr_II __P((void));
-void	adb_intr_IIsi __P((void));
-void	adb_intr_cuda __P((void));
-int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_cuda __P((u_char *, u_char *, void *, void *, int));
-void	adb_intr_cuda_test __P((void));
-void	adb_handle_unsol __P((u_char *));
-void	adb_op_comprout __P((void));
-void	adb_reinit __P((void));
-int	count_adbs __P((void));
-int	get_ind_adb_info __P((ADBDataBlock *, int));
-int	get_adb_info __P((ADBDataBlock *, int));
-int	set_adb_info __P((ADBSetInfoBlock *, int));
-void	adb_setup_hw_type __P((void));
-int	adb_op __P((Ptr, Ptr, Ptr, short));
-void	adb_handle_unsol __P((u_char *));
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
-void	adb_read_II __P((u_char *));
-void	adb_cleanup __P((u_char *));
-void	adb_cleanup_IIsi __P((u_char *));
-void	adb_comp_exec __P((void));
-int	adb_cmd_result __P((u_char *));
-int	adb_cmd_extra __P((u_char *));
-int	adb_guess_next_device __P((void));
-int	adb_prog_switch_enable __P((void));
-int	adb_prog_switch_disable __P((void));
+void	print_single(u_char *);
+void	adb_intr(void);
+void	adb_intr_II(void);
+void	adb_intr_IIsi(void);
+void	adb_intr_cuda(void);
+int	send_adb_II(u_char *, u_char *, void *, void *, int);
+int	send_adb_IIsi(u_char *, u_char *, void *, void *, int);
+int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
+void	adb_intr_cuda_test(void);
+void	adb_handle_unsol(u_char *);
+void	adb_op_comprout(void);
+void	adb_reinit(void);
+int	count_adbs(void);
+int	get_ind_adb_info(ADBDataBlock *, int);
+int	get_adb_info(ADBDataBlock *, int);
+int	set_adb_info(ADBSetInfoBlock *, int);
+void	adb_setup_hw_type(void);
+int	adb_op(Ptr, Ptr, Ptr, short);
+void	adb_handle_unsol(u_char *);
+int	adb_op_sync(Ptr, Ptr, Ptr, short);
+void	adb_read_II(u_char *);
+void	adb_cleanup(u_char *);
+void	adb_cleanup_IIsi(u_char *);
+void	adb_comp_exec(void);
+int	adb_cmd_result(u_char *);
+int	adb_cmd_extra(u_char *);
+int	adb_guess_next_device(void);
+int	adb_prog_switch_enable(void);
+int	adb_prog_switch_disable(void);
 /* we should create this and it will be the public version */
-int	send_adb __P((u_char *, void *, void *));
+int	send_adb(u_char *, void *, void *);
 
 /*
  * print_single

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.7 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: pci_550.c,v 1.8 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -94,18 +94,18 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_550_intr_map __P((void *, pcitag_t, int, int,
-	    pci_intr_handle_t *));
-const char *dec_550_intr_string __P((void *, pci_intr_handle_t));
-int	dec_550_intr_line __P((void *, pci_intr_handle_t));
-const struct evcnt *dec_550_intr_evcnt __P((void *, pci_intr_handle_t));
+int	dec_550_intr_map(void *, pcitag_t, int, int,
+	    pci_intr_handle_t *);
+const char *dec_550_intr_string(void *, pci_intr_handle_t);
+int	dec_550_intr_line(void *, pci_intr_handle_t);
+const struct evcnt *dec_550_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_550_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
-void	dec_550_intr_disestablish __P((void *, void *));
+void	dec_550_intr_disestablish(void *, void *);
 
 void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *));
-void    dec_550_pciide_compat_intr_disestablish __P((void *, void *));
+void    dec_550_pciide_compat_intr_disestablish(void *, void *);
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
 #define	DEC_550_MAX_IRQ		(64 - DEC_550_PCI_IRQ_BEGIN)
@@ -128,9 +128,9 @@ void    dec_550_pciide_compat_intr_disestablish __P((void *, void *));
 
 struct alpha_shared_intr *dec_550_pci_intr;
 
-void	dec_550_iointr __P((void *framep, unsigned long vec));
-void	dec_550_intr_enable __P((int irq));
-void	dec_550_intr_disable __P((int irq));
+void	dec_550_iointr(void *framep, unsigned long vec);
+void	dec_550_intr_enable(int irq);
+void	dec_550_intr_disable(int irq);
 
 void
 pci_550_pickintr(ccp)
@@ -331,7 +331,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg, name)
 	void *ccv, *arg;
 	pci_intr_handle_t ih;
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	char *name;
 {
 #if 0
@@ -398,7 +398,7 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	struct device *dev;
 	struct pci_attach_args *pa;
 	int chan;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

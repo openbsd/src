@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.11 2001/12/04 21:56:18 millert Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.12 2002/03/14 01:27:04 millert Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -46,8 +46,8 @@
 
 #include <machine/cpu.h>
 
-void record_stacktrace __P((int *, int));
-void playback_stacktrace __P((int *, int));
+void record_stacktrace(int *, int);
+void playback_stacktrace(int *, int);
 
 /*
  * Locking primitives implementation.

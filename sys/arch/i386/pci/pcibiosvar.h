@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.8 2001/10/25 19:03:49 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct pcibios_pir_header {
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
 #define	PIR_DEVFUNC_COMPOSE(dev,func)	((((dev) &0x1f) << 3) | ((func) & 7))
 
-void	pcibios_init __P((void));
+void	pcibios_init(void);
 
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
@@ -115,11 +115,11 @@ int pcibios_flags;
 typedef void *pciintr_icu_handle_t;
 
 struct pciintr_icu {
-	int	(*pi_getclink) __P((pciintr_icu_handle_t, int, int *));
-	int	(*pi_get_intr) __P((pciintr_icu_handle_t, int, int *));
-	int	(*pi_set_intr) __P((pciintr_icu_handle_t, int, int));
-	int	(*pi_get_trigger) __P((pciintr_icu_handle_t, int, int *));
-	int	(*pi_set_trigger) __P((pciintr_icu_handle_t, int, int));
+	int	(*pi_getclink)(pciintr_icu_handle_t, int, int *);
+	int	(*pi_get_intr)(pciintr_icu_handle_t, int, int *);
+	int	(*pi_set_intr)(pciintr_icu_handle_t, int, int);
+	int	(*pi_get_trigger)(pciintr_icu_handle_t, int, int *);
+	int	(*pi_set_trigger)(pciintr_icu_handle_t, int, int);
 };
 
 typedef const struct pciintr_icu *pciintr_icu_tag_t;
@@ -143,32 +143,32 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 
 #define	PCIADDR_SEARCH_IO	0
 #define	PCIADDR_SEARCH_MEM	1
-struct extent *pciaddr_search __P((int, bus_addr_t *, bus_size_t));
+struct extent *pciaddr_search(int, bus_addr_t *, bus_size_t);
 
-int  pci_intr_fixup __P((struct pcibios_softc *, pci_chipset_tag_t, bus_space_tag_t));
-int  pci_bus_fixup __P((pci_chipset_tag_t, int));
-void pci_addr_fixup __P((struct pcibios_softc *, pci_chipset_tag_t, int));
+int  pci_intr_fixup(struct pcibios_softc *, pci_chipset_tag_t, bus_space_tag_t);
+int  pci_bus_fixup(pci_chipset_tag_t, int);
+void pci_addr_fixup(struct pcibios_softc *, pci_chipset_tag_t, int);
 void pci_device_foreach __P((struct pcibios_softc *, pci_chipset_tag_t, int,
-    void (*) __P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t))));
-int  pci_intr_header_fixup __P((pci_chipset_tag_t, pcitag_t, pci_intr_handle_t *));
-int  pci_intr_route_link __P((pci_chipset_tag_t, pci_intr_handle_t *));
-int  pci_intr_post_fixup __P((void));
+    void (*)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t)));
+int  pci_intr_header_fixup(pci_chipset_tag_t, pcitag_t, pci_intr_handle_t *);
+int  pci_intr_route_link(pci_chipset_tag_t, pci_intr_handle_t *);
+int  pci_intr_post_fixup(void);
 
 /*
  * Init functions for our known PCI ICUs.
  */
-int	piix_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	opti82c558_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	opti82c700_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	via82c586_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	sis85c503_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	amd756_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-int	ali1543_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
-	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	piix_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	opti82c558_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	opti82c700_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	via82c586_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	sis85c503_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	amd756_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	ali1543_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasicvar.h,v 1.3 1997/11/07 08:07:51 niklas Exp $	*/
+/*	$OpenBSD: ioasicvar.h,v 1.4 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: ioasicvar.h,v 1.2 1996/03/17 21:37:45 jonathan Exp $	*/
 
 /*
@@ -63,12 +63,12 @@ extern tc_addr_t ioasic_base;
  */
 void    ioasic_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 	    int (*)(void *), void *));
-void    ioasic_intr_disestablish __P((struct device *, void *));
+void    ioasic_intr_disestablish(struct device *, void *);
 
 
 /*
  * Miscellaneous helper functions.
  */
-int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
-char	*ioasic_lance_ether_address __P((void));
-void	ioasic_lance_dma_setup __P((void *));
+int	ioasic_submatch(struct cfdata *, struct ioasicdev_attach_args *);
+char	*ioasic_lance_ether_address(void);
+void	ioasic_lance_dma_setup(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.19 2002/01/10 22:25:40 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -100,8 +100,8 @@ extern caddr_t	ROMBase;
  */
 caddr_t		CADDR1, CADDR2, vmmap;
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
-void	bootstrap_mac68k __P((int));
+void	pmap_bootstrap(paddr_t, paddr_t);
+void	bootstrap_mac68k(int);
 
 /*
  * Bootstrap the VM system.
@@ -543,7 +543,7 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
-	extern void	zs_init __P((void));
+	extern void	zs_init(void);
 	extern caddr_t	esym;
 	paddr_t		nextpa;
 	caddr_t		oldROMBase;

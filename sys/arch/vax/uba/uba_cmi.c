@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_cmi.c,v 1.1 2000/04/27 03:14:51 bjc Exp $	*/
+/*	$OpenBSD: uba_cmi.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uba_cmi.c,v 1.2 1999/08/14 11:31:48 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -64,11 +64,11 @@
  * and bus status/command registers, the latter are (partly) IPR's
  * on 750.
  */
-static	int	dw750_match __P((struct device *, struct cfdata *, void *));
-static	void	dw750_attach __P((struct device *, struct device *, void *));
-static	void	dw750_init __P((struct uba_softc*));
+static	int	dw750_match(struct device *, struct cfdata *, void *);
+static	void	dw750_attach(struct device *, struct device *, void *);
+static	void	dw750_init(struct uba_softc*);
 #ifdef notyet
-static	void	dw750_purge __P((struct uba_softc *, int));
+static	void	dw750_purge(struct uba_softc *, int);
 #endif
 
 struct	cfattach uba_cmi_ca = {

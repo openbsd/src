@@ -1,4 +1,4 @@
-/*	$OpenBSD: esovar.h,v 1.1 1999/08/04 23:38:03 niklas Exp $	*/
+/*	$OpenBSD: esovar.h,v 1.2 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: esovar.h,v 1.2 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -118,9 +118,9 @@ struct eso_softc {
 	bus_space_handle_t	sc_game_ioh;
 
 	/* MI audio interface: play/record interrupt callbacks and arguments */
-	void			(*sc_pintr) __P((void *));
+	void			(*sc_pintr)(void *);
 	void *			sc_parg;
-	void			(*sc_rintr) __P((void *));
+	void			(*sc_rintr)(void *);
 	void *			sc_rarg;
 
 	/* Audio 2 state */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.3 2001/04/17 04:30:50 aaron Exp $ */
+/* $OpenBSD: pcppi.c,v 1.4 2002/03/14 01:26:56 millert Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -49,7 +49,7 @@
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
 
-void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int, int));
+void	pcppi_pckbd_bell(void *, u_int, u_int, u_int, int);
 #endif
 
 struct pcppi_softc {
@@ -67,11 +67,11 @@ struct pcppi_softc {
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	pcppi_match __P((struct device *, void *, void *));
+int	pcppi_match(struct device *, void *, void *);
 #else
-int	pcppi_match __P((struct device *, struct cfdata *, void *));
+int	pcppi_match(struct device *, struct cfdata *, void *);
 #endif
-void	pcppi_attach __P((struct device *, struct device *, void *));
+void	pcppi_attach(struct device *, struct device *, void *);
 
 struct cfattach pcppi_ca = {
 	sizeof(struct pcppi_softc), pcppi_match, pcppi_attach,
@@ -81,7 +81,7 @@ struct cfdriver pcppi_cd = {
 	NULL, "pcppi", DV_DULL
 };
 
-static void pcppi_bell_stop __P((void*));
+static void pcppi_bell_stop(void*);
 
 #define PCPPIPRI (PZERO - 1)
 

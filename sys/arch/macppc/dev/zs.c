@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.5 2002/02/25 16:15:04 drahn Exp $	*/
+/*	$OpenBSD: zs.c,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ int	zs_cons_canabort = 0;
 /* device to which the console is attached--if serial. */
 /* Mac stuff */
 
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zs_get_speed(struct zs_chanstate *);
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -165,9 +165,9 @@ struct cfdriver zsc_cd = {
 };
 
 /* Definition of the driver for autoconfig. */
-int	zsc_match __P((struct device *, void *, void *));
-void	zsc_attach __P((struct device *, struct device *, void *));
-int	zsc_print __P((void *, const char *name));
+int	zsc_match(struct device *, void *, void *);
+void	zsc_attach(struct device *, struct device *, void *);
+int	zsc_print(void *, const char *name);
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
@@ -175,17 +175,17 @@ struct cfattach zsc_ca = {
 
 extern struct cfdriver zsc_cd;
 
-int zshard __P((void *));
-int zssoft __P((void *));
+int zshard(void *);
+int zssoft(void *);
 #ifdef ZS_TXDMA
-static int zs_txdma_int __P((void *));
+static int zs_txdma_int(void *);
 #endif
 
-void zscnprobe __P((struct consdev *));
-void zscninit __P((struct consdev *));
-int  zscngetc __P((dev_t));
-void zscnputc __P((dev_t, int));
-void zscnpollc __P((dev_t, int));
+void zscnprobe(struct consdev *);
+void zscninit(struct consdev *);
+int  zscngetc(dev_t);
+void zscnputc(dev_t, int);
+void zscnpollc(dev_t, int);
 
 /*
  * Is the zs chip present?
@@ -638,9 +638,9 @@ void  zs_write_data(cs, val)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
-static void	zs_putc __P((register volatile struct zschan *, int));
-static int	zs_getc __P((register volatile struct zschan *));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
+static void	zs_putc(register volatile struct zschan *, int);
+static int	zs_getc(register volatile struct zschan *);
+extern int	zsopen( dev_t dev, int flags, int mode, struct proc *p);
 
 static int stdin, stdout;
 
@@ -753,8 +753,8 @@ zscnputc(dev, c)
 	}
 }
 
-extern int ofccngetc __P((dev_t));
-extern void ofccnputc __P((dev_t, int));
+extern int ofccngetc(dev_t);
+extern void ofccnputc(dev_t, int);
 
 struct consdev consdev_zs = {
 	zscnprobe,

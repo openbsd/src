@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.10 2001/05/13 00:22:21 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.11 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.42 1996/11/20 18:57:03 gwr Exp $	*/
 
 /*-
@@ -124,14 +124,14 @@ static int zs_defspeed[NZS][2] = {
 };
 
 
-static struct zschan *zs_get_chan_addr __P((int, int));
-int zs_getc __P((volatile void *));
-static void zs_putc __P((volatile void *, int));
+static struct zschan *zs_get_chan_addr(int, int);
+int zs_getc(volatile void *);
+static void zs_putc(volatile void *, int);
 
-int  zscngetc __P((dev_t));
-void zscnputc __P((dev_t, int));
-void nullcnprobe __P((struct consdev *));
-void zscninit __P((struct consdev *));
+int  zscngetc(dev_t);
+void zscnputc(dev_t, int);
+void nullcnprobe(struct consdev *);
+void zscninit(struct consdev *);
 
 /* Find PROM mappings (for console support). */
 void zs_init()
@@ -191,9 +191,9 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match __P((struct device *, void *, void *));
-static void	zsc_attach __P((struct device *, struct device *, void *));
-static int  zsc_print __P((void *, const char *name));
+static int	zsc_match(struct device *, void *, void *);
+static void	zsc_attach(struct device *, struct device *, void *);
+static int  zsc_print(void *, const char *name);
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach

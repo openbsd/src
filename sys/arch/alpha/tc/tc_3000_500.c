@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_3000_500.c,v 1.7 1999/01/11 05:11:04 millert Exp $	*/
+/*	$OpenBSD: tc_3000_500.c,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: tc_3000_500.c,v 1.12 1996/11/15 23:59:00 cgd Exp $	*/
 
 /*
@@ -42,13 +42,13 @@
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_500.h>
 
-void	tc_3000_500_intr_setup __P((void));
+void	tc_3000_500_intr_setup(void);
 void	tc_3000_500_intr_establish __P((struct device *, void *,
 	    tc_intrlevel_t, int (*)(void *), void *));
-void	tc_3000_500_intr_disestablish __P((struct device *, void *));
-void	tc_3000_500_iointr __P((void *, unsigned long));
+void	tc_3000_500_intr_disestablish(struct device *, void *);
+void	tc_3000_500_iointr(void *, unsigned long);
 
-int	tc_3000_500_intrnull __P((void *));
+int	tc_3000_500_intrnull(void *);
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -94,7 +94,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 };
 
 struct tcintr {
-	int	(*tci_func) __P((void *));
+	int	(*tci_func)(void *);
 	void	*tci_arg;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
@@ -129,7 +129,7 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	struct device *tcadev;
 	void *cookie, *arg;
 	tc_intrlevel_t level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 {
 	u_long dev = (u_long)cookie;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.39 2002/02/22 20:37:46 drahn Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.40 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -59,20 +59,20 @@
 
 extern u_long nextgennumber;
 
-static daddr_t	ffs_alloccg __P((struct inode *, int, daddr_t, int));
-static daddr_t	ffs_alloccgblk __P((struct inode *, struct buf *, daddr_t));
-static daddr_t	ffs_clusteralloc __P((struct inode *, int, daddr_t, int));
-static ino_t	ffs_dirpref __P((struct inode *));
-static daddr_t	ffs_fragextend __P((struct inode *, int, long, int, int));
-static void	ffs_fserr __P((struct fs *, u_int, char *));
+static daddr_t	ffs_alloccg(struct inode *, int, daddr_t, int);
+static daddr_t	ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
+static daddr_t	ffs_clusteralloc(struct inode *, int, daddr_t, int);
+static ino_t	ffs_dirpref(struct inode *);
+static daddr_t	ffs_fragextend(struct inode *, int, long, int, int);
+static void	ffs_fserr(struct fs *, u_int, char *);
 static u_long	ffs_hashalloc __P((struct inode *, int, long, int,
 				   daddr_t (*)(struct inode *, int, daddr_t,
 					       int)));
-static daddr_t	ffs_nodealloccg __P((struct inode *, int, daddr_t, int));
-static daddr_t	ffs_mapsearch __P((struct fs *, struct cg *, daddr_t, int));
+static daddr_t	ffs_nodealloccg(struct inode *, int, daddr_t, int);
+static daddr_t	ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
 
 #ifdef DIAGNOSTIC
-static int      ffs_checkblk __P((struct inode *, daddr_t, long));
+static int      ffs_checkblk(struct inode *, daddr_t, long);
 #endif
 
 /*
@@ -864,7 +864,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 	int cg;
 	long pref;
 	int size;	/* size for data blocks, mode for inodes */
-	daddr_t (*allocator) __P((struct inode *, int, daddr_t, int));
+	daddr_t (*allocator)(struct inode *, int, daddr_t, int);
 {
 	register struct fs *fs;
 	long result;

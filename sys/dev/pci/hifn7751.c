@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.114 2002/01/31 21:17:37 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.115 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -65,8 +65,8 @@
 /*
  * Prototypes and count for the pci_device structure
  */
-int hifn_probe		__P((struct device *, void *, void *));
-void hifn_attach	__P((struct device *, struct device *, void *));
+int hifn_probe(struct device *, void *, void *);
+void hifn_attach(struct device *, struct device *, void *);
 
 struct cfattach hifn_ca = {
 	sizeof(struct hifn_softc), hifn_probe, hifn_attach,
@@ -76,34 +76,34 @@ struct cfdriver hifn_cd = {
 	0, "hifn", DV_DULL
 };
 
-void	hifn_reset_board __P((struct hifn_softc *, int));
-void	hifn_reset_puc __P((struct hifn_softc *));
-void	hifn_puc_wait __P((struct hifn_softc *));
-int	hifn_enable_crypto __P((struct hifn_softc *, pcireg_t));
-void	hifn_init_dma __P((struct hifn_softc *));
-void	hifn_init_pci_registers __P((struct hifn_softc *));
-int	hifn_sramsize __P((struct hifn_softc *));
-int	hifn_dramsize __P((struct hifn_softc *));
-int	hifn_ramtype __P((struct hifn_softc *));
-void	hifn_sessions __P((struct hifn_softc *));
-int	hifn_intr __P((void *));
-u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
-u_int32_t hifn_next_signature __P((u_int32_t a, u_int cnt));
-int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
-int	hifn_freesession __P((u_int64_t));
-int	hifn_process __P((struct cryptop *));
-void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
-int	hifn_crypto __P((struct hifn_softc *, struct hifn_command *, struct cryptop *));
-int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *));
-int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *));
-int	hifn_dmamap_aligned __P((bus_dmamap_t));
-int	hifn_dmamap_load_src __P((struct hifn_softc *, struct hifn_command *));
-int	hifn_dmamap_load_dst __P((struct hifn_softc *, struct hifn_command *));
-int	hifn_init_pubrng __P((struct hifn_softc *));
-void	hifn_rng __P((void *));
-void	hifn_tick __P((void *));
-void	hifn_abort __P((struct hifn_softc *));
-void	hifn_alloc_slot __P((struct hifn_softc *, int *, int *, int *, int *));
+void	hifn_reset_board(struct hifn_softc *, int);
+void	hifn_reset_puc(struct hifn_softc *);
+void	hifn_puc_wait(struct hifn_softc *);
+int	hifn_enable_crypto(struct hifn_softc *, pcireg_t);
+void	hifn_init_dma(struct hifn_softc *);
+void	hifn_init_pci_registers(struct hifn_softc *);
+int	hifn_sramsize(struct hifn_softc *);
+int	hifn_dramsize(struct hifn_softc *);
+int	hifn_ramtype(struct hifn_softc *);
+void	hifn_sessions(struct hifn_softc *);
+int	hifn_intr(void *);
+u_int	hifn_write_command(struct hifn_command *, u_int8_t *);
+u_int32_t hifn_next_signature(u_int32_t a, u_int cnt);
+int	hifn_newsession(u_int32_t *, struct cryptoini *);
+int	hifn_freesession(u_int64_t);
+int	hifn_process(struct cryptop *);
+void	hifn_callback(struct hifn_softc *, struct hifn_command *, u_int8_t *);
+int	hifn_crypto(struct hifn_softc *, struct hifn_command *, struct cryptop *);
+int	hifn_readramaddr(struct hifn_softc *, int, u_int8_t *);
+int	hifn_writeramaddr(struct hifn_softc *, int, u_int8_t *);
+int	hifn_dmamap_aligned(bus_dmamap_t);
+int	hifn_dmamap_load_src(struct hifn_softc *, struct hifn_command *);
+int	hifn_dmamap_load_dst(struct hifn_softc *, struct hifn_command *);
+int	hifn_init_pubrng(struct hifn_softc *);
+void	hifn_rng(void *);
+void	hifn_tick(void *);
+void	hifn_abort(struct hifn_softc *);
+void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *, int *);
 
 struct hifn_stats hifnstats;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs.h,v 1.9 2002/02/17 04:29:52 art Exp $	*/
+/*	$OpenBSD: kernfs.h,v 1.10 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: kernfs.h,v 1.10 1996/02/09 22:40:21 christos Exp $	*/
 
 /*
@@ -83,24 +83,24 @@ struct kernfs_node {
 #define KERNTOV(kn) ((struct vnode *)(kn)->kf_vnode)
 #define	VTOKERN(vp) ((struct kernfs_node *)(vp)->v_data)
 
-#define kernfs_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct vnode **)))eopnotsupp)
-#define kernfs_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-	    struct proc *)))eopnotsupp)
-#define kernfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define kernfs_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+#define kernfs_fhtovp ((int (*)(struct mount *, struct fid *, \
+	    struct vnode **))eopnotsupp)
+#define kernfs_quotactl ((int (*)(struct mount *, int, uid_t, caddr_t, \
+	    struct proc *))eopnotsupp)
+#define kernfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *))eopnotsupp)
+#define kernfs_vget ((int (*)(struct mount *, ino_t, struct vnode **)) \
 	    eopnotsupp)
-#define kernfs_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
-#define kernfs_sync ((int (*) __P((struct mount *, int, struct ucred *, \
-				   struct proc *)))nullop)
-#define kernfs_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
-	int *, struct ucred **)))eopnotsupp)
+#define kernfs_vptofh ((int (*)(struct vnode *, struct fid *))eopnotsupp)
+#define kernfs_sync ((int (*)(struct mount *, int, struct ucred *, \
+				   struct proc *))nullop)
+#define kernfs_checkexp ((int (*)(struct mount *, struct mbuf *,	\
+	int *, struct ucred **))eopnotsupp)
 
-int	kernfs_init __P((struct vfsconf *));
-int	kernfs_allocvp __P((struct kern_target *, struct mount *, struct vnode **));
-struct kern_target 	*kernfs_findtarget __P((char *, int));
-extern int (**kernfs_vnodeop_p) __P((void *));
+int	kernfs_init(struct vfsconf *);
+int	kernfs_allocvp(struct kern_target *, struct mount *, struct vnode **);
+struct kern_target 	*kernfs_findtarget(char *, int);
+extern int (**kernfs_vnodeop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.12 2001/02/01 18:05:30 art Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.13 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -53,11 +53,11 @@
 #include <machine/pte.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	sfbmatch __P((struct device *, void *, void *));
+int	sfbmatch(struct device *, void *, void *);
 #else
-int	sfbmatch __P((struct device *, struct cfdata *, void *));
+int	sfbmatch(struct device *, struct cfdata *, void *);
 #endif
-void	sfbattach __P((struct device *, struct device *, void *));
+void	sfbattach(struct device *, struct device *, void *);
 
 struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
@@ -67,7 +67,7 @@ struct cfdriver sfb_cd = {
 	NULL, "sfb", DV_DULL,
 };
 
-void	sfb_getdevconfig __P((tc_addr_t dense_addr, struct sfb_devconfig *dc));
+void	sfb_getdevconfig(tc_addr_t dense_addr, struct sfb_devconfig *dc);
 struct sfb_devconfig sfb_console_dc;
 tc_addr_t sfb_consaddr;
 
@@ -97,18 +97,18 @@ struct wsscreen_list sfb_screenlist = {
         sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	sfbmmap __P((void *, off_t, int));
+int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	sfbmmap(void *, off_t, int);
 
-static int      sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-                                      void **, int *, int *, long *));
-static void     sfb_free_screen __P((void *, void *));
+static int      sfb_alloc_screen(void *, const struct wsscreen_descr *,
+                                      void **, int *, int *, long *);
+static void     sfb_free_screen(void *, void *);
 static int      sfb_show_screen __P((void *, void *, int,
                                      void (*) (void *, int, int), void *));
 
 #if 0
-void	sfb_blank __P((struct sfb_devconfig *));
-void	sfb_unblank __P((struct sfb_devconfig *));
+void	sfb_blank(struct sfb_devconfig *);
+void	sfb_unblank(struct sfb_devconfig *);
 #endif
 
 struct wsdisplay_accessops sfb_accessops = {
@@ -403,7 +403,7 @@ sfb_show_screen(v, cookie, waitok, cb, cbarg)
         void *v;
         void *cookie;
         int waitok;
-        void (*cb) __P((void *, int, int));
+        void (*cb)(void *, int, int);
         void *cbarg;
 {
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.5 2001/10/09 15:07:20 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -90,8 +90,8 @@ struct hme_softc {
 	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
-	void	(*sc_hwreset) __P((struct hme_softc *));
-	void	(*sc_hwinit) __P((struct hme_softc *));
+	void	(*sc_hwreset)(struct hme_softc *);
+	void	(*sc_hwinit)(struct hme_softc *);
 
 	struct hme_sxd sc_txd[HME_TX_RING_MAX], sc_rxd[HME_RX_RING_MAX];
 	bus_dmamap_t	sc_rxmap_spare;
@@ -100,6 +100,6 @@ struct hme_softc {
 };
 
 
-void	hme_config __P((struct hme_softc *));
-void	hme_reset __P((struct hme_softc *));
-int	hme_intr __P((void *));
+void	hme_config(struct hme_softc *);
+void	hme_reset(struct hme_softc *);
+int	hme_intr(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofnet.c,v 1.7 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: ofnet.c,v 1.8 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct cfattach ipkdb_ofn_ca = {
 static struct ipkdb_if *kifp;
 static struct ofn_softc *ipkdb_of;
 
-static int ipkdbprobe __P((void *, void *));
+static int ipkdbprobe(void *, void *);
 #endif
 
 struct ofn_softc {
@@ -73,8 +73,8 @@ struct ofn_softc {
 	void *dmabuf;
 };
 
-static int ofnprobe __P((struct device *, void *, void *));
-static void ofnattach __P((struct device *, struct device *, void *));
+static int ofnprobe(struct device *, void *, void *);
+static void ofnattach(struct device *, struct device *, void *);
 
 struct cfattach ofnet_ca = {
 	sizeof(struct ofn_softc), ofnprobe, ofnattach
@@ -84,14 +84,14 @@ struct cfdriver ofnet_cd = {
 	NULL, "ofnet", DV_IFNET
 };
 
-static void ofnread __P((struct ofn_softc *));
-static void ofntimer __P((struct ofn_softc *));
-static void ofninit __P((struct ofn_softc *));
-static void ofnstop __P((struct ofn_softc *));
+static void ofnread(struct ofn_softc *);
+static void ofntimer(struct ofn_softc *);
+static void ofninit(struct ofn_softc *);
+static void ofnstop(struct ofn_softc *);
 
-static void ofnstart __P((struct ifnet *));
-static int ofnioctl __P((struct ifnet *, u_long, caddr_t));
-static void ofnwatchdog __P((struct ifnet *));
+static void ofnstart(struct ifnet *);
+static int ofnioctl(struct ifnet *, u_long, caddr_t);
+static void ofnwatchdog(struct ifnet *);
 
 static int
 ofnprobe(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.8 2001/04/17 04:30:49 aaron Exp $	*/
+/*	$OpenBSD: cons.h,v 1.9 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -44,18 +44,12 @@
  */
 
 struct consdev {
-	void	(*cn_probe)	/* probe hardware and fill in consdev info */
-		    __P((struct consdev *));
-	void	(*cn_init)	/* turn on as console */
-		    __P((struct consdev *));
-	int	(*cn_getc)	/* kernel getchar interface */
-		    __P((dev_t));
-	void	(*cn_putc)	/* kernel putchar interface */
-		    __P((dev_t, int));
-	void	(*cn_pollc)	/* turn on and off polling */
-		    __P((dev_t, int));
-	void	(*cn_bell)	/* ring bell */
-		    __P((dev_t, u_int, u_int, u_int));
+	void	(*cn_probe)	/* probe hardware and fill in consdev info */(struct consdev *);
+	void	(*cn_init)	/* turn on as console */(struct consdev *);
+	int	(*cn_getc)	/* kernel getchar interface */(dev_t);
+	void	(*cn_putc)	/* kernel putchar interface */(dev_t, int);
+	void	(*cn_pollc)	/* turn on and off polling */(dev_t, int);
+	void	(*cn_bell)	/* ring bell */(dev_t, u_int, u_int, u_int);
 	dev_t	cn_dev;		/* major/minor of device */
 	int	cn_pri;		/* pecking order; the higher the better */
 };
@@ -76,29 +70,29 @@ extern	struct consdev *cn_tab;
 
 struct knote;
 
-void	cninit __P((void));
-int	cnset __P((dev_t));
-int	cnopen __P((dev_t, int, int, struct proc *));
-int	cnclose __P((dev_t, int, int, struct proc *));
-int	cnread __P((dev_t, struct uio *, int));
-int	cnwrite __P((dev_t, struct uio *, int));
-int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	cnselect __P((dev_t, int, struct proc *));
-int	cnkqfilter __P((dev_t, struct knote *));
-int	cngetc __P((void));
-void	cnputc __P((int));
-void	cnpollc __P((int));
-void	cnbell __P((u_int, u_int, u_int));
-void	cnrint __P((void));
-void	nullcnpollc __P((dev_t, int));
+void	cninit(void);
+int	cnset(dev_t);
+int	cnopen(dev_t, int, int, struct proc *);
+int	cnclose(dev_t, int, int, struct proc *);
+int	cnread(dev_t, struct uio *, int);
+int	cnwrite(dev_t, struct uio *, int);
+int	cnioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	cnselect(dev_t, int, struct proc *);
+int	cnkqfilter(dev_t, struct knote *);
+int	cngetc(void);
+void	cnputc(int);
+void	cnpollc(int);
+void	cnbell(u_int, u_int, u_int);
+void	cnrint(void);
+void	nullcnpollc(dev_t, int);
 
 /* console-specific types */
-#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
-#define	dev_type_cninit(n)	void n __P((struct consdev *))
-#define	dev_type_cngetc(n)	int n __P((dev_t))
-#define	dev_type_cnputc(n)	void n __P((dev_t, int))
-#define	dev_type_cnpollc(n)	void n __P((dev_t, int))
-#define	dev_type_cnbell(n)	void n __P((dev_t, u_int, u_int, u_int))
+#define	dev_type_cnprobe(n)	void n(struct consdev *)
+#define	dev_type_cninit(n)	void n(struct consdev *)
+#define	dev_type_cngetc(n)	int n(dev_t)
+#define	dev_type_cnputc(n)	void n(dev_t, int)
+#define	dev_type_cnpollc(n)	void n(dev_t, int)
+#define	dev_type_cnbell(n)	void n(dev_t, u_int, u_int, u_int)
 
 #define	cons_decl(n) \
 	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \

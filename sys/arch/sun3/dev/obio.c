@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.7 1999/01/11 05:12:02 millert Exp $	*/
+/*	$OpenBSD: obio.c,v 1.8 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: obio.c,v 1.23 1996/11/20 18:56:56 gwr Exp $	*/
 
 /*-
@@ -47,13 +47,13 @@
 #include <machine/mon.h>
 #include <machine/obio.h>
 
-static int  obio_match __P((struct device *, void *, void *));
-static void obio_attach __P((struct device *, struct device *, void *));
-static int  obio_print __P((void *, const char *parentname));
-static int  obio_submatch __P((struct device *, void *, void *));
+static int  obio_match(struct device *, void *, void *);
+static void obio_attach(struct device *, struct device *, void *);
+static int  obio_print(void *, const char *parentname);
+static int  obio_submatch(struct device *, void *, void *);
 
-static void save_prom_mappings __P((void));
-static void make_required_mappings __P((void));
+static void save_prom_mappings(void);
+static void make_required_mappings(void);
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach

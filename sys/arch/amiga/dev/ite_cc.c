@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_cc.c,v 1.2 1996/05/02 06:44:10 niklas Exp $	*/
+/*	$OpenBSD: ite_cc.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_cc.c,v 1.25 1996/04/21 21:11:54 veego Exp $	*/
 
 /*
@@ -101,15 +101,15 @@ struct ite_priv {
 };
 typedef struct ite_priv ipriv_t;
 
-void view_deinit __P((struct ite_softc *));
-void view_init __P((struct ite_softc *));
+void view_deinit(struct ite_softc *);
+void view_init(struct ite_softc *);
 
-static void putc8 __P((struct ite_softc *, int, int, int, int));
-static void clear8 __P((struct ite_softc *, int, int, int, int));
-static void scroll8 __P((struct ite_softc *, int, int, int, int));
-static void cursor32 __P((struct ite_softc *, int));
-static void scrollbmap __P((bmap_t *, u_short, u_short, u_short, u_short,
-    short, short, u_char));
+static void putc8(struct ite_softc *, int, int, int, int);
+static void clear8(struct ite_softc *, int, int, int, int);
+static void scroll8(struct ite_softc *, int, int, int, int);
+static void cursor32(struct ite_softc *, int);
+static void scrollbmap(bmap_t *, u_short, u_short, u_short, u_short,
+    short, short, u_char);
 
 /* patchable */
 int ite_default_x = 0;		/* def leftedge offset */
@@ -124,23 +124,23 @@ int ite_default_height = 512;	/* def PAL height */
 int ite_default_height = 400;	/* def NON-PAL/NTSC height (?) */
 #endif
 
-int ite_newsize __P((struct ite_softc *, struct itewinsize *));
-static void putc_nm __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_ul __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_ul_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_bd __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_bd_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_bd_ul __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
-static void putc_bd_ul_in __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
+int ite_newsize(struct ite_softc *, struct itewinsize *);
+static void putc_nm(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_in(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_ul(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_ul_in(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_bd(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_bd_in(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_bd_ul(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
+static void putc_bd_ul_in(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
 
 /*
  * called from grf_cc to return console priority
@@ -680,8 +680,8 @@ putc_bd_ul_in (cci,p,f,co,ro,fw,fh)
 }
 
 
-typedef void cc_putc_func __P((ipriv_t *, u_char *, u_char *, u_int, u_int,
-			u_int, u_int));
+typedef void cc_putc_func(ipriv_t *, u_char *, u_char *, u_int, u_int,
+			u_int, u_int);
 
 cc_putc_func *put_func[ATTR_ALL+1] = {
     putc_nm,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.16 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.17 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -229,8 +229,8 @@ struct st_softc st_softc[NSTRIP];
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
 
-static int stripinit __P((struct st_softc *));
-static 	struct mbuf *strip_btom __P((struct st_softc *, int));
+static int stripinit(struct st_softc *);
+static 	struct mbuf *strip_btom(struct st_softc *, int);
 
 /*
  * STRIP header: '*' + modem address (dddd-dddd) + '*' + mactype ('SIP0')
@@ -259,23 +259,23 @@ struct st_header {
  * different STRIP implementations: *BSD, Linux, etc.
  *
  */
-static u_char* UnStuffData __P((u_char *src, u_char *end, u_char
-				*dest, u_long dest_length)); 
+static u_char* UnStuffData(u_char *src, u_char *end, u_char
+				*dest, u_long dest_length); 
 
-static u_char* StuffData __P((u_char *src, u_long length, u_char *dest,
-			      u_char **code_ptr_ptr));
+static u_char* StuffData(u_char *src, u_long length, u_char *dest,
+			      u_char **code_ptr_ptr);
 
-static void RecvErr __P((char *msg, struct st_softc *sc));
-static void RecvErr_Message __P((struct st_softc *strip_info,
-				u_char *sendername, u_char *msg));
-void	strip_resetradio __P((struct st_softc *sc, struct tty *tp));
-void	strip_proberadio __P((struct st_softc *sc, struct tty *tp));
-void	strip_watchdog __P((struct ifnet *ifp));
-void	strip_sendbody __P((struct st_softc *sc, struct mbuf *m));
-int	strip_newpacket __P((struct st_softc *sc, u_char *ptr, u_char *end));
-struct mbuf * strip_send __P((struct st_softc *sc, struct mbuf *m0));
+static void RecvErr(char *msg, struct st_softc *sc);
+static void RecvErr_Message(struct st_softc *strip_info,
+				u_char *sendername, u_char *msg);
+void	strip_resetradio(struct st_softc *sc, struct tty *tp);
+void	strip_proberadio(struct st_softc *sc, struct tty *tp);
+void	strip_watchdog(struct ifnet *ifp);
+void	strip_sendbody(struct st_softc *sc, struct mbuf *m);
+int	strip_newpacket(struct st_softc *sc, u_char *ptr, u_char *end);
+struct mbuf * strip_send(struct st_softc *sc, struct mbuf *m0);
 
-void strip_timeout __P((void *x));
+void strip_timeout(void *x);
 
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.10 1997/09/11 06:24:05 niklas Exp $	*/
+/*	$OpenBSD: siop.c,v 1.11 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: siop.c,v 1.37 1997/08/27 11:23:21 bouyer Exp $	*/
 
 /*
@@ -67,20 +67,20 @@
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-void siop_select __P((struct siop_softc *));
-void siopabort __P((struct siop_softc *, siop_regmap_p, char *));
-void sioperror __P((struct siop_softc *, siop_regmap_p, u_char));
-void siopstart __P((struct siop_softc *));
-int  siop_checkintr __P((struct siop_softc *, u_char, u_char, u_char, int *));
-void siopreset __P((struct siop_softc *));
-void siopsetdelay __P((int));
-void siop_scsidone __P((struct siop_acb *, int));
-void siop_sched __P((struct siop_softc *));
-int  siop_poll __P((struct siop_softc *, struct siop_acb *));
-void siopintr __P((struct siop_softc *));
-void scsi_period_to_siop __P((struct siop_softc *, int));
-void siop_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, int)); 
-void siop_dump_acb __P((struct siop_acb *));
+void siop_select(struct siop_softc *);
+void siopabort(struct siop_softc *, siop_regmap_p, char *);
+void sioperror(struct siop_softc *, siop_regmap_p, u_char);
+void siopstart(struct siop_softc *);
+int  siop_checkintr(struct siop_softc *, u_char, u_char, u_char, int *);
+void siopreset(struct siop_softc *);
+void siopsetdelay(int);
+void siop_scsidone(struct siop_acb *, int);
+void siop_sched(struct siop_softc *);
+int  siop_poll(struct siop_softc *, struct siop_acb *);
+void siopintr(struct siop_softc *);
+void scsi_period_to_siop(struct siop_softc *, int);
+void siop_start(struct siop_softc *, int, int, u_char *, int, u_char *, int); 
+void siop_dump_acb(struct siop_acb *);
 
 /* 53C710 script */
 const
@@ -159,8 +159,8 @@ int	siopphmm = 0;
 	siop_trix = (siop_trix + 4) & (SIOP_TRACE_SIZE - 1);
 u_char	siop_trbuf[SIOP_TRACE_SIZE];
 int	siop_trix;
-void siop_dump __P((struct siop_softc *));
-void siop_dump_trace __P((void));
+void siop_dump(struct siop_softc *);
+void siop_dump_trace(void);
 #else
 #define SIOP_TRACE(a,b,c,d)
 #endif

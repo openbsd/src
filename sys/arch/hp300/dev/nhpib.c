@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.10 2001/06/25 00:43:08 mickey Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.11 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -83,18 +83,18 @@ static u_char sec_par[] = {
 	0370,0171,0172,0373,0174,0375,0376,0177
 };
 
-void	nhpibifc __P((struct nhpibdevice *));
-void	nhpibreadtimo __P((void *));
-int	nhpibwait __P((struct nhpibdevice *, int));
+void	nhpibifc(struct nhpibdevice *);
+void	nhpibreadtimo(void *);
+int	nhpibwait(struct nhpibdevice *, int);
 
-void	nhpibreset __P((struct hpibbus_softc *)); 
-int	nhpibsend __P((struct hpibbus_softc *, int, int, void *, int));
-int	nhpibrecv __P((struct hpibbus_softc *, int, int, void *, int));
-int	nhpibppoll __P((struct hpibbus_softc *));
-void	nhpibppwatch __P((void *));
-void	nhpibgo __P((struct hpibbus_softc *, int, int, void *, int, int, int));
-void	nhpibdone __P((struct hpibbus_softc *));
-int	nhpibintr __P((void *));
+void	nhpibreset(struct hpibbus_softc *); 
+int	nhpibsend(struct hpibbus_softc *, int, int, void *, int);
+int	nhpibrecv(struct hpibbus_softc *, int, int, void *, int);
+int	nhpibppoll(struct hpibbus_softc *);
+void	nhpibppwatch(void *);
+void	nhpibgo(struct hpibbus_softc *, int, int, void *, int, int, int);
+void	nhpibdone(struct hpibbus_softc *);
+int	nhpibintr(void *);
 
 /*
  * Our controller ops structure.
@@ -118,8 +118,8 @@ struct nhpib_softc {
 	struct timeout sc_watch_to;	/* nhpibppwatch timeout */
 };
 
-int	nhpibmatch __P((struct device *, void *, void *));
-void	nhpibattach __P((struct device *, struct device *, void *));
+int	nhpibmatch(struct device *, void *, void *);
+void	nhpibattach(struct device *, struct device *, void *);
 
 struct cfattach nhpib_ca = {
 	sizeof(struct nhpib_softc), nhpibmatch, nhpibattach

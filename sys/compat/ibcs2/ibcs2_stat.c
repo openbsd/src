@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.7 2002/02/12 18:41:20 art Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -54,8 +54,8 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utsname.h>
 
-static void bsd_stat2ibcs_stat __P((struct ostat *, struct ibcs2_stat *));
-static int cvt_statfs __P((struct statfs *, caddr_t, int));
+static void bsd_stat2ibcs_stat(struct ostat *, struct ibcs2_stat *);
+static int cvt_statfs(struct statfs *, caddr_t, int);
 
 static void
 bsd_stat2ibcs_stat(st, st4)

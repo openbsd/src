@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
 /*	$KAME: altq_red.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -180,26 +180,26 @@ static int default_th_max = TH_MAX;
 static int default_inv_pmax = INV_P_MAX;
 
 /* internal function prototypes */
-static int red_enqueue __P((struct ifaltq *, struct mbuf *,
-			    struct altq_pktattr *));
-static struct mbuf *red_dequeue __P((struct ifaltq *, int));
-static int red_request __P((struct ifaltq *, int, void *));
-static void red_purgeq __P((red_queue_t *));
-static int red_detach __P((red_queue_t *));
+static int red_enqueue(struct ifaltq *, struct mbuf *,
+			    struct altq_pktattr *);
+static struct mbuf *red_dequeue(struct ifaltq *, int);
+static int red_request(struct ifaltq *, int, void *);
+static void red_purgeq(red_queue_t *);
+static int red_detach(red_queue_t *);
 #ifdef ALTQ_FLOWVALVE
-static __inline struct fve *flowlist_lookup __P((struct flowvalve *,
-			 struct altq_pktattr *, struct timeval *));
-static __inline struct fve *flowlist_reclaim __P((struct flowvalve *,
-						  struct altq_pktattr *));
-static __inline void flowlist_move_to_head __P((struct flowvalve *,
-						struct fve *));
-static __inline int fv_p2f __P((struct flowvalve *, int));
-static struct flowvalve *fv_alloc __P((struct red *));
-static void fv_destroy __P((struct flowvalve *));
-static int fv_checkflow __P((struct flowvalve *, struct altq_pktattr *,
-			     struct fve **));
-static void fv_dropbyred __P((struct flowvalve *fv, struct altq_pktattr *,
-			      struct fve *));
+static __inline struct fve *flowlist_lookup(struct flowvalve *,
+			 struct altq_pktattr *, struct timeval *);
+static __inline struct fve *flowlist_reclaim(struct flowvalve *,
+						  struct altq_pktattr *);
+static __inline void flowlist_move_to_head(struct flowvalve *,
+						struct fve *);
+static __inline int fv_p2f(struct flowvalve *, int);
+static struct flowvalve *fv_alloc(struct red *);
+static void fv_destroy(struct flowvalve *);
+static int fv_checkflow(struct flowvalve *, struct altq_pktattr *,
+			     struct fve **);
+static void fv_dropbyred(struct flowvalve *fv, struct altq_pktattr *,
+			      struct fve *);
 #endif
 
 /*

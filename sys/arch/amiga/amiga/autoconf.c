@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2001/05/05 22:33:28 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.59 1998/01/15 21:55:51 is Exp $	*/
 
 /*
@@ -41,11 +41,11 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-void setroot __P((void));
-void swapconf __P((void));
-void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, void *, void *));
+void setroot(void);
+void swapconf(void);
+void mbattach(struct device *, struct device *, void *);
+int mbprint(void *, const char *);
+int mbmatch(struct device *, void *, void *);
 
 int cold;	/* 1 if still booting */
 #include <sys/kernel.h>

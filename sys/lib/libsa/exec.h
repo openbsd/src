@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 2000/05/30 21:59:30 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.5 2002/03/14 01:27:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -67,10 +67,10 @@ struct x_param;
 struct x_sw {
 	char name[MAX_EXEC_NAME];
 	/* returns file position to lseek to */
-	int (*probe) __P((int, union x_header *));
+	int (*probe)(int, union x_header *);
 	/* zero on success */
-	int (*load) __P((int, struct x_param *));
-	int (*ldsym) __P((int, struct x_param *));
+	int (*load)(int, struct x_param *);
+	int (*ldsym)(int, struct x_param *);
 };
 
 struct x_param {
@@ -82,18 +82,18 @@ struct x_param {
 };
 
 extern const struct x_sw execsw[];
-void machdep_exec __P((struct x_param *, int, void *));
+void machdep_exec(struct x_param *, int, void *);
 
-int aout_probe __P((int, union x_header *));
-int aout_load __P((int, struct x_param *));
-int aout_ldsym __P((int, struct x_param *));
+int aout_probe(int, union x_header *);
+int aout_load(int, struct x_param *);
+int aout_ldsym(int, struct x_param *);
 
-int elf_probe __P((int, union x_header *));
-int elf_load __P((int, struct x_param *));
-int elf_ldsym __P((int, struct x_param *));
+int elf_probe(int, union x_header *);
+int elf_load(int, struct x_param *);
+int elf_ldsym(int, struct x_param *);
 
-int ecoff_probe __P((int, union x_header *));
-int ecoff_load __P((int, struct x_param *));
-int ecoff_ldsym __P((int, struct x_param *));
+int ecoff_probe(int, union x_header *);
+int ecoff_load(int, struct x_param *);
+int ecoff_ldsym(int, struct x_param *);
 
 #endif /* _SA_EXEC_H_ */

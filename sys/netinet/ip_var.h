@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.21 2002/01/24 22:42:48 provos Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.22 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -167,40 +167,40 @@ u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 struct rttimer_queue *ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
 
-int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-int	 ip_dooptions __P((struct mbuf *));
-void	 ip_drain __P((void));
-void	 ip_flush __P((void));
-void	 ip_forward __P((struct mbuf *, int));
-void	 ip_freef __P((struct ipq *));
-void	 ip_freemoptions __P((struct ip_moptions *));
-int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
-void	 ip_init __P((void));
-int	 ip_mforward __P((struct mbuf *, struct ifnet *));
-int	 ip_optcopy __P((struct ip *, struct ip *));
-int	 ip_output __P((struct mbuf *, ...));
-int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
+int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 ip_dooptions(struct mbuf *);
+void	 ip_drain(void);
+void	 ip_flush(void);
+void	 ip_forward(struct mbuf *, int);
+void	 ip_freef(struct ipq *);
+void	 ip_freemoptions(struct ip_moptions *);
+int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
+void	 ip_init(void);
+int	 ip_mforward(struct mbuf *, struct ifnet *);
+int	 ip_optcopy(struct ip *, struct ip *);
+int	 ip_output(struct mbuf *, ...);
+int	 ip_pcbopts(struct mbuf **, struct mbuf *);
 struct mbuf *
-	 ip_reass __P((struct ipqent *, struct ipq *));
+	 ip_reass(struct ipqent *, struct ipq *);
 struct in_ifaddr *
-	 in_iawithaddr __P((struct in_addr, struct mbuf *));
+	 in_iawithaddr(struct in_addr, struct mbuf *);
 struct in_ifaddr *
-	 ip_rtaddr __P((struct in_addr));
+	 ip_rtaddr(struct in_addr);
 u_int16_t	
-	 ip_randomid __P((void));
-int	 ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
-void	 ip_slowtimo __P((void));
+	 ip_randomid(void);
+int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *);
+void	 ip_slowtimo(void);
 struct mbuf *
-	 ip_srcroute __P((void));
-void	 ip_stripoptions __P((struct mbuf *, struct mbuf *));
-int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	 ipintr __P((void));
-void	 ipv4_input __P((struct mbuf *));
-int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
-void	 rip_init __P((void));
-void	 rip_input __P((struct mbuf *, ...));
-int	 rip_output __P((struct mbuf *, ...));
-int	 rip_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+	 ip_srcroute(void);
+void	 ip_stripoptions(struct mbuf *, struct mbuf *);
+int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	 ipintr(void);
+void	 ipv4_input(struct mbuf *);
+int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+void	 rip_init(void);
+void	 rip_input(struct mbuf *, ...);
+int	 rip_output(struct mbuf *, ...);
+int	 rip_usrreq(struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_VAR_H_ */

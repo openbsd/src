@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac.c,v 1.8 2001/05/31 10:21:01 art Exp $	*/
+/*	$OpenBSD: ac.c,v 1.9 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: ac.c,v 1.9 1997/04/02 22:37:21 scottr Exp $	*/
 
 /*
@@ -69,12 +69,12 @@
 
 /* cdev_decl(ac); */
 /* XXX we should use macros to do these... */
-int	acopen __P((dev_t, int, int, struct proc *));
-int	acclose __P((dev_t, int, int, struct proc *));
-int	acioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	acopen(dev_t, int, int, struct proc *);
+int	acclose(dev_t, int, int, struct proc *);
+int	acioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-static int	acmatch __P((struct device *, void *, void *));
-static void	acattach __P((struct device *, struct device *, void *));
+static int	acmatch(struct device *, void *, void *);
+static void	acattach(struct device *, struct device *, void *);
 
 struct cfattach ac_ca = {
 	sizeof(struct ac_softc), acmatch, acattach
@@ -84,9 +84,9 @@ struct cfdriver ac_cd = {
 	NULL, "ac", DV_DULL
 };
 
-void	acstart __P((void *));
-void	acgo __P((void *));
-void	acintr __P((void *, int));
+void	acstart(void *);
+void	acgo(void *);
+void	acintr(void *, int);
 
 #ifdef DEBUG
 int ac_debug = 0x0000;

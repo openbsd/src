@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.h,v 1.1 2001/04/02 21:43:11 niklas Exp $	*/
+/*	$OpenBSD: linux_misc.h,v 1.2 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_misc.h,v 1.3 1999/05/13 00:31:57 thorpej Exp $	*/
 
 /*-
@@ -49,9 +49,9 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void bsd_to_linux_wstat __P((int *));
-int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
-    fd_set *, struct timeval *));
+void bsd_to_linux_wstat(int *);
+int linux_select1(struct proc *, register_t *, int, fd_set *, fd_set *,
+    fd_set *, struct timeval *);
 __END_DECLS
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplelock.h,v 1.9 2001/02/26 15:43:08 art Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.10 2002/03/14 01:27:14 millert Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
@@ -42,7 +42,7 @@ struct simplelock {
 #define	simple_unlock(lkp)
 #define simple_lock_assert(lkp)
 
-static __inline void simple_lock_init __P((struct simplelock *));
+static __inline void simple_lock_init(struct simplelock *);
 
 static __inline void
 simple_lock_init(lkp)
@@ -54,12 +54,12 @@ simple_lock_init(lkp)
 
 #else
 
-void _simple_unlock __P((__volatile struct simplelock *, const char *, int));
-int _simple_lock_try __P((__volatile struct simplelock *, const char *, int));
-void _simple_lock __P((__volatile struct simplelock *, const char *, int));
-void _simple_lock_assert __P((__volatile struct simplelock *, int, const char *, int));
+void _simple_unlock(__volatile struct simplelock *, const char *, int);
+int _simple_lock_try(__volatile struct simplelock *, const char *, int);
+void _simple_lock(__volatile struct simplelock *, const char *, int);
+void _simple_lock_assert(__volatile struct simplelock *, int, const char *, int);
 
-void simple_lock_init __P((struct simplelock *));
+void simple_lock_init(struct simplelock *);
 #define simple_unlock(lkp) _simple_unlock(lkp, __FILE__, __LINE__)
 #define simple_lock_try(lkp) _simple_lock_try(lkp, __FILE__, __LINE__)
 #define simple_lock(lkp) _simple_lock(lkp, __FILE__, __LINE__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.11 2001/08/12 22:50:12 millert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.12 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ struct msgmap *msgmaps;		/* MSGSEG msgmap structures */
 struct msg *msghdrs;		/* MSGTQL msg headers */
 struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
-void msg_freehdr __P((struct msg *));
+void msg_freehdr(struct msg *);
 
 void
 msginit()

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.67 2002/02/17 23:38:16 jason Exp $ */
+/* $OpenBSD: machdep.c,v 1.68 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -125,14 +125,14 @@
 
 #include "le_ioasic.h"			/* for le_iomem creation */
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-caddr_t allocsys __P((caddr_t));
-void	identifycpu __P((void));
-void	regdump __P((struct trapframe *framep));
-void	printregs __P((struct reg *));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+caddr_t allocsys(caddr_t);
+void	identifycpu(void);
+void	regdump(struct trapframe *framep);
+void	printregs(struct reg *);
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -1201,7 +1201,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1297,7 +1297,7 @@ dumpsys()
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 	extern int msgbufmapped;
 
@@ -1951,8 +1951,8 @@ delay(n)
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
-void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-	    u_long, register_t *));
+void	cpu_exec_ecoff_setregs(struct proc *, struct exec_package *,
+	    u_long, register_t *);
 
 void
 cpu_exec_ecoff_setregs(p, epp, stack, retval)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzsc.c,v 1.9 2001/11/30 22:08:16 miod Exp $	*/
+/*	$OpenBSD: bzsc.c,v 1.10 2002/03/14 01:26:28 millert Exp $	*/
 
 /*	$NetBSD: bzsc.c,v 1.14 1996/12/23 09:09:53 veego Exp $	*/
 
@@ -56,8 +56,8 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-void bzscattach __P((struct device *, struct device *, void *));
-int  bzscmatch  __P((struct device *, void *, void *));
+void bzscattach(struct device *, struct device *, void *);
+int  bzscmatch(struct device *, void *, void *);
 
 struct scsi_adapter bzsc_scsiswitch = {
 	sfas_scsicmd,
@@ -81,15 +81,15 @@ struct cfdriver bzsc_cd = {
 	NULL, "bzsc", DV_DULL, NULL, 0
 };
 
-int bzsc_intr		__P((void *));
-void bzsc_set_dma_adr	__P((struct sfas_softc *sc, vm_offset_t ptr, int mode));       
-void bzsc_set_dma_tc	__P((struct sfas_softc *sc, unsigned int len));
-int bzsc_setup_dma	__P((struct sfas_softc *sc, vm_offset_t ptr, int len,
-			     int mode));
-int bzsc_build_dma_chain __P((struct sfas_softc *sc,
-				struct sfas_dma_chain *chain, void *p, int l));
-int bzsc_need_bump	__P((struct sfas_softc *sc, vm_offset_t ptr, int len));
-void bzsc_led_dummy	__P((struct sfas_softc *sc, int mode));
+int bzsc_intr(void *);
+void bzsc_set_dma_adr(struct sfas_softc *sc, vm_offset_t ptr, int mode);       
+void bzsc_set_dma_tc(struct sfas_softc *sc, unsigned int len);
+int bzsc_setup_dma(struct sfas_softc *sc, vm_offset_t ptr, int len,
+			     int mode);
+int bzsc_build_dma_chain(struct sfas_softc *sc,
+				struct sfas_dma_chain *chain, void *p, int l);
+int bzsc_need_bump(struct sfas_softc *sc, vm_offset_t ptr, int len);
+void bzsc_led_dummy(struct sfas_softc *sc, int mode);
 
 /*
  * if we are an Advanced Systems & Software FastlaneZ3

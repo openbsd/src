@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.4 2001/08/20 19:35:18 miod Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: itevar.h,v 1.14 1996/04/21 21:12:03 veego Exp $	*/
 
 /*
@@ -194,29 +194,29 @@ struct consdev;
 struct termios;
 
 /* console related function */
-void	itecnprobe __P((struct consdev *));
-void	itecninit __P((struct consdev *));
-int	itecngetc __P((dev_t));
-void	itecnputc __P((dev_t, int));
-void	ite_cnfinish __P((struct ite_softc *));
+void	itecnprobe(struct consdev *);
+void	itecninit(struct consdev *);
+int	itecngetc(dev_t);
+void	itecnputc(dev_t, int);
+void	ite_cnfinish(struct ite_softc *);
 
 /* standard ite device entry points. */
-void	iteinit __P((dev_t));
-int	iteopen __P((dev_t, int, int, struct proc *));
-int	iteclose __P((dev_t, int, int, struct proc *));
-int	iteread __P((dev_t, struct uio *, int));
-int	itewrite __P((dev_t, struct uio *, int));
-int	iteioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-void	itestart __P((struct tty *));
+void	iteinit(dev_t);
+int	iteopen(dev_t, int, int, struct proc *);
+int	iteclose(dev_t, int, int, struct proc *);
+int	iteread(dev_t, struct uio *, int);
+int	itewrite(dev_t, struct uio *, int);
+int	iteioctl(dev_t, u_long, caddr_t, int, struct proc *);
+void	itestart(struct tty *);
 
 /* ite functions */
-int	ite_on __P((dev_t, int));
-void	ite_off __P((dev_t, int));
-void	ite_reinit __P((dev_t));
-int	ite_param __P((struct tty *, struct termios *));
-void	ite_reset __P((struct ite_softc *));
-int	ite_cnfilter __P((u_char, enum caller));
-void	ite_filter __P((u_char ,enum caller));
-int	ite_grf_ioctl __P((struct ite_softc *, u_long, caddr_t, int, struct proc *));
+int	ite_on(dev_t, int);
+void	ite_off(dev_t, int);
+void	ite_reinit(dev_t);
+int	ite_param(struct tty *, struct termios *);
+void	ite_reset(struct ite_softc *);
+int	ite_cnfilter(u_char, enum caller);
+void	ite_filter(u_char ,enum caller);
+int	ite_grf_ioctl(struct ite_softc *, u_long, caddr_t, int, struct proc *);
 
 #endif /* _ITEVAR_H */

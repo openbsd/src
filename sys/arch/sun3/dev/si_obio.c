@@ -1,4 +1,4 @@
-/*	$OpenBSD: si_obio.c,v 1.10 2001/01/25 03:50:49 todd Exp $	*/
+/*	$OpenBSD: si_obio.c,v 1.11 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: si_obio.c,v 1.7 1996/11/20 18:57:00 gwr Exp $	*/
 
 /*-
@@ -117,21 +117,21 @@
  */
 #define UDC_WAIT_USEC 5
 
-void si_obio_dma_setup __P((struct ncr5380_softc *));
-void si_obio_dma_start __P((struct ncr5380_softc *));
-void si_obio_dma_eop __P((struct ncr5380_softc *));
-void si_obio_dma_stop __P((struct ncr5380_softc *));
+void si_obio_dma_setup(struct ncr5380_softc *);
+void si_obio_dma_start(struct ncr5380_softc *);
+void si_obio_dma_eop(struct ncr5380_softc *);
+void si_obio_dma_stop(struct ncr5380_softc *);
 
-static __inline__ int  si_obio_udc_read __P((volatile struct si_regs *, int));
-static __inline__ void si_obio_udc_write __P((volatile struct si_regs *,
-					      int, int));
+static __inline__ int  si_obio_udc_read(volatile struct si_regs *, int);
+static __inline__ void si_obio_udc_write(volatile struct si_regs *,
+					      int, int);
 
 /*
  * New-style autoconfig attachment
  */
 
-static int	si_obio_match __P((struct device *, void *, void *));
-static void	si_obio_attach __P((struct device *, struct device *, void *));
+static int	si_obio_match(struct device *, void *, void *);
+static void	si_obio_attach(struct device *, struct device *, void *);
 
 struct cfattach si_obio_ca = {
 	sizeof(struct si_softc), si_obio_match, si_obio_attach

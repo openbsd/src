@@ -1,5 +1,5 @@
 /*	$NetBSD: if_aevar.h,v 1.7 1997/03/19 08:04:40 scottr Exp $	*/
-/*	$OpenBSD: if_aevar.h,v 1.2 1997/03/25 04:58:44 briggs Exp $	*/
+/*	$OpenBSD: if_aevar.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -55,20 +55,20 @@ struct ae_softc {
 	u_short	next_packet;	/* pointer to next unread RX packet */
 };
 
-int	ae_size_card_memory __P((
-	    bus_space_tag_t, bus_space_handle_t, int));
+int	ae_size_card_memory(
+	    bus_space_tag_t, bus_space_handle_t, int);
 
-int	aesetup __P((struct ae_softc *));
-void	aeintr __P((void *, int));
-int	aeioctl __P((struct ifnet *, u_long, caddr_t));
-void	aestart __P((struct ifnet *));
-void	aewatchdog __P((struct ifnet *));
-void	aereset __P((struct ae_softc *));
-void	aeinit __P((struct ae_softc *));
-void	aestop __P((struct ae_softc *));
+int	aesetup(struct ae_softc *);
+void	aeintr(void *, int);
+int	aeioctl(struct ifnet *, u_long, caddr_t);
+void	aestart(struct ifnet *);
+void	aewatchdog(struct ifnet *);
+void	aereset(struct ae_softc *);
+void	aeinit(struct ae_softc *);
+void	aestop(struct ae_softc *);
 
-void	aeread __P((struct ae_softc *, int, int));
-struct mbuf *aeget __P((struct ae_softc *, int, int));
+void	aeread(struct ae_softc *, int, int);
+struct mbuf *aeget(struct ae_softc *, int, int);
 
-int	ae_put __P((struct ae_softc *, struct mbuf *, int));
-void	ae_getmcaf __P((struct arpcom *, u_char *));
+int	ae_put(struct ae_softc *, struct mbuf *, int);
+void	ae_getmcaf(struct arpcom *, u_char *);

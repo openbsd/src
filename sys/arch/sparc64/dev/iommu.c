@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.14 2002/03/12 19:41:05 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.15 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -82,8 +82,8 @@ int iommu_dvmamap_sync_seg(bus_dma_tag_t, struct iommu_state *,
 			0, (v));				\
 	} while (0)
 
-static	int iommu_strbuf_flush_done __P((struct iommu_state *));
-int64_t iommu_tsb_entry __P((struct iommu_state *, vaddr_t));
+static	int iommu_strbuf_flush_done(struct iommu_state *);
+int64_t iommu_tsb_entry(struct iommu_state *, vaddr_t);
 static	int iommu_tv_comp(struct timeval *, struct timeval *);
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.5 2001/11/06 19:53:17 miod Exp $ */
+/*	$OpenBSD: kdb.c,v 1.6 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: kdb.c,v 1.5 1997/01/11 11:34:39 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -76,14 +76,14 @@ struct	kdb_softc {
 	struct	mscp *sc_mscp;		/* Keep pointer to active mscp */
 };
 
-int	kdbmatch __P((struct device *, void *, void *));
-void	kdbattach __P((struct device *, struct device *, void *));
-void	kdbreset __P((int));
-void	kdbintr __P((int));
-void	kdbctlrdone __P((struct device *, int));
-int	kdbprint __P((void *, const char *));
-void	kdbsaerror __P((struct device *, int));
-int	kdbgo __P((struct device *, struct buf *));
+int	kdbmatch(struct device *, void *, void *);
+void	kdbattach(struct device *, struct device *, void *);
+void	kdbreset(int);
+void	kdbintr(int);
+void	kdbctlrdone(struct device *, int);
+int	kdbprint(void *, const char *);
+void	kdbsaerror(struct device *, int);
+int	kdbgo(struct device *, struct buf *);
 
 struct	cfdriver kdb_cd = {
 	NULL, "kdb", DV_DULL

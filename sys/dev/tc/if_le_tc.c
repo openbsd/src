@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.4 1998/09/16 22:41:22 jason Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.2 1996/05/07 02:24:57 thorpej Exp $	*/
 
 /*
@@ -53,8 +53,8 @@
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
-int	le_tc_match __P((struct device *, void *, void *));
-void	le_tc_attach __P((struct device *, struct device *, void *));
+int	le_tc_match(struct device *, void *, void *);
+void	le_tc_attach(struct device *, struct device *, void *);
 
 struct cfattach le_tc_ca = {
 	sizeof(struct le_softc), le_tc_match, le_tc_attach

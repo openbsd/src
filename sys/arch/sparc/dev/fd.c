@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.25 2002/03/13 00:24:21 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.26 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -149,8 +149,8 @@ extern	struct fdcio	*fdciop;
 #endif
 
 /* controller driver configuration */
-int	fdcmatch __P((struct device *, void *, void *));
-void	fdcattach __P((struct device *, struct device *, void *));
+int	fdcmatch(struct device *, void *, void *);
+void	fdcattach(struct device *, struct device *, void *);
 
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcmatch, fdcattach
@@ -160,7 +160,7 @@ struct cfdriver fdc_cd = {
 	NULL, "fdc", DV_DULL
 };
 
-__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
+__inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
@@ -206,8 +206,8 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdmatch __P((struct device *, void *, void *));
-void	fdattach __P((struct device *, struct device *, void *));
+int	fdmatch(struct device *, void *, void *);
+void	fdattach(struct device *, struct device *, void *);
 
 struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
@@ -217,38 +217,38 @@ struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK
 };
 
-void fdgetdisklabel __P((dev_t));
-int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
-void fdstart __P((struct fd_softc *));
-int fdprint __P((void *, const char *));
+void fdgetdisklabel(dev_t);
+int fd_get_parms(struct fd_softc *);
+void fdstrategy(struct buf *);
+void fdstart(struct fd_softc *);
+int fdprint(void *, const char *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct	fd_type *fd_nvtotype __P((char *, int, int));
-void	fd_set_motor __P((struct fdc_softc *fdc));
-void	fd_motor_off __P((void *arg));
-void	fd_motor_on __P((void *arg));
-int	fdcresult __P((struct fdc_softc *fdc));
-int	out_fdc __P((struct fdc_softc *fdc, u_char x));
-void	fdcstart __P((struct fdc_softc *fdc));
-void	fdcstatus __P((struct device *dv, int n, char *s));
-void	fdc_reset __P((struct fdc_softc *fdc));
-void	fdctimeout __P((void *arg));
-void	fdcpseudointr __P((void *arg));
+struct	fd_type *fd_nvtotype(char *, int, int);
+void	fd_set_motor(struct fdc_softc *fdc);
+void	fd_motor_off(void *arg);
+void	fd_motor_on(void *arg);
+int	fdcresult(struct fdc_softc *fdc);
+int	out_fdc(struct fdc_softc *fdc, u_char x);
+void	fdcstart(struct fdc_softc *fdc);
+void	fdcstatus(struct device *dv, int n, char *s);
+void	fdc_reset(struct fdc_softc *fdc);
+void	fdctimeout(void *arg);
+void	fdcpseudointr(void *arg);
 #ifdef FDC_C_HANDLER
-int	fdchwintr __P((struct fdc_softc *));
+int	fdchwintr(struct fdc_softc *);
 #else
-void	fdchwintr __P((void));
+void	fdchwintr(void);
 #endif
-int	fdcswintr __P((struct fdc_softc *));
-int	fdcstate __P((struct fdc_softc *));
-void	fdcretry __P((struct fdc_softc *fdc));
-void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
-int	fdformat __P((dev_t, struct fd_formb *, struct proc *));
-void	fd_do_eject __P((struct fd_softc *));
-void	fd_mountroot_hook __P((struct device *));
-static void fdconf __P((struct fdc_softc *));
+int	fdcswintr(struct fdc_softc *);
+int	fdcstate(struct fdc_softc *);
+void	fdcretry(struct fdc_softc *fdc);
+void	fdfinish(struct fd_softc *fd, struct buf *bp);
+int	fdformat(dev_t, struct fd_formb *, struct proc *);
+void	fd_do_eject(struct fd_softc *);
+void	fd_mountroot_hook(struct device *);
+static void fdconf(struct fdc_softc *);
 
 #if PIL_FDSOFT == 4
 #define IE_FDSOFT	IE_L4

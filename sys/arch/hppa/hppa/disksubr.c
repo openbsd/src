@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 2002/02/19 02:46:39 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -73,20 +73,20 @@
 #define	b_cylin	b_resid
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-void	swapdisklabel __P((struct disklabel *d));
-char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
+void	swapdisklabel(struct disklabel *d);
+char   *readbsdlabel __P((struct buf *, void (*)(struct buf *), int, int,
     int, int, struct disklabel *, int));
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
+char   *readdoslabel __P((struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int));
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-char   *readamigalabel __P((struct buf *, void (*) __P((struct buf *)),
+char   *readamigalabel __P((struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int));
 #endif
 #if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-char   *readliflabel __P((struct buf *, void (*) __P((struct buf *)),
+char   *readliflabel __P((struct buf *, void (*)(struct buf *),
     struct disklabel *, struct cpu_disklabel *, int *, int *, int));
 #endif
 
@@ -154,7 +154,7 @@ swapdisklabel(dlp)
 char *
 readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	struct buf *bp;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	int cyl, sec, off, endian;
 	struct disklabel *lp;
 	int spoofonly;
@@ -238,7 +238,7 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 char *
 readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int spoofonly;
@@ -346,7 +346,7 @@ done:
 char *
 readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	struct buf *bp;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int *partoffp;
@@ -577,7 +577,7 @@ donot:
 char *
 readamigalabel(bp, strat, lp, osdep, spoofonly)
 	struct buf *bp;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int spoofonly;
@@ -594,7 +594,7 @@ readamigalabel(bp, strat, lp, osdep, spoofonly)
 char *
 readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	struct buf *bp;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int *partoffp;
@@ -725,7 +725,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat) __P((struct buf *));
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {

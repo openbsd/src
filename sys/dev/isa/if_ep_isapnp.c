@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.6 2000/05/29 18:04:08 aaron Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -81,8 +81,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/elink.h>
 
-int ep_isapnp_match __P((struct device *, void *, void *));
-void ep_isapnp_attach __P((struct device *, struct device *, void *));
+int ep_isapnp_match(struct device *, void *, void *);
+void ep_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach ep_isapnp_ca = {
 	sizeof(struct ep_softc), ep_isapnp_match, ep_isapnp_attach

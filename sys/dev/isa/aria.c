@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.6 2001/11/06 19:53:19 miod Exp $ */
+/*	$OpenBSD: aria.c,v 1.7 2002/03/14 01:26:56 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -85,7 +85,7 @@
 #define FWRITE 2
 
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
+extern void Dprintf(const char *, ...);
 #define DPRINTF(x)	if (ariadebug) Dprintf x
 int	ariadebug = 0;
 #else
@@ -154,53 +154,53 @@ struct {
 
 
 int	ariaprobe();
-void	ariaattach __P((struct device *, struct device *, void *));
-void	ariaclose __P((void *));
-int	ariaopen __P((dev_t, int));
-int	aria_getdev __P((void *, struct audio_device *));
+void	ariaattach(struct device *, struct device *, void *);
+void	ariaclose(void *);
+int	ariaopen(dev_t, int);
+int	aria_getdev(void *, struct audio_device *);
 
-void	aria_do_kludge __P((u_short, u_short, u_short, u_short, u_short));
-void	aria_prometheus_kludge __P((struct isa_attach_args *));
+void	aria_do_kludge(u_short, u_short, u_short, u_short, u_short);
+void	aria_prometheus_kludge(struct isa_attach_args *);
 
-int	aria_set_sr __P((void *, u_long));
-u_long	aria_get_sr __P((void *));
-int	aria_query_encoding __P((void *, struct audio_encoding *));
-int	aria_set_format __P((void *, u_int, u_int));
-int	aria_get_encoding __P((void *));
-int	aria_get_precision __P((void *));
-int	aria_set_channels __P((void *, int));
-int	aria_get_channels __P((void *));
-int	aria_round_blocksize __P((void *, int));
-int	aria_set_out_port __P((void *, int));
-int	aria_get_out_port __P((void *));
-int	aria_set_in_port __P((void *, int));
-int	aria_get_in_port __P((void *));
-int	aria_speaker_ctl __P((void *, int));
-int	aria_commit_settings __P((void *));
+int	aria_set_sr(void *, u_long);
+u_long	aria_get_sr(void *);
+int	aria_query_encoding(void *, struct audio_encoding *);
+int	aria_set_format(void *, u_int, u_int);
+int	aria_get_encoding(void *);
+int	aria_get_precision(void *);
+int	aria_set_channels(void *, int);
+int	aria_get_channels(void *);
+int	aria_round_blocksize(void *, int);
+int	aria_set_out_port(void *, int);
+int	aria_get_out_port(void *);
+int	aria_set_in_port(void *, int);
+int	aria_get_in_port(void *);
+int	aria_speaker_ctl(void *, int);
+int	aria_commit_settings(void *);
 
 int	aria_start_output __P((void *, void *, int, void (*)(), void*));
 int	aria_start_input __P((void *, void *, int, void (*)(), void*));
 
-int	aria_halt_input __P((void *));
-int	aria_halt_output __P((void *));
-int	aria_cont __P((void *));
+int	aria_halt_input(void *);
+int	aria_halt_output(void *);
+int	aria_cont(void *);
 
-int	aria_sendcmd __P((u_short, u_short, int, int, int));
+int	aria_sendcmd(u_short, u_short, int, int, int);
 
-u_short	aria_getdspmem __P((u_short, u_short));
-u_short	aria_putdspmem __P((u_short, u_short, u_short));
+u_short	aria_getdspmem(u_short, u_short);
+u_short	aria_putdspmem(u_short, u_short, u_short);
 
-int	aria_intr __P((void *));
-short	ariaversion __P((struct aria_softc *));
+int	aria_intr(void *);
+short	ariaversion(struct aria_softc *);
 
-int	aria_setfd __P((void *, int));
+int	aria_setfd(void *, int);
 
-void	aria_mix_write __P((struct aria_softc *, int, int));
-int	aria_mix_read __P((struct aria_softc *, int));
+void	aria_mix_write(struct aria_softc *, int, int);
+int	aria_mix_read(struct aria_softc *, int);
 
-int	aria_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	aria_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	aria_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
+int	aria_mixer_set_port(void *, mixer_ctrl_t *);
+int	aria_mixer_get_port(void *, mixer_ctrl_t *);
+int	aria_mixer_query_devinfo(void *, mixer_devinfo_t *);
 
 /*
  * Mixer defines...

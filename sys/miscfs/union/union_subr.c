@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.10 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.11 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
@@ -70,15 +70,15 @@
 static LIST_HEAD(unhead, union_node) unhead[NHASH];
 static int unvplock[NHASH];
 
-static int union_list_lock __P((int));
-static void union_list_unlock __P((int));
-void union_updatevp __P((struct union_node *, struct vnode *, struct vnode *));
-static int union_relookup __P((struct union_mount *, struct vnode *,
+static int union_list_lock(int);
+static void union_list_unlock(int);
+void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
+static int union_relookup(struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
-			       struct componentname *, char *, int));
-int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
-static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *, struct proc *));
+			       struct componentname *, char *, int);
+int union_vn_close(struct vnode *, int, struct ucred *, struct proc *);
+static void union_dircache_r(struct vnode *, struct vnode ***, int *);
+struct vnode *union_dircache(struct vnode *, struct proc *);
 
 /*
  * This variable is used to hold a pointer to a function
@@ -89,8 +89,8 @@ struct vnode *union_dircache __P((struct vnode *, struct proc *));
  * to know if UNION is built in, lkm'ed, or not even there.
  */
 extern
-int (*union_check_p) __P((struct proc *, struct vnode **, 
-			   struct file *, struct uio, int *));
+int (*union_check_p)(struct proc *, struct vnode **, 
+			   struct file *, struct uio, int *);
 
 int union_check(struct proc *, struct vnode **, struct file *,
 		 struct uio, int *);

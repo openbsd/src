@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.14 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: hil.c,v 1.15 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: hil.c,v 1.34 1997/04/02 22:37:32 scottr Exp $	*/
 
 /*
@@ -102,26 +102,26 @@ char hilin[] = "hilin";
 
 cdev_decl(hil);
 
-void	hilinfo __P((int));
-void	hilconfig __P((struct hil_softc *));
-void	hilreset __P((struct hil_softc *));
-void	hilbeep __P((struct hil_softc *, struct _hilbell *));
-int	hiliddev __P((struct hil_softc *));
+void	hilinfo(int);
+void	hilconfig(struct hil_softc *);
+void	hilreset(struct hil_softc *);
+void	hilbeep(struct hil_softc *, struct _hilbell *);
+int	hiliddev(struct hil_softc *);
 
-void	hilint __P((int));
-void	hil_process_int __P((struct hil_softc *, u_char, u_char));
-void	hilevent __P((struct hil_softc *));
-void	hpuxhilevent __P((struct hil_softc *, struct hilloopdev *));
+void	hilint(int);
+void	hil_process_int(struct hil_softc *, u_char, u_char);
+void	hilevent(struct hil_softc *);
+void	hpuxhilevent(struct hil_softc *, struct hilloopdev *);
 
-int	hilqalloc __P((struct hil_softc *, struct hilqinfo *, struct proc *));
-int	hilqfree __P((struct hil_softc *, int, struct proc *));
-int	hilqmap __P((struct hil_softc *, int, int, struct proc *));
-int	hilqunmap __P((struct hil_softc *, int, int, struct proc *));
+int	hilqalloc(struct hil_softc *, struct hilqinfo *, struct proc *);
+int	hilqfree(struct hil_softc *, int, struct proc *);
+int	hilqmap(struct hil_softc *, int, int, struct proc *);
+int	hilqunmap(struct hil_softc *, int, int, struct proc *);
 
 #ifdef DEBUG
-void	printhilpollbuf __P((struct hil_softc *));
-void	printhilcmdbuf __P((struct hil_softc *));
-void	hilreport __P((struct hil_softc *));
+void	printhilpollbuf(struct hil_softc *);
+void	printhilcmdbuf(struct hil_softc *);
+void	hilreport(struct hil_softc *);
 #endif /* DEBUG */
 
 void

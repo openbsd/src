@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.19 2001/12/22 08:31:05 smurph Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.20 2002/03/14 01:26:39 millert Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -116,15 +116,15 @@ extern int quiet_db_read_bytes;
 /*#define	cngetc		db_getc*/
 /*#define	cnputc		db_putc*/
 
-unsigned inst_load __P((unsigned));
-unsigned inst_store __P((unsigned));
-boolean_t inst_branch __P((unsigned));
-db_addr_t next_instr_address __P((db_addr_t, unsigned));
+unsigned inst_load(unsigned);
+unsigned inst_store(unsigned);
+boolean_t inst_branch(unsigned);
+db_addr_t next_instr_address(db_addr_t, unsigned);
 db_addr_t branch_taken __P((u_int, db_addr_t,
-			    db_expr_t (*) __P((db_regs_t *, int)),
+			    db_expr_t (*)(db_regs_t *, int),
 			    db_regs_t *));
-int ddb_break_trap __P((int type, db_regs_t *eframe));
-int ddb_entry_trap __P((int level, db_regs_t *eframe));
+int ddb_break_trap(int type, db_regs_t *eframe);
+int ddb_entry_trap(int level, db_regs_t *eframe);
 
 /* breakpoint/watchpoint foo */
 #define IS_BREAKPOINT_TRAP(type,code) ((type)==T_KDB_BREAK)
@@ -138,9 +138,9 @@ int ddb_entry_trap __P((int level, db_regs_t *eframe));
 #define DB_NO_COFF 1
 
 #ifdef INTERNAL_SSTEP
-extern register_t getreg_val __P((db_regs_t *, int));
-void db_set_single_step __P((register db_regs_t *));
-void db_clear_single_step __P((register db_regs_t *));
+extern register_t getreg_val(db_regs_t *, int);
+void db_set_single_step(register db_regs_t *);
+void db_clear_single_step(register db_regs_t *);
 #else
 /* need software single step */
 #define SOFTWARE_SSTEP 1 /* we need this for mc88100 */
@@ -200,7 +200,7 @@ void db_clear_single_step __P((register db_regs_t *));
 
 #define	db_printf_enter	db_printing
 
-int m88k_print_instruction __P((unsigned iadr, long inst));
+int m88k_print_instruction(unsigned iadr, long inst);
 
 #endif	/* _LOCORE */
 

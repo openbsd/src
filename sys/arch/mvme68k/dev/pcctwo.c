@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.7 2000/03/26 23:31:59 deraadt Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.8 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -60,8 +60,8 @@ struct pcctwosoftc {
 	struct pcctworeg *sc_pcc2;	/* the actual registers */
 };
 
-void pcctwoattach __P((struct device *, struct device *, void *));
-int  pcctwomatch __P((struct device *, void *, void *));
+void pcctwoattach(struct device *, struct device *, void *);
+int  pcctwomatch(struct device *, void *, void *);
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach

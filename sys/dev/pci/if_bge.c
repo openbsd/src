@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.7 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.8 2002/03/14 01:26:58 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -117,67 +117,67 @@
 
 /* #define BGE_CHECKSUM */
 
-int bge_probe		__P((struct device *, void *, void *));
-void bge_attach		__P((struct device *, struct device *, void *));
-void bge_release_resources	__P((struct bge_softc *));
-void bge_txeof		__P((struct bge_softc *));
-void bge_rxeof		__P((struct bge_softc *));
+int bge_probe(struct device *, void *, void *);
+void bge_attach(struct device *, struct device *, void *);
+void bge_release_resources(struct bge_softc *);
+void bge_txeof(struct bge_softc *);
+void bge_rxeof(struct bge_softc *);
 
-void bge_tick		__P((void *));
-void bge_stats_update	__P((struct bge_softc *));
-int bge_encap		__P((struct bge_softc *, struct mbuf *, u_int32_t *));
+void bge_tick(void *);
+void bge_stats_update(struct bge_softc *);
+int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
 
-int bge_intr		__P((void *));
-void bge_start		__P((struct ifnet *));
-int bge_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void bge_init		__P((void *));
-void bge_stop		__P((struct bge_softc *));
-void bge_watchdog	__P((struct ifnet *));
-void bge_shutdown	__P((void *));
-int bge_ifmedia_upd	__P((struct ifnet *));
-void bge_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+int bge_intr(void *);
+void bge_start(struct ifnet *);
+int bge_ioctl(struct ifnet *, u_long, caddr_t);
+void bge_init(void *);
+void bge_stop(struct bge_softc *);
+void bge_watchdog(struct ifnet *);
+void bge_shutdown(void *);
+int bge_ifmedia_upd(struct ifnet *);
+void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-u_int8_t	bge_eeprom_getbyte	__P((struct bge_softc *,
-					     int, u_int8_t *));
-int bge_read_eeprom	__P((struct bge_softc *, caddr_t, int, int));
+u_int8_t	bge_eeprom_getbyte(struct bge_softc *,
+					     int, u_int8_t *);
+int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
-u_int32_t bge_crc	__P((struct bge_softc *, caddr_t));
-void bge_setmulti	__P((struct bge_softc *));
+u_int32_t bge_crc(struct bge_softc *, caddr_t);
+void bge_setmulti(struct bge_softc *);
 
-void bge_handle_events	__P((struct bge_softc *));
-int bge_alloc_jumbo_mem	__P((struct bge_softc *));
-void bge_free_jumbo_mem	__P((struct bge_softc *));
-void *bge_jalloc	__P((struct bge_softc *));
-void bge_jfree		__P((caddr_t, u_int, void *));
-int bge_newbuf_std	__P((struct bge_softc *, int, struct mbuf *));
-int bge_newbuf_jumbo	__P((struct bge_softc *, int, struct mbuf *));
-int bge_init_rx_ring_std	__P((struct bge_softc *));
-void bge_free_rx_ring_std	__P((struct bge_softc *));
-int bge_init_rx_ring_jumbo	__P((struct bge_softc *));
-void bge_free_rx_ring_jumbo	__P((struct bge_softc *));
-void bge_free_tx_ring	__P((struct bge_softc *));
-int bge_init_tx_ring	__P((struct bge_softc *));
+void bge_handle_events(struct bge_softc *);
+int bge_alloc_jumbo_mem(struct bge_softc *);
+void bge_free_jumbo_mem(struct bge_softc *);
+void *bge_jalloc(struct bge_softc *);
+void bge_jfree(caddr_t, u_int, void *);
+int bge_newbuf_std(struct bge_softc *, int, struct mbuf *);
+int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
+int bge_init_rx_ring_std(struct bge_softc *);
+void bge_free_rx_ring_std(struct bge_softc *);
+int bge_init_rx_ring_jumbo(struct bge_softc *);
+void bge_free_rx_ring_jumbo(struct bge_softc *);
+void bge_free_tx_ring(struct bge_softc *);
+int bge_init_tx_ring(struct bge_softc *);
 
-int bge_chipinit	__P((struct bge_softc *));
-int bge_blockinit	__P((struct bge_softc *));
+int bge_chipinit(struct bge_softc *);
+int bge_blockinit(struct bge_softc *);
 
-u_int8_t bge_vpd_readbyte	__P((struct bge_softc *, int));
-void bge_vpd_read_res	__P((struct bge_softc *, struct vpd_res *, int));
-void bge_vpd_read	__P((struct bge_softc *));
+u_int8_t bge_vpd_readbyte(struct bge_softc *, int);
+void bge_vpd_read_res(struct bge_softc *, struct vpd_res *, int);
+void bge_vpd_read(struct bge_softc *);
 
-u_int32_t bge_readmem_ind	__P((struct bge_softc *, int));
-void bge_writemem_ind	__P((struct bge_softc *, int, int));
+u_int32_t bge_readmem_ind(struct bge_softc *, int);
+void bge_writemem_ind(struct bge_softc *, int, int);
 #ifdef notdef
-u_int32_t bge_readreg_ind	__P((struct bge_softc *, int));
+u_int32_t bge_readreg_ind(struct bge_softc *, int);
 #endif
-void bge_writereg_ind	__P((struct bge_softc *, int, int));
+void bge_writereg_ind(struct bge_softc *, int, int);
 
-int bge_miibus_readreg	__P((struct device *, int, int));
-void bge_miibus_writereg	__P((struct device *, int, int, int));
-void bge_miibus_statchg	__P((struct device *));
+int bge_miibus_readreg(struct device *, int, int);
+void bge_miibus_writereg(struct device *, int, int, int);
+void bge_miibus_statchg(struct device *);
 
-void bge_reset		__P((struct bge_softc *));
-void bge_phy_hack	__P((struct bge_softc *));
+void bge_reset(struct bge_softc *);
+void bge_phy_hack(struct bge_softc *);
 
 #define BGE_DEBUG
 #ifdef BGE_DEBUG

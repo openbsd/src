@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcons.c,v 1.8 2001/08/24 14:26:46 drahn Exp $	*/
+/*	$OpenBSD: ofcons.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ struct ofc_softc {
 static int stdin  = 0;
 static int stdout = 0;
 
-static int ofcmatch __P((struct device *, void *, void *));
-static void ofcattach __P((struct device *, struct device *, void *));
+static int ofcmatch(struct device *, void *, void *);
+static void ofcattach(struct device *, struct device *, void *);
 
 struct cfattach ofcons_ca = {
 	sizeof(struct ofc_softc), ofcmatch, ofcattach
@@ -70,7 +70,7 @@ struct cfdriver ofcons_cd = {
 	NULL, "ofcons", DV_TTY
 };
 
-static int ofcprobe __P((void));
+static int ofcprobe(void);
 
 static int
 ofcmatch(parent, match, aux)
@@ -85,9 +85,9 @@ ofcmatch(parent, match, aux)
 		|| OF_instance_to_package(stdout) == ofp->phandle;
 }
 
-static void ofcstart __P((struct tty *));
-static int ofcparam __P((struct tty *, struct termios *));
-static void ofcpoll __P((void *));
+static void ofcstart(struct tty *);
+static int ofcparam(struct tty *, struct termios *);
+static void ofcpoll(void *);
 
 static void
 ofcattach(parent, self, aux)
@@ -100,9 +100,9 @@ ofcattach(parent, self, aux)
 	printf("\n");
 }
 
-void ofcstart __P((struct tty *));
-int ofcparam __P((struct tty *, struct termios *));
-void ofcpoll __P((void *));
+void ofcstart(struct tty *);
+int ofcparam(struct tty *, struct termios *);
+void ofcpoll(void *);
 int ofcopen(dev_t dev, int flag, int mode, struct proc *p);
 int ofcclose(dev_t dev, int flag, int mode, struct proc *p);
 int ofcread(dev_t dev, struct uio *uio, int flag);

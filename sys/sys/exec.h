@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.12 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.13 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -109,7 +109,7 @@ struct ps_strings {
 struct proc;
 struct exec_package;
 
-typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
+typedef int (*exec_makecmds_fcn)(struct proc *, struct exec_package *);
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
@@ -117,7 +117,7 @@ struct execsw {
 };
 
 struct exec_vmcmd {
-	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
+	int	(*ev_proc)(struct proc *p, struct exec_vmcmd *cmd);
 				/* procedure to run for region of vmspace */
 	u_long	ev_len;		/* length of the segment to map */
 	u_long	ev_addr;	/* address in the vmspace to place it at */
@@ -173,25 +173,25 @@ struct exec_package {
  * funtions used either by execve() or the various cpu-dependent execve()
  * hooks.
  */
-void	kill_vmcmd		__P((struct exec_vmcmd **));
-int	exec_makecmds		__P((struct proc *, struct exec_package *));
-int	exec_runcmds		__P((struct proc *, struct exec_package *));
-void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
-void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
-int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-void	*copyargs		__P((struct exec_package *,
+void	kill_vmcmd(struct exec_vmcmd **);
+int	exec_makecmds(struct proc *, struct exec_package *);
+int	exec_runcmds(struct proc *, struct exec_package *);
+void	vmcmdset_extend(struct exec_vmcmd_set *);
+void	kill_vmcmds(struct exec_vmcmd_set *evsp);
+int	vmcmd_map_pagedvn(struct proc *, struct exec_vmcmd *);
+int	vmcmd_map_readvn(struct proc *, struct exec_vmcmd *);
+int	vmcmd_map_zero(struct proc *, struct exec_vmcmd *);
+void	*copyargs(struct exec_package *,
 				    struct ps_strings *,
-				    void *, void *));
-void	setregs			__P((struct proc *, struct exec_package *,
-				    u_long, register_t *));
-int	check_exec		__P((struct proc *, struct exec_package *));
-int	exec_setup_stack	__P((struct proc *, struct exec_package *));
+				    void *, void *);
+void	setregs(struct proc *, struct exec_package *,
+				    u_long, register_t *);
+int	check_exec(struct proc *, struct exec_package *);
+int	exec_setup_stack(struct proc *, struct exec_package *);
 
 #ifdef DEBUG
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
-		    int (*proc) __P((struct proc *p, struct exec_vmcmd *)),
+		    int (*proc)(struct proc *p, struct exec_vmcmd *),
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
 		    u_int prot));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \

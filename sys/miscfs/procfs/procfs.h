@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.14 2002/01/30 20:29:44 nordin Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.15 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -120,41 +120,41 @@ struct vfs_namemap {
 	int nm_val;
 };
 
-int vfs_getuserstr __P((struct uio *, char *, int *));
-vfs_namemap_t *vfs_findname __P((vfs_namemap_t *, char *, int));
+int vfs_getuserstr(struct uio *, char *, int *);
+vfs_namemap_t *vfs_findname(vfs_namemap_t *, char *, int);
 
-int procfs_allocvp __P((struct mount *, struct vnode **, long, pfstype));
-int procfs_checkioperm __P((struct proc *p, struct proc *t));
-int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
-int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int));
-int procfs_freevp __P((struct vnode *));
-int procfs_getcpuinfstr __P((char *, int *));
+int procfs_allocvp(struct mount *, struct vnode **, long, pfstype);
+int procfs_checkioperm(struct proc *p, struct proc *t);
+int procfs_doctl(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_dofpregs(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_domem(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_donote(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_doregs(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_dostatus(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_docmdline(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_domeminfo(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_docpuinfo(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio);
+int procfs_domap(struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int);
+int procfs_freevp(struct vnode *);
+int procfs_getcpuinfstr(char *, int *);
 
 /* functions to check whether or not files should be displayed */
-int procfs_validfile __P((struct proc *, struct mount *));
-int procfs_validfpregs __P((struct proc *, struct mount *));
-int procfs_validregs __P((struct proc *, struct mount *));
-int procfs_validmap __P((struct proc *, struct mount *));
+int procfs_validfile(struct proc *, struct mount *);
+int procfs_validfpregs(struct proc *, struct mount *);
+int procfs_validregs(struct proc *, struct mount *);
+int procfs_validmap(struct proc *, struct mount *);
 
-int procfs_rw __P((void *));
+int procfs_rw(void *);
 
 #define PROCFS_LOCKED	0x01
 #define PROCFS_WANT	0x02
 
-extern int (**procfs_vnodeop_p) __P((void *));
+extern int (**procfs_vnodeop_p)(void *);
 extern struct vfsops procfs_vfsops;
 
 struct vfsconf;
 
-int	procfs_init __P((struct vfsconf *));
-int	procfs_root __P((struct mount *, struct vnode **));
+int	procfs_init(struct vfsconf *);
+int	procfs_root(struct mount *, struct vnode **);
 
 #endif /* _KERNEL */

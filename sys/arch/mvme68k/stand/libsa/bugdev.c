@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.1 1996/05/16 02:30:36 chuck Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.2 2002/03/14 01:26:38 millert Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,7 +37,7 @@
 #include "stand.h"
 #include "libsa.h"
 
-void cputobsdlabel __P((struct disklabel *lp, struct cpu_disklabel *clp));
+void cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp);
 
 int errno;
 

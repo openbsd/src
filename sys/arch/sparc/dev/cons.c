@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.12 2001/05/01 11:43:26 ho Exp $	*/
+/*	$OpenBSD: cons.c,v 1.13 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1997/07/07 23:30:23 pk Exp $	*/
 
 /*
@@ -90,15 +90,15 @@ int	cons_ocount;		/* output byte count */
  */
 struct tty cons;		/* rom console tty device */
 struct timeout cons_cnfbdma_tmo;/* for cnfdbma() timeouts */
-static int (*fcnstop) __P((struct tty *, int));
+static int (*fcnstop)(struct tty *, int);
 
-static void cnstart __P((struct tty *));
-int cnstop __P((struct tty *, int));
+static void cnstart(struct tty *);
+int cnstop(struct tty *, int);
 
-static void cnfbstart __P((struct tty *));
-static int cnfbstop __P((struct tty *, int));
-static void cnfbdma __P((void *));
-static struct tty  *xxcntty __P((dev_t));
+static void cnfbstart(struct tty *);
+static int cnfbstop(struct tty *, int);
+static void cnfbdma(void *);
+static struct tty  *xxcntty(dev_t);
 
 extern char char_type[];
 
@@ -464,8 +464,8 @@ cnstart(tp)
 {
 	register int c, s;
 	register union {
-		void (*v1)__P((int));
-		int  (*v3)__P((int, void *, int));
+		void (*v1)(int);
+		int  (*v3)(int, void *, int);
 	} putc;
 	register int fd = 0, v;
 

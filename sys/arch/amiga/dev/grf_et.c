@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_et.c,v 1.7 1997/09/18 13:39:51 niklas Exp $	*/
+/*	$OpenBSD: grf_et.c,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_et.c,v 1.10 1997/07/29 17:46:31 veego Exp $	*/
 
 /*
@@ -75,36 +75,36 @@
 #include <amiga/dev/grf_etreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	et_mondefok __P((struct grfvideo_mode *gv));
-void	et_boardinit __P((struct grf_softc *gp));
-void	et_CompFQ __P((u_int fq, u_char *num, u_char *denom));
-int	et_getvmode __P((struct grf_softc *gp, struct grfvideo_mode *vm));
-int	et_setvmode __P((struct grf_softc *gp, unsigned int mode));
-int	et_toggle __P((struct grf_softc *gp, unsigned short));
-int	et_getcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
-int	et_putcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
+int	et_mondefok(struct grfvideo_mode *gv);
+void	et_boardinit(struct grf_softc *gp);
+void	et_CompFQ(u_int fq, u_char *num, u_char *denom);
+int	et_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm);
+int	et_setvmode(struct grf_softc *gp, unsigned int mode);
+int	et_toggle(struct grf_softc *gp, unsigned short);
+int	et_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap);
+int	et_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap);
 #ifndef TSENGCONSOLE
-void	et_off __P((struct grf_softc *gp));
+void	et_off(struct grf_softc *gp);
 #endif
-void	et_inittextmode __P((struct grf_softc *gp));
-int	et_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
-int	et_getmousepos __P((struct grf_softc *gp, struct grf_position *data));
-void	et_writesprpos __P((volatile char *ba, short x, short y));
-int	et_setmousepos __P((struct grf_softc *gp, struct grf_position *data));
-int	et_setspriteinfo __P((struct grf_softc *gp,
-	    struct grf_spriteinfo *data));
-int	et_getspriteinfo __P((struct grf_softc *gp,
-	    struct grf_spriteinfo *data));
-int	et_getspritemax __P((struct grf_softc *gp, struct grf_position *data));
-int	et_setmonitor __P((struct grf_softc *gp, struct grfvideo_mode *gv));
-int	et_blank __P((struct grf_softc *gp, int *on));
-int	et_getControllerType __P((struct grf_softc *gp));
-int	et_getDACType __P((struct grf_softc *gp));
+void	et_inittextmode(struct grf_softc *gp);
+int	et_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
+int	et_getmousepos(struct grf_softc *gp, struct grf_position *data);
+void	et_writesprpos(volatile char *ba, short x, short y);
+int	et_setmousepos(struct grf_softc *gp, struct grf_position *data);
+int	et_setspriteinfo(struct grf_softc *gp,
+	    struct grf_spriteinfo *data);
+int	et_getspriteinfo(struct grf_softc *gp,
+	    struct grf_spriteinfo *data);
+int	et_getspritemax(struct grf_softc *gp, struct grf_position *data);
+int	et_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv);
+int	et_blank(struct grf_softc *gp, int *on);
+int	et_getControllerType(struct grf_softc *gp);
+int	et_getDACType(struct grf_softc *gp);
 
-int	grfetmatch __P((struct device *, void *, void *));
-void	grfetattach __P((struct device *, struct device *, void *));
-int	grfetprint __P((void *, const char *));
-void	et_memset __P((unsigned char *d, unsigned char c, int l));
+int	grfetmatch(struct device *, void *, void *);
+void	grfetattach(struct device *, struct device *, void *);
+int	grfetprint(void *, const char *);
+void	et_memset(unsigned char *d, unsigned char c, int l);
 
 /*
  * Graphics display definitions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.12 2002/02/18 14:26:24 drahn Exp $	*/
+/*	$OpenBSD: dma.c,v 1.13 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -122,8 +122,8 @@ _dmamap_destroy(t, map)
 	free(map, M_DEVBUF);
 }
 
-int _dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int, paddr_t *, int *, int));
+int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int, paddr_t *, int *, int);
 
 int
 _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_inet.c,v 1.6 2001/06/27 03:49:54 angelos Exp $	*/
+/*	$OpenBSD: tp_inet.c,v 1.7 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
 
 /*-
@@ -665,7 +665,7 @@ tpip_ctlinput(cmd, sa, dummy)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	extern int      inetctlerrmap[];
-	void            (*notify) __P((struct inpcb *, int));
+	void            (*notify)(struct inpcb *, int);
 	int             errno;
 
 	if (cmd < 0 || cmd >= PRC_NCMDS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.29 2002/02/12 13:05:32 art Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.30 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -79,12 +79,12 @@
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-void	nfsrv_zapsock	__P((struct nfssvc_sock *));
+void	nfsrv_zapsock(struct nfssvc_sock *);
 
 /* Global defs. */
-extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
+extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
-						struct proc *, struct mbuf **));
+						struct proc *, struct mbuf **);
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern int nfsrtton;
@@ -107,7 +107,7 @@ int nfs_niothreads = -1;
 #endif
 
 #ifdef NFSSERVER
-static void nfsd_rt __P((int, struct nfsrv_descript *, int));
+static void nfsd_rt(int, struct nfsrv_descript *, int);
 #endif
 
 int nfs_clientd(struct nfsmount *nmp, struct ucred *cred, 

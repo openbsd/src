@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.h,v 1.6 2001/08/25 13:33:36 hugh Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.7 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -88,7 +88,7 @@ struct	vsbus_attach_args {
 	vaddr_t	va_addr;		/* virtual CSR address */
 	paddr_t	va_paddr;		/* physical CSR address */
 
-	void	(*va_ivec) __P((void *));	/* Interrupt routine */
+	void	(*va_ivec)(void *);	/* Interrupt routine */
 	void	*va_vecarg;		/* Interrupt routine argument */
 
 	short	va_br;			/* Interrupt level */

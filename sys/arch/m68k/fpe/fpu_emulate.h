@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.h,v 1.3 1996/05/09 22:20:44 niklas Exp $	*/
+/*	$OpenBSD: fpu_emulate.h,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: fpu_emulate.h,v 1.4 1996/04/30 11:52:14 briggs Exp $	*/
 
 /*
@@ -256,57 +256,57 @@ struct instruction {
  */
 
 /* Build a new Quiet NaN (sign=0, frac=all 1's). */
-struct	fpn *fpu_newnan __P((struct fpemu *fe));
+struct	fpn *fpu_newnan(struct fpemu *fe);
 
 /*
  * Shift a number right some number of bits, taking care of round/sticky.
  * Note that the result is probably not a well-formed number (it will lack
  * the normal 1-bit mant[0]&FP_1).
  */
-int	fpu_shr __P((struct fpn * fp, int shr));
+int	fpu_shr(struct fpn * fp, int shr);
 /*
  * Round a number according to the round mode in FPCR
  */
-int	round __P((register struct fpemu *fe, register struct fpn *fp));
+int	round(register struct fpemu *fe, register struct fpn *fp);
 
 /* type conversion */
-void	fpu_explode __P((struct fpemu *fe, struct fpn *fp, int t, u_int *src));
-void	fpu_implode __P((struct fpemu *fe, struct fpn *fp, int t, u_int *dst));
+void	fpu_explode(struct fpemu *fe, struct fpn *fp, int t, u_int *src);
+void	fpu_implode(struct fpemu *fe, struct fpn *fp, int t, u_int *dst);
 
 /*
  * non-static emulation functions
  */
 /* type 0 */
-int fpu_emul_fmovecr __P((struct fpemu *fe, struct instruction *insn));
-int fpu_emul_fstore __P((struct fpemu *fe, struct instruction *insn));
-int fpu_emul_fscale __P((struct fpemu *fe, struct instruction *insn));
+int fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn);
+int fpu_emul_fstore(struct fpemu *fe, struct instruction *insn);
+int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn);
 
 /*
  * include function declarations of those which are called by fpu_emul_arith()
  */
 #include "fpu_arith_proto.h"
 
-int fpu_emulate __P((struct frame *frame, struct fpframe *fpf));
+int fpu_emulate(struct frame *frame, struct fpframe *fpf);
 
 /*
  * "helper" functions
  */
 /* return values from constant rom */
-struct fpn *fpu_const __P((struct fpn *fp, u_int offset));
+struct fpn *fpu_const(struct fpn *fp, u_int offset);
 /* update exceptions and FPSR */
-int fpu_upd_excp __P((struct fpemu *fe));
-u_int fpu_upd_fpsr __P((struct fpemu *fe, struct fpn *fp));
+int fpu_upd_excp(struct fpemu *fe);
+u_int fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp);
 
 /* address mode decoder, and load/store */
-int fpu_decode_ea __P((struct frame *frame, struct instruction *insn,
-		   struct insn_ea *ea, int modreg));
-int fpu_load_ea __P((struct frame *frame, struct instruction *insn,
-		 struct insn_ea *ea, char *dst));
-int fpu_store_ea __P((struct frame *frame, struct instruction *insn,
-		  struct insn_ea *ea, char *src));
+int fpu_decode_ea(struct frame *frame, struct instruction *insn,
+		   struct insn_ea *ea, int modreg);
+int fpu_load_ea(struct frame *frame, struct instruction *insn,
+		 struct insn_ea *ea, char *dst);
+int fpu_store_ea(struct frame *frame, struct instruction *insn,
+		  struct insn_ea *ea, char *src);
 
 /* fpu_subr.c */
-void fpu_norm __P((register struct fpn *fp));
+void fpu_norm(register struct fpn *fp);
 
 /* declarations for debugging */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.5 2001/06/23 21:54:45 fgsch Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -203,25 +203,25 @@ struct ie_softc {
 	struct	ifmedia sc_media;	/* supported media information */
 
 	/* Bus glue */
-	void	(*hwreset) __P((struct ie_softc *, int));
-	void	(*hwinit) __P((struct ie_softc *));
-	void	(*chan_attn) __P((struct ie_softc *));
-	void	(*port) __P((struct ie_softc *, u_int));
-	int	(*intrhook) __P((struct ie_softc *, int where));
+	void	(*hwreset)(struct ie_softc *, int);
+	void	(*hwinit)(struct ie_softc *);
+	void	(*chan_attn)(struct ie_softc *);
+	void	(*port)(struct ie_softc *, u_int);
+	int	(*intrhook)(struct ie_softc *, int where);
 
-	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
-	void	(*memcopyout) __P((struct ie_softc *, const void *,
-				   int, size_t));
-	u_int16_t (*ie_bus_read16) __P((struct ie_softc *, int offset));
-	void	(*ie_bus_write16) __P((struct ie_softc *, int offset,
-					u_int16_t value));
-	void	(*ie_bus_write24) __P((struct ie_softc *, int offset,
-					int addr));
+	void	(*memcopyin)(struct ie_softc *, void *, int, size_t);
+	void	(*memcopyout)(struct ie_softc *, const void *,
+				   int, size_t);
+	u_int16_t (*ie_bus_read16)(struct ie_softc *, int offset);
+	void	(*ie_bus_write16)(struct ie_softc *, int offset,
+					u_int16_t value);
+	void	(*ie_bus_write24)(struct ie_softc *, int offset,
+					int addr);
 
 	/* Media management */
-        int  (*sc_mediachange) __P((struct ie_softc *));
+        int  (*sc_mediachange)(struct ie_softc *);
 				/* card dependent media change */
-        void (*sc_mediastatus) __P((struct ie_softc *, struct ifmediareq *));
+        void (*sc_mediastatus)(struct ie_softc *, struct ifmediareq *);
 				/* card dependent media status */
 
 
@@ -281,12 +281,12 @@ struct ie_softc {
 };
 
 /* Exported functions */
-int 	i82596_intr	__P((void *));
-int 	i82596_probe	__P((struct ie_softc *));
-int 	i82596_proberam	__P((struct ie_softc *));
-void 	i82596_attach	__P((struct ie_softc *, const char *, u_int8_t *, 
-			     int*, int, int));
-int 	i82596_start_cmd __P((struct ie_softc *, int, int, int, int));
+int 	i82596_intr(void *);
+int 	i82596_probe(struct ie_softc *);
+int 	i82596_proberam(struct ie_softc *);
+void 	i82596_attach(struct ie_softc *, const char *, u_int8_t *, 
+			     int*, int, int);
+int 	i82596_start_cmd(struct ie_softc *, int, int, int, int);
 
 /*
  * Interrupt Acknowledge.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdvar.h,v 1.1 1997/07/14 08:14:36 downsj Exp $	*/
+/*	$OpenBSD: kbdvar.h,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: kbdvar.h,v 1.1 1997/04/14 19:00:13 thorpej Exp $	*/
 
 /*-
@@ -43,9 +43,9 @@
  */
 
 struct kbdsw {
-	int	(*k_getc) __P((void));	/* get character */
-	void	(*k_nmi) __P((void));	/* handle non-maskable interrupt */
-	int	(*k_init) __P((void));	/* probe/initialize keyboard */
+	int	(*k_getc)(void);	/* get character */
+	void	(*k_nmi)(void);	/* handle non-maskable interrupt */
+	int	(*k_init)(void);	/* probe/initialize keyboard */
 };
 
 #ifdef ITECONSOLE
@@ -53,14 +53,14 @@ struct kbdsw {
 extern struct kbdsw kbdsw[];
 
 #ifdef HIL_KEYBOARD
-int	hilkbd_getc __P((void));
-void	hilkbd_nmi __P((void));
-int	hilkbd_init __P((void));
+int	hilkbd_getc(void);
+void	hilkbd_nmi(void);
+int	hilkbd_init(void);
 #endif
 
 #ifdef DOMAIN_KEYBOARD
-int	dnkbd_getc __P((void));
-void	dnkbd_nmi __P((void));
-int	dnkbd_init __P((void));
+int	dnkbd_getc(void);
+void	dnkbd_nmi(void);
+int	dnkbd_init(void);
 #endif
 #endif /* ITECONSOLE */

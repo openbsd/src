@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscpvar.h,v 1.3 2000/04/27 03:14:46 bjc Exp $	*/
+/*	$OpenBSD: mscpvar.h,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: mscpvar.h,v 1.7 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -81,35 +81,23 @@ struct mscp_xi {
 };
 
 struct	mscp_ctlr {
-	void	(*mc_ctlrdone)		/* controller operation complete */
-	    __P((struct device *));
-	void	(*mc_go)		/* device-specific start routine */
-	    __P((struct device *, struct mscp_xi *));
-	void	(*mc_saerror)		/* ctlr error handling */
-	    __P((struct device *, int));
+	void	(*mc_ctlrdone)		/* controller operation complete */(struct device *);
+	void	(*mc_go)		/* device-specific start routine */(struct device *, struct mscp_xi *);
+	void	(*mc_saerror)		/* ctlr error handling */(struct device *, int);
 };
 
 struct mscp_softc;
 
 struct	mscp_device {
-	void	(*me_dgram)	/* error datagram */
-	    __P((struct device *, struct mscp *, struct mscp_softc *));
-	void	(*me_iodone)	/* normal I/O is done */
-	    __P((struct device *, struct buf *));
-	int	(*me_online)	/* drive on line */
-	    __P((struct device *, struct mscp *));
-	int	(*me_gotstatus) /* got unit status */
-	    __P((struct device *, struct mscp *));
-	void	(*me_replace)	/* replace done */
-	    __P((struct device *, struct mscp *));
-	int	(*me_ioerr)	/* read or write failed */
-	    __P((struct device *, struct mscp *, struct buf *));
-	void	(*me_bb)	/* B_BAD io done */
-	    __P((struct device *, struct mscp *, struct buf *));
-	void	(*me_fillin)	/* Fill in mscp info for this drive */
-	    __P((struct buf *,struct mscp *));
-	void	(*me_cmddone)	/* Non-data transfer operation is done */
-	    __P((struct device *, struct mscp *));
+	void	(*me_dgram)	/* error datagram */(struct device *, struct mscp *, struct mscp_softc *);
+	void	(*me_iodone)	/* normal I/O is done */(struct device *, struct buf *);
+	int	(*me_online)	/* drive on line */(struct device *, struct mscp *);
+	int	(*me_gotstatus) /* got unit status */(struct device *, struct mscp *);
+	void	(*me_replace)	/* replace done */(struct device *, struct mscp *);
+	int	(*me_ioerr)	/* read or write failed */(struct device *, struct mscp *, struct buf *);
+	void	(*me_bb)	/* B_BAD io done */(struct device *, struct mscp *, struct buf *);
+	void	(*me_fillin)	/* Fill in mscp info for this drive */(struct buf *,struct mscp *);
+	void	(*me_cmddone)	/* Non-data transfer operation is done */(struct device *, struct mscp *);
 };
 
 /*
@@ -236,16 +224,16 @@ struct mscp_softc {
 }
 
 /* Prototypes */
-struct	mscp *mscp_getcp __P((struct mscp_softc *, int));
-void	mscp_printevent __P((struct mscp *));
-void	mscp_go __P((struct mscp_softc *, struct mscp *, int));
-void	mscp_requeue __P((struct mscp_softc *));
-void	mscp_dorsp __P((struct mscp_softc *));
-int	mscp_decodeerror __P((char *, struct mscp *, struct mscp_softc *));
-int	mscp_print __P((void *, const char *));
-void	mscp_hexdump __P((struct mscp *));
-void	mscp_strategy __P((struct buf *, struct device *));
-void	mscp_printtype __P((int, int));
-int	mscp_waitstep __P((struct mscp_softc *, int, int));
-void	mscp_dgo __P((struct mscp_softc *, struct mscp_xi *));
-void	mscp_intr __P((struct mscp_softc *));
+struct	mscp *mscp_getcp(struct mscp_softc *, int);
+void	mscp_printevent(struct mscp *);
+void	mscp_go(struct mscp_softc *, struct mscp *, int);
+void	mscp_requeue(struct mscp_softc *);
+void	mscp_dorsp(struct mscp_softc *);
+int	mscp_decodeerror(char *, struct mscp *, struct mscp_softc *);
+int	mscp_print(void *, const char *);
+void	mscp_hexdump(struct mscp *);
+void	mscp_strategy(struct buf *, struct device *);
+void	mscp_printtype(int, int);
+int	mscp_waitstep(struct mscp_softc *, int, int);
+void	mscp_dgo(struct mscp_softc *, struct mscp_xi *);
+void	mscp_intr(struct mscp_softc *);

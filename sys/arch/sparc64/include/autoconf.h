@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 2001/09/26 20:21:04 jason Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.6 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -127,16 +127,16 @@ struct mainbus_attach_args {
 /*
  * length; the others convert or make some other guarantee.
  */
-long	getproplen __P((int node, char *name));
-int	getprop __P((int, char *, size_t, int *, void **));
-char	*getpropstring __P((int node, char *name));
-int	getpropint __P((int node, char *name, int deflt));
+long	getproplen(int node, char *name);
+int	getprop(int, char *, size_t, int *, void **);
+char	*getpropstring(int node, char *name);
+int	getpropint(int node, char *name, int deflt);
 
 /* Frequently used options node */
 extern int optionsnode;
 
 	/* new interfaces: */
-char	*getpropstringA __P((int, char *, char *));
+char	*getpropstringA(int, char *, char *);
 
 /*
  * The matchbyname function is useful in drivers that are matched
@@ -146,13 +146,13 @@ char	*getpropstringA __P((int, char *, char *));
  */
 struct device;
 struct cfdata;
-int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
+int	matchbyname(struct device *, struct cfdata *cf, void *aux);
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((long freq));
+char	*clockfreq(long freq);
 
 /* Openprom V2 style boot path */
 struct bootpath {
@@ -161,24 +161,24 @@ struct bootpath {
 	int	val[3];		/* up to three optional values */
 	struct device *dev;	/* device that recognised this component */
 };
-struct bootpath	*bootpath_store __P((int, struct bootpath *));
-int		sd_crazymap __P((int));
+struct bootpath	*bootpath_store(int, struct bootpath *);
+int		sd_crazymap(int);
 
 /* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk __P((char *, int, int, dev_t *));
+struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*) __P((struct device *)),
+void	mountroot_hook_establish __P((void (*)(struct device *),
 				      struct device *));
 
-void	bootstrap __P((int));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-void	callrom __P((void));
-struct device *getdevunit __P((char *, int));
-void	*findzs __P((int));
-int	romgetcursoraddr __P((int **, int **));
-int	findroot __P((void));
-int	findnode __P((int, const char *));
-int	node_has_property __P((int, const char *));
-void	device_register __P((struct device *, void *));
+void	bootstrap(int);
+int	firstchild(int);
+int	nextsibling(int);
+void	callrom(void);
+struct device *getdevunit(char *, int);
+void	*findzs(int);
+int	romgetcursoraddr(int **, int **);
+int	findroot(void);
+int	findnode(int, const char *);
+int	node_has_property(int, const char *);
+void	device_register(struct device *, void *);

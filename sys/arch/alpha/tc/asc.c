@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.2 2001/02/03 19:40:41 art Exp $	*/
+/*	$OpenBSD: asc.c,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
@@ -108,39 +108,39 @@
 
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
-/*static*/ void	espattach	__P((struct device *, struct device *,
-				    void *));
-/*static*/ int	espprint	__P((void *, const char *));
+/*static*/ void	espattach(struct device *, struct device *,
+				    void *);
+/*static*/ int	espprint(void *, const char *);
 #ifdef __BROKEN_INDIRECT_CONFIG
-/*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ int	espmatch(struct device *, void *, void *);
 #else
-/*static*/ int	espmatch	__P((struct device *, struct cfdata *,
-				    void *));
+/*static*/ int	espmatch(struct device *, struct cfdata *,
+				    void *);
 #endif
-/*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
-/*static*/ void	espreadregs	__P((struct esp_softc *));
-/*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
-/*static*/ int esp_reselect	__P((struct esp_softc *, int));
-/*static*/ void	esp_scsi_reset	__P((struct esp_softc *));
-/*static*/ void	esp_reset	__P((struct esp_softc *));
-/*static*/ void	espinit	__P((struct esp_softc *, int));
-/*static*/ int	esp_scsi_cmd	__P((struct scsi_xfer *));
-/*static*/ int	esp_poll	__P((struct esp_softc *, struct scsi_xfer *,
-				    int));
-/*static*/ void	esp_sched	__P((struct esp_softc *));
-/*static*/ void	esp_done	__P((struct esp_softc *, struct esp_ecb *));
-/*static*/ void	esp_msgin	__P((struct esp_softc *));
-/*static*/ void	esp_msgout	__P((struct esp_softc *));
-/*static*/ int	espintr		__P((struct esp_softc *));
-/*static*/ void	esp_timeout	__P((void *arg));
-/*static*/ void	esp_abort	__P((struct esp_softc *, struct esp_ecb *));
-/*static*/ void esp_dequeue	__P((struct esp_softc *, struct esp_ecb *));
-void esp_sense __P((struct esp_softc *, struct esp_ecb *));
-void esp_free_ecb __P((struct esp_softc *, struct esp_ecb *, int));
-struct esp_ecb *esp_get_ecb __P((struct esp_softc *, int));
-static inline int esp_stp2cpb __P((struct esp_softc *, int));
-static inline int esp_cpb2stp __P((struct esp_softc *, int));
-static inline void esp_setsync __P((struct esp_softc *, struct esp_tinfo *));
+/*static*/ u_int	esp_adapter_info(struct esp_softc *);
+/*static*/ void	espreadregs(struct esp_softc *);
+/*static*/ void	esp_select(struct esp_softc *, struct esp_ecb *);
+/*static*/ int esp_reselect(struct esp_softc *, int);
+/*static*/ void	esp_scsi_reset(struct esp_softc *);
+/*static*/ void	esp_reset(struct esp_softc *);
+/*static*/ void	espinit(struct esp_softc *, int);
+/*static*/ int	esp_scsi_cmd(struct scsi_xfer *);
+/*static*/ int	esp_poll(struct esp_softc *, struct scsi_xfer *,
+				    int);
+/*static*/ void	esp_sched(struct esp_softc *);
+/*static*/ void	esp_done(struct esp_softc *, struct esp_ecb *);
+/*static*/ void	esp_msgin(struct esp_softc *);
+/*static*/ void	esp_msgout(struct esp_softc *);
+/*static*/ int	espintr(struct esp_softc *);
+/*static*/ void	esp_timeout(void *arg);
+/*static*/ void	esp_abort(struct esp_softc *, struct esp_ecb *);
+/*static*/ void esp_dequeue(struct esp_softc *, struct esp_ecb *);
+void esp_sense(struct esp_softc *, struct esp_ecb *);
+void esp_free_ecb(struct esp_softc *, struct esp_ecb *, int);
+struct esp_ecb *esp_get_ecb(struct esp_softc *, int);
+static inline int esp_stp2cpb(struct esp_softc *, int);
+static inline int esp_cpb2stp(struct esp_softc *, int);
+static inline void esp_setsync(struct esp_softc *, struct esp_tinfo *);
 
 /* Linkup to the rest of the kernel */
 struct cfattach asc_ca = {

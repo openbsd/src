@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.7 2002/03/09 21:46:05 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.8 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -59,10 +59,10 @@
 int save_ofw_mapping(void);
 int restore_ofw_mapping(void);
 
-void OF_exit __P((void)) __attribute__((__noreturn__));
-void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
-void ofw_mem_regions __P((struct mem_region **memp, struct mem_region **availp));
-void ofw_vmon __P((void));
+void OF_exit(void) __attribute__((__noreturn__));
+void OF_boot(char *bootspec) __attribute__((__noreturn__));
+void ofw_mem_regions(struct mem_region **memp, struct mem_region **availp);
+void ofw_vmon(void);
 
 struct firmware ofw_firmware = {
 	ofw_mem_regions,
@@ -109,7 +109,7 @@ ofw_mem_regions(memp, availp)
 	*availp = OFavail;
 }
 
-typedef void (fwcall_f) __P((int, int));
+typedef void (fwcall_f)(int, int);
 extern fwcall_f *fwcall;
 fwcall_f fwentry;
 extern u_int32_t ofmsr;

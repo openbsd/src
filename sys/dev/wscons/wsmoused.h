@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.1 2001/04/14 04:44:02 aaron Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -38,42 +38,42 @@
  */
 
 
-int wsmoused __P((struct wsdisplay_softc *, u_long, caddr_t, int,
-		  struct proc *p));
+int wsmoused(struct wsdisplay_softc *, u_long, caddr_t, int,
+		  struct proc *p);
 
-void motion_event __P((u_int, int));
-void button_event __P((int, int));
-int ctrl_event __P((u_int, int, struct wsdisplay_softc *, struct proc *));
+void motion_event(u_int, int);
+void button_event(int, int);
+int ctrl_event(u_int, int, struct wsdisplay_softc *, struct proc *);
 
-void mouse_moverel __P((char, char));
+void mouse_moverel(char, char);
 
-void inverse_char __P((unsigned short c));
-void inverse_region __P((unsigned short start, unsigned short end));
+void inverse_char(unsigned short c);
+void inverse_region(unsigned short start, unsigned short end);
 
-unsigned char skip_spc_right __P((char));
-unsigned char skip_spc_left __P((void));
-unsigned char skip_char_right __P((unsigned short));
-unsigned char skip_char_left __P((unsigned short));
-unsigned char class_cmp __P((unsigned short, unsigned short));
+unsigned char skip_spc_right(char);
+unsigned char skip_spc_left(void);
+unsigned char skip_char_right(unsigned short);
+unsigned char skip_char_left(unsigned short);
+unsigned char class_cmp(unsigned short, unsigned short);
 
-void mouse_copy_start __P((void));
-void mouse_copy_word __P((void));
-void mouse_copy_line __P((void));
-void mouse_copy_end __P((void));
-void mouse_copy_extend __P((void));
-void mouse_copy_extend_char __P((void));
-void mouse_copy_extend_word __P((void));
-void mouse_copy_extend_line __P((void));
-void mouse_hide __P((struct wsdisplay_softc *));
-void mouse_copy_extend_after __P((void));
-void remove_selection __P((struct wsdisplay_softc *));
-void mouse_copy_selection __P((void));
-void mouse_paste __P((void));
+void mouse_copy_start(void);
+void mouse_copy_word(void);
+void mouse_copy_line(void);
+void mouse_copy_end(void);
+void mouse_copy_extend(void);
+void mouse_copy_extend_char(void);
+void mouse_copy_extend_word(void);
+void mouse_copy_extend_line(void);
+void mouse_hide(struct wsdisplay_softc *);
+void mouse_copy_extend_after(void);
+void remove_selection(struct wsdisplay_softc *);
+void mouse_copy_selection(void);
+void mouse_paste(void);
 
-void mouse_zaxis __P((int));
-void allocate_copybuffer __P((struct wsdisplay_softc *));
+void mouse_zaxis(int);
+void allocate_copybuffer(struct wsdisplay_softc *);
 
-void sysbeep __P((int, int));
+void sysbeep(int, int);
 
 char *Copybuffer = NULL; /* buffer that contains mouse selections */
 unsigned int Copybuffer_size = 0;

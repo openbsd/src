@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.4 2001/02/02 20:25:40 aaron Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.5 2002/03/14 01:26:56 millert Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -67,16 +67,16 @@ struct pcdisplay_softc {
 static int pcdisplayconsole, pcdisplay_console_attached;
 static struct pcdisplay_config pcdisplay_console_dc;
 
-int	pcdisplay_match __P((struct device *, void *, void *));
-void	pcdisplay_attach __P((struct device *, struct device *, void *));
+int	pcdisplay_match(struct device *, void *, void *);
+void	pcdisplay_attach(struct device *, struct device *, void *);
 
-static int pcdisplay_is_console __P((bus_space_tag_t));
-static int pcdisplay_probe_col __P((bus_space_tag_t, bus_space_tag_t));
-static int pcdisplay_probe_mono __P((bus_space_tag_t, bus_space_tag_t));
-static void pcdisplay_init __P((struct pcdisplay_config *,
+static int pcdisplay_is_console(bus_space_tag_t);
+static int pcdisplay_probe_col(bus_space_tag_t, bus_space_tag_t);
+static int pcdisplay_probe_mono(bus_space_tag_t, bus_space_tag_t);
+static void pcdisplay_init(struct pcdisplay_config *,
 			     bus_space_tag_t, bus_space_tag_t,
-			     int));
-static int pcdisplay_alloc_attr __P((void *, int, int, int, long *));
+			     int);
+static int pcdisplay_alloc_attr(void *, int, int, int, long *);
 
 struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
@@ -109,11 +109,11 @@ const struct wsscreen_list pcdisplay_screenlist = {
 	_pcdisplay_scrlist
 };
 
-static int pcdisplay_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t pcdisplay_mmap __P((void *, off_t, int));
-static int pcdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
-				       void **, int *, int *, long *));
-static void pcdisplay_free_screen __P((void *, void *));
+static int pcdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t pcdisplay_mmap(void *, off_t, int);
+static int pcdisplay_alloc_screen(void *, const struct wsscreen_descr *,
+				       void **, int *, int *, long *);
+static void pcdisplay_free_screen(void *, void *);
 static int pcdisplay_show_screen __P((void *, void *, int,
 				      void (*) (void *, int, int), void *));
 
@@ -395,7 +395,7 @@ pcdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 #ifdef DIAGNOSTIC

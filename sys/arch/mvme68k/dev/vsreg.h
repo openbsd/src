@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.2 2000/06/10 19:53:23 deraadt Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.3 2002/03/14 01:26:37 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -743,14 +743,14 @@ typedef struct ipsg
  * Scatter/gather functions
  */
 
-M328_SG vs_alloc_scatter_gather __P((void));
-void    vs_dealloc_scatter_gather __P((M328_SG sg));
-void    vs_link_scatter_gather_element __P((sg_list_element_t *element,
+M328_SG vs_alloc_scatter_gather(void);
+void    vs_dealloc_scatter_gather(M328_SG sg);
+void    vs_link_scatter_gather_element(sg_list_element_t *element,
                                             register vm_offset_t phys_add,
-                                            register int len));
-void    vs_link_scatter_gather_list __P((sg_list_element_t *list,
+                                            register int len);
+void    vs_link_scatter_gather_list(sg_list_element_t *list,
                                          register vm_offset_t phys_add,
-                                         register int elements));
-M328_SG vs_build_memory_structure __P((struct scsi_xfer *xs, M328_IOPB *iopb));
+                                         register int elements);
+M328_SG vs_build_memory_structure(struct scsi_xfer *xs, M328_IOPB *iopb);
 
 #endif /* _M328REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.118 2001/08/19 06:31:56 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -528,21 +528,21 @@ extern int ipe4_attach(void);
 extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
 extern int ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
-extern void ipe4_input __P((struct mbuf *, ...));
-extern void ipip_input __P((struct mbuf *, int, struct ifnet *));
+extern void ipe4_input(struct mbuf *, ...);
+extern void ipip_input(struct mbuf *, int, struct ifnet *);
 
 #ifdef INET
-extern void ip4_input __P((struct mbuf *, ...));
+extern void ip4_input(struct mbuf *, ...);
 #endif /* INET */
 
 #ifdef INET6
-extern int ip4_input6 __P((struct mbuf **, int *, int));
+extern int ip4_input6(struct mbuf **, int *, int);
 #endif /* INET */
 
 /* XF_ETHERIP */
 extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **,
     int, int);
-extern void etherip_input __P((struct mbuf *, ...));
+extern void etherip_input(struct mbuf *, ...);
 
 /* XF_AH */
 extern int ah_attach(void);
@@ -556,14 +556,14 @@ extern int ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 extern int ah_massage_headers(struct mbuf **, int, int, int, int);
 
 #ifdef INET
-extern void ah4_input __P((struct mbuf *, ...));
-extern int ah4_input_cb __P((struct mbuf *, ...));
-extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
+extern void ah4_input(struct mbuf *, ...);
+extern int ah4_input_cb(struct mbuf *, ...);
+extern void *ah4_ctlinput(int, struct sockaddr *, void *);
 #endif /* INET */
 
 #ifdef INET6
-extern int ah6_input __P((struct mbuf **, int *, int));
-extern int ah6_input_cb __P((struct mbuf *, int, int));
+extern int ah6_input(struct mbuf **, int *, int);
+extern int ah6_input_cb(struct mbuf *, int, int);
 #endif /* INET6 */
 
 /* XF_ESP */
@@ -577,14 +577,14 @@ extern int esp_input_cb(void *);
 extern int esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #ifdef INET
-extern void esp4_input __P((struct mbuf *, ...));
-extern int esp4_input_cb __P((struct mbuf *, ...));
-extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
+extern void esp4_input(struct mbuf *, ...);
+extern int esp4_input_cb(struct mbuf *, ...);
+extern void *esp4_ctlinput(int, struct sockaddr *, void *);
 #endif /* INET */
 
 #ifdef INET6
-extern int esp6_input __P((struct mbuf **, int *, int));
-extern int esp6_input_cb __P((struct mbuf *, int, int));
+extern int esp6_input(struct mbuf **, int *, int);
+extern int esp6_input_cb(struct mbuf *, int, int);
 #endif /* INET6 */
 
 /* XF_IPCOMP */
@@ -598,24 +598,24 @@ extern int ipcomp_input_cb(void *);
 extern int ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #ifdef INET
-extern void ipcomp4_input __P((struct mbuf *, ...));
-extern int ipcomp4_input_cb __P((struct mbuf *, ...));
+extern void ipcomp4_input(struct mbuf *, ...);
+extern int ipcomp4_input_cb(struct mbuf *, ...);
 #endif /* INET */
 
 #ifdef INET6
-extern int ipcomp6_input __P((struct mbuf **, int *, int));
-extern int ipcomp6_input_cb __P((struct mbuf *, int, int));
+extern int ipcomp6_input(struct mbuf **, int *, int);
+extern int ipcomp6_input_cb(struct mbuf *, int, int);
 #endif /* INET6 */
 
 /* XF_TCPSIGNATURE */
-extern int tcp_signature_tdb_attach __P((void));
-extern int tcp_signature_tdb_init __P((struct tdb *, struct xformsw *,
-    struct ipsecinit *));
-extern int tcp_signature_tdb_zeroize __P((struct tdb *));
-extern int tcp_signature_tdb_input __P((struct mbuf *, struct tdb *, int,
-    int));
-extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
-    struct mbuf **, int, int));
+extern int tcp_signature_tdb_attach(void);
+extern int tcp_signature_tdb_init(struct tdb *, struct xformsw *,
+    struct ipsecinit *);
+extern int tcp_signature_tdb_zeroize(struct tdb *);
+extern int tcp_signature_tdb_input(struct mbuf *, struct tdb *, int,
+    int);
+extern int tcp_signature_tdb_output(struct mbuf *, struct tdb *,
+    struct mbuf **, int, int);
 
 /* Padding */
 extern caddr_t m_pad(struct mbuf *, int);

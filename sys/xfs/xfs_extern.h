@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_extern.h,v 1.3 1998/08/31 05:13:25 art Exp $	*/
+/*	$OpenBSD: xfs_extern.h,v 1.4 2002/03/14 01:27:19 millert Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,13 +42,13 @@
 
 #ifdef _KERNEL
 
-int xfs_devopen __P((dev_t dev, int flags, int devtype, struct proc * p));
-int xfs_devclose __P((dev_t dev, int flags, int devtype, struct proc * p));
-int xfs_devread __P((dev_t dev, struct uio * uiop, int ioflag));
-int xfs_devwrite __P((dev_t dev, struct uio *uiop, int ioflag));
-int xfs_devioctl __P((dev_t dev, u_long cmd, caddr_t data, int flags,
-		      struct proc * p));
-int xfs_devselect __P((dev_t dev, int which, struct proc * p));
+int xfs_devopen(dev_t dev, int flags, int devtype, struct proc * p);
+int xfs_devclose(dev_t dev, int flags, int devtype, struct proc * p);
+int xfs_devread(dev_t dev, struct uio * uiop, int ioflag);
+int xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag);
+int xfs_devioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+		      struct proc * p);
+int xfs_devselect(dev_t dev, int which, struct proc * p);
 
 #endif /* _KERNEL */
 

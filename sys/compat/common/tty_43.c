@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_43.c,v 1.6 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: tty_43.c,v 1.7 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: tty_43.c,v 1.5 1996/05/20 14:29:17 mark Exp $	*/
 
 /*-
@@ -85,9 +85,9 @@ static int compatspcodes[] = {
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
-int ttcompatgetflags __P((struct tty *));
-void ttcompatsetflags __P((struct tty *, struct termios *));
-void ttcompatsetlflags __P((struct tty *, struct termios *));
+int ttcompatgetflags(struct tty *);
+void ttcompatsetflags(struct tty *, struct termios *);
+void ttcompatsetlflags(struct tty *, struct termios *);
 
 /*ARGSUSED*/
 int

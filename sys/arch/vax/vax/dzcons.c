@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.3 1997/09/10 12:04:44 maja Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -103,7 +103,7 @@ struct	tty *dzcn_tty[1];
 int	dzcnparam();
 void	dzcnstart();
 
-int	ka410_consintr_enable __P((void));
+int	ka410_consintr_enable(void);
 
 int
 dzcnopen(dev, flag, mode, p)

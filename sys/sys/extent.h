@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.6 2001/07/05 10:00:47 art Exp $	*/
+/*	$OpenBSD: extent.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
 
 /*-
@@ -103,17 +103,17 @@ struct extent_fixed {
 	((ALIGN(sizeof(struct extent_region))) *	\
 	 (_nregions)))
 
-struct extent *extent_find __P((char *));
-void extent_print_all __P((void));
+struct extent *extent_find(char *);
+void extent_print_all(void);
 
-struct	extent *extent_create __P((char *, u_long, u_long, int,
-	    caddr_t, size_t, int));
-void	extent_destroy __P((struct extent *));
-int	extent_alloc_subregion __P((struct extent *, u_long, u_long,
-	    u_long, u_long, u_long, u_long, int, u_long *));
-int	extent_alloc_region __P((struct extent *, u_long, u_long, int));
-int	extent_free __P((struct extent *, u_long, u_long, int));
-void	extent_print __P((struct extent *));
+struct	extent *extent_create(char *, u_long, u_long, int,
+	    caddr_t, size_t, int);
+void	extent_destroy(struct extent *);
+int	extent_alloc_subregion(struct extent *, u_long, u_long,
+	    u_long, u_long, u_long, u_long, int, u_long *);
+int	extent_alloc_region(struct extent *, u_long, u_long, int);
+int	extent_free(struct extent *, u_long, u_long, int);
+void	extent_print(struct extent *);
 
 /* Simple case of extent_alloc_subregion() */
 #define extent_alloc(_ex, _size, _alignment, _skew, _boundary, \

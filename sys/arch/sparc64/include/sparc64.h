@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.3 2001/09/26 17:32:19 deraadt Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.4 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -39,17 +39,17 @@ struct mem_region {
 	u_int64_t size;
 };
 
-int prom_set_trap_table __P((vaddr_t tba));
-paddr_t prom_vtop __P((vaddr_t vaddr));
-vaddr_t prom_claim_virt __P((vaddr_t vaddr, int len));
-vaddr_t prom_alloc_virt __P((int len, int align));
-int prom_free_virt __P((vaddr_t vaddr, int len));
-int prom_unmap_virt __P((vaddr_t vaddr, int len));
-int prom_map_phys __P((paddr_t paddr, off_t size, vaddr_t vaddr, int mode));
-paddr_t prom_alloc_phys __P((int len, int align));
-paddr_t prom_claim_phys __P((paddr_t phys, int len));
-int prom_free_phys __P((paddr_t paddr, int len));
-paddr_t prom_get_msgbuf __P((int len, int align));
+int prom_set_trap_table(vaddr_t tba);
+paddr_t prom_vtop(vaddr_t vaddr);
+vaddr_t prom_claim_virt(vaddr_t vaddr, int len);
+vaddr_t prom_alloc_virt(int len, int align);
+int prom_free_virt(vaddr_t vaddr, int len);
+int prom_unmap_virt(vaddr_t vaddr, int len);
+int prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode);
+paddr_t prom_alloc_phys(int len, int align);
+paddr_t prom_claim_phys(paddr_t phys, int len);
+int prom_free_phys(paddr_t paddr, int len);
+paddr_t prom_get_msgbuf(int len, int align);
 
 /*
  * Compatibility stuff.
@@ -62,15 +62,15 @@ paddr_t prom_get_msgbuf __P((int len, int align));
  *
  * Not sure whether boot itself should be implementation dependent instead.	XXX
  */
-void ppc_exit __P((void)) __attribute__((__noreturn__));
-void ppc_boot __P((char *bootspec)) __attribute__((__noreturn__));
+void ppc_exit(void) __attribute__((__noreturn__));
+void ppc_boot(char *bootspec) __attribute__((__noreturn__));
 
-int dk_match __P((char *name));
+int dk_match(char *name);
 
-void ofrootfound __P((void));
+void ofrootfound(void);
 
 /*
  * Debug
  */
-void prom_printf __P((const char *, ...));
+void prom_printf(const char *, ...);
 #endif	/* _MACHINE_SPARC64_H_ */

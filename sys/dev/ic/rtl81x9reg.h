@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.3 2001/06/23 22:03:08 fgsch Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -478,5 +478,5 @@ struct rl_softc {
 #define vtophys(va)	alpha_XXX_dmamap((vm_offset_t)va)
 #endif
 
-extern int rl_attach	__P((struct rl_softc *));
-extern int rl_intr	__P((void *));
+extern int rl_attach(struct rl_softc *);
+extern int rl_intr(void *);

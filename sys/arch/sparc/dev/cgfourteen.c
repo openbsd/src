@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.8 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.9 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -122,16 +122,16 @@ static struct fbdriver cgfourteenfbdriver = {
 extern int fbnode;
 extern struct tty *fbconstty;
 
-static void cg14_set_video __P((struct cgfourteen_softc *, int));
-static int  cg14_get_video __P((struct cgfourteen_softc *));
-static int  cg14_get_cmap __P((struct fbcmap *, union cg14cmap *, int));
-static int  cg14_put_cmap __P((struct fbcmap *, union cg14cmap *, int));
-static void cg14_load_hwcmap __P((struct cgfourteen_softc *, int, int));
-static void cg14_init __P((struct cgfourteen_softc *));
-static void cg14_reset __P((struct cgfourteen_softc *));
-static void cg14_loadomap __P((struct cgfourteen_softc *));/* cursor overlay */
-static void cg14_setcursor __P((struct cgfourteen_softc *));/* set position */
-static void cg14_loadcursor __P((struct cgfourteen_softc *));/* set shape */
+static void cg14_set_video(struct cgfourteen_softc *, int);
+static int  cg14_get_video(struct cgfourteen_softc *);
+static int  cg14_get_cmap(struct fbcmap *, union cg14cmap *, int);
+static int  cg14_put_cmap(struct fbcmap *, union cg14cmap *, int);
+static void cg14_load_hwcmap(struct cgfourteen_softc *, int, int);
+static void cg14_init(struct cgfourteen_softc *);
+static void cg14_reset(struct cgfourteen_softc *);
+static void cg14_loadomap(struct cgfourteen_softc *);/* cursor overlay */
+static void cg14_setcursor(struct cgfourteen_softc *);/* set position */
+static void cg14_loadcursor(struct cgfourteen_softc *);/* set shape */
 
 /*
  * Match a cgfourteen.

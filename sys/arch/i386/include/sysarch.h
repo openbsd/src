@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.3 2000/08/05 22:07:33 niklas Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.4 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.8 1996/01/08 13:51:44 mycroft Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
@@ -39,12 +39,12 @@ struct i386_set_ioperm_args {
 };
 
 #ifndef _KERNEL
-int i386_get_ldt __P((int, union descriptor *, int));
-int i386_set_ldt __P((int, union descriptor *, int));
-int i386_iopl __P((int));
-int i386_get_ioperm __P((u_long *));
-int i386_set_ioperm __P((u_long *));
-int sysarch __P((int, char *));
+int i386_get_ldt(int, union descriptor *, int);
+int i386_set_ldt(int, union descriptor *, int);
+int i386_iopl(int);
+int i386_get_ioperm(u_long *);
+int i386_set_ioperm(u_long *);
+int sysarch(int, char *);
 #endif
 
 #endif /* !_I386_SYSARCH_H_ */

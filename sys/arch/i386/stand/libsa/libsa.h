@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.33 2001/08/18 15:34:17 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.34 2002/03/14 01:26:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -38,21 +38,21 @@
 
 #define	DEFAULT_KERNEL_ADDRESS	0x100000
 
-void gateA20 __P((int));
+void gateA20(int);
 
-void smpprobe __P((void));
-void pciprobe __P((void));
-void memprobe __P((void));
-void diskprobe __P((void));
-void apmprobe __P((void));
-void apmcheck __P((void));
-void dump_biosmem __P((bios_memmap_t *));
-int mem_add __P((long, long));
-int mem_delete __P((long, long));
-void mem_pass __P((void));
+void smpprobe(void);
+void pciprobe(void);
+void memprobe(void);
+void diskprobe(void);
+void apmprobe(void);
+void apmcheck(void);
+void dump_biosmem(bios_memmap_t *);
+int mem_add(long, long);
+int mem_delete(long, long);
+void mem_pass(void);
 
-void devboot __P((dev_t, char *));
-void machdep __P((void));
+void devboot(dev_t, char *);
+void machdep(void);
 
 extern const char bdevs[][4];
 extern const int nbdevs;

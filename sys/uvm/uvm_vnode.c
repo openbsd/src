@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.32 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.33 2002/03/14 01:27:19 millert Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -84,22 +84,22 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
  * functions
  */
 
-static void		   uvn_cluster __P((struct uvm_object *, voff_t,
-					   voff_t *, voff_t *));
-static void                uvn_detach __P((struct uvm_object *));
-static boolean_t           uvn_flush __P((struct uvm_object *, voff_t, 
-					 voff_t, int));
-static int                 uvn_get __P((struct uvm_object *, voff_t,
+static void		   uvn_cluster(struct uvm_object *, voff_t,
+					   voff_t *, voff_t *);
+static void                uvn_detach(struct uvm_object *);
+static boolean_t           uvn_flush(struct uvm_object *, voff_t, 
+					 voff_t, int);
+static int                 uvn_get(struct uvm_object *, voff_t,
 					vm_page_t *, int *, int, 
-					vm_prot_t, int, int));
-static void		   uvn_init __P((void));
-static int		   uvn_io __P((struct uvm_vnode *, vm_page_t *,
-				      int, int, int));
-static int		   uvn_put __P((struct uvm_object *, vm_page_t *,
-					int, boolean_t));
-static void                uvn_reference __P((struct uvm_object *));
-static boolean_t	   uvn_releasepg __P((struct vm_page *, 
-					      struct vm_page **));
+					vm_prot_t, int, int);
+static void		   uvn_init(void);
+static int		   uvn_io(struct uvm_vnode *, vm_page_t *,
+				      int, int, int);
+static int		   uvn_put(struct uvm_object *, vm_page_t *,
+					int, boolean_t);
+static void                uvn_reference(struct uvm_object *);
+static boolean_t	   uvn_releasepg(struct vm_page *, 
+					      struct vm_page **);
 
 /*
  * master pager structure
@@ -1816,9 +1816,9 @@ uvm_vnp_uncache(vp)
 	if (!VOP_ISLOCKED(vp)) {
 		boolean_t is_ok_anyway = FALSE;
 #if defined(NFSCLIENT)
-		extern int (**nfsv2_vnodeop_p) __P((void *));
-		extern int (**spec_nfsv2nodeop_p) __P((void *));
-		extern int (**fifo_nfsv2nodeop_p) __P((void *));
+		extern int (**nfsv2_vnodeop_p)(void *);
+		extern int (**spec_nfsv2nodeop_p)(void *);
+		extern int (**fifo_nfsv2nodeop_p)(void *);
 
 		/* vnode is NOT VOP_LOCKed: some vnode types _never_ lock */
 		if (vp->v_op == nfsv2_vnodeop_p ||

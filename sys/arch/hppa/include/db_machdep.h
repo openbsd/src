@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -93,7 +93,7 @@ static __inline int inst_trap_return(u_int ins)	{
 #define db_clear_single_step(r)	((r)->tf_flags |= 0)
 #define db_set_single_step(r)	((r)->tf_flags |= 0)
 
-int db_valid_breakpoint __P((db_addr_t));
-int kdb_trap __P((int, int, db_regs_t *));
+int db_valid_breakpoint(db_addr_t);
+int kdb_trap(int, int, db_regs_t *);
 
 #endif /* _MACHINE_DB_MACHDEP_H_ */

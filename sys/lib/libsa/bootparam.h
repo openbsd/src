@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootparam.h,v 1.3 1998/05/31 23:39:18 mickey Exp $	*/
+/*	$OpenBSD: bootparam.h,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
 
-int bp_whoami __P((int sock));
-int bp_getfile __P((int sock, char *key, struct in_addr *addrp, char *path));
+int bp_whoami(int sock);
+int bp_getfile(int sock, char *key, struct in_addr *addrp, char *path);
 

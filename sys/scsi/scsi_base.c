@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.32 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.33 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -51,13 +51,13 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
-static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
+static __inline struct scsi_xfer *scsi_make_xs(struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
-    int datalen, int retries, int timeout, struct buf *, int flags));
-static __inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
-int	sc_err1 __P((struct scsi_xfer *, int));
-int	scsi_interpret_sense __P((struct scsi_xfer *));
-char   *scsi_decode_sense __P((void *, int));
+    int datalen, int retries, int timeout, struct buf *, int flags);
+static __inline void asc2ascii(u_char asc, u_char ascq, char *result);
+int	sc_err1(struct scsi_xfer *, int);
+int	scsi_interpret_sense(struct scsi_xfer *);
+char   *scsi_decode_sense(void *, int);
 
 struct pool scsi_xfer_pool;
 

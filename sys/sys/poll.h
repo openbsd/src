@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.h,v 1.6 2001/08/11 08:13:18 fgsch Exp $ */
+/*	$OpenBSD: poll.h,v 1.7 2002/03/14 01:27:14 millert Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -52,7 +52,7 @@ struct pollfd {
 #ifndef _KERNEL
 #include <ctype.h>
 
-int   poll __P((struct pollfd[], int, int));
+int   poll(struct pollfd[], int, int);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_POLL_H_ */

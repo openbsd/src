@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess_isapnp.c,v 1.4 2001/09/21 17:55:43 miod Exp $	*/
+/*	$OpenBSD: ess_isapnp.c,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: ess_isa.c,v 1.4 1999/03/18 20:57:11 mycroft Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@
 #define DPRINTF(x)
 #endif
 
-int ess_isapnp_probe __P((struct device *, void *, void *));
-void ess_isapnp_attach __P((struct device *, struct device *, void *));
+int ess_isapnp_probe(struct device *, void *, void *);
+void ess_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach ess_isapnp_ca = {
 	sizeof(struct ess_softc), ess_isapnp_probe, ess_isapnp_attach

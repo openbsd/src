@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.3 1999/11/24 01:43:32 deraadt Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.4 2002/03/14 01:26:32 millert Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -60,11 +60,11 @@ char *mem_owner_bios = "BIOS";
 
 #define mrcopyflags(curr, new) (((curr) & ~MDF_ATTRMASK) | ((new) & MDF_ATTRMASK))
 
-void	i686_mrinit __P((struct mem_range_softc *sc));
-int	i686_mrset __P((struct mem_range_softc *sc,
+void	i686_mrinit(struct mem_range_softc *sc);
+int	i686_mrset(struct mem_range_softc *sc,
 			   struct mem_range_desc *mrd,
-			   int *arg));
-void	i686_mrAPinit __P((struct mem_range_softc *sc));
+			   int *arg);
+void	i686_mrAPinit(struct mem_range_softc *sc);
 
 struct mem_range_ops i686_mrops = {
 	i686_mrinit,
@@ -75,20 +75,20 @@ struct mem_range_ops i686_mrops = {
 /* XXX for AP startup hook */
 u_int64_t	mtrrcap, mtrrdef;
 
-struct mem_range_desc	*mem_range_match __P((struct mem_range_softc *sc,
-						      struct mem_range_desc *mrd));
-void			 i686_mrfetch __P((struct mem_range_softc *sc));
-int			 i686_mtrrtype __P((int flags));
-void			 i686_mrstore __P((struct mem_range_softc *sc));
-void			 i686_mrstoreone __P((void *arg));
-struct mem_range_desc	*i686_mtrrfixsearch __P((struct mem_range_softc *sc,
-						    u_int64_t addr));
-int			 i686_mrsetlow __P((struct mem_range_softc *sc,
+struct mem_range_desc	*mem_range_match(struct mem_range_softc *sc,
+						      struct mem_range_desc *mrd);
+void			 i686_mrfetch(struct mem_range_softc *sc);
+int			 i686_mtrrtype(int flags);
+void			 i686_mrstore(struct mem_range_softc *sc);
+void			 i686_mrstoreone(void *arg);
+struct mem_range_desc	*i686_mtrrfixsearch(struct mem_range_softc *sc,
+						    u_int64_t addr);
+int			 i686_mrsetlow(struct mem_range_softc *sc,
 					      struct mem_range_desc *mrd,
-					      int *arg));
-int			 i686_mrsetvariable __P((struct mem_range_softc *sc,
+					      int *arg);
+int			 i686_mrsetvariable(struct mem_range_softc *sc,
 						   struct mem_range_desc *mrd,
-						   int *arg));
+						   int *arg);
 
 /* i686 MTRR type to memory range type conversion */
 int i686_mtrrtomrt[] = {

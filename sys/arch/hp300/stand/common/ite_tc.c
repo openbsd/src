@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_tc.c,v 1.1 1997/07/14 08:14:22 downsj Exp $	*/
+/*	$OpenBSD: ite_tc.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: ite_tc.c,v 1.8 1996/03/03 04:23:41 thorpej Exp $	*/
 
 /*
@@ -58,8 +58,8 @@
 #define REGBASE	    	((struct tcboxfb *)(ip->regbase))
 #define WINDOWMOVER 	topcat_windowmove
 
-void	topcat_windowmove __P((struct ite_data *, int, int, int, int,
-	    int, int, int));
+void	topcat_windowmove(struct ite_data *, int, int, int, int,
+	    int, int, int);
 
 void
 topcat_init(ip)

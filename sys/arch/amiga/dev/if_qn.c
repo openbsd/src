@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.14 2001/06/29 08:18:19 jj Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.15 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -157,23 +157,23 @@ struct	qn_softc {
 #endif
 
 
-int	qnmatch __P((struct device *, void *, void *));
-void	qnattach __P((struct device *, struct device *, void *));
-int	qnintr __P((void *));
-int	qnioctl __P((struct ifnet *, u_long, caddr_t));
-void	qnstart __P((struct ifnet *));
-void	qnwatchdog __P((struct ifnet *));
-void	qnreset __P((struct qn_softc *));
-void	qninit __P((struct qn_softc *));
-void	qnstop __P((struct qn_softc *));
-static	u_short qn_put __P((u_short volatile *, struct mbuf *));
-static	void qn_rint __P((struct qn_softc *, u_short));
-static	void qn_flush __P((struct qn_softc *));
-static	void __inline word_copy_from_card __P((u_short volatile *, u_short *, u_short));
-static	void __inline word_copy_to_card __P((u_short *, u_short volatile *, u_short));
-void	qn_get_packet __P((struct qn_softc *, u_short)); 
+int	qnmatch(struct device *, void *, void *);
+void	qnattach(struct device *, struct device *, void *);
+int	qnintr(void *);
+int	qnioctl(struct ifnet *, u_long, caddr_t);
+void	qnstart(struct ifnet *);
+void	qnwatchdog(struct ifnet *);
+void	qnreset(struct qn_softc *);
+void	qninit(struct qn_softc *);
+void	qnstop(struct qn_softc *);
+static	u_short qn_put(u_short volatile *, struct mbuf *);
+static	void qn_rint(struct qn_softc *, u_short);
+static	void qn_flush(struct qn_softc *);
+static	void __inline word_copy_from_card(u_short volatile *, u_short *, u_short);
+static	void __inline word_copy_to_card(u_short *, u_short volatile *, u_short);
+void	qn_get_packet(struct qn_softc *, u_short); 
 #ifdef QN_DEBUG1
-static	void qn_dump __P((struct qn_softc *));
+static	void qn_dump(struct qn_softc *);
 #endif
 
 struct cfattach qn_ca = {

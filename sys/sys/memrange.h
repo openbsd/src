@@ -1,4 +1,4 @@
-/* $OpenBSD: memrange.h,v 1.2 1999/11/20 13:47:55 matthieu Exp $ */
+/* $OpenBSD: memrange.h,v 1.3 2002/03/14 01:27:14 millert Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -69,9 +69,9 @@ struct mem_range_op
 struct mem_range_softc;
 struct mem_range_ops
 {
-	void	(*init) __P((struct mem_range_softc *sc));
-	int	(*set) __P((struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg));
-    	void	(*initAP) __P((struct mem_range_softc *sc));
+	void	(*init)(struct mem_range_softc *sc);
+	int	(*set)(struct mem_range_softc *sc, struct mem_range_desc *mrd, int *arg);
+    	void	(*initAP)(struct mem_range_softc *sc);
 };
 
 struct mem_range_softc 
@@ -85,9 +85,9 @@ struct mem_range_softc
 extern struct mem_range_softc mem_range_softc;
 
 __BEGIN_DECLS
-extern int mem_range_attr_get __P((struct mem_range_desc *mrd, int *arg));
-extern int mem_range_attr_set __P((struct mem_range_desc *mrd, int *arg));
-extern void mem_range_AP_init __P((void));
+extern int mem_range_attr_get(struct mem_range_desc *mrd, int *arg);
+extern int mem_range_attr_set(struct mem_range_desc *mrd, int *arg);
+extern void mem_range_AP_init(void);
 __END_DECLS
 #endif
 

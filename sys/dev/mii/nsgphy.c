@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.6 2001/10/05 18:29:15 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -64,8 +64,8 @@
 
 #include <dev/mii/nsgphyreg.h>
 
-int	nsgphymatch __P((struct device*, void *, void *));
-void	nsgphyattach __P((struct device *, struct device *, void *));
+int	nsgphymatch(struct device*, void *, void *);
+void	nsgphyattach(struct device *, struct device *, void *);
 
 struct cfattach nsgphy_ca = {
 	sizeof(struct mii_softc), nsgphymatch, nsgphyattach, mii_phy_detach,
@@ -76,11 +76,11 @@ struct cfdriver nsgphy_cd = {
 	NULL, "nsgphy", DV_DULL
 };
 
-int	nsgphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	nsgphy_status __P((struct mii_softc *));
+int	nsgphy_service(struct mii_softc *, struct mii_data *, int);
+void	nsgphy_status(struct mii_softc *);
 
-static int	nsgphy_mii_phy_auto __P((struct mii_softc *, int));
-extern void	mii_phy_auto_timeout __P((void *));
+static int	nsgphy_mii_phy_auto(struct mii_softc *, int);
+extern void	mii_phy_auto_timeout(void *);
 
 int
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.11 2002/03/12 19:46:25 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.12 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -138,35 +138,35 @@ int sbus_debug = 0;
 #define DPRINTF(l, s)
 #endif
 
-void sbusreset __P((int));
+void sbusreset(int);
 
-static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
-static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
-static int sbus_get_intr __P((struct sbus_softc *, int,
-			      struct sbus_intr **, int *, int));
-int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			      int, bus_space_handle_t *));
-static int sbus_overtemp __P((void *));
-static int _sbus_bus_map __P((
+static bus_space_tag_t sbus_alloc_bustag(struct sbus_softc *);
+static bus_dma_tag_t sbus_alloc_dmatag(struct sbus_softc *);
+static int sbus_get_intr(struct sbus_softc *, int,
+			      struct sbus_intr **, int *, int);
+int sbus_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
+			      int, bus_space_handle_t *);
+static int sbus_overtemp(void *);
+static int _sbus_bus_map(
 		bus_space_tag_t,
 		bus_type_t,
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
+		bus_space_handle_t *);
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
 		int,			/*`device class' priority*/
 		int,			/*flags*/
-		int (*) __P((void *)),	/*handler*/
+		int (*)(void *),	/*handler*/
 		void *));		/*handler arg*/
 
 
 /* autoconfiguration driver */
-int	sbus_match __P((struct device *, void *, void *));
-void	sbus_attach __P((struct device *, struct device *, void *));
+int	sbus_match(struct device *, void *, void *);
+void	sbus_attach(struct device *, struct device *, void *);
 
 
 struct cfattach sbus_ca = {
@@ -182,23 +182,23 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-			  bus_size_t, struct proc *, int));
-void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-int sbus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-void sbus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-			   bus_size_t, int));
-int sbus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int sbus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+			  bus_size_t, struct proc *, int);
+void sbus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+int sbus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+void sbus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+			   bus_size_t, int);
+int sbus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 			   bus_size_t alignment, bus_size_t boundary,
 			   bus_dma_segment_t *segs, int nsegs, int *rsegs,
-			   int flags));
-void sbus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			   int nsegs));
-int sbus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			 int nsegs, size_t size, caddr_t *kvap, int flags));
-void sbus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-			    size_t size));
+			   int flags);
+void sbus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+			   int nsegs);
+int sbus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+			 int nsegs, size_t size, caddr_t *kvap, int flags);
+void sbus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+			    size_t size);
 
 /*
  * Child devices receive the Sbus interrupt level in their attach
@@ -701,7 +701,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 	int pri;
 	int level;
 	int flags;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	struct sbus_softc *sc = t->cookie;

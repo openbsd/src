@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.19 1999/04/24 06:39:40 downsj Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.20 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -60,10 +60,10 @@ extern long		videorowbytes;
 extern long		videobitdepth;
 extern unsigned long	videosize;
 
-static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfiv_match __P((struct device *, void *, void *));
-static void	grfiv_attach __P((struct device *, struct device *, void *));
+static int	grfiv_mode(struct grf_softc *gp, int cmd, void *arg);
+static caddr_t	grfiv_phys(struct grf_softc *gp, vm_offset_t addr);
+static int	grfiv_match(struct device *, void *, void *);
+static void	grfiv_attach(struct device *, struct device *, void *);
 
 struct cfdriver intvid_cd = {
 	NULL, "intvid", DV_DULL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.12 2002/01/14 21:34:41 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.13 2002/03/14 01:26:40 millert Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -209,13 +209,13 @@ error("ack gag barf!");
 int      vme188_config;
 
 /* local prototypes */
-unsigned m8820x_cmmu_get __P((int mmu, int reg));
-void m8820x_cmmu_store __P((int, int, unsigned));
-void m8820x_cmmu_set __P((int, unsigned, int, int, int, int, vm_offset_t));
-void m8820x_cmmu_sync_cache __P((vm_offset_t, int));
-void m8820x_cmmu_sync_inval_cache __P((vm_offset_t, int));
-void m8820x_cmmu_inval_cache __P((vm_offset_t, int));
-int m8820x_cmmu_alive __P((int));
+unsigned m8820x_cmmu_get(int mmu, int reg);
+void m8820x_cmmu_store(int, int, unsigned);
+void m8820x_cmmu_set(int, unsigned, int, int, int, int, vm_offset_t);
+void m8820x_cmmu_sync_cache(vm_offset_t, int);
+void m8820x_cmmu_sync_inval_cache(vm_offset_t, int);
+void m8820x_cmmu_inval_cache(vm_offset_t, int);
+int m8820x_cmmu_alive(int);
 
 void
 m8820x_show_apr(value)

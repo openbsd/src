@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.60 2002/03/08 03:49:58 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.61 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ struct pool tcpcb_pool;
 struct pool sackhl_pool;
 #endif
 
-int	tcp_freeq __P((struct tcpcb *));
+int	tcp_freeq(struct tcpcb *);
 
 struct tcpstat tcpstat;		/* tcp statistics */
 
@@ -768,7 +768,7 @@ tcp6_ctlinput(cmd, sa, d)
 	void *d;
 {
 	struct tcphdr th;
-	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	void (*notify)(struct inpcb *, int) = tcp_notify;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
@@ -873,7 +873,7 @@ tcp_ctlinput(cmd, sa, v)
 	register struct ip *ip = v;
 	register struct tcphdr *th;
 	extern int inetctlerrmap[];
-	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	void (*notify)(struct inpcb *, int) = tcp_notify;
 	int errno;
 
 	if (sa->sa_family != AF_INET)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bztzsc.c,v 1.5 2001/11/30 22:08:16 miod Exp $	*/
+/*	$OpenBSD: bztzsc.c,v 1.6 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: bztzsc.c,v 1.2 1996/12/23 09:09:54 veego Exp $	*/
 
 /*
@@ -53,8 +53,8 @@
 #include <amiga/dev/bztzscreg.h>
 #include <amiga/dev/bztzscvar.h>
 
-void bztzscattach __P((struct device *, struct device *, void *));
-int  bztzscmatch  __P((struct device *, void *, void *));
+void bztzscattach(struct device *, struct device *, void *);
+int  bztzscmatch(struct device *, void *, void *);
 
 struct scsi_adapter bztzsc_scsiswitch = {
 	sfas_scsicmd,
@@ -78,14 +78,14 @@ struct cfdriver bztzsc_cd = {
 	NULL, "bztzsc", DV_DULL, NULL, 0
 };
 
-int bztzsc_intr		 __P((void *));
-void bztzsc_set_dma_tc	 __P((struct sfas_softc *sc, unsigned int len));
-int bztzsc_setup_dma	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len,
-			      int mode));
-int bztzsc_build_dma_chain __P((struct sfas_softc *sc,
-			      struct sfas_dma_chain *chain, void *p, int l));
-int bztzsc_need_bump	 __P((struct sfas_softc *sc, vm_offset_t ptr, int len));
-void bztzsc_led		 __P((struct sfas_softc *sc, int mode));
+int bztzsc_intr(void *);
+void bztzsc_set_dma_tc(struct sfas_softc *sc, unsigned int len);
+int bztzsc_setup_dma(struct sfas_softc *sc, vm_offset_t ptr, int len,
+			      int mode);
+int bztzsc_build_dma_chain(struct sfas_softc *sc,
+			      struct sfas_dma_chain *chain, void *p, int l);
+int bztzsc_need_bump(struct sfas_softc *sc, vm_offset_t ptr, int len);
+void bztzsc_led(struct sfas_softc *sc, int mode);
 
 /*
  * If we are an Phase 5 Devices Blizzard-2060 SCSI option:

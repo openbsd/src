@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff_machdep.h,v 1.2 2000/08/31 14:49:06 ericj Exp $	*/
+/*	$OpenBSD: ecoff_machdep.h,v 1.3 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: ecoff_machdep.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
 
 /*
@@ -100,6 +100,5 @@ struct ecoff_extsym {
 };
 
 #ifdef _KERNEL
-void cpu_exec_ecoff_setregs
-     __P((struct proc *, struct exec_package *, u_long, register_t *));
+void cpu_exec_ecoff_setregs(struct proc *, struct exec_package *, u_long, register_t *);
 #endif

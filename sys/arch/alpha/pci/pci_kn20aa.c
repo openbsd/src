@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.16 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.17 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -58,13 +58,13 @@
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn20aa_intr_map __P((void *, pcitag_t, int, int,
-	    pci_intr_handle_t *));
-const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
-int	dec_kn20aa_intr_line __P((void *, pci_intr_handle_t));
+int	dec_kn20aa_intr_map(void *, pcitag_t, int, int,
+	    pci_intr_handle_t *);
+const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
+int	dec_kn20aa_intr_line(void *, pci_intr_handle_t);
 void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *));
-void	dec_kn20aa_intr_disestablish __P((void *, void *));
+void	dec_kn20aa_intr_disestablish(void *, void *);
 
 #define	KN20AA_PCEB_IRQ	31
 #define	KN20AA_MAX_IRQ	32
@@ -75,9 +75,9 @@ struct alpha_shared_intr *kn20aa_pci_intr;
 struct evcnt kn20aa_intr_evcnt;
 #endif
 
-void	kn20aa_iointr __P((void *framep, unsigned long vec));
-void	kn20aa_enable_intr __P((int irq));
-void	kn20aa_disable_intr __P((int irq));
+void	kn20aa_iointr(void *framep, unsigned long vec);
+void	kn20aa_enable_intr(int irq);
+void	kn20aa_disable_intr(int irq);
 
 void
 pci_kn20aa_pickintr(ccp)
@@ -204,7 +204,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
         void *ccv, *arg;
         pci_intr_handle_t ih;
         int level;
-        int (*func) __P((void *));
+        int (*func)(void *);
 	char *name;
 {           
 	void *cookie;

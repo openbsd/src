@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti82c700.c,v 1.5 2001/01/25 00:07:40 mickey Exp $	*/
+/*	$OpenBSD: opti82c700.c,v 1.6 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: opti82c700.c,v 1.2 2000/07/18 11:07:20 soda Exp $	*/
 
 /*-
@@ -88,11 +88,11 @@
 #define	DPRINTF(arg)
 #endif
 
-int	opti82c700_getclink __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_get_intr __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_set_intr __P((pciintr_icu_handle_t, int, int));
-int	opti82c700_get_trigger __P((pciintr_icu_handle_t, int, int *));
-int	opti82c700_set_trigger __P((pciintr_icu_handle_t, int, int));
+int	opti82c700_getclink(pciintr_icu_handle_t, int, int *);
+int	opti82c700_get_intr(pciintr_icu_handle_t, int, int *);
+int	opti82c700_set_intr(pciintr_icu_handle_t, int, int);
+int	opti82c700_get_trigger(pciintr_icu_handle_t, int, int *);
+int	opti82c700_set_trigger(pciintr_icu_handle_t, int, int);
 
 const struct pciintr_icu opti82c700_pci_icu = {
 	opti82c700_getclink,
@@ -107,9 +107,9 @@ struct opti82c700_handle {
 	pcitag_t ph_tag;
 };
 
-int	opti82c700_addr __P((int, int *, int *));
+int	opti82c700_addr(int, int *, int *);
 #ifdef FIRESTARDEBUG
-void	opti82c700_pir_dump __P((struct opti82c700_handle *));
+void	opti82c700_pir_dump(struct opti82c700_handle *);
 #endif
 
 int

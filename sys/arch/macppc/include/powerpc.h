@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.1 2001/09/01 15:49:06 drahn Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -39,16 +39,16 @@ struct mem_region {
 	vm_size_t size;
 };
 
-void mem_regions __P((struct mem_region **, struct mem_region **));
+void mem_regions(struct mem_region **, struct mem_region **);
 
 /*
  * These two functions get used solely in boot() in machdep.c.
  *
  * Not sure whether boot itself should be implementation dependent instead.	XXX
  */
-typedef void (exit_f) __P((void)) /*__attribute__((__noreturn__))*/ ;
-typedef void (boot_f) __P((char *bootspec)) /* __attribute__((__noreturn__))*/ ;
-typedef void (vmon_f) __P((void));
+typedef void (exit_f)(void) /*__attribute__((__noreturn__))*/ ;
+typedef void (boot_f)(char *bootspec) /* __attribute__((__noreturn__))*/ ;
+typedef void (vmon_f)(void);
 
 /* firmware interface.
  * regardless of type of firmware used several items
@@ -62,8 +62,8 @@ typedef void (vmon_f) __P((void));
  *	vmon - tell firmware the bsd vm is active.
  */
 
-typedef void (mem_regions_f)__P((struct mem_region **memp,
-	struct mem_region **availp));
+typedef void (mem_regions_f)(struct mem_region **memp,
+	struct mem_region **availp);
 
 struct firmware {
 	mem_regions_f	*mem_regions;
@@ -77,10 +77,10 @@ struct firmware {
 };
 extern  struct firmware *fw;
 void ofwconprobe(void);
-int ppc_open_pci_bridge __P((void));
-void ppc_close_pci_bridge __P((int));
+int ppc_open_pci_bridge(void);
+void ppc_close_pci_bridge(int);
 void install_extint __P((void (*handler) (void)));
-void ppc_intr_enable __P((int enable));
-int ppc_intr_disable __P((void));
+void ppc_intr_enable(int enable);
+int ppc_intr_disable(void);
 
 #endif	/* _MACHINE_POWERPC_H_ */

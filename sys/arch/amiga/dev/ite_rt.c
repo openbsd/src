@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_rt.c,v 1.2 1996/05/02 06:44:14 niklas Exp $	*/
+/*	$OpenBSD: ite_rt.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_rt.c,v 1.16 1996/04/23 22:53:12 veego Exp $	*/
 
 /*
@@ -51,16 +51,16 @@
 
 int retina_console = 1;
 
-void retina_cursor __P((struct ite_softc *,int));
-void retina_scroll __P((struct ite_softc *,int,int,int,int));
-void retina_deinit __P((struct ite_softc *));
-void retina_clear __P((struct ite_softc *,int,int,int,int));
-void retina_putc __P((struct ite_softc *,int,int,int,int));
-void retina_init __P((struct ite_softc *));
+void retina_cursor(struct ite_softc *,int);
+void retina_scroll(struct ite_softc *,int,int,int,int);
+void retina_deinit(struct ite_softc *);
+void retina_clear(struct ite_softc *,int,int,int,int);
+void retina_putc(struct ite_softc *,int,int,int,int);
+void retina_init(struct ite_softc *);
 
 #ifdef RETINA_SPEED_HACK
-static void screen_up __P((struct ite_softc *, int, int, int));
-static void screen_down __P((struct ite_softc *, int, int, int));
+static void screen_up(struct ite_softc *, int, int, int);
+static void screen_down(struct ite_softc *, int, int, int);
 #endif
 
 /*

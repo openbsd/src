@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.50 2002/01/28 03:16:27 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.51 2002/03/14 01:27:19 millert Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -232,31 +232,31 @@ lock_data_t swap_syscall_lock;
 /*
  * prototypes
  */
-static void		 swapdrum_add __P((struct swapdev *, int));
-static struct swapdev	*swapdrum_getsdp __P((int));
+static void		 swapdrum_add(struct swapdev *, int);
+static struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find __P((struct vnode *, int));
-static void		 swaplist_insert __P((struct swapdev *, 
-					     struct swappri *, int));
-static void		 swaplist_trim __P((void));
+static struct swapdev	*swaplist_find(struct vnode *, int);
+static void		 swaplist_insert(struct swapdev *, 
+					     struct swappri *, int);
+static void		 swaplist_trim(void);
 
-static int swap_on __P((struct proc *, struct swapdev *));
-static int swap_off __P((struct proc *, struct swapdev *));
+static int swap_on(struct proc *, struct swapdev *);
+static int swap_off(struct proc *, struct swapdev *);
 
-static void sw_reg_strategy __P((struct swapdev *, struct buf *, int));
-static void sw_reg_iodone __P((struct buf *));
-static void sw_reg_start __P((struct swapdev *));
+static void sw_reg_strategy(struct swapdev *, struct buf *, int);
+static void sw_reg_iodone(struct buf *);
+static void sw_reg_start(struct swapdev *);
 
-static int uvm_swap_io __P((struct vm_page **, int, int, int));
+static int uvm_swap_io(struct vm_page **, int, int, int);
 
-static void swapmount __P((void));
+static void swapmount(void);
 
 #ifdef UVM_SWAP_ENCRYPT
 /* for swap encrypt */
-boolean_t uvm_swap_allocpages __P((struct vm_page **, int));
-void uvm_swap_markdecrypt __P((struct swapdev *, int, int, int));
-boolean_t uvm_swap_needdecrypt __P((struct swapdev *, int));
-void uvm_swap_initcrypt __P((struct swapdev *, int));
+boolean_t uvm_swap_allocpages(struct vm_page **, int);
+void uvm_swap_markdecrypt(struct swapdev *, int, int, int);
+boolean_t uvm_swap_needdecrypt(struct swapdev *, int);
+void uvm_swap_initcrypt(struct swapdev *, int);
 #endif
 
 /*
@@ -909,7 +909,7 @@ swap_on(p, sdp)
 	long addr;
 	struct vattr va;
 #if defined(NFSCLIENT)
-	extern int (**nfsv2_vnodeop_p) __P((void *));
+	extern int (**nfsv2_vnodeop_p)(void *);
 #endif /* defined(NFSCLIENT) */
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.4 2001/09/20 17:02:30 mpech Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
 /*  pm_direct.c 1.22 01/09/97 Takashi Hamada */
 
 /*
@@ -125,37 +125,37 @@ char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef PM_DEBUG
-void pm_printerr __P(( char *, int, int, char * ));
+void pm_printerr( char *, int, int, char * );
 #endif
 
-int pm_wait_busy __P((int));
-int pm_wait_free __P((int));
+int pm_wait_busy(int);
+int pm_wait_free(int);
 
 /* these functions are for the PB1XX series */
-int pm_receive_pm1 __P((u_char *));
-int pm_send_pm1 __P((u_char,int));
-int pm_pmgrop_pm1 __P((PMData *));
-void pm_intr_pm1 __P((void));
+int pm_receive_pm1(u_char *);
+int pm_send_pm1(u_char,int);
+int pm_pmgrop_pm1(PMData *);
+void pm_intr_pm1(void);
 
 /* these functions are for the PB Duo series and the PB 5XX series */
-int pm_receive_pm2 __P((u_char *));
-int pm_send_pm2 __P((u_char));
-int pm_pmgrop_pm2 __P((PMData *));
-void pm_intr_pm2 __P((void));
+int pm_receive_pm2(u_char *);
+int pm_send_pm2(u_char);
+int pm_pmgrop_pm2(PMData *);
+void pm_intr_pm2(void);
 
 /* this function is MRG-Based (for testing) */
-int pm_pmgrop_mrg __P((PMData *));
+int pm_pmgrop_mrg(PMData *);
 
 /* these functions are called from adb_direct.c */
-void pm_setup_adb __P((void));
-void pm_check_adb_devices __P((int));
-void pm_intr __P((void));
-int pm_adb_op __P((u_char *, void *, void *, int));
+void pm_setup_adb(void);
+void pm_check_adb_devices(int);
+void pm_intr(void);
+int pm_adb_op(u_char *, void *, void *, int);
 
 /* these functions also use the valiables of adb_direct.c */
-void pm_adb_get_TALK_result __P((PMData *));
-void pm_adb_get_ADB_data __P((PMData *));
-void pm_adb_poll_next_device_pm1 __P((PMData *));
+void pm_adb_get_TALK_result(PMData *);
+void pm_adb_get_ADB_data(PMData *);
+void pm_adb_poll_next_device_pm1(PMData *);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_isa.c,v 1.1 1999/07/31 06:10:04 d Exp $	*/
+/*	$OpenBSD: if_rln_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
@@ -54,8 +54,8 @@
 
 #include <dev/isa/isavar.h>
 
-static int rln_isa_probe __P((struct device *, void *, void *));
-static void rln_isa_attach __P((struct device *, struct device *, void *));
+static int rln_isa_probe(struct device *, void *, void *);
+static void rln_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach rln_isa_ca = {
 	sizeof(struct rln_softc), rln_isa_probe, rln_isa_attach

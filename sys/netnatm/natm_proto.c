@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_proto.c,v 1.3 1996/11/09 03:29:01 chuck Exp $	*/
+/*	$OpenBSD: natm_proto.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
 
 extern	struct domain natmdomain;
 
-static	void natm_init __P((void));
+static	void natm_init(void);
 
 struct protosw natmsw[] = {
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL5, PR_CONNREQUIRED,

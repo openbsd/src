@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.6 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.7 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -87,8 +87,8 @@
 
 #include <dev/mii/iophyreg.h>
 
-int	iophymatch __P((struct device *, void *, void *));
-void	iophyattach __P((struct device *, struct device *, void *));
+int	iophymatch(struct device *, void *, void *);
+void	iophyattach(struct device *, struct device *, void *);
 
 struct cfattach iophy_ca = {
 	sizeof(struct mii_softc), iophymatch, iophyattach, mii_phy_detach,
@@ -99,8 +99,8 @@ struct cfdriver iophy_cd = {
 	NULL, "iophy", DV_DULL
 };
 
-int	iophy_service __P((struct mii_softc *, struct mii_data *, int));
-void	iophy_status __P((struct mii_softc *));
+int	iophy_service(struct mii_softc *, struct mii_data *, int);
+void	iophy_status(struct mii_softc *);
 
 int
 iophymatch(parent, match, aux)

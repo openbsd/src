@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.16 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: cy.c,v 1.17 2002/03/14 01:26:54 millert Exp $	*/
 
 /*
  * cy.c
@@ -57,16 +57,16 @@
 #include <dev/ic/cyreg.h>
 
 
-void	cy_attach __P((struct device *, struct device *, void *));
-int	cy_probe_common __P((int, bus_space_tag_t, bus_space_handle_t, int));
-int	cy_intr __P((void *));
-int	cyparam __P((struct tty *, struct termios *));
-void	cystart __P((struct tty *));
-void	cy_poll __P((void *));
-int	cy_modem_control __P((struct cy_port *, int, int));
-void	cy_enable_transmitter __P((struct cy_port *));
-void	cd1400_channel_cmd __P((struct cy_port *, int));
-int	cy_speed __P((speed_t, int *, int *, int));
+void	cy_attach(struct device *, struct device *, void *);
+int	cy_probe_common(int, bus_space_tag_t, bus_space_handle_t, int);
+int	cy_intr(void *);
+int	cyparam(struct tty *, struct termios *);
+void	cystart(struct tty *);
+void	cy_poll(void *);
+int	cy_modem_control(struct cy_port *, int, int);
+void	cy_enable_transmitter(struct cy_port *);
+void	cd1400_channel_cmd(struct cy_port *, int);
+int	cy_speed(speed_t, int *, int *, int);
 
 struct cfdriver cy_cd = {
 	NULL, "cy", DV_TTY
@@ -287,13 +287,13 @@ cy_attach(parent, self, aux)
 /*
  * open routine. returns zero if successfull, else error code
  */
-int cyopen __P((dev_t, int, int, struct proc *));
-int cyclose __P((dev_t, int, int, struct proc *));
-int cyread __P((dev_t, struct uio *, int));
-int cywrite __P((dev_t, struct uio *, int));
-struct tty *cytty __P((dev_t));
-int cyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int cystop __P((struct tty *, int flag));
+int cyopen(dev_t, int, int, struct proc *);
+int cyclose(dev_t, int, int, struct proc *);
+int cyread(dev_t, struct uio *, int);
+int cywrite(dev_t, struct uio *, int);
+struct tty *cytty(dev_t);
+int cyioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int cystop(struct tty *, int flag);
 
 int
 cyopen(dev, flag, mode, p)

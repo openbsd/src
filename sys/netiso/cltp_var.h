@@ -1,4 +1,4 @@
-/*	$OpenBSD: cltp_var.h,v 1.2 1996/03/04 10:35:08 mickey Exp $	*/
+/*	$OpenBSD: cltp_var.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: cltp_var.h,v 1.7 1996/02/13 22:09:03 christos Exp $	*/
 
 /*
@@ -56,11 +56,11 @@ struct isopcb   cltb;
 struct cltpstat cltpstat;
 
 /* cltp_usrreq.c */
-void cltp_init __P((void));
-void cltp_input __P((struct mbuf *, ...));
-void cltp_notify __P((struct isopcb *));
-void cltp_ctlinput __P((int, struct sockaddr *, void *));
-int cltp_output __P((struct mbuf *, ...));
-int cltp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+void cltp_init(void);
+void cltp_input(struct mbuf *, ...);
+void cltp_notify(struct isopcb *);
+void cltp_ctlinput(int, struct sockaddr *, void *);
+int cltp_output(struct mbuf *, ...);
+int cltp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnl.h,v 1.2 1996/03/04 10:34:42 mickey Exp $	*/
+/*	$OpenBSD: clnl.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: clnl.h,v 1.6 1996/02/13 22:08:02 christos Exp $	*/
 
 /*-
@@ -64,5 +64,5 @@ SOFTWARE.
  */
 struct clnl_protosw {
 	/* input routine */
-	void            (*clnl_input) __P((struct mbuf *, ...));
+	void            (*clnl_input)(struct mbuf *, ...);
 };

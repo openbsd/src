@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.11 2002/01/20 19:56:53 ericj Exp $ */
+/*      $OpenBSD: sv.c,v 1.12 2002/03/14 01:27:00 millert Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -74,12 +74,12 @@ static int	svdebug = 100;
 
 #define __BROKEN_INDIRECT_CONFIG
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	sv_match __P((struct device *, void *, void *));
+int	sv_match(struct device *, void *, void *);
 #else
-int	sv_match __P((struct device *, struct cfdata *, void *));
+int	sv_match(struct device *, struct cfdata *, void *);
 #endif
-static void	sv_attach __P((struct device *, struct device *, void *));
-int	sv_intr __P((void *));
+static void	sv_attach(struct device *, struct device *, void *);
+int	sv_intr(void *);
 
 struct sv_dma {
 	bus_dmamap_t map;
@@ -139,31 +139,31 @@ struct audio_device sv_device = {
 
 #define ARRAY_SIZE(foo)  ((sizeof(foo)) / sizeof(foo[0]))
 
-int	sv_allocmem __P((struct sv_softc *, size_t, size_t, struct sv_dma *));
-int	sv_freemem __P((struct sv_softc *, struct sv_dma *));
+int	sv_allocmem(struct sv_softc *, size_t, size_t, struct sv_dma *);
+int	sv_freemem(struct sv_softc *, struct sv_dma *);
 
-int	sv_open __P((void *, int));
-void	sv_close __P((void *));
-int	sv_query_encoding __P((void *, struct audio_encoding *));
-int	sv_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	sv_round_blocksize __P((void *, int));
-int	sv_dma_init_output __P((void *, void *, int));
-int	sv_dma_init_input __P((void *, void *, int));
+int	sv_open(void *, int);
+void	sv_close(void *);
+int	sv_query_encoding(void *, struct audio_encoding *);
+int	sv_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	sv_round_blocksize(void *, int);
+int	sv_dma_init_output(void *, void *, int);
+int	sv_dma_init_input(void *, void *, int);
 int	sv_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	sv_dma_input __P((void *, void *, int, void (*)(void *), void*));
-int	sv_halt_in_dma __P((void *));
-int	sv_halt_out_dma __P((void *));
-int	sv_getdev __P((void *, struct audio_device *));
-int	sv_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	sv_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	sv_query_devinfo __P((void *, mixer_devinfo_t *));
-void   *sv_malloc __P((void *, int, size_t, int, int));
-void	sv_free __P((void *, void *, int));
-size_t	sv_round __P((void *, int, size_t));
-paddr_t	sv_mappage __P((void *, void *, off_t, int));
-int	sv_get_props __P((void *));
+int	sv_halt_in_dma(void *);
+int	sv_halt_out_dma(void *);
+int	sv_getdev(void *, struct audio_device *);
+int	sv_mixer_set_port(void *, mixer_ctrl_t *);
+int	sv_mixer_get_port(void *, mixer_ctrl_t *);
+int	sv_query_devinfo(void *, mixer_devinfo_t *);
+void   *sv_malloc(void *, int, size_t, int, int);
+void	sv_free(void *, void *, int);
+size_t	sv_round(void *, int, size_t);
+paddr_t	sv_mappage(void *, void *, off_t, int);
+int	sv_get_props(void *);
 
-void    sv_dumpregs __P((struct sv_softc *sc));
+void    sv_dumpregs(struct sv_softc *sc);
 
 struct audio_hw_if sv_hw_if = {
 	sv_open,
@@ -195,11 +195,11 @@ struct audio_hw_if sv_hw_if = {
 };
 
 
-static __inline__ u_int8_t sv_read __P((struct sv_softc *, u_int8_t));
-static __inline__ u_int8_t sv_read_indirect __P((struct sv_softc *, u_int8_t));
-static __inline__ void sv_write __P((struct sv_softc *, u_int8_t, u_int8_t ));
-static __inline__ void sv_write_indirect __P((struct sv_softc *, u_int8_t, u_int8_t ));
-static void sv_init_mixer __P((struct sv_softc *));
+static __inline__ u_int8_t sv_read(struct sv_softc *, u_int8_t);
+static __inline__ u_int8_t sv_read_indirect(struct sv_softc *, u_int8_t);
+static __inline__ void sv_write(struct sv_softc *, u_int8_t, u_int8_t );
+static __inline__ void sv_write_indirect(struct sv_softc *, u_int8_t, u_int8_t );
+static void sv_init_mixer(struct sv_softc *);
 
 static __inline__ void
 sv_write (sc, reg, val)
@@ -683,8 +683,8 @@ sv_set_params(addr, setmode, usemode, p, r)
 	struct audio_params *p, *r;
 {
 	struct sv_softc *sc = addr;
-	void (*pswcode) __P((void *, u_char *buf, int cnt));
-	void (*rswcode) __P((void *, u_char *buf, int cnt));
+	void (*pswcode)(void *, u_char *buf, int cnt);
+	void (*rswcode)(void *, u_char *buf, int cnt);
         u_int32_t mode, val;
         u_int8_t reg;
 	
@@ -884,7 +884,7 @@ sv_dma_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	struct sv_softc *sc = addr;
@@ -915,7 +915,7 @@ sv_dma_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	struct sv_softc *sc = addr;

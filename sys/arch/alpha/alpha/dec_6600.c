@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.4 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.5 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -66,9 +66,9 @@
 
 static int comcnrate __attribute__((unused)) = CONSPEED;
 
-void dec_6600_init __P((void));
-static void dec_6600_cons_init __P((void));
-static void dec_6600_device_register __P((struct device *, void *));
+void dec_6600_init(void);
+static void dec_6600_cons_init(void);
+static void dec_6600_device_register(struct device *, void *);
 
 void
 dec_6600_init()

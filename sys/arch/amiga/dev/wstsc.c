@@ -1,4 +1,4 @@
-/*	$OpenBSD: wstsc.c,v 1.6 1997/01/18 12:26:36 niklas Exp $	*/
+/*	$OpenBSD: wstsc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: wstsc.c,v 1.18 1996/12/23 09:10:31 veego Exp $	*/
 
 /*
@@ -48,18 +48,18 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void wstscattach __P((struct device *, struct device *, void *));
-int wstscmatch __P((struct device *, void *, void *));
+void wstscattach(struct device *, struct device *, void *);
+int wstscmatch(struct device *, void *, void *);
 
-int wstsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int wstsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int wstsc_dma_xfer_in2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
-    register u_short *buf, int phase));
-int wstsc_intr __P((void *));
+int wstsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int wstsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int wstsc_dma_xfer_in2(struct sci_softc *dev, int len,
+    register u_short *buf, int phase);
+int wstsc_dma_xfer_out2(struct sci_softc *dev, int len,
+    register u_short *buf, int phase);
+int wstsc_intr(void *);
 
 struct scsi_adapter wstsc_scsiswitch = {
 	sci_scsicmd,

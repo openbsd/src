@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_termios.c,v 1.11 2000/08/29 02:22:13 brad Exp $	 */
+/*	$OpenBSD: svr4_termios.c,v 1.12 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_termios.c,v 1.9 1996/04/11 12:53:48 christos Exp $	 */
 
 /*
@@ -61,18 +61,18 @@
 # endif
 #endif
 
-u_long bsd_to_svr4_speed __P((u_long, u_long));
-u_long svr4_to_bsd_speed __P((u_long, u_long));
-void svr4_to_bsd_termios __P((const struct svr4_termios *, struct termios *,
-    int));
-void bsd_to_svr4_termios __P((const struct termios *, struct svr4_termios *));
-void svr4_termio_to_termios __P((const struct svr4_termio *,
-    struct svr4_termios *));
-void svr4_termios_to_termio __P((const struct svr4_termios *,
-    struct svr4_termio *));
+u_long bsd_to_svr4_speed(u_long, u_long);
+u_long svr4_to_bsd_speed(u_long, u_long);
+void svr4_to_bsd_termios(const struct svr4_termios *, struct termios *,
+    int);
+void bsd_to_svr4_termios(const struct termios *, struct svr4_termios *);
+void svr4_termio_to_termios(const struct svr4_termio *,
+    struct svr4_termios *);
+void svr4_termios_to_termio(const struct svr4_termios *,
+    struct svr4_termio *);
 #ifdef DEBUG_SVR4
-void print_svr4_termios __P((const struct svr4_termios *));
-void print_bsd_termios __P((const struct termios *));
+void print_svr4_termios(const struct svr4_termios *);
+void print_bsd_termios(const struct termios *);
 #endif /* DEBUG_SVR4 */
 
 #define undefined_char(a,b)				/**/
@@ -528,7 +528,7 @@ svr4_term_ioctl(fp, p, retval, fd, cmd, data)
 	struct svr4_termios	st;
 	struct svr4_termio	t;
 	int			error, new;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long,  caddr_t, struct proc *) =
 	    fp->f_ops->fo_ioctl;
 
 	*retval = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.6 2000/03/26 23:31:59 deraadt Exp $ */
+/*	$OpenBSD: pcc.c,v 1.7 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -60,9 +60,9 @@ struct pccsoftc {
 	struct intrhand	sc_nmiih;
 };
 
-void pccattach __P((struct device *, struct device *, void *));
-int  pccmatch __P((struct device *, void *, void *));
-int  pccabort __P((struct frame *));
+void pccattach(struct device *, struct device *, void *);
+int  pccmatch(struct device *, void *, void *);
+int  pccabort(struct frame *);
 
 struct cfattach pcc_ca = {
 	sizeof(struct pccsoftc), pccmatch, pccattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.32 2002/01/23 19:16:09 fgsch Exp $	*/
+/*	$OpenBSD: if.h,v 1.33 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -159,17 +159,12 @@ struct ifnet {				/* and the entries */
 	int	if_capabilities;	/* interface capabilities */
 
 	/* procedure handles */
-	int	(*if_output)		/* output routine (enqueue) */
-		__P((struct ifnet *, struct mbuf *, struct sockaddr *,
-		     struct rtentry *));
-	void	(*if_start)		/* initiate output routine */
-		__P((struct ifnet *));
-	int	(*if_ioctl)		/* ioctl routine */
-		__P((struct ifnet *, u_long, caddr_t));
-	int	(*if_reset)		/* XXX bus reset routine */
-		__P((struct ifnet *));
-	void	(*if_watchdog)		/* timer routine */
-		__P((struct ifnet *));
+	int	(*if_output)		/* output routine (enqueue) */(struct ifnet *, struct mbuf *, struct sockaddr *,
+		     struct rtentry *);
+	void	(*if_start)		/* initiate output routine */(struct ifnet *);
+	int	(*if_ioctl)		/* ioctl routine */(struct ifnet *, u_long, caddr_t);
+	int	(*if_reset)		/* XXX bus reset routine */(struct ifnet *);
+	void	(*if_watchdog)		/* timer routine */(struct ifnet *);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 };
@@ -295,8 +290,7 @@ struct ifaddr {
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
-	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
-		    __P((int, struct rtentry *, struct rt_addrinfo *));
+	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */(int, struct rtentry *, struct rt_addrinfo *);
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	u_int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
@@ -425,9 +419,9 @@ struct if_nameindex {
 
 #ifndef _KERNEL
 __BEGIN_DECLS
-unsigned int if_nametoindex __P((const char *));
-char 	*if_indextoname __P((unsigned int, char *));
-struct	if_nameindex *if_nameindex __P((void));
+unsigned int if_nametoindex(const char *);
+char 	*if_indextoname(unsigned int, char *);
+struct	if_nameindex *if_nameindex(void);
 __END_DECLS
 #define if_freenameindex(x)	free(x)
 #endif
@@ -544,43 +538,43 @@ struct ifnet **ifindex2ifnet;
 struct ifnet *lo0ifp;
 int if_index;
 
-void	ether_ifattach __P((struct ifnet *));
-void	ether_ifdetach __P((struct ifnet *));
-int	ether_ioctl __P((struct ifnet *, struct arpcom *, u_long, caddr_t));
-void	ether_input_mbuf __P((struct ifnet *, struct mbuf *));
-void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
-int	ether_output __P((struct ifnet *,
-	   struct mbuf *, struct sockaddr *, struct rtentry *));
-char	*ether_sprintf __P((u_char *));
+void	ether_ifattach(struct ifnet *);
+void	ether_ifdetach(struct ifnet *);
+int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
+void	ether_input_mbuf(struct ifnet *, struct mbuf *);
+void	ether_input(struct ifnet *, struct ether_header *, struct mbuf *);
+int	ether_output(struct ifnet *,
+	   struct mbuf *, struct sockaddr *, struct rtentry *);
+char	*ether_sprintf(u_char *);
 
-void	if_attach __P((struct ifnet *));
-void	if_attachtail __P((struct ifnet *));
-void	if_attachhead __P((struct ifnet *));
-void	if_detach __P((struct ifnet *));
-void	if_down __P((struct ifnet *));
-void	if_qflush __P((struct ifqueue *));
-void	if_slowtimo __P((void *));
-void	if_up __P((struct ifnet *));
-int	ifconf __P((u_long, caddr_t));
-void	ifinit __P((void));
-int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
-int	ifpromisc __P((struct ifnet *, int));
-struct	ifnet *ifunit __P((char *));
+void	if_attach(struct ifnet *);
+void	if_attachtail(struct ifnet *);
+void	if_attachhead(struct ifnet *);
+void	if_detach(struct ifnet *);
+void	if_down(struct ifnet *);
+void	if_qflush(struct ifqueue *);
+void	if_slowtimo(void *);
+void	if_up(struct ifnet *);
+int	ifconf(u_long, caddr_t);
+void	ifinit(void);
+int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
+int	ifpromisc(struct ifnet *, int);
+struct	ifnet *ifunit(char *);
 
-struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithaf __P((int));
-struct	ifaddr *ifa_ifwithdstaddr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithnet __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
-					struct sockaddr *));
-struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
-void	ifafree __P((struct ifaddr *));
-void	link_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+struct	ifaddr *ifa_ifwithaddr(struct sockaddr *);
+struct	ifaddr *ifa_ifwithaf(int);
+struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *);
+struct	ifaddr *ifa_ifwithnet(struct sockaddr *);
+struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *,
+					struct sockaddr *);
+struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
+void	ifafree(struct ifaddr *);
+void	link_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
-int	loioctl __P((struct ifnet *, u_long, caddr_t));
-void	loopattach __P((int));
-int	looutput __P((struct ifnet *,
-	   struct mbuf *, struct sockaddr *, struct rtentry *));
-void	lortrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+int	loioctl(struct ifnet *, u_long, caddr_t);
+void	loopattach(int);
+int	looutput(struct ifnet *,
+	   struct mbuf *, struct sockaddr *, struct rtentry *);
+void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
 #endif /* _KERNEL */
 #endif /* _NET_IF_H_ */

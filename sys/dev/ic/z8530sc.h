@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.8 2001/08/18 22:37:40 art Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.9 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.4 1996/10/16 20:34:54 gwr Exp $	*/
 
 /*
@@ -92,16 +92,16 @@ struct zs_chanstate {
  */
 struct zsops {
 	/* receive char available */
-	void	(*zsop_rxint)__P((register struct zs_chanstate *));
+	void	(*zsop_rxint)(register struct zs_chanstate *);
 
 	/* external/status */
-	void	(*zsop_stint)__P((register struct zs_chanstate *));
+	void	(*zsop_stint)(register struct zs_chanstate *);
 
 	/* xmit buffer empty */
-	void	(*zsop_txint)__P((register struct zs_chanstate *));
+	void	(*zsop_txint)(register struct zs_chanstate *);
 
 	/* process software interrupt */
-	void	(*zsop_softint)__P((struct zs_chanstate *));
+	void	(*zsop_softint)(struct zs_chanstate *);
 };
 
 extern struct zsops zsops_null;
@@ -112,9 +112,9 @@ struct zsc_attach_args {
 };
 #define ZS_HWFLAG_CONSOLE 1
 
-int  zsc_intr_hard __P((void *));
-int  zsc_intr_soft __P((void *));
-void zs_break __P((struct zs_chanstate *, int));
-int  zs_getspeed __P((struct zs_chanstate *));
-void zs_iflush __P((struct zs_chanstate *));
-void zs_loadchannelregs __P((struct zs_chanstate *));
+int  zsc_intr_hard(void *);
+int  zsc_intr_soft(void *);
+void zs_break(struct zs_chanstate *, int);
+int  zs_getspeed(struct zs_chanstate *);
+void zs_iflush(struct zs_chanstate *);
+void zs_loadchannelregs(struct zs_chanstate *);

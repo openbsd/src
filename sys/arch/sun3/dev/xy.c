@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.15 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.16 2002/03/14 01:26:46 millert Exp $	*/
 /* $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $ */
 
 /*
@@ -139,50 +139,50 @@
  */
 
 /* internals */
-struct xy_iopb *xyc_chain __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_cmd __P((struct xyc_softc *, int, int, int, int, int, char *, int));
-char   *xyc_e2str __P((int));
-int	xyc_entoact __P((int));
-int	xyc_error __P((struct xyc_softc *, struct xy_iorq *,
-		   struct xy_iopb *, int));
-int	xyc_ioctlcmd __P((struct xy_softc *, dev_t dev, struct xd_iocmd *));
-void	xyc_perror __P((struct xy_iorq *, struct xy_iopb *, int));
-int	xyc_piodriver __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_remove_iorq __P((struct xyc_softc *));
-int	xyc_reset __P((struct xyc_softc *, int, struct xy_iorq *, int, 
-			struct xy_softc *));
-inline void xyc_rqinit __P((struct xy_iorq *, struct xyc_softc *,
+struct xy_iopb *xyc_chain(struct xyc_softc *, struct xy_iorq *);
+int	xyc_cmd(struct xyc_softc *, int, int, int, int, int, char *, int);
+char   *xyc_e2str(int);
+int	xyc_entoact(int);
+int	xyc_error(struct xyc_softc *, struct xy_iorq *,
+		   struct xy_iopb *, int);
+int	xyc_ioctlcmd(struct xy_softc *, dev_t dev, struct xd_iocmd *);
+void	xyc_perror(struct xy_iorq *, struct xy_iopb *, int);
+int	xyc_piodriver(struct xyc_softc *, struct xy_iorq *);
+int	xyc_remove_iorq(struct xyc_softc *);
+int	xyc_reset(struct xyc_softc *, int, struct xy_iorq *, int, 
+			struct xy_softc *);
+inline void xyc_rqinit(struct xy_iorq *, struct xyc_softc *,
 			    struct xy_softc *, int, u_long, int,
-			    caddr_t, struct buf *));
-void	xyc_rqtopb __P((struct xy_iorq *, struct xy_iopb *, int, int));
-void	xyc_start __P((struct xyc_softc *, struct xy_iorq *));
-int	xyc_startbuf __P((struct xyc_softc *, struct xy_softc *, struct buf *));
-int	xyc_submit_iorq __P((struct xyc_softc *, struct xy_iorq *, int));
-void	xyc_tick __P((void *));
-int	xyc_unbusy __P((struct xyc *, int));
-void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
+			    caddr_t, struct buf *);
+void	xyc_rqtopb(struct xy_iorq *, struct xy_iopb *, int, int);
+void	xyc_start(struct xyc_softc *, struct xy_iorq *);
+int	xyc_startbuf(struct xyc_softc *, struct xy_softc *, struct buf *);
+int	xyc_submit_iorq(struct xyc_softc *, struct xy_iorq *, int);
+void	xyc_tick(void *);
+int	xyc_unbusy(struct xyc *, int);
+void	xyc_xyreset(struct xyc_softc *, struct xy_softc *);
 
 /* machine interrupt hook */
-int	xycintr __P((void *));
+int	xycintr(void *);
 
 /* {b,c}devsw */
-int	xyclose __P((dev_t, int, int));
-int	xydump __P((dev_t));
-int	xyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	xyopen __P((dev_t, int, int));
-int	xyread __P((dev_t, struct uio *));
-int	xywrite __P((dev_t, struct uio *));
-int	xysize __P((dev_t));
-void	xystrategy __P((struct buf *));
+int	xyclose(dev_t, int, int);
+int	xydump(dev_t);
+int	xyioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	xyopen(dev_t, int, int);
+int	xyread(dev_t, struct uio *);
+int	xywrite(dev_t, struct uio *);
+int	xysize(dev_t);
+void	xystrategy(struct buf *);
 
 /* autoconf */
-int	xycmatch __P((struct device *, void *, void *));
-void	xycattach __P((struct device *, struct device *, void *));
-int	xymatch __P((struct device *, void *, void *));
-void	xyattach __P((struct device *, struct device *, void *));
+int	xycmatch(struct device *, void *, void *);
+void	xycattach(struct device *, struct device *, void *);
+int	xymatch(struct device *, void *, void *);
+void	xyattach(struct device *, struct device *, void *);
 
-static	void xydummystrat __P((struct buf *));
-int	xygetdisklabel __P((struct xy_softc *, void *));
+static	void xydummystrat(struct buf *);
+int	xygetdisklabel(struct xy_softc *, void *);
 
 /*
  * cfdrivers: device driver interface to autoconfig

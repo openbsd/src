@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.20 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.21 2002/03/14 01:27:03 millert Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -84,8 +84,8 @@ struct isoreaddir {
 	int ncookies;
 };
 
-int	iso_uiodir __P((struct isoreaddir *, struct dirent *, off_t));
-int	iso_shipdir __P((struct isoreaddir *));
+int	iso_uiodir(struct isoreaddir *, struct dirent *, off_t);
+int	iso_shipdir(struct isoreaddir *);
 
 #if 0
 /*
@@ -986,7 +986,7 @@ cd9660_pathconf(v)
 #define	cd9660_mknod	eopnotsupp
 #define	cd9660_write	eopnotsupp
 #ifdef	NFSSERVER
-int	lease_check	__P((void *));
+int	lease_check(void *);
 #define	cd9660_lease_check	lease_check
 #else
 #define	cd9660_lease_check	nullop
@@ -1007,7 +1007,7 @@ int	lease_check	__P((void *));
 /*
  * Global vfs data structures for cd9660
  */
-int (**cd9660_vnodeop_p) __P((void *));
+int (**cd9660_vnodeop_p)(void *);
 struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, cd9660_lookup },	/* lookup */
@@ -1045,7 +1045,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, cd9660_pathconf },/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 	{ &cd9660_vnodeop_p, cd9660_vnodeop_entries };
@@ -1053,7 +1053,7 @@ struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 /*
  * Special device vnode ops
  */
-int (**cd9660_specop_p) __P((void *));
+int (**cd9660_specop_p)(void *);
 struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },	/* lookup */
@@ -1091,13 +1091,13 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
 
 #ifdef FIFO
-int (**cd9660_fifoop_p) __P((void *));
+int (**cd9660_fifoop_p)(void *);
 struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
@@ -1135,7 +1135,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc cd9660_fifoop_opv_desc =
 	{ &cd9660_fifoop_p, cd9660_fifoop_entries };

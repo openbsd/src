@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.5 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -89,8 +89,8 @@
 
 /******************************************************************************/
 
-int	adv_pci_match __P((struct device *, void *, void *));
-void	adv_pci_attach __P((struct device *, struct device *, void *));
+int	adv_pci_match(struct device *, void *, void *);
+void	adv_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach adv_pci_ca =
 {

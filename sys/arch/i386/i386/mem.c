@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.22 2001/12/08 02:24:06 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.23 2002/03/14 01:26:32 millert Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@ extern int allowaperture;
 
 #if NMTRR > 0
 struct mem_range_softc mem_range_softc;
-static int mem_ioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+static int mem_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #endif
 
 /*ARGSUSED*/

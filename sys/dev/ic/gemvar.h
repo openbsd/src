@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.6 2002/02/22 20:15:28 jason Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.7 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -190,8 +190,8 @@ struct gem_softc {
 	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
-	void	(*sc_hwreset) __P((struct gem_softc *));
-	void	(*sc_hwinit) __P((struct gem_softc *));
+	void	(*sc_hwreset)(struct gem_softc *);
+	void	(*sc_hwinit)(struct gem_softc *);
 };
 
 #define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? letoh64(v) : betoh64(v))
@@ -263,22 +263,22 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
-void	gem_attach __P((struct gem_softc *, const u_int8_t *));
-int	gem_activate __P((struct device *, enum devact));
-int	gem_detach __P((struct gem_softc *));
-int	gem_intr __P((void *));
-int	gem_read_srom __P((struct gem_softc *));
-int	gem_srom_crcok __P((const u_int8_t *));
-int	gem_isv_srom __P((const u_int8_t *));
-int	gem_isv_srom_enaddr __P((struct gem_softc *, u_int8_t *));
-int	gem_parse_old_srom __P((struct gem_softc *, u_int8_t *));
+void	gem_attach(struct gem_softc *, const u_int8_t *);
+int	gem_activate(struct device *, enum devact);
+int	gem_detach(struct gem_softc *);
+int	gem_intr(void *);
+int	gem_read_srom(struct gem_softc *);
+int	gem_srom_crcok(const u_int8_t *);
+int	gem_isv_srom(const u_int8_t *);
+int	gem_isv_srom_enaddr(struct gem_softc *, u_int8_t *);
+int	gem_parse_old_srom(struct gem_softc *, u_int8_t *);
 
-int	gem_mediachange __P((struct ifnet *));
-void	gem_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	gem_mediachange(struct ifnet *);
+void	gem_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	gem_config __P((struct gem_softc *));
-void	gem_reset __P((struct gem_softc *));
-int	gem_intr __P((void *));
+void	gem_config(struct gem_softc *);
+void	gem_reset(struct gem_softc *);
+int	gem_intr(void *);
 #endif /* _KERNEL */
 
 

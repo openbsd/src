@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.17 2001/10/02 18:04:35 deraadt Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.18 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -244,13 +244,13 @@ struct bpf_insn {
 #define BPF_JUMP(code, k, jt, jf) { (u_int16_t)(code), jt, jf, k }
 
 #ifdef _KERNEL
-int	 bpf_validate __P((struct bpf_insn *, int));
-void	 bpf_tap __P((caddr_t, u_char *, u_int));
-void	 bpf_mtap __P((caddr_t, struct mbuf *));
-void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
-void	 bpfdetach __P((struct ifnet *));
-void	 bpfilterattach __P((int));
-u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
+int	 bpf_validate(struct bpf_insn *, int);
+void	 bpf_tap(caddr_t, u_char *, u_int);
+void	 bpf_mtap(caddr_t, struct mbuf *);
+void	 bpfattach(caddr_t *, struct ifnet *, u_int, u_int);
+void	 bpfdetach(struct ifnet *);
+void	 bpfilterattach(int);
+u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 #endif /* _KERNEL */
 
 /*

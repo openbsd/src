@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.15 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.16 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -75,17 +75,17 @@
 static char *card_type[] =
     { "unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA" };
 
-int le_isa_probe __P((struct device *, void *, void *));
-void le_isa_attach __P((struct device *, struct device *, void *));
+int le_isa_probe(struct device *, void *, void *);
+void le_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach le_isa_ca = {
 	sizeof(struct le_softc), le_isa_probe, le_isa_attach
 };
 
-int depca_isa_probe __P((struct le_softc *, struct isa_attach_args *));
-int ne2100_isa_probe __P((struct le_softc *, struct isa_attach_args *));
-int bicc_isa_probe __P((struct le_softc *, struct isa_attach_args *));
-int lance_isa_probe __P((struct am7990_softc *));
+int depca_isa_probe(struct le_softc *, struct isa_attach_args *);
+int ne2100_isa_probe(struct le_softc *, struct isa_attach_args *);
+int bicc_isa_probe(struct le_softc *, struct isa_attach_args *);
+int lance_isa_probe(struct am7990_softc *);
 
 int
 le_isa_probe(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.11 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.12 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -59,8 +59,8 @@
 /*
  * Prototypes and count for the pci_device structure
  */
-int lofn_probe		__P((struct device *, void *, void *));
-void lofn_attach	__P((struct device *, struct device *, void *));
+int lofn_probe(struct device *, void *, void *);
+void lofn_attach(struct device *, struct device *, void *);
 
 struct cfattach lofn_ca = {
 	sizeof(struct lofn_softc), lofn_probe, lofn_attach,
@@ -70,12 +70,12 @@ struct cfdriver lofn_cd = {
 	0, "lofn", DV_DULL
 };
 
-int lofn_intr	__P((void *));
+int lofn_intr(void *);
 
-void lofn_putnum __P((struct lofn_softc *, u_int32_t, u_int32_t,
-    u_int32_t *, u_int32_t));
-int lofn_getnum __P((struct lofn_softc *, u_int32_t, u_int32_t,
-    u_int32_t *num, u_int32_t *numlen));
+void lofn_putnum(struct lofn_softc *, u_int32_t, u_int32_t,
+    u_int32_t *, u_int32_t);
+int lofn_getnum(struct lofn_softc *, u_int32_t, u_int32_t,
+    u_int32_t *num, u_int32_t *numlen);
 
 int
 lofn_probe(parent, match, aux)

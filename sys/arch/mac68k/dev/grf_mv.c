@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.17 1999/04/24 06:39:40 downsj Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.18 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
@@ -51,18 +51,18 @@
 #include "nubus.h"
 #include "grfvar.h"
 
-static void	load_image_data __P((caddr_t data, struct image_data *image));
+static void	load_image_data(caddr_t data, struct image_data *image);
 
-static void	grfmv_intr_generic __P((void *vsc, int slot));
-static void	grfmv_intr_radius __P((void *vsc, int slot));
-static void	grfmv_intr_cti __P((void *vsc, int slot));
-static void	grfmv_intr_cb264 __P((void *vsc, int slot));
-static void	grfmv_intr_cb364 __P((void *vsc, int slot));
+static void	grfmv_intr_generic(void *vsc, int slot);
+static void	grfmv_intr_radius(void *vsc, int slot);
+static void	grfmv_intr_cti(void *vsc, int slot);
+static void	grfmv_intr_cb264(void *vsc, int slot);
+static void	grfmv_intr_cb364(void *vsc, int slot);
 
-static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfmv_match __P((struct device *, void *, void *));
-static void	grfmv_attach __P((struct device *, struct device *, void *));
+static int	grfmv_mode(struct grf_softc *gp, int cmd, void *arg);
+static caddr_t	grfmv_phys(struct grf_softc *gp, vm_offset_t addr);
+static int	grfmv_match(struct device *, void *, void *);
+static void	grfmv_attach(struct device *, struct device *, void *);
 
 struct cfdriver macvid_cd = {
 	NULL, "macvid", DV_DULL

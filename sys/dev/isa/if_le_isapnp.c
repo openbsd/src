@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.8 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.9 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -72,8 +72,8 @@
 
 #include <dev/isa/if_levar.h>
 
-int le_isapnp_match __P((struct device *, void *, void *));
-void le_isapnp_attach __P((struct device *, struct device *, void *));
+int le_isapnp_match(struct device *, void *, void *);
+void le_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach le_isapnp_ca = {
 	sizeof(struct le_softc), le_isapnp_match, le_isapnp_attach

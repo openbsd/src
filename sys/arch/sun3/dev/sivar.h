@@ -1,4 +1,4 @@
-/*	$OpenBSD: sivar.h,v 1.3 2000/05/02 21:48:52 miod Exp $	*/
+/*	$OpenBSD: sivar.h,v 1.4 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: sivar.h,v 1.3 1996/11/20 18:57:01 gwr Exp $	*/
 
 /*-
@@ -92,11 +92,11 @@ struct si_softc {
 
 extern int si_debug;
 
-void si_attach __P((struct si_softc *));
-int  si_intr __P((void *));
+void si_attach(struct si_softc *);
+int  si_intr(void *);
 
-void si_reset_adapter __P((struct ncr5380_softc *));
+void si_reset_adapter(struct ncr5380_softc *);
 
-void si_dma_alloc __P((struct ncr5380_softc *));
-void si_dma_free __P((struct ncr5380_softc *));
-void si_dma_poll __P((struct ncr5380_softc *));
+void si_dma_alloc(struct ncr5380_softc *);
+void si_dma_free(struct ncr5380_softc *);
+void si_dma_poll(struct ncr5380_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.4 2001/09/15 23:42:36 jason Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.5 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -89,24 +89,24 @@
 #include <sparc64/fpu/fpu_emu.h>
 #include <sparc64/fpu/fpu_extern.h>
 
-int fpu_regoffset __P((int, int));
-int fpu_insn_fmov __P((struct fpstate64 *, struct fpemu *, union instr));
-int fpu_insn_fabs __P((struct fpstate64 *, struct fpemu *, union instr));
-int fpu_insn_fneg __P((struct fpstate64 *, struct fpemu *, union instr));
-int fpu_insn_itof __P((struct fpemu *, union instr, int, int *,
-    int *, u_int *));
-int fpu_insn_ftoi __P((struct fpemu *, union instr, int *, int, u_int *));
-int fpu_insn_ftof __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fsqrt __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fcmp __P((struct fpstate64 *, struct fpemu *, union instr, int));
-int fpu_insn_fmul __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fmulx __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fdiv __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fadd __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fsub __P((struct fpemu *, union instr, int *, int *, u_int *));
-int fpu_insn_fmovcc __P((struct fpstate64 *, union instr));
-int fpu_insn_fmovr __P((struct fpstate64 *, union instr));
-void fpu_fcopy __P((u_int *, u_int *, int));
+int fpu_regoffset(int, int);
+int fpu_insn_fmov(struct fpstate64 *, struct fpemu *, union instr);
+int fpu_insn_fabs(struct fpstate64 *, struct fpemu *, union instr);
+int fpu_insn_fneg(struct fpstate64 *, struct fpemu *, union instr);
+int fpu_insn_itof(struct fpemu *, union instr, int, int *,
+    int *, u_int *);
+int fpu_insn_ftoi(struct fpemu *, union instr, int *, int, u_int *);
+int fpu_insn_ftof(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fsqrt(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fcmp(struct fpstate64 *, struct fpemu *, union instr, int);
+int fpu_insn_fmul(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fmulx(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fdiv(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fadd(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fsub(struct fpemu *, union instr, int *, int *, u_int *);
+int fpu_insn_fmovcc(struct fpstate64 *, union instr);
+int fpu_insn_fmovr(struct fpstate64 *, union instr);
+void fpu_fcopy(u_int *, u_int *, int);
 
 #ifdef DEBUG
 int fpe_debug = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2002/02/28 22:18:03 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -106,8 +106,8 @@ struct mem_softc {
 	volatile struct vi_trs *sc_vp;
 };
 
-int	memmatch __P((struct device *, void *, void *));
-void	memattach __P((struct device *, struct device *, void *));
+int	memmatch(struct device *, void *, void *);
+void	memattach(struct device *, struct device *, void *);
 
 struct cfattach mem_ca = {
 	sizeof(struct mem_softc), memmatch, memattach

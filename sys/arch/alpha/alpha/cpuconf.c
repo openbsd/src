@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.6 2002/01/24 19:45:03 miod Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.7 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -74,67 +74,67 @@
 #include <machine/rpb.h>
 
 #ifdef DEC_3000_500
-extern void dec_3000_500_init __P((void));
+extern void dec_3000_500_init(void);
 #else
 #define	dec_3000_500_init	platform_not_configured
 #endif
 
 #ifdef DEC_3000_300
-extern void dec_3000_300_init __P((void));
+extern void dec_3000_300_init(void);
 #else
 #define	dec_3000_300_init	platform_not_configured
 #endif
 
 #ifdef DEC_AXPPCI_33
-extern void dec_axppci_33_init __P((void));
+extern void dec_axppci_33_init(void);
 #else
 #define	dec_axppci_33_init	platform_not_configured
 #endif
 
 #ifdef DEC_2100_A50
-extern void dec_2100_a50_init __P((void));
+extern void dec_2100_a50_init(void);
 #else
 #define	dec_2100_a50_init	platform_not_configured
 #endif
 
 #ifdef DEC_KN20AA
-extern void dec_kn20aa_init __P((void));
+extern void dec_kn20aa_init(void);
 #else
 #define	dec_kn20aa_init		platform_not_configured
 #endif
 
 #ifdef DEC_EB164
-extern void dec_eb164_init __P((void));
+extern void dec_eb164_init(void);
 #else
 #define	dec_eb164_init		platform_not_configured
 #endif
 
 #ifdef DEC_EB64PLUS
-extern void dec_eb64plus_init __P((void));
+extern void dec_eb64plus_init(void);
 #else
 #define dec_eb64plus_init	platform_not_configured
 #endif
 
 #ifdef	DEC_KN300
-extern void dec_kn300_init __P((void));
+extern void dec_kn300_init(void);
 #else
 #define	dec_kn300_init		platform_not_configured
 #endif
 
 #ifdef DEC_550
-extern void dec_550_init __P((void));
+extern void dec_550_init(void);
 #else
 #define	dec_550_init		platform_not_configured
 #endif
 
 #ifdef DEC_6600
-extern void dec_6600_init __P((void));
+extern void dec_6600_init(void);
 #else
 #define	dec_6600_init		platform_not_configured
 #endif
 
 #ifdef API_UP1000
-extern void api_up1000_init __P((void));
+extern void api_up1000_init(void);
 #else
 #define	api_up1000_init		platform_not_configured
 #endif

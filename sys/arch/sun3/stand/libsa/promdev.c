@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.6 2001/07/04 08:33:52 niklas Exp $ */
+/*	$OpenBSD: promdev.c,v 1.7 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: promdev.c,v 1.7 1996/01/29 23:41:10 gwr Exp $ */
 
 /*
@@ -40,7 +40,7 @@
 #include "stand.h"
 #include "dvma.h"
 
-extern void set_pte __P((int, int));
+extern void set_pte(int, int);
 extern int debug;
 
 static int promdev_inuse;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.19 2001/11/15 06:22:30 art Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.20 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -59,8 +59,8 @@
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
 
-static void *linux_aout_copyargs __P((struct exec_package *,
-	struct ps_strings *, void *, void *));
+static void *linux_aout_copyargs(struct exec_package *,
+	struct ps_strings *, void *, void *);
 
 #define	LINUX_AOUT_AUX_ARGSIZ	2
 #define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
@@ -74,10 +74,10 @@ extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
 #endif
 
-int exec_linux_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int exec_linux_aout_prep_qmagic __P((struct proc *, struct exec_package *));
+int exec_linux_aout_prep_zmagic(struct proc *, struct exec_package *);
+int exec_linux_aout_prep_nmagic(struct proc *, struct exec_package *);
+int exec_linux_aout_prep_omagic(struct proc *, struct exec_package *);
+int exec_linux_aout_prep_qmagic(struct proc *, struct exec_package *);
 
 struct emul emul_linux_aout = {
 	"linux",

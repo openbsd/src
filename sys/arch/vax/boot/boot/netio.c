@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.2 2001/04/10 12:27:54 bjc Exp $ */
+/*	$OpenBSD: netio.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: netio.c,v 1.4 1999/06/30 18:38:03 ragge Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ int netio_ask = 0;		/* default to bootparam, can override */
 
 static	char input_line[100];
 
-int netmountroot __P((struct open_file *, char *));
+int netmountroot(struct open_file *, char *);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.

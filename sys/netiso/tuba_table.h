@@ -1,4 +1,4 @@
-/*	$OpenBSD: tuba_table.h,v 1.2 1996/03/04 10:36:52 mickey Exp $	*/
+/*	$OpenBSD: tuba_table.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: tuba_table.h,v 1.4 1996/02/13 22:12:37 christos Exp $	*/
 
 /*-
@@ -68,23 +68,23 @@ struct sockaddr_iso;
 struct socket;
 
 /* tuba_subr.c */
-void tuba_init __P((void));
-int tuba_output __P((struct mbuf *, struct tcpcb *));
-void tuba_refcnt __P((struct isopcb *, int ));
-void tuba_pcbdetach __P((void *));
-int tuba_pcbconnect __P((void *, struct mbuf *));
-void tuba_tcpinput __P((struct mbuf *, ...));
-int tuba_pcbconnect __P((void *, struct mbuf *));
-void tuba_slowtimo __P((void));
-void tuba_fasttimo __P((void));
+void tuba_init(void);
+int tuba_output(struct mbuf *, struct tcpcb *);
+void tuba_refcnt(struct isopcb *, int );
+void tuba_pcbdetach(void *);
+int tuba_pcbconnect(void *, struct mbuf *);
+void tuba_tcpinput(struct mbuf *, ...);
+int tuba_pcbconnect(void *, struct mbuf *);
+void tuba_slowtimo(void);
+void tuba_fasttimo(void);
 
 /* tuba_table.c */
-void tuba_timer __P((void *));
-void tuba_table_init __P((void));
-int tuba_lookup __P((struct sockaddr_iso *, int ));
+void tuba_timer(void *);
+void tuba_table_init(void);
+int tuba_lookup(struct sockaddr_iso *, int );
 
 /* tuba_usrreq.c */
-int tuba_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
-int tuba_ctloutput __P((int, struct socket *, int, int , struct mbuf **));
+int tuba_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *);
+int tuba_ctloutput(int, struct socket *, int, int , struct mbuf **);
 #endif

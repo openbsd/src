@@ -1,4 +1,4 @@
-/*	$OpenBSD: dptvar.h,v 1.1 1999/11/30 07:55:56 cmetz Exp $	*/
+/*	$OpenBSD: dptvar.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: dptvar.h,v 1.5 1999/10/23 16:26:32 ad Exp $	*/
 
 /*
@@ -98,30 +98,30 @@ struct dpt_softc {
 #endif /* __NetBSD__ */
 };
 
-int	dpt_intr __P((void *));
-int	dpt_readcfg __P((struct dpt_softc *));
-void	dpt_init __P((struct dpt_softc *, const char *));
-void	dpt_shutdown __P((void *));
-void	dpt_timeout __P((void *));
-void	dpt_minphys __P((struct buf *));
+int	dpt_intr(void *);
+int	dpt_readcfg(struct dpt_softc *);
+void	dpt_init(struct dpt_softc *, const char *);
+void	dpt_shutdown(void *);
+void	dpt_timeout(void *);
+void	dpt_minphys(struct buf *);
 #ifdef __NetBSD__
-int	dpt_scsi_cmd __P((struct scsipi_xfer *));
+int	dpt_scsi_cmd(struct scsipi_xfer *);
 #endif /* __NetBSD__ */
 #ifdef __OpenBSD__
-int	dpt_scsi_cmd __P((struct scsi_xfer *));
+int	dpt_scsi_cmd(struct scsi_xfer *);
 #endif /* __OpenBSD__ */
-int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
-int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
-void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
-void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
-struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *, int));
+int	dpt_wait(struct dpt_softc *, u_int8_t, u_int8_t, int);
+int	dpt_poll(struct dpt_softc *, struct dpt_ccb *);
+int	dpt_cmd(struct dpt_softc *, struct eata_cp *, u_int32_t, int, int);
+void	dpt_hba_inquire(struct dpt_softc *, struct eata_inquiry_data **);
+void	dpt_reset_ccb(struct dpt_softc *, struct dpt_ccb *);
+void	dpt_free_ccb(struct dpt_softc *, struct dpt_ccb *);
+void	dpt_done_ccb(struct dpt_softc *, struct dpt_ccb *);
+int	dpt_init_ccb(struct dpt_softc *, struct dpt_ccb *);
+int	dpt_create_ccbs(struct dpt_softc *, struct dpt_ccb *, int);
+struct dpt_ccb	*dpt_alloc_ccb(struct dpt_softc *, int);
 #ifdef DEBUG
-void	dpt_dump_sp __P((struct eata_sp *));
+void	dpt_dump_sp(struct eata_sp *);
 #endif
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.9 1997/09/12 09:28:14 maja Exp $	*/
+/*	$OpenBSD: uda.c,v 1.10 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: uda.c,v 1.25 1997/07/04 13:26:02 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -89,19 +89,19 @@ struct	uda_softc {
 	int	sc_wticks;	/* watchdog timer ticks */
 };
 
-static	int	udamatch __P((struct device *, void *, void *));
-static	void	udaattach __P((struct device *, struct device *, void *));
-static	void	udareset __P((int));
-static	void	mtcreset __P((int));
-static	void	reset __P((struct uda_softc *));
-static	void	udaintr __P((int));
-static	void	mtcintr __P((int));
-static	void	intr __P((struct uda_softc *));
-int	udaready __P((struct uba_unit *));
-void	udactlrdone __P((struct device *, int));
-int	udaprint __P((void *, const char *));
-void	udasaerror __P((struct device *, int));
-int	udago __P((struct device *, struct buf *));
+static	int	udamatch(struct device *, void *, void *);
+static	void	udaattach(struct device *, struct device *, void *);
+static	void	udareset(int);
+static	void	mtcreset(int);
+static	void	reset(struct uda_softc *);
+static	void	udaintr(int);
+static	void	mtcintr(int);
+static	void	intr(struct uda_softc *);
+int	udaready(struct uba_unit *);
+void	udactlrdone(struct device *, int);
+int	udaprint(void *, const char *);
+void	udasaerror(struct device *, int);
+int	udago(struct device *, struct buf *);
 
 struct	cfdriver mtc_cd = {
 	NULL, "mtc", DV_DULL

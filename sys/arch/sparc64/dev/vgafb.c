@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.5 2002/02/08 16:46:26 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.6 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -98,20 +98,20 @@ struct wsscreen_list vgafb_screenlist = {
 	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
 };
 
-int vgafb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int vgafb_alloc_screen __P((void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *));
-void vgafb_free_screen __P((void *, void *));
+int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+void vgafb_free_screen(void *, void *);
 int vgafb_show_screen __P((void *, void *, int,
-    void (*cb) __P((void *, int, int)), void *));
-paddr_t vgafb_mmap __P((void *, off_t, int));
-int vgafb_is_console __P((int));
-int vgafb_getcmap __P((struct vgafb_softc *, struct wsdisplay_cmap *));
-int vgafb_putcmap __P((struct vgafb_softc *, struct wsdisplay_cmap *));
-void vgafb_setcolor __P((struct vgafb_softc *, unsigned int,
-    u_int8_t, u_int8_t, u_int8_t));
+    void (*cb)(void *, int, int), void *));
+paddr_t vgafb_mmap(void *, off_t, int);
+int vgafb_is_console(int);
+int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
+int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
+void vgafb_setcolor(struct vgafb_softc *, unsigned int,
+    u_int8_t, u_int8_t, u_int8_t);
 
-static int a2int __P((char *, int));
+static int a2int(char *, int);
 
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
@@ -122,8 +122,8 @@ struct wsdisplay_accessops vgafb_accessops = {
 	0 /* load_font */
 };
 
-int	vgafbmatch	__P((struct device *, void *, void *));
-void	vgafbattach	__P((struct device *, struct device *, void *));
+int	vgafbmatch(struct device *, void *, void *);
+void	vgafbattach(struct device *, struct device *, void *);
 
 struct cfattach vgafb_ca = {
 	sizeof (struct vgafb_softc), vgafbmatch, vgafbattach
@@ -402,7 +402,7 @@ vgafb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.19 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.20 2002/03/14 01:26:39 millert Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -80,7 +80,7 @@ int      cpu_cmmu_ratio;
 
 struct cmmu_p *cmmu;
 
-void md_cmmu_flush_tlb __P((unsigned kernel, vm_offset_t vaddr, int size));
+void md_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size);
 
 /* This is here so that process.S doesn't have to decide the CPU type */
 void 

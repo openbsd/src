@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.15 2001/12/12 16:44:11 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.16 2002/03/14 01:26:54 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -89,8 +89,8 @@ struct cfdriver ami_cd = {
 	NULL, "ami", DV_DULL
 };
 
-int	ami_scsi_cmd __P((struct scsi_xfer *xs));
-void	amiminphys __P((struct buf *bp));
+int	ami_scsi_cmd(struct scsi_xfer *xs);
+void	amiminphys(struct buf *bp);
 
 struct scsi_adapter ami_switch = {
 	ami_scsi_cmd, amiminphys, 0, 0,
@@ -100,7 +100,7 @@ struct scsi_device ami_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-int	ami_scsi_raw_cmd __P((struct scsi_xfer *xs));
+int	ami_scsi_raw_cmd(struct scsi_xfer *xs);
 
 struct scsi_adapter ami_raw_switch = {
 	ami_scsi_raw_cmd, amiminphys, 0, 0,
@@ -110,22 +110,22 @@ struct scsi_device ami_raw_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-static __inline struct ami_ccb *ami_get_ccb __P((struct ami_softc *sc));
-static __inline void ami_put_ccb __P((struct ami_ccb *ccb));
-void ami_copyhds __P((struct ami_softc *sc, const u_int32_t *sizes,
-	const u_int8_t *props, const u_int8_t *stats));
-void *ami_allocmem __P((bus_dma_tag_t dmat, bus_dmamap_t *map,
-	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname));
-void ami_freemem __P((bus_dma_tag_t dmat, bus_dmamap_t *map,
-	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname));
-void ami_dispose __P((struct ami_softc *sc));
-void ami_stimeout __P((void *v));
-int  ami_cmd __P((struct ami_ccb *ccb, int flags, int wait));
-int  ami_start __P((struct ami_ccb *ccb, int wait));
-int  ami_complete __P((struct ami_ccb *ccb));
-int  ami_done __P((struct ami_softc *sc, int idx));
-void ami_copy_internal_data __P((struct scsi_xfer *xs, void *v, size_t size));
-int  ami_inquire __P((struct ami_softc *sc, u_int8_t op));
+static __inline struct ami_ccb *ami_get_ccb(struct ami_softc *sc);
+static __inline void ami_put_ccb(struct ami_ccb *ccb);
+void ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
+	const u_int8_t *props, const u_int8_t *stats);
+void *ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map,
+	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
+void ami_freemem(bus_dma_tag_t dmat, bus_dmamap_t *map,
+	bus_dma_segment_t *segp, size_t isize, size_t nent, const char *iname);
+void ami_dispose(struct ami_softc *sc);
+void ami_stimeout(void *v);
+int  ami_cmd(struct ami_ccb *ccb, int flags, int wait);
+int  ami_start(struct ami_ccb *ccb, int wait);
+int  ami_complete(struct ami_ccb *ccb);
+int  ami_done(struct ami_softc *sc, int idx);
+void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
+int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
 
 static __inline struct ami_ccb *
@@ -328,7 +328,7 @@ ami_attach(sc)
 		}
 	}
 
-	timeout_set(&sc->sc_poll_tmo, (void (*)__P((void *)))ami_intr, sc);
+	timeout_set(&sc->sc_poll_tmo, (void (*)(void *))ami_intr, sc);
 
 	(sc->sc_init)(sc);
 	{

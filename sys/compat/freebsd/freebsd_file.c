@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.14 2002/02/13 21:32:03 art Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.15 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 
 const char freebsd_emul_path[] = "/emul/freebsd";
 
-static char * convert_from_freebsd_mount_type __P((int));
-void statfs_to_freebsd_statfs __P((struct proc *, struct mount *, struct statfs *, struct freebsd_statfs *));
+static char * convert_from_freebsd_mount_type(int);
+void statfs_to_freebsd_statfs(struct proc *, struct mount *, struct statfs *, struct freebsd_statfs *);
 
 struct freebsd_statfs {
 	long	f_spare2;		/* placeholder */

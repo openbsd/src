@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.6 2001/07/04 08:33:46 niklas Exp $ */
+/*	$OpenBSD: installboot.c,v 1.7 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -65,11 +65,11 @@ daddr_t	*block_table;	/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
-char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
-static void	devread __P((int, void *, daddr_t, size_t, char *));
-static void	usage __P((void));
-int 		main __P((int, char *[]));
+char		*loadprotoblocks(char *, long *);
+int		loadblocknums(char *, int);
+static void	devread(int, void *, daddr_t, size_t, char *);
+static void	usage(void);
+int 		main(int, char *[]);
 
 
 static void

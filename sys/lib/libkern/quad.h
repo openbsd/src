@@ -1,4 +1,4 @@
-/*	$OpenBSD: quad.h,v 1.5 1997/07/25 18:25:38 mickey Exp $	*/
+/*	$OpenBSD: quad.h,v 1.6 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: quad.h,v 1.7 1996/04/18 02:20:04 cgd Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ union uu {
 #define	LHALF(x)	((u_long)(x) & (((long)1 << HALF_BITS) - 1))
 #define	LHUP(x)		((u_long)(x) << HALF_BITS)
 
-extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
+extern u_quad_t __qdivrem(u_quad_t u, u_quad_t v, u_quad_t *rem);
 
 /*
  * XXX
@@ -117,22 +117,22 @@ typedef u_quad_t	qshift_t;
 #endif
 
 __BEGIN_DECLS
-quad_t	__adddi3	__P((quad_t, quad_t));
-quad_t	__anddi3	__P((quad_t, quad_t));
-quad_t	__ashldi3	__P((quad_t, qshift_t));
-quad_t	__ashrdi3	__P((quad_t, qshift_t));
-int	__cmpdi2	__P((quad_t, quad_t));
-quad_t	__divdi3	__P((quad_t, quad_t));
-quad_t	__iordi3	__P((quad_t, quad_t));
-quad_t	__lshldi3	__P((quad_t, qshift_t));
-quad_t	__lshrdi3	__P((quad_t, qshift_t));
-quad_t	__moddi3	__P((quad_t, quad_t));
-quad_t	__muldi3	__P((quad_t, quad_t));
-quad_t	__negdi2	__P((quad_t));
-quad_t	__one_cmpldi2	__P((quad_t));
-quad_t	__subdi3	__P((quad_t, quad_t));
-int	__ucmpdi2	__P((u_quad_t, u_quad_t));
-u_quad_t __udivdi3	__P((u_quad_t, u_quad_t));
-u_quad_t __umoddi3	__P((u_quad_t, u_quad_t));
-quad_t	__xordi3	__P((quad_t, quad_t));
+quad_t	__adddi3(quad_t, quad_t);
+quad_t	__anddi3(quad_t, quad_t);
+quad_t	__ashldi3(quad_t, qshift_t);
+quad_t	__ashrdi3(quad_t, qshift_t);
+int	__cmpdi2(quad_t, quad_t);
+quad_t	__divdi3(quad_t, quad_t);
+quad_t	__iordi3(quad_t, quad_t);
+quad_t	__lshldi3(quad_t, qshift_t);
+quad_t	__lshrdi3(quad_t, qshift_t);
+quad_t	__moddi3(quad_t, quad_t);
+quad_t	__muldi3(quad_t, quad_t);
+quad_t	__negdi2(quad_t);
+quad_t	__one_cmpldi2(quad_t);
+quad_t	__subdi3(quad_t, quad_t);
+int	__ucmpdi2(u_quad_t, u_quad_t);
+u_quad_t __udivdi3(u_quad_t, u_quad_t);
+u_quad_t __umoddi3(u_quad_t, u_quad_t);
+quad_t	__xordi3(quad_t, quad_t);
 __END_DECLS

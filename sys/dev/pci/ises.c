@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.18 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: ises.c,v 1.19 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -61,30 +61,30 @@
 /*
  * Prototypes and count for the pci_device structure
  */
-int	ises_match __P((struct device *, void *, void *));
-void	ises_attach __P((struct device *, struct device *, void *));
+int	ises_match(struct device *, void *, void *);
+void	ises_attach(struct device *, struct device *, void *);
 
-void	ises_initstate __P((void *));
-void	ises_hrng_init __P((struct ises_softc *));
-void	ises_hrng __P((void *));
-void	ises_process_oqueue __P((struct ises_softc *));
+void	ises_initstate(void *);
+void	ises_hrng_init(struct ises_softc *);
+void	ises_hrng(void *);
+void	ises_process_oqueue(struct ises_softc *);
 int	ises_queue_cmd __P((struct ises_softc *, u_int32_t, u_int32_t *, 
 			    u_int32_t (*)(struct ises_softc *, 
 					  struct ises_cmd *)));
-u_int32_t ises_get_fwversion __P((struct ises_softc *));
-int	ises_assert_cmd_mode __P((struct ises_softc *));
+u_int32_t ises_get_fwversion(struct ises_softc *);
+int	ises_assert_cmd_mode(struct ises_softc *);
 
-int	ises_intr __P((void *));
-int	ises_newsession __P((u_int32_t *, struct cryptoini *));
-int	ises_freesession __P((u_int64_t));
-int	ises_process __P((struct cryptop *));
-void	ises_callback __P((struct ises_q *));
-int	ises_feed __P((struct ises_softc *));
-int	ises_bchu_switch_session __P((struct ises_softc *, 
-				      struct ises_session *, int));
-u_int32_t ises_bchu_switch_final __P((struct ises_softc *, struct ises_cmd *));
+int	ises_intr(void *);
+int	ises_newsession(u_int32_t *, struct cryptoini *);
+int	ises_freesession(u_int64_t);
+int	ises_process(struct cryptop *);
+void	ises_callback(struct ises_q *);
+int	ises_feed(struct ises_softc *);
+int	ises_bchu_switch_session(struct ises_softc *, 
+				      struct ises_session *, int);
+u_int32_t ises_bchu_switch_final(struct ises_softc *, struct ises_cmd *);
 
-void	ises_read_dma __P((struct ises_softc *));
+void	ises_read_dma(struct ises_softc *);
 
 #define READ_REG(sc,r) \
     bus_space_read_4((sc)->sc_memt, (sc)->sc_memh,r)
@@ -102,12 +102,12 @@ void	ises_read_dma __P((struct ises_softc *));
 #endif
 
 #ifdef ISESDEBUG
-void	ises_debug_init __P((struct ises_softc *));
-void	ises_debug_2 __P((void));
-void	ises_debug_loop __P((void *));
-void	ises_showreg __P((void));
-void	ises_debug_parse_omr __P((struct ises_softc *));
-void	ises_debug_simple_cmd __P((struct ises_softc *, u_int32_t, u_int32_t));
+void	ises_debug_init(struct ises_softc *);
+void	ises_debug_2(void);
+void	ises_debug_loop(void *);
+void	ises_showreg(void);
+void	ises_debug_parse_omr(struct ises_softc *);
+void	ises_debug_simple_cmd(struct ises_softc *, u_int32_t, u_int32_t);
 struct ises_softc *ises_sc;
 struct timeout ises_db_timeout;
 int ises_db;

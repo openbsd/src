@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.16 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.17 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -94,8 +94,8 @@
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	apecsmatch __P((struct device *, void *, void *));
-void	apecsattach __P((struct device *, struct device *, void *));
+int	apecsmatch(struct device *, void *, void *);
+void	apecsattach(struct device *, struct device *, void *);
 
 struct cfattach apecs_ca = {
 	sizeof(struct apecs_softc), apecsmatch, apecsattach,
@@ -105,7 +105,7 @@ struct cfdriver apecs_cd = {
 	NULL, "apecs", DV_DULL,
 };
 
-int	apecsprint __P((void *, const char *pnp));
+int	apecsprint(void *, const char *pnp);
 
 /* There can be only one. */
 int apecsfound;

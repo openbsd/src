@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheops_60.h,v 1.3 2001/05/15 01:43:14 millert Exp $	*/
+/*	$OpenBSD: cacheops_60.h,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: cacheops_60.h,v 1.1 1997/06/02 20:26:43 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 /*
  * Invalidate entire TLB.
  */
-void TBIA_60 __P((void));
+void TBIA_60(void);
 extern __inline__ void
 TBIA_60()
 {
@@ -50,7 +50,7 @@ TBIA_60()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_60 __P((vaddr_t));
+void TBIS_60(vaddr_t);
 extern __inline__ void
 TBIS_60(va)
 	vaddr_t	va;
@@ -73,7 +73,7 @@ TBIS_60(va)
 /*
  * Invalidate supervisor side of TLB
  */
-void TBIAS_60 __P((void));
+void TBIAS_60(void);
 extern __inline__ void
 TBIAS_60()
 {
@@ -91,7 +91,7 @@ TBIAS_60()
 /*
  * Invalidate user side of TLB
  */
-void TBIAU_60 __P((void));
+void TBIAU_60(void);
 extern __inline__ void
 TBIAU_60()
 {
@@ -109,7 +109,7 @@ TBIAU_60()
 /*
  * Invalidate instruction cache
  */
-void ICIA_60 __P((void));
+void ICIA_60(void);
 extern __inline__ void
 ICIA_60()
 {
@@ -117,7 +117,7 @@ ICIA_60()
 	__asm __volatile (" .word 0xf498;");
 }
 
-void ICPA_60 __P((void));
+void ICPA_60(void);
 extern __inline__ void
 ICPA_60()
 {
@@ -128,28 +128,28 @@ ICPA_60()
 /*
  * Invalidate data cache.
  */
-void DCIA_60 __P((void));
+void DCIA_60(void);
 extern __inline__ void
 DCIA_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIS_60 __P((void));
+void DCIS_60(void);
 extern __inline__ void
 DCIS_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIU_60 __P((void));
+void DCIU_60(void);
 extern __inline__ void
 DCIU_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCIAS_60 __P((paddr_t));
+void DCIAS_60(paddr_t);
 extern __inline__ void
 DCIAS_60(pa)
 	paddr_t	pa;
@@ -159,14 +159,14 @@ DCIAS_60(pa)
 	__asm __volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,a0@ */
 }
 
-void PCIA_60 __P((void));
+void PCIA_60(void);
 extern __inline__ void
 PCIA_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-void DCFA_60 __P((void));
+void DCFA_60(void);
 extern __inline__ void
 DCFA_60()
 {
@@ -174,7 +174,7 @@ DCFA_60()
 }
 
 /* invalidate instruction physical cache line */
-void ICPL_60 __P((paddr_t));
+void ICPL_60(paddr_t);
 extern __inline__ void
 ICPL_60(pa)
 	paddr_t	pa;
@@ -185,7 +185,7 @@ ICPL_60(pa)
 }
 
 /* invalidate instruction physical cache page */
-void ICPP_60 __P((paddr_t));
+void ICPP_60(paddr_t);
 extern __inline__ void
 ICPP_60(pa)
 	paddr_t	pa;
@@ -196,7 +196,7 @@ ICPP_60(pa)
 }
 
 /* invalidate data physical cache line */
-void DCPL_60 __P((paddr_t));
+void DCPL_60(paddr_t);
 extern __inline__ void
 DCPL_60(pa)
 	paddr_t	va;
@@ -207,7 +207,7 @@ DCPL_60(pa)
 }
 
 /* invalidate data physical cache page */
-void DCPP_60 __P((paddr_t));
+void DCPP_60(paddr_t);
 extern __inline__ void
 DCPP_60(pa)
 	paddr_t	pa;
@@ -218,7 +218,7 @@ DCPP_60(pa)
 }
 
 /* invalidate data physical all */
-void DCPA_60 __P((void));
+void DCPA_60(void);
 extern __inline__ void
 DCPA_60()
 {
@@ -226,7 +226,7 @@ DCPA_60()
 }
 
 /* data cache flush line */
-void DCFL_60 __P((paddr_t));
+void DCFL_60(paddr_t);
 extern __inline__ void
 DCFL_60(pa)
 	paddr_t	pa;
@@ -237,7 +237,7 @@ DCFL_60(pa)
 }
 
 /* data cache flush page */
-void DCFP_60 __P((paddr_t));
+void DCFP_60(paddr_t);
 extern __inline__ void
 DCFP_60(pa)
 	paddr_t	pa;

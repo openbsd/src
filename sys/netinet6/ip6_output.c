@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.57 2002/01/21 05:33:14 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.58 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 #include <netinet/tcp.h>
 #include <net/pfkeyv2.h>
 
-extern u_int8_t get_sa_require  __P((struct inpcb *));
+extern u_int8_t get_sa_require(struct inpcb *);
 
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
@@ -118,15 +118,15 @@ struct ip6_exthdrs {
 	struct mbuf *ip6e_dest2;
 };
 
-static int ip6_pcbopts __P((struct ip6_pktopts **, struct mbuf *,
-			    struct socket *));
-static int ip6_setmoptions __P((int, struct ip6_moptions **, struct mbuf *));
-static int ip6_getmoptions __P((int, struct ip6_moptions *, struct mbuf **));
-static int ip6_copyexthdr __P((struct mbuf **, caddr_t, int));
-static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
-				  struct ip6_frag **));
-static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
-static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
+static int ip6_pcbopts(struct ip6_pktopts **, struct mbuf *,
+			    struct socket *);
+static int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
+static int ip6_getmoptions(int, struct ip6_moptions *, struct mbuf **);
+static int ip6_copyexthdr(struct mbuf **, caddr_t, int);
+static int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
+				  struct ip6_frag **);
+static int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
+static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6

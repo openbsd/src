@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_ul.c,v 1.4 1997/01/16 09:24:52 niklas Exp $	*/
+/*	$OpenBSD: ite_ul.c,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_ul.c,v 1.7 1996/10/13 03:07:20 christos Exp $	*/
 
 /*
@@ -86,15 +86,15 @@ extern u_int8_t kernel_font[], kernel_cursor[];
 
 int ulowell_console = 1;
 
-void ulowell_cursor __P((struct ite_softc *,int));
-void ulowell_scroll __P((struct ite_softc *,int,int,int,int));
-void ulowell_deinit __P((struct ite_softc *));
-void ulowell_clear __P((struct ite_softc *,int,int,int,int));
-void ulowell_putc __P((struct ite_softc *,int,int,int,int));
-void ulowell_init __P((struct ite_softc *));
+void ulowell_cursor(struct ite_softc *,int);
+void ulowell_scroll(struct ite_softc *,int,int,int,int);
+void ulowell_deinit(struct ite_softc *);
+void ulowell_clear(struct ite_softc *,int,int,int,int);
+void ulowell_putc(struct ite_softc *,int,int,int,int);
+void ulowell_init(struct ite_softc *);
 
 #ifdef DEBUG_UL
-void gsp_dump __P((u_int16_t *,int));
+void gsp_dump(u_int16_t *,int);
 #endif
 
 /* Text always on overlay plane, so: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.27 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.28 2002/03/14 01:27:01 millert Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -117,17 +117,17 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	ep_pcmcia_match __P((struct device *, void *, void *));
-void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
-int	ep_pcmcia_detach __P((struct device *, int));
-int	ep_pcmcia_activate __P((struct device *, enum devact));
+int	ep_pcmcia_match(struct device *, void *, void *);
+void	ep_pcmcia_attach(struct device *, struct device *, void *);
+int	ep_pcmcia_detach(struct device *, int);
+int	ep_pcmcia_activate(struct device *, enum devact);
 
-int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
-int	ep_pcmcia_enable __P((struct ep_softc *));
-void	ep_pcmcia_disable __P((struct ep_softc *));
+int	ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
+int	ep_pcmcia_enable(struct ep_softc *);
+void	ep_pcmcia_disable(struct ep_softc *);
 
-int	ep_pcmcia_enable1 __P((struct ep_softc *));
-void	ep_pcmcia_disable1 __P((struct ep_softc *));
+int	ep_pcmcia_enable1(struct ep_softc *);
+void	ep_pcmcia_disable1(struct ep_softc *);
 
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */
@@ -171,7 +171,7 @@ struct ep_pcmcia_product {
 	  EP_FLAGS_MII,			0 }
 };
 
-struct ep_pcmcia_product *ep_pcmcia_lookup __P((struct pcmcia_attach_args *));
+struct ep_pcmcia_product *ep_pcmcia_lookup(struct pcmcia_attach_args *);
 
 struct ep_pcmcia_product *
 ep_pcmcia_lookup(pa)

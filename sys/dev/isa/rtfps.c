@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.18 1999/01/11 01:57:52 millert Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.19 2002/03/14 01:26:56 millert Exp $       */
 /*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
 
 /*
@@ -62,10 +62,10 @@ struct rtfps_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int rtfpsprobe __P((struct device *, void *, void *));
-void rtfpsattach __P((struct device *, struct device *, void *));
-int rtfpsintr __P((void *));
-int rtfpsprint __P((void *, const char *));
+int rtfpsprobe(struct device *, void *, void *);
+void rtfpsattach(struct device *, struct device *, void *);
+int rtfpsintr(void *);
+int rtfpsprint(void *, const char *);
 
 struct cfattach rtfps_ca = {
 	sizeof(struct rtfps_softc), rtfpsprobe, rtfpsattach

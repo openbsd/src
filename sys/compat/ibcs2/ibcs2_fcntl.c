@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_fcntl.c,v 1.8 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: ibcs2_fcntl.c,v 1.9 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: ibcs2_fcntl.c,v 1.6 1996/05/03 17:05:20 christos Exp $	*/
 
 /*
@@ -50,11 +50,11 @@
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
 
-static int cvt_o_flags __P((int));
-static void cvt_flock2iflock __P((struct flock *, struct ibcs2_flock *));
-static void cvt_iflock2flock __P((struct ibcs2_flock *, struct flock *));
-static int ioflags2oflags __P((int));
-static int oflags2ioflags __P((int));
+static int cvt_o_flags(int);
+static void cvt_flock2iflock(struct flock *, struct ibcs2_flock *);
+static void cvt_iflock2flock(struct ibcs2_flock *, struct flock *);
+static int ioflags2oflags(int);
+static int oflags2ioflags(int);
 
 static int
 cvt_o_flags(flags)

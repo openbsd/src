@@ -1,4 +1,4 @@
-/*	$OpenBSD: acvar.h,v 1.4 1997/04/16 11:55:56 downsj Exp $	*/
+/*	$OpenBSD: acvar.h,v 1.5 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: acvar.h,v 1.4 1997/03/31 07:32:15 scottr Exp $	*/
 
 /*
@@ -89,12 +89,12 @@ struct	ac_restatdb {
 };
 
 #ifdef _KERNEL
-int	accommand __P((dev_t, int, char *, int));
+int	accommand(dev_t, int, char *, int);
 
-void	acstart __P((void *));
-void	acgo __P((void *));
-void	acintr __P((void *, int));
+void	acstart(void *);
+void	acgo(void *);
+void	acintr(void *, int);
 
-int	acgeteinfo __P((dev_t));
-void	acconvert __P((char *, char *, int));
+int	acgeteinfo(dev_t);
+void	acconvert(char *, char *, int);
 #endif /* _KERNEL */

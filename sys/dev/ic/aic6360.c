@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.3 2000/12/13 16:15:57 mickey Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.4 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -152,34 +152,34 @@
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #endif
 
-void	aic_minphys	__P((struct buf *));
-void 	aic_init	__P((struct aic_softc *));
-void	aic_done	__P((struct aic_softc *, struct aic_acb *));
-void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
-int	aic_scsi_cmd	__P((struct scsi_xfer *));
-int	aic_poll	__P((struct aic_softc *, struct scsi_xfer *, int));
-integrate void	aic_sched_msgout __P((struct aic_softc *, u_char));
-integrate void	aic_setsync	__P((struct aic_softc *, struct aic_tinfo *));
-void	aic_select	__P((struct aic_softc *, struct aic_acb *));
-void	aic_timeout	__P((void *));
-void	aic_sched	__P((struct aic_softc *));
-void	aic_scsi_reset	__P((struct aic_softc *));
-void	aic_reset	__P((struct aic_softc *));
-void	aic_free_acb	__P((struct aic_softc *, struct aic_acb *, int));
-struct aic_acb* aic_get_acb __P((struct aic_softc *, int));
-int	aic_reselect	__P((struct aic_softc *, int));
-void	aic_sense	__P((struct aic_softc *, struct aic_acb *));
-void	aic_msgin	__P((struct aic_softc *));
-void	aic_abort	__P((struct aic_softc *, struct aic_acb *));
-void	aic_msgout	__P((struct aic_softc *));
-int	aic_dataout_pio	__P((struct aic_softc *, u_char *, int));
-int	aic_datain_pio	__P((struct aic_softc *, u_char *, int));
+void	aic_minphys(struct buf *);
+void 	aic_init(struct aic_softc *);
+void	aic_done(struct aic_softc *, struct aic_acb *);
+void	aic_dequeue(struct aic_softc *, struct aic_acb *);
+int	aic_scsi_cmd(struct scsi_xfer *);
+int	aic_poll(struct aic_softc *, struct scsi_xfer *, int);
+integrate void	aic_sched_msgout(struct aic_softc *, u_char);
+integrate void	aic_setsync(struct aic_softc *, struct aic_tinfo *);
+void	aic_select(struct aic_softc *, struct aic_acb *);
+void	aic_timeout(void *);
+void	aic_sched(struct aic_softc *);
+void	aic_scsi_reset(struct aic_softc *);
+void	aic_reset(struct aic_softc *);
+void	aic_free_acb(struct aic_softc *, struct aic_acb *, int);
+struct aic_acb* aic_get_acb(struct aic_softc *, int);
+int	aic_reselect(struct aic_softc *, int);
+void	aic_sense(struct aic_softc *, struct aic_acb *);
+void	aic_msgin(struct aic_softc *);
+void	aic_abort(struct aic_softc *, struct aic_acb *);
+void	aic_msgout(struct aic_softc *);
+int	aic_dataout_pio(struct aic_softc *, u_char *, int);
+int	aic_datain_pio(struct aic_softc *, u_char *, int);
 #if AIC_DEBUG
-void	aic_print_acb	__P((struct aic_acb *));
-void	aic_dump_driver __P((struct aic_softc *));
-void	aic_dump6360	__P((struct aic_softc *));
-void	aic_show_scsi_cmd __P((struct aic_acb *));
-void	aic_print_active_acb __P((void));
+void	aic_print_acb(struct aic_acb *);
+void	aic_dump_driver(struct aic_softc *);
+void	aic_dump6360(struct aic_softc *);
+void	aic_show_scsi_cmd(struct aic_acb *);
+void	aic_print_active_acb(void);
 #endif
 
 struct cfdriver aic_cd = {

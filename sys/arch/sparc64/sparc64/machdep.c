@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2002/02/21 20:30:15 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -185,9 +185,9 @@ int sparc_led_blink;
  */
 int   safepri = 0;
 
-caddr_t	allocsys __P((caddr_t));
-void	dumpsys __P((void));
-void	stackdump __P((void));
+caddr_t	allocsys(caddr_t);
+void	dumpsys(void);
+void	stackdump(void);
 
 /* 
  * This is the table that tells us how to access different bus space types.
@@ -948,7 +948,7 @@ dumpsys()
 {
 	register int psize;
 	daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	register int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error = 0;
 	register struct mem_region *mp;
 	extern struct mem_region *mem;
@@ -1053,7 +1053,7 @@ printf("starting dump, blkno %d\n", blkno);
 	}
 }
 
-void trapdump __P((struct trapframe64*));
+void trapdump(struct trapframe64*);
 /*
  * dump out a trapframe.
  */
@@ -1700,25 +1700,25 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
+static int	sparc_bus_map( bus_space_tag_t, bus_type_t, bus_addr_t,
 				    bus_size_t, int, vaddr_t,
-				    bus_space_handle_t *));
-static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
-				     bus_size_t));
-static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
+				    bus_space_handle_t *);
+static int	sparc_bus_unmap(bus_space_tag_t, bus_space_handle_t,
+				     bus_size_t);
+static int	sparc_bus_subregion(bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
-					 bus_space_handle_t *));
-static paddr_t	sparc_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
+					 bus_space_handle_t *);
+static paddr_t	sparc_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int, int (*) __P((void *)),
+						   int, int (*)(void *),
 						   void *));
-static void	sparc_bus_barrier __P((bus_space_tag_t, bus_space_handle_t,
-					  bus_size_t, bus_size_t, int));
-static int	sparc_bus_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
+static void	sparc_bus_barrier(bus_space_tag_t, bus_space_handle_t,
+					  bus_size_t, bus_size_t, int);
+static int	sparc_bus_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,
 					bus_size_t, bus_size_t, bus_size_t, int,
-					bus_addr_t *, bus_space_handle_t *));
-static void	sparc_bus_free __P((bus_space_tag_t, bus_space_handle_t,
-				       bus_size_t));
+					bus_addr_t *, bus_space_handle_t *);
+static void	sparc_bus_free(bus_space_tag_t, bus_space_handle_t,
+				       bus_size_t);
 
 vaddr_t iobase = IODEV_BASE;
 struct extent *io_space = NULL;
@@ -1865,7 +1865,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	bus_size_t	size;
 	size_t		offset;
 	int		flags;
-	int		(*callback) __P((void *, void *));
+	int		(*callback)(void *, void *);
 	void		*arg;
 {
 	bus_space_handle_t bh;
@@ -1890,7 +1890,7 @@ sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	int	pil;
 	int	level;
 	int	flags;
-	int	(*handler)__P((void *));
+	int	(*handler)(void *);
 	void	*arg;
 {
 	struct intrhand *ih;

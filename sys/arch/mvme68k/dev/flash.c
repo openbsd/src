@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.9 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: flash.c,v 1.10 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,8 +66,8 @@ struct flashsoftc {
 	int			sc_zonesize;
 };
 
-void flashattach __P((struct device *, struct device *, void *));
-int  flashmatch __P((struct device *, void *, void *));
+void flashattach(struct device *, struct device *, void *);
+int  flashmatch(struct device *, void *, void *);
 
 struct cfattach flash_ca = {
 	sizeof(struct flashsoftc), flashmatch, flashattach
@@ -77,8 +77,8 @@ struct cfdriver flash_cd = {
 	NULL, "flash", DV_DULL, 0
 };
 
-int flashwritebyte __P((struct flashsoftc *sc, int addr, u_char val));
-int flasherasezone __P((struct flashsoftc *sc, int addr));
+int flashwritebyte(struct flashsoftc *sc, int addr, u_char val);
+int flasherasezone(struct flashsoftc *sc, int addr);
 
 struct flashii intel_flashii[] = {
 	{ "28F008SA",	FLII_INTEL_28F008SA,	1024*1024,	64*1024 },

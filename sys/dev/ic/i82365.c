@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.21 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.22 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -83,29 +83,29 @@ static char *pcic_vendor_to_string[] = {
 
 #define	PCIC_MEM_ALIGN	PCIC_MEM_PAGESIZE
 
-void	pcic_attach_socket __P((struct pcic_handle *));
-void	pcic_init_socket __P((struct pcic_handle *));
+void	pcic_attach_socket(struct pcic_handle *);
+void	pcic_init_socket(struct pcic_handle *);
 
-int	pcic_submatch __P((struct device *, void *, void *));
-int	pcic_print  __P((void *arg, const char *pnp));
-int	pcic_intr_socket __P((struct pcic_handle *));
+int	pcic_submatch(struct device *, void *, void *);
+int	pcic_print(void *arg, const char *pnp);
+int	pcic_intr_socket(struct pcic_handle *);
 
-void	pcic_attach_card __P((struct pcic_handle *));
-void	pcic_detach_card __P((struct pcic_handle *, int));
-void	pcic_deactivate_card __P((struct pcic_handle *));
+void	pcic_attach_card(struct pcic_handle *);
+void	pcic_detach_card(struct pcic_handle *, int);
+void	pcic_deactivate_card(struct pcic_handle *);
 
-void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
-void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
+void	pcic_chip_do_mem_map(struct pcic_handle *, int);
+void	pcic_chip_do_io_map(struct pcic_handle *, int);
 
-void	pcic_create_event_thread __P((void *));
-void	pcic_event_thread __P((void *));
-void	pcic_event_process __P((struct pcic_handle *, struct pcic_event *));
-void	pcic_queue_event __P((struct pcic_handle *, int));
+void	pcic_create_event_thread(void *);
+void	pcic_event_thread(void *);
+void	pcic_event_process(struct pcic_handle *, struct pcic_event *);
+void	pcic_queue_event(struct pcic_handle *, int);
 
-void	pcic_wait_ready __P((struct pcic_handle *));
+void	pcic_wait_ready(struct pcic_handle *);
 
-u_int8_t st_pcic_read __P((struct pcic_handle *, int));
-void	st_pcic_write __P((struct pcic_handle *, int, int));
+u_int8_t st_pcic_read(struct pcic_handle *, int);
+void	st_pcic_write(struct pcic_handle *, int, int);
 
 struct cfdriver pcic_cd = {
 	NULL, "pcic", DV_DULL

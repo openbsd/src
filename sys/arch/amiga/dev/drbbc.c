@@ -1,4 +1,4 @@
-/*	$OpenBSD: drbbc.c,v 1.1 1997/09/18 13:39:44 niklas Exp $	*/
+/*	$OpenBSD: drbbc.c,v 1.2 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: drbbc.c,v 1.1 1997/07/17 23:29:30 is Exp $	*/
 
 /*
@@ -51,16 +51,16 @@
 
 #include <dev/ic/ds.h>
 
-int draco_ds_read_bit __P((void *));
-void draco_ds_write_bit __P((void *, int));
-void draco_ds_reset __P((void *));
+int draco_ds_read_bit(void *);
+void draco_ds_write_bit(void *, int);
+void draco_ds_reset(void *);
 
-void drbbc_attach __P((struct device *, struct device *, void *));
-int drbbc_match __P((struct device *, void *, void *));
+void drbbc_attach(struct device *, struct device *, void *);
+int drbbc_match(struct device *, void *, void *);
 
-time_t dracogettod __P((void));
+time_t dracogettod(void);
 #ifdef __NOTYET__
-int dracosettod __P((time_t));
+int dracosettod(time_t);
 #endif
 
 struct drbbc_softc {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esis.h,v 1.2 1996/03/04 10:35:18 mickey Exp $	*/
+/*	$OpenBSD: esis.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: esis.h,v 1.9 1996/02/13 22:09:29 christos Exp $	*/
 
 /*-
@@ -127,21 +127,21 @@ struct iso_addr;
 struct rtentry;
 struct sockaddr_dl;
 
-void esis_init __P((void));
-int esis_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
-void esis_input __P((struct mbuf *, ...));
-void esis_rdoutput __P((struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
-			struct iso_addr *, struct rtentry *));
-int esis_insert_addr __P((caddr_t *, int *, struct iso_addr *, struct mbuf *,
-			  int));
-void esis_eshinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_ishinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_rdinput __P((struct mbuf *, struct snpa_hdr *));
-void esis_config __P((void *));
-void esis_shoutput __P((struct ifnet *, int, int, caddr_t, int,
-	               struct iso_addr *));
-void isis_input __P((struct mbuf *, ...));
-int isis_output __P((struct mbuf *, ...));
-void *esis_ctlinput __P((int, struct sockaddr *, void *));
+void esis_init(void);
+int esis_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *);
+void esis_input(struct mbuf *, ...);
+void esis_rdoutput(struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
+			struct iso_addr *, struct rtentry *);
+int esis_insert_addr(caddr_t *, int *, struct iso_addr *, struct mbuf *,
+			  int);
+void esis_eshinput(struct mbuf *, struct snpa_hdr *);
+void esis_ishinput(struct mbuf *, struct snpa_hdr *);
+void esis_rdinput(struct mbuf *, struct snpa_hdr *);
+void esis_config(void *);
+void esis_shoutput(struct ifnet *, int, int, caddr_t, int,
+	               struct iso_addr *);
+void isis_input(struct mbuf *, ...);
+int isis_output(struct mbuf *, ...);
+void *esis_ctlinput(int, struct sockaddr *, void *);
 #endif /* _KERNEL */

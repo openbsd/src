@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.11 2000/04/27 03:14:42 bjc Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.12 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -139,17 +139,17 @@ struct	de_softc {
 	int	ds_nxmit;		/* # of transmits in progress */
 };
 
-int	dematch __P((struct device *, void *, void *));
-void	deattach __P((struct device *, struct device *, void *));
-int	dewait __P((struct de_softc *, char *));
-void	deinit __P((struct de_softc *));
-int	deioctl __P((struct ifnet *, u_long, caddr_t));
-void	dereset __P((int));
-void	destart __P((struct ifnet *));
-void	deread __P((struct de_softc *, struct ifrw *, int));
-void	derecv __P((int));
-void	de_setaddr __P((u_char *, struct de_softc *));
-void	deintr __P((int));
+int	dematch(struct device *, void *, void *);
+void	deattach(struct device *, struct device *, void *);
+int	dewait(struct de_softc *, char *);
+void	deinit(struct de_softc *);
+int	deioctl(struct ifnet *, u_long, caddr_t);
+void	dereset(int);
+void	destart(struct ifnet *);
+void	deread(struct de_softc *, struct ifrw *, int);
+void	derecv(int);
+void	de_setaddr(u_char *, struct de_softc *);
+void	deintr(int);
 
 
 struct	cfdriver de_cd = {

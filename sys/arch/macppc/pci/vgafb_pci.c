@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.2 2001/10/31 12:26:18 art Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.3 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -63,18 +63,18 @@ struct vgafb_pci_softc {
 	int nscreens;
 };
 
-int vgafb_pci_probe __P((struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
+int vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
     u_int32_t *iosize, u_int32_t *memaddr, u_int32_t *memsize,
-    u_int32_t *cacheable, u_int32_t *mmioaddr, u_int32_t *mmiosize));
+    u_int32_t *cacheable, u_int32_t *mmioaddr, u_int32_t *mmiosize);
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	vgafb_pci_match __P((struct device *, void *, void *));
+int	vgafb_pci_match(struct device *, void *, void *);
 #else
-int	vgafb_pci_match __P((struct device *, struct cfdata *, void *));
+int	vgafb_pci_match(struct device *, struct cfdata *, void *);
 #endif
-void	vgafb_pci_attach __P((struct device *, struct device *, void *));
+void	vgafb_pci_attach(struct device *, struct device *, void *);
 
-paddr_t	vgafbpcimmap __P((void *, off_t, int));
-int	vgafbpciioctl __P((void *, u_long, caddr_t, int, struct proc *));
+paddr_t	vgafbpcimmap(void *, off_t, int);
+int	vgafbpciioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct cfattach vgafb_pci_ca = {
 	sizeof(struct vgafb_pci_softc), (cfmatch_t)vgafb_pci_match, vgafb_pci_attach,
@@ -440,7 +440,7 @@ vgafb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 

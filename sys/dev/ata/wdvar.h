@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.3 2001/01/25 03:50:50 todd Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.4 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -77,6 +77,6 @@ struct ata_bio {
 #define MULTIMODE_WAIT 9
 #define READY          10
 
-int wdc_ata_bio __P((struct ata_drive_datas*, struct ata_bio*)); 
+int wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*); 
 
-void wddone __P((void *));
+void wddone(void *);

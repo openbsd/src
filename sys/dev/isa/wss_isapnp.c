@@ -61,8 +61,8 @@
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
 
-int	wss_isapnp_match __P((struct device *, void *, void *));
-void	wss_isapnp_attach __P((struct device *, struct device *, void *));
+int	wss_isapnp_match(struct device *, void *, void *);
+void	wss_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach wss_isapnp_ca = {
 	sizeof(struct wss_softc), wss_isapnp_match, wss_isapnp_attach

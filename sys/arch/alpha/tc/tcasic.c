@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcasic.c,v 1.8 2000/11/08 16:01:26 art Exp $	*/
+/*	$OpenBSD: tcasic.c,v 1.9 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: tcasic.c,v 1.14 1996/12/05 01:39:45 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct cfdriver tcasic_cd = {
 	NULL, "tcasic", DV_DULL,
 };
 
-int	tcasicprint __P((void *, const char *));
+int	tcasicprint(void *, const char *);
 
 extern int cputype;
 
@@ -94,8 +94,8 @@ tcasicattach(parent, self, aux)
 	void *aux;
 {
 	struct tcbus_attach_args tba;
-	void (*intr_setup) __P((void));
-	void (*iointr) __P((void *, unsigned long));
+	void (*intr_setup)(void);
+	void (*iointr)(void *, unsigned long);
 
 	printf("\n");
 	tcasicfound = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.1 2001/06/29 06:05:03 niklas Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.2 2002/03/14 01:26:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -101,24 +101,24 @@
 void	ioprbsminphys(struct buf *);
 void	ioprbs_adjqparam(struct device *, int);
 void	ioprbs_attach(struct device *, struct device *, void *);
-void	ioprbs_copy_internal_data __P((struct scsi_xfer *, u_int8_t *,
-	    size_t));
-struct scsi_xfer *ioprbs_dequeue __P((struct ioprbs_softc *));
-void	ioprbs_enqueue __P((struct ioprbs_softc *, struct scsi_xfer *, int));
-void	ioprbs_enqueue_ccb __P((struct ioprbs_softc *, struct ioprbs_ccb *));
-int	ioprbs_exec_ccb __P((struct ioprbs_ccb *));
-void	ioprbs_free_ccb __P((struct ioprbs_softc *, struct ioprbs_ccb *));
-struct ioprbs_ccb *ioprbs_get_ccb __P((struct ioprbs_softc *, int));
-int	ioprbs_internal_cache_cmd __P((struct scsi_xfer *));
+void	ioprbs_copy_internal_data(struct scsi_xfer *, u_int8_t *,
+	    size_t);
+struct scsi_xfer *ioprbs_dequeue(struct ioprbs_softc *);
+void	ioprbs_enqueue(struct ioprbs_softc *, struct scsi_xfer *, int);
+void	ioprbs_enqueue_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
+int	ioprbs_exec_ccb(struct ioprbs_ccb *);
+void	ioprbs_free_ccb(struct ioprbs_softc *, struct ioprbs_ccb *);
+struct ioprbs_ccb *ioprbs_get_ccb(struct ioprbs_softc *, int);
+int	ioprbs_internal_cache_cmd(struct scsi_xfer *);
 void	ioprbs_intr(struct device *, struct iop_msg *, void *);
 void	ioprbs_intr_event(struct device *, struct iop_msg *, void *);
 int	ioprbs_match(struct device *, void *, void *);
 int	ioprbs_scsi_cmd(struct scsi_xfer *);
-int	ioprbs_start __P((struct ioprbs_ccb *));
-void	ioprbs_start_ccbs __P((struct ioprbs_softc *));
-void	ioprbs_timeout __P((void *));
+int	ioprbs_start(struct ioprbs_ccb *);
+void	ioprbs_start_ccbs(struct ioprbs_softc *);
+void	ioprbs_timeout(void *);
 void	ioprbs_unconfig(struct ioprbs_softc *, int);
-void	ioprbs_watchdog __P((void *));
+void	ioprbs_watchdog(void *);
 
 struct cfdriver ioprbs_cd = {
 	NULL, "ioprbs", DV_DULL

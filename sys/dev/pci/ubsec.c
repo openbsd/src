@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.82 2002/01/28 17:10:11 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.83 2002/03/14 01:27:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -68,14 +68,14 @@
 /*
  * Prototypes and count for the pci_device structure
  */
-int ubsec_probe		__P((struct device *, void *, void *));
-void ubsec_attach	__P((struct device *, struct device *, void *));
-void ubsec_reset_board	__P((struct ubsec_softc *));
-void ubsec_init_board	__P((struct ubsec_softc *));
-void ubsec_init_pciregs	__P((struct pci_attach_args *pa));
-void ubsec_cleanchip	__P((struct ubsec_softc *));
-void ubsec_totalreset	__P((struct ubsec_softc *));
-int  ubsec_free_q	__P((struct ubsec_softc*, struct ubsec_q *));
+int ubsec_probe(struct device *, void *, void *);
+void ubsec_attach(struct device *, struct device *, void *);
+void ubsec_reset_board(struct ubsec_softc *);
+void ubsec_init_board(struct ubsec_softc *);
+void ubsec_init_pciregs(struct pci_attach_args *pa);
+void ubsec_cleanchip(struct ubsec_softc *);
+void ubsec_totalreset(struct ubsec_softc *);
+int  ubsec_free_q(struct ubsec_softc*, struct ubsec_q *);
 
 struct cfattach ubsec_ca = {
 	sizeof(struct ubsec_softc), ubsec_probe, ubsec_attach,
@@ -85,20 +85,20 @@ struct cfdriver ubsec_cd = {
 	0, "ubsec", DV_DULL
 };
 
-int	ubsec_intr __P((void *));
-int	ubsec_newsession __P((u_int32_t *, struct cryptoini *));
-int	ubsec_freesession __P((u_int64_t));
-int	ubsec_process __P((struct cryptop *));
-void	ubsec_callback __P((struct ubsec_softc *, struct ubsec_q *));
-int	ubsec_feed __P((struct ubsec_softc *));
-void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
-void	ubsec_callback2 __P((struct ubsec_softc *, struct ubsec_q2 *));
-int	ubsec_feed2 __P((struct ubsec_softc *));
-void	ubsec_rng __P((void *));
-int	ubsec_dma_malloc __P((struct ubsec_softc *, bus_size_t,
-    struct ubsec_dma_alloc *, int));
-void	ubsec_dma_free __P((struct ubsec_softc *, struct ubsec_dma_alloc *));
-int	ubsec_dmamap_aligned __P((bus_dmamap_t));
+int	ubsec_intr(void *);
+int	ubsec_newsession(u_int32_t *, struct cryptoini *);
+int	ubsec_freesession(u_int64_t);
+int	ubsec_process(struct cryptop *);
+void	ubsec_callback(struct ubsec_softc *, struct ubsec_q *);
+int	ubsec_feed(struct ubsec_softc *);
+void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
+void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
+int	ubsec_feed2(struct ubsec_softc *);
+void	ubsec_rng(void *);
+int	ubsec_dma_malloc(struct ubsec_softc *, bus_size_t,
+    struct ubsec_dma_alloc *, int);
+void	ubsec_dma_free(struct ubsec_softc *, struct ubsec_dma_alloc *);
+int	ubsec_dmamap_aligned(bus_dmamap_t);
 
 #define	READ_REG(sc,r) \
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (r))

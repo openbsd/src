@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.21 2002/02/20 21:51:07 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.22 2002/03/14 01:26:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,51 +122,51 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.21 2002/02/20 21:51:07 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.22 2002/03/14 01:26:54 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
 static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 #endif
 
-STATIC void wi_reset		__P((struct wi_softc *));
-STATIC int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
-STATIC void wi_start		__P((struct ifnet *));
-STATIC void wi_watchdog		__P((struct ifnet *));
-STATIC void wi_shutdown		__P((void *));
-STATIC void wi_rxeof		__P((struct wi_softc *));
-STATIC void wi_txeof		__P((struct wi_softc *, int));
-STATIC void wi_update_stats	__P((struct wi_softc *));
-STATIC void wi_setmulti		__P((struct wi_softc *));
+STATIC void wi_reset(struct wi_softc *);
+STATIC int wi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC void wi_start(struct ifnet *);
+STATIC void wi_watchdog(struct ifnet *);
+STATIC void wi_shutdown(void *);
+STATIC void wi_rxeof(struct wi_softc *);
+STATIC void wi_txeof(struct wi_softc *, int);
+STATIC void wi_update_stats(struct wi_softc *);
+STATIC void wi_setmulti(struct wi_softc *);
 
-STATIC int wi_cmd		__P((struct wi_softc *, int, int));
-STATIC int wi_read_record	__P((struct wi_softc *, struct wi_ltv_gen *));
-STATIC int wi_write_record	__P((struct wi_softc *, struct wi_ltv_gen *));
-STATIC int wi_read_data		__P((struct wi_softc *, int,
-					int, caddr_t, int));
-STATIC int wi_write_data	__P((struct wi_softc *, int,
-					int, caddr_t, int));
-STATIC int wi_seek		__P((struct wi_softc *, int, int, int));
-STATIC int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
-STATIC void wi_inquire		__P((void *));
-STATIC int wi_setdef		__P((struct wi_softc *, struct wi_req *));
-STATIC int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
-STATIC void wi_get_id		__P((struct wi_softc *, int));
+STATIC int wi_cmd(struct wi_softc *, int, int);
+STATIC int wi_read_record(struct wi_softc *, struct wi_ltv_gen *);
+STATIC int wi_write_record(struct wi_softc *, struct wi_ltv_gen *);
+STATIC int wi_read_data(struct wi_softc *, int,
+					int, caddr_t, int);
+STATIC int wi_write_data(struct wi_softc *, int,
+					int, caddr_t, int);
+STATIC int wi_seek(struct wi_softc *, int, int, int);
+STATIC int wi_alloc_nicmem(struct wi_softc *, int, int *);
+STATIC void wi_inquire(void *);
+STATIC int wi_setdef(struct wi_softc *, struct wi_req *);
+STATIC int wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
+STATIC void wi_get_id(struct wi_softc *, int);
 
-STATIC int wi_media_change __P((struct ifnet *));
-STATIC void wi_media_status __P((struct ifnet *, struct ifmediareq *));
+STATIC int wi_media_change(struct ifnet *);
+STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
 
-STATIC int wi_set_ssid __P((struct ieee80211_nwid *, u_int8_t *, int));
-STATIC int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
-STATIC int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
-STATIC int wi_sync_media __P((struct wi_softc *, int, int));
-STATIC int wi_set_pm __P((struct wi_softc *, struct ieee80211_power *));
-STATIC int wi_get_pm __P((struct wi_softc *, struct ieee80211_power *));
+STATIC int wi_set_ssid(struct ieee80211_nwid *, u_int8_t *, int);
+STATIC int wi_set_nwkey(struct wi_softc *, struct ieee80211_nwkey *);
+STATIC int wi_get_nwkey(struct wi_softc *, struct ieee80211_nwkey *);
+STATIC int wi_sync_media(struct wi_softc *, int, int);
+STATIC int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
+STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
-int	wi_intr			__P((void *));
-int	wi_attach		__P((struct wi_softc *, int));
-void	wi_init			__P((void *));
-void	wi_stop			__P((struct wi_softc *));
+int	wi_intr(void *);
+int	wi_attach(struct wi_softc *, int);
+void	wi_init(void *);
+void	wi_stop(struct wi_softc *);
 
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {

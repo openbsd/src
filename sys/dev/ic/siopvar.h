@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.4 2001/04/15 06:01:29 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.5 2002/03/14 01:26:55 millert Exp $ */
 /*	$NetBSD: siopvar.h,v 1.13 2000/10/23 23:18:11 bouyer Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct siop_softc {
 	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
 	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
-	void (*sc_reset) __P((struct siop_softc*)); /* reset callback */
+	void (*sc_reset)(struct siop_softc*); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
 	bus_addr_t sc_scriptaddr;	/* on-board ram or physical adress */
 	u_int32_t *sc_script;		/* script location in memory */
@@ -96,5 +96,5 @@ struct siop_softc {
 #define SF_PCI_CLS	0x08000000 /* PCI cache line size */
 #define SF_PCI_WRI	0x10000000 /* PCI write and invalidate */
 
-void    siop_attach __P((struct siop_softc *));
-int	siop_intr __P((void *));
+void    siop_attach(struct siop_softc *);
+int	siop_intr(void *);

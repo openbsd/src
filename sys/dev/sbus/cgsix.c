@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.15 2002/03/14 01:14:22 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.16 2002/03/14 01:27:02 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -219,25 +219,25 @@ struct wsscreen_list cgsix_screenlist = {
 	sizeof(cgsix_scrlist) / sizeof(struct wsscreen_descr *), cgsix_scrlist
 };
 
-int cgsix_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int cgsix_alloc_screen __P((void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *));
-void cgsix_free_screen __P((void *, void *));
+int cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int cgsix_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+void cgsix_free_screen(void *, void *);
 int cgsix_show_screen __P((void *, void *, int,
-    void (*cb) __P((void *, int, int)), void *));
-paddr_t cgsix_mmap __P((void *, off_t, int));
-int cgsix_is_console __P((int));
-int cg6_bt_getcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
-int cg6_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
-void cgsix_loadcmap_immediate __P((struct cgsix_softc *, u_int, u_int));
-void cgsix_loadcmap_deferred __P((struct cgsix_softc *, u_int, u_int));
-void cgsix_setcolor __P((struct cgsix_softc *, u_int,
-    u_int8_t, u_int8_t, u_int8_t));
-void cgsix_reset __P((struct cgsix_softc *));
-void cgsix_hardreset __P((struct cgsix_softc *));
-void cgsix_burner __P((void *, u_int, u_int));
-int cgsix_intr __P((void *));
-static int a2int __P((char *, int));
+    void (*cb)(void *, int, int), void *));
+paddr_t cgsix_mmap(void *, off_t, int);
+int cgsix_is_console(int);
+int cg6_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
+int cg6_bt_putcmap(union bt_cmap *, struct wsdisplay_cmap *);
+void cgsix_loadcmap_immediate(struct cgsix_softc *, u_int, u_int);
+void cgsix_loadcmap_deferred(struct cgsix_softc *, u_int, u_int);
+void cgsix_setcolor(struct cgsix_softc *, u_int,
+    u_int8_t, u_int8_t, u_int8_t);
+void cgsix_reset(struct cgsix_softc *);
+void cgsix_hardreset(struct cgsix_softc *);
+void cgsix_burner(void *, u_int, u_int);
+int cgsix_intr(void *);
+static int a2int(char *, int);
 
 struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_ioctl,
@@ -251,8 +251,8 @@ struct wsdisplay_accessops cgsix_accessops = {
 	NULL,	/* burner */
 };
 
-int	cgsixmatch	__P((struct device *, void *, void *));
-void	cgsixattach	__P((struct device *, struct device *, void *));
+int	cgsixmatch(struct device *, void *, void *);
+void	cgsixattach(struct device *, struct device *, void *);
 
 struct cfattach cgsix_ca = {
 	sizeof (struct cgsix_softc), cgsixmatch, cgsixattach
@@ -521,7 +521,7 @@ cgsix_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	return (0);

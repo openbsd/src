@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf.c,v 1.2 2002/01/31 18:35:19 jason Exp $	*/
+/*	$OpenBSD: uperf.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,10 +50,10 @@ struct cfdriver uperf_cd = {
 	NULL, "uperf", DV_DULL
 };
 
-int uperf_getcntsrc __P((struct uperf_softc *, struct uperf_io *));
-int uperf_findbyval __P((struct uperf_softc *, int, u_int, int *));
-int uperf_findbysrc __P((struct uperf_softc *, int, int, u_int32_t *));
-int uperf_setcntsrc __P((struct uperf_softc *, struct uperf_io *));
+int uperf_getcntsrc(struct uperf_softc *, struct uperf_io *);
+int uperf_findbyval(struct uperf_softc *, int, u_int, int *);
+int uperf_findbysrc(struct uperf_softc *, int, int, u_int32_t *);
+int uperf_setcntsrc(struct uperf_softc *, struct uperf_io *);
 
 int
 uperfopen(dev, flags, mode, p)

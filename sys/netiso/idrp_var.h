@@ -1,4 +1,4 @@
-/*	$OpenBSD: idrp_var.h,v 1.1 1996/03/19 16:30:10 mickey Exp $	*/
+/*	$OpenBSD: idrp_var.h,v 1.2 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: idrp_var.h,v 1.1 1996/02/13 22:09:39 christos Exp $	*/
 
 /*
@@ -34,9 +34,9 @@
 struct mbuf;
 
 /* idrp_usrreq.c */
-void idrp_init __P((void));
-void idrp_input __P((struct mbuf *, ...));
-int idrp_output __P((struct mbuf *, ...));
-int idrp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *));
+void idrp_init(void);
+void idrp_input(struct mbuf *, ...);
+int idrp_output(struct mbuf *, ...);
+int idrp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+		     struct mbuf *);
 #endif

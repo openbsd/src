@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.18 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,2000 Michael Shalayeff
@@ -218,14 +218,14 @@ ledctl(int on, int off, int toggle)
 #endif
 
 #ifdef _KERNEL
-void ficache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void fdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void pdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
-void fcacheall __P((void));
-void ptlball __P((void));
-int btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
-		     vsize_t *lenp, u_int prot));
-hppa_hpa_t cpu_gethpa __P((int n));
+void ficache(pa_space_t sp, vaddr_t va, vsize_t size);
+void fdcache(pa_space_t sp, vaddr_t va, vsize_t size);
+void pdcache(pa_space_t sp, vaddr_t va, vsize_t size);
+void fcacheall(void);
+void ptlball(void);
+int btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
+		     vsize_t *lenp, u_int prot);
+hppa_hpa_t cpu_gethpa(int n);
 #endif
 
 #endif /* _MACHINE_CPUFUNC_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.37 1999/07/30 17:12:56 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.38 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -76,8 +76,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 
-int isamatch __P((struct device *, void *, void *));
-void isaattach __P((struct device *, struct device *, void *));
+int isamatch(struct device *, void *, void *);
+void isaattach(struct device *, struct device *, void *);
 
 extern int autoconf_verbose;
 

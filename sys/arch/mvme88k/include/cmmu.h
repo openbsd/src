@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.10 2001/12/22 09:49:39 smurph Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.11 2002/03/14 01:26:39 millert Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -77,38 +77,38 @@ extern struct simplelock cmmu_cpu_lock;
 
 /* machine dependant cmmu function pointer structure */
 struct cmmu_p {
-	void (*cmmu_init_func) __P((void));
-	void (*show_apr_func) __P((unsigned));
-	void (*setup_board_config_func) __P((void));
-	void (*setup_cmmu_config_func) __P((void));
-	void (*cmmu_dump_config_func) __P((void));
-	void (*cpu_configuration_print_func) __P((int));
-	void (*cmmu_shutdown_now_func) __P((void));
-	void (*cmmu_parity_enable_func) __P((void));
-	unsigned (*cmmu_cpu_number_func) __P((void));
-	unsigned (*cmmu_get_idr_func) __P((unsigned));
-	void (*cmmu_set_sapr_func) __P((unsigned));
-	void (*cmmu_remote_set_sapr_func) __P((unsigned, unsigned));
-	void (*cmmu_set_uapr_func) __P((unsigned));
-	void (*cmmu_set_batc_entry_func) __P((unsigned, unsigned, unsigned, unsigned));
-	void (*cmmu_set_pair_batc_entry_func) __P((unsigned, unsigned, unsigned));
-	void (*cmmu_flush_remote_tlb_func) __P((unsigned, unsigned, vm_offset_t, int));
-	void (*cmmu_flush_tlb_func) __P((unsigned, vm_offset_t, int));
-	void (*cmmu_pmap_activate_func) __P((unsigned, unsigned,
+	void (*cmmu_init_func)(void);
+	void (*show_apr_func)(unsigned);
+	void (*setup_board_config_func)(void);
+	void (*setup_cmmu_config_func)(void);
+	void (*cmmu_dump_config_func)(void);
+	void (*cpu_configuration_print_func)(int);
+	void (*cmmu_shutdown_now_func)(void);
+	void (*cmmu_parity_enable_func)(void);
+	unsigned (*cmmu_cpu_number_func)(void);
+	unsigned (*cmmu_get_idr_func)(unsigned);
+	void (*cmmu_set_sapr_func)(unsigned);
+	void (*cmmu_remote_set_sapr_func)(unsigned, unsigned);
+	void (*cmmu_set_uapr_func)(unsigned);
+	void (*cmmu_set_batc_entry_func)(unsigned, unsigned, unsigned, unsigned);
+	void (*cmmu_set_pair_batc_entry_func)(unsigned, unsigned, unsigned);
+	void (*cmmu_flush_remote_tlb_func)(unsigned, unsigned, vm_offset_t, int);
+	void (*cmmu_flush_tlb_func)(unsigned, vm_offset_t, int);
+	void (*cmmu_pmap_activate_func)(unsigned, unsigned,
 					     batc_template_t i_batc[BATC_MAX],
-					     batc_template_t d_batc[BATC_MAX]));
-	void (*cmmu_flush_remote_cache_func) __P((int, vm_offset_t, int));
-	void (*cmmu_flush_cache_func) __P((vm_offset_t, int));
-	void (*cmmu_flush_remote_inst_cache_func) __P((int, vm_offset_t, int));
-	void (*cmmu_flush_inst_cache_func) __P((vm_offset_t, int));
-	void (*cmmu_flush_remote_data_cache_func) __P((int, vm_offset_t, int));
-	void (*cmmu_flush_data_cache_func) __P((vm_offset_t, int));
-	void (*dma_cachectl_func) __P((vm_offset_t, int, int));
+					     batc_template_t d_batc[BATC_MAX]);
+	void (*cmmu_flush_remote_cache_func)(int, vm_offset_t, int);
+	void (*cmmu_flush_cache_func)(vm_offset_t, int);
+	void (*cmmu_flush_remote_inst_cache_func)(int, vm_offset_t, int);
+	void (*cmmu_flush_inst_cache_func)(vm_offset_t, int);
+	void (*cmmu_flush_remote_data_cache_func)(int, vm_offset_t, int);
+	void (*cmmu_flush_data_cache_func)(vm_offset_t, int);
+	void (*dma_cachectl_func)(vm_offset_t, int, int);
 #ifdef DDB
-	unsigned (*cmmu_get_by_mode_func) __P((int, int));
-	void (*cmmu_show_translation_func) __P((unsigned, unsigned, unsigned, int));
-	void (*cmmu_cache_state_func) __P((unsigned, unsigned));
-	void (*show_cmmu_info_func) __P((unsigned));
+	unsigned (*cmmu_get_by_mode_func)(int, int);
+	void (*cmmu_show_translation_func)(unsigned, unsigned, unsigned, int);
+	void (*cmmu_cache_state_func)(unsigned, unsigned);
+	void (*show_cmmu_info_func)(unsigned);
 #endif /* end if DDB */
 };
 

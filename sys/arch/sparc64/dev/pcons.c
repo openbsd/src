@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.3 2001/12/08 17:11:55 miod Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -76,10 +76,10 @@ typedef struct cnm_state {
 #define cn_trap()
 #endif
 #define cn_isconsole(d)	((d) == cn_tab->cn_dev)
-void cn_init_magic __P((cnm_state_t *cnm));
-void cn_destroy_magic __P((cnm_state_t *cnm));
-int cn_set_magic __P((char *magic));
-int cn_get_magic __P((char *magic, int len));
+void cn_init_magic(cnm_state_t *cnm);
+void cn_destroy_magic(cnm_state_t *cnm);
+int cn_set_magic(char *magic);
+int cn_get_magic(char *magic, int len);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)                                         \
@@ -106,8 +106,8 @@ int cn_get_magic __P((char *magic, int len));
 
 #include <sparc64/dev/cons.h>
 
-static int pconsmatch __P((struct device *, void *, void *));
-static void pconsattach __P((struct device *, struct device *, void *));
+static int pconsmatch(struct device *, void *, void *);
+static void pconsattach(struct device *, struct device *, void *);
 
 struct cfattach pcons_ca = {
 	sizeof(struct pconssoftc), pconsmatch, pconsattach
@@ -120,7 +120,7 @@ struct cfdriver pcons_cd = {
 extern struct cfdriver pcons_cd;
 static struct cnm_state pcons_cnm_state;
 
-static int pconsprobe __P((void));
+static int pconsprobe(void);
 extern struct consdev *cn_tab;
 
 static int
@@ -130,7 +130,7 @@ pconsmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	extern int  prom_cngetc __P((dev_t));
+	extern int  prom_cngetc(dev_t);
 
 	/* Only attach if no other console has attached. */
 	return ((strcmp("pcons", ma->ma_name) == 0) &&
@@ -138,7 +138,7 @@ pconsmatch(parent, match, aux)
 
 }
 
-static void pcons_poll __P((void *));
+static void pcons_poll(void *);
 
 static void
 pconsattach(parent, self, aux)
@@ -156,8 +156,8 @@ pconsattach(parent, self, aux)
 	timeout_set(&sc->sc_poll_to, pcons_poll, sc);
 }
 
-static void pconsstart __P((struct tty *));
-static int pconsparam __P((struct tty *, struct termios *));
+static void pconsstart(struct tty *);
+static int pconsparam(struct tty *, struct termios *);
 
 int
 pconsopen(dev, flag, mode, p)
@@ -373,7 +373,7 @@ pcons_cnpollc(dev, on)
 	}
 }
 
-void pcons_dopoll __P((void));
+void pcons_dopoll(void);
 void
 pcons_dopoll() {
 		pcons_poll((void*)pcons_cd.cd_devs[0]);

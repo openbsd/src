@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.26 2001/06/13 07:14:39 miod Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.27 2002/03/14 01:27:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -65,32 +65,32 @@ char userconf_argbuf[40];			/* Additional input         */
 char userconf_cmdbuf[40];			/* Command line             */
 char userconf_histbuf[40];
 
-void userconf_init __P((void));
-int userconf_more __P((void));
-void userconf_modify __P((char *, int*));
-void userconf_hist_cmd __P((char));
-void userconf_hist_int __P((int));
-void userconf_hist_eoc __P((void));
-void userconf_pnum __P((int));
-void userconf_pdevnam __P((short));
-void userconf_pdev __P((short));
-int userconf_number __P((char *, int *));
-int userconf_device __P((char *, int *, short *, short *));
-int userconf_attr __P((char *, int *));
-void userconf_modify __P((char *, int *));
-void userconf_change __P((int));
-void userconf_disable __P((int));
-void userconf_enable __P((int));
-void userconf_help __P((void));
-void userconf_list __P((void));
-void userconf_show __P((void));
-void userconf_common_attr_val __P((short, int *, char));
-void userconf_show_attr __P((char *));
-void userconf_common_dev __P((char *, int, short, short, char));
-void userconf_common_attr __P((char *, int, char));
-void userconf_add_read __P((char *, char, char *, int, int *));
-void userconf_add __P((char *, int, short, short));
-int userconf_parse __P((char *));
+void userconf_init(void);
+int userconf_more(void);
+void userconf_modify(char *, int*);
+void userconf_hist_cmd(char);
+void userconf_hist_int(int);
+void userconf_hist_eoc(void);
+void userconf_pnum(int);
+void userconf_pdevnam(short);
+void userconf_pdev(short);
+int userconf_number(char *, int *);
+int userconf_device(char *, int *, short *, short *);
+int userconf_attr(char *, int *);
+void userconf_modify(char *, int *);
+void userconf_change(int);
+void userconf_disable(int);
+void userconf_enable(int);
+void userconf_help(void);
+void userconf_list(void);
+void userconf_show(void);
+void userconf_common_attr_val(short, int *, char);
+void userconf_show_attr(char *);
+void userconf_common_dev(char *, int, short, short, char);
+void userconf_common_attr(char *, int, char);
+void userconf_add_read(char *, char, char *, int, int *);
+void userconf_add(char *, int, short, short);
+int userconf_parse(char *);
 
 #define UC_CHANGE 'c'
 #define UC_DISABLE 'd'

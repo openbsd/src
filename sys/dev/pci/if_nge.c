@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.17 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.18 2002/03/14 01:26:59 millert Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -134,50 +134,50 @@
 
 #include <dev/pci/if_ngereg.h>
 
-int nge_probe		__P((struct device *, void *, void *));
-void nge_attach		__P((struct device *, struct device *, void *));
+int nge_probe(struct device *, void *, void *);
+void nge_attach(struct device *, struct device *, void *);
 
-int nge_alloc_jumbo_mem	__P((struct nge_softc *));
-void *nge_jalloc	__P((struct nge_softc *));
-void nge_jfree		__P((caddr_t, u_int, void *));
+int nge_alloc_jumbo_mem(struct nge_softc *);
+void *nge_jalloc(struct nge_softc *);
+void nge_jfree(caddr_t, u_int, void *);
 
-int nge_newbuf		__P((struct nge_softc *, struct nge_desc *,
-			     struct mbuf *));
-int nge_encap		__P((struct nge_softc *, struct mbuf *, u_int32_t *));
-void nge_rxeof		__P((struct nge_softc *));
-void nge_rxeoc		__P((struct nge_softc *));
-void nge_txeof		__P((struct nge_softc *));
-int nge_intr		__P((void *));
-void nge_tick		__P((void *));
-void nge_start		__P((struct ifnet *));
-int nge_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void nge_init		__P((void *));
-void nge_stop		__P((struct nge_softc *));
-void nge_watchdog	__P((struct ifnet *));
-void nge_shutdown	__P((void *));
-int nge_ifmedia_upd	__P((struct ifnet *));
-void nge_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+int nge_newbuf(struct nge_softc *, struct nge_desc *,
+			     struct mbuf *);
+int nge_encap(struct nge_softc *, struct mbuf *, u_int32_t *);
+void nge_rxeof(struct nge_softc *);
+void nge_rxeoc(struct nge_softc *);
+void nge_txeof(struct nge_softc *);
+int nge_intr(void *);
+void nge_tick(void *);
+void nge_start(struct ifnet *);
+int nge_ioctl(struct ifnet *, u_long, caddr_t);
+void nge_init(void *);
+void nge_stop(struct nge_softc *);
+void nge_watchdog(struct ifnet *);
+void nge_shutdown(void *);
+int nge_ifmedia_upd(struct ifnet *);
+void nge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-void nge_delay		__P((struct nge_softc *));
-void nge_eeprom_idle	__P((struct nge_softc *));
-void nge_eeprom_putbyte	__P((struct nge_softc *, int));
-void nge_eeprom_getword	__P((struct nge_softc *, int, u_int16_t *));
-void nge_read_eeprom	__P((struct nge_softc *, caddr_t, int, int, int));
+void nge_delay(struct nge_softc *);
+void nge_eeprom_idle(struct nge_softc *);
+void nge_eeprom_putbyte(struct nge_softc *, int);
+void nge_eeprom_getword(struct nge_softc *, int, u_int16_t *);
+void nge_read_eeprom(struct nge_softc *, caddr_t, int, int, int);
 
-void nge_mii_sync	__P((struct nge_softc *));
-void nge_mii_send	__P((struct nge_softc *, u_int32_t, int));
-int nge_mii_readreg	__P((struct nge_softc *, struct nge_mii_frame *));
-int nge_mii_writereg	__P((struct nge_softc *, struct nge_mii_frame *));
+void nge_mii_sync(struct nge_softc *);
+void nge_mii_send(struct nge_softc *, u_int32_t, int);
+int nge_mii_readreg(struct nge_softc *, struct nge_mii_frame *);
+int nge_mii_writereg(struct nge_softc *, struct nge_mii_frame *);
 
-int nge_miibus_readreg	__P((struct device *, int, int));
-void nge_miibus_writereg	__P((struct device *, int, int, int));
-void nge_miibus_statchg	__P((struct device *));
+int nge_miibus_readreg(struct device *, int, int);
+void nge_miibus_writereg(struct device *, int, int, int);
+void nge_miibus_statchg(struct device *);
 
-void nge_setmulti	__P((struct nge_softc *));
-u_int32_t nge_crc	__P((struct nge_softc *, caddr_t));
-void nge_reset		__P((struct nge_softc *));
-int nge_list_rx_init	__P((struct nge_softc *));
-int nge_list_tx_init	__P((struct nge_softc *));
+void nge_setmulti(struct nge_softc *);
+u_int32_t nge_crc(struct nge_softc *, caddr_t);
+void nge_reset(struct nge_softc *);
+int nge_list_rx_init(struct nge_softc *);
+int nge_list_tx_init(struct nge_softc *);
 
 #ifdef NGE_USEIOSPACE
 #define NGE_RES			SYS_RES_IOPORT

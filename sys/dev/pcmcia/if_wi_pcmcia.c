@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.17 2002/01/22 14:36:04 mickey Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.18 2002/03/14 01:27:01 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -70,15 +70,15 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
-int	wi_pcmcia_match		__P((struct device *, void *, void *));
-void	wi_pcmcia_attach	__P((struct device *, struct device *, void *));
-int	wi_pcmcia_detach	__P((struct device *, int));
-int	wi_pcmcia_activate	__P((struct device *, enum devact));
+int	wi_pcmcia_match(struct device *, void *, void *);
+void	wi_pcmcia_attach(struct device *, struct device *, void *);
+int	wi_pcmcia_detach(struct device *, int);
+int	wi_pcmcia_activate(struct device *, enum devact);
 
-int	wi_intr			__P((void *));
-int	wi_attach		__P((struct wi_softc *, int));
-void	wi_init			__P((void *));
-void	wi_stop			__P((struct wi_softc *));
+int	wi_intr(void *);
+int	wi_attach(struct wi_softc *, int);
+void	wi_init(void *);
+void	wi_stop(struct wi_softc *);
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -240,7 +240,7 @@ static const struct wi_pcmcia_product {
 	}
 };
 
-static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
+static const struct wi_pcmcia_product *wi_lookup(struct pcmcia_attach_args *pa);
 
 const struct wi_pcmcia_product *
 wi_lookup(pa)

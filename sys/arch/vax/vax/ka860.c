@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka860.c,v 1.5 2000/04/27 01:10:13 bjc Exp $	*/
+/*	$OpenBSD: ka860.c,v 1.6 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: ka860.c,v 1.15 1999/08/07 10:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
@@ -53,13 +53,13 @@
 
 #include <vax/vax/gencons.h>
 
-static	void	ka86_memerr __P((void));
-static	int	ka86_mchk __P((caddr_t));
-static	void	ka86_reboot __P((int));
-static	void	ka86_clrf __P((void));
-static	void	ka860_init __P((struct device *));
+static	void	ka86_memerr(void);
+static	int	ka86_mchk(caddr_t);
+static	void	ka86_reboot(int);
+static	void	ka86_clrf(void);
+static	void	ka860_init(struct device *);
 
-void	crlattach __P((void));
+void	crlattach(void);
 
 struct	cpu_dep	ka860_calls = {
 	0,
@@ -337,9 +337,9 @@ ka86_reboot(howto)
 	asm("halt");
 }
 
-static	int abus_print __P((void *, const char *));
-static  int abus_match __P((struct device *, struct cfdata *, void *));
-static  void abus_attach __P((struct device *, struct device *, void*));
+static	int abus_print(void *, const char *);
+static  int abus_match(struct device *, struct cfdata *, void *);
+static  void abus_attach(struct device *, struct device *, void*);
 
 struct  cfattach abus_ca = {
         sizeof(struct device), abus_match, abus_attach

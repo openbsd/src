@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.6 2001/06/26 19:56:51 dugsong Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.7 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -71,32 +71,22 @@ struct protosw {
 	short	pr_flags;		/* see below */
 
 /* protocol-protocol hooks */
-	void	(*pr_input)		/* input to protocol (from below) */
-			__P((struct mbuf *, ...));
-	int	(*pr_output)		/* output to protocol (from above) */
-			__P((struct mbuf *, ...));
-	void	*(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, void *));
-	int	(*pr_ctloutput)		/* control output (from above) */
-			__P((int, struct socket *, int, int, struct mbuf **));
+	void	(*pr_input)		/* input to protocol (from below) */(struct mbuf *, ...);
+	int	(*pr_output)		/* output to protocol (from above) */(struct mbuf *, ...);
+	void	*(*pr_ctlinput)		/* control input (from below) */(int, struct sockaddr *, void *);
+	int	(*pr_ctloutput)		/* control output (from above) */(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
-	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *));
+	int	(*pr_usrreq)		/* user request: see list below */(struct socket *, int, struct mbuf *,
+			     struct mbuf *, struct mbuf *);
 
 /* utility hooks */
-	void	(*pr_init)		/* initialization hook */
-			__P((void));
+	void	(*pr_init)		/* initialization hook */(void);
 
-	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			__P((void));
-	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			__P((void));
-	void	(*pr_drain)		/* flush any excess space possible */
-			__P((void));
-	int	(*pr_sysctl)		/* sysctl for protocol */
-			__P((int *, u_int, void *, size_t *, void *, size_t));
+	void	(*pr_fasttimo)		/* fast timeout (200ms) */(void);
+	void	(*pr_slowtimo)		/* slow timeout (500ms) */(void);
+	void	(*pr_drain)		/* flush any excess space possible */(void);
+	int	(*pr_sysctl)		/* sysctl for protocol */(int *, u_int, void *, size_t *, void *, size_t);
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
@@ -235,7 +225,7 @@ char	*prcorequests[] = {
 
 #ifdef _KERNEL
 struct sockaddr;
-struct protosw *pffindproto __P((int, int, int));
-struct protosw *pffindtype __P((int, int));
-void pfctlinput __P((int, struct sockaddr *));
+struct protosw *pffindproto(int, int, int);
+struct protosw *pffindtype(int, int);
+void pfctlinput(int, struct sockaddr *);
 #endif

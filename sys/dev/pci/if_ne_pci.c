@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.10 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.11 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -87,8 +87,8 @@ struct ne_pci_softc {
 	void *sc_ih;				/* interrupt handle */
 };
 
-int ne_pci_match __P((struct device *, void *, void *));
-void ne_pci_attach __P((struct device *, struct device *, void *));
+int ne_pci_match(struct device *, void *, void *);
+void ne_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
@@ -97,11 +97,11 @@ struct cfattach ne_pci_ca = {
 const struct ne_pci_product {
 	pci_vendor_id_t npp_vendor;
 	pci_product_id_t npp_product;
-	int (*npp_mediachange) __P((struct dp8390_softc *));
-	void (*npp_mediastatus) __P((struct dp8390_softc *,
-	    struct ifmediareq *));
-	void (*npp_init_card) __P((struct dp8390_softc *));
-	void (*npp_media_init) __P((struct dp8390_softc *));
+	int (*npp_mediachange)(struct dp8390_softc *);
+	void (*npp_mediastatus)(struct dp8390_softc *,
+	    struct ifmediareq *);
+	void (*npp_init_card)(struct dp8390_softc *);
+	void (*npp_media_init)(struct dp8390_softc *);
 } ne_pci_prod[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
 	  rtl80x9_mediachange,		rtl80x9_mediastatus,
@@ -145,7 +145,7 @@ const struct ne_pci_product {
 	  /* KTI */ },
 };
 
-const struct ne_pci_product *ne_pci_lookup __P((struct pci_attach_args *));
+const struct ne_pci_product *ne_pci_lookup(struct pci_attach_args *);
 
 const struct ne_pci_product *
 ne_pci_lookup(pa)

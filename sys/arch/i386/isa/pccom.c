@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.41 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.42 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -107,17 +107,17 @@
 cdev_decl(com);
 bdev_decl(com);
 
-static u_char tiocm_xxx2mcr __P((int));
+static u_char tiocm_xxx2mcr(int);
 
-void pccom_xr16850_fifo_init __P((bus_space_tag_t, bus_space_handle_t));
+void pccom_xr16850_fifo_init(bus_space_tag_t, bus_space_handle_t);
 
 /*
  * XXX the following two cfattach structs should be different, and possibly
  * XXX elsewhere.
  */
-int	comprobe __P((struct device *, void *, void *));
-void	comattach __P((struct device *, struct device *, void *));
-void	compwroff __P((struct com_softc *));
+int	comprobe(struct device *, void *, void *);
+void	comattach(struct device *, struct device *, void *);
+void	compwroff(struct com_softc *);
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
@@ -141,7 +141,7 @@ struct cfdriver pccom_cd = {
 	NULL, "pccom", DV_TTY
 };
 
-void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
+void cominit(bus_space_tag_t, bus_space_handle_t, int);
 
 #ifndef CONSPEED
 #define	CONSPEED B9600
@@ -171,8 +171,8 @@ static	bus_space_tag_t com_kgdb_iot;
 static	bus_space_handle_t com_kgdb_ioh;
 static	int com_kgdb_attached;
 
-int	com_kgdb_getc __P((void *));
-void	com_kgdb_putc __P((void *, int));
+int	com_kgdb_getc(void *);
+void	com_kgdb_putc(void *, int);
 #endif /* KGDB */
 
 #define	DEVUNIT(x)	(minor(x) & 0x7f)

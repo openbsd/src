@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.14 2001/06/25 00:43:08 mickey Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.15 2002/03/14 01:26:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -54,26 +54,26 @@
 int ggdebug = 0;
 int ggstrayints = 0;
 
-void	ggbusattach __P((struct device *, struct device *, void *));
-int	ggbusmatch __P((struct device *, void *, void *));
-int	ggbusprint __P((void *, const char *));
+void	ggbusattach(struct device *, struct device *, void *);
+int	ggbusmatch(struct device *, void *, void *);
+int	ggbusprint(void *, const char *);
 
-int	ggbus_io_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	ggbus_mem_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	ggbus_cannot_mem_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	ggbus_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int	ggbus_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	ggbus_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	ggbus_cannot_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	ggbus_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-int	ggbusintr __P((void *));
+int	ggbusintr(void *);
 
-void	ggbus_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
+void	ggbus_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
 void	*ggbus_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
-void	ggbus_intr_disestablish __P((void *, void *));
-int	ggbus_intr_check __P((void *, int, int));
+void	ggbus_intr_disestablish(void *, void *);
+int	ggbus_intr_check(void *, int, int);
 
 struct cfattach ggbus_ca = {
 	sizeof(struct ggbus_softc), ggbusmatch, ggbusattach

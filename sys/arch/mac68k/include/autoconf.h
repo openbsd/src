@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2001/05/05 22:33:50 art Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.8 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
@@ -43,29 +43,29 @@
 
 #ifdef _KERNEL
 /* autoconf.c */
-void	setconf __P((void));
+void	setconf(void);
 
 /* machdep.c */
-void	mac68k_set_io_offsets __P((vm_offset_t));
-void	dumpconf __P((void));
-int	badbaddr __P((register caddr_t addr));
-int	badwaddr __P((register caddr_t addr));
-int	badladdr __P((register caddr_t addr));
+void	mac68k_set_io_offsets(vm_offset_t);
+void	dumpconf(void);
+int	badbaddr(register caddr_t addr);
+int	badwaddr(register caddr_t addr);
+int	badladdr(register caddr_t addr);
 
 /* clock.h */
 
-void	enablertclock __P((void));
-void	cpu_initclocks __P((void));
-void	setstatclockrate __P((int));
-void	disablertclock __P((void));
-u_long	clkread __P((void));
-void	inittodr __P((time_t));
-void	resettodr __P((void));
-void	mac68k_calibrate_delay __P((void));
-void	startrtclock __P((void));
+void	enablertclock(void);
+void	cpu_initclocks(void);
+void	setstatclockrate(int);
+void	disablertclock(void);
+u_long	clkread(void);
+void	inittodr(time_t);
+void	resettodr(void);
+void	mac68k_calibrate_delay(void);
+void	startrtclock(void);
 
 /* macrom.c */
-void	mrg_init __P((void));
+void	mrg_init(void);
 #endif	/* _KERNEL */
 
 #endif	/* _MAC68K_AUTOCONF_H_ */

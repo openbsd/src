@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_lex.h,v 1.5 1997/07/06 16:45:21 niklas Exp $	*/
+/*	$OpenBSD: db_lex.h,v 1.6 2002/03/14 01:26:51 millert Exp $	*/
 /*	$NetBSD: db_lex.h,v 1.7 1996/02/05 01:57:07 christos Exp $	*/
 
 /* 
@@ -33,14 +33,14 @@
 /*
  * Lexical analyzer.
  */
-int db_read_line __P((void));
-void db_flush_line __P((void));
-int db_read_char __P((void));
-void db_unread_char __P((int));
-void db_unread_token __P((int));
-int db_read_token __P((void));
-void db_flush_lex __P((void));
-int db_lex __P((void));
+int db_read_line(void);
+void db_flush_line(void);
+int db_read_char(void);
+void db_unread_char(int);
+void db_unread_token(int);
+int db_read_token(void);
+void db_flush_lex(void);
+int db_lex(void);
 
 db_expr_t db_tok_number;
 #define	TOK_STRING_SIZE		120 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 1999/08/16 09:43:08 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -49,15 +49,15 @@ int	debug = 0;	/* XXX */
 /*
  * Device configuration
  */
-int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	sdopen __P((struct open_file *, ...));
-int	sdclose __P((struct open_file *));
+int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdopen(struct open_file *, ...);
+int	sdclose(struct open_file *);
 #define	sdioctl		noioctl
 
 #define xxstrategy	\
-	(int (*) __P((void *, int, daddr_t, size_t, void *, size_t *)))nullsys
-#define xxopen		(int (*) __P((struct open_file *, ...)))nodev
-#define xxclose		(int (*) __P((struct open_file *)))nullsys
+	(int (*)(void *, int, daddr_t, size_t, void *, size_t *))nullsys
+#define xxopen		(int (*)(struct open_file *, ...))nodev
+#define xxclose		(int (*)(struct open_file *))nullsys
 
 struct devsw devsw[] = {
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*0*/
@@ -71,7 +71,7 @@ int	ndevs = (sizeof(devsw) / sizeof(devsw[0]));
 /*
  * Physical unit/lun detection.
  */
-int	punitzero __P((int, int, int *));
+int	punitzero(int, int, int *);
 
 int
 punitzero(ctlr, slave, punit)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.17 2001/06/23 19:43:53 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.18 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -139,9 +139,9 @@ typedef	_BSD_OFF_T_	off_t;
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-off_t	 lseek __P((int, off_t, int));
-int	 ftruncate __P((int, off_t));
-int	 truncate __P((const char *, off_t));
+off_t	 lseek(int, off_t, int);
+int	 ftruncate(int, off_t);
+int	 truncate(const char *, off_t);
 __END_DECLS
 #endif /* !_KERNEL */
 #endif /* !defined(_POSIX_SOURCE) ... */

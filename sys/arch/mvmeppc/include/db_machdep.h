@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2001/11/06 00:30:38 art Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2002/03/14 01:26:41 millert Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -93,8 +93,8 @@ db_regs_t	ddb_regs;		/* register state */
 
 #ifdef _KERNEL
 
-void	kdb_kintr __P((void *));
-int	kdb_trap __P((int, void *));
+void	kdb_kintr(void *);
+int	kdb_trap(int, void *);
 
 #endif /* _KERNEL */
 

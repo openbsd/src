@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.12 2001/12/04 06:32:06 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.13 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -42,25 +42,24 @@
 
 #include <i386/pci/pcibiosvar.h>
 
-typedef int (*pciaddr_resource_manage_func_t) 
-	__P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t, int,
-	struct extent *, int, bus_addr_t *, bus_size_t));
-void	pciaddr_resource_manage __P((struct pcibios_softc *,
-    pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t));
-void	pciaddr_resource_reserve __P((struct pcibios_softc *,
-    pci_chipset_tag_t, pcitag_t));
-int	pciaddr_do_resource_reserve __P((struct pcibios_softc *,
+typedef int (*pciaddr_resource_manage_func_t)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t, int,
+	struct extent *, int, bus_addr_t *, bus_size_t);
+void	pciaddr_resource_manage(struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t);
+void	pciaddr_resource_reserve(struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t);
+int	pciaddr_do_resource_reserve(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
-    bus_addr_t *, bus_size_t));
-void	pciaddr_resource_allocate __P((struct pcibios_softc *,
-    pci_chipset_tag_t, pcitag_t));
-int	pciaddr_do_resource_allocate __P((struct pcibios_softc *,
+    bus_addr_t *, bus_size_t);
+void	pciaddr_resource_allocate(struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t);
+int	pciaddr_do_resource_allocate(struct pcibios_softc *,
     pci_chipset_tag_t, pcitag_t, int, struct extent *, int, bus_addr_t *,
-    bus_size_t));
-bus_addr_t pciaddr_ioaddr __P((u_int32_t));
-void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
+    bus_size_t);
+bus_addr_t pciaddr_ioaddr(u_int32_t);
+void	pciaddr_print_devid(pci_chipset_tag_t, pcitag_t);
 
-int	pciaddr_device_is_agp __P((pci_chipset_tag_t, pcitag_t));
+int	pciaddr_device_is_agp(pci_chipset_tag_t, pcitag_t);
 
 #define PCIADDR_MEM_START	0x0
 #define PCIADDR_MEM_END		0xffffffff

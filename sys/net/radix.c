@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.7 2001/07/21 14:34:47 itojun Exp $	*/
+/*	$OpenBSD: radix.c,v 1.8 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
@@ -65,10 +65,10 @@ static char *rn_zeros, *rn_ones;
 #define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
 
 
-static int rn_satsifies_leaf __P((char *, struct radix_node *, int));
-static int rn_lexobetter __P((void *, void *));
-static struct radix_mask *rn_new_radix_mask __P((struct radix_node *,
-						 struct radix_mask *));
+static int rn_satsifies_leaf(char *, struct radix_node *, int);
+static int rn_lexobetter(void *, void *);
+static struct radix_mask *rn_new_radix_mask(struct radix_node *,
+						 struct radix_mask *);
 /*
  * The data structure for the keys is a radix tree with one way
  * branching removed.  The index rn_b at an internal node n represents a bit
@@ -808,7 +808,7 @@ out:
 int
 rn_walktree(h, f, w)
 	struct radix_node_head *h;
-	register int (*f) __P((struct radix_node *, void *));
+	register int (*f)(struct radix_node *, void *);
 	void *w;
 {
 	int error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.22 2002/02/13 20:43:42 jasoni Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.23 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -76,33 +76,33 @@
  * are copied to structures.
  */
 
-int linux_to_bsd_domain __P((int));
-int linux_socket __P((struct proc *, void *, register_t *));
-int linux_bind __P((struct proc *, void *, register_t *));
-int linux_connect __P((struct proc *, void *, register_t *));
-int linux_listen __P((struct proc *, void *, register_t *));
-int linux_accept __P((struct proc *, void *, register_t *));
-int linux_getsockname __P((struct proc *, void *, register_t *));
-int linux_getpeername __P((struct proc *, void *, register_t *));
-int linux_socketpair __P((struct proc *, void *, register_t *));
-int linux_send __P((struct proc *, void *, register_t *));
-int linux_recv __P((struct proc *, void *, register_t *));
-int linux_sendto __P((struct proc *, void *, register_t *));
-int linux_recvfrom __P((struct proc *, void *, register_t *));
-int linux_shutdown __P((struct proc *, void *, register_t *));
-int linux_to_bsd_sopt_level __P((int));
-int linux_to_bsd_so_sockopt __P((int));
-int linux_to_bsd_ip_sockopt __P((int));
-int linux_to_bsd_tcp_sockopt __P((int));
-int linux_to_bsd_udp_sockopt __P((int));
-int linux_setsockopt __P((struct proc *, void *, register_t *));
-int linux_getsockopt __P((struct proc *, void *, register_t *));
-int linux_recvmsg __P((struct proc *, void *, register_t *));
-int linux_sendmsg __P((struct proc *, void *, register_t *));
+int linux_to_bsd_domain(int);
+int linux_socket(struct proc *, void *, register_t *);
+int linux_bind(struct proc *, void *, register_t *);
+int linux_connect(struct proc *, void *, register_t *);
+int linux_listen(struct proc *, void *, register_t *);
+int linux_accept(struct proc *, void *, register_t *);
+int linux_getsockname(struct proc *, void *, register_t *);
+int linux_getpeername(struct proc *, void *, register_t *);
+int linux_socketpair(struct proc *, void *, register_t *);
+int linux_send(struct proc *, void *, register_t *);
+int linux_recv(struct proc *, void *, register_t *);
+int linux_sendto(struct proc *, void *, register_t *);
+int linux_recvfrom(struct proc *, void *, register_t *);
+int linux_shutdown(struct proc *, void *, register_t *);
+int linux_to_bsd_sopt_level(int);
+int linux_to_bsd_so_sockopt(int);
+int linux_to_bsd_ip_sockopt(int);
+int linux_to_bsd_tcp_sockopt(int);
+int linux_to_bsd_udp_sockopt(int);
+int linux_setsockopt(struct proc *, void *, register_t *);
+int linux_getsockopt(struct proc *, void *, register_t *);
+int linux_recvmsg(struct proc *, void *, register_t *);
+int linux_sendmsg(struct proc *, void *, register_t *);
 
-int linux_check_hdrincl __P((struct proc *, int, register_t *));
-int linux_sendto_hdrincl __P((struct proc *, struct sys_sendto_args *,
-    register_t *));
+int linux_check_hdrincl(struct proc *, int, register_t *);
+int linux_sendto_hdrincl(struct proc *, struct sys_sendto_args *,
+    register_t *);
 
 /*
  * Convert between Linux and BSD socket domain values
@@ -1003,7 +1003,7 @@ linux_ioctl_socket(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
-	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
+	int (*ioctlf)(struct file *, u_long, caddr_t, struct proc *);
 	struct ioctl_pt pt;
 	int error = 0, isdev = 0, dosys = 1;
 

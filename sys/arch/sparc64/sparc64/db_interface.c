@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 #include "esp_sbus.h"
 #endif
 
-extern void OF_enter __P((void));
+extern void OF_enter(void);
 
 extern struct traptrace {
 	unsigned short tl:3,	/* Trap level */
@@ -221,31 +221,31 @@ int	db_active = 0;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap __P((struct trapframe64 *));
-void db_prom_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_proc_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_ctx_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_fpstate __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_ts __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_pcb __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_pv __P((db_expr_t, int, db_expr_t, char *));
-void db_setpcb __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_dtlb __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_dtsb __P((db_expr_t, int, db_expr_t, char *));
-void db_pmap_kernel __P((db_expr_t, int, db_expr_t, char *));
-void db_pload_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_pmap_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_lock __P((db_expr_t, int, db_expr_t, char *));
-void db_traptrace __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_buf __P((db_expr_t, int, db_expr_t, char *));
-void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
-void db_watch __P((db_expr_t, int, db_expr_t, char *));
+void kdb_kbd_trap(struct trapframe64 *);
+void db_prom_cmd(db_expr_t, int, db_expr_t, char *);
+void db_proc_cmd(db_expr_t, int, db_expr_t, char *);
+void db_ctx_cmd(db_expr_t, int, db_expr_t, char *);
+void db_dump_window(db_expr_t, int, db_expr_t, char *);
+void db_dump_stack(db_expr_t, int, db_expr_t, char *);
+void db_dump_trap(db_expr_t, int, db_expr_t, char *);
+void db_dump_fpstate(db_expr_t, int, db_expr_t, char *);
+void db_dump_ts(db_expr_t, int, db_expr_t, char *);
+void db_dump_pcb(db_expr_t, int, db_expr_t, char *);
+void db_dump_pv(db_expr_t, int, db_expr_t, char *);
+void db_setpcb(db_expr_t, int, db_expr_t, char *);
+void db_dump_dtlb(db_expr_t, int, db_expr_t, char *);
+void db_dump_dtsb(db_expr_t, int, db_expr_t, char *);
+void db_pmap_kernel(db_expr_t, int, db_expr_t, char *);
+void db_pload_cmd(db_expr_t, int, db_expr_t, char *);
+void db_pmap_cmd(db_expr_t, int, db_expr_t, char *);
+void db_lock(db_expr_t, int, db_expr_t, char *);
+void db_traptrace(db_expr_t, int, db_expr_t, char *);
+void db_dump_buf(db_expr_t, int, db_expr_t, char *);
+void db_dump_espcmd(db_expr_t, int, db_expr_t, char *);
+void db_watch(db_expr_t, int, db_expr_t, char *);
 
-static void db_dump_pmap __P((struct pmap*));
-static void db_print_trace_entry __P((struct traptrace *, int));
+static void db_dump_pmap(struct pmap*);
+static void db_print_trace_entry(struct traptrace *, int);
 
 
 /*
@@ -434,7 +434,7 @@ db_dump_dtlb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern void print_dtlb __P((void));
+	extern void print_dtlb(void);
 
 	if (have_addr) {
 		int i;
@@ -501,7 +501,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 	}
 }
 
-int64_t pseg_get __P((struct pmap *, vaddr_t));
+int64_t pseg_get(struct pmap *, vaddr_t);
 
 void
 db_dump_pmap(pm)
@@ -676,7 +676,7 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	}
 }
 
-void db_page_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_page_cmd(db_expr_t, int, db_expr_t, char *);
 void
 db_page_cmd(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -954,8 +954,8 @@ db_watch(addr, have_addr, count, modif)
 
 #include <uvm/uvm.h>
 
-void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
-extern void uvmhist_dump __P((struct uvm_history *));
+void db_uvmhistdump(db_expr_t, int, db_expr_t, char *);
+extern void uvmhist_dump(struct uvm_history *);
 extern struct uvm_history_head uvm_histories;
 
 void

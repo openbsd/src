@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.h,v 1.3 1996/05/02 06:43:18 niklas Exp $	*/
+/*	$OpenBSD: isr.h,v 1.4 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: isr.h,v 1.8 1996/04/21 21:07:02 veego Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 struct isr {
 	struct	isr *isr_forw;
 	struct	isr *isr_back;
-	int	(*isr_intr) __P((void *));
+	int	(*isr_intr)(void *);
 	void	*isr_arg;
 	int	isr_ipl;
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
@@ -55,12 +55,12 @@ struct isr {
 #define	ISRIPL(x)	((x) - 3)
 
 #ifdef _KERNEL
-void add_isr __P((struct isr *));
-void remove_isr __P((struct isr *));
-typedef void (*sifunc_t) __P((void *, void *));
-void alloc_sicallback __P((void));
-void add_sicallback __P((sifunc_t, void *, void *));
-void rem_sicallback __P((sifunc_t));
+void add_isr(struct isr *);
+void remove_isr(struct isr *);
+typedef void (*sifunc_t)(void *, void *);
+void alloc_sicallback(void);
+void add_sicallback(sifunc_t, void *, void *);
+void rem_sicallback(sifunc_t);
 #endif
 
 #ifdef IPL_REMAP2

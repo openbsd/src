@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.43 2002/02/22 20:51:24 drahn Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.44 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -71,13 +71,12 @@
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ufs_chmod __P((struct vnode *, int, struct ucred *, struct proc *));
-static int ufs_chown
-	__P((struct vnode *, uid_t, gid_t, struct ucred *, struct proc *));
-int filt_ufsread __P((struct knote *kn, long hint));
-int filt_ufswrite __P((struct knote *kn, long hint));
-int filt_ufsvnode __P((struct knote *kn, long hint));
-void filt_ufsdetach __P((struct knote *kn));
+static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
+static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *, struct proc *);
+int filt_ufsread(struct knote *kn, long hint);
+int filt_ufswrite(struct knote *kn, long hint);
+int filt_ufsvnode(struct knote *kn, long hint);
+void filt_ufsdetach(struct knote *kn);
 
 union _qcvt {
 	int64_t	qcvt;
@@ -1875,7 +1874,7 @@ ufsfifo_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 
 	/*
 	 * Set access flag.
@@ -1897,7 +1896,7 @@ ufsfifo_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 
 	/*
 	 * Set update and change flags.
@@ -1921,7 +1920,7 @@ ufsfifo_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	extern int (**fifo_vnodeop_p) __P((void *));
+	extern int (**fifo_vnodeop_p)(void *);
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
@@ -1998,8 +1997,8 @@ ufs_advlock(v)
 int
 ufs_vinit(mntp, specops, fifoops, vpp)
 	struct mount *mntp;
-	int (**specops) __P((void *));
-	int (**fifoops) __P((void *));
+	int (**specops)(void *);
+	int (**fifoops)(void *);
 	struct vnode **vpp;
 {
 	struct inode *ip;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.h,v 1.3 2001/01/15 12:02:36 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.h,v 1.4 2002/03/14 01:26:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -51,7 +51,7 @@ struct netbsd_sigcontext {
 };
 
 #ifdef _KERNEL
-void netbsd_sendsig __P((sig_t, int, int, u_long, int, union sigval));
+void netbsd_sendsig(sig_t, int, int, u_long, int, union sigval);
 #endif
 
 #endif /* _NETBSD_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.10 2002/01/20 19:56:53 ericj Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.11 2002/03/14 01:26:58 millert Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct cs4281_softc {
 	int	sc_pi;
 	struct cs4281_dma *sc_pdma;
 	char	*sc_pbuf;
-	int	(*halt_output)__P((void *));
+	int	(*halt_output)(void *);
 #ifdef DIAGNOSTIC
         char	sc_prun;
 #endif
@@ -126,7 +126,7 @@ struct cs4281_softc {
 	struct	cs4281_dma *sc_rdma;
 	char	*sc_rbuf;
 	int	sc_rparam;		/* record format */
-	int	(*halt_input)__P((void *));
+	int	(*halt_input)(void *);
 #ifdef DIAGNOSTIC
         char	sc_rrun;
 #endif
@@ -158,15 +158,15 @@ struct cs4281_softc {
 #define MAX_FIFO_SIZE 64 /* 128/2 channels */
 #endif
 
-int cs4281_match		__P((struct device *, void *, void *));
-void cs4281_attach		__P((struct device *, struct device *, void *));
-int cs4281_intr			__P((void *));
-int cs4281_query_encoding	__P((void *, struct audio_encoding *));
-int cs4281_set_params		__P((void *, int, int, struct audio_params *,
-				     struct audio_params *));
-int cs4281_halt_output		__P((void *));
-int cs4281_halt_input		__P((void *));
-int cs4281_getdev		__P((void *, struct audio_device *));
+int cs4281_match(struct device *, void *, void *);
+void cs4281_attach(struct device *, struct device *, void *);
+int cs4281_intr(void *);
+int cs4281_query_encoding(void *, struct audio_encoding *);
+int cs4281_set_params(void *, int, int, struct audio_params *,
+				     struct audio_params *);
+int cs4281_halt_output(void *);
+int cs4281_halt_input(void *);
+int cs4281_getdev(void *, struct audio_device *);
 int cs4281_trigger_output	__P((void *, void *, void *, int,
 				     void (*)(void *), void *,
 				     struct audio_params *));
@@ -174,33 +174,33 @@ int cs4281_trigger_input	__P((void *, void *, void *, int,
 				     void (*)(void *), void *,
 				     struct audio_params *));
 
-u_int8_t cs4281_sr2regval	__P((int));
-void cs4281_set_dac_rate	__P((struct cs4281_softc *, int));
-void cs4281_set_adc_rate	__P((struct cs4281_softc *, int));
-int cs4281_init			__P((struct cs4281_softc *));
+u_int8_t cs4281_sr2regval(int);
+void cs4281_set_dac_rate(struct cs4281_softc *, int);
+void cs4281_set_adc_rate(struct cs4281_softc *, int);
+int cs4281_init(struct cs4281_softc *);
 
-int cs4281_open			__P((void *, int));
-void cs4281_close		__P((void *));
-int cs4281_round_blocksize	__P((void *, int));
-int cs4281_get_props		__P((void *));
-int cs4281_attach_codec		__P((void *, struct ac97_codec_if *));
-int cs4281_read_codec		__P((void *, u_int8_t , u_int16_t *));
-int cs4281_write_codec		__P((void *, u_int8_t, u_int16_t));
-void cs4281_reset_codec		__P((void *));
+int cs4281_open(void *, int);
+void cs4281_close(void *);
+int cs4281_round_blocksize(void *, int);
+int cs4281_get_props(void *);
+int cs4281_attach_codec(void *, struct ac97_codec_if *);
+int cs4281_read_codec(void *, u_int8_t , u_int16_t *);
+int cs4281_write_codec(void *, u_int8_t, u_int16_t);
+void cs4281_reset_codec(void *);
 
-void cs4281_power		__P((int, void *));
+void cs4281_power(int, void *);
 
-int cs4281_mixer_set_port	__P((void *, mixer_ctrl_t *));
-int cs4281_mixer_get_port	__P((void *, mixer_ctrl_t *));
-int cs4281_query_devinfo	__P((void *, mixer_devinfo_t *));
-void *cs4281_malloc		__P((void *, int, size_t, int, int));
-size_t cs4281_round_buffersize	__P((void *, int, size_t));
-void cs4281_free		__P((void *, void *, int));
-paddr_t cs4281_mappage		__P((void *, void *, off_t, int));
+int cs4281_mixer_set_port(void *, mixer_ctrl_t *);
+int cs4281_mixer_get_port(void *, mixer_ctrl_t *);
+int cs4281_query_devinfo(void *, mixer_devinfo_t *);
+void *cs4281_malloc(void *, int, size_t, int, int);
+size_t cs4281_round_buffersize(void *, int, size_t);
+void cs4281_free(void *, void *, int);
+paddr_t cs4281_mappage(void *, void *, off_t, int);
 
-int cs4281_allocmem		__P((struct cs4281_softc *, size_t, int, int,
-				     struct cs4281_dma *));
-int cs4281_src_wait		__P((struct cs4281_softc *));
+int cs4281_allocmem(struct cs4281_softc *, size_t, int, int,
+				     struct cs4281_dma *);
+int cs4281_src_wait(struct cs4281_softc *);
 
 #if defined(CS4281_DEBUG)
 #undef DPRINTF
@@ -244,11 +244,11 @@ struct audio_hw_if cs4281_hw_if = {
 
 #if NMIDI > 0
 /* Midi Interface */
-void cs4281_midi_close		__P((void *));
-void cs4281_midi_getinfo	__P((void *, struct midi_info *));
+void cs4281_midi_close(void *);
+void cs4281_midi_getinfo(void *, struct midi_info *);
 int cs4281_midi_open		__P((void *, int, void (*)(void *, int),
 				     void (*)(void *), void *));
-int cs4281_midi_output		__P((void *, int));
+int cs4281_midi_output(void *, int);
 
 struct midi_hw_if cs4281_midi_hw_if = {
 	cs4281_midi_open,
@@ -632,7 +632,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {
@@ -736,7 +736,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 	struct audio_params *param;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2001/12/22 08:31:04 smurph Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2002/03/14 01:26:38 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -149,22 +149,22 @@ static char *m88110_ctrlreg[64] = {
 	} while (0)
 
 /* prototypes */
-void oimmed __P((int, char *, long));
-void ctrlregs __P((int, char *, long));
-void printsod __P((int));
-void sindou __P((int, char *, long));
-void jump __P((int, char *, long));
-void instset __P((int, char *, long));
-void symofset __P((int, int, int));
-void obranch __P((int, char *, long));
-void brcond __P((int, char *, long));
-void otrap __P((int, char *, long));
-void obit __P((int, char *, long));
-void bitman __P((int, char *, long));
-void immem __P((int, char *, long));
-void nimmem __P((int, char *, long));
-void lognim __P((int, char *, long));
-void onimmed __P((int, char *, long));      
+void oimmed(int, char *, long);
+void ctrlregs(int, char *, long);
+void printsod(int);
+void sindou(int, char *, long);
+void jump(int, char *, long);
+void instset(int, char *, long);
+void symofset(int, int, int);
+void obranch(int, char *, long);
+void brcond(int, char *, long);
+void otrap(int, char *, long);
+void obit(int, char *, long);
+void bitman(int, char *, long);
+void immem(int, char *, long);
+void nimmem(int, char *, long);
+void lognim(int, char *, long);
+void onimmed(int, char *, long);      
 
 /* Handlers immediate integer arithmetic instructions */
 void
@@ -551,7 +551,7 @@ onimmed(int inst, char *opcode, long iadr)
 
 static struct opdesc {
 	unsigned mask, match;
-	void (*opfun) __P((int, char *, long));
+	void (*opfun)(int, char *, long);
 	char *farg;
 } opdecode[] = {
 

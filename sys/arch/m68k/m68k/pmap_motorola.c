@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.16 2002/01/23 00:39:47 art Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.17 2002/03/14 01:26:35 millert Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -311,26 +311,26 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 /*
  * Internal routines
  */
-struct pv_entry	*pmap_alloc_pv __P((void));
-void		 pmap_free_pv __P((struct pv_entry *));
-void		 pmap_collect_pv __P((void));
+struct pv_entry	*pmap_alloc_pv(void);
+void		 pmap_free_pv(struct pv_entry *);
+void		 pmap_collect_pv(void);
 #ifdef COMPAT_HPUX
-int		 pmap_mapmulti __P((pmap_t, vaddr_t));
+int		 pmap_mapmulti(pmap_t, vaddr_t);
 #endif
-void		 pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
-boolean_t	 pmap_testbit __P((paddr_t, int));
-void		 pmap_changebit __P((paddr_t, int, int));
-void		 pmap_enter_ptpage __P((pmap_t, vaddr_t));
-void		 pmap_ptpage_addref __P((vaddr_t));
-int		 pmap_ptpage_delref __P((vaddr_t));
-void		 pmap_collect1 __P((pmap_t, paddr_t, paddr_t));
-void		 pmap_pinit __P((pmap_t));
-void		 pmap_release __P((pmap_t));
+void		 pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
+boolean_t	 pmap_testbit(paddr_t, int);
+void		 pmap_changebit(paddr_t, int, int);
+void		 pmap_enter_ptpage(pmap_t, vaddr_t);
+void		 pmap_ptpage_addref(vaddr_t);
+int		 pmap_ptpage_delref(vaddr_t);
+void		 pmap_collect1(pmap_t, paddr_t, paddr_t);
+void		 pmap_pinit(pmap_t);
+void		 pmap_release(pmap_t);
 
 
 #ifdef DEBUG
-void pmap_pvdump	__P((paddr_t));
-void pmap_check_wiring	__P((char *, vaddr_t));
+void pmap_pvdump(paddr_t);
+void pmap_check_wiring(char *, vaddr_t);
 #endif
 
 /* pmap_remove_mapping flags */

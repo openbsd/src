@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.20 2001/11/28 16:24:26 art Exp $	*/
+/*	$OpenBSD: cross.c,v 1.21 2002/03/14 01:26:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -54,8 +54,8 @@
 #include <amiga/isa/crossvar.h>
 
 #if 1
-void	crossattach __P((struct device *, struct device *, void *));
-int	crossmatch __P((struct device *, void *, void *));
+void	crossattach(struct device *, struct device *, void *);
+int	crossmatch(struct device *, void *, void *);
 
 struct cfattach cross_ca = {
 	sizeof(struct cross_softc), crossmatch, crossattach
@@ -93,27 +93,27 @@ crossmatch(parent, match, aux)
 
 int crossdebug = 0;
 
-void	crossattach __P((struct device *, struct device *, void *));
-int	crossmatch __P((struct device *, void *, void *));
-int	crossprint __P((void *, const char *));
+void	crossattach(struct device *, struct device *, void *);
+int	crossmatch(struct device *, void *, void *);
+int	crossprint(void *, const char *);
 
-int	cross_io_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	cross_mem_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *));
-int	cross_io_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
-int	cross_mem_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int	cross_io_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	cross_mem_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	cross_io_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	cross_mem_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-int	crossintr __P((void *));
+int	crossintr(void *);
 
-void	cross_attach_hook __P((struct device *, struct device *,
-	    struct isabus_attach_args *));
+void	cross_attach_hook(struct device *, struct device *,
+	    struct isabus_attach_args *);
 void	*cross_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
-void	cross_intr_disestablish __P((void *, void *));
-int	cross_intr_check __P((void *, int, int));
+void	cross_intr_disestablish(void *, void *);
+int	cross_intr_check(void *, int, int);
 
-int	cross_pager_get_pages __P((vm_pager_t, struct vm_page **, int, boolean_t));
+int	cross_pager_get_pages(vm_pager_t, struct vm_page **, int, boolean_t);
 
 struct cfattach cross_ca = {
 	sizeof(struct cross_softc), crossmatch, crossattach

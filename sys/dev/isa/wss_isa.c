@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss_isa.c,v 1.3 2000/03/28 14:07:42 espie Exp $	*/
+/*	$OpenBSD: wss_isa.c,v 1.4 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: wss_isa.c,v 1.1 1998/01/19 22:18:24 augustss Exp $	*/
 
 /*
@@ -72,14 +72,14 @@ extern int	wssdebug;
 #define DPRINTF(x)
 #endif
 
-static int	wssfind __P((struct device *, struct wss_softc *, struct isa_attach_args *));
+static int	wssfind(struct device *, struct wss_softc *, struct isa_attach_args *);
 
-static void	madprobe __P((struct wss_softc *, int));
-static void	madunmap __P((struct wss_softc *));
-static int	detect_mad16 __P((struct wss_softc *, int));
+static void	madprobe(struct wss_softc *, int);
+static void	madunmap(struct wss_softc *);
+static int	detect_mad16(struct wss_softc *, int);
 
-int		wss_isa_probe __P((struct device *, void *, void *));
-void		wss_isa_attach __P((struct device *, struct device *, void *));
+int		wss_isa_probe(struct device *, void *, void *);
+void		wss_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach wss_isa_ca = {
 	sizeof(struct wss_softc), wss_isa_probe, wss_isa_attach

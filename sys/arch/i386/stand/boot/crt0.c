@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 1998/05/25 19:20:49 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -41,11 +41,11 @@
 #include "libsa.h"
 #include <lib/libsa/unixdev.h>
 
-void start __P((void)) asm("start");
-void _rtt __P((void));
-extern int  boot __P((dev_t));
-static void domap __P((void));
-static void seterm __P((void));
+void start(void) asm("start");
+void _rtt(void);
+extern int  boot(dev_t);
+static void domap(void);
+static void seterm(void);
 
 void
 start()

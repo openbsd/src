@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2001/06/26 21:57:43 smurph Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 2002/03/14 01:26:41 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -54,17 +54,14 @@ extern int system_type;
 /**/
 struct confargs;
 
-typedef int (*intr_handler_t) __P((void *));
+typedef int (*intr_handler_t)(void *);
 
 typedef struct bushook {
 	struct	device *bh_dv;
 	int	bh_type;
-	void	(*bh_intr_establish)
-		    __P((struct confargs *, intr_handler_t, void *));
-	void	(*bh_intr_disestablish)
-		    __P((struct confargs *));
-	int	(*bh_matchname)	
-		    __P((struct confargs *, char *));
+	void	(*bh_intr_establish)(struct confargs *, intr_handler_t, void *);
+	void	(*bh_intr_disestablish)(struct confargs *);
+	int	(*bh_matchname)(struct confargs *, char *);
 } bushook_t;
 
 #define	BUS_MAIN	1		/* mainbus */
@@ -98,6 +95,6 @@ struct confargs {
 
 void	set_clockintr __P((void (*)(struct clockframe *)));
 void	set_iointr __P((void (*)(void *, int)));
-int	badaddr	__P((void *, u_int32_t));
+int	badaddr(void *, u_int32_t);
 
 #endif /* _MACHINE_AUTOCONF_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: eeprom.h,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: eeprom.h,v 1.2 1999/12/30 16:25:17 eeh Exp $	*/
 
 /*
@@ -179,6 +179,6 @@ struct eeprom {
 
 #ifdef	_KERNEL
 extern	char *eeprom_va;
-int	eeprom_uio __P((struct uio *));
+int	eeprom_uio(struct uio *);
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.h,v 1.3 1998/05/25 18:37:31 mickey Exp $	*/
+/*	$OpenBSD: unixdev.h,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,24 +34,24 @@
 
 
 /* unixdev.c */
-int unixstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int unixopen __P((struct open_file *, ...));
-int unixclose __P((struct open_file *));
-int unixioctl __P((struct open_file *, u_long, void *));
+int unixstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int unixopen(struct open_file *, ...);
+int unixclose(struct open_file *);
+int unixioctl(struct open_file *, u_long, void *);
 
-void unix_probe __P((struct consdev *));
-void unix_init __P((struct consdev *));
-int unix_getc __P((dev_t));
-void unix_putc __P((dev_t, int));
-int unix_ischar __P((dev_t));
+void unix_probe(struct consdev *);
+void unix_init(struct consdev *);
+int unix_getc(dev_t);
+void unix_putc(dev_t, int);
+int unix_ischar(dev_t);
 
 /* unixsys.S */
-int uopen __P((const char *, int, ...));
-int uread __P((int, void *, size_t));
-int uwrite __P((int, void *, size_t));
-int uioctl __P((int, u_long, char *));
-int uclose __P((int));
-off_t ulseek __P((int, off_t, int));
-void uexit __P((int)) __attribute__((noreturn));
-int syscall __P((int, ...));
-int __syscall __P((quad_t, ...));
+int uopen(const char *, int, ...);
+int uread(int, void *, size_t);
+int uwrite(int, void *, size_t);
+int uioctl(int, u_long, char *);
+int uclose(int);
+off_t ulseek(int, off_t, int);
+void uexit(int) __attribute__((noreturn));
+int syscall(int, ...);
+int __syscall(quad_t, ...);

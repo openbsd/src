@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropic.c,v 1.5 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: tropic.c,v 1.6 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
 
 /* 
@@ -84,23 +84,23 @@
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>
 
-static void tr_shutdown __P((void *));
+static void tr_shutdown(void *);
 
-void	tr_rint __P((struct tr_softc *));
-void	tr_xint __P((struct tr_softc *));
-void	tr_oldxint __P((struct tr_softc *));
-struct	mbuf *tr_get __P((struct tr_softc *, int, struct ifnet *));
-void	tr_opensap __P((struct tr_softc *, u_char));
-int	tr_mbcopy __P((struct tr_softc *, bus_size_t, struct mbuf *));
-void	tr_bcopy __P((struct tr_softc *, u_char *, int));
-void	tr_start __P((struct ifnet *));
-void	tr_oldstart __P((struct ifnet *));
-void	tr_watchdog __P((struct ifnet *));
-int	tr_mediachange __P((struct ifnet *));
-void	tr_mediastatus __P((struct ifnet *, struct ifmediareq *));
-int	tropic_mediachange __P((struct tr_softc *));
-void	tropic_mediastatus __P((struct tr_softc *, struct ifmediareq *));
-void	tr_reinit __P((void *));
+void	tr_rint(struct tr_softc *);
+void	tr_xint(struct tr_softc *);
+void	tr_oldxint(struct tr_softc *);
+struct	mbuf *tr_get(struct tr_softc *, int, struct ifnet *);
+void	tr_opensap(struct tr_softc *, u_char);
+int	tr_mbcopy(struct tr_softc *, bus_size_t, struct mbuf *);
+void	tr_bcopy(struct tr_softc *, u_char *, int);
+void	tr_start(struct ifnet *);
+void	tr_oldstart(struct ifnet *);
+void	tr_watchdog(struct ifnet *);
+int	tr_mediachange(struct ifnet *);
+void	tr_mediastatus(struct ifnet *, struct ifmediareq *);
+int	tropic_mediachange(struct tr_softc *);
+void	tropic_mediastatus(struct tr_softc *, struct ifmediareq *);
+void	tr_reinit(void *);
 
 struct cfdriver tr_cd = {
 	NULL, "tr", DV_IFNET

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2002/02/07 13:54:16 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -99,9 +99,9 @@ int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 u_int32_t sir;
 int want_resched, astpending;
 
-void pmap_hptdump __P((void));
-void cpu_intr __P((struct trapframe *frame));
-void syscall __P((struct trapframe *frame, int *args));
+void pmap_hptdump(void);
+void cpu_intr(struct trapframe *frame);
+void syscall(struct trapframe *frame, int *args);
 
 static __inline void
 userret (struct proc *p, register_t pc, u_quad_t oticks)
@@ -547,14 +547,14 @@ syscall(frame, args)
 struct cpu_intr_vector {
 	struct evcnt evcnt;
 	int pri;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 } cpu_intr_vectors[CPU_NINTS];
 
 void *
 cpu_intr_establish(pri, irq, handler, arg, dv)
 	int pri, irq;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 	struct device *dv;
 {

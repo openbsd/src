@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.10 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.11 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -122,9 +122,9 @@ struct fxp_softc {
 #define	CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
-extern int fxp_intr __P((void *));
-extern int fxp_attach_common __P((struct fxp_softc *, u_int8_t *, const char *));
-extern int fxp_detach __P((struct fxp_softc *));
+extern int fxp_intr(void *);
+extern int fxp_attach_common(struct fxp_softc *, u_int8_t *, const char *);
+extern int fxp_detach(struct fxp_softc *);
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
 #define	FXP_RXMAP_PUT(sc,map)	((sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.7 2001/08/18 20:37:42 espie Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.8 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -41,24 +41,24 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-static __inline void invlpg __P((u_int));
-static __inline void lidt __P((void *));
-static __inline void lldt __P((u_short));
-static __inline void ltr __P((u_short));
-static __inline void lcr0 __P((u_int));
-static __inline u_int rcr0 __P((void));
-static __inline u_int rcr2 __P((void));
-static __inline void lcr3 __P((u_int));
-static __inline u_int rcr3 __P((void));
-static __inline void lcr4 __P((u_int));
-static __inline u_int rcr4 __P((void));
-static __inline void tlbflush __P((void));
-static __inline void disable_intr __P((void));
-static __inline void enable_intr __P((void));
-static __inline void wbinvd __P((void));
-static __inline void wrmsr __P((u_int, u_int64_t));
-static __inline u_int64_t rdmsr __P((u_int));
-static __inline void breakpoint __P((void));
+static __inline void invlpg(u_int);
+static __inline void lidt(void *);
+static __inline void lldt(u_short);
+static __inline void ltr(u_short);
+static __inline void lcr0(u_int);
+static __inline u_int rcr0(void);
+static __inline u_int rcr2(void);
+static __inline void lcr3(u_int);
+static __inline u_int rcr3(void);
+static __inline void lcr4(u_int);
+static __inline u_int rcr4(void);
+static __inline void tlbflush(void);
+static __inline void disable_intr(void);
+static __inline void enable_intr(void);
+static __inline void wbinvd(void);
+static __inline void wrmsr(u_int, u_int64_t);
+static __inline u_int64_t rdmsr(u_int);
+static __inline void breakpoint(void);
 
 static __inline void 
 invlpg(u_int addr)
@@ -143,7 +143,7 @@ tlbflush(void)
 }
 
 #ifdef notyet
-void	setidt	__P((int idx, /*XXX*/caddr_t func, int typ, int dpl));
+void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 #endif
 
 

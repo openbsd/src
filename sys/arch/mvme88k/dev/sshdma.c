@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.10 2001/12/22 18:45:35 smurph Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.11 2002/03/14 01:26:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -63,13 +63,13 @@
 #include <mvme88k/dev/pcctworeg.h>
 #endif
 
-int	afscmatch	__P((struct device *, void *, void *));
-void	afscattach	__P((struct device *, struct device *, void *));
+int	afscmatch(struct device *, void *, void *);
+void	afscattach(struct device *, struct device *, void *);
 
-int	afscprint	__P((void *auxp, char *));
-int	sshintr		__P((struct ssh_softc *));
-int	afsc_dmaintr	__P((void *));
-void	sshinitialize	__P((struct ssh_softc *));
+int	afscprint(void *auxp, char *);
+int	sshintr(struct ssh_softc *);
+int	afsc_dmaintr(void *);
+void	sshinitialize(struct ssh_softc *);
 
 struct scsi_adapter afsc_scsiswitch = {
 	ssh_scsicmd,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.23 2001/01/29 05:30:30 mickey Exp $	*/
+/*	$OpenBSD: gus.c,v 1.24 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -466,7 +466,7 @@ gusmax_dma_output(addr, buf, size, intr, arg)
 	void * addr;
 	void *buf;
 	int size;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	struct ad1848_softc *ac = addr;
@@ -524,7 +524,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 	void * addr;
 	void *buf;
 	int size;
-	void (*intr) __P((void *));
+	void (*intr)(void *);
 	void *arg;
 {
 	struct gus_softc *sc = addr;
@@ -918,7 +918,7 @@ gus_dmaout_dointr(sc)
 	 */
 	if (sc->sc_dmaoutintr && sc->sc_bufcnt < sc->sc_nbufs) {
 	    /* clean out to prevent double calls */
-	    void (*pfunc) __P((void *)) = sc->sc_dmaoutintr;
+	    void (*pfunc)(void *) = sc->sc_dmaoutintr;
 	    void *arg = sc->sc_outarg;
 
 	    sc->sc_outarg = 0;
@@ -1063,7 +1063,7 @@ gus_voice_intr(sc)
 			    printf("gusdmaout botch?\n");
 			else {
 			    /* clean out to avoid double calls */
-			    void (*pfunc) __P((void *)) = sc->sc_dmaoutintr;
+			    void (*pfunc)(void *) = sc->sc_dmaoutintr;
 			    void *arg = sc->sc_outarg;
 
 			    sc->sc_outarg = 0;
@@ -2268,7 +2268,7 @@ gusmax_dma_input(addr, buf, size, callback, arg)
 	void * addr;
 	void *buf;
 	int size;
-	void (*callback) __P((void *));
+	void (*callback)(void *);
 	void *arg;
 {
 	struct ad1848_softc *sc = addr;
@@ -2284,7 +2284,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	void * addr;
 	void *buf;
 	int size;
-	void (*callback) __P((void *));
+	void (*callback)(void *);
 	void *arg;
 {
 	struct gus_softc *sc = addr;
@@ -2334,7 +2334,7 @@ int
 gus_dmain_intr(sc)
 	struct gus_softc *sc;
 {
-        void (*callback) __P((void *));
+        void (*callback)(void *);
 	void *arg;
 
 	DMAPRINTF(("gus_dmain_intr called\n"));

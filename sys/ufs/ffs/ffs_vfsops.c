@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.51 2002/02/22 20:37:46 drahn Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.52 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-int ffs_sbupdate __P((struct ufsmount *, int));
+int ffs_sbupdate(struct ufsmount *, int);
 int ffs_reload_vnode(struct vnode *, void *);
 int ffs_sync_vnode(struct vnode *, void *);
 

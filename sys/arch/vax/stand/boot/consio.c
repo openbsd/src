@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.2 2000/10/04 04:38:08 bjc Exp $ */
+/*	$OpenBSD: consio.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: consio.c,v 1.11 2000/07/19 00:58:24 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -44,31 +44,31 @@
 
 #include "data.h"
 
-void setup __P((void));
+void setup(void);
 
 unsigned       *bootregs;
 extern struct rpb     *rpb;
 struct bqo     *bqo;
 
-static int (*put_fp) __P((int))  = NULL;
-static int (*get_fp) __P((void)) = NULL;
-static int (*test_fp) __P((void)) = NULL;
+static int (*put_fp)(int)  = NULL;
+static int (*get_fp)(void) = NULL;
+static int (*test_fp)(void) = NULL;
 
 /* Also added such a thing for KA53 - MK-991208 */
 unsigned char  *ka53_conspage;
-void ka53_consinit __P((void));
+void ka53_consinit(void);
 
-int ka53_rom_putchar __P((int c));
-int ka53_rom_getchar __P((void));
-int ka53_rom_testchar __P((void));
+int ka53_rom_putchar(int c);
+int ka53_rom_getchar(void);
+int ka53_rom_testchar(void);
 
-int pr_putchar __P((int c));	/* putchar() using mtpr/mfpr */
-int pr_getchar __P((void));
-int pr_testchar __P((void));
+int pr_putchar(int c);	/* putchar() using mtpr/mfpr */
+int pr_getchar(void);
+int pr_testchar(void);
 
-int rom_putchar __P((int c));	/* putchar() using ROM routines */
-int rom_getchar __P((void));
-int rom_testchar __P((void));
+int rom_putchar(int c);	/* putchar() using ROM routines */
+int rom_getchar(void);
+int rom_testchar(void);
 
 static int rom_putc;		/* ROM-address of put-routine */
 static int rom_getc;		/* ROM-address of get-routine */
@@ -88,11 +88,11 @@ static int rom_getc;		/* ROM-address of get-routine */
 /* Pointer to KA630 console page, initialized by ka630_consinit */
 unsigned char  *ka630_conspage; 
 /* Function that initializes things for KA630 ROM console I/O */
-void ka630_consinit __P((void));
+void ka630_consinit(void);
 /* Functions that use KA630 ROM for console I/O */
-int ka630_rom_putchar __P((int c));
-int ka630_rom_getchar __P((void));
-int ka630_rom_testchar __P((void));
+int ka630_rom_putchar(int c);
+int ka630_rom_getchar(void);
+int ka630_rom_testchar(void);
 
 putchar(c)
 	int c;

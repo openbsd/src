@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcons.h,v 1.3 2001/08/19 15:07:34 miod Exp $ */
+/*	$OpenBSD: rcons.h,v 1.4 2002/03/14 01:27:02 millert Exp $ */
 /*	$NetBSD: rcons.h,v 1.4 1996/03/14 19:02:32 christos Exp $ */
 
 /*
@@ -59,7 +59,7 @@ struct rconsole {
 	int	rc_linebytes;		/* bytes per display line */
 	int	rc_maxrow;		/* emulator height of screen */
 	int	rc_maxcol;		/* emulator width of screen */
-	void	(*rc_bell)__P((int));	/* ring the bell */
+	void	(*rc_bell)(int);	/* ring the bell */
 	/* The following two items may optionally be left zero */
 	int	*rc_row;		/* emulator row */
 	int	*rc_col;		/* emulator column */
@@ -103,22 +103,22 @@ struct rconsole {
 
 
 /* rcons_kern.c */
-void rcons_cnputc __P((int));
-void rcons_bell __P((struct rconsole *));
-void rcons_init __P((struct rconsole *));
+void rcons_cnputc(int);
+void rcons_bell(struct rconsole *);
+void rcons_init(struct rconsole *);
 
 /* rcons_subr.c */
-void rcons_puts __P((struct rconsole *, unsigned char *, int));
-void rcons_text __P((struct rconsole *, unsigned char *, int));
-void rcons_pctrl __P((struct rconsole *, int));
-void rcons_esc __P((struct rconsole *, int));
-void rcons_doesc __P((struct rconsole *, int));
-void rcons_cursor __P((struct rconsole *));
-void rcons_invert __P((struct rconsole *, int));
-void rcons_clear2eop __P((struct rconsole *));
-void rcons_clear2eol __P((struct rconsole *));
-void rcons_scroll __P((struct rconsole *, int));
-void rcons_delchar __P((struct rconsole *, int));
-void rcons_delline __P((struct rconsole *, int));
-void rcons_insertchar __P((struct rconsole *, int));
-void rcons_insertline __P((struct rconsole *, int));
+void rcons_puts(struct rconsole *, unsigned char *, int);
+void rcons_text(struct rconsole *, unsigned char *, int);
+void rcons_pctrl(struct rconsole *, int);
+void rcons_esc(struct rconsole *, int);
+void rcons_doesc(struct rconsole *, int);
+void rcons_cursor(struct rconsole *);
+void rcons_invert(struct rconsole *, int);
+void rcons_clear2eop(struct rconsole *);
+void rcons_clear2eol(struct rconsole *);
+void rcons_scroll(struct rconsole *, int);
+void rcons_delchar(struct rconsole *, int);
+void rcons_delline(struct rconsole *, int);
+void rcons_insertchar(struct rconsole *, int);
+void rcons_insertline(struct rconsole *, int);

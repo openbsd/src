@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.3 2001/10/03 14:45:37 drahn Exp $	*/
+/*	$OpenBSD: adb.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -52,9 +52,9 @@
 /*
  * Function declarations.
  */
-static int	adbmatch __P((struct device *, void *, void *));
-static void	adbattach __P((struct device *, struct device *, void *));
-static int	adbprint __P((void *, const char *));
+static int	adbmatch(struct device *, void *, void *);
+static void	adbattach(struct device *, struct device *, void *);
+static int	adbprint(void *, const char *);
 
 /*
  * Global variables.

@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.h,v 1.1 2001/03/21 17:26:38 art Exp $ */
+/* $OpenBSD: sgmap_typedep.h,v 1.2 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: sgmap_typedep.h,v 1.4 1998/06/04 01:22:52 thorpej Exp $ */
 
 /*-
@@ -46,14 +46,14 @@
 
 extern	SGMAP_PTE_TYPE	__C(SGMAP_TYPE,_prefetch_spill_page_pte);
 
-void	__C(SGMAP_TYPE,_init_spill_page_pte) __P((void));
-int	__C(SGMAP_TYPE,_load) __P((bus_dma_tag_t, bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int, struct alpha_sgmap *));
-int	__C(SGMAP_TYPE,_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int, struct alpha_sgmap *));
-int	__C(SGMAP_TYPE,_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int, struct alpha_sgmap *));
-int	__C(SGMAP_TYPE,_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int, struct alpha_sgmap *));
-void	__C(SGMAP_TYPE,_unload) __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct alpha_sgmap *));
+void	__C(SGMAP_TYPE,_init_spill_page_pte)(void);
+int	__C(SGMAP_TYPE,_load)(bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int, struct alpha_sgmap *);
+int	__C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int, struct alpha_sgmap *);
+int	__C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int, struct alpha_sgmap *);
+int	__C(SGMAP_TYPE,_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int, struct alpha_sgmap *);
+void	__C(SGMAP_TYPE,_unload)(bus_dma_tag_t, bus_dmamap_t,
+	    struct alpha_sgmap *);

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.16 2001/06/27 06:34:45 kjc Exp $       */
+/*    $OpenBSD: if_el.c,v 1.17 2002/03/14 01:26:56 millert Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -75,20 +75,20 @@ struct el_softc {
 /*
  * prototypes
  */
-int elintr __P((void *));
-void elinit __P((struct el_softc *));
-int elioctl __P((struct ifnet *, u_long, caddr_t));
-void elstart __P((struct ifnet *));
-void elwatchdog __P((struct ifnet *));
-void elreset __P((struct el_softc *));
-void elstop __P((struct el_softc *));
-static int el_xmit __P((struct el_softc *));
-void elread __P((struct el_softc *, int));
-struct mbuf *elget __P((struct el_softc *sc, int));
-static inline void el_hardreset __P((struct el_softc *));
+int elintr(void *);
+void elinit(struct el_softc *);
+int elioctl(struct ifnet *, u_long, caddr_t);
+void elstart(struct ifnet *);
+void elwatchdog(struct ifnet *);
+void elreset(struct el_softc *);
+void elstop(struct el_softc *);
+static int el_xmit(struct el_softc *);
+void elread(struct el_softc *, int);
+struct mbuf *elget(struct el_softc *sc, int);
+static inline void el_hardreset(struct el_softc *);
 
-int elprobe __P((struct device *, void *, void *));
-void elattach __P((struct device *, struct device *, void *));
+int elprobe(struct device *, void *, void *);
+void elattach(struct device *, struct device *, void *);
 
 struct cfattach el_ca = {
 	sizeof(struct el_softc), elprobe, elattach

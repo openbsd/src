@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.43 2002/03/08 07:25:29 mickey Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.44 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -180,17 +180,17 @@ vaddr_t uvm_maxkaddr;
  * local prototypes
  */
 
-static vm_map_entry_t	uvm_mapent_alloc __P((vm_map_t));
-static void		uvm_mapent_copy __P((vm_map_entry_t,vm_map_entry_t));
-static void		uvm_mapent_free __P((vm_map_entry_t));
-static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
-static void		uvm_map_reference_amap __P((vm_map_entry_t, int));
-static void		uvm_map_unreference_amap __P((vm_map_entry_t, int));
+static vm_map_entry_t	uvm_mapent_alloc(vm_map_t);
+static void		uvm_mapent_copy(vm_map_entry_t,vm_map_entry_t);
+static void		uvm_mapent_free(vm_map_entry_t);
+static void		uvm_map_entry_unwire(vm_map_t, vm_map_entry_t);
+static void		uvm_map_reference_amap(vm_map_entry_t, int);
+static void		uvm_map_unreference_amap(vm_map_entry_t, int);
 
-int			uvm_map_spacefits __P((vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t));
+int			uvm_map_spacefits(vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t);
 
 int _uvm_tree_sanity(vm_map_t map, char *name);
-static int		uvm_rb_subtree_space __P((vm_map_entry_t));
+static int		uvm_rb_subtree_space(vm_map_entry_t);
 
 static __inline int
 uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
@@ -3591,7 +3591,7 @@ void
 uvm_map_printit(map, full, pr)
 	vm_map_t map;
 	boolean_t full;
-	int (*pr) __P((const char *, ...));
+	int (*pr)(const char *, ...);
 {
 	vm_map_entry_t entry;
 
@@ -3633,7 +3633,7 @@ void
 uvm_object_printit(uobj, full, pr)
 	struct uvm_object *uobj;
 	boolean_t full;
-	int (*pr) __P((const char *, ...));
+	int (*pr)(const char *, ...);
 {
 	struct vm_page *pg;
 	int cnt = 0;
@@ -3676,7 +3676,7 @@ void
 uvm_page_printit(pg, full, pr)
 	struct vm_page *pg;
 	boolean_t full;
-	int (*pr) __P((const char *, ...));
+	int (*pr)(const char *, ...);
 {
 	struct vm_page *tpg;
 	struct uvm_object *uobj;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_vnops.c,v 1.4 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: tcfs_vnops.c,v 1.5 2002/03/14 01:27:08 millert Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -40,27 +40,27 @@
 
 int tcfs_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 
-int     tcfs_bypass __P((void *));
-int     tcfs_getattr __P((void *));
-int     tcfs_setattr __P((void *));
-int     tcfs_inactive __P((void *));
-int     tcfs_reclaim __P((void *));
-int     tcfs_print __P((void *));
-int     tcfs_strategy __P((void *));
-int     tcfs_bwrite __P((void *));
-int     tcfs_lock __P((void *));
-int     tcfs_unlock __P((void *));
-int     tcfs_islocked __P((void *));
-int     tcfs_read __P((void *));
-int     tcfs_readdir __P((void *));
-int     tcfs_write __P((void *));
-int     tcfs_create __P((void *));
-int     tcfs_mknod __P((void *));
-int     tcfs_mkdir __P((void *));
-int     tcfs_link __P((void *));
-int     tcfs_symlink __P((void *));
-int     tcfs_rename __P((void *));
-int     tcfs_lookup __P((void *));
+int     tcfs_bypass(void *);
+int     tcfs_getattr(void *);
+int     tcfs_setattr(void *);
+int     tcfs_inactive(void *);
+int     tcfs_reclaim(void *);
+int     tcfs_print(void *);
+int     tcfs_strategy(void *);
+int     tcfs_bwrite(void *);
+int     tcfs_lock(void *);
+int     tcfs_unlock(void *);
+int     tcfs_islocked(void *);
+int     tcfs_read(void *);
+int     tcfs_readdir(void *);
+int     tcfs_write(void *);
+int     tcfs_create(void *);
+int     tcfs_mknod(void *);
+int     tcfs_mkdir(void *);
+int     tcfs_link(void *);
+int     tcfs_symlink(void *);
+int     tcfs_rename(void *);
+int     tcfs_lookup(void *);
 
 int
 tcfs_bypass(v)
@@ -428,7 +428,7 @@ tcfs_lookup(v)
 /*
  * Global vfs data structures
  */
-int (**tcfs_vnodeop_p) __P((void *));
+int (**tcfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc tcfs_vnodeop_entries[] = {
         { &vop_default_desc,    tcfs_bypass },
 

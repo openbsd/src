@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.4 1997/03/12 13:36:58 briggs Exp $	*/
+/*	$OpenBSD: obio.c,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: obio.c,v 1.7 1997/02/13 19:01:07 scottr Exp $	*/
 
 /*
@@ -45,10 +45,10 @@
 
 #include <mac68k/dev/obiovar.h>
 
-static int	obio_match __P((struct device *, void *, void *));
-static void	obio_attach __P((struct device *, struct device *, void *));
-static int	obio_print __P((void *, const char *));
-static int	obio_search __P((struct device *, void *, void *));
+static int	obio_match(struct device *, void *, void *);
+static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_print(void *, const char *);
+static int	obio_search(struct device *, void *, void *);
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach

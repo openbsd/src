@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.56 2002/02/25 04:53:16 dhartmei Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.57 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -97,9 +97,9 @@ struct	pool mclpool;		/* mbuf cluster pool */
 
 struct vm_map *mb_map;
 
-void	*mclpool_alloc __P((struct pool *, int));
-void	mclpool_release __P((struct pool *, void *));
-struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
+void	*mclpool_alloc(struct pool *, int);
+void	mclpool_release(struct pool *, void *);
+struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 
 const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
@@ -829,7 +829,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 	char *buf;
 	int totlen, off0;
 	struct ifnet *ifp;
-	void (*copy) __P((const void *, void *, size_t));
+	void (*copy)(const void *, void *, size_t);
 {
 	register struct mbuf *m;
 	struct mbuf *top = NULL, **mp = &top;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.79 2002/03/01 20:01:35 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.80 2002/03/14 01:26:59 millert Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -120,10 +120,10 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/ic/wdcvar.h>
 
 /* inlines for reading/writing 8-bit PCI registers */
-static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
-					      int));
-static __inline void pciide_pci_write __P((pci_chipset_tag_t, pcitag_t,
-					   int, u_int8_t));
+static __inline u_int8_t pciide_pci_read(pci_chipset_tag_t, pcitag_t,
+					      int);
+static __inline void pciide_pci_write(pci_chipset_tag_t, pcitag_t,
+					   int, u_int8_t);
 
 static __inline u_int8_t
 pciide_pci_read(pc, pa, reg)
@@ -188,74 +188,74 @@ struct pciide_softc {
 	} pciide_channels[PCIIDE_NUM_CHANNELS];
 };
 
-void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void default_chip_map(struct pciide_softc*, struct pci_attach_args*);
 
-void piix_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void piix_setup_channel __P((struct channel_softc*));
-void piix3_4_setup_channel __P((struct channel_softc*));
+void piix_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void piix_setup_channel(struct channel_softc*);
+void piix3_4_setup_channel(struct channel_softc*);
 
-static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
-static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
-static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
+static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
+static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas*);
+static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 
-void amd756_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void amd756_setup_channel __P((struct channel_softc*));
+void amd756_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void amd756_setup_channel(struct channel_softc*);
 
-void apollo_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void apollo_setup_channel __P((struct channel_softc*));
+void apollo_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void apollo_setup_channel(struct channel_softc*);
 
-void cmd_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void cmd0643_9_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void cmd0643_9_setup_channel __P((struct channel_softc*));
-void cmd_channel_map __P((struct pci_attach_args *,
-			struct pciide_softc *, int));
-int  cmd_pci_intr __P((void *));
-void cmd646_9_irqack __P((struct channel_softc *));
+void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void cmd0643_9_setup_channel(struct channel_softc*);
+void cmd_channel_map(struct pci_attach_args *,
+			struct pciide_softc *, int);
+int  cmd_pci_intr(void *);
+void cmd646_9_irqack(struct channel_softc *);
 
-void cy693_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void cy693_setup_channel __P((struct channel_softc*));
+void cy693_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void cy693_setup_channel(struct channel_softc*);
 
-void sis_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void sis_setup_channel __P((struct channel_softc*));
+void sis_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void sis_setup_channel(struct channel_softc*);
 
-void natsemi_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void natsemi_setup_channel __P((struct channel_softc*));
-int  natsemi_pci_intr __P((void *));
+void natsemi_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void natsemi_setup_channel(struct channel_softc*);
+int  natsemi_pci_intr(void *);
 
-void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void acer_setup_channel __P((struct channel_softc*));
-int  acer_pci_intr __P((void *));
+void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void acer_setup_channel(struct channel_softc*);
+int  acer_pci_intr(void *);
 
-void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void pdc202xx_setup_channel __P((struct channel_softc*));
-int  pdc202xx_pci_intr __P((void *));
-int  pdc20265_pci_intr __P((void *));
+void pdc202xx_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void pdc202xx_setup_channel(struct channel_softc*);
+int  pdc202xx_pci_intr(void *);
+int  pdc20265_pci_intr(void *);
 
-void opti_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void opti_setup_channel __P((struct channel_softc*));
+void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void opti_setup_channel(struct channel_softc*);
 
-void hpt_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void hpt_setup_channel __P((struct channel_softc*));
-int  hpt_pci_intr __P((void *));
+void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void hpt_setup_channel(struct channel_softc*);
+int  hpt_pci_intr(void *);
 
-void acard_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void acard_setup_channel __P((struct channel_softc*));
-int  acard_pci_intr __P((void *));
+void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void acard_setup_channel(struct channel_softc*);
+int  acard_pci_intr(void *);
  
-void pciide_channel_dma_setup __P((struct pciide_channel *));
-int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
-int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
-void pciide_dma_start __P((void*, int, int));
-int  pciide_dma_finish __P((void*, int, int));
-void pciide_irqack __P((struct channel_softc *));
-void pciide_print_modes __P((struct pciide_channel *));
-void pciide_print_channels __P((int, pcireg_t));;
+void pciide_channel_dma_setup(struct pciide_channel *);
+int  pciide_dma_table_setup(struct pciide_softc*, int, int);
+int  pciide_dma_init(void*, int, int, void *, size_t, int);
+void pciide_dma_start(void*, int, int);
+int  pciide_dma_finish(void*, int, int);
+void pciide_irqack(struct channel_softc *);
+void pciide_print_modes(struct pciide_channel *);
+void pciide_print_channels(int, pcireg_t);;
 
 struct pciide_product_desc {
 	u_int32_t ide_product;
 	u_short ide_flags;
 	/* map and setup chip, probe drives */
-	void (*chip_map) __P((struct pciide_softc*, struct pci_attach_args*));
+	void (*chip_map)(struct pciide_softc*, struct pci_attach_args*);
 };
 
 /* Flags for ide_flags */
@@ -483,11 +483,11 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 #define PCIIDE_OPTIONS_DMA	0x01
 
 #ifndef __OpenBSD__
-int	pciide_match __P((struct device *, struct cfdata *, void *));
+int	pciide_match(struct device *, struct cfdata *, void *);
 #else
-int	pciide_match __P((struct device *, void *, void *));
+int	pciide_match(struct device *, void *, void *);
 #endif
-void	pciide_attach __P((struct device *, struct device *, void *));
+void	pciide_attach(struct device *, struct device *, void *);
 
 struct cfattach pciide_ca = {
 	sizeof(struct pciide_softc), pciide_match, pciide_attach
@@ -498,28 +498,28 @@ struct        cfdriver pciide_cd = {
       NULL, "pciide", DV_DULL
 };
 #endif
-int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
-int	pciide_mapregs_compat __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int, bus_size_t *, bus_size_t*));
+int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
+int	pciide_mapregs_compat( struct pci_attach_args *,
+	    struct pciide_channel *, int, bus_size_t *, bus_size_t*);
 int	pciide_mapregs_native __P((struct pci_attach_args *, 
 	    struct pciide_channel *, bus_size_t *, bus_size_t *,
-	    int (*pci_intr) __P((void *))));
-void	pciide_mapreg_dma __P((struct pciide_softc *,
-	    struct pci_attach_args *));
-int	pciide_chansetup __P((struct pciide_softc *, int, pcireg_t));
+	    int (*pci_intr)(void *)));
+void	pciide_mapreg_dma(struct pciide_softc *,
+	    struct pci_attach_args *);
+int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
 void	pciide_mapchan __P((struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
-	    int (*pci_intr) __P((void *))));
-int	pciide_chan_candisable __P((struct pciide_channel *));
-void	pciide_map_compat_intr __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int, int));
-void	pciide_unmap_compat_intr __P(( struct pci_attach_args *,
-	    struct pciide_channel *, int, int));
-int	pciide_compat_intr __P((void *));
-int	pciide_pci_intr __P((void *));
+	    int (*pci_intr)(void *)));
+int	pciide_chan_candisable(struct pciide_channel *);
+void	pciide_map_compat_intr( struct pci_attach_args *,
+	    struct pciide_channel *, int, int);
+void	pciide_unmap_compat_intr( struct pci_attach_args *,
+	    struct pciide_channel *, int, int);
+int	pciide_compat_intr(void *);
+int	pciide_pci_intr(void *);
 int     pciide_intr_flag(struct pciide_channel *);
 
-const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
+const struct pciide_product_desc* pciide_lookup_product(u_int32_t);
 
 const struct pciide_product_desc *
 pciide_lookup_product(id)
@@ -689,7 +689,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	struct pci_attach_args * pa;
 	struct pciide_channel *cp;
 	bus_size_t *cmdsizep, *ctlsizep;
-	int (*pci_intr) __P((void *));
+	int (*pci_intr)(void *);
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
@@ -1218,7 +1218,7 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 	struct pciide_channel *cp;
 	pcireg_t interface;
 	bus_size_t *cmdsizep, *ctlsizep;
-	int (*pci_intr) __P((void *));
+	int (*pci_intr)(void *);
 {
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.3 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.4 2002/03/14 01:27:00 millert Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -79,11 +79,11 @@ struct esp_pcmcia_softc {
 #define ESP_PCMCIA_ATTACHING	2		/* attach in progress */
 };
 
-int	esp_pcmcia_match __P((struct device *, void *, void *)); 
-void	esp_pcmcia_attach __P((struct device *, struct device *, void *));  
-void	esp_pcmcia_init __P((struct esp_pcmcia_softc *));
-int	esp_pcmcia_detach __P((struct device *, int));
-int	esp_pcmcia_enable __P((void *, int));
+int	esp_pcmcia_match(struct device *, void *, void *); 
+void	esp_pcmcia_attach(struct device *, struct device *, void *);  
+void	esp_pcmcia_init(struct esp_pcmcia_softc *);
+int	esp_pcmcia_detach(struct device *, int);
+int	esp_pcmcia_enable(void *, int);
 
 struct scsi_adapter esp_pcmcia_adapter = {
 	ncr53c9x_scsi_cmd,	/* cmd */
@@ -100,18 +100,18 @@ struct cfattach esp_pcmcia_ca = {
  * Functions and the switch for the MI code.
  */
 #ifdef ESP_PCMCIA_POLL
-void	esp_pcmcia_poll __P((void *));
+void	esp_pcmcia_poll(void *);
 #endif
-u_char	esp_pcmcia_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_pcmcia_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_pcmcia_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_pcmcia_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_pcmcia_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_pcmcia_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_pcmcia_dma_go __P((struct ncr53c9x_softc *));
-void	esp_pcmcia_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_pcmcia_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	esp_pcmcia_read_reg(struct ncr53c9x_softc *, int);
+void	esp_pcmcia_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	esp_pcmcia_dma_isintr(struct ncr53c9x_softc *);
+void	esp_pcmcia_dma_reset(struct ncr53c9x_softc *);
+int	esp_pcmcia_dma_intr(struct ncr53c9x_softc *);
+int	esp_pcmcia_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+void	esp_pcmcia_dma_go(struct ncr53c9x_softc *);
+void	esp_pcmcia_dma_stop(struct ncr53c9x_softc *);
+int	esp_pcmcia_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue esp_pcmcia_glue = {
 	esp_pcmcia_read_reg,

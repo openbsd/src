@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.4 2001/10/05 18:26:48 nate Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.5 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -57,8 +57,8 @@
 
 #include <dev/mii/xmphyreg.h>
 
-int xmphy_probe __P((struct device *, void *, void *));
-void xmphy_attach __P((struct device *, struct device *, void *));
+int xmphy_probe(struct device *, void *, void *);
+void xmphy_attach(struct device *, struct device *, void *);
 
 struct cfattach xmphy_ca = {
 	sizeof(struct mii_softc), xmphy_probe, xmphy_attach, mii_phy_detach,
@@ -69,11 +69,11 @@ struct cfdriver xmphy_cd = {
 	NULL, "xmphy", DV_DULL
 };
 
-int	xmphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	xmphy_status __P((struct mii_softc *));
+int	xmphy_service(struct mii_softc *, struct mii_data *, int);
+void	xmphy_status(struct mii_softc *);
 
-int	xmphy_mii_phy_auto __P((struct mii_softc *, int));
-extern void	mii_phy_auto_timeout __P((void *));
+int	xmphy_mii_phy_auto(struct mii_softc *, int);
+extern void	mii_phy_auto_timeout(void *);
 
 int xmphy_probe(parent, match, aux)
 	struct device *parent;

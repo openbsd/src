@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.4 2001/06/27 06:11:09 mickey Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.5 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -78,8 +78,8 @@ struct cfattach iopsp_ca = {
 	sizeof(struct iopsp_softc), iopsp_match, iopsp_attach
 };
 
-int	iopsp_scsi_cmd __P((struct scsi_xfer *));
-void	iopspminphys __P((struct buf *bp));
+int	iopsp_scsi_cmd(struct scsi_xfer *);
+void	iopspminphys(struct buf *bp);
 
 struct scsi_adapter iopsp_switch = {
 	iopsp_scsi_cmd, iopspminphys, 0, 0,

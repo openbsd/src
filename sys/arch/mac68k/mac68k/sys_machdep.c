@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 2000/06/23 02:14:35 mickey Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.9 1996/05/05 06:18:58 briggs Exp $	*/
 
 /*
@@ -94,9 +94,9 @@
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-int	cachectl __P((int, caddr_t, int));
-void	DCIU __P((void));
-void	ICIA __P((void));
+int	cachectl(int, caddr_t, int);
+void	DCIU(void);
+void	ICIA(void);
 
 /*ARGSUSED1*/
 int

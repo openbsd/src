@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.14 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.15 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -130,16 +130,16 @@ static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;
 
 static void	ncr5380_irq_intr(void *);
 static void	ncr5380_drq_intr(void *);
-static void	do_ncr5380_drq_intr __P((void *));
+static void	do_ncr5380_drq_intr(void *);
 
-static __inline__ void	scsi_clr_ipend __P((void));
-static		  void	scsi_mach_init __P((struct ncr_softc *sc));
-static		  int	machine_match __P((struct device *parent,
+static __inline__ void	scsi_clr_ipend(void);
+static		  void	scsi_mach_init(struct ncr_softc *sc);
+static		  int	machine_match(struct device *parent,
 			    struct cfdata *cf, void *aux,
-			    struct cfdriver *cd));
-static __inline__ int	pdma_ready __P((void));
-static		  int	transfer_pdma __P((u_char *phasep, u_char *data,
-					u_long *count));
+			    struct cfdriver *cd);
+static __inline__ int	pdma_ready(void);
+static		  int	transfer_pdma(u_char *phasep, u_char *data,
+					u_long *count);
 
 static __inline__ void
 scsi_clr_ipend()

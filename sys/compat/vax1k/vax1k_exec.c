@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax1k_exec.c,v 1.1 2001/11/14 14:37:22 hugh Exp $	*/
+/*	$OpenBSD: vax1k_exec.c,v 1.2 2002/03/14 01:26:51 millert Exp $	*/
 /*	$NetBSD: vax1k_exec.c,v 1.1 1998/08/21 13:25:47 ragge Exp $	*/
 
 /*
@@ -50,8 +50,7 @@
 
 #include <compat/vax1k/vax1k_exec.h>
 
-int	exec_vax1k_prep_anymagic
-	    __P((struct proc *, struct exec_package *, int));
+int	exec_vax1k_prep_anymagic(struct proc *, struct exec_package *, int);
 
 /*
  * exec_vax1k_makecmds(): Check if it's an a.out-format executable

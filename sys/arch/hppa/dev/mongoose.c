@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.8 2002/02/05 04:26:06 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.9 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -167,7 +167,7 @@ struct mongoose_ctrl {
 
 struct hppa_isa_iv {
 	const char *iv_name;
-	int (*iv_handler) __P((void *arg));
+	int (*iv_handler)(void *arg);
 	void *iv_arg;
 	int iv_pri;
 
@@ -206,9 +206,9 @@ union mongoose_attach_args {
 	struct isabus_attach_args mongoose_isa;
 };
 
-int	mgmatch __P((struct device *, void *, void *));
-void	mgattach __P((struct device *, struct device *, void *));
-int	mgprint __P((void *aux, const char *pnp));
+int	mgmatch(struct device *, void *, void *);
+void	mgattach(struct device *, struct device *, void *);
+int	mgprint(void *aux, const char *pnp);
 
 struct cfattach mongoose_ca = {
 	sizeof(struct mongoose_softc), mgmatch, mgattach
@@ -251,7 +251,7 @@ mg_isa_attach_hook(struct device *parent, struct device *self,
 
 void *
 mg_intr_establish(void *v, int irq, int type, int pri,
-	int (*handler) __P((void *)), void *arg, char *name)
+	int (*handler)(void *), void *arg, char *name)
 {
 	struct hppa_isa_iv *iv;
 	struct mongoose_softc *sc = v;

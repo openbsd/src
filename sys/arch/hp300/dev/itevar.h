@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.9 1997/04/16 11:56:11 downsj Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.10 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: itevar.h,v 1.14 1997/03/31 07:37:27 scottr Exp $	*/
 
 /*
@@ -79,14 +79,14 @@ struct ite_data {
 };
 
 struct itesw {
-	void	(*ite_init) __P((struct ite_data *));
-	void	(*ite_deinit) __P((struct ite_data *));
-	void	(*ite_clear) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_putc) __P((struct ite_data *, int, int, int, int));
-	void	(*ite_cursor) __P((struct ite_data *, int));
-	void	(*ite_scroll) __P((struct ite_data *, int, int, int, int));
-	u_char	(*ite_readbyte) __P((struct ite_data *, int));
-	void	(*ite_writeglyph) __P((struct ite_data *, u_char *, u_char *));
+	void	(*ite_init)(struct ite_data *);
+	void	(*ite_deinit)(struct ite_data *);
+	void	(*ite_clear)(struct ite_data *, int, int, int, int);
+	void	(*ite_putc)(struct ite_data *, int, int, int, int);
+	void	(*ite_cursor)(struct ite_data *, int);
+	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
+	u_char	(*ite_readbyte)(struct ite_data *, int);
+	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
 };
 
 struct ite_softc {
@@ -200,18 +200,18 @@ extern	struct itesw itesw[];
 extern	int nitesw;
 
 /* ite.c prototypes */
-void	ite_attach_grf __P((int, int));
-int	iteon __P((struct ite_data *, int));
-void	iteoff __P((struct ite_data *, int));
-void	itefilter __P((char, char));
-void	itecninit __P((struct grf_data *, struct itesw *));
-int	itecngetc __P((dev_t));
-void	itecnputc __P((dev_t, int));
-int	ite_major __P((void));
+void	ite_attach_grf(int, int);
+int	iteon(struct ite_data *, int);
+void	iteoff(struct ite_data *, int);
+void	itefilter(char, char);
+void	itecninit(struct grf_data *, struct itesw *);
+int	itecngetc(dev_t);
+void	itecnputc(dev_t, int);
+int	ite_major(void);
 
 /* ite_subr.c prototypes */
-void	ite_fontinfo __P((struct ite_data *));
-void	ite_fontinit __P((struct ite_data *));
-u_char	ite_readbyte __P((struct ite_data *, int));
-void	ite_writeglyph __P((struct ite_data *, u_char *, u_char *));
+void	ite_fontinfo(struct ite_data *);
+void	ite_fontinit(struct ite_data *);
+u_char	ite_readbyte(struct ite_data *, int);
+void	ite_writeglyph(struct ite_data *, u_char *, u_char *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.14 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: dca.c,v 1.15 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -94,8 +94,8 @@ struct	dca_softc {
 
 };
 
-int	dcamatch __P((struct device *, void *, void *));
-void	dcaattach __P((struct device *, struct device *, void *));
+int	dcamatch(struct device *, void *, void *);
+void	dcaattach(struct device *, struct device *, void *);
 
 struct cfattach dca_ca = {
 	sizeof(struct dca_softc), dcamatch, dcaattach
@@ -110,21 +110,21 @@ int	dcamajor;
 
 cdev_decl(dca);
 
-int	dcaintr __P((void *));
-void	dcaeint __P((struct dca_softc *, int));
-void	dcamint __P((struct dca_softc *));
+int	dcaintr(void *);
+void	dcaeint(struct dca_softc *, int);
+void	dcamint(struct dca_softc *);
 
-int	dcaparam __P((struct tty *, struct termios *));
-void	dcastart __P((struct tty *));
-int	dcastop __P((struct tty *, int));
-int	dcamctl __P((struct dca_softc *, int, int));
-void	dcainit __P((struct dcadevice *, int));
+int	dcaparam(struct tty *, struct termios *);
+void	dcastart(struct tty *);
+int	dcastop(struct tty *, int);
+int	dcamctl(struct dca_softc *, int, int);
+void	dcainit(struct dcadevice *, int);
 
-int	dca_console_scan __P((int, caddr_t, void *));
-void	dcacnprobe __P((struct consdev *));
-void	dcacninit __P((struct consdev *));
-int	dcacngetc __P((dev_t));
-void	dcacnputc __P((dev_t, int));
+int	dca_console_scan(int, caddr_t, void *);
+void	dcacnprobe(struct consdev *);
+void	dcacninit(struct consdev *);
+int	dcacngetc(dev_t);
+void	dcacnputc(dev_t, int);
 
 /*
  * Stuff for DCA console support.
@@ -170,7 +170,7 @@ long	dcaintrcount[16];
 long	dcamintcount[16];
 #endif
 
-void	dcainit __P((struct dcadevice *, int));
+void	dcainit(struct dcadevice *, int);
 
 int
 dcamatch(parent, match, aux)

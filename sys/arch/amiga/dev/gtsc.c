@@ -1,4 +1,4 @@
-/*	$OpenBSD: gtsc.c,v 1.6 1997/01/18 12:26:29 niklas Exp $	*/
+/*	$OpenBSD: gtsc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: gtsc.c,v 1.20 1996/12/23 09:10:11 veego Exp $	*/
 
 /*
@@ -53,17 +53,17 @@
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
 
-void gtscattach __P((struct device *, struct device *, void *));
-int gtscmatch __P((struct device *, void *, void *));
+void gtscattach(struct device *, struct device *, void *);
+int gtscmatch(struct device *, void *, void *);
 
-void gtsc_enintr __P((struct sbic_softc *));
-void gtsc_dmastop __P((struct sbic_softc *));
-int gtsc_dmanext __P((struct sbic_softc *));
-int gtsc_dmaintr __P((void *));
-int gtsc_dmago __P((struct sbic_softc *, char *, int, int));
+void gtsc_enintr(struct sbic_softc *);
+void gtsc_dmastop(struct sbic_softc *);
+int gtsc_dmanext(struct sbic_softc *);
+int gtsc_dmaintr(void *);
+int gtsc_dmago(struct sbic_softc *, char *, int, int);
 
 #ifdef DEBUG
-void gtsc_dump __P((void));
+void gtsc_dump(void);
 #endif
 
 struct scsi_adapter gtsc_scsiswitch = {

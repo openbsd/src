@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.4 2001/01/25 03:50:48 todd Exp $ */
+/*	$OpenBSD: sbicvar.h,v 1.5 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,10 +128,10 @@ struct  sbic_softc {
 #endif
     struct  dma_chain       *sc_cur;
     struct  dma_chain       *sc_last;
-    int  (*sc_dmago)        __P((struct sbic_softc *, char *, int, int));
-    int  (*sc_dmanext)      __P((struct sbic_softc *));
-    void (*sc_enintr)       __P((struct sbic_softc *));
-    void (*sc_dmastop)      __P((struct sbic_softc *));
+    int  (*sc_dmago)(struct sbic_softc *, char *, int, int);
+    int  (*sc_dmanext)(struct sbic_softc *);
+    void (*sc_enintr)(struct sbic_softc *);
+    void (*sc_dmastop)(struct sbic_softc *);
 };
 
 /*
@@ -201,7 +201,7 @@ struct  sbic_softc {
 struct buf;
 struct scsi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
-int sbic_scsicmd __P((struct scsi_xfer *));
+void sbic_minphys(struct buf *bp);
+int sbic_scsicmd(struct scsi_xfer *);
 
 #endif /* _SBICVAR_H_ */

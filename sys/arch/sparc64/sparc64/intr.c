@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2002/01/10 00:06:17 nordin Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -69,10 +69,10 @@
  */
 struct intrhand *intrlev[MAXINTNUM];
 
-void	strayintr __P((const struct trapframe64 *, int));
-int	softintr __P((void *));
-int	softnet __P((void *));
-int	intr_list_handler __P((void *));
+void	strayintr(const struct trapframe64 *, int);
+int	softintr(void *);
+int	softnet(void *);
+int	intr_list_handler(void *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -130,7 +130,7 @@ softintr(fp)
 	void *fp;
 {
 #if NPCONS >0
-	extern void pcons_dopoll __P((void));
+	extern void pcons_dopoll(void);
 
 	pcons_dopoll();
 #endif
@@ -314,14 +314,14 @@ intr_establish(level, ih)
 void *
 softintr_establish(level, fun, arg)
 	int level; 
-	void (*fun) __P((void *));
+	void (*fun)(void *);
 	void *arg;
 {
 	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
 	bzero(ih, sizeof(*ih));
-	ih->ih_fun = (int (*) __P((void *)))fun;	/* XXX */
+	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_pending = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.9 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.10 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -65,11 +65,11 @@
 
 extern	vaddr_t avail_start, avail_end, virtual_avail;
 
-int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));
-int	_bus_dma_inrange __P((bus_dma_segment_t *, int, bus_addr_t));
-int	_bus_dmamem_alloc_range __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-	    bus_size_t, bus_dma_segment_t*, int, int *, int, vaddr_t, vaddr_t));
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int);
+int	_bus_dma_inrange(bus_dma_segment_t *, int, bus_addr_t);
+int	_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t*, int, int *, int, vaddr_t, vaddr_t);
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.

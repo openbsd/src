@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.8 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.9 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -80,12 +80,12 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-static __inline int getpsr __P((void));
-static __inline void setpsr __P((int));
-static __inline int spl0 __P((void));
-static __inline int splhigh __P((void));
-static __inline void splx __P((int));
-static __inline int getmid __P((void));
+static __inline int getpsr(void);
+static __inline void setpsr(int);
+static __inline int spl0(void);
+static __inline int splhigh(void);
+static __inline void splx(int);
+static __inline int getmid(void);
 
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
@@ -142,7 +142,7 @@ static __inline int spl0()
  * into the ipl field.)
  */
 #define	SPL(name, newipl) \
-static __inline int name __P((void)); \
+static __inline int name(void); \
 static __inline int name() \
 { \
 	int psr, oldipl; \
@@ -156,7 +156,7 @@ static __inline int name() \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newipl) \
-static __inline int name __P((void)); \
+static __inline int name(void); \
 static __inline int name() \
 { \
 	int psr, oldipl; \

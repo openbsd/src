@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2002/02/04 19:38:18 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -165,26 +165,26 @@ ddlist_t	dev_data_list;	  	/* all dev_datas */
 ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
-void	setroot __P((void));
-void	swapconf __P((void));
-void	findbootdev __P((void));
-void	findbootdev_slave __P((ddlist_t *, int, int, int));
-void	setbootdev __P((void));
+void	setroot(void);
+void	swapconf(void);
+void	findbootdev(void);
+void	findbootdev_slave(ddlist_t *, int, int, int);
+void	setbootdev(void);
 
-static	struct dev_data *dev_data_lookup __P((struct device *));
-static	void dev_data_insert __P((struct dev_data *, ddlist_t *));
+static	struct dev_data *dev_data_lookup(struct device *);
+static	void dev_data_insert(struct dev_data *, ddlist_t *);
 
-static	struct device *parsedisk __P((char *str, int len, int defpart,
-	    dev_t *devp));
-static	struct device *getdisk __P((char *str, int len, int defpart,
-	    dev_t *devp));
-static	int findblkmajor __P((struct device *dv));
-static	char *findblkname __P((int));
-static	int getstr __P((char *cp, int size));  
+static	struct device *parsedisk(char *str, int len, int defpart,
+	    dev_t *devp);
+static	struct device *getdisk(char *str, int len, int defpart,
+	    dev_t *devp);
+static	int findblkmajor(struct device *dv);
+static	char *findblkname(int);
+static	int getstr(char *cp, int size);  
 
-int	mainbusmatch __P((struct device *, void *, void *));
-void	mainbusattach __P((struct device *, struct device *, void *));
-int	mainbussearch __P((struct device *, void *, void *));
+int	mainbusmatch(struct device *, void *, void *);
+void	mainbusattach(struct device *, struct device *, void *);
+int	mainbussearch(struct device *, void *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
@@ -1134,7 +1134,7 @@ dev_data_insert(dd, ddlist)
  */
 void
 console_scan(func, arg)
-	int (*func) __P((int, caddr_t, void *));
+	int (*func)(int, caddr_t, void *);
 	void *arg;
 {
 	int size, scode, sctop;

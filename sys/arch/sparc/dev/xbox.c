@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbox.c,v 1.1 1999/04/18 03:24:26 jason Exp $	*/
+/*	$OpenBSD: xbox.c,v 1.2 2002/03/14 01:26:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -53,10 +53,10 @@
 #include <sparc/dev/xboxreg.h>
 #include <sparc/dev/xboxvar.h>
 
-int	xboxmatch	__P((struct device *, void *, void *));
-void	xboxattach	__P((struct device *, struct device *, void *));
-int	xboxprint	__P((void *, const char *));
-void	xbox_fix_range	__P((struct xbox_softc *sc, struct sbus_softc *sbp));
+int	xboxmatch(struct device *, void *, void *);
+void	xboxattach(struct device *, struct device *, void *);
+int	xboxprint(void *, const char *);
+void	xbox_fix_range(struct xbox_softc *sc, struct sbus_softc *sbp);
 
 struct cfattach xbox_ca = {
 	sizeof (struct xbox_softc), xboxmatch, xboxattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wssvar.h,v 1.1 1998/04/26 21:02:38 provos Exp $	*/
+/*	$OpenBSD: wssvar.h,v 1.2 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: wssvar.h,v 1.1 1998/01/19 22:18:25 augustss Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ struct wss_softc {
 	bus_space_handle_t mad_ioh1, mad_ioh2, mad_ioh3;
 };
 
-void	wssattach __P((struct wss_softc *));
+void	wssattach(struct wss_softc *);
 
-u_int	mad_read __P((struct wss_softc *, int));
-void	mad_write __P((struct wss_softc *, int, int));
-void	madattach __P((struct wss_softc *));
+u_int	mad_read(struct wss_softc *, int);
+void	mad_write(struct wss_softc *, int, int);
+void	madattach(struct wss_softc *);

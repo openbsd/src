@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.10 2002/03/14 01:26:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,24 +44,24 @@ typedef u_long pci_intr_handle_t;
  */
 struct ppc_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook) __P((struct device *,
-			    struct device *, struct pcibus_attach_args *));
-	int		(*pc_bus_maxdevs) __P((void *, int));
-	pcitag_t	(*pc_make_tag) __P((void *, int, int, int));
-	void		(*pc_decompose_tag) __P((void *, pcitag_t, int *,
-			    int *, int *));
-	pcireg_t	(*pc_conf_read) __P((void *, pcitag_t, int));
-	void		(*pc_conf_write) __P((void *, pcitag_t, int, pcireg_t));
+	void		(*pc_attach_hook)(struct device *,
+			    struct device *, struct pcibus_attach_args *);
+	int		(*pc_bus_maxdevs)(void *, int);
+	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
+	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
+	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
-			    pci_intr_handle_t *));
-	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
-	int		(*pc_intr_line) __P((void *, pci_intr_handle_t));
+	int		(*pc_intr_map)(void *, pcitag_t, int, int,
+			    pci_intr_handle_t *);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	int		(*pc_intr_line)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
-	void		(*pc_intr_disestablish) __P((void *, void *));
-	int		(*pc_ether_hw_addr) __P((struct ppc_pci_chipset *, u_int8_t *));
+	void		(*pc_intr_disestablish)(void *, void *);
+	int		(*pc_ether_hw_addr)(struct ppc_pci_chipset *, u_int8_t *);
 };
 
 /*

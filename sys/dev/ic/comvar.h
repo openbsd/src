@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.30 2001/10/05 21:01:11 mickey Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.31 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -134,41 +134,41 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 
 	/* power management hooks */
-	int (*enable) __P((struct com_softc *));
-	void (*disable) __P((struct com_softc *));
+	int (*enable)(struct com_softc *);
+	void (*disable)(struct com_softc *);
 	int enabled;
 };
 
-int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
-void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
-int	comstop __P((struct tty *, int));
-int	comintr __P((void *));
-int	com_detach __P((struct device *, int));
-int	com_activate __P((struct device *, enum devact));
+int	comprobe1(bus_space_tag_t, bus_space_handle_t);
+void	cominit(bus_space_tag_t, bus_space_handle_t, int);
+int	comstop(struct tty *, int);
+int	comintr(void *);
+int	com_detach(struct device *, int);
+int	com_activate(struct device *, enum devact);
 
-void	comdiag		__P((void *));
-int	comspeed	__P((long, long));
-u_char	com_cflag2lcr	__P((tcflag_t));
-int	comparam	__P((struct tty *, struct termios *));
-void	comstart	__P((struct tty *));
-void	compoll		__P((void *));
+void	comdiag(void *);
+int	comspeed(long, long);
+u_char	com_cflag2lcr(tcflag_t);
+int	comparam(struct tty *, struct termios *);
+void	comstart(struct tty *);
+void	compoll(void *);
 
 struct consdev;
-int	comcnattach	__P((bus_space_tag_t, int, int, int, tcflag_t));
-void	comcnprobe	__P((struct consdev *));
-void	comcninit	__P((struct consdev *));
-int	comcngetc	__P((dev_t));
-void	comcnputc	__P((dev_t, int));
-void	comcnpollc	__P((dev_t, int));
-int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
-void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
+int	comcnattach(bus_space_tag_t, int, int, int, tcflag_t);
+void	comcnprobe(struct consdev *);
+void	comcninit(struct consdev *);
+int	comcngetc(dev_t);
+void	comcnputc(dev_t, int);
+void	comcnpollc(dev_t, int);
+int	com_common_getc(bus_space_tag_t, bus_space_handle_t);
+void	com_common_putc(bus_space_tag_t, bus_space_handle_t, int);
 
 #ifdef KGDB
-int	com_kgdb_attach	__P((bus_space_tag_t, int, int, int, tcflag_t));
-int	kgdbintr __P((void *));
+int	com_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
+int	kgdbintr(void *);
 #endif
 
-void com_attach_subr __P((struct com_softc *));
+void com_attach_subr(struct com_softc *);
 
 extern int comdefaultrate;
 extern int comconsaddr;

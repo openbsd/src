@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.3 1996/09/23 14:18:58 mickey Exp $	*/
+/*	$OpenBSD: net.h,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -92,18 +92,18 @@ extern	int debug;			/* defined in the machdep sources */
 extern struct iodesc sockets[SOPEN_MAX];
 
 /* ARP/RevARP functions: */
-u_char	*arpwhohas __P((struct iodesc *, struct in_addr));
-void	arp_reply __P((struct iodesc *, void *));
-int	rarp_getipaddress __P((int));
+u_char	*arpwhohas(struct iodesc *, struct in_addr);
+void	arp_reply(struct iodesc *, void *);
+int	rarp_getipaddress(int);
 
 /* Link functions: */
-ssize_t sendether __P((struct iodesc *d, void *pkt, size_t len,
-			u_char *dea, int etype));
-ssize_t readether __P((struct iodesc *d, void *pkt, size_t len,
-			time_t tleft, u_int16_t *etype));
+ssize_t sendether(struct iodesc *d, void *pkt, size_t len,
+			u_char *dea, int etype);
+ssize_t readether(struct iodesc *d, void *pkt, size_t len,
+			time_t tleft, u_int16_t *etype);
 
-ssize_t	sendudp __P((struct iodesc *, void *, size_t));
-ssize_t	readudp __P((struct iodesc *, void *, size_t, time_t));
+ssize_t	sendudp(struct iodesc *, void *, size_t);
+ssize_t	readudp(struct iodesc *, void *, size_t, time_t);
 ssize_t	sendrecv __P((struct iodesc *,
 		      ssize_t (*)(struct iodesc *, void *, size_t),
 			void *, size_t,
@@ -111,11 +111,11 @@ ssize_t	sendrecv __P((struct iodesc *,
 			void *, size_t));
 
 /* Utilities: */
-char	*ether_sprintf __P((u_char *));
-int	in_cksum __P((void *, int));
-char	*inet_ntoa __P((struct in_addr));
-char	*intoa __P((n_long));		/* similar to inet_ntoa */
-n_long	inet_addr __P((char *));
+char	*ether_sprintf(u_char *);
+int	in_cksum(void *, int);
+char	*inet_ntoa(struct in_addr);
+char	*intoa(n_long);		/* similar to inet_ntoa */
+n_long	inet_addr(char *);
 
 /* Machine-dependent functions: */
-time_t	getsecs __P((void));
+time_t	getsecs(void);

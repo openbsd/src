@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.11 2001/03/29 01:39:32 aaron Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.12 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -88,15 +88,15 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
-int	ne2000_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-int	ne2000_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-void	ne2000_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-int	ne2000_test_mem __P((struct dp8390_softc *));
+int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+int	ne2000_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+void	ne2000_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+int	ne2000_test_mem(struct dp8390_softc *);
 
-void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t, int));
-void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
+void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
+	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t, int);
+void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
+	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int);
 
 struct cfdriver ne_cd = {
 	NULL, "ne", DV_IFNET

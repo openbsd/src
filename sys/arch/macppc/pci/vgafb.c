@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.5 2001/12/14 03:08:54 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.6 2002/03/14 01:26:37 millert Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -63,15 +63,15 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
 };
 
-void	vgafb_cursor __P((void *, int, int, int));
-void	vgafb_putchar __P((void *, int, int, u_int, long));
-void	vgafb_copycols __P((void *, int, int, int, int));
-void	vgafb_erasecols __P((void *, int, int, int));
-void	vgafb_copyrows __P((void *, int, int, int));
-void	vgafb_eraserows __P((void *, int, int));
-void	vgafb_alloc_attr __P((void *c, int fg, int bg, int flags, long *));
+void	vgafb_cursor(void *, int, int, int);
+void	vgafb_putchar(void *, int, int, u_int, long);
+void	vgafb_copycols(void *, int, int, int, int);
+void	vgafb_erasecols(void *, int, int, int);
+void	vgafb_copyrows(void *, int, int, int);
+void	vgafb_eraserows(void *, int, int);
+void	vgafb_alloc_attr(void *c, int fg, int bg, int flags, long *);
 
-void vgafb_setcolor __P((unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b));
+void vgafb_setcolor(unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b);
 
 struct vgafb_devconfig {
 	struct rcons dc_ri;
@@ -118,8 +118,8 @@ struct wsdisplay_accessops vgafb_accessops = {
 	0 /* load_font */
 };
 
-int	vgafb_getcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
-int	vgafb_putcmap __P((struct vgafb_config *vc, struct wsdisplay_cmap *cm));
+int	vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
+int	vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16

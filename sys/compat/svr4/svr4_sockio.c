@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_sockio.c,v 1.7 2000/08/29 02:22:13 brad Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.8 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_sockio.c,v 1.10 1996/05/03 17:09:15 christos Exp $	 */
 
 /*
@@ -51,7 +51,7 @@
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_sockio.h>
 
-static int bsd_to_svr4_flags __P((int));
+static int bsd_to_svr4_flags(int);
 
 #define bsd_to_svr4_flag(a) \
 	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)
@@ -85,7 +85,7 @@ svr4_sock_ioctl(fp, p, retval, fd, cmd, data)
 	caddr_t data;
 {
 	int error;
-	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
+	int (*ctl)(struct file *, u_long,  caddr_t, struct proc *) =
 			fp->f_ops->fo_ioctl;
 
 	*retval = 0;

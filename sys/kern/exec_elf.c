@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.37 2001/11/15 06:22:30 art Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.38 2002/03/14 01:27:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -71,8 +71,8 @@
 #endif
 
 struct ELFNAME(probe_entry) {
-	int (*func) __P((struct proc *, struct exec_package *, char *,
-	    u_long *, u_int8_t *));
+	int (*func)(struct proc *, struct exec_package *, char *,
+	    u_long *, u_int8_t *);
 	int os_mask;
 } ELFNAME(probes)[] = {
 	/* XXX - bogus, shouldn't be size independent.. */

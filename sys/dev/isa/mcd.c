@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.29 2000/11/11 23:55:57 mickey Exp $ */
+/*	$OpenBSD: mcd.c,v 1.30 2002/03/14 01:26:56 millert Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -156,43 +156,43 @@ struct mcd_softc {
 cdev_decl(mcd);
 bdev_decl(mcd);
 
-static void hsg2msf __P((int, bcd_t *));
-static daddr_t msf2hsg __P((bcd_t *, int));
+static void hsg2msf(int, bcd_t *);
+static daddr_t msf2hsg(bcd_t *, int);
 
-int mcd_playtracks __P((struct mcd_softc *, struct ioc_play_track *));
-int mcd_playmsf __P((struct mcd_softc *, struct ioc_play_msf *));
-int mcd_playblocks __P((struct mcd_softc *, struct ioc_play_blocks *));
-int mcd_stop __P((struct mcd_softc *));
-int mcd_eject __P((struct mcd_softc *));
-int mcd_read_subchannel __P((struct mcd_softc *, struct ioc_read_subchannel *));
-int mcd_pause __P((struct mcd_softc *));
-int mcd_resume __P((struct mcd_softc *));
-int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
-int mcd_toc_entries __P((struct mcd_softc *, struct ioc_read_toc_entry *));
+int mcd_playtracks(struct mcd_softc *, struct ioc_play_track *);
+int mcd_playmsf(struct mcd_softc *, struct ioc_play_msf *);
+int mcd_playblocks(struct mcd_softc *, struct ioc_play_blocks *);
+int mcd_stop(struct mcd_softc *);
+int mcd_eject(struct mcd_softc *);
+int mcd_read_subchannel(struct mcd_softc *, struct ioc_read_subchannel *);
+int mcd_pause(struct mcd_softc *);
+int mcd_resume(struct mcd_softc *);
+int mcd_toc_header(struct mcd_softc *, struct ioc_toc_header *);
+int mcd_toc_entries(struct mcd_softc *, struct ioc_read_toc_entry *);
 
-int mcd_getreply __P((struct mcd_softc *));
-int mcd_getstat __P((struct mcd_softc *));
-int mcd_getresult __P((struct mcd_softc *, struct mcd_result *));
-void mcd_setflags __P((struct mcd_softc *));
-int mcd_get __P((struct mcd_softc *, char *, int));
-int mcd_send __P((struct mcd_softc *, struct mcd_mbox *, int));
-int mcdintr __P((void *));
-void mcd_soft_reset __P((struct mcd_softc *));
-int mcd_hard_reset __P((struct mcd_softc *));
-int mcd_setmode __P((struct mcd_softc *, int));
-int mcd_setupc __P((struct mcd_softc *, int));
-int mcd_read_toc __P((struct mcd_softc *));
-int mcd_getqchan __P((struct mcd_softc *, union mcd_qchninfo *, int));
-int mcd_setlock __P((struct mcd_softc *, int));
+int mcd_getreply(struct mcd_softc *);
+int mcd_getstat(struct mcd_softc *);
+int mcd_getresult(struct mcd_softc *, struct mcd_result *);
+void mcd_setflags(struct mcd_softc *);
+int mcd_get(struct mcd_softc *, char *, int);
+int mcd_send(struct mcd_softc *, struct mcd_mbox *, int);
+int mcdintr(void *);
+void mcd_soft_reset(struct mcd_softc *);
+int mcd_hard_reset(struct mcd_softc *);
+int mcd_setmode(struct mcd_softc *, int);
+int mcd_setupc(struct mcd_softc *, int);
+int mcd_read_toc(struct mcd_softc *);
+int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
+int mcd_setlock(struct mcd_softc *, int);
 
-int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
+int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
 #define __BROKEN_INDIRECT_CONFIG
 #ifdef __BROKEN_INDIRECT_CONFIG
-int mcdprobe __P((struct device *, void *, void *));
+int mcdprobe(struct device *, void *, void *);
 #else
-int mcdprobe __P((struct device *, struct cfdata *, void *));
+int mcdprobe(struct device *, struct cfdata *, void *);
 #endif
-void mcdattach __P((struct device *, struct device *, void *));
+void mcdattach(struct device *, struct device *, void *);
 
 struct cfattach mcd_ca = {
 	sizeof(struct mcd_softc), mcdprobe, mcdattach
@@ -202,14 +202,14 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void	mcdgetdisklabel __P((dev_t, struct mcd_softc *, struct disklabel *,
-			     struct cpu_disklabel *, int));
-int	mcd_get_parms __P((struct mcd_softc *));
-void	mcdstrategy __P((struct buf *));
-void	mcdstart __P((struct mcd_softc *));
-int	mcdlock __P((struct mcd_softc *));
-void	mcdunlock __P((struct mcd_softc *));
-void	mcd_pseudointr __P((void *));
+void	mcdgetdisklabel(dev_t, struct mcd_softc *, struct disklabel *,
+			     struct cpu_disklabel *, int);
+int	mcd_get_parms(struct mcd_softc *);
+void	mcdstrategy(struct buf *);
+void	mcdstart(struct mcd_softc *);
+int	mcdlock(struct mcd_softc *);
+void	mcdunlock(struct mcd_softc *);
+void	mcd_pseudointr(void *);
 
 struct dkdriver mcddkdriver = { mcdstrategy };
 

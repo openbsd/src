@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.h,v 1.4 2000/04/27 01:10:12 bjc Exp $ */
+/*	$OpenBSD: gencons.h,v 1.5 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: gencons.h,v 1.9 2000/01/20 00:07:49 matt Exp $ */
 
 /*
@@ -69,4 +69,4 @@
 #define	SCB_G3T	0xdc
 
 /* Prototypes */
-void	gencnputc __P((dev_t, int));
+void	gencnputc(dev_t, int);

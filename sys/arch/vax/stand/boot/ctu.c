@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
+/*	$OpenBSD: ctu.c,v 1.2 2002/03/14 01:26:47 millert Exp $ */
 /*	$NetBSD: ctu.c,v 1.1 1996/02/17 18:23:20 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -59,8 +59,8 @@ volatile struct tu_softc {
 	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 } tu_sc;
 
-void	ctutintr __P((void));
-void	cturintr __P((void));
+void	ctutintr(void);
+void	cturintr(void);
 
 int
 ctuopen(f, adapt, ctlr, unit, part)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.7 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.8 2002/03/14 01:27:12 millert Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ rip6_ctlinput(cmd, sa, d)
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
 	void *cmdarg;
-	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
+	void (*notify)(struct in6pcb *, int) = in6_rtchange;
 	int nxt;
 
 	if (sa->sa_family != AF_INET6 ||

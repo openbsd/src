@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.9 2002/03/14 01:26:48 millert Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -112,14 +112,14 @@ struct le_softc {
 	volatile u_short *sc_rdp;
 };
 
-int	le_ibus_match __P((struct device *, void *, void *));
-void	le_ibus_attach __P((struct device *, struct device *, void *));
-void	lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-void	lance_copytobuf_gap2 __P((struct am7990_softc *, void *, int, int));
-void	lance_copyfrombuf_gap2 __P((struct am7990_softc *, void *, int, int));
-void	lance_zerobuf_gap2 __P((struct am7990_softc *, int, int));
-void	leintr __P((void *));
+int	le_ibus_match(struct device *, void *, void *);
+void	le_ibus_attach(struct device *, struct device *, void *);
+void	lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+void	lance_copytobuf_gap2(struct am7990_softc *, void *, int, int);
+void	lance_copyfrombuf_gap2(struct am7990_softc *, void *, int, int);
+void	lance_zerobuf_gap2(struct am7990_softc *, int, int);
+void	leintr(void *);
 
 struct cfattach le_ibus_ca = {
 	sizeof(struct le_softc), le_ibus_match, le_ibus_attach

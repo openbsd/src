@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.3 2001/06/20 23:23:14 gluk Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.4 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -63,24 +63,24 @@ struct lockf {
 #define MAXDEPTH 50
 
 __BEGIN_DECLS
-int	 lf_advlock __P((struct lockf **,
-	    off_t, caddr_t, int, struct flock *, int));
-int	 lf_clearlock __P((struct lockf *));
-int	 lf_findoverlap __P((struct lockf *,
-	    struct lockf *, int, struct lockf ***, struct lockf **));
+int	 lf_advlock(struct lockf **,
+	    off_t, caddr_t, int, struct flock *, int);
+int	 lf_clearlock(struct lockf *);
+int	 lf_findoverlap(struct lockf *,
+	    struct lockf *, int, struct lockf ***, struct lockf **);
 struct lockf *
-	 lf_getblock __P((struct lockf *));
-int	 lf_getlock __P((struct lockf *, struct flock *));
-int	 lf_setlock __P((struct lockf *));
-void	 lf_split __P((struct lockf *, struct lockf *));
-void	 lf_wakelock __P((struct lockf *));
+	 lf_getblock(struct lockf *);
+int	 lf_getlock(struct lockf *, struct flock *);
+int	 lf_setlock(struct lockf *);
+void	 lf_split(struct lockf *, struct lockf *);
+void	 lf_wakelock(struct lockf *);
 __END_DECLS
 
 #ifdef LOCKF_DEBUG
 extern int lockf_debug;
 
 __BEGIN_DECLS
-void	lf_print __P((char *, struct lockf *));
-void	lf_printlist __P((char *, struct lockf *));
+void	lf_print(char *, struct lockf *);
+void	lf_printlist(char *, struct lockf *);
 __END_DECLS
 #endif

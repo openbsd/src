@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcreg.h,v 1.5 2000/01/29 04:11:25 smurph Exp $ */
+/*	$OpenBSD: mcreg.h,v 1.6 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -169,8 +169,8 @@ extern struct mcreg *sys_mc;
 #define MC_VER_NOVME	0x02
 #define MC_VER_33MHZ	0x01
 
-void mc_enableflashwrite __P((int on));
+void mc_enableflashwrite(int on);
 #define MC_ENAFLASHWRITE_OFFSET	0xcc000
 #define MC_DISFLASHWRITE_OFFSET	0xc8000
-int mc_hasflash __P((void));
+int mc_hasflash(void);
 

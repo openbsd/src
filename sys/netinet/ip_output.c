@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.141 2002/01/23 21:34:53 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.142 2002/03/14 01:27:11 millert Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 #define DPRINTF(x)
 #endif
 
-extern u_int8_t get_sa_require  __P((struct inpcb *));
+extern u_int8_t get_sa_require(struct inpcb *);
 
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
@@ -87,9 +87,8 @@ extern int ipsec_esp_network_default_level;
 extern int ipsec_ipcomp_default_level;
 #endif /* IPSEC */
 
-static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
-static void ip_mloopback
-	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
+static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
+static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP

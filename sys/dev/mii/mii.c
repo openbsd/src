@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.10 2001/10/10 15:05:47 jason Exp $	*/
+/*	$OpenBSD: mii.c,v 1.11 2002/03/14 01:26:57 millert Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-int	mii_print __P((void *, const char *));
-int	mii_submatch __P((struct device *, void *, void *));
+int	mii_print(void *, const char *);
+int	mii_submatch(struct device *, void *, void *);
 
 #define MIICF_PHY		0	/* cf_loc index */
 #define MIICF_PHY_DEFAULT	(-1)	/* default phy device */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.11 1999/09/18 22:48:28 downsj Exp $	*/
+/*	$OpenBSD: st.c,v 1.12 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -165,26 +165,26 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 /* bdev_decl(st); */
 /* cdev_decl(st); */
 /* XXX we should use macros to do these... */
-int	stopen __P((dev_t, int, int, struct proc *));
-int	stclose __P((dev_t, int, int, struct proc *));
+int	stopen(dev_t, int, int, struct proc *);
+int	stclose(dev_t, int, int, struct proc *);
 
-int	stioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	stread __P((dev_t, struct uio *, int));
-int	stwrite __P((dev_t, struct uio *, int));
+int	stioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	stread(dev_t, struct uio *, int);
+int	stwrite(dev_t, struct uio *, int);
 
-void	ststrategy __P((struct buf *));
-int	stdump __P((dev_t));
+void	ststrategy(struct buf *);
+int	stdump(dev_t);
 
 #ifdef DEBUG
-void	dumpxsense __P((struct st_xsense *));
-void	prtmodsel __P((struct mode_select_data *, int));
-void	prtmodstat __P((struct mode_sense *));
+void	dumpxsense(struct st_xsense *);
+void	prtmodsel(struct mode_select_data *, int);
+void	prtmodstat(struct mode_sense *);
 #endif /* DEBUG */
 
-static void	stfinish __P((struct st_softc *, struct buf *));
-static void	sterror __P((struct st_softc *, int));
-static int	stmatch __P((struct device *, void *, void *));
-static void	stattach __P((struct device *, struct device *, void *));
+static void	stfinish(struct st_softc *, struct buf *);
+static void	sterror(struct st_softc *, int);
+static int	stmatch(struct device *, void *, void *);
+static void	stattach(struct device *, struct device *, void *);
 
 struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.43 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: ss.c,v 1.44 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -90,18 +90,18 @@ struct quirkdata {
 	 * To enable additional scanner options, point vendor_unique_sw
 	 * at a function that adds more stuff to the SET_WINDOW parameters.
 	 */
-	int	(*vendor_unique_sw)__P((struct ss_softc *, struct scan_io *,
-					struct scsi_set_window *, void *));
+	int	(*vendor_unique_sw)(struct ss_softc *, struct scan_io *,
+					struct scsi_set_window *, void *);
 	/* 
 	 * If the scanner requires use of GET_BUFFER_STATUS before READ
 	 * it can be called from ss_minphys().
 	 */
-	void	(*special_minphys)__P((struct ss_softc *, struct buf *));
+	void	(*special_minphys)(struct ss_softc *, struct buf *);
 
 	/*
 	 * 
 	 */
-	int	(*compute_sizes)__P((void));
+	int	(*compute_sizes)(void);
 };
 
 struct ss_quirk_inquiry_pattern {
@@ -115,23 +115,23 @@ struct  quirkdata ss_gen_quirks = {
 	NULL, NULL, NULL
 };
 
-void    ssstrategy __P((struct buf *));
-void    ssstart __P((void *));
-void	ssminphys __P((struct buf *));
+void    ssstrategy(struct buf *);
+void    ssstart(void *);
+void	ssminphys(struct buf *);
 
-void	ss_identify_scanner __P((struct ss_softc *, struct scsi_inquiry_data*));
-int	ss_set_window __P((struct ss_softc *, struct scan_io *));
+void	ss_identify_scanner(struct ss_softc *, struct scsi_inquiry_data*);
+int	ss_set_window(struct ss_softc *, struct scan_io *);
 
-int	ricoh_is410_sw __P((struct ss_softc *, struct scan_io *,
-			    struct scsi_set_window *, void *));
-int	umax_uc630_sw __P((struct ss_softc *, struct scan_io *,
-			   struct scsi_set_window *, void *));
+int	ricoh_is410_sw(struct ss_softc *, struct scan_io *,
+			    struct scsi_set_window *, void *);
+int	umax_uc630_sw(struct ss_softc *, struct scan_io *,
+			   struct scsi_set_window *, void *);
 #ifdef NOTYET	/* for ADF support  */
-int	fujitsu_m3096g_sw __P((struct ss_softc *, struct scan_io *,
-			       struct scsi_set_window *, void *));
+int	fujitsu_m3096g_sw(struct ss_softc *, struct scan_io *,
+			       struct scsi_set_window *, void *);
 #endif
 
-void	get_buffer_status __P((struct ss_softc *, struct buf *));
+void	get_buffer_status(struct ss_softc *, struct buf *);
 
 /*
  * WDL:
@@ -245,8 +245,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 };
        
 
-int ssmatch __P((struct device *, void *, void *));
-void ssattach __P((struct device *, struct device *, void *));
+int ssmatch(struct device *, void *, void *);
+void ssattach(struct device *, struct device *, void *);
 
 struct cfattach ss_ca = {
 	sizeof(struct ss_softc), ssmatch, ssattach

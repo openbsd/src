@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.4 2001/06/08 03:53:46 angelos Exp $ */
+/* $OpenBSD: ip_id.c,v 1.5 2002/03/14 01:27:11 millert Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -83,9 +83,9 @@ static u_int16_t ru_msb = 0;
 static long ru_reseed;
 static u_int32_t tmp;		/* Storage for unused random */
 
-static u_int16_t pmod __P((u_int16_t, u_int16_t, u_int16_t));
-static void ip_initid __P((void));
-u_int16_t ip_randomid __P((void));
+static u_int16_t pmod(u_int16_t, u_int16_t, u_int16_t);
+static void ip_initid(void);
+u_int16_t ip_randomid(void);
 
 /*
  * Do a fast modular exponation, returned value will be in the range

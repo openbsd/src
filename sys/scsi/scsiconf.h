@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.32 2002/01/07 19:04:46 mickey Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.33 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -101,12 +101,12 @@ extern int scsi_autoconf;
  * these statically allocated.
  */
 struct scsi_adapter {
-	int		(*scsi_cmd) __P((struct scsi_xfer *));
-	void		(*scsi_minphys) __P((struct buf *));
-	int		(*open_target_lu) __P((void));
-	int		(*close_target_lu) __P((void));
-	int		(*ioctl) __P((struct scsi_link *, u_long cmd,
-			    caddr_t addrp, int flag, struct proc *p));
+	int		(*scsi_cmd)(struct scsi_xfer *);
+	void		(*scsi_minphys)(struct buf *);
+	int		(*open_target_lu)(void);
+	int		(*close_target_lu)(void);
+	int		(*ioctl)(struct scsi_link *, u_long cmd,
+			    caddr_t addrp, int flag, struct proc *p);
 };
 
 /*
@@ -132,18 +132,18 @@ struct scsi_adapter {
  * of these statically allocated.
  */
 struct scsi_device {
-	int	(*err_handler) __P((struct scsi_xfer *));
+	int	(*err_handler)(struct scsi_xfer *);
 			/* returns -1 to say err processing done */
-	void	(*start) __P((void *));
+	void	(*start)(void *);
 
-	int	(*async) __P((void));
+	int	(*async)(void);
 	/*
 	 * When called with `0' as the second argument, we expect status
 	 * back from the upper-level driver.  When called with a `1',
 	 * we're simply notifying the upper-level driver that the command
 	 * is complete and expect no status back.
 	 */
-	void	(*done)  __P((struct scsi_xfer *));
+	void	(*done)(struct scsi_xfer *);
 };
 
 /*
@@ -195,7 +195,7 @@ struct scsi_link {
 	u_char	luns;
 };
 
-int	scsiprint __P((void *, const char *));
+int	scsiprint(void *, const char *);
 
 /*
  * This describes matching information for scsi_inqmatch().  The more things
@@ -309,51 +309,51 @@ struct scsi_xfer {
 #define XS_SHORTSENSE   6	/* Check the ATAPI sense for the error */
 #define XS_RESET	8	/* bus was reset; possible retry command  */
 
-caddr_t scsi_inqmatch __P((struct scsi_inquiry_data *, caddr_t, int,
-	    int, int *));
+caddr_t scsi_inqmatch(struct scsi_inquiry_data *, caddr_t, int,
+	    int, int *);
 
-void	scsi_init __P((void));
+void	scsi_init(void);
 struct scsi_xfer *
-	scsi_get_xs __P((struct scsi_link *, int));
-void	scsi_free_xs __P((struct scsi_xfer *, int));
-int	scsi_execute_xs __P((struct scsi_xfer *));
-u_long	scsi_size __P((struct scsi_link *, int));
-int	scsi_test_unit_ready __P((struct scsi_link *, int));
-int	scsi_change_def __P((struct scsi_link *, int));
-int	scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, int));
-int	scsi_prevent __P((struct scsi_link *, int, int));
-int	scsi_start __P((struct scsi_link *, int, int));
-void	scsi_done __P((struct scsi_xfer *));
-void	scsi_user_done __P((struct scsi_xfer *));
-int	scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
+	scsi_get_xs(struct scsi_link *, int);
+void	scsi_free_xs(struct scsi_xfer *, int);
+int	scsi_execute_xs(struct scsi_xfer *);
+u_long	scsi_size(struct scsi_link *, int);
+int	scsi_test_unit_ready(struct scsi_link *, int);
+int	scsi_change_def(struct scsi_link *, int);
+int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
+int	scsi_prevent(struct scsi_link *, int, int);
+int	scsi_start(struct scsi_link *, int, int);
+void	scsi_done(struct scsi_xfer *);
+void	scsi_user_done(struct scsi_xfer *);
+int	scsi_scsi_cmd(struct scsi_link *, struct scsi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
-	    int timeout, struct buf *bp, int flags));
-int	scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t,
-	    int, struct proc *));
-int	scsi_do_safeioctl __P((struct scsi_link *, dev_t, u_long, caddr_t,
-	    int, struct proc *));
-void	sc_print_addr __P((struct scsi_link *));
+	    int timeout, struct buf *bp, int flags);
+int	scsi_do_ioctl(struct scsi_link *, dev_t, u_long, caddr_t,
+	    int, struct proc *);
+int	scsi_do_safeioctl(struct scsi_link *, dev_t, u_long, caddr_t,
+	    int, struct proc *);
+void	sc_print_addr(struct scsi_link *);
 
-void	show_scsi_xs __P((struct scsi_xfer *));
-void	scsi_print_sense __P((struct scsi_xfer *, int));
-void	show_scsi_cmd __P((struct scsi_xfer *));
-void	show_mem __P((u_char *, int));
-int	scsi_probe_busses __P((int, int, int));
-void	scsi_strvis __P((u_char *, u_char *, int));
+void	show_scsi_xs(struct scsi_xfer *);
+void	scsi_print_sense(struct scsi_xfer *, int);
+void	show_scsi_cmd(struct scsi_xfer *);
+void	show_mem(u_char *, int);
+int	scsi_probe_busses(int, int, int);
+void	scsi_strvis(u_char *, u_char *, int);
 
-static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes));
-static __inline u_int32_t _2btol __P((u_int8_t *bytes));
-static __inline u_int32_t _3btol __P((u_int8_t *bytes));
-static __inline u_int32_t _4btol __P((u_int8_t *bytes));
+static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto4b(u_int32_t val, u_int8_t *bytes);
+static __inline u_int32_t _2btol(u_int8_t *bytes);
+static __inline u_int32_t _3btol(u_int8_t *bytes);
+static __inline u_int32_t _4btol(u_int8_t *bytes);
 
-static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes));
-static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes));
-static __inline u_int32_t _2ltol __P((u_int8_t *bytes));
-static __inline u_int32_t _3ltol __P((u_int8_t *bytes));
-static __inline u_int32_t _4ltol __P((u_int8_t *bytes));
+static __inline void _lto2l(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto3l(u_int32_t val, u_int8_t *bytes);
+static __inline void _lto4l(u_int32_t val, u_int8_t *bytes);
+static __inline u_int32_t _2ltol(u_int8_t *bytes);
+static __inline u_int32_t _3ltol(u_int8_t *bytes);
+static __inline u_int32_t _4ltol(u_int8_t *bytes);
 
 static __inline void
 _lto2b(val, bytes)

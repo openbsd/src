@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.14 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.15 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -186,7 +186,7 @@ static const struct tbl pal_op_tbl[] = {
 	{ NULL,			-1 },
 };
 
-static const char *pal_opname __P((int));
+static const char *pal_opname(int);
 
 static const char *
 pal_opname(op)
@@ -242,7 +242,7 @@ static const char **arit_opname[8] = {
 	arit_c0, arit_c2, 0, 0, arit_c9, arit_cB, arit_cD, arit_cF
 };
 
-static __inline const char *arit_name __P((int));
+static __inline const char *arit_name(int);
 static __inline const char *
 arit_name(op)
 	int op;
@@ -283,7 +283,7 @@ static const char *logical_c8[4] = {
 	"andnot", "ornot", "xornot", 0
 };
 
-static __inline const char *logical_name __P((int));
+static __inline const char *logical_name(int);
 static __inline const char *
 logical_name(op)
 	int op;
@@ -332,7 +332,7 @@ static const char *bitop_c67ab[4][4] = {
 /* 7 */	{ 0, "inswh", "inslh", "insqh" },
 };
 
-static __inline const char *bitop_name __P((int));
+static __inline const char *bitop_name(int);
 static __inline const char *
 bitop_name(op)
 	int op;
@@ -362,7 +362,7 @@ static const char *mul_opname[4] = {
 	"mull", "mulq", "mull/v", "mulq/v"
 };
 
-static __inline const char *mul_name __P((int));
+static __inline const char *mul_name(int);
 static __inline const char *
 mul_name(op)
 	int op;
@@ -388,7 +388,7 @@ static const char *special_opname[8] = {
 	"trapb", 0, "mb", 0, "fetch", "fetch_m", "rpcc", "rc"
 };
 
-static __inline const char *special_name __P((int));
+static __inline const char *special_name(int);
 static __inline const char *
 special_name(op)
 	int op;
@@ -431,7 +431,7 @@ static const char *intmisc_opname_3x[16] = {
 	"maxuw4", "maxsb8", "maxsw4",
 };
 
-static __inline const char *intmisc_name __P((int));
+static __inline const char *intmisc_name(int);
 static __inline const char *
 intmisc_name(op)
 	int op;
@@ -452,7 +452,7 @@ intmisc_name(op)
 	return (unk);
 }
 
-static const char *float_name __P((const struct tbl[], int, const char *type));
+static const char *float_name(const struct tbl[], int, const char *type);
 
 static const char *
 float_name(tbl, op, type)
@@ -802,7 +802,7 @@ static const char *name_of_register[32] = {
 static int regcount;		/* how many regs used in this inst */
 static int regnum[3];		/* which regs used in this inst */
 
-static const char *register_name __P((int));
+static const char *register_name(int);
 
 static const char *
 register_name (ireg)
@@ -823,7 +823,7 @@ register_name (ireg)
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-int	alpha_print_instruction __P((db_addr_t, alpha_instruction, boolean_t));
+int	alpha_print_instruction(db_addr_t, alpha_instruction, boolean_t);
 
 db_addr_t
 db_disasm(loc, altfmt)

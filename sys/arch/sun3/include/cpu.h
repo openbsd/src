@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.20 1995/12/21 05:02:10 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ extern int want_resched; /* resched() was called */
  * isr_soft_request() so this scheme just multiplexes four
  * software interrupt `sources' on the level one handler.
  */
-extern void isr_soft_request __P((int level));
+extern void isr_soft_request(int level);
 union sun3sir {
 	int 	sir_any;
 	char	sir_which[4];
@@ -147,15 +147,15 @@ union sun3sir {
 extern	unsigned char cpu_machine_id;
 
 /* dma.c */
-long	dvma_kvtopa __P((long, int));
+long	dvma_kvtopa(long, int);
 
 /* machdep.c */
-void	dumpconf __P((void));
+void	dumpconf(void);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	proc_trampoline __P((void));
+void	savectx(struct pcb *);
+void	switch_exit(struct proc *);
+void	proc_trampoline(void);
 
 #endif	/* _KERNEL */
 

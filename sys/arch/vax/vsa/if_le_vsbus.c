@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.6 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.7 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
@@ -111,10 +111,10 @@ struct le_softc {
 	volatile u_short *sc_rdp;
 };
 
-static	int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
-static	void	le_vsbus_attach __P((struct device *, struct device *, void *));
-static	void	lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-static	u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+static	int	le_vsbus_match(struct device *, struct cfdata *, void *);
+static	void	le_vsbus_attach(struct device *, struct device *, void *);
+static	void	lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+static	u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 
 struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), (cfmatch_t)le_vsbus_match, le_vsbus_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.h,v 1.6 1997/08/08 08:26:50 downsj Exp $	*/
+/*	$OpenBSD: svr4_machdep.h,v 1.7 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: svr4_machdep.h,v 1.4 1996/03/31 22:21:45 pk Exp $	 */
 
 /*
@@ -99,11 +99,11 @@ typedef struct {
 
 struct svr4_ucontext;
 
-void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
-			  int, int));
-int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
-void svr4_sendsig __P((sig_t, int, int, u_long, int, union sigval));
-int svr4_trap __P((int, struct proc *));
+void svr4_getcontext(struct proc *, struct svr4_ucontext *,
+			  int, int);
+int svr4_setcontext(struct proc *p, struct svr4_ucontext *);
+void svr4_sendsig(sig_t, int, int, u_long, int, union sigval);
+int svr4_trap(int, struct proc *);
 
 /*
  * Processor traps

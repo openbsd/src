@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.10 2001/05/15 06:53:30 art Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.11 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -58,18 +58,18 @@
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount __P((struct mount *, const char *, void *,
-			 struct nameidata *, struct proc *));
-int	fdesc_start __P((struct mount *, int, struct proc *));
-int	fdesc_unmount __P((struct mount *, int, struct proc *));
-int	fdesc_root __P((struct mount *, struct vnode **));
-int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			    struct proc *));
-int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	fdesc_vptofh __P((struct vnode *, struct fid *));
+int	fdesc_mount(struct mount *, const char *, void *,
+			 struct nameidata *, struct proc *);
+int	fdesc_start(struct mount *, int, struct proc *);
+int	fdesc_unmount(struct mount *, int, struct proc *);
+int	fdesc_root(struct mount *, struct vnode **);
+int	fdesc_quotactl(struct mount *, int, uid_t, caddr_t,
+			    struct proc *);
+int	fdesc_statfs(struct mount *, struct statfs *, struct proc *);
+int	fdesc_sync(struct mount *, int, struct ucred *, struct proc *);
+int	fdesc_vget(struct mount *, ino_t, struct vnode **);
+int	fdesc_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	fdesc_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -210,18 +210,18 @@ fdesc_sync(mp, waitfor, uc, p)
 	return (0);
 }
 
-#define fdesc_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct vnode **)))eopnotsupp)
-#define fdesc_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-	    struct proc *)))eopnotsupp)
-#define fdesc_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define fdesc_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+#define fdesc_fhtovp ((int (*)(struct mount *, struct fid *, \
+	    struct vnode **))eopnotsupp)
+#define fdesc_quotactl ((int (*)(struct mount *, int, uid_t, caddr_t, \
+	    struct proc *))eopnotsupp)
+#define fdesc_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *))eopnotsupp)
+#define fdesc_vget ((int (*)(struct mount *, ino_t, struct vnode **)) \
 	    eopnotsupp)
-#define fdesc_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
+#define fdesc_vptofh ((int (*)(struct vnode *, struct fid *))eopnotsupp)
  
-#define fdesc_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
-	int *, struct ucred **)))eopnotsupp)
+#define fdesc_checkexp ((int (*)(struct mount *, struct mbuf *,	\
+	int *, struct ucred **))eopnotsupp)
 
 struct vfsops fdesc_vfsops = {
 	fdesc_mount,

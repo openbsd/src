@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbvar.h,v 1.1 1997/07/10 23:06:39 provos Exp $	*/
+/*	$OpenBSD: sbvar.h,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: sbvar.h,v 1.1 1997/01/16 21:03:38 christos Exp $	*/
 
 /*
@@ -32,5 +32,5 @@
 
 
 struct sbdsp_softc;
-int sbmatch __P((struct sbdsp_softc *));
-void sbattach __P((struct sbdsp_softc *));
+int sbmatch(struct sbdsp_softc *);
+void sbattach(struct sbdsp_softc *);

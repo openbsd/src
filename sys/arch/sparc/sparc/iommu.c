@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.14 2002/02/21 19:55:13 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.15 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -66,9 +66,9 @@ int	has_iocache;
 
 
 /* autoconfiguration driver */
-int	iommu_print __P((void *, const char *));
-void	iommu_attach __P((struct device *, struct device *, void *));
-int	iommu_match __P((struct device *, void *, void *));
+int	iommu_print(void *, const char *);
+void	iommu_attach(struct device *, struct device *, void *);
+int	iommu_match(struct device *, void *, void *);
 
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach

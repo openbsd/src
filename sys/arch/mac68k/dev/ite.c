@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.19 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.20 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -90,33 +90,33 @@
 #define CHARHEIGHT	10
 
 /* Local function prototypes */
-static __inline void putpixel1 __P((int, int, int *, int));
-static void	putpixel2 __P((int, int, int *, int));
-static void	putpixel4 __P((int, int, int *, int));
-static void	putpixel8 __P((int, int, int *, int));
-static void	putpixel16 __P((int, int, int *, int));
-static void	putpixel32 __P((int, int, int *, int));
-static void	reversepixel1 __P((int, int, int));
-static void	writechar __P((char, int, int, int));
-static void	drawcursor __P((void));
-static void	erasecursor __P((void));
-static void	scrollup __P((void));
-static void	scrolldown __P((void));
-static void	clear_screen __P((int));
-static void	clear_line __P((int));
-static void	reset_tabs __P((void));
-static void	clear_tabs __P((void));
-static void	vt100_reset __P((void));
-static void	putc_normal __P((char));
-static void	putc_esc __P((char));
-static void	putc_gotpars __P((char));
-static void	putc_getpars __P((char));
-static void	putc_square __P((char));
-static void	ite_putchar __P((char));
-static int	ite_pollforchar __P((void));
-static int	itematch __P((struct device *, void *, void *));
-static void	iteattach __P((struct device *, struct device *, void *));
-static int	ite_init __P((void));
+static __inline void putpixel1(int, int, int *, int);
+static void	putpixel2(int, int, int *, int);
+static void	putpixel4(int, int, int *, int);
+static void	putpixel8(int, int, int *, int);
+static void	putpixel16(int, int, int *, int);
+static void	putpixel32(int, int, int *, int);
+static void	reversepixel1(int, int, int);
+static void	writechar(char, int, int, int);
+static void	drawcursor(void);
+static void	erasecursor(void);
+static void	scrollup(void);
+static void	scrolldown(void);
+static void	clear_screen(int);
+static void	clear_line(int);
+static void	reset_tabs(void);
+static void	clear_tabs(void);
+static void	vt100_reset(void);
+static void	putc_normal(char);
+static void	putc_esc(char);
+static void	putc_gotpars(char);
+static void	putc_getpars(char);
+static void	putc_square(char);
+static void	ite_putchar(char);
+static int	ite_pollforchar(void);
+static int	itematch(struct device *, void *, void *);
+static void	iteattach(struct device *, struct device *, void *);
+static int	ite_init(void);
 
 #define dprintf if (0) printf
 
@@ -174,8 +174,8 @@ extern u_int32_t mac68k_vidphys;
 
 struct tty	*ite_tty;		/* Our tty */
 
-static void	(*putpixel) __P((int x, int y, int *c, int num));
-static void	(*reversepixel) __P((int x, int y, int num));
+static void	(*putpixel)(int x, int y, int *c, int num);
+static void	(*reversepixel)(int x, int y, int num);
 
 /* For capslock key functionality */
 #define isealpha(ch)  (((ch)>='A'&&(ch)<='Z')||((ch)>='a'&&(ch)<='z')||((ch)>=0xC0&&(ch)<=0xFF))
@@ -1340,7 +1340,7 @@ itecnputc(dev, c)
 	int	c;
 {
 	extern dev_t mac68k_zsdev;
-	extern int zscnputc __P((dev_t dev, int c));
+	extern int zscnputc(dev_t dev, int c);
 
 	erasecursor();
 	ite_putchar(c);

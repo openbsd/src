@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.10 1997/07/06 08:01:55 downsj Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.11 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: scsi.c,v 1.21 1997/05/05 21:08:26 thorpej Exp $	*/
 
 /*
@@ -96,28 +96,28 @@ struct scsi_softc {
 #define	SCSI_DATA_WAIT	10000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
-static void	scsiabort __P((int, struct scsi_softc *,
-				volatile struct scsidevice *, char *));
-static void	scsierror __P((struct scsi_softc *,
-				volatile struct scsidevice *, u_char));
-static int	issue_select __P((volatile struct scsidevice *,
-				u_char, u_char));
-static int	wait_for_select __P((volatile struct scsidevice *));
-static int	ixfer_start __P((volatile struct scsidevice *,
-				int, u_char, int));
-static int	ixfer_out __P((volatile struct scsidevice *, int, u_char *));
-static void	ixfer_in __P((volatile struct scsidevice *, int, u_char *));
-static int	mxfer_in __P((volatile struct scsidevice *,
-				int, u_char *, u_char));
-static int	scsiicmd __P((struct scsi_softc *, int, u_char *, int,
-				u_char *, int, u_char));
-static void	finishxfer __P((struct scsi_softc *,
-				volatile struct scsidevice *, int));
+static void	scsiabort(int, struct scsi_softc *,
+				volatile struct scsidevice *, char *);
+static void	scsierror(struct scsi_softc *,
+				volatile struct scsidevice *, u_char);
+static int	issue_select(volatile struct scsidevice *,
+				u_char, u_char);
+static int	wait_for_select(volatile struct scsidevice *);
+static int	ixfer_start(volatile struct scsidevice *,
+				int, u_char, int);
+static int	ixfer_out(volatile struct scsidevice *, int, u_char *);
+static void	ixfer_in(volatile struct scsidevice *, int, u_char *);
+static int	mxfer_in(volatile struct scsidevice *,
+				int, u_char *, u_char);
+static int	scsiicmd(struct scsi_softc *, int, u_char *, int,
+				u_char *, int, u_char);
+static void	finishxfer(struct scsi_softc *,
+				volatile struct scsidevice *, int);
 
-int	scsimatch __P((struct device *, void *, void *));
-void	scsiattach __P((struct device *, struct device *, void *));
-void	scsi_attach_children __P((struct scsi_softc *));
-int	scsisubmatch __P((struct device *, void *, void *));
+int	scsimatch(struct device *, void *, void *);
+void	scsiattach(struct device *, struct device *, void *);
+void	scsi_attach_children(struct scsi_softc *);
+int	scsisubmatch(struct device *, void *, void *);
 
 struct cfattach oscsi_ca = {
 	sizeof(struct scsi_softc), scsimatch, scsiattach

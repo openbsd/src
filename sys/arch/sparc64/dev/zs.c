@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.8 2002/01/25 03:58:39 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.9 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -138,9 +138,9 @@ static u_char zs_init_reg[16] = {
 };
 
 /* Console ops */
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
-static void zscnpollc __P((dev_t, int));
+static int  zscngetc(dev_t);
+static void zscnputc(dev_t, int);
+static void zscnpollc(dev_t, int);
 
 struct consdev zs_consdev = {
 	NULL,
@@ -157,11 +157,11 @@ struct consdev zs_consdev = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int  zs_match_mainbus __P((struct device *, void *, void *));
-static void zs_attach_mainbus __P((struct device *, struct device *, void *));
+static int  zs_match_mainbus(struct device *, void *, void *);
+static void zs_attach_mainbus(struct device *, struct device *, void *);
 
-static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
-static int  zs_print __P((void *, const char *name));
+static void zs_attach(struct zsc_softc *, struct zsdevice *, int);
+static int  zs_print(void *, const char *name);
 
 /* Do we really need this ? */
 struct cfattach zs_ca = {
@@ -177,18 +177,18 @@ extern int stdinnode;
 extern int fbnode;
 
 /* Interrupt handlers. */
-int zscheckintr __P((void *));
-static int zshard __P((void *));
-static void zssoft __P((void *));
+int zscheckintr(void *);
+static int zshard(void *);
+static void zssoft(void *);
 
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zs_get_speed(struct zs_chanstate *);
 
 /* Console device support */
-static int zs_console_flags __P((int, int, int));
+static int zs_console_flags(int, int, int);
 
 /* Power management hooks */
-int  zs_enable __P((struct zs_chanstate *));
-void zs_disable __P((struct zs_chanstate *));
+int  zs_enable(struct zs_chanstate *);
+void zs_disable(struct zs_chanstate *);
 
 /*
  * Is the zs chip present?
@@ -657,7 +657,7 @@ void  zs_write_data(cs, val)
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
 
-extern void Debugger __P((void));
+extern void Debugger(void);
 
 /*
  * Handle user request to enter kernel debugger.

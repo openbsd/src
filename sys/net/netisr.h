@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.16 2001/09/23 10:44:10 mickey Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.17 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -74,17 +74,17 @@
 #ifdef _KERNEL
 int	netisr;				/* scheduling bits for network */
 
-void	arpintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	atintr __P((void));
-void	nsintr __P((void));
-void	ipxintr __P((void));
-void	clnlintr __P((void));
-void	natmintr __P((void));
-void	pppintr __P((void));
-void	ccittintr __P((void));
-void	bridgeintr __P((void));
+void	arpintr(void);
+void	ipintr(void);
+void	ip6intr(void);
+void	atintr(void);
+void	nsintr(void);
+void	ipxintr(void);
+void	clnlintr(void);
+void	natmintr(void);
+void	pppintr(void);
+void	ccittintr(void);
+void	bridgeintr(void);
 
 #include <dev/rndvar.h>
 #define	schednetisr(anisr)	\

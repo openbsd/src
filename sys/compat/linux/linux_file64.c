@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.2 2002/02/04 20:04:52 provos Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.3 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -67,10 +67,10 @@
 #include <machine/linux_machdep.h>
 
 
-void bsd_to_linux_flock64 __P((struct flock *, struct linux_flock64 *));
-void linux_to_bsd_flock64 __P((struct linux_flock64 *, struct flock *));
-static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
-static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
+void bsd_to_linux_flock64(struct flock *, struct linux_flock64 *);
+void linux_to_bsd_flock64(struct linux_flock64 *, struct flock *);
+static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
+static int linux_do_stat64(struct proc *, void *, register_t *, int);
 
 /*
  * Convert a OpenBSD stat structure to a Linux stat structure.

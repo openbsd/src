@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.12 2002/03/08 20:33:43 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.13 2002/03/14 01:26:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -69,14 +69,14 @@ int m_virq_max = 0;
 
 struct evcnt evirq[ICU_LEN*2];
 
-static int fakeintr __P((void *));
-static char *intr_typename __P((int type));
-static void intr_calculatemasks __P((void));
-static void enable_irq __P((int x));
-static __inline int cntlzw __P((int x));
-static int mapirq __P((int irq));
-static int read_irq __P((void));
-static void mac_intr_do_pending_int __P((void));
+static int fakeintr(void *);
+static char *intr_typename(int type);
+static void intr_calculatemasks(void);
+static void enable_irq(int x);
+static __inline int cntlzw(int x);
+static int mapirq(int irq);
+static int read_irq(void);
+static void mac_intr_do_pending_int(void);
 
 extern u_int32_t *heathrow_FCR;
 
@@ -96,10 +96,10 @@ struct macintr_softc {
 	struct device sc_dev;
 };
 
-int	macintr_match __P((struct device *parent, void *cf, void *aux));
-void	macintr_attach __P((struct device *, struct device *, void *));
-void	mac_do_pending_int __P((void));
-void	mac_ext_intr __P((void));
+int	macintr_match(struct device *parent, void *cf, void *aux);
+void	macintr_attach(struct device *, struct device *, void *);
+void	mac_do_pending_int(void);
+void	mac_ext_intr(void);
 
 struct cfattach macintr_ca = { 
 	sizeof(struct macintr_softc),
@@ -150,7 +150,7 @@ intr_establish_t macintr_establish;
 intr_disestablish_t macintr_disestablish;
 extern intr_establish_t *mac_intr_establish_func;
 extern intr_disestablish_t *mac_intr_disestablish_func;
-void macintr_collect_preconf_intr __P((void));
+void macintr_collect_preconf_intr(void);
 
 void
 macintr_attach(parent, self, aux)
@@ -237,7 +237,7 @@ macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	int irq;
 	int type;
 	int level;
-	int (*ih_fun) __P((void *));
+	int (*ih_fun)(void *);
 	void *ih_arg;
 	char *name;
 {

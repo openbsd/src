@@ -1,4 +1,4 @@
-/* 	$OpenBSD: osf1_mount.c,v 1.7 2002/02/22 20:37:45 drahn Exp $ */
+/* 	$OpenBSD: osf1_mount.c,v 1.8 2002/03/14 01:26:50 millert Exp $ */
 /*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
 
 /*
@@ -100,10 +100,10 @@
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
 
 
-static int	osf1_mount_mfs __P((struct proc *,
-		    struct osf1_sys_mount_args *, struct sys_mount_args *));
-static int	osf1_mount_nfs __P((struct proc *,
-		    struct osf1_sys_mount_args *, struct sys_mount_args *));
+static int	osf1_mount_mfs(struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *);
+static int	osf1_mount_nfs(struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *);
 
 int
 osf1_sys_fstatfs(p, v, retval)

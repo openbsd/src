@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.5 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.6 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -86,19 +86,19 @@ struct cfdriver mc_cd = {
 	NULL, "mc", DV_IFNET
 };
 
-hide void	mcwatchdog __P((struct ifnet *));
-hide int	mcinit __P((struct mc_softc *sc));
-hide int	mcstop __P((struct mc_softc *sc));
-hide int	mcioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
-hide void	mcstart __P((struct ifnet *ifp));
-hide void	mcreset __P((struct mc_softc *sc));
+hide void	mcwatchdog(struct ifnet *);
+hide int	mcinit(struct mc_softc *sc);
+hide int	mcstop(struct mc_softc *sc);
+hide int	mcioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+hide void	mcstart(struct ifnet *ifp);
+hide void	mcreset(struct mc_softc *sc);
 
-integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
-integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mace_read __P((struct mc_softc *, caddr_t, int));
-integrate struct mbuf *mace_get __P((struct mc_softc *, caddr_t, int));
-static void mace_calcladrf __P((struct arpcom *ac, u_int8_t *af));
-static inline u_int16_t ether_cmp __P((void *, void *));
+integrate u_int	maceput(struct mc_softc *sc, struct mbuf *m0);
+integrate void	mc_tint(struct mc_softc *sc);
+integrate void	mace_read(struct mc_softc *, caddr_t, int);
+integrate struct mbuf *mace_get(struct mc_softc *, caddr_t, int);
+static void mace_calcladrf(struct arpcom *ac, u_int8_t *af);
+static inline u_int16_t ether_cmp(void *, void *);
 
 
 /*

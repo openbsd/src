@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_all.h,v 1.1 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: atapi_all.h,v 1.2 2002/03/14 01:27:13 millert Exp $	*/
 /*	$NetBSD: atapi_all.h,v 1.3 1998/02/13 08:28:16 enami Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ struct atapi_mode_header {
 	u_int8_t reserved[5];
 };
 
-int	atapi_mode_select __P((struct scsi_link *,
-	    struct atapi_mode_header *, int, int, int, int));
-int	atapi_mode_sense __P((struct scsi_link *, int,
-	    struct atapi_mode_header *, int, int, int, int));
+int	atapi_mode_select(struct scsi_link *,
+	    struct atapi_mode_header *, int, int, int, int);
+int	atapi_mode_sense(struct scsi_link *, int,
+	    struct atapi_mode_header *, int, int, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -68,8 +68,8 @@
 
 #define	LPTGSC_OFFSET	0x800
 
-int	lpt_gsc_probe __P((struct device *, void *, void *));
-void	lpt_gsc_attach __P((struct device *, struct device *, void *));
+int	lpt_gsc_probe(struct device *, void *, void *);
+void	lpt_gsc_attach(struct device *, struct device *, void *);
 
 struct cfattach lpt_gsc_ca = {
 	sizeof(struct lpt_softc), lpt_gsc_probe, lpt_gsc_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.1 2001/08/21 21:42:30 jason Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.2 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: z8530sc.c,v 1.15 2001/07/07 15:53:22 thorpej Exp $	*/
 
 /*
@@ -311,10 +311,10 @@ zsc_intr_soft(arg)
  * Provide a null zs "ops" vector.
  */
 
-static void zsnull_rxint   __P((struct zs_chanstate *));
-static void zsnull_stint   __P((struct zs_chanstate *, int));
-static void zsnull_txint   __P((struct zs_chanstate *));
-static void zsnull_softint __P((struct zs_chanstate *));
+static void zsnull_rxint(struct zs_chanstate *);
+static void zsnull_stint(struct zs_chanstate *, int);
+static void zsnull_txint(struct zs_chanstate *);
+static void zsnull_softint(struct zs_chanstate *);
 
 static void
 zsnull_rxint(cs)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2var.h,v 1.1 2000/05/15 04:17:28 jason Exp $	*/
+/*	$OpenBSD: tcic2var.h,v 1.2 2002/03/14 01:26:55 millert Exp $	*/
 /*	$NetBSD: tcic2var.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*
@@ -136,54 +136,54 @@ struct tcic_softc {
 	struct tcic_handle handle[TCIC_NSLOTS];
 };
 
-int	tcic_log2 __P((u_int));
-int	tcic_ns2wscnt __P((int));
+int	tcic_log2(u_int);
+int	tcic_ns2wscnt(int);
 
-int	tcic_check_reserved_bits __P((bus_space_tag_t, bus_space_handle_t));
-int	tcic_chipid __P((bus_space_tag_t, bus_space_handle_t));
-int	tcic_chipid_known __P((int));
-char	*tcic_chipid_to_string __P((int));
-int	tcic_validirqs __P((int));
+int	tcic_check_reserved_bits(bus_space_tag_t, bus_space_handle_t);
+int	tcic_chipid(bus_space_tag_t, bus_space_handle_t);
+int	tcic_chipid_known(int);
+char	*tcic_chipid_to_string(int);
+int	tcic_validirqs(int);
 
-void	tcic_attach __P((struct tcic_softc *));
-void	tcic_attach_sockets __P((struct tcic_softc *));
-int	tcic_intr __P((void *arg));
+void	tcic_attach(struct tcic_softc *);
+void	tcic_attach_sockets(struct tcic_softc *);
+int	tcic_intr(void *arg);
 
-static __inline__ int tcic_read_1 __P((struct tcic_handle *, int));
-static __inline__ int tcic_read_2 __P((struct tcic_handle *, int));
-static __inline__ int tcic_read_4 __P((struct tcic_handle *, int));
-static __inline__ void tcic_write_1 __P((struct tcic_handle *, int, int));
-static __inline__ void tcic_write_2 __P((struct tcic_handle *, int, int));
-static __inline__ void tcic_write_4 __P((struct tcic_handle *, int, int));
-static __inline__ int tcic_read_ind_2 __P((struct tcic_handle *, int));
-static __inline__ void tcic_write_ind_2 __P((struct tcic_handle *, int, int));
-static __inline__ void tcic_sel_sock __P((struct tcic_handle *));
-static __inline__ void tcic_wait_ready __P((struct tcic_handle *));
-static __inline__ int tcic_read_aux_1 __P((bus_space_tag_t, bus_space_handle_t, int, int));
-static __inline__ int tcic_read_aux_2 __P((bus_space_tag_t, bus_space_handle_t, int));
-static __inline__ void tcic_write_aux_1 __P((bus_space_tag_t, bus_space_handle_t, int, int, int));
-static __inline__ void tcic_write_aux_2 __P((bus_space_tag_t, bus_space_handle_t, int, int));
+static __inline__ int tcic_read_1(struct tcic_handle *, int);
+static __inline__ int tcic_read_2(struct tcic_handle *, int);
+static __inline__ int tcic_read_4(struct tcic_handle *, int);
+static __inline__ void tcic_write_1(struct tcic_handle *, int, int);
+static __inline__ void tcic_write_2(struct tcic_handle *, int, int);
+static __inline__ void tcic_write_4(struct tcic_handle *, int, int);
+static __inline__ int tcic_read_ind_2(struct tcic_handle *, int);
+static __inline__ void tcic_write_ind_2(struct tcic_handle *, int, int);
+static __inline__ void tcic_sel_sock(struct tcic_handle *);
+static __inline__ void tcic_wait_ready(struct tcic_handle *);
+static __inline__ int tcic_read_aux_1(bus_space_tag_t, bus_space_handle_t, int, int);
+static __inline__ int tcic_read_aux_2(bus_space_tag_t, bus_space_handle_t, int);
+static __inline__ void tcic_write_aux_1(bus_space_tag_t, bus_space_handle_t, int, int, int);
+static __inline__ void tcic_write_aux_2(bus_space_tag_t, bus_space_handle_t, int, int);
 
-int	tcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
-	    struct pcmcia_mem_handle *));
-void	tcic_chip_mem_free __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_mem_handle *));
-int	tcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
-void	tcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
+int	tcic_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
+	    struct pcmcia_mem_handle *);
+void	tcic_chip_mem_free(pcmcia_chipset_handle_t,
+	    struct pcmcia_mem_handle *);
+int	tcic_chip_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *);
+void	tcic_chip_mem_unmap(pcmcia_chipset_handle_t, int);
 
-int	tcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,
-	    bus_size_t, bus_size_t, struct pcmcia_io_handle *));
-void	tcic_chip_io_free __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_io_handle *));
-int	tcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_io_handle *, int *));
-void	tcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
+int	tcic_chip_io_alloc(pcmcia_chipset_handle_t, bus_addr_t,
+	    bus_size_t, bus_size_t, struct pcmcia_io_handle *);
+void	tcic_chip_io_free(pcmcia_chipset_handle_t,
+	    struct pcmcia_io_handle *);
+int	tcic_chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
+	    bus_size_t, struct pcmcia_io_handle *, int *);
+void	tcic_chip_io_unmap(pcmcia_chipset_handle_t, int);
 
-void	tcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
-void	tcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
+void	tcic_chip_socket_enable(pcmcia_chipset_handle_t);
+void	tcic_chip_socket_disable(pcmcia_chipset_handle_t);
 
-static __inline__ int tcic_read_1 __P((struct tcic_handle *, int));
+static __inline__ int tcic_read_1(struct tcic_handle *, int);
 static __inline__ int
 tcic_read_1(h, reg)
 	struct tcic_handle *h;
@@ -192,7 +192,7 @@ tcic_read_1(h, reg)
 	return (bus_space_read_1(h->sc->iot, h->sc->ioh, reg));
 }
 
-static __inline__ int tcic_read_2 __P((struct tcic_handle *, int));
+static __inline__ int tcic_read_2(struct tcic_handle *, int);
 static __inline__ int
 tcic_read_2(h, reg)
 	struct tcic_handle *h;
@@ -201,7 +201,7 @@ tcic_read_2(h, reg)
 	return (bus_space_read_2(h->sc->iot, h->sc->ioh, reg));
 }
 
-static __inline__ int tcic_read_4 __P((struct tcic_handle *, int));
+static __inline__ int tcic_read_4(struct tcic_handle *, int);
 static __inline__ int
 tcic_read_4(h, reg)
 	struct tcic_handle *h;
@@ -213,7 +213,7 @@ tcic_read_4(h, reg)
 	return val;
 }
 
-static __inline__ void tcic_write_1 __P((struct tcic_handle *, int, int));
+static __inline__ void tcic_write_1(struct tcic_handle *, int, int);
 static __inline__ void
 tcic_write_1(h, reg, data)
 	struct tcic_handle *h;
@@ -223,7 +223,7 @@ tcic_write_1(h, reg, data)
 	bus_space_write_1(h->sc->iot, h->sc->ioh, reg, (data));
 }
 
-static __inline__ void tcic_write_2 __P((struct tcic_handle *, int, int));
+static __inline__ void tcic_write_2(struct tcic_handle *, int, int);
 static __inline__ void
 tcic_write_2(h, reg, data)
 	struct tcic_handle *h;
@@ -233,7 +233,7 @@ tcic_write_2(h, reg, data)
 	bus_space_write_2(h->sc->iot, h->sc->ioh, reg, (data));
 }
 
-static __inline__ void tcic_write_4 __P((struct tcic_handle *, int, int));
+static __inline__ void tcic_write_4(struct tcic_handle *, int, int);
 static __inline__ void
 tcic_write_4(h, reg, data)
 	struct tcic_handle *h;
@@ -244,7 +244,7 @@ tcic_write_4(h, reg, data)
 	bus_space_write_2(h->sc->iot, h->sc->ioh, reg+2, (data)>>16);
 }
 
-static __inline__ int tcic_read_ind_2 __P((struct tcic_handle *, int));
+static __inline__ int tcic_read_ind_2(struct tcic_handle *, int);
 static __inline__ int
 tcic_read_ind_2(h, reg)
 	struct tcic_handle *h;
@@ -258,7 +258,7 @@ tcic_read_ind_2(h, reg)
 	return val;
 }
 
-static __inline__ void tcic_write_ind_2 __P((struct tcic_handle *, int, int));
+static __inline__ void tcic_write_ind_2(struct tcic_handle *, int, int);
 static __inline__ void
 tcic_write_ind_2(h, reg, data)
 	struct tcic_handle *h;
@@ -272,7 +272,7 @@ tcic_write_ind_2(h, reg, data)
 	tcic_write_4(h, TCIC_R_ADDR, r_addr);
 }
 
-static __inline__ void tcic_sel_sock __P((struct tcic_handle *));
+static __inline__ void tcic_sel_sock(struct tcic_handle *);
 static __inline__ void
 tcic_sel_sock(h)
 	struct tcic_handle *h;
@@ -283,7 +283,7 @@ tcic_sel_sock(h)
 	    (h->sock<<TCIC_ADDR2_SS_SHFT)|(r_addr & ~TCIC_ADDR2_SS_MASK));
 }
 
-static __inline__ void tcic_wait_ready __P((struct tcic_handle *));
+static __inline__ void tcic_wait_ready(struct tcic_handle *);
 static __inline__ void
 tcic_wait_ready(h)
 	struct tcic_handle *h;
@@ -302,7 +302,7 @@ tcic_wait_ready(h)
 #endif
 }
 
-static __inline__ int tcic_read_aux_1 __P((bus_space_tag_t, bus_space_handle_t, int, int));
+static __inline__ int tcic_read_aux_1(bus_space_tag_t, bus_space_handle_t, int, int);
 static __inline__ int
 tcic_read_aux_1(iot, ioh, auxreg, reg)
 	bus_space_tag_t iot;
@@ -316,7 +316,7 @@ tcic_read_aux_1(iot, ioh, auxreg, reg)
 	return val;
 }
 
-static __inline__ int tcic_read_aux_2 __P((bus_space_tag_t, bus_space_handle_t, int));
+static __inline__ int tcic_read_aux_2(bus_space_tag_t, bus_space_handle_t, int);
 static __inline__ int
 tcic_read_aux_2(iot, ioh, auxreg)
 	bus_space_tag_t iot;
@@ -330,7 +330,7 @@ tcic_read_aux_2(iot, ioh, auxreg)
 	return val;
 }
 
-static __inline__ void tcic_write_aux_1 __P((bus_space_tag_t, bus_space_handle_t, int, int, int));
+static __inline__ void tcic_write_aux_1(bus_space_tag_t, bus_space_handle_t, int, int, int);
 static __inline__ void
 tcic_write_aux_1(iot, ioh, auxreg, reg, val)
 	bus_space_tag_t iot;
@@ -343,7 +343,7 @@ tcic_write_aux_1(iot, ioh, auxreg, reg, val)
 	bus_space_write_1(iot, ioh, reg, val);
 }
 
-static __inline__ void tcic_write_aux_2 __P((bus_space_tag_t, bus_space_handle_t, int, int));
+static __inline__ void tcic_write_aux_2(bus_space_tag_t, bus_space_handle_t, int, int);
 static __inline__ void
 tcic_write_aux_2(iot, ioh, auxreg, val)
 	bus_space_tag_t iot;

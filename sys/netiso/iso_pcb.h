@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_pcb.h,v 1.2 1996/03/04 10:35:36 mickey Exp $	*/
+/*	$OpenBSD: iso_pcb.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: iso_pcb.h,v 1.7 1996/02/13 22:10:18 christos Exp $	*/
 
 /*-
@@ -117,13 +117,13 @@ struct inpcb;
 struct mbuf;
 struct sockaddr_iso;
 
-int iso_pcballoc __P((struct socket *, void *));
-int iso_pcbbind __P((void *, struct mbuf *));
-int iso_pcbconnect __P((void *, struct mbuf *));
-void iso_pcbdisconnect __P((void *));
-void iso_pcbdetach __P((void *));
+int iso_pcballoc(struct socket *, void *);
+int iso_pcbbind(void *, struct mbuf *);
+int iso_pcbconnect(void *, struct mbuf *);
+void iso_pcbdisconnect(void *);
+void iso_pcbdetach(void *);
 void iso_pcbnotify __P((struct isopcb *, struct sockaddr_iso *, int,
 			void (*) (struct isopcb *)));
-struct isopcb  *iso_pcblookup __P((struct isopcb *, int, caddr_t,
-				   struct sockaddr_iso *));
+struct isopcb  *iso_pcblookup(struct isopcb *, int, caddr_t,
+				   struct sockaddr_iso *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarp.c,v 1.6 1998/02/23 20:32:28 niklas Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.7 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
 #include "net.h"
 #include "netif.h"
 
-static ssize_t rarpsend __P((struct iodesc *, void *, size_t));
-static ssize_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
+static ssize_t rarpsend(struct iodesc *, void *, size_t);
+static ssize_t rarprecv(struct iodesc *, void *, size_t, time_t);
 
 /*
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).

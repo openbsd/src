@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.8 2001/09/13 14:07:14 fgsch Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.9 2002/03/14 01:27:05 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -25,9 +25,9 @@ struct	sem *sem;		/* semaphore pool */
 struct	sem_undo *semu_list;	/* list of active undo structures */
 int	*semu;			/* undo structure pool */
 
-struct sem_undo *semu_alloc __P((struct proc *));
-int semundo_adjust __P((struct proc *, struct sem_undo **, int, int, int));
-void semundo_clear __P((int, int));
+struct sem_undo *semu_alloc(struct proc *);
+int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
+void semundo_clear(int, int);
 
 void
 seminit()

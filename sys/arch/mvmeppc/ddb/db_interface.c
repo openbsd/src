@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 2001/06/26 21:57:39 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -15,8 +15,8 @@
 
 extern label_t *db_recover;
 
-void ddb_trap __P((void));                   /* Call into trap_subr.S */
-int ddb_trap_glue __P((struct trapframe *)); /* Called from trap_subr.S */
+void ddb_trap(void);                   /* Call into trap_subr.S */
+int ddb_trap_glue(struct trapframe *); /* Called from trap_subr.S */
 
 void
 Debugger()

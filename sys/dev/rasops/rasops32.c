@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.1 2001/03/18 04:32:45 nate Exp $ */
+/*	$OpenBSD: rasops32.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
 /*	 $NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops32_putchar __P((void *, int, int, u_int, long attr));
+static void 	rasops32_putchar(void *, int, int, u_int, long attr);
 
 /*
  * Initalize a 'rasops_info' descriptor for this depth.

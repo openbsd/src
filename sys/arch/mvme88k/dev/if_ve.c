@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.16 2002/03/05 22:11:37 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.17 2002/03/14 01:26:39 millert Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -81,18 +81,18 @@
 
 
 #ifdef LEDEBUG
-void ve_recv_print __P((struct vam7990_softc *, int));
-void ve_xmit_print __P((struct vam7990_softc *, int));
+void ve_recv_print(struct vam7990_softc *, int);
+void ve_xmit_print(struct vam7990_softc *, int);
 #endif
 
-void ve_rint __P((struct vam7990_softc *));
-void ve_tint __P((struct vam7990_softc *));
+void ve_rint(struct vam7990_softc *);
+void ve_tint(struct vam7990_softc *);
 
-int ve_put __P((struct vam7990_softc *, int, struct mbuf *));
-struct mbuf *ve_get __P((struct vam7990_softc *, int, int));
-void ve_read __P((struct vam7990_softc *, int, int)); 
+int ve_put(struct vam7990_softc *, int, struct mbuf *);
+struct mbuf *ve_get(struct vam7990_softc *, int, int);
+void ve_read(struct vam7990_softc *, int, int); 
 
-void ve_shutdown __P((void *));
+void ve_shutdown(void *);
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 #ifndef	ETHER_CMP
@@ -134,12 +134,12 @@ struct cfattach ve_ca = {
 	sizeof(struct ve_softc), vematch, veattach
 };
 
-void vewrcsr __P((struct vam7990_softc *, u_int16_t, u_int16_t));
-u_int16_t verdcsr __P((struct vam7990_softc *, u_int16_t));
-void nvram_cmd __P((struct vam7990_softc *, u_char, u_short));
-u_int16_t nvram_read __P((struct vam7990_softc *, u_char));
-void vereset __P((struct vam7990_softc *));
-void ve_ackint __P((struct vam7990_softc *));
+void vewrcsr(struct vam7990_softc *, u_int16_t, u_int16_t);
+u_int16_t verdcsr(struct vam7990_softc *, u_int16_t);
+void nvram_cmd(struct vam7990_softc *, u_char, u_short);
+u_int16_t nvram_read(struct vam7990_softc *, u_char);
+void vereset(struct vam7990_softc *);
+void ve_ackint(struct vam7990_softc *);
 
 /* send command to the nvram controller */
 void

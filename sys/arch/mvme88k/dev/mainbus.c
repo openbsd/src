@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.8 2002/03/14 01:26:39 millert Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -10,10 +10,10 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-void mainbus_attach __P((struct device *, struct device *, void *));
-int  mainbus_match __P((struct device *, void *, void *));
-int mainbus_print __P((void *, const char *));
-int mainbus_scan __P((struct device *, void *, void *));
+void mainbus_attach(struct device *, struct device *, void *);
+int  mainbus_match(struct device *, void *, void *);
+int mainbus_print(void *, const char *);
+int mainbus_scan(struct device *, void *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach

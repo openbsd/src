@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.26 2002/02/23 16:59:36 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.27 2002/03/14 01:26:59 millert Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-int pcimatch __P((struct device *, void *, void *));
-void pciattach __P((struct device *, struct device *, void *));
+int pcimatch(struct device *, void *, void *);
+void pciattach(struct device *, struct device *, void *);
 
 #ifdef USER_PCICONF
 struct pci_softc {
@@ -70,8 +70,8 @@ struct cfdriver pci_cd = {
 	NULL, "pci", DV_DULL
 };
 
-int	pciprint __P((void *, const char *));
-int	pcisubmatch __P((struct device *, void *, void *));
+int	pciprint(void *, const char *);
+int	pcisubmatch(struct device *, void *, void *);
 
 /*
  * Callback so that ISA/EISA bridges can attach their child busses
@@ -94,7 +94,7 @@ int	pcisubmatch __P((struct device *, void *, void *));
  * up as an ISA device, and that can (bogusly) complicate the PCI device's
  * attach code, or make the PCI device not be properly attached at all.
  */
-static void	(*pci_isa_bridge_callback) __P((void *));
+static void	(*pci_isa_bridge_callback)(void *);
 static void	*pci_isa_bridge_callback_arg;
 
 int
@@ -321,7 +321,7 @@ pcisubmatch(parent, match, aux)
 
 void
 set_pci_isa_bridge_callback(fn, arg)
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 
@@ -381,9 +381,9 @@ pci_get_capability(pc, tag, capid, offset, value)
 #endif
 
 
-int pciopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-int pciclose __P((dev_t dev, int flag, int devtype, struct proc *p));
-int pciioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+int pciopen(dev_t dev, int oflags, int devtype, struct proc *p);
+int pciclose(dev_t dev, int flag, int devtype, struct proc *p);
+int pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
 
 int
 pciopen(dev_t dev, int oflags, int devtype, struct proc *p) 

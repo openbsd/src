@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.5 2001/06/09 06:16:39 angelos Exp $	*/
+/*	$OpenBSD: radix.h,v 1.6 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -111,22 +111,15 @@ struct radix_node_head {
 	struct	radix_node *rnh_treetop;
 	int	rnh_addrsize;		/* permit, but not require fixed keys */
 	int	rnh_pktsize;		/* permit, but not require fixed keys */
-	struct	radix_node *(*rnh_addaddr)	/* add based on sockaddr */
-		__P((void *v, void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
-	struct	radix_node *(*rnh_addpkt)	/* add based on packet hdr */
-		__P((void *v, void *mask,
-		     struct radix_node_head *head, struct radix_node nodes[]));
-	struct	radix_node *(*rnh_deladdr)	/* remove based on sockaddr */
-		__P((void *v, void *mask, struct radix_node_head *head));
-	struct	radix_node *(*rnh_delpkt)	/* remove based on packet hdr */
-		__P((void *v, void *mask, struct radix_node_head *head));
-	struct	radix_node *(*rnh_matchaddr)	/* locate based on sockaddr */
-		__P((void *v, struct radix_node_head *head));
-	struct	radix_node *(*rnh_lookup)	/* locate based on sockaddr */
-		__P((void *v, void *mask, struct radix_node_head *head));
-	struct	radix_node *(*rnh_matchpkt)	/* locate based on packet hdr */
-		__P((void *v, struct radix_node_head *head));
+	struct	radix_node *(*rnh_addaddr)	/* add based on sockaddr */(void *v, void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
+	struct	radix_node *(*rnh_addpkt)	/* add based on packet hdr */(void *v, void *mask,
+		     struct radix_node_head *head, struct radix_node nodes[]);
+	struct	radix_node *(*rnh_deladdr)	/* remove based on sockaddr */(void *v, void *mask, struct radix_node_head *head);
+	struct	radix_node *(*rnh_delpkt)	/* remove based on packet hdr */(void *v, void *mask, struct radix_node_head *head);
+	struct	radix_node *(*rnh_matchaddr)	/* locate based on sockaddr */(void *v, struct radix_node_head *head);
+	struct	radix_node *(*rnh_lookup)	/* locate based on sockaddr */(void *v, void *mask, struct radix_node_head *head);
+	struct	radix_node *(*rnh_matchpkt)	/* locate based on packet hdr */(void *v, struct radix_node_head *head);
 	int	(*rnh_walktree)			/* traverse tree */
 		__P((struct radix_node_head *,
 		     int (*)(struct radix_node *, void *), void *));
@@ -149,22 +142,22 @@ struct radix_node_head {
 #endif /* !_KERNEL */
 
 #if defined(_KERNEL) || defined(_ROUTED)
-void	 rn_init __P((void));
-int	 rn_inithead __P((void **, int));
-int	 rn_refines __P((void *, void *));
+void	 rn_init(void);
+int	 rn_inithead(void **, int);
+int	 rn_refines(void *, void *);
 int	 rn_walktree __P((struct radix_node_head *,
 			  int (*)(struct radix_node *, void *), void *));
 struct radix_node
-	 *rn_addmask __P((void *, int, int)),
-	 *rn_addroute __P((void *, void *, struct radix_node_head *,
-			struct radix_node [2])),
-	 *rn_delete __P((void *, void *, struct radix_node_head *)),
-	 *rn_insert __P((void *, struct radix_node_head *, int *,
-			struct radix_node [2])),
-	 *rn_lookup __P((void *, void *, struct radix_node_head *)),
-	 *rn_match __P((void *, struct radix_node_head *)),
-	 *rn_newpair __P((void *, int, struct radix_node[2])),
-	 *rn_search __P((void *, struct radix_node *)),
-	 *rn_search_m __P((void *, struct radix_node *, void *));
+	 *rn_addmask(void *, int, int),
+	 *rn_addroute(void *, void *, struct radix_node_head *,
+			struct radix_node [2]),
+	 *rn_delete(void *, void *, struct radix_node_head *),
+	 *rn_insert(void *, struct radix_node_head *, int *,
+			struct radix_node [2]),
+	 *rn_lookup(void *, void *, struct radix_node_head *),
+	 *rn_match(void *, struct radix_node_head *),
+	 *rn_newpair(void *, int, struct radix_node[2]),
+	 *rn_search(void *, struct radix_node *),
+	 *rn_search_m(void *, struct radix_node *, void *);
 #endif /* define(_KERNEL) || defined(_ROUTED) */
 #endif /* _NET_RADIX_H_ */

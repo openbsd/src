@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 1999/01/19 10:04:55 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Niklas Hallqvist
@@ -42,15 +42,15 @@ typedef struct amiga_isa_chipset *isa_chipset_tag_t;
 struct amiga_isa_chipset {
 	void	*ic_data;
 
-	void	(*ic_attach_hook) __P((struct device *, struct device *,
-		    struct isabus_attach_args *));
+	void	(*ic_attach_hook)(struct device *, struct device *,
+		    struct isabus_attach_args *);
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
 		    int (*)(void *), void *, char *));
-	void	(*ic_intr_disestablish) __P((void *, void *));
-	int	(*ic_intr_check) __P((void *, int, int));
+	void	(*ic_intr_disestablish)(void *, void *);
+	int	(*ic_intr_check)(void *, int, int);
 };
 
-int	__isa_intr_check __P((int, int, int *));
+int	__isa_intr_check(int, int, int *);
 
 /*
  * Functions provided to machine-independent ISA code.

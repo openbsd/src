@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cc.c,v 1.9 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.10 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
 
 /*
@@ -62,10 +62,10 @@
 
 #include "view.h" 
 
-int grfccmatch __P((struct device *, void *, void *));
-int grfccprint __P((void *, const char *));
-void grfccattach __P((struct device *, struct device *, void *));
-void grf_cc_on __P((struct grf_softc *));
+int grfccmatch(struct device *, void *, void *);
+int grfccprint(void *, const char *);
+void grfccattach(struct device *, struct device *, void *);
+void grf_cc_on(struct grf_softc *);
 
 struct cfattach grfcc_ca = {
 	sizeof(struct grf_softc), grfccmatch, grfccattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.25 2002/02/23 00:31:09 miod Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.26 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -108,15 +108,15 @@ static u_long boot_flags;
 u_long scsi_nosync;
 int shift_nosync;
 
-void  start_c __P((int, u_int, u_int, u_int, char *, u_int, u_long));
-void rollcolor __P((int));
-static int kernel_image_magic_size __P((void));
-static void kernel_image_magic_copy __P((u_char *));
-int kernel_reload_write __P((struct uio *));
-extern void kernel_reload __P((char *, u_long, u_long, u_long, u_long,
-	u_long, u_long, u_long, u_long, u_long));
-extern void etext __P((void));
-void start_c_cleanup __P((void));
+void  start_c(int, u_int, u_int, u_int, char *, u_int, u_long);
+void rollcolor(int);
+static int kernel_image_magic_size(void);
+static void kernel_image_magic_copy(u_char *);
+int kernel_reload_write(struct uio *);
+extern void kernel_reload(char *, u_long, u_long, u_long, u_long,
+	u_long, u_long, u_long, u_long, u_long);
+extern void etext(void);
+void start_c_cleanup(void);
 
 void *
 chipmem_steal(amount)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.1 2001/03/18 04:32:44 nate Exp $ */
+/*	$OpenBSD: rasops.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
 /*	 $NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -105,13 +105,13 @@ const u_char rasops_isgray[16] = {
 };
 
 /* Generic functions */
-static void	rasops_copyrows __P((void *, int, int, int));
-static int	rasops_mapchar __P((void *, int, u_int *));
-static void	rasops_cursor __P((void *, int, int, int));
-static int	rasops_alloc_cattr __P((void *, int, int, int, long *));
-static int	rasops_alloc_mattr __P((void *, int, int, int, long *));
-static void	rasops_do_cursor __P((struct rasops_info *));
-static void	rasops_init_devcmap __P((struct rasops_info *));
+static void	rasops_copyrows(void *, int, int, int);
+static int	rasops_mapchar(void *, int, u_int *);
+static void	rasops_cursor(void *, int, int, int);
+static int	rasops_alloc_cattr(void *, int, int, int, long *);
+static int	rasops_alloc_mattr(void *, int, int, int, long *);
+static void	rasops_do_cursor(struct rasops_info *);
+static void	rasops_init_devcmap(struct rasops_info *);
 
 /*
  * Initalize a 'rasops_info' descriptor.

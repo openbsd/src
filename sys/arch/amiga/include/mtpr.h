@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtpr.h,v 1.4 1997/09/18 13:40:02 niklas Exp $	*/
+/*	$OpenBSD: mtpr.h,v 1.5 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: mtpr.h,v 1.10 1996/05/09 20:31:53 is Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ extern unsigned char ssir;
 #define setsoftclock()	(ssir |= SIR_CLOCK, setsoftint())
 #define setsoftcback()	(ssir |= SIR_CBACK, setsoftint())
 
-void softintr_schedule __P((void *));
+void softintr_schedule(void *);
 void *softintr_establish __P((int,  void (*)(void *), void *));
 
 #endif /* _KERNEL */

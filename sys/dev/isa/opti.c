@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.c,v 1.5 1996/10/16 12:32:48 deraadt Exp $	*/
+/*	$OpenBSD: opti.c,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -63,15 +63,15 @@ int	opti_type = OPTI_C929;	/* XXX only one card can be installed */
 #define	OPTI_cd_valid_ift(i)	((i)==OPTI_SONY||(i)==OPTI_PANASONIC||\
 					(i)==OPTI_MITSUMI||(i)==OPTI_IDE)
 
-static __inline int OPTI_cd_addr __P((int));
-static __inline int OPTI_cd_irq __P((int));
-static __inline int OPTI_cd_drq __P((int));
-static __inline int OPTI_snd_addr __P((int));
-static __inline int OPTI_snd_irq __P((int));
-static __inline int OPTI_snd_drq __P((int));
-static __inline void opti_outb __P((u_short, u_char));
-static __inline u_char opti_inb __P((u_short));
-static int opti_present __P((void));
+static __inline int OPTI_cd_addr(int);
+static __inline int OPTI_cd_irq(int);
+static __inline int OPTI_cd_drq(int);
+static __inline int OPTI_snd_addr(int);
+static __inline int OPTI_snd_irq(int);
+static __inline int OPTI_snd_drq(int);
+static __inline void opti_outb(u_short, u_char);
+static __inline u_char opti_inb(u_short);
+static int opti_present(void);
 
 static __inline int
 OPTI_cd_addr(a)

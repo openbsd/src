@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.7 1997/04/16 11:55:57 downsj Exp $	*/
+/*	$OpenBSD: ct.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -109,8 +109,8 @@ struct	ct_softc {
 #define CTF_CANSTREAM	0x200
 #define	CTF_WRTTN	0x400
 
-int	ctmatch __P((struct device *, void *, void *));
-void	ctattach __P((struct device *, struct device *, void *));
+int	ctmatch(struct device *, void *, void *);
+void	ctattach(struct device *, struct device *, void *);
 
 struct cfattach ct_ca = {
 	sizeof(struct ct_softc), ctmatch, ctattach
@@ -120,20 +120,20 @@ struct cfdriver ct_cd = {
 	NULL, "ct", DV_TAPE
 };
 
-int	ctident __P((struct device *, struct ct_softc *,
-	    struct hpibbus_attach_args *));
+int	ctident(struct device *, struct ct_softc *,
+	    struct hpibbus_attach_args *);
 
-void	ctreset __P((struct ct_softc *));
-void	ctaddeof __P((struct ct_softc *));
-void	ctustart __P((struct ct_softc *));
-void	cteof __P((struct ct_softc *, struct buf *));
-void	ctdone __P((struct ct_softc *, struct buf *));
+void	ctreset(struct ct_softc *);
+void	ctaddeof(struct ct_softc *);
+void	ctustart(struct ct_softc *);
+void	cteof(struct ct_softc *, struct buf *);
+void	ctdone(struct ct_softc *, struct buf *);
 
-void	ctstart __P((void *));
-void	ctgo __P((void *));
-void	ctintr __P((void *));
+void	ctstart(void *);
+void	ctgo(void *);
+void	ctintr(void *);
 
-void	ctcommand __P((dev_t, int, int));
+void	ctcommand(dev_t, int, int);
 
 cdev_decl(ct);
 bdev_decl(ct);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.3 1999/01/07 06:14:47 niklas Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.4 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -75,8 +75,8 @@
 #include <dev/ic/aic6360reg.h>
 #include <dev/ic/aic6360var.h>
 
-int	aic_isa_probe __P((struct device *, void *, void *));
-void	aic_isa_attach __P((struct device *, struct device *, void *));
+int	aic_isa_probe(struct device *, void *, void *);
+void	aic_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach aic_isa_ca = {
 	sizeof(struct aic_softc), aic_isa_probe, aic_isa_attach

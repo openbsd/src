@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2001/11/25 17:15:19 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -189,30 +189,30 @@ extern	int mmutype;		/* MMU on this host */
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
 #ifdef _KERNEL
-void	copypage __P((void *fromaddr, void *toaddr));
-void	zeropage __P((void *addr));
+void	copypage(void *fromaddr, void *toaddr);
+void	zeropage(void *addr);
 #ifdef MAPPEDCOPY
-int	mappedcopyin __P((void *fromp, void *top, size_t count));
-int	mappedcopyout __P((void *fromp, void *top, size_t count));
+int	mappedcopyin(void *fromp, void *top, size_t count);
+int	mappedcopyout(void *fromp, void *top, size_t count);
 extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
 
 /* locore.s */
-u_long getdfc __P((void));
-u_long getsfc __P((void));
+u_long getdfc(void);
+u_long getsfc(void);
 
 /* copy.s */
-int	fusword __P((caddr_t));
-int	susword __P((caddr_t, u_short));
+int	fusword(caddr_t);
+int	susword(caddr_t, u_short);
 
 /* m68k_machdep.c */
 struct proc;
 struct frame;
-void userret __P((struct proc *, struct frame *, u_quad_t, u_int, int));
+void userret(struct proc *, struct frame *, u_quad_t, u_int, int);
 
 /* regdump.c */
 struct trapframe;
-void regdump __P((struct trapframe *, int));
+void regdump(struct trapframe *, int);
 
 
 #endif /* _KERNEL */

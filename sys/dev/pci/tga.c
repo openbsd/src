@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.10 2001/11/06 19:53:19 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.11 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: tga.c,v 1.31 2001/02/11 19:34:58 nathanw Exp $ */
 
 /*
@@ -64,9 +64,9 @@
 #include <mips/pte.h>
 #endif
 
-int	tgamatch __P((struct device *, struct cfdata *, void *));
-void	tgaattach __P((struct device *, struct device *, void *));
-int	tgaprint __P((void *, const char *));
+int	tgamatch(struct device *, struct cfdata *, void *);
+void	tgaattach(struct device *, struct device *, void *);
+int	tgaprint(void *, const char *);
 
 struct cfdriver tga_cd = {
 	NULL, "tga", DV_DULL
@@ -76,45 +76,45 @@ struct cfattach tga_ca = {
 	sizeof(struct tga_softc), (cfmatch_t)tgamatch, tgaattach,
 };
 
-int	tga_identify __P((struct tga_devconfig *));
-const struct tga_conf *tga_getconf __P((int));
-void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
-	    pcitag_t tag, struct tga_devconfig *dc));
+int	tga_identify(struct tga_devconfig *);
+const struct tga_conf *tga_getconf(int);
+void	tga_getdevconfig(bus_space_tag_t memt, pci_chipset_tag_t pc,
+	    pcitag_t tag, struct tga_devconfig *dc);
 
 struct tga_devconfig tga_console_dc;
 
-int tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t tga_mmap __P((void *, off_t, int));
-static void tga_copyrows __P((void *, int, int, int));
-static void tga_copycols __P((void *, int, int, int, int));
-static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *, long *));
-static void tga_free_screen __P((void *, void *));
+int tga_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t tga_mmap(void *, off_t, int);
+static void tga_copyrows(void *, int, int, int);
+static void tga_copycols(void *, int, int, int, int);
+static int tga_alloc_screen(void *, const struct wsscreen_descr *,
+				      void **, int *, int *, long *);
+static void tga_free_screen(void *, void *);
 static int tga_show_screen __P((void *, void *, int,
 				void (*) (void *, int, int), void *));
-static int tga_rop __P((struct rasops_info *, int, int, int, int, int,
-	struct rasops_info *, int, int));
-static int tga_rop_vtov __P((struct rasops_info *, int, int, int, int,
-	int, struct rasops_info *, int, int ));
-static void tga_putchar __P((void *c, int row, int col,
-				u_int uc, long attr));
-static void tga_eraserows __P((void *, int, int, long));
-static void	tga_erasecols __P((void *, int, int, int, long));
-void tga2_init __P((struct tga_devconfig *, int));
+static int tga_rop(struct rasops_info *, int, int, int, int, int,
+	struct rasops_info *, int, int);
+static int tga_rop_vtov(struct rasops_info *, int, int, int, int,
+	int, struct rasops_info *, int, int );
+static void tga_putchar(void *c, int row, int col,
+				u_int uc, long attr);
+static void tga_eraserows(void *, int, int, long);
+static void	tga_erasecols(void *, int, int, int, long);
+void tga2_init(struct tga_devconfig *, int);
 
-void tga_config_interrupts __P((struct device *));
+void tga_config_interrupts(struct device *);
 
 /* RAMDAC interface functions */
 int		tga_sched_update __P((void *, void (*)(void *)));
-void		tga_ramdac_wr __P((void *, u_int, u_int8_t));
-u_int8_t	tga_ramdac_rd __P((void *, u_int));
-void		tga_bt463_wr __P((void *, u_int, u_int8_t));
-u_int8_t	tga_bt463_rd __P((void *, u_int));
-void		tga2_ramdac_wr __P((void *, u_int, u_int8_t));
-u_int8_t	tga2_ramdac_rd __P((void *, u_int));
+void		tga_ramdac_wr(void *, u_int, u_int8_t);
+u_int8_t	tga_ramdac_rd(void *, u_int);
+void		tga_bt463_wr(void *, u_int, u_int8_t);
+u_int8_t	tga_bt463_rd(void *, u_int);
+void		tga2_ramdac_wr(void *, u_int, u_int8_t);
+u_int8_t	tga2_ramdac_rd(void *, u_int);
 
 /* Interrupt handler */
-int	tga_intr __P((void *));
+int	tga_intr(void *);
 
 /* The NULL entries will get filled in by rasops_init().
  * XXX and the non-NULL ones will be overwritten; reset after calling it.
@@ -157,8 +157,8 @@ struct wsdisplay_accessops tga_accessops = {
 	NULL			/* scrollback */
 };
 
-void	tga_blank __P((struct tga_devconfig *));
-void	tga_unblank __P((struct tga_devconfig *));
+void	tga_blank(struct tga_devconfig *);
+void	tga_unblank(struct tga_devconfig *);
 
 #ifdef TGA_DEBUG
 #define DPRINTF(...)      printf (__VA_ARGS__)
@@ -621,7 +621,7 @@ tga_ioctl(v, cmd, data, flag, p)
 int
 tga_sched_update(v, f)
 	void	*v;
-	void	(*f) __P((void *));
+	void	(*f)(void *);
 {
 	struct tga_devconfig *dc = v;
 
@@ -743,7 +743,7 @@ tga_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 
@@ -1525,10 +1525,10 @@ tga2_ramdac_rd(v, btreg)
 }
 
 #include <dev/ic/decmonitors.c>
-void tga2_ics9110_wr __P((
+void tga2_ics9110_wr(
 	struct tga_devconfig *dc,
 	int dotclock
-));
+);
 
 void
 tga2_init(dc, m)

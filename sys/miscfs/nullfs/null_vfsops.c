@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.12 2001/02/20 01:50:10 assar Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.13 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -57,18 +57,18 @@
 #include <sys/malloc.h>
 #include <miscfs/nullfs/null.h>
 
-int	nullfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	nullfs_start __P((struct mount *, int, struct proc *));
-int	nullfs_unmount __P((struct mount *, int, struct proc *));
-int	nullfs_root __P((struct mount *, struct vnode **));
-int	nullfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
-int	nullfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	nullfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	nullfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nullfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	nullfs_vptofh __P((struct vnode *, struct fid *));
+int	nullfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	nullfs_start(struct mount *, int, struct proc *);
+int	nullfs_unmount(struct mount *, int, struct proc *);
+int	nullfs_root(struct mount *, struct vnode **);
+int	nullfs_quotactl(struct mount *, int, uid_t, caddr_t,
+			     struct proc *);
+int	nullfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	nullfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	nullfs_vget(struct mount *, ino_t, struct vnode **);
+int	nullfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	nullfs_vptofh(struct vnode *, struct fid *);
 /*
  * Mount null layer
  */
@@ -368,11 +368,11 @@ nullfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-#define nullfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-           size_t, struct proc *)))eopnotsupp)
+#define nullfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+           size_t, struct proc *))eopnotsupp)
 
-#define nullfs_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
-	int *, struct ucred **)))eopnotsupp)
+#define nullfs_checkexp ((int (*)(struct mount *, struct mbuf *,	\
+	int *, struct ucred **))eopnotsupp)
 
 struct vfsops null_vfsops = {
 	nullfs_mount,

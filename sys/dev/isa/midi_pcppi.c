@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_pcppi.c,v 1.1 1999/01/02 00:02:42 niklas Exp $	*/
+/*	$OpenBSD: midi_pcppi.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: midi_pcppi.c,v 1.4 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -65,15 +65,15 @@ struct midi_pcppi_softc {
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	midi_pcppi_match __P((struct device *, void *, void *));
+int	midi_pcppi_match(struct device *, void *, void *);
 #else
-int	midi_pcppi_match __P((struct device *, struct cfdata *, void *));
+int	midi_pcppi_match(struct device *, struct cfdata *, void *);
 #endif
-void	midi_pcppi_attach __P((struct device *, struct device *, void *));
+void	midi_pcppi_attach(struct device *, struct device *, void *);
 
-void	midi_pcppi_on    __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	midi_pcppi_off   __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void	midi_pcppi_close __P((midisyn *));
+void	midi_pcppi_on(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	midi_pcppi_off(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void	midi_pcppi_close(midisyn *);
 
 struct cfattach midi_pcppi_ca = {
 	sizeof(struct midi_pcppi_softc), midi_pcppi_match, midi_pcppi_attach

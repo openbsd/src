@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.17 2002/02/22 20:29:09 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.18 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -86,44 +86,44 @@ struct cfdriver gem_cd = {
 	NULL, "gem", DV_IFNET
 };
 
-void		gem_start __P((struct ifnet *));
-void		gem_stop __P((struct ifnet *, int));
-int		gem_ioctl __P((struct ifnet *, u_long, caddr_t));
-void		gem_tick __P((void *));
-void		gem_watchdog __P((struct ifnet *));
-void		gem_shutdown __P((void *));
-int		gem_init __P((struct ifnet *));
+void		gem_start(struct ifnet *);
+void		gem_stop(struct ifnet *, int);
+int		gem_ioctl(struct ifnet *, u_long, caddr_t);
+void		gem_tick(void *);
+void		gem_watchdog(struct ifnet *);
+void		gem_shutdown(void *);
+int		gem_init(struct ifnet *);
 void		gem_init_regs(struct gem_softc *sc);
 static int	gem_ringsize(int sz);
-int		gem_meminit __P((struct gem_softc *));
-void		gem_mifinit __P((struct gem_softc *));
-void		gem_reset __P((struct gem_softc *));
+int		gem_meminit(struct gem_softc *);
+void		gem_mifinit(struct gem_softc *);
+void		gem_reset(struct gem_softc *);
 int		gem_reset_rx(struct gem_softc *sc);
 int		gem_reset_tx(struct gem_softc *sc);
 int		gem_disable_rx(struct gem_softc *sc);
 int		gem_disable_tx(struct gem_softc *sc);
 void		gem_rxdrain(struct gem_softc *sc);
 int		gem_add_rxbuf(struct gem_softc *sc, int idx);
-void		gem_setladrf __P((struct gem_softc *));
-int		gem_encap __P((struct gem_softc *, struct mbuf *, u_int32_t *));
+void		gem_setladrf(struct gem_softc *);
+int		gem_encap(struct gem_softc *, struct mbuf *, u_int32_t *);
 
 /* MII methods & callbacks */
-static int	gem_mii_readreg __P((struct device *, int, int));
-static void	gem_mii_writereg __P((struct device *, int, int, int));
-static void	gem_mii_statchg __P((struct device *));
+static int	gem_mii_readreg(struct device *, int, int);
+static void	gem_mii_writereg(struct device *, int, int, int);
+static void	gem_mii_statchg(struct device *);
 
-int		gem_mediachange __P((struct ifnet *));
-void		gem_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int		gem_mediachange(struct ifnet *);
+void		gem_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct mbuf	*gem_get __P((struct gem_softc *, int, int));
-int		gem_put __P((struct gem_softc *, int, struct mbuf *));
-void		gem_read __P((struct gem_softc *, int, int));
-int		gem_eint __P((struct gem_softc *, u_int));
-int		gem_rint __P((struct gem_softc *));
-int		gem_tint __P((struct gem_softc *, u_int32_t));
-void		gem_power __P((int, void *));
+struct mbuf	*gem_get(struct gem_softc *, int, int);
+int		gem_put(struct gem_softc *, int, struct mbuf *);
+void		gem_read(struct gem_softc *, int, int);
+int		gem_eint(struct gem_softc *, u_int);
+int		gem_rint(struct gem_softc *);
+int		gem_tint(struct gem_softc *, u_int32_t);
+void		gem_power(int, void *);
 
-static int	ether_cmp __P((u_char *, u_char *));
+static int	ether_cmp(u_char *, u_char *);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \

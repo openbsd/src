@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.25 2002/02/17 04:29:52 art Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.26 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ extern char machine[], cpu_model[];
 extern char ostype[], osrelease[];
 
 #ifdef IPSEC
-extern int ipsp_kern __P((int, char **, int));
+extern int ipsp_kern(int, char **, int);
 #endif
 
 struct kern_target kern_targets[] = {
@@ -118,54 +118,54 @@ struct kern_target kern_targets[] = {
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
-int	kernfs_badop	__P((void *));
+int	kernfs_badop(void *);
 
-int	kernfs_lookup	__P((void *));
+int	kernfs_lookup(void *);
 #define	kernfs_create	eopnotsupp
 #define	kernfs_mknod	eopnotsupp
-int	kernfs_open	__P((void *));
+int	kernfs_open(void *);
 #define	kernfs_close	nullop
-int	kernfs_access	__P((void *));
-int	kernfs_getattr	__P((void *));
-int	kernfs_setattr	__P((void *));
-int	kernfs_read	__P((void *));
-int	kernfs_write	__P((void *));
-#define	kernfs_ioctl	(int (*) __P((void *)))enoioctl
+int	kernfs_access(void *);
+int	kernfs_getattr(void *);
+int	kernfs_setattr(void *);
+int	kernfs_read(void *);
+int	kernfs_write(void *);
+#define	kernfs_ioctl	(int (*)(void *))enoioctl
 #define	kernfs_select	eopnotsupp
 #define	kernfs_mmap	eopnotsupp
 #define	kernfs_fsync	nullop
 #define	kernfs_seek	nullop
 #define	kernfs_remove	eopnotsupp
-int	kernfs_link	__P((void *));
+int	kernfs_link(void *);
 #define	kernfs_rename	eopnotsupp
 #define kernfs_revoke   vop_generic_revoke
 #define	kernfs_mkdir	eopnotsupp
 #define	kernfs_rmdir	eopnotsupp
-int	kernfs_symlink	__P((void *));
-int	kernfs_readdir	__P((void *));
+int	kernfs_symlink(void *);
+int	kernfs_readdir(void *);
 #define	kernfs_readlink	eopnotsupp
-int	kernfs_inactive	__P((void *));
-int	kernfs_reclaim	__P((void *));
+int	kernfs_inactive(void *);
+int	kernfs_reclaim(void *);
 #define	kernfs_lock	vop_generic_lock
 #define	kernfs_unlock	vop_generic_unlock
 #define	kernfs_bmap	kernfs_badop
 #define	kernfs_strategy	kernfs_badop
-int	kernfs_print	__P((void *));
+int	kernfs_print(void *);
 #define	kernfs_islocked	vop_generic_islocked
-int	kernfs_pathconf	__P((void *));
+int	kernfs_pathconf(void *);
 #define	kernfs_advlock	eopnotsupp
 #define	kernfs_blkatoff	eopnotsupp
 #define	kernfs_valloc	eopnotsupp
-int	kernfs_vfree	__P((void *));
+int	kernfs_vfree(void *);
 #define	kernfs_truncate	eopnotsupp
 #define	kernfs_update	eopnotsupp
 #define	kernfs_bwrite	eopnotsupp
 
-int	kernfs_xread __P((struct kern_target *, int, char **, int));
-int	kernfs_xwrite __P((struct kern_target *, char *, int));
-int	kernfs_freevp __P((struct vnode *, struct proc *));
+int	kernfs_xread(struct kern_target *, int, char **, int);
+int	kernfs_xwrite(struct kern_target *, char *, int);
+int	kernfs_freevp(struct vnode *, struct proc *);
 
-int (**kernfs_vnodeop_p) __P((void *));
+int (**kernfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, kernfs_lookup },	/* lookup */

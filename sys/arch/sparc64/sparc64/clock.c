@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2002/01/25 03:36:25 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -120,7 +120,7 @@ int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 
 static long tick_increment;
-int schedintr __P((void *));
+int schedintr(void *);
 
 static struct intrhand level10 = { clockintr };
 static struct intrhand level0 = { tickintr };
@@ -130,13 +130,13 @@ static struct intrhand schedint = { schedintr };
 /*
  * clock (eeprom) attaches at the sbus or the ebus (PCI)
  */
-static int	clockmatch_sbus __P((struct device *, void *, void *));
-static void	clockattach_sbus __P((struct device *, struct device *, void *));
-static int	clockmatch_ebus __P((struct device *, void *, void *));
-static void	clockattach_ebus __P((struct device *, struct device *, void *));
-static int	clockmatch_rtc __P((struct device *, void *, void *));
-static void	clockattach_rtc __P((struct device *, struct device *, void *));
-static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
+static int	clockmatch_sbus(struct device *, void *, void *);
+static void	clockattach_sbus(struct device *, struct device *, void *);
+static int	clockmatch_ebus(struct device *, void *, void *);
+static void	clockattach_ebus(struct device *, struct device *, void *);
+static int	clockmatch_rtc(struct device *, void *, void *);
+static void	clockattach_rtc(struct device *, struct device *, void *);
+static void	clockattach(int, bus_space_tag_t, bus_space_handle_t);
 
 struct cfattach clock_sbus_ca = {
 	sizeof(struct device), clockmatch_sbus, clockattach_sbus
@@ -158,8 +158,8 @@ struct cfdriver rtc_cd = {
 static todr_chip_handle_t todr_handle = NULL;
 static struct idprom *idprom;
 
-static int	timermatch __P((struct device *, void *, void *));
-static void	timerattach __P((struct device *, struct device *, void *));
+static int	timermatch(struct device *, void *, void *);
+static void	timerattach(struct device *, struct device *, void *);
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
@@ -171,13 +171,13 @@ struct cfdriver timer_cd = {
 	NULL, "timer", DV_DULL
 };
 
-int sbus_wenable __P((struct todr_chip_handle *, int));
-int ebus_wenable __P((struct todr_chip_handle *, int));
+int sbus_wenable(struct todr_chip_handle *, int);
+int ebus_wenable(struct todr_chip_handle *, int);
 struct chiptime;
-void myetheraddr __P((u_char *));
-int chiptotime __P((int, int, int, int, int, int));
-void timetochip __P((struct chiptime *));
-void stopcounter __P((struct timer_4u *));
+void myetheraddr(u_char *);
+int chiptotime(int, int, int, int, int, int);
+void timetochip(struct chiptime *);
+void stopcounter(struct timer_4u *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 

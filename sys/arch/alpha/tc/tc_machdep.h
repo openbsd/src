@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_machdep.h,v 1.4 1996/12/08 00:20:59 niklas Exp $	*/
+/*	$OpenBSD: tc_machdep.h,v 1.5 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: tc_machdep.h,v 1.3 1996/10/22 21:34:22 cgd Exp $	*/
 
 /*
@@ -92,4 +92,4 @@ typedef int32_t		tc_offset_t;
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
 
-bus_space_tag_t tc_bus_mem_init __P((void *memv));;
+bus_space_tag_t tc_bus_mem_init(void *memv);;

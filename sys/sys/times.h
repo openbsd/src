@@ -1,4 +1,4 @@
-/*	$OpenBSD: times.h,v 1.2 1996/03/03 12:12:28 niklas Exp $	*/
+/*	$OpenBSD: times.h,v 1.3 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: times.h,v 1.8 1995/03/26 20:24:54 jtc Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ struct tms {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-clock_t	times __P((struct tms *));
+clock_t	times(struct tms *);
 __END_DECLS
 #endif
 #endif /* !_SYS_TIMES_H_ */

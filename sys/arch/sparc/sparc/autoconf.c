@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.48 2002/02/15 20:45:30 nordin Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.49 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -104,26 +104,26 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
-void	setroot __P((void));
-static	char *str2hex __P((char *, int *));
-static	int getstr __P((char *, int));
-int	findblkmajor __P((struct device *));
-char	*findblkname __P((int));
-static	struct device *getdisk __P((char *, int, int, dev_t *));
-static	int mbprint __P((void *, const char *));
-static	void crazymap __P((char *, int *));
-int	st_crazymap __P((int));
-void	swapconf __P((void));
-void	sync_crash __P((void));
-int	mainbus_match __P((struct device *, void *, void *));
-static	void mainbus_attach __P((struct device *, struct device *, void *));
+void	setroot(void);
+static	char *str2hex(char *, int *);
+static	int getstr(char *, int);
+int	findblkmajor(struct device *);
+char	*findblkname(int);
+static	struct device *getdisk(char *, int, int, dev_t *);
+static	int mbprint(void *, const char *);
+static	void crazymap(char *, int *);
+int	st_crazymap(int);
+void	swapconf(void);
+void	sync_crash(void);
+int	mainbus_match(struct device *, void *, void *);
+static	void mainbus_attach(struct device *, struct device *, void *);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
-static	void bootpath_build __P((void));
-static	void bootpath_fake __P((struct bootpath *, char *));
-static	void bootpath_print __P((struct bootpath *));
-int	search_prom __P((int, char *));
+static	void bootpath_build(void);
+static	void bootpath_fake(struct bootpath *, char *);
+static	void bootpath_print(struct bootpath *);
+int	search_prom(int, char *);
 char	mainbus_model[30];
 
 /*
@@ -134,7 +134,7 @@ char	mainbus_model[30];
 struct mountroot_hook {
 	LIST_ENTRY(mountroot_hook) mr_link;
 	struct	device *mr_device;
-	void	(*mr_func) __P((struct device *));
+	void	(*mr_func)(struct device *);
 };
 LIST_HEAD(, mountroot_hook) mrh_list;
 
@@ -202,7 +202,7 @@ bootstrap()
 {
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		extern void oldmon_w_cmd __P((u_long, char *));
+		extern void oldmon_w_cmd(u_long, char *);
 
 		/*
 		 * XXX:
@@ -272,7 +272,7 @@ bootstrap()
 		struct romaux ra;
 		register u_int pte;
 		register int i;
-		extern void setpte4m __P((u_int, u_int));
+		extern void setpte4m(u_int, u_int);
 		extern struct timer_4m *timerreg_4m;
 		extern struct counter_4m *counterreg_4m;
 
@@ -1586,7 +1586,7 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
-u_int      hexatoi __P((const char *));
+u_int      hexatoi(const char *);
 
 /* The following recursively searches a PROM tree for a given node */
 int
@@ -1853,7 +1853,7 @@ parsedisk(str, len, defpart, devp)
 
 void
 mountroot_hook_establish(func, dev)
-	void (*func) __P((struct device *));
+	void (*func)(struct device *);
 	struct device *dev;
 {
 	struct mountroot_hook *mrhp;

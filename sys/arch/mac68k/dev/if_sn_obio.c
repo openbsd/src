@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.17 2001/07/04 08:52:46 niklas Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.18 2002/03/14 01:26:35 millert Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -54,10 +54,10 @@
 #define SONIC_REG_BASE	0x50F0A000
 #define SONIC_PROM_BASE	0x50F08000
 
-static int	sn_obio_match __P((struct device *, void *, void *));
-static void	sn_obio_attach __P((struct device *, struct device *, void *));
-static int	sn_obio_getaddr __P((struct sn_softc *, u_int8_t *));
-static int	sn_obio_getaddr_kludge __P((struct sn_softc *, u_int8_t *));
+static int	sn_obio_match(struct device *, void *, void *);
+static void	sn_obio_attach(struct device *, struct device *, void *);
+static int	sn_obio_getaddr(struct sn_softc *, u_int8_t *);
+static int	sn_obio_getaddr_kludge(struct sn_softc *, u_int8_t *);
 
 struct cfattach sn_obio_ca = {
 	sizeof(struct sn_softc), sn_obio_match, sn_obio_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.c,v 1.7 2001/05/24 06:00:09 jasoni Exp $	*/
+/*	$OpenBSD: linux_ipc.c,v 1.8 2002/03/14 01:26:50 millert Exp $	*/
 /*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
 
 /*
@@ -70,34 +70,34 @@
  */
 
 #ifdef SYSVSEM
-int linux_semop __P((struct proc *, void *, register_t *));
-int linux_semget __P((struct proc *, void *, register_t *));
-int linux_semctl __P((struct proc *, void *, register_t *));
-void bsd_to_linux_semid_ds __P((struct semid_ds *, struct linux_semid_ds *));
-void linux_to_bsd_semid_ds __P((struct linux_semid_ds *, struct semid_ds *));
+int linux_semop(struct proc *, void *, register_t *);
+int linux_semget(struct proc *, void *, register_t *);
+int linux_semctl(struct proc *, void *, register_t *);
+void bsd_to_linux_semid_ds(struct semid_ds *, struct linux_semid_ds *);
+void linux_to_bsd_semid_ds(struct linux_semid_ds *, struct semid_ds *);
 #endif
 
 #ifdef SYSVMSG
-int linux_msgsnd __P((struct proc *, void *, register_t *));
-int linux_msgrcv __P((struct proc *, void *, register_t *));
-int linux_msgget __P((struct proc *, void *, register_t *));
-int linux_msgctl __P((struct proc *, void *, register_t *));
-void linux_to_bsd_msqid_ds __P((struct linux_msqid_ds *, struct msqid_ds *));
-void bsd_to_linux_msqid_ds __P((struct msqid_ds *, struct linux_msqid_ds *));
+int linux_msgsnd(struct proc *, void *, register_t *);
+int linux_msgrcv(struct proc *, void *, register_t *);
+int linux_msgget(struct proc *, void *, register_t *);
+int linux_msgctl(struct proc *, void *, register_t *);
+void linux_to_bsd_msqid_ds(struct linux_msqid_ds *, struct msqid_ds *);
+void bsd_to_linux_msqid_ds(struct msqid_ds *, struct linux_msqid_ds *);
 #endif
 
 #ifdef SYSVSHM
-int linux_shmat __P((struct proc *, void *, register_t *));
-int linux_shmdt __P((struct proc *, void *, register_t *));
-int linux_shmget __P((struct proc *, void *, register_t *));
-int linux_shmctl __P((struct proc *, void *, register_t *));
-void linux_to_bsd_shmid_ds __P((struct linux_shmid_ds *, struct shmid_ds *));
-void bsd_to_linux_shmid_ds __P((struct shmid_ds *, struct linux_shmid_ds *));
+int linux_shmat(struct proc *, void *, register_t *);
+int linux_shmdt(struct proc *, void *, register_t *);
+int linux_shmget(struct proc *, void *, register_t *);
+int linux_shmctl(struct proc *, void *, register_t *);
+void linux_to_bsd_shmid_ds(struct linux_shmid_ds *, struct shmid_ds *);
+void bsd_to_linux_shmid_ds(struct shmid_ds *, struct linux_shmid_ds *);
 #endif
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-void linux_to_bsd_ipc_perm __P((struct linux_ipc_perm *, struct ipc_perm *));
-void bsd_to_linux_ipc_perm __P((struct ipc_perm *, struct linux_ipc_perm *));
+void linux_to_bsd_ipc_perm(struct linux_ipc_perm *, struct ipc_perm *);
+void bsd_to_linux_ipc_perm(struct ipc_perm *, struct linux_ipc_perm *);
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.h,v 1.6 1997/07/06 08:02:12 downsj Exp $	*/
+/*	$OpenBSD: hpux_machdep.h,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: hpux_machdep.h,v 1.8 1997/04/27 21:38:58 thorpej Exp $	*/
 
 /*-
@@ -70,14 +70,14 @@ struct hpuxsigcontext {
 struct exec_package;
 struct exec_vmcmd;
 
-int	hpux_cpu_makecmds __P((struct proc *, struct exec_package *));
-int	hpux_cpu_vmcmd __P((struct proc *, struct exec_vmcmd *));
-int	hpux_cpu_sysconf_arch __P((void));
-int	hpux_to_bsd_uoff __P((int *, int *, struct proc *));
+int	hpux_cpu_makecmds(struct proc *, struct exec_package *);
+int	hpux_cpu_vmcmd(struct proc *, struct exec_vmcmd *);
+int	hpux_cpu_sysconf_arch(void);
+int	hpux_to_bsd_uoff(int *, int *, struct proc *);
 
-void	hpux_sendsig __P((sig_t, int, int, u_long, int, union sigval));
-void	hpux_setregs __P((struct proc *, struct exec_package *,
-	    u_long, register_t *));
+void	hpux_sendsig(sig_t, int, int, u_long, int, union sigval);
+void	hpux_setregs(struct proc *, struct exec_package *,
+	    u_long, register_t *);
 #endif /* _KERNEL */
 
 #endif /* ! _MACHINE_HPUX_MACHDEP_H_ */

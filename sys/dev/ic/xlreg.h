@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.9 2001/08/19 01:45:55 jason Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.10 2002/03/14 01:26:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -584,7 +584,7 @@ struct xl_softc {
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
 	int			xl_flags;
-	void (*intr_ack)	__P((struct xl_softc *));
+	void (*intr_ack)(struct xl_softc *);
 	void *			sc_sdhook, *sc_pwrhook;
 };
 
@@ -725,6 +725,6 @@ struct xl_stats {
 #define ETHER_ALIGN 2
 #endif
 
-extern int xl_intr __P((void *));
-extern void xl_attach __P((struct xl_softc *));
-extern int xl_detach __P((struct xl_softc *));
+extern int xl_intr(void *);
+extern void xl_attach(struct xl_softc *);
+extern int xl_detach(struct xl_softc *);

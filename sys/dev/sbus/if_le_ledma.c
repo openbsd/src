@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.5 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.6 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -87,18 +87,18 @@ struct	le_softc {
 #define MEMSIZE		(16*1024)	/* LANCE memory size */
 #define LEDMA_BOUNDARY	(16*1024*1024)	/* must not cross 16MB boundary */
 
-int	lematch_ledma __P((struct device *, void *, void *));
-void	leattach_ledma __P((struct device *, struct device *, void *));
+int	lematch_ledma(struct device *, void *, void *);
+void	leattach_ledma(struct device *, struct device *, void *);
 
 /*
  * Media types supported by the Sun4m.
  */
 
-void	lesetutp __P((struct am7990_softc *));
-void	lesetaui __P((struct am7990_softc *));
+void	lesetutp(struct am7990_softc *);
+void	lesetaui(struct am7990_softc *);
 
-int	lemediachange __P((struct ifnet *));
-void	lemediastatus __P((struct ifnet *, struct ifmediareq *));
+int	lemediachange(struct ifnet *);
+void	lemediastatus(struct ifnet *, struct ifmediareq *);
 
 struct cfattach le_ledma_ca = {
 	sizeof(struct le_softc), lematch_ledma, leattach_ledma
@@ -116,11 +116,11 @@ struct cfattach le_ledma_ca = {
 #define hide		static
 #endif
 
-static void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-static u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-hide void lehwreset __P((struct am7990_softc *));
-hide void lehwinit __P((struct am7990_softc *));
-hide void lenocarrier __P((struct am7990_softc *));
+static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+hide void lehwreset(struct am7990_softc *);
+hide void lehwinit(struct am7990_softc *);
+hide void lenocarrier(struct am7990_softc *);
 
 static void
 lewrcsr(sc, port, val)
@@ -345,7 +345,7 @@ leattach_ledma(parent, self, aux)
 	bus_dma_segment_t seg;
 	int rseg, error;
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	lesc->sc_bustag = sa->sa_bustag;
 

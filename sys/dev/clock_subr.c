@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.c,v 1.1 1997/09/09 13:08:18 maja Exp $	*/
+/*	$OpenBSD: clock_subr.c,v 1.2 2002/03/14 01:26:52 millert Exp $	*/
 /*	$NetBSD: clock_subr.c,v 1.3 1997/03/15 18:11:16 is Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 /* Traditional POSIX base year */
 #define	POSIX_BASE_YEAR	1970
 
-static inline int leapyear __P((int year));
+static inline int leapyear(int year);
 #define FEBRUARY	2
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])

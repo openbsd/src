@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2001/12/06 23:45:23 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
 
 /* 
@@ -44,7 +44,7 @@ extern label_t	*db_recover;
 /*
  * Register list
  */
-static int db_var_short __P((struct db_variable *, db_expr_t *, int));
+static int db_var_short(struct db_variable *, db_expr_t *, int);
 
 struct db_variable db_regs[] = {
 	/* D0-D7 */
@@ -114,10 +114,10 @@ struct stackpos {
 	 int	k_regloc[NREGISTERS];
 };
 
-static void findentry __P((struct stackpos *));
-static void findregs __P((struct stackpos *, db_addr_t));
-static int  nextframe __P((struct stackpos *, int));
-static void stacktop __P((db_regs_t *, struct stackpos *));
+static void findentry(struct stackpos *);
+static void findregs(struct stackpos *, db_addr_t);
+static int  nextframe(struct stackpos *, int);
+static void stacktop(db_regs_t *, struct stackpos *);
 
 
 #define FR_SAVFP	0

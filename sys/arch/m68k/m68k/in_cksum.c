@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 1996/05/09 22:30:11 niklas Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.6 1996/04/30 11:57:05 briggs Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-extern int oc_cksum __P((char *buffer, int length, int startingval));
+extern int oc_cksum(char *buffer, int length, int startingval);
 
 /*
  * Checksum routine for the Internet Protocol family.

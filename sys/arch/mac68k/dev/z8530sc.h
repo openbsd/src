@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.3 1996/10/13 15:29:07 briggs Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.4 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.1 1996/05/18 18:54:30 briggs Exp $	*/
 
 /*
@@ -178,11 +178,11 @@ struct zsc_attach_args {
 #define ZS_CHIP_8580		2
 #define ZS_CHIP_ESCC		3
 
-void	zs_loadchannelregs __P((struct zs_chanstate *));
-int	zsc_intr_soft __P((void *));
-int	zsc_intr_hard __P((void *));
-int	zs_checkchip __P((struct zs_chanstate *));
-int	zs_break __P((struct zs_chanstate *, int));
-int	zs_getspeed __P((struct zs_chanstate *));
-void	zs_iflush __P((struct zs_chanstate *));
+void	zs_loadchannelregs(struct zs_chanstate *);
+int	zsc_intr_soft(void *);
+int	zsc_intr_hard(void *);
+int	zs_checkchip(struct zs_chanstate *);
+int	zs_break(struct zs_chanstate *, int);
+int	zs_getspeed(struct zs_chanstate *);
+void	zs_iflush(struct zs_chanstate *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.17 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: cia.c,v 1.18 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -99,8 +99,8 @@
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	ciamatch __P((struct device *, void *, void *));
-void	ciaattach __P((struct device *, struct device *, void *));
+int	ciamatch(struct device *, void *, void *);
+void	ciaattach(struct device *, struct device *, void *);
 
 struct cfattach cia_ca = {
 	sizeof(struct cia_softc), ciamatch, ciaattach,
@@ -110,7 +110,7 @@ struct cfdriver cia_cd = {
 	NULL, "cia", DV_DULL,
 };
 
-static int	ciaprint __P((void *, const char *pnp));
+static int	ciaprint(void *, const char *pnp);
 
 /* There can be only one. */
 int ciafound;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.28 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.29 2002/03/14 01:27:09 millert Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -70,20 +70,20 @@
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
 
-int msdosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		       struct proc *));
-int msdosfs_start __P((struct mount *, int, struct proc *));
-int msdosfs_unmount __P((struct mount *, int, struct proc *));
-int msdosfs_root __P((struct mount *, struct vnode **));
-int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int msdosfs_vptofh __P((struct vnode *, struct fid *));
-int msdosfs_check_export __P((struct mount *mp, struct mbuf *nam,
-			      int *extflagsp, struct ucred **credanonp));
+int msdosfs_mount(struct mount *, const char *, void *, struct nameidata *,
+		       struct proc *);
+int msdosfs_start(struct mount *, int, struct proc *);
+int msdosfs_unmount(struct mount *, int, struct proc *);
+int msdosfs_root(struct mount *, struct vnode **);
+int msdosfs_statfs(struct mount *, struct statfs *, struct proc *);
+int msdosfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int msdosfs_vptofh(struct vnode *, struct fid *);
+int msdosfs_check_export(struct mount *mp, struct mbuf *nam,
+			      int *extflagsp, struct ucred **credanonp);
 
-int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
-			 struct msdosfs_args *));
+int msdosfs_mountfs(struct vnode *, struct mount *, struct proc *,
+			 struct msdosfs_args *);
 
 int msdosfs_sync_vnode(struct vnode *, void *);
 
@@ -844,14 +844,14 @@ msdosfs_check_export(mp, nam, exflagsp, credanonp)
 	return (0);
 }
 
-#define msdosfs_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
+#define msdosfs_vget ((int (*)(struct mount *, ino_t, struct vnode **)) \
 		      eopnotsupp)
 
-#define msdosfs_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-					struct proc *)))eopnotsupp)
+#define msdosfs_quotactl ((int (*)(struct mount *, int, uid_t, caddr_t, \
+					struct proc *))eopnotsupp)
 
-#define msdosfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-                                    size_t, struct proc *)))eopnotsupp)
+#define msdosfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+                                    size_t, struct proc *))eopnotsupp)
 
 struct vfsops msdosfs_vfsops = {
 	msdosfs_mount,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.15 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.16 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ kthread_create(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
 #else
 kthread_create(func, arg, newpp, fmt, va_alist)
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 	struct proc **newpp;
 	const char *fmt;
@@ -136,7 +136,7 @@ kthread_exit(ecode)
 
 struct kthread_q {
 	SIMPLEQ_ENTRY(kthread_q) kq_q;
-	void (*kq_func) __P((void *));
+	void (*kq_func)(void *);
 	void *kq_arg;
 };
 
@@ -149,7 +149,7 @@ SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
  */
 void
 kthread_create_deferred(func, arg)
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct kthread_q *kq;

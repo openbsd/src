@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2002/01/20 03:41:29 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
-	extern void fork_trampoline __P((void));
+	extern void fork_trampoline(void);
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 	if (p1 == fpuproc)

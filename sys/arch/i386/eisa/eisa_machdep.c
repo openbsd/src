@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.4 2001/07/04 08:57:45 niklas Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.5 2002/03/14 01:26:32 millert Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.6 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ void *
 eisa_intr_establish(ec, ih, type, level, func, arg, what)
 	eisa_chipset_tag_t ec;
 	eisa_intr_handle_t ih;
-	int type, level, (*func) __P((void *));
+	int type, level, (*func)(void *);
 	void *arg;
 	char *what;
 {

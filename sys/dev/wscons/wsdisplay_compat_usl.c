@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.9 2001/06/04 12:48:37 ho Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.10 2002/03/14 01:27:03 millert Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -64,31 +64,31 @@ struct usl_syncdata {
 #define SF_ATTACHPENDING 2
 	int s_acqsig, s_relsig;
 	int s_frsig; /* unused */
-	void (*s_callback) __P((void *, int, int));
+	void (*s_callback)(void *, int, int);
 	void *s_cbarg;
 	struct timeout s_attach_ch;
 	struct timeout s_detach_ch;
 };
 
-int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
-		       struct proc *, int, int, int));
-void usl_sync_done __P((struct usl_syncdata *));
-int usl_sync_check __P((struct usl_syncdata *));
-struct usl_syncdata *usl_sync_get __P((struct wsscreen *));
+int usl_sync_init(struct wsscreen *, struct usl_syncdata **,
+		       struct proc *, int, int, int);
+void usl_sync_done(struct usl_syncdata *);
+int usl_sync_check(struct usl_syncdata *);
+struct usl_syncdata *usl_sync_get(struct wsscreen *);
 
 int usl_detachproc __P((void *, int, void (*)(void *, int, int), void *));
-int usl_detachack __P((struct usl_syncdata *, int));
-void usl_detachtimeout __P((void *));
+int usl_detachack(struct usl_syncdata *, int);
+void usl_detachtimeout(void *);
 int usl_attachproc __P((void *, int, void (*)(void *, int, int), void *));
-int usl_attachack __P((struct usl_syncdata *, int));
-void usl_attachtimeout __P((void *));
+int usl_attachack(struct usl_syncdata *, int);
+void usl_attachtimeout(void *);
 
 static const struct wscons_syncops usl_syncops = {
 	usl_detachproc,
 	usl_attachproc,
-#define _usl_sync_check ((int (*) __P((void *)))usl_sync_check)
+#define _usl_sync_check ((int (*)(void *))usl_sync_check)
 	_usl_sync_check,
-#define _usl_sync_destroy ((void (*) __P((void *)))usl_sync_done)
+#define _usl_sync_destroy ((void (*)(void *))usl_sync_done)
 	_usl_sync_destroy
 };
 
@@ -170,7 +170,7 @@ int
 usl_detachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
-	void (*callback) __P((void *, int, int));
+	void (*callback)(void *, int, int);
 	void *cbarg;
 {
 	struct usl_syncdata *sd = cookie;
@@ -240,7 +240,7 @@ int
 usl_attachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
-	void (*callback) __P((void *, int, int));
+	void (*callback)(void *, int, int);
 	void *cbarg;
 {
 	struct usl_syncdata *sd = cookie;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2002/02/05 23:07:38 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2002/03/14 01:26:40 millert Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -248,17 +248,17 @@ extern vaddr_t obiova;
 /*
  * Internal routines
  */
-void flush_atc_entry __P((long, vaddr_t, boolean_t));
-pt_entry_t *pmap_expand_kmap __P((vaddr_t, vm_prot_t));
-void pmap_remove_range __P((pmap_t, vaddr_t, vaddr_t));
-void pmap_expand __P((pmap_t, vaddr_t));
-void pmap_release __P((pmap_t));
-vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t, unsigned int));
-vaddr_t pmap_map_batc __P((vaddr_t, paddr_t, paddr_t, vm_prot_t, unsigned int));
-pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-void pmap_remove_all __P((paddr_t));
-void pmap_changebit __P((paddr_t, int, int));
-boolean_t pmap_testbit __P((paddr_t, int));
+void flush_atc_entry(long, vaddr_t, boolean_t);
+pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
+void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
+void pmap_expand(pmap_t, vaddr_t);
+void pmap_release(pmap_t);
+vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, unsigned int);
+vaddr_t pmap_map_batc(vaddr_t, paddr_t, paddr_t, vm_prot_t, unsigned int);
+pt_entry_t *pmap_pte(pmap_t, vaddr_t);
+void pmap_remove_all(paddr_t);
+void pmap_changebit(paddr_t, int, int);
+boolean_t pmap_testbit(paddr_t, int);
 
 /*
  * quick PTE field checking macros

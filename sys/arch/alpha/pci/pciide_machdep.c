@@ -1,4 +1,4 @@
-/* $OpenBSD: pciide_machdep.c,v 1.3 2001/06/25 22:53:19 art Exp $ */
+/* $OpenBSD: pciide_machdep.c,v 1.4 2002/03/14 01:26:27 millert Exp $ */
 /* $NetBSD: pciide_machdep.c,v 1.2 1998/04/18 01:09:20 thorpej Exp $ */
 
 /*
@@ -60,7 +60,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	struct device *dev;
 	struct pci_attach_args *pa;
 	int chan;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

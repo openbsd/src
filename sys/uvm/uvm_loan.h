@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.h,v 1.6 2001/03/09 05:34:38 smart Exp $	*/
+/*	$OpenBSD: uvm_loan.h,v 1.7 2002/03/14 01:27:18 millert Exp $	*/
 /*	$NetBSD: uvm_loan.h,v 1.7 1999/06/21 17:25:11 thorpej Exp $	*/
 
 /*
@@ -51,9 +51,9 @@
  * loan prototypes
  */
 
-int uvm_loan __P((struct vm_map *, vaddr_t, vsize_t, void **, int));
-void uvm_unloananon __P((struct vm_anon **, int));
-void uvm_unloanpage __P((struct vm_page **, int));
+int uvm_loan(struct vm_map *, vaddr_t, vsize_t, void **, int);
+void uvm_unloananon(struct vm_anon **, int);
+void uvm_unloanpage(struct vm_page **, int);
 
 #endif /* _KERNEL */
 

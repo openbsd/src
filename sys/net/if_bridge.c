@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.85 2002/02/14 00:55:49 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.86 2002/03/14 01:27:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -112,39 +112,39 @@ extern int ifqmaxlen;
 struct bridge_softc *bridgectl;
 int nbridge;
 
-void	bridgeattach __P((int));
-int	bridge_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	bridge_start __P((struct ifnet *));
-void	bridgeintr_frame __P((struct bridge_softc *, struct mbuf *));
-void	bridge_broadcast __P((struct bridge_softc *, struct ifnet *,
-    struct ether_header *, struct mbuf *));
-void	bridge_span __P((struct bridge_softc *, struct ether_header *,
-    struct mbuf *));
-void	bridge_stop __P((struct bridge_softc *));
-void	bridge_init __P((struct bridge_softc *));
-int	bridge_bifconf __P((struct bridge_softc *, struct ifbifconf *));
+void	bridgeattach(int);
+int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
+void	bridge_start(struct ifnet *);
+void	bridgeintr_frame(struct bridge_softc *, struct mbuf *);
+void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *);
+void	bridge_span(struct bridge_softc *, struct ether_header *,
+    struct mbuf *);
+void	bridge_stop(struct bridge_softc *);
+void	bridge_init(struct bridge_softc *);
+int	bridge_bifconf(struct bridge_softc *, struct ifbifconf *);
 
-void	bridge_timer __P((void *));
-int	bridge_rtfind __P((struct bridge_softc *, struct ifbaconf *));
-void	bridge_rtage __P((struct bridge_softc *));
-void	bridge_rttrim __P((struct bridge_softc *));
-void	bridge_rtdelete __P((struct bridge_softc *, struct ifnet *));
-int	bridge_rtdaddr __P((struct bridge_softc *, struct ether_addr *));
-int	bridge_rtflush __P((struct bridge_softc *, int));
-struct ifnet *	bridge_rtupdate __P((struct bridge_softc *,
-    struct ether_addr *, struct ifnet *ifp, int, u_int8_t));
-struct ifnet *	bridge_rtlookup __P((struct bridge_softc *,
-    struct ether_addr *));
-u_int32_t	bridge_hash __P((struct bridge_softc *, struct ether_addr *));
-int bridge_blocknonip __P((struct ether_header *, struct mbuf *));
-int		bridge_addrule __P((struct bridge_iflist *,
-    struct ifbrlreq *, int out));
-int		bridge_flushrule __P((struct bridge_iflist *));
-int	bridge_brlconf __P((struct bridge_softc *, struct ifbrlconf *));
-u_int8_t bridge_filterrule __P((struct brl_head *, struct ether_header *));
+void	bridge_timer(void *);
+int	bridge_rtfind(struct bridge_softc *, struct ifbaconf *);
+void	bridge_rtage(struct bridge_softc *);
+void	bridge_rttrim(struct bridge_softc *);
+void	bridge_rtdelete(struct bridge_softc *, struct ifnet *);
+int	bridge_rtdaddr(struct bridge_softc *, struct ether_addr *);
+int	bridge_rtflush(struct bridge_softc *, int);
+struct ifnet *	bridge_rtupdate(struct bridge_softc *,
+    struct ether_addr *, struct ifnet *ifp, int, u_int8_t);
+struct ifnet *	bridge_rtlookup(struct bridge_softc *,
+    struct ether_addr *);
+u_int32_t	bridge_hash(struct bridge_softc *, struct ether_addr *);
+int bridge_blocknonip(struct ether_header *, struct mbuf *);
+int		bridge_addrule(struct bridge_iflist *,
+    struct ifbrlreq *, int out);
+int		bridge_flushrule(struct bridge_iflist *);
+int	bridge_brlconf(struct bridge_softc *, struct ifbrlconf *);
+u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *);
 #if NPF > 0
-struct mbuf *bridge_filter __P((struct bridge_softc *, int, struct ifnet *,
-    struct ether_header *, struct mbuf *m));
+struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
+    struct ether_header *, struct mbuf *m);
 #endif
 
 #define	ETHERADDR_IS_IP_MCAST(a) \

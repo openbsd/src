@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.47 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.48 2002/03/14 01:26:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -68,13 +68,13 @@
 extern struct extent *iomap_extent;
 extern struct vm_map *iomap_map;
 
-vm_offset_t iomap_mapin __P((vm_offset_t, vm_size_t, boolean_t));
-void iomap_mapout __P((vm_offset_t, vm_size_t));
-void *mapiodev __P((void *, int));
-void unmapiodev __P((void *, int));
-vm_offset_t mapiospace __P((caddr_t, int));
-void unmapiospace __P((vm_offset_t));
-int badpaddr __P((caddr_t, int));
+vm_offset_t iomap_mapin(vm_offset_t, vm_size_t, boolean_t);
+void iomap_mapout(vm_offset_t, vm_size_t);
+void *mapiodev(void *, int);
+void unmapiodev(void *, int);
+vm_offset_t mapiospace(caddr_t, int);
+void unmapiospace(vm_offset_t);
+int badpaddr(caddr_t, int);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -91,18 +91,18 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct switchframe *p2sf;
 	int cpu;
 	struct ksigframe {
-		void (*func) __P((void *));
+		void (*func)(void *);
 		void *proc;
 	} *ksfp;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline __P((void));
-        extern void save_u_area __P((struct proc *, vm_offset_t));
+	extern void proc_trampoline(void);
+        extern void save_u_area(struct proc *, vm_offset_t);
 
 	cpu = cpu_number();
 /*	
@@ -188,7 +188,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *
 void
 cpu_swapin(struct proc *p)
 {
-        extern void save_u_area __P((struct proc *, vm_offset_t));
+        extern void save_u_area(struct proc *, vm_offset_t);
 
 	save_u_area(p, (vm_offset_t)p->p_addr);
 }

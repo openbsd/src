@@ -1,4 +1,4 @@
-/*	$OpenBSD: ivsc.c,v 1.6 1997/01/18 12:26:31 niklas Exp $	*/
+/*	$OpenBSD: ivsc.c,v 1.7 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ivsc.c,v 1.21 1996/12/23 09:10:21 veego Exp $	*/
 
 /*
@@ -49,14 +49,14 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void ivscattach __P((struct device *, struct device *, void *));
-int ivscmatch __P((struct device *, void *, void *));
+void ivscattach(struct device *, struct device *, void *);
+int ivscmatch(struct device *, void *, void *);
 
-int ivsc_intr __P((void *));
-int ivsc_dma_xfer_in __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
-int ivsc_dma_xfer_out __P((struct sci_softc *dev, int len,
-    register u_char *buf, int phase));
+int ivsc_intr(void *);
+int ivsc_dma_xfer_in(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
+int ivsc_dma_xfer_out(struct sci_softc *dev, int len,
+    register u_char *buf, int phase);
 
 struct scsi_adapter ivsc_scsiswitch = {
 	sci_scsicmd,

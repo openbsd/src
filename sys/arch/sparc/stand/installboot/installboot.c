@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.2 1998/04/17 18:18:06 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -71,11 +71,11 @@ char	cpumodel[130];
 int	isofsblk = 0;
 int	isofseblk = 0;
 
-char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
-static void	devread __P((int, void *, daddr_t, size_t, char *));
-static void	usage __P((void));
-int 		main __P((int, char *[]));
+char		*loadprotoblocks(char *, long *);
+int		loadblocknums(char *, int);
+static void	devread(int, void *, daddr_t, size_t, char *);
+static void	usage(void);
+int 		main(int, char *[]);
 
 
 static void

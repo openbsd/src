@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.14 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.15 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -190,68 +190,68 @@ struct sbdsp_softc {
 #define ISSB16CLASS(sc) ((sc)->sc_model >= SB_16)
 
 #ifdef _KERNEL
-int	sbdsp_open __P((void *, int));
-void	sbdsp_close __P((void *));
+int	sbdsp_open(void *, int);
+void	sbdsp_close(void *);
 
-int	sbdsp_probe __P((struct sbdsp_softc *));
-void	sbdsp_attach __P((struct sbdsp_softc *));
+int	sbdsp_probe(struct sbdsp_softc *);
+void	sbdsp_attach(struct sbdsp_softc *);
 
-int	sbdsp_set_in_gain __P((void *, u_int, u_char));
-int	sbdsp_set_in_gain_real __P((void *, u_int, u_char));
-int	sbdsp_get_in_gain __P((void *));
-int	sbdsp_set_out_gain __P((void *, u_int, u_char));
-int	sbdsp_set_out_gain_real __P((void *, u_int, u_char));
-int	sbdsp_get_out_gain __P((void *));
-int	sbdsp_set_monitor_gain __P((void *, u_int));
-int	sbdsp_get_monitor_gain __P((void *));
-int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	sbdsp_round_blocksize __P((void *, int));
-int	sbdsp_get_avail_in_ports __P((void *));
-int	sbdsp_get_avail_out_ports __P((void *));
-int	sbdsp_speaker_ctl __P((void *, int));
+int	sbdsp_set_in_gain(void *, u_int, u_char);
+int	sbdsp_set_in_gain_real(void *, u_int, u_char);
+int	sbdsp_get_in_gain(void *);
+int	sbdsp_set_out_gain(void *, u_int, u_char);
+int	sbdsp_set_out_gain_real(void *, u_int, u_char);
+int	sbdsp_get_out_gain(void *);
+int	sbdsp_set_monitor_gain(void *, u_int);
+int	sbdsp_get_monitor_gain(void *);
+int	sbdsp_query_encoding(void *, struct audio_encoding *);
+int	sbdsp_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	sbdsp_round_blocksize(void *, int);
+int	sbdsp_get_avail_in_ports(void *);
+int	sbdsp_get_avail_out_ports(void *);
+int	sbdsp_speaker_ctl(void *, int);
 
-int	sbdsp_commit __P((void *));
+int	sbdsp_commit(void *);
 int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
 int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
 
-int	sbdsp_haltdma __P((void *));
+int	sbdsp_haltdma(void *);
 
-void	sbdsp_compress __P((int, u_char *, int));
-void	sbdsp_expand __P((int, u_char *, int));
+void	sbdsp_compress(int, u_char *, int);
+void	sbdsp_expand(int, u_char *, int);
 
-int	sbdsp_reset __P((struct sbdsp_softc *));
-void	sbdsp_spkron __P((struct sbdsp_softc *));
-void	sbdsp_spkroff __P((struct sbdsp_softc *));
+int	sbdsp_reset(struct sbdsp_softc *);
+void	sbdsp_spkron(struct sbdsp_softc *);
+void	sbdsp_spkroff(struct sbdsp_softc *);
 
-int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
-int	sbdsp_rdsp __P((struct sbdsp_softc *));
+int	sbdsp_wdsp(struct sbdsp_softc *, int v);
+int	sbdsp_rdsp(struct sbdsp_softc *);
 
-int	sbdsp_intr __P((void *));
+int	sbdsp_intr(void *);
 
-int	sbdsp_set_sr __P((struct sbdsp_softc *, u_long *, int));
+int	sbdsp_set_sr(struct sbdsp_softc *, u_long *, int);
 
-void	sbdsp_mix_write __P((struct sbdsp_softc *, int, int));
-int	sbdsp_mix_read __P((struct sbdsp_softc *, int));
+void	sbdsp_mix_write(struct sbdsp_softc *, int, int);
+int	sbdsp_mix_read(struct sbdsp_softc *, int);
 
-int	sbdsp_mixer_set_port __P((void *, mixer_ctrl_t *));
-int	sbdsp_mixer_get_port __P((void *, mixer_ctrl_t *));
-int	sbdsp_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
+int	sbdsp_mixer_set_port(void *, mixer_ctrl_t *);
+int	sbdsp_mixer_get_port(void *, mixer_ctrl_t *);
+int	sbdsp_mixer_query_devinfo(void *, mixer_devinfo_t *);
 
-void	*sb_malloc __P((void *, int, size_t, int, int));
-void	sb_free __P((void *, void *, int));
-size_t sb_round __P((void *, int, size_t));
-paddr_t	sb_mappage __P((void *, void *, off_t, int));
+void	*sb_malloc(void *, int, size_t, int, int);
+void	sb_free(void *, void *, int);
+size_t sb_round(void *, int, size_t);
+paddr_t	sb_mappage(void *, void *, off_t, int);
 
-int	sbdsp_get_props __P((void *));
+int	sbdsp_get_props(void *);
 
 
 int	sbdsp_midi_open __P((void *, int,
-			     void (*iintr)__P((void *, int)),
-			     void (*ointr)__P((void *)), void *arg));
-void	sbdsp_midi_close __P((void *));
-int	sbdsp_midi_output __P((void *, int));
-void	sbdsp_midi_getinfo __P((void *, struct midi_info *));
+			     void (*iintr)(void *, int),
+			     void (*ointr)(void *), void *arg));
+void	sbdsp_midi_close(void *);
+int	sbdsp_midi_output(void *, int);
+void	sbdsp_midi_getinfo(void *, struct midi_info *);
 #endif

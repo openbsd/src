@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.25 2000/06/08 01:51:33 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.26 2002/03/14 01:26:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -37,27 +37,27 @@ struct open_file;
 
 /* biosdev.c */
 extern const char *biosdevs[];
-int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int biosopen __P((struct open_file *, ...));
-int biosclose __P((struct open_file *));
-int biosioctl __P((struct open_file *, u_long, void *));
-int bios_getdiskinfo __P((int, bios_diskinfo_t *));
-int biosd_io __P((int, int, int, int, int, int, void*));
-const char * bios_getdisklabel __P((bios_diskinfo_t *, struct disklabel *));
+int biosstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int biosopen(struct open_file *, ...);
+int biosclose(struct open_file *);
+int biosioctl(struct open_file *, u_long, void *);
+int bios_getdiskinfo(int, bios_diskinfo_t *);
+int biosd_io(int, int, int, int, int, int, void*);
+const char * bios_getdisklabel(bios_diskinfo_t *, struct disklabel *);
 
 /* diskprobe.c */
-struct diskinfo *dklookup __P((int));
-bios_diskinfo_t *bios_dklookup __P((int));
+struct diskinfo *dklookup(int);
+bios_diskinfo_t *bios_dklookup(int);
 
 /* bioscons.c */
-void pc_probe __P((struct consdev *));
-void pc_init __P((struct consdev *));
-int pc_getc __P((dev_t));
-void pc_putc __P((dev_t, int));
-void pc_pollc __P((dev_t, int));
-void com_probe __P((struct consdev *));
-void com_init __P((struct consdev *));
-int comspeed __P((dev_t, int));
-int com_getc __P((dev_t));
-void com_putc __P((dev_t, int));
-void com_pollc __P((dev_t, int));
+void pc_probe(struct consdev *);
+void pc_init(struct consdev *);
+int pc_getc(dev_t);
+void pc_putc(dev_t, int);
+void pc_pollc(dev_t, int);
+void com_probe(struct consdev *);
+void com_init(struct consdev *);
+int comspeed(dev_t, int);
+int com_getc(dev_t);
+void com_putc(dev_t, int);
+void com_pollc(dev_t, int);

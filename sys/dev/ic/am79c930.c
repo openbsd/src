@@ -1,4 +1,4 @@
-/* $OpenBSD: am79c930.c,v 1.3 2001/07/04 09:02:56 niklas Exp $ */
+/* $OpenBSD: am79c930.c,v 1.4 2002/03/14 01:26:54 millert Exp $ */
 /* $NetBSD: am79c930.c,v 1.5 2000/03/23 13:57:58 onoe Exp $ */
 
 /*-
@@ -88,27 +88,27 @@
 
 #define AM930_DELAY(x) /*nothing*/
 
-void am79c930_regdump __P((struct am79c930_softc *sc));
+void am79c930_regdump(struct am79c930_softc *sc);
 
-static void io_write_1 __P((struct am79c930_softc *, u_int32_t, u_int8_t));
-static void io_write_2 __P((struct am79c930_softc *, u_int32_t, u_int16_t));
-static void io_write_4 __P((struct am79c930_softc *, u_int32_t, u_int32_t));
-static void io_write_bytes __P((struct am79c930_softc *, u_int32_t, u_int8_t *, size_t));
+static void io_write_1(struct am79c930_softc *, u_int32_t, u_int8_t);
+static void io_write_2(struct am79c930_softc *, u_int32_t, u_int16_t);
+static void io_write_4(struct am79c930_softc *, u_int32_t, u_int32_t);
+static void io_write_bytes(struct am79c930_softc *, u_int32_t, u_int8_t *, size_t);
 
-static u_int8_t io_read_1 __P((struct am79c930_softc *, u_int32_t));
-static u_int16_t io_read_2 __P((struct am79c930_softc *, u_int32_t));
-static u_int32_t io_read_4 __P((struct am79c930_softc *, u_int32_t));
-static void io_read_bytes __P((struct am79c930_softc *, u_int32_t, u_int8_t *, size_t));
+static u_int8_t io_read_1(struct am79c930_softc *, u_int32_t);
+static u_int16_t io_read_2(struct am79c930_softc *, u_int32_t);
+static u_int32_t io_read_4(struct am79c930_softc *, u_int32_t);
+static void io_read_bytes(struct am79c930_softc *, u_int32_t, u_int8_t *, size_t);
 
-static void mem_write_1 __P((struct am79c930_softc *, u_int32_t, u_int8_t));
-static void mem_write_2 __P((struct am79c930_softc *, u_int32_t, u_int16_t));
-static void mem_write_4 __P((struct am79c930_softc *, u_int32_t, u_int32_t));
-static void mem_write_bytes __P((struct am79c930_softc *, u_int32_t, u_int8_t *, size_t));
+static void mem_write_1(struct am79c930_softc *, u_int32_t, u_int8_t);
+static void mem_write_2(struct am79c930_softc *, u_int32_t, u_int16_t);
+static void mem_write_4(struct am79c930_softc *, u_int32_t, u_int32_t);
+static void mem_write_bytes(struct am79c930_softc *, u_int32_t, u_int8_t *, size_t);
 
-static u_int8_t mem_read_1 __P((struct am79c930_softc *, u_int32_t));
-static u_int16_t mem_read_2 __P((struct am79c930_softc *, u_int32_t));
-static u_int32_t mem_read_4 __P((struct am79c930_softc *, u_int32_t));
-static void mem_read_bytes __P((struct am79c930_softc *, u_int32_t, u_int8_t *, size_t));
+static u_int8_t mem_read_1(struct am79c930_softc *, u_int32_t);
+static u_int16_t mem_read_2(struct am79c930_softc *, u_int32_t);
+static u_int32_t mem_read_4(struct am79c930_softc *, u_int32_t);
+static void mem_read_bytes(struct am79c930_softc *, u_int32_t, u_int8_t *, size_t);
 
 static struct am79c930_ops iospace_ops = {
 	io_write_1,

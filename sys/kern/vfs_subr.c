@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.82 2002/02/04 19:38:20 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.83 2002/03/14 01:27:06 millert Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -101,21 +101,21 @@ struct simplelock mntvnode_slock;
 struct simplelock vnode_free_list_slock;
 struct simplelock spechash_slock;
 
-void	vclean __P((struct vnode *, int, struct proc *));
+void	vclean(struct vnode *, int, struct proc *);
 
-void insmntque __P((struct vnode *, struct mount *));
-int getdevvp __P((dev_t, struct vnode **, enum vtype));
+void insmntque(struct vnode *, struct mount *);
+int getdevvp(dev_t, struct vnode **, enum vtype);
 
-int vfs_hang_addrlist __P((struct mount *, struct netexport *,
-				  struct export_args *));
-int vfs_free_netcred __P((struct radix_node *, void *));
-void vfs_free_addrlist __P((struct netexport *));
-static __inline__ void vputonfreelist __P((struct vnode *));
+int vfs_hang_addrlist(struct mount *, struct netexport *,
+				  struct export_args *);
+int vfs_free_netcred(struct radix_node *, void *);
+void vfs_free_addrlist(struct netexport *);
+static __inline__ void vputonfreelist(struct vnode *);
 
 int vflush_vnode(struct vnode *, void *);
 
 #ifdef DEBUG
-void printlockedvnodes __P((void));
+void printlockedvnodes(void);
 #endif
 
 #define VN_KNOTE(vp, b) \
@@ -363,7 +363,7 @@ vattr_null(vap)
 /*
  * Routines having to do with the management of the vnode table.
  */
-extern int (**dead_vnodeop_p) __P((void *));
+extern int (**dead_vnodeop_p)(void *);
 long numvnodes;
 
 /*
@@ -373,7 +373,7 @@ int
 getnewvnode(tag, mp, vops, vpp)
 	enum vtagtype tag;
 	struct mount *mp;
-	int (**vops) __P((void *));
+	int (**vops)(void *);
 	struct vnode **vpp;
 {
 	struct proc *p = curproc;			/* XXX */
@@ -830,7 +830,7 @@ vrele(vp)
 		VOP_INACTIVE(vp, p);
 }
 
-void vhold __P((struct vnode *vp));
+void vhold(struct vnode *vp);
 
 /*
  * Page or buffer structure gets a reference.

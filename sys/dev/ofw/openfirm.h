@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.5 2001/08/19 05:32:59 art Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -38,31 +38,31 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
-int openfirmware __P((void *));
+int openfirmware(void *);
 
 extern char OF_buf[];
 
-int OF_peer __P((int phandle));
-int OF_child __P((int phandle));
-int OF_parent __P((int phandle));
-int OF_instance_to_package __P((int ihandle));
-int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
-int OF_setprop __P((int, char *, const void *, int));
-int OF_nextprop __P((int, char *, void *));
-int OF_finddevice __P((char *name));
-int OF_instance_to_path __P((int ihandle, char *buf, int buflen));
-int OF_package_to_path __P((int phandle, char *buf, int buflen));
-int OF_call_method_1 __P((char *method, int ihandle, int nargs, ...));
-int OF_call_method __P((char *method, int ihandle, int nargs, int nreturns, ...));
-int OF_open __P((char *dname));
-void OF_close __P((int handle));
-int OF_read __P((int handle, void *addr, int len));
-int OF_write __P((int handle, void *addr, int len));
-int OF_seek __P((int handle, u_quad_t pos));
-void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
-void OF_enter __P((void));
-void OF_exit __P((void)) __attribute__((__noreturn__));
-int OF_interpret __P((char *cmd, int nreturns, ...));
+int OF_peer(int phandle);
+int OF_child(int phandle);
+int OF_parent(int phandle);
+int OF_instance_to_package(int ihandle);
+int OF_getprop(int handle, char *prop, void *buf, int buflen);
+int OF_setprop(int, char *, const void *, int);
+int OF_nextprop(int, char *, void *);
+int OF_finddevice(char *name);
+int OF_instance_to_path(int ihandle, char *buf, int buflen);
+int OF_package_to_path(int phandle, char *buf, int buflen);
+int OF_call_method_1(char *method, int ihandle, int nargs, ...);
+int OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...);
+int OF_open(char *dname);
+void OF_close(int handle);
+int OF_read(int handle, void *addr, int len);
+int OF_write(int handle, void *addr, int len);
+int OF_seek(int handle, u_quad_t pos);
+void OF_boot(char *bootspec) __attribute__((__noreturn__));
+void OF_enter(void);
+void OF_exit(void) __attribute__((__noreturn__));
+int OF_interpret(char *cmd, int nreturns, ...);
 #if 0
 void (*OF_set_callback __P((void (*newfunc)(void *)))) ();
 #endif
@@ -70,7 +70,7 @@ void (*OF_set_callback __P((void (*newfunc)(void *)))) ();
 /*
  * Some generic routines for OpenFirmware handling.
  */
-int ofnmmatch __P((char *cp1, char *cp2));
+int ofnmmatch(char *cp1, char *cp2);
 void ofw_intr_establish(void);
 
 /*

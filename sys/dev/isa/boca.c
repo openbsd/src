@@ -1,4 +1,4 @@
-/*	$OpenBSD: boca.c,v 1.15 1997/07/07 16:38:23 niklas Exp $ */
+/*	$OpenBSD: boca.c,v 1.16 2002/03/14 01:26:56 millert Exp $ */
 /*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
 
 /*
@@ -60,10 +60,10 @@ struct boca_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int bocaprobe __P((struct device *, void *, void *));
-void bocaattach __P((struct device *, struct device *, void *));
-int bocaintr __P((void *));
-int bocaprint __P((void *, const char *));
+int bocaprobe(struct device *, void *, void *);
+void bocaattach(struct device *, struct device *, void *);
+int bocaintr(void *);
+int bocaprint(void *, const char *);
 
 struct cfattach boca_ca = {
 	sizeof(struct boca_softc), bocaprobe, bocaattach,

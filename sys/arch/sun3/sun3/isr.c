@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.15 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: isr.c,v 1.16 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -69,11 +69,11 @@ struct isr {
 	int	   isr_ipl;
 };
 
-void set_vector_entry __P((int, void (*handler) __P((void))));
-unsigned int get_vector_entry __P((int));
+void set_vector_entry __P((int, void (*handler)(void)));
+unsigned int get_vector_entry(int);
 
-void    isr_autovec  __P((int));
-void    isr_vectored __P((int));
+void    isr_autovec(int);
+void    isr_vectored(int);
 
 void
 isr_add_custom(level, handler)
@@ -193,7 +193,7 @@ isr_vectored(evec)
  * Called by driver attach functions.
  */
 
-extern void _isr_vectored __P((void));
+extern void _isr_vectored(void);
 
 void
 isr_add_vectored(func, arg, level, vec)
@@ -223,7 +223,7 @@ isr_add_vectored(func, arg, level, vec)
 void
 set_vector_entry(entry, handler)
 	int entry;
-	void (*handler) __P((void));
+	void (*handler)(void);
 {
 	if ((entry <0) || (entry >= NVECTORS))
 		panic("set_vector_entry: setting vector too high or low");

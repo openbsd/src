@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_signal.c,v 1.1 2001/02/02 19:48:07 tholo Exp $	*/
+/*	$OpenBSD: freebsd_signal.c,v 1.2 2002/03/14 01:26:49 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 #include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 
-static void freebsd_to_openbsd_sigaction __P((struct freebsd_sigaction *,
-	struct sigaction *));
+static void freebsd_to_openbsd_sigaction(struct freebsd_sigaction *,
+	struct sigaction *);
 
-static void openbsd_to_freebsd_sigaction __P((struct sigaction *,
-	struct freebsd_sigaction *));
+static void openbsd_to_freebsd_sigaction(struct sigaction *,
+	struct freebsd_sigaction *);
 
 static void
 openbsd_to_freebsd_sigaction(obsa, fbsa)

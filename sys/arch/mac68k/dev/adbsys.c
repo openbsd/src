@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.c,v 1.10 1998/05/03 07:12:53 gene Exp $	*/
+/*	$OpenBSD: adbsys.c,v 1.11 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
 
 /*-
@@ -43,9 +43,9 @@
 extern	struct mac68k_machine_S mac68k_machine;
 
 /* from adb.c */
-void    adb_processevent __P((adb_event_t * event));
+void    adb_processevent(adb_event_t * event);
 
-extern void adb_jadbproc __P((void));
+extern void adb_jadbproc(void);
 
 void 
 adb_complete(buffer, data_area, adb_command)

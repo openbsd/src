@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2002/02/16 02:41:15 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -125,20 +125,20 @@ extern int want_resched;
 
 #define DELAY(x) delay(x)
 
-extern int (*cpu_desidhash) __P((void));
+extern int (*cpu_desidhash)(void);
 
-void	delay __P((u_int us));
-void	hppa_init __P((paddr_t start));
-void	trap __P((int type, struct trapframe *frame));
-int	spcopy __P((pa_space_t ssp, const void *src,
-		    pa_space_t dsp, void *dst, size_t size));
-int	spstrcpy __P((pa_space_t ssp, const void *src,
-		      pa_space_t dsp, void *dst, size_t size, size_t *rsize));
-int	copy_on_fault __P((void));
-void	switch_trampoline __P((void));
-void	switch_exit __P((struct proc *p));
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((void));
+void	delay(u_int us);
+void	hppa_init(paddr_t start);
+void	trap(int type, struct trapframe *frame);
+int	spcopy(pa_space_t ssp, const void *src,
+		    pa_space_t dsp, void *dst, size_t size);
+int	spstrcpy(pa_space_t ssp, const void *src,
+		      pa_space_t dsp, void *dst, size_t size, size_t *rsize);
+int	copy_on_fault(void);
+void	switch_trampoline(void);
+void	switch_exit(struct proc *p);
+int	cpu_dumpsize(void);
+int	cpu_dump(void);
 #endif
 
 /*

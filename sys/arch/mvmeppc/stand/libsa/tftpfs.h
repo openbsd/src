@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.h,v 1.1 2001/06/26 21:58:08 smurph Exp $	*/
+/*	$OpenBSD: tftpfs.h,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -30,14 +30,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	tftpfs_open __P((char *path, struct open_file *f));
-int	tftpfs_close __P((struct open_file *f));
-int	tftpfs_read __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-int	tftpfs_write __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-off_t	tftpfs_seek __P((struct open_file *f, off_t offset, int where));
-int	tftpfs_stat __P((struct open_file *f, struct stat *sb));
+int	tftpfs_open(char *path, struct open_file *f);
+int	tftpfs_close(struct open_file *f);
+int	tftpfs_read(struct open_file *f, void *buf,
+			size_t size, size_t *resid);
+int	tftpfs_write(struct open_file *f, void *buf,
+			size_t size, size_t *resid);
+off_t	tftpfs_seek(struct open_file *f, off_t offset, int where);
+int	tftpfs_stat(struct open_file *f, struct stat *sb);
 #ifndef NO_READDIR
-int	tftpfs_readdir __P((struct open_file *f, char *name));
+int	tftpfs_readdir(struct open_file *f, char *name);
 #endif

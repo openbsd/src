@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.11 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.12 2002/03/14 01:27:02 millert Exp $	*/
 /*	$NetBSD: kbd.c,v 1.14 1997/07/17 01:17:45 jtk Exp $	*/
 
 /*
@@ -385,14 +385,14 @@ kbdselect(dev, rw, p)
 
 
 static int kbd_ioccmd(struct kbd_softc *k, int *data);
-static int kbd_iockeymap __P((struct kbd_state *ks,
-	u_long cmd, struct kiockeymap *kio));
+static int kbd_iockeymap(struct kbd_state *ks,
+	u_long cmd, struct kiockeymap *kio);
 
 static int kbd_iocsled(struct kbd_softc *k, int *data);
 
 #ifdef	KIOCGETKEY
-static int kbd_oldkeymap __P((struct kbd_state *ks,
-	u_long cmd, struct okiockey *okio));
+static int kbd_oldkeymap(struct kbd_state *ks,
+	u_long cmd, struct okiockey *okio);
 #endif
 
 int
@@ -652,10 +652,10 @@ kbd_iocsled(k, data)
  *  - raw key codes to keysym
  ****************************************************************/
 
-static void kbd_input_string __P((struct kbd_softc *, char *));
-static void kbd_input_funckey __P((struct kbd_softc *, int));
-static void kbd_input_keysym __P((struct kbd_softc *, int));
-static void kbd_input_raw __P((struct kbd_softc *k, int));
+static void kbd_input_string(struct kbd_softc *, char *);
+static void kbd_input_funckey(struct kbd_softc *, int);
+static void kbd_input_keysym(struct kbd_softc *, int);
+static void kbd_input_raw(struct kbd_softc *k, int);
 
 /*
  * Initialization done by either kdcninit or kbd_iopen
@@ -958,10 +958,10 @@ kbd_input_raw(k, c)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void kbd_rxint __P((struct zs_chanstate *));
-static void kbd_txint __P((struct zs_chanstate *));
-static void kbd_stint __P((struct zs_chanstate *));
-static void kbd_softint __P((struct zs_chanstate *));
+static void kbd_rxint(struct zs_chanstate *);
+static void kbd_txint(struct zs_chanstate *);
+static void kbd_stint(struct zs_chanstate *);
+static void kbd_softint(struct zs_chanstate *);
 
 static void
 kbd_rxint(cs)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.24 2001/12/10 00:58:04 miod Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.25 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -55,21 +55,21 @@ static int	nubus_debug = 0x01;
 #define NDB_ARITH	0x4
 #endif
 
-static int	nubus_print __P((void *, const char *));
-static int	nubus_match __P((struct device *, void *, void *));
-static void	nubus_attach __P((struct device *, struct device *, void *));
-int		nubus_video_resource __P((int));
+static int	nubus_print(void *, const char *);
+static int	nubus_match(struct device *, void *, void *);
+static void	nubus_attach(struct device *, struct device *, void *);
+int		nubus_video_resource(int);
 
-static int	probe_slot __P((int slot, nubus_slot *fmt));
-static u_long	IncPtr __P((nubus_slot *fmt, u_long base, long amt));
-static u_long	nubus_calc_CRC __P((nubus_slot *fmt));
-static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
+static int	probe_slot(int slot, nubus_slot *fmt);
+static u_long	IncPtr(nubus_slot *fmt, u_long base, long amt);
+static u_long	nubus_calc_CRC(nubus_slot *fmt);
+static u_char	GetByte(nubus_slot *fmt, u_long ptr);
 #ifdef notyet
-/* unused */ static u_short	GetWord __P((nubus_slot *fmt, u_long ptr));
+/* unused */ static u_short	GetWord(nubus_slot *fmt, u_long ptr);
 #endif
-static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
+static u_long	GetLong(nubus_slot *fmt, u_long ptr);
 
-static int	nubus_peek __P((vm_offset_t, int));
+static int	nubus_peek(vm_offset_t, int);
 
 struct cfattach nubus_ca = {
 	sizeof(struct nubus_softc), nubus_match, nubus_attach

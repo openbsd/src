@@ -1,4 +1,4 @@
-/*	$OpenBSD: mon.h,v 1.5 1997/01/16 04:04:08 kstailey Exp $	*/
+/*	$OpenBSD: mon.h,v 1.6 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: mon.h,v 1.19 1996/11/20 18:57:12 gwr Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ typedef struct bootparam {
 typedef struct {
 	char	*initSp;		/* Initial system stack ptr
 					 * for hardware */
-	int	(*startMon)__P((void));	/* Initial PC for hardware */
+	int	(*startMon)(void);	/* Initial PC for hardware */
 
 	int	*diagberr;		/* Bus err handler for diags */
 
@@ -121,10 +121,10 @@ typedef struct {
 	 * Single-character input and output
 	 */
 
-	u_char	(*getChar)__P((void));	/* Get char from input source */
-	int	(*putChar)__P((int));	/* Put char to output sink */
-	int	(*mayGet)__P((void));	/* Maybe get char, or -1 */
-	int	(*mayPut)__P((int));	/* Maybe put char, or -1 */
+	u_char	(*getChar)(void);	/* Get char from input source */
+	int	(*putChar)(int);	/* Put char to output sink */
+	int	(*mayGet)(void);	/* Maybe get char, or -1 */
+	int	(*mayPut)(int);	/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -133,8 +133,8 @@ typedef struct {
 	 * Keyboard input (scanned by monitor nmi routine)
 	 */
 
-	int	(*getKey)__P((void));		/* Get next key if one exists */
-	int	(*initGetKey)__P((void*));	/* Initialize get key */
+	int	(*getKey)(void);		/* Get next key if one exists */
+	int	(*initGetKey)(void*);	/* Initialize get key */
 	u_int	*translation;			/* Kbd translation selector
 						   (see keyboard.h in sun
 						    monitor code) */
@@ -153,18 +153,18 @@ typedef struct {
 	 * Frame buffer output and terminal emulation
 	 */
 
-	int	(*fbWriteChar)__P((int)); /* Write a character to FB */
+	int	(*fbWriteChar)(int); /* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
 	/* Quickly write string to FB */
-	int	(*fbWriteStr)__P((char *buf, int len));
+	int	(*fbWriteStr)(char *buf, int len);
 
 	/*
 	 * Reboot interface routine -- resets and reboots system.  No return.
 	 * XXX should this be declared volatile?
 	 */
 
-	int	(*reBoot)__P((char *));	/* e.g. reBoot("sd()bsd") */
+	int	(*reBoot)(char *);	/* e.g. reBoot("sd()bsd") */
 
 	/*
 	 * Line input and parsing
@@ -173,32 +173,32 @@ typedef struct {
 	u_char	*lineBuf;			/* The line input buffer */
 	u_char	**linePtr;			/* Cur pointer into linebuf */
 	int	*lineSize;			/* length of line in linebuf */
-	int	(*getLine)__P((int));		/* Get line from user */
-	u_char	(*getNextChar)__P((void));	/* Get next char from linebuf */
-	u_char	(*peekNextChar)__P((void));	/* Peek at next char */
+	int	(*getLine)(int);		/* Get line from user */
+	u_char	(*getNextChar)(void);	/* Get next char from linebuf */
+	u_char	(*peekNextChar)(void);	/* Peek at next char */
 	int	*fbThere;			/* =1 if frame buffer there */
-	int	(*getNum)__P((void));		/* Grab hex num from line */
+	int	(*getNum)(void);		/* Grab hex num from line */
 
 	/*
 	 * Print formatted output to current output sink
 	 */
 
-	int	(*printf)__P((char *, ...));	/* Similar to "Kernel printf" */
-	int	(*printHex)__P((int,int));	/* Format N digits in hex */
+	int	(*printf)(char *, ...);	/* Similar to "Kernel printf" */
+	int	(*printHex)(int,int);	/* Format N digits in hex */
 
 	/*
 	 * Led stuff
 	 */
 
 	u_char	*leds;				/* RAM copy of LED register */
-	int	(*setLeds)__P((int));		/* Sets LED's and RAM copy */
+	int	(*setLeds)(int);		/* Sets LED's and RAM copy */
 
 	/*
 	 * Non-maskable interrupt  (nmi) information
 	 */
 
-	int	(*nmiAddr)__P((void*));		/* Addr for level 7 vector */
-	int	(*abortEntry)__P((void*));	/* Entry for keyboard abort */
+	int	(*nmiAddr)(void*);		/* Addr for level 7 vector */
+	int	(*abortEntry)(void*);	/* Entry for keyboard abort */
 	int	*nmiClock;			/* Counts up in msec */
 
 	/*
@@ -221,10 +221,10 @@ typedef struct {
 	long	*resetAddr;			/* where to jump on a reset */
 	long	*resetMap;			/* pgmap entry for resetaddr */
 						/* Really struct pgmapent *  */
-	int	(*exitToMon)__P((void));	/* Exit from user program */
+	int	(*exitToMon)(void);	/* Exit from user program */
 	u_char	**memorybitmap;			/* V1: &{0 or &bits} */
-	void	(*setcxsegmap)__P((int,int,int)); /* Set seg in any context */
-	void	(**vector_cmd)__P((int, char*)); /* V2: Handler for 'v' cmd */
+	void	(*setcxsegmap)(int,int,int); /* Set seg in any context */
+	void	(**vector_cmd)(int, char*); /* V2: Handler for 'v' cmd */
 	int	dummy1z;
 	int	dummy2z;
 	int	dummy3z;

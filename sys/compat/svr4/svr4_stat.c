@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.20 2001/11/06 19:53:18 miod Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.21 2002/03/14 01:26:51 millert Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -68,10 +68,10 @@
 # define SVR4_NO_OSTAT
 #endif
 
-static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
-static void bsd_to_svr4_stat64 __P((struct stat *, struct svr4_stat64 *));
-int svr4_ustat __P((struct proc *, void *, register_t *));
-static int svr4_to_bsd_pathconf __P((int));
+static void bsd_to_svr4_xstat(struct stat *, struct svr4_xstat *);
+static void bsd_to_svr4_stat64(struct stat *, struct svr4_stat64 *);
+int svr4_ustat(struct proc *, void *, register_t *);
+static int svr4_to_bsd_pathconf(int);
 
 /*
  * SVR4 uses named pipes as named sockets, so we tell programs
@@ -81,7 +81,7 @@ static int svr4_to_bsd_pathconf __P((int));
 
 
 #ifndef SVR4_NO_OSTAT
-static void bsd_to_svr4_stat __P((struct stat *, struct svr4_stat *));
+static void bsd_to_svr4_stat(struct stat *, struct svr4_stat *);
 
 static void
 bsd_to_svr4_stat(st, st4)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.h,v 1.6 1997/01/16 04:04:06 kstailey Exp $	*/
+/*	$OpenBSD: dvma.h,v 1.7 2002/03/14 01:26:46 millert Exp $	*/
 /*	$NetBSD: dvma.h,v 1.4 1996/11/20 18:57:08 gwr Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@
 #define	DVMA_SPACE_START	0x0FF00000
 #define DVMA_SPACE_END  	0x0FFFE000
 
-void dvma_init __P((void));
+void dvma_init(void);
 
 /* Allocate/free actual pages of DVMA space. */
 caddr_t dvma_malloc(size_t bytes);

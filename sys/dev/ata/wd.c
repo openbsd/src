@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.21 2002/01/07 19:04:46 mickey Exp $ */
+/*	$OpenBSD: wd.c,v 1.22 2002/03/14 01:26:52 millert Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -171,15 +171,15 @@ struct wd_softc {
 #define sc_badsect sc_wdc_bio.badsect
 
 #ifndef __OpenBSD__
-int	wdprobe		__P((struct device *, struct cfdata *, void *));
+int	wdprobe(struct device *, struct cfdata *, void *);
 #else
-int	wdprobe		__P((struct device *, void *, void *));
+int	wdprobe(struct device *, void *, void *);
 #endif
-void	wdattach	__P((struct device *, struct device *, void *));
-int     wddetach __P((struct device *, int));
-int     wdactivate __P((struct device *, enum devact));
-void    wdzeroref __P((struct device *));
-int	wdprint	__P((void *, char *));
+void	wdattach(struct device *, struct device *, void *);
+int     wddetach(struct device *, int);
+int     wdactivate(struct device *, enum devact);
+void    wdzeroref(struct device *);
+int	wdprint(void *, char *);
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach,
@@ -194,17 +194,17 @@ struct cfdriver wd_cd = {
 extern struct cfdriver wd_cd;
 #endif
 
-void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
-void  wdgetdisklabel __P((dev_t dev, struct wd_softc *, 
+void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
+void  wdgetdisklabel(dev_t dev, struct wd_softc *, 
 				 struct disklabel *,
-				 struct cpu_disklabel *, int));
-void  wdstrategy	__P((struct buf *));
-void  wdstart	__P((void *));
-void  __wdstart	__P((struct wd_softc*, struct buf *));
-void  wdrestart __P((void*));
-int   wd_get_params __P((struct wd_softc *, u_int8_t, struct ataparams *));
-void  wd_flushcache __P((struct wd_softc *, int));
-void  wd_shutdown __P((void*));
+				 struct cpu_disklabel *, int);
+void  wdstrategy(struct buf *);
+void  wdstart(void *);
+void  __wdstart(struct wd_softc*, struct buf *);
+void  wdrestart(void*);
+int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
+void  wd_flushcache(struct wd_softc *, int);
+void  wd_shutdown(void*);
 
 struct dkdriver wddkdriver = { wdstrategy };
 
@@ -213,7 +213,7 @@ cdev_decl(wd);
 bdev_decl(wd);
 
 #ifdef DKBAD
-void	bad144intern __P((struct wd_softc *));
+void	bad144intern(struct wd_softc *);
 #endif
 
 #define wdlock(wd)  disk_lock(&(wd)->sc_dk)

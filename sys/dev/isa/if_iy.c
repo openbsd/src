@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.15 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.16 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -113,50 +113,50 @@ struct iy_softc {
 #endif
 };
 
-void iywatchdog __P((struct ifnet *));
-int iyioctl __P((struct ifnet *, u_long, caddr_t));
-int iyintr __P((void *));
-void iyinit __P((struct iy_softc *));
-void iystop __P((struct iy_softc *));
-void iystart __P((struct ifnet *));
+void iywatchdog(struct ifnet *);
+int iyioctl(struct ifnet *, u_long, caddr_t);
+int iyintr(void *);
+void iyinit(struct iy_softc *);
+void iystop(struct iy_softc *);
+void iystart(struct ifnet *);
 
-void iy_intr_rx __P((struct iy_softc *));
-void iy_intr_tx __P((struct iy_softc *));
-void eepro_reset_595 __P((struct iy_softc *));
-int eepro_probe __P((struct iy_softc *, struct isa_attach_args *));
-void eepro_eeprom_outbits __P((struct iy_softc *, int, int));
-void eepro_eeprom_clock __P((struct iy_softc *, int));
-u_short eepro_read_eeprom __P((struct iy_softc *, int));
-int eepro_eeprom_inbits __P((struct iy_softc *));
+void iy_intr_rx(struct iy_softc *);
+void iy_intr_tx(struct iy_softc *);
+void eepro_reset_595(struct iy_softc *);
+int eepro_probe(struct iy_softc *, struct isa_attach_args *);
+void eepro_eeprom_outbits(struct iy_softc *, int, int);
+void eepro_eeprom_clock(struct iy_softc *, int);
+u_short eepro_read_eeprom(struct iy_softc *, int);
+int eepro_eeprom_inbits(struct iy_softc *);
 
-void iyreset __P((struct iy_softc *));
-void iy_readframe __P((struct iy_softc *, int));
-void iy_drop_packet_buffer __P((struct iy_softc *));
-void iy_find_mem_size __P((struct iy_softc *));
-void iyrint __P((struct iy_softc *));
-void iytint __P((struct iy_softc *));
-void iyxmit __P((struct iy_softc *));
-void iyget __P((struct iy_softc *, int, int));
-void iymbuffill __P((void *));
-void iymbufempty __P((void *));
-void iyprobemem __P((struct iy_softc *));
+void iyreset(struct iy_softc *);
+void iy_readframe(struct iy_softc *, int);
+void iy_drop_packet_buffer(struct iy_softc *);
+void iy_find_mem_size(struct iy_softc *);
+void iyrint(struct iy_softc *);
+void iytint(struct iy_softc *);
+void iyxmit(struct iy_softc *);
+void iyget(struct iy_softc *, int, int);
+void iymbuffill(void *);
+void iymbufempty(void *);
+void iyprobemem(struct iy_softc *);
 
 /*
- * void iymeminit __P((void *, struct iy_softc *));
- * static int iy_mc_setup __P((struct iy_softc *, void *));
- * static void iy_mc_reset __P((struct iy_softc *));
+ * void iymeminit(void *, struct iy_softc *);
+ * static int iy_mc_setup(struct iy_softc *, void *);
+ * static void iy_mc_reset(struct iy_softc *);
  */
 #ifdef IYDEBUGX
-void print_rbd __P((volatile struct iy_recv_buf_desc *));
+void print_rbd(volatile struct iy_recv_buf_desc *);
 
 int in_ifrint = 0;
 int in_iftint = 0;
 #endif
 
-int iyprobe __P((struct device *, void *, void *));
-void iyattach __P((struct device *, struct device *, void *));
+int iyprobe(struct device *, void *, void *);
+void iyattach(struct device *, struct device *, void *);
 
-static u_int16_t eepromread __P((int, int));
+static u_int16_t eepromread(int, int);
 
 struct cfattach iy_ca = {
 	sizeof(struct iy_softc), iyprobe, iyattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.6 2002/02/15 20:45:30 nordin Exp $ */
+/*	$OpenBSD: wl.c,v 1.7 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -165,38 +165,38 @@ struct {
 };
 
 /* prototypes */
-u_char cl_clkdiv __P((int speed));
-u_char cl_clknum __P((int speed));
-u_char cl_clkrxtimeout __P((int speed));
-void clstart __P((struct tty *tp));
-void cl_unblock __P((struct tty *tp));
-int clccparam __P((struct wlsoftc *sc, struct termios *par, int channel));
+u_char cl_clkdiv(int speed);
+u_char cl_clknum(int speed);
+u_char cl_clkrxtimeout(int speed);
+void clstart(struct tty *tp);
+void cl_unblock(struct tty *tp);
+int clccparam(struct wlsoftc *sc, struct termios *par, int channel);
 
-int clparam __P((struct tty *tp, struct termios *t));
-int cl_intr __P((struct wlsoftc *sc, int));
-int cl_mintr __P((struct wlsoftc *sc));
-int cl_txintr __P((struct wlsoftc *sc));
-int cl_rxintr __P((struct wlsoftc *sc));
-void cl_overflow __P((struct wlsoftc *sc, int channel, long *ptime, u_char *msg));
-void cl_parity __P((struct wlsoftc *sc, int channel));
-void cl_frame __P((struct wlsoftc *sc, int channel));
-void cl_break __P(( struct wlsoftc *sc, int channel));
-int clmctl __P((dev_t dev, int bits, int how));
-void cl_dumpport __P((int channel));
+int clparam(struct tty *tp, struct termios *t);
+int cl_intr(struct wlsoftc *sc, int);
+int cl_mintr(struct wlsoftc *sc);
+int cl_txintr(struct wlsoftc *sc);
+int cl_rxintr(struct wlsoftc *sc);
+void cl_overflow(struct wlsoftc *sc, int channel, long *ptime, u_char *msg);
+void cl_parity(struct wlsoftc *sc, int channel);
+void cl_frame(struct wlsoftc *sc, int channel);
+void cl_break( struct wlsoftc *sc, int channel);
+int clmctl(dev_t dev, int bits, int how);
+void cl_dumpport(int channel);
 
-int	wlprobe __P((struct device *parent, void *self, void *aux));
-void	wlattach __P((struct device *parent, struct device *self, void *aux));
+int	wlprobe(struct device *parent, void *self, void *aux);
+void	wlattach(struct device *parent, struct device *self, void *aux);
 
-int wlopen  __P((dev_t dev, int flag, int mode, struct proc *p));
-int wlclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int wlread  __P((dev_t dev, struct uio *uio, int flag));
-int wlwrite __P((dev_t dev, struct uio *uio, int flag));
-int wlioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-int wlstop  __P((struct tty *tp, int flag));
+int wlopen(dev_t dev, int flag, int mode, struct proc *p);
+int wlclose(dev_t dev, int flag, int mode, struct proc *p);
+int wlread(dev_t dev, struct uio *uio, int flag);
+int wlwrite(dev_t dev, struct uio *uio, int flag);
+int wlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
+int wlstop(struct tty *tp, int flag);
 
-static void cl_initchannel __P((struct wlsoftc *sc, int channel));
-static void clputc __P((struct wlsoftc *sc, int unit, u_char c));
-static u_char clgetc __P((struct wlsoftc *sc, int *channel));
+static void cl_initchannel(struct wlsoftc *sc, int channel);
+static void clputc(struct wlsoftc *sc, int unit, u_char c);
+static u_char clgetc(struct wlsoftc *sc, int *channel);
 static void cloutput __P( (struct tty *tp));
 
 struct cfattach wl_ca = {

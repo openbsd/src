@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_extern.h,v 1.6 2001/02/20 01:50:12 assar Exp $	*/
+/*	$OpenBSD: lfs_extern.h,v 1.7 2002/03/14 01:27:15 millert Exp $	*/
 /*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
@@ -56,101 +56,101 @@ struct ucred;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_vcreate __P((struct mount *, ino_t, struct vnode **));
+int lfs_vcreate(struct mount *, ino_t, struct vnode **);
 
 
 /* lfs_balloc.c */
-int lfs_balloc __P((struct vnode *, int, u_long, ufs_daddr_t, struct buf **));
+int lfs_balloc(struct vnode *, int, u_long, ufs_daddr_t, struct buf **);
 
 /* lfs_bio.c */
-void lfs_flush __P((void));
-int lfs_check __P((struct vnode *, ufs_daddr_t));
+void lfs_flush(void);
+int lfs_check(struct vnode *, ufs_daddr_t);
 
 /* lfs_cksum.c */
-u_long cksum __P((void *, size_t));
+u_long cksum(void *, size_t);
 
 /* lfs_debug.c */
 #ifdef DEBUG
-void lfs_dump_super __P((struct lfs *));
-void lfs_dump_dinode __P((struct dinode *));
+void lfs_dump_super(struct lfs *);
+void lfs_dump_dinode(struct dinode *);
 #endif
 
 /* lfs_inode.c */
-void lfs_init __P((void));
-struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct dinode *));
+void lfs_init(void);
+struct dinode *lfs_ifind(struct lfs *, ino_t, struct dinode *);
 
 /* lfs_segment.c */
-int lfs_vflush __P((struct vnode *));
-void lfs_writevnodes __P((struct lfs *, struct mount *, struct segment *, int));
-int lfs_segwrite __P((struct mount *, int));
-void lfs_writefile __P((struct lfs *, struct segment *, struct vnode *));
-int lfs_writeinode __P((struct lfs *, struct segment *, struct inode *));
-int lfs_gatherblock __P((struct segment *, struct buf *, int *));
-void lfs_gather __P((struct lfs *, struct segment *, struct vnode *, int (*match )__P ((struct lfs *, struct buf *))));
-void lfs_updatemeta __P((struct segment *));
-int lfs_initseg __P((struct lfs *));
-void lfs_newseg __P((struct lfs *));
-int lfs_writeseg __P((struct lfs *, struct segment *));
-void lfs_writesuper __P((struct lfs *));
-int lfs_match_data __P((struct lfs *, struct buf *));
-int lfs_match_indir __P((struct lfs *, struct buf *));
-int lfs_match_dindir __P((struct lfs *, struct buf *));
-int lfs_match_tindir __P((struct lfs *, struct buf *));
-struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
-void lfs_callback __P((struct buf *));
-void lfs_supercallback __P((struct buf *));
-void lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));
-int lfs_vref __P((struct vnode *));
-void lfs_vunref __P((struct vnode *));
+int lfs_vflush(struct vnode *);
+void lfs_writevnodes(struct lfs *, struct mount *, struct segment *, int);
+int lfs_segwrite(struct mount *, int);
+void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
+int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
+int lfs_gatherblock(struct segment *, struct buf *, int *);
+void lfs_gather __P((struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *)));
+void lfs_updatemeta(struct segment *);
+int lfs_initseg(struct lfs *);
+void lfs_newseg(struct lfs *);
+int lfs_writeseg(struct lfs *, struct segment *);
+void lfs_writesuper(struct lfs *);
+int lfs_match_data(struct lfs *, struct buf *);
+int lfs_match_indir(struct lfs *, struct buf *);
+int lfs_match_dindir(struct lfs *, struct buf *);
+int lfs_match_tindir(struct lfs *, struct buf *);
+struct buf *lfs_newbuf(struct vnode *, ufs_daddr_t, size_t);
+void lfs_callback(struct buf *);
+void lfs_supercallback(struct buf *);
+void lfs_shellsort(struct buf **, ufs_daddr_t *, int);
+int lfs_vref(struct vnode *);
+void lfs_vunref(struct vnode *);
 
 /* lfs_subr.c */
-void lfs_seglock __P((struct lfs *, unsigned long));
-void lfs_segunlock __P((struct lfs *));
+void lfs_seglock(struct lfs *, unsigned long);
+void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget __P((struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *));
-struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
+int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *);
+struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */
-int lfs_mountroot __P((void));
-int lfs_mount __P((struct mount *, const char *, void *, struct nameidata *, struct proc *));
-int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
-int lfs_unmount __P((struct mount *, int, struct proc *));
-int lfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int lfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int lfs_vget __P((struct mount *, ino_t, struct vnode **));
-int lfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int lfs_vptofh __P((struct vnode *, struct fid *));
-int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
+int lfs_mountroot(void);
+int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct proc *);
+int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
+int lfs_unmount(struct mount *, int, struct proc *);
+int lfs_statfs(struct mount *, struct statfs *, struct proc *);
+int lfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int lfs_vget(struct mount *, ino_t, struct vnode **);
+int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int lfs_vptofh(struct vnode *, struct fid *);
+int lfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *);
 
-int lfs_valloc		__P((void *));
-int lfs_vfree		__P((void *));
-int lfs_bwrite		__P((void *));
-int lfs_update		__P((void *));
-int lfs_truncate	__P((void *));
-int lfs_blkatoff	__P((void *));
-int lfs_fsync		__P((void *));
-int lfs_symlink		__P((void *));
-int lfs_mknod		__P((void *));
-int lfs_create		__P((void *));
-int lfs_mkdir		__P((void *));
-int lfs_read		__P((void *));
-int lfs_remove		__P((void *));
-int lfs_rmdir		__P((void *));
-int lfs_link		__P((void *));
-int lfs_rename		__P((void *));
-int lfs_getattr		__P((void *));
-int lfs_close		__P((void *));
-int lfs_inactive	__P((void *));
-int lfs_reclaim		__P((void *));
-int lfs_write		__P((void *));
+int lfs_valloc(void *);
+int lfs_vfree(void *);
+int lfs_bwrite(void *);
+int lfs_update(void *);
+int lfs_truncate(void *);
+int lfs_blkatoff(void *);
+int lfs_fsync(void *);
+int lfs_symlink(void *);
+int lfs_mknod(void *);
+int lfs_create(void *);
+int lfs_mkdir(void *);
+int lfs_read(void *);
+int lfs_remove(void *);
+int lfs_rmdir(void *);
+int lfs_link(void *);
+int lfs_rename(void *);
+int lfs_getattr(void *);
+int lfs_close(void *);
+int lfs_inactive(void *);
+int lfs_reclaim(void *);
+int lfs_write(void *);
 
 __END_DECLS
-extern int (**lfs_vnodeop_p) __P((void *));
-extern int (**lfs_specop_p) __P((void *));
+extern int (**lfs_vnodeop_p)(void *);
+extern int (**lfs_specop_p)(void *);
 #ifdef FIFO
-extern int (**lfs_fifoop_p) __P((void *));
+extern int (**lfs_fifoop_p)(void *);
 #define LFS_FIFOOPS lfs_fifoop_p
 #else
 #define LFS_FIFOOPS NULL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interreg.h,v 1.5 1997/01/16 04:04:22 kstailey Exp $	*/
+/*	$OpenBSD: interreg.h,v 1.6 2002/03/14 01:26:47 millert Exp $	*/
 /*	$NetBSD: interreg.h,v 1.7 1996/11/20 18:57:30 gwr Exp $	*/
 
 /*-
@@ -48,4 +48,4 @@
 
 #define IREG_BITS "\20\8CLK7\7RSV6\6CLK5\5VIDEO\4SOFT3\3SOFT2\2SOFT1\1ALL\n"
 
-void set_clk_mode __P((u_char on, u_char off, int enable));
+void set_clk_mode(u_char on, u_char off, int enable);

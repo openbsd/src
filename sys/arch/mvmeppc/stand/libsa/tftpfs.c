@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.1 2001/06/26 21:58:08 smurph Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.2 2002/03/14 01:26:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -59,11 +59,11 @@ struct tftp_file {
 #define TFTP_BLOCK_NO(x)	((x >> TFTP_BLOCK_SHIFT) + 1)
 #define TFTP_BLOCK_OFF(x)	(x % TFTP_BLOCK_SIZE)
 
-static int	read_inode __P((ino_t, struct open_file *));
-static int	block_map __P((struct open_file *, daddr_t, daddr_t *));
-static int	tftp_read_file __P((struct open_file *, char **, size_t *));
+static int	read_inode(ino_t, struct open_file *);
+static int	block_map(struct open_file *, daddr_t, daddr_t *);
+static int	tftp_read_file(struct open_file *, char **, size_t *);
 #ifdef COMPAT_UFS
-static void	ffs_oldfscompat __P((struct fs *));
+static void	ffs_oldfscompat(struct fs *);
 #endif
 
 /*

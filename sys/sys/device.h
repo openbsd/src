@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.20 2001/09/01 05:48:18 jason Exp $	*/
+/*	$OpenBSD: device.h,v 1.21 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -110,8 +110,7 @@ struct cfdata {
 	int	cf_flags;		/* flags from config */
 	short	*cf_parents;		/* potential parents */
 	int	cf_locnames;		/* start of names */
-	void	(**cf_ivstubs)		/* config-generated vectors, if any */
-			__P((void));
+	void	(**cf_ivstubs)		/* config-generated vectors, if any */(void);
 	short	cf_starunit1;		/* 1st usable unit number by STAR */
 };
 extern struct cfdata cfdata[];
@@ -121,8 +120,8 @@ extern struct cfdata cfdata[];
 #define FSTATE_DNOTFOUND 3	/* has not been found, and is disabled */
 #define FSTATE_DSTAR	4	/* duplicable, and is disabled */
 
-typedef int (*cfmatch_t) __P((struct device *, void *, void *));
-typedef void (*cfscan_t) __P((struct device *, void *));
+typedef int (*cfmatch_t)(struct device *, void *, void *);
+typedef void (*cfscan_t)(struct device *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -142,10 +141,10 @@ typedef void (*cfscan_t) __P((struct device *, void *));
 struct cfattach {
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
-	void	(*ca_attach) __P((struct device *, struct device *, void *));
-	int	(*ca_detach) __P((struct device *, int));
-	int	(*ca_activate) __P((struct device *, enum devact));
-	void    (*ca_zeroref) __P((struct device *));
+	void	(*ca_attach)(struct device *, struct device *, void *);
+	int	(*ca_detach)(struct device *, int);
+	int	(*ca_activate)(struct device *, enum devact);
+	void    (*ca_zeroref)(struct device *);
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -166,7 +165,7 @@ struct cfdriver {
  * of the parent device.  The return value is ignored if the device was
  * configured, so most functions can return UNCONF unconditionally.
  */
-typedef int (*cfprint_t) __P((void *, const char *));
+typedef int (*cfprint_t)(void *, const char *);
 #define	QUIET	0		/* print nothing */
 #define	UNCONF	1		/* print " not configured\n" */
 #define	UNSUPP	2		/* print " not supported\n" */
@@ -175,7 +174,7 @@ typedef int (*cfprint_t) __P((void *, const char *));
  * Pseudo-device attach information (function + number of pseudo-devs).
  */
 struct pdevinit {
-	void	(*pdev_attach) __P((int));
+	void	(*pdev_attach)(int);
 	int	pdev_count;
 };
 
@@ -191,28 +190,28 @@ extern struct evcntlist allevents;	/* list of all event counters */
 
 extern int autoconf_verbose;
 
-void config_init __P((void));
-void config_edit __P((void));
-void *config_search __P((cfmatch_t, struct device *, void *));
-void *config_rootsearch __P((cfmatch_t, char *, void *));
-struct device *config_found_sm __P((struct device *, void *, cfprint_t,
-    cfmatch_t));
-struct device *config_rootfound __P((char *, void *));
-void config_scan __P((cfscan_t, struct device *));
-struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
-int config_detach __P((struct device *, int));
-int config_detach_children __P((struct device *, int));
-int config_activate __P((struct device *));
-int config_deactivate __P((struct device *));
-int config_activate_children __P((struct device *, enum devact));
-struct device *config_make_softc __P((struct device *parent,
-    struct cfdata *cf));
+void config_init(void);
+void config_edit(void);
+void *config_search(cfmatch_t, struct device *, void *);
+void *config_rootsearch(cfmatch_t, char *, void *);
+struct device *config_found_sm(struct device *, void *, cfprint_t,
+    cfmatch_t);
+struct device *config_rootfound(char *, void *);
+void config_scan(cfscan_t, struct device *);
+struct device *config_attach(struct device *, void *, void *, cfprint_t);
+int config_detach(struct device *, int);
+int config_detach_children(struct device *, int);
+int config_activate(struct device *);
+int config_deactivate(struct device *);
+int config_activate_children(struct device *, enum devact);
+struct device *config_make_softc(struct device *parent,
+    struct cfdata *cf);
 void config_defer __P((struct device *, void (*)(struct device *)));
-void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+void evcnt_attach(struct device *, const char *, struct evcnt *);
 
-struct device *device_lookup __P((struct cfdriver *, int unit));
-void device_ref __P((struct device *));
-void device_unref __P((struct device *));
+struct device *device_lookup(struct cfdriver *, int unit);
+void device_ref(struct device *);
+void device_unref(struct device *);
 
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);
@@ -221,8 +220,8 @@ void device_register(struct device *, void *);
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
 #if 0
-extern int attach_loadable __P((char *, int, struct cftable *));
-extern int detach_loadable __P((struct cftable *));
+extern int attach_loadable(char *, int, struct cftable *);
+extern int detach_loadable(struct cftable *);
 #endif
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.11 2002/03/04 23:32:52 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.12 2002/03/14 01:27:02 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -156,22 +156,22 @@ struct wsscreen_list cgthree_screenlist = {
 	sizeof(cgthree_scrlist) / sizeof(struct wsscreen_descr *), cgthree_scrlist
 };
 
-int cgthree_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int cgthree_alloc_screen __P((void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *));
-void cgthree_free_screen __P((void *, void *));
+int cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int cgthree_alloc_screen(void *, const struct wsscreen_descr *, void **,
+    int *, int *, long *);
+void cgthree_free_screen(void *, void *);
 int cgthree_show_screen __P((void *, void *, int,
-    void (*cb) __P((void *, int, int)), void *));
-paddr_t cgthree_mmap __P((void *, off_t, int));
-int cgthree_is_console __P((int));
-void cgthree_loadcmap __P((struct cgthree_softc *, u_int, u_int));
-int cg3_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
-int cg3_bt_getcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
-void cgthree_setcolor __P((struct cgthree_softc *, u_int,
-    u_int8_t, u_int8_t, u_int8_t));
-void cgthree_burner __P((void *, u_int, u_int));
-void cgthree_reset __P((struct cgthree_softc *));
-static int a2int __P((char *, int));
+    void (*cb)(void *, int, int), void *));
+paddr_t cgthree_mmap(void *, off_t, int);
+int cgthree_is_console(int);
+void cgthree_loadcmap(struct cgthree_softc *, u_int, u_int);
+int cg3_bt_putcmap(union bt_cmap *, struct wsdisplay_cmap *);
+int cg3_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
+void cgthree_setcolor(struct cgthree_softc *, u_int,
+    u_int8_t, u_int8_t, u_int8_t);
+void cgthree_burner(void *, u_int, u_int);
+void cgthree_reset(struct cgthree_softc *);
+static int a2int(char *, int);
 
 struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_ioctl,
@@ -185,8 +185,8 @@ struct wsdisplay_accessops cgthree_accessops = {
 	NULL,	/* burner */
 };
 
-int	cgthreematch	__P((struct device *, void *, void *));
-void	cgthreeattach	__P((struct device *, struct device *, void *));
+int	cgthreematch(struct device *, void *, void *);
+void	cgthreeattach(struct device *, struct device *, void *);
 
 struct cfattach cgthree_ca = {
 	sizeof (struct cgthree_softc), cgthreematch, cgthreeattach
@@ -443,7 +443,7 @@ cgthree_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb) __P((void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.16 2002/02/01 15:36:29 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.17 2002/03/14 01:27:05 millert Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -77,7 +77,7 @@
 	 ((m)->m_ext.ext_free || MCLISREFERENCED((m))))
 
 /* can't call it m_dup(), as freebsd[34] uses m_dup() with different arg */
-static struct mbuf *m_dup1 __P((struct mbuf *, int, int, int));
+static struct mbuf *m_dup1(struct mbuf *, int, int, int);
 
 /*
  * ensure that [off, off + len) is contiguous on the mbuf chain "m".

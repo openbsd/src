@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahsc.c,v 1.6 1997/01/18 12:26:22 niklas Exp $	*/
+/*	$OpenBSD: ahsc.c,v 1.7 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: ahsc.c,v 1.18 1996/12/23 09:09:51 veego Exp $	*/
 
 /*
@@ -52,17 +52,17 @@
 #include <amiga/dev/ahscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-void ahscattach __P((struct device *, struct device *, void *));
-int ahscmatch __P((struct device *, void *, void *));
+void ahscattach(struct device *, struct device *, void *);
+int ahscmatch(struct device *, void *, void *);
 
-void ahsc_enintr __P((struct sbic_softc *));
-void ahsc_dmastop __P((struct sbic_softc *));
-int ahsc_dmanext __P((struct sbic_softc *));
-int ahsc_dmaintr __P((void *));
-int ahsc_dmago __P((struct sbic_softc *, char *, int, int));
+void ahsc_enintr(struct sbic_softc *);
+void ahsc_dmastop(struct sbic_softc *);
+int ahsc_dmanext(struct sbic_softc *);
+int ahsc_dmaintr(void *);
+int ahsc_dmago(struct sbic_softc *, char *, int, int);
 
 #ifdef DEBUG
-void ahsc_dump __P((void));
+void ahsc_dump(void);
 #endif
 
 struct scsi_adapter ahsc_scsiswitch = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascvar.h,v 1.4 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
 /*	$NetBSD: ascvar.h,v 1.3 1997/02/24 05:47:34 scottr Exp $	*/
 
 /*
@@ -42,10 +42,10 @@ struct asc_softc {
 	struct timeout		sc_bell_tmo;
 };
 
-int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	ascclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	ascread __P((dev_t, struct uio *, int));
-int	ascwrite __P((dev_t, struct uio *, int));
-int	ascioctl __P((dev_t, int, caddr_t, int, struct proc *p));
-int	ascselect __P((dev_t dev, int rw, struct proc *p));
-paddr_t	ascmmap __P((dev_t dev, off_t off, int prot));
+int	ascopen(dev_t dev, int flag, int mode, struct proc *p);
+int	ascclose(dev_t dev, int flag, int mode, struct proc *p);
+int	ascread(dev_t, struct uio *, int);
+int	ascwrite(dev_t, struct uio *, int);
+int	ascioctl(dev_t, int, caddr_t, int, struct proc *p);
+int	ascselect(dev_t dev, int rw, struct proc *p);
+paddr_t	ascmmap(dev_t dev, off_t off, int prot);

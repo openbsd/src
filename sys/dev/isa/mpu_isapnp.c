@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isapnp.c,v 1.4 2001/07/08 06:41:38 fgsch Exp $	*/
+/*	$OpenBSD: mpu_isapnp.c,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
 
 #include "midi.h"
 
@@ -22,8 +22,8 @@
 
 #include <dev/ic/mpuvar.h>
 
-int	mpu_isapnp_match __P((struct device *, void *, void *));
-void	mpu_isapnp_attach __P((struct device *, struct device *, void *));
+int	mpu_isapnp_match(struct device *, void *, void *);
+void	mpu_isapnp_attach(struct device *, struct device *, void *);
 
 struct mpu_isapnp_softc {
 	struct device sc_dev;

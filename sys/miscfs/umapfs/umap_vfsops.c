@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.17 2001/09/16 00:42:44 millert Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.18 2002/03/14 01:27:08 millert Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -56,18 +56,18 @@
 #include <sys/malloc.h>
 #include <miscfs/umapfs/umap.h>
 
-int	umapfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	umapfs_start __P((struct mount *, int, struct proc *));
-int	umapfs_unmount __P((struct mount *, int, struct proc *));
-int	umapfs_root __P((struct mount *, struct vnode **));
-int	umapfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct proc *));
-int	umapfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	umapfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	umapfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int	umapfs_vptofh __P((struct vnode *, struct fid *));
+int	umapfs_mount(struct mount *, const char *, void *,
+			  struct nameidata *, struct proc *);
+int	umapfs_start(struct mount *, int, struct proc *);
+int	umapfs_unmount(struct mount *, int, struct proc *);
+int	umapfs_root(struct mount *, struct vnode **);
+int	umapfs_quotactl(struct mount *, int, uid_t, caddr_t,
+			     struct proc *);
+int	umapfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	umapfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	umapfs_vget(struct mount *, ino_t, struct vnode **);
+int	umapfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	umapfs_vptofh(struct vnode *, struct fid *);
 
 /*
  * Mount umap layer
@@ -411,10 +411,10 @@ umapfs_vptofh(vp, fhp)
 	return VFS_VPTOFH(UMAPVPTOLOWERVP(vp), fhp);
 }
 
-#define umapfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-	    size_t, struct proc *)))eopnotsupp)
-#define umapfs_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
-	int *, struct ucred **)))eopnotsupp)
+#define umapfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
+	    size_t, struct proc *))eopnotsupp)
+#define umapfs_checkexp ((int (*)(struct mount *, struct mbuf *,	\
+	int *, struct ucred **))eopnotsupp)
 
 struct vfsops umap_vfsops = {
 	umapfs_mount,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.48 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.49 2002/03/14 01:26:33 millert Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -129,11 +129,11 @@ struct pc_softc {
 	struct	tty *sc_tty;
 };
 
-int pcprobe __P((struct device *, void *, void *));
-void pcattach __P((struct device *, struct device *, void *));
-int pcintr __P((void *));
-static void screen_restore __P((int));
-static void screen_blank __P((void *));
+int pcprobe(struct device *, void *, void *);
+void pcattach(struct device *, struct device *, void *);
+int pcintr(void *);
+static void screen_restore(int);
+static void screen_blank(void *);
 
 struct cfattach pc_ca = {
 	sizeof(struct pc_softc), pcprobe, pcattach
@@ -149,36 +149,36 @@ struct cfdriver pc_cd = {
 
 static unsigned int addr_6845 = MONO_BASE;
 
-void pcinit __P((void));
-char *sget __P((void));
-void sput __P((u_char *, int));
+void pcinit(void);
+char *sget(void);
+void sput(u_char *, int);
 #ifdef XSERVER
-void pc_xmode_on __P((void));
-void pc_xmode_off __P((void));
+void pc_xmode_on(void);
+void pc_xmode_off(void);
 #endif
 
-void	pcstart __P((struct tty *));
-int	pcparam __P((struct tty *, struct termios *));
+void	pcstart(struct tty *);
+int	pcparam(struct tty *, struct termios *);
 
-int kbd_cmd __P((u_char, u_char));
-void set_cursor_shape __P((void));
+int kbd_cmd(u_char, u_char);
+void set_cursor_shape(void);
 #ifdef XSERVER
-void get_cursor_shape __P((void));
+void get_cursor_shape(void);
 #endif
-void do_async_update __P((void *));
-void async_update __P((void));
+void do_async_update(void *);
+void async_update(void);
 
-static __inline int kbd_wait_output __P((void));
-static __inline int kbd_wait_input __P((void));
-static __inline void kbd_flush_input __P((void));
-static u_char kbc_get8042cmd __P((void));
-static int kbc_put8042cmd __P((u_char));
+static __inline int kbd_wait_output(void);
+static __inline int kbd_wait_input(void);
+static __inline void kbd_flush_input(void);
+static u_char kbc_get8042cmd(void);
+static int kbc_put8042cmd(u_char);
 
-void pccnprobe __P((struct consdev *));
-void pccninit __P((struct consdev *));
-void pccnputc __P((dev_t, char));
-int pccngetc __P((dev_t));
-void pccnpollc __P((dev_t, int));
+void pccnprobe(struct consdev *);
+void pccninit(struct consdev *);
+void pccnputc(dev_t, char);
+int pccngetc(dev_t);
+void pccnpollc(dev_t, int);
 
 /* wait 7+ us for keyboard controller; ~1.25us per inb() */
 #define	KBD_DELAY \

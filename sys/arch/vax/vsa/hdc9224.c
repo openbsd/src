@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.6 2002/01/16 20:50:17 miod Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.7 2002/03/14 01:26:49 millert Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -178,9 +178,9 @@ struct	hdcsoftc {
 /*
  * Device definition for (new) autoconfiguration.
  */
-int	hdcmatch  __P((struct device *parent, void *cfdata, void *aux));
-void	hdcattach __P((struct device *parent, struct device *self, void *aux));
-int	hdcprint  __P((void *aux, const char *name));
+int	hdcmatch(struct device *parent, void *cfdata, void *aux);
+void	hdcattach(struct device *parent, struct device *self, void *aux);
+int	hdcprint(void *aux, const char *name);
 
 struct	cfdriver hdc_cd = {
 	NULL, "hdc", DV_DULL
@@ -189,10 +189,10 @@ struct	cfattach hdc_ca = {
 	sizeof(struct hdcsoftc), hdcmatch, hdcattach
 };
 
-int	hdmatch __P((struct device *parent, void *cfdata, void *aux));
-void	hdattach __P((struct device *parent, struct device *self, void *aux));
-int	hdprint __P((void *aux, const char *name));
-void	hdstrategy __P((struct buf *bp));
+int	hdmatch(struct device *parent, void *cfdata, void *aux);
+void	hdattach(struct device *parent, struct device *self, void *aux);
+int	hdprint(void *aux, const char *name);
+void	hdstrategy(struct buf *bp);
 
 struct	cfdriver hd_cd = {
 	NULL, "hd", DV_DISK
@@ -206,14 +206,14 @@ struct dkdriver hddkdriver = { hdstrategy };
 /*
  * prototypes for (almost) all the internal routines
  */
-int hdc_reset	__P((struct hdcsoftc *sc));
-int hdc_select	__P((struct hdcsoftc *sc, int drive));
-int hdc_command __P((struct hdcsoftc *sc, int cmd));
+int hdc_reset(struct hdcsoftc *sc);
+int hdc_select(struct hdcsoftc *sc, int drive);
+int hdc_command(struct hdcsoftc *sc, int cmd);
 
-int hdc_getdata	 __P((struct hdcsoftc *hdc, struct hdsoftc *hd, int drive));
-int hdc_getlabel __P((struct hdcsoftc *hdc, struct hdsoftc *hd, int drive));
+int hdc_getdata(struct hdcsoftc *hdc, struct hdsoftc *hd, int drive);
+int hdc_getlabel(struct hdcsoftc *hdc, struct hdsoftc *hd, int drive);
 
-void hdgetlabel __P((struct hdsoftc *sc));
+void hdgetlabel(struct hdsoftc *sc);
 
 /*
  * new-config's hdcmatch() is similiar to old-config's hdcprobe(), 

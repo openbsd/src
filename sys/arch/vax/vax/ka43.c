@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.7 2001/11/06 19:53:17 miod Exp $ */
+/*	$OpenBSD: ka43.c,v 1.8 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -52,22 +52,22 @@
 #include <machine/ka43.h>
 #include <machine/clock.h>
 
-static	void ka43_conf __P((void));
-static	void ka43_steal_pages __P((void));
+static	void ka43_conf(void);
+static	void ka43_steal_pages(void);
 
-static	int ka43_mchk __P((caddr_t));
-static	void ka43_memerr __P((void));
+static	int ka43_mchk(caddr_t);
+static	void ka43_memerr(void);
 #if 0
-static	void ka43_clear_errors __P((void));
+static	void ka43_clear_errors(void);
 #endif
-static	int ka43_cache_init __P((void));	/* "int mapen" as argument? */
-static	int ka43_cache_reset __P((void));
-static	int ka43_cache_enable __P((void));
-static	int ka43_cache_disable __P((void));
-static	int ka43_cache_invalidate __P((void));
-static  void ka43_halt __P((void));
-static  void ka43_reboot __P((int));
-static  void ka43_clrf __P((void));
+static	int ka43_cache_init(void);	/* "int mapen" as argument? */
+static	int ka43_cache_reset(void);
+static	int ka43_cache_enable(void);
+static	int ka43_cache_disable(void);
+static	int ka43_cache_invalidate(void);
+static  void ka43_halt(void);
+static  void ka43_reboot(int);
+static  void ka43_clrf(void);
 
 
 struct	cpu_dep ka43_calls = {

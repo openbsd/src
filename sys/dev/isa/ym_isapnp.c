@@ -1,4 +1,4 @@
-/*	$OpenBSD: ym_isapnp.c,v 1.7 1999/08/05 05:32:41 deraadt Exp $ */
+/*	$OpenBSD: ym_isapnp.c,v 1.8 2002/03/14 01:26:57 millert Exp $ */
 
 
 /*
@@ -59,8 +59,8 @@
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
 
-int	ym_isapnp_match __P((struct device *, void *, void *));
-void	ym_isapnp_attach __P((struct device *, struct device *, void *));
+int	ym_isapnp_match(struct device *, void *, void *);
+void	ym_isapnp_attach(struct device *, struct device *, void *);
 
 struct cfattach ym_isapnp_ca = {
 	sizeof(struct ym_softc), ym_isapnp_match, ym_isapnp_attach

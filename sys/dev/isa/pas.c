@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.21 2001/06/06 10:18:57 d Exp $	*/
+/*	$OpenBSD: pas.c,v 1.22 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -102,8 +102,8 @@ struct pas_softc {
 
 };
 
-int	pas_getdev __P((void *, struct audio_device *));
-void	pasconf __P((int, int, int, int));
+int	pas_getdev(void *, struct audio_device *);
+void	pasconf(int, int, int, int);
 
 
 /*
@@ -240,8 +240,8 @@ pasconf(model, sbbase, sbirq, sbdrq)
 	paswrite(P_M_MV508_INPUTMIX | 30, PARALLEL_MIXER);
 }
 
-int	pasprobe __P((struct device *, void *, void *));
-void	pasattach __P((struct device *, struct device *, void *));
+int	pasprobe(struct device *, void *, void *);
+void	pasattach(struct device *, struct device *, void *);
 
 struct cfattach pas_ca = {
 	sizeof(struct pas_softc), pasprobe, pasattach

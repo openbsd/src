@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.12 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.13 2002/03/14 01:26:42 millert Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -93,10 +93,10 @@ struct cgfour_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgfourattach __P((struct device *, struct device *, void *));
-static int	cgfourmatch __P((struct device *, void *, void *));
+static void	cgfourattach(struct device *, struct device *, void *);
+static int	cgfourmatch(struct device *, void *, void *);
 #if defined(SUN4)
-static void	cgfourunblank __P((struct device *));
+static void	cgfourunblank(struct device *);
 #endif
 
 struct cfattach cgfour_ca = {
@@ -116,9 +116,9 @@ static struct fbdriver cgfourfbdriver = {
 extern int fbnode;
 extern struct tty *fbconstty;
 
-static void cgfourloadcmap __P((struct cgfour_softc *, int, int));
-static int cgfour_get_video __P((struct cgfour_softc *));
-static void cgfour_set_video __P((struct cgfour_softc *, int));
+static void cgfourloadcmap(struct cgfour_softc *, int, int);
+static int cgfour_get_video(struct cgfour_softc *);
+static void cgfour_set_video(struct cgfour_softc *, int);
 #endif
 
 /*

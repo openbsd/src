@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka49.c,v 1.3 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: ka49.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,16 +39,16 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
-static	void	ka49_conf __P((void));
-static	void	ka49_memerr __P((void));
-static	int	ka49_mchk __P((caddr_t));
-static	void	ka49_halt __P((void));
-static	void	ka49_reboot __P((int));
-static	void	ka49_softmem __P((void *));
-static	void	ka49_hardmem __P((void *));
-static	void	ka49_steal_pages __P((void));
-static	void	ka49_cache_enable __P((void));
-static	void	ka49_halt __P((void));
+static	void	ka49_conf(void);
+static	void	ka49_memerr(void);
+static	int	ka49_mchk(caddr_t);
+static	void	ka49_halt(void);
+static	void	ka49_reboot(int);
+static	void	ka49_softmem(void *);
+static	void	ka49_hardmem(void *);
+static	void	ka49_steal_pages(void);
+static	void	ka49_cache_enable(void);
+static	void	ka49_halt(void);
 
 /* 
  * Declaration of 49-specific calls.

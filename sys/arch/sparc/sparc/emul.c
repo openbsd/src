@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.2 2000/02/21 21:05:59 art Exp $	*/
+/*	$OpenBSD: emul.c,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: emul.c,v 1.3 1997/07/29 09:42:01 fair Exp $	*/
 
 /*
@@ -49,13 +49,13 @@
 #define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe *, int, void *));
-static __inline int readfpreg __P((struct proc *, int, void *));
-static __inline int writegpreg __P((struct trapframe *, int, const void *));
-static __inline int writefpreg __P((struct proc *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe *, union instr *, void *));
-static int muldiv __P((struct trapframe *, union instr *, int32_t *, int32_t *,
-    int32_t *));
+static __inline int readgpreg(struct trapframe *, int, void *);
+static __inline int readfpreg(struct proc *, int, void *);
+static __inline int writegpreg(struct trapframe *, int, const void *);
+static __inline int writefpreg(struct proc *, int, const void *);
+static __inline int decodeaddr(struct trapframe *, union instr *, void *);
+static int muldiv(struct trapframe *, union instr *, int32_t *, int32_t *,
+    int32_t *);
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
 

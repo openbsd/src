@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_extern.h,v 1.2 1997/08/08 08:25:53 downsj Exp $	*/
+/*	$OpenBSD: fpu_extern.h,v 1.3 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: fpu_extern.h,v 1.1 1996/03/14 19:41:56 christos Exp $	*/
 
 /*
@@ -38,40 +38,40 @@ struct fpemu;
 struct fpn;
 
 /* fpu.c */
-void fpu_cleanup __P((struct proc *, struct fpstate *));
-int fpu_emulate __P((struct proc *, struct trapframe *, struct fpstate *));
-int fpu_execute __P((struct fpemu *, union instr));
+void fpu_cleanup(struct proc *, struct fpstate *);
+int fpu_emulate(struct proc *, struct trapframe *, struct fpstate *);
+int fpu_execute(struct fpemu *, union instr);
 
 /* fpu_add.c */
-struct fpn *fpu_add __P((struct fpemu *));
+struct fpn *fpu_add(struct fpemu *);
 
 /* fpu_compare.c */
-void fpu_compare __P((struct fpemu *, int));
+void fpu_compare(struct fpemu *, int);
 
 /* fpu_div.c */
-struct fpn *fpu_div __P((struct fpemu *));
+struct fpn *fpu_div(struct fpemu *);
 
 /* fpu_explode.c */
-int fpu_itof __P((struct fpn *, u_int));
-int fpu_stof __P((struct fpn *, u_int));
-int fpu_dtof __P((struct fpn *, u_int, u_int ));
-int fpu_xtof __P((struct fpn *, u_int, u_int , u_int , u_int ));
-void fpu_explode __P((struct fpemu *, struct fpn *, int, int ));
+int fpu_itof(struct fpn *, u_int);
+int fpu_stof(struct fpn *, u_int);
+int fpu_dtof(struct fpn *, u_int, u_int );
+int fpu_xtof(struct fpn *, u_int, u_int , u_int , u_int );
+void fpu_explode(struct fpemu *, struct fpn *, int, int );
 
 /* fpu_implode.c */
-u_int fpu_ftoi __P((struct fpemu *, struct fpn *));
-u_int fpu_ftos __P((struct fpemu *, struct fpn *));
-u_int fpu_ftod __P((struct fpemu *, struct fpn *, u_int *));
-u_int fpu_ftox __P((struct fpemu *, struct fpn *, u_int *));
-void fpu_implode __P((struct fpemu *, struct fpn *, int, u_int *));
+u_int fpu_ftoi(struct fpemu *, struct fpn *);
+u_int fpu_ftos(struct fpemu *, struct fpn *);
+u_int fpu_ftod(struct fpemu *, struct fpn *, u_int *);
+u_int fpu_ftox(struct fpemu *, struct fpn *, u_int *);
+void fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
 
 /* fpu_mul.c */
-struct fpn *fpu_mul __P((struct fpemu *));
+struct fpn *fpu_mul(struct fpemu *);
 
 /* fpu_sqrt.c */
-struct fpn *fpu_sqrt __P((struct fpemu *));
+struct fpn *fpu_sqrt(struct fpemu *);
 
 /* fpu_subr.c */
-int fpu_shr __P((register struct fpn *, register int));
-void fpu_norm __P((register struct fpn *));
-struct fpn *fpu_newnan __P((register struct fpemu *));
+int fpu_shr(register struct fpn *, register int);
+void fpu_norm(register struct fpn *);
+struct fpn *fpu_newnan(register struct fpemu *);

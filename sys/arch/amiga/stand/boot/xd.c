@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: xd.c,v 1.1 1997/01/16 09:26:45 niklas Exp $
+ * $OpenBSD: xd.c,v 1.2 2002/03/14 01:26:29 millert Exp $
  * $NetBSD: xd.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
@@ -42,10 +42,10 @@
 #include "amigaio.h"
 #include "libstubs.h"
 
-static int xdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-static int xdopen __P((struct open_file *, ...));
-static int xdclose __P((struct open_file *));
-static int xdioctl __P((struct open_file *, u_long, void *));
+static int xdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+static int xdopen(struct open_file *, ...);
+static int xdclose(struct open_file *);
+static int xdioctl(struct open_file *, u_long, void *);
 
 static u_int32_t aio_base;
 static struct AmigaIO *aio_save;

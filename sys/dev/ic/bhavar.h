@@ -1,4 +1,4 @@
-/*	$OpenBSD: bhavar.h,v 1.1 2002/01/24 22:38:03 mickey Exp $	*/
+/*	$OpenBSD: bhavar.h,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: bhavar.h,v 1.12 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*-
@@ -124,12 +124,12 @@ struct bha_probe_data {
 
 /*#define	ISWIDE(sc)	(sc->sc_link.max_target >= 8)*/
 
-int	bha_cmd __P((bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
-	    int, u_char *, int, u_char *));
-int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
-	    struct bha_probe_data *));
-void	bha_attach __P((struct bha_softc *, struct bha_probe_data *));
-int	bha_intr __P((void *));
+int	bha_cmd(bus_space_tag_t, bus_space_handle_t, struct bha_softc *,
+	    int, u_char *, int, u_char *);
+int	bha_find(bus_space_tag_t, bus_space_handle_t,
+	    struct bha_probe_data *);
+void	bha_attach(struct bha_softc *, struct bha_probe_data *);
+int	bha_intr(void *);
 
-int	bha_disable_isacompat __P((struct bha_softc *));
-void	bha_inquire_setup_information __P((struct bha_softc *));
+int	bha_disable_isacompat(struct bha_softc *);
+void	bha_inquire_setup_information(struct bha_softc *);

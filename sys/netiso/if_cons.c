@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cons.c,v 1.3 2001/05/16 12:54:07 ho Exp $	*/
+/*	$OpenBSD: if_cons.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 /*	$NetBSD: if_cons.c,v 1.7 1996/02/13 22:09:44 christos Exp $	*/
 
 /*-
@@ -159,12 +159,12 @@ unsigned        LAST_CALL_PCB;
 
 #define CONS_IFQMAXLEN 5
 
-Static int make_partial_x25_packet __P((struct isopcb *, struct pklcd *));
-Static int NSAPtoDTE __P((struct sockaddr_iso *, struct sockaddr_x25 *));
-Static int FACILtoNSAP __P((struct sockaddr_iso *, u_char *));
-Static void init_siso __P((struct sockaddr_iso *));
-Static int DTEtoNSAP __P((struct sockaddr_iso *, struct sockaddr_x25 *));
-Static int parse_facil __P((struct pklcd *, struct isopcb *, caddr_t, u_char));
+Static int make_partial_x25_packet(struct isopcb *, struct pklcd *);
+Static int NSAPtoDTE(struct sockaddr_iso *, struct sockaddr_x25 *);
+Static int FACILtoNSAP(struct sockaddr_iso *, u_char *);
+Static void init_siso(struct sockaddr_iso *);
+Static int DTEtoNSAP(struct sockaddr_iso *, struct sockaddr_x25 *);
+Static int parse_facil(struct pklcd *, struct isopcb *, caddr_t, u_char);
 
 /* protosw pointers for getting to higher layer */
 Static struct protosw *CLNP_proto;

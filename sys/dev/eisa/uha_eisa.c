@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.3 2001/02/03 07:29:29 mickey Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.4 2002/03/14 01:26:53 millert Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 #define	Debugger() panic("should call debugger here (uha_eisa.c)")
 #endif
 
-int	uha_eisa_match __P((struct device *, void *, void *));
-void	uha_eisa_attach __P((struct device *, struct device *, void *));
+int	uha_eisa_match(struct device *, void *, void *);
+void	uha_eisa_attach(struct device *, struct device *, void *);
 
 struct cfattach uha_eisa_ca = {
 	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
@@ -66,11 +66,11 @@ struct cfattach uha_eisa_ca = {
 
 #define KVTOPHYS(x)	vtophys(x)
 
-int u24_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));
-void u24_start_mbox __P((struct uha_softc *, struct uha_mscp *));
-int u24_poll __P((struct uha_softc *, struct scsi_xfer *, int));
-int u24_intr __P((void *));
-void u24_init __P((struct uha_softc *));
+int u24_find(bus_space_tag_t, bus_space_handle_t, struct uha_softc *);
+void u24_start_mbox(struct uha_softc *, struct uha_mscp *);
+int u24_poll(struct uha_softc *, struct scsi_xfer *, int);
+int u24_intr(void *);
+void u24_init(struct uha_softc *);
 
 /*
  * Check the slots looking for a board we recognise

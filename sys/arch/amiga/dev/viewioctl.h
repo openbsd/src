@@ -1,4 +1,4 @@
-/*	$OpenBSD: viewioctl.h,v 1.2 1996/05/02 06:44:37 niklas Exp $	*/
+/*	$OpenBSD: viewioctl.h,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: viewioctl.h,v 1.6 1996/04/21 21:12:40 veego Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct view_size {
 #define VIOCGCMAP 	_IOWR('V', 0x6, colormap_t)
 
 #ifdef _KERNEL
-int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-void viewprobe __P((void));
+int viewioctl(dev_t, u_long, caddr_t, int, struct proc *);
+void viewprobe(void);
 #endif
 

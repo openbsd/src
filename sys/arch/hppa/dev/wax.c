@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
+/*	$OpenBSD: wax.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -44,8 +44,8 @@ struct wax_softc {
 	struct  device sc_dv;
 };
 
-int	waxmatch __P((struct device *, void *, void *));
-void	waxattach __P((struct device *, struct device *, void *));
+int	waxmatch(struct device *, void *, void *);
+void	waxattach(struct device *, struct device *, void *);
 
 struct cfattach wax_ca = {
 	sizeof(struct wax_softc), waxmatch, waxattach

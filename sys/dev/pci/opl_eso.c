@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_eso.c,v 1.2 1999/08/05 05:32:41 deraadt Exp $	*/
+/*	$OpenBSD: opl_eso.c,v 1.3 2002/03/14 01:26:59 millert Exp $	*/
 /*	$NetBSD: opl_eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
 
 /*
@@ -70,8 +70,8 @@
 #include <dev/ic/mpuvar.h>
 #include <dev/pci/esovar.h>
 
-HIDE int	opl_eso_match __P((struct device *, MATCH_ARG_2_T, void *));
-HIDE void	opl_eso_attach __P((struct device *, struct device *, void *));
+HIDE int	opl_eso_match(struct device *, MATCH_ARG_2_T, void *);
+HIDE void	opl_eso_attach(struct device *, struct device *, void *);
 
 struct cfattach opl_eso_ca = {
 	sizeof (struct opl_softc), opl_eso_match, opl_eso_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.4 2000/11/16 20:02:20 provos Exp $	*/
+/*	$OpenBSD: select.h,v 1.5 2002/03/14 01:27:14 millert Exp $	*/
 /*	$NetBSD: select.h,v 1.10 1995/03/26 20:24:38 jtc Exp $	*/
 
 /*-
@@ -55,8 +55,8 @@ struct selinfo {
 #ifdef _KERNEL
 struct proc;
 
-void	selrecord __P((struct proc *selector, struct selinfo *));
-void	selwakeup __P((struct selinfo *));
+void	selrecord(struct proc *selector, struct selinfo *);
+void	selwakeup(struct selinfo *);
 #endif
 
 #endif /* !_SYS_SELECT_H_ */

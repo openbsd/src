@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.8 2001/11/06 02:49:22 art Exp $ */
+/*	$OpenBSD: sbic.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -91,28 +91,28 @@
 
 extern u_int kvtop();
 
-int     sbicicmd            __P((struct sbic_softc *, void *, int, void *, int));
-int     sbicgo              __P((struct sbic_softc *, struct scsi_xfer *));
-int     sbicdmaok           __P((struct sbic_softc *, struct scsi_xfer *));
-int     sbicwait            __P((sbic_regmap_p, u_char, int , int));
-int     sbiccheckdmap       __P((void *, u_long, u_long));
-u_char  sbicselectbus       __P((struct sbic_softc *));
-int     sbicxfout           __P((sbic_regmap_p, int, void *));
-int     sbicxfin            __P((sbic_regmap_p, int, void *));
-int     sbicfromscsiperiod  __P((struct sbic_softc *, int));
-int     sbictoscsiperiod    __P((struct sbic_softc *, int));
-int     sbicintr            __P((struct sbic_softc *));
-int     sbicpoll            __P((struct sbic_softc *));
-int     sbicnextstate       __P((struct sbic_softc *, u_char, u_char));
-int     sbicmsgin           __P((struct sbic_softc *));
-int     sbicabort           __P((struct sbic_softc *, char *));
-void    sbicxfdone          __P((struct sbic_softc *));
-void    sbicerror           __P((struct sbic_softc *,u_char));
-void    sbicreset           __P((struct sbic_softc *));
-void    sbic_scsidone       __P((struct sbic_acb *, int));
-void    sbic_sched          __P((struct sbic_softc *));
-void    sbic_save_ptrs      __P((struct sbic_softc *));
-void    sbic_load_ptrs      __P((struct sbic_softc *));
+int     sbicicmd(struct sbic_softc *, void *, int, void *, int);
+int     sbicgo(struct sbic_softc *, struct scsi_xfer *);
+int     sbicdmaok(struct sbic_softc *, struct scsi_xfer *);
+int     sbicwait(sbic_regmap_p, u_char, int , int);
+int     sbiccheckdmap(void *, u_long, u_long);
+u_char  sbicselectbus(struct sbic_softc *);
+int     sbicxfout(sbic_regmap_p, int, void *);
+int     sbicxfin(sbic_regmap_p, int, void *);
+int     sbicfromscsiperiod(struct sbic_softc *, int);
+int     sbictoscsiperiod(struct sbic_softc *, int);
+int     sbicintr(struct sbic_softc *);
+int     sbicpoll(struct sbic_softc *);
+int     sbicnextstate(struct sbic_softc *, u_char, u_char);
+int     sbicmsgin(struct sbic_softc *);
+int     sbicabort(struct sbic_softc *, char *);
+void    sbicxfdone(struct sbic_softc *);
+void    sbicerror(struct sbic_softc *,u_char);
+void    sbicreset(struct sbic_softc *);
+void    sbic_scsidone(struct sbic_acb *, int);
+void    sbic_sched(struct sbic_softc *);
+void    sbic_save_ptrs(struct sbic_softc *);
+void    sbic_load_ptrs(struct sbic_softc *);
 
 /*
  * Synch xfer parameters, and timing conversions
@@ -149,7 +149,7 @@ int     reselect_debug  = 0;    /* Debug all reselection related things */
 int     report_sense    = 0;    /* Always print Sense information */
 int     data_pointer_debug = 0; /* Debug Data Pointer related things */
 
-void    sbictimeout __P((struct sbic_softc *dev));
+void    sbictimeout(struct sbic_softc *dev);
 
 #else
 #define QPRINTF(a)  /* */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2002/02/04 21:20:32 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2002/03/14 01:26:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -900,44 +900,44 @@ struct majoropcode {
 /*##################### Globals - Imports ##################################*/
 
 /* Disassembly functions */
-int fcoprDasm __P((int w, u_int op1, u_int));
-char *edDCond __P((u_int cond));
-char *unitDCond __P((u_int cond));
-char *addDCond __P((u_int cond));
-char *subDCond __P((u_int cond));
-int blDasm __P((const struct inst *i, OFS ofs, int w));
-int ldDasm __P((const struct inst *, OFS, int));
-int stDasm __P((const struct inst *i, OFS, int));
-int addDasm __P((const struct inst *i, OFS, int));
-int unitDasm __P((const struct inst *i, OFS, int));
-int iaDasm __P((const struct inst *i, OFS, int));
-int shdDasm __P((const struct inst *i, OFS, int));
-int extrDasm __P((const struct inst *i, OFS, int));
-int vextrDasm __P((const struct inst *i, OFS, int));
-int depDasm __P((const struct inst *i, OFS, int));
-int vdepDasm __P((const struct inst *i, OFS, int));
-int depiDasm __P((const struct inst *i, OFS, int));
-int vdepiDasm __P((const struct inst *i, OFS, int));
-int limmDasm __P((const struct inst *i, OFS, int));
-int brkDasm __P((const struct inst *i, OFS, int));
-int lpkDasm __P((const struct inst *i, OFS, int));
-int fmpyaddDasm __P((const struct inst *i, OFS, int));
-int fmpysubDasm __P((const struct inst *i, OFS, int));
-int floatDasm __P((const struct inst *i, OFS, int));
-int coprDasm __P((const struct inst *i, OFS, int));
-int diagDasm __P((const struct inst *i, OFS, int));
-int scDasm __P((const struct inst *i, OFS, int));
-int mmgtDasm __P((const struct inst *i, OFS, int));
-int ldxDasm __P((const struct inst *i, OFS, int));
-int stsDasm __P((const struct inst *i, OFS, int));
-int stbysDasm __P((const struct inst *i, OFS, int));
-int brDasm __P((const struct inst *i, OFS, int));
-int bvDasm __P((const struct inst *i, OFS, int));
-int beDasm __P((const struct inst *i, OFS, int));
-int cbDasm __P((const struct inst *i,OFS ofs, int));
-int cbiDasm __P((const struct inst *i,OFS ofs, int));
-int bbDasm __P((const struct inst *i,OFS ofs, int));
-int ariDasm __P((const struct inst *i, OFS, int));
+int fcoprDasm(int w, u_int op1, u_int);
+char *edDCond(u_int cond);
+char *unitDCond(u_int cond);
+char *addDCond(u_int cond);
+char *subDCond(u_int cond);
+int blDasm(const struct inst *i, OFS ofs, int w);
+int ldDasm(const struct inst *, OFS, int);
+int stDasm(const struct inst *i, OFS, int);
+int addDasm(const struct inst *i, OFS, int);
+int unitDasm(const struct inst *i, OFS, int);
+int iaDasm(const struct inst *i, OFS, int);
+int shdDasm(const struct inst *i, OFS, int);
+int extrDasm(const struct inst *i, OFS, int);
+int vextrDasm(const struct inst *i, OFS, int);
+int depDasm(const struct inst *i, OFS, int);
+int vdepDasm(const struct inst *i, OFS, int);
+int depiDasm(const struct inst *i, OFS, int);
+int vdepiDasm(const struct inst *i, OFS, int);
+int limmDasm(const struct inst *i, OFS, int);
+int brkDasm(const struct inst *i, OFS, int);
+int lpkDasm(const struct inst *i, OFS, int);
+int fmpyaddDasm(const struct inst *i, OFS, int);
+int fmpysubDasm(const struct inst *i, OFS, int);
+int floatDasm(const struct inst *i, OFS, int);
+int coprDasm(const struct inst *i, OFS, int);
+int diagDasm(const struct inst *i, OFS, int);
+int scDasm(const struct inst *i, OFS, int);
+int mmgtDasm(const struct inst *i, OFS, int);
+int ldxDasm(const struct inst *i, OFS, int);
+int stsDasm(const struct inst *i, OFS, int);
+int stbysDasm(const struct inst *i, OFS, int);
+int brDasm(const struct inst *i, OFS, int);
+int bvDasm(const struct inst *i, OFS, int);
+int beDasm(const struct inst *i, OFS, int);
+int cbDasm(const struct inst *i,OFS ofs, int);
+int cbiDasm(const struct inst *i,OFS ofs, int);
+int bbDasm(const struct inst *i,OFS ofs, int);
+int ariDasm(const struct inst *i, OFS, int);
 
 /*##################### Globals - Exports ##################################*/
 /*##################### Local Variables ####################################*/

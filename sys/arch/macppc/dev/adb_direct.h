@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: adb_direct.h,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: adb_direct.h,v 1.1 1998/05/15 10:15:47 tsubai Exp $	*/
 
 /*
@@ -43,13 +43,13 @@
 #define ADB_HW_PB		0x04	/* PowerBook series */
 #define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
 
-int	adb_poweroff __P((void));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock *info, int index));
-int	GetADBInfo __P((ADBDataBlock *info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock *info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *));
-int	adb_set_date_time __P((unsigned long));
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+int	adb_poweroff(void);
+int	CountADBs(void);
+void	ADBReInit(void);
+int	GetIndADB(ADBDataBlock *info, int index);
+int	GetADBInfo(ADBDataBlock *info, int adbAddr);
+int	SetADBInfo(ADBSetInfoBlock *info, int adbAddr);
+int	ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum);
+int	adb_read_date_time(unsigned long *);
+int	adb_set_date_time(unsigned long);
+int	adb_op_sync(Ptr, Ptr, Ptr, short);

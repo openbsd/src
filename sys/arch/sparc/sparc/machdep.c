@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2002/02/20 22:28:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.81 2002/03/14 01:26:44 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -153,9 +153,9 @@ int   safepri = 0;
 vaddr_t dvma_base, dvma_end;
 struct extent *dvmamap_extent;
 
-caddr_t allocsys __P((caddr_t));
-void	dumpsys __P((void));
-void	stackdump __P((void));
+caddr_t allocsys(caddr_t);
+void	dumpsys(void);
+void	stackdump(void);
 
 /*
  * Machine-dependent startup code
@@ -826,7 +826,7 @@ dumpsys()
 {
 	int psize;
 	daddr_t blkno;
-	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error = 0;
 	struct memarr *mp;
 	int nmem;
@@ -1008,7 +1008,7 @@ cpu_exec_aout_makecmds(p, epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_SUNOS
-	extern int sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	extern int sunos_exec_aout_makecmds(struct proc *, struct exec_package *);
 	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: consdefs.h,v 1.1 1997/07/14 08:14:31 downsj Exp $	*/
+/*	$OpenBSD: consdefs.h,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: consdefs.h,v 1.2 1997/05/12 07:45:41 thorpej Exp $	*/
 
 /*
@@ -44,26 +44,26 @@ extern	int cons_scode;
  * Console routine prototypes.
  */
 #ifdef ITECONSOLE
-void	iteprobe __P((struct consdev *));
-void	iteinit __P((struct consdev *));
-int	itegetchar __P((dev_t));
-void	iteputchar __P((dev_t, int));
+void	iteprobe(struct consdev *);
+void	iteinit(struct consdev *);
+int	itegetchar(dev_t);
+void	iteputchar(dev_t, int);
 #endif
 #ifdef DCACONSOLE
-void	dcaprobe __P((struct consdev *));
-void	dcainit __P((struct consdev *));
-int	dcagetchar __P((dev_t));
-void	dcaputchar __P((dev_t, int));
+void	dcaprobe(struct consdev *);
+void	dcainit(struct consdev *);
+int	dcagetchar(dev_t);
+void	dcaputchar(dev_t, int);
 #endif
 #ifdef APCICONSOLE
-void	apciprobe __P((struct consdev *));
-void	apciinit __P((struct consdev *));
-int	apcigetchar __P((dev_t));
-void	apciputchar __P((dev_t, int));
+void	apciprobe(struct consdev *);
+void	apciinit(struct consdev *);
+int	apcigetchar(dev_t);
+void	apciputchar(dev_t, int);
 #endif
 #ifdef DCMCONSOLE
-void	dcmprobe __P((struct consdev *));
-void	dcminit __P((struct consdev *));
-int	dcmgetchar __P((dev_t));
-void	dcmputchar __P((dev_t, int));
+void	dcmprobe(struct consdev *);
+void	dcminit(struct consdev *);
+int	dcmgetchar(dev_t);
+void	dcmputchar(dev_t, int);
 #endif

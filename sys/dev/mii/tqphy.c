@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.3 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.4 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -89,9 +89,9 @@
 
 #include <dev/mii/tqphyreg.h>
 
-int	tqphymatch __P((struct device *, void *, void *));
-void	tqphyattach __P((struct device *, struct device *, void *));
-int	tqphydetach __P((struct device *, int));
+int	tqphymatch(struct device *, void *, void *);
+void	tqphyattach(struct device *, struct device *, void *);
+int	tqphydetach(struct device *, int);
 
 struct cfattach tqphy_ca = {
 	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach,
@@ -102,8 +102,8 @@ struct cfdriver tqphy_cd = {
 	NULL, "tqphy", DV_DULL
 };
 
-int	tqphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	tqphy_status __P((struct mii_softc *));
+int	tqphy_service(struct mii_softc *, struct mii_data *, int);
+void	tqphy_status(struct mii_softc *);
 
 int
 tqphymatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka750.c,v 1.8 2000/04/27 01:10:12 bjc Exp $ */
+/*	$OpenBSD: ka750.c,v 1.9 2002/03/14 01:26:48 millert Exp $ */
 /*	$NetBSD: ka750.c,v 1.30 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -49,11 +49,11 @@
 
 #include <vax/vax/gencons.h>
 
-void	ctuattach __P((void));
-static	void	ka750_clrf __P((void));
-static	void	ka750_conf __P((void));
-static	void    ka750_memerr __P((void));
-static	int     ka750_mchk __P((caddr_t));
+void	ctuattach(void);
+static	void	ka750_clrf(void);
+static	void	ka750_conf(void);
+static	void    ka750_memerr(void);
+static	int     ka750_mchk(caddr_t);
 
 
 struct	cpu_dep ka750_calls = {
@@ -92,8 +92,8 @@ ka750_conf()
 	ctuattach();
 }
 
-int ka750_memmatch __P((struct  device  *, struct cfdata	 *, void *));
-void ka750_memenable __P((struct	 device	 *, struct  device  *, void *));
+int ka750_memmatch(struct  device  *, struct cfdata	 *, void *);
+void ka750_memenable(struct	 device	 *, struct  device  *, void *);
 
 struct	cfattach mem_cmi_ca = {
 	sizeof(struct device), ka750_memmatch, ka750_memenable

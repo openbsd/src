@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.6 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -88,8 +88,8 @@
 
 #include <dev/mii/qsphyreg.h>
 
-int	qsphymatch __P((struct device *, void *, void *));
-void	qsphyattach __P((struct device *, struct device *, void *));
+int	qsphymatch(struct device *, void *, void *);
+void	qsphyattach(struct device *, struct device *, void *);
 
 struct cfattach qsphy_ca = {
 	sizeof(struct mii_softc), qsphymatch, qsphyattach, mii_phy_detach,
@@ -100,9 +100,9 @@ struct cfdriver qsphy_cd = {
 	NULL, "qsphy", DV_DULL
 };
 
-int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	qsphy_reset __P((struct mii_softc *));
-void	qsphy_status __P((struct mii_softc *));
+int	qsphy_service(struct mii_softc *, struct mii_data *, int);
+void	qsphy_reset(struct mii_softc *);
+void	qsphy_status(struct mii_softc *);
 
 int
 qsphymatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2001/05/05 22:34:17 art Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.9 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -126,8 +126,8 @@ struct confargs {
  * it will use that instead of creating one, but you must only do this if
  * you get it from ../sparc/vaddrs.h.
  */
-void	*mapdev __P((struct rom_reg *pa, int va,
-		     int offset, int size));
+void	*mapdev(struct rom_reg *pa, int va,
+		     int offset, int size);
 #define	mapiodev(pa, offset, size) \
 	mapdev(pa, 0, offset, size)
 /*
@@ -137,18 +137,18 @@ void	*mapdev __P((struct rom_reg *pa, int va,
 	(((u_int)(rr)->rr_paddr + (offset)) | PMAP_IOENC((rr)->rr_iospace) )
 
 /* For VME and sun4/obio busses */
-void	*bus_map __P((struct rom_reg *, int));
-void	bus_untmp __P((void));
+void	*bus_map(struct rom_reg *, int);
+void	bus_untmp(void);
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
  * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
  */
-int	getproplen __P((int node, char *name));
-int	getprop __P((int node, char *name, void *buf, int bufsiz));
-char	*getpropstring __P((int node, char *name));
-int	getpropint __P((int node, char *name, int deflt));
+int	getproplen(int node, char *name);
+int	getprop(int node, char *name, void *buf, int bufsiz);
+char	*getpropstring(int node, char *name);
+int	getpropint(int node, char *name, int deflt);
 
 /* Frequently used options node */
 extern int optionsnode;
@@ -158,7 +158,7 @@ extern int optionsnode;
  * and fills in a romaux.  It returns 1 on success, 0 if the physical
  * address is not available as a "reg" property.
  */
-int	romprop __P((struct romaux *ra, const char *name, int node));
+int	romprop(struct romaux *ra, const char *name, int node);
 
 /*
  * The matchbyname function is useful in drivers that are matched
@@ -168,13 +168,13 @@ int	romprop __P((struct romaux *ra, const char *name, int node));
  */
 struct device;
 struct cfdata;
-int	matchbyname __P((struct device *, void *cf, void *aux));
+int	matchbyname(struct device *, void *cf, void *aux);
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((int freq));
+char	*clockfreq(int freq);
 
 /*
  * Memory description arrays.  Shared between pmap.c and autoconf.c; no
@@ -190,7 +190,7 @@ int	makememarr(struct memarr *, int max, int which);
 #define	MEMARR_TOTALPHYS	1
 
 /* Pass a string to the FORTH interpreter.  May fail silently. */
-void	rominterpret __P((char *));
+void	rominterpret(char *);
 
 /* Openprom V2 style boot path */
 struct bootpath {
@@ -199,24 +199,24 @@ struct bootpath {
 	struct device *dev;	/* device that recognised this component */
 };
 
-struct bootpath	*bootpath_store __P((int, struct bootpath *));
-int		sd_crazymap __P((int));
+struct bootpath	*bootpath_store(int, struct bootpath *);
+int		sd_crazymap(int);
 
 /* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk __P((char *, int, int, dev_t *));
+struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*) __P((struct device *)),
+void	mountroot_hook_establish __P((void (*)(struct device *),
 				      struct device *));
 
-void	bootstrap __P((void));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-void	callrom __P((void));
-struct device *getdevunit __P((char *, int));
-void	*findzs __P((int));
-int	romgetcursoraddr __P((int **, int **));
-int	findroot __P((void));
-int	findnode __P((int, const char *));
-int	opennode __P((char *));
-int	node_has_property __P((int, const char *));
+void	bootstrap(void);
+int	firstchild(int);
+int	nextsibling(int);
+void	callrom(void);
+struct device *getdevunit(char *, int);
+void	*findzs(int);
+int	romgetcursoraddr(int **, int **);
+int	findroot(void);
+int	findnode(int, const char *);
+int	opennode(char *);
+int	node_has_property(int, const char *);

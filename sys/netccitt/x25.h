@@ -1,4 +1,4 @@
-/*	$OpenBSD: x25.h,v 1.3 2001/01/19 06:37:37 itojun Exp $	*/
+/*	$OpenBSD: x25.h,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
 /*	$NetBSD: x25.h,v 1.7 1996/02/13 22:05:51 christos Exp $	*/
 
 /*
@@ -168,18 +168,18 @@ struct ifnet;
 struct rtentry;
 struct rt_addrinfo;
 
-void x25_lxfree __P((struct llinfo_x25 *));
-int x25_ifinput __P((struct mbuf *, void *));
-int x25_connect_callback __P((struct mbuf *, void *));
-int x25_dgram_incoming __P((struct mbuf *, void *));
-int x25_ifoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *));
-void x25_iftimeout __P((struct ifnet *));
-void x25_rtrequest __P((int , struct rtentry *, struct rt_addrinfo *));
-void x25_rtinvert __P((int , struct sockaddr *, struct rtentry *));
-void x25_ddnip_to_ccitt __P((struct sockaddr *, struct rtentry *));
-void x25_dg_rtinit __P((struct sockaddr_x25 *, struct x25_ifaddr *, int ));
-void pk_init __P((void));
-int pk_user_protolisten __P((u_char *));
-int pk_rtattach __P((struct socket *, struct mbuf *));
-int x25_rtattach __P((struct pklcd *, struct rtentry *));
+void x25_lxfree(struct llinfo_x25 *);
+int x25_ifinput(struct mbuf *, void *);
+int x25_connect_callback(struct mbuf *, void *);
+int x25_dgram_incoming(struct mbuf *, void *);
+int x25_ifoutput(struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *);
+void x25_iftimeout(struct ifnet *);
+void x25_rtrequest(int , struct rtentry *, struct rt_addrinfo *);
+void x25_rtinvert(int , struct sockaddr *, struct rtentry *);
+void x25_ddnip_to_ccitt(struct sockaddr *, struct rtentry *);
+void x25_dg_rtinit(struct sockaddr_x25 *, struct x25_ifaddr *, int );
+void pk_init(void);
+int pk_user_protolisten(u_char *);
+int pk_rtattach(struct socket *, struct mbuf *);
+int x25_rtattach(struct pklcd *, struct rtentry *);
 #endif

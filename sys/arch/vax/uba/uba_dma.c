@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba_dma.c,v 1.2 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: uba_dma.c,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
 /* $NetBSD: uba_dma.c,v 1.2 1999/06/20 00:59:55 ragge Exp $ */
 
 /*-
@@ -55,27 +55,27 @@
 
 #include <arch/vax/uba/uba_common.h>
 
-int	uba_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+int	uba_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-void	uba_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	uba_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-int	uba_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	uba_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	uba_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	uba_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	uba_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	uba_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	uba_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	uba_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	uba_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	uba_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-void	uba_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+void	uba_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 void
 uba_dma_init(sc)

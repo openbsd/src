@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.62 2002/03/12 09:51:20 kjc Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.63 2002/03/14 01:26:59 millert Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -93,48 +93,48 @@
 #undef	TRY_TX_UDP_CSUM
 #undef	TRY_TX_TCP_CSUM
 
-int txp_probe		__P((struct device *, void *, void *));
-void txp_attach		__P((struct device *, struct device *, void *));
-int txp_intr		__P((void *));
-void txp_tick		__P((void *));
-void txp_shutdown	__P((void *));
-int txp_ioctl		__P((struct ifnet *, u_long, caddr_t));
-void txp_start		__P((struct ifnet *));
-void txp_stop		__P((struct txp_softc *));
-void txp_init		__P((struct txp_softc *));
-void txp_watchdog	__P((struct ifnet *));
+int txp_probe(struct device *, void *, void *);
+void txp_attach(struct device *, struct device *, void *);
+int txp_intr(void *);
+void txp_tick(void *);
+void txp_shutdown(void *);
+int txp_ioctl(struct ifnet *, u_long, caddr_t);
+void txp_start(struct ifnet *);
+void txp_stop(struct txp_softc *);
+void txp_init(struct txp_softc *);
+void txp_watchdog(struct ifnet *);
 
-int txp_chip_init __P((struct txp_softc *));
-int txp_reset_adapter __P((struct txp_softc *));
-int txp_download_fw __P((struct txp_softc *));
-int txp_download_fw_wait __P((struct txp_softc *));
-int txp_download_fw_section __P((struct txp_softc *,
-    struct txp_fw_section_header *, int));
-int txp_alloc_rings __P((struct txp_softc *));
-void txp_dma_free __P((struct txp_softc *, struct txp_dma_alloc *));
-int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int));
-void txp_set_filter __P((struct txp_softc *));
+int txp_chip_init(struct txp_softc *);
+int txp_reset_adapter(struct txp_softc *);
+int txp_download_fw(struct txp_softc *);
+int txp_download_fw_wait(struct txp_softc *);
+int txp_download_fw_section(struct txp_softc *,
+    struct txp_fw_section_header *, int);
+int txp_alloc_rings(struct txp_softc *);
+void txp_dma_free(struct txp_softc *, struct txp_dma_alloc *);
+int txp_dma_malloc(struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int);
+void txp_set_filter(struct txp_softc *);
 
-int txp_cmd_desc_numfree __P((struct txp_softc *));
-int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
-    u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int));
-int txp_command2 __P((struct txp_softc *, u_int16_t, u_int16_t,
+int txp_cmd_desc_numfree(struct txp_softc *);
+int txp_command(struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
+    u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int);
+int txp_command2(struct txp_softc *, u_int16_t, u_int16_t,
     u_int32_t, u_int32_t, struct txp_ext_desc *, u_int8_t,
-    struct txp_rsp_desc **, int));
-int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
-    struct txp_rsp_desc **));
-void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *,
-    struct txp_rsp_desc *));
-void txp_capabilities __P((struct txp_softc *));
+    struct txp_rsp_desc **, int);
+int txp_response(struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
+    struct txp_rsp_desc **);
+void txp_rsp_fixup(struct txp_softc *, struct txp_rsp_desc *,
+    struct txp_rsp_desc *);
+void txp_capabilities(struct txp_softc *);
 
-void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
-int txp_ifmedia_upd __P((struct ifnet *));
-void txp_show_descriptor __P((void *));
-void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *,
-    struct txp_dma_alloc *));
-void txp_rxbuf_reclaim __P((struct txp_softc *));
-void txp_rx_reclaim __P((struct txp_softc *, struct txp_rx_ring *,
-    struct txp_dma_alloc *));
+void txp_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+int txp_ifmedia_upd(struct ifnet *);
+void txp_show_descriptor(void *);
+void txp_tx_reclaim(struct txp_softc *, struct txp_tx_ring *,
+    struct txp_dma_alloc *);
+void txp_rxbuf_reclaim(struct txp_softc *);
+void txp_rx_reclaim(struct txp_softc *, struct txp_rx_ring *,
+    struct txp_dma_alloc *);
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,

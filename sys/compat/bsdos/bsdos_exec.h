@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsdos_exec.h,v 1.1 1997/09/02 08:54:12 downsj Exp $	*/
+/*	$OpenBSD: bsdos_exec.h,v 1.2 2002/03/14 01:26:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,6 +42,6 @@
 
 #define	BSDOS_AOUT_HDR_SIZE	sizeof(struct exec)
 
-int exec_bsdos_aout_makecmds __P((struct proc *, struct exec_package *));
+int exec_bsdos_aout_makecmds(struct proc *, struct exec_package *);
 
 #endif /* !_BSDOS_EXEC_H */

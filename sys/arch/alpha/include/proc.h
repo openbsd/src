@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.6 2002/03/12 11:58:14 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.7 2002/03/14 01:26:27 millert Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -50,5 +50,5 @@ struct mdproc {
 #define MDP_STEP2	0x0003		/* Single step branch */
 
 #ifdef _KERNEL
-void switch_exit __P((struct proc *));
+void switch_exit(struct proc *);
 #endif

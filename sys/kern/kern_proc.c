@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.12 2002/01/25 15:00:26 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.13 2002/03/14 01:27:04 millert Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -92,9 +92,9 @@ struct pool pcred_pool;
 struct simplelock deadproc_slock;
 struct proclist deadproc;		/* dead, but not yet undead */
 
-static void orphanpg __P((struct pgrp *));
+static void orphanpg(struct pgrp *);
 #ifdef DEBUG
-void pgrpdump __P((void));
+void pgrpdump(void);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.10 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.11 2002/03/14 01:27:01 millert Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,10 +106,10 @@ int cnw_domain = CNW_DOMAIN;		/* Domain */
 int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
 
 
-int	cnw_match __P((struct device *, void *, void *));
-void	cnw_attach __P((struct device *, struct device *, void *));
-int	cnw_detach __P((struct device *, int));
-int	cnw_activate __P((struct device *, enum devact));
+int	cnw_match(struct device *, void *, void *);
+void	cnw_attach(struct device *, struct device *, void *);
+int	cnw_detach(struct device *, int);
+int	cnw_activate(struct device *, enum devact);
 
 struct cnw_softc {
 	struct device sc_dev;		    /* Device glue (must be first) */
@@ -140,25 +140,25 @@ struct cfdriver cnw_cd = {
 	NULL, "cnw", DV_IFNET
 };
 
-void cnw_reset __P((struct cnw_softc *));
-void cnw_init __P((struct cnw_softc *));
-int cnw_enable __P((struct cnw_softc *sc));
-void cnw_disable __P((struct cnw_softc *sc));
-void cnw_config __P((struct cnw_softc *sc, u_int8_t *));
-void cnw_start __P((struct ifnet *));
-void cnw_transmit __P((struct cnw_softc *, struct mbuf *));
-struct mbuf *cnw_read __P((struct cnw_softc *));
-void cnw_recv __P((struct cnw_softc *));
-int cnw_intr __P((void *arg));
-int cnw_ioctl __P((struct ifnet *, u_long, caddr_t));
-void cnw_watchdog __P((struct ifnet *));
+void cnw_reset(struct cnw_softc *);
+void cnw_init(struct cnw_softc *);
+int cnw_enable(struct cnw_softc *sc);
+void cnw_disable(struct cnw_softc *sc);
+void cnw_config(struct cnw_softc *sc, u_int8_t *);
+void cnw_start(struct ifnet *);
+void cnw_transmit(struct cnw_softc *, struct mbuf *);
+struct mbuf *cnw_read(struct cnw_softc *);
+void cnw_recv(struct cnw_softc *);
+int cnw_intr(void *arg);
+int cnw_ioctl(struct ifnet *, u_long, caddr_t);
+void cnw_watchdog(struct ifnet *);
 
 /* ---------------------------------------------------------------- */
 
 /* Help routines */
-static int wait_WOC __P((struct cnw_softc *, int));
-static int read16 __P((struct cnw_softc *, int));
-static int cnw_cmd __P((struct cnw_softc *, int, int, int, int));
+static int wait_WOC(struct cnw_softc *, int);
+static int read16(struct cnw_softc *, int);
+static int cnw_cmd(struct cnw_softc *, int, int, int, int);
 
 /* 
  * Wait until the WOC (Write Operation Complete) bit in the 

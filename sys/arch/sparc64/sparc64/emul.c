@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -57,13 +57,13 @@
 #define IPR(tf, i)	((int32_t *)(u_long)tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
-static __inline int readgpreg __P((struct trapframe64 *, int, void *));
-static __inline int readfpreg __P((struct proc *, int, void *));
-static __inline int writegpreg __P((struct trapframe64 *, int, const void *));
-static __inline int writefpreg __P((struct proc *, int, const void *));
-static __inline int decodeaddr __P((struct trapframe64 *, union instr *, void *));
-static int muldiv __P((struct trapframe64 *, union instr *, int32_t *, int32_t *,
-    int32_t *));
+static __inline int readgpreg(struct trapframe64 *, int, void *);
+static __inline int readfpreg(struct proc *, int, void *);
+static __inline int writegpreg(struct trapframe64 *, int, const void *);
+static __inline int writefpreg(struct proc *, int, const void *);
+static __inline int decodeaddr(struct trapframe64 *, union instr *, void *);
+static int muldiv(struct trapframe64 *, union instr *, int32_t *, int32_t *,
+    int32_t *);
 
 #define	REGNAME(i)	"goli"[i >> 3], i & 7
 

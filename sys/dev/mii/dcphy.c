@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.5 2001/04/02 23:01:54 aaron Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.6 2002/03/14 01:26:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -85,8 +85,8 @@
  */
 #define COMPAQ_PRESARIO_ID	0xb0bb0e11
 
-int	dcphy_match	__P((struct device *, void *, void *));
-void	dcphy_attach	__P((struct device *, struct device *, void *));
+int	dcphy_match(struct device *, void *, void *);
+void	dcphy_attach(struct device *, struct device *, void *);
 
 struct cfattach dcphy_ca = {
 	sizeof(struct mii_softc), dcphy_match, dcphy_attach, mii_phy_detach,
@@ -97,10 +97,10 @@ struct cfdriver dcphy_cd = {
 	NULL, "dcphy", DV_DULL
 };
 
-int	dcphy_service	__P((struct mii_softc *, struct mii_data *, int));
-void	dcphy_status	__P((struct mii_softc *));
-int	dcphy_auto	__P((struct mii_softc *, int));
-void	dcphy_reset	__P((struct mii_softc *));
+int	dcphy_service(struct mii_softc *, struct mii_data *, int);
+void	dcphy_status(struct mii_softc *);
+int	dcphy_auto(struct mii_softc *, int);
+void	dcphy_reset(struct mii_softc *);
 
 int
 dcphy_match(parent, match, aux)

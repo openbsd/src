@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_exec.c,v 1.3 2002/01/22 21:50:49 ericj Exp $ */
+/* $OpenBSD: osf1_exec.c,v 1.4 2002/03/14 01:26:50 millert Exp $ */
 /* $NetBSD$ */
 
 /*
@@ -70,8 +70,8 @@ static int osf1_exec_ecoff_dynamic(struct proc *, struct exec_package *);
 #define MAX_AUX_ENTRIES                4        /* max we'll ever push (right now) */
 
 extern struct sysent osf1_sysent[];
-extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
-					u_long, register_t *));
+extern void cpu_exec_ecoff_setregs(struct proc *, struct exec_package *,
+					u_long, register_t *);
 extern char osf1_sigcode[], osf1_esigcode[];
 
 struct emul emul_osf1 = {

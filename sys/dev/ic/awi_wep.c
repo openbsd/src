@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.7 2002/02/18 23:07:19 mickey Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.8 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -131,12 +131,12 @@ arc4_encrypt(void *ctx, u_int8_t *dst, u_int8_t *src, int len)
 }
 #endif
 
-static void awi_crc_init __P((void));
-static u_int32_t awi_crc_update __P((u_int32_t crc, u_int8_t *buf, int len));
+static void awi_crc_init(void);
+static u_int32_t awi_crc_update(u_int32_t crc, u_int8_t *buf, int len);
 
-static int awi_null_ctxlen __P((void));
-static void awi_null_setkey __P((void *ctx, u_int8_t *key, int keylen));
-static void awi_null_copy __P((void *ctx, u_int8_t *dst, u_int8_t *src, int len));
+static int awi_null_ctxlen(void);
+static void awi_null_setkey(void *ctx, u_int8_t *key, int keylen);
+static void awi_null_copy(void *ctx, u_int8_t *dst, u_int8_t *src, int len);
 
 /* XXX: the order should be known to wiconfig/user */
 

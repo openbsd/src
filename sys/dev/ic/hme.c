@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.13 2002/02/18 22:48:03 mickey Exp $	*/
+/*	$OpenBSD: hme.c,v 1.14 2002/03/14 01:26:54 millert Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -92,31 +92,31 @@ struct cfdriver hme_cd = {
 
 #define	HME_RX_OFFSET	2
 
-void		hme_start __P((struct ifnet *));
-void		hme_stop __P((struct hme_softc *));
-int		hme_ioctl __P((struct ifnet *, u_long, caddr_t));
-void		hme_tick __P((void *));
-void		hme_watchdog __P((struct ifnet *));
-void		hme_shutdown __P((void *));
-void		hme_init __P((struct hme_softc *));
-void		hme_meminit __P((struct hme_softc *));
-void		hme_mifinit __P((struct hme_softc *));
-void		hme_reset __P((struct hme_softc *));
-void		hme_setladrf __P((struct hme_softc *));
-int		hme_newbuf __P((struct hme_softc *, struct hme_sxd *, int));
-int		hme_encap __P((struct hme_softc *, struct mbuf *, int *));
+void		hme_start(struct ifnet *);
+void		hme_stop(struct hme_softc *);
+int		hme_ioctl(struct ifnet *, u_long, caddr_t);
+void		hme_tick(void *);
+void		hme_watchdog(struct ifnet *);
+void		hme_shutdown(void *);
+void		hme_init(struct hme_softc *);
+void		hme_meminit(struct hme_softc *);
+void		hme_mifinit(struct hme_softc *);
+void		hme_reset(struct hme_softc *);
+void		hme_setladrf(struct hme_softc *);
+int		hme_newbuf(struct hme_softc *, struct hme_sxd *, int);
+int		hme_encap(struct hme_softc *, struct mbuf *, int *);
 
 /* MII methods & callbacks */
-static int	hme_mii_readreg __P((struct device *, int, int));
-static void	hme_mii_writereg __P((struct device *, int, int, int));
-static void	hme_mii_statchg __P((struct device *));
+static int	hme_mii_readreg(struct device *, int, int);
+static void	hme_mii_writereg(struct device *, int, int, int);
+static void	hme_mii_statchg(struct device *);
 
-int		hme_mediachange __P((struct ifnet *));
-void		hme_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int		hme_mediachange(struct ifnet *);
+void		hme_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int		hme_eint __P((struct hme_softc *, u_int));
-int		hme_rint __P((struct hme_softc *));
-int		hme_tint __P((struct hme_softc *));
+int		hme_eint(struct hme_softc *, u_int);
+int		hme_rint(struct hme_softc *);
+int		hme_tint(struct hme_softc *);
 
 void
 hme_config(sc)

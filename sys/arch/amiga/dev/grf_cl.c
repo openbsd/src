@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.15 2001/09/13 13:20:22 jj Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.16 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -83,41 +83,41 @@
 #include <amiga/dev/grf_clreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	cl_mondefok __P((struct grfvideo_mode *));
-void	cl_boardinit __P((struct grf_softc *));
-void	cl_CompFQ __P((u_int, u_char *, u_char *, u_char *));
-int	cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int	cl_setvmode __P((struct grf_softc *, unsigned int));
-int	cl_toggle __P((struct grf_softc *, unsigned short));
-int	cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int	cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cl_mondefok(struct grfvideo_mode *);
+void	cl_boardinit(struct grf_softc *);
+void	cl_CompFQ(u_int, u_char *, u_char *, u_char *);
+int	cl_getvmode(struct grf_softc *, struct grfvideo_mode *);
+int	cl_setvmode(struct grf_softc *, unsigned int);
+int	cl_toggle(struct grf_softc *, unsigned short);
+int	cl_getcmap(struct grf_softc *, struct grf_colormap *);
+int	cl_putcmap(struct grf_softc *, struct grf_colormap *);
 #ifndef CL5426CONSOLE
-void	cl_off __P((struct grf_softc *));
+void	cl_off(struct grf_softc *);
 #endif
-void	cl_inittextmode __P((struct grf_softc *));
-int	cl_ioctl __P((register struct grf_softc *, u_long, void *));
-int	cl_getmousepos __P((struct grf_softc *, struct grf_position *));
-int	cl_setmousepos __P((struct grf_softc *, struct grf_position *));
-int	cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int	cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int	cl_getspritemax __P((struct grf_softc *, struct grf_position *));
-int	cl_blank __P((struct grf_softc *, int *));
-int	cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-void	cl_writesprpos __P((volatile char *, short, short));
-void	writeshifted __P((volatile char *, char, char));
+void	cl_inittextmode(struct grf_softc *);
+int	cl_ioctl(register struct grf_softc *, u_long, void *);
+int	cl_getmousepos(struct grf_softc *, struct grf_position *);
+int	cl_setmousepos(struct grf_softc *, struct grf_position *);
+int	cl_setspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+int	cl_getspriteinfo(struct grf_softc *, struct grf_spriteinfo *);
+int	cl_getspritemax(struct grf_softc *, struct grf_position *);
+int	cl_blank(struct grf_softc *, int *);
+int	cl_setmonitor(struct grf_softc *, struct grfvideo_mode *);
+void	cl_writesprpos(volatile char *, short, short);
+void	writeshifted(volatile char *, char, char);
 
-void	RegWakeup __P((volatile u_char *));
-void	RegOnpass __P((volatile u_char *));
-void	RegOffpass __P((volatile u_char *));
+void	RegWakeup(volatile u_char *);
+void	RegOnpass(volatile u_char *);
+void	RegOffpass(volatile u_char *);
 
-void	grfclattach __P((struct device *, struct device *, void *));
-int	grfclprint __P((void *, const char *));
-int	grfclmatch __P((struct device *, void *, void *));
-void	cl_memset __P((unsigned char *, unsigned char, int));
+void	grfclattach(struct device *, struct device *, void *);
+int	grfclprint(void *, const char *);
+int	grfclmatch(struct device *, void *, void *);
+void	cl_memset(unsigned char *, unsigned char, int);
 
 /* Handle rgb format */
-void 	cl_setcolor __P((volatile u_char *, u_char, u_char, u_char));
-void 	cl_getcolor __P((volatile u_char *, u_char *, u_char *, u_char *));
+void 	cl_setcolor(volatile u_char *, u_char, u_char, u_char);
+void 	cl_getcolor(volatile u_char *, u_char *, u_char *, u_char *);
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.

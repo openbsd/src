@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.2 1997/09/14 07:02:03 downsj Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.3 2002/03/14 01:26:31 millert Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ extern	u_int bootdev;
 extern	char *getmachineid();
 
 extern	int userom;
-extern	void romputchar __P((int));
+extern	void romputchar(int);
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
@@ -82,7 +82,7 @@ struct grfinfo {
  * Switch we use to set punit in devopen.
  */
 struct punitsw {
-	int	(*p_punit) __P((int, int, int *));
+	int	(*p_punit)(int, int, int *);
 };
 extern	struct punitsw punitsw[];
 extern	int npunit;

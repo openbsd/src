@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.4 1998/02/05 16:49:23 deraadt Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.5 2002/03/14 01:26:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -67,8 +67,8 @@ extern int	db_max_line;
 extern int	db_panic;
 extern int	db_console;
 
-int	ddb_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *));
+int	ddb_sysctl(int *, u_int, void *, size_t *, void *, size_t,
+		       struct proc *);
 #endif
 
 #endif /* _DDB_DB_VAR_H_ */

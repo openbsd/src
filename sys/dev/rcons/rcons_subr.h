@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcons_subr.h,v 1.2 1997/11/07 08:07:42 niklas Exp $ */
+/*	$OpenBSD: rcons_subr.h,v 1.3 2002/03/14 01:27:02 millert Exp $ */
 /*	$NetBSD: rcons_subr.h,v 1.1 1995/10/04 23:57:28 pk Exp $ */
 
 /*
@@ -45,18 +45,18 @@
  *	extracted from: @(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
 
-extern void rcons_puts __P((struct rconsole *, unsigned char *, int));
-extern void rcons_font __P((struct rconsole *));
-extern void rcons_text __P((struct rconsole *, unsigned char *, int));
-extern void rcons_pctrl __P((struct rconsole *, int));
-extern void rcons_esc __P((struct rconsole *, int));
-extern void rcons_doesc __P((struct rconsole *, int));
-extern void rcons_cursor __P((struct rconsole *));
-extern void rcons_invert __P((struct rconsole *, int));
-extern void rcons_clear2eop __P((struct rconsole *));
-extern void rcons_clear2eol __P((struct rconsole *));
-extern void rcons_scroll __P((struct rconsole *, int));
-extern void rcons_delchar __P((struct rconsole *, int));
-extern void rcons_delline __P((struct rconsole *, int));
-extern void rcons_insertchar __P((struct rconsole *, int));
-extern void rcons_insertline __P((struct rconsole *, int));
+extern void rcons_puts(struct rconsole *, unsigned char *, int);
+extern void rcons_font(struct rconsole *);
+extern void rcons_text(struct rconsole *, unsigned char *, int);
+extern void rcons_pctrl(struct rconsole *, int);
+extern void rcons_esc(struct rconsole *, int);
+extern void rcons_doesc(struct rconsole *, int);
+extern void rcons_cursor(struct rconsole *);
+extern void rcons_invert(struct rconsole *, int);
+extern void rcons_clear2eop(struct rconsole *);
+extern void rcons_clear2eol(struct rconsole *);
+extern void rcons_scroll(struct rconsole *, int);
+extern void rcons_delchar(struct rconsole *, int);
+extern void rcons_delline(struct rconsole *, int);
+extern void rcons_insertchar(struct rconsole *, int);
+extern void rcons_insertline(struct rconsole *, int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: psm_intelli.c,v 1.3 2001/02/19 02:27:06 jbm Exp $ */
+/* $OpenBSD: psm_intelli.c,v 1.4 2002/03/14 01:27:00 millert Exp $ */
 /* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -52,17 +52,17 @@ struct pmsi_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-int pmsiprobe __P((struct device *, void *, void *));
-void pmsiattach __P((struct device *, struct device *, void *));
-void pmsiinput __P((void *, int));
+int pmsiprobe(struct device *, void *, void *);
+void pmsiattach(struct device *, struct device *, void *);
+void pmsiinput(void *, int);
 
 struct cfattach pmsi_ca = {
 	sizeof(struct pmsi_softc), pmsiprobe, pmsiattach,
 };
 
-int	pmsi_enable __P((void *));
-int	pmsi_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void	pmsi_disable __P((void *));
+int	pmsi_enable(void *);
+int	pmsi_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	pmsi_disable(void *);
 
 const struct wsmouse_accessops pmsi_accessops = {
 	pmsi_enable,
@@ -70,7 +70,7 @@ const struct wsmouse_accessops pmsi_accessops = {
 	pmsi_disable,
 };
 
-static int pmsi_setintellimode __P((pckbc_tag_t, pckbc_slot_t));
+static int pmsi_setintellimode(pckbc_tag_t, pckbc_slot_t);
 
 static int
 pmsi_setintellimode(tag, slot)

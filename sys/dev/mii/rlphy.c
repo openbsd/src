@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.6 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -52,8 +52,8 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	rlphymatch __P((struct device *, void *, void *));
-void	rlphyattach __P((struct device *, struct device *, void *));
+int	rlphymatch(struct device *, void *, void *);
+void	rlphyattach(struct device *, struct device *, void *);
 
 struct cfattach rlphy_ca = {
 	sizeof(struct mii_softc), rlphymatch, rlphyattach, mii_phy_detach,
@@ -64,8 +64,8 @@ struct cfdriver rlphy_cd = {
 	NULL, "rlphy", DV_DULL
 };
 
-int	rlphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	rlphy_reset __P((struct mii_softc *));
+int	rlphy_service(struct mii_softc *, struct mii_data *, int);
+void	rlphy_reset(struct mii_softc *);
 
 int
 rlphymatch(parent, match, aux)

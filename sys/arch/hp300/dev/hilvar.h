@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.4 1997/04/16 11:56:08 downsj Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.5 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: hilvar.h,v 1.14 1997/04/01 19:29:10 scottr Exp $	*/
 
 /*
@@ -120,26 +120,26 @@ struct hil_softc {
 #define KBD_AR2		0x04		/* keyboard auto-repeat rate 2 */
 
 #ifdef _KERNEL
-void	kbdbell __P((int));
-void	kbdenable __P((int));
-void	kbddisable __P((int));
-int	kbdgetc __P((int *));
-void	kbdcninit __P((void));
+void	kbdbell(int);
+void	kbdenable(int);
+void	kbddisable(int);
+int	kbdgetc(int *);
+void	kbdcninit(void);
 
-int	kbdnmi __P((void));
+int	kbdnmi(void);
 
-void	hilsoftinit __P((int, struct hil_dev *));
-void	hilinit __P((int, struct hil_dev *));
+void	hilsoftinit(int, struct hil_dev *);
+void	hilinit(int, struct hil_dev *);
 
-void	send_hil_cmd __P((struct hil_dev *, u_char,
-				u_char *, u_char, u_char *));
-void	send_hildev_cmd __P((struct hil_softc *, char, char));
+void	send_hil_cmd(struct hil_dev *, u_char,
+				u_char *, u_char, u_char *);
+void	send_hildev_cmd(struct hil_softc *, char, char);
 
-void	polloff __P((struct hil_dev *));
-void	pollon __P((struct hil_dev *));
+void	polloff(struct hil_dev *);
+void	pollon(struct hil_dev *);
 
 #ifdef COMPAT_HPUX
-int	hpuxhilioctl __P((dev_t, int, caddr_t, int));
-int	hildevno __P((dev_t));
+int	hpuxhilioctl(dev_t, int, caddr_t, int);
+int	hildevno(dev_t);
 #endif /* COMPAT_HPUX */
 #endif /* _KERNEL */

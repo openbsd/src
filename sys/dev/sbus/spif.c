@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.2 2002/01/13 04:13:53 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -63,42 +63,42 @@
 #define	CLR(t, f)	((t) &= ~(f))
 #define	ISSET(t, f)	((t) & (f))
 
-int	spifmatch	__P((struct device *, void *, void *));
-void	spifattach	__P((struct device *, struct device *, void *));
+int	spifmatch(struct device *, void *, void *);
+void	spifattach(struct device *, struct device *, void *);
 
-int	sttymatch	__P((struct device *, void *, void *));
-void	sttyattach	__P((struct device *, struct device *, void *));
-int	sttyopen	__P((dev_t, int, int, struct proc *));
-int	sttyclose	__P((dev_t, int, int, struct proc *));
-int	sttyread	__P((dev_t, struct uio *, int));
-int	sttywrite	__P((dev_t, struct uio *, int));
-int	sttyioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	sttystop	__P((struct tty *, int));
+int	sttymatch(struct device *, void *, void *);
+void	sttyattach(struct device *, struct device *, void *);
+int	sttyopen(dev_t, int, int, struct proc *);
+int	sttyclose(dev_t, int, int, struct proc *);
+int	sttyread(dev_t, struct uio *, int);
+int	sttywrite(dev_t, struct uio *, int);
+int	sttyioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	sttystop(struct tty *, int);
 
-int	spifstcintr		__P((void *));
-int	spifstcintr_mx		__P((struct spif_softc *, int *));
-int	spifstcintr_tx		__P((struct spif_softc *, int *));
-int	spifstcintr_rx		__P((struct spif_softc *, int *));
-int	spifstcintr_rxexception	__P((struct spif_softc *, int *));
-void	spifsoftintr		__P((void *));
+int	spifstcintr(void *);
+int	spifstcintr_mx(struct spif_softc *, int *);
+int	spifstcintr_tx(struct spif_softc *, int *);
+int	spifstcintr_rx(struct spif_softc *, int *);
+int	spifstcintr_rxexception(struct spif_softc *, int *);
+void	spifsoftintr(void *);
 
-int	stty_param	__P((struct tty *, struct termios *));
-struct tty *sttytty	__P((dev_t));
-int	stty_modem_control __P((struct stty_port *, int, int));
-void	stty_write_ccr __P((struct spif_softc *, u_int8_t));
-int	stty_compute_baud __P((speed_t, int, u_int8_t *, u_int8_t *));
-void	stty_start	__P((struct tty *));
+int	stty_param(struct tty *, struct termios *);
+struct tty *sttytty(dev_t);
+int	stty_modem_control(struct stty_port *, int, int);
+void	stty_write_ccr(struct spif_softc *, u_int8_t);
+int	stty_compute_baud(speed_t, int, u_int8_t *, u_int8_t *);
+void	stty_start(struct tty *);
 
-int	sbppmatch	__P((struct device *, void *, void *));
-void	sbppattach	__P((struct device *, struct device *, void *));
-int	sbppopen	__P((dev_t, int, int, struct proc *));
-int	sbppclose	__P((dev_t, int, int, struct proc *));
-int	sbppread	__P((dev_t, struct uio *, int));
-int	sbppwrite	__P((dev_t, struct uio *, int));
-int	sbpp_rw	__P((dev_t, struct uio *));
-int	spifppcintr	__P((void *));
-int	sbppselect	__P((dev_t, int, struct proc *));
-int	sbppioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
+int	sbppmatch(struct device *, void *, void *);
+void	sbppattach(struct device *, struct device *, void *);
+int	sbppopen(dev_t, int, int, struct proc *);
+int	sbppclose(dev_t, int, int, struct proc *);
+int	sbppread(dev_t, struct uio *, int);
+int	sbppwrite(dev_t, struct uio *, int);
+int	sbpp_rw(dev_t, struct uio *);
+int	spifppcintr(void *);
+int	sbppselect(dev_t, int, struct proc *);
+int	sbppioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 struct cfattach spif_ca = {
 	sizeof (struct spif_softc), spifmatch, spifattach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.9 2001/03/12 05:37:00 aaron Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.10 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -130,8 +130,8 @@ struct we_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-int	we_probe __P((struct device *, void *, void *));
-void	we_attach __P((struct device *, struct device *, void *));
+int	we_probe(struct device *, void *, void *);
+void	we_attach(struct device *, struct device *, void *);
 
 struct cfattach we_isa_ca = {
 	sizeof(struct we_softc), we_probe, we_attach
@@ -151,23 +151,23 @@ struct cfdriver we_cd = {
 };
 #endif
 
-const char *we_params __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *,
-	    bus_size_t *, int *, int *));
-void	we_set_media __P((struct we_softc *, int));
+const char *we_params(bus_space_tag_t, bus_space_handle_t, u_int8_t *,
+	    bus_size_t *, int *, int *);
+void	we_set_media(struct we_softc *, int);
 
-void	we_media_init __P((struct dp8390_softc *));
+void	we_media_init(struct dp8390_softc *);
 
-int	we_mediachange __P((struct dp8390_softc *));
-void	we_mediastatus __P((struct dp8390_softc *, struct ifmediareq *));
+int	we_mediachange(struct dp8390_softc *);
+void	we_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
-void	we_recv_int __P((struct dp8390_softc *));
-void	we_init_card __P((struct dp8390_softc *));
-int	we_write_mbuf __P((struct dp8390_softc *, struct mbuf *, int));
-int	we_ring_copy __P((struct dp8390_softc *, int, caddr_t, u_short));
-void	we_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
-int	we_test_mem __P((struct dp8390_softc *));
+void	we_recv_int(struct dp8390_softc *);
+void	we_init_card(struct dp8390_softc *);
+int	we_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+int	we_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+void	we_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
+int	we_test_mem(struct dp8390_softc *);
 
-__inline void we_readmem __P((struct we_softc *, int, u_int8_t *, int));
+__inline void we_readmem(struct we_softc *, int, u_int8_t *, int);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,

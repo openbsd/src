@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2001/12/06 23:45:23 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2002/03/14 01:26:34 millert Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -71,60 +71,60 @@
 #include <ddb/db_output.h>
 #include <m68k/m68k/db_disasm.h>
 
-void get_modregstr __P((dis_buffer_t *, int, int, int, int));
-void get_immed __P((dis_buffer_t *, int));
-void get_fpustdGEN __P((dis_buffer_t *, u_short, const char *));
-void addstr __P((dis_buffer_t *, const char *s));
-void prints __P((dis_buffer_t *, int, int));
-void printu __P((dis_buffer_t *, u_int, int));
-void prints_wb __P((dis_buffer_t *, int, int, int));
-void printu_wb __P((dis_buffer_t *, u_int, int, int));
-void prints_bf __P((dis_buffer_t *, int, int, int));
-void printu_bf __P((dis_buffer_t *, u_int, int, int));
-void iaddstr __P((dis_buffer_t *, const char *s));
-void iprints __P((dis_buffer_t *, int, int));
-void iprintu __P((dis_buffer_t *, u_int, int));
-void iprints_wb __P((dis_buffer_t *, int, int, int));
-void iprintu_wb __P((dis_buffer_t *, u_int, int, int));
-void make_cond __P((dis_buffer_t *, int , char *));
-void print_fcond __P((dis_buffer_t *, char));
-void print_mcond __P((dis_buffer_t *, char));
-void print_disp __P((dis_buffer_t *, int, int, int));
-void print_addr __P((dis_buffer_t *, u_long));
-void print_reglist __P((dis_buffer_t *, int, u_short));
-void print_freglist __P((dis_buffer_t *, int, u_short, int));
-void print_fcode __P((dis_buffer_t *, u_short));
+void get_modregstr(dis_buffer_t *, int, int, int, int);
+void get_immed(dis_buffer_t *, int);
+void get_fpustdGEN(dis_buffer_t *, u_short, const char *);
+void addstr(dis_buffer_t *, const char *s);
+void prints(dis_buffer_t *, int, int);
+void printu(dis_buffer_t *, u_int, int);
+void prints_wb(dis_buffer_t *, int, int, int);
+void printu_wb(dis_buffer_t *, u_int, int, int);
+void prints_bf(dis_buffer_t *, int, int, int);
+void printu_bf(dis_buffer_t *, u_int, int, int);
+void iaddstr(dis_buffer_t *, const char *s);
+void iprints(dis_buffer_t *, int, int);
+void iprintu(dis_buffer_t *, u_int, int);
+void iprints_wb(dis_buffer_t *, int, int, int);
+void iprintu_wb(dis_buffer_t *, u_int, int, int);
+void make_cond(dis_buffer_t *, int , char *);
+void print_fcond(dis_buffer_t *, char);
+void print_mcond(dis_buffer_t *, char);
+void print_disp(dis_buffer_t *, int, int, int);
+void print_addr(dis_buffer_t *, u_long);
+void print_reglist(dis_buffer_t *, int, u_short);
+void print_freglist(dis_buffer_t *, int, u_short, int);
+void print_fcode(dis_buffer_t *, u_short);
 
 /* groups */
-void opcode_bitmanip __P((dis_buffer_t *, u_short));
-void opcode_move __P((dis_buffer_t *, u_short));
-void opcode_misc __P((dis_buffer_t *, u_short));
-void opcode_branch __P((dis_buffer_t *, u_short));
-void opcode_coproc __P((dis_buffer_t *, u_short));
-void opcode_0101 __P((dis_buffer_t *, u_short));
-void opcode_1000 __P((dis_buffer_t *, u_short));
-void opcode_addsub __P((dis_buffer_t *, u_short));
-void opcode_1010 __P((dis_buffer_t *, u_short));
-void opcode_1011 __P((dis_buffer_t *, u_short));
-void opcode_1100 __P((dis_buffer_t *, u_short));
-void opcode_1110 __P((dis_buffer_t *, u_short));
-void opcode_fpu __P((dis_buffer_t *, u_short));
-void opcode_mmu __P((dis_buffer_t *, u_short));
-void opcode_mmu040 __P((dis_buffer_t *, u_short));
-void opcode_move16 __P((dis_buffer_t *, u_short));
+void opcode_bitmanip(dis_buffer_t *, u_short);
+void opcode_move(dis_buffer_t *, u_short);
+void opcode_misc(dis_buffer_t *, u_short);
+void opcode_branch(dis_buffer_t *, u_short);
+void opcode_coproc(dis_buffer_t *, u_short);
+void opcode_0101(dis_buffer_t *, u_short);
+void opcode_1000(dis_buffer_t *, u_short);
+void opcode_addsub(dis_buffer_t *, u_short);
+void opcode_1010(dis_buffer_t *, u_short);
+void opcode_1011(dis_buffer_t *, u_short);
+void opcode_1100(dis_buffer_t *, u_short);
+void opcode_1110(dis_buffer_t *, u_short);
+void opcode_fpu(dis_buffer_t *, u_short);
+void opcode_mmu(dis_buffer_t *, u_short);
+void opcode_mmu040(dis_buffer_t *, u_short);
+void opcode_move16(dis_buffer_t *, u_short);
 
 /* subs of groups */
-void opcode_movec __P((dis_buffer_t *, u_short));
-void opcode_divmul __P((dis_buffer_t *, u_short));
-void opcode_movem __P((dis_buffer_t *, u_short));
-void opcode_fmove_ext __P((dis_buffer_t *, u_short, u_short));
-void opcode_pmove __P((dis_buffer_t *, u_short, u_short));
-void opcode_pflush __P((dis_buffer_t *, u_short, u_short));
+void opcode_movec(dis_buffer_t *, u_short);
+void opcode_divmul(dis_buffer_t *, u_short);
+void opcode_movem(dis_buffer_t *, u_short);
+void opcode_fmove_ext(dis_buffer_t *, u_short, u_short);
+void opcode_pmove(dis_buffer_t *, u_short, u_short);
+void opcode_pflush(dis_buffer_t *, u_short, u_short);
 
 #define addchar(ch) (*dbuf->casm++ = ch)
 #define iaddchar(ch) (*dbuf->cinfo++ = ch)
 
-typedef void dis_func_t __P((dis_buffer_t *, u_short));
+typedef void dis_func_t(dis_buffer_t *, u_short);
 
 dis_func_t *const opcode_map[16] = {
 	opcode_bitmanip, opcode_move, opcode_move, opcode_move,

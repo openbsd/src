@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.13 2001/12/14 00:44:59 nate Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.14 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -66,9 +66,9 @@
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_kn20aa_init __P((void));
-static void dec_kn20aa_cons_init __P((void));
-static void dec_kn20aa_device_register __P((struct device *, void *));
+void dec_kn20aa_init(void);
+static void dec_kn20aa_cons_init(void);
+static void dec_kn20aa_device_register(struct device *, void *);
 
 const struct alpha_variation_table dec_kn20aa_variations[] = {
 	{ 0, "AlphaStation 500 or 600 (KN20AA)" },

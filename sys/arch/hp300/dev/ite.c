@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.13 2001/11/25 23:23:01 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.14 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: ite.c,v 1.38 1997/03/31 07:37:25 scottr Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ int	iteburst = 64;
 
 struct  ite_data *kbd_ite = NULL;
 
-int	itematch __P((struct device *, void *, void *));
-void	iteattach __P((struct device *, struct device *, void *));
+int	itematch(struct device *, void *, void *);
+void	iteattach(struct device *, struct device *, void *);
 
 struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
@@ -103,16 +103,16 @@ struct cfdriver ite_cd = {
  */
 struct	ite_data ite_cn;
 
-void	iteinit __P((struct ite_data *));
-void	iteputchar __P((int, struct ite_data *));
-void	itecheckwrap __P((struct ite_data *, struct itesw *));
-void	ite_dchar __P((struct ite_data *, struct itesw *));
-void	ite_ichar __P((struct ite_data *, struct itesw *));
-void	ite_dline __P((struct ite_data *, struct itesw *));
-void	ite_iline __P((struct ite_data *, struct itesw *));
-void	ite_clrtoeol __P((struct ite_data *, struct itesw *, int, int));
-void	ite_clrtoeos __P((struct ite_data *, struct itesw *));
-void	itestart __P((struct tty *));
+void	iteinit(struct ite_data *);
+void	iteputchar(int, struct ite_data *);
+void	itecheckwrap(struct ite_data *, struct itesw *);
+void	ite_dchar(struct ite_data *, struct itesw *);
+void	ite_ichar(struct ite_data *, struct itesw *);
+void	ite_dline(struct ite_data *, struct itesw *);
+void	ite_iline(struct ite_data *, struct itesw *);
+void	ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
+void	ite_clrtoeos(struct ite_data *, struct itesw *);
+void	itestart(struct tty *);
 
 /*
  * Primary attribute buffer to be used by the first bitmapped console

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 2002/03/07 18:08:08 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2002/03/14 01:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -47,121 +47,121 @@ typedef u_long bus_space_handle_t;
 struct hppa_bus_space_tag {
 	void *hbt_cookie;
 
-	int  (*hbt_map) __P((void *v, bus_addr_t addr, bus_size_t size,
-			     int cacheable, bus_space_handle_t *bshp));
-	void (*hbt_unmap) __P((void *v, bus_space_handle_t bsh,
-			       bus_size_t size));
-	int  (*hbt_subregion) __P((void *v, bus_space_handle_t bsh,
+	int  (*hbt_map)(void *v, bus_addr_t addr, bus_size_t size,
+			     int cacheable, bus_space_handle_t *bshp);
+	void (*hbt_unmap)(void *v, bus_space_handle_t bsh,
+			       bus_size_t size);
+	int  (*hbt_subregion)(void *v, bus_space_handle_t bsh,
 				   bus_size_t offset, bus_size_t size,
-				   bus_space_handle_t *nbshp));
-	int  (*hbt_alloc) __P((void *v, bus_addr_t rstart, bus_addr_t rend,
+				   bus_space_handle_t *nbshp);
+	int  (*hbt_alloc)(void *v, bus_addr_t rstart, bus_addr_t rend,
 			       bus_size_t size, bus_size_t align,
 			       bus_size_t boundary, int cacheable,
-			       bus_addr_t *addrp, bus_space_handle_t *bshp));
-	void (*hbt_free) __P((void *, bus_space_handle_t, bus_size_t));
-	void (*hbt_barrier) __P((void *v, bus_space_handle_t h,
-				 bus_size_t o, bus_size_t l, int op));
+			       bus_addr_t *addrp, bus_space_handle_t *bshp);
+	void (*hbt_free)(void *, bus_space_handle_t, bus_size_t);
+	void (*hbt_barrier)(void *v, bus_space_handle_t h,
+				 bus_size_t o, bus_size_t l, int op);
 
-	u_int8_t  (*hbt_r1) __P((void *, bus_space_handle_t, bus_size_t));
-	u_int16_t (*hbt_r2) __P((void *, bus_space_handle_t, bus_size_t));
-	u_int32_t (*hbt_r4) __P((void *, bus_space_handle_t, bus_size_t));
-	u_int64_t (*hbt_r8) __P((void *, bus_space_handle_t, bus_size_t));
+	u_int8_t  (*hbt_r1)(void *, bus_space_handle_t, bus_size_t);
+	u_int16_t (*hbt_r2)(void *, bus_space_handle_t, bus_size_t);
+	u_int32_t (*hbt_r4)(void *, bus_space_handle_t, bus_size_t);
+	u_int64_t (*hbt_r8)(void *, bus_space_handle_t, bus_size_t);
 
-	void (*hbt_w1)__P((void *, bus_space_handle_t, bus_size_t, u_int8_t));
-	void (*hbt_w2)__P((void *, bus_space_handle_t, bus_size_t, u_int16_t));
-	void (*hbt_w4)__P((void *, bus_space_handle_t, bus_size_t, u_int32_t));
-	void (*hbt_w8)__P((void *, bus_space_handle_t, bus_size_t, u_int64_t));
+	void (*hbt_w1)(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+	void (*hbt_w2)(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+	void (*hbt_w4)(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+	void (*hbt_w8)(void *, bus_space_handle_t, bus_size_t, u_int64_t);
 
-	void (*hbt_rm_1) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rm_2) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int16_t *a, bus_size_t c));
-	void (*hbt_rm_4) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int32_t *a, bus_size_t c));
-	void (*hbt_rm_8) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int64_t *a, bus_size_t c));
+	void (*hbt_rm_1)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rm_2)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int16_t *a, bus_size_t c);
+	void (*hbt_rm_4)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int32_t *a, bus_size_t c);
+	void (*hbt_rm_8)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int64_t *a, bus_size_t c);
 
-	void (*hbt_wm_1) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      const u_int8_t *a, bus_size_t c));
-	void (*hbt_wm_2) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      const u_int16_t *a, bus_size_t c));
-	void (*hbt_wm_4) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      const u_int32_t *a, bus_size_t c));
-	void (*hbt_wm_8) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      const u_int64_t *a, bus_size_t c));
+	void (*hbt_wm_1)(void *v, bus_space_handle_t h, bus_size_t o,
+			      const u_int8_t *a, bus_size_t c);
+	void (*hbt_wm_2)(void *v, bus_space_handle_t h, bus_size_t o,
+			      const u_int16_t *a, bus_size_t c);
+	void (*hbt_wm_4)(void *v, bus_space_handle_t h, bus_size_t o,
+			      const u_int32_t *a, bus_size_t c);
+	void (*hbt_wm_8)(void *v, bus_space_handle_t h, bus_size_t o,
+			      const u_int64_t *a, bus_size_t c);
 
-	void (*hbt_sm_1) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      u_int8_t  vv, bus_size_t c));
-	void (*hbt_sm_2) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      u_int16_t vv, bus_size_t c));
-	void (*hbt_sm_4) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      u_int32_t vv, bus_size_t c));
-	void (*hbt_sm_8) __P((void *v, bus_space_handle_t h, bus_size_t o,
-			      u_int64_t vv, bus_size_t c));
+	void (*hbt_sm_1)(void *v, bus_space_handle_t h, bus_size_t o,
+			      u_int8_t  vv, bus_size_t c);
+	void (*hbt_sm_2)(void *v, bus_space_handle_t h, bus_size_t o,
+			      u_int16_t vv, bus_size_t c);
+	void (*hbt_sm_4)(void *v, bus_space_handle_t h, bus_size_t o,
+			      u_int32_t vv, bus_size_t c);
+	void (*hbt_sm_8)(void *v, bus_space_handle_t h, bus_size_t o,
+			      u_int64_t vv, bus_size_t c);
 
-	void (*hbt_rrm_2) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rrm_4) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rrm_8) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
+	void (*hbt_rrm_2)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rrm_4)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rrm_8)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
 
-	void (*hbt_wrm_2) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
-	void (*hbt_wrm_4) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
-	void (*hbt_wrm_8) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
+	void (*hbt_wrm_2)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
+	void (*hbt_wrm_4)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
+	void (*hbt_wrm_8)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
 
-	void (*hbt_rr_1) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rr_2) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int16_t *a, bus_size_t c));
-	void (*hbt_rr_4) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int32_t *a, bus_size_t c));
-	void (*hbt_rr_8) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, u_int64_t *a, bus_size_t c));
+	void (*hbt_rr_1)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rr_2)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int16_t *a, bus_size_t c);
+	void (*hbt_rr_4)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int32_t *a, bus_size_t c);
+	void (*hbt_rr_8)(void *v, bus_space_handle_t h,
+			      bus_size_t o, u_int64_t *a, bus_size_t c);
 
-	void (*hbt_wr_1) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, const u_int8_t *a, bus_size_t c));
-	void (*hbt_wr_2) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, const u_int16_t *a, bus_size_t c));
-	void (*hbt_wr_4) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, const u_int32_t *a, bus_size_t c));
-	void (*hbt_wr_8) __P((void *v, bus_space_handle_t h,
-			      bus_size_t o, const u_int64_t *a, bus_size_t c));
+	void (*hbt_wr_1)(void *v, bus_space_handle_t h,
+			      bus_size_t o, const u_int8_t *a, bus_size_t c);
+	void (*hbt_wr_2)(void *v, bus_space_handle_t h,
+			      bus_size_t o, const u_int16_t *a, bus_size_t c);
+	void (*hbt_wr_4)(void *v, bus_space_handle_t h,
+			      bus_size_t o, const u_int32_t *a, bus_size_t c);
+	void (*hbt_wr_8)(void *v, bus_space_handle_t h,
+			      bus_size_t o, const u_int64_t *a, bus_size_t c);
 
-	void (*hbt_rrr_2) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rrr_4) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
-	void (*hbt_rrr_8) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t *a, bus_size_t c));
+	void (*hbt_rrr_2)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rrr_4)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
+	void (*hbt_rrr_8)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t *a, bus_size_t c);
 
-	void (*hbt_wrr_2) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
-	void (*hbt_wrr_4) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
-	void (*hbt_wrr_8) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, const u_int8_t *a, bus_size_t c));
+	void (*hbt_wrr_2)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
+	void (*hbt_wrr_4)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
+	void (*hbt_wrr_8)(void *v, bus_space_handle_t h,
+			       bus_size_t o, const u_int8_t *a, bus_size_t c);
 
-	void (*hbt_sr_1) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int8_t vv, bus_size_t c));
-	void (*hbt_sr_2) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int16_t vv, bus_size_t c));
-	void (*hbt_sr_4) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int32_t vv, bus_size_t c));
-	void (*hbt_sr_8) __P((void *v, bus_space_handle_t h,
-			       bus_size_t o, u_int64_t vv, bus_size_t c));
+	void (*hbt_sr_1)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int8_t vv, bus_size_t c);
+	void (*hbt_sr_2)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int16_t vv, bus_size_t c);
+	void (*hbt_sr_4)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int32_t vv, bus_size_t c);
+	void (*hbt_sr_8)(void *v, bus_space_handle_t h,
+			       bus_size_t o, u_int64_t vv, bus_size_t c);
 
-	void (*hbt_cp_1) __P((void *v, bus_space_handle_t h1, bus_size_t o1,
-			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c));
-	void (*hbt_cp_2) __P((void *v, bus_space_handle_t h1, bus_size_t o1,
-			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c));
-	void (*hbt_cp_4) __P((void *v, bus_space_handle_t h1, bus_size_t o1,
-			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c));
-	void (*hbt_cp_8) __P((void *v, bus_space_handle_t h1, bus_size_t o1,
-			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c));
+	void (*hbt_cp_1)(void *v, bus_space_handle_t h1, bus_size_t o1,
+			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
+	void (*hbt_cp_2)(void *v, bus_space_handle_t h1, bus_size_t o1,
+			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
+	void (*hbt_cp_4)(void *v, bus_space_handle_t h1, bus_size_t o1,
+			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
+	void (*hbt_cp_8)(void *v, bus_space_handle_t h1, bus_size_t o1,
+			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
 };
 typedef const struct hppa_bus_space_tag *bus_space_tag_t;
 extern const struct hppa_bus_space_tag hppa_bustag;
@@ -338,32 +338,32 @@ struct hppa_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((void *, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((void *, bus_dmamap_t));
-	int	(*_dmamap_load) __P((void *, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((void *, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((void *, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((void *, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((void *, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_addr_t,
-		    bus_size_t, int));
+	int	(*_dmamap_create)(void *, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(void *, bus_dmamap_t);
+	int	(*_dmamap_load)(void *, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(void *, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(void *, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(void *, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(void *, bus_dmamap_t);
+	void	(*_dmamap_sync)(void *, bus_dmamap_t, bus_addr_t,
+		    bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((void *, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((void *, bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((void *, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((void *, caddr_t, size_t));
-	paddr_t	(*_dmamem_mmap) __P((void *, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*_dmamem_alloc)(void *, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(void *, bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(void *, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
+	void	(*_dmamem_unmap)(void *, caddr_t, size_t);
+	paddr_t	(*_dmamem_mmap)(void *, bus_dma_segment_t *,
+		    int, off_t, int, int);
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\

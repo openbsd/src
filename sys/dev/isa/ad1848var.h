@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.10 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.11 2002/03/14 01:26:56 millert Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -139,8 +139,8 @@ typedef struct ad1848_devmap {
   int  dev;
 } ad1848_devmap_t;
 
-static __inline int ad1848_to_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
-static __inline int ad1848_from_vol __P((mixer_ctrl_t *, struct ad1848_volume *));
+static __inline int ad1848_to_vol(mixer_ctrl_t *, struct ad1848_volume *);
+static __inline int ad1848_from_vol(mixer_ctrl_t *, struct ad1848_volume *);
 
 static __inline int
 ad1848_to_vol(cp, vol)
@@ -177,52 +177,52 @@ ad1848_from_vol(cp, vol)
 }
 
 
-int     ad1848_mixer_get_port __P((struct ad1848_softc *, ad1848_devmap_t *, int cnt, mixer_ctrl_t *));
-int     ad1848_mixer_set_port __P((struct ad1848_softc *, ad1848_devmap_t *, int, mixer_ctrl_t *));
-int	ad1848_mapprobe __P((struct ad1848_softc *, int));
-int	ad1848_probe __P((struct ad1848_softc *));
-void	ad1848_unmap __P((struct ad1848_softc *));
-void	ad1848_attach __P((struct ad1848_softc *));
+int     ad1848_mixer_get_port(struct ad1848_softc *, ad1848_devmap_t *, int cnt, mixer_ctrl_t *);
+int     ad1848_mixer_set_port(struct ad1848_softc *, ad1848_devmap_t *, int, mixer_ctrl_t *);
+int	ad1848_mapprobe(struct ad1848_softc *, int);
+int	ad1848_probe(struct ad1848_softc *);
+void	ad1848_unmap(struct ad1848_softc *);
+void	ad1848_attach(struct ad1848_softc *);
 
-int	ad1848_open __P((void *, int));
-void	ad1848_close __P((void *));
+int	ad1848_open(void *, int);
+void	ad1848_close(void *);
     
-void	ad1848_forceintr __P((struct ad1848_softc *));
+void	ad1848_forceintr(struct ad1848_softc *);
 
-int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	ad1848_query_encoding(void *, struct audio_encoding *);
+int	ad1848_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 
-int	ad1848_round_blocksize __P((void *, int));
+int	ad1848_round_blocksize(void *, int);
 
-int	ad1848_dma_init_output __P((void *, void *, int));
-int	ad1848_dma_init_input __P((void *, void *, int));
+int	ad1848_dma_init_output(void *, void *, int);
+int	ad1848_dma_init_input(void *, void *, int);
 int	ad1848_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	ad1848_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
-int	ad1848_commit_settings __P((void *));
+int	ad1848_commit_settings(void *);
 
-int	ad1848_halt_in_dma __P((void *));
-int	ad1848_halt_out_dma __P((void *));
+int	ad1848_halt_in_dma(void *);
+int	ad1848_halt_out_dma(void *);
 
-int	ad1848_intr __P((void *));
+int	ad1848_intr(void *);
 
-int	ad1848_set_rec_port __P((struct ad1848_softc *, int));
-int	ad1848_get_rec_port __P((struct ad1848_softc *));
+int	ad1848_set_rec_port(struct ad1848_softc *, int);
+int	ad1848_get_rec_port(struct ad1848_softc *);
 
-int	ad1848_set_channel_gain __P((struct ad1848_softc *, int, struct ad1848_volume *));
-int	ad1848_get_device_gain __P((struct ad1848_softc *, int, struct ad1848_volume *));
-int	ad1848_set_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_rec_gain __P((struct ad1848_softc *, struct ad1848_volume *));
+int	ad1848_set_channel_gain(struct ad1848_softc *, int, struct ad1848_volume *);
+int	ad1848_get_device_gain(struct ad1848_softc *, int, struct ad1848_volume *);
+int	ad1848_set_rec_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	ad1848_get_rec_gain(struct ad1848_softc *, struct ad1848_volume *);
 /* Note: The mic pre-MUX gain is not a variable gain, it's 20dB or 0dB */
-int	ad1848_set_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-int	ad1848_get_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
-void     ad1848_mute_channel __P((struct ad1848_softc *, int device, int mute));
+int	ad1848_set_mic_gain(struct ad1848_softc *, struct ad1848_volume *);
+int	ad1848_get_mic_gain(struct ad1848_softc *, struct ad1848_volume *);
+void     ad1848_mute_channel(struct ad1848_softc *, int device, int mute);
 
-void   *ad1848_malloc __P((void *, int, size_t, int, int));
-void	ad1848_free __P((void *, void *, int));
-size_t	ad1848_round __P((void *, int, size_t));
-paddr_t	ad1848_mappage __P((void *, void *, off_t, int));
+void   *ad1848_malloc(void *, int, size_t, int, int);
+void	ad1848_free(void *, void *, int);
+size_t	ad1848_round(void *, int, size_t);
+paddr_t	ad1848_mappage(void *, void *, off_t, int);
 
-int	ad1848_get_props __P((void *));
+int	ad1848_get_props(void *);
 
 #endif

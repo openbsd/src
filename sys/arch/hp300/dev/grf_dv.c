@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_dv.c,v 1.7 2000/11/10 15:33:05 provos Exp $	*/
+/*	$OpenBSD: grf_dv.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
 /*	$NetBSD: grf_dv.c,v 1.11 1997/03/31 07:34:14 scottr Exp $	*/
 
 /*
@@ -75,19 +75,19 @@
 
 #include "ite.h"
 
-int	dv_init __P((struct grf_data *, int, caddr_t));
-int	dv_mode __P((struct grf_data *, int, caddr_t));
-void	dv_reset __P((struct dvboxfb *));
+int	dv_init(struct grf_data *, int, caddr_t);
+int	dv_mode(struct grf_data *, int, caddr_t);
+void	dv_reset(struct dvboxfb *);
 
-int	dvbox_intio_match __P((struct device *, void *, void *));
-void	dvbox_intio_attach __P((struct device *, struct device *, void *));
+int	dvbox_intio_match(struct device *, void *, void *);
+void	dvbox_intio_attach(struct device *, struct device *, void *);
 
-int	dvbox_dio_match __P((struct device *, void *, void *));
-void	dvbox_dio_attach __P((struct device *, struct device *, void *));
+int	dvbox_dio_match(struct device *, void *, void *);
+void	dvbox_dio_attach(struct device *, struct device *, void *);
 
-int	dvbox_console_scan __P((int, caddr_t, void *));
-void	dvboxcnprobe __P((struct consdev *cp));
-void	dvboxcninit __P((struct consdev *cp));
+int	dvbox_console_scan(int, caddr_t, void *);
+void	dvboxcnprobe(struct consdev *cp);
+void	dvboxcninit(struct consdev *cp);
 
 struct cfattach dvbox_intio_ca = {
 	sizeof(struct grfdev_softc), dvbox_intio_match, dvbox_intio_attach
@@ -107,14 +107,14 @@ struct grfsw dvbox_grfsw = {
 };
 
 #if NITE > 0
-void	dvbox_init __P((struct ite_data *));
-void	dvbox_deinit __P((struct ite_data *));
-void	dvbox_putc __P((struct ite_data *, int, int, int, int));
-void	dvbox_cursor __P((struct ite_data *, int));
-void	dvbox_clear __P((struct ite_data *, int, int, int, int));
-void	dvbox_scroll __P((struct ite_data *, int, int, int, int));
-void	dvbox_windowmove __P((struct ite_data *, int, int, int, int,
-		int, int, int));
+void	dvbox_init(struct ite_data *);
+void	dvbox_deinit(struct ite_data *);
+void	dvbox_putc(struct ite_data *, int, int, int, int);
+void	dvbox_cursor(struct ite_data *, int);
+void	dvbox_clear(struct ite_data *, int, int, int, int);
+void	dvbox_scroll(struct ite_data *, int, int, int, int);
+void	dvbox_windowmove(struct ite_data *, int, int, int, int,
+		int, int, int);
 
 /* DaVinci ite switch */
 struct itesw dvbox_itesw = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.10 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.11 2002/03/14 01:27:07 millert Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -40,23 +40,23 @@
 /*
  * Prototypes for fifo operations on vnodes.
  */
-int	fifo_badop	__P((void *));
-int	fifo_ebadf	__P((void *));
+int	fifo_badop(void *);
+int	fifo_ebadf(void *);
 
-int	fifo_lookup	__P((void *));
+int	fifo_lookup(void *);
 #define fifo_create	fifo_badop
 #define fifo_mknod	fifo_badop
-int	fifo_open	__P((void *));
-int	fifo_close	__P((void *));
+int	fifo_open(void *);
+int	fifo_close(void *);
 #define fifo_access	fifo_ebadf
 #define fifo_getattr	fifo_ebadf
 #define fifo_setattr	fifo_ebadf
-int	fifo_read	__P((void *));
-int	fifo_write	__P((void *));
+int	fifo_read(void *);
+int	fifo_write(void *);
 #define fifo_lease_check nullop
-int	fifo_ioctl	__P((void *));
-int	fifo_select	__P((void *));
-int	fifo_kqfilter	__P((void *));
+int	fifo_ioctl(void *);
+int	fifo_select(void *);
+int	fifo_kqfilter(void *);
 #define fifo_fsync	nullop
 #define fifo_remove	fifo_badop
 #define fifo_revoke     vop_generic_revoke
@@ -68,21 +68,21 @@ int	fifo_kqfilter	__P((void *));
 #define fifo_readdir	fifo_badop
 #define fifo_readlink	fifo_badop
 #define fifo_abortop	fifo_badop
-int fifo_inactive __P((void *));
+int fifo_inactive(void *);
 #define fifo_reclaim	nullop
 #define fifo_lock       vop_generic_lock
 #define fifo_unlock     vop_generic_unlock
-int	fifo_bmap	__P((void *));
+int	fifo_bmap(void *);
 #define fifo_strategy	fifo_badop
-int	fifo_print	__P((void *));
+int	fifo_print(void *);
 #define fifo_islocked	vop_generic_islocked
-int	fifo_pathconf	__P((void *));
-int	fifo_advlock	__P((void *));
+int	fifo_pathconf(void *);
+int	fifo_advlock(void *);
 #define fifo_reallocblks fifo_badop
 #define fifo_bwrite	nullop
 
-void 	fifo_printinfo __P((struct vnode *));
+void 	fifo_printinfo(struct vnode *);
 
-extern int (**fifo_vnodeop_p) __P((void *));
+extern int (**fifo_vnodeop_p)(void *);
 
 #endif /* FIFO */

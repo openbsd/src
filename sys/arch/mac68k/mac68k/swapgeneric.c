@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.4 1996/06/23 15:59:43 briggs Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.5 2002/03/14 01:26:36 millert Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.10 1996/06/19 03:21:06 scottr Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 
-int (*mountroot) __P((void *)) = NULL;  /* tells autoconf.c that we are "generic" */
+int (*mountroot)(void *) = NULL;  /* tells autoconf.c that we are "generic" */
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.14 2001/12/14 17:07:40 mickey Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.15 2002/03/14 01:26:33 millert Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -289,11 +289,11 @@ struct apm_ctl {
 					   if the percentage changes */
 
 #ifdef _KERNEL
-extern void apm_cpu_busy __P((void));
-extern void apm_cpu_idle __P((void));
-extern void apminit __P((void));
-int apm_set_powstate __P((u_int devid, u_int powstate));
-int apm_kqfilter __P((dev_t dev, struct knote *kn));
+extern void apm_cpu_busy(void);
+extern void apm_cpu_idle(void);
+extern void apminit(void);
+int apm_set_powstate(u_int devid, u_int powstate);
+int apm_kqfilter(dev_t dev, struct knote *kn);
 #endif /* _KERNEL */
 
 #endif /* _I386_APMVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgnsc.c,v 1.10 1997/01/18 12:26:32 niklas Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.11 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
@@ -53,11 +53,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void mgnscattach __P((struct device *, struct device *, void *));
-int mgnscmatch __P((struct device *, void *, void *));
-int mgnsc_dmaintr __P((void *));
+void mgnscattach(struct device *, struct device *, void *);
+int mgnscmatch(struct device *, void *, void *);
+int mgnsc_dmaintr(void *);
 #ifdef DEBUG
-void mgnsc_dump __P((void));
+void mgnsc_dump(void);
 #endif
 
 struct scsi_adapter mgnsc_scsiswitch = {

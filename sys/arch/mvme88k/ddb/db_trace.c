@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.12 2001/12/22 08:31:04 smurph Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.13 2002/03/14 01:26:38 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -95,12 +95,12 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 
 #define TRACE_DEBUG	/* undefine to disable debugging */
 
-extern void db_read_bytes __P((vm_offset_t addr, int size, char *data));
-int frame_is_sane __P((db_regs_t *regs));
-char *m88k_exception_name __P((unsigned vector));
-unsigned db_trace_get_val __P((vm_offset_t addr, unsigned *ptr));
-void db_stack_trace_cmd __P((db_regs_t *addr, int have_addr,
-			     db_expr_t count, char *modif));
+extern void db_read_bytes(vm_offset_t addr, int size, char *data);
+int frame_is_sane(db_regs_t *regs);
+char *m88k_exception_name(unsigned vector);
+unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
+void db_stack_trace_cmd(db_regs_t *addr, int have_addr,
+			     db_expr_t count, char *modif);
 
 /*
  * Some macros to tell if the given text is the instruction.

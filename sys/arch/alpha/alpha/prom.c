@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.12 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: prom.c,v 1.13 2002/03/14 01:26:26 millert Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -55,7 +55,7 @@ struct simplelock prom_slock;
 int		prom_mapped = 1;	/* Is PROM still mapped? */
 
 pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
-static pt_entry_t *prom_lev1map __P((void));
+static pt_entry_t *prom_lev1map(void);
 
 static pt_entry_t *
 prom_lev1map()
@@ -100,7 +100,7 @@ init_bootstrap_console()
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-static void prom_cache_sync __P((void));
+static void prom_cache_sync(void);
 #endif
 
 int
@@ -160,7 +160,7 @@ prom_leave(s)
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 static void
-prom_cache_sync __P((void))
+prom_cache_sync(void)
 {
 	ALPHA_TBIA();
 	alpha_pal_imb();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2kbbc.c,v 1.2 2000/01/24 16:02:04 espie Exp $	*/
+/*	$OpenBSD: a2kbbc.c,v 1.3 2002/03/14 01:26:28 millert Exp $	*/
 /*	$NetBSD: a2kbbc.c,v 1.3 1997/07/23 10:19:44 is Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 
 #include <dev/clock_subr.h>
 
-int a2kbbc_match __P((struct device *, void *, void *));
-void a2kbbc_attach __P((struct device *, struct device *, void *));
+int a2kbbc_match(struct device *, void *, void *);
+void a2kbbc_attach(struct device *, struct device *, void *);
 
 struct cfattach a2kbbc_ca = {
         sizeof(struct device), a2kbbc_match, a2kbbc_attach
@@ -69,8 +69,8 @@ struct cfdriver a2kbbc_cd = {
 };      
 
 void *a2kclockaddr;
-time_t a2gettod __P((void));
-int a2settod __P((time_t));
+time_t a2gettod(void);
+int a2settod(time_t);
 
 int
 a2kbbc_match(pdp, match, auxp)

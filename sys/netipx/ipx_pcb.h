@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.h,v 1.3 1996/11/25 08:20:00 mickey Exp $	*/
+/*	$OpenBSD: ipx_pcb.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
 
 /*-
  *
@@ -91,18 +91,18 @@ struct ipxpcbtable {
 #ifdef _KERNEL
 extern struct ipxpcbtable ipxcbtable, ipxrawcbtable;	/* head of list */
 
-void	ipx_pcbinit __P((struct ipxpcbtable *, int));
-int	ipx_pcballoc __P((struct socket *so, struct ipxpcbtable *head));
-int	ipx_pcbbind __P((struct ipxpcb *ipxp, struct mbuf *nam));
-int	ipx_pcbconnect __P((struct ipxpcb *ipxp, struct mbuf *nam));
-void	ipx_pcbdetach __P((struct ipxpcb *ipxp));
-void	ipx_pcbdisconnect __P((struct ipxpcb *ipxp));
+void	ipx_pcbinit(struct ipxpcbtable *, int);
+int	ipx_pcballoc(struct socket *so, struct ipxpcbtable *head);
+int	ipx_pcbbind(struct ipxpcb *ipxp, struct mbuf *nam);
+int	ipx_pcbconnect(struct ipxpcb *ipxp, struct mbuf *nam);
+void	ipx_pcbdetach(struct ipxpcb *ipxp);
+void	ipx_pcbdisconnect(struct ipxpcb *ipxp);
 struct ipxpcb *
-	ipx_pcblookup __P((struct ipx_addr *faddr, int lport, int wildp));
+	ipx_pcblookup(struct ipx_addr *faddr, int lport, int wildp);
 void	ipx_pcbnotify __P((struct ipx_addr *dst, int errno,
 			   void (*notify)(struct ipxpcb *), long param));
-void	ipx_setpeeraddr __P((struct ipxpcb *ipxp, struct mbuf *nam));
-void	ipx_setsockaddr __P((struct ipxpcb *ipxp, struct mbuf *nam));
+void	ipx_setpeeraddr(struct ipxpcb *ipxp, struct mbuf *nam);
+void	ipx_setsockaddr(struct ipxpcb *ipxp, struct mbuf *nam);
 #endif
 
 #endif /* !_NETIPX_IPX_PCB_H_ */

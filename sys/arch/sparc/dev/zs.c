@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.32 2002/03/13 00:24:21 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.33 2002/03/14 01:26:43 millert Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -125,8 +125,8 @@ struct zs_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, void *, void *));
-static void	zsattach __P((struct device *, struct device *, void *));
+static int	zsmatch(struct device *, void *, void *);
+static void	zsattach(struct device *, struct device *, void *);
 
 struct cfattach zs_ca = {
 	sizeof(struct zs_softc), zsmatch, zsattach
@@ -137,53 +137,53 @@ struct cfdriver zs_cd = {
 };
 
 /* Interrupt handlers. */
-static int	zshard __P((void *));
+static int	zshard(void *);
 static struct intrhand levelhard = { zshard };
-static int	zssoft __P((void *));
+static int	zssoft(void *);
 static struct intrhand levelsoft = { zssoft };
 
 struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
-static void	zsiopen __P((struct tty *));
-static void	zsiclose __P((struct tty *));
-static void	zsstart __P((struct tty *));
-static int	zsparam __P((struct tty *, struct termios *));
+static void	zsiopen(struct tty *);
+static void	zsiclose(struct tty *);
+static void	zsstart(struct tty *);
+static int	zsparam(struct tty *, struct termios *);
 
 /* Routines purely local to this driver. */
-static int	zs_getspeed __P((volatile struct zschan *));
+static int	zs_getspeed(volatile struct zschan *);
 #ifdef KGDB
-static void	zs_reset __P((volatile struct zschan *, int, int));
+static void	zs_reset(volatile struct zschan *, int, int);
 #endif
-static void	zs_modem __P((struct zs_chanstate *, int));
-static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
-static void	tiocm_to_zs __P((struct zs_chanstate *, int how, int data));
+static void	zs_modem(struct zs_chanstate *, int);
+static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
+static void	tiocm_to_zs(struct zs_chanstate *, int how, int data);
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
 static int zs_consin = -1, zs_consout = -1;
 static struct zs_chanstate *zs_conscs = NULL; /*console channel state */
-static void zscnputc __P((int));	/* console putc function */
+static void zscnputc(int);	/* console putc function */
 static volatile struct zschan *zs_conschan;
-static struct tty *zs_checkcons __P((struct zs_softc *, int,
-    struct zs_chanstate *));
+static struct tty *zs_checkcons(struct zs_softc *, int,
+    struct zs_chanstate *);
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
 extern int kgdb_dev, kgdb_rate;
 static int zs_kgdb_savedspeed;
-static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
-void zskgdb __P((int));
-static int zs_kgdb_getc __P((void *));
-static void zs_kgdb_putc __P((void *, int));
+static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
+void zskgdb(int);
+static int zs_kgdb_getc(void *);
+static void zs_kgdb_putc(void *, int);
 #endif
 
-static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zsrint(struct zs_chanstate *, volatile struct zschan *);
+static int zsxint(struct zs_chanstate *, volatile struct zschan *);
+static int zssint(struct zs_chanstate *, volatile struct zschan *);
 
-void zsabort __P((int));
-static void zsoverrun __P((int, long *, char *));
+void zsabort(int);
+static void zsoverrun(int, long *, char *);
 
 static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
@@ -203,8 +203,8 @@ int zshardscope;
 int zsshortcuts;		/* number of "shortcut" software interrupts */
 
 #ifdef SUN4
-static u_int zs_read __P((volatile struct zschan *, u_int reg));
-static u_int zs_write __P((volatile struct zschan *, u_int, u_int));
+static u_int zs_read(volatile struct zschan *, u_int reg);
+static u_int zs_write(volatile struct zschan *, u_int, u_int);
 
 static u_int
 zs_read(zc, reg)
@@ -445,7 +445,7 @@ zsconsole(tp, unit, out, fnstop)
 	register struct tty *tp;
 	register int unit;
 	int out;
-	int (**fnstop) __P((struct tty *, int));
+	int (**fnstop)(struct tty *, int);
 {
 	int zs;
 	volatile struct zsdevice *addr;
@@ -853,9 +853,9 @@ zstty(dev)
 	return (cs->cs_ttyp);
 }
 
-static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
-static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
-static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
+static int zsrint(struct zs_chanstate *, volatile struct zschan *);
+static int zsxint(struct zs_chanstate *, volatile struct zschan *);
+static int zssint(struct zs_chanstate *, volatile struct zschan *);
 
 /*
  * ZS hardware interrupt.  Scan all ZS channels.  NB: we know here that

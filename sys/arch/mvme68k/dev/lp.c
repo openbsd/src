@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.c,v 1.4 2000/03/26 23:31:59 deraadt Exp $ */
+/*	$OpenBSD: lp.c,v 1.5 2002/03/14 01:26:37 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -53,8 +53,8 @@ struct lpsoftc {
 	struct pccreg	*sc_pcc;
 };
 
-void lpattach __P((struct device *, struct device *, void *));
-int  lpmatch __P((struct device *, void *, void *));
+void lpattach(struct device *, struct device *, void *);
+int  lpmatch(struct device *, void *, void *);
 
 struct cfattach lp_ca = {
 	sizeof(struct lpsoftc), lpmatch, lpattach
@@ -64,7 +64,7 @@ struct cfdriver lp_cd = {
 	NULL, "lp", DV_DULL, 0
 };
 
-int lpintr __P((void *));
+int lpintr(void *);
 
 /*
  * a PCC chip always has an lp attached to it.

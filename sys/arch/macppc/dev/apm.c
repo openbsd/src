@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.2 2001/10/03 20:06:00 drahn Exp $	*/
+/*	$OpenBSD: apm.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -69,16 +69,16 @@ struct apm_softc {
 	int    sc_flags;
 };
 
-int apmmatch __P((struct device *, void *, void *));
-void apmattach __P((struct device *, struct device *, void *));
+int apmmatch(struct device *, void *, void *);
+void apmattach(struct device *, struct device *, void *);
 
 struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 
-int apmopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int apmclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int apmioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+int apmopen(dev_t dev, int flag, int mode, struct proc *p);
+int apmclose(dev_t dev, int flag, int mode, struct proc *p);
+int apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
 
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
@@ -89,9 +89,9 @@ struct cfdriver apm_cd = {
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
 
-void filt_apmrdetach __P((struct knote *kn));
-int filt_apmread __P((struct knote *kn, long hint));
-int apmkqfilter __P((dev_t dev, struct knote *kn));
+void filt_apmrdetach(struct knote *kn);
+int filt_apmread(struct knote *kn, long hint);
+int apmkqfilter(dev_t dev, struct knote *kn);
 
 struct filterops apmread_filtops =
 	{ 1, NULL, filt_apmrdetach, filt_apmread};

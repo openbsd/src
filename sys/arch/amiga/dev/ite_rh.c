@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_rh.c,v 1.2 1996/05/02 06:44:13 niklas Exp $	*/
+/*	$OpenBSD: ite_rh.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
 /*	$NetBSD: ite_rh.c,v 1.7 1996/04/23 22:53:05 veego Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
 #include <amiga/dev/itevar.h>
 
 #ifdef	RETINA_SPEED_HACK
-static void screen_up __P((struct ite_softc *, int, int, int));
-static void screen_down __P((struct ite_softc *, int, int, int));
+static void screen_up(struct ite_softc *, int, int, int);
+static void screen_down(struct ite_softc *, int, int, int);
 #endif
 
 /*
