@@ -1,7 +1,7 @@
 KeyNote-Version: 2
-Comment: $OpenBSD: policy,v 1.2 1999/08/26 22:29:42 niklas Exp $
-#	$EOM: policy,v 1.3 1999/08/26 11:51:37 niklas Exp $
 Comment: This policy accepts ESP SAs from a remote that uses the right password
+ 	$OpenBSD: policy,v 1.3 1999/11/18 21:45:52 angelos Exp $
+	$EOM: policy,v 1.3 1999/08/26 11:51:37 niklas Exp $
 Authorizer: "POLICY"
 Licensees: "mekmitasdigoat"
 Conditions: app_domain == "IPsec policy" &&
