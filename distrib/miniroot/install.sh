@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.94 2002/04/12 02:24:40 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.95 2002/04/12 03:24:02 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -185,14 +185,17 @@ __EOT
 			fi
 		done
 
-		# Now write it out
-		_i=0
-		while [ $_i -lt $_npartitions ] ; do
-			if [ -n "${_mount_points[${_i}]}" ]; then
-				echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
-				_mount_points[${_i}]=
-			fi
-			_i=$(( ${_i} + 1 ))
+		# Now write it out, sorted by mount point
+		for _mp in `bsort ${_mount_points[*]}`; do
+			_i=0
+			while [ $_i -lt $_npartitions ] ; do
+				if [ $_mp = "${_mount_points[${_i}]}" ]; then
+					echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
+					_mount_points[${_i}]=
+					break
+				fi
+				_i=$(( ${_i} + 1 ))
+			done
 		done
 		rm -f /tmp/fstab.${DISK}
 	done
