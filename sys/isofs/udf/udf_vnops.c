@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.1 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.2 2005/03/30 00:30:51 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -479,6 +479,11 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 {
 	unicode_t *transname;
 	int i, unilen = 0, destlen;
+
+	if (len > MAXNAMLEN) {
+		printf("udf_transname(): name too long\n");
+		return (0);
+	}
 
 	/* allocate a buffer big enough to hold an 8->16 bit expansion */
 	transname = pool_get(&udf_trans_pool, PR_WAITOK);
