@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.4 2005/01/14 16:39:15 miod Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.5 2005/01/14 18:42:31 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -194,6 +194,8 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &zkbd_accessops;
 	a.accesscookie = sc;
 
+	printf("\n");
+
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	timeout_set(&(sc->sc_roll_to), zkbd_poll, sc);
@@ -289,7 +291,7 @@ printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
 		}
 	}
 	if (keysdown)
-		timeout_add(&(sc->sc_roll_to), hz / 4); /* how long?*/
+		timeout_add(&(sc->sc_roll_to), hz / 8); /* how long?*/
 	else 
 		timeout_del(&(sc->sc_roll_to)); /* always cancel? */
 }
