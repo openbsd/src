@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.111 2002/11/23 10:03:39 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.112 2002/11/23 11:58:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -410,12 +410,12 @@ print_pool(struct pf_pool *pool, sa_family_t af, int id)
 			print_addr(&pooladdr->addr, af);
 			break;
 		case PF_POOL_RULE_RT:
-			if (PF_AZERO(&pooladdr->addr.addr, af)) {
-				printf("%s ", pooladdr->ifname);
-			} else {
-				printf("( %s ", pooladdr->ifname);
+			if (PF_AZERO(&pooladdr->addr.addr, af))
+				printf("%s", pooladdr->ifname);
+			else {
+				printf("(%s ", pooladdr->ifname);
 				print_addr(&pooladdr->addr, af);
-				printf(" )");
+				printf(")");
 			}
 			break;
 		}
@@ -584,29 +584,30 @@ print_rdr(struct pf_rdr *r)
 	if (!r->no) {
 		printf(" -> ");
 		print_pool(&r->rpool, r->af, PF_POOL_RDR_R);
-		if (r->rport) {
-			printf(" port %u", ntohs(r->rport));
-			if (r->opts & PF_RPORT_RANGE)
-				printf(":*");
-		}
+		printf(" ");
 		switch (r->rpool.opts & 0x0f) {
 		case PF_POOL_NONE:
 			break;
 		case PF_POOL_BITMASK:
-			printf(" bitmask");
+			printf("bitmask ");
 			break;
 		case PF_POOL_RANDOM:
-			printf(" random");
+			printf("random ");
 			break;
 		case PF_POOL_SRCHASH:
-			printf(" source-hash");
+			printf("source-hash ");
 			break;
 		case PF_POOL_SRCKEYHASH:
-			printf(" source-hash key");
+			printf("source-hash key ");
 			break;
 		case PF_POOL_ROUNDROBIN:
-			printf(" round-robin");
+			printf("round-robin ");
 			break;
+		}
+		if (r->rport) {
+			printf("port %u", ntohs(r->rport));
+			if (r->opts & PF_RPORT_RANGE)
+				printf(":*");
 		}
 	}
 	printf("\n");
@@ -775,28 +776,30 @@ print_rule(struct pf_rule *r)
 		else if (r->rt == PF_DUPTO)
 			printf("dup-to ");
 		else if (r->rt == PF_FASTROUTE)
-			printf("fastroute");
+			printf("fastroute ");
+		if (r->rt != PF_FASTROUTE) {
 			print_pool(&r->rt_pool, r->af, PF_POOL_RULE_RT);
+			printf(" ");
+		}
 		switch (r->rt_pool.opts & 0x0f) {
 		case PF_POOL_NONE:
 			break;
 		case PF_POOL_BITMASK:
-			printf(" bitmask");
+			printf("bitmask ");
 			break;
 		case PF_POOL_RANDOM:
-			printf(" random");
+			printf("random ");
 			break;
 		case PF_POOL_SRCHASH:
-			printf(" source-hash");
+			printf("source-hash ");
 			break;
 		case PF_POOL_SRCKEYHASH:
-			printf(" source-hash key");
+			printf("source-hash key ");
 			break;
 		case PF_POOL_ROUNDROBIN:
-			printf(" round-robin");
+			printf("round-robin ");
 			break;
 		}
-		printf(" ");
 	}
 	if (r->af) {
 		if (r->af == AF_INET)
