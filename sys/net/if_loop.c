@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.21 2001/12/18 23:07:49 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.22 2002/01/02 20:56:14 dugsong Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ loioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
+		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		ifa = (struct ifaddr *)data;
 		if (ifa != 0 /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
 			ifa->ifa_rtrequest = lortrequest;
@@ -488,6 +488,11 @@ loioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+		break;
+
+	case SIOCSIFMTU:
+		ifr = (struct ifreq *)data;
+		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
 	default:
