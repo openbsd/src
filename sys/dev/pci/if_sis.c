@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.30 2002/11/22 10:38:48 markus Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.31 2003/03/10 12:13:23 mcbride Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1445,6 +1445,7 @@ void sis_init(xsc)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct mii_data		*mii;
 	int			s;
+	int                     tmp;
 
 	s = splnet();
 
@@ -1588,6 +1589,30 @@ void sis_init(xsc)
 		CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
 		CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
 		CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
+		
+		/* 
+		 * A small number of DP83815's will have excessive receive
+		 * errors when using short cables (<30m/100feet) in 100Base-TX
+		 * mode. This patch was taken from the National Semiconductor
+		 * linux driver and (supposedly - no mention of this in any NS
+		 * docs) modifies the dsp's signal attenuation.
+		 */
+		if (IFM_SUBTYPE(mii->mii_media_active) != IFM_10_T) {
+			CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
+			tmp = CSR_READ_4(sc, NS_PHY_DSPCFG);
+			tmp &= 0xFFF;
+			CSR_WRITE_4(sc, NS_PHY_DSPCFG, (tmp | 0x1000));
+			DELAY(100);
+			tmp = CSR_READ_4(sc, NS_PHY_TDATA);
+			tmp &= 0xFF;
+			if (!(tmp & 0x80) || (tmp >= 0xD8)) {
+				CSR_WRITE_4(sc, NS_PHY_TDATA, 0xE8);
+				tmp = CSR_READ_4(sc, NS_PHY_DSPCFG);
+				CSR_WRITE_4(sc, NS_PHY_DSPCFG, (tmp | 0x20));
+			} else {
+				CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
+			}
+		}
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
