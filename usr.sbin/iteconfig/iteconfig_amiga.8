@@ -47,6 +47,7 @@
 .Op Fl d Ar depth
 .Op Fl x Ar offset
 .Op Fl y Ar offset
+.Op Fl b Ar seconds
 .Op Ar color ...
 .Sh DESCRIPTION
 .Nm iteconfig
@@ -110,6 +111,12 @@ Set the vertical offset of the console view on the monitor to
 .Ar offset
 pixel rows.  The vertical offset may be a positive or a negative
 integer, positive being an offset down, negative up.
+.It Fl b Ar seconds
+Set the console screen blanker to kick in after
+.Ar seconds .
+Disable the blanker if 
+.Ar seconds
+is 0.
 .El
 .Pp
 Any additional arguments will be interpreted as colors and will

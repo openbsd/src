@@ -1,5 +1,35 @@
+/* $OpenBSD: iteconfig.c,v 1.3 2000/01/19 16:33:00 espie Exp $ */
 /*	$NetBSD: iteconfig.c,v 1.4.6.1 1996/06/04 16:48:24 is Exp $	*/
-/*
+/* Copyright (c) 1999 Marc Espie
+ * All rights reserved.
+ *
+ * This code is derived from software developped by Christian E. Hopps.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Marc Espie.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
  *
@@ -59,6 +89,7 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "pathnames.h"
 
@@ -67,8 +98,7 @@ void	usage __P((void));
 void	xioctl __P((int, int, void *));
 colormap_t *xgetcmap __P((int, int));
 long	xstrtol __P((char *));
-int	initialize __P((char *, struct itewinsize *, struct itebell *,
-			struct itewinsize *, struct itebell *));
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -77,39 +107,84 @@ main(argc, argv)
 {
 	struct itewinsize is, newis;
 	struct itebell ib, newib;
+	int bt;
 	struct winsize ws;
-	colormap_t *cm;
 	char *file = _PATH_CONSOLE;
-	int ch, fd, i, iflag, max_colors, did_reset;
-	long val;
+	int ch, fd, iflag, max_colors;
+	int use_is, use_ib;
 
-	iflag = 0;
-	did_reset = 0;
+	max_colors = use_is = use_ib = iflag = 0;
 
-	fd = initialize(_PATH_CONSOLE, &is, &ib, &newis, &newib);
+		/* need two passes through options */
+	while ((ch = getopt(argc, argv, "B:D:H:P:T:V:W:X:Y:b:d:f:h:ip:t:v:w:x:y:"))
+	    != -1) {
+		switch (tolower(ch)) {
+		case 'd':
+		case 'h':
+		case 'w':
+		case 'x':
+		case 'y':
+			use_is = 1;
+			break;
+		case 'f':
+			file = optarg;
+			break;
+		case 'p':
+		case 't':
+		case 'v':
+			use_ib = 1;
+			break;
+		case 'b':
+		case 'i':
+			break;
+		default:
+			usage();
+		}
+	}
 
-	while ((ch = getopt(argc, argv, "D:H:P:T:V:W:X:Y:d:f:h:ip:t:v:w:x:y:"))
-	    != EOF) {
-		switch (ch) {
-		case 'D':		/* undocumented backward compat */
+	fd = open(file, O_RDONLY, O_NONBLOCK);
+	if(fd == -1)
+		err(1, "open \"%s\"", file);
+
+	if (argc > optind) 
+		use_is = 1;
+
+	if (use_is) {
+		xioctl(fd, ITEIOCGWINSZ, &is);
+		memcpy(&newis, &is, sizeof is);
+		max_colors = 1 << is.depth;
+	}
+	if (use_ib) {
+		xioctl(fd, ITEIOCGBELL, &ib);
+		memcpy(&newib, &ib, sizeof ib);
+	}
+
+	optind = 1;
+	optreset = 1;
+	
+		
+	while ((ch = getopt(argc, argv, "B:D:H:P:T:V:W:X:Y:b:d:f:h:ip:t:v:w:x:y:"))
+	    != -1) {
+		switch (tolower(ch)) {
+		case 'i':
+			iflag = 1;
+			break;
+		case 'f':
+			break;
 		case 'd':
 			newis.depth = xstrtol(optarg);
 			break;
-		case 'f':
-			if (did_reset)
-				break;
-			if (fd != -1)
-				close(fd);
-			file = optarg;
-			fd = initialize(optarg, &is, &ib, &newis, &newib);
-			did_reset = optreset = optind = 1;
-			break;
-		case 'H':		/* undocumented backward compat */
 		case 'h':
 			newis.height = xstrtol(optarg);
 			break;
-		case 'i':
-			iflag = 1;
+		case 'w':
+			newis.width = xstrtol(optarg);
+			break;
+		case 'x':
+			newis.x = xstrtol(optarg);
+			break;
+		case 'y':
+			newis.y = xstrtol(optarg);
 			break;
 		case 'p':
 			newib.pitch = xstrtol(optarg);
@@ -117,71 +192,86 @@ main(argc, argv)
 		case 't':
 			newib.msec = xstrtol(optarg);
 			break;
-		case 'V':		/* undocumented backward compat */
 		case 'v':
 			newib.volume = xstrtol(optarg);
 			break;
-		case 'W':		/* undocumented backward compat */
-		case 'w':
-			newis.width = xstrtol(optarg);
+		case 'b':
+#ifdef  ITEIOCSBLKTIME
+			bt = xstrtol(optarg);
+			xioctl(fd, ITEIOCSBLKTIME, &bt);
 			break;
-		case 'X':		/* undocumented backward compat */
-		case 'x':
-			newis.x = xstrtol(optarg);
-			break;
-		case 'Y':		/* undocumented backward compat */
-		case 'y':
-			newis.y = xstrtol(optarg);
-			break;
+#else
+			/*FALLTHRU*/
+#endif
 		case '?':
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
-	argc -= optind;
-	argv += optind;
-	if(fd == -1)
-		err(1, "open \"%s\"", file);
 
-	if (memcmp(&newis, &is, sizeof(is))) {
+	if (use_is && memcmp(&is, &newis, sizeof is) != 0) {
 		xioctl(fd, ITEIOCSWINSZ, &newis);
 		xioctl(fd, ITEIOCGWINSZ, &is);
+		max_colors = 1 << is.depth;
 	}
-	if (memcmp(&newib, &ib, sizeof(ib))) {
+	if (use_ib && memcmp(&ib, &newib, sizeof ib) != 0) {
 		xioctl(fd, ITEIOCSBELL, &newib);
 		xioctl(fd, ITEIOCGBELL, &ib);
 	}
 	
-	/*
-	 * get, set and get colors again
-	 */
-	i = 0;
-	max_colors = 1 << is.depth;
-	cm = xgetcmap(fd, max_colors);
-	while (argc--) {
-		val = xstrtol(*argv++);
-		if (i >= max_colors) {
-			warnx("warning: too many colors");
-			break;
+	argc -= optind;
+	argv += optind;
+
+
+	if (argc) {
+		int i;
+		long val;
+		colormap_t *cm;
+		/*
+		 * get, set and get colors again
+		 */
+		cm = xgetcmap(fd, max_colors);
+		for (i = 0; i < argc; i++) {
+			val = xstrtol(argv[i]);
+			if (i >= max_colors) {
+				warnx("warning: too many colors");
+				break;
+			}
+			cm->entry[i] = val;
 		}
-		cm->entry[i] = val;
-		i++;
+		xioctl(fd, VIOCSCMAP, cm);
+		free(cm);
 	}
-	xioctl(fd, VIOCSCMAP, cm);
-	free(cm);
-	cm = xgetcmap(fd, max_colors);
 
 	/* do tty stuff to get it to register the changes. */
 	xioctl(fd, TIOCGWINSZ, &ws);
 
 	if (iflag) {
 		printf("tty size: rows %d cols %d\n", ws.ws_row, ws.ws_col);
-		printf("ite size: w: %d  h: %d  d: %d  [x: %d  y: %d]\n",
-		    is.width, is.height, is.depth, is.x, is.y);
-		printf("ite bell: vol: %d  millisec: %d  pitch: %d\n",
-		    ib.volume, ib.msec, ib.pitch);
-		printcmap(cm, ws.ws_col);
+		if (use_is || ioctl(fd, ITEIOCGWINSZ, &is) != -1) {
+			printf("ite size: w: %d  h: %d  d: %d  [x: %d  y: %d]\n",
+			    is.width, is.height, is.depth, is.x, is.y);
+			max_colors = 1 << is.depth;
+		}
+		if (use_ib || ioctl(fd, ITEIOCGBELL, &ib) != -1)
+			printf("ite bell: vol: %d  millisec: %d  pitch: %d\n",
+			    ib.volume, ib.msec, ib.pitch);
+#ifdef ITEIOCGBLKTIME
+		if (ioctl(fd, ITEIOCGBLKTIME, &bt) != -1) {
+			printf("ite screenblanker: ");
+			if (bt != 0)
+				printf("%d seconds\n", bt);
+			else
+				printf("off\n");
+		}
+#endif
+		if (max_colors) {
+			colormap_t *cm;
+			cm = xgetcmap(fd, max_colors);
+			printcmap(cm, ws.ws_col);
+			free(cm);
+		}
 	}
 	close(fd);
 	exit(0);
@@ -256,31 +346,16 @@ printcmap(cm, ncols)
 		printf("\n");
 }
 
-int
-initialize(file, is, ib, newis, newib)
-	char	*file;
-	struct itewinsize *is, *newis;
-	struct itebell *ib, *newib;
-{
-	int fd;
-
-	fd = open(file, O_RDONLY | O_NONBLOCK);
-	if (fd == -1)
-		return(-1);
-
-	xioctl(fd, ITEIOCGWINSZ, is);
-	xioctl(fd, ITEIOCGBELL, ib);
-
-	memcpy(newis, is, sizeof(*is));
-	memcpy(newib, ib, sizeof(*ib));
-	return(fd);
-}
-
 void
 usage()
 {
-	fprintf(stderr, "%s\n\t\t%s\n\t\t%s\n",
+	fprintf(stderr, "%s\n\t\t%s%s\n\t\t%s\n",
 	    "usage: iteconfig [-i] [-f file] [-v volume] [-p pitch] [-t msec]",
+#ifdef ITEIOCSBLKTIME
+	    "[-b timeout]",
+#else
+	    "",
+#endif
 	    "[-w width] [-h height] [-d depth] [-x off] [-y off]",
 	    "[color ...]");
 	exit(1);
