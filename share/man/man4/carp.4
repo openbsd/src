@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.1 2003/10/17 21:04:58 mcbride Exp $
+.\"	$OpenBSD: carp.4,v 1.2 2003/10/18 00:47:03 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd October 16, 2003
-.Dt CARP
+.Dt CARP 4
 .Os
 .Sh NAME
 .Nm carp
@@ -34,14 +34,21 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a pseudo-device which implements and controls the 
+interface is a pseudo-device which implements and controls the
 CARP protocol.
+.Nm
+Allows multiple hosts on the same local network to share a set of IP
+addresses among them. It's primary purpose is to ensure that these
+addresses are always available, but in some configurations
+.Nm
+can also provide load balancing functionality.
 .Pp
 To use
-.Nm carp ,
-the administrator needs to configure at minimum a a common virtual host id and
+.Nm ,
+the administrator needs to configure at minimum a common virtual host ID and
 virtual host IP address on each machine which is to take part in the virtual
-group. Additinal parameters can also be set on a per-interface basis:
+group.
+Additional parameters can also be set on a per-interface basis:
 .Ar advbase
 and
 .Ar advskew ,
@@ -49,7 +56,7 @@ which are used to control how frequently the host sends advertisments when it
 is the master for a virtual host, and
 .Ar pass
 which is used to authenticate carp advertisements.
-These configurations can be done by using
+These configurations can be done using
 .Xr ifconfig 8 ,
 or through the
 .Dv SIOCSVH
@@ -58,10 +65,9 @@ ioctl.
 Additionally, there are a number of global parameters which can be set using
 .Xr sysctl 8 .
 .Sh EXAMPLES
-.Pp
 In order to set up an ARP balanced virtual host, it is necessary to configure
 one virtual host for each physical host which you would like to have actively
-responding to arp requests and thus handling the traffic.
+responding to ARP requests and thus handling the traffic.
 In the following example, we will configure 2 hosts to provide balancing and
 failover for the IP address 192.168.1.10.
 .Pp
@@ -85,9 +91,8 @@ The configuration is identical, except we skew virtual host 1 instead.
 .Ed
 .Pp
 Finally, the ARP balancing feature must be enabled on both hosts:
-.Bd -literal -offset indent
-# sysctl -w net.inet.carp.arpbalance=1
-.Ed
+.Pp
+.Dl # sysctl -w net.inet.carp.arpbalance=1
 .Pp
 When the hosts recieve an ARP request for 192.168.1.10, they both select
 one of the virtual hosts based on the source IP address in the request.
@@ -96,19 +101,20 @@ other will ignore it.
 .Pp
 Because the host which advertises most often will tend to be the master, the
 result of this is that Host A will tend to be the master for the virtual host
-with id 1, while Host B will tend to be the master for the virtual host with id
+with ID 1, while Host B will tend to be the master for the virtual host with ID
 2, and therefore arp requests and subsequent IP traffic are balanced across the
-two hosts. If one of the hosts fails, the other will take over the virtual MAC
-address, and begin answering ARP requests on it's behalf.
+two hosts.
+If one of the hosts fails, the other will take over the virtual MAC address,
+and begin answering ARP requests on its behalf.
 .Pp
-Note: ARP balancing only works on the local network segment. Connections from
-which cross a router to arrive on the local netowrk segment will all appear
-to come from that router and be balanced to the same host.
+Note: ARP balancing only works on the local network segment.
+Connections which cross a router to arrive on the local network segment
+will all appear to come from that router and be balanced to the same host.
 .Sh SEE ALSO
+.Xr sysctl 3 ,
 .Xr inet 4 ,
 .Xr ifconfig 8 ,
-.Xr sysctl 8 ,
-.Xr sysctl 3
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm

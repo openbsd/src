@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.68 2003/10/17 21:04:57 mcbride Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.69 2003/10/18 00:47:02 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -122,8 +122,8 @@ byte, and the dots are optional, if the user wishes to (carefully)
 count out long strings of digits in network byte order.
 .Tn AppleTalk
 (LLAP) addresses are specified as nn.na (Network Number.Node Address).
-Node addresses are divided into 2 classes: User Node IDs and Server
-Node IDs. 1-127($01-$7F) are for User Node IDs while 128-254($80-$FE)
+Node addresses are divided into 2 classes: User Node IDs and Server Node IDs.
+1-127($01-$7F) are for User Node IDs while 128-254($80-$FE)
 are used for Server Node IDs.
 Node 0($00) is not allowed (unknown)
 while Node 255($FF) is reserved for the AppleTalk broadcast Hardware
@@ -292,9 +292,10 @@ and
 .Cm vlandev
 must both be set at the same time.
 .It Cm vlandev Ar iface
-If the interface is a vlan pseudo device, associate physical interface
+If the interface is a vlan pseudo-device, associate physical interface
 .Ar iface
-with it. Packets transmitted through the vlan interface will be
+with it.
+Packets transmitted through the vlan interface will be
 diverted to the specified physical interface
 .Ar iface
 with 802.1Q vlan encapsulation.
@@ -323,39 +324,39 @@ parent interface supports insertion and extraction of vlan tags on its
 own (usually in firmware) and that it should pass packets to and from
 the parent unaltered.
 .It Fl vlandev
-If the driver is a vlan pseudo device, disassociate the physical interface
+If the driver is a vlan pseudo-device, disassociate the physical interface
 from it.
 This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags and its link address and shuts the interface down.
 .It Cm vhid Ar n
-If the driver is a carp pseudo device, set the virtual host id to
+If the driver is a carp pseudo-device, set the virtual host ID to
 .Ar n .
 Acceptable values are 1 to 255.
 .It Cm advintv Ar n
-If the driver is a carp pseudo device, set the base advertisement interval to
+If the driver is a carp pseudo-device, set the base advertisement interval to
 .Ar n
 seconds.
 This is an 8-bit number; the default value is 1 second.
 .It Cm advskew Ar n
-If the driver is a carp pseudo device, skew the advertisement inteval by
+If the driver is a carp pseudo-device, skew the advertisement interval by
 .Ar n .
 This is an 8-bit number; the default value is 0.
 .Pp
-Taken togther the 
+Taken together the
 .Cm advbase
 and
 .Cm advskew
 indicate how frequently, in seconds, the host will advertise the fact that it
 considers itself master of the virtual host.
-The formula is 
-.Cm advbase 
-\+
+The formula is
+.Cm advbase
++
 .Cm ( advskew
 / 255 ).
 If the master does not advertise within three times this interval, this host
 will begin advertising as master.
 .It Cm pass Ar passphrase
-If the driver is a carp pseudo device, set the athentication key to 
+If the driver is a carp pseudo-device, set the authentication key to
 .Ar passphrase .
 There is no passphrase by default.
 .It Cm metric Ar n
@@ -597,7 +598,7 @@ Configure the vlan0 interface for IP address 192.168.254.1, vlan tag 4,
 and vlan parent device fxp0.
 .Pp
 .It Cm # ifconfig carp0 vhid 1 192.168.10.1
-Configure the carp0 interface for IP address 192.168.10.1, virtual host id 1.
+Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1.
 .El
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the
@@ -605,6 +606,7 @@ requested address is unknown, or the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr carp 4 ,
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
 .Xr hostname.if 5 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.110 2003/10/17 21:04:57 mcbride Exp $
+.\"	$OpenBSD: sysctl.3,v 1.111 2003/10/18 00:47:02 mcbride Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -941,6 +941,10 @@ The currently defined protocols and names are:
 .Bl -column "Protocol name" "ipsec-soft-bytes " "integer" -offset indent
 .It Sy Protocol name	Variable name	Type	Changeable
 .It ah	enable	integer	yes
+.It carp	allow	integer	yes
+.It carp	arpbalance	integer	yes
+.It carp	log	integer	yes
+.It carp	preempt	integer	yes
 .It esp	enable	integer	yes
 .It etherip	allow	integer	yes
 .It gre	allow	integer	yes
@@ -999,10 +1003,6 @@ The currently defined protocols and names are:
 .It udp	checksum	integer	yes
 .It udp	recvspace	integer	yes
 .It udp	sendspace	integer	yes
-.It carp	allow	integer	yes
-.It carp	preempt	integer	yes
-.It carp	log	integer	yes
-.It carp	arpbalance	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -1015,6 +1015,33 @@ Enabled by default.
 See
 .Xr ipsec 4
 for more information.
+.It Li carp.allow
+If set to 0, incoming
+.Tn CARP
+packets will not be processed.
+If set to any other value, processing will occur.
+Enabled by default.
+.It Li carp.arpbalance
+If set to any value other than 0, the ARP balancing functionality in carp is
+enabled.
+When ARP requests are recieved for an IP address which is part of any virtual
+host, carp will hash the source IP in the ARP request to select one of the
+virtual hosts from the set of all the virtual hosts which have that IP address.
+The master of that host will respond with the correct virtual MAC address.
+Disabled by default.
+.It Li carp.log
+If set to any value other than 0,
+.Xr carp 4
+will log errors.
+Enabled by default.
+.It Li carp.preempt
+If set to 0,
+.Xr carp 4
+will not attempt to become master if it is recieving advertisements from
+another active master.
+If set to any other value, carp will become master of the virtual host if it
+believes it can send advertisements more frequently than the current master.
+Enabled by default.
 .It Li esp.enable
 If set to 1, enable Encapsulating Security Payload
 .Pq ESP
@@ -1337,32 +1364,6 @@ receive buffer size.
 Returns the default
 .Tn UDP
 send buffer size.
-.It Li carp.allow
-If set to 0, incoming
-.Tn CARP
-packets will not be processed.
-If set to any other value, processing will occur.
-Enabled by default.
-.It Li carp.preempt
-If set to 0, 
-.Xr carp 4
-will not attempt to become master if it is recieving advertisements from an
-other active master.
-If set to any other value, carp will become master of the virtual host if it
-believes it can send advertisements more frequently than the current master.
-Enabled by default.
-.It Li carp.log
-If set to any value other than 0
-.Xr carp 4
-will log errors.
-Enabled by default.
-.It Li carp.arpbalance
-If set to any value other than 0, the arp balancing functionality in carp is
-enabled.
-When arp requests are recieved for an IP address which is part of any virtual
-host, carp will hash the source ip in the arp request to select one of the
-virtual hosts from the set of all the virtual hosts which have that IP address. The master of that host will respond with the correct virtual MAC address.
-Disabled by default.
 .El
 .It Dv PF_INET6
 Get or set various global information about IPv6
