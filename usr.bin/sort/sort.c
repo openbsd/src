@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.12 1999/05/24 17:57:19 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.13 1999/11/30 16:41:41 espie Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.12 1999/05/24 17:57:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.13 1999/11/30 16:41:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ static char rcsid[] = "$OpenBSD: sort.c,v 1.12 1999/05/24 17:57:19 millert Exp $
 #include "fsort.h"
 #include "pathnames.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -264,6 +266,7 @@ main(argc, argv)
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
 		int outfd;
+		mode_t um;
 
 		errno = 0;
 
@@ -272,7 +275,12 @@ main(argc, argv)
 		act.sa_handler = onsig;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXXXXXX",
 		    outpath);
-		if ((outfd = mkstemp(toutpath)) < 0 ||
+		/* use default umask to try and avoid one syscall */
+		um = umask(S_IWGRP|S_IWOTH);
+		if (um != S_IWGRP|S_IWOTH)
+			(void)umask(um);
+		if ((outfd = mkstemp(toutpath)) == -1 ||
+		    fchmod(outfd, DEFFILEMODE & ~um) == -1 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
 			err(2, toutpath);
 		outfile = toutpath;
