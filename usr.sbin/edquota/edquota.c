@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.21 1999/01/03 10:06:35 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.22 1999/06/15 17:08:25 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -149,7 +149,7 @@ main(argc, argv)
 			qup->dqblk.dqb_itime = 0;
 		}
 		while (argc-- > 0) {
-			if ((id = getentry(*argv++, quotatype)) < 0)
+			if ((id = getentry(*argv++, quotatype)) == -1)
 				continue;
 			putprivs(id, quotatype, protoprivs);
 		}
