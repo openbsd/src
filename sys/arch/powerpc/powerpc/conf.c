@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2000/09/26 14:03:54 art Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 2000/10/01 00:23:26 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -58,6 +58,8 @@ bdev_decl(rd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "raid.h"
+bdev_decl(raid);
 
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
@@ -79,6 +81,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NCCD,ccd),	/* 16 concatenated disk driver*/
 	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
 	bdev_notdef(),                  /* 18 unknown*/
+	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -129,6 +132,8 @@ cdev_decl(cd);
 cdev_decl(vnd);
 cdev_decl(ccd);
 cdev_decl(rd);  
+#include "raid.h"
+cdev_decl(raid);
 
 #include <wd.h>
 cdev_decl(wd);
@@ -175,8 +180,6 @@ cdev_decl(urio);
 #include "ucom.h"
 cdev_decl(ucom);
 
-#include "raid.h"
-cdev_decl(raid);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
