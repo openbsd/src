@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2002/03/31 21:38:10 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1709,7 +1709,6 @@ ctx_alloc(pm)
 		 */
 
 		setcontext4(cnum);
-		splx(s);
 		if (doflush)
 			cache_flush_context();
 
@@ -1736,6 +1735,7 @@ ctx_alloc(pm)
 				rp++;
 			}
 		}
+		splx(s);
 
 	} else if (CPU_ISSUN4M) {
 
