@@ -7,11 +7,11 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.1
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.1/include
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.23.3
-./usr/lib/libc_r.so.1.2
+./usr/lib/libc.so.24.0
+./usr/lib/libc_r.so.2.0
 ./usr/lib/libcrypto.so.2.0
 ./usr/lib/libcurses++.so.1.1
-./usr/lib/libcurses.so.5.2
+./usr/lib/libcurses.so.6.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -30,8 +30,8 @@
 ./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.2.0
-./usr/lib/libtermcap.so.5.2
-./usr/lib/libtermlib.so.5.2
+./usr/lib/libtermcap.so.6.0
+./usr/lib/libtermlib.so.6.0
 ./usr/lib/libutil.so.4.4
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3
@@ -697,3 +697,4 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph
 ./usr/lib/libperl.so.5.3
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph

@@ -389,3 +389,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_token.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/net/if_gre.ph

@@ -11,7 +11,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.23.3
+./usr/lib/libc.so.24.0
 ./usr/lib/libcrypto.so.2.0
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
@@ -444,3 +444,4 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph
 ./usr/lib/libperl.so.5.3
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_gre.ph

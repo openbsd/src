@@ -265,7 +265,6 @@
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
-./usr/include/dev/pci/if_mxreg.h
 ./usr/include/dev/pci/if_pnreg.h
 ./usr/include/dev/pci/if_rlreg.h
 ./usr/include/dev/pci/if_sfreg.h
@@ -383,7 +382,6 @@
 ./usr/include/dev/raidframe/rf_sstf.h
 ./usr/include/dev/raidframe/rf_states.h
 ./usr/include/dev/raidframe/rf_stripelocks.h
-./usr/include/dev/raidframe/rf_sys.h
 ./usr/include/dev/raidframe/rf_threadid.h
 ./usr/include/dev/raidframe/rf_threadstuff.h
 ./usr/include/dev/raidframe/rf_types.h
@@ -3315,3 +3313,5 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/net/if_gre.h
+./usr/include/netinet/ip_gre.h

@@ -661,3 +661,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_token.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_gre.ph

@@ -595,6 +595,15 @@
 ./usr/share/man/cat3/inet6_rthdr_reverse.0
 ./usr/share/man/cat3/inet6_rthdr_segments.0
 ./usr/share/man/cat3/inet6_rthdr_space.0
+./usr/share/man/cat3/pthread_attr_destroy.0
+./usr/share/man/cat3/pthread_attr_getdetachstate.0
+./usr/share/man/cat3/pthread_attr_getstackaddr.0
+./usr/share/man/cat3/pthread_attr_getstacksize.0
+./usr/share/man/cat3/pthread_attr_init.0
+./usr/share/man/cat3/pthread_attr_setdetachstate.0
+./usr/share/man/cat3/pthread_attr_setstackaddr.0
+./usr/share/man/cat3/pthread_attr_setstacksize.0
+./usr/share/man/cat3/pthread_set_name_np.0
 ./usr/share/man/cat3/set_form_userptr.0
 ./usr/share/man/cat3/set_form_win.0
 ./usr/share/man/cat3/set_item_init.0
@@ -860,6 +869,7 @@
 ./usr/share/man/cat4/ffs_softupdates.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fxp.0
+./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/hp300/autoconf.0
 ./usr/share/man/cat4/hp300/cons.0
 ./usr/share/man/cat4/hp300/ct.0
@@ -935,7 +945,6 @@
 ./usr/share/man/cat4/icsphy.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
-./usr/share/man/cat4/imp.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inphy.0
 ./usr/share/man/cat4/ip.0
@@ -1261,6 +1270,7 @@
 ./usr/share/man/cat7/msafer.0
 ./usr/share/man/cat7/ports.0
 ./usr/share/man/cat7/re_format.0
+./usr/share/man/cat7/securelevel.0
 ./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat7/term.0
 ./usr/share/man/cat8/ab.0
