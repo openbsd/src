@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.2 2001/12/05 05:34:22 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.3 2002/01/04 05:42:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -59,6 +59,8 @@ struct cgthree_softc {
 	struct device sc_dev;
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
+	bus_addr_t sc_paddr;
+	bus_type_t sc_btype;
 	bus_space_handle_t sc_ctrl_regs;
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
@@ -149,6 +151,8 @@ cgthreeattach(parent, self, aux)
 	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_btype = (bus_type_t)sa->sa_slot;
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -330,19 +334,38 @@ cgthree_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
+#define	START		(128 * 1024 + 128 * 1024)
+#define	NOOVERLAY	(0x04000000)
+
 paddr_t
 cgthree_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
 	int prot;
 {
-#if 0
 	struct cgthree_softc *sc = v;
-#endif
+	bus_space_handle_t bh;
 
 	if (offset & PGOFSET)
 		return (-1);
-	return (-1);
+	if (offset < 0)
+		return (-1);
+	if ((u_int)offset >= NOOVERLAY)
+		offset -= NOOVERLAY;
+	else if ((u_int)offset >= START)
+		offset -= START;
+	else
+		offset = 0;
+
+	if (offset >= sc->sc_linebytes * sc->sc_height)
+		return (-1);
+
+	if (bus_space_mmap(sc->sc_bustag, sc->sc_btype,
+	    sc->sc_paddr + CGTHREE_VID_OFFSET + offset,
+	    BUS_SPACE_MAP_LINEAR, &bh))
+		return (-1);
+
+	return ((paddr_t)bh);
 }
 
 static int
