@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.5 2003/04/08 18:03:46 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.6 2003/04/09 00:47:54 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -552,11 +552,12 @@ osiop_sched(sc)
 
 	if ((sc->sc_nexus != NULL) || TAILQ_EMPTY(&sc->ready_list)) {
 #ifdef OSIOP_DEBUG
-		printf("%s: osiop_sched- nexus %p/%d ready %p/%d\n",
-		    sc->sc_dev.dv_xname, sc->sc_nexus,
-		    sc->sc_nexus->xs->sc_link->target,
-		    sc->ready_list.tqh_first,
-		    sc->ready_list.tqh_first->xs->sc_link->target);
+		if (osiop_debug)
+			printf("%s: osiop_sched- nexus %p/%d ready %p/%d\n",
+			    sc->sc_dev.dv_xname, sc->sc_nexus,
+			    sc->sc_nexus->xs->sc_link->target,
+			    sc->ready_list.tqh_first,
+			    sc->ready_list.tqh_first->xs->sc_link->target);
 #endif
 		return;
 	}
@@ -573,8 +574,9 @@ osiop_sched(sc)
 
 	if (acb == NULL) {
 #ifdef OSIOP_DEBUG
-		printf("%s: osiop_sched didn't find ready command\n",
-		    sc->sc_dev.dv_xname);
+		if (osiop_debug)
+			printf("%s: osiop_sched didn't find ready command\n",
+			    sc->sc_dev.dv_xname);
 #endif
 		return;
 	}
