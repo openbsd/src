@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.33 2003/01/04 17:21:31 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.34 2003/05/31 17:28:14 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1907,7 +1907,7 @@ not147:
 	movl	d0,d1
 	andl	#0x40000000,d1		| is VME2_TCTL_SCON set?
 	beq	1f			| not SCON. may not use SRESET.
-	orw	#0x00800000,d0		| ok, assert VME2_TCTL_SRST
+	orl	#0x00800000,d0		| ok, assert VME2_TCTL_SRST
 	movl	d0,a0@(0x60)
 1:
 	| lets try the local bus reset
