@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.7 1997/06/20 10:33:37 grr Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.8 1997/07/13 21:48:42 angelos Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.10 1996/03/31 22:38:29 pk Exp $	*/
 
 /*
@@ -202,9 +202,8 @@ u_long	amd7930_get_in_sr __P((void *));
 int	amd7930_set_out_sr __P((void *, u_long));
 u_long	amd7930_get_out_sr __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_encoding __P((void *, u_int));
+int	amd7930_set_format __P((void *, u_int, u_int));
 int	amd7930_get_encoding __P((void *));
-int	amd7930_set_precision __P((void *, u_int));
 int	amd7930_get_precision __P((void *));
 int	amd7930_set_channels __P((void *, int));
 int	amd7930_get_channels __P((void *));
@@ -239,9 +238,8 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_out_sr,
 	amd7930_get_out_sr,
 	amd7930_query_encoding,
-	amd7930_set_encoding,
+	amd7930_set_format,
 	amd7930_get_encoding,
-	amd7930_set_precision,
 	amd7930_get_precision,
 	amd7930_set_channels,
 	amd7930_get_channels,
@@ -251,7 +249,6 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_in_port,
 	amd7930_get_in_port,
 	amd7930_commit_settings,
-	amd7930_get_silence,
 	NULL,
 	NULL,
 	amd7930_start_output,
@@ -462,11 +459,14 @@ amd7930_query_encoding(addr, fp)
 }
 
 int
-amd7930_set_encoding(addr, enc)
+amd7930_set_format(addr, enc, precision)
 	void *addr;
-	u_int enc;
+	u_int enc, precision;
 {
 	if (enc != AUDIO_ENCODING_ULAW)
+		return(EINVAL);
+
+	if (precision != 8)
 		return(EINVAL);
 
 	return(0);		/* no other encoding supported by amd chip */
@@ -477,17 +477,6 @@ amd7930_get_encoding(addr)
 	void *addr;
 {
 	return(AUDIO_ENCODING_ULAW);
-}
-
-int
-amd7930_set_precision(addr, prec)
-	void *addr;
-	u_int prec;
-{
-	if (prec != 8)
-		return(EINVAL);
-
-	return(0);		/* no other precision supported by amd chip */
 }
 
 int
