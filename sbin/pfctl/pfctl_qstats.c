@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.23 2003/06/21 20:57:45 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.24 2003/07/31 09:46:08 kjc Exp $ */
 
 /*
  * Copyright (c) Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,7 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 	struct pfioc_qstats	 pq;
 	u_int32_t		 mnr, nr;
 	struct queue_stats	 qstats;
+	static	u_int32_t	 last_ticket;
 
 	memset(&pa, 0, sizeof(pa));
 	memset(&pq, 0, sizeof(pq));
@@ -120,6 +121,14 @@ pfctl_update_qstats(int dev, struct pf_altq_node **root)
 		warn("DIOCGETALTQS");
 		return (-1);
 	}
+
+	/* if a new set is found, start over */
+	if (pa.ticket != last_ticket && *root != NULL) {
+		pfctl_free_altq_node(*root);
+		*root = NULL;
+	}
+	last_ticket = pa.ticket;
+
 	mnr = pa.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pa.nr = nr;
