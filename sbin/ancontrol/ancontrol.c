@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.22 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.23 2004/05/13 16:36:38 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -187,7 +187,7 @@ an_printwords(u_int16_t *w, int len)
 
 	printf("[ ");
 	for (i = 0; i < len; i++)
-		printf("%d ", w[i]);
+		printf("%u ", w[i]);
 	printf("]");
 
 	return;
@@ -254,7 +254,7 @@ an_dumpstatus(void)
 	printf("]\n");
 	printf("Error code:\t\t");
 	an_printhex((char *)&sts->an_errcode, 1);
-	printf("\nSignal strength:\t[ %d%% ]",sts->an_normalized_rssi);
+	printf("\nSignal strength:\t[ %u%% ]",sts->an_normalized_rssi);
 	printf("\nSignal quality:\t\t");
 	an_printhex((char *)&sts->an_cur_signal_quality, 1);
 	printf("\nCurrent SSID:\t\t");
@@ -386,152 +386,152 @@ an_dumpstats(void)
 	ptr -= 2;
 	stats = (struct an_ltv_stats *)ptr;
 
-	printf("RX overruns:\t\t\t\t\t[ %d ]\n", stats->an_rx_overruns);
-	printf("RX PLCP CSUM errors:\t\t\t\t[ %d ]\n",
+	printf("RX overruns:\t\t\t\t\t[ %u ]\n", stats->an_rx_overruns);
+	printf("RX PLCP CSUM errors:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_plcp_csum_errs);
-	printf("RX PLCP format errors:\t\t\t\t[ %d ]\n",
+	printf("RX PLCP format errors:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_plcp_format_errs);
-	printf("RX PLCP length errors:\t\t\t\t[ %d ]\n",
+	printf("RX PLCP length errors:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_plcp_len_errs);
-	printf("RX MAC CRC errors:\t\t\t\t[ %d ]\n",
+	printf("RX MAC CRC errors:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_mac_crc_errs);
-	printf("RX MAC CRC OK:\t\t\t\t\t[ %d ]\n",
+	printf("RX MAC CRC OK:\t\t\t\t\t[ %u ]\n",
 	    stats->an_rx_mac_crc_ok);
-	printf("RX WEP errors:\t\t\t\t\t[ %d ]\n",
+	printf("RX WEP errors:\t\t\t\t\t[ %u ]\n",
 	    stats->an_rx_wep_errs);
-	printf("RX WEP OK:\t\t\t\t\t[ %d ]\n",
+	printf("RX WEP OK:\t\t\t\t\t[ %u ]\n",
 	    stats->an_rx_wep_ok);
-	printf("Long retries:\t\t\t\t\t[ %d ]\n",
+	printf("Long retries:\t\t\t\t\t[ %u ]\n",
 	    stats->an_retry_long);
-	printf("Short retries:\t\t\t\t\t[ %d ]\n",
+	printf("Short retries:\t\t\t\t\t[ %u ]\n",
 	    stats->an_retry_short);
-	printf("Retries exhausted:\t\t\t\t[ %d ]\n",
+	printf("Retries exhausted:\t\t\t\t[ %u ]\n",
 	    stats->an_retry_max);
-	printf("Bad ACK:\t\t\t\t\t[ %d ]\n",
+	printf("Bad ACK:\t\t\t\t\t[ %u ]\n",
 	    stats->an_no_ack);
-	printf("Bad CTS:\t\t\t\t\t[ %d ]\n",
+	printf("Bad CTS:\t\t\t\t\t[ %u ]\n",
 	    stats->an_no_cts);
-	printf("RX good ACKs:\t\t\t\t\t[ %d ]\n",
+	printf("RX good ACKs:\t\t\t\t\t[ %u ]\n",
 	    stats->an_rx_ack_ok);
-	printf("RX good CTSs:\t\t\t\t\t[ %d ]\n",
+	printf("RX good CTSs:\t\t\t\t\t[ %u ]\n",
 	    stats->an_rx_cts_ok);
-	printf("TX good ACKs:\t\t\t\t\t[ %d ]\n",
+	printf("TX good ACKs:\t\t\t\t\t[ %u ]\n",
 	    stats->an_tx_ack_ok);
-	printf("TX good RTSs:\t\t\t\t\t[ %d ]\n",
+	printf("TX good RTSs:\t\t\t\t\t[ %u ]\n",
 	    stats->an_tx_rts_ok);
-	printf("TX good CTSs:\t\t\t\t\t[ %d ]\n",
+	printf("TX good CTSs:\t\t\t\t\t[ %u ]\n",
 	    stats->an_tx_cts_ok);
-	printf("LMAC multicasts transmitted:\t\t\t[ %d ]\n",
+	printf("LMAC multicasts transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_lmac_mcasts);
-	printf("LMAC broadcasts transmitted:\t\t\t[ %d ]\n",
+	printf("LMAC broadcasts transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_lmac_bcasts);
-	printf("LMAC unicast frags transmitted:\t\t\t[ %d ]\n",
+	printf("LMAC unicast frags transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_lmac_ucast_frags);
-	printf("LMAC unicasts transmitted:\t\t\t[ %d ]\n",
+	printf("LMAC unicasts transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_lmac_ucasts);
-	printf("Beacons transmitted:\t\t\t\t[ %d ]\n",
+	printf("Beacons transmitted:\t\t\t\t[ %u ]\n",
 	    stats->an_tx_beacons);
-	printf("Beacons received:\t\t\t\t[ %d ]\n",
+	printf("Beacons received:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_beacons);
-	printf("Single transmit collisions:\t\t\t[ %d ]\n",
+	printf("Single transmit collisions:\t\t\t[ %u ]\n",
 	    stats->an_tx_single_cols);
-	printf("Multiple transmit collisions:\t\t\t[ %d ]\n",
+	printf("Multiple transmit collisions:\t\t\t[ %u ]\n",
 	    stats->an_tx_multi_cols);
-	printf("Transmits without deferrals:\t\t\t[ %d ]\n",
+	printf("Transmits without deferrals:\t\t\t[ %u ]\n",
 	    stats->an_tx_defers_no);
-	printf("Transmits deferred due to protocol:\t\t[ %d ]\n",
+	printf("Transmits deferred due to protocol:\t\t[ %u ]\n",
 	    stats->an_tx_defers_prot);
-	printf("Transmits deferred due to energy detect:\t\t[ %d ]\n",
+	printf("Transmits deferred due to energy detect:\t\t[ %u ]\n",
 	    stats->an_tx_defers_energy);
-	printf("RX duplicate frames/frags:\t\t\t[ %d ]\n",
+	printf("RX duplicate frames/frags:\t\t\t[ %u ]\n",
 	    stats->an_rx_dups);
-	printf("RX partial frames:\t\t\t\t[ %d ]\n",
+	printf("RX partial frames:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_partial);
-	printf("TX max lifetime exceeded:\t\t\t[ %d ]\n",
+	printf("TX max lifetime exceeded:\t\t\t[ %u ]\n",
 	    stats->an_tx_too_old);
-	printf("RX max lifetime exceeded:\t\t\t[ %d ]\n",
+	printf("RX max lifetime exceeded:\t\t\t[ %u ]\n",
 	    stats->an_tx_too_old);
-	printf("Sync lost due to too many missed beacons:\t[ %d ]\n",
+	printf("Sync lost due to too many missed beacons:\t[ %u ]\n",
 	    stats->an_lostsync_missed_beacons);
-	printf("Sync lost due to ARL exceeded:\t\t\t[ %d ]\n",
+	printf("Sync lost due to ARL exceeded:\t\t\t[ %u ]\n",
 	    stats->an_lostsync_arl_exceeded);
-	printf("Sync lost due to deauthentication:\t\t[ %d ]\n",
+	printf("Sync lost due to deauthentication:\t\t[ %u ]\n",
 	    stats->an_lostsync_deauthed);
-	printf("Sync lost due to disassociation:\t\t[ %d ]\n",
+	printf("Sync lost due to disassociation:\t\t[ %u ]\n",
 	    stats->an_lostsync_disassociated);
-	printf("Sync lost due to excess change in TSF timing:\t[ %d ]\n",
+	printf("Sync lost due to excess change in TSF timing:\t[ %u ]\n",
 	    stats->an_lostsync_tsf_timing);
-	printf("Host transmitted multicasts:\t\t\t[ %d ]\n",
+	printf("Host transmitted multicasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_host_mcasts);
-	printf("Host transmitted broadcasts:\t\t\t[ %d ]\n",
+	printf("Host transmitted broadcasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_host_bcasts);
-	printf("Host transmitted unicasts:\t\t\t[ %d ]\n",
+	printf("Host transmitted unicasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_host_ucasts);
-	printf("Host transmission failures:\t\t\t[ %d ]\n",
+	printf("Host transmission failures:\t\t\t[ %u ]\n",
 	    stats->an_tx_host_failed);
-	printf("Host received multicasts:\t\t\t[ %d ]\n",
+	printf("Host received multicasts:\t\t\t[ %u ]\n",
 	    stats->an_rx_host_mcasts);
-	printf("Host received broadcasts:\t\t\t[ %d ]\n",
+	printf("Host received broadcasts:\t\t\t[ %u ]\n",
 	    stats->an_rx_host_bcasts);
-	printf("Host received unicasts:\t\t\t\t[ %d ]\n",
+	printf("Host received unicasts:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_host_ucasts);
-	printf("Host receive discards:\t\t\t\t[ %d ]\n",
+	printf("Host receive discards:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_host_discarded);
-	printf("HMAC transmitted multicasts:\t\t\t[ %d ]\n",
+	printf("HMAC transmitted multicasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_hmac_mcasts);
-	printf("HMAC transmitted broadcasts:\t\t\t[ %d ]\n",
+	printf("HMAC transmitted broadcasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_hmac_bcasts);
-	printf("HMAC transmitted unicasts:\t\t\t[ %d ]\n",
+	printf("HMAC transmitted unicasts:\t\t\t[ %u ]\n",
 	    stats->an_tx_hmac_ucasts);
-	printf("HMAC transmissions failed:\t\t\t[ %d ]\n",
+	printf("HMAC transmissions failed:\t\t\t[ %u ]\n",
 	    stats->an_tx_hmac_failed);
-	printf("HMAC received multicasts:\t\t\t[ %d ]\n",
+	printf("HMAC received multicasts:\t\t\t[ %u ]\n",
 	    stats->an_rx_hmac_mcasts);
-	printf("HMAC received broadcasts:\t\t\t[ %d ]\n",
+	printf("HMAC received broadcasts:\t\t\t[ %u ]\n",
 	    stats->an_rx_hmac_bcasts);
-	printf("HMAC received unicasts:\t\t\t\t[ %d ]\n",
+	printf("HMAC received unicasts:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_hmac_ucasts);
-	printf("HMAC receive discards:\t\t\t\t[ %d ]\n",
+	printf("HMAC receive discards:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_hmac_discarded);
-	printf("HMAC transmits accepted:\t\t\t[ %d ]\n",
+	printf("HMAC transmits accepted:\t\t\t[ %u ]\n",
 	    stats->an_tx_hmac_accepted);
-	printf("SSID mismatches:\t\t\t\t[ %d ]\n",
+	printf("SSID mismatches:\t\t\t\t[ %u ]\n",
 	    stats->an_ssid_mismatches);
-	printf("Access point mismatches:\t\t\t[ %d ]\n",
+	printf("Access point mismatches:\t\t\t[ %u ]\n",
 	    stats->an_ap_mismatches);
-	printf("Speed mismatches:\t\t\t\t[ %d ]\n",
+	printf("Speed mismatches:\t\t\t\t[ %u ]\n",
 	    stats->an_rates_mismatches);
-	printf("Authentication rejects:\t\t\t\t[ %d ]\n",
+	printf("Authentication rejects:\t\t\t\t[ %u ]\n",
 	    stats->an_auth_rejects);
-	printf("Authentication timeouts:\t\t\t[ %d ]\n",
+	printf("Authentication timeouts:\t\t\t[ %u ]\n",
 	    stats->an_auth_timeouts);
-	printf("Association rejects:\t\t\t\t[ %d ]\n",
+	printf("Association rejects:\t\t\t\t[ %u ]\n",
 	    stats->an_assoc_rejects);
-	printf("Association timeouts:\t\t\t\t[ %d ]\n",
+	printf("Association timeouts:\t\t\t\t[ %u ]\n",
 	    stats->an_assoc_timeouts);
-	printf("Management frames received:\t\t\t[ %d ]\n",
+	printf("Management frames received:\t\t\t[ %u ]\n",
 	    stats->an_rx_mgmt_pkts);
-	printf("Management frames transmitted:\t\t\t[ %d ]\n",
+	printf("Management frames transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_mgmt_pkts);
-	printf("Refresh frames received:\t\t\t[ %d ]\n",
+	printf("Refresh frames received:\t\t\t[ %u ]\n",
 	    stats->an_rx_refresh_pkts),
-	printf("Refresh frames transmitted:\t\t\t[ %d ]\n",
+	printf("Refresh frames transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_refresh_pkts),
-	printf("Poll frames received:\t\t\t\t[ %d ]\n",
+	printf("Poll frames received:\t\t\t\t[ %u ]\n",
 	    stats->an_rx_poll_pkts);
-	printf("Poll frames transmitted:\t\t\t[ %d ]\n",
+	printf("Poll frames transmitted:\t\t\t[ %u ]\n",
 	    stats->an_tx_poll_pkts);
-	printf("Host requested sync losses:\t\t\t[ %d ]\n",
+	printf("Host requested sync losses:\t\t\t[ %u ]\n",
 	    stats->an_lostsync_hostreq);
-	printf("Host transmitted bytes:\t\t\t\t[ %d ]\n",
+	printf("Host transmitted bytes:\t\t\t\t[ %u ]\n",
 	    stats->an_host_tx_bytes);
-	printf("Host received bytes:\t\t\t\t[ %d ]\n",
+	printf("Host received bytes:\t\t\t\t[ %u ]\n",
 	    stats->an_host_rx_bytes);
-	printf("Uptime in microseconds:\t\t\t\t[ %d ]\n",
+	printf("Uptime in microseconds:\t\t\t\t[ %u ]\n",
 	    stats->an_uptime_usecs);
-	printf("Uptime in seconds:\t\t\t\t[ %d ]\n",
+	printf("Uptime in seconds:\t\t\t\t[ %u ]\n",
 	    stats->an_uptime_secs);
-	printf("Sync lost due to better AP:\t\t\t[ %d ]\n",
+	printf("Sync lost due to better AP:\t\t\t[ %u ]\n",
 	    stats->an_lostsync_better_ap);
 
 	return;
@@ -845,7 +845,7 @@ an_setconfig(int act, void *arg)
 			diversity = AN_DIVERSITY_ANTENNA_1_AND_2;
 			break;
 		default:
-			errx(1, "bad diversity setting: %d", diversity);
+			errx(1, "bad diversity setting: %u", diversity);
 			break;
 		}
 		if (atoi(arg) == ACT_SET_DIVERSITY_RX) {
