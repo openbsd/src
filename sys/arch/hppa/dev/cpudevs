@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.27 2003/08/20 23:49:23 mickey Exp $
+$OpenBSD: cpudevs,v 1.28 2003/08/21 06:39:10 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -219,14 +219,14 @@ board	HP785_J7000	0x5bf	785/J7000 (Forte W 4w)
 #board			0x5c1	(M2500)
 #board			0x5c2	(Sonata 440)
 #board			0x5c3	(Sonata 360)
-board	HP800L2		0x5c4	800/L2000-44 (Rhapsody 440)
-#board			0x5c5	(Rhapsody 360)
+board	HP800_L200044	0x5c4	800/L2000-44/rp5450 (Rhapsody 440)
+board	HP800_L200036	0x5c5	800/L2000-36/rp5450 (Rhapsody 360)
 board	HP785C_1	0x5c6	780/C360 (Raven W 360)
 #board			0x5c7	(Halftone W 440)
 #board			0x5c8	(Lego 360)
-board	HP800_L100044	0x5c9	800/L1000-44 (Rhapsody DC-440)
-board	HP800_L100036	0x5ca	800/L1000-36 (Rhapsody DC-360)
-board	HP800_A500	0x5cb	800/A500 (Crescendo 440)
+board	HP800_L100044	0x5c9	800/L1000-44/rp5400 (Rhapsody DC-440)
+board	HP800_L100036	0x5ca	800/L1000-36/rp5400 (Rhapsody DC-360)
+board	HP800_A50044	0x5cb	800/A500-44/rp2450 (Crescendo 440)
 board	HP800_N400044	0x5cc	800/N4000-44 (Prelude W 440)
 #board			0x5cd	SPP2600
 #board			0x5ce	M2600
@@ -236,8 +236,8 @@ board	HP785_J5600	0x5d1	785/J5600 (Forte W+ 2w)
 #board			0x5d2	(Forte W+ 4w)
 board	HP800_N400055	0x5d3	800/N4000-55 (Prelude W+ 550)
 board	HP785_J6000	0x5d4	785/J6000 (Duet W+)
-board	HP800_A5005X	0x5d5	800/A500-5X (Crescendo 550)
-#board			0x5d6	(Crescendo DC-440)
+board	HP800_A5005X	0x5d5	800/A500-5X/rp2450 (Crescendo 550)
+board	HP800_A40044	0x5d6	800/A400-44/rp2400 (Crescendo DC-440)
 #board			0x5d7	(Keystone W+)
 #board			0x5d8	(Rhapsody wave 2 W+ DC-)
 #board			0x5d9	(Rhapsody wave 2 W+)
@@ -247,9 +247,9 @@ board	HP785_J6700	0x5dd	785/J6700 (Duet W2)
 board	HP785_B2600	0x5de	785/B2600 (Piccolo W+)
 #board	HP		0x5df	(Cantata W2)
 #board	HP		0x5e0	(Cantata DC- W2)
-board	HP800_A400_6X	0x5e1	800/A400-6X/rp2430 (Crescendo DC- W2)
-board	HP800_A500_6X	0x5e2	800/A500-6X/rp2470 (Crescendo 650 W2)
-#board	HP		0x5e3	(Crescendo 750 W2)
+board	HP800_A4006X	0x5e1	800/A400-6X/rp2430 (Crescendo DC-W2)
+board	HP800_A5006X	0x5e2	800/A500-6X/rp2470 (Crescendo 650 W2)
+board	HP800_A5007X	0x5e3	800/A500-7X/rp2470 (Crescendo 750 W2)
 board	HP800_rp7410	0x5e4	800/rp7410 (Keystone/Matterhorn W2 750)
 #board	HP		0x5e5	(PowerBar W+)
 #board	HP		0x5e6	(Keystone/Matterhorn W2 650)
@@ -417,7 +417,7 @@ console	NULL	0x01f	Jason/Anole Null Console
 
 fio	A_X25	0x02e	Armyknife Optional X.25
 fio	8x25	0x04f	8-Port X.25 EISA-ACC
-fio	SCSI	0x071	Core SCSI
+fio	SCSI	0x071	NCR 53C700 SCSI
 fio	LAN	0x072	Core LAN
 fio	HIL	0x073	Core HIL
 fio	CENT	0x074	Core Centronics
@@ -425,7 +425,7 @@ fio	RS232	0x075	Core RS-232C
 fio	SGC	0x077	SGC Graphics
 fio	A1	0x07a	Core audio (int.)
 fio	A2NB	0x07b	Advanced audio (ext.)
-fio	FWSCSI	0x07c	Core FW SCSI
+fio	FWSCSI	0x07c	NCR 53C720 FW-SCSI
 fio	FDDI	0x07d	Core FDDI
 fio	A1NB	0x07e	Core audio (ext.)
 fio	A2	0x07f	Advanced audio (int.)
@@ -447,7 +447,7 @@ fio	BARCO	0x340	BARCO CX4500 VME Graphics Console
 fio	HUGHES	0x360	Hughes TOG VME FDDI
 
 # Gecko section
-fio	GSCSI	0x082	Core SCSI
+fio	GSCSI	0x082	NCR 53C710 SCSI
 fio	GPCFD	0x083	floppy controller
 fio	GPCIO	0x084	PS/2 port
 fio	GSGC	0x085	GIO Graphics
