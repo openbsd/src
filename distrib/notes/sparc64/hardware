@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.70 2004/08/26 07:41:37 miod Exp $
+dnl	$OpenBSD: hardware,v 1.71 2004/09/28 18:46:12 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -11,6 +11,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Enterprise 220R
 		Enterprise 250
 		Enterprise 450
+		Enterprise 4500/5500
 		Netra T1 100/105
 		Netra t 1400/1405
 		Netra X1
@@ -332,6 +333,10 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 	Miscellaneous devices:
 		EBus beeper (beeper)
 		performance counters/system controller (uperf)
+		FireHose controller (fhc)
+		Central controller (central)
+		Clock board (clkbrd) 
+
 
 Hardware that we do NOT currently support, but get many questions about:
 	Multiprocessor machines.
