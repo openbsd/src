@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2001/06/05 14:52:26 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2001/06/13 08:45:34 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -125,9 +125,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			if ((((Elf_Addr) r_addr) & 0x7) != 0) {
 				Elf_Addr tmp;
 #if 0
-_dl_printf("unaligned RELATIVE: %p type: %d %s:%s 0x%lx -> 0x%lx\n", r_addr,
-ELF_R_TYPE(relas->r_info), object->load_name, symn, *r_addr,
-*r_addr+loff);
+_dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
+ELF_R_TYPE(relas->r_info), object->load_name, *r_addr, *r_addr+loff);
 #endif
 				_dl_bcopy(r_addr, &tmp, sizeof(Elf_Addr));
 				tmp += loff;
@@ -140,7 +139,7 @@ ELF_R_TYPE(relas->r_info), object->load_name, symn, *r_addr,
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 			if (this == NULL)
 				goto resolve_failed;
-			*r_addr = ooff + this->st_value;
+			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(GLOB_DAT):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
@@ -150,7 +149,6 @@ ELF_R_TYPE(relas->r_info), object->load_name, symn, *r_addr,
 			break;
 		case R_TYPE(NONE):
 			break;
-
 		default:
 			_dl_printf("%s:"
 				" %s: unsupported relocation '%s' %d at %lx\n",
@@ -180,10 +178,49 @@ resolve_failed:
 }
 
 /*
+ * Resolve a symbol at run-time.
+ */
+void *
+_dl_bind(elf_object_t *object, Elf_Word reloff)
+{
+	Elf_RelA *rela;
+	Elf_Addr *addr, ooff;
+	const Elf_Sym *sym, *this;
+	const char *symn;
+
+	rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
+
+	sym = object->dyn.symtab;
+	sym += ELF64_R_SYM(rela->r_info);
+	symn = object->dyn.strtab + sym->st_name;
+
+	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
+	ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
+	if (this == NULL) {
+		_dl_printf("lazy binding failed!\n");
+		*((int *)0) = 0;	/* XXX */
+	}
+	*addr = ooff + this->st_value + rela->r_addend;
+
+	return (void *)*addr;
+}
+
+/*
  *	Relocate the Global Offset Table (GOT).
  */
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	/* no got relocations until lazy binding */
+	Elf_Addr *pltgot;
+	extern void _dl_bind_start(void);	/* XXX */
+
+	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+
+	if (object->obj_type != OBJTYPE_EXE || !lazy || pltgot == NULL) {
+		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+		return;
+	}
+
+	pltgot[2] = (Elf_Addr)_dl_bind_start;
+	pltgot[3] = (Elf_Addr)object;
 }
