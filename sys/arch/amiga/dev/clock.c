@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2002/01/24 20:31:08 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ stopclock()
  * The advantage of this is that the profiling timer can be turned up to
  * a higher interrupt rate, giving finer resolution timing. The profclock
  * routine is called from the lev6intr in locore, and is a specialized
- * routine that calls addupc. The overhead then is far less than if
+ * routine that calls addupc_task. The overhead then is far less than if
  * hardclock/softclock was called. Further, the context switch code in
  * locore has been changed to turn the profile clock on/off when switching
  * into/out of a process that is profiling (startprofclock/stopprofclock).
@@ -658,7 +658,7 @@ profclock(pc, ps)
 	 */
 	if (USERMODE(ps)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(pc, &curproc->p_stats.p_prof, 1);
+			addupc_task(&curproc, pc, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.
