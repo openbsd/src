@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2001/06/27 05:46:11 art Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2001/08/28 09:19:03 jj Exp $
 
 #
 # A ramdisk kernel
@@ -40,7 +40,6 @@ option		ADOSFS		# AmigaDOS file system
 # Support for various kernel options
 #
 
-option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
 # Misc. debuging options

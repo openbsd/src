@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2001/06/27 05:46:10 art Exp $
+#	$OpenBSD: GENERIC,v 1.36 2001/08/28 09:19:03 jj Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -50,7 +50,6 @@ option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
 #
 
 option		GENERIC		# Mini-root boot support
-option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
 # Misc. debuging options

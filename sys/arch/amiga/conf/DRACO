@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.15 2001/06/27 05:46:10 art Exp $
+#	$OpenBSD: DRACO,v 1.16 2001/08/28 09:19:03 jj Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -82,7 +82,6 @@ option		GENERIC		# Mini-root boot support
 option		LKM		# Loadable kernel modules
 option		KTRACE		# Add kernel tracing system call
 option		DIAGNOSTIC	# Add additional error checking code
-option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
 # Misc. debuging options
