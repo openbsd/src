@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.15 2003/05/08 09:17:56 jmc Exp $
+.\" $OpenBSD: dhclient.8,v 1.16 2003/12/22 15:58:30 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nd Dynamic Host Configuration Protocol (DHCP) Client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1du
+.Op Fl 1dqu
 .Op Fl p Ar port
 .Op Ar interface ...
 .Sh DESCRIPTION
@@ -63,7 +63,7 @@ interfaces, eliminating non-broadcast interfaces if possible, and
 attempt to configure each one.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-p port"
 .It Fl 1
 Forces
 .Nm
@@ -76,14 +76,20 @@ By default,
 .Nm
 runs in the foreground until it has configured an interface, and then
 will revert to running in the background.
-.It Fl u
-Forces dhclient to reject leases with unknown options in them. The default
-behaviour is to accept such lease offers
 .It Fl p Ar port
 Specifies the UDP
 .Ar port
 .Nm
 should listen on, instead of the default (68).
+.It Fl q
+Forces
+.Nm
+to be less verbose on startup.
+.It Fl u
+Forces
+.Nm
+to reject leases with unknown options in them.
+The default behaviour is to accept such lease offers.
 .El
 .Pp
 The DHCP protocol allows a host to contact a central server which
