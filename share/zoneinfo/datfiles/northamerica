@@ -1,14 +1,13 @@
-# @(#)northamerica	7.41
+# @(#)northamerica	7.44
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1994-08-17):
+# From Paul Eggert <eggert@twinsun.com> (1999-03-22):
 # A reliable and entertaining source about time zones is
-# Derek Howse, Greenwich time and the discovery of the longitude,
-# Oxford University Press (1980).
+# Derek Howse, Greenwich time and longitude, Antique Collectors Club (1997).
 
 ###############################################################################
 
@@ -59,6 +58,9 @@ Rule	US	1974	only	-	Jan	6	2:00	1:00	D
 Rule	US	1975	only	-	Feb	23	2:00	1:00	D
 Rule	US	1976	1986	-	Apr	lastSun	2:00	1:00	D
 Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
+# <a href="http://thomas.loc.gov/cgi-bin/bdquery/z?d106:h.r.00177:">
+# H.R.177
+# </a> (introduced 1999-01-06) would change April to March in the above rule.
 
 # From Bob Devine (1988-01-28):
 # ...Alaska (and Hawaii) had the timezone names changed in 1967.
@@ -398,7 +400,7 @@ Zone America/Louisville	-5:43:02 -	LMT	1883 Nov 18 12:00
 #
 # From Paul Eggert (1995-12-19):
 # Shanks writes that Michigan started using standard time on 1885 Sep 18,
-# but Howse (p 126) writes that Detroit kept
+# but Howse writes that Detroit kept
 #
 #	local time until 1900 when the City Council decreed that clocks should
 #	be put back twenty-eight minutes to Central Standard Time.  Half the
@@ -440,8 +442,14 @@ Zone America/Menominee	-5:50:27 -	LMT	1885 Sep 18 12:00
 			-6:00	US	C%sT
 
 # Navassa
-# uninhabited
-
+# claimed by US under the provisions of the 1856 Guano Islands Act
+# also claimed by Haiti
+# occupied 1857/1900 by the Navassa Phosphate Co
+# US lighthouse 1917/1997-01
+# currently uninhabited
+# see Mark Fineman, ``An Isle Rich in Guano and Discord'',
+# _Los Angeles Times_ (1998-11-10), A1, A10; it cites
+# Jimmy Skaggs, _The Great Guano Rush_ (1994).
 
 # Old names, for S5 users
 
@@ -850,7 +858,7 @@ Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 			-7:00	-	MST
 
 
-# Northwest Territories, Yukon
+# Northwest Territories, Nunavut, Yukon
 
 # From Paul Eggert (1996-10-07):
 # Dawson switched to PST in 1973.  Inuvik switched to MST in 1979.
@@ -985,6 +993,10 @@ Zone America/Dawson	-9:17:40 -	LMT	1900 Aug 20
 # ``Diario Oficial: Time Zone Changeover'' (1996-01-04).
 # </a>
 
+# From Rives McDow (1998-10-08):
+# The State of Quintana Roo has reverted back to central STD and DST times
+# (i.e. UTC -0600 and -0500 as of 1998-08-02).
+
 # From Shanks (1991):
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Mexico	1939	only	-	Feb	5	0:00	1:00	D
@@ -1006,7 +1018,8 @@ Rule	BajaN	1961	1966	-	Oct	lastSun	2:00	0	S
 Zone America/Cancun	-5:47:04 -	LMT	1922 Jan  1  1:12:42
 			-6:00	-	CST	1996
 			-6:00	Mexico	C%sT	1997 Oct lastSun 2:00
-			-5:00	Mexico	E%sT
+			-5:00	Mexico	E%sT	1998 Aug  2  2:00
+			-6:00	Mexico	C%sT
 # Central Mexico
 Zone America/Mexico_City -6:36:36 -	LMT	1922 Jan  1  0:23:24
 			-7:00	-	MST	1927 Jun 10 23:00
@@ -1137,16 +1150,17 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 
 # Cuba
 
-# From Bob Devine (1988-01-28):
-# . . .DST is from 2nd Sunday in May to 2nd Sunday in October since 1981.
-# Change at midnight.  In 1979 & 1980, started at 3rd Sunday in March
-# (I think).
+# From Arthur David Olson (1999-03-29):
+# The 1999-03-28 exhibition baseball game held in Havana, Cuba, between
+# the Cuban National Team and the Baltimore Orioles was carried live on
+# the Orioles Radio Network, including affiliate WTOP in Washington, DC.
+# During the game, play-by-play announcer Jim Hunter noted that
+# "We'll be losing two hours of sleep...Cuba switched to Daylight Saving
+# Time today."  (The "two hour" remark referred to losing one hour of
+# sleep on 1999-03-28--when the announcers were in Cuba as it switched
+# to DST--and one more hour on 1999-04-04--when the announcers will have
+# returned to Baltimore, which switches on that date.)
 
-# From U. S. Naval Observatory (1989-01-19):
-# CUBA                5 H  BEHIND UTC
-# CUBA                4 H  BEHIND UTC    MAR 20 - OCT 8
-
-# From Shanks (1991):
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
 Rule	Cuba	1928	only	-	Oct	10	0:00	0	S
@@ -1174,9 +1188,8 @@ Rule	Cuba	1990	1997	-	Apr	Sun>=1	0:00	1:00	D
 Rule	Cuba	1991	1995	-	Oct	Sun>=8	0:00s	0	S
 Rule	Cuba	1996	only	-	Oct	 6	0:00s	0	S
 Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
-Rule	Cuba	1998	only	-	Mar	29	0:00	1:00	D
+Rule	Cuba	1998	max	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	max	-	Oct	lastSun	0:00s	0	S
-Rule	Cuba	1999	max	-	Apr	Sun>=1	0:00s	1:00	D
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
@@ -1251,6 +1264,8 @@ Zone America/Port-au-Prince -4:49:20 -	LMT	1890
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Tegucigalpa -5:48:52 -	LMT	1921 Apr
 			-6:00	Salv	C%sT
+#
+# Great Swan I ceded by US to Honduras in 1972
 
 # Jamaica
 
@@ -1285,6 +1300,11 @@ Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul 1 0:01   # Olveston
 			-4:00	-	AST
 
 # Nicaragua
+#
+# From Steffen Thorsen (1998-12-29):
+# Nicaragua seems to be back at -6:00 but I have not been able to find when
+# they changed from -5:00.
+#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Nic	1979	1980	-	Mar	Sun>=16	0:00	1:00	D
 Rule	Nic	1979	1980	-	Jun	Mon>=23	0:00	0	S
@@ -1296,7 +1316,8 @@ Zone	America/Managua	-5:45:08 -	LMT	1890
 			-6:00	-	CST	1973 May
 			-5:00	-	EST	1975 Feb 16
 			-6:00	Nic	C%sT	1993 Jan 1 4:00
-			-5:00	-	EST
+			-5:00	-	EST	1998 Dec
+			-6:00	-	CST
 
 # Panama
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]

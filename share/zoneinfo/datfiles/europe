@@ -1,10 +1,10 @@
-# @(#)europe	7.57
+# @(#)europe	7.60
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
 # tz@elsie.nci.nih.gov for general use in the future).
 
-# From Paul Eggert <eggert@twinsun.com> (1996-11-22):
+# From Paul Eggert <eggert@twinsun.com> (1999-03-22):
 # A good source for time zone historical data outside the U.S. is
 # Thomas G. Shanks, The International Atlas (4th edition),
 # San Diego: ACS Publications, Inc. (1995).
@@ -18,9 +18,17 @@
 # Except where otherwise noted, Shanks is the source for entries through 1990,
 # and IATA SSIM is the source for entries after 1990.
 #
-# Another source occasionally used is Edward W. Whitman, World Time Differences,
-# Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated), which
-# I found in the UCLA library.
+# Other sources occasionally used include:
+#
+#	Edward W. Whitman, World Time Differences,
+#	Whitman Publishing Co, 2 Niagara Av, Ealing, London (undated),
+#	which I found in the UCLA library.
+#
+#	Brazil's Departamento Servico da Hora (DSH),
+#	<a href="http://pcdsh01.on.br/HISTHV.htm">
+#	History of Summer Time
+#	</a> (1998-09-21, in Portuguese)
+
 #
 # I invented the abbreviations marked `*' in the following table;
 # the rest are from earlier versions of this file, or from other sources.
@@ -38,8 +46,7 @@
 #	 3:00	MSK MSD	Moscow
 #
 # A reliable and entertaining source about time zones, especially in Britain,
-# is Derek Howse, Greenwich time and the discovery of the longitude,
-# Oxford University Press (1980).
+# Derek Howse, Greenwich time and longitude, Antique Collectors Club (1997).
 
 # From Peter Ilieve <peter@memex.co.uk> (1994-12-04),
 # The original six [EU members]: Belgium, France, (West) Germany, Italy,
@@ -66,7 +73,6 @@
 ###############################################################################
 
 # Britain (United Kingdom) and Ireland (Eire)
-# The UK and its colonies adopted the Gregorian calendar on 1752-09-14.
 
 # From Peter Ilieve <peter@memex.co.uk> (1994-07-06):
 #
@@ -115,9 +121,10 @@
 # transition date for London, namely 1847 Sep 22.  We don't know as much
 # about Dublin, so we use 1880 Aug 2, the legal transition time.
 
-# From Paul Eggert (1996-06-12):
+# From Paul Eggert (1999-01-30):
 # Summer Time was first seriously proposed by William Willett (1857-1915),
-# a London builder who circulated a pamphlet ``Waste of Daylight'' (1907)
+# a London builder and member of the Royal Astronomical Society
+# who circulated a pamphlet ``Waste of Daylight'' (1907)
 # that proposed advancing clocks 20 minutes on each of four Sundays in April,
 # and retarding them by the same amount on four Sundays in September.
 # A bill was drafted in 1909 and introduced in Parliament several times,
@@ -740,6 +747,20 @@
 #
 # Whitman says Dublin Mean Time was -0:25:21, which is more precise than Shanks.
 
+# From Paul Eggert (1999-03-28):
+# Clive Feather (<news:859845706.26043.0@office.demon.net>, 1997-03-31)
+# reports that Cheriton Shuttle Terminal uses Concession Time (CT),
+# equivalent to French civil time.
+# Julian Hill (<news:36118128.5A14@virgin.net>, 1998-09-30) reports that
+# trains between Dollands Moor (the freight facility just outside Cheriton)
+# and Frethun run in CT.
+# My admittedly uninformed guess is that the terminal has two authorities,
+# the French concession operators and the British civil authorities,
+# and that the time depends on who you're talking to.
+# If, say, the British police were called to the station for some reason,
+# I would expect the official police report to use GMT/BST and not CET/CEST.
+# This is a borderline case, but for now let's stick to GMT/BST for Cheriton.
+
 # From an anonymous contributor (1996-06-02):
 # The law governing time in Ireland is under Statutory Instrument SI 395/94,
 # which gives force to European Union 7th Council Directive # 94/21/EC.
@@ -1100,6 +1121,10 @@ Rule	Belgium	1922	1927	-	Oct	Sat>=1	23:00s	0	-
 Rule	Belgium	1923	only	-	Apr	21	23:00s	1:00	S
 Rule	Belgium	1924	only	-	Mar	29	23:00s	1:00	S
 Rule	Belgium	1925	only	-	Apr	 4	23:00s	1:00	S
+# DSH writes that a royal decree of 1926-02-22 specified the Sun following 3rd
+# Sat in Apr (except if it's Easter, in which case it's one Sunday earlier),
+# to Sun following 1st Sat in Oct, and that a royal decree of 1928-09-15
+# changed the transition times to 02:00 GMT.
 Rule	Belgium	1926	only	-	Apr	17	23:00s	1:00	S
 Rule	Belgium	1927	only	-	Apr	 9	23:00s	1:00	S
 Rule	Belgium	1928	only	-	Apr	14	23:00s	1:00	S
@@ -1157,7 +1182,6 @@ Zone	Europe/Sofia	1:33:16 -	LMT	1880
 # see Yugosloavia
 
 # Czech Republic
-# Gregorian calendar adopted 1584-01-17.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Czech	1945	only	-	Apr	 8	2:00s	1:00	S
 Rule	Czech	1945	only	-	Nov	18	2:00s	0	-
@@ -1174,7 +1198,6 @@ Zone	Europe/Prague	0:57:44 -	LMT	1850
 			1:00	EU	CE%sT
 
 # Denmark, Faeroe Islands, and Greenland
-# Gregorian calendar adopted 1700-03-01.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Denmark	1916	only	-	May	14	23:00	1:00	S
 Rule	Denmark	1916	only	-	Sep	30	23:00	0	-
@@ -1240,6 +1263,18 @@ Zone America/Thule	-4:35:08 -	LMT	1916 Jul 28 # Pituffik
 # A discussion is running about the summer time efficiency and effect on
 # human physiology.  It seems that Estonia maybe will not change to
 # summer time next spring.''
+
+# From Peter Ilieve <peter@aldie.co.uk> (1998-11-04), heavily edited:
+# <a href="http://trip.rk.ee/cgi-bin/thw?${BASE}=akt&${OOHTML}=rtd&TA=1998&TO=1&AN=1390">
+# The 1998-09-22 Estonian time law
+# </a>
+# refers to the Eighth Directive and cites the association agreement between
+# the EU and Estonia, ratified by the Estonian law (RT II 1995, 22--27, 120).
+#
+# I also asked [my relative] whether they use any standard abbreviation
+# for their standard and summer times. He says no, they use "suveaeg"
+# (summer time) and "talveaeg" (winter time).
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Tallinn	1:39:00	-	LMT	1880
 			1:39:00	-	TMT	1918 Feb # Tallinn Mean Time
@@ -1250,11 +1285,10 @@ Zone	Europe/Tallinn	1:39:00	-	LMT	1880
 			1:00	C-Eur	CE%sT	1944 Sep 22
 			3:00	Russia	MSK/MSD	1989 Mar 26 2:00s
 			2:00	1:00	EEST	1989 Sep 24 2:00s
-			2:00	C-Eur	EE%sT	1998
+			2:00	C-Eur	EE%sT	1998 Sep 22
 			2:00	EU	EE%sT
 
 # Finland
-# See Sweden for when the Gregorian calendar was adopted.
 #
 # From Hannu Strang <chs@apu.fi> (25 Sep 1994 06:03:37 UTC):
 # Well, here in Helsinki we're just changing from summer time to regular one,
@@ -1274,9 +1308,6 @@ Zone	Europe/Helsinki	1:39:52 -	LMT	1878 May 31
 			2:00	EU	EE%sT
 
 # France
-# Gregorian calendar adopted 1582-12-20.
-# French Revolutionary calendar used 1793-11-24 through 1805-12-31,
-# and (in Paris only) 1871-05-06 through 1871-05-23.
 #
 # Shanks seems to use `24:00' ambiguously; we resolve it with Whitman.
 # From Shanks (1991):
@@ -1291,6 +1322,9 @@ Rule	France	1920	only	-	Oct	23	23:00s	0	-
 Rule	France	1921	only	-	Mar	14	23:00s	1:00	S
 Rule	France	1921	only	-	Oct	25	23:00s	0	-
 Rule	France	1922	only	-	Mar	25	23:00s	1:00	S
+# DSH writes that a law of 1923-05-24 specified 3rd Sat in Apr at 23:00 to 1st
+# Sat in Oct at 24:00; and that in 1930, because of Easter, the transitions
+# were Apr 12 and Oct 5.  Go with Shanks.
 Rule	France	1922	1938	-	Oct	Sat>=1	23:00s	0	-
 Rule	France	1923	only	-	May	26	23:00s	1:00	S
 Rule	France	1924	only	-	Mar	29	23:00s	1:00	S
@@ -1423,7 +1457,6 @@ Zone	Europe/Athens	1:34:52 -	LMT	1895 Sep 14
 			2:00	EU	EE%sT
 
 # Hungary
-# Gregorian calendar adopted 1587-11-01.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Hungary	1918	only	-	Apr	 1	 3:00	1:00	S
 Rule	Hungary	1918	only	-	Sep	29	 3:00	0	-
@@ -1515,7 +1548,6 @@ Zone Atlantic/Reykjavik	-1:27:24 -	LMT	1837
 			 0:00	-	GMT
 
 # Italy
-# Gregorian calendar adopted 1582-10-15.
 #
 # From Paul Eggert (1996-05-06):
 # For Italian DST we have three sources: Shanks, Whitman, and F. Pollastri
@@ -1788,15 +1820,12 @@ Zone Europe/Amsterdam	0:19:28 -	LMT	1892 May
 			1:00	EU	CE%sT
 
 # Norway
-# Gregorian calendar adopted 1700-03-01.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 # Whitman gives 1916 May 21 - 1916 Oct 21; go with Shanks.
 Rule	Norway	1916	only	-	May	22	1:00	1:00	S
 Rule	Norway	1916	only	-	Sep	30	0:00	0	-
-# Shanks omits the following transition; go with Whitman.
-Rule	Norway	1935	only	-	Aug	11	0:00	1:00	S
-# Whitman says DST observed until 1942 Nov 1, then 1943 Mar 29 - Oct 4,
-# 1944 Apr 3 - Oct 2, and 1945 Apr 1 - Oct 1; go with Shanks after 1940.
+# Whitman says DST observed 1935-08-11/1942-11-01, then 1943-03-29/10-04,
+# 1944-04-03/10-02, and 1945-04-01/10-01; go with Shanks.
 Rule	Norway	1945	only	-	Apr	 2	2:00s	1:00	S
 Rule	Norway	1945	only	-	Oct	 1	2:00s	0	-
 Rule	Norway	1959	1964	-	Mar	Sun>=15	2:00s	1:00	S
@@ -1855,7 +1884,6 @@ Zone	Europe/Warsaw	1:24:00 -	LMT	1880
 # Stick with W-Eur for now.
 
 # Portugal
-# Gregorian calendar adopted 1582-10-15.
 #
 # From Rui Pedro Salgueiro <rps@inescca.inescc.pt> (1992-11-12):
 # Portugal has recently (September, 27) changed timezone
@@ -1874,6 +1902,9 @@ Zone	Europe/Warsaw	1:24:00 -	LMT	1880
 # harmonized with the EU), and that they stayed +0:00 that winter.
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+# DSH writes that despite Decree 1,469 (1915), the change to the clocks was not
+# done every year, depending on what Spain did, because of railroad schedules.
+# Go with Shanks.
 Rule	Port	1916	only	-	Jun	17	23:00	1:00	S
 # Whitman gives 1916 Oct 31; go with Shanks.
 Rule	Port	1916	only	-	Nov	 1	 1:00	0	-
@@ -1977,15 +2008,6 @@ Zone Europe/Bucharest	1:44:24 -	LMT	1891 Oct
 
 # Russia
 
-# From Chris Carrier <72157.3334@CompuServe.COM> (1996-12-02):
-# On 1929-10-01 the Soviet Union instituted an ``Eternal Calendar''
-# with 30-day months plus 5 holidays, with a 5-day week.
-# On 1931-12-01 it changed to a 6-day week; in 1934 it reverted to the
-# Gregorian calendar while retaining the 6-day week; on 1940-06-27 it
-# reverted to the 7-day week.  With the 6-day week the usual days
-# off were the 6th, 12th, 18th, 24th and 30th of the month.
-# (Source: Evitiar Zerubavel, _The Seven Day Circle_)
-#
 # From Paul Eggert <eggert@twinsun.com> (1996-11-22):
 # Except for Moscow after 1919-07-01, I invented the time zone abbreviations,
 # and (unless otherwise specified) guessed what happened after 1991.
@@ -2105,7 +2127,6 @@ Link Europe/Prague Europe/Bratislava
 # see Yugoslavia
 
 # Spain
-# Gregorian calendar adopted 1582-10-15.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 # For 1917-1919 Whitman gives Apr Sat>=1 - Oct Sat>=1; go with Shanks.
 Rule	Spain	1917	only	-	May	 5	23:00s	1:00	S
@@ -2176,32 +2197,6 @@ Zone	Atlantic/Canary	-1:01:36 -	LMT	1922 Mar # Las Palmas de Gran C.
 # Ignore this for now, as the Canaries are part of the EU.
 
 # Sweden
-
-# From: msb@sq.com (Mark Brader)
-# <a href="news:1996Jul6.012937.29190@sq.com">
-# Subject: Re: Gregorian reform -- a part of locale?
-# </a>
-# Date: 1996-07-06
-#
-# In 1700, Denmark made the transition from Julian to Gregorian.  Sweden
-# decided to *start* a transition in 1700 as well, but rather than have one of
-# those unsightly calendar gaps :-), they simply decreed that the next leap
-# year after 1696 would be in 1744 -- putting the whole country on a calendar
-# different from both Julian and Gregorian for a period of 40 years.
-#
-# However, in 1704 something went wrong and the plan was not carried through;
-# they did, after all, have a leap year that year.  And one in 1708.  In 1712
-# they gave it up and went back to Julian, putting 30 days in February that
-# year!...
-#
-# Then in 1753, Sweden made the transition to Gregorian in the usual manner,
-# getting there only 13 years behind the original schedule.
-#
-# (A previous posting of this story was challenged, and Swedish readers
-# produced the following references to support it: "Tiderakning och historia"
-# by Natanael Beckman (1924) and "Tid, en bok om tiderakning och
-# kalendervasen" by Lars-Olof Lode'n (no date was given).)
-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Europe/Stockholm	1:12:12 -	LMT	1878 May 31
 			1:12:12	-	SMT	1900 Jan  1  1:00 # Stockholm MT
@@ -2211,9 +2206,7 @@ Zone Europe/Stockholm	1:12:12 -	LMT	1878 May 31
 			1:00	EU	CE%sT
 
 # Switzerland
-# The Gregorian calendar was introduced gradually in Switzerland,
-# by omitting leap years during 1583-1812.
-# From Howse (1988), p 82:
+# From Howse:
 # By the end of the 18th century clocks and watches became commonplace
 # and their performance improved enormously.  Communities began to keep
 # mean time in preference to apparent time -- Geneva from 1780 ....

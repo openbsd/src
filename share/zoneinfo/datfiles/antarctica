@@ -1,14 +1,13 @@
-# @(#)antarctica	7.14
+# @(#)antarctica	7.15
 
-# From Paul Eggert (1997-03-28):
-# To keep things manageable, we list only locations occupied year-round;
-# see
-# <a href="http://earth.agu.org/amen/nations.html">
+# From Paul Eggert (1999-03-22):
+# To keep things manageable, we list only locations occupied year-round; see
+# <a href="http://www.delm.tas.gov.au/comnap/members.html">
 # Antarctic Activities of Member Nations of the Antarctic Treaty (1996-05-24)
 # </a>
 # and
 # <a href="http://www.spri.cam.ac.uk/bob/periant.htm">
-# Summary of the Peri-Antarctic Islands (1996-09-05)
+# Summary of the Peri-Antarctic Islands (1998-07-23)
 # </a>
 # for information.
 # Unless otherwise specified, we have no time zone information.
@@ -28,8 +27,12 @@ Rule	ArgAQ	1974	only	-	Jan	23	0:00	1:00	S
 Rule	ArgAQ	1974	only	-	May	 1	0:00	0	-
 Rule	ArgAQ	1974	1976	-	Oct	Sun<=7	0:00	1:00	S
 Rule	ArgAQ	1975	1977	-	Apr	Sun<=7	0:00	0	-
-Rule	ChileAQ	1969	max	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	1970	max	-	Mar	Sun>=9	0:00	0	-
+Rule	ChileAQ	1969	1997	-	Oct	Sun>=9	0:00	1:00	S
+Rule	ChileAQ	1970	1998	-	Mar	Sun>=9	0:00	0	-
+Rule	ChileAQ	1998	only	-	Sep	27	0:00	1:00	S
+Rule	ChileAQ	1999	only	-	Apr	 4	0:00	0	-
+Rule	ChileAQ	1999	max	-	Oct	Sun>=9	0:00	1:00	S
+Rule	ChileAQ	2000	max	-	Mar	Sun>=9	0:00	0	-
 
 
 # Argentina - 6 year-round bases
@@ -38,6 +41,7 @@ Rule	ChileAQ	1970	max	-	Mar	Sun>=9	0:00	0	-
 
 # Australia - territories
 # Heard Island, McDonald Islands (uninhabited)
+#	previously sealers and scientific personnel wintered
 #
 # year-round bases
 # Casey, Bailey Peninsula, since 1969
@@ -89,9 +93,10 @@ Zone Antarctica/Mawson	0	-	___	1954 Feb 13
 # Martin-de-Vivies Base, Amsterdam Island, -374105+0773155, since 1950
 # Alfred-Faure Base, Crozet Islands, -462551+0515152, since 1964
 # Port-aux-Francais, Kerguelen Islands, -492110+0701303, since 1951;
-#	a whaling and sealing station operated 1908-14, 1920-29, and 1951-56
+#	whaling & sealing station operated 1908/1914, 1920/1929, and 1951/1956
 #
-# St Paul Island - near Amsterdam, uninhabited since 1931
+# St Paul Island - near Amsterdam, uninhabited
+#	fishing stations operated variously 1819/1931
 #
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Indian/Kerguelen	0	-	___	1950	# Port-aux-Francais
@@ -123,6 +128,22 @@ Zone Antarctica/DumontDUrville 0 -	___	1947
 # Japan - year-round bases
 # Dome Fuji
 # Syowa
+#
+# From Hideyuki Suzuki (1999-02-06):
+# In all Japanese stations, +0300 is used as the standard time.  [See]
+# <a href="http://www.crl.go.jp/uk/uk201/basyo.htm">[reference in Japanese]</a>
+# and information from KAMO Hiroyasu <wd@ics.nara-wu.ac.jp>.
+#
+# Syowa station, which is the first antarctic station of Japan,
+# was established on 1957-01-29.  Since Syowa station is still the main
+# station of Japan, it's appropriate for the principal location.
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone Antarctica/Syowa	0	-	___	1957 Jan 29
+			3:00	-	SYOT	# Syowa Time
+# See:
+# <a href="http://www.nipr.ac.jp/english/jare.html">
+# Japanese Antarctic Research Expedition (JARE) (1998-04-09)
+# </a>
 
 # S Korea - year-round base
 # King Sejong, King George Island, since 1988
@@ -169,10 +190,12 @@ Rule	NZAQ	1990	max	-	Mar	Sun>=15	2:00s	0	S
 # British Antarctic Territories (BAT) claims
 # South Orkney Islands
 #	scientific station from 1903
-#	whaling station at Signy I 1920-1926
+#	whaling station at Signy I 1920/1926
 # South Shetland Islands
-#	whaling station at Deception I 1912-1931
-#	scientific station from 1943
+#	whaling station at Deception I 1912/1931
+#	scientific station from 1943;
+#	previously sealers and a scientific expedition wintered by accident,
+#	and a garrison was deployed briefly
 #
 # year-round bases
 # Halley, Coates Land, -7535-2619, since 1956-01-06
