@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$OpenBSD: dz.c,v 1.2 2001/01/28 01:19:59 hugh Exp $	*/
 /*	$NetBSD: dz.c,v 1.19 2000/01/24 02:40:29 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -197,7 +197,7 @@ dzrint(arg)
 		if (c & DZ_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
-#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46))
+#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46) || defined(VAX53))
 		if (tp->t_dev == cn_tab->cn_dev) {
 			int j = kdbrint(cc);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibus.c,v 1.1 2000/04/27 01:10:10 bjc Exp $	*/
+/*	$OpenBSD: ibus.c,v 1.2 2001/01/28 01:19:59 hugh Exp $	*/
 /*	$NetBSD: ibus.c,v 1.2 1999/08/14 18:42:46 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -39,6 +39,8 @@
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
+#include <machine/ibus.h>
+
 static	int ibus_print __P((void *, const char *));
 static	int ibus_match __P((struct device *, struct cfdata *, void *));
 static	void ibus_attach __P((struct device *, struct device *, void*));
@@ -50,6 +52,8 @@ struct	cfdriver ibus_cd = {
 struct	cfattach ibus_ca = {
 	sizeof(struct device), (cfmatch_t)ibus_match, ibus_attach
 };
+
+struct ibus_edal *ibus_edal = NULL;
 
 int
 ibus_print(aux, name)
@@ -89,6 +93,10 @@ ibus_attach(parent, self, aux)
 	vaddr_t va;
 
 	printf("\n");
+
+	if (vax_boardtype == VAX_BTYP_1303)
+		ibus_edal = (struct ibus_edal *) vax_map_physmem(0x25c00000, 1);
+
 	/*
 	 * There may be a SGEC. Is badaddr() enough here?
 	 */
@@ -115,10 +123,38 @@ ibus_attach(parent, self, aux)
 	if (badaddr((caddr_t)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
+
 	/*
 	 * All MV's have a Qbus.
 	 */
 	bp.type = "uba";
 	config_found(self, &bp, ibus_print);
 
+}
+
+/*
+ * Bitwise OR bits into the interrupt mask.
+ * Returns the new mask.
+ */
+unsigned char
+ibus_ormask(mask)
+	unsigned char mask;
+{
+	ibus_edal->edal_intmsk |= mask;
+	return (ibus_edal->edal_intmsk);
+}
+
+/*
+ * Sets a new interrupt mask. Returns the old one.
+ * Works like spl functions.
+ */
+unsigned char
+ibus_setmask(mask)
+	unsigned char mask;
+{
+	unsigned char ch;
+
+	ch = ibus_edal->edal_intmsk;
+	ibus_edal->edal_intmsk = mask;
+	return ch;
 }

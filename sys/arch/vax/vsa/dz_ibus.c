@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.1 2000/04/27 02:34:50 bjc Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.2 2001/01/28 01:20:00 hugh Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@
 #include <machine/sid.h>
 #include <machine/uvax.h>
 #include <machine/vsbus.h>
+#include <machine/ibus.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
@@ -61,12 +62,18 @@
 
 static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
 static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
+static	int	dz_ibus_match __P((struct device *, struct cfdata *, void *));
+static	void	dz_ibus_attach __P((struct device *, struct device *, void *));
 static	int	dz_print __P((void *, const char *));
 
 static	vaddr_t dz_regs; /* Used for console */
 
 struct  cfattach dz_vsbus_ca = {
 	sizeof(struct dz_softc), (cfmatch_t)dz_vsbus_match, dz_vsbus_attach
+};
+
+struct cfattach dz_ibus_ca = {
+	sizeof(struct dz_softc), (cfmatch_t)dz_ibus_match, dz_ibus_attach
 };
 
 #define REG(name)     short name; short X##name##X;
@@ -165,6 +172,49 @@ dz_vsbus_attach(parent, self, aux)
 			config_found(self, 0, dz_print);
 }
 
+static void
+dz_ibus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct dz_softc *sc = (struct dz_softc *)self;
+
+	sc->sc_ioh = (vaddr_t)dz_regs;
+	sc->sc_dr.dr_csr = 0;		/* correct  */
+	sc->sc_dr.dr_rbuf = 4;		/* correct  */
+	sc->sc_dr.dr_dtr = 9;		/* unknown  */
+	sc->sc_dr.dr_break = 13;	/* untested */
+	sc->sc_dr.dr_tbuf = 12;		/* correct  */
+	sc->sc_dr.dr_tcr = 8;		/* correct  */
+	sc->sc_dr.dr_dcd = 11;		/* works    */
+	sc->sc_dr.dr_ring = 13;		/* untested */
+
+	sc->sc_type = DZ_DC;
+	scb_vecalloc(0x154, dzxint, sc, SCB_ISTACK);
+	scb_vecalloc(0x150, dzrint, sc, SCB_ISTACK);
+
+	dzattach(sc);
+
+	ibus_ormask(0x8);
+	DELAY(1000);
+
+	config_found(self, 0, dz_print);
+}
+
+static int
+dz_ibus_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	/* This function assumes all btype 1303 machines have a dz. */  
+
+	if (vax_boardtype == VAX_BTYP_1303)
+		return (1);
+
+	return (0);
+}
+
 int
 dzcngetc(dev) 
 	dev_t dev;
@@ -211,6 +261,7 @@ dzcnprobe(cndev)
 		break;
 
 	case VAX_BTYP_49:
+	case VAX_BTYP_1303:
 		ioaddr = 0x25000000;
 		diagcons = 3;
 		break;
@@ -280,10 +331,19 @@ dzcnpollc(dev, pollflag)
 {
 	static	u_char mask;
 
-	if (pollflag)
-		mask = vsbus_setmask(0);
-	else
-		vsbus_setmask(mask);
+	switch(vax_boardtype) {
+	case VAX_BTYP_1303:
+		if(pollflag)
+			mask = ibus_setmask(0);
+		else
+			ibus_setmask(mask);
+		break;
+	default:
+		if (pollflag)
+			mask = vsbus_setmask(0);
+		else
+			vsbus_setmask(mask);
+	}
 }
 
 #if NLKC

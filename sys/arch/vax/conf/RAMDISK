@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2000/10/31 02:30:56 hugh Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2001/01/28 01:19:58 hugh Exp $
 
 machine 	vax			# machine type
 
@@ -22,6 +22,7 @@ option 		VAX43		# VS 3100/76
 option 		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option 		VAX49		# VS 4000/90
+option		VAX53		# VAX 4000/10{0,5,6}
 
 option		UVM			# VAX uses UVM; REQUIRED
 
@@ -94,7 +95,8 @@ asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
 #shac0		at ibus0 		# DSSI controller
-le0			at ibus0		# LANCE ethernet
+le0		at ibus0		# LANCE ethernet
+dz0		at ibus0		# DZ serial controller
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu
