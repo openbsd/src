@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.120 2001/06/25 01:21:15 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.121 2001/06/25 01:59:29 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/udp_var.h>
 
 #ifdef vax
 #include <machine/mtpr.h>
@@ -670,16 +673,18 @@ sendit:
 	}
 #endif
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
-	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
-	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
-		in_delayed_cksum(m);
-		m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
-	}
-
-	if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
-	    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
-		m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
+		if (!(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
+		    ifp->if_bridge != NULL) {
+			in_delayed_cksum(m);
+			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+		}
+	} else if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+		if (!(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
+		    ifp->if_bridge != NULL) {
+			in_delayed_cksum(m);
+			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+		}
 	}
 
 	/*
@@ -696,6 +701,11 @@ sendit:
 			ip->ip_sum = 0;
 			ip->ip_sum = in_cksum(m, hlen);
 		}
+		/* Update relevant hardware checksum stats for TCP/UDP */
+		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+			tcpstat.tcps_outhwcsum++;
+		else if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+			udpstat.udps_outhwcsum++;
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
@@ -1857,7 +1867,7 @@ in_delayed_cksum(struct mbuf *m)
 
 	ip = mtod(m, struct ip *);
 	offset = ip->ip_hl << 2;
-	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
+	csum = in4_cksum(m, 0, offset, m->m_pkthdr.len - offset);
 	if (csum == 0 && ip->ip_p == IPPROTO_UDP)
 		csum = 0xffff;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.42 2001/06/25 00:11:58 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.43 2001/06/25 01:59:29 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -226,8 +226,6 @@ tcp_output(tp)
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
 	int idle, sendalot = 0;
-	struct route *ro;
-	struct ifnet *ifp;
 #ifdef TCP_SACK
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
@@ -846,22 +844,6 @@ send:
 		 */
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
-	/* Put TCP length in pseudo-header */
-	switch (tp->pf) {
-	case 0:	/*default to PF_INET*/
-#ifdef INET
-	case AF_INET:
-		if (len + optlen)
-			mtod(m, struct ipovly *)->ih_len = htons((u_int16_t)(
-				sizeof (struct tcphdr) + optlen + len));
-		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		break;
-#endif /* INET6 */
-	}
-
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE) {
 		MD5_CTX ctx;
@@ -910,7 +892,8 @@ send:
 				ippseudo.ippseudo_dst = ipovly->ih_dst;
 				ippseudo.ippseudo_pad = 0;
 				ippseudo.ippseudo_p   = IPPROTO_TCP;
-				ippseudo.ippseudo_len = ipovly->ih_len;
+				ippseudo.ippseudo_len = ipovly->ih_len + len +
+				    optlen;
 				MD5Update(&ctx, (char *)&ippseudo,
 					sizeof(struct ippseudo));
 				MD5Update(&ctx, mtod(m, caddr_t) +
@@ -951,29 +934,11 @@ send:
 	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case AF_INET:
-		/*
-		 * If we know our route, and the interface supports TCPv4
-		 * checksumming, only compute the pseudoheader.
-		 */
-		ro = &tp->t_inpcb->inp_route;
-		if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP)) {
-			ifp = ro->ro_rt->rt_ifp;
-			if ((ifp->if_capabilities & IFCAP_CSUM_TCPv4) &&
-			    ifp->if_bridge == NULL) {
-				struct ipovly *ipov;
-
-				ipov = mtod(m, struct ipovly *);
-				m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
-				tcpstat.tcps_outhwcsum++;
-				th->th_sum = in_cksum_phdr(ipov->ih_src.s_addr,
-				    ipov->ih_dst.s_addr,
-				    htons(sizeof(struct tcphdr) + len +
-					optlen + IPPROTO_TCP));
-				break;
-			}
-		}
-
-		th->th_sum = in_cksum(m, (int)(hdrlen + len));
+		/* Defer checksumming until later (ip_output() or hardware) */
+		m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
+		if (len + optlen)
+			th->th_sum = in_cksum_addword(th->th_sum,
+			    htons((u_int16_t)(len + optlen)));
 		break;
 #endif /* INET */
 #ifdef INET6

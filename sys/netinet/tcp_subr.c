@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.47 2001/06/23 19:02:53 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.48 2001/06/25 01:59:29 angelos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -235,13 +235,15 @@ tcp_template(tp)
 
 			bzero(ipovly->ih_x1, sizeof ipovly->ih_x1);
 			ipovly->ih_pr = IPPROTO_TCP;
-			ipovly->ih_len = htons(sizeof (struct tcpiphdr) -
-				sizeof (struct ip));
+			ipovly->ih_len = htons(sizeof (struct tcphdr));
 			ipovly->ih_src = inp->inp_laddr;
 			ipovly->ih_dst = inp->inp_faddr;
 
 			th = (struct tcphdr *)(mtod(m, caddr_t) +
 				sizeof(struct ip));
+			th->th_sum = in_cksum_phdr(ipovly->ih_src.s_addr,
+			    ipovly->ih_dst.s_addr,
+			    htons(sizeof (struct tcphdr) + IPPROTO_TCP));
 		}
 		break;
 #endif /* INET */
@@ -277,7 +279,6 @@ tcp_template(tp)
 	th->th_off = 5;
 	th->th_flags = 0;
 	th->th_win = 0;
-	th->th_sum = 0;
 	th->th_urp = 0;
 	return (m);
 }
