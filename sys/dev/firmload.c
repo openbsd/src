@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.2 2004/11/17 15:14:57 deraadt Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.3 2004/11/17 16:16:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -62,7 +62,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 		goto fail;
 	}
 
-	iov.iov_base = ptr, 
+	iov.iov_base = ptr;
 	iov.iov_len = va.va_size;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
