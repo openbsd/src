@@ -188,6 +188,7 @@ cpu_attach(parent, dev, aux)
 		case SUN4_300:
 			sprintf(cpu_model, "SUN-4/300 series (%s FPU)", fpuname);
 			bug = 1;
+			vactype = VAC_WRITETHROUGH;
 	        	cacheinfo.c_totalsize = 128*1024;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 16;
