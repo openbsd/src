@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.11 2002/10/20 13:08:29 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.12 2002/10/22 00:39:23 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -414,7 +414,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			rule->ifp = NULL;
 		if (rule->rt_ifname[0]) {
 			rule->rt_ifp = ifunit(rule->rt_ifname);
-			if (rule->rt_ifname == NULL) {
+			if (rule->rt_ifp == NULL) {
 				pool_put(&pf_rule_pl, rule);
 				error = EINVAL;
 				break;
@@ -551,7 +551,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				newrule->ifp = NULL;
 			if (newrule->rt_ifname[0]) {
 				newrule->rt_ifp = ifunit(newrule->rt_ifname);
-				if (newrule->rt_ifname == NULL) {
+				if (newrule->rt_ifp == NULL) {
 					pool_put(&pf_rule_pl, newrule);
 					error = EINVAL;
 					break;
