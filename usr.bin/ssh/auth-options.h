@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* $OpenBSD: auth-options.h,v 1.6 2000/12/19 23:17:55 markus Exp $ */
+/* $OpenBSD: auth-options.h,v 1.7 2001/01/20 15:55:20 markus Exp $ */
 
 #ifndef AUTH_OPTIONS_H
 #define AUTH_OPTIONS_H
@@ -23,8 +23,14 @@ extern int no_pty_flag;
 extern char *forced_command;
 extern struct envstring *custom_environment;
 
-/* return 1 if access is granted, 0 if not. side effect: sets key option flags */
-int	auth_parse_options(struct passwd *pw, char *options, u_long linenum);
+/*
+ * return 1 if access is granted, 0 if not.
+ * side effect: sets key option flags
+ */
+int
+auth_parse_options(struct passwd *pw, char *options, char *file,
+    u_long linenum);
+
 /* reset options flags */
 void	auth_clear_options(void);
 

@@ -10,13 +10,12 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.9 2001/01/19 15:55:10 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.10 2001/01/20 15:55:20 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
 #include "xmalloc.h"
 #include "match.h"
-#include "pathnames.h"
 
 /* Flags set authorized_keys flags */
 int no_port_forwarding_flag = 0;
@@ -49,9 +48,12 @@ auth_clear_options(void)
 	}
 }
 
-/* return 1 if access is granted, 0 if not. side effect: sets key option flags */
+/*
+ * return 1 if access is granted, 0 if not.
+ * side effect: sets key option flags
+ */
 int
-auth_parse_options(struct passwd *pw, char *options, u_long linenum)
+auth_parse_options(struct passwd *pw, char *options, char *file, u_long linenum)
 {
 	const char *cp;
 	if (!options)
@@ -107,9 +109,9 @@ auth_parse_options(struct passwd *pw, char *options, u_long linenum)
 			}
 			if (!*options) {
 				debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				continue;
 			}
 			forced_command[i] = 0;
@@ -137,9 +139,9 @@ auth_parse_options(struct passwd *pw, char *options, u_long linenum)
 			}
 			if (!*options) {
 				debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				continue;
 			}
 			s[i] = 0;
@@ -171,9 +173,9 @@ auth_parse_options(struct passwd *pw, char *options, u_long linenum)
 			}
 			if (!*options) {
 				debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
-				    _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+				    file, linenum);
 				continue;
 			}
 			patterns[i] = 0;
@@ -220,9 +222,9 @@ next_option:
 
 bad_option:
 	log("Bad options in %.100s file, line %lu: %.50s",
-	    _PATH_SSH_USER_PERMITTED_KEYS, linenum, options);
+	    file, linenum, options);
 	packet_send_debug("Bad options in %.100s file, line %lu: %.50s",
-	    _PATH_SSH_USER_PERMITTED_KEYS, linenum, options);
+	    file, linenum, options);
 	/* deny access */
 	return 0;
 }

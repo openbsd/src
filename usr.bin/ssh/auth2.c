@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.29 2001/01/19 15:55:10 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.30 2001/01/20 15:55:20 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -515,7 +515,7 @@ authmethod_lookup(const char *name)
 int
 user_key_allowed(struct passwd *pw, Key *key)
 {
-	char line[8192], file[1024];
+	char line[8192], file[MAXPATHNAME];
 	int found_key = 0;
 	FILE *f;
 	u_long linenum = 0;
@@ -618,7 +618,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 			}
 		}
 		if (key_equal(found, key) &&
-		    auth_parse_options(pw, options, linenum) == 1) {
+		    auth_parse_options(pw, options, file, linenum) == 1) {
 			found_key = 1;
 			debug("matching key found: file %s, line %ld",
 			    file, linenum);

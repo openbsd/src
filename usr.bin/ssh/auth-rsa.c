@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.35 2001/01/19 15:55:10 markus Exp $");
+RCSID("$OpenBSD: auth-rsa.c,v 1.36 2001/01/20 15:55:20 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -122,7 +122,7 @@ auth_rsa_challenge_dialog(RSA *pk)
 int
 auth_rsa(struct passwd *pw, BIGNUM *client_n)
 {
-	char line[8192], file[1024];
+	char line[8192], file[MAXPATHNAME];
 	int authenticated;
 	u_int bits;
 	FILE *f;
@@ -237,9 +237,9 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		/* Parse the key from the line. */
 		if (!auth_rsa_read_key(&cp, &bits, pk->e, pk->n)) {
 			debug("%.100s, line %lu: bad key syntax",
-			      _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+			    file, linenum);
 			packet_send_debug("%.100s, line %lu: bad key syntax",
-					  _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+			    file, linenum);
 			continue;
 		}
 		/* cp now points to the comment part. */
@@ -259,7 +259,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		 * If our options do not allow this key to be used,
 		 * do not send challenge.
 		 */
-		if (!auth_parse_options(pw, options, linenum))
+		if (!auth_parse_options(pw, options, file, linenum))
 			continue;
 
 		/* Perform the challenge-response dialog for this key. */
