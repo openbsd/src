@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.43 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: audio.c,v 1.44 2004/07/10 11:48:30 vincent Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -891,24 +891,22 @@ audio_initbufs(sc)
 	}
 
 #ifdef AUDIO_INTR_TIME
-#define double u_long
 	sc->sc_pnintr = 0;
 	sc->sc_pblktime = (u_long)(
-	    (double)sc->sc_pr.blksize * 100000 /
-	    (double)(sc->sc_pparams.precision / NBBY *
+	    (u_long)sc->sc_pr.blksize * 100000 /
+	    (u_long)(sc->sc_pparams.precision / NBBY *
 		sc->sc_pparams.channels *
 		sc->sc_pparams.sample_rate)) * 10;
 	DPRINTF(("audio: play blktime = %lu for %d\n",
 		 sc->sc_pblktime, sc->sc_pr.blksize));
 	sc->sc_rnintr = 0;
 	sc->sc_rblktime = (u_long)(
-	    (double)sc->sc_rr.blksize * 100000 /
-	    (double)(sc->sc_rparams.precision / NBBY *
+	    (u_long)sc->sc_rr.blksize * 100000 /
+	    (u_long)(sc->sc_rparams.precision / NBBY *
 		sc->sc_rparams.channels *
 		sc->sc_rparams.sample_rate)) * 10;
 	DPRINTF(("audio: record blktime = %lu for %d\n",
 		 sc->sc_rblktime, sc->sc_rr.blksize));
-#undef double
 #endif
 
 	return 0;
