@@ -4536,8 +4536,8 @@ mips_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	      if ((info->shared
 		   || (elf_hash_table (info)->dynamic_sections_created
 		       && h != NULL
-		       && ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
-			   == 0)))
+		       && ((h->elf_link_hash_flags & ELF_LINK_HASH_DEF_DYNAMIC)
+			   != 0)))
 		  && (input_section->flags & SEC_ALLOC) != 0)
 		{
 		  /* When generating a shared object, these
