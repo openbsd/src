@@ -1,4 +1,5 @@
-/*	$OpenBSD: umap_vnops.c,v 1.2 1996/02/26 07:20:12 mickey Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.3 1996/02/29 13:08:07 niklas Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.5 1996/02/09 22:41:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,7 +312,7 @@ umap_getattr(v)
 	struct vnode **vp1p;
 	struct vnodeop_desc *descp = ap->a_desc;
 
-	if (error = umap_bypass(ap))
+	if ((error = umap_bypass(ap)) != 0)
 		return (error);
 	/* Requires that arguments be restored. */
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];

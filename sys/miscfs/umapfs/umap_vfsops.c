@@ -1,4 +1,5 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.2 1996/02/26 07:20:09 mickey Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.3 1996/02/29 13:08:06 niklas Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +102,8 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	if (error = copyin(data, (caddr_t)&args, sizeof(struct umap_args)))
+	error = copyin(data, (caddr_t)&args, sizeof(struct umap_args));
+	if (error)
 		return (error);
 
 	/*
@@ -109,7 +111,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT|LOCKLEAF,
 		UIO_USERSPACE, args.target, p);
-	if (error = namei(ndp))
+	if ((error = namei(ndp)) != 0)
 		return (error);
 
 	/*
@@ -264,7 +266,7 @@ umapfs_unmount(mp, mntflags, p)
 #endif
 	if (umapm_rootvp->v_usecount > 1 && !(flags & FORCECLOSE))
 		return (EBUSY);
-	if (error = vflush(mp, umapm_rootvp, flags))
+	if ((error = vflush(mp, umapm_rootvp, flags)) != 0)
 		return (error);
 
 #ifdef UMAPFS_DIAGNOSTIC

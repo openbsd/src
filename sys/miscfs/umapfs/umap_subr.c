@@ -1,4 +1,5 @@
-/*	$OpenBSD: umap_subr.c,v 1.2 1996/02/26 07:20:07 mickey Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.3 1996/02/29 13:08:05 niklas Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.7 1996/02/09 22:41:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +75,7 @@ static int umap_node_alloc __P((struct mount *, struct vnode *,
 /*
  * Initialise cache headers
  */
-int
+void
 umapfs_init()
 {
 
@@ -433,7 +434,7 @@ umap_mapids(v_mount, credp)
 
 	for ( i = 0 ; credp->cr_groups[i] != 0 ; i++ ) {
 		gid = (gid_t) umap_findid(credp->cr_groups[i],
-					groupmap, gnentries);
+					  groupmap, gnentries);
 
 		if (gid != -1)
 			credp->cr_groups[i] = gid;
