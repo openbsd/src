@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1999/12/30 16:19:32 itojun Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/06/13 22:27:06 angelos Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c ipx.c iso.c main.c mbuf.c mroute.c ns.c route.c \
@@ -8,8 +8,12 @@ BINGRP=	kmem
 BINMODE=2555
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
+INET6?=	yes
 
+.if (${INET6} != "no")
 CPPFLAGS+=	-DINET6
-CPPFLAGS+=	-DKAME_SCOPEID
+.endif
+
+#CPPFLAGS+=	-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
