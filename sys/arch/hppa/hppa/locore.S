@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.37 2000/08/15 20:12:15 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.38 2001/02/23 22:54:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1210,8 +1210,8 @@ $sfu_emu
 
 	/* Compute the hpt entry ptr */
 #define	HPTENT \
-	extru	r9, 23, 24, r16		/* r17 = (offset >> 8) */	! \
-	zdep	r8, 26, 16, r24		/* r24 = (space << 5) */	! \
+	extru	r9, 23, 24, r16		/* r16 = (offset >> 8) */	! \
+	zdep	r8, 22, 16, r24		/* r24 = (space << 9) */	! \
 	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
 	xor	r16, r24, r24		/* r24 ^= r16 */		! \
 	and	r17, r24, r24		/* r24 &= r17 */		! \

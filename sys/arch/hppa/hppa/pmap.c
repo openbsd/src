@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2001/01/30 21:44:16 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2001/02/23 22:54:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -217,7 +217,7 @@ pmap_hash(pa_space_t sp, vaddr_t va)
 	struct hpt_entry *hpt;
 	__asm __volatile (
 		"extru	%2, 23, 20, %%r22\n\t"	/* r22 = (va >> 8) */
-		"zdep	%1, 26, 16, %%r23\n\t"	/* r23 = (sp << 5) */
+		"zdep	%1, 22, 16, %%r23\n\t"	/* r23 = (sp << 9) */
 		"dep	%%r0, 31, 4, %%r22\n\t"	/* r22 &= ~0xf */
 		"xor	%%r22,%%r23, %%r23\n\t"	/* r23 ^= r22 */
 		"mfctl	%%cr24, %%r22\n\t"	/* r22 = sizeof(HPT)-1 */
