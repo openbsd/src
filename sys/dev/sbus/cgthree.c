@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.13 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.14 2002/03/29 09:45:30 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -262,15 +262,15 @@ cgthreeattach(parent, self, aux)
 	    sa->sa_reg[0].sbr_offset + CGTHREE_CTRL_OFFSET,
 	    CGTHREE_CTRL_SIZE, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_ctrl_regs) != 0) {
-		printf(": cannot map bt registers\n", self->dv_xname);
-		goto fail_bt;
+		printf(": cannot map ctrl registers\n");
+		goto fail_ctrl;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGTHREE_VID_OFFSET,
 	    CGTHREE_VID_SIZE, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_vid_regs) != 0) {
-		printf(": cannot map vid registers\n", self->dv_xname);
+		printf(": cannot map vid registers\n");
 		goto fail_vid;
 	}
 
@@ -346,7 +346,7 @@ cgthreeattach(parent, self, aux)
 
 fail_vid:
 	bus_space_unmap(sa->sa_bustag, sc->sc_ctrl_regs, CGTHREE_CTRL_SIZE);
-fail_bt:
+fail_ctrl:
 fail:
 }
 

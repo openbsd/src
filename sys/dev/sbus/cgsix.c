@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.17 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.18 2002/03/29 09:45:30 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -185,12 +185,6 @@ struct cgsix_softc {
     bus_space_barrier((sc)->sc_bustag, (sc)->sc_bt_regs, (reg), \
 	sizeof(u_int32_t), (flags))
 
-struct mmo {
-	u_long	mo_uaddr;		/* user (virtual address */
-	u_long	mo_size;		/* size, or 0 for video ram size */
-	u_long	mo_physoff;		/* offset from sc_physadr */
-};
-
 struct wsdisplay_emulops cgsix_emulops = {
 	rcons_cursor,
 	rcons_mapchar,
@@ -298,35 +292,35 @@ cgsixattach(parent, self, aux)
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_BT_OFFSET,
 	    CGSIX_BT_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_bt_regs) != 0) {
-		printf(": cannot map bt registers\n", self->dv_xname);
+		printf(": cannot map bt registers\n");
 		goto fail_bt;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_FHC_OFFSET,
 	    CGSIX_FHC_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_fhc_regs) != 0) {
-		printf(": cannot map fhc registers\n", self->dv_xname);
+		printf(": cannot map fhc registers\n");
 		goto fail_fhc;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_THC_OFFSET,
 	    CGSIX_THC_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_thc_regs) != 0) {
-		printf(": cannot map thc registers\n", self->dv_xname);
+		printf(": cannot map thc registers\n");
 		goto fail_thc;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_VID_OFFSET,
 	    CGSIX_VID_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_vid_regs) != 0) {
-		printf(": cannot map vid registers\n", self->dv_xname);
+		printf(": cannot map vid registers\n");
 		goto fail_vid;
 	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_TEC_OFFSET,
 	    CGSIX_TEC_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tec_regs) != 0) {
-		printf(": cannot map tec registers\n", self->dv_xname);
+		printf(": cannot map tec registers\n");
 		goto fail_tec;
 	}
 
