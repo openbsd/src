@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.1 2000/04/03 01:01:59 mickey Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.2 2000/04/03 03:11:27 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -40,9 +40,9 @@
 #define AN_DEFAULT_NETNAME	"ANY"
 
 /* The nodename must be less than 16 bytes */
-#define AN_DEFAULT_NODENAME	"FreeBSD"
+#define AN_DEFAULT_NODENAME	"OpenBSD"
 
-#define AN_DEFAULT_IBSS		"FreeBSD IBSS"
+#define AN_DEFAULT_IBSS		"OpenBSD IBSS"
 
 /*
  * register space access macros
