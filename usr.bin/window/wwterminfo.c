@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwterminfo.c,v 1.2 1996/06/26 05:43:53 deraadt Exp $	*/
+/*	$OpenBSD: wwterminfo.c,v 1.3 1996/12/06 02:29:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -100,8 +100,9 @@ wwterminfoend()
 		return -1;
 	case 0:
 		execl(_PATH_RM, _PATH_RM, "-rf", wwterminfopath, 0);
-		return -1;
+		_exit(1);
 	default:
+		(void)wait(NULL);
 		return 0;
 	}
 }
