@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.8 1998/11/28 03:38:01 aaron Exp $
+.\"	$OpenBSD: hier.7,v 1.9 1998/11/28 20:14:45 aaron Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -45,6 +45,8 @@ A sketch of the filesystem hierarchy.
 .Bl -tag -width "/stand/"
 .It Li /
 Root directory.
+.It Li /altroot
+Alternate (backup) location for the root user's home directory.
 .It Li /bin/
 User utilities fundamental to both single and multi-user environments.
 .It Li /bsd
@@ -96,9 +98,7 @@ configuration files (see
 .Xr uucp 1 ) .
 .El
 .It Li /home/
-User home directories.
-.It Li /lost+found/
-I don't know.
+Default location for user home directories.
 .It Li /mnt/
 Empty directory commonly used by
 system administrators as a temporary mount point.
