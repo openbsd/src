@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.5 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.6 2004/03/23 01:04:24 krw Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -24,14 +24,25 @@ Supported devices {:-include-:}:
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
 	SCSI Host Adapters
-		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
-		    using the AIC7870 and AIC7880 chips.
-		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
-		    using the AIC789[01], AIC7895, AIC789[67] chips
-		Adaptec AIC-789[29] chips and products like the
-		    AHA-29160 based upon it which do 160MB/sec SCSI.
-		    (However, the 7899G card is currently not supported with
-		     more than one device attached)
+		adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
+		    AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
+		    and AIC-7899 based host adapters [C] including the
+		    Adaptec cards
+			AHA-274X[W,T]
+			AHA-284X
+			AHA-2910, AHA-2915
+			AHA-2920
+			AHA-2930[C,U2]
+			AHA-2940[J,N,U,AU,UW,UW Dual,UW Pro,U2W,U2B]
+			AHA-2950[U2W,U2B]
+			AHA-3940[U,AU,UW,AUW,U2W]
+			AHA-3950U2
+			AHA-3960
+			AHA-3985
+			AHA-4944UW
+			AHA-19160B
+			AHA-29160[B,N]
+			AHA-39160
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
 		    ASB3940U[AW]-00, ASB3940U2W-00, and ASB3950U160
