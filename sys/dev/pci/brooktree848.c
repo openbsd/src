@@ -1,4 +1,4 @@
-/* $OpenBSD: brooktree848.c,v 1.11 1999/08/05 21:18:42 niklas Exp $ */
+/* $OpenBSD: brooktree848.c,v 1.12 1999/10/31 20:50:04 deraadt Exp $ */
 /* $Roger: brooktree848.c,v 1.85 1999/06/12 14:54:54 roger Exp $ */
 
 /* BT848 Driver for Brooktree's Bt848, Bt848A, Bt849A, Bt878, Bt879 based cards.
@@ -8448,11 +8448,15 @@ bktr_open( dev_t dev, int flags, int fmt, struct proc *p )
 	int		unit;
 
 	unit = UNIT( minor(dev) );
-	if (unit >= NBKTR)			/* unit out of range */
+	if (unit >= NBKTR || unit > bktr_cd.cd_ndevs)	/* unit out of range */
+		return( ENXIO );
+
+	if (bktr_cd.cd_devs == NULL)
 		return( ENXIO );
 
 	bktr = bktr_cd.cd_devs[unit];
-
+	if (bktr == NULL)
+		return ( ENXIO );
 	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
 		return( ENXIO );	
 
