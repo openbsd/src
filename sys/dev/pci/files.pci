@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.121 2001/12/05 10:31:44 mickey Exp $
+#	$OpenBSD: files.pci,v 1.122 2001/12/05 10:34:44 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -26,9 +26,9 @@ file	dev/ic/bt485.c			tga
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
 #
-#       PCI-ISA bridge
-#       PCI IDE controller
-#       OHCI USB controller
+#	PCI-ISA bridge
+#	PCI IDE controller
+#	OHCI USB controller
 #
 # There are some common subroutines that each function needs.
 define	cy82c693
@@ -163,8 +163,8 @@ file	dev/pci/if_de.c			de
 # ENI ATM driver
 device	en: atm, ifnet
 attach	en at pci with en_pci
-file    dev/pci/if_en_pci.c		en
-file    dev/ic/midway.c			en
+file	dev/pci/if_en_pci.c		en
+file	dev/ic/midway.c			en
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
@@ -198,7 +198,7 @@ file	dev/pci/siop_pci.c	siop_pci
 # NeoMagic 256AV and 256ZX
 device	neo: audio, auconv, mulaw, ac97
 attach	neo at pci
-file	dev/pci/neo.c		        neo
+file	dev/pci/neo.c			neo
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
@@ -210,7 +210,7 @@ device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
 
-# Cyclades Cyclom-8/16/32 
+# Cyclades Cyclom-8/16/32
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
@@ -295,7 +295,7 @@ device	lofn: crypto
 attach	lofn at pci
 file	dev/pci/lofn.c			lofn
 
-# Hi/fn 7751 
+# Hi/fn 7751
 device	hifn: crypto
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
