@@ -563,7 +563,7 @@ genConfigMouse()
 		break;
 #endif /* NDC_DS */
 
-#if NSCC > 1
+#if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		sccDivertXInput = genKbdEvent;
