@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.67 2001/05/30 02:14:03 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.68 2001/06/23 15:37:39 matthieu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -634,6 +634,16 @@ See
 and
 .Xr sysctl 3
 for details.
+.It Cd option USER_PCICONF
+Enables the user level acces to the PCI bus configuration space
+through ioctls on the 
+.Pa /dev/pci 
+device. It's used by the 
+.Xr XFree86 1
+server on some architectures. 
+See 
+.Xr pci 4
+for details.
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -963,6 +973,7 @@ and/or
 .Xr iso 4 ,
 .Xr lkm 4 ,
 .Xr ns 4 ,
+.Xr pci 4 ,
 .Xr xf86 4 ,
 .Xr apm 8 ,
 .Xr apmd 8 ,
