@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.4 2000/06/13 05:15:19 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.5 2000/06/19 02:51:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -59,6 +59,7 @@ struct ubsec_q {
 	long				q_dst_packp[MAX_SCATTER];
 	int				q_dst_packl[MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
+	u_int32_t			q_macbuf[5];
 };
 
 /* Maximum queue length */
