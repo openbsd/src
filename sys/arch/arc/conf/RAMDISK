@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 1997/05/18 13:45:24 pefo Exp $
+#	$OpenBSD: RAMDISK,v 1.2 1997/05/19 10:34:54 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -143,6 +143,6 @@ pseudo-device	ppp		 2	# serial-line PPP ports
 pseudo-device	rd		 1	# Ram disk.
 
 # RAMDISK stuff
-option          MINIROOTSIZE=20000
+option          MINIROOTSIZE=8192
 option          RAMDISK_HOOKS
 
