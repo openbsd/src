@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.10 2000/07/23 21:35:00 pjanzen Exp $	*/
+/*	$OpenBSD: subs.c,v 1.11 2001/06/23 23:50:04 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.10 2000/07/23 21:35:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.11 2001/06/23 23:50:04 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,14 +51,10 @@ static const char plwhite[] = "Player is white, computer is red.";
 static const char nocomp[] = "(No computer play.)";
 
 const char   *const descr[] = {
-	"Usage:  backgammon [-] [-nrwb] [-p [r|w|b]] [-t <term>] [-s <file>]\n",
+	"Usage:  backgammon [-] [-nrwb] [-s <file>]\n",
 	"\t-h\tget this list\n\t-n\tdon't ask for rules or instructions",
 	"\t-r\tplayer is red (implies n)\n\t-w\tplayer is white (implies n)",
 	"\t-b\ttwo players, red and white (implies n)",
-	"\t-p r\tprint the board before red's turn",
-	"\t-p w\tprint the board before white's turn",
-	"\t-p b\tprint the board before all turns",
-	"\t-t term\tterminal is type term",
 	"\t-s file\trecover previously saved game from file",
 	0
 };
@@ -73,43 +69,14 @@ errexit(s)
 }
 
 int
-addbuf(c)
-	int     c;
-{
-	buffnum++;
-	if (buffnum == BUFSIZ) {
-		if (write(STDOUT_FILENO, outbuff, BUFSIZ) != BUFSIZ)
-			errexit("addbuf (write):");
-		buffnum = 0;
-	}
-	outbuff[buffnum] = c;
-	return(0);
-}
-
-void
-buflush()
-{
-	if (buffnum < 0)
-		return;
-	buffnum++;
-	if (write(STDOUT_FILENO, outbuff, buffnum) != buffnum)
-		errexit("buflush (write):");
-	buffnum = -1;
-}
-
-int
 readc()
 {
-	char    c;
+	int    c;
 
-	if (tflag) {
-		cline();
-		newpos();
-	}
-	buflush();
-	if (read(0, &c, 1) != 1)
-		errexit("readc");
-	if (c == '\004')	/* ^D	*/
+	clrtoeol();
+	refresh();
+	c = getch();
+	if (c == '\004' || c == ERR)	/* ^D or failure	*/
 		getout(0);
 	if (c == '\033' || c == '\015')
 		return('\n');
@@ -118,43 +85,8 @@ readc()
 	if (c == '\014')
 		return('R');
 	if (c >= 'a' && c <= 'z')
-		return(c & 0137);
+		return(c & 0137);	/* upper case */
 	return(c);
-}
-
-void
-writec(c)
-	char    c;
-{
-	if (tflag)
-		fancyc(c);
-	else
-		addbuf(c);
-}
-
-void
-writel(l)
-	const char   *l;
-{
-#ifdef DEBUG
-	const char   *s;
-
-	if (trace == NULL)
-		trace = fopen("bgtrace", "w");
-
-	fprintf(trace, "writel: \"");
-	for (s = l; *s; s++) {
-		if (*s < ' ' || *s == '\177')
-			fprintf(trace, "^%c", (*s)^0100);
-		else
-			putc(*s, trace);
-	}
-	fprintf(trace, "\"\n");
-	fflush(trace);
-#endif
-
-	while (*l)
-		writec(*l++);
 }
 
 void
@@ -163,30 +95,11 @@ proll()
 	if (d0)
 		swap;
 	if (cturn == 1)
-		writel("Red's roll:  ");
+		printw("Red's roll:  ");
 	else
-		writel("White's roll:  ");
-	writec(D0 + '0');
-	writec('\040');
-	writec(D1 + '0');
-	if (tflag)
-		cline();
-}
-
-void
-wrint(n)
-	int     n;
-{
-	int     i, j, t;
-
-	for (i = 4; i > 0; i--) {
-		t = 1;
-		for (j = 0; j < i; j++)
-			t *= 10;
-		if (n > t - 1)
-			writec((n / t) % 10 + '0');
-	}
-	writec(n % 10 + '0');
+		printw("White's roll:  ");
+	printw("%d,%d", D0, D1);
+	clrtoeol();
 }
 
 void
@@ -194,54 +107,44 @@ gwrite()
 {
 	int     r, c;
 
-	if (tflag) {
-		r = curr;
-		c = curc;
-		curmove(16, 0);
-	}
+	getyx(stdscr, r, c);
+	move(16, 0);
 	if (gvalue > 1) {
-		writel("Game value:  ");
-		wrint(gvalue);
-		writel(".  ");
+		printw("Game value:  %d.  ", gvalue);
 		if (dlast == -1)
-			writel(color[0]);
+			addstr(color[0]);
 		else
-			writel(color[1]);
-		writel(" doubled last.");
+			addstr(color[1]);
+		addstr(" doubled last.");
 	} else {
 		switch (pnum) {
 		case -1:	/* player is red */
-			writel(plred);
+			addstr(plred);
 			break;
 		case 0:	/* player is both colors */
-			writel(nocomp);
+			addstr(nocomp);
 			break;
 		case 1:	/* player is white */
-			writel(plwhite);
+			addstr(plwhite);
 		}
 	}
 	if (rscore || wscore) {
-		writel("  ");
+		addstr("  ");
 		wrscore();
 	}
-	if (tflag) {
-		cline();
-		curmove(r, c);
-	}
+	clrtoeol();
+	move(r, c);
 }
 
 int
 quit()
 {
-	if (tflag) {
-		curmove(20, 0);
-		clend();
-	} else
-		writec('\n');
-	writel("Are you sure you want to quit?");
+	move(20, 0);
+	clrtobot();
+	addstr("Are you sure you want to quit?");
 	if (yorn(0)) {
 		if (rfl) {
-			writel("Would you like to save this game?");
+			addstr("Would you like to save this game?");
 			if (yorn(0))
 				save(0);
 		}
@@ -263,22 +166,19 @@ yorn(special)
 		if (special && c == special)
 			return(2);
 		if (i) {
-			if (special) {
-				writel("  (Y, N, or ");
-				writec(special);
-				writec(')');
-			} else
-				writel("  (Y or N)");
+			if (special)
+				printw("  (Y, N, or %c)", special);
+			else
+				printw("  (Y or N)");
 			i = 0;
 		} else
-			writec('\007');
+			beep();
 	}
 	if (c == 'Y')
-		writel("  Yes.\n");
+		addstr("  Yes.\n");
 	else
-		writel("  No.\n");
-	if (tflag)
-		buflush();
+		addstr("  No.\n");
+	refresh();
 	return(c == 'Y');
 }
 
@@ -286,10 +186,7 @@ void
 wrhit(i)
 	int     i;
 {
-	writel("Blot hit on ");
-	wrint(i);
-	writec('.');
-	writec('\n');
+	printw("Blot hit on %d.\n", i);
 }
 
 void
@@ -350,24 +247,8 @@ getarg(argc,argv)
 			args[acnt++] = 'w';
 			break;
 
-		case 't':	/* use spec'd term from terminfo database */
-			tflag = getcaps(optarg);
-			break;
-
 		case 's':	/* restore saved game */
 			recover(optarg);
-			break;
-
-		case 'p':	/* print board after move */
-			switch(optarg[0]) {
-				case 'r':	bflag = 1;
-						break;
-				case 'w':	bflag = -1;
-						break;
-				case 'b':
-				default:	bflag = 0;
-						break;
-			}
 			break;
 
 		default:	/* print cmdline options */
@@ -401,43 +282,19 @@ init()
 void
 wrscore()
 {
-	writel("Score:  ");
-	writel(color[1]);
-	writec(' ');
-	wrint(rscore);
-	writel(", ");
-	writel(color[0]);
-	writec(' ');
-	wrint(wscore);
+	printw("Score:  %s %d, %s %d", color[1], rscore, color[0], wscore);
 }
 
-void
-fixtty(t)
-	struct termios *t;
-{
-	if (tflag)
-		newpos();
-	buflush();
-	if (tcsetattr(STDIN_FILENO, TCSADRAIN, t) < 0)
-		errexit("fixtty");
-}
 
 void
 getout(dummy)
 	int     dummy;
 {
 	/* go to bottom of screen */
-	if (tflag) {
-		curmove(23, 0);
-		cline();
-		newpos();
-	} else
-		writec('\n');
+	move(23, 0);
+	clrtoeol();
 
-	/* fix terminal status; avoid calling fixtty() to avoid loop */
-	if (buffnum >= 0)
-		write(STDOUT_FILENO, outbuff, buffnum + 1);
-	tcsetattr(STDIN_FILENO, TCSADRAIN, &old);
+	endwin();
 	exit(0);
 }
 
@@ -449,40 +306,27 @@ roll()
 	int     col;
 
 	if (iroll) {
-		if (tflag) {
-			row = curr;
-			col = curc;
-			curmove(17, 0);
-		} else
-			writec('\n');
-		writel("ROLL: ");
+		getyx(stdscr, row, col);
+		mvprintw(17, 0, "ROLL: ");
 		c = readc();
 		if (c != '\n') {
 			while (c < '1' || c > '6')
 				c = readc();
 			D0 = c - '0';
-			writec(' ');
-			writec(c);
+			printw(" %c", c);
 			c = readc();
 			while (c < '1' || c > '6')
 				c = readc();
 			D1 = c - '0';
-			writec(' ');
-			writec(c);
-			if (tflag) {
-				curmove(17, 0);
-				cline();
-				curmove(row, col);
-			} else
-				writec('\n');
+			printw(" %c", c);
+			move(17, 0);
+			clrtoeol();
+			move(row, col);
 			return;
 		}
-		if (tflag) {
-			curmove(17, 0);
-			cline();
-			curmove(row, col);
-		} else
-			writec('\n');
+		move(17, 0);
+		clrtoeol();
+		move(row, col);
 	}
 	D0 = rnum(6) + 1;
 	D1 = rnum(6) + 1;

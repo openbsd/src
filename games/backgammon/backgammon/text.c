@@ -1,4 +1,4 @@
-/*	$OpenBSD: text.c,v 1.4 2001/02/18 04:16:36 ericj Exp $	*/
+/*	$OpenBSD: text.c,v 1.5 2001/06/23 23:49:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: text.c,v 1.4 2001/02/18 04:16:36 ericj Exp $";
+static char rcsid[] = "$OpenBSD: text.c,v 1.5 2001/06/23 23:49:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-const char *const instr[] = {
+const char *const instruct[] = {
 	"    This program reacts to keystrokes immediately, without waiting",
 	"for a newline.  Consequently, special characters such as RUBOUT",
 	"and ESC will not perform their special functions during most of",
@@ -111,23 +111,18 @@ text(t)
 	int     i;
 	const char   *s, *a;
 
-	fixtty(&noech);
 	while (*t != 0) {
 		s = a = *t;
 		for (i = 0; *a != '\0'; i--)
 			a++;
-		if (i) {
-			writel(s);
-			writec('\n');
-		} else {
-			writel("-->");
-			fixtty(&traw);
+		if (i)
+			printw("%s\n", s);
+		else {
+			addstr("-->");
 			while ((i = readc()) != ' ' && i != '\n');
-			fixtty(&noech);
 			clear();
 		}
 		t++;
 	}
-	fixtty(&traw);
 	return(0);
 }

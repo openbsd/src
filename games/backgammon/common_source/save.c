@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.6 2001/03/30 04:41:34 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.7 2001/06/23 23:50:04 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.6 2001/03/30 04:41:34 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.7 2001/06/23 23:50:04 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <ctype.h>
 #include <errno.h>
 #include "back.h"
 
@@ -63,37 +64,37 @@ save(n)
 	int     fdesc;
 	char   *fs;
 	char    fname[MAXPATHLEN];
+	int     r, c, i;
 
 	if (n) {
-		if (tflag) {
-			curmove(20, 0);
-			clend();
-		} else
-			writec('\n');
-		writel(confirm);
+		move(20, 0);
+		clrtobot();
+		addstr(confirm);
 		if (!yorn(0))
 			return;
 	}
 	cflag = 1;
 	for (;;) {
-		writel(prompt);
+		addstr(prompt);
 		fs = fname;
-		while ((*fs = readc()) != '\n') {
-			if (*fs == old.c_cc[VERASE]) {
+		while ((i = readc()) != '\n') {
+			if (i == KEY_BACKSPACE || i == 0177) {
 				if (fs > fname) {
 					fs--;
-					if (tflag)
-						curmove(curr, curc - 1);
-					else
-						writec(*fs);
+					getyx(stdscr, r, c);
+					move(r, c - 1);
 				} else
-					writec('\007');
+					beep();
 				continue;
 			}
-			if (fs - fname < MAXPATHLEN - 1)
-				writec(*fs++);
-			else
-				writec('\007');
+			if (fs - fname < MAXPATHLEN - 1) {
+				if (isascii(i)) {
+					*fs = i;
+					addch(*fs++);
+				} else
+					beep();
+			} else
+				beep();
 		}
 		*fs = '\0';
 		if ((fdesc = open(fname, O_RDWR)) == -1 && errno == ENOENT) {
@@ -101,14 +102,9 @@ save(n)
 				break;
 		}
 		if (fdesc != -1) {
-			if (tflag) {
-				curmove(18, 0);
-				clend();
-			} else
-				writec('\n');
-			writel(exist1);
-			writel(fname);
-			writel(exist2);
+			move(18, 0);
+			clrtobot();
+			printw("%s%s%s", exist1, fname, exist2);
 			cflag = 0;
 			close(fdesc);
 			if (yorn(0)) {
@@ -120,9 +116,7 @@ save(n)
 				continue;
 			}
 		}
-		writel(cantuse);
-		writel(fname);
-		writel(".\n");
+		printw("%s%s.\n", cantuse, fname);
 		close(fdesc);
 		cflag = 1;
 	}
@@ -138,15 +132,9 @@ save(n)
 	write(fdesc, &gvalue, sizeof(gvalue));
 	write(fdesc, &raflag, sizeof(raflag));
 	close(fdesc);
-	if (tflag)
-		curmove(18, 0);
-	writel(saved);
-	writel(fname);
-	writel(type);
-	writel(fname);
-	writel(rec);
-	if (tflag)
-		clend();
+	move(18, 0);
+	printw("%s%s%s%s%s", saved, fname, type, fname, rec);
+	clrtobot();
 	getout(0);
 }
 
@@ -179,10 +167,9 @@ norec(s)
 {
 	const char   *c;
 
-	tflag = 0;
-	writel(cantrec);
+	addstr(cantrec);
 	c = s;
 	while (*c != '\0')
-		writec(*c++);
+		addch(*c++);
 	getout(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extra.c,v 1.2 1998/03/19 11:13:06 pjanzen Exp $	*/
+/*	$OpenBSD: extra.c,v 1.3 2001/06/23 23:49:53 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)extra.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: extra.c,v 1.2 1998/03/19 11:13:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: extra.c,v 1.3 2001/06/23 23:49:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,34 +55,31 @@ dble()
 	int     resp;		/* response to y/n */
 
 	for (;;) {
-		writel(" doubles.");	/* indicate double */
+		addstr(" doubles.");	/* indicate double */
 
 		if (cturn == -pnum) {	/* see if computer accepts */
 			if (dblgood()) {	/* guess not */
-				writel("  Declined.\n");
+				addstr("  Declined.\n");
 				nexturn();
 				cturn *= -2;	/* indicate loss */
 				return;
 			} else {/* computer accepts */
-				writel("  Accepted.\n");
+				addstr("  Accepted.\n");
 				gvalue *= 2;	/* double game value */
 				dlast = cturn;
-				if (tflag)
-					gwrite();
+				gwrite();
 				return;
 			}
 		}
 		/* ask if player accepts */
-		writel("  Does ");
-		writel(cturn == 1 ? color[2] : color[3]);
-		writel(" accept?");
+		printw("  Does %s accept?", cturn == 1 ? color[2] : color[3]);
 
 		/* get response from yorn; a "2" means he said "p" to print board. */
 		if ((resp = yorn ('r')) == 2) {
-			writel("  Reprint.\n");
-			buflush();
+			addstr("  Reprint.\n");
+			moveplayers();
 			wrboard();
-			writel(*Colorptr);
+			addstr(*Colorptr);
 			continue;
 		}
 		/* check response */
@@ -90,8 +87,7 @@ dble()
 			/* accepted */
 			gvalue *= 2;
 			dlast = cturn;
-			if (tflag)
-				gwrite();
+			gwrite();
 			return;
 		}
 		nexturn();	/* declined */

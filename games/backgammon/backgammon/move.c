@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.3 2001/02/18 04:16:36 ericj Exp $	*/
+/*	$OpenBSD: move.c,v 1.4 2001/06/23 23:49:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.3 2001/02/18 04:16:36 ericj Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.4 2001/06/23 23:49:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static struct BOARD *nextfree __P((void));
 
 
 void
-move(okay)
+domove(okay)
 	int     okay;		/* zero if first move */
 {
 	int     i;		/* index */
@@ -103,7 +103,7 @@ move(okay)
 
 	if (okay) {	 /* see if comp should double */
 		if (gvalue < 64 && dlast != cturn && dblgood()) {
-			writel(*Colorptr);
+			addstr(*Colorptr);
 			dble();	/* double */
 			/* return if declined */
 			if (cturn != 1 && cturn != -1)
@@ -124,24 +124,15 @@ move(okay)
 		race = 1;
 
 	/* print roll */
-	if (tflag)
-		curmove(cturn == -1 ? 18 : 19, 0);
-	writel(*Colorptr);
-	writel(" rolls ");
-	writec(D0 + '0');
-	writec(' ');
-	writec(D1 + '0');
-	/* make tty interruptable while thinking */
-	if (tflag)
-		cline();
-	fixtty(&noech);
+	move(cturn == -1 ? 18 : 19, 0);
+	printw("%s rolls %d %d", *Colorptr, D0, D1);
+	clrtoeol();
 
 	/* find out how many moves */
 	mvlim = movallow();
 	if (mvlim == 0) {
-		writel(" but cannot use it.\n");
+		addstr(" but cannot use it.\n");
 		nexturn();
-		fixtty(&traw);
 		return;
 	}
 	/* initialize */
@@ -153,32 +144,26 @@ move(okay)
 	pickmove();
 
 	/* print move */
-	writel(" and moves ");
+	addstr(" and moves ");
 	for (i = 0; i < mvlim; i++) {
 		if (i > 0)
-			writec(',');
-		wrint(p[i] = cp[i]);
-		writec('-');
-		wrint(g[i] = cg[i]);
+			addch(',');
+		printw("%d-%d", p[i] = cp[i], g[i] = cg[i]);
 		makmove(i);
 	}
-	writec('.');
+	addch('.');
 
 	/* print blots hit */
-	if (tflag)
-		curmove(20, 0);
-	else
-		writec('\n');
+	move(20, 0);
 	for (i = 0; i < mvlim; i++)
 		if (h[i])
 			wrhit(g[i]);
 	/* get ready for next move */
 	nexturn();
 	if (!okay) {
-		buflush();
+		refresh();
 		sleep(3);
 	}
-	fixtty(&traw);		/* no more tty interrupt */
 }
 
 void
@@ -353,7 +338,7 @@ nextfree()
 	if (freeq == 0) {
 		new = (struct BOARD *)calloc (1, sizeof(struct BOARD));
 		if (new == 0) {
-			writel("\nOut of memory\n");
+			addstr("\nOut of memory\n");
 			getout(0);
 		}
 	} else {

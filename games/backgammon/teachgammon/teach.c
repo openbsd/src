@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.8 2001/03/08 21:18:32 deraadt Exp $	*/
+/*	$OpenBSD: teach.c,v 1.9 2001/06/23 23:50:05 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,10 +43,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: teach.c,v 1.8 2001/03/08 21:18:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: teach.c,v 1.9 2001/06/23 23:50:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include "back.h"
 #include "tutor.h"
 
@@ -77,20 +78,7 @@ main(argc, argv)
 	setgid(getgid());
 
 	signal(SIGINT, getout);
-	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
-		errexit("teachgammon(gtty)");
-	noech = old;
-	noech.c_lflag &= ~ECHO;
-	traw = noech;
-	traw.c_lflag &= ~ICANON;	/* set up modes */
-	ospeed = cfgetospeed(&old);	/* for termlib */
-	tflag = getcaps(getenv("TERM"));
-	getarg(argc, argv);
-	if (tflag) {
-		noech.c_oflag &= ~(ONLCR | OXTABS);
-		traw.c_oflag &= ~(ONLCR | OXTABS);
-		clear();
-	}
+	initcurses();
 	text(hello);
 	text(list);
 	i = text(contin);
@@ -149,12 +137,8 @@ main(argc, argv)
 void
 leave()
 {
-	if (tflag)
-		clear();
-	else
-		writec('\n');
-	fixtty(&old);
+	clear();
+	endwin();
 	execl(EXEC, "backgammon", "-n", args, 0);
-	writel("Help! Backgammon program is missing\007!!\n");
-	exit(1);
+	errx(1, "help! Backgammon program is missing!!");
 }

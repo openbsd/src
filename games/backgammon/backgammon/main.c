@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2001/02/18 03:32:49 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2001/06/23 23:49:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,10 +43,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 2001/02/18 03:32:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/06/23 23:49:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <err.h>
 #include <time.h>
 #include "back.h"
 #include "backlocal.h"
@@ -54,7 +55,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.8 2001/02/18 03:32:49 pjanzen Exp $"
 #define MVPAUSE	5		/* time to sleep when stuck */
 /* #define MAXUSERS 35	*/		/* maximum number of users */
 
-extern const char   *const instr[];		/* text of instructions */
+extern const char   *const instruct[];		/* text of instructions */
 
 const char   *const helpm[] = {		/* help message */
 	"Enter a space or newline to roll, or",
@@ -110,42 +111,24 @@ main (argc,argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	/* initialization */
-	bflag = 2;		/* default no board */
 	signal(SIGINT, getout);	/* trap interrupts */
-	if (tcgetattr(0, &old) == -1)	/* get old tty mode */
-		errexit("backgammon(gtty)");
-	noech = old;
-	noech.c_lflag &= ~ECHO;
-	traw = noech;
-	traw.c_lflag &= ~ICANON;	/* set up modes */
+	initcurses();
 
 /* check user count */
 #if 0
 	if (ucount() > MAXUSERS)  {
-		writel(user1a);
-		wrint(MAXUSERS);
-		writel(user1b);
+		printw("%s%d%s", user1a, MAXUSERS, user1b);
 		getout(0);
 	}
 #endif
 
-	/* get terminal capabilities, and decide if it can cursor address */
-	tflag = getcaps(getenv("TERM"));
 	/* use whole screen for text */
-	if (tflag)
-		begscr = 0;
-	t = time(0);
+	begscr = 0;
+	t = time(NULL);
 	srandom(t);		/* 'random' seed */
 
 	getarg(argc, argv);
 	args[acnt] = '\0';
-	if (tflag) {		/* clear screen */
-		noech.c_oflag &= ~(ONLCR | OXTABS);
-		traw.c_oflag &= ~(ONLCR | OXTABS);
-		clear();
-	}
-	fixtty(&traw);		/* go into raw mode */
 
 	/* check if restored game and save flag for later */
 	if ((rfl = rflag)) {
@@ -157,27 +140,24 @@ main (argc,argv)
 		rscore = wscore = 0;	/* zero score */
 
 		if (aflag) {	/* print rules */
-			writel(rules);
+			addstr(rules);
 			if (yorn(0)) {
-				fixtty(&old);	/* restore tty */
+				endwin();
 				execl(TEACH, "teachgammon", args, 0);
 
-				tflag = 0;	/* error! */
-				writel(noteach);
-				exit(1);
+				err(1, "%s", noteach);
 			} else {/* if not rules, then instructions */
-				writel(need);
+				addstr(need);
 				if (yorn(0)) {	/* print instructions */
 					clear();
-					text(instr);
+					text(instruct);
 				}
 			}
 		}
 		init();		/* initialize board */
 
 		if (pnum == 2) {/* ask for color(s) */
-			writec('\n');
-			writel(askcol);
+			printw("\n%s", askcol);
 			while (pnum == 2) {
 				c = readc();
 				switch (c) {
@@ -196,28 +176,22 @@ main (argc,argv)
 
 				case 'P':	/* Control the dice */
 					iroll = 1;
-					writec('\n');
-					writel("Dice controlled!");
-					writec('\n');
-					writel(askcol);
+					addstr("\nDice controlled!\n");
+					addstr(askcol);
 					break;
 
 				default:	/* error */
-					writec('\007');
+					beep();
 				}
 			}
 		}
 
 		wrboard();		/* print board */
 
-		if (tflag)
-			curmove(18, 0);
-		else
-			writec('\n');
+		move(18, 0);
 	}
 	/* limit text to bottom of screen */
-	if (tflag)
-		begscr = 17;
+	begscr = 17;
 
 	for (;;)  {			/* begin game! */
 		/* initial roll if needed */
@@ -226,23 +200,19 @@ main (argc,argv)
 
 		/* perform ritual of first roll */
 		if (!rflag) {
-			if (tflag)
-				curmove(17, 0);
+			move(17, 0);
 			while (D0 == D1)	/* no doubles */
 				roll();
 
 			/* print rolls */
-			writel(rollr);
-			writec(D0 + '0');
-			writel(rollw);
-			writec(D1 + '0');
+			printw("%s%d%s%d", rollr, D0, rollw, D1);
 
 			/* winner goes first */
 			if (D0 > D1) {
-				writel(rstart);
+				addstr(rstart);
 				cturn = 1;
 			} else {
-				writel(wstart);
+				addstr(wstart);
 				cturn = -1;
 			}
 		}
@@ -273,21 +243,18 @@ main (argc,argv)
 		/* do first move (special case) */
 		if (!(rflag && raflag)) {
 			if (cturn == pnum)	/* computer's move */
-				move(0);
+				domove(0);
 			else {	/* player's move */
 				mvlim = movallow();
 				/* reprint roll */
-				if (tflag)
-					curmove(cturn == -1 ? 18 : 19, 0);
+				move(cturn == -1 ? 18 : 19, 0);
 				proll();
 				getmove();	/* get player's move */
 			}
 		}
-		if (tflag) {
-			curmove(17, 0);
-			cline();
-			begscr = 18;
-		}
+		move(17, 0);
+		clrtoeol();
+		begscr = 18;
 		/* no longer any difference between normal and recovered game. */
 		rflag = 0;
 
@@ -295,16 +262,11 @@ main (argc,argv)
 		while (cturn == 1 || cturn == -1) {
 
 			/* board maintainence */
-			if (tflag)
-				refresh();	/* fix board */
-			else
-				/* redo board if -p */
-				if (cturn == bflag || bflag == 0)
-					wrboard();
+			moveplayers();	/* fix board */
 
 			/* do computer's move */
 			if (cturn == pnum) {
-				move(1);
+				domove(1);
 
 				/* see if double refused */
 				if (cturn == -2 || cturn == 2)
@@ -321,16 +283,15 @@ main (argc,argv)
 			/* (player's move) */
 
 			/* clean screen if safe */
-			if (tflag && hflag) {
-				curmove(20, 0);
-				clend();
+			if (hflag) {
+				move(20, 0);
+				clrtobot();
 				hflag = 1;
 			}
 			/* if allowed, give him a chance to double */
 			if (dlast != cturn && gvalue < 64) {
-				if (tflag)
-					curmove(cturn == -1 ? 18: 19, 0);
-				writel(*Colorptr);
+				move(cturn == -1 ? 18: 19, 0);
+				addstr(*Colorptr);
 				c = readc();
 
 				/* character cases */
@@ -356,24 +317,16 @@ main (argc,argv)
 				case ' ':		/* roll */
 				case '\n':
 					roll();
-					writel(" rolls ");
-					writec(D0 + '0');
-					writec(' ');
-					writec(D1 + '0');
-					writel(".  ");
+					printw(" rolls %d %d.  ", D0, D1);
 
 					/* see if he can move */
 					if ((mvlim = movallow()) == 0) {
 
 						/* can't move */
-						writel(toobad1);
-						writel(*colorptr);
-						writel(unable);
-						if (tflag) {
-							if (pnum) {
-								buflush();
-								sleep(MVPAUSE);
-							}
+						printw("%s%s%s", toobad1, *colorptr, unable);
+						if (pnum) {
+							moveplayers();
+							sleep(MVPAUSE);
 						}
 						nexturn();
 						break;
@@ -388,15 +341,9 @@ main (argc,argv)
 				default:		/* invalid character */
 
 					/* print help message */
-					if (tflag)
-						curmove(20, 0);
-					else
-						writec('\n');
+					move(20, 0);
 					text(helpm);
-					if (tflag)
-						curmove(cturn == -1 ? 18 : 19, 0);
-					else
-						writec('\n');
+					move(cturn == -1 ? 18 : 19, 0);
 
 					/* don't erase */
 					hflag = 0;
@@ -405,18 +352,15 @@ main (argc,argv)
 
 				/* print roll */
 				roll();
-				if (tflag)
-					curmove(cturn == -1 ? 18: 19, 0);
+				move(cturn == -1 ? 18: 19, 0);
 				proll();
 
 				/* can he move? */
 				if ((mvlim = movallow()) == 0) {
 
 					/* he can't */
-					writel(toobad2);
-					writel(*colorptr);
-					writel(cantmv);
-					buflush();
+					printw("%s%s%s", toobad2, *colorptr, cantmv);
+					moveplayers();
 					sleep(MVPAUSE);
 					nexturn();
 					continue;
@@ -434,8 +378,7 @@ main (argc,argv)
 		cturn /= -2;
 
 		/* final board pos. */
-		if (tflag)
-			refresh();
+		moveplayers();
 
 		/* backgammon? */
 		mflag = 0;
@@ -445,31 +388,26 @@ main (argc,argv)
 				mflag++;
 
 		/* compute game value */
-		if (tflag)
-			curmove(20, 0);
+		move(20, 0);
 		if (*offopp == 15) {
 			if (mflag) {
-				writel(bgammon);
+				addstr(bgammon);
 				gvalue *= 3;
 			}
 			else if (*offptr <= 0) {
-				writel(gammon);
+				addstr(gammon);
 				gvalue *= 2;
 			}
 		}
 		/* report situation */
 		if (cturn == -1) {
-			writel("Red wins ");
+			addstr("Red wins ");
 			rscore += gvalue;
 		} else {
-			writel("White wins ");
+			addstr("White wins ");
 			wscore += gvalue;
 		}
-		wrint(gvalue);
-		writel(" point");
-		if (gvalue > 1)
-			writec('s');
-		writel(".\n");
+		printw("%d point%s.\n", gvalue, (gvalue > 1) ? "s":"");
 
 		/* write score */
 		wrscore();
@@ -477,22 +415,20 @@ main (argc,argv)
 /* check user count */
 #if 0
 		if (ucount() > MAXUSERS)  {
-			writel (user2a);
-			wrint (MAXUSERS);
-			writel (user2b);
+			printw("%s%d%s", user2a, MAXUSERS, user2b);
 			rfl = 1;
 			break;
 		}
 #endif
 
 		/* see if he wants another game */
-		writel(again);
+		addstr(again);
 		if ((i = yorn('S')) == 0)
 			break;
 
 		init();
 		if (i == 2) {
-			writel("  Save.\n");
+			addstr("  Save.\n");
 			cturn = 0;
 			save(0);
 		}
@@ -502,7 +438,7 @@ main (argc,argv)
 
 	/* give him a chance to save if game was recovered */
 	if (rfl && cturn) {
-		writel(svpromt);
+		addstr(svpromt);
 		if (yorn(0)) {
 			/* re-initialize for recovery */
 			init();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: tutor.c,v 1.4 2001/06/23 23:50:06 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tutor.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: tutor.c,v 1.4 2001/06/23 23:50:06 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,7 @@ tutor()
 	while (1) {
 		if (!brdeq(test[i].brd, board)) {
 			wrongans++;
-			if (tflag && curr == 23)
-				curmove(18, 0);
+			move(18, 0);
 			if (wrongans >= 3) {
 				wrongans = 0;
 				text(*test[i].ans);
@@ -84,23 +83,20 @@ tutor()
 				for (j = 0; j < 19; j++)
 					k += (board[j] > 0 ? board[j] : 0);
 				*offopp = k - 30;  /* -15 at start */
-				if (tflag) {
-					refresh();
-					clrest();
-				}
+				moveplayers();
+				clrest();
 			} else {
-				writel(better);
+				addstr(better);
 				nexturn();
 				movback(mvlim);
-				if (tflag) {
-					refresh();
-					clrest();
-				}
-				if ((!tflag) || curr == 19) {
+				moveplayers();
+				clrest();
+				getyx(stdscr, j, k);
+				if (j == 19) {
 					proll();
-					writec('\t');
+					addch('\t');
 				} else
-					curmove(curr > 19 ? curr - 2 : curr + 4, 25);
+					move(j > 19 ? j - 2 : j + 4, 25);
 				getmove();
 				if (cturn == 0)
 					leave();
@@ -108,13 +104,9 @@ tutor()
 			}
 		} else
 			wrongans = 0;
-		if (tflag)
-			curmove(18, 0);
+		move(18, 0);
 		text(*test[i].com);
-		if (!tflag)
-			writec('\n');
-		else
-			curmove(19, 0);
+		move(19, 0);
 		if (i == maxmoves)
 			break;
 		D0 = test[i].roll1;
@@ -131,9 +123,8 @@ tutor()
 		if (mvlim)
 			for (j = 0; j < mvlim; j++)
 				if (makmove(j))
-					writel("AARGH!!!\n");
-		if (tflag)
-			refresh();
+					addstr("AARGH!!!\n");
+		moveplayers();
 		nexturn();
 		D0 = test[i].new1;
 		D1 = test[i].new2;
@@ -141,13 +132,11 @@ tutor()
 		i++;
 		mvlim = movallow();
 		if (mvlim) {
-			if (tflag)
-				clrest();
+			clrest();
 			proll();
-			writec('\t');
+			addch('\t');
 			getmove();
-			if (tflag)
-				refresh();
+			moveplayers();
 			if (cturn == 0)
 				leave();
 		}
@@ -160,13 +149,12 @@ clrest()
 {
 	int     r, c, j;
 
-	r = curr;
-	c = curc;
+	getyx(stdscr, r, c);
 	for (j = r + 1; j < 24; j++) {
-		curmove(j, 0);
-		cline();
+		move(j, 0);
+		clrtoeol();
 	}
-	curmove(r, c);
+	move(r, c);
 }
 
 int

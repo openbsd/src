@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $	*/
+/*	$OpenBSD: board.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)board.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: board.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: board.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,15 +55,12 @@ wrboard()
 	static const char sv[] =
 	"|                       |   |                       |    \n";
 
-	fixtty(&noech);
 	clear();
 
-	if (tflag) {
-		fboard();
-		goto lastline;
-	}
-	writel("_____________________________________________________\n");
-	writel(bl);
+	fboard();
+	goto lastline;
+	addstr("_____________________________________________________\n");
+	addstr(bl);
 	strcpy(ln, bl);
 	for (j = 1; j < 50; j += 4) {
 		k = j / 4 + (j > 24 ? 12 : 13);
@@ -72,7 +69,7 @@ wrboard()
 		if (j == 21)
 			j += 4;
 	}
-	writel(ln);
+	addstr(ln);
 	for (i = 0; i < 5; i++) {
 		strcpy(ln, sv);
 		for (j = 1; j < 50; j += 4) {
@@ -102,13 +99,13 @@ wrboard()
 		}
 		ln[l++] = '\n';
 		ln[l] = '\0';
-		writel(ln);
+		addstr(ln);
 	}
 	strcpy(ln, bl);
 	ln[25] = 'B';
 	ln[26] = 'A';
 	ln[27] = 'R';
-	writel(ln);
+	addstr(ln);
 	strcpy(ln, sv);
 	for (i = 4; i > -1; i--) {
 		for (j = 1; j < 50; j += 4) {
@@ -138,7 +135,7 @@ wrboard()
 		}
 		ln[l++] = '\n';
 		ln[l] = '\0';
-		writel(ln);
+		addstr(ln);
 	}
 	strcpy(ln, bl);
 	for (j = 1; j < 50; j += 4) {
@@ -149,18 +146,12 @@ wrboard()
 		if (j == 21)
 			j += 4;
 	}
-	writel(ln);
-	writel("|_______________________|___|_______________________|\n");
+	addstr(ln);
+	addstr("|_______________________|___|_______________________|\n");
 
 lastline:
 	gwrite();
-	if (tflag)
-		curmove(18, 0);
-	else {
-		writec('\n');
-		writec('\n');
-	}
-	fixtty(&traw);
+	move(18, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext1.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: ttext1.c,v 1.4 2001/06/23 23:50:05 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ttext1.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ttext1.c,v 1.4 2001/06/23 23:50:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ const char   *const intro2[] = {
 	"\n   Although they are not shown on the board, the players' homes are",
 	"located just to the right of the board.  A player's men are placed",
 	"there when they are removed from the board.  The board you just",
-	"saw was in it's initial position:  all games start with the board",
+	"saw was in its initial position:  all games start with the board",
 	"looking like this.  Notice that red's pieces are represented by",
 	"the letter `r' and white's pieces are represented by the letter",
 	"`w'.  A position may have zero or more pieces on it:  for example,",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,11 +37,9 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
-
-#include <termios.h>
 
 /*
  * variable initialization.
@@ -63,13 +61,11 @@ int     pnum = 2;		/* color of player:
 						 2 = not yet init'ed */
 int     acnt = 0;		/* length of args */
 int     aflag = 1;		/* flag to ask for rules or instructions */
-int     bflag = 0;		/* flag for automatic board printing */
 int     cflag = 0;		/* case conversion flag */
 int     hflag = 1;		/* flag for cleaning screen */
 int     mflag = 0;		/* backgammon flag */
 int     raflag = 0;		/* 'roll again' flag for recovered game */
 int     rflag = 0;		/* recovered game flag */
-int     tflag = 0;		/* cursor addressing flag */
 int     iroll = 0;		/* special flag for inputting rolls */
 int     rfl = 0;
 
@@ -89,8 +85,6 @@ int	board[26];
 char	cin[100];
 int	colen;
 int	cturn;
-int	curc;
-int	curr;
 int	d0;
 int	dice[2];
 int	dlast;
@@ -107,4 +101,3 @@ int	p[5];
 int	rscore;
 int	table[6][6];
 int	wscore;
-struct termios	old, noech, traw;

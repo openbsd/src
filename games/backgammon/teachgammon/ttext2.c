@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext2.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $	*/
+/*	$OpenBSD: ttext2.c,v 1.5 2001/06/23 23:50:05 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ttext2.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ttext2.c,v 1.5 2001/06/23 23:50:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,28 +135,22 @@ text(txt)
 	const char   *c;
 	int     i;
 
-	fixtty(&noech);
 	begin = txt;
 	while (*txt) {
 		a = *(txt++);
 		if (*a != '\0') {
 			c = a;
 			for (i = 0; *(c++) != '\0'; i--);
-			writel(a);
-			writec('\n');
+			printw("%s\n", a);
 		} else {
-			fixtty(&traw);
-			writel(prompt);
+			addstr(prompt);
 			/* if begscr is set we're past the rules screens */
 			if (!begscr) {
 				for (;;) {
 					if ((b = readc()) == '?') {
-						if (tflag)
-							clear();
-						else
-							writec('\n');
+						clear();
 						text(list);
-						writel(prompt);
+						addstr(prompt);
 						continue;
 					}
 					i = 0;
@@ -168,7 +162,7 @@ text(txt)
 						i++;
 					}
 					if (i == 11)
-						writec('\007');
+						beep();
 					else
 						break;
 				}
@@ -176,22 +170,16 @@ text(txt)
 				b = readc();
 				i = 0;
 			}
-			if (tflag) {
-				if (begscr) {
-					curmove(18, 0);
-					clend();
-				} else
-					clear();
+			if (begscr) {
+				move(18, 0);
+				clrtobot();
 			} else
-				writec('\n');
+				clear();
 			if (i)
 				return(i);
-			fixtty(&noech);
-			if (tflag)
-				curmove(curr, 0);
+			/* move to start of current line? */
 			begin = txt;
 		}
 	}
-	fixtty(&traw);
 	return(0);
 }
