@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.40 2000/06/16 19:18:51 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.41 2000/06/18 16:32:19 millert Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -1048,6 +1048,14 @@ randomioctl(dev, cmd, data, flag, p)
 	add_timer_randomness((u_long)p ^ (u_long)data ^ cmd);
 
 	switch (cmd) {
+        case FIOASYNC:
+		/* rnd has no async flag in softc so this is really a no-op. */
+		break;
+
+        case FIONBIO:
+		/* Handled in the upper FS layer. */
+		break;
+
 	case RNDGETENTCNT:
 		ret = copyout(&random_state.entropy_count, data,
 		    sizeof(random_state.entropy_count));
