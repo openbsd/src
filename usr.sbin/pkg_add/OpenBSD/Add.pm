@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.30 2005/01/13 00:27:39 espie Exp $
+# $OpenBSD: Add.pm,v 1.31 2005/02/07 00:52:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -96,6 +96,27 @@ sub validate_plist($$)
 		if ($s->avail() < 0) {
 			Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
 			$problems++;
+		}
+	}
+	my $dest = installed_info($pkgname);
+	my $dir = $plist->{dir};
+	for my $i (info_names()) {
+		if (-e "$dir/$i") {
+			my $size = (stat _)[7];
+			my $fname = "$dest/$i";
+			my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
+			next unless defined $s;
+			if ($s->{ro}) {
+				Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
+				$problems++;
+			}
+			if ($state->{forced}->{kitchensink} && $state->{not}) {
+				next;
+			}
+			if ($s->avail() < 0) {
+				Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
+				$problems++;
+			}
 		}
 	}
 	if (@$colliding > 0) {
