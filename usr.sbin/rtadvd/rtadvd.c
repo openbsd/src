@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtadvd.c,v 1.5 2000/05/23 11:23:23 itojun Exp $	*/
-/*	$KAME: rtadvd.c,v 1.24 2000/05/22 21:58:10 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.6 2000/05/23 11:33:48 itojun Exp $	*/
+/*	$KAME: rtadvd.c,v 1.26 2000/05/23 11:31:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -60,6 +60,7 @@
 #include "timer.h"
 #include "if.h"
 #include "config.h"
+#include "dump.h"
 
 struct msghdr rcvmhdr;
 static u_char *rcvcmsgbuf;
@@ -138,8 +139,6 @@ static void rtmsg_input __P((void));
 static void rtadvd_set_dump_file __P((void));
 
 struct prefix *find_prefix __P((struct rainfo *, struct in6_addr *, int));
-
-extern void rtadvd_dump_file __P((char *));
 
 int
 main(argc, argv)
