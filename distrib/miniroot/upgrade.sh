@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.38 2002/07/13 13:18:05 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.39 2002/07/18 00:36:44 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -132,19 +132,21 @@ __EOT
 	;;
 esac
 
-echo	"The fstab is configured as follows:\n"
-cat /tmp/fstab
-
 cat << __EOT
+The fstab is configured as follows:
 
-You may wish to edit the fstab. For example, you may need to resolve
-dependencies in the order which the filesystems are mounted.
+$(</tmp/fstab)
 
-NOTE:	1) this fstab is used only during the upgrade. It will not be
-	   copied into the root filesystem.
+You may wish to edit the fstab before the filesystems are mounted. e.g. to
+change the order in which the filesystems are mounted.
 
-	2) all non-ffs filesystems, and filesystems with the 'noauto'
-	   option, will be ignored during the upgrade.
+NOTE:	1) the edited fstab will be used only during the upgrade. It will not
+           be copied back into the root filesystem.
+
+	2) Filesystems with a 'noauto' option or for which no /sbin/mount_XXX
+           can be found will not be mounted.
+
+	3) Non-ffs filesystems will be mounted read-only.
 
 __EOT
 ask "Edit the fstab with ${EDITOR}?" n

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.247 2002/07/13 16:32:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.248 2002/07/18 00:36:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1637,27 +1637,36 @@ munge_fstab() {
 	local _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
-		# Skip comment lines, non-ffs filesystems and
-		# 'noauto' filesystems.
+		# Skip comment lines.
 		case $_dev in
 		\#*)	continue ;;
 		esac
-		case $_fstype in
-		ffs)	;;
-		*)	continue ;;
-		esac
+
+		# Skip noauto filesystems.
 		case $_opt in
 		*noauto*)
 			continue ;;
 		esac
 
-		# Don't use soft updates
+		# Skip filesystems we can't mount.
+		[ -f "/sbin/mount_${_fstype}" ] || continue
+
+		# Remove any softdep options, as soft updates are not
+		# available in the ramdisk kernels.
 		_opt="$(echo ${_opt} | \
 			sed -e 's/^softdep$//; s/^softdep,//; s/,softdep,/,/; s/,softdep$//;')"
 
+		# Mount non-ffs filesystems read-only
+		[ "$_fstype" = "ffs" ] || \
+			_opt="$(echo ${_opt} | \
+				sed -e 's/^rw$/ro/; s/^rw,/ro,/; s/,rw,/,ro,/; s/,rw$/,ro/')"
+
+		# Avoid '/mnt/' in root fs entry in munged fstab
 		[ "$_mp" = "/" ] && _mp=
 
+		# Write fs entry in fstab.
 		echo $_dev /mnt$_mp $_fstype $_opt $_rest
+
 	done < /tmp/fstab > /etc/fstab
 	
 	# If no /etc/fstab was created, we have nowhere to ${MODE} to.
@@ -1724,18 +1733,19 @@ remount_fs() {
 	done < /etc/fstab
 }
 
-# Preen all filesystems in /etc/fstab, showing individual results,
-# but skipping the root filesystem device $ROOTDEV. This was
-# already fsck'ed successfully.
+# Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX,
+# showing individual results, but skipping $ROOTDEV. This was already
+# fsck'ed successfully.
 #
 # Exit if any fsck's fail (but do them all before exiting!).
 check_fs() {
-	local _dev _rest _fail
+	local _dev _mp _fstype _rest _badfsck=0 _root=$1
 
 	echo "Checking non-root filesystems..."
 
-	while read _dev _rest; do
-		[ "$_dev" = "/dev/$ROOTDEV" ] && continue
+	while read _dev _mp _fstype _rest; do
+		[ "$_dev" != "$_root" ] || continue
+		[ -f "/sbin/fsck_$_fstype" ] || continue
 		echo -n "fsck -p ${_dev}..."
 		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
 			echo "FAILED. You must fsck this device manually."
