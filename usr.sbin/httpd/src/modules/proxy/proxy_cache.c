@@ -1006,7 +1006,6 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
 		     c->tempfile);
 	return DECLINED;
     }
-    (void) fchmod(i, 0622);
 
     ap_note_cleanups_for_fd(r->pool, i);
     c->fp = ap_bcreate(r->pool, B_WR);
