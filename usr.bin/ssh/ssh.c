@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.69 2000/10/27 07:32:19 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.70 2000/11/06 23:04:56 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -724,16 +724,57 @@ x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 	}
 }
 
+void
+ssh_init_forwarding(void)
+{
+	int i;
+	/* Initiate local TCP/IP port forwardings. */
+	for (i = 0; i < options.num_local_forwards; i++) {
+		debug("Connections to local port %d forwarded to remote address %.200s:%d",
+		    options.local_forwards[i].port,
+		    options.local_forwards[i].host,
+		    options.local_forwards[i].host_port);
+		channel_request_local_forwarding(
+		    options.local_forwards[i].port,
+		    options.local_forwards[i].host,
+		    options.local_forwards[i].host_port,
+		    options.gateway_ports);
+	}
+
+	/* Initiate remote TCP/IP port forwardings. */
+	for (i = 0; i < options.num_remote_forwards; i++) {
+		debug("Connections to remote port %d forwarded to local address %.200s:%d",
+		    options.remote_forwards[i].port,
+		    options.remote_forwards[i].host,
+		    options.remote_forwards[i].host_port);
+		channel_request_remote_forwarding(
+		    options.remote_forwards[i].port,
+		    options.remote_forwards[i].host,
+		    options.remote_forwards[i].host_port);
+	}
+}
+
+void
+check_agent_present(void)
+{
+	if (options.forward_agent) {
+		/* Clear agent forwarding if we don\'t have an agent. */
+		int authfd = ssh_get_authentication_socket();
+		if (authfd < 0)
+			options.forward_agent = 0;
+		else
+			ssh_close_authentication_socket(authfd);
+	}
+}
+
 int
 ssh_session(void)
 {
 	int type;
-	int i;
 	int plen;
 	int interactive = 0;
 	int have_tty = 0;
 	struct winsize ws;
-	int authfd;
 	char *cp;
 
 	/* Enable compression if requested. */
@@ -817,14 +858,10 @@ ssh_session(void)
 	/* Tell the packet module whether this is an interactive session. */
 	packet_set_interactive(interactive, options.keepalives);
 
-	/* Clear agent forwarding if we don\'t have an agent. */
-	authfd = ssh_get_authentication_socket();
-	if (authfd < 0)
-		options.forward_agent = 0;
-	else
-		ssh_close_authentication_socket(authfd);
 
 	/* Request authentication agent forwarding if appropriate. */
+	check_agent_present();
+
 	if (options.forward_agent) {
 		debug("Requesting authentication agent forwarding.");
 		auth_request_forwarding();
@@ -835,28 +872,9 @@ ssh_session(void)
 		if (type != SSH_SMSG_SUCCESS)
 			log("Warning: Remote host denied authentication agent forwarding.");
 	}
-	/* Initiate local TCP/IP port forwardings. */
-	for (i = 0; i < options.num_local_forwards; i++) {
-		debug("Connections to local port %d forwarded to remote address %.200s:%d",
-		      options.local_forwards[i].port,
-		      options.local_forwards[i].host,
-		      options.local_forwards[i].host_port);
-		channel_request_local_forwarding(options.local_forwards[i].port,
-						 options.local_forwards[i].host,
-						 options.local_forwards[i].host_port,
-						 options.gateway_ports);
-	}
 
-	/* Initiate remote TCP/IP port forwardings. */
-	for (i = 0; i < options.num_remote_forwards; i++) {
-		debug("Connections to remote port %d forwarded to local address %.200s:%d",
-		      options.remote_forwards[i].port,
-		      options.remote_forwards[i].host,
-		      options.remote_forwards[i].host_port);
-		channel_request_remote_forwarding(options.remote_forwards[i].port,
-						  options.remote_forwards[i].host,
-						  options.remote_forwards[i].host_port);
-	}
+	/* Initiate port forwardings. */
+	ssh_init_forwarding();
 
 	/* If requested, let ssh continue in the background. */
 	if (fork_after_authentication_flag)
@@ -887,27 +905,10 @@ ssh_session(void)
 	return client_loop(have_tty, tty_flag ? options.escape_char : -1, 0);
 }
 
-void
-init_local_fwd(void)
-{
-	int i;
-	/* Initiate local TCP/IP port forwardings. */
-	for (i = 0; i < options.num_local_forwards; i++) {
-		debug("Connections to local port %d forwarded to remote address %.200s:%d",
-		      options.local_forwards[i].port,
-		      options.local_forwards[i].host,
-		      options.local_forwards[i].host_port);
-		channel_request_local_forwarding(options.local_forwards[i].port,
-						 options.local_forwards[i].host,
-						 options.local_forwards[i].host_port,
-						 options.gateway_ports);
-	}
-}
-
 extern void client_set_session_ident(int id);
 
 void
-client_init(int id, void *arg)
+ssh_session2_callback(int id, void *arg)
 {
 	int len;
 	debug("client_init id %d arg %d", id, (int)arg);
@@ -944,6 +945,13 @@ client_init(int id, void *arg)
 		debug("Requesting X11 forwarding with authentication spoofing.");
 		x11_request_forwarding_with_spoofing(id, proto, data);
 		/* XXX wait for reply */
+	}
+
+	check_agent_present();
+	if (options.forward_agent) {
+		debug("Requesting authentication agent forwarding.");
+		channel_request_start(id, "auth-agent-req@openssh.com", 0);
+		packet_send();
 	}
 
 	len = buffer_len(&command);
@@ -988,8 +996,8 @@ ssh_session2(void)
 	if (!isatty(err))
 		set_nonblock(err);
 
-	/* should be pre-session */
-	init_local_fwd();
+	/* XXX should be pre-session */
+	ssh_init_forwarding();
 	
 	/* If requested, let ssh continue in the background. */
 	if (fork_after_authentication_flag)
@@ -1008,7 +1016,8 @@ ssh_session2(void)
 	    xstrdup("client-session"), /*nonblock*/0);
 
 	channel_open(id);
-	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, client_init, (void *)0);
+	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION,
+	     ssh_session2_callback, (void *)0);
 
 	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
 }
