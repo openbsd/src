@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.93 2004/11/19 10:11:52 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.94 2004/11/26 18:02:22 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -493,7 +493,7 @@ ret:
  * Get all the information contained in an SA to a PFKEYV2 message.
  */
 int
-pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
+pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 {
 	int rval, i;
 	void *p;
@@ -549,6 +549,14 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 
 	if (sa->tdb_udpencap_port)
 		i+= sizeof(struct sadb_x_udpencap);
+
+	if (lenp)
+		*lenp = i;
+
+	if (buffer == NULL) {
+		rval = 0;
+		goto ret;
+	}
 
 	if (!(p = malloc(i, M_PFKEY, M_DONTWAIT))) {
 		rval = ENOMEM;
@@ -674,7 +682,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 		headers[0] = (void *) dump_state->sadb_msg;
 
 		/* Get the information from the TDB to a PFKEYv2 message */
-		if ((rval = pfkeyv2_get(sa, headers, &buffer)) != 0)
+		if ((rval = pfkeyv2_get(sa, headers, &buffer, NULL)) != 0)
 			return (rval);
 
 		if (last)
@@ -1229,7 +1237,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			goto splxret;
 		}
 
-		rval = pfkeyv2_get(sa2, headers, &freeme);
+		rval = pfkeyv2_get(sa2, headers, &freeme, NULL);
 		if (rval)
 			mode = PFKEYV2_SENDMESSAGE_UNICAST;
 
@@ -2131,6 +2139,100 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	return (rval);
 }
 
+struct pfkeyv2_sysctl_walk {
+	void		*w_where;
+	size_t		 w_len;
+	int		 w_op;
+	u_int8_t	 w_satype;
+};
+
+int
+pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
+{
+	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
+	void *buffer = NULL;
+	int error = 0;
+	int buflen, i;
+
+	if (w->w_satype != SADB_SATYPE_UNSPEC &&
+	    w->w_satype != sa->tdb_satype)
+		return (0);
+
+	if (w->w_where) {
+		void *headers[SADB_EXT_MAX+1];
+		struct sadb_msg msg;
+
+		bzero(headers, sizeof(headers));
+		if ((error = pfkeyv2_get(sa, headers, &buffer, &buflen)) != 0)
+			goto done;
+		if (w->w_len < sizeof(msg) + buflen) {
+			error = ENOMEM;
+			goto done;
+		}
+		/* prepend header */
+		msg.sadb_msg_version = PF_KEY_V2;
+		msg.sadb_msg_pid = 0;
+		msg.sadb_msg_seq = 0;
+		msg.sadb_msg_satype = sa->tdb_satype;
+		msg.sadb_msg_type = SADB_DUMP;
+		msg.sadb_msg_len = (sizeof(msg) + buflen) / sizeof(uint64_t);
+		if ((error = copyout(&msg, w->w_where, sizeof(msg))) != 0)
+			goto done;
+		w->w_where += sizeof(msg);
+		w->w_len -= sizeof(msg);
+		/* set extension type */
+		for (i = 1; i <= SADB_EXT_MAX; i++)
+			if (headers[i])
+				((struct sadb_ext *)
+				    headers[i])->sadb_ext_type = i;
+		if ((error = copyout(buffer, w->w_where, buflen)) != 0)
+			goto done;
+		w->w_where += buflen;
+		w->w_len -= buflen;
+	} else {
+		if ((error = pfkeyv2_get(sa, NULL, NULL, &buflen)) != 0)
+			return (error);
+		w->w_len += buflen;
+		w->w_len += sizeof(struct sadb_msg);
+	}
+
+done:
+	if (buffer)
+		free(buffer, M_PFKEY);
+	return (error);
+}
+
+int
+pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *new, size_t newlen)
+{
+	struct pfkeyv2_sysctl_walk w;
+	int s, error = EINVAL;
+
+	if (new)
+		return (EPERM);
+	if (namelen < 1)
+		return (EINVAL);
+	w.w_op = name[0];
+	w.w_satype = name[1];
+	w.w_where = oldp;
+	w.w_len = oldp ? *oldlenp : 0;
+
+	switch(w.w_op) {
+	case NET_KEY_SADB_DUMP:
+		if ((error = suser(curproc, 0)) != 0)
+			return (error);
+		s = spltdb();
+		error = tdb_walk(pfkeyv2_sysctl_walker, &w);
+		splx(s);
+		if (oldp)
+			*oldlenp = w.w_where - oldp;
+		else
+			*oldlenp = w.w_len;
+	}
+	return (error);
+}
+
 int
 pfkeyv2_init(void)
 {
@@ -2141,6 +2243,7 @@ pfkeyv2_init(void)
 	pfkeyv2_version.create = &pfkeyv2_create;
 	pfkeyv2_version.release = &pfkeyv2_release;
 	pfkeyv2_version.send = &pfkeyv2_send;
+	pfkeyv2_version.sysctl = &pfkeyv2_sysctl;
 
 	rval = pfkey_register(&pfkeyv2_version);
 	return (rval);

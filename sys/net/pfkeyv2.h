@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.51 2004/08/10 16:17:05 ho Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.52 2004/11/26 18:02:22 markus Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -386,6 +386,7 @@ struct pfkey_version
 	int (*create)(struct socket *socket);
 	int (*release)(struct socket *socket);
 	int (*send)(struct socket *socket, void *message, int len);
+	int (*sysctl)(int *, u_int, void *, size_t *, void *, size_t);
 };
 
 struct pfkeyv2_socket
@@ -415,7 +416,7 @@ int pfkey_unregister(struct pfkey_version *version);
 int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
 
 int pfkeyv2_create(struct socket *);
-int pfkeyv2_get(struct tdb *, void **, void **);
+int pfkeyv2_get(struct tdb *, void **, void **, int *);
 int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
@@ -423,6 +424,8 @@ int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
 int pfkeyv2_dump_walker(struct tdb *, void *, int);
 int pfkeyv2_flush_walker(struct tdb *, void *, int);
 int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
+int pfkeyv2_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int pfkeyv2_sysctl_walker(struct tdb *, void *, int);
 
 int pfdatatopacket(void *, int, struct mbuf **);
 
