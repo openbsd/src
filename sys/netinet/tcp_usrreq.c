@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.44 2000/07/05 22:51:10 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.45 2000/07/06 05:24:45 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -213,20 +213,6 @@ tcp_usrreq(so, req, m, nam, control)
 			error = in_pcbbind(inp, nam);
 		if (error)
 			break;
-#if 0 /*INET6*/
-		/*
-		 * If we bind to an address, set up the tp->pf accordingly!
-		 */
-		if (inp->inp_flags & INP_IPV6) {
-			/* If a PF_INET6 socket... */
-			if (inp->inp_flags & INP_IPV6_MAPPED)
-				tp->pf = AF_INET;
-			else if ((inp->inp_flags & INP_IPV6_UNDEC) == 0)
-				tp->pf = AF_INET6;
-			/* else tp->pf is still 0. */
-		}
-		/* else socket is PF_INET, and tp->pf is PF_INET. */
-#endif /* INET6 */
 		break;
 
 	/*
@@ -305,33 +291,12 @@ tcp_usrreq(so, req, m, nam, control)
 		if (error)
 			break;
 
-#if 0 /*INET6*/
-		/*
-		 * With a connection, I now know the version of IP
-		 * is in use and hence can set tp->pf with authority. 
-		 */
-		if (inp->inp_flags & INP_IPV6) {
-			if (inp->inp_flags & INP_IPV6_MAPPED)
-				tp->pf = PF_INET;
-			else
-				tp->pf = PF_INET6;
-		}
-		/* else I'm a PF_INET socket, and hence tp->pf is PF_INET. */
-#endif /* INET6 */
-
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			in_pcbdisconnect(inp);
 			error = ENOBUFS;
 			break;
 		}
-
-#if 0 /*INET6*/
-		if ((inp->inp_flags & INP_IPV6) && (tp->pf == PF_INET)) {
-			inp->inp_ip.ip_ttl = ip_defttl;
-			inp->inp_ip.ip_tos = 0;
-		}
-#endif /* INET6 */
 
 		so->so_state |= SS_CONNECTOUT;
 		/* Compute window scaling to request.  */
