@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.4 1996/05/07 07:22:09 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.5 1996/05/09 10:16:47 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
@@ -68,9 +68,7 @@
  */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#ifdef BABY
-#define	NKPDE		31
-#else
+#ifndef NKPDE
 #define	NKPDE		12
 #endif
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
