@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.18 2001/07/04 07:10:51 mickey Exp $
+.\"	$OpenBSD: apmd.8,v 1.19 2001/07/05 22:06:00 mickey Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -34,10 +34,10 @@
 .Nd Advanced Power Management monitor daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl dsaqepm
-.Op Fl t Ar seconds
-.Op Fl S Ar sockname
+.Op Fl adempqs
 .Op Fl f Ar devname
+.Op Fl S Ar sockname
+.Op Fl t Ar seconds
 .Sh DESCRIPTION
 .Nm
 monitors the advanced power management (APM) pseudo-device, acting on
@@ -123,8 +123,10 @@ driver power status messages.
 In both cases
 .Nm
 exits immediately after setting the desired option.
+The
 .Fl e
 unconditionally enables power status messages.
+The
 .Fl p
 causes power status messages to be displayed only when the
 battery life expectancy changes.
