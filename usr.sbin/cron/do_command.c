@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.24 2003/04/14 15:58:13 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.25 2003/07/30 20:20:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.24 2003/04/14 15:58:13 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.25 2003/07/30 20:20:01 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -258,9 +258,9 @@ child_process(entry *e, user *u) {
 				_exit(OK_EXIT);
 			}
 # endif /*DEBUGGING*/
-			execle(shell, shell, "-c", e->cmd, (char *)0, e->envp);
-			fprintf(stderr, "execl: couldn't exec `%s'\n", shell);
-			perror("execl");
+			execle(shell, shell, "-c", e->cmd, (char *)NULL, e->envp);
+			fprintf(stderr, "execle: couldn't exec `%s'\n", shell);
+			perror("execle");
 			_exit(ERROR_EXIT);
 		}
 		break;
