@@ -172,6 +172,6 @@ distribution:
 		    ${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 
-.include<bsd.obj.mk>
-.include<bsd.subdir.mk>
-.include<bsd.man.mk>
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>
