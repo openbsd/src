@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 1995/12/16 21:40:31 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 1995/12/18 20:40:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -610,7 +610,7 @@ _lev7intr:
 	 * the hardware modification has no de-bouncing logic....
 	 */
 	movb	SYSMASK_ADDR, sp@-	|  save current sysmask
-	movb	#0, 0xff8e01		|  disable all interrupts
+	movb	#0, SYSMASK_ADDR	|  disable all interrupts
 	trap	#15			|  drop into the debugger
 	movb	sp@+, SYSMASK_ADDR	|  restore sysmask
 #endif
