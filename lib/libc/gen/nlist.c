@@ -281,6 +281,21 @@ static struct nlist_handlers {
 #endif
 };
 
+__fdnlist(fd, list)
+	register int fd;
+	register struct nlist *list;
+{
+	int n, i;
+
+	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
+		n = (nlist_fn[i].fn)(fd, list);
+		if (n != -1)
+			break;
+	}
+	return (n);
+}
+
+
 int
 nlist(name, list)
 	const char *name;
@@ -292,11 +307,7 @@ nlist(name, list)
 	fd = open(name, O_RDONLY, 0);
 	if (fd < 0)
 		return (-1);
-	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
-		n = (nlist_fn[i].fn)(fd, list);
-		if (n != -1)
-			break;
-	}
+	n = __fdnlist(fd, list);
 	(void)close(fd);
 	return (n);
 }
