@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.15 2000/08/09 15:56:45 aaron Exp $
+.\"	$OpenBSD: regex.3,v 1.16 2002/10/16 21:32:06 wcobb Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -51,29 +51,23 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <regex.h>
-.Fo "int regcomp"
-.Fa "regex_t *preg"
-.Fa "const char *pattern"
-.Fa "int cflags"
-.Fc
-.Fo "int regexec"
-.Fa "const regex_t *preg"
-.Fa "const char *string"
-.Fa "size_t nmatch"
-.Fa "regmatch_t pmatch[]"
-.Fa "int eflags"
-.Fc
-.Fo "size_t regerror"
-.Fa "int errcode"
-.Fa "const regex_t *preg"
-.Fa "char *errbuf"
-.Fa "size_t errbuf_size"
-.Fc
-.Fo "void regfree"
-.Fa "regex_t *preg"
-.Fc
+.Ft int
+.Fn regcomp "regex_t *preg" "const char *pattern" "int cflags"
+.Pp
+.Ft int
+.Fn regexec "const regex_t *preg" "const char *string" "size_t nmatch" \
+            "regmatch_t pmatch[]" "int eflags"
+.Pp
+.Ft size_t
+.Fn regerror "int errcode" "const regex_t *preg" "char *errbuf" \
+             "size_t errbuf_size"
+.Pp
+.Ft void
+.Fn regfree "regex_t *preg"
 .Sh DESCRIPTION
-These routines implement POSIX 1003.2 regular expressions
+These routines implement
+.St -p1003.2
+regular expressions
 .Pq Dq REs ;
 see
 .Xr re_format 7 .
@@ -132,7 +126,8 @@ Compile with recognition of all special characters turned off.
 All characters are thus considered ordinary,
 so the RE is a literal string.
 This is an extension,
-compatible with but not specified by POSIX 1003.2,
+compatible with but not specified by
+.St -p1003.2 ,
 and should be used with
 caution in software intended to be portable to other systems.
 .Dv REG_EXTENDED
@@ -178,7 +173,8 @@ member is of type
 This flag permits inclusion of NULs in the RE;
 they are considered ordinary characters.
 This is an extension,
-compatible with but not specified by POSIX 1003.2,
+compatible with but not specified by
+.St -p1003.2 ,
 and should be used with
 caution in software intended to be portable to other systems.
 .El
@@ -260,7 +256,8 @@ See below for the definition of
 and
 .Fa nmatch .
 This is an extension,
-compatible with but not specified by POSIX 1003.2,
+compatible with but not specified by
+.St -p1003.2 ,
 and should be used with
 caution in software intended to be portable to other systems.
 Note that a non-zero \fIrm_so\fR does not imply
@@ -456,7 +453,8 @@ and
 .Dv REG_ATOI
 are intended primarily as debugging facilities;
 they are extensions,
-compatible with but not specified by POSIX 1003.2,
+compatible with but not specified by
+.St -p1003.2
 and should be used with
 caution in software intended to be portable to other systems.
 Be warned also that they are considered experimental and changes are possible.
@@ -478,7 +476,9 @@ None of these functions references global variables except for tables
 of constants;
 all are safe for use from multiple threads if the arguments are safe.
 .Sh IMPLEMENTATION CHOICES
-There are a number of decisions that 1003.2 leaves up to the implementor,
+There are a number of decisions that
+.St -p1003.2
+leaves up to the implementor,
 either by explicitly saying
 .Dq undefined
 or by virtue of them being
@@ -499,7 +499,9 @@ for one short RE using them
 that will run almost any system out of memory.
 .Pp
 A backslashed character other than one specifically given a magic meaning
-by 1003.2 (such magic meanings occur only in obsolete REs)
+by
+.St -p1003.2
+(such magic meanings occur only in obsolete REs)
 is taken as an ordinary character.
 .Pp
 Any unmatched
@@ -553,7 +555,8 @@ REs are anchors, not ordinary characters.
 .Xr grep 1 ,
 .Xr re_format 7
 .Pp
-POSIX 1003.2, sections 2.8 (Regular Expression Notation)
+.St -p1003.2 ,
+sections 2.8 (Regular Expression Notation)
 and
 B.5 (C Binding for Regular Expression Matching).
 .Sh DIAGNOSTICS
@@ -609,7 +612,8 @@ Please report problems.
 .Pp
 There is one known functionality bug.
 The implementation of internationalization is incomplete:
-the locale is always assumed to be the default one of 1003.2,
+the locale is always assumed to be the default one of
+.St -p1003.2 ,
 and only the collating elements etc. of that locale are available.
 .Pp
 The back-reference code is subtle and doubts linger about its correctness
@@ -644,7 +648,9 @@ certain kinds of internal overflow,
 produced only by truly enormous REs or by multiply nested bounded repetitions,
 are probably not handled well.
 .Pp
-Due to a mistake in 1003.2, things like
+Due to a mistake in
+.St -p1003.2 ,
+things like
 .Ql a)b
 are legal REs because
 .Ql \&)
