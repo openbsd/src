@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu.c,v 1.9 1997/03/12 13:37:00 briggs Exp $	*/
-/*	$NetBSD: fpu.c,v 1.21 1996/12/16 16:17:16 scottr Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.10 1998/02/14 09:22:38 gene Exp $	*/
+/*	$NetBSD: fpu.c,v 1.23 1998/01/12 19:22:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -27,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -132,7 +132,7 @@ fpu_probe()
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
-	__asm("fnop");
+	asm("fnop");
 
 	nofault = (int *) 0;
 
@@ -148,7 +148,7 @@ fpu_probe()
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	__asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
 
 	b = *((u_char *) fpframe + 1);
 
