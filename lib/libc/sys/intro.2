@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.29 2003/12/04 14:32:09 otto Exp $
+.\"	$OpenBSD: intro.2,v 1.30 2004/03/16 08:46:46 tedu Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -49,10 +49,15 @@ their error returns, and other common definitions and concepts.
 Nearly all of the system calls provide an error number in the external
 variable
 .Va errno ,
-which is defined as:
+which is currently defined as:
 .Pp
 .Dl extern int errno;
 .Pp
+Portable applications must not depend on this definition, and should only
+use
+.Va errno
+as defined in
+.Aq Pa errno.h .
 When a system call detects an error, it returns an integer value
 indicating failure (usually \-1) and sets the variable
 .Va errno
