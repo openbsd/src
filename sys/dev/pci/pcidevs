@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.413 2001/07/06 17:06:48 jason Exp $
+	$OpenBSD: pcidevs,v 1.414 2001/07/07 11:22:00 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -722,6 +722,7 @@ product ADP2 AAC2622		0x0282	AAC-2622
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 AAC3642		0x0365	AAC-3642
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
+/* XXX guess */
 product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 
 /* Advanced System Products */
@@ -1013,6 +1014,13 @@ product CYRIX CX5530_VIDEO	0x0104	Cx5530 Video
 product DELL PERC_2SI		0x0001	PERC 2/Si
 product DELL PERC_3DI		0x0002	PERC 3/Di
 product DELL PERC_3SI		0x0003	PERC 3/Si
+product DELL PERC_3SI_2		0x0004	PERC 3/Si
+product DELL PERC_3DI_2		0x0008	PERC 3/Di
+product DELL PERC_3SI		0x0003	PERC 3/Si
+product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
+product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
+product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
+product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 
 /* D-Link products */
 product DLINK 550TX		0x1002	550TX
@@ -1110,7 +1118,6 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P02
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
-/* XXX guess */
 product HP NETRAID_4M		0x10c2	NetRaid-4M
 
 /* Hi/Fn products */
