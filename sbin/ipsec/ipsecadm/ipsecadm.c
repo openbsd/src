@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.3 1997/05/15 19:32:22 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.4 1997/06/20 06:14:38 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -57,9 +57,11 @@ typedef struct {
 }       transform;
 
 int xf_espdes __P((int, char **));
+int xf_esp3des __P((int, char **));
 int xf_esp3desmd5 __P((int, char **));
 int xf_espdesmd5 __P((int, char **));
 int xf_ahmd5 __P((int, char **));
+int xf_ahsha1 __P((int, char **));
 int xf_ahhmacmd5 __P((int, char **));
 int xf_ahhmacsha1 __P((int, char **));
 int xf_ip4 __P((int, char **));
@@ -69,9 +71,11 @@ int xf_pfr __P((int, char **));
 
 transform xf[] = {
 	{"des", xf_espdes},
+	{"3des", xf_esp3des},
 	{"3desmd5", xf_esp3desmd5},
 	{"desmd5", xf_espdesmd5},
 	{"md5", xf_ahmd5},
+	{"sha1", xf_ahsha1},
 	{"hmacmd5", xf_ahhmacmd5},
 	{"hmacsha1", xf_ahhmacsha1},
 	{"ip4", xf_ip4},
