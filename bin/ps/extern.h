@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2002/12/19 21:29:46 mickey Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -81,6 +81,8 @@ void	 state(KINFO *, VARENT *);
 void	 tdev(KINFO *, VARENT *);
 void	 tname(KINFO *, VARENT *);
 void	 tsize(KINFO *, VARENT *);
+void	 dsize(KINFO *, VARENT *);
+void	 ssize(KINFO *, VARENT *);
 void	 ucomm(KINFO *, VARENT *);
 void	 uname(KINFO *, VARENT *);
 void	 uvar(KINFO *, VARENT *);

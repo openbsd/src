@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.27 2002/06/18 03:21:33 provos Exp $	*/
+/*	$OpenBSD: print.c,v 1.28 2002/12/19 21:29:46 mickey Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.27 2002/06/18 03:21:33 provos Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.28 2002/12/19 21:29:46 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -642,6 +642,28 @@ tsize(k, ve)
 
 	v = ve->var;
 	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_tsize));
+}
+
+void
+dsize(k, ve)
+	KINFO *k;
+	VARENT *ve;
+{
+	VAR *v;
+
+	v = ve->var;
+	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_dsize));
+}
+
+void
+ssize(k, ve)
+	KINFO *k;
+	VARENT *ve;
+{
+	VAR *v;
+
+	v = ve->var;
+	(void)printf("%*d", v->width, pgtok(KI_EPROC(k)->e_vm.vm_ssize));
 }
 
 /*
