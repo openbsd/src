@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 1996/03/26 15:16:42 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 1996/10/30 00:24:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -102,16 +102,13 @@ clock_match(parent, vcf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_CLOCK;
-	} else {
-		/* Validate the given PA. */
-		if (pa != OBIO_CLOCK)
-			panic("clock: wrong address");
-	}
-	if (pa != ca->ca_paddr)
+	/* Validate the given address. */
+	if (ca->ca_paddr != OBIO_CLOCK)
 		return (0);
+
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = CLOCK_PRI;
 
 	return (1);
 }
@@ -124,16 +121,8 @@ clock_attach(parent, self, args)
 {
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int pri;
 
-	if ((pri = cf->cf_intpri) == -1) {
-		pri = CLOCK_PRI;
-	} else {
-		if (pri != CLOCK_PRI)
-			panic("clock: level != %d", CLOCK_PRI);
-	}
-
-	printf(" level %d\n", pri);
+	printf("\n");
 
 	/*
 	 * Can not hook up the ISR until cpu_initclock()

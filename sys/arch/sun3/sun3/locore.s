@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1996/06/17 15:40:52 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -871,11 +871,11 @@ Lset2:
 #endif
 
 /*
- * remrq(p)
+ * remrunqueue(p)
  *
  * Call should be made at splclock().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	sp@(4),a0		| proc *p
 	clrl	d0
 	movb	a0@(P_PRIORITY),d0
@@ -904,7 +904,7 @@ Lrem2:
 	movl	#Lrem3,sp@-
 	jbsr	_panic
 Lrem3:
-	.asciz	"remrq"
+	.asciz	"remrunqueue"
 
 
 | Message for Lbadsw panic

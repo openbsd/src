@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.24 1996/05/07 01:30:18 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -34,7 +34,7 @@ file arch/sun3/sun3/vm_machdep.c
 
 file arch/sun3/dev/idprom.c
 
-include "../../m68k/fpe/files.fpe"
+include "arch/m68k/fpe/files.fpe"
 
 file arch/m68k/m68k/copy.s
 file dev/cons.c
@@ -136,8 +136,6 @@ file arch/sun3/dev/cg2.c		cgtwo needs-flag
 device cgfour: sunfb
 attach cgfour at obmem
 file arch/sun3/dev/cg4.c		cgfour needs-flag
-
-file	arch/sun3/dev/bt_subr.c 	cgfour
 
 #
 # VME

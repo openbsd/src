@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.1 1996/11/12 00:01:47 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.2 1996/11/23 07:54:46 kstailey Exp $
 #
 
 #
@@ -17,10 +17,13 @@ include "std.sun3"
 maxusers	4
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	KTRACE				# system call tracing support
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+
+# Debugging options.  Uncomment either this:
 options 	DDB
+# ... or these two: (for KGDB on another machine)
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+#options 	KGDB
 
 # Filesystem options
 options 	NFSCLIENT			# nfs client support
@@ -69,7 +72,7 @@ ms0    at zsc0 channel 1	# mouse
 #
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr ? level ?
+le0 at obio0 addr   0x120000 level 3
 
 #
 # Frame buffer devices

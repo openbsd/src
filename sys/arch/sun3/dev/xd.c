@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.7 1996/03/17 02:04:07 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.7 1996/03/17 02:04:07 thorpej Exp $
+ * id: $NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -101,7 +101,8 @@
  * XDC_HWAIT: add iorq "N" to head of SC's wait queue
  */
 #define XDC_HWAIT(SC, N) { \
-	(SC)->waithead = ((SC)->waithead - 1) % XDC_MAXIOPB; \
+	(SC)->waithead = ((SC)->waithead == 0) ? \
+		(XDC_MAXIOPB - 1) : ((SC)->waithead - 1); \
 	(SC)->waitq[(SC)->waithead] = (N); \
 	(SC)->nwait++; \
 }

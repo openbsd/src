@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.12 1996/05/09 21:15:47 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.15 1996/10/30 00:24:33 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -269,7 +269,7 @@ ie_attach(sc)
 	int off;
 
 	/* MD code has done its part before calling this. */
-	printf(" hwaddr %s\n", ether_sprintf(sc->sc_addr));
+	printf(": hwaddr %s\n", ether_sprintf(sc->sc_addr));
 
 	/* Allocate from end of buffer space for ISCP, SCB */
 	off = sc->buf_area_sz;

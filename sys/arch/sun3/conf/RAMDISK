@@ -17,9 +17,6 @@ options 	HAVECACHE		# Sun3/260 VAC
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	2
 
-# Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-
 # Debugging options.  Uncomment either this:
 #options 	DDB
 # ... or these two: (for KGDB on another machine)

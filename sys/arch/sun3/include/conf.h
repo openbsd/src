@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 1996/11/11 23:51:40 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 1996/11/23 07:55:02 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -37,7 +37,6 @@ bdev_decl(rd);
 bdev_decl(sw);
 cdev_decl(sw);
 
-#include "xd.h"
 bdev_decl(xd);
 cdev_decl(xd);
 
@@ -45,7 +44,6 @@ cdev_decl(xd);
 bdev_decl(xt);
 cdev_decl(xt);
 
-#include "xy.h"
 bdev_decl(xy);
 cdev_decl(xy);
 
@@ -61,18 +59,10 @@ dev_decl(filedesc,open);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 
-#define NZS 2 /* XXX: temporary hack */
 cdev_decl(zs);
-cdev_decl(kd);
 cdev_decl(ms);
 cdev_decl(kbd);
-
-/* XXX - Should make keyboard/mouse real children of zs. */
-#if NZS > 1
-#define NKD 1
-#else
-#define NKD 0
-#endif
+cdev_decl(kd);
 
 /* frame-buffer devices */
 cdev_decl(fb);

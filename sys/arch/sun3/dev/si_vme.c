@@ -1,9 +1,11 @@
-/*	$NetBSD: si_vme.c,v 1.2 1996/06/17 23:21:39 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.7 1996/11/20 18:57:01 gwr Exp $	*/
 
-/*
- * Copyright (c) 1995 David Jones, Gordon W. Ross
- * Copyright (c) 1994 Adam Glass
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Adam Glass, David Jones, and Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,23 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the authors may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by
- *      Adam Glass, David Jones, and Gordon Ross
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -103,12 +107,6 @@
 #include "sireg.h"
 #include "sivar.h"
 
-/*
- * Transfers smaller than this are done using PIO
- * (on assumption they're not worth DMA overhead)
- */
-#define	MIN_DMA_LEN 128
-
 void si_vme_dma_setup __P((struct ncr5380_softc *));
 void si_vme_dma_start __P((struct ncr5380_softc *));
 void si_vme_dma_eop __P((struct ncr5380_softc *));
@@ -130,9 +128,6 @@ struct cfattach si_vmes_ca = {
 
 /* Options.  Interesting values are: 1,3,7 */
 int si_vme_options = 3;
-#define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
-#define SI_DMA_INTR 	2	/* DMA completion interrupts */
-#define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
 
 
 static int
@@ -142,7 +137,7 @@ si_vmes_match(parent, vcf, args)
 {
 	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
-	int x, probe_addr;
+	int probe_addr;
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {
@@ -151,13 +146,6 @@ si_vmes_match(parent, vcf, args)
 	}
 #endif
 
-	if ((cpu_machine_id == SUN3_MACH_50) ||
-	    (cpu_machine_id == SUN3_MACH_60) )
-	{
-		/* Sun3/50 or Sun3/60 do not have VME. */
-		return(0);
-	}
-
 	/*
 	 * Other Sun3 models may have VME "si" or "sc".
 	 * This driver has no default address.
@@ -165,13 +153,9 @@ si_vmes_match(parent, vcf, args)
 	if (ca->ca_paddr == -1)
 		return (0);
 
-	/* Default interrupt priority always splbio==2 */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 2;
-
 	/* Make sure there is something there... */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1);
-	if (x == -1)
+	probe_addr = ca->ca_paddr + 1;
+	if (bus_peek(ca->ca_bustype, probe_addr, 1) == -1)
 		return (0);
 
 	/*
@@ -181,8 +165,8 @@ si_vmes_match(parent, vcf, args)
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
 	/* Note: the "si" board should NOT respond here. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 0x801, 1);
-	if (x != -1) {
+	probe_addr = ca->ca_paddr + 0x801;
+	if (bus_peek(ca->ca_bustype, probe_addr, 1) != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
 		printf("si_vmes_match: May be an `sc' board at pa=0x%x\n",
@@ -191,9 +175,12 @@ si_vmes_match(parent, vcf, args)
 		return(0);
 	}
 
-    return (1);
-}
+	/* Default interrupt priority (always splbio==2) */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 2;
 
+	return (1);
+}
 
 static void
 si_vmes_attach(parent, self, args)
@@ -201,33 +188,26 @@ si_vmes_attach(parent, self, args)
 	void		*args;
 {
 	struct si_softc *sc = (struct si_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int s;
 
-	/* XXX: Get options from flags... */
-	printf(" : options=%d\n", si_vme_options);
-
-	ncr_sc->sc_flags = 0;
-	if (si_vme_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
-	if ((si_vme_options & SI_DMA_INTR) == 0)
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+	/* Get options from config flags... */
+	sc->sc_options = cf->cf_flags | si_vme_options;
+	printf(": options=%d\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
-	sc->sc_adapter_iv_am =
-		VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
-
 	sc->sc_regs = (struct si_regs *)
 		bus_mapin(ca->ca_bustype, ca->ca_paddr,
 				sizeof(struct si_regs));
+	sc->sc_adapter_iv_am =
+		VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
 
 	/*
 	 * MD function pointers used by the MI code.
 	 */
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
 	ncr_sc->sc_pio_in =  ncr5380_pio_in;
-
 	ncr_sc->sc_dma_alloc = si_dma_alloc;
 	ncr_sc->sc_dma_free  = si_dma_free;
 	ncr_sc->sc_dma_setup = si_vme_dma_setup;
@@ -237,16 +217,6 @@ si_vmes_attach(parent, self, args)
 	ncr_sc->sc_dma_stop  = si_vme_dma_stop;
 	ncr_sc->sc_intr_on   = si_vme_intr_on;
 	ncr_sc->sc_intr_off  = si_vme_intr_off;
-
-	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
-
-#if 1	/* XXX - Temporary */
-	/* XXX - In case we think DMA is completely broken... */
-	if ((si_vme_options & SI_ENABLE_DMA) == 0) {
-		/* Override this function pointer. */
-		ncr_sc->sc_dma_alloc = NULL;
-	}
-#endif
 
 	/* Attach interrupt handler. */
 	isr_add_vectored(si_intr, (void *)sc,

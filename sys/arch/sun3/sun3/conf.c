@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 1996/03/14 21:35:47 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -51,6 +51,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include "bpfilter.h"
 #include "ccd.h"
 #include "cd.h"
+#include "kbd.h"
 #include "pty.h"
 #include "rd.h"
 #include "sd.h"
@@ -59,6 +60,9 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include "tun.h"
 #include "uk.h"
 #include "vnd.h"
+#include "xd.h"
+#include "xy.h"
+#include "zstty.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -92,7 +96,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKD,kd),	/* 1: Sun keyboard/display */
+	cdev_tty_init(NKBD,kd),	/* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4: was PROM console */
@@ -103,8 +107,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
-	cdev_tty_init(NZS,zs),		/* 12: Zilog 8350 serial port */
-	cdev_mouse_init(NKD,ms),	/* 13: Sun mouse */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_mouse_init(NMS,ms),	/* 13: Sun mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: /dev/winXXX */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
@@ -120,7 +124,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 26: bwone */
 	cdev_fb_init(NBWTWO,bw2),	/* 27: bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
-	cdev_mouse_init(NKD,kbd),	/* 29: Sun keyboard */
+	cdev_mouse_init(NKBD,kbd),	/* 29: Sun keyboard */
 	cdev_tape_init(NXT,xt),		/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */

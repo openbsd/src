@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.15.4.1 1996/08/19 23:35:12 gwr Exp $
+#	$NetBSD: std.sun3,v 1.19 1996/11/19 21:04:50 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -18,14 +18,17 @@ vmel0 at mainbus?
 # Devices that should be present in any Sun3 kernel.
 
 # OBIO
-zsc0 at obio? addr ?
-zsc1 at obio? addr ?
-eeprom0 at obio? addr ?
-clock0 at obio? addr ?
-memerr0 at obio? addr ?
-intreg0 at obio? addr ?
+zsc0    at obio0 addr 0x000000
+zsc1    at obio0 addr 0x020000
+eeprom0 at obio0 addr 0x040000
+clock0  at obio0 addr 0x060000
+memerr0 at obio0 addr 0x080000
+intreg0 at obio0 addr 0x0A0000
 
 # Standard defines
+options		EXEC_AOUT
+options		EXEC_SCRIPT
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER
 
 # XXX - Still needed?
 options 	NEWCONFIG

@@ -1,8 +1,11 @@
-/*	$NetBSD: if_ie_obio.c,v 1.2 1996/03/26 22:04:19 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.6 1996/11/20 18:56:51 gwr Exp $	*/
 
-/*
- * Copyright (c) 1994 Gordon W. Ross
+/*-
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,20 +17,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Gordon Ross
- * 4. The name of the Author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -84,28 +90,16 @@ ie_obio_match(parent, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int pa, x;
 
-#ifdef	DIAGNOSTIC
-	if (ca->ca_bustype != BUS_OBIO) {
-		printf("ie_obio_match: bustype %d?\n", ca->ca_bustype);
-		return (0);
-	}
-#endif
-
-	/*
-	 * OBIO match functions may be called for every possible
-	 * physical address, so match only our physical address.
-	 */
-	if ((pa = cf->cf_paddr) == -1) {
-		/* Use our default PA. */
-		pa = OBIO_INTEL_ETHER;
-	}
-	if (pa != ca->ca_paddr)
+	/* Make sure there is something there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
-	return (x != -1);
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 3;
+
+	return (1);
 }
 
 void
@@ -117,12 +111,6 @@ ie_obio_attach(parent, self, args)
 	struct ie_softc *sc = (void *) self;
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
-	int intpri;
-
-	/* Default interrupt level. */
-	if ((intpri = cf->cf_intpri) == -1)
-		intpri = 3;
-	printf(" level %d", intpri);
 
 	sc->hard_type = IE_OBIO;
 	sc->reset_586 = ie_obreset;
@@ -177,7 +165,7 @@ ie_obio_attach(parent, self, args)
 	ie_attach(sc);
 
 	/* Install interrupt handler. */
-	isr_add_autovect(ie_intr, (void *)sc, intpri);
+	isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
 }
 
 

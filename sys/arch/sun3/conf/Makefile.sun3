@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.43 1996/02/29 20:57:38 cgd Exp $
+#	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -7,7 +7,7 @@
 # Most changes should be made in the machine description
 #	/sys/arch/sun3/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
 #	/sys/arch/sun3/conf/Makefile.sun3
 # after which config should be rerun for all machines of that type.
@@ -21,24 +21,33 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
-STRIP?=	strip -d
-TOUCH?=	touch -f -c
+MKDEP?=	mkdep
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-SUN3=	../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+SUN3=	$S/arch/sun3
 
-INCLUDES=	-I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
-CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+# Override CPP defaults entirely, so cross-compilation works.
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dsun3 ${XDEFS}
+CWARNFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
+STRIPFLAGS=	-d
 
-# What to use for libkern:
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
+
+### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
@@ -54,19 +63,13 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
+# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -92,7 +95,7 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-S
 .endif
@@ -106,14 +109,14 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${SUN3}/sun3/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -124,11 +127,11 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
@@ -148,15 +151,24 @@ SRCS=	${SUN3}/sun3/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SUN3}/sun3/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${SUN3}/sun3/genassym.c
+
+# XXX - see below
+#	${MKDEP} -a ${APPFLAGS} ${SUN3}/sun3/locore.s
+#	${MKDEP} -a ${APPFLAGS} ${SFILES}
+#
+# For cross-compilation, the "gcc -M" mkdep script is convenient,
+# but that does not correctly make rules from *.s files.  The
+# easiest compromise is to just list those dependencies here.
+locore.o: assym.h machine/trap.h m68k/trap.h
+copy.o:   assym.h $S/sys/errno.h
 
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
-
+ 
 # depend on network or filesystem configuration 
 uipc_proto.o vfs_conf.o: Makefile 
 

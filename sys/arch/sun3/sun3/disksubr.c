@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1996/05/05 06:00:31 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -235,14 +235,14 @@ int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0)
+	/* XXX PR#2598: labelsect is always sector zero. */
+	if (((bp->b_blkno + p->p_offset) <= LABELSECTOR) &&
+	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0))
 	{
 		bp->b_error = EROFS;
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1996/03/26 15:16:53 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -63,6 +63,8 @@
 #include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
@@ -82,6 +84,7 @@
 #include <machine/pte.h>
 #include <machine/mon.h> 
 #include <machine/isr.h>
+#include <machine/kcore.h>
 
 #include <dev/cons.h>
 
@@ -102,6 +105,7 @@ extern int cold;
 
 int physmem;
 int fpu_type;
+int	msgbufmapped;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -134,9 +138,16 @@ void identifycpu();
  */
 void consinit()
 {
-    extern void cninit();
-    cninit();
+	extern void cninit();
+	cninit();
 
+#ifdef KGDB
+	/* XXX - Ask on console for kgdb_dev? */
+	zs_kgdb_init();		/* XXX */
+	/* Note: kgdb_connect() will just return if kgdb_dev<0 */
+	if (boothowto & RB_KDB)
+		kgdb_connect(1);
+#endif
 #ifdef DDB
 	/* Now that we have a console, we can stop in DDB. */
 	db_machine_init();
@@ -228,12 +239,12 @@ cpu_startup()
 	vm_size_t size;	
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
-	
+
 	/*
 	 * The msgbuf was set up earlier (in sun3_startup.c)
 	 * just because it was more convenient to do there.
 	 */
-	
+
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -348,13 +359,6 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
-	if (boothowto & RB_CONFIG) {
-#ifdef BOOT_CONFIG
-		user_config();
-#else
-		printf("kernel does not support -c; continuing..\n");
-#endif
-	}
 	configure();
 }
 
@@ -761,26 +765,21 @@ sys_sigreturn(p, v, retval)
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void reboot_sync()
 {
-	extern struct proc proc0;
 	struct buf *bp;
 	int iter, nbusy;
 
 	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
 		return;
-	/* fix curproc */
-	if (curproc == NULL)
-		curproc = &proc0;
 	waittime = 0;
 	vfs_shutdown();
 }
 
-struct pcb dumppcb;
-
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-int reboot2(howto, user_boot_string)
+__dead void
+boot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -808,10 +807,8 @@ int reboot2(howto, user_boot_string)
 	splhigh();
 
 	/* Write out a crash dump if asked. */
-	if (howto & RB_DUMP) {
-		savectx(&dumppcb);
+	if (howto & RB_DUMP)
 		dumpsys();
-	}
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
@@ -850,22 +847,8 @@ int reboot2(howto, user_boot_string)
 	}
 	printf("Kernel rebooting...\n");
 	sun3_mon_reboot(bs);
+	for (;;) ;
 	/*NOTREACHED*/
-}
-
-/*
- * BSD reboot system call
- * XXX - Should be named: cpu_reboot maybe? -gwr
- * XXX - It would be nice to allow a second argument
- * that specifies a machine-dependent boot string that
- * is passed to the boot program if RB_STRING is set.
- */
-void boot(howto)
-	int howto;
-{
-	(void) reboot2(howto, NULL);
-	for(;;);
-	/* NOTREACHED */
 }
 
 /*
@@ -874,6 +857,12 @@ void boot(howto)
 u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
+
+/* Our private scratch page for dumping the MMU. */
+vm_offset_t dumppage_va;
+vm_offset_t dumppage_pa;
+
+#define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
 
 /*
  * This is called by cpu_startup to set dumplo, dumpsize.
@@ -903,37 +892,147 @@ dumpconf()
 		return;
 
 	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem; /* pages */
+	dumpsize = physmem + DUMP_EXTRA;	/* pages */
 	dumplo = nblks - ctod(dumpsize);
 	dumplo &= ~(ctod(1)-1);
 
 	/* If it does not fit, truncate it by moving dumplo. */
-	/* Note: Must force signed comparison (fixes PR#887) */
+	/* Note: Must force signed comparison. */
 	if (dumplo < ((long)ctod(1))) {
 		dumplo = ctod(1);
 		dumpsize = dtoc(nblks - dumplo);
 	}
 }
 
+struct pcb dumppcb;
+extern vm_offset_t avail_start;
+
 /*
- * Write a crash dump.
+ * Write a crash dump.  The format while in swap is:
+ *   kcore_seg_t cpu_hdr;
+ *   cpu_kcore_hdr_t cpu_data;
+ *   padding (NBPG-sizeof(kcore_seg_t))
+ *   pagemap (2*NBPG)
+ *   physical memory...
  */
 dumpsys()
 {
-#if 1
-    printf("dumping not supported yet :)\n");
-#else
+	struct bdevsw *dsw;
+	kcore_seg_t	*kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char *vaddr;
+	vm_offset_t paddr;
+	int psize, todo, chunk;
+	daddr_t blkno;
+	int error = 0;
+
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
-	if (dumpsize == 0) {
+	if (dumppage_va == 0)
+		return;
+
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
 		dumpconf();
-		if (dumpsize == 0)
-			return;
+	if (dumplo <= 0)
+		return;
+	savectx(&dumppcb);
+
+	dsw = &bdevsw[major(dumpdev)];
+	psize = (*(dsw->d_psize))(dumpdev);
+	if (psize == -1) {
+		printf("dump area unavailable\n");
+		return;
 	}
+
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	/* XXX - todo... */
-#endif
+
+	/*
+	 * Write the dump header, including MMU state.
+	 */
+	blkno = dumplo;
+	todo = dumpsize - DUMP_EXTRA;	/* pages */
+	vaddr = (char*)dumppage_va;
+	bzero(vaddr, NBPG);
+
+	/* kcore header */
+	kseg_p = (kcore_seg_t *)vaddr;
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(kcore_seg_t));
+
+	/* MMU state */
+	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
+	pmap_get_ksegmap(chdr_p->ksegmap);
+	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+	if (error)
+		goto fail;
+	blkno += btodb(NBPG);
+
+	/* translation RAM (page zero) */
+	pmap_get_pagemap(vaddr, 0);
+	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+	if (error)
+		goto fail;
+	blkno += btodb(NBPG);
+
+	/* translation RAM (page one) */
+	pmap_get_pagemap(vaddr, NBPG);
+	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+	if (error)
+		goto fail;
+	blkno += btodb(NBPG);
+
+	/*
+	 * Now dump physical memory.  Have to do it in two chunks.
+	 * The first chunk is "unmanaged" (by the VM code) and its
+	 * range of physical addresses is not allow in pmap_enter.
+	 * However, that segment is mapped linearly, so we can just
+	 * use the virtual mappings already in place.  The second
+	 * chunk is done the normal way, using pmap_enter.
+	 *
+	 * Note that vaddr==(paddr+KERNBASE) for paddr=0 through etext.
+	 */
+
+	/* Do the first chunk (0 <= PA < avail_start) */
+	paddr = 0;
+	chunk = btoc(avail_start);
+	if (chunk > todo)
+		chunk = todo;
+	do {
+		if ((todo & 0xf) == 0)
+			printf("\r%4d", todo);
+		vaddr = (char*)(paddr + KERNBASE);
+		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+		if (error)
+			goto fail;
+		paddr += NBPG;
+		blkno += btodb(NBPG);
+		--todo;
+	} while (--chunk > 0);
+
+	/* Do the second chunk (avail_start <= PA < dumpsize) */
+	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
+	do {
+		if ((todo & 0xf) == 0)
+			printf("\r%4d", todo);
+		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
+			VM_PROT_READ, FALSE);
+		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
+		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+		if (error)
+			goto fail;
+		paddr += NBPG;
+		blkno += btodb(NBPG);
+	} while (--todo > 0);
+
+	printf("\rdump succeeded\n");
+	return;
+fail:
+	printf(" dump error=%d\n", error);
 }
 
 initcpu()

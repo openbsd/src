@@ -16,7 +16,6 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	KTRACE				# system call tracing support
 
 # Debugging options.  Uncomment either this:

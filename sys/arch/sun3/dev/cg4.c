@@ -47,12 +47,19 @@
 /*
  * color display (cg4) driver.
  *
- * Does not handle interrupts, even though they can occur.
+ * Credits, history:
+ * Gordon Ross created this driver based on the cg3 driver from
+ * the sparc port as distributed in BSD 4.4 Lite, but included
+ * support for only the "type B" adapter (Brooktree DACs).
+ * Ezra Story added support for the "type A" (AMD DACs).
  *
- * XXX should defer colormap updates to vertical retrace interrupts
+ * Todo:
+ * Make this driver handle video interrupts.
+ * Defer colormap updates to vertical retrace interrupts.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -71,16 +78,30 @@
 #include "btvar.h"
 #include "cg4reg.h"
 
+#define	CG4_MMAP_SIZE (CG4_OVERLAY_SIZE + CG4_ENABLE_SIZE + CG4_PIXMAP_SIZE)
+
 extern unsigned char cpu_machine_id;
+
+#define CMAP_SIZE 256
+struct soft_cmap {
+	u_char r[CMAP_SIZE];
+	u_char g[CMAP_SIZE];
+	u_char b[CMAP_SIZE];
+};
 
 /* per-display variables */
 struct cg4_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
-	int 	sc_phys;		/* display RAM (phys addr) */
+	int 	sc_cg4type;		/* A or B */
+	void	*sc_va_cmap;		/* Colormap h/w (mapped KVA) */
+	int 	sc_pa_overlay;		/* phys. addr. of overlay plane */
+	int 	sc_pa_enable;		/* phys. addr. of enable plane */
+	int 	sc_pa_pixmap;		/* phys. addr. of color plane */
 	int 	sc_blanked;		/* true if blanked */
-	union	bt_cmap sc_cmap;	/* Brooktree color map */
+
+	union bt_cmap *sc_btcm;		/* Brooktree color map */
+	struct soft_cmap sc_cmap;	/* Generic soft colormap. */
 };
 
 /* autoconfiguration driver */
@@ -98,18 +119,24 @@ struct cfdriver cgfour_cd = {
 /* frame buffer generic driver */
 int cg4open(), cg4close(), cg4mmap();
 
-static int  cg4gattr __P((struct fbdevice *, struct fbgattr *));
-static int  cg4gvideo __P((struct fbdevice *, int *));
-static int	cg4svideo __P((struct fbdevice *, int *));
+static int	cg4gattr   __P((struct fbdevice *, struct fbgattr *));
+static int	cg4gvideo  __P((struct fbdevice *, int *));
+static int	cg4svideo  __P((struct fbdevice *, int *));
 static int	cg4getcmap __P((struct fbdevice *, struct fbcmap *));
 static int	cg4putcmap __P((struct fbdevice *, struct fbcmap *));
 
-static struct fbdriver cg4fbdriver = {
+static void	cg4a_init   __P((struct cg4_softc *));
+static void	cg4a_svideo __P((struct cg4_softc *, int));
+static void	cg4a_ldcmap __P((struct cg4_softc *));
+
+static void	cg4b_init   __P((struct cg4_softc *));
+static void	cg4b_svideo __P((struct cg4_softc *, int));
+static void	cg4b_ldcmap __P((struct cg4_softc *));
+
+static struct fbdriver cg4_fbdriver = {
 	cg4open, cg4close, cg4mmap, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
-
-static void cg4loadcmap __P((struct cg4_softc *, int, int));
 
 /*
  * Match a cg4.
@@ -120,31 +147,39 @@ cg4match(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	int paddr, x;
+	int paddr;
 
-	/* XXX - Huge hack due to lack of probe info... */
+	/* XXX: Huge hack due to lack of probe info... */
+	/* XXX: Machines that might have a cg4 (gag). */
+	/* XXX: Need info on the "P4" register... */
 	switch (cpu_machine_id) {
-		/* Machines that might have a cg4 (gag). */
-	case SUN3_MACH_50:
-	case SUN3_MACH_60:
+
 	case SUN3_MACH_110:
+		/* XXX: Assume type A. */
+		if (ca->ca_paddr == -1)
+			ca->ca_paddr = CG4A_DEF_BASE;
+		if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
+			return (0);
+		if (bus_peek(BUS_OBIO, CG4A_OBIO_CMAP, 1) == -1)
+			return (0);
 		break;
+
+	case SUN3_MACH_60:
+		/* XXX: Assume type A. */
+		if (ca->ca_paddr == -1)
+			ca->ca_paddr = CG4B_DEF_BASE;
+		paddr = ca->ca_paddr;
+		if (bus_peek(ca->ca_bustype, paddr, 1) == -1)
+			return (0);
+        /* Make sure we're color */
+		paddr += CG4B_OFF_PIXMAP;
+		if (bus_peek(ca->ca_bustype, paddr, 1) == -1)
+			return (0);
+		break;
+
 	default:
 		return (0);
 	}
-
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = 0xFF200000;
-
-	paddr = ca->ca_paddr;
-	x = bus_peek(ca->ca_bustype, paddr, 1);
-	if (x == -1)
-		return (0);
-
-	paddr += CG4REG_PIXMAP;
-	x = bus_peek(ca->ca_bustype, paddr, 1);
-	if (x == -1)
-		return (0);
 
 	return (1);
 }
@@ -161,10 +196,18 @@ cg4attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-	volatile struct bt_regs *bt;
-	int i;
 
-	fb->fb_driver = &cg4fbdriver;
+	/* XXX: should do better than this... */
+	switch (cpu_machine_id) {
+	case SUN3_MACH_110:
+		sc->sc_cg4type = CG4_TYPE_A;
+		break;
+	case SUN3_MACH_60:
+	default:
+		sc->sc_cg4type = CG4_TYPE_B;
+	}
+
+	fb->fb_driver = &cg4_fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name = sc->sc_dev.dv_xname;
 
@@ -177,28 +220,29 @@ cg4attach(parent, self, args)
 	fbt->fb_height = 900;
 	fbt->fb_size = CG4_MMAP_SIZE;
 
-	sc->sc_phys = ca->ca_paddr;
-	sc->sc_bt = bt = (volatile struct bt_regs *)
-		bus_mapin(ca->ca_bustype, ca->ca_paddr,
-				  sizeof(struct bt_regs *));
-
-	/* grab initial (current) color map */
-	bt->bt_addr = 0;
-	for (i = 0; i < (256 * 3 / 4); i++)
-		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
-
-	/*
-	 * BT458 chip initialization as described in Brooktree's
-	 * 1993 Graphics and Imaging Product Databook (DB004-1/93).
-	 */
-	bt->bt_addr = 0x04;	/* select read mask register */
-	bt->bt_ctrl = 0xff;	/* all planes on */
-	bt->bt_addr = 0x05;	/* select blink mask register */
-	bt->bt_ctrl = 0x00;	/* all planes non-blinking */
-	bt->bt_addr = 0x06;	/* select command register */
-	bt->bt_ctrl = 0x43;	/* palette enabled, overlay planes enabled */
-	bt->bt_addr = 0x07;	/* select test register */
-	bt->bt_ctrl = 0x00;	/* set test mode */
+	switch (sc->sc_cg4type) {
+	case CG4_TYPE_A:	/* Sun3/110 */
+		sc->sc_va_cmap = bus_mapin(BUS_OBIO, CG4A_OBIO_CMAP,
+		                           sizeof(struct amd_regs));
+		sc->sc_pa_overlay = ca->ca_paddr + CG4A_OFF_OVERLAY;
+		sc->sc_pa_enable  = ca->ca_paddr + CG4A_OFF_ENABLE;
+		sc->sc_pa_pixmap  = ca->ca_paddr + CG4A_OFF_PIXMAP;
+		sc->sc_btcm = NULL;
+		cg4a_init(sc);
+		break;
+		
+	case CG4_TYPE_B:	/* Sun3/60 */
+	default:
+		sc->sc_va_cmap = (struct bt_regs *)
+			bus_mapin(ca->ca_bustype, ca->ca_paddr,
+					  sizeof(struct bt_regs *));
+		sc->sc_pa_overlay = ca->ca_paddr + CG4B_OFF_OVERLAY;
+		sc->sc_pa_enable  = ca->ca_paddr + CG4B_OFF_ENABLE;
+		sc->sc_pa_pixmap  = ca->ca_paddr + CG4B_OFF_PIXMAP;
+		sc->sc_btcm = malloc(sizeof(union bt_cmap), M_DEVBUF, M_WAITOK);
+		cg4b_init(sc);
+		break;
+	}
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 	fb_attach(fb, 4);
@@ -245,8 +289,8 @@ cg4ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  *
  * X11 expects its mmap'd region to look like this:
- * 	128k overlay memory
- * 	128k overlay-enable bitmap
+ * 	128k overlay data memory
+ * 	128k overlay enable bitmap
  * 	1024k color memory
  * 
  * The hardware really looks like this (starting at ca_paddr)
@@ -273,20 +317,18 @@ cg4mmap(dev, off, prot)
 	if ((unsigned)off >= CG4_MMAP_SIZE)
 		return (-1);
 
-	physbase = sc->sc_phys;
 	if (off < 0x40000) {
 		if (off < 0x20000) {
-			/* overlay plane */
-			physbase += CG4REG_OVERLAY;
+			physbase = sc->sc_pa_overlay;
 		} else {
 			/* enable plane */
 			off -= 0x20000;
-			physbase += CG4REG_ENABLE;
+			physbase = sc->sc_pa_enable;
 		}
 	} else {
 		/* pixel map */
 		off -= 0x40000;
-		physbase += CG4REG_PIXMAP;
+		physbase = sc->sc_pa_pixmap;
 	}
 
 	/*
@@ -334,85 +376,241 @@ static int cg4svideo(fb, on)
 	int *on;
 {
 	struct cg4_softc *sc = fb->fb_private;
-	register volatile struct bt_regs *bt = sc->sc_bt;
+	int state;
 
-	if ((*on == 0) && (sc->sc_blanked == 0)) {
-		/* Turn OFF video (blank it). */
-		bt->bt_addr = 0x06;	/* command reg */
-		bt->bt_ctrl = 0x70;	/* overlay plane */
-		bt->bt_addr = 0x04;	/* read mask */
-		bt->bt_ctrl = 0x00;	/* color planes */
-		/*
-		 * Set color 0 to black -- note that this overwrites
-		 * R of color 1.
-		 */
-		bt->bt_addr = 0;
-		bt->bt_cmap = 0;
-
-		sc->sc_blanked = 1;
-	}
-
-	if ((*on != 0) && (sc->sc_blanked != 0)) {
-		/* Turn video back ON (unblank). */
-		sc->sc_blanked = 0;
-
-		/* restore color 0 (and R of color 1) */
-		bt->bt_addr = 0;
-		bt->bt_cmap = sc->sc_cmap.cm_chip[0];
-
-		/* restore read mask */
-		bt->bt_addr = 0x06;	/* command reg */
-		bt->bt_ctrl = 0x73;	/* overlay plane */
-		bt->bt_addr = 0x04;	/* read mask */
-		bt->bt_ctrl = 0xff;	/* color planes */
-	}
+	state = *on;
+	if (sc->sc_cg4type == CG4_TYPE_A)
+		cg4a_svideo(sc, state);
+	else
+		cg4b_svideo(sc, state);
 	return (0);
 }
 
-/* FBIOGETCMAP: */
-static int cg4getcmap(fb, cmap)
+/*
+ * FBIOGETCMAP:
+ * Copy current colormap out to user space.
+ */
+static int cg4getcmap(fb, fbcm)
 	struct fbdevice *fb;
-	struct fbcmap *cmap;
+	struct fbcmap *fbcm;
 {
 	struct cg4_softc *sc = fb->fb_private;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	int error, start, count;
 
-	return (bt_getcmap(cmap, &sc->sc_cmap, 256));
-}
+	start = fbcm->index;
+	count = fbcm->count;
+	if ((start < 0) || (start >= CMAP_SIZE) ||
+	    (count < 0) || (start + count > CMAP_SIZE) )
+		return (EINVAL);
 
-/* FBIOPUTCMAP: */
-static int cg4putcmap(fb, cmap)
-	struct fbdevice *fb;
-	struct fbcmap *cmap;
-{
-	struct cg4_softc *sc = fb->fb_private;
-	int error;
+	if ((error = copyout(&cm->r[start], fbcm->red, count)) != 0)
+		return (error);
 
-	/* copy to software map */
-	error = bt_putcmap(cmap, &sc->sc_cmap, 256);
-	if (error == 0) {
-		/* now blast them into the chip */
-		/* XXX should use retrace interrupt */
-		cg4loadcmap(sc, cmap->index, cmap->count);
-	}
-	return (error);
+	if ((error = copyout(&cm->g[start], fbcm->green, count)) != 0)
+		return (error);
+
+	if ((error = copyout(&cm->b[start], fbcm->blue, count)) != 0)
+		return (error);
+
+	return (0);
 }
 
 /*
- * Load a subset of the current (new) colormap into the Brooktree DAC.
+ * FBIOPUTCMAP:
+ * Copy new colormap from user space and load.
  */
-static void
-cg4loadcmap(sc, start, ncolors)
-	struct cg4_softc *sc;
-	int start, ncolors;
+static int cg4putcmap(fb, fbcm)
+	struct fbdevice *fb;
+	struct fbcmap *fbcm;
 {
-	volatile struct bt_regs *bt;
-	u_int *ip;
-	int count;
+	struct cg4_softc *sc = fb->fb_private;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	int error, start, count;
 
-	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
-	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
-	bt = sc->sc_bt;
-	bt->bt_addr = BT_D4M4(start);
-	while (--count >= 0)
-		bt->bt_cmap = *ip++;
+	start = fbcm->index;
+	count = fbcm->count;
+	if ((start < 0) || (start >= CMAP_SIZE) ||
+	    (count < 0) || (start + count > CMAP_SIZE) )
+		return (EINVAL);
+
+	if ((error = copyin(fbcm->red, &cm->r[start], count)) != 0)
+		return (error);
+
+	if ((error = copyin(fbcm->green, &cm->g[start], count)) != 0)
+		return (error);
+
+	if ((error = copyin(fbcm->blue, &cm->b[start], count)) != 0)
+		return (error);
+
+	if (sc->sc_cg4type == CG4_TYPE_A)
+		cg4a_ldcmap(sc);
+	else
+		cg4b_ldcmap(sc);
+
+	return (0);
 }
+
+/****************************************************************
+ * Routines for the "Type A" hardware
+ ****************************************************************/
+
+static void
+cg4a_init(sc)
+	struct cg4_softc *sc;
+{
+	volatile struct amd_regs *ar = sc->sc_va_cmap;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	int i;
+
+	/* grab initial (current) color map */
+	for(i = 0; i < 256; i++) {
+		cm->r[i] = ar->r[i];
+		cm->g[i] = ar->g[i];
+		cm->b[i] = ar->b[i];
+	}
+}
+
+static void
+cg4a_ldcmap(sc)
+	struct cg4_softc *sc;
+{
+	volatile struct amd_regs *ar = sc->sc_va_cmap;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	int i;
+
+	/*
+	 * Now blast them into the chip!
+	 * XXX Should use retrace interrupt!
+	 * Just set a "need load" bit and let the
+	 * retrace interrupt handler do the work.
+	 */
+	for(i = 0; i < 256; i++) {
+		ar->r[i] = cm->r[i];
+		ar->g[i] = cm->g[i];
+		ar->b[i] = cm->b[i];
+	}
+}
+
+static void
+cg4a_svideo(sc, on)
+	struct cg4_softc *sc;
+	int on;
+{
+	volatile struct amd_regs *ar = sc->sc_va_cmap;
+	int i;
+
+	if ((on == 0) && (sc->sc_blanked == 0)) {
+		/* Turn OFF video (make it blank). */
+		sc->sc_blanked = 1;
+		/* Load fake "all zero" colormap. */
+		for (i = 0; i < 256; i++) {
+			ar->r[i] = 0;
+			ar->g[i] = 0;
+			ar->b[i] = 0;
+		}
+	}
+
+	if ((on != 0) && (sc->sc_blanked != 0)) {
+		/* Turn video back ON (unblank). */
+		sc->sc_blanked = 0;
+		/* Restore normal colormap. */
+		cg4a_ldcmap(sc);
+	}
+}
+
+
+/****************************************************************
+ * Routines for the "Type B" hardware
+ ****************************************************************/
+
+static void
+cg4b_init(sc)
+	struct cg4_softc *sc;
+{
+	volatile struct bt_regs *bt = sc->sc_va_cmap;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	union bt_cmap *btcm = sc->sc_btcm;
+	int i;
+
+	/*
+	 * BT458 chip initialization as described in Brooktree's
+	 * 1993 Graphics and Imaging Product Databook (DB004-1/93).
+	 */
+	bt->bt_addr = 0x04;	/* select read mask register */
+	bt->bt_ctrl = 0xff;	/* all planes on */
+	bt->bt_addr = 0x05;	/* select blink mask register */
+	bt->bt_ctrl = 0x00;	/* all planes non-blinking */
+	bt->bt_addr = 0x06;	/* select command register */
+	bt->bt_ctrl = 0x43;	/* palette enabled, overlay planes enabled */
+	bt->bt_addr = 0x07;	/* select test register */
+	bt->bt_ctrl = 0x00;	/* set test mode */
+
+	/* grab initial (current) color map */
+	bt->bt_addr = 0;
+	for (i = 0; i < (256 * 3 / 4); i++) {
+		btcm->cm_chip[i] = bt->bt_cmap;
+	}
+
+	/* Transpose into S/W form. */
+	for (i = 0; i < 256; i++) {
+		cm->r[i] = btcm->cm_map[i][0];
+		cm->g[i] = btcm->cm_map[i][1];
+		cm->b[i] = btcm->cm_map[i][2];
+	}
+}
+
+static void
+cg4b_ldcmap(sc)
+	struct cg4_softc *sc;
+{
+	volatile struct bt_regs *bt = sc->sc_va_cmap;
+	struct soft_cmap *cm = &sc->sc_cmap;
+	union bt_cmap *btcm = sc->sc_btcm;
+	int i;
+
+	/*
+	 * Now blast them into the chip!
+	 * XXX Should use retrace interrupt!
+	 * Just set a "need load" bit and let the
+	 * retrace interrupt handler do the work.
+	 */
+
+	/* Transpose into H/W form. */
+	for (i = 0; i < 256; i++) {
+		btcm->cm_map[i][0] = cm->r[i];
+		btcm->cm_map[i][1] = cm->g[i];
+		btcm->cm_map[i][2] = cm->b[i];
+	}
+
+	bt->bt_addr = 0;
+	for (i = 0; i < (256 * 3 / 4); i++) {
+		bt->bt_cmap = btcm->cm_chip[i];
+	}
+}
+
+static void
+cg4b_svideo(sc, on)
+	struct cg4_softc *sc;
+	int on;
+{
+	volatile struct bt_regs *bt = sc->sc_va_cmap;
+	int i;
+
+	if ((on == 0) && (sc->sc_blanked == 0)) {
+		/* Turn OFF video (make it blank). */
+		sc->sc_blanked = 1;
+		/* Load fake "all zero" colormap. */
+		bt->bt_addr = 0;
+		for (i = 0; i < (256 * 3 / 4); i++)
+			bt->bt_cmap = 0;
+	}
+
+	if ((on != 0) && (sc->sc_blanked != 0)) {
+		/* Turn video back ON (unblank). */
+		sc->sc_blanked = 0;
+		/* Restore normal colormap. */
+		cg4b_ldcmap(sc);
+	}
+}
+

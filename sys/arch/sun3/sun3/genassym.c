@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.31 1996/02/16 23:36:52 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,6 +60,24 @@
 #include "interreg.h"
 #include "buserr.h"
 
+#if 1	/* XXX - Temporary hack... */
+/*
+ * Make this work correctly on a SPARC!
+ * Should be able to fix this by adding:
+ * __attribute__((packed)) where needed.
+ */
+struct mytrapframe {
+	int 	tf_regs[16];
+	short	tf_pad;
+	short	tf_stackadj;
+	u_short	tf_sr;
+	u_short	tf_pc[2];	/* XXX was:  u_int tf_pc; */
+	u_short	tf_format:4,
+	        tf_vector:12;
+};
+#define trapframe mytrapframe
+#endif	/* XXX */
+
 #ifdef	__STDC__
 #define	def1(name) def(#name, name)
 #else
@@ -82,7 +100,7 @@ main()
 	struct proc *p = (struct proc *) 0;
 	struct vmspace *vms = (struct vmspace *) 0;
 	struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
-	struct frame *fp = (struct frame *) 0;
+	struct trapframe *tf = (struct trapframe *) 0;
 	struct fpframe *fpf = (struct fpframe *) 0;
 
 	/* intersil clock internals */
@@ -163,13 +181,13 @@ main()
 	def("PCB_REGS", pcb->pcb_regs);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
 	def("PCB_FPCTX", &pcb->pcb_fpregs);
-	def("SIZEOF_PCB", sizeof(struct pcb));
+	def("SIZEOF_PCB", sizeof(*pcb));
 
 	/* exception frame offset/sizes */
-	def("FR_SP", &fp->f_regs[15]);
-	def("FR_HW", &fp->f_sr);
-	def("FR_ADJ", &fp->f_stackadj);
-	def("FR_SIZE", sizeof(struct trapframe));
+	def("FR_SP", &tf->tf_regs[15]);
+	def("FR_ADJ", &tf->tf_stackadj);
+	def("FR_HW", &tf->tf_sr);
+	def("FR_SIZE", sizeof(*tf));
 
 	/* FP frame offsets */
 	def("FPF_REGS", &fpf->fpf_regs[0]);

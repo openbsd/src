@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.2 1995/04/07 02:51:21 gwr Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.3 1996/10/29 19:27:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,6 @@ struct fbdriver {
 	int 	(*fbd_putcmap) __P((struct fbdevice *, struct fbcmap *));
 };
 
-void	fbattach __P((struct fbdevice *, int));
+void	fb_attach __P((struct fbdevice *, int));
 int 	fbioctlfb __P((struct fbdevice *, u_long, caddr_t));
 extern int enoioctl();
