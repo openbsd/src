@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2001/05/13 02:37:29 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2001/05/16 17:40:41 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:38 veego Exp $	*/
 
 /*
@@ -103,6 +103,10 @@ void	_delay __P((u_int));
 	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
 #define HPMMBASEADDR(v) \
 	((unsigned)(v) & ~HPMMMASK)
+#endif
+
+#ifdef UVM
+#define PMAP_NEW
 #endif
 
 #endif	/* !_MACHINE_PARAM_H_ */
