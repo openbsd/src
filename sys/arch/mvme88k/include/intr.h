@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2004/01/08 14:29:45 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2004/04/26 12:34:05 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -80,56 +80,6 @@ extern int intrcnt[M88K_NIRQ];
 #define IPL_NMI		7
 #define IPL_ABORT	7
 
-#ifdef _KERNEL
-#ifndef _LOCORE
-unsigned setipl(unsigned level);
-unsigned raiseipl(unsigned level);
-int spl0(void);
+#include <m88k/intr.h>
 
-/* needs major cleanup - XXX nivas */
-
-/* SPL asserts */
-#ifdef DIAGNOSTIC
-/*
- * Although this function is implemented in MI code, it must be in this MD
- * header because we don't want this header to include MI includes.
- */
-void splassert_fail(int, int, const char *);
-extern int splassert_ctl;
-void splassert_check(int, const char *);
-#define splassert(__wantipl) do {			\
-	if (__predict_false(splassert_ctl > 0)) {	\
-		splassert_check(__wantipl, __func__);	\
-	}						\
-} while (0)
-#else
-#define	splassert(wantipl)	do { /* nothing */ } while (0)
-#endif
-
-#endif /* _LOCORE */
-
-#define spl1()		setipl(1)
-#define spl2()		setipl(2)
-#define spl3()		setipl(3)
-#define spl4()		setipl(4)
-#define spl5()		setipl(5)
-#define spl6()		setipl(6)
-#define spl7()		setipl(7)
-
-#define splnone			spl0
-#define spllowersoftclock()	setipl(IPL_SOFTCLOCK)
-#define splsoftclock()		setipl(IPL_SOFTCLOCK)
-#define splsoftnet()		setipl(IPL_SOFTNET)
-#define splbio()		raiseipl(IPL_BIO)
-#define splnet()		raiseipl(IPL_NET)
-#define spltty()		raiseipl(IPL_TTY)
-#define splclock()		raiseipl(IPL_CLOCK)
-#define splstatclock()		raiseipl(IPL_STATCLOCK)
-#define splimp()		raiseipl(IPL_IMP)
-#define splvm()			raiseipl(IPL_VM)
-#define splhigh()		setipl(IPL_HIGH)
-
-#define splx(x)		((x) ? setipl((x)) : spl0())
-
-#endif /* _KERNEL */
 #endif /* _MVME88K_INTR_H_ */

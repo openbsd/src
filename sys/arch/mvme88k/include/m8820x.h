@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.12 2004/01/19 17:21:23 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.13 2004/04/26 12:34:05 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -49,122 +49,7 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	__MACHINE_M8820X_H__
-#define	__MACHINE_M8820X_H__
-
-/*
- * 8820x CMMU definitions
- */
-
-/* CMMU registers */
-#define CMMU_IDR	(0x000 / 4)	/* CMMU id register */
-#define CMMU_SCR	(0x004 / 4)	/* system command register */
-#define CMMU_SSR	(0x008 / 4)	/* system status register */
-#define CMMU_SAR	(0x00c / 4)	/* system address register */
-#define CMMU_SCTR	(0x104 / 4)	/* system control register */
-#define CMMU_PFSR	(0x108 / 4)	/* P bus fault status register */
-#define CMMU_PFAR	(0x10c / 4)	/* P bus fault address register */
-#define CMMU_SAPR	(0x200 / 4)	/* supervisor area pointer register */
-#define CMMU_UAPR	(0x204 / 4)	/* user area pointer register */
-#define CMMU_BWP0	(0x400 / 4)	/* block ATC writer port 0 */
-#define CMMU_BWP1	(0x404 / 4)	/* block ATC writer port 1 */
-#define CMMU_BWP2	(0x408 / 4)	/* block ATC writer port 2 */
-#define CMMU_BWP3	(0x40c / 4)	/* block ATC writer port 3 */
-#define CMMU_BWP4	(0x410 / 4)	/* block ATC writer port 4 */
-#define CMMU_BWP5	(0x414 / 4)	/* block ATC writer port 5 */
-#define CMMU_BWP6	(0x418 / 4)	/* block ATC writer port 6 */
-#define CMMU_BWP7	(0x41c / 4)	/* block ATC writer port 7 */
-#define CMMU_BWP(n)	(CMMU_BWP0 + (n))
-#define CMMU_CDP0	(0x800 / 4)	/* cache data port 0 */
-#define CMMU_CDP1	(0x804 / 4)	/* cache data port 1 */
-#define CMMU_CDP2	(0x808 / 4)	/* cache data port 2 */
-#define CMMU_CDP3	(0x80c / 4)	/* cache data port 3 */
-#define CMMU_CTP0	(0x840 / 4)	/* cache tag port 0 */
-#define CMMU_CTP1	(0x844 / 4)	/* cache tag port 1 */
-#define CMMU_CTP2	(0x848 / 4)	/* cache tag port 2 */
-#define CMMU_CTP3	(0x84c / 4)	/* cache tag port 3 */
-#define CMMU_CSSP0	(0x880 / 4)	/* cache set status register */
-#define CMMU_CSSP(n)	(CMMU_CSSP0 + (n))
-/* the following only exist on 88204 */
-#define CMMU_CSSP1	(0x890 / 4)	/* cache set status register */
-#define CMMU_CSSP2	(0x8a0 / 4)	/* cache set status register */
-#define CMMU_CSSP3	(0x8b0 / 4)	/* cache set status register */
-
-/* system commands */
-#define CMMU_FLUSH_CACHE_INV_LINE	0x14	/* data cache invalidate */
-#define CMMU_FLUSH_CACHE_INV_PAGE	0x15
-#define CMMU_FLUSH_CACHE_INV_SEGMENT	0x16
-#define CMMU_FLUSH_CACHE_INV_ALL	0x17
-#define CMMU_FLUSH_CACHE_CB_LINE	0x18	/* data cache copyback */
-#define CMMU_FLUSH_CACHE_CB_PAGE	0x19
-#define CMMU_FLUSH_CACHE_CB_SEGMENT	0x1a
-#define CMMU_FLUSH_CACHE_CB_ALL		0x1b
-#define CMMU_FLUSH_CACHE_CBI_LINE	0x1c	/* copyback and invalidate */
-#define CMMU_FLUSH_CACHE_CBI_PAGE	0x1d
-#define CMMU_FLUSH_CACHE_CBI_SEGMENT	0x1e
-#define CMMU_FLUSH_CACHE_CBI_ALL	0x1f
-#define CMMU_PROBE_USER			0x20	/* probe user address */
-#define CMMU_PROBE_SUPER		0x24	/* probe supervisor address */
-#define CMMU_FLUSH_USER_LINE		0x30	/* flush PATC */
-#define CMMU_FLUSH_USER_PAGE		0x31
-#define CMMU_FLUSH_USER_SEGMENT		0x32
-#define CMMU_FLUSH_USER_ALL		0x33
-#define CMMU_FLUSH_SUPER_LINE		0x34
-#define CMMU_FLUSH_SUPER_PAGE		0x35
-#define CMMU_FLUSH_SUPER_SEGMENT	0x36
-#define CMMU_FLUSH_SUPER_ALL		0x37
-
-/* system control values */
-#define CMMU_SCTR_PE	0x00008000	/* parity enable */
-#define CMMU_SCTR_SE	0x00004000	/* snoop enable */
-#define CMMU_SCTR_PR	0x00002000	/* priority arbitration */
-
-/* P bus fault status */
-#define	CMMU_PFSR_FAULT(pfsr)	(((pfsr) >> 16) & 0x07)
-#define CMMU_PFSR_SUCCESS	0	/* no fault */
-#define CMMU_PFSR_BERROR	3	/* bus error */
-#define CMMU_PFSR_SFAULT	4	/* segment fault */
-#define CMMU_PFSR_PFAULT	5	/* page fault */
-#define CMMU_PFSR_SUPER		6	/* supervisor violation */
-#define CMMU_PFSR_WRITE		7	/* writer violation */
-
-/* CSSP values */
-#define	CMMU_CSSP_L5		0x20000000
-#define	CMMU_CSSP_L4		0x10000000
-#define	CMMU_CSSP_L3		0x08000000
-#define	CMMU_CSSP_L2		0x04000000
-#define	CMMU_CSSP_L1		0x02000000
-#define	CMMU_CSSP_L0		0x01000000
-#define	CMMU_CSSP_D3		0x00800000
-#define	CMMU_CSSP_D2		0x00400000
-#define	CMMU_CSSP_D1		0x00200000
-#define	CMMU_CSSP_D0		0x00100000
-#define	CMMU_CSSP_VV(n,v)	(((v) & 0x03) << (12 + 2 * (n)))
-#define	CMMU_VV_EXCLUSIVE	0x00
-#define	CMMU_VV_MODIFIED	0x01
-#define	CMMU_VV_SHARED		0x02
-#define	CMMU_VV_INVALID		0x03
-
-/* IDR values */
-#define	CMMU_ID(idr)		((idr) >> 24)
-#define	CMMU_TYPE(idr)		(((idr) >> 21) & 0x07)
-#define	CMMU_VERSION(idr)	(((idr) >> 16) & 0x1f)
-#define	M88200_ID		5
-#define	M88204_ID		6
-
-/* SSR values */
-#define	CMMU_SSR_CE		0x00008000	/* copyback error */
-#define	CMMU_SSR_BE		0x00004000	/* bus error */
-#define	CMMU_SSR_BH		0x00000002	/* probe BATC hit */
-
-/*
- * Cache line information
- */
-
-#define	MC88200_CACHE_SHIFT	4
-#define	MC88200_CACHE_LINE	(1 << MC88200_CACHE_SHIFT)
-
-#define NBSG    	(1 << (PDT_BITS + PG_BITS))	/* segment size */
+#include <m88k/m8820x.h>
 
 /*
  * Address masks for MVME188 CMMU configs
@@ -187,5 +72,3 @@
 #define VME_CMMU_D1	0xfff5f000
 #define VME_CMMU_D2	0xfff3f000
 #define VME_CMMU_D3	0xfff7f000
-
-#endif	/* __MACHINE_M8820X_H__ */
