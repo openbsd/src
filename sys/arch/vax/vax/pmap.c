@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/11/06 02:49:23 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.24 2001/11/17 05:07:55 hugh Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -660,7 +660,9 @@ pmap_enter(pmap, v, p, prot, flags)
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
+#ifdef PMAPDEBUG
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+#endif
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
@@ -693,9 +695,6 @@ if (startpmapdebug)
 			newpte = (p >> VAX_PGSHIFT) |
 			    (prot & VM_PROT_WRITE ? PG_RW : PG_RO);
 		}
-
-		if (wired)
-			 newpte |= PG_W;
 
 		/*
 		 * Check if a pte page must be mapped in.
@@ -735,6 +734,8 @@ if (startpmapdebug)
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}
 	}
+	if (flags & PMAP_WIRED)
+		newpte |= PG_W;
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
@@ -791,6 +792,9 @@ if (startpmapdebug)
 	}
 	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
+
+	if (flags & PMAP_WIRED)
+		newpte |= PG_V; /* Not allowed to be invalid */
 
 	patch[i] = newpte;
 	patch[i+1] = newpte+1;
@@ -1072,6 +1076,7 @@ pmap_clear_reference(pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct	pv_entry *pv;
+	int ref = 0;
 
 	pv = pv_table + (pa >> PGSHIFT);
 #ifdef PMAPDEBUG
@@ -1079,22 +1084,26 @@ pmap_clear_reference(pg)
 		printf("pmap_clear_reference: pa %lx pv_entry %p\n", pa, pv);
 #endif
 
+	if (pv->pv_attr & PG_V)
+		ref++;
+
 	pv->pv_attr &= ~PG_V;
 
 	RECURSESTART;
-	if (pv->pv_pte)
+	if (pv->pv_pte && (pv->pv_pte[0].pg_w == 0))
 		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
 		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 
 	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
-		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
-		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
-		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+		if (pv->pv_pte[0].pg_w == 0)
+			pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
+			    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
+			    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
+			    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
-	return TRUE; /* XXX */
+	return ref;
 }
 
 /*
