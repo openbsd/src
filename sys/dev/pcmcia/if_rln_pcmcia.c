@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.8 2000/02/03 18:42:42 angelos Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.9 2000/02/05 13:55:45 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -30,12 +30,12 @@
 #include <dev/pcmcia/pcmciadevs.h>
 
 struct rln_pcmcia_softc {
-	struct rln_softc sc_rln;		/* real "rln" softc */
+	struct rln_softc psc_rln;		/* real "rln" softc */
 
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
+	struct pcmcia_io_handle psc_pcioh;	/* PCMCIA i/o information */
 	int sc_io_window;			/* i/o window for the card */
-	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
-	void *sc_ih;				/* our interrupt handle */
+	struct pcmcia_function *psc_pf;		/* our PCMCIA function */
+	void *psc_ih;				/* our interrupt handle */
 };
 
 static int	rln_pcmcia_match __P((struct device *, void *, void *));
@@ -134,13 +134,13 @@ rln_pcmcia_attach(parent, self, aux)
 	void *aux;
 {
 	struct rln_pcmcia_softc *psc = (void *) self;
-	struct rln_softc *sc = &psc->sc_rln;
+	struct rln_softc *sc = &psc->psc_rln;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct rln_pcmcia_product *rpp;
 
-	psc->sc_pf = pa->pf;
-	cfe = psc->sc_pf->cfe_head.sqh_first;
+	psc->psc_pf = pa->pf;
+	cfe = psc->psc_pf->cfe_head.sqh_first;
 
 	/* Guess the transfer width we will be using */
 	if (cfe->flags & PCMCIA_CFE_IO16)
@@ -165,29 +165,29 @@ rln_pcmcia_attach(parent, self, aux)
 		printf(": unknown bus width\n");
 #endif /* DIAGNOSTIC */
 
-	pcmcia_function_init(psc->sc_pf, cfe);
+	pcmcia_function_init(psc->psc_pf, cfe);
 
 	/* Allocate i/o space */
-	if (pcmcia_io_alloc(psc->sc_pf, 0, RLN_NPORTS,
-	    RLN_NPORTS, &psc->sc_pcioh)) {
+	if (pcmcia_io_alloc(psc->psc_pf, 0, RLN_NPORTS,
+	    RLN_NPORTS, &psc->psc_pcioh)) {
 		printf(": can't allocate i/o space\n");
 		return;
 	}
 
-	sc->sc_iot = psc->sc_pcioh.iot;
-	sc->sc_ioh = psc->sc_pcioh.ioh;
+	sc->sc_iot = psc->psc_pcioh.iot;
+	sc->sc_ioh = psc->psc_pcioh.ioh;
 
 	/* Map i/o space */
-	if (pcmcia_io_map(psc->sc_pf, ((sc->sc_width == 8) ? PCMCIA_WIDTH_IO8 :
+	if (pcmcia_io_map(psc->psc_pf, ((sc->sc_width == 8) ? PCMCIA_WIDTH_IO8 :
 	    (sc->sc_width == 16) ? PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO),
-	    0, RLN_NPORTS, &psc->sc_pcioh, &psc->sc_io_window)) {
+	    0, RLN_NPORTS, &psc->psc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, RLN_NPORTS);
+	printf(" port 0x%lx/%d", psc->psc_pcioh.addr, RLN_NPORTS);
 
 	/* Enable the card */
-	if (pcmcia_function_enable(psc->sc_pf)) {
+	if (pcmcia_function_enable(psc->psc_pf)) {
 		printf(": function enable failed\n");
 		return;
 	}
@@ -201,7 +201,7 @@ rln_pcmcia_attach(parent, self, aux)
 
 	/* Check if the device has a separate antenna module */
 	sc->sc_cardtype = 0;
-	switch (psc->sc_pf->ccr_base) {
+	switch (psc->psc_pf->ccr_base) {
 	case 0x0100:
 		sc->sc_cardtype |= RLN_CTYPE_ONE_PIECE;
 		break;
@@ -211,7 +211,7 @@ rln_pcmcia_attach(parent, self, aux)
 #ifdef DIAGNOSTIC
 	default:
 		printf(": cannot tell if one or two piece (ccr addr %x)\n",
-			sc->sc_dev.dv_xname, psc->sc_pf->ccr_base);
+			sc->sc_dev.dv_xname, psc->psc_pf->ccr_base);
 #endif
 	}
 
@@ -223,11 +223,12 @@ rln_pcmcia_attach(parent, self, aux)
 	 * polling registers (the alternative) to reading card
 	 * responses, causes hard lock-ups.
 	 */
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+	psc->psc_ih = pcmcia_intr_establish(psc->psc_pf, IPL_NET,
 		rlnintr_pcmcia, sc);
-	if (sc->sc_ih == NULL)
+	if (psc->psc_ih == NULL)
 		printf(": couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+	sc->sc_ih = NULL;
 
 #ifdef DIAGNOSTIC
 	if (rpp->manufacturer == PCMCIA_VENDOR_INVALID)
@@ -249,8 +250,8 @@ rln_pcmcia_detach(dev, flags)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int rv = 0;
 
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+	pcmcia_io_unmap(psc->psc_pf, psc->sc_io_window);
+	pcmcia_io_free(psc->psc_pf, &psc->psc_pcioh);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -263,18 +264,19 @@ rln_pcmcia_activate(dev, act)
 	struct device *dev;
 	enum devact act;
 {
-	struct rln_pcmcia_softc *sc = (struct rln_pcmcia_softc *)dev;
+	struct rln_pcmcia_softc *psc = (struct rln_pcmcia_softc *)dev;
+	struct rln_softc *sc = (struct rln_softc *)dev;
         struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
+		pcmcia_function_enable(psc->psc_pf);
 		printf("%s:", sc->sc_dev.dv_xname);
-		sc->sc_rln.sc_ih =
-		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, rlnintr_pcmcia,
-		        sc);
+		psc->psc_ih =
+		    pcmcia_intr_establish(psc->psc_pf, IPL_NET, rlnintr_pcmcia,
+		        psc);
 		printf("\n");
 		rlninit(sc);
 		break;
@@ -283,8 +285,8 @@ rln_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			rlnstop(sc);
-		pcmcia_function_disable(sc->sc_pf);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_rln.sc_ih);
+		pcmcia_function_disable(psc->psc_pf);
+		pcmcia_intr_disestablish(psc->psc_pf, psc->psc_ih);
 		break;
 	}
 	splx(s);
@@ -302,11 +304,11 @@ rlnintr_pcmcia(arg)
 	int ret;
 
 	/* Need to immediately read/write the option register for PC-card */
-	opt = pcmcia_ccr_read(psc->sc_pf, PCMCIA_CCR_OPTION);
-	pcmcia_ccr_write(psc->sc_pf, PCMCIA_CCR_OPTION, opt);
+	opt = pcmcia_ccr_read(psc->psc_pf, PCMCIA_CCR_OPTION);
+	pcmcia_ccr_write(psc->psc_pf, PCMCIA_CCR_OPTION, opt);
 
 	/* Call actual interrupt handler */
-	ret = rlnintr(arg);
+	ret = rlnintr(sc);
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnvar.h,v 1.2 1999/08/19 06:17:04 d Exp $	*/
+/*	$OpenBSD: rlnvar.h,v 1.3 2000/02/05 13:55:46 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -81,6 +81,8 @@ struct rln_mm_cmd;			/* fwd decl */
 
 void		rlnconfig __P((struct rln_softc *));
 int		rlnintr __P((void *));
+void		rlninit __P((struct rln_softc *));
+void		rlnstop __P((struct rln_softc *));
 void		rlnread __P((struct rln_softc *, struct rln_mm_cmd *, int));
 int		rln_enable __P((struct rln_softc *, int));
 int		rln_reset __P((struct rln_softc *));
