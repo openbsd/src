@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.24 1996/10/19 12:20:02 michaels Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.25 1996/12/03 03:07:17 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	high_data_ports = 0;
+int	anon_only = 0;
 int	multihome = 0;
 int	guest;
 int	stats;
@@ -232,7 +233,7 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
-	char *argstr = "dDhlMSt:T:u:Uv";
+	char *argstr = "AdDhlMSt:T:u:Uv";
 	struct hostent *hp;
 
 	tzset();	/* in case no timezone database in ~ftp */
@@ -242,6 +243,10 @@ main(argc, argv, envp)
 
 	while ((ch = getopt(argc, argv, argstr)) != EOF) {
 		switch (ch) {
+		case 'A':
+			anon_only = 1;
+			break;
+
 		case 'd':
 			debug = 1;
 			break;
@@ -593,6 +598,11 @@ user(name)
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
 		return;
 	}
+	if (anon_only != 0) {
+		reply(530, "Sorry, only anonymous ftp allowed.");
+		return;
+	}
+
 	if (pw = sgetpwnam(name)) {
 		if ((shell = pw->pw_shell) == NULL || *shell == 0)
 			shell = _PATH_BSHELL;

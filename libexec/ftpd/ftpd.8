@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.8 1996/08/19 04:36:30 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.9 1996/12/03 03:07:16 deraadt Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -61,6 +61,9 @@ service specification; see
 .Pp
 Available options:
 .Bl -tag -width Ds
+.It Fl A
+Permit only anonymous ftp connections.
+Other connection attempts are refused.
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
 .It Fl D
