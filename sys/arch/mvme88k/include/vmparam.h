@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.15 2001/08/12 19:30:19 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -60,21 +60,6 @@
 #endif
 
 /*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * External IO space map size.
- */
-#ifndef EIOMAPSIZE
-#define EIOMAPSIZE	1024		/* in pages */
-#endif
-
-/*
  * Default sizes of swap allocation chunks (see dmap.h).
  * The actual values may be changed in vminit() based on MAXDSIZ.
  * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
@@ -112,20 +97,12 @@
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
 
-#define	VM_MINUSER_ADDRESS	((vm_offset_t) 0)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t) 0xffc00000U)
-
-#define VM_MINKERNEL_ADDRESS	((vm_offset_t) 0)
-#define VM_MAXKERNEL_ADDRESS	((vm_offset_t) 0x1fffffff)
-
 /*
  * Mach derived constants
  */
 #define	VM_MIN_ADDRESS		((vm_offset_t) 0)
 #define	VM_MAX_ADDRESS		((vm_offset_t) 0xffc00000U)
-
-#define	VM_MIN_USER_ADDRESS	((vm_offset_t) 0)
-#define	VM_MAX_USER_ADDRESS	((vm_offset_t) 0xffc00000U)
+#define VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
 /* on vme188, max = 0xf0000000 */
 
@@ -138,7 +115,7 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS * MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS * PAGE_SIZE)
-#define VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
+#define VM_PHYS_SIZE		(1 * NPTEPG * PAGE_SIZE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
