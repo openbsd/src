@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.12 2003/05/06 22:55:38 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.13 2003/05/19 21:32:18 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -517,6 +517,7 @@ osiop_poll(sc, acb)
 			i--;
 		}
 		sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
+		delay(25); /* Need delay between SSTAT0 and DSTAT reads */
 		dstat = osiop_read_1(sc, OSIOP_DSTAT);
 		if (osiop_checkintr(sc, istat, dstat, sstat0, &status)) {
 			if (acb != sc->sc_nexus)
@@ -771,11 +772,15 @@ osiop_abort(sc, where)
 	struct osiop_softc *sc;
 	const char *where;
 {
+	u_int8_t dstat, sstat0;
+
+	sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
+	delay(25); /* Need delay between SSTAT0 and DSTAT reads */
+	dstat = osiop_read_1(sc, OSIOP_DSTAT);
 
 	printf("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 	    sc->sc_dev.dv_xname, where,
-	    osiop_read_1(sc, OSIOP_DSTAT),
-	    osiop_read_1(sc, OSIOP_SSTAT0),
+	    dstat, sstat0,
 	    osiop_read_1(sc, OSIOP_SBCL));
 
 	/* XXX XXX XXX */
@@ -901,8 +906,12 @@ osiop_reset(sc)
 	stat = osiop_read_1(sc, OSIOP_ISTAT);
 	if (stat & OSIOP_ISTAT_SIP)
 		osiop_read_1(sc, OSIOP_SSTAT0);
-	if (stat & OSIOP_ISTAT_DIP)
+	if (stat & OSIOP_ISTAT_DIP) {
+		if (stat & OSIOP_ISTAT_SIP)
+			/* Need delay between SSTAT0 and DSTAT reads */
+			delay(25);
 		osiop_read_1(sc, OSIOP_DSTAT);
+	}
 
 	splx(s);
 
