@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.32 2002/05/24 13:10:53 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.33 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ uvm_pagermapout(kva, npages)
 	}
 
 	vm_map_lock(pager_map);
-	(void) uvm_unmap_remove(pager_map, kva, kva + size, &entries);
+	uvm_unmap_remove(pager_map, kva, kva + size, &entries);
 	simple_lock(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = FALSE;

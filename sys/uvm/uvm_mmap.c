@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.35 2002/08/23 00:53:51 pvalchev Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.36 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ sys_munmap(p, v, retval)
 	/*
 	 * doit!
 	 */
-	(void) uvm_unmap_remove(map, addr, addr + size, &dead_entries);
+	uvm_unmap_remove(map, addr, addr + size, &dead_entries);
 
 	vm_map_unlock(map);	/* and unlock */
 
@@ -1098,7 +1098,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		(void) uvm_unmap(map, *addr, *addr + size);	/* zap! */
+		uvm_unmap(map, *addr, *addr + size);	/* zap! */
 	}
 
 	/*
@@ -1221,7 +1221,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 				retval = KERN_RESOURCE_SHORTAGE;
 				vm_map_unlock(map);
 				/* unmap the region! */
-				(void) uvm_unmap(map, *addr, *addr + size);
+				uvm_unmap(map, *addr, *addr + size);
 				goto bad;
 			}
 			/*
@@ -1232,7 +1232,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {
 				/* unmap the region! */
-				(void) uvm_unmap(map, *addr, *addr + size);
+				uvm_unmap(map, *addr, *addr + size);
 				goto bad;
 			}
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.27 2002/07/16 23:06:05 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.28 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -144,15 +144,13 @@ shm_delete_mapping(vm, shmmap_s)
 	struct shmmap_state *shmmap_s;
 {
 	struct shmid_ds *shmseg;
-	int segnum, result;
+	int segnum;
 	size_t size;
 	
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = round_page(shmseg->shm_segsz);
-	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
-	if (result != KERN_SUCCESS)
-		return EINVAL;
+	uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = time.tv_sec;
 	if ((--shmseg->shm_nattch <= 0) &&

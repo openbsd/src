@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.54 2002/10/29 01:26:58 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.55 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1314,7 +1314,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
  *    in "entry_list"
  */
 
-int
+void
 uvm_unmap_remove(map, start, end, entry_list)
 	vm_map_t map;
 	vaddr_t start,end;
@@ -1486,7 +1486,6 @@ uvm_unmap_remove(map, start, end, entry_list)
 
 	*entry_list = first_entry;
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
-	return(KERN_SUCCESS);
 }
 
 /*
@@ -3271,7 +3270,7 @@ uvmspace_free(vm)
 #endif
 		vm_map_lock(&vm->vm_map);
 		if (vm->vm_map.nentries) {
-			(void)uvm_unmap_remove(&vm->vm_map,
+			uvm_unmap_remove(&vm->vm_map,
 			    vm->vm_map.min_offset, vm->vm_map.max_offset,
 			    &dead_entries);
 			if (dead_entries != NULL)

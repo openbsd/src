@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1634,9 +1634,9 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	/* Return excess virtual addresses */
 	if (va != sva)
-		(void)uvm_unmap(kernel_map, sva, va);
+		uvm_unmap(kernel_map, sva, va);
 	if (va + size != sva + oversize)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize);
+		uvm_unmap(kernel_map, va + size, sva + oversize);
 
 
 	*kvap = (caddr_t)va;

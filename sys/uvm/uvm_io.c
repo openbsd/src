@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.13 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.14 2002/10/29 18:30:21 art Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ uvm_io(map, uio)
 		 */
 
 		vm_map_lock(kernel_map);
-		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz,
+		uvm_unmap_remove(kernel_map, kva, kva+chunksz,
 		    &dead_entries);
 		vm_map_unlock(kernel_map);
 
