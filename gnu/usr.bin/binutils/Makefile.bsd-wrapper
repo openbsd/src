@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.39 2000/09/14 21:55:25 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.40 2000/09/19 06:03:46 deraadt Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa
-
 
 SUBDIRS=	opcodes bfd
 ALL_X11_MODULES=
@@ -41,6 +40,8 @@ INSTALL_MODULES=${SUBDIRS:S/^/install-/g}
 all:	config.status
 	SUBDIRS='${SUBDIRS}' ${MAKE} CC="${CC}" \
 	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
+	    scriptdir=${PREFIX}/libdata \
+	    tooldir=${PREFIX} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_X11_MODULES="${ALL_X11_MODULES}"
 	cd ${.OBJDIR}/binutils && \
@@ -76,6 +77,8 @@ install: maninstall
 	SUBDIRS='${SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' INSTALL_MAN= \
 	    INSTALL_X11_MODULES="${INSTALL_X11_MODULES}" \
 	    INSTALL_MAN= \
+	    scriptdir=${PREFIX}/libdata \
+	    tooldir=${PREFIX} \
 	    INSTALL_MODULES='${INSTALL_MODULES}' install install-info
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
