@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.342 2000/11/07 23:06:14 chris Exp $
+	$OpenBSD: pcidevs,v 1.343 2000/11/07 23:51:43 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -79,7 +79,7 @@ vendor AMD		0x1022	AMD
 vendor TRIDENT		0x1023	Trident
 vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
-vendor DELL		0x1028	Dell Computer
+vendor DELL		0x1028	Dell
 vendor SNI		0x1029	Siemens Nixdorf AG
 vendor LSILOGIC		0x102a	LSI Logic
 vendor MATROX		0x102b	Matrox
