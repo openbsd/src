@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.30 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.31 2003/09/24 20:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.30 2003/07/29 18:39:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.31 2003/09/24 20:40:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -147,14 +147,14 @@ main(int argc, char *argv[])
 		}
 
 	for (; optind != argc; optind++) {
-		if (dirs)
-			dirs = realloc(dirs, (ndirs+2) * sizeof (char *));
-		else
-			dirs = calloc(ndirs+2, sizeof(char *));
-		if (dirs == NULL) {
+		char **d;
+
+		d = realloc(dirs, (ndirs+2) * sizeof (char *));
+		if (d == NULL) {
 			syslog(LOG_ERR, "malloc: %m");
 			exit(1);
 		}
+		dirs = d;
 		dirs[n++] = argv[optind];
 		dirs[n] = NULL;
 		ndirs++;

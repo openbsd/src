@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.90 2003/08/29 00:17:09 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.91 2003/09/24 20:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.90 2003/08/29 00:17:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.91 2003/09/24 20:40:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1887,14 +1887,16 @@ char **
 mpcopy(char **to, char **from)
 {
 	int i;
+	char *top;
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		if (from[i] != NULL) {
 			int len = strlen(from[i]) + 1;
 
-			to[i] = realloc(to[i], len);
-			if (to[i] == NULL)
+			top = realloc(to[i], len);
+			if (top == NULL)
 				errx(4, "out of memory");
+			to[i] = top;
 			(void)strlcpy(to[i], from[i], len);
 		} else if (to[i] != NULL) {
 			free(to[i]);
