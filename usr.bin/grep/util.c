@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2004/05/07 14:51:42 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2004/05/07 19:06:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -412,8 +412,16 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	return (0);
 }
 
+/*
+ * Word boundaries using regular expressions are defined as the point
+ * of transition from a non-word char to a word char, or vice versa.
+ * This means that grep -w +a and grep -w a+ never match anything,
+ * because they lack a starting or ending transition, but grep -w a+b
+ * does match a line containing a+b.
+ */
 #define wmatch(d, l, s, e)	\
-	((s == 0 || !isword(d[s-1])) && (e == l || !isword(d[e])))
+	((s == 0 || !isword(d[s-1])) && (e == l || !isword(d[e])) && \
+	  e > s && isword(d[s]) && isword(d[e-1]))
 
 static int
 grep_search(fastgrep_t *fg, unsigned char *data, size_t dataLen, regmatch_t *pmatch)
