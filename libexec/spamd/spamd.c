@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.73 2004/10/05 15:20:30 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.74 2004/11/17 15:29:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -625,7 +625,7 @@ void
 nextstate(struct con *cp)
 {
 	if (match(cp->ibuf, "QUIT") && cp->state < 99) {
-		snprintf(cp->obuf, cp->osize, "221 %s\n", hostname);
+		snprintf(cp->obuf, cp->osize, "221 %s\r\n", hostname);
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->w = t + cp->stutter;
@@ -634,6 +634,16 @@ nextstate(struct con *cp)
 		return;
 	}
 
+	if (match(cp->ibuf, "RSET") && cp->state > 2 && cp->state < 50) {
+		snprintf(cp->obuf, cp->osize,
+		    "250 Ok to start over.\r\n");
+		cp->op = cp->obuf;
+		cp->ol = strlen(cp->op);
+		cp->w = t + cp->stutter;
+		cp->laststate = cp->state;
+		cp->state = 2;
+		return;
+	}
 	switch (cp->state) {
 	case 0:
 		/* banner sent; wait for input */
