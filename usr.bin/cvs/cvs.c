@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.25 2004/12/15 16:28:14 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.26 2004/12/21 18:15:55 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -221,8 +221,8 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		CVS_OP_REMOVE, "remove",   {}, NULL,
-		"",
+		CVS_OP_REMOVE, "remove",   { "rm", "delete" }, cvs_remove,
+		"[-flR] files ...",
 		"",
 		"Remove an entry from the repository",
 		NULL,
