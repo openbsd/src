@@ -122,7 +122,7 @@ pmap_bootstrap()
 	/*
 	 * Map kernel. Kernel code is always readable for user,
 	 * it must be because of the emulation code that is somewhere
-	 * in there. And it doesn't hurt, /netbsd is also public readable.
+	 * in there. And it doesn't hurt, kernel is also public readable.
 	 * There are also a couple of other things that must be in
 	 * physical memory and that isn't managed by the vm system.
 	 */
