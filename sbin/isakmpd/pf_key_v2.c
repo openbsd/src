@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.37 2000/11/27 01:41:04 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.38 2000/11/27 01:42:58 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.67 2000/11/17 05:10:14 angelos Exp $	*/
 
 /*
@@ -1231,7 +1231,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
    * XXX Addresses have to be thought through.  Assumes IPv4.
    */
   len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
-#ifdef SADB_X_EXT_FLOW_TYPE
+#ifndef SADB_X_EXT_FLOW_TYPE
   if (!delete || ingress)
 #else
   if (!delete)
