@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.74 2001/01/17 19:30:03 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.75 2001/01/29 11:23:28 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.74 2001/01/17 19:30:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.75 2001/01/29 11:23:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1045,7 +1045,7 @@ goaway(sig)
 		(void)close(sep->se_fd);
 	}
 	(void)unlink(_PATH_INETDPID);
-	exit(0);
+	_exit(0);
 }
 
 int bump_nofile __P((void));
