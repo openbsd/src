@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.46 2000/03/20 02:38:35 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.47 2000/06/15 20:05:48 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.46 2000/03/20 02:38:35 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.47 2000/06/15 20:05:48 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -752,7 +752,7 @@ esp_stats(off, name)
         p(esps_qfull, "\t%u packet%s were dropped due to full output queue\n");
         p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
         p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
-        p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
+        p(esps_badilen, "\t%u packet%s with bad payload size or padding received\n");
 	p(esps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
 	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(esps_crypto, "\t%u packet%s that failed crypto processing\n");
