@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.2 1999/10/05 18:14:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.1 1999/10/04 20:00:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.2 1999/10/05 18:14:44 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -84,7 +84,7 @@ ecoff_check(file)
 	if (read(fd,(char *)&ecoff_ex, sizeof(ecoff_ex)) != sizeof(ecoff_ex))
 		ret = 0;
 
-	if (ret)
+	if (ret) {
 		if (ECOFF_BADMAG(&ecoff_ex))
 			ret = 0;
 	}
