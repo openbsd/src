@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.8 2002/02/18 12:52:26 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.9 2002/02/18 14:30:12 markus Exp $
 #	Placed in the Public Domain.
 
 PORT=4242
@@ -81,7 +81,7 @@ fatal ()
 RESULT=0
 PIDFILE=$OBJ/pidfile
 
-trap cleanup 3 2
+trap fatal 3 2
 
 # create server config
 cat << EOF > $OBJ/sshd_config
@@ -176,7 +176,7 @@ start_sshd ()
 # kill sshd
 cleanup
 if [ $RESULT -eq 0 ]; then
-	trace ok $tid
+	verbose ok $tid
 else
 	echo failed $tid
 fi
