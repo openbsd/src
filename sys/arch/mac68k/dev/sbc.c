@@ -1,10 +1,8 @@
-/*	$OpenBSD: sbc.c,v 1.2 1996/06/08 16:21:12 briggs Exp $	*/
-/*	$NetBSD: sbc.c,v 1.7 1996/05/29 14:26:33 scottr Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.3 1996/06/23 16:06:32 briggs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.9 1996/06/19 01:47:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
- * Copyright (c) 1995 David Jones
- * Copyright (c) 1995 Allen Briggs
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,9 +16,8 @@
  * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by David Jones, Allen
- *	Briggs and Scott Reynolds.
+ *    must display the following acknowledgements:
+ *      This product includes software developed by Scott Reynolds.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -45,13 +42,11 @@
  * Credits, history:
  *
  * Scott Reynolds wrote this module, based on work by Allen Briggs
- * (mac68k), David Jones (sun3), and Leo Weppelman (atari).  Allen
- * supplied some crucial interpretation of the NetBSD 1.1 'ncrscsi'
- * driver.  Allen, Gordon W. Ross, and Jason Thorpe all helped to
- * refine this code, and were considerable sources of moral support.
- *
- * The sbc_options code is based on similar code in Jason's modified
- * NetBSD/sparc 'si' driver.
+ * (mac68k), Gordon W. Ross and David Jones (sun3), and Leo Weppelman
+ * (atari).  Thanks to Allen for supplying crucial interpretation of the
+ * NetBSD/mac68k 1.1 'ncrscsi' driver.  Also, Allen, Gordon, and Jason
+ * Thorpe all helped to refine this code, and were considerable sources
+ * of moral support.
  */
 
 #include <sys/types.h>
@@ -71,6 +66,7 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
+#include <machine/cpu.h>
 #include <machine/viareg.h>
 
 #include "sbcreg.h"
@@ -88,12 +84,18 @@
 #define	MAX_DMA_LEN 0x2000
 
 /*
- * From Guide to the Macintosh Family Hardware, p. 137
+ * From Guide to the Macintosh Family Hardware, pp. 137-143
  * These are offsets from SCSIBase (see pmap_bootstrap.c)
  */
-#define	SBC_REGISTER_OFFSET	0x10000
-#define	SBC_DMA_DRQ_OFFSET	0x06000
-#define	SBC_DMA_NODRQ_OFFSET	0x12000
+#define	SBC_REG_OFS		0x10000
+#define	SBC_HSK_OFS		0x06000
+#define	SBC_DMA_OFS		0x12000
+
+#define	SBC_DMA_OFS_PB500	0x06000
+
+#define	SBC_REG_OFS_IIFX	0x08000		/* Just guessing... */
+#define	SBC_HSK_OFS_IIFX	0x0e000
+#define	SBC_DMA_OFS_IIFX	0x0c000
 
 #ifdef SBC_DEBUG
 # define	SBC_DB_INTR	0x01
@@ -120,6 +122,7 @@ struct sbc_pdma_handle {
 	int	dh_flags;	/* flags */
 #define	SBC_DH_BUSY	0x01	/* This handle is in use */
 #define	SBC_DH_OUT	0x02	/* PDMA data out (write) */
+#define	SBC_DH_DONE	0x04	/* PDMA transfer is complete */
 	u_char	*dh_addr;	/* data buffer */
 	int	dh_len;		/* length of data buffer */
 };
@@ -131,11 +134,11 @@ struct sbc_pdma_handle {
 struct sbc_softc {
 	struct ncr5380_softc ncr_sc;
 	volatile struct sbc_regs *sc_regs;
-	volatile long	*sc_drq_addr;
-	volatile u_char	*sc_nodrq_addr;
-	volatile u_char	*sc_ienable;
-	volatile u_char	*sc_iflag;
-	int		sc_options;	/* options for this instance. */
+	volatile vm_offset_t	sc_drq_addr;
+	volatile vm_offset_t	sc_nodrq_addr;
+	volatile u_int8_t	*sc_ienable;
+	volatile u_int8_t	*sc_iflag;
+	int			sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
 };
 
@@ -147,6 +150,9 @@ struct sbc_softc {
  * Alternatively, you can patch your kernel with DDB or some other
  * mechanism.  The sc_options member of the softc is OR'd with
  * the value in sbc_options.
+ *
+ * The options code is based on the sparc 'si' driver's version of
+ * the same.
  */     
 #define	SBC_PDMA	0x01	/* Use PDMA for polled transfers */
 #define	SBC_INTR	0x02	/* Allow SCSI IRQ/DRQ interrupts */
@@ -230,9 +236,28 @@ sbc_attach(parent, self, args)
 	    & SBC_OPTIONS_MASK);
 
 	/*
-	 * Set up base address of 5380
+	 * Set up offsets to 5380 registers and GLUE I/O space, and turn
+	 * off options we know we can't support on certain models.
 	 */
-	sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REGISTER_OFFSET);
+	switch (current_mac_model->machineid) {
+	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
+		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS_IIFX);
+		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS_IIFX);
+		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_IIFX);
+		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
+		break;
+	case MACH_MACPB500:
+		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
+		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS); /*??*/
+		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_PB500);
+		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
+		break;
+	default:
+		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
+		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS);
+		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS);
+		break;
+	}
 
 	/*
 	 * Fill in the prototype scsi_link.
@@ -257,8 +282,13 @@ sbc_attach(parent, self, args)
 	/*
 	 * MD function pointers used by the MI code.
 	 */
-	ncr_sc->sc_pio_out   = sbc_pdma_out;
-	ncr_sc->sc_pio_in    = sbc_pdma_in;
+	if (sc->sc_options & SBC_PDMA) {
+		ncr_sc->sc_pio_out   = sbc_pdma_out;
+		ncr_sc->sc_pio_in    = sbc_pdma_in;
+	} else {
+		ncr_sc->sc_pio_out   = ncr5380_pio_out;
+		ncr_sc->sc_pio_in    = ncr5380_pio_in;
+	}
 	ncr_sc->sc_dma_alloc = NULL;
 	ncr_sc->sc_dma_free  = NULL;
 	ncr_sc->sc_dma_poll  = NULL;
@@ -271,9 +301,7 @@ sbc_attach(parent, self, args)
 	ncr_sc->sc_flags = 0;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	if ((sc->sc_options & SBC_INTR) == 0) {
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
-	} else {
+	if (sc->sc_options & SBC_INTR) {
 		if (sc->sc_options & SBC_RESELECT)
 			ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
 		ncr_sc->sc_dma_alloc = sbc_dma_alloc;
@@ -285,13 +313,12 @@ sbc_attach(parent, self, args)
 		ncr_sc->sc_dma_stop  = sbc_dma_stop;
 		mac68k_register_scsi_drq(sbc_drq_intr, ncr_sc);
 		mac68k_register_scsi_irq(sbc_irq_intr, ncr_sc);
-	}
+	} else
+		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 
 	/*
 	 * Initialize fields used only here in the MD code.
 	 */
-	sc->sc_drq_addr = (long *) (SCSIBase + SBC_DMA_DRQ_OFFSET);
-	sc->sc_nodrq_addr = (u_char *) (SCSIBase + SBC_DMA_NODRQ_OFFSET);
 	if (VIA2 == VIA2OFF) {
 		sc->sc_ienable = Via1Base + VIA2 * 0x2000 + vIER;
 		sc->sc_iflag   = Via1Base + VIA2 * 0x2000 + vIFR;
@@ -505,6 +532,7 @@ decode_5380_intr(ncr_sc)
 }
 #endif
 
+
 /***
  * The following code implements polled PDMA.
  ***/
@@ -517,8 +545,8 @@ sbc_pdma_out(ncr_sc, phase, count, data)
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	register volatile long *long_data = sc->sc_drq_addr;
-	register volatile u_char *byte_data = sc->sc_nodrq_addr;
+	register volatile long *long_data = (long *) sc->sc_drq_addr;
+	register volatile u_char *byte_data = (u_char *) sc->sc_nodrq_addr;
 	register int len = count;
 
 	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
@@ -594,8 +622,8 @@ sbc_pdma_in(ncr_sc, phase, count, data)
 	u_char *data;
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
-	register volatile long *long_data = sc->sc_drq_addr;
-	register volatile u_char *byte_data = sc->sc_nodrq_addr;
+	register volatile long *long_data = (long *) sc->sc_drq_addr;
+	register volatile u_char *byte_data = (u_char *) sc->sc_nodrq_addr;
 	register int len = count;
 
 	if (count < ncr_sc->sc_min_dma_len || (sc->sc_options & SBC_PDMA) == 0)
@@ -728,6 +756,7 @@ sbc_drq_intr(p)
 	u_int8_t		*data;
 	register int		count;
 	int			dcount, resid;
+	u_int8_t		tmp;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -750,37 +779,41 @@ sbc_drq_intr(p)
 
 	if (setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-		count = ((  (u_long) mac68k_buserr_addr
-			  - (u_long) sc->sc_drq_addr));
+		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
+			count = ((  (u_long) mac68k_buserr_addr
+				  - (u_long) sc->sc_drq_addr));
 
-		if ((count < 0) || (count > dh->dh_len)) {
-			printf("%s: complete=0x%x (pending 0x%x)\n",
-			    ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
-			panic("something is wrong");
+			if ((count < 0) || (count > dh->dh_len)) {
+				printf("%s: complete=0x%x (pending 0x%x)\n",
+				    ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
+				panic("something is wrong");
+			}
+
+			dh->dh_addr += count;
+			dh->dh_len -= count;
 		}
+
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_INTR)
-			printf("%s: drq /berr, pending=0x%x, complete=0x%x\n",
-			   ncr_sc->sc_dev.dv_xname, dh->dh_len, count);
+			printf("%s: drq /berr, complete=0x%x (pending 0x%x)\n",
+			   ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 #endif
-
-		dh->dh_addr += count;
-		dh->dh_len -= count;
 		mac68k_buserr_addr = 0;
 
 		return;
 	}
 
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
-#ifdef notyet
+#if notyet /* XXX */
 		/*
 		 * Get the source address aligned.
 		 */
 		resid =
 		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
 		if (count && count < 4) {
+			drq = (volatile u_int8_t *) sc->sc_drq_addr;
 			data = (u_int8_t *) dh->dh_addr;
-			drq = (u_int8_t *) sc->sc_drq_addr;
+
 #define W1		*drq++ = *data++
 			while (count) {
 				W1; count--;
@@ -791,7 +824,7 @@ sbc_drq_intr(p)
 		}
 
 		/*
-		 * Get ready to start the transfer.
+		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
@@ -810,19 +843,16 @@ sbc_drq_intr(p)
 #undef W4
 			data = (u_int8_t *) long_data;
 			drq = (u_int8_t *) long_drq;
-#define W1		*drq++ = *data++
-			while (count) {
-				W1; count--;
-			}
-#undef W1
-			dh->dh_len -= dcount;
-			dh->dh_addr += dcount;
-		}
-#else
+#else /* notyet */
+		/*
+		 * Start the transfer.
+		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
 			drq = (volatile u_int8_t *) sc->sc_drq_addr;
 			data = (u_int8_t *) dh->dh_addr;
+#endif /* notyet */
+
 #define W1		*drq++ = *data++
 			while (count) {
 				W1; count--;
@@ -831,19 +861,21 @@ sbc_drq_intr(p)
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
 		}
-#endif
-
-		/* Wait for the GLUE to raise /ACK */
-		while ((*ncr_sc->sci_csr & SCI_CSR_ACK) == 0)
-			;
+		dh->dh_flags |= SBC_DH_DONE;
 
 		/*
-		 * If the SCSI bus is still busy, trigger a bus error
-		 * by writing another byte to the SBC.
+		 * XXX -- Read a byte from the SBC to trigger a /BERR.
+		 * This seems to be necessary for us to notice that
+		 * the target has disconnected.  Ick.  06 jun 1996 (sr)
 		 */
-		if (*ncr_sc->sci_bus_csr & SCI_BUS_BSY)
-			*((u_int8_t *) sc->sc_drq_addr) = 0;
-
+		if (dcount >= MAX_DMA_LEN) {
+#if 0
+			while ((*ncr_sc->sci_csr & SCI_CSR_ACK) == 0)
+				;
+#endif
+			drq = (volatile u_int8_t *) sc->sc_drq_addr;
+		}
+		tmp = *drq;
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.
@@ -852,7 +884,8 @@ sbc_drq_intr(p)
 		    count = min(dh->dh_len, 4 - (((int) dh->dh_addr) & 0x3));
 		if (count && count < 4) {
 			data = (u_int8_t *) dh->dh_addr;
-			drq = (u_int8_t *) sc->sc_drq_addr;
+			drq = (volatile u_int8_t *) sc->sc_drq_addr;
+
 #define R1		*data++ = *drq++
 			while (count) {
 				R1; count--;
@@ -863,46 +896,26 @@ sbc_drq_intr(p)
 		}
 
 		/*
-		 * Get ready to start the transfer.
+		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
 			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
-			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
 			long_data = (u_int32_t *) dh->dh_addr;
+			long_drq = (volatile u_int32_t *) sc->sc_drq_addr;
 
 #define R4		*long_data++ = *long_drq++
-			while (count >= 512) {
-				if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0) {
-					nofault = (int *) 0;
-
-					dh->dh_addr += (dcount - count);
-					dh->dh_len -= (dcount - count);
-					return;
-				}
+			while (count >= 64) {
 				R4; R4; R4; R4; R4; R4; R4; R4;
 				R4; R4; R4; R4; R4; R4; R4; R4;	/* 64 */
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;	/* 128 */
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;	/* 256 */
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;
-				R4; R4; R4; R4; R4; R4; R4; R4;	/* 512 */
-				count -= 512;
+				count -= 64;
 			}
 			while (count >= 4) {
 				R4; count -= 4;
 			}
 #undef R4
 			data = (u_int8_t *) long_data;
-			drq = (u_int8_t *) long_drq;
+			drq = (volatile u_int8_t *) long_drq;
+
 #define R1		*data++ = *drq++
 			while (count) {
 				R1; count--;
@@ -911,6 +924,7 @@ sbc_drq_intr(p)
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
 		}
+		dh->dh_flags |= SBC_DH_DONE;
 	}
 
 	/*
@@ -945,12 +959,6 @@ sbc_dma_alloc(ncr_sc)
 	/* Polled transfers shouldn't allocate a PDMA handle. */
 	if (sr->sr_flags & SR_IMMED)
 		return;
-
-#ifndef SBCTEST
-	/* XXX - we don't trust PDMA writes yet! */
-	if (xs->flags & SCSI_DATA_OUT)
-		return;
-#endif
 
 	xlen = ncr_sc->sc_datalen;
 
@@ -1110,7 +1118,7 @@ sbc_dma_stop(ncr_sc)
 
 		/* Clear any pending interrupts. */
 		SCI_CLR_INTR(ncr_sc);
-		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		*sc->sc_iflag = 0x80 | V2IF_SCSIIRQ;
 	}
 
 	/* Put SBIC back into PIO mode. */
