@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.39 2003/11/20 08:38:52 espie Exp $
-#	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
+#	$OpenBSD: Makefile.i386,v 1.40 2004/05/11 04:01:00 deraadt Exp $
 
 # Makefile for OpenBSD
 #
