@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.401 2001/05/28 15:51:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.402 2001/06/06 18:43:31 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -42,6 +42,10 @@
  *
  *	http://www.yourvote.com/pci/
  *	http://members.hyperlink.net.au/~chart/pci.htm
+ *
+ * There is a Vendor ID search engine available at:
+ *
+ *	http://www.pcisig.com/app/search/by_vendor_id/
  */
 
 /*
@@ -540,7 +544,9 @@
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
+#define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom Technology */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
+#define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Technology */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -1072,6 +1078,9 @@
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus */
 
+/* Eumitcom Technology products */
+#define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P PCMCIA dumb bridge */
+
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
@@ -1086,6 +1095,10 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PF	0x0000		/* 155P-MF1 ATM (FPGA) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_EFSS25	0x0005		/* 25SS-3010 ATM (ASIC) */
+
+/* Global Sun Technology products */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCMCIA dumb bridge */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P02 PCMCIA dumb bridge */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */

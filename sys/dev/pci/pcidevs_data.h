@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.401 2001/05/28 15:51:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.402 2001/06/06 18:43:31 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1555,6 +1555,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Freedom PCI-GBus",
 	},
 	{
+	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
+	    "WL11000P PCMCIA dumb bridge",
+	},
+	{
 	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
 	    "ATM PCA-200",
 	},
@@ -1581,6 +1585,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_EFSS25,
 	    "25SS-3010 ATM (ASIC)",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
+	    "GL24110P PCMCIA dumb bridge",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
+	    "GL24110P02 PCMCIA dumb bridge",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
@@ -6303,8 +6315,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "VMware",
 	},
 	{
+	    PCI_VENDOR_EUMITCOM,
+	    "Eumitcom Technology",
+	},
+	{
 	    PCI_VENDOR_NETSEC,
 	    "NetSec",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN,
+	    "Global Sun Technology",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
