@@ -1,11 +1,11 @@
-dnl	$OpenBSD: hardware,v 1.22 2002/04/07 23:31:04 miod Exp $
+dnl	$OpenBSD: hardware,v 1.23 2002/04/14 02:36:53 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
 		Ultra 1E (Creator)
 		Ultra 2
 	- PCI based workstations:
-		SUNBlade 100 (onboard ethernet has issues)
+		SUNBlade 100
 		Enterprise 220R
 		Enterprise 250
 		Netra X1
@@ -55,7 +55,7 @@ Supported devices {:-include-:}:
 		SBus Quad 10/100MBit Quad Fast Ethernet cards (hme, qfe)
 		PCI Fast Ethernet (hme)
 		PCI Quad Fast Ethernet (hme)
-		PCI GEM Ethernet (gem) [not fully supported]
+		PCI GEM Ethernet (gem)
 		PCI Davicom DM9102 Ethernet (dc)
 
 	Serial ports: 
