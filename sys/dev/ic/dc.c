@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.10 2000/08/26 12:53:57 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.11 2000/09/07 20:26:15 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1924,8 +1924,8 @@ void dc_tick(xsc)
 			if ((r & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT &&
 			    sc->dc_cdata.dc_tx_prod == 0)
 				mii_tick(mii);
-				if (!(mii->mii_media_status & IFM_ACTIVE))
-					sc->dc_link = 0;
+			if (!(mii->mii_media_status & IFM_ACTIVE))
+				sc->dc_link = 0;
 		}
 	} else
 		mii_tick(mii);
