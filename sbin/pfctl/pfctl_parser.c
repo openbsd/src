@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.103 2002/11/18 22:49:15 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.104 2002/11/18 22:55:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -652,7 +652,7 @@ print_rule(struct pf_rule *r)
 				printf("return-icmp");
 				if (ic == NULL)
 					printf("(%u) ", r->return_icmp & 255);
-				else 
+				else
 					printf("(%s) ", ic->name);
 				break;
 			case AF_INET6:
@@ -666,7 +666,7 @@ print_rule(struct pf_rule *r)
 				printf("return-icmp");
 				if (ic == NULL)
 					printf("(%u, ", r->return_icmp & 255);
-				else 
+				else
 					printf("(%s, ", ic->name);
 				if (ic6 == NULL)
 					printf("%u) ", r->return_icmp6 & 255);

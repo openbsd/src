@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.187 2002/11/18 22:49:15 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.188 2002/11/18 22:55:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -442,7 +442,7 @@ scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 				r.rule_flag |= $9;
 
 			expand_rule(&r, $3, NULL, $5.src.host, $5.src.port,
-			    $5.dst.host, $5.dst.port, NULL, NULL, NULL); 
+			    $5.dst.host, $5.dst.port, NULL, NULL, NULL);
 		}
 		;
 
@@ -576,7 +576,7 @@ queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
 		;
 
 schedtype	: /* empty */			{ $$.qtype = ALTQT_NONE; }
-		| CBQ 				{ $$.qtype = ALTQT_CBQ; }
+		| CBQ				{ $$.qtype = ALTQT_CBQ; }
 		| CBQ '(' cbqflags_list ')'	{
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = $3;
@@ -584,7 +584,7 @@ schedtype	: /* empty */			{ $$.qtype = ALTQT_NONE; }
 		;
 
 cbqflags_list	: cbqflags_item				{ $$ |= $1; }
-		| cbqflags_list comma cbqflags_item 	{ $$ |= $3; }
+		| cbqflags_list comma cbqflags_item	{ $$ |= $3; }
 		;
 
 
@@ -601,7 +601,7 @@ bandwidth	: /* empty */		{
 			$$.bw_percent = 0;
 		}
 		| BANDWIDTH STRING {
- 			double bps;
+			double bps;
 			char *cp;
 
 			$$.bw_percent = 0;
@@ -617,7 +617,7 @@ bandwidth	: /* empty */		{
 				else if (!strcasecmp(cp, "Gb"))
 					bps *= 1024 * 1024 * 1024;
 				else if (*cp == '%') {
- 					if (bps < 0 || bps > 100) {
+					if (bps < 0 || bps > 100) {
 						yyerror("bandwidth spec "
 						    "out of range");
 						YYERROR;
@@ -639,7 +639,7 @@ priority	: /* empty */		{ $$ = 0; }
 				yyerror("priority out of range: max 255");
 				YYERROR;
 			}
-			$$ = $2; 
+			$$ = $2;
 		}
 		;
 
@@ -660,7 +660,7 @@ tbrsize		: /* empty */		{ $$ = 0; }
 				yyerror("tbrsize too big: max 65535");
 				YYERROR;
 			}
-			$$ = $1; 
+			$$ = $1;
 		}
 		;
 
@@ -814,8 +814,8 @@ blockspec	: /* empty */		{
 		}
 		| RETURNRST		{
 			$$.b2 = PFRULE_RETURNRST;
-			$$.w = 0; 
-			$$.w2 = 0; 
+			$$.w = 0;
+			$$.w2 = 0;
 		}
 		| RETURNRST '(' TTL number ')'	{
 			$$.b2 = PFRULE_RETURNRST;
@@ -1763,7 +1763,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
-				} 
+				}
 				free($10->address);
 				free($10);
 			}
@@ -2380,7 +2380,7 @@ expand_rule(struct pf_rule *r,
 	char	ifname[IF_NAMESIZE];
 	char	label[PF_RULE_LABEL_SIZE];
 	char	qname[PF_QNAME_SIZE];
-	u_int8_t 	flags, flagset;
+	u_int8_t flags, flagset;
 
 	strlcpy(label, r->label, sizeof(label));
 	strlcpy(qname, r->qname, sizeof(qname));
@@ -2678,7 +2678,7 @@ lookup(char *s)
 		{ "ecn",	ECN},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
-		{ "for", 	FOR},
+		{ "for",	FOR},
 		{ "fragment",	FRAGMENT},
 		{ "from",	FROM},
 		{ "group",	GROUP},

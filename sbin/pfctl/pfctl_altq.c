@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.1 2002/11/18 22:49:15 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.2 2002/11/18 22:55:39 deraadt Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -158,7 +158,7 @@ print_queue(const struct pf_altq *a, unsigned level)
 
 	for (i = 0; i < level; ++i)
 		printf("  ");
-	printf("queue %s bandwidth %s priority %u", a->qname, 
+	printf("queue %s bandwidth %s priority %u", a->qname,
 	    rate2str((double)a->bandwidth), a->priority);
 /*	printf("queue on %s %s parent 0x%x priority %u bandwidth %s"
 	    " qlimit %u qid 0x%x\n",
