@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.15 1999/08/17 15:02:03 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.16 2000/01/23 02:25:48 brian Exp $
 #
 #################################################################
 
@@ -26,7 +26,7 @@
 #
 default:
  set log Phase Chat LCP IPCP CCP tun command
- set device /dev/cuaa1
+ set device /dev/cua01
  set speed 115200
  set dial "ABORT BUSY ABORT NO\\sCARRIER TIMEOUT 5 \"\" AT OK-AT-OK ATE1Q0 OK \\dATDT\\T TIMEOUT 40 CONNECT"
 
@@ -243,7 +243,7 @@ dodgynet:
     # For autoconnect only
     allow modes auto
     # Define modem device and speed
-    set device /dev/cuaa1
+    set device /dev/cua01
     set speed 115200
     # Don't support LQR
     deny lqr
@@ -370,7 +370,7 @@ PAPServerwithPASSWD:
 #
 direct-client:
  set dial ""
- set device /dev/cuaa0
+ set device /dev/cua00
  set sp 115200
  set timeout 900
  set lqrperiod 10
@@ -482,7 +482,7 @@ dialback:
  set cbcp
  set log +cbcp
  set redial 3 1
- set device /dev/cuaa0
+ set device /dev/cua00
  set speed 115200
  set dial "TIMEOUT 10 \"\" AT OK-AT-OK ATDT\\T CONNECT"
 
