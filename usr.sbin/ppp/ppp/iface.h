@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: iface.h,v 1.2 1999/02/06 03:22:37 brian Exp $
+ *	$Id: iface.h,v 1.3 1999/05/27 08:44:48 brian Exp $
  */
 
 struct iface_addr {
@@ -57,4 +57,6 @@ extern int iface_inAdd(struct iface *, struct in_addr, struct in_addr,
                      struct in_addr, int);
 extern int iface_inDelete(struct iface *, struct in_addr);
 extern int iface_Show(struct cmdargs const *);
+extern int iface_SetFlags(struct iface *, int);
+extern int iface_ClearFlags(struct iface *, int);
 extern void iface_Destroy(struct iface *);
