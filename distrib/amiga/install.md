@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 1997/05/18 13:15:09 niklas Exp $
+#	$OpenBSD: install.md,v 1.5 1998/03/27 23:49:34 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -161,10 +161,8 @@ md_welcome_banner() {
 		echo "Welcome to the OpenBSD/amiga ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
+This program is designed to help you put OpenBSD on your disk in a simple and
+rational way.
 __welcome_banner_1
 
 	else
