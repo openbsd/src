@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.63 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.64 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -263,14 +263,12 @@ sys_sigaction(p, v, retval)
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
-		error = copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
-				sizeof (vec));
+		error = copyout(sa, SCARG(uap, osa), sizeof (vec));
 		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsa)) {
-		error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
-		    sizeof (vec));
+		error = copyin(SCARG(uap, nsa), sa, sizeof (vec));
 		if (error)
 			return (error);
 		setsigvec(p, signum, sa);
@@ -501,7 +499,7 @@ sys_sigsuspend(p, v, retval)
 	ps->ps_oldmask = p->p_sigmask;
 	ps->ps_flags |= SAS_OLDMASK;
 	p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
-	while (tsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0) == 0)
+	while (tsleep(ps, PPAUSE|PCATCH, "pause", 0) == 0)
 		/* void */;
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
@@ -525,12 +523,12 @@ sys_sigaltstack(p, v, retval)
 	psp = p->p_sigacts;
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
 		psp->ps_sigstk.ss_flags |= SS_DISABLE;
-	if (SCARG(uap, oss) && (error = copyout((caddr_t)&psp->ps_sigstk,
-	    (caddr_t)SCARG(uap, oss), sizeof (struct sigaltstack))))
+	if (SCARG(uap, oss) && (error = copyout(&psp->ps_sigstk,
+	    SCARG(uap, oss), sizeof (struct sigaltstack))))
 		return (error);
 	if (SCARG(uap, nss) == NULL)
 		return (0);
-	error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss, sizeof (ss));
+	error = copyin(SCARG(uap, nss), &ss, sizeof (ss));
 	if (error)
 		return (error);
 	if (ss.ss_flags & SS_DISABLE) {
@@ -1009,7 +1007,7 @@ issignal(struct proc *p)
 #ifdef	PROCFS
 				/* procfs debugging */
 				p->p_stat = SSTOP;
-				wakeup((caddr_t)p);
+				wakeup(p);
 				mi_switch();
 #else
 				panic("procfs debugging");
@@ -1132,7 +1130,7 @@ proc_stop(p)
 
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
-	wakeup((caddr_t)p->p_pptr);
+	wakeup(p->p_pptr);
 }
 
 /*

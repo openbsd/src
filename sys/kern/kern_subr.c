@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.24 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.25 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 int
 uiomove(cp, n, uio)
-	register caddr_t cp;
+	register void *cp;
 	register int n;
 	register struct uio *uio;
 {
@@ -99,7 +99,7 @@ uiomove(cp, n, uio)
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
-		cp += cnt;
+		cp = (caddr_t)cp + cnt;
 		n -= cnt;
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.9 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.10 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ logread(dev, uio, flag)
 			return (EWOULDBLOCK);
 		}
 		logsoftc.sc_state |= LOG_RDWAIT;
-		error = tsleep((caddr_t)mbp, LOG_RDPRI | PCATCH,
+		error = tsleep(mbp, LOG_RDPRI | PCATCH,
 			       "klog", 0);
 		if (error) {
 			splx(s);
@@ -166,8 +166,7 @@ logread(dev, uio, flag)
 		l = min(l, uio->uio_resid);
 		if (l == 0)
 			break;
-		error = uiomove((caddr_t)&mbp->msg_bufc[mbp->msg_bufr],
-			(int)l, uio);
+		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], (int)l, uio);
 		if (error)
 			break;
 		mbp->msg_bufr += l;
@@ -253,7 +252,7 @@ logwakeup()
 		csignal(logsoftc.sc_pgid, SIGIO,
 		    logsoftc.sc_siguid, logsoftc.sc_sigeuid);
 	if (logsoftc.sc_state & LOG_RDWAIT) {
-		wakeup((caddr_t)msgbufp);
+		wakeup(msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
 	}
 	KNOTE(&logsoftc.sc_selp.si_note, 0);

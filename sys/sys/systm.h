@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.56 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: systm.h,v 1.57 2003/07/21 22:44:49 tedu Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ void	dopowerhooks(int);
 #define PWR_STANDBY 2
 
 struct uio;
-int	uiomove(caddr_t, int, struct uio *);
+int	uiomove(void *, int, struct uio *);
 
 int	setjmp(label_t *);
 void	longjmp(label_t *);

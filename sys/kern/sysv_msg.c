@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.14 2002/12/22 04:55:05 millert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.15 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ sys_msgctl(p, v, retval)
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
 
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 	}
 
 		break;
@@ -263,7 +263,7 @@ sys_msgctl(p, v, retval)
 			DPRINTF(("requester doesn't have read access\n"));
 			return (eval);
 		}
-		eval = copyout((caddr_t)msqptr, user_msqptr,
+		eval = copyout(msqptr, user_msqptr,
 		    sizeof(struct msqid_ds));
 		break;
 
@@ -466,7 +466,7 @@ sys_msgsnd(p, v, retval)
 				we_own_it = 1;
 			}
 			DPRINTF(("goodnight\n"));
-			eval = tsleep((caddr_t)msqptr, (PZERO - 4) | PCATCH,
+			eval = tsleep(msqptr, (PZERO - 4) | PCATCH,
 			    "msgwait", 0);
 			DPRINTF(("good morning, eval=%d\n", eval));
 			if (we_own_it)
@@ -562,7 +562,7 @@ sys_msgsnd(p, v, retval)
 		DPRINTF(("error %d copying the message type\n", eval));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		return (eval);
 	}
 	user_msgp += sizeof(msghdr->msg_type);
@@ -574,7 +574,7 @@ sys_msgsnd(p, v, retval)
 	if (msghdr->msg_type < 1) {
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		DPRINTF(("mtype (%d) < 1\n", msghdr->msg_type));
 		return (EINVAL);
 	}
@@ -602,7 +602,7 @@ sys_msgsnd(p, v, retval)
 			    eval));
 			msg_freehdr(msghdr);
 			msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			wakeup((caddr_t)msqptr);
+			wakeup(msqptr);
 			return (eval);
 		}
 		msgsz -= tlen;
@@ -625,7 +625,7 @@ sys_msgsnd(p, v, retval)
 
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		return (EIDRM);
 	}
 
@@ -647,7 +647,7 @@ sys_msgsnd(p, v, retval)
 	msqptr->msg_lspid = p->p_pid;
 	msqptr->msg_stime = time.tv_sec;
 
-	wakeup((caddr_t)msqptr);
+	wakeup(msqptr);
 	*retval = 0;
 	return (0);
 }
@@ -814,7 +814,7 @@ sys_msgrcv(p, v, retval)
 		 */
 
 		DPRINTF(("msgrcv: goodnight\n"));
-		eval = tsleep((caddr_t)msqptr, (PZERO - 4) | PCATCH, "msgwait",
+		eval = tsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
 		    0);
 		DPRINTF(("msgrcv: good morning (eval=%d)\n", eval));
 
@@ -860,12 +860,12 @@ sys_msgrcv(p, v, retval)
 	 * Return the type to the user.
 	 */
 
-	eval = copyout((caddr_t)&msghdr->msg_type, user_msgp,
+	eval = copyout(&msghdr->msg_type, user_msgp,
 	    sizeof(msghdr->msg_type));
 	if (eval != 0) {
 		DPRINTF(("error (%d) copying out message type\n", eval));
 		msg_freehdr(msghdr);
-		wakeup((caddr_t)msqptr);
+		wakeup(msqptr);
 		return (eval);
 	}
 	user_msgp += sizeof(msghdr->msg_type);
@@ -888,13 +888,13 @@ sys_msgrcv(p, v, retval)
 		if (next >= msginfo.msgseg)
 			panic("next out of range #3");
 #endif
-		eval = copyout((caddr_t)&msgpool[next * msginfo.msgssz],
+		eval = copyout(&msgpool[next * msginfo.msgssz],
 		    user_msgp, tlen);
 		if (eval != 0) {
 			DPRINTF(("error (%d) copying out message segment\n",
 			    eval));
 			msg_freehdr(msghdr);
-			wakeup((caddr_t)msqptr);
+			wakeup(msqptr);
 			return (eval);
 		}
 		user_msgp += tlen;
@@ -906,7 +906,7 @@ sys_msgrcv(p, v, retval)
 	 */
 
 	msg_freehdr(msghdr);
-	wakeup((caddr_t)msqptr);
+	wakeup(msqptr);
 	*retval = msgsz;
 	return (0);
 }

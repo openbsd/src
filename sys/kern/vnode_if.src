@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.21 2003/06/02 23:28:07 millert Exp $
+#	$OpenBSD: vnode_if.src,v 1.22 2003/07/21 22:44:50 tedu Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -203,7 +203,7 @@ vop_lease {
 vop_ioctl {
 	IN struct vnode *vp;
 	IN u_long command;
-	IN caddr_t data;
+	IN void *data;
 	IN int fflag;
 	IN struct ucred *cred;
 	IN struct proc *p;
@@ -433,7 +433,7 @@ vop_pathconf {
 #
 vop_advlock {
 	IN struct vnode *vp;
-	IN caddr_t id;
+	IN void *id;
 	IN int op;
 	IN struct flock *fl;
 	IN int flags;

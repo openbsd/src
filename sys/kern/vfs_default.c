@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.20 2003/06/02 23:28:07 millert Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.21 2003/07/21 22:44:50 tedu Exp $  */
 
 /*
  *    Portions of this code are:
@@ -84,7 +84,7 @@ vop_generic_revoke(v)
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
 			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vop_generic_revokeall", 0);
+			tsleep(vp, PINOD, "vop_generic_revokeall", 0);
 			return(0);
 		}
 		/*

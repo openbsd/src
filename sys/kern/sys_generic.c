@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.43 2003/06/23 04:26:53 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.44 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ dofileread(p, fd, fp, buf, nbyte, offset, retval)
 	struct iovec ktriov;
 #endif
 
-	aiov.iov_base = (caddr_t)buf;
+	aiov.iov_base = buf;
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -250,7 +250,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, retval)
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		bcopy(auio.uio_iov, ktriov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -324,7 +324,7 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, retval)
 	struct iovec ktriov;
 #endif
 
-	aiov.iov_base = (caddr_t)buf;		/* XXX kills const */
+	aiov.iov_base = (void *)buf;		/* XXX kills const */
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -464,7 +464,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
+		bcopy(auio.uio_iov, ktriov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -674,7 +674,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		pobits[1] = (fd_set *)&mbits[ni * 4];
 		pobits[2] = (fd_set *)&mbits[ni * 5];
 	} else {
-		bzero((caddr_t)bits, sizeof(bits));
+		bzero(bits, sizeof(bits));
 		pibits[0] = &bits[0];
 		pibits[1] = &bits[1];
 		pibits[2] = &bits[2];
@@ -684,8 +684,8 @@ sys_select(struct proc *p, void *v, register_t *retval)
 	}
 
 #define	getbits(name, x) \
-	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, name), \
-	    (caddr_t)pibits[x], ni))) \
+	if (SCARG(uap, name) && (error = copyin(SCARG(uap, name), \
+	    pibits[x], ni))) \
 		goto done;
 	getbits(in, 0);
 	getbits(ou, 1);
@@ -693,8 +693,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 #undef	getbits
 
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)SCARG(uap, tv), (caddr_t)&atv,
-			sizeof (atv));
+		error = copyin(SCARG(uap, tv), &atv, sizeof (atv));
 		if (error)
 			goto done;
 		if (itimerfix(&atv)) {
@@ -726,7 +725,7 @@ retry:
 		goto retry;
 	}
 	p->p_flag &= ~P_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
@@ -738,8 +737,8 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 #define	putbits(name, x) \
-	if (SCARG(uap, name) && (error2 = copyout((caddr_t)pobits[x], \
-	    (caddr_t)SCARG(uap, name), ni))) \
+	if (SCARG(uap, name) && (error2 = copyout(pobits[x], \
+	    SCARG(uap, name), ni))) \
 		error = error2;
 	if (error == 0) {
 		int error2;
@@ -848,7 +847,7 @@ selwakeup(sip)
 	if (sip->si_flags & SI_COLL) {
 		nselcoll++;
 		sip->si_flags &= ~SI_COLL;
-		wakeup((caddr_t)&selwait);
+		wakeup(&selwait);
 	}
 	p = pfind(sip->si_selpid);
 	sip->si_selpid = 0;
@@ -981,7 +980,7 @@ retry:
 		goto retry;
 	}
 	p->p_flag &= ~P_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
+	error = tsleep(&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;

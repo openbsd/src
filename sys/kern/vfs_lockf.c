@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.6 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.7 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ lf_setlock(lock)
 		}
 #endif /* LOCKF_DEBUG */
 		TAILQ_INSERT_TAIL(&block->lf_blkhd, lock, lf_block);
-		error = tsleep((caddr_t)lock, priority, lockstr, 0);
+		error = tsleep(lock, priority, lockstr, 0);
 #if 0
 		if (error) {
 			/*
@@ -664,7 +664,7 @@ lf_split(lock1, lock2)
 	 * the encompassing lock
 	 */
 	MALLOC(splitlock, struct lockf *, sizeof *splitlock, M_LOCKF, M_WAITOK);
-	memcpy((caddr_t)splitlock, (caddr_t)lock1, sizeof (*splitlock));
+	memcpy(splitlock, lock1, sizeof (*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	splitlock->lf_block.tqe_next = NULL;
 	TAILQ_INIT(&splitlock->lf_blkhd);

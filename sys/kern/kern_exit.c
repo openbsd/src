@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.45 2003/06/21 00:42:58 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.46 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ exit1(p, rv)
 	p->p_flag &= ~P_TRACED;
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
-		wakeup((caddr_t)p->p_pptr);
+		wakeup(p->p_pptr);
 	}
 	p->p_sigignore = ~0;
 	p->p_siglist = 0;
@@ -205,7 +205,7 @@ exit1(p, rv)
 	 */
 	q = p->p_children.lh_first;
 	if (q)		/* only need this if any child is S_ZOMB */
-		wakeup((caddr_t)initproc);
+		wakeup(initproc);
 	for (; q != 0; q = nq) {
 		nq = q->p_sibling.le_next;
 		proc_reparent(q, initproc);
@@ -252,18 +252,18 @@ exit1(p, rv)
 		 * continue.
 		 */
 		if (pp->p_children.lh_first == NULL)
-			wakeup((caddr_t)pp);
+			wakeup(pp);
 	}
 
 	if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 		psignal(p->p_pptr, P_EXITSIG(p));
-	wakeup((caddr_t)p->p_pptr);
+	wakeup(p->p_pptr);
 
 	/*
 	 * Notify procfs debugger
 	 */
 	if (p->p_flag & P_FSTRACE)
-		wakeup((caddr_t)p);
+		wakeup(p);
 
 	/*
 	 * Release the process's signal state.
@@ -371,7 +371,7 @@ reaper(void)
 
 			/* Wake up the parent so it can get exit status. */
 			psignal(p->p_pptr, SIGCHLD);
-			wakeup((caddr_t)p->p_pptr);
+			wakeup(p->p_pptr);
 		} else {
 			/* Noone will wait for us. Just zap the process now */
 			proc_zap(p);
@@ -424,16 +424,14 @@ loop:
 
 			if (SCARG(uap, status)) {
 				status = p->p_xstat;	/* convert to int */
-				error = copyout((caddr_t)&status,
-						(caddr_t)SCARG(uap, status),
-						sizeof(status));
+				error = copyout(&status,
+				    SCARG(uap, status), sizeof(status));
 				if (error)
 					return (error);
 			}
 			if (SCARG(uap, rusage) &&
-			    (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)SCARG(uap, rusage),
-			    sizeof(struct rusage))))
+			    (error = copyout(p->p_ru,
+			    SCARG(uap, rusage), sizeof(struct rusage))))
 				return (error);
 
 			/*
@@ -445,7 +443,7 @@ loop:
 				proc_reparent(p, t);
 				if (p->p_exitsig != 0)
 					psignal(t, P_EXITSIG(p));
-				wakeup((caddr_t)t);
+				wakeup(t);
 				return (0);
 			}
 
@@ -464,8 +462,7 @@ loop:
 
 			if (SCARG(uap, status)) {
 				status = W_STOPCODE(p->p_xstat);
-				error = copyout((caddr_t)&status,
-				    (caddr_t)SCARG(uap, status),
+				error = copyout(&status, SCARG(uap, status),
 				    sizeof(status));
 			} else
 				error = 0;
@@ -478,7 +475,7 @@ loop:
 		retval[0] = 0;
 		return (0);
 	}
-	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0)) != 0)
+	if ((error = tsleep(q, PWAIT | PCATCH, "wait", 0)) != 0)
 		return (error);
 	goto loop;
 }

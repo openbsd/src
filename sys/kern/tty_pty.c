@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.12 2003/06/14 23:14:30 mickey Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.13 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ ptsopen(dev, flag, devtype, p)
 		tp->t_state |= TS_WOPEN;
 		if (flag&FNONBLOCK)
 			break;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 				 ttopen, 0);
 		if (error)
 			return (error);
@@ -182,7 +182,7 @@ again:
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
-			error = ttysleep(tp, (caddr_t)&lbolt, 
+			error = ttysleep(tp, &lbolt, 
 					 TTIPRI | PCATCH, ttybg, 0);
 			if (error)
 				return (error);
@@ -190,7 +190,7 @@ again:
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY)
 				return (EWOULDBLOCK);
-			error = ttysleep(tp, (caddr_t)&tp->t_canq,
+			error = ttysleep(tp, &tp->t_canq,
 					 TTIPRI | PCATCH, ttyin, 0);
 			if (error)
 				return (error);
@@ -284,12 +284,12 @@ ptcwakeup(tp, flag)
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
-		wakeup((caddr_t)&tp->t_outq.c_cf);
+		wakeup(&tp->t_outq.c_cf);
 		KNOTE(&pti->pt_selr.si_note, 0);
 	}
 	if (flag & FWRITE) {
 		selwakeup(&pti->pt_selw);
-		wakeup((caddr_t)&tp->t_rawq.c_cf);
+		wakeup(&tp->t_rawq.c_cf);
 		KNOTE(&pti->pt_selw.si_note, 0);
 	}
 }
@@ -368,8 +368,7 @@ ptcread(dev, uio, flag)
 				if (pti->pt_send & TIOCPKT_IOCTL) {
 					cc = min(uio->uio_resid,
 						sizeof(tp->t_termios));
-					uiomove((caddr_t) &tp->t_termios,
-						cc, uio);
+					uiomove(&tp->t_termios, cc, uio);
 				}
 				pti->pt_send = 0;
 				return (0);
@@ -388,7 +387,7 @@ ptcread(dev, uio, flag)
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
-		error = tsleep((caddr_t)&tp->t_outq.c_cf, TTIPRI | PCATCH,
+		error = tsleep(&tp->t_outq.c_cf, TTIPRI | PCATCH,
 			       ttyin, 0);
 		if (error)
 			return (error);
@@ -404,7 +403,7 @@ ptcread(dev, uio, flag)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -437,7 +436,7 @@ again:
 				cc = min(uio->uio_resid, BUFSIZ);
 				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
 				cp = locbuf;
-				error = uiomove((caddr_t)cp, cc, uio);
+				error = uiomove(cp, cc, uio);
 				if (error)
 					return (error);
 				/* check again for safety */
@@ -450,14 +449,14 @@ again:
 		}
 		(void) putc(0, &tp->t_canq);
 		ttwakeup(tp);
-		wakeup((caddr_t)&tp->t_canq);
+		wakeup(&tp->t_canq);
 		return (0);
 	}
 	while (uio->uio_resid > 0) {
 		if (cc == 0) {
 			cc = min(uio->uio_resid, BUFSIZ);
 			cp = locbuf;
-			error = uiomove((caddr_t)cp, cc, uio);
+			error = uiomove(cp, cc, uio);
 			if (error)
 				return (error);
 			/* check again for safety */
@@ -467,7 +466,7 @@ again:
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
 			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
-				wakeup((caddr_t)&tp->t_rawq);
+				wakeup(&tp->t_rawq);
 				goto block;
 			}
 			(*linesw[tp->t_line].l_rint)(*cp++, tp);
@@ -491,7 +490,7 @@ block:
 			return (EWOULDBLOCK);
 		return (0);
 	}
-	error = tsleep((caddr_t)&tp->t_rawq.c_cf, TTOPRI | PCATCH,
+	error = tsleep(&tp->t_rawq.c_cf, TTOPRI | PCATCH,
 		       ttyout, 0);
 	if (error) {
 		/* adjust for data copied in but not written */
@@ -643,7 +642,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)pti;
+	kn->kn_hook = pti;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.38 2003/04/29 07:14:11 tedu Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.39 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 		 * Sleep pending unlock; we use tsleep() to allow
 		 * an alarm out of the open.
 		 */
-		error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0);
+		error = tsleep(&lkm_v, TTIPRI|PCATCH, "lkmopn", 0);
 		if (error)
 			return (error);	/* leave LKM_WANT set -- no problem */
 	}
@@ -268,7 +268,7 @@ lkmclose(dev_t dev, int flag, int mode, struct proc *p)
 		lkmfree(curp);
 	}
 	lkm_v &= ~LKM_ALLOC;
-	wakeup((caddr_t)&lkm_v);	/* thundering herd "problem" here */
+	wakeup(&lkm_v);	/* thundering herd "problem" here */
 
 	return (0);
 }

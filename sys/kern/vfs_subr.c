@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.94 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.95 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -676,7 +676,7 @@ vget(vp, flags, p)
 	if (vp->v_flag & VXLOCK) {
  		vp->v_flag |= VXWANT;
 		simple_unlock(&vp->v_interlock);
-		tsleep((caddr_t)vp, PINOD, "vget", 0);
+		tsleep(vp, PINOD, "vget", 0);
 		return (ENOENT);
  	}
 	if (vp->v_usecount == 0 &&
@@ -1082,7 +1082,7 @@ vclean(vp, flags, p)
 #endif
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
-		wakeup((caddr_t)vp);
+		wakeup(vp);
 	}
 }
 
@@ -1143,7 +1143,7 @@ vgonel(vp, p)
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
 		simple_unlock(&vp->v_interlock);
-		tsleep((caddr_t)vp, PINOD, "vgone", 0);
+		tsleep(vp, PINOD, "vgone", 0);
 		return;
 	}
 	/*
@@ -1473,10 +1473,10 @@ again:
 				vfs_unbusy(mp, p);
 				return (ENOMEM);
 			}
-			if ((error = copyout((caddr_t)&vp,
+			if ((error = copyout(&vp,
 			    &((struct e_vnode *)bp)->vptr,
 			    sizeof(struct vnode *))) ||
-			   (error = copyout((caddr_t)vp,
+			   (error = copyout(vp,
 			    &((struct e_vnode *)bp)->vnode,
 			    sizeof(struct vnode)))) {
 				vfs_unbusy(mp, p);
@@ -1558,16 +1558,16 @@ vfs_hang_addrlist(mp, nep, argp)
 		return (EINVAL);
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
-	bzero((caddr_t)np, i);
+	bzero(np, i);
 	saddr = (struct sockaddr *)(np + 1);
-	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
+	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
 		saddr->sa_len = argp->ex_addrlen;
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
-		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
+		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
 		if (error)
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
@@ -1618,7 +1618,7 @@ vfs_free_netcred(rn, w)
 	register struct radix_node_head *rnh = (struct radix_node_head *)w;
 
 	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
-	free((caddr_t)rn, M_NETADDR);
+	free(rn, M_NETADDR);
 	return (0);
 }
 
@@ -1635,7 +1635,7 @@ vfs_free_addrlist(nep)
 	for (i = 0; i <= AF_MAX; i++)
 		if ((rnh = nep->ne_rtable[i]) != NULL) {
 			(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
-			free((caddr_t)rnh, M_RTABLE);
+			free(rnh, M_RTABLE);
 			nep->ne_rtable[i] = 0;
 		}
 }
@@ -1936,7 +1936,7 @@ vwaitforio(vp, slpflag, wmesg, timeo)
 
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
-		error = tsleep((caddr_t)&vp->v_numoutput,
+		error = tsleep(&vp->v_numoutput,
 		    slpflag | (PRIBIO + 1), wmesg, timeo);
 		if (error)
 			break;
@@ -1962,7 +1962,7 @@ vwakeup(vp)
 			panic("vwakeup: neg numoutput");
 		if ((vp->v_bioflag & VBIOWAIT) && vp->v_numoutput == 0) {
 			vp->v_bioflag &= ~VBIOWAIT;
-			wakeup((caddr_t)&vp->v_numoutput);
+			wakeup(&vp->v_numoutput);
 		}
 	}
 }
@@ -2017,9 +2017,8 @@ loop:
 				continue;
 			if (bp->b_flags & B_BUSY) {
 				bp->b_flags |= B_WANTED;
-				error = tsleep((caddr_t)bp,
-					slpflag | (PRIBIO + 1), "vinvalbuf",
-					slptimeo);
+				error = tsleep(bp, slpflag | (PRIBIO + 1),
+				    "vinvalbuf", slptimeo);
 				if (error) {
 					splx(s);
 					return (error);

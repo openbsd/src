@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.18 2003/06/17 21:56:25 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.19 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 		pool_put(&sema_pool, semaptr);
 		sema[semid] = NULL;
 		semundo_clear(semid, -1);
-		wakeup((caddr_t)&sema[semid]);
+		wakeup(&sema[semid]);
 		break;
 
 	case IPC_SET:
@@ -304,8 +304,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((error = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return (error);
-		if ((error = copyin(real_arg.buf, (caddr_t)&sbuf,
-		    sizeof(sbuf))) != 0)
+		if ((error = copyin(real_arg.buf, &sbuf, sizeof(sbuf))) != 0)
 			return (error);
 		semaptr->sem_perm.uid = sbuf.sem_perm.uid;
 		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
@@ -319,8 +318,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((error = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return (error);
-		error = copyout((caddr_t)semaptr, real_arg.buf,
-		    sizeof(struct semid_ds));
+		error = copyout(semaptr, real_arg.buf, sizeof(struct semid_ds));
 		break;
 
 	case GETNCNT:
@@ -353,7 +351,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 		if ((error = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return (error);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = copyout((caddr_t)&semaptr->sem_base[i].semval,
+			error = copyout(&semaptr->sem_base[i].semval,
 			    &real_arg.array[i], sizeof(real_arg.array[0]));
 			if (error != 0)
 				break;
@@ -377,7 +375,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 			return (error);
 		semaptr->sem_base[semnum].semval = real_arg.val;
 		semundo_clear(semid, semnum);
-		wakeup((caddr_t)&sema[semid]);
+		wakeup(&sema[semid]);
 		break;
 
 	case SETALL:
@@ -387,13 +385,13 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 			return (error);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			error = copyin(&real_arg.array[i],
-			    (caddr_t)&semaptr->sem_base[i].semval,
+			    &semaptr->sem_base[i].semval,
 			    sizeof(real_arg.array[0]));
 			if (error != 0)
 				break;
 		}
 		semundo_clear(semid, -1);
-		wakeup((caddr_t)&sema[semid]);
+		wakeup(&sema[semid]);
 		break;
 
 	default:
@@ -646,7 +644,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 			semptr->semncnt++;
 
 		DPRINTF(("semop:  good night!\n"));
-		error = tsleep((caddr_t)&sema[semid], PLOCK | PCATCH,
+		error = tsleep(&sema[semid], PLOCK | PCATCH,
 		    "semwait", 0);
 		DPRINTF(("semop:  good morning (error=%d)!\n", error));
 
@@ -740,7 +738,7 @@ done:
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
 		DPRINTF(("semop:  doing wakeup\n"));
-		wakeup((caddr_t)&sema[semid]);
+		wakeup(&sema[semid]);
 		DPRINTF(("semop:  back from wakeup\n"));
 	}
 	DPRINTF(("semop:  done\n"));
@@ -813,7 +811,7 @@ semexit(struct proc *p)
 			else
 				semaptr->sem_base[semnum].semval += adjval;
 
-			wakeup((caddr_t)&sema[semid]);
+			wakeup(&sema[semid]);
 			DPRINTF(("semexit:  back from wakeup\n"));
 		}
 	}

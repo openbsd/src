@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.54 2003/06/26 01:01:06 mickey Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.55 2003/07/21 22:44:50 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ malloc(size, type, flags)
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
-		tsleep((caddr_t)ksp, PSWP+2, memname[type], 0);
+		tsleep(ksp, PSWP+2, memname[type], 0);
 	}
 	ksp->ks_size |= 1 << indx;
 #endif
@@ -369,7 +369,7 @@ free(addr, type)
 		kup->ku_pagecnt = 0;
 		if (ksp->ks_memuse + size >= ksp->ks_limit &&
 		    ksp->ks_memuse < ksp->ks_limit)
-			wakeup((caddr_t)ksp);
+			wakeup(ksp);
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
@@ -415,7 +415,7 @@ free(addr, type)
 	ksp->ks_memuse -= size;
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
 	    ksp->ks_memuse < ksp->ks_limit)
-		wakeup((caddr_t)ksp);
+		wakeup(ksp);
 	ksp->ks_inuse--;
 #endif
 	if (kbp->kb_next == NULL)
