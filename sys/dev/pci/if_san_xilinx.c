@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.3 2004/06/28 01:16:30 mcbride Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -33,7 +33,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include </usr/include/bitstring.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +56,8 @@
 #include <netinet/in_var.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
+
+#include <machine/bus.h>
 
 #include <dev/pci/if_san_common.h>
 #include <dev/pci/if_san_obsd.h>
@@ -163,6 +164,10 @@ typedef struct {
 	void		*prot_ch;
 	wan_trace_t	trace_info;
 
+	u_int8_t		tx_dma_status;
+	bus_dma_segment_t	tx_dma_seg;
+	int			tx_dma_rseg;
+	caddr_t			tx_dma_vaddr;
 }xilinx_softc_t;
 #define WAN_IFP_TO_SOFTC(ifp)	(xilinx_softc_t *)((ifp)->if_softc)
 
@@ -556,6 +561,15 @@ wan_xilinx_down(struct ifnet *ifp)
 		aft_init_requeue_free_m(sc, m);
 		sc->rx_dma_mbuf = NULL;
 	}
+	if (bit_test((u_int8_t *)&sc->tx_dma_status, TX_DMA_BUF_INIT)){
+		bus_dma_tag_t	dmat;
+
+		sdla_getcfg(card->hw, SDLA_DMATAG, &dmat);
+		bus_dmamem_unmap(dmat, sc->tx_dma_vaddr, sc->dma_mtu);
+		bus_dmamem_free(dmat, &sc->tx_dma_seg, sc->tx_dma_rseg);
+		bit_clear((u_int8_t *)&sc->tx_dma_status, TX_DMA_BUF_INIT);
+	}
+
 	/* If there is something in rx_complete_list, then
 	** move evething to rx_free_list. */
 	for (;;) {
@@ -845,7 +859,8 @@ process_udp_mgmt_pkt(sdla_t* card, struct ifnet* ifp,
 					 * indicate there are more frames
 					 * on board & exit
 					 */
-					wan_udp_pkt->wan_udp_aft_ismoredata = 0x01;
+					wan_udp_pkt->wan_udp_aft_ismoredata
+								= 0x01;
 					break;
 				}
 
@@ -1807,7 +1822,6 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 		bit_clear((u_int8_t *)&sc->dma_status, TX_BUSY);
 		return (-ENOBUFS);
 	} else {
-
 		len = m->m_len;
 		if (len > MAX_XILINX_TX_DMA_SIZE) {
 			/* FIXME: We need to split this frame into
@@ -1821,7 +1835,59 @@ xilinx_dma_tx(sdla_t *card, xilinx_softc_t *sc)
 			return (-EINVAL);
 		}
 
-		sc->tx_dma_addr = kvtop(mtod(m, caddr_t));
+		if (mtod(m, u_int32_t)  & 0x03) {
+			if (!bit_test((u_int8_t *)&sc->tx_dma_status,
+							TX_DMA_BUF_INIT)) {
+				bus_dma_tag_t	dmat;
+				int err;
+
+				sdla_getcfg(card->hw, SDLA_DMATAG, &dmat);
+				err = bus_dmamem_alloc(
+						dmat,
+						sc->dma_mtu,
+						PAGE_SIZE,
+						0,
+						&sc->tx_dma_seg,
+						1,
+						&sc->tx_dma_rseg,
+						BUS_DMA_NOWAIT);
+				if (err) {
+					log(LOG_INFO,
+					"%s: Failed allocate DMA buffer!\n",
+						sc->if_name);
+					m_freem(m);
+					bit_clear((u_int8_t *)&sc->dma_status,
+								TX_BUSY);
+					return (-EINVAL);
+				}
+				err = bus_dmamem_map(
+						dmat,
+						&sc->tx_dma_seg,
+						sc->tx_dma_rseg,
+						sc->dma_mtu,
+						(caddr_t*)&sc->tx_dma_vaddr,
+						BUS_DMA_NOWAIT);
+				if (err) {
+					log(LOG_INFO,
+					"%s: Failed to map DMA buffer!\n",
+						sc->if_name);
+					bus_dmamem_free(
+						dmat,
+						&sc->tx_dma_seg,
+						sc->tx_dma_rseg);
+					m_freem(m);
+					bit_clear((u_int8_t *)&sc->dma_status,
+								TX_BUSY);
+					return (-EINVAL);
+				}
+				bit_set((u_int8_t *)&sc->tx_dma_status,
+							TX_DMA_BUF_INIT);
+			}
+			memcpy(sc->tx_dma_vaddr, mtod(m, caddr_t), m->m_len);
+			sc->tx_dma_addr = kvtop(sc->tx_dma_vaddr);
+		} else {
+			sc->tx_dma_addr = kvtop(mtod(m, caddr_t));
+		}
 		sc->tx_dma_len = len;
 	}
 

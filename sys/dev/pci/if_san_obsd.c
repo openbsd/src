@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.3 2004/06/26 22:48:14 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -32,7 +32,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-# include </usr/include/bitstring.h>
 # include <sys/types.h>
 # include <sys/param.h>
 # include <sys/systm.h>
@@ -115,7 +114,7 @@ wanpipe_generic_name(sdla_t *card, char *ifname)
 }
 
 int
-wanpipe_generic_register (sdla_t *card, struct ifnet *ifp, char *ifname)
+wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 {
 	if (ifname == NULL || strlen(ifname) > IFNAMSIZ) {
 		return (-EINVAL);

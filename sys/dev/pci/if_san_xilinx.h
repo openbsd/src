@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.h,v 1.3 2004/06/28 01:16:30 mcbride Exp $	*/
+/*	$OpenBSD: if_san_xilinx.h,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -325,6 +325,8 @@ typedef struct {
 #define USER_SECTOR_START_ADDR  0x40000
 
 #define MAX_TRACE_QUEUE		100
+
+#define TX_DMA_BUF_INIT		0
 
 #define MAX_TRACE_BUFFER	(MAX_LGTH_UDP_MGNT_PKT -	\
 				 sizeof(iphdr_t) -		\

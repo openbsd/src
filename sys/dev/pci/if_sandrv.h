@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.h,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_sandrv.h,v 1.3 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -36,7 +36,7 @@
 #   define	__IF_SANDRV_H
 
 #ifdef __SDLADRV__
-# define EXTERN 
+# define EXTERN
 #else
 # define EXTERN extern
 #endif
@@ -51,7 +51,7 @@ typedef struct {
 		struct {
 			unsigned char  opp_flag;
 			unsigned char  command;
-			unsigned short data_len;	
+			unsigned short data_len;
 			unsigned char  return_code;
 		} wan_p_cmd;
 		unsigned char mbox[WAN_MAILBOX_SIZE];
@@ -170,8 +170,8 @@ typedef struct {
 #define PCI_MEM_BASE0_DWORD	0x14	/* memory base - apperture 0 */
 #define PCI_MEM_BASE1_DWORD     0x18	/* memory base - apperture 1 */
 #if 0
-#define PCI_SUBSYS_VENDOR_WORD 	0x2C		/* subsystem vendor ID */
-#define PCI_SUBSYS_ID_WORD 	0x2E		/* subsystem ID */
+#define PCI_SUBSYS_VENDOR_WORD	0x2C		/* subsystem vendor ID */
+#define PCI_SUBSYS_ID_WORD	0x2E		/* subsystem ID */
 #define PCI_INT_LINE_BYTE	0x3C		/* interrupt line */
 #define PCI_INT_PIN_BYTE	0x3D		/* interrupt pin */
 #endif
@@ -179,13 +179,13 @@ typedef struct {
 #define PCI_MAP1_DWORD          0x44	/* PCI to local bus address 1 */
 #define PCI_INT_STATUS          0x48		/* interrupt status */
 #define PCI_INT_CONFIG		0x4C		/* interrupt configuration */
-  
+
 #define PCI_DEV_SLOT_MASK	0x1F		/* mask for slot numbering */
 #define PCI_IRQ_NOT_ALLOCATED	0xFF		/* interrupt line for no IRQ */
 /* Local PCI register usage */
 #define PCI_MEMORY_ENABLE	0x00000003	/* enable PCI memory */
 #define PCI_CPU_A_MEM_DISABLE	0x00000002	/* disable CPU A memory */
-#define PCI_CPU_B_MEM_DISABLE  	0x00100002	/* disable CPU B memory */
+#define PCI_CPU_B_MEM_DISABLE	0x00100002	/* disable CPU B memory */
 #define PCI_ENABLE_IRQ_CPU_A	0x005A0004	/* enable IRQ for CPU A */
 #define PCI_ENABLE_IRQ_CPU_B    0x005A0008	/* enable IRQ for CPU B */
 #define PCI_ENABLE_IRQ_DMA0     0x01000000	/* enable IRQ for DMA 0 */
@@ -194,7 +194,7 @@ typedef struct {
 #define PCI_DISABLE_IRQ_CPU_B   0x00000008	/* disable IRQ for CPU B */
 #define PCI_DISABLE_IRQ_DMA0     0x01000000	/* disable IRQ for DMA 0 */
 #define PCI_DISABLE_IRQ_DMA1     0x02000000	/* disable IRQ for DMA 1 */
- 
+
 /* Setting for the Interrupt Status register */  
 #define IRQ_DMA0		0x01000000	/* IRQ for DMA0 */
 #define IRQ_DMA1		0x02000000	/* IRQ for DMA1 */
@@ -208,13 +208,13 @@ typedef struct {
 
 /* S514 control register offsets within the memory address space */
 #define S514_CTRL_REG_BYTE	0x80000
- 
+
 /* S514 adapter control bytes */
-#define S514_CPU_HALT 		0x00
+#define S514_CPU_HALT		0x00
 #define S514_CPU_START		0x01
 
 /* The maximum number of S514 adapters supported */
-#define MAX_S514_CARDS		20	
+#define MAX_S514_CARDS		20
 
 #define WAN_CMD_OK		0	/* normal firmware return code */
 #define WAN_CMD_TIMEOUT		0xFF	/* firmware command timed out */
@@ -232,7 +232,7 @@ typedef struct {
 		(core_id == AFT_ATM_CORE_ID) ? "ATM"   :	\
 		(core_id == AFT_SS7_CORE_ID) ? "SS7"   :	\
 						"Unknown"
-#define WAN_ASSERT(val) 						\
+#define WAN_ASSERT(val)							\
 	if (val){							\
 		log(LOG_INFO, "********** ASSERT FAILED **********\n");	\
 		log(LOG_INFO, "%s:%d - Critical error\n",		\
@@ -240,7 +240,7 @@ typedef struct {
 		return -EINVAL;						\
 	}
 
-#define WAN_ASSERT1(val) 						\
+#define WAN_ASSERT1(val)						\
 	if (val){							\
 		log(LOG_INFO, "********** ASSERT FAILED **********\n");	\
 		log(LOG_INFO, "%s:%d - Critical error\n",		\
@@ -329,5 +329,5 @@ extern int sdla_is_te1(void*);
 
 #endif
 
-#undef EXTERN 
+#undef EXTERN
 #endif	/* __IF_SANDRV_H */

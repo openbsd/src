@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.h,v 1.3 2004/06/26 22:19:38 mcbride Exp $	*/
+/*	$OpenBSD: if_san_common.h,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -287,6 +287,18 @@ typedef struct wan_udp_hdr{
 /* Unsafe sprintf and vsprintf function removed from the kernel */
 # define WAN_IRQ_RETVAL(a)		return;
 
+#define	_bit_byte(bit) ((bit) >> 3)
+#define	_bit_mask(bit) (1 << ((bit)&0x7))
+
+/* is bit N of bitstring name set? */
+#define	bit_test(name, bit) ((name)[_bit_byte(bit)] & _bit_mask(bit))
+
+/* set bit N of bitstring name */
+#define	bit_set(name, bit) ((name)[_bit_byte(bit)] |= _bit_mask(bit))
+
+/* clear bit N of bitstring name */
+#define	bit_clear(name, bit) ((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
+
 /****** Data Structures *****************************************************/
 
 typedef struct wan_udp_pkt {
@@ -361,19 +373,19 @@ typedef struct sdla {
 	char		state;		/* device state */
 	unsigned long	critical;	/* critical section flag */
 
-	int (*iface_up) (struct ifnet*);
-	int (*iface_down) (struct ifnet*);
-	int (*iface_send) (struct mbuf* skb, struct ifnet*);
-	int (*iface_ioctl) (struct ifnet*, int, struct ifreq*);
+	int(*iface_up) (struct ifnet*);
+	int(*iface_down) (struct ifnet*);
+	int(*iface_send) (struct mbuf* skb, struct ifnet*);
+	int(*iface_ioctl) (struct ifnet*, int, struct ifreq*);
 
 	unsigned long	state_tick;	/* link state timestamp */
 	unsigned long	in_isr;		/* interrupt-in-service flag */
 	unsigned long	configured;	/* configurations status */
-	int (*del_if) (struct sdla*, struct ifnet*);
-	void (*isr)(struct sdla*);	/* interrupt service routine */
-	void (*poll)(struct sdla*);	/* polling routine */
-	int (*exec)(struct sdla*, void*, void*);
-	int (*ioctl) (struct ifnet*, int, struct ifreq*);
+	int(*del_if) (struct sdla*, struct ifnet*);
+	void(*isr)(struct sdla*);	/* interrupt service routine */
+	void(*poll)(struct sdla*);	/* polling routine */
+	int(*exec)(struct sdla*, void*, void*);
+	int(*ioctl) (struct ifnet*, int, struct ifreq*);
 
 	union {
 		sdla_xilinx_t	xilinx;
@@ -388,8 +400,8 @@ typedef struct sdla {
 	unsigned char		front_end_status;
 	WRITE_FRONT_END_REG_T*	write_front_end_reg;
 	READ_FRONT_END_REG_T*	read_front_end_reg;
-	void (*te_enable_timer) (void*);
-	void (*te_link_state)  (void*);
+	void(*te_enable_timer) (void*);
+	void(*te_link_state)  (void*);
 
 	LIST_HEAD(,wanpipe_common)	dev_head;
 	LIST_ENTRY(sdla)		next;	/* -> next device */

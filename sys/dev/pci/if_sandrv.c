@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.3 2004/06/26 22:05:25 mcbride Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -171,13 +171,13 @@ static void sdla_poke_by_4(sdlahw_t *, unsigned long, void *, unsigned int);
 
 static sdlahw_card_t* sdla_card_register(u_int16_t, int, int);
 #if 0
-static int sdla_card_unregister (unsigned char hw_type, int slot_no, int bus_no, int ioport);
+static int sdla_card_unregister (unsigned char, int, int, int);
 #endif
 static sdlahw_card_t* sdla_card_search(u_int16_t, int, int);
 
 static sdlahw_t* sdla_hw_register(sdlahw_card_t *, int, int, void *);
 #if 0
-static int sdla_hw_unregister(sdlahw_card_t* card, int cpu_no);
+static int sdla_hw_unregister(sdlahw_card_t*, int);
 #endif
 static sdlahw_t* sdla_hw_search(u_int16_t, int, int, int);
 
@@ -387,7 +387,7 @@ sdladrv_exit(void)
 		sdla_hw_probe_t *tmp = elm_hw_probe;
 		elm_hw_probe = LIST_NEXT(elm_hw_probe, next);
 		if (tmp->used){
-			log(LOG_INFO, "sdladrv: HW probe info is in used (%s)\n",
+			log(LOG_INFO, "HW probe info is in used (%s)\n",
 					elm_hw_probe->hw_info);
 			return -EBUSY;
 		}
@@ -617,7 +617,7 @@ sdla_card_register(u_int16_t atype, int slot_no, int bus_no)
 
 #if 0
 static int
-sdla_card_unregister (u_int16_t atype, int slot_no, int bus_no, int ioport)
+sdla_card_unregister(u_int16_t atype, int slot_no, int bus_no, int ioport)
 {
 	sdlahw_card_t*	tmp_card;
 
@@ -631,12 +631,14 @@ sdla_card_unregister (u_int16_t atype, int slot_no, int bus_no, int ioport)
 		}
 	}
 	if (tmp_card == NULL){
-		log(LOG_INFO, "Error: Card didn't find %04X card (slot=%d, bus=%d)\n",
+		log(LOG_INFO,
+		"Error: Card didn't find %04X card (slot=%d, bus=%d)\n"
 				atype, slot_no, bus_no);
 		return -EFAULT;
 	}
 	if (tmp_card->used){
-		log(LOG_INFO, "Error: Card is still in used (slot=%d,bus=%d,used=%d)\n",
+		log(LOG_INFO,
+		"Error: Card is still in used (slot=%d,bus=%d,used=%d)\n",
 				slot_no, bus_no, tmp_card->used);
 		return -EBUSY;
 	}
@@ -703,7 +705,7 @@ sdla_hw_register(sdlahw_card_t *card, int cpu_no, int irq, void *dev)
 
 #if 0
 static int
-sdla_hw_unregister (sdlahw_card_t* hwcard, int cpu_no)
+sdla_hw_unregister(sdlahw_card_t* hwcard, int cpu_no)
 {
 	sdlahw_t*	tmp_hw;
 	int		i;
@@ -717,13 +719,18 @@ sdla_hw_unregister (sdlahw_card_t* hwcard, int cpu_no)
 		}
 	}
 	if (tmp_hw == NULL){
-		log(LOG_INFO, "Error: Failed to find device (slot=%d,bus=%d,cpu=%c)\n",
-				hwcard->slot_no, hwcard->bus_no, SDLA_GET_CPU(cpu_no));
+		log(LOG_INFO,
+		"Error: Failed to find device (slot=%d,bus=%d,cpu=%c)\n",
+		hwcard->slot_no, hwcard->bus_no, SDLA_GET_CPU(cpu_no));
 		return -EFAULT;
 	}
 	if (tmp_hw->used){
-		log(LOG_INFO, "Error: Device is still in used (slot=%d,bus=%d,cpu=%c,used=%d)\n",
-				hwcard->slot_no, hwcard->bus_no, SDLA_GET_CPU(cpu_no), hwcard->used);
+		log(LOG_INFO,
+		"Error: Device is still in used (slot=%d,bus=%d,cpu=%c,%d)\n",
+				hwcard->slot_no,
+				hwcard->bus_no,
+				SDLA_GET_CPU(cpu_no),
+				hwcard->used);
 		return -EBUSY;
 	}
 
@@ -743,7 +750,9 @@ sdla_hw_search(u_int16_t atype, int slot_no, int bus_no, int cpu_no)
 
 	LIST_FOREACH(tmp_hw, &sdlahw_head, next) {
 		if (tmp_hw->hwcard == NULL) {
-			log(LOG_INFO, "Critical Error: sdla_cpu_search: line %d\n", __LINE__);
+			log(LOG_INFO,
+			"Critical Error: sdla_cpu_search: line %d\n",
+					__LINE__);
 			LIST_REMOVE(tmp_hw, next);
 			continue;
 		}
