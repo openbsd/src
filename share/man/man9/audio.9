@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.6 2000/12/22 00:13:34 avsm Exp $
+.\"	$OpenBSD: audio.9,v 1.7 2001/09/24 12:23:15 espie Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@ struct audio_hw_if {
 
 	int	(*getdev)__P((void *, struct audio_device *));
 	int	(*setfd)__P((void *, int));
-	
+
 	int	(*set_port)__P((void *, mixer_ctrl_t *));
 	int	(*get_port)__P((void *, mixer_ctrl_t *));
 
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
-	
+
 	void	*(*allocm)__P((void *, int, size_t, int, int));
 	void	(*freem)__P((void *, void *, int));
 	size_t	(*round_buffersize)__P((void *, int, size_t));
@@ -135,10 +135,10 @@ The upper layer of the audio driver allocates one buffer for playing
 and one for recording.
 It handles the buffering of data from the user processes in these.
 The data is presented to the lower level in smaller chunks, called blocks.
-If there, during playback, is no data available from the user process
+During playback, if there is no data available from the user process
 when the hardware requests another block, a block of silence will be
 used instead.
-Furthermore, if the user process does not read data quickly enough during
+Similarly, if the user process does not read data quickly enough during
 recording, data will be thrown away.
 .Pp
 The fields of
@@ -147,7 +147,19 @@ are described in some more detail below.
 Some fields are optional and can be set to 0 if not needed.
 .Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
-is called when the audio device is opened.
+is called when the audio device is opened, with
+.Va flags
+the kernel represention of flags passed to the
+.Xr open 2
+system call
+.Po
+see
+.Dv OFLAGS
+and
+.Dv FFLAGS
+in
+.Pa sys/fcntl.h
+.Pc .
 It should initialize the hardware for I/O.
 Every successful call to
 .Va open
@@ -200,7 +212,10 @@ If the hardware requires software assistance with some encoding
 .Va sw_code
 and
 .Va factor
-fields of these structures.
+fields of these structures. 
+See
+.Pa /usr/src/sys/dev/auconv.h
+for available software support.
 The values of the structures may also be modified if the hardware
 cannot be set to exactly the requested mode (e.g., if the requested
 sampling rate is not supported, but one close enough is).
@@ -216,6 +231,11 @@ is copied into
 .Va rec
 after the call to
 .Va set_params .
+The mi audio driver does some preliminary parameter checking: it verifies
+that the precision is compatible with the encoding, and it translates
+.Dv AUDIO_ENCODING_[US]LINEAR
+to
+.Dv AUDIO_ENCODING_[US]LINEAR_{LE,BE} .
 Return 0 on success, otherwise an error code.
 .It Dv int round_blocksize(void *hdl, int bs)
 optional, is called with the block size,
@@ -345,6 +365,11 @@ is used instead (with the same arguments but the first two).
 The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
+.Va direction
+is
+.Dv AUMODE_PLAY
+or
+.Dv AUMODE_RECORD .
 Returns the address of the buffer, or 0 on failure.
 .It Dv void freem(void *hdl, void *addr, int type)
 optional, is called to free memory allocated by
@@ -359,6 +384,11 @@ The upper layer supplies the suggested size in
 .Va bufsize ,
 which the hardware driver can then change if needed.
 E.g., DMA on the ISA bus cannot exceed 65536 bytes.
+Note that the buffer size is always a multiple of the block size, so
+.Fn round_blocksize
+and
+.Fn round_buffersize
+should be consistent.
 .It Dv "int mappage(void *hdl, void *addr, int offs, int prot)"
 .br
 optional, is called for
@@ -372,8 +402,11 @@ mapped with protection
 Returns -1 on failure, or a machine dependent opaque value
 on success.
 .It Dv int get_props(void *hdl)
-Should return the device properties; i.e., a combination of
-AUDIO_PROP_xxx.
+Should return the device properties, as per
+.Xr audio 2
+.Dv AUDIO_GETPROPS
+ioctl, i.e., a combination of
+.Dv AUDIO_PROP_xxx .
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
