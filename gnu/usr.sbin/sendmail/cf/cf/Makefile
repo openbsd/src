@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/06/18 00:14:40 itojun Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/06/18 03:13:08 itojun Exp $
 #
 #  Makefile for configuration files.
 #
@@ -37,7 +37,7 @@ clean cleandir:
 
 depend install:
 
-distribution: openbsd-proto.cf openbsd-proto-IPv6.cf
+distribution: openbsd-proto.cf openbsd-proto-IPv4only.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-proto.cf \
 	    ${DESTDIR}/etc/mail/sendmail.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \
