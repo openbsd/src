@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.8 2003/09/28 21:01:42 grange Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.9 2003/10/16 10:02:45 grange Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 #ifndef __DEV_ATA_ATAREG_H__
@@ -105,7 +105,17 @@ struct ataparams {
     u_int16_t	__reserved4[2];
     u_int16_t	atap_queuedepth;   	/* 75: */
 #define WDC_QUEUE_DEPTH_MASK 0x1f
-    u_int16_t	__reserved5[4];
+    u_int16_t	atap_sata_caps;		/* 76: SATA capabilities */
+#define SATA_SIGNAL_GEN1	0x0002	/* SATA Gen-1 signaling speed */
+#define SATA_SIGNAL_GEN2	0x0004	/* SATA Gen-2 signaling speed */
+#define SATA_NATIVE_CMDQ	0x0100	/* native command queuing */
+#define SATA_HOST_PWR_MGMT	0x0200	/* power management (host) */
+    u_int16_t	atap_sata_reserved;	/* 77: reserved */
+    u_int16_t	atap_sata_features_supp;/* 78: SATA features supported */
+#define SATA_NONZERO_OFFSETS	0x0002	/* non-zero buffer offsets */
+#define SATA_DMA_SETUP_AUTO	0x0004	/* DMA setup auto-activate */
+#define SATA_DRIVE_PWR_MGMT	0x0008	/* power management (device) */
+    u_int16_t	atap_sata_features_en;	/* 79: SATA features enabled */
     u_int16_t	atap_ata_major;  	/* 80: Major version number */
 #define	WDC_VER_ATA1	0x0002
 #define	WDC_VER_ATA2	0x0004
