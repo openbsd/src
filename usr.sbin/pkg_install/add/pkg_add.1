@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.21 2000/04/25 19:56:51 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.22 2000/05/05 17:09:44 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -259,19 +259,9 @@ an attempt is made to find and install it;
 if the missing package cannot be found or installed,
 the installation is terminated.
 .It
-A search is made for any
-.Cm @option
-directives which control how the package is added to the system.
-The only currently implemented option is
-.Cm @option extract-in-place ,
-which causes the package to be extracted directly into its
-prefix directory rather than moving it through a staging area in
-.Pa /tmp .
-.It
-If
-.Cm @option extract-in-place
-is enabled, the package is now extracted directly into its
-final location, otherwise it is extracted into the staging area.
+A staging area is created under
+.Pa /tmp ,
+and the package is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
@@ -306,11 +296,8 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-If
-.Cm @option extract-in-place
-is not present in the packing list,
-then it is used as a guide for moving (or copying, as necessary) files from
-the staging area into their final locations.
+The packing list is used as a guide for moving (or copying, as necessary) 
+files from the staging area into their final locations.
 .It
 If the package contains an
 .Ar mtreefile
