@@ -1,10 +1,10 @@
-/*	$OpenBSD: ip6_input.c,v 1.10 2000/04/17 04:44:50 itojun Exp $	*/
-/*	$KAME: ip6_input.c,v 1.72 2000/03/21 09:23:19 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.11 2000/05/19 20:12:10 itojun Exp $	*/
+/*	$KAME: ip6_input.c,v 1.89 2000/05/19 19:59:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -141,13 +141,6 @@ static void ip6_init2 __P((void *));
 
 static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
 
-#if defined(PTR)
-extern	int		ip6_protocol_tr;
-
-int	ptr_in6		__P((struct mbuf *, struct mbuf **));
-extern void ip_forward __P((struct mbuf *, int));
-#endif
-
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
  * All protocols not implemented in kernel go to raw IP6 protocol handler.
@@ -186,7 +179,7 @@ ip6_init2(dummy)
 #if 1
 	/*
 	 * to route local address of p2p link to loopback,
-	 * assign loopback address first. 
+	 * assign loopback address first.
 	 */
 	in6_ifattach(&loif[0], NULL);
 #else
@@ -359,13 +352,12 @@ ip6_input(m)
 		}
 	}
 
-	if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
-		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-			ours = 1;
-			deliverifp = m->m_pkthdr.rcvif;
-			goto hbhcheck;
-		}
-	} else {
+#ifndef FAKE_LOOPBACK_IF
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0)
+#else
+	if (1)
+#endif
+	{
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 			ip6->ip6_src.s6_addr16[1]
 				= htons(m->m_pkthdr.rcvif->if_index);
@@ -374,31 +366,19 @@ ip6_input(m)
 				= htons(m->m_pkthdr.rcvif->if_index);
 	}
 
-#if defined(PTR)
 	/*
-	 *
+	 * XXX we need this since we do not have "goto ours" hack route
+	 * for some of our ifaddrs on loopback interface.
+	 * we should correct it by changing in6_ifattach to install
+	 * "goto ours" hack route.
 	 */
-	if (ip6_protocol_tr)
-	{
-	    struct mbuf *m1 = NULL;
-
-	    switch (ptr_in6(m, &m1))
-	    {
-	      case IPPROTO_IP:					goto mcastcheck;
-	      case IPPROTO_IPV4:	ip_forward(m1, 0);	break;
-	      case IPPROTO_IPV6:	ip6_forward(m1, 0);	break;
-	      case IPPROTO_MAX:			/* discard this packet	*/
-	      default:
-	    }
-
-	    if (m != m1)
-		m_freem(m);
-
-	    return;
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) != 0) {
+		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
+			ours = 1;
+			deliverifp = m->m_pkthdr.rcvif;
+			goto hbhcheck;
+		}
 	}
-
-  mcastcheck:
-#endif
 
 	/*
 	 * Multicast check
