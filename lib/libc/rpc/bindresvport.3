@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.15 2000/01/26 06:57:20 itojun Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.16 2000/01/26 07:02:57 itojun Exp $
 .\"
 .Dd August 9, 1997
 .Dt BINDRESVPORT 3
@@ -32,7 +32,7 @@ When
 .Va sin
 is not null,
 .Va sin->sin_family
-must initialized to the address family of the socket, passed by
+must be initialized to the address family of the socket, passed by
 .Va sd .
 If the value of
 .Va sin->sin_port
