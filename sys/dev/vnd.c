@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.39 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.40 2003/10/11 03:31:07 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -94,8 +94,8 @@ int vnddebug = 0x00;
 
 #define b_cylin	b_resid
 
-#define	vndunit(x)	DISKUNIT((x) & 0x7f)
-#define vndsimple(x)	((x) & 0x80)
+#define	vndunit(x)	DISKUNIT(minor(x) & 0x7ff)
+#define vndsimple(x)	(minor(x) & 0x800)
 #define	MAKEVNDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	VNDLABELDEV(dev) (MAKEVNDDEV(major(dev), vndunit(dev), RAW_PART))
