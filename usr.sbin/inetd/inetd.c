@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.101 2002/06/21 07:30:09 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.102 2002/06/28 22:41:10 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.101 2002/06/21 07:30:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.102 2002/06/28 22:41:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1300,7 +1300,8 @@ more:
 		*s++ = '\0';
 		sep->se_max = strtoul(s, &p, 0);
 		if (sep->se_max < 1 || *p) {
-			syslog(LOG_ERR, "%s: illegal max field \"%s\", setting to %d",
+			syslog(LOG_ERR,
+			    "%s: illegal max field \"%s\", setting to %d",
 			    sep->se_service, s, toomany);
 			sep->se_max = toomany;
 		}
@@ -1685,8 +1686,8 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 	struct sockaddr_storage ss;
 
 	size = sizeof(ss);
-	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss,
-	    &size)) < 0)
+	if ((i = recvfrom(s, buffer, sizeof(buffer), 0,
+	    (struct sockaddr *)&ss, &size)) < 0)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
