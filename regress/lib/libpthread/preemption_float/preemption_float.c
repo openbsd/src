@@ -1,4 +1,4 @@
-/*	$OpenBSD: preemption_float.c,v 1.2 2002/06/23 20:21:22 marc Exp $	*/
+/*	$OpenBSD: preemption_float.c,v 1.3 2003/01/23 00:52:52 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -62,6 +62,7 @@ void *log_loop (void *x) {
 		d = sin(d);
 		/* if (d2 != d1) { */
 		if (memcmp (&d2, &d1, 8)) {
+			printf("log loop: %f != %f\n", d1, d2);
 			pthread_exit(&float_failed);
 		}
 	}
@@ -86,6 +87,7 @@ void *trig_loop (void *x) {
 		d = sin(d);
 		/* if (d2 != d1) { */
 		if (memcmp (&d2, &d1, 8)) {
+			printf("trig loop: %f != %f\n", d1, d2);
   			pthread_exit(&float_failed);
 		}
 	}
