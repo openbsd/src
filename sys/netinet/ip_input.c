@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.51 2000/04/04 13:43:02 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.52 2000/04/09 17:43:02 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1040,9 +1040,7 @@ ip_dooptions(m)
 	return (0);
 bad:
 	ip->ip_len -= ip->ip_hl << 2;   /* XXX icmp_error adds in hdr length */
-	HTONS(ip->ip_len);	/* XXX because ip_input changed these three */
 	HTONS(ip->ip_id);
-	HTONS(ip->ip_off);
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);
