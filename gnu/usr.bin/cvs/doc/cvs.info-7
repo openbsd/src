@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -88,6 +87,7 @@ run the `cvs --help' command, or see *Note Index::.
      Trace CVS execution.  See *Note Global options::.
 
 `-v'
+
 `--version'
      Display version and copyright information for CVS.
 
@@ -103,9 +103,9 @@ run the `cvs --help' command, or see *Note Index::.
 
    Keyword expansion modes (*note Substitution modes::.):
 
-     -kkv  $Id: cvs.info-7,v 1.1.1.10 1999/02/28 21:40:14 tholo Exp $
-     -kkvl $Id: cvs.info-7,v 1.1.1.10 1999/02/28 21:40:14 tholo Exp $
-     -kk   $Id: cvs.info-7,v 1.1.1.10 1999/02/28 21:40:14 tholo Exp $
+     -kkv  $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
+     -kkvl $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
+     -kk   $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
      -kv   file1,v 1.1 1993/12/09 03:21:13 joe Exp
      -ko   no expansion
      -kb   no expansion, file is binary
@@ -113,17 +113,17 @@ run the `cvs --help' command, or see *Note Index::.
    Keywords (*note Keyword list::.):
 
      $Author: tholo $
-     $Date: 1999/02/28 21:40:14 $
-     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v 1.1.1.10 1999/02/28 21:40:14 tholo Exp $
-     $Id: cvs.info-7,v 1.1.1.10 1999/02/28 21:40:14 tholo Exp $
+     $Date: 1999/09/10 05:14:51 $
+     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
+     $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
      $Locker:  $
      $Name:  $
      $RCSfile: cvs.info-7,v $
-     $Revision: 1.1.1.10 $
+     $Revision: 1.1.1.11 $
      $Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v $
      $State: Exp $
      $Log: cvs.info-7,v $
-     Revision 1.1.1.10  1999/02/28 21:40:14  tholo
+     Revision 1.1.1.11  1999/09/10 05:14:51  tholo
      Latest version from Cyclic; skipped files
 
      Revision 1.1  1993/12/09 03:30:17  joe
@@ -378,8 +378,7 @@ run the `cvs --help' command, or see *Note Index::.
           Operate recursively (default).  *Note Recursive behavior::.
 
     `-r TAG'
-          Checkout revision TAG (is sticky).  See *Note Common
-          options::.
+          Checkout revision TAG.  See *Note Common options::.
 
 `history [OPTIONS] [FILES...]'
      Show repository access history.  See *Note history::.
@@ -768,7 +767,7 @@ defines the modules inside the repository.
 * Menu:
 
 * modules::                     Defining modules
-* Wrappers::                    Treat directories as files
+* Wrappers::                    Specify binary-ness based on file name
 * commit files::                The commit support files
 * commitinfo::                  Pre-commit checking
 * verifymsg::                   How are log messages evaluated?
@@ -777,6 +776,7 @@ defines the modules inside the repository.
 * loginfo::                     Where should log messages be sent?
 * rcsinfo::                     Templates for the log messages
 * cvsignore::                   Ignoring files via cvsignore
+* checkoutlist::                Adding your own administrative files
 * history file::                History information
 * Variables::                   Various variables are expanded
 * config::                      Miscellaneous CVS configuration
@@ -1100,7 +1100,7 @@ are described later on.  The common syntax is described here.
    * A file name or command-line template.
 
 Blank lines are ignored.  Lines that start with the character `#' are
-treated as comments.  Long lines unfortunately can *not* be broken in
+treated as comments.  Long lines unfortunately can _not_ be broken in
 two parts in any way.
 
    The first regular expression that matches the current directory name
@@ -1139,7 +1139,7 @@ are used in addition to the first matching regular expression or the
 name `DEFAULT'.
 
    Note: when CVS is accessing a remote repository, `commitinfo' will
-be run on the *remote* (i.e., server) side, not the client side (*note
+be run on the _remote_ (i.e., server) side, not the client side (*note
 Remote repositories::.).
 
 
@@ -1204,7 +1204,7 @@ log message.
 
    The `verifymsg' file contains this line:
 
-     ^tc     /usr/cvssupport/bugid.edit
+     ^tc     /usr/cvssupport/bugid.verify
 
    The `rcsinfo' file contains this line:
 
@@ -1216,7 +1216,7 @@ File: cvs.info,  Node: editinfo,  Next: loginfo,  Prev: verifymsg,  Up: Administ
 Editinfo
 ========
 
-   *NOTE:* The `editinfo' feature has been rendered obsolete.  To set a
+   _NOTE:_ The `editinfo' feature has been rendered obsolete.  To set a
 default editor for log messages use the `EDITOR' environment variable
 (*note Environment variables::.) or the `-e' global option (*note
 Global options::.).  See *Note verifymsg::, for information on the use
@@ -1365,7 +1365,7 @@ Makefile, foo.c) were modified, the output might be:
 will be generated.
 
    Note: when CVS is accessing a remote repository, `loginfo' will be
-run on the *remote* (i.e., server) side, not the client side (*note
+run on the _remote_ (i.e., server) side, not the client side (*note
 Remote repositories::.).
 
 * Menu:
@@ -1432,7 +1432,7 @@ Rcsinfo
    The `rcsinfo' file can be used to specify a form to edit when
 filling out the commit log.  The `rcsinfo' file has a syntax similar to
 the `verifymsg', `commitinfo' and `loginfo' files.  *Note syntax::.
-Unlike the other files the second part is *not* a command-line
+Unlike the other files the second part is _not_ a command-line
 template.  Instead, the part after the regular expression should be a
 full pathname to a file containing the log message template.
 
@@ -1455,7 +1455,7 @@ which does not then change.  If you edit `rcsinfo' or its templates,
 you may need to check out a new working directory.
 
 
-File: cvs.info,  Node: cvsignore,  Next: history file,  Prev: rcsinfo,  Up: Administrative files
+File: cvs.info,  Node: cvsignore,  Next: checkoutlist,  Prev: rcsinfo,  Up: Administrative files
 
 Ignoring files via cvsignore
 ============================
@@ -1525,20 +1525,4 @@ This offers no clean way to specify filenames which contain spaces, but
 you can use a workaround like `foo?bar' to match a file named `foo bar'
 (it also matches `fooxbar' and the like).  Also note that there is
 currently no way to specify comments.
-
-
-File: cvs.info,  Node: history file,  Next: Variables,  Prev: cvsignore,  Up: Administrative files
-
-The history file
-================
-
-   The file `$CVSROOT/CVSROOT/history' is used to log information for
-the `history' command (*note history::.).  This file must be created to
-turn on logging.  This is done automatically if the `cvs init' command
-is used to set up the repository (*note Creating a repository::.).
-
-   The file format of the `history' file is documented only in comments
-in the CVS source code, but generally programs should use the `cvs
-history' command to access it anyway, in case the format changes with
-future releases of CVS.
 

@@ -1,5 +1,5 @@
-This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+This is cvsclient.info, produced by Makeinfo version 3.12f from
+./cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Responses,  Next: Text tags,  Prev: Response pathnames,  Up: Protocol
@@ -227,7 +227,14 @@ Responses
      this one, for graceful handling of `Valid-responses').
 
 `M TEXT \n'
-     A one-line message for the user.
+     A one-line message for the user.  Note that the format of TEXT is
+     not designed for machine parsing.  Although sometimes scripts and
+     clients will have little choice, the exact text which is output is
+     subject to vary at the discretion of the server and the example
+     output given in this document is just that, example output.
+     Servers are encouraged to use the `MT' response, and future
+     versions of this document will hopefully standardize more of the
+     `MT' tags; see *Note Text tags::.
 
 `Mbinary \n'
      Additional data: file transmission (note: compressed file
@@ -315,7 +322,13 @@ Responses
      feature, or if it's not appropriate for this particular message,
      it just omits the errno-code (in that case there are two spaces
      after `error').  Text is an error message such as that provided by
-     strerror(), or any other message the server wants to use.
+     strerror(), or any other message the server wants to use.  The
+     TEXT is like the `M' response, in the sense that it is not
+     particularly intended to be machine-parsed; servers may wish to
+     print an error message with `MT' responses, and then issue a
+     `error' response without TEXT (although it should be noted that
+     `MT' currently has no way of flagging the output as intended for
+     standard error, the way that the `E' response does).
 
 `ok \n'
      The command completed successfully.
@@ -580,7 +593,7 @@ page.
      a circle on top might have different encodings in different
      character sets.
 
-     It *almost* works to say that the client picks an arbitrary,
+     It _almost_ works to say that the client picks an arbitrary,
      unknown character set (indeed, having the CVS client know what
      character set the user has in mind is a hard problem otherwise),
      and scrambles according to a certain octet<->octet mapping.  There
@@ -603,6 +616,7 @@ page.
      human factors point of view, that makes quite a bit of sense.  The
      contrary argument, of course, is that a with a circle on top, or
      some of the characters poorly handled by Unicode, are on
-     *someone*'s keyboard.
+     _someone_'s keyboard.
+
 
 

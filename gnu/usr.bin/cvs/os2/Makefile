@@ -16,13 +16,13 @@ SL = /
 install_dir = s:${SL}gnu${SL}util
 
 # srcdir is usually "."
-srcdir     = ../../work/ccvs/os2
+srcdir     = .
 
 # top_srcdir is usually ".."
-top_srcdir = ../../work/ccvs
+top_srcdir = ..
 
-lib_dir     = ../../work/ccvs${SL}lib
-cvs_srcdir = ../../work/ccvs${SL}src
+lib_dir     = ..${SL}lib
+cvs_srcdir = ..${SL}src
 
 zlib_dir = ${top_srcdir}/zlib
 

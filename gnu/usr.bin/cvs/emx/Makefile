@@ -11,10 +11,10 @@ project: cvs.exe
 install_dir = s:/gnu/util
 
 # srcdir is usually "."
-srcdir     = ../../work/ccvs/emx
+srcdir     = .
 
 # top_srcdir is usually ".."
-top_srcdir = ../../work/ccvs
+top_srcdir = ..
 
 lib_dir     = ${top_srcdir}/lib
 cvs_srcdir = ${top_srcdir}/src
@@ -147,7 +147,6 @@ DIFF_SOURCES = \
 # sources from ../lib
 # FIXME: Is this used anywhere?  I don't think it is.
 LIB_SOURCES = \
-       ${lib_dir}/vasprintf.c \
        ${lib_dir}/argmatch.c \
        ${lib_dir}/getline.c \
        ${lib_dir}/getopt.c \
@@ -243,7 +242,6 @@ DIFF_OBJECTS = \
 
 # objects from ../lib
 LIB_OBJECTS = \
-       ${lib_dir}/vasprintf.o \
        ${lib_dir}/argmatch.o \
        ${lib_dir}/getline.o \
        ${lib_dir}/getopt.o \

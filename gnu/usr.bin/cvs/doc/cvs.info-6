@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +20,291 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: checkout options,  Next: checkout examples,  Up: checkout
+
+checkout options
+----------------
+
+   These standard options are supported by `checkout' (*note Common
+options::., for a complete description of them):
+
+`-D DATE'
+     Use the most recent revision no later than DATE.  This option is
+     sticky, and implies `-P'.  See *Note Sticky tags::, for more
+     information on sticky tags/dates.
+
+`-f'
+     Only useful with the `-D DATE' or `-r TAG' flags.  If no matching
+     revision is found, retrieve the most recent revision (instead of
+     ignoring the file).
+
+`-k KFLAG'
+     Process keywords according to KFLAG.  See *Note Keyword
+     substitution::.  This option is sticky; future updates of this
+     file in this working directory will use the same KFLAG.  The
+     `status' command can be viewed to see the sticky options.  See
+     *Note Invoking CVS::, for more information on the `status' command.
+
+`-l'
+     Local; run only in current working directory.
+
+`-n'
+     Do not run any checkout program (as specified with the `-o' option
+     in the modules file; *note modules::.).
+
+`-P'
+     Prune empty directories.  See *Note Moving directories::.
+
+`-p'
+     Pipe files to the standard output.
+
+`-R'
+     Checkout directories recursively.  This option is on by default.
+
+`-r TAG'
+     Use revision TAG.  This option is sticky, and implies `-P'.  See
+     *Note Sticky tags::, for more information on sticky tags/dates.
+
+   In addition to those, you can use these special command options with
+`checkout':
+
+`-A'
+     Reset any sticky tags, dates, or `-k' options.  See *Note Sticky
+     tags::, for more information on sticky tags/dates.
+
+`-c'
+     Copy the module file, sorted, to the standard output, instead of
+     creating or modifying any files or directories in your working
+     directory.
+
+`-d DIR'
+     Create a directory called DIR for the working files, instead of
+     using the module name.  In general, using this flag is equivalent
+     to using `mkdir DIR; cd DIR' followed by the checkout command
+     without the `-d' flag.
+
+     There is an important exception, however.  It is very convenient
+     when checking out a single item to have the output appear in a
+     directory that doesn't contain empty intermediate directories.  In
+     this case _only_, CVS tries to "shorten" pathnames to avoid those
+     empty directories.
+
+     For example, given a module `foo' that contains the file `bar.c',
+     the command `cvs co -d dir foo' will create directory `dir' and
+     place `bar.c' inside.  Similarly, given a module `bar' which has
+     subdirectory `baz' wherein there is a file `quux.c', the command
+     `cvs -d dir co bar/baz' will create directory `dir' and place
+     `quux.c' inside.
+
+     Using the `-N' flag will defeat this behavior.  Given the same
+     module definitions above, `cvs co -N -d dir foo' will create
+     directories `dir/foo' and place `bar.c' inside, while `cvs co -N -d
+     dir bar/baz' will create directories `dir/bar/baz' and place
+     `quux.c' inside.
+
+`-j TAG'
+     With two `-j' options, merge changes from the revision specified
+     with the first `-j' option to the revision specified with the
+     second `j' option, into the working directory.
+
+     With one `-j' option, merge changes from the ancestor revision to
+     the revision specified with the `-j' option, into the working
+     directory.  The ancestor revision is the common ancestor of the
+     revision which the working directory is based on, and the revision
+     specified in the `-j' option.
+
+     In addition, each -j option can contain an optional date
+     specification which, when used with branches, can limit the chosen
+     revision to one within a specific date.  An optional date is
+     specified by adding a colon (:) to the tag:
+     `-jSYMBOLIC_TAG:DATE_SPECIFIER'.
+
+     *Note Branching and merging::.
+
+`-N'
+     Only useful together with `-d DIR'.  With this option, CVS will
+     not "shorten" module paths in your working directory when you
+     check out a single module.  See the `-d' flag for examples and a
+     discussion.
+
+`-s'
+     Like `-c', but include the status of all modules, and sort it by
+     the status string.  *Note modules::, for info about the `-s'
+     option that is used inside the modules file to set the module
+     status.
+
+
+File: cvs.info,  Node: checkout examples,  Prev: checkout options,  Up: checkout
+
+checkout examples
+-----------------
+
+   Get a copy of the module `tc':
+
+     $ cvs checkout tc
+
+   Get a copy of the module `tc' as it looked one day ago:
+
+     $ cvs checkout -D yesterday tc
+
+
+File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: CVS commands
+
+commit--Check files into the repository
+=======================================
+
+   * Synopsis: commit [-lnRf] [-m 'log_message' | -F file] [-r
+     revision] [files...]
+
+   * Requires: working directory, repository.
+
+   * Changes: repository.
+
+   * Synonym: ci
+
+   Use `commit' when you want to incorporate changes from your working
+source files into the source repository.
+
+   If you don't specify particular files to commit, all of the files in
+your working current directory are examined.  `commit' is careful to
+change in the repository only those files that you have really changed.
+By default (or if you explicitly specify the `-R' option), files in
+subdirectories are also examined and committed if they have changed;
+you can use the `-l' option to limit `commit' to the current directory
+only.
+
+   `commit' verifies that the selected files are up to date with the
+current revisions in the source repository; it will notify you, and
+exit without committing, if any of the specified files must be made
+current first with `update' (*note update::.).  `commit' does not call
+the `update' command for you, but rather leaves that for you to do when
+the time is right.
+
+   When all is well, an editor is invoked to allow you to enter a log
+message that will be written to one or more logging programs (*note
+modules::., and *note loginfo::.)  and placed in the RCS file inside the
+repository.  This log message can be retrieved with the `log' command;
+see *Note log::.  You can specify the log message on the command line
+with the `-m MESSAGE' option, and thus avoid the editor invocation, or
+use the `-F FILE' option to specify that the argument file contains the
+log message.
+
+* Menu:
+
+* commit options::              commit options
+* commit examples::             commit examples
+
+
+File: cvs.info,  Node: commit options,  Next: commit examples,  Up: commit
+
+commit options
+--------------
+
+   These standard options are supported by `commit' (*note Common
+options::., for a complete description of them):
+
+`-l'
+     Local; run only in current working directory.
+
+`-n'
+     Do not run any module program.
+
+`-R'
+     Commit directories recursively.  This is on by default.
+
+`-r REVISION'
+     Commit to REVISION.  REVISION must be either a branch, or a
+     revision on the main trunk that is higher than any existing
+     revision number (*note Assigning revisions::.).  You cannot commit
+     to a specific revision on a branch.
+
+   `commit' also supports these options:
+
+`-F FILE'
+     Read the log message from FILE, instead of invoking an editor.
+
+`-f'
+     Note that this is not the standard behavior of the `-f' option as
+     defined in *Note Common options::.
+
+     Force CVS to commit a new revision even if you haven't made any
+     changes to the file.  If the current revision of FILE is 1.7, then
+     the following two commands are equivalent:
+
+          $ cvs commit -f FILE
+          $ cvs commit -r 1.8 FILE
+
+     The `-f' option disables recursion (i.e., it implies `-l').  To
+     force CVS to commit a new revision for all files in all
+     subdirectories, you must use `-f -R'.
+
+`-m MESSAGE'
+     Use MESSAGE as the log message, instead of invoking an editor.
+
+
+File: cvs.info,  Node: commit examples,  Prev: commit options,  Up: commit
+
+commit examples
+---------------
+
+Committing to a branch
+......................
+
+   You can commit to a branch revision (one that has an even number of
+dots) with the `-r' option.  To create a branch revision, use the `-b'
+option of the `rtag' or `tag' commands (*note Branching and
+merging::.).  Then, either `checkout' or `update' can be used to base
+your sources on the newly created branch.  From that point on, all
+`commit' changes made within these working sources will be
+automatically added to a branch revision, thereby not disturbing
+main-line development in any way.  For example, if you had to create a
+patch to the 1.2 version of the product, even though the 2.0 version is
+already under development, you might do:
+
+     $ cvs rtag -b -r FCS1_2 FCS1_2_Patch product_module
+     $ cvs checkout -r FCS1_2_Patch product_module
+     $ cd product_module
+     [[ hack away ]]
+     $ cvs commit
+
+This works automatically since the `-r' option is sticky.
+
+Creating the branch after editing
+.................................
+
+   Say you have been working on some extremely experimental software,
+based on whatever revision you happened to checkout last week.  If
+others in your group would like to work on this software with you, but
+without disturbing main-line development, you could commit your change
+to a new branch.  Others can then checkout your experimental stuff and
+utilize the full benefit of CVS conflict resolution.  The scenario might
+look like:
+
+     [[ hacked sources are present ]]
+     $ cvs tag -b EXPR1
+     $ cvs update -r EXPR1
+     $ cvs commit
+
+   The `update' command will make the `-r EXPR1' option sticky on all
+files.  Note that your changes to the files will never be removed by the
+`update' command.  The `commit' will automatically commit to the
+correct branch, because the `-r' is sticky.  You could also do like
+this:
+
+     [[ hacked sources are present ]]
+     $ cvs tag -b EXPR1
+     $ cvs commit -r EXPR1
+
+but then, only those files that were changed by you will have the `-r
+EXPR1' sticky flag.  If you hack away, and commit without specifying
+the `-r EXPR1' flag, some files may accidentally end up on the main
+trunk.
+
+   To work with you on the experimental change, others would simply do
+
+     $ cvs checkout -r EXPR1 whatever_module
 
 
 File: cvs.info,  Node: diff,  Next: export,  Prev: commit,  Up: CVS commands
@@ -434,7 +718,7 @@ branch (e.g., for 1.1.1).  You must also specify at least one
 RELEASETAG to identify the files at the leaves created each time you
 execute `import'.
 
-   Note that `import' does *not* change the directory in which you
+   Note that `import' does _not_ change the directory in which you
 invoke it.  In particular, it does not set up that directory as a CVS
 working directory; if you want to work with the sources import them
 first and then check them out into a different directory (*note Getting

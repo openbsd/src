@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -23,6 +22,60 @@ versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
 
 
+File: cvs.info,  Node: checkoutlist,  Next: history file,  Prev: cvsignore,  Up: Administrative files
+
+The checkoutlist file
+=====================
+
+   It may be helpful to use CVS to maintain your own files in the
+`CVSROOT' directory.  For example, suppose that you have a script
+`logcommit.pl' which you run by including the following line in the
+`commitinfo' administrative file:
+
+     ALL   $CVSROOT/CVSROOT/logcommit.pl
+
+   To maintain `logcommit.pl' with CVS you would add the following line
+to the `checkoutlist' administrative file:
+
+     logcommit.pl
+
+   The format of `checkoutlist' is one line for each file that you want
+to maintain using CVS, giving the name of the file.
+
+   After setting up `checkoutlist' in this fashion, the files listed
+there will function just like CVS's built-in administrative files.  For
+example, when checking in one of the files you should get a message
+such as:
+
+     cvs commit: Rebuilding administrative file database
+
+   and the checked out copy in the `CVSROOT' directory should be
+updated.
+
+   Note that listing `passwd' (*note Password authentication server::.)
+in `checkoutlist' is not recommended for security reasons.
+
+   For information about keeping a checkout out copy in a more general
+context than the one provided by `checkoutlist', see *Note Keeping a
+checked out copy::.
+
+
+File: cvs.info,  Node: history file,  Next: Variables,  Prev: checkoutlist,  Up: Administrative files
+
+The history file
+================
+
+   The file `$CVSROOT/CVSROOT/history' is used to log information for
+the `history' command (*note history::.).  This file must be created to
+turn on logging.  This is done automatically if the `cvs init' command
+is used to set up the repository (*note Creating a repository::.).
+
+   The file format of the `history' file is documented only in comments
+in the CVS source code, but generally programs should use the `cvs
+history' command to access it anyway, in case the format changes with
+future releases of CVS.
+
+
 File: cvs.info,  Node: Variables,  Next: config,  Prev: history file,  Up: Administrative files
 
 Expansions in administrative files
@@ -36,7 +89,7 @@ in.  There are several mechanisms to do that.
 environment variable), use `~' followed by `/' or the end of the line.
 Likewise for the home directory of USER, use `~USER'.  These variables
 are expanded on the server machine, and don't get any reasonable
-expansion if pserver (*note Password authenticated::.) is in use;
+expansion if pserver (*note Password authenticated::.)  is in use;
 therefore user variables (see below) may be a better choice to
 customize behavior based on the user running CVS.
 
@@ -115,8 +168,8 @@ very strict.  Extraneous spaces or tabs are not permitted.
 `PreservePermissions=VALUE'
      Enable support for saving special device files, symbolic links,
      file permissions and ownerships in the repository.  The default
-     value is `no'.  *Note Special Files:: for the full implications of
-     using this keyword.
+     value is `no'.  *Note Special Files::, for the full implications
+     of using this keyword.
 
 `TopLevelAdmin=VALUE'
      Modify the `checkout' command to create a `CVS' directory at the
@@ -198,7 +251,9 @@ All environment variables which affect CVS
      use `$PATH' to try to find all programs it uses.
 
 `$HOME'
+
 `$HOMEPATH'
+
 `$HOMEDRIVE'
      Used to locate the directory where the `.cvsrc' file, and other
      such files, are searched.  On Unix, CVS just checks for HOME.  On
@@ -359,6 +414,18 @@ using at any particular moment).
      using CVS, retrying the operation which produced it should work
      fine.
 
+`cvs [server aborted]: Cannot check out files into the repository itself'
+     The obvious cause for this message (especially for
+     non-client/server CVS) is that the CVS root is, for example,
+     `/usr/local/cvsroot' and you try to check out files when you are
+     in a subdirectory, such as `/usr/local/cvsroot/test'.  However,
+     there is a more subtle cause, which is that the temporary
+     directory on the server is set to a subdirectory of the root
+     (which is also not allowed).  If this is the problem, set the
+     temporary directory to somewhere else, for example `/var/tmp'; see
+     `TMPDIR' in *Note Environment variables::, for how to set the
+     temporary directory.
+
 `cannot open CVS/Entries for reading: No such file or directory'
      This generally indicates a CVS internal error, and can be handled
      as with other CVS bugs (*note BUGS::.).  Usually there is a
@@ -415,7 +482,7 @@ using at any particular moment).
 `cvs [update aborted]: could not patch FILE: No such file or directory'
      This means that there was a problem finding the `patch' program.
      Make sure that it is in your `PATH'.  Note that despite
-     appearances the message is *not* referring to whether it can find
+     appearances the message is _not_ referring to whether it can find
      FILE.  If both the client and the server are running a current
      version of CVS, then there is no need for an external patch
      program and you should not see this message.  But if either client
@@ -443,6 +510,19 @@ using at any particular moment).
      before the above message.  For more information on setting up a
      CVS client and server, see *Note Remote repositories::.
 
+`cvs [update aborted]: EOF in key in RCS file FILE,v'
+`cvs [checkout aborted]: EOF while looking for end of string in RCS file FILE,v'
+     This means that there is a syntax error in the given RCS file.
+     Note that this might be true even if RCS can read the file OK; CVS
+     does more error checking of errors in the RCS file.  That is why
+     you may see this message when upgrading from CVS 1.9 to CVS 1.10.
+     The likely cause for the original corruption is hardware, the
+     operating system, or the like.  Of course, if you find a case in
+     which CVS seems to corrupting the file, by all means report it,
+     (*note BUGS::.).  There are quite a few variations of this error
+     message, depending on exactly where in the RCS file CVS finds the
+     syntax error.
+
 `cvs commit: Executing 'mkmodules''
      This means that your repository is set up for a version of CVS
      prior to CVS 1.8.  When using CVS 1.8 or later, the above message
@@ -463,6 +543,18 @@ using at any particular moment).
      file with no value for the author field.  The solution is to make
      sure your username is set to a non-empty value and re-create the
      RCS file.
+
+`cvs [checkout aborted]: no such tag TAG'
+     This message means that CVS isn't familiar with the tag TAG.
+     Usually this means that you have mistyped a tag name; however
+     there are (relatively obscure) cases in which CVS will require you
+     to try a few other CVS commands involving that tag, before you
+     find one which will cause CVS to update the `val-tags' file; see
+     discussion of val-tags in *Note File permissions::.  You only need
+     to worry about this once for a given tag; when a tag is listed in
+     `val-tags', it stays there.  Note that using `-f' to not require
+     tag matches does not override this check; see *Note Common
+     options::.
 
 `*PANIC* administration files missing'
      This typically means that there is a directory named CVS but it
@@ -497,6 +589,9 @@ using at any particular moment).
      whereas the `log.pl' from CVS 1.5 and newer expects the logfile to
      be specified with a `-f' option.  Of course, if you don't need
      `log.pl' you can just comment it out of `loginfo'.
+
+`cvs [update aborted]: unexpected EOF reading FILE,v'
+     See `EOF in key in RCS file'.
 
 `cvs [login aborted]: unrecognized auth response from SERVER'
      This message typically means that the server is not set up
@@ -603,6 +698,9 @@ the next steps depend largely on which access method you are using.
      2401 is registered for use with CVS.  I hear that there is an AIX
      patch available to address this problem.
 
+     Another good debugging tool is the `-d' (debugging) option to
+     inetd.  Consult your system documentation for more information.
+
 
 File: cvs.info,  Node: Other problems,  Prev: Connection,  Up: Troubleshooting
 
@@ -611,6 +709,12 @@ Other common problems
 
    Here is a list of problems which do not fit into the above
 categories.  They are in no particular order.
+
+   * On Windows, if there is a 30 second or so delay when you run a CVS
+     command, it may mean that you have your home directory set to
+     `C:/', for example (see `HOMEDRIVE' and `HOMEPATH' in *Note
+     Environment variables::).  CVS expects the home directory to not
+     end in a slash, for example `C:' or `C:\cvs'.
 
    * If you are running CVS 1.9.18 or older, and `cvs update' finds a
      conflict and tries to merge, as described in *Note Conflicts
@@ -726,7 +830,7 @@ problems with CVS itself.
      justification for sending mail directly to one of the CVS
      maintainers rather than to `bug-cvs'; those maintainers who want
      to hear about such bug reports read `bug-cvs'.  Also note that
-     sending a bug report to other mailing lists or newsgroups is *not*
+     sending a bug report to other mailing lists or newsgroups is _not_
      a substitute for sending it to `bug-cvs'.  It is fine to discuss
      CVS bugs on whatever forum you prefer, but there are not
      necessarily any maintainers reading bug reports sent anywhere

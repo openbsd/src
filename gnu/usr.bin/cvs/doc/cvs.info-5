@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -23,6 +22,193 @@ versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
 
 
+File: cvs.info,  Node: Tracking sources,  Next: Builds,  Prev: Keyword substitution,  Up: Top
+
+Tracking third-party sources
+****************************
+
+   If you modify a program to better fit your site, you probably want
+to include your modifications when the next release of the program
+arrives.  CVS can help you with this task.
+
+   In the terminology used in CVS, the supplier of the program is
+called a "vendor".  The unmodified distribution from the vendor is
+checked in on its own branch, the "vendor branch".  CVS reserves branch
+1.1.1 for this use.
+
+   When you modify the source and commit it, your revision will end up
+on the main trunk.  When a new release is made by the vendor, you
+commit it on the vendor branch and copy the modifications onto the main
+trunk.
+
+   Use the `import' command to create and update the vendor branch.
+When you import a new file, the vendor branch is made the `head'
+revision, so anyone that checks out a copy of the file gets that
+revision.  When a local modification is committed it is placed on the
+main trunk, and made the `head' revision.
+
+* Menu:
+
+* First import::                Importing for the first time
+* Update imports::              Updating with the import command
+* Reverting local changes::     Reverting to the latest vendor release
+* Binary files in imports::     Binary files require special handling
+* Keywords in imports::         Keyword substitution might be undesirable
+* Multiple vendor branches::    What if you get sources from several places?
+
+
+File: cvs.info,  Node: First import,  Next: Update imports,  Up: Tracking sources
+
+Importing for the first time
+============================
+
+   Use the `import' command to check in the sources for the first time.
+When you use the `import' command to track third-party sources, the
+"vendor tag" and "release tags" are useful.  The "vendor tag" is a
+symbolic name for the branch (which is always 1.1.1, unless you use the
+`-b BRANCH' flag--*Note Multiple vendor branches::.).  The "release
+tags" are symbolic names for a particular release, such as `FSF_0_04'.
+
+   Note that `import' does _not_ change the directory in which you
+invoke it.  In particular, it does not set up that directory as a CVS
+working directory; if you want to work with the sources import them
+first and then check them out into a different directory (*note Getting
+the source::.).
+
+   Suppose you have the sources to a program called `wdiff' in a
+directory `wdiff-0.04', and are going to make private modifications
+that you want to be able to use even when new releases are made in the
+future.  You start by importing the source to your repository:
+
+     $ cd wdiff-0.04
+     $ cvs import -m "Import of FSF v. 0.04" fsf/wdiff FSF_DIST WDIFF_0_04
+
+   The vendor tag is named `FSF_DIST' in the above example, and the
+only release tag assigned is `WDIFF_0_04'.
+
+
+File: cvs.info,  Node: Update imports,  Next: Reverting local changes,  Prev: First import,  Up: Tracking sources
+
+Updating with the import command
+================================
+
+   When a new release of the source arrives, you import it into the
+repository with the same `import' command that you used to set up the
+repository in the first place.  The only difference is that you specify
+a different release tag this time.
+
+     $ tar xfz wdiff-0.05.tar.gz
+     $ cd wdiff-0.05
+     $ cvs import -m "Import of FSF v. 0.05" fsf/wdiff FSF_DIST WDIFF_0_05
+
+   For files that have not been modified locally, the newly created
+revision becomes the head revision.  If you have made local changes,
+`import' will warn you that you must merge the changes into the main
+trunk, and tell you to use `checkout -j' to do so.
+
+     $ cvs checkout -jFSF_DIST:yesterday -jFSF_DIST wdiff
+
+The above command will check out the latest revision of `wdiff',
+merging the changes made on the vendor branch `FSF_DIST' since
+yesterday into the working copy.  If any conflicts arise during the
+merge they should be resolved in the normal way (*note Conflicts
+example::.).  Then, the modified files may be committed.
+
+   Using a date, as suggested above, assumes that you do not import
+more than one release of a product per day. If you do, you can always
+use something like this instead:
+
+     $ cvs checkout -jWDIFF_0_04 -jWDIFF_0_05 wdiff
+
+In this case, the two above commands are equivalent.
+
+
+File: cvs.info,  Node: Reverting local changes,  Next: Binary files in imports,  Prev: Update imports,  Up: Tracking sources
+
+Reverting to the latest vendor release
+======================================
+
+   You can also revert local changes completely and return to the
+latest vendor release by changing the `head' revision back to the
+vendor branch on all files.  For example, if you have a checked-out
+copy of the sources in `~/work.d/wdiff', and you want to revert to the
+vendor's version for all the files in that directory, you would type:
+
+     $ cd ~/work.d/wdiff
+     $ cvs admin -bWDIFF .
+
+You must specify the `-bWDIFF' without any space after the `-b'.  *Note
+admin options::.
+
+
+File: cvs.info,  Node: Binary files in imports,  Next: Keywords in imports,  Prev: Reverting local changes,  Up: Tracking sources
+
+How to handle binary files with cvs import
+==========================================
+
+   Use the `-k' wrapper option to tell import which files are binary.
+*Note Wrappers::.
+
+
+File: cvs.info,  Node: Keywords in imports,  Next: Multiple vendor branches,  Prev: Binary files in imports,  Up: Tracking sources
+
+How to handle keyword substitution with cvs import
+==================================================
+
+   The sources which you are importing may contain keywords (*note
+Keyword substitution::.).  For example, the vendor may use CVS or some
+other system which uses similar keyword expansion syntax.  If you just
+import the files in the default fashion, then the keyword expansions
+supplied by the vendor will be replaced by keyword expansions supplied
+by your own copy of CVS.  It may be more convenient to maintain the
+expansions supplied by the vendor, so that this information can supply
+information about the sources that you imported from the vendor.
+
+   To maintain the keyword expansions supplied by the vendor, supply
+the `-ko' option to `cvs import' the first time you import the file.
+This will turn off keyword expansion for that file entirely, so if you
+want to be more selective you'll have to think about what you want and
+use the `-k' option to `cvs update' or `cvs admin' as appropriate.
+
+
+File: cvs.info,  Node: Multiple vendor branches,  Prev: Keywords in imports,  Up: Tracking sources
+
+Multiple vendor branches
+========================
+
+   All the examples so far assume that there is only one vendor from
+which you are getting sources.  In some situations you might get
+sources from a variety of places.  For example, suppose that you are
+dealing with a project where many different people and teams are
+modifying the software.  There are a variety of ways to handle this,
+but in some cases you have a bunch of source trees lying around and
+what you want to do more than anything else is just to all put them in
+CVS so that you at least have them in one place.
+
+   For handling situations in which there may be more than one vendor,
+you may specify the `-b' option to `cvs import'.  It takes as an
+argument the vendor branch to import to.  The default is `-b 1.1.1'.
+
+   For example, suppose that there are two teams, the red team and the
+blue team, that are sending you sources.  You want to import the red
+team's efforts to branch 1.1.1 and use the vendor tag RED.  You want to
+import the blue team's efforts to branch 1.1.3 and use the vendor tag
+BLUE.  So the commands you might use are:
+
+     $ cvs import dir RED RED_1-0
+     $ cvs import -b 1.1.3 dir BLUE BLUE_1-5
+
+   Note that if your vendor tag does not match your `-b' option, CVS
+will not detect this case!  For example,
+
+     $ cvs import -b 1.1.3 dir RED RED_1-0
+
+Be careful; this kind of mismatch is sure to sow confusion or worse.  I
+can't think of a useful purpose for the ability to specify a mismatch
+here, but if you discover such a use, don't.  CVS is likely to make this
+an error in some future release.
+
+
 File: cvs.info,  Node: Builds,  Next: Special Files,  Prev: Tracking sources,  Up: Top
 
 How your build system interacts with CVS
@@ -39,7 +225,7 @@ itself can recurse through directories, there is no need to modify your
 `Makefile' (or whatever configuration file your build tool uses) to
 make sure each file is up to date.  Instead, just use two commands,
 first `cvs -q update' and then `make' or whatever the command is to
-invoke your build tool.  Secondly, you do not necessarily *want* to get
+invoke your build tool.  Secondly, you do not necessarily _want_ to get
 a copy of a change someone else made until you have finished your own
 work.  One suggested approach is to first update your sources, then
 implement, build and test the change you were thinking of, and then
@@ -260,7 +446,7 @@ scripts.
 for a line that begins with the same name as the `cvs_command' being
 executed.  If a match is found, then the remainder of the line is split
 up (at whitespace characters) into separate options and added to the
-command arguments *before* any options from the command line.
+command arguments _before_ any options from the command line.
 
    If a command has two names (e.g., `checkout' and `co'), the official
 name, not necessarily the one used on the command line, will be used to
@@ -385,6 +571,7 @@ Global options
      impact of an unfamiliar command.
 
 `-v'
+
 `--version'
      Display version and copyright information for CVS.
 
@@ -451,7 +638,7 @@ options that conflict even with these standard options.
           1972-09-24 20:05
 
      There are a lot more ISO8601 date formats, and CVS accepts many of
-     them, but you probably don't want to hear the *whole* long story
+     them, but you probably don't want to hear the _whole_ long story
      :-).
 
      In addition to the dates allowed in Internet e-mail itself, CVS
@@ -484,6 +671,10 @@ options that conflict even with these standard options.
      exist prior to the date) that you specified.  Use the `-f' option
      if you want files retrieved even when there is no match for the
      tag or date.  (The most recent revision of the file will be used).
+
+     Note that even with `-f', a tag that you specify must exist (that
+     is, in some file, not necessary in every file).  This is so that
+     CVS will continue to give an error if you mistype a tag name.
 
      `-f' is available with these commands: `annotate', `checkout',
      `export', `rdiff', `rtag', and `update'.
@@ -561,8 +752,11 @@ options that conflict even with these standard options.
      or `update' to make your own copy of a file: CVS remembers the tag
      and continues to use it on future update commands, until you
      specify otherwise (for more information on sticky tags/dates,
-     *note Sticky tags::.).  The tag can be either a symbolic or
-     numeric tag.  *Note Tags::.
+     *note Sticky tags::.).
+
+     The tag can be either a symbolic or numeric tag, as described in
+     *Note Tags::, or the name of a branch, as described in *Note
+     Branching and merging::.
 
      Specifying the `-q' global option along with the `-r' command
      option is often useful, to suppress the warning messages when the
@@ -595,14 +789,15 @@ admin--Administration
    This is the CVS interface to assorted administrative facilities.
 Some of them have questionable usefulness for CVS but exist for
 historical purposes.  Some of the questionable options are likely to
-disappear in the future.  This command *does* work recursively, so
+disappear in the future.  This command _does_ work recursively, so
 extreme care should be used.
 
    On unix, if there is a group named `cvsadmin', only members of that
-group can run `cvs admin'.  This group should exist on the server, or
-any system running the non-client/server CVS.  To disallow `cvs admin'
-for all users, create a group with no users in it.  On NT, the
-`cvsadmin' feature does not exist and all users can run `cvs admin'.
+group can run `cvs admin' (except for the `cvs admin -k' command, which
+can be run by anybody).  This group should exist on the server, or any
+system running the non-client/server CVS.  To disallow `cvs admin' for
+all users, create a group with no users in it.  On NT, the `cvsadmin'
+feature does not exist and all users can run `cvs admin'.
 
 * Menu:
 
@@ -643,7 +838,8 @@ you undo the effect!
 `-e[LOGINS]'
      Might not work together with CVS.  Erase the login names appearing
      in the comma-separated list LOGINS from the access list of the RCS
-     file.  If LOGINS is omitted, erase the entire access list.
+     file.  If LOGINS is omitted, erase the entire access list.  There
+     can be no space between `-e' and its argument.
 
 `-I'
      Run interactively, even if the standard input is not a terminal.
@@ -706,7 +902,7 @@ you undo the effect!
      Deletes ("outdates") the revisions given by RANGE.
 
      Note that this command can be quite dangerous unless you know
-     *exactly* what you are doing (for example see the warnings below
+     _exactly_ what you are doing (for example see the warnings below
      about how the REV1:REV2 syntax is confusing).
 
      If you are short on disc this option might help you.  But think
@@ -752,7 +948,7 @@ you undo the effect!
           `cvs admin -oR_1_01:R_1_02 .' is rarely useful.  It means to
           delete revisions up to, and including, the tag R_1_02.  But
           beware!  If there are files that have not changed between
-          R_1_02 and R_1_03 the file will have *the same* numerical
+          R_1_02 and R_1_03 the file will have _the same_ numerical
           revision number assigned to the tags R_1_02 and R_1_03.  So
           not only will it be impossible to retrieve R_1_02; R_1_03
           will also have to be restored from the tapes!  In most cases
@@ -801,7 +997,7 @@ you undo the effect!
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-5,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.15  1999/02/28 21:40:09  tholo
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.16  1999/09/10 05:14:50  tholo
      output from CVS LOG (*note log::.), and in the `Latest version from Cyclic; skipped files
      output from CVS LOG (*note log::.), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
@@ -920,289 +1116,4 @@ output::.
 
 * checkout options::            checkout options
 * checkout examples::           checkout examples
-
-
-File: cvs.info,  Node: checkout options,  Next: checkout examples,  Up: checkout
-
-checkout options
-----------------
-
-   These standard options are supported by `checkout' (*note Common
-options::., for a complete description of them):
-
-`-D DATE'
-     Use the most recent revision no later than DATE.  This option is
-     sticky, and implies `-P'.  See *Note Sticky tags::, for more
-     information on sticky tags/dates.
-
-`-f'
-     Only useful with the `-D DATE' or `-r TAG' flags.  If no matching
-     revision is found, retrieve the most recent revision (instead of
-     ignoring the file).
-
-`-k KFLAG'
-     Process keywords according to KFLAG.  See *Note Keyword
-     substitution::.  This option is sticky; future updates of this
-     file in this working directory will use the same KFLAG.  The
-     `status' command can be viewed to see the sticky options.  See
-     *Note Invoking CVS::, for more information on the `status' command.
-
-`-l'
-     Local; run only in current working directory.
-
-`-n'
-     Do not run any checkout program (as specified with the `-o' option
-     in the modules file; *note modules::.).
-
-`-P'
-     Prune empty directories.  See *Note Moving directories::.
-
-`-p'
-     Pipe files to the standard output.
-
-`-R'
-     Checkout directories recursively.  This option is on by default.
-
-`-r TAG'
-     Use revision TAG.  This option is sticky, and implies `-P'.  See
-     *Note Sticky tags::, for more information on sticky tags/dates.
-
-   In addition to those, you can use these special command options with
-`checkout':
-
-`-A'
-     Reset any sticky tags, dates, or `-k' options.  See *Note Sticky
-     tags::, for more information on sticky tags/dates.
-
-`-c'
-     Copy the module file, sorted, to the standard output, instead of
-     creating or modifying any files or directories in your working
-     directory.
-
-`-d DIR'
-     Create a directory called DIR for the working files, instead of
-     using the module name.  In general, using this flag is equivalent
-     to using `mkdir DIR; cd DIR' followed by the checkout command
-     without the `-d' flag.
-
-     There is an important exception, however.  It is very convenient
-     when checking out a single item to have the output appear in a
-     directory that doesn't contain empty intermediate directories.  In
-     this case *only*, CVS tries to "shorten" pathnames to avoid those
-     empty directories.
-
-     For example, given a module `foo' that contains the file `bar.c',
-     the command `cvs co -d dir foo' will create directory `dir' and
-     place `bar.c' inside.  Similarly, given a module `bar' which has
-     subdirectory `baz' wherein there is a file `quux.c', the command
-     `cvs -d dir co bar/baz' will create directory `dir' and place
-     `quux.c' inside.
-
-     Using the `-N' flag will defeat this behavior.  Given the same
-     module definitions above, `cvs co -N -d dir foo' will create
-     directories `dir/foo' and place `bar.c' inside, while `cvs co -N -d
-     dir bar/baz' will create directories `dir/bar/baz' and place
-     `quux.c' inside.
-
-`-j TAG'
-     With two `-j' options, merge changes from the revision specified
-     with the first `-j' option to the revision specified with the
-     second `j' option, into the working directory.
-
-     With one `-j' option, merge changes from the ancestor revision to
-     the revision specified with the `-j' option, into the working
-     directory.  The ancestor revision is the common ancestor of the
-     revision which the working directory is based on, and the revision
-     specified in the `-j' option.
-
-     In addition, each -j option can contain an optional date
-     specification which, when used with branches, can limit the chosen
-     revision to one within a specific date.  An optional date is
-     specified by adding a colon (:) to the tag:
-     `-jSYMBOLIC_TAG:DATE_SPECIFIER'.
-
-     *Note Branching and merging::.
-
-`-N'
-     Only useful together with `-d DIR'.  With this option, CVS will
-     not "shorten" module paths in your working directory when you
-     check out a single module.  See the `-d' flag for examples and a
-     discussion.
-
-`-s'
-     Like `-c', but include the status of all modules, and sort it by
-     the status string.  *Note modules::, for info about the `-s'
-     option that is used inside the modules file to set the module
-     status.
-
-
-File: cvs.info,  Node: checkout examples,  Prev: checkout options,  Up: checkout
-
-checkout examples
------------------
-
-   Get a copy of the module `tc':
-
-     $ cvs checkout tc
-
-   Get a copy of the module `tc' as it looked one day ago:
-
-     $ cvs checkout -D yesterday tc
-
-
-File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: CVS commands
-
-commit--Check files into the repository
-=======================================
-
-   * Synopsis: commit [-lnRf] [-m 'log_message' | -F file] [-r
-     revision] [files...]
-
-   * Requires: working directory, repository.
-
-   * Changes: repository.
-
-   * Synonym: ci
-
-   Use `commit' when you want to incorporate changes from your working
-source files into the source repository.
-
-   If you don't specify particular files to commit, all of the files in
-your working current directory are examined.  `commit' is careful to
-change in the repository only those files that you have really changed.
-By default (or if you explicitly specify the `-R' option), files in
-subdirectories are also examined and committed if they have changed;
-you can use the `-l' option to limit `commit' to the current directory
-only.
-
-   `commit' verifies that the selected files are up to date with the
-current revisions in the source repository; it will notify you, and
-exit without committing, if any of the specified files must be made
-current first with `update' (*note update::.).  `commit' does not call
-the `update' command for you, but rather leaves that for you to do when
-the time is right.
-
-   When all is well, an editor is invoked to allow you to enter a log
-message that will be written to one or more logging programs (*note
-modules::., and *note loginfo::.) and placed in the RCS file inside the
-repository.  This log message can be retrieved with the `log' command;
-see *Note log::.  You can specify the log message on the command line
-with the `-m MESSAGE' option, and thus avoid the editor invocation, or
-use the `-F FILE' option to specify that the argument file contains the
-log message.
-
-* Menu:
-
-* commit options::              commit options
-* commit examples::             commit examples
-
-
-File: cvs.info,  Node: commit options,  Next: commit examples,  Up: commit
-
-commit options
---------------
-
-   These standard options are supported by `commit' (*note Common
-options::., for a complete description of them):
-
-`-l'
-     Local; run only in current working directory.
-
-`-n'
-     Do not run any module program.
-
-`-R'
-     Commit directories recursively.  This is on by default.
-
-`-r REVISION'
-     Commit to REVISION.  REVISION must be either a branch, or a
-     revision on the main trunk that is higher than any existing
-     revision number (*note Assigning revisions::.).  You cannot commit
-     to a specific revision on a branch.
-
-   `commit' also supports these options:
-
-`-F FILE'
-     Read the log message from FILE, instead of invoking an editor.
-
-`-f'
-     Note that this is not the standard behavior of the `-f' option as
-     defined in *Note Common options::.
-
-     Force CVS to commit a new revision even if you haven't made any
-     changes to the file.  If the current revision of FILE is 1.7, then
-     the following two commands are equivalent:
-
-          $ cvs commit -f FILE
-          $ cvs commit -r 1.8 FILE
-
-     The `-f' option disables recursion (i.e., it implies `-l').  To
-     force CVS to commit a new revision for all files in all
-     subdirectories, you must use `-f -R'.
-
-`-m MESSAGE'
-     Use MESSAGE as the log message, instead of invoking an editor.
-
-
-File: cvs.info,  Node: commit examples,  Prev: commit options,  Up: commit
-
-commit examples
----------------
-
-Committing to a branch
-......................
-
-   You can commit to a branch revision (one that has an even number of
-dots) with the `-r' option.  To create a branch revision, use the `-b'
-option of the `rtag' or `tag' commands (*note Branching and
-merging::.).  Then, either `checkout' or `update' can be used to base
-your sources on the newly created branch.  From that point on, all
-`commit' changes made within these working sources will be
-automatically added to a branch revision, thereby not disturbing
-main-line development in any way.  For example, if you had to create a
-patch to the 1.2 version of the product, even though the 2.0 version is
-already under development, you might do:
-
-     $ cvs rtag -b -r FCS1_2 FCS1_2_Patch product_module
-     $ cvs checkout -r FCS1_2_Patch product_module
-     $ cd product_module
-     [[ hack away ]]
-     $ cvs commit
-
-This works automatically since the `-r' option is sticky.
-
-Creating the branch after editing
-.................................
-
-   Say you have been working on some extremely experimental software,
-based on whatever revision you happened to checkout last week.  If
-others in your group would like to work on this software with you, but
-without disturbing main-line development, you could commit your change
-to a new branch.  Others can then checkout your experimental stuff and
-utilize the full benefit of CVS conflict resolution.  The scenario might
-look like:
-
-     [[ hacked sources are present ]]
-     $ cvs tag -b EXPR1
-     $ cvs update -r EXPR1
-     $ cvs commit
-
-   The `update' command will make the `-r EXPR1' option sticky on all
-files.  Note that your changes to the files will never be removed by the
-`update' command.  The `commit' will automatically commit to the
-correct branch, because the `-r' is sticky.  You could also do like
-this:
-
-     [[ hacked sources are present ]]
-     $ cvs tag -b EXPR1
-     $ cvs commit -r EXPR1
-
-but then, only those files that were changed by you will have the `-r
-EXPR1' sticky flag.  If you hack away, and commit without specifying
-the `-r EXPR1' flag, some files may accidentally end up on the main
-trunk.
-
-   To work with you on the experimental change, others would simply do
-
-     $ cvs checkout -r EXPR1 whatever_module
 

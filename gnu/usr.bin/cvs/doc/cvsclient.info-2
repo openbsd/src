@@ -1,5 +1,5 @@
-This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+This is cvsclient.info, produced by Makeinfo version 3.12f from
+./cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Requests,  Next: Response intro,  Prev: Request intro,  Up: Protocol
@@ -11,7 +11,7 @@ Requests
 
 `Root PATHNAME \n'
      Response expected: no.  Tell the server which `CVSROOT' to use.
-     Note that PATHNAME is a local directory and *not* a fully
+     Note that PATHNAME is a local directory and _not_ a fully
      qualified `CVSROOT' variable.  PATHNAME must already exist; if
      creating a new root, use the `init' request, not `Root'.  PATHNAME
      does not include the hostname of the server, how to access the
@@ -271,10 +271,11 @@ Requests
 `Modified FILENAME \n'
      Response expected: no.  Additional data: mode, \n, file
      transmission.  Send the server a copy of one locally modified
-     file.  FILENAME is relative to the most recent repository sent
-     with `Directory'.  If the user is operating on only some files in
-     a directory, only those files need to be included.  This can also
-     be sent without `Entry', if there is no entry for the file.
+     file.  FILENAME is a file within the most recent directory sent
+     with `Directory'; it must not contain `/'.  If the user is
+     operating on only some files in a directory, only those files need
+     to be included.  This can also be sent without `Entry', if there
+     is no entry for the file.
 
 `Is-modified FILENAME \n'
      Response expected: no.  Additional data: none.  Like `Modified',
@@ -310,8 +311,9 @@ Requests
 
 `Unchanged FILENAME \n'
      Response expected: no.  Tell the server that FILENAME has not been
-     modified in the checked out directory.  The name is relative to
-     the most recent repository sent with `Directory'.
+     modified in the checked out directory.  The FILENAME is a file
+     within the most recent directory sent with `Directory'; it must
+     not contain `/'.
 
 `UseUnchanged \n'
      Response expected: no.  To specify the version of the protocol
@@ -319,11 +321,12 @@ Requests
      (although it need not do anything) and clients must issue it.
 
 `Notify FILENAME \n'
-     Response expected: no.  Tell the server that a `edit' or `unedit'
+     Response expected: no.  Tell the server that an `edit' or `unedit'
      command has taken place.  The server needs to send a `Notified'
      response, but such response is deferred until the next time that
-     the server is sending responses.  Response expected: no.
-     Additional data:
+     the server is sending responses.  The FILENAME is a file within
+     the most recent directory sent with `Directory'; it must not
+     contain `/'.  Additional data:
           NOTIFICATION-TYPE \t TIME \t CLIENTHOST \t
           WORKING-DIR \t WATCHES \n
      where NOTIFICATION-TYPE is `E' for edit, `U' for unedit, undefined
@@ -334,9 +337,16 @@ Requests
      rather than interpreting it).  CLIENTHOST is the name of the host
      on which the edit or unedit took place, and WORKING-DIR is the
      pathname of the working directory where the edit or unedit took
-     place.  WATCHES are the temporary watches to set.  If WATCHES is
-     followed by \t then the \t and the rest of the line should be
-     ignored, for future expansion.
+     place.  WATCHES are the temporary watches, zero or more of the
+     following characters in the following order: `E' for edit, `U' for
+     unedit, `C' for commit, and all other letters should be silently
+     ignored for future expansion.  If NOTIFICATION-TYPE is `E' the
+     temporary watches are set; if it is `U' they are cleared.  If
+     WATCHES is followed by \t then the \t and the rest of the line
+     should be ignored, for future expansion.
+
+     The TIME, CLIENTHOST, and WORKING-DIR fields may not contain the
+     characters `+', `,', `>', `;', or `='.
 
      Note that a client may be capable of performing an `edit' or
      `unedit' operation without connecting to the server at that time,
@@ -465,7 +475,7 @@ Requests
      directory.  Now suppose the client already has this module checked
      out and is planning on using the `co' request to update it.
      Without using `expand-modules', the client would have two bad
-     choices: it could either send information about *all* working
+     choices: it could either send information about _all_ working
      directories under the current directory, which could be
      unnecessarily slow, or it could be ignorant of the fact that
      `aliasmodule' stands for `1dir', and neglect to send information
@@ -536,7 +546,7 @@ Requests
 `init ROOT-NAME \n'
      Response expected: yes.  If it doesn't already exist, create a CVS
      repository ROOT-NAME.  Note that ROOT-NAME is a local directory
-     and *not* a fully qualified `CVSROOT' variable.  The `Root'
+     and _not_ a fully qualified `CVSROOT' variable.  The `Root'
      request need not have been previously sent.
 
 `update \n'
@@ -552,11 +562,14 @@ Requests
      Response expected: yes.  Actually do a `cvs import' command.  This
      uses any previous `Argument', `Directory', `Entry', or `Modified'
      requests, if they have been sent.  The last `Directory' sent
-     specifies the working directory at the time of the operation.  The
-     files to be imported are sent in `Modified' requests (files which
-     the client knows should be ignored are not sent; the server must
-     still process the CVSROOT/cvsignore file unless -I ! is sent).  A
-     log message must have been specified with a `-m' argument.
+     specifies the working directory at the time of the operation -
+     unlike most commands, the repository field of each `Directory'
+     request is ignored (it merely must point somewhere within the
+     root).  The files to be imported are sent in `Modified' requests
+     (files which the client knows should be ignored are not sent; the
+     server must still process the CVSROOT/cvsignore file unless -I ! is
+     sent).  A log message must have been specified with a `-m'
+     argument.
 
 `add \n'
      Response expected: yes.  Add a file or directory.  This uses any

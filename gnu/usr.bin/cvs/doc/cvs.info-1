@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -28,7 +27,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.10.5.
+1.10.7.
 
 * Menu:
 
@@ -42,7 +41,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 * History browsing::            Viewing the history of files in various ways
 
 CVS and the Real World.
-----------------------
+-----------------------
 * Binary files::                CVS can handle binary files
 * Multiple developers::         How CVS helps a group of developers
 * Revision management::         Policy questions for revision management
@@ -52,7 +51,7 @@ CVS and the Real World.
 * Special Files::		Devices, links and other non-regular files
 
 References.
-----------
+-----------
 * CVS commands::                CVS commands share some things
 * Invoking CVS::                Quick reference to CVS commands
 * Administrative files::        Reference manual for the Administrative files
@@ -166,7 +165,7 @@ CVS is not a build system.
      will share files (via links, mounts, `VPATH' in `Makefile's,
      etc.), you can arrange your disk usage however you like.
 
-     But you have to remember that *any* such system is a lot of work
+     But you have to remember that _any_ such system is a lot of work
      to construct and maintain.  CVS does not address the issues
      involved.
 
@@ -522,7 +521,7 @@ File: cvs.info,  Node: Repository storage,  Next: Working directory storage,  Pr
 How data is stored in the repository
 ====================================
 
-   For most purposes it isn't important *how* CVS stores information in
+   For most purposes it isn't important _how_ CVS stores information in
 the repository.  In fact, the format has changed in the past, and is
 likely to change in the future.  Since in almost all cases one accesses
 the repository via CVS commands, such changes need not be disruptive.
@@ -746,13 +745,75 @@ The CVS directory in the repository
 -----------------------------------
 
    The `CVS' directory in each repository directory contains
-information such as file attributes (in a file called `CVS/fileattr';
-see fileattr.h in the CVS source distribution for more documentation).
+information such as file attributes (in a file called `CVS/fileattr'.
 In the future additional files may be added to this directory, so
 implementations should silently ignore additional files.
 
    This behavior is implemented only by CVS 1.7 and later; for details
 see *Note Watches Compatibility::.
+
+   The format of the fileattr file is a series of entries of the
+following form (where `{' and `}' means the text between the braces can
+be repeated zero or more times):
+
+   ENT-TYPE FILENAME <tab> ATTRNAME = ATTRVAL   {; ATTRNAME = ATTRVAL}
+<linefeed>
+
+   ENT-TYPE is `F' for a file, in which case the entry specifies the
+attributes for that file.
+
+   ENT-TYPE is `D', and FILENAME empty, to specify default attributes
+to be used for newly added files.
+
+   Other ENT-TYPE are reserved for future expansion.  CVS 1.9 and older
+will delete them any time it writes file attributes.  CVS 1.10 and
+later will preserve them.
+
+   Note that the order of the lines is not significant; a program
+writing the fileattr file may rearrange them at its convenience.
+
+   There is currently no way of quoting tabs or linefeeds in the
+filename, `=' in ATTRNAME, `;' in ATTRVAL, etc.  Note: some
+implementations also don't handle a NUL character in any of the fields,
+but implementations are encouraged to allow it.
+
+   By convention, ATTRNAME starting with `_' is for an attribute given
+special meaning by CVS; other ATTRNAMEs are for user-defined attributes
+(or will be, once implementations start supporting user-defined
+attributes).
+
+   Builtin attributes:
+
+`_watched'
+     Present means the file is watched and should be checked out
+     read-only.
+
+`_watchers'
+     Users with watches for this file.  Value is WATCHER > TYPE { ,
+     WATCHER > TYPE } where WATCHER is a username, and TYPE is zero or
+     more of edit,unedit,commit separated by `+' (that is, nothing if
+     none; there is no "none" or "all" keyword).
+
+`_editors'
+     Users editing this file.  Value is EDITOR > VAL { , EDITOR > VAL }
+     where EDITOR is a username, and VAL is TIME+HOSTNAME+PATHNAME,
+     where TIME is when the `cvs edit' command (or equivalent) happened,
+     and HOSTNAME and PATHNAME are for the working directory.
+
+   Example:
+
+     Ffile1 _watched=;_watchers=joe>edit,mary>commit
+     Ffile2 _watched=;_editors=sue>8 Jan 1975+workstn1+/home/sue/cvs
+     D _watched=
+
+   means that the file `file1' should be checked out read-only.
+Furthermore, joe is watching for edits and mary is watching for
+commits.  The file `file2' should be checked out read-only; sue started
+editing it on 8 Jan 1975 in the directory `/home/sue/cvs' on the
+machine `workstn1'.  Future files which are added should be checked out
+read-only.  To represent this example here, we have shown a space after
+`D', `Ffile1', and `Ffile2', but in fact there must be a single tab
+character there and no spaces.
 
 
 File: cvs.info,  Node: Locks,  Next: CVSROOT storage,  Prev: CVS in repository,  Up: Repository storage
@@ -768,8 +829,8 @@ yourself confused by concepts described here, like "read lock", "write
 lock", and "deadlock", you might consult the literature on operating
 systems or databases.
 
-   Any file in the repository with a name starting with `#cvs.rfl' is a
-read lock.  Any file in the repository with a name starting with
+   Any file in the repository with a name starting with `#cvs.rfl.' is
+a read lock.  Any file in the repository with a name starting with
 `#cvs.wfl' is a write lock.  Old versions of CVS (before CVS 1.5) also
 created files with names starting with `#cvs.tfl', but they are not
 discussed here.  The directory `#cvs.lock' serves as a master lock.
@@ -780,7 +841,7 @@ other locks.
 operation must be atomic (which should be true for creating a directory
 under most operating systems).  If it fails because the directory
 already existed, wait for a while and try again.  After obtaining the
-`#cvs.lock' lock, create a file whose name is `#cvs.rfl' followed by
+`#cvs.lock' lock, create a file whose name is `#cvs.rfl.' followed by
 information of your choice (for example, hostname and process
 identification number).  Then remove the `#cvs.lock' directory to
 release the master lock.  Then proceed with reading the repository.
@@ -788,7 +849,7 @@ When you are done, remove the `#cvs.rfl' file to release the read lock.
 
    To obtain a writelock, first create the `#cvs.lock' directory, as
 with a readlock.  Then check that there are no files whose names start
-with `#cvs.rfl'.  If there are, remove `#cvs.lock', wait for a while,
+with `#cvs.rfl.'.  If there are, remove `#cvs.lock', wait for a while,
 and try again.  If there are no readers, then create a file whose name
 is `#cvs.wfl' followed by information of your choice (for example,
 hostname and process identification number).  Hang on to the
@@ -835,7 +896,7 @@ CVS should print
 and update the checked out copy in `$CVSROOT/CVSROOT'.  If it does not,
 there is something wrong (*note BUGS::.).  To add your own files to the
 files to be updated in this fashion, you can add them to the
-`checkoutlist' administrative file.
+`checkoutlist' administrative file (*note checkoutlist::.).
 
    By default, the `modules' file behaves as described above.  If the
 modules file is very large, storing it as a flat text file may make
@@ -927,22 +988,33 @@ by CVS probably will not be portable between such systems either.
      `-' followed by a revision for a removed file.  TIMESTAMP is the
      timestamp of the file at the time that CVS created it; if the
      timestamp differs with the actual modification time of the file it
-     means the file has been modified.  It is in Universal Time (UT),
-     stored in the format used by the ISO C asctime() function (for
-     example, `Sun Apr  7 01:29:26 1996').  One may write a string
-     which is not in that format, for example, `Result of merge', to
-     indicate that the file should always be considered to be modified.
-     This is not a special case; to see whether a file is modified a
-     program should take the timestamp of the file and simply do a
-     string compare with TIMESTAMP.  CONFLICT indicates that there was
-     a conflict; if it is the same as the actual modification time of
-     the file it means that the user has obviously not resolved the
+     means the file has been modified.  It is stored in the format used
+     by the ISO C asctime() function (for example, `Sun Apr  7 01:29:26
+     1996').  One may write a string which is not in that format, for
+     example, `Result of merge', to indicate that the file should
+     always be considered to be modified.  This is not a special case;
+     to see whether a file is modified a program should take the
+     timestamp of the file and simply do a string compare with
+     TIMESTAMP.  If there was a conflict, CONFLICT can be set to the
+     modification time of the file after the file has been written with
+     conflict markers (*note Conflicts example::.).  Thus if CONFLICT
+     is subsequently the same as the actual modification time of the
+     file it means that the user has obviously not resolved the
      conflict.  OPTIONS contains sticky options (for example `-kb' for a
      binary file).  TAGDATE contains `T' followed by a tag name, or `D'
      for a date, followed by a sticky tag or date.  Note that if
      TIMESTAMP contains a pair of timestamps separated by a space,
      rather than a single timestamp, you are dealing with a version of
      CVS earlier than CVS 1.5 (not documented here).
+
+     The timezone on the timestamp in CVS/Entries (local or universal)
+     should be the same as the operating system stores for the
+     timestamp of the file itself.  For example, on Unix the file's
+     timestamp is in universal time (UT), so the timestamp in
+     CVS/Entries should be too.  On VMS, the file's timestamp is in
+     local time, so CVS on VMS should use local time.  This rule is so
+     that files do not appear to be modified merely because the
+     timezone changed (for example, to or from summer time).
 
      If the first character of a line in `Entries' is `D', then it
      indicates a subdirectory.  `D' on a line all by itself indicates
@@ -1046,79 +1118,4 @@ by CVS probably will not be portable between such systems either.
      This file contains the template specified by the `rcsinfo' file
      (*note rcsinfo::.).  It is only used by the client; the
      non-client/server CVS consults `rcsinfo' directly.
-
-
-File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: Working directory storage,  Up: Repository
-
-The administrative files
-========================
-
-   The directory `$CVSROOT/CVSROOT' contains some "administrative
-files".  *Note Administrative files::, for a complete description.  You
-can use CVS without any of these files, but some commands work better
-when at least the `modules' file is properly set up.
-
-   The most important of these files is the `modules' file.  It defines
-all modules in the repository.  This is a sample `modules' file.
-
-     CVSROOT         CVSROOT
-     modules         CVSROOT modules
-     cvs             gnu/cvs
-     rcs             gnu/rcs
-     diff            gnu/diff
-     tc              yoyodyne/tc
-
-   The `modules' file is line oriented.  In its simplest form each line
-contains the name of the module, whitespace, and the directory where
-the module resides.  The directory is a path relative to `$CVSROOT'.
-The last four lines in the example above are examples of such lines.
-
-   The line that defines the module called `modules' uses features that
-are not explained here.  *Note modules::, for a full explanation of all
-the available features.
-
-Editing administrative files
-----------------------------
-
-   You edit the administrative files in the same way that you would edit
-any other module.  Use `cvs checkout CVSROOT' to get a working copy,
-edit it, and commit your changes in the normal way.
-
-   It is possible to commit an erroneous administrative file.  You can
-often fix the error and check in a new revision, but sometimes a
-particularly bad error in the administrative file makes it impossible
-to commit new revisions.
-
-
-File: cvs.info,  Node: Multiple repositories,  Next: Creating a repository,  Prev: Intro administrative files,  Up: Repository
-
-Multiple repositories
-=====================
-
-   In some situations it is a good idea to have more than one
-repository, for instance if you have two development groups that work
-on separate projects without sharing any code.  All you have to do to
-have several repositories is to specify the appropriate repository,
-using the `CVSROOT' environment variable, the `-d' option to CVS, or
-(once you have checked out a working directory) by simply allowing CVS
-to use the repository that was used to check out the working directory
-(*note Specifying a repository::.).
-
-   The big advantage of having multiple repositories is that they can
-reside on different servers.  With CVS version 1.10, a single command
-cannot recurse into directories from different repositories.  With
-development versions of CVS, you can check out code from multiple
-servers into your working directory.  CVS will recurse and handle all
-the details of making connections to as many server machines as
-necessary to perform the requested command.  Here is an example of how
-to set up a working directory:
-
-     cvs -d server1:/cvs co dir1
-     cd dir1
-     cvs -d server2:/root co sdir
-     cvs update
-
-   The `cvs co' commands set up the working directory, and then the
-`cvs update' command will contact server2, to update the dir1/sdir
-subdirectory, and server1, to update everything else.
 

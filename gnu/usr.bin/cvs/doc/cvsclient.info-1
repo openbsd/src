@@ -1,5 +1,5 @@
-This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ../../work/ccvs/doc/cvsclient.texi.
+This is cvsclient.info, produced by Makeinfo version 3.12f from
+./cvsclient.texi.
 
 
 File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
@@ -9,7 +9,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.10.5 of the protocol
+regular CVS manual for that.  This is version 1.10.7 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -58,7 +58,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.10.5 of the protocol specification.  This version
+   This is version 1.10.7 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -213,7 +213,11 @@ pserver
           nonspecific.  The TEXT should be supplied to the user.
           Compatibility note: CVS 1.9.10 and older clients will print
           `unrecognized auth response' and TEXT, and then exit, upon
-          receiving this response.
+          receiving this response.  Note that TEXT for this response,
+          or the TEXT in an `E' response, is not designed for machine
+          parsing.  More vigorous use of CODE, or future extensions,
+          will be needed to prove a cleaner machine-parseable
+          indication of what the error was.
 
      If the client wishes to merely authenticate without starting the
      cvs protocol, the procedure is the same, except BEGIN AUTH REQUEST
@@ -507,4 +511,14 @@ elicit a response from the server, while all others do - save one.  The
 exception is `gzip-file-contents'.  Unrecognized requests will always
 elicit a response from the server, even if that request begins with a
 capital letter.
+
+   The term "command" means a request which expects a response (except
+`valid-requests').  The general model is that the client transmits a
+great number of requests, but nothing happens until the very end when
+the client transmits a command.  Although the intention is that
+transmitting several commands in one connection should be legal,
+existing servers probably have some bugs with some combinations of more
+than one command, and so clients may find it necessary to make several
+connections in some cases.  This should be thought of as a workaround
+rather than a desired attribute of the protocol.
 

@@ -1,5 +1,4 @@
-This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ../../work/ccvs/doc/cvs.texinfo.
+This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +20,81 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: Working directory storage,  Up: Repository
+
+The administrative files
+========================
+
+   The directory `$CVSROOT/CVSROOT' contains some "administrative
+files".  *Note Administrative files::, for a complete description.  You
+can use CVS without any of these files, but some commands work better
+when at least the `modules' file is properly set up.
+
+   The most important of these files is the `modules' file.  It defines
+all modules in the repository.  This is a sample `modules' file.
+
+     CVSROOT         CVSROOT
+     modules         CVSROOT modules
+     cvs             gnu/cvs
+     rcs             gnu/rcs
+     diff            gnu/diff
+     tc              yoyodyne/tc
+
+   The `modules' file is line oriented.  In its simplest form each line
+contains the name of the module, whitespace, and the directory where
+the module resides.  The directory is a path relative to `$CVSROOT'.
+The last four lines in the example above are examples of such lines.
+
+   The line that defines the module called `modules' uses features that
+are not explained here.  *Note modules::, for a full explanation of all
+the available features.
+
+Editing administrative files
+----------------------------
+
+   You edit the administrative files in the same way that you would edit
+any other module.  Use `cvs checkout CVSROOT' to get a working copy,
+edit it, and commit your changes in the normal way.
+
+   It is possible to commit an erroneous administrative file.  You can
+often fix the error and check in a new revision, but sometimes a
+particularly bad error in the administrative file makes it impossible
+to commit new revisions.
+
+
+File: cvs.info,  Node: Multiple repositories,  Next: Creating a repository,  Prev: Intro administrative files,  Up: Repository
+
+Multiple repositories
+=====================
+
+   In some situations it is a good idea to have more than one
+repository, for instance if you have two development groups that work
+on separate projects without sharing any code.  All you have to do to
+have several repositories is to specify the appropriate repository,
+using the `CVSROOT' environment variable, the `-d' option to CVS, or
+(once you have checked out a working directory) by simply allowing CVS
+to use the repository that was used to check out the working directory
+(*note Specifying a repository::.).
+
+   The big advantage of having multiple repositories is that they can
+reside on different servers.  With CVS version 1.10, a single command
+cannot recurse into directories from different repositories.  With
+development versions of CVS, you can check out code from multiple
+servers into your working directory.  CVS will recurse and handle all
+the details of making connections to as many server machines as
+necessary to perform the requested command.  Here is an example of how
+to set up a working directory:
+
+     cvs -d server1:/cvs co dir1
+     cd dir1
+     cvs -d server2:/root co sdir
+     cvs update
+
+   The `cvs co' commands set up the working directory, and then the
+`cvs update' command will contact server2, to update the dir1/sdir
+subdirectory, and server1, to update everything else.
 
 
 File: cvs.info,  Node: Creating a repository,  Next: Backing up,  Prev: Multiple repositories,  Up: Repository
@@ -310,7 +384,11 @@ sufficient:
    The `--allow-root' option specifies the allowable CVSROOT directory.
 Clients which attempt to use a different CVSROOT directory will not be
 allowed to connect.  If there is more than one CVSROOT directory which
-you want to allow, repeat the option.
+you want to allow, repeat the option.  (Unfortunately, many versions of
+`inetd' have very small limits on the number of arguments and/or the
+total length of the command.  The usual solution to this problem is to
+have `inetd' run a shell script which then invokes CVS with the
+necessary arguments.)
 
    If your `inetd' wants a symbolic service name instead of a raw port
 number, then put this in `/etc/services':
@@ -430,7 +508,7 @@ at that file).
 removed from the CVS_PASSFILE by using the `cvs logout' command.
 
    The `CVS_PASSFILE' environment variable overrides this default.  If
-you use this variable, make sure you set it *before* `cvs login' is
+you use this variable, make sure you set it _before_ `cvs login' is
 run.  If you were to set it after running `cvs login', then later CVS
 commands would be unable to look up the password for transmission to
 the server.
@@ -454,9 +532,6 @@ non-read-only access to the repository, she can execute programs on the
 server system through a variety of means.  Thus, repository access
 implies fairly broad system access as well.  It might be possible to
 modify CVS to prevent that, but no one has done so as of this writing.
-Furthermore, there may be other ways in which having access to CVS
-allows people to gain more general access to the system; no one has
-done a careful audit.
 
    Note that because the `$CVSROOT/CVSROOT' directory contains `passwd'
 and other files which are used to check security, you must control the
@@ -467,10 +542,11 @@ will have the ability to become any user on the system.  Note that
 these permissions are typically tighter than you would use if you are
 not using pserver.
 
-   In summary, anyone who gets the password gets repository access, and
-some measure of general system access as well.  The password is
-available to anyone who can sniff network packets or read a protected
-(i.e., user read-only) file.  If you want real security, get Kerberos.
+   In summary, anyone who gets the password gets repository access
+(which may imply some measure of general system access as well).  The
+password is available to anyone who can sniff network packets or read a
+protected (i.e., user read-only) file.  If you want real security, get
+Kerberos.
 
 
 File: cvs.info,  Node: GSSAPI authenticated,  Next: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
@@ -488,10 +564,10 @@ kerberos version 5 are present.  You can also use the `--with-gssapi'
 flag to configure.
 
    The connection is authenticated using GSSAPI, but the message stream
-is *not* authenticated by default.  You must use the `-a' global option
+is _not_ authenticated by default.  You must use the `-a' global option
 to request stream authentication.
 
-   The data transmitted is *not* encrypted by default.  Encryption
+   The data transmitted is _not_ encrypted by default.  Encryption
 support must be compiled into both the client and the server; use the
 `--enable-encrypt' configure option to turn it on.  You must then use
 the `-x' global option to request encryption.
@@ -532,7 +608,7 @@ security interface, as described in the previous section.
 configuring CVS it tries to detect whether kerberos is present or you
 can use the `--with-krb4' flag to configure.
 
-   The data transmitted is *not* encrypted by default.  Encryption
+   The data transmitted is _not_ encrypted by default.  Encryption
 support must be compiled into both the client and server; use the
 `--enable-encryption' configure option to turn it on.  You must then
 use the `-x' global option to request encryption.
@@ -600,7 +676,7 @@ authentication server::.).
    Unlike with previous versions of CVS, read-only users should be able
 merely to read the repository, and not to execute programs on the
 server or otherwise gain unexpected levels of access.  Or to be more
-accurate, the *known* holes have been plugged.  Because this feature is
+accurate, the _known_ holes have been plugged.  Because this feature is
 new and has not received a comprehensive security audit, you should use
 whatever level of caution seems warranted given your attitude concerning
 security.
@@ -618,7 +694,7 @@ list of users.  Here is a sample `readers' file:
 
    (Don't forget the newline after the last user.)
 
-   "Exclusion" means explicitly listing everyone who has *write*
+   "Exclusion" means explicitly listing everyone who has _write_
 access--if the file
 
      $CVSROOT/CVSROOT/writers
@@ -630,7 +706,7 @@ has the same format as the `readers' file.
 
    Note: if your CVS `passwd' file maps cvs users onto system users
 (*note Password authentication server::.), make sure you deny or grant
-read-only access using the *cvs* usernames, not the system usernames.
+read-only access using the _cvs_ usernames, not the system usernames.
 That is, the `readers' and `writers' files contain cvs usernames, which
 may or may not be the same as system usernames.
 
@@ -898,7 +974,7 @@ numeric revision in each file.
 * Revision numbers::            The meaning of a revision number
 * Versions revisions releases::  Terminology used in this manual
 * Assigning revisions::         Assigning revisions
-* Tags::                        Tags-Symbolic revisions
+* Tags::                        Tags--Symbolic revisions
 * Tagging the working directory::  The cvs tag command
 * Tagging by date/tag::         The cvs rtag command
 * Modifying tags::              Adding, renaming, and deleting tags
@@ -975,161 +1051,4 @@ those that haven't changed), you might invoke:
 existing revision number.  That is, if revision 3.0 exists, you cannot
 `cvs commit -r 1.3'.  If you want to maintain several releases in
 parallel, you need to use a branch (*note Branching and merging::.).
-
-
-File: cvs.info,  Node: Tags,  Next: Tagging the working directory,  Prev: Assigning revisions,  Up: Revisions
-
-Tags-Symbolic revisions
-=======================
-
-   The revision numbers live a life of their own.  They need not have
-anything at all to do with the release numbers of your software
-product.  Depending on how you use CVS the revision numbers might
-change several times between two releases.  As an example, some of the
-source files that make up RCS 5.6 have the following revision numbers:
-
-     ci.c            5.21
-     co.c            5.9
-     ident.c         5.3
-     rcs.c           5.12
-     rcsbase.h       5.11
-     rcsdiff.c       5.10
-     rcsedit.c       5.11
-     rcsfcmp.c       5.9
-     rcsgen.c        5.10
-     rcslex.c        5.11
-     rcsmap.c        5.2
-     rcsutil.c       5.10
-
-   You can use the `tag' command to give a symbolic name to a certain
-revision of a file.  You can use the `-v' flag to the `status' command
-to see all tags that a file has, and which revision numbers they
-represent.  Tag names must start with an uppercase or lowercase letter
-and can contain uppercase and lowercase letters, digits, `-', and `_'.
-The two tag names `BASE' and `HEAD' are reserved for use by CVS.  It is
-expected that future names which are special to CVS will be specially
-named, for example by starting with `.', rather than being named
-analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
-names.
-
-   You'll want to choose some convention for naming tags, based on
-information such as the name of the program and the version number of
-the release.  For example, one might take the name of the program,
-immediately followed by the version number with `.' changed to `-', so
-that CVS 1.9 would be tagged with the name `cvs1-9'.  If you choose a
-consistent convention, then you won't constantly be guessing whether a
-tag is `cvs-1-9' or `cvs1_9' or what.  You might even want to consider
-enforcing your convention in the taginfo file (*note user-defined
-logging::.).
-
-   The following example shows how you can add a tag to a file.  The
-commands must be issued inside your working directory.  That is, you
-should issue the command in the directory where `backend.c' resides.
-
-     $ cvs tag rel-0-4 backend.c
-     T backend.c
-     $ cvs status -v backend.c
-     ===================================================================
-     File: backend.c         Status: Up-to-date
-     
-         Version:            1.4     Tue Dec  1 14:39:01 1992
-         RCS Version:        1.4     /u/cvsroot/yoyodyne/tc/backend.c,v
-         Sticky Tag:         (none)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             rel-0-4                     (revision: 1.4)
-
-   For a complete summary of the syntax of `cvs tag', including the
-various options, see *Note Invoking CVS::.
-
-   There is seldom reason to tag a file in isolation.  A more common
-use is to tag all the files that constitute a module with the same tag
-at strategic points in the development life-cycle, such as when a
-release is made.
-
-     $ cvs tag rel-1-0 .
-     cvs tag: Tagging .
-     T Makefile
-     T backend.c
-     T driver.c
-     T frontend.c
-     T parser.c
-
-   (When you give CVS a directory as argument, it generally applies the
-operation to all the files in that directory, and (recursively), to any
-subdirectories that it may contain.  *Note Recursive behavior::.)
-
-   The `checkout' command has a flag, `-r', that lets you check out a
-certain revision of a module.  This flag makes it easy to retrieve the
-sources that make up release 1.0 of the module `tc' at any time in the
-future:
-
-     $ cvs checkout -r rel-1-0 tc
-
-This is useful, for instance, if someone claims that there is a bug in
-that release, but you cannot find the bug in the current working copy.
-
-   You can also check out a module as it was at any given date.  *Note
-checkout options::.  When specifying `-r' to any of these commands, you
-will need beware of sticky tags; see *Note Sticky tags::.
-
-   When you tag more than one file with the same tag you can think
-about the tag as "a curve drawn through a matrix of filename vs.
-revision number."  Say we have 5 files with the following revisions:
-
-             file1   file2   file3   file4   file5
-     
-             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
-             1.2*-   1.2     1.2    -1.2*-
-             1.3  \- 1.3*-   1.3   / 1.3
-             1.4          \  1.4  /  1.4
-                           \-1.5*-   1.5
-                             1.6
-
-   At some time in the past, the `*' versions were tagged.  You can
-think of the tag as a handle attached to the curve drawn through the
-tagged revisions.  When you pull on the handle, you get all the tagged
-revisions.  Another way to look at it is that you "sight" through a set
-of revisions that is "flat" along the tagged revisions, like this:
-
-             file1   file2   file3   file4   file5
-     
-                             1.1
-                             1.2
-                     1.1     1.3                       _
-             1.1     1.2     1.4     1.1              /
-             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
-             1.3             1.6     1.3              \_
-             1.4                     1.4
-                                     1.5
-
-
-File: cvs.info,  Node: Tagging the working directory,  Next: Tagging by date/tag,  Prev: Tags,  Up: Revisions
-
-Specifying what to tag from the working directory
-=================================================
-
-   The example in the previous section demonstrates one of the most
-common ways to choose which revisions to tag.  Namely, running the `cvs
-tag' command without arguments causes CVS to select the revisions which
-are checked out in the current working directory.  For example, if the
-copy of `backend.c' in working directory was checked out from revision
-1.4, then CVS will tag revision 1.4.  Note that the tag is applied
-immediately to revision 1.4 in the repository; tagging is not like
-modifying a file, or other operations in which one first modifies the
-working directory and then runs `cvs commit' to transfer that
-modification to the repository.
-
-   One potentially surprising aspect of the fact that `cvs tag'
-operates on the repository is that you are tagging the checked-in
-revisions, which may differ from locally modified files in your working
-directory.  If you want to avoid doing this by mistake, specify the
-`-c' option to `cvs tag'.  If there are any locally modified files, CVS
-will abort with an error before it tags any files:
-
-     $ cvs tag -c rel-0-4
-     cvs tag: backend.c is locally modified
-     cvs [tag aborted]: correct the above errors first!
 
