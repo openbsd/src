@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.1 2001/01/28 19:49:45 drahn Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.2 2001/03/03 08:53:46 maja Exp $	*/
 /*	$NetBSD: akbd.c,v 1.10 2000/09/01 16:00:38 tsubai Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ akbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;		/* XXX */
+		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;

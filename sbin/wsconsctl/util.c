@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2001/01/28 22:45:20 niklas Exp $ */
+/*	$OpenBSD: util.c,v 1.3 2001/03/03 08:53:46 maja Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -64,6 +64,7 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_USB,	"usb" },
 	{ WSKBD_TYPE_HPC_KBD,	"hpc-kbd" },
 	{ WSKBD_TYPE_HPC_BTN,	"hpc-btn" },
+	{ WSKBD_TYPE_ADB,	"adb" },
 };
 
 static struct nameint mstype_tab[] = {

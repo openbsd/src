@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.6 2001/02/28 19:12:40 drahn Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.7 2001/03/03 08:53:46 maja Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -87,6 +87,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
+#define		WSKBD_TYPE_ADB		10	/* Apple ADB keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
