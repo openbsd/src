@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2003/03/06 14:22:13 cedric Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2003/03/13 10:31:44 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -401,9 +401,10 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 
 	for (i = 0, j = 0; i < 8; i++)
 	  {
-	    j += snprintf ((*address) + j, addrlen - j, "%02x%02x",
-			   ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i],
-			   ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i + 1]);
+	    snprintf ((*address) + j, addrlen - j, "%02x%02x",
+		      ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i],
+		      ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i + 1]);
+	    j += 4;
 	    (*address)[j] = (j < (addrlen - 1)) ? ':' : '\0';
 	    j++;
 	  }
