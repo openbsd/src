@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.132 2000/04/06 18:26:04 millert Exp $
+#	$OpenBSD: rc,v 1.133 2000/04/26 22:34:54 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -366,9 +366,17 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-if [ ! -f /etc/ssh_host_key -a -x /usr/bin/ssh-keygen ]; then
-	umask 022
-	echo -n "ssh-keygen: generating new host key... "
+if [ ! -f /etc/ssh_dsa_host_key -a -x /usr/bin/ssh-keygen ]; then
+	echo -n "ssh-keygen: generating new DSA host key... "
+	if /usr/bin/ssh-keygen -q -d -f /etc/ssh_dsa_host_key -N ''; then
+		echo done.
+	else
+		echo failed.
+	fi
+fi
+if [ ! -f /etc/ssh_host_key -a -x /usr/bin/ssh-keygen ] && \
+    ssh-keygen -R; then
+	echo -n "ssh-keygen: generating new RSA host key... "
 	if /usr/bin/ssh-keygen -q -b 1024 -f /etc/ssh_host_key -N ''; then
 		echo done.
 	else
@@ -505,12 +513,9 @@ fi
 
 if [ X"${sshd}" == X"YES" ]; then
 	if test -x /usr/sbin/sshd && /usr/sbin/sshd -Q ; then
-		echo -n ' sshd';
-		#echo -n ' sshd(2022)';	/usr/sbin/sshd -p 2022
-	elif [ -x /usr/local/sbin/sshd ]; then
-		/usr/local/sbin/sshd
-		echo -n ' sshd';
-		#echo -n ' sshd(2022)';	/usr/local/sbin/sshd -p 2022
+		echo -n ' sshd'
+	elif [ -x /usr/local/sbin/sshd && /usr/local/sbin/sshd ]; then
+		echo -n ' sshd'
 	fi
 fi
 
