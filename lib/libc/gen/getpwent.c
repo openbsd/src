@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.17 1999/09/15 08:57:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.18 2000/04/25 12:21:05 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,9 @@ static char rcsid[] = "$OpenBSD: getpwent.c,v 1.17 1999/09/15 08:57:25 deraadt E
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 #endif
+#include "thread_private.h"
+
+_THREAD_PRIVATE_MUTEX(pw);
 
 static struct passwd _pw_passwd;	/* password structure */
 static DB *_pw_db;			/* password database */
@@ -96,6 +99,9 @@ struct _ypexclude {
 	struct _ypexclude *next;
 };
 static struct _ypexclude *__ypexclude = (struct _ypexclude *)NULL;
+
+static struct passwd *getpwnam_unlocked __P((const char *));
+static struct passwd *getpwuid_unlocked __P((uid_t));
 
 /*
  * Using DB for this just wastes too damn much memory.
@@ -320,8 +326,13 @@ getpwent()
 	const char *user, *host, *dom;
 #endif
 
-	if (!_pw_db && !__initdb())
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+
+	if (!_pw_db && !__initdb()) {
+		_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 		return ((struct passwd *)NULL);
+	}
+
 
 #ifdef YP
 	if (__getpwent_has_yppw == -1)
@@ -426,6 +437,7 @@ again:
 		__ypline[datalen] = '\0';
 		if (__ypparse(&_pw_passwd, __ypline))
 			goto again;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 		return &_pw_passwd;
 	}
 #endif
@@ -479,8 +491,10 @@ again:
 			}
 		}
 #endif
+		_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 		return &_pw_passwd;
 	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (struct passwd *)NULL;
 }
 
@@ -566,8 +580,8 @@ __has_ypmaster()
 }
 #endif
 
-struct passwd *
-getpwnam(name)
+static struct passwd *
+getpwnam_unlocked(name)
 	const char *name;
 {
 	DBT key;
@@ -744,13 +758,9 @@ pwnam_netgrp:
 	return (rval ? &_pw_passwd : (struct passwd *)NULL);
 }
 
-struct passwd *
-#ifdef __STDC__
-getpwuid(uid_t uid)
-#else
-getpwuid(uid)
+static struct passwd *
+getpwuid_unlocked (uid)
 	uid_t uid;
-#endif
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
@@ -924,10 +934,119 @@ pwuid_netgrp:
 	return (rval ? &_pw_passwd : (struct passwd *)NULL);
 }
 
+/* XXX copy static storage into user's buffer */
+static int
+fill_reent(src, pwd, buffer, bufsize, result)
+	struct passwd *src;
+	struct passwd *pwd;
+	char *buffer;
+	size_t bufsize;
+	struct passwd **result;
+{
+	int len;
+
+	*result = NULL;
+	if (src == NULL) {
+		if (errno == 0)
+			return ENOENT;
+		return errno;
+	}
+
+#define fill_alloc(field)				\
+	if (src->field == NULL)				\
+		pwd->field = NULL;			\
+	else {						\
+		len = strlen(src->field) + 1;		\
+		if (len > bufsize)			\
+			return ERANGE;			\
+		memcpy(buffer, src->field, len);	\
+		pwd->field = buffer;			\
+		buffer += len;				\
+		bufsize -= len;				\
+	}
+
+	fill_alloc(pw_name)
+	fill_alloc(pw_passwd)
+	pwd->pw_uid = src->pw_uid;
+	pwd->pw_gid = src->pw_gid;
+	pwd->pw_change = src->pw_change;
+	fill_alloc(pw_class)
+	fill_alloc(pw_gecos)
+	fill_alloc(pw_dir)
+	fill_alloc(pw_shell)
+	pwd->pw_expire = src->pw_expire;
+
+#undef fill_alloc
+
+	*result = pwd;
+	return 0;
+}
+
+struct passwd *
+getpwnam(name)
+	const char *name;
+{
+	struct passwd *ret;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	ret = getpwnam_unlocked(name);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
+	return ret;
+}
+
+int
+getpwnam_r(name, pwd, buffer, bufsize, result)
+	const char *name;
+	struct passwd *pwd;
+	char *buffer;
+	size_t bufsize;
+	struct passwd **result;
+{
+	int error;
+	struct passwd *pw;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	pw = getpwnam_unlocked(name);
+	error = fill_reent(pw, pwd, buffer, bufsize, result);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
+	return error;
+}
+
+struct passwd *
+getpwuid(uid)
+	uid_t uid;
+{
+	struct passwd *ret;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	ret = getpwuid_unlocked(uid);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
+	return ret;
+}
+
+int
+getpwuid_r(uid, pwd, buffer, bufsize, result)
+	uid_t uid;
+	struct passwd *pwd;
+	char *buffer;
+	size_t bufsize;
+	struct passwd **result;
+{
+	int error;
+	struct passwd *pw;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
+	pw = getpwuid_unlocked(uid);
+	error = fill_reent(pw, pwd, buffer, bufsize, result);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
+	return error;
+}
+
 int
 setpassent(stayopen)
 	int stayopen;
 {
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
 	_pw_keynum = 0;
 	_pw_stayopen = stayopen;
 #ifdef YP
@@ -938,6 +1057,7 @@ setpassent(stayopen)
 	__ypexclude_free();
 	__ypproto = (struct passwd *)NULL;
 #endif
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 	return (1);
 }
 
@@ -950,6 +1070,7 @@ setpwent()
 void
 endpwent()
 {
+	_THREAD_PRIVATE_MUTEX_LOCK(pw);
 	_pw_keynum = 0;
 	if (_pw_db) {
 		(void)(_pw_db->close)(_pw_db);
@@ -963,6 +1084,7 @@ endpwent()
 	__ypexclude_free();
 	__ypproto = (struct passwd *)NULL;
 #endif
+	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
 }
 
 static int

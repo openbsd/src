@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.11 2000/04/18 03:01:27 aaron Exp $
+.\"	$OpenBSD: getpwent.3,v 1.12 2000/04/25 12:21:05 d Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,9 @@
 .Sh NAME
 .Nm getpwent ,
 .Nm getpwnam ,
+.Nm getpwnam_r ,
 .Nm getpwuid ,
+.Nm getpwuid_r ,
 .Nm setpassent ,
 .Nm setpwent ,
 .Nm endpwent
@@ -49,8 +51,12 @@
 .Fn getpwent void
 .Ft struct passwd *
 .Fn getpwnam "const char *login"
+.Ft int
+.Fn getpwnam_r "const char *login" "struct passwd *pwd" "char *buffer" "size_t bufsize" "struct passwd **result"
 .Ft struct passwd *
 .Fn getpwuid "uid_t uid"
+.Ft int
+.Fn getpwuid_r "uid_t uid" "struct passwd *pwd" "char *buffer" "size_t bufsize" "struct passwd **result"
 .Ft int
 .Fn setpassent "int stayopen"
 .Ft void
@@ -129,6 +135,29 @@ If the process which calls them has an effective UID of 0, the encrypted
 password will be returned, otherwise, the password field of the returned
 structure will point to the string
 .Ql * .
+.Pp
+The
+.Fn getpwuid_r
+and
+.Fn getpwnam_r
+functions both update the passwd structure pointed to by
+.Fa pwd
+and store a pointer to that structure at the location pointed to by
+.Fa result .
+The structure shall contain an entry from the user database with a matching
+.Fa uid
+or
+.Fa login .
+Storage referenced by the structure shall be allocated from the memory
+provided with the
+.Fa buffer
+parameter, which is
+.Fa bufsize
+characters in size.
+.\" The maximum size needed for this buffer can be determined with the
+.\" _SC_GETPW_R_SIZE_MAX
+.\" .Xr sysconf 2
+.\" parameter.
 .Sh RETURN VALUES
 The functions
 .Fn getpwent ,
@@ -146,6 +175,20 @@ and
 .Fn setpwent
 functions
 have no return value.
+The functions
+.Fn getpwuid_r
+and
+.Fn getpwnam_r
+return a null pointer in the location pointed to by
+.Fa result
+and return the error number
+on error or if the requested entry is not found.
+The error value
+.Ev ERANGE
+is returned if insufficient storage was supplied via
+.Fa buffer
+and
+.Fa bufsize.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/pwd.db
