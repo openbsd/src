@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.55 2000/10/26 22:23:45 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.56 2000/10/30 18:21:37 espie Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -656,7 +656,16 @@ and
 as needed.
 .Ss Packages
 Install your own packages.
-The simple way is to copy source and compile and link/load.
+The OpenBSD ports collection includes a large set of Third-Party software.
+A lot of it is available as binary packages, that you can download from
+.Pa ftp://ftp.openbsd.org/
+or a mirror, and install using
+.Xr pkg_add 1 .
+See
+.Pa http://www.openbsd.org/ports.html
+and
+.Xr packages 7
+for more details.
 .Pp
 Copy vendor binaries and install them.
 You will need to install any shared libraries, etc.
@@ -664,22 +673,13 @@ You will need to install any shared libraries, etc.
 .Ic man -k compat
 to find out how to install and use compatibility mode.)
 .Pp
-Install any of a large group of Third-Party Software that is available
-in source form.
-See
-.Pa http://www.openbsd.org
-under
-.Sq Ports: a Nice Way to Get Third-Party Software .
-.Pp
-You may have some difficulty installing due to various compiling errors.
-Don't get discouraged easily!
+There is also other Third-Party Software that is available
+in source form only, either because it has not been ported to
+.Ox
+yet, or because licensing restrictions make binary redistribution
+impossible.
 Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
-One recent item says to delete
-.Pa -lcrypt
-from
-.Pa Makefile Ns No s
-as the crypt routines are now present in the standard libraries.
 .Sh COMPILING A KERNEL
 First, review the system message buffer using the
 .Xr dmesg 8
@@ -821,6 +821,7 @@ boot time in the kernel image.
 .Xr rbootd 5 ,
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
+.Xr packages 7 ,
 .Xr adduser 8 ,
 .Xr amd 8 ,
 .Xr bootpd 8 ,
