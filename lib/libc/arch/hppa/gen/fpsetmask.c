@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.3 2002/10/21 18:41:05 mickey Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.4 2004/01/05 06:06:16 otto Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -12,7 +12,7 @@ fpsetmask(mask)
 	fp_except mask;
 {
 	u_int64_t fpsr;
-	fp_rnd old;
+	fp_except old;
 
 	__asm__ __volatile__("fstd %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr));
 	old = (fpsr >> 32) & 0x1f;
