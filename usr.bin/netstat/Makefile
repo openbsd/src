@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.9 2000/06/14 01:05:04 itojun Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/07/30 11:42:09 hugh Exp $
 
 PROG=	netstat
-SRCS=	if.c inet.c ipx.c iso.c main.c mbuf.c mroute.c ns.c route.c \
-	tp_astring.c unix.c atalk.c inet6.c mroute6.c
+SRCS=	if.c inet.c inet6.c ipx.c iso.c main.c mbuf.c mroute.c ns.c route.c \
+	tp_astring.c unix.c atalk.c mroute6.c
 .PATH:	${.CURDIR}/../../sys/netiso
 BINGRP=	kmem
 BINMODE=2555
