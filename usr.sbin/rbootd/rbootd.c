@@ -151,6 +151,7 @@ main(argc, argv)
 
 		if ((IntfName = BpfGetIntfName(&errmsg)) == NULL) {
 			syslog(LOG_NOTICE, "restarted (??)");
+			/* BpfGetIntfName() returns safe names, using %m */
 			syslog(LOG_ERR, errmsg);
 			Exit(0);
 		}
