@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.27 2001/06/25 09:31:07 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.28 2001/06/25 09:35:52 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -83,9 +83,9 @@ struct timeval		 pftv;
 struct pf_status	 pf_status;
 struct ifnet		*status_ifp;
 
-u_int32_t		 last_purge = 0;
-u_int16_t		 next_port_tcp = 50001;
-u_int16_t		 next_port_udp = 50001;
+u_int32_t		 pf_last_purge = 0;
+u_int16_t		 pf_next_port_tcp = 50001;
+u_int16_t		 pf_next_port_udp = 50001;
 
 struct pool		pf_tree_pl;
 struct pool		pf_rule_pl;
@@ -529,9 +529,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	s = splsoftnet();
 
 	microtime(&pftv);
-	if (pftv.tv_sec - last_purge >= 10) {
+	if (pftv.tv_sec - pf_last_purge >= 10) {
 		purge_expired_states();
-		last_purge = pftv.tv_sec;
+		pf_last_purge = pftv.tv_sec;
 	}
 
 	switch (cmd) {
@@ -976,7 +976,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 			baddr = h->ip_src.s_addr;
 			bport = th->th_sport;
 			change_ap(&h->ip_src.s_addr, &th->th_sport, &h->ip_sum,
-			    &th->th_sum, nat->daddr, htons(next_port_tcp));
+			    &th->th_sum, nat->daddr, htons(pf_next_port_tcp));
 		}
 	} else {
 		/* check incoming packet for RDR */
@@ -1066,9 +1066,9 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 			if (nat != NULL) {
 				s->lan.addr	= baddr;
 				s->lan.port	= bport;
-				next_port_tcp++;
-				if (next_port_tcp == 65535)
-					next_port_tcp = 50001;
+				pf_next_port_tcp++;
+				if (pf_next_port_tcp == 65535)
+					pf_next_port_tcp = 50001;
 			} else {
 				s->lan.addr	= s->gwy.addr;
 				s->lan.port	= s->gwy.port;
@@ -1119,7 +1119,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 			baddr = h->ip_src.s_addr;
 			bport = uh->uh_sport;
 			change_ap(&h->ip_src.s_addr, &uh->uh_sport, &h->ip_sum,
-			    &uh->uh_sum, nat->daddr, htons(next_port_udp));
+			    &uh->uh_sum, nat->daddr, htons(pf_next_port_udp));
 		}
 	} else {
 		/* check incoming packet for RDR */
@@ -1188,9 +1188,9 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 			if (nat != NULL) {
 				s->lan.addr	= baddr;
 				s->lan.port	= bport;
-				next_port_udp++;
-				if (next_port_udp == 65535)
-					next_port_udp = 50001;
+				pf_next_port_udp++;
+				if (pf_next_port_udp == 65535)
+					pf_next_port_udp = 50001;
 			} else {
 				s->lan.addr	= s->gwy.addr;
 				s->lan.port	= s->gwy.port;
@@ -1730,9 +1730,9 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 	/* purge expire states, at most once every 10 seconds */
 	microtime(&pftv);
-	if (pftv.tv_sec - last_purge >= 10) {
+	if (pftv.tv_sec - pf_last_purge >= 10) {
 		purge_expired_states();
-		last_purge = pftv.tv_sec;
+		pf_last_purge = pftv.tv_sec;
 	}
 
 	off = h->ip_hl << 2;
