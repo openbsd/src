@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.9 1997/04/10 15:45:25 millert Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.10 1997/07/19 20:44:19 niklas Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
@@ -630,9 +630,15 @@ __abs_c(tc_mem_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
 		return;							\
 	}								\
 									\
-	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
-		__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
-		    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
+	/* Circumvent a common case of overlapping problems */		\
+	if (h1 == h2 && o2 > o1)					\
+		for (i = 0, o = (c - 1) * BYTES; i < c; i++, o -= BYTES)\
+			__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,	\
+			    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));\
+	else								\
+		for (i = 0, o = 0; i < c; i++, o += BYTES)		\
+			__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,	\
+			    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));\
 }
 tc_mem_copy_N(1)
 tc_mem_copy_N(2)

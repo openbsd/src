@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcs_bus_mem_common.c,v 1.7 1997/07/06 18:28:01 niklas Exp $	*/
+/*	$OpenBSD: pcs_bus_mem_common.c,v 1.8 1997/07/19 20:44:15 niklas Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -1006,9 +1006,15 @@ __C(__C(CHIP,_mem_copy_),BYTES)(v, h1, o1, h2, o2, c)			\
 		return;							\
 	}								\
 									\
-	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
-		__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,		\
-		    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o));	\
+	/* Circumvent a common case of overlapping problems */		\
+	if (h1 == h2 && o2 > o1)					\
+		for (i = 0, o = (c - 1) * BYTES; i < c; i++, o -= BYTES)\
+			__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,	\
+			    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o));\
+	else								\
+		for (i = 0, o = 0; i < c; i++, o += BYTES)		\
+			__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,	\
+			    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o));\
 }
 CHIP_mem_copy_N(1)
 CHIP_mem_copy_N(2)
