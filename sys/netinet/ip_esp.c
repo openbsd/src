@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.36 2000/03/28 07:04:02 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.37 2000/03/29 07:09:57 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -418,8 +418,18 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crde->crd_skip = skip + hlen;
 	crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 	crde->crd_inject = skip + hlen - tdb->tdb_ivlen;
+
         if (tdb->tdb_flags & TDBF_HALFIV)
-	  crde->crd_flags |= CRD_F_HALFIV;
+	{
+	    /* Copy half-IV from packet */
+	    m_copydata(m, crde->crd_inject, tdb->tdb_ivlen, crde->crd_iv);
+
+	    /* Cook IV */
+	    for (btsx = 0; btsx < tdb->tdb_ivlen; btsx++)
+	      crde->crd_iv[tdb->tdb_ivlen + btsx] = ~crde->crd_iv[btsx];
+
+	    crde->crd_flags |= CRD_F_IV_EXPLICIT;
+	}
 
 	crde->crd_alg = espx->type;
 	crde->crd_key = tdb->tdb_emxkey;
@@ -888,9 +898,20 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	crde->crd_skip = skip + hlen;
 	crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 	crde->crd_flags = CRD_F_ENCRYPT;
-        if (tdb->tdb_flags & TDBF_HALFIV)
-	  crde->crd_flags |= CRD_F_HALFIV;
 	crde->crd_inject = skip + hlen - tdb->tdb_ivlen;
+
+        if (tdb->tdb_flags & TDBF_HALFIV)
+	{
+	    /* Copy half-iv in the packet */
+	    m_copyback(m, crde->crd_inject, tdb->tdb_ivlen, tdb->tdb_iv);
+
+	    /* Cook half-iv */
+	    bcopy(tdb->tdb_iv, crde->crd_iv, tdb->tdb_ivlen);
+	    for (ilen = 0; ilen < tdb->tdb_ivlen; ilen++)
+	      crde->crd_iv[tdb->tdb_ivlen + ilen] = ~crde->crd_iv[ilen];
+
+	    crde->crd_flags |= CRD_F_IV_PRESENT | CRD_F_IV_EXPLICIT;
+	}
 
 	/* Encryption operation */
 	crde->crd_alg = espx->type;
@@ -988,6 +1009,15 @@ esp_output_cb(void *op)
 
     /* Release crypto descriptors */
     crypto_freereq(crp);
+
+    /*
+     * If we're doing half-iv, keep a copy of the last few bytes of the
+     * encrypted part, for use as the next IV. Note that HALF-IV is only
+     * supposed to be used without authentication (the old ESP specs).
+     */
+    if (tdb->tdb_flags & TDBF_HALFIV)
+      m_copydata(m, m->m_pkthdr.len - tdb->tdb_ivlen, tdb->tdb_ivlen,
+		 tdb->tdb_iv);
 
     /* Call the IPsec input callback */
     return ipsp_process_done(m, tdb);

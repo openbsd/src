@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.62 2000/03/17 10:25:22 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.63 2000/03/29 07:09:57 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -298,6 +298,8 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_dstid_len;
     u_int16_t         tdb_srcid_type;
     u_int16_t         tdb_dstid_type;
+
+    u_int8_t          tdb_iv[4];        /* Used for HALF-IV ESP */
 
     caddr_t           tdb_interface;
     struct flow	     *tdb_flow; 	/* Which outboind flows use this SA */
