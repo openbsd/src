@@ -1033,7 +1033,6 @@
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pctr.0
-./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/psm.0
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
@@ -2039,3 +2038,9 @@
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/siop.0
 ./usr/share/man/cat3/rfc1413.0
+./usr/share/man/cat4/uftdi.0
+./usr/share/man/cat4/pms.0
+./usr/share/man/cat4/pmsi.0
+./usr/share/man/cat4/i386/olms.0
+./usr/share/man/cat4/i386/omms.0
+./usr/share/man/cat4/i386/opms.0

@@ -1772,3 +1772,4 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar_common.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/siop_pci_common.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uftdireg.ph

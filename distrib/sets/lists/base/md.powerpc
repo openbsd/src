@@ -1767,3 +1767,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/siopvar_common.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/siop_pci_common.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uftdireg.ph
