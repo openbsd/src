@@ -1,4 +1,4 @@
-/*	$Id: kadm_ser_wrap.c,v 1.2 1995/12/14 08:43:45 tholo Exp $	*/
+/*	$Id: kadm_ser_wrap.c,v 1.3 1997/02/19 06:08:37 tholo Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -56,7 +56,7 @@ kadm_ser_init(int inter, char *realm)
   (void) strcpy(server_parm.sname, PWSERV_NAME);
   if (krb_get_admhst(admin, realm, 1) != KSUCCESS)
       return KADM_NO_MAST;
-  if ((dot = strchr(server_parm.sinst, '.')) != NULL)
+  if ((dot = strchr(admin, '.')) != NULL)
       *dot = '\0';
   (void) strcpy(server_parm.sinst, admin);
   (void) strcpy(server_parm.krbrlm, realm);
