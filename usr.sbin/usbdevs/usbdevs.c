@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.1 2000/02/03 21:52:15 jakob Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.2 2001/09/17 17:29:56 mickey Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.11 1999/09/08 02:39:36 augustss Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #define USBDEV "/dev/usb"
 
 int verbose;
+int showdevs;
 
 void usage __P((void));
 void usbdev __P((int f, int a, int rec));
@@ -62,7 +63,8 @@ extern char *__progname;
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-a addr] [-f dev] [-v]\n", __progname);
+	fprintf(stderr, "Usage: %s [-a addr] [-d] [-f dev] [-v]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -76,7 +78,7 @@ usbdev(f, a, rec)
 	int rec;
 {
 	struct usb_device_info di;
-	int e, p;
+	int e, p, i;
 
 	di.addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
@@ -106,6 +108,12 @@ usbdev(f, a, rec)
 	} else
 		printf("%s, %s", di.product, di.vendor);
 	printf("\n");
+	if (showdevs) {
+		for (i = 0; i< USB_MAX_DEVNAMES; i++)
+			if (di.devnames[i][0])
+				printf("%*s %s\n", indent, "",
+				    di.devnames[i]);
+	}
 	if (!rec)
 		return;
 	for (p = 0; p < di.nports; p++) {
@@ -175,10 +183,13 @@ main(argc, argv)
 	int addr = 0;
 	int ncont;
 
-	while ((ch = getopt(argc, argv, "a:f:v")) != -1) {
+	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch(ch) {
 		case 'a':
 			addr = atoi(optarg);
+			break;
+		case 'd':
+			showdevs++;
 			break;
 		case 'f':
 			dev = optarg;
