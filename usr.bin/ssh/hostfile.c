@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: hostfile.c,v 1.9 1999/11/24 19:53:47 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.10 1999/12/02 20:18:59 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -231,9 +231,9 @@ check_host_in_hostfile(const char *filename, const char *host,
 			continue;
 
 		if (kbits != BN_num_bits(kn)) {
-			error("Warning: error in %s, line %d: keysize mismatch for host %s: "
-			      "actual size %d vs. announced %d.",
-			filename, linenum, host, BN_num_bits(kn), kbits);
+			error("Warning: %s, line %d: keysize mismatch for host %s: "
+			      "actual %d vs. announced %d.",
+			      filename, linenum, host, BN_num_bits(kn), kbits);
 			error("Warning: replace %d with %d in %s, line %d.",
 			      kbits, BN_num_bits(kn), filename, linenum);
 		}
