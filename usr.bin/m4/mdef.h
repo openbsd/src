@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.19 2001/09/17 08:11:13 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.20 2001/09/18 13:39:52 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ struct input_file {
 			enlarge_stack();\
 		mstack[sp].sfra = (x);	\
 		sstack[sp] = 0; \
-	} while (0);
+	} while (0)
 
 #define pushs(x) 			\
 	do {				\
@@ -181,7 +181,7 @@ struct input_file {
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 1; \
-	} while (0);
+	} while (0)
 
 #define pushs1(x) 			\
 	do {				\
@@ -189,7 +189,7 @@ struct input_file {
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
 		sstack[sp] = 0; \
-	} while (0);
+	} while (0)
 
 /*
  *	    .				   .
