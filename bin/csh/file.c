@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.11 2002/07/15 22:10:13 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.12 2002/07/24 19:53:50 millert Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.11 2002/07/15 22:10:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.12 2002/07/24 19:53:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static void	 beep(void);
 static void	 print_recognized_stuff(Char *);
 static void	 extract_dir_and_name(Char *, Char *, Char *);
 static Char	*getentry(DIR *, int);
-static void	 free_items(Char **);
+static void	 free_items(Char **, int);
 static int	 tsearch(Char *, COMMAND, int);
 static int	 recognize(Char *, Char *, int, int);
 static int	 is_prefix(Char *, Char *);
@@ -412,12 +412,13 @@ getentry(dir_fd, looking_for_lognames)
 }
 
 static void
-free_items(items)
-    register Char **items;
+free_items(items, numitems)
+    Char **items;
+    int numitems;
 {
-    register int i;
+    int i;
 
-    for (i = 0; items[i]; i++)
+    for (i = 0; i < numitems; i++)
 	xfree((ptr_t) items[i]);
     xfree((ptr_t) items);
 }
@@ -428,7 +429,7 @@ free_items(items)
 	sigemptyset(&sigset);\
 	sigaddset(&sigset, SIGINT);\
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);\
-	free_items(items);\
+	free_items(items, numitems);\
 	sigprocmask(SIG_SETMASK, &osigset, NULL);\
 }
 
@@ -478,10 +479,10 @@ again:				/* search for matches */
 	    if (numitems >= maxitems) {
 		maxitems += 1024;
 		if (items == NULL)
-			items = (Char **) xmalloc(sizeof(items[0]) * maxitems);
+			items = (Char **) xmalloc(sizeof(*items) * maxitems);
 		else
 			items = (Char **) xrealloc((ptr_t) items,
-			    sizeof(items[0]) * maxitems);
+			    sizeof(*items) * maxitems);
 	    }
 	    items[numitems] = (Char *) xmalloc((size_t) (Strlen(entry) + 1) *
 					       sizeof(Char));
@@ -523,7 +524,7 @@ again:				/* search for matches */
 	return (numitems);
     }
     else {			/* LIST */
-	qsort((ptr_t) items, numitems, sizeof(items[0]),
+	qsort((ptr_t) items, numitems, sizeof(*items),
 		(int (*)(const void *, const void *)) sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);
