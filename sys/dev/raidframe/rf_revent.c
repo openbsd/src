@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_revent.c,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
+/*	$OpenBSD: rf_revent.c,v 1.4 1999/08/02 12:35:33 peter Exp $	*/
 /*	$NetBSD: rf_revent.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -66,8 +66,9 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *,
     RF_RowCol_t, void (*continueFunc) (void *),
     void *);
 
-	static void rf_ShutdownReconEvent(ignored)
-	void   *ignored;
+static void
+rf_ShutdownReconEvent(ignored)
+void   *ignored;
 {
 	RF_FREELIST_DESTROY(rf_revent_freelist, next, (RF_ReconEvent_t *));
 }
