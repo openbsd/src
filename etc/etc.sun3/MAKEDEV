@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1998/09/15 10:23:23 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1998/09/25 12:42:22 todd Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -40,30 +40,31 @@
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	st*	? tape
+#	st*	SCSI tapes
 # Disks:
-#	sd*	Sun SCSI disks
-#	fd*	Floppies
+#	sd*	SCSI disks
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	vnd*	"file" pseudo-disks
-#	ccd*	concatenated disk driver
+#	ccd*	concatenated disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
 # Call units:
 # Special purpose devices:
-#	bwtwo*
-#	cgtwo*
-#	cgfour*
-#	bpf*	packet filter
+#	bwtwo*	
+#	cgtwo*	
+#	cgfour*	
+#	bpf*	Berkeley Packet Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	rd*	RAM-disk
-#	*random	random data source
-#	uk*	unknown SCSI
+#	rd*	"ramdisk" pseudo-disks
+#	*random	inkernal random data source
+#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
+this=$0
 umask 77
 
 # set this to echo for Echo-Only debugging
@@ -87,9 +88,9 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV ipl
+	sh $this std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this ipl
 	;;
 
 std)
@@ -242,9 +243,16 @@ ss*)
 	ln -s ss$unit scan$unit
 	;;
 
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
+
 local)
 	umask 0
-	test -s MAKEDEV.local && sh MAKEDEV.local
+	test -s MAKEDEV.local && sh $this.local
 	;;
 *)
 	echo $arg: unknown device
