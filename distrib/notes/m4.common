@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.32 2002/03/30 22:52:55 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.33 2002/04/09 01:22:19 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -328,8 +328,8 @@ define({:-OpenBSDInstallPart5-:},
 	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
 	point of no return.-:})dnl
 dnl
-dnl OpenBSDInstallNet(has media settings information following)
-dnl Setting up the network, part 1
+dnl OpenBSDInstallNet(other installation sources,hasfloppy)
+dnl Setting up the network
 define({:-OpenBSDInstallNet-:},
 {:-	After all your file systems have been created, the install program
 	will give you an opportunity to configure the network.  The network
@@ -347,13 +347,13 @@ define({:-OpenBSDInstallNet-:},
 	will ask for the IP address to use, the symbolic host name to use,
 	the netmask to use and any interface-specific flags to set. The
 	interface-specific flags are usually used to determine which media
-	the network card is to use.ifelse(X$1,X,{:- Typically no media flags are required as
-	autodetect normally works.-:})-:})dnl
-dnl
-dnl OpenBSDInstallNet2(other installation sources,hasfloppy)
-dnl Setting up the network, part 2 (after the media flags)
-define({:-OpenBSDInstallNet2-:},
-{:-	After all network interfaces has been configured the install pro-
+	the network card is to use.  Typically no media flags are required
+	as autodetection normally works, but you will be prompted with a
+	list of the acceptable media flags, and asked if you want to provide
+	any.  In doubt, do not enter any media flags; or you can refer to
+	the manual page for your interface for the appropriate flags.
+
+	After all network interfaces has been configured the install pro-
 	gram will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
 	to edit the host table.

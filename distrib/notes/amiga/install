@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2002/03/30 22:52:57 miod Exp $
+dnl	$OpenBSD: install,v 1.23 2002/04/09 01:22:22 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -84,15 +84,7 @@ OpenBSDBootMsgs
 	does not write disklabels currently.  You should expect
 	this error whenever using newfs.
 
-OpenBSDInstallNet(linkflags)dnl
- The flags usually carry the following
-	meaning:
-
-		-link0 -link1	Use BNC (coaxial) port [default]
-		link0 -link1	Use AUI port
-		link0 link1	Use UTP (twisted pair) port
-
-OpenBSDInstallNet2({:-CD-ROM, NFS, -:},nofloppy)
+OpenBSDInstallNet({:-CD-ROM, NFS, -:},nofloppy)
 
 OpenBSDFTPInstall
 

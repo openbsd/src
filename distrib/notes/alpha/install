@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2002/04/07 22:13:01 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2002/04/09 01:22:22 miod Exp $
 OpenBSDInstallPrelude
 
 dnl XXX document mopbooting from the SRM console.
@@ -64,9 +64,7 @@ OpenBSDInstallPart4
 
 OpenBSDInstallPart5(sd0)
 
-OpenBSDInstallNet
-
-OpenBSDInstallNet2({:-CD-ROM, -:},nofloppy)
+OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
 
 OpenBSDFTPInstall
 
