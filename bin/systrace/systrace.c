@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.34 2002/09/17 04:57:53 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.35 2002/09/23 04:41:02 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -192,7 +192,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 		goto out;
 	}
 
-	action = filter_ask(tls, pflq, policynr, emulation, name,
+	action = filter_ask(fd, tls, pflq, policynr, emulation, name,
 	    output, &future, &ipid->uflags);
 	if (future != ICPOLICY_ASK)
 		filter_modifypolicy(fd, policynr, emulation, name, future);
@@ -261,7 +261,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 		goto out;
 	}
 
-	action = filter_ask(NULL, NULL, policynr, emulation, name,
+	action = filter_ask(fd, NULL, NULL, policynr, emulation, name,
 	    output, &future, &ipid->uflags);
 	if (future != ICPOLICY_ASK)
 		systrace_modifypolicy(fd, policynr, name, future);

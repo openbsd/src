@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.17 2002/09/23 04:41:02 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -54,6 +54,8 @@ extern char cwd[];
 static void logic_free(struct logic *);
 static int filter_match(struct intercept_tlq *, struct logic *);
 static void filter_review(struct filterq *);
+static void filter_templates(const char *);
+static int filter_template(int, struct policy *, int);
 static void filter_policyrecord(struct policy *, struct filter *, const char *,
     const char *, char *);
 static void filter_replace(char *, size_t, char *, char *);
@@ -171,6 +173,59 @@ filter_review(struct filterq *fls)
 		i++;
 		printf("%d. %s\n", i, filter->rule);
 	}
+}
+
+static void
+filter_templates(const char *emulation)
+{
+	extern struct tmplqueue templates;
+	struct template *template;
+	int i = 0;
+
+	printf("Available Templates:\n");
+
+	TAILQ_FOREACH(template, &templates, next) {
+		if (strcmp(template->emulation, emulation))
+			continue;
+
+		i++;
+		printf("%d. %s - %s\n", i,
+		    template->name, template->description);
+	}
+}
+
+/* Inserts a policy from a template */
+
+static int
+filter_template(int fd, struct policy *policy, int count)
+{
+	extern struct tmplqueue templates;
+	struct template *template;
+	int i = 0;
+
+	TAILQ_FOREACH(template, &templates, next) {
+		if (strcmp(template->emulation, policy->emulation))
+			continue;
+
+		i++;
+		if (i == count)
+			break;
+	}
+
+	if (i != count)
+		return (-1);
+
+	template = systrace_readtemplate(template->filename, policy, template);
+	if (template == NULL)
+		return (-1);
+
+	if (filter_prepolicy(fd, policy) == -1)
+		return (-1);
+
+	/* We inserted new statements into the policy */
+	policy->flags |= POLICY_CHANGED;
+
+	return (0);
 }
 
 static void
@@ -338,7 +393,7 @@ filter_prepolicy(int fd, struct policy *policy)
 }
 
 short
-filter_ask(struct intercept_tlq *tls, struct filterq *fls,
+filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
     int policynr, const char *emulation, const char *name,
     char *output, short *pfuture, int *pflags)
 {
@@ -435,6 +490,25 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 		} else if (!strcasecmp(line, "review") && fls != NULL) {
 			filter_review(fls);
 			continue;
+		} else if (!strcasecmp(line, "templates")) {
+			filter_templates(emulation);
+			continue;
+		} else if (!strncasecmp(line, "template ", 9)) {
+			int count = atoi(line + 9);
+
+			if (count == 0 ||
+			    filter_template(fd, policy, count) == -1) {
+				printf("Syntax error.\n");
+				continue;
+			}
+
+			action = filter_evaluate(tls, fls, pflags);
+			if (action == ICPOLICY_ASK) {
+				printf("Filter unmatched.\n");
+				continue;
+			}
+
+			goto out;
 		}
 
 		if (filter_parse_simple(line, &action, pfuture) != -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.15 2002/09/23 04:41:02 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -90,6 +90,18 @@ struct policy {
 	struct filterq prefilters;
 };
 
+struct template {
+	TAILQ_ENTRY(template) next;
+
+	char *filename;
+	char *name;
+	char *description;
+
+	char *emulation;
+};
+
+TAILQ_HEAD(tmplqueue, template);
+
 #define POLICY_PATH		"/etc/systrace"
 
 #define POLICY_UNSUPERVISED	0x01	/* Auto-Pilot */
@@ -102,6 +114,8 @@ struct policy {
 
 int systrace_initpolicy(char *, char *);
 void systrace_setupdir(char *);
+struct template *systrace_readtemplate(char *, struct policy *,
+    struct template *);
 void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
 int systrace_newpolicynr(int, struct policy *);
@@ -153,8 +167,8 @@ struct systrace_revalias *systrace_reverse(const char *, const char *);
 struct systrace_revalias *systrace_find_reverse(const char *, const char *);
 
 short filter_evaluate(struct intercept_tlq *, struct filterq *, int *);
-short filter_ask(struct intercept_tlq *, struct filterq *, int, const char *,
-    const char *, char *, short *, int *);
+short filter_ask(int, struct intercept_tlq *, struct filterq *, int,
+    const char *, const char *, char *, short *, int *);
 void filter_free(struct filter *);
 void filter_modifypolicy(int, int, const char *, const char *, short);
 
