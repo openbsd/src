@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.8 1999/08/05 00:12:09 niklas Exp $     */
+/*      $OpenBSD: wdc.c,v 1.9 1999/09/05 21:43:30 niklas Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -182,19 +182,16 @@ wdc_select_drive(chp, drive, howlong)
 	int drive;
 	int howlong;
 {
-	
-	if (wait_for_unbusy(chp, howlong)) {
+	if (wait_for_unbusy (chp, howlong))
 		return -1;
-	}
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
 	
 	delay(1);
 
-	if (wdcwait(chp, WDCS_DRQ, 0, howlong)) {
+	if (wdcwait(chp, WDCS_DRQ, 0, howlong))
 		return -1;
-	}
 
 	return 0;
 }
@@ -539,7 +536,7 @@ wdcstart(chp)
 	chp = xfer->chp;
 
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
-		return; /* channel aleady active */
+		return; /* channel already active */
 	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
