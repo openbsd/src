@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.22 2000/03/03 11:15:43 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.23 2001/03/25 07:07:57 csapuntz Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ mbinit()
 	splx(s);
 	return;
 bad:
+	splx(s);
 	panic("mbinit");
 }
 
