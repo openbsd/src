@@ -198,7 +198,7 @@ rl_replace_line (text, clear_undo)
   len = strlen (text);
   if (len >= rl_line_buffer_len)
     rl_extend_line_buffer (len);
-  strlcpy (rl_line_buffer, text, len);
+  strlcpy (rl_line_buffer, text, rl_line_buffer_len);
   rl_end = len;
 
   if (clear_undo)
