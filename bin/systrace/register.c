@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.2 2002/07/12 12:26:29 provos Exp $	*/
+/*	$OpenBSD: register.c,v 1.3 2002/07/13 08:54:10 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -111,6 +111,8 @@ systrace_initcb(void)
 
 	X(intercept_register_sccb("native", "chdir", trans_cb, NULL));
 	intercept_register_transfn("native", "chdir", 0);
+	X(intercept_register_sccb("native", "chroot", trans_cb, NULL));
+	intercept_register_transfn("native", "chroot", 0);
 	X(intercept_register_sccb("native", "access", trans_cb, NULL));
 	tl = intercept_register_transfn("native", "access", 0);
 	alias = systrace_new_alias("native", "access", "native", "fsread");
@@ -134,8 +136,10 @@ systrace_initcb(void)
 
 	X(intercept_register_sccb("native", "setuid", trans_cb, NULL));
 	intercept_register_translation("native", "setuid", 0, &uidt);
+	intercept_register_translation("native", "setuid", 0, &uname);
 	X(intercept_register_sccb("native", "seteuid", trans_cb, NULL));
 	intercept_register_translation("native", "seteuid", 0, &uidt);
+	intercept_register_translation("native", "seteuid", 0, &uname);
 	X(intercept_register_sccb("native", "setgid", trans_cb, NULL));
 	intercept_register_translation("native", "setgid", 0, &gidt);
 	X(intercept_register_sccb("native", "setegid", trans_cb, NULL));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.3 2002/07/09 15:22:27 provos Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.4 2002/07/13 08:54:10 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <err.h>
 
 #include "../../sys/compat/linux/linux_types.h"
@@ -158,6 +159,18 @@ print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
+int
+print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	struct passwd *pw;
+	uid_t uid = (uid_t)tl->trans_addr;
+
+	pw = getpwuid(uid);
+	snprintf(buf, buflen, "%s", pw != NULL ? pw->pw_name : "<unknown>");
+
+	return (0);
+}
+
 struct intercept_translate oflags = {
 	"oflags",
 	NULL, print_oflags,
@@ -176,6 +189,11 @@ struct intercept_translate modeflags = {
 struct intercept_translate uidt = {
 	"uid",
 	NULL, print_number,
+};
+
+struct intercept_translate uname = {
+	"uname",
+	NULL, print_uname,
 };
 
 struct intercept_translate gidt = {
