@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.4 1999/05/30 08:20:50 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.5 1999/06/06 19:09:05 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1361,7 +1361,7 @@ void make_discover (ip, lease)
 	ip -> client -> packet.hops = 0;
 	ip -> client -> packet.xid = arc4random ();
 	ip -> client -> packet.secs = 0; /* filled in by send_discover. */
-	ip -> client -> packet.flags = htons (BOOTP_BROADCAST); /* XXX */
+	ip -> client -> packet.flags = 0;
 	memset (&(ip -> client -> packet.ciaddr),
 		0, sizeof ip -> client -> packet.ciaddr);
 	memset (&(ip -> client -> packet.yiaddr),
@@ -1468,7 +1468,7 @@ void make_request (ip, lease)
 	ip -> client -> packet.hops = 0;
 	ip -> client -> packet.xid = ip -> client -> xid;
 	ip -> client -> packet.secs = 0; /* Filled in by send_request. */
-	ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
+	ip -> client -> packet.flags = 0;
 
 	/* If we own the address we're requesting, put it in ciaddr;
 	   otherwise set ciaddr to zero. */
@@ -1567,7 +1567,7 @@ void make_decline (ip, lease)
 	ip -> client -> packet.hops = 0;
 	ip -> client -> packet.xid = ip -> client -> xid;
 	ip -> client -> packet.secs = 0; /* Filled in by send_request. */
-	ip -> client -> packet.flags = htons (BOOTP_BROADCAST);
+	ip -> client -> packet.flags = 0;
 
 	/* ciaddr must always be zero. */
 	memset (&ip -> client -> packet.ciaddr, 0,
