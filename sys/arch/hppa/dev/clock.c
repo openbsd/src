@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2002/09/15 09:45:15 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2002/11/27 21:47:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -52,49 +52,11 @@
 #include <ddb/db_extern.h>
 #endif
 
-struct timeval time;
-int cpu_clockok;
-
-void startrtclock(void);
-
 void
 cpu_initclocks()
 {
-	extern u_int cpu_hzticks;
-	u_int time_inval;
-
-	/* Start the interval timer. */
-	mfctl(CR_ITMR, time_inval);
-	mtctl(time_inval + cpu_hzticks, CR_ITMR);
-
-	cpu_clockok = 1;
+	CPU_CLOCKUPDATE();
 }
-
-int
-clock_intr (v)
-	void *v;
-{
-	struct trapframe *frame = v;
-
-	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
-	   frame->tf_iioq_head, curproc); */
-
-	if (!cpu_clockok)
-		return (1);
-
-	cpu_initclocks();
-	hardclock(frame);
-
-#if 0
-	ddb_regs = *frame;
-	db_show_regs(NULL, 0, 0, NULL);
-#endif
-
-	/* printf ("clock out 0x%x\n", t); */
-
-	return 1;
-}
-
 
 /*
  * initialize the system time from the time of day clock
@@ -152,4 +114,3 @@ setstatclockrate(newhz)
 {
 	/* nothing we can do */
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.96 2002/11/14 01:41:55 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.97 2002/11/27 21:47:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2432,41 +2432,6 @@ $spstrcpy_exit
 	bv	0(rp)
 	copy	r0, ret0
 EXIT(spstrcpy)
-
-/*
- * adjust the time value
- * XXX: do it the easy way, later we will calculate actual fuzz from itmr
- */
-LEAF_ENTRY(microtime)
-
-	/* t4 = splhigh() */
-	mfctl	eiem, t4
-	mtctl	r0, eiem
-
-	.import time, data
-	ldil	L%time, t3
-	ldo	R%time(t3), t3
-	ldw	0(t3), t1
-	ldw	4(t3), t2
-
-	/* splx(t4) */
-	mtctl	t4, eiem
-
-	ldil	L%-1000000, t3
-	ldo	R%-1000000(t3), t3
-
-	addi	1, t2, t2
-	addb,<,n t2, t3, microtime_no
-
-	addi	1, t1, t1
-	copy	t3, t2
-
-microtime_no
-	stwm	t1, 4(arg0)
-	bv	(rp)
-	stw	t2, 0(arg0)
-
-EXIT(microtime)
 
 	.import	whichqs, data
 	.import	qs, data

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2002/11/08 21:42:12 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2002/11/27 21:47:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff
@@ -120,6 +120,14 @@ extern const char *cpu_typename;
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
+#define	CPU_CLOCKUPDATE() do {					\
+	register_t __itmr;					\
+	__asm __volatile("mfctl	%%cr16, %0" : "=r" (__itmr));	\
+	cpu_itmr = __itmr;					\
+	__itmr += cpu_hzticks;					\
+	__asm __volatile("mtctl	%0, %%cr16" :: "r" (__itmr));	\
+} while (0)
+
 #define	clockframe		trapframe
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
 #define	CLKF_INTR(framep)	((framep)->tf_flags & TFF_INTR)
@@ -138,6 +146,7 @@ extern const char *cpu_typename;
 	(((t)? pdcache : fdcache) (HPPA_SID_KERNEL,(vaddr_t)(a),(s)))
 
 extern int want_resched;
+extern u_int cpu_itmr, cpu_hzticks;
 
 #define DELAY(x) delay(x)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.89 2002/11/08 01:59:53 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.90 2002/11/27 21:47:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -139,7 +139,7 @@ struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 
 	/* w/ a little deviation should be the same for all installed cpus */
-u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
+u_int	cpu_itmr, cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 
 	/* exported info */
 char	machine[] = MACHINE_ARCH;
@@ -744,9 +744,30 @@ delay(us)
 		while (start < end);
 
 		us -= n;
-		mfctl(CR_ITMR, start);
 	}
 }
+
+void
+microtime(struct timeval *tv)
+{
+	u_int itmr;
+	int s;
+
+	s = splhigh();
+	tv->tv_sec  = time.tv_sec;
+	tv->tv_usec = time.tv_usec;
+
+	mfctl(CR_ITMR, itmr);
+	itmr -= cpu_itmr;
+	splx(s);
+
+	tv->tv_usec += itmr * cpu_ticksdenom / cpu_ticksnum;
+	if (tv->tv_usec > 1000000) {
+		tv->tv_usec -= 1000000;
+		tv->tv_sec++;
+	}
+}
+
 
 static __inline void
 fall(c_base, c_count, c_loop, c_stride, data)
