@@ -8,7 +8,8 @@ require 5.002;
 # if Carp hasn't been loaded in earlier compile time. :-(
 # We'll let those bugs get found on the development track.
 require Carp if $] < 5.00450;
-use warnings::register();
+
+use warnings::register;
 
 sub import {
     my $callpack = caller;
