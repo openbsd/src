@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.14 2001/07/04 21:59:53 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.15 2001/07/04 22:34:17 millert Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.14 2001/07/04 21:59:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.15 2001/07/04 22:34:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,15 @@ rep_add(str)
 	 * first character in the string specifies what the delimiter is for
 	 * this expression
 	 */
-	if ((pt1 = strchr(str+1, *str)) == NULL) {
+	for (pt1 = str+1; *pt1; pt1++) {
+		if (*pt1 == '\\') {
+			pt1++;
+			continue;
+		}
+		if (*pt1 == *str)
+			break;
+	}
+	if (pt1 == NULL) {
 		paxwarn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -151,7 +159,15 @@ rep_add(str)
 	 * we then point the node at the new substitution string
 	 */
 	*pt1++ = *str;
-	if ((pt2 = strchr(pt1, *str)) == NULL) {
+	for (pt2 = pt1; *pt2; pt2++) {
+		if (*pt2 == '\\') {
+			pt2++;
+			continue;
+		}
+		if (*pt2 == *str)
+			break;
+	}
+	if (pt2 == NULL) {
 		regfree(&(rep->rcmp));
 		(void)free((char *)rep);
 		paxwarn(1, "Invalid replacement string %s", str);
@@ -1112,7 +1128,7 @@ resub(rp, pm, src, inpt, dest, destend)
 			/*
 			 * Ordinary character, just copy it
 			 */
-			if ((c == '\\') && ((*spt == '\\') || (*spt == '&')))
+			if ((c == '\\') && (*spt != '\0'))
 				c = *spt++;
 			*dpt++ = c;
 			continue;
