@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.13 2002/03/20 18:58:13 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.14 2002/04/18 14:15:11 jason Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -97,6 +97,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 dcphy*	at mii? phy ?				# Digital clone PHYs
+amphy*	at mii? phy ?				# AMD AM79c873 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
 pseudo-device	rd	2	# ramdisk

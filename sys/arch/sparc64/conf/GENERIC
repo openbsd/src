@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 2002/04/04 23:16:21 jason Exp $
+#	$OpenBSD: GENERIC,v 1.58 2002/04/18 14:15:11 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -177,6 +177,7 @@ uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 dcphy*	at mii? phy ?				# Digital clone PHYs
+amphy*	at mii? phy ?				# AMD AM79c873 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
 cgsix*		at sbus? slot ? offset ?
