@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2000/08/15 20:22:10 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2000/11/08 16:44:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -570,7 +570,7 @@ pmap_find_pv(paddr_t pa)
 #endif
 		return &vm_physmem[bank].pmseg.pvent[off];
 	} else
-		panic("pmap_find_pv: mapping unmappable");
+		return NULL;
 }
 
 /*
@@ -997,18 +997,17 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		    prot, wired? "" : "un");
 #endif
 
-	if (!pmap)
-		return;
-
 	simple_lock(&pmap->pmap_lock);
+
+	if (!pmap || !(pv = pmap_find_pv(pa)))
+		return;
 
 	space = pmap_sid(pmap, va);
 	pmap_clear_va(space, va);
-	pv = pmap_find_pv(pa);
 
 	tlbprot = TLB_REF | pmap_prot(pmap, prot) | pmap->pmap_pid;
 
-	/* this saves on extra dirty fault */
+	/* this saves on extra dirty fault? */
 	if (access_type & VM_PROT_WRITE)
 		tlbprot |= TLB_DIRTY;
 
@@ -1109,8 +1108,10 @@ pmap_remove(pmap, sva, eva)
 				pv, space, sva);
 #endif
 		if (pv) {
-			pmap_remove_pv(pmap, sva, pv);
 			pmap->pmap_stats.resident_count--;
+			if (pv->pv_tlbprot & TLB_WIRED)
+				pmap->pmap_stats.wired_count--;
+			pmap_remove_pv(pmap, sva, pv);
 		}
 		sva += PAGE_SIZE;
 	}
@@ -1568,17 +1569,36 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
+	register struct pv_entry *pv;
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW && pmapdebug & PDB_ENTER)
 		printf("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot);
 #endif
-
 	simple_lock(&pmap_kernel()->pmap_lock);
 
-	pmap_enter_pv(pmap_kernel(), va, pmap_prot(pmap_kernel(), prot),
-	    tlbbtop(pa), pmap_find_pv(pa));
-	pmap_kernel()->pmap_stats.resident_count++;
-	pmap_kernel()->pmap_stats.wired_count++;
+	pv = pmap_find_pv(pa);
+	if (pv && (pa & HPPA_IOSPACE) == HPPA_IOSPACE)
+		/* if already mapped i/o space, nothing to do */
+		;
+	else {
+		if (!pv || !(pv->pv_tlbprot & TLB_WIRED))
+			pmap_kernel()->pmap_stats.wired_count++;
+
+		if (pv)
+			pmap_remove_pv(pmap_kernel(), va, pv);
+		else
+			pmap_kernel()->pmap_stats.resident_count++;
+
+		pv = pmap_alloc_pv();
+		pv->pv_va = va;
+		pv->pv_pmap = pmap_kernel();
+		pv->pv_space = pmap_kernel()->pmap_space;
+		pv->pv_tlbpage = tlbbtop(pa);
+		pv->pv_tlbprot = TLB_WIRED | TLB_REF |
+		    pmap_prot(pmap_kernel(), prot) | HPPA_PID_KERNEL |
+		    ((pa & HPPA_IOSPACE) == HPPA_IOSPACE? TLB_UNCACHEABLE : 0);
+		pmap_enter_va(pv->pv_space, va, pv);
+	}
 
 	simple_unlock(&pmap_kernel()->pmap_lock);
 
