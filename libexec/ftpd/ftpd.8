@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.24 1999/09/30 08:00:17 downsj Exp $
+.\"	$OpenBSD: ftpd.8,v 1.25 1999/09/30 08:28:52 downsj Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -350,6 +350,65 @@ Make this directory mode 555 and owned by
 This is traditionally where publically accessible files are
 stored for download.
 .El
+.Pp
+If logging to the
+.Pa /var/log/ftpd
+file is enabled, information will be written in the following format:
+.Pp
+.Bl -tag -width XXXXXXXXXXXXXX -offset indent -compact
+.It time
+The time and date of the download, in
+.Xr ctime 3
+format.
+.It elapsed time
+The elapsed time, in seconds.
+.It remote host
+The remote host (or IP number).
+.It bytes
+The number of bytes transfered.
+.It path
+The full path (relative the ftp chroot space) of the file transfered.
+.It type
+The type of transfer; either
+.Dq a
+for ASCII or
+.Dq b
+for binary.
+.It unused
+Unused field containing a
+.Dq * ,
+for compatibility.
+.It unused
+Unused field containing a
+.Dq o ,
+for compatibility.
+.It user type
+The type of user, either
+.Dq a
+for anonymous, or
+.Dq r
+for a real user (should always be anonymous).
+.It name
+Either a system login name or the value given for
+.Dq email address
+if an anonymous user.
+.It unused
+Unused field, containing a
+.Dq 0 ,
+for compatibility.
+.It real name
+The system login name if the connection is not anonymous, or a
+.Dq *
+if it is.
+.It virtual host
+The virtual host that the connection was made to.
+.El
+.Pp
+Although fields exist for logging information on real users, this file is
+only used for anonymous downloads.  Unused fields exist only for compatility
+with other
+.Nm ftpd
+implementations.
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
 .It Pa /etc/ftpusers
@@ -365,7 +424,7 @@ Displayed and access refused.
 .It Pa /var/run/utmp
 List of users on the system.
 .It Pa /var/log/ftpd
-Log file for anonymous transfers.
+Log file for anonymous downloads.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
