@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.10 2002/07/10 18:08:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -586,7 +586,7 @@ void lge_attach(parent, self, aux)
 	/*
 	 * A Level 1 chip was detected. Inform the world.
 	 */
-	printf(": Ethernet address: %s\n", ether_sprintf(eaddr));
+	printf(": address: %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 

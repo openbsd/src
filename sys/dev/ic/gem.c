@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.25 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: gem.c,v 1.26 2002/07/10 18:08:13 deraadt Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -209,7 +209,7 @@ gem_config(sc)
 	 */
 
 	/* Announce ourselves. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* Get RX FIFO size */

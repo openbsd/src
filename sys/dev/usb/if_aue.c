@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.23 2002/07/09 14:45:43 nate Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.24 2002/07/10 18:08:13 deraadt Exp $ */
 /*	$NetBSD: if_aue.c,v 1.78 2002/07/08 17:46:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -800,7 +800,7 @@ USB_ATTACH(aue)
 	 * A Pegasus chip was detected. Inform the world.
 	 */
 	ifp = GET_IFP(sc);
-	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->aue_dev),
+	printf("%s: address %s\n", USBDEVNAME(sc->aue_dev),
 	    ether_sprintf(eaddr));
 
 #if defined(__OpenBSD__)

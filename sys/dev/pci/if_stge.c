@@ -581,7 +581,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_arpcom.ac_enaddr[5] = bus_space_read_2(sc->sc_st, sc->sc_sh,
 	    STGE_StationAddress2) >> 8;
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.5 2002/06/26 11:29:55 espie Exp $ */
+/*	$OpenBSD: if_url.c,v 1.6 2002/07/10 18:08:13 deraadt Exp $ */
 /*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -281,7 +281,7 @@ USB_ATTACH(url)
 	}
 
 	/* Print Ethernet Address */
-	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
+	printf("%s: address %s\n", devname, ether_sprintf(eaddr));
 
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);

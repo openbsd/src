@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.19 2002/07/09 16:44:15 nate Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.20 2002/07/10 18:08:13 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.48 2002/07/08 17:46:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -514,7 +514,7 @@ USB_ATTACH(kue)
 	/*
 	 * A KLSI chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->kue_dev),
+	printf("%s: address %s\n", USBDEVNAME(sc->kue_dev),
 	    ether_sprintf(sc->kue_desc.kue_macaddr));
 
 #if defined(__OpenBSD__)
