@@ -14,7 +14,6 @@
 ./usr/include/macppc/cpu.h
 ./usr/include/macppc/db_machdep.h
 ./usr/include/macppc/disklabel.h
-./usr/include/macppc/dlfcn.h
 ./usr/include/macppc/elf_abi.h
 ./usr/include/macppc/endian.h
 ./usr/include/macppc/exec.h
