@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.16 2002/03/16 04:17:36 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2002/05/29 12:32:51 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -54,6 +54,17 @@ filevisit(int f, int n)
 	return TRUE;
 }
 
+int
+filevisitro(int f, int n)
+{
+	int error;
+
+	error = filevisit(f, n);
+	if (error != TRUE)
+		return (error);
+	curbp->b_flag |= BFREADONLY;
+	return (TRUE);
+}
 /*
  * Pop to a file in the other window.  Same as the last function, but uses
  * popbuf instead of showbuffer.
