@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.112 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.113 2001/06/24 18:24:11 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -53,6 +54,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
@@ -109,6 +111,7 @@ ip_output(m0, va_alist)
 	u_int8_t sproto = 0, donerouting = 0;
 	short csums;
 #ifdef IPSEC
+	u_int32_t icmp_mtu = 0;
 	union sockaddr_union sdst;
 	u_int32_t sspi;
 	struct m_tag *mtag;
@@ -578,6 +581,36 @@ sendit:
 		if (inp)
 		        tdb_add_inp(tdb, inp, 0);
 
+		/* Check if we are allowed to fragment */
+		if ((ip->ip_off & IP_DF) && tdb->tdb_mtu &&
+		    (u_int16_t)ip->ip_len > tdb->tdb_mtu &&
+		    tdb->tdb_mtutimeout > time.tv_sec) {
+			struct rtentry *rt;
+			
+			icmp_mtu = tdb->tdb_mtu;
+			splx(s);
+
+			/* Find a host route to store the mtu in */
+			if (ro != NULL)
+				rt = ro->ro_rt;
+			if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+				struct sockaddr_in dst = {
+					sizeof(struct sockaddr_in), AF_INET};
+				dst.sin_addr = ip->ip_dst;
+				rt = icmp_mtudisc_clone((struct sockaddr *)&dst);
+			}
+			if (rt != NULL) {
+				rt->rt_rmx.rmx_mtu = icmp_mtu;
+				if (ro && ro->ro_rt != NULL) {
+					RTFREE(ro->ro_rt);
+					ro->ro_rt = (struct rtentry *) 0;
+					rtalloc(ro);
+				}
+			}
+			error = EMSGSIZE;
+			goto bad;
+		}
+
 		/* Massage the IP header for use by the IPsec code */
 		ip->ip_len = htons((u_short) ip->ip_len);
 		ip->ip_off = htons((u_short) ip->ip_off);
@@ -648,6 +681,9 @@ sendit:
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & IP_DF) {
+#ifdef IPSEC
+		icmp_mtu = ifp->if_mtu;
+#endif
 		error = EMSGSIZE;
 		/*
 		 * This case can happen if the user changed the MTU
@@ -762,6 +798,10 @@ done:
 		RTFREE(ro->ro_rt);
 	return (error);
 bad:
+#ifdef IPSEC
+	if (error == EMSGSIZE && icmp_mtu != 0)
+		ipsec_adjust_mtu(m, icmp_mtu);
+#endif
 	m_freem(m0);
 	goto done;
 }
