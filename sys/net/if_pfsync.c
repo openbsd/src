@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.32 2004/04/30 22:08:18 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.33 2004/05/17 17:15:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1117,7 +1117,7 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 	struct pfsync_header *h;
 	struct pfsync_softc *sc = ifp->if_softc;
 	struct pfsync_state_upd_req *rup;
-	int ret;
+	int ret = 0;
 
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
@@ -1269,7 +1269,7 @@ pfsync_bulkfail(void *v)
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: cannot allocate mbufs for "
 				    "bulk update\n");
-		} else 
+		} else
 			pfsync_sendout(sc);
 		splx(s);
 	} else {
