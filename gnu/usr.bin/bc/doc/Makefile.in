@@ -276,7 +276,7 @@ installcheck:
 install-exec: 
 	@$(NORMAL_INSTALL)
 
-install-data: install-info-am install-man
+install-data: install-info-am #install-man
 	@$(NORMAL_INSTALL)
 
 install: install-exec install-data all
