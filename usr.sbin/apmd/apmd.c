@@ -77,7 +77,7 @@ void do_etc_file(const char *file);
 void
 sigexit(int signo)
 {
-    exit(1);
+    _exit(1);
 }
 
 void
