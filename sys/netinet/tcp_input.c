@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.90 2001/05/27 03:16:10 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.91 2001/05/27 03:55:59 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -710,19 +710,23 @@ findpcb:
 			  newinp->inp_secrequire = inp->inp_secrequire;
 			  if (inp->inp_ipsec_localid != NULL) {
 			  	newinp->inp_ipsec_localid = inp->inp_ipsec_localid;
-				newinp->inp_ipsec_localid->ref_count++;
+				inp->inp_ipsec_localid->ref_count++;
 			  }
 			  if (inp->inp_ipsec_remoteid != NULL) {
 			  	newinp->inp_ipsec_remoteid = inp->inp_ipsec_remoteid;
-				newinp->inp_ipsec_remoteid->ref_count++;
+				inp->inp_ipsec_remoteid->ref_count++;
 			  }
 			  if (inp->inp_ipsec_localcred != NULL) {
 			  	newinp->inp_ipsec_localcred = inp->inp_ipsec_localcred;
-				newinp->inp_ipsec_localcred->ref_count++;
+				inp->inp_ipsec_localcred->ref_count++;
 			  }
 			  if (inp->inp_ipsec_remotecred != NULL) {
 			  	newinp->inp_ipsec_remotecred = inp->inp_ipsec_remotecred;
-				newinp->inp_ipsec_remotecred->ref_count++;
+				inp->inp_ipsec_remotecred->ref_count++;
+			  }
+			  if (inp->inp_ipsec_auth != NULL) {
+			  	newinp->inp_ipsec_auth = inp->inp_ipsec_auth;
+				inp->inp_ipsec_auth->ref_count++;
 			  }
 			}
 #endif /* IPSEC */
