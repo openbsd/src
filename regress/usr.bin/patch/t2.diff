@@ -1,0 +1,12 @@
+$OpenBSD: t2.diff,v 1.1 2003/07/22 19:31:51 otto Exp $
+--- Makefile.in.orig	Tue Jan 16 16:08:48 2001
++++ Makefile.in	Tue Jan 16 16:10:06 2001
+@@ -521,7 +521,7 @@ installdirs mostlyclean-generic distclea
+ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+ 
+ install-exec-am: 
+-	chmod u+s $(sbindir)/mtr
++	chmod u+s $(DESTDIR)$(sbindir)/mtr
+ distclean-local:
+ 	cp Makefile.dist Makefile
+ 	rm -f *.orig
