@@ -48,6 +48,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,7 +129,7 @@ main(argc, argv)
 	if (sigaction(SIGCHLD, &sa, NULL) == -1)
 		err(1, "sigaction SIGCHLD");
 
-	semkey = ftok(keyname, 4160);
+	semkey = ftok(keyname, arc4random() & INT_MAX);
 
 	/*
 	 * Initialize child_pid to ourselves to that the cleanup function
@@ -143,7 +144,8 @@ main(argc, argv)
 	if (atexit(cleanup) == -1)
 		err(1, "atexit");
 
-	if ((sender_semid = semget(semkey, 1, IPC_CREAT | 0640)) == -1)
+	sender_semid = semget(semkey, 1, IPC_CREAT | IPC_EXCL | 0640);
+	if (sender_semid == -1)
 		err(1, "semget");
 
 	
