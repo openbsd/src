@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2004/05/23 00:06:01 tedu Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -108,10 +108,10 @@ int iunmask[NIPL];	/* Bitmasks telling what interrupts are accepted. */
 
 extern void Xspllower(void);
 
-static __inline int splraise(int);
-static __inline int spllower(int);
-#define SPLX_DECL void splx(int);
-static __inline void softintr(int);
+int splraise(int);
+int spllower(int);
+void splx(int);
+void softintr(int);
 
 /* SPL asserts */
 #ifdef DIAGNOSTIC
@@ -130,63 +130,6 @@ void splassert_check(int, const char *);
 #else
 #define splassert(wantipl) do { /* nada */ } while (0)
 #endif
-
-/*
- * Raise current interrupt priority level, and return the old one.
- */
-static __inline int
-splraise(ncpl)
-	int ncpl;
-{
-	int ocpl = cpl;
-
-	if (ncpl > ocpl)
-		cpl = ncpl;
-	__asm __volatile("":::"memory");
-	return (ocpl);
-}
-
-/*
- * Restore an old interrupt priority level.  If any thereby unmasked
- * interrupts are pending, call Xspllower() to process them.
- */
-#define SPLX_BODY							\
-void									\
-splx(ncpl)								\
-	int ncpl;							\
-{									\
-	__asm __volatile("":::"memory");				\
-	cpl = ncpl;							\
-	if (ipending & IUNMASK(ncpl))					\
-		Xspllower();						\
-}
-
-/* If SMALL_KERNEL make splx out of line, otherwise inline it.  */
-#ifdef SMALL_KERNEL
-#define SPLX_INLINED_BODY
-#define SPLX_OUTLINED_BODY	SPLX_BODY
-SPLX_DECL
-#else
-#define SPLX_INLINED_BODY	static __inline SPLX_BODY
-#define SPLX_OUTLINED_BODY
-static __inline SPLX_DECL
-#endif
-
-SPLX_INLINED_BODY
-
-/*
- * Same as splx(), but we return the old value of spl, for the
- * benefit of some splsoftclock() callers.
- */
-static __inline int
-spllower(ncpl)
-	int ncpl;
-{
-	int ocpl = cpl;
-
-	splx(ncpl);
-	return (ocpl);
-}
 
 /*
  * Hardware interrupt masks
@@ -216,19 +159,6 @@ spllower(ncpl)
 #define splimp()	splvm()
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
-
-/*
- * Software interrupt registration
- *
- * We hand-code this to ensure that it's atomic.
- */
-static __inline void
-softintr(mask)
-	int mask;
-{
-	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (mask));
-
-}
 
 #define	setsoftast()	(astpending = 1)
 #define	setsoftclock()	softintr(1 << SIR_CLOCK)

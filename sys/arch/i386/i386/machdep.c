@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.292 2004/05/19 18:17:00 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.293 2004/05/23 00:06:01 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3914,5 +3914,57 @@ splassert_check(int wantipl, const char *func)
 }
 #endif
 
-/* If SMALL_KERNEL this results in an out of line definition of splx.  */
-SPLX_OUTLINED_BODY
+/*
+ * Software interrupt registration
+ *
+ * We hand-code this to ensure that it's atomic.
+ */
+void
+softintr(mask)
+	int mask;
+{
+	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (mask));
+
+}
+
+/*
+ * Raise current interrupt priority level, and return the old one.
+ */
+int
+splraise(ncpl)
+	int ncpl;
+{
+	int ocpl = cpl;
+
+	if (ncpl > ocpl)
+		cpl = ncpl;
+	return (ocpl);
+}
+
+/*
+ * Restore an old interrupt priority level.  If any thereby unmasked
+ * interrupts are pending, call Xspllower() to process them.
+ */
+void									\
+splx(ncpl)								\
+	int ncpl;							\
+{									\
+	cpl = ncpl;							\
+	if (ipending & IUNMASK(ncpl))					\
+		Xspllower();						\
+}
+
+/*
+ * Same as splx(), but we return the old value of spl, for the
+ * benefit of some splsoftclock() callers.
+ */
+int
+spllower(ncpl)
+	int ncpl;
+{
+	int ocpl = cpl;
+
+	splx(ncpl);
+	return (ocpl);
+}
+
