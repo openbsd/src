@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.2 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.3 2004/09/14 22:49:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -51,7 +51,7 @@ sub conflicts_with
 	my ($self, @pkgnames) = @_;
 	for my $cfl (@$self) {
 		if (grep { m/$cfl/ } @pkgnames) {
-			return 1;
+			return grep { m/$cfl/ } @pkgnames;
 		}
 	}
 	return 0;

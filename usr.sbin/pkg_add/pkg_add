@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.52 2004/09/14 22:47:48 espie Exp $
+# $OpenBSD: pkg_add,v 1.53 2004/09/14 22:49:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -351,7 +351,8 @@ sub pre_add($$)
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
 	$handle->{conflicts} = $l;
 	if ($l->conflicts_with(installed_packages())) {
-		print "package $pkg has conflicts\n";
+		print "package $pkg has conflicts: ", 
+		    join(' ', $l->conflicts_with(installed_packages())), "\n";
 		$errors++;
 		return undef unless $forced{conflicts};
 	}
