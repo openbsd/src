@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.43 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.44 2002/04/13 03:08:44 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -234,9 +234,9 @@ setroot()
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
+	printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
 	if (rootdev == orootdev)
 		return;
-	printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
 
 #ifdef DOSWAP
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
@@ -394,6 +394,14 @@ noask:
 		setroot();
 	} else {
 		/* preconfigured */
+		int  majdev, unit, part;
+
+		majdev = major(rootdev);
+		if (findblkname(majdev) == NULL)
+			return;
+		part = minor(rootdev) % MAXPARTITIONS;
+		unit = minor(rootdev) / MAXPARTITIONS;
+		printf("root on %s%d%c\n", findblkname(majdev), unit, part + 'a');
 		return;
 	}
 
