@@ -71,10 +71,11 @@ krb5_addresses explicit_addresses;
 #ifdef KRB4
 char *v4_realm;
 int enable_v4 = -1;
-int enable_524 = -1;
-int enable_v4_cross_realm = -1;
 int enable_kaserver = -1;
 #endif
+
+int enable_524 = -1;
+int enable_v4_cross_realm = -1;
 
 static int help_flag;
 static int version_flag;
@@ -109,10 +110,6 @@ static struct getargs args[] = {
     },
     {	"kerberos4",	0, 	arg_flag, &enable_v4,
 	"respond to kerberos 4 requests" 
-    },
-    {	"kerberos4-cross-realm",	0, 	arg_flag,
-	&enable_v4_cross_realm,
-	"respond to kerberos 4 requests from foreign realms" 
     },
     { 
 	"v4-realm",	'r',	arg_string, &v4_realm, 
