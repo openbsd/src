@@ -156,7 +156,7 @@ getether(ifname, eap)
 }
 
 #define	GETETHER
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || __OpenBSD__ */
 
 
 #ifdef	SVR4

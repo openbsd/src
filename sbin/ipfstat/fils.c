@@ -36,13 +36,13 @@
 #include <resolv.h>
 #include "ipf.h"
 #include "kmem.h"
-#ifdef	__NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <paths.h>
 #endif
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.8 1997/02/11 22:23:41 kstailey Exp $";
+static	char	rcsid[] = "$Id: fils.c,v 1.9 1997/02/17 09:13:11 deraadt Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX

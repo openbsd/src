@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_util.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_util.c,v 1.2 1997/01/31 14:42:11 graichen Exp $
+ *	$Id: fsi_util.c,v 1.3 1997/02/17 09:11:25 deraadt Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
@@ -83,7 +83,7 @@ char *s, *s1, *s2, *s3, *s4;
 	exit(1);
 }
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 /*
  * Dup a string
  */
@@ -98,7 +98,7 @@ char *s;
 
 	return sp;
 }
-#endif /* __NetBSD__ */
+l#endif /* !(defined(__NetBSD__) || defined(__OpenBSD)) */
 
 /*
  * Debug log
