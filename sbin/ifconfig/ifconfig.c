@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.36 2000/04/28 04:44:58 chris Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.37 2000/05/15 11:23:51 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.36 2000/04/28 04:44:58 chris Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.37 2000/05/15 11:23:51 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1410,7 +1410,11 @@ phys_status(force)
 	u_long srccmd, dstcmd;
 	struct ifreq *ifrp;
 	char *ver = "";
-
+#ifdef NI_WITHSCOPEID
+	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_NUMERICHOST;
+#endif
 #ifdef INET6
 	struct in6_ifreq in6_ifr;
 #endif /* INET6 */
@@ -1431,17 +1435,27 @@ phys_status(force)
 #endif /* INET6 */
 
 	if (0 <= ioctl(s, srccmd, (caddr_t)ifrp)) {
+#ifdef INET6
+		if (ifrp->ifr_addr.sa_family == AF_INET6)
+			in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
+#endif
 		getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
-			    psrcaddr, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+			    psrcaddr, NI_MAXHOST, 0, 0, niflag);
 #ifdef INET6
 		if (ifrp->ifr_addr.sa_family == AF_INET6)
 			ver = "6";
 #endif /* INET6 */
 
-		if (0 <= ioctl(s, dstcmd, (caddr_t)ifrp))
+		if (0 <= ioctl(s, dstcmd, (caddr_t)ifrp)) {
+#ifdef INET6
+			if (ifrp->ifr_addr.sa_family == AF_INET6) {
+				in6_fillscopeid((struct sockaddr_in6 *)
+				    &ifrp->ifr_addr);
+			}
+#endif
 		        getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
-				    pdstaddr, NI_MAXHOST, 0, 0,
-				    NI_NUMERICHOST);
+				    pdstaddr, NI_MAXHOST, 0, 0, niflag);
+		}
 
 		printf("\tphysical address inet%s %s --> %s\n", ver,
 		       psrcaddr, pdstaddr);
