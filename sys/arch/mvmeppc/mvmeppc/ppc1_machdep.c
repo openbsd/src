@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.7 2002/06/07 01:01:40 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.8 2002/06/08 15:50:00 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
-#include <machine/prom.h>
+#include <machine/bugio.h>
 #include <mvmeppc/dev/nvramreg.h>
 
 #include <dev/cons.h>
@@ -64,6 +64,8 @@ int PPC1_clock_read(int *sec, int *min, int *hour, int *day,
 								 int *mon, int *yr);
 int PPC1_clock_write(int sec, int min, int hour, int day,
 								  int mon, int yr);
+
+vm_offset_t size_memory(void);
 
 struct firmware ppc1_firmware = {
 	PPC1_mem_regions,
@@ -143,7 +145,7 @@ size_memory(void)
 			break;
 		*look = save;
 	}
-	look = (unsigned int *)0x02000000;
+look = (unsigned int *)0x03f00000;	/* XXX */
 	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
 	total_mem = trunc_page((unsigned)look);
 #ifdef USE_BUG
@@ -188,12 +190,12 @@ void
 PPC1_exit()
 {
 	mvmeprom_return();
-	panic ("PPC1_exit returned!");		/* just in case */
-	while (1);
+	panic("PPC1_exit returned!");		/* just in case */
+	for (;;) ;
 }
 void
 PPC1_boot(bootspec)
-char *bootspec;
+	char *bootspec;
 {
 	u_int32_t msr, i = 10000;
 
@@ -207,24 +209,26 @@ char *bootspec;
 	/* signal a reset to system control port A - soft reset */
 	outb(0x80000092, inb(0x92) | 1);
 
-	while ( i != 0 ) i++;
-	panic("restart failed\n");
+	while (i != 0) i++;
+	panic("restart failed");
 	mvmeprom_return();
-	printf ("PPC1_boot returned!");		/* just in case */
-	while (1);
+	printf("PPC1_boot returned!");		/* just in case */
+	for (;;) ;
 }
 
-unsigned char PPC1_nvram_rd(addr)
-unsigned long addr;
+unsigned char
+PPC1_nvram_rd(addr)
+	unsigned long addr;
 {
 	outb(NVRAM_S0, addr);
 	outb(NVRAM_S1, addr>>8);
 	return inb(NVRAM_DATA);
 }
 
-void PPC1_nvram_wr(addr, val)
-unsigned long addr; 
-unsigned char val;
+void
+PPC1_nvram_wr(addr, val)
+	unsigned long addr; 
+	unsigned char val;
 {
 	outb(NVRAM_S0, addr);
 	outb(NVRAM_S1, addr>>8);
@@ -232,8 +236,8 @@ unsigned char val;
 }
 
 /* Function to get ticks per second. */
-
-unsigned long PPC1_tps(void)
+unsigned long
+PPC1_tps()
 {
 	unsigned long start_val, ticks;
 	unsigned char val, sec;
@@ -246,7 +250,7 @@ unsigned long PPC1_tps(void)
 
 	/* look at seconds. */
 	sec = PPC1_nvram_rd(RTC_SECONDS);
-	while (1) {
+	for (;;) {
 		if (PPC1_nvram_rd(RTC_SECONDS) != sec)
 			break;
 	}
@@ -255,7 +259,7 @@ unsigned long PPC1_tps(void)
 
 	/* wait until it changes. */
 	sec = PPC1_nvram_rd(RTC_SECONDS);
-	while (1) {
+	for (;;) {
 		if (PPC1_nvram_rd(RTC_SECONDS) != sec)
 			break;
 	}
@@ -263,8 +267,8 @@ unsigned long PPC1_tps(void)
 	return (ticks);
 }
 
-int PPC1_clock_write(int sec, int min, int hour, int day,
-							int mon, int yr)
+int
+PPC1_clock_write(int sec, int min, int hour, int day, int mon, int yr)
 {
 	unsigned char val;
 
@@ -285,8 +289,8 @@ int PPC1_clock_write(int sec, int min, int hour, int day,
 	return 0;
 }
 
-int PPC1_clock_read(int *sec, int *min, int *hour, int *day,
-						  int *mon, int *yr)
+int
+PPC1_clock_read(int *sec, int *min, int *hour, int *day, int *mon, int *yr)
 {
 	unsigned char val;
 	int i;
@@ -327,37 +331,36 @@ int PPC1_clock_read(int *sec, int *min, int *hour, int *day,
  * Boot console routines: 
  * Enables printing of boot messages before consinit().
  */
-int
+cons_decl(boot);
+
+void
 bootcnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	cp->cn_dev = makedev(14, 0);
 	cp->cn_pri = CN_NORMAL;
-	return (1);
 }
 
-int
+void
 bootcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	/* Nothing to do */
-	return (1);
 }
 
 int
 bootcngetc(dev)
-dev_t dev;
+	dev_t dev;
 {
 	return (mvmeprom_getchar());
 }
 
 void
 bootcnputc(dev, c)
-dev_t dev;
-char c;
+	dev_t dev;
+	char c;
 {
 	if (c == '\n')
 		mvmeprom_outchar('\r');
 	mvmeprom_outchar(c);
 }
-

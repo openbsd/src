@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.6 2001/06/15 15:50:05 nonaka Exp $        */
-/*      $OpenBSD: bus.h,v 1.1 2001/06/26 21:57:43 smurph Exp $        */
+/*      $OpenBSD: bus.h,v 1.2 2002/06/08 15:49:57 miod Exp $        */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -124,5 +124,8 @@ extern const struct ppc_bus_space prep_io_space_tag;
 extern const struct ppc_bus_space prep_isa_io_space_tag;
 extern const struct ppc_bus_space prep_mem_space_tag;
 extern const struct ppc_bus_space prep_isa_mem_space_tag;
+
+void prep_bus_space_init(void);
+void prep_bus_space_mallocok(void);
 
 #endif /* _PREP_BUS_H_ */

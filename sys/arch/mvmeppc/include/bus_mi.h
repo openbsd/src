@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $        */
-/*      $OpenBSD: bus_mi.h,v 1.4 2002/03/14 01:26:41 millert Exp $        */
+/*      $OpenBSD: bus_mi.h,v 1.5 2002/06/08 15:49:57 miod Exp $        */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -255,8 +255,8 @@ static __inline void                                                          \
 CAT(bus_space_read_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,     \
      bus_size_t offset, CAT3(u_int,m,_t) *addr, size_t count)                 \
 {                                                                             \
-        CAT3(ins,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),              \
-            (CAT3(u_int,m,_t) *)addr, (size_t)count);                              \
+	while (count--)							      \
+		*addr++ = CAT(bus_space_read_,n)(tag, bsh, offset);	      \
 }
 
 bus_space_read_multi(1,8)
@@ -264,6 +264,7 @@ bus_space_read_multi(2,16)
 bus_space_read_multi(4,32)
 #define bus_space_read_multi_8        !!! bus_space_read_multi_8 not implemented !!!
 
+#if 0
 /*
  *      void bus_space_read_multi_stream_N(bus_space_tag_t tag,
  *          bus_space_handle_t bsh, bus_size_t offset,
@@ -296,6 +297,7 @@ bus_space_read_multi_stream(4,32)
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
+#endif
 
 #define bus_space_write(n,m)                                                  \
 static __inline void                                                          \
@@ -345,8 +347,8 @@ static __inline void                                                          \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t tag, bus_space_handle_t bsh,    \
      bus_size_t offset, const CAT3(u_int,m,_t) *addr, size_t count)           \
 {                                                                             \
-        CAT3(outs,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (offset)),              \
-            (CAT3(u_int,m,_t) *)addr, (size_t)count);                              \
+	while (count--)							      \
+		CAT(bus_space_write_,n)(tag, bsh, offset, *addr++);	      \
 }
 
 bus_space_write_multi(1,8)
@@ -354,6 +356,7 @@ bus_space_write_multi(2,16)
 bus_space_write_multi(4,32)
 #define bus_space_write_multi_8        !!! bus_space_write_multi_8 not implemented !!!
 
+#if 0
 /*
  *      void bus_space_write_multi_stream_N(bus_space_tag_t tag,
  *          bus_space_handle_t bsh, bus_size_t offset,
@@ -377,6 +380,7 @@ bus_space_write_multi_stream(2,16)
 bus_space_write_multi_stream(4,32)
 #define bus_space_write_multi_stream_8                                              \
         !!! bus_space_write_multi_stream_8 not implemented !!!
+#endif
 
 /*
  *      void bus_space_read_region_N(bus_space_tag_t tag,

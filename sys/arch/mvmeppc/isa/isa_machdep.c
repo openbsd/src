@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.4 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.5 2002/06/08 15:49:58 miod Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -137,6 +137,7 @@
 
 void	*i8259_intr_establish( void * lcv, int irq, int type, int level,
 		int (*ih_fun)(void *), void *ih_arg, char *name);
+void openpic_intr_disestablish(void *, void *);
 
 int isa_has_been_seen = 0;
 

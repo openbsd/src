@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.9 2002/03/14 03:15:58 millert Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.10 2002/06/08 15:50:01 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -70,25 +70,20 @@ int      mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *mpc_intr_string(void *, pci_intr_handle_t);
 int	 mpc_intr_line(void *, pci_intr_handle_t);
 void     *mpc_intr_establish(void *, pci_intr_handle_t,
-											 int, int (*func)(void *), void *, char *);
+    int, int (*)(void *), void *, char *);
 void     mpc_intr_disestablish(void *, void *);
 int      mpc_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
-void
-mpc_cfg_write_1( struct pcibr_config *cp, u_int32_t reg, u_int8_t val);
-void
-mpc_cfg_write_2( struct pcibr_config *cp, u_int32_t reg, u_int16_t val);
-void
-mpc_cfg_write_4( struct pcibr_config *cp, u_int32_t reg, u_int32_t val);
+void mpc_cfg_write_1(struct pcibr_config *, u_int32_t, u_int8_t);
+void mpc_cfg_write_2(struct pcibr_config *, u_int32_t, u_int16_t);
+void mpc_cfg_write_4(struct pcibr_config *, u_int32_t, u_int32_t);
 
-u_int8_t
-mpc_cfg_read_1( struct pcibr_config *cp, u_int32_t reg);
+u_int8_t mpc_cfg_read_1(struct pcibr_config *, u_int32_t);
+u_int16_t mpc_cfg_read_2(struct pcibr_config *, u_int32_t);
+u_int32_t mpc_cfg_read_4(struct pcibr_config *, u_int32_t);
 
-u_int16_t
-mpc_cfg_read_2( struct pcibr_config *cp, u_int32_t reg);
-
-u_int32_t
-mpc_cfg_read_4( struct pcibr_config *cp, u_int32_t reg);
+u_int32_t pci_iack(void);
+u_int32_t mpc_gen_config_reg(void *, pcitag_t, int);
 
 struct cfattach mpcpcibr_ca = {
 	sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -98,7 +93,7 @@ struct cfdriver mpcpcibr_cd = {
 	NULL, "mpcpcibr", DV_DULL,
 };
 
-static int      mpcpcibrprint(void *, const char *pnp);
+int      mpcpcibrprint(void *, const char *pnp);
 
 struct pcibr_config mpc_config;
 
@@ -131,8 +126,8 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 
 int
 mpcpcibrmatch(parent, match, aux)
-struct device *parent;
-void *match, *aux;
+	struct device *parent;
+	void *match, *aux;
 {
 	/* We must be a child of the raven device */
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
@@ -147,8 +142,8 @@ void *match, *aux;
 int pci_map_a = 0;
 void
 mpcpcibrattach(parent, self, aux)
-struct device *parent, *self;
-void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
 	struct pcibr_config *lcp;
@@ -234,15 +229,15 @@ addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 #endif 
 	/* enable mem and io mapping, and bus master */
 	mpc_cfg_write_2(lcp, RAVEN_PCI_CMD, 
-						 RAVEN_CMD_IOSP|RAVEN_CMD_MEMSP|RAVEN_CMD_MASTR);
+	    RAVEN_CMD_IOSP|RAVEN_CMD_MEMSP|RAVEN_CMD_MASTR);
 
 	config_found(self, &pba, mpcpcibrprint);
 }
 
-static int
+int
 mpcpcibrprint(aux, pnp)
-void *aux;
-const char *pnp;
+	void *aux;
+	const char *pnp;
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -301,15 +296,15 @@ vaddr_t p;
 
 void
 mpc_attach_hook(parent, self, pba)
-struct device *parent, *self;
-struct pcibus_attach_args *pba;
+	struct device *parent, *self;
+	struct pcibus_attach_args *pba;
 {
 }
 
 int
 mpc_ether_hw_addr(p, ethaddr)
-struct ppc_pci_chipset *p;
-u_int8_t *ethaddr;
+	struct ppc_pci_chipset *p;
+	u_int8_t *ethaddr;
 {
 	printf("mpc_ether_hw_addr not supported\n");
 	return (0);
@@ -317,8 +312,8 @@ u_int8_t *ethaddr;
 
 int
 mpc_bus_maxdevs(cpv, busno)
-void *cpv;
-int busno;
+	void *cpv;
+	int busno;
 {
 	return (32);
 }
@@ -329,17 +324,17 @@ int busno;
 
 pcitag_t
 mpc_make_tag(cpv, bus, dev, fnc)
-void *cpv;
-int bus, dev, fnc;
+	void *cpv;
+	int bus, dev, fnc;
 {
 	return (bus << BUS_SHIFT) | (dev << DEVICE_SHIFT) | (fnc << FNC_SHIFT);
 }
 
 void
 mpc_decompose_tag(cpv, tag, busp, devp, fncp)
-void *cpv;
-pcitag_t tag;
-int *busp, *devp, *fncp;
+	void *cpv;
+	pcitag_t tag;
+	int *busp, *devp, *fncp;
 {
 	if (busp != NULL)
 		*busp = (tag >> BUS_SHIFT) & 0xff;
@@ -349,11 +344,11 @@ int *busp, *devp, *fncp;
 		*fncp = (tag >> FNC_SHIFT) & 0x7;
 }
 
-static u_int32_t
+u_int32_t
 mpc_gen_config_reg(cpv, tag, offset)
-void *cpv;
-pcitag_t tag;
-int offset;
+	void *cpv;
+	pcitag_t tag;
+	int offset;
 {
 	struct pcibr_config *cp = cpv;
 	unsigned int bus, dev, fcn;
@@ -402,9 +397,9 @@ int offset;
 /*#define DEBUG_CONFIG */
 pcireg_t
 mpc_conf_read(cpv, tag, offset)
-void *cpv;
-pcitag_t tag;
-int offset;
+	void *cpv;
+	pcitag_t tag;
+	int offset;
 {
 	struct pcibr_config *cp = cpv;
 
@@ -453,10 +448,10 @@ int offset;
 
 void
 mpc_conf_write(cpv, tag, offset, data)
-void *cpv;
-pcitag_t tag;
-int offset;
-pcireg_t data;
+	void *cpv;
+	pcitag_t tag;
+	int offset;
+	pcireg_t data;
 {
 	struct pcibr_config *cp = cpv;
 	u_int32_t reg;
@@ -497,10 +492,10 @@ pcireg_t data;
 
 int
 mpc_intr_map(lcv, bustag, buspin, line, ihp)
-void *lcv;
-pcitag_t bustag;
-int buspin, line;
-pci_intr_handle_t *ihp;
+	void *lcv;
+	pcitag_t bustag;
+	int buspin, line;
+	pci_intr_handle_t *ihp;
 {
 	int error = 0;
 
@@ -520,8 +515,8 @@ pci_intr_handle_t *ihp;
 
 const char *
 mpc_intr_string(lcv, ih)
-void *lcv;
-pci_intr_handle_t ih;
+	void *lcv;
+	pci_intr_handle_t ih;
 {
 	static char str[16];
 
@@ -545,12 +540,12 @@ extern intr_disestablish_t *intr_disestablish_func;
 
 void *
 mpc_intr_establish(lcv, ih, level, func, arg, name)
-void *lcv;
-pci_intr_handle_t ih;
-int level;
-int (*func)(void *);
-void *arg;
-char *name;
+	void *lcv;
+	pci_intr_handle_t ih;
+	int level;
+	int (*func)(void *);
+	void *arg;
+	char *name;
 {
 	return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
 											name);
@@ -558,7 +553,7 @@ char *name;
 
 void
 mpc_intr_disestablish(lcv, cookie)
-void *lcv, *cookie;
+	void *lcv, *cookie;
 {
 	/* XXX We should probably do something clever here.... later */
 }
@@ -577,9 +572,9 @@ pci_iack()
 
 void
 mpc_cfg_write_1(cp, reg, val)
-struct pcibr_config *cp;
-u_int32_t reg;
-u_int8_t val;
+	struct pcibr_config *cp;
+	u_int32_t reg;
+	u_int8_t val;
 {
 	int s;
 	s = splhigh();
@@ -591,9 +586,9 @@ u_int8_t val;
 
 void
 mpc_cfg_write_2(cp, reg, val)
-struct pcibr_config *cp;
-u_int32_t reg;
-u_int16_t val;
+	struct pcibr_config *cp;
+	u_int32_t reg;
+	u_int16_t val;
 {
 	int s;
 	s = splhigh();
@@ -604,9 +599,9 @@ u_int16_t val;
 
 void
 mpc_cfg_write_4(cp, reg, val)
-struct pcibr_config *cp;
-u_int32_t reg;
-u_int32_t val;
+	struct pcibr_config *cp;
+	u_int32_t reg;
+	u_int32_t val;
 {
 
 	int s;
@@ -618,8 +613,8 @@ u_int32_t val;
 
 u_int8_t
 mpc_cfg_read_1(cp, reg)
-struct pcibr_config *cp;
-u_int32_t reg;
+	struct pcibr_config *cp;
+	u_int32_t reg;
 {
 	u_int8_t _v_;
 
@@ -633,8 +628,8 @@ u_int32_t reg;
 
 u_int16_t
 mpc_cfg_read_2(cp, reg)
-struct pcibr_config *cp;
-u_int32_t reg;
+	struct pcibr_config *cp;
+	u_int32_t reg;
 {
 	u_int16_t _v_;
 
@@ -648,8 +643,8 @@ u_int32_t reg;
 
 u_int32_t
 mpc_cfg_read_4(cp, reg)
-struct pcibr_config *cp;
-u_int32_t reg;
+	struct pcibr_config *cp;
+	u_int32_t reg;
 {
 	u_int32_t _v_;
 

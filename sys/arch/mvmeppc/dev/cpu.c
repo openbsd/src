@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2001/11/06 22:45:54 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 2002/06/08 15:49:52 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -69,7 +69,8 @@ cpumatch(parent, cfdata, aux)
 
 	return (1);
 }
-void config_l2cr();
+
+void config_l2cr(void);
 
 static void
 cpuattach(parent, dev, aux)
