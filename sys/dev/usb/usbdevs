@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.124 2004/11/19 23:17:03 dlg Exp $
+$OpenBSD: usbdevs,v 1.125 2004/11/28 18:59:27 pvalchev Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -314,6 +314,7 @@ vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
+vendor GARMIN		0x091e	Garmin International
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor INTREPIDCS	0x093c	Intrepid
@@ -819,6 +820,9 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Fujitsu protducts */
 product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
+
+/* Garmin International products */
+product GARMIN IQUE3600		0x0004	Ique 3600
 
 /* Genesys Logic products */
 product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
