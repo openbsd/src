@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.14 2001/01/22 06:29:20 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.15 2001/02/20 00:52:58 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -972,10 +972,15 @@ adw_poll(sc, xs, count)
 {
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
-	while (count) {
+	while (count > 0) {
 		adw_intr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->flags & ITSDONE) {
+			if ((xs->cmd->opcode == INQUIRY)
+			    && (xs->sc_link->lun == 0)
+			    && (xs->error == XS_NOERROR))
+				adw_print_info(sc, xs->sc_link->target);
 			return (0);
+		}
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
@@ -1113,68 +1118,46 @@ adw_print_info(sc, tid)
 	ADW_SOFTC	*sc;
 	int		 tid;
 {
-	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t wdtr_able, wdtr_done, wdtr;
-    	u_int16_t sdtr_able, sdtr_done, sdtr, period;
-	static int wdtr_reneg = 0, sdtr_reneg = 0;
+	bus_space_tag_t iot = sc->sc_iot;
+	u_int16_t hshk_cfg, able_mask, period = 0;
 
-	if (tid == 0){
-		wdtr_reneg = sdtr_reneg = 0;
-	}
+	/* hshk/HSHK means 'handskake' */
 
-	printf("%s: target %d ", sc->sc_dev.dv_xname, tid);
+	ADW_READ_WORD_LRAM(iot, ioh,
+	    ADW_MC_DEVICE_HSHK_CFG_TABLE + (2 * tid), hshk_cfg);
 
-	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, wdtr_able);
-	if(wdtr_able & ADW_TID_TO_TIDMASK(tid)) {
-		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE, wdtr_done);
-		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_DEVICE_HSHK_CFG_TABLE +
-			(2 * tid), wdtr);
-		printf("using %d-bits wide, ", (wdtr & 0x8000)? 16 : 8);
-		if((wdtr_done & ADW_TID_TO_TIDMASK(tid)) == 0)
-			wdtr_reneg = 1;
-	} else {
-		printf("wide transfers disabled, ");
-	}
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, able_mask);
+	if ((able_mask & ADW_TID_TO_TIDMASK(tid)) == 0)
+		hshk_cfg &= ~HSHK_CFG_WIDE_XFR;
 
-	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
-	if(sdtr_able & ADW_TID_TO_TIDMASK(tid)) {
-		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE, sdtr_done);
-		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_DEVICE_HSHK_CFG_TABLE +
-			(2 * tid), sdtr);
-		sdtr &=  ~0x8000;
-		if((sdtr & 0x1F) != 0) {
-			if((sdtr & 0x1F00) == 0x1100){
-				printf("80.0 MHz");
-			} else if((sdtr & 0x1F00) == 0x1000){
-				printf("40.0 MHz");
-			} else {
-				/* <= 20.0 MHz */
-				period = (((sdtr >> 8) * 25) + 50)/4;
-				if(period == 0) {
-					/* Should never happen. */
-					printf("? MHz");
-				} else {
-					printf("%d.%d MHz", 250/period,
-						ADW_TENTHS(250, period));
-				}
-			}
-			printf(" synchronous transfers\n");
-		} else {
-			printf("asynchronous transfers\n");
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, able_mask);
+	if ((able_mask & ADW_TID_TO_TIDMASK(tid)) == 0)
+		hshk_cfg &= ~HSHK_CFG_OFFSET;
+
+	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, tid,
+	    (hshk_cfg & HSHK_CFG_WIDE_XFR) ? 16 : 8);
+
+	if ((hshk_cfg & HSHK_CFG_OFFSET) == 0)
+		printf("async ");
+	else {
+		period = (hshk_cfg & 0x1f00) >> 8;
+		switch (period) {
+		case 0x11: 
+			printf("80.0 ");
+			break;
+		case 0x10:
+			printf("40.0 ");
+			break;
+		default:
+			period = (period * 25) + 50;
+			printf("%d.%d ", 1000/period, ADW_TENTHS(1000, period));
+			break;
 		}
-		if((sdtr_done & ADW_TID_TO_TIDMASK(tid)) == 0)
-			sdtr_reneg = 1;
-	} else {
-		printf("synchronous transfers disabled\n");
+		printf("MHz %d REQ/ACK offset ", hshk_cfg & HSHK_CFG_OFFSET);
 	}
 
-	if(wdtr_reneg || sdtr_reneg) {
-		printf("%s: target %d %s", sc->sc_dev.dv_xname, tid,
-			(wdtr_reneg)? ((sdtr_reneg)? "wide/sync" : "wide") :
-			((sdtr_reneg)? "sync" : "") );
-		printf(" renegotiation pending before next command.\n");
-	}
+	printf("xfers\n");
 }	
 
 
@@ -1240,13 +1223,6 @@ adw_isr_callback(sc, scsiq)
 
 	switch (scsiq->done_status) {
 	case QD_NO_ERROR: /* (scsi_status == 0) && (host_status == 0) */
-		/*
-		 * XXX - is there no better way to handle the inquiries
-		 *       generated during boot time probes?
-		 */
-		if ((scsiq->cdb[0] == INQUIRY) &&
-		    (scsiq->target_lun == 0))
-			adw_print_info(sc, scsiq->target_id);
 NO_ERROR:
 		xs->resid = scsiq->data_cnt;
 		xs->error = XS_NOERROR;
