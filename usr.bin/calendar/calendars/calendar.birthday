@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.3 1997/04/02 04:46:54 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.4 1997/04/03 19:20:11 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -63,6 +63,7 @@
 02/18	Ernst Mach born, 1838, philosopher & optics pioneer
 02/19	Nicolas Copernicus born in Thorn, Poland, 1473
 02/20	Ludwig Boltzmann born, 1838, atomic physics pioneer
+02/21	Gogol dies, 1852
 02/21	Alexis De Rochon born, 1838, developed the spyglass
 02/22	George Washington born, 1732
 02/22	Pierre Jules Cesar Janssen born, 1838, found hydrogen in the sun
@@ -101,7 +102,7 @@
 03/30	Vincent Van Gogh born, 1853
 03/31	Descartes born, 1596
 03/31	Rene Descartes born, 1596, mathematician & philosopher
-04/01	Nikolay Vasilyevich Gogol born, 1827
+04/01	Nikolay Vasilyevich Gogol born, 1809
 04/03	Washington Irving born, 1783
 04/05	Thomas Hobbes born, 1588, philosopher
 04/08	Buddha born, 563 BC
