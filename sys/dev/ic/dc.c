@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.66 2004/04/15 08:34:48 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.67 2004/05/31 03:53:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -840,7 +840,6 @@ dc_miibus_statchg(self)
 	}
 }
 
-#define DC_POLY		0xEDB88320
 #define DC_BITS_512	9
 #define DC_BITS_128	7
 #define DC_BITS_64	6
@@ -850,15 +849,10 @@ dc_crc_le(sc, addr)
 	struct dc_softc *sc;
 	caddr_t addr;
 {
-	u_int32_t idx, bit, data, crc;
+	u_int32_t crc;
 
 	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (idx = 0; idx < 6; idx++) {
-		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
-			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? DC_POLY : 0);
-	}
+	crc = ether_crc32_le(addr, ETHER_ADDR_LEN);
 
 	/*
 	 * The hash table on the PNIC II and the MX98715AEC-C/D/E
@@ -886,31 +880,8 @@ dc_crc_le(sc, addr)
 /*
  * Calculate CRC of a multicast group address, return the lower 6 bits.
  */
-u_int32_t
-dc_crc_be(addr)
-	caddr_t addr;
-{
-	u_int32_t crc, carry;
-	int i, j;
-	u_int8_t c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return ((crc >> 26) & 0x0000003F);
-}
+#define dc_crc_be(addr)	((ether_crc32_be(addr,ETHER_ADDR_LEN) >> 26) \
+	& 0x0000003F)
 
 /*
  * 21143-style RX filter setup routine. Filter programming is done by
@@ -957,16 +928,24 @@ dc_setfilt_21143(sc)
 	else
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI)
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
-	else
+	else {
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		h = dc_crc_le(sc, enm->enm_addrlo);
-		sp[h >> 4] |= htole32(1 << (h & 0xF));
-		ETHER_NEXT_MULTI(step, enm);
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				ifp->if_flags |= IFF_ALLMULTI;
+				goto allmulti;
+			}
+
+			h = dc_crc_le(sc, enm->enm_addrlo);
+			sp[h >> 4] |= htole32(1 << (h & 0xF));
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
@@ -1027,6 +1006,7 @@ dc_setfilt_admtek(sc)
 	else
 		DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_RX_PROMISC);
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI)
 		DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ALLMULTI);
 	else
@@ -1046,6 +1026,11 @@ dc_setfilt_admtek(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+
 		if (DC_IS_CENTAUR(sc))
 			h = dc_crc_le(sc, enm->enm_addrlo);
 		else
