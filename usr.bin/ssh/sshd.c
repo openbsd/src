@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.23 1999/10/07 04:40:03 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.24 1999/10/07 21:45:02 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -938,11 +938,14 @@ void do_connection(int privileged_port)
    in as (received from the clinet).  Privileged_port is true if the
    connection comes from a privileged port (used for .rhosts authentication).*/
 
+#define MAX_AUTH_FAILURES 5
+
 void
 do_authentication(char *user, int privileged_port)
 {
   int type;
   int authenticated = 0;
+  int authentication_failures = 0;
   char *password;
   struct passwd *pw, pwcopy;
   char *client_user;
@@ -972,13 +975,30 @@ do_authentication(char *user, int privileged_port)
 	{
 	  /* Read a packet.  This will not return if the client disconnects. */
 	  int plen;
-	  (void) packet_read(&plen);
-
+	  int type = packet_read(&plen);
+#ifdef SKEY
+	  int passw_len;
+	  char *password, *skeyinfo;
+	  if (options.password_authentication &&
+	     options.skey_authentication == 1 &&
+	     type == SSH_CMSG_AUTH_PASSWORD &&
+	     (password = packet_get_string(&passw_len)) != NULL &&
+	     passw_len == 5 &&
+	     strncasecmp(password, "s/key", 5) == 0 &&
+	     (skeyinfo = skey_fake_keyinfo(user)) != NULL ){
+	    /* Send a fake s/key challenge. */
+	    packet_send_debug(skeyinfo);
+          }
+#endif
 	  /* Send failure.  This should be indistinguishable from a failed
 	     authentication. */
 	  packet_start(SSH_SMSG_FAILURE);
 	  packet_send();
 	  packet_write_wait();
+          if (++authentication_failures >= MAX_AUTH_FAILURES) {
+	    packet_disconnect("To many authentication failures for %.100s from %.200s", 
+            		       user, get_canonical_hostname());
+          }
 	}
       /*NOTREACHED*/
       abort();
@@ -1006,7 +1026,7 @@ do_authentication(char *user, int privileged_port)
 #ifdef KRB4
       options.kerberos_or_local_passwd &&
 #endif /* KRB4 */
-      auth_password(user, ""))
+      auth_password(pw, ""))
     {
       /* Authentication with empty password succeeded. */
       debug("Login for user %.100s accepted without authentication.", user);
@@ -1243,7 +1263,7 @@ do_authentication(char *user, int privileged_port)
 	  }
 
 	  /* Try authentication with the password. */
-	  if (auth_password(user, password))
+	  if (auth_password(pw, password))
 	    {
 	      /* Successful authentication. */
 	      /* Clear the password from memory. */
@@ -1272,6 +1292,11 @@ do_authentication(char *user, int privileged_port)
       packet_start(SSH_SMSG_FAILURE);
       packet_send();
       packet_write_wait();
+
+      if (++authentication_failures >= MAX_AUTH_FAILURES) {
+	packet_disconnect("To many authentication failures for %.100s from %.200s", 
+          pw->pw_name, get_canonical_hostname());
+      }
     }
 
   /* Check if the user is logging in as root and root logins are disallowed. */

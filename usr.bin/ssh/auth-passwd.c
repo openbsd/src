@@ -15,7 +15,7 @@ the password is valid for the user.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.5 1999/09/30 04:30:03 deraadt Exp $");
+RCSID("$Id: auth-passwd.c,v 1.6 1999/10/07 21:45:02 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -29,14 +29,10 @@ extern char *ticket;
 /* Tries to authenticate the user using password.  Returns true if
    authentication succeeds. */
 
-int auth_password(const char *server_user, const char *password)
+int auth_password(struct passwd *pw, const char *password)
 {
   extern ServerOptions options;
-  extern char *crypt(const char *key, const char *salt);
-  struct passwd *pw;
   char *encrypted_password;
-  char correct_passwd[200];
-  char *saved_pw_name, *saved_pw_passwd;
 
   if (*password == '\0' && options.permit_empty_passwd == 0)
   {
@@ -44,14 +40,32 @@ int auth_password(const char *server_user, const char *password)
       return 0;
   }
 
-  /* Get the encrypted password for the user. */
-  pw = getpwnam(server_user);
-  if (!pw)
+  /* deny if no user. */
+  if (pw == NULL)
     return 0;
 
-  saved_pw_name = xstrdup(pw->pw_name);
-  saved_pw_passwd = xstrdup(pw->pw_passwd);
-  
+#ifdef SKEY
+  if (options.skey_authentication == 1) {
+    if (strncasecmp(password, "s/key", 5) == 0) {
+      char *skeyinfo = skey_keyinfo(pw->pw_name);
+      if(skeyinfo == NULL){
+	debug("generating fake skeyinfo for %.100s.", pw->pw_name);
+        skeyinfo = skey_fake_keyinfo(pw->pw_name);
+      }
+      if(skeyinfo != NULL)
+        packet_send_debug(skeyinfo);
+      /* Try again. */
+      return 0;
+    }
+    else if (skey_haskey(pw->pw_name) == 0 && 
+	     skey_passcheck(pw->pw_name, (char *)password) != -1) {
+      /* Authentication succeeded. */
+      return 1;
+    }
+    /* Fall back to ordinary passwd authentication. */
+  }
+#endif
+
 #if defined(KRB4)
   /* Support for Kerberos v4 authentication - Dug Song <dugsong@UMICH.EDU> */
   if (options.kerberos_authentication)
@@ -72,15 +86,15 @@ int auth_password(const char *server_user, const char *password)
 	/* Set up our ticket file. */
 	if (!ssh_tf_init(pw->pw_uid)) {
 	  log("Couldn't initialize Kerberos ticket file for %s!",
-	      server_user);
+	      pw->pw_name);
 	  goto kerberos_auth_failure;
 	}
 	/* Try to get TGT using our password. */
-	r = krb_get_pw_in_tkt((char *)server_user, "", realm, "krbtgt", realm,
+	r = krb_get_pw_in_tkt((char *)pw->pw_name, "", realm, "krbtgt", realm,
 			      DEFAULT_TKT_LIFE, (char *)password);
 	if (r != INTK_OK) {
 	  packet_send_debug("Kerberos V4 password authentication for %s "
-			    "failed: %s", server_user, krb_err_txt[r]);
+			    "failed: %s", pw->pw_name, krb_err_txt[r]);
 	  goto kerberos_auth_failure;
 	}
 	/* Successful authentication. */
@@ -105,7 +119,7 @@ int auth_password(const char *server_user, const char *password)
 	  if (r == RD_AP_UNDEC) {
 	    /* Probably didn't have a srvtab on localhost. Allow login. */
 	    log("Kerberos V4 TGT for %s unverifiable, no srvtab installed? "
-		"krb_rd_req: %s", server_user, krb_err_txt[r]);
+		"krb_rd_req: %s", pw->pw_name, krb_err_txt[r]);
 	  }
 	  else if (r != KSUCCESS) {
 	    log("Kerberos V4 %s ticket unverifiable: %s",
@@ -116,13 +130,13 @@ int auth_password(const char *server_user, const char *password)
 	else if (r == KDC_PR_UNKNOWN) {
 	  /* Allow login if no rcmd service exists, but log the error. */
 	  log("Kerberos V4 TGT for %s unverifiable: %s; %s.%s "
-	      "not registered, or srvtab is wrong?", server_user,
+	      "not registered, or srvtab is wrong?", pw->pw_name,
 	      krb_err_txt[r], KRB4_SERVICE_NAME, phost);
 	}
 	else {
 	  /* TGT is bad, forget it. Possibly spoofed! */
 	  packet_send_debug("WARNING: Kerberos V4 TGT possibly spoofed for"
-			    "%s: %s", server_user, krb_err_txt[r]);
+			    "%s: %s", pw->pw_name, krb_err_txt[r]);
 	  goto kerberos_auth_failure;
 	}
 	
@@ -142,25 +156,19 @@ int auth_password(const char *server_user, const char *password)
       /* Fall back to ordinary passwd authentication. */
     }
 #endif /* KRB4 */
-
-  /* Save the encrypted password. */
-  strlcpy(correct_passwd, saved_pw_passwd, sizeof(correct_passwd));
-
+  
   /* Check for users with no password. */
-  if (strcmp(password, "") == 0 && strcmp(correct_passwd, "") == 0)
+  if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
     {
       packet_send_debug("Login permitted without a password because the account has no password.");
       return 1; /* The user has no password and an empty password was tried. */
     }
 
-  xfree(saved_pw_name);
-  xfree(saved_pw_passwd);
-  
   /* Encrypt the candidate password using the proper salt. */
   encrypted_password = crypt(password, 
-			     (correct_passwd[0] && correct_passwd[1]) ?
-			     correct_passwd : "xx");
+			     (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
+			     pw->pw_passwd : "xx");
 
   /* Authentication is accepted if the encrypted passwords are identical. */
-  return (strcmp(encrypted_password, correct_passwd) == 0);
+  return (strcmp(encrypted_password, pw->pw_passwd) == 0);
 }

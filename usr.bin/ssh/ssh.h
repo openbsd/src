@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.8 1999/10/05 22:18:52 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.9 1999/10/07 21:45:02 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -260,7 +260,7 @@ int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
 
 /* Tries to authenticate the user using password.  Returns true if
    authentication succeeds. */
-int auth_password(const char *server_user, const char *password);
+int auth_password(struct passwd *pw, const char *password);
 
 /* Performs the RSA authentication dialog with the client.  This returns
    0 if the client could not be authenticated, and 1 if authentication was
@@ -582,5 +582,10 @@ int radix_to_creds(const char *buf, CREDENTIALS *creds);
 #endif /* AFS */
 
 #endif /* KRB4 */
+
+#ifdef SKEY
+#include <skey.h>
+char *skey_fake_keyinfo(char *username);
+#endif /* SKEY */
 
 #endif /* SSH_H */

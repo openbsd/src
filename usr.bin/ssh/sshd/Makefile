@@ -27,6 +27,10 @@ DPADD+=  ${LIBKRBAFS}
 .endif # AFS
 .endif # KERBEROS
 
+.if (${SKEY} == "yes")
+SRCS+=	auth-skey.c
+.endif
+
 .include <bsd.prog.mk>
 
 LDADD+=	-lcrypto -lutil -lz
@@ -36,4 +40,10 @@ DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 CFLAGS+= -DLIBWRAP
 LDADD+= -lwrap
 DPADD+= ${LIBWRAP}
+.endif
+
+.if (${SKEY} == "yes")
+CFLAGS+= -DSKEY
+LDADD+= -lskey
+DPADD+= ${SKEY}
 .endif

@@ -13,7 +13,7 @@ Definitions for server configuration data and for the functions reading it.
 
 */
 
-/* RCSID("$Id: servconf.h,v 1.4 1999/10/01 02:38:09 provos Exp $"); */
+/* RCSID("$Id: servconf.h,v 1.5 1999/10/07 21:45:02 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -54,6 +54,9 @@ typedef struct
   int afs_token_passing;	/* If true, permit AFS token passing. */
 #endif
   int password_authentication;  /* If true, permit password authentication. */
+#ifdef SKEY
+  int skey_authentication;      /* If true, permit s/key authentication. */
+#endif
   int permit_empty_passwd;      /* If false, do not permit empty passwords. */
   unsigned int num_allow_hosts;
   char *allow_hosts[MAX_ALLOW_HOSTS];

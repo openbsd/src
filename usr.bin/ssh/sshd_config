@@ -29,6 +29,8 @@ RSAAuthentication yes
 # To disable tunneled clear text passwords, change to no here!
 PasswordAuthentication yes
 PermitEmptyPasswords no
+# Uncomment to disable s/key passwords 
+#SkeyAuthentication no
 
 # To change Kerberos options
 #KerberosAuthentication no

@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.6 1999/10/03 18:46:12 aaron Exp $
+.\" $Id: sshd.8,v 1.7 1999/10/07 21:45:02 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -126,14 +126,22 @@ indicates no limit.
 .It Fl h Ar host_key_file
 Specifies the file from which the host key is read (default
 .Pa /etc/ssh_host_key ) .
-This option must be given if sshd is not run as root (as the normal
+This option must be given if
+.Nm
+is not run as root (as the normal
 host file is normally not readable by anyone but root).
 .It Fl i
-Specifies that sshd is being run from inetd.  Sshd is normally not run
+Specifies that
+.Nm
+is being run from inetd. 
+.Nm
+is normally not run
 from inetd because it needs to generate the server key before it can
 respond to the client, and this may take tens of seconds.  Clients
 would have to wait too long if the key was regenerated every time.
-However, with small key sizes (e.g.  512) using sshd from inetd may
+However, with small key sizes (e.g.  512) using
+.Nm
+from inetd may
 be feasible.
 .It Fl k Ar key_gen_time
 Specifies how often the server key is regenerated (default 3600
@@ -182,7 +190,7 @@ are allowed to connect.
 Note that
 .Nm
 can also be configured to use tcp_wrappers using the
-.Fl LIBWARP
+.Sy LIBWARP
 compile-time option.
 .It Cm DenyHosts
 This keyword can be followed by any number of host name patterns,
@@ -228,7 +236,8 @@ To disable keepalives, the value should be set to
 in both the server and the client configuration files.
 .It Cm KerberosAuthentication
 Specifies whether Kerberos authentication is allowed. This can
-be in the form of a Kerberos ticket, or if PasswordAuthentication
+be in the form of a Kerberos ticket, or if
+.Cm PasswordAuthentication
 is yes, the password provided by the user will be validated through
 the Kerberos KDC. Default is
 .Dq yes .
@@ -245,8 +254,8 @@ Default is
 .Dq no ,
 as this only works when the Kerberos KDC is actually an AFS kaserver.
 .It Cm KerberosTicketCleanup
-Specifies whether to automatically destroy the user's
-ticket cache file on logout. Default is
+Specifies whether to automatically destroy the user's ticket cache
+file on logout. Default is
 .Dq yes .
 .It Cm KeyRegenerationInterval
 The server key is automatically regenerated after this many seconds
@@ -255,6 +264,11 @@ decrypting captured sessions by later breaking into the machine and
 stealing the keys.  The key is never stored anywhere.  If the value is
 0, the key is never regenerated.  The default is 3600
 (seconds).
+.It Cm ListenAddress
+Specifies what local address
+.Nm
+should listen on.
+The default is to listen to all local addresses.
 .It Cm LoginGraceTime
 The server disconnects after this time if the user has not
 successfully logged in.  If the value is 0, there is no time limit.
@@ -304,7 +318,9 @@ Obsolete.  Random number generation uses other techniques.
 .It Cm RhostsAuthentication
 Specifies whether authentication using rhosts or /etc/hosts.equiv
 files is sufficient.  Normally, this method should not be permitted
-because it is insecure.  RhostsRSAAuthentication should be used
+because it is insecure. 
+.Cm RhostsRSAAuthentication
+should be used
 instead, because it performs RSA-based host authentication in addition
 to normal rhosts or /etc/hosts.equiv authentication.
 The default is
@@ -319,11 +335,20 @@ Specifies whether pure RSA authentication is allowed.  The default is
 .It Cm ServerKeyBits
 Defines the number of bits in the server key.  The minimum value is
 512, and the default is 768.
+.It Cm SkeyAuthentication
+Specifies whether
+.Xr skey 1 
+authentication is allowed.  The default is
+.Dq yes .
+Note that s/key authentication is enabled only if
+.Cm PasswordAuthentication
+is allowed, too.
 .It Cm StrictModes
 Specifies whether SSH should check file modes and ownership of the
 user's home directory and rhosts files before accepting login.  This
 is normally desirable because novices sometimes accidentally leave their
-directory or files world-writable.  The default is "yes".
+directory or files world-writable.  The default is
+.Dq yes .
 .It Cm SyslogFacility
 Gives the facility code that is used when logging messages from
 .Nm sshd .
@@ -516,19 +541,17 @@ Contains configuration data for
 This file should be writable by root only, but it is recommended
 (though not necessary) that it be world-readable.
 .It Pa /etc/ssh_host_key
-Contains the private part of the host key.  This file is normally
-created automatically by "make install", but can also be created
-manually using
-.Xr ssh-keygen 1 .
+Contains the private part of the host key.
 This file should only be owned by root, readable only by root, and not
 accessible to others.
 .It Pa /etc/ssh_host_key.pub
-Contains the public part of the host key.  This file is normally
-created automatically by "make install", but can also be created
-manually.  This file should be world-readable but writable only by
+Contains the public part of the host key.
+This file should be world-readable but writable only by
 root.  Its contents should match the private part.  This file is not
 really used for anything; it is only provided for the convenience of
 the user so its contents can be copied to known hosts files.
+These two files are created using
+.Xr ssh-keygen 1 .
 .It Pa /var/run/sshd.pid
 Contains the process ID of the
 .Nm

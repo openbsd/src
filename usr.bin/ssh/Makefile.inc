@@ -1,1 +1,1 @@
-CFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/..
+CFLAGS+=	-I${.CURDIR}/..
