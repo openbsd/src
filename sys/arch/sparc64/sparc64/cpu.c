@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2003/05/07 22:33:25 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2003/05/11 22:09:31 jason Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -82,7 +82,8 @@ char	cpu_model[100];
 
 struct	proc *fpproc;
 int	foundfpu;
-int	want_ast, want_resched;
+int	want_ast;
+extern	int want_resched;
 
 /* The CPU configuration driver. */
 static void cpu_attach(struct device *, struct device *, void *);
