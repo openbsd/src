@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 1997/09/21 11:37:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/05/09 22:51:52 deraadt Exp $
 
 PROG=	mount
-SRCS=	mount.c getmntopts.c
+SRCS=	mount.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	mount.8
