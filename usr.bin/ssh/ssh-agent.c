@@ -35,7 +35,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.99 2002/08/12 10:46:35 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.100 2002/08/21 20:10:28 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -1034,7 +1034,7 @@ main(int ac, char **av)
 		perror("bind");
 		cleanup_exit(1);
 	}
-	if (listen(sock, 5) < 0) {
+	if (listen(sock, 128) < 0) {
 		perror("listen");
 		cleanup_exit(1);
 	}
