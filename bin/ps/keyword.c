@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.9 1997/08/08 19:30:09 millert Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.10 1997/08/22 20:08:14 kstailey Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.9 1997/08/08 19:30:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.10 1997/08/22 20:08:14 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,14 +95,18 @@ VAR var[] = {
 	{"%mem", "%MEM", NULL, 0, pmem, 4},
 	{"acflag", "ACFLG", NULL, 0, pvar, 3, 0, POFF(p_acflag), USHORT, "x"},
 	{"acflg", "", "acflag"},
+	{"args", "", "command"},
 	{"blocked", "", "sigmask"},
 	{"caught", "", "sigcatch"},
+	{"comm", "", "ucomm"},
 	{"command", "COMMAND", NULL, COMM|LJUST|USER, command, 16},
 	{"cpu", "CPU", NULL, 0, pvar, 3, 0, POFF(p_estcpu), UINT, "d"},
 	{"cputime", "", "time"},
+	{"etime", "", "start"},
 	{"f", "F", NULL, 0, pvar, 7, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
 	GID("gid", "GID", evar, EOFF(e_ucred.cr_gid)),
+	{"group", "GROUP", NULL, 0, gname, USERLEN},
 	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 8, 0, POFF(p_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, rvar, 4, 0, ROFF(ru_inblock), LONG, "d"},
@@ -145,6 +149,7 @@ VAR var[] = {
 	{"re", "RE", NULL, INF127, pvar, 3, 0, POFF(p_swtime), UINT, "d"},
 	GID("rgid", "RGID", evar, EOFF(e_pcred.p_rgid)),
 	/* XXX */
+	{"rgroup", "RGROUP", NULL, LJUST, rgname, USERLEN},
 	{"rlink", "RLINK", NULL, 0, pvar, 8, 0, POFF(p_back), KPTR, "x"},
 	{"rss", "RSS", NULL, 0, p_rssize, 4},
 	{"rssize", "", "rsz"},

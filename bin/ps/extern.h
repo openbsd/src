@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1997/08/04 05:37:03 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/08/22 20:08:13 kstailey Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@ void	 fmt_puts __P((char *, int *));
 void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((KINFO *));
 double	 getpmem __P((KINFO *));
+void	 gname __P((KINFO *, VARENT *));
 void	 logname __P((KINFO *, VARENT *));
 void	 longtname __P((KINFO *, VARENT *));
 void	 lstarted __P((KINFO *, VARENT *));
@@ -69,6 +70,7 @@ void	 pmem __P((KINFO *, VARENT *));
 void	 pri __P((KINFO *, VARENT *));
 void	 printheader __P((void));
 void	 pvar __P((KINFO *, VARENT *));
+void	 rgname __P((KINFO *, VARENT *));
 void	 rssize __P((KINFO *, VARENT *));
 void	 runame __P((KINFO *, VARENT *));
 void	 rvar __P((KINFO *, VARENT *));

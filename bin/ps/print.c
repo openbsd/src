@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.6 1997/08/04 05:37:04 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.7 1997/08/22 20:08:14 kstailey Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.6 1997/08/04 05:37:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.7 1997/08/22 20:08:14 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,6 +274,30 @@ runame(k, ve)
 	v = ve->var;
 	(void)printf("%-*s",
 	    (int)v->width, user_from_uid(KI_EPROC(k)->e_pcred.p_ruid, 0));
+}
+
+void
+gname(k, ve)
+	KINFO *k;
+	VARENT *ve;
+{
+	VAR *v;
+
+	v = ve->var;
+	(void)printf("%-*s",
+	    (int)v->width, group_from_gid(KI_EPROC(k)->e_ucred.cr_gid, 0));
+}
+
+void
+rgname(k, ve)
+	KINFO *k;
+	VARENT *ve;
+{
+	VAR *v;
+
+	v = ve->var;
+	(void)printf("%-*s",
+	    (int)v->width, group_from_gid(KI_EPROC(k)->e_pcred.p_rgid, 0));
 }
 
 void
