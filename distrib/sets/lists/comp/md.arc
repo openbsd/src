@@ -114,8 +114,8 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/Protocol.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/encoding.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/hash.h
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/objc-list.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/objc-api.h
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/objc-list.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/objc.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/sarray.h
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc/thr.h

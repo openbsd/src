@@ -1,4 +1,7 @@
 ./usr/bin/gdb
+./usr/include/ansidecl.h
+./usr/include/bfd.h
+./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
 ./usr/include/link.h
 ./usr/include/m68k/ansi.h
@@ -71,6 +74,10 @@
 ./usr/include/machine/viareg.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/z8530var.h
+./usr/include/obstack.h
+./usr/include/readline/chardefs.h
+./usr/include/readline/keymaps.h
+./usr/include/readline/readline.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/cc1obj
@@ -98,6 +105,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/libobjc.a
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/specs
 ./usr/lib/libacl_pic.a
+./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcurses_pic.a
@@ -113,9 +121,13 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libmenu_pic.a
+./usr/lib/libmmalloc.a
 ./usr/lib/libocurses_pic.a
+./usr/lib/libopcodes.a
+./usr/lib/libossaudio_pic.a
 ./usr/lib/libpanel_pic.a
 ./usr/lib/libpcap_pic.a
+./usr/lib/libreadline.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/librx_pic.a
 ./usr/lib/libskey_pic.a
@@ -135,14 +147,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/include/ansidecl.h
-./usr/include/bfd.h
-./usr/include/bfdlink.h
-./usr/include/obstack.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
-./usr/lib/libbfd.a
-./usr/lib/libmmalloc.a
-./usr/lib/libopcodes.a
-./usr/lib/libreadline.a

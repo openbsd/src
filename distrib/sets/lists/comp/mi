@@ -1051,7 +1051,6 @@
 ./usr/lib/libocurses_p.a
 ./usr/lib/libossaudio.a
 ./usr/lib/libossaudio_p.a
-./usr/lib/libossaudio_pic.a
 ./usr/lib/libpanel.a
 ./usr/lib/libpanel_p.a
 ./usr/lib/libpcap.a
