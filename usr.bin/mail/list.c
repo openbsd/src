@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.7 1997/07/31 02:36:33 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.8 1997/08/04 17:30:22 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.7 1997/07/31 02:36:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.8 1997/08/04 17:30:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -421,9 +421,10 @@ getrawlist(line, argv, argc)
 			/* Alloc more space if necessary */
 			if (cp2 - linebuf == linebufsize - 1) {
 				linebufsize += BUFSIZ;
-				if (!(linebuf = realloc(linebuf, linebufsize)))
+				linebuf = (char *)realloc(linebuf, linebufsize);
+				if (linebuf == NULL)
 					panic("Out of memory");
-				cp2 = linebuf + (linebufsize - BUFSIZ) - 1;
+				cp2 = linebuf + linebufsize - BUFSIZ - 1;
 			}
 			cp++;
 			if (quotec != '\0') {

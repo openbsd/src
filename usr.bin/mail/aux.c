@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.11 1997/07/31 02:36:32 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.12 1997/08/04 17:30:22 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.11 1997/07/31 02:36:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.12 1997/08/04 17:30:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,8 +465,8 @@ skin(name)
 {
 	register int c;
 	register char *cp, *cp2;
-	char *bufend;
 	int gotlt, lastsp;
+	char *nbuf, *bufend;
 
 	if (name == NULL)
 		return(NULL);
@@ -475,10 +475,11 @@ skin(name)
 		return(name);
 
 	/* We assume that length(input) <= length(output) */
-	if ((bufend = (char *)malloc(strlen(name) + 1)) == NULL)
+	if ((nbuf = (char *)malloc(strlen(name) + 1)) == NULL)
 		panic("Out of memory");
 	gotlt = 0;
 	lastsp = 0;
+	bufend = nbuf;
 	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; ) {
 		switch (c) {
 		case '(':
@@ -559,9 +560,9 @@ skin(name)
 	}
 	*cp2 = 0;
 
-	if ((bufend = realloc(bufend, strlen(bufend) + 1)) == NULL)
+	if ((nbuf = (char *)realloc(nbuf, strlen(nbuf) + 1)) == NULL)
 		panic("Out of memory");
-	return(bufend);
+	return(nbuf);
 }
 
 /*
