@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_umap.8,v 1.16 2002/06/26 21:32:02 fgsch Exp $
+.\"	$OpenBSD: mount_umap.8,v 1.17 2003/03/13 22:02:25 tedu Exp $
 .\"	$NetBSD: mount_umap.8,v 1.4 1996/03/05 02:36:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -71,6 +71,14 @@ flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
+.It Fl g Ar gid-mapfile
+Use the group ID mapping specified in
+.Ar gid-mapfile .
+This flag is required.
+.It Fl u Ar uid-mapfile
+Use the user ID mapping specified in
+.Ar uid-mapfile .
+This flag is required.
 .El
 .Pp
 The
@@ -97,24 +105,15 @@ where the mapped subtree is to be placed.
 and
 .Em gid-mapfile
 describe the mappings to be made between identifiers.
-Briefly, the format of these files is a count of the number of
-mappings on the first line, with each subsequent line containing
-a single mapping.
-Each of these mappings consists of an ID from
-the original environment and the corresponding ID in the local environment,
-separated by whitespace.
-.Em uid-mapfile
-should contain all UID
-mappings, and
-.Em gid-mapfile
-should contain all GID mappings.
-Any UIDs not mapped in
-.Em uid-mapfile
-will be treated as user NOBODY,
-and any GIDs not mapped in
-.Em gid-mapfile
-will be treated as group
-NULLGROUP.
+.Pp
+The format of these files is very simple.
+The first line is a count of the number of mappings.
+Each subsequent line contains two numbers.
+The first is the ID in the mapped subtree, and the second
+is the ID in the original subtree.
+IDs in the original subtree for which no mapping exists will
+be mapped to
+.Dq nobody .
 At most 64 UIDs can be mapped for a given subtree, and
 at most 16 groups can be mapped by a given subtree.
 .Pp
@@ -126,9 +125,7 @@ these files are improper.
 It will also balk if the count of mappings
 in the first line of the map files is not correct.
 .Pp
-The layer created by the
-.Nm
-command is meant to serve as a simple example of file system layering.
+.Sh BUGS
 It is not meant for production use.
 The implementation is not very sophisticated.
 .Sh SEE ALSO
