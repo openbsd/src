@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.21 2004/11/29 22:07:37 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.22 2005/03/07 01:28:45 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -198,12 +198,10 @@ tcxattach(parent, self, args)
 	char *nam = NULL;
 
 	node = ca->ca_ra.ra_node;
-	nam = getpropstring(node, "model");
-	printf(": %s\n", nam);
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG) {
-		printf("\n%s: expected %d registers, got %d\n",
-		    self->dv_xname, TCX_NREG, ca->ca_ra.ra_nreg);
+		printf(": expected %d registers, got %d\n",
+		    TCX_NREG, ca->ca_ra.ra_nreg);
 		return;
 	}
 
@@ -265,8 +263,11 @@ tcxattach(parent, self, args)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	printf("%s: %dx%d, id %d, rev %d, sense %d\n",
-	    self->dv_xname, sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
+	nam = getpropstring(node, "model");
+	if (*nam != '\0')
+		printf(": %s\n%s", nam, self->dv_xname);
+	printf(": %dx%d, id %d, rev %d, sense %d\n",
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
 	    (sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
 	    (sc->sc_thc->thc_config & THC_CFG_REV) >> THC_CFG_REV_SHIFT,
 	    (sc->sc_thc->thc_config & THC_CFG_SENSE) >> THC_CFG_SENSE_SHIFT
