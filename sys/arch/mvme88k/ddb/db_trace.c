@@ -146,7 +146,7 @@ db_setf_regs(
 	*regp = *valuep;
 }
 
-#define N(s, x)  {s, (int *)&(((db_regs_t *) 0)->x), db_setf_regs}
+#define N(s, x)  {s, (long *)&(((db_regs_t *) 0)->x), db_setf_regs}
 
 struct db_variable db_regs[] = {
     N("r1", r[1]),     N("r2", r[2]), 	 N("r3", r[3]),	   N("r4", r[4]),

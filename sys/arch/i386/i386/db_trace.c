@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 1996/05/07 07:21:35 deraadt Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 1997/03/21 02:10:42 niklas Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /* 
@@ -43,20 +43,20 @@
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "es",		&ddb_regs.tf_es,     FCN_NULL },
-	{ "ds",		&ddb_regs.tf_ds,     FCN_NULL },
-	{ "edi",	&ddb_regs.tf_edi,    FCN_NULL },
-	{ "esi",	&ddb_regs.tf_esi,    FCN_NULL },
-	{ "ebp",	&ddb_regs.tf_ebp,    FCN_NULL },
-	{ "ebx",	&ddb_regs.tf_ebx,    FCN_NULL },
-	{ "edx",	&ddb_regs.tf_edx,    FCN_NULL },
-	{ "ecx",	&ddb_regs.tf_ecx,    FCN_NULL },
-	{ "eax",	&ddb_regs.tf_eax,    FCN_NULL },
-	{ "eip",	&ddb_regs.tf_eip,    FCN_NULL },
-	{ "cs",		&ddb_regs.tf_cs,     FCN_NULL },
-	{ "eflags",	&ddb_regs.tf_eflags, FCN_NULL },
-	{ "esp",	&ddb_regs.tf_esp,    FCN_NULL },
-	{ "ss",		&ddb_regs.tf_ss,     FCN_NULL },
+	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
+	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
+	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
+	{ "esi",	(long *)&ddb_regs.tf_esi,    FCN_NULL },
+	{ "ebp",	(long *)&ddb_regs.tf_ebp,    FCN_NULL },
+	{ "ebx",	(long *)&ddb_regs.tf_ebx,    FCN_NULL },
+	{ "edx",	(long *)&ddb_regs.tf_edx,    FCN_NULL },
+	{ "ecx",	(long *)&ddb_regs.tf_ecx,    FCN_NULL },
+	{ "eax",	(long *)&ddb_regs.tf_eax,    FCN_NULL },
+	{ "eip",	(long *)&ddb_regs.tf_eip,    FCN_NULL },
+	{ "cs",		(long *)&ddb_regs.tf_cs,     FCN_NULL },
+	{ "eflags",	(long *)&ddb_regs.tf_eflags, FCN_NULL },
+	{ "esp",	(long *)&ddb_regs.tf_esp,    FCN_NULL },
+	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
