@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.42 2000/12/17 22:35:19 marc Exp $
+#	$OpenBSD: security,v 1.43 2000/12/22 08:04:48 todd Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -373,7 +373,8 @@ if [ -s $OUTPUT ] ; then
 fi
 
 # Files that should not be owned by someone else or readable.
-list=".netrc .rhosts .pgp/secring.pgp .shosts .ssh/identity .ssh/random_seed"
+list=".netrc .rhosts .gnupg/secring.gpg .gnupg/random_seed \
+	.pgp/secring.pgp .shosts .ssh/identity .ssh/random_seed"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
