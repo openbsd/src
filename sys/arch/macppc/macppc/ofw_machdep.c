@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.25 2001/08/18 05:39:03 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.1 2001/09/01 15:44:20 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 #include <ukbd.h>
 #include <akbd.h>
 #include <dev/usb/ukbdvar.h>
-#include <powerpc/mac/akbdvar.h>
+#include <macppc/dev/akbdvar.h>
 
 /* XXX, called from asm */
 int save_ofw_mapping(void);
@@ -330,7 +330,7 @@ ofwtrysercon(char *name, int qhandle)
 #endif
 
 #include <dev/pci/pcivar.h>
-#include <arch/powerpc/pci/vgafb_pcivar.h>
+#include <arch/macppc/pci/vgafb_pcivar.h>
 static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
 
 /* ARGSUSED */

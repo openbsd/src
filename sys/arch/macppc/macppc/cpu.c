@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2001/07/09 04:41:28 mickey Exp $ */
+/*	$OpenBSD: cpu.c,v 1.1 2001/09/01 15:44:20 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -61,7 +61,7 @@
 #define HID0_DPM	(1 << (31-11))
 
 char cpu_model[80];
-char machine[] = "powerpc";	/* cpu architecture */
+char machine[] = MACHINE;	/* cpu architecture */
 
 /* Definition of the driver for autoconfig. */
 int	cpumatch(struct device *, void *, void *);
