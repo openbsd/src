@@ -1,41 +1,19 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
+ *
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 # include "sendmail.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)alias.c	8.73 (Berkeley) 5/8/97";
+static char sccsid[] = "@(#)alias.c	8.92 (Berkeley) 6/5/98";
 #endif /* not lint */
 
 
@@ -77,7 +55,7 @@ alias(a, sendq, aliaslevel, e)
 	char *owner;
 	auto int stat = EX_OK;
 	char obuf[MAXNAME + 7];
-	extern char *aliaslookup();
+	extern char *aliaslookup __P((char *, int *, ENVELOPE *));
 
 	if (tTd(27, 1))
 		printf("alias(%s)\n", a->q_user);
@@ -104,7 +82,7 @@ alias(a, sendq, aliaslevel, e)
 	{
 		a->q_flags |= QQUEUEUP;
 		if (e->e_message == NULL)
-			e->e_message = "alias database unavailable";
+			e->e_message = newstr("alias database unavailable");
 		return;
 	}
 	if (p == NULL)
@@ -123,11 +101,11 @@ alias(a, sendq, aliaslevel, e)
 		a->q_flags |= QVERIFIED;
 		return;
 	}
-	message("aliased to %s", shortenstring(p, 203));
+	message("aliased to %s", shortenstring(p, MAXSHORTSTR));
 	if (LogLevel > 9)
 		sm_syslog(LOG_INFO, e->e_id,
 			"alias %.100s => %s",
-			a->q_paddr, shortenstring(p, 203));
+			a->q_paddr, shortenstring(p, MAXSHORTSTR));
 	a->q_flags &= ~QSELFREF;
 	if (tTd(27, 5))
 	{
@@ -237,7 +215,7 @@ setalias(spec)
 	{
 		char buf[50];
 
-		while (isspace(*p))
+		while (isascii(*p) && isspace(*p))
 			p++;
 		if (*p == '\0')
 			break;
@@ -402,7 +380,9 @@ aliaswait(map, ext, isopen)
 	if (stat(buf, &stb) < 0 || stb.st_mtime < mtime || attimeout)
 	{
 		/* database is out of date */
-		if (AutoRebuild && stb.st_ino != 0 && stb.st_uid == geteuid())
+		if (AutoRebuild && stb.st_ino != 0 &&
+		    (stb.st_uid == geteuid() ||
+		     (geteuid() == 0 && stb.st_uid == TrustedFileUid)))
 		{
 			bool oldSuprErrs;
 
@@ -414,7 +394,7 @@ aliaswait(map, ext, isopen)
 				map->map_class->map_close(map);
 				map->map_mflags &= ~(MF_OPEN|MF_WRITABLE);
 			}
-			rebuildaliases(map, TRUE);
+			(void) rebuildaliases(map, TRUE);
 			isopen = map->map_class->map_open(map, O_RDONLY);
 			SuprErrs = oldSuprErrs;
 		}
@@ -438,28 +418,36 @@ aliaswait(map, ext, isopen)
 **		automatic -- set if this was automatically generated.
 **
 **	Returns:
-**		none.
+**		TRUE if successful; FALSE otherwise.
 **
 **	Side Effects:
 **		Reads the text version of the database, builds the
 **		DBM or DB version.
 */
 
-void
+bool
 rebuildaliases(map, automatic)
 	register MAP *map;
 	bool automatic;
 {
 	FILE *af;
 	bool nolock = FALSE;
-	int sff = SFF_OPENASROOT|SFF_REGONLY|SFF_NOLOCK|SFF_NOWLINK|SFF_NOWFILES;
+	bool success = FALSE;
+	int sff = SFF_OPENASROOT|SFF_REGONLY|SFF_NOLOCK;	
 	sigfunc_t oldsigint, oldsigquit;
 #ifdef SIGTSTP
 	sigfunc_t oldsigtstp;
 #endif
 
 	if (!bitset(MCF_REBUILDABLE, map->map_class->map_cflags))
-		return;
+		return FALSE;
+
+	if (!bitset(DBS_LINKEDALIASFILEINWRITABLEDIR, DontBlameSendmail))
+		sff |= SFF_NOWLINK;
+	if (!bitset(DBS_GROUPWRITABLEALIASFILE, DontBlameSendmail))
+		sff |= SFF_NOGWFILES;
+	if (!bitset(DBS_WORLDWRITABLEALIASFILE, DontBlameSendmail))
+		sff |= SFF_NOWWFILES;
 
 	/* try to lock the source file */
 	if ((af = safefopen(map->map_file, O_RDWR, 0, sff)) == NULL)
@@ -478,7 +466,7 @@ rebuildaliases(map, automatic)
 				message("newaliases: cannot open %s: %s",
 					map->map_file, errstring(saveerr));
 			errno = 0;
-			return;
+			return FALSE;
 		}
 		nolock = TRUE;
 		if (tTd(27, 1) ||
@@ -503,7 +491,7 @@ rebuildaliases(map, automatic)
 		}
 		(void) xfclose(af, "rebuildaliases1", map->map_file);
 		errno = 0;
-		return;
+		return FALSE;
 	}
 
 	oldsigint = setsignal(SIGINT, SIG_IGN);
@@ -523,6 +511,7 @@ rebuildaliases(map, automatic)
 		}
 		map->map_mflags |= MF_OPEN|MF_WRITABLE;
 		readaliases(map, af, !automatic, TRUE);
+		success = TRUE;
 	}
 	else
 	{
@@ -550,6 +539,7 @@ rebuildaliases(map, automatic)
 #ifdef SIGTSTP
 	(void) setsignal(SIGTSTP, oldsigtstp);
 #endif
+	return success;
 }
 /*
 **  READALIASES -- read and process the alias file.
@@ -607,6 +597,7 @@ readaliases(map, af, announcestats, logstats)
 			p--;
 			if (fgets(p, SPACELEFT(line, p), af) == NULL)
 				break;
+			LineNumber++;
 			p = strchr(p, '\n');
 		}
 #endif
@@ -854,6 +845,38 @@ forward(user, sendq, aliaslevel, e)
 				sm_syslog(LOG_ERR, e->e_id,
 					"forward %s: transient error: %s",
 					buf, errstring(err));
+		}
+		else
+		{
+			switch (err)
+			{
+			  case ENOENT:
+				break;
+
+#if _FFR_FORWARD_SYSERR
+			  case E_SM_NOSLINK:
+			  case E_SM_NOHLINK:
+			  case E_SM_REGONLY:
+			  case E_SM_ISEXEC:
+			  case E_SM_WWDIR:
+			  case E_SM_GWDIR:
+			  case E_SM_WWFILE:
+			  case E_SM_GWFILE:
+				syserr("forward: %s: %s", buf, errstring(err));
+				break;
+#endif
+
+			  default:
+				if (LogLevel > (RunAsUid == 0 ? 2 : 10))
+					sm_syslog(LOG_WARNING, e->e_id,
+						"forward %s: %s", buf,
+						errstring(err));
+				if (Verbose)
+					message("forward: %s: %s",
+						buf,
+						errstring(err));
+				break;
+			}
 		}
 	}
 	if (pp == NULL && got_transient)

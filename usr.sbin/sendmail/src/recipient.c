@@ -1,42 +1,21 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)recipient.c	8.133 (Berkeley) 10/19/97";
+static char sccsid[] = "@(#)recipient.c	8.154 (Berkeley) 6/24/98";
 #endif /* not lint */
 
 # include "sendmail.h"
+# include <grp.h>
 
 /*
 **  SENDTOLIST -- Designate a send list.
@@ -134,7 +113,7 @@ sendtolist(list, ctladdr, sendq, aliaslevel, e)
 		if (ctladdr != NULL)
 		{
 			ADDRESS *b;
-			extern ADDRESS *self_reference();
+			extern ADDRESS *self_reference __P((ADDRESS *, ENVELOPE *));
 
 			/* self reference test */
 			if (sameaddr(ctladdr, a))
@@ -312,6 +291,7 @@ recipient(a, sendq, aliaslevel, e)
 		{
 			a->q_flags |= QBADADDR;
 			a->q_status = "5.7.1";
+			a->q_rstatus = newstr("Unsafe for mailing to programs");
 			usrerr("550 Address %s is unsafe for mailing to programs",
 				a->q_alias->q_paddr);
 		}
@@ -328,7 +308,9 @@ recipient(a, sendq, aliaslevel, e)
 
 	for (pq = sendq; (q = *pq) != NULL; pq = &q->q_next)
 	{
-		if (sameaddr(q, a) && bitset(QRCPTOK, q->q_flags))
+		if (sameaddr(q, a) &&
+		    (bitset(QRCPTOK, q->q_flags) ||
+		     !bitset(QPRIMARY, q->q_flags)))
 		{
 			if (tTd(26, 1))
 			{
@@ -383,12 +365,12 @@ recipient(a, sendq, aliaslevel, e)
 				if (LogLevel > 2)
 					sm_syslog(LOG_ERR, e->e_id,
 						"include %s: transient error: %s",
-						shortenstring(a->q_user, 203),
+						shortenstring(a->q_user, MAXSHORTSTR),
 						errstring(ret));
 				a->q_flags |= QQUEUEUP;
 				a->q_flags &= ~QDONTSEND;
 				usrerr("451 Cannot open %s: %s",
-					shortenstring(a->q_user, 203),
+					shortenstring(a->q_user, MAXSHORTSTR),
 					errstring(ret));
 			}
 			else if (ret != 0)
@@ -396,14 +378,14 @@ recipient(a, sendq, aliaslevel, e)
 				a->q_flags |= QBADADDR;
 				a->q_status = "5.2.4";
 				usrerr("550 Cannot open %s: %s",
-					shortenstring(a->q_user, 203),
+					shortenstring(a->q_user, MAXSHORTSTR),
 					errstring(ret));
 			}
 		}
 	}
 	else if (m == FileMailer)
 	{
-		extern bool writable();
+		extern bool writable __P((char *, ADDRESS *, int));
 
 		/* check if writable or creatable */
 		if (a->q_alias == NULL)
@@ -427,6 +409,7 @@ recipient(a, sendq, aliaslevel, e)
 		{
 			a->q_flags |= QBADADDR;
 			a->q_status = "5.7.1";
+			a->q_rstatus = newstr("Unsafe for mailing to files");
 			usrerr("550 Address %s is unsafe for mailing to files",
 				a->q_alias->q_paddr);
 		}
@@ -452,7 +435,7 @@ recipient(a, sendq, aliaslevel, e)
 	if (!bitset(QDONTSEND|QNOTREMOTE|QVERIFIED, a->q_flags) &&
 	    bitnset(M_CHECKUDB, m->m_flags))
 	{
-		extern int udbexpand();
+		extern int udbexpand __P((ADDRESS *, ADDRESS **, int, ENVELOPE *));
 
 		if (udbexpand(a, sendq, aliaslevel, e) == EX_TEMPFAIL)
 		{
@@ -856,7 +839,11 @@ writable(filename, ctladdr, flags)
 	if (geteuid() == 0 &&
 	    (ctladdr == NULL || !bitset(QGOODUID, ctladdr->q_flags)))
 		flags |= SFF_SETUIDOK;
-	flags |= SFF_NOLINK;
+
+	if (!bitset(DBS_FILEDELIVERYTOSYMLINK, DontBlameSendmail))
+		flags |= SFF_NOSLINK;
+	if (!bitset(DBS_FILEDELIVERYTOHARDLINK, DontBlameSendmail))
+		flags |= SFF_NOHLINK;
 
 	errno = safefile(filename, euid, egid, uname, flags, S_IWRITE, NULL);
 	return errno == 0;
@@ -898,7 +885,7 @@ writable(filename, ctladdr, flags)
 */
 
 static jmp_buf	CtxIncludeTimeout;
-static void	includetimeout();
+static void	includetimeout __P((void));
 
 int
 include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
@@ -915,6 +902,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	int oldlinenumber = LineNumber;
 	register EVENT *ev = NULL;
 	int nincludes;
+	int mode;
 	register ADDRESS *ca;
 	volatile uid_t saveduid, uid;
 	volatile gid_t savedgid, gid;
@@ -926,7 +914,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	volatile bool safedir = FALSE;
 	struct stat st;
 	char buf[MAXLINE];
-	extern bool chownsafe();
+	extern bool chownsafe __P((int, bool));
 
 	if (tTd(27, 2))
 		printf("include(%s)\n", fname);
@@ -964,9 +952,22 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	if (saveduid == 0)
 	{
 		if (!DontInitGroups)
-			initgroups(uname, gid);
-		if (gid != 0)
-			(void) setgid(gid);
+		{
+			if (initgroups(uname, gid) == -1)
+				syserr("include: initgroups(%s, %d) failed",
+					uname, gid);
+		}
+		else
+		{
+			GIDSET_T gidset[1];
+
+			gidset[0] = gid;
+			if (setgroups(1, gidset) == -1)
+				syserr("include: setgroups() failed");
+		}
+
+		if (gid != 0 && setgid(gid) < -1)
+			syserr("setgid(%d) failure", gid);
 		if (uid != 0)
 		{
 # if USESETEUID
@@ -978,8 +979,6 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 				syserr("setreuid(0, %d) failure (real=%d, eff=%d)",
 					uid, getuid(), geteuid());
 # endif
-			else
-				sfflags |= SFF_NOPATHCHECK;
 		}
 	}
 #endif
@@ -1011,18 +1010,63 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	p = strrchr(fname, '/');
 	if (p != NULL)
 	{
+		int ret;
+
 		*p = '\0';
-		if (safedirpath(fname, uid, gid, uname, sfflags|SFF_SAFEDIRPATH) == 0)
+		ret = safedirpath(fname, uid, gid, uname, sfflags|SFF_SAFEDIRPATH);
+		if (ret == 0)
 		{
 			/* in safe directory: relax chown & link rules */
 			safedir = TRUE;
 			sfflags |= SFF_NOPATHCHECK;
 		}
+		else
+		{
+			if (bitset((forwarding ?
+				    DBS_FORWARDFILEINUNSAFEDIRPATH :
+				    DBS_INCLUDEFILEINUNSAFEDIRPATH),
+				   DontBlameSendmail))
+				sfflags |= SFF_NOPATHCHECK;
+			else if (bitset((forwarding ?
+					 DBS_FORWARDFILEINGROUPWRITABLEDIRPATH :
+					 DBS_INCLUDEFILEINGROUPWRITABLEDIRPATH),
+					DontBlameSendmail) &&
+				 ret == E_SM_GWDIR)
+			{
+				DontBlameSendmail |= DBS_GROUPWRITABLEDIRPATHSAFE;
+				ret = safedirpath(fname, uid,
+						  gid, uname,
+						  sfflags|SFF_SAFEDIRPATH);
+				DontBlameSendmail &= ~DBS_GROUPWRITABLEDIRPATHSAFE;
+				if (ret == 0)
+					sfflags |= SFF_NOPATHCHECK;
+				else
+					sfflags |= SFF_SAFEDIRPATH;
+			}
+			else
+				sfflags |= SFF_SAFEDIRPATH;
+			if (ret > E_PSEUDOBASE &&
+			    !bitset((forwarding ?
+				     DBS_FORWARDFILEINUNSAFEDIRPATHSAFE :
+				     DBS_INCLUDEFILEINUNSAFEDIRPATHSAFE),
+				    DontBlameSendmail))
+			{
+				if (LogLevel >= 12)
+					sm_syslog(LOG_INFO, e->e_id,
+						  "%s: unsafe directory path, marked unsafe",
+						  shortenstring(fname, MAXSHORTSTR));
+				ctladdr->q_flags |= QUNSAFEADDR;
+			}
+		}
 		*p = '/';
 	}
 
 	/* allow links only in unwritable directories */
-	if (!safedir)
+	if (!safedir &&
+	    !bitset((forwarding ?
+		     DBS_LINKEDFORWARDFILEINWRITABLEDIR :
+		     DBS_LINKEDINCLUDEFILEINWRITABLEDIR),
+		    DontBlameSendmail))
 		sfflags |= SFF_NOLINK;
 
 	rval = safefile(fname, uid, gid, uname, sfflags, S_IREAD, &st);
@@ -1039,7 +1083,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		if (tTd(27, 4))
 			printf("include: open: %s\n", errstring(rval));
 	}
-	else if (filechanged(fname, fileno(fp), &st, sfflags))
+	else if (filechanged(fname, fileno(fp), &st))
 	{
 		rval = E_SM_FILECHANGE;
 		if (tTd(27, 4))
@@ -1130,7 +1174,7 @@ resetuid:
 				if (LogLevel >= 12)
 					sm_syslog(LOG_INFO, e->e_id,
 						"%s: user %s has bad shell %s, marked %s",
-						shortenstring(fname, 203),
+						shortenstring(fname, MAXSHORTSTR),
 						pw->pw_name, sh,
 						safechown ? "bogus" : "unsafe");
 				if (safechown)
@@ -1156,17 +1200,25 @@ resetuid:
 	**	Group write checking could be more clever, e.g.,
 	**	guessing as to which groups are actually safe ("sys"
 	**	may be; "user" probably is not).
-	**	Also, we don't check for writable
-	**	directories in the path.  We've got to leave
-	**	something for the local sysad to do.
 	*/
 
-	if (bitset(S_IWOTH | (UnsafeGroupWrites ? S_IWGRP : 0), st.st_mode))
+	mode = S_IWOTH;
+	if (!bitset((forwarding ?
+		     DBS_GROUPWRITABLEFORWARDFILESAFE :
+		     DBS_GROUPWRITABLEINCLUDEFILESAFE),
+		    DontBlameSendmail))
+		mode |= S_IWGRP;
+
+	if (bitset(mode, st.st_mode))
 	{
+		if (tTd(27, 6))
+			printf("include: %s is %s writable, marked unsafe\n",
+				shortenstring(fname, MAXSHORTSTR),
+				bitset(S_IWOTH, st.st_mode) ? "world" : "group");
 		if (LogLevel >= 12)
 			sm_syslog(LOG_INFO, e->e_id,
 				"%s: %s writable %s file, marked unsafe",
-				shortenstring(fname, 203),
+				shortenstring(fname, MAXSHORTSTR),
 				bitset(S_IWOTH, st.st_mode) ? "world" : "group",
 				forwarding ? "forward" : ":include:");
 		ctladdr->q_flags |= QUNSAFEADDR;
@@ -1208,7 +1260,7 @@ resetuid:
 		if (forwarding && LogLevel > 9)
 			sm_syslog(LOG_INFO, e->e_id,
 				"forward %.200s => %s",
-				oldto, shortenstring(buf, 203));
+				oldto, shortenstring(buf, MAXSHORTSTR));
 
 		nincludes += sendtolist(buf, ctladdr, sendq, aliaslevel + 1, e);
 	}

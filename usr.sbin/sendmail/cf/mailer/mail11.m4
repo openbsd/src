@@ -1,5 +1,12 @@
 PUSHDIVERT(-1)
 #
+# Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the sendmail distribution.
+#
+#
 # Not exciting enough to bother with copyrights and most of the
 # rulesets are based from those provided by DEC.
 # Barb Dijker, Labyrinth Computer Services, barb@labyrinth.com
@@ -33,7 +40,7 @@ POPDIVERT
 ###   UTK-MAIL11 Mailer specification   ###
 ###########################################
 
-VERSIONID(`@(#)mail11.m4	8.4 (Berkeley) 3/18/97')
+VERSIONID(`@(#)mail11.m4	8.8 (Berkeley) 5/19/98')
 
 Mmail11, P=MAIL11_MAILER_PATH, F=MAIL11_MAILER_FLAGS, S=15, R=25,
 	A=MAIL11_MAILER_ARGS

@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)snprintf.c	8.11 (Berkeley) 6/4/98";
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.1.1.1 1998/07/12 17:10:41 millert Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.2 1998/07/12 19:45:15 millert Exp $";*/
 void	sm_dopr();
 char	*DoprEnd;
 int	SnprfOverflow;

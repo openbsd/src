@@ -1,42 +1,21 @@
 /*
- * Copyright (c) 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mci.c	8.66 (Berkeley) 8/2/97";
+static char sccsid[] = "@(#)mci.c	8.82 (Berkeley) 6/15/98";
 #endif /* not lint */
 
 #include "sendmail.h"
+#include <arpa/inet.h>
 #include <dirent.h>
 
 /*
@@ -73,7 +52,7 @@ static char sccsid[] = "@(#)mci.c	8.66 (Berkeley) 8/2/97";
 MCI	**MciCache;		/* the open connection cache */
 
 extern int	mci_generate_persistent_path __P((const char *, char *, int, bool));
-extern void	mci_load_persistent __P((MCI *));
+extern bool	mci_load_persistent __P((MCI *));
 extern void	mci_uncache __P((MCI **, bool));
 /*
 **  MCI_CACHE -- enter a connection structure into the open connection cache
@@ -105,6 +84,9 @@ mci_cache(mci)
 		return;
 	}
 
+	if (mci->mci_host == NULL)
+		return;
+
 	/* if this is already cached, we are done */
 	if (bitset(MCIF_CACHED, mci->mci_flags))
 		return;
@@ -115,7 +97,7 @@ mci_cache(mci)
 
 	if (tTd(42, 5))
 		printf("mci_cache: caching %lx (%s) in slot %d\n",
-			(u_long) mci, mci->mci_host, mcislot - MciCache);
+			(u_long) mci, mci->mci_host, (int)(mcislot - MciCache));
 	if (tTd(91, 100))
 		sm_syslog(LOG_DEBUG, CurEnv->e_id,
 			"mci_cache: caching %x (%.100s) in slot %d",
@@ -208,12 +190,15 @@ mci_uncache(mcislot, doquit)
 	if (mci == NULL)
 		return;
 	*mcislot = NULL;
+	if (mci->mci_host == NULL)
+		return;
 
 	mci_unlock_host(mci);
 
 	if (tTd(42, 5))
 		printf("mci_uncache: uncaching %lx (%s) from slot %d (%d)\n",
-			(u_long) mci, mci->mci_host, mcislot - MciCache, doquit);
+			(u_long) mci, mci->mci_host,
+			(int)(mcislot - MciCache), doquit);
 	if (tTd(91, 100))
 		sm_syslog(LOG_DEBUG, CurEnv->e_id,
 			"mci_uncache: uncaching %x (%.100s) from slot %d (%d)",
@@ -301,7 +286,15 @@ mci_get(host, m)
 	mci = &s->s_mci;
 	mci->mci_host = s->s_name;
 
-	mci_load_persistent(mci);
+	if (!mci_load_persistent(mci))
+	{
+		if (tTd(42, 2))
+			printf("mci_get(%s %s): lock failed\n", host, m->m_name);
+		mci->mci_exitstat = EX_TEMPFAIL;
+		mci->mci_state = MCIS_CLOSED;
+		mci->mci_statfile = NULL;
+		return mci;
+	}
 
 	if (tTd(42, 2))
 	{
@@ -572,7 +565,7 @@ mci_lock_host_statfile(mci)
 	}
 
 	mci->mci_statfile = safefopen(fname, O_RDWR, FileMode,
-		   SFF_NOLOCK|SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY|SFF_CREAT);
+		   SFF_NOLOCK|SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY|SFF_SAFEDIRPATH|SFF_CREAT);
 
 	if (mci->mci_statfile == NULL)
 	{
@@ -660,14 +653,16 @@ mci_unlock_host(mci)
 **			   for.
 **
 **	Returns:
-**		none.
+**		TRUE -- lock was successful
+**		FALSE -- lock failed
 */
 
-void
+bool
 mci_load_persistent(mci)
 	MCI *mci;
 {
 	int saveErrno = errno;
+	bool locked = TRUE;
 	FILE *fp;
 	char fname[MAXPATHLEN+1];
 
@@ -675,12 +670,16 @@ mci_load_persistent(mci)
 	{
 		if (tTd(56, 1))
 			printf("mci_load_persistent: NULL mci\n");
-		return;
+		return TRUE;
 	}
 
 	if (IgnoreHostStatus || HostStatDir == NULL || mci->mci_host == NULL)
-		return;
+		return TRUE;
 	
+	/* Already have the persistent information in memory */
+	if (SingleThreadDelivery && mci->mci_statfile != NULL)
+		return TRUE;
+
 	if (tTd(56, 1))
 		printf("mci_load_persistent: Attempting to load persistent information for %s\n",
 		       mci->mci_host);
@@ -694,7 +693,7 @@ mci_load_persistent(mci)
 	}
 
 	fp = safefopen(fname, O_RDONLY, FileMode,
-		       SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY);
+		       SFF_NOLOCK|SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY|SFF_SAFEDIRPATH);
 	if (fp == NULL)
 	{
 		/* I can't think of any reason this should ever happen */
@@ -705,13 +704,16 @@ mci_load_persistent(mci)
 	}
 
 	FileName = fname;
+	locked = lockfile(fileno(fp), fname, "", LOCK_SH|LOCK_NB);
 	(void) mci_read_persistent(fp, mci);
 	FileName = NULL;
+	if (locked)
+		lockfile(fileno(fp), fname, "", LOCK_UN);
 	fclose(fp);
 
 cleanup:
 	errno = saveErrno;
-	return;
+	return locked;
 }
 /*
 **  MCI_READ_PERSISTENT -- read persistent host status file
@@ -803,7 +805,10 @@ mci_read_persistent(fp, mci)
 			return 0;
 
 		  default:
-			syserr("Unknown host status line \"%s\"", buf);
+			sm_syslog(LOG_CRIT, NOQID,
+				  "%s: line %d: Unknown host status line \"%s\"",
+				  FileName == NULL ? mci->mci_host : FileName,
+				  LineNumber, buf);
 			LineNumber = saveLineNumber;
 			return -1;
 		}
@@ -868,7 +873,7 @@ mci_store_persistent(mci)
 	if (mci->mci_rstatus != NULL)
 		fprintf(mci->mci_statfile, "R%.80s\n",
 			denlstring(mci->mci_rstatus, TRUE, FALSE));
-	fprintf(mci->mci_statfile, "U%ld\n", mci->mci_lastuse);
+	fprintf(mci->mci_statfile, "U%ld\n", (long)(mci->mci_lastuse));
 	fprintf(mci->mci_statfile, ".\n");
 
 	fflush(mci->mci_statfile);
@@ -1054,7 +1059,7 @@ mci_print_persistent(pathname, hostname)
 	}
 
 	fp = safefopen(pathname, O_RDWR, FileMode,
-		       SFF_NOLOCK|SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY);
+		       SFF_NOLOCK|SFF_NOLINK|SFF_OPENASROOT|SFF_REGONLY|SFF_SAFEDIRPATH);
 
 	if (fp == NULL)
 	{
@@ -1091,7 +1096,7 @@ mci_print_persistent(pathname, hostname)
 		extern int N_SysEx;
 		extern char *SysExMsg[];
 
-		if (i < 0 || i > N_SysEx)
+		if (i < 0 || i >= N_SysEx)
 		{
 			char buf[80];
 
@@ -1210,7 +1215,7 @@ mci_generate_persistent_path(host, path, pathlen, createflag)
 	if (tTd(56, 80))
 		printf("mci_generate_persistent_path(%s): ", host);
 
-	if (*host == '\0')
+	if (*host == '\0' || *host == '.')
 		return -1;
 
 	/* make certain this is not a bracketed host number */
@@ -1231,17 +1236,21 @@ mci_generate_persistent_path(host, path, pathlen, createflag)
 	       (elem[-1] == '.' || (host[0] == '[' && elem[-1] == ']')))
 		*--elem = '\0';
 
+	/* check for bogus bracketed address */
+	if (host[0] == '[' && inet_addr(t_host) == INADDR_NONE)
+		return -1;
+
 	/* check for what will be the final length of the path */
 	len = strlen(HostStatDir) + 2;
-	for (p = (char *) host; *p != '\0'; p++)
+	for (p = (char *) t_host; *p != '\0'; p++)
 	{
-		if (*p == '|' || *p == '.')
+		if (*p == '.')
 			len++;
 		len++;
 		if (p[0] == '.' && p[1] == '.')
 			return -1;
 	}
-	if (len > pathlen)
+	if (len > pathlen || len < 1)
 		return -1;
 
 	strcpy(path, HostStatDir);
@@ -1261,12 +1270,10 @@ mci_generate_persistent_path(host, path, pathlen, createflag)
 		x = elem + 1;
 		while ((ch = *x++) != '\0' && ch != '.')
 		{
-			if (isupper(ch))
+			if (isascii(ch) && isupper(ch))
 				ch = tolower(ch);
-			if (ch == '|')
-				*p++ = '|';	/* | -> || */
-			else if (ch == '/')
-				ch = '|';	/* / -> | */
+			if (ch == '/')
+				ch = ':';	/* / -> : */
 			*p++ = ch;
 		}
 		if (elem >= t_host)

@@ -1,7 +1,7 @@
 
 
 	     K N O W N   B U G S   I N   S E N D M A I L
-			     (for 8.8.6)
+			     (for 8.9.0)
 
 
 The following are bugs or deficiencies in sendmail that I am aware of
@@ -37,7 +37,7 @@ This list is not guaranteed to be complete.
 
 * If you EXPN a list or user that has a program mailer, the output of
   EXPN will include ``@local.host.name''.  You can't actually mail to
-  this address.  It's not clear what the right behaviour is in this
+  this address.  It's not clear what the right behavior is in this
   circumstance.
 
 * \231 considered harmful.
@@ -48,7 +48,7 @@ This list is not guaranteed to be complete.
 * accept() problem on SVR4.
 
   Apparently, the sendmail daemon loop (doing accept()s on the network)
-  can get into a wierd state on SVR4; it starts logging ``SYSERR:
+  can get into a weird state on SVR4; it starts logging ``SYSERR:
   getrequests: accept: Protocol Error''.  The workaround is to kill
   and restart the sendmail daemon.  We don't have an SVR4 system at
   Berkeley that carries more than token mail load, so I can't validate
@@ -73,7 +73,11 @@ This list is not guaranteed to be complete.
 			getrequests: accept: Connection timed out
 
   "Connection timed out" is not documented as a valid return from
-  accept(2) and this is believed to be a bug in the Linux kernel.
+  accept(2) and this was believed to be a bug in the Linux kernel.
+  Later information from the Linux kernel group states that Linux
+  2.0 kernels follow RFC1122 while sendmail follows the original BSD
+  (now POSIX 1003.1g draft) specification.  The 2.1.X and later kernels
+  will follow the POSIX draft.
 
 * Excessive mailing list nesting can run out of file descriptors.
 
@@ -103,5 +107,41 @@ This list is not guaranteed to be complete.
   account for the SMTP on-the-wire \r\n expansion.  It probably doesn't
   allow for 8->7 bit MIME conversions either.
 
+* Paths to programs being executed and the mode of program files are
+  not checked.  Essentially, the RunProgramInUnsafeDirPath and
+  RunWritableProgram bits in the DontBlameSendmail option are always
+  set.  This is not a problem if your system is well managed (that is,
+  if binaries and system directories are mode 755 instead of something
+  foolish like 777).
 
-(Version 8.25, last updated 6/13/97)
+* 8-bit data in GECOS field
+
+  If the GECOS (personal name) information in the passwd file contains
+  8-bit characters, those characters can be included in the message
+  header, which can cause problems when sending SMTP to hosts that
+  only accept 7-bit characters.
+
+* 8->7 bit MIME conversion
+
+  When sendmail is doing 8->7 bit MIME conversions, and the message
+  contains certain MIME body types that cannot be converted to 7-bit,
+  sendmail will strip the message to 7-bit.
+
+* 7->8 bit MIME conversion
+
+  If a message that is encoded as 7-bit MIME is converted to 8-bit and
+  that message when decoded is illegal (e.g., because of long lines or
+  illegal characters), sendmail can produce an illegal message.
+
+* MIME encoded full name phrases in the From: header
+
+  If a full name phrase includes characters from MustQuoteChars, sendmail  
+  will quote the entire full name phrase. If MustQuoteChars includes  
+  characters which are not special characters according to STD 11 (RFC  
+  822), this quotation can interfere with MIME encoded full name phrases. 
+  By default, sendmail includes the single quote character (') in
+  MustQuoteChars even though it is not listed as a special character in
+  STD 11.
+
+
+(Version 8.32, last updated 6/30/98)

@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)safefile.c	8.18 (Berkeley) 8/1/97";
+static char sccsid[] = "@(#)safefile.c	8.40 (Berkeley) 6/5/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -62,18 +40,6 @@ static char sccsid[] = "@(#)safefile.c	8.18 (Berkeley) 8/1/97";
 */
 
 #include <grp.h>
-
-#ifndef S_IXOTH
-# define S_IXOTH	(S_IEXEC >> 6)
-#endif
-
-#ifndef S_IXGRP
-# define S_IXGRP	(S_IEXEC >> 3)
-#endif
-
-#ifndef S_IXUSR
-# define S_IXUSR	(S_IEXEC)
-#endif
 
 int
 safefile(fn, uid, gid, uname, flags, mode, st)
@@ -135,7 +101,8 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 #ifdef SUID_ROOT_FILES_OK
 		if (bitset(S_ISUID, st->st_mode))
 #else
-		if (bitset(S_ISUID, st->st_mode) && st->st_uid != 0)
+		if (bitset(S_ISUID, st->st_mode) && st->st_uid != 0 &&
+		    st->st_uid != TrustedFileUid)
 #endif
 		{
 			uid = st->st_uid;
@@ -174,6 +141,16 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 		}
 		else
 		{
+#ifdef HASLSTAT
+			/* Need lstat() information if called stat() before */
+			if (!bitset(SFF_NOSLINK, flags) && lstat(fn, st) < 0)
+			{
+				ret = errno;
+				if (tTd(44, 4))
+					printf("\t%s\n", errstring(ret));
+				return ret;
+			}
+#endif
 			/* directory is writable: disallow links */
 			flags |= SFF_NOLINK;
 		}
@@ -226,8 +203,34 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 		if (stat(dir, &stbuf) >= 0)
 		{
 			int md = S_IWRITE|S_IEXEC;
-			if (stbuf.st_uid != uid)
-				md >>= 6;
+
+			if (stbuf.st_uid == uid)
+				;
+			else if (uid == 0 && TrustedFileUid != 0 && stbuf.st_uid == TrustedFileUid)
+				;
+			else
+			{
+				md >>= 3;
+				if (stbuf.st_gid == gid)
+					;
+#ifndef NO_GROUP_SET
+				else if (uname != NULL && !DontInitGroups &&
+			 		 ((gr != NULL &&
+			 		   gr->gr_gid == stbuf.st_gid) ||
+			  		  (gr = getgrgid(stbuf.st_gid)) != NULL))
+				{
+					register char **gp;
+		
+					for (gp = gr->gr_mem; *gp != NULL; gp++)
+						if (strcmp(*gp, uname) == 0)
+							break;
+					if (*gp == NULL)
+						md >>= 3;
+				}
+#endif
+				else
+					md >>= 3;
+			}
 			if ((stbuf.st_mode & md) != md)
 				errno = EACCES;
 		}
@@ -246,40 +249,47 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 	if (bitset(SFF_NOSLINK, flags) && S_ISLNK(st->st_mode))
 	{
 		if (tTd(44, 4))
-			printf("\t[slink mode %o]\tE_SM_NOSLINK\n",
-				st->st_mode);
+			printf("\t[slink mode %lo]\tE_SM_NOSLINK\n",
+				(u_long) st->st_mode);
 		return E_SM_NOSLINK;
 	}
 #endif
 	if (bitset(SFF_REGONLY, flags) && !S_ISREG(st->st_mode))
 	{
 		if (tTd(44, 4))
-			printf("\t[non-reg mode %o]\tE_SM_REGONLY\n",
-				st->st_mode);
+			printf("\t[non-reg mode %lo]\tE_SM_REGONLY\n",
+				(u_long) st->st_mode);
 		return E_SM_REGONLY;
 	}
-	if (bitset(SFF_NOWFILES, flags) &&
-	    bitset(S_IWOTH | (UnsafeGroupWrites ? S_IWGRP : 0), st->st_mode))
+	if (bitset(SFF_NOGWFILES, flags) &&
+	    bitset(S_IWGRP, st->st_mode))
 	{
 		if (tTd(44, 4))
-			printf("\t[write bits %o]\tE_SM_%cWFILE\n",
-				st->st_mode,
-				bitset(S_IWOTH, st->st_mode) ? 'W' : 'G');
-		return bitset(S_IWOTH, st->st_mode) ? E_SM_WWFILE : E_SM_GWFILE;
+			printf("\t[write bits %lo]\tE_SM_GWFILE\n",
+			       (u_long) st->st_mode);
+		return E_SM_GWFILE;
+	}
+	if (bitset(SFF_NOWWFILES, flags) &&
+	    bitset(S_IWOTH, st->st_mode))
+	{
+		if (tTd(44, 4))
+			printf("\t[write bits %lo]\tE_SM_WWFILE\n",
+			       (u_long) st->st_mode);
+		return E_SM_WWFILE;
 	}
 	if (bitset(S_IWUSR|S_IWGRP|S_IWOTH, mode) &&
 	    bitset(S_IXUSR|S_IXGRP|S_IXOTH, st->st_mode))
 	{
 		if (tTd(44, 4))
-			printf("\t[exec bits %o]\tE_SM_ISEXEC]\n",
-				st->st_mode);
+			printf("\t[exec bits %lo]\tE_SM_ISEXEC]\n",
+				(u_long) st->st_mode);
 		return E_SM_ISEXEC;
 	}
 	if (bitset(SFF_NOHLINK, flags) && st->st_nlink != 1)
 	{
 		if (tTd(44, 4))
 			printf("\t[link count %d]\tE_SM_NOHLINK\n",
-				st->st_nlink);
+				(int) st->st_nlink);
 		return E_SM_NOHLINK;
 	}
 
@@ -287,7 +297,11 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 		;
 	else if (uid == 0 && !bitset(SFF_ROOTOK, flags))
 		mode >>= 6;
-	else if (st->st_uid != uid)
+	else if (st->st_uid == uid)
+		;
+	else if (uid == 0 && TrustedFileUid != 0 && st->st_uid == TrustedFileUid)
+		;
+	else
 	{
 		mode >>= 3;
 		if (st->st_gid == gid)
@@ -314,6 +328,7 @@ safefile(fn, uid, gid, uname, flags, mode, st)
 			(int) st->st_uid, (int) st->st_nlink,
 			(u_long) st->st_mode, (u_long) mode);
 	if ((st->st_uid == uid || st->st_uid == 0 ||
+	     st->st_uid == TrustedFileUid ||
 	     !bitset(SFF_MUSTOWN, flags)) &&
 	    (st->st_mode & mode) == mode)
 	{
@@ -357,6 +372,7 @@ safedirpath(fn, uid, gid, uname, flags)
 	char *p;
 	register struct group *gr = NULL;
 	int ret = 0;
+	int mode = S_IWOTH;
 	struct stat stbuf;
 
 	/* special case root directory */
@@ -366,6 +382,9 @@ safedirpath(fn, uid, gid, uname, flags)
 	if (tTd(44, 4))
 		printf("safedirpath(%s, uid=%ld, gid=%ld, flags=%x):\n",
 			fn, (long) uid, (long) gid, flags);
+
+	if (!bitset(DBS_GROUPWRITABLEDIRPATHSAFE, DontBlameSendmail))
+		mode |= S_IWGRP;
 
 	p = fn;
 	do
@@ -381,11 +400,11 @@ safedirpath(fn, uid, gid, uname, flags)
 			break;
 		}
 		if ((uid == 0 || bitset(SFF_SAFEDIRPATH, flags)) &&
-		    bitset(S_IWGRP|S_IWOTH, stbuf.st_mode))
+		    bitset(mode, stbuf.st_mode))
 		{
 			if (tTd(44, 4))
-				printf("\t[dir %s] mode %o\n",
-					fn, stbuf.st_mode);
+				printf("\t[dir %s] mode %lo\n",
+					fn, (u_long) stbuf.st_mode);
 			if (bitset(SFF_SAFEDIRPATH, flags))
 			{
 				if (bitset(S_IWOTH, stbuf.st_mode))
@@ -395,7 +414,11 @@ safedirpath(fn, uid, gid, uname, flags)
 				break;
 			}
 			if (Verbose > 1)
-				message("051 WARNING: writable directory %s", fn);
+				message("051 WARNING: %s writable directory %s",
+					bitset(S_IWOTH, stbuf.st_mode)
+					   ? "World"
+					   : "Group",
+					fn);
 		}
 		if (uid == 0 && !bitset(SFF_ROOTOK|SFF_OPENASROOT, flags))
 		{
@@ -404,6 +427,15 @@ safedirpath(fn, uid, gid, uname, flags)
 			ret = EACCES;
 			break;
 		}
+
+		/*
+		** Let OS determine access to file if we are not
+		** running as a privileged user.  This allows ACLs
+		** to work.
+		*/
+		if (geteuid() != 0)
+			continue;
+
 		if (stbuf.st_uid == uid &&
 		    bitset(S_IXUSR, stbuf.st_mode))
 			continue;
@@ -505,7 +537,7 @@ safeopen(fn, omode, cmode, sff)
 	fd = dfopen(fn, omode, cmode, sff);
 	if (fd < 0)
 		return fd;
-	if (filechanged(fn, fd, &stb, sff))
+	if (filechanged(fn, fd, &stb))
 	{
 		syserr("554 cannot open: file %s changed after open", fn);
 		close(fd);
@@ -594,7 +626,6 @@ safefopen(fn, omode, cmode, sff)
 **		fn -- pathname of file to check.
 **		fd -- file descriptor to check.
 **		stb -- stat structure from before open.
-**		sff -- safe file flags.
 **
 **	Returns:
 **		TRUE -- if a problem was detected.
@@ -602,11 +633,10 @@ safefopen(fn, omode, cmode, sff)
 */
 
 bool
-filechanged(fn, fd, stb, sff)
+filechanged(fn, fd, stb)
 	char *fn;
 	int fd;
 	struct stat *stb;
-	int sff;
 {
 	struct stat sta;
 
@@ -639,8 +669,17 @@ filechanged(fn, fd, stb, sff)
 				(long) stb->st_nlink, (long) sta.st_nlink);
 			printf(" dev	= %ld/%ld\n",
 				(long) stb->st_dev, (long) sta.st_dev);
-			printf(" ino	= %ld/%ld\n",
-				(long) stb->st_ino, (long) sta.st_ino);
+			if (sizeof sta.st_ino > sizeof (long))
+			{
+				printf(" ino	= %s/", 
+					quad_to_string(stb->st_ino));
+				printf("%s\n",
+					quad_to_string(sta.st_ino));
+			}
+			else
+				printf(" ino	= %lu/%lu\n",
+					(unsigned long) stb->st_ino,
+					(unsigned long) sta.st_ino);
 #if HAS_ST_GEN
 			printf(" gen	= %ld/%ld\n",
 				(long) stb->st_gen, (long) sta.st_gen);

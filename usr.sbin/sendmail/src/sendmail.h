@@ -1,37 +1,15 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  *
- *	@(#)sendmail.h	8.245 (Berkeley) 10/22/97
+ *	@(#)sendmail.h	8.280 (Berkeley) 6/5/98
  */
 
 /*
@@ -41,7 +19,7 @@
 # ifdef _DEFINE
 # define EXTERN
 # ifndef lint
-static char SmailSccsId[] =	"@(#)sendmail.h	8.245		10/22/97";
+static char SmailSccsId[] =	"@(#)sendmail.h	8.280		6/5/98";
 # endif
 # else /*  _DEFINE */
 # define EXTERN extern
@@ -91,6 +69,14 @@ static char SmailSccsId[] =	"@(#)sendmail.h	8.245		10/22/97";
 # include <arpa/nameser.h>
 # ifdef NOERROR
 #  undef NOERROR		/* avoid <sys/streams.h> conflict */
+# endif
+#endif
+
+#ifdef HESIOD
+# include <hesiod.h>
+# if !defined(HES_ER_OK) || defined(HESIOD_INTERFACES)
+#  define HESIOD_INIT		/* support for the new interface */
+EXTERN void	*HesiodContext;
 # endif
 #endif
 
@@ -337,6 +323,7 @@ MCI
 	short		mci_herrno;	/* h_errno from last DNS lookup */
 	short		mci_exitstat;	/* exit status from last connection */
 	short		mci_state;	/* SMTP state */
+	off_t		mci_contentlen;	/* body length for Content-Length: */
 	long		mci_maxsize;	/* max size this server will accept */
 	FILE		*mci_in;	/* input side of connection */
 	FILE		*mci_out;	/* output side of connection */
@@ -384,7 +371,7 @@ extern void	mci_flush __P((bool, MCI *));
 extern void	mci_dump __P((MCI *, bool));
 extern void	mci_dump_all __P((bool));
 extern MCI	**mci_scan __P((MCI *));
-extern int 	mci_traverse_persistent __P((int (), char *));
+extern int 	mci_traverse_persistent __P((int (*)(), char *));
 extern int	mci_print_persistent __P((char *, char *));
 extern int	mci_purge_persistent __P((char *, char *));
 extern int	mci_lock_host __P((MCI *));
@@ -526,6 +513,7 @@ struct envelope
 #define EF_HAS_DF	0x0200000	/* set when df file is instantiated */
 #define EF_IS_MIME	0x0400000	/* really is a MIME message */
 #define EF_DONT_MIME	0x0800000	/* never MIME this message */
+#define EF_DISCARD	0x1000000	/* discard the message */
 
 EXTERN ENVELOPE	*CurEnv;	/* envelope currently being processed */
 
@@ -692,6 +680,7 @@ MAP
 	u_char		map_valcolno;	/* value column number */
 	char		map_coldelim;	/* column delimiter */
 	char		*map_app;	/* to append to successful matches */
+	char		*map_tapp;	/* to append to "tempfail" matches */
 	char		*map_domain;	/* the (nominal) NIS domain */
 	char		*map_rebuild;	/* program to run to do auto-rebuild */
 	time_t		map_mtime;	/* last database modification time */
@@ -720,6 +709,7 @@ MAP
 # define MF_APPEND	0x00008000	/* append new entry on rebuiled */
 # define MF_KEEPQUOTES	0x00010000	/* don't dequote key before lookup */
 # define MF_NODEFER	0x00020000	/* don't defer if map lookup fails */
+# define MF_REGEX_NOT	0x00040000	/* regular expression negation */
 
 /* indices for map_actions */
 # define MA_NOTFOUND	0		/* member map returned "not found" */
@@ -754,7 +744,7 @@ MAPCLASS
 #define MCF_OPTFILE	0x0008		/* file name is optional */
 
 /* functions */
-extern char	*map_rewrite __P((MAP *, const char *, int, char **));
+extern char	*map_rewrite __P((MAP *, const char *, size_t, char **));
 extern MAP	*makemapentry __P((char *));
 extern void	initmaps __P((bool, ENVELOPE *));
 /*
@@ -949,6 +939,7 @@ EXTERN int		NoRecipientAction;
 #define PRIV_AUTHWARNINGS	0x0020	/* flag possible authorization probs */
 #define PRIV_NORECEIPTS		0x0040	/* disallow return receipts */
 #define PRIV_NOETRN		0x0080	/* disallow ETRN command entirely */
+#define PRIV_NOVERB		0x0100	/* disallow VERB command entirely */
 #define PRIV_RESTRICTMAILQ	0x1000	/* restrict mailq command */
 #define PRIV_RESTRICTQRUN	0x2000	/* restrict queue run */
 #define PRIV_GOAWAY		0x0fff	/* don't give no info, anyway, anyhow */
@@ -991,11 +982,12 @@ struct prival
 #define SFF_SAFEDIRPATH		0x0100	/* no writable directories allowed */
 #define SFF_NOHLINK		0x0200	/* file cannot have hard links */
 #define SFF_NOWLINK		0x0400	/* links only in non-writable dirs */
-#define SFF_NOWFILES		0x0800	/* disallow world writable files */
+#define SFF_NOGWFILES		0x0800	/* disallow world writable files */
+#define SFF_NOWWFILES		0x1000	/* disallow group writable files */
 
 /* flags that are actually specific to safeopen/safefopen/dfopen */
-#define SFF_OPENASROOT		0x1000	/* open as root instead of real user */
-#define SFF_NOLOCK		0x2000	/* don't lock the file */
+#define SFF_OPENASROOT		0x2000	/* open as root instead of real user */
+#define SFF_NOLOCK		0x4000	/* don't lock the file */
 
 /* pseudo-flags */
 #define SFF_NOLINK		(SFF_NOHLINK|SFF_NOSLINK)
@@ -1006,7 +998,7 @@ extern int	safedirpath __P((char *, UID_T, GID_T, char *, int));
 extern int	safeopen __P((char *, int, int, int));
 extern FILE	*safefopen __P((char *, int, int, int));
 extern int	dfopen __P((char *, int, int, int));
-extern bool	filechanged __P((char *, int, struct stat *, int));
+extern bool	filechanged __P((char *, int, struct stat *));
 
 
 /*
@@ -1060,7 +1052,7 @@ EXTERN SOCKADDR RealHostAddr;	/* address of host we are talking to */
 extern char	*hostnamebyanyaddr __P((SOCKADDR *));
 extern char	*anynet_ntoa __P((SOCKADDR *));
 # if DAEMON
-extern bool	validate_connection __P((SOCKADDR *, char *, ENVELOPE *));
+extern char	*validate_connection __P((SOCKADDR *, char *, ENVELOPE *));
 # endif
 
 #endif
@@ -1092,6 +1084,51 @@ EXTERN int	VendorCode;	/* vendor-specific operation enhancements */
 extern void	vendor_set_uid __P((UID_T));
 extern void	vendor_daemon_setup __P((ENVELOPE *));
 
+/*
+**  DontBlameSendmail options
+**
+**	Hopefully nobody uses these.
+*/
+#define DBS_SAFE					0
+#define DBS_ASSUMESAFECHOWN				0x00000001
+#define DBS_GROUPWRITABLEDIRPATHSAFE			0x00000002
+#define DBS_GROUPWRITABLEFORWARDFILESAFE		0x00000004
+#define DBS_GROUPWRITABLEINCLUDEFILESAFE		0x00000008
+#define DBS_GROUPWRITABLEALIASFILE			0x00000010
+#define DBS_WORLDWRITABLEALIASFILE			0x00000020
+#define DBS_FORWARDFILEINUNSAFEDIRPATH			0x00000040
+#define DBS_INCLUDEFILEINUNSAFEDIRPATH			0x00000060
+#define DBS_MAPINUNSAFEDIRPATH				0x00000080
+#define DBS_LINKEDALIASFILEINWRITABLEDIR		0x00000100
+#define DBS_LINKEDCLASSFILEINWRITABLEDIR		0x00000200
+#define DBS_LINKEDFORWARDFILEINWRITABLEDIR		0x00000400
+#define DBS_LINKEDINCLUDEFILEINWRITABLEDIR		0x00000800
+#define DBS_LINKEDMAPINWRITABLEDIR			0x00001000
+#define DBS_LINKEDSERVICESWITCHFILEINWRITABLEDIR	0x00002000
+#define DBS_FILEDELIVERYTOHARDLINK			0x00004000
+#define DBS_FILEDELIVERYTOSYMLINK			0x00008000
+#define DBS_WRITEMAPTOHARDLINK				0x00010000
+#define DBS_WRITEMAPTOSYMLINK				0x00020000
+#define DBS_WRITESTATSTOHARDLINK			0x00040000
+#define DBS_WRITESTATSTOSYMLINK				0x00080000
+#define DBS_FORWARDFILEINGROUPWRITABLEDIRPATH		0x00100000
+#define DBS_INCLUDEFILEINGROUPWRITABLEDIRPATH		0x00200000
+#define DBS_CLASSFILEINUNSAFEDIRPATH			0x00400000
+#define DBS_ERRORHEADERINUNSAFEDIRPATH			0x00800000
+#define DBS_HELPFILEINUNSAFEDIRPATH			0x01000000
+#define DBS_FORWARDFILEINUNSAFEDIRPATHSAFE		0x02000000
+#define DBS_INCLUDEFILEINUNSAFEDIRPATHSAFE		0x04000000
+#define DBS_RUNPROGRAMINUNSAFEDIRPATH			0x08000000
+#define DBS_RUNWRITABLEPROGRAM				0x10000000
+
+/* struct defining such things */
+struct dbsval
+{
+	char	*dbs_name;	/* name of DontBlameSendmail flag */
+	long	dbs_flag;	/* numeric level */
+};
+
+EXTERN long	DontBlameSendmail;	/* DontBlameSendmail option bits */
 
 /*
 **  Terminal escape codes.
@@ -1146,6 +1183,7 @@ EXTERN gid_t	RealGid;	/* real gid of caller */
 EXTERN uid_t	DefUid;		/* default uid to run as */
 EXTERN gid_t	DefGid;		/* default gid to run as */
 EXTERN char	*DefUser;	/* default user to run as (from DefUid) */
+EXTERN uid_t	TrustedFileUid;	/* uid of trusted owner of files and dirs */
 EXTERN MODE_T	OldUmask;	/* umask when sendmail starts up */
 EXTERN int	Verbose;	/* set if blow-by-blow desired */
 EXTERN int	Errors;		/* set if errors (local to single pass) */
@@ -1215,6 +1253,7 @@ EXTERN uid_t	RunAsUid;	/* UID to become for bulk of run */
 EXTERN gid_t	RunAsGid;	/* GID to become for bulk of run */
 EXTERN int	MaxRcptPerMsg;	/* max recipients per SMTP message */
 EXTERN bool	DoQueueRun;	/* non-interrupt time queue run needed */
+EXTERN u_long	ConnectOnlyTo;	/* override connection address (for testing) */
 #if _FFR_DSN_RRT_OPTION
 EXTERN bool	RrtImpliesDsn;	/* turn Return-Receipt-To: into DSN */
 #endif
@@ -1223,7 +1262,6 @@ EXTERN bool	DontProbeInterfaces;	/* don't probe interfaces for names */
 EXTERN bool	ChownAlwaysSafe;	/* treat chown(2) as safe */
 EXTERN bool	IgnoreHostStatus;	/* ignore long term host status files */
 EXTERN bool	SingleThreadDelivery;	/* single thread hosts on delivery */
-EXTERN bool	UnsafeGroupWrites;	/* group-writable files are unsafe */
 EXTERN bool	SingleLineFromHeader;	/* force From: header to be one line */
 EXTERN bool	DontLockReadFiles;	/* don't read lock support files */
 EXTERN int	ConnRateThrottle;	/* throttle for SMTP connection rate */
@@ -1242,17 +1280,27 @@ EXTERN time_t	ServiceCacheTime;	/* time service switch was cached */
 EXTERN time_t	ServiceCacheMaxAge;	/* refresh interval for cache */
 EXTERN time_t	MciCacheTimeout;	/* maximum idle time on connections */
 EXTERN time_t	MciInfoTimeout;		/* how long 'til we retry down hosts */
-EXTERN char	*QueueLimitRecipient;	/* limit queue runs to this recipient */
-EXTERN char	*QueueLimitSender;	/* limit queue runs to this sender */
-EXTERN char	*QueueLimitId;		/* limit queue runs to this id */
 EXTERN FILE	*TrafficLogFile;	/* file in which to log all traffic */
 EXTERN char	*DoubleBounceAddr;	/* where to send double bounces */
-EXTERN bool	FatalWritableDirs;	/* no writable dirs in map paths */
 EXTERN char	**ExternalEnviron;	/* input environment */
 EXTERN char	*UserEnviron[MAXUSERENVIRON + 1];
 					/* saved user environment */
 extern int	errno;
 
+/*
+** Queue Run Limitations
+*/
+struct queue_char
+{
+	char *queue_match;		/* string to match */
+	struct queue_char *queue_next;
+};
+
+typedef struct queue_char QUEUE_CHAR;
+
+EXTERN QUEUE_CHAR	*QueueLimitRecipient;	/* limit queue runs to this recipient */
+EXTERN QUEUE_CHAR	*QueueLimitSender;	/* limit queue runs to this sender */
+EXTERN QUEUE_CHAR	*QueueLimitId;		/* limit queue runs to this id */
 
 /*
 **  Timeouts
@@ -1334,10 +1382,10 @@ EXTERN u_char	tTdvect[100];
 extern char	*xalloc __P((int));
 extern char	*sfgets __P((char *, int, FILE *, time_t, char *));
 extern char	*queuename __P((ENVELOPE *, int));
-extern time_t	curtime __P(());
+extern time_t	curtime __P((void));
 extern bool	transienterror __P((int));
 extern char	*fgetfolded __P((char *, int, FILE *));
-extern char	*username __P(());
+extern char	*username __P((void));
 extern char	*pintvl __P((time_t, bool));
 extern bool	shouldqueue __P((long, time_t));
 extern bool	lockfile __P((int, char *, char *, int));
@@ -1350,9 +1398,9 @@ extern char	*defcharset __P((ENVELOPE *));
 extern bool	wordinclass __P((char *, int));
 extern char	*denlstring __P((char *, bool, bool));
 extern void	makelower __P((char *));
-extern void	rebuildaliases __P((MAP *, bool));
+extern bool	rebuildaliases __P((MAP *, bool));
 extern void	readaliases __P((MAP *, FILE *, bool, bool));
-extern void	finis __P(());
+extern void	finis __P((void));
 extern void	setsender __P((char *, ENVELOPE *, char **, int, bool));
 extern void	xputs __P((const char *));
 extern void	logsender __P((ENVELOPE *, char *));
@@ -1409,10 +1457,10 @@ extern void	sendall __P((ENVELOPE *, int));
 extern void	queueup __P((ENVELOPE *, bool));
 extern void	checkfds __P((char *));
 extern int	returntosender __P((char *, ADDRESS *, int, ENVELOPE *));
-extern void	markstats __P((ENVELOPE *, ADDRESS *));
+extern void	markstats __P((ENVELOPE *, ADDRESS *, bool));
 extern void	poststats __P((char *));
 extern char	*arpadate __P((char *));
-extern int	mailfile __P((char *, ADDRESS *, int, ENVELOPE *));
+extern int	mailfile __P((char *volatile, MAILER *volatile, ADDRESS *, volatile int, ENVELOPE *));
 extern void	loseqfile __P((ENVELOPE *, char *));
 extern int	prog_open __P((char **, int *, ENVELOPE *));
 extern bool	getcanonname __P((char *, int, bool));
@@ -1437,30 +1485,16 @@ extern void		checkfd012 __P((char *));
 #endif
 
 /* ellipsis is a different case though */
-#ifdef __STDC__
-extern void		auth_warning(ENVELOPE *, const char *, ...);
-extern void		syserr(const char *, ...);
-extern void		usrerr(const char *, ...);
-extern void		message(const char *, ...);
-extern void		nmessage(const char *, ...);
-extern void		setproctitle(const char *, ...);
-extern void		sm_syslog(int, const char *, const char *, ...);
-#else
-extern void		auth_warning();
-extern void		syserr();
-extern void		usrerr();
-extern void		message();
-extern void		nmessage();
-extern void		setproctitle();
-extern void		sm_syslog();
-#endif
+extern void		auth_warning __P((ENVELOPE *, const char *, ...));
+extern void		syserr __P((const char *, ...));
+extern void		usrerr __P((const char *, ...));
+extern void		message __P((const char *, ...));
+extern void		nmessage __P((const char *, ...));
+extern void		setproctitle __P((const char *, ...));
+extern void		sm_syslog __P((int, const char *, const char *, ...));
 
 #if !HASSNPRINTF
-# ifdef __STDC__
-extern int		snprintf(char *, size_t, const char *, ...);
-extern int		vsnprintf(char *, size_t, const char *, va_list);
-# else
-extern int		snprintf();
-extern int		vsnprintf();
-# endif
+extern int		snprintf __P((char *, size_t, const char *, ...));
+extern int		vsnprintf __P((char *, size_t, const char *, va_list));
 #endif
+extern char		*quad_to_string __P((QUAD_T));

@@ -1,44 +1,22 @@
 /*
- * Copyright (c) 1986, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1986, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #include "sendmail.h"
 
 #ifndef lint
 #if NAMED_BIND
-static char sccsid[] = "@(#)domain.c	8.68 (Berkeley) 8/2/97 (with name server)";
+static char sccsid[] = "@(#)domain.c	8.77 (Berkeley) 6/4/98 (with name server)";
 #else
-static char sccsid[] = "@(#)domain.c	8.68 (Berkeley) 8/2/97 (without name server)";
+static char sccsid[] = "@(#)domain.c	8.77 (Berkeley) 6/4/98 (without name server)";
 #endif
 #endif /* not lint */
 
@@ -354,7 +332,8 @@ punt:
 		if (strlen(host) >= (SIZE_T) sizeof MXHostBuf)
 		{
 			*rcode = EX_CONFIG;
-			syserr("Host name %s too long", shortenstring(host, 203));
+			syserr("Host name %s too long",
+			       shortenstring(host, MAXSHORTSTR));
 			return -1;
 		}
 		snprintf(MXHostBuf, sizeof MXHostBuf, "%s", host);
@@ -458,6 +437,7 @@ mxrand(host)
 **	to generalize it at the moment.
 */
 
+/* ARGSUSED3 */
 char *
 bestmx_map_lookup(map, name, av, statp)
 	MAP *map;
@@ -468,7 +448,10 @@ bestmx_map_lookup(map, name, av, statp)
 	int nmx;
 	auto int rcode;
 	int saveopts = _res.options;
+	int i, len = 0;
+	char *p;
 	char *mxhosts[MAXMXHOSTS + 1];
+	char buf[MXHOSTBUFSIZE + 1];
 
 	_res.options &= ~(RES_DNSRCH|RES_DEFNAMES);
 	nmx = getmxrr(name, mxhosts, FALSE, &rcode);
@@ -477,8 +460,37 @@ bestmx_map_lookup(map, name, av, statp)
 		return NULL;
 	if (bitset(MF_MATCHONLY, map->map_mflags))
 		return map_rewrite(map, name, strlen(name), NULL);
-	else
+	if ((map->map_coldelim == '\0') || (nmx == 1))
 		return map_rewrite(map, mxhosts[0], strlen(mxhosts[0]), av);
+
+	/*
+	** We were given a -z flag (return all MXs) and there are multiple
+	** ones.  We need to build them all into a list.
+	*/
+	p = buf;
+	for (i = 0; i < nmx; i++)
+	{
+		int slen;
+		
+		if (strchr(mxhosts[i], map->map_coldelim) != NULL)
+		{
+			syserr("bestmx_map_lookup: MX host %.64s includes map delimiter character 0x%02X",
+			       mxhosts[i], map->map_coldelim);
+			return NULL;
+		}
+		slen = strlen(mxhosts[i]);
+		if (len + slen + 2 > sizeof buf)
+			break;
+		if (i > 0)
+		{
+			*p++ = map->map_coldelim;
+			len++;
+		}
+		strcpy(p, mxhosts[i]);
+		p += slen;
+		len += slen;
+	}
+	return map_rewrite(map, buf, len, av);
 }
 /*
 **  DNS_GETCANONNAME -- get the canonical name for named host using DNS
@@ -535,7 +547,7 @@ dns_getcanonname(host, hbsize, trymx, statp)
 	char *xp;
 	char nbuf[MAX(MAXPACKET, MAXDNAME*2+2)];
 	char *searchlist[MAXDNSRCH+2];
-	extern char *gethostalias();
+	extern char *gethostalias __P((char *));
 
 	if (tTd(8, 2))
 		printf("dns_getcanonname(%s, trymx=%d)\n", host, trymx);

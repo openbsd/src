@@ -1,56 +1,49 @@
+.\" Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
 .\"
-.\" $OpenBSD: praliases.1,v 1.1 1996/09/15 05:15:57 millert Exp $
+.\" By using this file, you agree to the terms and conditions set
+.\" forth in the LICENSE file which can be found at the top level of
+.\" the sendmail distribution.
 .\"
-.Dd Sep 14, 1996
+.\"
+.\"	@(#)praliases.8	8.5 (Berkeley) 5/19/98
+.\"
+.Dd April 25, 1996
 .Dt PRALIASES 1
-.Os BSD 4
+.Os BSD 3
 .Sh NAME
 .Nm praliases
-.Nd look up aliases in the aliases file
+.Nd display system mail aliases
 .Sh SYNOPSIS
 .Nm praliases
 .Op Fl f Ar file
-.Op key ...
 .Sh DESCRIPTION
-.Nm Praliases
-looks up the specified aliases in the
-system-wide aliases file.
-With no arguments,
-.Nm praliases
-prints out the entire aliases file.
-.Pp
-When given the
-.Fl f
-option,
-.Nm
-looks up aliases in the specified
-.Ar file
-instead of the default system-wide aliases file.  Note
-that this must be the database version created by:
-.Pp
-.Bd -literal -offset indent -compact
-.Pa /usr/sbin/sendmail Fl bi oA Ar file
-.Ed
-.Sh BUGS
-.Nm Praliases
-only will only lookup aliases in the database version of
-the aliases file.  It does not look up aliases in the
-raw aliases file, nor does it look in
-.Pa /etc/sendmail.cf
-for the paths to other aliases files or network-based
-databases such as NIS, NetInfo, or Hesiod.
-.Sh FILES
-.Bl -tag -width /etc/aliases.db -compact
-.It Pa /etc/aliases
-raw data for alias names
-.It Pa /etc/aliases.db
-data base of alias names
-.Sh SEE ALSO
-.Xr newaliases 1 ,
-.Xr aliases 5 ,
-.Xr sendmail 8 .
-.Sh HISTORY
 The
-.Nm
-command appeared in
-.Bx 4.3 .
+.Nm praliases
+utility displays the current system aliases,
+one per line, in no particular order.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f
+Read the specified file instead of the default
+.Nm sendmail
+system aliases file.
+.El
+.Pp
+The
+.Nm praliases
+utility exits 0 on success, and >0 if an error occurs.
+.Sh FILES
+.Bl -tag -width /var/log/sendmail.stXX -compact
+.It Pa /etc/aliases
+The default
+.Nm sendmail
+system aliases file.
+.It Pa /etc/aliases.db
+The database version of the
+.Pa /etc/aliases
+file.
+.El
+.Sh SEE ALSO
+.Xr mailq 1 ,
+.Xr sendmail 8

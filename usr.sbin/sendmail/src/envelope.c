@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)envelope.c	8.105 (Berkeley) 6/24/97";
+static char sccsid[] = "@(#)envelope.c	8.117 (Berkeley) 6/4/98";
 #endif /* not lint */
 
 #include "sendmail.h"
@@ -108,7 +86,7 @@ dropenvelope(e, fulldrop)
 
 	if (tTd(50, 1))
 	{
-		extern void printenvflags();
+		extern void printenvflags __P((ENVELOPE *));
 
 		printf("dropenvelope %lx: id=", (u_long) e);
 		xputs(e->e_id);
@@ -344,7 +322,7 @@ simpledrop:
 	{
 		if (tTd(50, 1))
 		{
-			extern void printenvflags();
+			extern void printenvflags __P((ENVELOPE *));
 
 			printf("\n===== Dropping [dq]f%s... queueit=%d, e_flags=",
 				e->e_id, queueit);
@@ -419,6 +397,7 @@ clearenvelope(e, fullclear)
 
 	/* now clear out the data */
 	STRUCTCOPY(BlankEnvelope, *e);
+	e->e_message = NULL;
 	if (Verbose)
 		e->e_sendmode = SM_DELIVER;
 	bh = BlankEnvelope.e_header;
@@ -457,9 +436,9 @@ initsys(e)
 #ifdef TTYNAME
 	static char ybuf[60];			/* holds tty id */
 	register char *p;
-#endif /* TTYNAME */
 	extern char *ttyname();
-	extern void settime();
+#endif /* TTYNAME */
+	extern void settime __P((ENVELOPE *));
 
 	/*
 	**  Give this envelope a reality.
@@ -766,7 +745,7 @@ setsender(from, e, delimptr, delimchar, internal)
 	if (bitnset(M_CHECKUDB, e->e_from.q_mailer->m_flags))
 	{
 		register char *p;
-		extern char *udbsender();
+		extern char *udbsender __P((char *));
 
 		p = udbsender(e->e_from.q_user);
 		if (p != NULL)
@@ -847,7 +826,7 @@ setsender(from, e, delimptr, delimchar, internal)
 		if (LogLevel > 2)
 			sm_syslog(LOG_NOTICE, e->e_id,
 				"cannot prescan from (%s)",
-				shortenstring(from, 203));
+				shortenstring(from, MAXSHORTSTR));
 		finis();
 	}
 	(void) rewrite(pvp, 3, 0, e);
@@ -869,7 +848,7 @@ setsender(from, e, delimptr, delimchar, internal)
 	    bitnset(M_CANONICAL, e->e_from.q_mailer->m_flags))
 	{
 		char **lastat;
-		extern char **copyplist();
+		extern char **copyplist __P((char **, bool));
 
 		/* get rid of any pesky angle brackets */
 		(void) rewrite(pvp, 3, 0, e);

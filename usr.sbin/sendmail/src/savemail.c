@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)savemail.c	8.121 (Berkeley) 10/22/97";
+static char sccsid[] = "@(#)savemail.c	8.138 (Berkeley) 6/17/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -84,8 +62,8 @@ savemail(e, sendbody)
 	MCI mcibuf;
 	int flags;
 	char buf[MAXLINE+1];
-	extern char *ttypath();
-	extern bool writable();
+	extern char *ttypath __P((void));
+	extern bool writable __P((char *, ADDRESS *, int));
 
 	if (tTd(6, 1))
 	{
@@ -366,9 +344,11 @@ savemail(e, sendbody)
 			/* we have a home directory; write dead.letter */
 			define('z', p, e);
 			expand("\201z/dead.letter", buf, sizeof buf, e);
-			flags = SFF_NOLINK|SFF_CREAT|SFF_REGONLY|SFF_RUNASREALUID;
+			flags = SFF_CREAT|SFF_REGONLY|SFF_RUNASREALUID;
+			if (RealUid == 0)
+				flags |= SFF_ROOTOK;
 			e->e_to = buf;
-			if (mailfile(buf, NULL, flags, e) == EX_OK)
+			if (mailfile(buf, FileMailer, NULL, flags, e) == EX_OK)
 			{
 				int oldverb = Verbose;
 
@@ -399,7 +379,7 @@ savemail(e, sendbody)
 				break;
 			}
 
-			flags = SFF_NOLINK|SFF_CREAT|SFF_REGONLY|SFF_ROOTOK|SFF_OPENASROOT|SFF_MUSTOWN;
+			flags = SFF_CREAT|SFF_REGONLY|SFF_ROOTOK|SFF_OPENASROOT|SFF_MUSTOWN;
 			if (!writable(DeadLetterDrop, NULL, flags) ||
 			    (fp = safefopen(DeadLetterDrop, O_WRONLY|O_APPEND,
 					    FileMode, flags)) == NULL)
@@ -413,6 +393,7 @@ savemail(e, sendbody)
 			mcibuf.mci_mailer = FileMailer;
 			if (bitnset(M_7BITS, FileMailer->m_flags))
 				mcibuf.mci_flags |= MCIF_7BIT;
+			mcibuf.mci_contentlen = 0;
 
 			putfromline(&mcibuf, e);
 			(*e->e_puthdr)(&mcibuf, e->e_header, e);
@@ -483,7 +464,7 @@ returntosender(msg, returnq, flags, e)
 	register ENVELOPE *ee;
 	ENVELOPE *oldcur = CurEnv;
 	ENVELOPE errenvelope;
-	static int returndepth;
+	static int returndepth = 0;
 	register ADDRESS *q;
 	char *p;
 	char buf[MAXNAME + 1];
@@ -562,7 +543,7 @@ returntosender(msg, returnq, flags, e)
 			p = "DSN";
 		sm_syslog(LOG_INFO, e->e_id,
 			"%s: %s: %s",
-			ee->e_id, p, shortenstring(msg, 203));
+			ee->e_id, p, shortenstring(msg, MAXSHORTSTR));
 	}
 
 	if (SendMIMEErrors)
@@ -641,7 +622,7 @@ returntosender(msg, returnq, flags, e)
 	eatheader(ee, TRUE);
 
 	/* mark statistics */
-	markstats(ee, NULLADDR);
+	markstats(ee, NULLADDR, FALSE);
 
 	/* actually deliver the error message */
 	sendall(ee, SM_DELIVER);
@@ -764,14 +745,16 @@ errbody(mci, e, separator)
 
 			if (DontLockReadFiles)
 				sff |= SFF_NOLOCK;
+			if (!bitset(DBS_ERRORHEADERINUNSAFEDIRPATH, DontBlameSendmail))
+				sff |= SFF_SAFEDIRPATH;
 			xfile = safefopen(ErrMsgFile, O_RDONLY, 0444, sff);
 			if (xfile != NULL)
 			{
 				while (fgets(buf, sizeof buf, xfile) != NULL)
 				{
-#if _FFR_BUG_FIX
+					extern void translate_dollars __P((char *));
+
 					translate_dollars(buf);
-#endif
 					expand(buf, buf, sizeof buf, e);
 					putline(buf, mci);
 				}
@@ -805,12 +788,13 @@ errbody(mci, e, separator)
 			printheader = FALSE;
 		}
 
-		snprintf(buf, sizeof buf, "%s", shortenstring(q->q_paddr, 203));
+		snprintf(buf, sizeof buf, "%s",
+			 shortenstring(q->q_paddr, MAXSHORTSTR));
 		putline(buf, mci);
 		if (q->q_alias != NULL)
 		{
 			snprintf(buf, sizeof buf, "    (expanded from: %s)",
-				shortenstring(q->q_alias->q_paddr, 203));
+				shortenstring(q->q_alias->q_paddr, MAXSHORTSTR));
 			putline(buf, mci);
 		}
 	}
@@ -832,12 +816,13 @@ errbody(mci, e, separator)
 			printheader = FALSE;
 		}
 
-		snprintf(buf, sizeof buf, "%s", shortenstring(q->q_paddr, 203));
+		snprintf(buf, sizeof buf, "%s",
+			 shortenstring(q->q_paddr, MAXSHORTSTR));
 		putline(buf, mci);
 		if (q->q_alias != NULL)
 		{
 			snprintf(buf, sizeof buf, "    (expanded from: %s)",
-				shortenstring(q->q_alias->q_paddr, 203));
+				shortenstring(q->q_alias->q_paddr, MAXSHORTSTR));
 			putline(buf, mci);
 		}
 	}
@@ -875,12 +860,12 @@ errbody(mci, e, separator)
 		}
 
 		snprintf(buf, sizeof buf, "%s  (%s)",
-			shortenstring(q->q_paddr, 203), p);
+			shortenstring(q->q_paddr, MAXSHORTSTR), p);
 		putline(buf, mci);
 		if (q->q_alias != NULL)
 		{
 			snprintf(buf, sizeof buf, "    (expanded from: %s)",
-				shortenstring(q->q_alias->q_paddr, 203));
+				shortenstring(q->q_alias->q_paddr, MAXSHORTSTR));
 			putline(buf, mci);
 		}
 	}

@@ -1,9 +1,15 @@
 cpyr
-cpyr	Copyright (c) 1983, 1995-1997 Eric P. Allman
+cpyr	Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+cpyr	Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
 cpyr	Copyright (c) 1988, 1993
 cpyr	    The Regents of the University of California.  All rights reserved.
 cpyr	
-cpyr	@(#)sendmail.hf	8.12 (Berkeley) 2/1/97
+cpyr
+cpyr	By using this file, you agree to the terms and conditions set
+cpyr	forth in the LICENSE file which can be found at the top level of
+cpyr	the sendmail distribution.
+cpyr
+cpyr	@(#)sendmail.hf	8.16 (Berkeley) 5/19/98
 cpyr
 smtp	Topics:
 smtp		HELO	EHLO	MAIL	RCPT	DATA

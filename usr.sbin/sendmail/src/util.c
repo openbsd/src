@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	8.137 (Berkeley) 10/22/97";
+static char sccsid[] = "@(#)util.c	8.159 (Berkeley) 7/1/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -78,6 +56,122 @@ stripquotes(s)
 			continue;
 		*q++ = c;
 	} while (c != '\0');
+}
+/*
+**  ADDQUOTES -- Adds quotes & quote bits to a string.
+**
+**	Runs through a string and adds characters and quote bits.
+**
+**	Parameters:
+**		s -- the string to modify.
+**
+**	Returns:
+**		pointer to quoted string.
+**
+**	Side Effects:
+**		none.
+**
+*/
+
+char *
+addquotes(s)
+	char *s;
+{
+	int len = 0;
+	char c;
+	char *p = s, *q, *r;
+
+	if (s == NULL)
+		return NULL;
+
+	/* Find length of quoted string */
+	while ((c = *p++) != '\0')
+	{
+		len++;
+		if (c == '\\' || c == '"')
+			len++;
+	}
+	
+	q = r = xalloc(len + 3);
+	p = s;
+
+	/* add leading quote */
+	*q++ = '"';
+	while ((c = *p++) != '\0')
+	{
+		/* quote \ or " */
+		if (c == '\\' || c == '"')
+			*q++ = '\\';
+		*q++ = c;
+	}
+	*q++ = '"';
+	*q = '\0';
+	return r;
+}
+/*
+**  RFC822_STRING -- Checks string for proper RFC822 string quoting.
+**
+**	Runs through a string and verifies RFC822 special characters
+**	are only found inside comments, quoted strings, or backslash
+**	escaped.  Also verified balanced quotes and parenthesis.
+**
+**	Parameters:
+**		s -- the string to modify.
+**
+**	Returns:
+**		TRUE -- if the string is RFC822 compliant.
+**		FALSE -- if the string is not RFC822 compliant.
+**
+**	Side Effects:
+**		none.
+**
+*/
+
+bool
+rfc822_string(s)
+	char *s;
+{
+	bool quoted = FALSE;
+	int commentlev = 0;
+	char *c = s;
+
+	if (s == NULL)
+		return FALSE;
+
+	while (*c != '\0')
+	{
+		/* escaped character */
+		if (*c == '\\')
+		{
+			c++;
+			if (*c == '\0')
+				return FALSE;
+		}
+		else if (commentlev == 0 && *c == '"')
+			quoted = !quoted;
+		else if (!quoted)
+		{
+			if (*c == ')')
+			{
+				/* unbalanced ')' */
+				if (commentlev == 0)
+					return FALSE;
+				else
+					commentlev--;
+			}
+			else if (*c == '(')
+				commentlev++;
+			else if (commentlev == 0 &&
+				 strchr(MustQuoteChars, *c) != NULL)
+				return FALSE;
+		}
+		c++;
+	}
+	/* unbalanced '"' or '(' */
+	if (quoted || commentlev != 0)
+		return FALSE;
+	else
+		return TRUE;
 }
 /*
 **  XALLOC -- Allocate memory and bitch wildly on failure.
@@ -286,10 +380,14 @@ xputs(s)
 				c = *s++ & 0377;
 				goto printchar;
 			}
-			if (c == MACROEXPAND)
+			if (c == MACROEXPAND || c == MACRODEXPAND)
 			{
 				printf("%s$", TermEscape.te_rv_on);
+				if (c == MACRODEXPAND)
+					putchar('&');
 				shiftout = TRUE;
+				if (*s == '\0')
+					continue;
 				if (strchr("=~&?", *s) != NULL)
 					putchar(*s++);
 				if (bitset(0200, *s))
@@ -538,6 +636,7 @@ putxline(l, len, mci, pxflags)
 {
 	register char *p, *end;
 	int slop = 0;
+	size_t eol_len = strlen(mci->mci_mailer->m_eol);
 
 	/* strip out 0200 bits -- these can look like TELNET protocol */
 	if (bitset(MCIF_7BIT, mci->mci_flags) ||
@@ -572,6 +671,8 @@ putxline(l, len, mci, pxflags)
 			    bitnset(M_XDOT, mci->mci_mailer->m_flags))
 			{
 				(void) putc('.', mci->mci_out);
+				if (!bitset(MCIF_INHEADER, mci->mci_flags))
+					mci->mci_contentlen++;
 				if (TrafficLogFile != NULL)
 					(void) putc('.', TrafficLogFile);
 			}
@@ -581,14 +682,26 @@ putxline(l, len, mci, pxflags)
 				 bitnset(M_ESCFROM, mci->mci_mailer->m_flags))
 			{
 				(void) putc('>', mci->mci_out);
+				if (!bitset(MCIF_INHEADER, mci->mci_flags))
+					mci->mci_contentlen++;
 				if (TrafficLogFile != NULL)
 					(void) putc('>', TrafficLogFile);
 			}
 			while (l < q)
+			{
 				(void) putc(*l++, mci->mci_out);
+				if (!bitset(MCIF_INHEADER, mci->mci_flags))
+					mci->mci_contentlen++;
+			}
 			(void) putc('!', mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen++;
 			fputs(mci->mci_mailer->m_eol, mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen += eol_len;
 			(void) putc(' ', mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen++;
 			if (TrafficLogFile != NULL)
 			{
 				for (l = l_base; l < q; l++)
@@ -604,6 +717,8 @@ putxline(l, len, mci, pxflags)
 		    bitnset(M_XDOT, mci->mci_mailer->m_flags))
 		{
 			(void) putc('.', mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen++;
 			if (TrafficLogFile != NULL)
 				(void) putc('.', TrafficLogFile);
 		}
@@ -613,6 +728,8 @@ putxline(l, len, mci, pxflags)
 			 bitnset(M_ESCFROM, mci->mci_mailer->m_flags))
 		{
 			(void) putc('>', mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen++;
 			if (TrafficLogFile != NULL)
 				(void) putc('>', TrafficLogFile);
 		}
@@ -621,16 +738,22 @@ putxline(l, len, mci, pxflags)
 			if (TrafficLogFile != NULL)
 				(void) putc(*l, TrafficLogFile);
 			(void) putc(*l, mci->mci_out);
+			if (!bitset(MCIF_INHEADER, mci->mci_flags))
+				mci->mci_contentlen++;
 		}
 		if (TrafficLogFile != NULL)
 			(void) putc('\n', TrafficLogFile);
 		fputs(mci->mci_mailer->m_eol, mci->mci_out);
+		if (!bitset(MCIF_INHEADER, mci->mci_flags))
+			mci->mci_contentlen += eol_len;
 		if (l < end && *l == '\n')
 		{
 			if (*++l != ' ' && *l != '\t' && *l != '\0' &&
 			    bitset(PXLF_HEADER, pxflags))
 			{
 				(void) putc(' ', mci->mci_out);
+				if (!bitset(MCIF_INHEADER, mci->mci_flags))
+					mci->mci_contentlen++;
 				if (TrafficLogFile != NULL)
 					(void) putc(' ', TrafficLogFile);
 			}
@@ -715,7 +838,7 @@ xfclose(fp, a, b)
 */
 
 static jmp_buf	CtxReadTimeout;
-static void	readtimeout();
+static void	readtimeout __P((time_t));
 
 char *
 sfgets(buf, siz, fp, timeout, during)
@@ -801,6 +924,7 @@ sfgets(buf, siz, fp, timeout, during)
 	return (buf);
 }
 
+/* ARGSUSED */
 static void
 readtimeout(timeout)
 	time_t timeout;
@@ -1192,20 +1316,29 @@ dumpfd(fd, printclosed, logit)
 {
 	register char *p;
 	char *hp;
-	char *fmtstr;
 #ifdef S_IFSOCK
 	SOCKADDR sa;
 #endif
 	auto SOCKADDR_LEN_T slen;
 	int i;
+#if STAT64 > 0
+	struct stat64 st;
+#else
 	struct stat st;
+#endif
 	char buf[200];
 
 	p = buf;
 	snprintf(p, SPACELEFT(buf, p), "%3d: ", fd);
 	p += strlen(p);
 
-	if (fstat(fd, &st) < 0)
+	if (
+#if STAT64 > 0
+	    fstat64(fd, &st)
+#else
+	    fstat(fd, &st)
+#endif
+	    < 0)
 	{
 		if (errno != EBADF)
 		{
@@ -1299,13 +1432,24 @@ dumpfd(fd, printclosed, logit)
 
 	  default:
 defprint:
-		if (sizeof st.st_size > sizeof (long))
-			fmtstr = "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%qd";
+		if (sizeof st.st_ino > sizeof (long))
+			snprintf(p, SPACELEFT(buf, p),
+				 "dev=%d/%d, ino=%s, nlink=%d, u/gid=%d/%d, ",
+				 major(st.st_dev), minor(st.st_dev),
+				 quad_to_string(st.st_ino),
+				 st.st_nlink, st.st_uid, st.st_gid);
 		else
-			fmtstr = "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%ld";
-		snprintf(p, SPACELEFT(buf, p), fmtstr,
-			major(st.st_dev), minor(st.st_dev), st.st_ino,
-			st.st_nlink, st.st_uid, st.st_gid, st.st_size);
+			snprintf(p, SPACELEFT(buf, p),
+				"dev=%d/%d, ino=%lu, nlink=%d, u/gid=%d/%d, ",
+				major(st.st_dev), minor(st.st_dev),
+				(unsigned long) st.st_ino,
+				st.st_nlink, st.st_uid, st.st_gid);
+		if (sizeof st.st_size > sizeof (long))
+			snprintf(p, SPACELEFT(buf, p), "size=%s",
+				 quad_to_string(st.st_size));
+		else
+			snprintf(p, SPACELEFT(buf, p), "size=%lu",
+				 (unsigned long) st.st_size);
 		break;
 	}
 
@@ -1315,55 +1459,6 @@ printit:
 			"%.800s", buf);
 	else
 		printf("%s\n", buf);
-}
-/*
-**  SHORTENSTRING -- return short version of a string
-**
-**	If the string is already short, just return it.  If it is too
-**	long, return the head and tail of the string.
-**
-**	Parameters:
-**		s -- the string to shorten.
-**		m -- the max length of the string.
-**
-**	Returns:
-**		Either s or a short version of s.
-*/
-
-#ifndef MAXSHORTSTR
-# define MAXSHORTSTR	203
-#endif
-
-char *
-shortenstring(s, m)
-	register const char *s;
-	int m;
-{
-	int l;
-	static char buf[MAXSHORTSTR + 1];
-
-	l = strlen(s);
-	if (l < m)
-		return (char *) s;
-	if (m > MAXSHORTSTR)
-		m = MAXSHORTSTR;
-	else if (m < 10)
-	{
-		if (m < 5)
-		{
-			strncpy(buf, s, m);
-			buf[m] = '\0';
-			return buf;
-		}
-		strncpy(buf, s, m - 3);
-		strcpy(buf + m - 3, "...");
-		return buf;
-	}
-	m = (m - 3) / 2;
-	strncpy(buf, s, m);
-	strcpy(buf + m, "...");
-	strcpy(buf + m + 3, s + l - m);
-	return buf;
 }
 /*
 **  SHORTEN_HOSTNAME -- strip local domain information off of hostname.
@@ -1481,9 +1576,9 @@ prog_open(argv, pfd, e)
 
 	/* run as default user */
 	endpwent();
-	if (setgid(DefGid) < 0)
+	if (setgid(DefGid) < 0 && geteuid() == 0)
 		syserr("prog_open: setgid(%ld) failed", (long) DefGid);
-	if (setuid(DefUid) < 0)
+	if (setuid(DefUid) < 0 && geteuid() == 0)
 		syserr("prog_open: setuid(%ld) failed", (long) DefUid);
 
 	/* run in some directory */
@@ -1686,7 +1781,7 @@ denlstring(s, strict, logattacks)
 		sm_syslog(LOG_NOTICE, CurEnv->e_id,
 			"POSSIBLE ATTACK from %.100s: newline in string \"%s\"",
 			RealHostName == NULL ? "[UNKNOWN]" : RealHostName,
-			shortenstring(bp, 203));
+			shortenstring(bp, MAXSHORTSTR));
 	}
 
 	return bp;

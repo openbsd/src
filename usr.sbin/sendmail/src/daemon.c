@@ -1,35 +1,13 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #include <errno.h>
@@ -37,9 +15,9 @@
 
 #ifndef lint
 #ifdef DAEMON
-static char sccsid[] = "@(#)daemon.c	8.195 (Berkeley) 10/23/97 (with daemon mode)";
+static char sccsid[] = "@(#)daemon.c	8.220 (Berkeley) 6/24/98 (with daemon mode)";
 #else
-static char sccsid[] = "@(#)daemon.c	8.195 (Berkeley) 10/23/97 (without daemon mode)";
+static char sccsid[] = "@(#)daemon.c	8.220 (Berkeley) 6/24/98 (without daemon mode)";
 #endif
 #endif /* not lint */
 
@@ -132,7 +110,7 @@ getrequests(e)
 #if XDEBUG
 	bool j_has_dot;
 #endif
-	extern void reapchild();
+	extern void reapchild __P((int));
 	extern int opendaemonsocket __P((bool));
 
 	/*
@@ -232,7 +210,7 @@ getrequests(e)
 		auto SOCKADDR_LEN_T lotherend;
 		int savederrno;
 		int pipefd[2];
-		extern bool refuseconnections();
+		extern bool refuseconnections __P((int));
 
 		/* see if we are rejecting connections */
 		(void) blocksignal(SIGALRM);
@@ -424,7 +402,7 @@ getrequests(e)
 			    (outchannel = fdopen(t, "w")) == NULL)
 			{
 				syserr("cannot open SMTP server channel, fd=%d", t);
-				exit(0);
+				exit(EX_OK);
 			}
 
 			InChannel = inchannel;
@@ -438,7 +416,7 @@ getrequests(e)
 			if (!xla_host_ok(RealHostName))
 			{
 				message("421 Too many SMTP sessions for this host");
-				exit(0);
+				exit(EX_OK);
 			}
 #endif
 
@@ -814,7 +792,9 @@ makeconnection(host, port, mci, e)
 
 	if (host[0] == '[')
 	{
-		long hid;
+#if NETINET
+		unsigned long hid = INADDR_NONE;
+#endif
 		register char *p = strchr(host, ']');
 
 		if (p != NULL)
@@ -908,6 +888,13 @@ gothostent:
 #endif
 
 		  default:
+			if (hp->h_length > sizeof addr.sa.sa_data)
+			{
+				syserr("makeconnection: long sa_data: family %d len %d",
+					hp->h_addrtype, hp->h_length);
+				mci_setstat(mci, EX_NOHOST, "5.1.2", NULL);
+				return EX_NOHOST;
+			}
 			bcopy(hp->h_addr,
 				addr.sa.sa_data,
 				hp->h_length);
@@ -1038,6 +1025,12 @@ gothostent:
 				ev = setevent(TimeOuts.to_connect, connecttimeout, 0);
 			else
 				ev = NULL;
+
+#if _FFR_CONNECTONLYTO_OPTION
+			/* for testing */
+			if (ConnectOnlyTo != 0)
+				addr.sin.sin_addr.s_addr = ConnectOnlyTo;
+#endif
 			i = connect(s, (struct sockaddr *) &addr, addrlen);
 			sav_errno = errno;
 			if (ev != NULL)
@@ -1061,7 +1054,14 @@ gothostent:
 
 		/* couldn't connect.... figure out why */
 		(void) close(s);
-		if (hp != NULL && hp->h_addr_list[addrno])
+
+		if (LogLevel >= 14)
+			sm_syslog(LOG_INFO, e->e_id,
+				  "makeconnection (%s [%s]) failed: %s",
+				  host, anynet_ntoa(&addr),
+				  errstring(sav_errno));
+
+		if (hp != NULL && hp->h_addr_list[addrno] != NULL)
 		{
 			if (tTd(16, 1))
 				printf("Connect failed (%s); trying new address....\n",
@@ -1225,6 +1225,9 @@ addrcmp(hp, ha, sa)
 **
 **	Parameters:
 **		fd -- the descriptor
+**		may_be_forged -- an outage that is set to TRUE if the
+**			forward lookup of RealHostName does not match
+**			RealHostAddr; set to FALSE if they do match.
 **
 **	Returns:
 **		The user@host information associated with this descriptor.
@@ -1239,8 +1242,9 @@ authtimeout()
 }
 
 char *
-getauthinfo(fd)
+getauthinfo(fd, may_be_forged)
 	int fd;
+	bool *may_be_forged;
 {
 	SOCKADDR_LEN_T falen;
 	register char *volatile p = NULL;
@@ -1248,19 +1252,22 @@ getauthinfo(fd)
 	SOCKADDR_LEN_T lalen;
 	register struct servent *sp;
 	volatile int s;
-	int i;
+	int i = 0;
 	EVENT *ev;
 	int nleft;
 	struct hostent *hp;
+	char *ostype = NULL;
 	char **ha;
-	volatile bool may_be_forged;
 	char ibuf[MAXNAME + 1];
-	static char hbuf[MAXNAME * 2 + 2];
+	static char hbuf[MAXNAME * 2 + 11];
 
+	*may_be_forged = FALSE;
 	falen = sizeof RealHostAddr;
-	if (isatty(fd) || getpeername(fd, &RealHostAddr.sa, &falen) < 0 ||
+	if (isatty(fd) || (i = getpeername(fd, &RealHostAddr.sa, &falen)) < 0 ||
 	    falen <= 0 || RealHostAddr.sa.sa_family == 0)
 	{
+		if (i < 0 && errno != ENOTSOCK)
+			return NULL;
 		(void) snprintf(hbuf, sizeof hbuf, "%s@localhost",
 			RealUserName);
 		if (tTd(9, 1))
@@ -1277,15 +1284,14 @@ getauthinfo(fd)
 	}
 
 	/* cross check RealHostName with forward DNS lookup */
-	if (anynet_ntoa(&RealHostAddr)[0] == '[')
+	if (anynet_ntoa(&RealHostAddr)[0] == '[' ||
+	    RealHostName[0] == '[')
 	{
-		/* address is not a socket */
-		may_be_forged = FALSE;
-	}
-	else if (RealHostName[0] == '[')
-	{
-		/* have IP address with no forward lookup */
-		may_be_forged = FALSE;
+		/*
+		** address is not a socket or have an
+		** IP address with no forward lookup
+		*/
+		*may_be_forged = FALSE;
 	}
 	else
 	{
@@ -1293,13 +1299,13 @@ getauthinfo(fd)
 		hp = sm_gethostbyname(RealHostName);
 
 		if (hp == NULL)
-			may_be_forged = TRUE;
+			*may_be_forged = TRUE;
 		else
 		{
 			for (ha = hp->h_addr_list; *ha != NULL; ha++)
 				if (addrcmp(hp, *ha, &RealHostAddr) == 0)
 					break;
-			may_be_forged = *ha == NULL;
+			*may_be_forged = *ha == NULL;
 		}
 	}
 
@@ -1407,11 +1413,23 @@ getauthinfo(fd)
 	}
 
 	/* p now points to the OSTYPE field */
+	while (isascii(*p) && isspace(*p))
+		p++;
+	ostype = p;
 	p = strchr(p, ':');
 	if (p == NULL)
 	{
 		/* malformed response */
 		goto noident;
+	}
+	else
+	{
+		char *charset;
+
+		*p = '\0';
+		charset = strchr(ostype, ',');
+		if (charset != NULL)
+			*charset = '\0';
 	}
 
 	/* 1413 says don't do this -- but it's broken otherwise */
@@ -1419,10 +1437,17 @@ getauthinfo(fd)
 		continue;
 
 	/* p now points to the authenticated name -- copy carefully */
-	cleanstrcpy(hbuf, p, MAXNAME);
+	if (strncasecmp(ostype, "other", 5) == 0 &&
+	    (ostype[5] == ' ' || ostype[5] == '\0'))
+	{
+		snprintf(hbuf, sizeof hbuf, "IDENT:");
+		cleanstrcpy(&hbuf[6], p, MAXNAME);
+	}
+	else
+		cleanstrcpy(hbuf, p, MAXNAME);
 	i = strlen(hbuf);
 	snprintf(&hbuf[i], sizeof hbuf - i, "@%s",
-		RealHostName == NULL ? "localhost" : RealHostName);
+		 RealHostName == NULL ? "localhost" : RealHostName);
 	goto postident;
 
 closeident:
@@ -1538,22 +1563,24 @@ postident:
 		snprintf(p, SPACELEFT(hbuf, p), "]");
 		goto postipsr;
 	}
-#endif
 
 noipsr:
+#endif
 	if (RealHostName != NULL && RealHostName[0] != '[')
 	{
 		p = &hbuf[strlen(hbuf)];
 		(void) snprintf(p, SPACELEFT(hbuf, p), " [%.100s]",
 			anynet_ntoa(&RealHostAddr));
 	}
-	if (may_be_forged)
+	if (*may_be_forged)
 	{
 		p = &hbuf[strlen(hbuf)];
 		(void) snprintf(p, SPACELEFT(hbuf, p), " (may be forged)");
 	}
 
+#if IP_SRCROUTE
 postipsr:
+#endif
 	if (tTd(9, 1))
 		printf("getauthinfo: %s\n", hbuf);
 	return hbuf;
@@ -1781,6 +1808,9 @@ myhostname(hostbuf, size)
 **
 **	Parameters:
 **		fd -- the descriptor
+**		may_be_forged -- an outage that is set to TRUE if the
+**			forward lookup of RealHostName does not match
+**			RealHostAddr; set to FALSE if they do match.
 **
 **	Returns:
 **		The host name associated with this descriptor, if it can
@@ -1792,9 +1822,11 @@ myhostname(hostbuf, size)
 */
 
 char *
-getauthinfo(fd)
+getauthinfo(fd, may_be_forged)
 	int fd;
+	bool *may_be_forged;
 {
+	*may_be_forged = FALSE;
 	return NULL;
 }
 /*
@@ -1837,7 +1869,7 @@ host_map_lookup(map, name, avp, statp)
 	if (bitset(MF_MATCHONLY, map->map_mflags))
 		cp = map_rewrite(map, name, strlen(name), NULL);
 	else
-		cp = map_rewrite(map, hp->h_name, strlen(hp->h_name), av);
+		cp = map_rewrite(map, hp->h_name, strlen(hp->h_name), avp);
 	return cp;
 }
 
@@ -1865,6 +1897,10 @@ host_map_init(map, args)
 			map->map_app = ++p;
 			break;
 
+		  case 'T':
+			map->map_tapp = ++p;
+			break;
+
 		  case 'm':
 			map->map_mflags |= MF_MATCHONLY;
 			break;
@@ -1880,6 +1916,8 @@ host_map_init(map, args)
 	}
 	if (map->map_app != NULL)
 		map->map_app = newstr(map->map_app);
+	if (map->map_tapp != NULL)
+		map->map_tapp = newstr(map->map_tapp);
 	return TRUE;
 }
 /*
@@ -2015,10 +2053,13 @@ hostnamebyanyaddr(sap)
 	_res.retry = saveretry;
 #endif /* NAMED_BIND */
 
-	if (hp != NULL && hp->h_name[0] != '[')
+	if (hp != NULL && hp->h_name[0] != '[' &&
+	    inet_addr(hp->h_name) == INADDR_NONE)
 		return denlstring((char *) hp->h_name, TRUE, TRUE);
+#if NETUNIX
 	else if (sap->sa.sa_family == AF_UNIX && sap->sunix.sun_path[0] == '\0')
 		return "localhost";
+#endif
 	else
 	{
 		/* produce a dotted quad */

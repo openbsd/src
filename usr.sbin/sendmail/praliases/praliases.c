@@ -1,35 +1,13 @@
 /*
- * Copyright (c) 1983 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
@@ -39,14 +17,37 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)praliases.c	8.5 (Berkeley) 5/28/97";
+static char sccsid[] = "@(#)praliases.c	8.17 (Berkeley) 6/25/98";
 #endif /* not lint */
 
-#include <ndbm.h>
-#define NOT_SENDMAIL
+#if !defined(NDBM) && !defined(NEWDB)
+  ERROR README:	You must define one of NDBM or NEWDB in order to compile
+  ERROR README:	praliases.
+#endif
+
+#ifdef NDBM
+# include <ndbm.h>
+#endif
+#ifndef NOT_SENDMAIL
+# define NOT_SENDMAIL
+#endif
 #include <sendmail.h>
 #ifdef NEWDB
-#include <db.h>
+# include <db.h>
+# ifndef DB_VERSION_MAJOR
+#  define DB_VERSION_MAJOR 1
+# endif
+#endif
+
+#if defined(IRIX64) || defined(IRIX5) || defined(IRIX6) || \
+    defined(BSD4_4) || defined(__osf__) || defined(__GNU_LIBRARY__)
+# ifndef HASSTRERROR
+#  define HASSTRERROR	1	/* has strerror(3) */
+# endif
+#endif
+
+#if !HASSTRERROR
+extern char	*strerror __P((int));
 #endif
 
 int
@@ -56,18 +57,20 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
+#ifdef NDBM
 	DBM *dbp;
 	datum content, key;
+#endif
 	char *filename;
 	int ch;
 #ifdef NEWDB
-	const DB *db;
+	DB *db;
 	DBT newdbkey, newdbcontent;
 	char buf[MAXNAME];
 #endif
 
 	filename = "/etc/aliases";
-	while ((ch = getopt(argc, argv, "f:")) != -1)
+	while ((ch = getopt(argc, argv, "f:")) != EOF)
 		switch((char)ch) {
 		case 'f':
 			filename = optarg;
@@ -88,26 +91,74 @@ main(argc, argv)
 	}
 	(void) strcpy(buf, filename);
 	(void) strcat(buf, ".db");
-	if (db = dbopen(buf, O_RDONLY, 0444 , DB_HASH, NULL)) {
+# if DB_VERSION_MAJOR < 2
+	db = dbopen(buf, O_RDONLY, 0444, DB_HASH, NULL);
+# else
+	db = NULL;
+	errno = db_open(buf, DB_HASH, DB_RDONLY, 0444, NULL, NULL, &db);
+# endif
+	if (db != NULL)
+	{
 		if (!argc) {
+# if DB_VERSION_MAJOR > 1
+			DBC *dbc;
+# endif
+			bzero(&newdbkey, sizeof newdbkey);
+			bzero(&newdbcontent, sizeof newdbcontent);
+
+# if DB_VERSION_MAJOR < 2
 			while(!db->seq(db, &newdbkey, &newdbcontent, R_NEXT))
+# else
+			if ((errno = db->cursor(db, NULL, &dbc)) == 0)
+			{
+				while ((errno = dbc->c_get(dbc, &newdbkey,
+							   &newdbcontent,
+							   DB_NEXT)) == 0)
+# endif
 				printf("%.*s:%.*s\n",
-					newdbkey.size, newdbkey.data,
-					newdbcontent.size, newdbcontent.data);
+					(int) newdbkey.size,
+					(char *) newdbkey.data,
+					(int) newdbcontent.size,
+					(char *) newdbcontent.data);
+# if DB_VERSION_MAJOR > 1
+				(void) dbc->c_close(dbc);
+			}
+			else
+			{
+				fprintf(stderr,
+					"praliases: %s: Could not set cursor: %s\n",
+					buf, strerror(errno));
+				exit(EX_DATAERR);
+			}
+# endif
 		}
 		else for (; *argv; ++argv) {
+			bzero(&newdbkey, sizeof newdbkey);
+			bzero(&newdbcontent, sizeof newdbcontent);
 			newdbkey.data = *argv;
 			newdbkey.size = strlen(*argv) + 1;
+# if DB_VERSION_MAJOR < 2
 			if (!db->get(db, &newdbkey, &newdbcontent, 0))
-				printf("%s:%.*s\n", newdbkey.data,
-					newdbcontent.size, newdbcontent.data);
+# else
+			if ((errno = db->get(db, NULL, &newdbkey,
+					     &newdbcontent, 0)) == 0)
+# endif
+				printf("%s:%.*s\n", (char *) newdbkey.data,
+					(int) newdbcontent.size,
+					(char *) newdbcontent.data);
 			else
 				printf("%s: No such key\n",
-					newdbkey.data);
+					(char *) newdbkey.data);
 		}
+# if DB_VERSION_MAJOR < 2
+		(void)db->close(db);
+# else
+		errno = db->close(db, 0);
+# endif
 	}
 	else {
 #endif
+#ifdef NDBM
 		if ((dbp = dbm_open(filename, O_RDONLY, 0)) == NULL) {
 			(void)fprintf(stderr,
 			    "praliases: %s: %s\n", filename, strerror(errno));
@@ -118,8 +169,8 @@ main(argc, argv)
 			    key.dptr != NULL; key = dbm_nextkey(dbp)) {
 				content = dbm_fetch(dbp, key);
 				(void)printf("%.*s:%.*s\n",
-					key.dsize, key.dptr,
-					content.dsize, content.dptr);
+					(int) key.dsize, key.dptr,
+					(int) content.dsize, content.dptr);
 			}
 		else for (; *argv; ++argv) {
 			key.dptr = *argv;
@@ -129,10 +180,30 @@ main(argc, argv)
 				(void)printf("%s: No such key\n", key.dptr);
 			else
 				(void)printf("%s:%.*s\n", key.dptr,
-					content.dsize, content.dptr);
+					(int) content.dsize, content.dptr);
 		}
+		dbm_close(dbp);
+#endif
 #ifdef NEWDB
 	}
 #endif
 	exit(EX_OK);
 }
+
+#if !HASSTRERROR
+
+char *
+strerror(eno)
+	int eno;
+{
+	extern int sys_nerr;
+	extern char *sys_errlist[];
+	static char ebuf[60];
+
+	if (eno >= 0 && eno < sys_nerr)
+		return sys_errlist[eno];
+	(void) sprintf(ebuf, "Error %d", eno);
+	return ebuf;
+}
+
+#endif /* !HASSTRERROR */

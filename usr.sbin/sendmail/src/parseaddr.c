@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)parseaddr.c	8.132 (Berkeley) 10/20/97";
+static char sccsid[] = "@(#)parseaddr.c	8.153 (Berkeley) 6/24/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -89,8 +67,8 @@ parseaddr(addr, a, flags, delim, delimptr, e)
 	auto char *delimptrbuf;
 	bool queueup;
 	char pvpbuf[PSBUFSIZE];
-	extern ADDRESS *buildaddr();
-	extern bool invalidaddr();
+	extern ADDRESS *buildaddr __P((char **, ADDRESS *, int, ENVELOPE *));
+	extern bool invalidaddr __P((char *, char *));
 	extern void allocaddr __P((ADDRESS *, int, char *));
 
 	/*
@@ -668,12 +646,12 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 			}
 			if (avp >= &av[MAXATOM])
 			{
-				syserr("553 prescan: too many tokens");
+				usrerr("553 prescan: too many tokens");
 				goto returnnull;
 			}
 			if (q - tok > MAXNAME)
 			{
-				syserr("553 prescan: token too long");
+				usrerr("553 prescan: token too long");
 				goto returnnull;
 			}
 			*avp++ = tok;
@@ -761,6 +739,7 @@ rewrite(pvp, ruleset, reclevel, e)
 	int loopcount;
 	struct match mlist[MAXMATCH];	/* stores match on LHS */
 	char *npvp[MAXATOM+1];		/* temporary space for rebuild */
+	char buf[MAXLINE];
 	extern int callsubr __P((char**, int, ENVELOPE *));
 	extern int sm_strcasecmp __P((char *, char *));
 
@@ -845,8 +824,6 @@ rewrite(pvp, ruleset, reclevel, e)
 
 			switch (*rp & 0377)
 			{
-				char buf[MAXLINE];
-
 			  case MATCHCLASS:
 				/* match any phrase in a class */
 				mlp->pattern = rvp;
@@ -1071,7 +1048,7 @@ rewrite(pvp, ruleset, reclevel, e)
 			}
 			else
 			{
-				/* vanilla replacement */
+				/* some sort of replacement */
 				if (avp >= &npvp[MAXATOM])
 				{
 	toolong:
@@ -1079,16 +1056,64 @@ rewrite(pvp, ruleset, reclevel, e)
 					return EX_DATAERR;
 				}
 				if ((*rp & 0377) != MACRODEXPAND)
+				{
+					/* vanilla replacement */
 					*avp++ = rp;
+				}
 				else
 				{
-					*avp = macvalue(rp[1], e);
+					/* $&x replacement */
+					char *mval = macvalue(rp[1], e);
+					char **xpvp;
+					int trsize = 0;
+					static size_t pvpb1_size = 0;
+					static char **pvpb1 = NULL;
+					char pvpbuf[PSBUFSIZE];
+
 					if (tTd(21, 2))
 						printf("rewrite: RHS $&%s => \"%s\"\n",
 							macname(rp[1]),
-							*avp == NULL ? "(NULL)" : *avp);
-					if (*avp != NULL)
-						avp++;
+							mval == NULL ? "(NULL)" : mval);
+					if (mval == NULL || *mval == '\0')
+						continue;
+
+					/* save the remainder of the input */
+					for (xpvp = pvp; *xpvp != NULL; xpvp++)
+						trsize += sizeof *xpvp;
+					if (trsize > pvpb1_size)
+					{
+						if (pvpb1 != NULL)
+							free(pvpb1);
+						pvpb1 = (char **)xalloc(trsize);
+						pvpb1_size = trsize;
+					}
+
+					bcopy((char *) pvp, (char *) pvpb1, trsize);
+
+					/* scan the new replacement */
+					xpvp = prescan(mval, '\0', pvpbuf,
+						       sizeof pvpbuf, NULL, NULL);
+					if (xpvp == NULL)
+					{
+						/* prescan pre-printed error */
+						return EX_DATAERR;
+					}
+
+					/* insert it into the output stream */
+					while (*xpvp != NULL)
+					{
+						if (tTd(21, 19))
+							printf(" ... %s\n", *xpvp);
+						*avp++ = newstr(*xpvp);
+						if (avp >= &npvp[MAXATOM])
+							goto toolong;
+						xpvp++;
+					}
+					if (tTd(21, 19))
+						printf(" ... DONE\n");
+
+					/* restore the old trailing input */
+					bcopy((char *) pvpb1, (char *) pvp, trsize);
 				}
 			}
 		}
@@ -1239,11 +1264,10 @@ rewrite(pvp, ruleset, reclevel, e)
 			}
 
 			/* restore the old trailing information */
+			rvp = avp - 1;
 			for (xpvp = pvpb1; (*avp++ = *xpvp++) != NULL; )
 				if (avp >= &npvp[MAXATOM])
 					goto toolong;
-
-			break;
 		}
 
 		/*
@@ -1308,6 +1332,7 @@ callsubr(pvp, reclevel, e)
 	{
 		if ((**avp & 0377) == CALLSUBR && avp[1] != NULL)
 		{
+			stripquotes(avp[1]);
 			subr = strtorwset(avp[1], NULL, ST_FIND);
 			if (subr < 0)
 			{
@@ -1448,9 +1473,28 @@ map_lookup(map, key, argvect, pstat, e)
 			snprintf(mbuf, sizeof mbuf,
 				"%.80s map: lookup (%s): deferred",
 				map->s_name,
-				shortenstring(key, 203));
+				shortenstring(key, MAXSHORTSTR));
 			e->e_message = newstr(mbuf);
 		}
+	}
+	if (stat == EX_TEMPFAIL && map->s_map.map_tapp != NULL)
+	{
+		size_t i = strlen(key) + strlen(map->s_map.map_tapp) + 1;
+		static char *rwbuf = NULL;
+		static size_t rwbuflen = 0;
+
+		if (i > rwbuflen)
+		{
+			if (rwbuf != NULL)
+				free(rwbuf);
+			rwbuflen = i;
+			rwbuf = (char *) xalloc(rwbuflen);
+		}
+		snprintf(rwbuf, rwbuflen, "%s%s", key, map->s_map.map_tapp);
+		if (tTd(60, 4))
+			printf("map_lookup tempfail: returning \"%s\"\n",
+				rwbuf);
+		return rwbuf;
 	}
 	return replac;
 }
@@ -1505,7 +1549,9 @@ buildaddr(tv, a, flags, e)
 	char *mname;
 	char **hostp;
 	char hbuf[MAXNAME + 1];
+	static MAILER discardmailer;
 	static MAILER errormailer;
+	static char *discardargv[] = { "DISCARD", NULL };
 	static char *errorargv[] = { "ERROR", NULL };
 	static char ubuf[MAXNAME + 1];
 
@@ -1521,6 +1567,14 @@ buildaddr(tv, a, flags, e)
 
 	/* set up default error return flags */
 	a->q_flags |= DefaultNotify;
+
+	if (discardmailer.m_name == NULL)
+	{
+		/* initialize the discard mailer */
+		discardmailer.m_name = "*discard*";
+		discardmailer.m_mailer = "DISCARD";
+		discardmailer.m_argv = discardargv;
+	}
 
 	/* figure out what net/mailer to use */
 	if (*tv == NULL || (**tv & 0377) != CANONNET)
@@ -1990,7 +2044,7 @@ remotename(name, m, flags, pstat, e)
 	static char buf[MAXNAME + 1];
 	char lbuf[MAXNAME + 1];
 	char pvpbuf[PSBUFSIZE];
-	extern char *crackaddr();
+	extern char *crackaddr __P((char *));
 
 	if (tTd(12, 1))
 		printf("remotename(%s)\n", name);
@@ -2251,6 +2305,7 @@ dequote_init(map, args)
 **		else -- The dequoted buffer.
 */
 
+/* ARGSUSED2 */
 char *
 dequote_map(map, name, av, statp)
 	MAP *map;
@@ -2356,9 +2411,10 @@ rscheck(rwset, p1, p2, e)
 	char *buf;
 	int bufsize;
 	int saveexitstat;
-	int rstat;
+	int rstat = EX_OK;
 	char **pvp;
 	int rsno;
+	bool discard = FALSE;
 	auto ADDRESS a1;
 	bool saveQuickAbort = QuickAbort;
 	bool saveSuprErrs = SuprErrs;
@@ -2404,25 +2460,49 @@ rscheck(rwset, p1, p2, e)
 	SuprErrs = saveSuprErrs;
 	if (pvp == NULL)
 	{
+		if (tTd(48, 2))
+			printf("rscheck: cannot prescan input\n");
+/*
 		syserr("rscheck: cannot prescan input: \"%s\"",
-			shortenstring(buf, 203));
+			shortenstring(buf, MAXSHORTSTR));
 		rstat = EX_DATAERR;
+*/
 		goto finis;
 	}
 	(void) rewrite(pvp, rsno, 0, e);
 	if (pvp[0] == NULL || (pvp[0][0] & 0377) != CANONNET ||
-	    pvp[1] == NULL || strcmp(pvp[1], "error") != 0)
+	    pvp[1] == NULL || (strcmp(pvp[1], "error") != 0 &&
+			       strcmp(pvp[1], "discard") != 0))
 	{
-		rstat = EX_OK;
 		goto finis;
 	}
 
-	/* got an error -- process it */
-	saveexitstat = ExitStat;
-	(void) buildaddr(pvp, &a1, 0, e);
-	rstat = ExitStat;
-	ExitStat = saveexitstat;
+	if (strcmp(pvp[1], "discard") == 0)
+	{
+		if (tTd(48, 2))
+			printf("rscheck: discard mailer selected\n");
+		e->e_flags |= EF_DISCARD;
+		discard = TRUE;
+	}
+	else 
+	{
+		int savelogusrerrs = LogUsrErrs;
+		static bool logged = FALSE;
 
+		/* got an error -- process it */
+		saveexitstat = ExitStat;
+		LogUsrErrs = FALSE;
+		(void) buildaddr(pvp, &a1, 0, e);
+		LogUsrErrs = savelogusrerrs;
+		rstat = ExitStat;
+		ExitStat = saveexitstat;
+		if (!logged)
+		{
+			markstats(e, &a1, TRUE);
+			logged = TRUE;
+		}
+	}
+	
 	if (LogLevel >= 4)
 	{
 		char *relay;
@@ -2444,9 +2524,14 @@ rscheck(rwset, p1, p2, e)
 			p += strlen(p);
 		}
 		*p = '\0';
-		sm_syslog(LOG_NOTICE, e->e_id,
-			"ruleset=%s, arg1=%s%s, reject=%s",
-			rwset, p1, lbuf, MsgBuf);
+		if (discard)
+			sm_syslog(LOG_NOTICE, e->e_id,
+				  "ruleset=%s, arg1=%s%s, discard",
+				  rwset, p1, lbuf);
+		else
+			sm_syslog(LOG_NOTICE, e->e_id,
+				  "ruleset=%s, arg1=%s%s, reject=%s",
+				  rwset, p1, lbuf, MsgBuf);
 	}
 
  finis:

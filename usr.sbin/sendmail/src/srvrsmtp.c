@@ -1,44 +1,22 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 # include "sendmail.h"
 
 #ifndef lint
 #if SMTP
-static char sccsid[] = "@(#)srvrsmtp.c	8.159 (Berkeley) 10/19/97 (with SMTP)";
+static char sccsid[] = "@(#)srvrsmtp.c	8.181 (Berkeley) 6/15/98 (with SMTP)";
 #else
-static char sccsid[] = "@(#)srvrsmtp.c	8.159 (Berkeley) 10/19/97 (without SMTP)";
+static char sccsid[] = "@(#)srvrsmtp.c	8.181 (Berkeley) 6/15/98 (without SMTP)";
 #endif
 #endif /* not lint */
 
@@ -50,7 +28,9 @@ static char sccsid[] = "@(#)srvrsmtp.c	8.159 (Berkeley) 10/19/97 (without SMTP)"
 **  SMTP -- run the SMTP protocol.
 **
 **	Parameters:
-**		none.
+**		nullserver -- if non-NULL, rejection message for
+**			all SMTP commands.
+**		e -- the envelope.
 **
 **	Returns:
 **		never.
@@ -118,7 +98,7 @@ static struct cmd	CmdTab[] =
 bool	OneXact = FALSE;		/* one xaction only this run */
 char	*CurSmtpClient;			/* who's at the other end of channel */
 
-static char	*skipword();
+static char	*skipword __P((char *volatile, char *));
 
 
 #define MAXBADCOMMANDS	25	/* maximum number of bad commands */
@@ -129,7 +109,7 @@ static char	*skipword();
 
 void
 smtp(nullserver, e)
-	bool nullserver;
+	char *nullserver;
 	register ENVELOPE *volatile e;
 {
 	register char *volatile p;
@@ -147,6 +127,7 @@ smtp(nullserver, e)
 	char *id;
 	volatile int nrcpts = 0;	/* number of RCPT commands */
 	bool doublequeue;
+	bool discard;
 	volatile int badcommands = 0;	/* count of bad commands */
 	volatile int nverifies = 0;	/* count of VRFY/EXPN commands */
 	volatile int n_etrn = 0;	/* count of ETRN commands */
@@ -155,6 +136,7 @@ smtp(nullserver, e)
 	bool ok;
 	volatile int lognullconnection = TRUE;
 	register char *q;
+	QUEUE_CHAR *new;
 	char inp[MAXLINE];
 	char cmdbuf[MAXLINE];
 	extern ENVELOPE BlankEnvelope;
@@ -177,6 +159,9 @@ smtp(nullserver, e)
 	CurSmtpClient = macvalue('_', e);
 	if (CurSmtpClient == NULL)
 		CurSmtpClient = CurHostName;
+
+	/* check_relay may have set discard bit, save for later */
+	discard = bitset(EF_DISCARD, e->e_flags);
 
 	setproctitle("server %s startup", CurSmtpClient);
 #if DAEMON
@@ -317,7 +302,7 @@ smtp(nullserver, e)
 		**	to everything.
 		*/
 
-		if (nullserver)
+		if (nullserver != NULL)
 		{
 			switch (c->cmdcode)
 			{
@@ -331,7 +316,7 @@ smtp(nullserver, e)
 			  default:
 				if (++badcommands > MAXBADCOMMANDS)
 					sleep(1);
-				usrerr("550 Access denied");
+				usrerr("550 %s", nullserver);
 				continue;
 			}
 		}
@@ -380,6 +365,13 @@ smtp(nullserver, e)
 				break;
 			}
 
+			/* check for long domain name (hides Received: info) */
+			if (strlen(p) > MAXNAME)
+			{
+				usrerr("501 Invalid domain name");
+				break;
+			}
+
 			for (q = p; *q != '\0'; q++)
 			{
 				if (!isascii(*q))
@@ -412,7 +404,7 @@ smtp(nullserver, e)
 			gothello = TRUE;
 			
 			/* print HELO response message */
-			if (c->cmdcode != CMDEHLO)
+			if (c->cmdcode != CMDEHLO || nullserver != NULL)
 			{
 				message("250 %s Hello %s, %s",
 					MyHostName, CurSmtpClient, q);
@@ -426,7 +418,8 @@ smtp(nullserver, e)
 			if (!bitset(PRIV_NOEXPN, PrivacyFlags))
 			{
 				message("250-EXPN");
-				message("250-VERB");
+				if (!bitset(PRIV_NOVERB, PrivacyFlags))
+					message("250-VERB");
 			}
 #if MIME8TO7
 			message("250-8BITMIME");
@@ -440,7 +433,8 @@ smtp(nullserver, e)
 				message("250-DSN");
 #endif
 			message("250-ONEX");
-			message("250-ETRN");
+			if (!bitset(PRIV_NOETRN, PrivacyFlags))
+				message("250-ETRN");
 			message("250-XUSR");
 			message("250 HELP");
 			break;
@@ -727,12 +721,17 @@ smtp(nullserver, e)
 				break;
 			}
 
+			/* put back discard bit */
+			if (discard)
+				e->e_flags |= EF_DISCARD;
+
 			/* check to see if we need to re-expand aliases */
 			/* also reset QBADADDR on already-diagnosted addrs */
 			doublequeue = FALSE;
 			for (a = e->e_sendqueue; a != NULL; a = a->q_next)
 			{
-				if (bitset(QVERIFIED, a->q_flags))
+				if (bitset(QVERIFIED, a->q_flags) &&
+				    !bitset(EF_DISCARD, e->e_flags))
 				{
 					/* need to re-expand aliases */
 					doublequeue = TRUE;
@@ -809,7 +808,7 @@ smtp(nullserver, e)
 
 				if (!shouldqueue(e->e_msgpriority, e->e_ctime))
 				{
-					extern pid_t dowork();
+					extern pid_t dowork __P((char *, bool, bool, ENVELOPE *));
 
 					unlockqueue(e);
 					(void) dowork(id, TRUE, TRUE, e);
@@ -863,7 +862,7 @@ smtp(nullserver, e)
 					sm_syslog(LOG_INFO, e->e_id,
 						"%.100s: %s [rejected]",
 						CurSmtpClient,
-						shortenstring(inp, 203));
+						shortenstring(inp, MAXSHORTSTR));
 				break;
 			}
 			else if (!gothello &&
@@ -881,7 +880,7 @@ smtp(nullserver, e)
 				sm_syslog(LOG_INFO, e->e_id,
 					"%.100s: %s",
 					CurSmtpClient,
-					shortenstring(inp, 203));
+					shortenstring(inp, MAXSHORTSTR));
 			if (setjmp(TopFrame) > 0)
 				goto undo_subproc;
 			QuickAbort = TRUE;
@@ -921,6 +920,17 @@ smtp(nullserver, e)
 			break;
 
 		  case CMDETRN:		/* etrn -- force queue flush */
+			if (bitset(PRIV_NOETRN, PrivacyFlags))
+			{
+				message("502 Sorry, we do not allow this operation");
+				if (LogLevel > 5)
+					sm_syslog(LOG_INFO, e->e_id,
+						"%.100s: %s [rejected]",
+						CurSmtpClient,
+						shortenstring(inp, MAXSHORTSTR));
+				break;
+			}
+
 			if (strlen(p) <= 0)
 			{
 				usrerr("500 Parameter required");
@@ -934,15 +944,24 @@ smtp(nullserver, e)
 				sm_syslog(LOG_INFO, e->e_id,
 					"%.100s: ETRN %s",
 					CurSmtpClient,
-					shortenstring(p, 203));
+					shortenstring(p, MAXSHORTSTR));
 
 			id = p;
 			if (*id == '@')
 				id++;
 			else
 				*--id = '@';
-			QueueLimitRecipient = id;
+				  
+			if ((new = (QUEUE_CHAR *)malloc(sizeof(QUEUE_CHAR))) == NULL)
+			{
+				syserr("500 ETRN out of memory");
+				break;
+			}
+			new->queue_match = id;
+			new->queue_next = NULL;
+			QueueLimitRecipient = new;
 			ok = runqueue(TRUE, TRUE);
+			free(QueueLimitRecipient);
 			QueueLimitRecipient = NULL;
 			if (ok && Errors == 0)
 				message("250 Queuing for node %s started", p);
@@ -976,7 +995,8 @@ doquit:
 			finis();
 
 		  case CMDVERB:		/* set verbose mode */
-			if (bitset(PRIV_NOEXPN, PrivacyFlags))
+			if (bitset(PRIV_NOEXPN, PrivacyFlags) ||
+			    bitset(PRIV_NOVERB, PrivacyFlags))
 			{
 				/* this would give out the same info */
 				message("502 Verbose unavailable");
@@ -1033,7 +1053,7 @@ doquit:
 			}
 
 			usrerr("500 Command unrecognized: \"%s\"",
-				shortenstring(inp, 203));
+				shortenstring(inp, MAXSHORTSTR));
 			break;
 
 		  default:
@@ -1095,7 +1115,7 @@ checksmtpattack(pcounter, maxcount, cname, e)
 
 static char *
 skipword(p, w)
-	register char *p;
+	register char *volatile p;
 	char *w;
 {
 	register char *q;
@@ -1115,7 +1135,7 @@ skipword(p, w)
 	{
 	  syntax:
 		usrerr("501 Syntax error in parameters scanning \"%s\"",
-			shortenstring(firstp, 203));
+			shortenstring(firstp, MAXSHORTSTR));
 		return (NULL);
 	}
 	*p++ = '\0';
@@ -1461,6 +1481,8 @@ help(topic)
 
 	if (DontLockReadFiles)
 		sff |= SFF_NOLOCK;
+	if (!bitset(DBS_HELPFILEINUNSAFEDIRPATH, DontBlameSendmail))    
+		sff |= SFF_SAFEDIRPATH;
 
 	if (HelpFile == NULL ||
 	    (hf = safefopen(HelpFile, O_RDONLY, 0444, sff)) == NULL)

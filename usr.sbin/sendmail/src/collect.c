@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)collect.c	8.72 (Berkeley) 10/6/97";
+static char sccsid[] = "@(#)collect.c	8.89 (Berkeley) 6/4/98";
 #endif /* not lint */
 
 # include <errno.h>
@@ -64,7 +42,7 @@ static char sccsid[] = "@(#)collect.c	8.72 (Berkeley) 10/6/97";
 */
 
 static jmp_buf	CtxCollectTimeout;
-static void	collecttimeout();
+static void	collecttimeout __P((time_t));
 static bool	CollectProgress;
 static EVENT	*CollectTimeout;
 
@@ -102,9 +80,9 @@ collect(fp, smtpmode, hdrp, e)
 	u_char peekbuf[8];
 	char dfname[MAXQFNAME];
 	char bufbuf[MAXLINE];
-	extern bool isheader();
-	extern void eatheader();
-	extern void tferror();
+	extern bool isheader __P((char *));
+	extern void eatheader __P((ENVELOPE *, bool));
+	extern void tferror __P((FILE *volatile, ENVELOPE *));
 
 	headeronly = hdrp != NULL;
 
@@ -181,6 +159,8 @@ collect(fp, smtpmode, hdrp, e)
 
 	for (;;)
 	{
+		extern int chompheader __P((char *, bool, HDR **, ENVELOPE *));
+
 		if (tTd(30, 35))
 			printf("top, istate=%d, mstate=%d\n", istate, mstate);
 		for (;;)
@@ -333,14 +313,12 @@ nextstate:
 				istate, mstate, buf);
 		switch (mstate)
 		{
-			extern int chompheader();
-
 		  case MS_UFROM:
 			mstate = MS_HEADER;
 #ifndef NOTUNIX
 			if (strncmp(buf, "From ", 5) == 0)
 			{
-				extern void eatfrom();
+				extern void eatfrom __P((char *volatile, ENVELOPE *));
 
 				bp = buf;
 				eatfrom(buf, e);
@@ -376,7 +354,10 @@ nextstate:
 				bp++;
 			*bp = '\0';
 			if (bitset(H_EOH, chompheader(buf, FALSE, hdrp, e)))
+			{
 				mstate = MS_BODY;
+				goto nextstate;
+			}
 			break;
 
 		  case MS_BODY:
@@ -456,16 +437,16 @@ readerr:
 			sm_syslog(LOG_NOTICE, e->e_id,
 			    "collect: %s on connection from %.100s, sender=%s: %s",
 			    problem, host,
-			    shortenstring(e->e_from.q_paddr, 203),
+			    shortenstring(e->e_from.q_paddr, MAXSHORTSTR),
 			    errstring(errno));
 		if (feof(fp))
 			usrerr("451 collect: %s on connection from %s, from=%s",
 				problem, host,
-				shortenstring(e->e_from.q_paddr, 203));
+				shortenstring(e->e_from.q_paddr, MAXSHORTSTR));
 		else
 			syserr("451 collect: %s on connection from %s, from=%s",
 				problem, host,
-				shortenstring(e->e_from.q_paddr, 203));
+				shortenstring(e->e_from.q_paddr, MAXSHORTSTR));
 
 		/* don't return an error indication */
 		e->e_to = NULL;
@@ -490,11 +471,7 @@ readerr:
 
 	/* collect statistics */
 	if (OpMode != MD_VERIFY)
-	{
-		extern void markstats();
-
-		markstats(e, (ADDRESS *) NULL);
-	}
+		markstats(e, (ADDRESS *) NULL, FALSE);
 
 #if _FFR_DSN_RRT_OPTION
 	/*
@@ -527,7 +504,7 @@ readerr:
 		/* no valid recipient headers */
 		register ADDRESS *q;
 		char *hdr = NULL;
-		extern void addheader();
+		extern void addheader __P((char *, char *, HDR **));
 
 		/* create an Apparently-To: field */
 		/*    that or reject the message.... */
@@ -634,29 +611,40 @@ collecttimeout(timeout)
 
 void
 tferror(tf, e)
-	FILE *tf;
+	FILE *volatile tf;
 	register ENVELOPE *e;
 {
 	setstat(EX_IOERR);
 	if (errno == ENOSPC)
 	{
+#if STAT64 > 0
+		struct stat64 st;
+#else
 		struct stat st;
+#endif
 		long avail;
 		long bsize;
 		extern long freediskspace __P((char *, long *));
 
 		e->e_flags |= EF_NO_BODY_RETN;
-		if (fstat(fileno(tf), &st) < 0)
-			st.st_size = 0;
+
+		if (
+#if STAT64 > 0
+		    fstat64(fileno(tf), &st) 
+#else
+		    fstat(fileno(tf), &st) 
+#endif
+		    < 0)
+		  st.st_size = 0;
 		(void) freopen(queuename(e, 'd'), "w", tf);
 		if (st.st_size <= 0)
 			fprintf(tf, "\n*** Mail could not be accepted");
 		else if (sizeof st.st_size > sizeof (long))
-			fprintf(tf, "\n*** Mail of at least %qd bytes could not be accepted\n",
-				st.st_size);
+			fprintf(tf, "\n*** Mail of at least %s bytes could not be accepted\n",
+				quad_to_string(st.st_size));
 		else
-			fprintf(tf, "\n*** Mail of at least %ld bytes could not be accepted\n",
-				(long) st.st_size);
+			fprintf(tf, "\n*** Mail of at least %lu bytes could not be accepted\n",
+				(unsigned long) st.st_size);
 		fprintf(tf, "*** at %s due to lack of disk space for temp file.\n",
 			MyHostName);
 		avail = freediskspace(QueueDir, &bsize);
@@ -674,7 +662,10 @@ tferror(tf, e)
 	}
 	else
 		syserr("collect: Cannot write tf%s", e->e_id);
-	(void) freopen("/dev/null", "w", tf);
+	if (freopen("/dev/null", "w", tf) == NULL)
+		sm_syslog(LOG_ERR, e->e_id,
+			  "tferror: freopen(\"/dev/null\") failed: %s",
+			  errstring(errno));
 }
 /*
 **  EATFROM -- chew up a UNIX style from line and process
@@ -709,7 +700,7 @@ char	*MonthList[] =
 
 void
 eatfrom(fm, e)
-	char *fm;
+	char *volatile fm;
 	register ENVELOPE *e;
 {
 	register char *p;

@@ -1,37 +1,15 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  *
- *	@(#)conf.h	8.335 (Berkeley) 10/24/97
+ *	@(#)conf.h	8.372 (Berkeley) 6/4/98
  */
 
 /*
@@ -48,7 +26,10 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 # include <sys/param.h>
 # include <sys/types.h>
 # include <sys/stat.h>
+#ifndef __QNX__
+/* in QNX this grabs bogus LOCK_* manifests */
 # include <sys/file.h>
+#endif
 # include <sys/wait.h>
 # include <limits.h>
 # include <fcntl.h>
@@ -80,6 +61,9 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 # define MAXMIMENESTING	20		/* max MIME multipart nesting */
 # define QUEUESEGSIZE	1000		/* increment for queue size */
 # define MAXQFNAME	20		/* max qf file name length */
+# define MACBUFSIZE	4096		/* max expanded macro buffer size */
+# define TOBUFSIZE	512		/* max buffer to hold address list */
+# define MAXSHORTSTR	203		/* max short string length */
 
 /**********************************************************************
 **  Compilation options.
@@ -167,11 +151,12 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 **  HP-UX -- tested for 8.07, 9.00, and 9.01.
 **
 **	If V4FS is defined, compile for HP-UX 10.0.
+**	11.x support from Richard Allen <ra@hp.is>.
 */
 
 #ifdef __hpux
 		/* common definitions for HP-UX 9.x and 10.x */
-# undef m_flags		/* conflict between db.h & sys/sysmacros.h on HP 300 */
+# undef m_flags		/* conflict between Berkeley DB 1.85 db.h & sys/sysmacros.h on HP 300 */
 # define SYSTEM5	1	/* include all the System V defines */
 # define HASINITGROUPS	1	/* has initgroups(3) call */
 # define HASFCHMOD	1	/* has fchmod(2) syscall */
@@ -186,7 +171,9 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 # ifndef HASGETUSERSHELL
 #  define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps */
 # endif
-# define syslog		hard_syslog
+# ifndef HPUX11
+#  define syslog	hard_syslog
+# endif
 # define SAFENFSPATHCONF 1	/* pathconf(2) pessimizes on NFS filesystems */
 
 # ifdef V4FS
@@ -213,6 +200,8 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #  endif
 #  ifdef __STDC__
 extern void	hard_syslog(int, char *, ...);
+#  else
+extern void	hard_syslog();
 #  endif
 #  define FDSET_CAST	(int *)	/* cast for fd_set parameters to select */
 # endif
@@ -228,10 +217,18 @@ extern void	hard_syslog(int, char *, ...);
 # define _AIX3		1	/* pull in AIX3 stuff */
 # define USESETEUID	1	/* seteuid(2) works */
 # define TZ_TYPE	TZ_NAME	/* use tzname[] vector */
-# define SOCKADDR_LEN_T	size_t	/* e.g., arg#3 to accept, getsockname */
 # define SOCKOPT_LEN_T	size_t	/* arg#5 to getsockopt */
 # if _AIX4 >= 40200
 #  define HASSETREUID	1	/* setreuid(2) works as of AIX 4.2 */
+#  define SOCKADDR_LEN_T	size_t	/* e.g., arg#3 to accept, getsockname */
+# endif
+# if defined(_ILS_MACROS)	/* IBM versions aren't side-effect clean */
+#  undef isascii
+#  define isascii(c)		!(c & ~0177)
+#  undef isdigit
+#  define isdigit(__a)		(_IS(__a,_ISDIGIT))
+#  undef isspace
+#  define isspace(__a)		(_IS(__a,_ISSPACE))
 # endif
 #endif
 
@@ -348,6 +345,8 @@ typedef int		pid_t;
 # define SFS_TYPE	SFS_4ARGS	/* four argument statfs() call */
 # define SFS_BAVAIL	f_bfree		/* alternate field name */
 # ifdef IRIX6
+#  define STAT64        1
+#  define QUAD_T	unsigned long long
 #  define LA_TYPE	LA_IRIX6	/* figure out at run time */
 #  define SAFENFSPATHCONF 0	/* pathconf(2) lies on NFS filesystems */
 #  define SYSLOG_BUFSIZE 512
@@ -355,17 +354,21 @@ typedef int		pid_t;
 #  define LA_TYPE	LA_INT
 
 #  ifdef IRIX64
+#   define STAT64       1
+#   define QUAD_T	unsigned long long
 #   define NAMELISTMASK	0x7fffffffffffffff	/* mask for nlist() values */
 #  else
+#   define STAT64       0
 #   define NAMELISTMASK	0x7fffffff		/* mask for nlist() values */
 #  endif
 # endif
-# if defined(IRIX64) || defined(IRIX5) 
+# if defined(IRIX64) || defined(IRIX5) || defined(IRIX6)
 #  include <sys/cdefs.h>
 #  include <paths.h>
 #  define ARGV_T	char *const *
 #  define HASSETRLIMIT	1	/* has setrlimit(2) syscall */
 #  define HASGETDTABLESIZE 1    /* has getdtablesize(2) syscall */
+#  define HASSTRERROR	1	/* has strerror(3) */
 # else
 #  define ARGV_T	const char **
 #  define WAITUNION	1	/* use "union wait" as wait argument type */
@@ -427,15 +430,23 @@ typedef int		pid_t;
 #  endif
 #  if SOLARIS >= 20500 || (SOLARIS < 10000 && SOLARIS >= 205)
 #   define HASSETREUID	1		/* setreuid works as of 2.5 */
-#   ifndef LA_TYPE
-#    define LA_TYPE	LA_KSTAT	/* use kstat(3k) -- may work in < 2.5 */
+#   if SOLARIS < 207 || (SOLARIS > 10000 && SOLARIS < 20700)
+#    ifndef LA_TYPE
+#     define LA_TYPE	LA_KSTAT	/* use kstat(3k) -- may work in < 2.5 */
+#    endif
 #   endif
 #  endif
 #  if SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
 #   define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
 #  endif
+#  if SOLARIS >= 20700 || (SOLARIS < 10000 && SOLARIS >= 207)
+#   ifndef LA_TYPE
+#    define LA_TYPE	LA_SUBR		/* getloadavg(3c) appears in 2.7 */
+#   endif
+#   define HASGETUSERSHELL 1	/* getusershell(3c) bug fixed in 2.7 */
+#  endif
 #  ifndef HASGETUSERSHELL
-#   define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps */
+#   define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps pre-2.7 */
 #  endif
 
 # else
@@ -449,6 +460,9 @@ typedef int		pid_t;
 #  define TZ_TYPE	TZ_TM_ZONE	/* use tm->tm_zone */
 #  include <memory.h>
 #  include <vfork.h>
+#  ifdef __GNUC__
+#   define strtoul	strtol	/* gcc library bogosity */
+#  endif
 
 #  ifdef SUNOS403
 			/* special tweaking for SunOS 4.0.3 */
@@ -603,13 +617,16 @@ extern long	dgux_inet_addr();
 #  define HASFLOCK	1	/* has flock(2) call */
 # endif
 # define LA_TYPE	LA_ALPHAOSF
-# define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
+# define SFS_TYPE	SFS_STATVFS	/* use <sys/statvfs.h> statfs() impl */
 # ifndef _PATH_VENDOR_CF
 #  define _PATH_VENDOR_CF	"/var/adm/sendmail/sendmail.cf"
 # endif  
 # ifndef _PATH_SENDMAILPID
 #  define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
 # endif
+# define bcopy(s, d, l)		(memmove((d), (s), (l)))
+# define bzero(d, l)		(memset((d), '\0', (l)))
+# define bcmp(s, d, l)		(memcmp((s), (d), (l)))
 #endif
 
 
@@ -675,6 +692,7 @@ typedef int		pid_t;
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # define BSD4_4_SOCKADDR	/* has sa_len */
+# define NEED_PRINTF_PERCENTQ	1	/* doesn't have %lld */
 # define NETLINK	1	/* supports AF_LINK */
 # ifndef LA_TYPE
 #  define LA_TYPE	LA_SUBR
@@ -708,19 +726,55 @@ typedef int		pid_t;
 #  define LA_TYPE	LA_SUBR
 # endif
 # define GIDSET_T	gid_t
+# define QUAD_T		quad_t
 # if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199312
 			/* version 1.1 or later */
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 # else
 			/* version 1.0 or earlier */
-#  ifndef OLD_NEWDB
-#   define OLD_NEWDB	1	/* old version of newdb library */
-#  endif
 #  define SPT_PADCHAR	'\0'	/* pad process title with nulls */
+# endif
+# if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199701	/* on 3.x */
+#  define HASSETUSERCONTEXT 1	/* has setusercontext */
 # endif
 #endif
 
+
+/*
+**  QNX 4.2x
+**	Contributed by Glen McCready <glen@qnx.com>.
+**
+**	Should work with all versions of QNX.
+*/
+
+#if defined(__QNX__)
+# include <unix.h>
+# include <sys/select.h>
+# undef NGROUPS_MAX
+# define HASSETSID      1       /* has the setsid(2) POSIX syscall */
+# define USESETEUID     1       /* has useable seteuid(2) call */
+# define HASFCHMOD      1       /* has fchmod(2) syscall */
+# define HASGETDTABLESIZE 1     /* has getdtablesize(2) call */
+# define HASSETREUID    1       /* has setreuid(2) call */
+# define HASSTRERROR	1	/* has strerror(3) */
+# define HASFLOCK	0
+# undef HASINITGROUPS           /* has initgroups(3) call */
+# define NEEDGETOPT     1       /* use sendmail's getopt */
+# define IP_SRCROUTE    1       /* can check IP source routing */
+# define TZ_TYPE        TZ_TMNAME       /* use tmname variable */
+# define GIDSET_T       gid_t
+# define LA_TYPE        LA_ZERO
+# define SFS_TYPE       SFS_NONE
+# define SPT_TYPE       SPT_REUSEARGV
+# define SPT_PADCHAR    '\0'    /* pad process title with nulls */
+# define HASGETUSERSHELL 0
+# define E_PSEUDOBASE	512
+# define bcopy(s, d, l)		(memmove((d), (s), (l)))
+# define bzero(d, l)		(memset((d), '\0', (l)))
+# define bcmp(s, d, l)		(memcmp((s), (d), (l)))
+# define _FILE_H_INCLUDED
+#endif
 
 
 /*
@@ -742,12 +796,14 @@ typedef int		pid_t;
 # define HASUNAME	1	/* has uname(2) syscall */
 # define HASSTRERROR	1	/* has strerror(3) */
 # define HAS_ST_GEN	1	/* has st_gen field in stat struct */
+# define NEED_PRINTF_PERCENTQ	1	/* doesn't have %lld */
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # define BSD4_4_SOCKADDR	/* has sa_len */
 # define NETLINK	1	/* supports AF_LINK */
 # define SAFENFSPATHCONF 1	/* pathconf(2) pessimizes on NFS filesystems */
 # define GIDSET_T	gid_t
+# define QUAD_T		unsigned long long
 # ifndef LA_TYPE
 #  define LA_TYPE	LA_SUBR
 # endif
@@ -905,7 +961,6 @@ extern int		errno;
 /* SCO OpenServer 5 */
 #if _SCO_DS >= 1
 # include <paths.h>
-# define _SCO_unix_4_2
 # define SIOCGIFNUM_IS_BROKEN 1	/* SIOCGIFNUM returns bogus value */
 # define HASSNPRINTF	1	/* has snprintf(3) call */
 # define HASFCHMOD	1	/* has fchmod(2) call */
@@ -918,8 +973,12 @@ extern int		errno;
 #  define LA_TYPE	LA_DEVSHORT
 # endif
 # define _PATH_AVENRUN	"/dev/table/avenrun"
-# define SOCKADDR_LEN_T	size_t	/* e.g., arg#3 to accept, getsockname */
-# define SOCKOPT_LEN_T	size_t	/* arg#5 to getsockopt */
+# ifndef _SCO_unix_4_2
+#  define _SCO_unix_4_2
+# else
+#  define SOCKADDR_LEN_T	size_t	/* e.g., arg#3 to accept, getsockname */
+#  define SOCKOPT_LEN_T		size_t	/* arg#5 to getsockopt */
+# endif
 #endif
 
 /* SCO UNIX 3.2v4.2/Open Desktop 3.0 */
@@ -1557,11 +1616,16 @@ typedef int		pid_t;
 #  define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps */
 # endif
 
-/* avoid m_flags conflict between db.h & sys/sysmacros.h on HIUX 3050 */
+/*
+**  avoid m_flags conflict between Berkeley DB 1.85 db.h & sys/sysmacros.h
+**  on HIUX 3050
+*/
 # undef m_flags
 
 # ifdef __STDC__
 extern int	syslog(int, char *, ...);
+#else
+extern int	syslog();
 # endif
 
 #endif
@@ -1775,7 +1839,7 @@ extern int	errno;
 /*
 **  Pyramid DC/OSx
 **
-**	From Earle Ake <akee@wpdis01.wpafb.af.mil>.
+**	From Earle Ake <akee@wpdiss1.wpafb.af.mil>.
 */
 
 #ifdef DCOSx
@@ -1848,8 +1912,18 @@ typedef struct msgb		mblk_t;
 **	Contributed by Gerald Rinske <Gerald.Rinske@mch.sni.de>
 **	of Siemens Business Services VAS.
 */
-#ifdef _sinix_
+#ifdef sinix
 # define SYSLOG_BUFSIZE		1024
+#endif
+
+/*
+**  CRAY T3E
+**
+**	Contributed by Manu Mahonen <mailadm@csc.fi>
+**	of Center for Scientific Computing.
+*/
+#ifdef _CRAY
+# define GET_IPOPT_DST(dst)	*(struct in_addr *)&(dst)
 #endif
 
 /**********************************************************************
@@ -1947,6 +2021,11 @@ typedef struct msgb		mblk_t;
 # if _POSIX_VERSION >= 199500 && !defined(USESETEUID)
 #  define USESETEUID	1	/* has useable seteuid(2) call */
 # endif
+# ifndef bcopy
+#  define bcopy(s, d, l)	(memmove((d), (s), (l)))
+#  define bzero(d, l)		(memset((d), '\0', (l)))
+#  define bcmp(s, d, l)		(memcmp((s), (d), (l)))
+# endif
 #endif
 /*
 **  Tweaking for systems that (for example) claim to be BSD or POSIX
@@ -1969,6 +2048,10 @@ typedef struct msgb		mblk_t;
 # undef bcopy			/* despite SystemV claim, uses BSD bcopy */
 # undef bzero			/* despite SystemV claim, uses BSD bzero */
 # undef bcmp			/* despite SystemV claim, uses BSD bcmp */
+#endif
+
+#if defined(sun) && !defined(BSD) && !defined(SOLARIS) && !defined(__svr4__) && !defined(__SVR4)
+# undef bcopy			/* SunOS 4 doesn't have memmove() */
 #endif
 
 
@@ -2023,10 +2106,6 @@ typedef struct msgb		mblk_t;
 # define HASULIMIT	0	/* assume no ulimit(2) support */
 #endif
 
-#ifndef OLD_NEWDB
-# define OLD_NEWDB	0	/* assume newer version of newdb */
-#endif
-
 #ifndef SECUREWARE
 # define SECUREWARE	0	/* assume no SecureWare C2 auditing hooks */
 #endif
@@ -2075,6 +2154,10 @@ typedef struct msgb		mblk_t;
 
 #ifndef SOCKOPT_LEN_T
 # define SOCKOPT_LEN_T	int
+#endif
+
+#ifndef QUAD_T
+# define QUAD_T	unsigned long
 #endif
 /**********************************************************************
 **  Remaining definitions should never have to be changed.  They are
@@ -2165,7 +2248,11 @@ typedef struct msgb		mblk_t;
 # include "cdefs.h"
 #endif
 
-#if NAMED_BIND && !defined(__ksr__)
+#if HESIOD && !defined(NAMED_BIND)
+# define NAMED_BIND	1	/* not one without the other */
+#endif
+
+#if NAMED_BIND && !defined(__ksr__) && !defined(h_errno)
 extern int	h_errno;
 #endif
 
@@ -2248,6 +2335,18 @@ struct utsname
 # define LOCK_UN	0x08	/* unlock */
 #endif
 
+#ifndef S_IXOTH
+# define S_IXOTH	(S_IEXEC >> 6)
+#endif
+
+#ifndef S_IXGRP
+# define S_IXGRP	(S_IEXEC >> 3)
+#endif
+
+#ifndef S_IXUSR
+# define S_IXUSR	(S_IEXEC)
+#endif
+
 #ifndef SEEK_SET
 # define SEEK_SET	0
 # define SEEK_CUR	1
@@ -2278,26 +2377,6 @@ typedef void		(*sigfunc_t) __P((int));
 /* size of syslog buffer */
 #ifndef SYSLOG_BUFSIZE
 # define SYSLOG_BUFSIZE	1024
-#endif
-
-/*
-**  Size of tobuf (deliver.c)
-**	Tweak this to match your syslog implementation.  It will have to
-**	allow for the extra information printed.
-*/
-
-#ifndef TOBUFSIZE
-# if (SYSLOG_BUFSIZE) > 768
-#  define TOBUFSIZE	(SYSLOG_BUFSIZE - 512)
-# else
-#  define TOBUFSIZE	(SYSLOG_BUFSIZE / 2)
-# endif
-#endif
-
-/* TOBUFSIZE must never be permitted to exceed MAXLINE - 128 */
-#if TOBUFSIZE > (MAXLINE - 128)
-# undef TOBUFSIZE
-# define TOBUFSIZE	(MAXLINE - 128)
 #endif
 
 /*

@@ -1,45 +1,24 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)conf.c	8.379 (Berkeley) 10/20/97";
+static char sccsid[] = "@(#)conf.c	8.431 (Berkeley) 6/25/98";
 #endif /* not lint */
 
 # include "sendmail.h"
 # include "pathnames.h"
 # include <sys/ioctl.h>
 # include <sys/param.h>
+# include <limits.h>
 
 /*
 **  CONF.C -- Sendmail Configuration Tables.
@@ -61,8 +40,6 @@ static char sccsid[] = "@(#)conf.c	8.379 (Berkeley) 10/20/97";
 **		protocols.  If you find yourself playing with
 **		this file too much, you may be making a mistake!
 */
-
-
 
 
 /*
@@ -140,15 +117,63 @@ struct prival PrivacyValues[] =
 	{ "novrfy",		PRIV_NOVRFY		},
 	{ "restrictmailq",	PRIV_RESTRICTMAILQ	},
 	{ "restrictqrun",	PRIV_RESTRICTQRUN	},
-#if _FFR_PRIVACY_NOETRN
 	{ "noetrn",		PRIV_NOETRN		},
-#endif
+	{ "noverb",		PRIV_NOVERB		},
 	{ "authwarnings",	PRIV_AUTHWARNINGS	},
 	{ "noreceipts",		PRIV_NORECEIPTS		},
 	{ "goaway",		PRIV_GOAWAY		},
 	{ NULL,			0			}
 };
 
+/*
+**  DontBlameSendmail values
+*/
+struct dbsval DontBlameSendmailValues[] =
+{
+	{ "safe",			DBS_SAFE			},
+	{ "assumesafechown",		DBS_ASSUMESAFECHOWN		},
+	{ "groupwritabledirpathsafe",	DBS_GROUPWRITABLEDIRPATHSAFE	},
+	{ "groupwritableforwardfilesafe",
+					DBS_GROUPWRITABLEFORWARDFILESAFE },
+	{ "groupwritableincludefilesafe",
+					DBS_GROUPWRITABLEINCLUDEFILESAFE },
+	{ "groupwritablealiasfile",	DBS_GROUPWRITABLEALIASFILE	},
+	{ "worldwritablealiasfile",	DBS_WORLDWRITABLEALIASFILE	},
+	{ "forwardfileinunsafedirpath",	DBS_FORWARDFILEINUNSAFEDIRPATH	},
+	{ "includefileinunsafedirpath",	DBS_INCLUDEFILEINUNSAFEDIRPATH	},
+	{ "mapinunsafedirpath",		DBS_MAPINUNSAFEDIRPATH	},
+	{ "linkedaliasfileinwritabledir",
+					DBS_LINKEDALIASFILEINWRITABLEDIR },
+	{ "linkedclassfileinwritabledir",
+					DBS_LINKEDCLASSFILEINWRITABLEDIR },
+	{ "linkedforwardfileinwritabledir",
+					DBS_LINKEDFORWARDFILEINWRITABLEDIR },
+	{ "linkedincludefileinwritabledir",
+					DBS_LINKEDINCLUDEFILEINWRITABLEDIR },
+	{ "linkedmapinwritabledir",	DBS_LINKEDMAPINWRITABLEDIR	},
+	{ "linkedserviceswitchfileinwritabledir",
+					DBS_LINKEDSERVICESWITCHFILEINWRITABLEDIR },
+	{ "filedeliverytohardlink",	DBS_FILEDELIVERYTOHARDLINK	},
+	{ "filedeliverytosymlink",	DBS_FILEDELIVERYTOSYMLINK	},
+	{ "writemaptohardlink",		DBS_WRITEMAPTOHARDLINK		},
+	{ "writemaptosymlink",		DBS_WRITEMAPTOSYMLINK		},
+	{ "writestatstohardlink",	DBS_WRITESTATSTOHARDLINK	},
+	{ "writestatstosymlink",	DBS_WRITESTATSTOSYMLINK		},
+	{ "forwardfileingroupwritabledirpath",
+					DBS_FORWARDFILEINGROUPWRITABLEDIRPATH },
+	{ "includefileingroupwritabledirpath",
+					DBS_INCLUDEFILEINGROUPWRITABLEDIRPATH },
+	{ "classfileinunsafedirpath",	DBS_CLASSFILEINUNSAFEDIRPATH	},
+	{ "errorheaderinunsafedirpath",	DBS_ERRORHEADERINUNSAFEDIRPATH	},
+	{ "helpfileinunsafedirpath",	DBS_HELPFILEINUNSAFEDIRPATH	},
+	{ "forwardfileinunsafedirpathsafe",
+					DBS_FORWARDFILEINUNSAFEDIRPATHSAFE },
+	{ "includefileinunsafedirpathsafe",
+					DBS_INCLUDEFILEINUNSAFEDIRPATHSAFE },
+	{ "runprograminunsafedirpath",	DBS_RUNPROGRAMINUNSAFEDIRPATH	},
+	{ "runwritableprogram",		DBS_RUNWRITABLEPROGRAM		},
+	{ NULL,				0				}
+};
 
 
 /*
@@ -190,12 +215,13 @@ setdefaults(e)
 	register ENVELOPE *e;
 {
 	int i;
+	struct passwd *pw;
 	char buf[MAXNAME];
-	extern void inittimeouts();
-	extern void setdefuser();
-	extern void setupmaps();
-	extern void setupmailers();
-	extern void setupheaders();
+	extern void inittimeouts __P((char *));
+	extern void setdefuser __P((void));
+	extern void setupmaps __P((void));
+	extern void setupmailers __P((void));
+	extern void setupheaders __P((void));
 
 	SpaceSub = ' ';				/* option B */
 	QueueLA = 8;				/* option x */
@@ -206,8 +232,26 @@ setdefaults(e)
 	QueueFactor = WkRecipFact * 20;		/* option q */
 	FileMode = (RealUid != geteuid()) ? 0644 : 0600;
 						/* option F */
-	DefUid = 1;				/* option u */
-	DefGid = 1;				/* option g */
+
+	if (((pw = getpwnam("mailnull")) != NULL && pw->pw_uid != 0) ||
+	    ((pw = getpwnam("sendmail")) != NULL && pw->pw_uid != 0) ||
+	    ((pw = getpwnam("daemon")) != NULL && pw->pw_uid != 0))
+	{
+		DefUid = pw->pw_uid;		/* option u */
+		DefGid = pw->pw_gid;		/* option g */
+		DefUser = newstr(pw->pw_name);
+	}
+	else
+	{
+		DefUid = 1;			/* option u */
+		DefGid = 1;			/* option g */
+		setdefuser();
+	}
+	TrustedFileUid = 0;
+	if (tTd(37, 4))
+		printf("setdefaults: DefUser=%s, DefUid=%d, DefGid=%d\n",
+		       DefUser != NULL ? DefUser : "<1:1>",
+		       (int) DefUid, (int) DefGid);
 	CheckpointInterval = 10;		/* option C */
 	MaxHopCount = 25;			/* option h */
 	e->e_sendmode = SM_FORK;		/* option d */
@@ -217,7 +261,8 @@ setdefaults(e)
 	MciCacheTimeout = 5 MINUTES;		/* option K */
 	LogLevel = 9;				/* option L */
 	inittimeouts(NULL);			/* option r */
-	PrivacyFlags = 0;			/* option p */
+	PrivacyFlags = PRIV_PUBLIC;		/* option p */
+	DontBlameSendmail = DBS_SAFE;		/* DontBlameSendmail option */
 #if MIME8TO7
 	MimeMode = MM_CVTMIME|MM_PASS8BIT;	/* option 8 */
 #else
@@ -244,7 +289,9 @@ setdefaults(e)
 		_PATH_VARTMP,
 		_PATH_VARTMP[sizeof _PATH_VARTMP - 2] == '/' ? "" : "/");
 	DeadLetterDrop = newstr(buf);
-	setdefuser();
+#ifdef HESIOD_INIT
+	HesiodContext = NULL;
+#endif
 	setupmaps();
 	setupmailers();
 	setupheaders();
@@ -265,6 +312,9 @@ setdefuser()
 	defpwent = sm_getpwuid(DefUid);
 	snprintf(defuserbuf, sizeof defuserbuf, "%s",
 		defpwent == NULL ? "nobody" : defpwent->pw_name);
+	if (tTd(37, 4))
+		printf("setdefuser: DefUid=%d, DefUser=%s\n",
+		       (int) DefUid, DefUser);
 }
 /*
 **  SETUPMAILERS -- initialize default mailers
@@ -274,7 +324,7 @@ void
 setupmailers()
 {
 	char buf[100];
-	extern void makemailer();
+	extern void makemailer __P((char *));
 
 	strcpy(buf, "prog, P=/bin/sh, F=lsoDq9, T=DNS/RFC822/X-Unix, A=sh -c \201u");
 	makemailer(buf);
@@ -396,6 +446,12 @@ setupmaps()
 		dequote_init, null_map_open, null_map_close,
 		dequote_map, null_map_store);
 
+#ifdef MAP_REGEX
+	MAPDEF("regex", NULL, 0,
+		regex_map_init, null_map_open, null_map_close,
+		regex_map_lookup, null_map_store);
+#endif
+
 #if USERDB
 	/* user database */
 	MAPDEF("userdb", ".db", 0,
@@ -423,7 +479,7 @@ setupmaps()
 		map_parseargs, null_map_open, null_map_close,
 		null_map_lookup, null_map_store);
 
-#if _FFR_SYSLOG_MAP
+#if _FFR_MAP_SYSLOG
 	/* syslog map -- logs information to syslog */
 	MAPDEF("syslog", NULL, 0,
 	       syslog_map_parseargs, null_map_open, null_map_close,
@@ -758,10 +814,14 @@ switch_map_find(service, maptype, mapreturn)
 	{
 		/* (re)read service switch */
 		register FILE *fp;
+		int sff = SFF_REGONLY|SFF_OPENASROOT|SFF_NOLOCK;
+
+		if (!bitset(DBS_LINKEDSERVICESWITCHFILEINWRITABLEDIR, DontBlameSendmail))
+			sff |= SFF_NOWLINK;
 
 		if (ConfigFileRead)
 			ServiceCacheTime = now;
-		fp = fopen(ServiceSwitchFile, "r");
+		fp = safefopen(ServiceSwitchFile, O_RDONLY, 0, sff);
 		if (fp != NULL)
 		{
 			char buf[MAXLINE];
@@ -830,38 +890,42 @@ switch_map_find(service, maptype, mapreturn)
 	}
 #endif
 
+#if !defined(_USE_SUN_NSSWITCH_)
 	/* if the service file doesn't work, use an absolute fallback */
+# ifdef _USE_DEC_SVC_CONF_
   punt:
+# endif
 	for (svcno = 0; svcno < MAXMAPACTIONS; svcno++)
 		mapreturn[svcno] = 0;
 	svcno = 0;
 	if (strcmp(service, "aliases") == 0)
 	{
 		maptype[svcno++] = "files";
-#ifdef AUTO_NIS_ALIASES
-# ifdef NISPLUS
+# ifdef AUTO_NIS_ALIASES
+#  ifdef NISPLUS
 		maptype[svcno++] = "nisplus";
-# endif
-# ifdef NIS
+#  endif
+#  ifdef NIS
 		maptype[svcno++] = "nis";
+#  endif
 # endif
-#endif
 		return svcno;
 	}
 	if (strcmp(service, "hosts") == 0)
 	{
-# if NAMED_BIND
+#  if NAMED_BIND
 		maptype[svcno++] = "dns";
-# else
-#  if defined(sun) && !defined(BSD) && !defined(_USE_SUN_NSSWITCH_)
+#  else
+#   if defined(sun) && !defined(BSD)
 		/* SunOS */
 		maptype[svcno++] = "nis";
+#   endif
 #  endif
-# endif
 		maptype[svcno++] = "files";
 		return svcno;
 	}
 	return -1;
+#endif
 }
 /*
 **  USERNAME -- return the user id of the logged in user.
@@ -959,7 +1023,7 @@ ttypath()
 	}
 
 	/* see if we have write permission */
-	if (stat(pathn, &stbuf) < 0 || !bitset(02, stbuf.st_mode))
+	if (stat(pathn, &stbuf) < 0 || !bitset(S_IWOTH, stbuf.st_mode))
 	{
 		errno = 0;
 		return (NULL);
@@ -1214,6 +1278,15 @@ init_md(argc, argv)
 	/* keep gethostby*() from stripping the local domain name */
 	set_domain_trim_off();
 #endif
+#ifdef __QNX__
+	/*
+	** Due to QNX's network distributed nature, you can target a tcpip
+	** stack on a different node in the qnx network; this patch lets
+	** this feature work.  The __sock_locate() must be done before the
+	** environment is clear.
+	*/
+	__sock_locate();
+#endif
 #if SECUREWARE || defined(_SCO_unix_)
 	set_auth_parameters(argc, argv);
 
@@ -1326,10 +1399,6 @@ init_vendor_macros(e)
 #if (LA_TYPE == LA_INT) || (LA_TYPE == LA_FLOAT) || (LA_TYPE == LA_SHORT)
 
 #include <nlist.h>
-
-#ifdef IRIX64
-# define nlist		nlist64
-#endif
 
 /* _PATH_UNIX should be defined in <paths.h> */
 #ifndef _PATH_UNIX
@@ -1661,95 +1730,12 @@ getla()
 #endif /* LA_TYPE == LA_PROCSTR */
 
 #if LA_TYPE == LA_IRIX6
-
-#include <nlist.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#define	X_AVENRUN	0
-struct nlist	Nl32[] =
-{
-	{ LA_AVENRUN },
-	{ 0 },
-};
-struct nlist64	Nl64[] =
-{
-	{ LA_AVENRUN },
-	{ 0 },
-};
+#include <sys/sysmp.h>
 
 int getla(void)
 {
 	static int kmem = -1;
-	static enum { getla_none, getla_32, getla_64 } kernel_type =
-					getla_none;
-	uint32_t avenrun[3];
-
-	if (kernel_type == getla_none)
-	{
-		/* Try 32 bit kernel ... */
-		errno = 0;
-		if (nlist(_PATH_UNIX, Nl32) == 0)
-		{
-			if (tTd(3, 20))
-				printf("getla: Kernel is 32bit\n");
-
-			if (Nl32[X_AVENRUN].n_value == 0)
-			{
-				if (tTd(3, 1))
-					printf("getla: nlist(%s, %s) ==> 0\n",
-						_PATH_UNIX, LA_AVENRUN);
-			}
-			else
-				kernel_type = getla_32;
-		}
-		else if (errno != 0)
-		{
-			if (tTd(3, 1))
-				printf("getla: nlist(%s): %s\n",
-					_PATH_UNIX, errstring(errno));
-		}
-		else
-		{
-			if (tTd(3, 20))
-				printf("getla: Kernel is not 32bit\n");
-		}
-
-		/* Try 64 bit kernel ... */
-		errno = 0;
-		if (nlist64(_PATH_UNIX, Nl64) == 0)
-		{
-			if (tTd(3, 20))
-			printf("getla: Kernel is 64bit\n");
-
-			if (Nl64[X_AVENRUN].n_value == 0)
-			{
-				if (tTd(3, 1))
-					printf("getla: nlist(%s, %s) ==> 0\n",
-						_PATH_UNIX, LA_AVENRUN);
-			}
-			else
-				kernel_type = getla_64;
-		}
-		else if (errno != 0)
-		{
-			if (tTd(3, 1))
-				printf("getla: nlist64(%s): %s\n",
-					_PATH_UNIX, errstring(errno));
-		}
-		else
-		{
-			if (tTd(3, 20))
-				printf("getla: Kernel is not 64bit\n");
-		}
-	}
-
-	if (kernel_type == getla_none)
-	{
-		if (tTd(3, 1))
-			printf("getla: Failed to determine kernel type\n");
-		return -1;
-	}
+	int avenrun[3];
 
 	if (kmem < 0)
 	{
@@ -1757,56 +1743,34 @@ int getla(void)
 		if (kmem < 0)
 		{
 			if (tTd(3, 1))
-				printf("getla: open(/dev/kmem): %s\n",
+				printf("getla: open(%s): %s\n", _PATH_KMEM,
 					errstring(errno));
 			return -1;
 		}
 		(void) fcntl(kmem, F_SETFD, 1);
 	}
 
-	switch (kernel_type)
+	if (lseek(kmem, (sysmp(MP_KERNADDR, MPKA_AVENRUN) & 0x7fffffff), SEEK_SET) == -1 || 
+	    read(kmem, (char *)avenrun, sizeof(avenrun)) < sizeof(avenrun)) 
 	{
-	  case getla_none:
+		if (tTd(3, 1))
+			printf("getla: lseek or read: %s\n",
+			       errstring(errno));
 		return -1;
-
-	  case getla_32:
-		if (lseek(kmem, (off_t) Nl32[X_AVENRUN].n_value, SEEK_SET) == -1 ||
-		    read(kmem, (char *) avenrun, sizeof(avenrun)) < sizeof(avenrun))
-		{
-			if (tTd(3, 1))
-				printf("getla: lseek or read: %s\n",
-					errstring(errno));
-			return -1;
-		}
-		break;
-
-	  case getla_64:
-		/* Using of lseek64 is perhaps overkill ... */
-		if (lseek64(kmem, (off64_t) Nl64[X_AVENRUN].n_value, SEEK_SET) == -1 ||
-		    read(kmem, (char *) avenrun, sizeof(avenrun)) <
-					sizeof(avenrun))
-		{
-			if (tTd(3, 1))
-				printf("getla: lseek64 or read: %s\n",
-					errstring(errno));
-			return -1;
-		}
-		break;
 	}
 	if (tTd(3, 5))
 	{
-		printf("getla: avenrun = %ld",
-			(long int) avenrun[0]);
+		printf("getla: avenrun = %ld", (long int) avenrun[0]);
 		if (tTd(3, 15))
 			printf(", %ld, %ld",
-				(long int)avenrun[1],
-				(long int)avenrun[2]);
+			       (long int) avenrun[1], (long int) avenrun[2]);
 		printf("\n");
 	}
+
 	if (tTd(3, 1))
-		printf("getla: %d\n",
-			(int) (avenrun[0] + FSCALE/2) >> FSHIFT);
+		printf("getla: %d\n", (int) (avenrun[0] + FSCALE/2) >> FSHIFT);
 	return ((int) (avenrun[0] + FSCALE/2) >> FSHIFT);
+
 }
 #endif
 
@@ -1906,6 +1870,8 @@ getla()
 #endif /* LA_TYPE == LA_DEVSHORT */
 
 #if LA_TYPE == LA_ALPHAOSF
+struct rtentry;
+struct mbuf;
 # include <sys/table.h>
 
 int getla()
@@ -1973,7 +1939,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.9 1997/11/09 04:05:36 gene Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.10 1998/07/12 19:44:26 millert Exp $";
 #endif /* !lint */
 
 #ifdef apollo
@@ -2065,7 +2031,7 @@ refuseconnections(port)
 	time_t now;
 	static time_t lastconn = (time_t) 0;
 	static int conncnt = 0;
-	extern bool enoughdiskspace();
+	extern bool enoughdiskspace __P((long));
 
 #ifdef XLA
 	if (!xla_smtp_ok())
@@ -2246,18 +2212,23 @@ initsetproctitle(argc, argv, envp)
 	Argv = argv;
 
 	/*
-	**  Find the last environment variable within sendmail's
-	**  process memory area.
-	*/
-	while (i > 0 && (envp[i - 1] < argv[0] ||
-			 envp[i - 1] > (argv[argc - 1] +
-					strlen(argv[argc - 1]) + 1 + envpsize)))
-		i--;
-
-	if (i > 0)
-		LastArgv = envp[i - 1] + strlen(envp[i - 1]);
-	else
-		LastArgv = argv[argc - 1] + strlen(argv[argc - 1]);
+	**  Determine how much space we can use for setproctitle.  
+	**  Use all contiguous argv and envp pointers starting at argv[0]
+ 	*/
+	for (i = 0; i < argc; i++)
+	{
+		if (i==0 || LastArgv + 1 == argv[i])
+			LastArgv = argv[i] + strlen(argv[i]);
+		else
+			continue;
+	}
+	for (i=0; envp[i] != NULL; i++)
+	{
+		if (LastArgv + 1 == envp[i])
+			LastArgv = envp[i] + strlen(envp[i]);
+		else
+			continue;
+	}
 }
 
 #if SPT_TYPE != SPT_BUILTIN
@@ -2720,6 +2691,23 @@ initgroups(name, basegid)
 
 #endif
 /*
+**  SETGROUPS -- set group list
+**
+**	Stub implementation for systems that don't have group lists
+*/
+
+#ifndef NGROUPS_MAX
+
+int
+setgroups(ngroups, grouplist)
+	int ngroups;
+	GIDSET_T grouplist[];
+{
+	return 0;
+}
+
+#endif
+/*
 **  SETSID -- set session id (for non-POSIX systems)
 */
 
@@ -2918,333 +2906,6 @@ vsprintf(s, fmt, ap)
 
 #endif
 /*
-**  SNPRINTF, VSNPRINT -- counted versions of printf
-**
-**	These versions have been grabbed off the net.  They have been
-**	cleaned up to compile properly and support for .precision and
-**	%lx has been added.
-*/
-
-/**************************************************************
- * Original:
- * Patrick Powell Tue Apr 11 09:48:21 PDT 1995
- * A bombproof version of doprnt (sm_dopr) included.
- * Sigh.  This sort of thing is always nasty do deal with.  Note that
- * the version here does not include floating point...
- *
- * snprintf() is used instead of sprintf() as it does limit checks
- * for string length.  This covers a nasty loophole.
- *
- * The other functions are there to prevent NULL pointers from
- * causing nast effects.
- **************************************************************/
-
-/*static char _id[] = "$Id: conf.c,v 1.9 1997/11/09 04:05:36 gene Exp $";*/
-static void	sm_dopr();
-static char	*DoprEnd;
-static int	SnprfOverflow;
-
-#if !HASSNPRINTF
-
-/* VARARGS3 */
-int
-# ifdef __STDC__
-snprintf(char *str, size_t count, const char *fmt, ...)
-# else
-snprintf(str, count, fmt, va_alist)
-	char *str;
-	size_t count;
-	const char *fmt;
-	va_dcl
-#endif
-{
-	int len;
-	VA_LOCAL_DECL
-
-	VA_START(fmt);
-	len = vsnprintf(str, count, fmt, ap);
-	VA_END;
-	return len;
-}
-
-
-# ifndef luna2
-int
-vsnprintf(str, count, fmt, args)
-	char *str;
-	size_t count;
-	const char *fmt;
-	va_list args;
-{
-	str[0] = 0;
-	DoprEnd = str + count - 1;
-	SnprfOverflow = 0;
-	sm_dopr( str, fmt, args );
-	if (count > 0)
-		DoprEnd[0] = 0;
-	if (SnprfOverflow && tTd(57, 2))
-		printf("\nvsnprintf overflow, len = %d, str = %s",
-			count, shortenstring(str, 203));
-	return strlen(str);
-}
-
-# endif /* !luna2 */
-#endif /* !HASSNPRINTF */
-
-/*
- * sm_dopr(): poor man's version of doprintf
- */
-
-static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
-static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
-static void dostr __P(( char * , int ));
-static char *output;
-static void dopr_outch __P(( int c ));
-static int	SyslogErrno;
-
-static void
-sm_dopr( buffer, format, args )
-       char *buffer;
-       const char *format;
-       va_list args;
-{
-       int ch;
-       long value;
-       int longflag  = 0;
-       int pointflag = 0;
-       int maxwidth  = 0;
-       char *strvalue;
-       int ljust;
-       int len;
-       int zpad;
-# if !HASSTRERROR && !defined(ERRLIST_PREDEFINED)
-	extern char *sys_errlist[];
-	extern int sys_nerr;
-# endif
-
-
-       output = buffer;
-       while( (ch = *format++) ){
-	       switch( ch ){
-	       case '%':
-		       ljust = len = zpad = maxwidth = 0;
-		       longflag = pointflag = 0;
-	       nextch:
-		       ch = *format++;
-		       switch( ch ){
-		       case 0:
-			       dostr( "**end of format**" , 0);
-			       return;
-		       case '-': ljust = 1; goto nextch;
-		       case '0': /* set zero padding if len not set */
-			       if(len==0 && !pointflag) zpad = '0';
-		       case '1': case '2': case '3':
-		       case '4': case '5': case '6':
-		       case '7': case '8': case '9':
-			       if (pointflag)
-				 maxwidth = maxwidth*10 + ch - '0';
-			       else
-				 len = len*10 + ch - '0';
-			       goto nextch;
-		       case '*': 
-			       if (pointflag)
-				 maxwidth = va_arg( args, int );
-			       else
-				 len = va_arg( args, int );
-			       goto nextch;
-		       case '.': pointflag = 1; goto nextch;
-		       case 'l': longflag = 1; goto nextch;
-		       case 'u': case 'U':
-			       /*fmtnum(value,base,dosign,ljust,len,zpad) */
-			       if( longflag ){
-				       value = va_arg( args, long );
-			       } else {
-				       value = va_arg( args, int );
-			       }
-			       fmtnum( value, 10,0, ljust, len, zpad ); break;
-		       case 'o': case 'O':
-			       /*fmtnum(value,base,dosign,ljust,len,zpad) */
-			       if( longflag ){
-				       value = va_arg( args, long );
-			       } else {
-				       value = va_arg( args, int );
-			       }
-			       fmtnum( value, 8,0, ljust, len, zpad ); break;
-		       case 'd': case 'D':
-			       if( longflag ){
-				       value = va_arg( args, long );
-			       } else {
-				       value = va_arg( args, int );
-			       }
-			       fmtnum( value, 10,1, ljust, len, zpad ); break;
-		       case 'x':
-			       if( longflag ){
-				       value = va_arg( args, long );
-			       } else {
-				       value = va_arg( args, int );
-			       }
-			       fmtnum( value, 16,0, ljust, len, zpad ); break;
-		       case 'X':
-			       if( longflag ){
-				       value = va_arg( args, long );
-			       } else {
-				       value = va_arg( args, int );
-			       }
-			       fmtnum( value,-16,0, ljust, len, zpad ); break;
-		       case 's':
-			       strvalue = va_arg( args, char *);
-			       if (maxwidth > 0 || !pointflag) {
-				 if (pointflag && len > maxwidth)
-				   len = maxwidth; /* Adjust padding */
-				 fmtstr( strvalue,ljust,len,zpad, maxwidth);
-			       }
-			       break;
-		       case 'c':
-			       ch = va_arg( args, int );
-			       dopr_outch( ch ); break;
-                       case 'm':
-#if HASSTRERROR
-                               dostr(strerror(SyslogErrno), 0);
-#else
-                               if (SyslogErrno < 0 || SyslogErrno > sys_nerr) 
-                               {
-                                   dostr("Error ", 0);
-                                   fmtnum(SyslogErrno, 10, 0, 0, 0, 0);
-                               }
-                               else 
-                                   dostr(sys_errlist[SyslogErrno], 0);
-#endif
-			       break;
-
-		       case '%': dopr_outch( ch ); continue;
-		       default:
-			       dostr(  "???????" , 0);
-		       }
-		       break;
-	       default:
-		       dopr_outch( ch );
-		       break;
-	       }
-       }
-       *output = 0;
-}
-
-static void
-fmtstr(  value, ljust, len, zpad, maxwidth )
-       char *value;
-       int ljust, len, zpad, maxwidth;
-{
-       int padlen, strlen;     /* amount to pad */
-
-       if( value == 0 ){
-	       value = "<NULL>";
-       }
-       for( strlen = 0; value[strlen]; ++ strlen ); /* strlen */
-       if (strlen > maxwidth && maxwidth)
-	 strlen = maxwidth;
-       padlen = len - strlen;
-       if( padlen < 0 ) padlen = 0;
-       if( ljust ) padlen = -padlen;
-       while( padlen > 0 ) {
-	       dopr_outch( ' ' );
-	       --padlen;
-       }
-       dostr( value, maxwidth );
-       while( padlen < 0 ) {
-	       dopr_outch( ' ' );
-	       ++padlen;
-       }
-}
-
-static void
-fmtnum(  value, base, dosign, ljust, len, zpad )
-       long value;
-       int base, dosign, ljust, len, zpad;
-{
-       int signvalue = 0;
-       unsigned long uvalue;
-       char convert[20];
-       int place = 0;
-       int padlen = 0; /* amount to pad */
-       int caps = 0;
-
-       /* DEBUGP(("value 0x%x, base %d, dosign %d, ljust %d, len %d, zpad %d\n",
-	       value, base, dosign, ljust, len, zpad )); */
-       uvalue = value;
-       if( dosign ){
-	       if( value < 0 ) {
-		       signvalue = '-';
-		       uvalue = -value;
-	       }
-       }
-       if( base < 0 ){
-	       caps = 1;
-	       base = -base;
-       }
-       do{
-	       convert[place++] =
-		       (caps? "0123456789ABCDEF":"0123456789abcdef")
-			[uvalue % (unsigned)base  ];
-	       uvalue = (uvalue / (unsigned)base );
-       }while(uvalue);
-       convert[place] = 0;
-       padlen = len - place;
-       if( padlen < 0 ) padlen = 0;
-       if( ljust ) padlen = -padlen;
-       /* DEBUGP(( "str '%s', place %d, sign %c, padlen %d\n",
-	       convert,place,signvalue,padlen)); */
-       if( zpad && padlen > 0 ){
-	       if( signvalue ){
-		       dopr_outch( signvalue );
-		       --padlen;
-		       signvalue = 0;
-	       }
-	       while( padlen > 0 ){
-		       dopr_outch( zpad );
-		       --padlen;
-	       }
-       }
-       while( padlen > 0 ) {
-	       dopr_outch( ' ' );
-	       --padlen;
-       }
-       if( signvalue ) dopr_outch( signvalue );
-       while( place > 0 ) dopr_outch( convert[--place] );
-       while( padlen < 0 ){
-	       dopr_outch( ' ' );
-	       ++padlen;
-       }
-}
-
-static void
-dostr( str , cut)
-     char *str;
-     int cut;
-{
-  if (cut) {
-    while(*str && cut-- > 0) dopr_outch(*str++);
-  } else {
-    while(*str) dopr_outch(*str++);
-  }
-}
-
-static void
-dopr_outch( c )
-       int c;
-{
-#if 0
-       if( iscntrl(c) && c != '\n' && c != '\t' ){
-	       c = '@' + (c & 0x1F);
-	       if( DoprEnd == 0 || output < DoprEnd )
-		       *output++ = '^';
-       }
-#endif
-       if( DoprEnd == 0 || output < DoprEnd )
-	       *output++ = c;
-       else
-		SnprfOverflow++;
-}
-/*
 **  USERSHELLOK -- tell if a user's shell is ok for unrestricted use
 **
 **	Parameters:
@@ -3264,6 +2925,9 @@ dopr_outch( c )
 
 # if defined(_AIX3) || defined(_AIX4)
 #  include <userconf.h>
+#  if _AIX4 >= 40200
+#   include <userpw.h>
+#  endif
 #  include <usersec.h>
 # endif
 
@@ -3302,6 +2966,15 @@ char	*DefaultUserShells[] =
 	"/bin/ksh",		/* Korn shell */
 	"/usr/bin/ksh",
 #endif
+#ifdef sgi
+	"/sbin/sh",		/* SGI's shells really live in /sbin */
+	"/sbin/csh",
+	"/bin/ksh",		/* Korn shell */
+	"/sbin/ksh",
+	"/usr/bin/ksh",
+	"/bin/tcsh",		/* Extended csh */
+	"/usr/bin/tcsh",
+#endif
 	NULL
 };
 
@@ -3335,7 +3008,8 @@ usershellok(user, shell)
 	register FILE *shellf;
 	char buf[MAXLINE];
 
-	if (shell == NULL || shell[0] == '\0' || wordinclass(user, 't'))
+	if (shell == NULL || shell[0] == '\0' || wordinclass(user, 't') ||
+	    ConfigLevel <= 1)
 		return TRUE;
 
 # if USEGETCONFATTR
@@ -3369,6 +3043,11 @@ usershellok(user, shell)
 	{
 		/* no /etc/shells; see if it is one of the std shells */
 		char **d;
+		
+		if (errno != ENOENT && LogLevel > 3)
+			sm_syslog(LOG_ERR, NOQID,
+				  "usershellok: cannot open %s: %s",
+				  _PATH_SHELLS, errstring(errno));
 
 		for (d = DefaultUserShells; *d != NULL; d++)
 		{
@@ -3388,7 +3067,7 @@ usershellok(user, shell)
 		if (*p == '#' || *p == '\0')
 			continue;
 		q = p;
-		while (*p != '\0' && *p != '#' && !isspace(*p))
+		while (*p != '\0' && *p != '#' && !(isascii(*p) && isspace(*p)))
 			p++;
 		*p = '\0';
 		if (strcmp(shell, q) == 0 || strcmp(WILDCARD_SHELL, q) == 0)
@@ -3500,8 +3179,10 @@ freediskspace(dir, bsize)
 			*bsize = FSBLOCKSIZE;
 		if (fs.SFS_BAVAIL <= 0)
 			return 0;
+		else if (fs.SFS_BAVAIL > LONG_MAX)
+			return LONG_MAX;
 		else
-			return fs.SFS_BAVAIL;
+			return (long) fs.SFS_BAVAIL;
 	}
 #endif
 	return (-1);
@@ -3689,6 +3370,7 @@ lockfile(fd, filename, ext, type)
 	int type;
 {
 	int i;
+	int save_errno;
 # if !HASFLOCK
 	int action;
 	struct flock lfd;
@@ -3721,9 +3403,10 @@ lockfile(fd, filename, ext, type)
 			printf("SUCCESS\n");
 		return TRUE;
 	}
+	save_errno = errno;
 
 	if (tTd(55, 60))
-		printf("(%s) ", errstring(errno));
+		printf("(%s) ", errstring(save_errno));
 
 	/*
 	**  On SunOS, if you are testing using -oQ/tmp/mqueue or
@@ -3734,21 +3417,19 @@ lockfile(fd, filename, ext, type)
 	**  that this indicates that the lock is successfully grabbed.
 	*/
 
-	if (errno == EINVAL)
+	if (save_errno == EINVAL)
 	{
 		if (tTd(55, 60))
 			printf("SUCCESS\n");
 		return TRUE;
 	}
 
-	if (!bitset(LOCK_NB, type) || (errno != EACCES && errno != EAGAIN))
+	if (!bitset(LOCK_NB, type) || (save_errno != EACCES && save_errno != EAGAIN))
 	{
 		int omode = -1;
 #  ifdef F_GETFL
-		int oerrno = errno;
-
 		(void) fcntl(fd, F_GETFL, &omode);
-		errno = oerrno;
+		errno = save_errno;
 #  endif
 		syserr("cannot lockf(%s%s, fd=%d, type=%o, omode=%o, euid=%d)",
 			filename, ext, fd, type, omode, geteuid());
@@ -3769,18 +3450,17 @@ lockfile(fd, filename, ext, type)
 			printf("SUCCESS\n");
 		return TRUE;
 	}
+	save_errno = errno;
 
 	if (tTd(55, 60))
-		printf("(%s) ", errstring(errno));
+		printf("(%s) ", errstring(save_errno));
 
-	if (!bitset(LOCK_NB, type) || errno != EWOULDBLOCK)
+	if (!bitset(LOCK_NB, type) || save_errno != EWOULDBLOCK)
 	{
 		int omode = -1;
 #  ifdef F_GETFL
-		int oerrno = errno;
-
 		(void) fcntl(fd, F_GETFL, &omode);
-		errno = oerrno;
+		errno = save_errno;
 #  endif
 		syserr("cannot flock(%s%s, fd=%d, type=%o, omode=%o, euid=%d)",
 			filename, ext, fd, type, omode, geteuid());
@@ -3789,6 +3469,7 @@ lockfile(fd, filename, ext, type)
 # endif
 	if (tTd(55, 60))
 		printf("FAIL\n");
+	errno = save_errno;
 	return FALSE;
 }
 /*
@@ -3858,7 +3539,7 @@ chownsafe(fd, safedir)
 	int rval;
 
 	/* give the system administrator a chance to override */
-	if (ChownAlwaysSafe)
+	if (bitset(DBS_ASSUMESAFECHOWN, DontBlameSendmail))
 		return TRUE;
 
 	/*
@@ -3875,7 +3556,7 @@ chownsafe(fd, safedir)
 	return safedir && errno == 0 && rval IS_SAFE_CHOWN;
 # endif
 #else
-	return ChownAlwaysSafe;
+	return bitset(DBS_ASSUMESAFECHOWN, DontBlameSendmail);
 #endif
 }
 /*
@@ -3935,7 +3616,7 @@ getcfname()
 		return ConfFile;
 #if NETINFO
 	{
-		extern char *ni_propval();
+		extern char *ni_propval __P((char *, char *, char *, char *, int));
 		char *cflocation;
 
 		cflocation = ni_propval("/locations", NULL, "sendmail",
@@ -4026,6 +3707,13 @@ void
 vendor_post_defaults(e)
 	ENVELOPE *e;
 {
+#ifdef __QNX__
+	char *p;
+	
+	/* Makes sure the SOCK environment variable remains */
+	if (p = getextenv("SOCK"))
+		setuserenv("SOCK", p);
+#endif
 #if defined(SUN_EXTENSIONS) && defined(SUN_DEFAULT_VALUES)
 	sun_post_defaults(e);
 #endif
@@ -4087,8 +3775,8 @@ vendor_set_uid(uid)
 **		e -- the current envelope.
 **
 **	Returns:
-**		TRUE -- if the connection should be accepted.
-**		FALSE -- if it should be rejected.
+**		error message from rejection.
+**		NULL if not rejected.
 */
 
 #if TCPWRAPPERS
@@ -4100,38 +3788,62 @@ int	deny_severity	= LOG_NOTICE;
 #endif
 
 #if DAEMON
-bool
+char *
 validate_connection(sap, hostname, e)
 	SOCKADDR *sap;
 	char *hostname;
 	ENVELOPE *e;
 {
+#if TCPWRAPPERS
+	char *host;
+#endif
+
 	if (tTd(48, 3))
 		printf("validate_connection(%s, %s)\n",
 			hostname, anynet_ntoa(sap));
 
 	if (rscheck("check_relay", hostname, anynet_ntoa(sap), e) != EX_OK)
 	{
+		static char reject[BUFSIZ*2];
+		extern char MsgBuf[];
+
 		if (tTd(48, 4))
 			printf("  ... validate_connection: BAD (rscheck)\n");
-		return FALSE;
+
+		if (strlen(MsgBuf) > 5)
+		{
+			if (isascii(MsgBuf[0]) && isdigit(MsgBuf[0]) &&
+			    isascii(MsgBuf[1]) && isdigit(MsgBuf[1]) &&
+			    isascii(MsgBuf[2]) && isdigit(MsgBuf[2]))
+				strcpy(reject, &MsgBuf[4]);
+			else
+				strcpy(reject, MsgBuf);
+		}
+		else
+			strcpy(reject, "Access denied");
+
+		return reject;
 	}
 
 #if TCPWRAPPERS
-	if (!hosts_ctl("sendmail", hostname, anynet_ntoa(sap), STRING_UNKNOWN))
+	if (hostname[0] == '[' && hostname[strlen(hostname) - 1] == ']')
+		host = "unknown";
+	else
+		host = hostname;
+	if (!hosts_ctl("sendmail", host, anynet_ntoa(sap), STRING_UNKNOWN))
 	{
 		if (tTd(48, 4))
 			printf("  ... validate_connection: BAD (tcpwrappers)\n");
 		if (LogLevel >= 4)
 			sm_syslog(LOG_NOTICE, NOQID,
 				"tcpwrappers (%s, %s) rejection",
-				hostname, anynet_ntoa(sap));
-		return FALSE;
+				host, anynet_ntoa(sap));
+		return "Access denied";
 	}
 #endif
 	if (tTd(48, 4))
 		printf("  ... validate_connection: OK\n");
-	return TRUE;
+	return NULL;
 }
 
 #endif
@@ -4148,8 +3860,6 @@ validate_connection(sap, hostname, e)
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
-
-#include <limits.h>
 
 /*
  * Convert a string to a long integer.
@@ -4487,6 +4197,9 @@ struct mbuf;
 # ifndef SUNOS403
 #  include <sys/time.h>
 # endif
+# if _AIX4 >= 40300
+#  undef __P
+# endif
 # include <net/if.h>
 #endif
 
@@ -4696,7 +4409,10 @@ sm_syslog(level, id, fmt, va_alist)
 	int seq = 1;
 	int idlen;
 	extern int SnprfOverflow;
+	extern int SyslogErrno;
+	extern char *DoprEnd;
 	VA_LOCAL_DECL
+	extern void sm_dopr __P((char *, const char *, ...));
 	
 	SyslogErrno = errno;
 	if (id == NULL)
@@ -4805,7 +4521,7 @@ bufalloc:
 **	syslog succeeds during interrupt handlers.
 */
 
-#ifdef __hpux
+#if defined(__hpux) && !defined(HPUX11)
 
 # define MAXSYSLOGTRIES	100
 # undef syslog
@@ -4879,14 +4595,17 @@ local_hostname_length(hostname)
 
 char	*CompileOptions[] =
 {
-#if HESIOD
+#ifdef HESIOD
 	"HESIOD",
 #endif
 #if HES_GETMAILHOST
 	"HES_GETMAILHOST",
 #endif
-#if LDAPMAP
+#ifdef LDAPMAP
 	"LDAPMAP",
+#endif
+#ifdef MAP_REGEX
+	"MAP_REGEX",
 #endif
 #if LOG
 	"LOG",
@@ -4903,7 +4622,7 @@ char	*CompileOptions[] =
 #if NAMED_BIND
 	"NAMED_BIND",
 #endif
-#if NDBM
+#ifdef NDBM
 	"NDBM",
 #endif
 #if NETINET
@@ -4924,13 +4643,13 @@ char	*CompileOptions[] =
 #if NETX25
 	"NETX25",
 #endif
-#if NEWDB
+#ifdef NEWDB
 	"NEWDB",
 #endif
-#if NIS
+#ifdef NIS
 	"NIS",
 #endif
-#if NISPLUS
+#ifdef NISPLUS
 	"NISPLUS",
 #endif
 #if QUEUE
@@ -4945,7 +4664,7 @@ char	*CompileOptions[] =
 #if SMTPDEBUG
 	"SMTPDEBUG",
 #endif
-#if SUID_ROOT_FILES_OK
+#ifdef SUID_ROOT_FILES_OK
 	"SUID_ROOT_FILES_OK",
 #endif
 #if TCPWRAPPERS
@@ -4957,7 +4676,7 @@ char	*CompileOptions[] =
 #if XDEBUG
 	"XDEBUG",
 #endif
-#if XLA
+#ifdef XLA
 	"XLA",
 #endif
 	NULL

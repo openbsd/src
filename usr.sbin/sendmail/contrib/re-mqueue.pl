@@ -84,7 +84,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# @(#)$Id: re-mqueue.pl,v 1.1 1996/12/14 21:16:38 downsj Exp $
+# @(#)$Id: re-mqueue.pl,v 1.2 1998/07/12 19:43:49 millert Exp $
 
 require "syslog.pl";
 

@@ -1,36 +1,14 @@
-.\" Copyright (c) 1993	Eric P. Allman
+.\" Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+.\" Copyright (c) 1993 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1993
 .\"     The Regents of the University of California.  All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" By using this file, you agree to the terms and conditions set
+.\" forth in the LICENSE file which can be found at the top level of
+.\" the sendmail distribution.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
 .\"
-.\"     @(#)smrsh.8	8.2 (Berkeley) 1/9/96
+.\"     @(#)smrsh.8	8.7 (Berkeley) 5/19/98
 .\"
 .TH SMRSH 8 11/02/93
 .SH NAME
@@ -59,7 +37,7 @@ limits the set of programs that he or she can execute.
 Briefly,
 .I smrsh
 limits programs to be in the directory
-/usr/libexec/sm.bin,
+/usr/adm/sm.bin,
 allowing the system administrator to choose the set of acceptable commands.
 It also rejects any commands with the characters
 `\`', `<', `>', `|', `;', `&', `$', `(', `)', `\er' (carriage return),
@@ -73,10 +51,10 @@ so forwarding to ``/usr/ucb/vacation'',
 and
 ``vacation''
 all actually forward to
-``/usr/libexec/sm.bin/vacation''.
+``/usr/adm/sm.bin/vacation''.
 .PP
 System administrators should be conservative about populating
-/usr/libexec/sm.bin.
+/usr/adm/sm.bin.
 Reasonable additions are
 .IR vacation (1),
 .IR procmail (1),
@@ -91,15 +69,15 @@ directory.
 Note that this does not restrict the use of shell or perl scripts
 in the sm.bin directory (using the ``#!'' syntax);
 it simply disallows execution of arbitrary programs.
-.\" .SH COMPILATION
-.\" Compilation should be trivial on most systems.
-.\" You may need to use \-DPATH=\e"\fIpath\fP\e"
-.\" to adjust the default search path
-.\" (defaults to ``/bin:/usr/bin:/usr/ucb'')
-.\" and/or \-DCMDBIN=\e"\fIdir\fP\e"
-.\" to change the default program directory
-.\" (defaults to ``/usr/adm/sm.bin'').
+.SH COMPILATION
+Compilation should be trivial on most systems.
+You may need to use \-DPATH=\e"\fIpath\fP\e"
+to adjust the default search path
+(defaults to ``/bin:/usr/bin:/usr/ucb'')
+and/or \-DCMDBIN=\e"\fIdir\fP\e"
+to change the default program directory
+(defaults to ``/usr/adm/sm.bin'').
 .SH FILES
-/usr/libexec/sm.bin \- directory for restricted programs
+/usr/adm/sm.bin \- directory for restricted programs
 .SH SEE ALSO
 sendmail(8)

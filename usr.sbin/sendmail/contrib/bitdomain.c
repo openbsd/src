@@ -51,7 +51,7 @@ char **argv;
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "o:")) != -1) {
+    while ((opt = getopt(argc, argv, "o:")) != EOF) {
 	switch (opt) {
 	case 'o':
 	    if (!freopen(optarg, "w", stdout)) {

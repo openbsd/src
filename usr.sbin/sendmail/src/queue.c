@@ -1,44 +1,22 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 # include "sendmail.h"
 
 #ifndef lint
 #if QUEUE
-static char sccsid[] = "@(#)queue.c	8.175 (Berkeley) 10/4/97 (with queueing)";
+static char sccsid[] = "@(#)queue.c	8.202 (Berkeley) 6/15/98 (with queueing)";
 #else
-static char sccsid[] = "@(#)queue.c	8.175 (Berkeley) 10/4/97 (without queueing)";
+static char sccsid[] = "@(#)queue.c	8.202 (Berkeley) 6/15/98 (without queueing)";
 #endif
 #endif /* not lint */
 
@@ -163,7 +141,7 @@ queueup(e, announce)
 			newid ? " (new id)" : "");
 	if (tTd(40, 3))
 	{
-		extern void printenvflags();
+		extern void printenvflags __P((ENVELOPE *));
 
 		printf("  e_flags=");
 		printenvflags(e);
@@ -225,10 +203,10 @@ queueup(e, announce)
 	fprintf(tfp, "V%d\n", QF_VERSION);
 
 	/* output creation time */
-	fprintf(tfp, "T%ld\n", e->e_ctime);
+	fprintf(tfp, "T%ld\n", (long) e->e_ctime);
 
 	/* output last delivery time */
-	fprintf(tfp, "K%ld\n", e->e_dtime);
+	fprintf(tfp, "K%ld\n", (long) e->e_dtime);
 
 	/* output number of delivery attempts */
 	fprintf(tfp, "N%d\n", e->e_ntries);
@@ -239,8 +217,16 @@ queueup(e, announce)
 	/* output inode number of data file */
 	/* XXX should probably include device major/minor too */
 	if (e->e_dfino != -1)
-		fprintf(tfp, "I%d/%d/%ld\n",
-			major(e->e_dfdev), minor(e->e_dfdev), e->e_dfino);
+	{
+		if (sizeof e->e_dfino > sizeof(long))
+			fprintf(tfp, "I%d/%d/%s\n",
+				major(e->e_dfdev), minor(e->e_dfdev),
+				quad_to_string(e->e_dfino));
+		else
+			fprintf(tfp, "I%d/%d/%lu\n",
+				major(e->e_dfdev), minor(e->e_dfdev),
+				(unsigned long) e->e_dfino);
+	}
 
 	/* output body type */
 	if (e->e_bodytype != NULL)
@@ -360,7 +346,7 @@ queueup(e, announce)
 	define('g', "\201f", e);
 	for (h = e->e_header; h != NULL; h = h->h_link)
 	{
-		extern bool bitzerop();
+		extern bool bitzerop __P((BITMAP));
 
 		/* don't output null headers */
 		if (h->h_value == NULL || h->h_value[0] == '\0')
@@ -477,7 +463,7 @@ printctladdr(a, tfp)
 	register ADDRESS *q;
 	uid_t uid;
 	gid_t gid;
-	static ADDRESS *lastctladdr;
+	static ADDRESS *lastctladdr = NULL;
 	static uid_t lastuid;
 
 	/* initialization */
@@ -599,12 +585,10 @@ runqueue(forkflag, verbose)
 	{
 		pid_t pid;
 		extern SIGFUNC_DECL intsig __P((int));
-#ifdef SIGCHLD
 		extern SIGFUNC_DECL reapchild __P((int));
 
 		blocksignal(SIGCHLD);
 		(void) setsignal(SIGCHLD, reapchild);
-#endif
 
 		pid = dofork();
 		if (pid == -1)
@@ -626,27 +610,18 @@ runqueue(forkflag, verbose)
 		if (pid != 0)
 		{
 			/* parent -- pick up intermediate zombie */
-#ifndef SIGCHLD
-			(void) waitfor(pid);
-#else
 			(void) blocksignal(SIGALRM);
 			proc_list_add(pid);
 			(void) releasesignal(SIGALRM);
 			releasesignal(SIGCHLD);
-#endif /* SIGCHLD */
 			if (QueueIntvl != 0)
 				(void) setevent(QueueIntvl, runqueueevent, 0);
 			return TRUE;
 		}
 		/* child -- double fork and clean up signals */
 		proc_list_clear();
-#ifndef SIGCHLD
-		if (fork() != 0)
-			exit(EX_OK);
-#else /* SIGCHLD */
 		releasesignal(SIGCHLD);
 		(void) setsignal(SIGCHLD, SIG_DFL);
-#endif /* SIGCHLD */
 		(void) setsignal(SIGHUP, intsig);
 	}
 
@@ -775,7 +750,7 @@ runqueue(forkflag, verbose)
 		else
 		{
 			pid_t pid;
-			extern pid_t dowork();
+			extern pid_t dowork __P((char *, bool, bool, ENVELOPE *));
 
 			if (Verbose)
 			{
@@ -842,20 +817,40 @@ orderq(doall)
 {
 	register struct dirent *d;
 	register WORK *w;
+	register char *p;
 	DIR *f;
 	register int i;
 	int wn = -1;
 	int wc;
-
+	QUEUE_CHAR *check;
+	
 	if (tTd(41, 1))
 	{
 		printf("orderq:\n");
-		if (QueueLimitId != NULL)
-			printf("\tQueueLimitId = %s\n", QueueLimitId);
-		if (QueueLimitSender != NULL)
-			printf("\tQueueLimitSender = %s\n", QueueLimitSender);
-		if (QueueLimitRecipient != NULL)
-			printf("\tQueueLimitRecipient = %s\n", QueueLimitRecipient);
+
+		check = QueueLimitId;
+		while (check != NULL)
+		{
+			printf("\tQueueLimitId = %s\n",
+			       check->queue_match);
+			check = check->queue_next;
+		}
+
+		check = QueueLimitSender;
+		while (check != NULL)
+		{
+			printf("\tQueueLimitSender = %s\n",
+			       check->queue_match);
+			check = check->queue_next;
+		}
+
+		check = QueueLimitRecipient;
+		while (check != NULL)
+		{
+			printf("\tQueueLimitRecipient = %s\n",
+			       check->queue_match);
+			check = check->queue_next;
+		}
 	}
 
 	/* clear out old WorkQ */
@@ -886,9 +881,9 @@ orderq(doall)
 	while ((d = readdir(f)) != NULL)
 	{
 		FILE *cf;
-		register char *p;
+		int qfver = 0;
 		char lbuf[MAXNAME + 1];
-		extern bool strcontainedin();
+		extern bool strcontainedin __P((char *, char *));
 
 		if (tTd(41, 50))
 			printf("orderq: checking %s\n", d->d_name);
@@ -900,8 +895,15 @@ orderq(doall)
 		if (strlen(d->d_name) > MAXQFNAME)
 			continue;
 
-		if (QueueLimitId != NULL &&
-		    !strcontainedin(QueueLimitId, d->d_name))
+		check = QueueLimitId;
+		while (check != NULL)
+		{
+			if (strcontainedin(check->queue_match, d->d_name))
+				break;
+			else
+				check = check->queue_next;
+		}
+		if (QueueLimitId != NULL && check == NULL)
 			continue;
 
 #ifdef PICKY_QF_NAME_CHECK
@@ -984,10 +986,9 @@ orderq(doall)
 			i |= NEED_R;
 		while (i != 0 && fgets(lbuf, sizeof lbuf, cf) != NULL)
 		{
-			int qfver = 0;
-			char *p;
 			int c;
-			extern bool strcontainedin();
+			time_t age;
+			extern bool strcontainedin __P((char *, char *));
 
 			p = strchr(lbuf, '\n');
 			if (p != NULL)
@@ -1032,18 +1033,37 @@ orderq(doall)
 				}
 				else
 					p = &lbuf[1];
-				if (strcontainedin(QueueLimitRecipient, p))
+				check = QueueLimitRecipient;
+				while (check != NULL)
+				{
+					if (strcontainedin(check->queue_match,
+							   p))
+						break;
+					else
+						check = check->queue_next;
+				}
+				if (check != NULL)
 					i &= ~NEED_R;
 				break;
 
 			  case 'S':
-				if (QueueLimitSender != NULL &&
-				    strcontainedin(QueueLimitSender, &lbuf[1]))
-					i &= ~NEED_S;
+				  check = QueueLimitSender;
+				  while (check != NULL)
+				  {
+					  if (strcontainedin(check->queue_match,
+							     &lbuf[1]))
+						  break;
+					  else
+						  check = check->queue_next;
+				  }
+				  if (check != NULL)
+					  i &= ~NEED_S;
 				break;
 
 			  case 'K':
-				if ((curtime() - (time_t) atol(&lbuf[1])) < MinQueueAge)
+				age = curtime() - (time_t) atol(&lbuf[1]);
+				if (age >= 0 && MinQueueAge > 0 &&
+				    age < MinQueueAge)
 					w->w_tooyoung = TRUE;
 				break;
 
@@ -1076,8 +1096,8 @@ orderq(doall)
 
 	if (QueueSortOrder == QS_BYHOST)
 	{
-		extern workcmpf1();
-		extern workcmpf2();
+		extern int workcmpf1();
+		extern int workcmpf2();
 
 		/*
 		**  Sort the work directory for the first time,
@@ -1102,12 +1122,14 @@ orderq(doall)
 			w = &WorkList[i];
 			while (++i < wc)
 			{
+				extern int sm_strcasecmp __P((char *, char *));
+
 				if (WorkList[i].w_host == NULL &&
 				    w->w_host == NULL)
 					WorkList[i].w_lock = TRUE;
 				else if (WorkList[i].w_host != NULL &&
 					 w->w_host != NULL &&
-					 strcmp(WorkList[i].w_host, w->w_host) == 0)
+					 sm_strcasecmp(WorkList[i].w_host, w->w_host) == 0)
 					WorkList[i].w_lock = TRUE;
 				else
 					break;
@@ -1123,7 +1145,7 @@ orderq(doall)
 	}
 	else if (QueueSortOrder == QS_BYTIME)
 	{
-		extern workcmpf3();
+		extern int workcmpf3();
 
 		/*
 		**  Simple sort based on submission time only.
@@ -1133,7 +1155,7 @@ orderq(doall)
 	}
 	else
 	{
-		extern workcmpf0();
+		extern int workcmpf0();
 
 		/*
 		**  Simple sort based on queue priority only.
@@ -1163,6 +1185,7 @@ orderq(doall)
 	if (WorkList != NULL)
 		free(WorkList);
 	WorkList = NULL;
+	WorkListSize = 0;
 
 	if (tTd(40, 1))
 	{
@@ -1279,6 +1302,7 @@ workcmpf1(a, b)
 	register WORK *b;
 {
 	int i;
+	extern int sm_strcasecmp __P((char *, char *));
 
 	/* host name */
 	if (a->w_host != NULL && b->w_host == NULL)
@@ -1286,7 +1310,7 @@ workcmpf1(a, b)
 	else if (a->w_host == NULL && b->w_host != NULL)
 		return -1;
 	if (a->w_host != NULL && b->w_host != NULL &&
-	    (i = strcmp(a->w_host, b->w_host)))
+	    (i = sm_strcasecmp(a->w_host, b->w_host)) != 0)
 		return i;
 
 	/* lock status */
@@ -1320,6 +1344,7 @@ workcmpf2(a, b)
 	register WORK *b;
 {
 	int i;
+	extern int sm_strcasecmp __P((char *, char *));
 
 	/* lock status */
 	if (a->w_lock != b->w_lock)
@@ -1331,7 +1356,7 @@ workcmpf2(a, b)
 	else if (a->w_host == NULL && b->w_host != NULL)
 		return -1;
 	if (a->w_host != NULL && b->w_host != NULL &&
-	    (i = strcmp(a->w_host, b->w_host)))
+	    (i = sm_strcasecmp(a->w_host, b->w_host)) != 0)
 		return i;
 
 	/* job priority */
@@ -1392,7 +1417,7 @@ dowork(id, forkflag, requeueflag, e)
 	register ENVELOPE *e;
 {
 	register pid_t pid;
-	extern bool readqf();
+	extern bool readqf __P((ENVELOPE *));
 
 	if (tTd(40, 1))
 		printf("dowork(%s)\n", id);
@@ -1461,7 +1486,7 @@ dowork(id, forkflag, requeueflag, e)
 		/* read the queue control file -- return if locked */
 		if (!readqf(e))
 		{
-			if (tTd(40, 4))
+			if (tTd(40, 4) && e->e_id != NULL)
 				printf("readqf(%s) failed\n", e->e_id);
 			e->e_id = NULL;
 			if (forkflag)
@@ -1748,10 +1773,11 @@ readqf(e)
 
 			/* if this has been tried recently, let it be */
 			if (e->e_ntries > 0 &&
+			    MinQueueAge > 0 && e->e_dtime <= curtime() &&
 			    curtime() < e->e_dtime + MinQueueAge)
 			{
 				char *howlong = pintvl(curtime() - e->e_dtime, TRUE);
-				extern void unlockqueue();
+				extern void unlockqueue __P((ENVELOPE *));
 
 				if (Verbose || tTd(40, 8))
 					printf("%s: too young (%s)\n",
@@ -1825,7 +1851,7 @@ readqf(e)
 
 		  default:
 			syserr("readqf: %s: line %d: bad line \"%s\"",
-				qf, LineNumber, shortenstring(bp, 203));
+				qf, LineNumber, shortenstring(bp, MAXSHORTSTR));
 			fclose(qfp);
 			loseqfile(e, "unrecognized line");
 			return FALSE;
@@ -2100,6 +2126,13 @@ printqueue()
 **		locked, open-for-write file pointer in the envelope.
 */
 
+#ifndef ENOLCK
+# define ENOLCK		-1
+#endif
+#ifndef ENOSPC
+# define ENOSPC		-1
+#endif
+
 char *
 queuename(e, type)
 	register ENVELOPE *e;
@@ -2133,6 +2166,7 @@ queuename(e, type)
 		while (c1 < '~' || c2 < 'Z')
 		{
 			int i;
+			int attempts = 0;
 
 			if (c2 >= 'Z')
 			{
@@ -2153,10 +2187,32 @@ queuename(e, type)
 					qf, QueueDir, geteuid());
 				exit(EX_UNAVAILABLE);
 			}
-			if (lockfile(i, qf, NULL, LOCK_EX|LOCK_NB))
+			do
 			{
-				e->e_lockfp = fdopen(i, "w");
+				if (attempts > 0)
+					sleep(attempts);
+				e->e_lockfp = 0;
+				if (lockfile(i, qf, NULL, LOCK_EX|LOCK_NB))
+				{
+					e->e_lockfp = fdopen(i, "w");
+					break;
+				}
+			} while ((errno == ENOLCK || errno == ENOSPC) &&
+				 attempts++ < 4);
+
+			/* Successful lock */
+			if (e->e_lockfp != 0)
 				break;
+
+#if !HASFLOCK
+			if (errno != EAGAIN && errno != EACCES)
+#else
+			if (errno != EWOULDBLOCK)
+#endif
+			{
+				syserr("queuename: Cannot lock \"%s\" in \"%s\" (euid=%d)",
+					qf, QueueDir, geteuid());
+				exit(EX_OSERR);
 			}
 
 			/* a reader got the file; abandon it and try again */

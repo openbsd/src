@@ -1,35 +1,13 @@
 /*
- * Copyright (c) 1983 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  *
  */
 
@@ -40,16 +18,19 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mailstats.c	8.10 (Berkeley) 5/30/97";
+static char sccsid[] = "@(#)mailstats.c	8.26 (Berkeley) 7/2/98";
 #endif /* not lint */
 
-#define NOT_SENDMAIL
+#ifndef NOT_SENDMAIL
+# define NOT_SENDMAIL
+#endif
 #include <sendmail.h>
 #include <mailstats.h>
 #include <pathnames.h>
 
 #define MNAMELEN	20	/* max length of mailer name */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -64,7 +45,8 @@ main(argc, argv)
 	char *cfile;
 	FILE *cfp;
 	bool mnames;
-	long frmsgs = 0, frbytes = 0, tomsgs = 0, tobytes = 0;
+	long frmsgs = 0, frbytes = 0, tomsgs = 0, tobytes = 0, rejmsgs = 0;
+	long dismsgs = 0;
 	char mtable[MAXMAILERS][MNAMELEN+1];
 	char sfilebuf[MAXLINE];
 	char buf[MAXLINE];
@@ -73,7 +55,7 @@ main(argc, argv)
 	cfile = _PATH_SENDMAILCF;
 	sfile = NULL;
 	mnames = TRUE;
-	while ((ch = getopt(argc, argv, "C:f:o")) != -1)
+	while ((ch = getopt(argc, argv, "C:f:o")) != EOF)
 	{
 		switch (ch)
 		{
@@ -129,13 +111,13 @@ main(argc, argv)
 
 		  case 'O':		/* option -- see if .st file */
 			if (strncasecmp(b, " StatusFile", 11) == 0 &&
-			    !isalnum(b[11]))
+			    !(isascii(b[11]) && isalnum(b[11])))
 			{
 				/* new form -- find value */
 				b = strchr(b, '=');
 				if (b == NULL)
 					continue;
-				while (isspace(*++b))
+				while (isascii(*++b) && isspace(*b))
 					continue;
 			}
 			else if (*b++ != 'S')
@@ -149,7 +131,7 @@ main(argc, argv)
 			{
 				fprintf(stderr,
 					"StatusFile filename too long: %.30s...\n",
-					s);
+					b);
 				exit(EX_CONFIG);
 			}
 			strcpy(sfilebuf, b);
@@ -158,7 +140,7 @@ main(argc, argv)
 				b = strchr(sfilebuf, '\n');
 			if (b == NULL)
 				b = &sfilebuf[strlen(sfilebuf)];
-			while (isspace(*--b))
+			while (isascii(*--b) && isspace(*b))
 				continue;
 			*++b = '\0';
 			if (sfile == NULL)
@@ -177,7 +159,8 @@ main(argc, argv)
 		}
 		m = mtable[mno];
 		s = m + MNAMELEN;		/* is [MNAMELEN+1] */
-		while (*b != ',' && !isspace(*b) && *b != '\0' && m < s)
+		while (*b != ',' && !(isascii(*b) && isspace(*b)) &&
+		       *b != '\0' && m < s)
 			*m++ = *b++;
 		*m = '\0';
 		for (i = 0; i < mno; i++)
@@ -208,29 +191,53 @@ main(argc, argv)
 	if (i == 0)
 	{
 		sleep(1);
-		i = read(fd, &stat, sizeof stat);
-		if (i == 0)
+		if ((i = read(fd, &stat, sizeof stat)) < 0)
+		{
+			fputs("mailstats: ", stderr);
+			perror(sfile);
+			exit(EX_NOINPUT);
+		}
+		else if (i == 0)
 		{
 			bzero((ARBPTR_T) &stat, sizeof stat);
 			(void) time(&stat.stat_itime);
 		}
 	}
-	else if (i != sizeof stat || stat.stat_size != sizeof(stat))
+	if (i != 0)
 	{
-		fputs("mailstats: file size changed.\n", stderr);
-		exit(EX_OSERR);
+		if (stat.stat_magic != STAT_MAGIC)
+		{
+			fprintf(stderr,
+				"mailstats: incorrect magic number in %s\n",
+				sfile);
+			exit(EX_OSERR);
+		}
+		else if (stat.stat_version != STAT_VERSION)
+		{
+			fprintf(stderr,
+				"mailstats version (%d) incompatible with %s version(%d)\n",
+				STAT_VERSION, sfile, stat.stat_version);
+			exit(EX_OSERR);
+		}
+		else if (i != sizeof stat || stat.stat_size != sizeof(stat))
+		{
+			fputs("mailstats: file size changed.\n", stderr);
+			exit(EX_OSERR);
+		}
 	}
 
 	printf("Statistics from %s", ctime(&stat.stat_itime));
-	printf(" M msgsfr bytes_from  msgsto   bytes_to%s\n",
+	printf(" M   msgsfr  bytes_from   msgsto    bytes_to  msgsrej msgsdis%s\n",
 		mnames ? "  Mailer" : "");
 	for (i = 0; i < MAXMAILERS; i++)
 	{
-		if (stat.stat_nf[i] || stat.stat_nt[i])
+		if (stat.stat_nf[i] || stat.stat_nt[i] ||
+		    stat.stat_nr[i] || stat.stat_nd[i])
 		{
-			printf("%2d %6ld %10ldK %6ld %10ldK", i,
+			printf("%2d %8ld %10ldK %8ld %10ldK   %6ld  %6ld", i,
 			    stat.stat_nf[i], stat.stat_bf[i],
-			    stat.stat_nt[i], stat.stat_bt[i]);
+			    stat.stat_nt[i], stat.stat_bt[i],
+			    stat.stat_nr[i], stat.stat_nd[i]);
 			if (mnames)
 				printf("  %s", mtable[i]);
 			printf("\n");
@@ -238,10 +245,12 @@ main(argc, argv)
 			frbytes += stat.stat_bf[i];
 			tomsgs += stat.stat_nt[i];
 			tobytes += stat.stat_bt[i];
+			rejmsgs += stat.stat_nr[i];
+			dismsgs += stat.stat_nd[i];
 		}
 	}
-	printf("========================================\n");
-	printf(" T %6ld %10ldK %6ld %10ldK\n",
-		frmsgs, frbytes, tomsgs, tobytes);
+	printf("=============================================================\n");
+	printf(" T %8ld %10ldK %8ld %10ldK   %6ld  %6ld\n",
+		frmsgs, frbytes, tomsgs, tobytes, rejmsgs, dismsgs);
 	exit(EX_OK);
 }

@@ -1,5 +1,16 @@
 PUSHDIVERT(-1)
 #
+# Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the sendmail distribution.
+#
+#
+# This code incorporates code from Carnegie Mellon University, whose
+# copyright notice and conditions of redistribution are as follows:
+#
+#***************************************************************************
 #	(C) Copyright 1995 by Carnegie Mellon University
 # 
 #                      All Rights Reserved
@@ -23,7 +34,7 @@ PUSHDIVERT(-1)
 #	Contributed to Berkeley by John Gardiner Myers <jgm+@CMU.EDU>.
 # 
 
-ifdef(`CYRUS_MAILER_FLAGS',, `define(`CYRUS_MAILER_FLAGS', `A5@')')
+ifdef(`CYRUS_MAILER_FLAGS',, `define(`CYRUS_MAILER_FLAGS', `A5@/:|')')
 ifdef(`CYRUS_MAILER_PATH',, `define(`CYRUS_MAILER_PATH', /usr/cyrus/bin/deliver)')
 ifdef(`CYRUS_MAILER_ARGS',, `define(`CYRUS_MAILER_ARGS', `deliver -e -m $h -- $u')')
 ifdef(`CYRUS_MAILER_USER',, `define(`CYRUS_MAILER_USER', `cyrus:mail')')
@@ -36,7 +47,7 @@ POPDIVERT
 ###   Cyrus Mailer specification               ###
 ##################################################
 
-VERSIONID(`@(#)cyrus.m4	8.4 (Carnegie Mellon) 9/2/96')
+VERSIONID(`@(#)cyrus.m4	8.9 (Carnegie Mellon) 5/19/98')
 
 Mcyrus,		P=CYRUS_MAILER_PATH, F=CONCAT(`lsDFMnPq', CYRUS_MAILER_FLAGS), S=10, R=20/40, T=X-Unix,
 		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER,

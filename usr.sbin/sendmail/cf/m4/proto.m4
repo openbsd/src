@@ -1,45 +1,23 @@
 divert(-1)
 #
-# Copyright (c) 1983, 1995 Eric P. Allman
+# Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+# Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the sendmail distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
 #
 divert(0)
 
-VERSIONID(`@(#)proto.m4	8.151 (Berkeley) 7/31/97')
+VERSIONID(`@(#)proto.m4	8.223 (Berkeley) 6/30/98')
 
 MAILER(local)dnl
 
-# level 7 config file format
-V7/Berkeley
+# level 8 config file format
+V8/Berkeley
 divert(-1)
 
 # do some sanity checking
@@ -58,6 +36,9 @@ define(`_SMTP_', `confSMTP_MAILER')dnl		for readability only
 define(`_LOCAL_', `confLOCAL_MAILER')dnl	for readability only
 define(`_RELAY_', `confRELAY_MAILER')dnl	for readability only
 define(`_UUCP_', `confUUCP_MAILER')dnl		for readability only
+
+# set our default hashed database type
+ifdef(`DATABASE_MAP_TYPE',, `define(`DATABASE_MAP_TYPE', `hash')')
 
 # back compatibility with old config files
 ifdef(`confDEF_GROUP_ID',
@@ -82,6 +63,10 @@ ifdef(`confMIN_FREE_BLOCKS', `ifelse(index(confMIN_FREE_BLOCKS, /), -1,,
 define(`_OPTION', `ifdef(`$2', `O $1=$2', `#O $1`'ifelse($3, `',, `=$3')')')dnl
 
 divert(0)dnl
+
+# override file safeties - setting this option compromises system security
+# need to set this now for the sake of class files
+_OPTION(DontBlameSendmail, `confDONT_BLAME_SENDMAIL', safe)
 
 ##################
 #   local info   #
@@ -129,12 +114,11 @@ CPFAX
 # "Smart" relay host (may be null)
 DS`'ifdef(`SMART_HOST', SMART_HOST)
 
+ifdef(`LUSER_RELAY', `dnl
 # place to which unknown users should be forwarded
-ifdef(`LUSER_RELAY', `', `#')dnl
 Kuser user -m -a<>
-ifdef(`LUSER_RELAY',
-	`DL`'LUSER_RELAY',
-	`#DLname_of_luser_relay')
+DL`'LUSER_RELAY',
+`dnl')
 
 # operators that cannot be in local usernames (i.e., network indicators)
 CO @ % ifdef(`_NO_UUCP_', `', `!')
@@ -145,25 +129,54 @@ C..
 # a class with just a left bracket (for identifying domain literals)
 C[[
 
+ifdef(`MAILER_TABLE', `dnl
 # Mailer table (overriding domains)
-ifdef(`MAILER_TABLE',
-	`Kmailertable MAILER_TABLE',
-	`#Kmailertable dbm /etc/mailertable')
+Kmailertable MAILER_TABLE',
+`dnl')
 
+ifdef(`DOMAIN_TABLE', `dnl
 # Domain table (adding domains)
-ifdef(`DOMAIN_TABLE',
-	`Kdomaintable DOMAIN_TABLE',
-	`#Kdomaintable dbm /etc/domaintable')
+Kdomaintable DOMAIN_TABLE',
+`dnl')
 
+ifdef(`GENERICS_TABLE', `dnl
 # Generics table (mapping outgoing addresses)
-ifdef(`GENERICS_TABLE',
-	`Kgenerics GENERICS_TABLE',
-	`#Kgenerics dbm /etc/genericstable')
+Kgenerics GENERICS_TABLE',
+`dnl')
 
+ifdef(`UUDOMAIN_TABLE', `dnl
+# UUCP domain table
+Kuudomain UUDOMAIN_TABLE',
+`dnl')
+
+ifdef(`BITDOMAIN_TABLE', `dnl
+# BITNET mapping table
+Kbitdomain BITDOMAIN_TABLE',
+`dnl')
+
+ifdef(`VIRTUSER_TABLE', `dnl
 # Virtual user table (maps incoming users)
-ifdef(`VIRTUSER_TABLE',
-	`Kvirtuser VIRTUSER_TABLE',
-	`#Kvirtuser dbm /etc/virtusertable')
+Kvirtuser VIRTUSER_TABLE',
+`dnl')
+
+ifdef(`ACCESS_TABLE', `dnl
+# Access list database (for spam stomping)
+Kaccess ACCESS_TABLE',
+`dnl')
+
+ifdef(`_RELAY_MX_SERVED_', `dnl
+# MX map (to allow relaying to hosts that we MX for)
+Kmxserved bestmx -z: -T<TEMP>',
+`dnl')
+
+ifdef(`_ACCEPT_UNRESOLVABLE_DOMAINS_',`dnl',`dnl
+# Resolve map (to check if a host exists in check_mail)
+Kresolve host -a<OK> -T<TEMP>')
+
+ifdef(`confCR_FILE', `dnl
+# Hosts that will permit relaying ($=R)
+FR`'confCR_FILE',
+`dnl')
 
 # who I send unqualified names to (null means deliver locally)
 DR`'ifdef(`LOCAL_RELAY', LOCAL_RELAY)
@@ -349,7 +362,7 @@ ifelse(confTIME_ZONE, `USE_SYSTEM', `#O TimeZoneSpec=',
 	`O TimeZoneSpec=confTIME_ZONE')
 
 # default UID (can be username or userid:groupid)
-_OPTION(DefaultUser, `confDEF_USER_ID', nobody)
+_OPTION(DefaultUser, `confDEF_USER_ID', mailnull)
 
 # list of locations of user database file (null means no lookup)
 _OPTION(UserDatabaseSpec, `confUSERDB_SPEC', /etc/userdb)
@@ -423,6 +436,15 @@ _OPTION(SmtpGreetingMessage, `confSMTP_LOGIN_MSG')
 # UNIX initial From header format (old $l macro)
 _OPTION(UnixFromLine, `confFROM_LINE')
 
+# From: lines that have embedded newlines are unwrapped onto one line
+_OPTION(SingleLineFromHeader, `confSINGLE_LINE_FROM_HEADER', False)
+
+# Allow HELO SMTP command that does not `include' a host name
+_OPTION(AllowBogusHELO, `confALLOW_BOGUS_HELO', False)
+
+# Characters to be quoted in a full name phrase (@,;:\()[] are automatic)
+_OPTION(MustQuoteChars, `confMUST_QUOTE_CHARS', .)
+
 # delimiter (operator) characters (old $o macro)
 _OPTION(OperatorChars, `confOPERATORS')
 
@@ -433,10 +455,16 @@ _OPTION(DontInitGroups, `confDONT_INIT_GROUPS')
 _OPTION(UnsafeGroupWrites, `confUNSAFE_GROUP_WRITES')
 
 # where do errors that occur when sending errors get sent?
-_OPTION(DoubleBounceAddress, `confDOUBLE_BOUNCE_ADDRESS')
+_OPTION(DoubleBounceAddress, `confDOUBLE_BOUNCE_ADDRESS', postmaster)
 
 # what user id do we assume for the majority of the processing?
 _OPTION(RunAsUser, `confRUN_AS_USER', sendmail)
+
+# maximum number of recipients per SMTP envelope
+_OPTION(MaxRecipientsPerMessage, `confMAX_RCPTS_PER_MESSAGE', 100)
+
+# shall we get local names from our installed interfaces?
+_OPTION(DontProbeInterfaces, `confDONT_PROBE_INTERFACES')
 
 ###########################
 #   Message precedences   #
@@ -572,11 +600,19 @@ R$* < @ [ $+ ] > $*		$: $1 < @@ [ $2 ] > $3		mark [a.b.c.d]
 R$* < @@ $=w > $*		$: $1 < @ $j . > $3		self-literal
 R$* < @@ $+ > $*		$@ $1 < @ $2 > $3		canon IP addr
 
+ifdef(`DOMAIN_TABLE', `dnl
 # look up domains in the domain table
-ifdef(`DOMAIN_TABLE', `', `#')dnl
-R$* < @ $+ > $* 		$: $1 < @ $(domaintable $2 $) > $3
+R$* < @ $+ > $* 		$: $1 < @ $(domaintable $2 $) > $3', `dnl')
 
 undivert(2)dnl
+
+ifdef(`BITDOMAIN_TABLE', `dnl
+# handle BITNET mapping
+R$* < @ $+ .BITNET > $*		$: $1 < @ $(bitdomain $2 $: $2.BITNET $) > $3', `dnl')
+
+ifdef(`UUDOMAIN_TABLE', `dnl
+# handle UUCP mapping
+R$* < @ $+ .UUCP > $*		$: $1 < @ $(uudomain $2 $: $2.UUCP $) > $3', `dnl')
 
 ifdef(`_NO_UUCP_', `dnl',
 `ifdef(`UUCP_RELAY',
@@ -594,15 +630,14 @@ ifdef(`_CLASS_X_',
 ifdef(`_CLASS_Y_',
 `R$* < @ $=Y . UUCP > $*	$@ $1 < @ $2 . UUCP . > $3', `dnl')
 
-define(`X', ifdef(`_NO_CANONIFY_', `#', `'))dnl
+ifdef(`_NO_CANONIFY_', `dnl', `dnl
 # try UUCP traffic as a local address
-X`'R$* < @ $+ . UUCP > $*		$: $1 < @ $[ $2 $] . UUCP . > $3
-X`'R$* < @ $+ . . UUCP . > $*		$@ $1 < @ $2 . > $3')
-undefine(`X')dnl
-')
+R$* < @ $+ . UUCP > $*		$: $1 < @ $[ $2 $] . UUCP . > $3
+R$* < @ $+ . . UUCP . > $*	$@ $1 < @ $2 . > $3')
+')')
+ifdef(`_NO_CANONIFY_', `dnl', `dnl
 # pass to name server to make hostname canonical
-ifdef(`_NO_CANONIFY_', `#')dnl
-R$* < @ $* $~P > $*		$: $1 < @ $[ $2 $3 $] > $4
+R$* < @ $* $~P > $*		$: $1 < @ $[ $2 $3 $] > $4')
 
 # local host aliases and pseudo-domains are always canonical
 R$* < @ $=w > $*		$: $1 < @ $2 . > $3
@@ -662,50 +697,68 @@ R$*			$@ $>0 $1
 S0
 
 R$*			$: $>Parse0 $1		initial parsing
+R<@>			$#_LOCAL_ $: <@>		special case error msgs
 R$*			$: $>98 $1		handle local hacks
 R$*			$: $>Parse1 $1		final parsing
 
+#
+#  Parse0 -- do initial syntax checking and eliminate local addresses.
+#	This should either return with the (possibly modified) input
+#	or return with a #error mailer.  It should not return with a
+#	#mailer other than the #error mailer.
+#
+
 SParse0
-R<@>			$#_LOCAL_ $: <@>		special case error msgs
-R$* : $* ; <@>		$#error $@ 5.1.3 $: "list:; syntax illegal for recipient addresses"
-R<@ $+>			$#error $@ 5.1.1 $: "user address required"
+R<@>			$@ <@>			special case error msgs
+R$* : $* ; <@>		$#error $@ 5.1.3 $: "List:; syntax illegal for recipient addresses"
+#R@ <@ $* >		< @ $1 >		catch "@@host" bogosity
+R<@ $+>			$#error $@ 5.1.3 $: "User address required"
 R$*			$: <> $1
 R<> $* < @ [ $+ ] > $*	$1 < @ [ $2 ] > $3
-R<> $* <$* : $* > $*	$#error $@ 5.1.1 $: "colon illegal in host name part"
+R<> $* <$* : $* > $*	$#error $@ 5.1.3 $: "Colon illegal in host name part"
 R<> $*			$1
-R$* < @ . $* > $*	$#error $@ 5.1.2 $: "invalid host name"
-R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "invalid host name"
+R$* < @ . $* > $*	$#error $@ 5.1.2 $: "Invalid host name"
+R$* < @ $* .. $* > $*	$#error $@ 5.1.2 $: "Invalid host name"
 
+# now delete the local info -- note $=O to find characters that cause forwarding
+R$* < @ > $*		$@ $>Parse0 $>3 $1		user@ => user
+R< @ $=w . > : $*	$@ $>Parse0 $>3 $2		@here:... -> ...
+R$- < @ $=w . >		$: $(dequote $1 $) < @ $2 . >	dequote "foo"@here
+R< @ $+ >		$#error $@ 5.1.3 $: "User address required"
+R$* $=O $* < @ $=w . >	$@ $>Parse0 $>3 $1 $2 $3	...@here -> ...
+R$- 			$: $(dequote $1 $) < @ *LOCAL* >	dequote "foo"
+R< @ *LOCAL* >		$#error $@ 5.1.3 $: "User address required"
+R$* $=O $* < @ *LOCAL* >
+			$@ $>Parse0 $>3 $1 $2 $3	...@*LOCAL* -> ...
+R$* < @ *LOCAL* >	$: $1
+
+#
+#  Parse1 -- the bottom half of ruleset 0.
+#
+
+SParse1
 ifdef(`_MAILER_smtp_',
 `# handle numeric address spec
 R$* < @ [ $+ ] > $*	$: $>98 $1 < @ [ $2 ] > $3	numeric internet spec
 R$* < @ [ $+ ] > $*	$#_SMTP_ $@ [$2] $: $1 < @ [$2] > $3	still numeric: send',
 	`dnl')
 
-# now delete the local info -- note $=O to find characters that cause forwarding
-R$* < @ > $*		$@ $>Parse0 $>3 $1		user@ => user
-R< @ $=w . > : $*	$@ $>Parse0 $>3 $2		@here:... -> ...
-R$- < @ $=w . >		$: $(dequote $1 $) < @ $2 . >	dequote "foo"@here
-R< @ $+ >		$#error $@ 5.1.1 $: "user address required"
-R$* $=O $* < @ $=w . >	$@ $>Parse0 $>3 $1 $2 $3	...@here -> ...
-
-SParse1
+ifdef(`VIRTUSER_TABLE', `dnl
 # handle virtual users
-define(`X', ifdef(`VIRTUSER_TABLE', `', `#'))dnl
-X`'R$+ < @ $=w . > 	$: < $(virtuser $1 @ $2 $@ $1 $: @ $) > $1 < @ $2 . >
-X`'R<@> $+ + $* < @ $* . >
+R$+ < @ $=w . > 	$: < $(virtuser $1 @ $2 $@ $1 $: @ $) > $1 < @ $2 . >
+R<@> $+ + $* < @ $* . >
 			$: < $(virtuser $1 + * @ $3 $@ $1 $: @ $) > $1 + $2 < @ $3 . >
-X`'R<@> $+ + $* < @ $* . >
+R<@> $+ + $* < @ $* . >
 			$: < $(virtuser $1 @ $3 $@ $1 $: @ $) > $1 + $2 < @ $3 . >
-X`'R<@> $+ < @ $+ . >	$: < $(virtuser @ $2 $@ $1 $: @ $) > $1 < @ $2 . >
-X`'R<@> $+			$: $1
-X`'R< error : $- $+ > $* 	$#error $@ $( dequote $1 $) $: $2
-X`'R< $+ > $+ < @ $+ >	$: $>97 $1
-undefine(`X')dnl
+R<@> $+ < @ $+ . >	$: < $(virtuser @ $2 $@ $1 $: @ $) > $1 < @ $2 . >
+R<@> $+			$: $1
+R< error : $- $+ > $* 	$#error $@ $(dequote $1 $) $: $2
+R< $+ > $+ < @ $+ >	$: $>97 $1',
+`dnl')
 
 # short circuit local delivery so forwarded email works
-ifdef(`_MAILER_usenet_', `', `#')dnl
-R$+ . USENET < @ $=w . >	$#usenet $: $1		handle usenet specially
+ifdef(`_MAILER_usenet_', `dnl
+R$+ . USENET < @ $=w . >	$#usenet $: $1		handle usenet specially', `dnl')
 ifdef(`_STICKY_LOCAL_DOMAIN_',
 `R$+ < @ $=w . >		$: < $H > $1 < @ $2 . >		first try hub
 R< $+ > $+ < $+ >	$>95 < $1 > $2 < $3 >		yep ....
@@ -714,14 +767,14 @@ R< > $+ < $+ >		$#_LOCAL_ $: @ $1			nope, local address',
 `R$=L < @ $=w . >	$#_LOCAL_ $: @ $1		special local names
 R$+ < @ $=w . >		$#_LOCAL_ $: $1			regular local name')
 
-define(`X', ifdef(`MAILER_TABLE', `', `#'))dnl
+ifdef(`MAILER_TABLE', `dnl
 # not local -- try mailer table lookup
-X`'R$* <@ $+ > $*		$: < $2 > $1 < @ $2 > $3	extract host name
-X`'R< $+ . > $*		$: < $1 > $2			strip trailing dot
-X`'R< $+ > $*		$: < $(mailertable $1 $) > $2	lookup
-X`'R< $~[ : $+ > $* 	$>95 < $1 : $2 > $3		check -- resolved?
-X`'R< $+ > $*		$: $>90 <$1> $2			try domain
-undefine(`X')dnl
+R$* <@ $+ > $*		$: < $2 > $1 < @ $2 > $3	extract host name
+R< $+ . > $*		$: < $1 > $2			strip trailing dot
+R< $+ > $*		$: < $(mailertable $1 $) > $2	lookup
+R< $~[ : $+ > $* 	$>95 < $1 : $2 > $3		check -- resolved?
+R< $+ > $*		$: $>90 <$1> $2			try domain',
+`dnl')
 undivert(4)dnl
 
 ifdef(`_NO_UUCP_', `dnl',
@@ -774,11 +827,7 @@ R$* < @ $* > $*		$: $>95 < $S > $1 < @ $2 > $3	glue on smarthost name
 # deal with other remote names
 ifdef(`_MAILER_smtp_',
 `R$* < @$* > $*		$#_SMTP_ $@ $2 $: $1 < @ $2 > $3		user@host.domain',
-`R$* < @$* > $*		$#error $@ 5.1.2 $: Unrecognized host name $2')
-
-# if this is quoted, strip the quotes and try again
-R$+			$: $(dequote $1 $)		strip quotes
-R$+ $=O $+		$@ $>97 $1 $2 $3			try again
+`R$* < @$* > $*		$#error $@ 5.1.2 $: "Unrecognized host name" $2')
 
 # handle locally delivered names
 R$=L			$#_LOCAL_ $: @ $1			special local names
@@ -797,39 +846,39 @@ R$+ + $*		$#_LOCAL_ $@ + $2 $: $1 + *
 # prepend an empty "forward host" on the front
 R$+			$: <> $1
 
-define(`X', ifdef(`LUSER_RELAY', `', `#'))dnl
+ifdef(`LUSER_RELAY', `dnl
 # send unrecognized local users to a relay host
-X`'R< > $+ 		$: < $L . > $( user $1 $)	look up user
-X`'R< $* > $+ <> $*	$: < > $2 $3			found; strip $L
-X`'R< $* . > $+		$: < $1 > $2			strip extra dot
-undefine(`X')dnl
+R< > $+ 		$: < $L . > $(user $1 $)	look up user
+R< $* > $+ <> $*	$: < > $2 $3			found; strip $L
+R< $* . > $+		$: < $1 > $2			strip extra dot',
+`dnl')
 
 # see if we have a relay or a hub
 R< > $+			$: < $H > $1			try hub
 R< > $+			$: < $R > $1			try relay
-R< > $+			$: < > < $1 $(dequote "" $&h $) >	nope, restore +detail
+R< > $+			$: < > < $1 $&h >		nope, restore +detail
 R< > < $+ + $* > $*	   < > < $1 > + $2 $3		find the user part
 R< > < $+ > + $*	$#_LOCAL_ $@ $2 $: @ $1		strip the extra +
 R< > < $+ >		$@ $1				no +detail
-R$+			$: $1 $(dequote "" $&h $)	add +detail back in
+R$+			$: $1 $&h			add +detail back in
 R< local : $* > $*	$: $>95 < local : $1 > $2	no host extension
 R< error : $* > $*	$: $>95 < error : $1 > $2	no host extension
 R< $- : $+ > $+		$: $>95 < $1 : $2 > $3 < @ $2 >
 R< $+ > $+		$@ $>95 < $1 > $2 < @ $1 >
 
+ifdef(`MAILER_TABLE', `dnl
 ###################################################################
 ###  Ruleset 90 -- try domain part of mailertable entry 	###
 ###################################################################
 
-define(`X', ifdef(`MAILER_TABLE', `', `#'))dnl
 S90
-X`'R$* <$- . $+ > $*	$: $1$2 < $(mailertable .$3 $@ $1$2 $@ $2 $) > $4
-X`'R$* <$~[ : $+ > $*		$>95 < $2 : $3 > $4	check -- resolved?
-X`'R$* < . $+ > $* 		$@ $>90 $1 . <$2> $3	no -- strip & try again
-X`'R$* < $* > $*		$: < $(mailertable . $@ $1$2 $) > $3	try "."
-X`'R< $~[ : $+ > $*		$>95 < $1 : $2 > $3	"." found?
-X`'R< $* > $*			$@ $2			no mailertable match
-undefine(`X')dnl
+R$* <$- . $+ > $*	$: $1$2 < $(mailertable .$3 $@ $1$2 $@ $2 $) > $4
+R$* <$~[ : $+ > $*	$>95 < $2 : $3 > $4		check -- resolved?
+R$* < . $+ > $* 	$@ $>90 $1 . <$2> $3		no -- strip & try again
+R$* < $* > $*		$: < $(mailertable . $@ $1$2 $) > $3	try "."
+R< $~[ : $+ > $*	$>95 < $1 : $2 > $3		"." found?
+R< $* > $*		$@ $2				no mailertable match',
+`dnl')
 
 ###################################################################
 ###  Ruleset 95 -- canonify mailer:[user@]host syntax to triple	###
@@ -837,7 +886,7 @@ undefine(`X')dnl
 
 S95
 R< > $*				$@ $1			strip off null relay
-R< error : $- $+ > $*		$#error $@ $( dequote $1 $) $: $2
+R< error : $- $+ > $*		$#error $@ $(dequote $1 $) $: $2
 R< local : $* > $*		$>CanonLocal < $1 > $2
 R< $- : $+ @ $+ > $*<$*>$*	$# $1 $@ $3 $: $2<@$3>	use literal user
 R< $- : $+ > $*			$# $1 $@ $2 $: $3	try qualified mailer
@@ -869,33 +918,33 @@ R< $+ > $* 			$#_LOCAL_ $@ $2    $: $1
 
 S93
 
+ifdef(`GENERICS_TABLE', `dnl
 # handle generics database
-define(`X', ifdef(`GENERICS_TABLE', `', `#'))dnl
 ifdef(`_GENERICS_ENTIRE_DOMAIN_',
-`X`'R$+ < @ $* $=G . >	$: < $1@$2$3 > $1 < @ $2$3 . > @	mark',
-`X`'R$+ < @ $=G . >	$: < $1@$2 > $1 < @ $2 . > @	mark')
-X`'R$+ < @ *LOCAL* >	$: < $1@$j > $1 < @ *LOCAL* > @	mark
-X`'R< $+ > $+ < $* > @	$: < $(generics $1 $: $) > $2 < $3 >
-X`'R< > $+ < @ $+ > 	$: < $(generics $1 $: $) > $1 < @ $2 >
-X`'R< $* @ $* > $* < $* >	$@ $>3 $1 @ $2			found qualified
-X`'R< $+ > $* < $* >	$: $>3 $1 @ *LOCAL*		found unqualified
-X`'R< > $*			$: $1				not found
-undefine(`X')dnl
+`R$+ < @ $* $=G . >	$: < $1@$2$3 > $1 < @ $2$3 . > @	mark',
+`R$+ < @ $=G . >	$: < $1@$2 > $1 < @ $2 . > @	mark')
+R$+ < @ *LOCAL* >	$: < $1@$j > $1 < @ *LOCAL* > @	mark
+R< $+ > $+ < $* > @	$: < $(generics $1 $: $) > $2 < $3 >
+R< > $+ < @ $+ > 	$: < $(generics $1 $: $) > $1 < @ $2 >
+R< $* @ $* > $* < $* >	$@ $>3 $1 @ $2			found qualified
+R< $+ > $* < $* >	$: $>3 $1 @ *LOCAL*		found unqualified
+R< > $*			$: $1				not found',
+`dnl')
 
 # special case the users that should be exposed
 R$=E < @ *LOCAL* >	$@ $1 < @ $j . >		leave exposed
 ifdef(`_MASQUERADE_ENTIRE_DOMAIN_',
 `R$=E < @ $* $=M . >	$@ $1 < @ $2 $3 . >',
 `R$=E < @ $=M . >	$@ $1 < @ $2 . >')
-ifdef(`_LIMITED_MASQUERADE_', `#')dnl
-R$=E < @ $=w . >	$@ $1 < @ $2 . >
+ifdef(`_LIMITED_MASQUERADE_', `dnl',
+`R$=E < @ $=w . >	$@ $1 < @ $2 . >')
 
 # handle domain-specific masquerading
 ifdef(`_MASQUERADE_ENTIRE_DOMAIN_',
 `R$* < @ $* $=M . > $*	$: $1 < @ $2 $3 . @ $M > $4	convert masqueraded doms',
 `R$* < @ $=M . > $*	$: $1 < @ $2 . @ $M > $3	convert masqueraded doms')
-ifdef(`_LIMITED_MASQUERADE_', `#')dnl
-R$* < @ $=w . > $*	$: $1 < @ $2 . @ $M > $3
+ifdef(`_LIMITED_MASQUERADE_', `dnl',
+`R$* < @ $=w . > $*	$: $1 < @ $2 . @ $M > $3')
 R$* < @ *LOCAL* > $*	$: $1 < @ $j . @ $M > $2
 R$* < @ $+ @ > $*	$: $1 < @ $2 > $3		$M is null
 R$* < @ $+ @ $+ > $*	$: $1 < @ $3 . > $4		$M is not null
@@ -905,10 +954,9 @@ R$* < @ $+ @ $+ > $*	$: $1 < @ $3 . > $4		$M is not null
 ###################################################################
 
 S94
-ifdef(`_MASQUERADE_ENVELOPE_', `', `#')dnl
-R$+			$@ $>93 $1
-ifdef(`_MASQUERADE_ENVELOPE_', `#', `')dnl
-R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2
+ifdef(`_MASQUERADE_ENVELOPE_',
+`R$+			$@ $>93 $1',
+`R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2')
 
 ###################################################################
 ###  Ruleset 98 -- local part of ruleset zero (can be null)	###
@@ -916,6 +964,298 @@ R$* < @ *LOCAL* > $*	$: $1 < @ $j . > $2
 
 S98
 undivert(3)dnl
+
+ifelse(confDELIVERY_MODE, defer, `errprint(`WARNING: Antispam rules not available in deferred delivery mode.')')
+ifdef(`ACCESS_TABLE', `dnl
+######################################################################
+###  LookUpDomain -- search for domain in access database
+###
+###	Parameters:
+###		<$1> -- key (domain name)
+###		<$2> -- default (what to return if not found in db)
+###		<$3> -- passthru (additional data passed unchanged through)
+######################################################################
+
+SLookUpDomain
+R<$+> <$+> <$*>		$: < $(access $1 $: ? $) > <$1> <$2> <$3>
+R<?> <$+.$+> <$+> <$*>	$@ $>LookUpDomain <$2> <$3> <$4>
+R<?> <$+> <$+> <$*>	$@ <$2> <$3>
+R<$*> <$+> <$+> <$*>	$@ <$1> <$4>
+
+######################################################################
+###  LookUpAddress -- search for host address in access database
+###
+###	Parameters:
+###		<$1> -- key (dot quadded host address)
+###		<$2> -- default (what to return if not found in db)
+###		<$3> -- passthru (additional data passed through)
+######################################################################
+
+SLookUpAddress
+R<$+> <$+> <$*>		$: < $(access $1 $: ? $) > <$1> <$2> <$3>
+R<?> <$+.$-> <$+> <$*>	$@ $>LookUpAddress <$1> <$3> <$4>
+R<?> <$+> <$+> <$*>	$@ <$2> <$3>
+R<$*> <$+> <$+> <$*>	$@ <$1> <$4>',
+`dnl')
+
+######################################################################
+###  ParseRecipient --	Strip off hosts in $=R as well as possibly
+###			$* $=m or the access database.
+###			Check user portion for host separators.
+###
+###	Parameters:
+###		$1 -- full recipient address
+###
+###	Returns:
+###		parsed, non-local-relaying address
+######################################################################
+
+SParseRecipient
+R$*			$: <?> $>Parse0 $>3 $1
+R<?> $* < @ $* . >	<?> $1 < @ $2 >		strip trailing dots
+R<?> $- < @ $* >	$: <?> $(dequote $1 $) < @ $2 >		dequote local part
+
+# if no $=O character, no host in the user portion, we are done
+R<?> $* $=O $* < @ $* >	$: <NO> $1 $2 $3 < @ $4>
+R<?> $*			$@ $1
+
+ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl
+# if we relay, check username portion for user%host so host can be checked also
+R<NO> $* < @ $* $=m >	$: <RELAY> $1 < @ $2 $3 >', `dnl')
+ifdef(`_RELAY_HOSTS_ONLY_',
+`R<NO> $* < @ $=R >	$: <RELAY> $1 < @ $2 >
+ifdef(`ACCESS_TABLE', `dnl
+R<NO> $* < @ $* >	$: <$(access $2 $: NO $)> $1 < @ $2 >',`dnl')',
+`R<NO> $* < @ $* $=R >	$: <RELAY> $1 < @ $2 $3 >
+ifdef(`ACCESS_TABLE', `dnl
+R<NO> $* < @ $* >	$: $>LookUpDomain <$2> <NO> <$1 < @ $2 >>
+R<$+> <$+>		$: <$1> $2',`dnl')')
+R<RELAY> $* < @ $* >	$@ $>ParseRecipient $1
+R<$-> $*		$@ $2
+
+######################################################################
+###  check_relay -- check hostname/address on SMTP startup
+######################################################################
+
+SLocal_check_relay
+Scheck_relay
+R$*			$: $1 $| $>"Local_check_relay" $1
+R$* $| $* $| $#$*	$#$3
+R$* $| $* $| $*		$@ $>"Basic_check_relay" $1 $| $2
+
+SBasic_check_relay
+# check for deferred delivery mode
+R$*			$: < ${deliveryMode} > $1
+R< d > $*		$@ deferred
+R< $* > $*		$: $2
+
+ifdef(`ACCESS_TABLE', `dnl
+R$+ $| $+		$: $>LookUpDomain < $1 > <?> < $2 >
+R<?> < $+ >		$: $>LookUpAddress < $1 > <OK> < $1 >
+R<OK> < $* >		$: $1
+R<RELAY> < $* >		$: $1
+R<REJECT> $*		$#error $@ 5.7.1 $: "ifdef(`confREJECT_MSG', `confREJECT_MSG', `550 Access denied')"
+R<DISCARD> $*		$#discard $: discard
+R<$+> $*		$#error $@ 5.7.1 $: $1', `dnl')
+
+ifdef(`_RBL_', `dnl
+# MAPS project checks -- http://maps.vix.com/
+R$*			$: $&{client_addr}
+R$-.$-.$-.$-		$: $(host $4.$3.$2.$1._RBL_. $: OK $)
+ROK			$@ OK
+R$+			$#error $@ 5.7.1 $: "Mail from " $&{client_addr} " refused; see http://maps.vix.com/rbl/"',
+`dnl')
+
+######################################################################
+###  check_mail -- check SMTP ``MAIL FROM:'' command argument
+######################################################################
+
+SLocal_check_mail
+Scheck_mail
+R$*			$: $1 $| $>"Local_check_mail" $1
+R$* $| $#$*		$#$2
+R$* $| $*		$@ $>"Basic_check_mail" $1
+
+SBasic_check_mail
+# check for deferred delivery mode
+R$*			$: < ${deliveryMode} > $1
+R< d > $*		$@ deferred
+R< $* > $*		$: $2
+
+R<>			$@ <OK>
+R$*			$: <?> $>Parse0 $>3 $1		make domain canonical
+R<?> $* < @ $+ . > $*	<?> $1 < @ $2 > $3		strip trailing dots
+# handle non-DNS hostnames (*.bitnet, *.decnet, *.uucp, etc)
+R<?> $* < $* $=P > $*	$: <OK> $1 < @ $2 $3 > $4
+ifdef(`_ACCEPT_UNRESOLVABLE_DOMAINS_',
+`R<?> $* < @ $+ > $*	$: <OK> $1 < @ $2 > $3		... unresolvable OK',
+`R<?> $* < @ $+ > $*	$: <? $(resolve $2 $: $2 <PERM> $) > $1 < @ $2 > $3
+R<? $* <$->> $* < @ $+ > $*
+			$: <$2> $3 < @ $4 > $5')
+
+ifdef(`_ACCEPT_UNQUALIFIED_SENDERS_',`dnl',`dnl
+# handle case of @localhost on address
+R<$+> $* < @localhost >	$: < ? $&{client_name} > <$1> $2 < @localhost >
+R<$+> $* < @localhost.$m >
+			$: < ? $&{client_name} > <$1> $2 < @localhost.$m >
+ifdef(`_NO_UUCP_', `dnl',
+`R<$+> $* < @localhost.UUCP >
+			$: < ? $&{client_name} > <$1> $2 < @localhost.UUCP >')
+R<? $=w> <$+> $*	<?> <$2> $3
+R<? $+> <$+> $*		$#error $@ 5.5.4 $: "553 Real domain name required"
+R<?> <$+> $*		$: <$1> $2')
+
+ifdef(`ACCESS_TABLE', `dnl
+# lookup localpart (user@)
+R<$+> $* < @ $+ > $*	$: <USER $(access $2@ $: ? $) > <$1> $2 < @ $3 > $4
+# no match, try full address (user@domain rest)
+R<USER ?> <$+> $* < @ $* > $*
+			$: <USER $(access $2@$3$4 $: ? $) > <$1> $2 < @ $3 > $4
+# no match, try address (user@domain)
+R<USER ?> <$+> $+ < @ $+ > $*
+			$: <USER $(access $2@$3 $: ? $) > <$1> $2 < @ $3 > $4
+# no match, try (sub)domain (domain)
+R<USER ?> <$+> $* < @ $+ > $*
+			$: $>LookUpDomain <$3> <$1> <>
+# check unqualified user in access database
+R<?> $*			$: <USER $(access $1@ $: ? $) > <?> $1
+# retransform for further use
+R<USER $+> <$+> $*	$: <$1> $3',
+`dnl')
+
+ifdef(`_ACCEPT_UNQUALIFIED_SENDERS_',`dnl',`dnl
+# handle case of no @domain on address
+R<?> $*			$: < ? $&{client_name} > $1
+R<?> $*			$@ <OK>				...local unqualed ok
+R<? $+> $*		$#error $@ 5.5.4 $: "553 Domain name required"
+							...remote is not')
+# check results
+R<?> $*			$@ <OK>
+R<OK> $*		$@ <OK>
+R<TEMP> $*		$#error $@ 4.1.8 $: "451 Sender domain must resolve"
+R<PERM> $*		$#error $@ 5.1.8 $: "501 Sender domain must exist"
+ifdef(`ACCESS_TABLE', `dnl
+R<RELAY> $*		$@ <RELAY>
+R<DISCARD> $*		$#discard $: discard
+R<REJECT> $*		$#error $@ 5.7.1 $: "ifdef(`confREJECT_MSG', `confREJECT_MSG', `550 Access denied')"
+R<$+> $*		$#error $@ 5.7.1 $: $1		error from access db',
+`dnl')
+
+######################################################################
+###  check_rcpt -- check SMTP ``RCPT TO:'' command argument
+######################################################################
+
+SLocal_check_rcpt
+Scheck_rcpt
+R$*			$: $1 $| $>"Local_check_rcpt" $1
+R$* $| $#$*		$#$2
+R$* $| $*		$@ $>"Basic_check_rcpt" $1
+
+SBasic_check_rcpt
+# check for deferred delivery mode
+R$*			$: < ${deliveryMode} > $1
+R< d > $*		$@ deferred
+R< $* > $*		$: $2
+
+ifdef(`_LOOSE_RELAY_CHECK_',`dnl
+R$*			$: $>Parse0 $>3 $1
+R$* < @ $* . >		$1 < @ $2 >			strip trailing dots',
+`R$*			$: $>ParseRecipient $1		strip relayable hosts')
+
+ifdef(`_BLACKLIST_RCPT_',`dnl
+ifdef(`ACCESS_TABLE', `dnl
+# blacklist local users or any host from receiving mail
+R$*			$: <?> $1
+R<?> $+ < @ $=w >	$: <> <USER $1> <FULL $1@$2> <HOST $2> <$1 < @ $2 >>
+R<?> $+ < @ $* >	$: <> <FULL $1@$2> <HOST $2> <$1 < @ $2 >>
+R<?> $+			$: <> <USER $1> <$1>
+R<> <USER $+> $*	$: <$(access $1 $: $)> $2
+R<> <FULL $+> $*	$: <$(access $1 $: $)> $2
+R<OK> <FULL $+> $*	$: <$(access $1 $: $)> $2
+R<> <HOST $+> $*	$: <$(access $1 $: $)> $2
+R<OK> <HOST $+> $*	$: <$(access $1 $: $)> $2
+R<> <$*>		$: $1
+R<OK> <$*>		$: $1
+R<RELAY> <$*>		$: $1
+R<REJECT> $*		$#error $@ 5.2.1 $: "550 Mailbox disabled for this recipient"
+R<$+> $*		$#error $@ 5.2.1 $: $1			error from access db', `dnl')', `dnl')
+
+ifdef(`_PROMISCUOUS_RELAY_', `dnl', `dnl
+# anything terminating locally is ok
+ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl
+R$+ < @ $* $=m >	$@ OK', `dnl')
+R$+ < @ $=w >		$@ OK
+ifdef(`_RELAY_HOSTS_ONLY_',
+`R$+ < @ $=R >		$@ OK
+ifdef(`ACCESS_TABLE', `dnl
+R$+ < @ $* >		$: <$(access $2 $: ? $)> <$1 < @ $2 >>',`dnl')',
+`R$+ < @ $* $=R >	$@ OK
+ifdef(`ACCESS_TABLE', `dnl
+R$+ < @ $* >		$: $>LookUpDomain <$2> <?> <$1 < @ $2 >>',`dnl')')
+ifdef(`ACCESS_TABLE', `dnl
+R<RELAY> $*		$@ RELAY
+R<$*> <$*>		$: $2',`dnl')
+
+ifdef(`_RELAY_MX_SERVED_', `dnl
+# allow relaying for hosts which we MX serve
+R$+ < @ $* >		$: < : $(mxserved $2 $) : > $1 < @ $2 >
+R< : $* <TEMP> : > $*	$#error $@ 4.7.1 $: "450 Can not check MX records for recipient host " $1
+R<$* : $=w . : $*> $*	$@ OK
+R<$*> $*			$: $2',
+`dnl')
+
+# check for local user (i.e. unqualified address)
+R$*			$: <?> $1
+R<?> $+ < @ $+ >	$: <REMOTE> $1 < @ $2 >
+# local user is ok
+R<?> $+			$@ OK
+R<$+> $*		$: $2
+
+# anything originating locally is ok
+R$*			$: <?> $&{client_name}
+# check if bracketed IP address (forward lookup != reverse lookup)
+R<?> [$+]		$: <BAD> [$1]
+# pass to name server to make hostname canonical
+R<?> $* $~P 		$: <?> $[ $1 $2 $]
+R<$-> $*		$: $2
+R$* .			$1				strip trailing dots
+R$@			$@ OK
+ifdef(`_RELAY_ENTIRE_DOMAIN_', `dnl
+R$* $=m			$@ OK', `dnl')
+R$=w			$@ OK
+ifdef(`_RELAY_HOSTS_ONLY_',
+`R$=R			$@ OK
+ifdef(`ACCESS_TABLE', `dnl
+R$*			$: <$(access $1 $: ? $)> <$1>',`dnl')',
+`R$* $=R			$@ OK
+ifdef(`ACCESS_TABLE', `dnl
+R$*			$: $>LookUpDomain <$1> <?> <$1>',`dnl')')
+ifdef(`ACCESS_TABLE', `dnl
+R<RELAY> $*		$@ RELAY
+R<$*> <$*>		$: $2',`dnl')
+
+# check IP address
+R$*			$: $&{client_addr}
+R$@			$@ OK			originated locally
+R0			$@ OK			originated locally
+R$=R $*			$@ OK			relayable IP address
+ifdef(`ACCESS_TABLE', `dnl
+R$*			$: $>LookUpAddress <$1> <?> <$1>
+R<RELAY> $* 		$@ RELAY		relayable IP address
+R<$*> <$*>		$: $2', `dnl')
+R$*			$: [ $1 ]		put brackets around it...
+R$=w			$@ OK			... and see if it is local
+
+ifdef(`_RELAY_LOCAL_FROM_', `dnl
+# anything with a local FROM is ok
+R$*			$: $1 $| $>Parse0 $>3 $&f
+R$* $| $+ < @ $=w . >	$@ OK			FROM local
+R$* $| $*		$: $1
+', `dnl')
+
+# anything else is bogus
+R$*			$#error $@ 5.7.1 $: "550 Relaying denied"')
+
 undivert(9)dnl
 #
 ######################################################################

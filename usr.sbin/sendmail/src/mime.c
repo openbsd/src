@@ -1,42 +1,20 @@
 /*
- * Copyright (c) 1994, 1996-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1994, 1996-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 # include "sendmail.h"
 # include <string.h>
 
 #ifndef lint
-static char sccsid[] = "@(#)mime.c	8.59 (Berkeley) 5/6/97";
+static char sccsid[] = "@(#)mime.c	8.66 (Berkeley) 5/19/98";
 #endif /* not lint */
 
 /*
@@ -306,6 +284,7 @@ mime8to7(mci, header, e, boundaries, flags)
 
 		/* skip the early "comment" prologue */
 		putline("", mci);
+		mci->mci_flags &= ~MCIF_INHEADER;
 		while (fgets(buf, sizeof buf, e->e_dfp) != NULL)
 		{
 			bt = mimeboundary(buf, boundaries);
@@ -992,6 +971,7 @@ mime7to8(mci, header, e)
 	cataddr(pvp, NULL, buf, sizeof buf, '\0');
 	cte = newstr(buf);
 
+	mci->mci_flags |= MCIF_INHEADER;
 	putline("Content-Transfer-Encoding: 8bit", mci);
 	snprintf(buf, sizeof buf,
 		"X-MIME-Autoconverted: from %.200s to 8bit by %s id %s",
@@ -1146,20 +1126,24 @@ mime_fromqp(infile, outfile, state, maxlen)
 			if ((c1 = *infile++) == 0)
 				break;
 
-			if (c1 == '\n') /* ignore it */
+			if (c1 == '\n' || (c1 = HEXCHAR(c1)) == -1)
 			{
+				/* ignore it */
 				if (state == 0)
 					return 0;
 			}
 			else
 			{
-				if ((c2 = *infile++) == '\0')
-					break;
+				do
+				{
+					if ((c2 = *infile++) == '\0')
+					{
+						c2 = -1;
+						break;
+					}
+				} while ((c2 = HEXCHAR(c2)) == -1);
 
-				c1 = HEXCHAR(c1);
-				c2 = HEXCHAR(c2);
-
-				if (++nchar > maxlen)
+				if (c2 == -1 || ++nchar > maxlen)
 					break;
 
 				*(*outfile)++ = c1 << 4 | c2;

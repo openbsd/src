@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readcf.c	8.201 (Berkeley) 10/1/97";
+static char sccsid[] = "@(#)readcf.c	8.230 (Berkeley) 6/5/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -43,9 +21,9 @@ static char sccsid[] = "@(#)readcf.c	8.201 (Berkeley) 10/1/97";
 #endif
 
 /*
-**  READCF -- read control file.
+**  READCF -- read configuration file.
 **
-**	This routine reads the control file and builds the internal
+**	This routine reads the configuration file and builds the internal
 **	form.
 **
 **	The file is formatted as a sequence of lines, each taken
@@ -77,7 +55,7 @@ static char sccsid[] = "@(#)readcf.c	8.201 (Berkeley) 10/1/97";
 **		Eenvar=value	Set the environment value to the given value.
 **
 **	Parameters:
-**		cfname -- control file name.
+**		cfname -- configuration file name.
 **		safe -- TRUE if this is the system config file;
 **			FALSE otherwise.
 **		e -- the main envelope.
@@ -231,10 +209,6 @@ readcf(cfname, safe, e)
 
 					  case MATCHREPL:
 						botch = "$0-$9";
-						break;
-
-					  case CANONNET:
-						botch = "$#";
 						break;
 
 					  case CANONUSER:
@@ -536,7 +510,7 @@ readcf(cfname, safe, e)
 
 		  default:
 		  badline:
-			syserr("unknown control line \"%s\"", bp);
+			syserr("unknown configuration line \"%s\"", bp);
 		}
 		if (bp != buf)
 			free(bp);
@@ -750,7 +724,11 @@ fileclass(class, filename, fmt, safe, optional)
 	else
 	{
 		pid = -1;
-		sff = SFF_REGONLY|SFF_NOWLINK;
+		sff = SFF_REGONLY;
+		if (!bitset(DBS_CLASSFILEINUNSAFEDIRPATH, DontBlameSendmail))
+			sff |= SFF_SAFEDIRPATH;
+		if (!bitset(DBS_LINKEDCLASSFILEINWRITABLEDIR, DontBlameSendmail))
+			sff |= SFF_NOWLINK;
 		if (safe)
 			sff |= SFF_OPENASROOT;
 		if (DontLockReadFiles)
@@ -850,7 +828,7 @@ makemailer(line)
 	char fcode;
 	auto char *endp;
 	extern int NextMailer;
-	extern char **makeargv();
+	extern char **makeargv __P((char *));
 	extern char *munchstring __P((char *, char **, int));
 
 	/* allocate a mailer and set up defaults */
@@ -1103,6 +1081,24 @@ makemailer(line)
 			m->m_addrtype = "rfc822";
 		if (m->m_diagtype == NULL)
 			m->m_diagtype = "smtp";
+	}
+
+	if (strcmp(m->m_mailer, "[FILE]") == 0)
+	{
+		/* Use the second argument for filename */
+		if (m->m_argv[0] == NULL || m->m_argv[1] == NULL ||
+		    m->m_argv[2] != NULL)
+		{
+			syserr("M%s: too %s parameters for [FILE] mailer",
+			       m->m_name,
+			       (m->m_argv[0] == NULL ||
+				m->m_argv[1] == NULL) ? "few" : "many");
+		}
+		else if (strcmp(m->m_argv[0], "FILE") != 0)
+		{
+			syserr("M%s: first argument in [FILE] mailer must be FILE",
+			       m->m_name);
+		}
 	}
 
 	if (m->m_eol == NULL)
@@ -1497,33 +1493,31 @@ struct optioninfo
 #define O_PIDFILE	0x9f
 	{ "PidFile",			O_PIDFILE,	FALSE	},
 #endif
-#if _FFR_WRITABLE_DIRECTORIES_ARE_FATAL_OPTION
-#define O_WDAF		0xa0
-	{ "WritableDirectoriesAreFatal", O_WDAF,	FALSE	},
-#endif
-#if _FFR_CHOWN_IS_ALWAYS_SAFE_OPTION
-#define O_CIAS		0xa1
-	{ "ChownIsAlwaysSafe",		O_CIAS,		FALSE	},
-#endif
-#if _FFR_DONT_PROBE_INTERFACES_OPTION
-#define O_DPI		0xa2
+#define O_DONTBLAMESENDMAIL	0xa0
+	{ "DontBlameSendmail",		O_DONTBLAMESENDMAIL,	FALSE	},
+#define O_DPI		0xa1
 	{ "DontProbeInterfaces",	O_DPI,		FALSE	},
-#endif
-#if _FFR_MAXRCPT_OPTION
-#define O_MAXRCPT	0xa3
-	{ "MaxRecipientPerMessage",	O_MAXRCPT,	FALSE	},
-#endif
+#define O_MAXRCPT	0xa2
+	{ "MaxRecipientsPerMessage",	O_MAXRCPT,	FALSE	},
 #if _FFR_DEADLETTERDROP_OPTION
-#define O_DEADLETTER	0xa4
+#define O_DEADLETTER	0xa3
 	{ "DeadLetterDrop",		O_DEADLETTER,	FALSE	},
 #endif
 #if _FFR_DONTLOCKFILESFORREAD_OPTION
-#define O_DONTLOCK	0xa5
+#define O_DONTLOCK	0xa4
 	{ "DontLockFilesForRead",	O_DONTLOCK,	FALSE	},
 #endif
 #if _FFR_MAXALIASRECURSION_OPTION
-#define O_MAXALIASRCSN	0xa6
+#define O_MAXALIASRCSN	0xa5
 	{ "MaxAliasRecursion",		O_MAXALIASRCSN,	FALSE	},
+#endif
+#if _FFR_CONNECTONLYTO_OPTION
+#define O_CNCTONLYTO	0xa6
+	{ "ConnectOnlyTo",		O_CNCTONLYTO,	FALSE	},
+#endif
+#if _FFR_TRUSTED_FILE_OWNER
+#define O_TRUSTFILEOWN	0xa7
+	{ "TrustedFileOwner",		O_TRUSTFILEOWN,	FALSE	},
 #endif
 
 	{ NULL,				'\0',		FALSE	}
@@ -1543,10 +1537,11 @@ setoption(opt, val, safe, sticky, e)
 	register struct optioninfo *o;
 	char *subopt;
 	int mid;
+	bool can_setuid = RunAsUid == 0;
 	auto char *ep;
 	char buf[50];
-	extern bool atobool();
-	extern time_t convtime();
+	extern bool atobool __P((char *));
+	extern time_t convtime __P((char *, char));
 	extern int QueueLA;
 	extern int RefuseLA;
 	extern bool Warn_Q_option;
@@ -1778,6 +1773,9 @@ setoption(opt, val, safe, sticky, e)
 			syserr("Unknown delivery mode %c", *val);
 			exit(EX_USAGE);
 		}
+		buf[0] = (char)e->e_sendmode;
+		buf[1] = '\0';
+		define(macid("{deliveryMode}", NULL), newstr(buf), e);
 		break;
 
 	  case 'D':		/* rebuild alias database as needed */
@@ -2052,7 +2050,10 @@ setoption(opt, val, safe, sticky, e)
 			}
 		}
 		if (isascii(*val) && isdigit(*val))
+		{
 			DefUid = atoi(val);
+			setdefuser();
+		}
 		else
 		{
 			register struct passwd *pw;
@@ -2065,6 +2066,7 @@ setoption(opt, val, safe, sticky, e)
 			{
 				DefUid = pw->pw_uid;
 				DefGid = pw->pw_gid;
+				DefUser = newstr(pw->pw_name);
 			}
 		}
 
@@ -2075,7 +2077,6 @@ setoption(opt, val, safe, sticky, e)
 				DefUid, UID_MAX);
 		}
 #endif
-		setdefuser();
 
 		/* handle the group if it is there */
 		if (*p == '\0')
@@ -2240,7 +2241,8 @@ setoption(opt, val, safe, sticky, e)
 		break;
 
 	  case O_UGW:		/* group writable files are unsafe */
-		UnsafeGroupWrites = atobool(val);
+		if (!atobool(val))
+			DontBlameSendmail |= DBS_GROUPWRITABLEFORWARDFILESAFE|DBS_GROUPWRITABLEINCLUDEFILESAFE;
 		break;
 
 	  case O_DBLBOUNCE:	/* address to which to send double bounces */
@@ -2270,7 +2272,7 @@ setoption(opt, val, safe, sticky, e)
 		}
 		if (isascii(*val) && isdigit(*val))
 		{
-			if (RunAsUid == 0)
+			if (can_setuid)
 				RunAsUid = atoi(val);
 		}
 		else
@@ -2280,7 +2282,7 @@ setoption(opt, val, safe, sticky, e)
 			pw = sm_getpwnam(val);
 			if (pw == NULL)
 				syserr("readcf: option RunAsUser: unknown user %s", val);
-			else if (RunAsUid == 0)
+			else if (can_setuid)
 			{
 				if (*p == '\0')
 					RunAsUserName = newstr(val);
@@ -2288,24 +2290,34 @@ setoption(opt, val, safe, sticky, e)
 				RunAsGid = pw->pw_gid;
 			}
 		}
-		if (*p == '\0')
-			break;
-		if (isascii(*p) && isdigit(*p))
+#ifdef UID_MAX
+		if (RunAsUid > UID_MAX)
 		{
-			if (RunAsGid == 0)
-				RunAsGid = atoi(p);
+			syserr("readcf: option RunAsUser: uid value (%ld) > UID_MAX (%ld); ignored",
+				RunAsUid, UID_MAX);
 		}
-		else
+#endif
+		if (*p != '\0')
 		{
-			register struct group *gr;
-
-			gr = getgrnam(p);
-			if (gr == NULL)
-				syserr("readcf: option RunAsUser: unknown group %s",
-					p);
-			else if (RunAsGid == 0)
-				RunAsGid = gr->gr_gid;
+			if (isascii(*p) && isdigit(*p))
+			{
+				if (can_setuid)
+					RunAsGid = atoi(p);
+			}
+			else
+			{
+				register struct group *gr;
+	
+				gr = getgrnam(p);
+				if (gr == NULL)
+					syserr("readcf: option RunAsUser: unknown group %s",
+						p);
+				else if (can_setuid)
+					RunAsGid = gr->gr_gid;
+			}
 		}
+		if (tTd(47, 5))
+			printf("readcf: RunAsUser = %d:%d\n", (int)RunAsUid, (int)RunAsGid);
 		break;
 
 #if _FFR_DSN_RRT_OPTION
@@ -2321,29 +2333,46 @@ setoption(opt, val, safe, sticky, e)
 		break;
 #endif
 
-#if _FFR_WRITABLE_DIRECTORIES_ARE_FATAL_OPTION
-	  case O_WDAF:
-		FatalWritableDirs = atobool(val);
-		break;
-#endif
+	case O_DONTBLAMESENDMAIL:
+		p = val;
+		for (;;)
+		{
+			register struct dbsval *dbs;
+			extern struct dbsval DontBlameSendmailValues[];
 
-#if _FFR_CHOWN_IS_ALWAYS_SAFE_OPTION
-	  case O_CIAS:
-		ChownIsAlwaysSafe = atobool(val);
-		break;
-#endif
+			while (isascii(*p) && (isspace(*p) || ispunct(*p)))
+				p++;
+			if (*p == '\0')
+				break;
+			val = p;
+			while (isascii(*p) && isalnum(*p))
+				p++;
+			if (*p != '\0')
+				*p++ = '\0';
 
-#if _FFR_DONT_PROBE_INTERFACES_OPTION
+			for (dbs = DontBlameSendmailValues;
+			     dbs->dbs_name != NULL; dbs++)
+			{
+				if (strcasecmp(val, dbs->dbs_name) == 0)
+					break;
+			}
+			if (dbs->dbs_name == NULL)
+				syserr("readcf: DontBlameSendmail option: %s unrecognized", val);
+			else if (dbs->dbs_flag == DBS_SAFE)
+				DontBlameSendmail = DBS_SAFE;
+			else
+				DontBlameSendmail |= dbs->dbs_flag;
+		}
+		sticky = FALSE;
+		break;
+
 	  case O_DPI:
 		DontProbeInterfaces = atobool(val);
 		break;
-#endif
 
-#if _FFR_MAXRCPT_OPTION
 	  case O_MAXRCPT:
 		MaxRcptPerMsg = atoi(val);
 		break;
-#endif
 
 #if _FFR_DEADLETTERDROP_OPTION
 	  case O_DEADLETTER:
@@ -2362,6 +2391,40 @@ setoption(opt, val, safe, sticky, e)
 #if _FFR_MAXALIASRECURSION_OPTION
 	  case O_MAXALIASRCSN:
 		MaxAliasRecursion = atoi(val);
+		break;
+#endif
+
+#if _FFR_CONNECTONLYTO_OPTION
+	  case O_CNCTONLYTO:
+		/* XXX should probably use gethostbyname */
+		ConnectOnlyTo = inet_addr(val);
+		break;
+#endif
+
+#if _FFR_TRUSTED_FILE_OWNER
+	  case O_TRUSTFILEOWN:
+		if (isascii(*val) && isdigit(*val))
+			TrustedFileUid = atoi(val);
+		else
+		{
+			register struct passwd *pw;
+
+			TrustedFileUid = 0;
+			pw = sm_getpwnam(val);
+			if (pw == NULL)
+				syserr("readcf: option TrustedFileOwner: unknown user %s", val);
+			else
+				TrustedFileUid = pw->pw_uid;
+		}
+
+#ifdef UID_MAX
+		if (TrustedFileUid > UID_MAX)
+		{
+			syserr("readcf: option TrustedFileOwner: uid value (%ld) > UID_MAX (%ld)",
+				TrustedFileUid, UID_MAX);
+			TrustedFileUid = 0;
+		}
+#endif
 		break;
 #endif
 
@@ -2536,7 +2599,7 @@ strtorwset(p, endp, stabmode)
 		while (*p != '\0' && isascii(*p) &&
 		       (isalnum(*p) || *p == '_'))
 			p++;
-		if (q == p || !isalpha(*q))
+		if (q == p || !(isascii(*q) && isalpha(*q)))
 		{
 			/* no valid characters */
 			syserr("invalid ruleset name: \"%.20s\"", q);
@@ -2558,7 +2621,7 @@ strtorwset(p, endp, stabmode)
 		{
 			while (isascii(*++p) && isspace(*p))
 				continue;
-			if (!isdigit(*p))
+			if (!(isascii(*p) && isdigit(*p)))
 			{
 				syserr("bad ruleset definition \"%s\" (number required after `=')", q);
 				ruleset = -1;
@@ -2623,7 +2686,7 @@ inittimeouts(val)
 	register char *val;
 {
 	register char *p;
-	extern time_t convtime();
+	extern time_t convtime __P((char *, char));
 
 	if (tTd(37, 2))
 		printf("inittimeouts(%s)\n", val == NULL ? "<NULL>" : val);
@@ -2650,20 +2713,20 @@ inittimeouts(val)
 		if (tTd(37, 5))
 		{
 			printf("Timeouts:\n");
-			printf("  connect = %ld\n", TimeOuts.to_connect);
-			printf("  initial = %ld\n", TimeOuts.to_initial);
-			printf("  helo = %ld\n", TimeOuts.to_helo);
-			printf("  mail = %ld\n", TimeOuts.to_mail);
-			printf("  rcpt = %ld\n", TimeOuts.to_rcpt);
-			printf("  datainit = %ld\n", TimeOuts.to_datainit);
-			printf("  datablock = %ld\n", TimeOuts.to_datablock);
-			printf("  datafinal = %ld\n", TimeOuts.to_datafinal);
-			printf("  rset = %ld\n", TimeOuts.to_rset);
-			printf("  quit = %ld\n", TimeOuts.to_quit);
-			printf("  nextcommand = %ld\n", TimeOuts.to_nextcommand);
-			printf("  miscshort = %ld\n", TimeOuts.to_miscshort);
-			printf("  ident = %ld\n", TimeOuts.to_ident);
-			printf("  fileopen = %ld\n", TimeOuts.to_fileopen);
+			printf("  connect = %ld\n", (long)TimeOuts.to_connect);
+			printf("  initial = %ld\n", (long)TimeOuts.to_initial);
+			printf("  helo = %ld\n", (long)TimeOuts.to_helo);
+			printf("  mail = %ld\n", (long)TimeOuts.to_mail);
+			printf("  rcpt = %ld\n", (long)TimeOuts.to_rcpt);
+			printf("  datainit = %ld\n", (long)TimeOuts.to_datainit);
+			printf("  datablock = %ld\n", (long)TimeOuts.to_datablock);
+			printf("  datafinal = %ld\n", (long)TimeOuts.to_datafinal);
+			printf("  rset = %ld\n", (long)TimeOuts.to_rset);
+			printf("  quit = %ld\n", (long)TimeOuts.to_quit);
+			printf("  nextcommand = %ld\n", (long)TimeOuts.to_nextcommand);
+			printf("  miscshort = %ld\n", (long)TimeOuts.to_miscshort);
+			printf("  ident = %ld\n", (long)TimeOuts.to_ident);
+			printf("  fileopen = %ld\n", (long)TimeOuts.to_fileopen);
 		}
 		return;
 	}
@@ -2722,7 +2785,7 @@ settimeout(name, val)
 {
 	register char *p;
 	time_t to;
-	extern time_t convtime();
+	extern time_t convtime __P((char *, char));
 
 	if (tTd(37, 2))
 		printf("settimeout(%s = %s)\n", name, val);

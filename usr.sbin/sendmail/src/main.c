@@ -1,51 +1,32 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
+"@(#) Copyright (c) 1998 Sendmail, Inc.  All rights reserved.\n\
+     Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.\n\
+     Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	8.258 (Berkeley) 10/20/97";
+static char sccsid[] = "@(#)main.c	8.302 (Berkeley) 6/4/98";
 #endif /* not lint */
 
 #define	_DEFINE
 
 #include "sendmail.h"
 #include <arpa/inet.h>
+#include <grp.h>
 #if NAMED_BIND
 #include <resolv.h>
 #endif
@@ -74,6 +55,7 @@ static char sccsid[] = "@(#)main.c	8.258 (Berkeley) 10/20/97";
 **				(11/88 - 9/89).
 **			     UCB/Mammoth Project (10/89 - 7/95).
 **			     InReference, Inc. (8/95 - 1/97).
+**			     Sendmail, Inc. (1/98 - present).
 **		The support of the my employers is gratefully acknowledged.
 **			Few of them (Britton-Lee in particular) have had
 **			anything to gain from my involvement in this project.
@@ -95,7 +77,7 @@ int		MissingFds = 0;	/* bit map of fds missing on startup */
 GIDSET_T	InitialGidSet[NGROUPS_MAX];
 #endif
 
-static void	obsolete();
+static void	obsolete __P((char **));
 extern void	printmailer __P((MAILER *));
 extern void	tTflag __P((char *));
 
@@ -106,7 +88,7 @@ ERROR %%%%   Cannot have DAEMON mode without SMTP   %%%% ERROR
 ERROR %%%%   Cannot have SMTP mode without QUEUE   %%%% ERROR
 #endif /* DAEMON && !SMTP */
 
-#define MAXCONFIGLEVEL	7	/* highest config version level known */
+#define MAXCONFIGLEVEL	8	/* highest config version level known */
 
 int
 main(argc, argv, envp)
@@ -129,20 +111,22 @@ main(argc, argv, envp)
 	static bool reenter = FALSE;
 	struct passwd *pw;
 	struct hostent *hp;
-	bool nullserver = FALSE;
+	char *nullserver = NULL;
+	bool forged;
 	char jbuf[MAXHOSTNAMELEN];	/* holds MyHostName */
 	static char rnamebuf[MAXNAME];	/* holds RealUserName */
 	char *emptyenviron[1];
+	QUEUE_CHAR *new;
 	extern int DtableSize;
 	extern int optind;
 	extern int opterr;
 	extern char *optarg;
 	extern char **environ;
-	extern time_t convtime();
+	extern time_t convtime __P((char *, char));
 	extern SIGFUNC_DECL intsig __P((int));
-	extern struct hostent *myhostname();
-	extern char *getauthinfo();
-	extern char *getcfname();
+	extern struct hostent *myhostname __P((char *, int));
+	extern char *getauthinfo __P((int, bool *));
+	extern char *getcfname __P((void));
 	extern SIGFUNC_DECL sigusr1 __P((int));
 	extern SIGFUNC_DECL sighup __P((int));
 	extern void initmacros __P((ENVELOPE *));
@@ -159,6 +143,9 @@ main(argc, argv, envp)
 	extern void printqueue __P((void));
 	extern void sendtoargv __P((char **, ENVELOPE *));
 	extern void resetlimits __P((void));
+#ifndef HASUNSETENV
+	extern void unsetenv __P((char *));
+#endif  
 
 	/*
 	**  Check to see if we reentered.
@@ -250,6 +237,9 @@ main(argc, argv, envp)
 	setsignal(SIGUSR1, sigusr1);
 #endif
 
+	/* initialize for setproctitle */
+	initsetproctitle(argc, argv, envp);
+
 	/* Handle any non-getoptable constructions. */
 	obsolete(argv);
 
@@ -311,16 +301,37 @@ main(argc, argv, envp)
 		(void) snprintf(rnamebuf, sizeof rnamebuf, "Unknown UID %d", RealUid);
 	RealUserName = rnamebuf;
 
-	/* if running non-setuid binary, pretend we are the RunAsUid */
-	if (geteuid() == RealUid)
+	if (tTd(0, 101))
+	{
+		printf("Version %s\n", Version);
+		endpwent();
+		setuid(RealUid);
+		exit(EX_OK);
+	}
+
+	/*
+	**  if running non-setuid binary as non-root, pretend
+	**  we are the RunAsUid
+	*/
+	if (RealUid != 0 && geteuid() == RealUid)
 	{
 		if (tTd(47, 1))
 			printf("Non-setuid binary: RunAsUid = RealUid = %d\n",
-				RealUid);
+				(int)RealUid);
 		RunAsUid = RealUid;
 	}
-	if (getegid() == RealGid)
+	else if (geteuid() != 0)
+		RunAsUid = geteuid();
+
+	if (RealUid != 0 && getegid() == RealGid)
 		RunAsGid = RealGid;
+
+	if (tTd(47, 5))
+	{
+		printf("main: e/ruid = %d/%d e/rgid = %d/%d\n",
+			(int)geteuid(), (int)getuid(), (int)getegid(), (int)getgid());
+		printf("main: RunAsUser = %d:%d\n", (int)RunAsUid, (int)RunAsGid);
+	}
 
 	/* save command line arguments */
 	i = 0;
@@ -402,13 +413,25 @@ main(argc, argv, envp)
 	InChannel = stdin;
 	OutChannel = stdout;
 
-	/* initialize for setproctitle */
-	initsetproctitle(argc, argv, envp);
-
 	/* clear sendmail's environment */
 	ExternalEnviron = environ;
 	emptyenviron[0] = NULL;
 	environ = emptyenviron;
+
+	/*
+	** restore any original TZ setting until TimeZoneSpec has been
+	** determined - or early log messages may get bogus time stamps
+	*/
+	if ((p = getextenv("TZ")) != NULL)
+	{
+		char *tz;
+		int tzlen;
+
+		tzlen = strlen(p) + 4;
+		tz = xalloc(tzlen);
+		snprintf(tz, tzlen, "TZ=%s", p);
+		putenv(tz);
+	}
 
 	/* prime the child environment */
 	setuserenv("AGENT", "sendmail");
@@ -504,8 +527,6 @@ main(argc, argv, envp)
 #if NETINET
 		if (hp->h_addrtype == AF_INET && hp->h_length == INADDRSZ)
 		{
-			register int i;
-
 			for (i = 0; hp->h_addr_list[i] != NULL; i++)
 			{
 				char ipbuf[103];
@@ -522,6 +543,10 @@ main(argc, argv, envp)
 
 	/* current time */
 	define('b', arpadate((char *) NULL), CurEnv);
+
+	QueueLimitRecipient = (QUEUE_CHAR *) NULL;
+	QueueLimitSender = (QUEUE_CHAR *) NULL;
+	QueueLimitId = (QUEUE_CHAR *) NULL;
 
 	/*
 	** Crack argv.
@@ -690,15 +715,27 @@ main(argc, argv, envp)
 			switch (optarg[0])
 			{
 			  case 'I':
-				QueueLimitId = newstr(&optarg[1]);
+				if ((new = (QUEUE_CHAR *)malloc(sizeof(QUEUE_CHAR))) == NULL)
+					syserr("!Out of memory!!");
+				new->queue_match = newstr(&optarg[1]);
+				new->queue_next = QueueLimitId;
+				QueueLimitId = new;
 				break;
 
 			  case 'R':
-				QueueLimitRecipient = newstr(&optarg[1]);
+				if ((new = (QUEUE_CHAR *)malloc(sizeof(QUEUE_CHAR))) == NULL)
+					syserr("!Out of memory!!");
+				new->queue_match = newstr(&optarg[1]);
+				new->queue_next = QueueLimitRecipient;
+				QueueLimitRecipient = new;
 				break;
 
 			  case 'S':
-				QueueLimitSender = newstr(&optarg[1]);
+				if ((new = (QUEUE_CHAR *)malloc(sizeof(QUEUE_CHAR))) == NULL)
+					syserr("!Out of memory!!");
+				new->queue_match = newstr(&optarg[1]);
+				new->queue_next = QueueLimitSender;
+				QueueLimitSender = new;
 				break;
 
 			  default:
@@ -850,7 +887,7 @@ main(argc, argv, envp)
 	**  Find our real host name for future logging.
 	*/
 
-	p = getauthinfo(STDIN_FILENO);
+	p = getauthinfo(STDIN_FILENO, &forged);
 	define('_', p, CurEnv);
 
 	/* suppress error printing if errors mailed back or whatever */
@@ -934,14 +971,15 @@ main(argc, argv, envp)
 	}
 
 	/* check for permissions */
-	if ((OpMode == MD_DAEMON || OpMode == MD_PURGESTAT) && RealUid != 0)
+	if ((OpMode == MD_DAEMON || OpMode == MD_FGDAEMON ||
+	     OpMode == MD_PURGESTAT) && RealUid != 0)
 	{
 		if (LogLevel > 1)
 			sm_syslog(LOG_ALERT, NOQID,
 				"user %d attempted to %s",
 				RealUid,
-				OpMode == MD_DAEMON ? "run daemon"
-						    : "purge host status");
+				OpMode != MD_PURGESTAT ? "run daemon"
+						       : "purge host status");
 		usrerr("Permission denied");
 		exit(EX_USAGE);
 	}
@@ -954,8 +992,18 @@ main(argc, argv, envp)
 	  case MD_TEST:
 		/* don't have persistent host status in test mode */
 		HostStatDir = NULL;
-		Verbose = 2;
+		if (Verbose == 0)
+			Verbose = 2;
 		CurEnv->e_errormode = EM_PRINT;
+		HoldErrs = FALSE;
+		break;
+
+	  case MD_VERIFY:
+		CurEnv->e_errormode = EM_PRINT;
+		HoldErrs = FALSE;
+		/* arrange to exit cleanly on hangup signal */
+		if (setsignal(SIGHUP, SIG_IGN) == (sigfunc_t) SIG_DFL)
+			setsignal(SIGHUP, intsig);
 		break;
 
 	  case MD_FGDAEMON:
@@ -983,6 +1031,7 @@ main(argc, argv, envp)
 	  case MD_INITALIAS:
 		Verbose = 2;
 		CurEnv->e_errormode = EM_PRINT;
+		HoldErrs = FALSE;
 		/* fall through... */
 
 	  case MD_PRINT:
@@ -997,9 +1046,32 @@ main(argc, argv, envp)
 		break;
 	}
 
-	/* full names can't have newlines */
-	if (FullName != NULL && strchr(FullName, '\n') != NULL)
-		FullName = newstr(denlstring(FullName, TRUE, TRUE));
+	/* special considerations for FullName */
+	if (FullName != NULL)
+	{
+		char *full = NULL;
+		extern bool rfc822_string __P((char *));
+
+		/* full names can't have newlines */
+		if (strchr(FullName, '\n') != NULL) 
+		{
+			FullName = full = newstr(denlstring(FullName, TRUE, TRUE));
+		}
+		/* check for characters that may have to be quoted */
+		if (!rfc822_string(FullName))
+		{
+			extern char *addquotes __P((char *));
+
+			/*
+			**  Quote a full name with special characters
+			**  as a comment so crackaddr() doesn't destroy
+			**  the name portion of the address.
+			*/
+			FullName = addquotes(FullName);
+			if (full != NULL)
+				free(full);
+		}
+	}
 
 	/* do heuristic mode adjustment */
 	if (Verbose)
@@ -1009,6 +1081,13 @@ main(argc, argv, envp)
 
 		/* turn on interactive delivery */
 		setoption('d', "", TRUE, FALSE, CurEnv);
+	}
+
+	/* check for out of date configuration level */
+	if (ConfigLevel < MAXCONFIGLEVEL)
+	{
+		message("Warning: .cf file is out of date: sendmail %s supports version %d, .cf file is version %d",
+			Version, MAXCONFIGLEVEL, ConfigLevel);
 	}
 
 	if (ConfigLevel < 3)
@@ -1216,9 +1295,6 @@ main(argc, argv, envp)
 		exit(ExitStat);
 
 	  case MD_SMTP:
-		nullserver = FALSE;
-		/* fall through... */
-
 	  case MD_DAEMON:
 		/* reset DSN parameters */
 		DefaultNotify = QPINGONFAILURE|QPINGONDELAY;
@@ -1279,7 +1355,7 @@ main(argc, argv, envp)
 		{
 			extern void testmodeline __P((char *, ENVELOPE *));
 
-			if (Verbose)
+			if (Verbose == 2)
 				printf("> ");
 			(void) fflush(stdout);
 			if (fgets(buf, sizeof buf, stdin) == NULL)
@@ -1287,7 +1363,7 @@ main(argc, argv, envp)
 			p = strchr(buf, '\n');
 			if (p != NULL)
 				*p = '\0';
-			if (!Verbose)
+			if (Verbose < 2)
 				printf("> %s\n", buf);
 			testmodeline(buf, CurEnv);
 		}
@@ -1326,7 +1402,7 @@ main(argc, argv, envp)
 			if (i < 0)
 				syserr("daemon: cannot fork");
 			if (i != 0)
-				exit(0);
+				exit(EX_OK);
 
 			/* disconnect from our controlling tty */
 			disconnect(2, CurEnv);
@@ -1379,13 +1455,8 @@ main(argc, argv, envp)
 		**  Get authentication data
 		*/
 
-		p = getauthinfo(fileno(InChannel));
+		p = getauthinfo(fileno(InChannel), &forged);
 		define('_', p, &BlankEnvelope);
-
-		/* validate the connection */
-		HoldErrs = TRUE;
-		nullserver = !validate_connection(&RealHostAddr, RealHostName, CurEnv);
-		HoldErrs = FALSE;
 #endif /* DAEMON */
 	}
 
@@ -1398,13 +1469,24 @@ main(argc, argv, envp)
 	if (OpMode == MD_SMTP || OpMode == MD_DAEMON)
 	{
 		char pbuf[20];
-		extern void smtp __P((bool, ENVELOPE *));
+		extern void smtp __P((char *, ENVELOPE *));
 
 		/*
 		**  Save some macros for check_* rulesets.
 		*/
 
-		define(macid("{client_name}", NULL), RealHostName, &BlankEnvelope);
+		if (forged)
+		{
+			char ipbuf[103];
+
+			snprintf(ipbuf, sizeof ipbuf, "[%.100s]",
+				 inet_ntoa(RealHostAddr.sin.sin_addr));
+
+			define(macid("{client_name}", NULL),
+			       newstr(ipbuf), &BlankEnvelope);
+		}
+		else
+			define(macid("{client_name}", NULL), RealHostName, &BlankEnvelope);
 		define(macid("{client_addr}", NULL),
 		       newstr(anynet_ntoa(&RealHostAddr)), &BlankEnvelope);
 		if (RealHostAddr.sa.sa_family == AF_INET)
@@ -1413,6 +1495,14 @@ main(argc, argv, envp)
 			snprintf(pbuf, sizeof pbuf, "0");
 		define(macid("{client_port}", NULL), newstr(pbuf), &BlankEnvelope);
 
+		if (OpMode == MD_DAEMON)
+		{
+			/* validate the connection */
+			HoldErrs = TRUE;
+			nullserver = validate_connection(&RealHostAddr,
+							 RealHostName, CurEnv);
+			HoldErrs = FALSE;
+		}
 		smtp(nullserver, CurEnv);
 	}
 # endif /* SMTP */
@@ -1421,9 +1511,7 @@ main(argc, argv, envp)
 	if (OpMode == MD_VERIFY)
 	{
 		CurEnv->e_sendmode = SM_VERIFY;
-		CurEnv->e_errormode = EM_PRINT;
 		PostMasterCopy = NULL;
-		HoldErrs = FALSE;
 	}
 	else
 	{
@@ -1463,6 +1551,21 @@ main(argc, argv, envp)
 	/* if we have had errors sofar, arrange a meaningful exit stat */
 	if (Errors > 0 && ExitStat == EX_OK)
 		ExitStat = EX_USAGE;
+
+#if _FFR_FIX_DASHT
+	/*
+	**  If using -t, force not sending to argv recipients, even
+	**  if they are mentioned in the headers.
+	*/
+
+	if (GrabTo)
+	{
+		ADDRESS *q;
+		
+		for (q = CurEnv->e_sendqueue; q != NULL; q = q->q_next)
+			q->q_flags |= QDONTSEND;
+	}
+#endif
 
 	/*
 	**  Read the input mail.
@@ -1504,6 +1607,7 @@ main(argc, argv, envp)
 	}
 	CurEnv->e_to = NULL;
 	CurrentLA = getla();
+	GrabTo = FALSE;
 	sendall(CurEnv, SM_DEFAULT);
 
 	/*
@@ -1517,6 +1621,7 @@ main(argc, argv, envp)
 }
 
 
+/* ARGSUSED */
 SIGFUNC_DECL
 intindebug(sig)
 	int sig;
@@ -1544,7 +1649,7 @@ finis()
 {
 	if (tTd(2, 1))
 	{
-		extern void printenvflags();
+		extern void printenvflags __P((ENVELOPE *));
 
 		printf("\n====finis: stat %d e_id=%s e_flags=",
 			ExitStat,
@@ -1605,6 +1710,7 @@ finis()
 **		Unlocks the current job.
 */
 
+/* ARGSUSED */
 SIGFUNC_DECL
 intsig(sig)
 	int sig;
@@ -1752,7 +1858,10 @@ disconnect(droplev, e)
 		(void) fclose(InChannel);
 		InChannel = stdin;
 	}
-	(void) freopen("/dev/null", "r", stdin);
+	if (freopen("/dev/null", "r", stdin) == NULL)
+		sm_syslog(LOG_ERR, e->e_id,
+			  "disconnect: freopen(\"/dev/null\") failed: %s",
+			  errstring(errno));
 
 	/* output to the transcript */
 	if (OutChannel != stdout)
@@ -1763,9 +1872,21 @@ disconnect(droplev, e)
 	if (droplev > 0)
 	{
 		if (e->e_xfp == NULL)
+		{
 			fd = open("/dev/null", O_WRONLY, 0666);
+			if (fd == -1)
+				sm_syslog(LOG_ERR, e->e_id,
+					  "disconnect: open(\"/dev/null\") failed: %s",
+					  errstring(errno));
+		}
 		else
+		{
 			fd = fileno(e->e_xfp);
+			if (fd == -1)
+				sm_syslog(LOG_ERR, e->e_id,
+					  "disconnect: fileno(e->e_xfp) failed: %s",
+					  errstring(errno));
+		}
 		(void) fflush(stdout);
 		dup2(fd, STDOUT_FILENO);
 		dup2(fd, STDERR_FILENO);
@@ -1876,7 +1997,7 @@ auth_warning(e, msg, va_alist)
 	{
 		register char *p;
 		static char hostbuf[48];
-		extern struct hostent *myhostname();
+		extern struct hostent *myhostname __P((char *, int));
 
 		if (hostbuf[0] == '\0')
 			(void) myhostname(hostbuf, sizeof hostbuf);
@@ -2017,6 +2138,7 @@ dumpstate(when)
 }
 
 
+/* ARGSUSED */
 SIGFUNC_DECL
 sigusr1(sig)
 	int sig;
@@ -2026,6 +2148,7 @@ sigusr1(sig)
 }
 
 
+/* ARGSUSED */
 SIGFUNC_DECL
 sighup(sig)
 	int sig;
@@ -2069,13 +2192,11 @@ drop_privileges(to_real_uid)
 	bool to_real_uid;
 {
 	int rval = EX_OK;
-#ifdef NGROUPS_MAX
-	GIDSET_T emptygidset[NGROUPS_MAX];
-#endif
+	GIDSET_T emptygidset[1];
 
 	if (tTd(47, 1))
 		printf("drop_privileges(%d): Real[UG]id=%d:%d, RunAs[UG]id=%d:%d\n",
-			to_real_uid, RealUid, RealGid, RunAsUid, RunAsGid);
+			(int)to_real_uid, (int)RealUid, (int)RealGid, (int)RunAsUid, (int)RunAsGid);
 
 	if (to_real_uid)
 	{
@@ -2087,17 +2208,22 @@ drop_privileges(to_real_uid)
 	/* make sure no one can grab open descriptors for secret files */
 	endpwent();
 
-#ifdef NGROUPS_MAX
 	/* reset group permissions; these can be set later */
 	emptygidset[0] = (to_real_uid || RunAsGid != 0) ? RunAsGid : getegid();
-	(void) setgroups(1, emptygidset);
-#endif
+	if (setgroups(1, emptygidset) == -1 && geteuid() == 0)
+		rval = EX_OSERR;
 
 	/* reset primary group and user id */
 	if ((to_real_uid || RunAsGid != 0) && setgid(RunAsGid) < 0)
 		rval = EX_OSERR;
 	if ((to_real_uid || RunAsUid != 0) && setuid(RunAsUid) < 0)
 		rval = EX_OSERR;
+	if (tTd(47, 5))
+	{
+		printf("drop_privileges: e/ruid = %d/%d e/rgid = %d/%d\n",
+			(int)geteuid(), (int)getuid(), (int)getegid(), (int)getgid());
+		printf("drop_privileges: RunAsUser = %d:%d\n", (int)RunAsUid, (int)RunAsGid);
+	}
 	return rval;
 }
 /*
@@ -2387,13 +2513,14 @@ testmodeline(line, e)
 		else if (strcasecmp(&line[1], "map") == 0)
 		{
 			auto int rcode = EX_OK;
+			char *av[2];
 
 			if (*p == '\0')
 			{
 				printf("Usage: /map mapname key\n");
 				return;
 			}
-			for (q = p; *q != '\0' && !isspace(*q); q++)
+			for (q = p; *q != '\0' && !(isascii(*q) && isspace(*q)); q++)
 				continue;
 			if (*q == '\0')
 			{
@@ -2413,8 +2540,10 @@ testmodeline(line, e)
 				return;
 			}
 			printf("map_lookup: %s (%s) ", p, q);
+			av[0] = q;
+			av[1] = NULL;
 			p = (*map->s_map.map_class->map_lookup)
-					(&map->s_map, q, NULL, &rcode);
+					(&map->s_map, q, av, &rcode);
 			if (p == NULL)
 				printf("no match (%d)\n", rcode);
 			else
@@ -2542,8 +2671,8 @@ testmodeline(line, e)
 		while (*p != '\0')
 		{
 			int stat;
-			int rs = strtorwset(p, NULL, ST_FIND);
 
+			rs = strtorwset(p, NULL, ST_FIND);
 			if (rs < 0)
 			{
 				printf("Undefined ruleset %s\n", p);

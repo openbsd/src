@@ -1,39 +1,17 @@
 /*
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+ * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the sendmail distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)err.c	8.65 (Berkeley) 10/18/97";
+static char sccsid[] = "@(#)err.c	8.74 (Berkeley) 6/4/98";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -273,7 +251,7 @@ usrerr(fmt, va_alist)
 **		none.
 */
 
-/*VARARGS2*/
+/*VARARGS1*/
 void
 #ifdef __STDC__
 message(const char *msg, ...)
@@ -325,7 +303,7 @@ message(msg, va_alist)
 **		none.
 */
 
-/*VARARGS2*/
+/*VARARGS1*/
 void
 #ifdef __STDC__
 nmessage(const char *msg, ...)
@@ -456,7 +434,7 @@ putoutmsg(msg, holdmsg, heldmsg)
 		sm_syslog(LOG_CRIT, CurEnv->e_id,
 			"SYSERR: putoutmsg (%s): error on output channel sending \"%s\": %s",
 			CurHostName == NULL ? "NO-HOST" : CurHostName,
-			shortenstring(msg, 203), errstring(errno));
+			shortenstring(msg, MAXSHORTSTR), errstring(errno));
 }
 /*
 **  PUTERRMSG -- like putoutmsg, but does special processing for error messages
@@ -533,7 +511,9 @@ fmtmsg(eb, to, num, eno, fmt, ap)
 	int spaceleft = sizeof MsgBuf;
 
 	/* output the reply code */
-	if (isdigit(fmt[0]) && isdigit(fmt[1]) && isdigit(fmt[2]))
+	if (isascii(fmt[0]) && isdigit(fmt[0]) &&
+	    isascii(fmt[1]) && isdigit(fmt[1]) &&
+	    isascii(fmt[2]) && isdigit(fmt[2]))
 	{
 		num = fmt;
 		fmt += 4;
@@ -561,7 +541,7 @@ fmtmsg(eb, to, num, eno, fmt, ap)
 	    strncmp(num, "251", 3) != 0)
 	{
 		(void) snprintf(eb, spaceleft, "%s... ",
-			shortenstring(to, 203));
+			shortenstring(to, MAXSHORTSTR));
 		spaceleft -= strlen(eb);
 		while (*eb != '\0')
 			*eb++ &= 0177;
@@ -657,7 +637,10 @@ errstring(errnum)
 #if HASSTRERROR
 		snprintf(bp, SPACELEFT(buf, bp), "%s", strerror(errnum));
 #else
-		snprintf(bp, SPACELEFT(buf, bp), "%s", sys_errlist[errnum]);
+		if (errnum >= 0 && errnum < sys_nerr)
+			snprintf(bp, SPACELEFT(buf, bp), "%s", sys_errlist[errnum]);
+		else
+			snprintf(bp, SPACELEFT(buf, bp), "Error %d", errnum);
 #endif
 		bp += strlen(bp);
 		if (CurHostName != NULL)
@@ -675,7 +658,7 @@ errstring(errnum)
 				bp += strlen(bp);
 			}
 			snprintf(bp, SPACELEFT(buf, bp), "%s",
-				shortenstring(CurHostName, 203));
+				shortenstring(CurHostName, MAXSHORTSTR));
 			bp += strlen(buf);
 		}
 		if (SmtpPhase != NULL)
@@ -689,14 +672,14 @@ errstring(errnum)
 		if (CurHostName == NULL)
 			break;
 		(void) snprintf(buf, sizeof buf, "Host %s is down",
-			shortenstring(CurHostName, 203));
+			shortenstring(CurHostName, MAXSHORTSTR));
 		return (buf);
 
 	  case ECONNREFUSED:
 		if (CurHostName == NULL)
 			break;
 		(void) snprintf(buf, sizeof buf, "Connection refused by %s",
-			shortenstring(CurHostName, 203));
+			shortenstring(CurHostName, MAXSHORTSTR));
 		return (buf);
 # endif
 
@@ -765,7 +748,7 @@ errstring(errnum)
 		if (CurHostName != NULL)
 		{
 			snprintf(bp, SPACELEFT(buf, bp), "%s: ",
-				shortenstring(CurHostName, 203));
+				shortenstring(CurHostName, MAXSHORTSTR));
 			bp += strlen(bp);
 		}
 		snprintf(bp, SPACELEFT(buf, bp), "%s", dnsmsg);
