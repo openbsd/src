@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.8 2002/11/23 19:14:25 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.9 2002/11/23 19:50:45 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -286,7 +286,7 @@ _dl_getdirentries:
 	.globl _dl_sysctl
 	.type _dl_sysctl,@function
 _dl_sysctl:
-	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys___sysctl
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
