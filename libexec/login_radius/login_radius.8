@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.1 2001/07/08 17:56:33 millert Exp $
+.\" $OpenBSD: login_radius.8,v 1.2 2001/07/08 20:57:08 millert Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -49,13 +49,19 @@ The
 .Nm
 utility contacts the
 .Xr radiusd 8
-daemon to authenticate a user.
+daemon to authenticate a
+.Ar user .
+If no
+.Ar class
+is specified, the login class will be obtained from the password database.
+.Pp
 When executed as the name
-.Pa login_ Ns Ar style
-it will request
+.Pa login_ Ns Ar style ,
+.Nm
+will request
 .Xr radiusd 8
-to use the authentication specified by
-.Xr style .
+use the authentication specified by
+.Ar style .
 .Pp
 Available options are:
 .Bl -tag -width indent
@@ -81,13 +87,6 @@ with the format:
 server shared_secret
 .Ed
 .Pp
-The primary and possible secondary radius servers are defined in the
-.Xr login.conf 5
-file by the fields:
-.Li radius-server
-and
-.Li radius-server-alt .
-.Pp
 It is expected that rather than requesting the radius style directly
 (in which case the
 .Xr radiusd 8
@@ -108,14 +107,46 @@ Now when the user requests one of those authentication styles,
 will automatically forward the request to the remote
 .Xr radiusd 8
 and request it do the requested style of authentication.
-.Pp
-Unless the the style being used is listed in the
-.Li radius-challenge-styles
-entry of the
+.Sh LOGIN.CONF VARIABLES
+The
+.Nm
+utility uses the following radius-specific
 .Pa /etc/login.conf
-file, a password will be requested before sending the request to the
-radius server.
+variables:
+.Bl -tag -width radius-challenge-styles
+.It radius-server
+Hostname of the radius server to contact.
+.It radius-server-alt
+Alternate radius server to use when the primary is not responding.
+.It radius-challenge-styles
+Comma-separated list of authentication styles that the radius server
+knows about.
+If the user's authentication style is in this list the challenge will
+be provided by the radius server.
+If not,
+.Nm
+will prompt the user for the password before sending the request
+(along with the password) to the radius server.
+.It radius-timout
+Number of seconds to wait for a response from the radius server.
+Defaults to 2 seconds.
+.It radius-retries
+Number of times to attempt to contact the radius server before giving up
+(or falling back to the alternate server if there is one).
+Defaults to 6 tries.
+.El
+.Sh FILES
+.Bl -tag -compact -width xetcxraddbxserversxx
+.It Pa /etc/login.conf
+login configuration database
+.It Pa /etc/raddb/servers
+list of radius servers and their associated shared secrets
+.El
 .Sh SEE ALSO
 .Xr login.conf 5 ,
-.Xr login 8 ,
-.Xr radiusd 8
+.Xr login 8
+.Sh CAVEATS
+.Ox
+does not ship with a radius server in the default install, however
+several are available via
+.Xr packages 7 .
