@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.25 2000/11/11 00:45:39 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.26 2000/12/11 08:04:56 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.156 2000/10/19 19:21:07 itojun Exp $	*/
 
 /*
@@ -112,12 +112,26 @@ extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
+
+/*
+ * List of callbacks to notify when Path MTU changes are made.
+ */
+struct icmp6_mtudisc_callback {
+	LIST_ENTRY(icmp6_mtudisc_callback) mc_list;
+	void (*mc_func) __P((struct in6_addr *));
+};
+
+LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
+    LIST_HEAD_INITIALIZER(&icmp6_mtudisc_callbacks);
+
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
 
+/* XXX do these values make any sense? */
+int icmp6_mtudisc_hiwat = 1280;
+int icmp6_mtudisc_lowat = 256;
+
 static void icmp6_errcount __P((struct icmp6errstat *, int, int));
-static void icmp6_mtudisc_update __P((struct in6_addr *, struct icmp6_hdr *,
-				      struct mbuf *));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
 static const char *icmp6_redirect_diag __P((struct in6_addr *,
 	struct in6_addr *, struct in6_addr *));
@@ -198,6 +212,29 @@ icmp6_errcount(stat, type, code)
 		return;
 	}
 	stat->icp6errs_unknown++;
+}
+
+/*
+ * Register a Path MTU Discovery callback.
+ */
+void
+icmp6_mtudisc_callback_register(func)
+	void (*func) __P((struct in6_addr *));
+{
+	struct icmp6_mtudisc_callback *mc;
+
+	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list)) {
+		if (mc->mc_func == func)
+			return;
+	}
+
+	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
+	if (mc == NULL)
+		panic("icmp6_mtudisc_callback_register");
+
+	mc->mc_func = func;
+	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, mc, mc_list);
 }
 
 /*
@@ -410,7 +447,7 @@ icmp6_input(mp, offp, proto)
 #ifdef IPSEC
 	/* drop it if it does not match the default policy */
 	if (ipsec6_in_reject(m, NULL)) {
-		ipsecstat.in_polvio++;
+		ipsec6stat.in_polvio++;
 		goto freeit;
 	}
 #endif
@@ -822,7 +859,6 @@ icmp6_input(mp, offp, proto)
 			sizeof(struct ip6_hdr);
 		struct ip6ctlparam ip6cp;
 		struct in6_addr *finaldst = NULL;
-		int icmp6type = icmp6->icmp6_type;
 		struct ip6_frag *fh;
 		struct ip6_rthdr *rth;
 		struct ip6_rthdr0 *rth0;
@@ -962,19 +998,19 @@ icmp6_input(mp, offp, proto)
 			return IPPROTO_DONE;
 		}
 #endif
-		if (icmp6type == ICMP6_PACKET_TOO_BIG) {
-			if (finaldst == NULL)
-				finaldst = &((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
-			icmp6_mtudisc_update(finaldst, icmp6, m);
-		}
+		if (finaldst == NULL)
+			finaldst = &((struct ip6_hdr *)(icmp6 + 1))->ip6_dst;
+		ip6cp.ip6c_m = m;
+		ip6cp.ip6c_icmp6 = icmp6;
+		ip6cp.ip6c_ip6 = (struct ip6_hdr *)(icmp6 + 1);
+		ip6cp.ip6c_off = eoff;
+		ip6cp.ip6c_finaldst = finaldst;
 
 		ctlfunc = (void (*) __P((int, struct sockaddr *, void *)))
 			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
-			ip6cp.ip6c_m = m;
-			ip6cp.ip6c_ip6 = (struct ip6_hdr *)(icmp6 + 1);
-			ip6cp.ip6c_off = eoff;
-			(*ctlfunc)(code, (struct sockaddr *)&icmp6src, &ip6cp);
+			(void) (*ctlfunc)(code, (struct sockaddr *)&icmp6src,
+			    &ip6cp);
 		}
 	    }
 		break;
@@ -996,15 +1032,37 @@ icmp6_input(mp, offp, proto)
 	return IPPROTO_DONE;
 }
 
-static void
-icmp6_mtudisc_update(dst, icmp6, m)
-	struct in6_addr *dst;
-	struct icmp6_hdr *icmp6;/* we can assume the validity of the pointer */
-	struct mbuf *m;	/* currently unused but added for scoped addrs */
+void
+icmp6_mtudisc_update(ip6cp, validated)
+	struct ip6ctlparam *ip6cp;
+	int validated;
 {
+	unsigned long rtcount;
+	struct icmp6_mtudisc_callback *mc;
+	struct in6_addr *dst = ip6cp->ip6c_finaldst;
+	struct icmp6_hdr *icmp6 = ip6cp->ip6c_icmp6;
+	struct mbuf *m = ip6cp->ip6c_m;	/* will be necessary for scope issue */
 	u_int mtu = ntohl(icmp6->icmp6_mtu);
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 sin6;
+
+	/*
+	 * allow non-validated cases if memory is plenty, to make traffic
+	 * from non-connected pcb happy.
+	 */
+	rtcount = rt_timer_count(icmp6_mtudisc_timeout_q);
+	if (validated) {
+		if (rtcount > icmp6_mtudisc_hiwat)
+			return;
+		else if (rtcount > icmp6_mtudisc_lowat) {
+			/*
+			 * XXX nuke a victim, install the new one.
+			 */
+		}
+	} else {
+		if (rtcount > icmp6_mtudisc_lowat)
+			return;
+	}
 
 	bzero(&sin6, sizeof(sin6));
 	sin6.sin6_family = PF_INET6;
@@ -1030,11 +1088,20 @@ icmp6_mtudisc_update(dst, icmp6, m)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		} else if (mtu < rt->rt_ifp->if_mtu &&
 			   rt->rt_rmx.rmx_mtu > mtu) {
+			icmp6stat.icp6s_pmtuchg++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}
 	if (rt)
 		RTFREE(rt);
+
+	/*
+	 * Notify protocols that the MTU for this destination
+	 * has changed.
+	 */
+	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
+	     mc = LIST_NEXT(mc, mc_list))
+		(*mc->mc_func)(&sin6.sin6_addr);
 }
 
 /*
@@ -2573,6 +2640,12 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case ICMPV6CTL_ND6_MAXNUDHINT:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&nd6_maxnudhint);
+	case ICMPV6CTL_MTUDISC_HIWAT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+				&icmp6_mtudisc_hiwat);
+	case ICMPV6CTL_MTUDISC_LOWAT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+				&icmp6_mtudisc_lowat);
 	default:
 		return ENOPROTOOPT;
 	}

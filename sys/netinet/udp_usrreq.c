@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.51 2000/10/13 17:58:37 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.52 2000/12/11 08:04:56 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ udp_init()
 	in_pcbinit(&udbtable, udbhashsize);
 }
 
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 int
 udp6_input(mp, offp, proto)
 	struct mbuf **mp;
@@ -650,39 +650,127 @@ udp_notify(inp, errno)
 	sowwakeup(inp->inp_socket);
 }
 
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 void
 udp6_ctlinput(cmd, sa, d)
 	int cmd;
 	struct sockaddr *sa;
 	void *d;
 {
+	struct udphdr *uhp;
+	struct udphdr uh;
 	struct sockaddr_in6 sa6;
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
+	struct in6_addr s;
+	struct in6_addr finaldst;
+	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 
-	if (sa == NULL)
+	if (!sa)
 		return;
-	if (sa->sa_family != AF_INET6)
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
 		return;
 
-	/* decode parameter from icmp6. */
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in_rtchange, d = NULL;
+	else if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (cmd == PRC_MSGSIZE)
+		; /* special code is present, see below */
+	else if (inet6ctlerrmap[cmd] == 0)
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
 		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
-		ip6 = ip6cp->ip6c_ip6;
 		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-	} else
-		return;
+
+		/* translate addresses into internal form */
+		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
+		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
+			finaldst.s6_addr16[1] =
+			    htons(m->m_pkthdr.rcvif->if_index);
+		}
+		bcopy(&ip6->ip6_src, &s, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
 
 	/* translate addresses into internal form */
 	sa6 = *(struct sockaddr_in6 *)sa;
 	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
 		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
-	sa = (struct sockaddr *)&sa6;
 
-	(void)udp_ctlinput(cmd, sa, (void *)ip6);
+	if (ip6) {
+		/*
+		 * XXX: We assume that when IPV6 is non NULL,
+		 * M and OFF are valid.
+		 */
+
+		/* check if we can safely examine src and dst ports */
+		if (m->m_pkthdr.len < off + sizeof(uh))
+			return;
+
+		if (m->m_len < off + sizeof(uh)) {
+			/*
+			 * this should be rare case,
+			 * so we compromise on this copy...
+			 */
+			m_copydata(m, off, sizeof(uh), (caddr_t)&uh);
+			uhp = &uh;
+		} else
+			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
+
+		if (cmd == PRC_MSGSIZE) {
+			int valid = 0;
+			/*
+			 * Check to see if we have a valid UDP socket
+			 * corresponding to the address in the ICMPv6 message
+			 * payload.
+			 */
+			if (in_pcblookup(&udbtable, &finaldst, uhp->uh_dport,
+			    &s, uhp->uh_sport, INPLOOKUP_IPV6))
+				valid++;
+#if 0
+			/*
+			 * As the use of sendto(2) is fairly popular,
+			 * we may want to allow non-connected pcb too.
+			 * But it could be too weak against attacks...
+			 * We should at least check if the local address (= s)
+			 * is really ours.
+			 */
+			else if (in_pcblookup(&udbtable, &finaldst,
+			    uhp->uh_dport, &s, uhp->uh_sport,
+			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6))
+				valid++;
+#endif
+
+			/*
+			 * Now that we've validated that we are actually
+			 * communicating with the host indicated in the ICMPv6
+			 * message, recalculate the new MTU, and create the
+			 * corresponding routing entry.
+			 */
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
+
+			return;
+		}
+
+		(void) in6_pcbnotify(&udbtable, (struct sockaddr *)&sa6,
+		    uhp->uh_dport, &s, uhp->uh_sport, cmd, notify);
+	} else {
+		(void) in6_pcbnotify(&udbtable, (struct sockaddr *)&sa6, 0,
+		    &zeroin6_addr, 0, cmd, notify);
+	}
 }
 #endif
 
@@ -698,6 +786,12 @@ udp_ctlinput(cmd, sa, v)
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 	int errno;
 
+	if (!sa)
+		return NULL;
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
+
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
@@ -707,28 +801,6 @@ udp_ctlinput(cmd, sa, v)
 		ip = 0;
 	else if (errno == 0)
 		return NULL;
-	if (sa == NULL)
-		return NULL;
-#ifdef INET6
-	if (sa->sa_family == AF_INET6) {
-		if (ip) {
-			struct ip6_hdr *ip6 = (struct ip6_hdr *)ip;
-		
-			/* XXX we assume that the mbuf is sane enough */
-
-			uhp = (struct udphdr *)((caddr_t)ip6 + sizeof(*ip6));
-#if 0 /*XXX*/
-			in6_pcbnotify(&udbtable, sa, uhp->uh_dport,
-			    &(ip6->ip6_src), uhp->uh_sport, cmd, udp_notify);
-#endif
-		} else {
-#if 0 /*XXX*/
-			in6_pcbnotify(&udbtable, sa, 0,
-			    (struct in6_addr *)&in6addr_any, 0, cmd, udp_notify);
-#endif
-		}
-	} else
-#endif /* INET6 */
 	if (ip) {
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, sa, uhp->uh_dport, ip->ip_src,
@@ -1014,7 +1086,7 @@ u_int	udp_sendspace = 9216;		/* really max datagram size */
 u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 /*ARGSUSED*/
 int
 udp6_usrreq(so, req, m, addr, control, p)
@@ -1023,6 +1095,7 @@ udp6_usrreq(so, req, m, addr, control, p)
 	struct mbuf *m, *addr, *control;
 	struct proc *p;
 {
+
 	return udp_usrreq(so, req, m, addr, control);
 }
 #endif

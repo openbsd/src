@@ -1,9 +1,10 @@
-/*	$OpenBSD: ip6protosw.h,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.3 2000/12/11 08:04:56 itojun Exp $	*/
+/*	$KAME: ip6protosw.h,v 1.14 2000/10/18 18:15:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -81,15 +82,29 @@ struct socket;
 struct domain;
 struct proc;
 struct ip6_hdr;
+struct icmp6_hdr;
+struct in6_addr;
 
 /*
  * argument type for the last arg of pr_ctlinput().
  * should be consulted only with AF_INET6 family.
+ *
+ * IPv6 ICMP IPv6 [exthdrs] finalhdr paylaod
+ * ^    ^    ^              ^
+ * |    |    ip6c_ip6       ip6c_off
+ * |    ip6c_icmp6
+ * ip6c_m
+ *
+ * ip6c_finaldst usually points to ip6c_ip6->ip6_dst.  if the original
+ * (internal) packet carries a routing header, it may point the final
+ * dstination address in the routing header.
  */
 struct ip6ctlparam {
 	struct mbuf *ip6c_m;		/* start of mbuf chain */
+	struct icmp6_hdr *ip6c_icmp6;	/* icmp6 header of target packet */
 	struct ip6_hdr *ip6c_ip6;	/* ip6 header of target packet */
 	int ip6c_off;			/* offset of the target proto header */
+	struct in6_addr *ip6c_finaldst;	/* final destination address */
 };
 
 struct ip6protosw {

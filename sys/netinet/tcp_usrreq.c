@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.48 2000/10/14 01:04:11 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.49 2000/12/11 08:04:56 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ extern	struct baddynamicports baddynamicports;
 
 int tcp_ident __P((void *, size_t *, void *, size_t));
 
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 int
 tcp6_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
@@ -103,6 +103,7 @@ tcp6_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
+
 	return tcp_usrreq(so, req, m, nam, control);
 }
 #endif
