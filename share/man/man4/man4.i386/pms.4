@@ -1,4 +1,7 @@
 .\"
+.\"	$OpenBSD: pms.4,v 1.3 1996/10/13 05:58:33 downsj Exp $
+.\"
+.\" Copyright (c) 1996, Jason Downs.
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
 .\"
@@ -27,9 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: pms.4,v 1.2 1996/08/08 17:11:28 deraadt Exp $
-.\"
-.Dd August 6, 1993
+.Dd October 12, 1996
 .Dt PMS 4 i386
 .Os
 .Sh NAME
@@ -40,11 +41,42 @@ PS/2 auxiliary port mouse driver
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "pms0 at isa? port" \&"IO_KBD\&" irq 12
 .Sh DESCRIPTION
-This driver provides an interface to a PS/2 auxiliary port mice.
+This driver provides an interface to a PS/2 auxiliary port mice.  The driver
+offers two modes of operation, both a raw and the old style translated
+input stream.  The translating portion of the driver provides BusMouse
+codes; in raw mode no translations are performed.
+The
+.Nm
+driver provides three
+.Em ioctls
+for getting mouse status and changing modes.  They are defined in the
+following include:
+.Bd -literal -offset indent
+#include <machine/mouse.h>
+.Ed
+
+The
+.Dv MOUSEIOCREAD
+.Em ioctl
+is used to read the current mouse stats, and takes the
+.Dv "struct mouseinfo"
+as an argument to store the data in.
+
+The
+.Dv MOUSEIOCSRAW
+.Em ioctl
+puts the device into raw mode, if it is not already, and the
+.Dv MOUSEIOCSCOOKED
+.Em ioctl
+puts it into translated (or cooked) mode.  If the mode of the
+.Nm
+device driver changes, all pending but not yet read input is flushed.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
-PS/2 mouse device file
+PS/2 mouse device file, defaulting to translating mode
+.It Pa /dev/pms0r
+PS/2 mouse device file, defaulting to raw mode
 .El
 .Sh SEE ALSO
 .Xr lms 4 ,
