@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfctl.c,v 1.36 2001/08/19 19:57:33 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.37 2001/08/23 04:10:31 deraadt Exp $ */
 
 /*
- * Copyright (c) 2001, Daniel Hartmeier
+ * Copyright (c) 2001 Daniel Hartmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,11 +9,11 @@
  * are met:
  *
  *    - Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer. 
+ *      notice, this list of conditions and the following disclaimer.
  *    - Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer in the documentation and/or other materials provided
- *      with the distribution. 
+ *      with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -177,13 +177,17 @@ pfctl_show_rules(int dev, int opts)
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
 
-	if (ioctl(dev, DIOCGETRULES, &pr))
-		err(1, "DIOCGETRULES");
+	if (ioctl(dev, DIOCGETRULES, &pr)) {
+		warnx("DIOCGETRULES");
+		return (-1);
+	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr))
-			err(1, "DIOCGETRULE");
+		if (ioctl(dev, DIOCGETRULE, &pr)) {
+			warnx("DIOCGETRULE");
+			return (-1);
+		}
 		print_rule(&pr.rule);
 		if (opts & PF_OPT_VERBOSE)
 			printf("[ Evaluations: %-10llu  Packets: %-10llu  "
@@ -200,22 +204,30 @@ pfctl_show_nat(int dev)
 	struct pfioc_rdr pr;
 	u_int32_t mnr, nr;
 
-	if (ioctl(dev, DIOCGETNATS, &pn))
-		err(1, "DIOCGETNATS");
+	if (ioctl(dev, DIOCGETNATS, &pn)) {
+		warnx("DIOCGETNATS");
+		return (-1);
+	}
 	mnr = pn.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pn.nr = nr;
-		if (ioctl(dev, DIOCGETNAT, &pn))
-			err(1, "DIOCGETNAT");
+		if (ioctl(dev, DIOCGETNAT, &pn)) {
+			warnx("DIOCGETNAT");
+			return (-1);
+		}
 		print_nat(&pn.nat);
 	}
-	if (ioctl(dev, DIOCGETRDRS, &pr))
-		err(1, "DIOCGETRDRS");
+	if (ioctl(dev, DIOCGETRDRS, &pr)) {
+		warnx("DIOCGETRDRS");
+		return (-1);
+	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRDR, &pr))
-			err(1, "DIOCGETRDR");
+		if (ioctl(dev, DIOCGETRDR, &pr)) {
+			warnx("DIOCGETRDR");
+			return (-1);
+		}
 		print_rdr(&pr.rdr);
 	}
 	return (0);
@@ -236,10 +248,16 @@ pfctl_show_states(int dev, u_int8_t proto)
 			if (inbuf == NULL)
 				err(1, "malloc");
 		}
-		if (ioctl(dev, DIOCGETSTATES, &ps) < 0)
-			err(1, "DIOCGETSTATES");
+		if (ioctl(dev, DIOCGETSTATES, &ps) < 0) {
+			warnx("DIOCGETSTATES");
+			return (-1);
+		}
 		if (ps.ps_len + sizeof(struct pfioc_state) < len)
 			break;
+		if (len == 0 && ps.ps_len == 0) {
+			printf("no states\n");
+			return (0);
+		}
 		if (len == 0 && ps.ps_len != 0)
 			len = ps.ps_len;
 		if (ps.ps_len == 0)
@@ -260,8 +278,10 @@ pfctl_show_status(int dev)
 {
 	struct pf_status status;
 
-	if (ioctl(dev, DIOCGETSTATUS, &status))
-		err(1, "DIOCGETSTATUS");
+	if (ioctl(dev, DIOCGETSTATUS, &status)) {
+		warnx("DIOCGETSTATUS");
+		return (-1);
+	}
 	print_status(&status);
 	return (0);
 }
