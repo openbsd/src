@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.23 1996/09/01 19:04:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 1996/09/04 22:52:05 deraadt Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
+
+.include <bsd.own.mk>
 
 SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	cap_mkdb cdio checknr chflags chpass cksum cmp col colcrt colrm \
@@ -19,7 +21,11 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vis vmstat w wall wc what whatis whereis \
 	which who whois window write \
-	xargs xinstall xlint xstr yacc yes ypcat ypmatch ypwhich
+	xargs xinstall xlint xstr yacc yes
+
+.if defined(YP)
+SUBDIR+=ypcat ypmatch ypwhich
+.endif
 
 # Don't use the standard tool chain on the alpha or mips.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")

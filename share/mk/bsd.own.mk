@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.9 1996/07/27 10:05:52 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.10 1996/09/04 22:52:04 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -15,6 +15,8 @@ KERBEROS=	yes
 # Defining 'KERBEROS5' causes support for Kerberos5 authentication to be
 # compiled in.
 #KERBEROS5=	yes
+# Defining 'YP' causes support for NIS/YP to be compiled in
+YP=		yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example

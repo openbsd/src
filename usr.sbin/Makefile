@@ -1,6 +1,8 @@
-#	$OpenBSD: Makefile,v 1.17 1996/08/26 07:50:12 downsj Exp $
+#	$OpenBSD: Makefile,v 1.18 1996/09/04 22:52:07 deraadt Exp $
 
 # not yet done: catman
+
+.include <bsd.own.mk>
 
 SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron dev_mkdb \
@@ -12,8 +14,11 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	rpc.bootparamd rpc.pcnfsd rwhod \
 	sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp \
-	vipw vnconfig ypbind yppoll ypset \
-	ypserv zdump zic
+	vipw vnconfig zdump zic
+
+.if defined (YP)
+SUBDIR+=ypbind yppoll ypset ypserv
+.endif
 
 # should be listed above, but doesn't work on the Alpha.
 .if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)

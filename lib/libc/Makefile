@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1996/08/19 08:10:10 tholo Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/09/04 22:52:00 deraadt Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -14,7 +14,10 @@
 # actually call the YP functions, put -DYP on the CFLAGS line below.
 
 LIB=c
-CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -I${.CURDIR}/include
+CFLAGS+=-DNLS -DLIBC_SCCS -DSYSLIBC_SCCS -I${.CURDIR}/include
+.if defined(YP)
+CFLAGS+=-DYP
+.endif
 LINTFLAGS=-z
 LLIBS=
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
@@ -48,7 +51,9 @@ CLEANFILES+=tags
 .include "${.CURDIR}/termios/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
+.if defined(YP)
 .include "${.CURDIR}/yp/Makefile.inc"
+.endif
 
 NLS=	C.msg Pig.msg de.msg es.msg fr.msg
 

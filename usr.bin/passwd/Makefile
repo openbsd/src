@@ -1,11 +1,17 @@
-#	$OpenBSD: Makefile,v 1.7 1996/05/22 11:35:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1996/09/04 22:52:06 deraadt Exp $
+
+.include <bsd.own.mk>
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lrpcsvc -lcrypt -lutil
-CFLAGS+=-I${.CURDIR} -DYP
+CFLAGS+=-I${.CURDIR}
+
+.if defined(YP)
+CFLAGS+=-DYP
+.endif
 
 .include <bsd.own.mk>	# For Kerberos
 

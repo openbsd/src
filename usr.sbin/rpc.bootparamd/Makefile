@@ -1,6 +1,10 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/09/04 22:52:09 deraadt Exp $
 
+.include <bsd.own.mk>
+
+.if defined(YP)
 CFLAGS+=-DYP
+.endif
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c

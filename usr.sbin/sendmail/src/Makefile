@@ -6,6 +6,8 @@
 #	@Id: Makefile.NetBSD,v 1.3 1994/02/01 05:33:44 glass Exp $
 #
 
+.include <bsd.own.mk>
+
 PROG=	sendmail
 
 # define the database format to use for aliases et al.  Can be -DNEWDB (for
@@ -16,7 +18,11 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB -DNIS
+DBMDEF=	-DNEWDB
+
+.if defined(YP)
+DBMDEF+=-DNIS
+.endif
 
 CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
