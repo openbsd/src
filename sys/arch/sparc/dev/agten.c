@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.1 2003/03/06 21:48:28 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.2 2003/03/06 22:17:49 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -30,7 +30,7 @@
  * Fujitsu AG-10 framebuffer driver.
  *
  * The AG-10 is mostly made of:
- * - a 3DLabs 300SX Glint chip, with two 6MB independant framebuffer spaces
+ * - a 3DLabs 300SX Glint chip, with two 6MB independent framebuffer spaces
  * - a Number Nine Imagine 128 chip with its own 4MB framebuffer space
  * - a Weitek P9100 with its own 2MB of framebuffer memory
  * - an IBM PaletteDAC 561 ramdac
@@ -92,8 +92,9 @@ struct agten_cmap {
 struct agten_softc {
 	struct	sunfb sc_sunfb;			/* common base part */
 	struct	sbusdev sc_sd;			/* sbus device */
-	struct	rom_reg sc_phys;		/* phys addr of h/w */
-	off_t	sc_physoffset;
+
+	struct	rom_reg sc_phys;		/* physical address and */
+	off_t	sc_physoffset;			/* offset for frame buffer */
 
 	volatile u_int32_t *sc_dac;
 	struct agten_cmap sc_cmap;		/* shadow color map */
@@ -191,7 +192,7 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 
 	/*
-	 * Map the various beasts of this card.
+	 * Map the various beasts of this card we are interested in.
 	 */
 
 	sc->sc_physoffset =
