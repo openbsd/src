@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.21 2001/02/02 08:28:20 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.22 2001/02/03 19:45:03 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -91,211 +91,201 @@ void
 etherip_input(struct mbuf *m, ...)
 #else
 etherip_input(m, va_alist)
-struct mbuf *m;
-va_dcl
+	struct mbuf *m;
+	va_dcl
 #endif
 {
-    union sockaddr_union ssrc, sdst;
-    struct ether_header eh;
-    struct mbuf *mrest, *m0;
-    int iphlen, clen;
-    struct etherip_header eip;
-    u_int8_t v;
-    va_list ap;
+	union sockaddr_union ssrc, sdst;
+	struct ether_header eh;
+	struct mbuf *mrest, *m0;
+	int iphlen, clen;
+	struct etherip_header eip;
+	u_int8_t v;
+	va_list ap;
 
 #if NGIF > 0
-    int i;
+	int i;
 #endif /* NGIF */
 
-    va_start(ap, m);
-    iphlen = va_arg(ap, int);
-    va_end(ap);
+	va_start(ap, m);
+	iphlen = va_arg(ap, int);
+	va_end(ap);
 
-    etheripstat.etherip_ipackets++;
+	etheripstat.etherip_ipackets++;
 
-    /* If we do not accept EtherIP explicitly, drop. */
-    if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
-    {
-	DPRINTF(("etherip_input(): dropped due to policy\n"));
-	etheripstat.etherip_pdrops++;
-	m_freem(m);
-	return;
-    }
-
-    /*
-     * Make sure there's at least an ethernet header's and an EtherIP header's
-     * worth of worth of data after the outer IP header.
-     */
-    if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header) +
-	sizeof(struct etherip_header))
-    {
-	DPRINTF(("etherip_input(): encapsulated packet too short\n"));
-	etheripstat.etherip_hdrops++;
-	m_freem(m);
-	return;
-    }
-
-    /* Verify EtherIP version number */
-    m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
-    if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION)
-    {
-	DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
-	etheripstat.etherip_adrops++;
-	m_freem(m);
-	return;
-    }
-
-    /*
-     * Note that the other potential failure of the above check is that the
-     * second nibble of the EtherIP header (the reserved part) is not
-     * zero; this is also invalid protocol behaviour.
-     */
-    if (eip.eip_ver & ETHERIP_VER_RSVD_MASK)
-    {
-	DPRINTF(("etherip_input(): received EtherIP invalid EtherIP header (reserved field non-zero\n"));
-	etheripstat.etherip_adrops++;
-	m_freem(m);
-	return;
-    }
-
-    /* Make sure the ethernet header at least is in the first mbuf. */
-    if (m->m_len < iphlen + sizeof(struct ether_header) +
-      sizeof(struct etherip_header))
-    {
-	if ((m = m_pullup(m, iphlen + sizeof(struct ether_header) +
-	  sizeof(struct etherip_header))) == NULL)
-	{
-	    DPRINTF(("etherip_input(): m_pullup() failed\n"));
-	    etheripstat.etherip_adrops++;
-	    m_freem(m);
-	    return;
+	/* If we do not accept EtherIP explicitly, drop. */
+	if (!etherip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
+		DPRINTF(("etherip_input(): dropped due to policy\n"));
+		etheripstat.etherip_pdrops++;
+		m_freem(m);
+		return;
 	}
-    }
 
-    /* Copy the addresses for use later */
-    bzero(&ssrc, sizeof(ssrc));
-    bzero(&sdst, sizeof(sdst));
+	/*
+	 * Make sure there's at least an ethernet header's and an EtherIP
+	 * header's of worth of data after the outer IP header.
+	 */
+	if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header) +
+	    sizeof(struct etherip_header)) {
+		DPRINTF(("etherip_input(): encapsulated packet too short\n"));
+		etheripstat.etherip_hdrops++;
+		m_freem(m);
+		return;
+	}
 
-    v = *mtod(m, u_int8_t *);
-    switch (v >> 4)
-    {
+	/* Verify EtherIP version number */
+	m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
+	if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION) {
+		DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return;
+	}
+
+	/*
+	 * Note that the other potential failure of the above check is that the
+	 * second nibble of the EtherIP header (the reserved part) is not
+	 * zero; this is also invalid protocol behaviour.
+	 */
+	if (eip.eip_ver & ETHERIP_VER_RSVD_MASK) {
+		DPRINTF(("etherip_input(): received EtherIP invalid EtherIP header (reserved field non-zero\n"));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return;
+	}
+
+	/* Make sure the ethernet header at least is in the first mbuf. */
+	if (m->m_len < iphlen + sizeof(struct ether_header) +
+	    sizeof(struct etherip_header)) {
+		if ((m = m_pullup(m, iphlen + sizeof(struct ether_header) +
+		    sizeof(struct etherip_header))) == NULL) {
+			DPRINTF(("etherip_input(): m_pullup() failed\n"));
+			etheripstat.etherip_adrops++;
+			m_freem(m);
+			return;
+		}
+	}
+
+	/* Copy the addresses for use later */
+	bzero(&ssrc, sizeof(ssrc));
+	bzero(&sdst, sizeof(sdst));
+
+	v = *mtod(m, u_int8_t *);
+	switch (v >> 4) {
 #ifdef INET
 	case 4:
-	    ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in);
-	    ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET;
-	    m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
-		       (caddr_t) &ssrc.sin.sin_addr);
-	    m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
-		       (caddr_t) &sdst.sin.sin_addr);
-	    break;
+		ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in);
+		ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET;
+		m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
+		    (caddr_t) &ssrc.sin.sin_addr);
+		m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
+		    (caddr_t) &sdst.sin.sin_addr);
+		break;
 #endif /* INET */
 #ifdef INET6
 	case 6:
-	    ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in6);
-	    ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET6;
-	    m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
-		       sizeof(struct in6_addr),
-		       (caddr_t) &ssrc.sin6.sin6_addr);
-	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
-		       sizeof(struct in6_addr),
-		       (caddr_t) &sdst.sin6.sin6_addr);
-	    break;
+		ssrc.sa.sa_len = sdst.sa.sa_len = sizeof(struct sockaddr_in6);
+		ssrc.sa.sa_family = sdst.sa.sa_family = AF_INET6;
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		    sizeof(struct in6_addr),
+		    (caddr_t) &ssrc.sin6.sin6_addr);
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
+		    sizeof(struct in6_addr),
+		    (caddr_t) &sdst.sin6.sin6_addr);
+		break;
 #endif /* INET6 */
 	default:
-	    m_freem(m);
-	    etheripstat.etherip_hdrops++;
-	    return /* EAFNOSUPPORT */;
-    }
-
-    /* Chop off the `outer' IP and EtherIP headers and reschedule. */
-    m_adj(m, iphlen + sizeof(struct etherip_header));
-
-    /* Statistics */
-    etheripstat.etherip_ibytes += m->m_pkthdr.len;
-
-    /* Copy ethernet header */
-    m_copydata(m, 0, sizeof(eh), (void *) &eh);
-
-    m->m_flags &= ~(M_BCAST|M_MCAST);
-    if (eh.ether_dhost[0] & 1)
-    {
-	if (bcmp((caddr_t) etherbroadcastaddr, (caddr_t) eh.ether_dhost,
-	  sizeof(etherbroadcastaddr)) == 0)
-	    m->m_flags |= M_BCAST;
-	else
-	    m->m_flags |= M_MCAST;
-    }
-
-    /* Trim the beginning of the mbuf, to remove the ethernet header */
-    m_adj(m, sizeof(struct ether_header));
-
-    /* Copy out the first MHLEN bytes of data to ensure correct alignment */
-    MGETHDR(m0, M_DONTWAIT, MT_DATA);
-    if (m0 == NULL) {
-	    m_freem(m);
-	    etheripstat.etherip_adrops++;
-	    return;
-    }
-    M_COPY_PKTHDR(m0, m);
-    clen = min(MHLEN, m->m_pkthdr.len);
-    if (m->m_pkthdr.len == clen)
-      mrest = NULL;
-    else {
-	mrest = m_split(m, clen, M_DONTWAIT);
-	if (mrest == NULL) {
-	    m_freem(m);
-	    m_freem(m0);
-	    etheripstat.etherip_adrops++;
-	    return;
+		m_freem(m);
+		etheripstat.etherip_hdrops++;
+		return /* EAFNOSUPPORT */;
 	}
-    }
-    m0->m_next = mrest;
-    m0->m_len = clen;
-    m_copydata(m, 0, clen, mtod(m0, caddr_t));
-    m_freem(m);
-    m = m0;
+
+	/* Chop off the `outer' IP and EtherIP headers and reschedule. */
+	m_adj(m, iphlen + sizeof(struct etherip_header));
+
+	/* Statistics */
+	etheripstat.etherip_ibytes += m->m_pkthdr.len;
+
+	/* Copy ethernet header */
+	m_copydata(m, 0, sizeof(eh), (void *) &eh);
+
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+	if (eh.ether_dhost[0] & 1) {
+		if (bcmp((caddr_t) etherbroadcastaddr,
+		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
+
+	/* Trim the beginning of the mbuf, to remove the ethernet header */
+	m_adj(m, sizeof(struct ether_header));
+
+	/* Copy out the first MHLEN bytes of data to ensure correct alignment */
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == NULL) {
+		m_freem(m);
+		etheripstat.etherip_adrops++;
+		return;
+	}
+	M_COPY_PKTHDR(m0, m);
+	clen = min(MHLEN, m->m_pkthdr.len);
+	if (m->m_pkthdr.len == clen)
+		mrest = NULL;
+	else {
+		mrest = m_split(m, clen, M_DONTWAIT);
+		if (mrest == NULL) {
+			m_freem(m);
+			m_freem(m0);
+			etheripstat.etherip_adrops++;
+			return;
+		}
+	}
+	m0->m_next = mrest;
+	m0->m_len = clen;
+	m_copydata(m, 0, clen, mtod(m0, caddr_t));
+	m_freem(m);
+	m = m0;
 
 #if NGIF > 0
-    /* Find appropriate gif(4) interface */
-    for (i = 0; i < ngif; i++)
-    {
-	if ((gif[i].gif_psrc == NULL) || (gif[i].gif_pdst == NULL) ||
-	    !(gif[i].gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
-	  continue;
+	/* Find appropriate gif(4) interface */
+	for (i = 0; i < ngif; i++) {
+		if ((gif[i].gif_psrc == NULL) || (gif[i].gif_pdst == NULL) ||
+		    !(gif[i].gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
+			continue;
 
-	if (!bcmp(gif[i].gif_psrc, &sdst, gif[i].gif_psrc->sa_len) &&
-	    !bcmp(gif[i].gif_pdst, &ssrc, gif[i].gif_pdst->sa_len) &&
-	    gif[i].gif_if.if_bridge != NULL)
-	  break;
-    }
+		if (!bcmp(gif[i].gif_psrc, &sdst, gif[i].gif_psrc->sa_len) &&
+		    !bcmp(gif[i].gif_pdst, &ssrc, gif[i].gif_pdst->sa_len) &&
+		    gif[i].gif_if.if_bridge != NULL)
+			break;
+	}
 
-    /* None found */
-    if (i >= ngif)
-    {
-	DPRINTF(("etherip_input(): no interface found\n"));
-        etheripstat.etherip_noifdrops++;
-	m_freem(m);
-	return;
-    }
+	/* None found */
+	if (i >= ngif) {
+		DPRINTF(("etherip_input(): no interface found\n"));
+		etheripstat.etherip_noifdrops++;
+		m_freem(m);
+		return;
+	}
 
 #if NBRIDGE > 0
-    /*
-     * Tap the packet off here for a bridge. bridge_input() returns
-     * NULL if it has consumed the packet.  In the case of gif's,
-     * bridge_input() returns non-NULL when an error occurs.
-     */
-    m->m_pkthdr.rcvif = &gif[i].gif_if;
-    if (m->m_flags & (M_BCAST|M_MCAST))
-      gif[i].gif_if.if_imcasts++;
-    m = bridge_input(&gif[i].gif_if, &eh, m);
-    if (m == NULL)
-      return;
+	/*
+	 * Tap the packet off here for a bridge. bridge_input() returns
+	 * NULL if it has consumed the packet.  In the case of gif's,
+	 * bridge_input() returns non-NULL when an error occurs.
+	 */
+	m->m_pkthdr.rcvif = &gif[i].gif_if;
+	if (m->m_flags & (M_BCAST|M_MCAST))
+		gif[i].gif_if.if_imcasts++;
+	m = bridge_input(&gif[i].gif_if, &eh, m);
+	if (m == NULL)
+		return;
 #endif /* NBRIDGE */
 #endif /* NGIF */
 
-    etheripstat.etherip_noifdrops++;
-    m_freem(m);
-    return;
+	etheripstat.etherip_noifdrops++;
+	m_freem(m);
+	return;
 }
 
 #ifdef IPSEC
@@ -304,150 +294,151 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	       int protoff)
 {
 #ifdef INET
-    struct ip *ipo;
+	struct ip *ipo;
 #endif /* INET */
 
 #ifdef INET6
-    struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6;
 #endif /* INET6 */
 
-    struct etherip_header eip;
-    struct mbuf *m0;
-    ushort hlen;
+	struct etherip_header eip;
+	struct mbuf *m0;
+	ushort hlen;
 
-    /* Some address family sanity checks */
-    if ((tdb->tdb_src.sa.sa_family != 0) &&
-        (tdb->tdb_src.sa.sa_family != AF_INET) &&
-	(tdb->tdb_src.sa.sa_family != AF_INET6))
-    {
-        DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_src.sa.sa_family));
-	etheripstat.etherip_adrops++;
-        m_freem(m);
-        return EINVAL;
-    }
+	/* Some address family sanity checks */
+	if ((tdb->tdb_src.sa.sa_family != 0) &&
+	    (tdb->tdb_src.sa.sa_family != AF_INET) &&
+	    (tdb->tdb_src.sa.sa_family != AF_INET6)) {
+		DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting",
+		    tdb->tdb_src.sa.sa_family));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return EINVAL;
+	}
 
-    if ((tdb->tdb_dst.sa.sa_family != AF_INET) &&
-	(tdb->tdb_dst.sa.sa_family != AF_INET6))
-    {
-	DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_dst.sa.sa_family));
-	etheripstat.etherip_adrops++;
-	m_freem(m);
-	return EINVAL;
-    }
+	if ((tdb->tdb_dst.sa.sa_family != AF_INET) &&
+	    (tdb->tdb_dst.sa.sa_family != AF_INET6)) {
+		DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting",
+		    tdb->tdb_dst.sa.sa_family));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return EINVAL;
+	}
 
-    if (tdb->tdb_dst.sa.sa_family != tdb->tdb_src.sa.sa_family)
-    {
-	DPRINTF(("etherip_output(): mismatch in tunnel source and destination address protocol families (%d/%d), aborting", tdb->tdb_src.sa.sa_family, tdb->tdb_dst.sa.sa_family));
-	etheripstat.etherip_adrops++;
-	m_freem(m);
-	return EINVAL;
-    }
+	if (tdb->tdb_dst.sa.sa_family != tdb->tdb_src.sa.sa_family) {
+		DPRINTF(("etherip_output(): mismatch in tunnel source and destination address protocol families (%d/%d), aborting",
+		    tdb->tdb_src.sa.sa_family, tdb->tdb_dst.sa.sa_family));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return EINVAL;
+	}
 
-    switch (tdb->tdb_dst.sa.sa_family)
-    {
+	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-	    hlen = sizeof(struct ip);
-	    break;
+		hlen = sizeof(struct ip);
+		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-	    hlen = sizeof(struct ip6_hdr);
-	    break;
+		hlen = sizeof(struct ip6_hdr);
+		break;
 #endif /* INET6 */
 	default:
-	    DPRINTF(("etherip_output(): unsupported tunnel protocol family <%d>, aborting", tdb->tdb_dst.sa.sa_family));
-	    etheripstat.etherip_adrops++;
-	    m_freem(m);
-	    return EINVAL;
-    }
+		DPRINTF(("etherip_output(): unsupported tunnel protocol family <%d>, aborting",
+		    tdb->tdb_dst.sa.sa_family));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return EINVAL;
+	}
 
-    /* Don't forget the EtherIP header */
-    hlen += sizeof(struct etherip_header);
+	/* Don't forget the EtherIP header */
+	hlen += sizeof(struct etherip_header);
 
-    MGETHDR(m0, M_DONTWAIT, MT_DATA);
-    if (m0 == NULL) {
-	DPRINTF(("etherip_output(): M_GETHDR failed\n"));
-	etheripstat.etherip_adrops++;
-	m_freem(m);
-      	return ENOBUFS;
-    }
-    M_COPY_PKTHDR(m0, m);
-    m0->m_next = m;
-    m0->m_len = hlen;
-    m0->m_pkthdr.len += hlen;
-    m = m0;
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == NULL) {
+		DPRINTF(("etherip_output(): M_GETHDR failed\n"));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return ENOBUFS;
+	}
+	M_COPY_PKTHDR(m0, m);
+	m0->m_next = m;
+	m0->m_len = hlen;
+	m0->m_pkthdr.len += hlen;
+	m = m0;
 
-    /* Statistics */
-    etheripstat.etherip_opackets++;
-    etheripstat.etherip_obytes += m->m_pkthdr.len - hlen;
+	/* Statistics */
+	etheripstat.etherip_opackets++;
+	etheripstat.etherip_obytes += m->m_pkthdr.len - hlen;
 
-    switch (tdb->tdb_dst.sa.sa_family)
-    {
+	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-	    ipo = mtod(m, struct ip *);
+		ipo = mtod(m, struct ip *);
 
-	    ipo->ip_v = IPVERSION;
-	    ipo->ip_hl = 5;
-	    ipo->ip_len = htons(m->m_pkthdr.len);
-	    ipo->ip_ttl = ip_defttl;
-	    ipo->ip_p = IPPROTO_ETHERIP;
-	    ipo->ip_tos = 0;
-	    ipo->ip_off = 0;
-	    ipo->ip_sum = 0;
-	    ipo->ip_id = ip_randomid();
-	    HTONS(ipo->ip_id);
+		ipo->ip_v = IPVERSION;
+		ipo->ip_hl = 5;
+		ipo->ip_len = htons(m->m_pkthdr.len);
+		ipo->ip_ttl = ip_defttl;
+		ipo->ip_p = IPPROTO_ETHERIP;
+		ipo->ip_tos = 0;
+		ipo->ip_off = 0;
+		ipo->ip_sum = 0;
+		ipo->ip_id = ip_randomid();
+		HTONS(ipo->ip_id);
 
-	    /* 
-	     * We should be keeping tunnel soft-state and send back
-	     * ICMPs as needed.
-	     */
+		/* 
+		 * We should be keeping tunnel soft-state and send back
+		 * ICMPs as needed.
+		 */
 
-	    ipo->ip_src = tdb->tdb_src.sin.sin_addr;
-	    ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
-	    break;
+		ipo->ip_src = tdb->tdb_src.sin.sin_addr;
+		ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
+		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-	    ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(m, struct ip6_hdr *);
 
-	    ip6->ip6_flow = 0;
-            ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-            ip6->ip6_vfc |= IPV6_VERSION;
-            ip6->ip6_plen = htons(m->m_pkthdr.len);
-            ip6->ip6_hlim = ip_defttl;
-            ip6->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
-            ip6->ip6_src = tdb->tdb_src.sin6.sin6_addr;
-	    break;
+		ip6->ip6_flow = 0;
+		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_plen = htons(m->m_pkthdr.len);
+		ip6->ip6_hlim = ip_defttl;
+		ip6->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
+		ip6->ip6_src = tdb->tdb_src.sin6.sin6_addr;
+		break;
 #endif /* INET6 */
-    }
+	}
 
-    /* Set the version number */
-    eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
-    m_copyback(m, hlen - sizeof(struct etherip_header),
-	sizeof(struct etherip_header), (caddr_t)&eip);
+	/* Set the version number */
+	eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+	m_copyback(m, hlen - sizeof(struct etherip_header),
+	    sizeof(struct etherip_header), (caddr_t)&eip);
 
-    *mp = m;
+	*mp = m;
 
-    return 0;
+	return 0;
 }
 #endif /* IPSEC */
 
 int
-etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	       void *newp, size_t newlen)
+etherip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp, *newp;
+	size_t *oldlenp, newlen;
 {
-    /* All sysctl names at this level are terminal. */
-    if (namelen != 1)
-      return (ENOTDIR);
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
 
-    switch (name[0]) 
-    {
+	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
-	    return (sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow));
 	default:
-	    return (ENOPROTOOPT);
-    }
-    /* NOTREACHED */
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

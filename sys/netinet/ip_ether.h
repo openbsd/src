@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.7 2001/02/02 08:28:21 jason Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.8 2001/02/03 19:45:04 jason Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr) 
@@ -27,17 +27,16 @@
  * Ethernet-inside-IP processing.
  */
 
-struct etheripstat
-{
-    u_int32_t	etherip_hdrops;		/* packet shorter than header shows */
-    u_int32_t	etherip_qfull;		/* bridge queue full, packet dropped */
-    u_int32_t   etherip_noifdrops;	/* no interface/bridge information */
-    u_int32_t	etherip_pdrops;		/* packet dropped due to policy */
-    u_int32_t   etherip_adrops;         /* all other drops */
-    u_int32_t	etherip_ipackets;	/* total input packets */
-    u_int32_t	etherip_opackets;	/* total output packets */
-    u_int64_t   etherip_ibytes;		/* input bytes */
-    u_int64_t   etherip_obytes;		/* output bytes */
+struct etheripstat {
+	u_int32_t	etherip_hdrops;		/* packet shorter than header shows */
+	u_int32_t	etherip_qfull;		/* bridge queue full, packet dropped */
+	u_int32_t	etherip_noifdrops;	/* no interface/bridge information */
+	u_int32_t	etherip_pdrops;		/* packet dropped due to policy */
+	u_int32_t	etherip_adrops;         /* all other drops */
+	u_int32_t	etherip_ipackets;	/* total input packets */
+	u_int32_t	etherip_opackets;	/* total output packets */
+	u_int64_t	etherip_ibytes;		/* input bytes */
+	u_int64_t	etherip_obytes;		/* output bytes */
 };
 
 struct etherip_header {
