@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.12 2004/02/24 12:34:26 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.13 2004/02/24 12:41:28 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -79,7 +79,6 @@ struct tree_cache *global_options[256];
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = _PATH_DHCLIENT_DB;
-char *path_dhclient_pid = _PATH_DHCLIENT_PID;
 
 int interfaces_requested = 0;
 
@@ -96,25 +95,21 @@ struct sockaddr_in sockaddr_broadcast;
  */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
-u_int16_t local_port;
-u_int16_t remote_port;
-int log_priority;
-int no_daemon;
-int save_scripts;
-int onetry = 0;
-int unknown_ok = 1;
+u_int16_t	local_port;
+u_int16_t	remote_port;
+int		log_priority;
+int		no_daemon;
+int		save_scripts;
+int		onetry = 0;
+int		unknown_ok = 1;
+int		routefd;
 
-void	usage(void);
+void	 usage(void);
+int	 check_option(struct client_lease *l, int option);
+int	 ipv4addrs(char * buf);
+int	 res_hnok(const char *dn);
+char	*option_as_string(unsigned int code, unsigned char *data, int len);
 
-static int check_option(struct client_lease *l, int option);
-
-static int ipv4addrs(char * buf);
-
-static int res_hnok(const char *dn);
-
-char *option_as_string(unsigned int code, unsigned char *data, int len);
-
-int routefd;
 
 struct interface_info *
 isours(u_int16_t index)
@@ -2174,10 +2169,8 @@ go_daemon(void)
 	int pid;
 
 	/* Don't become a daemon if the user requested otherwise. */
-	if (no_daemon) {
-		write_client_pid_file();
+	if (no_daemon)
 		return;
-	}
 
 	/* Only do it once. */
 	if (state)
@@ -2200,29 +2193,6 @@ go_daemon(void)
 	close(1);
 	close(2);
 
-	write_client_pid_file();
-}
-
-void
-write_client_pid_file()
-{
-	FILE *pf;
-	int pfdesc;
-
-	pfdesc = open(path_dhclient_pid, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-
-	if (pfdesc < 0) {
-		warn("Can't create %s: %m", path_dhclient_pid);
-		return;
-	}
-
-	pf = fdopen(pfdesc, "w");
-	if (!pf)
-		warn("Can't fdopen %s: %m", path_dhclient_pid);
-	else {
-		fprintf(pf, "%ld\n", (long)getpid());
-		fclose(pf);
-	}
 }
 
 int

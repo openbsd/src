@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.10 2004/02/23 20:16:00 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.11 2004/02/24 12:41:28 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -424,12 +424,8 @@ typedef unsigned char option_mask[16];
 
 /* Default path to dhcpd config file. */
 #define _PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
-#define _PATH_DHCLIENT_PID	"/var/run/dhclient.pid"
 #define _PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 #define _PATH_RESOLV_CONF	"/etc/resolv.conf"
-#define _PATH_DHCRELAY_PID	"/var/run/dhcrelay.pid"
-#define _PATH_DHCLIENT_PID	"/var/run/dhclient.pid"
-#define _PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 #define DHCPD_LOG_FACILITY	LOG_DAEMON
 
 #define MAX_TIME 0x7fffffff
@@ -605,7 +601,6 @@ char *piaddr(struct iaddr);
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
-extern char *path_dhclient_pid;
 extern int interfaces_requested;
 extern time_t cur_time;
 extern u_int16_t local_port;
@@ -654,7 +649,6 @@ int dhcp_option_ev_name(char *, size_t, struct option *);
 
 struct client_lease *packet_to_lease(struct packet *);
 void go_daemon(void);
-void write_client_pid_file(void);
 void client_location_changed(void);
 
 void bootp(struct packet *);
