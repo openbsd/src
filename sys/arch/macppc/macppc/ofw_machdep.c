@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.9 2002/04/29 01:34:58 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.10 2002/05/22 21:00:00 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
 #include <machine/autoconf.h>
 
 #include <dev/ofw/openfirm.h>
+
+#include <macppc/macppc/ofw_machdep.h>
 
 #include <ukbd.h>
 #include <akbd.h>
@@ -332,6 +334,8 @@ bus_space_handle_t cons_display_ctl_h;
 int cons_height, cons_width, cons_linebytes, cons_depth;
 int cons_display_ofh;
 u_int32_t cons_addr;
+int cons_brightness;
+int cons_backlight_available;
 
 #include "vgafb_pci.h"
 
@@ -482,7 +486,9 @@ of_display_console()
 	char name[32];
 	int len;
 	int stdout_node;
+	int display_node;
 	int err;
+	int backlight_control[2];
 	u_int32_t memtag, iotag;
 	struct ppc_pci_chipset pa;
 	struct {
@@ -521,20 +527,25 @@ of_display_console()
 
 	ofw_find_keyboard();
 
+	display_node = stdout_node;
 	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
 	if (len == -1) {
-		int node;
-		node = OF_parent(stdout_node);
-		len = OF_getprop(node, "name", name, 20);
+		display_node = OF_parent(stdout_node);
+		len = OF_getprop(display_node, "name", name, 20);
 		name[len] = 0;
 
 		printf("using parent %s:", name);
-		len = OF_getprop(node, "assigned-addresses",
+		len = OF_getprop(display_node, "assigned-addresses",
 			addr, sizeof(addr));
 		if (len < sizeof(addr[0])) {
 			panic(": no address\n");
 		}
 	}
+	len = OF_getprop(display_node, "backlight-control",
+	    backlight_control, sizeof(backlight_control));
+	if (len > 0)
+		cons_backlight_available = 1;
+
 	memtag = ofw_make_tag(NULL, pcibus(addr[0].phys_hi),
 		pcidev(addr[0].phys_hi),
 		pcifunc(addr[0].phys_hi));
@@ -579,5 +590,30 @@ of_display_console()
 		}
 #endif
 	}
+
+	of_setbrightness(DEFAULT_BRIGHTNESS);
+#endif
+}
+
+void
+of_setbrightness(brightness)
+	int brightness;
+{
+
+#if NVGAFB_PCI > 0
+	if (cons_backlight_available == 0)
+		return;
+
+	if (brightness < MIN_BRIGHTNESS)
+		brightness = MIN_BRIGHTNESS;
+	else if (brightness > MAX_BRIGHTNESS)
+		brightness = MAX_BRIGHTNESS;
+
+	cons_brightness = brightness;
+
+	/* The OF method is called "set-contrast" but affects brightness. Don't ask. */
+	OF_call_method_1("set-contrast", cons_display_ofh, 1, cons_brightness);
+
+	/* XXX this routine should also save the brightness settings in the nvram */
 #endif
 }

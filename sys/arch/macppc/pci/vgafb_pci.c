@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.7 2002/04/29 01:34:58 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.8 2002/05/22 21:00:03 miod Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -115,8 +115,11 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 		    PCI_MAPREG_TYPE_IO) {
 			retval = pci_io_find(pc, pa->pa_tag, i,
 				&addr, &size);
-			if (retval) {
+#ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: io %x addr %x size %x\n", i, addr, size);
+#endif
+
+			if (retval) {
 				return 0;
 			}
 			if (*iosize == 0) {
@@ -132,12 +135,11 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 #endif
 
 			if (retval) {
-	printf("vgafb_pci_probe: mem %x addr %x size %x\n", i, addr, size);
 				return 0;
 			}
 			if (size == 0) {
 				/* ignore this entry */
-			}else if (size <= (1024 * 1024)) {
+			} else if (size <= (1024 * 1024)) {
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: mem %x addr %x size %x iosize %x\n",
 		i, addr, size, *iosize);
@@ -211,6 +213,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 #endif
 	return 1;
 }
+
 int
 vgafb_pci_match(parent, match, aux)
 	struct device *parent;
@@ -325,8 +328,6 @@ vgafb_pci_attach(parent, self, aux)
 	}
 	vc->vc_mmap = vgafbpcimmap;
 	vc->vc_ioctl = vgafbpciioctl;
-	vc->iobase = ioaddr;
-	vc->iosize = iosize;
 	vc->membase = memaddr;
 	vc->memsize = memsize;
 	vc->mmiobase = mmioaddr;

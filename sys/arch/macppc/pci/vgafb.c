@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.12 2002/05/18 20:20:17 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.13 2002/05/22 21:00:03 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -40,6 +40,13 @@
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
+#include <macppc/macppc/ofw_machdep.h>
+
+#if 0
+#include <dev/ic/mc6845.h>
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/vgareg.h>
+#endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -47,18 +54,7 @@
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
 
-#include <arch/macppc/pci/vgafbvar.h>
-
-/* parameters set by OF to detect console */
-extern int cons_displaytype;
-extern bus_space_tag_t cons_membus;
-extern bus_space_handle_t cons_display_mem_h;
-extern bus_space_handle_t cons_display_ctl_h;
-extern int cons_width;
-extern int cons_linebytes;
-extern int cons_height;
-extern int cons_depth;
-extern int cons_display_ofh;
+#include <macppc/pci/vgafbvar.h>
 
 struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
@@ -81,7 +77,7 @@ struct wsscreen_descr vgafb_stdscreen = {
 	0,
 	0, 0,
 	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE|WSSCREEN_WSCOLORS
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 const struct wsscreen_descr *vgafb_scrlist[] = {
 	&vgafb_stdscreen,
@@ -92,15 +88,16 @@ struct wsscreen_list vgafb_screenlist = {
 	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
 };
 
-
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
 	vgafb_mmap,
 	vgafb_alloc_screen,
 	vgafb_free_screen,
 	vgafb_show_screen,
-	0, /* load_font */
-	0 /* scrollback */
+	NULL,		/* load_font */
+	NULL,		/* scrollback */
+	NULL,		/* getchar */
+	vgafb_burn,	/* burner */
 };
 
 int	vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
@@ -136,8 +133,10 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 		gotio_d = 1;
 	}
 	if (mmiosize != 0) {
+#if 0
 		printf("vgafb_common_probe, mmio base %x size %x\n",
 			mmiobase, mmiosize);
+#endif
 		if (bus_space_map(iot, mmiobase, mmiosize, 0, &mmioh))
 			goto bad;
 		printf("vgafb_common_probe, mmio done\n");
@@ -154,8 +153,8 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 	gotmem = 1;
 
 	/* CR1 - Horiz. Display End */
-	bus_space_write_1(iot, ioh_d, 4, 0x1);
-	width = bus_space_read_1(iot, ioh_d, 5);
+	bus_space_write_1(iot, ioh_d, MC6845_INDEX, CRTC_HDISPLE);
+	width = bus_space_read_1(iot, ioh_d, MC6845_DATA);
 	/* this is not bit width yet */
 
 	/* use CR17 - mode control for this?? */
@@ -197,7 +196,6 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	u_int32_t iobase, membase, mmiobase;
 	size_t iosize, memsize, mmiosize;
 {
-
         vc->vc_iot = iot;
         vc->vc_memt = memt;
 	vc->vc_paddr = membase;
@@ -217,7 +215,7 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 #if 0
 	printf("commons setup mapping mem base %x size %x\n", membase, memsize);
 #endif
-	/* memsize  should only be visable region for console */
+	/* memsize should only be visible region for console */
 	memsize = cons_height * cons_linebytes;
         if (bus_space_map(vc->vc_memt, membase, memsize, 1, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
@@ -230,24 +228,23 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 #if 0
 	if (iosize != 0) {
 		/* CR1 - Horiz. Display End */
-		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x1);
-		width = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+		bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_HDISPLE);
+		width = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
 		/* (stored value + 1) * depth -> pixel width */
-		width = ( width + 1 ) * 8;   
+		width = (width + 1) * 8;   
 
 		/* CR1 - Horiz. Display End */
-		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
 		{ 
 			u_int8_t t1, t2, t3;
-			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
-			t1 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_VDE);
+			t1 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
 
-			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x7);
-			t2 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_OVERFLL);
+			t2 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
 			height = t1 + ((t2&0x40) << 3) 
 				    + ((t2&0x02) << 7) + 1; 
-			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x17);
-			t3 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_MODE);
+			t3 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
 			if (t3 & 0x04) {
 				height *= 2;
 			}
@@ -298,9 +295,11 @@ void
 vgafb_restore_default_colors(struct vgafb_config *vc)
 { 
 	int i;
+
 	for (i = 0; i < 256; i++) {
 		const u_char *color;
-		color = &rasops_cmap[i*3];
+
+		color = &rasops_cmap[i * 3];
 		vgafb_setcolor(vc, i, color[0], color[1], color[2]);
 	}
 }
@@ -317,6 +316,14 @@ vgafb_wsdisplay_attach(parent, vc, console)
 	aa.scrdata = &vgafb_screenlist;
 	aa.accessops = &vgafb_accessops;
 	aa.accesscookie = vc;
+
+	/* no need to keep the burner function if no hw support */
+	if (cons_backlight_available == 0)
+		vgafb_accessops.burn_screen = NULL;
+	else {
+		vc->vc_backlight_on = WSDISPLAYIO_VIDEO_OFF;
+		vgafb_burn(vc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
+	}
  
         config_found(parent, &aa, wsemuldisplaydevprint);
 }
@@ -368,6 +375,49 @@ vgafb_ioctl(v, cmd, data, flag, p)
 		 * layer handle this ioctl
 		 */
 		return -1;
+
+	case WSDISPLAYIO_GETPARAM:
+	{
+		struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			dp->min = MIN_BRIGHTNESS;
+			dp->max = MAX_BRIGHTNESS;
+			dp->curval = cons_brightness;
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (cons_backlight_available != 0) {
+				dp->min = 0;
+				dp->max = 1;
+				dp->curval = vc->vc_backlight_on;
+				return 0;
+			} else
+				return -1;
+		}
+	}
+		return -1;
+
+	case WSDISPLAYIO_SETPARAM:
+	{
+		struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			of_setbrightness(dp->curval);
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			if (cons_backlight_available != 0) {
+				vgafb_burn(vc,
+				    dp->curval ? WSDISPLAYIO_VIDEO_ON :
+				      WSDISPLAYIO_VIDEO_OFF, 0);
+				return 0;
+			} else
+				return -1;
+		}
+	}
+		return -1;
+
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_GCURPOS:
@@ -448,7 +498,7 @@ vgafb_cnprobe(cp)
 	} 
 
 	cp->cn_pri = CN_REMOTE;
-	#if 0
+#if 0
 	for (j = 0; j < 2; j++) {
 		for (i = 0; i < cons_width * cons_height; i++) {
 			bus_space_write_1(cons_membus,
@@ -456,13 +506,13 @@ vgafb_cnprobe(cp)
 
 		}
 	}
-	#endif
+#endif
 
 }
 
 void
 vgafb_cnattach(iot, memt, pc, bus, device, function)
-	void * pc;
+	void *pc;
 	bus_space_tag_t iot, memt;
 	int bus, device, function;
 {
@@ -476,7 +526,7 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	ri->rc_sp->width = cons_width;
 	ri->rc_sp->height = cons_height;
 	ri->rc_sp->depth = cons_depth;
-	ri->rc_sp->linelongs = cons_linebytes /4; /* XXX */
+	ri->rc_sp->linelongs = cons_linebytes / 4; /* XXX */
 	ri->rc_sp->pixels = (void *)cons_display_mem_h;
 
 	ri->rc_crow = ri->rc_ccol = -1;
@@ -491,7 +541,7 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	ri->ri_stride = cons_linebytes;
 	ri->ri_hw = dc;
 
-	rasops_init(ri, 160, 160);
+	rasops_init(ri, 160, 160);	/* XXX */
 
 	vgafb_stdscreen.nrows = ri->ri_rows;
 	vgafb_stdscreen.ncols = ri->ri_cols;
@@ -557,14 +607,13 @@ vgafb_putcmap(vc, cm)
 	int index = cm->index;
 	int count = cm->count;
 	int i;
-	u_char *r, *g, *b;
+	u_int8_t *r, *g, *b;
 
-	if (cm->index >= 256 || cm->count > 256 ||
-	    (cm->index + cm->count) > 256)
+	if (index >= 256 || count > 256 || index + count > 256)
 		return EINVAL;
-	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
-	    !uvm_useracc(cm->green, cm->count, B_READ) ||
-	    !uvm_useracc(cm->blue, cm->count, B_READ))
+	if (!uvm_useracc(cm->red, count, B_READ) ||
+	    !uvm_useracc(cm->green, count, B_READ) ||
+	    !uvm_useracc(cm->blue, count, B_READ))
 		return EFAULT;
 	copyin(cm->red,   &(vc->vc_cmap_red[index]),   count);
 	copyin(cm->green, &(vc->vc_cmap_green[index]), count);
@@ -578,9 +627,26 @@ vgafb_putcmap(vc, cm)
 		vgafb_color[i].r = *r;
 		vgafb_color[i].g = *g;
 		vgafb_color[i].b = *b;
-		r++, g++, b++, index++;
+		r++, g++, b++;
 	}
 	OF_call_method_1("set-colors", cons_display_ofh, 3,
-	    &vgafb_color, cm->index, count);
+	    &vgafb_color, index, count);
 	return 0;
+}
+
+void
+vgafb_burn(v, on, flags)
+	void *v;
+	u_int on, flags;
+{
+	struct vgafb_config *vc = v;
+
+	if (vc->vc_backlight_on != on) {
+		if (on == WSDISPLAYIO_VIDEO_ON) {
+			OF_call_method_1("backlight-on", cons_display_ofh, 0);
+		} else {
+			OF_call_method_1("backlight-off", cons_display_ofh, 0);
+		}
+		vc->vc_backlight_on = on;
+	}
 }
