@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.26 2002/10/20 17:00:01 henning Exp $
+.\"	$OpenBSD: dc.4,v 1.27 2002/10/21 20:31:39 henning Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -317,9 +317,6 @@ and ported to
 by
 .An Aaron Campbell Aq aaron@openbsd.org .
 .Sh BUGS
-The Intel 21145 seems to support 10 MBit/s halfduplex only.
-An explicit media setting to 10BaseT is required.
-.Pp
 The Macronix application notes claim that in order to put the
 chips in normal operation, the driver must write a certain magic
 number into the CSR16 register.
