@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.22 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.23 2001/07/05 08:10:31 art Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -202,9 +202,7 @@ struct socket {
 
 #ifdef _KERNEL
 u_long	sb_max;
-/* to catch callers missing new second argument to sonewconn: */
-#define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
-struct	socket *sonewconn1 __P((struct socket *head, int connstatus));
+struct	socket *sonewconn __P((struct socket *head, int connstatus));
 
 /* strings for sleep message: */
 extern	char netio[], netcon[], netcls[];
@@ -268,8 +266,7 @@ void	soisconnecting __P((struct socket *so));
 void	soisdisconnected __P((struct socket *so));
 void	soisdisconnecting __P((struct socket *so));
 int	solisten __P((struct socket *so, int backlog));
-struct socket *
-	sonewconn1 __P((struct socket *head, int connstatus));
+struct socket *sonewconn __P((struct socket *head, int connstatus));
 void	soqinsque __P((struct socket *head, struct socket *so, int q));
 int	soqremque __P((struct socket *so, int q));
 int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
