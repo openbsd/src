@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.116 2002/01/23 17:03:21 mpech Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.117 2002/01/23 20:59:05 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.116 2002/01/23 17:03:21 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.117 2002/01/23 20:59:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -657,7 +657,7 @@ sgetpwnam(name)
 	struct passwd *pw;
 
 	if ((pw = getpwnam(name)) == NULL)
-		return (pw);
+		return (NULL);
 	if (save) {
 		memset(save->pw_passwd, 0, strlen(save->pw_passwd));
 		free(save);
@@ -690,7 +690,7 @@ void
 user(name)
 	char *name;
 {
-	char *cp, *shell, *style;
+	char *cp, *shell, *style, *host;
 	char *class = NULL;
 
 	if (logged_in) {
@@ -701,19 +701,24 @@ user(name)
 			reply(530, "Can't change user from chroot user.");
 			return;
 		}
+		end_login();
+	}
+
+	/* Close session from previous user if there was one. */
+	if (as) {
+		auth_close(as);
+		as = NULL;
+	}
+	if (lc) {
 		login_close(lc);
 		lc = NULL;
-		if (as) {
-			auth_close(as);
-			as = NULL;
-		}
-		end_login();
 	}
 
 	if ((style = strchr(name, ':')) != NULL)
 		*style++ = 0;
 
 	guest = 0;
+	host = multihome ? dhostname : hostname;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
 		if (checkuser(_PATH_FTPUSERS, "ftp") ||
 		    checkuser(_PATH_FTPUSERS, "anonymous"))
@@ -722,6 +727,17 @@ user(name)
 			guest = 1;
 			askpasswd = 1;
 			lc = login_getclass(pw->pw_class);
+			if ((as = auth_open()) == NULL ||
+			    auth_setoption(as, "FTPD_HOST", host) < 0) {
+				if (as) {
+					auth_close(as);
+					as = NULL;
+				}
+				login_close(lc);
+				lc = NULL;
+				reply(421, "Local resource failure");
+				return;
+			}
 			reply(331,
 			"Guest login ok, send your email address as password.");
 		} else
@@ -758,7 +774,8 @@ user(name)
 	    auth_setitem(as, AUTHV_NAME, name) < 0 ||
 	    auth_setitem(as, AUTHV_CLASS, class) < 0 ||
 	    auth_setoption(as, "login", "yes") < 0 ||
-	    auth_setoption(as, "notickets", "yes") < 0)) {
+	    auth_setoption(as, "notickets", "yes") < 0 ||
+	    auth_setoption(as, "FTPD_HOST", host) < 0)) {
 		if (as) {
 			auth_close(as);
 			as = NULL;
@@ -898,14 +915,12 @@ pass(passwd)
 		}
 	} else if (lc != NULL) {
 		/* Save anonymous' password. */
+		if (guestpw != NULL)
+			free(guestpw);
 		guestpw = strdup(passwd);
-		if (guestpw == (char *)NULL)
+		if (guestpw == NULL)
 			fatal("Out of memory.");
 
-		if ((as = auth_open()) == NULL)
-			fatal("Out of memory.");
-		auth_setoption(as, "FTPD_HOST",
-		    multihome ? dhostname : hostname);
 		authok = auth_approval(as, lc, pw->pw_name, "ftp");
 		auth_close(as);
 		as = NULL;
