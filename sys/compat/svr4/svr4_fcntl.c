@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.7 1997/08/29 17:59:51 kstailey Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.8 1997/08/29 18:46:31 kstailey Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -308,6 +308,56 @@ svr4_sys_access(p, v, retval)
 	SCARG(&cup, flags) = SCARG(uap, flags);
 
 	return sys_access(p, &cup, retval);
+}
+
+int
+svr4_sys_pread(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pread_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_read_args rap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&rap, fd) = SCARG(uap, fd);
+	SCARG(&rap, buf) = SCARG(uap, buf);
+	SCARG(&rap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_read(p, &rap, retval);
+}
+
+int
+svr4_sys_pwrite(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pwrite_args *uap = v;
+	struct sys_lseek_args lap;
+	struct sys_write_args wap;
+	int error;
+
+	SCARG(&lap, fd) = SCARG(uap, fd);
+	SCARG(&lap, offset) = SCARG(uap, off);
+	SCARG(&lap, whence) = SEEK_CUR;
+
+	if ((error = sys_lseek(p, &lap, retval)) != 0)
+		return error;
+
+	SCARG(&wap, fd) = SCARG(uap, fd);
+	SCARG(&wap, buf) = SCARG(uap, buf);
+	SCARG(&wap, nbyte) = SCARG(uap, nbyte);
+
+	return sys_write(p, &wap, retval);
 }
 
 int
