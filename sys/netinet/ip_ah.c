@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.65 2002/06/09 00:58:32 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.66 2002/06/18 19:21:48 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -720,16 +720,16 @@ ah_input_cb(void *op)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
+		FREE(tc, M_XDATA);
+
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
 
 		if (crp->crp_etype == EAGAIN) {
 			splx(s);
-			FREE(tc, M_XDATA);
 			return crypto_dispatch(crp);
 		}
 
-		FREE(tc, M_XDATA);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -1232,9 +1232,8 @@ ah_output_cb(void *op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-
-	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
+		FREE(tc, M_XDATA);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_output_cb(): TDB is expired while in crypto\n"));
 		goto baddone;
@@ -1242,6 +1241,8 @@ ah_output_cb(void *op)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
+		FREE(tc, M_XDATA);
+
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
 
@@ -1258,6 +1259,7 @@ ah_output_cb(void *op)
 
 	/* Shouldn't happen... */
 	if (m == NULL) {
+		FREE(tc, M_XDATA);
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_output_cb(): bogus returned buffer from "
 		    "crypto\n"));
@@ -1271,6 +1273,8 @@ ah_output_cb(void *op)
 	 */
 	if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
 		m_copyback(m, 0, skip, ptr);
+
+	FREE(tc, M_XDATA);
 
 	/* No longer needed. */
 	crypto_freereq(crp);
