@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.9 2002/11/25 16:30:22 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.10 2002/11/27 15:00:41 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -142,8 +142,16 @@ print_altq(const struct pf_altq *a, unsigned level)
 		return;
 	}
 
-	printf("altq on %s scheduler %u bandwidth %s tbrsize %u",
-	    a->ifname, a->scheduler, rate2str((double)a->ifbandwidth),
+	printf("altq on %s scheduler", a->ifname);
+
+	switch(a->scheduler) {
+	case ALTQT_CBQ:
+		print_cbq_opts(a);
+		if (!a->pq_u.cbq_opts.flags)
+			printf(" cbq");
+	}
+
+	printf(" bandwidth %s tbrsize %u", rate2str((double)a->ifbandwidth),
 	    a->tbrsize);
 }
 
