@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq.h,v 1.3 2001/08/09 15:30:10 kjc Exp $	*/
+/*	$OpenBSD: altq.h,v 1.4 2002/02/13 08:06:13 kjc Exp $	*/
 /*	$KAME: altq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -33,9 +33,6 @@
 #include <sys/ioccom.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
-
-#define ALTQ_RED		/* Always included */
-#define ALTQ_CBQ		/* Always included */
 
 #ifndef IFNAMSIZ
 #define	IFNAMSIZ	16

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.2 2002/02/13 08:06:14 kjc Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -34,6 +34,13 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+
+#ifndef ALTQ_RED
+#define ALTQ_RED		/* RED is enabled by default */
+#endif
+#ifndef ALTQ_CBQ
+#define ALTQ_CBQ		/* CBQ is enabled by default */
+#endif
 
 /*
  * filter structure for altq common classifier
