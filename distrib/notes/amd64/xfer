@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.2 2004/02/07 22:47:49 miod Exp $
+dnl	$OpenBSD: xfer,v 1.3 2004/03/08 22:31:28 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -10,14 +10,13 @@ dnl	Remote NFS partition
 	FTP
 	HTTP
 
-dnl Uncomment when floppies are available
-dnl If you can't (or don't want to) boot off a CD-ROM, you'll need to have
-dnl a floppy disk (1.44MB required).
-dnl
-dnl OpenBSDXferFloppyFromDOS
-dnl
-dnl OpenBSDXferFloppyFromUNIX
-dnl
+If you can't (or don't want to) boot off a CD-ROM, you'll need to have
+a floppy disk (1.44MB required).
+
+OpenBSDXferFloppyFromDOS
+
+OpenBSDXferFloppyFromUNIX
+
 
 OpenBSDXferShortPrelude
 

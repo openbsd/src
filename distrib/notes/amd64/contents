@@ -1,8 +1,8 @@
-dnl	$OpenBSD: contents,v 1.4 2004/02/11 23:29:58 miod Exp $
+dnl	$OpenBSD: contents,v 1.5 2004/03/08 22:31:28 miod Exp $
 TopPart
 dnl uncomment as stuff becomes available
 dnl
-dnl OpenBSDfloppy
+OpenBSDfloppy
 dnl
 dnl		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 dnl				this one features all the drivers not available
@@ -12,10 +12,10 @@ dnl
 dnl		floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 dnl				this one features most of the cardbus and
 dnl				pcmcia drivers; see below.
-dnl
-dnl		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
-dnl				2.88MB floppy image that contains almost all
-dnl				OpenBSD drivers; see below.
+
+		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
+				2.88MB floppy image that contains almost all
+				OpenBSD drivers; see below.
 
 OpenBSDdistsets
 
@@ -25,8 +25,7 @@ OpenBSDrd
 
 OpenBSDcd
 
-dnl Uncomment when floppies are available, and if this really is
-dnl worth providing...
+dnl Uncomment if this really is worth providing...
 dnl
 dnl As well you may be interested in
 dnl
@@ -36,13 +35,12 @@ dnl		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
 dnl		see installation section, below.
 dnl
 dnl
-dnl uncomment as stuff becomes available
-dnl OpenBSDfloppydesc(three,Each,s)
+OpenBSDfloppydesc(,The)
 dnl
 dnl In addition, the "tools/" directory contains some utilities that might be
 dnl useful for the installation.
-dnl
-DistributionDescription(six)
+
+DistributionDescription(ten)
 
 OpenBSDbase(,,shared)
 
@@ -55,11 +53,11 @@ OpenBSDgame
 OpenBSDman
 
 OpenBSDmisc
-dnl
-dnl OpenBSDxbase
-dnl
-dnl OpenBSDxfont
-dnl
-dnl OpenBSDxserv
-dnl
-dnl OpenBSDxshare
+
+OpenBSDxbase
+
+OpenBSDxfont
+
+OpenBSDxserv
+
+OpenBSDxshare
