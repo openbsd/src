@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.87 2004/04/28 01:53:45 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.88 2004/09/09 10:30:23 otto Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.87 2004/04/28 01:53:45 mcbride Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.88 2004/09/09 10:30:23 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,6 @@ protopr0(u_long off, char *name, int af)
 			else
 				printf(" %s", tcpstates[tcpcb.t_state]);
 		} else if (israw) {
-			struct protoent *pe = NULL;
 			u_int8_t proto;
 #ifdef INET6
 			if (inpcb.inp_flags & INP_IPV6)
@@ -233,12 +232,7 @@ protopr0(u_long off, char *name, int af)
 			else
 #endif
 				proto = inpcb.inp_ip.ip_p;
-			if (!nflag)
-				pe = getprotobynumber(proto);
-			if (pe)
-				printf(" %s", pe->p_name);
-			else
-				printf(" %u", proto);
+			printf(" %u", proto);
 		}
 		putchar('\n');
 	}
