@@ -65,8 +65,14 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb5.c,v 1.14 2003/04/02 18:57:34 millert Exp $";
+static const char rcsid[] = "$Sudo: kerb5.c,v 1.16 2003/04/04 17:46:57 millert Exp $";
 #endif /* lint */
+
+#ifdef HAVE_HEIMDAL
+# define krb5_free_data_contents(c, d)	krb5_data_free(d)
+#else
+# define krb5_principal_get_realm(c, p)	(krb5_princ_realm(c, p)->data)
+#endif
 
 static int verify_krb_v5_tgt __P((krb5_context, krb5_ccache, char *));
 static struct _sudo_krb5_data {
@@ -276,7 +282,7 @@ verify_krb_v5_tgt(sudo_context, ccache, auth_name)
      * and enctype is currently ignored anyhow.)
      */
     if ((error = krb5_kt_read_service_key(sudo_context, NULL, princ, 0,
-					 ETYPE_DES_CBC_MD5, &keyblock))) {
+					 ENCTYPE_DES_CBC_MD5, &keyblock))) {
 	/* Keytab or service key does not exist. */
 	log_error(NO_EXIT,
 		  "%s: host service key not found: %s", auth_name,
@@ -301,7 +307,7 @@ verify_krb_v5_tgt(sudo_context, ccache, auth_name)
 			    NULL, NULL, NULL);
 cleanup:
     if (packet.data)
-	krb5_data_free(&packet);
+	krb5_free_data_contents(sudo_context, &packet);
     krb5_free_principal(sudo_context, princ);
 
     if (error)

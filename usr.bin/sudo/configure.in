@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.381 2003/04/02 18:45:35 millert Exp $
+dnl $Sudo: configure.in,v 1.382 2003/04/04 17:45:24 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.7p2)
+AC_INIT(sudo, 1.6.7p3)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.7p2])
+AC_MSG_NOTICE([Configuring Sudo version 1.6.7p3])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -1779,6 +1779,16 @@ if test "$with_kerb5" = "yes"; then
 	AUTH_OBJS="${AUTH_OBJS} kerb5.o"
 	CPPFLAGS="$CPPFLAGS `krb5-config --cflags`"
 	SUDO_LIBS="$SUDO_LIBS `krb5-config --libs`"
+	dnl
+	dnl Try to determine whether we have Heimdal or MIT Kerberos
+	dnl
+	AC_MSG_CHECKING(whether we are using Heimdal)
+	AC_TRY_COMPILE([#include <krb5.h>], [const char *tmp = heimdal_version;],
+	    [
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_HEIMDAL, 1, [Define if your Kerberos is Heimdal.])
+	    ]
+	)
     fi
 fi
 if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
@@ -1810,6 +1820,7 @@ if test -n "$with_kerb5" -a -z "$KRB5CONFIG"; then
     AC_TRY_COMPILE([#include <krb5.h>], [const char *tmp = heimdal_version;],
 	[
 	    AC_MSG_RESULT(yes)
+	    AC_DEFINE(HAVE_HEIMDAL, 1, [Define if your Kerberos is Heimdal.])
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -ldes -lcom_err -lasn1"
 	    AC_CHECK_LIB(roken, main, [SUDO_LIBS="${SUDO_LIBS} -lroken"])
 	], [

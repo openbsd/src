@@ -124,6 +124,9 @@
    passwords) */
 #undef HAVE_GETSPWUID
 
+/* Define if your Kerberos is Heimdal. */
+#undef HAVE_HEIMDAL
+
 /* Define to 1 if you have the `initgroups' function. */
 #undef HAVE_INITGROUPS
 
