@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.45 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.46 2003/08/27 17:16:00 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -456,7 +456,20 @@ __elf_fdnlist(fd, list)
 				/*	 is pretty rude. */
 				switch(ELF_ST_TYPE(s->st_info)) {
 				case STT_NOTYPE:
-					p->n_type = N_UNDF;
+					switch (s->st_shndx) {
+					case SHN_UNDEF:
+						p->n_type = N_UNDF;
+						break;
+					case SHN_ABS:
+						p->n_type = N_ABS;
+						break;
+					case SHN_COMMON:
+						p->n_type = N_COMM;
+						break;
+					default:
+						p->n_type = N_COMM | N_EXT;
+						break;
+					}
 					break;
 				case STT_OBJECT:
 					p->n_type = N_DATA;
