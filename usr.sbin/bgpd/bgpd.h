@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.96 2004/02/16 14:26:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.97 2004/02/16 17:24:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,6 +93,7 @@ struct bgpd_addr {
 		u_int16_t		addr16[8];
 		u_int32_t		addr32[4];
 	} ba;		    /* 128-bit address */
+	u_int32_t	scope_id;	/* iface scope id for v6 */
 #define v4	ba.v4
 #define v6	ba.v6
 #define addr8	ba.addr8
