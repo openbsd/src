@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2003/06/25 21:12:30 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1996/02/20 19:29:07 jtc Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ void unblock_close(void);
 
 extern IO in, out;
 extern STAT st;
-extern void (*cfunc)();
+extern void (*cfunc)(void);
 extern size_t cpy_cnt;
 extern size_t cbsz;
 extern u_int ddflags;
