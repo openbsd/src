@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.57 2003/07/13 08:35:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.58 2003/07/19 23:52:27 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -385,7 +385,7 @@ map_pages(pages)
     pages <<= malloc_pageshift;
     if (pages > SIZE_T_MAX - (size_t)result) {
 #ifdef MALLOC_EXTRA_SANITY
-	wrterror("(ES): overflow in map_pages fails\n");
+	wrtwarning("(ES): overflow in map_pages fails\n");
 #endif /* MALLOC_EXTRA_SANITY */
 	errno = ENOMEM;
 	return (NULL);
@@ -394,7 +394,7 @@ map_pages(pages)
 
     if (brk(tail) == (char *)-1) {
 #ifdef MALLOC_EXTRA_SANITY
-	wrterror("(ES): map_pages fails\n");
+	wrtwarning("(ES): map_pages fails\n");
 #endif /* MALLOC_EXTRA_SANITY */
 	return (NULL);
     }
@@ -402,7 +402,7 @@ map_pages(pages)
     last_index = ptr2index(tail) - 1;
     malloc_brk = tail;
 
-    if ((last_index+1) >= malloc_ninfo && extend_pgdir(last_index) == NULL)
+    if ((last_index+1) >= malloc_ninfo && !extend_pgdir(last_index))
 	return (NULL);
 
     return (result);
@@ -790,7 +790,7 @@ malloc_bytes(size)
     }
 
     /* If it's empty, make a page more of that size chunks */
-    if (page_dir[j] == NULL && malloc_make_chunks(j) == NULL)
+    if (page_dir[j] == NULL && !malloc_make_chunks(j))
 	return (NULL);
 
     bp = page_dir[j];
