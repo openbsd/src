@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.9 2003/01/28 04:20:49 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.10 2003/01/28 05:12:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -121,7 +121,7 @@ int harmony_intr(void *);
 void harmony_intr_enable(struct harmony_softc *);
 void harmony_intr_disable(struct harmony_softc *);
 u_int32_t harmony_speed_bits(struct harmony_softc *, u_long *);
-void harmony_set_gainctl(struct harmony_softc *);
+int harmony_set_gainctl(struct harmony_softc *);
 void harmony_reset_codec(struct harmony_softc *);
 void harmony_start_pb(struct harmony_softc *);
 void harmony_start_cp(struct harmony_softc *);
@@ -445,8 +445,8 @@ harmony_commit_settings(void *vsc)
 			break;
 	}
 
-	WRITE_REG(sc, HARMONY_GAINCTL, GAINCTL_OUTPUT_LEFT_M |
-	    GAINCTL_OUTPUT_RIGHT_M | GAINCTL_MONITOR_M);
+	/* Setting some bits in gainctl requires a reset */
+	harmony_reset_codec(sc);
 
 	/* set the silence character based on the encoding type */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_empty_map,
@@ -488,7 +488,6 @@ harmony_commit_settings(void *vsc)
 			break;
 	}
 
-	harmony_set_gainctl(sc);
 	sc->sc_need_commit = 0;
 
 	if (sc->sc_playing || sc->sc_capturing)
@@ -1011,11 +1010,10 @@ harmony_speed_bits(struct harmony_softc *sc, u_long *speedp)
 	return (harmony_speeds[selected].bits);
 }
 
-void
+int
 harmony_set_gainctl(struct harmony_softc *sc)
 {
-	/* master (monitor) and playback are inverted */
-	u_int32_t bits, mask, val;
+	u_int32_t bits, mask, val, old;
 
 	/* XXX leave these bits alone or the chip will not come out of CNTL */
 	bits = GAINCTL_LE | GAINCTL_HE | GAINCTL_SE | GAINCTL_IS_MASK;
@@ -1038,16 +1036,15 @@ harmony_set_gainctl(struct harmony_softc *sc)
 	val = mask - (sc->sc_monitor_lvl.left >> (8 - GAINCTL_MONITOR_BITS));
 	bits |= (val << GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M;
 
-#if 0
 	/* XXX messing with these causes CNTL_C to get stuck... grr. */
 	bits &= ~GAINCTL_IS_MASK;
 	if (sc->sc_in_port == HARMONY_IN_MIC)
 		bits |= GAINCTL_IS_LINE;
 	else
-		bits |= GAINCTL_IS_MIC;
+		bits |= GAINCTL_IS_MICROPHONE;
 
 	/* XXX messing with these causes CNTL_C to get stuck... grr. */
-	bits = ~(GAINCTL_LE | GAINCTL_HE | GAINCTL_SE);
+	bits &= ~(GAINCTL_LE | GAINCTL_HE | GAINCTL_SE);
 	if (sc->sc_out_port == HARMONY_OUT_LINE)
 		bits |= GAINCTL_LE;
 	else if (sc->sc_out_port == HARMONY_OUT_SPEAKER)
@@ -1055,9 +1052,12 @@ harmony_set_gainctl(struct harmony_softc *sc)
 	else
 		bits |= GAINCTL_HE;
 
-#endif
-
+	mask = GAINCTL_LE | GAINCTL_HE | GAINCTL_SE | GAINCTL_IS_MASK;
+	old = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_GAINCTL);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_GAINCTL, bits);
+	if ((old & mask) != (bits & mask))
+		return (1);
+	return (0);
 }
 
 struct cfdriver harmony_cd = {
