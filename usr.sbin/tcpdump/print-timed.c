@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-timed.c,v 1.1 2000/12/07 22:52:00 mickey Exp $	*/
+/*	$OpenBSD: print-timed.c,v 1.2 2004/01/09 19:47:17 otto Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -27,7 +27,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-timed.c,v 1.1 2000/12/07 22:52:00 mickey Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-timed.c,v 1.2 2004/01/09 19:47:17 otto Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -41,6 +41,7 @@ static const char rcsid[] =
 
 #include <protocols/timed.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -48,7 +49,7 @@ static const char rcsid[] =
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
 
-static char *tsptype[TSPTYPENUMBER] =
+static const char *tsptype[TSPTYPENUMBER] =
   { "ANY", "ADJTIME", "ACK", "MASTERREQ", "MASTERACK", "SETTIME", "MASTERUP",
   "SLAVEUP", "ELECTION", "ACCEPT", "REFUSE", "CONFLICT", "RESOLVE", "QUIT",
   "DATE", "DATEREQ", "DATEACK", "TRACEON", "TRACEOFF", "MSITE", "MSITEREQ",
@@ -60,14 +61,14 @@ timed_print(register const u_char *bp, u_int length)
 #define endof(x) ((u_char *)&(x) + sizeof (x))
 	struct tsp *tsp = (struct tsp *)bp;
 	long sec, usec;
-	const u_char *end;
+	const u_char *end, *p;
 
 	if (endof(tsp->tsp_type) > snapend) {
 		fputs("[|timed]", stdout);
 		return;
 	}
 	if (tsp->tsp_type < TSPTYPENUMBER)
-		printf("%s", tsptype[tsp->tsp_type]);
+		printf("TSP_%s", tsptype[tsp->tsp_type]);
 	else
 		printf("(tsp_type %#x)", tsp->tsp_type);
 
@@ -97,8 +98,8 @@ timed_print(register const u_char *bp, u_int length)
 			fputs(" [|timed]", stdout);
 			return;
 		}
-		sec = ntohl((long)tsp->tsp_time.tv_sec);
-		usec = ntohl((long)tsp->tsp_time.tv_usec);
+		sec = EXTRACT_32BITS(&tsp->tsp_time.tv_sec);
+		usec = EXTRACT_32BITS(&tsp->tsp_time.tv_usec);
 		if (usec < 0)
 			/* corrupt, skip the rest of the packet */
 			return;
@@ -117,6 +118,7 @@ timed_print(register const u_char *bp, u_int length)
 		fputs(" [|timed]", stdout);
 	else {
 		fputs(" name ", stdout);
-		fwrite(tsp->tsp_name, end - (u_char *)tsp->tsp_name, 1, stdout);
+		for (p = tsp->tsp_name; p < end; p++)
+			putchar(isprint(*p) ? *p : '?');
 	}
 }
