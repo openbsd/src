@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2003/04/06 18:54:19 ho Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2003/09/02 17:32:44 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,7 +57,6 @@ struct	device *parsedisk(char *, int, int, dev_t *);
 void	setroot(void);
 void	swapconf(void);
 char	buginchr(void);
-int	getsb(char *, int);
 void	dumpconf(void);
 int	findblkmajor(struct device *);
 struct device	*getdisk(char *, int, int, dev_t *);
@@ -95,7 +94,7 @@ cpu_configure()
 /*
  * Configure swap space and related parameters.
  */
-void 
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -126,7 +125,6 @@ struct nam2blk {
 	{ "st",	5 },
 	{ "rd",	7 },
 };
-
 
 int
 findblkmajor(dv)
@@ -222,7 +220,7 @@ setroot()
 {
 	register struct swdevt *swp;
 	register struct device *dv;
-	register int len, majdev, unit, part;
+	register int len, majdev, unit;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
 	dev_t temp;
@@ -235,13 +233,13 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			printf("root device");
+			printf("root device ");
 			if (bootdv != NULL)
 				printf("(default %s%c)",
 				    bootdv->dv_xname,
 				    bootdv->dv_class == DV_DISK ? 'a' : ' ');
 			printf(": ");
-			len = getsb(buf, sizeof(buf));
+			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
@@ -249,14 +247,14 @@ setroot()
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
-				if (dv != NULL) {
+				if (dv) {
 					bootdv = dv;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}
 			}
 			dv = getdisk(buf, len, 0, &nrootdev);
-			if (dv != NULL) {
+			if (dv) {
 				bootdv = dv;
 				break;
 			}
@@ -276,7 +274,7 @@ setroot()
 				    bootdv->dv_xname,
 				    bootdv->dv_class == DV_DISK ? 'b' : ' ');
 			printf(": ");
-			len = getsb(buf, sizeof(buf));
+			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
@@ -295,7 +293,7 @@ setroot()
 				break;
 			}
 			dv = getdisk(buf, len, 1, &nswapdev);
-			if (dv != NULL) {
+			if (dv) {
 				if (dv->dv_class == DV_IFNET)
 					nswapdev = NODEV;
 				break;
@@ -320,9 +318,8 @@ gotswap:
 			 * val[2] of the boot device is the partition number.
 			 * Assume swap is on partition b.
 			 */
-			part = bootpart;
 			unit = bootdv->dv_unit;
-			rootdev = MAKEDISKDEV(majdev, unit, part);
+			rootdev = MAKEDISKDEV(majdev, unit, bootpart);
 			nswapdev = dumpdev = MAKEDISKDEV(major(rootdev),
 			    DISKUNIT(rootdev), 1);
 		} else {
@@ -375,13 +372,15 @@ gotswap:
 			break;
 		}
 	}
-	if (swp->sw_dev != NODEV)
-		/*
-		 * If dumpdev was the same as the old primary swap device,
-		 * move it to the new primary swap device.
-		 */
-		if (temp == dumpdev)
-			dumpdev = swdevt[0].sw_dev;
+	if (swp->sw_dev == NODEV)
+		return;
+
+	/*
+	 * If dumpdev was the same as the old primary swap device, move
+	 * it to the new primary swap device.
+	 */
+	if (temp == dumpdev)
+		dumpdev = swdevt[0].sw_dev;
 }
 
 /*
@@ -410,49 +409,4 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
-}
-
-int
-getsb(cp, size)
-	char *cp;
-	int size;
-{
-	register char *lp;
-	register int c;
-	register int len;
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = buginchr();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			return (len);
-		case '\b':
-		case '\177':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u' & 037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
 }
