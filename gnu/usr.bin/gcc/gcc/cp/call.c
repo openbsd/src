@@ -4592,6 +4592,10 @@ build_over_call (cand, args, flags)
     check_function_format (NULL, TYPE_ATTRIBUTES (TREE_TYPE (fn)),
 			   converted_args);
 
+  if (warn_bounded)
+    check_function_bounded (NULL, TYPE_ATTRIBUTES (TREE_TYPE (fn)),
+			   converted_args);
+
   /* Avoid actually calling copy constructors and copy assignment operators,
      if possible.  */
 

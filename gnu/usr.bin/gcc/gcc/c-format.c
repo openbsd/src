@@ -540,6 +540,10 @@ typedef struct format_wanted_type
   /* Whether the argument, dereferenced once, is written into and so the
      argument must not be a pointer to a const-qualified type.  */
   int writing_in_flag;
+  /* If the argument is to be written into and is an array, should the
+     width specifier be equal to the size of the array, or one less
+     (to accommodate a NULL being placed at the end) */
+  int size_equals_width;
   /* Whether the argument, dereferenced once, is read from and so
      must not be a NULL pointer.  */
   int reading_from_flag;
@@ -552,6 +556,8 @@ typedef struct format_wanted_type
   const char *name;
   /* The actual parameter to check against the wanted type.  */
   tree param;
+  /* Field width of type */
+  int field_width;
   /* The argument number of that parameter.  */
   int arg_num;
   /* The next type to check for this format conversion, or NULL if none.  */
@@ -1634,6 +1640,7 @@ check_format_info_main (status, res, info, format_chars, format_length,
       const format_length_info *fli = NULL;
       const format_char_info *fci = NULL;
       char flag_chars[256];
+      int field_width = 0;
       int aflag = 0;
       if (*format_chars == 0)
 	{
@@ -1775,20 +1782,29 @@ check_format_info_main (status, res, info, format_chars, format_length,
 	      /* Possibly read a numeric width.  If the width is zero,
 		 we complain if appropriate.  */
 	      int non_zero_width_char = FALSE;
-	      int found_width = FALSE;
+	      unsigned int found_width = 0;
+	      char format_num_str[32];
+
+	      format_num_str[0] = '\0';
 	      while (ISDIGIT (*format_chars))
 		{
-		  found_width = TRUE;
+		  if (found_width < (sizeof(format_num_str)-2))
+		    {
+		      format_num_str[found_width++] = *format_chars;
+                      format_num_str[found_width] = '\0';
+		    }
 		  if (*format_chars != '0')
 		    non_zero_width_char = TRUE;
 		  ++format_chars;
 		}
-	      if (found_width && !non_zero_width_char &&
+
+	      if (found_width > 0 && !non_zero_width_char &&
 		  (fki->flags & (int) FMT_FLAG_ZERO_WIDTH_BAD))
 		status_warning (status, "zero width in %s format",
 				fki->name);
-	      if (found_width)
+	      if (found_width > 0)
 		{
+		  field_width  = atoi(format_num_str);
 		  i = strlen (flag_chars);
 		  flag_chars[i++] = fki->width_char;
 		  flag_chars[i] = 0;
@@ -2186,10 +2202,15 @@ check_format_info_main (status, res, info, format_chars, format_length,
 	  main_wanted_type.wanted_type_name = wanted_type_name;
 	  main_wanted_type.pointer_count = fci->pointer_count + aflag;
 	  main_wanted_type.char_lenient_flag = 0;
+	  main_wanted_type.field_width = field_width;
 	  if (strchr (fci->flags2, 'c') != 0)
 	    main_wanted_type.char_lenient_flag = 1;
 	  main_wanted_type.writing_in_flag = 0;
 	  main_wanted_type.reading_from_flag = 0;
+	  if (strchr (fci->format_chars, 'c') != 0)
+	    main_wanted_type.size_equals_width = 1;
+	  else
+	    main_wanted_type.size_equals_width = 0;
 	  if (aflag)
 	    main_wanted_type.writing_in_flag = 1;
 	  else
@@ -2284,6 +2305,27 @@ check_format_types (status, types)
 		cur_param = TREE_OPERAND (cur_param, 0);
 	      else
 		cur_param = 0;
+
+	      /* Test static string bounds for sscan if -Wbounded is on as well */
+	      if (warn_bounded
+		  && types->writing_in_flag
+		  && i == 0
+		  && cur_param != 0
+		  && COMPLETE_TYPE_P (TREE_TYPE (cur_param)) 
+		  && TREE_CODE (TREE_TYPE (cur_param)) == ARRAY_TYPE
+		  && TREE_CODE (TREE_TYPE (TREE_TYPE (cur_param))) == INTEGER_TYPE)
+		{
+		  tree array_domain = TYPE_DOMAIN (TREE_TYPE (cur_param));
+		  tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (cur_param)));
+		  int f = types->size_equals_width ? 0 : 1;
+		  if (array_size_expr != 0 && types->field_width > 0)
+		    {
+		      int array_size = TREE_INT_CST_LOW (array_size_expr) + 1;
+		      if (array_size < (types->field_width + f))
+			warning ("Array size (%d) smaller than format string size (%d)",
+				 array_size, types->field_width + f);
+		    }
+		}
 
 	      /* See if this is an attempt to write into a const type with
 		 scanf or with printf "%n".  Note: the writing in happens

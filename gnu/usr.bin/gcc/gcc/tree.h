@@ -698,6 +698,10 @@ extern void tree_vec_elt_check_failed PARAMS ((int, int, const char *,
 #define TREE_LANG_FLAG_4(NODE) ((NODE)->common.lang_flag_4)
 #define TREE_LANG_FLAG_5(NODE) ((NODE)->common.lang_flag_5)
 #define TREE_LANG_FLAG_6(NODE) ((NODE)->common.lang_flag_6)
+
+/* Used to track constants derived from sizeof(pointer) operations */
+#define SIZEOF_PTR_DERIVED(NODE) (TREE_LANG_FLAG_6((NODE)))
+
 
 /* Define additional fields and accessors for nodes representing constants.  */
 

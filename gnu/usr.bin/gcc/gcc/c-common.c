@@ -39,7 +39,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "langhooks.h"
 #include "except.h"		/* For USING_SJLJ_EXCEPTIONS.  */
 #include "tree-inline.h"
-#include "c-tree.h"
 
 cpp_reader *parse_in;		/* Declared in c-pragma.h.  */
 
@@ -333,6 +332,9 @@ int warn_format_nonliteral;
 
 int warn_format_security;
 
+/* Warn about buffer size mismatches.  */
+
+int warn_bounded;
 
 /* C/ObjC language option variables.  */
 
@@ -764,8 +766,6 @@ static tree handle_pure_attribute	PARAMS ((tree *, tree, tree, int,
 static tree handle_deprecated_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
 static tree handle_vector_size_attribute PARAMS ((tree *, tree, tree, int,
-						  bool *));
-static tree handle_bounded_attribute    PARAMS ((tree *, tree, tree, int,
 						  bool *));
 static tree handle_nonnull_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
@@ -3060,6 +3060,7 @@ c_sizeof_or_alignof_type (type, op, complain)
   const char *op_name;
   tree value = NULL;
   enum tree_code type_code = TREE_CODE (type);
+  bool sizeof_ptr_flag = false;
   
   my_friendly_assert (op == SIZEOF_EXPR || op == ALIGNOF_EXPR, 20020720);
   op_name = op == SIZEOF_EXPR ? "sizeof" : "__alignof__";
@@ -3091,10 +3092,15 @@ c_sizeof_or_alignof_type (type, op, complain)
   else
     {
       if (op == SIZEOF_EXPR)
-	/* Convert in case a char is more than one unit.  */
-	value = size_binop (CEIL_DIV_EXPR, TYPE_SIZE_UNIT (type),
-			    size_int (TYPE_PRECISION (char_type_node)
-				      / BITS_PER_UNIT));
+        {
+	  /* Convert in case a char is more than one unit.  */
+	  value = size_binop (CEIL_DIV_EXPR, TYPE_SIZE_UNIT (type),
+		  	      size_int (TYPE_PRECISION (char_type_node)
+				        / BITS_PER_UNIT));
+
+          if (type_code == POINTER_TYPE)
+            sizeof_ptr_flag = true;
+        }
       else
 	value = size_int (TYPE_ALIGN (type) / BITS_PER_UNIT);
     }
@@ -3105,7 +3111,10 @@ c_sizeof_or_alignof_type (type, op, complain)
      `size_t', which is just a typedef for an ordinary integer type.  */
   value = fold (build1 (NOP_EXPR, size_type_node, value));
   my_friendly_assert (!TYPE_IS_SIZETYPE (TREE_TYPE (value)), 20001021);
-  
+ 
+  if (sizeof_ptr_flag)
+    SIZEOF_PTR_DERIVED (value) = 1;
+
   return value;
 }
 
@@ -6389,22 +6398,6 @@ vector_size_helper (type, bottom)
   return outer;
 }
 
-/* Handle a "bounded" attribute; arguments as in
-   struct attribute_spec.handler. 
-   Just a stub for now. */
-
-static tree
-handle_bounded_attribute (node, name, args, flags, no_add_attrs)
-     tree *node ATTRIBUTE_UNUSED;
-     tree name ATTRIBUTE_UNUSED;
-     tree args ATTRIBUTE_UNUSED;
-     int flags ATTRIBUTE_UNUSED;
-     bool *no_add_attrs;
-{
-  *no_add_attrs = true;
-  return NULL_TREE;
-}
- 
 /* Handle a "sentinel" attribute.
    Just a stub for now. */
 
@@ -6633,6 +6626,9 @@ check_function_arguments (attrs, params)
 
   if (warn_format)
     check_function_format (NULL, attrs, params);
+
+  if (warn_bounded)
+    check_function_bounded (NULL, attrs, params);
 }
 
 /* Generic argument checking recursion routine.  PARAM is the argument to

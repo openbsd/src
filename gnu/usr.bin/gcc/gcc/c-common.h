@@ -501,6 +501,9 @@ extern int warn_format_nonliteral;
 
 extern int warn_format_security;
 
+/* Warn about buffer size mismatches.  */
+
+extern int warn_bounded;
 
 /* C/ObjC language option variables.  */
 
@@ -866,7 +869,10 @@ extern void check_function_arguments_recurse	PARAMS ((void (*) (void *,
 							 void *, tree,
 							 unsigned HOST_WIDE_INT));
 extern void check_function_format		PARAMS ((int *, tree, tree));
+extern void check_function_bounded		PARAMS ((int *, tree, tree));
 extern void set_Wformat				PARAMS ((int));
+extern tree handle_bounded_attribute		PARAMS ((tree *, tree, tree,
+							 int, bool *));
 extern tree handle_format_attribute		PARAMS ((tree *, tree, tree,
 							 int, bool *));
 extern tree handle_format_arg_attribute		PARAMS ((tree *, tree, tree,
