@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.6 1997/08/27 18:01:09 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.7 1997/11/26 22:30:21 niklas Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -79,16 +79,24 @@ may be either serially concatenated or interleaved.  If a
 .Nm ccd
 is interleaved correctly, a
 .Dq striping
-effect is achieved, which can increase performance.  The optimum interleave
-factor is typically the size of a track.  Since the interleave factor
-is expressed in units of DEV_BSIZE, one must account for sector sizes
-other than DEV_BSIZE in order to calculate the correct interleave.
-The kernel will not allow an interleave factor less than the size
-of the largest component sector divided by DEV_BSIZE.
+effect is achieved, which can increase performance.  Finding the optimum
+interleave factor is a hard problem.  Some things to think about is the
+number of disks in the ccd, the typical readahead opportunities, the
+filesystem blocksize and if it's possible to use the optimized ccd I/O
+protocol.  The optimized protocol allows smaller interleave factors for a
+comparably cheap price but requires that the factor be a multiple of the
+software page size (CLBYTES), and that mirroring is not requested.  So far the
+best policy is to test with different interleaves and benchmark typical uses.
+A rule of thumb might be to use the software pagesize with the optimized
+I/O protocol (the default, unless the requirements mentioned above are not
+fulfilled) or MAXBSIZE / #components with the unoptimized protocol.
+Since the interleave factor is expressed in units of DEV_BSIZE, one must
+account for sector sizes other than DEV_BSIZE in order to calculate the
+correct interleave.  The kernel will not allow an interleave factor less than
+the size of the largest component sector divided by DEV_BSIZE.
 .Pp
 Note that best performance is achieved if all component disks have the same
-geometry and size.  Optimum striping cannot occur with different
-disk types.
+geometry and size.  Optimum striping cannot occur with different disk types.
 .Pp
 There is a run-time utility that is used for configuring
 .Nm ccds .
