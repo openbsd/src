@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.11 2004/05/20 09:20:42 kettenis Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.12 2004/08/07 18:57:44 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -128,6 +128,7 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
 #define	pmap_update(pmap)		do { /* nothing (yet) */ } while (0)
+#define	pmap_unuse_final(p)		do { /* nothing */ } while (0)
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
