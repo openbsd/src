@@ -1,5 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.1 2002/02/01 18:51:44 todd Exp $	*/
-
+/*	$OpenBSD: getaddrinfo.c,v 1.2 2002/02/01 21:49:51 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Todd T. Fries <todd@OpenBSD.org>
  * All rights reserved.
@@ -34,25 +33,25 @@
 
 #include "test.h"
 
-void *func(void *);
-void *foo(void *);
+void	*func(void *);
+void	*foo(void *);
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	pthread_t threads[10];
-	char *status;
+	pthread_t threads[2];
 	int i;
 
 	for (i = 0; i < 2; i++) {
-		CHECKr(pthread_create(&threads[i], NULL, func, (void *)i));
+		CHECKr(pthread_create(&threads[i], NULL, func, NULL));
 	}
 
 	pthread_yield();
-	sleep(1); /* (ensure the thread is dead) */
-	CHECKr(pthread_join(threads[i-1],(void **)&status));
+	for (i = 0; i < 2; i++) {
+		CHECKr(pthread_join(threads[i], NULL));
+	}
 
 	SUCCEED;
 }
@@ -63,26 +62,27 @@ func(arg)
 {
 	struct addrinfo hints, *res;
 	char h[NI_MAXHOST];
-	int i,me = (int)arg;
+	int i;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_CANONNAME;
 
-	printf("Starting thread %d\n", me );
-	for(i=0;i<50;i++) {
+	printf("Starting thread %p\n", pthread_self());
+
+	for(i = 0; i < 50; i++) {
 		if (getaddrinfo("www.openbsd.org", "0", &hints, &res))
 			printf("error on thread %p\n", pthread_self());
 		else {
 			getnameinfo(res->ai_addr, res->ai_addrlen, h, sizeof h,
 			    NULL, 0, NI_NUMERICHOST);
-			printf("success on thread %d: %s is %s\n",
-			    me, res->ai_canonname, h);
+			printf("success on thread %p: %s is %s\n",
+			    pthread_self(), res->ai_canonname, h);
 			freeaddrinfo(res);
 		}
 	}
-	return NULL;
+	return (NULL);
 }
 
 void *
