@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.31 2000/03/23 20:25:40 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.32 2000/04/27 18:00:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1194,7 +1194,7 @@ $sfu_emu
 $tlbd_x
 $tlbd_s
 $tlbd_t
-	HPTENT	/* will update cr28 */
+	HPTENT
 	mtctl	r16, cr28
 	
 	/*
@@ -1221,6 +1221,7 @@ $hash_loop_tlbd_t
 $itlb_x
 $itlb_s
 $itlb_t
+	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
 
 $dtlb_x
 $dtlb_s
@@ -1232,9 +1233,10 @@ $dtlb_t
 	 * r24 is the correspondent HPT entry pointer
 	 */
 
-	HPTENT	/* will update cr28 */
+	HPTENT
 	mtctl	r16, cr28
-	
+	copy	r16, r24
+
 	ldw	hpt_tag(r16),r17
 	VTAG	/* (r8,r9) -> r16 */
 
@@ -1322,7 +1324,7 @@ $hash_loop_tlbd_l
 	
 	.align	8
 $itlb_l
-	HPTENT	/* will update cr28 */
+	HPTENT
 #ifdef DDB
 	mtctl	r16, cr28
 #endif
