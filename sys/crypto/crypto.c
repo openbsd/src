@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.39 2002/07/16 06:12:46 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.40 2002/07/16 06:29:43 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -46,9 +46,10 @@ struct cryptkop **krp_req_queue_tail = NULL;
 int
 crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 {
+	struct cryptocap *cpc;
 	struct cryptoini *cr;
+	int err, s, turn = 0;
 	u_int32_t hid, lid;
-	int err, s;
 
 	if (crypto_drivers == NULL)
 		return EINVAL;
@@ -57,41 +58,59 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	/*
 	 * The algorithm we use here is pretty stupid; just use the
-	 * first driver that supports all the algorithms we need.
+	 * first driver that supports all the algorithms we need. Do
+	 * a double-pass over all the drivers, ignoring software ones
+	 * at first, to deal with cases of drivers that register after
+	 * the software one(s) --- e.g., PCMCIA crypto cards.
 	 *
 	 * XXX We need more smarts here (in real life too, but that's
 	 * XXX another story altogether).
 	 */
+	do {
+		for (hid = 0; hid < crypto_drivers_num; hid++) {
+			cpc = &crypto_drivers[hid];
 
-	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		/*
-		 * If it's not initialized or has remaining sessions
-		 * referencing it, skip.
-		 */
-		if (crypto_drivers[hid].cc_newsession == NULL ||
-		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP))
-			continue;
+			/*
+			 * If it's not initialized or has remaining sessions
+			 * referencing it, skip.
+			 */
+			if (cpc->cc_newsession == NULL ||
+			    (cpc->cc_flags & CRYPTOCAP_F_CLEANUP))
+				continue;
 
-		/* Hardware requested -- ignore software drivers. */
-		if (hard &&
-		    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE))
-			continue;
+			if (cpc->cc_flags & CRYPTOCAP_F_SOFTWARE) {
+				/*
+				 * First round of search, ignore
+				 * software drivers.
+				 */
+				if (turn == 0)
+					continue;
+			} else { /* !CRYPTOCAP_F_SOFTWARE */
+				/* Second round of search, only software. */
+				if (turn == 1)
+					continue;
+			}
 
-		/* See if all the algorithms are supported. */
-		for (cr = cri; cr; cr = cr->cri_next)
-			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
+			/* See if all the algorithms are supported. */
+			for (cr = cri; cr; cr = cr->cri_next)
+				if (cpc->cc_alg[cr->cri_alg] == 0)
+					break;
+
+			/* Ok, all algorithms are supported. */
+			if (cr == NULL)
 				break;
+		}
 
-		/* Ok, all algorithms are supported. */
-		if (cr == NULL)
-			break;
-	}
+		turn++;
+
+		/* If we only want hardware drivers, don't do second pass. */
+	} while (turn <= 1 && hard != 0);
 
 	/*
 	 * Can't do everything in one session.
 	 *
-	 * XXX Fix this. We need to inject a "virtual" session layer right
-	 * XXX about here.
+	 * XXX Fix this. We need to inject a "virtual" session
+	 * XXX layer right about here.
 	 */
 
 	if (hid == crypto_drivers_num) {
