@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.12 2002/12/05 04:30:21 kjc Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.13 2003/02/05 20:17:38 mickey Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.56 2003/01/06 17:19:16 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
@@ -51,6 +51,13 @@
 #	pty*	set of 16 master pseudo terminals
 # Printers:
 #	lpt*	IEEE 1284 centronics printer
+# Console ports:
+#	ttyC0	wscons screen 0
+#	ttyC-F*	wscons virtual consoles
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Call units:
 # Special purpose devices:
 #	fd	makes fd/* for the fdescfs
@@ -277,6 +284,40 @@ fd)
 	MKlist="$MKlist;chmod 555 fd"
 	;;
 
+wsmouse*)
+	M wsmouse$U c 29 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 30 0 600
+	M wskbd c 30 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 28 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 27 $(( 16#$U + $m )) 600;;
+	cfg) M tty${n}cfg c 27 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
+	;;
+
 lpt*|lpa*)
 	case $i in
 	lpt*) n=lpt f=0;;
@@ -368,9 +409,9 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 ses0 audio0 uk0 random lpa0 lpa1 lpa2 lpt0
-	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf systrace std
-	R st0 st1 fd
+	R xfs0 ss0 ss1 ch0 ses0 wscons audio0 uk0 random lpa0 lpa1
+	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
