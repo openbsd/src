@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.26 1998/07/09 06:32:27 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.27 1998/07/11 21:20:12 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft 
  * icmp "time exceeded" reply from a gateway.  We start our probes
  * with a ttl of one and increase by one until we get an icmp "port
  * unreachable" (which means we got to "host") or hit a max (which
- * defaults to 30 hops & can be changed with the -m flag).  Three
+ * defaults to 64 hops & can be changed with the -m flag).  Three
  * probes (change with -q flag) are sent at each ttl setting and a
  * line is printed showing the ttl, address of the gateway and
  * round trip time of each probe.  If the probe answers come from
@@ -77,7 +77,7 @@ static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft 
  * A sample use might be:
  *
  *     [yak 71]% traceroute nis.nsf.net.
- *     traceroute to nis.nsf.net (35.1.1.48), 30 hops max, 56 byte packet
+ *     traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
  *      1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
  *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
  *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
@@ -97,7 +97,7 @@ static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft 
  * A more interesting example is:
  *
  *     [yak 72]% traceroute allspice.lcs.mit.edu.
- *     traceroute to allspice.lcs.mit.edu (18.26.0.115), 30 hops max
+ *     traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
  *      1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
  *      2  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  19 ms  19 ms
  *      3  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  19 ms  19 ms
@@ -287,7 +287,7 @@ char *source = 0;
 char *hostname;
 
 int nprobes = 3;
-int max_ttl = 30;
+int max_ttl = IPDEFTTL;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
