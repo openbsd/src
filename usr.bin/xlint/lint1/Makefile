@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2001/09/11 00:06:28 jason Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/01/05 02:55:28 espie Exp $
 #	$NetBSD: Makefile,v 1.3 1995/07/04 01:53:05 cgd Exp $
 
 PROG=	lint1
@@ -8,7 +8,7 @@ NOMAN=
 LDADD+=	-ll
 DPADD+=	${LIBL}
 YFLAGS=	-d
-CFLAGS+=-I.
+CFLAGS+=-I. -I${.CURDIR}
 LINTFLAGS=-aehpz
 CLEANFILES+=y.tab.h cgram.c scan.c
 

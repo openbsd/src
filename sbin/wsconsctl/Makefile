@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2003/10/31 04:05:29 drahn Exp $
+#	$OpenBSD: Makefile,v 1.13 2004/01/05 02:55:28 espie Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "sparc" || \
@@ -8,7 +8,7 @@ PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
 	mouse.c util.c wsconsctl.c
 
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I${.CURDIR} -I.
 CLEANFILES+=	keysym.h y.tab.h
 
 beforedepend: keysym.h
