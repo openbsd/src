@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.58 2004/10/14 21:28:15 mickey Exp $	*/
+/*	$OpenBSD: if.h,v 1.59 2004/11/10 21:10:53 grange Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ struct ifnet {				/* and the entries */
 	if (IF_QFULL(ifq)) {				\
 		IF_DROP(ifq);				\
 		m_freem(m);				\
-		if (!ifq->ifq_congestion)		\
+		if (!(ifq)->ifq_congestion)		\
 			if_congestion(ifq);		\
 	} else						\
 		IF_ENQUEUE(ifq, m);			\
