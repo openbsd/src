@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2004/09/22 14:39:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2004/09/23 08:42:38 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -216,8 +216,7 @@ trap(trapframe)
 			}
 			entry |= PG_M;
 			pte->pt_entry = entry;
-			trapframe->badvaddr &= ~PGOFSET;
-			tlb_update(trapframe->badvaddr, entry);
+			tlb_update(trapframe->badvaddr & ~PGOFSET, entry);
 			pa = pfn_to_pad(entry);
 			pg = PHYS_TO_VM_PAGE(pa);
 			if (pg == NULL)
@@ -237,7 +236,7 @@ trap(trapframe)
 
 		if (!(pte = pmap_segmap(pmap, trapframe->badvaddr)))
 			panic("trap: utlbmod: invalid segmap");
-		pte += (trapframe->badvaddr >> PGSHIFT) & (NPTEPG - 1);
+		pte += uvtopte(trapframe->badvaddr);
 		entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
 		if (!(entry & PG_V) || (entry & PG_M))
@@ -251,9 +250,8 @@ trap(trapframe)
 		}
 		entry |= PG_M;
 		pte->pt_entry = entry;
-		trapframe->badvaddr = (trapframe->badvaddr & ~PGOFSET) |
-		    (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
-		tlb_update(trapframe->badvaddr, entry);
+		tlb_update((trapframe->badvaddr & ~PGOFSET) |
+		    (pmap->pm_tlbpid << VMTLB_PID_SHIFT), entry);
 		pa = pfn_to_pad(entry);
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg == NULL)
@@ -587,6 +585,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		u_int32_t instr;
 		struct uio uio;
 		struct iovec iov;
+		struct trap_frame *locr0 = p->p_md.md_regs;
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
@@ -594,40 +593,70 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			va += 4;
 
 		/* read break instruction */
-		copyin(&instr, va, sizeof(int32_t));
+		copyin(va, &instr, sizeof(int32_t));
+
 #if 0
 		printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
 			p->p_comm, p->p_pid, instr, trapframe->pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
-		if (p->p_md.md_ss_addr != (long)va || instr != BREAK_SSTEP) {
+
+		switch ((instr & BREAK_VAL_MASK) >> BREAK_VAL_SHIFT) {
+		case 6:	/* gcc range error */
+			i = SIGFPE;
+			typ = FPE_FLTSUB;
+			/* skip instruction */
+			if ((int)trapframe->cause & CR_BR_DELAY)
+				locr0->pc = MipsEmulateBranch(locr0,
+				    trapframe->pc, 0, 0);
+			else
+				locr0->pc += 4;
+			break;
+		case 7:	/* gcc divide by zero */
+			i = SIGFPE;
+			typ = FPE_FLTDIV;	/* XXX FPE_INTDIV ? */
+			/* skip instruction */
+			if ((int)trapframe->cause & CR_BR_DELAY)
+				locr0->pc = MipsEmulateBranch(locr0,
+				    trapframe->pc, 0, 0);
+			else
+				locr0->pc += 4;
+			break;
+		case BREAK_SSTEP_VAL:
+			if (p->p_md.md_ss_addr == (long)va) {
+				/*
+				 * Restore original instruction and clear BP
+				 */
+				iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+				iov.iov_len = sizeof(int);
+				uio.uio_iov = &iov;
+				uio.uio_iovcnt = 1;
+				uio.uio_offset = (off_t)(long)va;
+				uio.uio_resid = sizeof(int);
+				uio.uio_segflg = UIO_SYSSPACE;
+				uio.uio_rw = UIO_WRITE;
+				uio.uio_procp = curproc;
+				i = procfs_domem(p, p, NULL, &uio);
+				Mips_SyncCache();
+
+				if (i < 0)
+					printf("Warning: can't restore instruction at %x: %x\n",
+					    p->p_md.md_ss_addr,
+					    p->p_md.md_ss_instr);
+
+				p->p_md.md_ss_addr = 0;
+				typ = TRAP_BRKPT;
+			} else {
+				typ = TRAP_TRACE;
+			}
 			i = SIGTRAP;
+			break;
+		default:
 			typ = TRAP_TRACE;
+			i = SIGTRAP;
 			break;
 		}
 
-		/*
-		 * Restore original instruction and clear BP
-		 */
-		iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
-		iov.iov_len = sizeof(int);
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)va;
-		uio.uio_resid = sizeof(int);
-		uio.uio_segflg = UIO_SYSSPACE;
-		uio.uio_rw = UIO_WRITE;
-		uio.uio_procp = curproc;
-		i = procfs_domem(p, p, NULL, &uio);
-		Mips_SyncCache();
-
-		if (i < 0)
-			printf("Warning: can't restore instruction at %x: %x\n",
-				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
-
-		p->p_md.md_ss_addr = 0;
-		i = SIGTRAP;
-		typ = TRAP_BRKPT;
 		break;
 	    }
 
@@ -660,12 +689,11 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		if ((int)trapframe->cause & CR_BR_DELAY)
 			va += 4;
 		/* read break instruction */
-		copyin(&instr, va, sizeof(int32_t));
+		copyin(va, &instr, sizeof(int32_t));
 
 		if ((int)trapframe->cause & CR_BR_DELAY) {
 			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
-		}
-		else {
+		} else {
 			locr0->pc += 4;
 		}
 		if (instr == 0x040c0000) { /* Performance cntr trap */
