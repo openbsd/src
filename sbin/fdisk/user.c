@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.4 1997/09/30 00:02:54 mickey Exp $	*/
+/*	$OpenBSD: user.c,v 1.5 1997/10/02 14:55:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -132,6 +132,7 @@ USER_modify(disk, tt, offset)
 	/* Parse the sucker */
 	MBR_parse(mbr_buf, &mbr);
 
+	printf("Enter 'help' for information\n");
 
 	/* Edit cycle */
 	do {
