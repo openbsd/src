@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.63 2004/09/16 22:32:46 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.64 2004/09/18 06:51:49 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -764,14 +764,13 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
 
 	/* Tag packet for carp_output */
-	mtag = m_tag_get(PACKET_TAG_CARP,
-	    sizeof(struct carp_softc *), M_NOWAIT);
+	mtag = m_tag_get(PACKET_TAG_CARP, sizeof(struct ifnet *), M_NOWAIT);
 	if (mtag == NULL) {
 		m_freem(m);
 		sc->sc_ac.ac_if.if_oerrors++;
 		return (ENOMEM);
 	}
-	bcopy(&sc, (caddr_t)(mtag + 1), sizeof(struct carp_softc *));
+	bcopy(&sc->sc_ac.ac_if, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
 	m_tag_prepend(m, mtag);
 
 	return (0);
@@ -1798,6 +1797,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 {
 	struct m_tag *mtag;
 	struct carp_softc *sc;
+	struct ifnet *carp_ifp;
 
 	if (!sa)
 		return (0);
@@ -1818,8 +1818,8 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	mtag = m_tag_find(m, PACKET_TAG_CARP, NULL);
 	if (mtag == NULL)
 		return (0);
-
-	bcopy(mtag + 1, &sc, sizeof(struct carp_softc *));
+	bcopy(mtag + 1, &carp_ifp, sizeof(struct ifnet *));
+	sc = carp_ifp->if_softc;
 
 	/* Set the source MAC address to Virtual Router MAC Address */
 	switch (ifp->if_type) {
