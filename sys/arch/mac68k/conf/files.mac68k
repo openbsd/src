@@ -1,5 +1,5 @@
-#	$OpenBSD: files.mac68k,v 1.5 1996/05/26 18:35:10 briggs Exp $
-#	$NetBSD: files.mac68k,v 1.48 1996/05/19 22:29:10 scottr Exp $
+#	$OpenBSD: files.mac68k,v 1.6 1996/06/23 16:18:02 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.49 1996/06/19 03:21:08 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -99,6 +99,7 @@ file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
 file	arch/mac68k/mac68k/macromasm.s
+file	arch/mac68k/mac68k/mainbus.c
 file	arch/mac68k/mac68k/mem.c
 file	arch/mac68k/mac68k/pmap.c
 file	arch/mac68k/mac68k/pmap_bootstrap.c
