@@ -16,33 +16,12 @@ the login based on rhosts authentication.  This file also processes
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rhosts.c,v 1.4 1999/09/30 05:43:33 deraadt Exp $");
+RCSID("$Id: auth-rhosts.c,v 1.5 1999/10/03 20:09:18 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
-
-/* Returns true if the strings are equal, ignoring case (a-z only). */
-
-static int casefold_equal(const char *a, const char *b)
-{
-  unsigned char cha, chb;
-  for (; *a; a++, b++)
-    {
-      cha = *a;
-      chb = *b;
-      if (!chb)
-	return 0;
-      if (cha >= 'a' && cha <= 'z')
-	cha -= 32;
-      if (chb >= 'a' && chb <= 'z')
-	chb -= 32;
-      if (cha != chb)
-	return 0;
-    }
-  return !*b;
-}
 
 /* This function processes an rhosts-style file (.rhosts, .shosts, or
    /etc/hosts.equiv).  This returns true if authentication can be granted
@@ -138,7 +117,7 @@ int check_rhosts_file(const char *filename, const char *hostname,
 	    continue;
 	}
       else
-	if (!casefold_equal(host, hostname) && strcmp(host, ipaddr) != 0)
+	if (strcasecmp(host, hostname) && strcmp(host, ipaddr) != 0)
 	  continue; /* Different hostname. */
 
       /* Verify that user name matches. */
