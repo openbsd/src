@@ -32,6 +32,7 @@
  */
 
 #include "iprop.h"
+#include <util.h>
 
 RCSID("$KTH: ipropd_slave.c,v 1.24 2001/08/31 03:12:17 assar Exp $");
 

@@ -318,7 +318,7 @@ do_version4(unsigned char *buf,
 	    KTEXT r;
 	    des_cblock session;
 
-	    des_new_random_key(&session);
+	    des_new_random_key((unsigned char *)&session);
 
 	    krb_create_ticket(&ticket, 0, name, inst, v4_realm,
 			      addr->sin_addr.s_addr, session, life, kdc_time, 
@@ -493,7 +493,7 @@ do_version4(unsigned char *buf,
 	    KTEXT_ST cipher, ticket;
 	    KTEXT r;
 	    des_cblock session;
-	    des_new_random_key(&session);
+	    des_new_random_key((unsigned char *)&session);
 	    krb_create_ticket(&ticket, 0, ad.pname, ad.pinst, ad.prealm,
 			      addr->sin_addr.s_addr, &session, life, kdc_time,
 			      sname, sinst, skey->key.keyvalue.data);

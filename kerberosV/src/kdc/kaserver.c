@@ -259,11 +259,12 @@ create_reply_ticket (struct rx_header *hdr,
     struct rx_header reply_hdr;
     des_cblock zero;
     size_t pad;
-    unsigned fyrtiosjuelva;
+    unsigned fyrtiosjuelva; /* XXX better variable name 
+			       (this means 4711 in swedish. not kidding */
 
     /* create the ticket */
 
-    des_new_random_key(&session);
+    des_new_random_key((unsigned char *)&session);
 
     krb_create_ticket (&ticket, 0, name, instance, realm,
 		       addr->sin_addr.s_addr,

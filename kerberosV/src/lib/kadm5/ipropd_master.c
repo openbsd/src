@@ -32,6 +32,7 @@
  */
 
 #include "iprop.h"
+#include <util.h>
 
 RCSID("$KTH: ipropd_master.c,v 1.23 2001/08/30 15:15:50 nectar Exp $");
 
