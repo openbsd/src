@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.18 2001/06/08 03:23:26 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.19 2001/06/09 01:39:31 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1222,7 +1222,6 @@ wskbd_cngetc(dev)
 	for(;;) {
 		if (num-- > 0) {
 			ks = wskbd_console_data.t_symbols[pos++];
-		if (KS_GROUP(ks) == KS_GROUP_Ascii)
 			return (KS_VALUE(ks));	
 		} else {
 			(*wskbd_console_data.t_consops->getc)
