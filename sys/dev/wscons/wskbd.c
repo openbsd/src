@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.27 2001/10/25 14:30:43 drahn Exp $ */
+/* $OpenBSD: wskbd.c,v 1.28 2001/10/30 05:15:37 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -966,6 +966,11 @@ getbell:
 		kkdp = &sc->sc_keyrepeat_data;
 setkeyrepeat:
 		ukdp = (struct wskbd_keyrepeat_data *)data;
+		if ((ukdp->which & WSKBD_KEYREPEAT_DODEL1 &&
+		     (hz * ukdp->del1) / 1000 <= 0) ||
+		    (ukdp->which & WSKBD_KEYREPEAT_DODELN &&
+		     (hz * ukdp->delN) / 1000 <= 0))
+			return (EINVAL);
 		SETKEYREPEAT(kkdp, ukdp, kkdp);
 		return (0);
 
