@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.12 2003/08/30 17:30:54 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.13 2003/08/30 17:37:44 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -126,7 +126,7 @@
 .Pp
 .Nm
 .Bk -words
-.Oo Cm list-standard-commands Li |\ \&
+.Oo Cm list-standard-commands No |\ \&
 .Cm list-message-digest-commands |
 .Cm \	\&\ \&\ \&\ \&\ \&list-cipher-commands
 .Oc
@@ -170,18 +170,16 @@ Handling of S/MIME signed or encrypted mail
 The
 .Nm
 program provides a rich variety of commands
-.Po Cm command\ \&
+.Pf ( Cm command
 in the
 .Sx SYNOPSIS
-above
-.Pc ,
+above),
 each of which often has a wealth of options and arguments
-.Po Ar command_opts\ \&
+.Pf ( Ar command_opts
 and
 .Ar command_args
 in the
-.Sx SYNOPSIS
-.Pc .
+.Sx SYNOPSIS ) .
 .Pp
 The pseudo-commands
 .Cm list-standard-commands , list-message-digest-commands ,
