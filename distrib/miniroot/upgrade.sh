@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.6 1997/05/13 18:22:14 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.7 1997/05/14 21:22:07 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ MODE="upgrade"
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+#	md_machine_arch()	- get machine architecture
 
 # include machine dependent subroutines
 . install.md
@@ -93,6 +94,9 @@ ls -l /dev > /dev/null 2>&1
 # This might make an MFS mount on /tmp, or it may
 # just re-mount the root with read-write enabled.
 md_makerootwritable
+
+# Get the machine architecture (must be done after md_makerootwritable)
+ARCH=`md_machine_arch`
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk

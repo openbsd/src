@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.10 1997/05/14 21:07:59 millert Exp $
+#	$OpenBSD: install.sh,v 1.11 1997/05/14 21:22:06 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,9 +101,6 @@ esac
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-# Get the machine architecture
-ARCH=`md_machine_arch`
-
 # Deal with terminal issues
 md_set_term
 
@@ -116,6 +113,9 @@ get_timezone
 if [ "`df /`" = "`df /tmp`" ]; then
 	md_makerootwritable
 fi
+
+# Get the machine architecture (must be done after md_makerootwritable)
+ARCH=`md_machine_arch`
 
 if [ "`df /`" = "`df /mnt`" ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
