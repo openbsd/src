@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.52 2002/04/11 00:08:25 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.53 2002/04/11 02:11:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.52 2002/04/11 00:08:25 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.53 2002/04/11 02:11:19 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -902,6 +902,7 @@ wi_write_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int8_t		*ptr;
+	u_int16_t		val;
 	int			i;
 	struct wi_ltv_gen	p2ltv;
 
@@ -935,18 +936,24 @@ wi_write_record(sc, ltv)
 		case WI_RID_ENCRYPTION:
 			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
 			p2ltv.wi_len = 2;
-			if (ltv->wi_val & htole16(0x01))
+			if (ltv->wi_val & htole16(0x01)) {
+				val = PRIVACY_INVOKED;
+				/*
+				 * If using shared key WEP we must set the
+				 * EXCLUDE_UNENCRYPTED bit.  Symbol cards
+				 * need this bit set even when not using
+				 * shared key. We can't just test for
+				 * IEEE80211_AUTH_SHARED since Symbol cards
+				 * have 2 shared key modes.
+				 */
+				if (sc->wi_authmode != IEEE80211_AUTH_OPEN ||
+				    sc->sc_firmware_type == WI_SYMBOL)
+					val |= EXCLUDE_UNENCRYPTED;
+				/* TX encryption is broken in Host AP mode. */
 				if (sc->wi_ptype == WI_PORTTYPE_AP)
-					/* Disable tx encryption...
-					 * it's broken.
-					 */
-					p2ltv.wi_val = htole16(HOST_ENCRYPT |
-					    PRIVACY_INVOKED |
-					    EXCLUDE_UNENCRYPTED);
-				else
-					p2ltv.wi_val = htole16(PRIVACY_INVOKED |
-					    EXCLUDE_UNENCRYPTED);
-			else
+					val |= HOST_ENCRYPT;
+				p2ltv.wi_val = htole16(val);
+			} else
 				p2ltv.wi_val = htole16(HOST_ENCRYPT | HOST_DECRYPT);
 			ltv = &p2ltv;
 			break;
