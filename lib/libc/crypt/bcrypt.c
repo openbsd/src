@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt.c,v 1.4 1997/03/27 01:09:38 provos Exp $ */
+/* $OpenBSD: bcrypt.c,v 1.5 1997/04/30 05:57:04 tholo Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -95,11 +95,16 @@ const static u_int8_t index_64[128] =
 };
 #define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
 
+#if __STDC__
+static void
+decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
+#else
 static void
 decode_base64(buffer, len, data)
 	u_int8_t *buffer;
 	u_int16_t len;
 	u_int8_t *data;
+#endif
 {
 	u_int8_t *bp = buffer;
 	u_int8_t *p = data;
@@ -133,12 +138,17 @@ decode_base64(buffer, len, data)
 	}
 }
 
+#if __STDC__
+static void
+encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
+#else
 static void
 encode_salt(salt, csalt, clen, logr)
 	char   *salt;
 	u_int8_t *csalt;
 	u_int16_t clen;
 	u_int8_t logr;
+#endif
 {
 	salt[0] = '$';
 	salt[1] = BCRYPT_VERSION;
@@ -153,9 +163,14 @@ encode_salt(salt, csalt, clen, logr)
    seems sensible.
  */
 
-char   *
+#if __STDC__
+char *
+bcrypt_gensalt(u_int8_t log_rounds)
+#else
+char *
 bcrypt_gensalt(log_rounds)
 	u_int8_t log_rounds;
+#endif
 {
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int16_t i;
@@ -179,8 +194,8 @@ bcrypt_gensalt(log_rounds)
 
 char   *
 bcrypt(key, salt)
-	char   *key;
-	char   *salt;
+	const char   *key;
+	const char   *salt;
 {
 	blf_ctx state;
 	u_int32_t rounds, i, k;
@@ -256,11 +271,16 @@ bcrypt(key, salt)
 	return encrypted;
 }
 
+#if __STDC__
+static void
+encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
+#else
 static void
 encode_base64(buffer, data, len)
 	u_int8_t *buffer;
 	u_int8_t *data;
 	u_int16_t len;
+#endif
 {
 	u_int8_t *bp = buffer;
 	u_int8_t *p = data;
