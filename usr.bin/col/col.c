@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.4 1997/06/17 20:53:58 kstailey Exp $	*/
+/*	$OpenBSD: col.c,v 1.5 1997/07/25 21:30:12 mickey Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.4 1997/06/17 20:53:58 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.5 1997/07/25 21:30:12 mickey Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -101,7 +101,6 @@ void	flush_lines __P((int));
 void	flush_blanks __P((void));
 void	free_line __P((LINE *));
 void	usage __P((void));
-void	wrerr __P((void));
 void   *xmalloc __P((void *, size_t));
 
 CSET	last_set;		/* char_set of last char printed */
@@ -114,7 +113,7 @@ int	no_backspaces;		/* if not to output any backspaces */
 
 #define	PUTC(ch) \
 	if (putchar(ch) == EOF) \
-		wrerr();
+		err(1, "stdout");
 
 int
 main(argc, argv)
@@ -525,14 +524,6 @@ usage()
 {
 
 	(void)fprintf(stderr, "usage: col [-bfx] [-l nline]\n");
-	exit(1);
-}
-
-void
-wrerr()
-{
-
-	(void)fprintf(stderr, "col: write error.\n");
 	exit(1);
 }
 

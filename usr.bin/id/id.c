@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.5 1997/07/25 21:05:27 mickey Exp $	*/
+/*	$OpenBSD: id.c,v 1.6 1997/07/25 21:33:39 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.5 1997/07/25 21:05:27 mickey Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.6 1997/07/25 21:33:39 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,9 +53,9 @@ static char rcsid[] = "$OpenBSD: id.c,v 1.5 1997/07/25 21:05:27 mickey Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 void	current __P((void));
-void	err __P((const char *, ...));
 void	pretty __P((struct passwd *));
 void	group __P((struct passwd *, int));
 void	usage __P((void));
@@ -162,7 +162,7 @@ pretty(pw)
 		group(pw, 1);
 	} else {
 		if ((login = getlogin()) == NULL)
-			err("getlogin: %s", strerror(errno));
+			err(1, "getlogin");
 
 		pw = getpwuid(rid = getuid());
 		if (pw == NULL || strcmp(login, pw->pw_name))
@@ -311,45 +311,16 @@ who(u)
 	id = strtoul(u, &ep, 10);
 	if (*u && !*ep && (pw = getpwuid(id)))
 		return(pw);
-	err("%s: No such user", u);
-	/* NOTREACHED */
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "id: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
+	errx(1, "%s: No such user", u);
 	/* NOTREACHED */
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: id [user]\n");
-	(void)fprintf(stderr, "       id -G [-n] [user]\n");
-	(void)fprintf(stderr, "       id -g [-nr] [user]\n");
-	(void)fprintf(stderr, "       id -u [-nr] [user]\n");
+	(void)fprintf(stderr, "usage: id [user]\n"
+			      "       id -G [-n] [user]\n"
+			      "       id -g [-nr] [user]\n"
+			      "       id -u [-nr] [user]\n");
 	exit(1);
 }
