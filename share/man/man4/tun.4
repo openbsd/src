@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.32 2004/08/17 23:58:36 jaredy Exp $
+.\"	$OpenBSD: tun.4,v 1.33 2004/09/02 12:55:22 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -81,7 +81,9 @@ are removed.
 .Pp
 Writes never block.
 If the protocol queue is full, the packet is dropped,
-a ``collision'' is counted, and
+a
+.Dq collision
+is counted, and
 .Er ENOBUFS
 is returned.
 .Pp
@@ -93,9 +95,9 @@ the following special commands defined in
 are supported:
 .Pp
 .Bl -tag -width indent -compact
-.It Dv TUNGIFINFO (struct tuninfo)
-.It Dv TUNSIFINFO (struct tuninfo)
-Can be used to get or set the interface characteristics.
+.It Dv TUNGIFINFO Fa "struct tuninfo *"
+.It Dv TUNSIFINFO Fa "struct tuninfo *"
+Get or set the interface characteristics.
 .Bd -literal
 /* iface info */
 struct tuninfo {
@@ -128,20 +130,25 @@ but can be set to
 This sets the interface media address header type.
 .Pp
 .It Dv TUNSIFMODE Fa int *flags
-Can be used to just set the interface flags.
+Set just the interface flags.
+.Pp
 .It Dv FIONBIO Fa int *flag
-Can be used to set non-blocking I/O.
+Set non-blocking I/O.
+.Pp
 .It Dv FIOASYNC Fa int *flag
-Can be used to cause signal
+Cause signal
 .Dv SIGIO
 to be sent when a packet can be read.
+.Pp
 .It Dv TIOCSPGRP Fa int *pgrp
 .It Dv TIOCGPGRP Fa int *pgrp
 Get or set the process group to which signals might be sent
 via
 .Dv FIOASYNC .
+.Pp
 .It Dv FIONREAD Fa int *count
-Gets the byte count of the next packet available to be read.
+Get the byte count of the next packet available to be read.
+.Pp
 .It Dv SIOCGIFADDR Fa struct ether_addr *addr
 .It Dv SIOCSIFADDR Fa struct ether_addr *addr
 Get or set the Ethernet address of the device in layer 2 mode.
@@ -155,11 +162,11 @@ If open fails,
 .Xr errno 2
 may be set to one of:
 .Bl -tag -width Er
-.It Bq Eq EPERM
+.It Bq Er EPERM
 Only the superuser may open the device.
-.It Bq Eq ENXIO
+.It Bq Er ENXIO
 Not that many devices configured.
-.It Bq Eq EBUSY
+.It Bq Er EBUSY
 Device was already open.
 .El
 .Pp
@@ -169,20 +176,20 @@ call fails,
 .Xr errno 2
 is set to one of:
 .Bl -tag -width Er
-.It Bq Eq EMSGSIZE
+.It Bq Er EMSGSIZE
 The packet supplied was too small or too large.
 The maximum sized packet allowed is currently 16384 bytes.
-.It Bq Eq ENOBUFS
+.It Bq Er ENOBUFS
 There were no mbufs, or
 the queue for the outgoing protocol is full.
-.It Bq Eq EAFNOSUPPORT
+.It Bq Er EAFNOSUPPORT
 The address family specified in the tunnel header was not
 recognized.
 .El
 .Pp
 Ioctl commands may fail with:
 .Bl -tag -width Er
-.It Bq EINVAL
+.It Bq Er EINVAL
 Attempt to set both
 .Dv IFF_POINTOPOINT
 and
@@ -194,7 +201,7 @@ or using
 or
 .Dv SIOCSIFADDR
 in layer 3 mode.
-.It Bq ENOTTY
+.It Bq Er ENOTTY
 Unrecognized ioctl command.
 .El
 .Pp
@@ -202,19 +209,19 @@ A
 .Xr read 2
 call may fail because of:
 .Bl -tag -width Er
-.It Bq Eq EHOSTDOWN
+.It Bq Er EHOSTDOWN
 The device is not ready.
 The device must have an
 .Xr inet 4
 interface address assigned to it, such as via
 .Dv SIOCSIFADDR .
-.It Bq Eq EWOULDBLOCK
+.It Bq Er EWOULDBLOCK
 Non-blocking I/O was selected and no packets were available.
 .El
 .Pp
 An attempt to send a packet out via the interface may fail with:
 .Bl -tag -width Er
-.It Bq Eq EHOSTDOWN
+.It Bq Er EHOSTDOWN
 The device is not ready.
 The device must have an
 .Xr inet 4
