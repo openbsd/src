@@ -131,6 +131,12 @@ if test -n "$GENERATE_SHLIB_SCRIPT"; then
     ldscripts/${EMULATION_NAME}.xs
 fi
 
+LD_FLAG=Z
+DATA_ALIGNMENT=${DATA_ALIGNMENT_}
+RELOCATING=" "
+(. ${srcdir}/scripttempl/${SCRIPT_NAME}.sc) | sed -e '/^ *$/d' > \
+  ldscripts/${EMULATION_NAME}.xz
+
 for i in $EMULATION_LIBPATH ; do
   test "$i" = "$EMULATION_NAME" && COMPILE_IN=true
 done

@@ -739,7 +739,7 @@ parse_args (argc, argv)
 	  config.dynamic_link = false;
 	  break;
 	case 'Z':
-	  /* compatibility flag, unused */
+	  config.data_bss_contig = true;
 	  break;
 	case OPTION_NO_DEMANGLE:
 	  demangling = false;

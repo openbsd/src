@@ -3100,7 +3100,7 @@ get_program_header_size (abfd)
 
   /* Assume we will need exactly two PT_LOAD segments: one for text
      and one for data.  */
-  segs = 2;
+  segs = 6;
 
   s = bfd_get_section_by_name (abfd, ".interp");
   if (s != NULL && (s->flags & SEC_LOAD) != 0)

@@ -70,6 +70,11 @@ DYNAMIC=".dynamic     ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata ${RELOCATING-0} : { *(.rodata) ${RELOCATING+*(.rodata.*)} ${RELOCATING+*(.gnu.linkonce.r.*)} }"
 SBSS2=".sbss2 ${RELOCATING-0} : { *(.sbss2) ${RELOCATING+*(.sbss2.*)} ${RELOCATING+*(.gnu.linkonce.sb2.*)} }"
 SDATA2=".sdata2 ${RELOCATING-0} : { *(.sdata2) ${RELOCATING+*(.sdata2.*)} ${RELOCATING+*(.gnu.linkonce.s2.*)} }"
+test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .pltpad0 ${RELOCATING-0} : { ${RELOCATING+__plt_start = .;} }"
+test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_PLT1=".pltpad1 ${RELOCATING-0} : { ${RELOCATING+__plt_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
+test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_GOT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .gotpad0 ${RELOCATING-0} : { ${RELOCATING+__got_start = .;} }"
+test "$LD_FLAG" = "N" || test "$LD_FLAG" = "Z" || PAD_GOT1=".gotpad1 ${RELOCATING-0} : { ${RELOCATING+__got_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
+
 CTOR=".ctors ${CONSTRUCTING-0} : 
   {
     ${CONSTRUCTING+${CTOR_START}}
@@ -310,9 +315,16 @@ SECTIONS
   ${RELOCATING+${OTHER_READWRITE_SECTIONS}}
   ${RELOCATING+${CTOR}}
   ${RELOCATING+${DTOR}}
+
+  /* pad GOT (and PLT if DATA_PLT) to page aligned if PAD_GOT */
+  ${DATA_PLT+${PAD_PLT+${PAD_PLT0}}}
   ${DATA_PLT+${PLT}}
+  ${DATA_PLT+${PAD_PLT+${PAD_PLT1}}}
+  ${PAD_GOT+${PAD_GOT0}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
   .got		${RELOCATING-0} : { *(.got.plt) *(.got) }
+  ${PAD_GOT+${PAD_GOT1}}
+
   ${CREATE_SHLIB+${SDATA2}}
   ${CREATE_SHLIB+${SBSS2}}
   ${TEXT_DYNAMIC-${DYNAMIC}}
@@ -343,7 +355,9 @@ SECTIONS
     ${RELOCATING+PROVIDE (__sbss_end = .);}
     ${RELOCATING+PROVIDE (___sbss_end = .);}
   }
+  ${BSS_PLT+${PAD_PLT+${PAD_PLT0}}}
   ${BSS_PLT+${PLT}}
+  ${BSS_PLT+${PAD_PLT+${PAD_PLT1}}}
   .bss     ${RELOCATING-0} :
   {
    *(.dynbss)
