@@ -91,6 +91,7 @@ struct ifnet; struct ethercom;
 #include "sii.h"
 #include "le_pmax.h"
 #include "dc_ds.h"
+#include "led.h"
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
@@ -777,6 +778,11 @@ kn03_intr(mask, pc, statusReg, causeReg)
  *----------------------------------------------------------------------
  */
 #ifdef DS3100
+
+#if (NLED > 0)
+extern unsigned short led_current;
+#endif
+
 static void
 pmax_errintr()
 {
@@ -791,7 +797,12 @@ pmax_errintr()
 			*(unsigned *)MIPS_PHYS_TO_KSEG1(KN01_SYS_ERRADR));
 		panic("Mem error interrupt");
 	}
+#if (NLED > 0)
+	*sysCSRPtr = ((csr & ~KN01_CSR_MBZ) & ~(KN01_CSR_LEDS_MASK))
+			| led_current;
+#else
 	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
+#endif
 }
 #endif /* DS3100 */
 

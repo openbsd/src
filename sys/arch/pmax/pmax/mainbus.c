@@ -157,7 +157,7 @@ mbattach(parent, self, aux)
 }
 
 
-#define KN01_MAXDEVS 8
+#define KN01_MAXDEVS 9
 struct confargs kn01_devs[KN01_MAXDEVS] = {
 	/*   name       slot  offset 		   addr intpri  */
 	{ "pm",		0,   0,  (u_int)KV(KN01_PHYS_FBUF_START), 3,  },
@@ -167,6 +167,7 @@ struct confargs kn01_devs[KN01_MAXDEVS] = {
 	{ "mc146818",	4,   0,  (u_int)KV(KN01_SYS_CLOCK),       16, },
 	{ "dc",  	5,   0,  (u_int)KV(0x15000000),	  	  4,  },
 	{ "dc",  	6,   0,  (u_int)KV(0x15200000),	 	  5,  },
+	{ "led",	6,   0,  0,				  -1, },
 #ifdef notyet
 	/*
 	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are

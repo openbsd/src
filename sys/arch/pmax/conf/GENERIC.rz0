@@ -123,6 +123,8 @@ rz6		at oldscsibus? target ? drive ?
 tz0		at oldscsibus? target ? drive ?
 tz1		at oldscsibus? target ? drive ?
 
+led0		at mainbus0		# [23]100 back panel leds
+
 pseudo-device	loop		1
 pseudo-device	sl		1	# serial-line ip ports
 pseudo-device   ppp             1       # point ot point ip ports

@@ -101,6 +101,11 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # Optional device-drivers
 #
 
+# Back panel LEDS on KN01 boxes
+device	led
+attach	led at mainbus
+file	arch/pmax/dev/led.c		led needs-count
+
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dc

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 1998/05/18 00:28:11 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1998/06/04 03:49:48 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.15 1996/03/23 20:28:19 jonathan Exp $	*/
 
 /*-
@@ -152,11 +152,13 @@ union cpuprid {
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define CPU_LED_BLINK		2
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "led_blink", CTLTYPE_INT }, \
 }
 
 

@@ -87,6 +87,7 @@
 #include <pmax/stand/dec_prom.h>
 
 #include <pmax/dev/ascreg.h>
+#include <pmax/dev/led.h>
 
 #include <machine/autoconf.h>
 #include <machine/locore.h>
@@ -102,7 +103,6 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-
 #include "pm.h"
 #include "cfb.h"
 #include "mfb.h"
@@ -112,6 +112,7 @@
 #include "scc.h"
 #include "le_ioasic.h"
 #include "asc.h"
+#include "led.h"
 
 extern void fbPutc();
 
@@ -898,6 +899,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if (NLED > 0)
+	int ret, oldval;
+#endif
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -907,6 +911,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CONSDEV:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
+	case CPU_LED_BLINK:
+#if (NLED > 0)
+		oldval = pmax_led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen, &pmax_led_blink);
+
+		/*
+		 * If we were false and are now true, call led_blink().
+		 * led_blink() itself will catch the other case.
+		 */
+		led_pmax_cycle((caddr_t *)0);
+		return (ret);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
