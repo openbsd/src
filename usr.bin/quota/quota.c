@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.15 2000/10/18 22:15:29 pjanzen Exp $	*/
+/*	$OpenBSD: quota.c,v 1.16 2000/10/18 23:05:16 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.15 2000/10/18 22:15:29 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.16 2000/10/18 23:05:16 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -571,7 +571,7 @@ getufsquota(fst, fs, qup, id, quotatype)
 	if (!ufshasquota(fs, quotatype, &qfpathname))
 		return (0);
 
-	if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
+	if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
 		if ((fd = open(qfpathname, O_RDONLY)) < 0) {
 			warn("%s", qfpathname);
 			return (0);
