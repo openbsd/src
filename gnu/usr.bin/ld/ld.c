@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.3 1996/03/30 15:29:59 niklas Exp $	*/
+/*	$OpenBSD: ld.c,v 1.4 1996/06/17 00:15:37 deraadt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2266,7 +2266,7 @@ consider_file_section_lengths(entry)
 	entry->data_start_address = data_size;
 	data_size += entry->header.a_data;
 	entry->bss_start_address = bss_size;
-	bss_size += entry->header.a_bss;
+	bss_size += MALIGN(entry->header.a_bss);
 
 	text_reloc_size += entry->header.a_trsize;
 	data_reloc_size += entry->header.a_drsize;
