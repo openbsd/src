@@ -1,4 +1,4 @@
-# $OpenBSD: PackageInfo.pm,v 1.3 2003/11/06 18:16:25 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.4 2003/12/09 19:22:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -28,7 +28,7 @@ use warnings;
 package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name 
-    add_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
+    add_installed delete_installed is_installed borked_package CONTENTS COMMENT DESC INSTALL DEINSTALL REQUIRE 
     REQUIRED_BY DISPLAY MTREE_DIRS);
 
 use OpenBSD::PackageName;
@@ -45,8 +45,7 @@ use constant {
 
 my $pkg_db = $ENV{"PKG_DBDIR"} || '/var/db/pkg';
 
-our @list;
-my $read_list;
+our $list;
 
 our @info = (CONTENTS, COMMENT, DESC, INSTALL, DEINSTALL, REQUIRE, REQUIRED_BY, DISPLAY, MTREE_DIRS);
 
@@ -59,31 +58,43 @@ for my $i (@info) {
 
 sub add_installed
 {
-	if (!$read_list) {
+	if (!defined $list) {
 		installed_packages();
 	}
-	push(@list, @_);
+	for my $p (@_) {
+		$list->{$p} = 1;
+	}
+}
+
+sub delete_installed
+{
+	if (!defined $list) {
+		installed_packages();
+	}
+	for my $p (@_) {
+		undef $list->{$p};
+
+	}
 }
 
 sub installed_packages()
 {
-	if (!$read_list) {
-		@list = ();
-		$read_list = 1;
+	if (!defined $list) {
+		$list = {};
 
 		opendir(my $dir, $pkg_db) or die "Bad pkg_db";
 		while (my $e = readdir($dir)) {
 			next if $e eq '.' or $e eq '..';
 			next unless -d "$pkg_db/$e";
 			if (-f "$pkg_db/$e/+CONTENTS") {
-				add_installed($e);
+				$list->{$e} = 1;
 			} else {
 				print "Warning: $e is not really a package";
 			}
 		}
 		close($dir);
 	}
-	return @list;
+	return keys %$list;
 }
 
 sub installed_info($)
@@ -109,11 +120,11 @@ sub borked_package()
 
 sub is_installed($)
 {
-	my $name = shift;
-	my $dir = installed_info($name);
-	return unless -d $dir;
-	return unless -f $dir.CONTENTS;
-	return $dir;
+	my $name = installed_name(shift);
+	if (!defined $list) {
+		installed_packages();
+	}
+	return defined $list->{$name};
 }
 
 sub installed_name($)

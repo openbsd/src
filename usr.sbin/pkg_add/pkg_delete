@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.12 2003/11/09 15:42:48 espie Exp $
+# $OpenBSD: pkg_delete,v 1.13 2003/12/09 19:22:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -383,6 +383,7 @@ if ($bad) {
 		print "Deleting $pkgname\n";
 		$state->{pkgname_tolog} = $pkgname;
 		delete_package($pkgname, $state);
+		delete_installed($pkgname);
 		$done{$pkgname} = 1;
 		$removed++;
 	}
