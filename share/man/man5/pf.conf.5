@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.73 2002/07/30 13:53:57 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.74 2002/07/30 16:35:15 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -972,9 +972,7 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 
 pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
-                 [ "on" ( interface-name | "{" interface-list "}" ) ]
-                 [ route ] [ af ]
-                 [ protospec ]
+                 [ "on" ifspec ] [ route ] [ af ] [ protospec ]
                  hosts
                  [ user ] [ group ] [ flags ]
                  [ icmp-type | ipv6-icmp-type ]
@@ -983,13 +981,13 @@ pf_rule        = action ( "in" | "out" )
                  [ "max-mss" number ] [ "allow-opts" ]
                  [ "label" string ] .
 
-nat_rule       = [ "no" ] "nat" "on" [ "!" ] ifname [ protospec ] hosts
+nat_rule       = [ "no" ] "nat" "on" ifspec  [ protospec ] hosts
                  [ "->" address [ portspec ] ] .
 
-binat_rule     = [ "no" ] "binat" "on" ifname [ "proto" ( proto-name |
+binat_rule     = [ "no" ] "binat" "on" interface-name [ "proto" ( proto-name |
                  proto-number ) ] "from" address "to" ipspec [ "->" address ] .
 
-rdr_rule       = [ "no" ] "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
+rdr_rule       = [ "no" ] "rdr" "on" ifspec [ protospec ] "from" ipspec
                  "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
@@ -999,7 +997,8 @@ return         = "return-rst" [ "(" "ttl" number ")" ] |
                  "return-icmp6"
                      [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
 
-interface-list = interface-name [ "," interface-list ] .
+ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
+interface-list = [ "!" ] interface-name [ "," interface-list ] .
 route          = "fastroute" |
                  "route-to" "(" interface-name address ")" |
                  "route-to" interface-name |
