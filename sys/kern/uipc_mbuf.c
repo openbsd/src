@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.63 2003/08/12 05:09:18 mickey Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.64 2004/01/28 20:19:24 dhartmei Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -865,7 +865,7 @@ m_split(m0, len0, wait)
 	}
 extpacket:
 	if (m->m_flags & M_EXT) {
-		n->m_flags |= M_EXT;
+		n->m_ext = m->m_ext;
 		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
