@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.24 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.25 2004/10/28 19:13:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -308,6 +308,12 @@ ie_gsc_attach(parent, self, aux)
 	pmapdebug = 0;
 #endif
 
+	sc->iot = sc->bt = ga->ga_iot;
+	if (bus_space_map(sc->iot, ga->ga_hpa, IOMOD_HPASIZE, 0, &sc->ioh)) {
+		printf(": can't map IO space\n");
+		return;
+	}
+
 	if (ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		sc->sc_flags |= IEGSC_GECKO;
 
@@ -336,8 +342,6 @@ ie_gsc_attach(parent, self, aux)
 #endif
 	sc->sysbus = 0x40 | IE_SYSBUS_82586 | IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
 
-	sc->iot = sc->bt = ga->ga_iot;
-	sc->ioh = ga->ga_hpa;
 	sc->do_xmitnopchain = 0;
 	sc->hwreset = ie_gsc_reset;
 	sc->chan_attn = ie_gsc_attend;
