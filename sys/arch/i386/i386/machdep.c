@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1996/10/23 05:23:39 etheisen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1996/10/25 06:20:14 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1181,6 +1181,8 @@ init386(first_avail)
 #endif
 
 #ifdef EXTMEM_SIZE /* Override memory size */
+	if (biosextmem != EXTMEM_SIZE)
+		printf("Note:  Overriding BIOS memsize of %d.\n", biosextmem);
 	biosextmem = EXTMEM_SIZE;
 #endif
 
