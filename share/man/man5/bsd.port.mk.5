@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.72 2002/07/06 09:30:14 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.73 2002/08/07 15:49:57 avsm Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -612,6 +612,8 @@ Set by the user, and tested by the port to activate wanted functionalities.
 List of all flavors keywords a port may match.
 Used to sort FLAVOR into a canonical order to build the package name,
 or to select the packing-list, and as a quick validity check.
+See also
+.Ev PSEUDO_FLAVORS .
 .It Ev FLAVOR_EXT
 Canonical list of flavors being set for the current build, dash-separated.
 See
@@ -900,6 +902,17 @@ The first cipher that matches in ${CHECKSUM_FILE} is verified.
 Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under /var,
 and some multi-package ports may install under several locations.
+.It Ev PSEUDO_FLAVORS
+Extra list of flavors that do not register in package names, but are still
+used to control build logic, and e.g., working directories names.
+Its main use is for disabling part of a multi-packages build, for instance:
+.Bd -literal
+FLAVOR=no_gnome make package 
+.Ed
+
+Creation of a separate working directory is mandatory.
+If, at a later time, a full build with all subpackages is required,
+all the work will need to be done again.
 .It Ev REFETCH
 If set to true,
 .Ar checksum
