@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.14 2001/06/25 19:53:54 provos Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.15 2002/01/23 23:32:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.14 2001/06/25 19:53:54 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.15 2002/01/23 23:32:20 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ struct rtentry;
 #endif
 
 /*
- * The DLT_NULL packet header is 4 bytes long. It contains a network
+ * The DLT_NULL packet header is 4 bytes long. It contains a host
  * order 32 bit integer that specifies the family, e.g. AF_INET
  */
 #define	NULL_HDRLEN 4
@@ -74,7 +74,6 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 	u_int family;
 
 	memcpy((char *)&family, (char *)p, sizeof(family));
-	family = ntohl(family);
 
 	if (nflag && family != AF_LINK) {
 		/* XXX just dump the header */
@@ -109,20 +108,25 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 }
 
 void
+loop_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+{
+	*(u_int *)p = ntohl(*(u_int *)p);
+
+	null_if_print(user, h, p);
+}
+
+void
 null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int length = h->len;
 	u_int caplen = h->caplen;
-	u_int family;
+	u_int family = *(u_int *)p;
 
 #ifdef __OpenBSD__
 	struct ether_header *ep;
 	u_short ether_type;
 	extern u_short extracted_ethertype;
 #endif
-
-	memcpy((char *)&family, (char *)p, sizeof(family));
-	family = ntohl(family);
 
 	ts_print(&h->ts);
 
