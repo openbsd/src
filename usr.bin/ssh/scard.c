@@ -24,7 +24,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.1 2001/06/26 05:33:34 markus Exp $");
+RCSID("$OpenBSD: scard.c,v 1.2 2001/06/26 06:32:59 itojun Exp $");
 
 #include <openssl/engine.h>
 #include <sectok.h>
@@ -293,7 +293,7 @@ static RSA_METHOD smart_rsa =
 };
 
 ENGINE *
-sc_get_engine()
+sc_get_engine(void)
 {
 	RSA_METHOD *def;
 
