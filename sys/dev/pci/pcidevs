@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.683 2003/10/22 11:00:59 henning Exp $
+	$OpenBSD: pcidevs,v 1.684 2003/10/28 00:11:38 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1343,6 +1343,7 @@ product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
 product IRE ADSP2141		0x2f44	ADSP 2141
 
 /* ITExpress */
+product ITEXPRESS IT8212	0x8212	IT8212
 product ITEXPRESS IT8330G	0x8330	IT8330G
 
 /* KTI */
