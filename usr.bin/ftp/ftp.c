@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.46 2002/06/01 20:21:49 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.47 2002/06/09 00:40:29 itojun Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.46 2002/06/01 20:21:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.47 2002/06/09 00:40:29 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1434,10 +1434,12 @@ noport:
 #define	UC(b)	(((int)b)&0xff)
 
 	if (sendport) {
-		char hname[INET6_ADDRSTRLEN];
+		char hname[NI_MAXHOST], pbuf[NI_MAXSERV];
 		int af;
+		union sockunion tmp;
 
-		switch (data_addr.su_family) {
+		tmp = data_addr;
+		switch (tmp.su_family) {
 		case AF_INET:
 			if (!epsv4 || epsv4bad) {
 				result = COMPLETE +1;
@@ -1445,14 +1447,16 @@ noport:
 			}
 			/*FALLTHROUGH*/
 		case AF_INET6:
-			af = (data_addr.su_family == AF_INET) ? 1 : 2;
-			if (getnameinfo((struct sockaddr *)&data_addr,
-					data_addr.su_len, hname, sizeof(hname),
-					NULL, 0, NI_NUMERICHOST)) {
+			if (tmp.su_family == AF_INET6)
+				tmp.su_sin6.sin6_scope_id = 0;
+			af = (tmp.su_family == AF_INET) ? 1 : 2;
+			if (getnameinfo((struct sockaddr *)&tmp,
+			    tmp.su_len, hname, sizeof(hname),
+			    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
 			} else {
-				result = command("EPRT |%d|%s|%d|",
-					af, hname, ntohs(data_addr.su_port));
+				result = command("EPRT |%d|%s|%s|",
+				    af, hname, pbuf);
 				if (result != COMPLETE) {
 					epsv4bad = 1;
 					if (debug) {
