@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.12 1997/11/21 01:01:44 gene Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.13 1999/02/24 17:00:01 aaron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.12 1997/11/21 01:01:44 gene Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.13 1999/02/24 17:00:01 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ main(argc, argv)
 			break;
 		lp = NULL;
 		if (secure && strchr(*ap, '@')) {
-			(void) puts("fowarding service denied\r");
+			(void) puts("forwarding service denied\r");
 			exit(1);
 		}
 
