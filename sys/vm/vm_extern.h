@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_extern.h,v 1.4 1996/03/03 17:45:26 niklas Exp $	*/
-/*	$NetBSD: vm_extern.h,v 1.19 1996/02/10 00:08:05 christos Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.5 1996/05/02 13:21:11 deraadt Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,10 +138,17 @@ void		 vsunlock __P((caddr_t, u_int));
 void		vmapbuf __P((struct buf *, vm_size_t));
 void		vunmapbuf __P((struct buf *, vm_size_t));
 void		remrq __P((struct proc *));
+void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifdef __FORK_BRAINDAMAGE
 int		cpu_fork __P((struct proc *, struct proc *));
 #else
 void		cpu_fork __P((struct proc *, struct proc *));
+#endif
+#ifndef	cpu_swapin
+void		cpu_swapin __P((struct proc *));
+#endif
+#ifndef	cpu_swapout
+void		cpu_swapout __P((struct proc *));
 #endif
 
 #endif
