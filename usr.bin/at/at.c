@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.36 2003/03/03 18:23:13 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.37 2003/03/13 21:28:30 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.36 2003/03/03 18:23:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.37 2003/03/13 21:28:30 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -435,7 +435,7 @@ byjobno(const void *v1, const void *v2)
 }
 
 static void
-print_job(struct atjob *job, int n, struct stat *st, int shortformat)
+print_job(struct atjob *job, int n, int shortformat)
 {
 	struct passwd *pw;
 	struct tm runtime;
@@ -450,7 +450,7 @@ print_job(struct atjob *job, int n, struct stat *st, int shortformat)
 		(void)printf("%ld.%c\t%s\n", (long)job->runtimer,
 		    job->queue, timestr);
 	} else {
-		pw = getpwuid(st->st_uid);
+		pw = getpwuid(job->uid);
 		/* Rank hack shamelessly stolen from lpq */
 		if (n / 10 == 1)
 			printf("%3d%-5s", n,"th");
@@ -460,7 +460,7 @@ print_job(struct atjob *job, int n, struct stat *st, int shortformat)
 		(void)printf("%-21.18s%-11.8s%10ld.%c   %c%s\n",
 		    timestr, pw ? pw->pw_name : "???",
 		    (long)job->runtimer, job->queue, job->queue,
-		    (S_IXUSR & st->st_mode) ? "" : " (done)");
+		    (S_IXUSR & job->mode) ? "" : " (done)");
 	}
 }
 
@@ -573,6 +573,8 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 			panic("Insufficient virtual memory");
 		job->runtimer = runtimer;
 		job->ctime = stbuf.st_ctime;
+		job->uid = stbuf.st_uid;
+		job->mode = stbuf.st_mode;
 		job->queue = queue;
 		if (numjobs == maxjobs) {
 			maxjobs *= 2;
@@ -602,7 +604,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		    "Job       Queue");
 
 	for (i = 0; i < numjobs; i++) {
-		print_job(atjobs[i], i + 1, &stbuf, shortformat);
+		print_job(atjobs[i], i + 1, shortformat);
 		free(atjobs[i]);
 	}
 	free(atjobs);
