@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.418 2001/07/20 11:28:56 peter Exp 
+ *		OpenBSD: pcidevs,v 1.419 2001/07/21 17:47:33 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2377,6 +2377,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001,
+	    "LXT1001 Gigabit MAC",
 	},
 	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
@@ -6389,6 +6393,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETGEAR,
 	    "Netgear",
+	},
+	{
+	    PCI_VENDOR_LEVEL1,
+	    "Level 1",
 	},
 	{
 	    PCI_VENDOR_HIFN,

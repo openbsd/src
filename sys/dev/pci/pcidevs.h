@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.418 2001/07/20 11:28:56 peter Exp 
+ *		OpenBSD: pcidevs,v 1.419 2001/07/21 17:47:33 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -528,6 +528,7 @@
 #define	PCI_VENDOR_KAWASAKI	0x136b		/* Kawasaki */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
@@ -1331,6 +1332,9 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Level 1 (Intel) */
+#define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 Gigabit MAC */
 
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
