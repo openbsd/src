@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.5 2000/04/26 23:26:06 jasoni Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.6 2001/01/31 22:31:11 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #if 0
 static char rcsid[] = "$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.5 2000/04/26 23:26:06 jasoni Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.6 2001/01/31 22:31:11 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -255,7 +255,7 @@ print_bmap(map, size)
 	while (i < size) {
 		printf("%u: ",i);
 		for (j = 0; j < 16; j++, i++)
-			printf("%2x ", (u_int)map[i]) & 0xff;
+			printf("%2x ", (u_int)map[i] & 0xff);
 		printf("\n");
 	}
 }
