@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.4 1996/04/21 22:32:21 deraadt Exp $	*/
+/*	$OpenBSD: wait.h,v 1.5 1996/11/14 20:28:35 etheisen Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
 #define	WAIT_ANY	(-1)	/* any process */
 #define	WAIT_MYPGRP	0	/* any process in my process group */
 
-#include <machine/endian.h>
+#include <sys/types.h>
 
 /*
  * Deprecated:
