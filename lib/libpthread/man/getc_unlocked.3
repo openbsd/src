@@ -1,4 +1,4 @@
-.\" $OpenBSD: getc_unlocked.3,v 1.2 1999/07/07 10:50:05 aaron Exp $
+.\" $OpenBSD: getc_unlocked.3,v 1.3 2003/05/18 13:06:33 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
 .Dd March 20, 1999
 .Dt GETC_UNLOCKED 3
@@ -26,7 +26,7 @@ However,
 .Fn getc_unlocked
 and
 .Fn getchar_unlocked
-assume that the relevant stream has either been previous locked
+assume that the relevant stream has either been previously locked
 with
 .Xr flockfile 3 ,
 or that it will not be accessed by any other thread.

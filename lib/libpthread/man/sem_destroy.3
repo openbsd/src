@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_destroy.3,v 1.2 2002/02/20 05:29:37 fgsch Exp $
+.\" $OpenBSD: sem_destroy.3,v 1.3 2003/05/18 13:06:33 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ function destroys the unnamed semaphore pointed to by
 After a successful call to
 .Fn sem_destroy ,
 .Fa sem
-is unuseable until re-initialized by another call to
+is unusable until re-initialized by another call to
 .Fn sem_init .
 .Sh RETURN VALUES
 .Rv -std sem_destroy

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.5 2000/04/12 21:48:02 aaron Exp $
+.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.6 2003/05/18 13:06:33 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -46,9 +46,9 @@ function acquires a read lock on
 provided that
 .Fa lock
 is not presently held for writing and no writer threads are
-presently blocked on the lock.  If the read lock cannot be
-immediately acquired, the calling thread blocks until it can
-acquire the lock.
+presently blocked on the lock.
+If the read lock cannot be immediately acquired,
+the calling thread blocks until it can acquire the lock.
 .Pp
 The
 .Fn pthread_rwlock_tryrdlock
@@ -56,7 +56,8 @@ function performs the same action, but does not block if the lock
 cannot be immediately obtained (i.e., the lock is held for writing
 or there are waiting writers).
 .Pp
-A thread may hold multiple concurrent read locks.  If so,
+A thread may hold multiple concurrent read locks.
+If so,
 .Fn pthread_rwlock_unlock
 must be called once for each lock obtained.
 .Pp
@@ -69,8 +70,8 @@ If successful, the
 .Fn pthread_rwlock_rdlock
 and
 .Fn pthread_rwlock_tryrdlock
-functions will return zero.  Otherwise an error number will be returned
-to indicate the error.
+functions will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh SEE ALSO
 .Xr pthread_rwlock_init 3 ,
 .Xr pthread_rwlock_trywrlock 3 ,

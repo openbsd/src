@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.18 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: pthreads.3,v 1.19 2003/05/18 13:06:33 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -9,7 +9,7 @@
 .Sh DESCRIPTION
 A thread is a flow of control within a process.
 Each thread represents a minimal amount of state;
-normally just the cpu state and a signal mask.
+normally just the CPU state and a signal mask.
 All other process state (such as memory, file descriptors)
 is shared among all of the threads in the process.
 .Pp
@@ -187,7 +187,7 @@ signal output.
 .It Ev LIBC_R_DEBUG
 Display thread status every time the garbage collection thread runs,
 approximately once every 10 seconds.
-The status display verbosity is controled by the
+The status display verbosity is controlled by the
 .Ev PTHREAD_DEBUG
 environment variable.
 .El

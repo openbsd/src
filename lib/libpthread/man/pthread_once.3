@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_once.3,v 1.10 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: pthread_once.3,v 1.11 2003/05/18 13:06:33 jmc Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -78,13 +78,14 @@ is not a cancellation point.
 However, if
 .Fn init_routine
 is a cancellation point and is cancelled, the effect on
-.Fa once_control is as if
+.Fa once_control
+is as if
 .Fn pthread_once
 was never called.
 .Pp
 The constant
 .Dv PTHREAD_ONCE_INIT
-is defined by header
+is defined in the header file
 .Aq Pa pthread.h .
 .Pp
 The behavior of

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.4 2000/04/12 21:48:02 aaron Exp $
+.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.5 2003/05/18 13:06:33 jmc Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -57,12 +57,10 @@ If successful, the
 .Fn pthread_rwlock_wrlock
 and
 .Fn pthread_rwlock_trywrlock
-functions will return zero.  Otherwise an error number will be returned
-to indicate the error.
+functions will return zero.
+Otherwise an error number will be returned to indicate the error.
 .Sh SEE ALSO
-.Xr pthread_rwlock_trywrlock 3 ,
-.Xr pthread_rwlock_unlock 3 ,
-.Xr pthread_rwlock_wrlock 3
+.Xr pthread_rwlock_unlock 3
 .Sh STANDARDS
 The
 .Fn pthread_rwlock_wrlock
