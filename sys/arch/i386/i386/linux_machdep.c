@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.13 2000/03/23 17:17:32 aaron Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.14 2000/03/28 06:35:57 jasoni Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -268,6 +268,15 @@ linux_sys_sigreturn(p, v, retval)
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
+}
+
+int
+linux_sys_rt_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return(ENOSYS);
 }
 
 #ifdef USER_LDT

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.19 2000/03/27 22:38:12 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.20 2000/03/28 06:35:57 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -273,7 +273,8 @@
 171	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
 172	UNIMPL		prctl
-173	UNIMPL		rt_sigreturn
+173	STD     	{ int linux_sys_rt_sigreturn( \
+	                    struct linux_rt_sigframe *sfp); }
 174	STD		{ int linux_sys_rt_sigaction(int signum, \
 			    struct linux_sigaction *nsa, \
 			    struct linux_sigaction *osa, \
