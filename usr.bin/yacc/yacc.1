@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	$Id: yacc.1,v 1.1.1.1 1995/10/18 08:47:06 deraadt Exp $
+.\"	$Id: yacc.1,v 1.2 1996/01/11 17:52:34 deraadt Exp $
 .\"
 .Dd July 30, 1991
 .Dt YACC 1
@@ -47,6 +47,7 @@ parser generator
 .Nm yacc
 .Op Fl dlrtv
 .Op Fl b Ar prefix
+.Op Fl p Ar symbol_prefix
 .Ar filename
 .Sh DESCRIPTION
 .Nm Yacc
@@ -93,6 +94,14 @@ option is specified,
 .Nm yacc
 will not insert the #line directives.
 #line directives specified by the user will be retained.
+.It Fl p Ar symbol_prefix
+The
+.Fl p
+option changes the prefix prepended to yacc-generated symbols to
+the string denoted by
+.Ar symbol_prefix .
+The default prefix is the string
+.Ar yy .
 .It Fl r
 The
 .Fl r
