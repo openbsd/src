@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/01/15 23:43:53 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/01/18 02:24:16 briggs Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ main(argc, argv)
 			/*
 			 * Essentially the same as makeoptions PROF="-pg",
 			 * but also changes the path from ../../compile/FOO
-			 * to ../../compile/FOO.prof; i.e., compile a
+			 * to ../../compile/FOO.PROF; i.e., compile a
 			 * profiling kernel based on a typical "regular"
 			 * kernel.
 			 *
@@ -419,6 +419,9 @@ cfcrosscheck(cf, what, nv)
 	register struct devi *pd;
 	int errs, devminor;
 
+	if (maxpartitions <= 0)
+		panic("cfcrosscheck");
+
 	for (errs = 0; nv != NULL; nv = nv->nv_next) {
 		if (nv->nv_name == NULL)
 			continue;
@@ -518,4 +521,49 @@ badstar()
 			panic("badstar() n<1");
 	}
 	return (errs);
+}
+
+/*
+ * Verify/create builddir if necessary, change to it, and verify srcdir.
+ * This will be called when we see the first include.
+ */
+void
+setupdirs()
+{
+	struct stat st;
+	char *prof;
+
+	/* srcdir must be specified if builddir is not specified or if
+	 * no configuration filename was specified. */
+	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir) {
+		error("source directory must be specified");
+		exit(1);
+	}
+
+	if (srcdir == NULL)
+		srcdir = "../../../..";
+	if (builddir == NULL)
+		builddir = defbuilddir;
+
+	if (stat(builddir, &st) != 0) {
+		if (mkdir(builddir, 0777)) {
+			(void)fprintf(stderr, "config: cannot create %s: %s\n",
+			    builddir, strerror(errno));
+			exit(2);
+		}
+	} else if (!S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      builddir);
+		exit(2);
+	}
+	if (chdir(builddir) != 0) {
+		(void)fprintf(stderr, "config: cannot change to %s\n",
+			      builddir);
+		exit(2);
+	}
+	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      srcdir);
+		exit(2);
+	}
 }

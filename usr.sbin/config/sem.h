@@ -1,5 +1,5 @@
-/*	$OpenBSD: sem.h,v 1.5 1996/10/23 22:38:01 niklas Exp $	*/
-/*	$NetBSD: sem.h,v 1.5 1996/08/31 21:15:16 mycroft Exp $	*/
+/*	$OpenBSD: sem.h,v 1.6 1997/01/18 02:24:20 briggs Exp $	*/
+/*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  *	from: @(#)sem.h	8.1 (Berkeley) 6/6/93
  */
 
-void		enddefs __P((const char *));
+void		enddefs __P((void));
 
 void		setdefmaxusers __P((int, int, int));
 void		setmaxusers __P((int));

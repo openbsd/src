@@ -1,6 +1,6 @@
 %{
-/*	$OpenBSD: gram.y,v 1.6 1996/10/23 22:37:52 niklas Exp $	*/
-/*	$NetBSD: gram.y,v 1.9 1996/08/31 21:15:07 mycroft Exp $	*/
+/*	$OpenBSD: gram.y,v 1.7 1997/01/18 02:24:14 briggs Exp $	*/
+/*	$NetBSD: gram.y,v 1.12 1996/11/11 23:54:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,11 +46,9 @@
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/param.h>
 #include <ctype.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +63,6 @@
 int	include __P((const char *, int));
 void	yyerror __P((const char *));
 int	yylex __P((void));
-extern const char *lastfile;
 
 static	struct	config conf;	/* at most one active at a time */
 
@@ -88,10 +85,9 @@ static	int	adepth;
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
-static	void	setupdirs __P((void));
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
-static	void	setmaxpartitions __P((int));
+static	void	check_maxpart __P((void));
 
 %}
 
@@ -107,11 +103,15 @@ static	void	setmaxpartitions __P((int));
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEVICE DISABLE DUMPS
 %token	ENDFILE XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS
 %token	MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP WITH
-%token	<val> FFLAG NUMBER
+%token	NEEDS_COUNT NEEDS_FLAG
+%token	<val> NUMBER
 %token	<str> PATHNAME WORD
 
+%left '|'
+%left '&'
+
 %type	<list>	fopts fexpr fatom
-%type	<val>	fflgs
+%type	<val>	fflgs fflag
 %type	<str>	rule
 %type	<attr>	attr
 %type	<devb>	devbase
@@ -130,9 +130,6 @@ static	void	setmaxpartitions __P((int));
 %type	<val>	major_minor signed_number npseudo
 %type	<val>	flags_opt
 
-%left	'|'
-%left	'&'
-
 %%
 
 /*
@@ -140,81 +137,73 @@ static	void	setmaxpartitions __P((int));
  * definition files (via the include() mechanism), followed by the
  * configuration specification(s) proper.  In effect, this is two
  * separate grammars, with some shared terminals and nonterminals.
+ * Note that we do not have sufficient keywords to enforce any order
+ * between elements of "topthings" without introducing shift/reduce
+ * conflicts.  Instead, check order requirements in the C code.
  */
 Configuration:
-	dirs hdrs machine_spec		/* "machine foo" from machine descr. */
-	dev_defs dev_eof		/* ../../conf/devices */
-	dev_defs dev_eof		/* devices.foo */
-	maxpart_spec dev_defs dev_eof	/* ../../conf/devices */
+	topthings			/* dirspecs, include "std.arch" */
+	machine_spec			/* "machine foo" from machine descr. */
+	dev_defs dev_eof		/* sys/conf/files */
+	dev_defs dev_eof		/* sys/arch/${MACHINE_ARCH}/... */
+	dev_defs dev_eof		/* sys/arch/${MACHINE}/... */
+					{ check_maxpart(); }
 	specs;				/* rest of machine description */
 
-dirs:
-	dirspecs			= { setupdirs(); };
-
-dirspecs:
-	dirspecs dir |
+topthings:
+	topthings topthing |
 	/* empty */;
 
-dir:
-	SOURCE PATHNAME			= { if (!srcdir) srcdir = $2; } |
-	BUILD PATHNAME			= { if (!builddir) builddir = $2; } |
-	'\n';
-
-hdrs:
-	hdrs hdr |
-	/* empty */;
-
-hdr:
-	include |
+topthing:
+	SOURCE PATHNAME '\n'		{ if (!srcdir) srcdir = $2; } |
+	BUILD  PATHNAME '\n'		{ if (!builddir) builddir = $2; } |
+	include '\n' |
 	'\n';
 
 machine_spec:
-	XMACHINE WORD			= { setmachine($2,NULL); } |
-	XMACHINE WORD WORD		= { setmachine($2,$3); } |
-	error = { stop("cannot proceed without machine specifier"); };
+	XMACHINE WORD '\n'		{ setmachine($2,NULL); } |
+	XMACHINE WORD WORD '\n' 	{ setmachine($2,$3); } |
+	error { stop("cannot proceed without machine specifier"); };
 
 dev_eof:
-	ENDFILE				= { enddefs(lastfile); checkfiles(); };
-
-maxpart_blanks:
-	maxpart_blanks '\n' |
-	/* empty */;
-
-maxpart_spec:
-	maxpart_blanks MAXPARTITIONS NUMBER	= { setmaxpartitions($3); } |
-	error = { stop("cannot proceed without maxpartitions specifier"); };
+	ENDFILE				{ enddefs(); checkfiles(); };
 
 /*
  * Various nonterminals shared between the grammars.
  */
 file:
-	XFILE PATHNAME fopts fflgs rule	= { addfile($2, $3, $4, $5); };
+	XFILE PATHNAME fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
 /* order of options is important, must use right recursion */
 fopts:
-	fexpr				= { $$ = $1; } |
-	/* empty */			= { $$ = NULL; };
+	fexpr				{ $$ = $1; } |
+	/* empty */			{ $$ = NULL; };
 
 fexpr:
-	fatom				= { $$ = $1; } |
-	'!' fatom			= { $$ = fx_not($2); } |
-	fexpr '&' fexpr			= { $$ = fx_and($1, $3); } |
-	fexpr '|' fexpr			= { $$ = fx_or($1, $3); } |
-	'(' fexpr ')'			= { $$ = $2; };
+	fatom				{ $$ = $1; } |
+	'!' fatom			{ $$ = fx_not($2); } |
+	fexpr '&' fexpr			{ $$ = fx_and($1, $3); } |
+	fexpr '|' fexpr			{ $$ = fx_or($1, $3); } |
+	'(' fexpr ')'			{ $$ = $2; };
 
 fatom:
-	WORD				= { $$ = fx_atom($1); };
+	WORD				{ $$ = fx_atom($1); };
 
 fflgs:
-	fflgs FFLAG			= { $$ = $1 | $2; } |
-	/* empty */			= { $$ = 0; };
+	fflgs fflag			{ $$ = $1 | $2; } |
+	/* empty */			{ $$ = 0; };
+
+fflag:
+	NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; } |
+	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; };
 
 rule:
-	COMPILE_WITH WORD		= { $$ = $2; } |
-	/* empty */			= { $$ = NULL; };
+	COMPILE_WITH WORD		{ $$ = $2; } |
+	/* empty */			{ $$ = NULL; };
 
 include:
-	INCLUDE WORD			= { include($2, '\n'); };
+	INCLUDE WORD			{ include($2, 0); };
+
 
 /*
  * The machine definitions grammar.
@@ -224,90 +213,91 @@ dev_defs:
 	/* empty */;
 
 dev_def:
-	one_def '\n'			= { adepth = 0; } |
+	one_def '\n'			{ adepth = 0; } |
 	'\n' |
-	error '\n'			= { cleanup(); };
+	error '\n'			{ cleanup(); };
 
 one_def:
 	file |
 	include |
-	DEFINE WORD interface_opt	= { (void)defattr($2, $3); } |
+	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
 	DEVICE devbase interface_opt attrs_opt
-					= { defdev($2, 0, $3, $4); } |
+					{ defdev($2, 0, $3, $4); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
-					= { defdevattach($5, $2, $4, $6); } |
-	MAXUSERS NUMBER NUMBER NUMBER	= { setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt = { defdev($2,1,NULL,$3); } |
+					{ defdevattach($5, $2, $4, $6); } |
+	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
+	MAXPARTITIONS NUMBER 		{ maxpartitions = $2; } |
+	PSEUDO_DEVICE devbase attrs_opt { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
 
 disable:
-	DISABLE				= { $$ = 1; } |
-	/* empty */			= { $$ = 0; };
+	DISABLE				{ $$ = 1; } |
+	/* empty */			{ $$ = 0; };
 
 atlist:
-	atlist ',' atname		= { $$ = new_nx($3, $1); } |
-	atname				= { $$ = new_n($1); };
+	atlist ',' atname		{ $$ = new_nx($3, $1); } |
+	atname				{ $$ = new_n($1); };
 
 atname:
-	WORD				= { $$ = $1; } |
-	ROOT				= { $$ = NULL; };
+	WORD				{ $$ = $1; } |
+	ROOT				{ $$ = NULL; };
 
 devbase:
-	WORD				= { $$ = getdevbase($1); };
+	WORD				{ $$ = getdevbase($1); };
 
 devattach_opt:
-	WITH WORD			= { $$ = getdevattach($2); } |
-	/* empty */			= { $$ = NULL; };
+	WITH WORD			{ $$ = getdevattach($2); } |
+	/* empty */			{ $$ = NULL; };
 
 interface_opt:
-	'{' loclist_opt '}'		= { $$ = new_nx("", $2); } |
-	/* empty */			= { $$ = NULL; };
+	'{' loclist_opt '}'		{ $$ = new_nx("", $2); } |
+	/* empty */			{ $$ = NULL; };
 
 loclist_opt:
-	loclist				= { $$ = $1; } |
-	/* empty */			= { $$ = NULL; };
+	loclist				{ $$ = $1; } |
+	/* empty */			{ $$ = NULL; };
 
 /* loclist order matters, must use right recursion */
 loclist:
-	locdef ',' loclist		= { ($$ = $1)->nv_next = $3; } |
-	locdef				= { $$ = $1; };
+	locdef ',' loclist		{ ($$ = $1)->nv_next = $3; } |
+	locdef				{ $$ = $1; };
 
 /* "[ WORD locdefault ]" syntax may be unnecessary... */
 locdef:
-	WORD locdefault 		= { $$ = new_nsi($1, $2, 0); } |
-	WORD				= { $$ = new_nsi($1, NULL, 0); } |
-	'[' WORD locdefault ']'		= { $$ = new_nsi($2, $3, 1); };
+	WORD locdefault 		{ $$ = new_nsi($1, $2, 0); } |
+	WORD				{ $$ = new_nsi($1, NULL, 0); } |
+	'[' WORD locdefault ']'		{ $$ = new_nsi($2, $3, 1); };
 
 locdefault:
-	'=' value			= { $$ = $2; };
+	'=' value			{ $$ = $2; };
 
 value:
-	WORD				= { $$ = $1; } |
-	signed_number			= { char bf[40];
+	WORD				{ $$ = $1; } |
+	signed_number			{ char bf[40];
 					    (void)sprintf(bf, FORMAT($1), $1);
 					    $$ = intern(bf); };
 
 signed_number:
-	NUMBER				= { $$ = $1; } |
-	'-' NUMBER			= { $$ = -$2; };
+	NUMBER				{ $$ = $1; } |
+	'-' NUMBER			{ $$ = -$2; };
 
 attrs_opt:
-	':' attrs			= { $$ = $2; } |
-	/* empty */			= { $$ = NULL; };
+	':' attrs			{ $$ = $2; } |
+	/* empty */			{ $$ = NULL; };
 
 attrs:
-	attrs ',' attr			= { $$ = new_px($3, $1); } |
-	attr				= { $$ = new_p($1); };
+	attrs ',' attr			{ $$ = new_px($3, $1); } |
+	attr				{ $$ = new_p($1); };
 
 attr:
-	WORD				= { $$ = getattr($1); };
+	WORD				{ $$ = getattr($1); };
 
 majorlist:
 	majorlist ',' majordef |
 	majordef;
 
 majordef:
-	devbase '=' NUMBER		= { setmajor($1, $3); };
+	devbase '=' NUMBER		{ setmajor($1, $3); };
 
 
 
@@ -319,38 +309,38 @@ specs:
 	/* empty */;
 
 spec:
-	config_spec '\n'		= { adepth = 0; } |
+	config_spec '\n'		{ adepth = 0; } |
 	'\n' |
-	error '\n'			= { cleanup(); };
+	error '\n'			{ cleanup(); };
 
 config_spec:
 	file |
 	include |
 	OPTIONS opt_list |
 	MAKEOPTIONS mkopt_list |
-	MAXUSERS NUMBER			= { setmaxusers($2); } |
-	CONFIG conf sysparam_list	= { addconf(&conf); } |
-	PSEUDO_DEVICE WORD npseudo	= { addpseudo($2, $3); } |
+	MAXUSERS NUMBER			{ setmaxusers($2); } |
+	CONFIG conf sysparam_list	{ addconf(&conf); } |
+	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
 	device_instance AT attachment disable locators flags_opt
-					= { adddev($1, $3, $5, $6, $4); };
+					{ adddev($1, $3, $5, $6, $4); };
 
 mkopt_list:
 	mkopt_list ',' mkoption |
 	mkoption;
 
 mkoption:
-	WORD '=' value			= { addmkoption($1, $3); }
+	WORD '=' value			{ addmkoption($1, $3); }
 
 opt_list:
 	opt_list ',' option |
 	option;
 
 option:
-	WORD				= { addoption($1, NULL); } |
-	WORD '=' value			= { addoption($1, $3); };
+	WORD				{ addoption($1, NULL); } |
+	WORD '=' value			{ addoption($1, $3); };
 
 conf:
-	WORD				= { conf.cf_name = $1;
+	WORD				{ conf.cf_name = $1;
 					    conf.cf_lineno = currentline();
 					    conf.cf_root = NULL;
 					    conf.cf_swap = NULL;
@@ -361,48 +351,48 @@ sysparam_list:
 	sysparam;
 
 sysparam:
-	ROOT on_opt dev_spec	 = { setconf(&conf.cf_root, "root", $3); } |
-	SWAP on_opt swapdev_list = { setconf(&conf.cf_swap, "swap", $3); } |
-	DUMPS on_opt dev_spec	 = { setconf(&conf.cf_dump, "dumps", $3); };
+	ROOT on_opt dev_spec	 { setconf(&conf.cf_root, "root", $3); } |
+	SWAP on_opt swapdev_list { setconf(&conf.cf_swap, "swap", $3); } |
+	DUMPS on_opt dev_spec	 { setconf(&conf.cf_dump, "dumps", $3); };
 
 swapdev_list:
-	dev_spec AND swapdev_list	= { ($$ = $1)->nv_next = $3; } |
-	dev_spec			= { $$ = $1; };
+	dev_spec AND swapdev_list	{ ($$ = $1)->nv_next = $3; } |
+	dev_spec			{ $$ = $1; };
 
 dev_spec:
-	WORD				= { $$ = new_si($1, NODEV); } |
-	major_minor			= { $$ = new_si(NULL, $1); };
+	WORD				{ $$ = new_si($1, NODEV); } |
+	major_minor			{ $$ = new_si(NULL, $1); };
 
 major_minor:
-	MAJOR NUMBER MINOR NUMBER	= { $$ = makedev($2, $4); };
+	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2, $4); };
 
 on_opt:
 	ON | /* empty */;
 
 npseudo:
-	NUMBER				= { $$ = $1; } |
-	/* empty */			= { $$ = 1; };
+	NUMBER				{ $$ = $1; } |
+	/* empty */			{ $$ = 1; };
 
 device_instance:
-	WORD '*'			= { $$ = starref($1); } |
-	WORD				= { $$ = $1; };
+	WORD '*'			{ $$ = starref($1); } |
+	WORD				{ $$ = $1; };
 
 attachment:
-	ROOT				= { $$ = NULL; } |
-	WORD '?'			= { $$ = wildref($1); } |
-	WORD				= { $$ = $1; };
+	ROOT				{ $$ = NULL; } |
+	WORD '?'			{ $$ = wildref($1); } |
+	WORD				{ $$ = $1; };
 
 locators:
-	locators locator		= { ($$ = $2)->nv_next = $1; } |
-	/* empty */			= { $$ = NULL; };
+	locators locator		{ ($$ = $2)->nv_next = $1; } |
+	/* empty */			{ $$ = NULL; };
 
 locator:
-	WORD value			= { $$ = new_ns($1, $2); } |
-	WORD '?'			= { $$ = new_ns($1, NULL); };
+	WORD value			{ $$ = new_ns($1, $2); } |
+	WORD '?'			{ $$ = new_ns($1, NULL); };
 
 flags_opt:
-	FLAGS NUMBER			= { $$ = $2; } |
-	/* empty */			= { $$ = 0; };
+	FLAGS NUMBER			{ $$ = $2; } |
+	/* empty */			{ $$ = 0; };
 
 %%
 
@@ -412,48 +402,6 @@ yyerror(s)
 {
 
 	error("%s", s);
-}
-
-/*
- * Verify/create builddir if necessary, change to it, and verify srcdir.
- */
-static void
-setupdirs()
-{
-	struct stat st;
-	char *prof;
-
-	/* srcdir must be specified if builddir is not specified or if
-	 * no configuration filename was specified. */
-	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir)
-		stop("source directory must be specified");
-
-	if (srcdir == NULL)
-		srcdir = "../../../..";
-	if (builddir == NULL)
-		builddir = defbuilddir;
-
-	if (stat(builddir, &st) != 0) {
-		if (mkdir(builddir, 0777)) {
-			(void)fprintf(stderr, "config: cannot create %s: %s\n",
-			    builddir, strerror(errno));
-			exit(2);
-		}
-	} else if (!S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      builddir);
-		exit(2);
-	}
-	if (chdir(builddir) != 0) {
-		(void)fprintf(stderr, "config: cannot change to %s\n",
-			      builddir);
-		exit(2);
-	}
-	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      srcdir);
-		exit(2);
-	}
 }
 
 /*
@@ -498,9 +446,9 @@ setmachine(mch, mcharch)
 }
 
 static void
-setmaxpartitions(n)
-	int n;
+check_maxpart()
 {
-
-	maxpartitions = n;
+	if (maxpartitions <= 0) {
+		stop("cannot proceed without maxpartitions specifier");
+	}
 }
