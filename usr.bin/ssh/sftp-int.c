@@ -24,10 +24,11 @@
 
 /* XXX: finish implementation of all commands */
 /* XXX: do fnmatch() instead of using raw pathname */
+/* XXX: globbed ls */
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.11 2001/02/07 00:10:18 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.12 2001/02/07 13:12:29 djm Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -498,8 +499,23 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		*pwd = tmp;
 		break;
 	case I_LS:
+		if (!path1) {
+			do_ls(in, out, *pwd);
+			break;
+		}
 		path1 = make_absolute(path1, *pwd);
-		do_ls(in, out, path1?path1:*pwd);
+		if ((tmp = do_realpath(in, out, path1)) == NULL)
+			break;
+		xfree(path1);
+		path1 = tmp;
+		if ((aa = do_stat(in, out, path1)) == NULL)
+			break;
+		if ((aa->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) && 
+		    !S_ISDIR(aa->perm)) {
+			error("Can't ls: \"%s\" is not a directory", path1);
+			break;
+		}
+		do_ls(in, out, path1);
 		break;
 	case I_LCHDIR:
 		if (chdir(path1) == -1)
