@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keysign.c,v 1.8 2002/11/07 22:08:07 markus Exp $");
+RCSID("$OpenBSD: ssh-keysign.c,v 1.9 2002/12/19 00:07:02 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -196,8 +196,8 @@ main(int argc, char **argv)
 		fatal("no hostkey found");
 
 	buffer_init(&b);
-	if (msg_recv(STDIN_FILENO, &b) < 0)
-		fatal("msg_recv failed");
+	if (ssh_msg_recv(STDIN_FILENO, &b) < 0)
+		fatal("ssh_msg_recv failed");
 	if (buffer_get_char(&b) != version)
 		fatal("bad version");
 	fd = buffer_get_int(&b);
@@ -229,7 +229,7 @@ main(int argc, char **argv)
 	/* send reply */
 	buffer_clear(&b);
 	buffer_put_string(&b, signature, slen);
-	msg_send(STDOUT_FILENO, version, &b);
+	ssh_msg_send(STDOUT_FILENO, version, &b);
 
 	return (0);
 }
