@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hz.9,v 1.5 2003/06/04 04:29:03 deraadt Exp $
+.\"	$OpenBSD: hz.9,v 1.6 2004/04/04 13:19:36 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -34,15 +34,11 @@
 .Nm profhz
 .Nd system time model
 .Sh SYNOPSIS
-.Va extern int hz;
-.br
-.Va extern int tick;
-.br
-.Va extern int tickadj;
-.br
-.Va extern int stathz;
-.br
-.Va extern int profhz;
+.Vt extern int hz;
+.Vt extern int tick;
+.Vt extern int tickadj;
+.Vt extern int stathz;
+.Vt extern int profhz;
 .Sh DESCRIPTION
 The system is driven by
 .Xr hardclock 9

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.9,v 1.9 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: time.9,v 1.10 2004/04/04 13:19:36 jmc Exp $
 .\"	$NetBSD: time.9,v 1.1 1995/11/25 21:24:53 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -40,13 +40,10 @@
 .Nm time
 .Nd system time variables
 .Sh SYNOPSIS
-.Va extern struct timeval boottime;
-.br
-.Va extern volatile struct timeval mono_time;
-.br
-.Va extern struct timeval runtime;
-.br
-.Va extern volatile struct timeval time;
+.Vt extern struct timeval boottime;
+.Vt extern volatile struct timeval mono_time;
+.Vt extern struct timeval runtime;
+.Vt extern volatile struct timeval time;
 .Sh DESCRIPTION
 The
 .Va time
