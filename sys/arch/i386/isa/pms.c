@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.9 1996/05/25 22:17:52 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.10 1996/08/17 05:57:23 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -193,7 +193,7 @@ pmsprobe(parent, match, aux)
 	if (cf->cf_loc[0] == -1)
 		return (0);
 
-	pms_dev_cmd(PMS_RESET);
+	/*pms_dev_cmd(PMS_RESET);*/
 	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
 	x = inb(PMS_DATA);
@@ -274,7 +274,7 @@ pmsclose(dev, flag, mode, p)
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	pms_dev_cmd(PMS_DEV_DISABLE);
+	/* pms_dev_cmd(PMS_DEV_DISABLE); */
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
 
