@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.12 2004/03/13 22:11:56 tedu Exp $	*/
+/*	$OpenBSD: ul.c,v 1.13 2004/07/06 14:37:59 jaredy Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -40,16 +40,17 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ul.c,v 1.12 2004/03/13 22:11:56 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: ul.c,v 1.13 2004/07/06 14:37:59 jaredy Exp $";
 #endif /* not lint */
 
+#include <curses.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <curses.h>
+#include <string.h>
 #include <term.h>
+#include <unistd.h>
 
 #define	IESC	'\033'
 #define	SO	'\016'
@@ -127,7 +128,7 @@ main(int argc, char *argv[])
 
 		default:
 			fprintf(stderr,
-				"usage: %s [ -i ] [ -tTerm ] file...\n",
+				"usage: %s [-i] [-t terminal] file...\n",
 				argv[0]);
 			exit(1);
 		}
@@ -138,8 +139,8 @@ main(int argc, char *argv[])
 		break;
 
 	default:
-		fprintf(stderr,"trouble reading termcap");
-		/* fall through to ... */
+		warnx("trouble reading termcap");
+		/* FALLTHROUGH */
 
 	case 0:
 		/* No such terminal type - assume dumb */
@@ -156,10 +157,8 @@ main(int argc, char *argv[])
 		mfilter(stdin);
 	else for (; optind<argc; optind++) {
 		f = fopen(argv[optind],"r");
-		if (f == NULL) {
-			perror(argv[optind]);
-			exit(1);
-		}
+		if (f == NULL)
+			err(1, "%s", argv[optind]);
 
 		mfilter(f);
 		fclose(f);
@@ -231,10 +230,8 @@ mfilter(FILE *f)
 			continue;
 
 		default:
-			fprintf(stderr,
-				"Unknown escape sequence in input: %o, %o\n",
-				IESC, c);
-			exit(1);
+			errx(1, "0%o: unknown escape sequence", c);
+			/* NOTREACHED */
 		}
 		continue;
 
@@ -243,6 +240,7 @@ mfilter(FILE *f)
 			obuf[col].c_mode |= UNDERL | mode;
 		else
 			obuf[col].c_char = '_';
+		/* FALLTHROUGH */
 	case ' ':
 		col++;
 		if (col > maxcol)
@@ -323,9 +321,12 @@ void
 overstrike(void)
 {
 	int i;
-	char lbuf[256];
-	char *cp = lbuf;
+	char *buf, *cp;
 	int hadbold=0;
+
+	if ((buf = malloc(maxcol + 1)) == NULL)
+		err(1, NULL);
+	cp = buf;
 
 	/* Set up overstrike buffer */
 	for (i=0; i<maxcol; i++)
@@ -343,26 +344,31 @@ overstrike(void)
 			break;
 		}
 	putchar('\r');
-	for (*cp=' '; *cp==' '; cp--)
-		*cp = '\0';
-	for (cp=lbuf; *cp; cp++)
+	while (cp > buf && *(cp - 1) == ' ')
+		cp--;
+	*cp = '\0';
+	for (cp = buf; *cp != '\0'; cp++)
 		putchar(*cp);
 	if (hadbold) {
 		putchar('\r');
-		for (cp=lbuf; *cp; cp++)
+		for (cp = buf; *cp != '\0'; cp++)
 			putchar(*cp=='_' ? ' ' : *cp);
 		putchar('\r');
-		for (cp=lbuf; *cp; cp++)
+		for (cp = buf; *cp != '\0'; cp++)
 			putchar(*cp=='_' ? ' ' : *cp);
 	}
+	free(buf);
 }
 
 void
 iattr(void)
 {
 	int i;
-	char lbuf[256];
-	char *cp = lbuf;
+	char *buf, *cp;
+
+	if ((buf = malloc(maxcol + 1)) == NULL)
+		err(1, NULL);
+	cp = buf;
 
 	for (i=0; i<maxcol; i++)
 		switch (obuf[i].c_mode) {
@@ -374,10 +380,12 @@ iattr(void)
 		case BOLD:	*cp++ = '!'; break;
 		default:	*cp++ = 'X'; break;
 		}
-	for (*cp=' '; *cp==' '; cp--)
-		*cp = '\0';
-	for (cp=lbuf; *cp; cp++)
+	while (cp > buf && *(cp - 1) == ' ')
+		cp--;
+	*cp = '\0';
+	for (cp = buf; *cp != '\0'; cp++)
 		putchar(*cp);
+	free(buf);
 	putchar('\n');
 }
 
