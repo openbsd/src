@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.21 1999/11/15 20:53:25 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.22 1999/11/19 16:04:17 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -374,6 +374,10 @@ void log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 
 /* Logging implementation, depending on server or client */
 void do_log(LogLevel level, const char *fmt, va_list args);
+
+/* name to facility/level */
+SyslogFacility log_facility_number(char *name);
+LogLevel log_level_number(char *name);
 
 /* Output a message to syslog or stderr */
 void fatal(const char *fmt, ...);
