@@ -1651,7 +1651,8 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
 		       pops_args, stack_slots, forced_labels, function_flags,
 		       outgoing_args_size, original_arg_vector,
 		       original_decl_initial, regno_rtx, regno_flag,
-		       regno_align, parm_reg_stack_loc)
+		       regno_align, parm_reg_stack_loc,
+		       nonlocal_goto_handler_labels)
      rtx first_insn, first_parm_insn;
      int first_labelno, last_labelno, max_parm_regnum, max_regnum, args_size;
      int pops_args;
@@ -1665,6 +1666,7 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
      char *regno_flag;
      char *regno_align;
      rtvec parm_reg_stack_loc;
+     rtx nonlocal_goto_handler_labels;
 {
   rtx header = gen_rtx_INLINE_HEADER (VOIDmode,
 				      cur_insn_uid++, NULL_RTX,
@@ -1676,7 +1678,9 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
 				      original_arg_vector,
 				      original_decl_initial,
 				      regno_rtx, regno_flag, regno_align,
-				      parm_reg_stack_loc);
+				      parm_reg_stack_loc,
+				      nonlocal_goto_handler_labels,
+				      nonlocal_goto_handler_labels);
   return header;
 }
 
