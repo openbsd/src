@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.122 2004/12/07 00:10:05 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.123 2004/12/07 10:26:49 jmc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.122 2004/12/07 00:10:05 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.123 2004/12/07 10:26:49 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -2703,7 +2703,7 @@ void
 usage(int value)
 {
 	fprintf(stderr,
-	    "usage: ifconfig interface [address_family] [address [dest_address]]\n"
+	    "usage: ifconfig [interface] [address_family] [address [dest_address]]\n"
 	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
