@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc.c,v 1.8 1996/11/23 21:47:10 kstailey Exp $	*/
-/*	$NetBSD: tc.c,v 1.16 1996/05/17 23:39:19 cgd Exp $	*/
+/*	$OpenBSD: tc.c,v 1.9 1996/12/08 01:03:05 niklas Exp $	*/
+/*	$NetBSD: tc.c,v 1.20 1996/10/22 21:37:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -132,7 +132,7 @@ tcattach(parent, self, aux)
 		 */
 		strncpy(ta.ta_modname, builtin->tcb_modname, TC_ROM_LLEN);
 #ifdef __alpha__ /* XXX */
-		ta.ta_bc = tba->tba_bc;
+		ta.ta_memt = tba->tba_memt;
 #endif
 		ta.ta_modname[TC_ROM_LLEN] = '\0';
 		ta.ta_slot = builtin->tcb_slot;

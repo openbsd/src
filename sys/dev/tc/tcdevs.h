@@ -2,9 +2,9 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD
+ *	OpenBSD: tcdevs,v 1.2 1996/05/26 00:27:54 deraadt Exp 
  */
-/*	$NetBSD: tcdevs,v 1.3 1996/03/05 23:15:59 cgd Exp $	*/
+/*	$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -37,17 +37,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	TC_DEVICE_DGLTA_FA	"otto"
+#define	TC_DESCRIPTION_DGLTA_FA	"DGLTA ATM"
+
+#define	TC_DEVICE_FORE_ATM	"fa"
+#define	TC_DESCRIPTION_FORE_ATM	"Fore TCA-100 ATM"
+
 #define	TC_DEVICE_KZTSA_AA	"tza"
 #define	TC_DESCRIPTION_KZTSA_AA	"TZA FWD SCSI"
+
+#define	TC_DEVICE_OTTO	"otto"
+#define	TC_DESCRIPTION_OTTO	"DEC SRC \"OTTO\" ATM"
 
 #define	TC_DEVICE_PMAD_AA	"le"
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
 #define	TC_DEVICE_PMAF_AA	"fza"
-#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI Controller"
+#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI"
 
 #define	TC_DEVICE_PMAF_F	"fta"
-#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI Controller"
+#define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI"
 
 #define	TC_DEVICE_PMAG_AA	"mfb"
 #define	TC_DESCRIPTION_PMAG_AA	"Monochrome Frame Buffer"
@@ -56,16 +65,16 @@
 #define	TC_DESCRIPTION_PMAG_BA	"Color Frame Buffer"
 
 #define	TC_DEVICE_PMAG_CA	"ga"
-#define	TC_DESCRIPTION_PMAG_CA	"2D Graphic Board"
+#define	TC_DESCRIPTION_PMAG_CA	"2D Graphics"
 
 #define	TC_DEVICE_PMAG_DA	"gq"
-#define	TC_DESCRIPTION_PMAG_DA	"3D Graphic Board (LM)"
-
-#define	TC_DEVICE_PMAG_FA	"gq"
-#define	TC_DESCRIPTION_PMAG_FA	"3D Graphic Board (HE)"
+#define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (LM)"
 
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
+
+#define	TC_DEVICE_PMAG_FA	"gq"
+#define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (HE)"
 
 #define	TC_DEVICE_PMAGB_BA	"sfb"
 #define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
@@ -82,11 +91,8 @@
 #define	TC_DEVICE_PMAZ_AA	"asc"
 #define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"
 
-#define	TC_DEVICE_T3PKT	"tt"
-#define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
-
 #define	TC_DEVICE_T1D4PKT	"ds"
 #define	TC_DESCRIPTION_T1D4PKT	"DECWRL Turbochannel T1"
 
-#define	TC_DEVICE_FORE_ATM	"fa"
-#define	TC_DESCRIPTION_FORE_ATM	"Fore TCA-100 ATM"
+#define	TC_DEVICE_T3PKT	"tt"
+#define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"

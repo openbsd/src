@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcvar.h,v 1.5 1996/11/12 20:31:02 niklas Exp $	*/
-/*	$NetBSD: tcvar.h,v 1.5 1996/05/17 23:38:16 cgd Exp $	*/
+/*	$OpenBSD: tcvar.h,v 1.6 1996/12/08 01:03:07 niklas Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.7 1996/10/22 21:37:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,8 +35,8 @@
  * Definitions for TurboChannel autoconfiguration.
  */
 
-#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.old.h */
-#include <machine/bus.old.h>
+#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.h */
+#include <machine/bus.h>
 #endif
 #include <dev/tc/tcreg.h>
 
@@ -60,7 +60,7 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  * by the pmax port, and not the new definitions provided by the
  * alpha port.
  */
-#ifdef __alpha_
+#ifdef __alpha__
 /*
  * On the alpha, map the new definitions to the old.
  */
@@ -93,7 +93,7 @@ typedef enum {
 struct tcbus_attach_args {
 	char		*tba_busname;		/* XXX should be common */
 #ifdef __alpha__ /* XXX */
-	bus_chipset_tag_t tba_bc;		/* XXX should be common */
+	bus_space_tag_t tba_memt;
 #endif
 
 	/* Bus information */
@@ -115,7 +115,7 @@ struct tcbus_attach_args {
  */
 struct tc_attach_args {
 #ifdef __alpha__ /* XXX */
-	bus_chipset_tag_t ta_bc;
+	bus_space_tag_t ta_memt;
 #endif
 
 	char		ta_modname[TC_ROM_LLEN+1];

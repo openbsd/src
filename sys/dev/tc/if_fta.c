@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.4 1996/05/20 15:53:09 thorpej Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -86,18 +86,22 @@ pdq_tc_attach(
     pdq_softc_t * const sc = (pdq_softc_t *) self;
     struct tc_attach_args * const ta = (struct tc_attach_args *) aux;
 
-    sc->sc_bc = ta->ta_bc;
+    /*
+     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
+     * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
+     */
+    sc->sc_csrtag = ta->ta_memt;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    if (bus_mem_map(sc->sc_bc, ta->ta_addr + PDQ_TC_CSR_OFFSET,
-		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
+    if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
+		    PDQ_TC_CSR_SPACE, 0, &sc->sc_csrhandle)) {
         printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
-    sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFTA);
     if (sc->sc_pdq == NULL) {
