@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.288 2000/07/20 23:05:15 ho Exp 
+ *		OpenBSD: pcidevs,v 1.289 2000/07/25 16:47:11 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1306,6 +1306,13 @@
 #define	PCI_PRODUCT_RCC_CMIC_HE	0x0011		/* CMIC_HE Host */
 /* product RCC UNKNOWN		0x0211	IDE */
 /* product RCC UNKNOWN		0x0220	USB */
+
+/* Picopower */
+#define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */
+#define	PCI_PRODUCT_PICOPOWER_PT86C521	0x0001		/* PT86C521 */
+#define	PCI_PRODUCT_PICOPOWER_PT86C523	0x0002		/* PT86C523 */
+#define	PCI_PRODUCT_PICOPOWER_PC87550	0x0005		/* PC87550 */
+#define	PCI_PRODUCT_PICOPOWER_PT86C523	0x8002		/* PT86C523 */
 
 /* Pijnenburg */
 #define	PCI_PRODUCT_PIJNENBURG_PCC_ISES	0x0001		/* PCC-ISES */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.288 2000/07/20 23:05:15 ho Exp 
+ *		OpenBSD: pcidevs,v 1.289 2000/07/25 16:47:11 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3241,6 +3241,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Reliance Computer",
 	    "CMIC_HE Host",
+	},
+	{
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,
+	    0,
+	    "Picopower Technology",
+	    "PT80C826",
+	},
+	{
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT86C521,
+	    0,
+	    "Picopower Technology",
+	    "PT86C521",
+	},
+	{
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT86C523,
+	    0,
+	    "Picopower Technology",
+	    "PT86C523",
+	},
+	{
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PC87550,
+	    0,
+	    "Picopower Technology",
+	    "PC87550",
+	},
+	{
+	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT86C523,
+	    0,
+	    "Picopower Technology",
+	    "PT86C523",
 	},
 	{
 	    PCI_VENDOR_PIJNENBURG, PCI_PRODUCT_PIJNENBURG_PCC_ISES,
