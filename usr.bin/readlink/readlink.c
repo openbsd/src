@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.7 1997/06/29 19:20:31 kstailey Exp $
+ * $OpenBSD: readlink.c,v 1.8 1997/07/01 15:09:36 kstailey Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -37,17 +37,33 @@ int argc;
 char **argv;
 {
 	char buf[PATH_MAX];
-	int n;
+	int n, ch, nflag = 0;
+	extern int optind;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: readlink symlink");
+	while ((ch = getopt(argc, argv, "n")) != -1)
+		switch (ch) {
+		case 'n':
+			nflag = 1;
+			break;
+		default:
+			(void)fprintf(stderr,
+			    "usage: readlink [-n] symlink\n");
+			exit(1);
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1) {
+		fprintf(stderr, "usage: readlink [-n] symlink\n");
 		exit(1);
 	}
 
-	if ((n = readlink(argv[1], buf, PATH_MAX)) < 0)
+	if ((n = readlink(argv[0], buf, PATH_MAX)) < 0)
 		exit(1);
 
 	buf[n] = '\0';
 	printf("%s", buf);
+	if (!nflag)
+		putchar('\n');
 	exit(0);
 }
