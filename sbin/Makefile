@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 1998/02/04 20:37:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 1998/09/05 17:46:28 art Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -23,6 +23,10 @@ SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_ext2fs fsck_ext2fs
+.include <bsd.own.mk>
+.if (${AFS} == "yes")
+SUBDIR+= mount_xfs
+.endif
 
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= bim config_slot edlabel fdisk pcmcia_cntrl
