@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2001/09/19 21:32:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2001/12/10 00:58:02 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dmap.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
 #include <sys/mount.h>

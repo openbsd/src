@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2001/09/19 21:32:19 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.15 2001/12/10 00:58:04 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -79,13 +79,18 @@
  * and the drivers are initialized.
  */
 
+#undef TRY_EXTENT
+
 #include <sys/param.h>
 #include <sys/systm.h>
+#ifdef TRY_EXTENT
+#include <sys/extent.h>
+#else
 #include <sys/map.h>
+#endif
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
@@ -100,7 +105,12 @@ struct	device *parsedisk __P((char *, int, int, dev_t *));
 void	setroot __P((void));
 
 /* XXX must be allocated statically because of early console init */
-struct	map extiomap[EIOMAPSIZE/16];
+#ifdef TRY_EXTENT
+static char iomap_space[EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16)];
+struct extent *iomap_extent;
+#else
+struct map extiomap[EIOMAPSIZE/16];
+#endif
 extern	void *extiobase;
 
 void mainbus_attach __P((struct device *, struct device *, void *));
@@ -181,7 +191,16 @@ cpu_configure()
 
 	init_sir();
 
+#ifdef TRY_EXTENT
+	iomap_extent = extent_create("iomap", &iomap_space,
+	    iomap_space  + EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16),
+	    M_DEVBUF, &iomap_space, EXTENT_FIXED_STORAGE_SIZE(EIOMAPSIZE / 16),
+	    EX_NOWAIT);
+	if (iomap_extent == NULL)
+		panic("cpu_configure: extent_create failed");
+#else
 	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
+#endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
@@ -202,6 +221,9 @@ mapiodev(pa, size)
 {
 	int ix, npf, offset;
 	void *kva;
+#ifdef TRY_EXTENT
+	int error;
+#endif
 
 	size = roundup(size, NBPG);
 	offset = (int)pa & PGOFSET;
@@ -212,7 +234,12 @@ mapiodev(pa, size)
 	        panic("mapiodev: unaligned");
 #endif
 	npf = btoc(size);
+#ifdef TRY_EXTENT
+	error = extent_alloc(iomap_extent, npf, EX_NOALIGN, 0, EX_NOBOUNDARY,
+	    EX_NOWAIT, &ix);
+#else
 	ix = rmalloc(extiomap, npf);
+#endif
 	if (ix == 0)
 	        return (0);
 	kva = extiobase + ctob(ix-1);

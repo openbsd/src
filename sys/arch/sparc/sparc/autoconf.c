@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.45 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.46 2001/12/10 00:58:04 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/disk.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>

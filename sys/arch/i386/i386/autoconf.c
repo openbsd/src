@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2001/12/05 23:58:41 tdeval Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2001/12/10 00:58:04 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 
@@ -198,7 +197,6 @@ findblkname(maj)
 dev_t	argdev = NODEV;
 int	nswap;
 long	dumplo;
-int	dmmin, dmmax, dmtext;
 
 /*
  * Attempt to find the device from which we were booted.
