@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.27 1998/07/03 02:02:01 angelos Exp $
+ * $OpenBSD: skeylogin.c,v 1.28 1998/07/03 02:06:22 angelos Exp $
  */
 
 #include <sys/param.h>
@@ -467,6 +467,7 @@ skey_authenticate(username)
 		/* See if the random file's there */
 		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1) {
 			if ((fstat(fd, &sb) != -1) &&
+			    (sb.st_size > SKEY_MAX_SEED_LEN) &&
 			    ((up = SHA1Data(username, strlen(username), NULL))
 			     != NULL)) {
 			        /* Collapse the hash */
