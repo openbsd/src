@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.34 2001/05/26 06:58:30 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.35 2001/05/27 00:38:07 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -570,14 +570,18 @@ struct m_tag *m_tag_find __P((struct mbuf *, int, struct m_tag *));
 struct m_tag *m_tag_copy __P((struct m_tag *));
 int	m_tag_copy_chain __P((struct mbuf *, struct mbuf *));
 void	m_tag_init __P((struct mbuf *));
+struct m_tag *m_tag_first __P((struct mbuf *));
+struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
 
 /* Packet tag types */
-#define	PACKET_TAG_NONE			0
-#define	PACKET_TAG_IPSEC_DONE		1
-#define	PACKET_TAG_IPSEC_NEEDED		2
-#define PACKET_TAG_BRIDGE		3
-#define PACKET_TAG_GIF			4
-#define PACKET_TAG_GRE			5
+#define	PACKET_TAG_NONE				0
+#define	PACKET_TAG_IPSEC_IN_DONE		1
+#define	PACKET_TAG_IPSEC_OUT_DONE		2
+#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3
+#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4
+#define PACKET_TAG_BRIDGE			5
+#define PACKET_TAG_GIF				6
+#define PACKET_TAG_GRE				7
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
