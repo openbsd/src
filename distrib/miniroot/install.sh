@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.73 2000/06/01 21:01:28 millert Exp $
+#	$OpenBSD: install.sh,v 1.74 2000/06/16 03:19:42 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -399,82 +399,6 @@ done
 md_questions
 
 install_sets $THESETS
-
-# XXX
-# XXX should loop until successful install or user abort
-# XXX
-if [ X"$ssl" != X1 ]; then
-	resp=
-	while [ X"${resp}" = X ]; do
-		echo
-		echo "Two OpenBSD libraries (libssl and libcrypto, based on OpenSSL) implement many"
-		echo "cryptographic functions which are used by OpenBSD programs like ssh, httpd, and"
-		echo "isakmpd.  Due to patent licensing reasons, those libraries may not be included"
-		echo "on the CD -- instead the base distribution contains libraries which have had"
-		echo "the troublesome code removed -- the programs listed above will not be fully"
-		echo "functional as a result.  Libraries which _include_ the troublesome routines"
-		echo "are available and can be FTP installed, as long as you meet the follow (legal)"
-		echo "criteria:"
-		echo "  (1) Outside the USA, no restrictions apply. Use ssl${VERSION}.tar.gz."
-		echo "  (2) Inside the USA, non-commercial entities may install sslUSA${VERSION}.tar.gz."
-		echo "  (3) Commercial entities in the USA are left in the cold, due to how the"
-		echo "      licences work.  (This is how the USA crypto export policy feels to the"
-		echo "      rest of the world.)"
-		echo ""
-		echo "If you do not install the ssl package now, it is easily installed at"
-		echo "a later time (see the afterboot(8) and ssl(8) manual pages)."
-		echo -n "Install (U)SA, (I)nternational, or (N)one? [none] "
-
-		getresp none
-		case "$resp" in
-		u*|U*)
-			THESETS=sslUSA
-			;;
-		i*|I*)
-			THESETS=ssl
-			;;
-		n*|N*)
-			echo "Not installing SSL+RSA shared libraries."
-			THESETS=
-			;;
-		*)
-			echo "Invalid response: $resp"
-			resp=
-			;;
-		esac
-	done
-	if [ X"$THESETS" != X ]; then
-		resp=
-		while [ X"${resp}" = X ]; do
-			echo -n "Install SSL+RSA libraries via (f)tp, (h)ttp, or (c)ancel? [ftp] "
-			getresp ftp
-			case "$resp" in
-			f*|F*)
-				# configure network if necessary
-				test -n "$_didnet" || donetconfig
-
-				install_url -ftp -reuse -minpat ${THESETS}'[0-9]*'
-				resp=f
-				;;
-			h*|H*)
-				# configure network if necessary
-				test -n "$_didnet" || donetconfig
-
-				install_url -http -reuse -minpat ${THESETS}'[0-9]*'
-				resp=h
-				;;
-			c*|C*)
-				echo "Not installing SSL+RSA shared libraries."
-				;;
-			*)
-				echo "Invalid response: $resp"
-				resp=
-				;;
-			esac
-		done
-	fi
-	echo
-fi
 
 # Copy in configuration information and make devices in target root.
 echo
