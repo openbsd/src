@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.24 2003/06/02 23:28:09 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.25 2003/08/04 16:30:35 millert Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ exec(path, loadaddr, howto)
 
 	sz = read(io, (char *)&x, sizeof(x));
 	if (sz != sizeof(x) || N_BADMAG(x)) {
+		close(io);
 		errno = EFTYPE;
 		return;
 	}
