@@ -1,4 +1,4 @@
-/* $OpenBSD: if_gx.c,v 1.1 2002/04/02 13:03:31 nate Exp $ */
+/* $OpenBSD: if_gx.c,v 1.2 2002/04/02 22:10:42 nate Exp $ */
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon
  * All rights reserved.
@@ -73,9 +73,6 @@
 
 #include <dev/pci/if_gxreg.h>
 #include <dev/pci/if_gxvar.h>
-
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_pmap.h>            /* for vtophys */
 
 #define TUNABLE_TX_INTR_DELAY	100
 #define TUNABLE_RX_INTR_DELAY	100
