@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.243 2002/07/09 23:19:10 krw Exp $
+#	$OpenBSD: install.sub,v 1.244 2002/07/12 00:07:33 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -190,6 +190,19 @@ ask() {
 		esac
 	done
 	set +o noglob
+}
+
+# Ask for user input until a non-empty reply is entered.
+#
+#    $1    = the question to ask the user
+#    $2    = the default answer
+#
+# Save the user input (or the default) in $resp.
+ask_until () {
+	resp=
+	while [ -z "$resp" ] ; do
+		ask "$1" "$2"
+	done
 }
 
 # test the first argument against the remaining ones, return success on a match
@@ -550,20 +563,13 @@ configure_ifs() {
 
 	# Get symbolic name
 	_hostname=`hostname`
-	resp=
-	while [ -z "$resp" ] ; do
-		ask "Symbolic (host) name?" "$_hostname"
-		_if_symname=$resp
-	done
+	ask_until "Symbolic (host) name?" "$_hostname"
+	_if_symname=$resp
 
 	# Get netmask
 	if [ "$_if_ip" != "dhcp" ]; then
-		resp=
-		: ${_if_mask:=255.255.255.0}
-		while [ -z "$resp" ]; do
-			ask "Netmask?" "$_if_mask"
-			_if_mask=$resp
-		done
+		ask_until "Netmask?" "${_if_mask:=255.255.255.0}"
+		_if_mask=$resp
 	fi
 
 	if [ "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
@@ -1115,23 +1121,17 @@ __EOT
 		# Default ftp dir
 		_ftp_server_dir=pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 	fi
-	resp=
-	while [ -z "$resp" ] ; do
-		eval ask \"Server directory?\" \"\$_${_url_type}_server_dir\"
-		eval _${_url_type}_server_dir=$resp
-	done
+
+	eval ask_until \"Server directory?\" \"\$_${_url_type}_server_dir\"
+	eval _${_url_type}_server_dir=$resp
 
 	if [ "$_url_type" = "ftp" ]; then
 		# Get login name, setting IFS to nothing so trailing or
 		# embedded blanks are preserved!
 		_oifs=$IFS
 		IFS=
-		resp=
-		: ${_ftp_server_login:=anonymous}
-		while [ -z "$resp" ] ; do
-			ask "Login?" "$_ftp_server_login"
-			_ftp_server_login=$resp
-		done
+		ask_until "Login?" "${_ftp_server_login:=anonymous}"
+		_ftp_server_login=$resp
 
 		# Get password unless anonymous
 		_ftp_server_password=root@`hostname`.$FQDN
@@ -1429,17 +1429,11 @@ install_nfs() {
 	[ "$_didnet" ] || donetconfig
 
 	# Get the IP address of the server
-	resp=
-	while [ -z "$resp" ] ; do
-		ask "Server IP address or hostname?" "$_nfs_server_ip"
-	done
+	ask_until "Server IP address or hostname?" "$_nfs_server_ip"
 	_nfs_server_ip=$resp
 
 	# Get server path to mount
-	resp=
-	while [ -z "$resp" ]; do
-		ask "Filesystem on server to mount?" "$_nfs_server_path"
-	done
+	ask_until "Filesystem on server to mount?" "$_nfs_server_path"
 	_nfs_server_path=$resp
 
 	# Determine use of TCP
@@ -1471,10 +1465,7 @@ The installation program needs to know which tape device to use. Make
 sure you use a "no rewind on close" device.
 
 __EOT
-	resp=
-	while [ -z "$resp" ]; do
-		ask "Name of tape device?" "${TAPE##*/}"
-	done
+	ask_until "Name of tape device?" "${TAPE##*/}"
 	TAPE=/dev/${resp##*/}
 	if [ ! -c $TAPE ]; then
 		echo "$TAPE does not exist or is not a character special file."
@@ -1865,10 +1856,7 @@ donetconfig() {
 		_nam=`cat /tmp/myname`
 	fi
 
-	resp=
-	while [ -z "$resp" ] ; do
-		ask "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
-	done
+	ask_until "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
 	hostname $resp
 	echo $resp > /tmp/myname
 
