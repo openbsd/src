@@ -2818,3 +2818,5 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/dev/pcmcia/if_wavelan_ieee.h
+./usr/include/dev/pcmcia/if_wireg.h
