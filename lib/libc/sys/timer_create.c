@@ -1,11 +1,12 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timer_create.c,v 1.2 1997/04/26 08:49:33 tholo Exp $";
+static char rcsid[] = "$OpenBSD: timer_create.c,v 1.3 1997/04/30 05:49:28 tholo Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
 
+/* ARGSUSED */
 int
 timer_create(clock_id, evp, timerid)
 	clockid_t clock_id;
