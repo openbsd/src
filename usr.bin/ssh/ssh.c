@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.88 2001/02/04 15:32:26 stevesk Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.89 2001/02/06 22:07:42 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -63,6 +63,7 @@ RCSID("$OpenBSD: ssh.c,v 1.88 2001/02/04 15:32:26 stevesk Exp $");
 #include "readconf.h"
 #include "sshconnect.h"
 #include "tildexpand.h"
+#include "dispatch.h"
 #include "misc.h"
 
 extern char *__progname;
@@ -910,6 +911,20 @@ ssh_session(void)
 }
 
 void
+client_subsystem_reply(int type, int plen, void *ctxt)
+{
+	int id, len;
+
+	id = packet_get_int();
+	len = buffer_len(&command);
+	len = MAX(len, 900);
+	packet_done();
+	if (type == SSH2_MSG_CHANNEL_FAILURE)
+		fatal("Request for subsystem '%.*s' failed on channel %d",
+		    len, buffer_ptr(&command), id);
+}
+
+void
 ssh_session2_callback(int id, void *arg)
 {
 	int len;
@@ -966,7 +981,11 @@ ssh_session2_callback(int id, void *arg)
 			len = 900;
 		if (subsystem_flag) {
 			debug("Sending subsystem: %.*s", len, buffer_ptr(&command));
-			channel_request_start(id, "subsystem", 0);
+			channel_request_start(id, "subsystem", /*want reply*/ 1);
+			/* register callback for reply */
+			/* XXX we asume that client_loop has already been called */
+			dispatch_set(SSH2_MSG_CHANNEL_FAILURE, &client_subsystem_reply);
+			dispatch_set(SSH2_MSG_CHANNEL_SUCCESS, &client_subsystem_reply);
 		} else {
 			debug("Sending command: %.*s", len, buffer_ptr(&command));
 			channel_request_start(id, "exec", 0);
