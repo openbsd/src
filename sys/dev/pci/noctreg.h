@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.1 2002/06/02 18:15:03 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.2 2002/06/20 20:31:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -40,6 +40,26 @@
 #define	NOCT_BRDG_TIMR		0x0010		/* bridge timer */
 #define	NOCT_BRDG_TEST		0x0014		/* bridge test */
 #define	NOCT_BRDG_RPMR		0x0018		/* bridge read ptr mirror */
+#define	NOCT_PKH_TEST0		0x4000		/* pkh test 0 */
+#define	NOCT_PKH_TEST1		0x4004		/* pkh test 1 */
+#define	NOCT_PKH_Q_LEN		0x4008		/* pkh queue length */
+#define	NOCT_PKH_Q_PTR		0x400c		/* pkh queue ptrs */
+#define	NOCT_PKH_Q_BASE_HI	0x4010		/* pkh queue base, msw */
+#define	NOCT_PKH_Q_BASE_LO	0x4014		/* pkh queue base, lsw */
+#define	NOCT_PKH_IER		0x4018		/* pkh intr enable */
+#define	NOCT_PKH_CSR		0x401c		/* pkh control/status */
+#define	NOCT_PKH_SKS_DATA	0x4020		/* pkh secure key data */
+#define	NOCT_PKH_SKS_CTRL	0x4024		/* pkh secure key ctrl */
+#define	NOCT_PKH_CMDB_0		0x40e0		/* pkh command block 0 */
+#define	NOCT_PKH_CMDB_1		0x40e4		/* pkh command block 1 */
+#define	NOCT_PKH_CMDB_2		0x40e8		/* pkh command block 2 */
+#define	NOCT_PKH_CMDB_3		0x40ec		/* pkh command block 3 */
+#define	NOCT_PKH_CMDB_4		0x40f0		/* pkh command block 4 */
+#define	NOCT_PKH_CMDB_5		0x40f4		/* pkh command block 5 */
+#define	NOCT_PKH_CMDB_6		0x40f8		/* pkh command block 6 */
+#define	NOCT_PKH_CMDB_7		0x40fc		/* pkh command block 7 */
+#define	NOCT_PKH_BNCACHE_START	0x5000		/* pkh bignumber cache start */
+#define	NOCT_PKH_BNCACHE_END	0x5fff		/* pkh bigbumber cache end */
 #define	NOCT_EA_TEST_1		0x8000		/* e/a test 1 */
 #define	NOCT_EA_TEST_0		0x8004		/* e/a test 0 */
 #define	NOCT_EA_CMDQ_LEN	0x8008		/* e/a cmd queue len */
@@ -76,6 +96,7 @@
 #define	NOCT_RNG_BAR0		0xd014		/* rng bar0 */
 #define	NOCT_RNG_CSR		0xd018		/* rng control/status */
 
+/* NOCT_EA_CTX_ADDR */
 #define	CTXADDR_READPEND	0x80000000	/* read pending/start */
 #define	CTXADDR_WRITEPEND	0x40000000	/* write pending/start */
 #define	CTXADDR_MASK		0x00ffffff	/* address mask */
@@ -144,7 +165,72 @@
 #define	RNGCSR_INT_DUP		0x00020000	/* intr ena: dup error */
 #define	RNGCSR_INT_ACCESS	0x00010000	/* intr ena: access error */
 
+/* NOCT_RNG_Q_PTR */
 #define	RNGQPTR_READ_M		0x00007fff	/* read mask */
 #define	RNGQPTR_READ_S		0		/* read shift */
 #define	RNGQPTR_WRITE_M		0x7fff0000	/* write mask */
 #define	RNGQPTR_WRITE_S		16		/* write shift */
+
+/* NOCT_PKH_Q_LEN */
+#define	PKHQLEN_MASK		0x0000000f	/* queue length, 2^n */
+
+/* NOCT_PKH_Q_PTR */
+#define PKHQPTR_READ_M		0x7fff0000	/* read mask */
+#define	PKHQPTR_READ_S		16		/* read shift */
+#define	PKHQPTR_WRITE_M		0x00007fff	/* write mask */
+#define	PKHQPTR_WRITE_S		0		/* write shift */
+
+/* NOCT_PKH_IER */
+#define	PKHIER_CMDSI		0x00020000	/* cmd successful, SI */
+#define	PKHIER_SKSWR		0x00010000	/* sks write op done */
+#define	PKHIER_SKSOFF		0x00008000	/* sks offset error */
+#define	PKHIER_PKHLEN		0x00004000	/* invalid data length */
+#define	PKHIER_PKHOPCODE	0x00002000	/* invalid opcode */
+#define	PKHIER_BADQBASE		0x00001000	/* base queue base */
+#define	PKHIER_LOADERR		0x00000800	/* bus error during load */
+#define	PKHIER_STOREERR		0x00000400	/* bus error during store */
+#define	PKHIER_CMDERR		0x00000200	/* bus error during cmd */
+#define	PKHIER_ILL		0x00000100	/* illegal access */
+#define	PKHIER_PKERESV		0x00000080	/* pke reserved */
+#define	PKHIER_PKEWDT		0x00000040	/* pke mul inv watchdog */
+#define	PKHIER_PKENOTPRIME	0x00000020	/* pke not relatively prime */
+#define	PKHIER_PKE_B		0x00000010	/* pke bad 'b' error */
+#define	PKHIER_PKE_A		0x00000008	/* pke bad 'a' error */
+#define	PKHIER_PKE_M		0x00000004	/* pke bad 'm' error */
+#define	PKHIER_PKE_R		0x00000002	/* pke bad 'r' error */
+#define	PKHIER_PKEOPCODE	0x00000001	/* pke bad opcode */
+
+/* NOCT_PKH_CSR */
+#define	PKHCSR_PKH_ENA		0x80000000	/* enable pkh */
+#define	PKHCSR_PKH_BUSY		0x40000000	/* pkh busy */
+#define	PKHCSR_PKE_GO		0x20000000	/* pke go input */
+#define	PKHCSR_PKE_BUSY		0x10000000	/* pke busy output */
+#define	PKHCSR_LINENO		0x0f000000	/* pke error opcode */
+#define	PKHCSR_CMDSI		0x00020000	/* cmd successful, SI */
+#define	PKHCSR_SKSWR		0x00010000	/* sks write op done */
+#define	PKHCSR_SKSOFF		0x00008000	/* sks offset error */
+#define	PKHCSR_PKHLEN		0x00004000	/* invalid data length */
+#define	PKHCSR_PKHOPCODE	0x00002000	/* invalid opcode */
+#define	PKHCSR_BADQBASE		0x00001000	/* base queue base */
+#define	PKHCSR_LOADERR		0x00000800	/* bus error during load */
+#define	PKHCSR_STOREERR		0x00000400	/* bus error during store */
+#define	PKHCSR_CMDERR		0x00000200	/* bus error during cmd */
+#define	PKHCSR_ILL		0x00000100	/* illegal access */
+#define	PKHCSR_PKERESV		0x00000080	/* pke reserved */
+#define	PKHCSR_PKEWDT		0x00000040	/* pke mul inv watchdog */
+#define	PKHCSR_PKENOTPRIME	0x00000020	/* pke not relatively prime */
+#define	PKHCSR_PKE_B		0x00000010	/* pke bad 'b' error */
+#define	PKHCSR_PKE_A		0x00000008	/* pke bad 'a' error */
+#define	PKHCSR_PKE_M		0x00000004	/* pke bad 'm' error */
+#define	PKHCSR_PKE_R		0x00000002	/* pke bad 'r' error */
+#define	PKHCSR_PKEOPCODE	0x00000001	/* pke bad opcode */
+
+/* NOCT_PKH_SKS_CTRL */
+#define	PKHSKS_GO		0x80000000	/* pkhsks busy */
+#define	PKHSKS_PROMERR		0x40000000	/* prom protocol error */
+#define	PKHSKS_ACCERR		0x20000000	/* access error */
+#define	PKHSKS_LOCMASK		0x00003000	/* location mask: */
+#define	PKHSKS_LOC_FROMPROM	0x00002000
+#define	PKHSKS_LOC_CACHEONLY	0x00001000
+#define	PKHSKS_ADDR		0x00000fff	/* address mask */
+
