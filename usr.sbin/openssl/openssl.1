@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.49 2004/09/28 21:16:12 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.50 2004/12/03 01:41:17 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -7337,53 +7337,54 @@ option was added in
 .Sh X509
 .Nm openssl x509
 .Bk -words
-.Op Fl inform Ar DER | NET | PEM
-.Op Fl outform Ar DER | NET | PEM
-.Op Fl keyform Ar DER | PEM
-.Op Fl CAform Ar DER | PEM
-.Op Fl CAkeyform Ar DER | PEM
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl passin Ar arg
-.Op Fl serial
-.Op Fl hash
-.Op Fl subject
-.Op Fl issuer
-.Op Fl nameopt Ar option
-.Op Fl email
-.Op Fl startdate
-.Op Fl enddate
-.Op Fl purpose
-.Op Fl dates
-.Op Fl modulus
-.Op Fl pubkey
-.Op Fl fingerprint
 .Op Fl alias
+.Op Fl C
+.Op Fl CAcreateserial
+.Op Fl clrext
+.Op Fl clrreject
+.Op Fl clrtrust
+.Op Fl dates
+.Op Fl email
+.Op Fl enddate
+.Op Fl fingerprint
+.Op Fl hash
+.Op Fl issuer
+.Op Fl md2 | md5 | sha1
+.Op Fl modulus
 .Op Fl noout
 .Op Fl ocspid
-.Op Fl trustout
-.Op Fl clrtrust
-.Op Fl clrreject
-.Op Fl addtrust Ar arg
-.Op Fl addreject Ar arg
-.Op Fl setalias Ar arg
-.Op Fl days Ar arg
-.Op Fl checkend Ar arg
-.Op Fl set_serial Ar n
-.Op Fl signkey Ar file
-.Op Fl x509toreq
+.Op Fl pubkey
+.Op Fl purpose
 .Op Fl req
-.Op Fl CA Ar file
-.Op Fl CAkey Ar file
-.Op Fl CAcreateserial
-.Op Fl CAserial Ar file
+.Op Fl serial
+.Op Fl startdate
+.Op Fl subject
 .Op Fl text
-.Op Fl C
-.Op Fl md2 | md5 | sha1
-.Op Fl clrext
-.Op Fl extfile Ar file
-.Op Fl extensions Ar section
+.Op Fl trustout
+.Op Fl x509toreq
+.Op Fl addreject Ar arg
+.Op Fl addtrust Ar arg
+.Op Fl CA Ar file
+.Op Fl CAform Ar DER | PEM
+.Op Fl CAkey Ar file
+.Op Fl CAkeyform Ar DER | PEM
+.Op Fl CAserial Ar file
+.Op Fl certopt Ar option
+.Op Fl checkend Ar arg
+.Op Fl days Ar arg
 .Op Fl engine Ar id
+.Op Fl extensions Ar section
+.Op Fl extfile Ar file
+.Op Fl in Ar file
+.Op Fl inform Ar DER | NET | PEM
+.Op Fl keyform Ar DER | PEM
+.Op Fl nameopt Ar option
+.Op Fl out Ar file
+.Op Fl outform Ar DER | NET | PEM
+.Op Fl passin Ar arg
+.Op Fl set_serial Ar n
+.Op Fl setalias Ar arg
+.Op Fl signkey Ar file
 .Ek
 .Pp
 The
@@ -7398,6 +7399,18 @@ Since there are a large number of options, they are split up into
 various sections.
 .Sh X509 INPUT, OUTPUT, AND GENERAL PURPOSE OPTIONS
 .Bl -tag -width "XXXX"
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm x509
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read a certificate from, or standard input if this option is not specified.
 .It Fl inform Ar DER | NET | PEM
 This specifies the input format.
 Normally, the command will expect an X509 certificate,
@@ -7413,25 +7426,6 @@ The
 .Ar NET
 option is an obscure Netscape server format that is now
 obsolete.
-.It Fl outform Ar DER | NET | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read a certificate from, or standard input if this option is not specified.
-.It Fl out Ar file
-This specifies the output
-.Ar file
-to write to, or standard output by default.
-.It Fl passin Ar arg
-The key password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
 .It Fl md2 | md5 | sha1
 The digest to use.
 This affects any signing or display option that uses a message digest,
@@ -7443,14 +7437,21 @@ options.
 If not specified, MD5 is used.
 If the key being used to sign with is a DSA key,
 this option has no effect: SHA1 is always used with DSA keys.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm x509
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
+.It Fl out Ar file
+This specifies the output
+.Ar file
+to write to, or standard output by default.
+.It Fl outform Ar DER | NET | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
+.It Fl passin Ar arg
+The key password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
 .El
 .Sh X509 DISPLAY OPTIONS
 .Sy Note :
@@ -7462,11 +7463,8 @@ options are also display options but are described in the
 .Sx X509 TRUST SETTINGS
 section.
 .Bl -tag -width "XXXX"
-.It Fl text
-Prints out the certificate in text form.
-Full details are output including the public key, signature algorithms,
-issuer and subject names, serial number, any extensions present and any
-trust settings.
+.It Fl C
+This outputs the certificate in the form of a C source file.
 .It Fl certopt Ar option
 Customise the output format used with
 .Fl text .
@@ -7479,17 +7477,18 @@ switch may also be used more than once to set multiple options.
 See the
 .Sx X509 TEXT OPTIONS
 section for more information.
-.It Fl noout
-This option prevents output of the encoded version of the request.
-.It Fl ocspid
-Print OCSP hash values for the subject name and public key.
-.It Fl modulus
-This option prints out the value of the modulus of the public key
-contained in the certificate.
-.It Fl pubkey
-Output the public key.
-.It Fl serial
-Outputs the certificate serial number.
+.It Fl dates
+Prints out the start and expiry dates of a certificate.
+.It Fl email
+Outputs the email address(es), if any.
+.It Fl enddate
+Prints out the expiry date of the certificate; that is, the
+.Em notAfter
+date.
+.It Fl fingerprint
+Prints out the digest of the DER-encoded version of the whole certificate
+(see
+.Sx DIGEST OPTIONS ) .
 .It Fl hash
 Outputs the
 .Qq hash
@@ -7498,10 +7497,11 @@ This is used in
 .Nm OpenSSL
 to form an index to allow certificates in a directory to be looked up
 by subject name.
-.It Fl subject
-Outputs the subject name.
 .It Fl issuer
 Outputs the issuer name.
+.It Fl modulus
+This option prints out the value of the modulus of the public key
+contained in the certificate.
 .It Fl nameopt Ar option
 Option which determines how the subject or issuer names are displayed.
 The
@@ -7513,24 +7513,25 @@ switch may be used more than once to set multiple options.
 See the
 .Sx X509 NAME OPTIONS
 section for more information.
-.It Fl email
-Outputs the email address(es) if any.
+.It Fl noout
+This option prevents output of the encoded version of the request.
+.It Fl ocspid
+Print OCSP hash values for the subject name and public key.
+.It Fl pubkey
+Output the public key.
+.It Fl serial
+Outputs the certificate serial number.
 .It Fl startdate
 Prints out the start date of the certificate; that is, the
 .Em notBefore
 date.
-.It Fl enddate
-Prints out the expiry date of the certificate; that is, the
-.Em notAfter
-date.
-.It Fl dates
-Prints out the start and expiry dates of a certificate.
-.It Fl fingerprint
-Prints out the digest of the DER-encoded version of the whole certificate
-(see
-.Sx DIGEST OPTIONS ) .
-.It Fl C
-This outputs the certificate in the form of a C source file.
+.It Fl subject
+Outputs the subject name.
+.It Fl text
+Prints out the certificate in text form.
+Full details are output including the public key, signature algorithms,
+issuer and subject names, serial number, any extensions present,
+and any trust settings.
 .El
 .Sh X509 TRUST SETTINGS
 Please note these options are currently experimental and may well change.
@@ -7562,29 +7563,11 @@ Future versions of
 .Nm OpenSSL
 will recognize trust settings on any certificate: not just root CAs.
 .Bl -tag -width "XXXX"
-.It Fl trustout
-This causes
-.Nm x509
-to output a
-.Em trusted certificate .
-An ordinary or trusted certificate can be input, but by default an ordinary
-certificate is output and any trust settings are discarded.
-With the
-.Fl trustout
-option a trusted certificate is output.
-A trusted certificate is automatically output if any trust settings
-are modified.
-.It Fl setalias Ar arg
-Sets the alias of the certificate.
-This will allow the certificate to be referred to using a nickname,
-for example
-.Qq Steve's Certificate .
-.It Fl alias
-Outputs the certificate alias, if any.
-.It Fl clrtrust
-Clears all the permitted or trusted uses of the certificate.
-.It Fl clrreject
-Clears all the prohibited or rejected uses of the certificate.
+.It Fl addreject Ar arg
+Adds a prohibited use.
+It accepts the same values as the
+.Fl addtrust
+option.
 .It Fl addtrust Ar arg
 Adds a trusted certificate use.
 Any object name can be used here, but currently only
@@ -7599,17 +7582,35 @@ are used.
 Other
 .Nm OpenSSL
 applications may define additional uses.
-.It Fl addreject Ar arg
-Adds a prohibited use.
-It accepts the same values as the
-.Fl addtrust
-option.
+.It Fl alias
+Outputs the certificate alias, if any.
+.It Fl clrreject
+Clears all the prohibited or rejected uses of the certificate.
+.It Fl clrtrust
+Clears all the permitted or trusted uses of the certificate.
 .It Fl purpose
 This option performs tests on the certificate extensions and outputs
 the results.
 For a more complete description, see the
 .Sx X509 CERTIFICATE EXTENSIONS
 section.
+.It Fl setalias Ar arg
+Sets the alias of the certificate.
+This will allow the certificate to be referred to using a nickname,
+for example
+.Qq Steve's Certificate .
+.It Fl trustout
+This causes
+.Nm x509
+to output a
+.Em trusted certificate .
+An ordinary or trusted certificate can be input, but by default an ordinary
+certificate is output and any trust settings are discarded.
+With the
+.Fl trustout
+option a trusted certificate is output.
+A trusted certificate is automatically output if any trust settings
+are modified.
 .El
 .Sh X509 SIGNING OPTIONS
 The
@@ -7618,26 +7619,69 @@ utility can be used to sign certificates and requests: it
 can thus behave like a
 .Qq mini CA .
 .Bl -tag -width "XXXX"
-.It Fl signkey Ar file
-This option causes the input file to be self-signed using the supplied
-private key.
+.It Fl CA Ar file
+Specifies the CA certificate to be used for signing.
+When this option is present,
+.Nm x509
+behaves like a
+.Qq mini CA .
+The input file is signed by the CA using this option;
+that is, its issuer name is set to the subject name of the CA and it is
+digitally signed using the CA's private key.
 .Pp
-If the input file is a certificate, it sets the issuer name to the
-subject name
-.Pq i.e. makes it self-signed ,
-changes the public key to the supplied value
-and changes the start and end dates.
-The start date is set to the current time and the end date is set to
-a value determined by the
-.Fl days
+This option is normally combined with the
+.Fl req
 option.
-Any certificate extensions are retained unless the
-.Fl clrext
-option is supplied.
+Without the
+.Fl req
+option, the input is a certificate which must be self-signed.
+.It Fl CAcreateserial
+With this option the CA serial number file is created if it does not exist:
+it will contain the serial number
+.Sq 02
+and the certificate being signed will have
+.Sq 1
+as its serial number.
+Normally, if the
+.Fl CA
+option is specified and the serial number file does not exist, it is an error.
+.It Fl CAform Ar DER | PEM
+The format of the CA certificate file.
+The default is
+.Ar PEM .
+.It Fl CAkey Ar file
+Sets the CA private key to sign a certificate with.
+If this option is not specified, it is assumed that the CA private key
+is present in the CA certificate file.
+.It Fl CAkeyform Ar DER | PEM
+The format of the CA private key.
+The default is
+.Ar PEM .
+.It Fl CAserial Ar file
+Sets the CA serial number file to use.
 .Pp
-If the input is a certificate request, a self-signed certificate
-is created using the supplied private key using the subject name in
-the request.
+When the
+.Fl CA
+option is used to sign a certificate,
+it uses a serial number specified in a file.
+This file consists of one line containing an even number of hex digits
+with the serial number to use.
+After each use the serial number is incremented and written out
+to the file again.
+.Pp
+The default filename consists of the CA certificate file base name with
+.Pa .srl
+appended.
+For example, if the CA certificate file is called
+.Pa mycacert.pem ,
+it expects to find a serial number file called
+.Pa mycacert.srl .
+.It Fl checkend Ar arg
+Check whether the certificate expires in the next
+.Ar arg
+seconds.
+If so, exit with return value 1;
+otherwise exit with return value 0.
 .It Fl clrext
 Delete any extensions from a certificate.
 This option is used when a certificate is being created from another
@@ -7647,26 +7691,26 @@ or the
 .Fl CA
 options).
 Normally, all extensions are retained.
+.It Fl days Ar arg
+Specifies the number of days to make a certificate valid for.
+The default is 30 days.
+.It Fl extensions Ar section
+The section to add certificate extensions from.
+If this option is not specified, the extensions should either be
+contained in the unnamed
+.Pq default
+section or the default section should contain a variable called
+.Qq extensions
+which contains the section to use.
+.It Fl extfile Ar file
+File containing certificate extensions to use.
+If not specified, no extensions are added to the certificate.
 .It Fl keyform Ar DER | PEM
 Specifies the format
 .Pq DER or PEM
 of the private key file used in the
 .Fl signkey
 option.
-.It Fl days Ar arg
-Specifies the number of days to make a certificate valid for.
-The default is 30 days.
-.It Fl checkend Ar arg
-Check whether the certificate expires in the next
-.Ar arg
-seconds.
-If so, exit with return value 1;
-otherwise exit with return value 0.
-.It Fl x509toreq
-Converts a certificate into a certificate request.
-The
-.Fl signkey
-option is used to pass the required private key.
 .It Fl req
 By default, a certificate is expected on input.
 With this option a certificate request is expected instead.
@@ -7688,66 +7732,31 @@ options) is not used.
 The serial number can be decimal or hex (if preceded by
 .Sq 0x ) .
 Negative serial numbers can also be specified but their use is not recommended.
-.It Fl CA Ar file
-Specifies the CA certificate to be used for signing.
-When this option is present,
-.Nm x509
-behaves like a
-.Qq mini CA .
-The input file is signed by the CA using this option;
-that is, its issuer name is set to the subject name of the CA and it is
-digitally signed using the CA's private key.
+.It Fl signkey Ar file
+This option causes the input file to be self-signed using the supplied
+private key.
 .Pp
-This option is normally combined with the
-.Fl req
+If the input file is a certificate, it sets the issuer name to the
+subject name
+.Pq i.e. makes it self-signed ,
+changes the public key to the supplied value,
+and changes the start and end dates.
+The start date is set to the current time and the end date is set to
+a value determined by the
+.Fl days
 option.
-Without the
-.Fl req
-option, the input is a certificate which must be self-signed.
-.It Fl CAkey Ar file
-Sets the CA private key to sign a certificate with.
-If this option is not specified, it is assumed that the CA private key
-is present in the CA certificate file.
-.It Fl CAserial Ar file
-Sets the CA serial number file to use.
+Any certificate extensions are retained unless the
+.Fl clrext
+option is supplied.
 .Pp
-When the
-.Fl CA
-option is used to sign a certificate it uses a serial
-number specified in a file.
-This file consist of one line containing an even number of hex digits
-with the serial number to use.
-After each use the serial number is incremented and written out
-to the file again.
-.Pp
-The default filename consists of the CA certificate file base name with
-.Pa .srl
-appended.
-For example, if the CA certificate file is called
-.Pa mycacert.pem ,
-it expects to find a serial number file called
-.Pa mycacert.srl .
-.It Fl CAcreateserial
-With this option the CA serial number file is created if it does not exist:
-it will contain the serial number
-.Sq 02
-and the certificate being signed will have
-.Sq 1
-as its serial number.
-Normally, if the
-.Fl CA
-option is specified and the serial number file does not exist, it is an error.
-.It Fl extfile Ar file
-File containing certificate extensions to use.
-If not specified, no extensions are added to the certificate.
-.It Fl extensions Ar section
-The section to add certificate extensions from.
-If this option is not specified, the extensions should either be
-contained in the unnamed
-.Pq default
-section or the default section should contain a variable called
-.Qq extensions
-which contains the section to use.
+If the input is a certificate request, a self-signed certificate
+is created using the supplied private key using the subject name in
+the request.
+.It Fl x509toreq
+Converts a certificate into a certificate request.
+The
+.Fl signkey
+option is used to pass the required private key.
 .El
 .Sh X509 NAME OPTIONS
 The
@@ -7763,32 +7772,44 @@ format is used which is compatible with previous versions of
 Each option is described in detail below; all options can be preceded by a
 .Sq -
 to turn the option off.
-Only the first four will normally be used.
+Only
+.Ar compat ,
+.Ar RFC2253 ,
+.Ar oneline ,
+and
+.Ar multiline
+will normally be used.
 .Bl -tag -width "XXXX"
+.It Ar align
+Align field values for a more readable output.
+Only usable with
+.Ar sep_multiline .
 .It Ar compat
 Use the old format.
 This is equivalent to specifying no name options at all.
-.It Ar RFC2253
-Displays names compatible with RFC 2253; equivalent to
-.Ar esc_2253 , esc_ctrl ,
-.Ar esc_msb , utf8 , dump_nostr , dump_unknown ,
-.Ar dump_der , sep_comma_plus , dn_rev and sname .
-.It Ar oneline
-A oneline format which is more readable than RFC2253.
-It is equivalent to specifying the
-.Ar esc_2253 , esc_ctrl , esc_msb , utf8 ,
-.Ar dump_nostr , dump_der , use_quote , sep_comma_plus_spc ,
-.Ar spc_eq
-and
-.Ar sname
-options.
-.It Ar multiline
-A multiline format.
-It is equivalent to
-.Ar esc_ctrl , esc_msb , sep_multiline ,
-.Ar spc_eq , lname
-and
-.Ar align .
+.It Ar dn_rev
+Reverse the fields of the DN.
+This is required by RFC 2253.
+As a side effect, this also reverses the order of multiple AVAs but this is
+permissible.
+.It Ar dump_all
+Dump all fields.
+This option, when used with
+.Ar dump_der ,
+allows the DER encoding of the structure to be unambiguously determined.
+.It Ar dump_der
+When this option is set, any fields that need to be hexdumped will
+be dumped using the DER encoding of the field.
+Otherwise just the content octets will be displayed.
+Both options use the RFC 2253 #XXXX... format.
+.It Ar dump_nostr
+Dump non-character string types
+.Pq for example OCTET STRING ;
+if this option is not set, non-character string types will be displayed
+as though each content octet represents a single character.
+.It Ar dump_unknown
+Dump any field whose OID is not recognised by
+.Nm OpenSSL .
 .It Ar esc_2253
 Escape the
 .Qq special
@@ -7810,6 +7831,73 @@ digits representing the character value).
 .It Ar esc_msb
 Escape characters with the MSB set; that is, with ASCII values larger than
 127.
+.It Ar multiline
+A multiline format.
+It is equivalent to
+.Ar esc_ctrl , esc_msb , sep_multiline ,
+.Ar spc_eq , lname ,
+and
+.Ar align .
+.It Ar no_type
+This option does not attempt to interpret multibyte characters in any
+way.
+That is, their content octets are merely dumped as though one octet
+represents each character.
+This is useful for diagnostic purposes but will result in rather odd
+looking output.
+.It Ar nofname , sname , lname , oid
+These options alter how the field name is displayed.
+.Ar nofname
+does not display the field at all.
+.Ar sname
+uses the
+.Qq short name
+form (CN for
+.Ar commonName ,
+for example).
+.Ar lname
+uses the long form.
+.Ar oid
+represents the OID in numerical form and is useful for diagnostic purpose.
+.It Ar oneline
+A oneline format which is more readable than
+.Ar RFC2253 .
+It is equivalent to specifying the
+.Ar esc_2253 , esc_ctrl , esc_msb , utf8 ,
+.Ar dump_nostr , dump_der , use_quote , sep_comma_plus_spc ,
+.Ar spc_eq ,
+and
+.Ar sname
+options.
+.It Ar RFC2253
+Displays names compatible with RFC 2253; equivalent to
+.Ar esc_2253 , esc_ctrl ,
+.Ar esc_msb , utf8 , dump_nostr , dump_unknown ,
+.Ar dump_der , sep_comma_plus , dn_rev ,
+and
+.Ar sname .
+.It Ar sep_comma_plus , sep_comma_plus_space , sep_semi_plus_space , sep_multiline
+These options determine the field separators.
+The first character is between RDNs and the second between multiple AVAs
+(multiple AVAs are very rare and their use is discouraged).
+The options ending in
+.Qq space
+additionally place a space after the separator to make it more readable.
+The
+.Ar sep_multiline
+uses a linefeed character for the RDN separator and a spaced
+.Sq +
+for the AVA separator.
+It also indents the fields by four characters.
+.It Ar show_type
+Show the type of the ASN1 character string.
+The type precedes the field contents.
+For example
+.Qq BMPSTRING: Hello World .
+.It Ar spc_eq
+Places spaces round the
+.Sq =
+character which follows the field name.
 .It Ar use_quote
 Escapes some characters by surrounding the whole string with
 .Sq \&"
@@ -7833,76 +7921,6 @@ will be represented using the format \eUXXXX for 16 bits and \eWXXXXXXXX
 for 32 bits.
 Also, if this option is off, any UTF8Strings will be converted to their
 character form first.
-.It Ar no_type
-This option does not attempt to interpret multibyte characters in any
-way.
-That is, their content octets are merely dumped as though one octet
-represents each character.
-This is useful for diagnostic purposes but will result in rather odd
-looking output.
-.It Ar show_type
-Show the type of the ASN1 character string.
-The type precedes the field contents.
-For example
-.Qq BMPSTRING: Hello World .
-.It Ar dump_der
-When this option is set, any fields that need to be hexdumped will
-be dumped using the DER encoding of the field.
-Otherwise just the content octets will be displayed.
-Both options use the RFC 2253 #XXXX... format.
-.It Ar dump_nostr
-Dump non-character string types
-.Pq for example OCTET STRING ;
-if this option is not set, non-character string types will be displayed
-as though each content octet represents a single character.
-.It Ar dump_all
-Dump all fields.
-This option, when used with
-.Ar dump_der ,
-allows the DER encoding of the structure to be unambiguously determined.
-.It Ar dump_unknown
-Dump any field whose OID is not recognised by
-.Nm OpenSSL .
-.It Ar sep_comma_plus , sep_comma_plus_space , sep_semi_plus_space , sep_multiline
-These options determine the field separators.
-The first character is between RDNs and the second between multiple AVAs
-(multiple AVAs are very rare and their use is discouraged).
-The options ending in
-.Qq space
-additionally place a space after the separator to make it more readable.
-The
-.Ar sep_multiline
-uses a linefeed character for the RDN separator and a spaced
-.Sq +
-for the AVA separator.
-It also indents the fields by four characters.
-.It Ar dn_rev
-Reverse the fields of the DN.
-This is required by RFC 2253.
-As a side effect, this also reverses the order of multiple AVAs but this is
-permissible.
-.It Ar nofname , sname , lname , oid
-These options alter how the field name is displayed.
-.Ar nofname
-does not display the field at all.
-.Ar sname
-uses the
-.Qq short name
-form (CN for
-.Ar commonName ,
-for example).
-.Ar lname
-uses the long form.
-.Ar oid
-represents the OID in numerical form and is useful for diagnostic purpose.
-.It Ar align
-Align field values for a more readable output.
-Only usable with
-.Ar sep_multiline .
-.It Ar spc_eq
-Places spaces round the
-.Sq =
-character which follows the field name.
 .El
 .Sh X509 TEXT OPTIONS
 As well as customising the name output format, it is also possible to
@@ -7913,62 +7931,57 @@ options when the
 option is present.
 The default behaviour is to print all fields.
 .Bl -tag -width "XXXX"
+.It Ar ca_default
+The value used by the
+.Nm ca
+utility; equivalent to
+.Ar no_issuer , no_pubkey , no_header ,
+.Ar no_version , no_sigdump ,
+and
+.Ar no_signame .
 .It Ar compatible
 Use the old format.
 This is equivalent to specifying no output options at all.
+.It Ar ext_default
+Retain default extension behaviour: attempt to print out unsupported
+certificate extensions.
+.It Ar ext_dump
+Hex dump unsupported extensions.
+.It Ar ext_error
+Print an error message for unsupported certificate extensions.
+.It Ar ext_parse
+ASN1 parse unsupported extensions.
+.It Ar no_aux
+Don't print out certificate trust information.
+.It Ar no_extensions
+Don't print out any X509V3 extensions.
 .It Ar no_header
 Don't print header information: that is, the lines saying
 .Qq Certificate
 and
 .Qq Data .
-.It Ar no_version
-Don't print out the version number.
+.It Ar no_issuer
+Don't print out the issuer name.
+.It Ar no_pubkey
+Don't print out the public key.
 .It Ar no_serial
 Don't print out the serial number.
+.It Ar no_sigdump
+Don't give a hexadecimal dump of the certificate signature.
 .It Ar no_signame
 Don't print out the signature algorithm used.
+.It Ar no_subject
+Don't print out the subject name.
 .It Ar no_validity
 Don't print the validity; that is, the
 .Em notBefore
 and
 .Em notAfter
 fields.
-.It Ar no_subject
-Don't print out the subject name.
-.It Ar no_issuer
-Don't print out the issuer name.
-.It Ar no_pubkey
-Don't print out the public key.
-.It Ar no_sigdump
-Don't give a hexadecimal dump of the certificate signature.
-.It Ar no_aux
-Don't print out certificate trust information.
-.It Ar no_extensions
-Don't print out any X509V3 extensions.
-.It Ar ext_default
-Retain default extension behaviour: attempt to print out unsupported
-certificate extensions.
-.It Ar ext_error
-Print an error message for unsupported certificate extensions.
-.It Ar ext_parse
-ASN1 parse unsupported extensions.
-.It Ar ext_dump
-Hex dump unsupported extensions.
-.It Ar ca_default
-The value used by the
-.Nm ca
-utility, equivalent to
-.Ar no_issuer , no_pubkey , no_header ,
-.Ar no_version , no_sigdump
-and
-.Ar no_signame .
+.It Ar no_version
+Don't print out the version number.
 .El
 .Sh X509 EXAMPLES
-.Sy Note :
-In these examples the
-.Sq \e
-means the example should be all on one line.
-.Pp
 Display the contents of a certificate:
 .Pp
 .Dl $ openssl x509 -in cert.pem -noout -text
@@ -7989,7 +8002,7 @@ Display the certificate subject name in oneline form on a terminal
 supporting UTF8:
 .Bd -literal -offset indent
 $ openssl x509 -in cert.pem -noout -subject \e
-	-nameopt oneline,-escmsb
+	-nameopt oneline,esc_msb
 .Ed
 .Pp
 Display the certificate MD5 fingerprint:
