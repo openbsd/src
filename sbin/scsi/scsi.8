@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.3 1997/04/02 06:22:17 millert Exp $
+.\"	$OpenBSD: scsi.8,v 1.4 1997/07/05 05:22:06 millert Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -203,7 +203,7 @@ root# scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 64 "s8 z8 z16 z4"
 FUJITSU M2654S-512 010P
 .Pp
 To edit mode page 1 on /dev/rsd2c, and store it permanently on the
-drive:
+drive (set AWRE and ARRE to 1 to enable bad block remapping):
 .Bd -literal -offset
 root# scsi -f /dev/rsd2c -m 1 -e -P 3
 .Ed
