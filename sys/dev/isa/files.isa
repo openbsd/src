@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.49 1999/01/02 00:02:45 niklas Exp $
+#	$OpenBSD: files.isa,v 1.50 1999/01/19 01:29:19 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -56,10 +56,6 @@ attach	com at commulti with com_commulti
 # Cyclades Cyclom multiport serial cards
 attach	cy at isa with cy_isa
 file	dev/isa/cy_isa.c		cy_isa
-
-# 8255A-based PC parallel ports
-attach	lpt at isa with lpt_isa
-file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
 # Generic VGA
 attach	vga at isa with vga_isa
@@ -306,6 +302,10 @@ attach spkr at pcppi
 file	dev/isa/spkr.c		spkr	needs-flag
 attach midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c    midi_pcppi
+
+# 8255A-based PC parallel ports
+attach	lpt at isa with lpt_isa
+file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):
