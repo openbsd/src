@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.34 2000/04/14 02:40:01 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.35 2000/04/26 19:03:46 chris Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.34 2000/04/14 02:40:01 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.35 2000/04/26 19:03:46 chris Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,10 @@ static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.34 2000/04/14 02:40:01 itojun Ex
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
 #include <sys/protosw.h>
+
+#ifndef INET_ONLY
+#include <net/if_vlan_var.h>
+#endif
 
 #include <ctype.h>
 #include <err.h>
@@ -187,6 +191,10 @@ void	setmedia __P((char *, int));
 void	setmediaopt __P((char *, int));
 void	unsetmediaopt __P((char *, int));
 void	setmediainst __P((char *, int));
+void	setvlantag __P((char *, int));
+void	setvlandev __P((char *, int));
+void	unsetvlandev __P((char *, int));
+void	vlan_status ();
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
 
@@ -259,6 +267,9 @@ const struct	cmd {
 	{ "802.3",	ETHERTYPE_8023,	0,		setipxframetype },
 	{ "snap",	ETHERTYPE_SNAP,	0,		setipxframetype },
 	{ "EtherII",	ETHERTYPE_II,	0,		setipxframetype },
+	{ "vlan",	NEXTARG,	0,		setvlantag },
+	{ "vlandev",	NEXTARG,	0,		setvlandev },
+	{ "-vlandev",	1,		0,		unsetvlandev },
 #endif	/* INET_ONLY */
 	{ "giftunnel",  NEXTARG2,       0,              gifsettunnel } ,
 	{ "dstsa",	NEXTARG,	0,		dstsa } ,
@@ -965,23 +976,32 @@ setifdstaddr(addr, param)
 	(*afp->af_getaddr)(addr, DSTADDR);
 }
 
+/*
+ * Note: doing an SIOCIGIFFLAGS scribbles on the union portion
+ * of the ifreq structure, which may confuse other parts of ifconfig.
+ * Make a private copy so we can avoid that.
+ */
 void
 setifflags(vname, value)
 	char *vname;
 	int value;
 {
- 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+	struct ifreq my_ifr;
+
+	bcopy((char *)&ifr, (char *)&my_ifr, sizeof(struct ifreq));
+
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&my_ifr) < 0)
 		err(1, "SIOCGIFFLAGS");
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
- 	flags = ifr.ifr_flags;
+	strncpy(my_ifr.ifr_name, name, sizeof (my_ifr.ifr_name));
+ 	flags = my_ifr.ifr_flags;
 
 	if (value < 0) {
 		value = -value;
 		flags &= ~value;
 	} else
 		flags |= value;
-	ifr.ifr_flags = flags;
-	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
+	my_ifr.ifr_flags = flags;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&my_ifr) < 0)
 		err(1, "SIOCSIFFLAGS");
 }
 
@@ -1453,6 +1473,9 @@ status(link)
 		printf(" mtu %d", mtu);
 	putchar('\n');
 
+#ifndef	INET_ONLY
+	vlan_status();
+#endif
 	ieee80211_status();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
@@ -2298,6 +2321,100 @@ usage()
 		"       ifconfig -m interface [af]\n");
 	exit(1);
 }
+
+#ifndef INET_ONLY
+
+static int __tag = 0;
+static int __have_tag = 0;
+
+void vlan_status()
+{
+	struct vlanreq vreq;
+
+	bzero((char *)&vreq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&vreq;
+
+	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
+		return;
+
+	if (vreq.vlr_tag || (vreq.vlr_parent[0] != '\0'))
+		printf("\tvlan: %d parent interface: %s\n",
+		       vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
+	               "<none>" : vreq.vlr_parent);
+
+	return;
+}
+
+void setvlantag(val, d)
+	char *val;
+	int d;
+{
+	u_int16_t tag;
+	struct vlanreq vreq;
+
+	__tag = tag = atoi(val);
+	__have_tag = 1;
+
+	bzero((char *)&vreq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&vreq;
+
+	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETVLAN");
+
+	vreq.vlr_tag = tag;
+
+	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETVLAN");
+
+	return;
+}
+
+void setvlandev(val, d)
+	char *val;
+	int d;
+{
+	struct vlanreq vreq;
+
+	if (!__have_tag)
+		errx(1, "must specify both vlan tag and device");
+
+	bzero((char *)&vreq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&vreq;
+
+	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETVLAN");
+
+	strncpy(vreq.vlr_parent, val, sizeof(vreq.vlr_parent));
+	vreq.vlr_tag = __tag;
+
+	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETVLAN");
+
+	return;
+}
+
+void unsetvlandev(val, d)
+	char *val;
+	int d;
+{
+	struct vlanreq vreq;
+
+	bzero((char *)&vreq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&vreq;
+
+	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETVLAN");
+
+	bzero((char *)&vreq.vlr_parent, sizeof(vreq.vlr_parent));
+	vreq.vlr_tag = 0;
+
+	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETVLAN");
+
+	return;
+}
+
+#endif /* INET_ONLY */
 
 #ifdef INET6
 char *
