@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.3 2002/05/25 07:33:36 deraadt Exp $
+ *	$Id: amd.c,v 1.4 2002/05/25 07:37:19 deraadt Exp $
  */
 
 #ifndef lint
@@ -62,7 +62,6 @@ static char copyright[] =
 #include <rpcsvc/yp_prot.h>
 
 char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
-char *progname;				/* "amd" */
 #ifdef HAS_HOST
 #ifdef HOST_EXEC
 char *host_helper;
@@ -211,20 +210,6 @@ char *argv[];
 	 * Set processing status.
 	 */
 	amd_state = Start;
-
-	/*
-	 * Determine program name
-	 */
-	if (argv[0]) {
-		progname = strrchr(argv[0], '/');
-		if (progname && progname[1])
-			progname++;
-		else
-			progname = argv[0];
-	}
-
-	if (!progname)
-		progname = "amd";
 
 	/*
 	 * Initialise process id.  This is kept

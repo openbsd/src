@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.2 1997/01/15 23:43:45 millert Exp $
+ *	$Id: get_args.c,v 1.3 2002/05/25 07:37:19 deraadt Exp $
  */
 
 /*
@@ -51,6 +51,7 @@
 
 extern int optind;
 extern char *optarg;
+extern char *__progname;
 
 #if defined(DEBUG) && defined(PARANOID)
 char **gargv;
@@ -116,7 +117,7 @@ char *v[];
 	case 'a':
 		if (*optarg != '/') {
 			fprintf(stderr, "%s: -a option must begin with a '/'\n",
-					progname);
+			    __progname);
 			exit(1);
 		}
 		auto_dir = optarg;
@@ -216,7 +217,8 @@ char *v[];
 #ifdef DEBUG
 		usage += debug_option(optarg);
 #else
-		fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n", progname);
+		fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n",
+		    __progname);
 #endif /* DEBUG */
 		break;
 
@@ -311,9 +313,9 @@ char *v[];
 
 show_usage:
 	fprintf(stderr,
-"Usage: %s [-mnprv] [-a mnt_point] [-c cache_time] [-d domain]\n\
-\t[-k kernel_arch] [-l logfile|\"syslog\"] [-t afs_timeout]\n\
-\t[-w wait_timeout] [-C cluster_name]", progname);
+	    "Usage: %s [-mnprv] [-a mnt_point] [-c cache_time] [-d domain]\n"
+	    "\t[-k kernel_arch] [-l logfile|\"syslog\"] [-t afs_timeout]\n"
+	    "\t[-w wait_timeout] [-C cluster_name]", __progname);
 
 #if defined(HAS_HOST) && defined(HOST_EXEC)
 	fputs(" [-h host_helper]\n", stderr);
