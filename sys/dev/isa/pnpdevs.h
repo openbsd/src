@@ -2,12 +2,13 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.64 1999/03/16 17:56:28 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.65 1999/03/17 18:46:28 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNP00A0", "aha" },
 	{ "ADP1520", "aic" },
+	{ "ADP2015", "aic" },
 	{ "PNP0500", "com" },
 	{ "PNP0500", "pccom" },
 	{ "PNP0501", "com" },
