@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.37 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.38 2004/05/23 16:14:22 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -489,6 +489,33 @@ check_file_secrecy(char *name, size_t *file_size)
 	struct stat st;
 
 	if (monitor_stat(name, &st) == -1) {
+		log_error("check_file_secrecy: stat (\"%s\") failed", name);
+		return -1;
+	}
+	if (st.st_uid != 0 && st.st_uid != getuid()) {
+		log_print("check_file_secrecy: "
+		    "not loading %s - file owner is not process user", name);
+		errno = EPERM;
+		return -1;
+	}
+	if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
+		log_print("conf_file_secrecy: not loading %s - too open permissions",
+		    name);
+		errno = EPERM;
+		return -1;
+	}
+	if (file_size)
+		*file_size = (size_t) st.st_size;
+
+	return 0;
+}
+
+int
+check_file_secrecy_fd(int fd, char *name, size_t *file_size)
+{
+	struct stat st;
+
+	if (fstat(fd, &st) == -1) {
 		log_error("check_file_secrecy: stat (\"%s\") failed", name);
 		return -1;
 	}

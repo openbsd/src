@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.18 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: util.h,v 1.19 2004/05/23 16:14:22 deraadt Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -43,6 +43,7 @@ struct message;
 struct sockaddr;
 
 extern int      check_file_secrecy(char *, size_t *);
+extern int      check_file_secrecy_fd(int, char *, size_t *);
 extern u_int16_t decode_16(u_int8_t *);
 extern u_int32_t decode_32(u_int8_t *);
 extern u_int64_t decode_64(u_int8_t *);

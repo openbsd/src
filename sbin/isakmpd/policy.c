@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.71 2004/04/28 20:20:31 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.72 2004/05/23 16:14:22 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1767,14 +1767,16 @@ policy_init(void)
 	if (!policy_file)
 		policy_file = CONF_DFLT_POLICY_FILE;
 
-	/* Check file modes and collect file size */
-	if (check_file_secrecy(policy_file, &sz))
-		log_fatal("policy_init: cannot read %s", policy_file);
-
 	/* Open policy file.  */
 	fd = monitor_open(policy_file, O_RDONLY, 0);
 	if (fd == -1)
 		log_fatal("policy_init: open (\"%s\", O_RDONLY) failed", policy_file);
+
+	/* Check file modes and collect file size */
+	if (check_file_secrecy_fd(fd, policy_file, &sz)) {
+		close(fd);
+		log_fatal("policy_init: cannot read %s", policy_file);
+	}
 
 	/* Allocate memory to keep policies.  */
 	ptr = calloc(sz + 1, sizeof(char));
@@ -2000,10 +2002,19 @@ keynote_cert_obtain(u_int8_t * id, size_t id_len, void *data, u_int8_t ** cert,
 		return 0;
 	}
 
-	if (monitor_stat(file, &sb) < 0) {
+	fd = monitor_open(file, O_RDONLY, 0);
+	if (fd < 0) {
+		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to open \"%s\"",
+		    file));
+		free(file);
+		return 0;
+	}
+
+	if (fstat(fd, &sb) < 0) {
 		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to stat \"%s\"",
 		    file));
 		free(file);
+		close(fd);
 		return 0;
 	}
 	size = (size_t)sb.st_size;
@@ -2015,13 +2026,7 @@ keynote_cert_obtain(u_int8_t * id, size_t id_len, void *data, u_int8_t ** cert,
 		free(file);
 		return 0;
 	}
-	fd = monitor_open(file, O_RDONLY, 0);
-	if (fd < 0) {
-		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to open \"%s\"",
-		    file));
-		free(file);
-		return 0;
-	}
+
 	if (read(fd, *cert, size) != (int)size) {
 		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: failed to read %lu "
 		    "bytes from \"%s\"", (unsigned long)size, file));
