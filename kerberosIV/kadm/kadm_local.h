@@ -1,4 +1,4 @@
-/*	$Id: kadm_local.h,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $	*/
+/*	$Id: kadm_local.h,v 1.2 1997/06/29 10:56:14 provos Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #include "krb_err.h"
 #include <kerberosIV/krb_db.h>
