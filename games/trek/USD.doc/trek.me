@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trek.me,v 1.3 2000/12/21 04:53:36 pjanzen Exp $
+.\"	$OpenBSD: trek.me,v 1.4 2000/12/21 10:14:48 pjanzen Exp $
 .\"	$NetBSD: trek.me,v 1.2 1995/04/22 10:59:49 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -314,7 +314,6 @@ K	the villain
 	a black hole
 .in -12
 .fi
-.ev
 .pp
 The name of the starsystem is listed underneath
 the short range scan.
@@ -426,44 +425,27 @@ that surround the quadrant
 you're in.
 A sample long range scan follows:
 .sp
-.ev 1
 .in +12
 Long range scan for quadrant 0,3
-.sp
-.ie t \{\
 .TS
-l1 c1 ce1 c1 ce1 c1 ce1 c0
-l1 l s s s s s s s0
-l1 c1 ce1 c1 ce1 c1 ce1 c0
-l1 l s s s s s s s0.
-		2		3		4
-	_
-	!	*	!	*	!	*	!
-	_
-.T&
-l1 c1 re1 c1 re1 c1 re1 c0
-l1 l s s s s s s s0
-l1 c1 re1 c1 re1 c1 re1 c0
-l1 l s s s s s s s0.
-0	!	108	!	6	!	19	!
-	_
-1	!	9	!	///	!	8	!
-	_
+l   ce  ce  ce
+l | _ | _ | _ |
+l | c | c | c |
+l | _ | _ | _ |
+l | r | r | r |
+l | _ | _ | _ |
+l | r | r | r |
+l | _ | _ | _ |.
+	2	3	4
+
+	*	*	*
+
+0	108	6	19
+
+1	9	///	8
+
 .TE
-.\}
-.el \{\
-.nf
-     2     3     4
-  -------------------
-  !  *  !  *  !  *  !
-  -------------------
-0 ! 108 !   6 !  19 !
-  -------------------
-1 !   9 ! /// !   8 !
-  -------------------
-.fi
-.\}
-.ev
+.in -12
 .pp
 The three digit numbers
 tell the number of objects
