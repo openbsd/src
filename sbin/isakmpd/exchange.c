@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.49 2001/06/05 05:59:43 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.50 2001/06/05 10:14:56 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1684,7 +1684,7 @@ exchange_establish (char *name,
 	  name = strdup (name);
 	  if (!name)
 	    {
-	      log_error ("exchange_establish: strdup(\"%s\") failed", name);
+	      log_error ("exchange_establish: strdup (\"%s\") failed", name);
 	      return;
 	    }
 
