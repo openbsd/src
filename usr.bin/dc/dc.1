@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.9 2003/10/18 21:00:17 jmc Exp $
+.\"	$OpenBSD: dc.1,v 1.10 2003/10/19 18:39:13 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -134,19 +134,44 @@ This is a shorthand for the sequence:
 x y / x y %
 .Ed
 The division and modulus operator is a non-portable extension.
-.It Ic s Ns Ar x
+.It Ic c
+All values on the stack are popped.
+.It Ic d
+The top value on the stack is duplicated.
+.It Ic f
+All values on the stack are printed, separated by newlines.
+.It Ic i
+The top value on the stack is popped and used as the
+base for further input.
+The initial input base is 10.
+.It Ic I
+Pushes the input base on the top of the stack.
+.It Ic J
+Pop the top value of the stack.
+The recursion level is popped by that value and, following that,
+the input is skipped until the first occurrence of the
+.Ic M
+operator.
 The
-top of the stack is popped and stored into
-a register named
-.Ar x ,
-where
+.Ic J
+operator is a non-portable extensions, used by the
+.Xr bc 1
+command.
+.It Ic K
+The current scale factor is pushed onto the stack.
+.It Ic k
+The top of the stack is popped, and that value is used as
+a non-negative scale factor:
+the appropriate number of places
+are printed on output,
+and maintained during multiplication, division, and exponentiation.
+The interaction of scale factor,
+input base, and output base will be reasonable if all are changed
+together.
+.It Ic L Ns Ar x
+Register
 .Ar x
-may be any character, including space, tab or any other special character.
-If the
-.Ic s
-is capitalized,
-.Ar x
-is treated as a stack and the value is pushed on it.
+is treated as a stack and its top value is popped onto the main stack.
 .It Ic l Ns Ar x
 The
 value in register
@@ -156,17 +181,21 @@ The register
 .Ar x
 is not altered.
 Initially, all registers contain the value zero.
-If the
-.Ar l
-is capitalized,
-register
-.Ar x
-is treated as a stack and its top value is popped onto the main stack.
-.It Ic d
-The top value on the stack is duplicated.
-.It Ic p
-The top value on the stack is printed with a trailing newline.
-The top value remains unchanged.
+.It Ic M
+Mark used by the
+.Ic J
+operator.
+The
+.Ic M
+operator is a non-portable extensions, used by the
+.Xr bc 1
+command.
+.It Ic O
+Pushes the output base on the top of the stack.
+.It Ic o
+The top value on the stack is popped and used as the
+base for further output.
+The initial output base is 10.
 .It Ic P
 The top of the stack is popped.
 If the top of the stack is a string, it is printed without a trailing newline.
@@ -175,25 +204,48 @@ base 256 number, and each digit of this base 256 number is printed as
 an
 .Tn ASCII
 character, without a trailing newline.
-.It Ic f
-All values on the stack are printed, separated by newlines.
+.It Ic p
+The top value on the stack is printed with a trailing newline.
+The top value remains unchanged.
+.It Ic Q
+The top value on the stack is popped and the string execution level is popped
+by that value.
 .It Ic q
 Exits the program.
 If executing a string, the recursion level is
 popped by two.
-If
-.Ic q
-is capitalized,
-the top value on the stack is popped and the string execution level is popped
-by that value.
+.It Ic S Ns Ar x
+Register
+.Ar x
+is treated as a stack.
+The top value of the main stack is popped and pushed on it.
+.It Ic s Ns Ar x
+The
+top of the stack is popped and stored into
+a register named
+.Ar x ,
+where
+.Ar x
+may be any character, including space, tab or any other special character.
+.It Ic v
+Replaces the top element on the stack by its square root.
+The scale of the result is the maximum of the scale of the argument
+and the current value of scale.
+.It Ic X
+Replaces the number on the top of the stack with its scale factor.
+If the top of the stack is a string, replace it with the integer 0.
 .It Ic x
 Treats the top element of the stack as a character string
 and executes it as a string of
 .Nm
 commands.
-.It Ic X
-Replaces the number on the top of the stack with its scale factor.
-If the top of the stack is a string, replace it with the integer 0.
+.It Ic Z
+Replaces the number on the top of the stack with its length.
+The length of a string is its number of characters.
+The length of a number is its number of digits, not counting the minus sign
+and decimal point.
+.It Ic z
+The stack level is pushed onto the stack.
 .It Cm [ Ns ... Ns Cm ]
 Puts the bracketed
 .Tn ASCII
@@ -217,46 +269,10 @@ Register
 .Ar x
 is executed if they obey the stated
 relation.
-.It Ic v
-Replaces the top element on the stack by its square root.
-The scale of the result is the maximum of the scale of the argument
-and the current value of scale.
 .It Ic \&!
 Interprets the rest of the line as a
 .Ux
 command.
-.It Ic c
-All values on the stack are popped.
-.It Ic i
-The top value on the stack is popped and used as the
-base for further input.
-The initial input base is 10.
-.Ic I
-Pushes the input base on the top of the stack.
-.It Ic o
-The top value on the stack is popped and used as the
-base for further output.
-The initial output base is 10.
-.It Ic O
-Pushes the output base on the top of the stack.
-.It Ic k
-The top of the stack is popped, and that value is used as
-a non-negative scale factor:
-the appropriate number of places
-are printed on output,
-and maintained during multiplication, division, and exponentiation.
-The interaction of scale factor,
-input base, and output base will be reasonable if all are changed
-together.
-.It Ic K
-The current scale factor is pushed onto the stack.
-.It Ic z
-The stack level is pushed onto the stack.
-.It Ic Z
-Replaces the number on the top of the stack with its length.
-The length of a string is its number of characters.
-The length of a number is its number of digits, not counting the minus sign
-and decimal point.
 .It Ic \&?
 A line of input is taken from the input source (usually the terminal)
 and executed.
@@ -290,23 +306,6 @@ since the string
 is written in an array that is later popped, to reveal the array that
 stored
 .Ql first .
-.It Ic J
-Pop the top value of the stack.
-The recursion level is popped by that value and, following that,
-the input is skipped until the first occurrence of the
-.Ic M
-operator.
-.It Ic M
-Mark used by the
-.Ic J
-operator.
-The
-.Ic J
-and
-.Ic M
-operators are non-portable extensions, used by the
-.Xr bc 1
-command.
 .El
 .Sh EXAMPLES
 An example which prints the first ten values of
