@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rlog.c,v $
+ * Revision 1.3  1996/05/31 13:11:11  deraadt
+ * on second thought, trash -Z option. LOCALID now comes from $RCSLOCALID
+ *
  * Revision 1.2  1996/05/07 12:03:44  mickey
  * change -L option name to -Z, note that in
  * co(1) manual, add -Z where were missed.
@@ -219,7 +222,7 @@ static struct lockers *lockerlist;
 static struct stateattri *statelist;
 
 
-mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.2 1996/05/07 12:03:44 mickey Exp $")
+mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.3 1996/05/31 13:11:11 deraadt Exp $")
 {
 	static char const cmdusage[] =
 		"\nrlog usage: rlog -{bhLNRt} -ddates -l[lockers] -r[revs] -sstates -Vn -w[logins] -xsuff -zzone -ZlocalId file ...";
@@ -316,11 +319,6 @@ mainProg(rlogId, "rlog", "$Id: rlog.c,v 1.2 1996/05/07 12:03:44 mickey Exp $")
 
 		case 'V':
 			setRCSversion(*argv);
-			break;
-
-		case 'Z':
-			/* add local Id keyword */
-			setRCSlocalId(a);
 			break;
 
                 default:

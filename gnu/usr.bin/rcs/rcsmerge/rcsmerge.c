@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsmerge.c,v $
+ * Revision 1.3  1996/05/31 13:11:11  deraadt
+ * on second thought, trash -Z option. LOCALID now comes from $RCSLOCALID
+ *
  * Revision 1.2  1996/05/07 12:03:37  mickey
  * change -L option name to -Z, note that in
  * co(1) manual, add -Z where were missed.
@@ -120,7 +123,7 @@ Report problems and direct all questions to:
 
 static char const co[] = CO;
 
-mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.2 1996/05/07 12:03:37 mickey Exp $")
+mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.3 1996/05/31 13:11:11 deraadt Exp $")
 {
 	static char const cmdusage[] =
 		"\nrcsmerge usage: rcsmerge -rrev1 [-rrev2] -ksubst -{pq}[rev] -Vn -xsuff -zzone -ZlocalId file";
@@ -193,9 +196,7 @@ mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.2 1996/05/07 12:03:37 mick
 			versionarg = *argv;
 			setRCSversion(versionarg);
 			break;
-		case 'Z':
-			setRCSlocalId(a);
-			break;
+
 		case 'k':
 			expandarg = *argv;
 			if (0 <= str2expmode(expandarg+2))

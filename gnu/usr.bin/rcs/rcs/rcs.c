@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcs.c,v $
+ * Revision 1.3  1996/05/31 13:11:08  deraadt
+ * on second thought, trash -Z option. LOCALID now comes from $RCSLOCALID
+ *
  * Revision 1.2  1996/05/07 12:03:21  mickey
  * change -L option name to -Z, note that in
  * co(1) manual, add -Z where were missed.
@@ -274,7 +277,7 @@ static struct delrevpair delrev;
 static struct hshentry *cuthead, *cuttail, *delstrt;
 static struct hshentries *gendeltas;
 
-mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.2 1996/05/07 12:03:21 mickey Exp $")
+mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.3 1996/05/31 13:11:08 deraadt Exp $")
 {
 	static char const cmdusage[] =
 		"\nrcs usage: rcs -{ae}logins -Afile -{blu}[rev] -cstring -{iILqTU} -ksubst -mrev:msg -{nN}name[:[rev]] -orange -sstate[:rev] -t[text] -Vn -xsuff -zzone -ZlocalId file ...";
@@ -467,10 +470,6 @@ mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.2 1996/05/07 12:03:21 mickey Exp $")
 
 		case 'z':
 			zone_set(a);
-			break;
-
-		case 'Z':
-			setRCSlocalId(a);
 			break;
 
 		case 'k':    /*  set keyword expand mode  */

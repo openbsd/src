@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
+ * Revision 1.4  1996/05/31 13:11:10  deraadt
+ * on second thought, trash -Z option. LOCALID now comes from $RCSLOCALID
+ *
  * Revision 1.3  1996/05/07 12:03:33  mickey
  * change -L option name to -Z, note that in
  * co(1) manual, add -Z where were missed.
@@ -157,7 +160,7 @@ static int exitstatus;
 static RILE *workptr;
 static struct stat workstat;
 
-mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1996/05/07 12:03:33 mickey Exp $")
+mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.4 1996/05/31 13:11:10 deraadt Exp $")
 {
     static char const cmdusage[] =
 	    "\nrcsdiff usage: rcsdiff -ksubst -q -rrev1 [-rrev2] -Vn -xsuff -zzone -ZlocalId [diff options] file ...";
@@ -263,9 +266,6 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1996/05/07 12:03:33 mickey 
 	    case 'V':
 		    versionarg = *argv;
 		    setRCSversion(versionarg);
-		    goto option_handled;
-	    case 'Z':
-		    setRCSlocalId(*argv + 2);
 		    goto option_handled;
 	    case 'k':
 		    expandarg = *argv;
