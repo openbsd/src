@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.1 1996/08/08 02:07:22 downsj Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.2 1996/08/08 04:37:02 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -45,6 +45,22 @@ void usage()
     errx(1, "usage: %s [-m] [-s salt] [string]", __progname);
 }
 
+char *trim(line)
+    char *line;
+{
+    char *ptr;
+
+    for (ptr = &line[strlen(line)-1]; ptr > line; ptr--) {
+        if (!isspace(*ptr))
+	    break;
+    }
+    ptr[1] = '\0';
+
+    for (ptr = line; *ptr && isspace(*ptr); ptr++);
+
+    return(ptr);
+}
+
 int main(argc, argv)
     int argc;
     char *argv[];
@@ -73,18 +89,16 @@ int main(argc, argv)
 	usage();
 
     if ((argc - optind) < 1) {
-    	char line[BUFSIZ];
+    	char line[BUFSIZ], *string;
 
     	/* Encrypt stdin to stdout. */
 	while (!feof(stdin) && (fgets(line, sizeof(line), stdin) != NULL)) {
-	    if ((line[0] == '\0') || (line[0] == '\n'))
+	    /* Kill the whitesapce. */
+	    string = trim(line);
+	    if (*string == '\0')
 	    	continue;
 
-	    /* Kill the newline. */
-	    if (line[strlen(line)] == '\n')
-	    	line[strlen(line)] = '\0';
-
-	    fputs(crypt(line, (do_md5 ? "$1$" : salt)), stdout);
+	    fputs(crypt(string, (do_md5 ? "$1$" : salt)), stdout);
 	    fputc('\n', stdout);
 	}
     } else {

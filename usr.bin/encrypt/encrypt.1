@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.2 1996/08/08 02:10:20 downsj Exp $
+.\"	$OpenBSD: encrypt.1,v 1.3 1996/08/08 04:37:01 downsj Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -58,6 +58,10 @@ is specified,
 reads one string per line from standard input, encrypting each one with
 the same
 .Ar salt .
+Specifing the 
+.Ar string
+on the command line should be discouraged; using the
+standard input is more secure.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr adduser 8
