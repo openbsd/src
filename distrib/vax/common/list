@@ -1,4 +1,8 @@
-#	$OpenBSD: list,v 1.4 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.5 2002/04/30 07:23:30 deraadt Exp $
+
+SRCDIRS distrib/special
+SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS sys/arch/vax/stand
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
@@ -44,7 +48,6 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/tar
 LINK	instbin					usr/sbin/chown
 # LINK	instbin					usr/sbin/bad144
-SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

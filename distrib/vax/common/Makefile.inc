@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2002/04/28 18:28:34 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/30 07:23:29 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,7 +15,7 @@ BOOTSYS=	bootroot-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
-CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
+CRUNCHCONF=	${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
 
 all: ${CBIN} bootroot
@@ -28,6 +28,7 @@ all: ${CBIN} bootroot
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -55,6 +56,9 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND} ${IMAGE}
 	-/bin/rm -f ${IMAGE}
+
+${CRUNCHCONF}: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../ -L ${DESTDIR}/usr/lib ${.ALLSRC}
