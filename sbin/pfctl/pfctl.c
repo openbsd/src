@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.25 2001/07/01 16:58:51 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.26 2001/07/03 12:10:45 ho Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -51,22 +51,23 @@
 #define PF_OPT_ENABLE		0x0002
 #define PF_OPT_VERBOSE		0x0004
 #define PF_OPT_NOACTION		0x0008
+#define PF_OPT_QUIET		0x0010
 
 void	 usage(void);
 char	*load_file(char *, size_t *);
-int	 pfctl_enable(int);
-int	 pfctl_disable(int);
-int	 pfctl_clear_stats(int);
-int	 pfctl_clear_rules(int);
-int	 pfctl_clear_nat(int);
-int	 pfctl_clear_states(int);
+int	 pfctl_enable(int, int);
+int	 pfctl_disable(int, int);
+int	 pfctl_clear_stats(int, int);
+int	 pfctl_clear_rules(int, int);
+int	 pfctl_clear_nat(int, int);
+int	 pfctl_clear_states(int, int);
 int	 pfctl_show_rules(int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t);
 int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_nat(int, char *, int);
-int	 pfctl_log(int, char *);
+int	 pfctl_log(int, char *, int);
 
 int	 opts = 0;
 char	*clearopt;
@@ -78,7 +79,7 @@ char	*showopt;
 void
 usage()
 {
-	fprintf(stderr, "usage: pfctl [-denvh] [-F set] [-l interface] ");
+	fprintf(stderr, "usage: pfctl [-dehnqv] [-F set] [-l interface] ");
 	fprintf(stderr, "[-N file] [-R file] [-s set]\n");
 	exit(1);
 }
@@ -151,7 +152,7 @@ load_file(char *name, size_t *len)
 }
 
 int
-pfctl_enable(int dev)
+pfctl_enable(int dev, int opts)
 {
 	if (ioctl(dev, DIOCSTART)) {
 		if (errno == EEXIST)
@@ -159,12 +160,13 @@ pfctl_enable(int dev)
 		else
 			err(1, "DIOCSTART");
 	}
-	printf("pf enabled\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("pf enabled\n");
 	return (0);
 }
 
 int
-pfctl_disable(int dev)
+pfctl_disable(int dev, int opts)
 {
 	if (ioctl(dev, DIOCSTOP)) {
 		if (errno == ENOENT)
@@ -172,21 +174,23 @@ pfctl_disable(int dev)
 		else
 			err(1, "DIOCSTOP");
 	}
-	printf("pf disabled\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("pf disabled\n");
 	return (0);
 }
 
 int
-pfctl_clear_stats(int dev)
+pfctl_clear_stats(int dev, int opts)
 {
 	if (ioctl(dev, DIOCCLRSTATUS))
 		err(1, "DIOCCLRSTATUS");
-	printf("pf: statistics cleared\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("pf: statistics cleared\n");
 	return (0);
 }
 
 int
-pfctl_clear_rules(int dev)
+pfctl_clear_rules(int dev, int opts)
 {
 	struct pfioc_rule pr;
 
@@ -194,12 +198,13 @@ pfctl_clear_rules(int dev)
 		err(1, "DIOCBEGINRULES");
 	else if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 		err(1, "DIOCCOMMITRULES");
-	printf("rules cleared\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("rules cleared\n");
 	return (0);
 }
 
 int
-pfctl_clear_nat(int dev)
+pfctl_clear_nat(int dev, int opts)
 {
 	struct pfioc_nat pn;
 	struct pfioc_rdr pr;
@@ -212,16 +217,18 @@ pfctl_clear_nat(int dev)
 		err(1, "DIOCBEGINRDRS");
 	else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 		err(1, "DIOCCOMMITRDRS");
-	printf("nat cleared\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("nat cleared\n");
 	return (0);
 }
 
 int
-pfctl_clear_states(int dev)
+pfctl_clear_states(int dev, int opts)
 {
 	if (ioctl(dev, DIOCCLRSTATES))
 		err(1, "DIOCCLRSTATES");
-	printf("states cleared\n");
+	if ((opts && PF_OPT_QUIET) == 0)
+		printf("states cleared\n");
 	return (0);
 }
 
@@ -332,7 +339,8 @@ pfctl_rules(int dev, char *filename, int opts)
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 			err(1, "DIOCCOMMITRULES");
-		printf("%u rules loaded\n", n);
+		if ((opts && PF_OPT_QUIET) == 0)
+			printf("%u rules loaded\n", n);
 	}
 	return (0);
 }
@@ -389,22 +397,25 @@ pfctl_nat(int dev, char *filename, int opts)
 			err(1, "DIOCCOMMITNATS");
 		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 			err(1, "DIOCCOMMITRDRS");
-		printf("%u nat entries loaded\n", n);
-		printf("%u rdr entries loaded\n", r);
+		if ((opts & PF_OPT_QUIET) == 0) {
+			printf("%u nat entries loaded\n", n);
+			printf("%u rdr entries loaded\n", r);
+		}
 	}
 	free(buf);
 	return (0);
 }
 
 int
-pfctl_log(int dev, char *ifname)
+pfctl_log(int dev, char *ifname, int opts)
 {
 	struct pfioc_if pi;
 
 	strncpy(pi.ifname, ifname, 16);
 	if (ioctl(dev, DIOCSETSTATUSIF, &pi))
 		err(1, "DIOCSETSTATUSIF");
-	printf("now logging %s\n", pi.ifname);
+	if ((opts & PF_OPT_QUIET) == 0)
+		printf("now logging %s\n", pi.ifname);
 	return (0);
 }
 
@@ -420,13 +431,16 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deF:hl:nN:R:s:v")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
 			break;
 		case 'e':
 			opts |= PF_OPT_ENABLE;
+			break;
+		case 'q':
+			opts |= PF_OPT_QUIET;
 			break;
 		case 'F':
 			clearopt = optarg;
@@ -461,29 +475,29 @@ main(int argc, char *argv[])
 		err(1, "open(\"/dev/pf\")");
 
 	if (opts & PF_OPT_DISABLE)
-		if (pfctl_disable(dev))
+		if (pfctl_disable(dev, opts))
 			error = 1;
 
 	if (clearopt != NULL) {
 		
 		switch (*clearopt) {
 		case 'r':
-			pfctl_clear_rules(dev);
+			pfctl_clear_rules(dev, opts);
 			break;
 		case 'n':
-			pfctl_clear_nat(dev);
+			pfctl_clear_nat(dev, opts);
 			break;
 		case 's':
-			pfctl_clear_states(dev);
+			pfctl_clear_states(dev, opts);
 			break;
 		case 'i':
-			pfctl_clear_stats(dev);
+			pfctl_clear_stats(dev, opts);
 			break;
 		case 'a':
-			pfctl_clear_rules(dev);
-			pfctl_clear_nat(dev);
-			pfctl_clear_states(dev);
-			pfctl_clear_stats(dev);
+			pfctl_clear_rules(dev, opts);
+			pfctl_clear_nat(dev, opts);
+			pfctl_clear_states(dev, opts);
+			pfctl_clear_stats(dev, opts);
 			break;
 		default:
 			warnx("Unknown flush modifier '%s'", clearopt);
@@ -526,11 +540,11 @@ main(int argc, char *argv[])
 	}
 
 	if (logopt != NULL)
-		if (pfctl_log(dev, logopt))
+		if (pfctl_log(dev, logopt, opts))
 			error = 1;
 
 	if (opts & PF_OPT_ENABLE)
-		if (pfctl_enable(dev))
+		if (pfctl_enable(dev, opts))
 			error = 1;
 
 	close(dev);
