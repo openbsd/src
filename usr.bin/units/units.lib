@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.9 2002/03/26 15:37:27 jason Exp $
+/ $OpenBSD: units.lib,v 1.10 2002/05/31 08:13:44 pjanzen Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -249,56 +249,59 @@ cd			candela
 lumen			cd sr
 lux			cd sr/m2
 
-/ Wall Street Journal, June 10, 1999, with rounding
+/ http://www.federalreserve.gov/releases/h10/update/ as of May 30, 2002
+/ with rounding
 
 $			dollar
-argentinapeso		$
-australiadollar		.66 $
-bahraindinar		2.6522 $
-brazilreal		.57 $
-britainpound		1.60 $
-canadadollar		.68 $
-chilepeso		.002 $
+australiadollar		.5645 $
+brazilreal		.3981 $
+britainpound		1.4655 $
+canadadollar		.652 $
 chinarenminbi		.1208 $
 chinayuan		chinarenminbi
-colombiapeso		.000596 $
-czechkoruna		.028 $
-denmarkkrone		.14 $
-ecuadorsucre		.000093 $
+denmarkkrone		.126 $
 greatbritainpound	britainpound
-greecedrachma		.00323 $
 hongkongdollar		.13  $
-hungaryforint		.0042 $
-indiarupee		.02326 $
-indonesiarupiah		.000129 $
-israelshekel		.245 $
-japanyen		.0084 $
-jordandinar		1.41 $
-kuwaitdinar		3.27 $
-lebanonpound		.000663 $
+indiarupee		.0204 $
+japanyen		.0081 $
 malaysiaringgit		.263 $
-maltalira		2.48 $
-mexicopeso		.1044 $
-newzealanddollar	.538 $
-norwaykrone		.128 $
-pakistanrupee		.0193 $
-perunewsol		.298 $
-philippinespeso		.0264 $
-polandzloty		.254 $
+mexicopeso		.103 $
+newzealanddollar	.477 $
+norwaykrone		.126 $
+singaporedollar		.560 $
+southafricarand		.103 $
+southkoreawon		.00082 $
+srilankarupee		.0104 $
+swedenkrona		.1029 $
+switzerlandfranc	.64 $
+taiwandollar		.0294 $
+thailandbaht		.02357 $
+venezuelabolivar	.00086 $
+euro			0.937 $
+
+/ Wall Street Journal, May 30 2002
+
+/ argentinapeso		$  XXX not stable
+bahraindinar		2.6525 $
+chilepeso		.0015 $
+colombiapeso		.000430 $
+czechkoruna		.0306 $
+hungaryforint		.00384 $
+indonesiarupiah		.000113 $
+israelshekel		.202 $
+jordandinar		1.41 $
+kuwaitdinar		3.28 $
+lebanonpound		.000661 $
+maltalira		2.28 $
+pakistanrupee		.0167 $
+perunewsol		.288 $
+philippinespeso		.0200 $
+polandzloty		.248 $
 saudiarabiariyal	.2666 $
-singaporedollar		.583 $
-slovakkoruna		.0229 $
-southafricarand		.163 $
-southkoreawon		.00086 $
-swedenkrona		.118 $
-switzerlandfranc	.66 $
-taiwandollar		.0308 $
-thailandbaht		.02705 $
-turkeylira		.00000244 $
+slovakkoruna		.0214 $
+turkeylira		.00000070 $
 unitedarabdirham	.2723 $
-uruguaynewpeso		.0889 $
-venezuelabolivar	.00166 $
-euro			1.05 $
+uruguaypeso		.0599 $
 
 / EMU currencies have constant exchange rate against Euro since 1.1.1999
 austriaschilling	1|13.7603 euro
@@ -306,8 +309,10 @@ belgiumfranc		1|40.3399 euro
 finlandmarkka		1|5.94573 euro
 francefranc		1|6.55957 euro
 germanymark		1|1.95583 euro
+greecedrachma		1|340.750 euro
 irelandpunt		1|0.787564 euro
 italylira		1|1936.27 euro
+luxembourgfranc	1|40.3399 euro
 netherlandsguilder	1|2.20371 euro
 portugalescudo		1|200.482 euro
 spainpeseta		1|166.386 euro
@@ -511,6 +516,7 @@ jansky			1e-26 W/m2-Hz
 jeroboam		4|5 gal
 Jy			jansky
 karat			1|24
+kayser			/cm
 kcal			kilocal
 kcalorie		kilocal
 key			kg
