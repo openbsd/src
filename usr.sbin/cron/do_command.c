@@ -1,28 +1,28 @@
-/*	$OpenBSD: do_command.c,v 1.28 2004/06/06 23:56:26 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.29 2004/06/17 22:11:55 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.28 2004/06/06 23:56:26 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.29 2004/06/17 22:11:55 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -88,7 +88,7 @@ child_process(entry *e, user *u) {
 	 */
 	pipe(stdin_pipe);	/* child's stdin */
 	pipe(stdout_pipe);	/* child's stdout */
-	
+
 	/* since we are a forked process, we can diddle the command string
 	 * we were passed -- nobody else is going to use it again, right?
 	 *
@@ -243,7 +243,8 @@ child_process(entry *e, user *u) {
 #endif /* BSD */
 		if (setuid(e->pwd->pw_uid)) {
 			fprintf(stderr,
-			    "unable to set uid to %ld\n", (long)e->pwd->pw_uid);
+			    "unable to set uid to %lu\n",
+			    (unsigned long)e->pwd->pw_uid);
 			_exit(ERROR_EXIT);
 		}
 
@@ -389,7 +390,7 @@ child_process(entry *e, user *u) {
 			} else if (!*mailto || !safe_p(usernm, mailto)) {
 				mailto = NULL;
 			}
-		
+
 			/* if we are supposed to be mailing, MAILTO will
 			 * be non-NULL.  only in this case should we set
 			 * up the mail command and subjects and stuff...

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.12 2004/06/03 19:54:04 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.13 2004/06/17 22:11:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.12 2004/06/03 19:54:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.13 2004/06/17 22:11:55 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -386,7 +386,7 @@ run_job(atjob *job, char *atfile)
 	setproctitle("atrun %s", atfile);
 
 	pipe(output_pipe);	/* child's stdout/stderr */
-	
+
 	/* Fork again, child will run the job, parent will catch output. */
 	switch ((pid = fork())) {
 	case -1:
@@ -468,8 +468,8 @@ run_job(atjob *job, char *atfile)
 		setlogin(pw->pw_name);
 #endif
 		if (setuid(pw->pw_uid)) {
-			fprintf(stderr,
-			    "unable to set uid to %ld\n", (long)pw->pw_uid);
+			fprintf(stderr, "unable to set uid to %lu\n",
+			    (unsigned long)pw->pw_uid);
 			_exit(ERROR_EXIT);
 		}
 

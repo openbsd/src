@@ -1,20 +1,20 @@
-/*	$OpenBSD: macros.h,v 1.5 2003/02/28 16:32:09 mpech Exp $	*/
+/*	$OpenBSD: macros.h,v 1.6 2004/06/17 22:11:55 millert Exp $	*/
 
 /*
+ * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 	/* these are really immutable, and are
@@ -75,9 +75,6 @@
 			while (c!='\t' && c!=' ' && c!='\n' && c != EOF) \
 				c = get_char(f);
 
-#define	Skip_Line(c, f) \
-			do {c = get_char(f);} while (c != '\n' && c != EOF);
-
 #if DEBUGGING
 # define Debug(mask, message) \
 			if (DebugFlags & (mask)) \
@@ -87,7 +84,6 @@
 			;
 #endif /* DEBUGGING */
 
-#define	MkLower(ch)	(isupper(ch) ? tolower(ch) : ch)
 #define	MkUpper(ch)	(islower(ch) ? toupper(ch) : ch)
 #define	Set_LineNum(ln)	{Debug(DPARS|DEXT,("linenum=%d\n",ln)); \
 			 LineNumber = ln; \
