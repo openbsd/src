@@ -140,6 +140,7 @@
 ./usr/libdata/ldscripts/elf64_sparc.xr
 ./usr/libdata/ldscripts/elf64_sparc.xs
 ./usr/libdata/ldscripts/elf64_sparc.xu
+./usr/libdata/ldscripts/elf64_sparc.xz
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/usb/umidireg.ph
