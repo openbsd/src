@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.19 1997/05/30 07:11:52 deraadt Exp $
+#	$OpenBSD: daily,v 1.20 1997/09/15 06:24:24 pierre Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -118,8 +118,8 @@ then
 		echo "Not running calendar, (yp client)."
 	fi
 else
-	echo "Running calendar."
-	calendar -a
+	echo "Running calendar in the background."
+	calendar -a &
 fi
 
 # Rotation of mail log now handled automatically by cron and 'newsyslog'
