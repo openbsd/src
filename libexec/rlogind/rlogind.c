@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.21 1999/07/20 22:40:40 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.22 1999/11/15 01:03:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -169,7 +169,7 @@ main(argc, argv)
 #endif
 	fromlen = sizeof (from);
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
-		syslog(LOG_ERR,"Can't get peer name of remote host: %m");
+		/* syslog(LOG_ERR,"Can't get peer name of remote host: %m"); */
 		fatal(STDERR_FILENO, "Can't get peer name of remote host", 1);
 	}
 	on = 1;
