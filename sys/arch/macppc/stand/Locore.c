@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.2 2001/09/05 22:32:39 deraadt Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.3 2001/10/01 22:44:26 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -571,6 +571,10 @@ setup()
 	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		_rtt();
+	if (stdout == 0) {
+		/* screen should be console, but it is not open */
+		stdout = OF_open("screen");
+	}
 }
 
 void
