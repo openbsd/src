@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.6 2003/06/23 14:39:14 mho Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.7 2003/07/15 19:22:16 deraadt Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -128,6 +128,8 @@ MLINKS+=krb5_keytab.3 krb5_kt_start_seq_get.3
 MAN+=	krb5_parse_name.3
 
 MAN+=	krb5_unparse_name.3
+
+MAN+=	com_err.3
 
 MAN+=	krb5_verify_user.3
 MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
