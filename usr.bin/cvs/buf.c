@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.6 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: buf.c,v 1.7 2004/12/08 21:11:07 djm Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "buf.h"
 #include "log.h"
@@ -370,24 +371,16 @@ cvs_buf_peek(BUF *b, size_t off)
 
 
 /*
- * cvs_buf_write()
+ * cvs_buf_write_fd()
  *
- * Write the contents of the buffer <b> to the file whose path is given in
- * <path>.  If the file does not exist, it is created with mode <mode>.
+ * Write the contents of the buffer <b> to the specified <fd>
  */
 int
-cvs_buf_write(BUF *b, const char *path, mode_t mode)
+cvs_buf_write_fd(BUF *b, int fd)
 {
-	int fd;
 	u_char *bp;
 	size_t len;
 	ssize_t ret;
-
-	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open file `%s'", path);
-		return (-1);
-	}
 
 	len = b->cb_len;
 	bp = b->cb_cur;
@@ -395,9 +388,8 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 	do {
 		ret = write(fd, bp, MIN(len, 8192));
 		if (ret == -1) {
-			cvs_log(LP_ERRNO, "failed to write to file `%s'", path);
-			(void)close(fd);
-			(void)unlink(path);
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
 			return (-1);
 		}
 
@@ -405,11 +397,69 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 		bp += (size_t)ret;
 	} while (len > 0);
 
-	(void)close(fd);
-
 	return (0);
 }
 
+/*
+ * cvs_buf_write()
+ *
+ * Write the contents of the buffer <b> to the file whose path is given in
+ * <path>.  If the file does not exist, it is created with mode <mode>.
+ */
+
+int
+cvs_buf_write(BUF *b, const char *path, mode_t mode)
+{
+	int ret, fd;
+
+	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
+	if (fd == -1) {
+		cvs_log(LP_ERRNO, "failed to open file `%s': %s", 
+		    path, strerror(errno));
+		return (-1);
+	}
+
+	ret = cvs_buf_write_fd(b, fd);
+	if (ret == -1) {
+		cvs_log(LP_ERRNO, "failed to write to file `%s': %s", 
+		    path, strerror(errno));
+		(void)unlink(path);
+	}
+	(void)close(fd);
+
+	return (ret);
+}
+
+/*
+ * cvs_buf_write_stmp()
+ *
+ * Write the contents of the buffer <b> to a temporary file whose path is 
+ * specified using <template> (see mkstemp.3). NB. This function will modify
+ * <template>, as per mkstemp
+ */
+
+int
+cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
+{
+	int ret, fd;
+
+	fd = mkstemp(template);
+	if (fd == -1) {
+		cvs_log(LP_ERRNO, "failed to mkstemp file `%s': %s", 
+		    template, strerror(errno));
+		return (-1);
+	}
+
+	ret = cvs_buf_write_fd(b, fd);
+	if (ret == -1) {
+		cvs_log(LP_ERRNO, "failed to write to temp file `%s': %s", 
+		    template, strerror(errno));
+		(void)unlink(template);
+	}
+	(void)close(fd);
+
+	return (ret);
+}
 
 /*
  * cvs_buf_grow()

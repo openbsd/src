@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.3 2004/07/14 03:33:53 vincent Exp $	*/
+/*	$OpenBSD: buf.h,v 1.4 2004/12/08 21:11:07 djm Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,19 +48,21 @@
 typedef struct cvs_buf BUF;
 
 
-BUF*         cvs_buf_alloc   (size_t, u_int);
-BUF*         cvs_buf_load    (const char *, u_int);
-void         cvs_buf_free    (BUF *);
-void*        cvs_buf_release (BUF *);
-void         cvs_buf_empty   (BUF *);
-ssize_t      cvs_buf_copy    (BUF *, size_t, void *, size_t);
-int          cvs_buf_set     (BUF *, const void *, size_t, size_t);
-ssize_t      cvs_buf_append  (BUF *, const void *, size_t);
-int          cvs_buf_fappend (BUF *, const char *, ...);
-int          cvs_buf_putc    (BUF *, int);
-size_t       cvs_buf_size    (BUF *);
-const void*  cvs_buf_peek    (BUF *, size_t);
-int          cvs_buf_write   (BUF *, const char *, mode_t);
+BUF*         cvs_buf_alloc     (size_t, u_int);
+BUF*         cvs_buf_load      (const char *, u_int);
+void         cvs_buf_free      (BUF *);
+void*        cvs_buf_release   (BUF *);
+void         cvs_buf_empty     (BUF *);
+ssize_t      cvs_buf_copy      (BUF *, size_t, void *, size_t);
+int          cvs_buf_set       (BUF *, const void *, size_t, size_t);
+ssize_t      cvs_buf_append    (BUF *, const void *, size_t);
+int          cvs_buf_fappend   (BUF *, const char *, ...);
+int          cvs_buf_putc      (BUF *, int);
+size_t       cvs_buf_size      (BUF *);
+const void*  cvs_buf_peek      (BUF *, size_t);
+int          cvs_buf_write_fd  (BUF *, int);
+int          cvs_buf_write     (BUF *, const char *, mode_t);
+int          cvs_buf_write_stmp(BUF *, char *, mode_t);
 
 #define cvs_buf_get(b)   cvs_buf_peek(b, 0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.11 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.12 2004/12/08 21:11:07 djm Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -472,6 +472,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 {
 	char *dir, *repo, buf[64];
 	char fpath[MAXPATHLEN], dfpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
@@ -585,9 +586,17 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (dap->rev2 != NULL)
 			printf(" -r%s", dap->rev2);
 		printf(" %s\n", diff_file);
-		cvs_buf_write(b1, "/tmp/diff1", 0600);
-		cvs_buf_write(b2, "/tmp/diff2", 0600);
-		cvs_diffreg("/tmp/diff1", "/tmp/diff2");
+		strlcpy(path_tmp1, "/tmp/diff1.XXXXXXXXXX", sizeof(path_tmp1));
+		if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1)
+			return (-1);
+		strlcpy(path_tmp2, "/tmp/diff2.XXXXXXXXXX", sizeof(path_tmp1));
+		if (cvs_buf_write_stmp(b2, path_tmp2, 0600) == -1) {
+			(void)unlink(path_tmp1);
+			return (-1);
+		}
+		cvs_diffreg(path_tmp1, path_tmp2);
+		(void)unlink(path_tmp1);
+		(void)unlink(path_tmp2);
 	}
 
 	cvs_ent_free(entp);
