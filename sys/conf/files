@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.272 2003/05/12 21:08:39 tedu Exp $
+#	$OpenBSD: files,v 1.273 2003/05/20 03:05:42 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -309,6 +309,10 @@ file	dev/usb/uhci.c			uhci	needs-flag
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
+# EHCI USB controller
+device	ehci: usbus
+file	dev/usb/ehci.c			ehci	needs-flag
+
 # radio devices, attaches to radio hardware driver
 device	radio
 attach	radio at radiobus
@@ -612,6 +616,12 @@ file msdosfs/msdosfs_fat.c		msdosfs
 file msdosfs/msdosfs_lookup.c		msdosfs
 file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
+file ntfs/ntfs_compr.c			ntfs
+file ntfs/ntfs_conv.c			ntfs
+file ntfs/ntfs_ihash.c			ntfs
+file ntfs/ntfs_subr.c			ntfs
+file ntfs/ntfs_vfsops.c			ntfs
+file ntfs/ntfs_vnops.c			ntfs
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
 file net/if.c

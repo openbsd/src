@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.65 2003/01/30 16:38:39 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.66 2003/05/20 03:05:42 tedu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -164,7 +164,17 @@
 #define	M_IP6RR		125	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	126	/* IPv6 Router Renumbering Ifid */
 #define	M_TEMP		127	/* misc temporary data buffers */
-#define M_LAST		128	/* Must be last type + 1 */
+
+#define	M_NTFSMNT	128	/* NTFS mount structure */
+#define	M_NTFSNTNODE	129	/* NTFS ntnode information */
+#define	M_NTFSFNODE	130	/* NTFS fnode information */
+#define	M_NTFSDIR	131	/* NTFS dir buffer */
+#define	M_NTFSNTHASH	132	/* NTFS ntnode hash tables */
+#define	M_NTFSNTVATTR	133	/* NTFS file attribute information */
+#define	M_NTFSRDATA	134	/* NTFS resident data */
+#define	M_NTFSDECOMP	135	/* NTFS decompression temporary */
+#define	M_NTFSRUN	136	/* NTFS vrun storage */
+#define	M_LAST		137	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -280,6 +290,15 @@
 	"ip6rr",	/* 125 M_IP6RR */ \
 	"rp_addr",	/* 126 M_RR_ADDR */ \
 	"temp",		/* 127 M_TEMP */ \
+	"NTFS mount",	/* 128 M_NTFSMNT */ \
+	"NTFS node",	/* 129 M_NTFSNTNODE */ \
+	"NTFS fnode",	/* 130 M_NTFSFNODE */ \
+	"NTFS dir",	/* 131 M_NTFSDIR */ \
+	"NTFS hash tables",	/* 132 M_NTFSNTHASH */ \
+	"NTFS file attr",	/* 133 M_NTFSNTVATTR */ \
+	"NTFS resident data ",	/* 134 M_NTFSRDATA */ \
+	"NTFS decomp",	/* 135 M_NTFSDECOMP */ \
+	"NTFS vrun",	/* 136 M_NTFSRUN */ \
 }
 
 struct kmemstats {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.19 2003/05/12 21:06:00 tedu Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.20 2003/05/20 03:05:42 tedu Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -147,6 +147,10 @@ extern	struct vfsops ext2fs_vfsops;
 extern  struct vfsops xfs_vfsops;
 #endif
 
+#ifdef NTFS
+extern  struct vfsops ntfs_vfsops;
+#endif
+
 /*
  * Set up the filesystem operations for vnodes.
  */
@@ -230,6 +234,11 @@ static struct vfsconf vfsconflist[] = {
         { &kernfs_vfsops, MOUNT_KERNFS, 11, 0, 0, NULL, NULL },
 #endif
 
+	/* NTFS Filesystem */
+#ifdef NTFS
+	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL, NULL },
+#endif
+
 };
 
 
@@ -276,6 +285,7 @@ extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
 extern struct vnodeopv_desc xfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ntfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_opv_descs[] = {
 	&sync_vnodeop_opv_desc,
@@ -351,6 +361,9 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 #endif
 #ifdef XFS
 	&xfs_vnodeop_opv_desc,
+#endif
+#ifdef NTFS
+	&ntfs_vnodeop_opv_desc,
 #endif
 
 	NULL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.51 2003/05/06 20:52:59 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.52 2003/05/20 03:05:42 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -238,6 +238,25 @@ struct adosfs_args {
 };
 
 /*
+ * Arguments to mount ntfs filesystems
+ */
+
+struct ntfs_args {
+        char    *fspec;                 /* block special device to mount */
+        struct  export_args export;     /* network export information */
+        uid_t   uid;                    /* uid that owns ntfs files */
+        gid_t   gid;                    /* gid that owns ntfs files */
+        mode_t  mode;                   /* mask to be applied for ntfs perms */
+        u_long  flag;                   /* additional flags */
+};
+
+/*
+ * ntfs mount options:
+ */
+#define     NTFS_MFLAG_CASEINS      0x00000001
+#define     NTFS_MFLAG_ALLNAMES     0x00000002
+
+/*
  * file system statistics
  */
 
@@ -252,6 +271,7 @@ union mount_info {
 	struct iso_args iso_args;
 	struct msdosfs_args msdosfs_args;
 	struct adosfs_args adosfs_args;
+	struct ntfs_args ntfs_args;
 	char __align[160];	/* 64-bit alignment and room to grow */
 };
 
@@ -321,6 +341,7 @@ struct ostatfs {
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_XFS	"xfs"		/* xfs */
+#define	MOUNT_NTFS	"ntfs"		/* NTFS */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
