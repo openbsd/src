@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2002/01/03 16:20:55 jason Exp $
+#	$OpenBSD: GENERIC,v 1.36 2002/01/03 21:58:59 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -9,7 +9,6 @@ option		SUN4U
 option		_LP64
 
 option		PCIVERBOSE
-option		WSEMUL_SUN
 
 maxusers	64
 

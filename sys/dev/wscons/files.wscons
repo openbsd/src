@@ -1,4 +1,4 @@
-# $OpenBSD: files.wscons,v 1.5 2001/12/01 18:41:33 deraadt Exp $
+# $OpenBSD: files.wscons,v 1.6 2002/01/03 21:58:59 jason Exp $
 # $NetBSD: files.wscons,v 1.19 1999/12/12 08:17:28 scottr Exp $
 
 #
@@ -26,7 +26,6 @@ file	dev/wscons/wsdisplay.c			wsdisplay needs-flag
 file	dev/wscons/wsdisplay_compat_usl.c	wsdisplay & wsdisplay_compat_usl
 file	dev/wscons/wsemulconf.c			wsdisplay
 file	dev/wscons/wsemul_dumb.c		wsdisplay & wsemul_dumb
-file	dev/wscons/wsemul_sun.c			wsdisplay & wsemul_sun
 file	dev/wscons/wsemul_vt100.c		wsdisplay & !wsemul_no_vt100
 file	dev/wscons/wsemul_vt100_subr.c		wsdisplay & !wsemul_no_vt100
 file	dev/wscons/wsemul_vt100_chars.c		wsdisplay & !wsemul_no_vt100
@@ -45,3 +44,6 @@ file	dev/wscons/wscons_font8x16.c	wsrasteremulops
 
 pseudo-device	wsmux
 file	dev/wscons/wsmux.c			wsmux | wsdisplay needs-flag
+
+define	wsemul_sun
+file	dev/wscons/wsemul_sun.c			wsdisplay & wsemul_sun needs-flag

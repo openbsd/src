@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.22 2001/12/14 14:59:04 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.23 2002/01/03 21:58:59 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -19,12 +19,12 @@ device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme
 
 include "dev/sun/files.sun"
+include "dev/wscons/files.wscons"
 include "dev/sbus/files.sbus"
 include "dev/i2o/files.i2o"
 include "dev/mii/files.mii"
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
-include "dev/wscons/files.wscons"
 
 # COMPAT_NETBSD
 include "compat/netbsd/files.netbsd"
@@ -42,7 +42,7 @@ file	arch/sparc64/dev/pci_machdep.c		psycho
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
 
-device vgafb: wsemuldisplaydev, wsrasteremulops
+device vgafb: wsemuldisplaydev, wsrasteremulops, wsemul_sun
 attach vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
