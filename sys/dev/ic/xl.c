@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.42 2002/11/17 02:06:28 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.43 2002/11/17 02:34:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1453,6 +1453,12 @@ xl_txeof_90xB(sc)
 			cur_tx->xl_mbuf = NULL;
 		}
 
+		if (cur_tx->map->dm_nsegs != 0) {
+			bus_dmamap_sync(sc->sc_dmat, cur_tx->map,
+			    0, cur_tx->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, cur_tx->map);
+		}
+
 		ifp->if_opackets++;
 
 		sc->xl_cdata.xl_tx_cnt--;
@@ -1898,6 +1904,13 @@ int xl_encap_90xB(sc, c, m_head)
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
+
+	/* sync the old map, and unload it (if necessary) */
+	if (c->map->dm_nsegs != 0) {
+		bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, c->map);
+	}
 
 	c->xl_mbuf = m_head;
 	sc->sc_tx_sparemap = c->map;
