@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.16 2000/04/01 15:38:21 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.17 2000/07/07 13:28:58 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -33,7 +33,8 @@
  */
 
 /*
- * MPC106  PCI BUS Bridge driver.
+ * Generic PCI BUS Bridge driver.
+ * specialized hooks for different config methods.
  */
 
 #include <sys/param.h>
@@ -92,6 +93,15 @@ static int      mpcpcibrprint __P((void *, const char *pnp));
 
 struct pcibr_config mpc_config;
 
+/*
+ * config types
+ * bit meanings
+ * 0 - standard cf8/cfc type configurations,
+ *     sometimes the base addresses for these are different
+ * 1 - Config Method #2 configuration - uni-north
+ *
+ * 2 - 64 bit config bus, data for accesses &4 is at daddr+4;
+ */
 struct {
 	char * compat;
 	u_int32_t addr;	 /* offset */
@@ -99,7 +109,7 @@ struct {
 	int config_type;
 } config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
-	{"uni-north",		0x00800000, 0x00c00000, 1 },
+	{"uni-north",		0x00800000, 0x00c00000, 3 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
 	{NULL,			0x00000000, 0x00000000, 0 },
@@ -160,6 +170,8 @@ mpcpcibrmatch(parent, match, aux)
 	return found;
 }
 
+void fix_node_irq(int node, struct pcibus_attach_args *pba);
+
 int pci_map_a = 0;
 void
 mpcpcibrattach(parent, self, aux)
@@ -170,8 +182,9 @@ mpcpcibrattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
-	int map;
+	int map, node;
 	char *bridge;
+	int of_node = 0;
 
 	switch(system_type) {
 	case POWER4e:
@@ -328,17 +341,6 @@ mpcpcibrattach(parent, self, aux)
 			int i;
 			int len;
 
-#if 0
-			/* for powerstack boxes? */
-			struct ranges_old {
-				u_int32_t flags;
-				u_int32_t pad1;
-				u_int32_t pad2;
-				u_int32_t base;
-				u_int32_t size;
-			};
-			struct ranges_old porange = &range_store;
-#endif 
 			struct ranges_new {
 				u_int32_t flags;
 				u_int32_t pad1;
@@ -367,24 +369,6 @@ mpcpcibrattach(parent, self, aux)
 
 			lcp = sc->sc_pcibr = &sc->pcibr_config;
 
-#if 0			
-			/* powerstack boxes? */
-			if (strcmp(compat, "IBM,27-82660") {
-				sc->sc_membus_space.bus_base =
-					MPC106_P_PCI_MEM_SPACE;
-				sc->sc_membus_space.bus_reverse = 1;
-				sc->sc_iobus_space.bus_base =
-					MPC106_P_PCI_IO_SPACE;
-				sc->sc_iobus_space.bus_reverse = 1;
-				if ( bus_space_map(&(sc->sc_iobus_space), 0,
-					NBPG, 0, &lcp->ioh_cf8) != 0 )
-				{
-					panic("mpcpcibus: unable to"
-						" map self\n");
-				}
-				lcp->ioh_cfc = lcp->ioh_cf8;
-			} else
-#endif
 			{
 				int found;
 
@@ -442,6 +426,7 @@ mpcpcibrattach(parent, self, aux)
 					data_offset = config_offsets[i].data; 
 					lcp->config_type =
 						config_offsets[i].config_type;
+					break;
 				}
 			}
 			if (addr_offset == 0) {
@@ -449,8 +434,13 @@ mpcpcibrattach(parent, self, aux)
 					" compatible %s\n", compat);
 				return;
 			}
-			printf("found  mem base %x io base %x config addr %x config data %x\n",
-				sc->sc_membus_space.bus_base, sc->sc_iobus_space.bus_base, addr_offset, data_offset);
+#if 0
+			printf("found  mem base %x io base %x config addr %x"
+				" config data %x\n",
+				sc->sc_membus_space.bus_base,
+				sc->sc_iobus_space.bus_base,
+				addr_offset, data_offset);
+#endif
 
 
 
@@ -464,7 +454,9 @@ mpcpcibrattach(parent, self, aux)
 			{
 				panic("mpcpcibus: unable to map self\n");
 			}
+			of_node = ca->ca_node;
 		}
+
 
 		lcp->lc_pc.pc_conf_v = lcp;
 		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
@@ -483,7 +475,6 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-
 		printf(": %s, Revision %x. ", bridge, 
 			mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		break;
@@ -494,14 +485,152 @@ mpcpcibrattach(parent, self, aux)
 	}
 
 	pba.pba_dmat = &pci_bus_dma_tag;
+		
 
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iobus_space;
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+
+	/* we want to check pci irq settings */
+	if (of_node != 0) {
+		int nn;
+
+		for (node = OF_child(of_node); node; node = nn)
+		{
+			{
+				char name[32];
+				int len;
+				len = OF_getprop(node, "name", name,
+					sizeof(name));
+				name[len] = 0;
+#if 0
+				printf("checking node %s\n", name);
+#endif
+			}
+			fix_node_irq(node, &pba);
+
+			/* iterate section */
+			if ((nn = OF_child(node)) != 0) {
+				continue;
+			}
+			while ((nn = OF_peer(node)) == 0) {
+				node = OF_parent(node);
+				if (node == of_node) {
+					nn = 0; /* done */
+					break;
+				}
+			}
+		}
+	}
+
 	config_found(self, &pba, mpcpcibrprint);
 
+}
+                 
+#define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
+#define       OFW_PCI_PHYS_HI_BUSSHIFT        16
+#define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
+#define       OFW_PCI_PHYS_HI_DEVICESHIFT     11
+#define       OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
+#define       OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
+
+#define pcibus(x) \
+	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
+#define pcidev(x) \
+	(((x) & OFW_PCI_PHYS_HI_DEVICEMASK) >> OFW_PCI_PHYS_HI_DEVICESHIFT)
+#define pcifunc(x) \
+	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
+
+/* 
+ * Find PCI IRQ from OF
+ */
+int
+find_node_intr(node, addr, intr)
+	int node;
+	u_int32_t *addr, *intr;
+{
+	int parent, iparent, len, mlen;
+	int match, i;
+	u_int32_t map[64], *mp;
+	u_int32_t imask[8], maskedaddr[8];
+	u_int32_t icells;
+	char name [32];
+
+	len = OF_getprop(node, "AAPL,interrupts", intr, 4);
+	if (len == 4)
+		return 1;
+
+	parent = OF_parent(node);
+	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
+	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
+
+	if ((len == -1) || (mlen == -1))
+		goto nomap;
+	for (i = 0; i < (mlen / 4); i++) {
+		maskedaddr[i] = addr[i] & imask[i];
+	}
+	mp = map;
+	while (len > mlen) {
+		match = bcmp(maskedaddr, mp, mlen);
+		mp += mlen / 4;
+		len -= mlen;
+		iparent = *mp++;
+		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
+			return -1;
+
+		if (match == 0) {
+			/* multiple irqs? */
+			*intr = *mp;
+			return 1;
+		}
+		mp += icells;
+		len -= icells * 4;
+	}
+	return -1;
+nomap:
+	return -1;
+}
+
+void
+fix_node_irq(node, pba)
+	int node;
+	struct pcibus_attach_args *pba;
+{
+	struct { 
+		u_int32_t phys_hi, phys_mid, phys_lo;
+		u_int32_t size_hi, size_lo;
+	} addr [8];
+	int len;
+	pcitag_t tag;
+	u_int32_t irq;
+	u_int32_t intr;
+
+	pci_chipset_tag_t pc = pba->pba_pc;
+
+	len = OF_getprop(node, "assigned-addresses", addr, sizeof(addr));
+	if (len < sizeof(addr[0])) {
+		return;
+	}
+	tag = pci_make_tag(pc, pcibus(addr[0].phys_hi),
+		pcidev(addr[0].phys_hi),
+		pcifunc(addr[0].phys_hi));
+	/* program the interrupt line register with the value
+	 * found in openfirmware
+	 */
+	if (find_node_intr(node, &addr[0].phys_hi, &irq) == -1)
+		return;
+
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+#if 0
+	printf("changing interrupt from %d to %d\n",
+		intr & PCI_INTERRUPT_LINE_MASK,
+		irq & PCI_INTERRUPT_LINE_MASK);
+#endif
+	intr &= ~PCI_INTERRUPT_LINE_MASK;
+	intr |= irq & PCI_INTERRUPT_LINE_MASK;
+	pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
 }
 
 static int
@@ -624,7 +753,57 @@ mpc_decompose_tag(cpv, tag, busp, devp, fncp)
 		*fncp = (tag >> FNC_SHIFT) & 0x7;
 }
 
+static u_int32_t
+mpc_gen_config_reg(cpv, tag, offset)
+	void *cpv;
+	pcitag_t tag;
+	int offset;
+{
+	struct pcibr_config *cp = cpv;
+	unsigned int bus, dev, fcn;
+	u_int32_t reg;
+	/*
+	static int spin = 0;
+	while (spin > 85);
+	spin++;
+	*/
 
+	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+
+	if (cp->config_type & 1) {
+		/* Config Mechanism #2 */
+		if (bus == 0) {
+			if (dev < 11) {
+				return 0xffffffff;
+			}
+			/*
+			 * Need to do config type 0 operation
+			 *  1 << (11?+dev) | fcn << 8 | reg
+			 * 11? is because pci spec states
+			 * that 11-15 is reserved.
+			 */
+			reg = 1 << (dev) | fcn << 8 | offset;
+			
+		} else {
+			if (dev > 15) {
+			 return 0xffffffff;
+			}
+			/*
+			 * config type 1 
+			 */
+			reg =  tag  | offset | 1;
+
+		}
+	} else {
+		/* config mechanism #2, type 0
+		/* standard cf8/cfc config */
+		reg =  0x80000000 | tag  | offset;
+
+	}
+	return reg;
+}
+
+/* #define DEBUG_CONFIG  */
 pcireg_t
 mpc_conf_read(cpv, tag, offset)
 	void *cpv;
@@ -639,47 +818,22 @@ mpc_conf_read(cpv, tag, offset)
 	int s;
 	int handle; 
 	int daddr = 0;
-	unsigned int bus, dev, fcn;
 
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
 		printf ("pci_conf_read: bad reg %x\n", offset);
 		return(~0);
 	}
 
-	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
-
-	if ((cp->config_type & 1) && (bus == 0)) {
-		if (dev > (30 - 11)) {
-			return 0xffffffff;
-		}
-#if 0
-	printf(" bus %x dev %x fcn %x offset %x", bus, dev, fcn, offset);
-#endif
-		/*
-		 * Need to do config type 1 operation
-		 *  1 << (11+dev) | fcn << 8 | reg
-		 */
-		reg = 1 << (11+dev) | fcn << 8 | offset;
-		if ((cp->config_type & 2) && (offset & 0x4)) {
-			daddr += 4;
-		}
-		
-	} else {
-#if 0
-	printf(" bus %x dev %x fcn %x offset %x", bus, dev, fcn, offset);
-#endif
-		/* Config type 0 operation
-		 * 80000000 | tag | offset
-		 */
-		reg =  0x80000000 | tag  | offset;
-		if (bus != 0) {
-			reg |= 1;
-		}
-
+	reg = mpc_gen_config_reg(cpv, tag, offset);
+	/* if invalid tag, return -1 */
+	if (reg == 0xffffffff) {
+		return 0xffffffff;
 	}
-#if 0
-	printf(" daddr %x reg %x",daddr, reg);
-#endif
+
+	if ((cp->config_type & 2) && (offset & 0x04)) {
+		daddr += 4;
+	}
+
 	s = splhigh();
 
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
@@ -689,8 +843,15 @@ mpc_conf_read(cpv, tag, offset)
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
 	splx(s);
-#if 0
-	printf("data %x\n", data);
+#ifdef DEBUG_CONFIG
+	if (!((offset == 0) && (data == 0xffffffff))) {
+		unsigned int bus, dev, fcn;
+		mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+		printf("mpc_conf_read bus %x dev %x fcn %x offset %x", bus, dev, fcn,
+			offset);
+		printf(" daddr %x reg %x",daddr, reg);
+		printf(" data %x\n", data);
+	}
 #endif
 
 	return(data);
@@ -707,39 +868,33 @@ mpc_conf_write(cpv, tag, offset, data)
 	u_int32_t reg;
 	int s;
 	int handle; 
+	int daddr = 0;
 
-#if 0
-	printf("mpc_conf_write tag %x offset %x data %x\n", tag, offset, data);
-#endif
+	reg = mpc_gen_config_reg(cpv, tag, offset);
 
-	reg = 0x80000000 | tag | offset;
-
-	if (cp->config_type == 1) {
-		unsigned int bus, dev, fcn;
-		/*
-		 * Need to do config type 1 operation
-		 * 80800000 | 1 << dev | fcn << 8 | reg
-		 */
-		if ( dev > 11) {
-#if 0
-			printf("invalid device\n", dev);
-#endif
-			return;
-		}
-		mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
-		reg = 0x80800000  | 1 << dev | fcn << 8 | offset;
-		
-	} else {
-		/* Config type 0 operation
-		 * 80800000 | bus << 16 | dev << 11 | 
-		 */
-		reg =  0x80000000 | tag  | offset;
-
+	/* if invalid tag, return ??? */
+	if (reg == 0xffffffff) {
+		return;
 	}
+	if ((cp->config_type & 2) && (offset & 0x04)) {
+		daddr += 4;
+	}
+#ifdef DEBUG_CONFIG
+	{
+		unsigned int bus, dev, fcn;
+		mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+		printf("mpc_conf_write bus %x dev %x fcn %x offset %x", bus,
+			dev, fcn, offset);
+		printf(" daddr %x reg %x",daddr, reg);
+		printf(" data %x\n", data);
+	}
+#endif
+
+	s = splhigh();
 
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
-	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, 0, data);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, daddr, data);
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
