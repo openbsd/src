@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.11 1996/11/21 12:47:16 mickey Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.12 1998/01/04 01:21:21 maja Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -63,6 +63,7 @@ void userconf_pdevnam __P((short));
 void userconf_pdev __P((short));
 int userconf_number __P((char *, int *));
 int userconf_device __P((char *, int *, short *, short *));
+int userconf_attr __P((char *, int *));
 void userconf_modify __P((char *, int *));
 void userconf_change __P((int));
 void userconf_disable __P((int));
@@ -70,9 +71,10 @@ void userconf_enable __P((int));
 void userconf_help __P((void));
 void userconf_list __P((void));
 void userconf_show __P((void));
-void userconf_show_attr_val __P((short, int *));
+void userconf_common_attr_val __P((short, int *, char));
 void userconf_show_attr __P((char *));
 void userconf_common_dev __P((char *, int, short, short, char));
+void userconf_common_attr __P((char *, int, char));
 void userconf_add_read __P((char *, char, char *, int, int *));
 void userconf_add __P((char *, int, short, short));
 int userconf_parse __P((char *));
@@ -81,6 +83,7 @@ int userconf_parse __P((char *));
 #define UC_DISABLE 'd'
 #define UC_ENABLE 'e'
 #define UC_FIND 'f'
+#define UC_SHOW 's'
 
 char *userconf_cmds[] = {
 	"add",		"a",
@@ -215,23 +218,6 @@ userconf_pdev(devno)
 	cd = &cfdata[devno];
 
 	printf("%3d ",devno);
-/*
-	printf("%3d",devno);
-	switch(cd->cf_fstate) {
-	case FSTATE_NOTFOUND:
-        case FSTATE_FOUND:
-        case FSTATE_STAR:
-		printf(" E ");
-		break;
-	case FSTATE_DNOTFOUND:
-        case FSTATE_DSTAR:
-		printf(" D ");
-		break;
-        default:
-		printf(" ? ");
-		break;
-	}
-*/		
 	userconf_pdevnam(devno);
 	printf(" at");
 	c=' ';
@@ -345,6 +331,37 @@ userconf_device(cmd, len, unit, state)
 	}
 
 	return(-1);
+}
+
+int
+userconf_attr(cmd, val)
+	char *cmd;
+	int *val;
+{
+	char *c;
+	short attr = -1, i = 0, l = 0;
+	
+	c = cmd;
+	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\000') {
+		c++; l++;
+	}
+	
+	while(i <= userconf_maxlocnames) {
+		if (strlen(locnames[i]) == l) {
+			if (strncasecmp(cmd,locnames[i],l) == 0) {
+				attr = i;
+			}
+		}
+		i++;
+	}
+
+	if (attr == -1) {
+		return (-1);
+	}
+
+	*val = attr;
+
+	return(0);
 }
 
 void
@@ -524,48 +541,49 @@ userconf_help()
 {
 	int j = 0,k;
 
-	printf("command   args          description\n");
+	printf("command   args                description\n");
 	while(*userconf_cmds[j] != '\000') {
 		printf(userconf_cmds[j]);
 		k=strlen(userconf_cmds[j]);
 		while (k < 10) { printf(" "); k++; }
 		switch(*userconf_cmds[j+1]) {
 		case 'L':
-			printf("[count]       number of lines before more");
+			printf("[count]             ",
+			       "number of lines before more");
 			break;
 		case 'a':
-			printf("dev           add a device");
+			printf("dev                 add a device");
 			break;
 		case 'b':
-			printf("8|10|16       base on large numbers");
+			printf("8|10|16             base on large numbers");
 			break;
 		case 'c':
-			printf("devno|dev     %s devices","change");
+			printf("devno|dev           %s devices","change");
 			break;
 		case 'd':
-			printf("devno|dev     %s devices","disable");
+			printf("attr val|devno|dev  %s devices","disable");
 			break;
 		case 'e':
-			printf("devno|dev     %s devices","enable");
+			printf("attr val|devno|dev  %s devices","enable");
 			break;
 		case 'f':
-			printf("devno|dev     %s devices","find");
+			printf("devno|dev           %s devices","find");
 			break;
 		case 'h':
-			printf("              %s","this message");
+			printf("                    %s","this message");
 			break;
 		case 'l':
-			printf("              %s","list configuration");
+			printf("                    %s","list configuration");
 			break;
 		case 'q':
-			printf("              %s","leave UKC");
+			printf("                    %s","leave UKC");
 			break;
 		case 's':
-			printf("[attr [val]]  %s",
+			printf("[attr [val]]        %s",
 			   "show attributes (or devices with an attribute)");
 			break;
 		default:
-			printf("              %s","don't know");
+			printf("                    %s","don't know");
 			break;
 		}
 		printf("\n");
@@ -605,9 +623,10 @@ userconf_show()
 }
 
 void
-userconf_show_attr_val(attr, val)
+userconf_common_attr_val(attr, val, routine)
 	short attr;
 	int   *val;
+	char  routine;
 {
 	struct cfdata *cd;
 	int   *l;
@@ -628,7 +647,21 @@ userconf_show_attr_val(attr, val)
 				} else {
 					if (*val == *l) {
 						quit = userconf_more();
-						userconf_pdev(i);
+						switch(routine) {
+						case UC_ENABLE:
+							userconf_enable(i);
+							break;
+						case UC_DISABLE:
+							userconf_disable(i);
+							break;
+						case UC_SHOW:
+							userconf_pdev(i);
+							break;
+						default:
+							printf("Unknown routine /%c/\n",
+							       routine);
+							break;
+						}
 					}
 				}
 			}
@@ -674,10 +707,10 @@ userconf_show_attr(cmd)
 	}
 
 	if (*c == '\000') {
-		userconf_show_attr_val(attr,NULL);
+		userconf_common_attr_val(attr,NULL,UC_SHOW);
 	} else {
 		if (userconf_number(c,&a) == 0) {
-			userconf_show_attr_val(attr,&a);
+			userconf_common_attr_val(attr,&a,UC_SHOW);
 		} else {
 			printf("Unknown argument\n");
 		}
@@ -754,6 +787,36 @@ userconf_common_dev(dev, len, unit, state, routine)
 		break;
 	}
 
+}
+
+void
+userconf_common_attr(cmd, attr, routine)
+	char *cmd;
+	int attr;
+	char routine;
+{
+	char *c;
+	short l = 0;
+	int a;
+	
+	c = cmd;
+	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\000') {
+		c++; l++;
+	}
+	while (*c == ' ' || *c == '\t' || *c == '\n') {
+		c++;
+	}
+	
+	if (*c == '\000') {
+		printf("Value missing for attribute\n");
+		return;
+	}
+
+	if (userconf_number(c,&a) == 0) {
+		userconf_common_attr_val(attr,&a,routine);
+	} else {
+		printf("Unknown argument\n");
+	}
 }
 
 void
@@ -1012,7 +1075,9 @@ userconf_parse(cmd)
 			break;
 		case 'd':
 			if (*c == '\000') {
-				printf("DevNo or Dev expected\n");
+				printf("Attr, DevNo or Dev expected\n");
+			} else if (userconf_attr(c,&a) == 0) {
+				userconf_common_attr(c,a,UC_DISABLE);
 			} else if (userconf_number(c,&a) == 0) {
 				userconf_disable(a);
 			} else if (userconf_device(c,&a,&unit,&state) == 0) {
@@ -1023,7 +1088,9 @@ userconf_parse(cmd)
 			break;
 		case 'e':
 			if (*c == '\000') {
-				printf("DevNo or Dev expected\n");
+				printf("Attr, DevNo or Dev expected\n");
+			} else if (userconf_attr(c,&a) == 0) {
+				userconf_common_attr(c,a,UC_ENABLE);
 			} else if (userconf_number(c,&a) == 0) {
 				userconf_enable(a);
 			} else if (userconf_device(c,&a,&unit,&state) == 0) {
