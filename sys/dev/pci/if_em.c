@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.43 2005/03/31 15:31:22 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.44 2005/04/01 06:44:14 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -179,11 +179,11 @@ void em_set_promisc(struct em_softc *);
 void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
-void em_print_link_status(struct em_softc *);
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(int i, struct em_softc *,
 			    struct mbuf *);
 void em_enable_vlans(struct em_softc *);
+void em_disable_vlans(struct em_softc *);
 int  em_encap(struct em_softc *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
@@ -1368,34 +1368,6 @@ em_local_timer(void *arg)
 
         EM_UNLOCK(sc);
 	return;
-}
-
-void
-em_print_link_status(struct em_softc *sc)
-{
-        if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
-                if (sc->link_active == 0) {
-                        em_get_speed_and_duplex(&sc->hw,
-                                                &sc->link_speed,
-                                                &sc->link_duplex);
-                        printf("%s: Link is up %d Mbps %s\n",
-                               sc->sc_dv.dv_xname,
-                               sc->link_speed,
-                               ((sc->link_duplex == FULL_DUPLEX) ?
-                                "Full Duplex" : "Half Duplex"));
-                        sc->link_active = 1;
-                        sc->smartspeed = 0;
-                }
-        } else {
-                if (sc->link_active == 1) {
-                        sc->link_speed = 0;
-                        sc->link_duplex = 0;
-                        printf("%s: Link is Down\n", sc->sc_dv.dv_xname);
-                        sc->link_active = 0;
-                }
-        }
-
-        return;
 }
 
 void
@@ -2665,7 +2637,6 @@ em_receive_checksum(struct em_softc *sc,
 		mp->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 }
 
-
 void
 em_enable_vlans(struct em_softc *sc)
 {
@@ -2675,6 +2646,18 @@ em_enable_vlans(struct em_softc *sc)
 
 	ctrl = E1000_READ_REG(&sc->hw, CTRL);
 	ctrl |= E1000_CTRL_VME; 
+	E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
+
+	return;
+}
+
+void
+em_disable_vlans(struct em_softc *sc)
+{
+	uint32_t ctrl;
+
+	ctrl = E1000_READ_REG(&sc->hw, CTRL);
+	ctrl &= ~E1000_CTRL_VME;
 	E1000_WRITE_REG(&sc->hw, CTRL, ctrl);
 
 	return;
