@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.6 1997/09/22 05:45:26 millert Exp $	*/
+/*	$OpenBSD: inp.c,v 1.7 1998/11/25 00:30:25 espie Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: inp.c,v 1.6 1997/09/22 05:45:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: inp.c,v 1.7 1998/11/25 00:30:25 espie Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -10,6 +10,8 @@ static char rcsid[] = "$OpenBSD: inp.c,v 1.6 1997/09/22 05:45:26 millert Exp $";
 #include "pch.h"
 #include "INTERN.h"
 #include "inp.h"
+
+extern bool check_only;
 
 /* Input-file-with-indexable-lines abstract type */
 
@@ -80,10 +82,18 @@ char *filename;
     if (statfailed && ok_to_create_file) {
 	if (verbose)
 	    say2("(Creating file %s...)\n",filename);
+	    /* in check_patch case, we still display `Creating file' even
+	       though we're not. The rule is that -C should be as similar
+	       to normal patch behavior as possible
+	     */
+	if (check_only) 
+	    return TRUE;
 	makedirs(filename, TRUE);
 	close(creat(filename, 0666));
 	statfailed = stat(filename, &filestat);
     }
+    if (statfailed && check_only)
+        fatal2("%s not found, -C mode, can't probe further\n", filename);
     /* For nonexistent or read-only files, look for RCS or SCCS versions.  */
     if (statfailed
 	/* No one can write to it.  */

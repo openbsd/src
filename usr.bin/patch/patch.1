@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.2 1996/06/10 11:21:30 niklas Exp $	-*- nroff -*-
+.\"	$OpenBSD: patch.1,v 1.3 1998/11/25 00:30:25 espie Exp $	-*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -217,6 +217,9 @@ name. If this argument is specified any argument from -b will be ignored.
 forces
 .I patch
 to interpret the patch file as a context diff.
+.TP 5
+.B \-C or \-\-check
+checks that the patch would apply cleanly, but does not modify anything.
 .TP 5
 .B \-d or \-\-directory
 causes
@@ -504,6 +507,14 @@ generated from.
 .SH BUGS
 Could be smarter about partial matches, excessively \&deviant offsets and
 swapped code, but that would take an extra pass.
+.PP
+Check patch mode (
+.BR -C )
+will fail if you try to check several patches in succession that build on
+each other.  The whole code of 
+.I patch
+would have to be restructured to keep temporary files around so that it can
+handle this situation.
 .PP
 If code has been duplicated (for instance with #ifdef OLDCODE ... #else ...
 #endif),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.10 1997/09/22 05:45:27 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.11 1998/11/25 00:30:26 espie Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -6,10 +6,13 @@
  *
  * This program may be copied as long as you don't try to make any
  * money off of it, or pretend that you wrote it.
+ *
+ * -C option added in 1998, original code by Marc Espie,
+ * based on FreeBSD behaviour
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.10 1997/09/22 05:45:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.11 1998/11/25 00:30:26 espie Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -47,6 +50,9 @@ static int remove_empty_files = FALSE;
 
 /* TRUE if -R was specified on command line.  */
 static int reverse_flag_specified = FALSE;
+
+/* TRUE if -C was specified on command line.  */
+bool check_only = FALSE;
 
 /* Apply a set of diffs as appropriate. */
 
@@ -282,19 +288,21 @@ char **argv;
 	    struct stat statbuf;
 	    char *realout = outname;
 
-	    if (move_file(TMPOUTNAME, outname) < 0) {
-		toutkeep = TRUE;
-		realout = TMPOUTNAME;
-		chmod(TMPOUTNAME, filemode);
-	    }
-	    else
-		chmod(outname, filemode);
+	    if (!check_only) {	
+		if (move_file(TMPOUTNAME, outname) < 0) {
+		    toutkeep = TRUE;
+		    realout = TMPOUTNAME;
+		    chmod(TMPOUTNAME, filemode);
+		}
+		else
+		    chmod(outname, filemode);
 
-	    if (remove_empty_files && stat(realout, &statbuf) == 0
-		&& statbuf.st_size == 0) {
-		if (verbose)
-		    say2("Removing %s (empty after patching).\n", realout);
-	        while (unlink(realout) >= 0) ; /* while is for Eunice.  */
+		if (remove_empty_files && stat(realout, &statbuf) == 0
+		    && statbuf.st_size == 0) {
+		    if (verbose)
+			say2("Removing %s (empty after patching).\n", realout);
+		    while (unlink(realout) >= 0) ; /* while is for Eunice.  */
+		}
 	    }
 	}
 	Fclose(rejfp);
@@ -325,7 +333,7 @@ char **argv;
 		say4("%d out of %d hunks failed--saving rejects to %s\n",
 		    failed, hunk, rejname);
 	    }
-	    if (move_file(TMPREJNAME, rejname) < 0)
+	    if (!check_only && move_file(TMPREJNAME, rejname) < 0)
 		trejkeep = TRUE;
 	}
 	set_signals(1);
@@ -481,6 +489,9 @@ get_some_switches()
 	    case 'c':
 		diff_type = CONTEXT_DIFF;
 		break;
+	    case 'C':
+	    	check_only = TRUE;
+		break;
 	    case 'd':
 		if (!*++s)
 		    s = nextarg();
@@ -571,7 +582,7 @@ get_some_switches()
 		fprintf(stderr, "\
 Usage: patch [options] [origfile [patchfile]] [+ [options] [origfile]]...\n\
 Options:\n\
-       [-ceEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
+       [-cCeEflnNRsStuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n\
        [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n\
        [-r rej-name] [-V {numbered,existing,simple}]\n");
 		my_exit(1);

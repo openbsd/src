@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.8 1997/04/03 07:07:36 imp Exp $	*/
+/*	$OpenBSD: pch.c,v 1.9 1998/11/25 00:30:26 espie Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.8 1997/04/03 07:07:36 imp Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.9 1998/11/25 00:30:26 espie Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -10,6 +10,7 @@ static char rcsid[] = "$OpenBSD: pch.c,v 1.8 1997/04/03 07:07:36 imp Exp $";
 #include "INTERN.h"
 #include "pch.h"
 
+extern bool check_only;
 /* Patch (diff listing) abstract type. */
 
 static long p_filesize;			/* size of the patch file */
@@ -1270,11 +1271,13 @@ do_ed_script()
     Fflush(pipefp);
     Pclose(pipefp);
     ignore_signals();
-    if (move_file(TMPOUTNAME, outname) < 0) {
-	toutkeep = TRUE;
-	chmod(TMPOUTNAME, filemode);
+    if (!check_only) {
+	if (move_file(TMPOUTNAME, outname) < 0) {
+	    toutkeep = TRUE;
+	    chmod(TMPOUTNAME, filemode);
+	}
+	else
+	    chmod(outname, filemode);
     }
-    else
-	chmod(outname, filemode);
     set_signals(1);
 }
