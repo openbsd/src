@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.3 2005/01/16 16:14:10 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.4 2005/01/19 10:51:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -307,7 +307,7 @@ rbox_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_RBOX;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
