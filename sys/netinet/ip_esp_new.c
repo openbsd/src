@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.24 1998/08/01 08:35:12 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.25 1998/11/25 01:02:59 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -895,7 +895,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	      tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	m_freem(m);
 	espstat.esps_wrap++;
-	return NULL;
+	return ENOBUFS;
     }
 
     espo.esp_spi = tdb->tdb_spi;
