@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.31 2003/03/10 03:53:32 david Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.32 2003/09/04 03:24:07 beck Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -388,6 +388,7 @@ int local_file(int, struct stat *);
 int stat_info_ok(struct stat *, struct stat *);
 int link_nofollow(int);
 int link_nofollow(int);
+int opentmp(char *, size_t);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
@@ -1319,8 +1320,8 @@ sendone(t, v)
 	TREE *t;
 	void *v;
 {
-	int x, fd;
-	char temp_file[STRINGLENGTH];
+	int x, fd, ifd;
+	char temp_file[MAXPATHLEN];
 	char *av[50];	/* More than enough */
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
@@ -1336,9 +1337,12 @@ sendone(t, v)
 		if (!listonly && (t->Tflags&FUPDATE) == 0) {
 #ifdef RCS
                         if (dorcs) {
-                                char rcs_release[STRINGLENGTH];
+                                char rcs_release[MAXPATHLEN];
 
-				tmpnam(rcs_file);
+				fd = opentmp(rcs_file, sizeof(rcs_file));
+				if (fd < 0)
+					goaway ("We died trying to create temp file");
+				close(fd);
                                 if (strcmp(&t->Tname[strlen(t->Tname)-2], ",v") == 0) {
                                         t->Tname[strlen(t->Tname)-2] = '\0';
 					ac = 0;
@@ -1385,19 +1389,26 @@ sendone(t, v)
                                                         t->Tflags |= FUPDATE;
                                                 }
                                         } else if (docompress) {
-                                                tmpnam(temp_file);
+                                                fd = opentmp(temp_file, sizeof(temp_file));
+						if (fd < 0)
+							goaway ("We died trying to create temp file");
+						ifd = open(rcs_file, O_RDONLY, 0);
+						if (ifd < 0)
+							goaway ("We died trying to open %s", rcs_file);
 						av[0] = "gzip";
 						av[1] = "-cf";
 						av[2] = NULL;
-						if (runio(av, rcs_file,
-						    temp_file, NULL) != 0) {
+						if (runiofd(av, ifd, fd, 2) != 0) {
+							close(fd);
+							close(ifd);
                                                         /* Just in case */
                                                         unlink(temp_file);
                                                         unlink(rcs_file);
                                                         goaway("We died trying to gzip %s", rcs_file);
                                                         t->Tmode = 0;
                                                 }
-                                                fd = open(temp_file,O_RDONLY,0);
+						lseek(fd, (off_t)0, SEEK_SET);
+						close(ifd);
                                         } else
                                                 fd = open (rcs_file,O_RDONLY,0);
                                 }
@@ -1405,17 +1416,25 @@ sendone(t, v)
 #endif
                         if (fd == -1) {
                                 if (docompress) {
-                                        tmpnam(temp_file);
+					fd = opentmp(temp_file, sizeof(temp_file));
+					if (fd < 0)
+						goaway ("We died trying to create temp file");
+					ifd = open(t->Tname, O_RDONLY, 0);
+					if (ifd < 0)
+						goaway ("We died trying to open %s", t->Tname);
 					av[0] = "gzip";
 					av[1] = "-cf";
 					av[2] = NULL;
-					if (runio(av, t->Tname, temp_file, NULL) != 0) {
+					if (runiofd(av, ifd, fd, 2) != 0) {
+						close(fd);
+						close(ifd);
                                                 /* Just in case */
                                                 unlink(temp_file);
                                                 goaway("We died trying to run gzip %s", t->Tname);
                                                 t->Tmode = 0;
                                         }
-                                        fd = open(temp_file, O_RDONLY, 0);
+					lseek(fd, (off_t)0, SEEK_SET);
+					close(ifd);
                                 } else
                                         fd = open(t->Tname, O_RDONLY, 0);
                         }
@@ -2105,3 +2124,19 @@ link_nofollow(on)
 	return(0);
 }
 #endif	/* MACH */
+
+int
+opentmp(path, psize)
+	char *path;
+	size_t psize;
+{
+	char *tdir;
+
+	if ((tdir = getenv("TMPDIR")) == NULL || *tdir == '\0')
+		tdir = "/tmp";
+	if (snprintf(path, psize, "%s/supfilesrv.XXXXXXXXXX", tdir) >= psize) {
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
+	return (mkstemp(path));
+}

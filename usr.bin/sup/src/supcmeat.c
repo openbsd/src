@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.18 2003/04/15 07:21:09 deraadt Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.19 2003/09/04 03:24:07 beck Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1154,7 +1154,7 @@ copyfile(to, from)
 {
 	int fromf, tof, istemp, x;
 	char dpart[STRINGLENGTH], fpart[STRINGLENGTH];
-	char tname[STRINGLENGTH];
+	char tname[MAXPATHLEN];
 	static int true = 1;
 	static pid_t thispid = 0;	/* process id # */
 
@@ -1175,49 +1175,49 @@ copyfile(to, from)
 	for (;;) {
 	/* try destination directory */
 		path(to, dpart, sizeof dpart, fpart, sizeof fpart);
-		(void) snprintf(tname, sizeof tname, "%s/#%ld.sup",
+		(void) snprintf(tname, sizeof tname, "%s/#%ld.sup.XXXXXXXXXX",
 		    dpart, (long)thispid);
-		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
+		tof = mkstemp(tname);
 		if (tof >= 0)
 			break;
 	/* try sup directory */
 		if (thisC->Cprefix)
 			(void) chdir (thisC->Cbase);
-		(void) snprintf(tname, sizeof tname, "sup/#%ld.sup",
+		(void) snprintf(tname, sizeof tname, "sup/#%ld.sup.XXXXXXXXXX",
 		    (long)thispid);
-		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
+		tof = mkstemp(tname);
 		if (tof >= 0) {
 			if (thisC->Cprefix)
 				(void) chdir(thisC->Cprefix);
 			break;
 		}
 	/* try base directory */
-		(void) snprintf(tname, sizeof tname, "#%ld.sup",
+		(void) snprintf(tname, sizeof tname, "#%ld.sup.XXXXXXXXXX",
 		    (long)thispid);
-		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
+		tof = mkstemp(tname);
 		if (thisC->Cprefix)
 			(void) chdir(thisC->Cprefix);
 		if (tof >= 0)
 			break;
 #ifdef	VAR_TMP
 	/* try /var/tmp */
-		(void) snprintf(tname, sizeof tname, "/var/tmp/#%ld.sup",
-		    (long)thispid);
-		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
+		(void) snprintf(tname, sizeof tname,
+		    "/var/tmp/#%ld.sup.XXXXXXXXXX", (long)thispid);
+		tof = mkstemp(tname);
 		if (tof >= 0)
 			break;
 #else
 	/* try /usr/tmp */
-		(void) snprintf(tname, sizeof tname, "/usr/tmp/#%ld.sup",
-			(long)thispid);
-		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
+		(void) snprintf(tname, sizeof tname,
+		    "/usr/tmp/#%ld.sup.XXXXXXXXXX", (long)thispid);
+		tof = mkstemp(tname);
 		if (tof >= 0)
 			break;
 #endif
 	/* try /tmp */
-		(void) snprintf(tname, sizeof tname, "/tmp/#%ld.sup",
-		    (long)thispid);
-		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
+		(void) snprintf(tname, sizeof tname,
+		    "/tmp/#%ld.sup.XXXXXXXXXX", (long)thispid);
+		tof = mkstemp(tname);
 		if (tof >= 0)
 			break;
 		istemp = FALSE;
@@ -1330,9 +1330,10 @@ copyfile(to, from)
 		av[ac++] = "gzip";
 		av[ac++] = "-d";
 		av[ac++] = NULL;
+		/* XXX - race between unlink and re-open */
 		if ((infd = open(tname, O_RDONLY, 0)) == -1 ||
 		     unlink(tname) == -1 ||
-		     (outfd = open(tname, O_WRONLY|O_CREAT|O_TRUNC, 0600)) == -1 ||
+		     (outfd = open(tname, O_WRONLY|O_CREAT|O_EXCL, 0600)) == -1 ||
 		     runiofd(av, infd, outfd, 2) != 0 ) {
 			notify("SUP: Error in uncompressing file %s (%s)\n",
 				to, tname);
