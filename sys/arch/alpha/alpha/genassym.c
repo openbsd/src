@@ -1,4 +1,4 @@
-/* $OpenBSD: genassym.c,v 1.8 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: genassym.c,v 1.9 2001/01/15 11:58:54 art Exp $ */
 /* $NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*
@@ -76,6 +76,10 @@
 #include <machine/frame.h>
 #include <machine/rpb.h>
 #include <machine/vmparam.h>
+
+#ifdef COMPAT_NETBSD
+#include <compat/netbsd/netbsd_syscall.h>
+#endif
 
 #include <vm/vm.h>
 
@@ -215,6 +219,12 @@ struct nv assyms[] = {
 	/* Syscalls called from sigreturn. */
 	def1(SYS_sigreturn),
 	def1(SYS_exit),
+
+#ifdef COMPAT_NETBSD
+	/* XXX - these should probably use the magic macro from machine/asm.h */
+	def1(NETBSD_SYS___sigreturn14),
+	def1(NETBSD_SYS_exit),
+#endif
 
 	/* CPU info */
 	off(CPU_INFO_CURPROC, struct cpu_info, ci_curproc),
