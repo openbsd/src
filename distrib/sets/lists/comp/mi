@@ -589,7 +589,6 @@
 ./usr/include/isofs/cd9660/iso.h
 ./usr/include/isofs/cd9660/iso_rrip.h
 ./usr/include/kerberosIV/acl.h
-./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/kadm.h
 ./usr/include/kerberosIV/kadm_err.h
 ./usr/include/kerberosIV/kafs.h
