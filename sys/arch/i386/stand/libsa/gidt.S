@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.26 2003/06/03 20:22:12 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.27 2004/01/13 23:54:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -167,8 +167,13 @@ pmm_init:
 	ret
 
 
+#ifdef __STDC__
+#define IPROC(n)	X##n
+#define IEMU(n)		IPROC(emu##n)
+#else
 #define IPROC(n)	X/**/n
 #define IEMU(n)		IPROC(emu/**/n)
+#endif
 	.align 8, 0x90
 idt:
 #define idte(e)	\
@@ -185,7 +190,11 @@ idt:
 		/* Maskable interrupts (32-255) */
 		/* BIOS entry points (32-63) */
 		/* DOS entry points (64-80) */
+#ifdef __STDC__
+#define idtb(b)	idte(emu##b)
+#else
 #define idtb(b)	idte(emu/**/b)
+#endif
 	idtb(0);  idtb(1);  idtb(2);  idtb(3);  idtb(4);  idtb(5)
 	idtb(6);  idtb(7);  idtb(8);  idtb(9);  idtb(10); idtb(11)
 	idtb(12); idtb(13); idtb(14); idtb(15); idtb(16); idtb(17)
