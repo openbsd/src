@@ -239,6 +239,7 @@ sparclite*-*-*)		gdb_target=sparclite ;;
 # regs (some of which are usable in v8plus) so sp64sol.mt hasn't been
 # deleted though presumably it should be eventually.
 #sparc64-*-solaris2*)	gdb_target=sp64sol2 ;;
+sparc64-*-openbsd*)	gdb_target=obsd ;;
 sparc64-*-*)		gdb_target=sp64 ;;
 
 tahoe-*-*)		gdb_target=tahoe ;;

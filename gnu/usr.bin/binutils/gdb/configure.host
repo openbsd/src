@@ -154,6 +154,7 @@ sparc-*-solaris2*)	gdb_host=sun4sol2 ;;
 sparc-*-sunos4*)	gdb_host=sun4os4 ;;
 sparc-*-sunos5*)	gdb_host=sun4sol2 ;;
 sparc-*-*)		gdb_host=sun4os4 ;;
+sparc64-*-openbsd*)	gdb_host=obsd64 ;;
 sparc64-*-*)		gdb_host=sun4sol2 ;;
 
 tahoe-*-*)		gdb_host=tahoe ;;
