@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.33 1998/01/12 19:20:35 kstailey Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.34 1998/02/16 21:23:38 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ", "MK538FB         ", "6027"}, SDEV_NOLUNS},
 	{{T_DIRECT, T_REMOV,
-	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE},
+	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE|SDEV_NOTAGS},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
