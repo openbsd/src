@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.15 2001/04/07 21:31:24 tholo Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.16 2001/05/01 19:15:16 aaron Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -70,16 +70,13 @@
 #include <machine/linux_machdep.h>
 
 /*
- * To see whether pcvt is configured (for virtual console ioctl calls).
+ * To see whether wsdisplay is configured (for virtual console ioctl calls).
  */
 #include "wsdisplay.h"
-#include "vt.h"
 #if NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)
 #include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-#elif NVT > 0
-#include <arch/i386/isa/pcvt/pcvt_ioctl.h>
 #endif
 
 #ifdef USER_LDT
@@ -450,7 +447,7 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)) || NVT > 0
+#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL))
 	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
@@ -461,7 +458,7 @@ linux_machdepioctl(p, v, retval)
 	com = SCARG(uap, com);
 
 	switch (com) {
-#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)) || NVT > 0
+#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL))
 	case LINUX_KDGKBMODE:
 		com = KDGKBMODE;
 		break;
