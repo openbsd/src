@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 2000/10/18 21:00:39 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 2001/03/14 08:02:12 drahn Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -89,7 +89,12 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL, *cp;
+	char *s;
 	int dospartoff, cyl, i, ourpart = -1;
+	/* HFS variables */
+	int part_cnt, n, hfspartoff;
+	struct part_map_entry *part;
+
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -109,13 +114,97 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
+	/* DPME (HFS) disklabel */
+
+	bp->b_blkno = 1; 
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = 1 / lp->d_secpercyl;
+	(*strat)(bp);
+
+	/* if successful, wander through DPME partition table */
+	if (biowait(bp)) {
+		msg = "DPME partition I/O error";
+		goto hfs_done;
+	}
+
+	part = (struct part_map_entry *)bp->b_data;
+	/* if first partition is not valid, assume not HFS/DPME partitioned */
+        if (part->pmSig != PART_ENTRY_MAGIC) {
+		msg = "DPME partition invalid";
+		osdep->macparts[0].pmSig = 0; /* make invalid */
+		goto hfs_done;
+        }
+	osdep->macparts[0] = *part;
+	part_cnt = part->pmMapBlkCnt;
+	n = 0;
+	for (i = 0; i < part_cnt; i++) {
+		struct partition *pp = &lp->d_partitions[8+n];
+
+		bp->b_blkno = 1+i; 
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylin = 1+i / lp->d_secpercyl;
+		(*strat)(bp);
+
+		if (biowait(bp)) {
+			msg = "DPME partition I/O error";
+			goto hfs_done;
+		}
+		part = (struct part_map_entry *)bp->b_data;
+		/* toupper the string, in case caps are different... */
+		for (s = part->pmPartType; *s; s++)
+			if ((*s >= 'a') && (*s <= 'z'))
+				*s = (*s - 'a' + 'A');
+
+		if (0 == strcmp(part->pmPartType, PART_TYPE_OPENBSD)) {
+			hfspartoff = part->pmPyPartStart;
+			osdep->macparts[1] = *part;
+		}
+		/* currently we ignore all but HFS partitions */
+		if (0 == strcmp(part->pmPartType, PART_TYPE_MAC)) {
+			pp->p_offset = part->pmPyPartStart;
+			pp->p_size = part->pmPartBlkCnt;
+			pp->p_fstype = FS_HFS;
+			n++;
+#if 0
+			printf("found DPME HFS partition [%s], adding to fake\n",
+				part->pmPartName);
+#endif
+		}
+	}
+	lp->d_npartitions = MAXPARTITIONS;
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		goto done;
+
+	/* next, dig out disk label */
+	bp->b_blkno = hfspartoff;
+	bp->b_cylin = hfspartoff/lp->d_secpercyl; /* XXX */
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp)) {
+		/* XXX we return the faked label built so far */
+		msg = "disk label I/O error";
+		goto done;
+	}
+	goto found_disklabel;
+
+
+hfs_done:
+	/* MBR type disklabel */
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
 	        daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
-		int wander = 1, n = 0, loop = 0;
+		int wander = 1, loop = 0;
+		n = 0;
 
 		/*
 		 * Read dos partition table, follow extended partitions.
@@ -262,6 +351,8 @@ donot:
 		msg = "disk label I/O error";
 		goto done;
 	}
+
+found_disklabel:
 	for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
@@ -404,6 +495,28 @@ writedisklabel(dev, strat, lp, osdep)
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
+
+	/* try DPME partition */
+	if (osdep->macparts[0].pmSig == PART_ENTRY_MAGIC) {
+		
+		/* only write if a valid "OpenBSD" partition type exists */
+		if (osdep->macparts[1].pmSig == PART_ENTRY_MAGIC) {
+			bp->b_blkno = osdep->macparts[1].pmPyPartStart;
+			bp->b_cylin = bp->b_blkno/lp->d_secpercyl;
+			bp->b_bcount = lp->d_secsize;
+			bp->b_flags = B_BUSY | B_WRITE;
+			*(struct disklabel *)bp->b_data = *lp;
+			(*strat)(bp);
+			error = biowait(bp);
+			goto done;
+		}
+
+		/* SHOULD FAIL TO WRITE LABEL IF VALID HFS partition exists
+		 * and no OpenBSD partition exists 
+		 */
+		error = 1; /* EPERM? */
+		goto done;
+	}
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
