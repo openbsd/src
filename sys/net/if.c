@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.26 1999/12/18 22:03:43 angelos Exp $	*/
+/*	$OpenBSD: if.c,v 1.27 2000/01/02 05:28:24 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -806,7 +806,7 @@ ifioctl(so, cmd, data, p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splimp();
+			int s = splsoftnet();
 			in6_if_up(ifp);
 			splx(s);
 		}
