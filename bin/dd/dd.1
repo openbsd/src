@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.14 2003/06/02 23:32:07 millert Exp $
+.\"	$OpenBSD: dd.1,v 1.15 2003/07/28 16:36:20 todd Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -338,7 +338,7 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Li # dd if=floppy28.fs of=/dev/fd0a
+.Li # dd if=floppy34.fs of=/dev/rfd0c bs=32k
 .Pp
 Write an
 .Ox
