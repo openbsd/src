@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.6 1998/11/23 03:28:22 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.7 1998/12/05 17:34:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -329,7 +329,7 @@ struct pdc_cache {	/* PDC_CACHE */
 };
 
 struct pdc_hpa {	/* PDC_HPA */
-	struct iomod *hpa;	/* HPA of processor */
+	hppa_hpa_t hpa;	/* HPA of processor */
 	int	filler1;
 	u_int	filler2[30];
 };
@@ -532,14 +532,6 @@ struct iodc_data {
 	u_short	iodc_length;		/* number of entry points in IODC */
 		/* IODC entry points follow... */
 };
-
-#define	BT_HPA	PAGE0->mem_boot.pz_hpa
-#define lightshow(val) { \
-	static int data; \
-	data = (val << 8) | 0xC0FF; \
-	(*PAGE0->mem_pdc)(PDC_CHASSIS, PDC_CHASSIS_DISP, data); \
-	delay(5000000); \
-}
 
 extern pdcio_t pdc;
 
