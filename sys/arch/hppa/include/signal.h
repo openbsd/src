@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 2002/02/06 19:39:20 mickey Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 2003/05/18 15:57:47 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -44,10 +44,10 @@ struct	sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
 	int	sc_ps;			/* psl to restore */
-	int	sc_sp;			/* sp to restore */
 	int	sc_fp;			/* fp to restore */
 	int	sc_pcoqh;		/* pc offset queue (head) to restore */
 	int	sc_pcoqt;		/* pc offset queue (tail) to restore */
-	int	sc_resv[5];
-	int	sc_tf[64];
+	int	sc_resv[2];
+	int	sc_regs[32];
+	int	sc_fpregs[64];
 };

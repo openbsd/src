@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2003/05/11 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.105 2003/05/18 15:57:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1173,7 +1173,7 @@ setregs(p, pack, stack, retval)
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
 	/*pmapdebug = 13;
-	printf("setregs(%p, %p, %x, %p), ep=%x, cr30=%x\n",
+	printf("setregs(%p, %p, 0x%x, %p), ep=0x%x, cr30=0x%x\n",
 	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
 	*/
 #endif
@@ -1218,6 +1218,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
@@ -1231,6 +1232,12 @@ sendsig(catcher, sig, mask, code, type, val)
 		printf("sendsig: %s[%d] sig %d catcher %p\n",
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
+
+	/* flush the FPU ctx first */
+	if (tf->tf_cr30 == fpu_curpcb) {
+		fpu_save(fpu_curpcb);
+		fpu_curpcb = 0;
+	}
 
 	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
@@ -1255,12 +1262,44 @@ sendsig(catcher, sig, mask, code, type, val)
 	}
 
 	ksc.sc_mask = mask;
-	ksc.sc_sp = tf->tf_sp;
 	ksc.sc_fp = (register_t)scp + sss;
 	ksc.sc_ps = tf->tf_ipsw;
 	ksc.sc_pcoqh = tf->tf_iioq_head;
 	ksc.sc_pcoqt = tf->tf_iioq_tail;
-	bcopy(tf, &ksc.sc_tf, sizeof(ksc.sc_tf));
+	ksc.sc_regs[0] = tf->tf_t1;
+	ksc.sc_regs[1] = tf->tf_t2;
+	ksc.sc_regs[2] = tf->tf_sp;
+	ksc.sc_regs[3] = tf->tf_t3;
+	ksc.sc_regs[4] = tf->tf_sar;
+	ksc.sc_regs[5] = tf->tf_r1;
+	ksc.sc_regs[6] = tf->tf_rp;
+	ksc.sc_regs[7] = tf->tf_r3;
+	ksc.sc_regs[8] = tf->tf_r4;
+	ksc.sc_regs[9] = tf->tf_r5;
+	ksc.sc_regs[10] = tf->tf_r6;
+	ksc.sc_regs[11] = tf->tf_r7;
+	ksc.sc_regs[12] = tf->tf_r8;
+	ksc.sc_regs[13] = tf->tf_r9;
+	ksc.sc_regs[14] = tf->tf_r10;
+	ksc.sc_regs[15] = tf->tf_r11;
+	ksc.sc_regs[16] = tf->tf_r12;
+	ksc.sc_regs[17] = tf->tf_r13;
+	ksc.sc_regs[18] = tf->tf_r14;
+	ksc.sc_regs[19] = tf->tf_r15;
+	ksc.sc_regs[20] = tf->tf_r16;
+	ksc.sc_regs[21] = tf->tf_r17;
+	ksc.sc_regs[22] = tf->tf_r18;
+	ksc.sc_regs[23] = tf->tf_t4;
+	ksc.sc_regs[24] = tf->tf_arg3;
+	ksc.sc_regs[25] = tf->tf_arg2;
+	ksc.sc_regs[26] = tf->tf_arg1;
+	ksc.sc_regs[27] = tf->tf_arg0;
+	ksc.sc_regs[28] = tf->tf_dp;
+	ksc.sc_regs[29] = tf->tf_ret0;
+	ksc.sc_regs[30] = tf->tf_ret1;
+	ksc.sc_regs[31] = tf->tf_r31;
+	bcopy(p->p_addr->u_pcb.pcb_fpregs, ksc.sc_fpregs,
+	    sizeof(ksc.sc_fpregs));
 	if (copyout((caddr_t)&ksc, scp, sizeof(*scp)))
 		sigexit(p, SIGILL);
 
@@ -1274,8 +1313,8 @@ sendsig(catcher, sig, mask, code, type, val)
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d scp %p fp %p sp %x\n",
-		    p->p_pid, sig, scp, ksc.sc_fp, ksc.sc_sp);
+		printf("sendsig(%d): sig %d scp %p fp %p sp 0x%x\n",
+		    p->p_pid, sig, scp, ksc.sc_fp, (register_t)scp + sss);
 #endif
 
 	tf->tf_arg0 = sig;
@@ -1287,11 +1326,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	/* disable tracing in the trapframe */
 
-	/* TODO FPU */
-
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
-		printf("sendsig(%d): pc %x, catcher %x\n", p->p_pid,
+		printf("sendsig(%d): pc 0x%x, catcher 0x%x\n", p->p_pid,
 		    tf->tf_iioq_head, tf->tf_arg3);
 #endif
 }
@@ -1302,6 +1339,7 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -1314,6 +1352,12 @@ sys_sigreturn(p, v, retval)
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
+
+	/* flush the FPU ctx first */
+	if (tf->tf_cr30 == fpu_curpcb) {
+		fpu_save(fpu_curpcb);
+		fpu_curpcb = 0;
+	}
 
 	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc)))
 		return (error);
@@ -1329,60 +1373,52 @@ sys_sigreturn(p, v, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
-	hppa_user2frame((struct trapframe *)&ksc.sc_tf, tf);
+	tf->tf_t1 = ksc.sc_regs[0];		/* r22 */
+	tf->tf_t2 = ksc.sc_regs[1];		/* r21 */
+	tf->tf_sp = ksc.sc_regs[2];
+	tf->tf_t3 = ksc.sc_regs[3];		/* r20 */
+	tf->tf_sar = ksc.sc_regs[4];
+	tf->tf_r1 = ksc.sc_regs[5];
+	tf->tf_rp = ksc.sc_regs[6];
+	tf->tf_r3 = ksc.sc_regs[7];
+	tf->tf_r4 = ksc.sc_regs[8];
+	tf->tf_r5 = ksc.sc_regs[9];
+	tf->tf_r6 = ksc.sc_regs[10];
+	tf->tf_r7 = ksc.sc_regs[11];
+	tf->tf_r8 = ksc.sc_regs[12];
+	tf->tf_r9 = ksc.sc_regs[13];
+	tf->tf_r10 = ksc.sc_regs[14];
+	tf->tf_r11 = ksc.sc_regs[15];
+	tf->tf_r12 = ksc.sc_regs[16];
+	tf->tf_r13 = ksc.sc_regs[17];
+	tf->tf_r14 = ksc.sc_regs[18];
+	tf->tf_r15 = ksc.sc_regs[19];
+	tf->tf_r16 = ksc.sc_regs[20];
+	tf->tf_r17 = ksc.sc_regs[21];
+	tf->tf_r18 = ksc.sc_regs[22];
+	tf->tf_t4 = ksc.sc_regs[23];		/* r19 */
+	tf->tf_arg3 = ksc.sc_regs[24];	/* r23 */
+	tf->tf_arg2 = ksc.sc_regs[25];	/* r24 */
+	tf->tf_arg1 = ksc.sc_regs[26];	/* r25 */
+	tf->tf_arg0 = ksc.sc_regs[27];	/* r26 */
+	tf->tf_dp = ksc.sc_regs[28];
+	tf->tf_ret0 = ksc.sc_regs[29];
+	tf->tf_ret1 = ksc.sc_regs[30];
+	tf->tf_r31 = ksc.sc_regs[31];
+	bcopy(ksc.sc_fpregs, p->p_addr->u_pcb.pcb_fpregs,
+	    sizeof(ksc.sc_fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs,
+	    sizeof(ksc.sc_fpregs));
 
-	tf->tf_sp = ksc.sc_sp;
 	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
 	tf->tf_ipsw = ksc.sc_ps;
-
-	/* TODO FPU */
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
-}
-
-void
-hppa_user2frame(sf, tf)
-	struct trapframe *sf, *tf;
-{
-	/* only restore r1-r31, sar */
-	tf->tf_t1 = sf->tf_t1;		/* r22 */
-	tf->tf_t2 = sf->tf_t2;		/* r21 */
-	tf->tf_sp = sf->tf_sp;
-	tf->tf_t3 = sf->tf_t3;		/* r20 */
-
-	tf->tf_sar = sf->tf_sar;
-	tf->tf_r1 = sf->tf_r1;
-	tf->tf_rp = sf->tf_rp;
-	tf->tf_r3 = sf->tf_r3;
-	tf->tf_r4 = sf->tf_r4;
-	tf->tf_r5 = sf->tf_r5;
-	tf->tf_r6 = sf->tf_r6;
-	tf->tf_r7 = sf->tf_r7;
-	tf->tf_r8 = sf->tf_r8;
-	tf->tf_r9 = sf->tf_r9;
-	tf->tf_r10 = sf->tf_r10;
-	tf->tf_r11 = sf->tf_r11;
-	tf->tf_r12 = sf->tf_r12;
-	tf->tf_r13 = sf->tf_r13;
-	tf->tf_r14 = sf->tf_r14;
-	tf->tf_r15 = sf->tf_r15;
-	tf->tf_r16 = sf->tf_r16;
-	tf->tf_r17 = sf->tf_r17;
-	tf->tf_r18 = sf->tf_r18;
-	tf->tf_t4 = sf->tf_t4;		/* r19 */
-	tf->tf_arg3 = sf->tf_arg3;	/* r23 */
-	tf->tf_arg2 = sf->tf_arg2;	/* r24 */
-	tf->tf_arg1 = sf->tf_arg1;	/* r25 */
-	tf->tf_arg0 = sf->tf_arg0;	/* r26 */
-	tf->tf_dp = sf->tf_dp;
-	tf->tf_ret0 = sf->tf_ret0;
-	tf->tf_ret1 = sf->tf_ret1;
-	tf->tf_r31 = sf->tf_r31;
 }
 
 /*
