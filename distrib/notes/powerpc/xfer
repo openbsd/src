@@ -13,14 +13,14 @@ a floppy disk (1.44Mb required).
 
 If you are using a UN*X-like system to write the floppy image to
 disk, you should use the "dd" command to copy the file system image
-(floppy.fs) directly to the raw floppy disks.  It is suggested that
+(floppy{:--:}OSrev.fs) directly to the raw floppy disks.  It is suggested that
 you read the dd(1) manual page or ask your system administrator to
 determine the correct set of arguments to use; it will be slightly
 different from system to system, and a comprehensive list of the
 possibilities is beyond the scope of this document.
 
 If you are using DOS to write the floppy image to disk, you should
-use the "rawrite" utility, provided in the "2.3/tools" directory of
+use the "rawrite" utility, provided in the "OSREV/tools" directory of
 the OpenBSD distribution.  It will write the file system image
 (floppy.fs) to a disk.
 
