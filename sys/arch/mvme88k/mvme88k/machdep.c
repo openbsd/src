@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.147 2004/07/28 12:28:48 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.148 2004/07/29 10:17:21 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -102,13 +102,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
-#include <ddb/db_output.h>		/* db_printf()		*/
-#endif /* DDB */
-
-#if DDB
-#define DEBUG_MSG db_printf
-#else
-#define DEBUG_MSG printf
 #endif /* DDB */
 
 struct intrhand *intr_handlers[256];
@@ -1526,7 +1519,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		}
 
 #ifdef DEBUG
-		if (level > 7 || (char)level < 0) {
+		if (level > 7 || (int)level < 0) {
 			panic("int level (%x) is not between 0 and 7", level);
 		}
 #endif
@@ -1573,7 +1566,8 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			}
 			vec &= VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
-				printf("vme vec timeout");
+				printf("VME vec timeout, vec = %x, mask = 0x%b\n",
+				    vec, 1 << intbit, IST_STRING);
 				break;
 			}
 			if (vec == 0) {
@@ -2045,10 +2039,10 @@ nmihand(void *framep)
 #endif
 
 #if DDB
-	DEBUG_MSG("Abort Pressed\n");
+	printf("Abort Pressed\n");
 	Debugger();
 #else
-	DEBUG_MSG("Spurious NMI?\n");
+	printf("Spurious NMI?\n");
 #endif /* DDB */
 }
 
