@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.297 2003/04/30 23:56:30 krw Exp $
+#	$OpenBSD: install.sub,v 1.298 2003/05/07 00:43:06 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -881,7 +881,7 @@ __EOT
 		isin $_f $_get_sets || continue
 		echo "Getting $_f ..."
 		case $_f in
-		*.tgz)	ftp $_ftp_active -o - -V -m "$_src/$_f" | tar zxpf - -C /mnt
+		*.tgz)	ftp $_ftp_active -o - -V -m "$_src/$_f" | tar zxphf - -C /mnt
 			;;
 		*)	ftp $_ftp_active -o "/mnt/$_f" -V -m "$_src/$_f"
 			;;
@@ -1364,9 +1364,9 @@ __EOT
 	while [ -z "$resp" ]; do
 		ask "Which way is it?" 1
 		case $resp in
-		1)	_xcmd="tar -zxvpf -"
+		1)	_xcmd="tar zxvphf -"
 			;;
-		2)	_xcmd="tar -xvpf -"
+		2)	_xcmd="tar xvphf -"
 			;;
 		*)	echo "Invalid response: $resp."
 			# force loop to repeat
