@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.26 1999/08/10 22:00:43 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.27 1999/08/11 17:18:47 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ void isapnp_configure __P((struct isapnp_softc *,
 void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 int isapnp_print __P((void *, const char *));
 int isapnp_submatch __P((struct device *, void *, void *));
+int isapnp_com_submatch __P((struct device *, void *, void *));
 int isapnp_find __P((struct isapnp_softc *, int));
 int isapnp_match __P((struct device *, void *, void *));
 void isapnp_attach __P((struct device *, struct device *, void *));
@@ -567,6 +568,34 @@ isapnp_print(aux, str)
 
 
 /* isapnp_submatch():
+ * Special case.
+ * A lot of com/pccom devices do not have the PNPxxx identifiers
+ * they should have.  If it looks like a modem..... let's try it.
+ */
+int
+isapnp_com_submatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct isa_attach_args *ipa = aux;
+
+	if ((strcmp("com", cf->cf_driver->cd_name) == 0 ||
+	    strcmp("pccom", cf->cf_driver->cd_name) == 0) &&
+	    ipa->ipa_nio == 1 && ipa->ipa_nirq == 1 &&
+	    ipa->ipa_ndrq == 0 && ipa->ipa_nmem == 0 &&
+	    ipa->ipa_io[0].length == 8) {
+		if (isapnp_config(ipa->ia_iot, ipa->ia_memt, ipa)) {
+			printf("%s: error in region allocation\n",
+			    cf->cf_driver->cd_name);
+			return (0);
+		}
+		return ((*cf->cf_attach->ca_match)(parent, match, ipa));
+	}
+	return (0);
+}
+
+/* isapnp_submatch():
  *	Probe the logical device...
  */
 int
@@ -854,6 +883,7 @@ isapnp_attach(parent, self, aux)
 {
 	struct isapnp_softc *sc = (struct isapnp_softc *) self;
 	struct isa_attach_args *ia = aux;
+	void *match;
 	int c, d;
 
 	sc->sc_iot = ia->ia_iot;
@@ -899,11 +929,8 @@ isapnp_attach(parent, self, aux)
 			    lpa->ipa_devident, lpa->ipa_devlogic,
 			    lpa->ipa_devcompat, lpa->ipa_devclass));
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
-				printf("%s: <%s, %s, %s, %s> ignored; %s\n",
-				    sc->sc_dev.dv_xname,
-				    lpa->ipa_devident, lpa->ipa_devlogic,
-				    lpa->ipa_devcompat, lpa->ipa_devclass,
-				    "resource conflict");
+				isapnp_print(lpa, self->dv_xname);
+				printf(" resouce conflict\n");
 				ISAPNP_FREE(lpa);
 				continue;
 			}
@@ -915,9 +942,18 @@ isapnp_attach(parent, self, aux)
 			lpa->ia_delaybah = ia->ia_delaybah;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
-			if (config_found_sm(self, lpa, isapnp_print,
-			    isapnp_submatch) == NULL)
+
+			if ((match = config_search(isapnp_submatch,
+			    self, lpa)))
+				config_attach(self, match, lpa, isapnp_print);
+			else if ((match = config_search(isapnp_com_submatch,
+			    self, lpa)))
+				config_attach(self, match, lpa, isapnp_print);
+			else {
+				isapnp_print(lpa, self->dv_xname);
+				printf(" not configured\n");
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
+			}
 			ISAPNP_FREE(lpa);
 		}
 		isapnp_write_reg(sc, ISAPNP_WAKE, 0);    /* Good night cards */
