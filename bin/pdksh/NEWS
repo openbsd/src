@@ -1,4 +1,19 @@
-$OpenBSD: NEWS,v 1.4 1996/10/13 21:32:17 downsj Exp $
+$OpenBSD: NEWS,v 1.5 1996/11/21 07:59:26 downsj Exp $
+
+Version 5.2.12
+
+* bug fixes
+    * editing: shell recognizes window resizes on Dec alphas (config problem).
+    * alias: no longer dumps core if alias is in a command substitution.
+    * alias: everything after ;\n or \n\n was ignored in aliases.
+    * exec: temp files used by here docs in functions now cleaned up on exec.
+    * possible core dump when cleaning up environment fixed.
+    * vi: set -o vi-show8 now does what it was supposed to do (cat -v like).
+    * job control: process group synchronization (needed on systems with
+      broken setpgrp()) now works when the pipeline contains built in commands.
+    * vi: if set -o vi-tabcomplete, tab works in command mode as well.
+    * set/typeset: unset parameters are only reported if they have attributes.
+
 
 Version 5.2.11
 

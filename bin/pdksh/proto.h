@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.2 1996/08/19 20:08:57 downsj Exp $	*/
+/*	$OpenBSD: proto.h,v 1.3 1996/11/21 07:59:34 downsj Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -165,6 +165,7 @@ void 	unwind		ARGS((int i)) GCC_FUNC_ATTR(noreturn);
 void 	newenv		ARGS((int type));
 void 	quitenv		ARGS((void));
 void	cleanup_parents_env ARGS((void));
+void	cleanup_proc_env ARGS((void));
 void 	aerror		ARGS((Area *ap, const char *msg))
 				GCC_FUNC_ATTR(noreturn);
 /* misc.c */

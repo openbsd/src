@@ -5,6 +5,7 @@
 #
 
 # Avoid common problems with ENV (though perl shouldn't let it through)
+# (can you believe some shells don't have an unset???)
 unset ENV
 
 x=x

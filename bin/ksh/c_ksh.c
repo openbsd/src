@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.4 1996/10/01 02:05:32 downsj Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.5 1996/11/21 07:59:27 downsj Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -768,6 +768,12 @@ c_typeset(wp)
 	    for (l = e->loc; l; l = l->next) {
 		for (p = tsort(&l->vars); (vp = *p++); )
 		    for (; vp; vp = vp->u.array) {
+			/* Report an unset param only if the user has
+			 * explicitly given it some attribute (like export);
+			 * otherwise, after "echo $FOO", we would report FOO...
+			 */
+			if (!(vp->flag & ISSET) && !(vp->flag & USERATTRIB))
+			    continue;
 			if (flag && (vp->flag & flag) == 0)
 			    continue;
 			/* no arguments */

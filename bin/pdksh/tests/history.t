@@ -73,7 +73,7 @@ expected-stderr-pattern:
 
 name: history-e-minus-4
 description:
-	"fc -e | more" works
+	Check if "fc -e -" command output goes to stdout.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
 perl-setup: system("echo PS1=X > Env");

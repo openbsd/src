@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.4 1996/10/01 02:05:34 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.5 1996/11/21 07:59:28 downsj Exp $	*/
 
 /*
  * execute command tree
@@ -34,7 +34,7 @@ static int	dbteste_eval ARGS((Test_env *te, Test_op op, const char *opnd1,
 static void	dbteste_error ARGS((Test_env *te, int offset, const char *msg));
 #endif /* KSH */
 #ifdef OS2
-static int	search_access1 ARGS((const char *path, int mode));
+static int	search_access1 ARGS((const char *path, int mode, int *errnop));
 #endif /* OS2 */
 
 
@@ -417,6 +417,7 @@ execute(t, flags)
 			}
 #endif
 		restoresigs();
+		cleanup_proc_env();
 		ksh_execve(t->str, t->args, ap);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);

@@ -34,10 +34,14 @@ stdin:
 	mkdir Y
 	cat > Y/xxxscript << EOF
 	#!/bin/sh
+	# Need to restore path so echo can be found (some shells don't have
+	# it as a built-in)
+	PATH=\$OLDPATH
 	echo hi
 	exit 0
 	EOF
 	chmod a+rx Y/xxxscript
+	export OLDPATH="$PATH"
 	PATH=$PWD/Y xxxscript
 	exit $?
 expected-stdout:
@@ -203,7 +207,7 @@ description:
 	
 	NOTE: this test provokes a bizarre bug in ksh93 (shell starts reading
 	      commands from /etc/termcap..)
-time-limit: 4
+time-limit: 10
 stdin:
 	echo A line of text that will be duplicated quite a number of times.> t1
 	cat t1 t1 t1 t1  t1 t1 t1 t1  t1 t1 t1 t1  t1 t1 t1 t1  > t2
@@ -645,7 +649,7 @@ description:
 	Can subshells be prefixed by redirections (historical shells allow
 	this)
 stdin:
-	< /dev/null (cat -n)
+	< /dev/null (sed 's/^/X/')
 ---
 
 name: regression-44
@@ -682,3 +686,85 @@ expected-stdout:
 	<[abc]>
 	<a[bc>
 ---
+
+name: regression-46
+description:
+	Check that alias expansion works in command substitutions and
+	at the end of file.
+stdin:
+	alias x='echo hi'
+	FOO="`x` "
+	echo "[$FOO]"
+	x
+expected-stdout:
+	[hi ]
+	hi
+---
+
+name: regression-47
+description:
+	Check that aliases are fully read.
+stdin:
+	alias x='echo hi;
+	echo there'
+	x
+	echo done
+expected-stdout:
+	hi
+	there
+	done
+---
+
+name: regression-48
+description:
+	Check that (here doc) temp files are not left behind after an exec.
+stdin:
+	mkdir foo || exit 1
+	TMPDIR=$PWD/foo $0 <<- 'EOF'
+		x() {
+			sed 's/^/X /' << E_O_F
+			hi
+			there
+			folks
+			E_O_F
+			echo "done ($?)"
+		}
+		exec /bin/echo subtest-1 hi
+	EOF
+	echo subtest-1 foo/*
+	TMPDIR=$PWD/foo $0 <<- 'EOF'
+		sed 's/^/X /' << E_O_F; exec /bin/echo subtest-2 hi
+		a
+		few
+		lines
+		E_O_F
+	EOF
+	echo subtest-2 foo/*
+expected-stdout:
+	subtest-1 hi
+	subtest-1 foo/*
+	X a
+	X few
+	X lines
+	subtest-2 hi
+	subtest-2 foo/*
+---
+
+name: regression-49
+description:
+	Check that unset params with attributes are reported by set, those
+	sans attributes are not.
+stdin:
+	unset FOO BAR
+	echo X$FOO
+	export BAR
+	typeset -i BLAH
+	set | grep FOO
+	set | grep BAR
+	set | grep BLAH
+expected-stdout:
+	X
+	BAR
+	BLAH
+---
+

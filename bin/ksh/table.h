@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.2 1996/08/19 20:09:00 downsj Exp $	*/
+/*	$OpenBSD: table.h,v 1.3 1996/11/21 07:59:35 downsj Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -66,6 +66,11 @@ struct tbl {			/* table item */
 #define FKSH		BIT(11)	/* function defined with function x (vs x()) */
 #define SPEC_BI		BIT(12)	/* a POSIX special builtin */
 #define REG_BI		BIT(13)	/* a POSIX regular builtin */
+/* Attributes that can be set by the user (used to decide if an unset param
+ * should be repoted by set/typeset).  Does not include ARRAY or LOCAL.
+ */
+#define USERATTRIB	(EXPORT|INTEGER|RDONLY|LJUST|RJUST|ZEROFIL\
+			 |LCASEV|UCASEV_AL|INT_U|INT_L)
 
 /* command types */
 #define	CNONE	0		/* undefined */

@@ -1,4 +1,58 @@
-$OpenBSD: ChangeLog,v 1.4 1996/10/13 21:32:16 downsj Exp $
+$OpenBSD: ChangeLog,v 1.5 1996/11/21 07:59:25 downsj Exp $
+
+Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* made pdksh-5.2.12 distribution
+
+Fri Oct 25 11:59:48 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* vi.c(vi_cmd): case Cntl('i'): dont fall through, call complete_word().
+
+Tue Oct 22 17:38:21 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* table.h(USERATTRIB): new define.
+	* c_ksh.c(c_typeset): report unset params only if it has some
+	  interesting attributes.
+
+Tue Oct 22 15:54:39 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* jobs.c(exchild): changed NEED_PGRP_SYNC code so j_sync_pipe[1] isn't
+	  left open in 2nd+ children.
+
+Tue Oct 22 12:59:49 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(main): memset() env to 0.
+
+Mon Oct 21 12:53:44 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(cleanup_proc_env): new function.
+	* exec.c(execute): call cleanup_proc_env() before calling ksh_execve().
+
+Fri Oct 11 22:53:57 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* vi.c(display): use ch not e->buf[cur] when printing character.
+
+Fri Oct 11 13:26:11 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4(KSH_TIMES_CHECK,KSH_DUP2_CLEXEC_CHECK,KSH_OPENDIR_CHECK):
+	  changed sense of test so "yes" result is printed if you have a good
+	  system.
+	* aclocal.m4(KSH_C_FUNC_ATTR): changed return type of test_cnst to int.
+
+Fri Oct 11 13:05:40 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* syn.c(get_command): added inalias() call when setting cf = CONTIN.
+
+Thu Oct 10 16:22:03 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.c(getsc__): case SALIAS: if we read eof, break, don't continue.
+
+Tue Oct  8 13:14:00 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4(KSH_TERM): added SYS_IOCTL_WITH_TERMIOS,
+	  SYS_IOCTL_WITH_TERMIO tests.
+	* tty.h: include <sys/ioctl.h> with <termios.h>/<termio.h>
+	  if possible.
 
 Tue Oct  8 11:42:36 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
