@@ -1,4 +1,4 @@
-.\"     $OpenBSD: harmony.4,v 1.1 2003/01/26 21:59:17 jason Exp $
+.\"     $OpenBSD: harmony.4,v 1.2 2003/01/28 21:57:04 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm harmony
-.Nd lasi CS4215/AD1849 audio interface
+.Nd CS4215/AD1849 audio interface
 .Sh SYNOPSIS
 .Cd "harmony* at gsc? irq 13"
 .Cd "audio*  at harmony?"
@@ -51,10 +51,19 @@ or
 .Tn AD1848
 chip to implement the audio device interface described in
 .Xr audio 4 .
-This device is found onboard on some HPPA models.
+This device is found on most
+.Tn HP PA-RISC
+workstations.
 The
 .Nm
 has a maximum precision of 16 bits and has a stereo input and stereo output.
+.Pp
+On
+.Tn HP9000/712
+models
+.Nm
+also provides two additional channels for an add-on
+card with two fax/voice/modems.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr audio 4 ,
