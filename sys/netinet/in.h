@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.17 1999/01/10 02:37:33 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.18 1999/02/17 23:51:12 deraadt Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -336,7 +336,8 @@ struct ip_mreq {
 #define IPCTL_IPPORT_LASTAUTO	8
 #define IPCTL_IPPORT_HIFIRSTAUTO 9
 #define IPCTL_IPPORT_HILASTAUTO	10
-#define	IPCTL_MAXID		11
+#define	IPCTL_IPPORT_MAXQUEUE	11
+#define	IPCTL_MAXID		12
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -350,6 +351,7 @@ struct ip_mreq {
 	{ "portlast", CTLTYPE_INT }, \
 	{ "porthifirst", CTLTYPE_INT }, \
 	{ "porthilast", CTLTYPE_INT }, \
+	{ "maxqueue", CTLTYPE_INT }, \
 }
 
 #ifndef _KERNEL

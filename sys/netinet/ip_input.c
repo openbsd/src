@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.34 1998/12/28 23:54:57 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.35 1999/02/17 23:51:12 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -99,6 +99,10 @@ int	ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
 int	ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
 int	ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 
+/* Keep track of memory used for reassembly */
+int	ip_maxqueue = 300;
+int	ip_frags = 0;
+
 /* from in_pcb.c */
 extern int ipport_firstauto;
 extern int ipport_lastauto;
@@ -116,7 +120,6 @@ struct	ifqueue ipintrq;
 int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int,
 			  struct mbuf **));
 #endif
-
 
 char *
 inet_ntoa(ina)
@@ -278,10 +281,10 @@ next:
 	}
 
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
-       /*
-	* Check if we want to allow this packet to be processed.
-	* Consider it to be bad if not.
-	*/
+	 /*
+	 * Check if we want to allow this packet to be processed.
+	 * Consider it to be bad if not.
+	 */
 	{
 		struct mbuf *m0 = m;
 		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
@@ -432,12 +435,19 @@ found:
 		 */
 		if (mff || ip->ip_off) {
 			ipstat.ips_fragments++;
+			if (ip_frags + 1 > ip_maxqueue) {
+				ip_flush();
+				ipstat.ips_rcvmemdrop++;
+				goto bad;
+			}
+			    
 			MALLOC(ipqe, struct ipqent *, sizeof (struct ipqent),
 			    M_IPQ, M_NOWAIT);
 			if (ipqe == NULL) {
 				ipstat.ips_rcvmemdrop++;
 				goto bad;
 			}
+			ip_frags++;
 			ipqe->ipqe_mff = mff;
 			ipqe->ipqe_ip = ip;
 			ip = ip_reass(ipqe, fp);
@@ -580,6 +590,7 @@ ip_reass(ipqe, fp)
 		m_freem(dtom(q->ipqe_ip));
 		LIST_REMOVE(q, ipqe_q);
 		FREE(q, M_IPQ);
+		ip_frags--;
 	}
 
 insert:
@@ -619,10 +630,12 @@ insert:
 	m_cat(m, t);
 	nq = q->ipqe_q.le_next;
 	FREE(q, M_IPQ);
+	ip_frags--;
 	for (q = nq; q != NULL; q = nq) {
 		t = dtom(q->ipqe_ip);
 		nq = q->ipqe_q.le_next;
 		FREE(q, M_IPQ);
+		ip_frags--;
 		m_cat(m, t);
 	}
 
@@ -652,6 +665,7 @@ dropfrag:
 	ipstat.ips_fragdropped++;
 	m_freem(m);
 	FREE(ipqe, M_IPQ);
+	ip_frags--;
 	return (0);
 }
 
@@ -670,6 +684,7 @@ ip_freef(fp)
 		m_freem(dtom(q->ipqe_ip));
 		LIST_REMOVE(q, ipqe_q);
 		FREE(q, M_IPQ);
+		ip_frags--;
 	}
 	LIST_REMOVE(fp, ipq_q);
 	(void) m_free(dtom(fp));
@@ -704,6 +719,19 @@ ip_drain()
 {
 
 	while (ipq.lh_first != NULL) {
+		ipstat.ips_fragdropped++;
+		ip_freef(ipq.lh_first);
+	}
+}
+
+/*
+ * Flush a bunch of datagram fragments, till we are down to 75%.
+ */
+void
+ip_flush()
+{
+
+	while (ipq.lh_first != NULL && ip_frags > ip_maxqueue * 3 / 4) {
 		ipstat.ips_fragdropped++;
 		ip_freef(ipq.lh_first);
 	}
@@ -976,9 +1004,9 @@ save_rte(option, dst)
  */
 static int
 ip_weadvertise(addr)
-        u_int32_t addr;
+	u_int32_t addr;
 {
-        register struct rtentry *rt;
+	register struct rtentry *rt;
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	struct sockaddr_inarp sin;
@@ -993,21 +1021,21 @@ ip_weadvertise(addr)
 	
 	RTFREE(rt);
 	
-	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 
-	    || rt->rt_gateway->sa_family != AF_LINK)
+	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
+	    rt->rt_gateway->sa_family != AF_LINK)
 	  return 0;
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-          for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) 
-	  {
-		if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
-		  continue;
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
+				continue;
 
-		if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
-			  LLADDR((struct sockaddr_dl *)rt->rt_gateway),
-			  ETHER_ADDR_LEN))
-		  return 1;
-	  }
+			if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
+			    LLADDR((struct sockaddr_dl *)rt->rt_gateway),
+			    ETHER_ADDR_LEN))
+				return 1;
+		}
 
 	return 0;
 }
@@ -1325,6 +1353,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_IPPORT_HILASTAUTO:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ipport_hilastauto));
+	case IPCTL_IPPORT_MAXQUEUE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_maxqueue));
 	default:
 		return (EOPNOTSUPP);
 	}

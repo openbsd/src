@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.10 1999/01/11 02:01:34 deraadt Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.11 1999/02/17 23:51:12 deraadt Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -165,6 +165,7 @@ int	  ip_defttl;			/* default IP ttl */
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	 ip_dooptions __P((struct mbuf *));
 void	 ip_drain __P((void));
+void	 ip_flush __P((void));
 void	 ip_forward __P((struct mbuf *, int));
 void	 ip_freef __P((struct ipq *));
 void	 ip_freemoptions __P((struct ip_moptions *));
