@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.1 1996/08/16 09:16:00 mickey Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.2 1996/10/18 14:28:22 mickey Exp $	*/
 /*	$NOWHERE: ipx_ip.c,v 1.2 1996/05/07 09:49:43 mickey Exp $	*/
 
 /*-
@@ -232,7 +232,6 @@ ipxip_input( struct mbuf *m, ...)
 	s = splimp();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
-bad:
 		m_freem(m);
 		splx(s);
 		return;
@@ -306,9 +305,6 @@ ipxipoutput(ifp, m, dst, rt)
 		ifn->ifen_ifnet.if_ierrors = error;
 	}
 	return (error);
-bad:
-	m_freem(m);
-	return (ENETUNREACH);
 }
 
 void

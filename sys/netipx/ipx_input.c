@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.1 1996/08/16 09:15:59 mickey Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.2 1996/10/18 14:28:22 mickey Exp $	*/
 /*	$NOWHERE: ipx_input.c,v 1.2 1996/05/07 09:49:42 mickey Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ next:
 
 	ipx = mtod(m, struct ipx *);
 	len = ntohs(ipx->ipx_len);
-	if (oddpacketp = len & 1) {
+	if (oddpacketp == (len & 1)) {
 		len++;		/* If this packet is of odd length,
 				   preserve garbage byte for checksum */
 	}
@@ -331,9 +331,9 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 	int type;
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
-		return;
+		return NULL;
 	if (ipxctlerrmap[cmd] == 0)
-		return;		/* XXX */
+		return NULL;		/* XXX */
 	type = IPX_ERR_UNREACH_HOST;
 	errp = (struct ipx_errp *)arg;
 	switch (cmd) {
@@ -344,7 +344,7 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 	case PRC_HOSTUNREACH:
 		sipx = (struct sockaddr_ipx *)arg;
 		if (sipx->sipx_family != AF_IPX)
-			return;
+			return NULL;
 		ipx = &sipx->sipx_addr;
 		break;
 

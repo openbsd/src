@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.1 1996/08/16 09:16:04 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.2 1996/10/18 14:28:23 mickey Exp $	*/
 /*	$NOWHERE: spx_usrreq.c,v 1.2 1996/05/07 09:49:55 mickey Exp $	*/
 
 /*-
@@ -439,9 +439,9 @@ register struct spx *si;
 update_window:
 	if (SSEQ_LT(cb->s_snxt, cb->s_rack))
 		cb->s_snxt = cb->s_rack;
-	if (SSEQ_LT(cb->s_swl1, si->si_seq) || cb->s_swl1 == si->si_seq &&
-	    (SSEQ_LT(cb->s_swl2, si->si_ack) ||
-	     cb->s_swl2 == si->si_ack && SSEQ_LT(cb->s_ralo, si->si_alo))) {
+	if ((SSEQ_LT(cb->s_swl1, si->si_seq) || cb->s_swl1 == si->si_seq) &&
+	     (SSEQ_LT(cb->s_swl2, si->si_ack) || cb->s_swl2 == si->si_ack) &&
+	     SSEQ_LT(cb->s_ralo, si->si_alo)) {
 		/* keep track of pure window updates */
 		if ((si->si_cc & SPX_SP) && cb->s_swl2 == si->si_ack
 		    && SSEQ_LT(cb->s_ralo, si->si_alo)) {
