@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.19 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.20 2003/12/08 22:19:57 mickey Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -266,19 +266,24 @@ uvm_loan(map, start, len, result, flags)
 			goto fail;
 
 		/*
-		 * now do the loanout
+		 * map now locked.  now do the loanout...
 		 */
 		rv = uvm_loanentry(&ufi, &output, flags);
 		if (rv < 0) 
 			goto fail;
 
 		/*
-		 * done!   advance pointers and unlock.
+		 * done!  the map is unlocked.  advance, if possible.
+		 *
+		 * XXXCDC: could be recoded to hold the map lock with   
+		 *	   smarter code (but it only happens on map entry
+		 *	   boundaries, so it isn't that bad).
 		 */
-		rv <<= PAGE_SHIFT;
-		len -= rv;
-		start += rv;
-		uvmfault_unlockmaps(&ufi, FALSE);
+		if (rv) {
+			rv <<= PAGE_SHIFT;
+			len -= rv;
+			start += rv;
+		}
 	}
 	
 	/*
