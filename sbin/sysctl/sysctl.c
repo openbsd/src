@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.18 1997/08/19 06:16:26 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.19 1997/08/19 06:42:42 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.18 1997/08/19 06:16:26 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.19 1997/08/19 06:42:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -360,23 +360,62 @@ parse(string, flags)
 			     mib[3] == UDPCTL_BADDYNAMIC)) {
 				u_int32_t newbaddynamic[DP_MAPSIZE];
 				in_port_t port;
+				char action;
 
 				special |= BADDYNAMIC;
 				if (newval == NULL)
 					break;
 
-				(void)memset((void *)&newbaddynamic, 0,
-				    sizeof(newbaddynamic));
-				while (newval && (cp = strsep((char **)&newval,
-				    ", \t")) && *cp) {
-					port = atoi(cp);
-					if (port < IPPORT_RESERVED/2 ||
-					    port >= IPPORT_RESERVED)
-						errx(1, "invalid port, "
-						    "range is %d to %d",
-						    IPPORT_RESERVED/2,
-						    IPPORT_RESERVED-1);
-					DP_SET(newbaddynamic, port);
+				if (strchr((char *)newval, '+') ||
+				    strchr((char *)newval, '-')) {
+					size = sizeof(newbaddynamic);
+					if (sysctl(mib, len, newbaddynamic,
+					    &size, 0, 0) < 0) {
+						if (flags == 0)
+							return;
+						if (!nflag)
+							printf("%s: ", string);
+						printf("kernel does not have "
+						    "bad dynamic port tables "
+						    "in it\n");
+						return;
+					}
+					while (newval &&
+					    (cp = strsep((char **)&newval,
+					    ", \t")) && *cp) {
+						if (*cp != '+' && *cp != '-')
+							errx(1, "cannot mix +/-"
+							    " with full list");
+						action = *cp++;
+						port = atoi(cp);
+						if (port < IPPORT_RESERVED/2 ||
+						    port >= IPPORT_RESERVED)
+							errx(1, "invalid port, "
+							    "range is %d to %d",
+							    IPPORT_RESERVED/2,
+							    IPPORT_RESERVED-1);
+						if (action == '+')
+							DP_SET(newbaddynamic,
+							    port);
+						else
+							DP_CLR(newbaddynamic,
+							    port);
+					}
+				} else {
+					(void)memset((void *)newbaddynamic, 0,
+					    sizeof(newbaddynamic));
+					while (newval &&
+					    (cp = strsep((char **)&newval,
+					    ", \t")) && *cp) {
+						port = atoi(cp);
+						if (port < IPPORT_RESERVED/2 ||
+						    port >= IPPORT_RESERVED)
+							errx(1, "invalid port, "
+							    "range is %d to %d",
+							    IPPORT_RESERVED/2,
+							    IPPORT_RESERVED-1);
+						DP_SET(newbaddynamic, port);
+					}
 				}
 				newval = (void *)newbaddynamic;
 				newsize = sizeof(newbaddynamic);

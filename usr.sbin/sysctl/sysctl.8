@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.11 1997/08/09 23:36:30 millert Exp $
+.\"	$OpenBSD: sysctl.8,v 1.12 1997/08/19 06:42:42 millert Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -227,9 +227,16 @@ sysctl vm.loadavg
 .Pp
 Set the list of reserved TCP ports that should not be allocated
 by the kernel dynamically.  This can be used to keep daemons
-from stealing a specific port that another program needs to function:
+from stealing a specific port that another program needs to function.
+List elements may be separated by commas and/or whitespace.
 .Bd -literal -offset indent -compact
-sysctl -w net.inet.tcp.baddynamic="749 750 751 760 761 871"
+sysctl -w net.inet.tcp.baddynamic=749,750,751,760,761,871
+.Ed
+.Pp
+It is also possible to add or remove ports from the current list.
+.Bd -literal -offset indent -compact
+sysctl -w net.inet.tcp.baddynamic=+748
+sysctl -w net.inet.tcp.baddynamic=-871
 .Ed
 .Sh FILES
 .Bl -tag -width <netinet/icmpXvar.h> -compact
