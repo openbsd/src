@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2003/01/14 11:04:18 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.17 2003/01/21 20:54:16 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -132,8 +132,8 @@ scsibus* at osiop?
 #fd*	at fdc?	drive ?	# floppy drives
 
 sd*	at scsibus? target ? lun ?
-#st*	at scsibus? target ? lun ?
-#cd*	at scsibus? target ? lun ?
-#ch*	at scsibus? target ? lun ?
-#ss*	at scsibus? target ? lun ?
-#uk*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
