@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.102 2000/04/12 07:45:44 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.103 2000/04/12 08:11:36 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -275,7 +275,8 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	char buf[256];			/* Must not be larger than remote_version. */
 	char remote_version[256];	/* Must be at least as big as buf. */
 
-	if (options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
+	if ((options.protocol & SSH_PROTO_1) &&
+	    (options.protocol & SSH_PROTO_2)) {
 		major = PROTOCOL_MAJOR_1;
 		minor = 99;
 	} else if (options.protocol & SSH_PROTO_2) {
