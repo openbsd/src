@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.187 2001/11/28 16:24:26 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.188 2001/12/07 17:30:14 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -345,18 +345,20 @@ cpu_startup()
 	unsigned i;
 	caddr_t v;
 	int sz;
-	vm_offset_t minaddr, maxaddr, pa;
+	vaddr_t minaddr, maxaddr, va;
+	paddr_t pa;
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 * (space reserved in pmap_bootstrap)
 	 */
 	pa = avail_end;
-	for (i = 0; i < btoc(MSGBUFSIZE); i++, pa += NBPG)
-		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG), pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	va = (vaddr_t)msgbufp;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
@@ -598,7 +600,7 @@ setup_buffers(maxaddr)
 	if (!TAILQ_EMPTY(&saved_pgs))
 		FREE_PGS(saved_pgs);
 
-	pg = pgs.tqh_first;
+	pg = TAILQ_FIRST(&pgs);
 	for (i = 0; i < nbuf; i++) {
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -609,11 +611,10 @@ setup_buffers(maxaddr)
 		 */
 		addr = (vm_offset_t)buffers + i * MAXBSIZE;
 		for (size = PAGE_SIZE * (i < residual ? base + 1 : base);
-		    size > 0; size -= NBPG, addr += NBPG) {
-			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
-			    VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-			pg = pg->pageq.tqe_next;
+		    size > 0; size -= PAGE_SIZE, addr += PAGE_SIZE) {
+			pmap_kenter_pa(addr, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
+			pg = TAILQ_NEXT(pg, pageq);
 		}
 	}
 }

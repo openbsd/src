@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2001/12/07 00:59:16 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2001/12/07 17:30:14 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -277,9 +277,9 @@ pagemove(from, to, size)
 				pmap_update_pg((vm_offset_t) from);
 		}
 
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 #if defined(I386_CPU)
 	if (cpu_class != CPUCLASS_386)
