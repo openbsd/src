@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.23 1997/11/06 15:59:49 kstailey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.24 1997/12/08 21:25:37 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	extern char ostype[], osrelease[], osversion[], version[];
 	extern int somaxconn, sominconn;
-	extern int usermount;
+	extern int usermount, nosuidcoredump;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF))
@@ -305,6 +305,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_RND:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
 		    sizeof(rndstats)));
+	case KERN_NOSUIDCOREDUMP:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
 	default:
 		return (EOPNOTSUPP);
 	}

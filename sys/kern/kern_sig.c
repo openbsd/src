@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.22 1997/11/06 05:58:18 csapuntz Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.23 1997/12/08 21:25:36 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1103,6 +1103,8 @@ sigexit(p, signum)
 	/* NOTREACHED */
 }
 
+int nosuidcoredump = 1;
+
 /*
  * Dump core, into a file named "progname.core", unless the process was
  * setuid/setgid.
@@ -1127,6 +1129,8 @@ coredump(p)
 	if ((p->p_flag & P_SUGID) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
+	if ((p->p_flag & P_SUGID) && nosuidcoredump)
+		return (EPERM);
 
 	/* Don't dump if will exceed file size limit. */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
