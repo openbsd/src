@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.505 2002/04/29 22:30:34 mickey Exp $
+	$OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -552,6 +552,7 @@ vendor NDC		0x15e8	National Datacomm Corp
 vendor SYBA		0x1592	Syba
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
+vendor ATHEROS		0x168c	Atheros
 vendor GLOBALSUN	0x16ab	Global Sun
 vendor USR2		0x16ec	US Robotics
 vendor ALTIMA		0x173b	Altima
