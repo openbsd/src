@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.367 2003/04/15 11:29:24 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.368 2003/04/25 17:36:33 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2433,6 +2433,7 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 						    ntohs($6->rport.b);
 					break;
 				case PF_NAT:
+					r.rpool.proxy_port[1] = ntohs($6->rport.b);
 					if (!r.rpool.proxy_port[0] &&
 					    !r.rpool.proxy_port[1]) {
 						r.rpool.proxy_port[0] =
