@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.5 2003/11/06 17:59:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.6 2003/11/06 18:04:10 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -127,7 +127,7 @@ sub can_install($)
 }
 
 # This does pre_add a package: finding it and reading its package information
-sub pre_add
+sub pre_add($)
 {
 	my $pkg = shift;
 	my $pkgname1;
@@ -169,7 +169,49 @@ sub pre_add
 	return $handle;
 }
 
-sub really_add
+sub register_installation
+{
+	my ($dir, $dest, $plist) = @_;
+	mkdir($dest);
+	for my $i (info_names()) {
+		copy("$dir$i", "$dest");
+	}
+	$plist->tofile($dest.CONTENTS);
+}
+
+sub borked_installation
+{
+	my ($plist, $dir) = @_;
+
+	use OpenBSD::PackingElement;
+
+	my $borked = borked_package();
+	# fix packing list for pkg_delete
+	$plist->{items} = $plist->{done};
+
+	# last file may have not copied correctly
+	my $last = $plist->{items}->[@{$plist->{items}}-1];
+	if ($last->IsFile()) {
+	    use OpenBSD::md5;
+	    my $old = $last->{md5};
+	    $last->{md5} = OpenBSD::md5::fromfile($last->{fullname});
+	    if ($old ne $last->{md5}) {
+		print "Adjusting md5 for ", $last->{fullname}, " from ",
+		    $old, " to ", $last->{md5}, "\n";
+	    }
+	}
+	OpenBSD::PackingElement::Cwd->add($plist, '.');
+	my $pkgname = $plist->pkgname();
+	$plist->{name}->{name} = $borked;
+	$plist->{pkgdep} = [];
+	my $dest = installed_info($borked);
+	register_installation($dir, $dest, $plist);
+	print "Installation of $pkgname failed.\n";
+	print "Partial installation recorded as $borked\n";
+	exit 1;
+}
+
+sub really_add($)
 {
 	my $handle = shift;
 	my $plist = $handle->{plist};
@@ -185,6 +227,11 @@ sub really_add
 		}
 	}
 	die if $collisions;
+	my $interrupted;
+	local $SIG{'INT'} = sub {
+		$interrupted = 1;
+	};
+
 	if ($plist->has(REQUIRE)) {
 		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
@@ -201,8 +248,11 @@ sub really_add
 	}
 	my $archive=$handle->{archive};
 
+	$plist->{done} = [];
 	for my $item (@{$plist->{items}}) {
 		$item->install($archive, $opt_v, $opt_n);
+		push(@{$plist->{done}}, $item);
+		last if $interrupted;
 	}
 
 	$handle->close();
@@ -212,13 +262,12 @@ sub really_add
 			system($dir.INSTALL, $pkgname, "POST-INSTALL") == 0 or die "install script borked";
 		}
 	}
-	my $dest = installed_info($pkgname);
 	unlink($dir.CONTENTS);
-	mkdir($dest);
-	for my $i (info_names()) {
-		copy("$dir$i", "$dest");
+	if ($interrupted) {
+		borked_installation($plist, $dir);
 	}
-	$plist->tofile($dest.CONTENTS);
+	my $dest = installed_info($pkgname);
+	register_installation($dir, $dest, $plist);
 	if (defined $handle->{solved_dependencies}) {
 		for my $dep (@{$handle->{solved_dependencies}}) {
 			OpenBSD::RequiredBy->new($dep)->add($pkgname);
