@@ -32,14 +32,11 @@
 
 .include <bsd.obj.mk>
 
-WARNS?=	0
-
-COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
+.PATH:	${.CURDIR}/../common
+SRCS+=	raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
+	packet.c memory.c print.c options.c inet.c convert.c sysconf.c \
+	tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${COBJDIR}/libdhcp.a          
-DPADD=  ${COBJDIR}/libdhcp.a          
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
