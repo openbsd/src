@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipft_tx.c,v 1.8 1997/02/26 14:59:30 kstailey Exp $	*/
+/*	$OpenBSD: ipft_tx.c,v 1.9 1997/06/23 01:37:35 deraadt Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -59,15 +59,15 @@ struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
 static	int	tfd = -1;
 
-static	u_long	tx_hostnum();
-static	u_short	tx_portnum();
+static	in_addr_t	tx_hostnum();
+static	in_port_t	tx_portnum();
 
 
 /*
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-static	u_long	tx_hostnum(host, resolved)
+static	in_addr_t	tx_hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -88,7 +88,7 @@ int	*resolved;
 		}
 		return np->n_net;
 	}
-	return *(u_long *)hp->h_addr;
+	return *(in_addr_t *)hp->h_addr;
 }
 
 
@@ -96,7 +96,7 @@ int	*resolved;
  * find the port number given by the name, either from getservbyname() or
  * straight atoi()
  */
-static	u_short	tx_portnum(name)
+static	in_port_t	tx_portnum(name)
 char	*name;
 {
 	struct	servent	*sp, *sp2;
