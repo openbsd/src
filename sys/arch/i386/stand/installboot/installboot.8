@@ -1,5 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.8 1997/09/24 08:31:18 mickey Exp $
-.\"
+.\"	$OpenBSD: installboot.8,v 1.9 1997/09/24 10:37:22 downsj Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -36,7 +35,7 @@
 .Os 
 .Sh NAME
 .Nm installboot
-.Nd install a bootstrap on a UFS disk or partition
+.Nd install a bootstrap on a FFS disk or partition
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl n
@@ -48,9 +47,10 @@
 .Ar disk
 .Sh DESCRIPTION
 .Nm installboot
-is used to install a "first-stage" boot program into the boot area
-of a UFS or a FFS disk partition, and initialize the table of block
-numbers the
+is used to install a
+.Dq first-stage
+boot program into the boot area
+of a FFS disk partition, and initialize the table of block numbers the
 .Ar biosboot
 program uses to load the second-stage boot program.
 .Pp
@@ -68,41 +68,68 @@ Used to specify the sectors-per-track value if the drive has
 sector translation activated, and
 .Nm
 is unable to determine the translated geometry.
-If not specified, this defaults to d_nsectors from the disklabel.
+.\" If not specified, this defaults to d_nsectors from the disklabel.
+If not specified, this defaults to the value retrieved from the BIOS
+at boot time, available via
+.Xr sysctl 8 .
 .It Fl h Ar tpc
 Used to specify the tracks-per-cylinder value if the drive has
 sector translation activated, and
 .Nm
 is unable to determine the translated geometry.
-If not specified, this defaults to d_ntracks from the disklabel.
+.\" If not specified, this defaults to d_ntracks from the disklabel.
+If not specified, this defaults to the value retrieved from the BIOS
+at boot time, available via
+.Xr sysctl 8 .
 .El
 .Pp
 The arguments are:
 .Bl -tag -width biosboot
 .It Ar boot
 The name of the second-stage boot program in the mounted file system
-where the first-stage boot program is to be installed.
+where the first-stage boot program is to be installed.  This should be
+a full pathname.
 .It Ar biosboot
 The name of the prototype file for the first stage boot program,
-usually /usr/mdec/biosboot.
+usually
+.Pa /usr/mdec/biosboot .
 .It Ar disk
-The name of the disk containing the partition in which the
-first-stage boot program is to be installed.
-This might be the raw partition
-of the block device on which the file system containing
-.Ar boot
-is mounted.  Note that you must be in single-user mode or have your
-kernel in insecure mode (see 
-.Xr sysctl 8 's
-kern.securelevel variable or /etc/rc.securelevel) to be able
-to access the raw partition of a mounted disk.
+The name of the disk containing the partition in which the second-stage
+boot program resides and the first-stage boot program is to be installed.
+This can either be specified in short form (i.e.,
+.Sq sd0
+or
+.Sq wd0 ) ,
+or as the explicit device node, such as
+.Pa /dev/rsd0c
+or
+.Pa /dec/rwd0c .
+.Pp
+Note that you must be in single-user mode or have your kernel in
+insecure mode (see the
+.Xr sysctl 8
+.Va kern.securelevel
+variable or
+.Pa /etc/rc.securelevel )
+to enable access to the raw partition of a mounted disk.
+.Pp
+The
+.Sq c
+partition is always used to represent the
+.Dq entire
+disk on i386.
 .El
 .Sh BUGS
-The disklabel d_type field must be set to a value other than "unknown".
+The disklabel
+.Va d_type
+field must be set to a value other than
+.Dq unknown .
 .Pp
 You cannot run
 .Nm installboot
-for drives/partitions others then the one you want /bsd loaded from.
+for drives/partitions others then the one you want
+.Pa /boot
+loaded from.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr init 8 ,
