@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.91 2005/02/10 05:28:58 itojun Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.91 2005/02/10 05:28:58 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,11 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride 
 #include <netinet/ip_ipip.h>
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_ether.h>
+#ifdef DCCP
+#include <netinet/dccp.h>
+#define DCCPSTATES
+#include <netinet/dccp_var.h>
+#endif
 #include <netinet/ip_carp.h>
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -91,6 +96,9 @@ static const char *rcsid = "$OpenBSD: inet.c,v 1.90 2005/01/14 15:00:44 mcbride 
 
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
+#ifdef DCCP
+struct  dccpcb dccpcb;
+#endif
 struct	socket sockb;
 
 static void protopr0(u_long, char *, int);
@@ -129,6 +137,9 @@ protopr0(u_long off, char *name, int af)
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
 	int istcp, israw;
+#ifdef DCCP
+	int isdccp;
+#endif
 	int first = 1;
 	char *name0;
 	char namebuf[20];
@@ -138,6 +149,9 @@ protopr0(u_long off, char *name, int af)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
 	israw = strncmp(name, "ip", 2) == 0;
+#ifdef DCCP
+	isdccp = strcmp(name, "dccp") == 0;
+#endif
 	kread(off, (char *)&table, sizeof table);
 	prev = head =
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
@@ -173,6 +187,12 @@ protopr0(u_long off, char *name, int af)
 			kread((u_long)inpcb.inp_ppcb,
 			    (char *)&tcpcb, sizeof (tcpcb));
 		}
+#ifdef DCCP
+		if (isdccp) {
+			kread((u_long)inpcb.inp_ppcb,
+			    (char *)&dccpcb, sizeof (dccpcb));
+		}
+#endif
 		if (first) {
 			printf("Active Internet connections");
 			if (aflag)
@@ -191,7 +211,11 @@ protopr0(u_long off, char *name, int af)
 			first = 0;
 		}
 		if (Aflag) {
+#ifdef DCCP
+			if (istcp || isdccp)
+#else
 			if (istcp)
+#endif
 				printf("%*p ", PLEN, inpcb.inp_ppcb);
 			else
 				printf("%*p ", PLEN, prev);
@@ -395,6 +419,56 @@ udp_stats(u_long off, char *name)
 #undef p
 #undef p1
 }
+
+#ifdef DCCP
+void
+dccp_stats(off, name)
+	u_long off;
+	char *name;
+{
+	struct dccpstat dccpstat;
+
+	if (off == 0)
+		return;
+	printf("%s:\n", name);
+	kread(off, (char *)&dccpstat, sizeof (dccpstat));
+
+#define	p(f, m) if (dccpstat.f || sflag <= 1) \
+    printf(m, dccpstat.f, plural(dccpstat.f))
+#define	p1a(f, m) if (dccpstat.f || sflag <= 1) \
+    printf(m, dccpstat.f)
+	p(dccps_ipackets, "\t%lu packet%s received\n");
+	p(dccps_ibytes, "\t%lu byte%s received\n");
+	p(dccps_connattempt, "\t%lu connection request%s\n");
+	p(dccps_connects, "\t%lu connection%s established\n");
+	p(dccps_drops, "\t%lu packet%s dropped\n");
+	p(dccps_badlen, "\t%lu packet%s with bad data length field\n");
+	p(dccps_badsum, "\t%lu packet%s with bad checksum\n");
+	p(dccps_badseq, "\t%lu packet%s with bad sequencenumber\n");
+	p(dccps_noport, "\t%lu packet%s dropped due to no socket\n");
+	p(dccps_opackets, "\t%lu packet%s output\n");
+	p(dccps_obytes, "\t%lu byte%s output\n");
+
+	printf("\n\tTCPlike Sender:\n");
+	p(tcplikes_send_conn, "\t%lu connection%s established\n");
+	p(tcplikes_send_reploss, "\t%lu data packet%s reported lost\n");
+	p(tcplikes_send_assloss, "\t%lu data packet%s assumed lost\n");
+	p(tcplikes_send_ackrecv, "\t%lu acknowledgement%s received\n");
+	p(tcplikes_send_missack, "\t%lu ack packet%s assumed lost\n");
+	p(tcplikes_send_badseq, "\t%lu bad sequence number on outgoing packet%s\n");
+	p(tcplikes_send_memerr, "\t%lu memory allocation error%s\n");
+
+	printf("\tTCPlike Receiver:\n");
+	p(tcplikes_recv_conn, "\t%lu connection%s established\n");
+	p(tcplikes_recv_datarecv, "\t%lu data packet%s received\n");
+	p(tcplikes_recv_ackack, "\t%lu Ack-on-ack%s received\n");
+	p(tcplikes_recv_acksent, "\t%lu acknowledgement packet%s sent\n");
+	p(tcplikes_recv_memerr, "\t%lu memory allocation error%s\n");
+
+#undef p
+#undef p1a
+}
+#endif
 
 /*
  * Dump IP statistics structure.
