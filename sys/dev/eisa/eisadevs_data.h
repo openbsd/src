@@ -2,9 +2,9 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.4 1996/05/26 00:26:53 deraadt Exp 
+ *	OpenBSD: eisadevs,v 1.6 1997/07/25 02:29:51 mickey Exp 
  */
-/*	$NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp $	*/
+$NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -160,6 +160,36 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "TCM5920",
+	    EISA_PRODUCT_TCM5920,
+	},
+	{
+	    0,
+	    "TCM5970",
+	    EISA_PRODUCT_TCM5970,
+	},
+	{
+	    0,
+	    "TCM5971",
+	    EISA_PRODUCT_TCM5971,
+	},
+	{
+	    0,
+	    "TCM5972",
+	    EISA_PRODUCT_TCM5972,
+	},
+	{
+	    0,
+	    "SMC8010",
+	    EISA_PRODUCT_SMC8010,
+	},
+	{
+	    0,
+	    "SMC0110",
+	    EISA_PRODUCT_SMC0110,
+	},
+	{
+	    0,
 	    "USC0240",
 	    EISA_PRODUCT_USC0240,
 	},
@@ -197,6 +227,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "ETI",
 	    "Microdyne",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "SMC",
+	    "Standard Microsystems Corp.",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
