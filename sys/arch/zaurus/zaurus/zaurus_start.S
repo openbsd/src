@@ -1,3 +1,4 @@
+/*	$OpenBSD: zaurus_start.S,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: zaurus_lcd.c,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
