@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.1 2001/06/08 02:53:49 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.2 2001/06/23 18:30:37 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
@@ -100,7 +100,7 @@
 #include <sys/socket.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.7 2001/06/16 22:17:50 deraadt Exp $	*/
+/*	$OpenBSD: xform.c,v 1.8 2001/06/23 18:30:36 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -51,7 +51,7 @@
 #include <crypto/cast.h>
 #include <crypto/skipjack.h>
 #include <crypto/rijndael.h>
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);

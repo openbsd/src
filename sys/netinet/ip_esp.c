@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.66 2001/06/13 13:42:02 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.67 2001/06/23 18:30:38 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -63,7 +63,7 @@
 #include <net/pfkeyv2.h>
 #include <net/if_enc.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 #include "bpfilter.h"

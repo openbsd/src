@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.59 2001/06/18 10:23:45 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.60 2001/06/23 18:30:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -53,7 +53,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <dev/rndvar.h>
 #include <sys/md5k.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.7 2001/06/12 15:40:32 niklas Exp $	*/
+/*	$OpenBSD: ises.c,v 1.8 2001/06/23 18:30:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -43,7 +43,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <dev/rndvar.h>
 #include <sys/md5k.h>

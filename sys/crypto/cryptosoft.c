@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.22 2001/06/16 22:17:49 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.23 2001/06/23 18:30:36 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -34,7 +34,7 @@
 #include <crypto/cast.h>
 #include <crypto/skipjack.h>
 #include <crypto/blf.h>
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
 #include <crypto/xform.h>
 

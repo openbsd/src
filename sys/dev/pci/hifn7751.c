@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.72 2001/06/23 00:25:37 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.73 2001/06/23 18:30:37 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -52,7 +52,7 @@
 #include <machine/pmap.h>
 #include <sys/device.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <dev/rndvar.h>
 
 #include <dev/pci/pcireg.h>

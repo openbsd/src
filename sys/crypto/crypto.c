@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.19 2001/06/16 22:17:49 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.20 2001/06/23 18:30:35 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -26,7 +26,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 
 struct cryptocap *crypto_drivers = NULL;
 int crypto_drivers_num = 0;

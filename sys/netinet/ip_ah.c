@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.60 2001/06/23 16:15:56 fgsch Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.61 2001/06/23 18:30:38 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -62,7 +62,7 @@
 #include <net/pfkeyv2.h>
 #include <net/if_enc.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 #include "bpfilter.h"

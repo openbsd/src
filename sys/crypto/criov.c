@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.5 2001/06/18 08:34:45 deraadt Exp $	*/
+/*      $OpenBSD: criov.c,v 1.6 2001/06/23 18:30:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -38,7 +38,7 @@
 #include <vm/vm_extern.h>
 #include <vm/pmap.h>
 
-#include <crypto/crypto.h>
+#include <crypto/cryptodev.h>
 
 int
 iov2pages(uio, np, pp, lp, maxp, nicep)
