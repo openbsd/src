@@ -30,7 +30,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 
 void	ssh_kex(char *host, struct sockaddr *hostaddr);
 void
-ssh_userauth(const char* local_user, const char* server_user, char *host,
+ssh_userauth(const char * local_user, const char * server_user, char *host,
     int host_key_valid, RSA *own_host_key);
 
 void	ssh_kex2(char *host, struct sockaddr *hostaddr);
