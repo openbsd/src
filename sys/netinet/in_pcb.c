@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.80 2004/08/10 20:12:15 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.81 2004/11/23 15:35:36 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -106,10 +106,10 @@ extern int ipsec_ipcomp_default_level;
  * These configure the range of local port addresses assigned to
  * "unspecified" outgoing connections/packets/whatever.
  */
-int ipport_firstauto = IPPORT_RESERVED;		/* 1024 */
-int ipport_lastauto = IPPORT_USERRESERVED;	/* 5000 */
-int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;	/* 40000 */
-int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
+int ipport_firstauto = IPPORT_RESERVED;
+int ipport_lastauto = IPPORT_USERRESERVED;
+int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;
+int ipport_hilastauto = IPPORT_HILASTAUTO;
 
 struct pool inpcb_pool;
 int inpcb_pool_initalized = 0;
