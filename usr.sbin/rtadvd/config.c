@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.10 2001/01/23 15:36:40 itojun Exp $	*/
-/*	$KAME: config.c,v 1.29 2001/01/23 14:13:08 jinmei Exp $	*/
+/*	$OpenBSD: config.c,v 1.11 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$KAME: config.c,v 1.32 2001/02/01 09:12:08 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -85,6 +85,7 @@ getconfig(intface)
 	char tbuf[BUFSIZ];
 	struct rainfo *tmp;
 	long val;
+	long long val64;
 	char buf[BUFSIZ];
 	char *bp = buf;
 	char *addr;
@@ -216,20 +217,23 @@ getconfig(intface)
 	}
 	tmp->reachabletime = (u_int32_t)val;
 
-	MAYHAVE(val, "retrans", DEF_ADVRETRANSTIMER);
-	if (val < 0 || val > 0xffffffff) {
+	MAYHAVE(val64, "retrans", DEF_ADVRETRANSTIMER);
+	if (val64 < 0 || val64 > 0xffffffff) {
 		syslog(LOG_ERR,
 		       "<%s> retrans time out of range", __FUNCTION__);
 		exit(1);
 	}
-	tmp->retranstimer = (u_int32_t)val;
+	tmp->retranstimer = (u_int32_t)val64;
 
-#ifdef MIP6
-	if (!mobileip6)
+#ifndef MIP6
+	if (agetstr("hapref", &bp) || agetstr("hatime", &bp)) {
+		syslog(LOG_ERR,
+		       "<%s> mobile-ip6 configuration not supported",
+		       __FUNCTION__);
+		exit(1);
+	}
 #else
-	if (1)
-#endif
-	{
+	if (!mobileip6) {
 		if (agetstr("hapref", &bp) || agetstr("hatime", &bp)) {
 			syslog(LOG_ERR,
 			       "<%s> mobile-ip6 configuration without "
@@ -237,9 +241,7 @@ getconfig(intface)
 			       __FUNCTION__);
 			exit(1);
 		}
-	}
-#ifdef MIP6
-	else {
+	} else {
 		tmp->hapref = 0;
 		if ((val = agetnum("hapref")) >= 0)
 			tmp->hapref = (int16_t)val;
@@ -315,7 +317,7 @@ getconfig(intface)
 			{
 				MAYHAVE(val, entbuf,
 				    (ND_OPT_PI_FLAG_ONLINK|ND_OPT_PI_FLAG_AUTO|
-					 ND_OPT_PI_FLAG_RTADDR));
+					 ND_OPT_PI_FLAG_ROUTER));
 			} else
 #endif
 			{
@@ -325,18 +327,18 @@ getconfig(intface)
 			pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
 			pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
 #ifdef MIP6
-			pfx->routeraddr = val & ND_OPT_PI_FLAG_RTADDR;
+			pfx->routeraddr = val & ND_OPT_PI_FLAG_ROUTER;
 #endif
 
 			makeentry(entbuf, i, "vltime", added);
-			MAYHAVE(val, entbuf, DEF_ADVVALIDLIFETIME);
-			if (val < 0 || val > 0xffffffff) {
+			MAYHAVE(val64, entbuf, DEF_ADVVALIDLIFETIME);
+			if (val64 < 0 || val64 > 0xffffffff) {
 				syslog(LOG_ERR,
 				       "<%s> vltime out of range",
 				       __FUNCTION__);
 				exit(1);
 			}
-			pfx->validlifetime = (u_int32_t)val;
+			pfx->validlifetime = (u_int32_t)val64;
 
 			makeentry(entbuf, i, "vltimedecr", added);
 			if (agetflag(entbuf)) {
@@ -347,14 +349,14 @@ getconfig(intface)
 			}
 
 			makeentry(entbuf, i, "pltime", added);
-			MAYHAVE(val, entbuf, DEF_ADVPREFERREDLIFETIME);
-			if (val < 0 || val > 0xffffffff) {
+			MAYHAVE(val64, entbuf, DEF_ADVPREFERREDLIFETIME);
+			if (val64 < 0 || val64 > 0xffffffff) {
 				syslog(LOG_ERR,
 				       "<%s> pltime out of range",
 				       __FUNCTION__);
 				exit(1);
 			}
-			pfx->preflifetime = (u_int32_t)val;
+			pfx->preflifetime = (u_int32_t)val64;
 
 			makeentry(entbuf, i, "pltimedecr", added);
 			if (agetflag(entbuf)) {
@@ -669,8 +671,8 @@ make_packet(struct rainfo *rainfo)
 	struct nd_opt_prefix_info *ndopt_pi;
 	struct nd_opt_mtu *ndopt_mtu;
 #ifdef MIP6
-	struct nd_opt_advint *ndopt_advint;
-	struct nd_opt_hai *ndopt_hai;
+	struct nd_opt_advinterval *ndopt_advint;
+	struct nd_opt_homeagent_info *ndopt_hai;
 #endif
 	struct prefix *pfx;
 
@@ -693,9 +695,9 @@ make_packet(struct rainfo *rainfo)
 		packlen += sizeof(struct nd_opt_mtu);
 #ifdef MIP6
 	if (mobileip6 && rainfo->maxinterval)
-		packlen += sizeof(struct nd_opt_advint);
+		packlen += sizeof(struct nd_opt_advinterval);
 	if (mobileip6 && rainfo->hatime)
-		packlen += sizeof(struct nd_opt_hai);
+		packlen += sizeof(struct nd_opt_homeagent_info);
 #endif
 
 	/* allocate memory for the packet */
@@ -747,25 +749,25 @@ make_packet(struct rainfo *rainfo)
 
 #ifdef MIP6
 	if (mobileip6 && rainfo->maxinterval) {
-		ndopt_advint = (struct nd_opt_advint *)buf;
-		ndopt_advint->nd_opt_int_type = ND_OPT_ADV_INTERVAL;
-		ndopt_advint->nd_opt_int_len = 1;
-		ndopt_advint->nd_opt_int_reserved = 0;
-		ndopt_advint->nd_opt_int_interval = ntohl(rainfo->maxinterval *
+		ndopt_advint = (struct nd_opt_advinterval *)buf;
+		ndopt_advint->nd_opt_adv_type = ND_OPT_ADVINTERVAL;
+		ndopt_advint->nd_opt_adv_len = 1;
+		ndopt_advint->nd_opt_adv_reserved = 0;
+		ndopt_advint->nd_opt_adv_interval = ntohl(rainfo->maxinterval *
 							  1000);
-		buf += sizeof(struct nd_opt_advint);
+		buf += sizeof(struct nd_opt_advinterval);
 	}
 #endif
 	
 #ifdef MIP6
 	if (rainfo->hatime) {
-		ndopt_hai = (struct nd_opt_hai *)buf;
-		ndopt_hai->nd_opt_hai_type = ND_OPT_HA_INFORMATION;
+		ndopt_hai = (struct nd_opt_homeagent_info *)buf;
+		ndopt_hai->nd_opt_hai_type = ND_OPT_HOMEAGENT_INFO;
 		ndopt_hai->nd_opt_hai_len = 1;
 		ndopt_hai->nd_opt_hai_reserved = 0;
-		ndopt_hai->nd_opt_hai_pref = ntohs(rainfo->hapref);
+		ndopt_hai->nd_opt_hai_preference = ntohs(rainfo->hapref);
 		ndopt_hai->nd_opt_hai_lifetime = ntohs(rainfo->hatime);
-		buf += sizeof(struct nd_opt_hai);
+		buf += sizeof(struct nd_opt_homeagent_info);
 	}
 #endif
 	
@@ -788,7 +790,7 @@ make_packet(struct rainfo *rainfo)
 #ifdef MIP6
 		if (pfx->routeraddr)
 			ndopt_pi->nd_opt_pi_flags_reserved |=
-				ND_OPT_PI_FLAG_RTADDR;
+				ND_OPT_PI_FLAG_ROUTER;
 #endif
 		if (pfx->vltimeexpire || pfx->pltimeexpire)
 			gettimeofday(&now, NULL);

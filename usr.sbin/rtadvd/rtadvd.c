@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtadvd.c,v 1.8 2001/01/15 11:06:28 itojun Exp $	*/
-/*	$KAME: rtadvd.c,v 1.47 2001/01/15 05:50:25 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.9 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,8 @@ struct in6_addr in6a_site_allrouters;
 static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurable */
 static char *pidfilename = "/var/run/rtadvd.pid"; /* should be configurable */
 static char *mcastif;
-int sock, rtsock;
+int sock;
+int rtsock = -1;
 #ifdef MIP6
 int mobileip6 = 0;
 #endif
@@ -189,7 +190,10 @@ main(argc, argv)
 			 break;
 #endif
 		 case 'R':
-			 accept_rr = 1;
+			 fprintf(stderr, "rtadvd: "
+				 "the -R option is currently ignored.\n");
+			 /* accept_rr = 1; */
+			 /* run anyway... */
 			 break;
 		 case 's':
 			 sflag = 1;
@@ -250,10 +254,13 @@ main(argc, argv)
 	FD_ZERO(&fdset);
 	FD_SET(sock, &fdset);
 	maxfd = sock;
-	rtsock_open();
-	FD_SET(rtsock, &fdset);
-	if (rtsock > sock)
-		maxfd = rtsock;
+	if (sflag == 0) {
+		rtsock_open();
+		FD_SET(rtsock, &fdset);
+		if (rtsock > sock)
+			maxfd = rtsock;
+	} else
+		rtsock = -1;
 
 	signal(SIGTERM, (void *)set_die);
 	signal(SIGUSR1, (void *)rtadvd_set_dump_file);
@@ -297,7 +304,7 @@ main(argc, argv)
 		}
 		if (i == 0)	/* timeout */
 			continue;
-		if (sflag == 0 && FD_ISSET(rtsock, &select_fd))
+		if (rtsock != -1 && FD_ISSET(rtsock, &select_fd))
 			rtmsg_input();
 		if (FD_ISSET(sock, &select_fd))
 			rtadvd_input();

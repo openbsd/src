@@ -1,5 +1,5 @@
-/*	$OpenBSD: advcap.c,v 1.3 2000/05/23 11:23:22 itojun Exp $	*/
-/*	$KAME: advcap.c,v 1.4 2000/05/23 11:17:40 itojun Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.4 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$KAME: advcap.c,v 1.5 2001/02/01 09:12:08 jinmei Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -96,7 +96,7 @@ int getent __P((char *, char *, char *));
 int tnchktc __P((void));
 int tnamatch __P((char *));
 static char *tskip __P((char *));
-int tgetnum __P((char *));
+long long tgetnum __P((char *));
 int tgetflag __P((char *));
 char *tgetstr __P((char *, char **));
 static char *tdecode __P((char *, char **));
@@ -307,11 +307,11 @@ breakbreak:
  * a # character.  If the option is not found we return -1.
  * Note that we handle octal numbers beginning with 0.
  */
-int
+long long
 tgetnum(id)
 	char *id;
 {
-	register long int i;
+	register long long i;
 	register int base;
 	register char *bp = tbuf;
 
