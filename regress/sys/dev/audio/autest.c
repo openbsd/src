@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.3 2003/02/04 07:38:51 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.4 2003/02/04 07:49:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -41,6 +41,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+
+/* XXX ADPCM is currently pretty broken... diagnosis and fix welcome */
+#undef	USE_ADPCM
 
 #include "adpcm.h"
 #include "law.h"
@@ -170,6 +173,12 @@ check_encoding_stereo(int fd, audio_encoding_t *enc)
 		else if (enc->precision == 16)
 			enc_slinear_be_16(fd, enc, 2);
 		break;
+#ifdef USE_ADPCM
+	case AUDIO_ENCODING_ADPCM:
+		if (enc->precision == 8)
+			enc_adpcm_8(fd, enc, 2);
+		break;
+#endif
 	default:
 		printf("[skip]");
 	}
@@ -225,7 +234,7 @@ check_encoding_mono(int fd, audio_encoding_t *enc)
 		else if (enc->precision == 16)
 			enc_slinear_be_16(fd, enc, 1);
 		break;
-#if 0
+#ifdef USE_ADPCM
 	case AUDIO_ENCODING_ADPCM:
 		if (enc->precision == 8)
 			enc_adpcm_8(fd, enc, 1);
@@ -562,8 +571,8 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	audio_info_t inf;
 	struct adpcm_state adsts;
 	int16_t *samples = NULL;
-	int i;
-	char *outbuf = NULL;
+	int i, j;
+	char *outbuf = NULL, *sbuf = NULL, *p;
 
 	AUDIO_INITINFO(&inf);
 	inf.play.precision = enc->precision;
@@ -588,8 +597,8 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 		goto out;
 	}
 
-	outbuf = (char *)malloc(inf.play.sample_rate / 2);
-	if (outbuf == NULL) {
+	sbuf = (char *)malloc(inf.play.sample_rate / 2);
+	if (sbuf == NULL) {
 		warn("malloc");
 		goto out;
 	}
@@ -602,9 +611,22 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 		samples[i] = rint(d);
 	}
 
+	outbuf = (char *)malloc((inf.play.sample_rate / 2) * chans);
+	if (outbuf == NULL) {
+		warn("malloc");
+		goto out;
+	}
+
 	for (i = 0; i < PLAYSECS; i++) {
-		adpcm_coder(samples, outbuf, inf.play.sample_rate, &adsts);
-		write(fd, outbuf, inf.play.sample_rate / 2);
+		adpcm_coder(samples, sbuf, inf.play.sample_rate, &adsts);
+
+		for (i = 0, p = outbuf; i < inf.play.sample_rate / 2; i++) {
+			for (j = 0; j < chans; j++, p++) {
+				*p = sbuf[i];
+			}
+		}
+
+		write(fd, outbuf, (inf.play.sample_rate / 2) * chans);
 	}
 	audio_wait(fd);
 
@@ -613,6 +635,8 @@ out:
 		free(samples);
 	if (outbuf != NULL)
 		free(outbuf);
+	if (sbuf != NULL)
+		free(sbuf);
 }
 
 void
