@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.98 2004/07/12 05:21:11 pvalchev Exp $
+$OpenBSD: usbdevs,v 1.99 2004/07/15 06:18:06 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -131,6 +131,7 @@ vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
+vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
@@ -1352,6 +1353,13 @@ product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
+
+/* Sharp products */
+product SHARP SL5500		0x8004	SL5500
+product SHARP A300		0x8005	A300
+product SHARP SL5600		0x8006	SL5600
+product SHARP C700		0x8007	C700
+product SHARP C750		0x9031	C750
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
