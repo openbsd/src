@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1999/07/21 07:37:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1999/08/14 03:19:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -245,7 +245,7 @@ hppa_init(start)
 	 */
 	if ((pdcerr = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_DFLT,
 			       &pdc_cache)) < 0) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
                 printf("Warning: PDC_CACHE call Ret'd %d\n", pdcerr);
 #endif
 	}
@@ -396,7 +396,7 @@ hppa_init(start)
 		panic("cannot allocate msgbuf");
 	msgbufmapped = 1;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 	printf("mem: %x+%x, %x\n", physmem, resvmem, totalphysmem);
 #endif
 	/* Turn on the HW TLB assist */
@@ -411,8 +411,10 @@ hppa_init(start)
 			printf("Warning: HW TLB init failed (%d), disabled\n",
 			       pdcerr);
 		} else
+#ifdef PMAPDEBUG
 			printf("HW TLB(%d entries at 0x%x) initialized (%d)\n",
 			       hptsize / sizeof(struct hpt_entry), hpt, pdcerr);
+#endif
 	}
 
         /*
