@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.3 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.4 2002/11/19 23:57:29 jason Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ bha_pci_match(parent, match, aux)
 	bus_size_t iosize;
 	int rv;
 
-	if (pci_matchbyid((struct pci_attach_args *)aux, bha_pci_devices,
+	if (pci_matchbyid(pa, bha_pci_devices,
 	    sizeof(bha_pci_devices)/sizeof(bha_pci_devices[0])) == 0)
 		return (0);
 
