@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.12 2004/12/29 01:02:30 jsg Exp $
+#	$OpenBSD: files.cardbus,v 1.13 2005/01/14 02:52:06 pvalchev Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -48,6 +48,12 @@ file	dev/cardbus/fwohci_cardbus.c		fwohci_cardbus
 #
 attach	rl at cardbus with rl_cardbus
 file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
+
+#
+# Realtek 8169/8169S/8110S
+#
+attach	re at cardbus with re_cardbus
+file	dev/cardbus/if_re_cardbus.c		re_cardbus
 
 #
 # Atheros AR5k
