@@ -15,12 +15,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.h,v 1.2 1997/12/06 12:08:59 brian Exp $
+ * $Id: lcp.h,v 1.3 1997/12/06 12:09:10 brian Exp $
  *
  *	TODO:
  */
 
-#define	REJECTED(p, x)	(p->his_reject & (1<<x))
+#define	REJECTED(p, x)	((p)->his_reject & (1<<(x)))
 
 struct lcpstate {
   u_long his_mru;
