@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.823 2005/01/22 15:04:27 martin Exp $
+$OpenBSD: pcidevs,v 1.824 2005/01/23 06:58:48 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2011,6 +2011,7 @@ product NVIDIA NFORCE_USB	0x01c2	nForce USB
 product NVIDIA NFORCE_LAN	0x01c3	nForce LAN
 product NVIDIA NFORCE2_PCHB	0x01e0	nForce2 PCI
 product NVIDIA NFORCE2_AGP	0x01e8	nForce2 AGP
+product NVIDIA NFORCE2_MEM0	0x01ea	nForce2
 product NVIDIA NFORCE2_MEM1	0x01eb	nForce2
 product NVIDIA NFORCE2_MEM2	0x01ec	nForce2
 product NVIDIA NFORCE2_MEM3	0x01ed	nForce2
