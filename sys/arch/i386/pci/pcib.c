@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.15 2004/05/06 19:47:03 grange Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.16 2004/05/06 22:38:44 deraadt Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 
 #include <machine/bus.h>
 #include <dev/isa/isavar.h>
@@ -49,6 +50,8 @@
 #include <dev/pci/pcireg.h>
 
 #include <dev/pci/pcidevs.h>
+
+#include <dev/pci/ichreg.h>
 
 #include "isa.h"
 #include "pcibios.h"
@@ -61,13 +64,27 @@ void	pcibattach(struct device *, struct device *, void *);
 void	pcib_callback(struct device *);
 int	pcib_print(void *, const char *);
 
+int	ichss_match(void *);
+int	ichss_attach(struct device *, void *);
+int	ichss_setperf(int);
+
+struct pcib_softc {
+	struct device sc_dev;
+
+	/* For power management capable bridges */
+	bus_space_tag_t sc_pmt;
+	bus_space_handle_t sc_pmh;
+};
+
 struct cfattach pcib_ca = {
-	sizeof(struct device), pcibmatch, pcibattach
+	sizeof(struct pcib_softc), pcibmatch, pcibattach
 };
 
 struct cfdriver pcib_cd = {
 	NULL, "pcib", DV_DULL
 };
+
+extern int setperf_prio;
 
 int
 pcibmatch(parent, match, aux)
@@ -106,6 +123,15 @@ pcibattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+#ifndef SMALL_KERNEL
+	/*
+	 * Detect and activate SpeedStep on ICHx-M chipsets.
+	 */
+	if (setperf_prio < 2 && ichss_match(aux) &&
+	    ichss_attach(self, aux) == 0)
+		printf(": SpeedStep");
+#endif
+
 	/*
 	 * Cannot attach isa bus now; must postpone for various reasons
 	 */
@@ -147,3 +173,113 @@ pcib_print(aux, pnp)
 		printf("isa at %s", pnp);
 	return (UNCONF);
 }
+
+#ifndef SMALL_KERNEL
+static void *ichss_cookie;	/* XXX */
+
+int
+ichss_match(void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	pcitag_t br_tag;
+	pcireg_t br_id, br_class;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DBM_LPC ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC)
+		return (1);
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC) {
+		/*
+		 * Old revisions of the 82815 hostbridge found on
+		 * Dell Inspirons 8000 and 8100 don't support
+		 * SpeedStep.
+		 */
+		/* XXX: dev 0 func 0 is not always a hostbridge */
+		br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
+		br_id = pci_conf_read(pa->pa_pc, br_tag, PCI_ID_REG);
+		br_class = pci_conf_read(pa->pa_pc, br_tag, PCI_CLASS_REG);
+
+		if (PCI_PRODUCT(br_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
+		    PCI_REVISION(br_class) < 5)
+			return (0);
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+ichss_attach(struct device *self, void *aux)
+{
+	struct pcib_softc *sc = (struct pcib_softc *)self;
+	struct pci_attach_args *pa = aux;
+	pcireg_t pmbase;
+
+	/* Map power management I/O space */
+	sc->sc_pmt = pa->pa_iot;
+	pmbase = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PMBASE);
+	if (bus_space_map(sc->sc_pmt, PCI_MAPREG_IO_ADDR(pmbase),
+	    ICH_PMSIZE, 0, &sc->sc_pmh) != 0)
+		return (1);
+
+	/* Enable SpeedStep */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_GEN_PMCON1,
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_GEN_PMCON1) |
+	    ICH_GEN_PMCON1_SS_EN);
+
+	/* Hook into hw.setperf sysctl */
+	ichss_cookie = sc;
+	cpu_setperf = ichss_setperf;
+	setperf_prio = 2;
+
+	return (0);
+}
+
+int
+ichss_setperf(int level)
+{
+	struct pcib_softc *sc = ichss_cookie;
+	u_int8_t state, ostate, cntl;
+	int s;
+
+#ifdef DIAGNOSTIC
+	if (sc == NULL) {
+		printf("%s: no cookie", __func__);
+		return (EFAULT);
+	}
+#endif
+
+	s = splhigh();
+	state = bus_space_read_1(sc->sc_pmt, sc->sc_pmh, ICH_PM_SS_CNTL);
+	ostate = state;
+
+	/* Only two states are available */
+	if (level <= 50)
+		state |= ICH_PM_SS_STATE_LOW;
+	else
+		state &= ~ICH_PM_SS_STATE_LOW;
+
+	/*
+	 * An Intel SpeedStep technology transition _always_ occur on
+	 * writes to the ICH_PM_SS_CNTL register, even if the value
+	 * written is the same as the previous value. So do the write
+	 * only if the state has changed.
+	 */
+	if (state != ostate) {
+		/* Disable bus mastering arbitration */
+		cntl = bus_space_read_1(sc->sc_pmt, sc->sc_pmh, ICH_PM_CNTL);
+		bus_space_write_1(sc->sc_pmt, sc->sc_pmh, ICH_PM_CNTL,
+		    cntl | ICH_PM_ARB_DIS);
+
+		/* Do the transition */
+		bus_space_write_1(sc->sc_pmt, sc->sc_pmh, ICH_PM_SS_CNTL,
+		    state);
+
+		/* Restore bus mastering arbitration state */
+		bus_space_write_1(sc->sc_pmt, sc->sc_pmh, ICH_PM_CNTL,
+		    cntl);
+	}
+	splx(s);
+
+	return (0);
+}
+#endif	/* !SMALL_KERNEL */
