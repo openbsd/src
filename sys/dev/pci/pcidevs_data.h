@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.62 1998/07/07 02:26:38 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.63 1998/07/07 18:41:27 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -475,6 +475,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65554",
+	},
+	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65555,
+	    0,
+	    "Chips and Technologies",
+	    "65555",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
@@ -1873,6 +1879,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI1131",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250,
+	    0,
+	    "Texas Instruments",
+	    "PCI1250",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
