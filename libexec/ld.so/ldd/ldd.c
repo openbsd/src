@@ -1,112 +1,56 @@
-/*	$OpenBSD: ldd.c,v 1.3 2001/05/14 22:18:23 niklas Exp $ */
-
+/*	$OpenBSD: ldd.c,v 1.4 2001/06/07 20:05:38 art Exp $	*/
 /*
- * Copyright (c) 1993 Paul Kranenburg
- * All rights reserved.
+ * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
+ * All rights reserved. 
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions 
+ * are met: 
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 1. Redistributions of source code must retain the above copyright 
+ *    notice, this list of conditions and the following disclaimer. 
+ * 2. Redistributions in binary form must reproduce the above copyright 
+ *    notice, this list of conditions and the following disclaimer in the 
+ *    documentation and/or other materials provided with the distribution. 
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission. 
  *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
-/*
- * Copyright (c) 1996 Per Fogelstrom
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- */
-
-
-/* readsoname() adapted from Eric Youngdale's readelf program */
-
 
 #include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/file.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <elf_abi.h>
 #include <err.h>
 #include <fcntl.h>
-#include <elf_abi.h>
+#include <unistd.h>
 
-int readsoneeded(FILE *f, int flag);
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
 
-void
-usage()
-{
-	extern char *__progname;
-
-	fprintf(stderr, "Usage: %s <filename> ...\n", __progname);
-	exit(1);
-}
+int usage(void);
+int doit(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	FILE *fp;
-	int lflag = 0;
-	int rval;
-	int c;
+	int c, xflag, ret;
 
-	while ((c = getopt(argc, argv, "l")) != EOF) {
+	xflag = 0;
+	while ((c = getopt(argc, argv, "x")) != -1) {
 		switch (c) {
-		case 'l':
-			lflag = 1;
+		case 'x':
+			xflag = 1;
 			break;
 		default:
 			usage();
@@ -114,146 +58,110 @@ main(argc, argv)
 		}
 	}
 
+	if (xflag)
+		errx(1, "-x not yet implemented\n");
+
 	argc -= optind;
 	argv += optind;
 
-	if (argc <= 0) {
+	if (argc == 0)
 		usage();
-		/*NOTREACHED*/
-	}
 
-	if (setenv("LD_TRACE_LOADED_OBJECTS", "1", 1) == -1)
-		errx(1, "cannot setenv LD_TRACE_LOADED_OBJECTS");
+	if (setenv("LD_TRACE_LOADED_OBJECTS", "true", 1) < 0)
+		err(1, "setenv(LD_TRACE_LOADED_OBJECTS)");
 
-	rval = 0;
+	ret = 0;
 	while (argc--) {
-		int     fd;
-		int     status;
-
-		if (lflag) {
-			if ((fp = fopen(*argv, "r")) == NULL) {
-				warn("%s", *argv);
-				rval |= 1;
-				argv++;
-				continue;
-			}
-			readsoneeded(fp, 0);
-			fclose(fp);
-			continue;
-		}
-		printf("%s:\n", *argv);
-		fflush(stdout);
-
-		switch (fork()) {
-		case -1:
-			err(1, "fork");
-			break;
-		default:
-			if (wait(&status) <= 0) {
-				warn("wait");
-				rval |= 1;
-			} else if (WIFSIGNALED(status)) {
-				fprintf(stderr, "%s: signal %d\n",
-						*argv, WTERMSIG(status));
-				rval |= 1;
-			} else if (WIFEXITED(status) && WEXITSTATUS(status)) {
-				fprintf(stderr, "%s: exit status %d\n",
-						*argv, WEXITSTATUS(status));
-				rval |= 1;
-			}
-			break;
-		case 0:
-			rval |= execl(*argv, *argv, NULL) != 0;
-			perror(*argv);
-			_exit(1);
-		}
+		ret |= doit(*argv);
 		argv++;
 	}
 
-	return (rval ? 1 : 0);
+	return ret;
 }
 
 int
-readsoneeded(FILE *infile, int dyncheck)
+usage(void)
 {
-	Elf_Ehdr *epnt;
-	Elf_Phdr *ppnt;
-	int i;
-	int isdynamic = 0;
-	char *header;
-	unsigned long dynamic_addr = 0;
-	unsigned long dynamic_size = 0;
-	int strtab_val = 0;
-	int soname_val = 0;
-	long loadaddr = -1;
-	long loadbase = 0;
-	Elf_Dyn *dpnt;
-	struct stat st;
-	char *res = NULL;
+	extern char *__progname;
 
-	if (fstat(fileno(infile), &st))
-		return -1L;
-	header = mmap(0, st.st_size, PROT_READ, MAP_SHARED, fileno(infile), 0);
-	if (header == MAP_FAILED)
-		return -1;
-
-	epnt = (Elf_Ehdr *)header;
-	if ((u_long)(epnt+1) > (u_long)(header + st.st_size))
-		goto skip;
-
-	ppnt = (Elf_Phdr *)&header[epnt->e_phoff];
-	if ((u_long)ppnt < (u_long)header ||
-	    (u_long)(ppnt+epnt->e_phnum) > (u_long)(header + st.st_size))
-		goto skip;
-
-	for (i = 0; i < epnt->e_phnum; i++) {
-		if (loadaddr == -1 && ppnt->p_vaddr != 0) 
-			loadaddr = (ppnt->p_vaddr & 0xfffff000) -
-			    (ppnt->p_offset & 0xfffff000);
-		if (ppnt->p_type == 2) {
-			dynamic_addr = ppnt->p_offset;
-			dynamic_size = ppnt->p_filesz;
-		}
-		ppnt++;
-	}
-		
-	dpnt = (Elf_Dyn *) &header[dynamic_addr];
-	dynamic_size = dynamic_size / sizeof(Elf_Dyn);
-	if ((u_long)dpnt < (u_long)header ||
-	    (u_long)(dpnt+dynamic_size) > (u_long)(header + st.st_size))
-		goto skip;
-	
-	while (dpnt->d_tag != DT_NULL) {
-		if (dpnt->d_tag == DT_STRTAB)
-			strtab_val = dpnt->d_un.d_val;
-#define DT_MIPS_BASE_ADDRESS    0x70000006      /* XXX */
-		if (dpnt->d_tag == DT_MIPS_BASE_ADDRESS)
-			loadbase = dpnt->d_un.d_val;
-		dpnt++;
-	}
-
-	if (!strtab_val)
-		goto skip;
-
-	dpnt = (Elf_Dyn *) &header[dynamic_addr];
-	while (dpnt->d_tag != DT_NULL) {
-		if (dpnt->d_tag == DT_NEEDED) {
-			isdynamic = 1;
-			if (dyncheck)
-				break;
-			soname_val = dpnt->d_un.d_val;
-			if (soname_val != 0 &&
-			    soname_val + strtab_val - loadbase >= 0 &&
-			    soname_val + strtab_val - loadbase < st.st_size)
-				printf("%s\n",
-				    header - loadbase + soname_val + strtab_val);
-		}
-		dpnt++;
-	}
-
-skip:
-	munmap(header, st.st_size);
-
-	return isdynamic;
+	fprintf(stderr, "Usage: %s [-x] <filename> ...\n", __progname);
+	exit(1);
 }
 
+
+int
+doit(char *name)
+{
+	Elf_Ehdr ehdr;
+	Elf_Phdr *phdr;
+	char *buf;
+	int fd, i, size, status;
+
+	if ((fd = open(name, O_RDONLY)) < 0) {
+		warn("%s", name);
+		return 1;
+	}
+
+	if (read(fd, &ehdr, sizeof(ehdr)) < 0) {
+		warn("read(%s)", name);
+		close(fd);
+		return 1;
+	}
+
+	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) ||
+	    ehdr.e_machine != ELF_TARG_MACH) {
+		warnx("%s: not an ELF executable", name);
+		close(fd);
+		return 1;
+	}
+
+	size = ehdr.e_phnum * sizeof(Elf_Phdr);
+	if ((phdr = malloc(size)) == NULL)
+		err(1, "malloc");
+
+	if (pread(fd, phdr, size, ehdr.e_phoff) != size) {
+		warn("read(%s)", name);
+		close(fd);
+		free(phdr);
+		return 1;
+	}
+	for (i = 0; i < ehdr.e_phnum; i++)
+		if (phdr[i].p_type == PT_DYNAMIC)
+			break;
+	close(fd);
+	free(phdr);
+
+	if (i == ehdr.e_phnum) {
+		warnx("%s: not a dynamic executable", name);
+		return 1;
+	}
+
+	fflush(stdout);
+	switch (fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		execl(name, name, NULL);
+		perror(name);
+		_exit(1);
+	default:
+		if (wait(&status) < 0) {
+			warn("wait");
+			return 1;
+		}
+		if (WIFSIGNALED(status)) {
+			fprintf(stderr, "%s: signal %d\n", name,
+				WTERMSIG(status));
+			return 1;
+		}
+		if (WEXITSTATUS(status)) {
+			fprintf(stderr, "%s: exit status %d\n", name,
+				WEXITSTATUS(status));
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+	
