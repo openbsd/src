@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.7 1996/09/24 04:19:29 millert Exp $	*/
+/*	$OpenBSD: pch.c,v 1.8 1997/04/03 07:07:36 imp Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.7 1996/09/24 04:19:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.8 1997/04/03 07:07:36 imp Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -306,7 +306,9 @@ intuit_diff_type()
 	    oldname = fetchname(oldtmp, strippath, ok_to_create_file);
 	if (newtmp != Nullch)
 	    newname = fetchname(newtmp, strippath, ok_to_create_file);
-	if (oldname && newname) {
+	if (indname)
+	    filearg[0] = savestr(indname);
+	else if (oldname && newname) {
 	    if (strlen(oldname) < strlen(newname))
 		filearg[0] = savestr(oldname);
 	    else
@@ -316,8 +318,6 @@ intuit_diff_type()
 	    filearg[0] = savestr(oldname);
 	else if (newname)
 	    filearg[0] = savestr(newname);
-	else if (indname)
-	    filearg[0] = savestr(indname);
     }
     if (bestguess) {
 	free(bestguess);
