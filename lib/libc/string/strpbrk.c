@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strpbrk.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strpbrk.c,v 1.4 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -37,11 +37,10 @@ static char *rcsid = "$OpenBSD: strpbrk.c,v 1.3 2003/06/02 20:18:38 millert Exp 
  * Find the first occurrence in s1 of a character in s2 (excluding NUL).
  */
 char *
-strpbrk(s1, s2)
-	register const char *s1, *s2;
+strpbrk(const char *s1, const char *s2)
 {
-	register const char *scanp;
-	register int c, sc;
+	const char *scanp;
+	int c, sc;
 
 	while ((c = *s1++) != 0) {
 		for (scanp = s2; (sc = *scanp++) != 0;)

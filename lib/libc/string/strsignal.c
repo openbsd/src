@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strsignal.c,v 1.4 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strsignal.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -37,9 +37,9 @@ static char *rcsid = "$OpenBSD: strsignal.c,v 1.4 2003/06/02 20:18:38 millert Ex
 extern char *__strsignal(int, char *);
 
 char *
-strsignal(sig)
-	int sig;
+strsignal(int sig)
 {
 	static char buf[NL_TEXTMAX];
+
 	return __strsignal(sig, buf);
 }

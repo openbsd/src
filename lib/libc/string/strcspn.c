@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcspn.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strcspn.c,v 1.4 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -40,12 +40,10 @@ static char *rcsid = "$OpenBSD: strcspn.c,v 1.3 2003/06/02 20:18:38 millert Exp 
  * Span the complement of string s2.
  */
 size_t
-strcspn(s1, s2)
-	const char *s1;
-	register const char *s2;
+strcspn(const char *s1, const char *s2)
 {
-	register const char *p, *spanp;
-	register char c, sc;
+	const char *p, *spanp;
+	char c, sc;
 
 	/*
 	 * Stop as soon as we find any character from s2.  Note that there

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcmp.c,v 1.4 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strcmp.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
@@ -44,8 +44,7 @@ static char *rcsid = "$OpenBSD: strcmp.c,v 1.4 2003/06/02 20:18:38 millert Exp $
  * Compare strings.
  */
 int
-strcmp(s1, s2)
-	register const char *s1, *s2;
+strcmp(const char *s1, const char *s2)
 {
 	while (*s1 == *s2++)
 		if (*s1++ == 0)

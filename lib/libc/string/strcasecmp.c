@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcasecmp.c,v 1.4 2003/06/02 20:18:38 millert Exp $	*/
+/*	$OpenBSD: strcasecmp.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: strcasecmp.c,v 1.4 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strcasecmp.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,12 +82,11 @@ static const u_char charmap[] = {
 };
 
 int
-strcasecmp(s1, s2)
-	const char *s1, *s2;
+strcasecmp(const char *s1, const char *s2)
 {
-	register const u_char *cm = charmap,
-			*us1 = (const u_char *)s1,
-			*us2 = (const u_char *)s2;
+	const u_char *cm = charmap;
+	const u_char *us1 = (const u_char *)s1;
+	const u_char *us2 = (const u_char *)s2;
 
 	while (cm[*us1] == cm[*us2++])
 		if (*us1++ == '\0')
@@ -96,14 +95,12 @@ strcasecmp(s1, s2)
 }
 
 int
-strncasecmp(s1, s2, n)
-	const char *s1, *s2;
-	register size_t n;
+strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	if (n != 0) {
-		register const u_char *cm = charmap,
-				*us1 = (const u_char *)s1,
-				*us2 = (const u_char *)s2;
+		const u_char *cm = charmap;
+		const u_char *us1 = (const u_char *)s1;
+		const u_char *us2 = (const u_char *)s2;
 
 		do {
 			if (cm[*us1] != cm[*us2++])

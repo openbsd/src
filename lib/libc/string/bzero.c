@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bzero.c,v 1.4 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: bzero.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
@@ -41,11 +41,9 @@ static char *rcsid = "$OpenBSD: bzero.c,v 1.4 2003/06/02 20:18:38 millert Exp $"
  * bzero -- vax movc5 instruction
  */
 void
-bzero(b, length)
-	void *b;
-	register size_t length;
+bzero(void *b, size_t length)
 {
-	register char *p;
+	char *p;
 
 	for (p = b; length--;)
 		*p++ = '\0';

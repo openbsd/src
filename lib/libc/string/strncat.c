@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strncat.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strncat.c,v 1.4 2003/06/11 21:08:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -41,14 +41,11 @@ static char *rcsid = "$OpenBSD: strncat.c,v 1.3 2003/06/02 20:18:38 millert Exp 
  * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
 char *
-strncat(dst, src, n)
-	char *dst;
-	const char *src;
-	register size_t n;
+strncat(char *dst, const char *src, size_t n)
 {
 	if (n != 0) {
-		register char *d = dst;
-		register const char *s = src;
+		char *d = dst;
+		const char *s = src;
 
 		while (*d != 0)
 			d++;
