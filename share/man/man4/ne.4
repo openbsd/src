@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ne.4,v 1.11 2003/03/19 00:03:02 mickey Exp $
+.\"	$OpenBSD: ne.4,v 1.12 2003/03/19 00:46:24 mickey Exp $
 .\"	$NetBSD: ne.4,v 1.4 1998/02/22 05:21:20 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,53 +56,62 @@ The
 device driver supports NE2000 and compatible (including NE1000) Ethernet
 cards, including:
 .Pp
-.Bl -tag -width -offset indent -compact
-.It Accton EN2212, EN2216
-.It Allied Telesis LA-PCM
-.It AmbiCom AMB8002T
-.It Arowana FE
-.It Belkin F5D5020
-.It Billionton Systems LNT-10TN
-.It CNet NE2000
-.It Compex Linkport ENET-B
-.It Corega PCC-T, PCC-TD, EtherII PCC-T
-.It Corega FastEther PCC-T, FastEther PCC-TX
-.It Corega FastEther PCC-TXD, FastEther PCC-TXF
-.It D-Link DE-650, DE-660, DE-660+, DFE-670TXD
-.It Dayna CommuniCard E
-.It Digital DEPCM-XX
-.It Dual NE2000
-.It Edimax NE2000
-.It Genius ME 3000II SE
-.It Grey Cell GCS2000 Gold II
-.It GVC NIC-2000p, NP0335
-.It Hawking PN650TX
-.It I-O DATA PCLA, PCLA/TE
-.It IC-Card
-.It Kingston KNE-PC2
-.It Linksys PCMPC100, EC2T Combo
-.It Linksys EthernetCard, Combo EthernetCard
-.It Linksys Trust Combo EthernetCard, Etherfast 10/100
-.It MACNICA ME1 for JEIDA
-.It Melco LPC3-TX
-.It National Semiconductor InfoMover
-.It NDC Instant-Link
-.It Netgear FA410TX, FA410TXC, FA411
-.It Network Everywhere NP10T
-.It New Media LiveWire 10/100
-.It Planet SmartCom 2000
-.It Planex FNW-3600-T, FNW-3700-T
-.It Premax PE-200
-.It RPTI EP-400, EP-401
-.It Seiko Epson EN10B
-.It SMC EZCard, 8041
-.It Socket Communications LP-CF, LP-E
-.It SVEC PN650TX, ComboCard, LANCard
-.It Synergy S21810
-.It Tamarack NE2000
-.It Telecom Device TCD-HPC100
-.It Wisecom T210CT, iPort
-.It Xircom CFE-10
+.Bl -column "Name                                             " "Bus" -compact
+.It Em "Name                                                 Bus"
+.It Li "Accton EN2212, EN2216" Ta PCMCIA
+.It Li "Allied Telesis LA-PCM" Ta PCMCIA
+.It Li "AmbiCom AMB8002T" Ta PCMCIA
+.It Li "Arowana FE" Ta PCMCIA
+.It Li "Belkin F5D5020" Ta PCMCIA
+.It Li "Billionton Systems LNT-10TN" Ta PCMCIA
+.It Li "CNet NE2000" Ta PCMCIA
+.It Li "Compex PCI Ethernet" Ta PCI
+.It Li "Compex Linkport ENET-B" Ta PCMCIA
+.It Li "Corega PCC-T, PCC-TD, EtherII PCC-T" Ta PCMCIA
+.It Li "Corega FastEther PCC-T, FastEther PCC-TX" Ta PCMCIA
+.It Li "Corega FastEther PCC-TXD, FastEther PCC-TXF" Ta PCMCIA
+.It Li "D-Link DE-650, DE-660, DE-660+, DFE-670TXD" Ta PCMCIA
+.It Li "Dayna CommuniCard E" Ta PCMCIA
+.It Li "Digital DEPCM-XX" Ta PCMCIA
+.It Li "Dual NE2000" Ta PCMCIA
+.It Li "Edimax NE2000" Ta PCMCIA
+.It Li "Genius ME 3000II SE" Ta PCMCIA
+.It Li "Grey Cell GCS2000 Gold II" Ta PCMCIA
+.It Li "GVC NIC-2000p, NP0335" Ta PCMCIA
+.It Li "Hawking PN650TX" Ta PCMCIA
+.It Li "I-O DATA PCLA, PCLA/TE" Ta PCMCIA
+.It Li "IC-Card" Ta PCMCIA
+.It Li "Kingston KNE-PC2" Ta PCMCIA
+.It Li "KTI PCI Ethernet" Ta PCI
+.It Li "Linksys PCMPC100, EC2T Combo" Ta PCMCIA
+.It Li "Linksys EthernetCard, Combo EthernetCard" Ta PCMCIA
+.It Li "Linksys Trust Combo EthernetCard, Etherfast 10/100" Ta PCMCIA
+.It Li "MACNICA ME1 for JEIDA" Ta PCMCIA
+.It Li "Melco LPC3-TX" Ta PCMCIA
+.It Li "National Semiconductor InfoMover" Ta PCMCIA
+.It Li "NDC Instant-Link" Ta PCMCIA
+.It Li "Netgear FA410TX, FA410TXC, FA411" Ta PCMCIA
+.It Li "NetVin NV5000" Ta PCI
+.It Li "Network Everywhere NP10T" Ta PCMCIA
+.It Li "New Media LiveWire 10/100" Ta PCMCIA
+.It Li "Planet SmartCom 2000" Ta PCMCIA
+.It Li "Planex FNW-3600-T, FNW-3700-T" Ta PCMCIA
+.It Li "Premax PE-200" Ta PCMCIA
+.It Li "Realtek RT8029" Ta PCI
+.It Li "RPTI EP-400, EP-401" Ta PCMCIA
+.It Li "Seiko Epson EN10B" Ta PCMCIA
+.It Li "SMC EZCard, 8041" Ta PCMCIA
+.It Li "Socket Communications LP-CF, LP-E" Ta PCMCIA
+.It Li "SVEC PN650TX, ComboCard, LANCard" Ta PCMCIA
+.It Li "Surecom NE-34" Ta PCI
+.It Li "Synergy S21810" Ta PCMCIA
+.It Li "Tamarack NE2000" Ta PCMCIA
+.It Li "Telecom Device TCD-HPC100" Ta PCMCIA
+.It Li "VIA Technologies VT86C926" Ta PCI
+.It Li "Winbond W89C940" Ta PCI
+.It Li "Winbond W89C940F" Ta PCI
+.It Li "Wisecom T210CT, iPort" Ta PCMCIA
+.It Li "Xircom CFE-10" Ta PCMCIA
 .El
 .Pp
 .Sh MEDIA SELECTION
