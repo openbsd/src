@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.42 2005/03/07 16:13:38 reyk Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.43 2005/03/25 13:45:30 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.42 2005/03/07 16:13:38 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.43 2005/03/25 13:45:30 moritz Exp $ (LBL)";
 #endif
 
 /*
@@ -447,7 +447,7 @@ main(int argc, char **argv)
 	if (snaplen == 0) {
 		switch (dlt) {
 		case DLT_IEEE802_11_RADIO:
-			snaplen = RADIOTAP_SNAPLEN;			
+			snaplen = RADIOTAP_SNAPLEN;
 			break;
 		default:
 			snaplen = DEFAULT_SNAPLEN;

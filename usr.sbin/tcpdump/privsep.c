@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.12 2005/03/06 18:44:50 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.13 2005/03/25 13:45:30 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -359,7 +359,7 @@ parent_init_done(int fd, int *bpfd)
 	int ret;
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_INIT_DONE received");
-	
+
 	close(*bpfd);	/* done with bpf descriptor */
 	*bpfd = -1;
 	ret = 0;
@@ -495,7 +495,7 @@ parent_getlines(int fd)
 	FILE *fp;
 	char *buf, *lbuf, *file;
 	size_t len, fid;
-	
+
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_GETLINES received");
 
 	must_read(fd, &fid, sizeof(size_t));
@@ -677,7 +677,7 @@ priv_localtime(const time_t *t)
 	must_read(priv_fd, &lt, sizeof(lt));
 	must_read(priv_fd, &gt0, sizeof(gt0));
 
-	if (read_string(priv_fd, zone, sizeof(zone), __func__)) 
+	if (read_string(priv_fd, zone, sizeof(zone), __func__))
 		lt.tm_zone = zone;
 	else
 		lt.tm_zone = NULL;
@@ -729,7 +729,7 @@ sig_got_chld(int sig)
 	pid_t pid;
 	int status;
 	int save_err = errno;
-	
+
 	do {
 		pid = waitpid(child_pid, &status, WNOHANG);
 	} while (pid == -1 && errno == EINTR);
