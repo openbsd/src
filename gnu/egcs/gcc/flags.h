@@ -542,6 +542,7 @@ extern int flag_no_ident;
 /* Nonzero means use propolice as a stack protection method */
 
 extern int flag_propolice_protection;
+extern int flag_stack_protection;
 
 /* Warn when not issuing stack smashing protection for some reason */
 

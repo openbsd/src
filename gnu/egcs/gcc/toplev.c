@@ -779,8 +779,10 @@ int flag_no_ident = 0;
 #if defined(STACK_PROTECTOR) && defined(STACK_GROWS_DOWNWARD)
 /* Nonzero means use propolice as a stack protection method */
 int flag_propolice_protection = 1;
+int flag_stack_protection = 0;
 #else
 int flag_propolice_protection = 0;
+int flag_stack_protection = 0;
 #endif
 
 /* Table of supported debugging formats.  */
@@ -993,8 +995,8 @@ lang_independent_options f_options[] =
    "Process #ident directives"},
   {"stack-protector", &flag_propolice_protection, 1,
    "Enables stack protection" },
-  {"no-stack-protector", &flag_propolice_protection, 0,
-   "Disables stack protection" },
+  {"stack-protector-all", &flag_stack_protection, 1,
+   "Enables stack protection of every function" },
 };
 
 #define NUM_ELEM(a)  (sizeof (a) / sizeof ((a)[0]))
@@ -3669,6 +3671,7 @@ rest_of_compilation (decl)
 
       insns = get_insns ();
 
+      flag_propolice_protection |= flag_stack_protection;
       if (flag_propolice_protection) prepare_stack_protection (inlinable);
   
       /* Dump the rtl code if we are dumping rtl.  */
