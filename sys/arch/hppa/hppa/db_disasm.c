@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2000/01/17 06:56:41 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2000/03/06 14:16:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -1549,16 +1549,21 @@ ldDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register u_int d = Disp(w);
+	register int d = Disp(w);
+	char s[2];
+
+	s[1] = '\0';
+	if (d < 0) {
+		d = -d;
+		s[0] = '-';
+	} else
+		s[0] = '\0';
 
 	if (Rsb(w) == 0 && Match("ldo")) {
-		db_printf("ldi\t%D,%%r%d",d,Rta(w));
+		db_printf("ldi\t%s%X,%%r%d",s,d,Rta(w));
 		return (1);
 	}
-	if (d < 2048)
-		db_printf("%s\tR'%X",i->mnem,d);
-	else
-		db_printf("%s\t%D",i->mnem,d);
+	db_printf("%s\t%s%s%X",i->mnem,(d < 2048? "R'":""), s, d);
 	if (Dss(w))
 		db_printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rta(w));
 	else
@@ -1573,13 +1578,20 @@ stDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register u_int d = Disp(w);
+	register int d = Disp(w);
+	char s[2];
 
 	db_printf("\t%%r%d,",Rta(w));
-	if (d < 2048)
-		db_printf("R'%X",d);
-	else
-		db_printf("%D",d);
+
+	s[1] = '\0';
+	if (d < 0) {
+		d = -d;
+		s[0] = '-';
+	} else
+		s[0] = '\0';
+
+	db_printf("%s%s%X", (d < 2048? "R'":""), s, d);
+
 	if (Dss(w))
 		db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
 	else
@@ -1738,14 +1750,20 @@ beDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	register u_int d = Bdisp(w);
+	register int d = Bdisp(w);
 	register const char *p;
+	char s[2];
+
+	s[1] = '\0';
+	if (d < 0) {
+		d = -d;
+		s[0] = '-';
+	} else
+		s[0] = '\0';
 
 	p =  Nu(w)? ",n":"";
-	if (d < 2048)
-		db_printf("%s\tR'%X(%%sr%d,%%r%d)", p, d, Sr(w), Rsb(w));
-	else
-		db_printf("%s\t%D(%%sr%d,%%r%d)", p, d, Sr(w), Rsb(w));
+	db_printf("%s\tR'%s%X(%%sr%d,%%r%d)", p, (d < 2048? "R'":""),
+	    s, d, Sr(w), Rsb(w));
 	return (1);
 }
 
