@@ -1,3 +1,5 @@
+/* $OpenBSD: os.c,v 1.10 2005/03/28 14:01:14 niallo Exp $ */
+
 /*
  * This file will include OS specific functions which are not inlineable.
  * Any inlineable functions should be defined in os-inline.c instead.
@@ -11,7 +13,11 @@
  * .o file... and extra prototype is for gcc -Wmissing-prototypes
  */
 extern void ap_is_not_here(void);
-void ap_is_not_here(void) {}
+
+void
+ap_is_not_here(void)
+{
+}
 
 /*
  *  Abstraction layer for loading
@@ -19,27 +25,32 @@ void ap_is_not_here(void) {}
  *  dynamic shared object (DSO) mechanism
  */
 
-void ap_os_dso_init(void)
+void
+ap_os_dso_init(void)
 {
 }
 
-void *ap_os_dso_load(const char *path)
+void
+*ap_os_dso_load(const char *path)
 {
-    return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+        return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 }
 
-void ap_os_dso_unload(void *handle)
+void
+ap_os_dso_unload(void *handle)
 {
-    dlclose(handle);
-    return;
+        dlclose(handle);
+        return;
 }
 
-void *ap_os_dso_sym(void *handle, const char *symname)
+void
+*ap_os_dso_sym(void *handle, const char *symname)
 {
-    return dlsym(handle, symname);
+        return dlsym(handle, symname);
 }
 
-const char *ap_os_dso_error(void)
+const char *
+ap_os_dso_error(void)
 {
-    return dlerror();
+        return dlerror();
 }
