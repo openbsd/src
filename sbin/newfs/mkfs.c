@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.4 1997/02/11 07:01:37 millert Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.5 1997/02/21 22:55:19 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.4 1997/02/11 07:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.5 1997/02/21 22:55:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,8 @@ extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
-extern caddr_t	malloc(), calloc();
+static caddr_t	malloc(), calloc();
+static void	free();
 
 union {
 	struct fs fs;
@@ -1025,7 +1026,7 @@ started()
 /*
  * Replace libc function with one suited to our needs.
  */
-caddr_t
+static caddr_t
 malloc(size)
 	register u_long size;
 {
@@ -1057,7 +1058,7 @@ malloc(size)
 /*
  * Replace libc function with one suited to our needs.
  */
-caddr_t
+static caddr_t
 realloc(ptr, size)
 	char *ptr;
 	u_long size;
@@ -1066,15 +1067,17 @@ realloc(ptr, size)
 
 	if ((p = malloc(size)) == NULL)
 		return (NULL);
-	memcpy(p, ptr, size);
-	free(ptr);
+	if (ptr) {
+		memcpy(p, ptr, size);
+		free(ptr);
+	}
 	return (p);
 }
 
 /*
  * Replace libc function with one suited to our needs.
  */
-char *
+static char *
 calloc(size, numelm)
 	u_long size, numelm;
 {
@@ -1089,6 +1092,7 @@ calloc(size, numelm)
 /*
  * Replace libc function with one suited to our needs.
  */
+static void
 free(ptr)
 	char *ptr;
 {
