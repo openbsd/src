@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.481 2001/12/28 18:22:25 jason Exp $
+	$OpenBSD: pcidevs,v 1.482 2002/01/09 19:40:15 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -546,6 +546,7 @@ vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
+vendor COREGA		0x15e8	Corega
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
@@ -1028,6 +1029,9 @@ product CONEXANT SOFTK56_PCI	0x2443	SoftK56 PCI
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB
 product CONTAQ 82C693		0xc693	CY82C693U PCI-ISA
+
+/* Corega products */
+product COREGA CGWLPCIA11 	0x0130	WLAN 11Mb
 
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
