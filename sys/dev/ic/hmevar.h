@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.7 2002/11/20 22:07:45 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ struct hme_softc {
 	bus_dmamap_t	sc_rxmap_spare;
 	int	sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 	int	sc_last_rd;
+	u_int32_t sc_tcvr;
 };
 
 
