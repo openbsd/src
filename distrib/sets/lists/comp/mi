@@ -5273,6 +5273,7 @@
 ./usr/share/man/cat9/systrace_exit.0
 ./usr/share/man/cat9/systrace_fork.0
 ./usr/share/man/cat9/systrace_redirect.0
+./usr/share/man/cat9/tc_init.0
 ./usr/share/man/cat9/tick.0
 ./usr/share/man/cat9/tickadj.0
 ./usr/share/man/cat9/time.0
@@ -5371,6 +5372,7 @@
 ./usr/share/man/cat9/vwaitforio.0
 ./usr/share/man/cat9/vwakeup.0
 ./usr/share/man/cat9/wakeup.0
+./usr/share/man/cat9/wdog_register.0
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg

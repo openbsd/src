@@ -2246,6 +2246,7 @@
 ./usr/share/man/cat1/help.0
 ./usr/share/man/cat1/man.0
 ./usr/share/man/cat1/pkg_add.0
+./usr/share/man/cat4/watchdog.0
 ./usr/share/man/cat7
 ./usr/share/man/cat7/packages.0
 ./usr/share/man/cat8
@@ -2473,6 +2474,7 @@
 ./usr/share/sendmail/ostype/darwin.m4
 ./usr/share/sendmail/ostype/dgux.m4
 ./usr/share/sendmail/ostype/domainos.m4
+./usr/share/sendmail/ostype/dragonfly.m4
 ./usr/share/sendmail/ostype/dynix3.2.m4
 ./usr/share/sendmail/ostype/freebsd4.m4
 ./usr/share/sendmail/ostype/freebsd5.m4

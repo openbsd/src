@@ -1,3 +1,5 @@
+./etc/firmware/3c990
+./etc/firmware/3c990-license
 ./etc/firmware/atu-intersil-ext
 ./etc/firmware/atu-intersil-int
 ./etc/firmware/atu-license
