@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.3 1999/07/21 05:23:13 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -305,6 +305,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, quirks & WDC_PCMCIA_FORCE_16BIT_IO ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
+		/* XXX should unallocate */
 		printf(": can't map first I/O space\n");
 		return;
 	} 
@@ -317,9 +318,16 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (cfe->num_iospace > 1 &&
 	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
+		/* XXX should unallocate */
 		printf(": can't map second I/O space\n");
 		return;
 	}
+
+	printf(" port 0x%lx/%d",
+	    sc->sc_pioh.addr, sc->sc_pioh.size);
+	if (cfe->num_iospace > 1 && sc->sc_auxpioh.size > 0)
+		printf(",0x%lx/%d",
+		    sc->sc_auxpioh.addr, sc->sc_auxpioh.size);
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
 	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
@@ -357,7 +365,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
 	    &sc->wdc_channel);
 	if (sc->sc_ih == NULL) {
-		printf("couldn't establish interrupt handler\n");
+		printf("couldn't establish interrupt handler");
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.7 1999/01/28 07:51:36 fgsch Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.8 1999/07/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ pcic_isa_probe(parent, match, aux)
 
 	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
 		return (0);
-
 	found = 0;
 
 	/*
@@ -119,45 +118,31 @@ pcic_isa_probe(parent, match, aux)
 	 */
 
 	bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C0SA + PCIC_IDENT);
-
 	val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
 	if (pcic_ident_ok(val))
 		found++;
-
 
 	bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C0SB + PCIC_IDENT);
-
 	val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
 	if (pcic_ident_ok(val))
 		found++;
-
 
 	bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C1SA + PCIC_IDENT);
-
 	val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
 	if (pcic_ident_ok(val))
 		found++;
-
 
 	bus_space_write_1(iot, ioh, PCIC_REG_INDEX, C1SB + PCIC_IDENT);
-
 	val = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
-
 	if (pcic_ident_ok(val))
 		found++;
-
 
 	bus_space_unmap(iot, ioh, PCIC_IOSIZE);
 	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
 
 	if (!found)
 		return (0);
-
 	ia->ia_iosize = PCIC_IOSIZE;
-
 	return (1);
 }
 

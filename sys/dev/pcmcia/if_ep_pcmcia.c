@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.14 1999/05/28 12:41:55 niklas Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.15 1999/07/26 05:43:15 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -332,6 +332,8 @@ ep_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, cfe->iospace[0].length);
+
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_3COM_3C562:
 		/*
@@ -355,20 +357,18 @@ ep_pcmcia_attach(parent, self, aux)
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
-	printf(": %s,", epp->epp_name);
-
 #ifdef notyet
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 #endif
 
-	epconfig(sc, epp->epp_chipset, enaddr);
-
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(", couldn't establish interrupt");
+
+	printf(": <%s>", epp->epp_name);
+	epconfig(sc, epp->epp_chipset, enaddr);
 
 #ifdef notyet
 	sc->enabled = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.4 1999/07/01 06:29:54 fgsch Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.5 1999/07/26 05:43:15 deraadt Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -122,9 +122,7 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-#if 0
 	struct aic_pcmcia_product *app;
-#endif
 
 	psc->sc_pf = pf;
 
@@ -169,22 +167,17 @@ aic_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, psc->sc_pcioh.size);
+
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
 		printf(": unable to detect chip!\n");
 		return;
 	}
 
-#if 0
 	app = aic_pcmcia_lookup(pa);
-	if (app == NULL) {
-		printf("\n");
-		panic("aic_pcmcia_attach: impossible");
-	}
-
-	printf(": %s\n", app->app_name);
-#else
+	if (app)
+		printf(": %s", app->app_name);
 	printf("\n");
-#endif
 
 	aicattach(sc);
 

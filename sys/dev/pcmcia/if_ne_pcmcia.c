@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.10 1999/07/01 06:29:55 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.11 1999/07/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ ne_pcmcia_attach(parent, self, aux)
 	 */
 
 	if (cfe->num_memspace != 1) {
-		printf(": unexpected number of memory spaces "
+		printf(": unexpected number of memory spaces, "
 		    " %d should be 1\n", cfe->num_memspace);
 		return;
 	}
@@ -457,7 +457,7 @@ ne_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	printf("\n");
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, NE2000_NIC_NPORTS);
 
 	/*
 	 * Read the station address from the board.
@@ -468,17 +468,15 @@ ne_pcmcia_attach(parent, self, aux)
 			if (ne_dev->enet_maddr >= 0) {
 				if (pcmcia_mem_alloc(pa->pf,
 				    ETHER_ADDR_LEN * 2, &pcmh)) {
-					printf("%s: can't alloc mem for"
-					    " enet addr\n",
-					    dsc->sc_dev.dv_xname);
+					printf(": can't alloc mem for"
+					    " address\n");
 					return;
 				}
 				if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_ATTR,
 				    ne_dev->enet_maddr, ETHER_ADDR_LEN * 2,
 				    &pcmh, &offset, &mwindow)) {
-					printf("%s: can't map mem for"
-					    " enet addr\n",
-					    dsc->sc_dev.dv_xname);
+					printf(": can't map mem for"
+					    " address\n");
 					return;
 				}
 				for (j = 0; j < ETHER_ADDR_LEN; j++)
@@ -502,8 +500,8 @@ ne_pcmcia_attach(parent, self, aux)
 		    enaddr[2] != ne_dev->enet_vendor[2]) {
 			printf("%s: enet addr has incorrect vendor code\n",
 			    dsc->sc_dev.dv_xname);
-			printf("%s: (%02x:%02x:%02x should be "
-			    "%02x:%02x:%02x)\n", dsc->sc_dev.dv_xname,
+			printf(": (%02x:%02x:%02x should be "
+			    "%02x:%02x:%02x)\n",
 			    enaddr[0], enaddr[1], enaddr[2],
 			    ne_dev->enet_vendor[0],
 			    ne_dev->enet_vendor[1],
@@ -528,8 +526,13 @@ ne_pcmcia_attach(parent, self, aux)
 		dsc->init_card = rtl80x9_init_card;
 	}
 
-	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,
-	    typestr);
+	/* set up the interrupt */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
+	    dsc);
+	if (psc->sc_ih == NULL)
+		printf("no irq");
+
+	printf(": <%s%s>\n", ne_dev->name, typestr);
 
 	/* Initialize media, if we have it. */
 	if (npp_init_media != NULL)
@@ -541,12 +544,6 @@ ne_pcmcia_attach(parent, self, aux)
 	pcmcia_function_disable(pa->pf);
 #endif
 
-	/* set up the interrupt */
-	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
-	    dsc);
-	if (psc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    dsc->sc_dev.dv_xname);
 }
 
 int

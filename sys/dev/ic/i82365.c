@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.7 1999/05/02 22:35:40 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.8 1999/07/26 05:43:15 deraadt Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -63,6 +63,17 @@
 #define PCIC_VENDOR_VADEM_VG468		6
 #define PCIC_VENDOR_VADEM_VG469		7
 
+static char *pcic_vendor_to_string[] = {
+	"Unknown",
+	"Intel 82365SL rev 0",
+	"Intel 82365SL rev 1",
+	"Intel 82365SL rev 2",
+	"Cirrus PD6710",
+	"Cirrus PD672X",
+	"Vadem VG468",
+	"Vadem VG469",
+};
+
 /*
  * Individual drivers will allocate their own memory and io regions. Memory
  * regions must be a multiple of 4k, aligned on a 4k boundary.
@@ -95,7 +106,7 @@ pcic_ident_ok(ident)
 {
 	/* this is very empirical and heuristic */
 
-	if ((ident == 0) || (ident == 0xff) || (ident & PCIC_IDENT_ZERO))
+	if (ident == 0 || ident == 0xff || (ident & PCIC_IDENT_ZERO))
 		return (0);
 
 	if ((ident & PCIC_IDENT_IFTYPE_MASK) != PCIC_IDENT_IFTYPE_MEM_AND_IO) {
@@ -173,30 +184,6 @@ pcic_vendor(h)
 	return (vendor);
 }
 
-char *
-pcic_vendor_to_string(vendor)
-	int vendor;
-{
-	switch (vendor) {
-	case PCIC_VENDOR_I82365SLR0:
-		return ("Intel 82365SL Revision 0");
-	case PCIC_VENDOR_I82365SLR1:
-		return ("Intel 82365SL Revision 1");
-	case PCIC_VENDOR_I82365SLR2:
-		return ("Intel 82365SL Revision 2");
-	case PCIC_VENDOR_CIRRUS_PD6710:
-		return ("Cirrus PD6710");
-	case PCIC_VENDOR_CIRRUS_PD672X:
-		return ("Cirrus PD672X");
-	case PCIC_VENDOR_VADEM_VG468:
-		return ("Vadem VG468");
-	case PCIC_VENDOR_VADEM_VG469:
-		return ("Vadem VG469");
-	}
-
-	return ("Unknown controller");
-}
-
 void
 pcic_attach(sc)
 	struct pcic_softc *sc;
@@ -246,7 +233,7 @@ pcic_attach(sc)
 	if (pcic_vendor(&sc->handle[0]) != PCIC_VENDOR_CIRRUS_PD672X ||
 	    pcic_read(&sc->handle[2], PCIC_IDENT) != 0) {
 		if (pcic_ident_ok(reg = pcic_read(&sc->handle[2],
-						  PCIC_IDENT))) {
+		    PCIC_IDENT))) {
 			sc->handle[2].flags = PCIC_FLAG_SOCKETP;
 			count++;
 		} else {
@@ -258,7 +245,7 @@ pcic_attach(sc)
 		sc->handle[3].sc = sc;
 		sc->handle[3].sock = C1SB;
 		if (pcic_ident_ok(reg = pcic_read(&sc->handle[3],
-						  PCIC_IDENT))) {
+		    PCIC_IDENT))) {
 			sc->handle[3].flags = PCIC_FLAG_SOCKETP;
 			count++;
 		} else {
@@ -272,7 +259,7 @@ pcic_attach(sc)
 	}
 
 	if (count == 0)
-		panic("pcic_attach: attach found no sockets");
+		return;
 
 	/* establish the interrupt */
 
@@ -283,52 +270,34 @@ pcic_attach(sc)
 		 * this should work, but w/o it, setting tty flags hangs at
 		 * boot time.
 		 */
-		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
-		{
+		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP) {
 			pcic_write(&sc->handle[i], PCIC_CSC_INTR, 0);
 			pcic_read(&sc->handle[i], PCIC_CSC);
 		}
 	}
 
-	if ((sc->handle[0].flags & PCIC_FLAG_SOCKETP) ||
-	    (sc->handle[1].flags & PCIC_FLAG_SOCKETP)) {
-		vendor = pcic_vendor(&sc->handle[0]);
+	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+		if ((sc->handle[i+0].flags & PCIC_FLAG_SOCKETP) ||
+		    (sc->handle[i+1].flags & PCIC_FLAG_SOCKETP)) {
+			vendor = pcic_vendor(&sc->handle[i]);
 
-		printf("%s: controller 0 (%s) has ", sc->dev.dv_xname,
-		       pcic_vendor_to_string(vendor));
+			printf("%s controller %d: <%s> has socket",
+			    sc->dev.dv_xname, i/2,
+			    pcic_vendor_to_string[vendor]);
 
-		if ((sc->handle[0].flags & PCIC_FLAG_SOCKETP) &&
-		    (sc->handle[1].flags & PCIC_FLAG_SOCKETP))
-			printf("sockets A and B\n");
-		else if (sc->handle[0].flags & PCIC_FLAG_SOCKETP)
-			printf("socket A only\n");
-		else
-			printf("socket B only\n");
+			if ((sc->handle[i+0].flags & PCIC_FLAG_SOCKETP) &&
+			    (sc->handle[i+1].flags & PCIC_FLAG_SOCKETP))
+				printf("s A and B\n");
+			else if (sc->handle[i+0].flags & PCIC_FLAG_SOCKETP)
+				printf(" A only\n");
+			else
+				printf(" B only\n");
 
-		if (sc->handle[0].flags & PCIC_FLAG_SOCKETP)
-			sc->handle[0].vendor = vendor;
-		if (sc->handle[1].flags & PCIC_FLAG_SOCKETP)
-			sc->handle[1].vendor = vendor;
-	}
-	if ((sc->handle[2].flags & PCIC_FLAG_SOCKETP) ||
-	    (sc->handle[3].flags & PCIC_FLAG_SOCKETP)) {
-		vendor = pcic_vendor(&sc->handle[2]);
-
-		printf("%s: controller 1 (%s) has ", sc->dev.dv_xname,
-		       pcic_vendor_to_string(vendor));
-
-		if ((sc->handle[2].flags & PCIC_FLAG_SOCKETP) &&
-		    (sc->handle[3].flags & PCIC_FLAG_SOCKETP))
-			printf("sockets A and B\n");
-		else if (sc->handle[2].flags & PCIC_FLAG_SOCKETP)
-			printf("socket A only\n");
-		else
-			printf("socket B only\n");
-
-		if (sc->handle[2].flags & PCIC_FLAG_SOCKETP)
-			sc->handle[2].vendor = vendor;
-		if (sc->handle[3].flags & PCIC_FLAG_SOCKETP)
-			sc->handle[3].vendor = vendor;
+			if (sc->handle[i+0].flags & PCIC_FLAG_SOCKETP)
+				sc->handle[i+0].vendor = vendor;
+			if (sc->handle[i+1].flags & PCIC_FLAG_SOCKETP)
+				sc->handle[i+1].vendor = vendor;
+		}
 	}
 }
 
@@ -1080,12 +1049,6 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	DPRINTF(("pcic_chip_io_map window %d %s port %lx+%lx\n",
 		 win, width_names[width], (u_long) ioaddr, (u_long) size));
-
-	/* XXX wtf is this doing here? */
-
-	printf(" port 0x%lx", (u_long) ioaddr);
-	if (size > 1)
-		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
 
 	h->io[win].addr = ioaddr;
 	h->io[win].size = size;

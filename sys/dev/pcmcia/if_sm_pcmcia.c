@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.3 1998/10/14 07:34:43 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -207,11 +207,13 @@ sm_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
+	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, cfe->iospace[0].length);
+
 	spp = sm_pcmcia_lookup(pa);
 	if (spp == NULL)
 		panic("sm_pcmcia_attach: impossible");
 
-	printf(": %s\n", spp->spp_name);
+	printf(": %s", spp->spp_name);
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
@@ -229,19 +231,16 @@ sm_pcmcia_attach(parent, self, aux)
 		case PCMCIA_VENDOR_MEGAHERTZ2:
 			cisstr = pa->pf->sc->card.cis1_info[3];
 			break;
-
 		case PCMCIA_VENDOR_SMC:
 			cisstr = pa->pf->sc->card.cis1_info[2];
 			break;
 		}
-
 		if (cisstr != NULL && sm_pcmcia_ascii_enaddr(cisstr, myla))
 			enaddr = myla;
 	}
 
 	if (enaddr == NULL)
-		printf("%s: unable to get Ethernet address\n",
-		    sc->sc_dev.dv_xname);
+		printf(", unable to get Ethernet address\n");
 
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);

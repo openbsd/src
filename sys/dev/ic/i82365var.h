@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.3 1999/05/02 22:35:40 fgsch Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.4 1999/07/26 05:43:15 deraadt Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ struct pcic_softc {
 
 int	pcic_ident_ok __P((int));
 int	pcic_vendor __P((struct pcic_handle *));
-char	*pcic_vendor_to_string __P((int));
 
 void	pcic_attach __P((struct pcic_softc *));
 void	pcic_attach_sockets __P((struct pcic_softc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.3 1999/05/19 14:04:04 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -320,6 +320,8 @@ xe_pcmcia_attach(parent, self, aux)
 	sc->sc_bsh = psc->sc_pcmh.memh;
 #endif
 
+	printf(" port 0x%lx/%d", psc->sc_pcmh.addr, 16);
+
 	/* Figure out what card we are. */
 	sc->sc_flags = xe_pcmcia_interpret_manfid(parent);
 
@@ -368,8 +370,7 @@ xe_pcmcia_attach(parent, self, aux)
 	if (enaddr)
 		bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	else {
-		printf("%s: unable to get ethernet address\n",
-		    sc->sc_dev.dv_xname);
+		printf(", unable to get ethernet address\n");
 		goto bad;
 	}
 
@@ -396,11 +397,9 @@ xe_pcmcia_attach(parent, self, aux)
 	DPRINTF(XED_MII | XED_CONFIG,
 	    ("bmsr %x\n", xe_mdi_read(&sc->sc_dev, 0, 1)));
 	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		printf(", no phy found, using auto mode");
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0,
 		    NULL);
-	}
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	/*
@@ -413,15 +412,14 @@ xe_pcmcia_attach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif	/* NBPFILTER > 0 */
 
-	printf("\n");
-
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, xe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(", couldn't establish interrupt\n");
 		goto bad;
 	}
+
+	printf("\n");
 
 	/*
 	 * Reset and initialize the card again for DINGO (as found in Linux

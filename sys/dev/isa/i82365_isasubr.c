@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.8 1999/07/11 16:22:21 niklas Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.9 1999/07/26 05:43:16 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -62,8 +62,7 @@
 /*
  * Default I/O allocation range.  If both are set to non-zero, these
  * values will be used instead.  Otherwise, the code attempts to probe
- * the bus width.  Systems with 10 address bits should use 0x300 and 0xff.
- * Systems with 12 address bits (most) should use 0x400 and 0xbff.
+ * the bus width.
  */
 
 #ifndef PCIC_ISA_ALLOC_IOBASE
@@ -77,21 +76,6 @@
 int	pcic_isa_alloc_iobase = PCIC_ISA_ALLOC_IOBASE;
 int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
 
-
-/*
- * Default IRQ allocation bitmask.  This defines the range of allowable
- * IRQs for PCMCIA slots.  Useful if order of probing would screw up other
- * devices, or if PCIC hardware/cards have trouble with certain interrupt
- * lines.
- */
-
-char	pcic_isa_intr_list[] = {
-	3, 4, 14, 9, 5, 12, 10, 11, 15, 13, 7
-};
-
-int	npcic_isa_intr_list =
-	sizeof(pcic_isa_intr_list) / sizeof(pcic_isa_intr_list[0]);
-
 struct pcic_ranges pcic_isa_addr[] = {
 	{ 0x340, 0x040 },
 	{ 0x300, 0x030 },
@@ -100,6 +84,17 @@ struct pcic_ranges pcic_isa_addr[] = {
 	{ 0, 0 },		/* terminator */
 };
 
+/*
+ * Default IRQ allocation bitmask.  This defines the range of allowable
+ * IRQs for PCMCIA slots.  Useful if order of probing would screw up other
+ * devices, or if PCIC hardware/cards have trouble with certain interrupt
+ * lines.
+ */
+char	pcic_isa_intr_list[] = {
+	3, 4, 14, 9, 5, 12, 10, 11, 15, 13, 7
+};
+int	npcic_isa_intr_list =
+	sizeof(pcic_isa_intr_list) / sizeof(pcic_isa_intr_list[0]);
 
 /*****************************************************************************
  * End of configurable parameters.
@@ -125,8 +120,15 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	/*
 	 * figure out how wide the isa bus is.  Do this by checking if the
 	 * pcic controller is mirrored 0x400 above where we expect it to be.
+	 *
+	 * XXX some hardware doesn't seem to grok addresses in 0x400
+	 * range-- apparently missing a bit or more of address lines.
+	 * (e.g. CIRRUS_PD672X with Linksys EthernetCard ne2000 clone
+	 * in TI TravelMate 5000 -- not clear which is at fault)
+	 * 
+	 * Add a kludge to detect 10 bit wide buses and deal with them,
+	 * and also a config file option to override the probe.
 	 */
-
 	iobuswidth = 12;
 
 	/* Map i/o space. */
@@ -141,7 +143,6 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 			 * read the ident flags from the normal space and
 			 * from the mirror, and compare them
 			 */
-
 			bus_space_write_1(iot, ioh, PCIC_REG_INDEX,
 			    sc->handle[i].sock + PCIC_IDENT);
 			tmp1 = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
@@ -157,21 +158,6 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 
 	bus_space_free(iot, ioh_high, length);
 
-	/*
-	 * XXX mycroft recommends I/O space range 0x400-0xfff .  I should put
-	 * this in a header somewhere
-	 */
-
-	/*
-	 * XXX some hardware doesn't seem to grok addresses in 0x400 range--
-	 * apparently missing a bit or more of address lines. (e.g.
-	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
-	 * TravelMate 5000--not clear which is at fault)
-	 * 
-	 * Add a kludge to detect 10 bit wide buses and deal with them,
-	 * and also a config file option to override the probe.
-	 */
-
 	sc->ranges = pcic_isa_addr;
 	if (iobuswidth == 10) {
 		sc->iobase = 0x000;
@@ -183,7 +169,6 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
 	    sc->dev.dv_xname, (long) sc->iobase,
-
 	    (long) sc->iobase + sc->iosize));
 
 	if (pcic_isa_alloc_iobase && pcic_isa_alloc_iosize) {
@@ -238,9 +223,7 @@ found:
 	pcic_write(h, PCIC_INTR, reg);
 
 	h->ih_irq = irq;
-
-	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
-
+	printf(" irq %d", irq);
 	return (ih);
 }
 
