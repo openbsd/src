@@ -978,7 +978,7 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	free(he);
     if (hostinfo && *IM)
 	putf(IM, ptyibuf2);
-    if (*IM)
+    if (IM != DEFAULT_IM && *IM)
 	free(IM);
 
     if (pcc)
