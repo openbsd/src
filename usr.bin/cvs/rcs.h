@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.9 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.10 2005/03/02 04:19:34 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -145,16 +145,18 @@ typedef struct rcs_file {
 } RCSFILE;
 
 
-RCSFILE*  rcs_open         (const char *, int, ...);
-void      rcs_close        (RCSFILE *);
-int       rcs_write        (RCSFILE *);
-int       rcs_sym_add      (RCSFILE *, const char *, RCSNUM *);
-int       rcs_sym_remove   (RCSFILE *, const char *);
-BUF*      rcs_getrev       (RCSFILE *, RCSNUM *);
-BUF*      rcs_gethead      (RCSFILE *);
-RCSNUM*   rcs_getrevbydate (RCSFILE *, struct tm *);
-int       rcs_kwexp_set    (RCSFILE *, int);
-int       rcs_kwexp_get    (RCSFILE *);
+RCSFILE*    rcs_open         (const char *, int, ...);
+void        rcs_close        (RCSFILE *);
+int         rcs_sym_add      (RCSFILE *, const char *, RCSNUM *);
+int         rcs_sym_remove   (RCSFILE *, const char *);
+RCSNUM*     rcs_sym_getrev   (RCSFILE *, const char *);
+BUF*        rcs_getrev       (RCSFILE *, RCSNUM *);
+BUF*        rcs_gethead      (RCSFILE *);
+RCSNUM*     rcs_getrevbydate (RCSFILE *, struct tm *);
+const char* rcs_desc_get     (RCSFILE *);
+int         rcs_desc_set     (RCSFILE *, const char *);
+int         rcs_kwexp_set    (RCSFILE *, int);
+int         rcs_kwexp_get    (RCSFILE *);
 
 int       rcs_kflag_get    (const char *);
 void      rcs_kflag_usage  (void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.26 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.27 2005/03/02 04:19:34 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -147,6 +147,7 @@ static struct rcs_key {
 #define RCS_NKEYS   (sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
 
+static int   rcs_write           (RCSFILE *);
 static int   rcs_parse           (RCSFILE *);
 static int   rcs_parse_admin     (RCSFILE *);
 static int   rcs_parse_delta     (RCSFILE *);
@@ -314,7 +315,7 @@ rcs_close(RCSFILE *rfp)
  * path is in <rf_path>.
  * Returns 0 on success, or -1 on failure.
  */
-int
+static int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
@@ -447,6 +448,107 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	/* not synced anymore */
 	rfp->rf_flags &= ~RCS_SYNCED;
+
+	return (0);
+}
+
+
+/*
+ * rcs_sym_remove()
+ *
+ * Remove the symbol with name <sym> from the symbol list for the RCS file
+ * <file>.  If no such symbol is found, the call fails and returns with an
+ * error.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_sym_remove(RCSFILE *file, const char *sym)
+{
+	struct rcs_sym *symp;
+
+	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
+		if (strcmp(symp->rs_name, sym) == 0)
+			break;
+
+	if (symp == NULL) {
+		cvs_log(LP_ERR, "%s: no such symbol `%s'", file->rf_path, sym);
+		return (-1);
+	}
+
+	TAILQ_REMOVE(&(file->rf_symbols), symp, rs_list);
+	free(symp->rs_name);
+	rcsnum_free(symp->rs_num);
+	free(symp);
+
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
+
+	return (0);
+}
+
+
+/*
+ * rcs_sym_getrev()
+ *
+ * Retrieve the RCS revision number associated with the symbol <sym> for the
+ * RCS file <file>.  The returned value is a dynamically-allocated copy and
+ * should be freed by the caller once they are done with it.
+ * Returns the RCSNUM on success, or NULL on failure.
+ */
+RCSNUM*
+rcs_sym_getrev(RCSFILE *file, const char *sym)
+{
+	RCSNUM *num;
+	struct rcs_sym *symp;
+
+	num = NULL;
+
+	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
+		if (strcmp(symp->rs_name, sym) == 0)
+			break;
+
+	if (symp == NULL) {
+		/* XXX set error */
+	} else if (((num = rcsnum_alloc()) != NULL) &&
+	    (rcsnum_cpy(symp->rs_num, num, 0) < 0)) {
+		rcsnum_free(num);
+		num = NULL;
+	}
+
+	return (num);
+}
+
+
+/*
+ * rcs_desc_get()
+ *
+ * Retrieve the description for the RCS file <file>.
+ */
+const char*
+rcs_desc_get(RCSFILE *file)
+{
+	return (file->rf_desc);
+}
+
+
+/*
+ * rcs_desc_set()
+ *
+ * Set the description for the RCS file <file>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_desc_set(RCSFILE *file, const char *desc)
+{
+	char *tmp;
+
+	if ((tmp = strdup(desc)) == NULL)
+		return (-1);
+
+	if (file->rf_desc != NULL)
+		free(file->rf_desc);
+	file->rf_desc = tmp;
+	file->rf_flags &= ~RCS_SYNCED;
 
 	return (0);
 }
@@ -766,7 +868,8 @@ rcs_kwexp_set(RCSFILE *file, int mode)
 		return (-1);
 	}
 
-	free(file->rf_expand);
+	if (file->rf_expand != NULL)
+		free(file->rf_expand);
 	file->rf_expand = tmp;
 
 	return (0);
