@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.16 1999/04/17 23:20:38 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.7 1999/05/06 22:45:00 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.17 1999/05/04 18:45:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -201,7 +201,10 @@ group_get (int id)
   struct group *new, *clone;
 
   if (id < 1 || id > (sizeof (groups) / sizeof (groups[0])))
-    return 0;
+    {
+      log_print ("group_get: group ID (%d) out of range", id);
+      return 0;
+    }
 
   clone = &groups[id - 1];
 
