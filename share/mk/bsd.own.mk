@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.63 2002/12/07 22:31:00 millert Exp $
+#	$OpenBSD: bsd.own.mk,v 1.64 2003/04/17 03:50:24 drahn Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -32,7 +32,7 @@ DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
      ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64" || \
-     ${MACHINE_ARCH} == "sparc")
+     ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "i386")
 ELF_TOOLCHAIN?=	yes
 .else
 ELF_TOOLCHAIN?=	no
