@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.119 2004/09/15 17:50:33 grange Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.120 2004/09/23 21:08:54 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1807,7 +1807,7 @@ sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 		return (sysctl_rdint(oldp, oldlenp, NULL, nintr));
 		break;
 	case KERN_INTRCNT_CNT:
-		return (sysctl_rdint(oldp, oldlenp, NULL, intrcnt[i]));
+		return (sysctl_rdquad(oldp, oldlenp, NULL, intrcnt[i]));
 	case KERN_INTRCNT_NAME:
 		intrname = intrnames;
 		while (i > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.2 2004/06/28 01:59:57 deraadt Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.3 2004/09/23 21:08:54 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -133,11 +133,10 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case KERN_INTRCNT_CNT:
 		if (ec == NULL)
 			return (ENOENT);
-		/* XXX - bogus cast to int, but we can't do better. */
 		s = splhigh();
 		count = ec->ec_count;
 		splx(s);
-		error = sysctl_rdint(oldp, oldlenp, NULL, (int)count);
+		error = sysctl_rdquad(oldp, oldlenp, NULL, count);
 		break;
 	case KERN_INTRCNT_NAME:
 		if (ec == NULL)
