@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.31 2004/06/06 17:08:23 cedric Exp $
+.\"	$OpenBSD: route.8,v 1.32 2004/06/06 22:17:28 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -103,15 +103,13 @@ routing lookup misses, or suspected network partitionings.
 .El
 .Pp
 The monitor command has the syntax
-.Pp
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Nm route Op Fl n
 .Cm monitor
 .Ed
 .Pp
 The flush command has the syntax
-.Pp
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Nm route Op Fl n
 .Cm flush
 .Op Ar family
@@ -137,8 +135,7 @@ modifiers, only routes having destinations with addresses in the
 delineated family will be deleted.
 .Pp
 The other commands have the following syntax:
-.Pp
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Nm route Op Fl n
 .Ar command
 .Op Fl net No \&| Fl host
@@ -283,13 +280,12 @@ which will match the source IP address of outgoing packets.
 .Fl src
 and
 .Fl srcmask
-work in a similar way than
+work in a similar way to
 .Fl dst
 and
 .Fl netmask .
 For example:
-.Pp
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Nm route
 .Cm add
 .Fl src
