@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.42 1998/09/11 10:02:58 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.43 1998/09/22 06:33:17 fgsch Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -139,9 +139,21 @@ file	dev/isa/wt.c			wt needs-flag
 # ISA networking drivers
 #
 
+# WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
+# MUST be first: probe is non invasive, and registers are clobbered
+# by other drivers's probe
+device	we: ether, ifnet, dp8390nic
+attach	we at isa
+file	dev/isa/if_we.c			we
+
 # 3Com common probe code
 define	elink
 file	dev/isa/elink.c			elink
+
+# 3Com 3C503
+device	ec: ether, ifnet, dp8390nic
+attach	ec at isa
+file	dev/isa/if_ec.c			ec
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
@@ -206,6 +218,10 @@ file	dev/isa/if_ex.c			ex needs-flag
 attach	le at isa with le_isa
 file	dev/isa/if_le.c			le_isa | le_pci
 file	dev/isa/if_le_isa.c		le_isa
+
+# Novell NE1000, NE2000, and clones
+attach	ne at isa with ne_isa
+file	dev/isa/if_ne_isa.c		ne_isa
 
 #
 # ISA Sound hardware
