@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.23 2003/12/31 11:18:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.24 2004/02/10 18:29:30 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -259,7 +259,8 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
+	if (tbl == NULL || size == NULL || *size < 0 ||
+	    (*size && addr == NULL)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -281,7 +282,8 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 {
 	struct pfioc_table io;
 
-	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
+	if (tbl == NULL || size == NULL || *size < 0 ||
+	    (*size && addr == NULL)) {
 		errno = EINVAL;
 		return (-1);
 	}
@@ -468,8 +470,8 @@ pfi_get_ifaces(const char *filter, struct pfi_if *buf, int *size, int flags)
 	bzero(&io, sizeof io);
 	io.pfiio_flags = flags;
 	if (filter != NULL)
-		if (strlcpy(io.pfiio_name, filter, sizeof(io.pfiio_name))
-		     > sizeof(io.pfiio_name)) {
+		if (strlcpy(io.pfiio_name, filter, sizeof(io.pfiio_name)) >=
+		    sizeof(io.pfiio_name)) {
 			errno = EINVAL;
 			return (-1);
 		}
