@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.3 1996/06/08 16:21:14 briggs Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.4 1996/10/28 14:49:08 briggs Exp $	*/
 /*	$NetBSD: viareg.h,v 1.4 1996/06/07 10:41:37 briggs Exp $	*/
 
 /*-
@@ -176,6 +176,7 @@ void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
 void	enable_nubus_intr __P((void));
 void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
+void	mac68k_register_scsi_b_irq __P((void (*)(void *), void *clnt));
 void	mac68k_register_scsi_drq __P((void (*)(void *), void *clnt));
 void	mac68k_register_via1_t1_irq __P((void (*)(void *)));
 
