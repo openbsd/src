@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2000/02/04 15:46:09 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2000/02/04 19:16:13 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4943,7 +4943,6 @@ pmap_changeprot4m(pm, va, prot, wired)
 	if (pm->pm_ctx) {
 		ctx = getcontext4m();
 		setcontext4m(pm->pm_ctxnum);
-		tlb_flush_page(va);
 		/*
 		 * Use current context.
 		 * Flush cache if page has been referenced to
@@ -4953,6 +4952,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 		if ((tpte & (SRMMU_PG_C|SRMMU_PGTYPE)) ==
 		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
 			cache_flush_page(va);
+		tlb_flush_page(va);
 		setcontext4m(ctx);
 	} else {
 		tpte = *ptep;
@@ -6485,7 +6485,6 @@ kvm_setcache(va, npages, cached)
 			int *ptep;
 
 			ptep = getptep4m(pmap_kernel(), (vaddr_t)va);
-			tlb_flush_page((vaddr_t)va);
 			pte = *ptep;
 #ifdef DIAGNOSTIC
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
@@ -6502,6 +6501,7 @@ kvm_setcache(va, npages, cached)
 				pte |= SRMMU_PG_C;
 			else
 				pte &= ~SRMMU_PG_C;
+			tlb_flush_page((vaddr_t)va);
 			setpgt4m(ptep, pte);
 
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
