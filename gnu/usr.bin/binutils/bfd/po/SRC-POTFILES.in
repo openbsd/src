@@ -229,6 +229,7 @@ m68klinux.c
 m68klynx.c
 m68knetbsd.c
 m88kmach3.c
+m88kopenbsd.c
 mach-o.c
 mach-o.h
 merge.c

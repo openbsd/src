@@ -5226,6 +5226,9 @@ if test "${target}" = "${host}"; then
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/m88kmach3.h"'
 	;;
+  m88*-*-openbsd*)
+	COREFILE=netbsd-core.lo
+	;;
   ns32k-pc532-mach)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/pc532mach.h"'
@@ -6242,6 +6245,7 @@ do
     m68ksysvcoff_vec)		tb="$tb coff-svm68k.lo cofflink.lo" ;;
     m88kbcs_vec)		tb="$tb coff-m88k.lo" ;;
     m88kmach3_vec)		tb="$tb m88kmach3.lo aout32.lo" ;;
+    m88kopenbsd_vec)		tb="$tb m88kopenbsd.lo aout32.lo" ;;
     mach_o_be_vec)              tb="$tb mach-o.lo" ;;
     mach_o_le_vec)              tb="$tb mach-o.lo" ;;
     mach_o_fat_vec)             tb="$tb mach-o.lo" ;;

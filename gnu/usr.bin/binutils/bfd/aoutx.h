@@ -830,6 +830,10 @@ NAME(aout,machine_type) (arch, machine, unknown)
 	arch_flags = M_CRIS;
       break;
 
+    case bfd_arch_m88k:
+      *unknown = FALSE;
+      break;
+
     default:
       arch_flags = M_UNKNOWN;
     }

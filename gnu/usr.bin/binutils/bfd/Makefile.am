@@ -278,6 +278,7 @@ BFD32_BACKENDS = \
 	m68klynx.lo \
 	m68knetbsd.lo \
 	m88kmach3.lo \
+	m88kopenbsd.lo \
 	mach-o.lo \
 	mipsbsd.lo \
 	newsos3.lo \
@@ -441,6 +442,7 @@ BFD32_BACKENDS_CFILES = \
 	m68klynx.c \
 	m68knetbsd.c \
 	m88kmach3.c \
+	m88kopenbsd.c \
 	mach-o.c \
 	mipsbsd.c \
 	newsos3.c \
@@ -1374,6 +1376,9 @@ m68knetbsd.lo: m68knetbsd.c netbsd.h $(INCDIR)/filenames.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 m88kmach3.lo: m88kmach3.c $(INCDIR)/filenames.h libaout.h \
   $(INCDIR)/bfdlink.h aout-target.h $(INCDIR)/aout/aout64.h \
+  $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
+m88kopenbsd.lo: m88kopenbsd.c netbsd.h $(INCDIR)/filenames.h \
+  libaout.h $(INCDIR)/bfdlink.h aout-target.h $(INCDIR)/aout/aout64.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 mach-o.lo: mach-o.c mach-o.h $(INCDIR)/filenames.h \
   $(INCDIR)/libiberty.h mach-o-target.c
