@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.21 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.22 2003/07/06 15:42:07 avsm Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.21 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.22 2003/07/06 15:42:07 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,8 +152,7 @@ extractdirs(genmode)
 	(void)snprintf(dirfile, sizeof(dirfile), "%s/rstdir%d", tmpdir,
 	    dumpdate);
 	if (command != 'r' && command != 'R') {
-		strncat(dirfile, "-XXXXXXXXXX",
-		    sizeof(dirfile) - strlen(dirfile));
+		strlcat(dirfile, "-XXXXXXXXXX", sizeof(dirfile));
 		fd = mkstemp(dirfile);
 	} else
 		fd = open(dirfile, O_RDWR|O_CREAT|O_EXCL, 0666);
@@ -166,8 +165,7 @@ extractdirs(genmode)
 		(void)snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
 		    tmpdir, dumpdate);
 		if (command != 'r' && command != 'R') {
-			strncat(modefile, "-XXXXXXXXXX",
-			    sizeof(modefile) - strlen(modefile));
+			strlcat(modefile, "-XXXXXXXXXX", sizeof(modefile));
 			fd = mkstemp(modefile);
 		} else
 			fd = open(modefile, O_RDWR|O_CREAT|O_EXCL, 0666);
@@ -231,7 +229,6 @@ treescan(pname, ino, todo)
 {
 	struct inotab *itp;
 	struct direct *dp;
-	int namelen;
 	long bpt;
 	char locname[MAXPATHLEN + 1];
 
@@ -252,9 +249,7 @@ treescan(pname, ino, todo)
 	 * begin search through the directory
 	 * skipping over "." and ".."
 	 */
-	namelen = snprintf(locname, sizeof(locname), "%s/", pname);
-	if (namelen >= sizeof(locname))
-		namelen = sizeof(locname) - 1;
+	(void)snprintf(locname, sizeof(locname), "%s/", pname);
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	dp = rst_readdir(dirp); /* "." */
 	if (dp != NULL && strcmp(dp->d_name, ".") == 0)
@@ -272,12 +267,11 @@ treescan(pname, ino, todo)
 	 * a zero inode signals end of directory
 	 */
 	while (dp != NULL) {
-		locname[namelen] = '\0';
-		if (namelen + dp->d_namlen >= sizeof(locname)) {
+		if (strlen(locname) + dp->d_namlen >= sizeof(locname)) {
 			fprintf(stderr, "%s%s: name exceeds %d char\n",
 				locname, dp->d_name, sizeof(locname) - 1);
 		} else {
-			(void)strncat(locname, dp->d_name, (int)dp->d_namlen);
+			(void)strlcat(locname, dp->d_name, sizeof(locname));
 			treescan(locname, dp->d_ino, todo);
 			rst_seekdir(dirp, bpt, itp->t_seekpt);
 		}
