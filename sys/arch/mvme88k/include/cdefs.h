@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.8 2001/09/23 02:51:17 miod Exp $ */
+/*	$OpenBSD: cdefs.h,v 1.9 2001/11/09 00:05:00 miod Exp $ */
 /*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:48 jtc Exp $	*/
 
 /*
@@ -9,7 +9,11 @@
 #ifndef	__MACHINE_CDEFS_H__
 #define	__MACHINE_CDEFS_H__
 
-#include <machine/asm.h>
+#ifdef __STDC__
+#define	_C_LABEL(name)		_ ## name
+#else
+#define	_C_LABEL(name)		_/**/name
+#endif
 
 #ifdef __GNUC__
 #ifdef __STDC__
