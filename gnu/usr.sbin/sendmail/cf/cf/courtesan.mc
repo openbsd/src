@@ -9,12 +9,12 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.13 2004/01/13 19:44:20 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.14 2004/01/26 04:49:11 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
 define(`confTRY_NULL_MX_LIST', `True')dnl
-define(`confSMTP_LOGIN_MSG', `$m Sendmail $v/$Z/courtesan ready at $b')dnl
+define(`confSMTP_LOGIN_MSG', `$j spamd IP-based SPAM blocker; $d')dnl
 define(`confMAX_HOP', `20')dnl
 define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
 dnl
