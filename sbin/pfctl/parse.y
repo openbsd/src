@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.448 2004/03/14 21:51:44 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.449 2004/03/20 23:20:20 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1549,7 +1549,7 @@ pfrule		: action dir logquick interface route af proto fromto
 					if (srctrack) {
 						yyerror("state option "
 						    "'source-track' "
-						    "multiple definitons");
+						    "multiple definitions");
 						YYERROR;
 					}
 					srctrack =  o->data.src_track;
@@ -1590,7 +1590,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				case PF_STATE_OPT_STATELOCK:
 					if (statelock) {
 						yyerror("state locking option: "
-						    "multiple definitons");
+						    "multiple definitions");
 						YYERROR;
 					}
 					statelock = 1;
