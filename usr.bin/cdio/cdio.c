@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.14 2000/12/24 11:34:10 aaron Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.15 2000/12/24 11:35:42 aaron Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -172,7 +172,7 @@ int main (argc, argv)
 		cdname = getenv ("CDROM");
 
 	for (;;) {
-		switch (getopt (argc, argv, "svhf:")) {
+		switch (getopt (argc, argv, "svf:")) {
 		case EOF:
 			break;
 		case 's':
@@ -184,7 +184,6 @@ int main (argc, argv)
 		case 'f':
 			cdname = optarg;
 			continue;
-		case 'h':
 		default:
 			usage ();
 		}
