@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.28 2001/04/04 20:13:11 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.29 2001/04/08 15:45:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.28 2001/04/04 20:13:11 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.29 2001/04/08 15:45:50 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -956,34 +956,54 @@ wi_write_record(sc, ltv)
 {
 	u_int16_t		*ptr;
 	int			i;
-	struct wi_ltv_gen	*oltv;
+	struct wi_ltv_gen	p2ltv;
 
 	if (sc->sc_prism2) {
-		switch (oltv->wi_type) {
+		switch (ltv->wi_type) {
 		case WI_RID_TX_RATE:
-		case WI_RID_CUR_TX_RATE:
 			switch (ltv->wi_val) {
-			case 1: oltv->wi_val = 1; break;
-			case 2: oltv->wi_val = 2; break;
-			case 3:	oltv->wi_val = 6; break;
-			case 4: oltv->wi_val = 5; break;
-			case 7: oltv->wi_val = 7; break;
-			case 8: oltv->wi_val = 11; break;
-			case 15: oltv->wi_val = 3; break;
-			default: oltv->wi_val = 0x100 + ltv->wi_val; break;
+			case 1: p2ltv.wi_val = 1; break;
+			case 2: p2ltv.wi_val = 2; break;
+			case 3:	p2ltv.wi_val = 15; break;
+			case 5: p2ltv.wi_val = 4; break;
+			case 6: p2ltv.wi_val = 3; break;
+			case 7: p2ltv.wi_val = 7; break;
+			case 11: p2ltv.wi_val = 8; break;
+			default: return EINVAL;
 			}
+			ltv = &p2ltv;
 			break;
 		case WI_RID_ENCRYPTION:
-			oltv->wi_len = 2;
+			p2ltv.wi_type = WI_RID_P2_ENCRYPTION;
+			p2ltv.wi_len = 2;
 			if (ltv->wi_val & 0x01)
-				oltv->wi_val = 1;
+				p2ltv.wi_val = 0x03;
 			else
-				oltv->wi_val = 0;
+				p2ltv.wi_val = 0x90;
+			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
-			oltv->wi_len = 2;
-			oltv->wi_val = ltv->wi_val;
+			p2ltv.wi_type = WI_RID_P2_TX_CRYPT_KEY;
+			p2ltv.wi_len = 2;
+			p2ltv.wi_val = ltv->wi_val;
+			ltv = &p2ltv;
 			break;
+		case WI_RID_DEFLT_CRYPT_KEYS: {
+				int error;
+				struct wi_ltv_str ws;
+				struct wi_ltv_keys *wk = (struct wi_ltv_keys *)ltv;
+				for (i = 0; i < 4; i++) {
+					ws.wi_len = 4;
+					ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
+					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
+					ws.wi_str[5] = '\0';
+					error = wi_write_record(sc,
+					    (struct wi_ltv_gen *)&ws);
+					if (error)
+						return (error);
+				}
+			}
+			return (0);
 		}
 	}
 
