@@ -1,4 +1,5 @@
-/*	$NetBSD: psc.h,v 1.2 1997/11/07 13:31:21 briggs Exp $	*/
+/*	$OpenBSD: psc.h,v 1.2 1998/05/08 22:13:02 gene Exp $	*/
+/*	$NetBSD: psc.h,v 1.3 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,15 +37,17 @@ extern volatile u_int8_t *PSCBase;
 #define	psc_reg2(r) (*((volatile u_int16_t *)(PSCBase+r)))
 #define	psc_reg4(r) (*((volatile u_int32_t *)(PSCBase+r)))
 
-int add_psc_lev3_intr __P((void (*)(void *), void *));
-int add_psc_lev4_intr __P((int, int (*)(void *), void *));
-int add_psc_lev5_intr __P((int, void (*)(void *), void *));
-int add_psc_lev6_intr __P((int, void (*)(void *), void *));
+void	psc_init __P((void));
 
-int remove_psc_lev3_intr __P((void));
-int remove_psc_lev4_intr __P((int));
-int remove_psc_lev5_intr __P((int));
-int remove_psc_lev6_intr __P((int));
+int	add_psc_lev3_intr __P((void (*)(void *), void *));
+int	add_psc_lev4_intr __P((int, int (*)(void *), void *));
+int	add_psc_lev5_intr __P((int, void (*)(void *), void *));
+int	add_psc_lev6_intr __P((int, void (*)(void *), void *));
+
+int	remove_psc_lev3_intr __P((void));
+int	remove_psc_lev4_intr __P((int));
+int	remove_psc_lev5_intr __P((int));
+int	remove_psc_lev6_intr __P((int));
 
 /*
  * Reading an interrupt status register returns a mask of the
