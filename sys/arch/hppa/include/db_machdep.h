@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.13 2005/01/06 20:34:07 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.14 2005/01/06 21:08:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -44,6 +44,11 @@ extern db_regs_t	ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
+#define	SET_PC_REGS(regs, value)					\
+do {									\
+	(regs)->tf_iioq_tail = 4 +					\
+	    ((regs)->tf_iioq_head = (value));				\
+} while (0)
 
 /* Breakpoint related definitions */
 #define	BKPT_INST	0x00010000	/* break 0,8 */
