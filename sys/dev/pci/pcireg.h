@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.8 1998/04/25 00:17:44 deraadt Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.9 1998/07/12 04:22:09 deraadt Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_BIST(bhlcr) \
 	    (((bhlcr) >> PCI_BIST_SHIFT) & PCI_BIST_MASK)
 
-#define	PCI_HDRTYPE_SHIFT			24
+#define	PCI_HDRTYPE_SHIFT			16
 #define	PCI_HDRTYPE_MASK			0xff
 #define	PCI_HDRTYPE(bhlcr) \
 	    (((bhlcr) >> PCI_HDRTYPE_SHIFT) & PCI_HDRTYPE_MASK)
@@ -234,12 +234,12 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_HDRTYPE_MULTIFN(bhlcr) \
 	    ((PCI_HDRTYPE(bhlcr) & 0x80) != 0)
 
-#define	PCI_LATTIMER_SHIFT			24
+#define	PCI_LATTIMER_SHIFT			8
 #define	PCI_LATTIMER_MASK			0xff
 #define	PCI_LATTIMER(bhlcr) \
 	    (((bhlcr) >> PCI_LATTIMER_SHIFT) & PCI_LATTIMER_MASK)
 
-#define	PCI_CACHELINE_SHIFT			24
+#define	PCI_CACHELINE_SHIFT			0
 #define	PCI_CACHELINE_MASK			0xff
 #define	PCI_CACHELINE(bhlcr) \
 	    (((bhlcr) >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK)
