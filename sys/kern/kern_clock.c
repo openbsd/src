@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.50 2004/08/05 13:45:30 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.51 2004/09/15 17:48:52 grange Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -666,4 +666,4 @@ getmicrouptime(struct timeval *tvp)
 	*tvp = mono_time;
 	splx(s);
 }
-#endif /* __HAVE_TIMECOUNTERS */
+#endif /* __HAVE_TIMECOUNTER */
