@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1996/08/19 08:28:32 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1996/08/22 20:11:19 millert Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -10,7 +10,7 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	ipx_addr.c ipx_ntoa.c \
 	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
 	res_comp.c res_debug.c res_init.c res_mkquery.c res_query.c \
-	res_send.c send.c sethostent.c ethers.c
+	res_send.c send.c sethostent.c ethers.c rcmdsh.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
