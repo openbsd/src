@@ -1,10 +1,10 @@
-/*	$OpenBSD: md5k.h,v 1.1 1997/03/30 22:05:08 mickey Exp $	*/
+/*	$OpenBSD: md5k.h,v 1.2 1997/04/04 16:17:02 mickey Exp $	*/
 
 /* GLOBAL.H - RSAREF types and constants
  */
 
 /* POINTER defines a generic pointer type */
-typedef unsigned char *POINTER;
+typedef void *POINTER;
 
 /* UINT2 defines a two byte word */
 typedef unsigned short int UINT2;

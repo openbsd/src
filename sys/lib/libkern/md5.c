@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.4 1997/03/30 22:05:09 mickey Exp $	*/
+/*	$OpenBSD: md5.c,v 1.5 1997/04/04 16:17:04 mickey Exp $	*/
 
 /*
  * The rest of the code is derived from MD5C.C by RSADSI. Minor cosmetic
@@ -43,8 +43,9 @@ documentation and/or software.
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/md5k.h>
-
-#define HAVEBCOPY
+#ifdef _STANDALONE
+#include <stand.h>
+#endif
 
 /* Constants for MD5Transform routine.
  */
@@ -363,7 +364,7 @@ unsigned int len;
 
   for (i = 0; i < len; i++)
 
- output[i] = input[i];
+ ((char *)output)[i] = ((char *)input)[i];
 }
 
 /* Note: Replace "for loop" with standard memset if possible.
