@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.106 2002/12/18 14:14:09 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.107 2002/12/18 16:00:03 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -713,30 +713,30 @@ int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
 	u_int8_t rs_num;
-	
+
 	switch (r->action) {
 	case PF_SCRUB:
 	case PF_DROP:
 	case PF_PASS:
-		rs_num = PF_RULESET_RULE;	
+		rs_num = PF_RULESET_RULE;
 		break;
 	case PF_NAT:
 	case PF_NONAT:
-		rs_num = PF_RULESET_NAT;	
+		rs_num = PF_RULESET_NAT;
 		break;
 	case PF_RDR:
 	case PF_NORDR:
-		rs_num = PF_RULESET_RDR;	
+		rs_num = PF_RULESET_RDR;
 		break;
 	case PF_BINAT:
 	case PF_NOBINAT:
-		rs_num = PF_RULESET_BINAT;	
+		rs_num = PF_RULESET_BINAT;
 		break;
 	default:
-		err(1, "Invalid rule type");	
+		err(1, "Invalid rule type");
 		break;
 	}
-	
+
 	if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
