@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.3 1996/03/04 08:21:53 niklas Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.4 1996/04/24 06:00:43 mickey Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -71,6 +71,11 @@
 #include <netns/idp_var.h>
 #endif /* NSIP */
 
+#ifdef IPXIP
+#include <netipx/ipx.h>
+#include <netipx/ipx_ip.h>
+#endif /* NSIP */
+
 #ifdef TPIP
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
@@ -139,6 +144,13 @@ struct protosw inetsw[] = {
   eonprotoinit,	0,		0,		0,
 },
 #endif /* EON */
+#ifdef IPXIP
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
+  ipxip_input,	rip_output,	ipxip_ctlinput,	0,
+  rip_usrreq,
+  ipxipprotoinit,0,		0,		0,
+},
+#endif /* NSIP */
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
   idpip_input,	rip_output,	nsip_ctlinput,	0,
