@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.11 2001/01/16 03:04:45 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.12 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.11 2001/01/16 03:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.12 2002/03/24 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,12 +147,12 @@ add_line_node(lp)
 
 
 /* get_line_node_addr: return line number of pointer */
-long
+int
 get_line_node_addr(lp)
 	line_t *lp;
 {
 	line_t *cp = &buffer_head;
-	long n = 0;
+	int n = 0;
 
 	while (cp != lp && (cp = cp->q_forw) != &buffer_head)
 		n++;
@@ -167,10 +167,10 @@ get_line_node_addr(lp)
 /* get_addressed_line_node: return pointer to a line node in the editor buffer */
 line_t *
 get_addressed_line_node(n)
-	long n;
+	int n;
 {
 	static line_t *lp = &buffer_head;
-	static long on = 0;
+	static int on = 0;
 
 	SPL1();
 	if (n > on) {

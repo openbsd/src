@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.9 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: glbl.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glbl.c,v 1.9 2002/03/24 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ build_active_list(isgcmd)
 {
 	pattern_t *pat;
 	line_t *lp;
-	long n;
+	int n;
 	char *s;
 	char delimiter;
 
@@ -78,7 +78,7 @@ build_active_list(isgcmd)
 
 /* exec_global: apply command list in the command buffer to the active
    lines in a range; return command status */
-long
+int
 exec_global(interact, gflag)
 	int interact;
 	int gflag;
@@ -147,10 +147,10 @@ exec_global(interact, gflag)
 
 
 line_t **active_list;		/* list of lines active in a global command */
-long active_last;		/* index of last active line in active_list */
-long active_size;		/* size of active_list */
-long active_ptr;		/* active_list index (non-decreasing) */
-long active_ndx;		/* active_list index (modulo active_last) */
+int active_last;		/* index of last active line in active_list */
+int active_size;		/* size of active_list */
+int active_ptr;			/* active_list index (non-decreasing) */
+int active_ndx;			/* active_list index (modulo active_last) */
 
 /* set_active_node: add a line node to the global-active list */
 int
@@ -197,7 +197,7 @@ unset_active_nodes(np, mp)
 	line_t *np, *mp;
 {
 	line_t *lp;
-	long i;
+	int i;
 
 	for (lp = np; lp != mp; lp = lp->q_forw)
 		for (i = 0; i < active_last; i++)

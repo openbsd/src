@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.9 2002/02/17 19:42:19 millert Exp $	*/
+/*	$OpenBSD: ed.h,v 1.10 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -112,14 +112,15 @@ if (--mutex == 0) { \
 	if (sigflags & (1 << (SIGINT - 1))) handle_int(SIGINT); \
 }
 
-/* STRTOL: convert a string to long */
-#define STRTOL(i, p) { \
-	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
-	    errno == ERANGE) { \
+/* STRTOI: convert a string to int */
+#define STRTOI(i, p) { \
+	long l = strtol(p, &p, 10); \
+	if (l <= INT_MIN || l >= INT_MAX) { \
 		seterrmsg("number out of range"); \
 	    	i = 0; \
 		return ERR; \
-	} \
+	} else \
+		i = (int)l; \
 }
 
 #if defined(sun) || defined(NO_REALLOC_NULL)
@@ -192,38 +193,38 @@ if ((i) > (n)) { \
 
 /* Local Function Declarations */
 void add_line_node(line_t *);
-int append_lines(long);
+int append_lines(int);
 int apply_subst_template(char *, regmatch_t *, int, int);
 int build_active_list(int);
 int cbc_decode(char *, FILE *);
 int cbc_encode(char *, int, FILE *);
-int check_addr_range(long, long);
+int check_addr_range(int, int);
 void clear_active_list(void);
 void clear_undo_stack(void);
 int close_sbuf(void);
-int copy_lines(long);
-int delete_lines(long, long);
+int copy_lines(int);
+int delete_lines(int, int);
 void des_error(char *);
-int display_lines(long, long, int);
+int display_lines(int, int, int);
 line_t *dup_line_node(line_t *);
 int exec_command(void);
-long exec_global(int, int);
+int exec_global(int, int);
 void expand_des_key(char *, char *);
 int extract_addr_range(void);
 char *extract_pattern(int);
-int extract_subst_tail(int *, long *);
+int extract_subst_tail(int *, int *);
 char *extract_subst_template(void);
-int filter_lines(long, long, char *);
+int filter_lines(int, int, char *);
 int flush_des_file(FILE *);
-line_t *get_addressed_line_node(long);
+line_t *get_addressed_line_node(int);
 pattern_t *get_compiled_pattern(void);
 int get_des_char(FILE *);
 char *get_extended_line(int *, int);
 char *get_filename(void);
 int get_keyword(void);
-long get_line_node_addr(line_t *);
-long get_matching_node_addr(pattern_t *, int);
-long get_marked_node_addr(int);
+int get_line_node_addr(line_t *);
+int get_matching_node_addr(pattern_t *, int);
+int get_marked_node_addr(int);
 char *get_sbuf_line(line_t *);
 int get_shell_command(void);
 int get_stream_line(FILE *);
@@ -236,22 +237,22 @@ int hex_to_binary(int, int);
 void init_buffers(void);
 void init_des_cipher(void);
 int is_legal_filename(char *);
-int join_lines(long, long);
+int join_lines(int, int);
 int mark_line_node(line_t *, int);
-int move_lines(long);
+int move_lines(int);
 line_t *next_active_node(void);
-long next_addr(void);
+int next_addr(void);
 int open_sbuf(void);
 char *parse_char_class(char *);
 int pop_undo_stack(void);
-undo_t *push_undo_stack(int, long, long);
+undo_t *push_undo_stack(int, int, int);
 int put_des_char(int, FILE *);
 char *put_sbuf_line(char *);
 int put_stream_line(FILE *, char *, int);
-int put_tty_line(char *, int, long, int);
+int put_tty_line(char *, int, int, int);
 void quit(int);
-long read_file(char *, long);
-long read_stream(FILE *, long);
+int read_file(char *, int);
+int read_stream(FILE *, int);
 int search_and_replace(pattern_t *, int, int);
 int set_active_node(line_t *);
 void set_des_key(char *);
@@ -263,8 +264,8 @@ int substitute_matching_text(pattern_t *, line_t *, int, int);
 char *translit_text(char *, int, int, int);
 void unmark_line_node(line_t *);
 void unset_active_nodes(line_t *, line_t *);
-long write_file(char *, char *, long, long);
-long write_stream(FILE *, long, long);
+int write_file(char *, char *, int, int);
+int write_stream(FILE *, int, int);
 
 /* global buffers */
 extern char stdinbuf[];
@@ -280,12 +281,12 @@ extern int mutex;
 extern int sigflags;
 
 /* global vars */
-extern long addr_last;
-extern long current_addr;
+extern int addr_last;
+extern int current_addr;
 extern char errmsg[MAXPATHLEN + 40];
-extern long first_addr;
+extern int first_addr;
 extern int lineno;
-extern long second_addr;
+extern int second_addr;
 #ifdef sun
 extern char *sys_errlist[];
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2002/01/16 18:44:21 mpech Exp $	*/
+/*	$OpenBSD: io.c,v 1.10 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.9 2002/01/16 18:44:21 mpech Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.10 2002/03/24 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,13 +42,13 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.9 2002/01/16 18:44:21 mpech Exp $";
 extern int scripted;
 
 /* read_file: read a named file/pipe into the buffer; return line count */
-long
+int
 read_file(fn, n)
 	char *fn;
-	long n;
+	int n;
 {
 	FILE *fp;
-	long size;
+	int size;
 
 
 	fp = (*fn == '!') ? popen(fn + 1, "r") : fopen(strip_escapes(fn), "r");
@@ -75,14 +75,14 @@ int sbufsz;			/* file i/o buffer size */
 int newline_added;		/* if set, newline appended to input file */
 
 /* read_stream: read a stream into the editor buffer; return status */
-long
+int
 read_stream(fp, n)
 	FILE *fp;
-	long n;
+	int n;
 {
 	line_t *lp = get_addressed_line_node(n);
 	undo_t *up = NULL;
-	unsigned long size = 0;
+	unsigned int size = 0;
 	int o_newline_added = newline_added;
 	int o_isbinary = isbinary;
 	int appended = (n == addr_last);
@@ -156,15 +156,15 @@ get_stream_line(fp)
 
 
 /* write_file: write a range of lines to a named file/pipe; return line count */
-long
+int
 write_file(fn, mode, n, m)
 	char *fn;
 	char *mode;
-	long n;
-	long m;
+	int n;
+	int m;
 {
 	FILE *fp;
-	long size;
+	int size;
 
 	fp = (*fn == '!') ? popen(fn+1, "w") : fopen(strip_escapes(fn), mode);
 	if (fp == NULL) {
@@ -184,14 +184,14 @@ write_file(fn, mode, n, m)
 
 
 /* write_stream: write a range of lines to a stream; return status */
-long
+int
 write_stream(fp, n, m)
 	FILE *fp;
-	long n;
-	long m;
+	int n;
+	int m;
 {
 	line_t *lp = get_addressed_line_node(n);
-	unsigned long size = 0;
+	unsigned int size = 0;
 	char *s;
 	int len;
 
@@ -329,7 +329,7 @@ int
 put_tty_line(s, l, n, gflag)
 	char *s;
 	int l;
-	long n;
+	int n;
 	int gflag;
 {
 	int col = 0;
@@ -339,7 +339,7 @@ put_tty_line(s, l, n, gflag)
 	char *cp;
 
 	if (gflag & GNP) {
-		printf("%ld\t", n);
+		printf("%d\t", n);
 		col = 8;
 	}
 	for (; l--; s++) {

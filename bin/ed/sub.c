@@ -1,4 +1,4 @@
-/*	$OpenBSD: sub.c,v 1.7 2001/01/16 03:04:46 deraadt Exp $	*/
+/*	$OpenBSD: sub.c,v 1.8 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
 /* sub.c: This file contains the substitution routines for the ed 
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.7 2001/01/16 03:04:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.8 2002/03/24 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ int rhbufi;			/* rhs substitution buffer index */
 int
 extract_subst_tail(flagp, np)
 	int *flagp;
-	long *np;
+	int *np;
 {
 	char delimiter;
 
@@ -65,7 +65,7 @@ extract_subst_tail(flagp, np)
 	} else if (*ibufp == delimiter)
 		ibufp++;
 	if ('1' <= *ibufp && *ibufp <= '9') {
-		STRTOL(*np, ibufp);
+		STRTOI(*np, ibufp);
 		return 0;
 	} else if (*ibufp == 'g') {
 		ibufp++;
@@ -129,8 +129,8 @@ search_and_replace(pat, gflag, kth)
 	undo_t *up;
 	char *txt;
 	char *eot;
-	long lc;
-	long xa = current_addr;
+	int lc;
+	int xa = current_addr;
 	int nsubs = 0;
 	line_t *lp;
 	int len;

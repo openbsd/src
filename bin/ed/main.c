@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2002/01/16 01:28:54 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2002/03/24 22:17:04 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.25 2002/01/16 01:28:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.26 2002/03/24 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,8 @@ int sigactive = 0;		/* if set, signal handlers are enabled */
 int interactive = 0;		/* if set, we are in interactive mode */
 
 char old_filename[MAXPATHLEN] = "";	/* default filename */
-long current_addr;		/* current address in editor buffer */
-long addr_last;			/* last address in editor buffer */
+int current_addr;		/* current address in editor buffer */
+int addr_last;			/* last address in editor buffer */
 int lineno;			/* script line number */
 char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
@@ -122,7 +122,7 @@ main(argc, argv)
 	char ** volatile argv;
 {
 	int c, n;
-	long status = 0;
+	int status = 0;
 
 	home = getenv("HOME");
 
@@ -283,14 +283,14 @@ top:
 	/*NOTREACHED*/
 }
 
-long first_addr, second_addr, addr_cnt;
+int first_addr, second_addr, addr_cnt;
 
 /* extract_addr_range: get line addresses from the command buffer until an 
    illegal address is seen; return status */
 int
 extract_addr_range()
 {
-	long addr;
+	int addr;
 
 	addr_cnt = 0;
 	first_addr = second_addr = current_addr;
@@ -325,12 +325,12 @@ extract_addr_range()
 	
 
 /*  next_addr: return the next line address in the command buffer */
-long
+int
 next_addr()
 {
 	char *hd;
-	long addr = current_addr;
-	long n;
+	int addr = current_addr;
+	int n;
 	int first = 1;
 	int c;
 
@@ -345,7 +345,7 @@ next_addr()
 			ibufp++;
 			SKIP_BLANKS();
 			if (isdigit(*ibufp)) {
-				STRTOL(n, ibufp);
+				STRTOI(n, ibufp);
 				addr += (c == '-' || c == '^') ? -n : n;
 			} else if (!isspace(c))
 				addr += (c == '-' || c == '^') ? -1 : 1;
@@ -354,7 +354,7 @@ next_addr()
 		case '3': case '4': case '5':
 		case '6': case '7': case '8': case '9':
 			MUST_BE_FIRST();
-			STRTOL(addr, ibufp);
+			STRTOI(addr, ibufp);
 			break;
 		case '.':
 		case '$':
@@ -405,7 +405,7 @@ next_addr()
 /* GET_THIRD_ADDR: get a legal address from the command buffer */
 #define GET_THIRD_ADDR(addr) \
 	do { \
-		long ol1, ol2; \
+		int ol1, ol2; \
 		\
 		ol1 = first_addr; \
 		ol2 = second_addr; \
@@ -427,7 +427,7 @@ next_addr()
 /* GET_THIRD_ADDR: get a legal address from the command buffer */
 #define GET_THIRD_ADDR(addr) \
 	do { \
-		long ol1, ol2; \
+		int ol1, ol2; \
 		\
 		ol1 = first_addr; \
 		ol2 = second_addr; \
@@ -488,18 +488,18 @@ volatile sig_atomic_t cols = 72;	/* wrap column */
 int
 exec_command()
 {
-	extern long u_current_addr;
-	extern long u_addr_last;
+	extern int u_current_addr;
+	extern int u_addr_last;
 
 	static pattern_t *pat = NULL;
 	static int sgflag = 0;
-	static long sgnum = 0;
+	static int sgnum = 0;
 
 	pattern_t *tpat;
 	char *fnp;
 	int gflag = 0;
 	int sflags = 0;
-	long addr = 0;
+	int addr = 0;
 	int n = 0;
 	int c;
 
@@ -744,7 +744,7 @@ exec_command()
 				break;
 			case '0': case '1': case '2': case '3': case '4':
 			case '5': case '6': case '7': case '8': case '9':
-				STRTOL(sgnum, ibufp);
+				STRTOI(sgnum, ibufp);
 				sflags |= SGF;
 				sgflag &= ~GSG;		/* override GSG */
 				break;
@@ -888,7 +888,7 @@ exec_command()
 #endif
 			return ERR;
 		else if ('0' < *ibufp && *ibufp <= '9')
-			STRTOL(rows, ibufp);
+			STRTOI(rows, ibufp);
 		GET_COMMAND_SUFFIX();
 		if (display_lines(second_addr, min(addr_last,
 		    second_addr + rows), gflag) < 0)
@@ -897,7 +897,7 @@ exec_command()
 		break;
 	case '=':
 		GET_COMMAND_SUFFIX();
-		printf("%ld\n", addr_cnt ? second_addr : addr_last);
+		printf("%d\n", addr_cnt ? second_addr : addr_last);
 		break;
 	case '!':
 		if (addr_cnt > 0) {
@@ -931,7 +931,7 @@ exec_command()
 /* check_addr_range: return status of address range check */
 int
 check_addr_range(n, m)
-	long n, m;
+	int n, m;
 {
 	if (addr_cnt == 0) {
 		first_addr = n;
@@ -949,13 +949,13 @@ check_addr_range(n, m)
 /* get_matching_node_addr: return the address of the next line matching a 
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
-long
+int
 get_matching_node_addr(pat, dir)
 	pattern_t *pat;
 	int dir;
 {
 	char *s;
-	long n = current_addr;
+	int n = current_addr;
 	line_t *lp;
 
 	if (!pat) return ERR;
@@ -1085,7 +1085,7 @@ get_shell_command()
    single period is read or EOF; return status */
 int
 append_lines(n)
-	long n;
+	int n;
 {
 	int l;
 	char *lp = ibuf;
@@ -1135,8 +1135,8 @@ append_lines(n)
 /* join_lines: replace a range of lines with the joined text of those lines */
 int
 join_lines(from, to)
-	long from;
-	long to;
+	int from;
+	int to;
 {
 	static char *buf = NULL;
 	static int n;
@@ -1174,11 +1174,11 @@ join_lines(from, to)
 /* move_lines: move a range of lines */
 int
 move_lines(addr)
-	long addr;
+	int addr;
 {
 	line_t *b1, *a1, *b2, *a2;
-	long n = INC_MOD(second_addr, addr_last);
-	long p = first_addr - 1;
+	int n = INC_MOD(second_addr, addr_last);
+	int p = first_addr - 1;
 	int done = (addr == first_addr - 1 || addr == second_addr);
 
 	SPL1();
@@ -1219,12 +1219,12 @@ move_lines(addr)
 /* copy_lines: copy a range of lines; return status */
 int
 copy_lines(addr)
-	long addr;
+	int addr;
 {
 	line_t *lp, *np = get_addressed_line_node(first_addr);
 	undo_t *up = NULL;
-	long n = second_addr - first_addr + 1;
-	long m = 0;
+	int n = second_addr - first_addr + 1;
+	int m = 0;
 
 	current_addr = addr;
 	if (first_addr <= addr && addr < second_addr) {
@@ -1256,7 +1256,7 @@ copy_lines(addr)
 /* delete_lines: delete a range of lines */
 int
 delete_lines(from, to)
-	long from, to;
+	int from, to;
 {
 	line_t *n, *p;
 
@@ -1282,8 +1282,8 @@ delete_lines(from, to)
 /* display_lines: print a range of lines to stdout */
 int
 display_lines(from, to, gflag)
-	long from;
-	long to;
+	int from;
+	int to;
 	int gflag;
 {
 	line_t *bp;
@@ -1328,7 +1328,7 @@ mark_line_node(lp, n)
 
 
 /* get_marked_node_addr: return address of a marked line */
-long
+int
 get_marked_node_addr(n)
 	int n;
 {
