@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.28 2003/05/19 20:22:53 henning Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.29 2003/06/07 21:10:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -138,7 +138,10 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 
 		memset(&aw, 0, sizeof(aw));
 		aw.v.a.addr = h->addr;
-		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
+		if (af == AF_INET)
+			aw.v.a.mask.addr32[0] = 0xffffffff;
+		else
+			memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
 		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
