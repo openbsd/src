@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.41 2004/08/25 20:18:46 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.42 2004/08/25 21:47:54 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -209,13 +209,13 @@ clockattach(struct device *parent, struct device *self, void *args)
 		sc->sc_profih.ih_arg = 0;
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
-		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih, "clock");
+		sysconintr_establish(SYSCV_TIMER2, &sc->sc_profih, "clock");
 		md.clock_init_func = m188_initclock;
 		sc->sc_statih.ih_fn = m188_statintr;
 		sc->sc_statih.ih_arg = 0;
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
-		sysconintr_establish(SYSCV_TIMER2, &sc->sc_statih, "stat");
+		sysconintr_establish(SYSCV_TIMER1, &sc->sc_statih, "stat");
 		md.statclock_init_func = m188_initstatclock;
 		break;
 #endif /* NSYSCON */
@@ -339,22 +339,54 @@ sbc_statintr(void *eframe)
 #endif /* NPCCTWO */
 
 #if NSYSCON > 0
+
+/*
+ * Notes on the MVME188 clock usage:
+ *
+ * We have two sources for timers:
+ * - two counter/timers in the DUART (MC68681/MC68692)
+ * - three counter/timers in the Zilog Z8536
+ *
+ * However:
+ * - Z8536 CT#3 is reserved as a watchdog device; and its input is
+ *   user-controllable with jumpers on the SYSCON board, so we can't
+ *   really use it.
+ * - When using the Z8536 in timer mode, it _seems_ like it resets at
+ *   0xffff instead of the initial count value...
+ * - Despite having per-counter programmable interrupt vectors, the
+ *   SYSCON logic forces fixed vectors for the DUART and the Z8536 timer
+ *   interrupts.
+ * - The DUART timers keep counting down from 0xffff even after
+ *   interrupting, and need to be manually stopped, then restarted, to
+ *   resume counting down the initial count value.
+ *
+ * Also, while the Z8536 has a very reliable 4MHz clock source, the
+ * 3.6864MHz clock source of the DUART timers does not seem to be correct.
+ *
+ * As a result, clock is run on a Z8536 counter, kept in counter mode and
+ * retriggered every interrupt, while statclock is run on a DUART counter,
+ * but in practice runs at an average 96Hz instead of the expected 100Hz.
+ *
+ * It should be possible to run statclock on the Z8536 counter #2, but
+ * this would make interrupt handling more tricky, in the case both
+ * counters interrupt at the same time...
+ */
+
 int
 m188_clockintr(void *eframe)
 {
-	volatile u_int32_t tmp;
-
-	tmp = *(volatile u_int32_t *)DART_STOPC;
-	/* acknowledge the timer interrupt */
-	tmp = *(volatile u_int32_t *)DART_ISR;
-	tmp = *(volatile u_int32_t *)DART_STARTC;
+	CIO_LOCK;
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
 	intrcnt[M88K_CLK_IRQ]++;
-
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
+
+	/* restart counter */
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	CIO_UNLOCK;
 
 	return (1);
 }
@@ -362,54 +394,33 @@ m188_clockintr(void *eframe)
 void
 m188_initclock(void)
 {
-	volatile int imr;
-	int counter;
-
 #ifdef CLOCK_DEBUG
 	printf("VME188 clock init\n");
 #endif
+#ifdef DIAGNOSTIC
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
+#endif
 	tick = 1000000 / hz;
 
-	/*
-	 * The DUART runs at 3.6864 MHz in PCLK/16 mode, hence for a
-	 * 100 Hz timer, it needs (3686400 / 16) / 100 ticks per cycle.
-	 */
-	counter = (3686400 / 16) / hz;
-
-#ifdef CLOCK_DEBUG
-	printf("tick == %d, counter == %d\n", tick, counter);
-#endif
-	/* clear the counter/timer output OP3 while we program the DART */
-	*(volatile u_int32_t *)DART_OPCR = 0x00;
-	/* set interrupt vec */
-	*(volatile u_int32_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
-	/* do the stop counter/timer command */
-	imr = *(volatile u_int32_t *)DART_STOPC;
-	/* set counter/timer to counter mode, clock/16 */
-	*(volatile u_int32_t *)DART_ACR = 0x30;
-	*(volatile u_int32_t *)DART_CTUR = (counter >> 8);
-	*(volatile u_int32_t *)DART_CTLR = (counter & 0xff);
-	/* set the counter/timer output OP3 */
-	*(volatile u_int32_t *)DART_OPCR = 0x04;
-	/* give the start counter/timer command */
-	imr = *(volatile u_int32_t *)DART_STARTC;
+	simple_lock_init(&cio_lock);
+	m188_cio_init(tick);
 }
 
 int
 m188_statintr(void *eframe)
 {
+	volatile u_int32_t tmp;
 	u_long newint, r, var;
 
-	CIO_LOCK;
+	/* stop counter and acknowledge interrupt */
+	tmp = *(volatile u_int32_t *)DART_STOPC;
+	tmp = *(volatile u_int32_t *)DART_ISR;
 
 	intrcnt[M88K_SCLK_IRQ]++;
-
 	statclock((struct clockframe *)eframe);
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
 	/*
 	 * Compute new randomized interval.  The intervals are uniformly
@@ -422,41 +433,56 @@ m188_statintr(void *eframe)
 	} while (r == 0);
 	newint = statmin + r;
 
-	/* Load time constant CTC #1 */
-	newint <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
-	write_cio(CIO_CT1MSB, newint >> 8);
-	write_cio(CIO_CT1LSB, newint);
+	/* setup new value and restart counter */
+	*(volatile u_int32_t *)DART_CTUR = (newint >> 8);
+	*(volatile u_int32_t *)DART_CTLR = (newint & 0xff);
+	tmp = *(volatile u_int32_t *)DART_STARTC;
 
-	/* Start CTC #1 running */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-
-	CIO_UNLOCK;
 	return (1);
 }
 
 void
 m188_initstatclock(void)
 {
+	volatile u_int32_t imr;
 	int statint, minint;
 
 #ifdef CLOCK_DEBUG
 	printf("VME188 statclock init\n");
 #endif
-	simple_lock_init(&cio_lock);
 	if (stathz == 0)
 		stathz = hz;
+#ifdef DIAGNOSTIC
 	if (1000000 % stathz) {
 		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
+#endif
 	profhz = stathz;		/* always */
 
-	statint = 1000000 / stathz;
+	/*
+	 * The DUART runs at 3.6864 MHz, CT#1 will run in PCLK/16 mode.
+	 */
+	statint = (3686400 / 16) / stathz;
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
-	m188_cio_init(statint);
 	statmin = statint - (statvar >> 1);
+
+	/* clear the counter/timer output OP3 while we program the DART */
+	*(volatile u_int32_t *)DART_OPCR = 0x00;
+	/* set interrupt vec */
+	*(volatile u_int32_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
+	/* do the stop counter/timer command */
+	imr = *(volatile u_int32_t *)DART_STOPC;
+	/* set counter/timer to counter mode, PCLK/16 */
+	*(volatile u_int32_t *)DART_ACR = 0x30;
+	*(volatile u_int32_t *)DART_CTUR = (statint >> 8);
+	*(volatile u_int32_t *)DART_CTLR = (statint & 0xff);
+	/* set the counter/timer output OP3 */
+	*(volatile u_int32_t *)DART_OPCR = 0x04;
+	/* give the start counter/timer command */
+	imr = *(volatile u_int32_t *)DART_STARTC;
 }
 
 /* Write CIO register */
@@ -474,8 +500,8 @@ write_cio(int reg, u_int val)
 	*cio_ctrl = 0;				/* take CIO out of RESET */
 	i = *cio_ctrl;				/* reset CIO state machine */
 
-	*cio_ctrl = (reg & 0xff);		/* Select register */
-	*cio_ctrl = (val & 0xff);		/* Write the value */
+	*cio_ctrl = (reg & 0xff);		/* select register */
+	*cio_ctrl = (val & 0xff);		/* write the value */
 
 	CIO_UNLOCK;
 	splx(s);
@@ -492,9 +518,9 @@ read_cio(int reg)
 	s = splclock();
 	CIO_LOCK;
 
-	/* Select register */
+	/* select register */
 	*cio_ctrl = (reg & 0xff);
-	/* Delay for a short time to allow 8536 to settle */
+	/* delay for a short time to allow 8536 to settle */
 	for (i = 0; i < 100; i++)
 		;
 	/* read the value */
@@ -507,17 +533,13 @@ read_cio(int reg)
 /*
  * Initialize the CTC (8536)
  * Only the counter/timers are used - the IO ports are un-comitted.
- * Channels 1 and 2 are linked to provide a /32 counter.
  */
-
 void
 m188_cio_init(unsigned period)
 {
 	volatile int i;
 
 	CIO_LOCK;
-
-	/* Initialize 8536 CTC */
 
 	/* Start by forcing chip into known state */
 	read_cio(CIO_MICR);
@@ -532,21 +554,17 @@ m188_cio_init(unsigned period)
 	while ((read_cio(CIO_MICR) & CIO_MICR_RJA) == 0)
 		;
 
-	/* Initialize the 8536 */
+	/* Initialize the 8536 for real */
 	write_cio(CIO_MICR,
 	    CIO_MICR_MIE /* | CIO_MICR_NV */ | CIO_MICR_RJA | CIO_MICR_DLC);
 	write_cio(CIO_CTMS1, CIO_CTMS_CSC);	/* Continuous count */
 	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
 
-	/* Load time constant CTC #1 */
-	period <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
+	period <<= 1;	/* CT#1 runs at PCLK/2, hence 2MHz */
 	write_cio(CIO_CT1MSB, period >> 8);
 	write_cio(CIO_CT1LSB, period);
-
-	/* enable counter 1 */
+	/* enable counter #1 */
 	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
-
-	/* Start CTC #1 running */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
 
 	CIO_UNLOCK;
