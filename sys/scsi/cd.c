@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.46 1999/10/16 19:30:18 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.47 1999/11/03 20:11:58 angelos Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/scsiio.h>
+#include <sys/dvdio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>
@@ -131,6 +132,14 @@ int	cd_read_toc __P((struct cd_softc *, int, int, void *,
 			 int, int ));
 int	cd_get_parms __P((struct cd_softc *, int));
 int	cd_load_toc __P((struct cd_softc *, struct cd_toc *));
+
+int    dvd_auth __P((struct cd_softc *, dvd_authinfo *));
+int    dvd_read_physical __P((struct cd_softc *, dvd_struct *));
+int    dvd_read_copyright __P((struct cd_softc *, dvd_struct *));
+int    dvd_read_disckey __P((struct cd_softc *, dvd_struct *));
+int    dvd_read_bca __P((struct cd_softc *, dvd_struct *));
+int    dvd_read_manufact __P((struct cd_softc *, dvd_struct *));
+int    dvd_read_struct __P((struct cd_softc *, dvd_struct *));
 
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach
@@ -796,6 +805,8 @@ cdioctl(dev, cmd, addr, flag, p)
 		case CDIOCSETDEBUG:
 		case CDIOCCLRDEBUG:
 		case CDIOCRESET:
+		case DVD_AUTH:
+		case DVD_READ_STRUCT:	
 			if (part == RAW_PART)
 				break;
 		/* FALLTHROUGH */
@@ -1127,6 +1138,12 @@ cdioctl(dev, cmd, addr, flag, p)
 			args->slot));
 	}
 
+	case DVD_AUTH:
+		return (dvd_auth(cd, (dvd_authinfo *)addr));
+
+	case DVD_READ_STRUCT:
+		return (dvd_read_struct(cd, (dvd_struct *)addr));
+	
 	default:
 		if (CDPART(dev) != RAW_PART)
 			return ENOTTY;
@@ -1553,4 +1570,288 @@ cddump(dev, blkno, va, size)
 
 	/* Not implemented. */
 	return ENXIO;
+}
+
+#define	dvd_copy_key(dst, src)		bcopy((src), (dst), sizeof(dvd_key))
+#define	dvd_copy_challenge(dst, src)	bcopy((src), (dst), sizeof(dvd_challenge))
+
+int
+dvd_auth(cd, a)
+	struct cd_softc *cd;
+	dvd_authinfo *a;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[20];
+	int error;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+
+	switch (a->type) {
+	case DVD_LU_SEND_AGID:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 0 | (0 << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 8,
+				      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		a->lsa.agid = buf[7] >> 6;
+		return (0);
+
+	case DVD_LU_SEND_CHALLENGE:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 16;
+		cmd.bytes[9] = 1 | (a->lsc.agid << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 16,
+				      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		dvd_copy_challenge(a->lsc.chal, &buf[4]);
+		return (0);
+
+	case DVD_LU_SEND_KEY1:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 12;
+		cmd.bytes[9] = 2 | (a->lsk.agid << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 12,
+				      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		dvd_copy_key(a->lsk.key, &buf[4]);
+		return (0);
+
+	case DVD_LU_SEND_TITLE_KEY:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		_lto4b(a->lstk.lba, &cmd.bytes[1]);
+		cmd.bytes[8] = 12;
+		cmd.bytes[9] = 4 | (a->lstk.agid << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 12,
+				      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		a->lstk.cpm = (buf[4] >> 7) & 1;
+		a->lstk.cp_sec = (buf[4] >> 6) & 1;
+		a->lstk.cgms = (buf[4] >> 4) & 3;
+		dvd_copy_key(a->lstk.title_key, &buf[5]);
+		return (0);
+
+	case DVD_LU_SEND_ASF:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 5 | (a->lsasf.agid << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 8,
+				      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+		if (error)
+			return (error);
+		a->lsasf.asf = buf[7] & 1;
+		return (0);
+
+	case DVD_HOST_SEND_CHALLENGE:
+		cmd.opcode = GPCMD_SEND_KEY;
+		cmd.bytes[8] = 16;
+		cmd.bytes[9] = 1 | (a->hsc.agid << 6);
+		buf[1] = 14;
+		dvd_copy_challenge(&buf[4], a->hsc.chal);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 16,
+				      CDRETRIES, 30000, NULL,
+				      SCSI_DATA_OUT|SCSI_DATA_IN);
+		if (error)
+			return (error);
+		a->type = DVD_LU_SEND_KEY1;
+		return (0);
+
+	case DVD_HOST_SEND_KEY2:
+		cmd.opcode = GPCMD_SEND_KEY;
+		cmd.bytes[8] = 12;
+		cmd.bytes[9] = 3 | (a->hsk.agid << 6);
+		buf[1] = 10;
+		dvd_copy_key(&buf[4], a->hsk.key);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 12,
+				      CDRETRIES, 30000, NULL,
+				      SCSI_DATA_OUT|SCSI_DATA_IN);
+		if (error) {
+			a->type = DVD_AUTH_FAILURE;
+			return (error);
+		}
+		a->type = DVD_AUTH_ESTABLISHED;
+		return (0);
+
+	case DVD_INVALIDATE_AGID:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
+		error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, 16,
+				      CDRETRIES, 30000, NULL, 0);
+		if (error)
+			return (error);
+		return (0);
+
+	default:
+		return (ENOTTY);
+	}
+}
+
+int
+dvd_read_physical(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[4 + 4 * 20], *bufp;
+	int error;
+	struct dvd_layer *layer;
+	int i;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
+	cmd.bytes[6] = s->type;
+	_lto2b(sizeof(buf), &cmd.bytes[7]);
+
+	cmd.bytes[5] = s->physical.layer_num;
+	error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+			      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+	if (error)
+		return (error);
+	for (i = 0, bufp = &buf[4], layer = &s->physical.layer[0]; i < 4;
+	     i++, bufp += 20, layer++) {
+	        bzero(layer, sizeof(*layer));
+                layer->book_version = bufp[0] & 0xf;
+                layer->book_type = bufp[0] >> 4;
+                layer->min_rate = bufp[1] & 0xf;
+                layer->disc_size = bufp[1] >> 4;
+                layer->layer_type = bufp[2] & 0xf;
+                layer->track_path = (bufp[2] >> 4) & 1;
+                layer->nlayers = (bufp[2] >> 5) & 3;
+                layer->track_density = bufp[3] & 0xf;
+                layer->linear_density = bufp[3] >> 4;
+                layer->start_sector = _4btol(&bufp[4]);
+                layer->end_sector = _4btol(&bufp[8]);
+                layer->end_sector_l0 = _4btol(&bufp[12]);
+                layer->bca = bufp[16] >> 7;
+	}
+	return (0);
+}
+
+int
+dvd_read_copyright(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[8];
+	int error;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
+	cmd.bytes[6] = s->type;
+	_lto2b(sizeof(buf), &cmd.bytes[7]);
+
+	cmd.bytes[5] = s->copyright.layer_num;
+	error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+			      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+	if (error)
+		return (error);
+	s->copyright.cpst = buf[4];
+	s->copyright.rmi = buf[5];
+	return (0);
+}
+
+int
+dvd_read_disckey(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[4 + 2048];
+	int error;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
+	cmd.bytes[6] = s->type;
+	_lto2b(sizeof(buf), &cmd.bytes[7]);
+
+	cmd.bytes[9] = s->disckey.agid << 6;
+	error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+			      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+	if (error)
+		return (error);
+	bcopy(&buf[4], s->disckey.value, 2048);
+	return (0);
+}
+
+int
+dvd_read_bca(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[4 + 188];
+	int error;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
+	cmd.bytes[6] = s->type;
+	_lto2b(sizeof(buf), &cmd.bytes[7]);
+
+	error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+			      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+	if (error)
+		return (error);
+	s->bca.len = _2btol(&buf[0]);
+	if (s->bca.len < 12 || s->bca.len > 188)
+		return (EIO);
+	bcopy(&buf[4], s->bca.value, s->bca.len);
+	return (0);
+}
+
+int
+dvd_read_manufact(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+	struct scsi_generic cmd;
+	u_int8_t buf[4 + 2048];
+	int error;
+
+	bzero(cmd.bytes, 15);
+	bzero(buf, sizeof(buf));
+	cmd.opcode = GPCMD_READ_DVD_STRUCTURE;
+	cmd.bytes[6] = s->type;
+	_lto2b(sizeof(buf), &cmd.bytes[7]);
+
+	error = scsi_scsi_cmd(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+			      CDRETRIES, 30000, NULL, SCSI_DATA_IN);
+	if (error)
+		return (error);
+	s->manufact.len = _2btol(&buf[0]);
+	if (s->manufact.len < 0 || s->manufact.len > 2048)
+		return (EIO);
+	bcopy(&buf[4], s->manufact.value, s->manufact.len);
+	return (0);
+}
+
+int
+dvd_read_struct(cd, s)
+	struct cd_softc *cd;
+	dvd_struct *s;
+{
+
+	switch (s->type) {
+	case DVD_STRUCT_PHYSICAL:
+		return (dvd_read_physical(cd, s));
+	case DVD_STRUCT_COPYRIGHT:
+		return (dvd_read_copyright(cd, s));
+	case DVD_STRUCT_DISCKEY:
+		return (dvd_read_disckey(cd, s));
+	case DVD_STRUCT_BCA:
+		return (dvd_read_bca(cd, s));
+	case DVD_STRUCT_MANUFACT:
+		return (dvd_read_manufact(cd, s));
+	default:
+		return (EINVAL);
+	}
 }
