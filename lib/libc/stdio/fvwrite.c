@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.5 1997/11/29 19:54:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.6 1997/11/30 01:13:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -120,9 +120,10 @@ __sfvwrite(fp, uio)
 				 */
 				fp->_w = len + 128;
 				fp->_bf._size = blen + len + 128;
-				/* XXX - check return val */
 				fp->_bf._base =
 				    realloc(fp->_bf._base, fp->_bf._size + 1);
+				if (fp->_bf._base == NULL)
+					goto err;
 				fp->_p = fp->_bf._base + blen;
 			}
 			w = fp->_w;
