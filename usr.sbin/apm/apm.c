@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.2 1997/09/12 04:07:14 millert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.3 1998/10/29 18:21:44 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -66,7 +66,7 @@ int send_command(int fd,
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-v] [-z | -S] [-slba] [-f socket]\n",
+    fprintf(stderr,"usage: %s [-v] [-z | -S] [-slbam] [-f socket]\n",
 	    __progname);
     exit(1);
 }
@@ -147,7 +147,7 @@ open_socket(const char *sockname)
     return sock;
 }
 
-void
+int
 main(int argc, char *argv[])
 {
     char *sockname = _PATH_APM_SOCKET;
@@ -156,6 +156,7 @@ main(int argc, char *argv[])
     int doac = FALSE;
     int dopct = FALSE;
     int dobstate = FALSE;
+    int domin = FALSE;
     int fd;
     int rval;
     int verbose = FALSE;
@@ -163,7 +164,7 @@ main(int argc, char *argv[])
     struct apm_command command;
     struct apm_reply reply;
 
-    while ((ch = getopt(argc, argv, "lbvadsSzf:")) != -1)
+    while ((ch = getopt(argc, argv, "lmbvadsSzf:")) != -1)
 	switch(ch) {
 	case 'v':
 	    verbose = TRUE;
@@ -199,6 +200,12 @@ main(int argc, char *argv[])
 	    dopct = TRUE;
 	    action = GETSTATUS;
 	    break;
+	case 'm':
+	    if (action != NONE && action != GETSTATUS)
+		usage();
+	    domin = TRUE;
+	    action = GETSTATUS;
+	    break;
 	case 'a':
 	    if (action != NONE && action != GETSTATUS)
 		usage();
@@ -211,14 +218,14 @@ main(int argc, char *argv[])
 	}
 
     if (!strcmp(__progname, "zzz")) {
-	exit(do_zzz(sockname, action));
+	return (do_zzz(sockname, action));
     }
 
     fd = open_socket(sockname);
 
     switch (action) {
     case NONE:
-	verbose = doac = dopct = dobstate = dostatus = TRUE;
+	verbose = doac = dopct = dobstate = dostatus = domin = TRUE;
 	action = GETSTATUS;
 	/* fallthrough */
     case GETSTATUS:
@@ -245,13 +252,17 @@ main(int argc, char *argv[])
     printval:
 	    if (verbose) {
 		if (dobstate)
-		    printf("Battery charge state: %s\n",
+		    printf("Battery state: %s\n",
 			   battstate(reply.batterystate.battery_state));
 		if (dopct)
 		    printf("Battery remaining: %d percent\n",
 			   reply.batterystate.battery_life);
+		if (domin)
+		    printf("Battery life estimate: %d minutes\n",
+			   reply.batterystate.minutes_left);
 		if (doac)
-		    printf("A/C adapter state: %s\n", ac_state(reply.batterystate.ac_state));
+		    printf("A/C adapter state: %s\n",
+			   ac_state(reply.batterystate.ac_state));
 		if (dostatus)
 		    printf("Power management enabled\n");
 	    } else {
@@ -259,6 +270,8 @@ main(int argc, char *argv[])
 		    printf("%d\n", reply.batterystate.battery_state);
 		if (dopct)
 		    printf("%d\n", reply.batterystate.battery_life);
+		if (domin)
+		    printf("%d\n", reply.batterystate.minutes_left);
 		if (doac)
 		    printf("%d\n", reply.batterystate.ac_state);
 		if (dostatus)
@@ -281,5 +294,5 @@ main(int argc, char *argv[])
     } else
 	errx(rval, "cannot get reply from APM daemon");
 
-    exit(0);
+    return (0);
 }
