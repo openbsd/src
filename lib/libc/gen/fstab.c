@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.10 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.11 2002/06/22 02:13:08 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ fstabscan()
 #define	MAXLINELENGTH	1024
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
-	char *endp;
+	char *endp, *last;
 	int typexx;
 	long l;
 
@@ -69,11 +69,11 @@ fstabscan()
 			return(0);
 /* OLD_STYLE_FSTAB */
 		if (!strpbrk(cp, " \t")) {
-			_fs_fstab.fs_spec = strtok(cp, ":\n");
+			_fs_fstab.fs_spec = strtok_r(cp, ":\n", &last);
 			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 				continue;
-			_fs_fstab.fs_file = strtok((char *)NULL, ":\n");
-			_fs_fstab.fs_type = strtok((char *)NULL, ":\n");
+			_fs_fstab.fs_file = strtok_r((char *)NULL, ":\n", &last);
+			_fs_fstab.fs_type = strtok_r((char *)NULL, ":\n", &last);
 			if (_fs_fstab.fs_type) {
 				if (!strcmp(_fs_fstab.fs_type, FSTAB_XX))
 					continue;
@@ -81,13 +81,14 @@ fstabscan()
 				_fs_fstab.fs_vfstype =
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
-				if ((cp = strtok((char *)NULL, ":\n"))) {
+				if ((cp = strtok_r((char *)NULL, ":\n", &last))) {
 					l = strtol(cp, &endp, 10);
 					if (endp == cp || *endp != '\0' ||
 					    l < 0 || l >= INT_MAX)
 						goto bad;
 					_fs_fstab.fs_freq = l;
-					if ((cp = strtok((char *)NULL, ":\n"))) {
+					if ((cp = strtok_r((char *)NULL,
+					    ":\n", &last))) {
 						l = strtol(cp, &endp, 10);
 						if (endp == cp || *endp != '\0'
 						    || l < 0 || l >= INT_MAX)
@@ -100,23 +101,23 @@ fstabscan()
 			goto bad;
 		}
 /* OLD_STYLE_FSTAB */
-		_fs_fstab.fs_spec = strtok(cp, " \t\n");
+		_fs_fstab.fs_spec = strtok_r(cp, " \t\n", &last);
 		if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 			continue;
-		_fs_fstab.fs_file = strtok((char *)NULL, " \t\n");
-		_fs_fstab.fs_vfstype = strtok((char *)NULL, " \t\n");
-		_fs_fstab.fs_mntops = strtok((char *)NULL, " \t\n");
+		_fs_fstab.fs_file = strtok_r((char *)NULL, " \t\n", &last);
+		_fs_fstab.fs_vfstype = strtok_r((char *)NULL, " \t\n", &last);
+		_fs_fstab.fs_mntops = strtok_r((char *)NULL, " \t\n", &last);
 		if (_fs_fstab.fs_mntops == NULL)
 			goto bad;
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
-		if ((cp = strtok((char *)NULL, " \t\n")) != NULL) {
+		if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
 			l = strtol(cp, &endp, 10);
 			if (endp == cp || *endp != '\0' || l < 0 ||
 			    l >= INT_MAX)
 				goto bad;
 			_fs_fstab.fs_freq = l;
-			if ((cp = strtok((char *)NULL, " \t\n")) != NULL) {
+			if ((cp = strtok_r((char *)NULL, " \t\n", &last)) != NULL) {
 				l = strtol(cp, &endp, 10);
 				if (endp == cp || *endp != '\0' || l < 0 ||
 				    l >= INT_MAX)
@@ -125,8 +126,8 @@ fstabscan()
 			}
 		}
 		strlcpy(subline, _fs_fstab.fs_mntops, sizeof subline);
-		for (typexx = 0, cp = strtok(subline, ","); cp;
-		     cp = strtok((char *)NULL, ",")) {
+		for (typexx = 0, cp = strtok_r(subline, ",", &last); cp;
+		     cp = strtok_r((char *)NULL, ",", &last)) {
 			if (strlen(cp) != 2)
 				continue;
 			if (!strcmp(cp, FSTAB_RW)) {

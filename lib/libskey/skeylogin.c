@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.45 2002/05/24 21:32:56 deraadt Exp $
+ * $OpenBSD: skeylogin.c,v 1.46 2002/06/22 02:13:10 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ skeylookup(mp, name)
 {
 	struct stat statbuf;
 	size_t nread;
-	char *cp, filename[PATH_MAX];
+	char *cp, filename[PATH_MAX], *last;
 	FILE *keyfile;
 	int fd;
 
@@ -141,19 +141,19 @@ skeylookup(mp, name)
 		goto bad_keyfile;
 	mp->buf[nread - 1] = '\0';
 
-	if ((mp->logname = strtok(mp->buf, " \t\n\r")) == NULL ||
+	if ((mp->logname = strtok_r(mp->buf, " \t\n\r", &last)) == NULL ||
 	    strcmp(mp->logname, name) != 0)
 		goto bad_keyfile;
-	if ((cp = strtok(NULL, " \t\n\r")) == NULL)
+	if ((cp = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
 	if (skey_set_algorithm(cp) == NULL)
 		goto bad_keyfile;
-	if ((cp = strtok(NULL, " \t\n\r")) == NULL)
+	if ((cp = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
 	mp->n = atoi(cp);	/* XXX - use strtol() */
-	if ((mp->seed = strtok(NULL, " \t\n\r")) == NULL)
+	if ((mp->seed = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
-	if ((mp->val = strtok(NULL, " \t\n\r")) == NULL)
+	if ((mp->val = strtok_r(NULL, " \t\n\r", &last)) == NULL)
 		goto bad_keyfile;
 
 	(void)fseek(keyfile, 0L, SEEK_SET);
@@ -232,7 +232,7 @@ skeyverify(mp, response)
 	char fkey[SKEY_BINKEY_SIZE];
 	char filekey[SKEY_BINKEY_SIZE];
 	size_t nread;
-	char *cp;
+	char *cp, *last;
 
 	if (response == NULL)
 		goto verify_failure;
@@ -262,15 +262,15 @@ skeyverify(mp, response)
 	if ((nread = fread(mp->buf, 1, sizeof(mp->buf), mp->keyfile)) == 0 ||
 	    !isspace(mp->buf[nread - 1]))
 		goto verify_failure;
-	if ((mp->logname = strtok(mp->buf, " \t\r\n")) == NULL)
+	if ((mp->logname = strtok_r(mp->buf, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
-	if ((cp = strtok(NULL, " \t\r\n")) == NULL)
+	if ((cp = strtok_r(NULL, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
-	if ((cp = strtok(NULL, " \t\r\n")) == NULL)
+	if ((cp = strtok_r(NULL, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
-	if ((mp->seed = strtok(NULL, " \t\r\n")) == NULL)
+	if ((mp->seed = strtok_r(NULL, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
-	if ((mp->val = strtok(NULL, " \t\r\n")) == NULL)
+	if ((mp->val = strtok_r(NULL, " \t\r\n", &last)) == NULL)
 		goto verify_failure;
 
 	/* Convert file value to hex and compare. */

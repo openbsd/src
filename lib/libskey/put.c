@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $OpenBSD: put.c,v 1.11 2002/02/16 21:27:27 millert Exp $
+ * $OpenBSD: put.c,v 1.12 2002/06/22 02:13:10 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -373,6 +373,7 @@ etob(out, e)
 	int i, p, v, l, low, high;
 	char b[SKEY_BINKEY_SIZE+1];
 	char input[36];
+	char *last;
 
 	if (e == NULL)
 		return(-1);
@@ -382,7 +383,7 @@ etob(out, e)
 	(void)memset(b, 0, sizeof(b));
 	(void)memset(out, 0, SKEY_BINKEY_SIZE);
 	for (i = 0, p = 0; i < 6; i++, p += 11) {
-		if ((word = strtok(i == 0 ? input : NULL, " ")) == NULL)
+		if ((word = strtok_r(i == 0 ? input : NULL, " ", &last)) == NULL)
 			return(-1);
 
 		l = strlen(word);
