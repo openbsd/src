@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.46 1998/06/03 17:44:47 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.47 1998/06/08 16:55:34 mickey Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -817,7 +817,7 @@ skip:
 
 	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
 	if (guest || dochroot) {
-		if (multihome) {
+		if (multihome && guest) {
 			struct stat ts;
 
 			/* Compute root directory. */
