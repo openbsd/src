@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.11 2000/01/09 01:16:25 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.12 2000/02/16 05:05:03 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.9 2000/01/09 01:15:16 jason Exp 
+ *	OpenBSD: miidevs,v 1.10 2000/02/16 05:04:25 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -50,6 +50,7 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
@@ -94,6 +95,10 @@
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
 #define	MII_MODEL_AMD_79C873phy	0x0036
 #define	MII_STR_AMD_79C873phy	"Am79C873 internal PHY"
+
+/* Broadcom Corp. PHYs */
+#define	MII_MODEL_BROADCOM_3C905C	0x0017
+#define	MII_STR_BROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
