@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.89 2001/05/21 06:01:34 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.90 2001/05/27 03:48:15 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -327,7 +327,8 @@ struct tdb				/* tunnel descriptor block */
     TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head;
 };
 
-struct tdb_ident {
+struct tdb_ident
+{
     u_int32_t spi;
     union sockaddr_union dst;
     u_int8_t proto;
@@ -576,7 +577,8 @@ extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int,
 extern int ipsp_process_done(struct mbuf *, struct tdb *, struct tdb *);
 extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
                                    struct tdb *, struct inpcb *);
-extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
+extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,
+				 struct m_tag *);
 extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 			   union sockaddr_union *, struct sockaddr_encap *,
 			   struct mbuf *);
