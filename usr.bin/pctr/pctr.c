@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.2 1996/08/16 00:02:35 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.3 1998/05/27 02:26:07 downsj Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -225,6 +225,37 @@ struct ctrfn p6fn[] = {
    "Number of times BACLEAR is asserted."},
   {0x0, 0, NULL, NULL},
 };
+
+#define __cpuid()				\
+({						\
+  pctrval id;					\
+  __asm __volatile ("pushfl\n"			\
+		    "\tpopl %%eax\n"		\
+		    "\tmovl %%eax,%%ecx\n"	\
+		    "\txorl %1,%%eax\n"		\
+		    "\tpushl %%eax\n"		\
+		    "\tpopfl\n"			\
+		    "\tpushfl\n"		\
+		    "\tpopl %%eax\n"		\
+		    "\tpushl %%ecx\n"		\
+		    "\tpopfl\n"			\
+		    "\tcmpl %%eax,%%ecx\n"	\
+		    "\tmovl $0,%%eax\n"		\
+		    "\tje 1f\n"			\
+		    "\tcpuid\n"			\
+		    "\ttestl %%eax,%%eax\n"	\
+		    "\tje 1f\n"			\
+		    "\tmovl $1,%%eax\n"		\
+		    "\tcpuid\n"			\
+		    "\tjmp 2f\n"		\
+		    "1:\t"			\
+		    "\txorl %%eax,%%eax\n"	\
+		    "\txorl %%edx,%%edx\n"	\
+		    "2:\t"			\
+		    : "=A" (id) : "i" (PSL_ID)	\
+		    : "edx", "ecx", "ebx");	\
+  id;						\
+})
 
 static void
 printdesc (char *desc)
