@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_hp.c,v 1.6 2001/02/20 19:39:41 mickey Exp $       */
+/*    $OpenBSD: if_hp.c,v 1.7 2001/06/23 22:03:09 fgsch Exp $       */
 /*    $NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $       */
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
@@ -102,7 +102,6 @@ struct isa_driver hpdriver =
 
 struct mbuf *hpget();
 
-#define ETHER_MIN_LEN 64
 #define ETHER_MAX_LEN 1536
 
 /*

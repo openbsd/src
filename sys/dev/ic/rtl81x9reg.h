@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.2 2001/05/22 11:35:16 mickey Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.3 2001/06/23 22:03:08 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -472,13 +472,6 @@ struct rl_softc {
 #define RL_PSTATE_D3		0x0003
 #define RL_PME_EN		0x0010
 #define RL_PME_STATUS		0x8000
-
-/*
- * FreeBSDism
- */
-#ifndef	ETHER_CRC_LEN
-#define	ETHER_CRC_LEN		4
-#endif
 
 #ifdef __alpha__
 #undef vtophys

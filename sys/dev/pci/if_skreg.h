@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.5 2000/08/29 23:45:40 jason Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.6 2001/06/23 22:03:12 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1226,10 +1226,3 @@ struct skc_attach_args {
 #define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
 #endif
 
-#ifndef ETHER_CRC_LEN
-#define ETHER_CRC_LEN	4
-#endif
-
-#ifndef ETHER_HDR_LEN
-#define ETHER_HDR_LEN	14
-#endif

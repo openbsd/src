@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.16 2001/06/08 08:09:24 art Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.17 2001/06/23 22:03:03 fgsch Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -162,10 +162,6 @@ vm_map_t ie_map; /* for obio */
 #define	IED_CNA		0x08
 #define	IED_READFRAME	0x10
 #define	IED_ALL		0x1f
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 #define B_PER_F         3               /* recv buffers per frame */
 #define MXFRAMES        300             /* max number of recv frames */
