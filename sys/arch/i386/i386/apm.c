@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.18 1997/12/11 01:03:51 rees Exp $	*/
+/*	$OpenBSD: apm.c,v 1.19 1997/12/17 22:05:31 rees Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -750,11 +750,9 @@ apmopen(dev, flag, mode, p)
 	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 	
-	sc = apm_cd.cd_devs[APMUNIT(dev)];
-
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE))
@@ -784,11 +782,9 @@ apmclose(dev, flag, mode, p)
 	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 	
-	sc = apm_cd.cd_devs[APMUNIT(dev)];
-
 	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
 
 	switch (APMDEV(dev)) {
@@ -822,11 +818,9 @@ apmioctl(dev, cmd, data, flag, p)
 	struct apm_ctl *actl;
 
 	/* apm0 only */
-	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 	
-	sc = apm_cd.cd_devs[APMUNIT(dev)];
-
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
@@ -911,11 +905,9 @@ apmselect(dev, rw, p)
 	struct apm_softc *sc;
 
 	/* apm0 only */
-	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || sc == NULL)
+	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 || !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 	
-	sc = apm_cd.cd_devs[APMUNIT(dev)];
-
 	switch (rw) {
 	case FREAD:
 		if (sc->event_count)
