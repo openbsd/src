@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.3 1997/02/25 00:04:04 downsj Exp $	*/
+/*	$OpenBSD: error.c,v 1.4 1998/03/17 04:11:53 deraadt Exp $	*/
 /*	$NetBSD: error.c,v 1.3 1995/09/28 10:34:20 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.3 1997/02/25 00:04:04 downsj Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.4 1998/03/17 04:11:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ char *fmt;
 	if ((w = x->x_errwin) == 0) {
 		char buf[512];
 
-		(void) sprintf(buf, "Errors from %s", x->x_filename);
+		(void) snprintf(buf, sizeof buf, "Errors from %s", x->x_filename);
 		if ((w = x->x_errwin = openiwin(ERRLINES, buf)) == 0) {
 			wwputs("Can't open error window.  ", cmdwin);
 			x->x_noerr = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwenviron.c,v 1.4 1997/02/25 00:04:50 downsj Exp $	*/
+/*	$OpenBSD: wwenviron.c,v 1.5 1998/03/17 04:11:54 deraadt Exp $	*/
 /*	$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.4 1997/02/25 00:04:50 downsj Exp $";
+static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.5 1998/03/17 04:11:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,10 +99,10 @@ register struct ww *wp;
 	 * 1. setenv() copies the string,
 	 * 2. we've already called tgetent which copies the termcap entry.
 	 */
-	(void) sprintf(buf, "%sco#%d:li#%d:%s",
+	(void) snprintf(buf, sizeof buf, "%sco#%d:li#%d:%s",
 		WWT_TERMCAP, wp->ww_w.nc, wp->ww_w.nr, wwwintermcap);
 	(void) setenv("TERMCAP", buf, 1);
-	(void) sprintf(buf, "%d", wp->ww_id + 1);
+	(void) snprintf(buf, sizeof buf, "%d", wp->ww_id + 1);
 	(void) setenv("WINDOW_ID", buf, 1);
 	return 0;
 bad:
