@@ -46,8 +46,6 @@ mode_t cvsumask = UMASK_DFLT;
 
 char *CurDir;
 
-static char *CVSroot = CVSROOT_DFLT;
-
 /*
  * Defaults, for the environment variables that are not set
  */
@@ -304,6 +302,7 @@ main (argc, argv)
     int argc;
     char **argv;
 {
+    char *CVSroot = CVSROOT_DFLT;
     extern char *version_string;
     extern char *config_string;
     char *cp, *end;
@@ -913,7 +912,9 @@ usage (cpp)
     exit (EXIT_FAILURE);
 }
 
-parseopts()
+void
+parseopts(root)
+    const char *root;
 {
     char path[PATH_MAX];
     int save_errno;
@@ -921,15 +922,15 @@ parseopts()
     char *p;
     FILE *fp;
 
-    if (CVSroot == NULL) {
+    if (root == NULL) {
 	printf("no CVSROOT in parseopts\n");
 	return;
     }
-    p = strchr (CVSroot, ':');
+    p = strchr (root, ':');
     if (p)
 	p++;
     else
-	p = CVSroot;
+	p = root;
     if (p == NULL) {
 	printf("mangled CVSROOT in parseopts\n");
 	return;
