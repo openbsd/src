@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.2.4.1 1996/06/05 23:23:02 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.2.4.2 1996/06/26 22:37:00 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ typedef char ttychar_t;
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
 #define SLMTU		1200 /*XXX*/
 
+#define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 
 #ifndef __NetBSD__					/* XXX - cgd */
@@ -254,10 +255,11 @@ static u_char* UnStuffData __P((u_char *src, u_char *end, u_char
 static u_char* StuffData __P((u_char *src, u_long length, u_char *dest,
 			      u_char **code_ptr_ptr));
 
-static void RecErr __P((char *msg, struct st_softc *sc));
-static void RecERR_Message __P((struct st_softc *strip_info,
+static void RecvErr __P((char *msg, struct st_softc *sc));
+static void RecvErr_Message __P((struct st_softc *strip_info,
 				u_char *sendername, u_char *msg));
-void	resetradio __P((struct st_softc *sc, struct tty *tp));
+void	strip_resetradio __P((struct st_softc *sc, struct tty *tp));
+void	strip_watchdog __P((struct ifnet *ifp));
 void	strip_esc __P((struct st_softc *sc, struct mbuf *m));
 int	strip_newpacket __P((struct st_softc *sc, u_char *ptr, u_char *end));
 struct mbuf * strip_send __P((struct st_softc *sc, struct mbuf *m0));
@@ -294,12 +296,14 @@ void stripdumpm __P((const char *msg, struct mbuf *m, int len));
 #define FORCE_RESET(sc) \
  do {\
     printf("strip: XXX: reset state-machine not yet implemented in *BSD\n"); \
+    (sc)->sc_if.if_timer = 0; \
  } while (0)
 
 #define CLEAR_RESET_TIMER(sc) \
  do {\
     printf("strip: clearing  reset timeout: not yet implemented in *BSD\n"); \
- } while (0)
+    (sc)->sc_if.if_timer = 0; \
+} while (0)
 
 
 
@@ -328,6 +332,9 @@ stripattach(n)
 		sc->sc_if.if_output = stripoutput;
 		sc->sc_if.if_snd.ifq_maxlen = 50;
 		sc->sc_fastq.ifq_maxlen = 32;
+
+		sc->sc_if.if_watchdog = strip_watchdog;
+		sc->sc_if.if_timer = 15; /* seconds */ 
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
@@ -418,15 +425,15 @@ stripopen(dev, tp)
 			ttyflush(tp, FREAD | FWRITE);
 #ifdef __NetBSD__
 			/*
-			 * make sure tty output queue is large enough
+			 * Make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
-			 * end, and a possible extra frame end).  full-sized
-			 * packet occupies a max of 2*SLMTU bytes (because
-			 * of possible escapes), and add two on for frame
-			 * ends.
+			 * end, and a possible extra frame end).
+			 * A   full-sized   of 65/64) *SLMTU bytes (because
+			 * of escapes and clever RLL bytestuffing),
+			 * plus frame header, and add two on for frame ends.
 			 */
 			s = spltty();
-			if (tp->t_outq.c_cn < 2*SLMTU+2) {
+			if (tp->t_outq.c_cn < STRIP_MTU_ONWIRE) {
 				sc->sc_oldbufsize = tp->t_outq.c_cn;
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
@@ -441,7 +448,7 @@ stripopen(dev, tp)
 			splx(s);
 #endif /* __NetBSD__ */
 			s = spltty();
-			resetradio(sc, tp);
+			strip_resetradio(sc, tp);
 			splx(s);
 
 			return (0);
@@ -514,10 +521,9 @@ striptioctl(tp, cmd, data, flag)
 	return (0);
 }
 
-/*XXX*/
 /*
- * Take an mbuf chain  containing a SLIP packet, byte-stuff (escape)
- * the packet, and enqueue it on the tty send queue.
+ * Take an mbuf chain  containing a STRIP packet (no link-level header),
+ * byte-stuff (escape) it, and enqueue it on the tty send queue.
  */
 void
 strip_esc(sc, m)
@@ -525,32 +531,34 @@ strip_esc(sc, m)
 	struct mbuf *m;
 {
 	register struct tty *tp = sc->sc_ttyp;
-	register u_char *cp;
-	register u_char *ep;
+	register u_char *dp = sc->sc_txbuf;
 	struct mbuf *m2;
 	register int len;
-	u_char         *stuffstate = NULL;
+	u_char	*rllstate_ptr = NULL;
 
 	while (m) {
-		cp = mtod(m, u_char *); ep = cp + m->m_len;
 		/*
-		 * Find out how many bytes in the string we can
-		 * handle without doing something special.
+		 * Byte-stuff/run-length encode this mbuf's data into the
+		 * output buffer.  XXX note that chained calls to stuffdata()
+		 * require that the stuffed data be left in the
+		 * output buffer until the entire packet is encoded.
 		 */
-		ep = StuffData(cp, m->m_len, sc->sc_txbuf, &stuffstate);
-		len = ep - sc->sc_txbuf;
+		dp = StuffData(mtod(m, u_char *), m->m_len, dp, &rllstate_ptr);
 
-		/*
-		 * Put n characters at once
-		 * into the tty output queue.
-		 */
-		if (b_to_q((ttychar_t *)sc->sc_txbuf,
-			   len, &tp->t_outq))
-			goto bad;
-		sc->sc_if.if_obytes += len;
 		MFREE(m, m2);
 		m = m2;
 	}
+
+	/*
+	 * Put the entire stuffed packet into the tty output queue.
+	 */
+	len = dp - sc->sc_txbuf;
+	if (b_to_q((ttychar_t *)sc->sc_txbuf,
+			   len, &tp->t_outq)) {
+			goto bad;
+		}
+		sc->sc_if.if_obytes += len;
+
 	return;
 
 bad:
@@ -558,9 +566,12 @@ bad:
 	return;
 }
 
+
 /* 
  *  Prepend a STRIP header to the packet.
  * (based on 4.4bsd if_ppp)
+ *
+ * XXX manipulates tty queues with putc
  */
 struct mbuf *
 strip_send(sc, m0)
@@ -579,13 +590,25 @@ strip_send(sc, m0)
 		m_freem(m0);
 	}
 
-	/* XXX undo M_PREPEND() */
+	/* The header has been enqueued in clear;  undo the M_PREPEND() of the header. */
 	m0->m_data += sizeof(struct st_header);
 	m0->m_len -= sizeof(struct st_header);
-	if (m0 && m0->m_flags & M_PKTHDR)
+	if (m0 && m0->m_flags & M_PKTHDR) {
 		m0->m_pkthdr.len -= sizeof(struct st_header);
-	
+	}
+#ifdef DIAGNOSTIC
+	 else
+		addlog("strip_send: not pkthdr, %d remains\n", m0->m_len); /*XXX*/
+#endif
 
+	/* If M_PREPEND() had to prepend a new mbuf, it is now empty. Discard it. */
+	if (m0->m_len == 0) {
+		register struct mbuf *m;
+		MFREE(m0, m);
+		m0 = m;
+	}
+
+	/* Byte-stuff and run-length encode the remainder of the packet. */
 	strip_esc(sc, m0);
 
 	if (putc(STRIP_FRAME_END, &tp->t_outq)) {
@@ -778,10 +801,12 @@ stripoutput(ifp, m, dst, rt)
 	return (0);
 }
 
+
 /*
  * Start output on interface.  Get another datagram
  * to send from the interface queue and map it to
  * the interface before starting output.
+ *
  */
 void
 stripstart(tp)
@@ -811,8 +836,8 @@ stripstart(tp)
 			  	TXPRINTF(("stripstart: outq past SLIP_HIWAT\n"));
 #if 0
 				/* XXX can't  just stop output on
-				   framed  packet-radio links!
-				   */
+				 *  framed  packet-radio links!
+				 */
 				return;
 #endif
 			}
@@ -825,18 +850,17 @@ stripstart(tp)
 			return;
 		}
 
-#if 0						 	/* XXX - jrs*/
 #if defined(__NetBSD__)					/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
 		 * current serial output queue, with a packet full of
-		 * escapes this could be as bad as SLMTU*2+2.
+		 * escapes this could be as bad as STRIP_MTU_ONWIRE
+		 * (for slip, SLMTU*2+2, for STRIP, header + 20 bytes).
 		 */
-		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*SLMTU+2)
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc < STRIP_MTU_ONWIRE)
 			return;
 #endif /* __NetBSD__ */
-#endif
 		/*
 		 * Get a packet and send it to the interface.
 		 */
@@ -887,14 +911,16 @@ stripstart(tp)
 		}
 #if NBPFILTER > 0
 		if (sc->sc_bpf) {
+			register u_char *cp = bpfbuf + STRIP_HDRLEN;
 			/*
 			 * Put the SLIP pseudo-"link header" in place.  The
 			 * compressed header is now at the beginning of the
 			 * mbuf.
 			 */
-			bpfbuf[SLX_DIR] = SLIPDIR_OUT;
-			bcopy(mtod(m, caddr_t), &bpfbuf[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, bpfbuf, len + SLIP_HDRLEN);
+			cp[SLX_DIR] = SLIPDIR_OUT;
+
+			bcopy(mtod(m, caddr_t)+STRIP_HDRLEN, &cp[SLX_CHDR], CHDR_LEN);
+			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN);
 		}
 #endif
 		sc->sc_if.if_lastchange = time;
@@ -1025,6 +1051,11 @@ stripinput(c, tp)
 			goto newpack;
 		}
 
+		/*
+		 * We have a frame.
+		 * Process an IP packet, ARP packet, AppleTalk packet,
+		 * AT command resposne, or Starmode error.
+		 */
 		len = strip_newpacket(sc, sc->sc_buf, sc->sc_mp);
 		if (len <= 1)
 			/* less than min length packet - ignore */
@@ -1133,7 +1164,6 @@ newpack:
 	/*DPRINTF(("stripinput: newpack\n"));*/	 /* XXX */
 quiet_newpack:
 	sc->sc_mp = sc->sc_buf = sc->sc_ep - SLMAX;
-	/*sc->sc_escape = 0;*/
 }
 
 /*
@@ -1199,9 +1229,10 @@ stripioctl(ifp, cmd, data)
 
 /*
  * Set a radio into starmode.
+ * XXX must be called at spltty() or higher (e.g., splimp()
  */
 void
-resetradio(sc, tp)
+strip_resetradio(sc, tp)
 	struct st_softc *sc;
 	struct tty *tp;
 {
@@ -1210,12 +1241,15 @@ resetradio(sc, tp)
 		"\r\n\r\n\r\nat\r\n\r\n\r\nate0dt**starmode\r\n**\r\n";
 #else
 	static ttychar_t InitString[] =
-		"\r\rat\r\r\rate0dt**starmode\r*\r";
+		"\r\rat\r\r\rate0q1dt**starmode\r*\r";
 #endif
 	register int i;
 
 
 	DPRINTF(("strip: resetting radio\n"));
+	/*
+	 * XXX Perhaps flush  tty output queue?
+	 */
 	if ((i = b_to_q(InitString, sizeof(InitString) - 1, &tp->t_outq))) {
 		printf("resetradio: %d chars didn't fit in tty queue\n", i);
 		return;
@@ -1227,17 +1261,42 @@ resetradio(sc, tp)
 	sc->watchdog_doprobe = jiffies + 10 * HZ;
 	sc->watchdog_doreset = jiffies + 1 * HZ;
 #endif
-	/*XXX jrs DANGEROUS - does this help? */
+
 	sc->sc_if.if_lastchange = time;
 
-	/*XXX jrs DANGEROUS - does this work? */
+	/*
+	 * XXX Does calling the tty output routine now help resets?
+	 */
 	(*sc->sc_ttyp->t_oproc)(tp);
+}
+
+/*
+ * Strip watchdog routine.
+ * The radio hardware is balky and sometimes crashes doesn't reste properly,
+ * or crashes and reboots into Hayes-emulation mode.
+ * If we don't hear a starmode-only response from the radio within a
+ *  given time, reset it.
+ */
+void
+strip_watchdog(ifp)
+	struct ifnet *ifp;
+{
+	register struct st_softc *sc = ifp->if_softc;
+
+
+	if (0) {
+		addlog("%s: watchdog\n", ifp->if_xname);
+		strip_resetradio(sc, sc->sc_ttyp);
+		++ifp->if_oerrors;
+	}
+
+	sc->sc_if.if_timer = 15; /* seconds */ 
+	return;
 }
 
 
 /*
- * XXX
- * The following is taken, with permisino of the author, from
+ * The following is taken, with permission of the author, from
  * the LInux strip  driver. 
  */
 
@@ -1269,9 +1328,10 @@ strip_newpacket(sc, ptr, end)
 	if (*ptr != '*') {
 		/* Catch other error messages */
 		if (ptr[0] == 'E' && ptr[1] == 'R' && ptr[2] == 'R' && ptr[3] == '_')
-			RecERR_Message(sc, NULL, ptr); /* XXX stuart? */
+			RecvErr_Message(sc, NULL, ptr);
+			 /* XXX what should the message above be? */
 		else {
-			RecErr("No initial *", sc);
+			RecvErr("No initial *", sc);
 			addlog("(len = %d\n", len);
 		     }
 		return 0;
@@ -1287,7 +1347,7 @@ strip_newpacket(sc, ptr, end)
 
 	/* Check for end of address marker, and skip over it */
 	if (ptr == end) {
-		RecErr("No second *", sc);
+		RecvErr("No second *", sc);
 		XDPRINTF(("XXX 3: sc_buf %x ptr %x end %x mp %x hardlim %x\n",
 			 sc->sc_buf, ptr, end, sc->sc_mp, sc->sc_ep));
 		return 0;
@@ -1299,9 +1359,9 @@ strip_newpacket(sc, ptr, end)
 		if (ptr[0] == 'E' && ptr[1] == 'R' && ptr[2] == 'R' &&
 		    ptr[3] == '_') { 
 			*name_end = 0;
-			RecERR_Message(sc, name, ptr);
+			RecvErr_Message(sc, name, ptr);
 		 }
-		else RecErr("No SRIP key", sc);
+		else RecvErr("No SRIP key", sc);
 		return 0;
 	}
 	ptr += 4;
@@ -1309,29 +1369,29 @@ strip_newpacket(sc, ptr, end)
 	/* Decode start of the IP packet header */
 	ptr = UnStuffData(ptr, end, sc->sc_rxbuf, 4);
 	if (!ptr) {
-		RecErr("Runt packet (hdr)", sc);
+		RecvErr("Runt packet (hdr)", sc);
 		return 0;
 	}
 
 	/* XXX is this the IP header length, or what? */
 	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
+
+#ifdef DIAGNOSTIC
 /*	printf("Packet %02x.%02x.%02x.%02x\n",
 		sc->sc_rxbuf[0], sc->sc_rxbuf[1],
 		sc->sc_rxbuf[2], sc->sc_rxbuf[3]);
 	printf("Got %d byte packet\n", packetlen); */
+#endif
 
 	/* Decode remainder of the IP packer */
 	ptr = UnStuffData(ptr, end, sc->sc_rxbuf+4, packetlen-4);
 	if (!ptr) {
-		RecErr("Short packet", sc);
+		RecvErr("Short packet", sc);
 		return 0;
 	}
 
-	/* XXX*/ bcopy(sc->sc_rxbuf, sc->sc_buf, packetlen );
-
-#ifdef linux
-	strip_bump(sc, packetlen);
-#endif
+	/* XXX redundant copy */
+	bcopy(sc->sc_rxbuf, sc->sc_buf, packetlen );
 	return(packetlen);
 }
 
@@ -1387,8 +1447,8 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 	if (!length) return(dest);
 	
 	if (code_ptr) {	/* Recover state from last call, if applicable */
-		code  = *code_ptr & Stuff_CodeMask;
-		count = *code_ptr & Stuff_CountMask;
+		code  = (*code_ptr ^ Stuff_Magic) & Stuff_CodeMask;
+		count = (*code_ptr ^ Stuff_Magic) & Stuff_CountMask;
 	}
 
 	while (src < end) {
@@ -1510,8 +1570,9 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 {
 	u_char *dest_end = dest + dest_length;
 
+	/* Sanity check */
 	if (!src || !end || !dest || !dest_length)
-		return(NULL);	/* Sanity check */
+		return(NULL);
 
 	while (src < end && dest < dest_end) {
 		int count = (*src ^ Stuff_Magic) & Stuff_CountMask;
@@ -1574,11 +1635,10 @@ UnStuffData(u_char *src, u_char *end, u_char *dest, u_long dest_length)
 
 /*
  * Log an error mesesage (for a packet received with errors?)
- * rom the STRIP driver.
- * XXX check with original author.
+ * from the STRIP driver.
  */
 static void
-RecErr(msg, sc)
+RecvErr(msg, sc)
 	char *msg;
 	struct st_softc *sc;
 {
@@ -1604,64 +1664,90 @@ RecErr(msg, sc)
 	*p++ = 0;
 	addlog("%13s : %s\n", msg, pkt_text);
 
-#ifdef linux
-	set_bit(SLF_ERROR, &sc->flags);
-	sc->rx_errors++;
-#endif /* linux */
 	sc->sc_if.if_ierrors++;
 }
 
-/*
- * Log an error message for a packet recieved from a remote Metricom
- * radio.  Update the radio-reset timer if the message is one that
- * is generated only in starmode.
- *
- * We only call this function when we have an error message from
- * the radio, which can only happen after seeing a frame delimeter
- * in the input-side routine; so it's safe to call the output side
- * to reset the radio.
- */
-static void
-RecERR_Message(sc, sendername, msg)
-	struct st_softc *sc;
-	u_char *sendername;
-	u_char *msg;
-{
-	static const char ERR_001[] = "ERR_001 Not in StarMode!";
-	static const char ERR_002[] = "ERR_002 Remap handle";
-	static const char ERR_003[] = "ERR_003 Can't resolve name";
-	static const char ERR_004[] = "ERR_004 Name too small or missing";
-	static const char ERR_007[] = "ERR_007 Body too big";
-	static const char ERR_008[] = "ERR_008 Bad character in name";
 
-	if (!strncmp(msg, ERR_001, sizeof(ERR_001)-1)) {
-		printf("Radio %s is not in StarMode\n", sendername);
+static void
+RecvErr_Message(strip_info, sendername, msg)
+	struct st_softc *strip_info;
+	u_char *sendername;
+	/*const*/ u_char *msg;
+{
+	static const char ERR_001[] = "001"; /* Not in StarMode! */
+	static const char ERR_002[] = "002"; /* Remap handle */
+	static const char ERR_003[] = "003"; /* Can't resolve name */
+	static const char ERR_004[] = "004"; /* Name too small or missing */
+	static const char ERR_005[] = "005"; /* Bad count specification */
+	static const char ERR_006[] = "006"; /* Header too big */
+	static const char ERR_007[] = "007"; /* Body too big */
+	static const char ERR_008[] = "008"; /* Bad character in name */
+	static const char ERR_009[] = "009"; /* No count or line terminator */
+
+	char * if_name;
+
+	if_name = strip_info->sc_if.if_xname;
+
+	if (!strncmp(msg, ERR_001, sizeof(ERR_001)-1))
+	{
+		RecvErr("Error Msg:", strip_info);
+		addlog("%s: Radio %s is not in StarMode\n",
+			if_name, sendername);
 	}
-	else if (!strncmp(msg, ERR_002, sizeof(ERR_002)-1)) {
+	else if (!strncmp(msg, ERR_002, sizeof(ERR_002)-1))
+	{
+		RecvErr("Error Msg:", strip_info);
 #ifdef notyet		/*Kernel doesn't have scanf!*/
 		int handle;
 		u_char newname[64];
 		sscanf(msg, "ERR_002 Remap handle &%d to name %s", &handle, newname);
-		printf("Radio name %s is handle %d\n", newname, handle);
+		addlog("%s: Radio name %s is handle %d\n",
+			if_name, newname, handle);
 #endif
-		}
-	else if (!strncmp(msg, ERR_003, sizeof(ERR_003)-1)) {
-		printf("Radio name <unspecified> is unknown (\"Can't resolve name\" error)\n");
-		}
-	else if (!strncmp(msg, ERR_004, sizeof(ERR_004)-1)) {
-		CLEAR_RESET_TIMER(sc);
-		/* printf("%s: Received tickle response; clearing watchdog_doreset timer.\n",
-			sc->sc_if.if_xname); */
 	}
-	else if (!strncmp(msg, ERR_007, sizeof(ERR_007)-1)) {
-		/* Note: This error knoks the radio back into command mode. */
-		printf("Error! Packet size <unspecified> is too big for radio.");
-		FORCE_RESET(sc);		/* Do reset ASAP */
+	else if (!strncmp(msg, ERR_003, sizeof(ERR_003)-1))
+	{
+		RecvErr("Error Msg:", strip_info);
+		addlog("%s: Destination radio name is unknown\n", if_name);
+	}
+	else if (!strncmp(msg, ERR_004, sizeof(ERR_004)-1))
+	{
+#ifdef notyet /* FIXME jrs */ 
+        	strip_info->watchdog_doreset = jiffies + LONG_TIME;
+		if (!strip_info->working)
+		{
+			strip_info->working = 1;
+			addlog("%s: Radio now in starmode\n", if_name);
 		}
-	else if (!strncmp(msg, ERR_008, sizeof(ERR_008)-1)) {
-		printf("Name <unspecified> contains illegal character\n");
-		}
-	else RecErr("Error Msg:", sc);
+#endif
+	}
+	else if (!strncmp(msg, ERR_005, sizeof(ERR_005)-1))
+        	RecvErr("Error Msg:", strip_info);
+	else if (!strncmp(msg, ERR_006, sizeof(ERR_006)-1))
+        	RecvErr("Error Msg:", strip_info);
+	else if (!strncmp(msg, ERR_007, sizeof(ERR_007)-1))
+	 {
+		/*
+		 *	Note: This error knocks the radio back into
+		 *	command mode.
+		 */
+		RecvErr("Error Msg:", strip_info);
+		printf("%s: Error! Packet size too big for radio.",
+			if_name);
+#ifdef FIXME /* FIXME jrs */ 
+		strip_info->watchdog_doreset = jiffies;		/* Do reset ASAP */
+#endif
+	}
+	else if (!strncmp(msg, ERR_008, sizeof(ERR_008)-1))
+	{
+		RecvErr("Error Msg:", strip_info);
+		printf("%s: Radio name contains illegal character\n",
+			if_name);
+	}
+	else if (!strncmp(msg, ERR_009, sizeof(ERR_009)-1))
+        	RecvErr("Error Msg:", strip_info);
+	else
+		RecvErr("Error Msg:", strip_info);
 }
 
 #ifdef DEBUG
