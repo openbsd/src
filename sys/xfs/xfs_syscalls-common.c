@@ -375,6 +375,7 @@ getfh_compat (d_thread_t *p,
  * implement xfs fhget by combining (dev, ino, generation)
  */
 
+#ifndef __OpenBSD__
 static int
 trad_fhget (d_thread_t *p,
 	    struct ViceIoctl *vice_ioctl,
@@ -414,6 +415,7 @@ trad_fhget (d_thread_t *p,
     }
     return error;
 }
+#endif  /* ! __OpenBSD__ */
 
 /*
  * return file handle of `vp' in vice_ioctl->out
@@ -648,7 +650,7 @@ xfs_pioctl_call(d_thread_t *proc,
     case VIOC_FHOPEN :
 	return fhopen_call (proc, &vice_ioctl, vp,
 			    SCARG(arg, a_followSymlinks), return_value);
-    case VIOC_NNPFSDEBUG :
+    case VIOC_XFSDEBUG :
 	if (vp != NULL)
 	    vrele (vp);
 	return xfs_debug (proc, &vice_ioctl);

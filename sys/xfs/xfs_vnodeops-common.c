@@ -49,7 +49,9 @@ RCSID("$arla: xfs_vnodeops-common.c,v 1.94 2003/01/27 11:58:50 lha Exp $");
 static void
 xfs_handle_stale(struct xfs_node *xn)
 {
+#if __APPLE__
     struct vnode *vp = XNODE_TO_VNODE(xn);
+#endif
 
     if ((xn->flags & NNPFS_STALE) == 0)
 	return;

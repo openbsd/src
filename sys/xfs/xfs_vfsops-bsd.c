@@ -256,8 +256,6 @@ xfs_checkexp (struct mount *mp,
 	      int *exflagsp,
 	      struct ucred **credanonp)
 {
-    struct netcred *np;
-
     NNPFSDEB(XDEBVFOPS, ("xfs_checkexp\n"));
 
 #if 0

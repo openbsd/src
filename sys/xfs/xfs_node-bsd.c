@@ -55,7 +55,6 @@ xfs_getnewvnode(struct xfs *xfsp, struct vnode **vpp,
 		struct xfs_handle *handle)
 {
     struct xfs_node *result, *check;
-    struct mount *mp;
     int error;
 
     error = getnewvnode(VT_AFS, NNPFS_TO_VFS(xfsp), xfs_vnodeop_p, vpp);

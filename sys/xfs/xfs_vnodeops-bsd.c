@@ -1185,6 +1185,7 @@ xfs_print (struct vop_print_args *v)
 int
 xfs_advlock(struct vop_advlock_args *v)
 {
+#if 0
     struct vop_advlock_args /* {
 	struct vnode *a_vp;
 	caddr_t  a_id;
@@ -1192,7 +1193,7 @@ xfs_advlock(struct vop_advlock_args *v)
 	struct flock *a_fl;
 	int  a_flags;
     } */ *ap = v;
-#if 0
+
     struct xfs_node *xn = VNODE_TO_XNODE(ap->a_vp);
     int ret;
     xfs_locktype_t locktype;
