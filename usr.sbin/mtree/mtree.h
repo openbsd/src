@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.8 2002/03/04 19:56:39 millert Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.9 2002/03/09 18:54:19 millert Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ typedef struct _node {
 #define	F_UNAME		0x020000		/* user name */
 #define	F_VISIT		0x040000		/* file visited */
 #define	F_FLAGS		0x080000		/* file flags */
-#define	F_PRESERVE	0x100000		/* preserve attributes */
+#define	F_NOCHANGE	0x100000		/* do not change owner/mode */
 	u_int32_t flags;			/* items set */
 
 #define	F_BLOCK	0x001				/* block special */

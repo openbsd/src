@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.9 2002/03/04 19:56:39 millert Exp $	*/
+/*	$OpenBSD: verify.c,v 1.10 2002/03/09 18:54:19 millert Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.9 2002/03/04 19:56:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.10 2002/03/09 18:54:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ vwalk()
 			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME)) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
-				if ((ep->flags & F_PRESERVE) == 0 &&
+				if ((ep->flags & F_NOCHANGE) == 0 &&
 				    compare(ep->name, ep, p))
 					rval = MISMATCHEXIT;
 				if (ep->flags & F_IGN)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.19 2002/03/04 19:56:39 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.20 2002/03/09 18:54:19 millert Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -181,11 +181,11 @@ The current file's permissions as a numeric (octal) or symbolic
 value.
 .It Cm nlink
 The number of hard links the file is expected to have.
+.It Cm nochange
+Do not change the attributes (owner, group, mode, etc) on a file or directory.
 .It Cm optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
-.It Cm preserve
-The file's attributes should be preserved; don't change owner, group, mode, etc.
 .It Cm rmd160digest
 The RIPEMD-160 message digest of the file.
 .It Cm sha1digest
