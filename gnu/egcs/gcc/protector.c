@@ -1765,12 +1765,16 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
 		       GET_MODE_SIZE (mode));
     
   if (push_frame_offset == 0
-      && check_out_of_frame_access (get_insns (), STARTING_FRAME_OFFSET))
+      && check_out_of_frame_access (get_insns (), STARTING_FRAME_OFFSET + push_allocated_offset))
     {
-      /* if there is an access beyond frame, push dummy region to seperate
-	 the address of instantiated variables */
-      push_frame (GET_MODE_SIZE (DImode), 0);
-      assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
+      if (push_allocated_offset == 0)
+	{
+	  /* if there is an access beyond frame, push dummy region to seperate
+	     the address of instantiated variables */
+	  push_frame (GET_MODE_SIZE (DImode), 0);
+	  assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
+	}
+      else push_allocated_offset = 0;
     }
 
   saved_frame_offset = frame_offset;
