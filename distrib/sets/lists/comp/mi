@@ -77,6 +77,9 @@
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
+./usr/include/dev/cardbus
+./usr/include/dev/cardbus/cardbusdevs.h
+./usr/include/dev/cardbus/cardbusdevs_data.h
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
