@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.23 2000/12/19 23:17:55 markus Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.24 2000/12/20 19:26:56 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -505,7 +505,7 @@ load_private_key(const char *filename, const char *passphrase, Key *key,
 
 	/* check owner and modes */
 	if (fstat(fd, &st) < 0 ||
-	    (st.st_uid != 0 && st.st_uid != getuid()) ||
+	    (st.st_uid != 0 && getuid() != 0 && st.st_uid != getuid()) ||
 	    (st.st_mode & 077) != 0) {
 		close(fd);
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
