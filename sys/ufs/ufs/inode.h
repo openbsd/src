@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.9 1997/11/06 05:59:25 csapuntz Exp $	*/
+/*	$OpenBSD: inode.h,v 1.10 1997/11/09 22:14:06 millert Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ struct inode {
 #define IN_UPDATE       0x0004          /* Modification time update request */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_RENAME	0x0010		/* Inode is being renamed. */
-#define IN_SHLOCK       0x0020          /* FIle has shared lock. */
+#define IN_SHLOCK       0x0020          /* File has shared lock. */
 #define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
 
 #ifdef _KERNEL
