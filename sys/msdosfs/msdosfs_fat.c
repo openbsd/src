@@ -1,8 +1,8 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.19 1995/09/09 19:38:04 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.21 1995/11/05 18:47:53 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1995 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -58,6 +58,7 @@
 #include <sys/mount.h>		/* to define statfs structure */
 #include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
+#include <sys/dirent.h>
 
 /*
  * msdosfs include files.
@@ -163,18 +164,18 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 	 */
 	if (cn == MSDOSFSROOT) {
 		if (dep->de_Attributes & ATTR_DIRECTORY) {
-			if (findcn * pmp->pm_SectPerClust >= pmp->pm_rootdirsize) {
+			if (de_cn2off(pmp, findcn) >= dep->de_FileSize) {
 				if (cnp)
-					*cnp = pmp->pm_rootdirsize / pmp->pm_SectPerClust;
+					*cnp = de_bn2cn(pmp, pmp->pm_rootdirsize);
 				return (E2BIG);
 			}
 			if (bnp)
-				*bnp = pmp->pm_rootdirblk + findcn * pmp->pm_SectPerClust;
+				*bnp = pmp->pm_rootdirblk + de_cn2bn(pmp, findcn);
 			if (cnp)
 				*cnp = MSDOSFSROOT;
 			if (sp)
 				*sp = min(pmp->pm_bpcluster,
-				    dep->de_FileSize - findcn * pmp->pm_bpcluster);
+				    dep->de_FileSize - de_cn2off(pmp, findcn));
 			return (0);
 		} else {		/* just an empty file */
 			if (cnp)
@@ -213,8 +214,10 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			if (bp)
 				brelse(bp);
 			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED,
-					  &bp))
+					  &bp)) {
+				brelse(bp);
 				return (error);
+			}
 			bp_bn = bn;
 		}
 		prevcn = cn;
@@ -338,7 +341,7 @@ updatefats(pmp, bp, fatbn)
 		/* getblk() never fails */
 		bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount, 0, 0);
 		bcopy(bp->b_data, bpn->b_data, bp->b_bcount);
-		if (pmp->pm_waitonfat)
+		if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
 			bwrite(bpn);
 		else
 			bdwrite(bpn);
@@ -346,7 +349,7 @@ updatefats(pmp, bp, fatbn)
 	/*
 	 * Write out the first fat last.
 	 */
-	if (pmp->pm_waitonfat)
+	if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
 		bwrite(bp);
 	else
 		bdwrite(bp);
@@ -477,8 +480,10 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+	if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+		brelse(bp);
 		return (error);
+	}
 	
 	if (function & FAT_GET) {
 		readcn = getushort(&bp->b_data[bo]);
@@ -546,8 +551,10 @@ fatchain(pmp, start, count, fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+		if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+			brelse(bp);
 			return (error);
+		}
 		while (count > 0) {
 			start++;
 			newc = --count > 0 ? start : fillwith;
@@ -772,8 +779,10 @@ freeclusterchain(pmp, cluster)
 		if (lbn != bn) {
 			if (bp)
 				updatefats(pmp, bp, lbn);
-			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+				brelse(bp);
 				return (error);
+			}
 			lbn = bn;
 		}
 		usemap_free(pmp, cluster);
@@ -837,8 +846,10 @@ fillinusemap(pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) {
+				brelse(bp);
 				return (error);
+			}
 		}
 		readcn = getushort(&bp->b_data[bo]);
 		if (fat12) {
@@ -960,11 +971,14 @@ extendfile(dep, count, bpp, ncp, flags)
 					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
 						    pmp->pm_bpcluster, 0, 0);
 				else {
-					bp = getblk(DETOV(dep), frcn++, pmp->pm_bpcluster, 0, 0);
+					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
+					    pmp->pm_bpcluster, 0, 0);
 					/*
 					 * Do the bmap now, as in msdosfs_write
 					 */
-					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0, 0))
+					if (pcbmap(dep,
+					    de_bn2cn(pmp, bp->b_lblkno),
+					    &bp->b_blkno, 0, 0))
 						bp->b_blkno = -1;
 					if (bp->b_blkno == -1)
 						panic("extendfile: pcbmap");

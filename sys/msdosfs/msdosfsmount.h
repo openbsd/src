@@ -1,8 +1,8 @@
-/*	$NetBSD: msdosfsmount.h,v 1.11 1995/09/09 19:38:12 ws Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.12 1995/10/15 15:34:34 ws Exp $	*/
 
 /*-
- * Copyright (C) 1994 Wolfgang Solfrank.
- * Copyright (C) 1994 TooLs GmbH.
+ * Copyright (C) 1994, 1995 Wolfgang Solfrank.
+ * Copyright (C) 1994, 1995 TooLs GmbH.
  * All rights reserved.
  * Original code by Paul Popelka (paulp@uts.amdahl.com) (see below).
  *
@@ -65,23 +65,33 @@ struct msdosfsmount {
 	u_long pm_nmbrofclusters;	/* # of clusters in filesystem */
 	u_long pm_maxcluster;	/* maximum cluster number */
 	u_long pm_freeclustercount;	/* number of free clusters */
-	u_long pm_bnshift;	/* shift file offset right this amount to get a block number */
-	u_long pm_brbomask;	/* and a file offset with this mask to get block rel offset */
 	u_long pm_cnshift;	/* shift file offset right this amount to get a cluster number */
 	u_long pm_crbomask;	/* and a file offset with this mask to get cluster rel offset */
+	u_long pm_bnshift;	/* shift file offset right this amount to get a block number */
 	u_long pm_bpcluster;	/* bytes per cluster */
 	u_long pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
 	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
 	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
 	u_long pm_fatsize;	/* size of fat in bytes */
 	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
-	char pm_ronly;		/* read only if non-zero */
-	char pm_waitonfat;	/* wait for writes of the fat to complt, when 0 use bdwrite, else use bwrite */
+	u_int pm_flags;		/* see below */
 	struct netexport pm_export;	/* export information */
 #ifdef	atari
 	u_int  pm_fatentrysize;	/* size of fat entry (12/16) */
 #endif	/* atari */
 };
+
+/*
+ * Mount point flags:
+ */
+/*#define	MSDOSFSMNT_SHORTNAME	1	/* Defined in <sys/mount.h> */
+/*#define	MSDOSFSMNT_LONGNAME	2				*/
+/*#define	MSDOSFSMNT_NOWIN95	4				*/
+/* All flags above: */
+#define	MSDOSFSMNT_MNTOPT \
+	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95)
+#define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
+#define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
 
 #define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
 
@@ -92,7 +102,6 @@ struct msdosfsmount {
  * Shorthand for fields in the bpb contained in the msdosfsmount structure.
  */
 #define	pm_BytesPerSec	pm_bpb.bpbBytesPerSec
-#define	pm_SectPerClust	pm_bpb.bpbSecPerClust
 #define	pm_ResSectors	pm_bpb.bpbResSectors
 #define	pm_FATs		pm_bpb.bpbFATs
 #define	pm_RootDirEnts	pm_bpb.bpbRootDirEnts
@@ -105,23 +114,64 @@ struct msdosfsmount {
 #define	pm_HugeSectors	pm_bpb.bpbHugeSectors
 
 /*
+ * Convert pointer to buffer -> pointer to direntry
+ */
+#define	bptoep(pmp, bp, dirofs) \
+	((struct direntry *)(((bp)->b_data)	\
+	 + ((dirofs) & (pmp)->pm_crbomask)))
+
+/*
+ * Convert block number to cluster number
+ */
+#define	de_bn2cn(pmp, bn) \
+	((bn) >> ((pmp)->pm_cnshift - (pmp)->pm_bnshift))
+
+/*
+ * Convert cluster number to block number
+ */
+#define	de_cn2bn(pmp, cn) \
+	((cn) << ((pmp)->pm_cnshift - (pmp)->pm_bnshift))
+
+/*
+ * Convert file offset to cluster number
+ */
+#define de_cluster(pmp, off) \
+	((off) >> (pmp)->pm_cnshift)
+
+/*
+ * Clusters required to hold size bytes
+ */
+#define	de_clcount(pmp, size) \
+	(((size) + (pmp)->pm_bpcluster - 1) >> (pmp)->pm_cnshift)
+
+/*
+ * Convert file offset to block number
+ */
+#define de_blk(pmp, off) \
+	(de_cn2bn(pmp, de_cluster((pmp), (off))))
+
+/*
+ * Convert cluster number to file offset
+ */
+#define	de_cn2off(pmp, cn) \
+	((cn) << (pmp)->pm_cnshift)
+
+/*
+ * Convert block number to file offset
+ */
+#define	de_bn2off(pmp, bn) \
+	((bn) << (pmp)->pm_bnshift)
+/*
  * Map a cluster number into a filesystem relative block number.
  */
 #define	cntobn(pmp, cn) \
-	((((cn)-CLUST_FIRST) * (pmp)->pm_SectPerClust) + (pmp)->pm_firstcluster)
-
-/*
- * Map a filesystem relative block number back into a cluster number.
- */
-#define	bntocn(pmp, bn) \
-	((((bn) - pmp->pm_firstcluster) / (pmp)->pm_SectPerClust) + CLUST_FIRST)
+	(de_cn2bn((pmp), (cn)-CLUST_FIRST) + (pmp)->pm_firstcluster)
 
 /*
  * Calculate block number for directory entry in root dir, offset dirofs
  */
 #define	roottobn(pmp, dirofs) \
-	(((dirofs) / (pmp)->pm_bpcluster) * (pmp)->pm_SectPerClust \
-	+ (pmp)->pm_rootdirblk)
+	(de_blk((pmp), (dirofs)) + (pmp)->pm_rootdirblk)
 
 /*
  * Calculate block number for directory entry at cluster dirclu, offset
@@ -131,26 +181,6 @@ struct msdosfsmount {
 	((dirclu) == MSDOSFSROOT \
 	 ? roottobn((pmp), (dirofs)) \
 	 : cntobn((pmp), (dirclu)))
-
-/*
- * Convert pointer to buffer -> pointer to direntry
- */
-#define	bptoep(pmp, bp, dirofs) \
-	((struct direntry *)(((bp)->b_data)	\
-	 + ((dirofs) & (pmp)->pm_crbomask)))
-
-
-/*
- * Convert filesize to block number
- */
-#define de_blk(pmp, off) \
-	((off) >> (pmp)->pm_cnshift)
-
-/*
- * Clusters required to hold size bytes
- */
-#define	de_clcount(pmp, size) \
-	(((size) + (pmp)->pm_bpcluster - 1) >> (pmp)->pm_cnshift)
 
 /*
  * Prototypes for MSDOSFS virtual filesystem operations
