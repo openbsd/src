@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.65 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: tty.c,v 1.66 2004/09/19 21:34:43 mickey Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2036,7 +2036,7 @@ ttwakeup(tp)
 int
 ttspeedtab(speed, table)
 	int speed;
-	register struct speedtab *table;
+	const struct speedtab *table;
 {
 
 	for ( ; table->sp_speed != -1; table++)

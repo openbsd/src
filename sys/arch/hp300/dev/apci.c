@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.15 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.16 2004/09/19 21:34:42 mickey Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ cdev_decl(apci);
 
 int	apcidefaultrate = TTYDEF_SPEED;
 
-struct speedtab apcispeedtab[] = {
+const struct speedtab apcispeedtab[] = {
 	{ 0,		0		},
 	{ 50,		APCIBRD(50)	},
 	{ 75,		APCIBRD(75)	},

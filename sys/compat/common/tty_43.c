@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_43.c,v 1.8 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: tty_43.c,v 1.9 2004/09/19 21:34:42 mickey Exp $	*/
 /*	$NetBSD: tty_43.c,v 1.5 1996/05/20 14:29:17 mark Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@
 
 int ttydebug = 0;
 
-static struct speedtab compatspeeds[] = {
+static const struct speedtab compatspeeds[] = {
 #define MAX_SPEED	17
 	{ 115200, 17 },
 	{ 57600, 16 },
@@ -76,7 +76,7 @@ static struct speedtab compatspeeds[] = {
 	{ 0,	0 },
 	{ -1,	-1 },
 };
-static int compatspcodes[] = {
+static const int compatspcodes[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.17 2003/12/22 20:38:07 jmc Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.18 2004/09/19 21:34:42 mickey Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-struct speedtab dcmspeedtab[] = {
+const struct speedtab dcmspeedtab[] = {
 	{	0,	BR_0		},
 	{	50,	BR_50		},
 	{	75,	BR_75		},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.18 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.19 2004/09/19 21:34:42 mickey Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ void	dcacnputc(dev_t, int);
 static	struct dcadevice *dca_cn = NULL;	/* pointer to hardware */
 static	int dcaconsinit;			/* has been initialized */
 
-struct speedtab dcaspeedtab[] = {
+const struct speedtab dcaspeedtab[] = {
 	{	0,	0		},
 	{	50,	DCABRD(50)	},
 	{	75,	DCABRD(75)	},
