@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.33 2004/12/30 21:34:24 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.34 2005/01/10 17:52:04 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -215,6 +215,7 @@ yylex(int cf)
 					      source->areap);
 					s->start = s->str = *replace;
 					s->next = source;
+					s->u.freeme = NULL;
 					source = s;
 					continue;
 				} else
