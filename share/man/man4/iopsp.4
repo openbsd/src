@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iopsp.4,v 1.2 2001/07/03 06:26:05 mickey Exp $
+.\"	$OpenBSD: iopsp.4,v 1.3 2001/07/03 23:35:07 niklas Exp $
 .\"	$NetBSD: iopsp.4,v 1.2 2000/12/11 13:11:59 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,10 +63,13 @@ message will be displayed during configuration.  For example:
 .Ed
 .Pp
 Such devices will usually be indirectly accessible as block devices, either
-individually or as part of an array.
+individually or as part of an array.  For accessing these, there is the
+.Nm ioprbs
+driver.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr iop 4 ,
+.Xr ioprbs 4 ,
 .Xr scsibus 4
 .Sh HISTORY
 The
