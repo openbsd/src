@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.35 1999/11/18 14:00:49 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.36 1999/11/19 19:58:18 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -900,7 +900,7 @@ void ssh_exchange_identification()
   for (i = 0; i < sizeof(buf) - 1; i++)
     {
       if (read(connection_in, &buf[i], 1) != 1)
-	fatal("read: %.100s", strerror(errno));
+	fatal("ssh_exchange_identification: read: %.100s", strerror(errno));
       if (buf[i] == '\r')
 	{
 	  buf[i] = '\n';
