@@ -1,5 +1,5 @@
-/*	$OpenBSD: audioio.h,v 1.7 1998/04/26 21:03:17 provos Exp $	*/
-/*	$NetBSD: audioio.h,v 1.18 1997/10/28 03:26:45 mikel Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.8 1998/06/02 11:01:11 provos Exp $	*/
+/*	$NetBSD: audioio.h,v 1.21 1998/05/27 17:21:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,16 +82,8 @@ struct audio_info {
 };
 typedef struct audio_info audio_info_t;
 
-#ifdef _KERNEL
-#define AUDIO_INITINFO(p)\
-	{ int n = sizeof(struct audio_info); \
-	  u_char *q = (u_char *) p; \
-	  while (n-- > 0) *q++ = 0xff; }
-
-#else
-#define AUDIO_INITINFO(p)\
+#define AUDIO_INITINFO(p) \
 	(void)memset((void *)(p), 0xff, sizeof(struct audio_info))
-#endif
 
 /*
  * Parameter for the AUDIO_GETDEV ioctl to determine current
@@ -269,11 +261,14 @@ typedef struct mixer_ctrl {
 #define AudioNline	"line"
 #define AudioNcd	"cd"
 #define AudioNdac	"dac"
+#define AudioNaux	"aux"
 #define AudioNrecord	"record"
 #define AudioNvolume	"volume"
 #define AudioNmonitor	"monitor"
 #define AudioNtreble	"treble"
+#define AudioNmid	"mid"
 #define AudioNbass	"bass"
+#define AudioNbassboost	"bassboost"
 #define AudioNspeaker	"speaker"
 #define AudioNheadphone	"headphones"
 #define AudioNoutput	"output"
@@ -281,6 +276,7 @@ typedef struct mixer_ctrl {
 #define AudioNmaster	"master"
 #define AudioNstereo	"stereo"
 #define AudioNmono	"mono"
+#define AudioNloudness	"loudness"
 #define AudioNspatial	"spatial"
 #define AudioNsurround	"surround"
 #define AudioNpseudo	"pseudo"
@@ -295,6 +291,8 @@ typedef struct mixer_ctrl {
 #define AudioNmidi	"midi"
 #define AudioNmixerout	"mixerout"
 #define AudioNswap	"swap"	/* swap left and right channels */
+#define AudioNagc	"agc"
+#define AudioNdelay	"delay"
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"
