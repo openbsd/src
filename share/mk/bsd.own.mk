@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.49 2001/06/27 06:16:48 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.50 2001/06/27 18:09:26 drahn Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -27,6 +27,12 @@ AFS?=		yes
 .endif
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
+# Set toolchain for libdl and other "differences"
+.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc")
+ELF_TOOLCHAIN?=	yes
+.else
+ELF_TOOLCHAIN?=	no
+.endif
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
