@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.1 2001/10/01 18:10:32 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.2 2001/10/02 00:26:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1334,7 +1334,7 @@ ce4231_pintr(v)
 			nextaddr = (u_int32_t)p->dmamap->dm_segs[0].ds_addr;
 			sc->sc_playcnt = togo = sc->sc_blksz;
 		} else {
-			nextaddr = P_READ(sc, EBDMA_DADDR) + sc->sc_blksz;
+			nextaddr = sc->sc_lastaddr;
 			if (togo > sc->sc_blksz)
 				togo = sc->sc_blksz;
 			sc->sc_playcnt += togo;
@@ -1342,6 +1342,7 @@ ce4231_pintr(v)
 
 		P_WRITE(sc, EBDMA_DCNT, togo);
 		P_WRITE(sc, EBDMA_DADDR, nextaddr);
+		sc->sc_lastaddr = nextaddr + togo;
 
 		if (sc->sc_pintr != NULL)
 			(*sc->sc_pintr)(sc->sc_parg);
@@ -1490,6 +1491,7 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		ce4231_write(sc, SP_INTERFACE_CONFIG,
 		    ce4231_read(sc, SP_INTERFACE_CONFIG) | PLAYBACK_ENABLE);
 	}
+	sc->sc_lastaddr = p->dmamap->dm_segs[0].ds_addr + n;
 
 	return (0);
 }
