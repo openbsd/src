@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 1999/04/20 22:35:30 provos Exp $
+#	$OpenBSD: GENERIC,v 1.49 1999/05/27 23:52:03 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -16,6 +16,7 @@ option		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
+option		KMEMSTATS	# collect malloc(9) statistics
 
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores

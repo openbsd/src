@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.21 1999/02/26 01:57:58 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.22 1999/05/27 23:52:03 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -38,10 +38,6 @@
 
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
-
-#ifndef NO_KMEMSTATS
-#define KMEMSTATS
-#endif
 
 /*
  * flags to malloc
