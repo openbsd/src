@@ -1,6 +1,5 @@
 %{
-/*	$OpenBSD: aicasm_scan.l,v 1.7 2003/12/24 23:27:55 krw Exp $	*/
-/*	$NetBSD: aicasm_scan.l,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$OpenBSD: aicasm_scan.l,v 1.8 2004/06/12 03:37:20 krw Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
@@ -40,7 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_scan.l,v 1.21 2002/09/27 03:23:02 gibbs Exp $
+ * $Id: aicasm_scan.l,v 1.8 2004/06/12 03:37:20 krw Exp $
+ *
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_scan.l,v 1.22 2003/12/16 23:54:07 gibbs Exp $
  */
 
 #include <sys/types.h>
@@ -87,6 +88,7 @@ MBODY		((\\[^\n])*[^\n\\]*)+
 
 %%
 \n			{ ++yylineno; }
+\r			;
 "/*"			{ BEGIN COMMENT;  /* Enter comment eating state */ }
 <COMMENT>"/*"		{ fprintf(stderr, "Warning! Comment within comment."); }
 <COMMENT>\n		{ ++yylineno; }
@@ -114,6 +116,7 @@ if[ \t]*\(		{
 				}
 			}
 <CEXPR>\n		{ ++yylineno; }
+<CEXPR>\r		;
 <CEXPR>[^()\n]+	{
 				char *yptr;
 
@@ -359,6 +362,7 @@ else			{ return T_ELSE; }
 				/* Eat escaped newlines. */
 				++yylineno;
 			}
+<MACROBODY>\r		;
 <MACROBODY>\n		{
 				/* Macros end on the first unescaped newline. */
 				BEGIN INITIAL;
@@ -369,10 +373,17 @@ else			{ return T_ELSE; }
 			}
 <MACROBODY>{MBODY}	{
 				char *yptr;
+				char c;
 
 				yptr = yytext;
-				while (*yptr)
-					*string_buf_ptr++ = *yptr++;
+				while (c = *yptr++) {
+					/*
+					 * Strip carriage returns.
+					 */
+					if (c == '\r')
+						continue;
+					*string_buf_ptr++ = c;
+				}
 			}
 {WORD}\(		{
 				char *yptr;
