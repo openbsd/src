@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.161 2002/12/30 11:26:20 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.162 2002/12/30 23:58:46 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -846,12 +846,12 @@ If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
 .El
 .It Pa icmp-type <type> code <code>
-.It Pa ipv6-icmp-type <type> code <code>
+.It Pa icmp6-type <type> code <code>
 The rule only applies to ICMP or ICMPv6 packets with the specified type
 and code.
 This parameter is only valid for rules that cover protocols icmp or
-ipv6-icmp.
-The protocol and the icmp type indicator (icmp-type or ipv6-icmp-type)
+icmp6.
+The protocol and the icmp type indicator (icmp-type or icmp6-type)
 must match.
 .It Pa allow-opts
 By default, packets which contain IP options are blocked.
@@ -1566,7 +1566,7 @@ pf-rule        = action [ ( "in" | "out" ) ]
 
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = [ user ] | [ group ] | [ flags ] |
-                 [ icmp-type | ipv6-icmp-type ] | [ tos ] |
+                 [ icmp-type | icmp6-type ] | [ tos ] |
                  [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ] |
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ] |
                  [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ] |
@@ -1651,7 +1651,7 @@ flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
                  [ "W" ]
 
 icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" )
-ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" )
+icmp6-type     = "icmp6-type" ( icmp-type-code | "{" icmp-list "}" )
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ]
 icmp-list      = icmp-type-code [ [ "," ] icmp-list ]
