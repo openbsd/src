@@ -3262,7 +3262,7 @@ sub prefixify {
     print STDERR "  prefixify $var => $path\n" if $Verbose >= 2;
     print STDERR "    from $sprefix to $rprefix\n" if $Verbose >= 2;
 
-    unless( $path =~ s{^\Q$sprefix\E(?=/|\z)}{$rprefix}s ) {
+    unless( $path =~ s{^\Q$sprefix\E\b}{$rprefix}s ) {
 
         print STDERR "    cannot prefix, using default.\n" if $Verbose >= 2;
         print STDERR "    no default!\n" if !$default && $Verbose >= 2;
