@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysconf.3,v 1.11 1999/07/09 13:35:19 aaron Exp $
+.\"	$OpenBSD: sysconf.3,v 1.12 2000/04/05 17:40:28 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,8 +62,9 @@ The available values are as follows:
 .Bl -tag -width "123456"
 .Pp
 .It Li _SC_ARG_MAX
-The maximum bytes of argument to
-.Xr exec 2 .
+The maximum bytes of arguments to
+.Xr exec 2
+(including the environment).
 .It Li _SC_CHILD_MAX
 The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
@@ -79,7 +80,7 @@ at any one time.
 The minimum maximum number of types supported for the name of a
 timezone.
 .It Li _SC_JOB_CONTROL
-Return 1 if job control is available on this system, otherwise \-1.
+Returns 1 if job control is available on this system, otherwise \-1.
 .It Li _SC_SAVED_IDS
 Returns 1 if saved set-group-ID and saved set-user-ID is available,
 otherwise \-1.
