@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.10 2002/06/25 15:13:09 millert Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.11 2002/11/19 18:36:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -106,7 +106,7 @@ an_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {

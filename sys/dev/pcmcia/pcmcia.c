@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.32 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.33 2002/11/19 18:36:18 jason Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ pcmcia_card_attach(dev)
 	/*
 	 * this is here so that when socket_enable calls gettype, trt happens
 	 */
-	sc->card.pf_head.sqh_first = NULL;
+	SIMPLEQ_FIRST(&sc->card.pf_head) = NULL;
 
 	pcmcia_chip_socket_enable(sc->pct, sc->pch);
 
@@ -188,7 +188,7 @@ pcmcia_card_attach(dev)
 
 	if (sc->card.error)
 		return (1);
-	if (sc->card.pf_head.sqh_first == NULL)
+	if (SIMPLEQ_EMPTY(&sc->card.pf_head))
 		return (1);
 #endif
 
@@ -455,8 +455,7 @@ pcmcia_function_enable(pf)
 	 * It's possible for different functions' CCRs to be in the same
 	 * underlying page.  Check for that.
 	 */
-	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
-	    tmp = tmp->pf_list.sqe_next) {
+	SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
 		    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 		    ((pf->ccr_base + PCMCIA_CCR_SIZE) <=
@@ -532,8 +531,7 @@ pcmcia_function_enable(pf)
 	}
 
 #ifdef PCMCIADEBUG
-	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
-	     tmp = tmp->pf_list.sqe_next) {
+	SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
 		printf("%s: function %d CCR at %d offset %lx: "
 		       "%x %x %x %x, %x %x %x %x, %x\n",
 		       tmp->sc->dev.dv_xname, tmp->number,
@@ -599,8 +597,7 @@ pcmcia_function_disable(pf)
 	 * first to avoid matching ourself.
 	 */
 	pf->pf_flags &= ~PFF_ENABLED;
-	for (tmp = pf->sc->card.pf_head.sqh_first; tmp != NULL;
-	    tmp = tmp->pf_list.sqe_next) {
+	SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
 		    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 		    ((pf->ccr_base + PCMCIA_CCR_SIZE) <=
@@ -701,8 +698,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
 		 * and find the highest ipl number (lowest priority).
 		 */
 		ihcnt = 0;
-		for (pf2 = pf->sc->card.pf_head.sqh_first; pf2 != NULL;
-		    pf2 = pf2->pf_list.sqe_next)
+		SIMPLEQ_FOREACH(pf2, &pf->sc->card.pf_head, pf_list) {
 			if (pf2->ih_fct) {
 				DPRINTF(("%s: function %d has ih_fct %p\n",
 				    pf->sc->dev.dv_xname, pf2->number,
@@ -715,6 +711,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
 
 				ihcnt++;
 			}
+		}
 
 		/*
 		 * Establish the real interrupt, changing the ipl if
@@ -804,8 +801,7 @@ pcmcia_intr_disestablish(pf, ih)
 		 * the current function.
 		 */
 		ihcnt = 0;
-		for (pf2 = pf->sc->card.pf_head.sqh_first; pf2 != NULL;
-		    pf2 = pf2->pf_list.sqe_next) {
+		SIMPLEQ_FOREACH(pf2, &pf->sc->card.pf_head, pf_list) {
 			if (pf2 == pf)
 				continue;
 

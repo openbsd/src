@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.c,v 1.8 2002/06/30 18:25:58 smurph Exp $ */
+/* $OpenBSD: aicasm.c,v 1.9 2002/11/19 18:36:18 jason Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm.c,v 1.8 2002/06/30 18:25:58 smurph Exp $
+ * $Id: aicasm.c,v 1.9 2002/11/19 18:36:18 jason Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.34 2002/06/05 22:51:54 gibbs Exp $
  */
@@ -197,15 +197,15 @@ main(argc, argv)
 							"times\n", appname);
 				}
 				includes_search_curdir = 0;
-				for (include_dir = search_path.slh_first;
-				     include_dir != NULL;
-				     include_dir = include_dir->links.sle_next)
+				SLIST_FOREACH(include_dir, &search_path,
+				    links) {
 					/*
 					 * All entries before a '-I-' only
 					 * apply to includes specified with
 					 * quotes instead of "<>".
 					 */
 					include_dir->quoted_includes_only = 1;
+				}
 			} else {
 				include_dir =
 				    (path_entry_t)malloc(sizeof(*include_dir));

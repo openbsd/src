@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.16 2002/03/14 03:16:07 millert Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.17 2002/11/19 18:36:18 jason Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -238,8 +238,8 @@ int	pcmcia_scan_cis(struct device * dev,
 int	pcmcia_ccr_read(struct pcmcia_function *, int);
 void	pcmcia_ccr_write(struct pcmcia_function *, int, int);
 
-#define	pcmcia_mfc(sc)	((sc)->card.pf_head.sqh_first &&		\
-			 (sc)->card.pf_head.sqh_first->pf_list.sqe_next)
+#define	pcmcia_mfc(sc)	(SIMPLEQ_FIRST(&(sc)->card.pf_head) &&		\
+    SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
 
 void	pcmcia_function_init(struct pcmcia_function *,
 	    struct pcmcia_config_entry *);

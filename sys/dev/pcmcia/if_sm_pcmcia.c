@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.17 2002/07/01 13:31:06 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.18 2002/11/19 18:36:18 jason Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -155,7 +155,7 @@ sm_pcmcia_attach(parent, self, aux)
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.38 2002/07/09 11:00:27 fgsch Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.39 2002/11/19 18:36:18 jason Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -331,7 +331,7 @@ wi_pcmcia_attach(parent, self, aux)
 	struct wi_softc		*sc = &psc->sc_wi;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function	*pf = pa->pf;
-	struct pcmcia_config_entry *cfe = pf->cfe_head.sqh_first;
+	struct pcmcia_config_entry *cfe = SIMPLEQ_FIRST(&pf->cfe_head);
 	int			state = 0;
 
 	psc->sc_pf = pf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.13 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.14 2002/11/19 18:36:18 jason Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -140,7 +140,7 @@ rln_pcmcia_attach(parent, self, aux)
 	struct rln_pcmcia_product *rpp;
 
 	psc->psc_pf = pa->pf;
-	cfe = psc->psc_pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&psc->psc_pf->cfe_head);
 
 	/* Guess the transfer width we will be using */
 	if (cfe->flags & PCMCIA_CFE_IO16)

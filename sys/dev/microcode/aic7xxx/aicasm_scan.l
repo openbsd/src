@@ -439,9 +439,7 @@ include_file(char *file_name, include_type type)
 
 	if (newfile == NULL && type != SOURCE_FILE) {
                 path_entry_t include_dir;
-                for (include_dir = search_path.slh_first;
-                     include_dir != NULL;                
-                     include_dir = include_dir->links.sle_next) {
+		SLIST_FOREACH(include_dir, &search_path, links) {
 			char fullname[PATH_MAX];
 
 			if ((include_dir->quoted_includes_only == TRUE)
@@ -575,8 +573,8 @@ yywrap()
 	if (yyfilename != NULL)
 		free(yyfilename);
 	yyfilename = NULL;
-	include = include_stack.slh_first;
-	if (include != NULL) {
+	include = SLIST_FIRST(&include_stack);
+	if (include != SLIST_END(&include_stack)) {
 		yy_switch_to_buffer(include->buffer);
 		yylineno = include->lineno;
 		yyfilename = include->filename;
