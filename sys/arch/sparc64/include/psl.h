@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.1.1.1 2001/08/18 04:16:40 jason Exp $	*/
+/*	$OpenBSD: psl.h,v 1.2 2001/08/18 19:46:04 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -388,6 +388,7 @@ SPLHOLD(spllpt, PIL_LPT)
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
 SPLHOLD(splvm, PIL_IMP)
+#define	splimp splvm
 
 SPLHOLD(splclock, PIL_CLOCK)
 
