@@ -1,4 +1,4 @@
-$Id: README.openssh2,v 1.1 2000/04/06 08:55:22 markus Exp $
+$Id: README.openssh2,v 1.2 2000/04/06 21:28:22 markus Exp $
 
 works:
 	secsh-transport: works w/o rekey
@@ -12,6 +12,7 @@ works:
 	dss: verification works,
 		key database in ~/.ssh/known_hosts with bits == 0 hack
 	dss: signature works, keygen w/ openssl:
+		$ umask 077
 		$ openssl dsaparam 1024 -out dsa1024.pem
 		$ openssl gendsa -out /etc/ssh_dsa_key dsa1024.pem -rand /dev/arandom
 		start sshd with '-2' flag
@@ -32,4 +33,4 @@ todo:
 	sftp
 
 -markus
-$Date: 2000/04/06 08:55:22 $
+$Date: 2000/04/06 21:28:22 $
