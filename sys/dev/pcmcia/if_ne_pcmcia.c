@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.70 2003/06/13 08:49:30 pb Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.71 2003/06/13 08:54:35 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -950,7 +950,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 		goto fail_2;
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef NE_DEBUG
 	printf(": LAN iobase 0x%x (0x%x) ->",
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8,
@@ -960,7 +960,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	    psc->sc_pcioh.addr & 0xff);
 	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
 	    psc->sc_pcioh.addr >> 8);
-#ifdef DIAGNOSTIC
+#ifdef NE_DEBUG
 	printf(" 0x%x", bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
 	    bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #endif
