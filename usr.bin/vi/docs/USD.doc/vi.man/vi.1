@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.15 2003/12/31 13:40:35 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.16 2003/12/31 18:56:21 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -119,10 +119,9 @@ option was set.
 Recover the specified files, or, if no files are specified,
 list the files that could be recovered.
 If no recoverable files by the specified name exist,
-.\" the file is edited as if the
-.\" .Fl r
-.\" option had not been specified.
-exit the editor.
+the file is edited as if the
+.Fl r
+option had not been specified.
 .It Fl S
 Run with the
 .Cm secure
