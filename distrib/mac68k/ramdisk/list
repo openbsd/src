@@ -1,0 +1,89 @@
+#	$OpenBSD: list,v 1.1 1999/06/13 10:33:31 downsj Exp $
+
+COPY	${OBJDIR}/raminst		raminst
+LINK	raminst			bin/cat
+LINK	raminst			bin/chmod
+LINK	raminst			bin/cp
+LINK	raminst			bin/df
+LINK	raminst			bin/dd
+LINK	raminst			bin/ed
+LINK	raminst			bin/expr
+LINK	raminst			bin/ln
+LINK	raminst			bin/ls
+LINK	raminst			bin/kill
+LINK	raminst			bin/hostname
+LINK	raminst			bin/mkdir
+LINK	raminst			bin/mv
+LINK	raminst			bin/pwd
+LINK	raminst			bin/rm
+LINK	raminst			bin/sh
+LINK	bin/sh			bin/-sh
+LINK	raminst			bin/sleep
+LINK	raminst			bin/stty
+LINK	raminst			bin/sync
+LINK	raminst			bin/test
+LINK	raminst			bin/[
+LINK	raminst			sbin/disklabel
+LINK	raminst			sbin/fsck
+LINK	raminst			sbin/halt
+LINK	raminst			sbin/ifconfig
+LINK	raminst			sbin/init
+LINK	raminst			sbin/mknod
+LINK	raminst			usr/bin/more
+LINK	raminst			sbin/mount
+LINK	raminst			sbin/mount_cd9660
+LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_kernfs
+LINK	raminst			sbin/mount_nfs
+LINK	raminst			sbin/mount_mfs
+LINK	raminst			sbin/newfs
+LINK	raminst			sbin/reboot
+LINK	raminst			sbin/route
+LINK	raminst			sbin/slattach
+LINK	raminst			sbin/umount
+LINK	raminst			usr/bin/chgrp
+LINK	raminst			usr/bin/ftp
+LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/grep
+LINK	raminst			usr/bin/gzip
+LINK	raminst			usr/bin/less
+LINK	raminst			usr/bin/sed
+LINK	raminst			usr/bin/sort
+LINK	raminst			bin/pax
+LINK	raminst			usr/bin/tar
+LINK	raminst			usr/bin/tip
+LINK	raminst			usr/sbin/chat
+LINK	raminst			usr/sbin/chown
+LINK	raminst			usr/sbin/pppd
+LINK	raminst			usr/bin/vi
+SPECIAL	/bin/rm raminst
+
+# copy the MAKEDEV script and make some devices
+#COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+COPY	${CURDIR}/../../../etc/etc.mac68k/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV raminst
+
+# various files that we need in /etc for the install
+COPY	rd.group		etc/group
+COPY	rd.master.passwd	etc/master.passwd
+COPY	rd.disktab		etc/disktab
+SPECIAL	cd etc; pwd_mkdb -p -d . ./master.passwd
+
+# we strip comments from files since we need the space...
+
+# and the common installation tools
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/dot.commonutils > .commonutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${TOPDIR}/common/termcap.vt > usr/share/misc/termcap
+
+# and the installation tools
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
+SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
+
+SPECIAL	chmod 755 install upgrade
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf
