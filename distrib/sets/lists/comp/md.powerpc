@@ -139,3 +139,13 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
+./usr/share/man/cat3/dlclose.0
+./usr/share/man/cat3/dlctl.0
+./usr/share/man/cat3/dlerror.0
+./usr/share/man/cat3/dlfcn.0
+./usr/share/man/cat3/dlopen.0
+./usr/share/man/cat3/dlsym.0
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0

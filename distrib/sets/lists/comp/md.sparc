@@ -128,3 +128,7 @@
 ./usr/include/sparc/fgaio.h
 ./usr/include/sparc/scfio.h
 ./usr/lib/libperl_pic.a
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0

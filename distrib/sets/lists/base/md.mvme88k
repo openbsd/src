@@ -392,10 +392,6 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
-./usr/share/man/cat3/kvm_dump.0
-./usr/share/man/cat3/kvm_dump_inval.0
-./usr/share/man/cat3/kvm_dump_mkheader.0
-./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/libdata/perl5/site_perl/m88k-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sched.ph

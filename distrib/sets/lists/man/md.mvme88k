@@ -1,11 +1,5 @@
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/ldd.0
-./usr/share/man/cat3/dlclose.0
-./usr/share/man/cat3/dlctl.0
-./usr/share/man/cat3/dlerror.0
-./usr/share/man/cat3/dlfcn.0
-./usr/share/man/cat3/dlopen.0
-./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/ldconfig.0

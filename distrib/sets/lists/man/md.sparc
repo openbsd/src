@@ -4,10 +4,6 @@
 ./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat1/rtld.0
 ./usr/share/man/cat1/screenblank.0
-./usr/share/man/cat3/kvm_dump.0
-./usr/share/man/cat3/kvm_dump_inval.0
-./usr/share/man/cat3/kvm_dump_mkheader.0
-./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/eeprom.0

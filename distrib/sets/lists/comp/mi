@@ -677,6 +677,7 @@
 ./usr/include/net/if_enc.h
 ./usr/include/net/if_fddi.h
 ./usr/include/net/if_gif.h
+./usr/include/net/if_gre.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
 ./usr/include/net/if_ppp.h
@@ -744,6 +745,7 @@
 ./usr/include/netinet/ip_fil.h
 ./usr/include/netinet/ip_fil_compat.h
 ./usr/include/netinet/ip_frag.h
+./usr/include/netinet/ip_gre.h
 ./usr/include/netinet/ip_icmp.h
 ./usr/include/netinet/ip_ipip.h
 ./usr/include/netinet/ip_ipsp.h
@@ -1678,7 +1680,7 @@
 ./usr/share/man/cat3/betoh16.0
 ./usr/share/man/cat3/betoh32.0
 ./usr/share/man/cat3/bindresvport.0
-./usr/share/man/cat3/bindresvport_af.0
+./usr/share/man/cat3/bindresvport_sa.0
 ./usr/share/man/cat3/bit_alloc.0
 ./usr/share/man/cat3/bit_clear.0
 ./usr/share/man/cat3/bit_decl.0
@@ -2203,6 +2205,20 @@
 ./usr/share/man/cat3/inchstr.0
 ./usr/share/man/cat3/index.0
 ./usr/share/man/cat3/inet.0
+./usr/share/man/cat3/inet6_option_alloc.0
+./usr/share/man/cat3/inet6_option_append.0
+./usr/share/man/cat3/inet6_option_find.0
+./usr/share/man/cat3/inet6_option_init.0
+./usr/share/man/cat3/inet6_option_next.0
+./usr/share/man/cat3/inet6_option_space.0
+./usr/share/man/cat3/inet6_rthdr_add.0
+./usr/share/man/cat3/inet6_rthdr_getaddr.0
+./usr/share/man/cat3/inet6_rthdr_getflags.0
+./usr/share/man/cat3/inet6_rthdr_init.0
+./usr/share/man/cat3/inet6_rthdr_lasthop.0
+./usr/share/man/cat3/inet6_rthdr_reverse.0
+./usr/share/man/cat3/inet6_rthdr_segments.0
+./usr/share/man/cat3/inet6_rthdr_space.0
 ./usr/share/man/cat3/inet_addr.0
 ./usr/share/man/cat3/inet_aton.0
 ./usr/share/man/cat3/inet_lnaof.0
@@ -2235,6 +2251,7 @@
 ./usr/share/man/cat3/ipx_addr.0
 ./usr/share/man/cat3/ipx_ntoa.0
 ./usr/share/man/cat3/iruserok.0
+./usr/share/man/cat3/iruserok_sa.0
 ./usr/share/man/cat3/is_linetouched.0
 ./usr/share/man/cat3/is_wintouched.0
 ./usr/share/man/cat3/isalnum.0
@@ -2612,6 +2629,14 @@
 ./usr/share/man/cat3/printf.0
 ./usr/share/man/cat3/printw.0
 ./usr/share/man/cat3/psignal.0
+./usr/share/man/cat3/pthread_attr_destroy.0
+./usr/share/man/cat3/pthread_attr_getdetachstate.0
+./usr/share/man/cat3/pthread_attr_getstackaddr.0
+./usr/share/man/cat3/pthread_attr_getstacksize.0
+./usr/share/man/cat3/pthread_attr_init.0
+./usr/share/man/cat3/pthread_attr_setdetachstate.0
+./usr/share/man/cat3/pthread_attr_setstackaddr.0
+./usr/share/man/cat3/pthread_attr_setstacksize.0
 ./usr/share/man/cat3/pthread_cancel.0
 ./usr/share/man/cat3/pthread_cleanup_pop.0
 ./usr/share/man/cat3/pthread_cleanup_push.0
@@ -2649,6 +2674,7 @@
 ./usr/share/man/cat3/pthread_rwlockattr_init.0
 ./usr/share/man/cat3/pthread_rwlockattr_setpshared.0
 ./usr/share/man/cat3/pthread_self.0
+./usr/share/man/cat3/pthread_set_name_np.0
 ./usr/share/man/cat3/pthread_setcancelstate.0
 ./usr/share/man/cat3/pthread_setcanceltype.0
 ./usr/share/man/cat3/pthread_setspecific.0
@@ -2692,6 +2718,7 @@
 ./usr/share/man/cat3/random.0
 ./usr/share/man/cat3/raw.0
 ./usr/share/man/cat3/rcmd.0
+./usr/share/man/cat3/rcmd_af.0
 ./usr/share/man/cat3/rcmdsh.0
 ./usr/share/man/cat3/re_comp.0
 ./usr/share/man/cat3/re_exec.0
@@ -2794,6 +2821,15 @@
 ./usr/share/man/cat3/set_form_page.0
 ./usr/share/man/cat3/set_form_sub.0
 ./usr/share/man/cat3/set_form_term.0
+./usr/share/man/cat3/set_form_userptr.0
+./usr/share/man/cat3/set_form_win.0
+./usr/share/man/cat3/set_item_init.0
+./usr/share/man/cat3/set_item_opts.0
+./usr/share/man/cat3/set_item_term.0
+./usr/share/man/cat3/set_item_userptr.0
+./usr/share/man/cat3/set_item_value.0
+./usr/share/man/cat3/set_max_field.0
+./usr/share/man/cat3/set_menu_back.0
 ./usr/share/man/cat3/set_menu_fore.0
 ./usr/share/man/cat3/set_menu_format.0
 ./usr/share/man/cat3/set_menu_grey.0
@@ -3307,5 +3343,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/net/if_gre.h
-./usr/include/netinet/ip_gre.h
