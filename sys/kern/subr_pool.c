@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_pool.c,v 1.18 2002/01/10 14:31:17 art Exp $	*/
-/*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.19 2002/01/10 18:56:03 art Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ struct pool_item_header {
 	caddr_t			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 };
+TAILQ_HEAD(pool_pagelist,pool_item_header);
 
 struct pool_item {
 #ifdef DIAGNOSTIC
@@ -271,7 +272,7 @@ pr_leave(struct pool *pp)
 	pp->pr_entered_line = 0;
 }
 
-static __inline__ void
+static __inline void
 pr_enter_check(struct pool *pp, int (*pr)(const char *, ...))
 {
 
@@ -311,8 +312,10 @@ pr_find_pagehead(struct pool *pp, caddr_t page)
  * Remove a page from the pool.
  */
 static __inline void
-pr_rmpage(struct pool *pp, struct pool_item_header *ph)
+pr_rmpage(struct pool *pp, struct pool_item_header *ph,
+     struct pool_pagelist *pq)
 {
+	int s;
 
 	/*
 	 * If the page was idle, decrement the idle page count.
@@ -330,20 +333,22 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph)
 	pp->pr_nitems -= pp->pr_itemsperpage;
 
 	/*
-	 * Unlink a page from the pool and release it.
+	 * Unlink a page from the pool and release it (or queue it for release).
 	 */
 	TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
-	(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
+	if (pq) {
+		TAILQ_INSERT_HEAD(pq, ph, ph_pagelist);
+	} else {
+		(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
+		if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
+			LIST_REMOVE(ph, ph_hashlist);
+			s = splhigh();
+			pool_put(&phpool, ph);
+			splx(s);
+		}
+	}
 	pp->pr_npages--;
 	pp->pr_npagefree++;
-
-	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
-		int s;
-		LIST_REMOVE(ph, ph_hashlist);
-		s = splhigh();
-		pool_put(&phpool, ph);
-		splx(s);
-	}
 
 	if (pp->pr_curpage == ph) {
 		/*
@@ -549,14 +554,15 @@ pool_destroy(struct pool *pp)
 
 	/* Remove all pages */
 	if ((pp->pr_roflags & PR_STATIC) == 0)
-		while ((ph = pp->pr_pagelist.tqh_first) != NULL)
-			pr_rmpage(pp, ph);
+		while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
+			pr_rmpage(pp, ph, NULL);
 
 	/* Remove from global pool list */
 	simple_lock(&pool_head_slock);
 	TAILQ_REMOVE(&pool_head, pp, pr_poollist);
-	/* XXX Only clear this if we were drainpp? */
-	drainpp = NULL;
+	if (drainpp == pp) {
+		drainpp = NULL;
+	}
 	simple_unlock(&pool_head_slock);
 
 #ifdef POOL_DIAGNOSTIC
@@ -612,7 +618,12 @@ pool_get(struct pool *pp, int flags)
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
 
+#ifdef LOCKDEBUG
+	if (flags & PR_WAITOK)
+		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
 #endif
+#endif /* DIAGNOSTIC */
+
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
 
@@ -751,9 +762,13 @@ pool_get(struct pool *pp, int flags)
 		    pp->pr_wchan, pp->pr_nitems);
 		panic("pool_get: nitems inconsistent\n");
 	}
+#endif
 
+#ifdef POOL_DIAGNOSTIC
 	pr_log(pp, v, PRLOG_GET, file, line);
+#endif
 
+#ifdef DIAGNOSTIC
 	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
@@ -835,6 +850,8 @@ pool_do_put(struct pool *pp, void *v)
 	caddr_t page;
 	int s;
 
+	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
+
 	page = (caddr_t)((u_long)v & pp->pr_pagemask);
 
 #ifdef DIAGNOSTIC
@@ -908,7 +925,7 @@ pool_do_put(struct pool *pp, void *v)
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
 		if (pp->pr_npages > pp->pr_maxpages) {
-			pr_rmpage(pp, ph);
+			pr_rmpage(pp, ph, NULL);
 		} else {
 			TAILQ_REMOVE(&pp->pr_pagelist, ph, ph_pagelist);
 			TAILQ_INSERT_TAIL(&pp->pr_pagelist, ph, ph_pagelist);
@@ -1228,6 +1245,7 @@ pool_page_alloc(unsigned long sz, int flags, int mtype)
 static void
 pool_page_free(void *v, unsigned long sz, int mtype)
 {
+
 	uvm_km_free_poolpage((vaddr_t)v);
 }
 
@@ -1265,6 +1283,7 @@ pool_reclaim(struct pool *pp)
 	struct pool_item_header *ph, *phnext;
 	struct pool_cache *pc;
 	struct timeval curtime;
+	struct pool_pagelist pq;
 	int s;
 
 	if (pp->pr_roflags & PR_STATIC)
@@ -1273,6 +1292,7 @@ pool_reclaim(struct pool *pp)
 	if (simple_lock_try(&pp->pr_slock) == 0)
 		return;
 	pr_enter(pp, file, line);
+	TAILQ_INIT(&pq);
 
 	/*
 	 * Reclaim items from the pool's caches.
@@ -1305,12 +1325,26 @@ pool_reclaim(struct pool *pp)
 			    pp->pr_minitems)
 				break;
 
-			pr_rmpage(pp, ph);
+			pr_rmpage(pp, ph, &pq);
 		}
 	}
 
 	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
+	if (TAILQ_EMPTY(&pq)) {
+		return;
+	}
+	while ((ph = TAILQ_FIRST(&pq)) != NULL) {
+		TAILQ_REMOVE(&pq, ph, ph_pagelist);
+		(*pp->pr_free)(ph->ph_page, pp->pr_pagesz, pp->pr_mtype);
+		if (pp->pr_roflags & PR_PHINPAGE) {
+			continue;
+		}
+		LIST_REMOVE(ph, ph_hashlist);
+		s = splhigh();
+		pool_put(&phpool, ph);
+		splx(s);
+	}
 }
 
 
@@ -1325,19 +1359,18 @@ pool_drain(void *arg)
 	struct pool *pp;
 	int s;
 
+	pp = NULL;
 	s = splvm();
 	simple_lock(&pool_head_slock);
-
-	if (drainpp == NULL && (drainpp = TAILQ_FIRST(&pool_head)) == NULL)
-		goto out;
-
-	pp = drainpp;
-	drainpp = TAILQ_NEXT(pp, pr_poollist);
-
-	pool_reclaim(pp);
-
- out:
+	if (drainpp == NULL) {
+		drainpp = TAILQ_FIRST(&pool_head);
+	}
+	if (drainpp) {
+		pp = drainpp;
+		drainpp = TAILQ_NEXT(pp, pr_poollist);
+	}
 	simple_unlock(&pool_head_slock);
+	pool_reclaim(pp);
 	splx(s);
 }
 
