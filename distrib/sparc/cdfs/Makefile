@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2004/03/11 22:16:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/08/11 06:49:35 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -30,6 +30,10 @@ ${CDROM}:
 	disklabel -w svnd0 fakecdrom "OpenBSD/sparc   "
 	umount /mnt
 	vnconfig -u svnd0
+	# XXX Some sparc machines fail to load the kernel correctly if the
+	# XXX cd image is truncated.  It is not yet known why this happens.
+	# XXX For now we pad the image.
+	dd if=/dev/zero bs=2k count=200 >> ${.OBJDIR}/${CDROM}
 
 install:
 	cp ${CDROM} ${DESTDIR}/snapshot
