@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.137 2004/03/16 12:06:42 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.138 2004/03/18 15:09:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -770,9 +770,13 @@ session_accept(int listenfd)
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
 		if (p->sock != -1) {
-			shutdown(connfd, SHUT_RDWR);
-			close(connfd);
-			return;
+			if (p->state == STATE_CONNECT)
+				session_close_connection(p);
+			else {
+				shutdown(connfd, SHUT_RDWR);
+				close(connfd);
+				return;
+			}
 		}
 		if (p->conf.tcp_md5_key[0]) {
 			len = sizeof(opt);
