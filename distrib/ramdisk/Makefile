@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.23 2002/05/19 08:56:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2002/08/05 15:25:43 art Exp $
 
 REV=		${OSrev}
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
+
+.include <bsd.own.mk>
 
 .if exists(${ARCHDIR}/Makefile.inc)
 .include "${ARCHDIR}/Makefile.inc"
@@ -19,11 +21,16 @@ REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
+.if ${ELF_TOOLCHAIN} == "yes"
+RDSETROOT?=	elfrdsetroot
+CRUNCHGENOPTS?=-E
+.else
+RDSETROOT?=	rdsetroot
 CRUNCHGENOPTS?=
+.endif
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
 STRIP?=		strip
-RDSETROOT?=	rdsetroot
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 MTREE=		${UTILS}/mtree.conf
