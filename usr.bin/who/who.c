@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.7 1999/07/18 01:22:16 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.8 2000/03/21 21:54:51 ericj Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.7 1999/07/18 01:22:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.8 2000/03/21 21:54:51 ericj Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,9 +116,11 @@ main(argc, argv)
 		only_current_term = show_term = show_idle = show_labels = 0;
 	}
 
-	if (chdir("/dev")) {
-		err(1, "cannot change directory to /dev");
-		/* NOTREACHED */
+	if (show_term || show_idle) {
+		if (chdir("/dev")) {
+			err(1, "cannot change directory to /dev");
+			/* NOTREACHED */
+		}
 	}
 
 	if (show_labels)
