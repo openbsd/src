@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.5 1999/04/19 21:04:00 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.32 1999/04/13 20:00:42 ho Exp $	*/
+/*	$OpenBSD: transport.c,v 1.6 1999/04/27 21:12:31 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.35 1999/04/25 22:15:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -206,86 +206,91 @@ transport_handle_messages (fd_set *fds)
 void
 transport_send_messages (fd_set *fds)
 {
-  struct transport *t = 0;
+  struct transport *t = 0, *next;
   struct message *msg;
   struct timeval expiration;
   struct sa *sa, *next_sa;
   int expiry;
 
-  for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
-    if (TAILQ_FIRST (&t->sendq) && t->vtbl->fd_isset (t, fds))
-      {
-	t->vtbl->fd_set (t, fds, 0);
-	msg = TAILQ_FIRST (&t->sendq);
-	msg->flags &= ~MSG_IN_TRANSIT;
-	TAILQ_REMOVE (&t->sendq, msg, link);
+  for (t = LIST_FIRST (&transport_list); t; t = next)
+    {
+      next = LIST_NEXT (t, link);
+      transport_reference (t);
+      if (TAILQ_FIRST (&t->sendq) && t->vtbl->fd_isset (t, fds))
+	{
+	  t->vtbl->fd_set (t, fds, 0);
+	  msg = TAILQ_FIRST (&t->sendq);
+	  msg->flags &= ~MSG_IN_TRANSIT;
+	  TAILQ_REMOVE (&t->sendq, msg, link);
 
-	/*
-	 * We disregard the potential error message here, hoping that the
-	 * retransmit will go better.
-	 * XXX Consider a retry/fatal error discriminator.
-	 */
-	t->vtbl->send_message (msg);
+	  /*
+	   * We disregard the potential error message here, hoping that the
+	   * retransmit will go better.
+	   * XXX Consider a retry/fatal error discriminator.
+	   */
+	  t->vtbl->send_message (msg);
 
-	/*
-	 * If this is not a retransmit call post-send functions that allows
-	 * parallel work to be done while the network and peer does their
-	 * share of the job.
-	 */
-	if (msg->xmits == 0)
-	  message_post_send (msg);
+	  /*
+	   * If this is not a retransmit call post-send functions that allows
+	   * parallel work to be done while the network and peer does their
+	   * share of the job.
+	   */
+	  if (msg->xmits == 0)
+	    message_post_send (msg);
 
-	msg->xmits++;
+	  msg->xmits++;
 
-	if ((msg->flags & MSG_NO_RETRANS) == 0)
-	  {
-	    /* XXX make this a configurable parameter.  */
-	    if (msg->xmits
-		> conf_get_num ("General", "retransmits", RETRANSMIT_DEFAULT))
-	      {
-		log_print ("transport_send_messages: giving up on message %p",
-			   msg);
-		msg->exchange->last_sent = 0;
+	  if ((msg->flags & MSG_LAST) == 0)
+	    {
+	      if (msg->xmits > conf_get_num ("General", "retransmits",
+					     RETRANSMIT_DEFAULT))
+		{
+		  log_print ("transport_send_messages: "
+			     "giving up on message %p",
+			     msg);
+		  msg->exchange->last_sent = 0;
 
-		/*
-		 * As this exchange never went to a normal end, remove the
-		 * SA's being negotiated too.
-		 */
-		for (sa = TAILQ_FIRST (&msg->exchange->sa_list); sa;
-		     sa = next_sa)
-		  {
-		    next_sa = TAILQ_NEXT (sa, next);
-		    sa_free (sa);
-		  }
+		  /*
+		   * As this exchange never went to a normal end, remove the
+		   * SA's being negotiated too.
+		   */
+		  for (sa = TAILQ_FIRST (&msg->exchange->sa_list); sa;
+		       sa = next_sa)
+		    {
+		      next_sa = TAILQ_NEXT (sa, next);
+		      sa_free (sa);
+		    }
 
-		exchange_free (msg->exchange);
-		message_free (msg);
-		continue;
+		  exchange_free (msg->exchange);
+		  message_free (msg);
+		  goto next;
 	      };
 
-	    gettimeofday (&expiration, 0);
-	    /* XXX Calculate from round trip timings and a backoff func.  */
-	    expiry = msg->xmits * 2 + 5;
-	    expiration.tv_sec += expiry;
-	    log_debug (LOG_TRANSPORT, 30,
-		       "transport_send_messages: "
-		       "message %p scheduled for retransmission %d in %d secs",
-		       msg, msg->xmits, expiry);
-	    msg->retrans = timer_add_event ("message_send",
-					    (void (*) (void *))message_send,
-					    msg, &expiration);
-	    if (!msg->retrans)
-	      {
-		/* If we can make no retransmission, we can't.... */
-		message_free (msg);
-		return;
-	      }
+	      gettimeofday (&expiration, 0);
+	      /* XXX Calculate from round trip timings and a backoff func.  */
+	      expiry = msg->xmits * 2 + 5;
+	      expiration.tv_sec += expiry;
+	      log_debug (LOG_TRANSPORT, 30,
+			 "transport_send_messages: message %p "
+			 "scheduled for retransmission %d in %d secs",
+			 msg, msg->xmits, expiry);
+	      msg->retrans = timer_add_event ("message_send",
+					      (void (*) (void *))message_send,
+					      msg, &expiration);
+	      if (!msg->retrans)
+		{
+		  /* If we can make no retransmission, we can't.... */
+		  message_free (msg);
+		  goto next;
+		}
 
-	    msg->exchange->last_sent = msg;
-	  }
-	else if ((msg->flags & MSG_KEEP) == 0)
-	  message_free (msg);
-      }
+	      msg->exchange->last_sent = msg;
+	    }
+	}
+
+    next:
+      transport_release (t);
+    }
 }
 
 /*
