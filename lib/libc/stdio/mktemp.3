@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.29 2003/05/03 19:08:21 jmc Exp $
+.\"	$OpenBSD: mktemp.3,v 1.30 2003/06/01 18:56:04 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ is told the length of the suffix string, i.e., strlen("suffix");
 The
 .Fn mkdtemp
 function makes the same replacement to the template as in
-.Xr mktemp 3
+.Fn mktemp
 and creates the template directory, mode 0700.
 .Sh RETURN VALUES
 The
@@ -119,92 +119,6 @@ The
 function returns \-1 if no suitable file could be created.
 If either call fails an error code is placed in the global variable
 .Va errno .
-.Sh ERRORS
-The
-.Fn mkstemp
-and
-.Fn mkdtemp
-functions may set
-.Va errno
-to one of the following values:
-.Bl -tag -width Er
-.It Bq Er ENOTDIR
-The pathname portion of the template is not an existing directory.
-.El
-.Pp
-The
-.Fn mkstemp
-and
-.Fn mkdtemp
-functions may also set
-.Va errno
-to any value specified by the
-.Xr stat 2
-function.
-.Pp
-The
-.Fn mkstemp
-function may also set
-.Va errno
-to any value specified by the
-.Xr open 2
-function.
-.Pp
-The
-.Fn mkstemps
-function may also set
-.Va errno
-to any value specified by the
-.Xr open 2
-function or,
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The suffix length is longer than the template length.
-.El
-.Pp
-The
-.Fn mkdtemp
-function may also set
-.Va errno
-to any value specified by the
-.Xr mkdir 2
-function.
-.Sh BUGS
-For
-.Fn mktemp
-there is an obvious race between file name selection and file
-creation and deletion: the program is typically written to call
-.Xr tmpnam 3 ,
-.Xr tempnam 3 ,
-or
-.Fn mktemp .
-Subsequently, the program calls
-.Xr open 2
-or
-.Xr fopen 3
-and erroneously opens a file (or symbolic link, FIFO or other
-device) that the attacker has created in the expected file location.
-Hence
-.Fn mkstemp
-is recommended, since it atomically creates the file.
-An attacker can guess the filenames produced by
-.Fn mktemp .
-Whenever it is possible,
-.Fn mkstemp
-or
-.Fn mkdtemp
-should be used instead.
-.Pp
-For this reason,
-.Xr ld 1
-will output a warning message whenever it links code that uses
-.Fn mktemp .
-.Pp
-The
-.Fn mkdtemp
-and
-.Fn mkstemps
-functions are nonstandard and should not be used if portability is required.
 .Sh EXAMPLES
 Quite often a programmer will want to replace a use of
 .Fn mktemp
@@ -284,6 +198,56 @@ fails with an
 .Va errno
 of
 .Er EEXIST .
+.Sh ERRORS
+The
+.Fn mkstemp
+and
+.Fn mkdtemp
+functions may set
+.Va errno
+to one of the following values:
+.Bl -tag -width Er
+.It Bq Er ENOTDIR
+The pathname portion of the template is not an existing directory.
+.El
+.Pp
+The
+.Fn mkstemp
+and
+.Fn mkdtemp
+functions may also set
+.Va errno
+to any value specified by the
+.Xr stat 2
+function.
+.Pp
+The
+.Fn mkstemp
+function may also set
+.Va errno
+to any value specified by the
+.Xr open 2
+function.
+.Pp
+The
+.Fn mkstemps
+function may also set
+.Va errno
+to any value specified by the
+.Xr open 2
+function or,
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The suffix length is longer than the template length.
+.El
+.Pp
+The
+.Fn mkdtemp
+function may also set
+.Va errno
+to any value specified by the
+.Xr mkdir 2
+function.
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
@@ -310,3 +274,39 @@ The
 .Fn mkstemps
 function appeared in
 .Ox 2.3 .
+.Sh BUGS
+For
+.Fn mktemp
+there is an obvious race between file name selection and file
+creation and deletion: the program is typically written to call
+.Xr tmpnam 3 ,
+.Xr tempnam 3 ,
+or
+.Fn mktemp .
+Subsequently, the program calls
+.Xr open 2
+or
+.Xr fopen 3
+and erroneously opens a file (or symbolic link, FIFO or other
+device) that the attacker has created in the expected file location.
+Hence
+.Fn mkstemp
+is recommended, since it atomically creates the file.
+An attacker can guess the filenames produced by
+.Fn mktemp .
+Whenever it is possible,
+.Fn mkstemp
+or
+.Fn mkdtemp
+should be used instead.
+.Pp
+For this reason,
+.Xr ld 1
+will output a warning message whenever it links code that uses
+.Fn mktemp .
+.Pp
+The
+.Fn mkdtemp
+and
+.Fn mkstemps
+functions are nonstandard and should not be used if portability is required.

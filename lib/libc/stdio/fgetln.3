@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.8 2000/12/24 00:30:57 aaron Exp $
+.\"	$OpenBSD: fgetln.3,v 1.9 2003/06/01 18:56:04 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,6 +109,17 @@ for any of the errors specified for the routines
 .Xr stat 2 ,
 or
 .Xr realloc 3 .
+.Sh SEE ALSO
+.Xr ferror 3 ,
+.Xr fgets 3 ,
+.Xr fopen 3 ,
+.Xr fparseln 3 ,
+.Xr putc 3
+.Sh HISTORY
+The
+.Fn fgetln
+function first appeared in
+.Bx 4.4 .
 .Sh CAVEATS
 Since the returned buffer is not a C string (it is not null terminated), a
 common practice is to replace the newline character with
@@ -140,14 +151,3 @@ temporary buffer:
 		}
 	}
 .Ed
-.Sh SEE ALSO
-.Xr ferror 3 ,
-.Xr fgets 3 ,
-.Xr fopen 3 ,
-.Xr fparseln 3 ,
-.Xr putc 3
-.Sh HISTORY
-The
-.Fn fgetln
-function first appeared in
-.Bx 4.4 .

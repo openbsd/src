@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.17 2003/05/17 10:30:10 pjanzen Exp $
+.\"	$OpenBSD: fgets.3,v 1.18 2003/06/01 18:56:04 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,6 +134,17 @@ may also fail and set
 .Va errno
 for any of the errors specified for the routine
 .Xr getchar 3 .
+.Sh SEE ALSO
+.Xr feof 3 ,
+.Xr ferror 3 ,
+.Xr fgetln 3
+.Sh STANDARDS
+The functions
+.Fn fgets
+and
+.Fn gets
+conform to
+.St -ansiC .
 .Sh CAVEATS
 The following bit of code illustrates a case where the programmer assumes a
 string is too long if it does not contain a newline:
@@ -179,17 +190,6 @@ which may indeed include a newline.
 Consider using
 .Xr fgetln 3
 instead when dealing with untrusted input.
-.Sh SEE ALSO
-.Xr feof 3 ,
-.Xr ferror 3 ,
-.Xr fgetln 3
-.Sh STANDARDS
-The functions
-.Fn fgets
-and
-.Fn gets
-conform to
-.St -ansiC .
 .Sh BUGS
 Since it is usually impossible to ensure that the next input line
 is less than some arbitrary length, and because overflowing the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getc.3,v 1.8 2003/05/03 19:08:21 jmc Exp $
+.\"	$OpenBSD: getc.3,v 1.9 2003/06/01 18:56:04 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,9 +118,9 @@ functions conform to
 Since
 .Dv EOF
 is a valid integer value,
-.Xr feof
+.Xr feof 3
 and
-.Xr ferror
+.Xr ferror 3
 must be used to check for failure after calling
 .Fn getw .
 The size and byte order of an
