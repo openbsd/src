@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.56 2004/02/01 12:26:45 grange Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.57 2004/02/01 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -163,6 +163,10 @@ void fix_f00f(void);
 /* dkcsum.c */
 void	dkcsumattach(void);
 
+extern int i386_use_fxsave;
+extern int i386_has_sse;
+extern int i386_has_sse2;
+
 /* machdep.c */
 void	dumpconf(void);
 void	cpu_reset(void);
@@ -257,7 +261,11 @@ void	setconf(void);
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_USERLDT		12
-#define	CPU_MAXID		13	/* number of valid machdep ids */
+#define CPU_OSFXSR		13	/* uses FXSAVE/FXRSTOR */
+#define CPU_SSE			14	/* supports SSE */
+#define CPU_SSE2		15	/* supports SSE2 */
+#define CPU_XCRYPT		16	/* supports VIA xcrypt in userland */
+#define CPU_MAXID		17	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -273,6 +281,10 @@ void	setconf(void);
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "userldt", CTLTYPE_INT }, \
+	{ "osfxsr", CTLTYPE_INT }, \
+	{ "sse", CTLTYPE_INT }, \
+	{ "sse2", CTLTYPE_INT }, \
+	{ "xcrypt", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

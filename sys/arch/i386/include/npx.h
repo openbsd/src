@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.5 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: npx.h,v 1.6 2004/02/01 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -86,9 +86,48 @@ struct	save87 {
 	u_long	sv_ex_tw;		/* tag word for last exception */
 };
 
-/* For the pcb. */
-union	fsave87 {
-	struct	save87 npx;
+/* Environment of FPU/MMX/SSE/SSE2. */
+struct envxmm {
+/*0*/	uint16_t en_cw;		/* FPU Control Word */
+	uint16_t en_sw;		/* FPU Status Word */
+	uint8_t  en_rsvd0;
+	uint8_t  en_tw;		/* FPU Tag Word (abridged) */
+	uint16_t en_opcode;	/* FPU Opcode */
+	uint32_t en_fip;	/* FPU Instruction Pointer */
+	uint16_t en_fcs;	/* FPU IP selector */
+	uint16_t en_rsvd1;
+/*16*/	uint32_t en_foo;	/* FPU Data pointer */
+	uint16_t en_fos;	/* FPU Data pointer selector */
+	uint16_t en_rsvd2;
+	uint32_t en_mxcsr;	/* MXCSR Register State */
+	uint32_t en_rsvd3;
+};
+
+/* FPU regsters in the extended save format. */
+struct fpaccxmm {
+	uint8_t	fp_bytes[10];
+	uint8_t	fp_rsvd[6];
+};
+
+/* SSE/SSE2 registers. */
+struct xmmreg {
+	uint8_t sse_bytes[16];
+};
+
+/* FPU/MMX/SSE/SSE2 context */
+struct savexmm {
+	struct envxmm sv_env;		/* control/status context */
+	struct fpaccxmm sv_ac[8];	/* ST/MM regs */
+	struct xmmreg sv_xmmregs[8];	/* XMM regs */
+	uint8_t sv_rsvd[16 * 14];
+	/* 512-bytes --- end of hardware portion of save area */
+	uint32_t sv_ex_sw;		/* saved SW from last exception */
+	uint32_t sv_ex_tw;		/* saved TW from last exception */
+};
+
+union savefpu {
+	struct save87 sv_87;
+	struct savexmm sv_xmm;
 #ifdef GPL_MATH_EMULATE
 	union i387_union gplemu;
 #else
@@ -107,6 +146,12 @@ struct	emcsts {
 #define	__iBCS_NPXCW__		0x262
 #define __BDE_NPXCW__		0x1272		/* FreeBSD */
 #define	__OpenBSD_NPXCW__	0x127f
+
+/*
+ * The default MXCSR value at reset is 0x1f80, IA-32 Instruction
+ * Set Reference, pg. 3-369.
+ */
+#define __INITIAL_MXCSR__       0x1f80
 
 /*
  * The standard control word from finit is 0x37F, giving:
@@ -132,5 +177,8 @@ struct	emcsts {
  */
 
 #define	__INITIAL_NPXCW__	__OpenBSD_NPXCW__
+
+void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
+void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
 
 #endif /* !_I386_NPX_H_ */

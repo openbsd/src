@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.267 2004/02/01 12:26:45 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.268 2004/02/01 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -237,6 +237,11 @@ int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
+
+int	i386_use_fxsave;
+int	i386_has_sse;
+int	i386_has_sse2;
+int	i386_has_xcrypt;
 
 bootarg_t *bootargp;
 paddr_t avail_end;
@@ -2111,6 +2116,30 @@ identifycpu()
 	if (cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
+
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		i386_use_fxsave = 1;
+		lcr4(rcr4() | CR4_OSFXSR);
+
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions, and
+		 * notify userland.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2)) {
+			if (cpu_feature & CPUID_SSE)
+				i386_has_sse = 1;
+			if (cpu_feature & CPUID_SSE2)
+				i386_has_sse2 = 1;
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+		}
+	} else
+		i386_use_fxsave = 0;
+#endif /* I686_CPU */
+
 }
 
 #ifdef COMPAT_IBCS2
@@ -2617,6 +2646,7 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -2631,6 +2661,11 @@ setregs(p, pack, stack, retval)
 #endif
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
+	if (i386_use_fxsave) {
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __OpenBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __OpenBSD_NPXCW__;
 
 	__asm("movw %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movw %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
@@ -2836,6 +2871,13 @@ init386(paddr_t first_avail)
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 			/* XXX here, until we can use bios for printfs */
+
+	/*
+	 * Saving SSE registers won't work if the save area isn't
+	 * 16-byte aligned.
+	 */
+	if (offsetof(struct user, u_pcb.pcb_savefpu) & 0xf)
+		panic("init386: pcb_savefpu not 16-byte aligned");
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
@@ -3225,6 +3267,14 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &user_ldt_enable));
 #endif
+	case CPU_OSFXSR:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
+	case CPU_SSE:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
+	case CPU_SSE2:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
+	case CPU_XCRYPT:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_xcrypt));
 	default:
 		return (EOPNOTSUPP);
 	}

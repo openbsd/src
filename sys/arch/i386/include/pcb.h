@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.10 2004/02/01 12:26:45 grange Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.11 2004/02/01 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -62,10 +62,11 @@ struct pcb {
 #define	pcb_gs	pcb_tss.tss_gs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_tss_sel;
-        union	descriptor *pcb_ldt;	/* per process (user) LDT */
-        int	pcb_ldt_len;		/*      number of LDT entries */
+	union	descriptor *pcb_ldt;	/* per process (user) LDT */
+	int	pcb_ldt_len;		/*      number of LDT entries */
 	int	pcb_cr0;		/* saved image of CR0 */
-	union	fsave87 pcb_savefpu;	/* floating point state for 287/387 */
+	int	pcb_pad[2];		/* savefpu on 16-byte boundary */
+	union	savefpu pcb_savefpu;	/* floating point state for FPU */
 	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 /*
  * Software pcb (extension)

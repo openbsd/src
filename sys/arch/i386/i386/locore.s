@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.76 2004/01/29 19:01:53 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.77 2004/02/01 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1747,7 +1747,7 @@ IDTVEC(dna)
 	pushl	$T_DNA
 	INTRENTRY
 	pushl	_C_LABEL(curproc)
-	call	_C_LABEL(npxdna)
+	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
