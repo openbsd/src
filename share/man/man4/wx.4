@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wx.4,v 1.6 2001/03/01 16:11:20 aaron Exp $
+.\"	$OpenBSD: wx.4,v 1.7 2001/04/14 20:04:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2000
 .\"	Traakan Software. All rights reserved.
@@ -39,17 +39,36 @@ The
 .Nm wx
 driver provides support for Intel Gigabit Ethernet PCI cards based on the
 .Tn i82452
-chipset such as the Intel Pro/1000 Gigabit Server Adapter.
+chipset such as the Intel Pro/1000, PRO1000F, and PRO1000T
+Gigabit Server Adapter.
 .Pp
-The following media types and options (as given to
+Various models support the following media types and options (as given to
 .Xr ifconfig 8 )
 are supported:
 .Pp
 .Bl -tag -width XXX -offset indent
+.It Cm media No autoselect
+Enable autoselection of media type and options.
+Note that this media type is only available with
+adapters that have external PHYs or built-in autonegotiation logic.
 .It Cm media No 1000baseSX Cm mediaopt No full-duplex
-Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
+Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
 .It Cm media No 1000baseSX
-Set 1000Mpbs (Gigabit Ethernet) operation.
+Set 1000Mpbs (Gigabit Ethernet) operation on fiber.
+.It Cm media No 1000baseTX
+Set 1000Mbps (Gigabit Ethernet) operation on copper.
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
+Set 100Mbps (Fast Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
+Set 100Mbps (Fast Ethernet) operation and force half-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No full-duplex
+Set 10baseT (UTP) operation and force full-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No half-duplex
+Set 10baseT (UTP) operation and force half-duplex mode.
+.It Cm media No 10base5
+Set 10base5 (thick-net) operation (half-duplex only).
+.It Cm media No 10base2
+Set 10base2 (thin-net) operation (half-duplex only).
 .El
 .Pp
 For more information on configuring this device, see

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.7 2001/03/01 16:11:19 aaron Exp $
+.\"	$OpenBSD: sk.4,v 1.8 2001/04/14 20:04:14 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -96,9 +96,23 @@ the autoselected mode by adding media options to the appropriate
 .Pa /etc/hostname.skX
 file.
 .It Cm media No 1000baseSX Cm mediaopt No full-duplex
-Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
+Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
 .It Cm media No 1000baseSX Cm mediaopt No half-duplex
+Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
+.It Cm media No 1000baseT Cm mediaopt
 Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
+Set 100Mbps (Fast Ethernet) operation and force full-duplex mode.
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
+Set 100Mbps (Fast Ethernet) operation and force half-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No full-duplex
+Set 10baseT (UTP) operation and force full-duplex mode.
+.It Cm media No 10baseT Cm mediaopt No half-duplex
+Set 10baseT (UTP) operation and force half-duplex mode.
+.It Cm media No 10base5
+Set 10base5 (thick-net) operation (half-duplex only).
+.It Cm media No 10base2
+Set 10base2 (thin-net) operation (half-duplex only).
 .El
 .Pp
 For more information on configuring this device, see
