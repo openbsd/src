@@ -1,5 +1,5 @@
-/*	$OpenBSD: systm.h,v 1.5 1996/05/02 13:14:59 deraadt Exp $	*/
-/*	$NetBSD: systm.h,v 1.49 1996/04/22 01:23:35 christos Exp $	*/
+/*	$OpenBSD: systm.h,v 1.6 1996/06/09 03:40:36 briggs Exp $	*/
+/*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -181,6 +181,9 @@ struct clockframe;
 void	hardclock __P((struct clockframe *frame));
 void	softclock __P((void));
 void	statclock __P((struct clockframe *frame));
+#ifdef NTP
+void	hardupdate __P((long offset));
+#endif
 
 void	initclocks __P((void));
 void	inittodr __P((time_t));
