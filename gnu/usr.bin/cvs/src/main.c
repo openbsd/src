@@ -233,6 +233,7 @@ static const char *const opt_usage[] =
     "    -n           Do not execute anything that will change the disk.\n",
     "    -t           Show trace of program execution -- try with -n.\n",
     "    -v           CVS version and copyright.\n",
+    "    -R           Read-only repository.\n",
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
     "    -e editor    Use 'editor' for editing log information.\n",
     "    -d CVS_root  Overrides $CVSROOT as the root of the CVS tree.\n",
@@ -515,7 +516,7 @@ main (argc, argv)
     opterr = 1;
 
     while ((c = getopt_long
-            (argc, argv, "+Qqrwtnlvb:T:e:d:Hfz:s:xa", long_options, &option_index))
+            (argc, argv, "+Qqrwtnlvb:T:e:d:Hfz:s:xaR", long_options, &option_index))
            != EOF)
     {
 	switch (c)
@@ -555,6 +556,10 @@ main (argc, argv)
 		noexec = 1;
 	    case 'l':			/* Fall through */
 		logoff = 1;
+		break;
+	    case 'R':
+		logoff = 1;
+		readonlyfs = 1;
 		break;
 	    case 'v':
 		/* Having the year here is a good idea, so people have
