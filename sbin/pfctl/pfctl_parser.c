@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.53 2001/10/24 09:09:32 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.54 2001/11/26 16:50:26 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -652,6 +652,21 @@ print_rule(struct pf_rule *r)
 		printf("quick ");
 	if (r->ifname[0])
 		printf("on %s ", r->ifname);
+	if (r->rt) {
+		if (r->rt == PF_ROUTETO)
+			printf("route-to ");
+		else if (r->rt == PF_DUPTO)
+			printf("dup-to ");
+		else if (r->rt == PF_FASTROUTE)
+			printf("fastroute");
+		if (r->rt_ifname[0])
+			printf("%s", r->rt_ifname);
+		if (r->af && !PF_AZERO(&r->rt_addr, r->af)) {
+			printf(":");
+			print_addr(&r->rt_addr, NULL, r->af);
+		}
+		printf(" ");
+	}
 	if (r->af) {
 		if (r->af == AF_INET) 
 			printf("inet ");

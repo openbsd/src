@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.17 2001/09/29 08:02:07 jasoni Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.18 2001/11/26 16:50:26 jasoni Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -487,10 +487,13 @@ ip6_forward(m, srcrt)
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
 #if NPF > 0 
-        if (pf_test6(PF_OUT, rt->rt_ifp, &m) != PF_PASS) {
+	if (pf_test6(PF_OUT, rt->rt_ifp, &m) != PF_PASS) {
 		m_freem(m);
 		goto senderr;
 	}
+	if (m == NULL)
+		goto senderr;
+
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2001/11/05 09:28:00 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2001/11/26 16:50:25 jasoni Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -151,6 +151,12 @@ typedef struct {
 		struct {
 			struct peer	src, dst;
 		}			fromto;
+		struct {
+			char		*string;
+			struct pf_addr	*addr;
+			u_int8_t	rt;
+			u_int8_t	af;
+		}			route;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -160,7 +166,7 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL IPV6ADDR ERROR ALLOWOPTS
+%token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -175,6 +181,7 @@ typedef struct {
 %type	<v.peer>	ipportspec
 %type	<v.host>	ipspec xhost host address host_list IPV6ADDR
 %type	<v.port>	portspec port_list port_item
+%type	<v.route>	route
 %%
 
 ruleset		: /* empty */
@@ -198,7 +205,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nodf minttl allowopts
+pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep nodf minttl allowopts
 		{
 			struct pf_rule r;
 
@@ -217,20 +224,42 @@ pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nod
 			r.log = $3;
 			r.quick = $4;
 
-			r.af = $6;
-			r.flags = $9.b1;
-			r.flagset = $9.b2;
 
-			r.keep_state = $11;
+			r.af = $7;
+			r.flags = $10.b1;
+			r.flagset = $10.b2;
 
-			if ($12)
-				r.rule_flag |= PFRULE_NODF;
+			r.keep_state = $12;
+
 			if ($13)
-				r.min_ttl = $13;
-			r.allow_opts = $14;
+				r.rule_flag |= PFRULE_NODF;
+			if ($14)
+				r.min_ttl = $14;
+			r.allow_opts = $15;
 
-			expand_rule(&r, $5, $7, $8.src.host, $8.src.port,
-			    $8.dst.host, $8.dst.port, $10);
+			if ($6.rt) {
+				r.rt = $6.rt;
+				if ($6.string) {
+					memcpy(r.rt_ifname, $6.string,
+					    sizeof(r.rt_ifname));
+					free($6.string);
+				}
+				if ($6.addr) {
+					if (!r.af)
+						r.af = $6.af;
+					else if (r.af != $6.af) {
+						yyerror("address family"
+						    " mismatch");
+						YYERROR;
+					}	
+					memcpy(&r.rt_addr, $6.addr,
+					    sizeof(r.rt_addr));
+					free($6.addr);
+				}
+			}
+
+			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
+			    $9.dst.host, $9.dst.port, $11);
 		}
 		;
 
@@ -932,6 +961,41 @@ rport		: PORT port			{
 			$$.t = PF_RPORT_RANGE;
 		}
 		;
+
+route		: /* empty */			{ 
+			$$.string = NULL; 
+			$$.rt = 0;
+			$$.addr = NULL;
+			$$.af = 0;
+		}
+		| FASTROUTE {
+			$$.string = NULL;
+			$$.rt = PF_FASTROUTE;
+			$$.addr = NULL;
+		}
+		| ROUTETO STRING ':' address {
+			$$.string = strdup($2);
+			$$.rt = PF_ROUTETO;
+			$$.addr = &$4->addr;
+			$$.af = $4->af;
+		}
+		| ROUTETO STRING 		{
+			$$.string = strdup($2); 
+			$$.rt = PF_ROUTETO;
+			$$.addr = NULL;
+		}
+		| DUPTO STRING ':' address {
+			$$.string = strdup($2);
+			$$.rt = PF_DUPTO;
+			$$.addr = &$4->addr;
+			$$.af = $4->af;
+		}
+		| DUPTO STRING 		{ 
+			$$.string = strdup($2); 
+			$$.rt = PF_DUPTO;
+			$$.addr = NULL;
+		}
+		;
 %%
 
 int
@@ -1081,19 +1145,37 @@ void expand_rule_hosts(struct pf_rule *r,
 					r->dst.port_op = dst_port->op;
 					r->type = icmp_type->type;
 					r->code = icmp_type->code;
-
-					if (src_host->af &&
-					    dst_host->af && 
-					    (src_host->af !=
-					    dst_host->af)) {
+					
+					if ((src_host->af && dst_host->af && 
+						r->af) && (src_host->af != 
+						    dst_host->af || 
+						    src_host->af != r->af || 
+						    dst_host->af != r->af)) {
 						yyerror("address family"
 						    " mismatch");
 						nomatch++;
-					} else if (src_host->af)
+					} else if ((src_host->af && 
+						       dst_host->af) && 
+					    (src_host->af != dst_host->af)) {
+						yyerror("address family"
+						    " mismatch");
+						nomatch++;
+					} else if ((src_host->af && r->af) && 
+					    (src_host->af != r->af)) {
+						yyerror("address family"
+						    " mismatch");
+						nomatch++;
+					} else if ((dst_host->af && r->af) && 
+					    (dst_host->af != r->af)) {
+						yyerror("address family"
+						    " mismatch");
+						nomatch++;
+					} else if (src_host->af && !r->af) {
 						r->af = src_host->af;
-					else if (dst_host->af)
-						r->af = dst_host->af;
-
+					} else if (dst_host->af && !r->af) {
+						r->af= dst_host->af;
+					}
+					
 					if (icmp_type->proto &&
 					    r->proto != icmp_type->proto) {
 						yyerror("icmp-type mismatch");
@@ -1187,7 +1269,9 @@ lookup(char *s)
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},
 		{ "code",	CODE},
+		{ "dup-to",	DUPTO},
 		{ "flags",	FLAGS},
+		{ "fastroute",	FASTROUTE},
 		{ "from",	FROM},
 		{ "icmp-type",	ICMPTYPE},
 		{ "ipv6-icmp-type", ICMP6TYPE},
@@ -1212,6 +1296,7 @@ lookup(char *s)
 		{ "return-icmp",RETURNICMP},
 		{ "return-icmp6",RETURNICMP6},
 		{ "return-rst",	RETURNRST},
+		{ "route-to",	ROUTETO},
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
 		{ "to",		TO},
@@ -1495,7 +1580,7 @@ top:
 #define allowed_in_string(x) \
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && x != '<' && x != '>' && \
-	x != '!' && x != '=' && x != '/' && x != '#' && x != ','))
+	x != '!' && x != '=' && x != '/' && x != '#' && x != ',' && x != ':'))
 
 	if (isalnum(c)) {
 		do {

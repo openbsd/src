@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.55 2001/11/06 11:48:29 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.56 2001/11/26 16:50:26 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,6 +49,7 @@ enum	{ PFTM_TCP_FIRST_PACKET=0, PFTM_TCP_OPENING=1, PFTM_TCP_ESTABLISHED=2,
 	  PFTM_UDP_FIRST_PACKET=6, PFTM_UDP_SINGLE=7, PFTM_UDP_MULTIPLE=8,
 	  PFTM_ICMP_FIRST_PACKET=9, PFTM_ICMP_ERROR_REPLY=10, PFTM_FRAG=11,
 	  PFTM_INTERVAL=12, PFTM_MAX=13 };
+enum	{ PF_FASTROUTE=1, PF_ROUTETO=2, PF_DUPTO=3 };
 
 struct pf_addr {
 	union {
@@ -188,9 +189,12 @@ struct pf_rule_addr {
 
 struct pf_rule {
 	char		 ifname[IFNAMSIZ];
+	char		 rt_ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
+	struct ifnet	*rt_ifp;
 	struct pf_rule_addr src;
 	struct pf_rule_addr dst;
+	struct pf_addr	 rt_addr;
 
 #define PF_SKIP_IFP		0
 #define PF_SKIP_AF		1
@@ -229,6 +233,7 @@ struct pf_rule {
 	u_int8_t	 rule_flag;
 	u_int8_t	 min_ttl;	/* minimum ttl for packet normalize */
 	u_int8_t	 allow_opts;
+	u_int8_t	 rt;
 };
 
 #define	PFRULE_RETURNRST	0x01

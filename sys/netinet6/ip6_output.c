@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.52 2001/10/01 16:03:09 jasoni Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.53 2001/11/26 16:50:26 jasoni Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -881,11 +881,13 @@ skip_ipsec2:;
 	}
 
 #if NPF > 0 
-        if (pf_test6(PF_OUT, ifp, &m) != PF_PASS) {
-                error = EHOSTUNREACH;
+	if (pf_test6(PF_OUT, ifp, &m) != PF_PASS) {
+		error = EHOSTUNREACH;
 		m_freem(m);
-                goto done;
-        }
+		goto done;
+	}
+	if (m == NULL)
+		goto done;
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif 
 

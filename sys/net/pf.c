@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.170 2001/11/21 19:00:24 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.171 2001/11/26 16:50:26 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,6 +57,10 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/in_pcb.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/udp_var.h>
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
@@ -248,6 +252,8 @@ int			 pf_add_sport(struct pf_port_list *, u_int16_t);
 int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			     int, int, void *, struct pf_pdesc *);
+void			 pf_route(struct mbuf *, struct pf_rule *);
+void			 pf_route6(struct mbuf *, struct pf_rule *);
 
 
 #if NPFLOG > 0
@@ -1113,6 +1119,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rule->ifp = NULL;
+		if (rule->rt_ifname[0]) {
+			rule->rt_ifp = ifunit(rule->rt_ifname);
+			if (rule->rt_ifname == NULL) {
+				pool_put(&pf_rule_pl, rule);
+				error = EINVAL;
+				break;
+			}
+		} else
+			rule->rt_ifp = NULL;
 		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
@@ -4311,6 +4326,265 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 }
 
 #ifdef INET
+void
+pf_route(struct mbuf *m, struct pf_rule *r)
+{
+	struct mbuf *m0, *m1;
+	struct route iproute;
+	struct route *ro;
+	struct sockaddr_in *dst;
+	struct ip *ip, *mhip;
+	struct ifnet *ifp = r->rt_ifp;
+	int hlen;
+	int len, off, error = 0;
+
+	if (m == NULL)
+		return;
+
+	m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+	if (m0 == NULL)
+		return;
+
+	ip = mtod(m0, struct ip *);
+	hlen = ip->ip_hl << 2;
+
+	ro = &iproute;
+	bzero((caddr_t)ro, sizeof(*ro));
+	dst = satosin(&ro->ro_dst);
+	dst->sin_family = AF_INET;
+	dst->sin_len = sizeof(*dst);
+	dst->sin_addr = ip->ip_dst;
+
+	if (r->rt == PF_FASTROUTE) {
+		rtalloc(ro);
+		if (ro->ro_rt == 0) {
+			ipstat.ips_noroute++;
+			goto bad;
+		}
+
+		ifp = ro->ro_rt->rt_ifp;
+		ro->ro_rt->rt_use++;
+
+		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			dst = satosin(ro->ro_rt->rt_gateway);
+	} else {
+		if (!PF_AZERO(&r->rt_addr, AF_INET))
+			dst->sin_addr.s_addr = r->rt_addr.v4.s_addr;
+	}
+
+	if (ifp == NULL)
+		goto bad;
+
+	/* Copied from ip_output. */
+	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+		ip->ip_len = htons((u_int16_t)ip->ip_len);
+		ip->ip_off = htons((u_int16_t)ip->ip_off);
+		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
+		    ifp->if_bridge == NULL) {
+			m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+			ipstat.ips_outhwcsum++;
+		} else {
+			ip->ip_sum = 0;
+			ip->ip_sum = in_cksum(m0, hlen);
+		}
+		/* Update relevant hardware checksum stats for TCP/UDP */
+		if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+			tcpstat.tcps_outhwcsum++;
+		else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+			udpstat.udps_outhwcsum++;
+		error = (*ifp->if_output)(ifp, m0, sintosa(dst), NULL);
+		
+		goto done;
+	}
+
+	/*
+	 * Too large for interface; fragment if possible.
+	 * Must be able to put at least 8 bytes per fragment.
+	 */
+	if (ip->ip_off & IP_DF) {
+		error = EMSGSIZE;
+		ipstat.ips_cantfrag++;
+		goto bad;
+	}
+	len = (ifp->if_mtu - hlen) &~ 7;
+	if (len < 8) {
+		error = EMSGSIZE;
+		goto bad;
+	}
+	/*
+	 * If we are doing fragmentation, we can't defer TCP/UDP
+	 * checksumming; compute the checksum and clear the flag.
+	 */
+	if (m0->m_pkthdr.csum & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
+		in_delayed_cksum(m0);
+		m0->m_pkthdr.csum &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
+	}
+	
+	{
+	    int mhlen, firstlen = len;
+	    struct mbuf **mnext = &m0->m_nextpkt;
+	    
+	    /*
+	     * Loop through length of segment after first fragment,
+	     * make new header and copy data of each part and link onto chain.
+	     */
+	    m1 = m0;
+	    mhlen = sizeof (struct ip);
+	    for (off = hlen + len; off < (u_int16_t)ip->ip_len; off += len) {
+		    MGETHDR(m0, M_DONTWAIT, MT_HEADER);
+		    if (m0 == 0) {
+			    error = ENOBUFS;
+			    ipstat.ips_odropped++;
+			    goto sendorfree;
+		    }
+		    *mnext = m0;
+		    mnext = &m0->m_nextpkt;
+		    m0->m_data += max_linkhdr;
+		    mhip = mtod(m0, struct ip *);
+		    *mhip = *ip;
+		    /* we must inherit MCAST and BCAST flags */
+		    m0->m_flags |= m1->m_flags & (M_MCAST|M_BCAST);
+		    if (hlen > sizeof (struct ip)) {
+			    mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
+			    mhip->ip_hl = mhlen >> 2;
+		    }
+		    m0->m_len = mhlen;
+		    mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
+		    if (ip->ip_off & IP_MF)
+			    mhip->ip_off |= IP_MF;
+		    if (off + len >= (u_int16_t)ip->ip_len)
+			    len = (u_int16_t)ip->ip_len - off;
+		    else
+			    mhip->ip_off |= IP_MF;
+		    mhip->ip_len = htons((u_int16_t)(len + mhlen));
+		    m0->m_next = m_copy(m1, off, len);
+		    if (m0->m_next == 0) {
+			    error = ENOBUFS;/* ??? */
+			    ipstat.ips_odropped++;
+			    goto sendorfree;
+		    }
+		    m0->m_pkthdr.len = mhlen + len;
+		    m0->m_pkthdr.rcvif = (struct ifnet *)0;
+		    mhip->ip_off = htons((u_int16_t)mhip->ip_off);
+		    if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
+			ifp->if_bridge == NULL) {
+			    m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+			    ipstat.ips_outhwcsum++;
+		    } else {
+			    mhip->ip_sum = 0;
+			    mhip->ip_sum = in_cksum(m0, mhlen);
+		    }
+		    ipstat.ips_ofragments++;
+	    }
+	    /*
+	     * Update first fragment by trimming what's been copied out
+	     * and updating header, then send each fragment (in order).
+	     */
+	    m0 = m1;
+	    m_adj(m0, hlen + firstlen - (u_int16_t)ip->ip_len);
+	    m0->m_pkthdr.len = hlen + firstlen;
+	    ip->ip_len = htons((u_int16_t)m0->m_pkthdr.len);
+	    ip->ip_off = htons((u_int16_t)(ip->ip_off | IP_MF));
+	    if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
+		ifp->if_bridge == NULL) {
+		    m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+		    ipstat.ips_outhwcsum++;
+	    } else {
+		    ip->ip_sum = 0;
+		    ip->ip_sum = in_cksum(m0, hlen);
+	    }
+sendorfree:
+	    for (m0 = m1; m0; m0 = m1) {
+		    m1 = m0->m_nextpkt;
+		    m->m_nextpkt = 0;
+		    if (error == 0)
+			    error = (*ifp->if_output)(ifp, m0, sintosa(dst),
+				NULL);
+		    else
+			    m_freem(m0);
+	    }
+	    
+	    if (error == 0)
+		    ipstat.ips_fragmented++;
+	}
+	
+done:
+	if (ro == &iproute && ro->ro_rt)
+		RTFREE(ro->ro_rt);
+	return;
+
+bad:
+	m_freem(m0);
+	goto done;
+}
+#endif /* INET */
+
+#ifdef INET6
+void
+pf_route6(struct mbuf *m, struct pf_rule *r)
+{
+	struct mbuf *m0;
+	struct m_tag *mtag;
+	struct route_in6 ip6route;
+	struct route_in6 *ro;
+	struct sockaddr_in6 *dst;
+	struct ip6_hdr *ip6;
+	struct ifnet *ifp = r->rt_ifp;
+	int error = 0;
+
+	if (m == NULL)
+		return;
+
+	m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+	if (m0 == NULL)
+		return;
+
+	ip6 = mtod(m0, struct ip6_hdr *);
+
+	ro = &ip6route;
+	bzero((caddr_t)ro, sizeof(*ro));
+	dst = (struct sockaddr_in6 *)&ro->ro_dst;
+	dst->sin6_family = AF_INET6;
+	dst->sin6_len = sizeof(*dst);
+	dst->sin6_addr = ip6->ip6_dst;
+
+	if (!PF_AZERO(&r->rt_addr, AF_INET6))
+		dst->sin6_addr = r->rt_addr.v6;
+
+	/* Cheat. */
+	if (r->rt == PF_FASTROUTE) {
+		mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
+		if (mtag == NULL)
+			goto bad;
+		m_tag_prepend(m0, mtag);
+		ip6_output(m0, NULL, NULL, NULL, NULL, NULL);
+		return;
+	}
+
+	if (ifp == NULL)
+		goto bad;
+
+	/*
+	 * Do not fragment packets (yet).  Not much is done here for dealing
+	 * with errors.  Actions on errors depend on whether the packet
+	 * was generated locally or being forwarded.
+	 */
+	if (m0->m_pkthdr.len <= ifp->if_mtu) {
+		error = (*ifp->if_output)(ifp, m0, (struct sockaddr *)dst,
+		    NULL);
+	} else
+		m_freem(m0);
+
+done:
+	return;
+
+bad:
+	m_freem(m0);
+	goto done;
+}
+#endif /* INET6 */
+
+#ifdef INET
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
@@ -4463,6 +4737,13 @@ done:
 			r = &r0;
 		}
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
+	}
+	if (r && r->rt) {
+		pf_route(m, r);
+		if (r->rt != PF_DUPTO) {
+			m_freem(*m0);
+			*m0 = NULL;
+                }
 	}
 	return (action);
 }
@@ -4636,6 +4917,13 @@ done:
 			r = &r0;
 		}
 		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r);
+	}
+	if (r && r->rt) {
+		pf_route6(m, r);
+		if (r->rt != PF_DUPTO) {
+			m_freem(*m0);
+			*m0 = NULL;
+                }
 	}
 	return (action);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.139 2001/11/24 19:29:06 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.140 2001/11/26 16:50:26 jasoni Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -554,6 +554,10 @@ sendit:
 			m_freem(m);
 			goto done;
 		}
+		if (m == NULL) {
+			splx(s);
+			goto done;
+		}
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 #endif
@@ -654,6 +658,9 @@ sendit:
 		m_freem(m);
 		goto done;
 	}
+	if (m == NULL)
+		goto done;
+
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 #endif
