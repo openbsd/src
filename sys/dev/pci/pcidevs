@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.748 2004/07/18 03:52:43 deraadt Exp $
+$OpenBSD: pcidevs,v 1.749 2004/07/18 03:55:22 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1779,7 +1779,7 @@ product NVIDIA NFORCE2_LAN	0x0066	nForce2 LAN
 product NVIDIA NFORCE2_USB	0x0067	nForce2 USB
 product NVIDIA NFORCE2_USB2	0x0068	nForce2 USB2
 product NVIDIA NFORCE2_ACA	0x006a	nForce2	AC-97 Audio
-product NVIDIA NFORCE2_APU	0x006b	nForce2	Audio Processing unit
+product NVIDIA NFORCE2_APU	0x006b	nForce2	Audio
 product NVIDIA NFORCE2_PPB	0x006c	nForce2 PCI-PCI
 product NVIDIA NFORCE2_PPB2	0x006d	nForce2 PCI-PCI
 product NVIDIA NFORCE2_FW	0x006e	nForce2 FireWire
@@ -1806,7 +1806,7 @@ product NVIDIA GEFORCE2TI	0x0151	GeForce2 Ti
 product NVIDIA GEFORCE2ULTRA	0x0152	GeForce2 Ultra
 product NVIDIA QUADRO2PRO	0x0153	Quadro2 Pro
 product NVIDIA GEFORCE4MX460	0x0170	GeForce4 MX 460
-product NVIDIA GEFORCE4MX440	0x0171	GeForce4 MX 440
+ Series WLANproduct NVIDIA GEFORCE4MX440	0x0171	GeForce4 MX 440
 product NVIDIA GEFORCE4MX420	0x0172	GeForce4 MX 420
 product NVIDIA GEFORCE4440GO	0x0174	GeForce4 440 Go
 product NVIDIA GEFORCE4420GO	0x0175	GeForce4 420 Go
@@ -2213,7 +2213,7 @@ product SYBA 4S2P		0x0781	4S2P
 product SYBA 4S			0x0786	4S
 
 /* Symbol */
-product SYMBOL LA41X3		0x0001	Spectrum24 LA41X3 Series WLAN
+product SYMBOL LA41X3		0x0001	Spectrum24 LA41X3
 
 /* Symphony Labs products */
 product SYMPHONY 82C101		0x0001	82C101
@@ -2394,7 +2394,7 @@ product USR2 WL11000P		0x3685	WL11000P
 product V3 V961PBC		0x0002	V961PBC i960 PCI
 product V3 V292PBC		0x0292	V292PBC AMD290x0 PCI
 product V3 V960PBC		0x0960	V960PBC	i960 PCI
-product V3 V96DPC		0xc960	V96DPC	i960 (Dual) PCI
+product V3 V96DPC		0xc960	V96DPC i960 (Dual) PCI
 
 /* VIA Technologies products */
 product VIATECH	VT8363		0x0305	VT8363 Host
