@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.15 2003/12/25 02:49:05 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.16 2003/12/25 02:50:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -121,11 +121,8 @@ retry:
 			return (-1);
 		}
 	}
-	if (n == sizeof(r))
-		return (0);
 
-	/* XXX we could not write everything... bad bad bad. cope. */
-	return (n);
+	return (0);
 }
 
 int
