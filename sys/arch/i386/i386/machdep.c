@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 1997/10/02 14:27:48 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 1997/10/02 14:30:04 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -795,7 +795,7 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-#if NAPM > 0 && !defined(APM_NO_POWEROFF)
+#if NAPM > 0
 		if (howto & RB_POWERDOWN) {
 			printf("\nAttempting to power down...\n");
 			/*
