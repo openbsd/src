@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1394var.h,v 1.4 2002/12/30 11:19:45 tdeval Exp $	*/
+/*	$OpenBSD: ieee1394var.h,v 1.5 2003/01/12 12:02:51 tdeval Exp $	*/
 /*	$NetBSD: ieee1394var.h,v 1.15 2002/02/27 05:04:28 jmc Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ typedef struct ieee1394_callbacks {
 
 typedef struct ieee1394_attach_args {
 	char		  name[7];
+	u_int8_t	  link_speed;
 	u_int8_t	  uid[8];
 	u_int16_t	  nodeid;
 	int		(*read) (struct ieee1394_abuf *);
