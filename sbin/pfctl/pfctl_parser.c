@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.150 2003/04/05 23:56:32 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.151 2003/04/25 19:44:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1043,10 +1043,6 @@ host_v4(const char *s, int mask)
 		h->ifname = NULL;
 		h->af = AF_INET;
 		h->addr.v.a.addr.addr32[0] = ina.s_addr;
-		/* inet_net_pton acts strange w/ multicast addresses, RFC1112 */
-		if (mask == -1 && h->addr.v.a.addr.addr8[0] >= 224 &&
-		    h->addr.v.a.addr.addr8[0] < 240)
-			bits = 32;
 		set_ipmask(h, bits);
 		h->next = NULL;
 		h->tail = h;
