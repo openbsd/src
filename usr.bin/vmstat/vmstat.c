@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.60 2001/09/16 01:27:55 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.61 2001/11/06 19:20:15 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -63,7 +63,6 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp 
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/pool.h>
-#include <vm/vm.h>
 #include <time.h>
 #include <nlist.h>
 #include <kvm.h>
