@@ -1,9 +1,9 @@
-/*	$OpenBSD: crypto.c,v 1.7 2000/01/26 15:23:04 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.26 1999/12/08 20:31:02 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.8 2000/02/19 19:31:32 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.27 2000/02/19 07:46:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,21 +63,27 @@ struct crypto_xf transforms[] = {
     des1_init,
     des1_encrypt, des1_decrypt
   },
+#ifdef USE_TRIPLEDES
   {
     TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, 0,
     des3_init,
     des3_encrypt, des3_decrypt
   },
+#endif
+#ifdef USE_BLOWFISH
   {
     BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56, BLOCKSIZE, 0,
     blf_init,
     blf_encrypt, blf_decrypt
   },
+#endif
+#ifdef USE_CAST
   {
     CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, 0,
     cast_init,
     cast1_encrypt, cast1_decrypt
   },
+#endif
 };
 
 /* Hmm, the function prototypes for des are really dumb */
@@ -113,6 +119,7 @@ des1_decrypt (struct keystate *ks, u_int8_t *d, u_int16_t len)
   des_cbc_encrypt (DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_DECRYPT);
 }
 
+#ifdef USE_TRIPLEDES
 enum cryptoerr
 des3_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -148,7 +155,9 @@ des3_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
 			ks->ks_des[2], DC iv, DES_DECRYPT);
 }
 #undef DC
-
+#endif /* USE_TRIPLEDES */
+ 
+#ifdef USE_BLOWFISH
 enum cryptoerr
 blf_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -202,7 +211,9 @@ blf_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
   SET_32BIT_BIG (data + 4, xr);
   XOR64 (data, ks->riv);
 }
+#endif /* USE_BLOWFISH */
 
+#ifdef USE_CAST
 enum cryptoerr
 cast_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -240,6 +251,7 @@ cast1_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
   cast_decrypt (&ks->ks_cast, data, data);
   XOR64 (data, ks->riv);
 }
+#endif /* USE_CAST */
 
 struct crypto_xf *
 crypto_get (enum transform id)

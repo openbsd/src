@@ -1,8 +1,8 @@
-/*	$OpenBSD: exchange.c,v 1.26 2000/02/01 02:46:17 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.114 2000/01/31 22:33:44 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.27 2000/02/19 19:31:32 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.115 2000/02/19 07:46:30 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,6 +135,7 @@ int16_t script_authentication_only[] = {
   EXCHANGE_SCRIPT_END
 };
 
+#ifdef USE_AGGRESSIVE
 int16_t script_aggressive[] = {
   ISAKMP_PAYLOAD_SA,		/* Initiator -> responder.  */
   ISAKMP_PAYLOAD_KEY_EXCH,
@@ -150,6 +151,7 @@ int16_t script_aggressive[] = {
   EXCHANGE_SCRIPT_AUTH,		/* Initiator -> responder.  */
   EXCHANGE_SCRIPT_END
 };
+#endif /* USE_AGGRESSIVE */
 
 int16_t script_informational[] = {
   EXCHANGE_SCRIPT_INFO,		/* Initiator -> responder.  */
@@ -171,8 +173,10 @@ exchange_script (struct exchange *exchange)
       return script_identity_protection;
     case ISAKMP_EXCH_AUTH_ONLY:
       return script_authentication_only;
+#ifdef USE_AGGRESSIVE
     case ISAKMP_EXCH_AGGRESSIVE:
       return script_aggressive;
+#endif
     case ISAKMP_EXCH_INFO:
       return script_informational;
     default:

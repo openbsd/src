@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.31 2000/02/12 09:21:23 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.114 2000/02/12 00:11:28 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.32 2000/02/19 19:31:32 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.115 2000/02/19 07:46:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
 #include <sys/types.h>
 #include <regex.h>
 #include <keynote.h>
@@ -73,7 +73,7 @@ static int responder_recv_HASH_SA_NONCE (struct message *);
 static int responder_send_HASH_SA_NONCE (struct message *);
 static int responder_recv_HASH (struct message *);
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
 static int check_policy (struct exchange *, struct sa *, struct sa *);
 #endif
 
@@ -89,7 +89,7 @@ int (*ike_quick_mode_responder[]) (struct message *) = {
   responder_recv_HASH
 };
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
 
 /* Policy session ID and other necessary globals.  XXX Why not in policy.h?  */
 extern int keynote_sessid;
@@ -262,7 +262,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    */
   return result;
 }
-#endif /* USE_KEYNOTE */
+#endif /* USE_POLICY */
 
 /*
  * Offer several sets of transforms to the responder.
@@ -855,7 +855,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 
       ipsec_decode_transform (msg, sa, proto, xf->p);
 
-#if defined (USE_KEYNOTE)
+#ifdef USE_POLICY
       if (!check_policy (exchange, sa, msg->isakmp_sa))
 	{
 	  message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
@@ -1264,16 +1264,18 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
     }
 
-#if defined (USE_KEYNOTE)
+#ifdef USE_POLICY
+#ifdef USE_KEYNOTE
   if (message_negotiate_sa (msg, check_policy))
     goto cleanup;
-#elif defined (HAVE_DLOPEN)
+#else
   if (message_negotiate_sa (msg, libkeynote ? check_policy : 0))
     goto cleanup;
+#endif
 #else
   if (message_negotiate_sa (msg, 0))
     goto cleanup;
-#endif
+#endif /* USE_POLICY */
 
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
     {
@@ -1364,8 +1366,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	  goto cleanup;
 	}
     }
-#ifndef USE_KEYNOTE
-#ifdef HAVE_DLOPEN
+#if !defined (USE_POLICY) || !defined (USE_KEYNOTE)
+#ifdef USE_POLICY
   else if (!libkeynote)
 #else
   else
@@ -1375,13 +1377,13 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
        * This code is no longer necessary, as policy determines acceptance
        * of IDs/SAs. (angelos@openbsd.org)
        *
-       * XXX Keep it if not USE_KEYNOTE for now, though. 
+       * XXX Keep it if not USE_POLICY for now, though. 
        */
 
       /* XXX Notify peer and log.  */
       goto cleanup;
     }
-#endif /* USE_KEYNOTE */
+#endif /* !USE_POLICY || !USE_KEYNOTE */
 
   return retval;
 
