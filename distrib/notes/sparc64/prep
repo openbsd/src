@@ -28,10 +28,10 @@ both OpenBSD and Solaris environments on the same system.
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16
 partitions, which may be compatible with Solaris, but the Solaris
-format(8) utility only sees the first 8 partitions and may "lose"
+format(1M) utility only sees the first 8 partitions and may "lose"
 information about the extended partitions.
 
-Use Solaris format(8) only with *extreme* caution on drives that contain
+Use Solaris format(1M) only with *extreme* caution on drives that contain
 OpenBSD partitions.
 
 
@@ -42,9 +42,9 @@ bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and Solaris bootblocks with Solaris installboot.
 
 Most of new Ultras shipped by Sun with a preinstalled Solaris have an
-initial strange setup of the boot ROM, in order to start up Solaris
-WebStart at the first boot: boot-device is set to disk:f.  Make sure
-you reset the boot device to its default value:
+initial specific factory setup of the boot ROM, in order to start up
+Solaris WebStart at the first boot; the boot-device variable is set to
+disk:f.  Make sure you reset the boot device to its default value:
 
     ok set-default boot-device
 

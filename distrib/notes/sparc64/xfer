@@ -7,45 +7,35 @@ Installation is supported from several media types, including:
 	FTP
 	HTTP
 
-dnl XXX uncomment when cd-rom distribution available
-dnl If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
-dnl may be able boot from it. If you can boot from the CD-ROM,
-dnl you are home free and can proceed to the installation steps.  If not,
-dnl you will need to do some setup work to prepare a bootable image, either
-dnl a floppy, hard drive, or compatible net boot server.
-dnl 
+If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
+may be able boot from it. If you can boot from the CD-ROM,
+you are home free and can proceed to the installation steps.  If not,
+you will need to do some setup work to prepare a bootable image, either
+a floppy, hard drive, or compatible net boot server.
+
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.
-dnl XXX uncomment when cd-rom distribution available
-dnl If you have the OpenBSD CD-ROM distribution you can either access the
-dnl CD-ROM directly from the bootable image or remotely mounted on another
-dnl system via NFS.
-dnl
-dnl Although you can access the distribution sets directly from the CD-ROM or
-dnl from one of the FTP mirrors over the internet, you may wish to transfer
-dnl the sets to a local FTP or NFS server, or copy them to a partition on
-dnl the target system's disk.
+If you have the OpenBSD CD-ROM distribution you can either access the
+CD-ROM directly from the bootable image or remotely mounted on another
+system via NFS.
+
+Although you can access the distribution sets directly from the CD-ROM or
+from one of the FTP mirrors over the internet, you may wish to transfer
+the sets to a local FTP or NFS server, or copy them to a partition on
+the target system's disk.
 
 OpenBSDXferFloppyFromDOS
 
 OpenBSDXferFloppyFromUNIX
 
-dnl XXX make sure to adapt text, especially examples, once miniroot
-dnl is available as well.
 Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
-dnl	If you don't have a floppy drive you can copy the floppy
-dnl 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
-dnl 	onto the hard disk you intend to boot on.  Traditionally, the
-dnl 	way to do this is to use dd(1) to place the bootable filesystem
-dnl 	image in the "swap" partition of the disk (while running in
-dnl 	single user mode), and then booting from that partition.
 	If you don't have a floppy drive you can copy the floppy
-	installation image "floppy{:--:}OSrev.fs" onto the hard disk
-	you intend to boot on.  Traditionally, the way to do this is
-	to use dd(1) to place the bootable filesystem image in the
-	"swap" partition of the disk (while running in single user
-	mode), and then booting from that partition.
+ 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
+ 	onto the hard disk you intend to boot on.  Traditionally, the
+ 	way to do this is to use dd(1) to place the bootable filesystem
+ 	image in the "swap" partition of the disk (while running in
+ 	single user mode), and then booting from that partition.
 
 	Using the "b" partition allows you to boot without overwriting
 	any useful parts of the disk, you can also use another partition,
@@ -58,12 +48,12 @@ dnl 	single user mode), and then booting from that partition.
 	Use the dd(1) utility to copy the file to the hard drive.
 	The command would likely be, under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
-dnl 				- or -
-dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+ 				- or -
+ 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 	and under Solaris:
 		dd if=floppy{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
-dnl 				- or -
-dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
+ 				- or -
+ 		dd if=miniroot{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -88,12 +78,10 @@ dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
 
 	The floppy image is used only for booting, and can be placed in
 	a partition that will be overwritten during the install process,
-	since it actually runs off a ram-disk image in the kernel.
-dnl XXX uncomment end of paragraph once miniroot available
-dnl	since it actually runs off a ram-disk image in the kernel.  In
-dnl	contrast the miniroot is a normal unix root filesystem and you
-dnl	must place in a partition that will not be overwritten until you've
-dnl	completed the installation process.
+	since it actually runs off a ram-disk image in the kernel.  In
+	contrast the miniroot is a normal unix root filesystem and you
+	must place in a partition that will not be overwritten until you've
+	completed the installation process.
 
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris, NetBSD or OpenBSD labels:

@@ -1,14 +1,8 @@
 OpenBSDInstallPrelude
 
-dnl XXX uncomment and alter once there is cdrom or miniroot
-dnl XXX available.
-dnl There are several ways to install OpenBSD onto a disk. The easiest way
-dnl in terms of preliminary setup is to use the OpenBSD miniroot that can
-dnl be booted off your local disk's swap partition.   The normal way is to
-dnl use the OpenBSD installation floppy.
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD installation
-floppy.
+cdrom, or an installation floppy.
 
 If your machine is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
@@ -44,32 +38,24 @@ Booting from Floppy Disk installation media:
 This will cause the kernel contained in the floppy to be booted.
 
 
-dnl XXX no cdrom release yet
-dnl Booting From CD-ROM installation media:
-dnl 
-dnl	ok boot cdrom OSREV/MACHINE/bsd.rd
-dnl
-dnl If the boot is successful, you will get a loader version message,
-dnl executable sizes and then the Kernel copyright and device probe
-dnl messages.  Boot failure modes are typically a lot of CD-ROM drive
-dnl activity, but no messages or complaints about magic numbers,
-dnl checksums or formats.
-dnl
-dnl
-dnl XXX no miniroot filesystem yet
-dnl Booting from disk (miniroot or floppy image):
-dnl When miniroot available replace occurences of ``floppy image''
-dnl with ``miniroot'' since these instructions are primarily intended
-dnl for miniroot installation.
-Booting from disk (using the floppy image):
+Booting From CD-ROM installation media:
 
-dnl Boot the miniroot by typing the appropriate command at the PROM:
-Boot the floppy image by typing the appropriate command at the PROM:
+	ok boot cdrom OSREV/MACHINE/bsd.rd
+
+If the boot is successful, you will get a loader version message,
+executable sizes and then the Kernel copyright and device probe
+messages.  Boot failure modes are typically a lot of CD-ROM drive
+activity, but no messages or complaints about magic numbers,
+checksums or formats.
+
+
+Booting from disk (miniroot or floppy image):
+
+Boot the miniroot by typing the appropriate command at the PROM:
 
 	ok boot disk:b bsd
 
-dnl If you've loaded the miniroot onto some other disk than the default
-If you've loaded the floppy image onto some other disk than the default
+If you've loaded the miniroot onto some other disk than the default
 drive 0, modify the boot specifier accordingly, keeping in mind the
 partition naming a=0, b=1... 
 
@@ -103,9 +89,7 @@ command at the monitor prompt:
 	ok boot net bsd.rd
 
 
-dnl XXX Update title when installation media becomes available.
-dnl Installing using the Floppy, CD-ROM, miniroot or netboot procedure:
-Installing using the Floppy or netboot procedure:
+Installing using the Floppy, CD-ROM, miniroot or netboot procedure:
 
 OpenBSDInstallPart2
 
@@ -218,6 +202,10 @@ OpenBSDHTTPInstall
 OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
+
+	On some pci-based systems, installing files from CD-ROM yields
+	a lot of ``pciide bogus intr'' warning messages.  While annoying,
+	these messages do not prevent the installation from suceeding.
 		
 OpenBSDNFSInstall
 
@@ -236,11 +224,14 @@ filesystem writable is
 
     OpenBSD# mount -u /dev/sd0a /
 
-The Sun monitor normally tries to load a file called "vmunix".   
-On OpenBOOT ROM systems you can change it to load OpenBSD instead using
-the following commands:
+The UltraSPARC OpenFirmware will normally load the kernel from the device
+and filename as instructed by the ``boot-device'' and ``boot-file''
+variables.  If the ``boot-file'' variable is empty, the OpenBSD bootloader
+will look for a kernel named ``bsd'', unless a different filename has been
+specified in the boot command.  To reset this variable to its default,
+empty, value, type the following:
 
-    ok setenv boot-file bsd
+    ok set-default boot-file
 
 
 OpenBSDCongratulations
