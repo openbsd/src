@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.15 2003/06/12 01:15:53 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.16 2003/06/13 16:54:00 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.15 2003/06/12 01:15:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.16 2003/06/13 16:54:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -531,7 +531,7 @@ exec:
 		if (fd > STDIN_FILENO) {
 			if (dup2(fd, STDIN_FILENO) != 0)
 				err(1, "can't dup2 to stdin");
-			close(STDIN_FILENO);
+			close(fd);
 		}
 		execvp(argv[0], argv);
 		childerr = errno;
