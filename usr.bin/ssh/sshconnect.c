@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.40 1999/11/24 19:53:53 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.41 1999/12/01 13:59:15 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -32,7 +32,7 @@ unsigned char session_id[16];
  * Connect to the given ssh server using a proxy command.
  */
 int
-ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
+ssh_proxy_connect(const char *host, u_short port, uid_t original_real_uid,
 		  const char *proxy_command)
 {
 	Buffer command;
@@ -43,7 +43,7 @@ ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
 	char portstring[100];
 
 	/* Convert the port number into a string. */
-	snprintf(portstring, sizeof portstring, "%d", port);
+	snprintf(portstring, sizeof portstring, "%hu", port);
 
 	/* Build the final command string in the buffer by making the
 	   appropriate substitutions to the given proxy command. */
@@ -171,7 +171,7 @@ ssh_create_socket(uid_t original_real_uid, int privileged)
  */
 int
 ssh_connect(const char *host, struct sockaddr_in * hostaddr,
-	    int port, int connection_attempts,
+	    u_short port, int connection_attempts,
 	    int anonymous, uid_t original_real_uid,
 	    const char *proxy_command)
 {

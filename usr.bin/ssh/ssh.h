@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: ssh.h,v 1.26 1999/11/24 19:53:52 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.27 1999/12/01 13:59:15 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -275,7 +275,7 @@ void    record_logout(int pid, const char *ttyname);
  */
 int 
 ssh_connect(const char *host, struct sockaddr_in * hostaddr,
-    int port, int connection_attempts,
+    u_short port, int connection_attempts,
     int anonymous, uid_t original_real_uid,
     const char *proxy_command);
 
@@ -560,8 +560,8 @@ char   *channel_open_message(void);
  * error.
  */
 void 
-channel_request_local_forwarding(int port, const char *host,
-    int remote_port);
+channel_request_local_forwarding(u_short port, const char *host,
+    u_short remote_port);
 
 /*
  * Initiate forwarding of connections to port "port" on remote host through
@@ -570,8 +570,8 @@ channel_request_local_forwarding(int port, const char *host,
  * permitted.
  */
 void 
-channel_request_remote_forwarding(int port, const char *host,
-    int remote_port);
+channel_request_remote_forwarding(u_short port, const char *host,
+    u_short remote_port);
 
 /*
  * Permits opening to any host/port in SSH_MSG_PORT_OPEN.  This is usually
