@@ -259,7 +259,7 @@ cache_flush_context()
 	}
 }
 
-#if defined(MMU_3L) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4M)
 /*
  * Flush the given virtual region from the cache.
  *
@@ -363,7 +363,7 @@ cache_flush(base, len)
 {
 	register int i, ls, baseoff;
 	register char *p;
-#if defined(MMU_3L)
+#if defined(SUN4)
 	extern int mmu_3l;
 #endif
 
@@ -431,11 +431,11 @@ cache_flush(base, len)
 	if (i == 1)
 		cache_flush_segment(VA_VREG(base), VA_VSEG(base));
 	else {
-#if defined(MMU_3L) || defined(SUN4M)
+#if defined(SUN4) || defined(SUN4M)
 		baseoff = (u_int)base & RGOFSET;
 		i = (baseoff + len + RGOFSET) >> RGSHIFT;
 		if (i == 1
-#if !defined(MMU_3L)
+#if !defined(SUN4)
 			&& CPU_ISSUN4M
 #elif !defined(SUN4M)
 			&& mmu_3l
