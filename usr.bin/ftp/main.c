@@ -151,7 +151,8 @@ main(argc, argv)
 		while (argc > 0 && strchr(argv[0], ':')) {
 			char *xargv[5];
 			extern char *__progname;
-			char portstr[20], *p, *bufp;
+			char portstr[20], *p, *bufp = NULL;
+			char *host = NULL, *dir = NULL, *file = NULL;
 			int xargc = 2;
 
 			if (setjmp(toplevel))
@@ -160,11 +161,31 @@ main(argc, argv)
 			(void) signal(SIGPIPE, lostpeer);
 			xargv[0] = __progname;
 
-			/* connect to host */
-			bufp = xargv[1] = strdup(argv[0]);
-			p = strchr(xargv[1], ':');
+			host = strdup(argv[0]);
+			if (host == NULL) {
+				ret = 1;
+				goto bail;
+			}
+
+			if (strncmp(host, "ftp://", sizeof("ftp://")-1) == 0) {
+				host += sizeof("ftp://") - 1;
+				p = strchr(host, '/');
+			} else
+				p = strchr(host, ':');
 			*p = '\0';
+			dir = ++p;
+			p = strrchr(p, '/');
+			if (p) {
+				*p = '\0';
+				file = ++p;
+			} else {
+				file = dir;
+				dir = NULL;
+			}
+
+			xargv[1] = host;
 			xargv[2] = NULL;
+			xargc = 2;
 			if (force_port) {
 				xargv[2] = portstr;
 				snprintf(portstr, sizeof portstr, "%d",
@@ -173,48 +194,30 @@ main(argc, argv)
 			}
 			setpeer(xargc, xargv);
 			if (!connected) {
-				printf("failed to connect to %s\n", xargv[1]);
+				printf("failed to connect to %s\n", host);
 				ret = 1;
 				goto bail;
 			}
-			free(bufp);
 
 			setbinary(NULL, 0);
 
-			/* cd into correct directory */
-			bufp = xargv[1] = strdup(argv[0]);
-			if (xargv[1] == NULL) {
-				ret = 1;
-				goto bail;
+			if (dir) {
+				xargv[1] = dir;
+				xargv[2] = NULL;
+				xargc = 2;
+				cd(xargc, xargv);
 			}
-			xargv[1] = strchr(xargv[1], ':');
-			xargv[1]++;
-			p = strrchr(xargv[1], '/');
-			if (p)
-				*p = '\0';
-			xargv[2] = NULL;
-			xargc = 2;
-			cd(xargc, xargv);
-			free(bufp);
 
 			/* fetch file */
-			bufp = xargv[1] = strdup(argv[0]);
-			if (xargv[1] == NULL) {
-				ret = 1;
-				goto bail;
-			}
-			xargv[1] = strchr(xargv[1], ':');
-			xargv[1]++;
-			p = strrchr(xargv[1], '/');
-			if (p)
-				xargv[1] = p + 1;
+			xargv[1] = file;
 			xargv[2] = NULL;
 			xargc = 2;
 			get(xargc, xargv);
-			free(bufp);
 
 			/* get ready for the next file */
 bail:
+			if (bufp)
+				free(bufp);
 			if (connected)
 				disconnect(1, xargv);
 			--argc;
