@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.15 2004/04/26 02:35:12 mcbride Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.16 2004/05/18 22:37:25 beck Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -87,6 +87,7 @@ struct fxp_softc {
 #define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
 #define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around
 					   the resume bug */
+#define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */

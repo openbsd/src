@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.52 2004/05/18 21:19:35 beck Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.53 2004/05/18 22:37:25 beck Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,9 @@ static u_char fxp_cb_config_template[] = {
 	0x05	/* 21 mc_all */
 };
 
+void fxp_eeprom_shiftin(struct fxp_softc *, int, int);
+void fxp_eeprom_putword(struct fxp_softc *, int, u_int16_t);
+void fxp_write_eeprom(struct fxp_softc *, u_short *, int, int);
 int fxp_mediachange(struct ifnet *);
 void fxp_mediastatus(struct ifnet *, struct ifmediareq *);
 void fxp_scb_wait(struct fxp_softc *);
@@ -204,6 +207,86 @@ fxp_scb_wait(sc)
 	if (i == 0)
 		printf("%s: warning: SCB timed out\n", sc->sc_dev.dv_xname);
 }
+
+
+void 
+fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int length)
+{
+	u_int16_t reg;
+	int x;
+
+	/*
+	 * Shift in data.
+	 */
+	for (x = 1 << (length - 1); x; x >>= 1) {
+		if (data & x)
+			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+		else
+			reg = FXP_EEPROM_EECS;
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(1);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg | FXP_EEPROM_EESK);
+		DELAY(1);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(1);
+	}
+}
+
+
+void
+fxp_eeprom_putword(struct fxp_softc *sc, int offset, u_int16_t data)
+{
+	int i;
+
+	/*
+	 * Erase/write enable.
+	 */
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	fxp_eeprom_shiftin(sc, 0x4, 3);
+	fxp_eeprom_shiftin(sc, 0x03 << (sc->eeprom_size - 2), sc->eeprom_size);
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+	DELAY(1);
+	/*
+	 * Shift in write opcode, address, data.
+	 */
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
+	fxp_eeprom_shiftin(sc, offset, sc->eeprom_size);
+	fxp_eeprom_shiftin(sc, data, 16);
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+	DELAY(1);
+	/*
+	 * Wait for EEPROM to finish up.
+	 */
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	DELAY(1);
+	for (i = 0; i < 1000; i++) {
+		if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) & FXP_EEPROM_EEDO)
+			break;
+		DELAY(50);
+	}
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+	DELAY(1);
+	/*
+	 * Erase/write disable.
+	 */
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	fxp_eeprom_shiftin(sc, 0x4, 3);
+	fxp_eeprom_shiftin(sc, 0, sc->eeprom_size);
+	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
+	DELAY(1);
+}
+
+void
+fxp_write_eeprom(struct fxp_softc *sc, u_short *data, int offset, int words)
+{
+	int i;
+
+	for (i = 0; i < words; i++)
+		fxp_eeprom_putword(sc, offset + i, data[i]);
+}
+
+
 
 /*************************************************************
  * Operating system-specific autoconfiguration glue
@@ -362,6 +445,30 @@ fxp_attach_common(sc, enaddr, intrstr)
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	
+	if (sc->sc_flags & FXPF_DISABLE_STANDBY) {
+		fxp_read_eeprom(sc, &data, 10, 1);
+		if (data & 0x02) {			/* STB enable */
+			u_int16_t cksum;
+			int i;
+			printf("Disabling dynamic standby mode in EEPROM\n");
+			data &= ~0x02;
+			fxp_write_eeprom(sc, &data, 10, 1);
+			printf("New EEPROM ID: 0x%x\n", data);
+			cksum = 0;
+			for (i = 0; i < (1 << sc->eeprom_size) - 1; i++) {
+				fxp_read_eeprom(sc, &data, i, 1);
+				cksum += data;
+			}
+			i = (1 << sc->eeprom_size) - 1;
+			cksum = 0xBABA - cksum;
+			fxp_read_eeprom(sc, &data, i, 1);
+			fxp_write_eeprom(sc, &cksum, i, 1);
+			printf("EEPROM checksum @ 0x%x: 0x%x -> 0x%x\n",
+			    i, data, cksum);
+		}
+	}
 
 #if NVLAN > 0
 	/*
@@ -544,6 +651,11 @@ fxp_autosize_eeprom(sc)
 	DELAY(4);
 	sc->eeprom_size = x;
 }
+
+
+
+
+
 /*
  * Read from the serial EEPROM. Basically, you manually shift in
  * the read opcode (one bit at a time) and then shift in the address,
@@ -907,9 +1019,8 @@ fxp_stats_update(arg)
 	if (sp->rx_good) {
 		ifp->if_ipackets += letoh32(sp->rx_good);
 		sc->rx_idle_secs = 0;
-	} else {
+	} else
 		sc->rx_idle_secs++;
-	}
 	ifp->if_ierrors +=
 	    letoh32(sp->rx_crc_errors) +
 	    letoh32(sp->rx_alignment_errors) +
