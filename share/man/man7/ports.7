@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.14 2000/10/13 04:09:21 aaron Exp $
+.\" $OpenBSD: ports.7,v 1.15 2000/12/27 18:23:16 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -35,7 +35,9 @@
 .Sh DESCRIPTION
 The
 .Nm OpenBSD Ports Collection
-(shamelessly stolen from the FreeBSD Ports Collection) offers a simple way
+(shamelessly stolen from the
+.Fx
+Ports Collection) offers a simple way
 for users and administrators to install applications.
 Each
 .Em port
@@ -67,6 +69,8 @@ http://www.freebsd.org/handbook/porting.html) as well as the NetBSD
 Package System documentation
 (http://www.netbsd.org/Documentation/netbsd/Packages.txt).
 .Pp
+For a detailed description of the build process, see
+.Xr bsd.port.mk 5 .
 .Sh PORTS MASTER MAKEFILE
 The ports master Makefile, normally located in
 .Pa /usr/ports/Makefile
@@ -126,9 +130,9 @@ line, e.g., to avoid stopping after each problem.
 .Ed
 
 The targets that do this are
-.Ar build , checksum , clean , configure , extract , fetch , fetch-list ,
+.Ar build , checksum , clean , configure , extract , fake, fetch ,
 .Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
-.Ar list-distfiles , package , cdrom-packages
+.Ar package , cdrom-packages , link-categories, unlink-categories ,
 and
 .Ar ftp-packages .
 .Pp
@@ -147,7 +151,11 @@ and so on all the way to
 .Ar fetch .
 Typical use only runs
 .Ar install
-explicitly (if root), or
+explicitly (if root or
+.Ev SUDO
+is defined in
+.Pa /etc/mk.conf ) ,
+or
 .Ar build
 (as user), then
 .Ar install
@@ -181,7 +189,7 @@ Using
 will try to get a set of distfiles that match the recorded checksum.
 .It Ar depends
 Install
-.Pq or compile if only compilation is necessary
+.Pq or package if only compilation is necessary
 any dependencies of the current port.
 When called by the
 .Ar extract, install
@@ -212,15 +220,19 @@ Build the port.
 This is the same as calling the
 .Ar all
 target.
+.It Ar fake
+Pretend to install the port under a subdirectory of the work directory.
+.It Ar package
+Create a binary package from the fake installation.
+The package is a .tgz file that can be used to
+install the port on several machines with
+.Xr pkg_add 1 .
 .It Ar install
-Install the port and register it with the package system.
+Install the resulting package.
 .El
 .Pp
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
-.It Ar fetch-list
-Build a script that lists the files needing to be fetched in order to
-build the port.
 .It Ar depends-list package-depends
 Print an ordered list of all the compile and run dependencies.
 .It Ar clean
@@ -237,19 +249,12 @@ This does not recurse to dependencies.
 .It Ar reinstall
 Use this to restore a port after using
 .Xr pkg_delete 1 .
-.It Ar package
-Make a binary package for the port.
-The port will be installed if it hasn't already been.
-The package is a .tgz file that can be used to
-install the port on other machines with
-.Xr pkg_add 1 .
-If the directory specified by
-.Ev PACKAGES
-does not exist the package will be put into the current directory.
-See
-.Ev PKGREPOSITORY
-and
-.Ev PKGFILE .
+.It Ar link-categories
+Populate the ports tree with symbolic links for each category the port
+belongs to.
+.It Ar unlink-categories
+Remove the symbolic links created by
+.Ar link-categories .
 .El
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
@@ -397,29 +402,38 @@ Local network configuration (OpenBSD).
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
+.Xr bsd.port.mk 5 ,
 .Xr packages 7
 .Pp
 The FreeBSD handbook.
 .Sh AUTHORS
 This man page was originated by
-David O'Brien.
-The FreeBSD ports collection is maintained by Satoshi Asami
-and the awesome ports team.
-The OpenBSD ports collection has been maintained by
-Marco S Hyman in the past.
-It is currently managed by Christopher Turan,
-with much help from Brad Smith
-and a host of others found at ports@openbsd.org.
+David O'Brien, from the
+.Fx
+project.
 .Sh HISTORY
 .Nm The Ports Collection
-appeared in FreeBSD 1.0.
+appeared in
+.Fx 1.0 .
+It was introduced in
+.Ox
+by Ejowi Nuwere, with much initial effort by Angelos D. Keromytis.
+Maintainance passed then to Marco S Hyman,
+it is currently managed by Christopher Turan,
+with much help from Marc Espie, Kevin Lo, Brad Smith, Christopher Weisgerber,
+and a host of others found at ports@openbsd.org.
 .Sh BUGS
-Ports documentation is split over four places ---
+Ports documentation is split over several places ---
 .Pa /usr/share/mk/bsd.port.mk ,
 the
 .Dq Ports Collection
-section of the FreeBSD handbook, the
+section of the
+.Fx
+handbook, the
 .Dq Porting Existing Software
-section of the FreeBSD handbook, and
-.Xr ports 7 .
-OpenBSD adds a few web pages to further confuse the issue.
+section of the
+.Fx
+handbook,
+and some man pages.
+.Ox
+adds a few web pages to further confuse the issue.
