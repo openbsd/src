@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 1999/02/20 21:46:05 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 1999/12/24 22:32:24 angelos Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -439,7 +439,7 @@ main(argc, argv)
 
 	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
-		msg("estimated %ld tape blocks.\n", tapesize);
+		msg("estimated %lq tape blocks.\n", tapesize);
 	} else {
 		double fetapes;
 
