@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.35 2003/09/05 10:03:18 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.36 2003/09/05 20:28:36 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1869,14 +1869,7 @@ ASLOCAL(fpu_enable)
 	bb1.n	eq,   r3,   8f
 #endif
 
-	/* enable interrupts */
-	 ldcr	r2,   PSR
-	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r2,   PSR
-	FLUSH_PIPELINE
-
-	/* service any outstanding data pipeline stuff
-	   - check dmt0 anything outstanding? */
+	/* service any outstanding data pipeline stuff */
 
 	ld	r3,   r30,  REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, 8f
@@ -1886,15 +1879,14 @@ ASLOCAL(fpu_enable)
 	 * register, say r15. R14 is in use (see return_to_... below).
 	 */
 	or	r15,  r0,   r30
-
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r15)
-	CALL(_C_LABEL(data_access_emulation), r15, r0)
-
-	/* restore it... */
 	or	r30,  r0,   r15
 
-	/* clear the dmt0 word in the E.F */
-	st	r0,   r30,  REG_OFF(EF_DMT0)
+	/* enable interrupts */
+	 ldcr	r2,   PSR
+	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r2,   PSR
+	FLUSH_PIPELINE
 
 8:
 	jmp	r14	/* loaded above */
@@ -1963,60 +1955,11 @@ ASLOCAL(return_from_exception_handler)
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
 
-#ifdef DEBUG
-	/*
-	 * This might happen for non-interrupts  If the user sets DMT0
-	 * in an exception handler...
-	 */
-	ld	r2, FPTR, REG_OFF(EF_VECTOR)
-	cmp	r2, r2, 1	/* is an interrupt? */
-	bb1	eq, r2, 1f
-	or.u	r4, r0, hi16(2f)
-	or	r4, r4, lo16(2f)
-#ifdef DDB
-	CALL(_C_LABEL(db_printf), r4, r0)
-	tb0	0, r0, 132
-#endif
-	br	1f
-	data
-2:	string "OOPS: DMT0 not zero and not interrupt.\n\000"
-	align 8
-	text
-1:
-#endif
-	/*
-	 * If it's the interrupt exception, enable interrupt.
-	 * Take care of any data access exception...... 90/8/15 add by yama
-	 */
-
-	/*
-	 * Is it ever possible to have interrupt exception while EPSR has
-	 * it disabled? I don't think so.. XXX nivas
-	 */
-	ld	r2, FPTR, REG_OFF(EF_VECTOR)
-	cmp	r2, r2, 1	/* is an interrupt? */
-        bb1	ne, r2, 1f	/* If not so, skip */
-
-	/* if EPSR has interrupts disabled, skip also */
-	ld	r2, FPTR, REG_OFF(EF_EPSR)
-        bb1	PSR_INTERRUPT_DISABLE_BIT, r2, 1f	/* skip if disabled */
-	ldcr	r2, PSR
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* enable interrupts */
-        stcr	r2, PSR
-	FLUSH_PIPELINE
-1:
-	ld	r2, FPTR, REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r2, 2f
-
 	/*
 	 * if there happens to be a data fault that hasn't been serviced yet,
 	 * go off and service that...
 	 */
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r30)
-	CALL(_C_LABEL(data_access_emulation), r30, r0)	/* really only 2 args */
-	/* clear the dmt0 word in the E.F. */
-	st	r0 , FPTR, REG_OFF(EF_DMT0)
-2:
 	br	_ASM_LABEL(check_ast)
 #endif /* M88100 */
 
