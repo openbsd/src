@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.72 2004/02/20 09:46:56 hshoexer Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.73 2004/02/20 11:31:10 hshoexer Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -139,9 +139,8 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       keynote_ids = calloc (keynote_policy_asserts_num, sizeof *keynote_ids);
       if (!keynote_ids)
         {
-	  log_error ("check_policy: "
-	     "failed to allocate %lu bytes for book keeping",
-	     keynote_policy_asserts_num * (unsigned long)sizeof *keynote_ids);
+	  log_error ("check_policy: calloc (%d, %lu) failed",
+	     keynote_policy_asserts_num, (unsigned long)sizeof *keynote_ids);
 	  return 0;
         }
     }
@@ -926,8 +925,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       id = calloc (sz, sizeof (char));
       if (!id)
 	{
-	  log_error ("initiator_send_HASH_SA_NONCE: malloc(%lu) failed",
-		     (unsigned long)sz);
+	  log_error ("initiator_send_HASH_SA_NONCE: calloc (%lu, %lu) failed",
+		     (unsigned long)sz, (unsigned long)sizeof (char));
 	  return -1;
 	}
 
@@ -1597,8 +1596,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 
       if (!ie->id_ci || !ie->id_cr)
 	{
-	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%lu) failed",
-		     (unsigned long)ie->id_ci_sz);
+	  log_error ("responder_recv_HASH_SA_NONCE: calloc (%lu, %lu) failed",
+		     (unsigned long)ie->id_ci_sz, (unsigned long)sizeof (char));
 	  goto cleanup;
 	}
 
