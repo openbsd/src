@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.3 1997/03/01 23:40:09 millert Exp $	*/
+/*	$OpenBSD: at.h,v 1.4 2002/05/11 23:02:33 millert Exp $	*/
 /*	$NetBSD: at.h,v 1.2 1995/03/25 18:13:32 glass Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  */
 
 extern int fcreated;
-extern char *namep;
+extern char *__progname;
 extern char atfile[];
 extern char atverify;
 

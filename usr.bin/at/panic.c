@@ -1,4 +1,4 @@
-/*	$OpenBSD: panic.c,v 1.6 2002/05/11 21:56:54 millert Exp $	*/
+/*	$OpenBSD: panic.c,v 1.7 2002/05/11 23:02:33 millert Exp $	*/
 /*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
 
 /*
@@ -42,21 +42,21 @@
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: panic.c,v 1.6 2002/05/11 21:56:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: panic.c,v 1.7 2002/05/11 23:02:33 millert Exp $";
 #endif
 
 /* External variables */
 
 /* Global functions */
 
-void
+__dead void
 panic(a)
 	char *a;
 {
 	/*
 	 * Something fatal has happened, print error message and exit.
 	 */
-	(void)fprintf(stderr, "%s: %s\n", namep, a);
+	(void)fprintf(stderr, "%s: %s\n", __progname, a);
 	if (fcreated) {
 		PRIV_START
 		unlink(atfile);
@@ -66,7 +66,7 @@ panic(a)
 	exit(EXIT_FAILURE);
 }
 
-void
+__dead void
 perr(a)
 	char *a;
 {
@@ -83,7 +83,7 @@ perr(a)
 	exit(EXIT_FAILURE);
 }
 
-void 
+__dead void 
 perr2(a, b)
 	char *a, *b;
 {
@@ -91,15 +91,16 @@ perr2(a, b)
 	perr(b);
 }
 
-void
+__dead void
 usage(void)
 {
 	/* Print usage and exit.  */
 	(void)fprintf(stderr,
-	    "Usage: at [-q queue] [-f file] [-mldbv] time\n"
+	    "Usage: at [-blmrv] [-f file] [-q queue] -t [[CC]YY]MMDDhhmm[.SS]\n"
+	    "       at [-blmrv] [-f file] [-q queue] time\n"
 	    "       at -c job [job ...]\n"
 	    "       atq [-q queue] [-v]\n"
 	    "       atrm job [job ...]\n"
-	    "       batch [-q queue] [-f file] [-mv]\n");
+	    "       batch [-mv] [-f file] [-q queue]\n");
 	exit(EXIT_FAILURE);
 }

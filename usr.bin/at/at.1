@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.21 2002/05/11 22:14:48 millert Exp $
+.\" $OpenBSD: at.1,v 1.22 2002/05/11 23:02:33 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -11,7 +11,12 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl bdlmv
+.Op Fl blmrv
+.Op Fl f Ar file
+.Op Fl q Ar queue
+.Fl t Ar [[CC]YY]MMDDhhmm[.SS]
+.Nm at
+.Op Fl blmrv
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Ar time
@@ -59,9 +64,6 @@ An alias for
 .Nm batch .
 .It Fl c
 Prints the jobs listed on the command line to standard output.
-.It Fl d
-An alias for
-.Nm atrm .
 .It Fl f Ar file
 Reads the job from
 .Ar file
@@ -97,6 +99,41 @@ is treated as if it had been submitted to batch at that time.
 If
 .Nm atq
 is given a specific queue, it will only show jobs pending in that queue.
+.It Fl r
+An alias for
+.Nm atrm .
+.It Fl t
+Specify the job time using the \*[Px] time format.
+The argument should be in the form
+.Ar [[CC]YY]MMDDhhmm[.SS]
+where each pair of letters represents the following:
+.Pp
+.Bl -tag -width indent -compact -offset indent
+.It Ar CC
+The first two digits of the year (the century).
+.It Ar YY
+The second two digits of the year.
+.It Ar MM
+The month of the year, from 1 to 12.
+.It Ar DD
+the day of the month, from 1 to 31.
+.It Ar hh
+The hour of the day, from 0 to 23.
+.It Ar mm
+The minute of the hour, from 0 to 59.
+.It Ar SS
+The second of the minute, from 0 to 61.
+.El
+.Pp
+If the
+.Ar CC
+and
+.Ar YY
+letter pairs are not specified, the values default to the current
+year.
+If the
+.Ar SS
+letter pair is not specified, the value defaults to 0.
 .It Fl v
 For
 .Nm atq ,
@@ -131,10 +168,13 @@ by giving a date in the form
 with an optional
 .Ar year ,
 or giving a date of the form
-.Ar MMDDYY ,
-.Ar MM/DD/YY
+.Ar DD.MM.CCYY ,
+.Ar DD.MM.YY ,
+.Ar MM/DD/CCYY ,
+.Ar MM/DD/YY ,
+.Ar MMDDCCYY ,
 or
-.Ar DD.MM.YY .
+.Ar MMDDYY .
 .Pp
 The year may be given as two or four digits.
 If the year is given as two digits, it is taken to occur as soon as
@@ -167,14 +207,20 @@ To run a job at 10:00am on July 31, you would do
 To run a job at 1am tomorrow, you would do
 .Ic at 1am tomorrow .
 .Pp
+The
+.Nm at
+utility also supports the \*[Px] time format (see the
+.Fl t
+option).
+.Pp
 For both
 .Nm at
 and
 .Nm batch ,
-commands are read from standard input or the file specified
+commands are read from standard input (or the file specified
 with the
 .Fl f
-option and executed.
+option) and executed.
 The working directory, the environment (except for the variables
 .Ev TERM ,
 .Ev TERMCAP ,
@@ -193,7 +239,7 @@ command invoked from a
 shell will retain the current user ID.
 The user will be mailed standard error and standard output from his
 commands, if any.
-Mail will be sent using the command
+Mail will be sent using
 .Xr sendmail 8 .
 If
 .Nm at

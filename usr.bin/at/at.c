@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.24 2002/05/11 21:56:54 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.25 2002/05/11 23:02:33 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -30,10 +30,9 @@
  */
 
 /* System Headers */
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
+#include <sys/time.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -74,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.24 2002/05/11 21:56:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.25 2002/05/11 23:02:33 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -87,7 +86,6 @@ static int send_mail = 0;
 
 extern char **environ;
 int fcreated;
-char *namep;
 char atfile[FILENAME_MAX];
 
 char *atinput = (char *)0;	/* where to get input from */
@@ -101,6 +99,7 @@ static void alarmc(int);
 static char *cwdname(void);
 static void writefile(time_t, char);
 static void list_jobs(void);
+static time_t ttime(const char *);
 
 /* Signal catching functions */
 
@@ -125,7 +124,7 @@ alarmc(signo)
 	char buf[1024];
 
 	/* Time out after some seconds. */
-	strlcpy(buf, namep, sizeof(buf));
+	strlcpy(buf, __progname, sizeof(buf));
 	strlcat(buf, ": File locking timed out\n", sizeof(buf));
 	write(STDERR_FILENO, buf, strlen(buf));
 	if (fcreated) {
@@ -457,14 +456,14 @@ list_jobs()
 
 		runtimer = 60 * (time_t) ctm;
 		runtime = *localtime(&runtimer);
-		strftime(timestr, TIMESIZE, "%X %x", &runtime);
+		strftime(timestr, TIMESIZE, "%+", &runtime);
 		if (first) {
-			(void)printf("Date\t\t\tOwner\tQueue\tJob#\n");
+			(void)printf("Date\t\t\t\tOwner\t\tQueue\tJob#\n");
 			first = 0;
 		}
 		pw = getpwuid(buf.st_uid);
 
-		(void)printf("%s\t%s\t%c%s\t%d\n",
+		(void)printf("%s\t%-16s%c%s\t%d\n",
 		    timestr,
 		    pw ? pw->pw_name : "???",
 		    queue,
@@ -556,6 +555,77 @@ process_jobs(argc, argv, what)
 	}
 }				/* delete_jobs */
 
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
+static time_t
+ttime(const char *arg)
+{
+	/*
+	 * This is pretty much a copy of stime_arg1() from touch.c.  I changed
+	 * the return value and the argument list because it's more convenient
+	 * (IMO) to do everything in one place. - Joe Halpin
+	 */
+	struct timeval tv[2];
+	time_t now;
+	struct tm *t;
+	int yearset;
+	char *p;
+	
+	if (gettimeofday(&tv[0], NULL))
+		panic("Cannot get current time");
+	
+	/* Start with the current time. */
+	now = tv[0].tv_sec;
+	if ((t = localtime(&now)) == NULL)
+		panic("localtime");
+	/* [[CC]YY]MMDDhhmm[.SS] */
+	if ((p = strchr(arg, '.')) == NULL)
+		t->tm_sec = 0;		/* Seconds defaults to 0. */
+	else {
+		if (strlen(p + 1) != 2)
+			goto terr;
+		*p++ = '\0';
+		t->tm_sec = ATOI2(p);
+	}
+	
+	yearset = 0;
+	switch(strlen(arg)) {
+	case 12:			/* CCYYMMDDhhmm */
+		t->tm_year = ATOI2(arg);
+		t->tm_year *= 100;
+		yearset = 1;
+		/* FALLTHROUGH */
+	case 10:			/* YYMMDDhhmm */
+		if (yearset) {
+			yearset = ATOI2(arg);
+			t->tm_year += yearset;
+		} else {
+			yearset = ATOI2(arg);
+			t->tm_year = yearset + 2000;
+		}
+		t->tm_year -= 1900;	/* Convert to UNIX time. */
+		/* FALLTHROUGH */
+	case 8:				/* MMDDhhmm */
+		t->tm_mon = ATOI2(arg);
+		--t->tm_mon;		/* Convert from 01-12 to 00-11 */
+		t->tm_mday = ATOI2(arg);
+		t->tm_hour = ATOI2(arg);
+		t->tm_min = ATOI2(arg);
+		break;
+	default:
+		goto terr;
+	}
+	
+	t->tm_isdst = -1;		/* Figure out DST. */
+	tv[0].tv_sec = tv[1].tv_sec = mktime(t);
+	if (tv[0].tv_sec != -1)
+		return (tv[0].tv_sec);
+	else
+    terr:
+		panic("out of range or illegal time specification: "
+		    "[[CC]YY]MMDDhhmm[.SS]");
+}
+
 /* Global functions */
 
 int
@@ -566,33 +636,21 @@ main(argc, argv)
 	int c;
 	char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
-	char *pgm;
-
-	enum {
-		ATQ, ATRM, AT, BATCH, CAT
-	};				/* what program we want to run */
-	int program = AT;		/* our default program */
-	char *options = "q:f:mvldbc";	/* default options for at */
+	int program = AT;			/* default program mode */
+	char *options = "q:f:t:bcdlmrv";	/* default options for at */
 	time_t timer;
+	int tflag = 0;
 
 	RELINQUISH_PRIVS
 
-	/* Eat any leading paths */
-	if ((pgm = strrchr(argv[0], '/')) == NULL)
-		pgm = argv[0];
-	else
-		pgm++;
-
-	namep = pgm;
-
 	/* find out what this program is supposed to do */
-	if (strcmp(pgm, "atq") == 0) {
+	if (strcmp(__progname, "atq") == 0) {
 		program = ATQ;
 		options = "q:v";
-	} else if (strcmp(pgm, "atrm") == 0) {
+	} else if (strcmp(__progname, "atrm") == 0) {
 		program = ATRM;
 		options = "";
-	} else if (strcmp(pgm, "batch") == 0) {
+	} else if (strcmp(__progname, "batch") == 0) {
 		program = BATCH;
 		options = "f:q:mv";
 	}
@@ -624,12 +682,20 @@ main(argc, argv)
 			queue_set = 1;
 			break;
 
-		case 'd':
+		case 'd':		/* for backwards compatibility */
+		case 'r':
 			if (program != AT)
 				usage();
 
 			program = ATRM;
 			options = "";
+			break;
+
+		case 't':
+			if (program != AT)
+				usage();
+			tflag++;
+			timer = ttime(optarg);
 			break;
 
 		case 'l':
@@ -661,7 +727,7 @@ main(argc, argv)
 
 	if (!check_permission())
 		errx(EXIT_FAILURE, "You do not have permission to use %s.",
-		     namep);
+		     __progname);
 
 	/* select our program */
 	switch (program) {
@@ -679,7 +745,9 @@ main(argc, argv)
 		break;
 
 	case AT:
-		timer = parsetime(argc, argv);
+		/* Time may have been specified via the -t flag. */
+		if (!tflag)
+			timer = parsetime(argc, argv);
 		if (atverify) {
 			struct tm *tm = localtime(&timer);
 			(void)fprintf(stderr, "%s\n", asctime(tm));
