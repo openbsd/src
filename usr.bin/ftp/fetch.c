@@ -1,5 +1,5 @@
-/*	$OpenBSD: fetch.c,v 1.14 1997/07/25 21:56:20 millert Exp $	*/
-/*	$NetBSD: fetch.c,v 1.13 1997/07/20 12:49:26 lukem Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.15 1997/09/04 04:37:15 millert Exp $	*/
+/*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.14 1997/07/25 21:56:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.15 1997/09/04 04:37:15 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -209,7 +209,7 @@ url_get(origline, proxyenv, fd)
 		long nport;
 
 		nport = strtol(portnum, &ep, 10);
-		if (nport < 1 || nport > 0xffff || *ep != '\0') {
+		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
 			warnx("Invalid port: %s", portnum);
 			goto cleanup_url_get;
 		}

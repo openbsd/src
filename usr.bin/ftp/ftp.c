@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp.c,v 1.21 1997/08/06 17:35:41 mickey Exp $	*/
-/*	$NetBSD: ftp.c,v 1.26 1997/07/20 09:45:53 lukem Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.22 1997/09/04 04:37:16 millert Exp $	*/
+/*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.21 1997/08/06 17:35:41 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.22 1997/09/04 04:37:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -713,9 +713,9 @@ abortrecv(notused)
 }
 
 void
-recvrequest(cmd, local, remote, lmode, printnames)
+recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	const char *cmd, *local, *remote, *lmode;
-	int printnames;
+	int printnames, ignorespecial;
 {
 	FILE *fout, *din;
 	int (*closefunc) __P((FILE *));
@@ -752,7 +752,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	opreserve = preserve;
 	is_retr = strcmp(cmd, "RETR") == 0;
 	if (is_retr && verbose && printnames) {
-		if (local && *local != '-')
+		if (local && (ignorespecial || *local != '-'))
 			fprintf(ttyout, "local: %s ", local);
 		if (remote)
 			fprintf(ttyout, "remote: %s\n", remote);
@@ -784,8 +784,8 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	}
 	oldintr = signal(SIGINT, abortrecv);
 	oldinti = signal(SIGINFO, psummary);
-	if (strcmp(local, "-") && *local != '|') {
-		if (access(local, 2) < 0) {
+	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
+		if (access(local, W_OK) < 0) {
 			char *dir = strrchr(local, '/');
 
 			if (errno != ENOENT && errno != EACCES) {
@@ -797,7 +797,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			}
 			if (dir != NULL)
 				*dir = 0;
-			d = access(dir == local ? "/" : dir ? local : ".", 2);
+			d = access(dir == local ? "/" : dir ? local : ".", W_OK);
 			if (dir != NULL)
 				*dir = '/';
 			if (d < 0) {
@@ -865,11 +865,11 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	din = dataconn("r");
 	if (din == NULL)
 		goto abort;
-	if (strcmp(local, "-") == 0) {
+	if (!ignorespecial && strcmp(local, "-") == 0) {
 		fout = stdout;
 		progress = 0;
 		preserve = 0;
-	} else if (*local == '|') {
+	} else if (!ignorespecial && *local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
 		if (fout == NULL) {
@@ -1002,9 +1002,10 @@ done:
 		}
 break2:
 		if (bare_lfs) {
-			printf(
+			fprintf(ttyout,
 "WARNING! %d bare linefeeds received in ASCII mode.\n", bare_lfs);
-			fputs("File may not have transferred correctly.\n", ttyout);
+			fputs("File may not have transferred correctly.\n",
+			    ttyout);
 		}
 		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
@@ -1043,7 +1044,7 @@ break2:
 				ut.actime = time(NULL);
 				ut.modtime = mtime;
 				if (utime(local, &ut) == -1)
-					printf(
+					fprintf(ttyout,
 				"Can't change modification time on %s to %s",
 					    local, asctime(localtime(&mtime)));
 			}
@@ -1528,7 +1529,7 @@ gunique(local)
 
 	if (cp)
 		*cp = '\0';
-	d = access(cp == local ? "/" : cp ? local : ".", 2);
+	d = access(cp == local ? "/" : cp ? local : ".", W_OK);
 	if (cp)
 		*cp = '/';
 	if (d < 0) {
@@ -1549,7 +1550,7 @@ gunique(local)
 			ext = '0';
 		else
 			ext++;
-		if ((d = access(new, 0)) < 0)
+		if ((d = access(new, F_OK)) < 0)
 			break;
 		if (ext != '0')
 			cp--;

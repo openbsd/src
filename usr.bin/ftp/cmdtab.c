@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmdtab.c,v 1.10 1997/07/25 21:56:18 millert Exp $	*/
-/*	$NetBSD: cmdtab.c,v 1.16 1997/07/20 09:45:41 lukem Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.11 1997/09/04 04:37:13 millert Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.10 1997/07/25 21:56:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.11 1997/09/04 04:37:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ char	domachelp[] =	"execute macro";
 char	edithelp[] =	"toggle command line editing";
 #endif /* !SMALL */
 char	formhelp[] =	"set file transfer format";
+char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
 char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
@@ -160,6 +161,7 @@ struct cmd cmdtab[] = {
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
 	{ "get",	receivehelp,	1, 1, 1, CMPL(rl)	get },
+	{ "gate",	gatehelp,	0, 0, 0, CMPL0		setgate },
 	{ "glob",	globhelp,	0, 0, 0, CMPL0		setglob },
 	{ "hash",	hashhelp,	0, 0, 0, CMPL0		sethash },
 	{ "help",	helphelp,	0, 0, 1, CMPL(C)	help },

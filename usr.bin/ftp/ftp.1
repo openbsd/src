@@ -1,5 +1,5 @@
-.\" 	$OpenBSD: ftp.1,v 1.13 1997/07/25 21:56:20 millert Exp $
-.\" 	$NetBSD: ftp.1,v 1.21 1997/06/10 21:59:58 lukem Exp $
+.\" 	$OpenBSD: ftp.1,v 1.14 1997/09/04 04:37:15 millert Exp $
+.\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd February 23, 1997
+.Dd August 18, 1997
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -331,6 +331,21 @@ The current settings for
 and
 .Ic structure
 are used while transferring the file.
+.It Ic gate Op Ar host Op Ar port 
+Toggle gate-ftp mode.
+This will not be permitted if the gate-ftp server hasn't been set
+(either explicitly by the user, or from the
+.Ev FTPSERVER 
+environment variable).
+If
+.Ar host
+is given,
+then gate-ftp mode will be enabled, and the gate-ftp server will be set to
+.Ar host .
+If
+.Ar port
+is also given, that will be used as the port to connect to on the
+gate-ftp server.
 .It Ic glob
 Toggle filename expansion for
 .Ic mdelete  ,
@@ -1322,6 +1337,18 @@ By default, this is bound to the TAB key.
 .Nm
 utilizes the following environment variables.
 .Bl -tag -width "http_proxy"
+.It Ev FTPSERVER
+Host to use as gate-ftp server when
+.Ic gate
+is enabled.
+.It Ev FTPSERVERPORT
+Port to use when connecting to gate-ftp server when
+.Ic gate
+is enabled.
+Default is port returned by a
+.Fn getservbyname
+lookup of 
+.Dq ftpgate/tcp .
 .It Ev HOME
 For default location of a
 .Pa .netrc
@@ -1339,7 +1366,9 @@ URL of FTP proxy to use when making FTP URL requests
 URL of HTTP proxy to use when making HTTP URL requests.
 .El
 .Sh SEE ALSO
+.Xr getservbyname 3 ,
 .Xr editrc 5 ,
+.Xr services 5 ,
 .Xr ftpd 8
 .Sh HISTORY
 The

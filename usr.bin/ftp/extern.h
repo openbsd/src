@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.15 1997/07/25 21:56:19 millert Exp $	*/
-/*	$NetBSD: extern.h,v 1.16 1997/07/20 09:45:48 lukem Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 1997/09/04 04:37:14 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -112,7 +112,7 @@ void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
-	    const char *, int));
+	    const char *, int, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int, char **));
 off_t	remotesize __P((const char *, int));
@@ -134,6 +134,7 @@ void	setdebug __P((int, char **));
 void	setedit __P((int, char **));
 void	setform __P((int, char **));
 void	setftmode __P((int, char **));
+void	setgate __P((int, char **));
 void	setglob __P((int, char **));
 void	sethash __P((int, char **));
 void	setnmap __P((int, char **));

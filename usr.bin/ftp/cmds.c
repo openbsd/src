@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmds.c,v 1.22 1997/08/30 20:48:41 kstailey Exp $	*/
-/*	$NetBSD: cmds.c,v 1.26 1997/07/21 14:03:48 lukem Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.23 1997/09/04 04:37:13 millert Exp $	*/
+/*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.22 1997/08/30 20:48:41 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.23 1997/09/04 04:37:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,8 @@ usage:
 	}
 	sendrequest(cmd, argv[1], argv[2],
 	    argv[1] != oldargv1 || argv[2] != oldargv2);
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }
 
 /*
@@ -342,7 +344,8 @@ mput(argc, argv)
 						tp2 = tmpbuf;
 						while ((*tp2 = *tp) != '\0') {
 						     if (isupper(*tp2)) {
-						        *tp2 = 'a' + *tp2 - 'A';
+							    *tp2 =
+								tolower(*tp2);
 						     }
 						     tp++;
 						     tp2++;
@@ -453,7 +456,8 @@ getit(argc, argv, restartit, mode)
 	const char *mode;
 {
 	int loc = 0;
-	char *oldargv1, *oldargv2;
+	int rval = 0;
+	char *oldargv1, *oldargv2, *globargv2;
 
 	if (argc == 2) {
 		argc++;
@@ -474,6 +478,7 @@ usage:
 		code = -1;
 		return (0);
 	}
+	globargv2 = argv[2];
 	if (loc && mcase) {
 		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
 
@@ -485,7 +490,7 @@ usage:
 			tp2 = tmpbuf;
 			while ((*tp2 = *tp) != '\0') {
 				if (isupper(*tp2)) {
-					*tp2 = 'a' + *tp2 - 'A';
+					*tp2 = tolower(*tp2);
 				}
 				tp++;
 				tp2++;
@@ -505,7 +510,7 @@ usage:
 		if (restartit == 1) {
 			if (ret < 0) {
 				warn("local: %s", argv[2]);
-				return (0);
+				goto freegetit;
 			}
 			restart_point = stbuf.st_size;
 		} else {
@@ -514,17 +519,22 @@ usage:
 
 				mtime = remotemodtime(argv[1], 0);
 				if (mtime == -1)
-					return (0);
-				if (stbuf.st_mtime >= mtime)
-					return (1);
+					goto freegetit;
+				if (stbuf.st_mtime >= mtime) {
+					rval = 1;
+					goto freegetit;
+				}
 			}
 		}
 	}
 
 	recvrequest("RETR", argv[2], argv[1], mode,
-	    argv[1] != oldargv1 || argv[2] != oldargv2);
+	    argv[1] != oldargv1 || argv[2] != oldargv2, loc);
 	restart_point = 0;
-	return (0);
+freegetit:
+	if (oldargv2 != globargv2)	/* free up after globulize() */
+		free(globargv2);
+	return (rval);
 }
 
 /* ARGSUSED */
@@ -593,7 +603,7 @@ mget(argc, argv)
 			if (mapflag)
 				tp = domap(tp);
 			recvrequest("RETR", tp, cp, "w",
-			    tp != cp || !interactive);
+			    tp != cp || !interactive, 1);
 			if (!mflag && fromatty) {
 				ointer = interactive;
 				interactive = 1;
@@ -643,6 +653,8 @@ status(argc, argv)
 		}
 		pswitch(0);
 	}
+	fprintf(ttyout, "Gate ftp: %s, server %s, port %d.\n", onoff(gatemode),
+	    *gateserver ? gateserver : "(none)", ntohs(gateport));
 	fprintf(ttyout, "Passive mode: %s.\n", onoff(passivemode));
 	fprintf(ttyout, "Mode: %s; Type: %s; Form: %s; Structure: %s.\n",
 		modename, typename, formname, structname);
@@ -823,8 +835,7 @@ setprogress(argc, argv)
 }
 
 /*
- * Turn on interactive prompting
- * during mget, mput, and mdelete.
+ * Turn on interactive prompting during mget, mput, and mdelete.
  */
 /*VARARGS*/
 void
@@ -837,8 +848,63 @@ setprompt(argc, argv)
 }
 
 /*
- * Toggle metacharacter interpretation
- * on local file names.
+ * Toggle gate-ftp mode, or set gate-ftp server
+ */
+/*VARARGS*/
+void
+setgate(argc, argv)
+	int argc;
+	char *argv[];
+{
+	static char gsbuf[MAXHOSTNAMELEN];
+
+	if (argc > 3) {
+		fprintf(ttyout, "usage: %s [ on | off | gateserver [ port ] ]\n",
+		    argv[0]);
+		code = -1;
+		return;
+	} else if (argc < 2) {
+		gatemode = !gatemode;
+	} else {
+		if (argc == 2 && strcasecmp(argv[1], "on") == 0)
+			gatemode = 1;
+		else if (argc == 2 && strcasecmp(argv[1], "off") == 0)
+			gatemode = 0;
+		else {
+			if (argc == 3) {
+				char *ep;
+				long port;
+
+				port = strtol(argv[2], &ep, 10);
+				if (port < 0 || port > USHRT_MAX || *ep != '\0') {
+					fprintf(ttyout,
+					    "%s: bad gateport value.\n",
+					    argv[2]);
+					code = -1;
+					return;
+				}
+				gateport = htons(port);
+			}
+			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
+			gsbuf[sizeof(gsbuf) - 1] = '\0';
+			gateserver = gsbuf;
+			gatemode = 1;
+		}
+	}
+	if (gatemode && (gateserver == NULL || *gateserver == '\0')) {
+		fprintf(ttyout,
+		    "Disabling gate-ftp mode - no gate-ftp server defined.\n");
+		gatemode = 0;
+	} else {
+		fprintf(ttyout, "Gate ftp: %s, server %s, port %d.\n",
+		    onoff(gatemode),
+		    *gateserver ? gateserver : "(none)", ntohs(gateport));
+	}
+	code = gatemode;
+}
+
+/*
+ * Toggle metacharacter interpretation on local file names.
  */
 /*VARARGS*/
 void
@@ -864,8 +930,7 @@ setpreserve(argc, argv)
 }
 
 /*
- * Set debugging mode on/off and/or
- * set level of debugging.
+ * Set debugging mode on/off and/or set level of debugging.
  */
 /*VARARGS*/
 void
@@ -906,8 +971,7 @@ setdebug(argc, argv)
 }
 
 /*
- * Set current working directory
- * on remote machine.
+ * Set current working directory on remote machine.
  */
 void
 cd(argc, argv)
@@ -933,8 +997,7 @@ cd(argc, argv)
 }
 
 /*
- * Set current working directory
- * on local machine.
+ * Set current working directory on local machine.
  */
 void
 lcd(argc, argv)
@@ -942,6 +1005,7 @@ lcd(argc, argv)
 	char *argv[];
 {
 	char buf[MAXPATHLEN];
+	char *oldargv1;
 
 	if (argc < 2)
 		argc++, argv[1] = home;
@@ -950,6 +1014,7 @@ lcd(argc, argv)
 		code = -1;
 		return;
 	}
+	oldargv1 = argv[1];
 	if (!globulize(&argv[1])) {
 		code = -1;
 		return;
@@ -957,13 +1022,15 @@ lcd(argc, argv)
 	if (chdir(argv[1]) < 0) {
 		warn("local: %s", argv[1]);
 		code = -1;
-		return;
+	} else {
+		if (getcwd(buf, sizeof(buf)) != NULL)
+			fprintf(ttyout, "Local directory now %s\n", buf);
+		else
+			warn("getcwd: %s", argv[1]);
+		code = 0;
 	}
-	if (getcwd(buf, sizeof(buf)) != NULL)
-		fprintf(ttyout, "Local directory now %s\n", buf);
-	else
-		warn("getcwd: %s", argv[1]);
-	code = 0;
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }
 
 /*
@@ -1047,8 +1114,7 @@ usage:
 }
 
 /*
- * Get a directory listing
- * of remote files.
+ * Get a directory listing of remote files.
  */
 void
 ls(argc, argv)
@@ -1056,6 +1122,7 @@ ls(argc, argv)
 	char *argv[];
 {
 	const char *cmd;
+	char *oldargv2, *globargv2;
 
 	if (argc < 2)
 		argc++, argv[1] = NULL;
@@ -1067,25 +1134,30 @@ ls(argc, argv)
 		return;
 	}
 	cmd = strcmp(argv[0], "dir") == 0 ? "LIST" : "NLST";
+	oldargv2 = argv[2];
 	if (strcmp(argv[2], "-") && !globulize(&argv[2])) {
 		code = -1;
 		return;
 	}
-	if (strcmp(argv[2], "-") && *argv[2] != '|')
-		if (!globulize(&argv[2]) || !confirm("output to local-file:",
-		    argv[2])) {
-			code = -1;
-			return;
+	globargv2 = argv[2];
+	if (strcmp(argv[2], "-") && *argv[2] != '|' && (!globulize(&argv[2]) ||
+	    !confirm("output to local-file:", argv[2]))) {
+		code = -1;
+		goto freels;
 	}
-	recvrequest(cmd, argv[2], argv[1], "w", 0);
+	recvrequest(cmd, argv[2], argv[1], "w", 0, 0);
 
 	/* flush results in case commands are coming from a pipe */
 	fflush(ttyout);
+freels:
+	if (argv[2] != globargv2)		/* free up after globulize() */
+		free(argv[2]);
+	if (globargv2 != oldargv2)
+		free(globargv2);
 }
 
 /*
- * Get a directory listing
- * of multiple remote files.
+ * Get a directory listing of multiple remote files.
  */
 void
 mls(argc, argv)
@@ -1095,7 +1167,7 @@ mls(argc, argv)
 	sig_t oldintr;
 	int ointer, i;
 	int dolist;
-	char mode[1], *dest;
+	char mode[1], *dest, *odest;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
 		goto usage;
@@ -1105,7 +1177,7 @@ usage:
 		code = -1;
 		return;
 	}
-	dest = argv[argc - 1];
+	odest = dest = argv[argc - 1];
 	argv[argc - 1] = NULL;
 	if (strcmp(dest, "-") && *dest != '|')
 		if (!globulize(&dest) ||
@@ -1120,7 +1192,8 @@ usage:
 	(void)setjmp(jabort);
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
-		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode, 0);
+		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
+		    0, 0);
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
@@ -1132,6 +1205,8 @@ usage:
 	}
 	(void)signal(SIGINT, oldintr);
 	mflag = 0;
+	if (dest != odest)			/* free up after globulize() */
+		free(dest);
 }
 
 /*
@@ -1911,7 +1986,9 @@ cdup(argc, argv)
 		dirchange = 1;
 }
 
-/* restart transfer at specific point */
+/*
+ * Restart transfer at specific point
+ */
 void
 restart(argc, argv)
 	int argc;
@@ -1927,7 +2004,9 @@ restart(argc, argv)
 	}
 }
 
-/* show remote system type */
+/* 
+ * Show remote system type
+ */
 void
 syst(argc, argv)
 	int argc;
@@ -1999,7 +2078,7 @@ macdef(argc, argv)
 }
 
 /*
- * get size of file on remote machine
+ * Get size of file on remote machine
  */
 void
 sizecmd(argc, argv)
@@ -2020,7 +2099,7 @@ sizecmd(argc, argv)
 }
 
 /*
- * get last modification time of file on remote machine
+ * Get last modification time of file on remote machine
  */
 void
 modtime(argc, argv)
@@ -2041,7 +2120,7 @@ modtime(argc, argv)
 }
 
 /*
- * show status on remote machine
+ * Show status on remote machine
  */
 void
 rmtstatus(argc, argv)
@@ -2053,7 +2132,7 @@ rmtstatus(argc, argv)
 }
 
 /*
- * get file if modtime is more recent than current file
+ * Get file if modtime is more recent than current file
  */
 void
 newer(argc, argv)
@@ -2075,13 +2154,14 @@ page(argc, argv)
 	char *argv[];
 {
 	int orestart_point, ohash, overbose;
-	char *p, *pager;
+	char *p, *pager, *oldargv1;
 
 	if ((argc < 2 && !another(&argc, &argv, "filename")) || argc > 2) {
 		fprintf(ttyout, "usage: %s filename\n", argv[0]);
 		code = -1;
 		return;
 	}
+	oldargv1 = argv[1];
 	if (!globulize(&argv[1])) {
 		code = -1;
 		return;
@@ -2097,9 +2177,11 @@ page(argc, argv)
 	ohash = hash;
 	overbose = verbose;
 	restart_point = hash = verbose = 0;
-	recvrequest("RETR", pager, argv[1], "r+w", 1);
+	recvrequest("RETR", pager, argv[1], "r+w", 1, 0);
 	(void)free(pager);
 	restart_point = orestart_point;
 	hash = ohash;
 	verbose = overbose;
+	if (oldargv1 != argv[1])	/* free up after globulize() */
+		free(argv[1]);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.12 1997/08/25 21:41:55 jkatz Exp $	*/
-/*	$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 1997/09/04 04:37:17 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.12 1997/08/25 21:41:55 jkatz Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.13 1997/09/04 04:37:17 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -87,13 +87,16 @@ setpeer(argc, argv)
 		code = -1;
 		return;
 	}
-	port = ftpport;
+	if (gatemode)
+		port = gateport;
+	else
+		port = ftpport;
 	if (argc > 2) {
 		char *ep;
 		long nport;
 
 		nport = strtol(argv[2], &ep, 10);
-		if (nport < 1 || nport > 0xffff || *ep != '\0') {
+		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
 			fprintf(ttyout, "%s: bad port number '%s'.\n",
 			    argv[1], argv[2]);
 			fprintf(ttyout, "usage: %s host-name [port]\n",
@@ -103,9 +106,25 @@ setpeer(argc, argv)
 		}
 		port = htons((in_port_t)nport);
 	}
-	host = hookup(argv[1], port);
+
+	if (gatemode) {
+		if (gateserver == NULL || *gateserver == '\0')
+			errx(1, "gateserver not defined (shouldn't happen)");
+		host = hookup(gateserver, port);
+	} else
+		host = hookup(argv[1], port);
+
 	if (host) {
 		int overbose;
+
+		if (gatemode) {
+			if (command("PASSERVE %s", argv[1]) != COMPLETE)
+				return;
+			if (verbose)
+				fprintf(ttyout,
+				    "Connected via pass-through server %s\n",
+				    gateserver);
+		}
 
 		connected = 1;
 		/*
@@ -384,7 +403,7 @@ remglob(argv, doswitch, errbuf)
                 if (doswitch)
                         pswitch(!proxy);
                 for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest("NLST", temp, *argv, mode, 0);
+                        recvrequest("NLST", temp, *argv, mode, 0, 0);
 		if ((code / 100) != COMPLETE) {
 			if (errbuf != NULL)
 				*errbuf = reply_string;
@@ -475,7 +494,10 @@ globulize(cpp)
 		globfree(&gl);
 		return (0);
 	}
-	*cpp = strdup(gl.gl_pathv[0]);	/* XXX - wasted memory */
+		/* XXX: caller should check if *cpp changed, and
+		 *	free(*cpp) if that is the case
+		 */
+	*cpp = strdup(gl.gl_pathv[0]);
 	globfree(&gl);
 	return (1);
 }
