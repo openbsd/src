@@ -1,4 +1,5 @@
-/*	$OpenBSD: map.c,v 1.2 1997/01/16 05:18:38 millert Exp $	*/
+/*	$OpenBSD: map.c,v 1.3 1997/03/14 05:12:54 millert Exp $	*/
+/*	$NetBSD: map.c,v 1.3 1997/01/11 06:48:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: map.c,v 1.2 1997/01/16 05:18:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: map.c,v 1.3 1997/03/14 05:12:54 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -908,7 +909,7 @@ map_init(el)
     el->el_map.vii   = el_map_vi_insert;
     el->el_map.help  = (el_bindings_t *) el_malloc(sizeof(el_bindings_t) *
 						   EL_NUM_FCNS);
-    (void) memcpy(el->el_map.help, help__get(), 
+    (void)memcpy(el->el_map.help, help__get(), 
 		  sizeof(el_bindings_t) * EL_NUM_FCNS);
     el->el_map.func  = (el_func_t *) el_malloc(sizeof(el_func_t) * EL_NUM_FCNS);
     memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
@@ -1109,10 +1110,10 @@ map_print_key(el, map, in)
     el_bindings_t *bp;
 
     if (in[0] == '\0' || in[1] == '\0') {
-	(void) key__decode_str(in, outbuf, "");
+	(void)key__decode_str(in, outbuf, "");
 	for (bp = el->el_map.help; bp->name != NULL; bp++)
 	    if (bp->func == map[(unsigned char) *in]) {
-		(void) fprintf(el->el_outfile, 
+		(void)fprintf(el->el_outfile, 
 			       "%s\t->\t%s\n", outbuf, bp->name);
 		return;
 	    }
@@ -1141,7 +1142,7 @@ map_print_some_keys(el, map, first, last)
     lastbuf[1] = 0;
     if (map[first] == ED_UNASSIGNED) {
 	if (first == last)
-	    (void) fprintf(el->el_outfile, "%-15s->  is undefined\n",
+	    (void)fprintf(el->el_outfile, "%-15s->  is undefined\n",
 		    key__decode_str(firstbuf, unparsbuf, STRQQ));
 	return;
     }
@@ -1149,12 +1150,12 @@ map_print_some_keys(el, map, first, last)
     for (bp = el->el_map.help; bp->name != NULL; bp++) {
 	if (bp->func == map[first]) {
 	    if (first == last) {
-		(void) fprintf(el->el_outfile, "%-15s->  %s\n",
+		(void)fprintf(el->el_outfile, "%-15s->  %s\n",
 			       key__decode_str(firstbuf, unparsbuf, STRQQ), 
 			       bp->name);
 	    }
 	    else {
-		(void) fprintf(el->el_outfile, "%-4s to %-7s->  %s\n",
+		(void)fprintf(el->el_outfile, "%-4s to %-7s->  %s\n",
 			       key__decode_str(firstbuf, unparsbuf, STRQQ),
 			       key__decode_str(lastbuf, extrabuf, STRQQ), 
 			       bp->name);
@@ -1164,15 +1165,15 @@ map_print_some_keys(el, map, first, last)
     }
 #ifdef MAP_DEBUG
     if (map == el->el_map.key) {
-	(void) fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
+	(void)fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
 		       key__decode_str(firstbuf, unparsbuf, STRQQ));
-	(void) fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n", 
+	(void)fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n", 
 		       first, el->el_map.key[first]);
     }
     else {
-	(void) fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
+	(void)fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
 		       key__decode_str(firstbuf, unparsbuf, STRQQ));
-	(void) fprintf(el->el_outfile, "el->el_map.alt[%d] == %d\n", 
+	(void)fprintf(el->el_outfile, "el->el_map.alt[%d] == %d\n", 
 		       first, el->el_map.alt[first]);
     }
 #endif
@@ -1189,7 +1190,7 @@ map_print_all_keys(el)
 {
     int     prev, i;
 
-    (void) fprintf(el->el_outfile, "Standard key bindings\n");
+    (void)fprintf(el->el_outfile, "Standard key bindings\n");
     prev = 0;
     for (i = 0; i < N_KEYS; i++) {
 	if (el->el_map.key[prev] == el->el_map.key[i])
@@ -1199,7 +1200,7 @@ map_print_all_keys(el)
     }
     map_print_some_keys(el, el->el_map.key, prev, i - 1);
 
-    (void) fprintf(el->el_outfile, "Alternative key bindings\n");
+    (void)fprintf(el->el_outfile, "Alternative key bindings\n");
     prev = 0;
     for (i = 0; i < N_KEYS; i++) {
 	if (el->el_map.alt[prev] == el->el_map.alt[i])
@@ -1209,9 +1210,9 @@ map_print_all_keys(el)
     }
     map_print_some_keys(el, el->el_map.alt, prev, i - 1);
 
-    (void) fprintf(el->el_outfile, "Multi-character bindings\n");
+    (void)fprintf(el->el_outfile, "Multi-character bindings\n");
     key_print(el, "");
-    (void) fprintf(el->el_outfile, "Arrow key bindings\n");
+    (void)fprintf(el->el_outfile, "Arrow key bindings\n");
     term_print_arrow(el, "");
 }
 
@@ -1275,11 +1276,11 @@ map_bind(el, argc, argv)
 
 	    case 'l':
 		for (bp = el->el_map.help; bp->name != NULL; bp++) 
-		    (void) fprintf(el->el_outfile, "%s\n\t%s\n", 
+		    (void)fprintf(el->el_outfile, "%s\n\t%s\n", 
 				   bp->name, bp->description);
 		return 0;
 	    default:
-		(void) fprintf(el->el_errfile, "%s: Invalid switch `%c'.\n",
+		(void)fprintf(el->el_errfile, "%s: Invalid switch `%c'.\n",
 			       argv[0], p[1]);
 	    }
 	else
@@ -1294,20 +1295,20 @@ map_bind(el, argc, argv)
 	in = argv[argc++];
     else
 	if ((in = parse__string(inbuf, argv[argc++])) == NULL) {
-	    (void) fprintf(el->el_errfile, "%s: Invalid \\ or ^ in instring.\n",
+	    (void)fprintf(el->el_errfile, "%s: Invalid \\ or ^ in instring.\n",
 			   argv[0]);
 	    return -1;
 	}
 
     if (remove) {
 	if (key) {
-	    (void) term_clear_arrow(el, in);
+	    (void)term_clear_arrow(el, in);
 	    return -1;
 	}
 	if (in[1]) 
-	    (void) key_delete(el, in);
+	    (void)key_delete(el, in);
 	else if (map[(unsigned char) *in] == ED_SEQUENCE_LEAD_IN) 
-	    (void) key_delete(el, in);
+	    (void)key_delete(el, in);
 	else 
 	    map[(unsigned char) *in] = ED_UNASSIGNED;
 	return 0;
@@ -1332,7 +1333,7 @@ map_bind(el, argc, argv)
     case XK_STR:
     case XK_EXE:
 	if ((out = parse__string(outbuf, argv[argc])) == NULL) {
-	    (void) fprintf(el->el_errfile, 
+	    (void)fprintf(el->el_errfile, 
 			   "%s: Invalid \\ or ^ in outstring.\n", argv[0]);
 	    return -1;
 	}
@@ -1345,7 +1346,7 @@ map_bind(el, argc, argv)
 
     case XK_CMD:
 	if ((cmd = parse_cmd(el, argv[argc])) == -1) {
-	    (void) fprintf(el->el_errfile, 
+	    (void)fprintf(el->el_errfile, 
 			   "%s: Invalid command `%s'.\n", argv[0], argv[argc]);
 	    return -1;
 	}

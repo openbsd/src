@@ -1,4 +1,5 @@
-/*	$OpenBSD: refresh.h,v 1.2 1997/01/16 05:18:43 millert Exp $	*/
+/*	$OpenBSD: refresh.h,v 1.3 1997/03/14 05:13:00 millert Exp $	*/
+/*	$NetBSD: refresh.h,v 1.2 1997/01/11 06:48:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,5 @@
-/*	$OpenBSD: tty.c,v 1.2 1997/01/16 05:18:50 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.3 1997/03/14 05:13:09 millert Exp $	*/
+/*	$NetBSD: tty.c,v 1.2 1997/01/11 06:48:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.2 1997/01/16 05:18:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.3 1997/03/14 05:13:09 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -470,7 +471,7 @@ tty_setup(el)
     int rst = 1;
     if (tty_getty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, 
+	(void)fprintf(el->el_errfile, 
 		       "tty_setup: tty_getty: %s\n", strerror(errno));
 #endif /* DEBUG_TTY */
 	return(-1);
@@ -515,7 +516,7 @@ tty_setup(el)
         tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
         if (tty_setty(el, &el->el_tty.t_ex) == -1) {
 #ifdef DEBUG_TTY
-            (void) fprintf(el->el_errfile, "tty_setup: tty_setty: %s\n", 
+            (void)fprintf(el->el_errfile, "tty_setup: tty_setty: %s\n", 
 			   strerror(errno));
 #endif /* DEBUG_TTY */
             return(-1);
@@ -546,8 +547,8 @@ tty_init(el)
 {
     el->el_tty.t_mode     = EX_IO;
     el->el_tty.t_vdisable = _POSIX_VDISABLE;
-    (void) memcpy(el->el_tty.t_t, ttyperm, sizeof(ttyperm_t));
-    (void) memcpy(el->el_tty.t_c, ttychar, sizeof(ttychar_t));
+    (void)memcpy(el->el_tty.t_t, ttyperm, sizeof(ttyperm_t));
+    (void)memcpy(el->el_tty.t_c, ttychar, sizeof(ttychar_t));
     return tty_setup(el);
 } /* end tty_init */
 
@@ -804,7 +805,7 @@ tty_rawmode(el)
 
     if (tty_getty(el, &el->el_tty.t_ts) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, "tty_rawmode: tty_getty: %s\n", strerror(errno));
+	(void)fprintf(el->el_errfile, "tty_rawmode: tty_getty: %s\n", strerror(errno));
 #endif /* DEBUG_TTY */
 	return(-1);
     }
@@ -818,10 +819,10 @@ tty_rawmode(el)
 
     if (tty__getspeed(&el->el_tty.t_ex) != el->el_tty.t_speed || 
 	tty__getspeed(&el->el_tty.t_ed) != el->el_tty.t_speed) {
-	(void) cfsetispeed(&el->el_tty.t_ex, el->el_tty.t_speed);
-	(void) cfsetospeed(&el->el_tty.t_ex, el->el_tty.t_speed);
-	(void) cfsetispeed(&el->el_tty.t_ed, el->el_tty.t_speed);
-	(void) cfsetospeed(&el->el_tty.t_ed, el->el_tty.t_speed);
+	(void)cfsetispeed(&el->el_tty.t_ex, el->el_tty.t_speed);
+	(void)cfsetospeed(&el->el_tty.t_ex, el->el_tty.t_speed);
+	(void)cfsetispeed(&el->el_tty.t_ed, el->el_tty.t_speed);
+	(void)cfsetospeed(&el->el_tty.t_ed, el->el_tty.t_speed);
     }
 
     if (tty__cooked_mode(&el->el_tty.t_ts)) {
@@ -916,7 +917,7 @@ tty_rawmode(el)
 
     if (tty_setty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, "tty_rawmode: tty_setty: %s\n", 
+	(void)fprintf(el->el_errfile, "tty_rawmode: tty_setty: %s\n", 
 		       strerror(errno));
 #endif /* DEBUG_TTY */
 	return -1;
@@ -938,7 +939,7 @@ tty_cookedmode(el)
 
     if (tty_setty(el, &el->el_tty.t_ex) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, "tty_cookedmode: tty_setty: %s\n", 
+	(void)fprintf(el->el_errfile, "tty_cookedmode: tty_setty: %s\n", 
 		       strerror(errno));
 #endif /* DEBUG_TTY */
 	return -1;
@@ -974,7 +975,7 @@ tty_quotemode(el)
 
     if (tty_setty(el, &el->el_tty.t_qu) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, "QuoteModeOn: tty_setty: %s\n", 
+	(void)fprintf(el->el_errfile, "QuoteModeOn: tty_setty: %s\n", 
 		       strerror(errno));
 #endif /* DEBUG_TTY */
 	return -1;
@@ -995,7 +996,7 @@ tty_noquotemode(el)
 	return 0;
     if (tty_setty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
-	(void) fprintf(el->el_errfile, "QuoteModeOff: tty_setty: %s\n", 
+	(void)fprintf(el->el_errfile, "QuoteModeOff: tty_setty: %s\n", 
 		       strerror(errno));
 #endif /* DEBUG_TTY */
 	return -1;
@@ -1044,7 +1045,7 @@ tty_stty(el, argc, argv)
 	    z = QU_IO;
 	    break;
 	default:
-	    (void) fprintf(el->el_errfile, "%s: Unknown switch `%c'.\n",
+	    (void)fprintf(el->el_errfile, "%s: Unknown switch `%c'.\n",
 			   name, argv[0][1]);
 	    return -1;
 	}
@@ -1054,7 +1055,7 @@ tty_stty(el, argc, argv)
 	int len = 0, st = 0, cu;
 	for (m = ttymodes; m->m_name; m++) {
 	    if (m->m_type != i) {
-		(void) fprintf(el->el_outfile, "%s%s", i != -1 ? "\n" : "", 
+		(void)fprintf(el->el_outfile, "%s%s", i != -1 ? "\n" : "", 
 			el->el_tty.t_t[z][m->m_type].t_name);
 		i = m->m_type;
 		st = len = strlen(el->el_tty.t_t[z][m->m_type].t_name);
@@ -1068,19 +1069,19 @@ tty_stty(el, argc, argv)
 		cu = strlen(m->m_name) + (x != '\0') + 1;
 
 		if (len + cu >= el->el_term.t_size.h) {
-		    (void) fprintf(el->el_outfile, "\n%*s", st, "");
+		    (void)fprintf(el->el_outfile, "\n%*s", st, "");
 		    len = st + cu;
 		}
 		else 
 		    len += cu;
 
 		if (x != '\0')
-		    (void) fprintf(el->el_outfile, "%c%s ", x, m->m_name);
+		    (void)fprintf(el->el_outfile, "%c%s ", x, m->m_name);
 		else
-		    (void) fprintf(el->el_outfile, "%s ", m->m_name);
+		    (void)fprintf(el->el_outfile, "%s ", m->m_name);
 	    }
 	}
-	(void) fprintf(el->el_outfile, "\n");
+	(void)fprintf(el->el_outfile, "\n");
 	return 0;
     }
 
@@ -1100,7 +1101,7 @@ tty_stty(el, argc, argv)
 		break;
 
 	if (!m->m_name)  {
-	    (void) fprintf(el->el_errfile, "%s: Invalid argument `%s'.\n",
+	    (void)fprintf(el->el_errfile, "%s: Invalid argument `%s'.\n",
 			   name, d);
 	    return -1;
 	}
@@ -1141,10 +1142,10 @@ tty_printchar(el, s)
 	    if (m->m_type == M_CHAR && C_SH(i) == m->m_value)
 		break;
 	if (m->m_name)
-	    (void) fprintf(el->el_errfile, "%s ^%c ", m->m_name, s[i] + 'A'-1);
+	    (void)fprintf(el->el_errfile, "%s ^%c ", m->m_name, s[i] + 'A'-1);
 	if (i % 5 == 0)
-	    (void) fprintf(el->el_errfile, "\n");
+	    (void)fprintf(el->el_errfile, "\n");
     }
-    (void) fprintf(el->el_errfile, "\n"); 
+    (void)fprintf(el->el_errfile, "\n"); 
 }
 #endif /* notyet */

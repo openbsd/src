@@ -1,4 +1,5 @@
-/*	$OpenBSD: common.c,v 1.2 1997/01/16 05:18:30 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.3 1997/03/14 05:12:43 millert Exp $	*/
+/*	$NetBSD: common.c,v 1.3 1997/01/14 04:17:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.2 1997/01/16 05:18:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: common.c,v 1.3 1997/03/14 05:12:43 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -117,7 +118,7 @@ ed_insert(el, c)
     }
 
     if (el->el_state.inputmode == MODE_REPLACE_1)
-	(void) vi_command_mode(el, 0);
+	(void)vi_command_mode(el, 0);
 
     return CC_NORM;
 }
@@ -706,7 +707,7 @@ ed_prev_history(el, c)
     *el->el_line.lastchar = '\0';		/* just in case */
 
     if (el->el_history.eventno == 0) {	/* save the current buffer away */
-	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
+	(void)strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
 	el->el_history.buf[EL_BUFSIZ - 1] = '\0';
 	el->el_history.last = el->el_history.buf + 
 		(el->el_line.lastchar - el->el_line.buffer);
@@ -717,7 +718,7 @@ ed_prev_history(el, c)
     if (hist_get(el) == CC_ERROR) {
 	beep = 1;
 	/* el->el_history.eventno was fixed by first call */
-	(void) hist_get(el); 
+	(void)hist_get(el); 
     }
 
     re_refresh(el);
@@ -771,14 +772,14 @@ ed_search_prev_history(el, c)
     *el->el_line.lastchar = '\0';		/* just in case */
     if (el->el_history.eventno < 0) {
 #ifdef DEBUG_EDIT
-	(void) fprintf(el->el_errfile, "e_prev_search_hist(): eventno < 0;\n");
+	(void)fprintf(el->el_errfile, "e_prev_search_hist(): eventno < 0;\n");
 #endif
 	el->el_history.eventno = 0;
 	return CC_ERROR;
     }
 
     if (el->el_history.eventno == 0) {
-	(void) strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
+	(void)strncpy(el->el_history.buf, el->el_line.buffer, EL_BUFSIZ - 1);
 	el->el_history.buf[EL_BUFSIZ - 1] = '\0';
 	el->el_history.last = el->el_history.buf + 
 		(el->el_line.lastchar - el->el_line.buffer);
@@ -799,7 +800,7 @@ ed_search_prev_history(el, c)
 
     while (hp != NULL) {
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
+	(void)fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
 	if ((strncmp(hp, el->el_line.buffer, 
 		     el->el_line.lastchar - el->el_line.buffer) || 
@@ -814,7 +815,7 @@ ed_search_prev_history(el, c)
 
     if (!found) {
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "not found\n"); 
+	(void)fprintf(el->el_errfile, "not found\n"); 
 #endif
 	return CC_ERROR;
     }
@@ -857,7 +858,7 @@ ed_search_next_history(el, c)
 
     for (h = 1; h < el->el_history.eventno && hp; h++) {
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
+	(void)fprintf(el->el_errfile, "Comparing with \"%s\"\n", hp);
 #endif
 	if ((strncmp(hp, el->el_line.buffer, 
 		     el->el_line.lastchar - el->el_line.buffer) || 
@@ -870,7 +871,7 @@ ed_search_next_history(el, c)
     if (!found) {		/* is it the current history number? */
 	if (!c_hmatch(el, el->el_history.buf)) {
 #ifdef SDEBUG
-	    (void) fprintf(el->el_errfile, "not found\n"); 
+	    (void)fprintf(el->el_errfile, "not found\n"); 
 #endif
 	    return CC_ERROR;
 	}

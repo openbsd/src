@@ -1,4 +1,5 @@
-/*	$OpenBSD: prompt.c,v 1.2 1997/01/16 05:18:40 millert Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.3 1997/03/14 05:12:57 millert Exp $	*/
+/*	$NetBSD: prompt.c,v 1.2 1997/01/11 06:48:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: prompt.c,v 1.2 1997/01/16 05:18:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: prompt.c,v 1.3 1997/03/14 05:12:57 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

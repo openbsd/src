@@ -1,4 +1,5 @@
-/*	$OpenBSD: term.h,v 1.2 1997/01/16 05:18:48 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.3 1997/03/14 05:13:06 millert Exp $	*/
+/*	$NetBSD: term.h,v 1.4 1997/01/11 06:48:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

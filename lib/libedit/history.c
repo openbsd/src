@@ -1,4 +1,5 @@
-/*	$OpenBSD: history.c,v 1.3 1997/01/16 05:18:35 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.4 1997/03/14 05:12:51 millert Exp $	*/
+/*	$NetBSD: history.c,v 1.4 1997/01/23 14:02:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: history.c,v 1.3 1997/01/16 05:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: history.c,v 1.4 1997/03/14 05:12:51 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -131,7 +132,7 @@ private void             history_def_clear  __P((ptr_t));
 private const HistEvent *history_def_insert __P((history_t *, const char *));
 private void             history_def_delete __P((history_t *, hentry_t *));
 
-#define history_def_set(p, num)	(void) (((history_t *) p)->max = (num))
+#define history_def_set(p, num)	(void)(((history_t *) p)->max = (num))
 
 
 /* history_def_first():
@@ -237,8 +238,8 @@ history_def_add(p, str)
 	return (history_def_enter(p, str));
     len = strlen(h->cursor->ev.str) + strlen(str) + 1;
     s = (char *) h_malloc(len);
-    (void) strcpy(s, h->cursor->ev.str);
-    (void) strcat(s, str);
+    (void)strcpy(s, h->cursor->ev.str);
+    (void)strcat(s, str);
     h_free((ptr_t) h->cursor->ev.str);
     h->cursor->ev.str = s;
     return &h->cursor->ev;
@@ -472,7 +473,7 @@ history_load(h, fname)
     }
 
 done:
-    (void) fclose(fp);
+    (void)fclose(fp);
     return i;
 }
 
@@ -492,10 +493,10 @@ history_save(h, fname)
     if ((fp = fopen(fname, "w")) == NULL)
 	return -1;
 
-    (void) fputs(hist_cookie, fp);
+    (void)fputs(hist_cookie, fp);
     for (ev = HLAST(h); ev != NULL; ev = HPREV(h), i++)
-	(void) fprintf(fp, "%s", ev->str);
-    (void) fclose(fp);
+	(void)fprintf(fp, "%s", ev->str);
+    (void)fclose(fp);
     return i;
 }
 

@@ -1,4 +1,5 @@
-/*	$OpenBSD: histedit.h,v 1.3 1997/01/16 05:18:34 millert Exp $	*/
+/*	$OpenBSD: histedit.h,v 1.4 1997/03/14 05:12:50 millert Exp $	*/
+/*	$NetBSD: histedit.h,v 1.4 1997/01/14 04:17:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,5 @@
-/*	$OpenBSD: chared.c,v 1.2 1997/01/16 05:18:28 millert Exp $	*/
+/*	$OpenBSD: chared.c,v 1.3 1997/03/14 05:12:41 millert Exp $	*/
+/*	$NetBSD: chared.c,v 1.2 1997/01/11 06:47:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: chared.c,v 1.2 1997/01/16 05:18:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: chared.c,v 1.3 1997/03/14 05:12:41 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,9 +66,9 @@ cv_undo(el, action, size, ptr)
     vu->action = action;
     vu->ptr    = ptr;
     vu->isize  = size;
-    (void) memcpy(vu->buf, vu->ptr, size);
+    (void)memcpy(vu->buf, vu->ptr, size);
 #ifdef DEBUG_UNDO
-    (void) fprintf(el->el_errfile, "Undo buffer \"%s\" size = +%d -%d\n",
+    (void)fprintf(el->el_errfile, "Undo buffer \"%s\" size = +%d -%d\n",
 		   vu->ptr, vu->isize, vu->dsize);
 #endif
 }
@@ -433,13 +434,13 @@ ch_init(el)
     EditLine *el;
 {
     el->el_line.buffer              = (char *)  el_malloc(EL_BUFSIZ);
-    (void) memset(el->el_line.buffer, 0, EL_BUFSIZ);
+    (void)memset(el->el_line.buffer, 0, EL_BUFSIZ);
     el->el_line.cursor              = el->el_line.buffer;
     el->el_line.lastchar            = el->el_line.buffer;
     el->el_line.limit  		    = &el->el_line.buffer[EL_BUFSIZ - 2];
 
     el->el_chared.c_undo.buf        = (char *)  el_malloc(EL_BUFSIZ);
-    (void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ);
+    (void)memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ);
     el->el_chared.c_undo.action     = NOP;
     el->el_chared.c_undo.isize      = 0;
     el->el_chared.c_undo.dsize      = 0;
@@ -450,7 +451,7 @@ ch_init(el)
     el->el_chared.c_vcmd.ins        = el->el_line.buffer;
 
     el->el_chared.c_kill.buf        = (char *)  el_malloc(EL_BUFSIZ);
-    (void) memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ);
+    (void)memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ);
     el->el_chared.c_kill.mark       = el->el_line.buffer;
     el->el_chared.c_kill.last       = el->el_chared.c_kill.buf;
 

@@ -1,4 +1,5 @@
-/*	$OpenBSD: search.h,v 1.2 1997/01/16 05:18:44 millert Exp $	*/
+/*	$OpenBSD: search.h,v 1.3 1997/03/14 05:13:02 millert Exp $	*/
+/*	$NetBSD: search.h,v 1.2 1997/01/11 06:48:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
