@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2002/04/25 21:28:13 miod Exp $
+#	$OpenBSD: install.md,v 1.7 2002/04/28 02:13:20 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,18 +51,14 @@ md_set_term() {
 	export TERM
 }
 
-md_makerootwritable() {
-	:
-}
-
 md_get_diskdevs() {
 	# return available disk devices
-	bsort `cat /kern/msgbuf | egrep -a "^[sw]d[0-9]+ " | cutword 1`
+	bsort `dmesg | egrep -a "^[sw]d[0-9]+ " | cutword 1`
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	bsort `cat /kern/msgbuf | egrep -a "^cd[0-9]+ " | cutword 1`
+	bsort `dmesg | egrep -a "^cd[0-9]+ " | cutword 1`
 }
 
 md_get_partition_range() {
@@ -365,7 +361,7 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = install ]; then
 		cat << __EOT
-Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
+Welcome to the OpenBSD/mvmeppc ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
@@ -373,7 +369,7 @@ __EOT
 
 	else
 		cat << __EOT
-Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
+Welcome to the OpenBSD/mvmeppc ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a simple
 and rational way.  As a reminder, installing the 'etc' binary set is NOT
