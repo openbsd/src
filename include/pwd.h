@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.3 1996/10/16 09:08:27 downsj Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.4 1997/02/14 23:28:47 provos Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 
 #ifndef _POSIX_SOURCE
 #define	_PATH_PASSWD		"/etc/passwd"
+#define _PATH_PASSWDCONF	"/etc/passwd.conf"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
 
@@ -71,6 +72,10 @@
 #define _PASSWORD_NOGID		0x02	/* flag for no specified gid. */
 #define _PASSWORD_NOCHG		0x04	/* flag for no specified change. */
 #define _PASSWORD_NOEXP		0x08	/* flag for no specified expire. */
+
+#define _PASSWORD_OLD		1	/* Old Unix style passwords */
+#define _PASSWORD_NSALT		2	/* Use extended salt + DES */
+#define _PASSWORD_BLF		3	/* Adaptable Blowfish hash */
 
 #endif
 
