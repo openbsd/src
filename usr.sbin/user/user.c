@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.35 2002/06/09 22:12:57 millert Exp $ */
+/* $OpenBSD: user.c,v 1.36 2002/07/25 15:41:39 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -919,24 +919,23 @@ adduser(char *login, user_t *up)
 		}
 	}
 
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%d:%ld:%s:%s:%s\n",
-			login,
-			password,
-			up->u_uid,
-			gid,
+	if ((cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%d:%ld:%s:%s:%s\n",
+	    login,
+	    password,
+	    up->u_uid,
+	    gid,
 #ifdef EXTENSIONS
-			up->u_class,
+	    up->u_class,
 #else
-			"",
+	    "",
 #endif
-			up->u_inactive,
-			(long) expire,
-			up->u_comment,
-			home,
-			up->u_shell);
-	if (cc >= sizeof(buf) || cc == -1 ||
+	    up->u_inactive,
+	    (long) expire,
+	    up->u_comment,
+	    home,
+	    up->u_shell)) >= sizeof(buf) || cc < 0 ||
 	    (strchr(up->u_comment, '&') != NULL &&
-	     cc + strlen(login) >= sizeof(buf))) {
+	    cc + strlen(login) >= sizeof(buf))) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
@@ -1106,28 +1105,29 @@ moduser(char *login, char *newlogin, user_t *up)
 		colonc = (size_t)(colon - line);
 		if (strncmp(login, line, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
-				len = snprintf(buf, sizeof(buf),
-					"%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
-					newlogin,
-					pwp->pw_passwd,
-					pwp->pw_uid,
-					pwp->pw_gid,
+				if ((len = snprintf(buf, sizeof(buf),
+				    "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
+				    newlogin,
+				    pwp->pw_passwd,
+				    pwp->pw_uid,
+				    pwp->pw_gid,
 #ifdef EXTENSIONS
-					pwp->pw_class,
+				    pwp->pw_class,
 #else
-					"",
+				    "",
 #endif
-					(long)pwp->pw_change,
-					(long)pwp->pw_expire,
-					pwp->pw_gecos,
-					pwp->pw_dir,
-					pwp->pw_shell);
-				if (len >= sizeof(buf) ||
+				    (long)pwp->pw_change,
+				    (long)pwp->pw_expire,
+				    pwp->pw_gecos,
+				    pwp->pw_dir,
+				    pwp->pw_shell)) >= sizeof(buf) || len < 0 ||
 				    (strchr(up->u_comment, '&') != NULL &&
 				    len + strlen(newlogin) >= sizeof(buf))) {
 					(void) close(ptmpfd);
 					(void) pw_abort();
-					errx(EXIT_FAILURE, "can't add `%s', line too long (%d bytes)", buf, len + strlen(newlogin));
+					errx(EXIT_FAILURE, "can't add `%s',
+					    line too long (%d bytes)", buf,
+					    len + strlen(newlogin));
 				}
 				if (write(ptmpfd, buf, len) != len) {
 					(void) close(ptmpfd);
@@ -1729,10 +1729,9 @@ groupmod(int argc, char **argv)
 	if (newname != NULL && !valid_group(newname)) {
 		warn("warning - invalid group name `%s'", newname);
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:",
+	if ((cc = snprintf(buf, sizeof(buf), "%s:%s:%u:",
 	    (newname) ? newname : grp->gr_name, grp->gr_passwd,
-	    (gid < 0) ? grp->gr_gid : gid);
-	if (cc >= sizeof(buf) || cc == -1)
+	    (gid < 0) ? grp->gr_gid : gid)) >= sizeof(buf) || cc < 0)
 		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
 
 	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
