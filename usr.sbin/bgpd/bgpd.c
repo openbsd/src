@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.2 2003/12/17 19:26:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@
 void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
-int	reconfigure(char *, int, int *, struct bgpd_config *,
+int	reconfigure(char *, int, int *, int, int *, struct bgpd_config *,
 	    struct mrt_config *);
 int	dispatch_imsg(int, int, struct mrt_config *, int, int *);
 
@@ -244,7 +244,7 @@ main(int argc, char *argv[])
 		if (reconfig) {
 			logit(LOG_CRIT, "rereading config");
 			reconfigure(conffile, pipe_m2s[0], &m2s_writes_queued,
-			    &conf, &mrtconf);
+			    pipe_m2r[0], &m2r_writes_queued, &conf, &mrtconf);
 			LIST_FOREACH(mconf, &mrtconf, list)
 				mrt_state(mconf, IMSG_NONE, pipe_m2r[0],
 					    &m2r_writes_queued);
@@ -272,8 +272,8 @@ main(int argc, char *argv[])
 }
 
 int
-reconfigure(char *conffile, int fd, int *waiting, struct bgpd_config *conf,
-    struct mrt_config *mrtc)
+reconfigure(char *conffile, int se_fd, int *se_waiting, int rde_fd,
+    int *rde_waiting, struct bgpd_config *conf, struct mrt_config *mrtc)
 {
 	struct peer		*p;
 
@@ -282,12 +282,18 @@ reconfigure(char *conffile, int fd, int *waiting, struct bgpd_config *conf,
 		    conffile);
 		return (-1);
 	}
-	*waiting += imsg_compose(fd, IMSG_RECONF_CONF, 0, (u_char *)conf,
-	    sizeof(struct bgpd_config));
-	for (p = conf->peers; p != NULL; p = p->next)
-		*waiting += imsg_compose(fd, IMSG_RECONF_PEER, p->conf.id,
-		    (u_char *)&p->conf, sizeof(struct peer_config));
-	*waiting += imsg_compose(fd, IMSG_RECONF_DONE, 0, NULL, 0);
+	*se_waiting += imsg_compose(se_fd, IMSG_RECONF_CONF, 0,
+	    (u_char *)conf, sizeof(struct bgpd_config));
+	*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_CONF, 0,
+	    (u_char *)conf, sizeof(struct bgpd_config));
+	for (p = conf->peers; p != NULL; p = p->next) {
+		*se_waiting += imsg_compose(se_fd, IMSG_RECONF_PEER,
+		    p->conf.id, (u_char *)&p->conf, sizeof(struct peer_config));
+		*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_PEER,
+		    p->conf.id, (u_char *)&p->conf, sizeof(struct peer_config));
+	}
+	*se_waiting += imsg_compose(se_fd, IMSG_RECONF_DONE, 0, NULL, 0);
+	*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_DONE, 0, NULL, 0);
 
 	return (0);
 }

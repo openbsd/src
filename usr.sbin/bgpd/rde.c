@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.2 2003/12/17 18:11:31 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.3 2003/12/17 19:26:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,7 @@ void		 peer_up(u_int32_t, u_int32_t);
 void		 peer_down(u_int32_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
-struct bgpd_config	*conf;
+struct bgpd_config	*conf, *nconf;
 int			 se_queued_writes = 0;
 int			 se_sock;
 int			 main_queued_writes = 0;
@@ -168,18 +168,51 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 void
 rde_dispatch_imsg(int fd, int idx)
 {
-	struct imsg	imsg;
-	u_int32_t	rid;
+	struct imsg		 imsg;
+	struct peer_config	*pconf;
+	struct rde_peer		*p;
+	u_int32_t		 rid;
+	int			 reconf;
 
 	if (get_imsg(fd, &imsg) > 0) {
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
+			if (idx != PFD_PIPE_MAIN)
+				fatal("reconf request not from parent", 0);
+			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
+			    NULL)
+				fatal(NULL, errno);
+			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
+			nconf->peers = NULL;
+			break;
 		case IMSG_RECONF_PEER:
+			if (idx != PFD_PIPE_MAIN)
+				fatal("reconf request not from parent", 0);
+			pconf = (struct peer_config *)imsg.data;
+			p = peer_get(pconf->id); /* will always fail atm */
+			if (p == NULL) {
+				if ((p = calloc(1, sizeof(struct rde_peer))) ==
+				    NULL)
+					fatal("new peer", errno);
+				p->state = PEER_NONE;
+				reconf = RECONF_REINIT;
+				/* XXXC peer_add */
+			} else
+				reconf = RECONF_KEEP;
+
+			memcpy(&p->conf, pconf, sizeof(struct peer_config));
+			p->conf.reconf_action = reconf;
+			if (pconf->reconf_action > reconf)
+				p->conf.reconf_action = pconf->reconf_action;
+			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
 				fatal("reconf request not from parent", 0);
-			logit(LOG_DEBUG, "RDE: got reconf request");
-			/* rde_request_dispatch() */
+			if (nconf == NULL)
+				fatal("got IMSG_RECONF_DONE but no config", 0);
+			/* XXXC merge in as needed */
+			free(nconf);
+			logit(LOG_INFO, "RDE reconfigured");
 			break;
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_SESSION)
