@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.4 1996/06/20 14:30:08 mickey Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.5 1997/09/11 05:26:10 millert Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	struct vnode *rvp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_mount(mp = %x)\n", mp);
+	printf("kernfs_mount(mp = %p)\n", mp);
 #endif
 
 	/*
@@ -139,7 +139,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_mount: root vp = %x\n", rvp);
+	printf("kernfs_mount: root vp = %p\n", rvp);
 #endif
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -180,7 +180,7 @@ kernfs_unmount(mp, mntflags, p)
 	struct vnode *rootvp = VFSTOKERNFS(mp)->kf_root;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_unmount(mp = %x)\n", mp);
+	printf("kernfs_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -227,7 +227,7 @@ kernfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_root(mp = %x)\n", mp);
+	printf("kernfs_root(mp = %p)\n", mp);
 #endif
 
 	/*
@@ -261,7 +261,7 @@ kernfs_statfs(mp, sbp, p)
 	extern long numvnodes; /* XXX */
 
 #ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_statfs(mp = %x)\n", mp);
+	printf("kernfs_statfs(mp = %p)\n", mp);
 #endif
 
 #ifdef COMPAT_09

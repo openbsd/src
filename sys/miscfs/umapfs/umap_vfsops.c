@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.7 1996/06/02 16:35:48 niklas Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.8 1997/09/11 05:26:15 millert Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ umapfs_mount(mp, path, data, ndp, p)
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 
-	printf("umapfs_mount(mp = %x)\n", mp);
+	printf("umapfs_mount(mp = %p)\n", mp);
 #endif
 
 	/*
@@ -120,7 +120,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 */
 	lowerrootvp = ndp->ni_vp;
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("vp = %x, check for VDIR...\n", lowerrootvp);
+	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif
 	vrele(ndp->ni_dvp);
 	ndp->ni_dvp = 0;
@@ -131,7 +131,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("mp = %x\n", mp);
+	printf("mp = %p\n", mp);
 #endif
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
@@ -154,7 +154,7 @@ umapfs_mount(mp, path, data, ndp, p)
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:unentries %d\n",args.unentries);
-	for (i = 0; i < args.nentries; i++)
+	for (i = 0; i < args.unentries; i++)
 		printf("   %d maps to %d\n", amp->info_umapdata[i][0],
 	 	    amp->info_umapdata[i][1]);
 #endif
@@ -245,7 +245,7 @@ umapfs_unmount(mp, mntflags, p)
 	extern int doforce;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_unmount(mp = %x)\n", mp);
+	printf("umapfs_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -297,7 +297,7 @@ umapfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_root(mp = %x, vp = %x->%x)\n", mp,
+	printf("umapfs_root(mp = %p, vp = %p->%p)\n", mp,
 			MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
 			UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp)
 			);
@@ -334,7 +334,7 @@ umapfs_statfs(mp, sbp, p)
 	struct statfs mstat;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_statfs(mp = %x, vp = %x->%x)\n", mp,
+	printf("umapfs_statfs(mp = %p, vp = %p->%p)\n", mp,
 			MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
 			UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp)
 			);

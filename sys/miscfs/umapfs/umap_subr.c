@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_subr.c,v 1.7 1996/04/19 16:09:57 niklas Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.8 1997/09/11 05:26:14 millert Exp $	*/
 /*	$NetBSD: umap_subr.c,v 1.8 1996/03/05 02:35:39 thorpej Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ umap_node_find(mp, targetvp)
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_node_find(mp = %x, target = %x)\n", mp, targetvp);
+	printf("umap_node_find(mp = %p, target = %p)\n", mp, targetvp);
 #endif
 
 	/*
@@ -177,7 +177,7 @@ loop:
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_node_find(%x, %x): NOT found\n", mp, targetvp);
+	printf("umap_node_find(%p, %p): NOT found\n", mp, targetvp);
 #endif
 
 	return (0);
@@ -304,7 +304,7 @@ umap_node_create(mp, targetvp, newvpp)
 		 * Take another reference to the alias vnode
 		 */
 #ifdef UMAPFS_DIAGNOSTIC
-		vprint("umap_node_create: exists", ap->umap_vnode);
+		vprint("umap_node_create: exists", aliasvp);
 #endif
 		/* VREF(aliasvp); */
 	} else {
@@ -347,7 +347,7 @@ umap_checkvp(vp, fil, lno)
 	int lno;
 {
 	struct umap_node *a = VTOUMAP(vp);
-#if 0
+#ifdef notyet
 	/*
 	 * Can't do this check because vop_reclaim runs
 	 * with funny vop vector.
@@ -361,9 +361,9 @@ umap_checkvp(vp, fil, lno)
 	if (a->umap_lowervp == NULL) {
 		/* Should never happen */
 		int i; u_long *p;
-		printf("vp = %x, ZERO ptr\n", vp);
+		printf("vp = %p, ZERO ptr\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
 		while (umap_checkvp_barrier) /*WAIT*/ ;
@@ -371,16 +371,16 @@ umap_checkvp(vp, fil, lno)
 	}
 	if (a->umap_lowervp->v_usecount < 1) {
 		int i; u_long *p;
-		printf("vp = %x, unref'ed lowervp\n", vp);
+		printf("vp = %p, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
 		while (umap_checkvp_barrier) /*WAIT*/ ;
 		panic ("umap with unref'ed lowervp");
 	}
-#if 0
-	printf("umap %x/%d -> %x/%d [%s, %d]\n",
+#ifdef notyet
+	printf("umap %p/%d -> %p/%d [%s, %d]\n",
 	        a->umap_vnode, a->umap_vnode->v_usecount,
 		a->umap_lowervp, a->umap_lowervp->v_usecount,
 		fil, lno);

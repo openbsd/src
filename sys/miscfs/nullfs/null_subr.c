@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_subr.c,v 1.3 1996/05/22 12:04:35 deraadt Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.4 1997/09/11 05:26:12 millert Exp $	*/
 /*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -303,8 +303,8 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	return (0);
 }
 
-#ifdef notyet
 #ifdef NULLFS_DIAGNOSTIC
+int null_checkvp_barrier = 1;
 struct vnode *
 null_checkvp(vp, fil, lno)
 	struct vnode *vp;
@@ -326,9 +326,9 @@ null_checkvp(vp, fil, lno)
 	if (a->null_lowervp == NULL) {
 		/* Should never happen */
 		int i; u_long *p;
-		printf("vp = %x, ZERO ptr\n", vp);
+		printf("vp = %p, ZERO ptr\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
 		while (null_checkvp_barrier) /*WAIT*/ ;
@@ -336,21 +336,20 @@ null_checkvp(vp, fil, lno)
 	}
 	if (a->null_lowervp->v_usecount < 1) {
 		int i; u_long *p;
-		printf("vp = %x, unref'ed lowervp\n", vp);
+		printf("vp = %p, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
 		while (null_checkvp_barrier) /*WAIT*/ ;
 		panic ("null with unref'ed lowervp");
 	};
 #ifdef notyet
-	printf("null %x/%d -> %x/%d [%s, %d]\n",
+	printf("null %p/%d -> %p/%d [%s, %d]\n",
 	        NULLTOV(a), NULLTOV(a)->v_usecount,
 		a->null_lowervp, a->null_lowervp->v_usecount,
 		fil, lno);
 #endif
 	return a->null_lowervp;
 }
-#endif
 #endif

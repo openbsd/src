@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.4 1996/05/22 12:04:36 deraadt Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.5 1997/09/11 05:26:13 millert Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ null_lock(v)
 
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_lock_e", ap->a_vp);
-	printf("retpc=%lx, retretpc=%lx\n",
+	printf("retpc=%p, retretpc=%p\n",
 	       RETURN_PC(0),
 	       RETURN_PC(1));
 #endif
@@ -625,7 +625,7 @@ null_lookup(v)
 	int flags = ap->a_cnp->cn_flags;
 
 #ifdef NULLFS_DIAGNOSTIC
-	printf("null_lookup: dvp=%lx, name='%s'\n",
+	printf("null_lookup: dvp=%p, name='%s'\n",
 	       ap->a_dvp, ap->a_cnp->cn_nameptr);
 #endif
 	/*
