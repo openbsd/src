@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.88 2002/10/27 16:20:48 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.89 2003/01/10 21:38:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.88 2002/10/27 16:20:48 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.89 2003/01/10 21:38:02 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -188,7 +188,6 @@ wi_attach(sc)
 	struct ifnet		*ifp;
 	int			error;
 
-	wi_cor_reset(sc);
 	wi_reset(sc);
 
 	/* Read the station address. */
@@ -2365,6 +2364,7 @@ wi_watchdog(ifp)
 
 	printf(WI_PRT_FMT ": device timeout\n", WI_PRT_ARG(sc));
 
+	wi_cor_reset(sc);
 	wi_init(sc);
 
 	ifp->if_oerrors++;
