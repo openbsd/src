@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.9 2001/01/29 06:12:11 mickey Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.10 2002/01/18 21:48:35 millert Exp $	*/
 /*	$NetBSD: zlib.c,v 1.2 1996/03/16 23:55:40 christos Exp $	*/
 
 /*
@@ -3405,7 +3405,10 @@ int r;
       {
         r = t;
         if (r == Z_DATA_ERROR)
+        {
+          ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
           s->mode = BADB;
+        }
         LEAVE
       }
       s->sub.trees.index = 0;
@@ -3468,7 +3471,10 @@ int r;
         if (t != Z_OK)
         {
           if (t == (uInt)Z_DATA_ERROR)
+          {
+            ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
             s->mode = BADB;
+          }
           r = t;
           LEAVE
         }
@@ -3480,11 +3486,11 @@ int r;
           r = Z_MEM_ERROR;
           LEAVE
         }
-        ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
         s->sub.decode.codes = c;
         s->sub.decode.tl = tl;
         s->sub.decode.td = td;
       }
+      ZFREE(z, s->sub.trees.blens, s->sub.trees.nblens * sizeof(uInt));
       s->mode = CODES;
     case CODES:
       UPDATE
