@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.4 1998/04/28 22:13:26 pjanzen Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.5 1998/08/18 04:02:14 millert Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.4 1998/04/28 22:13:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.5 1998/08/18 04:02:14 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -54,20 +54,20 @@ static char rcsid[] = "$OpenBSD: init_disp.c,v 1.4 1998/04/28 22:13:26 pjanzen E
 #include <termios.h>
 #include <unistd.h>
 
-/* 
+/*
  * Set up curses, catch the appropriate signals,
  * and build the various windows.
  */
 void
 init_display()
 {
-	struct sigvec sigv;
+	struct sigaction sa;
 
 	if (initscr() == NULL)
 		errx(1, "Terminal type unset or lacking necessary features.");
-	(void) sigvec(SIGTSTP, (struct sigvec *)0, &sigv);
-	sigv.sv_mask |= sigmask(SIGALRM);
-	(void) sigvec(SIGTSTP, &sigv, (struct sigvec *)0);
+	(void) sigaction(SIGTSTP, NULL, &sa);
+	sigaddset(&sa.sa_mask, SIGALRM);
+	(void) sigaction(SIGTSTP, &sa, NULL);
 	curses_initialized = 1;
 	clear();
 	refresh();
@@ -90,7 +90,7 @@ init_display()
 	wclear(his_win.x_win);
 
 	line_win = newwin(1, COLS, my_win.x_nlines, 0);
-#ifdef NCURSES_VERSION
+#if defined(NCURSES_VERSION) || defined(whline)
 	whline(line_win, '-', COLS);
 #else
 	box(line_win, '-', '-');
@@ -113,15 +113,12 @@ set_edit_chars()
 	struct termios tty;
 	
 	tcgetattr(0, &tty);
-	my_win.cerase = tty.c_cc[VERASE];
-	my_win.kill = tty.c_cc[VKILL];
-	if (tty.c_cc[VWERASE] == (unsigned char) -1)
-		my_win.werase = '\027';	 /* control W */
-	else
-		my_win.werase = tty.c_cc[VWERASE];
-	buf[0] = my_win.cerase;
-	buf[1] = my_win.kill;
-	buf[2] = my_win.werase;
+	buf[0] = my_win.cerase = tty.c_cc[VERASE] == (u_char)_POSIX_VDISABLE
+	    ? CERASE : tty.c_cc[VERASE];
+	buf[1] = my_win.kill = tty.c_cc[VKILL] == (u_char)_POSIX_VDISABLE
+	    ? CKILL : tty.c_cc[CKILL];
+	buf[2] = my_win.werase = tty.c_cc[VWERASE] == (u_char)_POSIX_VDISABLE
+	    ? CWERASE : tty.c_cc[VWERASE];
 	cc = write(sockt, buf, sizeof(buf));
 	if (cc != sizeof(buf) )
 		p_error("Lost the connection");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.5 1998/04/28 22:13:27 pjanzen Exp $	*/
+/*	$OpenBSD: invite.c,v 1.6 1998/08/18 04:02:15 millert Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.5 1998/04/28 22:13:27 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: invite.c,v 1.6 1998/08/18 04:02:15 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -56,13 +56,13 @@ static char rcsid[] = "$OpenBSD: invite.c,v 1.5 1998/04/28 22:13:27 pjanzen Exp 
 /*
  * There wasn't an invitation waiting, so send a request containing
  * our sockt address to the remote talk daemon so it can invite
- * him 
+ * him
  */
 
 /*
  * The msg.id's for the invitations
  * on the local and remote machines.
- * These are used to delete the 
+ * These are used to delete the
  * invitations.
  */
 int	local_id, remote_id;
@@ -209,11 +209,11 @@ send_delete()
 	if (sendto(ctl_sockt, &msg, sizeof (msg), 0,
 	    (struct sockaddr *)&daemon_addr,
 	    sizeof (daemon_addr)) != sizeof(msg))
-		perror("send_delete (remote)");
+		warn("send_delete (remote)");
 	msg.id_num = htonl(local_id);
 	daemon_addr.sin_addr = my_machine_addr;
 	if (sendto(ctl_sockt, &msg, sizeof (msg), 0,
 	    (struct sockaddr *)&daemon_addr,
 	    sizeof (daemon_addr)) != sizeof (msg))
-		perror("send_delete (local)");
+		warn("send_delete (local)");
 }

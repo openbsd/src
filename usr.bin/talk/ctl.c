@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl.c,v 1.3 1998/04/28 22:13:20 pjanzen Exp $	*/
+/*	$OpenBSD: ctl.c,v 1.4 1998/08/18 04:02:09 millert Exp $	*/
 /*	$NetBSD: ctl.c,v 1.3 1994/12/09 02:14:10 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl.c,v 1.3 1998/04/28 22:13:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ctl.c,v 1.4 1998/08/18 04:02:09 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -86,7 +86,7 @@ open_sockt()
 
 /* open the ctl socket */
 void
-open_ctl() 
+open_ctl()
 {
 	int length;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look_up.c,v 1.4 1998/04/28 22:13:29 pjanzen Exp $	*/
+/*	$OpenBSD: look_up.c,v 1.5 1998/08/18 04:02:18 millert Exp $	*/
 /*	$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: look_up.c,v 1.4 1998/04/28 22:13:29 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: look_up.c,v 1.5 1998/08/18 04:02:18 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -66,8 +66,8 @@ check_local()
 	if (!look_for_invite(&response))
 		return (0);
 	/*
-	 * There was an invitation waiting for us, 
-	 * so connect with the other (hopefully waiting) party 
+	 * There was an invitation waiting for us,
+	 * so connect with the other (hopefully waiting) party
 	 */
 	current_state = "Waiting to connect with caller";
 	do {
@@ -81,7 +81,7 @@ check_local()
 	if (errno == ECONNREFUSED) {
 		/*
 		 * The caller gave up, but his invitation somehow
-		 * was not cleared. Clear it and initiate an 
+		 * was not cleared. Clear it and initiate an
 		 * invitation. (We know there are no newer invitations,
 		 * the talkd works LIFO.)
 		 */

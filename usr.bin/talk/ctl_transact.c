@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.4 1998/04/28 22:13:21 pjanzen Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.5 1998/08/18 04:02:10 millert Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.4 1998/04/28 22:13:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.5 1998/08/18 04:02:10 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -97,7 +97,7 @@ ctl_transact(target, msg, type, rp)
 			}
 		} while (nready == 0);
 		/*
-		 * Keep reading while there are queued messages 
+		 * Keep reading while there are queued messages
 		 * (this is not necessary, it just saves extra
 		 * request/acknowledgements being sent)
 		 */

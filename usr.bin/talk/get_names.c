@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.5 1998/04/28 22:13:25 pjanzen Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.6 1998/08/18 04:02:13 millert Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: get_names.c,v 1.5 1998/04/28 22:13:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: get_names.c,v 1.6 1998/08/18 04:02:13 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -64,22 +64,18 @@ get_names(argc, argv)
 	char *names;
 
 	if ((argc < 2 ) || ('@' == argv[1][0])) {
-		printf("Usage: talk user [ttyname]\n");
-		printf("       talk user@hostname [ttyname]\n");
+		fprintf(stderr, "usage: talk user [ttyname]\n"
+				"       talk user@hostname [ttyname]\n");
 		exit(-1);
 	}
-	if (!isatty(0)) {
-		printf("Standard input must be a tty, not a pipe or a file\n");
-		exit(-1);
-	}
+	if (!isatty(0))
+		errx(1, "standard input must be a tty, not a pipe or a file");
 
 	if ((my_name = getlogin()) == NULL) {
 		struct passwd *pw;
 
-		if ((pw = getpwuid(getuid())) == NULL) {
-			printf("You don't exist. Go away.\n");
-			exit(-1);
-		}
+		if ((pw = getpwuid(getuid())) == NULL)
+			errx(1, "you don't exist in the passwd file.");
 		my_name = pw->pw_name;
 	}
 	gethostname(hostname, sizeof (hostname));

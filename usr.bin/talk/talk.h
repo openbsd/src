@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.h,v 1.3 1998/04/28 22:13:32 pjanzen Exp $	*/
+/*	$OpenBSD: talk.h,v 1.4 1998/08/18 04:02:26 millert Exp $	*/
 /*	$NetBSD: talk.h,v 1.3 1994/12/09 02:14:27 jtc Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <protocols/talkd.h>
 #include <curses.h>
 #include <string.h>
+#include <err.h>
 
 extern	int sockt;
 extern	int curses_initialized;

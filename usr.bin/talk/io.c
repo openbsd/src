@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 1998/08/18 02:54:23 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 1998/08/18 04:02:16 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/08/18 02:54:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.7 1998/08/18 04:02:16 millert Exp $";
 #endif /* not lint */
 
 /*
- * This file contains the I/O handling and the exchange of 
+ * This file contains the I/O handling and the exchange of
  * edit characters. This connection itself is established in
  * ctl.c
  */
@@ -67,7 +67,7 @@ talk()
 	char buf[BUFSIZ];
 	struct timeval wait;
 
-#ifdef NCURSES_VERSION
+#if defined(NCURSES_VERSION) || defined(beep)
 	message("Connection established");
 	/*
 	 * beep() doesn't flush output on its own.
@@ -75,14 +75,13 @@ talk()
 	beep();
 	beep();
 	beep();
-	refresh();
 #else
 	message("Connection established\007\007\007");
 #endif
 	current_line = 0;
 
 	/*
-	 * Wait on both the other process (sockt_mask) and 
+	 * Wait on both the other process (sockt_mask) and
 	 * standard input ( STDIN_MASK )
 	 */
 	FD_ZERO(&read_template);
@@ -130,7 +129,7 @@ talk()
  * on the screen and then exits. (i.e. a curses version of perror)
  */
 void
-p_error(string) 
+p_error(string)
 	char *string;
 {
 	wmove(my_win.x_win, current_line%my_win.x_nlines, 0);
