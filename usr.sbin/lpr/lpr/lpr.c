@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.16 1997/07/08 18:25:42 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.17 1997/07/09 00:16:12 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.16 1997/07/08 18:25:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.17 1997/07/09 00:16:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -487,8 +487,8 @@ linked(file)
 			}
 			break;
 		}
-		strncat(nfile, "/", sizeof(nfile) - strlen(nfile));
-		strncat(nfile, file, sizeof(nfile) - strlen(nfile));
+		strncat(nfile, "/", sizeof(nfile) - strlen(nfile) - 1);
+		strncat(nfile, file, sizeof(nfile) - strlen(nfile) - 1);
 		file = nfile;
 	}
 	seteuid(euid);
