@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.4 1996/07/01 20:40:10 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.5 1996/09/15 19:19:52 millert Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.4 1996/07/01 20:40:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.5 1996/09/15 19:19:52 millert Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -55,8 +55,10 @@ open_patch_file(filename)
 char *filename;
 {
     if (filename == Nullch || !*filename || strEQ(filename, "-")) {
-	pfp = fopen(TMPPATNAME, "w");
-	if (pfp == Nullfp)
+	int pfd;
+
+	if ((pfd = open(TMPPATNAME, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
+	    (pfp = fdopen(pfd, "w")) == Nullfp)
 	    pfatal2("can't create %s", TMPPATNAME);
 	while (fgets(buf, sizeof buf, stdin) != Nullch)
 	    fputs(buf, pfp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.4 1996/07/01 20:40:09 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.5 1996/09/15 19:19:54 millert Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.4 1996/07/01 20:40:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.5 1996/09/15 19:19:54 millert Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -784,8 +784,10 @@ void
 init_output(name)
 char *name;
 {
-    ofp = fopen(name, "w");
-    if (ofp == Nullfp)
+    int ofd;
+
+    if ((ofd = open(name, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
+	(ofp = fdopen(ofd, "w")) == Nullfp)
 	pfatal2("can't create %s", name);
 }
 
@@ -795,8 +797,10 @@ void
 init_reject(name)
 char *name;
 {
-    rejfp = fopen(name, "w");
-    if (rejfp == Nullfp)
+    int rejfd;
+
+    if ((rejfd = open(name, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
+	(rejfp = fdopen(rejfd, "w")) == Nullfp)
 	pfatal2("can't create %s", name);
 }
 
