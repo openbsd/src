@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/06/09 05:53:54 todd Exp $
+#	$OpenBSD: Makefile,v 1.11 2003/03/04 18:08:01 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -48,8 +48,12 @@ cd: ${BSD_RD}
 	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	mv ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
-	mkhybrid -r -part -hfs -o ${.OBJDIR}/cd${OSrev}.fs ${.OBJDIR}/cd-dir
-
+	mkhybrid -r -part -hfs \
+	    -A "OpenBSD ${OSREV} macppc bootonly CD" \
+	    -P "Copyright (c) 2003 Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD${OSREV} CD boot-only CD " \
+	    -o ${.OBJDIR}/cd${OSrev}.iso ${.OBJDIR}/cd-dir
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
@@ -84,7 +88,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} cd${REV}.fs ${DESTDIR}/snapshot/
+	cp ${BSD_RD} cd${REV}.iso ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -104,12 +108,12 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} cd${REV}.fs \
+	*.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso \
 	rdsetroot
 	rm -rf cd-dir
 
 beforeinstall:
-	cp ${BSD.RD} cd${REV}.fs ${DESTDIR}/snapshot
+	cp ${BSD.RD} cd${REV}.iso ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
