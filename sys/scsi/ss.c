@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.18 1997/03/08 22:52:58 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.19 1997/03/09 17:45:01 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -79,8 +79,7 @@ struct quirkdata {
 #define SS_Q_SET_RIF		0x0100 /* set RIF bit */
 #define SS_Q_PADDING_TYPE	0x0200 /* does not pad to byte boundary */
 #define SS_Q_BIT_ORDERING	0x0400 /* uses non-zero bit ordering */
-#define SS_Q_VENDOR_SETWINDOW	0x0800 /* 40 bytes of parms is not enough */
-#define SS_Q_GET_BUFFER_SIZE	0x1000 /* use GET_BUFFER_SIZE while reading */
+#define SS_Q_GET_BUFFER_SIZE	0x0800 /* use GET_BUFFER_SIZE while reading */
 	long window_descriptor_length;
 	u_int8_t brightness;
 	u_int8_t threshold;
@@ -132,8 +131,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_THRESHOLD |
 		 SS_Q_REV_CONTRAST |
 		 SS_Q_HALFTONE |
-		 SS_Q_BIT_ORDERING |
-		 SS_Q_VENDOR_SETWINDOW,
+		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
 		 ricoh_is410_sw
 	 }},
@@ -143,8 +141,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_THRESHOLD |
 		 SS_Q_HALFTONE |
-		 SS_Q_BIT_ORDERING |
-		 SS_Q_VENDOR_SETWINDOW,
+		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
 		 ricoh_is410_sw
 	 }},
@@ -154,8 +151,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_THRESHOLD |
 		 SS_Q_HALFTONE |
-		 SS_Q_BIT_ORDERING |
-		 SS_Q_VENDOR_SETWINDOW,
+		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
 		 ricoh_is410_sw
 	 }},
@@ -163,8 +159,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 	 "UMAX    ", "UC630           ", "    "}, {
 		 "UMAX UC-630",
 		 SS_Q_WINDOW_DESC_LEN |
-		 SS_Q_HALFTONE |
-		 SS_Q_VENDOR_SETWINDOW,
+		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
 		 umax_uc630_sw
 	 }},
@@ -172,8 +167,7 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 	 "UMAX    ", "UG630           ", "    "}, {
 		 "UMAX UG-630",
 		 SS_Q_WINDOW_DESC_LEN |
-		 SS_Q_HALFTONE |
-		 SS_Q_VENDOR_SETWINDOW,
+		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
 		 umax_uc630_sw
 	 }},
@@ -750,7 +744,7 @@ ss_set_window(ss, sio)
 
 #undef window_data
 
-	if (ss->quirkdata->quirks &SS_Q_VENDOR_SETWINDOW)
+	if (ss->quirkdata->vendor_unique_sw != NULL)
 		return ((*ss->quirkdata->vendor_unique_sw)(ss, sio,
 		    &window_cmd, (void*)&wd));
 	else
