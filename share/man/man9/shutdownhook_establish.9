@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.7 1999/09/05 16:23:11 espie Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.8 2000/07/01 14:48:24 aaron Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -68,8 +68,8 @@ is undefined.
 Shutdown hooks should be used to perform one-time activities
 that must happen immediately before the kernel exits.  Because
 of the environment in which they are run, shutdown hooks cannot
-rely on many system services (including file systems, and timeouts
-and other interrupt-driven services), or even basic system
+rely on many system services (including file systems, timeouts,
+and other interrupt-driven services) or even basic system
 integrity (because the system could be rebooting after a crash).
 .Sh RETURN VALUES
 If successful,
