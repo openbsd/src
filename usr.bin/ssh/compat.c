@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.19 2000/07/09 01:27:32 ho Exp $");
+RCSID("$OpenBSD: compat.c,v 1.20 2000/08/26 10:33:43 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -61,6 +61,7 @@ compat_datafellows(const char *version)
 		char	*version;
 		int	bugs;
 	} check[] = {
+		{"2.3.0",	SSH_BUG_HMAC|SSH_COMPAT_SESSIONID_ENCODING},
 		{"2.2.0",	SSH_BUG_HMAC|SSH_COMPAT_SESSIONID_ENCODING},
 		{"2.1.0",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC},
 		{"2.0.1",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC|SSH_BUG_PUBKEYAUTH|SSH_BUG_X11FWD},
