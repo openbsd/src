@@ -35,7 +35,7 @@
 #ifndef _PDQREG_H
 #define	_PDQREG_H
 
-#if !defined(__NetBSD__) || defined(__OpenBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 #include <stddef.h>
 #if defined(PDQTEST) && !defined(PDQ_NDEBUG)
 #include <assert.h>
@@ -43,9 +43,9 @@
 #else
 #define	PDQ_ASSERT(x)	do { } while(0)
 #endif
-#else /* __NetBSD__ */
+#else /* __NetBSD__ || __OpenBSD__*/
 /*
- * Including user-land headers in kernel code is not allowed in NetBSD
+ * Including user-land headers in kernel code is not allowed in Net- or OpenBSD
  */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
