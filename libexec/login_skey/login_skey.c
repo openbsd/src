@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.14 2004/08/08 19:32:45 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.15 2004/08/11 17:09:25 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -257,7 +257,7 @@ suspend(int signo)
 }
 
 void
-send_fd(int fd)
+send_fd(int sock)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmp;
@@ -274,6 +274,6 @@ send_fd(int fd)
 
 	*(int *)CMSG_DATA(cmsgbuf) = fileno(skey.keyfile);
 
-	if (sendmsg(fd, &msg, 0) < 0)
+	if (sendmsg(sock, &msg, 0) < 0)
 		syslog(LOG_ERR, "sendmsg: %m");
 }
