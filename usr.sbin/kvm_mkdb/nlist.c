@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.8 1998/08/19 06:47:54 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.9 1998/08/19 07:43:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.8 1998/08/19 06:47:54 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.9 1998/08/19 07:43:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,7 @@ static struct knlist_handlers {
 #endif
 };
 
-void
+int
 create_knlist(name, db)
 	char *name;
 	DB *db;
@@ -446,6 +446,6 @@ create_knlist(name, db)
 	}
 	if (fmterr != NULL)
 		badfmt(fmterr);
-	if (error)
-		errx(1, "cannot determine executable type of %s", name);
+
+	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.3 1998/08/19 06:47:53 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.4 1998/08/19 07:43:37 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.3 1998/08/19 06:47:53 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.4 1998/08/19 07:43:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,10 +116,16 @@ main(argc, argv)
 	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);
 	if (db == NULL)
-		err(1, "%s", dbtemp);
-	create_knlist(nlistpath, db);
-	if (db->close(db))
-		err(1, "%s", dbtemp);
+		err(1, "can't dbopen %s", dbtemp);
+	if (create_knlist(nlistpath, db) != 0) {
+		(void)unlink(dbtemp);
+		errx(1, "cannot determine executable type of %s", nlistpath);
+	}
+	if (db->close(db)) {
+		warn("can't dbclose %s", dbtemp);
+		(void)unlink(dbtemp);
+		exit(1);
+	}
 	if (rename(dbtemp, dbname))
 		err(1, "rename %s to %s", dbtemp, dbname);
 	exit(0);
