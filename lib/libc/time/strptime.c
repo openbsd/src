@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.4 1998/03/17 09:04:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.5 1998/04/25 08:08:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -107,7 +107,7 @@ again:		switch (c = *fmt++) {
 		case '%':	/* "%%" is converted to "%". */
 literal:
 		if (c != *bp++)
-			return (0);
+			return (NULL);
 
 		break;
 
@@ -131,43 +131,43 @@ literal:
 		case 'c':	/* Date and time, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(bp = _strptime(bp, _ctloc(d_t_fmt), tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%m/%d/%y", tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 	
 		case 'R':	/* The time as "%H:%M". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%H:%M", tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'r':	/* The time as "%I:%M:%S %p". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%I:%M:%S %p", tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'T':	/* The time as "%H:%M:%S". */
 			_LEGAL_ALT(0);
 			if (!(bp = _strptime(bp, "%H:%M:%S", tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'X':	/* The time, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(bp = _strptime(bp, _ctloc(t_fmt), tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'x':	/* The date, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(bp = _strptime(bp, _ctloc(d_fmt), tm, 0)))
-				return (0);
+				return (NULL);
 			break;
 
 		/*
@@ -179,18 +179,18 @@ literal:
 			for (i = 0; i < 7; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(day[i]));
-				if (strncmp(_ctloc(day[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(day[i]), bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abday[i]));
-				if (strncmp(_ctloc(abday[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abday[i]), bp, len) == 0)
 					break;
 			}
 
 			/* Nothing matched. */
 			if (i == 7)
-				return (0);
+				return (NULL);
 
 			tm->tm_wday = i;
 			bp += len;
@@ -203,18 +203,18 @@ literal:
 			for (i = 0; i < 12; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(mon[i]));
-				if (strncmp(_ctloc(mon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(mon[i]), bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abmon[i]));
-				if (strncmp(_ctloc(abmon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abmon[i]), bp, len) == 0)
 					break;
 			}
 
 			/* Nothing matched. */
 			if (i == 12)
-				return (0);
+				return (NULL);
 
 			tm->tm_mon = i;
 			bp += len;
@@ -223,7 +223,7 @@ literal:
 		case 'C':	/* The century number. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(_conv_num(&bp, &i, 0, 99)))
-				return (0);
+				return (NULL);
 
 			century = i * 100;
 			break;
@@ -232,7 +232,7 @@ literal:
 		case 'e':
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mday, 1, 31)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'k':	/* The hour (24-hour clock representation). */
@@ -241,7 +241,7 @@ literal:
 		case 'H':
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_hour, 0, 23)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'l':	/* The hour (12-hour clock representation). */
@@ -250,26 +250,26 @@ literal:
 		case 'I':
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_hour, 1, 12)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'j':	/* The day of year. */
 			_LEGAL_ALT(0);
 			if (!(_conv_num(&bp, &tm->tm_yday, 1, 366)))
-				return (0);
+				return (NULL);
 			tm->tm_yday--;
 			break;
 
 		case 'M':	/* The minute. */
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_min, 0, 59)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'm':	/* The month. */
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mon, 1, 12)))
-				return (0);
+				return (NULL);
 			tm->tm_mon--;
 			break;
 
@@ -278,7 +278,7 @@ literal:
 			/* AM? */
 			if (strcmp(_ctloc(am_pm[0]), bp) == 0) {
 				if (tm->tm_hour > 12)	/* i.e., 13:00 AM ?! */
-					return (0);
+					return (NULL);
 				else if (tm->tm_hour == 12)
 					tm->tm_hour = 0;
 
@@ -288,7 +288,7 @@ literal:
 			/* PM? */
 			else if (strcmp(_ctloc(am_pm[1]), bp) == 0) {
 				if (tm->tm_hour > 12)	/* i.e., 13:00 PM ?! */
-					return (0);
+					return (NULL);
 				else if (tm->tm_hour < 12)
 					tm->tm_hour += 12;
 
@@ -297,12 +297,12 @@ literal:
 			}
 
 			/* Nothing matched. */
-			return (0);
+			return (NULL);
 
 		case 'S':	/* The seconds. */
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_sec, 0, 61)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'U':	/* The week of year, beginning on sunday. */
@@ -315,19 +315,19 @@ literal:
 			 * range for now.
 			 */
 			 if (!(_conv_num(&bp, &i, 0, 53)))
-				return (0);
+				return (NULL);
 			 break;
 
 		case 'w':	/* The day of week, beginning on sunday. */
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_wday, 0, 6)))
-				return (0);
+				return (NULL);
 			break;
 
 		case 'Y':	/* The year. */
 			_LEGAL_ALT(_ALT_E);
 			if (!(_conv_num(&bp, &i, 0, INT_MAX)))
-				return (0);
+				return (NULL);
 
 			relyear = -1;
 			tm->tm_year = i - TM_YEAR_BASE;
@@ -336,7 +336,7 @@ literal:
 		case 'y':	/* The year within the century (2 digits). */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
 			if (!(_conv_num(&bp, &relyear, 0, 99)))
-				return (0);
+				return (NULL);
 			break;
 
 		/*
@@ -351,7 +351,7 @@ literal:
 
 
 		default:	/* Unknown/unsupported conversion. */
-			return (0);
+			return (NULL);
 		}
 
 
