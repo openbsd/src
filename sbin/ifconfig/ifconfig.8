@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.70 2003/10/18 12:26:37 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.71 2003/10/26 07:10:54 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -332,7 +332,7 @@ clears its vlan tag, flags and its link address and shuts the interface down.
 If the driver is a carp pseudo-device, set the virtual host ID to
 .Ar n .
 Acceptable values are 1 to 255.
-.It Cm advintv Ar n
+.It Cm advbase Ar n
 If the driver is a carp pseudo-device, set the base advertisement interval to
 .Ar n
 seconds.
