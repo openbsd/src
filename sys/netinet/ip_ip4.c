@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.26 1999/04/04 21:33:49 deraadt Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.27 1999/04/09 19:42:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -93,6 +93,9 @@ ip4_input(m, va_alist)
 	va_dcl
 #endif
 {
+    register struct ifnet *ifp;
+    register struct ifaddr *ifa;
+    register struct sockaddr_in *sin;
     int iphlen;
     struct ip *ipo, *ipi;
     struct ifqueue *ifq = NULL;
@@ -137,7 +140,6 @@ ip4_input(m, va_alist)
     }
 
     ipi = (struct ip *) ((caddr_t) ipo + iphlen);
-    ip4stat.ip4s_ibytes += ntohs(ipi->ip_len);
 
     /*
      * RFC 1853 specifies that the inner TTL should not be touched on
@@ -149,9 +151,34 @@ ip4_input(m, va_alist)
     {
 	DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipi->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
 	ip4stat.ip4s_notip4++;
+	m_freem(m);
 	return;
     }
-	
+
+    /*
+     * Check for local address spoofing.
+     */
+    for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+      for (ifa = ifp->if_addrlist.tqh_first;
+	   ifa != 0;
+	   ifa = ifa->ifa_list.tqe_next)
+      {
+	  if (ifa->ifa_addr->sa_family != AF_INET)
+	    continue;
+
+	  sin = (struct sockaddr_in *) ifa->ifa_addr;
+
+	  if (sin->sin_addr.s_addr == ipi->ip_src.s_addr)
+	  {
+	      DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
+	      m_freem(m);
+	      return;
+	  }
+      }
+    
+    /* Statistics */
+    ip4stat.ip4s_ibytes += ntohs(ipi->ip_len);
+
     /*
      * Interface pointer is already in first mbuf; chop off the 
      * `outer' header and reschedule.
