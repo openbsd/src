@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.13 2002/05/26 09:25:22 deraadt Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.14 2002/07/12 21:14:07 jason Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -288,7 +288,7 @@ change_state(state, sig)
 				if (sig)
 					_exit(1);
 				else {
-					syslog(LOG_ERR, "open(%s): %m",
+					syslog(LOG_WARNING, "open(%s): %m",
 					    dsp->ds_path);
 					exit(1);
 				}
