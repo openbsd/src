@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.24 2001/06/25 03:28:03 csapuntz Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.25 2001/12/12 19:06:47 nordin Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 
 void	settime __P((struct timeval *));
+void	itimerround __P((struct timeval *));
 
 /* 
  * Time of day and interval timer support.
@@ -493,8 +494,10 @@ sys_setitimer(p, v, retval)
 			timeout_add(&p->p_realit_to, timo);
 		}
 		p->p_realtimer = aitv;
-	} else
+	} else {
+		itimerround(&aitv.it_interval);
 		p->p_stats->p_timer[SCARG(uap, which)] = aitv;
+	}
 	splx(s);
 	return (0);
 }
@@ -550,6 +553,18 @@ itimerfix(tv)
 		return (EINVAL);
 
 	return (0);
+}
+
+/*
+ * Timer interval smaller than the resolution of the system clock are
+ * rounded up.
+ */
+void
+itimerround(tv)
+	struct timeval *tv;
+{
+	if (tv->tv_sec == 0 && tv->tv_usec < tick)
+		tv->tv_usec = tick;
 }
 
 /*
