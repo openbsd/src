@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1996/08/21 03:17:55 downsj Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1996/08/21 03:47:21 tholo Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
-	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c merge.c \
+	cfree.c exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c realpath.c \
 	setenv.c strtod.c strtol.c strtoq.c strtoul.c strtouq.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \

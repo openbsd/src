@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.7 1996/08/20 17:56:52 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.8 1996/08/21 03:47:22 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -23,11 +23,6 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.7 1996/08/20 17:56:52 tholo Exp $"
  * It has no run-time performance hit.
  */
 #define MALLOC_STATS
-
-/*
- * Defining CFREE_STUB will include a cfree() stub that just calls free().
- */
-#define CFREE_STUB
 
 #if defined(EXTRA_SANITY) && !defined(MALLOC_STATS)
 # define MALLOC_STATS	/* required for EXTRA_SANITY */
@@ -1258,19 +1253,3 @@ free(ptr)
 #endif
     return;
 }
-
-#ifdef CFREE_STUB
-
-#ifdef __indr_reference
-__indr_reference(free, cfree);
-#else /* __indr_reference */
-
-void
-cfree(p)
-	void *p;
-{
-    free(p);
-}
-#endif /* not __indr_reference */
-
-#endif /* CFREE_STUB */
