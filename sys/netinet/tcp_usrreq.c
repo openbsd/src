@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.15 1998/01/20 02:22:31 mickey Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.16 1998/01/24 18:21:39 mickey Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -440,11 +440,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 #ifndef TCP_SENDSPACE
 #define	TCP_SENDSPACE	1024*16;
 #endif
-u_long	tcp_sendspace = TCP_SENDSPACE;
+u_int	tcp_sendspace = TCP_SENDSPACE;
 #ifndef TCP_RECVSPACE
 #define	TCP_RECVSPACE	1024*16;
 #endif
-u_long	tcp_recvspace = TCP_RECVSPACE;
+u_int	tcp_recvspace = TCP_RECVSPACE;
 
 /*
  * Attach TCP protocol to socket, allocating
@@ -578,6 +578,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_RFC1323:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_do_rfc1323));
+
 	case TCPCTL_KEEPINITTIME:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcptv_keep_init));
@@ -596,6 +597,12 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_BADDYNAMIC:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
+
+	case TCPCTL_RECVSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_recvspace));
+
+	case TCPCTL_SENDSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_sendspace));
 
 	default:
 		return (ENOPROTOOPT);

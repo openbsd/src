@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.13 1997/09/07 02:19:24 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.14 1998/01/24 18:21:39 mickey Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -516,8 +516,8 @@ release:
 	return (error);
 }
 
-u_long	udp_sendspace = 9216;		/* really max datagram size */
-u_long	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
+u_int	udp_sendspace = 9216;		/* really max datagram size */
+u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
 /*ARGSUSED*/
@@ -690,6 +690,10 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case UDPCTL_BADDYNAMIC:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.udp, sizeof(baddynamicports.udp)));
+	case UDPCTL_RECVSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,&udp_recvspace));
+	case UDPCTL_SENDSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,&udp_sendspace));
 	default:
 		return (ENOPROTOOPT);
 	}
