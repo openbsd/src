@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.67 2001/09/19 22:52:41 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.68 2001/10/02 17:21:02 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1533,6 +1533,10 @@ vfs_hang_addrlist(mp, nep, argp)
 			smask->sa_len = argp->ex_masklen;
 	}
 	i = saddr->sa_family;
+	if (i < 0 || i > AF_MAX) {
+		error = EINVAL;
+		goto out;
+	}
 	if ((rnh = nep->ne_rtable[i]) == 0) {
 		/*
 		 * Seems silly to initialize every AF when most are not
