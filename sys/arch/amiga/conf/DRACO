@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.6 1996/10/04 23:34:44 niklas Exp $
+#	$OpenBSD: DRACO,v 1.7 1996/12/11 23:06:34 niklas Exp $
 #	$NetBSD: DRACO,v 1.2.4.2 1996/09/06 00:28:31 jtc Exp $
 
 #
@@ -6,7 +6,7 @@
 #
 
 # this will be replace by std.amiga soon:
-include "std.draco"
+include "arch/amiga/conf/std.draco"
 
 maxusers	8
 option		TIMEZONE=300, DST=1

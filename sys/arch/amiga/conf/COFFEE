@@ -1,4 +1,4 @@
-#	$OpenBSD: COFFEE,v 1.6 1996/09/20 06:44:53 deraadt Exp $
+#	$OpenBSD: COFFEE,v 1.7 1996/12/11 23:06:33 niklas Exp $
 #	$NetBSD: COFFEE,v 1.12 1995/10/09 02:08:35 chopps Exp $
 
 #
@@ -7,7 +7,7 @@
 # This configuration file contains all possible options
 #
 
-include "std.amiga"
+include "arch/amiga/conf/std.amiga"
 
 maxusers	8
 option		TIMEZONE=300, DST=1

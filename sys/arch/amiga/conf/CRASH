@@ -1,10 +1,10 @@
-#	$OpenBSD: CRASH,v 1.5 1996/10/04 15:01:29 niklas Exp $
+#	$OpenBSD: CRASH,v 1.6 1996/12/11 23:06:33 niklas Exp $
 
 #
 # The first OpenBSD/Amiga "user" Neil Brewitt's GG2 + NE2000 equipped A3000
 #
 
-include "std.amiga"
+include "arch/amiga/conf/std.amiga"
 
 makeoptions	DEBUG="-g"
 

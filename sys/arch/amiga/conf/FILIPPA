@@ -1,10 +1,10 @@
-#	$OpenBSD: FILIPPA,v 1.11 1996/11/28 23:33:04 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.12 1996/12/11 23:06:34 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
 #
 
-include "std.amiga"
+include "arch/amiga/conf/std.amiga"
 
 maxusers	8
 option		TIMEZONE=300, DST=1

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 1996/10/04 23:34:46 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.15 1996/12/11 23:06:35 niklas Exp $
 #	$NetBSD: GENERIC,v 1.57.4.4 1996/09/06 00:34:18 jtc Exp $
 
 #
@@ -7,8 +7,8 @@
 # This configuration file contains all possible options
 #
 
-include "std.amiga"
-include "../../../conf/GENERIC"
+include "arch/amiga/conf/std.amiga"
+include "conf/GENERIC"
 
 maxusers	8
 
