@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.4 1999/10/01 14:08:54 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.5 2000/01/10 21:58:19 angelos Exp $	*/
 /*	$EOM: certpatch.c,v 1.4 1999/09/28 21:26:47 angelos Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ main (int argc, char **argv)
         new_id[0] = 0x81; /* IDTYPE_UFQDN */
 
       new_id[1] = strlen (id);
-      memcpy (data + 2, id, strlen(id));
+      memcpy (new_id + 2, id, strlen(id));
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
       str.length = strlen (id) + 2;
       str.type = V_ASN1_OCTET_STRING;
