@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.11 2000/10/12 18:06:03 aaron Exp $
+.\"	$OpenBSD: timeout.9,v 1.12 2001/02/16 13:30:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -39,10 +39,15 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/timeout.h>
+.Ft void
 .Fn "timeout_set" "struct timeout *to" "void (*fn)(void *)" "void *arg"
+.Ft void
 .Fn "timeout_add" "struct timeout *to" "int ticks"
+.Ft void
 .Fn "timeout_del" "struct timeout *to"
+.Ft int
 .Fn "timeout_pending" "struct timeout *to"
+.Ft int
 .Fn "timeout_initialized" "struct timeout *to"
 .Sh DESCRIPTION
 The
