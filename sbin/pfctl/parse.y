@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.273 2003/01/03 21:37:44 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.274 2003/01/03 22:22:18 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -294,9 +294,9 @@ void			 ifa_load(void);
 struct node_host	*ifa_exists(char *);
 struct node_host	*ifa_lookup(char *, enum pfctl_iflookup_mode);
 void			 decide_address_family(struct node_host *,
-			     sa_family_t *);
+			    sa_family_t *);
 void			 remove_invalid_hosts(struct node_host **,
-			     sa_family_t *);
+			    sa_family_t *);
 u_int16_t		 parseicmpspec(char *, sa_family_t);
 
 typedef struct {
@@ -2326,7 +2326,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				    sizeof(binat.dst.addr.addr));
 				memcpy(&binat.dst.addr.mask, &$9->addr.mask,
 				    sizeof(binat.dst.addr.mask));
-				binat.dst.not  = $9->not;
+				binat.dst.not = $9->not;
 				free($9);
 			}
 
@@ -2399,7 +2399,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 				    sizeof(rdr.src.addr.addr));
 				memcpy(&rdr.src.addr.mask, &$7->addr.mask,
 				    sizeof(rdr.src.addr.mask));
-				rdr.src.not  = $7->not;
+				rdr.src.not = $7->not;
 				if (!rdr.af && !$7->ifindex)
 					rdr.af = $7->af;
 			}
@@ -2408,7 +2408,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 				    sizeof(rdr.dst.addr.addr));
 				memcpy(&rdr.dst.addr.mask, &$9->addr.mask,
 				    sizeof(rdr.dst.addr.mask));
-				rdr.dst.not  = $9->not;
+				rdr.dst.not = $9->not;
 				if (!rdr.af && !$9->ifindex)
 					rdr.af = $9->af;
 			}
@@ -2439,8 +2439,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 				remove_invalid_hosts(&$11->host, &rdr.af);
 				if ($11->host == NULL)
 					YYERROR;
-				rdr.rpool.proxy_port[0]  = $11->rport.a;
-				rdr.rpool.port_op  |= $11->rport.t;
+				rdr.rpool.proxy_port[0] = $11->rport.a;
+				rdr.rpool.port_op |= $11->rport.t;
 
 				if ($11->host->next) {
 					rdr.rpool.opts = $12.type;
@@ -3027,7 +3027,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			if (a->scheduler != ALTQT_NONE &&
 			    a->scheduler != tqueue->scheduler) {
 				yyerror("exactly one scheduler type per "
-				   "interface allowed");
+				    "interface allowed");
 				return (1);
 			}
 			a->scheduler = tqueue->scheduler;
@@ -3705,7 +3705,7 @@ top:
 		if (next == '>') {
 			yylval.v.i = PF_OP_XRG;
 			return (PORTBINARY);
-		} else  if (next == '=') {
+		} else if (next == '=') {
 			yylval.v.i = PF_OP_LE;
 		} else {
 			yylval.v.i = PF_OP_LT;
@@ -3718,7 +3718,7 @@ top:
 		if (next == '<') {
 			yylval.v.i = PF_OP_IRG;
 			return (PORTBINARY);
-		} else  if (next == '=') {
+		} else if (next == '=') {
 			yylval.v.i = PF_OP_GE;
 		} else {
 			yylval.v.i = PF_OP_GT;
@@ -3883,8 +3883,7 @@ ifa_load(void)
 		if (n->af == AF_INET6 &&
 		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)
 		    ifa->ifa_addr)->sin6_addr) &&
-		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0)
-		    {
+		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0) {
 			struct sockaddr_in6	*sin6;
 
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
