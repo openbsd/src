@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.14 2004/11/09 09:32:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.15 2004/11/09 09:58:56 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -113,15 +113,26 @@ sub validate_depend
 
 sub mark_lib
 {
-	my ($self, $libs) = @_;
+	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname();
+	if (my $libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+		$libpatterns->{"$1"} = [$2, $3, $libname];
+	}
 	$libs->{"$libname"} = 1;
 }
 
 sub unmark_lib
 {
-	my ($self, $libs) = @_;
+	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname();
+	if (my $libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
+		my ($pat, $major, $minor) = ($1, $2, $3);
+		my $p = $libpatterns->{"$pat"};
+		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
+			my $n = $p->[2];
+			delete $libs->{"$n"};
+		}
+	}
 	delete $libs->{"$libname"};
 }
 
@@ -241,9 +252,10 @@ sub save_old_libraries
 
 	my $old_plist = $new_plist->{replacing};
 	my $libs = {};
+	my $p = {};
 
-	$old_plist->visit('mark_lib', $libs);
-	$new_plist->visit('unmark_lib', $libs);
+	$old_plist->visit('mark_lib', $libs, $p);
+	$new_plist->visit('unmark_lib', $libs, $p);
 
 	if (%$libs) {
 		my $stub_list = split_libs($old_plist, $libs);
