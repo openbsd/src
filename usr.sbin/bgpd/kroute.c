@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.107 2004/08/19 10:38:34 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.108 2004/10/16 09:33:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,6 +398,19 @@ kr_show_route(struct imsg *imsg)
 	}
 
 	send_imsg_session(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
+}
+
+void
+kr_ifinfo(char *ifname)
+{
+	struct kif_node	*kif;
+
+	RB_FOREACH(kif, kif_tree, &kit)
+		if (!strcmp(ifname, kif->k.ifname)) {
+			send_imsg_session(IMSG_IFINFO, 0,
+			    &kif->k, sizeof(kif->k));
+			return;
+		}
 }
 
 /*
@@ -875,6 +888,9 @@ mask2prefixlen6(struct in6_addr *in6a)
 in_addr_t
 prefixlen2mask(u_int8_t prefixlen)
 {
+	if (prefixlen == 0)
+		return (0);
+
 	return (0xffffffff << (32 - prefixlen));
 }
 
@@ -948,6 +964,8 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.link_state = ifd->ifi_link_state;
 	kif->k.media_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
+
+	send_imsg_session(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
 
 	if ((reachable = (flags & IFF_UP) &&
 	    (ifd->ifi_link_state != LINK_STATE_DOWN)) == kif->k.nh_reachable)
