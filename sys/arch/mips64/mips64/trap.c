@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2004/09/16 07:25:26 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2004/09/16 09:58:56 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -747,21 +747,7 @@ out:
 	p->p_priority = p->p_usrpri;
 	astpending = 0;
 	if (want_resched) {
-		int s;
-
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we switched, we might not be on the queue
-		 * indicated by our priority.
-		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((i = CURSIG(p)) != 0)
 			postsig(i);
 	}
@@ -798,21 +784,7 @@ child_return(arg)
 	p->p_priority = p->p_usrpri;
 	astpending = 0;
 	if (want_resched) {
-		int s;
-
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we switched, we might not be on the queue
-		 * indicated by our priority.
-		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((i = CURSIG(p)) != 0)
 			postsig(i);
 	}
