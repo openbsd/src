@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.14 2003/05/16 19:28:59 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.15 2003/09/19 21:20:47 deraadt Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -239,8 +239,9 @@ getgoal(LINE *dlp)
 			col++;
 		else {
 			char tmp[5];
-			col += snprintf(tmp, sizeof tmp, "\\%o",
-			    c);
+
+			snprintf(tmp, sizeof tmp, "\\%o", c);
+			col += strlen(tmp);
 		}
 		if (col > curgoal)
 			break;
