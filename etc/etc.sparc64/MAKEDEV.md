@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/01/12 21:25:45 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.8 2002/01/13 02:06:45 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -136,21 +136,20 @@ magma*)
 	M bpp${nam}1 c 72 Add($offset,1) 600 wheel root
 	;;
 
-dnl No number allocated yet...
-dnl spif*)
-dnl 	case $U in
-dnl 	0)	offset=0  nam=j;;
-dnl 	1)	offset=16 nam=k;;
-dnl 	2)	offset=32 nam=l;;
-dnl 	*)	echo "bad unit for $i: $U"; exit 127;;
-dnl 	esac
-dnl 	offset=Mult($U,64)
-dnl 	n=0
-dnl 	while [ $n -lt 8 ]
-dnl 	do
-dnl 		name=${nam}`hex $n`
-dnl 		M tty$name c 102 Add($offset,$n) 660 dialer uucp
-dnl 		n=Add($n,1)
-dnl 	done
-dnl 	M bpp${nam}0 c 103 Add($offset,0) 600 wheel root
-dnl 	;;
+spif*)
+	case $U in
+	0)	offset=0  nam=j;;
+	1)	offset=16 nam=k;;
+	2)	offset=32 nam=l;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=Mult($U,64)
+	n=0
+	while [ $n -lt 8 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 108 Add($offset,$n) 660 dialer uucp
+		n=Add($n,1)
+	done
+	M bpp${nam}0 c 109 Add($offset,0) 600 wheel root
+	;;

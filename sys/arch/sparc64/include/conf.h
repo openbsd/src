@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.8 2002/01/12 20:19:40 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.9 2002/01/13 02:06:45 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -113,3 +113,5 @@ cdev_decl(uscanner);
 
 cdev_decl(mtty);
 cdev_decl(mbpp);
+cdev_decl(stty);
+cdev_decl(sbpp);
