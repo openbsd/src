@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.3 1997/05/08 12:48:04 niklas Exp $
+#	$OpenBSD: list,v 1.4 1997/05/09 18:00:20 millert Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -9,26 +9,26 @@ LINK	raminst			bin/cat
 LINK	raminst			bin/chmod
 LINK	raminst			bin/cp
 LINK	raminst			bin/cpio
-LINK	raminst			bin/df
 LINK	raminst			bin/dd
+LINK	raminst			bin/df
 LINK	raminst			bin/ed
 LINK	raminst			bin/expr
 LINK	raminst			bin/ln
 LINK	raminst			bin/ls
-LINK	raminst			bin/kill
-LINK	raminst			bin/hostname
+#LINK	raminst			bin/kill
+#LINK	raminst			bin/hostname
 LINK	raminst			bin/mkdir
 LINK	raminst			bin/mv
 LINK	raminst			bin/pdksh
-LINK	raminst			bin/pwd
+#LINK	raminst			bin/pwd
 LINK	raminst			bin/rm
 LINK	raminst			bin/sh
 LINK	raminst			bin/stty
 LINK	raminst			bin/sleep
 LINK	raminst			bin/sync
 LINK	raminst			bin/tar
-LINK	raminst			bin/test
-LINK	raminst			bin/[
+#LINK	raminst			bin/test
+#LINK	raminst			bin/[
 LINK	raminst			sbin/disklabel
 LINK	raminst			sbin/fdisk
 LINK	raminst			sbin/fsck
@@ -49,25 +49,28 @@ LINK	raminst			sbin/route
 #LINK	raminst			sbin/slattach
 LINK	raminst			sbin/umount
 LINK	raminst			usr/bin/chgrp
-LINK	raminst			usr/bin/cut
+#LINK	raminst			usr/bin/cut
 LINK	raminst			usr/bin/ftp
 LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/fgrep
 LINK	raminst			usr/bin/grep
 LINK	raminst			usr/bin/gzip
 LINK	raminst			usr/bin/more
 LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/sort
+#LINK	raminst			usr/bin/sort
 LINK	raminst			usr/bin/pax
 #LINK	raminst			usr/bin/tip
 LINK	raminst			usr/sbin/chown
+LINK	raminst			usr/mdec/installboot
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV raminst
 
-# we need the contents of /usr/mdec (XXX)
-# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+# we need the contents of /usr/mdec
+COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
+COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc
