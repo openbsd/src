@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.106 2003/03/01 18:26:52 grange Exp $
+dnl	$OpenBSD: hardware,v 1.107 2003/03/06 11:50:59 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -77,7 +77,7 @@ Supported hardware {:-include-:}:
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
 		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277
 		    (but the Promise RAID mode is not supported)
-		ServerWorks OSB4, CSB5
+		ServerWorks OSB4, CSB5, CSB6
 		Silicon Integrated Systems 5513 (5597/5598)
 		VIA Technologies VT82C586A/B, VT82C596A/B, VT82C686A/B,
 		    VT8231, VT8366, VT8233, VT8235
