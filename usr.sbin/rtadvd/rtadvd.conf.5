@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.20 2003/10/23 18:23:33 jmc Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.21 2004/09/15 23:00:57 jmc Exp $
 .\"	$KAME: rtadvd.conf.5,v 1.46 2003/06/17 08:26:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -180,10 +180,10 @@ The default value is 0xc0, i.e., both bits are set.
 (str) The address filled into Prefix field.
 Since
 .Dq \&:
-is used for
+is used for the
 .Xr termcap 5
-file format as well as IPv6 numeric address, the field MUST be quoted by
-doublequote character.
+file format as well as IPv6 numeric addresses, the field MUST be quoted
+using double quotes.
 .It Cm \&vltime
 (num) Valid lifetime field
 .Pq unit: seconds .
