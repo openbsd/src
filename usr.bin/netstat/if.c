@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.16 1996/05/07 05:30:45 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.16.4.1 1996/06/04 20:27:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.16 1996/05/07 05:30:45 thorpej Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.16.4.1 1996/06/04 20:27:06 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ intpr(interval, ifnetaddr)
 	}
 }
 
-#define	MAXIF	10
+#define	MAXIF	100
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
 	int	ift_ip;			/* input packets */
@@ -283,7 +283,7 @@ sidewaysintpr(interval, off)
 	lastif = iftot;
 	sum = iftot + MAXIF - 1;
 	total = sum - 1;
-	interesting = iftot;
+	interesting = (interface == NULL) ? iftot : NULL;
 	for (off = firstifnet, ip = iftot; off;) {
 		if (kread(off, (char *)&ifnet, sizeof ifnet))
 			break;
@@ -297,6 +297,11 @@ sidewaysintpr(interval, off)
 		if (ip >= iftot + MAXIF - 2)
 			break;
 		off = (u_long)ifnet.if_list.tqe_next;
+	}
+	if (interesting == NULL) {
+		fprintf(stderr, "%s: %s: unknown interface\n",
+		    __progname, interface);
+		exit(1);
 	}
 	lastif = ip;
 
