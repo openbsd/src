@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.41 2001/04/14 23:43:32 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.42 2001/05/14 03:10:22 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -7,14 +7,16 @@ option		UVM		# required
 option		PMAP_NEW	# required
 
 # CPU Support; at least one is REQUIRED
-option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-option		DEC_3000_300	# Pelican etc:	3000/300*
+#option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+#option		DEC_3000_300	# Pelican etc:	3000/300*
 option		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 option		DEC_KN20AA	# KN20AA:	AlphaStation 600
 option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option		DEC_550		# Miata:	Digital Personal Workstation
+#option		DEC_6600	# EV6:		264DP OEM Board
+#option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 # Enable the hooks used for initializing the ram-disk.
 option		RAMDISK_HOOKS
@@ -47,12 +49,18 @@ cpu*	at	mainbus0
 apecs*	at	mainbus?
 cia*	at	mainbus?
 lca*	at	mainbus?
+#irongate* at	mainbus?
+#tsc*	at	mainbus0
+#tsp*	at	tsc?
 
 # PCI bus support
 pci*	at	apecs?
 pci*	at	cia?
 pci*	at	lca?
 pci*	at	ppb?
+#pci*	at	irongate?
+#pci*	at	tsp?
+#pci*	at	ppb?
 
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
@@ -64,23 +72,28 @@ de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 #xl*	at	pci? dev ? function ?		# 3COM 3c9xx (untested)
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
+
 isp*	at	pci? dev ? function ?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
+#define ISP_COMPILE_FW
+#define ISP_COMPILE_1040_FW 1
+#define ISP_COMPILE_1080_FW 1
+#define ISP_COMPILE_12160_FW 1
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
 #inphy*	at mii? phy ?				# Intel 82555 PHYs
-#icsphy*	at mii? phy ?			# ICS 1890 PHYs
-#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
+#icsphy* at mii? phy ?				# ICS 1890 PHYs
+#lxtphy* at mii? phy ?				# Level1 LXT970 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
-#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
+#mtdphy* at mii? phy ?				# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 # ISA/EISA bus support
@@ -88,19 +101,19 @@ isa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-mcclock* at	isa? port 0x70
-pckbc*	at	isa?				# PC keyboard controller
-pckbd*	at	pckbc?				# PC keyboard (kbd port)
-com*	at	isa? port 0x3f8 irq 4		# standard serial ports
-com*	at	isa? port 0x2f8 irq 3
-vga*	at	isa?				# ISA (EISA: XXX) VGA
-#we0	at 	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-#we1	at 	isa? port 0x300 iomem 0xcc000 irq 10	#
-#ec0	at 	isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-#ne0	at 	isa? port 0x240 irq 9		# NE[12]000 ethernet cards
-#ne1	at 	isa? port 0x300 irq 10		# NE[12]000 ethernet cards
-#ne2	at 	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
-#cy0	at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
+mcclock* at isa? port 0x70
+pckbc*	at isa?					# PC keyboard controller
+pckbd*	at pckbc?				# PC keyboard (kbd port)
+com*	at isa? port 0x3f8 irq 4		# standard serial ports
+com*	at isa? port 0x2f8 irq 3
+vga*	at isa?					# ISA (EISA: XXX) VGA
+#we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+#we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+#ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet cards
+#ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+#ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+#cy0	at isa? iomem 0xd4000 irq 12		# ISA cyclom card
 
 # IDE
 pciide* at pci ? dev ? function ? flags 0x0000
@@ -115,7 +128,7 @@ wd*	at pciide? channel ? drive ? flags 0x0000
 
 # SCSI bus support
 #scsibus* at	asc?
-scsibus* at	ncr?
+scsibus* at	siop?
 scsibus* at	isp?
 
 # SCSI devices
