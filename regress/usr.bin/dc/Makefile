@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.6 2003/11/14 20:27:17 otto Exp $
+# $OpenBSD: Makefile,v 1.7 2003/11/17 11:13:38 otto Exp $
 
 DC=dc
 
-REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
+REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17
 
 # .in: input file
 # .out: desired result
@@ -22,6 +22,7 @@ REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
 # t14: test N, G, ( and {
 # t15: more N, G, ( and {
 # t16: even more N, G, ( and {
+# t17: test R (drop)
 
 all: clean ${REGRESS_TARGET}
 
