@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.5 2003/12/05 02:23:42 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.6 2003/12/23 21:52:52 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -219,7 +219,17 @@ const struct wi_usb_type {
 	u_int16_t	wi_usb_flags;
 	/* XXX */
 } wi_usb_devs[] = {
-	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_MA111NA }, 0 }
+	{{ USB_VENDOR_ACERW, USB_PRODUCT_ACERW_WARPLINK }, 0 },
+	{{ USB_VENDOR_ACTIONTEC, USB_PRODUCT_ACTIONTEC_PRISM_25A }, 0 },
+	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_WLANUSB }, 0 },
+	{{ USB_VENDOR_INTEL, USB_PRODUCT_INTEL_I2011B }, 0 },
+	{{ USB_VENDOR_INTERSIL, USB_PRODUCT_INTERSIL_PRISM_2X }, 0 },
+	{{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBWNB11 }, 0 },
+	{{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_WUSB12_11 }, 0 },
+	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_S11 }, 0 },
+	{{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_MN510 }, 0 },
+	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_MA111NA }, 0 },
+	{{ USB_VENDOR_SIEMENS, USB_PRODUCT_SIEMENS_SPEEDSTREAM22 }, 0 }
 };
 #define wi_usb_lookup(v, p) ((struct wi_usb_type *)usb_lookup(wi_usb_devs, v, p))
 
