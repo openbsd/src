@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.17 2004/08/25 21:59:59 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.18 2004/10/19 07:36:51 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -42,13 +42,14 @@
 .Sh SYNOPSIS
 .Nm bc
 .Op Fl cl
+.Op Fl e Ar expression
 .Op Ar file ...
 .Sh DESCRIPTION
 .Nm
 is an interactive processor for a language which resembles
 C but provides unlimited precision arithmetic.
-It takes input from any files given, then reads
-the standard input.
+It takes input from any expressions on the command line and
+any files given, then reads the standard input.
 .Pp
 Options available:
 .Bl -tag -width Ds
@@ -66,9 +67,17 @@ instructions are sent to the standard output,
 instead of being interpreted by a running
 .Xr dc 1
 process.
+.It Fl e Ar expression
+Evaluate
+.Ar expression .
+If multiple
+.Fl e
+options are specified, they are processed in the order given,
+separated by newlines.
 .It Fl l
-Allow specification
-of an arbitrary precision math library.
+Allow specification of an arbitrary precision math library.
+The definitions in the library are available to command line
+expressions.
 .El
 .Pp
 The syntax for
@@ -322,6 +331,12 @@ the exponential function and
 .Pp
 prints approximate values of the exponential function of
 the first ten integers.
+.Pp
+.Bd -literal -offset indent
+$ bc -l -e 'scale = 500; 2 * a(2^10000)' -e quit
+.Ed
+.Pp
+prints an approximation of pi.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/bc.library -compact
 .It Pa /usr/share/misc/bc.library

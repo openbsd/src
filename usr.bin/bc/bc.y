@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.23 2004/02/18 07:43:58 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.24 2004/10/19 07:36:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.23 2004/02/18 07:43:58 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.24 2004/10/19 07:36:51 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -61,6 +61,12 @@ struct tree {
 
 int			yyparse(void);
 int			yywrap(void);
+
+int			fileindex;
+int			sargc;
+char			**sargv;
+char			*filename;
+char			*cmdexpr;
 
 static void		grow(void);
 static ssize_t		cs(const char *);
@@ -94,10 +100,6 @@ static ssize_t		prologue;
 static ssize_t		epilogue;
 static bool		st_has_continue;
 static char		str_table[UCHAR_MAX][2];
-static int		fileindex;
-static int		sargc;
-static char		**sargv;
-static char		*filename;
 static bool		do_fork = true;
 static u_short		var_count;
 
@@ -921,26 +923,6 @@ add_local(ssize_t n)
 	epilogue = node(epilogue, cs("L"), n, cs("s."), END_NODE);
 }
 
-int
-yywrap(void)
-{
-	if (fileindex < sargc) {
-		filename = sargv[fileindex++];
-		yyin = fopen(filename, "r");
-		lineno = 1;
-		if (yyin == NULL)
-			err(1, "cannot open %s", filename);
-		return 0;
-	} else if (fileindex == sargc) {
-		fileindex++;
-		yyin = stdin;
-		lineno = 1;
-		filename = "stdin";
-		return 0;
-	}
-	return 1;
-}
-
 void
 yyerror(char *s)
 {
@@ -994,7 +976,8 @@ init(void)
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "%s: usage: [-cl] [file ...]\n", __progname);
+	fprintf(stderr, "%s: usage: [-cl] [-e expression] [file ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -1058,6 +1041,7 @@ main(int argc, char *argv[])
 {
 	int	i, ch, ret;
 	int	p[2];
+	char	*q;
 
 	init();
 	setlinebuf(stdout);
@@ -1066,12 +1050,20 @@ main(int argc, char *argv[])
 	if (sargv == NULL)
 		err(1, NULL);
 
-	/* The d debug option is 4.4 BSD dc(1) compatible */
-	while ((ch = getopt(argc, argv, "cdl")) != -1) {
+	if ((cmdexpr = strdup("")) == NULL)
+		err(1, NULL);
+	/* The d debug option is 4.4 BSD bc(1) compatible */
+	while ((ch = getopt(argc, argv, "cde:l")) != -1) {
 		switch (ch) {
 		case 'c':
 		case 'd':
 			do_fork = false;
+			break;
+		case 'e':
+			q = cmdexpr;
+			if (asprintf(&cmdexpr, "%s%s\n", cmdexpr, optarg) == -1)
+				err(1, NULL);
+			free(q);
 			break;
 		case 'l':
 			sargv[sargc++] = _PATH_LIBB;

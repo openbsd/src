@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.14 2003/12/02 09:00:07 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.15 2004/10/19 07:36:51 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.14 2003/12/02 09:00:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.15 2004/10/19 07:36:51 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -26,6 +26,7 @@ static const char rcsid[] = "$OpenBSD: scan.l,v 1.14 2003/12/02 09:00:07 otto Ex
 #include <string.h>
 
 #include "extern.h"
+#include "pathnames.h"
 #include "y.tab.h"
 
 int		lineno;
@@ -227,3 +228,46 @@ abort_line(int sig)
 		printf("[\n]P\n");
 	}
 }
+
+int
+yywrap(void)
+{
+	static int state;
+	static YY_BUFFER_STATE buf;
+
+	if (fileindex == 0 && sargc > 0 && strcmp(sargv[0], _PATH_LIBB) == 0) {
+		filename = sargv[fileindex++];
+		yyin = fopen(filename, "r");
+		lineno = 1;
+		if (yyin == NULL)
+			err(1, "cannot open %s", filename);
+		return (0);
+	}
+	if (state == 0 && cmdexpr[0] != '\0') {
+		buf = yy_scan_string(cmdexpr);
+		state++;
+		lineno = 1;
+		filename = "command line";
+		return (0);
+	} else if (state == 1) {
+		yy_delete_buffer(buf);
+		free(cmdexpr);
+		state++;
+	}
+	if (fileindex < sargc) {
+		filename = sargv[fileindex++];
+		yyin = fopen(filename, "r");
+		lineno = 1;
+		if (yyin == NULL)
+			err(1, "cannot open %s", filename);
+		return (0);
+	} else if (fileindex == sargc) {
+		fileindex++;
+		yyin = stdin;
+		lineno = 1;
+		filename = "stdin";
+		return (0);
+	}
+	return (1);
+}
+
