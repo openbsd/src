@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 1996/08/19 00:16:57 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.13 1996/10/04 15:04:51 niklas Exp $
 #	$NetBSD: GENERIC,v 1.57.4.3 1996/06/04 10:32:59 is Exp $
 
 #
@@ -193,7 +193,7 @@ isa*	at ggbus?
 cross*	at zbus0			# CrossLink bridge
 isa*	at cross?
 
-isapnp0	at isa?
+#isapnp0	at isa?
 
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -210,7 +210,7 @@ com*	at rtfps? slave ?
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
-cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+# cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
 lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
 lpt1	at isa? port 0x278
