@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.9 2001/02/19 14:33:32 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.10 2001/05/29 21:41:33 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -92,4 +92,4 @@
 #define LOGIN_CAP			/*-*/
 
 			/* if your OS supports BSD authentication */
-/*#define BSD_AUTH			-*/
+#define BSD_AUTH			/*-*/
