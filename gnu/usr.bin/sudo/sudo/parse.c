@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 1998/01/13 05:30:27 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.6 1998/01/13 15:22:31 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.4
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: parse.c,v 1.78 1998/01/13 04:48:42 millert Exp $";
+static char rcsid[] = "Id: parse.c,v 1.79 1998/01/13 15:19:08 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -220,7 +220,7 @@ int command_matches(cmnd, user_args, path, sudoers_args)
     static char *c;
 
     /* don't bother with pseudo commands like "validate" */
-    if (*cmnd != '/' && *cmnd != '.')
+    if (strchr(cmnd, '/') == NULL)
 	return(FALSE);
 
     /* only need to stat cmnd once since it never changes */
