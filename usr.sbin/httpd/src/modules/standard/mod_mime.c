@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_mime.c,v 1.10 2002/08/15 16:06:11 henning Exp $ */
+/*	$OpenBSD: mod_mime.c,v 1.11 2003/04/08 17:40:46 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -716,11 +716,12 @@ static int find_ct(request_rec *r)
     if (r->content_type) {
 	content_type *ctp;
 	char *ct;
+	size_t ctlen;
 	int override = 0;
 
-	ct = (char *) ap_palloc(r->pool,
-				sizeof(char) * (strlen(r->content_type) + 1));
-	strcpy(ct, r->content_type);
+	ctlen = sizeof(char) * (strlen(r->content_type) + 1);
+	ct = (char *) ap_palloc(r->pool, ctlen);
+	strlcpy(ct, r->content_type, ctlen);
 
 	if ((ctp = analyze_ct(r->pool, ct))) {
 	    param *pp = ctp->param;
