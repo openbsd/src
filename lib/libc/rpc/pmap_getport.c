@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_getport.c,v 1.3 1996/08/19 08:31:38 tholo Exp $";
+static char *rcsid = "$OpenBSD: pmap_getport.c,v 1.4 1996/12/10 07:46:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -81,7 +81,8 @@ pmap_getport(address, program, version, protocol)
 		}
 		CLNT_DESTROY(client);
 	}
-	(void)close(socket);
+	if (socket != -1)
+		(void)close(socket);
 	address->sin_port = 0;
 	return (port);
 }

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.11 1996/11/14 06:23:50 etheisen Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.12 1996/12/10 07:46:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -96,7 +96,8 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	} else {
 		stat = RPC_FAILED;
 	}
-	(void)close(socket);
+	if (socket != -1)
+		(void)close(socket);
 	addr->sin_port = 0;
 	return (stat);
 }

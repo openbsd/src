@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.10 1996/11/14 06:17:36 etheisen Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.11 1996/12/10 07:46:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -163,7 +163,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 		    sizeof(*raddr)) < 0)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
-			(void)close(*sockp);
+			if (*sockp != -1)
+				(void)close(*sockp);
 			goto fooy;
 		}
 		ct->ct_closeit = TRUE;
