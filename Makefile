@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.71 2001/08/31 12:47:57 brad Exp $
+#	$OpenBSD: Makefile,v 1.72 2001/08/31 13:49:17 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -289,7 +289,7 @@ cross-gcc:	cross-dirs
 	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-gcc \
 	    ${CROSSDIR}/usr/bin/cc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${CROSSDIR}/usr/obj/gnu/egcs/gcc/xcpp \
+	    ${CROSSDIR}/usr/obj/gnu/egcs/gcc/cccp \
 	    ${CROSSDIR}/usr/libexec/cpp
 	sed -e 's#/usr/libexec/cpp#${CROSSDIR}/usr/libexec/cpp#' \
 	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
