@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.309 2000/09/04 13:13:18 itojun Exp $
+	$OpenBSD: pcidevs,v 1.310 2000/09/12 00:27:05 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -987,6 +987,7 @@ product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 /* Efficient Networks products */
 product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
+product EFFICIENTNETS EFSS25	0x0005	25SS-3010 ATM (ASIC)
 
 /* Hewlett-Packard products */
 product HP J2585A		0x1030	J2585A
