@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.9,v 1.2 2004/05/23 22:10:53 jmc Exp $
+.\"	$OpenBSD: iic.9,v 1.3 2004/08/24 05:48:22 david Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -165,7 +165,7 @@ it must also be passed to
 .\" XXXJRT Someone help me with the mark-up here!
 .\" .It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len" "flags"
 .It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len"
-Perform a a series of I2C transactions on the bus.
+Perform a series of I2C transactions on the bus.
 .Fn iic_exec
 initiates the operation by sending a START condition on the I2C
 bus and then transmitting the address of the target device along
