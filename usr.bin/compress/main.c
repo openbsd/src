@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2005/02/07 08:37:28 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2005/02/24 09:44:36 moritz Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.58 2005/02/07 08:37:28 otto Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.59 2005/02/24 09:44:36 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -454,6 +454,7 @@ int
 docompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
+#ifndef SMALL
 	u_char buf[Z_BUFSIZE];
 	char *name;
 	int error, ifd, ofd, flags;
@@ -538,6 +539,10 @@ docompress(const char *in, char *out, const struct compressor *method,
 		verbose_info(out, info.total_out, info.total_in, info.hlen);
 
 	return (error);
+#else
+	warnx("compression not supported");
+	return (FAILURE);
+#endif
 }
 
 const struct compressor *
