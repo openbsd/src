@@ -452,6 +452,7 @@ nfs_mount(mp, path, data, ndp, p)
 		if (nmp == NULL)
 			return (EIO);
 		nfs_decode_args(nmp, &args);
+		args.flags |= NFSMNT_RESVPORT;	/* ALWAYS allocate one */
 		return (0);
 	}
 	if (error = copyin((caddr_t)args.fh, (caddr_t)&nfh, sizeof (nfsv2fh_t)))
