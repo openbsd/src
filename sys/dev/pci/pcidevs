@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.618 2003/05/08 18:55:13 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.619 2003/05/08 23:50:30 tdeval Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -877,6 +877,8 @@ product APPLE GMAC3             0x0032  GMAC Ethernet
 product APPLE UNINORTH_AGP3     0x0034  UniNorth AGP Bridge
 product APPLE UNINORTH5         0x0035  UniNorth Host-PCI Bridge
 product APPLE UNINORTH6         0x0036  UniNorth Host-PCI Bridge
+product APPLE INTREPID_ATA	0x003b	Intrepid ATA
+product APPLE INTREPID		0x003e	Intrepid
 
 /* ARC Logic products */
 product ARC USB			0x0003	USB
