@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.8 1996/05/10 12:46:23 deraadt Exp $ */
+/*	$OpenBSD: spkr.c,v 1.9 1996/05/28 10:28:15 deraadt Exp $ */
 /*	$NetBSD: spkr.c,v 1.23 1996/05/05 19:31:25 christos Exp $	*/
 
 /*
@@ -445,16 +445,16 @@ spkrprobe (parent, match, aux)
 	   (
 #include "vt.h"
 #include "pc.h"
-#if NPC
+#if NPC > 0
 	    (parent->dv_cfdata->cf_attach != &pc_ca)
 #endif
-#if NPC && NVT	/* XXX could we have both of them ??? */
+#if NPC > 0 && NVT > 0	/* XXX could we have both of them ??? */
 	    &&
 #endif
-#if NVT
+#if NVT > 0
 	    (parent->dv_cfdata->cf_attach != &vt_ca)
 #endif
-#if !NCP && !NVT
+#if NPC == 0 && NVT == 0
 	    1
 #endif
 	   ))
