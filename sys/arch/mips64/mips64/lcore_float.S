@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Opsycon AB, Sweden.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -517,3 +512,37 @@ FPReturn:
 	j	ra
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 END(MipsFPTrap)
+
+/*----------------------------------------------------------------------------
+ *
+ * cp1_get_prid
+ *
+ *	Get the floating point co-processor id.
+ *
+ *	cp1_get_prid(void)
+ *
+ * Results:
+ *	FPC_ID
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(cp1_get_prid)
+	mfc0	v1, COP_0_STATUS_REG
+	li	a0, SR_COP_1_BIT
+	or	v1, a0
+	mtc0	v1, COP_0_STATUS_REG
+	nop
+	nop
+	nop
+	nop
+	cfc1	v0, FPC_ID
+	xor	v1, a0
+	mtc0	v1, COP_0_STATUS_REG
+	ITLBNOPFIX
+	jr	ra
+	nop
+END(cp1_get_prid)
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Opsycon AB, Sweden.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -573,10 +568,10 @@ char *attr[] = {
 		if(have_addr && addr < 256) {
 			pid = addr;
 			tlbno = 0;
-			count = sys_config.cpu.tlbsize;
+			count = sys_config.cpu[0].tlbsize;
 		}
 	} else if (m[0] == 'c') {
-		last = sys_config.cpu.tlbsize;
+		last = sys_config.cpu[0].tlbsize;
 		for (tlbno = 0; tlbno < last; tlbno++) {
 			tlb_read(tlbno, &tlb);
 			for (check = tlbno + 1; check < last; check++) {
@@ -592,17 +587,17 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 		}
 		return;
 	} else {
-		if(have_addr && addr < sys_config.cpu.tlbsize) {
+		if(have_addr && addr < sys_config.cpu[0].tlbsize) {
 			tlbno = addr;
 		}
 			else {
 			tlbno = 0;
-			count = sys_config.cpu.tlbsize;
+			count = sys_config.cpu[0].tlbsize;
 		}
 	}
 	last = tlbno + count;
 
-	for (; tlbno < sys_config.cpu.tlbsize && tlbno < last; tlbno++) {
+	for (; tlbno < sys_config.cpu[0].tlbsize && tlbno < last; tlbno++) {
 		tlb_read(tlbno, &tlb);
 
 		if (pid >= 0 && (tlb.tlb_hi & 0xff) != pid)

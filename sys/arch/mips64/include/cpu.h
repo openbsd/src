@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2004/08/06 20:56:01 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -357,25 +357,6 @@
 
 int	want_resched;	/* resched() was called */
 
-/*
- * CPU identification, from PRID register.
- */
-union cpuprid {
-	int	cpuprid;
-	struct {
-#if BYTE_ORDER == BIG_ENDIAN
-		u_int	pad1:16;	/* reserved */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_minrev:4;	/* minor revision identifier */
-#else
-		u_int	cp_minrev:4;	/* minor revision identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	pad1:16;	/* reserved */
-#endif
-	} cpu;
-};
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
 
@@ -439,8 +420,6 @@ union cpuprid {
 #define	MIPS_VR5400	0x54	/* NEC Vr5400 FPU		ISA IV+ */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-union	cpuprid cpu_id;
-union	cpuprid fpu_id;
 
 u_int	CpuPrimaryInstCacheSize;
 u_int	CpuPrimaryInstCacheLSize;
@@ -463,6 +442,8 @@ struct user;
 
 void	tlb_set_wired(int);
 void	tlb_set_pid(int);
+u_int	cp0_get_prid(void);
+u_int	cp1_get_prid(void);
 u_int	cp0_get_count(void);
 void	cp0_set_compare(u_int);
 

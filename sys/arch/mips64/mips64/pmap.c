@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap.c,v 1.1 2004/08/06 20:56:03 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 
 /*
- * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
+ * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Opsycon AB, Sweden.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -191,7 +186,7 @@ pmap_bootstrap()
 	 */
 	i = 0;
 	for( n = 0; n < MAXMEMSEGS; n++) {
-		i += mem_layout[n].mem_size;
+		i += mem_layout[n].mem_last_page - mem_layout[n].mem_first_page + 1;
 	}
 	pv_table = (struct pv_entry *)uvm_pageboot_alloc(sizeof(struct pv_entry) * i);
 
@@ -1491,7 +1486,7 @@ pmap_alloc_tlbpid(p)
 	if (pmap->pm_tlbgen != tlbpid_gen) {
 		id = tlbpid_cnt;
 		if (id >= VMNUM_PIDS) {
-			tlb_flush(sys_config.cpu.tlbsize);
+			tlb_flush(sys_config.cpu[0].tlbsize);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
 			if (++tlbpid_gen == 0)
 				tlbpid_gen = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2004/08/06 21:12:18 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -43,20 +43,24 @@
 /*
  *  Structure holding all misc config information.
  */
+#define MAX_CPUS	4
 
 struct sys_rec {
         int     system_type;
 	struct {
-		u_int32_t type;
-		u_int32_t vers_maj;
-		u_int32_t vers_min;
+		u_int16_t type;
+		u_int8_t  vers_maj;
+		u_int8_t  vers_min;
+		u_int16_t fptype;
+		u_int8_t  fpvers_maj;
+		u_int8_t  fpvers_min;
 		u_int32_t clock;
 		u_int32_t clock_bus;
 		u_int32_t tlbsize;
 		u_int32_t tlbwired;
 		u_int32_t cfg_reg;
 		u_int32_t stat_reg;
-	} cpu;
+	} cpu[MAX_CPUS];
         struct mips_bus_space local;
         struct mips_bus_space isa_io;
         struct mips_bus_space isa_mem;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: locore.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,17 +61,6 @@ start:
 	sw	zero, CF_RA_OFFS(sp)		# Zero out old ra for debugger
 
 	move	sp, v0				# switch to new stack
-	li	t0, SR_COP_1_BIT		# Disable interrupts and
-	mtc0	t0, COP_0_STATUS_REG		#   enable the fp coprocessor
-	nop
-	nop					# wait for new status to
-	nop
-	nop
-	nop					# wait for new status to
-	nop					# to be effective
-	nop
-	cfc1	t1, FPC_ID			# read FPU ID register
-	sw	t1, fpu_id			# save FPU ID register
 	jal	main				# main(regs)
 	move	a0, zero
 	PANIC("Startup failed!")

@@ -1,12 +1,12 @@
-#	$OpenBSD: files.mips64,v 1.1 2004/08/06 20:56:01 pefo Exp $
+#	$OpenBSD: files.mips64,v 1.2 2004/08/09 14:57:26 pefo Exp $
 
-file	arch/mips64/mips64/cpu_ecoff.c
 file	arch/mips64/mips64/disksubr.c
 file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/process_machdep.c
 file	arch/mips64/mips64/sys_machdep.c
 file	arch/mips64/mips64/vm_machdep.c
 
+file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
 file	arch/mips64/mips64/cpu.c
 file	arch/mips64/mips64/busdma.c

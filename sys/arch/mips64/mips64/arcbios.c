@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.1 2004/08/08 21:51:36 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -41,6 +41,7 @@
 arc_param_blk_t *bios_base = ArcBiosBase;
 
 extern int	physmem;		/* Total physical memory size */
+extern int	rsvdmem;		/* Total reserved memory size */
 
 void bios_configure_memory(void);
 int bios_get_system_type(void);
@@ -185,7 +186,6 @@ bios_configure_memory()
 	struct phys_mem_desc *m;
 	vaddr_t seg_start, seg_end;
 	int	i;
-	char str[100];
 
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while(descr != 0) {
@@ -197,12 +197,6 @@ bios_configure_memory()
 		case BadMemory:		/* Have no use for theese */
 			break;
 
-#if 0
-		case ExeceptionBlock:
-		case SystemParameterBlock:
-		case FirmwareTemporary:
-		case FirmwarePermanent:
-#endif
 		case FreeMemory:
 		case FreeContigous:
 			physmem += descr->PageCount;
@@ -227,7 +221,15 @@ bios_configure_memory()
 			}
 			break;
 
-		case LoadedProgram:	/* This is the loaded kernel */
+		case ExeceptionBlock:
+		case SystemParameterBlock:
+		case FirmwareTemporary:
+		case FirmwarePermanent:
+			rsvdmem += descr->PageCount;
+			physmem += descr->PageCount;
+			break;
+
+		case LoadedProgram:	/* Count this into total memory */
 			physmem += descr->PageCount;
 			break;
 
@@ -239,6 +241,7 @@ bios_configure_memory()
 
 #ifdef DEBUG_MEM_LAYOUT
 	for ( i = 0; i < MAXMEMSEGS; i++) {
+		char str[100];
 		if (mem_layout[i].mem_first_page) {
 			snprintf(str, sizeof(str), "MEM %d, 0x%x to  0x%x\n",i,
 				mem_layout[i].mem_first_page * 4096,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,7 +59,7 @@
 	.globl	tlb_miss	/* 0xffffffff80000000 */
 	.set	noat
 tlb_miss:
-#if 0
+#ifdef TLB_TRACE
 	dmfc0	k0, COP_0_EXC_PC
 	PTR_L	k1, tlbtrcptr
 	PTR_S	k0, 0(k1)

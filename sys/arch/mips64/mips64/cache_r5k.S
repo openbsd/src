@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.2 2004/08/07 14:48:26 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.3 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -160,7 +160,6 @@
  *	CpuNWayCache is set to 0 for direct mapped caches, 2 for two way
  *	caches and 4 for four way caches. This primarily indicates the
  *	primary cache associativity.
- *	cpu_id is set for later decision testing.
  *
  * Allocation:
  *	t4, t5 t6 used to hold I and D set size and Alias mask.
@@ -171,7 +170,6 @@ LEAF(Mips5k_ConfigCache)
 	.set	noreorder
 	mfc0	v1, COP_0_PRID			# read processor ID register
 	mfc0	v0, COP_0_CONFIG		# Get configuration register
-	sw	v1, cpu_id			# save PRID register
 
 	srl	t1, v0, 9			# Get I cache size.
 	and	t1, 3

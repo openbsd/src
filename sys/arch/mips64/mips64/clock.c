@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,7 +134,7 @@ clock_int5_init(struct clock_softc *sc)
         int s;
 
         s = splclock();
-        cpu_counter_interval = sys_config.cpu.clock / (hz * 2);
+        cpu_counter_interval = sys_config.cpu[0].clock / (hz * 2);
         cpu_counter_last = cp0_get_count() + cpu_counter_interval * 4;
         cp0_set_compare(cpu_counter_last);
         splx(s);
@@ -201,7 +201,7 @@ delay(int n)
 	int p, c;
 
 	p = cp0_get_count();
-	dly = (sys_config.cpu.clock / 1000000) * n / 2;
+	dly = (sys_config.cpu[0].clock / 1000000) * n / 2;
 	while (dly > 0) {
 		c = cp0_get_count();
 		dly -= c - p;
@@ -219,7 +219,7 @@ nanodelay(int n)
 	int p, c;
 
 	p = cp0_get_count();
-	dly = ((sys_config.cpu.clock * n) / 1000000000) / 2;
+	dly = ((sys_config.cpu[0].clock * n) / 1000000000) / 2;
 	while (dly > 0) {
 		c = cp0_get_count();
 		dly -= c - p;

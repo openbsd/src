@@ -48,6 +48,46 @@
 #define	CRIME_INT_SOFT		 0x0020
 #define	CRIME_INT_HARD		 0x0028
 
+/*
+ * CRIME_INT_STAT and CRIME_INT_MASK mapping.
+ */
+#define	CRIME_INT_VIDEO_IN_1	0x00000001	/* Video in 1 */
+#define	CRIME_INT_VIDEO_IN_2	0x00000002	/* Video in 2 */
+#define	CRIME_INT_VIDEO_OUT	0x00000004	/* Video out */
+#define	CRIME_INT_MACE_ETHER	0x00000008	/* Mace ethernet NIC */
+#define	CRIME_INT_SUPER_IO	0x00000010	/* Super I/O sub interrupt */
+#define	CRIME_INT_SUB_MISC	0x00000020	/* Misc ??? */
+#define	CRIME_INT_SUB_AUDIO	0x00000040	/* Audio sub interrupt */
+#define	CRIME_INT_PCI_BRIDGE	0x00000080	/* PCI bridge errors */
+#define	CRIME_INT_PCI_SCSI_0	0x00000100	/* AIC SCSI controller 0 */
+#define	CRIME_INT_PCI_SCSI_1	0x00000200	/* AIC SCSI controller 1 */
+#define	CRIME_INT_PCI_SLOT_0	0x00000400	/* PCI expansion slot 0 */
+#define	CRIME_INT_PCI_SLOT_1	0x00000800	/* PCI expansion slot 1 */
+#define	CRIME_INT_PCI_SLOT_2	0x00001000	/* PCI expansion slot 2 */
+#define	CRIME_INT_PCI_SHARE_0	0x00002000	/* PCI shared 0 */
+#define	CRIME_INT_PCI_SHARE_1	0x00004000	/* PCI shared 1 */
+#define	CRIME_INT_PCI_SHARE_2	0x00008000	/* PCI shared 2 */
+#define	CRIME_INT_GBE_0		0x00010000	/* GBE0 (E) */
+#define	CRIME_INT_GBE_1		0x00020000	/* GBE1 (E) */
+#define	CRIME_INT_GBE_2		0x00040000	/* GBE2 (E) */
+#define	CRIME_INT_GBE_3		0x00080000	/* GBE3 (E) */
+#define	CRIME_INT_CPU_ERR	0x00100000	/* CPU Errors */
+#define	CRIME_INT_MEM_ERR	0x00200000	/* MEMORY Errors */
+#define	CRIME_INT_RE_EDGE_EMPTY	0x00400000	/* RE */
+#define	CRIME_INT_RE_EDGE_FULL	0x00800000	/* RE */
+#define	CRIME_INT_RE_EDGE_IDLE	0x01000000	/* RE */
+#define	CRIME_INT_RE_LEVL_EMPTY	0x02000000	/* RE */
+#define	CRIME_INT_RE_LEVL_FULL	0x04000000	/* RE */
+#define	CRIME_INT_RE_LEVL_IDLE	0x08000000	/* RE */
+#define	CRIME_INT_SOFT_0	0x10000000	/* ??? */
+#define	CRIME_INT_SOFT_1	0x20000000	/* ??? */
+#define	CRIME_INT_SOFT_2	0x40000000	/* ??? */
+#define	CRIME_INT_VICE		0x80000000	/* ??? */
+
+
+/*
+ *  Watchdog?
+ */
 #define	CRIME_KICK_DOG		 0x0030
 #define	CRIME_TIMER		 0x0038
 

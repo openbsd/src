@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Opsycon AB, Sweden.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -170,6 +165,12 @@ LEAF(setsr)
 	jr	ra
 	move	v0, a0
 END(setsr)
+
+LEAF(cp0_get_prid)
+	mfc0	v0, COP_0_PRID
+	j	ra
+	nop
+END(cp0_get_prid)
 
 LEAF(cp0_get_count)
 	mfc0	v0, COP_0_COUNT

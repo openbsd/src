@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 2004/08/06 21:12:19 pefo Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996-2003 Per Fogelstrom
@@ -56,7 +56,6 @@
 #define _NLIST_DO_ELF
 #define _NLIST_DO_ECOFF
 
-#define _KERN_DO_ECOFF		/* XXX obsolete */
 #define _KERN_DO_ELF
 #if defined(_LP64)
 #define _KERN_DO_ELF64

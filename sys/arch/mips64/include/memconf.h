@@ -1,4 +1,4 @@
-/*	$OpenBSD: memconf.h,v 1.1 2004/08/06 20:56:02 pefo Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Per Fogelstrom.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,14 +32,14 @@
 #ifndef _MIPS_MEMCONF_H_
 #define _MIPS_MEMCONF_H_
 
-struct mem_descriptor {
-	paddr_t	mem_start;
-	psize_t	mem_size;
+struct phys_mem_desc {
+	u_int32_t	mem_first_page;
+	u_int32_t	mem_last_page;
 };
 
 #ifdef _KERNEL
 #define	MAXMEMSEGS	16
-extern struct mem_descriptor mem_layout[];
+extern struct phys_mem_desc mem_layout[];
 #endif
 
 #endif /* !_MIPS_MEMCONF_H_ */

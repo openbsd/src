@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpu.c,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
- * Copyright (c) 1997-2003 Opsycon AB (www.opsycon.se)
+ * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Opsycon AB, Sweden.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -42,9 +37,8 @@
 #include <machine/autoconf.h>
 
 
-/* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, void *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+int	cpumatch(struct device *, void *, void *);
+void	cpuattach(struct device *, struct device *, void *);
 
 int cpu_is_rm7k = 0;
 
@@ -55,31 +49,32 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL, NULL, 0
 };
 
-static int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+int
+cpumatch(struct device *parent, void *match, void *aux)
 {
+	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-		return (0);
+		return 0;
+	if (cf->cf_unit >= MAX_CPUS)
+		return 0;
 
-	return (20);	/* Make CPU probe first */
+	return 20;	/* Make CPU probe first */
 }
 
-static void
+void
 cpuattach(parent, dev, aux)
 	struct device *parent;
 	struct device *dev;
 	void *aux;
 {
+	int cpuno = dev->dv_unit;
 
 	printf(": ");
 
-	switch(sys_config.cpu.type) {
+	switch(sys_config.cpu[cpuno].type) {
 
 	case MIPS_R4000:
 		if(CpuPrimaryInstCacheSize == 16384)
@@ -112,7 +107,7 @@ cpuattach(parent, dev, aux)
 		printf("PMC-Sierra RM52X0 CPU");
 		break;
 	case MIPS_RM7000:
-		if(sys_config.cpu.vers_maj < 2) {
+		if(sys_config.cpu[cpuno].vers_maj < 2) {
 			printf("PMC-Sierra RM7000 CPU");
 		}	
 		else {
@@ -124,13 +119,14 @@ cpuattach(parent, dev, aux)
 		printf("PMC-Sierra RM9000 CPU");
 		break;
 	default:
-		printf("Unknown CPU type (0x%x)",sys_config.cpu.type);
+		printf("Unknown CPU type (0x%x)",sys_config.cpu[cpuno].type);
 		break;
 	}
-	printf(" Rev. %d.%d with ", sys_config.cpu.vers_maj, sys_config.cpu.vers_min);
+	printf(" Rev. %d.%d with ", sys_config.cpu[cpuno].vers_maj,
+		sys_config.cpu[cpuno].vers_min);
 
 
-	switch(fpu_id.cpu.cp_imp) {
+	switch(sys_config.cpu[cpuno].fptype) {
 
 	case MIPS_SOFT:
 		printf("Software emulation float");
@@ -164,14 +160,14 @@ cpuattach(parent, dev, aux)
 		break;
 	case MIPS_UNKF1:
 	default:
-		printf("Unknown FPU type (0x%x)", fpu_id.cpu.cp_imp);
+		printf("Unknown FPU type (0x%x)", sys_config.cpu[cpuno].fptype);
 		break;
 	}
-	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
+	printf(" Rev. %d.%d", sys_config.cpu[cpuno].fpvers_maj,
+		sys_config.cpu[cpuno].fpvers_min);
 	printf("\n");
 
-	printf("        CPU clock %dMhz\n",sys_config.cpu.clock/1000000);
-	printf("        L1 Cache: I size %dkb(%d line),",
+	printf("cpu%d: L1 Cache: I size %dkb(%d line),", cpuno,
 		CpuPrimaryInstCacheSize / 1024,
 		CpuPrimaryInstCacheLSize);
 	printf(" D size %dkb(%d line), ",
@@ -189,53 +185,55 @@ cpuattach(parent, dev, aux)
 		break;
 	}
 	if(CpuSecondaryCacheSize != 0) {
-		switch(fpu_id.cpu.cp_imp) {
+		switch(sys_config.cpu[cpuno].type) {
 		case MIPS_RM7000:
-			printf("        L2 Cache: Size %dkb, four way\n",
-				CpuSecondaryCacheSize / 1024);
+		case MIPS_RM9000:
+			printf("cpu%d: L2 Cache: Size %dkb, four way\n",
+				cpuno, CpuSecondaryCacheSize / 1024);
 			break;
 
 		default:
-			printf("        L2 Cache: Size %dkb, direct mapped\n",
-				CpuSecondaryCacheSize / 1024);
+			printf("cpu%d: L2 Cache: Size %dkb, direct mapped\n",
+				cpuno, CpuSecondaryCacheSize / 1024);
 			break;
 		}
 
 	}
 	if(CpuTertiaryCacheSize != 0) {
-		printf("        L3 Cache: Size %dkb, direct mapped\n",
-			CpuTertiaryCacheSize / 1024);
+		printf("cpu%d: L3 Cache: Size %dkb, direct mapped\n",
+			cpuno, CpuTertiaryCacheSize / 1024);
 	}
 
 #ifdef DEBUG
-	printf("\tSetsize %d:%d\n", CpuPrimaryInstSetSize, CpuPrimaryDataSetSize);
-	printf("\tAlias mask 0x%x\n", CpuCacheAliasMask);
-	printf("\tConfig Register %x\n",CpuConfigRegister);
-	printf("\tCache type %x\n", CpuCacheType);
-	if(fpu_id.cpu.cp_imp == MIPS_RM7000) {
+	printf("cpu%d: Setsize %d:%d\n", cpuno,
+		CpuPrimaryInstSetSize, CpuPrimaryDataSetSize);
+	printf("cpu%d: Alias mask 0x%x\n", cpuno, CpuCacheAliasMask);
+	printf("cpu%d: Config Register %x\n", cpuno, CpuConfigRegister);
+	printf("cpu%d: Cache type %x\n", cpuno, CpuCacheType);
+	if(fpu_id.cpu[cpuno].cp_imp == MIPS_RM7000) {
 		u_int tmp;
 		tmp = CpuConfigRegister;
-		printf("\t\t\t");
+		printf("cpu%d: ", cpuno);
 		printf("K0 = %1d  ",0x7 & tmp);
 		printf("SE = %1d  ",0x1 & (tmp>>3));
 		printf("DB = %1d  ",0x1 & (tmp>>4));
 		printf("IB = %1d\n",0x1 & (tmp>>5));
-		printf("\t\t\t");
+		printf("cpu%d: ", cpuno);
 		printf("DC = %1d  ",0x7 & (tmp>>6));
 		printf("IC = %1d  ",0x7 & (tmp>>9));
 		printf("TE = %1d  ",0x1 & (tmp>>12));
 		printf("EB = %1d\n",0x1 & (tmp>>13));
-		printf("\t\t\t");
+		printf("cpu%d: ", cpuno);
 		printf("EM = %1d  ",0x1 & (tmp>>14));
 		printf("BE = %1d  ",0x1 & (tmp>>15));
 		printf("TC = %1d  ",0x1 & (tmp>>17));
 		printf("EW = %1d\n",0x3 & (tmp>>18));
-		printf("\t\t\t");
+		printf("cpu%d: ", cpuno);
 		printf("TS = %1d  ",0x3 & (tmp>>20));
 		printf("EP = %1d  ",0xf & (tmp>>24));
 		printf("EC = %1d  ",0x7 & (tmp>>28));
 		printf("SC = %1d\n",0x1 & (tmp>>31));
 	}
-	printf("\tStatus Register %x\n",CpuStatusRegister);
+	printf("cpu%d: Status Register %x\n", cpuno, CpuStatusRegister);
 #endif
 }

@@ -91,6 +91,18 @@
 #define	MACE_ISA_MISC_RLED_OFF	0x0010	/* Turns off RED LED */
 #define	MACE_ISA_MISC_GLED_OFF	0x0020	/* Turns off GREEN LED */
 
+/* MACE_ISA_INT_* definitions */
+#define	MACE_ISA_INT_AUDIO	0x000000ff	/* Audio ints */
+#define	MACE_ISA_INT_RTC	0x00000100	/* RTC */
+#define	MACE_ISA_INT_KBD	0x00000200	/* Keyboard */
+#define	MACE_ISA_INT_KBD_POLL	0x00000400	/* Keyboard polled */
+#define	MACE_ISA_INT_MOUSE	0x00000800	/* Mouse */
+#define	MACE_ISA_INT_MOUSE_POLL	0x00001000	/* Mouse polled */
+#define	MACE_ISA_INT_TIMER	0x0000e000	/* Timer/counter compare */
+#define	MACE_ISA_INT_PARALLEL	0x000f0000	/* Parallel port */
+#define	MACE_ISA_INT_SERIAL_1	0x03f00000	/* Serial port 1 */
+#define	MACE_ISA_INT_SERIAL_2	0xfc000000	/* Serial port 2 */
+
 
 /* ISA Periferials */
 #define	MACE_ISA_EPP_OFFS	(MACE_ISAX_OFFS+0x00000000)

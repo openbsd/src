@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2004/08/06 20:56:03 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 static int ap_open_count = 0;
 extern int allowaperture;
 #endif
-extern vaddr_t avail_end;
 caddr_t zeropage;
 
 #define mmread  mmrw
@@ -155,11 +154,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < KSEG0_BASE)
 				return (EFAULT);
-			if (v + c > PHYS_TO_KSEG0(avail_end +
-						sizeof (struct msgbuf)) &&
-			    (v < VM_MIN_KERNEL_ADDRESS ||
-			    !uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 
 			error = uiomove((caddr_t)v, c, uio);

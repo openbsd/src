@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -78,6 +78,7 @@
 
 #include <dev/cons.h>
 
+#include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 #include <machine/bus.h>
 
@@ -85,8 +86,8 @@
 
 extern struct consdev *cn_tab;
 extern char kernel_text[];
-extern void makebootdev __P((char *));
-extern void stacktrace __P((void));
+extern void makebootdev(char *);
+extern void stacktrace(void);
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* machine "architecture" */
@@ -124,6 +125,7 @@ register_t tlbtrcptr;
 
 int	msgbufmapped;		/* set when safe to use msgbuf */
 int	physmem;		/* max supported memory, changes to actual */
+int	rsvdmem;		/* reserved memory not usable */
 int	ncpu = 1;		/* At least one cpu in the system */
 struct	user *proc0paddr;
 struct	user *curprocpaddr;
@@ -139,16 +141,14 @@ caddr_t	ssym;
 caddr_t	esym;
 caddr_t	ekern;
 
-struct mem_descriptor mem_layout[MAXMEMSEGS];
-vaddr_t     avail_end;      /* PA of last available physical page */
+struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-caddr_t mips_init __P((int, int32_t *, int32_t *));	
+caddr_t mips_init(int, int32_t *);	
 void initcpu(void);
 void dumpsys(void);
 void dumpconf(void);
 caddr_t allocsys(caddr_t);
 
-static char *getenv(char *env);
 static void dobootopts(char *cp);
 static void get_eth_hw_addr(char *, char *);
 static int atoi(char *, int);
@@ -167,7 +167,7 @@ int	my_endian = 0;
  */
 
 caddr_t
-mips_init(int argc, int32_t *argv, int32_t *envv)
+mips_init(int argc, int32_t *argv)
 {
 	char *cp;
 	char *arg0;
@@ -182,9 +182,14 @@ mips_init(int argc, int32_t *argv, int32_t *envv)
 	extern char exception[], e_exception[];
 
 	/*
+	 *  Clean up any mess.
+	 */
+	Bios_FlushAllCaches();
+
+	/*
 	 * Clear the compiled BSS segment in OpenBSD code
 	 */
-	bzero(edata, (int)end - (int)edata);
+	bzero(edata, end-edata);
 
 	/*
 	 *  Reserve symol table space. If invalid pointers no table.
@@ -202,18 +207,15 @@ mips_init(int argc, int32_t *argv, int32_t *envv)
 	}
 
 	/*
-	 * Point environment for getenv() lookups.
+	 *  Initialize the system type and set up memory layout
 	 */
-	environment = envv;
+	bios_ident();
 
 	/*
 	 * Determine system type and set up configuration record data.
 	 */
-	sys_config.system_type = -1;
-	cp = getenv("systype");
-/*XXX*/    cp = "moosehead";
-	if(cp && strncasecmp("moosehead", cp, 9) == 0) {
-		sys_config.system_type = SGI_O2;
+	if (sys_config.system_type == SGI_O2) {
+		bios_putstring("Found SGI-IP32, setting up.\n");
 		strlcpy(cpu_model, "SGI O2", sizeof(cpu_model));
 		sys_config.cons_ioaddr[0] = 0x00390000;	/*XXX*/
 		sys_config.cons_ioaddr[1] = 0x00398000;	/*XXX*/
@@ -229,28 +231,13 @@ mips_init(int argc, int32_t *argv, int32_t *envv)
 #endif
 		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
 		sys_config.pci_mem[0].bus_reverse = my_endian;
-		sys_config.cpu.tlbwired = 3;
+		sys_config.cpu[0].tlbwired = 2;
+		sys_config.cpu[0].clock = 200000000;  /* Reasonable default */
+	} else {
+		bios_putstring("Unsupported system!!!\n");
+		while(1);
 	}
 
-	/*
-	 * Determine CPU clock frequency for timer and delay setup
-	 */
-	if(getenv("cpuclock") != 0) {
-		sys_config.cpu.clock = atoi(getenv("cpuclock"), 10);
-	}
-	else {
-		sys_config.cpu.clock = 180000000;  /* Reasonable default */
-	}
-
-	/*
-	 *  Initialize virtual memory system.
-         */
-	if(getenv("memsize") != 0) {
-		physmem = atop(atoi(getenv("memsize"), 10) * 1024 *1024);
-	}
-	else {
-		physmem = atop(1024 * 1024 * 64);  /* Reasonable default */
-	}
 #if 0
 #if defined(DDB) || defined(DEBUG)
 	physmem = atop(1024 * 1024 * 256);
@@ -264,36 +251,45 @@ mips_init(int argc, int32_t *argv, int32_t *envv)
 #endif
 #endif
 
-	/* Set pagesize to enable use of page macros and functions */
+	/*
+	 *  Use cpufrequency from bios to start with.
+	 */
+	cp = Bios_GetEnvironmentVariable("cpufreq");
+	if (cp) {
+		i = atoi(cp, 10);
+		if (i > 100)
+			sys_config.cpu[0].clock = i * 1000000;
+	}
+
+	/*
+	 *  Set pagesize to enable use of page macros and functions.
+	 *  Commit available memory to UVM system
+	 */
 	uvmexp.pagesize = 4096;
 	uvm_setpagesize();
 
-	/* Build up memory description and commit to UVM system */
-	mem_layout[0].mem_start = atop(0x20000);	/* Skip int vectors */
-	mem_layout[0].mem_size = atop(KSEG0_TO_PHYS(kernel_text));
-	mem_layout[0].mem_size -= mem_layout[0].mem_start;
-
-	mem_layout[1].mem_start = atop(round_page(KSEG0_TO_PHYS((long)ekern)));
-	mem_layout[1].mem_size = physmem - mem_layout[1].mem_start;
-
-	avail_end = ptoa(physmem);
-
-	for(i = 1; i < MAXMEMSEGS && mem_layout[i].mem_size != 0; i++) {
+	for(i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
 		vaddr_t fp, lp;
+		u_int32_t lastkernpage = atop(ekern);
 
-		fp = mem_layout[i].mem_start;
-		lp = mem_layout[i].mem_start + mem_layout[i].mem_size;
-		uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT); 
+		fp = mem_layout[i].mem_first_page;
+		lp = mem_layout[i].mem_last_page - 1;
+
+		/* Account for expansion from kernel symbol table */
+		if (fp < lastkernpage && lp >= lastkernpage)
+			fp = lastkernpage + 1;
+
+		if (fp <= lp)
+			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT); 
 	}
 
 	/*
 	 *  Figure out where we was booted from.
 	 */
-argc = 0;
 	if(argc > 1)
 		arg0 = (char *)(long)argv[1];
 	else
-		arg0 = getenv("bootdev");
+		arg0 = Bios_GetEnvironmentVariable("bootdev");
 
 	if(arg0 == 0)
 		arg0 = "unknown";
@@ -310,8 +306,8 @@ argc = 0;
 	boothowto = RB_SINGLE | RB_ASKNAME;
 #endif /* RAMDISK_HOOKS */
 
-	get_eth_hw_addr(getenv("ethaddr"), eth_hw_addr);
-	dobootopts(getenv("osloadoptions"));
+	get_eth_hw_addr(Bios_GetEnvironmentVariable("ethaddr"), eth_hw_addr);
+	dobootopts(Bios_GetEnvironmentVariable("osloadoptions"));
 
 	/*  Check any extra arguments which override.  */
 	for(i = 2; i < argc; i++) {
@@ -321,62 +317,41 @@ argc = 0;
 	}
 
 	/* Check l3cache size and disable (hard) if non present. */
-	if(getenv("l3cache") != 0) {
-		i = atoi(getenv("l3cache"), 10);
+	if(Bios_GetEnvironmentVariable("l3cache") != 0) {
+		i = atoi(Bios_GetEnvironmentVariable("l3cache"), 10);
 		CpuTertiaryCacheSize = 1024 * 1024 * i;
 	} else {
 		CpuTertiaryCacheSize = 0;
 	}
-	if(CpuTertiaryCacheSize == 0) {
-		CpuExternalCacheOn = 0;		/* No L3 detected */
-	} else {
-		CpuExternalCacheOn = 1;
-	}
 
-	cp = getenv("ecache_on");
-	if(cp && (*cp == 0 || *cp == 'n' || *cp == 'N')) {
-		CpuExternalCacheOn = 0;		/* Override config setting */
-	}
-
-	cp = getenv("ocache_on");
-	if(cp && (*cp == 0 || *cp == 'n' || *cp == 'N')) {
-		CpuOnboardCacheOn = 0;		/* Override HW setting */
-	} else {
-		CpuOnboardCacheOn = 1;
-	}
-
-	sys_config.cpu.cfg_reg = Mips_ConfigCache();
-	sys_config.cpu.type = cpu_id.cpu.cp_imp;
-	sys_config.cpu.vers_maj = cpu_id.cpu.cp_majrev;
-	sys_config.cpu.vers_min = cpu_id.cpu.cp_minrev;
+	sys_config.cpu[0].cfg_reg = Mips_ConfigCache();
+	sys_config.cpu[0].type = (cp0_get_prid() >> 8) & 0xff;
+	sys_config.cpu[0].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
+	sys_config.cpu[0].vers_min = cp0_get_prid() & 0x0f;
+	sys_config.cpu[0].fptype = (cp1_get_prid() >> 8) & 0xff;
+	sys_config.cpu[0].fpvers_maj = (cp1_get_prid() >> 4) & 0x0f;
+	sys_config.cpu[0].fpvers_min = cp1_get_prid() & 0x0f;
 
 	/*
 	 *  Configure TLB.
 	 */
-	switch(sys_config.cpu.type) {
+	switch(sys_config.cpu[0].type) {
 	case MIPS_RM7000:
-		if(sys_config.cpu.vers_maj < 2) {
-			sys_config.cpu.tlbsize = 48;
+		if(sys_config.cpu[0].vers_maj < 2) {
+			sys_config.cpu[0].tlbsize = 48;
 		} else {
-			sys_config.cpu.tlbsize = 64;
+			sys_config.cpu[0].tlbsize = 64;
 		}
 		break;
 
 	default:
-		sys_config.cpu.tlbsize = 48;
+		sys_config.cpu[0].tlbsize = 48;
 		break;
 	}
 
-	if(getenv("tlbwired")) {
-		i = atoi(getenv("tlbwired"), 10);
-		if((i < sys_config.cpu.tlbwired) || (i >= sys_config.cpu.tlbsize)) {
-		} else {
-			sys_config.cpu.tlbwired = i;
-		}
-	}
 	tlb_set_wired(0);
-	tlb_flush(sys_config.cpu.tlbsize);
-	tlb_set_wired(sys_config.cpu.tlbwired);
+	tlb_flush(sys_config.cpu[0].tlbsize);
+	tlb_set_wired(sys_config.cpu[0].tlbwired);
 	
 	/*
 	 *  Set up some fixed mappings. These are so frequently
@@ -408,13 +383,8 @@ argc = 0;
 	/*
 	 *  Get a console, very early but after initial mapping setup.
 	 */
+	bios_putstring("Initial setup done, switching console.\n\n");
 	consinit();
-
-	if (sys_config.system_type < 0) {
-		printf("'systype' = '%s' not known!\n", cp ? cp : "NULL");
-		panic("unidentified system");
-	}
-
 
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
@@ -452,13 +422,7 @@ argc = 0;
 	}
 
 	bcopy(exception, (char *)CACHE_ERR_EXC_VEC, e_exception - exception);
-
-	/*
-	 *  Keep PMON2000 exceptions if requested.
-	 */
-	if(!getenv("pmonexept")) {
-		bcopy(exception, (char *)GEN_EXC_VEC, e_exception - exception);
-	}
+	bcopy(exception, (char *)GEN_EXC_VEC, e_exception - exception);
 
 #ifdef DDB
 	db_machine_init();
@@ -547,30 +511,6 @@ allocsys(caddr_t v)
 
 
 /*
- * Return a pointer to the given environment variable.
- */
-static char *
-getenv(envname)
-	char *envname;
-{
-	int32_t *env = environment;
-	char *envp;
-	int i;
-
-return(NULL);
-	i = strlen(envname);
-
-	while(*env) {
-		envp = (char *)(long)*env;
-		if(strncasecmp(envname, envp, i) == 0 && envp[i] == '=') {
-			return(&envp[i+1]);
-		}
-		env++;
-	}
-	return(NULL);
-}
-
-/*
  *  Decode boot options.
  */
 static void
@@ -654,6 +594,7 @@ cpu_startup()
 	 */
 	printf(version);
 	printf("real mem = %d\n", ptoa(physmem));
+	printf("rsvd mem = %d\n", ptoa(rsvdmem));
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -858,22 +799,24 @@ boot(howto)
 	(void) splhigh();		/* extreme priority */
 
 	if (howto & RB_HALT) {
-		printf("System halted.\n");
-		if(sys_config.system_type == ALGOR_P5064 && howto & RB_POWERDOWN) {
-			printf("Shutting off!\n");
-			*(int *)(0xffffffffbffa000c) = 1;
+		if (howto & RB_POWERDOWN) {
+			printf("System Power Down.\n");
+			delay(1000000);
+			Bios_PowerDown();
+		} else {
+			printf("System Halt.\n");
+			delay(1000000);
+			Bios_EnterInteractiveMode();
 		}
+		printf("Didn't want to die!!! Reset manually.\n");
 		while(1); /* Forever */
-	}
-	else {
+	} else {
 		if (howto & RB_DUMP)
 			dumpsys();
 		printf("System restart.\n");
-#if defined(LP64)
-		__asm__(" li $2, 0xffffffff80010100; jr $2; nop\n");
-#else
-		__asm__(" li $2, 0x80010100; jr $2; nop\n");
-#endif
+		delay(1000000);
+		Bios_Reboot();
+		printf("Restart failed!!! Reset manually.\n");
 		while(1); /* Forever */
 	}
 	/*NOTREACHED*/

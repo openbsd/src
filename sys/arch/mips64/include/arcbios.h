@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.1 2004/08/08 21:51:36 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -356,11 +356,11 @@ void bios_display_info(int *, int *, int *, int *);
 int Bios_Load(void);
 int Bios_Invoke(void);
 int Bios_Execute(void);
-int Bios_Halt(void);
-int Bios_PowerDown(void);
-int Bios_Restart(void);
-int Bios_Reboot(void);
-int Bios_EnterInteractiveMode(void);
+void Bios_Halt(void);
+void Bios_PowerDown(void);
+void Bios_Restart(void);
+void Bios_Reboot(void);
+void Bios_EnterInteractiveMode(void);
 int Bios_GetPeer(void);
 arc_config_t *Bios_GetChild(arc_config_t *);
 int Bios_GetParent(void);
@@ -381,11 +381,11 @@ int Bios_GetReadStatus(void);
 int Bios_Write(int, char *, int, int *);
 int Bios_Seek(void);
 int Bios_Mount(void);
-int Bios_GetEnvironmentVariable(void);
+char *Bios_GetEnvironmentVariable(const char *);
 int Bios_SetEnvironmentVariable(void);
 int Bios_GetFileInformation(void);
 int Bios_SetFileInformation(void);
-int Bios_FlushAllCaches(void);
+void Bios_FlushAllCaches(void);
 int Bios_TestUnicodeCharacter(void);
 arc_dsp_stat_t *Bios_GetDisplayStatus(int);
 
