@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.3 2004/06/21 18:40:01 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.4 2004/06/22 03:44:55 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -603,6 +603,20 @@ virtual_handle_message(struct transport *t)
 		 * packet, we can't really deal with it. So, just ignore it
 		 * and hope we catch the retransmission.
 		 */
+		return;
+	}
+
+	/*
+	 * As per the NAT-T draft, in case we have already switched ports,
+	 * any messages recieved on the old (500) port SHOULD be discarded.
+	 * (Actually, while phase 1 messages should be discarded,
+	 *  informational exchanges MAY be processed normally. For now, we
+	 *  discard them all.)
+	 */
+	if (((struct virtual_transport *)t->virtual)->encap_is_active &&
+	    ((struct virtual_transport *)t->virtual)->main == t) {
+		LOG_DBG((LOG_MESSAGE, 10, "virtual_handle_message: "
+		    "message on old port discarded"));
 		return;
 	}
 
