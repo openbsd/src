@@ -5,24 +5,29 @@ out as follows:
 .../2.1/i386/
 		INSTALL.i386	Installation notes; this file.
 
-		bins/		i386 binary distribution sets;
+		floppy.fs	The i386 boot and installation
+				floppy; see below.
+
+		*.gz/		i386 binary distribution sets;
 				see below.
 
-		floppies/	i386 boot and installation
-				floppies; see below.
+		bsd		A stock GENERIC i386 kernel which
+				will be installed on your system
+				during the install.
 
-		inst/		i386 boot/installation floppy;
-				miscellaneous i386 installation
-				utilities; see installation
-				section, below.
+As well you may be interested in
 
-There is one i386 floppy image to be found in the "i386/inst" sub-
-directory of the OpenBSD 2.1 distribution.  This is a bootable install
-floppy which can be used both to install and to upgrade an OpenBSD to
-the current version, as well as for maintenance work.  In addition there
-are some utilities that might be useful for the installation.  There
-are gzipped versions of each available, for easier downloading.  (The
-gzipped versions have the ".gz" extension added to their names.)
+.../2.1/tools/
+		miscellaneous i386 installation utilities like
+		rawwrite.exe, gzip.exe, and pfdisk.exe; see
+		installation section, below.
+
+
+In summary, there is one i386 floppy image called "floppy.fs". This is
+a bootable install floppy which can be used both to install and to
+upgrade an OpenBSD to the current version, as well as for maintenance
+work.  In addition, the "tools/" directory contains some utilities
+that might be useful for the installation.
 
 Bootable installation/upgrade floppy:
 
