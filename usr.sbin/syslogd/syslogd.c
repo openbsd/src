@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.71 2004/01/04 18:29:33 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.72 2004/01/05 09:45:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.71 2004/01/04 18:29:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.72 2004/01/05 09:45:49 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -541,8 +541,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-dnu] [-f config_file] [-m mark_interval] "
-	    "[-a path] [-p log_socket]\n");
+	    "usage: syslogd [-dnu] [-a path] [-f config_file] [-m mark_interval]\n"
+	    "               [-p log_socket] [-s reporting_socket]\n");
 	exit(1);
 }
 

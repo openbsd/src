@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.19 2004/01/04 08:28:49 djm Exp $
+.\"	$OpenBSD: syslogd.8,v 1.20 2004/01/05 09:45:49 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,9 @@
 .Nm syslogd
 .Bk -words
 .Op Fl dnu
+.Op Fl a Ar path
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
-.Op Fl a Ar path
 .Op Fl p Ar log_socket
 .Op Fl s Ar reporting_socket
 .Ek
@@ -53,6 +53,14 @@ machines and/or users as specified by its configuration file.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Pa path
+Specify a location where
+.Nm
+should place an additional log socket.
+Up to about 20 additional logging sockets can be specified.
+The primary use for this is to place additional log sockets in
+.Pa /dev/log
+of various chroot filespaces.
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
@@ -72,6 +80,15 @@ which can be useful when combined with the
 option on a loghost with no DNS cache.
 Messages from the local host will still be logged with
 the symbolic local host name.
+.It Fl p Ar log_socket
+Specify the pathname of an alternate log socket to be used instead;
+the default is
+.Pa /dev/log .
+.It Fl s Ar reporting_socket
+Specify path to an
+.Dv AF_LOCAL
+socket for use in reporting logs stored in memory buffers using
+.Xr syslogc 8 .
 .It Fl u
 Select the historical
 .Dq insecure
@@ -79,23 +96,6 @@ mode, in which syslogd will
 accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
-.It Fl p Ar log_socket
-Specify the pathname of an alternate log socket to be used instead;
-the default is
-.Pa /dev/log .
-.It Fl a Pa path
-Specify a location where
-.Nm
-should place an additional log socket.
-Up to about 20 additional logging sockets can be specified.
-The primary use for this is to place additional log sockets in
-.Pa /dev/log
-of various chroot filespaces.
-.It Fl s Ar reporting_socket
-Specify path to an
-.Dv AF_LOCAL
-socket for use in reporting logs stored in memory buffers using
-.Xr syslogc 8 .
 .El
 .Pp
 .Nm
