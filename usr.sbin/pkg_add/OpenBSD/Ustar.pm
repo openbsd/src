@@ -1,4 +1,4 @@
-# $OpenBSD: Ustar.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.2 2003/10/31 09:30:10 espie Exp $
 #
 # Copyright (c) 2002 Marc Espie.
 # 
@@ -142,7 +142,7 @@ sub next
     $uid = oct($uid);
     $gid = oct($gid);
     $uid = name2uid($uname, $uid);
-    $gid = name2gid($uname, $gid);
+    $gid = name2gid($gname, $gid);
     $mtime = oct($mtime);
     unless ($prefix =~ m/^\0/) {
 	$prefix =~ s/\0*$//;
@@ -186,8 +186,8 @@ package OpenBSD::Ustar::Object;
 sub set_modes
 {
 	my $self = shift;
-	chmod $self->{mode}, $self->{name};
 	chown $self->{uid}, $self->{gid}, $self->{name};
+	chmod $self->{mode}, $self->{name};
 }
 
 sub make_basedir
