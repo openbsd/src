@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2003/09/04 03:42:02 avsm Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -149,9 +149,9 @@ process_read_fpregs(p, regs)
 			npxsave();
 #endif
 
-		bcopy(frame, regs, sizeof(frame));
+		bcopy(frame, regs, sizeof(*frame));
 	} else
-		bzero(regs, sizeof(regs));
+		bzero(regs, sizeof(*regs));
 
 	return (0);
 }
@@ -239,7 +239,7 @@ process_write_fpregs(p, regs)
 #endif
 
 	p->p_md.md_flags |= MDP_USEDFPU;
-	bcopy(regs, frame, sizeof(frame));
+	bcopy(regs, frame, sizeof(*frame));
 
 	return (0);
 }
