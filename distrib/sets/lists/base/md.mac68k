@@ -594,4 +594,5 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
 ./usr/lib/perl5/site_perl/m68k-openbsd/dbm.ph
-/usr/lib/libcurses++.so.1.0
+./usr/lib/libcurses++.so.1.0
+./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph

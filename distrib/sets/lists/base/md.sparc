@@ -668,4 +668,5 @@
 ./usr/libdata/perl5/sparc-openbsd/5.00503/ops.pm
 ./usr/libdata/perl5/sparc-openbsd/5.00503/re.pm
 ./usr/local/libdata/perl5/site_perl/sparc-openbsd
-/usr/lib/libcurses++.so.1.0
+./usr/lib/libcurses++.so.1.0
+./usr/libdata/perl5/site_perl/sparc-openbsd/termcap.ph

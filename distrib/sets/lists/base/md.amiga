@@ -598,4 +598,5 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
-/usr/lib/libcurses++.so.1.0
+./usr/lib/libcurses++.so.1.0
+./usr/libdata/perl5/site_perl/amiga-openbsd/termcap.ph

@@ -406,3 +406,4 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/pool.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph

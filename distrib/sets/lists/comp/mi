@@ -28,6 +28,7 @@
 ./usr/bin/yacc
 ./usr/include/dbm.h
 ./usr/include/a.out.h
+./usr/include/termcap.h
 ./usr/include/ar.h
 ./usr/include/arpa/ftp.h
 ./usr/include/arpa/inet.h
