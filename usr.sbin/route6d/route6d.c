@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.25 2002/02/19 19:39:40 millert Exp $	*/
-/*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.26 2002/02/25 02:33:06 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.81 2002/02/25 02:27:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.25 2002/02/19 19:39:40 millert Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.26 2002/02/25 02:33:06 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -135,7 +135,6 @@ int	nifc;		/* number of valid ifc's */
 struct	ifc **index2ifc;
 int	nindex2ifc;
 struct	ifc *loopifcp = NULL;	/* pointing to loopback */
-int	loopifindex = 0;	/* ditto */
 fd_set	sockvec;	/* vector to select() for receiving */
 int	rtsock;		/* the routing socket */
 int	ripsock;	/* socket to send/receive RIP datagram */
@@ -379,7 +378,6 @@ main(argc, argv)
 		fatal("No loopback found");
 		/*NOTREACHED*/
 	}
-	loopifindex = loopifcp->ifc_index;
 	for (ifcp = ifc; ifcp; ifcp = ifcp->ifc_next)
 		ifrt(ifcp, 0);
 	filterconfig();
@@ -949,11 +947,6 @@ sendpacket(sin6, len)
 	struct	sockaddr_in6 *sin6;
 	int	len;
 {
-	/*
-	 * MSG_DONTROUTE should not be specified when it responds with a
-	 * RIP6_REQUEST message.  SO_DONTROUTE has been specified to
-	 * other sockets.
-	 */
 	struct msghdr m;
 	struct cmsghdr *cm;
 	struct iovec iov[2];
@@ -966,10 +959,12 @@ sendpacket(sin6, len)
 	sincopy = *sin6;
 	sin6 = &sincopy;
 
-	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-	 || IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+	    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+		/* XXX: do not mix the interface index and link index */
 		idx = IN6_LINKLOCAL_IFINDEX(sin6->sin6_addr);
 		SET_IN6_LINKLOCAL_IFINDEX(sin6->sin6_addr, 0);
+		sin6->sin6_scope_id = idx;
 	} else
 		idx = 0;
 
@@ -1441,7 +1436,7 @@ ifconfig1(name, sa, ifcp, s)
 	if (IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) && !lflag)
 		return;
 	ifr.ifr_addr = *sin6;
-	strcpy(ifr.ifr_name, name);
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFNETMASK_IN6, (char *)&ifr) < 0) {
 		fatal("ioctl: SIOCGIFNETMASK_IN6");
 		/*NOTREACHED*/
@@ -1960,8 +1955,11 @@ ifrt(ifcp, again)
 	time_t t_lifetime;
 	int need_trigger = 0;
 
+#if 0
 	if (ifcp->ifc_flags & IFF_LOOPBACK)
 		return 0;			/* ignore loopback */
+#endif
+
 	if (ifcp->ifc_flags & IFF_POINTOPOINT) {
 		ifrt_p2p(ifcp, again);
 		return 0;
@@ -1983,6 +1981,13 @@ ifrt(ifcp, again)
 #endif
 			continue;
 		}
+		if (IN6_IS_ADDR_LOOPBACK(&ifa->ifa_addr)) {
+#if 0
+			trace(1, "route: %s: skip loopback address\n",
+			    ifcp->ifc_name);
+#endif
+			continue;
+		}
 		if (ifcp->ifc_flags & IFF_UP) {
 			if ((rrt = MALLOC(struct riprt)) == NULL)
 				fatal("malloc: struct riprt");
@@ -1994,7 +1999,10 @@ ifrt(ifcp, again)
 			rrt->rrt_info.rip6_tag = htons(routetag & 0xffff);
 			rrt->rrt_info.rip6_metric = 1 + ifcp->ifc_metric;
 			rrt->rrt_info.rip6_plen = ifa->ifa_plen;
-			rrt->rrt_flags = RTF_CLONING;
+			if (ifa->ifa_plen == 128)
+				rrt->rrt_flags = RTF_HOST;
+			else
+				rrt->rrt_flags = RTF_CLONING;
 			rrt->rrt_rflags |= RRTF_CHANGED;
 			applyplen(&rrt->rrt_info.rip6_dest, ifa->ifa_plen);
 			memset(&rrt->rrt_gw, 0, sizeof(struct in6_addr));
@@ -2054,7 +2062,7 @@ ifrt(ifcp, again)
 /*
  * there are couple of p2p interface routing models.  "behavior" lets
  * you pick one.  it looks that gated behavior fits best with BSDs,
- * since BSD kernels does not look at prefix length on p2p interfaces.
+ * since BSD kernels do not look at prefix length on p2p interfaces.
  */
 void
 ifrt_p2p(ifcp, again)
@@ -3065,7 +3073,7 @@ ifonly:
 		rrt->rrt_flags = RTF_UP | RTF_REJECT;
 		rrt->rrt_rflags = RRTF_AGGREGATE;
 		rrt->rrt_t = 0;
-		rrt->rrt_index = loopifindex;
+		rrt->rrt_index = loopifcp->ifc_index;
 #if 0
 		if (getroute(&rrt->rrt_info, &gw)) {
 #if 0
@@ -3250,6 +3258,11 @@ allocopy(p)
 {
 	char *q = (char *)malloc(strlen(p) + 1);
 
+	if (!q) {
+		fatal("malloc");
+		/*NOTREACHED*/
+	}
+
 	strcpy(q, p);
 	return q;
 }
@@ -3304,10 +3317,10 @@ fatal(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 	perror(buf);
 	syslog(LOG_ERR, "%s: %s", buf, strerror(errno));
 	rtdexit();
-	va_end(ap);
 }
 
 void
