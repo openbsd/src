@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.13 2001/07/18 14:49:13 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.14 2001/11/11 01:19:23 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -443,7 +443,7 @@ Parse_Getfilename()
 void
 LowParse_Init()
 {
-    Lst_Init(&input_stack);
+    Static_Lst_Init(&input_stack);
     current = NULL;
 }
 

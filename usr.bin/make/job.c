@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.43 2001/09/04 23:35:58 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.44 2001/11/11 01:19:23 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -2348,8 +2348,8 @@ Job_Init(maxproc, maxlocal)
     else
 	(void)close(tfd);
 
-    Lst_Init(&jobs);
-    Lst_Init(&stoppedJobs);
+    Static_Lst_Init(&jobs);
+    Static_Lst_Init(&stoppedJobs);
     maxJobs =	  maxproc;
     maxLocal =	  maxlocal;
     nJobs =	  0;

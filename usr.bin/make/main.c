@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.53 2001/06/05 11:59:11 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.54 2001/11/11 01:19:23 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -587,10 +587,10 @@ main(argc, argv)
 	esetenv("PWD", objdir);
 	unsetenv("CDPATH");
 
-	Lst_Init(create);
-	Lst_Init(&makefiles);
-	Lst_Init(&varstoprint);
-	Lst_Init(&targs);
+	Static_Lst_Init(create);
+	Static_Lst_Init(&makefiles);
+	Static_Lst_Init(&varstoprint);
+	Static_Lst_Init(&targs);
 
 	beSilent = false;		/* Print commands as executed */
 	ignoreErrors = false;		/* Pay attention to non-zero returns */

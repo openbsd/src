@@ -2,7 +2,7 @@
 #define _LST_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: lst.h,v 1.21 2001/05/29 12:53:41 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.22 2001/11/11 01:19:23 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -81,7 +81,10 @@ typedef void *(*DuplicateProc)(void *);
  * Creation/destruction functions
  */
 /* Create a new list */
-extern void		Lst_Init(LIST *);
+#define Lst_Init(l)	(l)->firstPtr = (l)->lastPtr = NULL
+/* Static lists are already okay */
+#define Static_Lst_Init(l)
+
 /* Duplicate an existing list */
 extern Lst		Lst_Clone(Lst, Lst, DuplicateProc);
 /* Destroy an old one */
