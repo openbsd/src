@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.20 1997/07/28 18:56:03 kstailey Exp $	*/
+/*	$OpenBSD: route.c,v 1.21 1998/02/26 10:06:13 peter Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.20 1997/07/28 18:56:03 kstailey Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.21 1998/02/26 10:06:13 peter Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ static void p_tree __P((struct radix_node *));
 static void p_rtnode __P(());
 static void ntreestuff __P(());
 static void np_rtentry __P((struct rt_msghdr *));
-static void p_sockaddr __P((struct sockaddr *, int, int));
+static void p_sockaddr __P((struct sockaddr *, struct sockaddr *, int, int));
 static void p_flags __P((int, char *));
 static void p_rtentry __P((struct rtentry *));
 static void encap_print __P((struct rtentry *));
@@ -274,7 +274,7 @@ again:
 				p_rtnode();
 		} else {
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_key),
-			    0, 44);
+			    0, 0, 44);
 			putchar('\n');
 		}
 		if ((rn = rnode.rn_dupedkey))
@@ -301,7 +301,7 @@ p_rtnode()
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
-			    0, -1);
+			    0, 0, -1);
 		} else if (rm == 0)
 			return;
 	} else {
@@ -314,7 +314,7 @@ p_rtnode()
 		sprintf(nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %16p {(%d),%s",
 			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
-		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, -1);
+		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, 0, -1);
 		putchar('}');
 		if ((rm = rmask.rm_mklist))
 			printf(" ->");
@@ -385,21 +385,21 @@ np_rtentry(rtm)
 		old_af = af;
 	}
 	if (rtm->rtm_addrs == RTA_DST)
-		p_sockaddr(sa, 0, 36);
+		p_sockaddr(sa, 0, 0, 36);
 	else {
-		p_sockaddr(sa, rtm->rtm_flags, 16);
+		p_sockaddr(sa, 0, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
 			sa->sa_len = sizeof(in_addr_t);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
-		p_sockaddr(sa, 0, 18);
+		p_sockaddr(sa, 0, 0, 18);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
 	putchar('\n');
 }
 
 static void
-p_sockaddr(sa, flags, width)
-	struct sockaddr *sa;
+p_sockaddr(sa, mask, flags, width)
+	struct sockaddr *sa, *mask;
 	int flags, width;
 {
 	char workbuf[128], *cplim;
@@ -409,11 +409,13 @@ p_sockaddr(sa, flags, width)
 	case AF_INET:
 	    {
 		register struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		register struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
 		      ((flags & RTF_HOST) ?
 			routename(sin->sin_addr.s_addr) :
-			netname(sin->sin_addr.s_addr, INADDR_ANY));
+			netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
+
 		break;
 	    }
 
@@ -510,17 +512,23 @@ p_rtentry(rt)
 	register struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-	struct sockaddr *sa;
+	struct sockaddr sock1, sock2;
+	struct sockaddr *sa = &sock1, *mask = &sock2;
 	
-	sa = kgetsa(rt_key(rt));
-	
+	bcopy(kgetsa(rt_key(rt)), sa, sizeof(struct sockaddr));
+
 	if (sa->sa_family == AF_ENCAP) {
 		encap_print(rt);
 		return;
 	}
+
+	if (rt_mask(rt))
+		bcopy(kgetsa(rt_mask(rt)), mask, sizeof(struct sockaddr));
+	else
+		mask = 0;
 	
-	p_sockaddr(sa, rt->rt_flags, WID_DST);
-	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
+	p_sockaddr(sa, mask, rt->rt_flags, WID_DST);
+	p_sockaddr(kgetsa(rt->rt_gateway), 0, RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
@@ -590,51 +598,26 @@ netname(in, mask)
 	static char line[MAXHOSTNAMELEN + 1];
 	struct netent *np = 0;
 	in_addr_t net, subnetshift;
+	int mbits;
 
 	in = ntohl(in);
 	mask = ntohl(mask);
 	if (!nflag && in != INADDR_ANY) {
-		np = getnetbyaddr(in, AF_INET);
-		if (np == NULL) {
-			if (mask == INADDR_ANY) {
-				if (IN_CLASSA(in)) {
-					mask = IN_CLASSA_NET;
-					subnetshift = 8;
-				} else if (IN_CLASSB(in)) {
-					mask = IN_CLASSB_NET;
-					subnetshift = 8;
-				} else {
-					mask = IN_CLASSC_NET;
-					subnetshift = 4;
-				}
-				/*
-			 	* If there are more bits than the standard mask
-			 	* would suggest, subnets must be in use.
-			 	* Guess at the subnet mask, assuming reasonable
-			 	* width subnet fields.
-			 	*/
-				while (in &~ mask)
-					mask = (int)mask >> subnetshift;
-			}
-			net = in & mask;
-			while ((mask & 1) == 0)
-				mask >>= 1, net >>= 1;
-			np = getnetbyaddr(net, AF_INET);
-		}
-		if (np)
+		if (np = getnetbyaddr(in, AF_INET))
 			cp = np->n_name;
 	}
+	mbits = mask ? 33 - ffs(mask) : 0;
 	if (cp)
 		strncpy(line, cp, sizeof(line) - 1);
 	else if ((in & 0xffffff) == 0)
-		sprintf(line, "%u", C(in >> 24));
+		sprintf(line, "%u/%d", C(in >> 24), mbits);
 	else if ((in & 0xffff) == 0)
-		sprintf(line, "%u.%u", C(in >> 24) , C(in >> 16));
+		sprintf(line, "%u.%u/%d", C(in >> 24) , C(in >> 16), mbits);
 	else if ((in & 0xff) == 0)
-		sprintf(line, "%u.%u.%u", C(in >> 24), C(in >> 16), C(in >> 8));
+		sprintf(line, "%u.%u.%u/%d", C(in >> 24), C(in >> 16), C(in >> 8), mbits);
 	else
-		sprintf(line, "%u.%u.%u.%u", C(in >> 24),
-			C(in >> 16), C(in >> 8), C(in));
+		sprintf(line, "%u.%u.%u.%u/%d", C(in >> 24),
+			C(in >> 16), C(in >> 8), C(in), mbits);
 	return (line);
 }
 
