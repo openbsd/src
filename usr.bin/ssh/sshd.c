@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.38 1999/10/17 23:11:24 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.39 1999/10/18 01:54:18 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -853,6 +853,7 @@ void do_connection(int privileged_port)
   /* Extract session key from the decrypted integer.  The key is in the 
      least significant 256 bits of the integer; the first byte of the 
      key is in the highest bits. */
+  BN_mask_bits(session_key_int, sizeof(session_key) * 8);
   assert(BN_num_bytes(session_key_int) == sizeof(session_key));
   BN_bn2bin(session_key_int, session_key);
   
