@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.23 1997/02/22 05:56:48 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.24 1997/02/22 13:25:28 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -946,8 +947,10 @@ ip_weadvertise(addr)
         u_int32_t addr;
 {
         register struct rtentry *rt;
+	register struct ifnet *ifp;
+	register struct ifaddr *ifa;
 	struct sockaddr_inarp sin;
-    
+
 	sin.sin_len = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
@@ -962,8 +965,17 @@ ip_weadvertise(addr)
 	    || rt->rt_gateway->sa_family != AF_LINK)
 	  return 0;
 
-	if(ifa_ifwithaddr(sintosa(&sin)))
-	  return 1;
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+          for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) 
+	  {
+		if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
+		  continue;
+
+		if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
+			  LLADDR((struct sockaddr_dl *)rt->rt_gateway),
+			  ETHER_ADDR_LEN))
+		  return 1;
+	  }
 
 	return 0;
 }
