@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/26 05:40:34 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/08/16 23:31:00 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/26 05:40:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/08/16 23:31:00 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -190,7 +190,7 @@ main(argc, argv)
 	command();
 }
 
-char    hostname[100];
+char    hostname[MAXHOSTNAMELEN];
 
 void
 setpeer(argc, argv)
@@ -213,7 +213,8 @@ setpeer(argc, argv)
 	}
 	if (inet_aton(argv[1], &peeraddr.sin_addr) != 0) {
 		peeraddr.sin_family = AF_INET;
-		(void) strcpy(hostname, argv[1]);
+		(void) strncpy(hostname, argv[1], sizeof hostname);
+		hostname[sizeof(hostname)-1] = '\0';
 	} else {
 		host = gethostbyname(argv[1]);
 		if (host == 0) {
