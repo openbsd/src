@@ -222,8 +222,8 @@ You should create yourself an account and protect it and the "root" account
 with good passwords. 
 
 Some of the files in the OpenBSD OSREV distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
+tailored for your site.  In particular, the /etc/mail/sendmail.cf file
+will almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
 system administration, it's recommended that you buy a book that
 discusses it.
