@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsdkintf.c,v 1.6 1999/08/03 13:56:37 peter Exp $	*/
+/*	$OpenBSD: rf_openbsdkintf.c,v 1.7 1999/12/03 22:38:11 art Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1810,6 +1810,7 @@ rf_InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
 	bp->b_vp = b_vp;
+	LIST_INIT(&bp->b_dep);
 }
 
 /* Extras... */
