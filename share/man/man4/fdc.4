@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.8 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: fdc.4,v 1.9 2004/03/21 19:50:44 miod Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -48,7 +48,7 @@ These include standard IDE, MFM, RLL,
 EIDE, ESDI, and SCSI controllers with floppy attachment.
 .Pp
 The standard names of a floppy drive will take the form
-.Nm /dev/fd{0,1,2,3}{,B,C,D,E,F,G,H}[abcdefghijklmnop] .
+.Pa /dev/fd{0,1,2,3}{,B,C,D,E,F,G,H}[a-p] .
 .Pp
 The first component of this path is the unit number, permitting
 a total of 4 floppy drives.
@@ -82,7 +82,7 @@ If the 0x10 bit is on, the low order three bits of the
 .Cm flags
 field encode the drive type, as follows:
 .Pp
-.Bl -tag -width xxxxxx -offset indent -compact
+.Bl -tag -width 2.88MB -offset indent -compact
 .It 1 2.88MB
 .It 2 1.44MB
 .It 3 1.2MB

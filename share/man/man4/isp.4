@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.15 2003/07/17 00:47:27 mickey Exp $
+.\"	$OpenBSD: isp.4,v 1.16 2004/03/21 19:50:44 miod Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -36,6 +36,7 @@
 .Cd "isp* at pci? dev ? function ?" Pq PCI
 .Cd "isp* at sbus? slot ? offset ?" Pq SBus
 .Cd "scsibus* at isp?"
+.Cd "option ISP_COMPILE_FW"
 .Sh DESCRIPTION
 This driver provides access to a
 .Tn SCSI
@@ -60,11 +61,13 @@ Command tagging is supported for all (in fact,
 .Tn FibreChannel
 requires tagging).
 .Sh CONFIGURATION
-An optional
+Adding
 .Tn option ISP_COMPILE_FW=1
-ensures that known good firmware will be downloaded to the driver
-at attach time.
-This is recommended.
+to the kernel configuration file ensures that known good firmware
+will be downloaded to the driver at attach time.
+This is the default setting on sparc and sparc64 platforms,
+and is also recommended on platforms where the card's bios may not be
+initialized upon power-up.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
@@ -81,5 +84,3 @@ This is recommended.
 The
 .Nm
 driver was written by Matthew Jacob for NASA/Ames Research Center.
-.Sh BUGS
-None known at this time.

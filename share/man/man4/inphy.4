@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inphy.4,v 1.4 2000/10/18 02:38:22 aaron Exp $
+.\"	$OpenBSD: inphy.4,v 1.5 2004/03/21 19:50:44 miod Exp $
 .\"	$NetBSD: inphy.4,v 1.1 1998/11/04 05:53:58 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,13 +41,13 @@
 .Os
 .Sh NAME
 .Nm inphy
-.Nd Intel i82555 10/100 Ethernet PHY driver
+.Nd Intel i82555/i82562 10/100 Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "inphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Intel i82555 10/100 Ethernet PHYs.
+driver supports the Intel i82555, i82562EM and i82562ET 10/100 Ethernet PHYs.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eephy.4,v 1.9 2004/01/22 05:24:01 brad Exp $
+.\"	$OpenBSD: eephy.4,v 1.10 2004/03/21 19:50:44 miod Exp $
 .\"
 .\"Copyright (c) 2001 by Parag Patel.  All rights reserved.
 .\"
@@ -30,13 +30,15 @@
 .Os
 .Sh NAME
 .Nm eephy
-.Nd Marvell 88E1000 Gigabit Ethernet PHY driver
+.Nd Marvell 88E1000/88E1011
+.Dq Alaska
+Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "eephy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Marvell 88E1000 Ethernet PHYs.
+driver supports Marvell 88E1000 and 88E1011 10/100/1000 Ethernet PHYs.
 .Sh SEE ALSO
 .Xr gem 4 ,
 .Xr ifmedia 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.137 2004/03/10 02:14:09 krw Exp $
+.\"	$OpenBSD: options.4,v 1.138 2004/03/21 19:50:44 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 17, 1997
+.Dd March 21, 2004
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -152,8 +152,9 @@ On those architectures that support it, this enables binary
 compatibility with
 .Em NetBSD
 applications built for the same architecture.
-See
-.Xr compat_freebsd 8 .
+.\" See
+.\" .Xr compat_netbsd 8 .
+This option is available on the alpha architecture.
 .It Cd option COMPAT_OSF1
 On those architectures that support it, this enables binary
 compatibility with

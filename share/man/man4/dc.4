@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.33 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: dc.4,v 1.34 2004/03/21 19:50:44 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm dc
-.Nd DEC/Intel 21140, 21143, 21145 and clone 10/100 Ethernet driver
+.Nd DEC/Intel 21140, 21142, 21143, 21145 and clones 10/100 Ethernet driver
 .Sh SYNOPSIS
 .Cd "dc* at pci? dev ? function ?"
 .Cd "dc* at cardbus? dev ? function ?"
@@ -161,7 +161,7 @@ Conexant LANfinity RS7112 MiniPCI
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width full-duplex
 .It autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -205,7 +205,7 @@ mode.
 The
 .Nm
 driver supports the following media options:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width full-duplex
 .It full-duplex
 Force full duplex operation.
 The interface will operate in half duplex mode if this media option
