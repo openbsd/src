@@ -412,6 +412,9 @@ static struct buf *spkr_inbuf; /* incoming buf */
 
 int spkrprobe (struct device *parent, void *match, void *aux)
 {
+	struct isa_attach_args *ia = aux;
+
+	ia->ia_iosize = 0;
 	return 1;
 }
 
