@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.26 2003/05/14 21:13:43 tdeval Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.27 2003/05/14 21:15:33 tdeval Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -799,7 +799,7 @@ cd9660_readlink(v)
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
 		if (uio->uio_segflg != UIO_SYSSPACE ||
-		    uio->uio_iov->iov_len >= MAXPATHLEN)
+		    uio->uio_iov->iov_len < MAXPATHLEN)
 			FREE(symname, M_NAMEI);
 		brelse(bp);
 		return (EINVAL);
