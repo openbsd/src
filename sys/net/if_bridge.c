@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.90 2002/05/31 20:58:25 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.91 2002/06/07 18:29:43 jasoni Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -156,15 +156,15 @@ u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *);
 struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
 #endif
+int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_fragment(struct bridge_softc *, struct ifnet *,
-    struct altq_pktattr *, struct ether_header *, struct mbuf *);
+    struct ether_header *, struct mbuf *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
 	((a)->ether_addr_octet[0] == 0x01 &&			\
 	 (a)->ether_addr_octet[1] == 0x00 &&			\
 	 (a)->ether_addr_octet[2] == 0x5e)
-
 
 void
 bridgeattach(n)
@@ -845,8 +845,6 @@ bridge_output(ifp, m, sa, rt)
 	struct ether_addr *src, *dst;
 	struct bridge_softc *sc;
 	int s, error, len;
-	short mflags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef IPSEC
 	struct m_tag *mtag;
 #endif /* IPSEC */
@@ -952,24 +950,10 @@ bridge_output(ifp, m, sa, rt)
 				}
 				mc = m1;
 			}
-			len = mc->m_pkthdr.len;
-			mflags = mc->m_flags;
-#ifdef ALTQ
-			if (ALTQ_IS_ENABLED(&dst_if->if_snd))
-				altq_etherclassify(&dst_if->if_snd, mc, &pktattr);
-#endif
-			IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
-			if (error) {
-				sc->sc_if.if_oerrors++;
+
+			error = bridge_ifenqueue(sc, dst_if, mc);
+			if (error)
 				continue;
-			}
-			sc->sc_if.if_opackets++;
-			sc->sc_if.if_obytes += len;
-			dst_if->if_obytes += len;
-			if (mflags & M_MCAST)
-				dst_if->if_omcasts++;
-			if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-				(*dst_if->if_start)(dst_if);
 		}
 		if (!used)
 			m_freem(m);
@@ -984,25 +968,7 @@ sendunicast:
 		splx(s);
 		return (0);
 	}
-	len = m->m_pkthdr.len;
-	mflags = m->m_flags;
-#ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
-		altq_etherclassify(&dst_if->if_snd, m, &pktattr);
-#endif
-	IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
-	if (error) {
-		sc->sc_if.if_oerrors++;
-		splx(s);
-		return (0);
-	}
-	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += len;
-	dst_if->if_obytes += len;
-	if (mflags & M_MCAST)
-		dst_if->if_omcasts++;
-	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-		(*dst_if->if_start)(dst_if);
+	bridge_ifenqueue(sc, dst_if, m);
 	splx(s);
 	return (0);
 }
@@ -1047,13 +1013,11 @@ bridgeintr_frame(sc, m)
 	struct bridge_softc *sc;
 	struct mbuf *m;
 {
-	int s, error, len;
+	int s, len;
 	struct ifnet *src_if, *dst_if;
 	struct bridge_iflist *ifl;
 	struct ether_addr *dst, *src;
 	struct ether_header eh;
-	short mflags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
@@ -1218,30 +1182,12 @@ bridgeintr_frame(sc, m)
 		return;
 #endif
 
-#ifdef ALTQ
-	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
-		altq_etherclassify(&dst_if->if_snd, m, &pktattr);
-#endif
-
 	len = m->m_pkthdr.len;
 	if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
-		bridge_fragment(sc, dst_if, &pktattr, &eh, m);
+		bridge_fragment(sc, dst_if, &eh, m);
 	else {
-		mflags = m->m_flags;
 		s = splimp();
-		IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
-		if (error) {
-			sc->sc_if.if_oerrors++;
-			splx(s);
-			return;
-		}
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
-		dst_if->if_obytes += len;
-		if (mflags & M_MCAST)
-			dst_if->if_omcasts++;
-		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-			(*dst_if->if_start)(dst_if);
+		bridge_ifenqueue(sc, dst_if, m);
 		splx(s);
 	}
 }
@@ -1407,9 +1353,7 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct bridge_iflist *p;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	int error, len = m->m_pkthdr.len, used = 0;
-	short mflags = m->m_flags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
+	int len = m->m_pkthdr.len, used = 0;
 
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
 		/*
@@ -1490,25 +1434,10 @@ bridge_broadcast(sc, ifp, eh, m)
 			continue;
 #endif
 
-#ifdef ALTQ
-		if (ALTQ_IS_ENABLED(&dst_if->if_snd))
-			altq_etherclassify(&dst_if->if_snd, mc, &pktattr);
-#endif
 		if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
-			bridge_fragment(sc, dst_if, &pktattr, eh, mc);
+			bridge_fragment(sc, dst_if, eh, mc);
 		else {
-			IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
-			if (error) {
-				sc->sc_if.if_oerrors++;
-				continue;
-			}
-			sc->sc_if.if_opackets++;
-			sc->sc_if.if_obytes += len;
-			dst_if->if_obytes += len;
-			if (mflags & M_MCAST)
-				dst_if->if_omcasts++;
-			if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-				(*dst_if->if_start)(dst_if);
+			bridge_ifenqueue(sc, dst_if, mc);
 		}
 	}
 
@@ -1526,7 +1455,6 @@ bridge_span(sc, eh, morig)
 	struct ifnet *ifp;
 	struct mbuf *mc, *m;
 	int error;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if (LIST_EMPTY(&sc->sc_spanlist))
 		return;
@@ -1562,23 +1490,9 @@ bridge_span(sc, eh, morig)
 			continue;
 		}
 
-#ifdef ALTQ
-		if (ALTQ_IS_ENABLED(&ifp->if_snd))
-			altq_etherclassify(&ifp->if_snd, mc, &pktattr);
-#endif
-
-		IFQ_ENQUEUE(&ifp->if_snd, mc, &pktattr, error);
-		if (error) {
-			sc->sc_if.if_oerrors++;
+		error = bridge_ifenqueue(sc, ifp, m);
+		if (error)
 			continue;
-		}
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += m->m_pkthdr.len;
-		ifp->if_obytes += m->m_pkthdr.len;
-		if (m->m_flags & M_MCAST)
-			ifp->if_omcasts++;
-		if ((ifp->if_flags & IFF_OACTIVE) == 0)
-			(*ifp->if_start)(ifp);
 	}
 	m_freem(m);
 }
@@ -1998,7 +1912,7 @@ bridge_rtfind(sc, baconf)
 			bareq.ifba_age = n->brt_age;
 			bareq.ifba_flags = n->brt_flags;
 			error = copyout((caddr_t)&bareq,
-		    	    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
+			    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
 			if (error)
 				goto done;
 			cnt++;
@@ -2321,13 +2235,12 @@ dropit:
 
 void
 bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
-    struct altq_pktattr *pktattr, struct ether_header *eh, struct mbuf *m)
+    struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
 	struct mbuf *m0 = m;
 	int s, len, error = 0;
 	int hassnap = 0;
-	short mflags = m->m_flags;
 #ifdef INET
 	struct ip *ip;
 #endif
@@ -2393,21 +2306,12 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 			len = m->m_pkthdr.len;
 			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
 			s = splimp();
-			IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+			error = bridge_ifenqueue(sc, ifp, m);
 			if (error) {
-				sc->sc_if.if_oerrors++;
 				splx(s);
 				continue;
 			}
-			sc->sc_if.if_opackets++;
-			sc->sc_if.if_obytes += len;
-			ifp->if_obytes += len;
-			if (mflags & M_MCAST)
-				ifp->if_omcasts++;
-			if ((ifp->if_flags & IFF_OACTIVE) == 0)
-				(*ifp->if_start)(ifp);
 			splx(s);
-			
 		} else
 			m_freem(m);
 	}
@@ -2420,4 +2324,33 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
  dropit:
 	if (m != NULL)
 		m_freem(m);
+}
+
+int
+bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
+{
+	int error, len;
+	short mflags;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
+
+	len = m->m_pkthdr.len;
+	mflags = m->m_flags;
+#ifdef ALTQ
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		altq_etherclassify(&ifp->if_snd, m, &pktattr);
+#endif
+	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error) {
+		sc->sc_if.if_oerrors++;
+		return (error);
+	}
+	sc->sc_if.if_opackets++;
+	sc->sc_if.if_obytes += len;
+	ifp->if_obytes += len;
+	if (mflags & M_MCAST)
+		ifp->if_omcasts++;
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+
+	return (0);
 }
