@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.51 2000/10/18 16:34:02 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.52 2000/10/18 16:38:27 aaron Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -426,13 +426,13 @@ Follow instructions for
 if using
 Kerberos
 for authentication.
-.Ss rc.conf, netstart, rc.local, rc.securelevel
+.Ss rc.conf, rc.local, rc.securelevel, rc.shutdown
 Check for any local changes needed in the files
 .Pa /etc/rc.conf ,
-.Pa /etc/netstart ,
 .Pa /etc/rc.local ,
+.Pa rc.securelevel ,
 and
-.Pa rc.securelevel .
+.Pa rc.shutdown.
 Turning on something like the Network Time Protocol in
 .Pa /etc/rc.conf
 requires making sure the package is installed.
