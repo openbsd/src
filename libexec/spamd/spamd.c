@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.6 2002/12/30 22:05:57 mickey Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.7 2003/01/05 23:10:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -28,8 +28,10 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -327,11 +329,11 @@ main(int argc, char *argv[])
 	pw = getpwnam("_spamd");
 	if (!pw)
 		pw = getpwnam("nobody");
-	if (chroot("/var/empty") == -1) {
+
+	if (chroot("/var/empty") == -1 || chdir("/") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);
 	}
-	chdir("/");
 
 	if (pw) {
 		setgroups(1, &pw->pw_gid);
@@ -391,7 +393,7 @@ main(int argc, char *argv[])
 		err(1, "socket");
 
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one,
-	    sizeof(one))  == -1)
+	    sizeof(one)) == -1)
 		return(-1);
 
 	memset(&sin, 0, sizeof sin);
@@ -402,11 +404,13 @@ main(int argc, char *argv[])
 	if (bind(s, (struct sockaddr *)&sin, sizeof sin) == -1)
 		err(1, "bind");
 
-	listen(s, 10);
+	if (listen(s, 10) == -1)
+		err(1, "listen");
 
-	if (debug == 0)
-		daemon(1, 1);
-	else
+	if (debug == 0) {
+		if (daemon(1, 1) == -1)
+			err(1, "fork");
+	} else
 		printf("listening for incoming connections.\n");
 
 	while (1) {
