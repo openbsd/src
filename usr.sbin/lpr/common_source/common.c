@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.27 2004/09/28 15:54:50 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.28 2004/09/28 20:26:27 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.27 2004/09/28 15:54:50 otto Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.28 2004/09/28 20:26:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,10 +303,8 @@ getq(struct queue ***namelist)
 
 errdone:
 	if (queue != NULL) {
-		size_t i;
-
-		for (i = 0; i < nitems; i++)
-			free(queue[i]);
+		while (nitems--)
+			free(queue[nitems]);
 		free(queue);
 	}
 	closedir(dirp);
