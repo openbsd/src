@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.61 2004/01/13 20:03:28 otto Exp $	*/
+/*	$OpenBSD: route.c,v 1.62 2004/03/13 22:02:13 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.61 2004/01/13 20:03:28 otto Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.62 2004/03/13 22:02:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -682,14 +682,14 @@ routename(in_addr_t in)
 		else
 			domain[0] = '\0';
 	}
-	cp = 0;
+	cp = NULL;
 	if (!nflag) {
 		hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
 		    AF_INET);
 		if (hp) {
 			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
-				*cp = 0;
+				*cp = '\0';
 			cp = hp->h_name;
 		}
 	}
@@ -711,9 +711,9 @@ routename(in_addr_t in)
 char *
 netname(in_addr_t in, in_addr_t mask)
 {
-	char *cp = 0;
+	char *cp = NULL;
 	static char line[MAXHOSTNAMELEN];
-	struct netent *np = 0;
+	struct netent *np = NULL;
 	int mbits;
 
 	in = ntohl(in);

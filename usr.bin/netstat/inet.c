@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.83 2004/02/29 14:17:51 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.84 2004/03/13 22:02:13 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.83 2004/02/29 14:17:51 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.84 2004/03/13 22:02:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -702,7 +702,7 @@ inetname(struct in_addr *inp)
 		else
 			domain[0] = '\0';
 	}
-	cp = 0;
+	cp = NULL;
 	if (!nflag && inp->s_addr != INADDR_ANY) {
 		int net = inet_netof(*inp);
 		int lna = inet_lnaof(*inp);
@@ -712,12 +712,12 @@ inetname(struct in_addr *inp)
 			if (np)
 				cp = np->n_name;
 		}
-		if (cp == 0) {
+		if (cp == NULL) {
 			hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
 			if (hp) {
 				if ((cp = strchr(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
-					*cp = 0;
+					*cp = '\0';
 				cp = hp->h_name;
 			}
 		}
@@ -876,7 +876,7 @@ ipip_stats(u_long off, char *name)
 #undef p
 }
 
-/* 
+/*
  * Dump CARP statistics structure.
  */
 void

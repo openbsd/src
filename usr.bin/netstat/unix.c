@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.10 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: unix.c,v 1.11 2004/03/13 22:02:13 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.10 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.11 2004/03/13 22:02:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ unixpr(u_long off)
 	struct protosw *unixsw = (struct protosw *)off;
 
 	filebuf = (char *)kvm_getfiles(kvmd, KERN_FILE, 0, &nfiles);
-	if (filebuf == 0) {
+	if (filebuf == NULL) {
 		printf("Out of memory (file table).\n");
 		return;
 	}
@@ -111,14 +111,13 @@ unixdomainpr(struct socket *so, caddr_t soaddr)
 	if (unp->unp_addr) {
 		m = &mbuf;
 		if (kread((u_long)unp->unp_addr, (char *)m, sizeof (*m)))
-			m = (struct mbuf *)0;
+			m = NULL;
 		sa = (struct sockaddr_un *)(m->m_dat);
 	} else
-		m = (struct mbuf *)0;
+		m = NULL;
 	if (first) {
 		printf("Active UNIX domain sockets\n");
-		printf(
-"%-*.*s %-6.6s %-6.6s %-6.6s %*.*s %*.*s %*.*s %*.*s Addr\n",
+		printf("%-*.*s %-6.6s %-6.6s %-6.6s %*.*s %*.*s %*.*s %*.*s Addr\n",
 		    PLEN, PLEN, "Address", "Type", "Recv-Q", "Send-Q",
 		    PLEN, PLEN, "Inode", PLEN, PLEN, "Conn",
 		    PLEN, PLEN, "Refs", PLEN, PLEN, "Nextref");

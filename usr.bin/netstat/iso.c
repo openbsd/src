@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.13 2003/06/26 21:59:11 deraadt Exp $	*/
+/*	$OpenBSD: iso.c,v 1.14 2004/03/13 22:02:13 deraadt Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.13 2003/06/26 21:59:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.14 2004/03/13 22:02:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -319,8 +319,8 @@ tp_protopr(u_long off, char *name)
 			printf("undefined tpcb state: %p\n", tpr->tpr_pcb);
 		if (!aflag &&
 		    (tpcb.tp_state == TP_LISTENING ||
-		     tpcb.tp_state == TP_CLOSED ||
-		     tpcb.tp_state == TP_REFWAIT))
+		    tpcb.tp_state == TP_CLOSED ||
+		    tpcb.tp_state == TP_REFWAIT))
 			continue;
 		kget(tpcb.tp_sock, sockb);
 		if (tpcb.tp_npcb)

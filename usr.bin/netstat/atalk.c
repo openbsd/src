@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.11 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.12 2004/03/13 22:02:13 deraadt Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.11 2003/06/03 02:56:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: atalk.c,v 1.12 2004/03/13 22:02:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ char *
 atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 {
 	size_t		n, l;
-	static char     buf[100];
+	static char	buf[100];
 	struct sockaddr_at *sat1, *sat2;
 	struct sockaddr_at thesockaddr;
 	struct sockaddr *sa2;
