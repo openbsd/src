@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.386 2003/05/19 18:18:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.387 2003/05/19 18:31:13 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1729,12 +1729,6 @@ host_list	: xhost				{ $$ = $1; }
 xhost		: not host			{
 			struct node_host	*n;
 
-			if ($2 == NULL)	{
-				/* error. "any" is handled elsewhere */
-				yyerror("could not parse host specification");
-				YYERROR;
-			}
-
 			for (n = $2; n != NULL; n = n->next)
 				n->not = $1;
 			$$ = $2;
@@ -1749,13 +1743,25 @@ xhost		: not host			{
 		}
 		;
 
-host		: STRING			{ $$ = host($1); }
+host		: STRING			{
+			if (($$ = host($1)) == NULL)	{
+				/* error. "any" is handled elsewhere */
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
+
+		}
 		| STRING '/' number		{
 			char	*buf;
 
 			if (asprintf(&buf, "%s/%u", $1, $3) == -1)
 				err(1, "host: asprintf");
-			$$ = host(buf);
+			if (($$ = host(buf)) == NULL)	{
+				/* error. "any" is handled elsewhere */
+				free(buf);
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
 			free(buf);
 		}
 		| dynaddr
