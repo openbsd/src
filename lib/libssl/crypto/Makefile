@@ -1,10 +1,10 @@
+# $OpenBSD: Makefile,v 1.25 2002/09/03 18:59:55 markus Exp $
 
 LIB=	crypto
 
-SSLEAYDIST= src
-
-LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
-LCRYPTO_INC= ${.CURDIR}/../${SSLEAYDIST}/include
+SSLEAYDIST=	src
+SSL_SRC=	${.CURDIR}/../${SSLEAYDIST}
+LCRYPTO_SRC=	${SSL_SRC}/crypto
 
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN
@@ -33,7 +33,6 @@ CFLAGS+= -DOPENSSL_NO_HW_SUREWARE
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
 SRCS+= o_time.c
-CFLAGS+= -I${LCRYPTO_INC}
 SRCS+=	cryptlib.c ex_data.c cpt_err.c mem.c mem_dbg.c tmdiff.c cversion.c uid.c
 CFLAGS+= -I${LCRYPTO_SRC}/md2
 SRCS+=	md2_dgst.c md2_one.c 					
@@ -177,17 +176,6 @@ CFLAGS+= -I${LCRYPTO_SRC}/ec
 SRCS+= ec_cvt.c ec_lib.c ecp_mont.c ecp_recp.c
 SRCS+= ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
 
-
-HDRS=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h \
-	comp.h conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h \
-	e_os2.h ebcdic.h engine.h err.h evp.h hmac.h idea.h lhash.h \
-	md2.h md4.h md5.h mdc2.h obj_mac.h objects.h opensslconf.h \
-	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h \
-	rc5.h ripemd.h rsa.h safestack.h sha.h \
-	stack.h symhacks.h tmdiff.h txt_db.h x509.h \
-	x509_vfy.h x509v3.h asn1t.h des_old.h ossl_typ.h \
-	ui.h ui_compat.h aes.h ec.h ocsp.h
-
 .PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/mdc2 ${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd \
 	${LCRYPTO_SRC}/des ${LCRYPTO_SRC}/rc2 ${LCRYPTO_SRC}/rc4 \
@@ -203,13 +191,85 @@ HDRS=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h \
 	${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}/ui \
 	${LCRYPTO_SRC}/ocsp ${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes ${LCRYPTO_SRC}
 
-includes:
+HDRS=\
+	crypto/aes/aes.h \
+	crypto/asn1/asn1.h \
+	crypto/asn1/asn1_mac.h \
+	crypto/asn1/asn1t.h \
+	crypto/bf/blowfish.h \
+	crypto/bio/bio.h \
+	crypto/bn/bn.h \
+	crypto/buffer/buffer.h \
+	crypto/cast/cast.h \
+	crypto/comp/comp.h \
+	crypto/conf/conf.h \
+	crypto/conf/conf_api.h \
+	crypto/crypto.h \
+	crypto/des/des.h \
+	crypto/des/des_old.h \
+	crypto/dh/dh.h \
+	crypto/dsa/dsa.h \
+	crypto/dso/dso.h \
+	crypto/ebcdic.h \
+	crypto/ec/ec.h \
+	crypto/engine/engine.h \
+	crypto/err/err.h \
+	crypto/evp/evp.h \
+	crypto/hmac/hmac.h \
+	crypto/idea/idea.h \
+	crypto/lhash/lhash.h \
+	crypto/md2/md2.h \
+	crypto/md4/md4.h \
+	crypto/md5/md5.h \
+	crypto/mdc2/mdc2.h \
+	crypto/objects/objects.h \
+	crypto/ocsp/ocsp.h \
+	crypto/opensslv.h \
+	crypto/ossl_typ.h \
+	crypto/pem/pem.h \
+	crypto/pem/pem2.h \
+	crypto/pkcs12/pkcs12.h \
+	crypto/pkcs7/pkcs7.h \
+	crypto/rand/rand.h \
+	crypto/rc2/rc2.h \
+	crypto/rc4/rc4.h \
+	crypto/rc5/rc5.h \
+	crypto/ripemd/ripemd.h \
+	crypto/rsa/rsa.h \
+	crypto/sha/sha.h \
+	crypto/stack/safestack.h \
+	crypto/stack/stack.h \
+	crypto/symhacks.h \
+	crypto/tmdiff.h \
+	crypto/txt_db/txt_db.h \
+	crypto/ui/ui.h \
+	crypto/ui/ui_compat.h \
+	crypto/x509/x509.h \
+	crypto/x509/x509_vfy.h \
+	crypto/x509v3/x509v3.h \
+	e_os2.h
+
+HDRS_GEN=\
+	${.CURDIR}/arch/${MACHINE_ARCH}/opensslconf.h \
+	${.OBJDIR}/obj_mac.h
+
+includes: obj_mac.h
 	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
 	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
-	cd ${LCRYPTO_INC}/openssl; for i in $(HDRS); do \
+	for i in $(HDRS); do \
 		f=`basename $$i`; \
 		j="sed 's/<openssl/<ssl/' \
-		       ${LCRYPTO_INC}/openssl/$$i >$$d/$$f && \
+		       ${SSL_SRC}/$$i >$$d/$$f && \
+		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
+		echo $$j; \
+		eval "$$j"; \
+	done; \
+	for i in $(HDRS_GEN); do \
+		f=`basename $$i`; \
+		j="sed 's/<openssl/<ssl/' \
+		       $$i >$$d/$$f && \
 		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
@@ -217,5 +277,31 @@ includes:
 		eval "$$j"; \
 	done; \
 	rm -rf $$d
+
+# generated
+CFLAGS+= -I${.OBJDIR}
+
+GENERATED=obj_mac.h obj_dat.h
+CLEANFILES=${GENERATED}
+SSL_OBJECTS=${SSL_SRC}/crypto/objects
+
+obj_mac.h: ${SSL_OBJECTS}/objects.h
+	/usr/bin/perl ${SSL_OBJECTS}/objects.pl ${SSL_OBJECTS}/objects.txt ${SSL_OBJECTS}/obj_mac.num obj_mac.h
+obj_dat.h: obj_mac.h
+	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
+
+.if (${MACHINE_ARCH} == "vax")
+# egcs bombs optimising this file on vax
+a_strnid.o:
+	${CC} ${CFLAGS} -O0 ${CPPFLAGS} -c ${.IMPSRC}
+a_strnid.po:           
+	${CC} ${CFLAGS} -O0 ${CPPFLAGS} -c ${.IMPSRC} -o $@
+des_enc.o:             
+	${CC} ${CFLAGS} -O1 ${CPPFLAGS} -c ${.IMPSRC}
+des_enc.po:            
+	${CC} ${CFLAGS} -O1 ${CPPFLAGS} -c ${.IMPSRC} -o $@
+.endif  
+
+all beforedepend: ${GENERATED}
 
 .include <bsd.lib.mk>

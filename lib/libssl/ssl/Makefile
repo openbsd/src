@@ -1,10 +1,10 @@
+# $OpenBSD: Makefile,v 1.15 2002/09/03 18:59:56 markus Exp $
 
 LIB=	ssl
 
 SSLEAYDIST= src
 
 LSSL_SRC= ${.CURDIR}/../${SSLEAYDIST}/ssl
-LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
 
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN -DBN_ASM
@@ -26,8 +26,6 @@ CFLAGS+= -DB_ENDIAN
 
 CFLAGS+= -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR 
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5 -DSO_DLFCN -DHAVE_DLFCN_H 
-CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}/include
-CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}/crypto
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 
 SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
