@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.1 2003/09/25 19:32:44 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.3 2003/09/26 07:04:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.1 2003/09/25 19:32:44 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.3 2003/09/26 07:04:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -30,7 +30,7 @@ static const char rcsid[] = "$OpenBSD: scan.l,v 1.1 2003/09/25 19:32:44 otto Exp
 
 int		lineno;
 
-static char 	*strbuf = NULL;
+static char	*strbuf = NULL;
 static size_t	strbuf_sz = 1;
 static bool	dot_seen;
 
@@ -102,7 +102,7 @@ DIGIT		[0-9A-F]
 }
 
 "auto"		return AUTO;
-"break" 	return BREAK;
+"break"		return BREAK;
 "define"	return DEFINE;
 "ibase"		return IBASE;
 "if"		return IF;
@@ -183,7 +183,7 @@ add_str(const char *str)
 
 	if (strlen(strbuf) + arglen + 1> strbuf_sz) {
 		size_t newsize;
-		char * p;
+		char *p;
 
 		newsize = strbuf_sz + arglen + 1;
 		p = realloc(strbuf, newsize);

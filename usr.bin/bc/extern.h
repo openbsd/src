@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.1 2003/09/25 19:32:44 otto Exp $	*/
+/*      $OpenBSD: extern.h,v 1.2 2003/09/26 07:02:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 struct lvalue {
-        int load;
+	int load;
 	int store;
 };
 
