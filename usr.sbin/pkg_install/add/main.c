@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.5 1998/04/07 04:06:37 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1998/04/07 04:17:47 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.5 1998/04/07 04:06:37 marc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:47 deraadt Exp $";
 #endif
 
 /*
@@ -155,17 +155,9 @@ usage(const char *name, const char *fmt, ...)
     if (fmt) {
 	fprintf(stderr, "%s: ", name);
 	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n\n");
+	fprintf(stderr, "\n");
     }
     va_end(args);
-    fprintf(stderr, "Usage: %s [args] pkg [ .. pkg ]\n", name);
-    fprintf(stderr, "\t-v         verbose\n");
-    fprintf(stderr, "\t-p arg     override prefix with arg\n");
-    fprintf(stderr, "\t-I         don't execute pkg install script, if any\n");
-    fprintf(stderr, "\t-R         don't record installation (can't delete!)\n");
-    fprintf(stderr, "\t-n         don't actually install, just show steps\n");
-    fprintf(stderr, "\t-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "\t-S         run in SLAVE mode\n");
-    fprintf(stderr, "\t-M         run in MASTER mode\n");
+    fprintf(stderr, "usage: %s [-vInfRMS] [-t template] [-p prefix] pkg ...\n", name);
     exit(1);
 }

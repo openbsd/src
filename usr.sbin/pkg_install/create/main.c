@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.5 1998/04/04 22:44:16 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1998/04/07 04:17:49 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.5 1998/04/04 22:44:16 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:49 deraadt Exp $";
 #endif
 
 /*
@@ -155,26 +155,13 @@ usage(const char *name, const char *fmt, ...)
     if (fmt) {
 	fprintf(stderr, "%s: ", name);
 	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n\n");
+	fprintf(stderr, "\n");
     }
     va_end(args);
-    fprintf(stderr, "Usage: %s [args] pkg\n\n", name);
-    fprintf(stderr, "\t-c [-]file Get one-line comment from file (-or arg)\n");
-    fprintf(stderr, "\t-d [-]file Get description from file (-or arg)\n");
-    fprintf(stderr, "\t-f file    get list of files from file (- for stdin)\n");
-    fprintf(stderr, "\t-h         follow symbolic links\n");
-    fprintf(stderr, "\t-i script  install script\n");
-    fprintf(stderr, "\t-k script  de-install script\n");
-    fprintf(stderr, "\t-D file    install notice\n");
-    fprintf(stderr, "\t-m file    mtree spec for directories\n");
-    fprintf(stderr, "\t-P pkgs    set package dependency list to pkgs\n");
-    fprintf(stderr, "\t-p prefix  install prefix will be arg\n");
-    fprintf(stderr, "\t-r script  pre/post requirements script\n");
-    fprintf(stderr, "\t-t temp    use temp as template for mktemp()\n");
-    fprintf(stderr, "\t-X file    exclude files listed in file\n");
-    fprintf(stderr, "\t-v         verbose\n");
-    fprintf(stderr, "\t-Y         assume `yes' answer to all questions\n");
-    fprintf(stderr, "\t-N         assume `no' answer to all questions\n");
-    fprintf(stderr, "\t-O         print a revised packing list and exit\n");
+    fprintf(stderr,
+	"usage: %s [-YNOhv] [-P pkgs] [-p prefix] [-f contents] [-i iscript]\n"
+	"       [-k dscript] [-r rscript] [-t template] [-X excludefile]\n"
+	"       [-D displayfile] [-m mtreefile] -d description -f packlist] pkg\n",
+	name);
     exit(1);
 }
