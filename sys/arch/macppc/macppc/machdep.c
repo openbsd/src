@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2002/07/23 17:53:24 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2002/08/20 02:50:43 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -67,10 +67,6 @@
 
 #include <dev/cons.h>
 
-#include <dev/ofw/openfirm.h>
-
-#include <dev/pci/pcivar.h>
-
 #include <machine/bat.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
@@ -79,6 +75,11 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
+
+#include <dev/pci/pcivar.h>
+
+#include <arch/macppc/macppc/ofw_machdep.h>
+#include <dev/ofw/openfirm.h>
 
 #include "adb.h"
 #if NADB > 0
@@ -458,7 +459,7 @@ where = 3;
 	/*
 	 * Now we can set up the console as mapping is enabled.
 	 */
-	consinit();
+	ofwconsinit();
 	/* while using openfirmware, run userconfig */
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG
@@ -470,8 +471,8 @@ where = 3;
 	/*
 	 * Replace with real console.
 	 */
-	cninit();
 	ofwconprobe();
+	consinit();
 
 #if NIPKDB > 0
 	/*
