@@ -1,5 +1,5 @@
-/*	$OpenBSD: types.h,v 1.9 1996/05/28 12:16:28 deraadt Exp $	*/
-/*	$NetBSD: types.h,v 1.26 1996/04/09 20:55:47 cgd Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 1997/04/20 20:47:33 tholo Exp $	*/
+/*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -123,6 +123,16 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #ifdef	_BSD_TIME_T_
 typedef	_BSD_TIME_T_	time_t;
 #undef	_BSD_TIME_T_
+#endif
+
+#ifdef	_BSD_CLOCKID_T_
+typedef	_BSD_CLOCKID_T_	clockid_t;
+#undef	_BSD_CLOCKID_T_
+#endif
+
+#ifdef	_BSD_TIMER_T_
+typedef	_BSD_TIMER_T_	timer_t;
+#undef	_BSD_TIMER_T_
 #endif
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
