@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.34 2004/05/20 09:20:42 kettenis Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.35 2004/11/30 07:41:52 martin Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2748,7 +2748,7 @@ pmap_check_wiring(str, va)
 
 	pa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg->wire_count >= PAGE_SIZE / sizeof(struct pt_entry_t)) {
+	if (pg->wire_count >= PAGE_SIZE / sizeof(pt_entry_t)) {
 		printf("*%s*: 0x%lx: wire count %d\n", str, va, pg->wire_count);
 		return;
 	}
