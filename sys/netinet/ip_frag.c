@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_frag.c,v 1.20 2001/01/17 04:47:13 fgsch Exp $	*/
+/*	$OpenBSD: ip_frag.c,v 1.21 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -69,21 +69,21 @@ static const char rcsid[] = "@(#)$IPFilter: ip_frag.c,v 2.10.2.7 2000/11/27 10:2
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_frag.h"
-#include "netinet/ip_state.h"
-#include "netinet/ip_auth.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 # if (defined(KERNEL) || defined(_KERNEL))
 #  ifndef IPFILTER_LKM
 #   include <sys/libkern.h>
 #   include <sys/systm.h>
-# endif
+#  endif
 extern struct callout_handle ipfr_slowtimer_ch;
 # endif
 #endif
@@ -91,6 +91,7 @@ extern struct callout_handle ipfr_slowtimer_ch;
 # include <sys/callout.h>
 extern struct callout ipfr_slowtimer_ch;
 #elif defined(__OpenBSD__)
+# include <sys/timeout.h>
 extern struct timeout ipfr_slowtimer_ch;
 #endif
 

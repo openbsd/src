@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_proxy.c,v 1.12 2001/01/17 04:47:15 fgsch Exp $	*/
+/*	$OpenBSD: ip_proxy.c,v 1.13 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -70,12 +70,12 @@ static const char rcsid[] = "@(#)$IPFilter: ip_proxy.c,v 2.9.2.1 2000/05/06 12:3
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_state.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_state.h>
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 #endif
@@ -93,9 +93,9 @@ static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 #define	AP_SESS_SIZE	53
 
 #if defined(_KERNEL) && !defined(linux)
-#include "netinet/ip_ftp_pxy.c"
-#include "netinet/ip_rcmd_pxy.c"
-#include "netinet/ip_raudio_pxy.c"
+#include <netinet/ip_ftp_pxy.c>
+#include <netinet/ip_rcmd_pxy.c>
+#include <netinet/ip_raudio_pxy.c>
 #endif
 
 ap_session_t	*ap_sess_tab[AP_SESS_SIZE];

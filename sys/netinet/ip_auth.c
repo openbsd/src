@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_auth.c,v 1.16 2001/01/17 07:25:18 fgsch Exp $	*/
+/*	$OpenBSD: ip_auth.c,v 1.17 2001/01/30 04:23:55 kjell Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -91,10 +91,10 @@ extern struct ifqueue   ipintrq;                /* ip packet input queue */
 #endif
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_auth.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_auth.h>
 #if !SOLARIS && !defined(linux)
 # include <net/netisr.h>
 # ifdef __FreeBSD__

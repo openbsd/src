@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.25 2001/01/17 07:25:19 fgsch Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.26 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -81,13 +81,13 @@ static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.30.2.28 2001/01/08 14
 #endif
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_frag.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_state.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_state.h>
 #ifdef	USE_INET6
 #include <netinet/icmp6.h>
 #endif

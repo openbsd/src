@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.27 2001/01/17 04:47:11 fgsch Exp $	*/
+/*	$OpenBSD: fil.c,v 1.28 2001/01/30 04:23:55 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -77,7 +77,7 @@ static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.35.2.30 2000/12/17 05:49:2
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #ifdef	USE_INET6
 # include <netinet/icmp6.h>
 # if !SOLARIS && defined(_KERNEL)
@@ -85,12 +85,12 @@ static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.35.2.30 2000/12/17 05:49:2
 # endif
 #endif
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_frag.h"
-#include "netinet/ip_state.h"
-#include "netinet/ip_auth.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 # if defined(__FreeBSD_version) && (__FreeBSD_version >= 300000)
 #  include <sys/malloc.h>
 #  if defined(_KERNEL) && !defined(IPFILTER_LKM)
@@ -100,7 +100,7 @@ static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.35.2.30 2000/12/17 05:49:2
 #ifndef	MIN
 # define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
-#include "netinet/ipl.h"
+#include <netinet/ipl.h>
 
 #ifndef	_KERNEL
 # include "ipf.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.h,v 1.16 2001/01/17 04:47:16 fgsch Exp $	*/
+/*	$OpenBSD: ip_state.h,v 1.17 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -19,8 +19,13 @@
 # define	SIOCDELST	_IOW(r, 61, struct ipstate *)
 #endif
 
-#define	IPSTATE_SIZE	5737
-#define	IPSTATE_MAX	4013	/* Maximum number of states held */
+#ifndef 	IPSTATE_SIZE
+# define	IPSTATE_SIZE	5737
+#endif
+
+#ifndef		IPSTATE_MAX
+# define	IPSTATE_MAX	4013	/* Maximum number of states held */
+#endif
 
 #define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
 				 (((s1) == (d2)) && ((d1) == (s2))))

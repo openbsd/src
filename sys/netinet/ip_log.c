@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_log.c,v 1.9 2001/01/17 04:47:14 fgsch Exp $	*/
+/*	$OpenBSD: ip_log.c,v 1.10 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -105,14 +105,14 @@
 # ifndef _KERNEL
 #  include <syslog.h>
 # endif
-# include "netinet/ip_compat.h"
+# include <netinet/ip_fil_compat.h>
 # include <netinet/tcpip.h>
-# include "netinet/ip_fil.h"
-# include "netinet/ip_proxy.h"
-# include "netinet/ip_nat.h"
-# include "netinet/ip_frag.h"
-# include "netinet/ip_state.h"
-# include "netinet/ip_auth.h"
+# include <netinet/ip_fil.h>
+# include <netinet/ip_proxy.h>
+# include <netinet/ip_nat.h>
+# include <netinet/ip_frag.h>
+# include <netinet/ip_state.h>
+# include <netinet/ip_auth.h>
 # if (__FreeBSD_version >= 300000)
 #  include <sys/malloc.h>
 # endif

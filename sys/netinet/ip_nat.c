@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.37 2001/01/17 07:25:19 fgsch Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.38 2001/01/30 04:23:56 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -97,13 +97,13 @@ extern struct ifnet vpnif;
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
-#include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_frag.h"
-#include "netinet/ip_state.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 #endif
@@ -342,11 +342,7 @@ u_32_t n;
 		return;
 	}
 #endif
-#ifdef sparc
-	sum1 = (~(*sp)) & 0xffff;
-#else
 	sum1 = (~ntohs(*sp)) & 0xffff;
-#endif
 	sum1 += ~(n) & 0xffff;
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
@@ -430,6 +426,24 @@ int mode;
 	if ((securelevel >= 2) && (mode & FWRITE))
 		return EPERM;
 #endif
+#if defined(_KERNEL)
+# if defined(__OpenBSD__)
+       	/* Prevent IPNAT changes when securelevel > 1 */
+	if (securelevel > 1) {
+		switch (cmd) {
+		case SIOCIPFFL:
+#  ifdef IPFILTER_LOG
+		case SIOCIPFFB:
+#  endif
+		case SIOCADNAT:
+		case SIOCRMNAT:
+		case SIOCSTPUT:
+		case SIOCSTLCK:
+			return EPERM;
+		}
+	}
+# endif /* OpenBSD */
+#endif /* _KERNEL */
 
 	nat = NULL;     /* XXX gcc -Wuninitialized */
 	KMALLOC(nt, ipnat_t *);

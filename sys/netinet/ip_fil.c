@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.39 2001/01/17 05:16:37 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.40 2001/01/30 04:23:55 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -99,16 +99,16 @@ static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.42.2.17 2000/10/19 15:3
 # include <unistd.h>
 # include <syslog.h>
 #endif
-#include "netinet/ip_compat.h"
+#include <netinet/ip_fil_compat.h>
 #ifdef USE_INET6
 # include <netinet/icmp6.h>
 #endif
-#include "netinet/ip_fil.h"
-#include "netinet/ip_proxy.h"
-#include "netinet/ip_nat.h"
-#include "netinet/ip_frag.h"
-#include "netinet/ip_state.h"
-#include "netinet/ip_auth.h"
+#include <netinet/ip_fil.h>
+#include <netinet/ip_proxy.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
+#include <netinet/ip_auth.h>
 #if defined(__FreeBSD_version) && (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 #endif
@@ -133,7 +133,12 @@ extern	int	tcp_ttl;
 # endif
 #endif
 
+# if defined (__OpenBSD__)
+int	ipl_unreach = ICMP_UNREACH_FILTER_PROHIB;
+# else
 int	ipl_unreach = ICMP_UNREACH_FILTER;
+# endif
+
 u_long	ipl_frouteok[2] = {0, 0};
 
 static	int	frzerostats __P((caddr_t));
@@ -174,7 +179,7 @@ struct callout_handle ipfr_slowtimer_ch;
 struct callout ipfr_slowtimer_ch;
 #endif
 #if defined(__OpenBSD__)
-#include <sys/timeout.h>
+# include <sys/timeout.h>
 struct timeout ipfr_slowtimer_ch;
 #endif
 #if defined(__sgi) && defined(_KERNEL)
@@ -335,7 +340,7 @@ pfil_error:
 	timeout_add(&ipfr_slowtimer_ch, hz / 2);
 #  else
 #   if (__FreeBSD_version >= 300000) || defined(__sgi)
- 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
+	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
 #   else
 	timeout(ipfr_slowtimer, NULL, hz/2);
 #   endif
@@ -367,7 +372,7 @@ int ipldetach()
 #   if (__FreeBSD_version >= 300000)
 	untimeout(ipfr_slowtimer, NULL, ipfr_slowtimer_ch);
 #   else
-#   ifdef __sgi
+#    ifdef __sgi
 	untimeout(ipfr_slowtimer_ch);
 #    else
 	untimeout(ipfr_slowtimer, NULL);
@@ -384,9 +389,7 @@ int ipldetach()
 		return 0;
 	}
 
-#if !defined(__OpenBSD__)
 	printf("%s unloaded\n", ipfilter_version);
-#endif
 
 	fr_checkp = fr_savep;
 	i = frflush(IPL_LOGIPF, i);
@@ -485,7 +488,34 @@ int mode;
 	unit = GET_MINOR(dev);
 	if ((IPL_LOGMAX < unit) || (unit < 0))
 		return ENXIO;
-#else
+
+# if defined(__OpenBSD__)
+       	/* Prevent IPF changes when securelevel > 1 */
+	if (securelevel > 1) {
+		switch (cmd) {
+#  ifndef IPFILTER_LKM
+		case SIOCFRENB:
+#  endif
+		case SIOCSETFF:
+		case SIOCADAFR:
+		case SIOCADIFR:
+		case SIOCINAFR:
+		case SIOCINIFR:
+		case SIOCRMAFR:
+		case SIOCRMIFR:
+		case SIOCZRLST:
+		case SIOCSWAPA:
+		case SIOCFRZST:
+		case SIOCIPFFL:
+#  ifdef IPFILTER_LOG
+		case SIOCIPFFB:
+#  endif
+		case SIOCSTLCK:
+			return EPERM;
+		}
+	}
+# endif /* OpenBSD */
+#else /* _KERNEL */
 	unit = dev;
 #endif
 
@@ -1404,11 +1434,9 @@ frdest_t *fdp;
 #  endif
 			i = 1;
 # endif
-# ifndef sparc
 		ip->ip_id = htons(ip->ip_id);
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
-# endif
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # if	BSD >= 199306
@@ -1487,9 +1515,7 @@ frdest_t *fdp;
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = NULL;
 # endif
-# ifndef sparc
 		mhip->ip_off = htons((u_short)mhip->ip_off);
-# endif
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
@@ -1584,6 +1610,7 @@ static int no_output __P((struct ifnet *ifp, struct mbuf *m,
 	return 0;
 }
 
+
 # ifdef __STDC__
 #  ifdef __sgi
 static int write_output __P((struct ifnet *ifp, struct mbuf *m,
@@ -1601,21 +1628,27 @@ ip_t *ip;
 {
 # endif
 	char fname[32];
-	int fd;
+	FILE *fp;
 
 # if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
 	(defined(OpenBSD) && (OpenBSD >= 199603))
+#    if defined __OpenBSD__
+	sprintf(fname, "/var/run/%s", ifp->if_xname);
+#    else
 	sprintf(fname, "/tmp/%s", ifp->if_xname);
+#    endif
 # else
 	sprintf(fname, "/tmp/%s%d", ifp->if_name, ifp->if_unit);
 # endif
-	fd = open(fname, O_WRONLY|O_APPEND);
-	if (fd == -1) {
-		perror("open");
-		return -1;
+	/*
+	 * XXX
+	 * This is still raceable, if the attacker gains the ability to
+	 * erase the existing file in /tmp
+	 */
+	if ((fp = fopen(fname, "a"))) {
+		fwrite((char *)ip, ntohs(ip->ip_len), 1, fp);
+		fclose(fp);
 	}
-	write(fd, (char *)ip, ntohs(ip->ip_len));
-	close(fd);
 	return 0;
 }
 
@@ -1701,7 +1734,11 @@ void init_ifp()
 	(defined(OpenBSD) && (OpenBSD >= 199603))
 	for (ifa = ifneta; ifa && (ifp = *ifa); ifa++) {
 		ifp->if_output = write_output;
+#    if defined(__OpenBSD__)
+		sprintf(fname, "/var/run/%s", ifp->if_xname);
+#    else
 		sprintf(fname, "/tmp/%s", ifp->if_xname);
+#    endif
 		fd = open(fname, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0600);
 		if (fd == -1)
 			perror("open");
