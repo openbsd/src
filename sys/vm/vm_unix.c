@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.4 1997/07/25 06:03:11 mickey Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.5 1997/09/17 17:26:15 weingart Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -74,9 +74,18 @@ sys_obreak(p, v, retval)
 	register int diff;
 
 	old = (vm_offset_t)vm->vm_daddr;
-	new = round_page(SCARG(uap, nsize));
-	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	new = (vm_offset_t)SCARG(uap, nsize);
+
+	/* Check for overflow, round to page */
+	if(round_page(new) < new)
 		return(ENOMEM);
+	new = round_page(new);
+
+	/* Check limit */
+	if ((new > old) && ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur))
+		return(ENOMEM);
+
+	/* Turn the trick */
 	old = round_page(old + ctob(vm->vm_dsize));
 	diff = new - old;
 	if (diff > 0) {
