@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.8 1997/08/31 21:33:26 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.9 1997/08/31 21:34:18 deraadt Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.8 1997/08/31 21:33:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.9 1997/08/31 21:34:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -626,10 +626,12 @@ register char *argv[];
 register int argc;
 {
 	if (argc > 2) {
-		if (*argv[2]) {
+		if (*argv[2])
 			strncpy(lquote, argv[2], MAXCCHARS);
-		else
-			strncpy(lquote, LQUOTE, MAXCCHARS);
+		else {
+			lquote[0] = LQUOTE;
+			lquote[1] = '\0';
+		}
 		if (argc > 3) {
 			if (*argv[3])
 				strncpy(rquote, argv[3], MAXCCHARS);
