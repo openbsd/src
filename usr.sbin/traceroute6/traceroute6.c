@@ -1,5 +1,5 @@
-/*	$OpenBSD: traceroute6.c,v 1.28 2002/08/30 07:23:50 itojun Exp $	*/
-/*	$KAME: traceroute6.c,v 1.60 2002/08/30 04:01:58 onoe Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.29 2002/09/08 01:31:46 itojun Exp $	*/
+/*	$KAME: traceroute6.c,v 1.61 2002/09/08 01:28:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -783,7 +783,8 @@ main(argc, argv)
 		freeaddrinfo(res);
 	} else {
 		struct sockaddr_in6 Nxt;
-		int dummy, len;
+		int dummy;
+		socklen_t len;
 
 		Nxt = Dst;
 		Nxt.sin6_port = htons(DUMMY_PORT);
@@ -819,7 +820,7 @@ main(argc, argv)
 	}
 
 	{
-		int len;
+		socklen_t len;
 
 		len = sizeof(Src);
 		if (getsockname(sndsock, (struct sockaddr *)&Src, &len) < 0) {
