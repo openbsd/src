@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.10 2002/03/14 01:26:51 millert Exp $ */
+/*	$OpenBSD: db_output.h,v 1.11 2002/05/14 16:12:33 art Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -39,3 +39,21 @@ int db_print_position(void);
 int db_printf(const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void db_end_line(int);
+
+/*
+ * This is a replacement for the non-standard %z, %n and %r printf formats
+ * in db_printf.
+ *
+ * db_format(buf, bufsize, val, format, alt, width)
+ *
+ * val is the value we want printed.
+ * format is one of DB_FORMAT_[ZRN]
+ * alt specifies if we should provide an "alternate" format (# in the printf
+ *   format).
+ * width is the field width. 0 is the same as no width specifier.
+ */
+#define DB_FORMAT_Z	1
+#define DB_FORMAT_R	2
+#define DB_FORMAT_N	3
+#define DB_FORMAT_BUF_SIZE	64	/* should be plenty for all formats */
+char *db_format(char *, size_t, long, int, int, int);
