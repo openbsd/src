@@ -4106,6 +4106,13 @@ for machine in $build $host $target; do
 			tmake_file=m88k/t-luna
 		fi
 		;;
+	m88k-*-openbsd*)
+		tm_file=m88k/openbsd.h
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		tmake_file=m88k/t-openbsd
+		xmake_file=x-openbsd
+		;;
 	m88k-*-sysv3*)
 		tm_file=m88k/sysv3.h
 		extra_parts="crtbegin.o crtend.o"
