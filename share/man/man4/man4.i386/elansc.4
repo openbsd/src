@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elansc.4,v 1.7 2003/08/07 08:33:10 markus Exp $
+.\"	$OpenBSD: elansc.4,v 1.8 2004/06/05 15:09:10 grange Exp $
 .\"	$NetBSD: elansc.4,v 1.1 2002/08/12 03:45:25 thorpej Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,15 +60,36 @@ driver:
 Watchdog timer.
 The watchdog timer may be configured for a 1 second, 2 second, 4 second,
 8 second, 16 second, or 32 second expiration period.
+.It
+Programmable Input/Output.
+The SC520 microcontroller supports 32 programmable I/O signals (PIOs)
+that can be used on the system board to monitor signals or control devices
+that are not handled by the other functions in the SC520 microcontroller.
+These signals can be programmed to be inputs or to be driven out
+.Dq high
+or
+.Dq low
+as outputs.
+Pins can be accessed through the
+.Xr gpio 4
+framework.
+The
+.Xr gpioctl 8
+program allows to easily manipulate pins from userland.
 .El
 .Sh SEE ALSO
 .Xr geodesc 4 ,
+.Xr gpio 4 ,
+.Xr intro 4 ,
+.Xr gpioctl 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 Support for the
 .Nm
 was added in
 .Ox 3.3 .
+PIO function support appeared in
+.Ox 3.6 .
 .Sh AUTHORS
 The
 .Nm
@@ -77,3 +98,5 @@ driver was written by
 .An Jasper Wallace
 provided the work-around for a hardware bug related to the watchdog timer
 in some steppings of the SC520 CPU.
+.An Alexander Yurchenko Aq grange@openbsd.org
+added support for the PIO function.
