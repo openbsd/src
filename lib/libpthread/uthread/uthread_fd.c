@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.15 2002/11/12 20:12:45 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.16 2003/01/19 21:22:31 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -269,8 +269,7 @@ void
 _thread_fd_unlock(int fd, int lock_type, const char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
-	return (_thread_fd_unlock_thread(curthread, fd, lock_type,
-					 fname, lineno));
+	_thread_fd_unlock_thread(curthread, fd, lock_type, fname, lineno);
 }
 
 /*
