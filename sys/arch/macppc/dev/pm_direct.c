@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.7 2002/06/07 07:14:48 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.8 2002/06/18 04:31:40 itojun Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -319,25 +319,25 @@ pm_receive_pm2(data)
 	rval = 0xffffcd34;
 
 	switch (1) {
-		default:
-			/* set VIA SR to input mode */
-			via_reg_or(VIA1, vACR, 0x0c);
-			via_reg_and(VIA1, vACR, ~0x10);
-			i = PM_SR();
+	default:
+		/* set VIA SR to input mode */
+		via_reg_or(VIA1, vACR, 0x0c);
+		via_reg_and(VIA1, vACR, ~0x10);
+		i = PM_SR();
 
-			PM_SET_STATE_ACKOFF();
-			if (pm_wait_busy((int)ADBDelay*32) != 0)
-				break;		/* timeout */
+		PM_SET_STATE_ACKOFF();
+		if (pm_wait_busy((int)ADBDelay*32) != 0)
+			break;		/* timeout */
 
-			PM_SET_STATE_ACKON();
-			rval = 0xffffcd33;
-			if (pm_wait_free((int)ADBDelay*32) == 0)
-				break;		/* timeout */
+		PM_SET_STATE_ACKON();
+		rval = 0xffffcd33;
+		if (pm_wait_free((int)ADBDelay*32) == 0)
+			break;		/* timeout */
 
-			*data = PM_SR();
-			rval = 0;
+		*data = PM_SR();
+		rval = 0;
 
-			break;
+		break;
 	}
 
 	PM_SET_STATE_ACKON();
@@ -410,69 +410,69 @@ pm_pmgrop_pm2(pmdata)
 		via1_vIER |= 0x80;
 
 	switch (pmdata->command) {
-		default:
-			/* wait until PM is free */
-			pm_cmd = (u_char)(pmdata->command & 0xff);
-			rval = 0xcd38;
-			if (pm_wait_free(ADBDelay * 4) == 0)
+	default:
+		/* wait until PM is free */
+		pm_cmd = (u_char)(pmdata->command & 0xff);
+		rval = 0xcd38;
+		if (pm_wait_free(ADBDelay * 4) == 0)
+			break;			/* timeout */
+
+		/* send PM command */
+		if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
+			break;				/* timeout */
+
+		/* send number of PM data */
+		num_pm_data = pmdata->num_data;
+		if (pm_send_cmd_type[pm_cmd] < 0) {
+			if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
+				break;		/* timeout */
+			pmdata->command = 0;
+		}			
+		/* send PM data */
+		pm_buf = (u_char *)pmdata->s_buf;
+		for (i = 0 ; i < num_pm_data; i++)
+			if ((rval = pm_send_pm2(pm_buf[i])) != 0)
 				break;			/* timeout */
-
-			/* send PM command */
-			if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
-				break;				/* timeout */
-
-			/* send number of PM data */
-			num_pm_data = pmdata->num_data;
-			if (pm_send_cmd_type[pm_cmd] < 0) {
-				if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
-					break;		/* timeout */
-				pmdata->command = 0;
-			}			
-			/* send PM data */
-			pm_buf = (u_char *)pmdata->s_buf;
-			for (i = 0 ; i < num_pm_data; i++)
-				if ((rval = pm_send_pm2(pm_buf[i])) != 0)
-					break;			/* timeout */
-			if (i != num_pm_data)
-				break;				/* timeout */
+		if (i != num_pm_data)
+			break;				/* timeout */
 
 
-			/* check if PM will send me data  */
-			pm_num_rx_data = pm_receive_cmd_type[pm_cmd];
-			pmdata->num_data = pm_num_rx_data;
-			if (pm_num_rx_data == 0) {
-				rval = 0;
-				break;				/* no return data */
-			}
-
-			/* receive PM command */
-			pm_data = pmdata->command;
-			pm_num_rx_data--;
-			if (pm_num_rx_data == 0)
-				if ((rval = pm_receive_pm2(&pm_data)) != 0) {
-					rval = 0xffffcd37;
-					break;
-				}
-			pmdata->command = pm_data;
-
-			/* receive number of PM data */
-			if (pm_num_rx_data < 0) {
-				if ((rval = pm_receive_pm2(&pm_data)) != 0)
-					break;		/* timeout */
-				num_pm_data = pm_data;
-			} else
-				num_pm_data = pm_num_rx_data;
-			pmdata->num_data = num_pm_data;
-
-			/* receive PM data */
-			pm_buf = (u_char *)pmdata->r_buf;
-			for (i = 0; i < num_pm_data; i++) {
-				if ((rval = pm_receive_pm2(&pm_data)) != 0)
-					break;			/* timeout */
-				pm_buf[i] = pm_data;
-			}
-
+		/* check if PM will send me data  */
+		pm_num_rx_data = pm_receive_cmd_type[pm_cmd];
+		pmdata->num_data = pm_num_rx_data;
+		if (pm_num_rx_data == 0) {
 			rval = 0;
+			break;				/* no return data */
+		}
+
+		/* receive PM command */
+		pm_data = pmdata->command;
+		pm_num_rx_data--;
+		if (pm_num_rx_data == 0)
+			if ((rval = pm_receive_pm2(&pm_data)) != 0) {
+				rval = 0xffffcd37;
+				break;
+			}
+		pmdata->command = pm_data;
+
+		/* receive number of PM data */
+		if (pm_num_rx_data < 0) {
+			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+				break;		/* timeout */
+			num_pm_data = pm_data;
+		} else
+			num_pm_data = pm_num_rx_data;
+		pmdata->num_data = num_pm_data;
+
+		/* receive PM data */
+		pm_buf = (u_char *)pmdata->r_buf;
+		for (i = 0; i < num_pm_data; i++) {
+			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+				break;			/* timeout */
+			pm_buf[i] = pm_data;
+		}
+
+		rval = 0;
 	}
 
 	/* restore former value */
@@ -512,30 +512,30 @@ pm_intr_pm2()
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
-		case 0x00:			/* 1 sec interrupt? */
-			break;
-		case 0x80:			/* 1 sec interrupt? */
-			break;
-		case 0x08:			/* Brightness/Contrast button on LCD panel */
-			break;
-		case 0x10:			/* ADB data that were requested by TALK command */
-		case 0x14:
-			pm_adb_get_TALK_result(&pmdata);
-			break;
-		case 0x16:			/* ADB device event */
-		case 0x18:
-		case 0x1e:
-		case PMU_INT_WAKEUP:
-			pm_adb_get_ADB_data(&pmdata);
-			break;
-		default:
+	case 0x00:		/* 1 sec interrupt? */
+		break;
+	case 0x80:		/* 1 sec interrupt? */
+		break;
+	case 0x08:		/* Brightness/Contrast button on LCD panel */
+		break;
+	case 0x10:		/* ADB data that were requested by TALK command */
+	case 0x14:
+		pm_adb_get_TALK_result(&pmdata);
+		break;
+	case 0x16:		/* ADB device event */
+	case 0x18:
+	case 0x1e:
+	case PMU_INT_WAKEUP:
+		pm_adb_get_ADB_data(&pmdata);
+		break;
+	default:
 #ifdef ADB_DEBUG
-			if (adb_debug)
-				pm_printerr("driver does not support this event.",
-				    pmdata.data[2], pmdata.num_data,
-				    pmdata.data);
+		if (adb_debug)
+			pm_printerr("driver does not support this event.",
+			    pmdata.data[2], pmdata.num_data,
+			    pmdata.data);
 #endif
-			break;
+		break;
 	}
 
 	splx(s);
@@ -892,26 +892,26 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 	info->flags = p.data[1];
 
 	switch (p.data[0]) {
-	        case 3:
-	        case 4:
-			info->cur_charge = p.data[2];
-			info->max_charge = p.data[3];
-			info->draw = *((signed char *)&p.data[4]);
-			info->voltage = p.data[5];
-			break;
-	        case 5:
-			info->cur_charge = ((p.data[2] << 8) | (p.data[3]));
-			info->max_charge = ((p.data[4] << 8) | (p.data[5]));
-			info->draw = *((signed short *)&p.data[6]);
-			info->voltage = ((p.data[8] << 8) | (p.data[7]));
-			break;
-	        default:
-			/* XXX - Error condition */
-			info->cur_charge = 0;
-			info->max_charge = 0;
-			info->draw = 0;
-			info->voltage = 0;
-			break;
+	case 3:
+	case 4:
+		info->cur_charge = p.data[2];
+		info->max_charge = p.data[3];
+		info->draw = *((signed char *)&p.data[4]);
+		info->voltage = p.data[5];
+		break;
+	case 5:
+		info->cur_charge = ((p.data[2] << 8) | (p.data[3]));
+		info->max_charge = ((p.data[4] << 8) | (p.data[5]));
+		info->draw = *((signed short *)&p.data[6]);
+		info->voltage = ((p.data[8] << 8) | (p.data[7]));
+		break;
+	default:
+		/* XXX - Error condition */
+		info->cur_charge = 0;
+		info->max_charge = 0;
+		info->draw = 0;
+		info->voltage = 0;
+		break;
 	}
 
 	return 1;
