@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: binstall.sh,v 1.4 1996/08/11 09:13:21 downsj Exp $
 #	$NetBSD: binstall.sh,v 1.3 1996/04/07 20:00:12 thorpej Exp $
 #
 
@@ -106,7 +107,7 @@ case $WHAT in
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.netbsd.$KARCH
+	TARGET=$DEST/boot.sparc.openbsd.$KARCH
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
 	;;
