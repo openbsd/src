@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.74 2000/06/18 07:13:50 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.75 2000/06/18 07:30:45 itojun Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -143,6 +143,8 @@ ip_output(m0, va_alist)
 	imo = va_arg(ap, struct ip_moptions *);
 #ifdef IPSEC
 	inp = va_arg(ap, struct inpcb *);
+	if (inp && (inp->inp_flags & INP_IPV6) != 0)
+		panic("ip_output: IPv6 pcb is passed");
 #endif /* IPSEC */
 	va_end(ap);
 
