@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.34 2004/04/08 16:08:21 henning Exp $
+.\"	$OpenBSD: queue.3,v 1.35 2004/06/03 14:16:33 jfb Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -181,9 +181,9 @@
 .Ft void
 .Fn SIMPLEQ_INSERT_TAIL "SIMPLEQ_HEAD *head" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Ft void
-.Fn SIMPLEQ_INSERT_AFTER "struct TYPE *listelm" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
+.Fn SIMPLEQ_INSERT_AFTER "SIMPLEQ_HEAD *head" "struct TYPE *listelm" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Ft void
-.Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "struct TYPE *elm" "SIMPLEQ_ENTRY NAME"
+.Fn SIMPLEQ_REMOVE_HEAD "SIMPLEQ_HEAD *head" "SIMPLEQ_ENTRY NAME"
 .Pp
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
@@ -722,7 +722,7 @@ n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
 SIMPLEQ_INSERT_HEAD(&head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
-SIMPLEQ_INSERT_AFTER(n1, n2, entries);
+SIMPLEQ_INSERT_AFTER(&head, n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert at the tail. */
 SIMPLEQ_INSERT_TAIL(&head, n1, entries);
@@ -731,7 +731,7 @@ for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
 while ((n1 = SIMPLEQ_FIRST(&head)) != NULL)
-	SIMPLEQ_REMOVE_HEAD(&head, n1, entries);
+	SIMPLEQ_REMOVE_HEAD(&head, entries);
 .Ed
 .Sh TAIL QUEUES
 A tail queue is headed by a structure defined by the
