@@ -1,9 +1,10 @@
-/*	$OpenBSD: exchange.c,v 1.31 2000/08/03 07:25:24 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.129 2000/07/20 15:29:17 provos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.32 2000/10/07 06:57:43 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.132 2000/10/06 23:36:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -813,6 +814,8 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  exchange_free (exchange);
 	  return;
 	}
+      else
+        sa_reference (msg->isakmp_sa);
     }
 
   msg->extra = args;
@@ -922,6 +925,7 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
     }
 
   msg = message_alloc (isakmp_sa->transport, 0, ISAKMP_HDR_SZ);
+  sa_reference (isakmp_sa);
   msg->isakmp_sa = isakmp_sa;
   
   msg->extra = args;
