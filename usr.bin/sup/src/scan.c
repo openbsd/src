@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.13 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: scan.c,v 1.14 2003/04/30 21:34:47 vincent Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1006,7 +1006,7 @@ recordone(t,v)
 		fprintf(scanF, "B");
 	if (t->Tflags&FNOACCT)
 		fprintf(scanF, "N");
-	strvis(fname, t->Tname, VIS_WHITE);
+	strnvis(fname, t->Tname, sizeof fname, VIS_WHITE);
 	fprintf(scanF, "%o %d %d %s\n", t->Tmode, t->Tctime, t->Tmtime, fname);
 	(void) Tprocess(t->Texec, recordexec, scanF);
 	return (SCMOK);
