@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.3 1999/08/19 06:14:44 d Exp $	*/
+/*	$OpenBSD: rln.c,v 1.4 1999/08/21 16:42:06 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -111,7 +111,7 @@ rlnconfig(sc)
 	for (i = 0; i < RLN_NMBOX; i++)
 		sc->sc_mbox[i].mb_state = RLNMBOX_VOID;
 
-	/* Keep the sys admin informed. */
+	/* Probe for some properties. */
 	printf(", %s-piece", 
 	    (sc->sc_cardtype & RLN_CTYPE_ONE_PIECE) ? "one" : "two");
 	if (sc->sc_cardtype & RLN_CTYPE_OEM)
@@ -189,10 +189,8 @@ rlninit(sc)
 	}
 #if 0
 	rln_roamconfig(sc);
-	/* rln_lockprom(sc); */		/* XXX error? */
-
+	/* rln_lockprom(sc); */
 	/* SendSetITO() */
-
 	rln_multicast(sc, 1);
 	rln_roam(sc);
 
@@ -237,6 +235,8 @@ rlnstart(ifp)
 		dprintf(" nosync]");
 		return;
 	}
+
+	rln_enable(sc, 1);
 
     startagain:
 	IF_DEQUEUE(&ifp->if_snd, m0);
@@ -324,7 +324,7 @@ rln_transmit(sc, m0, len, pad)
 	cmd.xxx2 = 0;
 	cmd.xxx3 = 0;
 
-	/* A unique packet-level sequence number. XXX related to sc_seq? */
+	/* A unique packet-level sequence number, independent of sc_seq. */
 	cmd.sequence = sc->sc_txseq;
 	sc->sc_txseq++;
 	if (sc->sc_txseq > RLN_MAXSEQ)
@@ -346,7 +346,7 @@ rln_transmit(sc, m0, len, pad)
 #endif
 	rln_msg_tx_data(sc, &cmd, sizeof cmd, &state);
 
-	/* XXX do we need to add trailer information here??? */
+	/* XXX do we need to insert a hardware header here??? */
 
 	/* Follow the header immediately with the packet payload */
 	actlen = 0;
@@ -354,10 +354,11 @@ rln_transmit(sc, m0, len, pad)
 		if (m->m_len) {
 #ifdef RLNDUMP
 			RLNDUMPHEX(mtod(m, void *), m->m_len);
-			printf("|");
 #endif
 			rln_msg_tx_data(sc, mtod(m, void *), m->m_len, &state);
 		}
+		if (m->m_next)
+			printf("|");
 		actlen += m->m_len;
 	}
 #ifdef DIAGNOSTIC
@@ -465,7 +466,7 @@ rlnsoftintr(arg)
 #ifdef DIAGNOSTIC
 			printf("%s: protocol error\n", sc->sc_dev.dv_xname);
 #endif
-			DELAY(100 * 1000);	/* XXX */
+			DELAY(100 * 1000);	/* Woah, baby. */
 			rln_clear_nak(sc);
 		} else {
 #ifdef DIAGNOSTIC
@@ -475,10 +476,7 @@ rlnsoftintr(arg)
 		}
 	}
 
-	/* Some cards need this? */
 	rln_eoi(sc);
-
-	/* Re-enable card. */
 	rln_enable(sc, 1);
 
 	dprintf(")");
@@ -584,14 +582,31 @@ rlnread(sc, hdr, len)
 			    sc->sc_dev.dv_xname);
 		}
 #endif
-		/* XXX Jean's driver dealt with RFC893 trailers here */
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 		/* Split the ether header from the mbuf */
 		eh = mtod(m, struct ether_header *);
-		m_adj(m, sizeof (struct ether_header));
+		m_adj(m, sizeof *eh);
+
+#ifdef RLNDUMP
+		{
+			struct mbuf *n;
+
+			printf("m=<%s,", ether_sprintf(eh->ether_dhost));
+			printf("%s,%04x|", ether_sprintf(eh->ether_shost),
+			    ntohs(eh->ether_type));
+			for (n = m; n; n = n->m_next)	{
+				if (n->m_len)
+					RLNDUMPHEX(mtod(n, void *), n->m_len);
+				if (n->m_next)
+					printf("|");
+			}
+			printf(">\n");
+		}
+#endif
 		ether_input(ifp, eh, m);
 		return;
 	}
@@ -745,6 +760,10 @@ rlnget(sc, hdr, totlen)
 		goto drop;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
+	/*
+	 * Insert some leading padding in the mbuf, so that payload data is
+	 * aligned.
+	 */
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
 	len = MHLEN - pad;
@@ -855,8 +874,6 @@ rlnioctl(ifp, cmd, data)
 			}
 		}
 
-		/* XXX Deal with other flag changes? */
-
 		if (need_init)
 			rlninit(sc);
 
@@ -895,9 +912,8 @@ rlnstop(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	dprintf(" [stop]");
-	/* XXX Should kill interrupts? */
-	/* rln_enable(sc, 0); */
 	ifp->if_flags &= ~IFF_RUNNING;
+	rln_enable(sc, 0);
 }
 
 /* Get MAC address from card. */
@@ -1168,5 +1184,53 @@ rln_standby(sc)
 	standby.xxx = 0;
 	if (rln_msg_txrx(sc, &ito, sizeof ito, NULL, 0))
 		return (-1);
+}
+
+void
+rln_crypt(userkey, cardkey)
+	char *userkey;		/* User's string (max 20 chars). */
+	u_int8_t *cardkey;	/* 20 bits (3 bytes) */
+{
+	/*
+	 * From <http://www.proxim.com/learn/whiteppr/rl2security.shtml> 
+	 * "RangeLAN2 Security Features":
+	 *
+         *  The Security ID is a unique, 20 character alphanumeric
+         *  string defined and configured by the user. It must be
+         *  identically configured in every radio intended to
+         *  communicate with others in the same network. Once
+         *  configured, the Security ID is reduced to 20 bits by a
+         *  proprietary algorithm confidential to Proxim. It is
+         *  merged with the radio MAC address (a 12 character field
+         *  unique to every radio), scrambled and stored using another
+         *  proprietary, confidential algorithm.
+	 */
+        int32_t key;
+        int8_t ret;
+        int i;
+	int len;
+	int32_t multiplicand = 0x80000181;
+	int64_t res;
+
+	/* 
+	 * This algorithm is `compatible' with Proxim's first
+	 * `proprietary confidential algorithm': i.e., it appears
+	 * to be functionally identical.
+	 */
+	len = strlen(s);
+        key = 0x030201;
+        for (i = 0; i < len; i++) {
+
+                key *= userkey[i];
+                res = (int64_t)multiplicand * key;
+                key = key - 0xfffffd * 
+		    (((key + (int32_t)(res >> 32)) >> 23) - (key >> 31));
+        }
+
+        cardkey[0] = (key >> 16) & 0xff;
+        cardkey[1] = (key >> 8) & 0xff;
+        cardkey[2] = key & 0xff;
+
+	cardkey[0] |= 0x03; 	/* Restrict key space by 2 bits. */
 }
 #endif
