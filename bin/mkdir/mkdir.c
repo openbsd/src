@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.8 1998/09/26 09:04:43 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.9 2000/02/02 05:09:01 ericj Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.8 1998/09/26 09:04:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.9 2000/02/02 05:09:01 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,19 @@ main(argc, argv)
 			if (mkdir(*argv, mode) < 0) {
 				warn("%s", *argv);
 				exitval = 1;
-			}
+		 	} else {
+                       		/*
+                 		 * The mkdir() and umask() calls both honor only the low
+                 		 * nine bits, so if you try to set a mode including the
+                 		 * sticky, setuid, setgid bits you lose them.  Don't do
+                 		 * this unless the user has specifically requested a mode
+                 		 * as chmod will (obviously) ignore the umask.
+                 		 */
+				if (mode > 0777 && chmod(*argv, mode) == -1) {
+					warn("%s", *argv);
+					exitval = 1;
+				}
+			}	
 		}
 	}
 	exit(exitval);
