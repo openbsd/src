@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.17 2001/06/26 19:43:14 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.18 2001/06/26 20:50:26 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -66,6 +66,7 @@ struct pf_rule {
 
 	u_int8_t	 flags;
 	u_int8_t	 flagset;
+	u_int16_t	 nr;
 };
 
 struct pf_state_host {

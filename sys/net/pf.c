@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.60 2001/06/26 20:06:36 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.61 2001/06/26 20:50:26 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -645,7 +645,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCADDRULE: {
 		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_rule *rule;
+		struct pf_rule *rule, *tail;
 
 		if (pr->ticket != ticket_rules_inactive) {
 			error = EBUSY;
@@ -657,6 +657,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
+		tail = TAILQ_LAST(pf_rules_inactive, pf_rulequeue);
+		rule->nr = tail ? tail->nr + 1 : 0;
 		rule->ifp = NULL;
 		if (rule->ifname[0]) {
 			rule->ifp = ifunit(rule->ifname);
