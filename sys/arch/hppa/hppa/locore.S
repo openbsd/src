@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.81 2002/08/27 16:29:22 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.82 2002/09/05 18:15:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -343,9 +343,6 @@ LEAF_ENTRY($kernel_setup)
 	stw,ma	r0, HPPA_FRAME_SIZE(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
 	stw	r0, HPPA_FRAME_PSP(sp)
-	copy	r3, r1
-	copy	sp, r3
-	stw,ma	r1, HPPA_FRAME_SIZE(sp)
 
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
