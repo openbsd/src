@@ -161,6 +161,8 @@ do {									\
     rs6000_current_abi = ABI_NT;					\
   else if (!strcmp (rs6000_abi_name, "linux"))				\
     rs6000_current_abi = ABI_V4;					\
+  else if (!strcmp (rs6000_abi_name, "openbsd"))			\
+    rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "solaris"))			\
     rs6000_current_abi = ABI_SOLARIS;					\
   else									\
@@ -959,7 +961,8 @@ do {									\
 %{memb} %{!memb: %{msdata: -memb} %{msdata=eabi: -memb}} \
 %{mlittle} %{mlittle-endian} %{mbig} %{mbig-endian} \
 %{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: \
-    %{mcall-solaris: -mlittle -msolaris} %{mcall-linux: -mbig} }}}}"
+    %{mcall-solaris: -mlittle -msolaris} %{mcall-linux: -mbig} \
+    %{mcall-openbsd: -mbig} }}}}"
 
 #undef CC1_SPEC
 /* Pass -G xxx to the compiler and set correct endian mode */
@@ -968,6 +971,7 @@ do {									\
     %{mcall-nt: -mlittle } \
     %{mcall-aixdesc: -mbig } \
     %{mcall-solaris: -mlittle } \
+    %{mcall-openbsd: -mbig} \
     %{mcall-linux: -mbig} }}}} \
 %{mcall-solaris: -mregnames } \
 %{mno-sdata: -msdata=none } \
@@ -975,6 +979,7 @@ do {									\
 %{!meabi: %{!mno-eabi: \
     %{mrelocatable: -meabi } \
     %{mcall-solaris: -mno-eabi } \
+    %{mcall-openbsd: -mno-eabi } \
     %{mcall-linux: -mno-eabi }}} \
 %{msdata: -msdata=default} \
 %{mno-sdata: -msdata=none}"
@@ -1005,8 +1010,9 @@ do {									\
 %{mmvme: %(link_start_mvme) } \
 %{msim: %(link_start_sim) } \
 %{mcall-linux: %(link_start_linux) } \
+%{mcall-openbsd: %(link_start_openbsd) } \
 %{mcall-solaris: %(link_start_solaris) } \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_start_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!mcall-openbsd: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_start_default) }}}}}}}"
 #endif
 
 #ifndef	LINK_START_DEFAULT_SPEC
@@ -1062,8 +1068,9 @@ do {									\
 %{mmvme: %(link_os_mvme) } \
 %{msim: %(link_os_sim) } \
 %{mcall-linux: %(link_os_linux) } \
+%{mcall-openbsd: %(link_os_openbsd) } \
 %{mcall-solaris: %(link_os_solaris) } \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_os_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mmvme: %{!mcall-openbsd: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(link_os_default) }}}}}}}"
 #endif
 
 #ifndef	LINK_OS_DEFAULT_SPEC
@@ -1106,8 +1113,9 @@ do {									\
     %{mcall-solaris: %(cpp_endian_solaris) } \
     %{mcall-nt: %(cpp_endian_little) } \
     %{mcall-linux: %(cpp_endian_big) } \
+    %{mcall-openbsd: %(cpp_endian_big) } \
     %{mcall-aixdesc:  %(cpp_endian_big) } \
-    %{!mcall-solaris: %{!mcall-linux: %{!mcall-nt: %{!mcall-aixdesc: %(cpp_endian_default) }}}}}}}}"
+    %{!mcall-solaris: %{!mcall-openbsd: %{!mcall-linux: %{!mcall-nt: %{!mcall-aixdesc: %(cpp_endian_default) }}}}}}}}}"
 
 #undef	CPP_ENDIAN_DEFAULT_SPEC
 #define	CPP_ENDIAN_DEFAULT_SPEC "%(cpp_endian_big)"
@@ -1119,8 +1127,9 @@ do {									\
 %{mmvme: %(cpp_os_mvme) } \
 %{msim: %(cpp_os_sim) } \
 %{mcall-linux: %(cpp_os_linux) } \
+%{mcall-openbsd: %(cpp_os_openbsd) } \
 %{mcall-solaris: %(cpp_os_solaris) } \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(cpp_os_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mcall-openbsd: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(cpp_os_default) }}}}}}}"
 
 #ifndef CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC ""
@@ -1133,8 +1142,9 @@ do {									\
 %{mmvme: %(startfile_mvme) } \
 %{msim: %(startfile_sim) } \
 %{mcall-linux: %(startfile_linux) } \
+%{mcall-openbsd: %(startfile_openbsd) } \
 %{mcall-solaris: %(startfile_solaris) } \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(startfile_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mcall-openbsd: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(startfile_default) }}}}}}}"
 
 #undef	STARTFILE_DEFAULT_SPEC
 #define	STARTFILE_DEFAULT_SPEC ""
@@ -1146,8 +1156,9 @@ do {									\
 %{mmvme: %(lib_mvme) } \
 %{msim: %(lib_sim) } \
 %{mcall-linux: %(lib_linux) } \
+%{mcall-openbsd: %(lib_openbsd) } \
 %{mcall-solaris: %(lib_solaris) } \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(lib_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mcall-openbsd: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(lib_default) }}}}}}}"
 
 #undef	LIBGCC_SPEC
 #define	LIBGCC_SPEC "libgcc.a%s"
@@ -1163,8 +1174,9 @@ do {									\
 %{mmvme: ecrtn.o%s} \
 %{msim: ecrtn.o%s} \
 %{mcall-linux: } \
+%{mcall-openbsd: } \
 %{mcall-solaris: scrtn.o%s} \
-%{!mads: %{!myellowknife: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(endfile_default) }}}}}}"
+%{!mads: %{!myellowknife: %{!mcall-openbsd: %{!mmvme: %{!msim: %{!mcall-linux: %{!mcall-solaris: %(endfile_default) }}}}}}}"
 
 #undef	ENDFILE_DEFAULT_SPEC
 #define	ENDFILE_DEFAULT_SPEC ""
@@ -1305,6 +1317,44 @@ do {									\
 #define CPP_OS_LINUX_SPEC ""
 #endif
 
+/* OpenBSD support.  */
+#ifndef	LIB_OPENBSD_SPEC
+#define LIB_OPENBSD_SPEC "%{mnewlib: --start-group -lopenbsd -lc --end-group } %{!mnewlib: -lc }"
+#endif
+
+#ifndef	STARTFILE_OPENBSD_SPEC
+#define	STARTFILE_OPENBSD_SPEC "\
+%{!shared: %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} %{!p:crt1.o%s}}} \
+%{mnewlib: ecrti.o%s} \
+%{!mnewlib: %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}}"
+#endif
+/*
+%{!mnewlib: crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}}"
+*/
+
+#ifndef	ENDFILE_OPENBSD_SPEC
+#define	ENDFILE_OPENBSD_SPEC "\
+%{mnewlib: ecrtn.o%s} \
+%{!mnewlib: %{!shared:crtend.o%s} %{shared:crtendS.o%s}}"
+#endif
+/*
+%{!mnewlib: %{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s}"
+*/
+
+#ifndef LINK_START_OPENBSD_SPEC
+#define LINK_START_OPENBSD_SPEC "-Ttext 0x400074"
+#endif
+
+#ifndef LINK_OS_OPENBSD_SPEC
+#define LINK_OS_OPENBSD_SPEC ""
+#endif
+
+#ifndef CPP_OS_OPENBSD_SPEC
+#define CPP_OS_OPENBSD_SPEC "-D__unix__ -D__OpenBSD__ \
+%{!ansi: -Dunix } \
+-Asystem(unix) -Asystem(OpenBSD)"
+#endif
+
 /* Solaris support.  */
 /* For Solaris, Gcc automatically adds in one of the files
    /usr/ccs/lib/values-Xc.o, /usr/ccs/lib/values-Xa.o, or
@@ -1368,6 +1418,7 @@ do {									\
   { "lib_mvme",			LIB_MVME_SPEC },			\
   { "lib_sim",			LIB_SIM_SPEC },				\
   { "lib_linux",		LIB_LINUX_SPEC },			\
+  { "lib_openbsd",		LIB_OPENBSD_SPEC },			\
   { "lib_solaris",		LIB_SOLARIS_SPEC },			\
   { "lib_default",		LIB_DEFAULT_SPEC },			\
   { "startfile_ads",		STARTFILE_ADS_SPEC },			\
@@ -1375,6 +1426,7 @@ do {									\
   { "startfile_mvme",		STARTFILE_MVME_SPEC },			\
   { "startfile_sim",		STARTFILE_SIM_SPEC },			\
   { "startfile_linux",		STARTFILE_LINUX_SPEC },			\
+  { "startfile_openbsd",	STARTFILE_OPENBSD_SPEC },		\
   { "startfile_solaris",	STARTFILE_SOLARIS_SPEC },		\
   { "startfile_default",	STARTFILE_DEFAULT_SPEC },		\
   { "endfile_ads",		ENDFILE_ADS_SPEC },			\
@@ -1382,6 +1434,7 @@ do {									\
   { "endfile_mvme",		ENDFILE_MVME_SPEC },			\
   { "endfile_sim",		ENDFILE_SIM_SPEC },			\
   { "endfile_linux",		ENDFILE_LINUX_SPEC },			\
+  { "endfile_openbsd",		ENDFILE_OPENBSD_SPEC },			\
   { "endfile_solaris",		ENDFILE_SOLARIS_SPEC },			\
   { "endfile_default",		ENDFILE_DEFAULT_SPEC },			\
   { "link_path",		LINK_PATH_SPEC },			\
@@ -1393,6 +1446,7 @@ do {									\
   { "link_start_mvme",		LINK_START_MVME_SPEC },			\
   { "link_start_sim",		LINK_START_SIM_SPEC },			\
   { "link_start_linux",		LINK_START_LINUX_SPEC },		\
+  { "link_start_openbsd",	LINK_START_OPENBSD_SPEC },		\
   { "link_start_solaris",	LINK_START_SOLARIS_SPEC },		\
   { "link_start_default",	LINK_START_DEFAULT_SPEC },		\
   { "link_os",			LINK_OS_SPEC },				\
@@ -1401,6 +1455,7 @@ do {									\
   { "link_os_mvme",		LINK_OS_MVME_SPEC },			\
   { "link_os_sim",		LINK_OS_SIM_SPEC },			\
   { "link_os_linux",		LINK_OS_LINUX_SPEC },			\
+  { "link_os_openbsd",		LINK_OS_OPENBSD_SPEC },			\
   { "link_os_solaris",		LINK_OS_SOLARIS_SPEC },			\
   { "link_os_default",		LINK_OS_DEFAULT_SPEC },			\
   { "cpp_endian_big",		CPP_ENDIAN_BIG_SPEC },			\
@@ -1411,6 +1466,7 @@ do {									\
   { "cpp_os_mvme",		CPP_OS_MVME_SPEC },			\
   { "cpp_os_sim",		CPP_OS_SIM_SPEC },			\
   { "cpp_os_linux",		CPP_OS_LINUX_SPEC },			\
+  { "cpp_os_openbsd",		CPP_OS_OPENBSD_SPEC },			\
   { "cpp_os_solaris",		CPP_OS_SOLARIS_SPEC },			\
   { "cpp_os_default",		CPP_OS_DEFAULT_SPEC },
 
