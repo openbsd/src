@@ -30,7 +30,7 @@
 #ifndef _MACHINE_EXEC_H_
 #define _MACHINE_EXEC_H_
 
-#define __LDPGSZ	4096
+#define __LDPGSZ	8192
 
 /* Relocation format. */
 struct relocation_info_m68k {
@@ -45,5 +45,12 @@ struct relocation_info_m68k {
 			  r_copy :  1;	/* run time copy */
 };
 #define relocation_info	relocation_info_m68k
+
+#define ELF_TARG_CLASS		ELFCLASS32
+#define ELF_TARG_DATA		ELFDATA2MSB
+#define ELF_TARG_MACH		EM_68K
+
+#define DO_AOUT			/* support a.out */
+#define DO_ELF			/* support ELF */
 
 #endif  /* _MACHINE_EXEC_H_ */

@@ -49,7 +49,7 @@
 #define	MACHINE		"hp300"
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
-#define	MID_MACHINE	MID_M68K4K
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

@@ -1634,6 +1634,11 @@ cpu_exec_aout_makecmds(p, epp)
 	midmag = mid << 16 | magic;
 
 	switch (midmag) {
+#if defined(COMPAT_M68K4K)
+	case (MID_M68K4K << 16) | ZMAGIC:
+		error = cpu_exec_aout_prep_m68k4k(p, epp);
+		break;
+#endif
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
@@ -1653,3 +1658,50 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 #endif
 }
+
+#if defined(COMPAT_M68K4K)
+int
+cpu_exec_aout_prep_m68k4k(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct exec *execp = epp->ep_hdr;
+
+	epp->ep_taddr = 4096;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+
+	/*
+	 * check if vnode is in open for writing, because we want to
+	 * demand-page out of it.  if it is, don't do it, for various
+	 * reasons
+	 */
+	if ((execp->a_text != 0 || execp->a_data != 0) &&
+	    epp->ep_vp->v_writecount != 0) {
+#ifdef DIAGNOSTIC
+		if (epp->ep_vp->v_flag & VTEXT)
+			panic("exec: a VTEXT vnode has writecount != 0\n");
+#endif
+		return ETXTBSY;
+	}
+	epp->ep_vp->v_flag |= VTEXT;
+
+	/* set up command for text segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, 0, VM_PROT_READ|VM_PROT_EXECUTE);
+
+	/* set up command for data segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, execp->a_text,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/* set up command for bss segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, NULLVP, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	return exec_aout_setup_stack(p, epp);
+}
+#endif /* COMPAT_M68K4K */
