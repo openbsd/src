@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.h,v 1.10 2000/10/10 14:24:32 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.22 2000/08/03 15:25:16 jinmei Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.11 2000/10/10 15:53:07 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.23 2000/10/10 15:35:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

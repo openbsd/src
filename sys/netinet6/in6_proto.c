@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_proto.c,v 1.24 2000/10/10 14:23:34 itojun Exp $	*/
-/*	$KAME: in6_proto.c,v 1.64 2000/06/20 16:20:27 itojun Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.25 2000/10/10 15:53:09 itojun Exp $	*/
+/*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
