@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.32 2003/05/16 17:18:14 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.33 2003/05/30 00:15:36 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1026,11 +1026,22 @@ psycho_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
+	u_int dev;
 	u_int ino;
 
 	ino = *ihp;
 
 	if ((ino & ~INTMAP_PCIINT) == 0) {
+		/*
+		 * This deserves some documentation.  Should anyone
+		 * have anything official looking, please speak up.
+		 */
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+		    pp->pp_id == PSYCHO_PBM_B)
+			dev = pa->pa_device - 2;
+		else
+			dev = pa->pa_device - 1;
+
 		if (ino == 0 || ino > 4) {
 			u_int32_t intreg;
 
@@ -1045,7 +1056,7 @@ psycho_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 				
 		ino |= sc->sc_ign;
 		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
-		ino |= ((pa->pa_device - 1) << 2) & INTMAP_PCISLOT;
+		ino |= (dev << 2) & INTMAP_PCISLOT;
 			
 		*ihp = ino;
 	}
