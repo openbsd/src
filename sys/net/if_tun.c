@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.52 2003/12/03 14:53:04 markus Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.53 2003/12/06 09:16:38 markus Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -131,7 +131,9 @@ int	tunwrite(dev_t, struct uio *, int);
 int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
 int	tun_clone_create(struct if_clone *, int);
+void	tun_clone_destroy(struct ifnet *);
 struct	tun_softc *tun_lookup(int);
+void	tun_wakeup(struct tun_softc *);
 
 static int tuninit(struct tun_softc *);
 #ifdef ALTQ
@@ -151,7 +153,7 @@ struct filterops tunwrite_filtops =
 LIST_HEAD(, tun_softc) tun_softc_list;
 
 struct if_clone tun_cloner =
-    IF_CLONE_INITIALIZER("tun", tun_clone_create, NULL);
+    IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
 void
 tunattach(n)
@@ -205,11 +207,31 @@ tun_clone_create(ifc, unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	s = splnet();
+	s = splimp();
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
 	splx(s);
 
 	return (0);
+}
+
+void
+tun_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct tun_softc *tp = ifp->if_softc;
+	int s;
+
+	s = splimp();
+	LIST_REMOVE(tp, tun_list);
+	splx(s);
+
+	tun_wakeup(tp);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+
+	free(tp, M_DEVBUF);
 }
 
 struct tun_softc *
@@ -474,6 +496,14 @@ tun_output(ifp, m0, dst, rt)
 	ifp->if_opackets++;
 	ifp->if_obytes += len;
 
+	tun_wakeup(tp);
+	return 0;
+}
+
+void
+tun_wakeup(tp)
+	struct tun_softc *tp;
+{
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
@@ -483,7 +513,6 @@ tun_output(ifp, m0, dst, rt)
 		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
 	KNOTE(&tp->tun_rsel.si_note, 0);
-	return 0;
 }
 
 /*
@@ -951,16 +980,7 @@ tunstart(ifp)
 		return;
 
 	IFQ_POLL(&ifp->if_snd, m);
-	if (m != NULL) {
-		if (tp->tun_flags & TUN_RWAIT) {
-			tp->tun_flags &= ~TUN_RWAIT;
-			wakeup((caddr_t)tp);
-		}
-		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-			csignal(tp->tun_pgid, SIGIO,
-			    tp->tun_siguid, tp->tun_sigeuid);
-		selwakeup(&tp->tun_rsel);
-		KNOTE(&tp->tun_rsel.si_note, 0);
-	}
+	if (m != NULL)
+		tun_wakeup(tp);
 }
 #endif
