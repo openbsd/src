@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.3 1997/06/17 15:34:29 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.4 1997/06/20 04:17:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.3 1997/06/17 15:34:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.4 1997/06/20 04:17:42 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <stdio.h>
@@ -85,17 +85,7 @@ main(argc, argv)
 	}
 
 	if (makedir) {
-		for (c = 0; c < 100; c++) {
-			if (mktemp(template) == NULL)
-				if (qflag)
-					exit(1);
-				else
-					err(1, "Cannot create temp dir %s",
-					    template);
-			if (mkdir(template, 0700) == 0)
-				break;
-		}
-		if (c >= 100) {
+		if (mkdtemp(template) == NULL) {
 			if (qflag)
 				exit(1);
 			else
