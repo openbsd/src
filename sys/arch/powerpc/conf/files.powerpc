@@ -42,6 +42,13 @@ file    arch/powerpc/powerpc/db_trace.c                 ddb
 file    arch/powerpc/powerpc/ofwreal.S
 
 #
+# MAC generic
+#
+file	arch/powerpc/mac/dbdma.c
+define macintr
+file	arch/powerpc/mac/macintr.c			macintr
+
+#
 # Openfirmware support
 #
 
@@ -61,7 +68,7 @@ major	{ ofdisk = 4 }
 pseudo-device rd
 major   {rd = 17}
 
-include	"../../../dev/pci/files.pci"
+include "dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
@@ -76,7 +83,7 @@ major	{cd = 3}
 
 define	pcmcia {}			# XXX dummy decl...
 include	"../../../dev/isa/files.isa"
-major	{ wd = 5 }		# Not even in bdevsw XXX
+#major	{ wd = 5 }		# Not even in bdevsw XXX
 
 device	pckbc { } 
 attach	pckbc at isa
@@ -94,7 +101,118 @@ include "../../../dev/isa/files.isapnp"
 file    arch/powerpc/isa/isapnp_machdep.c   isapnp   
 
 #
-# "wprkstation cpnsole" routines
+# "workstation console" routines
 #
 
 include "dev/wscons/files.wscons"
+
+
+#device ofb: wsemuldisplaydev, wsrasteremulops
+device ofb
+attach ofb at pci
+file arch/powerpc/mac/ofb.c				ofb needs-flag
+
+
+#
+# mac peripheral pieces.
+#
+
+#file arch/powerpc/pci/bandit.c			pci
+
+# PCI bus support
+
+#PCI-Host bridge chipsets
+device pchb
+attach pchb at pci
+file arch/powerpc/pci/pchb.c			pchb
+
+
+#
+# Machine-independent ATAPI drivers
+#
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
+
+# MAC periph 
+
+device obio {} : macintr
+attach obio at pci
+file arch/powerpc/pci/macobio.c                     obio
+
+device esp: scsi, ncr53c9x
+attach esp at obio
+file arch/powerpc/mac/esp.c                      esp
+
+device mesh: scsi
+attach mesh at obio
+file arch/powerpc/mac/mesh.c                     mesh
+
+device mc: ifnet, ether
+attach mc at obio
+file arch/powerpc/mac/if_mc.c                    mc
+file arch/powerpc/mac/am79c950.c                 mc
+
+device bm: ether, ifnet, ifmedia
+attach bm at obio
+file arch/powerpc/mac/if_bm.c                    bm
+
+device zsc {channel = -1}
+attach zsc at obio
+file arch/powerpc/mac/zs.c                       zsc needs-flag
+file dev/ic/z8530sc.c                           zsc
+
+device zstty: tty
+attach zstty at zsc
+file arch/powerpc/mac/z8530tty.c                 zstty needs-flag
+
+device adb {}
+attach adb at obio
+file arch/powerpc/mac/adb.c                      adb needs-flag
+file arch/powerpc/mac/adb_direct.c               adb
+file arch/powerpc/mac/pm_direct.c                adb
+
+device aed
+attach aed at adb
+file arch/powerpc/mac/aed.c                      aed needs-flag
+
+#??
+#define wskbddev	{[console = -1]}
+#define wsmousedev {}
+#??
+
+#device akbd: wskbddev
+#attach akbd at adb
+#file arch/powerpc/mac/akbd.c                     akbd needs-flag
+
+#device ams: wsmousedev
+#attach ams at adb
+#file arch/powerpc/mac/ams.c                      ams
+
+device nvram
+attach nvram at obio
+file arch/powerpc/mac/nvram.c                    nvram needs-flag
+
+
+attach wdc at obio with wdc_obio
+file arch/powerpc/mac/wdc_obio.c                 wdc_obio
+
+define grfdev {}
+
+device grfati: grfdev
+attach grfati at pci
+file arch/powerpc/mac/grf_ati.c                  grfati needs-flag
+
+device grf {}
+attach grf at grfdev
+file arch/powerpc/mac/grf.c                      grf needs-flag
+file arch/powerpc/mac/grf_subr.c                 grf
+
+device ite: tty
+attach ite at grf
+file arch/powerpc/mac/ite.c                      ite needs-flag
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
