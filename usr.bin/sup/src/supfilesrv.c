@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.25 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.26 2001/08/23 19:31:28 camield Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -446,7 +446,7 @@ char **argv;
 			logquit(1, "Can't connect to network");
 #ifdef LIBWRAP
 		request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE, netfile,
-		    NULL);      
+		    0);      
 		fromhost(&req);
 		if (hosts_access(&req) == 0) {
 			logdeny("refused connection from %.500s",
@@ -487,7 +487,7 @@ char **argv;
 		if ((pid = fork()) == 0) { /* server process */
 #ifdef LIBWRAP
 			request_init(&req, RQ_DAEMON, "supfilesrv", RQ_FILE,
-			    netfile, NULL);      
+			    netfile, 0);      
 			fromhost(&req);
 			if (hosts_access(&req) == 0) {
 				logdeny("refused connection from %.500s",
