@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.7 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.8 2002/07/18 03:26:59 mickey Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -683,9 +683,6 @@ void
 token_ifattach(ifp)
 	register struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
-	register struct sockaddr_dl *sdl;
-
 	ifp->if_type = IFT_ISO88025;
 	ifp->if_addrlen = ISO88025_ADDR_LEN;
 	ifp->if_hdrlen = 14;
