@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.67 2004/10/28 19:22:52 mcbride Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.68 2004/11/25 15:32:08 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ struct tcpcb {
 #endif
 #define TF_REASSLOCK	0x00080000	/* reassembling or draining */
 #define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
+#define TF_DEAD		0x00200000	/* dead and to-be-released */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -181,6 +182,8 @@ struct tcpcb {
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 
 	int pf;
+
+	struct	timeout t_reap_to;	/* delayed cleanup timeout */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
@@ -550,6 +553,7 @@ int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
+void	 tcp_reaper(void *);
 int	 tcp_freeq(struct tcpcb *);
 #if defined(INET6) && !defined(TCP6)
 void	 tcp6_ctlinput(int, struct sockaddr *, void *);
@@ -646,6 +650,7 @@ void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
+void	 syn_cache_reaper(void *);
 
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.34 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.35 2004/11/25 15:32:08 markus Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -112,6 +112,10 @@ tcp_delack(void *arg)
 	 */
 
 	s = splsoftnet();
+	if (tp->t_flags & TF_DEAD) {
+		splx(s);
+		return;
+	}
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
 	splx(s);
@@ -193,6 +197,10 @@ tcp_timer_rexmt(void *arg)
 	int s;
 
 	s = splsoftnet();
+	if (tp->t_flags & TF_DEAD) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_SACK
 	tcp_timer_freesack(tp);
@@ -357,6 +365,11 @@ tcp_timer_persist(void *arg)
 	int s;
 
 	s = splsoftnet();
+	if ((tp->t_flags & TF_DEAD) ||
+            TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
+		splx(s);
+		return;
+	}
 	tcpstat.tcps_persisttimeo++;
 	/*
 	 * Hack: if the peer is dead/unreachable, we do not
@@ -390,6 +403,10 @@ tcp_timer_keep(void *arg)
 	int s;
 
 	s = splsoftnet();
+	if (tp->t_flags & TF_DEAD) {
+		splx(s);
+		return;
+	}
 
 	tcpstat.tcps_keeptimeo++;
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
@@ -444,6 +461,10 @@ tcp_timer_2msl(void *arg)
 	int s;
 
 	s = splsoftnet();
+	if (tp->t_flags & TF_DEAD) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_SACK
 	tcp_timer_freesack(tp);
