@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.8 1997/01/16 04:04:33 kstailey Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.9 1997/01/16 08:08:41 kstailey Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -386,7 +386,7 @@ sun3_vm_init(kehp)
 	 */
 	avail_start = virtual_avail - KERNBASE;
 	if (romp->romvecVersion < 1) {
-		mon_printf("Warning: ancient PROM version=%d\n",
+		mon_printf("WARNING: ancient PROM version=%d\n",
 				   romp->romvecVersion);
 		/* Guess that PROM version 0.X used two pages. */
 		avail_end = *romp->memorySize - (2*NBPG);

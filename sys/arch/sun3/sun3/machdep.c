@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1997/01/16 04:22:49 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1997/01/16 08:08:40 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -820,6 +820,9 @@ reboot2(howto, user_boot_string)
 		 */
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 	}
 
 	/* Disable interrupts. */

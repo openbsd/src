@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.8 1997/01/16 04:04:16 kstailey Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.9 1997/01/16 08:08:39 kstailey Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.8 1996/11/20 18:57:27 gwr Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
@@ -112,7 +113,7 @@ db_mach_pagemap(addr, have_addr, count, modif)
  * Machine-specific ddb commands for the sun3:
  *    abort:	Drop into monitor via abort (allows continue)
  *    halt: 	Exit to monitor as in halt(8)
- *    reboot:	Reboot the machine as in reboot(8)
+ *    reboot:	Reboot the machine as in reboot(8) XXX obsolete, use "boot" cmd
  *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
@@ -146,7 +147,11 @@ db_mach_reboot(addr, have_addr, count, modif)
         char *          modif;
 {
 
+#if 0 /* XXX */
         sun3_mon_reboot("");
+#else
+	db_printf("`machine reboot' command is obsolete, use `boot' command\n");
+#endif
 }
 
 struct db_command db_machine_cmds[] = {
