@@ -126,3 +126,7 @@
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h
 ./usr/include/ansidecl.h
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libopcodes.a
+./usr/lib/libreadline.a

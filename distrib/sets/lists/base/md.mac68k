@@ -282,7 +282,3 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
 ./usr/include/readline
-./usr/lib/libbfd.a
-./usr/lib/libmmalloc.a
-./usr/lib/libopcodes.a
-./usr/lib/libreadline.a

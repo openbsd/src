@@ -145,3 +145,7 @@
 ./usr/include/bfdlink.h
 ./usr/include/obstack.h
 ./usr/include/readline
+./usr/lib/libbfd.a
+./usr/lib/libmmalloc.a
+./usr/lib/libopcodes.a
+./usr/lib/libreadline.a
