@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfs_bio.c,v 1.6 1996/06/11 03:25:13 tholo Exp $	*/
-/*	$NetBSD: vfs_bio.c,v 1.43 1996/04/22 01:38:59 christos Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.7 1996/06/14 06:36:24 deraadt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -283,7 +283,7 @@ int
 bwrite(bp)
 	struct buf *bp;
 {
-	int rv, sync, wasdelayed;
+	int rv, sync, wasdelayed, s;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -307,6 +307,7 @@ bwrite(bp)
 	if (wasdelayed)
 		TAILQ_REMOVE(&bdirties, bp, b_synclist);
 
+	s = splbio();
 	if (!sync) {
 		/*
 		 * If not synchronous, pay for the I/O operation and make
@@ -321,8 +322,9 @@ bwrite(bp)
 	}
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
-	SET(bp->b_flags, B_WRITEINPROG);
 	bp->b_vp->v_numoutput++;
+	splx(s);
+	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
 	if (sync) {
@@ -336,10 +338,12 @@ bwrite(bp)
 		 * make sure it's on the correct vnode queue. (async operatings
 		 * were payed for above.)
 		 */
+		s = splbio();
 		if (wasdelayed)
 			reassignbuf(bp, bp->b_vp);
 		else
 			curproc->p_stats->p_ru.ru_oublock++;
+		splx(s);
 
 		/* Release the buffer. */
 		brelse(bp);
