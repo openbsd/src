@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.17 2002/05/26 09:29:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.18 2002/06/05 17:13:49 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -268,13 +268,20 @@ vsyslog_r(pri, data, fmt, ap)
 		return;
 
 	/*
-	 * If the send() failed, the odds are syslogd was restarted.
-	 * Make one (only) attempt to reconnect to /dev/log.
+	 * If the send() failed, there are two likely scenarios:
+	 *  1) syslogd was restarted
+	 *  2) /dev/log is out of socket buffer space
+	 * We attempt to reconnect to /dev/log to take care of
+	 * case #1 and keep send()ing data to cover case #2
+	 * to give syslogd a chance to empty its socket buffer.
 	 */
 	disconnectlog_r(data);
 	connectlog_r(data);
-	if (send(data->log_file, tbuf, cnt, 0) >= 0)
-		return;
+	do {
+		usleep(1);
+		if (send(data->log_file, tbuf, cnt, 0) >= 0)
+			return;
+	} while (errno == ENOBUFS);
 
 	/*
 	 * Output the message to the console; try not to block
