@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.16 2000/10/31 16:06:46 deraadt Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.17 2000/11/23 18:32:20 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.16 2000/10/31 16:06:46 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.17 2000/11/23 18:32:20 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -673,7 +673,7 @@ udpport_string(register u_short port)
 	tp->addr = i;
 	tp->nxt = newhnamemem();
 
-	(void)sprintf(buf, "%u", i);
+	(void)snprintf(buf, sizeof(buf), "%u", i);
 	tp->name = savestr(buf);
 	return (tp->name);
 }
