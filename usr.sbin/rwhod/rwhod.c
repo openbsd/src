@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.2 1996/08/16 23:24:58 deraadt Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.3 1996/11/01 06:45:45 imp Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -139,7 +139,8 @@ main(argc, argv)
 	(void) signal(SIGHUP, getboottime);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
-	 * Establish host name as returned by system.
+	 * Establish host name as returned by system.  The -1 plus myname
+	 * being global ensure that myname is NUL terminated.
 	 */
 	if (gethostname(myname, sizeof(myname) - 1) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
@@ -147,7 +148,8 @@ main(argc, argv)
 	}
 	if ((cp = index(myname, '.')) != NULL)
 		*cp = '\0';
-	strncpy(mywd.wd_hostname, myname, sizeof(myname) - 1);
+	strncpy(mywd.wd_hostname, myname, sizeof(mywd.wd_hostname) - 1);
+	mywd.wd_hostname[sizeof(mywd.wd_hostname) - 1] = '\0';
 	utmpf = open(_PATH_UTMP, O_RDONLY|O_CREAT, 0644);
 	if (utmpf < 0) {
 		syslog(LOG_ERR, "%s: %m", _PATH_UTMP);
