@@ -1,4 +1,4 @@
-M$OpenBSD: pcidevs,v 1.199 1999/12/04 20:28:28 aaron Exp $
+M$OpenBSD: pcidevs,v 1.200 1999/12/06 23:42:34 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -509,6 +509,7 @@ vendor ADMTEK		0x1317	ADMtek
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
+vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor DELTA		0x1500	Delta
@@ -836,6 +837,9 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 /* Cyrix/National Semiconductor products */
 product CYRIX GXMPCI		0x0001  GXm Host-PCI
 product CYRIX GXMISA		0x0002	GXm PCI-ISA
+
+/* D-Link products */
+product DLINK 550TX		0x1002	550TX
 
 /* DEC products */
 product DEC 21050		0x0001	DECchip 21050 PCI-PCI
@@ -1298,6 +1302,9 @@ product	SONY CXD1947A		0x8009	CXD1947A FireWire
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
+
+/* Sundance products */
+product SUNDANCE ST201		0x0201	ST201
 
 /* Surecom products */
 product SURECOM NE34		0x0e34 Surecom NE-34
