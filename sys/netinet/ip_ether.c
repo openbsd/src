@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.4 1999/12/06 07:14:35 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.5 1999/12/25 07:25:25 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -167,7 +167,7 @@ va_dcl
     m->m_flags &= ~(M_BCAST|M_MCAST);
     if (eh.ether_dhost[0] & 1)
     {
-	if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh.ether_dhost,
+	if (bcmp((caddr_t) etherbroadcastaddr, (caddr_t) eh.ether_dhost,
 	  sizeof(etherbroadcastaddr)) == 0)
 	    m->m_flags |= M_BCAST;
 	else
@@ -200,22 +200,29 @@ int
 etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	       int protoff)
 {
+#ifdef INET
     struct ip *ipo;
-    ushort ilen;
+#endif /* INET */
 
-    /* Check that the source address, if present, is from AF_INET */
+#ifdef INET6
+    struct ip6_hdr *ip6;
+#endif /* INET6 */
+
+    ushort hlen;
+
+    /* Some address family sanity checks */
     if ((tdb->tdb_src.sa.sa_family != 0) &&
-        (tdb->tdb_src.sa.sa_family != AF_INET))
+        ((tdb->tdb_src.sa.sa_family != AF_INET) ||
+	 (tdb->tdb_src.sa.sa_family != AF_INET6)))
     {
-        DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting"
-, tdb->tdb_src.sa.sa_family));
+        DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_src.sa.sa_family));
 	etheripstat.etherip_adrops++;
         m_freem(m);
         return EINVAL;
     }
 
-    /* Check that the destination address is AF_INET */
-    if (tdb->tdb_dst.sa.sa_family != AF_INET)
+    if ((tdb->tdb_dst.sa.sa_family != AF_INET) &&
+	(tdb->tdb_dst.sa.sa_family != AF_INET6))
     {
 	DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_dst.sa.sa_family));
 	etheripstat.etherip_adrops++;
@@ -223,38 +230,89 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	return EINVAL;
     }
 
-    etheripstat.etherip_opackets++;
-    ilen = m->m_pkthdr.len;
+    if (tdb->tdb_dst.sa.sa_family != tdb->tdb_src.sa.sa_family)
+    {
+	DPRINTF(("etherip_output(): mismatch in tunnel source and destination address protocol families (%d/%d), aborting", tdb->tdb_src.sa.sa_family, tdb->tdb_dst.sa.sa_family));
+	etheripstat.etherip_adrops++;
+	m_freem(m);
+	return EINVAL;
+    }
 
-    M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+    switch (tdb->tdb_dst.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    hlen = sizeof(struct ip);
+	    break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+	    hlen = sizeof(struct ip6_hdr);
+	    break;
+#endif /* INET6 */
+	default:
+	    DPRINTF(("etherip_output(): unsupported tunnel protocol family <%d>, aborting", tdb->tdb_dst.sa.sa_family));
+	    etheripstat.etherip_adrops++;
+	    m_freem(m);
+	    return EINVAL;
+    }
+
+    /* Get enough space for a header */
+    M_PREPEND(m, hlen, M_DONTWAIT);
     if (m == 0)
     {
-	DPRINTF(("etherip_output(): M_PREPEND failed\n"));
+	DPRINTF(("etherip_output(): M_PREPEND of size %d failed\n", hlen));
 	etheripstat.etherip_adrops++;
       	return ENOBUFS;
     }
 
-    ipo = mtod(m, struct ip *);
+    /* Statistics */
+    etheripstat.etherip_opackets++;
+    etheripstat.etherip_obytes += m->m_pkthdr.len - hlen;
+
+    switch (tdb->tdb_dst.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    ipo = mtod(m, struct ip *);
 	
-    ipo->ip_v = IPVERSION;
-    ipo->ip_hl = 5;
-    ipo->ip_len = htons(ilen + sizeof(struct ip));
-    ipo->ip_ttl = ip_defttl;
-    ipo->ip_p = IPPROTO_ETHERIP;
-    ipo->ip_tos = 0;
-    ipo->ip_off = 0;
-    ipo->ip_sum = 0;
-    ipo->ip_id = ip_randomid();
-    HTONS(ipo->ip_id);
+	    ipo->ip_v = IPVERSION;
+	    ipo->ip_hl = 5;
+	    ipo->ip_len = htons(m->m_pkthdr.len + sizeof(struct ip));
+	    ipo->ip_ttl = ip_defttl;
+	    ipo->ip_p = IPPROTO_ETHERIP;
+	    ipo->ip_tos = 0;
+	    ipo->ip_off = 0;
+	    ipo->ip_sum = 0;
+	    ipo->ip_id = ip_randomid();
+	    HTONS(ipo->ip_id);
 
-    /* We should be keeping tunnel soft-state and send back ICMPs if needed. */
+	    /* 
+	     * We should be keeping tunnel soft-state and send back
+	     * ICMPs as needed.
+	     */
 
-    ipo->ip_src = tdb->tdb_src.sin.sin_addr;
-    ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
+	    ipo->ip_src = tdb->tdb_src.sin.sin_addr;
+	    ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
+	    break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+	    ip6 = mtod(m, struct ip6_hdr *);
+
+	    ip6->ip6_flow = 0;
+            ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+            ip6->ip6_vfc |= IPV6_VERSION;
+            ip6->ip6_plen = htons(m->m_pkthdr.len);
+            ip6->ip6_hlim = ip_defttl;
+            ip6->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
+            ip6->ip6_src = tdb->tdb_src.sin6.sin6_addr;
+	    break;
+#endif /* INET6 */
+    }
 
     *mp = m;
 
-    etheripstat.etherip_obytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
     return 0;
 }
 #endif /* IPSEC */
