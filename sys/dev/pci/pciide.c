@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.12 1999/11/02 02:43:45 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.13 1999/11/03 01:02:56 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 };
 
 const struct pciide_product_desc pciide_sis_products[] =  {
-	{ PCI_PRODUCT_SIS_5597,		/* SIS 5597/5598 IDE */
+	{ PCI_PRODUCT_SIS_5513,		/* SIS 5513 EIDE */
 	  0,
 	  sis_chip_map
 	}
@@ -2574,7 +2574,7 @@ pdc202xx_chip_map(sc, pa)
 	WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state 0x%x\n", st),
 	    DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PDC2xx_STATE, st);
-return;
+	return;
 }
 
 void
