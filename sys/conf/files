@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.71 1996/01/01 22:27:08 thorpej Exp $
+#	$NetBSD: files,v 1.72 1996/01/13 02:05:19 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -24,6 +24,7 @@ define	fddi
 # of device drivers.
 define	pdq		# DEC FDDI chipset
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
+define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -63,6 +64,7 @@ file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
+file dev/ic/aic7xxx.c			aic7xxx
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
