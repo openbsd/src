@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.138 2003/09/26 00:11:25 krw Exp $
+#	$OpenBSD: install.sh,v 1.139 2003/11/03 05:16:21 david Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -94,7 +94,7 @@ if [ ! -f /etc/fstab ]; then
 			resp=$ROOTDISK
 			rm -f /tmp/fstab
 			# Make sure empty files exist so we don't have to
-			# keep checking for their existance before grep'ing.
+			# keep checking for their existence before grep'ing.
 			cat /dev/null >$FILESYSTEMS
 			cat /dev/null >$SWAPLIST
 		else
