@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2004/08/10 13:47:45 pefo Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2004/08/10 19:08:18 deraadt Exp $
 #
 
 machine		sgi mips64
@@ -70,7 +70,7 @@ com0		at macebus0 sys 0x18 base 0x00390000 irq 5
 com1		at macebus0 sys 0x18 base 0x00398000 irq 5
 
 #### PCI Bus
-macepcibr0	at macebus0 	# MACE controller PCI Bus bridge.
+macepcibr0	at macebus0	# MACE controller PCI Bus bridge.
 pci*		at macepcibr?	# PCI is on pci bridge
 
 #### SCSI controllers
