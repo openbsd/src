@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.10 1999/07/20 21:51:21 fgsch Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.11 1999/08/08 01:00:15 niklas Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ struct pcmcia_function {
 	SIMPLEQ_ENTRY(pcmcia_function) pf_list;
 	/* run-time state */
 	struct pcmcia_softc *sc;
+	struct device *child;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_mem_handle pf_pcmh;
 #define	pf_ccrt		pf_pcmh.memt
@@ -135,6 +136,7 @@ struct pcmcia_function {
 
 /* pf_flags */
 #define	PFF_ENABLED	0x0001		/* function is enabled */
+#define	PFF_FAKE	0x0002		/* function is made up (no CIS) */
 
 struct pcmcia_card {
 	int		cis1_major;
@@ -258,6 +260,12 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
+
+#define	pcmcia_io_unmap(pf, window)					\
+	(pcmcia_chip_io_unmap((pf)->sc->pct, (pf)->sc->pch, (window)))
+
+#define pcmcia_io_free(pf, pciop)					\
+	(pcmcia_chip_io_free((pf)->sc->pct, (pf)->sc->pch, (pciop)))
 
 #define pcmcia_mem_alloc(pf, size, pcmhp)				\
 	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
