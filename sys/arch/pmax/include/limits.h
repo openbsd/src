@@ -76,6 +76,9 @@
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
+#define	UID_MAX		UINT_MAX	/* max value for a uid_t */
+#define	GID_MAX		UINT_MAX	/* max value for a gid_t */
+
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
 					/* max value for a quad_t */

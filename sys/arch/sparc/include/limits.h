@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.4 1997/08/08 08:26:30 downsj Exp $	*/
+/*	$OpenBSD: limits.h,v 1.5 1998/03/22 21:15:24 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1996/01/05 18:10:57 pk Exp $ */
 
 /*
@@ -63,6 +63,9 @@
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+
+#define	UID_MAX		UINT_MAX	/* max value for a uid_t */
+#define	GID_MAX		UINT_MAX	/* max value for a gid_t */
 
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */

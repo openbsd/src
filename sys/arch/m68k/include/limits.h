@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 1996/05/29 18:38:32 niklas Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 1998/03/22 21:15:14 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.9 1994/10/26 07:50:48 cgd Exp $	*/
 
 /*
@@ -63,6 +63,9 @@
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+
+#define	UID_MAX		UINT_MAX	/* max value for a uid_t */
+#define	GID_MAX		UINT_MAX	/* max value for a gid_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
