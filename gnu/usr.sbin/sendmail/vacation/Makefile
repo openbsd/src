@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2000/08/16 22:06:19 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/09/11 19:02:50 millert Exp $
 
 PROG=	vacation
 ENVDEF=	-DNOT_SENDMAIL
 
+WANT_LIBSM=1
 WANT_LIBSMDB=1
 WANT_LIBSMUTIL=1
 

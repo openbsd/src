@@ -27,10 +27,12 @@ the latest updates.
 
    You may also find these useful:
 
-   d. devtools/README
-   e. devtools/Site/README
-   f. mail.local/README
-   g. smrsh/README
+   d. sendmail/SECURITY
+   e. devtools/README
+   f. devtools/Site/README
+   g. libmilter/README
+   h. mail.local/README
+   i. smrsh/README
 
 4. Read cf/README.
 
@@ -93,7 +95,7 @@ the items in the file to be marked as safe for file and program
 delivery.
 
 Other files affected by this strengthened security include class
-files (i.e. Fw /etc/mail/local-host-names), persistent host status files,
+files (i.e., Fw /etc/mail/local-host-names), persistent host status files,
 and the files specified by the ErrorHeader and HelpFile options.  Similar
 DontBlameSendmail flags are available for the class, ErrorHeader, and
 HelpFile files.
@@ -221,8 +223,8 @@ PARTS OF THE WORLD.  SO, WHEN YOU IMPORT THIS PACKAGE TO YOUR
 COUNTRY, RE-DISTRIBUTE IT FROM THERE OR EVEN JUST EMAIL TECHNICAL
 SUGGESTIONS OR EVEN SOURCE PATCHES TO THE AUTHOR OR OTHER PEOPLE
 YOU ARE STRONGLY ADVISED TO PAY CLOSE ATTENTION TO ANY EXPORT/IMPORT
-AND/OR USE LAWS WHICH APPLY TO YOU. THE AUTHORS ARE NOT LIABLE FOR
-ANY VIOLATIONS YOU MAKE HERE. SO BE CAREFUL, IT IS YOUR RESPONSIBILITY.
+AND/OR USE LAWS WHICH APPLY TO YOU.  THE AUTHORS ARE NOT LIABLE FOR
+ANY VIOLATIONS YOU MAKE HERE.  SO BE CAREFUL, IT IS YOUR RESPONSIBILITY.
 
 If you use OpenSSL then make sure you read their README file which
 contains information about patents etc.
@@ -360,6 +362,8 @@ contrib		Some contributed tools to help with sendmail.  THESE
 devtools	Build environment.  See devtools/README.
 doc		Documentation.  If you are getting source, read
 		op.me -- it's long, but worth it.
+editmap		A program to edit and query maps that have been created
+		with makemap, e.g., adding and deleting entries.
 include		Include files used by multiple programs in the distribution.
 libsmdb		sendmail database library with support for Berkeley DB 1.X,
 		Berkeley DB 2.X, Berkeley DB 3.X, and NDBM.
@@ -392,4 +396,4 @@ sendmail	Source for the sendmail program itself.
 test		Some test scripts (currently only for compilation aids).
 vacation	Source for the vacation program.  NOT PART OF SENDMAIL!
 
-$Revision: 1.5 $, Last updated $Date: 2001/08/01 01:01:40 $
+$Revision: 1.6 $, Last updated $Date: 2001/09/11 19:02:47 $

@@ -6,9 +6,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: qtool.8,v 8.9.16.2 2000/12/15 19:50:41 gshapiro Exp $
+.\"     $Sendmail: qtool.8,v 8.12 2000/12/15 19:53:35 gshapiro Exp $
 .\"
-.TH QTOOL 8 "$Date: 2001/01/15 21:09:00 $"
+.TH QTOOL 8 "$Date: 2001/09/11 19:02:48 $"
 .SH NAME
 qtool
 \- manipulate sendmail queues
@@ -17,7 +17,7 @@ qtool
 .RB [options] 
 target_directory source [source ...]
 .PP
-.B qtool.pl [-d/-b]
+.B qtool.pl [-d|-b]
 .RB [options]
 source [source ...]
 .SH DESCRIPTION
@@ -42,6 +42,10 @@ running sendmail with the -OTimeout.queuereturn=now option.
 \fB\-b\fP
 Bounce all of the messages specified by source. The messages will be bounced
 immediately. No attempt will be made to deliver the messages.
+.TP  
+\fB\-C\fP configfile
+Specify the sendmail config file.
+Defaults to /etc/mail/sendmail.cf.
 .TP
 \fB\-d\fP
 Delete all of the messages specified by source.
@@ -191,12 +195,15 @@ Moves the message with id d6CLQh100847 in queue q1 to queue q2.
 \fBqtool.pl q2 q1/qfd6CLQh100847\fP
 Moves the message with id d6CLQh100847 in queue q1 to queue q2.
 .TP
-\fBqtool.pl q2 q1/dfd6CLQh100847\fP
-Moves the message with id d6CLQh100847 in queue q1 to queue q2.
-.TP
 \fBqtool.pl -e '$msg{num_delivery_attempts} == 3' /q2 /q1\fP
 Moves all of the queue files that have had three attempted deliveries from
 queue q1 to queue q2.
+.SH BUGS
+In sendmail 8.12, it is possible for a message's qf and df files
+to be stored in different queues.
+In this situation, you must give qtool the pathname of the qf file,
+not of the df file.
+To be safe, never feed qtool the pathname of a df file.
 .SH SEE ALSO
 sendmail(8)
 .SH HISTORY

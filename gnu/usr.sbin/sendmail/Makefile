@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile,v 1.3 2000/04/04 04:58:35 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/09/11 19:02:47 millert Exp $
 
 # We only use these libs internally
 .if !make(install)
-SUBDIR= libsmutil libsmdb
+SUBDIR= libsmutil libsmdb libsm
 .else
 SUBDIR=
 .endif
 
 # The bits we install
-SUBDIR+=sendmail mailstats makemap praliases smrsh cf/cf
+SUBDIR+=sendmail mailstats makemap praliases smrsh editmap cf/cf
 
 # Extra bits we don't build/install right now
 #SUBDIR+= libmilter mail.local rmail vacation

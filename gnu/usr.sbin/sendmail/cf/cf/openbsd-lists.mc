@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.5 2001/08/01 01:01:40 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.6 2001/09/11 19:02:48 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -21,6 +21,10 @@ dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings, nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
+dnl
+dnl Some broken nameservers will return SERVFAIL (a temporary failure)
+dnl on T_AAAA (IPv6) lookups.
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Keep host status on disk between sendmail runs in the .hoststat dir
 define(`confHOST_STATUS_DIRECTORY', `.hoststat')dnl

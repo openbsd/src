@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: sendmail.8,v 8.36.8.3 2000/12/14 23:08:15 gshapiro Exp $
+.\"     $Sendmail: sendmail.8,v 8.49 2001/03/23 22:10:00 ca Exp $
 .\"
-.Dd December 14, 2000
+.Dd March 23, 2001
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -62,6 +62,13 @@ and `group' includes `john' in the expansion,
 then the letter will also be delivered to `john'.
 .Ss Parameters
 .Bl -tag -width Fl
+.\" XXX - how to prevent Ac from being interpreted as angle close quote?
+.It Fl A Ns c
+Use submit.cf even if the operation mode does not indicate
+an initial mail submission.
+.It Fl Am
+Use sendmail.cf even if the operation mode indicates
+an initial mail submission.
 .It Fl B Ns Ar type
 Set the body type to
 .Ar type .
@@ -106,7 +113,10 @@ Initialize the alias database.
 .It Fl bm
 Deliver mail in the usual way (default).
 .It Fl bp
-Print a listing of the queue.
+Print a listing of the queue(s).
+.It Fl bP
+Print number of entries in the queue(s);
+only available with shared memory support.
 .It Fl bs
 Use the
 .Tn SMTP
@@ -213,7 +223,7 @@ Set the name of the protocol used to receive the message.
 This can be a simple protocol name such as ``UUCP''
 or a protocol and hostname, such as ``UUCP:ucbvax''.
 .It Fl q Ns Bq Ar time
-Processed saved messages in the queue at given intervals.
+Process saved messages in the queue at given intervals.
 If
 .Ar time
 is omitted, process the queue once.
@@ -223,7 +233,7 @@ with
 .Ql s
 being seconds,
 .Ql m
-being minutes,
+being minutes (default),
 .Ql h
 being hours,
 .Ql d
@@ -236,25 +246,51 @@ For example,
 or
 .Ql \-q90m
 would both set the timeout to one hour thirty minutes.
-If
-.Ar time
-is specified,
+By default,
 .Nm sendmail
 will run in background.
 This option can be used safely with
 .Fl bd .
-.It Fl qI Ns Ar substr
+.It Fl qp Ns Op Ar time
+Similar to
+.Fl q Ns Ar time ,
+except that instead of periodically forking a child to process the queue,
+sendmail forks a single persistent child for each queue
+that alternates between processing the queue and sleeping.
+The sleep time is given as the argument; it defaults to 1 second.
+The process will always sleep at least 5 seconds if the queue was
+empty in the previous queue run.
+.It Fl q Ns f
+Process saved messages in the queue once and do not fork(),
+but run in the foreground.
+.It Fl q Ns G Ar name
+Process jobs in queue group called
+.Ar name
+only.
+.It Xo Fl q Ns Op Ar ! Ns
+.No I Ar substr
+.Xc
 Limit processed jobs to those containing
 .Ar substr
-as a substring of the queue id.
-.It Fl qR Ns Ar substr
+as a substring of the queue id or not when
+.Em !
+is specified.
+.It Xo Fl q Ns Op Ar ! Ns
+.No R Ar substr
+.Xc
 Limit processed jobs to those containing
 .Ar substr
-as a substring of one of the recipients.
-.It Fl qS Ns Ar substr
+as a substring of one of the recipients or not when
+.Em !
+is specified.
+.It Xo Fl q Ns Op Ar ! Ns
+.No S Ar substr
+.Xc
 Limit processed jobs to those containing
 .Ar substr
-as a substring of the sender.
+as a substring of the sender or not when
+.Em !
+is specified.
 .It Fl R Ar return
 Set the amount of the message to be returned
 if the message bounces.
@@ -274,17 +310,6 @@ flag.
 Read message for recipients.
 To:, Cc:, and Bcc: lines will be scanned for recipient addresses.
 The Bcc: line will be deleted before transmission.
-.It Fl U
-Initial (user) submission.  This should
-.Em always
-be set when called from a user agent such as
-.Nm Mail
-or
-.Nm exmh
-and
-.Em never
-be set when called by a network delivery agent such as
-.Nm rmail .
 .It Fl V Ar envid
 Set the original envelope id.
 This is propagated across SMTP to servers that support DSNs

@@ -29,10 +29,10 @@ divert(-1)
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 divert(0)
-VERSIONID(`$OpenBSD: sigmasoft.m4,v 1.1 2000/04/02 19:48:14 millert Exp $')dnl
+VERSIONID(`$OpenBSD: sigmasoft.m4,v 1.2 2001/09/11 19:02:48 millert Exp $')dnl
 define(`UUCP_RELAY', relay1.uu.net)dnl
 define(`BITNET_RELAY', relay2.uu.net)dnl
 define(`confME_TOO', True)dnl
-FEATURE(rbl)dnl
+FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
 FEATURE(redirect)dnl
 FEATURE(relay_based_on_MX)dnl

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,11 +8,9 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)$Sendmail: signal.c,v 8.10.4.8 2000/11/20 21:15:37 ca Exp $";
-#endif /* ! lint */
+#include <sm/gen.h>
+SM_RCSID("@(#)$Sendmail: signal.c,v 8.24 2001/01/24 00:27:35 ca Exp $")
 
-#if _FFR_MILTER
 #include "libmilter.h"
 
 /*
@@ -100,7 +98,7 @@ mi_signal_thread(name)
 	sigaddset(&set, SIGINT);
 	errs = 0;
 
-	while (TRUE)
+	while (true)
 	{
 		sig = 0;
 #ifdef SOLARIS
@@ -212,4 +210,3 @@ mi_control_startup(name)
 	}
 	return MI_SUCCESS;
 }
-#endif /* _FFR_MILTER */

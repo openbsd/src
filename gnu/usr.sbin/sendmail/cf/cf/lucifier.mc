@@ -30,17 +30,17 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-VERSIONID(`$OpenBSD: lucifier.mc,v 1.1 2000/04/02 19:48:13 millert Exp $')dnl
+VERSIONID(`$OpenBSD: lucifier.mc,v 1.2 2001/09/11 19:02:48 millert Exp $')dnl
 OSTYPE(openbsd)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
 MASQUERADE_AS(lucifier.dial-up.user.akula.net)dnl
 MASQUERADE_DOMAIN(lucifier.dial-up.user.akula.net)dnl
 FEATURE(allmasquerade)dnl
 
+MAILER(local)dnl
+MAILER(smtp)dnl
+
 define(`BITNET_RELAY', relay.uu.net)dnl
 
-define(`confAUTO_REBUILD', True)dnl
 define(`confCHECK_ALIASES', True)dnl
 
 define(`confMIN_FREE_BLOCKS', 1024)dnl

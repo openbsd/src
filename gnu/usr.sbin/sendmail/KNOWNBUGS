@@ -13,7 +13,6 @@ distribution).
 This list is not guaranteed to be complete.
 
 * Delivery to programs that generate too much output may cause problems
-  (8.10, 8.11)
 
   If e-mail is delivered to a program which generates too much
   output, then sendmail may issue an error:
@@ -150,7 +149,7 @@ This list is not guaranteed to be complete.
 * MIME encoded full name phrases in the From: header
 
   If a full name phrase includes characters from MustQuoteChars, sendmail
-  will quote the entire full name phrase. If MustQuoteChars includes
+  will quote the entire full name phrase.  If MustQuoteChars includes
   characters which are not special characters according to STD 11 (RFC
   822), this quotation can interfere with MIME encoded full name phrases.
   By default, sendmail includes the single quote character (') in
@@ -200,22 +199,14 @@ This list is not guaranteed to be complete.
   local mail delivery and NFS hard mounted home directories should be
   avoided, as attempts to open the forward files could hang.
 
-* Race condition for delivery to set-user-id files
+* Race condition for delivery to set-user-ID files
 
   Sendmail will deliver to a fail if the file is owned by the DefaultUser
-  or has the set-user-id bit set.  Unfortunately, some systems clear that bit
+  or has the set-user-ID bit set.  Unfortunately, some systems clear that bit
   when a file is modified.  Sendmail compensates by resetting the file mode 
   back to it's original settings.  Unfortunately, there's still a
   permission failure race as sendmail checks the permissions before locking 
   the file.  This is unavoidable as sendmail must verify the file is safe
   to open before opening it.  A file can not be locked until it is open.
 
-* Potential denial of service attack with AutoRebuildAliases
-
-  There is a potential for a denial of service attack if the
-  AutoRebuildAliases option is set as a user can kill the sendmail process
-  while it is rebuilding the aliases file leaving it in an inconsistent
-  state.  This option and it's use is deprecated and will be removed from a
-  future version of sendmail.
-
-$Revision: 1.4 $, Last updated $Date: 2001/08/01 01:01:40 $
+$Revision: 1.5 $, Last updated $Date: 2001/09/11 19:02:47 $

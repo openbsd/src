@@ -1,5 +1,5 @@
 #
-#	$Sendmail: aliases,v 8.1.36.1 2000/10/16 20:18:39 gshapiro Exp $
+#	$Sendmail: aliases,v 8.2 2000/10/16 20:20:36 gshapiro Exp $
 #	@(#)aliases	8.2 (Berkeley) 3/5/94
 #
 #  Aliases in this file will NOT be expanded in the header from

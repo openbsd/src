@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.6 2001/08/01 01:01:40 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.7 2001/09/11 19:02:48 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -12,6 +12,10 @@ define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confSMTP_LOGIN_MSG', `$m Sendmail $v/$Z/courtesan ready at $b')dnl
 define(`confMAX_HOP', `20')dnl
 define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
+dnl
+dnl Some broken nameservers will return SERVFAIL (a temporary failure)
+dnl on T_AAAA (IPv6) lookups.
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Next, we define the features we want
 FEATURE(nouucp, `reject')dnl

@@ -17,13 +17,17 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.3 $')
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.4 $')
 OSTYPE(openbsd)
 FEATURE(nouucp, `reject')
 MAILER(local)
 MAILER(smtp)
 DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
+dnl
+dnl Some broken nameservers will return SERVFAIL (a temporary failure) 
+dnl on T_AAAA (IPv6) lookups.
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Enforce valid Message-Id to help stop spammers
 dnl

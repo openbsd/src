@@ -27,7 +27,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`$Sendmail: uucpproto.mc,v 8.15 1999/02/07 07:26:05 gshapiro Exp $')
-OSTYPE(unknown)
+OSTYPE(openbsd)
 FEATURE(promiscuous_relay)dnl
 FEATURE(accept_unresolvable_domains)dnl
 MAILER(local)dnl

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -11,11 +11,10 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)$Sendmail: lockfile.c,v 8.3.16.11 2000/11/16 02:54:28 geir Exp $";
-#endif /* ! lint */
-
 #include <sendmail.h>
+
+SM_RCSID("@(#)$Sendmail: lockfile.c,v 8.16 2001/01/24 00:34:54 ca Exp $")
+
 
 /*
 **  LOCKFILE -- lock a file using flock or (shudder) fcntl locking
@@ -30,8 +29,8 @@ static char id[] = "@(#)$Sendmail: lockfile.c,v 8.3.16.11 2000/11/16 02:54:28 ge
 **			LOCK_UN -- unlock.
 **
 **	Returns:
-**		TRUE if the lock was acquired.
-**		FALSE otherwise.
+**		true if the lock was acquired.
+**		false otherwise.
 */
 
 bool
@@ -59,7 +58,7 @@ lockfile(fd, filename, ext, type)
 		action = F_SETLKW;
 
 	if (fcntl(fd, action, &lfd) >= 0)
-		return TRUE;
+		return true;
 
 	/*
 	**  On SunOS, if you are testing using -oQ/tmp/mqueue or
@@ -71,14 +70,14 @@ lockfile(fd, filename, ext, type)
 	*/
 
 	if (errno == EINVAL)
-		return TRUE;
+		return true;
 
 #else /* !HASFLOCK */
 
 	if (flock(fd, type) >= 0)
-		return TRUE;
+		return true;
 
 #endif /* !HASFLOCK */
 
-	return FALSE;
+	return false;
 }

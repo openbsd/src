@@ -8,7 +8,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: makemap.8,v 8.21.16.5 2000/12/29 18:12:20 gshapiro Exp $
+.\"     $Sendmail: makemap.8,v 8.27 2000/12/29 18:16:55 gshapiro Exp $
 .\"
 .Dd December 29, 2000
 .Dt MAKEMAP 8
@@ -28,6 +28,7 @@
 .Op Fl o
 .Op Fl r
 .Op Fl s
+.Op Fl t Ar delim
 .Op Fl u
 .Op Fl v
 .Ar maptype
@@ -129,6 +130,8 @@ and does not do the insert.
 Ignore safety checks on maps being created.
 This includes checking for hard or symbolic
 links in world writable directories.
+.It Fl t
+Use the specified delimiter instead of white space.
 .It Fl u
 dump (unmap) the content of the database to standard output.
 .It Fl v

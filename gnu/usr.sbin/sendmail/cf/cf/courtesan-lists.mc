@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan-lists.mc,v 1.3 2001/08/01 01:01:40 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan-lists.mc,v 1.4 2001/09/11 19:02:48 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``lists.courtesan.com''
@@ -25,6 +25,10 @@ define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)
+dnl
+dnl Some broken nameservers will return SERVFAIL (a temporary failure)
+dnl on T_AAAA (IPv6) lookups.
+define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Need to add domo and mailman as "trusted users" to rewrite From lines
 define(`confTRUSTED_USERS', `domo mailman')dnl

@@ -3,7 +3,7 @@
 ## Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 ##       All rights reserved.
 ##
-## $Sendmail: qtool.pl,v 8.15.16.4 2000/11/30 07:14:01 gshapiro Exp $
+## $Sendmail: qtool.pl,v 8.20 2000/12/05 16:10:07 dmoen Exp $
 ##
 use strict;
 use File::Basename;
@@ -63,7 +63,7 @@ my $action;
 my $new_condition;
 my $conditions = new Compound();
 
-Getopt::Std::getopts('bde:s:', \%opts);
+Getopt::Std::getopts('bC:de:s:', \%opts);
 
 sub move_action
 {
@@ -126,6 +126,37 @@ if ($action == \&move_action)
 	$destination = new Queue($dst_name);
 }
 
+# determine queue_root by reading config file
+my $queue_root;
+{
+	my $config_file = "/etc/mail/sendmail.cf";
+	if (defined $opts{C})
+	{
+		$config_file = $opts{C};
+	}
+
+	my $line;
+	open(CONFIG_FILE, $config_file) or die "$config_file: $!";
+	while ($line = <CONFIG_FILE>)
+	{
+		chomp $line;
+		if ($line =~ m/^O QueueDirectory=(.*)/)
+		{
+			$queue_root = $1;
+			if ($queue_root =~ m/(.*)\/[^\/]+\*$/)
+			{
+				$queue_root = $1;
+			}
+			last;
+		}
+	}
+	close(CONFIG_FILE);
+	if (!defined $queue_root)
+	{
+		die "QueueDirectory option not defined in $config_file";
+	}
+}
+
 while (@ARGV)
 {
 	$source_name = shift(@ARGV);
@@ -161,6 +192,7 @@ sub usage
 	print("       $0 [-d|-b] source ...\n");
 	print("options:\n");
 	print("    -b                   Bounce the messages specified by source.\n");
+	print("    -C configfile	Specify sendmail config file.\n");
 	print("    -d                   Delete the messages specified by source.\n");
 	print("    -e [perl expression] Move only messages for which perl expression returns true.\n");
 	print("    -s [seconds]         Move only messages whose qf file is older than seconds.\n");
@@ -222,6 +254,10 @@ sub add_source
 			return "'$source_name' does not exist";
 		}
 		$data_dir_name = File::Spec->catfile("$source_dir_name", "df");
+		if (!-d $data_dir_name)
+		{
+			$data_dir_name = $source_dir_name;
+		}
 		$source_dir_name = File::Spec->catfile("$source_dir_name", 
 						       "qf");
 	}
@@ -402,6 +438,7 @@ sub parse
 		'B' => 'body_type',
 		'C' => 'controlling_user',
 		'D' => 'data_file_name',
+		'd' => 'data_file_directory',
 		'E' => 'error_recipient',
 		'F' => 'flags',
 		'H' => 'parse_header',
@@ -621,10 +658,21 @@ sub new
 sub initialize
 {
 	my $self = shift;
-	my $queue_dir = shift;
+	my $data_dir = shift;
 	$self->{id} = shift;
+	my $control_file = shift;
 
-	$self->{file_name} = $queue_dir . '/df' . $self->{id};
+	$self->{file_name} = $data_dir . '/df' . $self->{id};
+	return if -e $self->{file_name};
+	$control_file->parse();
+	return if !defined $control_file->{data_file_directory};
+	$data_dir = $queue_root . '/' . $control_file->{data_file_directory};
+	chomp $data_dir;
+	if (-d ($data_dir . '/df'))
+	{
+		$data_dir .= '/df';
+	}
+	$self->{file_name} = $data_dir . '/df' . $self->{id};
 }
 
 sub do_stat
@@ -694,14 +742,11 @@ sub initialize
 
 	$self->{id} = $id;
 	$self->{control_file} = new ControlFile($queue_dir, $id);
-	if ($data_dir)
+	if (!$data_dir)
 	{
-		$self->{data_file} = new DataFile($data_dir, $id);
+		$data_dir = $queue_dir;
 	}
-	else
-	{
-		$self->{data_file} = new DataFile($queue_dir, $id);
-	}
+	$self->{data_file} = new DataFile($data_dir, $id, $self->{control_file});
 }
 
 sub last_modified_time

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,13 +8,10 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)$Sendmail: smfi.c,v 8.28.4.6 2000/06/28 23:48:56 gshapiro Exp $";
-#endif /* ! lint */
+#include <sm/gen.h>
+SM_RCSID("@(#)$Sendmail: smfi.c,v 8.42 2001/08/27 18:09:16 gshapiro Exp $")
 
-#if _FFR_MILTER
 #include "libmilter.h"
-#include "sendmail/useful.h"
 
 /*
 **  SMFI_ADDHEADER -- send a new header to the MTA
@@ -181,13 +178,14 @@ smfi_delrcpt(ctx, rcpt)
 int
 smfi_replacebody(ctx, bodyp, bodylen)
 	SMFICTX *ctx;
-	u_char *bodyp;
+	unsigned char *bodyp;
 	int bodylen;
 {
 	int len, off, r;
 	struct timeval timeout;
 
-	if (bodyp == NULL && bodylen > 0)
+	if (bodylen < 0 ||
+	    (bodyp == NULL && bodylen > 0))
 		return MI_FAILURE;
 	if (!mi_sendok(ctx, SMFIF_CHGBODY))
 		return MI_FAILURE;
@@ -267,29 +265,41 @@ smfi_setreply(ctx, rcode, xcode, message)
 	char *xcode;
 	char *message;
 {
-	size_t len, l1, l2, l3;
+	size_t len;
 	char *buf;
 
 	if (rcode == NULL || ctx == NULL)
 		return MI_FAILURE;
-	l1 = strlen(rcode) + 1;
-	if (l1 != 4)
+
+	/* ### <sp> \0 */
+	len = strlen(rcode) + 2;
+	if (len != 5)
 		return MI_FAILURE;
 	if ((rcode[0] != '4' && rcode[0] != '5') ||
 	    !isascii(rcode[1]) || !isdigit(rcode[1]) ||
 	    !isascii(rcode[2]) || !isdigit(rcode[2]))
 		return MI_FAILURE;
-	l2 = xcode == NULL ? 1 : strlen(xcode) + 1;
-	if (xcode != NULL && !myisenhsc(xcode, '\0'))
-		return MI_FAILURE;
-	l3 = message == NULL ? 1 : strlen(message) + 1;
-	len = l1 + l2 + l3;
+	if (xcode != NULL)
+		len += strlen(xcode) + 1;
+	if (message != NULL)
+		len += strlen(message) + 1;
 	buf = malloc(len);
 	if (buf == NULL)
 		return MI_FAILURE;		/* oops */
-	(void) snprintf(buf, len, "%s %s %s", rcode,
-			xcode == NULL ? "" : xcode,
-			message == NULL ? "" : message);
+	(void) sm_strlcpy(buf, rcode, len);
+	(void) sm_strlcat(buf, " ", len);
+	if (xcode != NULL)
+	{
+		if (!myisenhsc(xcode, '\0'))
+			return MI_FAILURE;
+		(void) sm_strlcat(buf, xcode, len);
+	}
+	if (message != NULL)
+	{
+		if (xcode != NULL)
+			(void) sm_strlcat(buf, " ", len);
+		(void) sm_strlcat(buf, message, len);
+	}
 	if (ctx->ctx_reply != NULL)
 		free(ctx->ctx_reply);
 	ctx->ctx_reply = buf;
@@ -397,4 +407,3 @@ smfi_getsymval(ctx, symname)
 	}
 	return NULL;
 }
-#endif /* _FFR_MILTER */

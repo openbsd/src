@@ -10,16 +10,10 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)$Sendmail: shmticklib.c,v 8.6 2000/02/26 01:32:27 gshapiro Exp $";
-#endif /* ! lint */
+#include <sm/gen.h>
+SM_RCSID("@(#)$Sendmail: shmticklib.c,v 8.11 2000/09/04 19:13:19 ca Exp $")
 
 #if _FFR_SHM_STATUS
-# if SFIO
-#  include <sfio/stdio.h>
-# else /* !SFIO */
-#  include <stdio.h>
-# endif /* SFIO */
 # include <sys/types.h>
 # include <sys/ipc.h>
 # include <sys/shm.h>
@@ -54,10 +48,10 @@ shmtick(inc_me, what)
 		if (shmid < 0)
 			return;
 	}
-	if ((unsigned long *)sp == (unsigned long *)-1)
+	if ((unsigned long *) sp == (unsigned long *)-1)
 	{
-		sp = (STATUSD_SHM *)shmat(shmid, NULL, 0);
-		if ((unsigned long *)sp == (unsigned long *)-1)
+		sp = (STATUSD_SHM *) shmat(shmid, NULL, 0);
+		if ((unsigned long *) sp == (unsigned long *) -1)
 			return;
 	}
 	if (sp->magic != STATUSD_MAGIC)

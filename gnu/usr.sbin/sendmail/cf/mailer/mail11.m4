@@ -1,6 +1,6 @@
 PUSHDIVERT(-1)
 #
-# Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -41,19 +41,19 @@ POPDIVERT
 ###   UTK-MAIL11 Mailer specification   ###
 ###########################################
 
-VERSIONID(`$Sendmail: mail11.m4,v 8.19 1999/10/18 04:57:54 gshapiro Exp $')
+VERSIONID(`$Sendmail: mail11.m4,v 8.21 2001/07/19 00:16:16 ca Exp $')
 
-SMail11From=15
-R$+			$: $>25 $1		preprocess
-R$w :: $+		$@ $w :: $1		ready to go
-
-SMail11To=25
+SMail11To
 R$+ < @ $- .UUCP >	$: $2 ! $1		back to old style
 R$+ < @ $- .DECNET >	$: $2 :: $1		convert to DECnet style
 R$+ < @ $- .LOCAL >	$: $2 :: $1		convert to DECnet style
 R$+ < @ $=w. >		$: $2 :: $1		convert to DECnet style
 R$=w :: $+		$2			strip local names
 R$+ :: $+		$@ $1 :: $2		already qualified
+
+SMail11From
+R$+			$: $>Mail11To $1	preprocess
+R$w :: $+		$@ $w :: $1		ready to go
 
 Mmail11, P=MAIL11_MAILER_PATH, F=_MODMF_(MAIL11_MAILER_FLAGS, `MAIL11'), S=Mail11From, R=Mail11To,
 	T=DNS/X-DECnet/X-Unix,
