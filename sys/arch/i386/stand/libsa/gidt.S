@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.4 1997/04/18 01:28:02 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.5 1997/05/29 05:32:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -46,8 +46,27 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
+	.text
+	.globl	pmm_init
+
+pmm_init:
+	/* reload new gdt */
+	lgdt	_Gdtr
+	ljmp	$8, $1f
+1:	
+	movw	$0x10, %ax
+	movl	%ax, %ds
+	movl	%ax, %ss
+	movl	%ax, %es
+	movl	%ax, %fs
+	movl	%ax, %gs
+	/* init idt */
+	call	idt_init
+	/* load idtr for interrupts */
+	lidt	_Idtr_prot
+	ret
+
 	.data
-	.globl	_Gdtr
 
 	.align	3
 gdt:
@@ -86,19 +105,11 @@ _Gdtr:	.word	. - gdt - 1
 	.long	gdt
 	.word	0
 
-	.globl	_Idtr_real
 	.align 3
 _Idtr_real:
 	.word	1023
 	.long	0
 
-	.globl	_Idtr_reset
-	.align 3
-_Idtr_reset:
-	.word	0
-	.long	0
-
-	.globl	_Idtr_prot
 	.align 3
 idt:
 	.space 32*8, 0	/* internal (0-31) */
@@ -115,7 +126,6 @@ _Idtr_prot:
 #define IBIOS(n)	IPROC(bios/**/n)
 #define IDOS(n)		IPROC(dos/**/n)
 
-	.globl	idt_init
 idt_init:
 	pushl	%edi
 

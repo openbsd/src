@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.7 1997/04/18 01:30:03 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.8 1997/05/29 05:32:06 mickey Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -49,10 +49,6 @@
 	.globl	_edata
 	.globl	_boot
 	.globl	__rtt
-	.globl	_Gdtr
-	.globl	_Idtr_prot
-	.globl  _Idtr_reset
-	.globl	idt_init
 
 	.text
 	.globl	start_boot
@@ -61,20 +57,7 @@ start_boot:
 	movl	$0xb80a0, %ebx
 	movl	$0x07420742, (%ebx)
 #endif
-	/* reload new gdt */
-	lgdt	_Gdtr
-	ljmp	$8, $1f
-1:	
-	movw	$0x10, %ax
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
-	/* init idt */
-	call	idt_init
-	/* load idtr for interrupts */
-	lidt	_Idtr_prot
+	call	pmm_init	/* init protected moded memory management */
 
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
@@ -99,6 +82,13 @@ start_boot:
 
 	call	_boot
 
+	.data
+	.align 3
+_Idtr_reset:
+	.word	0
+	.long	0
+
+	.text
 __rtt:
 #ifdef DEBUG
 	movl	$0xb8000, %ebx
