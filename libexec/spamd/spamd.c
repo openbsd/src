@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.30 2003/04/08 22:09:53 vincent Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.31 2003/04/12 23:38:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -28,6 +28,7 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -728,6 +729,7 @@ main(int argc, char *argv[])
 	int sinlen, one = 1;
 	u_short port, cfg_port;
 	struct servent *ent;
+	struct rlimit rlp;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
@@ -774,6 +776,10 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	rlp.rlim_cur = rlp.rlim_max = maxcon + 7;
+	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1)
+		err(1, "setrlimit");
 
 	con = calloc(maxcon, sizeof(*con));
 	if (con == NULL)
