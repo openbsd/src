@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.2 2004/08/13 13:07:24 pefo Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */
-LEAF(strcmp)
+LEAF(strcmp, 0)
 	.set	noreorder
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them

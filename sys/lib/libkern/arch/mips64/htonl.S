@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.2 2004/08/13 13:07:24 pefo Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
  * netorder = htonl(hostorder)
  * hostorder = ntohl(netorder)
  */
-LEAF(htonl)				# a0 = 0x11223344, return 0x44332211
+LEAF(htonl, 0)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 	.set	noreorder
 	srl	v1, a0, 24		# v1 = 0x00000011

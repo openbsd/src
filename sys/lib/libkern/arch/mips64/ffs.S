@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.2 2004/08/13 13:07:24 pefo Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 /*
  * bit = ffs(value)
  */
-LEAF(ffs)
+LEAF(ffs, 0)
 	.set	noreorder
 	beq	a0, zero, 2f
 	move	v0, zero
