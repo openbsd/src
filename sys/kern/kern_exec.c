@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.19 1998/06/27 07:32:12 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.20 1998/07/02 08:53:04 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -456,6 +456,8 @@ sys_execve(p, v, retval)
 	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
 	 */
 	if ((attr.va_mode & (VSUID | VSGID))) {
+		int i;
+
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -474,6 +476,41 @@ sys_execve(p, v, retval)
 			p->p_ucred->cr_gid = attr.va_gid;
 		p->p_flag |= P_SUGID;
 		p->p_flag |= P_SUGIDEXEC;
+
+		/*
+		 * XXX For setuid processes, attempt to ensure that
+		 * stdin, stdout, and stderr are already allocated.
+		 * We do not want userland to accidentally allocate
+		 * descriptors in this range which has implied meaning
+		 * to libc.
+		 */
+		for (i = 0; i < 3; i++) {
+			extern struct fileops vnops;
+			struct nameidata nd;
+			struct file *fp;
+			int indx;
+
+			if (p->p_fd->fd_ofiles[i] == NULL) {
+				printf("need %d\n", i);
+				if ((error = falloc(p, &fp, &indx)) != 0)
+					continue;
+				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
+				    "/dev/null", p);
+				if ((error = vn_open(&nd, FREAD, 0)) != 0) {
+					printf("failed %d\n", i);
+					ffree(fp);
+					p->p_fd->fd_ofiles[indx] = NULL;
+					break;
+				}
+				printf("got %d\n", i);
+				fp->f_flag = FREAD;
+				fp->f_type = DTYPE_VNODE;
+				fp->f_ops = &vnops;
+				fp->f_data = (caddr_t)nd.ni_vp;
+				VOP_UNLOCK(nd.ni_vp, 0, p);
+			}
+		}
+
 	} else
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
