@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 1996/03/03 12:12:06 niklas Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 1996/03/05 02:30:00 dm Exp $	*/
 /*	$NetBSD: param.h,v 1.18.2.1 1995/10/12 05:42:01 jtc Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@
  * it smaller make make some file systems unmountable.
  */
 #if defined(__i386__)
-#define	MAXBSIZE	32768		/* XXX MAXPHYS */
+#define	MAXBSIZE	16384		/* XXX MAXPHYS */
 #else
 #define	MAXBSIZE	MAXPHYS
 #endif
