@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.1 2003/03/09 01:46:37 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.2 2003/03/09 02:30:02 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ void zx_free_screen(void *, void *);
 int zx_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
 paddr_t zx_mmap(void *, off_t, int);
 void zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void zx_reset(struct zx_softc *);
+void zx_reset(struct zx_softc *, u_int);
 void zx_burner(void *, u_int, u_int);
 
 struct wsdisplay_accessops zx_accessops = {
@@ -308,7 +308,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	/* reset cursor & frame buffer controls */
-	zx_reset(sc);
+	zx_reset(sc, WSDISPLAYIO_MODE_EMUL);
 
 	/* enable video */
 	zx_burner(sc, 1, 0);
@@ -328,28 +328,32 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct zx_softc *sc = dev;
 	struct wsdisplay_fbinfo *wdf;
 
+	/*
+	 * Note that, although the emulation (text) mode is running in
+	 * a 8-bit plane, we advertize the frame buffer as the full-blown
+	 * 32-bit beast it is.
+	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
-		wdf->depth = sc->sc_sunfb.sf_depth;
+		wdf->depth = 32;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-#if 0
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
-#else
-		/* Prevent X11 from starting, on purpose */
-		return (-1);
-#endif
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+		break;
+
+	case WSDISPLAYIO_SMODE:
+		zx_reset(sc, *(u_int *)data);
 		break;
 
 	default:
@@ -423,7 +427,7 @@ zx_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 }
 
 void
-zx_reset(struct zx_softc *sc)
+zx_reset(struct zx_softc *sc, u_int mode)
 {
 	volatile struct zx_draw *zd;
 	volatile struct zx_command *zc;
@@ -434,54 +438,72 @@ zx_reset(struct zx_softc *sc)
 	zd = sc->sc_zd_ss0;
 	zc = sc->sc_zc;
 
-	zx_cross_loadwid(sc, ZX_WID_DBL_8, 0, 0x2c0);
-	zx_cross_loadwid(sc, ZX_WID_DBL_8, 1, 0x30);
-	zx_cross_loadwid(sc, ZX_WID_DBL_8, 2, 0x20);
-	zx_cross_loadwid(sc, ZX_WID_DBL_24, 1, 0x30);
+	if (mode == WSDISPLAYIO_MODE_EMUL) {
+		/* Back from X11 to emulation mode, or first reset */
+		zx_cross_loadwid(sc, ZX_WID_DBL_8, 0, 0x2c0);
+		zx_cross_loadwid(sc, ZX_WID_DBL_8, 1, 0x30);
+		zx_cross_loadwid(sc, ZX_WID_DBL_8, 2, 0x20);
+		zx_cross_loadwid(sc, ZX_WID_DBL_24, 1, 0x30);
 
-	i = sc->sc_zd_ss1->zd_misc;
-	i |= ZX_SS1_MISC_ENABLE;
-	SETREG(sc->sc_zd_ss1->zd_misc, i);
+		i = sc->sc_zd_ss1->zd_misc;
+		i |= ZX_SS1_MISC_ENABLE;
+		SETREG(sc->sc_zd_ss1->zd_misc, i);
 
-	/*
-	 * XXX
-	 * If zc_fill is not set to that value, there will be black bars
-	 * left in the margins. But then with this value, the screen gets
-	 * cleared. Go figure.
-	 */
-	SETREG(zd->zd_wid, 0xffffffff);
-	SETREG(zd->zd_wmask, 0xffff);
-	SETREG(zd->zd_vclipmin, 0);
-	SETREG(zd->zd_vclipmax,
-	    (sc->sc_sunfb.sf_width - 1) | ((sc->sc_sunfb.sf_height - 1) << 16));
-	SETREG(zd->zd_fg, 0);
-	SETREG(zd->zd_planemask, 0xff000000);
-	SETREG(zd->zd_rop, ZX_STD_ROP | ZX_ATTR_WRITEZ_ENABLE);
-	SETREG(zd->zd_widclip, 0);
+		/*
+		 * XXX
+		 * If zc_fill is not set to that value, there will be black
+		 * bars left in the margins. But then with this value, the
+		 * screen gets cleared. Go figure.
+		 */
+		SETREG(zd->zd_wid, 0xffffffff);
+		SETREG(zd->zd_wmask, 0xffff);
+		SETREG(zd->zd_vclipmin, 0);
+		SETREG(zd->zd_vclipmax, (sc->sc_sunfb.sf_width - 1) |
+		    ((sc->sc_sunfb.sf_height - 1) << 16));
+		SETREG(zd->zd_fg, 0);
+		SETREG(zd->zd_planemask, 0xff000000);
+		SETREG(zd->zd_rop, ZX_STD_ROP);
+		SETREG(zd->zd_widclip, 0);
 
-	SETREG(zc->zc_extent, (sc->sc_sunfb.sf_width - 1) |
-	    ((sc->sc_sunfb.sf_height - 1) << ZX_WWIDTH));
-	SETREG(zc->zc_addrspace, ZX_ADDRSPC_FONT_OBGR);
-	SETREG(zc->zc_fill, 0x80000000);
-	SETREG(zc->zc_fontt, 0);
+		SETREG(zc->zc_extent, (sc->sc_sunfb.sf_width - 1) |
+		    ((sc->sc_sunfb.sf_height - 1) << ZX_WWIDTH));
+		SETREG(zc->zc_addrspace, ZX_ADDRSPC_FONT_OBGR);
+		SETREG(zc->zc_fill, 0x80000000);
+		SETREG(zc->zc_fontt, 0);
 
-	while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
-		;
+		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+			;
 
-	/*
-	 * Initialize the 8-bit colormap
-	 */
-	r = sc->sc_cmap.cm_red;
-	g = sc->sc_cmap.cm_green;
-	b = sc->sc_cmap.cm_blue;
-	color = rasops_cmap;
-	for (i = 0; i < 256; i++) {
-		*r++ = *color++;
-		*g++ = *color++;
-		*b++ = *color++;
+		/*
+		 * Initialize the 8-bit colormap
+		 */
+		r = sc->sc_cmap.cm_red;
+		g = sc->sc_cmap.cm_green;
+		b = sc->sc_cmap.cm_blue;
+		color = rasops_cmap;
+		for (i = 0; i < 256; i++) {
+			*r++ = *color++;
+			*g++ = *color++;
+			*b++ = *color++;
+		}
+		fbwscons_setcolormap(&sc->sc_sunfb, zx_setcolor);
+		zx_putcmap(sc);
+	} else {
+		/* Starting X11 - switch to 24bit WID */
+		SETREG(zd->zd_wid, 1);
+		SETREG(zd->zd_widclip, 0);
+		SETREG(zd->zd_wmask, 0xffff);
+		SETREG(zd->zd_planemask, 0x00ffffff);
+		SETREG(zc->zc_extent, (sc->sc_sunfb.sf_width - 1) |
+		    ((sc->sc_sunfb.sf_height - 1) << ZX_WWIDTH));
+		SETREG(zc->zc_fill, 0);
+		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+			;
+
+		SETREG(zc->zc_addrspace, ZX_ADDRSPC_OBGR);
+		SETREG(zd->zd_rop, ZX_ATTR_RGBE_ENABLE |
+		    ZX_ROP_NEW /* | ZX_ATTR_FORCE_WID */);
 	}
-	fbwscons_setcolormap(&sc->sc_sunfb, zx_setcolor);
-	zx_putcmap(sc);
 }
 
 int
