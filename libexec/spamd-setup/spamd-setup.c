@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.1 2003/03/08 18:17:04 beck Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.2 2003/03/08 18:29:16 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -36,11 +36,11 @@
 #include <err.h>
 #include <netinet/ip_ipsp.h>
 
-#define PATH_FTP "/usr/bin/ftp"
-#define PATH_PFCTL "/sbin/pfctl"
-#define PATH_SPAMD_CONF "/etc/spamd.conf"
-#define SPAMD_ARG_MAX 256 /* max # of args to an exec*/
-#define SPAMD_CONFIG_PORT 8026
+#define PATH_FTP		"/usr/bin/ftp"
+#define PATH_PFCTL		"/sbin/pfctl"
+#define PATH_SPAMD_CONF		"/etc/spamd.conf"
+#define SPAMD_ARG_MAX		256 /* max # of args to an exec */
+#define SPAMD_CONFIG_PORT	8026
 
 struct cidr {
 	u_int32_t addr;
@@ -54,26 +54,30 @@ struct bl {
 };
 
 struct blacklist {
-	char * name;
-	char * message;
+	char *name;
+	char *message;
 	struct bl *bl;
 	size_t blc, bls;
 	u_int8_t black;
 };
 
 u_int32_t
-imask(u_int8_t b) {
+imask(u_int8_t b)
+{
 	u_int32_t j = 0;
 	int i;
+
 	for (i = 31; i > 31 - b; --i)
 		j |= (1 << i);
 	return(j);
-};
+}
 
 u_int8_t
-maxblock (u_int32_t addr, u_int8_t bits) {
+maxblock(u_int32_t addr, u_int8_t bits)
+{
 	while (bits > 0) {
 		u_int32_t m = imask(bits - 1);
+
 		if ((addr & m) != addr)
 			return (bits);
 		bits--;
@@ -82,10 +86,11 @@ maxblock (u_int32_t addr, u_int8_t bits) {
 }
 
 u_int8_t
-maxdiff (u_int32_t a, u_int32_t b) {
+maxdiff(u_int32_t a, u_int32_t b)
+{
 	u_int8_t bits = 0;
+
 	b++;
-	
 	while (bits < 32) {
 		u_int32_t m = imask(bits);
 		if ((a & m) != (b & m))
@@ -96,19 +101,22 @@ maxdiff (u_int32_t a, u_int32_t b) {
 }
 
 struct cidr *
-range2cidrlist (u_int32_t start, u_int32_t end) {
-	struct cidr * list = NULL;
+range2cidrlist(u_int32_t start, u_int32_t end)
+{
+	struct cidr *list = NULL;
 	size_t cs = 0, cu = 0;
+
 	while (end >= start) {
 		u_int8_t maxsize = maxblock(start, 32);
 		u_int8_t diff = maxdiff(start, end);
+
 		maxsize = MAX(maxsize, diff);
 		if (cs == cu) {
-			struct cidr * tmp;
-			tmp = realloc( list, (cs + 32) * sizeof(struct cidr));
-			if (tmp == NULL) {
+			struct cidr *tmp;
+
+			tmp = realloc(list, (cs + 32) * sizeof(struct cidr));
+			if (tmp == NULL)
 				errx(1, "Malloc failed");
-			}
 			list = tmp;
 			cs += 32;
 		}
@@ -123,29 +131,35 @@ range2cidrlist (u_int32_t start, u_int32_t end) {
 }
 
 void
-cidr2range (struct cidr cidr, u_int32_t *start, u_int32_t *end) {
+cidr2range(struct cidr cidr, u_int32_t *start, u_int32_t *end)
+{
 	*start = cidr.addr;
 	*end = cidr.addr + (1 << (32 - cidr.bits)) - 1;
 }
 
 char *
-atop(u_int32_t addr) {
+atop(u_int32_t addr)
+{
 	struct in_addr in;
+
 	memset(&in, 0, sizeof(in));
 	in.s_addr = htonl(addr);
 	return(inet_ntoa(in));
 }
 
 u_int32_t
-ptoa(char * cp) {
+ptoa(char *cp)
+{
 	struct in_addr in;
+
 	memset(&in, 0, sizeof(in));
 	(void) inet_aton(cp, &in);
 	return ntohl(in.s_addr);
 }
 
 int
-parse_netblock(char *buf, struct bl * start, struct bl * end, int white) {
+parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
+{
 	char astring[16], astring2[16];
 	unsigned maskbits;
 
@@ -168,7 +182,7 @@ parse_netblock(char *buf, struct bl * start, struct bl * end, int white) {
 		cidr2range(c, &start->addr, &end->addr);
 		end->addr += 1;
 	} else if (sscanf(buf, "%15[0123456789.]%*[ -]%15[0123456789.]",
-			  astring, astring2) == 2) {
+	    astring, astring2) == 2) {
 		/* looks like start - end */
 		if (inet_pton(AF_INET, astring, &start->addr) != 1)
 			return(0);
@@ -186,13 +200,13 @@ parse_netblock(char *buf, struct bl * start, struct bl * end, int white) {
 		end->addr = start->addr + 1;
 	} else
 		return(0);
+
 	if (white) {
 		start->b = 0;
 		start->w = 1;
 		end->b = 0;
 		end->w = -1;
-	}
-	else  {
+	} else {
 		start->b = 1;
 		start->w = 0;
 		end->b = -1;
@@ -202,9 +216,11 @@ parse_netblock(char *buf, struct bl * start, struct bl * end, int white) {
 }
 
 int
-open_child(char *file, char **argv) {
+open_child(char *file, char **argv)
+{
 	pid_t pid;
 	int pdes[2];
+
 	if (pipe(pdes) != 0)
 		return(-1);
 	switch(pid = fork()) {
@@ -215,46 +231,51 @@ open_child(char *file, char **argv) {
 		close(pdes[0]);
 		if (pdes[1] != STDOUT_FILENO) {
 			dup2(pdes[1], STDOUT_FILENO);
-		        close(pdes[1]);
+			close(pdes[1]);
 		}
 		execvp(file, argv);
 		_exit(1);
-		
 	}
 	/* parent */
 	close(pdes[1]);
 	return(pdes[0]);
 }
 
-int fetch(char *url) {
+int
+fetch(char *url)
+{
 	char *argv[6]= {"ftp", "-V", "-o", "-", url, NULL};
+
 	return open_child(PATH_FTP, argv);
 }
 
-int open_file(char * method, char * file) {
+int
+open_file(char *method, char *file)
+{
 	char *url;
-	if ((method == NULL) || (strcmp(method, "file") == 0 ))
+
+	if ((method == NULL) || (strcmp(method, "file") == 0))
 		return(open(file, O_RDONLY));
-	if((strcmp(method, "http") == 0)
-	   || strcmp(method, "ftp") == 0) {
+	if ((strcmp(method, "http") == 0) ||
+	    strcmp(method, "ftp") == 0) {
 		int i;
+
 		asprintf(&url, "%s://%s", method, file);
 		if (url == NULL)
 			return(-1);
 		i = fetch(url);
 		free(url);
 		return(i);
-	}
-	if (strcmp(method, "exec") == 0) {
+	} else if (strcmp(method, "exec") == 0) {
 		char **ap, **argv;
 		int len, i, oerrno;
-		
+
 		len = strlen(file);
 		argv = malloc(len * sizeof(char *));
 		if (argv == NULL)
 			errx(1, "Malloc failed");
 		for (ap = argv; ap < &argv[len - 1] &&
-			     (*ap = strsep(&file, " \t")) != NULL;) {
+		    (*ap = strsep(&file, " \t")) != NULL;) {
 			if (**ap != '\0')
 				ap++;
 		}
@@ -267,9 +288,10 @@ int open_file(char * method, char * file) {
 	}
 	errx(1, "Unknown method %s", method);
 	return(-1); /* NOTREACHED */
-}	
+}
 
-/* fix_quoted_colons walks through a buffer returned by cgetent.  We
+/*
+ * fix_quoted_colons walks through a buffer returned by cgetent.  We
  * look for quoted strings, to escape colons (:) in quoted strings for
  * getcap by replacing them with \C so cgetstr() deals with it correctly
  * without having to see the \C bletchery in a configuration file tha
@@ -281,11 +303,11 @@ int open_file(char * method, char * file) {
  * way.
  */
 char *
-fix_quoted_colons(char *buf) {
-	char * newbuf;
-	char last;
-	int nbs=0, i=0, j=0, in = 0;
-	
+fix_quoted_colons(char *buf)
+{
+	int nbs = 0, i = 0, j = 0, in = 0;
+	char *newbuf, last;
+
 	nbs = strlen(buf) + 128;
 	newbuf = malloc(nbs);
 	if (newbuf == NULL)
@@ -321,9 +343,10 @@ fix_quoted_colons(char *buf) {
 	newbuf[j] = '\0';
 	return(newbuf);
 }
-	
+
 void
-do_message(FILE *sdc, char * msg) {
+do_message(FILE *sdc, char *msg)
+{
 	int i, n, bu = 0, bs = 0, len;
 	char *buf = NULL, last;
 
@@ -351,7 +374,7 @@ do_message(FILE *sdc, char * msg) {
 				bs += 8192;
 				buf = tmp;
 			}
-			
+
 			n = read(fd, buf + bu, bs - bu);
 			if (n == 0) {
 				goto sendit;
@@ -391,12 +414,13 @@ do_message(FILE *sdc, char * msg) {
 	if (bs != 0)
 		free(buf);
 }
-	
+
 /* retrieve a list from fd. add to blacklist bl */
 struct bl *
-add_blacklist(struct bl *bl, int *blc, int *bls , int fd, int white) {
+add_blacklist(struct bl *bl, int *blc, int *bls, int fd, int white)
+{
 	int i, n, start, bu = 0, bs = 0, serrno = 0;
-	char * buf = NULL;
+	char *buf = NULL;
 
 	for (;;) {
 		/* read in fd, then parse */
@@ -413,7 +437,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls , int fd, int white) {
 			bs += 8192;
 			buf = tmp;
 		}
-		
+
 		n = read(fd, buf + bu, bs - bu);
 		if (n == 0)
 			goto parse;
@@ -427,7 +451,8 @@ add_blacklist(struct bl *bl, int *blc, int *bls , int fd, int white) {
 	start = 0;
 	for (i = 0; i < bu; i++) {
 		if (*blc == *bls) {
-			struct bl * tmp;
+			struct bl *tmp;
+
 			*bls += 1024;
 			tmp = realloc(bl, *bls * sizeof(struct bl));
 			if (tmp == NULL) {
@@ -456,7 +481,8 @@ add_blacklist(struct bl *bl, int *blc, int *bls , int fd, int white) {
 }
 
 int
-cmpbl(const void * a, const void * b) {
+cmpbl(const void *a, const void *b)
+{
 	if (((struct bl *)a)->addr > ((struct bl *) b)->addr)
 		return(1);
 	if (((struct bl *)a)->addr < ((struct bl *) b)->addr)
@@ -469,14 +495,15 @@ cmpbl(const void * a, const void * b) {
  * ovelaps and whitelist portions, and returns netblocks to blacklis
  * as lists of nonoverlapping cidr blocks suitable for feeding in
  * printable form to pfctl or spamd.
- *
  */
-struct cidr ** collapse_blacklist(struct bl * bl, int blc) {
+struct cidr **
+collapse_blacklist(struct bl *bl, int blc)
+{
 	int bs = 0, ws = 0, state=0, cli, i;
 	struct cidr ** cl;
 	u_int32_t bstart = 0;
 
-	cl = malloc((blc / 2)  * sizeof(struct cidr));
+	cl = malloc((blc / 2) * sizeof(struct cidr));
 	if (cl == NULL) {
 		return (NULL);
 	}
@@ -513,11 +540,12 @@ struct cidr ** collapse_blacklist(struct bl * bl, int blc) {
 
 int
 configure_spamd(u_short dport, char *name, char *message,
-     struct cidr **blacklists) {
-	int s;
+    struct cidr **blacklists)
+{
 	struct sockaddr_in sin;
 	FILE* sdc;
-	
+	int s;
+
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1)
 		return(-1);
@@ -549,7 +577,8 @@ configure_spamd(u_short dport, char *name, char *message,
 
 
 int
-configure_pf(struct cidr **blacklists) {
+configure_pf(struct cidr **blacklists)
+{
 	char *argv[9]= {"pfctl", "-q", "-t", "spamd", "-T", "replace",
 	    "-f" "-", NULL};
 	static FILE *pf = NULL;
@@ -590,8 +619,9 @@ configure_pf(struct cidr **blacklists) {
 }
 
 int
-getlist(char ** db_array, char * name, struct blacklist *blist,
-    struct blacklist *blistnew){
+getlist(char ** db_array, char *name, struct blacklist *blist,
+    struct blacklist *blistnew)
+{
 	char *buf, *method, *file, *message;
 	int blc, bls, fd, black = 0;
 	struct bl *bl = NULL;
@@ -615,7 +645,7 @@ getlist(char ** db_array, char * name, struct blacklist *blist,
 	}
 	else
 		errx(1, "Must have \"black\" or \"white\" in %s", name);
-	
+
 	switch (cgetstr(buf, "msg", &message)) {
 	case -1:
 		if (black)
@@ -636,21 +666,21 @@ getlist(char ** db_array, char * name, struct blacklist *blist,
 	switch (cgetstr(buf, "file", &file)) {
 	case -1:
 		errx(1, "No file given for %slist %s", black?"black":"white",
-		     name);
+		    name);
 	case -2:
 		errx(1, "Malloc failed");
 	default:
 		fd = open_file(method, file);
 		if (fd == -1)
 			err(1, "Can't open %s by %s method",
-			     file, method?method:"file");
+			    file, method ? method:"file");
 		free(method);
 		free(file);
 	}
 	bl = add_blacklist(bl, &blc, &bls, fd, !black);
 	if (bl == NULL) {
-		warn("Could not add %slist %s", black?"black":"white",
-		     name );
+		warn("Could not add %slist %s", black ? "black" : "white",
+		    name);
 		return(0);
 	}
 	if (black) {
@@ -670,7 +700,8 @@ getlist(char ** db_array, char * name, struct blacklist *blist,
 }
 
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[])
+{
 	size_t dbs, dbc, blc, bls, black, white;
 	struct blacklist *blists;
 	char **db_array, *buf;
@@ -682,12 +713,12 @@ main(int argc, char *argv[]) {
 	db_array = calloc(dbs, sizeof(char *));
 	if (db_array == NULL)
 		errx(1, "Malloc failed");
-	
+
 	db_array[dbc]= PATH_SPAMD_CONF;
 	dbc++;
 	for (i = 1; i < argc; i++)
 		db_array[dbc++] = argv[i];
-	
+
 	blists = NULL;
 	blc = bls = 0;
 	if (cgetent(&buf, db_array, "all") != 0)
@@ -724,7 +755,7 @@ main(int argc, char *argv[]) {
 		if (configure_spamd(SPAMD_CONFIG_PORT, blists[i].name,
 		    blists[i].message, cidrs) == -1)
 			err(1, "Can't connect to spamd on port %d",
-			     SPAMD_CONFIG_PORT);
+			    SPAMD_CONFIG_PORT);
 		if (configure_pf(cidrs) == -1)
 			err(1, "pfctl failed");
 		tmp = cidrs;
