@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.7 1998/01/11 20:39:04 provos Exp $	*/
+/*	$OpenBSD: denode.h,v 1.8 1999/11/17 09:27:22 art Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -284,7 +284,6 @@ int	msdosfs_rmdir		__P((void *));
 int	msdosfs_symlink		__P((void *));
 int	msdosfs_readdir		__P((void *));
 int	msdosfs_readlink	__P((void *));
-int	msdosfs_abortop		__P((void *));
 int	msdosfs_inactive	__P((void *));
 int	msdosfs_reclaim		__P((void *));
 int	msdosfs_lock		__P((void *));
