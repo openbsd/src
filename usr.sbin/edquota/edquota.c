@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.14 1997/01/17 07:14:04 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.15 1997/01/28 21:28:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -242,7 +242,7 @@ getprivs(id, quotatype)
 			fprintf(stderr, "edquota: out of memory\n");
 			exit(2);
 		}
-		if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
+		if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
 	    		if (errno == EOPNOTSUPP && !warned) {
 				warned++;
 				fprintf(stderr, "Warning: %s\n",
@@ -313,7 +313,7 @@ putprivs(id, quotatype, quplist)
 
 	qcmd = QCMD(Q_SETQUOTA, quotatype);
 	for (qup = quplist; qup; qup = qup->next) {
-		if (quotactl(qup->fsname, qcmd, id, &qup->dqblk) == 0)
+		if (quotactl(qup->fsname, qcmd, id, (char *)&qup->dqblk) == 0)
 			continue;
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
