@@ -64,7 +64,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fwtk.c,v 1.14 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: fwtk.c,v 1.15 2002/01/21 22:25:14 millert Exp $";
 #endif /* lint */
 
 int
@@ -111,6 +111,7 @@ fwtk_verify(pw, prompt, auth)
     char *pass;				/* Password from the user */
     char buf[SUDO_PASS_MAX + 12];	/* General prupose buffer */
     char resp[128];			/* Response from the server */
+    int error;
     extern int nil_pw;
 
     /* Send username to authentication server. */
@@ -147,16 +148,23 @@ fwtk_verify(pw, prompt, auth)
     if (auth_send(buf) || auth_recv(resp, sizeof(resp))) {
 	(void) fprintf(stderr,
 	    "%s: lost connection to authentication server.\n", Argv[0]);
-	return(AUTH_FATAL);
+	error = AUTH_FATAL;
+	goto done;
     }
 
-    if (strncmp(resp, "ok", 2) == 0)
-	return(AUTH_SUCCESS);
+    if (strncmp(resp, "ok", 2) == 0) {
+	error = AUTH_SUCCESS;
+	goto done;
+    }
 
     /* Main loop prints "Permission Denied" or insult. */
     if (strcmp(resp, "Permission Denied.") != 0)
 	fprintf(stderr, "%s: %s\n", Argv[0], resp);
-    return(AUTH_FAILURE);
+    error = AUTH_FAILURE;
+done:
+    memset(pass, 0, strlen(pass));
+    memset(buf, 0, strlen(buf));
+    return(error);
 }
 
 int

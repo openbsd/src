@@ -66,7 +66,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.23 2001/12/31 17:18:12 millert Exp $";
+static const char rcsid[] = "$Sudo: pam.c,v 1.29 2002/01/22 16:43:23 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -162,8 +162,6 @@ pam_prep_user(pw)
 {
     struct pam_conv pam_conv;
     pam_handle_t *pamh;
-    const char *s;
-    int error;
 
     /* We need to setup a new PAM session for the user we are changing *to*. */
     pam_conv.conv = sudo_conv;
@@ -176,20 +174,25 @@ pam_prep_user(pw)
     if (strcmp(user_tty, "unknown"))
 	(void) pam_set_item(pamh, PAM_TTY, user_tty);
 
-    /* Set credentials (may include resource limits, device ownership, etc). */
-    if ((error = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS) {
-	if ((s = pam_strerror(pamh, error)))
-	    log_error(NO_EXIT|NO_MAIL, "pam_setcred: %s", s);
-    }
+    /*
+     * Set credentials (may include resource limits, device ownership, etc).
+     * We don't check the return value here because in Linux-PAM 0.75
+     * it returns the last saved return code, not the return code
+     * for the setcred module.  Because we haven't called pam_authenticate(),
+     * this is not set and so pam_setcred() returns PAM_PERM_DENIED.
+     * We can't call pam_acct_mgmt() with Linux-PAM for a similar reason.
+     */
+    (void) pam_setcred(pamh, PAM_ESTABLISH_CRED);
 
-    if (pam_end(pamh, error) != PAM_SUCCESS)
+    if (pam_end(pamh, PAM_SUCCESS) == PAM_SUCCESS)
+	return(PAM_SUCCESS);
+    else
 	return(AUTH_FAILURE);
-
-    return(error == PAM_SUCCESS ? AUTH_SUCCESS : AUTH_FAILURE);
 }
 
 /*
  * ``Conversation function'' for PAM.
+ * XXX - does not handle PAM_BINARY_PROMPT
  */
 static int
 sudo_conv(num_msg, msg, response, appdata_ptr)
@@ -201,13 +204,15 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
     const char *p = def_prompt;
+    char *pass;
+    int n;
     extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
 	return(PAM_CONV_ERR);
-    (void) memset((VOID *)*response, 0, num_msg * sizeof(struct pam_response));
+    (void) memset(*response, 0, num_msg * sizeof(struct pam_response));
 
-    for (pr = *response, pm = *msg; num_msg--; pr++, pm++) {
+    for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
 	switch (pm->msg_style) {
 	    case PAM_PROMPT_ECHO_ON:
 		tgetpass_flags |= TGP_ECHO;
@@ -217,10 +222,13 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		    && (pm->msg[9] != ' ' || pm->msg[10] != '\0')))
 		    p = pm->msg;
 		/* Read the password. */
-		pr->resp = estrdup((char *) tgetpass(p,
-		    def_ival(I_PASSWD_TIMEOUT) * 60, tgetpass_flags));
-		if (pr->resp == NULL || *pr->resp == '\0')
+		pass = tgetpass(p, def_ival(I_PASSWD_TIMEOUT) * 60,
+		    tgetpass_flags);
+		pr->resp = estrdup(pass ? pass : "");
+		if (*pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */
+		else
+		    memset(pass, 0, strlen(pass));
 		break;
 	    case PAM_TEXT_INFO:
 		if (pm->msg)
@@ -233,12 +241,19 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		}
 		break;
 	    default:
-		/* Something odd happened */
-		/* XXX - should free non-NULL response members */
+		/* Zero and free allocated memory and return an error. */
+		for (pr = *response, n = num_msg; n--; pr++) {
+		    if (pr->resp != NULL) {
+			(void) memset(pr->resp, 0, strlen(pr->resp));
+			free(pr->resp);
+			pr->resp = NULL;
+		    }
+		}
+		(void) memset(*response, 0,
+		    num_msg * sizeof(struct pam_response));
 		free(*response);
 		*response = NULL;
 		return(PAM_CONV_ERR);
-		break;
 	}
     }
 

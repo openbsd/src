@@ -17,8 +17,9 @@ A) Sudo must be setuid root to do its work.  You need to do something like
    your $PATH before the directory containing sudo.  If you are going
    to have '.' in your path you should make sure it is at the end.
 
-Q) Sudo compiles but when I run it I get "seteuid(0): Operation not permitted"
-   and sudo quits.
+Q) Sudo compiles but when I run it I get "seteuid(0) failed, your operating
+   system may have broken POSIX saved ID support\nTry running configure with
+   --disable-saved-ids" and sudo quits.
 A) The operating system you are running probably has broken support for
    POSIX saved IDs.  You should run configure with the "--disable-saved-ids"
    option and rebuild sudo.

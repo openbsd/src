@@ -66,14 +66,14 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: set_perms.c,v 1.11 2002/01/16 21:27:09 millert Exp $";
+static const char rcsid[] = "$Sudo: set_perms.c,v 1.12 2002/01/22 02:00:25 millert Exp $";
 #endif /* lint */
 
 /*
  * Prototypes
  */
 static void runas_setup		__P((void));
-static void fatal		__P((char *));
+static void fatal		__P((char *, int));
 
 #if !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
 /*
@@ -91,27 +91,27 @@ set_perms_posix(perm, sudo_mode)
     switch (perm) {
 	case PERM_ROOT:
 				if (seteuid(0))
-				    fatal("seteuid(0)");
+				    fatal("seteuid(0) failed, your operating system may have broken POSIX saved ID support\nTry running configure with --disable-saved-ids", 0);
 			      	break;
 
 	case PERM_FULL_ROOT:
 				/* headed for exec() */
 				(void) seteuid(0);
 				if (setuid(0))
-				    fatal("setuid(0)");
+				    fatal("setuid(0)", 1);
 			      	break;
 
 	case PERM_USER:
     	    	    	        (void) setegid(user_gid);
 				if (seteuid(user_uid))
-				    fatal("seteuid(user_uid)");
+				    fatal("seteuid(user_uid)", 1);
 			      	break;
 
 	case PERM_FULL_USER:
 				/* headed for exec() */
 				(void) setgid(user_gid);
 				if (setuid(user_uid))
-				    fatal("setuid(user_uid)");
+				    fatal("setuid(user_uid)", 1);
 				break;
 				
 	case PERM_RUNAS:
@@ -122,13 +122,13 @@ set_perms_posix(perm, sudo_mode)
 				else
 				    error = setuid(runas_pw->pw_uid);
 				if (error)
-				    fatal("unable to change to runas uid");
+				    fatal("unable to change to runas uid", 1);
 				break;
 
 	case PERM_SUDOERS:
 				/* assume euid == 0, ruid == user */
 				if (setegid(SUDOERS_GID))
-				    fatal("unable to change to sudoers gid");
+				    fatal("unable to change to sudoers gid", 1);
 
 				/*
 				 * If SUDOERS_UID == 0 and SUDOERS_MODE
@@ -139,10 +139,10 @@ set_perms_posix(perm, sudo_mode)
 				 */
 				if (SUDOERS_UID == 0) {
 				    if ((SUDOERS_MODE & 040) && seteuid(1))
-					fatal("seteuid(1)");
+					fatal("seteuid(1)", 1);
 				} else {
 				    if (seteuid(SUDOERS_UID))
-					fatal("seteuid(SUDOERS_UID)");
+					fatal("seteuid(SUDOERS_UID)", 1);
 				}
 			      	break;
     }
@@ -166,20 +166,20 @@ set_perms_fallback(perm, sudo_mode)
 	case PERM_FULL_ROOT:
 	case PERM_ROOT:
 				if (setuid(0))
-				    fatal("setuid(0)");
+				    fatal("setuid(0) failed, your operating system may have broken POSIX saved ID support\nTry running configure with --disable-setreuid", 0);
 			      	break;
 
 	case PERM_USER:
     	    	    	        (void) setegid(user_gid);
 				if (setreuid(0, user_uid))
-				    fatal("setreuid(0, user_uid)");
+				    fatal("setreuid(0, user_uid)", 1);
 			      	break;
 				
 	case PERM_FULL_USER:
 				/* headed for exec() */
     	    	    	        (void) setgid(user_gid);
 				if (setuid(user_uid))
-				    fatal("setuid(user_uid)");
+				    fatal("setuid(user_uid)", 1);
 			      	break;
 				
 	case PERM_RUNAS:
@@ -190,13 +190,13 @@ set_perms_fallback(perm, sudo_mode)
 				else
 				    error = setuid(runas_pw->pw_uid);
 				if (error)
-				    fatal("unable to change to runas uid");
+				    fatal("unable to change to runas uid", 1);
 				break;
 
 	case PERM_SUDOERS:
 				/* assume euid == 0, ruid == user */
 				if (setegid(SUDOERS_GID))
-				    fatal("unable to change to sudoers gid");
+				    fatal("unable to change to sudoers gid", 1);
 
 				/*
 				 * If SUDOERS_UID == 0 and SUDOERS_MODE
@@ -207,10 +207,10 @@ set_perms_fallback(perm, sudo_mode)
 				 */
 				if (SUDOERS_UID == 0) {
 				    if ((SUDOERS_MODE & 040) && setreuid(0, 1))
-					fatal("setreuid(0, 1)");
+					fatal("setreuid(0, 1)", 1);
 				} else {
 				    if (setreuid(0, SUDOERS_UID))
-					fatal("setreuid(0, SUDOERS_UID)");
+					fatal("setreuid(0, SUDOERS_UID)", 1);
 				}
 			      	break;
     }
@@ -233,33 +233,33 @@ set_perms_fallback(perm, sudo_mode)
      * real and effective uidss to 0 initially.
      */
     if (setuid(0))
-	fatal("setuid(0)");
+	fatal("setuid(0)", 1);
 
     switch (perm) {
 	case PERM_USER:
     	    	    	        (void) setegid(user_gid);
 				if (seteuid(user_uid))
-				    fatal("seteuid(user_uid)");
+				    fatal("seteuid(user_uid)", 1);
 			      	break;
 				
 	case PERM_FULL_USER:
 				/* headed for exec() */
     	    	    	        (void) setgid(user_gid);
 				if (setuid(user_uid))
-				    fatal("setuid(user_uid)");
+				    fatal("setuid(user_uid)", 1);
 			      	break;
 				
 	case PERM_RUNAS:
 				/* headed for exec(), assume euid == 0 */
 				runas_setup();
 				if (setuid(runas_pw->pw_uid))
-				    fatal("unable to change to runas uid");
+				    fatal("unable to change to runas uid", 1);
 				break;
 
 	case PERM_SUDOERS:
 				/* assume euid == 0, ruid == user */
 				if (setegid(SUDOERS_GID))
-				    fatal("unable to change to sudoers gid");
+				    fatal("unable to change to sudoers gid", 1);
 
 				/*
 				 * If SUDOERS_UID == 0 and SUDOERS_MODE
@@ -270,10 +270,10 @@ set_perms_fallback(perm, sudo_mode)
 				 */
 				if (SUDOERS_UID == 0) {
 				    if ((SUDOERS_MODE & 040) && seteuid(1))
-					fatal("seteuid(1)");
+					fatal("seteuid(1)", 1);
 				} else {
 				    if (seteuid(SUDOERS_UID))
-					fatal("seteuid(SUDOERS_UID)");
+					fatal("seteuid(SUDOERS_UID)", 1);
 				}
 			      	break;
     }
@@ -328,11 +328,17 @@ runas_setup()
 }
 
 static void
-fatal(str)
+fatal(str, printerr)
     char *str;
 {
 
-    if (str)
-	perror(str);
+    if (str) {
+	if (printerr)
+	    perror(str);
+	else {
+	    fputs(str, stderr);
+	    fputc('\n', stderr);
+	}
+    }
     exit(1);
 }

@@ -213,9 +213,11 @@ Special features/options:
   --disable-saved-ids
 	Disable use of POSIX saved IDs.  Normally, sudo will try to
 	use POSIX saved IDs if they are supported.  However, some
-	implementations are broken.  If sudo aborts with an error like:
-	    "seteuid(0): Operation not permitted"
-	you probably need to disable POSIX saved ID support.
+	implementations are broken.
+
+  --disable-setreuid
+	Disable use of the setreuid() function for operating systems
+	where it is broken.  4.4BSD has setreuid() but it doesn't really work.
 
   --disable-sia
 	Disable SIA support.  This is the "Security Integration Architecture"
@@ -605,6 +607,10 @@ Linux:
     the Linux client-side NFS implementation that has since been
     fixed.  There is a workaround on the sudo ftp site, linux_nfs.patch,
     if you need to NFS-mount sudoers on older Linux kernels.
+
+    Linux kernels 2.2.16-2.2.19 appear to have broken POSIX saved
+    ID support.  You must run configure with the --disable-saved-ids
+    flag to get a working sudo.
 
 Mac OS X:
     It has been reported that for sudo to work on Mac OS X it must

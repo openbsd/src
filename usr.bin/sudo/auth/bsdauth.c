@@ -57,6 +57,7 @@
 #endif /* HAVE_UNISTD_H */
 #include <ctype.h>
 #include <pwd.h>
+#include <signal.h>
 
 #include <login_cap.h>
 #include <bsd_auth.h>
@@ -65,7 +66,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: bsdauth.c,v 1.6 2001/12/14 19:52:53 millert Exp $";
+static const char rcsid[] = "$Sudo: bsdauth.c,v 1.8 2002/01/22 03:37:55 millert Exp $";
 #endif /* lint */
 
 extern char *login_style;		/* from sudo.c */
@@ -113,13 +114,16 @@ bsdauth_verify(pw, prompt, auth)
 {
     char *s, *pass;
     size_t len;
-    int authok;
-    sig_t childkiller;
+    int authok = 0;
+    sigaction_t sa, osa;
     auth_session_t *as = (auth_session_t *) auth->data;
     extern int nil_pw;
 
     /* save old signal handler */
-    childkiller = signal(SIGCHLD, SIG_DFL);
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = SIG_DFL;
+    (void) sigaction(SIGCHLD, &sa, &osa);
 
     /*
      * If there is a challenge then print that instead of the normal
@@ -154,10 +158,13 @@ bsdauth_verify(pw, prompt, auth)
     if (!pass || *pass == '\0')		/* ^C or empty password */
 	nil_pw = 1;
 
-    authok = pass ? auth_userresponse(as, pass, 1) : 0;
+    if (pass) {
+	authok = auth_userresponse(as, pass, 1);
+	memset(pass, 0, strlen(pass));
+    }
 
     /* restore old signal handler */
-    (void)signal(SIGCHLD, childkiller);
+    (void) sigaction(SIGCHLD, &osa, NULL);
 
     if (authok)
 	return(AUTH_SUCCESS);

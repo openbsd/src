@@ -99,7 +99,7 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.62 2001/12/14 22:12:39 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.63 2002/01/18 19:17:07 millert Exp $";
 #endif /* lint */
 
 
@@ -157,7 +157,11 @@ load_interfaces()
 		break;
 	}
     }
+#ifdef HAVE_FREEIFADDRS
     freeifaddrs(ifaddrs);
+#else
+    free(ifaddrs);
+#endif
 }
 
 #elif defined(SIOCGIFCONF) && !defined(STUB_LOAD_INTERFACES)

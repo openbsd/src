@@ -79,6 +79,9 @@
 /* Define if you have the `fnmatch' function. */
 #undef HAVE_FNMATCH
 
+/* Define if you have the `freeifaddrs' function. */
+#undef HAVE_FREEIFADDRS
+
 /* Define if you have the `fstat' function. */
 #undef HAVE_FSTAT
 

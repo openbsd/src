@@ -110,6 +110,7 @@ Linux	2.2.13	alpha	egcs-2.91.66	1.6.3	Todd Miller	 --with-pam
 Linux	2.2.6-15 ppc	egcs-1.1.2	1.5.9p4	Barbara Schelkle none
 Linux	2.0.34	mips	gcc-2.7.2	1.6	Tristan Roddis	 none
 UnixWare 1.1.4	i386	gcc-2.7.2	1.4	Michael Hancock	 none
+UnixWare 7.1.1	i686	cc		1.6.5p1	Mike Petkau	 none
 Pyramid DC/OSx 1.1	bundled cc	1.4	Les Schuettpelz	 none
 ATT	SVR4.x	i486	Metaware CC	1.4	Chris Ellington	 none
 SINIX	5.42	R4000	bundled cc	1.4	Paul Tuininga	 none

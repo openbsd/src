@@ -1501,3 +1501,21 @@ Sudo 1.6.5 released.
      would exit instead of allowing the user to enter an S/Key.
 
 Sudo 1.6.5p1 released.
+
+469) Older versions of BSDi have getifaddrs() but no freeifaddrs().
+
+470) BSDi has a fake setreuid() as do certain versions of FreeBSD and NetBSD.
+
+471) Ignore the return value of pam_setcred().  In Linux-PAM 0.75,
+     pam_setcred() will return PAM_PERM_DENIED even if the setcred function
+     of the module succeeds when pam_authenticate() has not been called.
+
+472) Avoid giving PAM a NULL password response, use the empty string instead.
+     This avoids a log warning when the user hits ^C at the password prompt
+     when Linux-PAM is in use.  This also prevents older versions of
+     Linux-PAM from dereferencing the NULL pointer.
+
+473) The user's password was not zeroed after use when AIX authentication,
+     BSD authentication, FWTK or PAM was in use.
+
+Sudo 1.6.5p2 released.

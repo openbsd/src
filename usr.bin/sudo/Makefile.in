@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.223 2002/01/16 23:37:33 millert Exp $
+# $Sudo: Makefile.in,v 1.224 2002/01/20 00:43:16 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -288,23 +288,23 @@ sudoers.cat: sudoers.man
 install: install-dirs install-binaries install-sudoers install-man
 
 install-dirs:
-	$(SHELL) $(srcdir)/mkinstalldirs $(DESTDIR)/$(sudodir) \
-	    $(DESTDIR)/$(visudodir) $(DESTDIR)/$(sudoersdir) \
-	    $(DESTDIR)/$(mandirsu) $(DESTDIR)/$(mandirform)
+	$(SHELL) $(srcdir)/mkinstalldirs $(DESTDIR)$(sudodir) \
+	    $(DESTDIR)$(visudodir) $(DESTDIR)$(sudoersdir) \
+	    $(DESTDIR)$(mandirsu) $(DESTDIR)$(mandirform)
 
 install-binaries: $(PROGS)
-	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 4111 -s sudo $(DESTDIR)/$(sudodir)/sudo
-	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0111 -s visudo $(DESTDIR)/$(visudodir)/visudo
+	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 4111 -s sudo $(DESTDIR)$(sudodir)/sudo
+	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0111 -s visudo $(DESTDIR)$(visudodir)/visudo
 
 install-sudoers:
-	test -f $(DESTDIR)/$(sudoersdir)/sudoers || \
+	test -f $(DESTDIR)$(sudoersdir)/sudoers || \
 	    $(INSTALL) -O $(sudoers_uid) -G $(sudoers_gid) -M $(sudoers_mode) \
-		$(srcdir)/sudoers $(DESTDIR)/$(sudoersdir)/sudoers
+		$(srcdir)/sudoers $(DESTDIR)$(sudoersdir)/sudoers
 
 install-man:
-	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudo.$(mantype) $(DESTDIR)/$(mandirsu)/sudo.$(mansectsu)
-	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/visudo.$(mantype) $(DESTDIR)/$(mandirsu)/visudo.$(mansectsu)
-	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudoers.$(mantype) $(DESTDIR)/$(mandirform)/sudoers.$(mansectform)
+	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudo.$(mantype) $(DESTDIR)$(mandirsu)/sudo.$(mansectsu)
+	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/visudo.$(mantype) $(DESTDIR)$(mandirsu)/visudo.$(mansectsu)
+	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudoers.$(mantype) $(DESTDIR)$(mandirform)/sudoers.$(mansectform)
 @MAN_POSTINSTALL@
 
 check:
