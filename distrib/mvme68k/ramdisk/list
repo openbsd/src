@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 2001/10/08 19:26:14 deraadt Exp $
+#	$OpenBSD: list,v 1.14 2002/02/09 17:02:14 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -63,7 +63,7 @@ SYMLINK	../../instbin		usr/bin/sed
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV raminst
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec

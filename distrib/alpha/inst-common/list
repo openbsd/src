@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.19 2002/02/06 01:28:53 art Exp $
+#	$OpenBSD: list,v 1.20 2002/02/09 17:02:13 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -53,7 +53,7 @@ SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec XXX - no it's not necessary and won't fit.

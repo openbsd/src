@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.26 2001/12/17 00:41:51 krw Exp $
+#	$OpenBSD: list,v 1.27 2002/02/09 17:02:13 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst				bin/cat
@@ -51,7 +51,7 @@ SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV raminst
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec (XXX)
 COPY	${DESTDIR}/usr/mdec/uboot.lif	usr/mdec/uboot.lif
