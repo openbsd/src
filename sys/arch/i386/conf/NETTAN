@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.15 1996/10/24 23:25:13 downsj Exp $
+#	$OpenBSD: NETTAN,v 1.16 1996/11/28 20:12:30 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,8 +6,8 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
-option		I486_CPU
-#option		I586_CPU
+#option		I486_CPU
+option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommanded
@@ -79,6 +79,10 @@ config		bsd	swap generic
 mainbus0	at root
 
 isa0	at mainbus0
+pci0	at mainbus0 bus ?
+
+#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+#pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -88,11 +92,11 @@ vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
+#com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
 #com*	at ast? slave ? flags 1
-boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+boca0	at isa? port 0x180 irq 12	# BOCA 8-port serial cards
 com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
@@ -100,8 +104,8 @@ com*	at boca? slave ?
 #cy0	at isa? ...
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
 
 #lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #lms1	at isa? port 0x238 irq 5
@@ -109,9 +113,11 @@ lpt2	at isa? port 0x3bc
 #mms1	at isa? port 0x238 irq 5
 #pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 
-aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-scsibus0 at aha?
+#scsibus* at aha?
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus0 at ahc?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -132,7 +138,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI Scanners
+#ss*	at scsibus? target ? lun ?	# SCSI Scanners
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
@@ -144,10 +150,15 @@ fd*	at fdc? drive ?
 #wdc1	at isa? port 0x170 irq ?
 #wd*	at wdc? drive ?
 
+#atapibus* at wdc?
+#acd*	at atapibus? drive?
+
 #ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 #ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
+ep0	at pci? dev ? function ?		# 3C590 ethernet cards
+ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 
 #spkr0	at isa? ...
 

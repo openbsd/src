@@ -5,9 +5,9 @@
 
 machine		i386		# architecture, used by config; REQUIRED
 
-option		I386_CPU	# CPU classes; at least one is REQUIRED
+#option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
-option		I586_CPU
+#option		I586_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
@@ -26,22 +26,23 @@ option		DDB		# in-kernel debugger
 makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internally consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
+option		BOOT_CONFIG	# user kernel config
 
 #option		SYSVMSG		# System V-like message queues
 #option		SYSVSEM		# System V-like semaphores
 #option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-option		COMPAT_09	# NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_43	# and 4.3BSD
+#option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+#option		COMPAT_09	# NetBSD 0.9,
+#option		COMPAT_10	# NetBSD 1.0,
+#option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-option		COMPAT_SVR4	# binary compatibility with SVR4
-option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-option		COMPAT_LINUX	# binary compatibility with Linux
-option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#option		COMPAT_SVR4	# binary compatibility with SVR4
+#option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#option		COMPAT_LINUX	# binary compatibility with Linux
+#option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 #option		USER_LDT	# user-settable LDT; used by WINE
 option		LKM		# loadable kernel modules
@@ -111,7 +112,7 @@ com2	at isa? port 0x3e8 irq 5
 #pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
 
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 #ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
@@ -133,9 +134,12 @@ scsibus* at aic?
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 #scsibus* at uha?
+#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds1	at isa? port 0x358 irq 11 drq 5
+#scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
 #cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
