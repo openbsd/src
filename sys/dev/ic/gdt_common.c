@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.12 2001/07/04 06:43:18 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.13 2001/08/03 15:21:40 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -215,7 +215,7 @@ gdt_attach(gdt)
 		gdt->sc_bus_cnt = i;
 	}
 
-	/* Read cache confgiuration */
+	/* Read cache configuration */
 	if (!gdt_internal_cmd(gdt, GDT_CACHESERVICE, GDT_IOCTL, GDT_CACHE_INFO,
 	    GDT_INVALID_CHANNEL, GDT_CINFO_SZ)) {
 		printf("cannot get cache info, error %d\n", gdt->sc_status);
