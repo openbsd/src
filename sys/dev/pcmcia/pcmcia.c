@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.26 2000/04/08 05:50:51 aaron Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.27 2000/04/24 19:06:00 niklas Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -550,6 +550,7 @@ pcmcia_function_enable(pf)
 
  done:
 	pf->pf_flags |= PFF_ENABLED;
+	delay(1000);
 	return (0);
 
  bad:
