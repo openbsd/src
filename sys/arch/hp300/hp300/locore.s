@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.10 1997/02/05 17:30:23 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.11 1997/02/10 11:13:28 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.63 1997/02/02 07:55:52 thorpej Exp $	*/
 
 /*
@@ -1175,38 +1175,6 @@ _esigcode:
  */ 
 
 #include <machine/asm.h>
-
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lmlloop			| no, use movl
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-#endif
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
 
 /*
  * non-local gotos

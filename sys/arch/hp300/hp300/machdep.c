@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/02/05 17:33:00 downsj Exp $	*/
-/*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1997/02/10 11:13:30 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 1997/02/02 07:58:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -1337,20 +1337,17 @@ dumpsys()
 void
 initcpu()
 {
-#ifdef MAPPEDCOPY
-	extern u_int mappedcopysize;
 
+#ifdef MAPPEDCOPY
 	/*
 	 * Initialize lower bound for doing copyin/copyout using
 	 * page mapping (if not already set).  We don't do this on
 	 * VAC machines as it loses big time.
 	 */
-	if (mappedcopysize == 0) {
-		if (ectype == EC_VIRT)
-			mappedcopysize = (u_int) -1;
-		else
-			mappedcopysize = NBPG;
-	}
+	if (ectype == EC_VIRT)
+		mappedcopysize = -1;	/* in case it was patched */
+	else
+		mappedcopysize = NBPG;
 #endif
 	parityenable();
 #ifdef USELEDS
