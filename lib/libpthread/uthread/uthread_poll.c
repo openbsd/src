@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.9 2004/01/01 08:19:33 brad Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.10 2004/01/19 17:53:38 millert Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -49,14 +49,14 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
 	struct pthread	*curthread = _get_curthread();
 	struct timespec	ts;
-	nfds_t		numfds = nfds;
-	int             i, ret = 0;
+	nfds_t		n, numfds = nfds;
+	int             ret = 0;
 	struct pthread_poll_data data;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
 
-	if (numfds > _thread_dtablesize) {
+	if (numfds > (nfds_t)_thread_dtablesize) {
 		numfds = _thread_dtablesize;
 	}
 	/* Check if a timeout was specified: */
@@ -84,8 +84,8 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 		 * Clear revents in case of a timeout which leaves fds
 		 * unchanged:
 		 */
-		for (i = 0; i < numfds; i++) {
-			fds[i].revents = 0;
+		for (n = 0; n < numfds; n++) {
+			fds[n].revents = 0;
 		}
 
 		curthread->data.poll_data = &data;
