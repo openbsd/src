@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.4 2003/08/07 16:37:52 fgsch Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.5 2003/08/16 17:31:55 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.4 2003/08/07 16:37:52 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.5 2003/08/16 17:31:55 deraadt Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -1996,7 +1996,7 @@ main(int argc, char **argv)
 			if (sblock.fs_snapinum[j]) {
 				errx(1, "active snapshot found in filesystem\n"
 				    "	please remove all snapshots before "
-				    "using growfs\n");
+				    "using growfs");
 			}
 			if (!sblock.fs_snapinum[j]) /* list is dense */
 				break;

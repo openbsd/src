@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.20 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: tables.c,v 1.21 2003/08/16 17:31:55 deraadt Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: tables.c,v 1.20 2003/06/02 23:32:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tables.c,v 1.21 2003/08/16 17:31:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -517,7 +517,7 @@ add_name(char *oname, int onamelen, char *nname)
 		/*
 		 * should never happen
 		 */
-		paxwarn(0, "No interactive rename table, links may fail\n");
+		paxwarn(0, "No interactive rename table, links may fail");
 		return(0);
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.5 2003/06/04 04:29:03 deraadt Exp $ */
+/* $OpenBSD: sha1.c,v 1.6 2003/08/16 17:31:56 deraadt Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -182,7 +182,7 @@ retrieve_sha1_marker(filename, sign, userid)
 		return 0;
 	}
 	if (gzip_read_header(f, &h, sign) == GZIP_NOT_GZIP) {
-		pwarnx("File %s is not a gzip file\n", filename);
+		pwarnx("File %s is not a gzip file", filename);
 		fclose(f);
 		free(n);
 		return 0;
