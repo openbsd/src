@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.1 1997/10/11 11:52:59 pefo Exp $ */
+/*	$OpenBSD: isa_machdep.h,v 1.2 1998/06/29 05:47:40 downsj Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -66,6 +66,7 @@ struct p4e_isa_bus {
 #define isa_intr_disestablish(c, h)                                     \
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
 
+#define __NO_ISA_INTR_CHECK	/* FIXME */
 
 /*
  *	Interrupt control struct used to control the ICU setup.

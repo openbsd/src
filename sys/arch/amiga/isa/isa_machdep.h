@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.2 1996/04/27 18:39:04 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.3 1998/06/29 05:47:37 downsj Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Niklas Hallqvist
@@ -58,5 +58,7 @@ struct amiga_isa_chipset {
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a), (w))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
+
+#define __NO_ISA_INTR_CHECK	/* FIXME */
 
 #endif
