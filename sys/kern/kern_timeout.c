@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.20 2004/11/10 11:00:00 grange Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.21 2004/12/12 20:37:01 espie Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -57,13 +57,14 @@ struct circq timeout_todo;		/* Worklist */
 #define MASKWHEEL(wheel, time) (((time) >> ((wheel)*WHEELBITS)) & WHEELMASK)
 
 #define BUCKET(rel, abs)						\
-    (((rel) <= (1 << (2*WHEELBITS)))					\
-    	? ((rel) <= (1 << WHEELBITS))					\
-            ? timeout_wheel[MASKWHEEL(0, (abs))]			\
-            : timeout_wheel[MASKWHEEL(1, (abs)) + WHEELSIZE]		\
-        : ((rel) <= (1 << (3*WHEELBITS)))				\
-            ? timeout_wheel[MASKWHEEL(2, (abs)) + 2*WHEELSIZE]		\
-            : timeout_wheel[MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
+    (timeout_wheel[							\
+	((rel) <= (1 << (2*WHEELBITS)))				\
+	    ? ((rel) <= (1 << WHEELBITS))				\
+		? MASKWHEEL(0, (abs))					\
+		: MASKWHEEL(1, (abs)) + WHEELSIZE			\
+	    : ((rel) <= (1 << (3*WHEELBITS)))				\
+		? MASKWHEEL(2, (abs)) + 2*WHEELSIZE			\
+		: MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
 
 #define MOVEBUCKET(wheel, time)						\
     CIRCQ_APPEND(&timeout_todo,						\
