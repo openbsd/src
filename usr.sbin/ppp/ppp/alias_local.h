@@ -14,11 +14,14 @@
     
      <updated several times by original author and Eivind Eklund>
 
-    $OpenBSD: alias_local.h,v 1.5 2000/02/27 01:38:24 brian Exp $
+    $OpenBSD: alias_local.h,v 1.6 2000/06/11 14:40:26 brian Exp $
 */
 #ifndef ALIAS_LOCAL_H
 #define ALIAS_LOCAL_H
 
+#ifndef NULL
+#define NULL 0
+#endif
 
 /*
     Macros
@@ -91,6 +94,12 @@ AddFragmentPtrLink(struct in_addr, u_short);
 
 struct alias_link *
 FindFragmentPtr(struct in_addr, u_short);
+
+struct alias_link *
+FindProtoIn(struct in_addr, struct in_addr, u_char);
+
+struct alias_link *
+FindProtoOut(struct in_addr, struct in_addr, u_char);
 
 struct alias_link *
 FindUdpTcpIn (struct in_addr, struct in_addr, u_short, u_short, u_char);
@@ -166,7 +175,5 @@ enum alias_tcp_state {
     ALIAS_TCP_STATE_CONNECTED,
     ALIAS_TCP_STATE_DISCONNECTED
 };
-
-int GetPptpAlias (struct in_addr*);
 /*lint -restore */
 #endif /* defined(ALIAS_LOCAL_H) */
