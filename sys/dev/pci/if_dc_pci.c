@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.7 2000/10/16 17:08:08 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.8 2000/10/27 18:13:44 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -268,8 +268,8 @@ void dc_pci_attach(parent, self, aux)
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102) {
 			found = 1;
 			sc->dc_type = DC_TYPE_DM9102;
-			sc->dc_flags |= DC_TX_COALESCE|DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_REDUCED_MII_POLL;
+			sc->dc_flags |= DC_TX_COALESCE|DC_TX_INTR_ALWAYS;
+			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_TX_STORENFWD;
 			sc->dc_pmode = DC_PMODE_MII;
 		}
 		break;
