@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.44 1997/10/25 02:07:08 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.45 1997/10/26 22:33:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -271,7 +271,7 @@ bios_getdisklabel(dev, label)
 {
 	daddr_t off = LABELSECTOR;
 	bios_diskinfo_t *bd;
-	char *st, *buf;
+	char *buf;
 	struct dos_mbr mbr;
 	int cyl, head, sect;
 	int error, i;
@@ -316,8 +316,7 @@ bios_getdisklabel(dev, label)
 		return("failed to read disklabel");
 
 	/* Fill in disklabel */
-	st = getdisklabel(buf, label); 
-	return(st);
+	return (getdisklabel(buf, label));
 }
 
 int
