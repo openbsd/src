@@ -37,9 +37,6 @@
 char *
 longname(void)
 {
-#ifdef EXTERN_TERMINFO
-    return cur_term->name;
-#else
 char	*ptr;
 
 	T(("longname() called"));
@@ -49,5 +46,4 @@ char	*ptr;
 			return(ptr + 1);
 
     return(ttytype);
-#endif
 }
