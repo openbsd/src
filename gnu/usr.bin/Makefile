@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2004/01/23 18:21:13 espie Exp $
+#	$OpenBSD: Makefile,v 1.42 2004/03/08 23:31:51 drahn Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -14,7 +14,10 @@ SUBDIR+=	../egcs/gcc
 .  endif
 .endif
 
-SUBDIR+=	cxxfilt cvs groff lynx rcs sendbug binutils
+SUBDIR+=	cxxfilt cvs groff lynx rcs sendbug
+.if ${MACHINE_ARCH} != "arm"
+SUBDIR+=binutils
+.endif
 
 # most ports use binutils gas and ld, some do not (yet).
 .if ${ELF_TOOLCHAIN:L} == "no"
