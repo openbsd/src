@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.14 2002/06/18 23:49:15 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.15 2002/06/24 17:51:05 angelos Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.14 2002/06/18 23:49:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.15 2002/06/24 17:51:05 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ mbpr(mbaddr, mbpooladdr, mclpooladdr)
 	} else {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_POOL;
-		mib[2] = KERN_POOL_POOL;
+		mib[2] = KERN_POOL_NPOOLS;
 		size = sizeof(npools);
 
 		if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
