@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 1999/08/06 20:41:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2000/02/12 09:46:59 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.27 1999/08/06 20:41:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.28 2000/02/12 09:46:59 deraadt Exp $";
 #endif
 #endif
 
@@ -490,9 +490,7 @@ main(argc, argv)
 	    sleep(1);		/* give it time to set up its terminal */
 	}
 
-	/* clear CLOCAL if modem option set and we set CLOCAL above */
-	if (modem && !modem_chat)
-		set_up_tty(ttyfd, 0);
+	set_up_tty(ttyfd, 0);
 
 	/* reopen tty if necessary to wait for carrier */
 	if (connector == NULL && modem) {
