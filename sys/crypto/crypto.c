@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.32 2002/01/23 01:33:07 art Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.33 2002/03/04 21:23:39 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -473,35 +473,4 @@ void
 crypto_done(struct cryptop *crp)
 {
 	crp->crp_callback(crp);
-}
-
-/*
- * Return SYMMETRIC or PUBLIC_KEY, depending on the algorithm type.
- */
-int
-crypto_check_alg(struct cryptoini *cri)
-{
-	switch (cri->cri_alg)
-	{
-	case CRYPTO_DES_CBC:
-	case CRYPTO_3DES_CBC:
-	case CRYPTO_BLF_CBC:
-	case CRYPTO_CAST_CBC:
-	case CRYPTO_SKIPJACK_CBC:
-	case CRYPTO_RIJNDAEL128_CBC:
-	case CRYPTO_ARC4:
-		return SYMMETRIC;
-	case CRYPTO_DH_SEND:
-	case CRYPTO_DH_RECEIVE:
-	case CRYPTO_RSA_ENCRYPT:
-	case CRYPTO_RSA_DECRYPT:
-	case CRYPTO_DSA_SIGN:
-	case CRYPTO_DSA_VERIFY:
-		return PUBLIC_KEY;
-	}
-
-#ifdef DIAGNOSTIC
-	panic("crypto_check_alg: unknown algorithm %d", cri->cri_alg);
-#endif
-	return -1;
 }
