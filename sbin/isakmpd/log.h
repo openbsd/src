@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.11 2001/10/05 08:18:37 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.12 2002/05/28 11:17:57 ho Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ enum log_classes {
 #define LOG_DBG(x)	log_debug x
 #define LOG_DBG_BUF(x)	log_debug_buf x
 
-extern void log_debug (int, int, const char *, ...);
+extern void log_debug (int, int, const char *, ...)
+     __attribute__ ((__format__ (__printf__, 3, 4)));
 extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
 extern void log_debug_cmd (int, int);
 extern void log_debug_toggle (void);
@@ -88,9 +89,12 @@ extern void log_packet_stop (void);
 #endif /* USE_DEBUG */
 
 extern FILE *log_current (void);
-extern void log_error (const char *, ...);
-extern void log_fatal (const char *, ...);
-extern void log_print (const char *, ...);
+extern void log_error (const char *, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void log_fatal (const char *, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void log_print (const char *, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void log_to (FILE *);
 extern void log_init (void);
 
