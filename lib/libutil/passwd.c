@@ -1,3 +1,4 @@
+/*	$OpenBSD: passwd.c,v 1.3 1996/06/17 07:46:04 downsj Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +52,8 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.1 1996/05/15 21:42:31 jtc Exp $";
 #include <paths.h>
 #include <signal.h>
 #include <limits.h>
-#include <util.h>
+
+#include "util.h"
 
 static void	pw_cont __P((int sig));
 

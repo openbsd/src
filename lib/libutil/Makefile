@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 1996/06/17 06:35:32 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/06/17 07:46:01 downsj Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS
 
-HDRS=	opendev.h scsi.h
+HDRS=	util.h scsi.h
 SRCS=	getmaxpartitions.c getrawpartition.c login.c login_tty.c logout.c \
 	logwtmp.c opendev.c passwd.c pty.c scsi.c
 

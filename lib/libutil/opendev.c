@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.1 1996/06/17 06:35:34 downsj Exp $ */
+/*	$OpenBSD: opendev.c,v 1.2 1996/06/17 07:46:03 downsj Exp $ */
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -31,7 +31,7 @@
 #include <sys/disklabel.h>
 #include <paths.h>
 
-#include "opendev.h"
+#include "util.h"
 
 /*
  * This routine is a generic rewrite of the original code found in
@@ -39,11 +39,10 @@
  */
 
 int
-opendev(path, oflags, dflags, mode, realpath)
+opendev(path, oflags, dflags, realpath)
 	char *path;
 	int oflags;
 	int dflags;
-	mode_t mode;
 	char **realpath;
 {
 	int fd;
@@ -51,7 +50,7 @@ opendev(path, oflags, dflags, mode, realpath)
 
 	*realpath = path;
 
-	fd = open(path, oflags, mode);
+	fd = open(path, oflags);
 	if ((fd < 0) && (errno == ENOENT)) {
 		if (path[0] != '/') {
 			if (dflags & OPENDEV_PART) {
@@ -61,14 +60,14 @@ opendev(path, oflags, dflags, mode, realpath)
 				 */
 				(void)snprintf(namebuf, sizeof(namebuf),
 				    "%sr%s%c", _PATH_DEV, path, 'a' + RAW_PART);
-				fd = open(namebuf, oflags, mode);
+				fd = open(namebuf, oflags);
 			}
 
 			if ((dflags & OPENDEV_DRCT) && (fd < 0) &&
 			    (errno == ENOENT)) {
 				/* ..and now no partition (for tapes) */
 				namebuf[strlen(namebuf) - 1] = '\0';
-				fd = open(namebuf, oflags, mode);
+				fd = open(namebuf, oflags);
 			}
 
 			*realpath = namebuf;
@@ -77,7 +76,7 @@ opendev(path, oflags, dflags, mode, realpath)
 	if ((fd < 0) && (errno == ENOENT) && (path[0] != '/')) {
 		(void)snprintf(namebuf, sizeof(namebuf), "%sr%s",
 		    _PATH_DEV, path);
-		fd = open(namebuf, oflags, mode);
+		fd = open(namebuf, oflags);
 
 		*realpath = namebuf;
 	}

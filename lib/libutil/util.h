@@ -1,7 +1,10 @@
-/*	$OpenBSD: logout.c,v 1.3 1996/06/17 07:46:03 downsj Exp $	*/
-/*
- * Copyright (c) 1988, 1993
+/*	$OpenBSD: util.h,v 1.1 1996/06/17 07:46:05 downsj Exp $	*/
+/*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
+ * Portions Copyright (c) 1996, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,44 +35,42 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: logout.c,v 1.3 1996/06/17 07:46:03 downsj Exp $";
-#endif /* LIBC_SCCS and not lint */
+#ifndef _UTIL_H_
+#define _UTIL_H_
 
-#include <sys/types.h>
-#include <sys/time.h>
-
-#include <fcntl.h>
+#include <pwd.h>
 #include <utmp.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
+#include <termios.h>
+#include <sys/ttycom.h>
+#include <sys/types.h>
+#include <sys/cdefs.h>
 
-#include "util.h"
+/*
+ * opendev() specific operation flags.
+ */
+#define OPENDEV_PART	0x01		/* Try to open the raw partition. */
+#define OPENDEV_DRCT	0x02		/* Try to open the device directly. */
 
-typedef struct utmp UTMP;
+__BEGIN_DECLS
+void	login __P((struct utmp *));
+int	login_tty __P((int));
+int	logout __P((const char *));
+void	logwtmp __P((const char *, const char *, const char *));
+int	opendev __P((char *, int, int, char **));
+int	pw_lock __P((int retries));
+int	pw_mkdb __P((void));
+int	pw_abort __P((void));
+void	pw_init __P((void));
+void	pw_edit __P((int notsetuid, const char *filename));
+void	pw_prompt __P((void));
+void	pw_copy __P((int ffd, int tfd, struct passwd *pw));
+int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
+void	pw_error __P((const char *name, int err, int eval));
+int	openpty __P((int *, int *, char *, struct termios *,
+		     struct winsize *));
+pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
+int	getmaxpartitions __P((void));
+int	getrawpartition __P((void));
+__END_DECLS
 
-int
-logout(line)
-	const char *line;
-{
-	int fd, rval;
-	UTMP ut;
-
-	if ((fd = open(_PATH_UTMP, O_RDWR, 0)) < 0)
-		return(0);
-	rval = 0;
-	while (read(fd, &ut, sizeof(UTMP)) == sizeof(UTMP)) {
-		if (!ut.ut_name[0] || strncmp(ut.ut_line, line, UT_LINESIZE))
-			continue;
-		bzero(ut.ut_name, UT_NAMESIZE);
-		bzero(ut.ut_host, UT_HOSTSIZE);
-		(void)time(&ut.ut_time);
-		(void)lseek(fd, -(off_t)sizeof(UTMP), L_INCR);
-		(void)write(fd, &ut, sizeof(UTMP));
-		rval = 1;
-	}
-	(void)close(fd);
-	return(rval);
-}
+#endif /* !_UTIL_H_ */
