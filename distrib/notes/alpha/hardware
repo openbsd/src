@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.42 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.43 2004/04/02 08:23:23 deraadt Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -356,6 +356,10 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			SMC 2202USB
 			SMC EZ Connect USB
 			SOHOware NUB100
+		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		    D-Link DUBE100
+		    LinkSys USB200M
+		    Netgear FA120
 		AMD LANCE and PCnet-based PCI adapters (le), including: [*]
 			BOCALANcard/PCI
 			AT&T StarLAN 10, EN100, and StarLAN Fiber

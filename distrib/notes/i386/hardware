@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.151 2004/03/26 08:56:10 tom Exp $
+dnl	$OpenBSD: hardware,v 1.152 2004/04/02 08:23:23 deraadt Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -322,6 +322,10 @@ Supported hardware {:-include-:}:
 		    SMC 2202USB
 		    SMC EZ Connect USB
 		    SOHOware NUB100
+		ASIX Electronics AX88172 USB Ethernet adapters, including:
+		    D-Link DUBE100
+		    LinkSys USB200M
+		    Netgear FA120
 		AMD LANCE and PCnet-based ISA Ethernet adapters, including: [B]
 		    Novell NE1500T
 		    Novell NE2100
