@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2004/06/28 01:52:24 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2004/06/28 02:14:11 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -438,7 +438,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
-	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_level,
+	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_pin,
 	    &evcount_intr);
 
 	*p = ih;
