@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.18 2001/02/24 03:59:55 angelos Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.19 2001/05/31 20:23:52 angelos Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -153,14 +153,43 @@ struct exchange {
   int key_length;
   struct keystate *keystate;
 
+  /* Used only by KeyNote, to cache the key used to authenticate Phase 1 */
+  char *keynote_key; /* printable format */
+
   /* 
    * Received certificate - used to verify signatures on packet,
    * stored here for later policy processing. 
-   * a type of ISAKMP_CERTENC_NONE implies pre-shared key.
+   *
+   * The rules for the recv_* and sent_* fields are:
+   * - recv_cert stores the credential (if any) received from the peer;
+   *   the kernel may pass us one, but we ignore it. We pass it to the
+   *   kernel so processes can peek at it. When doing passphrase
+   *   authentication in Phase 1, this is empty.
+   * - recv_key stores the key (public or private) used by the peer
+   *   to authenticate. Otherwise, same properties as recv_cert except
+   *   that we don't tell the kernel about passphrases (so we don't
+   *   reveal system-wide passphrases). Processes that used passphrase
+   *   authentication already know the passphrase! We ignore it if/when
+   *   received from the kernel (meaningless).
+   * - sent_cert stores the credential, if any, we used to authenticate
+   *   with the peer. It may be passed to us by the kernel, or we may
+   *   have found it in our certificate storage. In either case, there's
+   *   no point passing it to the kernel, so we don't.
+   * - sent key stores the private key we used for authentication with
+   *   the peer (private key or passphrase). This may have been received
+   *   from the kernel, or may be a system-wide setting. In either case,
+   *   we don't pass it to the kernel, to avoid revealing such information
+   *   to processes (processes either already know it, or have no business
+   *   knowing it).
    */
-  int recv_certtype, recv_certlen;
-  void *recv_cert;
-  void *recv_key;
+  int recv_certtype, recv_keytype;
+  void *recv_cert; /* Certificate received from peer, native format */
+  void *recv_key; /* Key peer used to authenticate, native format */
+
+  /* Likewise, for certificates/keys we use. */
+  int sent_certtype, sent_keytype;
+  void *sent_cert; /* Certificate (to be) sent to peer, native format */
+  void *sent_key; /* Key we'll use to authenticate to peer, native format */
 
   /* ACQUIRE sequence number */
   u_int32_t seq;
