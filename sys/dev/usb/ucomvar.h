@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.11 2002/07/10 03:09:34 nate Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.12 2005/01/10 08:17:49 dlg Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -110,11 +110,7 @@ struct ucom_attach_args {
 	void *arg;
 };
 
-#if defined(__NetBSD__)
-int ucomsubmatch(struct device *, struct cfdata *, void *);
-#else
 int ucomsubmatch(struct device *, void *, void *);
-#endif
 
 int ucomprint(void *aux, const char *pnp);
 void ucom_status_change(struct ucom_softc *);

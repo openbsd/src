@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.21 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: ucom.c,v 1.22 2005/01/10 08:17:49 dlg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -53,12 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
-#if defined(__NetBSD__)
-#include "rnd.h"
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
-#endif
 
 #include <dev/usb/usb.h>
 
@@ -74,32 +68,20 @@
 #if NUCOM > 0
 
 #ifdef UCOM_DEBUG
-#define DPRINTFN(n, x)	do { if (ucomdebug > (n)) logprintf x; } while (0)
+#define DPRINTFN(n, x)	do { if (ucomdebug > (n)) printf x; } while (0)
 int ucomdebug = 0;
 #else
 #define DPRINTFN(n, x)
 #endif
 #define DPRINTF(x) DPRINTFN(0, x)
 
-#if defined(__NetBSD__)
-#define	UCOMUNIT_MASK		0x3ffff
-#define	UCOMDIALOUT_MASK	0x80000
-#define	UCOMCALLUNIT_MASK	0x40000
-
-#define LINESW(tp, func)	((tp)->t_linesw->func)
-#endif
-
-#if defined(__OpenBSD__)
-#define	UCOMUNIT_MASK		0x3f
-#define	UCOMDIALOUT_MASK	0x80
-#define	UCOMCALLUNIT_MASK	0x40
+#define	UCOMUNIT_MASK		0x7f
+#define	UCOMCUA_MASK		0x80
 
 #define LINESW(tp, func)	(linesw[(tp)->t_line].func)
-#endif
 
 #define	UCOMUNIT(x)		(minor(x) & UCOMUNIT_MASK)
-#define	UCOMDIALOUT(x)		(minor(x) & UCOMDIALOUT_MASK)
-#define	UCOMCALLUNIT(x)		(minor(x) & UCOMCALLUNIT_MASK)
+#define	UCOMCUA(x)		(minor(x) & UCOMCUA_MASK)
 
 struct ucom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -134,30 +116,12 @@ struct ucom_softc {
 	u_char			sc_tx_stopped;
 	int			sc_swflags;
 
+	u_char			sc_cua;
+
 	u_char			sc_opening;	/* lock during open */
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
-
-#if defined(__NetBSD__) && NRND > 0
-	rndsource_element_t	sc_rndsource;	/* random source */
-#endif
 };
-
-#if defined(__NetBSD__)
-dev_type_open(ucomopen);
-dev_type_close(ucomclose);
-dev_type_read(ucomread);
-dev_type_write(ucomwrite);
-dev_type_ioctl(ucomioctl);
-dev_type_stop(ucomstop);
-dev_type_tty(ucomtty);
-dev_type_poll(ucompoll);
-
-const struct cdevsw ucom_cdevsw = {
-	ucomopen, ucomclose, ucomread, ucomwrite, ucomioctl,
-	ucomstop, ucomtty, ucompoll, nommap, ttykqfilter, D_TTY
-};
-#endif
 
 Static void	ucom_cleanup(struct ucom_softc *);
 Static void	ucom_hwiflow(struct ucom_softc *);
@@ -210,16 +174,7 @@ USB_ATTACH(ucom)
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
 	sc->sc_tty = tp;
-
-#ifndef __OpenBSD__
-	DPRINTF(("ucom_attach: tty_attach %p\n", tp));
-	tty_attach(tp);
-#endif
-
-#if defined(__NetBSD__) && NRND > 0
-	rnd_attach_source(&sc->sc_rndsource, USBDEVNAME(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
-#endif
+	sc->sc_cua = 0;
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -254,36 +209,22 @@ USB_DETACH(ucom)
 	}
 	splx(s);
 
-#if defined(__NetBSD__)
-	/* locate the major number */
-	maj = cdevsw_lookup_major(&ucom_cdevsw);
-#else
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == ucomopen)
 			break;
-#endif
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
 	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
-	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
-	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
+	vdevgone(maj, mn | UCOMCUA_MASK, mn | UCOMCUA_MASK, VCHR);
 
 	/* Detach and free the tty. */
 	if (tp != NULL) {
-#ifndef __OpenBSD__
-		tty_detach(tp);
-#endif
 		ttyfree(tp);
 		sc->sc_tty = NULL;
 	}
-
-	/* Detach the random source */
-#if defined(__NetBSD__) && NRND > 0
-	rnd_detach_source(&sc->sc_rndsource);
-#endif
 
 	return (0);
 }
@@ -329,6 +270,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	usbd_status err;
 	struct ucom_softc *sc;
 	struct tty *tp;
+	struct termios t;
 	int s;
 	int error;
 
@@ -345,40 +287,26 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		return (ENXIO);
 
 	tp = sc->sc_tty;
-
 	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-
-	s = spltty();
-
 	/*
-	 * Do the following iff this is a first open.
+	 * Do the following if this is a first open.
 	 */
 	while (sc->sc_opening)
 		tsleep(&sc->sc_opening, PRIBIO, "ucomop", 0);
 
 	if (sc->sc_dying) {
-		splx(s);
 		return (EIO);
 	}
 	sc->sc_opening = 1;
 
-#if defined(__NetBSD__)
-	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-#else
+	tp->t_dev = dev;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-#endif
-		struct termios t;
-
-		tp->t_dev = dev;
+		SET(tp->t_state, TS_WOPEN);
 
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
-							  sc->sc_portno);
+			    sc->sc_portno);
 			if (error) {
 				ucom_cleanup(sc);
 				sc->sc_opening = 0;
@@ -403,6 +331,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
+
 		/* Make sure ucomparam() will do something. */
 		tp->t_ospeed = 0;
 		(void) ucomparam(tp, &t);
@@ -412,6 +341,8 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		ttychars(tp);
 		ttsetwater(tp);
 
+		s = spltty();
+
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -419,7 +350,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		 * expect.  We always assert DTR while the device is open
 		 * unless explicitly requested to deassert it.
 		 */
-		ucom_dtr(sc, 1);
+		//ucom_dtr(sc, 1);
 
 		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
 		ucom_hwiflow(sc);
@@ -476,16 +407,62 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		}
 
 		ucomstartread(sc);
+
+		if (ISSET(sc->sc_swflags, TIOCFLAG_SOFTCAR) || UCOMCUA(dev) ||
+		    ISSET(sc->sc_msr, UMSR_DCD) || ISSET(tp->t_cflag, MDMBUF))
+			SET(tp->t_state, TS_CARR_ON);
+		else
+			CLR(tp->t_state, TS_CARR_ON);
+
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+	else
+		s = spltty();
+
+	if (UCOMCUA(dev)) {
+		if (ISSET(tp->t_state, TS_ISOPEN)) {
+			/* Someone is already dialed in */
+			splx(s);
+			return (EBUSY);
+		}
+		sc->sc_cua = 1;
+	} else {
+		/* tty (not cua) device, wait for carrier */
+		if (ISSET(flag, O_NONBLOCK)) {
+			if (sc->sc_cua) {
+				splx(s);
+				return (EBUSY);
+			}
+		} else {
+			while (sc->sc_cua || (!ISSET(tp->t_cflag, CLOCAL) &&
+			    !ISSET(tp->t_state, TS_CARR_ON))) {
+				SET(tp->t_state, TS_WOPEN);
+				error = ttysleep(tp, &tp->t_rawq,
+				    TTIPRI | PCATCH, ttopen, 0);
+				/*
+				 * If TS_WOPEN has been reset, that means the
+				 * cua device has been closed.  We don't want
+				 * to fail in that case, so just go around
+				 * again.
+				 */
+				if (error && ISSET(tp->t_state, TS_WOPEN)) {
+					CLR(tp->t_state, TS_WOPEN);
+					if (!sc->sc_cua &&
+					    !ISSET(tp->t_state, TS_ISOPEN))
+						ucom_cleanup(sc);
+					splx(s);
+					return (error);
+				}
+			}
+		}
 	}
+		
 	sc->sc_opening = 0;
 	wakeup(&sc->sc_opening);
 	splx(s);
 
-#if defined(__NetBSD__)
-	error = ttyopen(tp, UCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
-#else
-	error = ttyopen(UCOMDIALOUT(dev), tp);
-#endif
+
+	error = ttyopen(UCOMUNIT(dev), tp);
 	if (error)
 		goto bad;
 
@@ -514,11 +491,7 @@ fail_0:
 	return (error);
 
 bad:
-#if defined(__NetBSD__)
-	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-#else
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-#endif
 		/*
 		 * We failed to open the device, and nobody else had it opened.
 		 * Clean up the state as appropriate.
@@ -534,6 +507,7 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
+	int s;
 
 	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -542,13 +516,8 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	sc->sc_refcnt++;
 
 	(*LINESW(tp, l_close))(tp, flag);
-	ttyclose(tp);
-
-#if defined(__NetBSD__)
-	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-#else
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-#endif
+	s = spltty();
+	if (!ISSET(tp->t_state, TS_WOPEN)) {
 		/*
 		 * Although we got a last close, the device may still be in
 		 * use; e.g. if this was the dialout node, and there are still
@@ -556,6 +525,10 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		 */
 		ucom_cleanup(sc);
 	}
+	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+	sc->sc_cua = 0;
+	splx(s);
+	ttyclose(tp);
 
 	if (sc->sc_methods->ucom_close != NULL)
 		sc->sc_methods->ucom_close(sc->sc_parent, sc->sc_portno);
@@ -996,11 +969,7 @@ out:
 	splx(s);
 }
 
-#if defined(__NetBSD__)
-void
-#else
 int
-#endif
 ucomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
@@ -1017,9 +986,7 @@ ucomstop(struct tty *tp, int flag)
 	}
 	splx(s);
 #endif
-#if !defined(__NetBSD__)
 	return (0);
-#endif
 }
 
 Static void
@@ -1043,9 +1010,7 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
-#if defined(__NetBSD__) && NRND > 0
-	rnd_add_uint32(&sc->sc_rndsource, cc);
-#endif
+
 	DPRINTFN(5,("ucomwritecb: cc=%d\n", cc));
 	/* convert from USB bytes to tty bytes */
 	cc -= sc->sc_opkthdrlen;
@@ -1116,9 +1081,6 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 	}
 
 	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
-#if defined(__NetBSD__) && NRND > 0
-	rnd_add_uint32(&sc->sc_rndsource, cc);
-#endif
 	DPRINTFN(5,("ucomreadcb: got %d chars, tp=%p\n", cc, tp));
 	if (sc->sc_methods->ucom_read != NULL)
 		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
@@ -1185,16 +1147,10 @@ ucomprint(void *aux, const char *pnp)
 }
 
 int
-#if defined(__OpenBSD__)
 ucomsubmatch(struct device *parent, void *match, void *aux)
-#else
-ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
-#endif
 {
         struct ucom_attach_args *uca = aux;
-#if defined(__OpenBSD__)
         struct cfdata *cf = match;
-#endif
 
 	if (uca->portno != UCOM_UNK_PORTNO &&
 	    cf->ucomcf_portno != UCOM_UNK_PORTNO &&
