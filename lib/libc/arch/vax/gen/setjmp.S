@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.2 1996/08/19 08:18:29 tholo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -69,7 +69,7 @@ ENTRY(setjmp, R6)
 	clrl	r0
 	ret
 
-ENTRY(longjmp, 0)
+ENTRY(longjmp, R2)
 	movl	8(ap),r0		# return(v)
 	movl	4(ap),r1		# fetch buffer
 	tstl	12(r1)

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: memcpy.S,v 1.2 1996/08/19 08:18:52 tholo Exp $"
+	.asciz "$OpenBSD: memcpy.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -46,7 +46,7 @@
 
 #include "DEFS.h"
 
-ENTRY(memcpy, 0)
+ENTRY(memcpy, R2|R3|R4|R5)
 	movzwl	$65535,r0	/* r0 = 64K (needed below) */
 	movq	8(ap),r1	/* r1 = src, r2 = length */
 	movl	4(ap),r3	/* r3 = dst */

@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: udiv.S,v 1.2 1996/08/19 08:18:33 tholo Exp $"
+	.asciz "$OpenBSD: udiv.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -50,7 +50,7 @@
 #define	DIVIDEND	4(ap)
 #define	DIVISOR		8(ap)
 
-ASENTRY(udiv,0)
+ASENTRY(udiv,R2)
 	movl	DIVISOR,r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	DIVIDEND,r0
@@ -70,7 +70,7 @@ Lone:
 	movl	$1,r0
 	ret
 
-ASENTRY(audiv,0)
+ASENTRY(audiv,R2|R3)
 	movl	DIVIDEND,r3
 	movl	DIVISOR,r2
 	jlss	La_easy		# big divisor: settle by comparison

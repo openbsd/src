@@ -33,14 +33,14 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: bcopy.S,v 1.2 1996/08/19 08:18:45 tholo Exp $"
+	.asciz "$OpenBSD: bcopy.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /* bcopy(from, to, size) */
 
 #include "DEFS.h"
 
-ENTRY(bcopy, R6)
+ENTRY(bcopy, R2|R3|R4|R5|R6)
 	movl	4(ap),r1
 	movl	8(ap),r3
 	movl	12(ap),r6

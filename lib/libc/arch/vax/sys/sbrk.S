@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.3 1998/05/17 10:06:34 niklas Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.4 2001/03/18 07:29:04 bjc Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -48,7 +48,7 @@ minbrk: .long	_end
 curbrk:	.long	_end
 	.text
 
-ENTRY(sbrk, 0)
+ENTRY(sbrk, R3)
 	addl3	curbrk,4(ap),-(sp)
 	pushl	$1
 	movl	ap,r3

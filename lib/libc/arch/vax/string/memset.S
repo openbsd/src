@@ -33,14 +33,14 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: memset.S,v 1.2 1996/08/19 08:18:53 tholo Exp $"
+	.asciz "$OpenBSD: memset.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /* void *memset(base, c, length) */
 
 #include "DEFS.h"
 
-ENTRY(memset, 0)
+ENTRY(memset, R2|R3|R4|R5)
 	movl	4(ap),r3
 1:
 	movzwl	$65535,r0

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ldexp.S,v 1.2 1996/08/19 08:18:27 tholo Exp $"
+	.asciz "$OpenBSD: ldexp.S,v 1.3 2001/03/18 07:29:04 bjc Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -60,7 +60,7 @@
 
 	.globl	_errno
 
-ENTRY(ldexp, 0)
+ENTRY(ldexp, R2)
 	movd	4(ap),r0	/* fetch "value" */
 	extzv	$7,$8,r0,r2	/* r2 := biased exponent */
 	jeql	1f		/* if zero, done */
