@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_audio.h,v 1.2 1996/04/18 21:21:38 niklas Exp $	*/
+/*	$OpenBSD: linux_audio.h,v 1.3 1996/09/16 15:34:28 mickey Exp $	*/
 
 #define LINUX_IOCPARM_MASK    0x7f            /* parameters must be < 128 bytes */
 #define LINUX_IOC_VOID        0x00000000      /* no parameters */
@@ -19,6 +19,7 @@
 #define	LINUX_SNDCTL_DSP_STEREO		_LINUX_IOWR('P', 3, int)
 #define	LINUX_SNDCTL_DSP_GETBLKSIZE	_LINUX_IOWR('P', 4, int)
 #define	LINUX_SNDCTL_DSP_SETFMT		_LINUX_IOWR('P', 5, int)
+#define	LINUX_SNDCTL_DSP_WRITE_CHANNELS	_LINUX_IOWR('P', 6, int)
 #define	LINUX_SNDCTL_DSP_POST		_LINUX_IO('P', 8)
 #define	LINUX_SNDCTL_DSP_SETFRAGMENT	_LINUX_IOWR('P', 10, int)
 #define	LINUX_SNDCTL_DSP_GETFMTS	_LINUX_IOR('P', 11, int)
