@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.71 2004/10/11 13:29:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.72 2004/10/11 13:46:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -772,8 +772,7 @@ sub really_add($$)
 	}
 	add_installed($pkgname);
 	if ($plist->has(DISPLAY)) {
-		my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-		System("$pager $dir".DISPLAY);
+		$plist->get(DISPLAY)->prepare($state);
 	}
 }
 
@@ -853,6 +852,11 @@ ensure_ldconfig($opt_v) unless $opt_n;
 
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
+}
+if (defined $state->{display}) {
+	close $state->{display};
+	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
+	System("$pager ".$state->{displayname});
 }
 if ($dielater) {
 	die $@;

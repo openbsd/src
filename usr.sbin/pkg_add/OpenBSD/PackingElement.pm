@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.50 2004/10/11 13:29:05 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.51 2004/10/11 13:46:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1119,12 +1119,38 @@ package OpenBSD::PackingElement::FREQUIRED_BY;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 sub category() { OpenBSD::PackageInfo::REQUIRED_BY }
 
-package OpenBSD::PackingElement::FDISPLAY;
+package OpenBSD::PackingElement::DisplayFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+use OpenBSD::Error;
+
+sub prepare
+{
+	my ($self, $state) = @_;
+	unless (defined $state->{display}) {
+		require OpenBSD::Temp;
+		require File::Temp;
+
+		($state->{display}, $state->{displayname}) = File::Temp::tempfile("display.XXXXXXXXX", DIR => $OpenBSD::Temp::tempbase);
+	}
+	my $fname = $state->{dir}.$self->{name};
+	open(my $src, '<', $fname) or Fatal "Can't open $fname: $!";
+	my $dest = $state->{display};
+	local $_;
+	print $dest "+-------------- ", $state->{pkgname}, "\n";
+	while (<$src>) {
+		next if m/^\+\-+\s*$/;
+		s/^\+ //;
+		print $dest $_;
+	}
+	print $dest "+-------------- ", $state->{pkgname}, "\n";
+}
+
+package OpenBSD::PackingElement::FDISPLAY;
+our @ISA=qw(OpenBSD::PackingElement::DisplayFile);
 sub category() { OpenBSD::PackageInfo::DISPLAY }
 
 package OpenBSD::PackingElement::FUNDISPLAY;
-our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
+our @ISA=qw(OpenBSD::PackingElement::DisplayFile);
 sub category() { OpenBSD::PackageInfo::UNDISPLAY }
 
 package OpenBSD::PackingElement::FMTREE_DIRS;

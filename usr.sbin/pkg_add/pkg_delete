@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.53 2004/10/11 13:29:05 espie Exp $
+# $OpenBSD: pkg_delete,v 1.54 2004/10/11 13:46:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -559,7 +559,7 @@ sub delete_package
 	}
 
 	if ($plist->has(UNDISPLAY)) {
-		$plist->get(UNDISPLAY)->delete($state);
+		$plist->get(UNDISPLAY)->prepare($state);
 	}
 
 	# guard against duplicate pkgdep
@@ -729,6 +729,11 @@ ensure_ldconfig($opt_v) unless $opt_n;
 cleanup_shared_items($state);
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
+if (defined $state->{display}) {
+	close $state->{display};
+	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
+	System("$pager ".$state->{displayname});
+}
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
 	print "Problems logged as $logname\n";
