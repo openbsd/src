@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 1999/04/23 17:38:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 1999/04/27 17:58:26 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -359,7 +359,9 @@ int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
 
+#ifdef MACHINE_NEW_NONCONTIG
 static void pmap_page_upload __P((void));
+#endif
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -809,6 +811,7 @@ pmap_virtual_space(v_start, v_end)
         *v_end   = virtual_end;
 }
 
+#ifdef MACHINE_NEW_NONCONTIG
 /*
  * Helper routine that hands off available physical pages to the VM system.
  */
@@ -866,6 +869,7 @@ pmap_page_upload()
 	}
 
 }
+#endif
 
 #ifdef MACHINE_NONCONTIG
 /*
@@ -2746,7 +2750,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	register int npte, zseg, vr, vs;
 	register int rcookie, scookie;
 	register caddr_t p;
-	register struct memarr *mp;
 	register void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
 	extern char end[];
@@ -3099,7 +3102,6 @@ pmap_bootstrap4m(void)
 	caddr_t p;
 	register caddr_t q;
 	register union ctxinfo *ci;
-	register struct memarr *mp;
 	register int reg, seg;
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
