@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.6 1999/04/19 19:53:41 niklas Exp $	*/
-/*	$EOM: log.c,v 1.23 1999/04/18 15:17:24 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 1999/07/07 22:11:14 niklas Exp $	*/
+/*	$EOM: log.c,v 1.24 1999/06/26 23:26:56 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -120,6 +120,16 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  /* Report fallback.  */
 	  syslog (LOG_ALERT, fallback_msg, errno);
 	  fprintf (log_output, fallback_msg, errno);
+
+	  /* 
+	   * Close log_output to prevent isakmpd from locking the file.
+	   * We may need to explicitly close stdout to do this properly.
+	   * XXX - Figure out how to match two FILE *'s and rewrite.
+	   */  
+	  if (log_output->_file != -1)
+	    if (stdout->_file == log_output->_file)
+	      fclose (stdout);
+	  fclose (log_output);
 
 	  /* Fallback to syslog.  */
 	  log_to (0);
