@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.8 2004/10/24 22:07:38 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.9 2004/10/24 23:03:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -583,7 +583,7 @@ struct ahd_dma64_seg {
 
 struct map_node {
 	bus_dmamap_t		 dmamap;
-	bus_addr_t		 physaddr;
+	bus_addr_t		 busaddr;
 	uint8_t			*vaddr; 
 	bus_dma_segment_t	dmasegs;
 	int			nseg;
@@ -665,16 +665,18 @@ struct scb {
 #define pending_links links2.le
 #define collision_links links2.le
 	struct scb		 *col_scb;
-	struct scsipi_xfer	 *xs;
+	struct scsi_xfer	 *xs;
 
 	struct ahd_softc	 *ahd_softc;
 	scb_flag		  flags;
+#ifndef __linux__
 	bus_dmamap_t		  dmamap;
+#endif
 	struct scb_platform_data *platform_data;
 	struct map_node	 	 *hscb_map;
 	struct map_node	 	 *sg_map;
 	struct map_node	 	 *sense_map;
-	void 			 *sg_list;
+	void			 *sg_list;
 	uint8_t			 *sense_data;
 	bus_addr_t		  sg_list_busaddr;
 	bus_addr_t		  sense_busaddr;
@@ -712,7 +714,6 @@ struct scb_data {
 	SLIST_HEAD(, map_node) hscb_maps;
 	SLIST_HEAD(, map_node) sg_maps;
 	SLIST_HEAD(, map_node) sense_maps;
-
 	int		 scbs_left;	/* unallocated scbs in head map_node */
 	int		 sgs_left;	/* unallocated sgs in head map_node */
 	int		 sense_left;	/* unallocated sense in head map_node */
@@ -1104,15 +1105,15 @@ struct ahd_completion
 
 struct ahd_softc {
 	struct device		sc_dev;
-	struct scsipi_channel	sc_channel;
+	struct scsi_link	sc_channel;
 	struct device *		sc_child;
-	struct scsipi_adapter	sc_adapter;
+	struct scsi_adapter	sc_adapter;
 
 	bus_space_tag_t		tags[2];
 	bus_space_handle_t	bshs[2];
 
 #ifndef __linux__
-	bus_dma_tag_t             buffer_dmat;   /* dmat for buffer I/O */
+	bus_dma_tag_t		  buffer_dmat;   /* dmat for buffer I/O */
 #endif
 	void			*shutdown_hook;
 	struct scb_data		scb_data;
@@ -1382,25 +1383,13 @@ struct ahd_pci_identity {
 extern struct ahd_pci_identity ahd_pci_ident_table [];
 extern const u_int ahd_num_pci_devs;
 
-/***************************** VL/EISA Declarations ***************************/
-struct aic7770_identity {
-	uint32_t		 full_id;
-	uint32_t		 id_mask;
-	char			*name;
-	ahd_device_setup_t	*setup;
-};
-extern struct aic7770_identity aic7770_ident_table [];
-extern const int ahd_num_aic7770_devs;
-
-#define AHD_EISA_SLOT_OFFSET	0xc00
-#define AHD_EISA_IOSIZE		0x100
-
 /*************************** Function Declarations ****************************/
 /******************************************************************************/
-void	ahd_reset_cmds_pending(struct ahd_softc *ahd);
-u_int	ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl);
-void	ahd_busy_tcl(struct ahd_softc *ahd, u_int tcl, u_int busyid);
-void	ahd_unbusy_tcl(struct ahd_softc *, u_int);
+void			ahd_reset_cmds_pending(struct ahd_softc *ahd);
+u_int			ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl);
+void			ahd_busy_tcl(struct ahd_softc *ahd,
+				     u_int tcl, u_int busyid);
+void			ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl);
 
 /***************************** PCI Front End *********************************/
 const struct ahd_pci_identity * ahd_find_pci_device(pcireg_t, pcireg_t);
@@ -1570,24 +1559,24 @@ cam_status	ahd_find_tmode_devs(struct ahd_softc *ahd,
 #ifdef AHD_DEBUG
 extern uint32_t ahd_debug;
 #define AHD_DEBUG_OPTS		0
-#define     AHD_SHOW_MISC		0x00001
-#define     AHD_SHOW_SENSE		0x00002
-#define     AHD_SHOW_RECOVERY		0x00004
-#define     AHD_DUMP_SEEPROM		0x00008
-#define     AHD_SHOW_TERMCTL		0x00010
-#define     AHD_SHOW_MEMORY		0x00020
-#define     AHD_SHOW_MESSAGES		0x00040
-#define     AHD_SHOW_MODEPTR		0x00080
-#define     AHD_SHOW_SELTO		0x00100
-#define     AHD_SHOW_FIFOS		0x00200
-#define     AHD_SHOW_QFULL		0x00400
-#define	    AHD_SHOW_DV			0x00800
-#define     AHD_SHOW_MASKED_ERRORS	0x01000
-#define     AHD_SHOW_QUEUE		0x02000
-#define     AHD_SHOW_TQIN		0x04000
-#define     AHD_SHOW_SG			0x08000
-#define     AHD_SHOW_INT_COALESCING	0x10000
-#define     AHD_DEBUG_SEQUENCER		0x20000
+#define AHD_SHOW_MISC		0x00001
+#define AHD_SHOW_SENSE		0x00002
+#define AHD_SHOW_RECOVERY	0x00004
+#define AHD_DUMP_SEEPROM	0x00008
+#define AHD_SHOW_TERMCTL	0x00010
+#define AHD_SHOW_MEMORY		0x00020
+#define AHD_SHOW_MESSAGES	0x00040
+#define AHD_SHOW_MODEPTR	0x00080
+#define AHD_SHOW_SELTO		0x00100
+#define AHD_SHOW_FIFOS		0x00200
+#define AHD_SHOW_QFULL		0x00400
+#define	AHD_SHOW_DV		0x00800
+#define AHD_SHOW_MASKED_ERRORS	0x01000
+#define AHD_SHOW_QUEUE		0x02000
+#define AHD_SHOW_TQIN		0x04000
+#define AHD_SHOW_SG		0x08000
+#define AHD_SHOW_INT_COALESCING	0x10000
+#define AHD_DEBUG_SEQUENCER	0x20000
 #endif
 void			ahd_print_scb(struct scb *scb);
 void			ahd_print_devinfo(struct ahd_softc *ahd,

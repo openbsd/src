@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.11 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.12 2004/10/24 23:03:01 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -5925,7 +5925,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		offset = (PAGE_SIZE / sizeof(*hscb)) - scb_data->scbs_left;
 		hscb_map = SLIST_FIRST(&scb_data->hscb_maps);
 		hscb = &((struct hardware_scb *)hscb_map->vaddr)[offset];
-		hscb_busaddr = hscb_map->physaddr + (offset * sizeof(*hscb));
+		hscb_busaddr = hscb_map->busaddr + (offset * sizeof(*hscb));
 	} else {
 		hscb_map = malloc(sizeof(*hscb_map), M_DEVBUF, M_NOWAIT);
 
@@ -5938,7 +5938,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE,
 				     ahd->sc_dmaflags, &hscb_map->dmamap,
 				     (caddr_t *)&hscb_map->vaddr,
-				     &hscb_map->physaddr,
+				     &hscb_map->busaddr,
 				     &hscb_map->dmasegs, &hscb_map->nseg,
 				     ahd_name(ahd),
 				     "hardware SCB structures") < 0) {
@@ -5949,7 +5949,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		SLIST_INSERT_HEAD(&scb_data->hscb_maps, hscb_map, links);
 
 		hscb = (struct hardware_scb *)hscb_map->vaddr;
-		hscb_busaddr = hscb_map->physaddr;
+		hscb_busaddr = hscb_map->busaddr;
 		scb_data->scbs_left = PAGE_SIZE / sizeof(*hscb);
 	}
 
@@ -5962,7 +5962,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		       - scb_data->sgs_left) * ahd_sglist_size(ahd);
 		sg_map = SLIST_FIRST(&scb_data->sg_maps);
 		segs = sg_map->vaddr + offset;
-		sg_busaddr = sg_map->physaddr + offset;
+		sg_busaddr = sg_map->busaddr + offset;
 	} else {
 		sg_map = malloc(sizeof(*sg_map), M_DEVBUF, M_NOWAIT);
 
@@ -5974,7 +5974,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Allocate the next batch of S/G lists */
 		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
 				     &sg_map->dmamap, (caddr_t *)&sg_map->vaddr,
-				     &sg_map->physaddr, &sg_map->dmasegs,
+				     &sg_map->busaddr, &sg_map->dmasegs,
 				     &sg_map->nseg, ahd_name(ahd),
 				     "SG data structures") < 0) {
 			free(sg_map, M_DEVBUF);
@@ -5984,7 +5984,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		SLIST_INSERT_HEAD(&scb_data->sg_maps, sg_map, links);
 
 		segs = sg_map->vaddr;
-		sg_busaddr = sg_map->physaddr;
+		sg_busaddr = sg_map->busaddr;
 		scb_data->sgs_left =
 		    ahd_sglist_allocsize(ahd) / ahd_sglist_size(ahd);
 #ifdef AHD_DEBUG
@@ -6001,7 +6001,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		offset = PAGE_SIZE - (AHD_SENSE_BUFSIZE * scb_data->sense_left);
 		sense_map = SLIST_FIRST(&scb_data->sense_maps);
 		sense_data = sense_map->vaddr + offset;
-		sense_busaddr = sense_map->physaddr + offset;
+		sense_busaddr = sense_map->busaddr + offset;
 	} else {
 		sense_map = malloc(sizeof(*sense_map), M_DEVBUF, M_NOWAIT);
 
@@ -6013,7 +6013,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		/* Allocate the next batch of sense buffers */
 		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
                                      &sense_map->dmamap, (caddr_t *)&sense_map->vaddr,
-                                     &sense_map->physaddr, &sense_map->dmasegs,
+                                     &sense_map->busaddr, &sense_map->dmasegs,
                                      &sense_map->nseg, ahd_name(ahd),
                                      "Sense Data structures") < 0) {
 			free(sense_map, M_DEVBUF);
@@ -6023,7 +6023,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		SLIST_INSERT_HEAD(&scb_data->sense_maps, sense_map, links);
 
 		sense_data = sense_map->vaddr;
-		sense_busaddr = sense_map->physaddr;
+		sense_busaddr = sense_map->busaddr;
 		scb_data->sense_left = PAGE_SIZE / AHD_SENSE_BUFSIZE;
 #ifdef AHD_DEBUG
 		if (ahd_debug & AHD_SHOW_MEMORY)
@@ -6204,7 +6204,7 @@ ahd_init(struct ahd_softc *ahd)
         if (ahd_createdmamem(ahd->parent_dmat, ahd->shared_data_size,
                              ahd->sc_dmaflags,
                              &ahd->shared_data_map.dmamap, (caddr_t *)&ahd->shared_data_map.vaddr,
-                             &ahd->shared_data_map.physaddr, &ahd->shared_data_map.dmasegs,
+                             &ahd->shared_data_map.busaddr, &ahd->shared_data_map.dmasegs,
                              &ahd->shared_data_map.nseg, ahd_name(ahd), "shared data") < 0)
                 return (ENOMEM);
 
@@ -6213,7 +6213,7 @@ ahd_init(struct ahd_softc *ahd)
 	ahd->init_level++;
 
 	next_vaddr = (uint8_t *)&ahd->qoutfifo[AHD_QOUT_SIZE];
-	next_baddr = ahd->shared_data_map.physaddr
+	next_baddr = ahd->shared_data_map.busaddr
 		   + AHD_QOUT_SIZE*sizeof(struct ahd_completion);
 	if ((ahd->features & AHD_TARGETMODE) != 0) {
 		ahd->targetcmds = (struct target_cmd *)next_vaddr;
@@ -6593,7 +6593,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	/*
 	 * Tell the sequencer where it can find our arrays in memory.
 	 */
-	busaddr = ahd->shared_data_map.physaddr;
+	busaddr = ahd->shared_data_map.busaddr;
 	ahd_outl(ahd, SHARED_DATA_ADDR, busaddr);
 	ahd_outl(ahd, QOUTFIFO_NEXT_ADDR, busaddr);
 
@@ -8045,7 +8045,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 	{
 		struct ahd_devinfo devinfo;
 		struct ahd_dma_seg *sg;
-		struct scsipi_sense *sc;
+		struct scsi_sense *sc;
 		struct ahd_initiator_tinfo *targ_info;
 		struct ahd_tmode_tstate *tstate;
 		struct ahd_transinfo *tinfo;
@@ -8072,7 +8072,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 						&tstate);
 		tinfo = &targ_info->curr;
 		sg = scb->sg_list;
-		sc = (struct scsipi_sense *)hscb->shared_data.idata.cdb;
+		sc = (struct scsi_sense *)hscb->shared_data.idata.cdb;
 		/*
 		 * Save off the residual if there is one.
 		 */
