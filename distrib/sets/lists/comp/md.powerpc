@@ -47,7 +47,6 @@
 ./usr/include/powerpc/psl.h
 ./usr/include/powerpc/pte.h
 ./usr/include/powerpc/ptrace.h
-./usr/include/powerpc/rbus_machdep.h
 ./usr/include/powerpc/reg.h
 ./usr/include/powerpc/reloc.h
 ./usr/include/powerpc/setjmp.h
