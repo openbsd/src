@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.15 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.16 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ struct	odirtemplate odirhead = {
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
-static int expanddir(struct dinode *, char *);
+static int expanddir(struct ufs1_dinode *, char *);
 static void freedir(ino_t, ino_t);
 static struct direct *fsck_readdir(struct inodesc *);
 static struct bufarea *getdirblk(daddr_t, long);
@@ -273,7 +273,7 @@ direrror(ino_t ino, char *errmesg)
 void
 fileerror(ino_t cwd, ino_t ino, char *errmesg)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
 
 	pwarn("%s ", errmesg);
@@ -295,7 +295,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 void
 adjust(struct inodesc *idesc, short lcnt)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (dp->di_nlink == lcnt) {
@@ -384,7 +384,7 @@ chgino(struct inodesc *idesc)
 int
 linkup(ino_t orphan, ino_t parentdir)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	int lostdir;
 	ino_t oldlfdir;
 	struct inodesc idesc;
@@ -519,7 +519,7 @@ changeino(dir, name, newnum)
 int
 makeentry(ino_t parent, ino_t ino, char *name)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	char pathbuf[MAXPATHLEN + 1];
 
@@ -551,7 +551,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
  * Attempt to expand the size of a directory
  */
 static int
-expanddir(struct dinode *dp, char *name)
+expanddir(struct ufs1_dinode *dp, char *name)
 {
 	daddr_t lastbn, newblk;
 	struct bufarea *bp;
@@ -610,7 +610,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 {
 	ino_t ino;
 	char *cp;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct bufarea *bp;
 	struct dirtemplate *dirp;
 	struct inoinfo *inp;
@@ -666,7 +666,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 static void
 freedir(ino_t ino, ino_t parent)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	if (ino != parent) {
 		dp = ginode(parent);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.32 2003/07/16 18:02:35 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.33 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.32 2003/07/16 18:02:35 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.33 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.32 2003/07/16 18:02:35 tedu Exp $";
 #define MAXIPG(fs)	roundup((fs)->fs_bsize * NBBY / 3, INOPB(fs))
 
 #define UMASK		0755
-#define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
+#define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 /*
@@ -120,7 +120,7 @@ union cg_u {
 } *cgun;
 #define acg	cgun->cg
 
-struct dinode *zino;
+struct ufs1_dinode *zino;
 char	*buf;
 
 int	fsi, fso;
@@ -131,7 +131,7 @@ void		initcg(int, time_t);
 void		wtfs(daddr_t, int, void *);
 void		fsinit(time_t);
 int		makedir(struct direct *, int);
-void		iput(struct dinode *, ino_t);
+void		iput(struct ufs1_dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
 void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
@@ -153,7 +153,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo)
 
 	if ((fsun = (union fs_u *)calloc(1, sizeof (union fs_u))) == 0 ||
 	    (cgun = (union cg_u *)calloc(1, sizeof (union cg_u))) == 0 ||
-	    (zino = (struct dinode *)calloc(1, MAXBSIZE)) == 0 ||
+	    (zino = (struct ufs1_dinode *)calloc(1, MAXBSIZE)) == 0 ||
 	    (buf = (char *)calloc(1, MAXBSIZE)) == 0) {
 		printf("buffer malloc failed\n");
 		exit(1);
@@ -254,7 +254,7 @@ recalc:
 	}
 	sblock.fs_nrpos = nrpos;
 	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
-	sblock.fs_inopb = sblock.fs_bsize / sizeof(struct dinode);
+	sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
 	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
 	for (sblock.fs_fsbtodb = 0, i = NSPF(&sblock); i > 1; i >>= 1)
 		sblock.fs_fsbtodb++;
@@ -285,7 +285,7 @@ recalc:
 		/* void */;
 	mincpc = sblock.fs_cpc;
 	bpcg = sblock.fs_spc * sectorsize;
-	inospercg = roundup(bpcg / sizeof(struct dinode), INOPB(&sblock));
+	inospercg = roundup(bpcg / sizeof(struct ufs1_dinode), INOPB(&sblock));
 	if (inospercg > MAXIPG(&sblock))
 		inospercg = MAXIPG(&sblock);
 	used = (sblock.fs_iblkno + inospercg / INOPF(&sblock)) * NSPF(&sblock);
@@ -741,7 +741,7 @@ initcg(int cylno, time_t utime)
 			acg.cg_cs.cs_nifree--;
 		}
 	for (i = 0; i < sblock.fs_ipg / INOPF(&sblock); i += sblock.fs_frag) {
-		for (j = 0; j < sblock.fs_bsize / sizeof(struct dinode); j++)
+		for (j = 0; j < sblock.fs_bsize / sizeof(struct ufs1_dinode); j++)
 			zino[j].di_gen = (u_int32_t)arc4random();
 		wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
 		    sblock.fs_bsize, (char *)zino);
@@ -830,7 +830,7 @@ initcg(int cylno, time_t utime)
 /*
  * initialize the file system
  */
-struct dinode node;
+struct ufs1_dinode node;
 
 #ifdef LOSTDIR
 #define PREDEFDIR 3
@@ -1003,9 +1003,9 @@ goth:
  * Allocate an inode on the disk
  */
 void
-iput(struct dinode *ip, ino_t ino)
+iput(struct ufs1_dinode *ip, ino_t ino)
 {
-	struct dinode buf[MAXINOPB];
+	struct ufs1_dinode buf[MAXINOPB];
 	daddr_t d;
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2003/04/26 00:39:28 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
 
 /*
@@ -32,12 +32,12 @@ void	blkerror(ino_t, char *, daddr_t);
 int	bread(int, char *, daddr_t, long);
 void	bufinit(void);
 void	bwrite(int, char *, daddr_t, long);
-void	cacheino(struct dinode *, ino_t);
+void	cacheino(struct ufs1_dinode *, ino_t);
 int	changeino(ino_t, char *, ino_t);
 struct	fstab;
 int	chkrange(daddr_t, int);
 void	ckfini(int);
-int	ckinode(struct dinode *, struct inodesc *);
+int	ckinode(struct ufs1_dinode *, struct inodesc *);
 void	clri(struct inodesc *, char *, int);
 int	dircheck(struct inodesc *, struct direct *);
 void	direrror(ino_t, char *);
@@ -50,7 +50,7 @@ void	flush(int, struct bufarea *);
 void	freeblk(daddr_t, long);
 void	freeino(ino_t);
 void	freeinodebuf(void);
-int	ftypeok(struct dinode *);
+int	ftypeok(struct ufs1_dinode *);
 void	getpathname(char *, size_t, ino_t, ino_t);
 void	inocleanup(void);
 void	inodirty(void);
@@ -69,7 +69,7 @@ void	propagate(ino_t);
 int	reply(char *);
 void	resetinodebuf(void);
 int	setup(char *);
-struct	dinode * getnextinode(ino_t);
+struct	ufs1_dinode * getnextinode(ino_t);
 void	catch(int);
 void	catchquit(int);
 void	voidquit(int);

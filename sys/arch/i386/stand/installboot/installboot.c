@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.40 2003/08/15 21:17:27 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.41 2003/08/25 23:27:43 tedu Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -378,7 +378,7 @@ loadblocknums(char *boot, int devfd, struct disklabel *dl)
 	struct fs	*fs;
 	char		*buf;
 	daddr_t		blk, *ap;
-	struct dinode	*ip;
+	struct ufs1_dinode	*ip;
 	int		ndb;
 	u_int8_t	*bt;
 	int mib[4];
@@ -454,7 +454,7 @@ loadblocknums(char *boot, int devfd, struct disklabel *dl)
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, pl->p_offset + blk, fs->fs_bsize, "inode");
-	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.8 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.9 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.8 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.9 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ void
 pass1b(void)
 {
 	int c, i;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.12 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.13 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct bufarea {
 		daddr_t	*b_indir;		/* indirect block */
 		struct	fs *b_fs;		/* super block */
 		struct	cg *b_cg;		/* cylinder group */
-		struct	dinode *b_dinode;	/* inode block */
+		struct	ufs1_dinode *b_dinode;	/* inode block */
 	} b_un;
 	char	b_dirty;
 };
@@ -198,7 +198,7 @@ daddr_t	n_blks;			/* number of blocks in use */
 daddr_t	n_files;		/* number of files in use */
 
 #define	clearinode(dp)	(*(dp) = zino)
-struct	dinode zino;
+struct	ufs1_dinode zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)
@@ -210,7 +210,7 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-struct dinode *ginode(ino_t);
+struct ufs1_dinode *ginode(ino_t);
 struct inoinfo *getinoinfo(ino_t);
 void getblk(struct bufarea *, daddr_t, long);
 ino_t allocino(ino_t, int);

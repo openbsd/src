@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.13 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: dump.h,v 1.14 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
  *	@(#)dump.h	8.1 (Berkeley) 6/5/93
  */
 
-#define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
+#define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
 #define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
 
 /*
@@ -98,8 +98,8 @@ void	statussig(int);
 void	timeest(void);
 
 /* mapping routines */
-struct	dinode;
-off_t	blockest(struct dinode *dp);
+struct	ufs1_dinode;
+off_t	blockest(struct ufs1_dinode *dp);
 void	mapfileino(ino_t, off_t *, int *);
 int	mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv);
 int	mapdirs(ino_t maxino, off_t *tapesize);
@@ -107,7 +107,7 @@ int	mapdirs(ino_t maxino, off_t *tapesize);
 /* file dumping routines */
 void	blksout(daddr_t *blkp, int frags, ino_t ino);
 void	bread(daddr_t blkno, char *buf, int size);	
-void	dumpino(struct dinode *dp, ino_t ino);
+void	dumpino(struct ufs1_dinode *dp, ino_t ino);
 void	dumpmap(char *map, int type, ino_t ino);
 void	writeheader(ino_t ino);
 
@@ -124,7 +124,7 @@ void	dumpabort(int signo);
 void	getfstab(void);
 
 char	*rawname(char *cp);
-struct	dinode *getino(ino_t inum);
+struct	ufs1_dinode *getino(ino_t inum);
 
 /* rdump routines */
 #ifdef RDUMP

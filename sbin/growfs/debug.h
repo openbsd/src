@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.h,v 1.2 2003/08/07 16:37:52 fgsch Exp $	*/
+/*	$OpenBSD: debug.h,v 1.3 2003/08/25 23:28:15 tedu Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -54,7 +54,7 @@ void dbg_dump_hex(struct fs *, const char *, unsigned char *);
 void dbg_dump_fs(struct fs *, const char *);
 void dbg_dump_cg(const char *, struct cg *);
 void dbg_dump_csum(const char *, struct csum *);
-void dbg_dump_ino(struct fs *, const char *, struct dinode *);
+void dbg_dump_ino(struct fs *, const char *, struct ufs1_dinode *);
 void dbg_dump_iblk(struct fs *, const char *, char *, size_t);
 void dbg_dump_inmap(struct fs *, const char *, struct cg *);
 void dbg_dump_frmap(struct fs *, const char *, struct cg *);

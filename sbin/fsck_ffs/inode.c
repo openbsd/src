@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.23 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.24 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.23 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.24 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,11 +59,11 @@ static ino_t startinum;
 static int iblock(struct inodesc *, long, u_int64_t);
 
 int
-ckinode(struct dinode *dp, struct inodesc *idesc)
+ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 {
 	ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
-	struct dinode dino;
+	struct ufs1_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
@@ -156,7 +156,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	if (idesc->id_type == ADDR) {
 		func = idesc->id_func;
@@ -266,7 +266,7 @@ chkrange(daddr_t blk, int cnt)
 /*
  * General purpose interface for reading inodes.
  */
-struct dinode *
+struct ufs1_dinode *
 ginode(ino_t inumber)
 {
 	daddr_t iblk;
@@ -290,14 +290,14 @@ ginode(ino_t inumber)
  */
 ino_t nextino, lastinum;
 long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct dinode *inodebuf;
+struct ufs1_dinode *inodebuf;
 
-struct dinode *
+struct ufs1_dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
-	static struct dinode *dp;
+	static struct ufs1_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
 		errexit("bad inode number %d to nextinode\n", inumber);
@@ -326,10 +326,10 @@ resetinodebuf(void)
 	lastinum = 0;
 	readcnt = 0;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct dinode);
+	fullcnt = inobufsize / sizeof(struct ufs1_dinode);
 	readpercg = sblock.fs_ipg / fullcnt;
 	partialcnt = sblock.fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct dinode);
+	partialsize = partialcnt * sizeof(struct ufs1_dinode);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
@@ -360,7 +360,7 @@ freeinodebuf(void)
  * Enter inodes into the cache.
  */
 void
-cacheino(struct dinode *dp, ino_t inumber)
+cacheino(struct ufs1_dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
@@ -438,7 +438,7 @@ inodirty(void)
 void
 clri(struct inodesc *idesc, char *type, int flag)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
@@ -486,7 +486,7 @@ findino(struct inodesc *idesc)
 void
 pinode(ino_t ino)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	char *p;
 	struct passwd *pw;
 	time_t t;
@@ -544,7 +544,7 @@ ino_t
 allocino(ino_t request, int type)
 {
 	ino_t ino;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct cg *cgp = &cgrp;
 	int cg;
 	time_t t;
@@ -605,7 +605,7 @@ void
 freeino(ino_t ino)
 {
 	struct inodesc idesc;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;

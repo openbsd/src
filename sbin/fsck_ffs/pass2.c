@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.17 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.18 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.17 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.18 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,11 @@ pass2_info2(char *buf, int buflen)
 void
 pass2(void)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
-	struct dinode dino;
+	struct ufs1_dinode dino;
 	char pathbuf[MAXPATHLEN + 1];
 
 	switch (statemap[ROOTINO]) {
@@ -187,7 +187,7 @@ pass2(void)
 				inodirty();
 			}
 		}
-		memset(&dino, 0, sizeof(struct dinode));
+		memset(&dino, 0, sizeof(struct ufs1_dinode));
 		dino.di_mode = IFDIR;
 		dino.di_size = inp->i_isize;
 		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
@@ -254,7 +254,7 @@ pass2check(struct inodesc *idesc)
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.19 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.20 2003/08/25 23:28:15 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.19 2003/07/29 18:38:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.20 2003/08/25 23:28:15 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.19 2003/07/29 18:38:36 d
 #include <errno.h>
 #include <err.h>
 
-#define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
+#define MAXINOPB	(MAXBSIZE / sizeof(struct ufs1_dinode))
 
 char	*disk;		/* name of the disk file */
 int	diskfd;		/* disk file descriptor */
@@ -64,12 +64,12 @@ char	*format;	/* output format */
 
 struct icache_s {
 	ino_t		ino;
-	struct dinode	di;
+	struct ufs1_dinode	di;
 } *icache;
 int	nicache;
 
 void addinode(ino_t inum);
-struct dinode *getino(ino_t inum);
+struct ufs1_dinode *getino(ino_t inum);
 void findinodes(ino_t);
 void bread(daddr_t, char *, int);
 __dead void usage(void);
@@ -78,8 +78,8 @@ void dirindir(ino_t, daddr_t, int, long *, const char *);
 void searchdir(ino_t, daddr_t, long, long, const char *);
 int matchino(const void *, const void *);
 int matchcache(const void *, const void *);
-void cacheino(ino_t, struct dinode *);
-struct dinode *cached(ino_t);
+void cacheino(ino_t, struct ufs1_dinode *);
+struct ufs1_dinode *cached(ino_t);
 int main(int, char *[]);
 char *rawname(char *);
 void format_entry(const char *, struct direct *);
@@ -120,7 +120,7 @@ matchcache(const void *key, const void *val)
  * Add an inode to the cached entries
  */
 void
-cacheino(ino_t ino, struct dinode *ip)
+cacheino(ino_t ino, struct ufs1_dinode *ip)
 {
 	if (nicache)
 		icache = realloc(icache, (nicache + 1) * sizeof(struct icache_s));
@@ -135,7 +135,7 @@ cacheino(ino_t ino, struct dinode *ip)
 /*
  * Get a cached inode
  */
-struct dinode *
+struct ufs1_dinode *
 cached(ino_t ino)
 {
 	struct icache_s *ic;
@@ -154,7 +154,7 @@ void
 findinodes(ino_t maxino)
 {
 	ino_t ino;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	mode_t mode;
 
 	for (ino = ROOTINO; ino < maxino; ino++) {
@@ -177,12 +177,12 @@ findinodes(ino_t maxino)
  * Get a specified inode from disk.  Attempt to minimize reads to once
  * per cylinder group
  */
-struct dinode *
+struct ufs1_dinode *
 getino(ino_t inum)
 {
-	static struct dinode *itab = NULL;
+	static struct ufs1_dinode *itab = NULL;
 	static daddr_t iblk = -1;
-	struct dinode *ip;
+	struct ufs1_dinode *ip;
 
 	if (inum < ROOTINO || inum >= sblock->fs_ncg * sblock->fs_ipg)
 		return NULL;
@@ -191,10 +191,10 @@ getino(ino_t inum)
 	if ((inum / sblock->fs_ipg) != iblk || itab == NULL) {
 		iblk = inum / sblock->fs_ipg;
 		if (itab == NULL &&
-		    (itab = calloc(sblock->fs_ipg, sizeof(struct dinode))) == NULL)
+		    (itab = calloc(sblock->fs_ipg, sizeof(struct ufs1_dinode))) == NULL)
 			errx(1, "no memory for inodes");
 		bread(fsbtodb(sblock, cgimin(sblock, iblk)), (char *)itab,
-		      sblock->fs_ipg * sizeof(struct dinode));
+		      sblock->fs_ipg * sizeof(struct ufs1_dinode));
 	}
 	return &itab[inum % sblock->fs_ipg];
 }
@@ -280,7 +280,7 @@ addinode(ino_t ino)
 void
 scanonedir(ino_t ino, const char *path)
 {
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	long filesize;
 	int i;
 
@@ -341,7 +341,7 @@ searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
 {
 	char dblk[MAXBSIZE];
 	struct direct *dp;
-	struct dinode *di;
+	struct ufs1_dinode *di;
 	mode_t mode;
 	char *npath;
 	long loc;

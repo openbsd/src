@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.18 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.19 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.18 2003/06/02 20:06:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.19 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ char	*blockcheck(char *);
 void	 bread(daddr_t, char *, long);
 int	 chkquota(const char *, const char *, const char *, void *, pid_t *);
 void	 freeinodebuf(void);
-struct dinode *
+struct ufs1_dinode *
 	 getnextinode(ino_t);
 int	 getquotagid(void);
 int	 hasquota(struct fstab *, int, char **);
@@ -256,7 +256,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 {
 	struct quotaname *qnp = auxarg;
 	struct fileusage *fup;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	int cg, i, mode, errs = 0, status;
 	ino_t ino;
 	pid_t pid;
@@ -559,15 +559,15 @@ addid(u_long id, int type, char *name)
  */
 ino_t nextino, lastinum;
 long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-struct dinode *inodebuf;
+struct ufs1_dinode *inodebuf;
 #define	INOBUFSIZE	56*1024	/* size of buffer to read inodes */
 
-struct dinode *
+struct ufs1_dinode *
 getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
-	static struct dinode *dp;
+	static struct ufs1_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
 		err(1, "bad inode number %d to nextinode", inumber);
@@ -598,10 +598,10 @@ resetinodebuf(void)
 	lastinum = 0;
 	readcnt = 0;
 	inobufsize = blkroundup(&sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct dinode);
+	fullcnt = inobufsize / sizeof(struct ufs1_dinode);
 	readpercg = sblock.fs_ipg / fullcnt;
 	partialcnt = sblock.fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct dinode);
+	partialsize = partialcnt * sizeof(struct ufs1_dinode);
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {

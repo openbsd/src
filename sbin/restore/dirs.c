@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.25 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.26 2003/08/25 23:28:16 tedu Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: dirs.c,v 1.25 2003/07/29 18:38:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dirs.c,v 1.26 2003/08/25 23:28:16 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ struct odirect {
 	char	d_name[ODIRSIZ];
 };
 
-static struct inotab	*allocinotab(ino_t, struct dinode *, long);
+static struct inotab	*allocinotab(ino_t, struct ufs1_dinode *, long);
 static void		 dcvt(struct odirect *, struct direct *);
 static void		 flushent(void);
 static struct inotab	*inotablookup(ino_t);
@@ -143,7 +143,7 @@ extractdirs(genmode)
 	int genmode;
 {
 	int i;
-	struct dinode *ip;
+	struct ufs1_dinode *ip;
 	struct inotab *itp;
 	struct direct nulldir;
 	int fd;
@@ -705,7 +705,7 @@ inodetype(ino)
 static struct inotab *
 allocinotab(ino, dip, seekpt)
 	ino_t ino;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	long seekpt;
 {
 	struct inotab	*itp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprestore.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: dumprestore.h,v 1.6 2003/08/25 23:28:34 tedu Exp $	*/
 /*	$NetBSD: dumprestore.h,v 1.6 1994/10/26 00:56:49 cgd Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ union u_spcl {
 		ino_t	c_inumber;	    /* number of inode */
 		int32_t	c_magic;	    /* magic number (see above) */
 		int32_t	c_checksum;	    /* record checksum */
-		struct	dinode	c_dinode;   /* ownership and mode of inode */
+		struct	ufs1_dinode	c_dinode;   /* ownership and mode of inode */
 		int32_t	c_count;	    /* number of valid c_addr entries,
 					       unless c_type is TS_BITS or
 					       TS_CLRI. */

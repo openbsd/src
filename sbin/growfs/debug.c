@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.3 2003/08/07 16:37:52 fgsch Exp $	*/
+/*	$OpenBSD: debug.c,v 1.4 2003/08/25 23:28:15 tedu Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: debug.c,v 1.3 2003/08/07 16:37:52 fgsch Exp $";
+  "$OpenBSD: debug.c,v 1.4 2003/08/25 23:28:15 tedu Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -599,7 +599,7 @@ dbg_dump_sptbl(struct fs *sb, const char *comment, struct cg *cgr)
  * Dump an inode structure.
  */
 void
-dbg_dump_ino(struct fs *sb, const char *comment, struct dinode *ino)
+dbg_dump_ino(struct fs *sb, const char *comment, struct ufs1_dinode *ino)
 {
 	int ictr;
 	int remaining_blocks;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.16 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.17 2003/08/25 23:27:44 tedu Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@
 struct file {
 	off_t		f_seekp;	/* seek pointer */
 	struct fs	*f_fs;		/* pointer to super-block */
-	struct dinode	f_di;		/* copy of on-disk inode */
+	struct ufs1_dinode	f_di;		/* copy of on-disk inode */
 	int		f_nindir[NIADDR];
 					/* number of blocks mapped by
 					   indirect block at level i */
@@ -130,9 +130,9 @@ read_inode(ino_t inumber, struct open_file *f)
 	}
 
 	{
-		struct dinode *dp;
+		struct ufs1_dinode *dp;
 
-		dp = (struct dinode *)buf;
+		dp = (struct ufs1_dinode *)buf;
 		fp->f_di = dp[ino_to_fsbo(fs, inumber)];
 	}
 

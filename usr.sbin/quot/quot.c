@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.13 2003/06/26 19:47:09 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.14 2003/08/25 23:28:16 tedu Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.13 2003/06/26 19:47:09 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.14 2003/08/25 23:28:16 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,12 +78,12 @@ static int headerlen;
 #endif
 
 #define	INOCNT(fs)	((fs)->fs_ipg)
-#define	INOSZ(fs)	(sizeof(struct dinode) * INOCNT(fs))
+#define	INOSZ(fs)	(sizeof(struct ufs1_dinode) * INOCNT(fs))
 
-static struct dinode *
+static struct ufs1_dinode *
 get_inode(int fd, struct fs *super, ino_t ino)
 {
-	static struct dinode *ip;
+	static struct ufs1_dinode *ip;
 	static ino_t last;
 
 	if (fd < 0) {		/* flush cache */
@@ -95,7 +95,7 @@ get_inode(int fd, struct fs *super, ino_t ino)
 	}
 
 	if (!ip || ino < last || ino >= last + INOCNT(super)) {
-		if (!ip && !(ip = (struct dinode *)malloc(INOSZ(super))))
+		if (!ip && !(ip = (struct ufs1_dinode *)malloc(INOSZ(super))))
 			err(1, "allocate inodes");
 		last = (ino / INOCNT(super)) * INOCNT(super);
 		if (lseek(fd,
@@ -116,7 +116,7 @@ get_inode(int fd, struct fs *super, ino_t ino)
 #endif
 
 static int
-virtualblocks(struct fs *super, struct dinode *ip)
+virtualblocks(struct fs *super, struct ufs1_dinode *ip)
 {
 	off_t nblk, sz;
 
@@ -148,7 +148,7 @@ virtualblocks(struct fs *super, struct dinode *ip)
 }
 
 static int
-isfree(struct dinode *ip)
+isfree(struct ufs1_dinode *ip)
 {
 #ifdef	COMPAT
 	return (ip->di_mode&IFMT) == 0;
@@ -311,7 +311,7 @@ static void
 dofsizes(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
-	struct dinode *ip;
+	struct ufs1_dinode *ip;
 	daddr_t sz, ksz;
 	struct fsizes *fp, **fsp;
 	int i;
@@ -383,7 +383,7 @@ douser(int fd, struct fs *super, char *name)
 {
 	ino_t inode, maxino;
 	struct user *usr, *usrs;
-	struct dinode *ip;
+	struct ufs1_dinode *ip;
 	int n;
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
@@ -423,7 +423,7 @@ donames(int fd, struct fs *super, char *name)
 	int c;
 	ino_t inode, inode1;
 	ino_t maxino;
-	struct dinode *ip;
+	struct ufs1_dinode *ip;
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	/* first skip the name of the filesystem */

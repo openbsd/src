@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.14 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.15 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.14 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.15 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static	int searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize);
  * hence the estimate may be high.
  */
 off_t
-blockest(struct dinode *dp)
+blockest(struct ufs1_dinode *dp)
 {
 	off_t blkest, sizeest;
 
@@ -130,7 +130,7 @@ void
 mapfileino(ino_t ino, off_t *tapesize, int *dirskipped)
 {
 	int mode;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 
 	dp = getino(ino);
 	if ((mode = (dp->di_mode & IFMT)) == 0)
@@ -259,7 +259,7 @@ mapfiles(ino_t maxino, off_t *tapesize, char *disk, char * const *dirv)
 int
 mapdirs(ino_t maxino, off_t *tapesize)
 {
-	struct	dinode *dp;
+	struct	ufs1_dinode *dp;
 	int i, isdir;
 	char *map;
 	ino_t ino;
@@ -392,7 +392,7 @@ searchdir(ino_t ino, daddr_t blkno, long size, off_t filesize)
  * Dump the contents of an inode to tape.
  */
 void
-dumpino(struct dinode *dp, ino_t ino)
+dumpino(struct ufs1_dinode *dp, ino_t ino)
 {
 	int ind_level, cnt;
 	off_t size;
@@ -575,11 +575,11 @@ writeheader(ino)
 	writerec((char *)&spcl, 1);
 }
 
-struct dinode *
+struct ufs1_dinode *
 getino(ino_t inum)
 {
 	static daddr_t minino, maxino;
-	static struct dinode inoblock[MAXINOPB];
+	static struct ufs1_dinode inoblock[MAXINOPB];
 
 	curino = inum;
 	if (inum >= minino && inum < maxino)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.18 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.19 2003/08/25 23:28:15 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.18 2003/06/17 21:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.19 2003/08/25 23:28:15 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 int
 fsirand(char *device)
 {
-	static struct dinode *inodebuf;
+	static struct ufs1_dinode *inodebuf;
 	static size_t oldibufsize;
 	size_t ibufsize;
 	struct fs *sblock, *tmpsblock;
@@ -177,7 +177,7 @@ fsirand(char *device)
 	}
 
 	/* XXX - should really cap buffer at 512kb or so */
-	ibufsize = sizeof(struct dinode) * sblock->fs_ipg;
+	ibufsize = sizeof(struct ufs1_dinode) * sblock->fs_ipg;
 	if (oldibufsize < ibufsize) {
 		if ((inodebuf = realloc(inodebuf, ibufsize)) == NULL)
 			errx(1, "Can't allocate memory for inode buffer");

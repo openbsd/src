@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.19 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.20 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.19 2003/06/02 20:06:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.20 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 static void rwerror(char *, daddr_t);
 
 int
-ftypeok(struct dinode *dp)
+ftypeok(struct ufs1_dinode *dp)
 {
 	switch (dp->di_mode & IFMT) {
 

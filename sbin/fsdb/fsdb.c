@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.14 2003/06/26 08:01:54 tedu Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.15 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.14 2003/06/26 08:01:54 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.15 2003/08/25 23:28:15 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ static int chnamefunc(struct inodesc *);
 static int dotime(char *, int32_t *, int32_t *);
 
 int returntosingle = 0;
-struct dinode *curinode;
+struct ufs1_dinode *curinode;
 ino_t curinum;
 
 static void
@@ -325,7 +325,7 @@ CMDFUNCSTART(back)
 CMDFUNCSTART(zapi)
 {
 	ino_t inum;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	char *cp;
 
 	GETINUM(1,inum);

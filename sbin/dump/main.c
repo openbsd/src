@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2003/08/25 23:28:15 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.35 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.36 2003/08/25 23:28:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 {
 	ino_t ino;
 	int dirty;
-	struct dinode *dp;
+	struct ufs1_dinode *dp;
 	struct	fstab *dt;
 	char *map;
 	int ch;
