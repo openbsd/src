@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.6 2001/04/11 05:06:37 aaron Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.7 2001/08/17 09:26:30 mpech Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -82,15 +82,6 @@ is typically run as part of the boot sequence.
 The following options are recognized by
 .Nm ldconfig :
 .Bl -tag -width indent
-.It Fl R
-Rescan the previously configured directories. This opens the hints file
-and fetches the directory list from the header. Any additional pathnames
-on the command line are also processed.
-.It Fl U
-Unconfigure directories specified on the command line or remove inaccessible
-directories from search path if no directories specified. This option cannot
-be used with
-.Fl m .
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
 the existing hints file. The default action is to build the hints file
@@ -100,12 +91,22 @@ afresh. This option cannot be used with
 List the current contents of
 .Xr ld.so.hints
 on the standard output. The hints file will not be modified.
+.It Fl R
+Rescan the previously configured directories. This opens the hints file
+and fetches the directory list from the header. Any additional pathnames
+on the command line are also processed.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
 for shared libraries.
+.It Fl U
+Unconfigure directories specified on the command line or remove inaccessible
+directories from search path if no directories specified. This option cannot
+be used with
+.Fl m .
 .It Fl v
 Switch on verbose mode.
+.El
 .Sh Security
 Special care must be taken when loading shared libraries into the address
 space of
@@ -138,4 +139,5 @@ from the environment.
 A
 .Nm
 utility first appeared in SunOS 4.0, it appeared in its current form
-in NetBSD 0.9a.
+in
+.Nx 0.9 a.
