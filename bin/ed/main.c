@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1997/09/01 18:29:30 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1997/09/12 04:35:18 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/09/01 18:29:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/09/12 04:35:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,11 @@ main(argc, argv)
 {
 	int c, n;
 	long status = 0;
+
+#ifdef __GNUC__
+	(void)&argc;
+	(void)&argv;
+#endif
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
