@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.36 2002/02/23 18:54:55 espie Exp $
+#	$OpenBSD: adduser.perl,v 1.37 2002/03/05 17:23:45 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.36 2002/02/23 18:54:55 espie Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.37 2002/03/05 17:23:45 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -1535,7 +1535,7 @@ sub cleanup {
 }
 
 END {
-    if (-e $etc_ptmp && defined PTMP) {
+    if (-e $etc_ptmp && defined(fileno(PTMP))) {
 	    close PTMP;
 	    unlink($etc_ptmp) || warn "Error: unable to remove $etc_ptmp: $!\nPlease verify that $etc_ptmp no longer exists!\n";
     }
