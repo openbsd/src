@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.13 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: el.c,v 1.14 2004/08/23 18:31:25 otto Exp $	*/
 /*	$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static const char rcsid[] = "$OpenBSD: el.c,v 1.13 2003/11/25 20:12:38 otto Exp $";
+static const char rcsid[] = "$OpenBSD: el.c,v 1.14 2004/08/23 18:31:25 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -432,7 +432,7 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
-	char *ptr;
+	char *ptr, *lptr = NULL;
 
 	fp = NULL;
 	if (fname == NULL) {
@@ -464,15 +464,24 @@ el_source(EditLine *el, const char *fname)
 		return (-1);
 
 	while ((ptr = fgetln(fp, &len)) != NULL) {
-		if (len > 0 && ptr[len - 1] == '\n')
-			--len;
-		ptr[len] = '\0';
+		if (ptr[len - 1] == '\n')
+			ptr[len - 1] = '\0';
+		else {
+			if ((lptr = (char *)malloc(len + 1)) == NULL) {
+				(void) fclose(fp);
+				return (-1);
+			}
+			memcpy(lptr, ptr, len);
+			lptr[len] = '\0';
+			ptr = lptr;
+		}
 		if (parse_line(el, ptr) == -1) {
+			free(lptr);
 			(void) fclose(fp);
 			return (-1);
 		}
 	}
-
+	free(lptr);
 	(void) fclose(fp);
 	return (0);
 }

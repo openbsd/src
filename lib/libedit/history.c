@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.12 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: history.c,v 1.13 2004/08/23 18:31:25 otto Exp $	*/
 /*	$NetBSD: history.c,v 1.25 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: history.c,v 1.12 2003/11/25 20:12:38 otto Exp $";
+static const char rcsid[] = "$OpenBSD: history.c,v 1.13 2004/08/23 18:31:25 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -651,12 +651,13 @@ private int
 history_load(History *h, const char *fname)
 {
 	FILE *fp;
-	char *line;
+	char *line, *lbuf;
 	size_t sz, max_size;
 	char *ptr;
 	int i = -1;
 	HistEvent ev;
 
+	lbuf = NULL;
 	if ((fp = fopen(fname, "r")) == NULL)
 		return (i);
 
@@ -670,14 +671,19 @@ history_load(History *h, const char *fname)
 	if (ptr == NULL)
 		goto done;
 	for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
-		char c = line[sz];
-
-		if (sz != 0 && line[sz - 1] == '\n')
-			line[--sz] = '\0';
-		else
-			line[sz] = '\0';
-
-		if (max_size < sz) {
+		if (line[sz - 1] == '\n')
+			line[sz - 1] = '\0';
+		else {
+			lbuf = malloc(sz + 1);
+			if (lbuf == NULL) {
+				i = -1;
+				goto oomem;
+			}
+			memcpy(lbuf, line, sz);
+			lbuf[sz++] = '\0';
+			line = lbuf;
+		}
+		if (sz > max_size) {
 			char *nptr;
 			max_size = (sz + 1023) & ~1023;
 			nptr = h_realloc(ptr, max_size);
@@ -688,7 +694,6 @@ history_load(History *h, const char *fname)
 			ptr = nptr;
 		}
 		(void) strunvis(ptr, line);
-		line[sz] = c;
 		if (HENTER(h, &ev, ptr) == -1) {
 			h_free((ptr_t)ptr);
 			return -1;
@@ -697,6 +702,7 @@ history_load(History *h, const char *fname)
 oomem:
 	h_free((ptr_t)ptr);
 done:
+	h_free(lbuf);
 	(void) fclose(fp);
 	return (i);
 }
@@ -727,10 +733,10 @@ history_save(History *h, const char *fname)
 	for (i = 0, retval = HLAST(h, &ev);
 	    retval != -1;
 	    retval = HPREV(h, &ev), i++) {
-		len = strlen(ev.str) * 4;
-		if (len >= max_size) {
+		len = strlen(ev.str) * 4 + 1;
+		if (len > max_size) {
 			char *nptr;
-			max_size = (len + 1023) & 1023;
+			max_size = (len + 1023) & ~1023;
 			nptr = h_realloc(ptr, max_size);
 			if (nptr == NULL) {
 				i = -1;
@@ -738,7 +744,7 @@ history_save(History *h, const char *fname)
 			}
 			ptr = nptr;
 		}
-		(void) strvis(ptr, ev.str, VIS_WHITE);
+		(void) strnvis(ptr, ev.str, max_size, VIS_WHITE);
 		(void) fprintf(fp, "%s\n", ptr);
 	}
 oomem:
