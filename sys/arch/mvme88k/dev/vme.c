@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.30 2004/04/14 23:06:16 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.31 2004/04/16 06:06:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -447,7 +447,7 @@ vme2chip_init(sc)
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
 	       (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),
-	       (vme2->vme2_master4 & 0xffff0000) + (vme2->vme2_master4 & 0xffff0000));
+	       (vme2->vme2_master4 & 0xffff0000) + (vme2->vme2_master4mod & 0xffff0000));
 	/*
 	 * Map the VME irq levels to the cpu levels 1:1.
 	 * This is rather inflexible, but much easier.
@@ -563,24 +563,12 @@ vme2abort(eframe)
 
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
-	int rc = 0;
 
-	if (vme2->vme2_irqstat & VME2_IRQ_AB) {
-		vme2->vme2_irqclr = VME2_IRQ_AB;
-		nmihand(frame);
-		rc = 1;
-	}
-	if (vme2->vme2_irqstat & VME2_IRQ_AB) {
-		vme2->vme2_irqclr = VME2_IRQ_AB;
-		nmihand(frame);
-		rc = 1;
-	}
-#if 0
-	if (vme2->vme2_irqstat & VME2_IRQ_AB == 0) {
+	if ((vme2->vme2_irqstat & VME2_IRQ_AB) == 0) {
 		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
-#endif
+
 	vme2->vme2_irqclr = VME2_IRQ_AB;
 	nmihand(frame);
 	return (1);
