@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.4 1998/11/16 12:24:13 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.5 1998/11/16 12:30:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -42,9 +42,11 @@
 #include "x509.h"
 
 struct cert_handler cert_handler[] = {
+#if 0
     {ISAKMP_CERTENC_X509_SIG, 
      x509_certreq_validate, x509_certreq_decode, x509_free_aca,
      x509_cert_obtain, x509_cert_get_key, x509_cert_get_subject}
+#endif
 };
 
 struct cert_handler *
