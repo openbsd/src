@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.69 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.70 2001/11/12 23:05:52 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2149,16 +2149,12 @@ buf_replacevnode(bp, newvp)
  */
 void
 reassignbuf(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	struct buflists *listheadp;
 	int delay;
 	struct vnode *vp = bp->b_vp;
 
-	if (vp == NULL) {
-		printf("reassignbuf: NULL");
-		return;
-	}
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
