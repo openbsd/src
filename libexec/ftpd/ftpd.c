@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.35 1997/05/01 14:45:37 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.36 1997/06/01 06:40:34 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -88,6 +88,10 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <unistd.h>
 #include <utmp.h>
 
+#if defined(TCPWRAPPERS)
+#include <tcpd.h>
+#endif	/* TCPWRAPPERS */
+
 #include "pathnames.h"
 #include "extern.h"
 
@@ -149,6 +153,11 @@ static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
 
+#if defined(TCPWRAPPERS)
+int	allow_severity = LOG_INFO;
+int	deny_severity = LOG_NOTICE;
+#endif	/* TCPWRAPPERS */
+
 #if defined(KERBEROS)
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
@@ -208,6 +217,7 @@ static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
 static void	 reapchild __P((int));
+static int	 check_host __P((struct sockaddr_in *));
 
 void	 logxfer __P((char *, off_t, time_t));
 
@@ -378,6 +388,12 @@ main(argc, argv, envp)
 			}
 			close(fd);
 		}
+
+#if defined(TCPWRAPPERS)
+		/* ..in the child. */
+		if (!check_host(&his_addr))
+			exit(1);
+#endif	/* TCPWRAPPERS */
 	} else {
 		addrlen = sizeof(his_addr);
 		if (getpeername(0, (struct sockaddr *)&his_addr,
@@ -2085,3 +2101,28 @@ logxfer(name, size, start)
 		free(vpw);
 	}
 }
+
+#if defined(TCPWRAPPERS)
+static int
+check_host(sin)
+	struct sockaddr_in *sin;
+{
+	struct hostent *hp = gethostbyaddr((char *)&sin->sin_addr,
+		sizeof(struct in_addr), AF_INET);
+	char *addr = inet_ntoa(sin->sin_addr);
+
+	if (hp) {
+		if (!hosts_ctl("ftpd", hp->h_name, addr, STRING_UNKNOWN)) {
+			syslog(LOG_NOTICE, "tcpwrappers rejected: %s [%s]",
+			    hp->h_name, addr);
+			return (0);
+		}
+	} else {
+		if (!hosts_ctl("ftpd", STRING_UNKNOWN, addr, STRING_UNKNOWN)) {
+			syslog(LOG_NOTICE, "tcpwrappers rejected: [%s]", addr);
+			return (0);
+		}
+	}
+	return (1);
+}
+#endif	/* TCPWRAPPERS */
