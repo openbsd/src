@@ -676,7 +676,6 @@ gld${EMULATION_NAME}_before_allocation ()
       }
   }
 
-#if defined (TARGET_IS_elf32bmip) || defined (TARGET_IS_elf32lmip) || defined (TARGET_IS_elf32arc)
   /* For MIPS ELF the .reginfo section requires special handling.
      Each input section is 24 bytes, and the final output section must
      also be 24 bytes.  We handle this by clobbering all but the first
@@ -705,7 +704,6 @@ gld${EMULATION_NAME}_before_allocation ()
 	s->_cooked_size = 0;
       }
   }
-#endif
 }
 
 /* This is called by the before_allocation routine via
