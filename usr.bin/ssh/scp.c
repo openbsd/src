@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $
+ *	$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -54,14 +54,26 @@ RCSID("$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $");
 
 #define _PATH_CP "cp"
 
-/* For progressmeter() function. */
+/* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5
 
-static struct timeval start;
-unsigned long statbytes = 0;
-unsigned long totalbytes = 0;
+/* Visual statistics about files as they are transferred. */
 void progressmeter(int);
+
+/* Returns width of the terminal (for progress meter calculations). */
 int getttywidth(void);
+
+/* Time a transfer started. */
+static struct timeval start;
+
+/* Number of bytes of current file transferred so far. */
+volatile unsigned long statbytes;
+
+/* Total size of current file. */
+unsigned long totalbytes = 0;
+
+/* Name of current file being transferred. */
+char *curfile;
 
 /* This is set to non-zero to enable verbose mode. */
 int verbose = 0;
@@ -465,6 +477,7 @@ source(argc, argv)
 
 	for (indx = 0; indx < argc; ++indx) {
                 name = argv[indx];
+		statbytes = 0;
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb) < 0) {
@@ -488,6 +501,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			last = name;
 		else
 			++last;
+		curfile = last;
 		if (pflag) {
 			/*
 			 * Make it compatible with possible future
@@ -961,7 +975,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $
+ *	$Id: scp.c,v 1.11 1999/10/05 10:58:37 aaron Exp $
  */
 
 char *
@@ -1102,7 +1116,7 @@ progressmeter(int flag)
 {
 	static const char prefixes[] = " KMGTP";
 	static struct timeval lastupdate;
-	static off_t lastsize = 0;
+	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
 	double elapsed;
@@ -1112,15 +1126,16 @@ progressmeter(int flag)
 	if (flag == -1) {
 		(void)gettimeofday(&start, (struct timezone *)0);
 		lastupdate = start;
+		lastsize = 0;
 	}   
 	(void)gettimeofday(&now, (struct timezone *)0);
 	cursize = statbytes;
 	ratio = cursize * 100 / totalbytes;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio); 
+	snprintf(buf, sizeof(buf), "\r%-20.20s %3d%% ", curfile, ratio); 
 
-	barlength = getttywidth() - 30;
+	barlength = getttywidth() - 51;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
