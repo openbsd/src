@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.13 1997/11/14 00:23:41 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.14 2000/04/25 16:42:22 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.13 1997/11/14 00:23:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.14 2000/04/25 16:42:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -688,4 +688,17 @@ member(realfield, table)
 		    equal(igp->i_field, realfield))
 			return(1);
 	return(0);
+}
+
+void
+clearnew()
+{
+	struct message *mp;
+
+	for (mp = &message[0]; mp < &message[msgCount]; mp++) {
+		if (mp->m_flag & MNEW) {
+			mp->m_flag &= ~MNEW;
+			mp->m_flag |= MSTATUS;
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.13 1998/05/11 04:15:24 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.14 2000/04/25 16:42:22 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.13 1998/05/11 04:15:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.14 2000/04/25 16:42:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -490,6 +490,7 @@ inc(v)
 	} else if (nmsg > 0) {
 		mdot = newfileinfo(msgCount - nmsg);
 		dot = &message[mdot - 1];
+		clearnew();
 	} else {
 		puts("\"inc\" command failed...");
 	}

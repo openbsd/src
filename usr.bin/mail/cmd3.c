@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.10 1997/11/14 00:23:44 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.11 2000/04/25 16:42:22 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.10 1997/11/14 00:23:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.11 2000/04/25 16:42:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -564,6 +564,7 @@ file(v)
 
 	if (argv[0] == NULL) {
 		newfileinfo(0);
+		clearnew();
 		return(0);
 	}
 	if (setfile(*argv) < 0)
