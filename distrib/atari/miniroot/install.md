@@ -73,6 +73,10 @@ md_makerootwritable() {
 	fi
 }
 
+md_machine_arch() {
+	cat /kern/machine
+}
+
 md_get_diskdevs() {
 	# return available disk devices
 	__mount_kernfs

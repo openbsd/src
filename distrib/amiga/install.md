@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 1997/05/13 16:04:06 niklas Exp $
+#	$OpenBSD: install.md,v 1.3 1997/05/14 21:39:10 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -56,6 +56,10 @@ md_set_term() {
 
 md_makerootwritable() {
 	# This is done in .profile now
+}
+
+md_machine_arch() {
+	cat /kern/machine
 }
 
 md_get_diskdevs() {

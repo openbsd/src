@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 1997/05/14 20:52:45 pefo Exp $
+#	$OpenBSD: install.md,v 1.2 1997/05/14 21:43:09 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,10 @@ md_set_term() {
 }
 
 md_makerootwritable() {
+}
+
+md_machine_arch() {
+	cat /kern/machine
 }
 
 md_get_diskdevs() {

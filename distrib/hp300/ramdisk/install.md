@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.4 1997/04/21 07:32:11 downsj Exp $
+#	$OpenBSD: install.md,v 1.5 1997/05/14 21:39:12 millert Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,6 +104,10 @@ __kernfs_failed_1
 		exit
 	fi
 	> ${KERNFSMOUNTED} 
+}
+
+md_machine_arch() {
+	cat /kern/machine
 }
 
 md_get_diskdevs() {

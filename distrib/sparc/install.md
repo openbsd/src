@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 1997/05/01 11:30:43 niklas Exp $
+#	$OpenBSD: install.md,v 1.9 1997/05/14 21:39:15 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -71,6 +71,10 @@ __mfs_failed_1
 
 	# Bleh.  Give mount_mfs a chance to DTRT.
 	sleep 2
+}
+
+md_machine_arch() {
+	cat /kern/machine
 }
 
 md_get_diskdevs() {
