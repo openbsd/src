@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.17 1997/05/29 03:55:06 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.18 1997/06/12 03:46:57 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -359,10 +359,13 @@ X_db_stub_xh(sym, xh)
 	db_symtab_t sym;
 	struct exec *xh;
 {
-	extern char kernel_text[];
+	extern char kernel_text[], etext[];
 
-	bcopy(kernel_text, xh, sizeof(*xh));
+	bzero(xh, sizeof(*xh));
+	N_SETMAGIC(*xh, ZMAGIC, MID_MACHINE, 0);
+	xh->a_entry  = (u_long)kernel_text; /* XXX not right, but who cares? */
 	xh->a_syms = *(int *)sym->private;
+	xh->a_text = etext - kernel_text;
 	xh->a_data = 0;
 	if (sym->id != 0) {	/* lkm */
 #ifdef LKM
@@ -379,7 +382,7 @@ X_db_stub_xh(sym, xh)
 			printf("X_db_stub_xh: no lkm for symtab (ghost?)\n");
 #endif
 #else
-		panic("X_db_stub_zh: symtab w/o lkm itself");
+		panic("X_db_stub_xh: symtab w/o lkm itself");
 #endif
 	}
 }
