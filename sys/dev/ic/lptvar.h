@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptvar.h,v 1.1 1996/11/30 00:53:36 niklas Exp $ */
+/*	$OpenBSD: lptvar.h,v 1.2 2000/07/21 17:41:02 mickey Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -50,9 +50,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/timeout.h>
+
 struct lpt_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	struct timeout sc_wakeup_tmo;
 
 	size_t sc_count;
 	struct buf *sc_inbuf;
@@ -76,3 +79,4 @@ struct lpt_softc {
 int	lptintr __P((void *));
 int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_int8_t, u_int8_t));
+void	lpt_attach_common __P((struct lpt_softc *));

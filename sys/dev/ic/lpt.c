@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.3 1999/01/07 15:55:54 niklas Exp $ */
+/*	$OpenBSD: lpt.c,v 1.4 2000/07/21 17:41:02 mickey Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -134,6 +134,17 @@ lpt_port_test(iot, ioh, base, off, data, mask)
 	return (temp == data);
 }
 
+void
+lpt_attach_common(sc)
+	struct lpt_softc *sc;
+{
+	printf("\n");
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
+
+	timeout_set(&sc->sc_wakeup_tmo, lptwakeup, sc);
+}
+
 /*
  * Reset the printer, then wait until it's selected and not busy.
  */
@@ -251,7 +262,7 @@ lptwakeup(arg)
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptwakeup, sc, STEP);
+	timeout_add(&sc->sc_wakeup_tmo, STEP);
 }
 
 /*
@@ -273,7 +284,7 @@ lptclose(dev, flag, mode, p)
 		(void) lptpushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		untimeout(lptwakeup, sc);
+		timeout_del(&sc->sc_wakeup_tmo);
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;

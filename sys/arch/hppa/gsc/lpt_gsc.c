@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.5 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -165,13 +165,10 @@ lpt_gsc_attach(parent, self, aux)
 	/* sc->sc_flags |= LPT_POLLED; */
 
 	sc->sc_state = 0;
-
 	sc->sc_iot = ga->ga_iot;
 	sc->sc_ioh = ga->ga_hpa + LPTGSC_OFFSET;
 
-	printf("\n");
-
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
+	lpt_attach_common(sc);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
 				       ga->ga_irq, lptintr, sc, &sc->sc_dev);

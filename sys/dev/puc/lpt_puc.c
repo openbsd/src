@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.1 1999/11/28 11:52:06 downsj Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.2 2000/07/21 17:41:04 mickey Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -95,8 +95,9 @@ lpt_puc_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
+	printf(": interrupting at %s", intrstr);
 
 	sc->sc_state = 0;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
+
+	lpt_attach_common(sc);
 }

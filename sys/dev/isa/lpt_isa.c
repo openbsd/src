@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.10 1999/01/30 01:41:48 imp Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.11 2000/07/21 17:41:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -176,24 +176,19 @@ lpt_isa_attach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	if (ia->ia_irq != IRQUNK)
-		printf("\n");
-	else {
-		sc->sc_flags |= LPT_POLLED;
-		printf(": polled\n");
-	}
 
 	sc->sc_state = 0;
-
-	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	sc->sc_iot = ia->ia_iot;
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
+	    &sc->sc_ioh))
 		panic("lpt_isa_attach: couldn't map I/O ports");
-	sc->sc_ioh = ioh;
 
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
+	if (ia->ia_irq == IRQUNK) {
+		sc->sc_flags |= LPT_POLLED;
+		printf(": polled");
+	}
+
+	lpt_attach_common(sc);
 
 	if (ia->ia_irq != IRQUNK)
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

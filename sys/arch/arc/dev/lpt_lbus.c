@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
+/*	$OpenBSD: lpt_lbus.c,v 1.4 2000/07/21 17:41:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -140,16 +140,12 @@ lpt_localbus_attach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	printf("\n");
 
 	sc->sc_state = 0;
-	iot = sc->sc_iot = &arc_bus_io;
+	sc->sc_iot = &arc_bus_io;
 	sc->sc_ioh = (bus_space_handle_t)BUS_CVTADDR(ca);
 
-	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
+	lpt_attach_common(sc);
 
 	BUS_INTR_ESTABLISH(ca, lptintr, sc);
 }
