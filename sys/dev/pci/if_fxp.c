@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.5 1997/07/06 16:06:47 niklas Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.6 1997/07/09 18:22:39 niklas Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -383,6 +383,7 @@ fxp_attach(parent, self, aux)
 
 #ifdef __OpenBSD__
 	ifp = &sc->arpcom.ac_if;
+	bcopy(enaddr, sc->arpcom.ac_enaddr, sizeof(enaddr));
 #else
 	ifp = &sc->sc_ethercom.ec_if;
 #endif
