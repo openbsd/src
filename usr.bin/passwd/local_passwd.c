@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.34 2004/07/24 16:57:43 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.35 2004/09/18 19:34:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.34 2004/07/24 16:57:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.35 2004/09/18 19:34:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -205,6 +205,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 	return(crypt(buf, salt));
 }
 
+/* ARGSUSED */
 void
 kbintr(int signo)
 {
