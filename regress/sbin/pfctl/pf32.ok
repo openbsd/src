@@ -1,5 +1,4 @@
 pass in inet from 10.0.0.0/8 to any
-pass in inet from 10.1.0.0/16 to any
 pass in inet from 10.0.0.0/8 to any
 pass in inet from 192.168.37.0/25 to any
 pass in inet from 192.168.37.0/24 to any
