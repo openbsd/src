@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.36 2000/12/02 18:01:11 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.37 2000/12/24 11:15:26 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -289,8 +289,8 @@ S/Key is a Trademark of Bellcore.
 The login name must not appear in the file
 .Pa /etc/ftpusers .
 .It
-The user must have a standard shell returned by
-.Xr getusershell 3 .
+The user must have a standard shell as described by
+.Xr shells 5 .
 .It
 If the user name appears in the file
 .Pa /etc/ftpchroot
@@ -464,7 +464,7 @@ log file for anonymous downloads
 .Xr ftp 1 ,
 .Xr skey 1 ,
 .Xr who 1 ,
-.Xr getusershell 3 ,
+.Xr shells 5 ,
 .Xr syslogd 8
 .Sh HISTORY
 The
