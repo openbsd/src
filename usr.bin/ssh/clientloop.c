@@ -15,7 +15,7 @@ The main loop for the interactive session (client side).
 */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.6 1999/09/30 08:34:24 deraadt Exp $");
+RCSID("$Id: clientloop.c,v 1.7 1999/10/16 20:57:52 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -423,7 +423,7 @@ void client_wait_until_can_do_something(fd_set *readset, fd_set *writeset)
       if (errno == EINTR)
 	return;
       /* Note: we might still have data in the buffers. */
-      sprintf(buf, "select: %.100s\r\n", strerror(errno));
+      snprintf(buf, sizeof buf, "select: %s\r\n", strerror(errno));
       buffer_append(&stderr_buffer, buf, strlen(buf));
       stderr_bytes += strlen(buf);
       quit_pending = 1;
@@ -491,7 +491,7 @@ void client_process_input(fd_set *readset)
       if (len == 0)
 	{ 
 	  /* Received EOF.  The remote host has closed the connection. */
-	  sprintf(buf, "Connection to %.300s closed by remote host.\r\n",
+	  snprintf(buf, sizeof buf, "Connection to %.300s closed by remote host.\r\n",
 		  host);
 	  buffer_append(&stderr_buffer, buf, strlen(buf));
 	  stderr_bytes += strlen(buf);
@@ -508,7 +508,7 @@ void client_process_input(fd_set *readset)
 	{
 	  /* An error has encountered.  Perhaps there is a network
 	     problem. */
-	  sprintf(buf, "Read from remote host %.300s: %.100s\r\n", 
+	  snprintf(buf, sizeof buf, "Read from remote host %.300s: %.100s\r\n", 
 		  host, strerror(errno));
 	  buffer_append(&stderr_buffer, buf, strlen(buf));
 	  stderr_bytes += strlen(buf);
@@ -530,7 +530,7 @@ void client_process_input(fd_set *readset)
 	     an error condition. */
 	  if (len < 0)
 	    {
-	      sprintf(buf, "read: %.100s\r\n", strerror(errno));
+	      snprintf(buf, sizeof buf, "read: %.100s\r\n", strerror(errno));
 	      buffer_append(&stderr_buffer, buf, strlen(buf));
 	      stderr_bytes += strlen(buf);
 	    }
@@ -576,7 +576,7 @@ void client_process_input(fd_set *readset)
 		      {
 		      case '.':
 			/* Terminate the connection. */
-			sprintf(buf, "%c.\r\n", escape_char);
+			snprintf(buf, sizeof buf, "%c.\r\n", escape_char);
 			buffer_append(&stderr_buffer, buf, strlen(buf));
 			stderr_bytes += strlen(buf);
 			quit_pending = 1;
@@ -585,7 +585,7 @@ void client_process_input(fd_set *readset)
 		      case 'Z' - 64:
 			  /* Suspend the program. */
 			  /* Print a message to that effect to the user. */
-			  sprintf(buf, "%c^Z\r\n", escape_char);
+			  snprintf(buf, sizeof buf, "%c^Z\r\n", escape_char);
 			  buffer_append(&stderr_buffer, buf, strlen(buf));
 			  stderr_bytes += strlen(buf);
 
@@ -640,7 +640,7 @@ void client_process_input(fd_set *readset)
 			continue;
 
 		      case '?':
-			sprintf(buf, "%c?\r\n\
+			snprintf(buf, sizeof buf, "%c?\r\n\
 Supported escape sequences:\r\n\
 ~.  - terminate connection\r\n\
 ~^Z - suspend ssh\r\n\
@@ -654,7 +654,7 @@ Supported escape sequences:\r\n\
 			continue;
 
 		      case '#':
-			sprintf(buf, "%c#\r\n", escape_char);
+			snprintf(buf, sizeof buf, "%c#\r\n", escape_char);
 			buffer_append(&stderr_buffer, buf, strlen(buf));
 			s = channel_open_message();
 			buffer_append(&stderr_buffer, s, strlen(s));
@@ -723,7 +723,7 @@ void client_process_output(fd_set *writeset)
 	    {
 	      /* An error or EOF was encountered.  Put an error message
 		 to stderr buffer. */
-	      sprintf(buf, "write stdout: %.50s\r\n", strerror(errno));
+	      snprintf(buf, sizeof buf, "write stdout: %.50s\r\n", strerror(errno));
 	      buffer_append(&stderr_buffer, buf, strlen(buf));
 	      stderr_bytes += strlen(buf);
 	      quit_pending = 1;
@@ -868,7 +868,7 @@ int client_loop(int have_pty, int escape_char_arg)
      the connection has been closed. */
   if (have_pty && !quiet_flag)
     {
-      sprintf(buf, "Connection to %.64s closed.\r\n", host);
+      snprintf(buf, sizeof buf, "Connection to %.64s closed.\r\n", host);
       buffer_append(&stderr_buffer, buf, strlen(buf));
       stderr_bytes += strlen(buf);
     }

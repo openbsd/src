@@ -1,5 +1,5 @@
 #include "includes.h"
-RCSID("$Id: auth-skey.c,v 1.1 1999/10/07 21:45:02 markus Exp $");
+RCSID("$Id: auth-skey.c,v 1.2 1999/10/16 20:57:52 deraadt Exp $");
 
 #include "ssh.h"
 #include <sha1.h>
@@ -116,7 +116,7 @@ skey_fake_keyinfo(char *username)
 		memset(up, 0, 20); /* SHA1 specific */
 		free(up);
 
-		(void)sprintf(skeyprompt,
+		(void)snprintf(skeyprompt, sizeof skeyprompt,
 			      "otp-%.*s %d %.*s",
 			      SKEY_MAX_HASHNAME_LEN,
 			      skey_get_algorithm(),
@@ -139,7 +139,8 @@ skey_fake_keyinfo(char *username)
 		} while (--i != 0);
 		pbuf[12] = '\0';
 
-		(void)sprintf(skeyprompt, "otp-%.*s %d %.*s",
+		(void)snprintf(skeyprompt, sizeof skeyprompt,
+			      "otp-%.*s %d %.*s",
 			      SKEY_MAX_HASHNAME_LEN,
 			      skey_get_algorithm(),
 			      99, SKEY_MAX_SEED_LEN, pbuf);

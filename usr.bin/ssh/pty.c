@@ -14,7 +14,7 @@ Allocating a pseudo-terminal, and making it the controlling tty.
 */
 
 #include "includes.h"
-RCSID("$Id: pty.c,v 1.4 1999/09/30 05:19:57 deraadt Exp $");
+RCSID("$Id: pty.c,v 1.5 1999/10/16 20:57:52 deraadt Exp $");
 
 #include "pty.h"
 #include "ssh.h"
@@ -163,12 +163,12 @@ int pty_allocate(int *ptyfd, int *ttyfd, char *namebuf)
 
   for (i = 0; i < num_ptys; i++)
     {
-      sprintf(buf, "/dev/pty%c%c", ptymajors[i / num_minors], 
+      snprintf(buf, sizeof buf, "/dev/pty%c%c", ptymajors[i / num_minors], 
 	      ptyminors[i % num_minors]);
       *ptyfd = open(buf, O_RDWR|O_NOCTTY);
       if (*ptyfd < 0)
 	continue;
-      sprintf(namebuf, "/dev/tty%c%c", ptymajors[i / num_minors], 
+      snprintf(namebuf, sizeof buf, "/dev/tty%c%c", ptymajors[i / num_minors], 
 	      ptyminors[i % num_minors]);
 
       /* Open the slave side. */
