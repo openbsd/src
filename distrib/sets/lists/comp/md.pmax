@@ -98,6 +98,7 @@
 ./usr/include/mips/reloc.h
 ./usr/include/mips/setjmp.h
 ./usr/include/mips/signal.h
+./usr/include/mips/spinlock.h
 ./usr/include/mips/stdarg.h
 ./usr/include/mips/trap.h
 ./usr/include/mips/types.h
@@ -159,4 +160,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libc_r_pic.a

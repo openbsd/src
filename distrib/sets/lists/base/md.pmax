@@ -9,8 +9,9 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.5/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.1
+./usr/lib/libc_r.so.0.0
 ./usr/lib/libcrypto.so.1.0
-./usr/lib/libcurses.so.5.0
+./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -29,8 +30,8 @@
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
-./usr/lib/libtermcap.so.5.0
-./usr/lib/libtermlib.so.5.0
+./usr/lib/libtermcap.so.5.1
+./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.3
@@ -89,7 +90,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd
 ./usr/lib/perl5/site_perl/mips-openbsd/a.out.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ansidecl.ph
-./usr/lib/perl5/site_perl/mips-openbsd/ansidecl.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa/ftp.ph
@@ -99,8 +99,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/arpa/tftp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/assert.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/mips-openbsd/bfd.ph
-./usr/lib/perl5/site_perl/mips-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/bfdlink.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/bitstring.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/blf.ph
@@ -237,7 +235,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/netgroup.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nl_types.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/nlist.ph
-./usr/lib/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/obstack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ocurses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/olf_abi.ph
