@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.4 2000/08/17 16:16:31 mickey Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.5 2000/09/04 04:36:59 mickey Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -319,6 +319,7 @@ awi_pcmcia_attach(parent, self, aux)
 	printf(": %s\n", app->app_name);
 
 	psc->sc_mem_window = -1;
+#if 0	/* if memory mode is disabled it futhers futher */
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE,
 	    &psc->sc_memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
@@ -334,6 +335,7 @@ awi_pcmcia_attach(parent, self, aux)
 		sc->sc_chip.sc_memh = psc->sc_memh.memh;
 		am79c930_chip_init(&sc->sc_chip, 1);
 	}
+#endif
 
 	sc->sc_enable = awi_pcmcia_enable;
 	sc->sc_disable = awi_pcmcia_disable;
