@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.7 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.8 2002/01/25 21:37:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -190,6 +190,8 @@ sti_sgc_attach(parent, self, aux)
 	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, addr);
 	printf("sti: ioh=%x, romh=%x\n", sc->ioh, sc->romh);
 #endif
+	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
+		sc->sc_flags |= STI_CONSOLE;
 	sti_attach_common(sc);
 }
 
