@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.10 2002/10/16 15:48:31 todd Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.11 2002/10/24 18:36:13 mickey Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
@@ -198,7 +198,7 @@ std)
 	M stdin		c 16 0
 	M stdout	c 16 1
 	M stderr	c 16 2
-	M ksyms		c 29 0 640 kmem
+	M ksyms		c 25 0 640 kmem
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
 	;;
@@ -369,8 +369,8 @@ all)
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R xfs0 ss0 ss1 ch0 ses0 audio0 uk0 random lpa0 lpa1 lpa2 lpt0
-	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf
-	R systrace std st0 st1 fd
+	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf systrace std
+	R st0 st1 fd
 	;;
 
 sd*|ccd*)

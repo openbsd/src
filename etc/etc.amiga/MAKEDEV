@@ -442,8 +442,8 @@ all)
 	R grf3 grf4 grf5 grf6 audio0 uk0 random joy0 joy1 lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm ttye0 ttye1 ttye2 ttye3 ttye4 ttye5
 	R ttye6 tty00 tty01 tty02 tty03 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4
-	R ttyA0 ttyA1 pf systrace fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R ttyA0 ttyA1 pf systrace fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
