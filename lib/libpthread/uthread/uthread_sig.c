@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.9 2001/11/02 20:37:20 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.10 2001/11/05 22:53:28 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -271,9 +271,13 @@ void
 _thread_signal(pthread_t pthread, int sig)
 {
 	/*
-	 * Flag the signal as pending. It will be dispatched later.
+	 * Flag the signal as pending. It may be dispatched later.
 	 */
 	sigaddset(&pthread->sigpend,sig);
+
+	/* skip this thread if signal is masked */
+	if (sigismember(&pthread->sigmask, sig))
+		return;
 
 	/*
 	 * Process according to thread state:
@@ -348,8 +352,7 @@ _thread_signal(pthread_t pthread, int sig)
 		 * Only wake up the thread if the signal is unblocked
 		 * and there is a handler installed for the signal.
 		 */
-		if (!sigismember(&pthread->sigmask, sig) &&
-		    _thread_sigact[sig - 1].sa_handler != SIG_DFL) {
+		if (_thread_sigact[sig - 1].sa_handler != SIG_DFL) {
 			/* Change the state of the thread to run: */
 			PTHREAD_NEW_STATE(pthread,PS_RUNNING);
 
