@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.7 2004/12/27 16:41:13 miod Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.8 2005/01/29 13:34:42 martin Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -120,6 +120,8 @@ in native OS rather than from the usual location in the
 .Ox
 file system.
 A radio button is supplied for this purpose.
+The kernel may be compressed using
+.Xr gzip 1 .
 Note that some programs will not run properly if the kernel is not found as
 .Pa /bsd
 within the
