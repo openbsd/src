@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: id.c,v 1.5 2000/02/27 01:38:26 brian Exp $
+ *	$OpenBSD: id.c,v 1.6 2000/08/11 09:40:24 brian Exp $
  */
 
 #include <sys/param.h>
@@ -281,7 +281,10 @@ ID0setproctitle(const char *title)
     setproctitle(NULL);
     log_Printf(LogID0, "setproctitle(NULL)\n");
   } else {
-    setproctitle("%s", title);
+    if (title[0] == '-' && title[1] != '\0')
+      setproctitle("-%s", title + 1);
+    else
+      setproctitle("%s", title);
     log_Printf(LogID0, "setproctitle(\"%%s\", \"%s\")\n", title);
   }
   ID0setuser();
