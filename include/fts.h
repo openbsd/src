@@ -49,18 +49,19 @@ typedef struct {
 	int fts_nitems;			/* elements in the sort array */
 	int (*fts_compar)();		/* compare function */
 
-#define	FTS_COMFOLLOW	0x001		/* follow command line symlinks */
-#define	FTS_LOGICAL	0x002		/* logical walk */
-#define	FTS_NOCHDIR	0x004		/* don't change directories */
-#define	FTS_NOSTAT	0x008		/* don't get stat info */
-#define	FTS_PHYSICAL	0x010		/* physical walk */
-#define	FTS_SEEDOT	0x020		/* return dot and dot-dot */
-#define	FTS_XDEV	0x040		/* don't cross devices */
-#define	FTS_WHITEOUT	0x080		/* return whiteout information */
-#define	FTS_OPTIONMASK	0x0ff		/* valid user option mask */
+#define	FTS_COMFOLLOW	0x0001		/* follow command line symlinks */
+#define	FTS_LOGICAL	0x0002		/* logical walk */
+#define	FTS_NOCHDIR	0x0004		/* don't change directories */
+#define	FTS_NOSTAT	0x0008		/* don't get stat info */
+#define	FTS_PHYSICAL	0x0010		/* physical walk */
+#define	FTS_SEEDOT	0x0020		/* return dot and dot-dot */
+#define	FTS_XDEV	0x0040		/* don't cross devices */
+#define	FTS_WHITEOUT	0x0080		/* return whiteout information */
+#define	FTS_CHDIRROOT	0x0100		/* chdir to root of tree not orig cwd */
+#define	FTS_OPTIONMASK	0x0fff		/* valid user option mask */
 
-#define	FTS_NAMEONLY	0x100		/* (private) child names only */
-#define	FTS_STOP	0x200		/* (private) unrecoverable error */
+#define	FTS_NAMEONLY	0x1000		/* (private) child names only */
+#define	FTS_STOP	0x2000		/* (private) unrecoverable error */
 	int fts_options;		/* fts_open options, global flags */
 } FTS;
 

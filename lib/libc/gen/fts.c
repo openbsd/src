@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.10 1997/08/29 22:43:08 imp Exp $	*/
+/*	$OpenBSD: fts.c,v 1.11 1997/09/01 02:44:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.10 1997/08/29 22:43:08 imp Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.11 1997/09/01 02:44:17 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -167,7 +167,7 @@ fts_open(argv, options, compar)
 	sp->fts_cur->fts_info = FTS_INIT;
 
 	/*
-	 * If using chdir(2), grab a file descriptor pointing to dot to insure
+	 * If using chdir(2), grab a file descriptor pointing to dot to ensure
 	 * that we can get back here; this could be avoided for some paths,
 	 * but almost certainly not worth the effort.  Slashes, symbolic links,
 	 * and ".." are all fairly nasty problems.  Note, if we can't get the
@@ -366,13 +366,20 @@ next:	tmp = p;
 		free(tmp);
 
 		/*
-		 * If reached the top, return to the original directory, and
-		 * load the paths for the next root.
+		 * If reached the top, return to the original directory (or
+		 * the root of the tree), and load the paths for the next root.
 		 */
 		if (p->fts_level == FTS_ROOTLEVEL) {
-			if (FCHDIR(sp, sp->fts_rfd)) {
-				SET(FTS_STOP);
-				return (NULL);
+			if ((sp->fts_options & FTS_CHDIRROOT)) {
+				if (chdir(p->fts_accpath)) {
+					SET(FTS_STOP);
+					return (NULL);
+				}
+			} else {
+				if (FCHDIR(sp, sp->fts_rfd)) {
+					SET(FTS_STOP);
+					return (NULL);
+				}
 			}
 			fts_load(sp, p);
 			return (sp->fts_cur = p);
@@ -426,9 +433,16 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	 * one directory.
 	 */
 	if (p->fts_level == FTS_ROOTLEVEL) {
-		if (FCHDIR(sp, sp->fts_rfd)) {
-			SET(FTS_STOP);
-			return (NULL);
+		if ((sp->fts_options & FTS_CHDIRROOT)) {
+			if (chdir(p->fts_accpath)) {
+				SET(FTS_STOP);
+				return (NULL);
+			}
+		} else {
+			if (FCHDIR(sp, sp->fts_rfd)) {
+				SET(FTS_STOP);
+				return (NULL);
+			}
 		}
 	} else if (p->fts_flags & FTS_SYMFOLLOW) {
 		if (FCHDIR(sp, p->fts_symfd)) {
