@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.18 2002/06/07 21:33:43 nordin Exp $ */
+/* $OpenBSD: cpu.h,v 1.19 2002/06/28 16:50:38 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -385,9 +385,10 @@ void alpha_write_fpcr(u_int64_t);				/* MAGIC */
 u_int64_t alpha_read_fp_c(struct proc *);
 void alpha_write_fp_c(struct proc *, u_int64_t);
 
-void alpha_enable_fp(struct proc *, int);
 int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
 #endif
+
+void alpha_enable_fp(struct proc *, int);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */

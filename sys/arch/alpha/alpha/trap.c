@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.36 2002/06/23 03:03:15 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.37 2002/06/28 16:50:38 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -410,29 +410,8 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_FEN:
-#ifndef NO_IEEE
 			alpha_enable_fp(p, 0);
 			alpha_pal_wrfen(0);
-#else
-			/*
-			 * on exit from the kernel, if proc == fpcurproc,
-			 * FP is enabled.
-			 */
-			if (fpcurproc == p) {
-				printf("trap: fp disabled for fpcurproc == %p",
-				    p);
-				goto dopanic;
-			}
-
-			alpha_pal_wrfen(1);
-			if (fpcurproc)
-				savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-			fpcurproc = p;
-			restorefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-			alpha_pal_wrfen(0);
-
-			p->p_md.md_flags |= MDP_FPUSED;
-#endif
 			goto out;
 
 		default:
@@ -770,7 +749,6 @@ child_return(arg)
 #endif
 }
 
-#ifndef NO_IEEE
 /*
  * Set the float-point enable for the current process, and return
  * the FPU context to the named process. If check == 0, it is an
@@ -807,7 +785,6 @@ alpha_enable_fp(struct proc *p, int check)
 	alpha_pal_wrfen(1);
 	restorefpstate(&p->p_addr->u_pcb.pcb_fp);
 }
-#endif
 
 /*
  * Process an asynchronous software trap.
