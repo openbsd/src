@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.40 2000/11/06 01:40:28 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.41 2000/11/07 05:38:53 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -139,6 +139,7 @@ struct bridge_softc {
 	u_int32_t			sc_brtmax;	/* max # addresses */
 	u_int32_t			sc_brtcnt;	/* current # addrs */
 	u_int32_t			sc_brttimeout;	/* timeout ticks */
+	u_int32_t			sc_hashkey;	/* hash key */
 	struct timeout			sc_brtimeout;	/* timeout state */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
@@ -156,8 +157,9 @@ void	bridge_stop __P((struct bridge_softc *));
 void	bridge_init __P((struct bridge_softc *));
 int	bridge_bifconf __P((struct bridge_softc *, struct ifbifconf *));
 
+void	bridge_timer __P((void *));
 int	bridge_rtfind __P((struct bridge_softc *, struct ifbaconf *));
-void	bridge_rtage __P((void *));
+void	bridge_rtage __P((struct bridge_softc *));
 void	bridge_rttrim __P((struct bridge_softc *));
 void	bridge_rtdelete __P((struct bridge_softc *, struct ifnet *));
 int	bridge_rtdaddr __P((struct bridge_softc *, struct ether_addr *));
@@ -166,7 +168,7 @@ struct ifnet *	bridge_rtupdate __P((struct bridge_softc *,
     struct ether_addr *, struct ifnet *ifp, int, u_int8_t));
 struct ifnet *	bridge_rtlookup __P((struct bridge_softc *,
     struct ether_addr *));
-u_int32_t	bridge_hash __P((struct ether_addr *));
+u_int32_t	bridge_hash __P((struct bridge_softc *, struct ether_addr *));
 int bridge_blocknonip __P((struct ether_header *, struct mbuf *));
 int		bridge_addrule __P((struct bridge_iflist *,
     struct ifbrlreq *, int out));
@@ -203,7 +205,7 @@ bridgeattach(unused)
 
 		sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 		sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-		timeout_set(&sc->sc_brtimeout, bridge_rtage, sc);
+		timeout_set(&sc->sc_brtimeout, bridge_timer, sc);
 		LIST_INIT(&sc->sc_iflist);
 		ifp = &sc->sc_if;
 		sprintf(ifp->if_xname, "bridge%d", i);
@@ -244,7 +246,7 @@ bridge_ioctl(ifp, cmd, data)
 	int error = 0, s;
 	struct bridge_iflist *p;
 
-	s = splimp();
+	s = splsoftnet();
 	switch (cmd) {
 	case SIOCBRDGADD:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
@@ -681,26 +683,23 @@ bridge_init(sc)
 	struct bridge_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int i, s;
+	int i;
 
 	if ((ifp->if_flags & IFF_RUNNING) == IFF_RUNNING)
 		return;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL) {
 		sc->sc_rts = (struct bridge_rthead *)malloc(
 		    BRIDGE_RTABLE_SIZE * (sizeof(struct bridge_rthead)),
 		    M_DEVBUF, M_NOWAIT);
-		if (sc->sc_rts == NULL) {
-			splx(s);
+		if (sc->sc_rts == NULL)
 			return;
-		}
 		for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 			LIST_INIT(&sc->sc_rts[i]);
 		}
+		get_random_bytes(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
 	}
 	ifp->if_flags |= IFF_RUNNING;
-	splx(s);
 
 	if (sc->sc_brttimeout != 0)
 		timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
@@ -1216,25 +1215,25 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 {
 	struct bridge_rtnode *p, *q;
 	u_int32_t h;
-	int s, dir;
+	int dir;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL) {
 		if (setflags && flags == IFBAF_STATIC) {
 			sc->sc_rts = (struct bridge_rthead *)malloc(
 			    BRIDGE_RTABLE_SIZE *
 			    (sizeof(struct bridge_rthead)),M_DEVBUF,M_NOWAIT);
-
 			if (sc->sc_rts == NULL)
 				goto done;
 
-			for (h = 0; h < BRIDGE_RTABLE_SIZE; h++)
+			for (h = 0; h < BRIDGE_RTABLE_SIZE; h++) {
 				LIST_INIT(&sc->sc_rts[h]);
+			}
+			get_random_bytes(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
 		} else
 			goto done;
 	}
 
-	h = bridge_hash(ea);
+	h = bridge_hash(sc, ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
 	if (p == LIST_END(&sc->sc_rts[h])) {
 		if (sc->sc_brtcnt >= sc->sc_brtmax)
@@ -1322,7 +1321,6 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 done:
 	ifp = NULL;
 want:
-	splx(s);
 	return (ifp);
 }
 
@@ -1333,28 +1331,20 @@ bridge_rtlookup(sc, ea)
 {
 	struct bridge_rtnode *p;
 	u_int32_t h;
-	int s, dir;
-
-	/*
-	 * Lock out everything else
-	 */
-	s = splhigh();
+	int dir;
 
 	if (sc->sc_rts == NULL)
 		goto fail;
 
-	h = bridge_hash(ea);
+	h = bridge_hash(sc, ea);
 	LIST_FOREACH(p, &sc->sc_rts[h], brt_next) {
 		dir = memcmp(ea, &p->brt_addr, sizeof(p->brt_addr));
-		if (dir == 0) {
-			splx(s);
+		if (dir == 0)
 			return (p->brt_if);
-		}
 		if (dir > 0)
 			goto fail;
 	}
 fail:
-	splx(s);
 	return (NULL);
 }
 
@@ -1378,10 +1368,11 @@ fail:
 	} while(0)
 
 u_int32_t
-bridge_hash(addr)
+bridge_hash(sc, addr)
+	struct bridge_softc *sc;
 	struct ether_addr *addr;
 {
-	u_int32_t a = 0x9e3779b9, b = 0x9e3779b9, c = 0xdeadbeef;
+	u_int32_t a = 0x9e3779b9, b = 0x9e3779b9, c = sc->sc_hashkey;
 
 	b += addr->ether_addr_octet[5] << 8;
 	b += addr->ether_addr_octet[4];
@@ -1403,9 +1394,8 @@ bridge_rttrim(sc)
 	struct bridge_softc *sc;
 {
 	struct bridge_rtnode *n, *p;
-	int s, i;
+	int i;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL)
 		goto done;
 
@@ -1418,9 +1408,7 @@ bridge_rttrim(sc)
 	/*
 	 * Force an aging cycle, this might trim enough addresses.
 	 */
-	splx(s);
 	bridge_rtage(sc);
-	s = splhigh();
 
 	if (sc->sc_brtcnt <= sc->sc_brtmax)
 		goto done;
@@ -1446,7 +1434,17 @@ done:
 		free(sc->sc_rts, M_DEVBUF);
 		sc->sc_rts = NULL;
 	}
+}
 
+void
+bridge_timer(vsc)
+	void *vsc;
+{
+	struct bridge_softc *sc = vsc;
+	int s;
+
+	s = splsoftnet();
+	bridge_rtage(sc);
 	splx(s);
 }
 
@@ -1454,18 +1452,14 @@ done:
  * Perform an aging cycle
  */
 void
-bridge_rtage(vsc)
-	void *vsc;
+bridge_rtage(sc)
+	struct bridge_softc *sc;
 {
-	struct bridge_softc *sc = (struct bridge_softc *)vsc;
 	struct bridge_rtnode *n, *p;
-	int s, i;
+	int i;
 
-	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
+	if (sc->sc_rts == NULL)
 		return;
-	}
 
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
@@ -1487,7 +1481,6 @@ bridge_rtage(vsc)
 			}
 		}
 	}
-	splx(s);
 
 	if (sc->sc_brttimeout != 0)
 		timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
@@ -1501,12 +1494,11 @@ bridge_rtflush(sc, full)
 	struct bridge_softc *sc;
 	int full;
 {
-	int s, i;
+	int i;
 	struct bridge_rtnode *p, *n;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL)
-		goto done;
+		return (0);
 
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
@@ -1528,8 +1520,6 @@ bridge_rtflush(sc, full)
 		sc->sc_rts = NULL;
 	}
 
-done:
-	splx(s);
 	return (0);
 }
 
@@ -1541,14 +1531,13 @@ bridge_rtdaddr(sc, ea)
 	struct bridge_softc *sc;
 	struct ether_addr *ea;
 {
-	int h, s;
+	int h;
 	struct bridge_rtnode *p;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL)
-		goto done;
+		return (ENOENT);
 
-	h = bridge_hash(ea);
+	h = bridge_hash(sc, ea);
 	LIST_FOREACH(p, &sc->sc_rts[h], brt_next) {
 		if (bcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
 			LIST_REMOVE(p, brt_next);
@@ -1559,13 +1548,10 @@ bridge_rtdaddr(sc, ea)
 				free(sc->sc_rts, M_DEVBUF);
 				sc->sc_rts = NULL;
 			}
-			splx(s);
 			return (0);
 		}
 	}
 
-done:
-	splx(s);
 	return (ENOENT);
 }
 /*
@@ -1576,12 +1562,11 @@ bridge_rtdelete(sc, ifp)
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
 {
-	int i, s;
+	int i;
 	struct bridge_rtnode *n, *p;
 
-	s = splhigh();
 	if (sc->sc_rts == NULL)
-		goto done;
+		return;
 
 	/*
 	 * Loop through all of the hash buckets and traverse each
@@ -1604,9 +1589,6 @@ bridge_rtdelete(sc, ifp)
 		free(sc->sc_rts, M_DEVBUF);
 		sc->sc_rts = NULL;
 	}
-
-done:
-	splx(s);
 }
 
 /*
@@ -1617,12 +1599,10 @@ bridge_rtfind(sc, baconf)
 	struct bridge_softc *sc;
 	struct ifbaconf *baconf;
 {
-	int i, s, error = 0;
+	int i, error = 0;
 	u_int32_t cnt = 0;
 	struct bridge_rtnode *n;
 	struct ifbareq bareq;
-
-	s = splhigh();
 
 	if (sc->sc_rts == NULL || baconf->ifbac_len == 0)
 		goto done;
@@ -1649,7 +1629,6 @@ bridge_rtfind(sc, baconf)
 	}
 done:
 	baconf->ifbac_len = cnt * sizeof(struct ifbareq);
-	splx(s);
 	return (error);
 }
 
