@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.11 1999/07/04 11:53:51 aaron Exp $
+.\" $OpenBSD: at.1,v 1.12 1999/09/14 05:28:23 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -266,6 +266,12 @@ resources.
 If this is the case for your site, you might want to consider another
 batch system, such as
 .Nm nqs .
+.Pp
+.Nm atq
+always prints the year as two digits.  Since
+.Nm at
+only permits submission of jobs in the future, it is somewhat
+clear which century the job will run in.
 .Sh AUTHORS
 .Nm
 was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
