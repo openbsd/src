@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2002/04/01 16:23:01 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2002/09/05 18:41:19 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -33,6 +33,7 @@ typedef	u_int32_t	pt_entry_t;
 #define	PTE_PROT(tlb)	((tlb) >> PTE_PROT_SHIFT)
 #define	TLB_PROT(pte)	((pte) << PTE_PROT_SHIFT)
 #define	PDE_MASK	(0xffc00000)
+#define	PDE_SIZE	(0x00400000)
 #define	PTE_MASK	(0x003ff000)
 #define	PTE_PAGE(pte)	((pte) & ~PGOFSET)
 

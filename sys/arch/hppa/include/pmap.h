@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2002/05/09 17:45:24 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2002/09/05 18:41:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -94,6 +94,12 @@ extern struct pdc_hwtlb pdc_hwtlb;
 #endif
 
 /*
+ * pool quickmaps
+ */
+#define	PMAP_MAP_POOLPAGE(pa)	((vaddr_t)(pa))
+#define	PMAP_UNMAP_POOLPAGE(va) ((paddr_t)(va))
+
+/*
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
@@ -138,8 +144,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE))
-			(void) pmap_changebit(pg, PTE_PROT(TLB_READ),
-			    PTE_PROT(TLB_WRITE));
+			pmap_changebit(pg, 0, PTE_PROT(TLB_WRITE));
 		else
 			pmap_page_remove(pg);
 	}
