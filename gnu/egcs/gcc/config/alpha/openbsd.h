@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.  */
 #include <alpha/alpha.h>
 #include <alpha/elf.h>
 
-#define OBSD_NO_DYNAMIC_LIBRARIES
 #define OBSD_HAS_DECLARE_FUNCTION_NAME
 #define OBSD_HAS_DECLARE_FUNCTION_SIZE
 #define OBSD_HAS_DECLARE_OBJECT
@@ -36,7 +35,12 @@ Boston, MA 02111-1307, USA.  */
 /* alpha needs __start.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{assert*}"
+  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
