@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.1 2000/04/13 00:10:52 csapuntz Exp $       */
+/*      $OpenBSD: neo.c,v 1.2 2000/04/13 00:36:42 csapuntz Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -83,8 +83,14 @@ struct neo_softc {
 
         u_int32_t       pbufsize;
         u_int32_t       rbufsize;
+
+	u_int32_t       pblksize;
+	u_int32_t       rblksize;
+
         u_int32_t       pwmark;
         u_int32_t       rwmark;
+
+        int             mallocIdx;
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;	
@@ -290,14 +296,17 @@ static int
 nm_waitcd(struct neo_softc *sc)
 {
 	int cnt = 10;
+	int fail = 1;
 
 	while (cnt-- > 0) {
 		if (nm_rd(sc, sc->ac97_status, 2) & sc->ac97_busy)
 			DELAY(100);
-		else
+		else {
+		        fail = 0;
 			break;
+		}
 	}
-	return (nm_rd(sc, sc->ac97_status, 2) & sc->ac97_busy);
+	return (fail);
 }
 
 
@@ -359,9 +368,7 @@ neo_intr(void *p)
 	if (status & sc->playint) {
 		status &= ~sc->playint;
 
-		printf ("offset = %d\n", nmchan_getptr(sc, AUMODE_PLAY));
-
-		sc->pwmark += (sc->pbufsize / 2);
+		sc->pwmark += sc->pblksize;
 		sc->pwmark %= sc->pbufsize;
 
 		nm_wr(sc, NM_PBUFFER_WMARK, sc->pbuf + sc->pwmark, 4);
@@ -375,6 +382,10 @@ neo_intr(void *p)
 	}
 	if (status & sc->recint) {
 		status &= ~sc->recint;
+
+		sc->rwmark += sc->rblksize;
+		sc->rwmark %= sc->rbufsize;
+
 		nm_ackint(sc, sc->recint);
 		if (sc->rintr)
 			(*sc->rintr)(sc->rarg);
@@ -839,7 +850,8 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 		ssz <<= 1;
 
 	sc->pbufsize = ((char*)end - (char *)start);
-	sc->pwmark = sc->pbufsize / 2;
+	sc->pblksize = blksize;
+	sc->pwmark = blksize;
 
 	nm_wr(sc, NM_PBUFFER_START, sc->pbuf, 4);
 	nm_wr(sc, NM_PBUFFER_END, sc->pbuf + sc->pbufsize - ssz, 4); 
@@ -873,13 +885,16 @@ neo_trigger_input(addr, start, end, blksize, intr, arg, param)
 	if (param->channels == 2)
 		ssz <<= 1;
 
+	sc->rbufsize = ((char*)end - (char *)start);
+	sc->rblksize = blksize;
+	sc->rwmark = blksize;
+
+	nm_wr(sc, NM_RBUFFER_START, sc->rbuf, 4);
+	nm_wr(sc, NM_RBUFFER_END, sc->rbuf + sc->rbufsize, 4);
+	nm_wr(sc, NM_RBUFFER_CURRP, sc->rbuf, 4);
+	nm_wr(sc, NM_RBUFFER_WMARK, sc->rbuf + sc->rwmark, 4);
 	nm_wr(sc, NM_RECORD_ENABLE_REG, NM_RECORD_FREERUN |
 	    NM_RECORD_ENABLE_FLAG, 1);
-	nm_wr(sc, NM_RBUFFER_START, sc->rbuf, 4);
-	nm_wr(sc, NM_RBUFFER_END, 
-	      sc->rbuf + ((char *)end - (char *)start), 4);
-	nm_wr(sc, NM_RBUFFER_CURRP, sc->rbuf, 4);
-	nm_wr(sc, NM_RBUFFER_WMARK, sc->rbuf + NM_BUFFSIZE / 2, 4);
 
 	return (0);
 }
@@ -951,16 +966,6 @@ neo_query_devinfo(addr, dip)
 
 	return ((sc->codec_if->vtbl->query_devinfo)(sc->codec_if, dip));
 }
-#if 0
-int
-neo_get_portnum_by_name(sc, class, device, qualifier)
-	struct neo_softc *sc;
-	char *class, *device, *qualifier;
-{
-	return ((sc->codec_if->vtbl->get_portnum_by_name)(sc->codec_if, class,
-             device, qualifier));
-}
-#endif
 
 void *
 neo_malloc(addr, size, pool, flags)
@@ -969,8 +974,22 @@ neo_malloc(addr, size, pool, flags)
 	int pool, flags;
 {
 	struct neo_softc *sc = addr;
+	void *rv = 0;
 
-	return ((char *)sc->bufioh + sc->pbuf);
+	switch (sc->mallocIdx) {
+	case 0:
+	  rv = (char *)sc->bufioh + sc->pbuf;
+	  sc->mallocIdx++;
+	  break;
+	case 1:
+	  rv = (char *)sc->bufioh + sc->rbuf;
+	  sc->mallocIdx++;
+	  break;
+	default:
+	  break;
+	}
+
+	return (rv);
 }
 
 void
