@@ -1,0 +1,213 @@
+.\"	$OpenBSD: nc.1,v 1.1 1996/09/05 08:55:32 deraadt Exp $
+.\"
+.\" Copyright (c) 1996 David Sacerdote
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 1, 1996
+.Dt nc 1
+.Sh NAME
+.Os
+.Nm nc
+.Nd
+Arbitrary tcp and udp connections and listens.
+.Pp
+.Nm nc
+.Op Fl e Ar command
+.Op Fl g Ar intermediates
+.Op Fl G Ar hopcount
+.Op Fl i Ar interval
+.Op Fl lnrtuvz
+.Op Fl o Ar filename
+.Op Fl p Ar source port 
+.Op Fl s Ar ip address
+.Op Fl w Ar timeout 
+.Op Ar hostname
+.Op Ar port[s...]
+.Pp
+.Sh DESCRIPTION
+The
+.Nm nc
+(or
+.Nm netcat )
+utility is used for just about anything under the sun
+involving TCP or UDP.  It can open tcp connections, send udp packets,
+listen on arbitrary tcp and udp ports, do port scanning, and source
+routing.  Unlike
+.Xr telnet 1 ,
+.Nm nc
+scripts nicely, and separates error messages onto standard error instead
+of sending them to standard output, as 
+.Xr telnet 1  
+does with some.  
+.Pp
+Destination ports can be single integers, names as listed in
+.Xr /etc/services 5 ,
+or ranges.  Ranges are in the form nn-mm, and several separate ports and/or
+ranges may be specified on the command line.
+.Pp
+Common uses include:
+.Bl -bullet 
+.It
+simple tcp proxies
+.It
+shell\-script based http clients and servers
+.It
+network daemon testing
+.It
+source routing based connectivity testing
+.It
+and much, much more
+.El
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl e Ar command
+Execute the specified command, using data from the network for stdin,
+and sending stdout and stderr to the network.  This option is only present if
+.Nm nc
+was compiled with the GAPING_SECURITY_HOLE compile time option, since it
+allows users to make arbitrary programs available to anyone on the network.
+.It Fl g Ar intermediate-host
+Specifies a hop along a loose source routed path.  Can be used more than
+once to build a chain of hop points.
+.It Fl G Ar pointer
+Positions the "hop counter" within the list of machines in the path of
+a source routed packet.  Must be a multiple of 4.
+.It Fl i Ar seconds
+Specifies a delay time interval between lines of text sent and received.
+Also causes a delay time between connections to multiple ports.
+.It Fl l
+Is used to specify that
+.Nm nc
+should listen for an incoming connection, rather than initiate a
+connection to a remote host.  Any hostname/ip address and port arguments
+restrict the source of inbound connections to only that address and
+source port.
+.It Fl n
+Do not do DNS lookups on any of the specified addresses or hostnames, or
+names of port numbers from /etc/services.
+.It Fl o Ar filename
+Create a hexadecimal log of data transferred in the specified file.
+Each line begins with < or >.  < means "from the net" and > means
+"to the net."
+.It Fl p Ar port
+Specifies the source port
+.Nm nc
+should use, subject to privilege restrictions and availability.
+.It Fl r
+Specified that source and/or destination ports should be chosen semi-randomly
+instead of sequentially within a range or in the order that the
+system assigns.
+.It Fl s Ar hostname/ip-address
+Specifies the ip of the interface which is used to send the packets.
+On some platforms, this can be used for udp spoofing by using ifconfig
+to bring up a dummy interface with the desired source ip address.
+.It Fl t
+Causes
+.Nm nc
+to send RFC854 DON'T and WON'T responses to RFC854 DO
+and WILL requests.  This makes it possible to use
+.Nm nc
+to script telnet sessions.  The presence of this option can be
+enabled or disabled as a compile-time option.
+.It Fl u
+Use UDP instead of TCP. 
+On most platforms,
+.Nm nc
+will behave as if a connection is established until it receives an
+ICMP packet indicating that there is no program listening to what it
+sends.
+.It Fl v
+Verbose.  Cause
+.Nm nc
+to display connection information.  Using \-v
+more than once will cause
+.Nm nc
+to become even more verbose.
+.It Fl w Ar timeout
+Specifies the number of seconds
+.Nm nc
+should wait before deciding that
+an attempt to establish a connection is hopeless.
+Also used to specify how long to wait for more network data after standard
+input closes.
+.It Fl z
+Specifies that
+.Nm nc
+should just scan for listening
+daemons, without sending any data to them.  Diagnostic messages about refused
+connections will not be
+displayed unless \-v is specified twice.
+.Sh EXAMPLES
+.Pp
+.Bl -tag -width x
+.It Li "nc"
+Wait for the user to type what would normally be command-line
+arguments in at stdin.
+.It Li "nc example.host 42"
+Open a TCP connection to port 42 of example.host.  If the connection
+fails, do not display any error messages, but simply exit.
+.It Li "nc -p 31337 example.host 42"
+Open a TCP connection to port 42 of example.host, and use port 31337
+as the source port.
+.It Li "nc -w 5 example.host 42"
+Open a tcp connection to port 42 of example.host, and time out after
+five seconds while attempting to connect.
+.It Li "nc -u example.host 53"
+Send any data from stdin
+to UDP port 53 of example.host, and display any data returned.
+.It Li "nc -s 10.1.2.3 example.host 42"
+Open a tcp connection to port 42 of example.host using 10.1.2.3 as the
+ip for the local end of the connection.
+.It Li "nc -v example.host 42"
+Open a tcp connection to port 42 of example.host, displaying some
+diagnostic messages on stderr.
+.It Li "nc -v -v example.host 42"
+Open a tcp connection to port 42 of example.host, displaying all
+diagnostic messages on stderr.
+.It Li "nc -v -z example.host 20-30"
+Attempt to open tcp connections to ports 20 through 30 of
+example.host, and report which ones
+.Nm nc
+was able to connect to.
+.It Li "nc -v -u -z -w 3 example.host 20-30"
+Send udp packets to ports 20-30 of example.host, and report which ones
+did not respond with an ICMP packet after three seconds.
+.It Li "nc -l -p 3000"
+Listen on TCP port 3000, and once there is a connection, send stdin to
+the remote host, and send data from the remote host to stdout.
+.It Li "echo foobar | nc example.host 1000"
+Connect to port 1000 of example.host, send the string "foobar"
+followed by a newline, and move data from port 1000 of example.host to
+stdout until example.host closes the connection.
+.El
+.Sh SEE ALSO
+.Xr telnet 1 ,
+.Xr cat 1 ,
+and the
+.Nm netcat
+.Pa README
+.Sh AUTHOR
+*Hobbit*  [hobbit@avian.org]
