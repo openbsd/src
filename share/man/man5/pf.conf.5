@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.79 2002/09/06 09:46:52 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.80 2002/09/12 12:14:35 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -950,8 +950,9 @@ binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 		 [ "proto" ( proto-name | proto-number ) ]
 		 "from" address "to" ipspec [ "->" address ] .
 
-rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ] "from" ipspec
-                 "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
+rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
+		 "from" ipspec "to" ipspec [ portspec ]
+		 [ "->" address [ portspec ] ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "return-rst" [ "(" "ttl" number ")" ] |
