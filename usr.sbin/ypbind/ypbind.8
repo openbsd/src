@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypbind.8,v 1.7 1997/04/02 18:05:47 deraadt Exp $
+.\"	$OpenBSD: ypbind.8,v 1.8 1997/06/18 23:50:12 deraadt Exp $
 .\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl ypset
-.Nm
 .Op Fl ypsetme
+.Op Fl insecure
 .Sh DESCRIPTION
 .Nm
 finds the server for a particular YP domain and stores information about it
@@ -85,7 +85,7 @@ When the binding is once again successful,
 marks the domain as bound and resumes its periodic check.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width indentxx
 .It Fl ypset
 .Xr ypset 8
 may be used to change the server to which a domain is bound.
@@ -93,6 +93,11 @@ may be used to change the server to which a domain is bound.
 .Xr ypset 8
 may be used only from this machine to change the server
 to which a domain is bound.
+.It Fl insecure
+permit binding to a
+.Xr ypserv 8
+on a non-reserved port.  This is needed if receiving maps from
+SunOS 3.x or Ultrix.
 .El
 .Pp
 The

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.28 1997/06/14 07:12:14 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.29 1997/06/18 23:50:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.28 1997/06/14 07:12:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.29 1997/06/18 23:50:12 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -110,6 +110,7 @@ int check;
 #define YPSET_LOCAL	1
 #define YPSET_ALL	2
 int ypsetmode = YPSET_NO;
+int insecure = 0;
 
 int rpcsock, pingsock;
 struct rmtcallargs rmtca;
@@ -342,7 +343,7 @@ ypbindprog_2(rqstp, transp)
 void
 usage()
 {
-	fprintf(stderr, "usage: ypbind [-ypset] [-ypsetme]\n");
+	fprintf(stderr, "usage: ypbind [-ypset] [-ypsetme] [-insecure]\n");
 	exit(0);
 }
 
@@ -368,7 +369,9 @@ main(argc, argv)
 
 	while (--argc) {
 		++argv;
-		if (!strcmp("-ypset", *argv))
+		if (!strcmp("-insecure", *argv))
+			insecure = 1;
+		else if (!strcmp("-ypset", *argv))
 			ypsetmode = YPSET_ALL;
 		else if (!strcmp("-ypsetme", *argv))
 			ypsetmode = YPSET_LOCAL;
@@ -1027,7 +1030,7 @@ int force;
 	}
 
 	/* we do not support sunos 3.0 insecure servers */
-	if (ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
+	if (insecure == 0 && ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
 		return;
 
 	/* soft update, alive */
