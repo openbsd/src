@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.13 1999/12/07 19:24:27 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.14 1999/12/09 20:20:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -202,12 +202,9 @@ main(argc, argv)
 	 * that the file descriptors are already set up for us. 
 	 * J. Gettys - MIT Project Athena.
 	 */
-	if (isatty(0) == 0) {
-		fprintf(stderr, "not a tty\n");
-		exit(1);
-	} else if (argc <= 2 || strcmp(argv[2], "-") == 0)
-		strlcpy(ttyn, ttyname(0), sizeof(ttyn));
-	else {
+	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
+		snprintf(ttyn, sizeof ttyn, "%s", ttyname(0));
+	} else {
 		int i;
 
 		snprintf(ttyn, sizeof ttyn, "%s%s", dev, argv[2]);
