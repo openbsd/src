@@ -328,8 +328,8 @@ logfile()
 		else
 			fprintf(lp, "%u", uid);
 		fprintf(lp, "\t%s\t%s\t%s", game, gametty, ctime(&now));
-		(void)fclose(lp);
 		(void)flock(fileno(lp), LOCK_UN);
+		(void)fclose(lp);
 	}
 }
 #endif /* LOG */
