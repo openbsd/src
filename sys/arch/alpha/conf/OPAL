@@ -1,9 +1,9 @@
-#	$OpenBSD: OPAL,v 1.6 1997/02/26 16:31:16 niklas Exp $
+#	$OpenBSD: OPAL,v 1.7 1997/07/08 21:26:31 deraadt Exp $
 #
 # OPAL, kernel for a DEC Multia at Applitron
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

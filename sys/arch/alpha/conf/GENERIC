@@ -1,10 +1,10 @@
-#	$OpenBSD: GENERIC,v 1.20 1997/07/06 18:37:34 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.21 1997/07/08 21:26:28 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

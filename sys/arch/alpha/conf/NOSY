@@ -1,11 +1,11 @@
-#	$OpenBSD: NOSY,v 1.6 1997/01/24 19:56:59 niklas Exp $
+#	$OpenBSD: NOSY,v 1.7 1997/07/08 21:26:30 deraadt Exp $
 #	$NetBSD: NOSY,v 1.10 1996/11/15 19:37:31 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

@@ -1,10 +1,10 @@
-#	$OpenBSD: LOKI,v 1.1 1997/06/24 12:48:18 kstailey Exp $
+#	$OpenBSD: LOKI,v 1.2 1997/07/08 21:26:30 deraadt Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

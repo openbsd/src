@@ -1,12 +1,12 @@
-#	$OpenBSD: JURA,v 1.8 1997/01/24 19:56:57 niklas Exp $
+#	$OpenBSD: JURA,v 1.9 1997/07/08 21:26:29 deraadt Exp $
 #	$NetBSD: JURA,v 1.11 1996/11/25 04:16:18 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
 # THIS KERNEL DOES NOT CURRENTLY WORK, OR EVEN CONFIGURE!
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

@@ -1,10 +1,10 @@
-#	$OpenBSD: RAMDISK,v 1.8 1997/07/05 23:10:40 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.9 1997/07/08 21:26:31 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support

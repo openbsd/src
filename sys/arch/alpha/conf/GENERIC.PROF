@@ -1,10 +1,10 @@
-#	$OpenBSD: GENERIC.PROF,v 1.3 1997/06/02 13:17:30 deraadt Exp $
+#	$OpenBSD: GENERIC.PROF,v 1.4 1997/07/08 21:26:29 deraadt Exp $
 #	$NetBSD: GENERIC.PROF,v 1.10 1996/12/03 17:25:31 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # Always include profiling support; does not need 'config -p'.

@@ -1,10 +1,10 @@
-#	$OpenBSD: ALPHA,v 1.10 1997/06/02 13:17:28 deraadt Exp $
+#	$OpenBSD: ALPHA,v 1.11 1997/07/08 21:26:27 deraadt Exp $
 #	$NetBSD: ALPHA,v 1.30 1996/12/03 17:25:27 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
-include	"arch/alpha/conf/std.alpha"
-
+machine	alpha
+option		SWAPPAGER, DEVPAGER
 maxusers 8
 
 # CPU Support
