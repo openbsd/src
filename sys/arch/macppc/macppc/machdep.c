@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2001/09/20 13:02:30 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1465,7 +1465,7 @@ kcopy(from, to, size)
 	register void *oldh = curproc->p_addr->u_pcb.pcb_onfault;
 
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curproc->p_addr->u_pcb.pcb_onfault = oldh;
 		return EFAULT;
 	}
 	bcopy(from, to, size);
