@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.h,v 1.2 2000/11/08 21:27:17 ericj Exp $ */
+/* $OpenBSD: bwx.h,v 1.3 2001/11/04 23:00:11 art Exp $ */
 /* $NetBSD: bwx.h,v 1.3 2000/06/08 02:55:37 thorpej Exp $ */
 
 /*-
@@ -49,6 +49,11 @@
  * See "Alpha Architecture Handbook, Version 3", DEC order number EC-QD2KB-TE.
  */
 
+#define BWX_EV56_INT8	(0L << 37)
+#define BWX_EV56_INT4	(1L << 37)
+#define BWX_EV56_INT2	(2L << 37)
+#define BWX_EV56_INT1	(3L << 37)
+
 static __inline u_int8_t
 alpha_ldbu(__volatile u_int8_t *a0)
 {
@@ -73,6 +78,12 @@ alpha_ldwu(__volatile u_int16_t *a0)
 	return (v0);
 }
 
+static __inline u_int32_t
+alpha_ldlu(__volatile u_int32_t *a0)
+{
+	return (*a0);
+}
+
 static __inline void
 alpha_stb(__volatile u_int8_t *a0, u_int8_t a1)
 {
@@ -87,6 +98,15 @@ alpha_stw(__volatile u_int16_t *a0, u_int16_t a1)
 {
 
 	__asm __volatile("stw %1, %0"
+		: "=m" (*a0)
+		: "r" (a1));
+}
+
+static __inline void
+alpha_stl(__volatile u_int32_t *a0, u_int32_t a1)
+{
+
+	__asm __volatile("stl %1, %0"
 		: "=m" (*a0)
 		: "r" (a1));
 }
