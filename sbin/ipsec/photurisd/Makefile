@@ -1,5 +1,6 @@
 PROG=   photurisd
-LDADD= -lgmp -ldes
+LDADD=	-lgmp -ldes
+DPADD=	${LIBGMP} ${LIBDES}
 SRCS=   photuris_cookie_request.c photuris_cookie_response.c \
 	photuris_value_request.c photuris_value_response.c \
 	photuris_identity_request.c photuris_identity_response.c \
@@ -16,7 +17,7 @@ SRCS=   photuris_cookie_request.c photuris_cookie_response.c \
 	modulus.c spi.c state.c validity.c attributes.c \
 	photurisd.c packet.c api.c kernel.c
 
-CFLAGS+= -I. -DIPSEC
+CFLAGS+= -I. -DIPSEC -DDEBUG
 MAN= photurisd.8
 
 .include <bsd.prog.mk>
