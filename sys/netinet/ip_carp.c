@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.12 2003/10/31 09:00:32 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.13 2003/11/02 16:15:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -195,7 +195,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 	SHA1Update(&sc->sc_sha1, (void *)&version, sizeof(version));
 	SHA1Update(&sc->sc_sha1, (void *)&type, sizeof(type));
 	SHA1Update(&sc->sc_sha1, (void *)&vhid, sizeof(vhid));
-#ifdef INET6
+#ifdef INET
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			SHA1Update(&sc->sc_sha1,
