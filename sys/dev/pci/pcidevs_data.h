@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.484 2002/01/21 17:37:04 nate Exp 
+ *		OpenBSD: pcidevs,v 1.485 2002/01/23 18:08:13 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1471,8 +1471,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SoundBlaster Live",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY,
+	    "SoundBlaster Audigy",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_FIWIRE,
+	    "Firewire",
+	},
+	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_DIGIN,
-	    "SoundBlaster Digital Input",
+	    "SoundBlaster Live Digital Input",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGIN,
+	    "SoundBlaster Audigy Digital Input",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
