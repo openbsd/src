@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.87 2004/02/29 11:14:19 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.88 2004/03/03 17:08:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -973,6 +973,7 @@ fetchtable(void)
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
+		free(buf);
 		return (-1);
 	}
 
@@ -990,6 +991,7 @@ fetchtable(void)
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
 			log_warn("fetchtable");
+			free(buf);
 			return (-1);
 		}
 
@@ -1012,6 +1014,7 @@ fetchtable(void)
 				    prefixlen_classful(kr->r.prefix.s_addr);
 			break;
 		default:
+			free(kr);
 			continue;
 			/* not reached */
 		}
@@ -1063,6 +1066,7 @@ fetchifs(int ifindex)
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
+		free(buf);
 		return (-1);
 	}
 
@@ -1077,6 +1081,7 @@ fetchifs(int ifindex)
 
 		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
 			log_warn("fetchifs");
+			free(buf);
 			return (-1);
 		}
 
@@ -1098,6 +1103,7 @@ fetchifs(int ifindex)
 
 		kif_insert(kif);
 	}
+	free(buf);
 	return (0);
 }
 
