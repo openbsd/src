@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsi_all.h,v 1.3 1996/06/16 23:53:15 downsj Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.7 1996/03/19 03:06:10 mycroft Exp $	*/
 
 /*
@@ -177,6 +178,11 @@ struct scsi_changedef {
 #define	MODE_SELECT_BIG		0x55
 #define MOVE_MEDIUM     	0xa5
 #define READ_ELEMENT_STATUS	0xb8
+
+/*
+ * Sort of an extra one, for SCSI_RESET.
+ */
+#define GENRETRY		1
 
 /*
  * sense data format

@@ -1,3 +1,4 @@
+/*	$OpenBSD: scsi_ioctl.c,v 1.3 1996/06/16 23:53:16 downsj Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
 
 /*
@@ -354,6 +355,11 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		sca->scbus = sc_link->scsibus;
 		sca->target = sc_link->target;
 		sca->lun = sc_link->lun;
+		return 0;
+	}
+	case SCIOCRESET: {
+		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
+		      SCSI_RESET);
 		return 0;
 	}
 	default:
