@@ -263,14 +263,14 @@ extern	unsigned long		load_addr;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)
-#define	ROMLEN		(0x01000000)		/* 16MB should be plenty! */
-#define	ROMMAPSIZE	btoc(ROMLEN)		/* 16k of page tables.  */
+#define	ROMLEN		(0x00100000)		/* 1MB should be enough! */
+#define	ROMMAPSIZE	btoc(ROMLEN)		/* 1k of page tables.  */
 
 /* This should not be used.  Use IOBase, instead. */
-#define INTIOBASE	(0x50000000)
+#define INTIOBASE	(0x50F00000)
 
-#define INTIOTOP	(IOBase+0x01000000)
-#define IIOMAPSIZE	btoc(0x01000000)
+#define INTIOTOP	(IOBase+0x00100000)
+#define IIOMAPSIZE	btoc(0x00100000)
 
 /* XXX -- Need to do something about superspace.
  * Technically, NuBus superspace starts at 0x60000000, but no
@@ -284,7 +284,6 @@ extern	unsigned long		load_addr;
 #define NBTOP		0xFF000000	/* NUBUS space */
 #define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
-#define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
 
 /*
  * 68851 and 68030 MMU
