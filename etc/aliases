@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.14 2003/05/15 05:32:56 david Exp $
+#	$OpenBSD: aliases,v 1.15 2003/07/27 20:58:22 david Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -36,6 +36,7 @@ _spamd: root
 _kdc: root
 _kadmin: root
 _isakmpd: root
+_syslogd: root
 
 # Well-known aliases -- these should be filled in!
 # root:
