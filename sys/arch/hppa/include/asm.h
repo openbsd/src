@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 1999/09/18 20:41:16 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.10 2000/01/12 00:14:19 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -256,7 +256,7 @@ tf4	.reg	%fr8
 /*	.subspa $GLOBAL$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=8 */
 /*	.subspa $SHORTDATA$,	QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=16 */
 	.subspa $DATA$,		QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=24
-	.import $global$
+	.import $global$, data
 /*	.subspa	$PFA_COUNTER$,	QUAD=1,ALIGN=4,ACCESS=0x1f,SORT=72 */
 	.subspa $BSS$,		QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=80,ZERO
 
@@ -274,8 +274,9 @@ tf4	.reg	%fr8
 
 #define	ENTRY(x)		!\
 	.space	.text		!\
-	.subspa	$code$		!\
-	.export	x,entry		!\
+	.subspa $CODE$		!\
+	/* XXX broken gas 2.7.1 .align	4 */	!\
+	.export	x, entry	!\
 	.label	x               !\
 	.proc			!\
 	.callinfo calls		!\
@@ -283,11 +284,11 @@ tf4	.reg	%fr8
 	_PROF_PROLOGUE
 
 #define ALTENTRY(x)		!\
-	.export x,entry         !\
+	.export x, entry	!\
 	.label  x
 
-#define EXIT(x)			!\
-	.exit                   !\
+#define EXIT(x)		!\
+	.exit		!\
 	.procend
 
 #endif /* _MACHINE_ASM_H_ */
