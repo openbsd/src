@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.14 2002/06/15 01:33:23 brian Exp $
+ * $OpenBSD: mppe.c,v 1.15 2002/07/01 11:14:35 brian Exp $
  */
 
 #include <sys/param.h>
@@ -427,14 +427,27 @@ MPPEDispOpts(struct fsm_opt *o)
 static int
 MPPEUsable(struct fsm *fp)
 {
-  struct lcp *lcp;
   int ok;
+#ifndef NORADIUS
+  struct radius *r = &fp->bundle->radius;
 
-  lcp = &fp->link->lcp;
-  ok = (lcp->want_auth == PROTO_CHAP && lcp->want_authtype == 0x81) ||
-       (lcp->his_auth == PROTO_CHAP && lcp->his_authtype == 0x81);
-  if (!ok)
-    log_Printf(LogCCP, "MPPE: Not usable without CHAP81\n");
+  /*
+   * If the radius server gave us RAD_MICROSOFT_MS_MPPE_ENCRYPTION_TYPES,
+   * use that instead of our configuration value.
+   */
+  if (*r->cfg.file) {
+    ok = r->mppe.sendkeylen && r->mppe.recvkeylen;
+    if (!ok)
+      log_Printf(LogCCP, "MPPE: Not permitted by RADIUS server\n");
+  } else
+#endif
+  {
+    struct lcp *lcp = &fp->link->lcp;
+    ok = (lcp->want_auth == PROTO_CHAP && lcp->want_authtype == 0x81) ||
+         (lcp->his_auth == PROTO_CHAP && lcp->his_authtype == 0x81);
+    if (!ok)
+      log_Printf(LogCCP, "MPPE: Not usable without CHAP81\n");
+  }
 
   return ok;
 }
