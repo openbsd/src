@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2001/08/15 09:16:29 ho Exp $
+#	$OpenBSD: Makefile,v 1.43 2001/08/16 18:55:33 jakob Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -122,9 +122,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 #		  char *_y_ = malloc (strlen (_x_) + 1); \
 #		  strcpy (_y_, _x_); \
 #		})'
-
-# Enable this if you have a DNSSEC enabled OpenSSL
-#LWRESLIB=	/usr/local/lib/liblwres.a
 
 SUBDIR=		apps
 
