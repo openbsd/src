@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2001/01/05 04:27:23 marc Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.142 2001/01/23 21:59:18 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -719,6 +719,50 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro, II or III"	/* Default */
 			},
 			intel686_cpu_setup
+		},
+		/* Family 7 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 8 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 9 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family A */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family B */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family C */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family D */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family E */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family F */
+		{
+			CPUCLASS_686,
+			{
+				"Pentium 4", 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				0, 0, 0, 0,
+				"Pentium 4"	/* Default */
+			},
+			intel686_cpu_setup
 		} }
 	},
 	{
@@ -1123,8 +1167,8 @@ identifycpu()
 			i = family - CPU_MINFAMILY;
 
 			/* Special hack for the PentiumII/III series. */
-			if ((vendor == CPUVENDOR_INTEL) && (family == 6)
-				&& ((model == 5) || (model == 7))) {
+			if (vendor == CPUVENDOR_INTEL && family == 6 &&
+			    (model == 5 || model == 7)) {
 				name = intel686_cpu_name(model);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
@@ -1137,12 +1181,11 @@ identifycpu()
 
 	/* Find the amount of on-chip L2 cache.  Add support for AMD K6-3...*/
 	cachesize = -1;
-	if ((vendor == CPUVENDOR_INTEL) && (cpuid_level >= 2)) {
+	if (vendor == CPUVENDOR_INTEL && cpuid_level >= 2 && family < 0xf) {
 		int intel_cachetable[] = { 0, 128, 256, 512, 1024, 2048 };
-		if ((cpu_cache_edx & 0xFF) >= 0x40
-		    && (cpu_cache_edx & 0xFF) <= 0x45) {
+		if ((cpu_cache_edx & 0xFF) >= 0x40 &&
+		    (cpu_cache_edx & 0xFF) <= 0x45)
 			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
-		}
 	}
 
 	if (cachesize > -1) {
