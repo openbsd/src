@@ -24,10 +24,9 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.14 2001/04/12 23:17:54 mouring Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.15 2001/04/16 02:31:44 mouring Exp $");
 
 /* XXX: commandline mode */
-/* XXX: copy between two remote hosts (commandline) */
 /* XXX: short-form remote directory listings (like 'ls -C') */
 
 #include "buffer.h"
@@ -39,6 +38,8 @@ RCSID("$OpenBSD: sftp.c,v 1.14 2001/04/12 23:17:54 mouring Exp $");
 #include "sftp-common.h"
 #include "sftp-client.h"
 #include "sftp-int.h"
+
+#include "scp-common.h"
 
 int use_ssh1 = 0;
 char *ssh_program = _PATH_SSH_PROGRAM;
@@ -202,7 +203,7 @@ main(int argc, char **argv)
 	userhost = xstrdup(argv[optind]);
 	file2 = argv[optind+1];
 
-	if ((cp = strchr(userhost, ':')) != NULL) {
+	if ((cp = colon(userhost)) != NULL) {
 		*cp++ = '\0';
 		file1 = cp;
 	}
@@ -219,6 +220,7 @@ main(int argc, char **argv)
 		make_ssh_args(userhost);
 	}
 
+	host = cleanhostname(host);
 	if (!*host) {
 		fprintf(stderr, "Missing hostname\n");
 		usage();
