@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1998/04/06 20:13:58 pefo Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/09/01 15:35:00 drahn Exp $
 
 CLEANFILES= mbr msdos1mb.gz
 
