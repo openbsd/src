@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.43 1998/07/03 08:15:08 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.44 1998/08/07 04:54:38 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -161,9 +161,10 @@ file	arch/i386/isa/pms.c		pms needs-flag
 # XXX temporarily conflicts with arc, will soon move to files.isa
 device	fdc {drive = -1}
 attach	fdc at isa
+file	dev/isa/fdc.c		fdc needs-flag
+
 device	fd: disk, isa_dma
 attach	fd at fdc
-file	dev/isa/fdc.c		fdc needs-flag
 file	dev/isa/fd.c		fd needs-flag
 major	{fd = 2}
 
