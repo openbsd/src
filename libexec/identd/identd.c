@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.23 2002/01/07 08:13:31 mpech Exp $	*/
+/*	$OpenBSD: identd.c,v 1.24 2002/01/07 17:08:28 mpech Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -36,6 +36,7 @@
 #include "error.h"
 
 extern char *version;
+extern char *__progname;
 
 int     verbose_flag = 0;
 int     debug_flag = 0;
@@ -58,19 +59,14 @@ char   *indirect_password = NULL;
 
 static pid_t child_pid;
 
-#ifdef LOG_DAEMON
-static int syslog_facility = LOG_DAEMON;
-#endif
-
 void
 usage()
 {
 	syslog(LOG_ERR,
-	    "identd [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
-	    "[-a address] [-c charset] [-noelVvmNUdh]");
+	    "%s [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
+	    "[-a address] [-c charset] [-noelVvmNUdh]", __progname);
 	exit(2);
 }
-
 
 /*
  * Return the name of the connecting host, or the IP number as a string.
@@ -172,6 +168,7 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 
+	openlog(__progname, LOG_PID, LOG_DAEMON);
 	/*
 	 * Parse the command line arguments
 	 */
@@ -243,7 +240,7 @@ main(argc, argv)
 			number_flag = 1;
 			break;
 		case 'V':	/* Give version of this daemon */
-			printf("[identd version %s]\r\n", version);
+			(void)fprintf(stderr, "[identd version %s]\r\n", version);
 			exit(0);
 			break;
 		case 'v':	/* Be verbose */
@@ -447,14 +444,9 @@ main(argc, argv)
 	/*
 	 * Open the connection to the Syslog daemon if requested
 	 */
-	if (syslog_flag) {
-#ifdef LOG_DAEMON
-		openlog("identd", LOG_PID, syslog_facility);
-#else
-		openlog("identd", LOG_PID);
-#endif
+	if (syslog_flag)
 		syslog(LOG_INFO, "Connection from %s", gethost(&sa));
-	}
+
 	/*
 	 * Get local internet address
 	 */
