@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.md,v 1.3 1997/04/22 00:35:09 deraadt Exp $
+#	$OpenBSD: install.md,v 1.4 1997/04/22 01:05:18 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -445,7 +445,6 @@ sync
 
 echo	""
 echo	"THIS IS YOUR LAST CHANCE!!!"
-echo	""
 echo -n	"Are you SURE you want OpenBSD installed on your hard drive? (yes/no) "
 answer=""
 while [ "$answer" = "" ]; do
@@ -453,15 +452,10 @@ while [ "$answer" = "" ]; do
 	case $resp in
 	yes|YES)
 		echo	""
-		echo	"Here we go..."
 		answer=yes
 		;;
 	no|NO)
-		echo	""
-		echo -n	"OK, then.  enter 'halt' to halt the machine.  "
-		echo    "Once the machine has halted,"
-		echo -n	"remove the floppy, and press any key to "
-		echo	"reboot."
+		echo	"OK, then.  Turn the machine off."
 		exit
 		;;
 	*)
@@ -479,105 +473,89 @@ echo "Labeling disk $drivename..."
 $DONTDOIT disklabel -w -B $drivename $labelname
 
 if [ "$sect_fwd" = "sf:" ]; then
-	echo -n "Initializing bad144 badblock table..."
+	echo "Initializing bad144 badblock table..."
 	$DONTDOIT bad144 $drivename 0
-	echo " done."
 fi
 
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
 if [ "$ename" != "" ]; then
-	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}e $name
 	$DONTDOIT mkdir -p /mnt/$ename
 	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
 fi
 if [ "$fname" != "" ]; then
-	echo	""
 	echo	"Initializing $fname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}f $name
 	$DONTDOIT mkdir -p /mnt/$fname
 	$DONTDOIT mount -v /dev/${drivename}f /mnt/$fname
 fi
 if [ "$gname" != "" ]; then
-	echo	""
 	echo	"Initializing $gname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}g $name
 	$DONTDOIT mkdir -p /mnt/$gname
 	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
 fi
 if [ "$hname" != "" ]; then
-	echo	""
 	echo	"Initializing $hname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}h $name
 	$DONTDOIT mkdir -p /mnt/$hname
 	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
 fi
 if [ "$iname" != "" ]; then
-	echo	""
 	echo	"Initializing $iname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}i $name
 	$DONTDOIT mkdir -p /mnt/$iname
 	$DONTDOIT mount -v /dev/${drivename}i /mnt/$iname
 fi
 if [ "$jname" != "" ]; then
-	echo	""
 	echo	"Initializing $jname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}j $name
 	$DONTDOIT mkdir -p /mnt/$jname
 	$DONTDOIT mount -v /dev/${drivename}j /mnt/$jname
 fi
 if [ "$kname" != "" ]; then
-	echo	""
 	echo	"Initializing $kname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}k $name
 	$DONTDOIT mkdir -p /mnt/$kname
 	$DONTDOIT mount -v /dev/${drivename}k /mnt/$kname
 fi
 if [ "$lname" != "" ]; then
-	echo	""
 	echo	"Initializing $lname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}l $name
 	$DONTDOIT mkdir -p /mnt/$lname
 	$DONTDOIT mount -v /dev/${drivename}l /mnt/$lname
 fi
 if [ "$mname" != "" ]; then
-	echo	""
 	echo	"Initializing $mname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}m $name
 	$DONTDOIT mkdir -p /mnt/$mname
 	$DONTDOIT mount -v /dev/${drivename}m /mnt/$mname
 fi
 if [ "$nname" != "" ]; then
-	echo	""
 	echo	"Initializing $nname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}n $name
 	$DONTDOIT mkdir -p /mnt/$nname
 	$DONTDOIT mount -v /dev/${drivename}n /mnt/$nname
 fi
 if [ "$oname" != "" ]; then
-	echo	""
 	echo	"Initializing $oname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}o $name
 	$DONTDOIT mkdir -p /mnt/$oname
 	$DONTDOIT mount -v /dev/${drivename}o /mnt/$oname
 fi
 if [ "$pname" != "" ]; then
-	echo	""
 	echo	"Initializing $pname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}p $name
 	$DONTDOIT mkdir -p /mnt/$pname
 	$DONTDOIT mount -v /dev/${drivename}p /mnt/$pname
 fi
 
-echo	""
-echo    "Populating filesystems with bootstrapping binaries and config files"
+echo	"Populating filesystems with bootstrapping binaries and config files"
 $DONTDOIT tar -cXf - . | (cd /mnt ; tar -xpf - )
-$DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
-echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
 if [ "$ename" != "" ]; then
@@ -618,12 +596,11 @@ if [ "$pname" != "" ]; then
 fi
 
 sync
-echo	" done."
 
 echo	"OK!  The preliminary work of setting up your disk is now complete."
-echo 	""
 echo	"Currently the hard drive's root filesystem is mounted on /mnt"
 
+echo 	""
 echo	"How would you like to install the distribution and kernels?"
 echo -n	"ftp, http, msdos, ext2fs, tape, nfs, cd9660, local? [ftp] "
 getresp "ftp"
